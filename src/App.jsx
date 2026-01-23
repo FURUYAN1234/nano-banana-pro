@@ -542,9 +542,11 @@ export default function App() {
       (Safety Protocol): Replace ALL real celebrity/politician/trademarked names with GENERIC archetypes (e.g. "Famous Director" instead of "Nolan").
       (Manga Zone: Occupies the COMPLETE WIDTH of the canvas. NO SIDE MARGINS).
       (Panel Width: EXTEND TO THE VERY EDGES. ZERO PADDING ON SIDES).
-      (Composition: MAXIMALIST. CROWDED. FILL EVERY PIXEL. NO EMPTY BACKGROUNDS).
-      (Camera: Zoomed in. Waist-up or Close-up shots preferred. Avoid long shots).
-      (Density: High. Characters should be large and fill the frame).
+      (Composition: MAXIMALIST. CHAOTIC. CLUTTERED. HYPER-DETAILED. NO EMPTY SPACE).
+      (Camera Wide: WIDE ANGLE LENS but ZOOMED IN. Capture multiple characters + background details).
+      (Visual Density: INSANE. Backgrounds must be full of objects, crowds, debris, and context).
+      (Text Density: "SPEECH BUBBLE HELL". Maximum text volume. Multiple bubbles per panel. Overlapping OK).
+      (Art Style: MASTERPIECE. 8k Resolution. Highly detailed ink lines. Professional Manga Artist).
       (Structure: 4 EQUAL SIZED HORIZONTAL STRIPS stacked vertically).
       (Format: Classic 4-Koma Manga Strip).
       (Panel Aspect Ratio: Approx 16:9 landscape per panel BUT stacked VERTICALLY).
@@ -688,7 +690,7 @@ export default function App() {
               </div>
               <div>
                 <h1 className="text-4xl font-black tracking-tighter text-blue-400 drop-shadow-[0_0_10px_rgba(59,130,246,0.8)]">
-                  Super FURU AI <span className="text-white text-2xl ml-2 tracking-widest">4-koma System</span> <span className="text-xs text-yellow-500 font-mono align-top ml-1">v1.3.5</span>
+                  Super FURU AI <span className="text-white text-2xl ml-2 tracking-widest">4-koma System</span> <span className="text-xs text-yellow-500 font-mono align-top ml-1">v1.3.5 Alpha</span>
                 </h1>
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.4em] mt-1 pl-1">
                   Social Satire Engine [ 演出強化版 ]
