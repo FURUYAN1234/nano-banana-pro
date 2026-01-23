@@ -4,11 +4,13 @@
  */
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-"gemini-2.0-flash-thinking-exp-01-21",
+const MODEL_IDS = [
+    "gemini-2.0-flash-thinking-exp-01-21",
     "gemini-2.0-flash-thinking-exp",
     "gemini-2.0-flash",
     "gemini-1.5-flash-latest",
     "gemini-1.5-flash-002"
+];
 
 // Store API key in memory
 let currentApiKey = "";
