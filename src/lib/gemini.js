@@ -6,10 +6,12 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const MODEL_IDS = [
     "gemini-2.0-flash-thinking-exp-01-21",
-    "gemini-2.0-flash-thinking-exp",
-    "gemini-2.0-flash-thinking-exp-1219",
-    "gemini-2.0-flash-exp", // Reliable fallback
-    "gemini-1.5-flash"      // Nuclear fallback
+    "gemini-2.0-flash-thinking-exp", // The best thinking model
+    "gemini-2.0-flash",              // [NEW] Standard 2.0 Flash
+    "gemini-2.0-flash-exp",          // [Legacy] Experimental Flash 2.0
+    "gemini-1.5-flash-latest",       // [NEW] Latest aliased 1.5
+    "gemini-1.5-flash-002",          // [NEW] Stable 1.5 Flash 002
+    "gemini-1.5-flash"               // [Legacy] Original alias
 ];
 
 // Store API key in memory
