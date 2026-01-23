@@ -553,7 +553,7 @@ export default function App() {
       (Zoom): MIXED. Panel 1: Wide/Dutch. Panel 2: Extreme Close-up (Eyes/Mouth). Panel 3: Low Angle Action. Panel 4: High Angle/Overhead.
       
       (Acting): OVER-THE-TOP. SCREAMING. CRYING. FURIOUS. CARTOON PHYSICS. "Ahegao" level expressions.
-      (VFX): EXPLOSIVE LIGHTING. COLORFUL SOUND EFFECTS (Gion). SPEED LINES. IMPACT FRAMES.
+      (VFX): EXPLOSIVE LIGHTING. SOUND EFFECTS MUST BE JAPANESE KATAKANA ONLY (e.g. "ドーン", "ゴゴゴ"). NO ENGLISH SFX.
       (Density): "Maximalist". CROWDED. NO EMPTY BACKGROUNDS.
       (Panel Boundaries): BLEED TO EDGE. NO WHITE SPACE ON SIDES. EXTEND ARTWORK TO THE PHYSICAL BORDER.
       
