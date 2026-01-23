@@ -38,7 +38,7 @@ export const generateImageWithImagen = async (prompt) => {
                     ],
                     parameters: {
                         sampleCount: 1,
-                        aspectRatio: "2:3", // Match the manga vertical style
+                        aspectRatio: "9:16", // Taller aspect ratio for 4-koma stack to reduce side margins
                         personGeneration: "allow_adult" // Sometimes needed for older models, harmless if ignored
                     }
                 }),
