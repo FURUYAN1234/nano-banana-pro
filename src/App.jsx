@@ -553,11 +553,13 @@ export default function App() {
       (Composition): DYNAMIC and UNSTABLE. Fill the frame with characters' faces/bodies.
       (Zoom): MIXED. Panel 1: Wide/Dutch. Panel 2: Extreme Close-up (Eyes/Mouth). Panel 3: Low Angle Action. Panel 4: High Angle/Overhead.
       
-      (Acting): OVER-THE-TOP. SCREAMING. CRYING. FURIOUS. CARTOON PHYSICS.
+      (Acting): OVER-THE-TOP. SCREAMING. CRYING. FURIOUS. CARTOON PHYSICS. "Ahegao" level expressions.
       (VFX): EXPLOSIVE LIGHTING. COLORFUL SOUND EFFECTS (Gion). SPEED LINES. IMPACT FRAMES.
-      (Density): "Maximalist" but focused on ACTION, not just random clutter.
+      (Density): "Maximalist". CROWDED. NO EMPTY BACKGROUNDS.
+      (Panel Boundaries): BLEED TO EDGE. NO WHITE SPACE ON SIDES. EXTEND ARTWORK TO THE PHYSICAL BORDER.
       
-      (Art Style: MASTERPIECE. 8k Resolution. Highly detailed ink lines. Professional Manga Artist).
+      (Art Style): SEINEN MANGA. GEKIGA. HIGH CONTRAST INK. SCREEN TONES. DETAILED SHADING. MASTERPIECE. 8k.
+      (Reference): Akin to "Berserk" detail level but in "Pop" color.
       (Structure: 4 EQUAL SIZED HORIZONTAL STRIPS stacked vertically).
       (Format: Classic 4-Koma Manga Strip).
       (Panel Aspect Ratio: Approx 16:9 landscape per panel BUT stacked VERTICALLY).
@@ -701,7 +703,7 @@ export default function App() {
               </div>
               <div>
                 <h1 className="text-4xl font-black tracking-tighter text-blue-400 drop-shadow-[0_0_10px_rgba(59,130,246,0.8)]">
-                  Super FURU AI <span className="text-white text-2xl ml-2 tracking-widest">4-koma System</span> <span className="text-xs text-yellow-500 font-mono align-top ml-1">v1.3.5 Alpha</span>
+                  Super FURU AI <span className="text-white text-2xl ml-2 tracking-widest">4-koma System</span> <span className="text-xs text-yellow-500 font-mono align-top ml-1">v1.3.6 RC</span>
                 </h1>
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.4em] mt-1 pl-1">
                   Social Satire Engine [ 演出強化版 ]
