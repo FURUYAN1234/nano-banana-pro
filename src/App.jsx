@@ -86,7 +86,7 @@ const ApiKeyModal = ({ isOpen, onSave }) => {
       <div className="bg-[#111] border border-blue-500/30 p-8 rounded-[2rem] w-full max-w-md shadow-2xl relative">
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-purple-500" />
         <h2 className="text-2xl font-black text-white mb-4 tracking-tighter uppercase flex items-center gap-2 italic">
-          <Zap className="fill-blue-500 text-blue-500" /> システム初期化 <span className="text-[10px] not-italic text-slate-500 bg-black/50 px-2 py-1 rounded tracking-normal">v1.3.0</span>
+          <Zap className="fill-blue-500 text-blue-500" /> システム初期化 <span className="text-[10px] not-italic text-slate-500 bg-black/50 px-2 py-1 rounded tracking-normal">v1.3.5</span>
         </h2>
         <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-2">
           Google Gemini APIキーを入力 (Gemini 2.0/1.5 対応)
@@ -1004,7 +1004,7 @@ export default function App() {
                   <div className="mt-4 p-4 bg-black/80 rounded-lg border border-white/10 font-mono text-xs text-green-400 h-32 overflow-y-auto">
                     <div className="opacity-50 mb-2 border-b border-white/10 pb-1 flex justify-between">
                       <span>KERNEL LOG MONITOR</span>
-                      <span className="text-[10px] text-blue-500">v1.3.0 (Gemini 2.0 Native)</span>
+                      <span className="text-[10px] text-blue-500">v1.3.5 (Gemini 2.0 Native)</span>
                     </div>
                     {genLog.length === 0 ? (
                       <div className="text-white/30 italic">Ready to generate...</div>
