@@ -534,18 +534,29 @@ export default function App() {
       (Shape: Tall vertical rectangle).
       (Physical Barrier: Top 15% and bottom 15% are solid pure white blocks).
       (Physical Barrier: Top 15% and bottom 15% are solid pure white blocks).
-      (Top Text: Write the Japanese Text "${cleanTopic}" directly on the white background).
-      (Text Style: Simple Black Text on White Paper. NO DECORATION. NO FRAMES. NO BOXES).
+      (Top Text: Write the Japanese Text "${cleanTopic}" directly on the white canvas).
+      (Text Style: INK stamped directly on paper. Floating Text. NO BOX. NO FRAME. NO WHITE BACKGROUND RECTANGLE).
       (Text Position: TOP CENTER).
-      (Text Container: ABSOLUTELY NONE. Banned: Rectangles, Bubbles, Banners, Strips, Background shapes).
-      (Physics): Text must float freely in the white void with NO surrounding geometry.
+      (Text Container: ABSOLUTELY NONE. Banned: Rectangles, Bubbles, Banners, Strips, Background shapes, Borders).
+      (Physics): Text must blend into the negative space.
       (Safety Protocol): Replace ALL real celebrity/politician/trademarked names with GENERIC archetypes (e.g. "Famous Director" instead of "Nolan").
       (Manga Zone: Occupies the COMPLETE WIDTH of the canvas. NO SIDE MARGINS).
       (Panel Width: EXTEND TO THE VERY EDGES. ZERO PADDING ON SIDES).
-      (Composition: MAXIMALIST. CHAOTIC. CLUTTERED. HYPER-DETAILED. NO EMPTY SPACE).
-      (Camera Wide: WIDE ANGLE LENS but ZOOMED IN. Capture multiple characters + background details).
-      (Visual Density: INSANE. Backgrounds must be full of objects, crowds, debris, and context).
-      (Text Density: "SPEECH BUBBLE HELL". Maximum text volume. Multiple bubbles per panel. Overlapping OK).
+      
+      [EXTREME CINEMATOGRAPHY & ACTING PROTOCOL]
+      (Camera Rules): ABSOLUTELY NO EYE-LEVEL SHOTS. NO FLAT FRONTAL SHOTS.
+      (Lens): WIDE ANGLE LENS (14mm-24mm) with EXTREME FORESHORTENING and DISTORTION.
+      (Angles):
+        - POSITIVE VERTICAL: "Worm's Eye View" (Camera on the floor looking up). Use for shocks/power.
+        - NEGATIVE VERTICAL: "Bird's Eye View" (Camera on ceiling looking down). Use for despair/crowds.
+        - AXIS TILT: "Dutch Angle" (Tilted Horizon). NEVER use a straight horizon.
+      (Composition): DYNAMIC and UNSTABLE. Fill the frame with characters' faces/bodies.
+      (Zoom): MIXED. Panel 1: Wide/Dutch. Panel 2: Extreme Close-up (Eyes/Mouth). Panel 3: Low Angle Action. Panel 4: High Angle/Overhead.
+      
+      (Acting): OVER-THE-TOP. SCREAMING. CRYING. FURIOUS. CARTOON PHYSICS.
+      (VFX): EXPLOSIVE LIGHTING. COLORFUL SOUND EFFECTS (Gion). SPEED LINES. IMPACT FRAMES.
+      (Density): "Maximalist" but focused on ACTION, not just random clutter.
+      
       (Art Style: MASTERPIECE. 8k Resolution. Highly detailed ink lines. Professional Manga Artist).
       (Structure: 4 EQUAL SIZED HORIZONTAL STRIPS stacked vertically).
       (Format: Classic 4-Koma Manga Strip).
