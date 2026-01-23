@@ -86,10 +86,10 @@ const ApiKeyModal = ({ isOpen, onSave }) => {
       <div className="bg-[#111] border border-blue-500/30 p-8 rounded-[2rem] w-full max-w-md shadow-2xl relative">
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-purple-500" />
         <h2 className="text-2xl font-black text-white mb-4 tracking-tighter uppercase flex items-center gap-2 italic">
-          <Zap className="fill-blue-500 text-blue-500" /> システム初期化
+          <Zap className="fill-blue-500 text-blue-500" /> システム初期化 <span className="text-[10px] not-italic text-slate-500 bg-black/50 px-2 py-1 rounded tracking-normal">v1.3.0</span>
         </h2>
         <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-2">
-          Google Gemini APIキーを入力 (v1beta必須)
+          Google Gemini APIキーを入力 (Gemini 2.0/1.5 対応)
           <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" className="ml-2 text-cyan-400 hover:text-cyan-300 underline decoration-cyan-400/30">
             [取得はこちら]
           </a>
@@ -535,12 +535,13 @@ export default function App() {
       (Physical Barrier: Top 15% and bottom 15% are solid pure white blocks).
       (Physical Barrier: Top 15% and bottom 15% are solid pure white blocks).
       (Top Text: Write the Japanese Text "${cleanTopic}" directly on the white background).
-      (Text Style: Single Line Floating Text. Horizontal. Ink ONLY. No Box. No Border. No Frames).
+      (Text Style: Simple Black Text on White Paper. NO DECORATION. NO FRAMES. NO BOXES).
       (Text Position: TOP CENTER).
-      (Text Container: ABSOLUTELY NONE. Banned: Rectangles, Bubbles, Banners, Strips).
+      (Text Container: ABSOLUTELY NONE. Banned: Rectangles, Bubbles, Banners, Strips, Background shapes).
       (Physics): Text must float freely in the white void with NO surrounding geometry.
       (Safety Protocol): Replace ALL real celebrity/politician/trademarked names with GENERIC archetypes (e.g. "Famous Director" instead of "Nolan").
-      (Manga Zone: All 4 panels are floating in the central 70% vertical strip).
+      (Manga Zone: Occupies the COMPLETE WIDTH of the canvas. NO SIDE MARGINS).
+      (Panel Width: EXTEND TO THE VERY EDGES. ZERO PADDING ON SIDES).
       (Structure: 4 EQUAL SIZED HORIZONTAL STRIPS stacked vertically).
       (Format: Classic 4-Koma Manga Strip).
       (Panel Aspect Ratio: Approx 16:9 landscape per panel BUT stacked VERTICALLY).
@@ -998,7 +999,10 @@ export default function App() {
 
                   {/* Generation Log Terminal */}
                   <div className="mt-4 p-4 bg-black/80 rounded-lg border border-white/10 font-mono text-xs text-green-400 h-32 overflow-y-auto">
-                    <div className="opacity-50 mb-2 border-b border-white/10 pb-1">KERNEL LOG MONITOR v88.1</div>
+                    <div className="opacity-50 mb-2 border-b border-white/10 pb-1 flex justify-between">
+                      <span>KERNEL LOG MONITOR</span>
+                      <span className="text-[10px] text-blue-500">v1.3.0 (Gemini 2.0 Native)</span>
+                    </div>
                     {genLog.length === 0 ? (
                       <div className="text-white/30 italic">Ready to generate...</div>
                     ) : (
