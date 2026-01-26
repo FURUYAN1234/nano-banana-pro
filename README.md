@@ -27,7 +27,7 @@
 ### 2. Weighted Immutable Prompts
 キャラクター固有の特徴量（衣装・髪型・小物）に重みを付与。キャラ同士が混ざり合う「フュージョン」を徹底的に防ぎます。
 
-### 3. Kyoto Animation Quality (Level EX-2)
+### 3. Animation Quality (Level EX-2)
 物理ベースのライティング、SSS（肌の透過）、リムライトをエミュレート。最高峰のアニメクオリティを追求します。
 
 ---
