@@ -11,6 +11,9 @@
 ## 🚀 Overview / 概要
 
 ![Sample Output](sample.png)
+> [!TIP]
+> **詳細な解説記事を公開中** > 本プロジェクトの設計思想や、Google Gemini API（注釈3）のモデル毎の挙動の違いについては、以下のnote記事で詳しく解説しています。
+> [【Update 2026/1/24】AIマンガ制作を「自動化」ではなく「無人化」へ（note）](https://note.com/happy_duck780/n/ndf063558c1f5)
 
 This project aims to intentionally exclude humans from the creative process, allowing AI to act as a director and complete everything from brainstorming to composition, direction, and rendering.
 本プロジェクトは、人間をクリエイティブな工程から意図的に排除し、AIがディレクターとして「ネタ出し・構成・演出・作画」のすべてを完結させることを目的としています。
