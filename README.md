@@ -1,4 +1,4 @@
-# nano-banana-pro (Super AI 4-koma System)
+# nano-banana-pro Super AI 4-koma System
 
 > **"To what extent can humans step away from the creative process?"**
 > **「人間は、どこまで制作から降りられるのか？」**
