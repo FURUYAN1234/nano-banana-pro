@@ -3,7 +3,7 @@
 
 ### 🏆 Recognition / 実績
 - **Ranked #10 in Qiita Daily Trends (Jan 28, 2026)** - Japan's leading technical community.  
-  **Qiita デイリートレンド 10位獲得 (2026年1月28日)** - 日本最大級のエンジニアコミュニティで評価されました。
+  **Qiita デイリートレンド 6位獲得 (2026年1月28日)** - 日本最大級のエンジニアコミュニティで評価されました。
 - **Featured for "Build with Gemini"** - Implementing autonomous agent workflows.  
   **"Build with Gemini" 準拠** - 自律型エージェントワークフローの実装。
 
