@@ -40,6 +40,9 @@ This project is an experimental **Autonomous 4-Panel Manga Director**. It doesn'
 ## 🚀 Overview / 概要
 
 ![Sample Output](sample.png)
+
+https://github.com/user-attachments/assets/caead72f-8117-4e20-82b9-e353812b3e87
+
 > [!TIP]
 > **詳細な解説記事を公開中** > For insights into the design philosophy and behavior differences between Google Gemini API models, please refer to the following note article. / 本プロジェクトの設計思想や、Google Gemini APIのモデル毎の挙動の違いについては、以下のnote記事で詳しく解説しています。
 > [【Update 2026/1/24】AIマンガ制作を「自動化」ではなく「無人化」へ（note）/Beyond Automation: Toward "Unmanned" AI Manga Production (note / Japanese content)](https://note.com/happy_duck780/n/ndf063558c1f5)
