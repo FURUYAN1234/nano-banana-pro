@@ -1,4 +1,11 @@
 # Nano Banana Pro Powered Super AI 4-koma System
+
+> **"To what extent can humans step away from the creative process?"**
+> **「人間は、どこまで制作から降りられるのか？」**
+> 
+> An experimental web application pushing AI manga production beyond simple "automation" toward total "unmanned" autonomy.
+> AIによるマンガ制作を単なる「自動化」の域を超え、その先にある完全な**「無人化」**へと昇華させる実験的Webアプリケーション。
+
 ---
 
 ### 🏆 Recognition / 実績
@@ -24,18 +31,6 @@ We received an insightful review from **Narita Shigenari ([@bisekai1](https://x.
     **次なる目標**: 商業誌連載レベルの面白さと表現力を追求することを、次なるオープンソース開発の大きなマイルストーンに設定しました。
 
 > **Reference Link / 参照:** [Review by @bisekai1 on X](https://x.com/bisekai1/status/2016330820383080678)
-
----
-
-## 🤖 What is nano-banana-pro?
-**"To what extent can humans step away from the creative process?"**
-
-This project is an experimental **Autonomous 4-Panel Manga Director**. It doesn't just "draw"; it thinks, scans news, plots stories, and renders professional-grade manga strips without human intervention.
-> **"To what extent can humans step away from the creative process?"**
-> **「人間は、どこまで制作から降りられるのか？」**
-> 
-> An experimental web application that leads AI manga production beyond "automation" to full "unmanned" autonomy.
-> AIによるマンガ制作を「自動化」ではなく、その先にある**「無人化」**へと導く実験的Webアプリケーション。
 
 ---
 
