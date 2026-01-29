@@ -45,12 +45,22 @@ This project is an experimental **Autonomous 4-Panel Manga Director**. It doesn'
 
 https://github.com/user-attachments/assets/caead72f-8117-4e20-82b9-e353812b3e87
 
-> [!TIP]
-> **詳細な解説記事を公開中** > For insights into the design philosophy and behavior differences between Google Gemini API models, please refer to the following note article. / 本プロジェクトの設計思想や、Google Gemini APIのモデル毎の挙動の違いについては、以下のnote記事で詳しく解説しています。
-> [【Update 2026/1/24】AIマンガ制作を「自動化」ではなく「無人化」へ（note）/Beyond Automation: Toward "Unmanned" AI Manga Production (note / Japanese content)](https://note.com/happy_duck780/n/ndf063558c1f5)
+---
 
-This project aims to intentionally exclude humans from the creative process, allowing AI to act as a director and complete everything from brainstorming to composition, direction, and rendering.
-本プロジェクトは、人間をクリエイティブな工程から意図的に排除し、AIがディレクターとして「ネタ出し・構成・演出・作画」のすべてを完結させることを目的としています。
+## 🎮 Live Demo / 今すぐブラウザで試す
+
+**[Run nano-banana-pro on GitHub Pages](https://furuyan1234.github.io/nano-banana-pro/)**
+
+- **No server required**: Runs entirely in your browser.
+  **サーバー不要**: 面倒な設置作業なしに、ブラウザだけで動作します。
+- **Privacy First**: Your API Key is only stored locally in your browser.
+  **プライバシー保護**: 入力したAPIキーはブラウザ内にのみ保存され、外部に送信されることはありません。
+- **Full Autonomy**: Experience the "Unmanned" 4-panel manga generation logic.
+  **完全無人生成**: ニュース取得から完成まで、一切の人間介入なしで漫画が生成される様子を体験してください。
+
+> [!TIP]
+> Requires a Google Gemini API Key. You can get one for free at [Google AI Studio](https://aistudio.google.com/app/apikey).
+> 動作には Google Gemini API キーが必要です。[Google AI Studio](https://aistudio.google.com/app/apikey) で無料で取得できます。
 
 ---
 
