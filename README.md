@@ -91,9 +91,10 @@ Emulates physics-based lighting and SSS (Subsurface Scattering) for peak animati
 
 ## 💻 Tech Stack / 技術スタック
 
-* **Frontend**: React 19 / Vite 7 / Tailwind CSS
-* **LLM/VFM**: Google Gemini API (1.5 Pro / Flash)
-* **Logic**: Automatic retry and model fallback mechanism for 429 errors.
+* **Frontend**: React 19 / Vite 7 / Tailwind CSS 4
+* **LLM**: Google Gemini API (2.0 Flash Thinking / 2.0 Flash / 1.5 Pro & Flash)
+* **VFM (Image)**: Google Imagen 3 (via API Integration)
+* **Logic**: Intelligent multi-model fallback mechanism & Thinking Mode integration (v1beta API)
 
 ---
 
