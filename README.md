@@ -49,7 +49,7 @@ https://github.com/user-attachments/assets/caead72f-8117-4e20-82b9-e353812b3e87
 
 ## 🎮 Live Demo / 今すぐブラウザで試す
 
-**[Run nano-banana-pro on GitHub Pages](https://furuyan1234.github.io/nano-banana-pro/)**
+**[Run Nano Banana Pro Powered Super AI 4-koma System on GitHub Pages](https://furuyan1234.github.io/nano-banana-pro/)**
 
 - **No server required**: Runs entirely in your browser.
   **サーバー不要**: 面倒な設置作業なしに、ブラウザだけで動作します。
