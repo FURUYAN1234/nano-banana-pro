@@ -129,7 +129,7 @@ const ApiKeyModal = ({ isOpen, onSave }) => {
 };
 
 export default function App() {
-  const SYSTEM_VERSION = "v1.8.25 Alpha";
+  const SYSTEM_VERSION = "v1.8.26 Alpha";
   const [apiKey, setApiKeyState] = useState("");
   const [showModal, setShowModal] = useState(true);
 
@@ -557,7 +557,7 @@ export default function App() {
 
       const styleCore = isMonochrome
         ? "(Absolute total zero-saturation monochrome grayscale:2.0), (greyscale:2.0), (monochrome:2.0), (no color:2.0), (Masterpiece Traditional Manga), (G-Pen Ink Style), (Sharp, varied line weight), (Manual ink hatching), (High-Contrast Black & White), (Professional Comic Studio Quality), (Detailed Backgrounds)"
-        : "(Top-Tier Animation Studio Style:1.4), (Kyoto Animation Style:1.2), (CloverWorks Style:1.2), (Award Winning Compositing), (Official Anime Art), (Vibrant Full Color), (Masterpiece G-Pen Line Art), (Sharp Ink Contours), (High-budget Key Visual Quality), (Cinematic Lighting), (Beautiful Detailed Eyes)";
+        : "(Top-Tier Animation Studio Style:1.4), (Delicate and Detailed Art Style:1.2), (High Quality Character Art:1.2), (Award Winning Compositing), (Official Anime Art), (Vibrant Full Color), (Masterpiece G-Pen Line Art), (Sharp Ink Contours), (High-budget Key Visual Quality), (Cinematic Lighting), (Beautiful Detailed Eyes)";
 
       const dynamicCamera = `
     (Forbidden: Normal eye-level shots, Flat angles, Static poses). 
