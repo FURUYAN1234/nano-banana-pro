@@ -129,7 +129,7 @@ const ApiKeyModal = ({ isOpen, onSave }) => {
 };
 
 export default function App() {
-  const SYSTEM_VERSION = "v1.8.29 Alpha";
+  const SYSTEM_VERSION = "v1.8.30 Alpha";
   const [apiKey, setApiKeyState] = useState("");
   const [showModal, setShowModal] = useState(true);
 
@@ -672,10 +672,10 @@ RULE_5: "Maintain absolute consistency of features (Hair, Eyes, Glasses) for eac
       
       (Acting): **HIGH FIDELITY EXPRESSIONS**. Detailed emotional acting. NO gag-manga deformation.
       (VFX): **CINEMATIC LIGHTING**. Raytracing, bloom, depth of field.
-      (SFX Object Protocol): **SFX ARE OBJECTS, NOT TEXT**.
-         - Treat Sound Effects (Gion) as physical 3D objects made of neon light, smoke, or rock.
-         - **FORBIDDEN**: Standard Typesetting, Digital Fonts, Typography.
-         - **REQUIRED**: Hand-drawn Graffiti, Brush Strokes, "Floating 3D Katakana".
+      (SFX Object Protocol): **SFX ARE VISUAL SHAPES, NOT TEXT**.
+         - **CONCEPT**: The sound is represented by jagged, explosive 3D shapes (rocks, lightning, smoke) that roughly resemble Japanese characters but are primarily ART.
+         - **FORBIDDEN**: Standard Typesetting, Digital Fonts, Typography, Text Overlay.
+         - **REQUIRED**: Heavy Brush Strokes, Spray Paint, Splatter, 3D Blocky Shapes.
          - **INTEGRATION**: The sound effects must exist IN 3D SPACE (behind characters, hitting the floor).
       (Density): **BALANCED**. Focus on character beauty and composition.
       (Text Density): **LOW**. Visuals first. Dialogue is secondary.
@@ -732,7 +732,7 @@ RULE_5: "Maintain absolute consistency of features (Hair, Eyes, Glasses) for eac
       Strictly reproduce the character designs in the reference images (if provided) with 100% fidelity.
       You MUST verifying and enforce: Hair Style, Hair Color, and Presence/Absence of Glasses for each character.
       Deviation from the established character design is strictly forbidden.
-    \`;   --no color, colorized, sepia, brown, yellow, tint, part-color, spot color, halftone, dithering, digital gray, 2x2 grid, english, letters, numbers, technical tags, colons, parameter text, weight numbers, clipped edges, out of frame, touching edge, chibi, SD, 16:9, merged panels, borderless, eye-level, messy lines, bleeding, cropped borders, two-line title, frame around text, title box, text box, background rectangle, looking at camera, ahoge, version number, episode number, date stamp, protocol name, horizontal, landscape, wide view, panoramic, 4:3, square, 1:1, changing hair length, hair mutation, banner, header box, text container, caption box, title background, label box, ui element, clones, duplicates, twins, doppelganger, multiple versions, split view, text background, caption background, speech bubble in title, title frame, two lines text, multiline text, stacked text, vertical title, broken title, border around title, box around title, rectangle around text, white box title, comic strip banner, headline strip, caption strip, text enclosure, speech bubble around text
+    \`;   --no color, colorized, sepia, brown, yellow, tint, part-color, spot color, halftone, dithering, digital gray, 2x2 grid, english, letters, numbers, technical tags, colons, parameter text, weight numbers, clipped edges, out of frame, touching edge, chibi, SD, 16:9, merged panels, borderless, eye-level, messy lines, bleeding, cropped borders, two-line title, frame around text, title box, text box, background rectangle, looking at camera, ahoge, version number, episode number, date stamp, protocol name, horizontal, landscape, wide view, panoramic, 4:3, square, 1:1, changing hair length, hair mutation, banner, header box, text container, caption box, title background, label box, ui element, clones, duplicates, twins, doppelganger, multiple versions, split view, text background, caption background, speech bubble in title, title frame, two lines text, multiline text, stacked text, vertical title, broken title, border around title, box around title, rectangle around text, white box title, comic strip banner, headline strip, caption strip, text enclosure, speech bubble around text, digital fonts, standard typeface, typesetting, computer font, type overlay, font rendering, fused characters, fused accessories, glasses on non-glasses characters, shared glasses, floating glasses, wrong accessories, mutation of accessories, swapped clothes
     \`;
     Output ONLY the final prompt string inside a code block.
       `;
