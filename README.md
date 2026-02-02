@@ -14,6 +14,7 @@ This project aims to intentionally exclude humans from the creative process, all
 本プロジェクトは、人間をクリエイティブな工程から意図的に排除し、AIがディレクターとして「ネタ出し・構成・演出・作画」のすべてを完結させることを目的としています。
 
 ![Sample Output](assets/samples/sample.png)
+![Retro Sample](assets/samples/retro_sample.jpg)
 
 ### 🎥 Action Demo / 動作デモ
 
