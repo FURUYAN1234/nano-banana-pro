@@ -129,7 +129,7 @@ const ApiKeyModal = ({ isOpen, onSave }) => {
 };
 
 export default function App() {
-  const SYSTEM_VERSION = "v1.8.27 Alpha";
+  const SYSTEM_VERSION = "v1.8.28 Alpha";
   const [apiKey, setApiKeyState] = useState("");
   const [showModal, setShowModal] = useState(true);
 
@@ -431,7 +431,7 @@ export default function App() {
         2. **台詞密度の極小化と視覚効果の最大化**:
            - **重要**: 会話量を意図的に減らせ。「説明」は全て絵で行え。
            - 1コマあたりのフキダシは**「原則1つまで」**。キャラがベラベラ喋るのを禁止する。
-           - その分、**「ド派手なエフェクト」「空間を埋め尽くす書き文字（オノマトペ）」**で画面を埋めよ。
+           - その分、**「カラフルな手書きオノマトペ」「空間に浮かぶ3D文字」**で画面を埋めよ。既存フォントは使うな。
 
         3. **オチと構図の多様化 (Variety Constraints)**:
            - **必須**: 「手前に大きく顔があるキャラ」「奥で小さく驚くキャラ」など、**遠近感**を強調せよ。棒立ちは厳禁。
@@ -672,6 +672,10 @@ RULE_5: "Maintain absolute consistency of features (Hair, Eyes, Glasses) for eac
       
       (Acting): **HIGH FIDELITY EXPRESSIONS**. Detailed emotional acting. NO gag-manga deformation.
       (VFX): **CINEMATIC LIGHTING**. Raytracing, bloom, depth of field.
+      (SFX Protocol): **HAND-DRAWN 3D KANA**.
+         - **STYLE**: Graffiti-style, Street Art, Brush Strokes. **NO COMPUTER FONTS**.
+         - **COLOR**: **MULTICOLOR / RAINBOW / NEON**. Do not use black text for SFX.
+         - **INTEGRATION**: The sound effects must exist IN 3D SPACE (behind characters, hitting the floor).
       (Density): **BALANCED**. Focus on character beauty and composition.
       (Text Density): **LOW**. Visuals first. Dialogue is secondary.
       (Panel Boundaries): ZERO PADDING. DRAW TO THE VERY HARD EDGE OF THE CANVAS.
