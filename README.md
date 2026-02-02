@@ -1,87 +1,90 @@
-# 🍌 nano-banana-pro: The Ultimate 4-Panel Manga Director
+# nano-banana-pro (Super AI 4-koma System)
 
-![Project Banner](./assets/images/banner_kyoto_style.png)
-
-## 🏆 Project Achievements
-
-- **Qiita Daily Trend #10 Ranked** (January 2026)
-- **Editor Approved**: Evaluated by active editors from *Shonen Jump+* and *Young Magazine*.
-
----
-
-## 🚀 Concept: "Unmanned AI Creation"
-
-This project is an automated pipeline designed to achieve professional-grade 4-panel manga without human intervention. By synchronizing LLM plot construction with the **Super FURU Manga Protocol**, it ensures consistent visual storytelling.
-
-本プロジェクトは、人間の介入を最小限に抑え、プロットから作画までを完結させる「無人AIクリエイション」の実験場です。
-
----
-
-## 📺 Media & Demonstrations
-
-### System Demo Video
-
-A full walkthrough of the automated generation process from script to final render.
-
-- [Watch on YouTube](https://www.youtube.com/watch?v=YOUR_VIDEO_ID)
-
-### Case Study & Technical Blog
-
-Deep dive into "Art Style Portability" and protocol performance.
-
-- [note: はたして、まんがの「画風」はアウトポートできるのか？](https://note.com/happy_duck780/n/ndf063558c1f5)
-
----
-
-## 🖋 Professional Editor's Feedback
+> **"To what extent can humans step away from the creative process?"**
+> **「人間は、どこまで制作から降りられるのか？」**
 >
-> "The **ABSOLUTE PHYSICAL GEOMETRY LOCK** solves the biggest issue in AI manga: structural collapse. This is a game-changer for informational manga production."
-> — *Editorial Team, Shonen Jump+ / Young Magazine*
+> An experimental web application that leads AI manga production beyond "automation" to full "unmanned" autonomy.
+> AIによるマンガ制作を「自動化」ではなく、その先にある**「無人化」**へと導く実験的Webアプリケーション。
 
 ---
 
-## 🛠 Technical Specifications (Super FURU Protocol v3.5)
+## 🚀 Overview / 概要
 
-### 1. Absolute Physical Geometry Lock
+![Sample Output](sample.png)
 
-Utilizes pixel-coordinate mapping to ensure each of the 4 panels is rendered in a fixed space, preventing "bleeding" or overlapping frames.
-
-- **Panel 1-4**: Fixed aspect ratios.
-- **Gutter Control**: Precise spacing between frames.
-
-### 2. Weighted Immutable Prompts (WIP)
-
-Locks character visual DNA to prevent "character drift" across generations.
-
-- **Hikari (ひかり)**: `[Gold-Blonde, Intellectual, Oval-Glasses, Kyoto-Ani-Quality]`
-- **Akari (あかり)**: `[Copper-Orange, Energetic, Side-Ponytail, Kyoto-Ani-Quality]`
-- **Asset Reference**: [Character Sheets](./assets/characters/hikari_akari_v2.png)
-
-### 3. Modern Development Stack
-
-- **Frontend**: React 19 / Vite 7 / Tailwind CSS
-- **Package Manager**: pnpm
-- **Image Engine**: Nano Banana Pro (Customized for high-fidelity line art)
+This project aims to intentionally exclude humans from the creative process, allowing AI to act as a director and complete everything from brainstorming to composition, direction, and rendering.
+本プロジェクトは、人間をクリエイティブな工程から意図的に排除し、AIがディレクターとして「ネタ出し・構成・演出・作画」のすべてを完結させることを目的としています。
 
 ---
 
-## 🎨 Visual Samples
+## 💡 Concept: Full Autonomy / コンセプト：制作からの完全離脱
 
-| Panel 1 (Introduction) | Panel 4 (Conclusion/Punchline) |
-| :---: | :---: |
-| ![Panel 1](./assets/samples/panel1_sample.png) | ![Panel 4](./assets/samples/panel4_sample.png) |
+Unlike conventional AI tools that assist humans, this system is based on the following philosophy:
+従来のAIツールが「人間の補助」であったのに対し、本システムは以下の思想に基づいています。
 
----
-
-## ⚖️ Licensing
-
-- **Code**: [MIT License](./LICENSE)
-- **Prompts & Art Assets**: [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/)
-  - Attribution required. Non-commercial use only for the protocol logic.
+* **Dynamic Trend Sync / トレンド動的同期**: Dynamically acquires the latest news to self-select topics based on current social trends.
+  実行当日の最新ニュースを動的に取得。社会情勢に合わせたネタをAIが自ら選定します。
+* **Unmanned Direction / 無人ディレクション**: AI self-constructs the plot and determines the 4-panel structure without human intervention.
+  人間の指示を待たず、AI自身がプロットを組み立て、4コマの構成を決定。
+* **Physical Identity Enforcement / 同一性の物理的強制**: Maintains high-precision character consistency across all panels through a unique protocol.
+  独自のプロトコルにより、キャラクター造形を全コマで高精度に維持します。
 
 ---
 
-## 👥 Community
+## 🛠 Featured Protocols: Super FURU Manga Protocol / 搭載プロトコル
 
-- **Author**: [FURUYAN1234](https://github.com/FURUYAN1234)
-- **Social**: Updates on [X (Twitter)](https://x.com/your-handle)
+1. **ABSOLUTE PHYSICAL GEOMETRY LOCK**
+Controls 4-panel layout, aspect ratio, and perspective at the pixel level to suppress hallucinations.
+レイアウト、アスペクト比、パースをピクセル単位で制御。ハルシネーション（AIの誤描画）を物理的に抑制します。
+
+2. **Weighted Immutable Prompts**
+Weights character-specific features to prevent "fusion" or blending between characters.
+特徴量に重みを付与。キャラ同士が混ざり合う「フュージョン」を徹底的に防ぎます。
+
+3. **Animation Quality (Level EX-2)**
+Emulates physics-based lighting and SSS (Subsurface Scattering) for peak animation quality.
+物理ベースのライティング、SSS（肌の透過）をエミュレート。最高峰のアニメクオリティを追求します。
+
+---
+
+## 💻 Tech Stack / 技術スタック
+
+* **Frontend**: React 19 / Vite 7 / Tailwind CSS
+* **LLM/VFM**: Google Gemini API (1.5 Pro / Flash)
+* **Logic**: Automatic retry and model fallback mechanism for 429 errors.
+
+---
+
+## 📝 Setup / セットアップ
+
+1. **Get API Key**: Obtain a Gemini API key at [Google AI Studio](https://aistudio.google.com/).
+   [Google AI Studio](https://aistudio.google.com/) で Gemini API キーを取得してください。
+2. **Configuration**: Enter the key in the application settings or `.env` file.
+   アプリ内の設定画面、または `.env` ファイルにAPIキーを入力します。
+3. **Run**: Press **START** to generate the manga automatically.
+   `START` ボタンを押すだけで、全自動で漫画が生成されます。
+
+---
+
+## ⚖️ License & Rights / ライセンス・権利関係
+
+This project uses a hybrid license to balance technology sharing and intellectual property protection.
+技術の共有と創作の保護を両立するため、以下のハイブリッドライセンスを採用しています。
+
+* **Source Code**: [MIT License](https://opensource.org/licenses/MIT)
+  Applies to software logic and implementation code. / ソフトウェアの動作ロジックや実装コードに適用。
+* **Logic & Prompts**: [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ja)
+  Applies to original design philosophy and prompt structure. / 設計思想およびプロンプト構造に適用。
+* **Output Ownership / 生成物の帰属**:
+  The CC SA (ShareAlike) requirement **does not apply** to manga works generated by this system. Rights belong to the user.
+  本システムで生成されたマンガ作品に上記CCライセンスの継承義務は適用されません。権利はユーザーに帰属します。
+  *Maintaining the signature "Generated by Super FURU AI 4-Koma System" is strongly recommended.*
+  署名の維持を強く推奨します。
+
+**Commercial Use and Paid Seminars / 商用利用・有料セミナーについて**
+Usage of this system (including prompts and logic) in high-priced information products, paid seminars, or any "get-rich-quick" schemes is strictly prohibited under the CC BY-NC-SA 4.0 license. 本システム（プロンプトおよびロジックを含む）を、高額な情報商材、有料セミナー、または「副業・稼げる」等の謳い文句を伴うビジネスに無断で使用することは、CC BY-NC-SA 4.0ライセンスに基づき、固く禁じます。
+
+Any commercial or educational use involving fees requires explicit prior written consent from the developer (FURU). 有料の教育目的や商用利用を検討される場合は、必ず事前に開発者（FURU）の書面による承諾を得てください。
+
+---
+Developed by **FURU**
