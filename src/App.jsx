@@ -129,7 +129,7 @@ const ApiKeyModal = ({ isOpen, onSave }) => {
 };
 
 export default function App() {
-  const SYSTEM_VERSION = "v1.8.32 Alpha";
+  const SYSTEM_VERSION = "v1.8.33 Alpha";
   const [apiKey, setApiKeyState] = useState("");
   const [showModal, setShowModal] = useState(true);
 
@@ -307,18 +307,21 @@ export default function App() {
            - **【構造 (Structure) - 重要】**: 
              - **髪のトポロジー解析 (Hair Topology Vectors)**:
                - **毛先座標 (End Points)**: 毛先がどこにあるか？(顎ライン、肩ライン、鎖骨下、腰)。
-               - **絶対長 (Absolute Length)**: 
-                 - **Bob**: 毛先が「顎〜首」で止まっている。肩に触れていなければ「Bob」。
-                 - **Medium**: 毛先が「肩」に触れている。
-                 - **Long**: 毛先が「鎖骨」より下。
-               - **アカリの判定**: もし毛先が内側にカールの軌跡を描いているなら「Internal Round Bob」。外に跳ねているなら「Flicked Bob」。断定せよ。
-             - **シルエット (Volume)**:
-               - 頭頂部のボリューム、サイドの膨らみを記述せよ。
-             - 単なる「Short」は禁止。「Chin-length Bob」や「Shoulder-length Layered」など具体的に。
-           - **【前髪 (Bangs)】**: Hime, Parted, Blunt, Asymmetric.
-           - **【アレンジ (Arrangement)】**: 
-             - **重要**: 後ろ髪が見えなくても、**Ponytail, Twintails, Bun, Braid**の兆候を見逃すな。
-             - 結っている＝**Long Hair**タグ必須。
+               - **重要 (Black Hair Warning)**: **黒髪は制服やアウトラインと同化して短く見えやすい。**
+             - 「肩に掛かっているか？」「背中に線があるか？」を凝視せよ。
+             - **姫カット(Sidelocks/Hime-cut)**がある場合、後ろ髪が長い確率が極めて高い。**安易にBobと判定するな。**
+           - **絶対長 (Absolute Length)**: 
+             - **Bob**: 毛先が「顎〜首」で止まっている。完全に宙に浮いている。
+             - **Medium**: 毛先が「肩」に触れている。
+             - **Long**: 毛先が「鎖骨」より下。**黒髪の場合は特に注意して探せ。**
+           - **アカリの判定**: もし毛先が内側にカールの軌跡を描いているなら「Internal Round Bob」。外に跳ねているなら「Flicked Bob」。断定せよ。
+         - **シルエット (Volume)**:
+           - 頭頂部のボリューム、サイドの膨らみを記述せよ。
+         - 単なる「Short」は禁止。「Chin-length Bob」や「Shoulder-length Layered」など具体的に。
+       - **【前髪 (Bangs)】**: Hime, Parted, Blunt, Asymmetric.
+       - **【アレンジ (Arrangement)】**: 
+         - **重要**: 後ろ髪が見えなくても、**Ponytail, Twintails, Bun, Braid**の兆候を見逃すな。
+         - 結っている＝**Long Hair**タグ必須。
 
         C. **顔・アクセサリー (Face & Accessories)**:
            - **【アイウェア (Eyewear)】**: 
@@ -588,6 +591,7 @@ export default function App() {
   /* SYSTEM: Super FURU Manga Protocol ${SYSTEM_VERSION} [Universal Master - Structured Injection]
       TARGET: Absolute 4-Panel Manga (Strictly 2:3 Vertical)
       CANVAS: --ar 2:3 (Physical Vertical Pillar Orientation)
+      LAYOUT: FULL BLEED (ZERO MARGINS) / Edge-to-Edge Art
   */
 
   /* ============================================================================ 
@@ -679,7 +683,8 @@ RULE_5: "Maintain absolute consistency of features (Hair, Eyes, Glasses) for eac
          - **INTEGRATION**: The sound effects must exist IN 3D SPACE (behind characters, hitting the floor).
       (Density): **BALANCED**. Focus on character beauty and composition.
       (Text Density): **COMPACT**. Essential dialogue ONLY. Short, punchy sentences. NO WALL OF TEXT.
-      (Panel Boundaries): ZERO PADDING. DRAW TO THE VERY HARD EDGE OF THE CANVAS.
+      (Panel Boundaries): ZERO PADDING. DRAW TO THE VERY HARD EDGE OF THE CANVAS. (No White Borders).
+      (Layout): **FULL BLEED**. The art must extend to the absolute edge of the image.
       
       (Art Style): ${styleCore}.
       (Line Quality): **Pro Ink**. Sharp, clean lines.
