@@ -4,7 +4,7 @@
 > **「人間は、どこまで制作から降りられるのか？」**
 >
 > An experimental web application that leads AI manga production beyond "automation" to full "unmanned" autonomy.
-> AIによるマンガ制作を「自動化」ではなく、その先にある**「無人化」**へと導く実験的Webアプリケーション。
+> AIによるマンガ制作を「自動化」ではなく、その先にある「無人化」へと導く実験的Webアプリケーション。
 
 ---
 
