@@ -129,7 +129,7 @@ const ApiKeyModal = ({ isOpen, onSave }) => {
 };
 
 export default function App() {
-  const SYSTEM_VERSION = "v1.8.9 Alpha";
+  const SYSTEM_VERSION = "v1.8.14 Alpha";
   const [apiKey, setApiKeyState] = useState("");
   const [showModal, setShowModal] = useState(true);
 
