@@ -45,8 +45,6 @@ We received an insightful review from **Narita Shigenari ([@bisekai1](https://x.
 * **Next Milestone**: Reaching the artistic and entertainment threshold for professional commercial serialization is identified as the next major challenge for the global developer community.  
     **次なる目標**: 商業誌連載レベルの面白さと表現力を追求することを、次なるオープンソース開発の大きなマイルストーンに設定しました。
 
-> **Reference Link / 参照:** [Review by @bisekai1 on X](https://x.com/bisekai1/status/188330820383080678)
-
 ---
 
 ## 💡 Concept: Full Autonomy / コンセプト：制作からの完全離脱
