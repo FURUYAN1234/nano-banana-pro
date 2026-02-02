@@ -21,7 +21,7 @@ This project aims to intentionally exclude humans from the creative process, all
 ![Sample Output](assets/samples/sample.png)
 ![Retro Sample](assets/samples/retro_sample.jpg)
 
-### 🎥 Action Demo / 動作デモ
+### 🎥 Operation Tutorial / 動作手順動画
 
 <https://www.youtube.com/watch?v=wmC8BgKliKk>
 *(Click to watch / 動画を再生)*
@@ -30,10 +30,6 @@ This project aims to intentionally exclude humans from the creative process, all
 
 <https://www.youtube.com/watch?v=FmSQ267vrZg>
 *(Click to watch / 動画を再生)*
-
-### 🔗 Repository & Source / リポジトリ・ソースコード
-
-<https://github.com/FURUYAN1234/nano-banana-pro>
 
 ---
 
@@ -99,6 +95,7 @@ Emulates physics-based lighting and SSS (Subsurface Scattering) for peak animati
    [Google AI Studio](https://aistudio.google.com/) で Gemini API キーを取得してください。
 2. **Access**: Open the deployed web app.
    Webアプリにアクセスし、APIキーを入力してスタートします。
+   > **Demo Link / デモサイト:** [https://furuyan1234.github.io/nano-banana-pro/](https://furuyan1234.github.io/nano-banana-pro/)
 
 ### 💻 Local Launch (Windows) / ローカルでの起動 (Windows)
 
