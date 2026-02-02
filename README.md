@@ -1,61 +1,27 @@
 # Nano Banana Pro Powered Super AI 4-koma System
 
-> "To what extent can humans step away from the creative process?" 「人間は、どこまで制作から降りられるのか？」
+**Autonomous AI Manga Generation Protocol**  
+*Powered by Google Gemini 2.0 & Imagen 3*
 
-An experimental web application pushing AI manga production beyond simple "automation" toward total "unmanned" autonomy. AIによるマンガ制作を単なる「自動化」の域を超え、その先にある完全な**「無人化」**へと昇華させる実験的Webアプリケーション。
+## 🚀 Overview
 
-## 🏆 Recognition / 実績
+**Nano Banana Pro Powered Super AI 4-koma System** is an experimental web application designed to push the boundaries of AI manga production. Leveraging the Gemini API (v1.5 Pro / v2.0 Flash), it autonomously handles scenario writing, storyboard composition, and final image generation for 4-panel manga (Yon-Koma).
 
-* **Ranked #6 in Qiita Daily "Likes" Ranking (Jan 28, 2026)** - Japan's leading technical community. **Qiita デイリーいいね数ランキング 10位獲得 (2026年1月28日)** - 日本最大級のエンジニアコミュニティで高く評価されました。
-* **Ranked #6 in Qiita Weekly "Likes" Ranking (Jan 28, 2026)** - Achieving high engagement within the developer community. **Qiita 週間いいねランキング 6位獲得 (2026年1月28日)** - 週間を通じた継続的な支持と評価を獲得しました。
-* **Featured for "Build with Gemini"** - Implementing autonomous agent workflows using the latest LLM. **"Build with Gemini" 実装事例**として、最新LLMを活用した自律エージェントの先進的なユースケースを示しました。
+Human intervention is minimized—the system aims for total "unmanned" creativity.
 
----
+## ✨ Key Features
 
-## 🚀 Overview | 概要
+* **Automated Storytelling**: Generates Ki-Sho-Ten-Ketsu (Intro, Development, Twist, Conclusion) structures from a single topic.
+* **Dynamic Visual Direction**: Automatically instructs camera angles (Worm's eye, Dutch angle) and composition.
+* **Character Consistency**: Enforces strict adherence to character designs (hair, glasses, colors).
+* **Copyright Safety**: Intelligent prompt sanitization to avoid infringing on specific trademarks while maintaining high quality.
 
-This system is an advanced AI agent capable of autonomously generating high-fidelity 4-panel manga (Yon-Koma) requires minimal user input. It features extreme visual direction, strict character consistency, and robust copyright compliance mechanisms.
+## 📦 Usage
 
-**Current Version:** `v1.8.5 Alpha`
-
-## ✨ Key Features | 主な特徴
-
-### 1. **Extreme Visual Direction (v1.8.0+)**
-
-* **Dynamic Camera Work**: Automatically directs Worm's Eye, Bird's Eye, and Dutch Angle shots. Prohibits flat "Eye-Level" compositions.
-* **Visual Impact**: Enforces exaggerated acting, anime-style effects (Impact Frames), and high-contrast lighting.
-
-### 2. **Structured Scenario Injection (v1.8.3+)**
-
-* **Precision Parsing**: Splits generated scenarios into 4 distinct blocks (Ki/Sho/Ten/Ketsu) to prevent narrative crosstalk between panels.
-* **Plain Text Protocol**: Robust regex-based parsing to avoid JSON syntax errors.
-
-### 3. **Character Identity Enforcement (v1.8.4+)**
-
-* **Fidelity Lock**: Strictly enforces hair style, hair color, and accessories (glasses etc.) validation against reference designs.
-* **Compliance**: Replaces copyrighted brand names (e.g., KyoAni) with high-quality descriptive technical tags.
-
-## 📦 Installation & Usage | 使い方
-
-### Prerequisites
-
-- Node.js (v18+)
-* Google Gemini API Key
-
-### Quick Start
-
-1. **Clone & Setup**:
-
-   ```bash
-   git clone https://github.com/FURUYAN1234/nano-banana-pro.git
-   cd nano-banana-pro
-   start_app.bat
-   ```
-
-2. **Launch**:
-   * Run `start_app.bat` (Windows) or `npm run dev` (Mac/Linux).
-   * Open localhost URL.
-   * Enter API Key.
+1. Run `start_app.bat` to launch the local server.
+2. Open the displayed Local URL (e.g., `http://localhost:5173`).
+3. Enter your Gemini API Key.
+4. Enjoy the fully autonomous creation process.
 
 ---
-*Created by FURUYAN1234 / Powered by Antigravity*
+*Powered by Nano Banana Pro*
