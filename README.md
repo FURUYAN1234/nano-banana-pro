@@ -6,6 +6,11 @@
 > An experimental web application that leads AI manga production beyond "automation" to full "unmanned" autonomy.
 > AIによるマンガ制作を「自動化」ではなく、その先にある「無人化」へと導く実験的Webアプリケーション。
 
+> [!TIP]
+> **Detailed Commentary Available / 詳細な解説記事を公開中**
+> For insights into the design philosophy and behavior differences between Google Gemini API models, please refer to the following note article. / 本プロジェクトの設計思想や、Google Gemini APIのモデル毎の挙動の違いについては、以下のnote記事で詳しく解説しています。
+> [AIマンガ制作を「自動化」ではなく「無人化」へ / Beyond Automation: Toward "Unmanned" AI Manga Production (note / Japanese content)](https://note.com/happy_duck780/n/ndf063558c1f5)
+
 ---
 
 ## 🚀 Overview / 概要
@@ -25,6 +30,10 @@ This project aims to intentionally exclude humans from the creative process, all
 
 <https://www.youtube.com/watch?v=FmSQ267vrZg>
 *(Click to watch / 動画を再生)*
+
+### 🔗 Repository & Source / リポジトリ・ソースコード
+
+<https://github.com/FURUYAN1234/nano-banana-pro>
 
 ---
 
@@ -82,14 +91,29 @@ Emulates physics-based lighting and SSS (Subsurface Scattering) for peak animati
 
 ---
 
-## 📝 Setup / セットアップ
+## 📝 Setup & Launch / セットアップと起動
+
+### 🌍 Cloud / Browser (Deploy)
 
 1. **Get API Key**: Obtain a Gemini API key at [Google AI Studio](https://aistudio.google.com/).
    [Google AI Studio](https://aistudio.google.com/) で Gemini API キーを取得してください。
-2. **Configuration**: Enter the key in the application settings or `.env` file.
-   アプリ内の設定画面、または `.env` ファイルにAPIキーを入力します。
-3. **Run**: Press **START** to generate the manga automatically.
-   `START` ボタンを押すだけで、全自動で漫画が生成されます。
+2. **Access**: Open the deployed web app.
+   Webアプリにアクセスし、APIキーを入力してスタートします。
+
+### 💻 Local Launch (Windows) / ローカルでの起動 (Windows)
+
+You can launch strict local environment with a single click.
+以下の手順で、ローカル環境で簡単に起動できます。
+
+1. **Download**: Download the Source Code (ZIP) from [Releases](https://github.com/FURUYAN1234/nano-banana-pro/releases) or click "Code" -> "Download ZIP".
+   [Releases](https://github.com/FURUYAN1234/nano-banana-pro/releases) または "Code" ボタンからZIPファイルをダウンロードします。
+2. **Unzip**: Extract the ZIP file to any folder.
+   ダウンロードしたZIPファイルを解凍してください。
+3. **Run**: Double-click `start_app.bat`.
+   フォルダ内の `start_app.bat` をダブルクリックします。
+   *(Node.js required / 事前にNode.jsのインストールが必要です)*
+4. **Start**: The system will automatically install dependencies and launch the browser.
+   必要なライブラリが自動インストールされ、ブラウザが立ち上がります。
 
 ---
 
