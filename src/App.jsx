@@ -129,7 +129,7 @@ const ApiKeyModal = ({ isOpen, onSave }) => {
 };
 
 export default function App() {
-  const SYSTEM_VERSION = "v1.8.23 Alpha";
+  const SYSTEM_VERSION = "v1.8.24 Alpha";
   const [apiKey, setApiKeyState] = useState("");
   const [showModal, setShowModal] = useState(true);
 
@@ -642,8 +642,8 @@ RULE_5: "Maintain absolute consistency of features (Hair, Eyes, Glasses) for eac
       (Orientation: Portrait Mode).
       (Shape: Tall vertical rectangle).
       (Canvas Background: **PURE WHITE PAPER**. #FFFFFF).
-      (Physical Barrier: Top 15% and bottom 15% are solid pure white blocks).
-      (Side Margins: **ULTRA-THIN 2% WHITE STRIP**. Minimal White Space on Left and Right. NO BLACK BARS. ALMOST FULL BLEED).
+      (Physical Barrier: Top 5% and bottom 5% are solid pure white blocks. MINIMAL HEADER/FOOTER).
+      (Side Margins: **ZERO MARGINS**. FULL BLEED TO EDGE. NO WHITE STRIPS ON SIDES).
       
       (Top Text: OVERLAY the Japanese Text "${cleanTopic}" as a SOLID BLACK LAYER).
       (Text Style: **SOLID BLACK INK**. Bold, Heavy Stroke. High Contrast against the background. NO BOX. NO WHITE RECTANGLE).
@@ -652,9 +652,9 @@ RULE_5: "Maintain absolute consistency of features (Hair, Eyes, Glasses) for eac
       (Physics): Ink on paper. No physical displacement. NO WHITE BORDERS around text.
       (Safety Protocol): Replace ALL real celebrity/politician/trademarked names with GENERIC archetypes (e.g. "Famous Director" instead of "Nolan").
       
-      (Manga Zone: Centralized Column. 95% Width. Clean White Margins on sides).
-      (Panel Width: **FULL WIDTH within Margins**. 4 Panels stacked vertically. Equal Width).
-      (Geometry Constraint: **PANEL 1 WIDTH MUST EQUAL PANELS 2, 3, 4**. DO NOT SHRINK PANEL 1 FOR TITLE SPACE. TITLE IS AN OVERLAY. IGNORE TITLE WHEN DRAWING PANEL BORDERS).
+      (Manga Zone: **FULL CANVAS FILL**. 100% Width. NO SIDE PADDING).
+      (Panel Width: **EXTREME WIDTH**. 4 Panels stacked vertically. Equal Width).
+      (Geometry Constraint: **MAXIMIZE PANEL SIZE**. DO NOT SHRINK FOR MARGINS).
       
       [EXTREME CINEMATOGRAPHY & ACTING PROTOCOL - v1.8.23]
       (Camera Rules): **ABSOLUTELY NO EYE-LEVEL SHOTS**. NO FLAT FRONTAL SHOTS.
@@ -674,7 +674,7 @@ RULE_5: "Maintain absolute consistency of features (Hair, Eyes, Glasses) for eac
       (VFX): **EXPLOSIVE COLORFUL LIGHTING**. Neon sparks, impact frames.
       (Density): **MAXIMALIST**. FILL EVERY PIXEL.
       (Text Density): **LOW**. Visuals first. Dialogue is secondary.
-      (Panel Boundaries): BLEED TO EDGE within Margins.
+      (Panel Boundaries): ZERO PADDING. DRAW TO THE VERY HARD EDGE OF THE CANVAS.
       
       (Art Style): ${styleCore}.
       (Line Quality): **G-PEN (MARU-PEN) TOUCH**. Crisp, modulation (hairlines to bold strokes).
