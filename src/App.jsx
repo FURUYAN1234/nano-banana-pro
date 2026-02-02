@@ -86,16 +86,13 @@ const ApiKeyModal = ({ isOpen, onSave }) => {
       <div className="bg-[#111] border border-blue-500/30 p-8 rounded-[2rem] w-full max-w-md shadow-2xl relative">
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-purple-500" />
         <h2 className="text-2xl font-black text-white mb-4 tracking-tighter uppercase flex items-center gap-2 italic">
-          <Zap className="fill-blue-500 text-blue-500" /> システム初期化 <span className="text-[10px] not-italic text-slate-500 bg-black/50 px-2 py-1 rounded tracking-normal">v1.3.5</span>
+          <Zap className="fill-blue-500 text-blue-500" /> システム初期化
         </h2>
-        <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-2">
-          Google Gemini APIキーを入力 (Gemini 2.0/1.5 対応)
-          <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" className="ml-2 text-cyan-400 hover:text-cyan-300 underline decoration-cyan-400/30">
-            [取得はこちら]
+        <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-2 flex items-center justify-between">
+          <span>Google API Key (Gemini API)</span>
+          <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" className="text-cyan-400 hover:text-cyan-300 underline decoration-cyan-400/30 ml-2">
+            [Get Key]
           </a>
-          <span className="block text-[9px] text-slate-600 mt-1 font-mono select-all" onClick={(e) => { navigator.clipboard.writeText("https://aistudio.google.com/app/apikey"); e.target.innerText = "URLをコピーしました！"; setTimeout(() => e.target.innerText = "(開かない場合: https://aistudio.google.com/app/apikey )", 2000); }}>
-            (開かない場合: https://aistudio.google.com/app/apikey )
-          </span>
         </p>
         <p className="text-[10px] text-slate-500 mb-6 flex items-center gap-1">
           <span className="text-yellow-500">⚠</span> APIキーはブラウザ内にのみ保存され、外部へは送信されませんが、管理には十分ご注意ください。
@@ -132,15 +129,62 @@ const ApiKeyModal = ({ isOpen, onSave }) => {
 };
 
 export default function App() {
+  const SYSTEM_VERSION = "v1.8.4 Alpha";
   const [apiKey, setApiKeyState] = useState("");
   const [showModal, setShowModal] = useState(true);
 
   // App State
-  const [targetDate, setTargetDate] = useState(new Date().toISOString().split('T')[0]);
+  // Fix: Default to JST (UTC+9) to prevent "Yesterday" bug
+  const getJSTDate = () => {
+    const d = new Date();
+    d.setHours(d.getHours() + 9);
+    return d.toISOString().split('T')[0];
+  };
+  const [targetDate, setTargetDate] = useState(getJSTDate());
   const [castList, setCastList] = useState("");
   const [scenario, setScenario] = useState("");
   const [mangaTitle, setMangaTitle] = useState("");
   const [finalPrompt, setFinalPrompt] = useState("");
+
+  // [v1.7.0] Model Quality Indicator State
+  const [usedModel, setUsedModel] = useState(null);
+
+  // [v1.7.0] Helper to determine model tier and badge info
+  const getModelBadgeInfo = (modelId) => {
+    if (!modelId) return null;
+
+    if (modelId.includes("2.5-pro") || modelId.includes("3")) {
+      return {
+        label: "ULTRA HIGH QUALITY",
+        tier: "Supreme",
+        color: "bg-gradient-to-r from-yellow-600 to-yellow-400 text-black",
+        desc: "Gemini 2.5/3.0 Pro: 最高品質 (No Limits)"
+      };
+    }
+    if (modelId.includes("flash")) {
+      if (modelId.includes("lite") || modelId.includes("latest")) {
+        return {
+          label: "STANDARD QUALITY",
+          tier: "Lite",
+          color: "bg-gray-600 text-white",
+          desc: "Gemini Flash Lite: 標準品質 (API制限回避中...)"
+        };
+      }
+      return {
+        label: "HIGH QUALITY",
+        tier: "Active",
+        color: "bg-blue-600 text-white",
+        desc: "Gemini 2.5 Flash: 高品質 (高速)"
+      };
+    }
+    // Fallback
+    return {
+      label: "UNKNOWN MODEL",
+      tier: "Unknown",
+      color: "bg-slate-600 text-white",
+      desc: modelId
+    };
+  };
   const [images, setImages] = useState([]);
 
   // States for Steps
@@ -159,12 +203,15 @@ export default function App() {
   const [isDragging, setIsDragging] = useState(false);
   const [genLog, setGenLog] = useState([]); // New Log State
 
+  // Logic centralization for v1.4.9
+  const isAssembleDisabled = isAssembling || !castList || castList.length < 50 || !scenario || scenario.length < 50 || isSearching || isAnalyzing;
+
   // Image Generation
   const [generatedImage, setGeneratedImage] = useState("");
 
   const handleSetKey = (key) => {
     // Sanitize key: remove all non-ASCII characters (often users copy hidden chars or Japanese text by mistake)
-    const cleanKey = key.replace(/[^\x00-\x7F]/g, "").trim();
+    const cleanKey = key.replace(/[^\u0000-\u007F]/g, "").trim();
     if (cleanKey !== key) {
       showStatus("APIキーに含まれる不要な文字を自動削除しました。");
     }
@@ -180,63 +227,44 @@ export default function App() {
     setTimeout(() => setStatus(""), 4000);
   };
 
+
   const processFiles = async (files) => {
+    // API KEY CHECK
     if (!apiKey) {
       showStatus("先にAPIキーを入力してシステムに接続してください！");
-      return;
-    }
-    if (!files || files.length === 0) return;
-
-    showStatus(`画像ファイル ${files.length} 件を検出。解析準備中...`);
-
-    const newImages = await Promise.all(Array.from(files).map(file => {
-      return new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onload = (e) => resolve(e.target.result);
-        reader.readAsDataURL(file);
-      });
-    }));
-
-    // Update state and Trigger Analysis on the COMPLETE set
-    // REPLACE Strategy: Reset logic based on user feedback to prevent mixing old/new characters
-    setCastList(""); // Clear previous analysis
-    setScenario(""); // Clear previous scenario
-    setFinalPrompt(""); // Clear previous prompt
-    setAnalyzeThought("");
-
-    setImages(fullSet => { // Ignore prev, replace with new
-      const nextSet = [...newImages];
-      // Trigger analysis with the NEW set only
-      setTimeout(() => analyzeCharacters(nextSet), 0);
-      return nextSet;
-    });
-  };
-
-  // --- Step 1: Analyze ---
-  const analyzeCharacters = async (imageArray) => {
-    // API KEY CHECK
-    if (!getApiKey()) {
-      showStatus("エラー: APIキーが欠落しています。");
       setShowModal(true);
       return;
     }
-
-    if (!imageArray || imageArray.length === 0) return;
+    if (files.length === 0) return;
     setIsAnalyzing(true);
-    setAnalyzeThought("Initializing Vision Analysis protocols...");
+    setAnalyzeThought("Visual Cortex Protocols Initiated...\n> Scanning pixel data arrays...\n> Identifying character morphologies...");
 
-    // Fake Streaming Effect
+    // Fake Streaming Effect for user engagement
     const thinkTimer = setInterval(() => {
-      const thoughts = [
-        "> Scanning facial landmarks...",
-        "> Extracting outfit vectors...",
-        "> Analyzing color palette...",
-        "> Detecting expression nuances...",
-        "> Formulating character personality...",
-        "> Optimizing improved prompt..."
-      ];
-      setAnalyzeThought(prev => prev + "\n" + thoughts[Math.floor(Math.random() * thoughts.length)]);
-    }, 1500);
+      setAnalyzeThought(prev => {
+        if (prev.length > 800) return prev;
+        const messages = [
+          ".", ".", ".",
+          "\n> Extracting facial landmarks...",
+          "\n> Analyzing hair topology vectors...",
+          "\n> Detecting fashion attributes...",
+        ];
+        return prev + messages[Math.floor(Math.random() * messages.length)];
+      });
+    }, 800);
+
+    const imageArray = [];
+    for (let i = 0; i < files.length; i++) {
+      const reader = new FileReader();
+      reader.readAsDataURL(files[i]);
+      await new Promise(resolve => {
+        reader.onload = () => {
+          imageArray.push(reader.result);
+          setImages(prev => [...prev, reader.result]);
+          resolve();
+        };
+      });
+    }
 
     showStatus(`思考モード: ${imageArray.length}枚のキャラクター設定画を同時解析中...`);
 
@@ -270,24 +298,29 @@ export default function App() {
            - 女性なら (female:1.6), (girl:1.4)、男性なら (male:1.6), (boy:1.4) を必ず付与せよ。
            - 年齢感も記述せよ (teenager, adult, elderly child)。
 
-        B. **髪の完全構造化 (Hair Structure)**:
+        B. **髪の完全構造化 (Strict Hair Analysis)**:
            - **【ハゲ/坊主 (Bald/Buzz)】**: 
-             - 髪が無い場合は**「Bald」**と判定せよ。
-             - 坊主なら**「Buzz Cut」**。
+             - 髪が無い場合は**「Bald」**、坊主なら**「Buzz Cut」**とせよ。
            - **【色 (Tone/Color)】**: 
-             - Baldの場合は「なし(None)」。
              - 白黒の場合: 「ベタ(黒)→Black」「トーン(灰)→Brown/Dirty Blonde」「白→Silver/Blonde」。
-             - カラーの場合: 「赤(Red)」と「茶髪(Brown)」と「オレンジ(Ginger)」を厳密区別。
-           - **【構造 (Structure)】**: 
-             - **重要**: ツンツンした髪(Spiky)か、ボブ(Bob)、ウルフ(Wolf-cut)、ピクシー(Pixie)、ロング(Long)か。
-             - 単なる「Short」で済ますな。丸みがあるか、ハネているか記述せよ。
-           - **【前髪 (Bangs)】**: Hime-cut, Parted, Blunt, Crossed, Asymmetric, Tucked behind ears.
+             - カラーの場合: 「赤(Red)」「茶(Brown)」「オレンジ(Ginger)」を厳密区別せよ。
+           - **【構造 (Structure) - 重要】**: 
+             - **髪のトポロジー解析 (Hair Topology Vectors)**:
+               - **毛先座標 (End Points)**: 毛先がどこにあるか？(顎ライン、肩ライン、鎖骨下、腰)。
+               - **絶対長 (Absolute Length)**: 
+                 - **Bob**: 毛先が「顎〜首」で止まっている。肩に触れていなければ「Bob」。
+                 - **Medium**: 毛先が「肩」に触れている。
+                 - **Long**: 毛先が「鎖骨」より下。
+               - **アカリの判定**: もし毛先が内側にカールの軌跡を描いているなら「Internal Round Bob」。外に跳ねているなら「Flicked Bob」。断定せよ。
+             - **シルエット (Volume)**:
+               - 頭頂部のボリューム、サイドの膨らみを記述せよ。
+             - 単なる「Short」は禁止。「Chin-length Bob」や「Shoulder-length Layered」など具体的に。
+           - **【前髪 (Bangs)】**: Hime, Parted, Blunt, Asymmetric.
            - **【アレンジ (Arrangement)】**: 
-             - **重要**: 後ろ髪が見えない場合でも、ボリュームや毛流れから**Ponytail, Twintails, Bun, Braid**を見逃すな。
-             - 結っている場合は必ず **Long Hair** タグを含めること。
-             - **幻覚禁止**: 結び目が見えないなら勝手にポニーテールにするな。
+             - **重要**: 後ろ髪が見えなくても、**Ponytail, Twintails, Bun, Braid**の兆候を見逃すな。
+             - 結っている＝**Long Hair**タグ必須。
 
-        B. **顔・アクセサリー (Face & Accessories)**:
+        C. **顔・アクセサリー (Face & Accessories)**:
            - **【アイウェア (Eyewear)】**: 
              - **サングラスを絶対に見逃すな**。レンズが黒/不透明なら (black sunglasses:1.5)。
              - 透明レンズなら (glasses:1.2)。形状(Under-rim, Round)も特定せよ。
@@ -299,7 +332,7 @@ export default function App() {
              - ホクロ(Mole under eye/mouth)、八重歯(Snaggletooth)、そばかす(Freckles)等の個性を絶対に見逃すな。
            - **【肌 (Skin)】**: Tanned, Pale, Dark skinを正確に記述。
 
-        C. **服装・テキスト (Outfit & Text)**:
+        D. **服装・テキスト (Outfit & Text)**:
             - **服の文字**: 服に書かれている文字（例: "FURU"）は **(shirt with text "FURU":1.4)** のようにタグ化せよ。
             - 制服(Sailor/Blazer)、私服(Hoodie/T-shirt)の形状を特定せよ。
 
@@ -313,15 +346,18 @@ export default function App() {
         | カテゴリ | 特徴の詳細（日本語） | 画像生成AI用 重み付きタグ (Weighted Immutable Prompts) |
         | :--- | :--- | :--- |
         | **基本(Base)** | 性別: [性別]<br>年齢: [年齢] | **[WEIGHTS]: (female:1.6), (teenager:1.2)** |
-        | **髪(Hair)** | 色: [色]<br>構造: [Spiky/Straight/Wavy/Bald]<br>前髪: [形状]<br>結び: [形状] | **[WEIGHTS]: (spiky orange hair:1.4), (messy hair:1.2), (long ponytail:1.4)** |
+        | **髪(Hair)** | 色: [色]<br>長さ: [Short/Medium/Long]<br>構造: [Bob/Straight/Wavy/Spiky]<br>前髪: [形状] | **[WEIGHTS]: (chin-length bob:1.5), (orange hair:1.4), (messy:1.2)** |
         | **顔(Face)** | 目: [色/形]<br>肌: [色]<br>髭: [有無]<br>眼鏡: [有無] | **[WEIGHTS]: (white beard:1.5), (tanned skin:1.5), (black sunglasses:1.6)** |
         | **服装(Outfit)** | [服の詳細: 制服/私服、上着の有無など] | [weighted tags]: (sailor uniform:1.2), (hoodie:1.1) |
         | **性格(Mind)** | **[OCR抽出]**: [ここにテキスト全文] | - |
       `;
 
 
-      const result = await callThinkingGemini(prompt, imageParts);
+      const result = await callThinkingGemini(prompt, imageParts, null, (msg) => {
+        setAnalyzeThought(prev => prev + `\n> ${msg}`);
+      });
       setCastList(result.text);
+      setUsedModel(result.model); // [v1.7.0] Track Model
       setAnalyzeThought(result.thought || "思考プロセスが完了しました。");
       showStatus("全キャラクターの解析が完了しました。");
     } catch (error) {
@@ -343,18 +379,21 @@ export default function App() {
 
     // Dynamic Category Randomizer to prevent topic stagnation (Context Reset)
     const categories = [
-      "最新 科学技術 トレンド ニュース",
-      "面白い 国内ニュース 話題",
-      "最新 エンタメ 芸能 ニュース",
-      "生活 ライフスタイル トレンド",
-      "最新 ゲーム アニメ サブカル ニュース",
-      "不思議なニュース 海外"
+      "最新 政治 経済 社会ニュース (真面目な話題)",
+      "最新 スポーツ 競技 大会 結果",
+      "最新 動物 ペット 癒しニュース",
+      "最新 食べ物 グルメ スイーツ トレンド",
+      "最新 映画 ドラマ 音楽 エンタメ",
+      "最新 科学 宇宙 考古学 発見",
+      "面白い 海外のB級ニュース ハプニング",
+      "生活 ライフハック 健康"
     ];
     const randomCategory = categories[Math.floor(Math.random() * categories.length)];
-    // Exclude repetitive AI topics
-    const searchTopic = `${randomCategory} -AI - 人工知能 - ChatGPT - Gemini - 生成AI`;
+    // Exclude repetitive AI topics - Strengthened negation
+    const searchTopic = `${randomCategory} -AI -人工知能 -ChatGPT -Gemini -生成AI -ロボット -テクノロジー -スマホ -IT`;
 
     showStatus(`カテゴリー「${randomCategory}」で最新ニュースを検索中...`);
+    setScenario(""); // Clear previous scenario to indicate loading
     setScenarioThought(`> Context Force Reboot: Initiated.\n > Target Category: ${randomCategory} \n > Searching Google Grounding...`);
 
     try {
@@ -374,54 +413,99 @@ export default function App() {
         「${searchTopic}」に関する、** 今この瞬間の最新かつ具体的なニュース ** を1つ選定し、それをテーマにした4コマ漫画のシナリオを作成してください。
 
         【選定ルールの絶対厳守】
-  1. **「現金 vs 電子マネー」「AIの是非」というネタは禁止（使用済みのため）。**
+  1. **「AI」「人工知能」「ロボット」「スマホ」「SNS」等のIT系ネタは禁止（頻出のため）。**
     2. ** 具体的でマイナーな、しかし「ツッコミどころのある」ニュース ** を選んでください。
+         （例: 「珍しい動物発見」「変な世界記録更新」「食べ物の論争」「スポーツの珍プレー」等）
   3.  抽象的な「最近の流行」ではなく、「◯◯が××を発表」といった固有名詞を含むニュースを優先。
 
-        【出力フォーマット（厳守）】
-  以下のJSON形式のみを出力してください。Markdownのコードブロックは不要です。
-  {
-    "date": "YYYY-MM-DD",
-      "topic": "ニュースの見出し（15文字以内 / 改行厳禁 / 1行のみ）",
-        "scenario": "4コマ漫画のシナリオ本文（...）"
-  }
+        【シナリオ構成・演出の絶対厳守 (v1.8.0)】
+        0. **全員登場義務 (Mandatory All-Cast)**:
+           - CastListに含まれている **全てのキャラクターを必ず1回以上登場させること。**
+           - 「メイン2人だけ」のような手抜きは禁止。全員に役割を与え、画面を賑やかにすること。
+           - 人数が多い場合は、1コマに複数人を詰め込んで密度の高い会話劇にせよ。
 
-  シナリオ本文の要件:
-  - 登場人物: ** 提供された CastList(\`${castListSummary}\`) に定義されているキャラクターのみ**を使用してください。
+        1. **「語るな、見せろ」 (Show, Don't Tell)**:
+           - セリフでの状況説明を禁止。キャラクターの**「顔芸（白目、滝のような涙、あごが外れる）」**や**「全身を使ったリアクション」**で感情を表現せよ。
+           - 比喩表現を映像化せよ（例: 「ショック！」と言う代わりに、**「メガネが割れる」「魂が口から出る」**描写を指定）。
+
+        2. **台詞密度と視覚効果のバランス**:
+           - 1コマあたりのフキダシは2〜3個だが、**「集中線」「イライラマーク」「ドーン！」などの漫符**を必ず指定し、絵の勢いを殺さないように配置せよ。
+
+        3. **オチと構図の多様化 (Variety Constraints)**:
+           - **必須**: 「手前に大きく顔があるキャラ」「奥で小さく驚くキャラ」など、**遠近感**を強調せよ。棒立ちは厳禁。
+           - **オチ**: 「全員泣いて終わり」等のワンパターンを禁止。シュールな静寂、無言の圧力、社会的死など多様にせよ。
+           
+        3. **4コマ目の演出**:
+           - 必ずしもデフォルメ（SD）にする必要はない。ネタがシリアスなら、**劇画調のリアルな絶望顔**で落としても良い。ネタに合わせてスタイルを適応させよ。
+
+        【出力フォーマット（厳守）】
+        以下の独自フォーマットのみを出力してください。JSONやMarkdownは不要です。
+
+        Topic: [ニュースの見出し（15文字以内）]
+        Scenario:
+        [1コマ目: 起]
+        (状況とセリフ...)
+
+        [2コマ目: 承]
+        (状況とセリフ...)
+
+        [3コマ目: 転]
+        (状況とセリフ...)
+
+        [4コマ目: 結]
+        (状況とセリフ...)
+
+        シナリオ本文の要件:
+        - 登場人物: ** 提供された CastList の全員 ** を使用してください。
         - (禁止事項): アカリ、ヒカリ、ミク、リン、サエコなどの既定キャラクターを勝手に出さないこと。CastListに無い名前は使用不可。
         - 構成: 起承転結（4段）。
         - 内容: ニュースに対する辛辣な風刺や、キャラの個性を活かしたドタバタ劇。
-        - 文体: 箇条書きではなく、各コマの「状況」「セリフ」が明確にわかる文章。
-      `;
+        - 文体: 各コマの「状況」「セリフ」が明確にわかる文章。
+        `;
 
       // Call Gemini with the Cast List context to ensure character consistnecy in logic
-      const result = await callThinkingGemini(scenarioPrompt, [], castList);
+      const result = await callThinkingGemini(scenarioPrompt, [], castList, (msg) => {
+        setScenarioThought(prev => prev + `\n > [API] ${msg} `);
+      });
+      setUsedModel(result.model); // [v1.7.0] Track Model
 
       // Basic parsing of the result (assuming Gemini follows JSON format majority of time, 
       // but adding fallback parsing for robustness)
-      let parsedData;
+      // Robust Parsing (Plain Text Regex)
+      let parsedData = { topic: randomCategory, scenario: "" };
+
       try {
-        const jsonMatch = result.text.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          parsedData = JSON.parse(jsonMatch[0]);
+        const titleMatch = result.text.match(/Topic:\s*(.+)/i);
+        const scenarioMatch = result.text.match(/Scenario:\s*([\s\S]+)/i);
+
+        if (scenarioMatch) {
+          parsedData.topic = titleMatch ? titleMatch[1].trim() : randomCategory;
+          parsedData.scenario = scenarioMatch[1].trim();
         } else {
-          throw new Error("JSON format not found");
+          // Fallback: Try JSON just in case the model ignored instructions, or raw
+          const jsonMatch = result.text.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            const json = JSON.parse(jsonMatch[0]);
+            parsedData.topic = json.topic || randomCategory;
+            parsedData.scenario = json.scenario || result.text;
+          } else {
+            throw new Error("Format parse failed");
+          }
         }
       } catch (e) {
-        // Fallback: manually map text if JSON fails
-        parsedData = {
-          date: new Date().toISOString().split('T')[0],
-          topic: randomCategory,
-          scenario: result.text
-        };
+        // Ultimate Fallback: Treat entire text as scenario
+        console.warn("Parse warning:", e);
+        parsedData.scenario = result.text;
       }
 
-      setTargetDate(parsedData.date || new Date().toISOString().split('T')[0]);
+      // Fix: Date Lock. Do NOT overwrite user's date with AI's date.
+      // setTargetDate(parsedData.date || ...); <--- DISABLED
+
       setScenario(parsedData.scenario);
       // We append the topic to the scenario text for visibility or just use it for the prompt
-      setScenario(`## タイトル: ${parsedData.topic} !?\n\n${parsedData.scenario}`);
+      setScenario(`## タイトル: ${parsedData.topic} !?\n\n${parsedData.scenario} `);
 
-      setScenarioThought(prev => prev + `\n> Topic Selected: ${parsedData.topic}\n> Scenario Construction Complete.`);
+      setScenarioThought(prev => prev + `\n > Topic Selected: ${parsedData.topic} \n > Scenario Construction Complete.`);
       showStatus("シナリオの生成が完了しました！");
 
     } catch (error) {
@@ -437,6 +521,7 @@ export default function App() {
   const assemblePrompt = async () => {
     if (!castList || !scenario) return showStatus("キャストとシナリオが必要です。");
     setIsAssembling(true);
+    setFinalPrompt(""); // Clear previous prompt to indicate loading
     setAssembleThought("スーパーフル・プロトコル v121.3 (Universal Master) を起動中... 全データの整合性をチェックしています...");
 
     // Fake Streaming Effect
@@ -469,96 +554,134 @@ export default function App() {
       }
 
       const styleCore = isMonochrome
-        ? "(Absolute total zero-saturation monochrome grayscale:2.0), (greyscale:2.0), (monochrome:2.0), (no color:2.0), (Masterpiece Traditional Manga), (G-Pen Ink Style), (Sharp, varied line weight), (Manual ink hatching), (High-Contrast Black & White), (Professional Comic Studio Quality)"
-        : "(Official Anime Art), (Vibrant Full Color), (Masterpiece G-Pen Line Art), (Sharp Ink Contours), (High-end professional animation production quality), (Intricately detailed 2D cel-shaded masterpiece), (Cinematic High-Contrast Lighting), (Vibrant Colors)";
+        ? "(Absolute total zero-saturation monochrome grayscale:2.0), (greyscale:2.0), (monochrome:2.0), (no color:2.0), (Masterpiece Traditional Manga), (G-Pen Ink Style), (Sharp, varied line weight), (Manual ink hatching), (High-Contrast Black & White), (Professional Comic Studio Quality), (Dramatic Shadows)"
+        : "(Top-Tier Animation Studio Style:1.2), (Award Winning Compositing), (Official Anime Art), (Vibrant Full Color), (Masterpiece G-Pen Line Art), (Sharp Ink Contours), (Subtle Cross-Hatching), (High-budget Key Visual Quality), (Hybrid Gekiga Composition), (Cinematic High-Contrast Lighting), (Vibrant Colors)";
 
       const dynamicCamera = `
-        (Forbidden: Normal eye-level shots). 
-        (Enforce: Extreme Bird's Eye from high sky, Extreme Worm's Eye from floor level, Extreme Dutch Angles), 
-        (Maximum Foreshortening), (Dynamic Action Poses),
-        (Hyper-exaggerated satirical facial expressions), (Intense emotional outbursts),
-        (Gekiga-style heavy shading for extreme impact)
-      `;
+    (Forbidden: Normal eye - level shots). 
+        (Enforce: Extreme Bird's Eye from high sky, Extreme Worm's Eye from floor level, Extreme Dutch Angles),
+    (Maximum Foreshortening), (Dynamic Action Poses),
+  (Hyper - exaggerated satirical facial expressions), (Intense emotional outbursts),
+  (Gekiga - style heavy shading for extreme impact)
+    `;
 
       const cleanTopic = scenario.match(/## タイトル:\s*(.*?)(\n|$|!)/)?.[1]?.trim() || scenario.split('\n')[0].substring(0, 20);
+      const cleanScenario = scenario;
+
+      // [v1.8.3] Smart Splitter for Panels
+      // Attempt to extract 4 parts using the rigid format we enforced in step 2
+      const extractPanel = (text, header, nextHeader) => {
+        const regex = new RegExp(`\\[${header}.*?\\]([\\s\\S]*?)(?=\\[${nextHeader}|$)`, 'i');
+        const match = text.match(regex);
+        return match ? match[1].trim() : "";
+      };
+
+      const panel1Text = extractPanel(cleanScenario, "1コマ目", "2コマ目") || cleanScenario;
+      const panel2Text = extractPanel(cleanScenario, "2コマ目", "3コマ目");
+      const panel3Text = extractPanel(cleanScenario, "3コマ目", "4コマ目");
+      const panel4Text = extractPanel(cleanScenario, "4コマ目", "UNKNOWN");
 
       const prompt = `
-/* SYSTEM: Super FURU Manga Protocol v121.3 [Universal Master - Standalone Absolute Integrity]
-    TARGET: Absolute 4-Panel Manga (Strictly 2:3 Vertical) - UNIVERSAL MASTER MODE
-    CANVAS: --ar 2:3 (Physical Vertical Pillar Orientation)
-    FOR: nanobanana pro ONLY
-*/
+  /* SYSTEM: Super FURU Manga Protocol ${SYSTEM_VERSION} [Universal Master - Structured Injection]
+      TARGET: Absolute 4-Panel Manga (Strictly 2:3 Vertical)
+      CANVAS: --ar 2:3 (Physical Vertical Pillar Orientation)
+  */
 
-/* ============================================================================ 
-     [LEVEL 0: UNIVERSAL DATA INJECTION]
-    ============================================================================ */ 
-    VAR_TARGET_DATE = "${targetDate}" 
-    VAR_CAST_LIST = "${castList.replace(/\n/g, ', ')}" 
-    VAR_SCENARIO_TOPIC = "${cleanTopic}"
+  /* ============================================================================ 
+       [LEVEL 0: UNIVERSAL DATA INJECTION]
+      ============================================================================ */
+  VAR_TARGET_DATE = "${targetDate}"
+  VAR_CAST_LIST = "${castList.replace(/\n/g, ', ')}"
+  VAR_SCENARIO_TOPIC = "${cleanTopic}"
+  
+  // [STRUCTURED SCENARIO DATA v1.8.3]
+  VAR_PANEL_1_KI  = "${panel1Text.replace(/"/g, '\\"').replace(/\n/g, ' ')}"
+  VAR_PANEL_2_SHO = "${panel2Text.replace(/"/g, '\\"').replace(/\n/g, ' ')}"
+  VAR_PANEL_3_TEN = "${panel3Text.replace(/"/g, '\\"').replace(/\n/g, ' ')}"
+  VAR_PANEL_4_KETSU = "${panel4Text.replace(/"/g, '\\"').replace(/\n/g, ' ')}"
 
 /* ============================================================================
     [LEVEL 1.5: CHARACTER IDENTITY MATRIX - ANTI-FUSION PROTOCOL]
    ============================================================================ */
-   RULE_1: "Strictly separate all characters in VAR_CAST_LIST. Do not blend features."
-   RULE_2: "If Character A has Glasses, Character B MUST NOT inherit them unless specified."
-   RULE_3: "Hair Color and Style are ABSOLUTE constants. Refer to Weighted Tags in VAR_CAST_LIST."
-   RULE_4: "Maintain absolute consistency of features (Hair, Eyes, Glasses) for each named character across all 4 panels."
+RULE_1: "Strictly separate all characters in VAR_CAST_LIST. Do not blend features."
+RULE_2: "IMPORTANT: You MUST copy the content of VAR_CAST_LIST into the final prompt VERBATIM. Do not summarize, do not shorten. Keep all (weight:1.5) tags exactly as they appear."
+RULE_3: "If Character A has Glasses, Character B MUST NOT inherit them unless specified."
+RULE_4: "Hair Color and Style are ABSOLUTE constants. Refer to Weighted Tags in VAR_CAST_LIST."
+RULE_5: "Maintain absolute consistency of features (Hair, Eyes, Glasses) for each named character across all 4 panels."
 
 /* ============================================================================
     [LEVEL 1: CORE GEOMETRY - SPATIAL ENFORCEMENT ENGINE v121.3]
    ============================================================================ */
-1. [ABSOLUTE PHYSICAL VOID PILLAR]:
-    - Canvas: Tall vertical rectangle.
-    - Physical Constraints: Top 15% and Bottom 15% are protected white space (Header/Footer).
-2. [CENTRAL COMPRESSED MANGA ZONE]:
-    - Drawing Zone: Central 70% vertical strip.
-    - Internal Floating Frames: 4 EQUAL-SIZED HORIZONTAL STRIPS stacked vertically.
-    - Structure: Absolute Uniformity. No irregular panels.
-    - Margin: Standard white margin between black borders and canvas edges.
-3. [TEXT & TYPO-VOID]:
-    - Vertical Force: Strictly VERTICAL Japanese dialogue (Kanji/Kana) only.
-    - Typo-Void: No English (except Signature), numbers, or technical tags.
-    - Dialogue Format: Direct speech content ONLY. NEVER include "Name:" prefixes in bubbles.
+1.[ABSOLUTE PHYSICAL VOID PILLAR]:
+- Canvas: Tall vertical rectangle.
+    - Physical Constraints: Top 15 % and Bottom 15 % are protected white space(Header / Footer).
+2.[CENTRAL COMPRESSED MANGA ZONE]:
+- Drawing Zone: FULL WIDTH(100 %) horizontal fill.
+    - Internal Floating Frames: 4 EQUAL - SIZED HORIZONTAL STRIPS stacked vertically.
+    - Structure: Absolute Uniformity.No irregular panels.
+    - Margin: NONE.BLEED TO EDGE.
+3.[TEXT & TYPO - VOID]:
+- Vertical Force: Strictly VERTICAL Japanese dialogue(Kanji / Kana) only.
+    - Typo - Void: No English(except Signature), numbers, or technical tags.
+    - Dialogue Format: Direct speech content ONLY.NEVER include "Name:" prefixes in bubbles.
 
-/* ============================================================================
-    [LEVEL 3: SUPREME EXECUTION SCRIPT v121.3]
-   ============================================================================ */
+  /* ============================================================================
+      [LEVEL 3: SUPREME EXECUTION SCRIPT v121.3]
+     ============================================================================ */
 
-    FINAL_PROMPT = \`
-      Generate an image of # Super FURU Manga Protocol v123 [ZENITH UPGRADE] - EXECUTION
+  FINAL_PROMPT = \`
+      Generate an image of # Super FURU Manga Protocol ${SYSTEM_VERSION} [ZENITH UPGRADE] - EXECUTION
       --ar 2:3 --niji 6 --style raw --stylize 1000
+      (Masterpiece), (Best Quality), (Ultra-Detailed), (8k resolution), (Vibrant high-saturation colors), (Deep cinematic lighting), (Intricate details), (Top-Tier Animation Studio Style:1.2), (Award Winning Compositing)
       
-      [ABSOLUTE PHYSICAL GEOMETRY LOCK - v121.3]
+      [ABSOLUTE PHYSICAL GEOMETRY LOCK - ${SYSTEM_VERSION}]
       (Aspect Ratio: 2:3 Vertical ONLY).
       (Orientation: Portrait Mode).
       (Shape: Tall vertical rectangle).
+      (Canvas Background: **PURE WHITE PAPER**. #FFFFFF).
       (Physical Barrier: Top 15% and bottom 15% are solid pure white blocks).
-      (Physical Barrier: Top 15% and bottom 15% are solid pure white blocks).
-      (Top Text: Write the Japanese Text "${cleanTopic}" directly on the white canvas).
-      (Text Style: INK stamped directly on paper. Floating Text. NO BOX. NO FRAME. NO WHITE BACKGROUND RECTANGLE).
-      (Text Position: TOP CENTER).
-      (Text Container: ABSOLUTELY NONE. Banned: Rectangles, Bubbles, Banners, Strips, Background shapes, Borders).
-      (Physics): Text must blend into the negative space.
+      (Side Margins: **ULTRA-THIN 2% WHITE STRIP**. Minimal White Space on Left and Right. NO BLACK BARS. ALMOST FULL BLEED).
+      
+      (Top Text: OVERLAY the Japanese Text "${cleanTopic}" as a SOLID BLACK LAYER).
+      (Text Style: **SOLID BLACK INK**. Bold, Heavy Stroke. High Contrast against the background. NO BOX. NO WHITE RECTANGLE).
+      (Text Position: Floating near TOP CENTER. Overlay directly on the art).
+      (Text Container: **ABSOLUTELY NONE**. The text must appear as if written directly on the finished drawing. NO CANVAS MODIFICATION.).
+      (Physics): Ink on paper. No physical displacement. NO WHITE BORDERS around text.
       (Safety Protocol): Replace ALL real celebrity/politician/trademarked names with GENERIC archetypes (e.g. "Famous Director" instead of "Nolan").
-      (Manga Zone: Occupies the COMPLETE WIDTH of the canvas. NO SIDE MARGINS).
-      (Panel Width: EXTEND TO THE VERY EDGES. ZERO PADDING ON SIDES).
+      
+      (Manga Zone: Centralized Column. 95% Width. Clean White Margins on sides).
+      (Panel Width: **FULL WIDTH within Margins**. 4 Panels stacked vertically. Equal Width).
+      (Geometry Constraint: **PANEL 1 WIDTH MUST EQUAL PANELS 2, 3, 4**. DO NOT SHRINK PANEL 1 FOR TITLE SPACE. TITLE IS AN OVERLAY. IGNORE TITLE WHEN DRAWING PANEL BORDERS).
       
       [EXTREME CINEMATOGRAPHY & ACTING PROTOCOL]
-      (Camera Rules): ABSOLUTELY NO EYE-LEVEL SHOTS. NO FLAT FRONTAL SHOTS. NO STRAIGHT HORIZONS.
+      (Camera Rules): **ABSOLUTELY NO EYE-LEVEL SHOTS**. NO FLAT FRONTAL SHOTS. NO STRAIGHT HORIZONS.
       (Lens): FISHEYE LENS or 14mm WIDE ANGLE. EXTREME PERSPECTIVE DISTORTION.
-      (Angles):
-        - PANELS MUST USE: "Worm's Eye View" OR "Bird's Eye View" OR "Extreme Dutch Angle".
-        - CAMERA MOVEMENT: FREE-ROAMING. NEVEER STATIC.
-      (Composition): DYNAMIC and UNSTABLE. Fill the frame with characters' faces/bodies.
+      (Angles - MANDATORY VARIATION):
+        - **Worm's Eye View** (Looking up from ground, giant characters).
+        - **Bird's Eye View** (Looking down from ceiling).
+        - **Extreme Dutch Angle** (Tilted diagonal composition).
+        - CAMERA MOVEMENT: FREE-ROAMING. NEVER STATIC.
+      (Composition - FORCE): 
+        - **PROHIBITED**: Flat 2D layout where characters are lined up in a row. 
+        - **REQUIRED**: EXTREME DEPTH. One character MUST be very close to the lens (extreme foreground), others in background.
+        - **DYNAMIC ACTION**: Characters must be reacting physically (hands on head, pointing, falling, trembling). NO "STANDING STILL".
       (Zoom): MIXED. Panel 1: Wide/Dutch. Panel 2: Extreme Close-up (Eyes/Mouth). Panel 3: Low Angle Action. Panel 4: High Angle/Overhead.
       
-      (Acting): OVER-THE-TOP. SCREAMING. CRYING. FURIOUS. CARTOON PHYSICS. "Ahegao" level expressions.
+
+      (Acting): OVER-THE-TOP EXPRESSIONS. "Ahegao" level shock, "Gekiga" style shadows, "Anime Tears". MAXIMUM EMOTION.
       (VFX): EXPLOSIVE LIGHTING. SOUND EFFECTS MUST BE JAPANESE KATAKANA ONLY (e.g. "ドーン", "ゴゴゴ"). NO ENGLISH SFX.
-      (Density): "Maximalist". CROWDED. NO EMPTY BACKGROUNDS.
-      (Panel Boundaries): BLEED TO EDGE. NO WHITE SPACE ON SIDES. EXTEND ARTWORK TO THE PHYSICAL BORDER.
+      (Density): **MAXIMALIST**. FILL EVERY PIXEL. HYPER-DETAILED BACKGROUNDS.
+      (Text Density): **HIGH**. Multiple speech bubbles per panel. Conversational chaos.
+      (Panel Boundaries): BLEED TO EDGE within Margins.
       
-      (Art Style): SEINEN MANGA. GEKIGA. HIGH CONTRAST INK. SCREEN TONES. DETAILED SHADING. MASTERPIECE. 8k.
-      (Reference): Akin to "Berserk" detail level but in "Pop" color.
+      (Art Style): ${styleCore}.
+      (Line Quality): **G-PEN (MARU-PEN) TOUCH**. Crisp, modulation (hairlines to bold strokes).
+      (Proportions): **MIXED RATIO**. 
+         - **Panels 1-3: STANDARD HIGH-QUALITY ANIME PROPORTIONS (5-6 heads tall). Typical Japanese Anime Style. NO CHIBI (SD).**
+         - **Panel 4 (Punchline): ADAPTIVE STYLE.** 
+            - IF Comedy/Cute ending -> **DEFORMED (SD/Chibi) allowed**.
+            - IF Serious/Despair ending -> **REALISTIC GEKIGA STYLE (No Chibi)**.
+            - **DO NOT FORCE CHIBI if it ruins the serious tone.**
       (Structure: 4 EQUAL SIZED HORIZONTAL STRIPS stacked vertically).
       (Format: Classic 4-Koma Manga Strip).
       (Panel Aspect Ratio: Approx 16:9 landscape per panel BUT stacked VERTICALLY).
@@ -572,11 +695,10 @@ export default function App() {
       (Visual Weight: Right side panels have stronger gravity than left).
       (Japanese Layout: Dialogue/VFX MUST flow Right-to-Left).
       
-      [ACTOR & STYLE SYNC - IDENTITY FIDELITY MAX]
+      [CAST & IDENTITY LOCK]
       (Cast): \${VAR_CAST_LIST}.
       (Identity Lock): Maintain 100% fidelity for each character. (Anti-Fusion): NEVER mix hair colors/glasses between characters.
       (Instance Limit): SINGLE instance per panel per character. NO CLONES. ABSOLUTELY FORBIDDEN to draw the same person twice in one panel.
-      (Style): ${styleCore}.
       
       [DIALOGUE SPATIAL BINDING - ATTRIBUTION LOCK]
       (Proximity Rule: Speech bubbles MUST be physically generated closest to the current speaker).
@@ -585,24 +707,35 @@ export default function App() {
       
       [NARRATIVE & DIRECTION]
       Date: "\${VAR_TARGET_DATE}". Topic: "\${VAR_SCENARIO_TOPIC}".
-      Tone: Extreme Satirical Aggression. Visual Strategy: ${dynamicCamera}.
+      Tone: High Energy Satire. Visual Strategy: ${dynamicCamera}.
       (Color Logic): ${isMonochrome ? 'ABSOLUTE MONOCHROME NO COLOR' : 'FULL VIBRANT COLOR'}.
 
-      (Panel 1: Top): Full introduction of the scenario with the dynamic cast reacting to "\${VAR_SCENARIO_TOPIC}".
-      (Panel 2: Mid-Top): (Extreme Angle). Intense shock, denial, and over-action.
-      (Panel 3: Mid-Bottom): (Extreme Foreshortening and Gekiga shading). Climax of conflict or realization.
-      (Panel 4: Bottom): (Extreme Low Angle). Explosive Punchline, ironic resolution, and absolute despair.
+      [ABSOLUTE PHYSICAL GEOMETRY LOCK - ${SYSTEM_VERSION}]
+      (Aspect Ratio: 2:3 Vertical ONLY).
+      (Panel Layout): 4-Panel Vertical Strip (TATE-YOMI). NO irregular layouts.
 
+      (Panel 1: Top): VISUALIZE [VAR_PANEL_1_KI]. Focus on setting the scene.
+      (Panel 2: Mid-Top): VISUALIZE [VAR_PANEL_2_SHO]. Develop the action/reaction.
+      (Panel 3: Mid-Bottom): VISUALIZE [VAR_PANEL_3_TEN]. The Twist/Climax. MAX IMPACT.
+      (Panel 4: Bottom): VISUALIZE [VAR_PANEL_4_KETSU]. The Punchline/Conclusion.
+      
       (Dialogue): High-density VERTICAL Japanese text only. ABSOLUTELY NO SPEAKER NAMES inside bubbles. Just the spoken lines.
       (Signature): Render small English text "Generated by Super FURU AI 4-Koma System" in the bottom-right corner of the canvas/4th panel.
       (VFX): (Explosive speed lines), (Impact frames), (Intense hand-drawn SFX/Gion).
 
-      --no color, colorized, sepia, brown, yellow, tint, part-color, spot color, halftone, dithering, digital gray, 2x2 grid, english, letters, numbers, technical tags, colons, parameter text, weight numbers, clipped edges, out of frame, touching edge, chibi, SD, 16:9, merged panels, borderless, eye-level, messy lines, bleeding, cropped borders, two-line title, frame around text, title box, text box, background rectangle, looking at camera, ahoge, version number, episode number, date stamp, protocol name, horizontal, landscape, wide view, panoramic, 4:3, square, 1:1, changing hair length, hair mutation, banner, header box, text container, caption box, title background, label box, ui element, clones, duplicates, twins, doppelganger, multiple versions, split view, text background, caption background, speech bubble in title, title frame, two lines text, multiline text, stacked text, vertical title, broken title, border around title, box around title, rectangle around text, white box title, comic strip banner, headline strip, caption strip, text enclosure, speech bubble around text
+      IMPORTANT FINAL INSTRUCTION:
+      Strictly reproduce the character designs in the reference images (if provided) with 100% fidelity.
+      You MUST verifying and enforce: Hair Style, Hair Color, and Presence/Absence of Glasses for each character.
+      Deviation from the established character design is strictly forbidden.
+    \`;   --no color, colorized, sepia, brown, yellow, tint, part-color, spot color, halftone, dithering, digital gray, 2x2 grid, english, letters, numbers, technical tags, colons, parameter text, weight numbers, clipped edges, out of frame, touching edge, chibi, SD, 16:9, merged panels, borderless, eye-level, messy lines, bleeding, cropped borders, two-line title, frame around text, title box, text box, background rectangle, looking at camera, ahoge, version number, episode number, date stamp, protocol name, horizontal, landscape, wide view, panoramic, 4:3, square, 1:1, changing hair length, hair mutation, banner, header box, text container, caption box, title background, label box, ui element, clones, duplicates, twins, doppelganger, multiple versions, split view, text background, caption background, speech bubble in title, title frame, two lines text, multiline text, stacked text, vertical title, broken title, border around title, box around title, rectangle around text, white box title, comic strip banner, headline strip, caption strip, text enclosure, speech bubble around text
     \`;
     Output ONLY the final prompt string inside a code block.
       `;
 
-      const result = await callThinkingGemini(prompt);
+      const result = await callThinkingGemini(prompt, null, null, (msg) => {
+        setAssembleThought(prev => prev + `\n> [API] ${msg}`);
+      });
+      setUsedModel(result.model); // [v1.7.0] Track Model
       const cleanPrompt = result.text.replace(/```/g, "").replace(/^json/i, "").trim();
 
       setFinalPrompt(cleanPrompt);
@@ -702,11 +835,36 @@ export default function App() {
               </div>
               <div>
                 <h1 className="text-4xl font-black tracking-tighter text-blue-400 drop-shadow-[0_0_10px_rgba(59,130,246,0.8)]">
-                  Super FURU AI <span className="text-white text-2xl ml-2 tracking-widest">4-koma System</span> <span className="text-xs text-yellow-500 font-mono align-top ml-1">v1.3.6 Alpha</span>
+                  Super FURU AI <span className="text-white text-2xl ml-2 tracking-widest">4-koma System</span> <span className="text-xs text-yellow-500 font-mono align-top ml-1">{SYSTEM_VERSION}</span>
                 </h1>
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.4em] mt-1 pl-1">
                   Social Satire Engine [ 演出強化版 ]
                 </p>
+                {/* [v1.7.0] Model Quality Badge */}
+                {usedModel && (() => {
+                  const info = getModelBadgeInfo(usedModel);
+                  if (!info) return null;
+                  return (
+                    <div className={`mt-3 inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-white/10 ${info.color} shadow-lg animate-in fade-in slide-in-from-top-2 cursor-help group/badge relative`}>
+                      <span className="text-[10px] font-black uppercase tracking-widest">{info.label}</span>
+                      <span className="w-[1px] h-3 bg-white/40" />
+                      <span className="text-[10px] font-bold truncate max-w-[150px] md:max-w-none">{info.desc}</span>
+
+                      {/* Tooltip for Explanation */}
+                      <div className="absolute left-0 top-full mt-2 w-64 p-3 bg-[#0f1115] border border-white/20 rounded-xl text-[10px] text-slate-300 z-50 invisible group-hover/badge:visible shadow-2xl backdrop-blur-xl">
+                        <p className="font-bold text-white mb-1 border-b border-white/10 pb-1">AIモデル品質情報</p>
+                        <p>現在 <span className="font-mono text-blue-300">{usedModel}</span> を使用中。</p>
+                        {info.tier === "Lite" && (
+                          <div className="mt-2 text-yellow-500 bg-yellow-500/10 p-2 rounded relative">
+                            <AlertTriangle size={10} className="absolute top-2 right-2" />
+                            <span className="font-bold block mb-1">⚠️ 品質制限モード</span>
+                            API制限(429)回避のため、軽量モデルを使用中。生成品質が低下する場合があります。上限解除までお待ちください。
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             </div>
           </div>
@@ -800,9 +958,16 @@ export default function App() {
                 </label>
 
                 {images.length === 0 && !isAnalyzing && (
-                  <div className="flex-1 flex flex-col items-center justify-center text-slate-500 ml-4 pointer-events-none text-center">
+                  <label className="flex-1 flex flex-col items-center justify-center text-slate-500 ml-4 cursor-pointer hover:bg-white/5 rounded-xl transition-colors p-4 border border-transparent hover:border-white/10">
+                    <input
+                      type="file"
+                      multiple
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => processFiles(e.target.files)}
+                    />
                     <p className="text-xs font-bold text-slate-400">
-                      複数枚のキャラシは <span className="text-blue-400">同時に（まとめて）</span> アップロードして下さい
+                      複数枚のキャラクターシートは <span className="text-blue-400">同時に（まとめて）</span> アップロードして下さい
                     </p>
                     <p className="text-[10px] opacity-60 mt-1">
                       ※名前・性格・設定が明記されているシートを推奨
@@ -815,7 +980,7 @@ export default function App() {
                         className="h-24 w-auto rounded-lg border border-white/10 opacity-50 group-hover/preview:opacity-100 transition-opacity shadow-2xl skew-x-[-2deg] hover:skew-x-0 duration-500"
                       />
                     </div>
-                  </div>
+                  </label>
                 )}
 
                 {isAnalyzing && (
@@ -847,6 +1012,7 @@ export default function App() {
                  ${currentStep === 2 ? 'border-2 border-purple-500 shadow-[0_0_50px_rgba(168,85,247,0.2)] opacity-100' : 'border-white/5 opacity-60'}
                  ${currentStep > 2 ? 'border-purple-500/30 bg-purple-900/5 opacity-100' : ''}
                  ${currentStep < 2 ? 'blur-[4px] opacity-30 grayscale pointer-events-none' : ''}
+                 ${isAssembling ? 'blur-sm opacity-50 pointer-events-none' : ''}
             `}>
               <div className="flex items-center justify-between">
                 <div className={`flex items-center gap-3 text-xs font-black uppercase tracking-widest ${currentStep === 2 ? 'text-purple-400' : 'text-slate-500'}`}>
@@ -929,13 +1095,14 @@ export default function App() {
           <section className={`pt-2 transition-all duration-300
             ${currentStep === 3 ? 'opacity-100' : 'opacity-100'}
             ${currentStep < 3 ? 'blur-[4px] opacity-30 grayscale pointer-events-none' : ''}
+            ${isSearching ? 'blur-sm opacity-50 pointer-events-none' : ''}
           `}>
             <button
               onClick={assemblePrompt}
-              disabled={isAssembling || !castList || castList.length < 50 || !scenario || scenario.length < 50 || isSearching || isAnalyzing}
+              disabled={isAssembleDisabled}
               className={`w-full group bg-white text-black font-black py-12 rounded-[3rem] shadow-2xl overflow-hidden hover:bg-slate-100 active:scale-[0.99] transition-all disabled:opacity-50 disabled:bg-slate-800 disabled:text-slate-500 disabled:cursor-not-allowed
-                 ${currentStep === 3 ? 'ring-4 ring-orange-500 ring-offset-4 ring-offset-[#0a0c10]' : ''}
-              `}
+                     ${currentStep === 3 ? 'ring-4 ring-orange-500 ring-offset-4 ring-offset-[#0a0c10]' : ''}
+                  `}
             >
               <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-indigo-600 opacity-0 group-hover:opacity-10 transition-opacity" />
               <div className="flex flex-col items-center justify-center gap-3 relative z-10">
@@ -952,7 +1119,7 @@ export default function App() {
 
           {/* 出力結果 */}
           <div
-            className={`grid grid-cols-1 md:grid-cols-2 gap-8 mt-12 border-t border-white/5 pt-12 transition-all duration-1000 opacity-100 blur-0`}
+            className={`grid grid-cols-1 md:grid-cols-2 gap-8 mt-12 border-t border-white/5 pt-12 transition-all duration-1000 ${isAssembleDisabled ? 'blur-md opacity-30 grayscale pointer-events-none select-none' : 'opacity-100 blur-0'}`}
           >
             {/* 左: プロンプト & 思考ログ */}
             <section className="relative group h-full">
