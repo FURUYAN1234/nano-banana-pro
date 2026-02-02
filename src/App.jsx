@@ -1,4 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
+
+// CANARY TEST
+console.log("HELLO_USER_FIXED_VERSION_1_8_36");
+
 import {
   Camera,
   RefreshCw,
@@ -129,7 +133,7 @@ const ApiKeyModal = ({ isOpen, onSave }) => {
 };
 
 export default function App() {
-  const SYSTEM_VERSION = "v1.8.36 Alpha"; // Re-deploy Stamp 2026-02-03
+  const SYSTEM_VERSION = "v1.8.36 Alpha"; // Cache Cleared 2026-02-03
   // Force Build 2026-02-03 06:40 // Build 2026-02-03-02
 
   console.log("System Version Loaded:", SYSTEM_VERSION); // Debug Log
