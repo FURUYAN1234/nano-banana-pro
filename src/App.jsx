@@ -129,7 +129,7 @@ const ApiKeyModal = ({ isOpen, onSave }) => {
 };
 
 export default function App() {
-  const SYSTEM_VERSION = "v1.8.28 Alpha";
+  const SYSTEM_VERSION = "v1.8.29 Alpha";
   const [apiKey, setApiKeyState] = useState("");
   const [showModal, setShowModal] = useState(true);
 
@@ -608,9 +608,9 @@ export default function App() {
    ============================================================================ */
 RULE_1: "Strictly separate all characters in VAR_CAST_LIST. Do not blend features."
 RULE_2: "IMPORTANT: You MUST copy the content of VAR_CAST_LIST into the final prompt VERBATIM. Do not summarize, do not shorten. Keep all (weight:1.5) tags exactly as they appear."
-RULE_3: "If Character A has Glasses, Character B MUST NOT inherit them unless specified."
-RULE_4: "Hair Color and Style are ABSOLUTE constants. Refer to Weighted Tags in VAR_CAST_LIST."
-RULE_5: "Maintain absolute consistency of features (Hair, Eyes, Glasses) for each named character across all 4 panels."
+RULE_3: "ANTI-FUSION: If Character A has Glasses, Character B MUST NOT inherit them. If a character description does NOT say 'Glasses', explicitly enforce [Bare Eyes / No Glasses]."
+RULE_4: "Attributes (Hair Color, Eye Shape, Accessories) are EXCLUSIVE to their owner. Do not mix them."
+RULE_5: "Maintain absolute consistency of features (Hair, Eyes, Glasses) for each named character across all 4 panels. NO FEATURE DRIFT."
 
 /* ============================================================================
     [LEVEL 1: CORE GEOMETRY - SPATIAL ENFORCEMENT ENGINE v121.3]
@@ -672,9 +672,10 @@ RULE_5: "Maintain absolute consistency of features (Hair, Eyes, Glasses) for eac
       
       (Acting): **HIGH FIDELITY EXPRESSIONS**. Detailed emotional acting. NO gag-manga deformation.
       (VFX): **CINEMATIC LIGHTING**. Raytracing, bloom, depth of field.
-      (SFX Protocol): **HAND-DRAWN 3D KANA**.
-         - **STYLE**: Graffiti-style, Street Art, Brush Strokes. **NO COMPUTER FONTS**.
-         - **COLOR**: **MULTICOLOR / RAINBOW / NEON**. Do not use black text for SFX.
+      (SFX Object Protocol): **SFX ARE OBJECTS, NOT TEXT**.
+         - Treat Sound Effects (Gion) as physical 3D objects made of neon light, smoke, or rock.
+         - **FORBIDDEN**: Standard Typesetting, Digital Fonts, Typography.
+         - **REQUIRED**: Hand-drawn Graffiti, Brush Strokes, "Floating 3D Katakana".
          - **INTEGRATION**: The sound effects must exist IN 3D SPACE (behind characters, hitting the floor).
       (Density): **BALANCED**. Focus on character beauty and composition.
       (Text Density): **LOW**. Visuals first. Dialogue is secondary.
