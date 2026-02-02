@@ -13,13 +13,15 @@
 This project aims to intentionally exclude humans from the creative process, allowing AI to act as a director and complete everything from brainstorming to composition, direction, and rendering.
 本プロジェクトは、人間をクリエイティブな工程から意図的に排除し、AIがディレクターとして「ネタ出し・構成・演出・作画」のすべてを完結させることを目的としています。
 
-![Sample Output](assets/samples/retro_sample.jpg)
+![Sample Output](assets/samples/sample.png)
 
 ### 🎥 Action Demo / 動作デモ
+
 <https://www.youtube.com/watch?v=wmC8BgKliKk>
 *(Click to watch / 動画を再生)*
 
 ### 📺 Introduction / 解説動画
+
 <https://www.youtube.com/watch?v=FmSQ267vrZg>
 *(Click to watch / 動画を再生)*
 
