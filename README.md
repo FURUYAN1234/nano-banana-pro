@@ -16,13 +16,11 @@ This project aims to intentionally exclude humans from the creative process, all
 ![Sample Output](assets/samples/retro_sample.jpg)
 
 ### 🎥 Action Demo / 動作デモ
-
-[![Action Demo](https://img.youtube.com/vi/wmC8BgKliKk/0.jpg)](https://www.youtube.com/watch?v=wmC8BgKliKk)
+<https://www.youtube.com/watch?v=wmC8BgKliKk>
 *(Click to watch / 動画を再生)*
 
 ### 📺 Introduction / 解説動画
-
-[![Introduction](https://img.youtube.com/vi/FmSQ267vrZg/0.jpg)](https://www.youtube.com/watch?v=FmSQ267vrZg)
+<https://www.youtube.com/watch?v=FmSQ267vrZg>
 *(Click to watch / 動画を再生)*
 
 ---
