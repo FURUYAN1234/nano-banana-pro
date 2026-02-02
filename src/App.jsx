@@ -129,7 +129,7 @@ const ApiKeyModal = ({ isOpen, onSave }) => {
 };
 
 export default function App() {
-  const SYSTEM_VERSION = "v1.8.24 Alpha";
+  const SYSTEM_VERSION = "v1.8.25 Alpha";
   const [apiKey, setApiKeyState] = useState("");
   const [showModal, setShowModal] = useState(true);
 
@@ -556,16 +556,16 @@ export default function App() {
       }
 
       const styleCore = isMonochrome
-        ? "(Absolute total zero-saturation monochrome grayscale:2.0), (greyscale:2.0), (monochrome:2.0), (no color:2.0), (Masterpiece Traditional Manga), (G-Pen Ink Style), (Sharp, varied line weight), (Manual ink hatching), (High-Contrast Black & White), (Professional Comic Studio Quality), (Dramatic Shadows)"
-        : "(Top-Tier Animation Studio Style:1.2), (Award Winning Compositing), (Official Anime Art), (Vibrant Full Color), (Masterpiece G-Pen Line Art), (Sharp Ink Contours), (Subtle Cross-Hatching), (High-budget Key Visual Quality), (Hybrid Gekiga Composition), (Cinematic High-Contrast Lighting), (Vibrant Colors)";
+        ? "(Absolute total zero-saturation monochrome grayscale:2.0), (greyscale:2.0), (monochrome:2.0), (no color:2.0), (Masterpiece Traditional Manga), (G-Pen Ink Style), (Sharp, varied line weight), (Manual ink hatching), (High-Contrast Black & White), (Professional Comic Studio Quality), (Detailed Backgrounds)"
+        : "(Top-Tier Animation Studio Style:1.4), (Kyoto Animation Style:1.2), (CloverWorks Style:1.2), (Award Winning Compositing), (Official Anime Art), (Vibrant Full Color), (Masterpiece G-Pen Line Art), (Sharp Ink Contours), (High-budget Key Visual Quality), (Cinematic Lighting), (Beautiful Detailed Eyes)";
 
       const dynamicCamera = `
     (Forbidden: Normal eye-level shots, Flat angles, Static poses). 
     (Enforce: **Extreme Low Angle (Worm's Eye)** OR **Extreme High Angle (Bird's Eye)** for EVERY panel).
     (Lens: **ULTRA-WIDE ANGLE 14mm** or **FISHEYE LENS**. Use extreme perspective distortion to make hands/feet look huge).
     (Composition: **Full Body** or **Upper Body** with dynamic movement. NO "Talking Heads". NO "Bust up only").
-    (Acting: **Over-the-top cartoon reactions**. Eyes popping out, jaw dropping, anime speed lines).
-    (VFX: **Neon Lighting**, **Colorful Impact Frames**, **Hyper-saturated SFX**).
+    (Acting: **Expressive Anime Acting**. Detailed facial expressions. High-fidelity emotion. NO deformed faces).
+    (VFX: **Cinematic Lighting**, **Particle Effects**, **Impact Frames**).
     `;
 
       const cleanTopic = scenario.match(/## タイトル:\s*(.*?)(\n|$|!)/)?.[1]?.trim() || scenario.split('\n')[0].substring(0, 20);
@@ -670,20 +670,18 @@ RULE_5: "Maintain absolute consistency of features (Hair, Eyes, Glasses) for eac
         - **DEPTH**: Place hands/feet close to camera for 3D effect.
       (Zoom): MIXED. Panel 1: Ultra-Wide. Panel 2: Fisheye Close-up. Panel 3: Low Angle Action. Panel 4: Overhead High Angle.
       
-      (Acting): **OVER-ACTION**. Exaggerated anime expressions.
-      (VFX): **EXPLOSIVE COLORFUL LIGHTING**. Neon sparks, impact frames.
-      (Density): **MAXIMALIST**. FILL EVERY PIXEL.
+      (Acting): **HIGH FIDELITY EXPRESSIONS**. Detailed emotional acting. NO gag-manga deformation.
+      (VFX): **CINEMATIC LIGHTING**. Raytracing, bloom, depth of field.
+      (Density): **BALANCED**. Focus on character beauty and composition.
       (Text Density): **LOW**. Visuals first. Dialogue is secondary.
       (Panel Boundaries): ZERO PADDING. DRAW TO THE VERY HARD EDGE OF THE CANVAS.
       
       (Art Style): ${styleCore}.
-      (Line Quality): **G-PEN (MARU-PEN) TOUCH**. Crisp, modulation (hairlines to bold strokes).
-      (Proportions): **MIXED RATIO**. 
-         - **Panels 1-3: STANDARD HIGH-QUALITY ANIME PROPORTIONS (5-6 heads tall). Typical Japanese Anime Style. NO CHIBI (SD).**
-         - **Panel 4 (Punchline): ADAPTIVE STYLE.** 
-            - IF Comedy/Cute ending -> **DEFORMED (SD/Chibi) allowed**.
-            - IF Serious/Despair ending -> **REALISTIC GEKIGA STYLE (No Chibi)**.
-            - **DO NOT FORCE CHIBI if it ruins the serious tone.**
+      (Line Quality): **Pro Ink**. Sharp, clean lines.
+      (Proportions): **STRICTLY HIGH RATIO (6-7 heads)**. 
+         - **Panels 1-4: CONSISTENT HIGH QUALITY ANIME MODELS.**
+         - **PROIBITED: CHIBI, SD, Deformed, Cartoon styles.**
+         - **Ensure the characters look like a high-budget anime key visual in every panel.**
       (Structure: 4 EQUAL SIZED HORIZONTAL STRIPS stacked vertically).
       (Format: Classic 4-Koma Manga Strip).
       (Panel Aspect Ratio: Approx 16:9 landscape per panel BUT stacked VERTICALLY).
