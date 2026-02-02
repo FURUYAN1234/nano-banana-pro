@@ -428,8 +428,10 @@ export default function App() {
            - セリフでの状況説明を禁止。キャラクターの**「顔芸（白目、滝のような涙、あごが外れる）」**や**「全身を使ったリアクション」**で感情を表現せよ。
            - 比喩表現を映像化せよ（例: 「ショック！」と言う代わりに、**「メガネが割れる」「魂が口から出る」**描写を指定）。
 
-        2. **台詞密度と視覚効果のバランス**:
-           - 1コマあたりのフキダシは2〜3個だが、**「集中線」「イライラマーク」「ドーン！」などの漫符**を必ず指定し、絵の勢いを殺さないように配置せよ。
+        2. **台詞密度の極小化と視覚効果の最大化**:
+           - **重要**: 会話量を意図的に減らせ。「説明」は全て絵で行え。
+           - 1コマあたりのフキダシは**「原則1つまで」**。キャラがベラベラ喋るのを禁止する。
+           - その分、**「ド派手なエフェクト」「空間を埋め尽くす書き文字（オノマトペ）」**で画面を埋めよ。
 
         3. **オチと構図の多様化 (Variety Constraints)**:
            - **必須**: 「手前に大きく顔があるキャラ」「奥で小さく驚くキャラ」など、**遠近感**を強調せよ。棒立ちは厳禁。
@@ -558,11 +560,12 @@ export default function App() {
         : "(Top-Tier Animation Studio Style:1.2), (Award Winning Compositing), (Official Anime Art), (Vibrant Full Color), (Masterpiece G-Pen Line Art), (Sharp Ink Contours), (Subtle Cross-Hatching), (High-budget Key Visual Quality), (Hybrid Gekiga Composition), (Cinematic High-Contrast Lighting), (Vibrant Colors)";
 
       const dynamicCamera = `
-    (Forbidden: Normal eye - level shots). 
-        (Enforce: Extreme Bird's Eye from high sky, Extreme Worm's Eye from floor level, Extreme Dutch Angles),
-    (Maximum Foreshortening), (Dynamic Action Poses),
-  (Hyper - exaggerated satirical facial expressions), (Intense emotional outbursts),
-  (Gekiga - style heavy shading for extreme impact)
+    (Forbidden: Normal eye-level shots, Flat angles, Static poses). 
+    (Enforce: **Extreme Low Angle (Worm's Eye)** OR **Extreme High Angle (Bird's Eye)** for EVERY panel).
+    (Lens: **ULTRA-WIDE ANGLE 14mm** or **FISHEYE LENS**. Use extreme perspective distortion to make hands/feet look huge).
+    (Composition: **Full Body** or **Upper Body** with dynamic movement. NO "Talking Heads". NO "Bust up only").
+    (Acting: **Over-the-top cartoon reactions**. Eyes popping out, jaw dropping, anime speed lines).
+    (VFX: **Neon Lighting**, **Colorful Impact Frames**, **Hyper-saturated SFX**).
     `;
 
       const cleanTopic = scenario.match(/## タイトル:\s*(.*?)(\n|$|!)/)?.[1]?.trim() || scenario.split('\n')[0].substring(0, 20);
@@ -653,25 +656,24 @@ RULE_5: "Maintain absolute consistency of features (Hair, Eyes, Glasses) for eac
       (Panel Width: **FULL WIDTH within Margins**. 4 Panels stacked vertically. Equal Width).
       (Geometry Constraint: **PANEL 1 WIDTH MUST EQUAL PANELS 2, 3, 4**. DO NOT SHRINK PANEL 1 FOR TITLE SPACE. TITLE IS AN OVERLAY. IGNORE TITLE WHEN DRAWING PANEL BORDERS).
       
-      [EXTREME CINEMATOGRAPHY & ACTING PROTOCOL]
-      (Camera Rules): **ABSOLUTELY NO EYE-LEVEL SHOTS**. NO FLAT FRONTAL SHOTS. NO STRAIGHT HORIZONS.
-      (Lens): FISHEYE LENS or 14mm WIDE ANGLE. EXTREME PERSPECTIVE DISTORTION.
+      [EXTREME CINEMATOGRAPHY & ACTING PROTOCOL - v1.8.23]
+      (Camera Rules): **ABSOLUTELY NO EYE-LEVEL SHOTS**. NO FLAT FRONTAL SHOTS.
+      (Lens): **FISHEYE LENS (10mm)** or **SUPER WIDE ANGLE**. MAX DISTORTION.
       (Angles - MANDATORY VARIATION):
-        - **Worm's Eye View** (Looking up from ground, giant characters).
-        - **Bird's Eye View** (Looking down from ceiling).
-        - **Extreme Dutch Angle** (Tilted diagonal composition).
-        - CAMERA MOVEMENT: FREE-ROAMING. NEVER STATIC.
+        - **Worm's Eye View** (Look up from ground!).
+        - **Bird's Eye View** (Look down from sky!).
+        - **Extreme Dutch Angle** (Tilt 45 degrees!).
+        - **NEVER use a normal straight camera.**
       (Composition - FORCE): 
-        - **PROHIBITED**: Flat 2D layout where characters are lined up in a row. 
-        - **REQUIRED**: EXTREME DEPTH. One character MUST be very close to the lens (extreme foreground), others in background.
-        - **DYNAMIC ACTION**: Characters must be reacting physically (hands on head, pointing, falling, trembling). NO "STANDING STILL".
-      (Zoom): MIXED. Panel 1: Wide/Dutch. Panel 2: Extreme Close-up (Eyes/Mouth). Panel 3: Low Angle Action. Panel 4: High Angle/Overhead.
+        - **PROHIBITED**: "Face only" or "Bust up" shots.
+        - **REQUIRED**: **Full Body** or **Dynamic Upper Body** acting.
+        - **DEPTH**: Place hands/feet close to camera for 3D effect.
+      (Zoom): MIXED. Panel 1: Ultra-Wide. Panel 2: Fisheye Close-up. Panel 3: Low Angle Action. Panel 4: Overhead High Angle.
       
-
-      (Acting): OVER-THE-TOP EXPRESSIONS. "Ahegao" level shock, "Gekiga" style shadows, "Anime Tears". MAXIMUM EMOTION.
-      (VFX): EXPLOSIVE LIGHTING. SOUND EFFECTS MUST BE JAPANESE KATAKANA ONLY (e.g. "ドーン", "ゴゴゴ"). NO ENGLISH SFX.
-      (Density): **MAXIMALIST**. FILL EVERY PIXEL. HYPER-DETAILED BACKGROUNDS.
-      (Text Density): **HIGH**. Multiple speech bubbles per panel. Conversational chaos.
+      (Acting): **OVER-ACTION**. Exaggerated anime expressions.
+      (VFX): **EXPLOSIVE COLORFUL LIGHTING**. Neon sparks, impact frames.
+      (Density): **MAXIMALIST**. FILL EVERY PIXEL.
+      (Text Density): **LOW**. Visuals first. Dialogue is secondary.
       (Panel Boundaries): BLEED TO EDGE within Margins.
       
       (Art Style): ${styleCore}.
