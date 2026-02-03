@@ -123,6 +123,8 @@ You can launch strict local environment with a single click.
 
 ---
 
+---
+
 ## ⚖️ Compliance & Legal Stance / 法的遵守について
 
 ### Japanese Copyright Law (Article 30-4)
