@@ -133,7 +133,7 @@ const ApiKeyModal = ({ isOpen, onSave }) => {
 };
 
 export default function App() {
-  const SYSTEM_VERSION = "v1.8.37 Alpha"; // Code change = Version bump. Do not forget!
+  const SYSTEM_VERSION = "v1.8.38 Alpha"; // Code change = Version bump. Do not forget!
   // Force Build 2026-02-03 06:40 // Build 2026-02-03-02
 
   console.log("System Version Loaded:", SYSTEM_VERSION); // Debug Log
@@ -721,6 +721,24 @@ RULE_5: "Maintain absolute consistency of features (Hair, Eyes, Glasses) for eac
       (Proximity Rule: Speech bubbles MUST be physically generated closest to the current speaker).
       (Tail Logic: Ensure bubble tails point accurately to the speaker's mouth).
       (Speaker Separation: If A and B are in one panel, A's text is on A's side. NEVER cross speech bubbles).
+      
+      [MANGA COMPOSITION LAW - RIGHT TO LEFT FLOW]
+      (Rule: The character speaking FIRST (First Bubble) MUST be positioned on the RIGHT side of the panel).
+      (Rule: The LISTENER/Reactor MUST be positioned on the LEFT side of the panel).
+      (Constraint: Japanese Manga reads Right-to-Left. Therefore, Action starts on the Right, Reaction/Result is on the Left).
+      (Correction: If the model attempts to place the main speaker on the left, FORCE FLIP the composition horizontally).
+
+      [MULTI-CHARACTER PROTOCOL (EQUAL PRESENCE)]
+      (Rule: Do NOT hide characters. Use **HORIZONTAL ZONE SLOTTING** to place them).
+      (Strategy: Divid the panel width into 3 vertical slices: RIGHT, CENTER, LEFT).
+      
+      [ZONE ASSIGNMENT - READING ORDER FLOW]
+      (Slot 1 - RIGHT ZONE): **FIRST Speaker** / Initiator. (Primary visual anchor).
+      (Slot 2 - CENTER ZONE): **Second Speaker** / Mediator.
+      (Slot 3 - LEFT ZONE): **Reactor** / Listener / Final Speaker.
+      
+      (Constraint: Characters MUST stick to their zones. Do not overlap heavily).
+      (Bubble Binding): "Speech Bubble A" spawns in RIGHT ZONE. "Speech Bubble B" spawns in LEFT ZONE.
       
       [NARRATIVE & DIRECTION]
       Date: "\${VAR_TARGET_DATE}". Topic: "\${VAR_SCENARIO_TOPIC}".
