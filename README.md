@@ -123,6 +123,32 @@ You can launch strict local environment with a single click.
 
 ---
 
+## ⚖️ Compliance & Legal Stance / 法的遵守について
+
+### Japanese Copyright Law (Article 30-4)
+
+This project is developed in full compliance with **Article 30-4 of the Japanese Copyright Act**, which allows for the exploitation of copyrighted works for information analysis and technological development of AI.
+本プロジェクトは、日本の著作権法第30条の4（情報解析目的の外での利用）に基づき、技術検証および情報解析を目的として開発されており、法的に適正な範囲内で公開されています。
+
+### Official API Usage
+
+All generations are performed through the **official Google Gemini API**. This system adheres strictly to Google's "Generative AI Forbidden Use Policy" and Terms of Service.
+本システムはGoogle公式のGemini APIを介して動作しており、Googleが定める「生成AI禁止事項」および利用規約を厳格に遵守しています。
+
+### Autonomous & Deterministic Generation
+
+Unlike simple image synthesis, this system uses an **autonomous "Unmanned" pipeline** and the **ABSOLUTE PHYSICAL GEOMETRY LOCK** protocol.
+* It does not aim to replicate specific existing artworks.
+* It generates original compositions based on real-time trend analysis and mathematical geometric constraints.
+本システムは、特定の作品の模倣を目的としたものではありません。リアルタイムのトレンド分析と、独自の「物理幾何学ロック」プロトコルに基づき、AIが自律的に構図を決定・生成するものであり、依拠性のない独自創作を志向しています。
+
+### No-Profit & Research Focus
+
+The core logic (Prompts/Protocols) is released under **CC BY-NC-SA 4.0**. Any commercial misuse by third parties is strictly prohibited. This project exists solely for the advancement of AI agent technology and the democratization of creative tools.
+核心的なロジックはCC BY-NC-SA 4.0（非営利）の下で公開されています。第三者による悪質な商用利用はライセンス違反となります。本プロジェクトは、AIエージェント技術の発展と、創作ツールの民主化を目的とした研究成果です。
+
+---
+
 ## ⚖️ License & Rights / ライセンス・権利関係
 
 This project uses a hybrid license to balance technology sharing and intellectual property protection.
