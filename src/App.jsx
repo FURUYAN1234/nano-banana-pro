@@ -133,7 +133,7 @@ const ApiKeyModal = ({ isOpen, onSave }) => {
 };
 
 export default function App() {
-  const SYSTEM_VERSION = "v1.8.38 Alpha"; // Code change = Version bump. Do not forget!
+  const SYSTEM_VERSION = "v1.8.39 Alpha"; // Code change = Version bump. Do not forget!
   // Force Build 2026-02-03 06:40 // Build 2026-02-03-02
 
   console.log("System Version Loaded:", SYSTEM_VERSION); // Debug Log
@@ -423,10 +423,14 @@ export default function App() {
         「${searchTopic}」に関する、** 今この瞬間の最新かつ具体的なニュース ** を1つ選定し、それをテーマにした4コマ漫画のシナリオを作成してください。
 
         【選定ルールの絶対厳守】
-  1. **「AI」「人工知能」「ロボット」「スマホ」「SNS」等のIT系ネタは禁止（頻出のため）。**
+   1. **「AI」「人工知能」「ロボット」「スマホ」「SNS」等のIT系ネタは禁止（頻出のため）。**
     2. ** 具体的でマイナーな、しかし「ツッコミどころのある」ニュース ** を選んでください。
          （例: 「珍しい動物発見」「変な世界記録更新」「食べ物の論争」「スポーツの珍プレー」等）
-  3.  抽象的な「最近の流行」ではなく、「◯◯が××を発表」といった固有名詞を含むニュースを優先。
+   3.  抽象的な「最近の流行」ではなく、「◯◯が××を発表」といった固有名詞を含むニュースを優先。
+   4. **【場所（Location）の選定義務】**:
+      - ニュースの内容に**「最も適した具体的な舞台」**を選んでください。
+      - **禁止**: 「学校の教室」「真っ白な背景」「普通の部屋」。
+      - **推奨**: 「国会議事堂」「砂漠」「宇宙船」「海底」「スタジアム」「ラーメン屋の厨房」「ジャングル」など、視覚的に面白い場所。
 
         【シナリオ構成・演出の絶対厳守 (v1.8.0)】
         0. **全員登場義務 (Mandatory All-Cast)**:
@@ -454,6 +458,7 @@ export default function App() {
         以下の独自フォーマットのみを出力してください。JSONやMarkdownは不要です。
 
         Topic: [ニュースの見出し（15文字以内）]
+        Location: [ニュースの内容に即した舞台（例: 砂漠、法廷、宇宙）。※教室は禁止]
         Scenario:
         [1コマ目: 起]
         (状況とセリフ...)
@@ -488,10 +493,12 @@ export default function App() {
 
       try {
         const titleMatch = result.text.match(/Topic:\s*(.+)/i);
+        const locationMatch = result.text.match(/Location:\s*(.+)/i);
         const scenarioMatch = result.text.match(/Scenario:\s*([\s\S]+)/i);
 
         if (scenarioMatch) {
           parsedData.topic = titleMatch ? titleMatch[1].trim() : randomCategory;
+          parsedData.location = locationMatch ? locationMatch[1].trim() : "Generic Background";
           parsedData.scenario = scenarioMatch[1].trim();
         } else {
           // Fallback: Try JSON just in case the model ignored instructions, or raw
@@ -499,6 +506,7 @@ export default function App() {
           if (jsonMatch) {
             const json = JSON.parse(jsonMatch[0]);
             parsedData.topic = json.topic || randomCategory;
+            parsedData.location = json.location || "Generic Background";
             parsedData.scenario = json.scenario || result.text;
           } else {
             throw new Error("Format parse failed");
@@ -514,8 +522,8 @@ export default function App() {
       // setTargetDate(parsedData.date || ...); <--- DISABLED
 
       setScenario(parsedData.scenario);
-      // We append the topic to the scenario text for visibility or just use it for the prompt
-      setScenario(`## タイトル: ${parsedData.topic} !?\n\n${parsedData.scenario} `);
+      // We append the topic and location to the scenario text for visibility and parsing
+      setScenario(`## タイトル: ${parsedData.topic} !?\nLocation: ${parsedData.location || "Unspecified"}\n\n${parsedData.scenario} `);
 
       setScenarioThought(prev => prev + `\n > Topic Selected: ${parsedData.topic} \n > Scenario Construction Complete.`);
       showStatus("シナリオの生成が完了しました！");
@@ -579,6 +587,7 @@ export default function App() {
     `;
 
       const cleanTopic = scenario.match(/## タイトル:\s*(.*?)(\n|$|!)/)?.[1]?.trim() || scenario.split('\n')[0].substring(0, 20);
+      const cleanLocation = scenario.match(/Location:\s*(.*?)(\n|$)/i)?.[1]?.trim() || "Generic Detailed Background";
       const cleanScenario = scenario;
 
       // [v1.8.3] Smart Splitter for Panels
@@ -607,12 +616,13 @@ export default function App() {
   VAR_TARGET_DATE = "${targetDate}"
   VAR_CAST_LIST = "${castList.replace(/\n/g, ', ')}"
   VAR_SCENARIO_TOPIC = "${cleanTopic}"
+  VAR_LOCATION = "${cleanLocation}"
   
   // [STRUCTURED SCENARIO DATA v1.8.3]
-  VAR_PANEL_1_KI  = "${panel1Text.replace(/"/g, '\\"').replace(/\n/g, ' ')}"
-  VAR_PANEL_2_SHO = "${panel2Text.replace(/"/g, '\\"').replace(/\n/g, ' ')}"
-  VAR_PANEL_3_TEN = "${panel3Text.replace(/"/g, '\\"').replace(/\n/g, ' ')}"
-  VAR_PANEL_4_KETSU = "${panel4Text.replace(/"/g, '\\"').replace(/\n/g, ' ')}"
+  VAR_PANEL_1_KI  = "(Location: ${cleanLocation}), " + "${panel1Text.replace(/"/g, '\\"').replace(/\n/g, ' ')}"
+  VAR_PANEL_2_SHO = "(Location: ${cleanLocation}), " + "${panel2Text.replace(/"/g, '\\"').replace(/\n/g, ' ')}"
+  VAR_PANEL_3_TEN = "(Location: ${cleanLocation}), " + "${panel3Text.replace(/"/g, '\\"').replace(/\n/g, ' ')}"
+  VAR_PANEL_4_KETSU = "(Location: ${cleanLocation}), " + "${panel4Text.replace(/"/g, '\\"').replace(/\n/g, ' ')}"
 
 /* ============================================================================
     [LEVEL 1.5: CHARACTER IDENTITY MATRIX - ANTI-FUSION PROTOCOL]
@@ -648,6 +658,11 @@ RULE_5: "Maintain absolute consistency of features (Hair, Eyes, Glasses) for eac
       --ar 2:3 --niji 6 --style raw --stylize 1000
       (Masterpiece), (Best Quality), (Ultra-Detailed), (8k resolution), (Vibrant high-saturation colors), (Deep cinematic lighting), (Intricate details), (Top-Tier Animation Studio Style:1.2), (Award Winning Compositing)
       
+      [WORLD & LOCATION LOCK]
+      (Setting): \${VAR_LOCATION}
+      (Atmosphere): (Environmental storytelling), (Detailed background architecture)
+      (Constraint): ABSOLUTELY NO CLASSROOMS unless explicitly requested.
+
       [ABSOLUTE PHYSICAL GEOMETRY LOCK - ${SYSTEM_VERSION}]
       (Aspect Ratio: 2:3 Vertical ONLY).
       (Orientation: Portrait Mode).
