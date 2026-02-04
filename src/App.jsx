@@ -133,7 +133,7 @@ const ApiKeyModal = ({ isOpen, onSave }) => {
 };
 
 export default function App() {
-  const SYSTEM_VERSION = "v1.8.39 Alpha"; // Code change = Version bump. Do not forget!
+  const SYSTEM_VERSION = "v1.8.40 Alpha"; // Code change = Version bump. Do not forget!
   // Force Build 2026-02-03 06:40 // Build 2026-02-03-02
 
   console.log("System Version Loaded:", SYSTEM_VERSION); // Debug Log
@@ -429,7 +429,7 @@ export default function App() {
    3.  抽象的な「最近の流行」ではなく、「◯◯が××を発表」といった固有名詞を含むニュースを優先。
    4. **【場所（Location）の選定義務】**:
       - ニュースの内容に**「最も適した具体的な舞台」**を選んでください。
-      - **禁止**: 「学校の教室」「真っ白な背景」「普通の部屋」。
+      - **デフォルト回避**: 安易な「教室」「白い部屋」は避けるが、**ニュースの文脈（学生、学校関連）で必要ならば「教室」も許可する。**重要なのは「ニュースとの適合性」である。
       - **推奨**: 「国会議事堂」「砂漠」「宇宙船」「海底」「スタジアム」「ラーメン屋の厨房」「ジャングル」など、視覚的に面白い場所。
 
         【シナリオ構成・演出の絶対厳守 (v1.8.0)】
@@ -661,7 +661,6 @@ RULE_5: "Maintain absolute consistency of features (Hair, Eyes, Glasses) for eac
       [WORLD & LOCATION LOCK]
       (Setting): \${VAR_LOCATION}
       (Atmosphere): (Environmental storytelling), (Detailed background architecture)
-      (Constraint): ABSOLUTELY NO CLASSROOMS unless explicitly requested.
 
       [ABSOLUTE PHYSICAL GEOMETRY LOCK - ${SYSTEM_VERSION}]
       (Aspect Ratio: 2:3 Vertical ONLY).
