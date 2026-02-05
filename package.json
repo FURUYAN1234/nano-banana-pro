@@ -1,13 +1,13 @@
 {
   "name": "nano-banana-pro",
   "private": true,
-  "version": "1.8.42",
+  "version": "1.8.48",
   "homepage": "https://FURUYAN1234.github.io/nano-banana-pro",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "predeploy": "npm run build",
+    "predeploy": "node scripts/pre_deploy_check.js && npm run build",
     "deploy": "gh-pages -d dist",
     "lint": "eslint .",
     "preview": "vite preview"

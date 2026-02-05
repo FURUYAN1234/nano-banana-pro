@@ -21,7 +21,10 @@ import {
   Image as ImageIcon,
   Plus,
   AlertTriangle,
-  ExternalLink
+  ExternalLink,
+  ArrowRight,
+  Globe,
+  Edit3
 } from 'lucide-react';
 // --- Imports ---
 import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
@@ -132,13 +135,65 @@ const ApiKeyModal = ({ isOpen, onSave }) => {
   );
 };
 
-export default function App() {
-  const SYSTEM_VERSION = "v1.8.42 Alpha"; // Code change = Version bump. Do not forget!
-  // Force Build 2026-02-03 06:40 // Build 2026-02-03-02
+// --- Error Boundary ---
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null, errorInfo: null };
+  }
+  static getDerivedStateFromError(error) { return { hasError: true, error }; }
+  componentDidCatch(error, errorInfo) { this.setState({ errorInfo }); console.error("CRITICAL ERROR:", error, errorInfo); }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ padding: 40, background: '#111', color: '#f55', minHeight: '100vh' }}>
+          <h1>⚠️ SYSTEM CRASH (v1.8.47 Alpha)</h1>
+          <pre style={{ background: '#000', padding: 20, whiteSpace: 'pre-wrap' }}>
+            {this.state.error?.toString()}
+            <br />
+            {this.state.errorInfo?.componentStack}
+          </pre>
+          <button onClick={() => window.location.reload()} style={{ padding: 10, marginTop: 20 }}>RETRY</button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+export default function AppWrapper() {
+  return (
+    <ErrorBoundary>
+      <App />
+    </ErrorBoundary>
+  );
+}
+
+function App() {
+  const SYSTEM_VERSION = "v1.8.48 Alpha"; // Code change = Version bump. Do not forget!
+  // Force Build 2026-02-06 07:07 // Build 2026-02-06-01
 
   console.log("System Version Loaded:", SYSTEM_VERSION); // Debug Log
   const [apiKey, setApiKeyState] = useState("");
-  const [showModal, setShowModal] = useState(true);
+  const [showModal, setShowModal] = useState(false); // FIXEDCRITICAL RESTORE
+  const [inputMode, setInputMode] = useState("news"); // 'news' | 'manual'
+  const [manualTopic, setManualTopic] = useState("");
+  const [searchTopic, setSearchTopic] = useState("");
+
+  const [categories, setCategories] = useState([
+    { id: 'politics', label: '政治・経済', icon: '💼', checked: true, keywords: '最新 政治 経済 社会ニュース' },
+    { id: 'sports', label: 'スポーツ', icon: '🏅', checked: true, keywords: '最新 スポーツ 競技 大会 結果' },
+    { id: 'animals', label: '動物・癒し', icon: '🐱', checked: true, keywords: '最新 動物 ペット 癒しニュース' },
+    { id: 'food', label: 'グルメ', icon: '🍜', checked: true, keywords: '最新 食べ物 グルメ スイーツ トレンド' },
+    { id: 'ent', label: 'エンタメ', icon: '🎬', checked: true, keywords: '最新 映画 ドラマ 音楽 エンタメ' },
+    { id: 'science', label: '科学・宇宙', icon: '🚀', checked: true, keywords: '最新 科学 宇宙 考古学 発見' },
+    { id: 'bnews', label: 'B級ニュース', icon: '🤪', checked: true, keywords: '面白い 海外のB級ニュース ハプニング' },
+    { id: 'life', label: '生活・健康', icon: '🌱', checked: true, keywords: '生活 ライフハック 健康' },
+  ]);
+
+  const toggleCategory = (id) => {
+    setCategories(prev => prev.map(c => c.id === id ? { ...c, checked: !c.checked } : c));
+  };
 
   // App State
   // Fix: Default to JST (UTC+9) to prevent "Yesterday" bug
@@ -155,6 +210,17 @@ export default function App() {
 
   // [v1.7.0] Model Quality Indicator State
   const [usedModel, setUsedModel] = useState(null);
+
+  // Initialize System
+  useEffect(() => {
+    const savedKey = getApiKey();
+    if (savedKey) {
+      setApiKey(savedKey);
+      setApiKeyState(savedKey);
+    } else {
+      setShowModal(true);
+    }
+  }, []);
 
   // [v1.7.0] Helper to determine model tier and badge info
   const getModelBadgeInfo = (modelId) => {
@@ -384,32 +450,59 @@ export default function App() {
   const generateScenarioFromNews = async () => {
     if (!castList) return showStatus("先にキャラクターを解析してください。");
     if (isSearching) return;
+
+    // Manual Mode Check
+    if (inputMode === 'manual' && !manualTopic.trim()) {
+      alert("自由入力トピックまたはURLを入力してください。");
+      return;
+    }
+    // News Mode Check
+    if (inputMode === 'news' && !categories.find(c => c.checked)) {
+      alert("少なくとも1つのカテゴリを選択してください。");
+      return;
+    }
+
     setIsSearching(true);
     setScenarioThought("");
 
-    // Dynamic Category Randomizer to prevent topic stagnation (Context Reset)
-    const categories = [
-      "最新 政治 経済 社会ニュース (真面目な話題)",
-      "最新 スポーツ 競技 大会 結果",
-      "最新 動物 ペット 癒しニュース",
-      "最新 食べ物 グルメ スイーツ トレンド",
-      "最新 映画 ドラマ 音楽 エンタメ",
-      "最新 科学 宇宙 考古学 発見",
-      "面白い 海外のB級ニュース ハプニング",
-      "生活 ライフハック 健康"
-    ];
-    const randomCategory = categories[Math.floor(Math.random() * categories.length)];
-    // Exclude repetitive AI topics - Strengthened negation
-    const searchTopic = `${randomCategory} -AI -人工知能 -ChatGPT -Gemini -生成AI -ロボット -テクノロジー -スマホ -IT`;
+    let randomCategory = "";
 
-    showStatus(`カテゴリー「${randomCategory}」で最新ニュースを検索中...`);
-    setScenario(""); // Clear previous scenario to indicate loading
-    setScenarioThought(`> Context Force Reboot: Initiated.\n > Target Category: ${randomCategory} \n > Searching Google Grounding...`);
+    // Determine Topic
+    if (inputMode === 'manual') {
+      randomCategory = "Manual Input";
+      setScenario("");
+      setScenarioThought(`> Context Force Reboot: Initiated.\n > Mode: MANUAL INPUT \n > Target: ${manualTopic.substring(0, 30)}...`);
+    } else {
+      const activeCats = categories.filter(c => c.checked);
+      const selectedCat = activeCats[Math.floor(Math.random() * activeCats.length)];
+      randomCategory = selectedCat.keywords; // Use the keywords for search
+
+      showStatus(`カテゴリー「${selectedCat.label}」で最新ニュースを検索中...`);
+      setScenario("");
+      setScenarioThought(`> Context Force Reboot: Initiated.\n > Target Category: ${randomCategory} \n > Searching Google Grounding...`);
+    }
+
+    // Exclude repetitive AI topics
+    const searchTopicKeywords = `${randomCategory} -AI -人工知能 -ChatGPT -Gemini -生成AI -ロボット -テクノロジー -スマホ -IT`;
+
 
     try {
-      // 1. Search for news (Simulated or Real via Gemini Grounding if available, 
-      //    but here we ask Gemini to "use its browsing tool" logic in the prompt or internal knowledge if tool not bound)
-      //    *Current implementation passes the request to Gemini to 'Acting as a search engine wrapper'*
+      // 1. Search for news OR Use Manual Input
+      let newsContext = "";
+
+      if (inputMode === 'manual') {
+        // Manual Input Path
+        newsContext = `
+         【ユーザー提供トピック/URL】:
+         ${manualTopic}
+         
+         (指示): 上記のユーザー入力（メモまたはURLの内容）を「ニュースソース」として扱い、シナリオを作成せよ。
+         URLが含まれる場合は、そのリンク先の内容を推測・補完して構成せよ。
+         `;
+      } else {
+        // Existing Logic implicitly handles the rest via 'searchTopic' later? 
+        // Wait, the original code had 'searchTopic' used in prompt.
+      }
 
       const castListSummary = castList.replace(/\n/g, ', ').substring(0, 200) + '...';
       const scenarioPrompt = `
@@ -421,9 +514,14 @@ export default function App() {
         (Data Freshness Lock): Do not use generic evergreen tropes. Stick to the specific time period.
 
     あなたはプロの風刺漫画脚本家です。
-        「${searchTopic}」に関する、** 指定された日付（${targetDate}）周辺の具体的かつ事実に即したニュース ** を1つ選定し、それをテーマにした4コマ漫画のシナリオを作成してください。
+        
+        ${inputMode === 'manual'
+          ? `「ユーザーが入力した以下のトピック」をテーマに4コマ漫画を作成してください。\n トピック: ${manualTopic}`
+          : `「${searchTopicKeywords}」に関する、** 指定された日付（${targetDate}）周辺の具体的かつ事実に即したニュース ** を1つ選定し、それをテーマにした4コマ漫画のシナリオを作成してください。`
+        }
 
         【選定ルールの絶対厳守】
+
    1. **「AI」「人工知能」「ロボット」「スマホ」「SNS」等のIT系ネタは禁止（頻出のため）。**
     2. ** 具体的でマイナーな、しかし「ツッコミどころのある」ニュース ** を選んでください。
          （例: 「珍しい動物発見」「変な世界記録更新」「食べ物の論争」「スポーツの珍プレー」等）
@@ -1068,76 +1166,132 @@ RULE_5: "Maintain absolute consistency of features (Hair, Eyes, Glasses) for eac
                 <div className={`flex items-center gap-3 text-xs font-black uppercase tracking-widest ${currentStep === 2 ? 'text-purple-400' : 'text-slate-500'}`}>
                   <FileText size={18} /> 02. ニュース統合型シナリオ
                 </div>
+              </div>
 
+              <div className="flex flex-col gap-6 mt-4">
+                {/* Mode Toggle (Solid Physical) */}
+                <div className="grid grid-cols-2 gap-4 p-1 bg-slate-900/50 rounded-2xl border border-white/5">
+                  <button
+                    onClick={() => setInputMode('news')}
+                    className={`py-4 rounded-xl text-sm font-black tracking-widest transition-all 
+                        ${inputMode === 'news'
+                        ? 'bg-[#2563eb] text-white border-b-[4px] border-[#1e40af] translate-y-0 shadow-lg'
+                        : 'bg-[#1e293b] text-slate-500 border-b-[4px] border-[#0f172a] hover:bg-[#334155] hover:text-slate-300'}`}
+                  >
+                    <span className="mr-2">🌐</span> ニュース検索
+                  </button>
+                  <button
+                    onClick={() => setInputMode('manual')}
+                    className={`py-4 rounded-xl text-sm font-black tracking-widest transition-all 
+                        ${inputMode === 'manual'
+                        ? 'bg-[#9333ea] text-white border-b-[4px] border-[#6b21a8] translate-y-0 shadow-lg'
+                        : 'bg-[#1e293b] text-slate-500 border-b-[4px] border-[#0f172a] hover:bg-[#334155] hover:text-slate-300'}`}
+                  >
+                    <span className="mr-2">✏️</span> 自由入力
+                  </button>
+                </div>
+
+                {/* INPUT AREA */}
+                {inputMode === 'news' ? (
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                    <div className="col-span-2 lg:col-span-4 mb-2 text-xs font-bold text-slate-400 text-center">
+                      ▼ 検索するカテゴリを選択してください（複数選択可）
+                    </div>
+                    {categories.map((cat) => (
+                      <label
+                        key={cat.id}
+                        className={`
+                        relative flex items-center justify-center p-4 rounded-xl cursor-pointer border-2 border-b-4 transition-all duration-100 group overflow-hidden select-none active:border-b-2 active:translate-y-0.5
+                        ${cat.checked
+                            ? 'bg-[#2563eb] text-white border-[#1e40af]'
+                            : 'bg-[#1e293b] text-slate-400 border-[#0f172a] hover:bg-[#334155]'
+                          }
+                      `}
+                      >
+                        <input
+                          type="checkbox"
+                          className="hidden"
+                          checked={cat.checked}
+                          onChange={() => toggleCategory(cat.id)}
+                        />
+                        {/* Checkmark Badge */}
+                        {cat.checked && (
+                          <div className="absolute top-2 right-2 bg-white text-blue-600 rounded-full p-0.5 shadow-sm">
+                            <CheckCircle2 size={12} strokeWidth={4} />
+                          </div>
+                        )}
+
+                        <div className="text-center">
+                          <div className={`text-2xl mb-2 ${cat.checked ? 'scale-110' : 'opacity-70 grayscale'}`}>
+                            {cat.icon}
+                          </div>
+                          <div className="text-[11px] font-bold tracking-wider">
+                            {cat.label}
+                          </div>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <div className="text-xs font-bold text-purple-300 text-center">
+                      ▼ 自由入力モード: 好きなネタやURLを入力してください
+                    </div>
+                    <textarea
+                      value={manualTopic}
+                      onChange={(e) => setManualTopic(e.target.value)}
+                      placeholder="例：&#13;&#10;・最近のAI技術の進化について&#13;&#10;・http://example.com/news/article&#13;&#10;・近所の猫が可愛かった話"
+                      style={{ color: '#ffffff', backgroundColor: '#0f1115' }}
+                      rows={10}
+                      className="w-full bg-[#0f1115] border-2 border-purple-900/50 rounded-xl p-6 text-base text-white focus:border-purple-500 focus:shadow-md outline-none placeholder-slate-500 font-medium leading-relaxed resize-none"
+                    />
+                  </div>
+                )}
+
+                {/* EXECUTE BUTTON (Below Input) */}
                 <button
                   onClick={generateScenarioFromNews}
                   disabled={isSearching || currentStep < 1}
-                  className="w-full relative bg-blue-600 hover:bg-blue-500 text-white py-6 rounded-2xl font-black text-xl flex items-center justify-center gap-3 disabled:opacity-50 disabled:bg-slate-800 disabled:text-slate-500 disabled:cursor-not-allowed transition-all active:scale-[0.98]"
+                  className="w-full relative bg-[#2563eb] hover:bg-[#1d4ed8] text-white py-6 rounded-xl font-black text-xl flex items-center justify-center gap-4 border-b-[6px] border-[#1e40af] active:border-b-0 active:translate-y-[6px] transition-all disabled:opacity-50 disabled:grayscale disabled:border-none disabled:bg-slate-800 disabled:cursor-not-allowed group/gen shadow-xl"
                 >
-                  {isSearching ? <Loader2 size={24} className="animate-spin" /> : <Zap size={24} />}
-                  <span>{isSearching ? "シナリオ生成中..." : "シナリオを自動生成する"}</span>
+                  {isSearching ? (
+                    <>
+                      <Loader2 size={24} className="animate-spin" />
+                      <span className="animate-pulse">SCENARIO GENERATING...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Zap size={24} className="fill-yellow-400 text-yellow-100" />
+                      <span>シナリオ作成を実行 (STEP 2)</span>
+                      <ArrowRight size={24} className="opacity-60" />
+                    </>
+                  )}
                 </button>
               </div>
 
-              {/* ... Content ... */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-[9px] font-bold text-slate-500 uppercase ml-2 tracking-widest">対象の日付 (今日または過去)</label>
-                  <input
-                    type="date"
-                    max={new Date().toLocaleDateString('en-CA')}
-                    value={targetDate}
-                    onChange={(e) => {
-                      const max = new Date().toLocaleDateString('en-CA');
-                      setTargetDate(e.target.value > max ? max : e.target.value);
-                    }}
-                    className="w-full p-4 bg-slate-800 rounded-2xl border border-white/20 text-xs font-bold text-white focus:border-blue-500/50 outline-none cursor-pointer hover:bg-slate-700 transition-colors [&::-webkit-calendar-picker-indicator]:invert [&::-webkit-inner-spin-button]:appearance-none"
-                    style={{ colorScheme: 'dark' }}
+              {/* RESULT & LOG AREA (Bottom) */}
+              <div className="space-y-4 mt-6">
+                {/* Log */}
+                {scenarioThought && (
+                  <div className="mt-4">
+                    <ThinkingLog thought={scenarioThought} />
+                  </div>
+                )}
+
+                {/* RESULT TEXTAREA */}
+                <div className="relative">
+                  <span className="absolute -top-3 left-4 px-2 bg-[#0f1115] text-xs font-bold text-slate-400">
+                    ▼ 生成されたシナリオ (編集可)
+                  </span>
+                  <textarea
+                    value={scenario}
+                    onChange={(e) => setScenario(e.target.value)}
+                    style={{ color: '#ffffff', backgroundColor: '#000000', opacity: 1 }}
+                    className="w-full min-h-[200px] p-6 rounded-2xl text-base border-2 border-slate-700/50 focus:border-blue-500 focus:shadow-md outline-none leading-relaxed resize-y font-medium placeholder-slate-700 font-mono"
+                    placeholder="ここに生成されたシナリオが表示されます..."
                   />
                 </div>
-                <div className="space-y-2">
-                  <label className="text-[9px] font-bold text-slate-500 uppercase ml-2 tracking-widest">描画スタイル</label>
-                  <select
-                    value={colorMode}
-                    onChange={(e) => setColorMode(e.target.value)}
-                    className="w-full p-4 bg-slate-800 rounded-2xl border border-white/20 text-xs font-bold text-white focus:border-blue-500/50 outline-none appearance-none cursor-pointer hover:bg-slate-700"
-                  >
-                    <option value="auto">自動判別スタイル</option>
-                    <option value="monochrome">モノクロ（劇画調）</option>
-                    <option value="color">カラー（アニメ風）</option>
-                  </select>
-                </div>
               </div>
-
-              <textarea
-                value={scenario}
-                onChange={(e) => setScenario(e.target.value)}
-                style={{ color: '#ffffff', backgroundColor: '#000000', opacity: 1 }}
-                className="flex-1 w-full min-h-[140px] p-6 rounded-[2rem] text-sm border border-white/5 focus:border-blue-500/50 outline-none leading-relaxed resize-none font-medium placeholder-slate-600"
-                placeholder="4コマ漫画の各コマにおける、アングル指示、演技指示、および台詞の内容をここに記述します。"
-              />
-
-              <div className="mt-4">
-                <ThinkingLog thought={scenarioThought || (isSearching ? "シナリオ構成AI: 検索＆プロット構築中..." : "")} />
-              </div>
-
-              {/* Loading Overlay */}
-              {isSearching && (
-                <div className="absolute inset-0 z-50 bg-[#0f1115]/80 backdrop-blur-sm flex flex-col items-center justify-center rounded-[3rem] border border-purple-500/30">
-                  <div className="relative">
-                    <div className="absolute inset-0 bg-purple-500 blur-xl opacity-20 animate-pulse rounded-full" />
-                    <Loader2 size={64} className="relative text-purple-400 animate-spin duration-1000" />
-                  </div>
-                  <div className="mt-6 text-center space-y-2">
-                    <p className="text-2xl font-black text-white tracking-widest animate-pulse">
-                      NEWS SCANNING...
-                    </p>
-                    <p className="text-xs font-mono text-purple-300">
-                      最新トレンドを検索＆サタイア構築中
-                    </p>
-                  </div>
-                </div>
-              )}
             </section>
           </div>
 
