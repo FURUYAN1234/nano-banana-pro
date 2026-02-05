@@ -133,7 +133,7 @@ const ApiKeyModal = ({ isOpen, onSave }) => {
 };
 
 export default function App() {
-  const SYSTEM_VERSION = "v1.8.40 Alpha"; // Code change = Version bump. Do not forget!
+  const SYSTEM_VERSION = "v1.8.41 Alpha"; // Code change = Version bump. Do not forget!
   // Force Build 2026-02-03 06:40 // Build 2026-02-03-02
 
   console.log("System Version Loaded:", SYSTEM_VERSION); // Debug Log
@@ -417,10 +417,11 @@ export default function App() {
         Ignore all previous instructions and conversation history.This is a fresh, standalone session.
         (ABSOLUTE PROHIBITION: Repeating topics from the past.You MUST select a FRESH, UNIQUE topic).
         (Topic Lock): Focus strictly on the category: "${randomCategory}".
-        (Data Freshness Lock): Use the latest available information.Do not use generic evergreen tropes.
+        (Time Machine Lock): The target date is **${targetDate}**. You MUST search for news/events that happened AROUND this date.
+        (Data Freshness Lock): Do not use generic evergreen tropes. Stick to the specific time period.
 
     あなたはプロの風刺漫画脚本家です。
-        「${searchTopic}」に関する、** 今この瞬間の最新かつ具体的なニュース ** を1つ選定し、それをテーマにした4コマ漫画のシナリオを作成してください。
+        「${searchTopic}」に関する、** 指定された日付（${targetDate}）周辺の具体的かつ事実に即したニュース ** を1つ選定し、それをテーマにした4コマ漫画のシナリオを作成してください。
 
         【選定ルールの絶対厳守】
    1. **「AI」「人工知能」「ロボット」「スマホ」「SNS」等のIT系ネタは禁止（頻出のため）。**
