@@ -108,11 +108,11 @@ const ApiKeyModal = ({ isOpen, onSave }) => {
 
         <div className="mb-6">
           <input
-            type="text"
+            type="password"
             value={key}
             onChange={(e) => setKey(e.target.value)}
-            placeholder="API Enter... (Paste your key here)"
-            className="w-full bg-[#1a1a1a] text-white p-3 rounded-xl border border-white/10 focus:border-blue-500 outline-none font-mono"
+            placeholder="API Key (Paste here)..."
+            className="w-full bg-[#1a1a1a] !text-white placeholder:text-slate-500 p-3 rounded-xl border border-white/10 focus:border-blue-500 outline-none font-mono"
             onKeyDown={(e) => e.key === 'Enter' && handleSave()}
           />
         </div>
@@ -163,7 +163,7 @@ export default function AppWrapper() {
 }
 
 function App() {
-  const SYSTEM_VERSION = "v1.8.87 Alpha"; // Code change = Version bump. Do not forget!
+  const SYSTEM_VERSION = "v1.8.87 Alpha 2"; // Code change = Version bump. Do not forget!
   // Force Build 2026-02-06 07:07 // Build 2026-02-06-01
 
   console.log("System Version Loaded:", SYSTEM_VERSION); // Debug Log
