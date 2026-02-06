@@ -89,7 +89,7 @@ const ApiKeyModal = ({ isOpen, onSave }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/90 backdrop-blur-md">
+    <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/90 backdrop-blur-md">
       <div className="bg-[#111] border border-blue-500/30 p-8 rounded-xl w-full max-w-md shadow-2xl relative">
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-purple-500" />
         <h2 className="text-2xl font-black text-white mb-4 tracking-tighter uppercase flex items-center gap-2 italic">
@@ -163,7 +163,7 @@ export default function AppWrapper() {
 }
 
 function App() {
-  const SYSTEM_VERSION = "v1.8.86 Alpha"; // Code change = Version bump. Do not forget!
+  const SYSTEM_VERSION = "v1.8.87 Hotfix"; // Code change = Version bump. Do not forget!
   // Force Build 2026-02-06 07:07 // Build 2026-02-06-01
 
   console.log("System Version Loaded:", SYSTEM_VERSION); // Debug Log
@@ -991,6 +991,9 @@ function App() {
             </div>
           </div>
 
+          <button onClick={() => setShowModal(true)} className="group flex items-center gap-2 bg-blue-900/20 hover:bg-blue-600 text-blue-400 hover:text-white px-6 py-4 rounded-2xl font-bold transition-all border border-blue-500/30 z-10 mr-4">
+            <Zap size={18} className="fill-current" /> Key変更
+          </button>
           <button onClick={resetAll} className="group flex items-center gap-2 bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white px-8 py-4 rounded-2xl font-bold transition-all border border-white/5 z-10">
             <RefreshCw size={18} className="group-hover:rotate-180 transition-transform duration-500" /> 入力をリセット
           </button>

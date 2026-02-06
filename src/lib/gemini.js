@@ -15,13 +15,16 @@ const MODEL_IDS = [
 ];
 
 // Store API key in memory
-let currentApiKey = "";
+let currentApiKey = localStorage.getItem("gemini_api_key") || "";
 
 export const setApiKey = (key) => {
     currentApiKey = key;
+    localStorage.setItem("gemini_api_key", key);
 };
 
-export const getApiKey = () => currentApiKey;
+export const getApiKey = () => {
+    return currentApiKey || localStorage.getItem("gemini_api_key");
+};
 
 /**
  * Diagnostic Function: Fetches the ACTUAL list of models available to this API key.
