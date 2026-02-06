@@ -111,8 +111,8 @@ const ApiKeyModal = ({ isOpen, onSave }) => {
             type="password"
             value={key}
             onChange={(e) => setKey(e.target.value)}
-            placeholder="API Key (Paste here)..."
-            className="w-full bg-[#1a1a1a] !text-white placeholder:text-slate-500 p-3 rounded-xl border border-white/10 focus:border-blue-500 outline-none font-mono"
+            placeholder="APIキーを入力..."
+            className="w-full bg-white text-black placeholder:text-slate-400 p-3 rounded-xl border border-white/10 focus:border-blue-500 outline-none font-mono tracking-widest shadow-[0_0_15px_rgba(255,255,255,0.1)] focus:shadow-[0_0_20px_rgba(59,130,246,0.3)] transition-all"
             onKeyDown={(e) => e.key === 'Enter' && handleSave()}
           />
         </div>
@@ -163,7 +163,7 @@ export default function AppWrapper() {
 }
 
 function App() {
-  const SYSTEM_VERSION = "v1.8.87 Alpha 2"; // Code change = Version bump. Do not forget!
+  const SYSTEM_VERSION = "v1.8.88 Alpha"; // Code change = Version bump. Do not forget!
   // Force Build 2026-02-06 07:07 // Build 2026-02-06-01
 
   console.log("System Version Loaded:", SYSTEM_VERSION); // Debug Log
@@ -991,9 +991,6 @@ function App() {
             </div>
           </div>
 
-          <button onClick={() => setShowModal(true)} className="group flex items-center gap-2 bg-blue-900/20 hover:bg-blue-600 text-blue-400 hover:text-white px-6 py-4 rounded-2xl font-bold transition-all border border-blue-500/30 z-10 mr-4">
-            <Zap size={18} className="fill-current" /> Key変更
-          </button>
           <button onClick={resetAll} className="group flex items-center gap-2 bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white px-8 py-4 rounded-2xl font-bold transition-all border border-white/5 z-10">
             <RefreshCw size={18} className="group-hover:rotate-180 transition-transform duration-500" /> 入力をリセット
           </button>
