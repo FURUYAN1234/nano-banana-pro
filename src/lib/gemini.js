@@ -92,7 +92,7 @@ export const callThinkingGemini = async (prompt, images = null, systemInstructio
             const model = genAI.getGenerativeModel(modelParams, { apiVersion: "v1beta" });
 
             const timeoutPromise = new Promise((_, reject) =>
-                setTimeout(() => reject(new Error(`Timeout awaiting response from ${modelId} (20s limit)`)), 20000)
+                setTimeout(() => reject(new Error(`Timeout awaiting response from ${modelId} (60s limit)`)), 60000)
             );
 
             // [v1.8.66] Updated for Gemini 2.0 Flash: Use 'googleSearch' instead of 'googleSearchRetrieval'
