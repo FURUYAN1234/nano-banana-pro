@@ -163,7 +163,7 @@ export default function AppWrapper() {
 }
 
 function App() {
-  const SYSTEM_VERSION = "v1.8.89 Alpha"; // Code change = Version bump. Do not forget!
+  const SYSTEM_VERSION = "v1.8.90 Alpha"; // Code change = Version bump. Do not forget!
   // Force Build 2026-02-06 07:07 // Build 2026-02-06-01
 
   console.log("System Version Loaded:", SYSTEM_VERSION); // Debug Log
@@ -1097,7 +1097,7 @@ function App() {
                     <div className="mt-3 flex flex-col items-center gap-1 group/preview">
                       <span className="text-[9px] uppercase tracking-widest opacity-40 group-hover/preview:text-blue-400 transition-colors">推奨見本 (例)</span>
                       <img
-                        src={`${import.meta.env.BASE_URL} example_sheet.jpg`}
+                        src={`${import.meta.env.BASE_URL}example_sheet.jpg`}
                         alt="Example"
                         className="h-24 w-auto rounded-lg border border-white/10 opacity-50 group-hover/preview:opacity-100 transition-opacity shadow-2xl skew-x-[-2deg] hover:skew-x-0 duration-500"
                       />
