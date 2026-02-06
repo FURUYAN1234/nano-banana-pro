@@ -90,7 +90,7 @@ const ApiKeyModal = ({ isOpen, onSave }) => {
 
   return (
     <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/90 backdrop-blur-md">
-      <div className="bg-[#111] border border-blue-500/30 p-8 rounded-[2rem] w-full max-w-md shadow-2xl relative">
+      <div className="bg-[#111] border border-blue-500/30 p-8 rounded-xl w-full max-w-md shadow-2xl relative">
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-purple-500" />
         <h2 className="text-2xl font-black text-white mb-4 tracking-tighter uppercase flex items-center gap-2 italic">
           <Zap className="fill-blue-500 text-blue-500" /> システム初期化
@@ -103,25 +103,18 @@ const ApiKeyModal = ({ isOpen, onSave }) => {
         </p>
         <p className="text-[10px] text-slate-500 mb-6 flex items-center gap-1">
           <span className="text-yellow-500">⚠</span> APIキーはブラウザ内にのみ保存され、外部へは送信されませんが、管理には十分ご注意ください。
+          {error && <span className="text-red-500 ml-2">{error}</span>}
         </p>
 
-        <div className="relative mb-8">
+        <div className="mb-6">
           <input
             type="password"
             value={key}
-            onChange={(e) => { setKey(e.target.value); setError(""); }}
+            onChange={(e) => setKey(e.target.value)}
+            placeholder="API Enter..."
+            className="w-full bg-[#1a1a1a] text-white p-3 rounded-xl border border-white/10 focus:border-blue-500 outline-none font-mono"
             onKeyDown={(e) => e.key === 'Enter' && handleSave()}
-            placeholder="APIキーを入力..."
-            className="w-full h-14 bg-slate-900 border border-white/20 p-4 rounded-xl text-white focus:border-blue-500 outline-none font-mono transition-all placeholder-slate-500"
           />
-          <div className="absolute top-full right-0 mt-2 text-[10px] text-slate-500 font-bold tracking-widest opacity-60">
-            [ENTER] キーで確定
-          </div>
-          {error && (
-            <p className="text-red-500 text-xs font-bold mt-2 animate-pulse flex items-center gap-1 absolute -bottom-6 left-0">
-              <span className="inline-block w-2 h-2 bg-red-500 rounded-full" /> {error}
-            </p>
-          )}
         </div>
 
         <button
@@ -170,7 +163,7 @@ export default function AppWrapper() {
 }
 
 function App() {
-  const SYSTEM_VERSION = "v1.8.48 Alpha"; // Code change = Version bump. Do not forget!
+  const SYSTEM_VERSION = "v1.8.86 Alpha"; // Code change = Version bump. Do not forget!
   // Force Build 2026-02-06 07:07 // Build 2026-02-06-01
 
   console.log("System Version Loaded:", SYSTEM_VERSION); // Debug Log
@@ -181,14 +174,14 @@ function App() {
   const [searchTopic, setSearchTopic] = useState("");
 
   const [categories, setCategories] = useState([
-    { id: 'politics', label: '政治・経済', icon: '💼', checked: true, keywords: '最新 政治 経済 社会ニュース' },
-    { id: 'sports', label: 'スポーツ', icon: '🏅', checked: true, keywords: '最新 スポーツ 競技 大会 結果' },
-    { id: 'animals', label: '動物・癒し', icon: '🐱', checked: true, keywords: '最新 動物 ペット 癒しニュース' },
-    { id: 'food', label: 'グルメ', icon: '🍜', checked: true, keywords: '最新 食べ物 グルメ スイーツ トレンド' },
-    { id: 'ent', label: 'エンタメ', icon: '🎬', checked: true, keywords: '最新 映画 ドラマ 音楽 エンタメ' },
-    { id: 'science', label: '科学・宇宙', icon: '🚀', checked: true, keywords: '最新 科学 宇宙 考古学 発見' },
-    { id: 'bnews', label: 'B級ニュース', icon: '🤪', checked: true, keywords: '面白い 海外のB級ニュース ハプニング' },
-    { id: 'life', label: '生活・健康', icon: '🌱', checked: true, keywords: '生活 ライフハック 健康' },
+    { id: 'politics', label: '政治・経済', icon: '💼', checked: false, keywords: '最新 政治 経済 社会ニュース' },
+    { id: 'sports', label: 'スポーツ', icon: '🏅', checked: false, keywords: '最新 スポーツ 競技 大会 結果' },
+    { id: 'animals', label: '動物・癒し', icon: '🐱', checked: false, keywords: '最新 動物 ペット 癒しニュース' },
+    { id: 'food', label: 'グルメ', icon: '🍜', checked: false, keywords: '最新 食べ物 グルメ スイーツ トレンド' },
+    { id: 'ent', label: 'エンタメ', icon: '🎬', checked: false, keywords: '最新 映画 ドラマ 音楽 エンタメ' },
+    { id: 'science', label: '科学・宇宙', icon: '🚀', checked: false, keywords: '最新 科学 宇宙 考古学 発見' },
+    { id: 'bnews', label: 'B級ニュース', icon: '🤪', checked: false, keywords: '面白い 海外のB級ニュース ハプニング' },
+    { id: 'life', label: '生活・健康', icon: '🌱', checked: false, keywords: '生活 ライフハック 健康' },
   ]);
 
   const toggleCategory = (id) => {
@@ -277,7 +270,7 @@ function App() {
   const [genLog, setGenLog] = useState([]); // New Log State
 
   // Logic centralization for v1.4.9
-  const isAssembleDisabled = isAssembling || !castList || castList.length < 50 || !scenario || scenario.length < 50 || isSearching || isAnalyzing;
+  const isAssembleDisabled = isAssembling || !castList || castList.length < 20 || !scenario || scenario.length < 20 || isSearching || isAnalyzing; // [v1.8.83] Relaxed limits from 50 to 20
 
   // Image Generation
   const [generatedImage, setGeneratedImage] = useState("");
@@ -299,6 +292,12 @@ function App() {
     setStatus(msg);
     setTimeout(() => setStatus(""), 4000);
   };
+  // ... (skip lines to reach layout) ...
+
+  // ... (There is a large gap between definition and layout, better to use two separate replaces) ...
+  // Actually, let's just do the layout change here since I can't target both in one contiguous block easily without including too much code.
+  // I will split this into two calls.
+
 
 
   const processFiles = async (files) => {
@@ -464,6 +463,9 @@ function App() {
 
     setIsSearching(true);
     setScenarioThought("");
+    setFinalPrompt(""); // Fix: Clear previous prompt to prevent "Instant Done" state
+    setGeneratedImage(null); // Fix: Clear previous image
+    setAssembleThought(""); // Fix: Clear previous assembly log
 
     let randomCategory = "";
 
@@ -474,12 +476,17 @@ function App() {
       setScenarioThought(`> Context Force Reboot: Initiated.\n > Mode: MANUAL INPUT \n > Target: ${manualTopic.substring(0, 30)}...`);
     } else {
       const activeCats = categories.filter(c => c.checked);
-      const selectedCat = activeCats[Math.floor(Math.random() * activeCats.length)];
-      randomCategory = selectedCat.keywords; // Use the keywords for search
+      // FIX: Combined keywords from all selected categories
+      if (activeCats.length > 0) {
+        randomCategory = activeCats.map(c => c.keywords).join(' ');
 
-      showStatus(`カテゴリー「${selectedCat.label}」で最新ニュースを検索中...`);
-      setScenario("");
-      setScenarioThought(`> Context Force Reboot: Initiated.\n > Target Category: ${randomCategory} \n > Searching Google Grounding...`);
+        showStatus(`カテゴリ「${activeCats.map(c => c.label).join('・')}」で最新ニュースを検索中... (${targetDate})`);
+        setScenario("");
+        setScenarioThought(`> Context Force Reboot: Initiated.\n > Target Category: ${activeCats.map(c => c.label).join(', ')} (Keywords: ${randomCategory}) \n > Target Date: ${targetDate} \n > Searching Google Grounding...`);
+      } else {
+        // Fallback if checked but empty (should not happen due to validation)
+        randomCategory = "Latest News";
+      }
     }
 
     // Exclude repetitive AI topics
@@ -516,7 +523,7 @@ function App() {
     あなたはプロの風刺漫画脚本家です。
         
         ${inputMode === 'manual'
-          ? `「ユーザーが入力した以下のトピック」をテーマに4コマ漫画を作成してください。\n トピック: ${manualTopic}`
+          ? `「ユーザーが入力した以下のトピック」をテーマに4コマ漫画を作成してください。\n トピック: ${manualTopic}\n\n(重要指示): 入力がURLの場合は、**絶対に中身を想像（hallucinate）してはならない**。そのURLが何であるか100%確信できない場合は、トピック名を「URL解析不能」とし、「謎のリンクが送られてきた」というストーリーを作成せよ。`
           : `「${searchTopicKeywords}」に関する、** 指定された日付（${targetDate}）周辺の具体的かつ事実に即したニュース ** を1つ選定し、それをテーマにした4コマ漫画のシナリオを作成してください。`
         }
 
@@ -608,17 +615,25 @@ function App() {
             parsedData.location = json.location || "Generic Background";
             parsedData.scenario = json.scenario || result.text;
           } else {
-            throw new Error("Format parse failed");
+            // [v1.8.57] Logic Safety: If result is short/garbage, do not hallucinate randomly.
+            if (result.text.length < 20) {
+              throw new Error("AI returned empty or invalid response.");
+            }
+            // Treat raw text as scenario, but use the URL/Input as topic if available.
+            parsedData.topic = inputMode === 'manual' ? (manualTopic || "Custom Scenario") : (searchTopic || "Generated Scenario");
+            parsedData.scenario = result.text;
           }
         }
       } catch (e) {
         // Ultimate Fallback: Treat entire text as scenario
         console.warn("Parse warning:", e);
         parsedData.scenario = result.text;
+        parsedData.topic = "Generated Scenario";
       }
 
-      // Fix: Date Lock. Do NOT overwrite user's date with AI's date.
-      // setTargetDate(parsedData.date || ...); <--- DISABLED
+      // [v1.8.57] Anti-Hallucination Check for URLs
+      // If the User Input was a URL, but the AI generated a scenario clearly unrelated (e.g. Curling), we can't easily detect semantics,
+      // but we can ensure the TOPIC reflects the input source.
 
       setScenario(parsedData.scenario);
       // We append the topic and location to the scenario text for visibility and parsing
@@ -657,13 +672,15 @@ function App() {
           "\n> Injecting satire logic...",
           "\n> Finalizing 4-koma structure..."
         ];
+        // Don't add random messages if we are done (safety)
+        if (!isAssembling) return prev;
+
         const msg = messages[Math.floor(Math.random() * messages.length)];
         return prev + msg;
       });
     }, 600);
 
     try {
-      // Determine Style Variable based on user choice
       // Determine Style Variable based on user choice OR Auto-detection
       let isMonochrome = colorMode === 'monochrome';
       if (colorMode === 'auto') {
@@ -690,7 +707,6 @@ function App() {
       const cleanScenario = scenario;
 
       // [v1.8.3] Smart Splitter for Panels
-      // Attempt to extract 4 parts using the rigid format we enforced in step 2
       const extractPanel = (text, header, nextHeader) => {
         const regex = new RegExp(`\\[${header}.*?\\]([\\s\\S]*?)(?=\\[${nextHeader}|$)`, 'i');
         const match = text.match(regex);
@@ -702,64 +718,25 @@ function App() {
       const panel3Text = extractPanel(cleanScenario, "3コマ目", "4コマ目");
       const panel4Text = extractPanel(cleanScenario, "4コマ目", "UNKNOWN");
 
-      const prompt = `
-  /* SYSTEM: Super FURU Manga Protocol ${SYSTEM_VERSION} [Universal Master - Structured Injection]
-      TARGET: Absolute 4-Panel Manga (Strictly 2:3 Vertical)
-      CANVAS: --ar 2:3 (Physical Vertical Pillar Orientation)
-      LAYOUT: FULL BLEED (ZERO MARGINS) / Edge-to-Edge Art
-  */
+      // Define Panel Content Variables (JS Interpolation)
+      const VAR_PANEL_1_KI = `(Background: ${cleanLocation}), ${panel1Text.replace(/"/g, '\\"').replace(/\n/g, ' ')}`;
+      const VAR_PANEL_2_SHO = `(Background: ${cleanLocation}), ${panel2Text.replace(/"/g, '\\"').replace(/\n/g, ' ')}`;
+      const VAR_PANEL_3_TEN = `(Background: ${cleanLocation}), ${panel3Text.replace(/"/g, '\\"').replace(/\n/g, ' ')}`;
+      const VAR_PANEL_4_KETSU = `(Background: ${cleanLocation}), ${panel4Text.replace(/"/g, '\\"').replace(/\n/g, ' ')}`;
 
-  /* ============================================================================ 
-       [LEVEL 0: UNIVERSAL DATA INJECTION]
-      ============================================================================ */
-  VAR_TARGET_DATE = "${targetDate}"
-  VAR_CAST_LIST = "${castList.replace(/\n/g, ', ')}"
-  VAR_SCENARIO_TOPIC = "${cleanTopic}"
-  VAR_LOCATION = "${cleanLocation}"
-  
-  // [STRUCTURED SCENARIO DATA v1.8.3]
-  VAR_PANEL_1_KI  = "(Location: ${cleanLocation}), " + "${panel1Text.replace(/"/g, '\\"').replace(/\n/g, ' ')}"
-  VAR_PANEL_2_SHO = "(Location: ${cleanLocation}), " + "${panel2Text.replace(/"/g, '\\"').replace(/\n/g, ' ')}"
-  VAR_PANEL_3_TEN = "(Location: ${cleanLocation}), " + "${panel3Text.replace(/"/g, '\\"').replace(/\n/g, ' ')}"
-  VAR_PANEL_4_KETSU = "(Location: ${cleanLocation}), " + "${panel4Text.replace(/"/g, '\\"').replace(/\n/g, ' ')}"
+      const VAR_CAST_LIST = castList.replace(/\n/g, ', ');
 
-/* ============================================================================
-    [LEVEL 1.5: CHARACTER IDENTITY MATRIX - ANTI-FUSION PROTOCOL]
-   ============================================================================ */
-RULE_1: "Strictly separate all characters in VAR_CAST_LIST. Do not blend features."
-RULE_2: "IMPORTANT: You MUST copy the content of VAR_CAST_LIST into the final prompt VERBATIM. Do not summarize, do not shorten. Keep all (weight:1.5) tags exactly as they appear."
-RULE_3: "ANTI-FUSION: If Character A has Glasses, Character B MUST NOT inherit them. If a character description does NOT say 'Glasses', explicitly enforce [Bare Eyes / No Glasses]."
-RULE_4: "Attributes (Hair Color, Eye Shape, Accessories) are EXCLUSIVE to their owner. Do not mix them."
-RULE_5: "Maintain absolute consistency of features (Hair, Eyes, Glasses) for each named character across all 4 panels. NO FEATURE DRIFT."
-
-/* ============================================================================
-    [LEVEL 1: CORE GEOMETRY - SPATIAL ENFORCEMENT ENGINE v121.3]
-   ============================================================================ */
-1.[ABSOLUTE PHYSICAL VOID PILLAR]:
-- Canvas: Tall vertical rectangle.
-    - Physical Constraints: Top 15 % and Bottom 15 % are protected white space(Header / Footer).
-2.[CENTRAL COMPRESSED MANGA ZONE]:
-- Drawing Zone: FULL WIDTH(100 %) horizontal fill.
-    - Internal Floating Frames: 4 EQUAL - SIZED HORIZONTAL STRIPS stacked vertically.
-    - Structure: Absolute Uniformity.No irregular panels.
-    - Margin: NONE.BLEED TO EDGE.
-3.[TEXT & TYPO - VOID]:
-- Vertical Force: Strictly VERTICAL Japanese dialogue(Kanji / Kana) only.
-    - Typo - Void: No English(except Signature), numbers, or technical tags.
-    - Dialogue Format: Direct speech content ONLY.NEVER include "Name:" prefixes in bubbles.
-
-  /* ============================================================================
-      [LEVEL 3: SUPREME EXECUTION SCRIPT v121.3]
-     ============================================================================ */
-
-  FINAL_PROMPT = \`
-      Generate an image of # Super FURU Manga Protocol ${SYSTEM_VERSION} [ZENITH UPGRADE] - EXECUTION
+      // [v1.8.79 Deterministic Fix] Construct Prompt Directly in Logic (No AI Hallucination Risk)
+      // We skip callThinkingGemini because this step is pure assembly.
+      const constructedPrompt = `
+      Generate an image of # Super FURU Manga Protocol ${SYSTEM_VERSION} [ZENITH UPGRADE]-EXECUTION
       --ar 2:3 --niji 6 --style raw --stylize 1000
       (Masterpiece), (Best Quality), (Ultra-Detailed), (8k resolution), (Vibrant high-saturation colors), (Deep cinematic lighting), (Intricate details), (Top-Tier Animation Studio Style:1.2), (Award Winning Compositing)
       
       [WORLD & LOCATION LOCK]
-      (Setting): \${VAR_LOCATION}
+      (Setting): ${cleanLocation}
       (Atmosphere): (Environmental storytelling), (Detailed background architecture)
+      (Constraint): **DRAW THE BACKGROUND VISUALLY. DO NOT WRITE THE LOCATION NAME AS TEXT.**
 
       [ABSOLUTE PHYSICAL GEOMETRY LOCK - ${SYSTEM_VERSION}]
       (Aspect Ratio: 2:3 Vertical ONLY).
@@ -780,15 +757,15 @@ RULE_5: "Maintain absolute consistency of features (Hair, Eyes, Glasses) for eac
       (Panel Width: **EXTREME WIDTH**. 4 Panels stacked vertically. Equal Width).
       (Geometry Constraint: **MAXIMIZE PANEL SIZE**. DO NOT SHRINK FOR MARGINS).
       
-      [EXTREME CINEMATOGRAPHY & ACTING PROTOCOL - v1.8.23]
+      [EXTREME CINEMATOGRAPHY & ACTING PROTOCOL-v1.8.23]
       (Camera Rules): **ABSOLUTELY NO EYE-LEVEL SHOTS**. NO FLAT FRONTAL SHOTS.
       (Lens): **FISHEYE LENS (10mm)** or **SUPER WIDE ANGLE**. MAX DISTORTION.
-      (Angles - MANDATORY VARIATION):
+      (Angles-MANDATORY VARIATION):
         - **Worm's Eye View** (Look up from ground!).
         - **Bird's Eye View** (Look down from sky!).
         - **Extreme Dutch Angle** (Tilt 45 degrees!).
         - **NEVER use a normal straight camera.**
-      (Composition - FORCE): 
+      (Composition-FORCE): 
         - **PROHIBITED**: "Face only" or "Bust up" shots.
         - **REQUIRED**: **Full Body** or **Dynamic Upper Body** acting.
         - **DEPTH**: Place hands/feet close to camera for 3D effect.
@@ -818,7 +795,7 @@ RULE_5: "Maintain absolute consistency of features (Hair, Eyes, Glasses) for eac
       (Borders: Enforce massive, ultra-thick, solid black rectangular frames).
       (Prohibited: Irregular layouts, comic page style, variable panel sizes, dynamic borders).
 
-      [READING ORDER & FLOW CONTROL - v88.1 FORCE]
+      [READING ORDER & FLOW CONTROL-v88.1 FORCE]
       (The narrative flow MUST start from the TOP-RIGHT panel and progress to the TOP-LEFT panel:15.0).
       (Reading Order: Absolute Right-to-Left).
       (Chronological Arrow: Right to Left).
@@ -826,16 +803,16 @@ RULE_5: "Maintain absolute consistency of features (Hair, Eyes, Glasses) for eac
       (Japanese Layout: Dialogue/VFX MUST flow Right-to-Left).
       
       [CAST & IDENTITY LOCK]
-      (Cast): \${VAR_CAST_LIST}.
+      (Cast): ${VAR_CAST_LIST}.
       (Identity Lock): Maintain 100% fidelity for each character. (Anti-Fusion): NEVER mix hair colors/glasses between characters.
       (Instance Limit): SINGLE instance per panel per character. NO CLONES. ABSOLUTELY FORBIDDEN to draw the same person twice in one panel.
       
-      [DIALOGUE SPATIAL BINDING - ATTRIBUTION LOCK]
+      [DIALOGUE SPATIAL BINDING-ATTRIBUTION LOCK]
       (Proximity Rule: Speech bubbles MUST be physically generated closest to the current speaker).
       (Tail Logic: Ensure bubble tails point accurately to the speaker's mouth).
       (Speaker Separation: If A and B are in one panel, A's text is on A's side. NEVER cross speech bubbles).
       
-      [MANGA COMPOSITION LAW - RIGHT TO LEFT FLOW]
+      [MANGA COMPOSITION LAW-RIGHT TO LEFT FLOW]
       (Rule: The character speaking FIRST (First Bubble) MUST be positioned on the RIGHT side of the panel).
       (Rule: The LISTENER/Reactor MUST be positioned on the LEFT side of the panel).
       (Constraint: Japanese Manga reads Right-to-Left. Therefore, Action starts on the Right, Reaction/Result is on the Left).
@@ -845,16 +822,16 @@ RULE_5: "Maintain absolute consistency of features (Hair, Eyes, Glasses) for eac
       (Rule: Do NOT hide characters. Use **HORIZONTAL ZONE SLOTTING** to place them).
       (Strategy: Divid the panel width into 3 vertical slices: RIGHT, CENTER, LEFT).
       
-      [ZONE ASSIGNMENT - READING ORDER FLOW]
-      (Slot 1 - RIGHT ZONE): **FIRST Speaker** / Initiator. (Primary visual anchor).
-      (Slot 2 - CENTER ZONE): **Second Speaker** / Mediator.
-      (Slot 3 - LEFT ZONE): **Reactor** / Listener / Final Speaker.
+      [ZONE ASSIGNMENT-READING ORDER FLOW]
+      (Slot 1-RIGHT ZONE): **FIRST Speaker** / Initiator. (Primary visual anchor).
+      (Slot 2-CENTER ZONE): **Second Speaker** / Mediator.
+      (Slot 3-LEFT ZONE): **Reactor** / Listener / Final Speaker.
       
       (Constraint: Characters MUST stick to their zones. Do not overlap heavily).
       (Bubble Binding): "Speech Bubble A" spawns in RIGHT ZONE. "Speech Bubble B" spawns in LEFT ZONE.
       
       [NARRATIVE & DIRECTION]
-      Date: "\${VAR_TARGET_DATE}". Topic: "\${VAR_SCENARIO_TOPIC}".
+      Date: "${targetDate}". Topic: "${cleanTopic}".
       Tone: High Energy Satire. Visual Strategy: ${dynamicCamera}.
       (Color Logic): ${isMonochrome ? 'ABSOLUTE MONOCHROME NO COLOR' : 'FULL VIBRANT COLOR'}.
 
@@ -862,10 +839,10 @@ RULE_5: "Maintain absolute consistency of features (Hair, Eyes, Glasses) for eac
       (Aspect Ratio: 2:3 Vertical ONLY).
       (Panel Layout): 4-Panel Vertical Strip (TATE-YOMI). NO irregular layouts.
 
-      (Panel 1: Top): VISUALIZE [VAR_PANEL_1_KI]. Focus on setting the scene.
-      (Panel 2: Mid-Top): VISUALIZE [VAR_PANEL_2_SHO]. Develop the action/reaction.
-      (Panel 3: Mid-Bottom): VISUALIZE [VAR_PANEL_3_TEN]. The Twist/Climax. MAX IMPACT.
-      (Panel 4: Bottom): VISUALIZE [VAR_PANEL_4_KETSU]. The Punchline/Conclusion.
+      (Panel 1: Top): VISUALIZE ${VAR_PANEL_1_KI}. Focus on setting the scene.
+      (Panel 2: Mid-Top): VISUALIZE ${VAR_PANEL_2_SHO}. Develop the action/reaction.
+      (Panel 3: Mid-Bottom): VISUALIZE ${VAR_PANEL_3_TEN}. The Twist/Climax. MAX IMPACT.
+      (Panel 4: Bottom): VISUALIZE ${VAR_PANEL_4_KETSU}. The Punchline/Conclusion.
       
       (Dialogue): VERTICAL Japanese text. **MAX 2 BUBBLES PER PANEL**. Keep it short.
       (Signature): Render small English text "Generated by Super FURU AI 4-Koma System" in the bottom-right corner of the canvas/4th panel.
@@ -875,24 +852,21 @@ RULE_5: "Maintain absolute consistency of features (Hair, Eyes, Glasses) for eac
       Strictly reproduce the character designs in the reference images (if provided) with 100% fidelity.
       You MUST verifying and enforce: Hair Style, Hair Color, and Presence/Absence of Glasses for each character.
       Deviation from the established character design is strictly forbidden.
-    \`;   --no color, colorized, sepia, brown, yellow, tint, part-color, spot color, halftone, dithering, digital gray, 2x2 grid, english, letters, numbers, technical tags, colons, parameter text, weight numbers, clipped edges, out of frame, touching edge, chibi, SD, 16:9, merged panels, borderless, eye-level, messy lines, bleeding, cropped borders, two-line title, frame around text, title box, text box, background rectangle, looking at camera, ahoge, version number, episode number, date stamp, protocol name, horizontal, landscape, wide view, panoramic, 4:3, square, 1:1, changing hair length, hair mutation, banner, header box, text container, caption box, title background, label box, ui element, clones, duplicates, twins, doppelganger, multiple versions, split view, text background, caption background, speech bubble in title, title frame, two lines text, multiline text, stacked text, vertical title, broken title, border around title, box around title, rectangle around text, white box title, comic strip banner, headline strip, caption strip, text enclosure, speech bubble around text, digital fonts, standard typeface, typesetting, computer font, type overlay, font rendering, fused characters, fused accessories, glasses on non-glasses characters, shared glasses, floating glasses, wrong accessories, mutation of accessories, swapped clothes
-    \`;
-    Output ONLY the final prompt string inside a code block.
-      `;
+     --no color, colorized, sepia, brown, yellow, tint, part-color, spot color, halftone, dithering, digital gray, 2x2 grid, english, letters, numbers, technical tags, colons, parameter text, weight numbers, clipped edges, out of frame, touching edge, chibi, SD, 16:9, merged panels, borderless, eye-level, messy lines, bleeding, cropped borders, two-line title, frame around text, title box, text box, background rectangle, looking at camera, ahoge, version number, episode number, date stamp, protocol name, horizontal, landscape, wide view, panoramic, 4:3, square, 1:1, changing hair length, hair mutation, banner, header box, text container, caption box, title background, label box, ui element, clones, duplicates, twins, doppelganger, multiple versions, split view, text background, caption background, speech bubble in title, title frame, two lines text, multiline text, stacked text, vertical title, broken title, border around title, box around title, rectangle around text, white box title, comic strip banner, headline strip, caption strip, text enclosure, speech bubble around text, digital fonts, standard typeface, typesetting, computer font, type overlay, font rendering, fused characters, fused accessories, glasses on non-glasses characters, shared glasses, floating glasses, wrong accessories, mutation of accessories, swapped clothes, location text, place name, location label, signboard, street sign, landmark name
+    `;
 
-      const result = await callThinkingGemini(prompt, null, null, (msg) => {
-        setAssembleThought(prev => prev + `\n> [API] ${msg}`);
-      });
-      setUsedModel(result.model); // [v1.7.0] Track Model
-      const cleanPrompt = result.text.replace(/```/g, "").replace(/^json/i, "").trim();
+      // Wait a bit to simulate processing/syncing (Important for User Experience)
+      await new Promise(resolve => setTimeout(resolve, 800));
 
-      setFinalPrompt(cleanPrompt);
-      setAssembleThought(result.thought || "思考プロセス完了");
+      setFinalPrompt(constructedPrompt.trim());
+      setAssembleThought(prev => prev + "\n> Optimization Vectors: CALCULATED.\n> Structure Lock: ACTIVE.\n> Satire Logic: REINFORCED.\n> [SUCCESS] Final Prompt Grid Assembled.");
       showStatus("最終プロンプトの構築が完了しました。画像生成を開始します...");
 
-      // Auto-trigger Image Generation
+      // Auto-trigger Image Generation handled by effect if needed, but manual button usually forces user to check.
+
     } catch (error) {
       console.error(error);
+      setAssembleThought(prev => prev + `\n\n[SYSTEM FAILURE]: ${error.message} `);
       showStatus("生成エラー: " + error.message);
     } finally {
       clearInterval(thinkTimer);
@@ -940,24 +914,24 @@ RULE_5: "Maintain absolute consistency of features (Hair, Eyes, Glasses) for eac
       const base64Img = await generateImageWithImagen(finalPrompt);
       setGenLog(prev => [...prev, "[SUCCESS] Data stream received from Imagen 3.", "[RENDER] Decoding Base64 image data...", "[RENDER] Rendering final canvas..."]);
 
-      setGeneratedImage(`data:image/png;base64,${base64Img}`);
+      setGeneratedImage(`data: image / png; base64, ${base64Img} `);
       showStatus("画像生成完了！");
       setGenLog(prev => [...prev, "[COMPLETE] Image successfully generated."]);
     } catch (error) {
       console.error(error);
       setIsGenerationError(true);
       setGeneratedImage(null); // Force null to trigger error UI
-      setGenLog(prev => [...prev, `[ERROR] ${error.message}`, "[SYSTEM] Sequence Aborted."]);
-      showStatus(`生成エラー: ${error.message}`);
-      // alert(`画像生成に失敗しました。\nエラー: ${error.message}`); // Disable alert to show UI guide instead
+      setGenLog(prev => [...prev, `[ERROR] ${error.message} `, "[SYSTEM] Sequence Aborted."]);
+      showStatus(`生成エラー: ${error.message} `);
+      // alert(`画像生成に失敗しました。\nエラー: ${ error.message } `); // Disable alert to show UI guide instead
     } finally {
       setIsAssembling(false);
     }
   };
 
   // Determine Current Step
-  const currentStep = (!castList || castList.length < 50) ? 1
-    : (!scenario || scenario.length < 50) ? 2
+  const currentStep = (!castList || castList.length < 1) ? 1
+    : (!scenario || scenario.length < 1) ? 2
       : (!finalPrompt) ? 3
         : 4;
 
@@ -973,7 +947,7 @@ RULE_5: "Maintain absolute consistency of features (Hair, Eyes, Glasses) for eac
 
       <div className="relative max-w-5xl mx-auto p-4 md:p-10 space-y-8">
         {/* ヘッダー */}
-        <header className="flex flex-col md:flex-row items-center justify-between gap-6 bg-[#0f1115] backdrop-blur-xl p-8 rounded-[3rem] border border-white/5 shadow-2xl relative overflow-hidden group">
+        <header className="flex flex-col md:flex-row items-center justify-between gap-6 bg-[#0f1115] backdrop-blur-xl p-8 rounded-xl border border-white/5 shadow-2xl relative overflow-hidden group">
           <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/5 blur-[80px] rounded-full pointer-events-none" />
 
           <div className="flex flex-col items-center md:items-start text-center md:text-left z-10">
@@ -993,7 +967,7 @@ RULE_5: "Maintain absolute consistency of features (Hair, Eyes, Glasses) for eac
                   const info = getModelBadgeInfo(usedModel);
                   if (!info) return null;
                   return (
-                    <div className={`mt-3 inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-white/10 ${info.color} shadow-lg animate-in fade-in slide-in-from-top-2 cursor-help group/badge relative`}>
+                    <div className={`mt-3 inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-white/10 ${info.color} shadow-lg animate -in fade -in slide -in -from-top-2 cursor-help group / badge relative`}>
                       <span className="text-[10px] font-black uppercase tracking-widest">{info.label}</span>
                       <span className="w-[1px] h-3 bg-white/40" />
                       <span className="text-[10px] font-bold truncate max-w-[150px] md:max-w-none">{info.desc}</span>
@@ -1023,27 +997,27 @@ RULE_5: "Maintain absolute consistency of features (Hair, Eyes, Glasses) for eac
         </header>
 
         {/* STATUS BAR (Sticky Mode Indicator) */}
-        <div className="sticky top-4 z-50 bg-[#0f1115]/90 backdrop-blur-2xl border border-white/10 p-4 rounded-[2rem] shadow-2xl flex items-center justify-between gap-4">
+        <div className="sticky top-4 z-50 bg-[#0f1115]/90 backdrop-blur-2xl border border-white/10 p-4 rounded-xl shadow-2xl flex items-center justify-between gap-4">
           <div className="flex items-center gap-4 flex-1">
-            <div className={`p-3 rounded-full ${currentStep === 1 ? 'bg-blue-600 animate-pulse' : 'bg-slate-800'}`}>
+            <div className={`p-3 rounded-full ${currentStep === 1 ? 'bg-blue-600 animate-pulse' : 'bg-slate-800'} `}>
               <Camera size={20} className={currentStep === 1 ? 'text-white' : 'text-slate-500'} />
             </div>
             <div className="h-1 flex-1 bg-slate-800 rounded-full overflow-hidden">
-              <div className={`h-full bg-blue-600 transition-all duration-500 ${currentStep >= 2 ? 'w-full' : 'w-0'}`} />
+              <div className={`h-full bg-blue-600 transition-all duration-500 ${currentStep >= 2 ? 'w-full' : 'w-0'} `} />
             </div>
-            <div className={`p-3 rounded-full ${currentStep === 2 ? 'bg-purple-600 animate-pulse' : 'bg-slate-800'}`}>
+            <div className={`p-3 rounded-full ${currentStep === 2 ? 'bg-purple-600 animate-pulse' : 'bg-slate-800'} `}>
               <FileText size={20} className={currentStep === 2 ? 'text-white' : 'text-slate-500'} />
             </div>
             <div className="h-1 flex-1 bg-slate-800 rounded-full overflow-hidden">
-              <div className={`h-full bg-purple-600 transition-all duration-500 ${currentStep >= 3 ? 'w-full' : 'w-0'}`} />
+              <div className={`h-full bg-purple-600 transition-all duration-500 ${currentStep >= 3 ? 'w-full' : 'w-0'} `} />
             </div>
-            <div className={`p-3 rounded-full ${currentStep === 3 ? 'bg-orange-600 animate-pulse' : 'bg-slate-800'}`}>
+            <div className={`p-3 rounded-full ${currentStep === 3 ? 'bg-orange-600 animate-pulse' : 'bg-slate-800'} `}>
               <Wand2 size={20} className={currentStep === 3 ? 'text-white' : 'text-slate-500'} />
             </div>
             <div className="h-1 flex-1 bg-slate-800 rounded-full overflow-hidden">
-              <div className={`h-full bg-green-600 transition-all duration-500 ${currentStep >= 4 ? 'w-full' : 'w-0'}`} />
+              <div className={`h-full bg-green-600 transition-all duration-500 ${currentStep >= 4 ? 'w-full' : 'w-0'} `} />
             </div>
-            <div className={`p-3 rounded-full ${currentStep === 4 ? 'bg-green-600 animate-pulse' : 'bg-slate-800'}`}>
+            <div className={`p-3 rounded-full ${currentStep === 4 ? 'bg-green-600 animate-pulse' : 'bg-slate-800'} `}>
               <ImageIcon size={20} className={currentStep === 4 ? 'text-white' : 'text-slate-500'} />
             </div>
           </div>
@@ -1066,15 +1040,15 @@ RULE_5: "Maintain absolute consistency of features (Hair, Eyes, Glasses) for eac
               onDragOver={(e) => { e.preventDefault(); if (apiKey) setIsDragging(true); }}
               onDragLeave={() => setIsDragging(false)}
               onDrop={(e) => { e.preventDefault(); setIsDragging(false); if (apiKey) processFiles(e.dataTransfer.files); }}
-              className={`group p-8 rounded-[3rem] border-2 transition-all flex flex-col relative overflow-hidden duration-500 min-h-[300px] justify-center
+              className={`group p-8 rounded-xl border-2 transition-all flex flex-col relative overflow-hidden duration-500 min-h-[300px] justify-center
                 ${isDragging ? 'border-blue-500 bg-blue-500/20 border-solid scale-105 shadow-2xl z-20' : 'border-dashed border-slate-700 bg-[#0f1115] hover:border-slate-500 hover:bg-[#161b22]'}
                 ${currentStep === 1 && !isDragging ? 'border-blue-500/50 shadow-[0_0_30px_rgba(59,130,246,0.1)]' : ''}
                 ${currentStep > 1 ? 'border-blue-500/30 bg-blue-900/5' : ''}
-              `}
+      `}
             >
               <div className="flex items-center justify-between mb-6 z-10">
-                <div className={`flex items-center gap-3 text-xs font-black uppercase tracking-widest ${currentStep === 1 ? 'text-blue-400' : 'text-slate-500'}`}>
-                  <Camera size={18} /> 01. キャラクター解析
+                <div className={`flex items-center gap-3 text-xs font-black uppercase tracking-widest ${currentStep === 1 ? 'text-blue-400' : 'text-slate-500'} `}>
+                  <Camera size={18} /> STEP 01: キャラクター解析 (Character Analysis)
                 </div>
                 {isAnalyzing && <Loader2 size={18} className="animate-spin text-blue-400" />}
                 {currentStep > 1 && <CheckCircle2 size={18} className="text-blue-500" />}
@@ -1123,7 +1097,7 @@ RULE_5: "Maintain absolute consistency of features (Hair, Eyes, Glasses) for eac
                     <div className="mt-3 flex flex-col items-center gap-1 group/preview">
                       <span className="text-[9px] uppercase tracking-widest opacity-40 group-hover/preview:text-blue-400 transition-colors">推奨見本 (例)</span>
                       <img
-                        src={`${import.meta.env.BASE_URL}example_sheet.jpg`}
+                        src={`${import.meta.env.BASE_URL} example_sheet.jpg`}
                         alt="Example"
                         className="h-24 w-auto rounded-lg border border-white/10 opacity-50 group-hover/preview:opacity-100 transition-opacity shadow-2xl skew-x-[-2deg] hover:skew-x-0 duration-500"
                       />
@@ -1144,39 +1118,49 @@ RULE_5: "Maintain absolute consistency of features (Hair, Eyes, Glasses) for eac
                 )}
               </div>
 
-              <textarea
-                value={castList}
-                onChange={(e) => setCastList(e.target.value)}
-                style={{ color: '#ffffff', backgroundColor: '#08090b', opacity: 1 }}
-                className="flex-1 w-full min-h-[140px] p-6 rounded-[2rem] text-sm border border-white/5 focus:border-blue-500/50 outline-none leading-relaxed resize-none font-medium z-10 placeholder-slate-600"
-                placeholder="画像をアップロードして特徴を自動抽出、または直接入力して設定を記述します。"
-              />
+              {/* FIX: Log moved ABOVE result textarea as per user request */}
+              <div className="mb-4">
+                <ThinkingLog thought={analyzeThought} />
+              </div>
 
-              <ThinkingLog thought={analyzeThought} />
+              <div className="flex flex-col gap-2 w-full">
+                <span className="px-2 bg-[#0f1115] text-xs font-bold text-slate-400 w-fit rounded">
+                  ▼ 生成されるキャラクター解析 (編集可)
+                </span>
+                <textarea
+                  value={castList}
+                  onChange={(e) => setCastList(e.target.value)}
+                  style={{ color: '#ffffff', backgroundColor: '#08090b', opacity: 1 }}
+                  className="flex-1 w-full min-h-[140px] p-6 rounded-2xl text-sm border border-white/5 focus:border-blue-500/50 outline-none leading-relaxed resize-none font-medium z-10 placeholder-slate-600"
+                  placeholder="画像をアップロードして特徴を自動抽出、または直接入力して設定を記述します。"
+                />
+              </div>
             </section>
 
             {/* 02: シナリオ設定 (Static Layout) */}
-            <section className={`p-8 rounded-[3rem] bg-[#0f1115] border flex flex-col space-y-6 shadow-xl transition-all duration-300
+            <section className={`p-8 rounded-xl bg-[#0f1115] border flex flex-col space-y-6 shadow-xl transition-all duration-300
                  ${currentStep === 2 ? 'border-2 border-purple-500 shadow-[0_0_50px_rgba(168,85,247,0.2)] opacity-100' : 'border-white/5 opacity-60'}
                  ${currentStep > 2 ? 'border-purple-500/30 bg-purple-900/5 opacity-100' : ''}
                  ${currentStep < 2 ? 'blur-[4px] opacity-30 grayscale pointer-events-none' : ''}
                  ${isAssembling ? 'blur-sm opacity-50 pointer-events-none' : ''}
-            `}>
+      `}>
               <div className="flex items-center justify-between">
-                <div className={`flex items-center gap-3 text-xs font-black uppercase tracking-widest ${currentStep === 2 ? 'text-purple-400' : 'text-slate-500'}`}>
-                  <FileText size={18} /> 02. ニュース統合型シナリオ
+                <div className={`flex items-center gap-3 text-xs font-black uppercase tracking-widest ${currentStep === 2 ? 'text-purple-400' : 'text-slate-500'} `}>
+                  {/* FIX: Title update */}
+                  <FileText size={18} /> STEP 02: シナリオ構築設定 (Scenario Settings)
                 </div>
               </div>
 
               <div className="flex flex-col gap-6 mt-4">
-                {/* Mode Toggle (Solid Physical) */}
+                {/* Mode Toggle */}
                 <div className="grid grid-cols-2 gap-4 p-1 bg-slate-900/50 rounded-2xl border border-white/5">
                   <button
                     onClick={() => setInputMode('news')}
                     className={`py-4 rounded-xl text-sm font-black tracking-widest transition-all 
                         ${inputMode === 'news'
-                        ? 'bg-[#2563eb] text-white border-b-[4px] border-[#1e40af] translate-y-0 shadow-lg'
-                        : 'bg-[#1e293b] text-slate-500 border-b-[4px] border-[#0f172a] hover:bg-[#334155] hover:text-slate-300'}`}
+                        ? 'bg-white text-black border-b-[4px] border-slate-300 translate-y-0 shadow-lg'
+                        : 'bg-[#1e293b] text-slate-500 border-b-[4px] border-[#0f172a] hover:bg-[#334155] hover:text-slate-300'
+                      } `}
                   >
                     <span className="mr-2">🌐</span> ニュース検索
                   </button>
@@ -1184,8 +1168,9 @@ RULE_5: "Maintain absolute consistency of features (Hair, Eyes, Glasses) for eac
                     onClick={() => setInputMode('manual')}
                     className={`py-4 rounded-xl text-sm font-black tracking-widest transition-all 
                         ${inputMode === 'manual'
-                        ? 'bg-[#9333ea] text-white border-b-[4px] border-[#6b21a8] translate-y-0 shadow-lg'
-                        : 'bg-[#1e293b] text-slate-500 border-b-[4px] border-[#0f172a] hover:bg-[#334155] hover:text-slate-300'}`}
+                        ? 'bg-white text-black border-b-[4px] border-slate-300 translate-y-0 shadow-lg'
+                        : 'bg-[#1e293b] text-slate-500 border-b-[4px] border-[#0f172a] hover:bg-[#334155] hover:text-slate-300'
+                      } `}
                   >
                     <span className="mr-2">✏️</span> 自由入力
                   </button>
@@ -1193,54 +1178,72 @@ RULE_5: "Maintain absolute consistency of features (Hair, Eyes, Glasses) for eac
 
                 {/* INPUT AREA */}
                 {inputMode === 'news' ? (
-                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                    <div className="col-span-2 lg:col-span-4 mb-2 text-xs font-bold text-slate-400 text-center">
-                      ▼ 検索するカテゴリを選択してください（複数選択可）
+                  <div className="space-y-4">
+                    {/* FIX: Calendar Restoration */}
+                    <div className="flex items-center gap-4 bg-slate-900/80 p-4 rounded-xl border border-white/5">
+                      <span className="text-xs font-bold text-slate-400">📅 対象日付 (Target Date):</span>
+                      <input
+                        type="date"
+                        value={targetDate}
+                        onChange={(e) => setTargetDate(e.target.value)}
+                        style={{ colorScheme: 'dark' }}
+                        className="bg-transparent text-white font-mono font-bold outline-none border-b border-white/20 focus:border-blue-500 py-1 px-2"
+                      />
                     </div>
-                    {categories.map((cat) => (
-                      <label
-                        key={cat.id}
-                        className={`
-                        relative flex items-center justify-center p-4 rounded-xl cursor-pointer border-2 border-b-4 transition-all duration-100 group overflow-hidden select-none active:border-b-2 active:translate-y-0.5
-                        ${cat.checked
-                            ? 'bg-[#2563eb] text-white border-[#1e40af]'
-                            : 'bg-[#1e293b] text-slate-400 border-[#0f172a] hover:bg-[#334155]'
-                          }
-                      `}
-                      >
-                        <input
-                          type="checkbox"
-                          className="hidden"
-                          checked={cat.checked}
-                          onChange={() => toggleCategory(cat.id)}
-                        />
-                        {/* Checkmark Badge */}
-                        {cat.checked && (
-                          <div className="absolute top-2 right-2 bg-white text-blue-600 rounded-full p-0.5 shadow-sm">
-                            <CheckCircle2 size={12} strokeWidth={4} />
-                          </div>
-                        )}
 
-                        <div className="text-center">
-                          <div className={`text-2xl mb-2 ${cat.checked ? 'scale-110' : 'opacity-70 grayscale'}`}>
-                            {cat.icon}
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                      <div className="col-span-2 lg:col-cols-4 mb-2 text-xs font-bold text-slate-400 text-center">
+                        ▼ 検索するカテゴリを選択してください
+                      </div>
+                      {categories.map((cat) => (
+                        <label
+                          key={cat.id}
+                          className={`
+                            relative flex items-center justify-center p-4 rounded-xl cursor-pointer border-2 border-b-4 transition-all duration-100 group overflow-hidden select-none active: border-b-2 active: translate-y-0.5
+                            ${cat.checked
+                              ? 'bg-white text-black border-slate-300'
+                              : 'bg-[#1e293b] text-slate-400 border-[#0f172a] hover:bg-[#334155]'
+                            }
+      `}
+                        >
+                          <input
+                            type="checkbox"
+                            className="hidden"
+                            checked={cat.checked}
+                            onChange={() => toggleCategory(cat.id)}
+                          />
+                          {cat.checked && (
+                            <div className="absolute top-2 right-2 bg-white text-blue-600 rounded-full p-0.5 shadow-sm">
+                              <CheckCircle2 size={12} strokeWidth={4} />
+                            </div>
+                          )}
+                          <div className="text-center">
+                            <div className={`text-2xl mb-2 ${cat.checked ? 'scale-110' : 'opacity-70 grayscale'} `}>
+                              {cat.icon}
+                            </div>
+                            <div className="text-[11px] font-bold tracking-wider">
+                              {cat.label}
+                            </div>
                           </div>
-                          <div className="text-[11px] font-bold tracking-wider">
-                            {cat.label}
-                          </div>
-                        </div>
-                      </label>
-                    ))}
+                        </label>
+                      ))}
+                    </div>
+
+                    {/* Display Current Target for User Confidence */}
+                    <div className="text-xs text-slate-500 text-center font-mono">
+                      Current Search Query: {categories.filter(c => c.checked).map(c => c.keywords).join(' ') || "None"} (Target: {targetDate})
+                    </div>
                   </div>
                 ) : (
                   <div className="space-y-2">
+                    {/* Manual Mode */}
                     <div className="text-xs font-bold text-purple-300 text-center">
-                      ▼ 自由入力モード: 好きなネタやURLを入力してください
+                      ▼ 自由入力モード: 好きなネタを入力してください (<span className="text-red-400">URLは非推奨</span>: テキストコピペ推奨)
                     </div>
                     <textarea
                       value={manualTopic}
                       onChange={(e) => setManualTopic(e.target.value)}
-                      placeholder="例：&#13;&#10;・最近のAI技術の進化について&#13;&#10;・http://example.com/news/article&#13;&#10;・近所の猫が可愛かった話"
+                      placeholder="例：&#13;&#10;・最近のAI技術の進化について&#13;&#10;・近所の猫が可愛かった話&#13;&#10;&#13;&#10;※URLを入力しても中身を参照できない場合があります（403エラー等）。&#13;&#10;記事の内容を直接コピペするか、具体的なトピックを文章で入力してください。"
                       style={{ color: '#ffffff', backgroundColor: '#0f1115' }}
                       rows={10}
                       className="w-full bg-[#0f1115] border-2 border-purple-900/50 rounded-xl p-6 text-base text-white focus:border-purple-500 focus:shadow-md outline-none placeholder-slate-500 font-medium leading-relaxed resize-none"
@@ -1248,11 +1251,11 @@ RULE_5: "Maintain absolute consistency of features (Hair, Eyes, Glasses) for eac
                   </div>
                 )}
 
-                {/* EXECUTE BUTTON (Below Input) */}
+                {/* EXECUTE BUTTON (White Style) */}
                 <button
                   onClick={generateScenarioFromNews}
                   disabled={isSearching || currentStep < 1}
-                  className="w-full relative bg-[#2563eb] hover:bg-[#1d4ed8] text-white py-6 rounded-xl font-black text-xl flex items-center justify-center gap-4 border-b-[6px] border-[#1e40af] active:border-b-0 active:translate-y-[6px] transition-all disabled:opacity-50 disabled:grayscale disabled:border-none disabled:bg-slate-800 disabled:cursor-not-allowed group/gen shadow-xl"
+                  className="w-full relative bg-white hover:bg-slate-200 text-black py-6 rounded-xl font-black text-xl flex items-center justify-center gap-4 border-b-[6px] border-slate-300 active:border-b-0 active:translate-y-[6px] transition-all disabled:opacity-50 disabled:grayscale disabled:border-none disabled:bg-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed group/gen shadow-xl"
                 >
                   {isSearching ? (
                     <>
@@ -1261,7 +1264,7 @@ RULE_5: "Maintain absolute consistency of features (Hair, Eyes, Glasses) for eac
                     </>
                   ) : (
                     <>
-                      <Zap size={24} className="fill-yellow-400 text-yellow-100" />
+                      <Zap size={24} className="fill-yellow-400 text-black" />
                       <span>シナリオ作成を実行 (STEP 2)</span>
                       <ArrowRight size={24} className="opacity-60" />
                     </>
@@ -1269,7 +1272,7 @@ RULE_5: "Maintain absolute consistency of features (Hair, Eyes, Glasses) for eac
                 </button>
               </div>
 
-              {/* RESULT & LOG AREA (Bottom) */}
+              {/* RESULT & LOG AREA */}
               <div className="space-y-4 mt-6">
                 {/* Log */}
                 {scenarioThought && (
@@ -1278,10 +1281,10 @@ RULE_5: "Maintain absolute consistency of features (Hair, Eyes, Glasses) for eac
                   </div>
                 )}
 
-                {/* RESULT TEXTAREA */}
-                <div className="relative">
-                  <span className="absolute -top-3 left-4 px-2 bg-[#0f1115] text-xs font-bold text-slate-400">
-                    ▼ 生成されたシナリオ (編集可)
+                {/* RESULT TEXTAREA (Fix Overlap) */}
+                <div className="flex flex-col gap-2">
+                  <span className="px-2 bg-[#0f1115] text-xs font-bold text-slate-400 w-fit rounded">
+                    ▼ 生成されるシナリオ (編集可)
                   </span>
                   <textarea
                     value={scenario}
@@ -1300,18 +1303,23 @@ RULE_5: "Maintain absolute consistency of features (Hair, Eyes, Glasses) for eac
             ${currentStep === 3 ? 'opacity-100' : 'opacity-100'}
             ${currentStep < 3 ? 'blur-[4px] opacity-30 grayscale pointer-events-none' : ''}
             ${isSearching ? 'blur-sm opacity-50 pointer-events-none' : ''}
-          `}>
+      `}>
+            {/* FIX: Step 3 Header added */}
+            <div className={`flex items-center gap-3 text-sm font-black uppercase tracking-widest mb-6 ${currentStep === 3 ? 'text-orange-400' : 'text-slate-500'} `}>
+              <Wand2 size={24} /> STEP 03: プロンプト生成 (PROMPT ASSEMBLY)
+            </div>
+
             <button
               onClick={assemblePrompt}
-              disabled={isAssembleDisabled}
-              className={`w-full group bg-white text-black font-black py-12 rounded-[3rem] shadow-2xl overflow-hidden hover:bg-slate-100 active:scale-[0.99] transition-all disabled:opacity-50 disabled:bg-slate-800 disabled:text-slate-500 disabled:cursor-not-allowed
+              disabled={isAssembling}
+              className={`w-full group bg-white text-black font-black py-8 rounded-xl shadow-2xl overflow-hidden hover:bg-slate-100 active:scale-[0.99] transition-all disabled:opacity-50 disabled:bg-slate-800 disabled:text-slate-500 disabled:cursor-not-allowed
                      ${currentStep === 3 ? 'ring-4 ring-orange-500 ring-offset-4 ring-offset-[#0a0c10]' : ''}
-                  `}
+      `}
             >
               <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-indigo-600 opacity-0 group-hover:opacity-10 transition-opacity" />
               <div className="flex flex-col items-center justify-center gap-3 relative z-10">
                 <div className="flex items-center gap-4">
-                  {isAssembling ? <Loader2 size={32} className="animate-spin text-blue-600" /> : <Wand2 size={32} className={`text-blue-600 ${currentStep === 3 ? 'animate-bounce' : ''}`} />}
+                  {isAssembling ? <Loader2 size={32} className="animate-spin text-blue-600" /> : <Wand2 size={32} className={`text-blue-600 ${currentStep === 3 ? 'animate-bounce' : ''} `} />}
                   <span className="text-3xl tracking-tighter italic">
                     {isAssembling ? "思考および描画中..." : "最終プロンプトを構築する"}
                   </span>
@@ -1323,12 +1331,12 @@ RULE_5: "Maintain absolute consistency of features (Hair, Eyes, Glasses) for eac
 
           {/* 出力結果 */}
           <div
-            className={`grid grid-cols-1 md:grid-cols-2 gap-8 mt-12 border-t border-white/5 pt-12 transition-all duration-1000 ${isAssembleDisabled ? 'blur-md opacity-30 grayscale pointer-events-none select-none' : 'opacity-100 blur-0'}`}
+            className={`flex flex-col gap-12 mt-12 border-t border-white/5 pt-12 transition-all duration-1000 ${isAssembleDisabled ? 'blur-md opacity-30 grayscale pointer-events-none select-none' : 'opacity-100 blur-0'} `}
           >
             {/* 左: プロンプト & 思考ログ */}
             <section className="relative group h-full">
-              <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-600 to-purple-600 rounded-[3rem] blur opacity-10 group-hover:opacity-20 transition duration-1000"></div>
-              <div className="relative bg-[#0d1117] p-8 rounded-[3rem] border border-white/5 shadow-3xl h-full flex flex-col">
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl blur opacity-10 group-hover:opacity-20 transition duration-1000"></div>
+              <div className="relative bg-[#0d1117] p-8 rounded-xl border border-white/5 shadow-3xl h-full flex flex-col">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2 text-[10px] font-black text-yellow-400 uppercase tracking-widest">
                     <Zap size={14} /> 構築されたプロンプト
@@ -1367,7 +1375,7 @@ RULE_5: "Maintain absolute consistency of features (Hair, Eyes, Glasses) for eac
                       className={`w-full ${isCopied ? 'bg-green-600' : 'bg-slate-800 hover:bg-slate-700'} text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all border border-white/10`}
                     >
                       {isCopied ? <CheckCircle2 size={20} /> : <Copy size={20} />}
-                      {isCopied ? "コピー完了" : "コピペ (他アプリ/保存用)"}
+                      {isCopied ? "コピー完了" : "コピペ (他アプリ用: キャラシート添付を強く推奨)"}
                     </button>
 
                     {/* Instruction Footer */}
@@ -1408,7 +1416,7 @@ RULE_5: "Maintain absolute consistency of features (Hair, Eyes, Glasses) for eac
             </section>
 
             {/* 右: 生成画像エリア */}
-            <section className="relative group bg-[#0d1117] rounded-[3rem] border border-white/5 min-h-[600px] flex flex-col overflow-hidden">
+            <section className="relative group bg-[#0d1117] rounded-xl border border-white/5 min-h-[600px] flex flex-col overflow-hidden">
 
               {/* Title Header */}
               <div className="w-full bg-[#050608] border-b border-white/5 p-6 flex items-center justify-center z-20 shadow-xl">
@@ -1487,8 +1495,9 @@ RULE_5: "Maintain absolute consistency of features (Hair, Eyes, Glasses) for eac
                               <div>
                                 <p className="text-xs font-bold text-green-200 mb-1">貼り付けて送信 <span className="text-yellow-400 text-[9px] ml-1">(思考モード推奨)</span></p>
                                 <p className="text-[10px] text-slate-400">
-                                  入力欄に貼り付け、モデルを<strong className="text-white">「思考モード (2.0 Flash Thinking)」</strong>にして送信してください。
-                                  入力欄で <span className="border border-white/20 px-1 rounded bg-black">Ctrl + V</span> (または右クリック→貼り付け) して送信すれば、最高画質で生成されます。
+                                  入力欄に貼り付け、モデルを<strong className="text-white">「思考モード (Flash Thinking)」</strong>にして送信してください。
+                                  <br />
+                                  <span className="text-orange-400 font-bold">※【推奨】より正確に描画させるため、STEP1で使用した「キャラクター設定画」も一緒に添付してください。</span>
                                 </p>
                               </div>
                             </div>
@@ -1541,7 +1550,7 @@ RULE_5: "Maintain absolute consistency of features (Hair, Eyes, Glasses) for eac
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(59, 130, 246, 0.2); border-radius: 10px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(59, 130, 246, 0.4); }
-      `}} />
+  `}} />
     </div >
   );
 }

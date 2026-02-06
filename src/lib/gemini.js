@@ -7,12 +7,11 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const MODEL_IDS = [
-    "gemini-2.5-pro",                     // Primary: Ultra-High Intelligence
-    "gemini-2.5-flash",                   // Backup 1: Ultra-Fast
-    "gemini-2.5-flash-lite",              // Backup 2: Lite (Correct ID) - Fixes 404
-    "gemini-flash-latest",                // Backup 3: Latest Generic Flash
-    "gemini-2.0-flash-lite-preview-02-05",// Backup 4: Specific Lite
-    "gemini-pro-latest"                   // Final Resort
+    "gemini-2.0-flash",                   // Primary: Stable + Grounding Support
+    "gemini-1.5-pro",                     // Backup 1: Reliable High-Intel
+    "gemini-1.5-flash",                   // Backup 2: Fast
+    "gemini-pro-latest",                  // Fallback
+    "gemini-flash-latest"                 // Fallback
 ];
 
 // Store API key in memory
@@ -93,19 +92,39 @@ export const callThinkingGemini = async (prompt, images = null, systemInstructio
                 setTimeout(() => reject(new Error(`Timeout awaiting response from ${modelId} (60s limit)`)), 60000)
             );
 
-            const result = await Promise.race([
-                model.generateContent({
-                    contents: [{ role: "user", parts: finalPromptParts }],
-                    generationConfig: { temperature: 0.7, maxOutputTokens: 8192 },
-                    safetySettings: [
-                        { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
-                        { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
-                        { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
-                        { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" },
-                    ]
-                }),
-                timeoutPromise
-            ]);
+            // [v1.8.66] Updated for Gemini 2.0 Flash: Use 'googleSearch' instead of 'googleSearchRetrieval'
+            const finalTools = (images && Array.isArray(images) && images.length > 0)
+                ? undefined
+                : [{ googleSearch: {} }];
+
+            let result;
+            try {
+                result = await Promise.race([
+                    model.generateContent({
+                        contents: [{ role: "user", parts: finalPromptParts }],
+                        tools: finalTools,
+                        generationConfig: { temperature: 0.7, maxOutputTokens: 8192 },
+                        safetySettings: [
+                            { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
+                            { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
+                            { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
+                            { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" },
+                        ]
+                    }),
+                    timeoutPromise
+                ]);
+            } catch (err) {
+                // [v1.8.66] Failover: If Grounding fails (e.g. 400), retry WITHOUT tools
+                if (finalTools && (err.message.includes("400") || err.message.includes("not supported"))) {
+                    console.warn(`[API] Grounding failed for ${modelId}, retrying without tools...`);
+                    result = await model.generateContent({
+                        contents: [{ role: "user", parts: finalPromptParts }],
+                        generationConfig: { temperature: 0.7, maxOutputTokens: 8192 }
+                    });
+                } else {
+                    throw err;
+                }
+            }
 
             const response = result.response;
             const candidates = response.candidates || [];

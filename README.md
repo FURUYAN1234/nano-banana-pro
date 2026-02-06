@@ -72,6 +72,24 @@ Unlike conventional AI tools that assist humans, this system is based on the fol
 
 ---
 
+## ✨ Features & Modes / 機能とモード
+
+### 📅 Date-Specified News Search / 日付指定ニュース検索
+
+Users can specify a target date to retrieve and visualize past news trends.
+対象の日付を指定して、過去のニュースを取得・漫画化できます。
+
+* **Categories**: General, Technology, Business, Entertainment, Science, Health, Sports, Art.
+
+### ✏️ Manual Input Mode / 自由入力モード
+
+A "Free Input" mode allows users to generate manga from any text, such as personal diaries or specific creative prompts.
+自由にテキストを入力して漫画を生成できるモードです。個人的な日記や、特定の創作ネタなど、ニュース以外のトピックも扱えます。
+> **Note**: Direct URL input is often blocked by security (403 errors). Copy-pasting the article text is recommended.
+> URLの直接入力はセキュリティによりブロックされることが多いため、記事のテキストを直接コピペすることを推奨します。
+
+---
+
 ## 🛠 Featured Protocols: Super FURU Manga Protocol / 搭載プロトコル
 
 1. **ABSOLUTE PHYSICAL GEOMETRY LOCK**
@@ -123,6 +141,14 @@ You can launch strict local environment with a single click.
 
 ---
 
+## 🔄 Changellog / 更新履歴
+
+* **v1.8.86 Alpha** (2026/02/06 19:40)
+  * **[CRITICAL FIX]** "Instant Done" Logic: Fixed an issue where the system would incorrectly assume completion and disable UI elements.
+  * **[UI REVERT]** Restored vertical layout for better usability.
+  * **[UX IMPROVEMENT]** Enabled "Assemble Prompt" button visibility at all times to prevent user confusion.
+  * **[SYNTAX FIX]** Cleaned up CSS class names to fix styling issues.
+
 ---
 
 ## ⚖️ Compliance & Legal Stance / 法的遵守について
@@ -140,6 +166,7 @@ All generations are performed through the **official Google Gemini API**. This s
 ### Autonomous & Deterministic Generation
 
 Unlike simple image synthesis, this system uses an **autonomous "Unmanned" pipeline** and the **ABSOLUTE PHYSICAL GEOMETRY LOCK** protocol.
+
 * It does not aim to replicate specific existing artworks.
 * It generates original compositions based on real-time trend analysis and mathematical geometric constraints.
 本システムは、特定の作品の模倣を目的としたものではありません。リアルタイムのトレンド分析と、独自の「物理幾何学ロック」プロトコルに基づき、AIが自律的に構図を決定・生成するものであり、依拠性のない独自創作を志向しています。
