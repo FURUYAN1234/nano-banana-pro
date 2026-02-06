@@ -143,10 +143,11 @@ You can launch strict local environment with a single click.
 
 ## 🔄 Changellog / 更新履歴
 
-* **v1.8.87 Hotfix** (2026/02/06 23:55)
+* **v1.8.87 Alpha** (2026/02/06 23:55)
   * **[CRITICAL FIX]** API Key Persistence: Restored LocalStorage support. The system now remembers your key (no need to re-enter on reload).
   * **[UI]** Added **"Key変更 (Change Key)"** button to Header.
   * **[FIX]** Modal Input Blocked: Boosted Z-Index to prevent input field from being unresponsive.
+  * **[UX]** API Key Input: Changed from Password (Dots) to Text (Visible) for easier verification.
 
 * **v1.8.86 Alpha** (2026/02/06 19:40)
   * **[CRITICAL FIX]** "Instant Done" Logic: Fixed an issue where the system would incorrectly assume completion and disable UI elements.
