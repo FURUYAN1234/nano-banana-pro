@@ -163,7 +163,7 @@ export default function AppWrapper() {
 }
 
 function App() {
-  const SYSTEM_VERSION = "v1.8.88 Alpha"; // Code change = Version bump. Do not forget!
+  const SYSTEM_VERSION = "v1.8.89 Alpha"; // Code change = Version bump. Do not forget!
   // Force Build 2026-02-06 07:07 // Build 2026-02-06-01
 
   console.log("System Version Loaded:", SYSTEM_VERSION); // Debug Log
@@ -452,7 +452,7 @@ function App() {
 
     // Manual Mode Check
     if (inputMode === 'manual' && !manualTopic.trim()) {
-      alert("自由入力トピックまたはURLを入力してください。");
+      alert("自由入力トピックを入力してください。");
       return;
     }
     // News Mode Check

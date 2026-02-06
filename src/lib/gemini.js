@@ -14,16 +14,16 @@ const MODEL_IDS = [
     "gemini-flash-latest"                 // Fallback
 ];
 
-// Store API key in memory
-let currentApiKey = localStorage.getItem("gemini_api_key") || "";
+// Store API key in memory ONLY (Security Requirement: No persistence)
+let currentApiKey = "";
 
 export const setApiKey = (key) => {
     currentApiKey = key;
-    localStorage.setItem("gemini_api_key", key);
+    // localStorage.setItem("gemini_api_key", key); // DISABLED by User Request
 };
 
 export const getApiKey = () => {
-    return currentApiKey || localStorage.getItem("gemini_api_key");
+    return currentApiKey; // || localStorage.getItem("gemini_api_key"); // DISABLED by User Request
 };
 
 /**
