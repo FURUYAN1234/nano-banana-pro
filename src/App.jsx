@@ -163,7 +163,7 @@ export default function AppWrapper() {
 }
 
 function App() {
-  const SYSTEM_VERSION = "v1.8.93 Alpha"; // Code change = Version bump. Do not forget!
+  const SYSTEM_VERSION = "v1.8.94 Alpha"; // Code change = Version bump. Do not forget!
   // Force Build 2026-02-06 07:07 // Build 2026-02-06-01
 
   console.log("System Version Loaded:", SYSTEM_VERSION); // Debug Log
@@ -507,9 +507,23 @@ function App() {
          URLが含まれる場合は、そのリンク先の内容を推測・補完して構成せよ。
          `;
       } else {
-        // Existing Logic implicitly handles the rest via 'searchTopic' later? 
-        // Wait, the original code had 'searchTopic' used in prompt.
       }
+
+      // [v1.8.94] Location Randomizer Logic
+      const locationList = [
+        "寂れた商店街", "無人島", "ファミレスの厨房", "満員電車", "首相官邸", "ライブハウス", "コンビニ前", "古民家", "火星基地",
+        "学校の屋上", "深夜のオフィス", "結婚式場", "工事現場", "刑務所の面会室", "豪華客船の甲板", "雪山のロッジ",
+        "砂漠の真ん中", "海底トンネル", "裁判所", "病院の待合室", "動物園の檻の中", "美術館", "映画館の最前列",
+        "ラーメン屋のカウンター", "温泉旅館", "サウナの中", "エレベーターの中", "断崖絶壁", "廃墟の遊園地", "月面",
+        "飛行機の機内", "新幹線の座席", "警察署の取調室", "ゴミ捨て場", "高級ホテルのスイートルーム", "スタジアム",
+        "神社の境内", "教会の告解室", "地下アイドルの握手会", "ゲームセンター", "コインランドリー", "公園のベンチ",
+        "洞窟の奥", "ジャングルの奥地", "南極基地", "国際宇宙ステーション", "潜水艦の内部", "戦車の内部", "魔法使いの塔",
+        "異世界の酒場", "魔王城の玉座", "RPGのダンジョン", "サイバーパンクな路地裏", "昭和の茶の間", "江戸時代の長屋",
+        "渋谷スクランブル交差点", "秋葉原の電気街", "京都の竹林", "大阪の道頓堀", "沖縄のビーチ", "北海道のラベンダー畑"
+      ];
+      // Select one location randomly
+      const forcedLocation = locationList[Math.floor(Math.random() * locationList.length)];
+      console.log("Forced Location:", forcedLocation); // Debug log
 
       const castListSummary = castList.replace(/\n/g, ', ').substring(0, 200) + '...';
       const scenarioPrompt = `
@@ -536,9 +550,14 @@ function App() {
    4. **【場所（Location）の選定義務】**:
       - ニュースの内容に**「最も適した具体的な舞台」**を選んでください。
       - **デフォルト回避**: 安易な「教室」「白い部屋」は避けるが、**ニュースの文脈（学生、学校関連）で必要ならば「教室」も許可する。**重要なのは「ニュースとの適合性」である。
-       - **推奨**: 「寂れた商店街」「無人島」「ファミレスの厨房」「満員電車」「首相官邸」「ライブハウス」「コンビニ前」「古民家」「火星基地」など、バラエティ豊かに選定せよ。同じ場所ばかり選ぶな。
+       - **デフォルト回避**: 安易な「教室」「白い部屋」は避けるが、**ニュースの文脈（学生、学校関連）で必要ならば「教室」も許可する。**重要なのは「ニュースとの適合性」である。
+       
+       5. **【強制舞台指定 (Location Lock)】**:
+          - 今回の漫画の舞台は、以下の場所に**「必ず」**設定してください。
+          - **指定場所: 「${forcedLocation}」**
+          - もしニュースの内容と指定場所が矛盾する場合でも、無理やりこじつけてその場所で展開せよ。（例: 「政治のニュース」×「ラーメン屋」→ 政治家がラーメン屋で密談している、等）
  
-         【シナリオ構成・演出の絶対厳守 (v1.8.0)】
+         【シナリオ構成・演出の絶対厳守 (v1.8.94 Alpha)】
          0. **全員登場義務 (Mandatory All-Cast)**:
             - CastListに含まれている **全てのキャラクターを必ず1回以上登場させること。**
             - 「メイン2人だけ」のような手抜きは禁止。全員に役割を与え、画面を賑やかにすること。
