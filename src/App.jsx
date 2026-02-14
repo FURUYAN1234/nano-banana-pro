@@ -163,7 +163,7 @@ export default function AppWrapper() {
 }
 
 function App() {
-  const SYSTEM_VERSION = "v1.8.94 Alpha"; // Code change = Version bump. Do not forget!
+  const SYSTEM_VERSION = "v1.8.98 Alpha"; // Code change = Version bump. Do not forget!
   // Force Build 2026-02-06 07:07 // Build 2026-02-06-01
 
   console.log("System Version Loaded:", SYSTEM_VERSION); // Debug Log
@@ -841,11 +841,13 @@ function App() {
       (Tail Logic: Ensure bubble tails point accurately to the speaker's mouth).
       (Speaker Separation: If A and B are in one panel, A's text is on A's side. NEVER cross speech bubbles).
       
-      [MANGA COMPOSITION LAW-RIGHT TO LEFT FLOW]
-      (Rule: The character speaking FIRST (First Bubble) MUST be positioned on the RIGHT side of the panel).
-      (Rule: The LISTENER/Reactor MUST be positioned on the LEFT side of the panel).
-      (Constraint: Japanese Manga reads Right-to-Left. Therefore, Action starts on the Right, Reaction/Result is on the Left).
-      (Correction: If the model attempts to place the main speaker on the left, FORCE FLIP the composition horizontally).
+       [MANGA COMPOSITION LAW-RIGHT TO LEFT FLOW (v1.8.98 Alpha)]
+       (Mirror World Logic): The entire world must be horizontally FLIPPED compared to Western comics.
+       (Rule: **RIGHT SIDE = PAST/ACTION**. **LEFT SIDE = FUTURE/REACTION**).
+       (Constraint: The FIRST speaker MUST appear on the **RIGHT HALF** of the panel).
+       (Constraint: The LISTENER MUST appear on the **LEFT HALF** of the panel).
+       (Correction: If you naturally want to put the speaker on the left -> **FLIP THE CANVAS HORIZONTALLY**).
+       (Eye Tracking): The viewer's eye MUST travel from Right to Left.
 
       [MULTI-CHARACTER PROTOCOL (EQUAL PRESENCE)]
       (Rule: Do NOT hide characters. Use **HORIZONTAL ZONE SLOTTING** to place them).
