@@ -143,6 +143,9 @@ You can launch strict local environment with a single click.
 
 ## 🔄 Changellog / 更新履歴
 
+* **v1.8.102 Alpha** (2026/02/21)
+  * **[PROMPT FIX]** Restored Speaker Extraction logic: Correctly parses character names and separates them from dialogue text, injecting them into the Action metadata to prevent "Speech Bubble bleeding" while maintaining character presence in the scene.
+
 * **v1.8.101 Alpha** (2026/02/21)
   * **[PROMPT FIX]** Dialogue Cleaner Refactor: Completely rewrote the regex text filtering to process lines iteratively.
   * **[BUG FIX]** Prevented AI from rendering raw syntax like `(Speaker: サエコ)` or `SFX:` as textual captions directly onto the manga canvas and speech bubbles.

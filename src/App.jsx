@@ -751,29 +751,45 @@ function App() {
       ];
       const getRandomAngle = () => cameraAngles[Math.floor(Math.random() * cameraAngles.length)];
 
-      // [v1.8.101] Dialogue Cleaner & Formatter (Line-by-Line Fix)
+      // [v1.8.102] Dialogue Cleaner & Formatter (Line-by-Line Fix + Speaker Extraction)
       const extractDialogueOnly = (fullPanelText) => {
         const lines = fullPanelText.split('\n');
         const dialogLines = lines.filter(line => line.includes('：') || line.includes(':') || line.includes('「'));
 
-        // Clean each line individually BEFORE joining to ensure Regex catches every speaker
-        const cleanedLines = dialogLines.map(line => {
+        const formattedBubbles = [];
+        let bubbleCount = 1;
+
+        dialogLines.forEach(line => {
           let clean = line;
-          // Remove Speaker Name and Colon (matches any chars up to the LAST colon in the prefix)
-          clean = clean.replace(/^.*?[:：]\s*/, '');
+          let speaker = "Speaker";
+
+          // Extract Speaker if present before colon
+          const match = line.match(/^(.*?)(?:[:：]|「)/);
+          if (match && match[1].trim()) {
+            speaker = match[1].replace(/^(SFX|効果音|BGM|Action)/i, '').trim();
+            speaker = speaker.replace(/^[【\[（(]/, '').replace(/[】\]）)]$/, '').trim();
+          }
+
+          // Remove Speaker Name and Colon
+          clean = clean.replace(/^.*?(?:[:：]|「)\s*/, '');
           // Remove ALL Japanese Quotes and Brackets
           clean = clean.replace(/[「」『』""（）()]/g, '');
-          return clean.trim();
-        }).filter(line => line.length > 0);
+          clean = clean.trim();
 
-        if (cleanedLines.length === 0) return "(No speech bubble)";
-        // Join with space, not newline, so it's treated as one continuous text request
-        return `(Speech Bubble Text: "${cleanedLines.join(' ')}")`;
+          if (clean) {
+            formattedBubbles.push(`(Speech Bubble ${bubbleCount} by ${speaker}: "${clean}")`);
+            bubbleCount++;
+          }
+        });
+
+        if (formattedBubbles.length === 0) return "(No speech bubble)";
+        // Join with space so it's treated as continuous text request, but separated logically
+        return formattedBubbles.join(', ');
       };
 
       const extractActionOnly = (fullPanelText) => {
         const lines = fullPanelText.split('\n');
-        // Action lines are those WITHOUT colons or brackets
+        // Action lines are those WITHOUT colons AND WITHOUT brackets
         const actionLines = lines.filter(line => !line.includes('：') && !line.includes(':') && !line.includes('「'));
 
         const cleanedLines = actionLines.map(line => {
@@ -783,7 +799,28 @@ function App() {
           return clean.trim();
         }).filter(line => line.length > 0);
 
-        return cleanedLines.join(' ');
+        // [v1.8.102] Extract speakers to inject into action, so AI knows WHO is present
+        const dialogLines = lines.filter(line => line.includes('：') || line.includes(':') || line.includes('「'));
+        const speakers = [];
+        dialogLines.forEach(line => {
+          let match = line.match(/^(.*?)(?:[:：]|「)/);
+          if (match && match[1].trim()) {
+            let speaker = match[1].replace(/^(SFX|効果音|BGM|Action)/i, '').trim();
+            speaker = speaker.replace(/^[【\[（(]/, '').replace(/[】\]）)]$/, '').trim();
+            // Ignore empty speakers or generic labels like 'SFX'
+            if (speaker && !speakers.includes(speaker) && speaker.length > 0 && !speaker.match(/^(SFX|効果音|BGM|Action)$/i)) {
+              speakers.push(speaker);
+            }
+          }
+        });
+
+        let finalAction = cleanedLines.join(' ');
+        if (speakers.length > 0) {
+          let speakerText = `The characters [${speakers.join(', ')}] are in the scene.`;
+          finalAction = finalAction ? `${speakerText} ${finalAction}` : speakerText;
+        }
+
+        return finalAction;
       };
 
       const VAR_PANEL_1_KI = `(Camera: ${getRandomAngle()}), (Background: ${cleanLocation}), (Action: ${extractActionOnly(panel1Text)}), ${extractDialogueOnly(panel1Text)}`;
