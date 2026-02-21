@@ -98,7 +98,7 @@ A "Free Input" mode allows users to generate manga from any text, such as person
 
 ### 🇺🇸 [EN] Comprehensive Analysis of Autonomous AI Manga System
 A detailed analysis report (English version) covering the system's design philosophy, core technologies such as **Absolute Physical Geometry Lock** and **Weighted Immutable Prompts**, and legal/philosophical considerations.
-- 📄 [View Detailed Document](https://docs.google.com/document/d/17AaxAj4_IHGHjK5P8ndgoA-dFRyuDMdlCqK9qAU6X34/edit?tab=t.0)
+- 📄 [View Detailed Document](https://docs.google.com/document/d/17AaxAj4_IHGHjK5P8ndgoA-dFRyuDMdlCqK9qAU6X34/edit?usp=sharing)
 
 ---
 
