@@ -154,16 +154,8 @@ class ErrorBoundary extends React.Component {
   }
 }
 
-export default function AppWrapper() {
-  return (
-    <ErrorBoundary>
-      <App />
-    </ErrorBoundary>
-  );
-}
-
 function App() {
-  const SYSTEM_VERSION = "v1.8.98 Alpha"; // Code change = Version bump. Do not forget!
+  const SYSTEM_VERSION = "v1.8.101 Alpha"; // Code change = Version bump. Do not forget!
   // Force Build 2026-02-06 07:07 // Build 2026-02-06-01
 
   console.log("System Version Loaded:", SYSTEM_VERSION); // Debug Log
@@ -747,11 +739,57 @@ function App() {
       const panel3Text = extractPanel(cleanScenario, "3コマ目", "4コマ目");
       const panel4Text = extractPanel(cleanScenario, "4コマ目", "UNKNOWN");
 
-      // Define Panel Content Variables (JS Interpolation)
-      const VAR_PANEL_1_KI = `(Background: ${cleanLocation}), ${panel1Text.replace(/"/g, '\\"').replace(/\n/g, ' ')}`;
-      const VAR_PANEL_2_SHO = `(Background: ${cleanLocation}), ${panel2Text.replace(/"/g, '\\"').replace(/\n/g, ' ')}`;
-      const VAR_PANEL_3_TEN = `(Background: ${cleanLocation}), ${panel3Text.replace(/"/g, '\\"').replace(/\n/g, ' ')}`;
-      const VAR_PANEL_4_KETSU = `(Background: ${cleanLocation}), ${panel4Text.replace(/"/g, '\\"').replace(/\n/g, ' ')}`;
+      // [v1.8.99] Dynamic Camera Angle Generator
+      const cameraAngles = [
+        "Extreme Low Angle (Worm's Eye view)",
+        "Extreme High Angle (Bird's Eye view)",
+        "Dutch Angle (Tilted camera)",
+        "Over-the-shoulder shot",
+        "Dynamic Action Pose Camera",
+        "Dramatic Close-up on eyes",
+        "Wide Establishing Shot"
+      ];
+      const getRandomAngle = () => cameraAngles[Math.floor(Math.random() * cameraAngles.length)];
+
+      // [v1.8.101] Dialogue Cleaner & Formatter (Line-by-Line Fix)
+      const extractDialogueOnly = (fullPanelText) => {
+        const lines = fullPanelText.split('\n');
+        const dialogLines = lines.filter(line => line.includes('：') || line.includes(':') || line.includes('「'));
+
+        // Clean each line individually BEFORE joining to ensure Regex catches every speaker
+        const cleanedLines = dialogLines.map(line => {
+          let clean = line;
+          // Remove Speaker Name and Colon (matches any chars up to the LAST colon in the prefix)
+          clean = clean.replace(/^.*?[:：]\s*/, '');
+          // Remove ALL Japanese Quotes and Brackets
+          clean = clean.replace(/[「」『』""（）()]/g, '');
+          return clean.trim();
+        }).filter(line => line.length > 0);
+
+        if (cleanedLines.length === 0) return "(No speech bubble)";
+        // Join with space, not newline, so it's treated as one continuous text request
+        return `(Speech Bubble Text: "${cleanedLines.join(' ')}")`;
+      };
+
+      const extractActionOnly = (fullPanelText) => {
+        const lines = fullPanelText.split('\n');
+        // Action lines are those WITHOUT colons or brackets
+        const actionLines = lines.filter(line => !line.includes('：') && !line.includes(':') && !line.includes('「'));
+
+        const cleanedLines = actionLines.map(line => {
+          let clean = line;
+          // Remove literal prefixes that Midjourney miscues as captions e.g. "SFX: 爆笑" -> "爆笑"
+          clean = clean.replace(/^(SFX|効果音|BGM|Action)[:：\s]*/i, '');
+          return clean.trim();
+        }).filter(line => line.length > 0);
+
+        return cleanedLines.join(' ');
+      };
+
+      const VAR_PANEL_1_KI = `(Camera: ${getRandomAngle()}), (Background: ${cleanLocation}), (Action: ${extractActionOnly(panel1Text)}), ${extractDialogueOnly(panel1Text)}`;
+      const VAR_PANEL_2_SHO = `(Camera: ${getRandomAngle()}), (Background: ${cleanLocation}), (Action: ${extractActionOnly(panel2Text)}), ${extractDialogueOnly(panel2Text)}`;
+      const VAR_PANEL_3_TEN = `(Camera: ${getRandomAngle()}), (Background: ${cleanLocation}), (Action: ${extractActionOnly(panel3Text)}), ${extractDialogueOnly(panel3Text)}`;
+      const VAR_PANEL_4_KETSU = `(Camera: ${getRandomAngle()}), (Background: ${cleanLocation}), (Action: ${extractActionOnly(panel4Text)}), ${extractDialogueOnly(panel4Text)}`;
 
       const VAR_CAST_LIST = castList.replace(/\n/g, ', ');
 
@@ -831,9 +869,10 @@ function App() {
       (Visual Weight: Right side panels have stronger gravity than left).
       (Japanese Layout: Dialogue/VFX MUST flow Right-to-Left).
       
-      [CAST & IDENTITY LOCK]
+      [CAST & IDENTITY LOCK & ANTI-BLEED PROTOCOL]
       (Cast): ${VAR_CAST_LIST}.
       (Identity Lock): Maintain 100% fidelity for each character. (Anti-Fusion): NEVER mix hair colors/glasses between characters.
+      (Glasses Check): If a character does NOT wear glasses in their design, ABSOLUTELY PROHIBIT drawing glasses on them. If they DO wear glasses, ensure they have them.
       (Instance Limit): SINGLE instance per panel per character. NO CLONES. ABSOLUTELY FORBIDDEN to draw the same person twice in one panel.
       
       [DIALOGUE SPATIAL BINDING-ATTRIBUTION LOCK]
@@ -849,16 +888,12 @@ function App() {
        (Correction: If you naturally want to put the speaker on the left -> **FLIP THE CANVAS HORIZONTALLY**).
        (Eye Tracking): The viewer's eye MUST travel from Right to Left.
 
-      [MULTI-CHARACTER PROTOCOL (EQUAL PRESENCE)]
-      (Rule: Do NOT hide characters. Use **HORIZONTAL ZONE SLOTTING** to place them).
-      (Strategy: Divid the panel width into 3 vertical slices: RIGHT, CENTER, LEFT).
-      
-      [ZONE ASSIGNMENT-READING ORDER FLOW]
-      (Slot 1-RIGHT ZONE): **FIRST Speaker** / Initiator. (Primary visual anchor).
-      (Slot 2-CENTER ZONE): **Second Speaker** / Mediator.
-      (Slot 3-LEFT ZONE): **Reactor** / Listener / Final Speaker.
-      
-      (Constraint: Characters MUST stick to their zones. Do not overlap heavily).
+      [MULTI-CHARACTER PROTOCOL-v1.8.99 (STRICT LIMIT)]
+      (Rule: Limit active speaking characters to a MAXIMUM of 2 per panel to prevent concept bleeding).
+      (Placement: HORIZONTAL ZONE SLOTTING).
+      - (Slot 1-RIGHT ZONE): **FIRST Speaker** / Initiator.
+      - (Slot 2-LEFT ZONE): **Second Speaker** / Listener.
+      (Background Mobs): Any other characters present MUST be pushed far into the background, silhouetted out of focus, or NOT DRAWN. Prevent crowding.
       (Bubble Binding): "Speech Bubble A" spawns in RIGHT ZONE. "Speech Bubble B" spawns in LEFT ZONE.
       
       [NARRATIVE & DIRECTION]
@@ -1583,5 +1618,13 @@ function App() {
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(59, 130, 246, 0.4); }
   `}} />
     </div >
+  );
+}
+
+export default function AppWrapper() {
+  return (
+    <ErrorBoundary>
+      <App />
+    </ErrorBoundary>
   );
 }
