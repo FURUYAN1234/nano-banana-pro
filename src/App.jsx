@@ -155,9 +155,9 @@ class ErrorBoundary extends React.Component {
 }
 
 function App() {
-  const SYSTEM_VERSION = "v1.8.103 Alpha"; // Code change = Version bump. Do not forget!
   // Force Build 2026-02-06 07:07 // Build 2026-02-06-01
 
+  const SYSTEM_VERSION = "v1.9.001 Alpha"; // [ZENITH UPGRADE]
   console.log("System Version Loaded:", SYSTEM_VERSION); // Debug Log
   const [apiKey, setApiKeyState] = useState("");
   const [showModal, setShowModal] = useState(false); // FIXEDCRITICAL RESTORE
@@ -166,6 +166,9 @@ function App() {
   const [searchTopic, setSearchTopic] = useState("");
   const [customLocation, setCustomLocation] = useState(''); // [v1.8.103] Custom Location Override
   const [customOutfit, setCustomOutfit] = useState(''); // [v1.8.103] Custom Outfit Override
+  const [lockedLocation, setLockedLocation] = useState(''); // STEP2実行時に確定した場所
+  const [lockedOutfit, setLockedOutfit] = useState('');     // STEP2実行時に確定した服装
+
 
   const [categories, setCategories] = useState([
     { id: 'politics', label: '政治・経済', icon: '💼', checked: false, keywords: '最新 政治 経済 社会ニュース' },
@@ -667,6 +670,10 @@ function App() {
       // We append the topic and location to the scenario text for visibility and parsing
       setScenario(`## タイトル: ${parsedData.topic} !?\nLocation: ${parsedData.location || "Unspecified"}\n\n${parsedData.scenario} `);
 
+      // STEP2実行時に場所・服装を確定（ロック）する
+      setLockedLocation(customLocation.trim() || parsedData.location || "Unspecified");
+      setLockedOutfit(customOutfit.trim() || "");
+
       setScenarioThought(prev => prev + `\n > Topic Selected: ${parsedData.topic} \n > Scenario Construction Complete.`);
       showStatus("シナリオの生成が完了しました！");
 
@@ -731,7 +738,11 @@ function App() {
     `;
 
       const cleanTopic = scenario.match(/## タイトル:\s*(.*?)(\n|$|!)/)?.[1]?.trim() || scenario.split('\n')[0].substring(0, 20);
-      const cleanLocation = scenario.match(/Location:\s*(.*?)(\n|$)/i)?.[1]?.trim() || "Generic Detailed Background";
+
+      // FIX: If customLocation is set, IT is the absolute truth for the visual prompt, regardless of what the scenario text says.
+      const scenarioLocationMatch = scenario.match(/Location:\s*(.*?)(\n|$)/i)?.[1]?.trim();
+      const cleanLocation = customLocation.trim() ? customLocation.trim() : (scenarioLocationMatch || "Generic Detailed Background");
+
       const cleanScenario = scenario;
 
       // [v1.8.3] Smart Splitter for Panels
@@ -1435,38 +1446,87 @@ function App() {
                     placeholder="ここに生成されたシナリオが表示されます..."
                   />
                 </div>
+
+                {/* 場所・服装設定プレビューは grid 外へ移動済み */}
+
               </div>
             </section>
           </div>
 
-          {/* 03: プロンプト生成 (Static Layout) */}
-          <section className={`pt-2 transition-all duration-300
-            ${currentStep === 3 ? 'opacity-100' : 'opacity-100'}
-            ${currentStep < 3 ? 'blur-[4px] opacity-30 grayscale pointer-events-none' : ''}
-            ${isSearching ? 'blur-sm opacity-50 pointer-events-none' : ''}
-      `}>
-            {/* FIX: Step 3 Header added */}
-            <div className={`flex items-center gap-3 text-sm font-black uppercase tracking-widest mb-6 ${currentStep === 3 ? 'text-orange-400' : 'text-slate-500'} `}>
+          {/* 場所・服装設定プレビュー - STEP2以降のみ表示 */}
+          <div className={`bg-[#1a1625] border border-blue-500/30 p-4 pb-5 rounded-xl flex flex-col gap-3 text-xs font-mono shadow-inner transition-all duration-300
+            ${currentStep < 2 ? 'blur-[4px] opacity-30 grayscale pointer-events-none' : ''}
+          `}>
+            <span className="text-blue-400 font-bold border-b border-blue-500/20 pb-2 w-full flex items-center gap-2">
+              <Sparkles size={14} /> 場所・服装設定 (GENERATION PREVIEW)
+            </span>
+            <p className="text-[10px] text-slate-400 leading-relaxed">
+              ※以下を変更する場合は指定場所・指定服装を入力の上、『シナリオ作成を実行（STEP2）』ボタンをクリックして再生成してください。
+            </p>
+            <div className="text-gray-300" style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '6px' }}>
+              <Globe size={12} className="text-blue-400" />
+              <span>場所 (Location):</span>
+              <span style={{ fontWeight: 'bold', color: lockedLocation && customLocation && lockedLocation === customLocation ? '#c4b5fd' : '#ffffff' }}>
+                {lockedLocation || "AIおまかせ (Generic Background)"}
+              </span>
+              <span style={{
+                marginLeft: '6px', padding: '2px 6px', borderRadius: '4px', fontSize: '9px', whiteSpace: 'nowrap',
+                background: lockedLocation && customLocation && lockedLocation === customLocation ? 'rgba(88,28,135,0.5)' : 'rgba(29,78,216,0.3)',
+                color: lockedLocation && customLocation && lockedLocation === customLocation ? '#c4b5fd' : '#93c5fd',
+                border: `1px solid ${lockedLocation && customLocation && lockedLocation === customLocation ? 'rgba(139,92,246,0.4)' : 'rgba(59,130,246,0.3)'}`
+              }}>
+                {lockedLocation && customLocation && lockedLocation === customLocation ? '強制指定中' : '自動判定'}
+              </span>
+            </div>
+            <div className="text-gray-300" style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '6px', paddingBottom: '4px' }}>
+              <span className="text-green-400">👕</span>
+              <span>服装 (Outfit):</span>
+              <span style={{ fontWeight: 'bold', color: lockedOutfit ? '#c4b5fd' : '#ffffff' }}>
+                {lockedOutfit || "キャラシート準拠 (Default)"}
+              </span>
+              <span style={{
+                marginLeft: '6px', padding: '2px 6px', borderRadius: '4px', fontSize: '9px', whiteSpace: 'nowrap',
+                background: lockedOutfit ? 'rgba(88,28,135,0.5)' : 'rgba(29,78,216,0.3)',
+                color: lockedOutfit ? '#c4b5fd' : '#93c5fd',
+                border: `1px solid ${lockedOutfit ? 'rgba(139,92,246,0.4)' : 'rgba(59,130,246,0.3)'}`
+              }}>
+                {lockedOutfit ? '強制指定中' : '自動判定'}
+              </span>
+            </div>
+          </div>
+
+          {/* 03: プロンプト生成 - Tailwind p-8等がJITで無視されるためインラインスタイルで適用 */}
+          <section
+            style={{ padding: '16px', gap: '16px', borderRadius: '0', background: '#0f1115' }}
+            className={`flex flex-col shadow-xl transition-all duration-300
+              ${currentStep === 3 ? 'border-2 border-orange-500/50 shadow-[0_0_50px_rgba(249,115,22,0.15)] opacity-100' : 'border border-white/5 opacity-60'}
+              ${currentStep > 3 ? 'border border-orange-500/30 opacity-100' : ''}
+              ${currentStep < 3 ? 'blur-[4px] opacity-30 grayscale pointer-events-none' : ''}
+              ${isSearching ? 'blur-sm opacity-50 pointer-events-none' : ''}
+          `}>
+            <div className={`flex items-center gap-3 text-sm font-black uppercase tracking-widest px-2 ${currentStep === 3 ? 'text-orange-400' : 'text-slate-500'}`}>
               <Wand2 size={24} /> STEP 03: プロンプト生成 (PROMPT ASSEMBLY)
             </div>
 
             <button
               onClick={assemblePrompt}
               disabled={isAssembling}
-              className={`w-full group bg-white text-black font-black py-8 rounded-xl shadow-2xl overflow-hidden hover:bg-slate-100 active:scale-[0.99] transition-all disabled:opacity-50 disabled:bg-slate-800 disabled:text-slate-500 disabled:cursor-not-allowed
-                     ${currentStep === 3 ? 'ring-4 ring-orange-500 ring-offset-4 ring-offset-[#0a0c10]' : ''}
-      `}
+              className={`w-full relative bg-white hover:bg-slate-200 text-black py-6 rounded-xl font-black text-xl flex items-center justify-center gap-4 border-b-[6px] border-slate-300 active:border-b-0 active:translate-y-[6px] transition-all disabled:opacity-50 disabled:grayscale disabled:border-none disabled:bg-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed group/gen shadow-xl
+                   ${currentStep === 3 ? 'ring-4 ring-orange-500 ring-offset-4 ring-offset-[#0a0c10]' : ''}
+              `}
             >
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-indigo-600 opacity-0 group-hover:opacity-10 transition-opacity" />
-              <div className="flex flex-col items-center justify-center gap-3 relative z-10">
-                <div className="flex items-center gap-4">
-                  {isAssembling ? <Loader2 size={32} className="animate-spin text-blue-600" /> : <Wand2 size={32} className={`text-blue-600 ${currentStep === 3 ? 'animate-bounce' : ''} `} />}
-                  <span className="text-3xl tracking-tighter italic">
-                    {isAssembling ? "思考および描画中..." : "最終プロンプトを構築する"}
-                  </span>
-                </div>
-                <span className="text-[10px] font-bold text-slate-400 tracking-[0.2em] uppercase">全ての解析データと演出案を統合</span>
-              </div>
+              {isAssembling ? (
+                <>
+                  <Loader2 size={24} className="animate-spin" />
+                  <span className="animate-pulse">ASSEMBLING PROMPT...</span>
+                </>
+              ) : (
+                <>
+                  <Wand2 size={24} className={`text-blue-600 ${currentStep === 3 ? 'animate-bounce' : ''} `} />
+                  <span>最終プロンプトを構築する (STEP 3)</span>
+                  <ArrowRight size={24} className="opacity-60" />
+                </>
+              )}
             </button>
           </section>
 
@@ -1479,10 +1539,7 @@ function App() {
               <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl blur opacity-10 group-hover:opacity-20 transition duration-1000"></div>
               <div className="relative bg-[#0d1117] p-8 rounded-xl border border-white/5 shadow-3xl h-full flex flex-col">
                 <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2 text-[10px] font-black text-yellow-400 uppercase tracking-widest">
-                    <Zap size={14} /> 構築されたプロンプト
-                  </div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 ml-auto">
                     <button
                       onClick={copyPrompt}
                       disabled={!finalPrompt}
@@ -1498,6 +1555,7 @@ function App() {
                 <ThinkingLog thought={assembleThought} />
 
                 <div className="flex flex-col h-full mt-4 gap-4">
+
                   <div className="relative flex-1">
                     <textarea
                       value={finalPrompt}
