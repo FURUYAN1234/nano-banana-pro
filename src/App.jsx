@@ -155,7 +155,7 @@ class ErrorBoundary extends React.Component {
 }
 
 function App() {
-  const SYSTEM_VERSION = "v1.8.102 Alpha"; // Code change = Version bump. Do not forget!
+  const SYSTEM_VERSION = "v1.8.103 Alpha"; // Code change = Version bump. Do not forget!
   // Force Build 2026-02-06 07:07 // Build 2026-02-06-01
 
   console.log("System Version Loaded:", SYSTEM_VERSION); // Debug Log
@@ -164,6 +164,8 @@ function App() {
   const [inputMode, setInputMode] = useState("news"); // 'news' | 'manual'
   const [manualTopic, setManualTopic] = useState("");
   const [searchTopic, setSearchTopic] = useState("");
+  const [customLocation, setCustomLocation] = useState(''); // [v1.8.103] Custom Location Override
+  const [customOutfit, setCustomOutfit] = useState(''); // [v1.8.103] Custom Outfit Override
 
   const [categories, setCategories] = useState([
     { id: 'politics', label: '政治・経済', icon: '💼', checked: false, keywords: '最新 政治 経済 社会ニュース' },
@@ -544,11 +546,16 @@ function App() {
       - **デフォルト回避**: 安易な「教室」「白い部屋」は避けるが、**ニュースの文脈（学生、学校関連）で必要ならば「教室」も許可する。**重要なのは「ニュースとの適合性」である。
        - **デフォルト回避**: 安易な「教室」「白い部屋」は避けるが、**ニュースの文脈（学生、学校関連）で必要ならば「教室」も許可する。**重要なのは「ニュースとの適合性」である。
        
-       5. **【強制舞台指定 (Location Lock)】**:
+       4. **【強制舞台指定 (Location Lock)】**:
           - 今回の漫画の舞台は、以下の場所に**「必ず」**設定してください。
-          - **指定場所: 「${forcedLocation}」**
+          - **指定場所: 「${customLocation.trim() ? customLocation.trim() : "ニュース内容に即した場所"}」**
           - もしニュースの内容と指定場所が矛盾する場合でも、無理やりこじつけてその場所で展開せよ。（例: 「政治のニュース」×「ラーメン屋」→ 政治家がラーメン屋で密談している、等）
- 
+          ${customOutfit.trim() ? `
+       5. **【強制服装指定 (Outfit Lock)】**:
+          - 今回のシナリオでは、CastListに記載された元の服装設定を完全に無視し、全員の服装を強制的に『${customOutfit.trim()}』に変更して描写・行動させよ。
+          - 画像生成プロンプトでもこの指定タグが反映される前提で、シナリオ内のト書き(Action)テキストにも具体的な服装指定を含めること。
+          ` : ""}
+
          【シナリオ構成・演出の絶対厳守 (v1.8.94 Alpha)】
          0. **全員登場義務 (Mandatory All-Cast)**:
             - CastListに含まれている **全てのキャラクターを必ず1回以上登場させること。**
@@ -577,7 +584,7 @@ function App() {
         以下の独自フォーマット **のみ** を出力してください。Markdownのコードブロックも不要です。
 
         Topic: [ニュースの見出し（15文字以内）]
-        Location: [ニュースの内容に即した舞台（例: 砂漠、法廷、宇宙）。※教室は禁止]
+        Location: [${customLocation.trim() ? "必ず『" + customLocation.trim() + "』にせよ" : "ニュースの内容に即した舞台（例: 砂漠、法廷、宇宙）。※教室は禁止"}]
         Scenario:
         [1コマ目: 起]
         (状況とセリフ...)
@@ -935,6 +942,8 @@ function App() {
       
       [NARRATIVE & DIRECTION]
       Date: "${targetDate}". Topic: "${cleanTopic}".
+      ${customLocation.trim() ? `(Location Lock: ${customLocation.trim()}).` : ''}
+      ${customOutfit.trim() ? `(Outfit Lock: ALL CHARACTERS MUST WEAR ${customOutfit.trim()}).` : ''}
       Tone: High Energy Satire. Visual Strategy: ${dynamicCamera}.
       (Color Logic): ${isMonochrome ? 'ABSOLUTE MONOCHROME NO COLOR' : 'FULL VIBRANT COLOR'}.
 
@@ -1353,6 +1362,35 @@ function App() {
                     />
                   </div>
                 )}
+
+                <div className="flex flex-col md:flex-row gap-4 mb-4">
+                  <div className="flex-1 bg-[#050505] p-3 rounded-xl border border-blue-500/20">
+                    <label className="text-xs font-bold text-blue-400 mb-1 block flex items-center gap-1">
+                      <Globe size={14} /> 指定場所 (Location Override) <span className="text-[10px] text-gray-500 font-normal ml-auto">※空欄ならAIおまかせ</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={customLocation}
+                      onChange={(e) => setCustomLocation(e.target.value)}
+                      style={{ color: '#ffffff', backgroundColor: '#111111' }}
+                      className="w-full bg-[#111] text-white p-2 rounded border border-gray-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-sm placeholder-gray-600 font-mono"
+                      placeholder="例: サイバーパンクな裏路地、炎上する宇宙船..."
+                    />
+                  </div>
+                  <div className="flex-1 bg-[#050505] p-3 rounded-xl border border-purple-500/20">
+                    <label className="text-xs font-bold text-purple-400 mb-1 block flex items-center gap-1">
+                      <Sparkles size={14} /> 指定服装 (Outfit Override) <span className="text-[10px] text-gray-500 font-normal ml-auto">※空欄ならキャラシート準拠</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={customOutfit}
+                      onChange={(e) => setCustomOutfit(e.target.value)}
+                      style={{ color: '#ffffff', backgroundColor: '#111111' }}
+                      className="w-full bg-[#111] text-white p-2 rounded border border-gray-700 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 outline-none text-sm placeholder-gray-600 font-mono"
+                      placeholder="例: 全員水着、黒のミリタリー装備、ナース服..."
+                    />
+                  </div>
+                </div>
 
                 {/* EXECUTE BUTTON (White Style) */}
                 <button
