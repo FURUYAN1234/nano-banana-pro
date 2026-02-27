@@ -747,10 +747,14 @@ function App() {
         : "Draw in a high-budget, vibrant full-color TV anime style. The characters should have delicate and detailed anime features with beautiful eyes, cinematic lighting, and sharp clean ink contours. Ensure the artwork looks like an official Japanese animation illustration.";
 
       const dynamicCamera = `
-    Always use dynamic and extreme camera angles like a worm's-eye view from below or a bird's-eye view from above. Avoid flat, normal eye-level camera shots.
-    Use extreme perspective distortion (like a fisheye or ultra-wide lens) to make characters' hands or feet appear larger when close to the camera.
-    Show the characters' full bodies or at least dynamic upper body poses. Do not draw static "talking heads" or boring busts.
-    Characters must have highly expressive anime facial expressions. Include cinematic lighting and particle effects like impact frames for action shots.
+    CRITICAL COMPOSITION RULES:
+    1. Do NOT draw characters just standing neutrally or looking directly at the camera.
+    2. Characters must interact with each other, looking at the person they are talking to.
+    3. Left/Right Positioning: The FIRST person speaking in a panel MUST be drawn on the RIGHT side of the panel. The SECOND person speaking MUST be drawn on the LEFT side.
+    4. Always use dynamic and extreme camera angles: worm's-eye view from below, bird's-eye view from above, or tilted dutch angles. Avoid flat, normal eye-level camera shots.
+    5. Use extreme perspective distortion (fisheye or ultra-wide lens) for dramatic effect, making hands or foreground elements appear larger.
+    6. Include cinematic lighting, dramatic shadows, and high-budget visual effects like impact frames or speedlines for action shots.
+    7. Characters must have highly exaggerated, expressive anime facial expressions.
     `;
 
       const cleanTopic = scenario.match(/## タイトル:\s*(.*?)(\n|$|!)/)?.[1]?.trim() || scenario.split('\n')[0].substring(0, 20);
@@ -797,7 +801,7 @@ function App() {
           let clean = line;
           let speaker = "Speaker";
 
-          // Extract Speaker if present before colon
+          // Extract Speaker if present before colon or bracket
           const match = line.match(/^(.*?)(?:[:：]|「)/);
           if (match && match[1].trim()) {
             speaker = match[1].replace(/^(SFX|効果音|BGM|Action)/i, '').trim();
@@ -823,9 +827,14 @@ function App() {
 
       const extractActionOnly = (fullPanelText) => {
         const lines = fullPanelText.split('\n');
-        // Extract everything EXCEPT dialogue
-        const actionLines = lines.filter(line => !line.includes('：') && !line.includes(':') && !line.includes('「'));
-        return actionLines.join(' ').trim();
+        // Extract everything EXCEPT dialogue lines, empty lines, and the "[Xコマ目]" header
+        const actionLines = lines.filter(line => {
+          const isDialogue = line.includes('：') || line.includes(':') || line.includes('「');
+          const isHeader = line.match(/^\[\d+コマ目/);
+          const isEmpty = line.trim() === '';
+          return !isDialogue && !isHeader && !isEmpty;
+        });
+        return actionLines.join(' ').trim() || "Characters interacting dynamically based on dialogue.";
       };
 
       const VAR_PANEL_1_KI = `(Camera: ${getRandomAngle()}), (Background: ${cleanLocation}), (Action: ${extractActionOnly(panel1Text)}), ${extractDialogueOnly(panel1Text)}`;
