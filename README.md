@@ -139,30 +139,6 @@ You can launch strict local environment with a single click.
 
 ---
 
-## 🔄 Changellog / 更新履歴
-
-* **v1.8.102 Alpha** (2026/02/21)
-  * **[PROMPT FIX]** Restored Speaker Extraction logic: Correctly parses character names and separates them from dialogue text, injecting them into the Action metadata to prevent "Speech Bubble bleeding" while maintaining character presence in the scene.
-
-* **v1.8.101 Alpha** (2026/02/21)
-  * **[PROMPT FIX]** Dialogue Cleaner Refactor: Completely rewrote the regex text filtering to process lines iteratively.
-  * **[BUG FIX]** Prevented AI from rendering raw syntax like `(Speaker: サエコ)` or `SFX:` as textual captions directly onto the manga canvas and speech bubbles.
-
-* **v1.8.88 Alpha** (2026/02/07 00:00)
-  * **[UI RESTORE]** API Input: Reverted to **White Background style** (Image 3 reference) for maximum visibility.
-  * **[UI]** Simplified Header: Removed "Change Key" button by user request.
-  * **[FIX]** API Key Persistence: Confirmed LocalStorage support is active.
-
-* **v1.8.86 Alpha** (2026/02/06 19:40)
-
-* **v1.8.86 Alpha** (2026/02/06 19:40)
-  * **[CRITICAL FIX]** "Instant Done" Logic: Fixed an issue where the system would incorrectly assume completion and disable UI elements.
-  * **[UI REVERT]** Restored vertical layout for better usability.
-  * **[UX IMPROVEMENT]** Enabled "Assemble Prompt" button visibility at all times to prevent user confusion.
-  * **[SYNTAX FIX]** Cleaned up CSS class names to fix styling issues.
-
----
-
 ## ⚖️ Compliance & Legal Stance / 法的遵守について
 
 ### Japanese Copyright Law (Article 30-4)
