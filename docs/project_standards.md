@@ -95,6 +95,7 @@ Windows環境下での文字化けや実行エラー（"Agent execution terminat
 
 ## 5. 禁止事項 (Forbidden Actions)
 
+- ❌ **確認なきバージョン更新報告**: ツールの実行（コード置換等）がエラーやキャンセルで中断されたことに気付かず、`package.json`、`src/App.jsx`、`index.html`の内容が更新されたと盲信してデプロイや報告を行うこと。必ずファイルの実際の中身を確認し、差分が適用されたか確認してからデプロイすること。
 - ❌ **早すぎる "Fixed!" 宣言**: `git show origin/...` で新しいバージョン文字列を確認するまでは「修正完了」と報告しないこと。
 - ❌ **盲目的な Force Push**: `gh-pages` ブランチの削除やForce Pushは、GitHub Pagesの設定解除のリスクがあるため、必要な場合を除き避けること。
 - ❌ **"No packages published" への過剰反応**: GitHub UI上の "Packages" 表記はソースコードホスティングとは無関係であるため無視すること。
