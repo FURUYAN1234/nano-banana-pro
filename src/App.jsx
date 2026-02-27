@@ -31,6 +31,19 @@ import {
 import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 
+// --- Error Translation Utility ---
+const translateApiError = (errorMsg) => {
+  const msg = errorMsg || "";
+  if (msg.includes("sensitive") || msg.includes("Responsible AI") || msg.includes("400")) {
+    return "[ERROR GUIDE] 🚨 送信内容がAIの安全基準（NSFW等の検閲）に引っかかり、処理がブロックされました。\n[対処法] 送信内容（画像・テキスト）に過激・不適切な表現がないか確認し、修正して再試行してください。";
+  } else if (msg.includes("not found") || msg.includes("not supported") || msg.includes("404") || msg.includes("403")) {
+    return "[ERROR GUIDE] 🔑 現在のAPIキーではこの機能へのアクセス権限がありません、または制限されています。\n[対処法] 時間を置くか、設定を見直してください。";
+  } else {
+    return "[ERROR GUIDE] ⏲️ タイムアウト、または予期せぬ通信エラーが発生しました。\n[対処法] サーバーが混雑している可能性があります。数分時間を置いてから再度お試しください。";
+  }
+};
+
+
 // --- Thinking Log Component ---
 const ThinkingLog = ({ thought }) => {
   const scrollRef = useRef(null);
@@ -436,7 +449,8 @@ function App() {
       showStatus("全キャラクターの解析が完了しました。");
     } catch (error) {
       console.error(error);
-      setAnalyzeThought(prev => prev + "\n\n[システムエラー]: " + error.message);
+      const translatedMsg = translateApiError(error.message);
+      setAnalyzeThought(prev => prev + `\n\n[SYSTEM FAILURE]: ${error.message}\n--------------------------------------------------\n${translatedMsg}`);
       showStatus("解析エラー: " + error.message);
     } finally {
       clearInterval(thinkTimer);
@@ -681,7 +695,8 @@ function App() {
 
     } catch (error) {
       console.error(error);
-      setScenarioThought(prev => prev + "\n[ERROR]: " + error.message);
+      const translatedMsg = translateApiError(error.message);
+      setScenarioThought(prev => prev + `\n\n[SYSTEM FAILURE]: ${error.message}\n--------------------------------------------------\n${translatedMsg}`);
       showStatus("シナリオ生成エラー");
     } finally {
       setIsSearching(false);
@@ -891,7 +906,8 @@ Important constraints:
 
     } catch (error) {
       console.error(error);
-      setAssembleThought(prev => prev + `\n\n[SYSTEM FAILURE]: ${error.message} `);
+      const translatedMsg = translateApiError(error.message);
+      setAssembleThought(prev => prev + `\n\n[SYSTEM FAILURE]: ${error.message}\n--------------------------------------------------\n${translatedMsg}`);
       showStatus("生成エラー: " + error.message);
     } finally {
       clearInterval(thinkTimer);
