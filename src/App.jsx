@@ -776,15 +776,18 @@ function App() {
       const panel3Text = extractPanel(cleanScenario, "3コマ目", "4コマ目");
       const panel4Text = extractPanel(cleanScenario, "4コマ目", "UNKNOWN");
 
-      // [v1.8.99] Dynamic Camera Angle Generator
+      // [v1.9.6] Dynamic Camera Angle Generator - Expanded for less close-ups & more dynamic wide/full-body shots
       const cameraAngles = [
-        "Extreme Low Angle (Worm's Eye view)",
-        "Extreme High Angle (Bird's Eye view)",
-        "Dutch Angle (Tilted camera)",
-        "Over-the-shoulder shot",
-        "Dynamic Action Pose Camera",
-        "Dramatic Close-up on eyes",
-        "Wide Establishing Shot"
+        "Extreme Low Angle (Worm's Eye view, Full Body)",
+        "Extreme High Angle (Bird's Eye view, looking down)",
+        "Dutch Angle (Tilted camera, dramatic composition)",
+        "Dynamic Action Wide Shot (Full Body, dynamic pose)",
+        "Over-the-shoulder shot (Wide perspective)",
+        "Wide Establishing Shot (Entire scene visible)",
+        "Extreme Wide Angle Lens (Fisheye effect, dramatic depth)",
+        "Medium-Full Shot (Showing body language clearly)",
+        "Dramatic Close-up on eyes", // Keep one close-up for dramatic moments, but dilute its probability
+        "Cinematic Low Angle (Epic perspective)"
       ];
       const getRandomAngle = () => cameraAngles[Math.floor(Math.random() * cameraAngles.length)];
 
