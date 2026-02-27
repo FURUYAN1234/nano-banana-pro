@@ -70,6 +70,7 @@ ${R}`;throw R.includes("Quota exceeded")||R.includes("429")?j="【API制限】�
            - **【アイウェア (Eyewear)】**: 
              - **サングラスを絶対に見逃すな**。レンズが黒/不透明なら (black sunglasses:1.5)。
              - 透明レンズなら (glasses:1.2)。形状(Under-rim, Round)も特定せよ。
+             - **【最重要リスク】** 眼鏡をかけていない場合は、他のキャラの眼鏡が伝染するハルシネーションを防ぐため、必ず **(no glasses:1.5)** と出力せよ。
            - **【髭 (Facial Hair)】**: 
              - **絶対に髭を見逃すな**。(white beard:1.5), (mustache:1.5), (stubble:1.2).
              - 老人キャラは髭がある確率が高い。
@@ -93,7 +94,7 @@ ${R}`;throw R.includes("Quota exceeded")||R.includes("429")?j="【API制限】�
         | :--- | :--- | :--- |
         | **基本(Base)** | 性別: [性別]<br>年齢: [年齢] | **[WEIGHTS]: (female:1.6), (teenager:1.2)** |
         | **髪(Hair)** | 色: [色]<br>長さ: [Short/Medium/Long]<br>構造: [Bob/Straight/Wavy/Spiky]<br>前髪: [形状] | **[WEIGHTS]: (chin-length bob:1.5), (orange hair:1.4), (messy:1.2)** |
-        | **顔(Face)** | 目: [色/形]<br>肌: [色]<br>髭: [有無]<br>眼鏡: [有無] | **[WEIGHTS]: (white beard:1.5), (tanned skin:1.5), (black sunglasses:1.6)** |
+        | **顔(Face)** | 目: [色/形]<br>肌: [色]<br>髭: [有無]<br>眼鏡: [有無] | **[WEIGHTS]: (white beard:1.5), (tanned skin:1.5), (black sunglasses:1.6)** （※眼鏡無しなら **(no glasses:1.5)** を絶対付与） |
         | **服装(Outfit)** | [服の詳細: 制服/私服、上着の有無など] | [weighted tags]: (sailor uniform:1.2), (hoodie:1.1) |
         | **性格(Mind)** | **[OCR抽出]**: [ここにテキスト全文] | - |
       `,X,null,ht=>{rl(we=>we+`
@@ -217,9 +218,9 @@ ${X}`),Qe("シナリオ生成エラー")}finally{se(!1)}},sa=async()=>{if(!De||!
     CRITICAL COMPOSITION & GAG MANGA RULES:
     1. Do NOT draw characters just standing neutrally or looking directly at the camera. They MUST interact with each other.
     2. Always use dynamic and extreme camera angles: worm's-eye view, bird's-eye view, or tilted dutch angles. Use extreme perspective distortion (fisheye or ultra-wide lens) for dramatic effect. Avoid flat, boring shots.
-    3. [GAG VFX]: USE extreme comic visual effects! Add heavy speedlines (action lines), giant anime sweat drops, popping veins, or abstract backgrounds for punchlines/reactions. 
+    3. [GAG VFX]: Use comic visual effects, but DO NOT over-use speedlines (action lines) unless it is a high-action scene. Add giant anime sweat drops, popping veins, or abstract backgrounds for punchlines/reactions. 
     4. [EXAGGERATED EMOTIONS]: FORCE extreme, comical, and highly exaggerated facial expressions! Do NOT draw neutral or slightly smiling faces. Exaggerate expressions (blank white eyes, jaw-dropping shock, intense fury, crying waterfalls) while strictly maintaining top-tier, beautiful anime art quality.
-    5. [BODY ACTING]: Characters must physically react with their entire bodies (throwing arms up, falling, etc.). Exaggerate their gestures to the absolute limit.
+    5. [BODY ACTING]: Characters must physically react with their entire bodies (throwing arms up, falling, etc.). Exaggerate their gestures to the absolute limit. Do NOT over-use the "adjusting glasses" pose unless the character is explicitly wearing glasses.
     `,Ue=Le.match(/## タイトル:\s*(.*?)(\n|$|!)/)?.[1]?.trim()||Le.split(`
 `)[0].substring(0,20),st=Le.match(/Location:\s*(.*?)(\n|$)/i)?.[1]?.trim(),ht=D.trim()?D.trim():st||"Generic Detailed Background",we=Le.replace(/```(?:json|markdown)?/gi,"").trim(),pe=(Ne,yt,vt)=>{const he=new RegExp(`\\[${yt}.*?\\]([\\s\\S]*?)(?=\\[${vt}|$)`,"i"),oe=Ne.match(he);return oe?oe[1].trim():""},Ct=pe(we,"1コマ目","2コマ目")||we,$e=pe(we,"2コマ目","3コマ目"),Mt=pe(we,"3コマ目","4コマ目"),ml=pe(we,"4コマ目","UNKNOWN"),wl=["Extreme Low Angle (Worm's Eye view, Full Body)","Extreme High Angle (Bird's Eye view, looking down)","Dutch Angle (Tilted camera, dramatic composition)","Dynamic Action Wide Shot (Full Body, dynamic pose)","Over-the-shoulder shot (Wide perspective)","Wide Establishing Shot (Entire scene visible)","Extreme Wide Angle Lens (Fisheye effect, dramatic depth)","Medium-Full Shot (Showing body language clearly)","Dramatic Close-up on eyes","Cinematic Low Angle (Epic perspective)"],mt=()=>wl[Math.floor(Math.random()*wl.length)],Ft=Ne=>{const vt=Ne.split(`
 `).filter(bt=>bt.includes("：")||bt.includes(":")||bt.includes("「")),he=[];let oe=1;return vt.forEach(bt=>{let We=bt,Bt="Speaker";const il=bt.match(/^(.*?)(?:[:：]|「)/);il&&il[1].trim()&&(Bt=il[1].replace(/^(SFX|効果音|BGM|Action)/i,"").trim(),Bt=Bt.replace(/^[【\[（(]/,"").replace(/[】\]）)]$/,"").trim()),We=We.replace(/^.*?(?:[:：]|「)\s*/,""),We=We.replace(/[「」『』""（）()]/g,""),We=We.trim(),We&&(he.push(`(Speech Bubble ${oe} by ${Bt}: "${We}")`),oe++)}),he.length===0?"(No speech bubble)":he.join(", ")},ul=Ne=>Ne.split(`
@@ -233,9 +234,9 @@ CRITICAL LAYOUT COMMAND: There MUST BE ZERO OUTER WHITE MARGINS. The 4 manga pan
 At the very top of the page, draw a large, bold, black Japanese text title that says: "${Ue||"4-koma Manga"}".
 At the absolute bottom center, draw a tiny English watermark text: "Generated by Super FURU AI 4-koma System ${c}". The text MUST be horizontal.
 
-The canvas MUST be divided into exactly 4 equal horizontal panels stacked vertically from top to bottom, separated by white gutters.
+CRITICAL PANEL SIZE COMMAND: The canvas MUST be divided into exactly 4 EQUAL horizontal panels stacked vertically from top to bottom. All 4 panels MUST be the EXACT SAME height and EXACT SAME width.
 The art style is: ${$}.
-(Apply dramatic anime cinematic lighting, dynamic speedlines where appropriate, and high-budget visual effects).
+(Apply dramatic anime cinematic lighting and high-budget visual effects, but do not clutter the screen with excessive speedlines).
 
 Overall Setting: ${ht||"Detailed Background"}.
 
