@@ -749,11 +749,10 @@ function App() {
       const dynamicCamera = `
     CRITICAL COMPOSITION & GAG MANGA RULES:
     1. Do NOT draw characters just standing neutrally or looking directly at the camera. They MUST interact with each other.
-    2. Left/Right Positioning: The FIRST person speaking in a panel MUST be drawn on the RIGHT side. The SECOND person speaking MUST be drawn on the LEFT side.
-    3. Always use dynamic and extreme camera angles: worm's-eye view, bird's-eye view, or tilted dutch angles. Use extreme perspective distortion (fisheye or ultra-wide lens) for dramatic effect. Avoid flat, boring shots.
-    4. [GAG VFX]: USE extreme comic visual effects! Add heavy speedlines (action lines), giant anime sweat drops, popping veins, or abstract backgrounds for punchlines/reactions. 
-    5. [EXAGGERATED EMOTIONS]: FORCE extreme, comical, and highly exaggerated facial expressions! Do NOT draw neutral or slightly smiling faces. Exaggerate expressions (blank white eyes, jaw-dropping shock, intense fury, crying waterfalls) while strictly maintaining top-tier, beautiful anime art quality.
-    6. [BODY ACTING]: Characters must physically react with their entire bodies (throwing arms up, falling, etc.). Exaggerate their gestures to the absolute limit.
+    2. Always use dynamic and extreme camera angles: worm's-eye view, bird's-eye view, or tilted dutch angles. Use extreme perspective distortion (fisheye or ultra-wide lens) for dramatic effect. Avoid flat, boring shots.
+    3. [GAG VFX]: USE extreme comic visual effects! Add heavy speedlines (action lines), giant anime sweat drops, popping veins, or abstract backgrounds for punchlines/reactions. 
+    4. [EXAGGERATED EMOTIONS]: FORCE extreme, comical, and highly exaggerated facial expressions! Do NOT draw neutral or slightly smiling faces. Exaggerate expressions (blank white eyes, jaw-dropping shock, intense fury, crying waterfalls) while strictly maintaining top-tier, beautiful anime art quality.
+    5. [BODY ACTING]: Characters must physically react with their entire bodies (throwing arms up, falling, etc.). Exaggerate their gestures to the absolute limit.
     `;
 
       const cleanTopic = scenario.match(/## タイトル:\s*(.*?)(\n|$|!)/)?.[1]?.trim() || scenario.split('\n')[0].substring(0, 20);
@@ -836,6 +835,27 @@ function App() {
         return actionLines.join(' ').trim() || "Characters interacting dynamically based on dialogue.";
       };
 
+      const extractPlacementRule = (fullPanelText) => {
+        const lines = fullPanelText.split('\n');
+        const dialogLines = lines.filter(line => line.includes('：') || line.includes(':') || line.includes('「'));
+        const speakers = [];
+        dialogLines.forEach(line => {
+          const match = line.match(/^(.*?)(?:[:：]|「)/);
+          if (match && match[1].trim()) {
+            let speaker = match[1].replace(/^(SFX|効果音|BGM|Action|\(.*?\))/gi, '').replace(/^[【\[（(]/, '').replace(/[】\]）)]$/, '').trim();
+            if (speaker && !speakers.includes(speaker)) {
+              speakers.push(speaker);
+            }
+          }
+        });
+        if (speakers.length >= 2) {
+          return `CRITICAL PLACEMENT: ${speakers[0]} MUST be drawn on the RIGHT side. ${speakers[1]} MUST be drawn on the LEFT side.`;
+        } else if (speakers.length === 1) {
+          return `CRITICAL PLACEMENT: ${speakers[0]} is the main focus of this panel.`;
+        }
+        return `CRITICAL PLACEMENT: Follow the natural dialogue flow.`;
+      };
+
       const VAR_PANEL_1_KI = `(Camera: ${getRandomAngle()}), (Background: ${cleanLocation}), (Action: ${extractActionOnly(panel1Text)}), ${extractDialogueOnly(panel1Text)}`;
       const VAR_PANEL_2_SHO = `(Camera: ${getRandomAngle()}), (Background: ${cleanLocation}), (Action: ${extractActionOnly(panel2Text)}), ${extractDialogueOnly(panel2Text)}`;
       const VAR_PANEL_3_TEN = `(Camera: ${getRandomAngle()}), (Background: ${cleanLocation}), (Action: ${extractActionOnly(panel3Text)}), ${extractDialogueOnly(panel3Text)}`;
@@ -855,9 +875,9 @@ function App() {
       const constructedPrompt = `
 Generate a highly detailed, professional 4-koma (4-panel vertical strip) manga.
 The final image MUST have a tall portrait aspect ratio exactly equivalent to an A4 paper sheet (1:1.414 proportion).
-The canvas MUST be completely filled by the 4 panels. The panels MUST extend all the way to the extreme left and right edges of the canvas, leaving virtually ZERO white margins on the sides. Use thin white gutters between the panels.
+CRITICAL LAYOUT COMMAND: There MUST BE ZERO OUTER WHITE MARGINS. The 4 manga panels MUST stretch horizontally to touch the absolute left and right edges of the canvas. Do NOT draw thick white borders around the entire comic. Use thin white gutters between the panels horizontally.
 At the very top of the page, draw a large, bold, black Japanese text title that says: "${safeTopic}".
-At the bottom, draw a tiny English watermark text: "Generated by Super FURU AI 4-koma System ${SYSTEM_VERSION}". The text MUST be horizontal and placed perfectly in the center bottom.
+At the absolute bottom center, draw a tiny English watermark text: "Generated by Super FURU AI 4-koma System ${SYSTEM_VERSION}". The text MUST be horizontal.
 
 The canvas MUST be divided into exactly 4 equal horizontal panels stacked vertically from top to bottom, separated by white gutters.
 The art style is: ${styleCore}.
@@ -874,21 +894,25 @@ ${dynamicCamera}
 
 ## Panel 1 (Top)
 Camera: ${getRandomAngle()}.
+${extractPlacementRule(panel1Text)}
 Visual Action (Do NOT write this as text on the canvas, draw it visually): ${extractActionOnly(panel1Text)}.
 Dialogue (ONLY write this inside speech bubbles): ${extractDialogueOnly(panel1Text)}.
 
 ## Panel 2
 Camera: ${getRandomAngle()}.
+${extractPlacementRule(panel2Text)}
 Visual Action (Do NOT write this as text on the canvas, draw it visually): ${extractActionOnly(panel2Text)}.
 Dialogue (ONLY write this inside speech bubbles): ${extractDialogueOnly(panel2Text)}.
 
 ## Panel 3
 Camera: ${getRandomAngle()}.
+${extractPlacementRule(panel3Text)}
 Visual Action (Do NOT write this as text on the canvas, draw it visually): ${extractActionOnly(panel3Text)}.
 Dialogue (ONLY write this inside speech bubbles): ${extractDialogueOnly(panel3Text)}.
 
 ## Panel 4 (Bottom)
 Camera: ${getRandomAngle()}.
+${extractPlacementRule(panel4Text)}
 Visual Action (Do NOT write this as text on the canvas, draw it visually): ${extractActionOnly(panel4Text)}.
 Dialogue (ONLY write this inside speech bubbles): ${extractDialogueOnly(panel4Text)}.
 
