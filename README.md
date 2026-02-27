@@ -1,4 +1,4 @@
-# Nano Banana Pro Powered Super AI 4-koma System
+# Nano Banana Pro/2 Powered Super AI 4-koma System
 
 > **"To what extent can humans step away from the creative process?"**
 > **「人間は、どこまで制作から降りられるのか？」**
