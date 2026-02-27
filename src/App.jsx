@@ -201,6 +201,7 @@ function App() {
 
   // [v1.7.0] Model Quality Indicator State
   const [usedModel, setUsedModel] = useState(null);
+  const [isFallbackUsed, setIsFallbackUsed] = useState(false);
 
   // Initialize System
   useEffect(() => {
@@ -944,10 +945,15 @@ Important constraints:
         setGenLog(prev => [...prev, msg]);
       };
 
-      const base64Img = await generateImageWithImagen(finalPrompt, statCallback);
-      setGenLog(prev => [...prev, "[SUCCESS] Data stream received from Generation API.", "[RENDER] Decoding Base64 image data...", "[RENDER] Rendering final canvas..."]);
+      const { base64Img, usedModel: generatedModelId } = await generateImageWithImagen(finalPrompt, statCallback);
+      setGenLog(prev => [...prev, `[SUCCESS] Data stream received from Generation API (${generatedModelId}).`, "[RENDER] Decoding Base64 image data...", "[RENDER] Rendering final canvas..."]);
 
       setGeneratedImage(`data:image/png;base64,${base64Img}`);
+      if (generatedModelId && !generatedModelId.startsWith("gemini-3")) {
+        setIsFallbackUsed(true);
+      } else {
+        setIsFallbackUsed(false);
+      }
       showStatus("画像生成完了！");
       setGenLog(prev => [...prev, "[COMPLETE] Image successfully generated."]);
     } catch (error) {
@@ -1557,6 +1563,17 @@ Important constraints:
                         >
                           <Download size={20} /> 画像をダウンロード (.png)
                         </button>
+                        {isFallbackUsed && (
+                          <div className="mt-4 p-4 bg-orange-900/40 border border-orange-500/50 rounded-xl animate-in fade-in slide-in-from-bottom-2 duration-500">
+                            <p className="text-orange-400 font-bold text-sm flex items-center gap-2 mb-2">
+                              <AlertTriangle size={16} /> ※警告: 下位APIで生成されました
+                            </p>
+                            <p className="text-xs text-orange-200/80 leading-relaxed font-bold">
+                              最新モデル(Nano Banana 2)への接続が拒否/タイムアウトしたため、下位の画像生成専用AIで妥協版を出力しました。文字や描写が大きく崩れている可能性があります。<br />
+                              <span className="text-orange-400">プロンプトをコピーしてGemini(Web版)で手動生成</span>することを強く推奨します。
+                            </p>
+                          </div>
+                        )}
                       </div>
                     </div>
                   ) : isGenerationError ? (
@@ -1655,11 +1672,13 @@ Important constraints:
           </div >
         </main >
 
-        <footer className="text-center text-slate-700 text-[9px] font-bold tracking-[0.3em] uppercase py-10 flex items-center justify-center gap-4">
-          <span>Thinking Manga Engine &copy; 2026</span>
-          <span className="w-1 h-1 bg-slate-700 rounded-full" />
-          <span>Nano Banana Pro</span>
-        </footer>
+        {(!isAssembling && currentStep === 4) ? null : (
+          <footer className="text-center text-slate-700 text-[9px] font-bold tracking-[0.3em] uppercase py-10 flex items-center justify-center gap-4">
+            <span>Thinking Manga Engine &copy; 2026</span>
+            <span className="w-1 h-1 bg-slate-700 rounded-full" />
+            <span>Nano Banana Pro</span>
+          </footer>
+        )}
       </div >
 
       {/* 通知 (日本語) */}

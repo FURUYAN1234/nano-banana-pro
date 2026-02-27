@@ -64,7 +64,7 @@ export const generateImageWithImagen = async (prompt, onStatusUpdate) => {
                     // Find the image part in the response
                     const imagePart = data.candidates[0].content.parts.find(p => p.inlineData);
                     if (imagePart && imagePart.inlineData && imagePart.inlineData.data) {
-                        return imagePart.inlineData.data;
+                        return { base64: imagePart.inlineData.data, model: modelId };
                     }
                 }
                 throw new Error(`Unexpected formats from Gemini model ${modelId}: missing inlineData`);
@@ -98,12 +98,12 @@ export const generateImageWithImagen = async (prompt, onStatusUpdate) => {
 
                 // Success check
                 if (data.predictions && data.predictions[0] && data.predictions[0].bytesBase64Encoded) {
-                    return data.predictions[0].bytesBase64Encoded;
+                    return { base64Img: data.predictions[0].bytesBase64Encoded, usedModel: modelId };
                 }
                 // Fallback for older/different formats
                 if (data.predictions && data.predictions[0] && typeof data.predictions[0] === 'string') {
                     // specific case where prediction IS the base64 string
-                    return data.predictions[0];
+                    return { base64Img: data.predictions[0], usedModel: modelId };
                 }
 
                 throw new Error(`Unexpected response format from Imagen model ${modelId}`);
