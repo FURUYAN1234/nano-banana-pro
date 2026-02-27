@@ -747,14 +747,15 @@ function App() {
         : "Draw in a high-budget, vibrant full-color TV anime style. The characters should have delicate and detailed anime features with beautiful eyes, cinematic lighting, and sharp clean ink contours. Ensure the artwork looks like an official Japanese animation illustration.";
 
       const dynamicCamera = `
-    CRITICAL COMPOSITION RULES:
+    CRITICAL COMPOSITION & GAG MANGA RULES:
     1. Do NOT draw characters just standing neutrally or looking directly at the camera.
     2. Characters must interact with each other, looking at the person they are talking to.
     3. Left/Right Positioning: The FIRST person speaking in a panel MUST be drawn on the RIGHT side of the panel. The SECOND person speaking MUST be drawn on the LEFT side.
     4. Always use dynamic and extreme camera angles: worm's-eye view from below, bird's-eye view from above, or tilted dutch angles. Avoid flat, normal eye-level camera shots.
     5. Use extreme perspective distortion (fisheye or ultra-wide lens) for dramatic effect, making hands or foreground elements appear larger.
-    6. Include cinematic lighting, dramatic shadows, and high-budget visual effects like impact frames or speedlines for action shots.
-    7. Characters must have highly exaggerated, expressive anime facial expressions.
+    6. [GAG VFX]: USE extreme comic visual effects! Add heavy speedlines (action lines), giant anime sweat drops, popping veins, or abstract solid-color backgrounds for punchlines/reactions. 
+    7. [EXAGGERATED EMOTIONS]: FORCE extreme, comical, and highly exaggerated facial expressions! Do NOT draw neutral or slightly smiling faces. Break character design if necessary to show pure shock (blank white eyes, jaw-dropping), intense fury (screaming, glaring), or crying waterfalls.
+    8. [BODY ACTING]: Characters must physically react with their entire bodies. Throwing arms up, falling to knees, or rolling on the floor. Exaggerate their gestures to the absolute limit.
     `;
 
       const cleanTopic = scenario.match(/## タイトル:\s*(.*?)(\n|$|!)/)?.[1]?.trim() || scenario.split('\n')[0].substring(0, 20);
