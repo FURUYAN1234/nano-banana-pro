@@ -171,7 +171,7 @@ class ErrorBoundary extends React.Component {
 function App() {
   // Force Build 2026-02-06 07:07 // Build 2026-02-06-01
 
-  const SYSTEM_VERSION = "v1.94"; // [ZENITH UPGRADE]
+  const SYSTEM_VERSION = "v1.94 Alpha"; // [ZENITH UPGRADE]
   console.log("System Version Loaded:", SYSTEM_VERSION); // Debug Log
   const [apiKey, setApiKeyState] = useState("");
   const [showModal, setShowModal] = useState(false); // FIXEDCRITICAL RESTORE
