@@ -110,9 +110,13 @@ export const generateImageWithImagen = async (prompt, onStatusUpdate) => {
             }
 
         } catch (e) {
-            console.warn(`[ImageGen] Model ${modelId} failed:`, e.message);
-            lastError = e;
-            if (onStatusUpdate) onStatusUpdate(`[FAILED] ${modelId}: ${e.message}`);
+            let errorMsg = e.message;
+            if (e.name === 'AbortError' || errorMsg.includes('aborted')) {
+                errorMsg = "API Time out (30秒経過による強制切断)";
+            }
+            console.warn(`[ImageGen] Model ${modelId} failed:`, errorMsg);
+            lastError = new Error(errorMsg);
+            if (onStatusUpdate) onStatusUpdate(`[FAILED] ${modelId}: ${errorMsg}`);
         }
     }
 

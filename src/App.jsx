@@ -1583,7 +1583,7 @@ Important constraints:
                             <span className="w-20 h-[1px] bg-white/20"></span>
                           </h4>
 
-                          <div className="bg-gradient-to-br from-blue-900/20 to-purple-900/20 rounded-xl p-6 border border-white/10 text-left space-y-4 shadow-lg">
+                          <div className="bg-gradient-to-br from-blue-900/20 to-purple-900/20 rounded-xl p-6 border border-white/10 text-left space-y-4 shadow-lg overflow-y-auto max-h-[40vh] custom-scrollbar">
                             {/* Step 1 */}
                             <div className="flex items-start gap-4">
                               <div className="bg-blue-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-1">1</div>
@@ -1622,7 +1622,7 @@ Important constraints:
                                 <p className="text-xs font-bold text-green-200 mb-1">貼り付けて送信 <span className="text-yellow-400 text-[9px] ml-1">(思考モード推奨)</span></p>
                                 <p className="text-[10px] text-slate-400">
                                   入力欄に貼り付け、モデルを<strong className="text-white">「思考モード (Flash Thinking)」または画像生成能力のある最新モデル</strong>にして送信してください。<br />
-                                  <strong className="text-white">（※下位APIでの生成となった等の理由による画像崩れを防ぐため、こちらの手動生成を推奨しています）</strong>
+                                  <strong className="text-white">（※画像崩れを防ぐため、こちらの手動生成を推奨しています）</strong>
                                   <br />
                                   <span className="text-orange-400 font-bold">※【推奨】より正確に描画させるため、STEP1で使用した「キャラクター設定画」も一緒に添付してください。</span>
                                 </p>
