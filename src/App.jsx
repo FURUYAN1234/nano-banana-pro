@@ -761,7 +761,8 @@ function App() {
       const scenarioLocationMatch = scenario.match(/Location:\s*(.*?)(\n|$)/i)?.[1]?.trim();
       const cleanLocation = customLocation.trim() ? customLocation.trim() : (scenarioLocationMatch || "Generic Detailed Background");
 
-      const cleanScenario = scenario;
+      // [v1.9.5] Remove markdown codeblock artifacts that leak into Visual Action extraction
+      const cleanScenario = scenario.replace(/```(?:json|markdown)?/gi, '').trim();
 
       // [v1.8.3] Smart Splitter for Panels
       const extractPanel = (text, header, nextHeader) => {
@@ -859,10 +860,30 @@ function App() {
       const VAR_PANEL_1_KI = `(Camera: ${getRandomAngle()}), (Background: ${cleanLocation}), (Action: ${extractActionOnly(panel1Text)}), ${extractDialogueOnly(panel1Text)}`;
       const VAR_PANEL_2_SHO = `(Camera: ${getRandomAngle()}), (Background: ${cleanLocation}), (Action: ${extractActionOnly(panel2Text)}), ${extractDialogueOnly(panel2Text)}`;
       const VAR_PANEL_3_TEN = `(Camera: ${getRandomAngle()}), (Background: ${cleanLocation}), (Action: ${extractActionOnly(panel3Text)}), ${extractDialogueOnly(panel3Text)}`;
-      const VAR_PANEL_4_KETSU = `(Camera: ${getRandomAngle()}), (Background: ${cleanLocation}), (Action: ${extractActionOnly(panel4Text)}), ${extractDialogueOnly(panel4Text)}`;
+      // [v1.9.5] Clean up Cast List to extract ONLY visual tags, removing all Japanese text
+      // This prevents the AI from hallucinating Japanese text onto the canvas based on personality descriptions.
+      let cleanCastData = "";
+      let currentCharacter = "";
+      const castLines = castList.split('\n');
+      for (let i = 0; i < castLines.length; i++) {
+        const line = castLines[i].replace(/\*\*/g, '').trim();
+        if (line.startsWith('## ')) {
+          currentCharacter = line.replace(/^##\s*(?:\d+\.\s*)?/, '').trim();
+          cleanCastData += `\n- Character [${currentCharacter}]: `;
+        }
+        const tagsMatch = line.match(/(?:\[WEIGHTS?\]|\[weighted tags\]):\s*(.*?)(?:\||$)/i);
+        if (tagsMatch && currentCharacter) {
+          let tags = tagsMatch[1].trim();
+          if (tags && tags !== "()" && tags !== "-") {
+            cleanCastData += tags + ", ";
+          }
+        }
+      }
+      if (!cleanCastData.trim()) {
+        cleanCastData = castList.trim(); // fallback
+      }
 
-      // Preserve line breaks for better readability in the generated prompt box.
-      const VAR_CAST_LIST = castList.trim();
+      const VAR_CAST_LIST = cleanCastData.trim();
 
       // Ensure we always have non-empty prompt texts
       const safeLocation = cleanLocation || "Detailed Background";
@@ -893,25 +914,25 @@ Camera and Composition Rules:
 ${dynamicCamera}
 
 ## Panel 1 (Top)
-Camera: ${getRandomAngle()}.
+Camera: ${getRandomAngle()} (Ensure camera is NOT flat eye-level).
 ${extractPlacementRule(panel1Text)}
 Visual Action (Do NOT write this as text on the canvas, draw it visually): ${extractActionOnly(panel1Text)}.
 Dialogue (ONLY write this inside speech bubbles): ${extractDialogueOnly(panel1Text)}.
 
 ## Panel 2
-Camera: ${getRandomAngle()}.
+Camera: ${getRandomAngle()} (Ensure camera is NOT flat eye-level).
 ${extractPlacementRule(panel2Text)}
 Visual Action (Do NOT write this as text on the canvas, draw it visually): ${extractActionOnly(panel2Text)}.
 Dialogue (ONLY write this inside speech bubbles): ${extractDialogueOnly(panel2Text)}.
 
 ## Panel 3
-Camera: ${getRandomAngle()}.
+Camera: ${getRandomAngle()} (Ensure camera is NOT flat eye-level).
 ${extractPlacementRule(panel3Text)}
 Visual Action (Do NOT write this as text on the canvas, draw it visually): ${extractActionOnly(panel3Text)}.
 Dialogue (ONLY write this inside speech bubbles): ${extractDialogueOnly(panel3Text)}.
 
 ## Panel 4 (Bottom)
-Camera: ${getRandomAngle()}.
+Camera: ${getRandomAngle()} (Ensure camera is NOT flat eye-level).
 ${extractPlacementRule(panel4Text)}
 Visual Action (Do NOT write this as text on the canvas, draw it visually): ${extractActionOnly(panel4Text)}.
 Dialogue (ONLY write this inside speech bubbles): ${extractDialogueOnly(panel4Text)}.
