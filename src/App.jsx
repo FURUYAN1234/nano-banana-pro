@@ -970,15 +970,39 @@ Important constraints:
       console.error(error);
       setIsGenerationError(true);
       setGeneratedImage(null);
+
+      const errMsg = error.message || "";
+      let guideLines = [];
+
+      if (errMsg.includes("sensitive") || errMsg.includes("Responsible AI") || errMsg.includes("400")) {
+        guideLines = [
+          "[ERROR GUIDE] 🚨 プロンプトがAIの安全基準（NSFW等の検閲）に引っかかり、生成が拒否されました。",
+          "[ERROR GUIDE] 【対処法】「シナリオ」や「キャラクター設定」の中に、センシティブ・不適切な単語（服が破ける、過激な暴力、露骨な表現など）が含まれていないか確認し、削除して再試行してください。"
+        ];
+      } else if (errMsg.includes("not found") || errMsg.includes("not supported") || errMsg.includes("404") || errMsg.includes("403")) {
+        guideLines = [
+          "[ERROR GUIDE] 🔑 現在のAPIキーでは、開発アプリ経由での画像生成が許可されていません（Google側の仕様）。",
+          "[ERROR GUIDE] 【対処法】このアプリ上での自動生成は一旦諦め、以下の「手動生成手段（Gemini Web版）」をご利用ください。",
+          "[ERROR GUIDE] 1. 「プロンプトをコピー」ボタンを押す",
+          "[ERROR GUIDE] 2. Gemini (Web版) を開く: https://gemini.google.com/app",
+          "[ERROR GUIDE] 3. 貼り付けて「思考モード(Flash Thinking)」で送信する"
+        ];
+      } else {
+        guideLines = [
+          "[ERROR GUIDE] ⏲️ タイムアウト、または予期せぬ通信エラーで生成に失敗しました（Google側の混雑など）。",
+          "[ERROR GUIDE] 【対処法】しばらく時間（数分〜）を置いてから「画像を再生成」を試すか、以下の手動手順をご利用ください。",
+          "[ERROR GUIDE] 1. 「プロンプトをコピー」ボタンを押す",
+          "[ERROR GUIDE] 2. Gemini (Web版) を開く: https://gemini.google.com/app",
+          "[ERROR GUIDE] 3. 貼り付けて「思考モード(Flash Thinking)」で送信する"
+        ];
+      }
+
       setGenLog(prev => [
         ...prev,
         `[ERROR] ${error.message} `,
         "[SYSTEM] Sequence Aborted.",
         "--------------------------------------------------",
-        "[ERROR GUIDE] 制限による生成失敗のため、手動生成への切り替えを推奨します。",
-        "[ERROR GUIDE] 1. 「プロンプトをコピー」ボタンを押す",
-        "[ERROR GUIDE] 2. Gemini (Web版) を開く: https://gemini.google.com/app",
-        "[ERROR GUIDE] 3. 貼り付けて「思考モード(Flash Thinking)」で送信する"
+        ...guideLines
       ]);
       showStatus(`生成エラー: ${error.message} `);
       // alert(`画像生成に失敗しました。\nエラー: ${ error.message } `); // Disable alert to show UI guide instead
