@@ -24,7 +24,8 @@ import {
   ExternalLink,
   ArrowRight,
   Globe,
-  Edit3
+  Edit3,
+  Download
 } from 'lucide-react';
 // --- Imports ---
 import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
@@ -157,7 +158,7 @@ class ErrorBoundary extends React.Component {
 function App() {
   // Force Build 2026-02-06 07:07 // Build 2026-02-06-01
 
-  const SYSTEM_VERSION = "v1.9.002 Alpha"; // [ZENITH UPGRADE]
+  const SYSTEM_VERSION = "v1.9.3 Alpha"; // [ZENITH UPGRADE]
   console.log("System Version Loaded:", SYSTEM_VERSION); // Debug Log
   const [apiKey, setApiKeyState] = useState("");
   const [showModal, setShowModal] = useState(false); // FIXEDCRITICAL RESTORE
@@ -724,17 +725,16 @@ function App() {
         isMonochrome = lowerCast.includes('style_tag: monochrome') || lowerCast.includes('monochrome') || lowerCast.includes('greyscale') || lowerCast.includes('screentone');
       }
 
+      // [v1.9.1] Natural Language Style Core for Imagen 4
       const styleCore = isMonochrome
-        ? "(Absolute total zero-saturation monochrome grayscale:2.0), (greyscale:2.0), (monochrome:2.0), (no color:2.0), (Masterpiece Traditional Manga), (G-Pen Ink Style), (Sharp, varied line weight), (Manual ink hatching), (High-Contrast Black & White), (Professional Comic Studio Quality), (Detailed Backgrounds)"
-        : "(Top-Tier Animation Studio Style:1.4), (Delicate and Detailed Art Style:1.2), (High Quality Character Art:1.2), (Award Winning Compositing), (Official Anime Art), (Vibrant Full Color), (Masterpiece G-Pen Line Art), (Sharp Ink Contours), (High-budget Key Visual Quality), (Cinematic Lighting), (Beautiful Detailed Eyes), (Rim light emulation:1.3), (Volumetric lighting), (Subsurface Scattering on skin), (Physical hair gloss)";
+        ? "Draw in a traditional Japanese black and white manga style using G-pen ink lines, screentones, and manual hatching. The artwork should have high-contrast black and white shading without any color, similar to a professionally published comic."
+        : "Draw in a high-budget, vibrant full-color TV anime style. The characters should have delicate and detailed anime features with beautiful eyes, cinematic lighting, and sharp clean ink contours. Ensure the artwork looks like an official Japanese animation illustration.";
 
       const dynamicCamera = `
-    (Forbidden: Normal eye-level shots, Flat angles, Static poses). 
-    (Enforce: **Extreme Low Angle (Worm's Eye)** OR **Extreme High Angle (Bird's Eye)** for EVERY panel).
-    (Lens: **ULTRA-WIDE ANGLE 14mm** or **FISHEYE LENS**. Use extreme perspective distortion to make hands/feet look huge).
-    (Composition: **Full Body** or **Upper Body** with dynamic movement. NO "Talking Heads". NO "Bust up only").
-    (Acting: **Expressive Anime Acting**. Detailed facial expressions. High-fidelity emotion. NO deformed faces).
-    (VFX: **Cinematic Lighting**, **Particle Effects**, **Impact Frames**).
+    Always use dynamic and extreme camera angles like a worm's-eye view from below or a bird's-eye view from above. Avoid flat, normal eye-level camera shots.
+    Use extreme perspective distortion (like a fisheye or ultra-wide lens) to make characters' hands or feet appear larger when close to the camera.
+    Show the characters' full bodies or at least dynamic upper body poses. Do not draw static "talking heads" or boring busts.
+    Characters must have highly expressive anime facial expressions. Include cinematic lighting and particle effects like impact frames for action shots.
     `;
 
       const cleanTopic = scenario.match(/## タイトル:\s*(.*?)(\n|$|!)/)?.[1]?.trim() || scenario.split('\n')[0].substring(0, 20);
@@ -807,38 +807,9 @@ function App() {
 
       const extractActionOnly = (fullPanelText) => {
         const lines = fullPanelText.split('\n');
-        // Action lines are those WITHOUT colons AND WITHOUT brackets
+        // Extract everything EXCEPT dialogue
         const actionLines = lines.filter(line => !line.includes('：') && !line.includes(':') && !line.includes('「'));
-
-        const cleanedLines = actionLines.map(line => {
-          let clean = line;
-          // Remove literal prefixes that Midjourney miscues as captions e.g. "SFX: 爆笑" -> "爆笑"
-          clean = clean.replace(/^(SFX|効果音|BGM|Action)[:：\s]*/i, '');
-          return clean.trim();
-        }).filter(line => line.length > 0);
-
-        // [v1.8.102] Extract speakers to inject into action, so AI knows WHO is present
-        const dialogLines = lines.filter(line => line.includes('：') || line.includes(':') || line.includes('「'));
-        const speakers = [];
-        dialogLines.forEach(line => {
-          let match = line.match(/^(.*?)(?:[:：]|「)/);
-          if (match && match[1].trim()) {
-            let speaker = match[1].replace(/^(SFX|効果音|BGM|Action)/i, '').trim();
-            speaker = speaker.replace(/^[【\[（(]/, '').replace(/[】\]）)]$/, '').trim();
-            // Ignore empty speakers or generic labels like 'SFX'
-            if (speaker && !speakers.includes(speaker) && speaker.length > 0 && !speaker.match(/^(SFX|効果音|BGM|Action)$/i)) {
-              speakers.push(speaker);
-            }
-          }
-        });
-
-        let finalAction = cleanedLines.join(' ');
-        if (speakers.length > 0) {
-          let speakerText = `The characters [${speakers.join(', ')}] are in the scene.`;
-          finalAction = finalAction ? `${speakerText} ${finalAction}` : speakerText;
-        }
-
-        return finalAction;
+        return actionLines.join(' ').trim();
       };
 
       const VAR_PANEL_1_KI = `(Camera: ${getRandomAngle()}), (Background: ${cleanLocation}), (Action: ${extractActionOnly(panel1Text)}), ${extractDialogueOnly(panel1Text)}`;
@@ -846,137 +817,67 @@ function App() {
       const VAR_PANEL_3_TEN = `(Camera: ${getRandomAngle()}), (Background: ${cleanLocation}), (Action: ${extractActionOnly(panel3Text)}), ${extractDialogueOnly(panel3Text)}`;
       const VAR_PANEL_4_KETSU = `(Camera: ${getRandomAngle()}), (Background: ${cleanLocation}), (Action: ${extractActionOnly(panel4Text)}), ${extractDialogueOnly(panel4Text)}`;
 
-      const VAR_CAST_LIST = castList.replace(/\n/g, ', ');
+      // Preserve line breaks for better readability in the generated prompt box.
+      const VAR_CAST_LIST = castList.trim();
+
+      // Ensure we always have non-empty prompt texts
+      const safeLocation = cleanLocation || "Detailed Background";
+      const safeTopic = cleanTopic || "4-koma Manga";
 
       // [v1.8.79 Deterministic Fix] Construct Prompt Directly in Logic (No AI Hallucination Risk)
       // We skip callThinkingGemini because this step is pure assembly.
+      // [v1.9.0] Nano Banana 2 (Imagen 4) Optimized Natural Language Prompt
+      // Imagen 4 understands natural language perfectly and struggles with pseudocode.
       const constructedPrompt = `
-      Generate an image of # Super FURU Manga Protocol ${SYSTEM_VERSION} [ZENITH UPGRADE]-EXECUTION
-      --ar 2:3 --niji 6 --style raw --stylize 1000
-      (Masterpiece), (Best Quality), (Ultra-Detailed), (8k resolution), (Vibrant high-saturation colors), (Deep cinematic lighting), (Intricate details), (Top-Tier Animation Studio Style:1.2), (Award Winning Compositing)
-      
-      [WORLD & LOCATION LOCK]
-      (Setting): ${cleanLocation}
-      (Atmosphere): (Environmental storytelling), (Detailed background architecture)
-      (Constraint): **DRAW THE BACKGROUND VISUALLY. DO NOT WRITE THE LOCATION NAME AS TEXT.**
+Generate a highly detailed, professional 4-koma (4-panel vertical strip) manga.
+The final image MUST have a tall portrait aspect ratio exactly equivalent to an A4 paper sheet (1:1.414 proportion).
+The canvas must have a white background with thin, minimal white margins on the left and right edges, with standard white gutters between the panels.
+At the very top of the page, draw a large, bold, black Japanese text title that says: "${safeTopic}".
+At the bottom right below the 4th panel, draw a tiny English watermark text: "Generated by Super FURU AI 4-koma System ${SYSTEM_VERSION}". The text MUST be horizontal, do NOT draw it vertically.
 
-      [ABSOLUTE PHYSICAL GEOMETRY LOCK - ${SYSTEM_VERSION}]
-      (Aspect Ratio: 2:3 Vertical ONLY).
-      (Orientation: Portrait Mode).
-      (Shape: Tall vertical rectangle).
-      (Canvas Background: **PURE WHITE PAPER**. #FFFFFF).
-      (Physical Barrier: Top 5% and bottom 5% are solid pure white blocks. MINIMAL HEADER/FOOTER).
-      (Side Margins: **ZERO MARGINS**. FULL BLEED TO EDGE. NO WHITE STRIPS ON SIDES).
-      
-      (Top Text: OVERLAY the Japanese Text "${cleanTopic}" as a SOLID BLACK LAYER).
-      (Text Style: **SOLID BLACK INK**. Bold, Heavy Stroke. High Contrast against the background. NO BOX. NO WHITE RECTANGLE).
-      (Text Position: Floating near TOP CENTER. Overlay directly on the art).
-      (Text Container: **ABSOLUTELY NONE**. The text must appear as if written directly on the finished drawing. NO CANVAS MODIFICATION.).
-      (Physics): Ink on paper. No physical displacement. NO WHITE BORDERS around text.
-      (Safety Protocol): Replace ALL real celebrity/politician/trademarked names with GENERIC archetypes (e.g. "Famous Director" instead of "Nolan").
-      
-      (Manga Zone: **FULL CANVAS FILL**. 100% Width. NO SIDE PADDING).
-      (Panel Width: **EXTREME WIDTH**. 4 Panels stacked vertically. Equal Width).
-      (Geometry Constraint: **MAXIMIZE PANEL SIZE**. DO NOT SHRINK FOR MARGINS).
-      
-      [EXTREME CINEMATOGRAPHY & ACTING PROTOCOL-v1.8.23]
-      (Camera Rules): **ABSOLUTELY NO EYE-LEVEL SHOTS**. NO FLAT FRONTAL SHOTS.
-      (Lens): **FISHEYE LENS (10mm)** or **SUPER WIDE ANGLE**. MAX DISTORTION.
-      (Angles-MANDATORY VARIATION):
-        - **Worm's Eye View** (Look up from ground!).
-        - **Bird's Eye View** (Look down from sky!).
-        - **Extreme Dutch Angle** (Tilt 45 degrees!).
-        - **NEVER use a normal straight camera.**
-      (Composition-FORCE): 
-        - **PROHIBITED**: "Face only" or "Bust up" shots.
-        - **REQUIRED**: **Full Body** or **Dynamic Upper Body** acting.
-        - **DEPTH**: Place hands/feet close to camera for 3D effect.
-      (Zoom): MIXED. Panel 1: Ultra-Wide. Panel 2: Fisheye Close-up. Panel 3: Low Angle Action. Panel 4: Overhead High Angle.
-      
-      (Acting): **HIGH FIDELITY EXPRESSIONS**. Detailed emotional acting. NO gag-manga deformation.
-      (VFX): **CINEMATIC LIGHTING**. Raytracing, bloom, depth of field.
-      (SFX Object Protocol): **SFX ARE VISUAL SHAPES, NOT TEXT**.
-         - **CONCEPT**: The sound is represented by jagged, explosive 3D shapes (rocks, lightning, smoke) that roughly resemble Japanese characters but are primarily ART.
-         - **FORBIDDEN**: Standard Typesetting, Digital Fonts, Typography, Text Overlay.
-         - **REQUIRED**: Heavy Brush Strokes, Spray Paint, Splatter, 3D Blocky Shapes.
-         - **INTEGRATION**: The sound effects must exist IN 3D SPACE (behind characters, hitting the floor).
-      (Density): **BALANCED**. Focus on character beauty and composition.
-      (Text Density): **COMPACT**. Essential dialogue ONLY. Short, punchy sentences. NO WALL OF TEXT.
-      (Panel Boundaries): ZERO PADDING. DRAW TO THE VERY HARD EDGE OF THE CANVAS. (No White Borders).
-      (Layout): **FULL BLEED**. The art must extend to the absolute edge of the image.
-      
-      (Art Style): ${styleCore}.
-      (Line Quality): **Pro Ink**. Sharp, clean lines.
-      (Proportions): **STRICTLY HIGH RATIO (6-7 heads)**. 
-         - **Panels 1-4: CONSISTENT HIGH QUALITY ANIME MODELS.**
-         - **PROIBITED: CHIBI, SD, Deformed, Cartoon styles.**
-         - **Ensure the characters look like a high-budget anime key visual in every panel.**
-      (Structure: 4 EQUAL SIZED HORIZONTAL STRIPS stacked vertically).
-      (Format: Classic 4-Koma Manga Strip).
-      (Panel Aspect Ratio: Approx 16:9 landscape per panel BUT stacked VERTICALLY).
-      (Borders: Enforce massive, ultra-thick, solid black rectangular frames).
-      (Prohibited: Irregular layouts, comic page style, variable panel sizes, dynamic borders).
+The canvas MUST be divided into exactly 4 equal horizontal panels stacked vertically from top to bottom, separated by white gutters.
+The art style is: ${styleCore}.
+(Apply dramatic anime cinematic lighting, dynamic speedlines where appropriate, and high-budget visual effects).
 
-      [READING ORDER & FLOW CONTROL-v88.1 FORCE]
-      (The narrative flow MUST start from the TOP-RIGHT panel and progress to the TOP-LEFT panel:15.0).
-      (Reading Order: Absolute Right-to-Left).
-      (Chronological Arrow: Right to Left).
-      (Visual Weight: Right side panels have stronger gravity than left).
-      (Japanese Layout: Dialogue/VFX MUST flow Right-to-Left).
-      
-      [CAST & IDENTITY LOCK & ANTI-BLEED PROTOCOL]
-      (Cast): ${VAR_CAST_LIST}.
-      (Identity Lock): Maintain 100% fidelity for each character. (Anti-Fusion): NEVER mix hair colors/glasses between characters.
-      (Glasses Check): If a character does NOT wear glasses in their design, ABSOLUTELY PROHIBIT drawing glasses on them. If they DO wear glasses, ensure they have them.
-      (Instance Limit): SINGLE instance per panel per character. NO CLONES. ABSOLUTELY FORBIDDEN to draw the same person twice in one panel.
-      
-      [DIALOGUE SPATIAL BINDING-ATTRIBUTION LOCK]
-      (Proximity Rule: Speech bubbles MUST be physically generated closest to the current speaker).
-      (Tail Logic: Ensure bubble tails point accurately to the speaker's mouth).
-      (Speaker Separation: If A and B are in one panel, A's text is on A's side. NEVER cross speech bubbles).
-      
-       [MANGA COMPOSITION LAW-RIGHT TO LEFT FLOW (v1.8.98 Alpha)]
-       (Mirror World Logic): The entire world must be horizontally FLIPPED compared to Western comics.
-       (Rule: **RIGHT SIDE = PAST/ACTION**. **LEFT SIDE = FUTURE/REACTION**).
-       (Constraint: The FIRST speaker MUST appear on the **RIGHT HALF** of the panel).
-       (Constraint: The LISTENER MUST appear on the **LEFT HALF** of the panel).
-       (Correction: If you naturally want to put the speaker on the left -> **FLIP THE CANVAS HORIZONTALLY**).
-       (Eye Tracking): The viewer's eye MUST travel from Right to Left.
+Overall Setting: ${safeLocation}.
 
-      [MULTI-CHARACTER PROTOCOL-v1.8.99 (STRICT LIMIT)]
-      (Rule: Limit active speaking characters to a MAXIMUM of 2 per panel to prevent concept bleeding).
-      (Placement: HORIZONTAL ZONE SLOTTING).
-      - (Slot 1-RIGHT ZONE): **FIRST Speaker** / Initiator.
-      - (Slot 2-LEFT ZONE): **Second Speaker** / Listener.
-      (Background Mobs): Any other characters present MUST be pushed far into the background, silhouetted out of focus, or NOT DRAWN. Prevent crowding.
-      (Bubble Binding): "Speech Bubble A" spawns in RIGHT ZONE. "Speech Bubble B" spawns in LEFT ZONE.
-      
-      [NARRATIVE & DIRECTION]
-      Date: "${targetDate}". Topic: "${cleanTopic}".
-      ${customLocation.trim() ? `(Location Lock: ${customLocation.trim()}).` : ''}
-      ${customOutfit.trim() ? `(Outfit Lock: ALL CHARACTERS MUST WEAR ${customOutfit.trim()}).` : ''}
-      Tone: High Energy Satire. Visual Strategy: ${dynamicCamera}.
-      (Color Logic): ${isMonochrome ? 'ABSOLUTE MONOCHROME NO COLOR' : 'FULL VIBRANT COLOR'}.
+Important Character Cast:
+${VAR_CAST_LIST}
+${customOutfit.trim() ? `All characters are wearing: ${customOutfit.trim()}.` : ''}
 
-      [ABSOLUTE PHYSICAL GEOMETRY LOCK - ${SYSTEM_VERSION}]
-      (Aspect Ratio: 2:3 Vertical ONLY).
-      (Panel Layout): 4-Panel Vertical Strip (TATE-YOMI). NO irregular layouts.
+Camera and Composition Rules:
+${dynamicCamera}
 
-      (Panel 1: Top): VISUALIZE ${VAR_PANEL_1_KI}. Focus on setting the scene.
-      (Panel 2: Mid-Top): VISUALIZE ${VAR_PANEL_2_SHO}. Develop the action/reaction.
-      (Panel 3: Mid-Bottom): VISUALIZE ${VAR_PANEL_3_TEN}. The Twist/Climax. MAX IMPACT.
-      (Panel 4: Bottom): VISUALIZE ${VAR_PANEL_4_KETSU}. The Punchline/Conclusion.
-      
-      (Dialogue): VERTICAL Japanese text. **MAX 2 BUBBLES PER PANEL**. Keep it short.
-      (Signature): Render small English text "Generated by Super FURU AI 4-koma System" in the bottom-right corner of the canvas/4th panel.
-      (VFX): (Explosive speed lines), (Impact frames), (Intense hand-drawn SFX/Gion).
+## Panel 1 (Top)
+Camera: ${getRandomAngle()}.
+Visual Action (Do NOT write this as text on the canvas, draw it visually): ${extractActionOnly(panel1Text)}.
+Dialogue (ONLY write this inside speech bubbles): ${extractDialogueOnly(panel1Text)}.
 
-      IMPORTANT FINAL INSTRUCTION:
-      Strictly reproduce the character designs in the reference images (if provided) with 100% fidelity.
-      You MUST verifying and enforce: Hair Style, Hair Color, and Presence/Absence of Glasses for each character.
-      Deviation from the established character design is strictly forbidden.
-     --no color, colorized, sepia, brown, yellow, tint, part-color, spot color, halftone, dithering, digital gray, 2x2 grid, english, letters, numbers, technical tags, colons, parameter text, weight numbers, clipped edges, out of frame, touching edge, chibi, SD, 16:9, merged panels, borderless, eye-level, messy lines, bleeding, cropped borders, two-line title, frame around text, title box, text box, background rectangle, looking at camera, ahoge, version number, episode number, date stamp, protocol name, horizontal, landscape, wide view, panoramic, 4:3, square, 1:1, changing hair length, hair mutation, banner, header box, text container, caption box, title background, label box, ui element, clones, duplicates, twins, doppelganger, multiple versions, split view, text background, caption background, speech bubble in title, title frame, two lines text, multiline text, stacked text, vertical title, broken title, border around title, box around title, rectangle around text, white box title, comic strip banner, headline strip, caption strip, text enclosure, speech bubble around text, digital fonts, standard typeface, typesetting, computer font, type overlay, font rendering, fused characters, fused accessories, glasses on non-glasses characters, shared glasses, floating glasses, wrong accessories, mutation of accessories, swapped clothes, location text, place name, location label, signboard, street sign, landmark name, english subtitles, translations, english text below sfx, rumble text
-    `;
+## Panel 2
+Camera: ${getRandomAngle()}.
+Visual Action (Do NOT write this as text on the canvas, draw it visually): ${extractActionOnly(panel2Text)}.
+Dialogue (ONLY write this inside speech bubbles): ${extractDialogueOnly(panel2Text)}.
+
+## Panel 3
+Camera: ${getRandomAngle()}.
+Visual Action (Do NOT write this as text on the canvas, draw it visually): ${extractActionOnly(panel3Text)}.
+Dialogue (ONLY write this inside speech bubbles): ${extractDialogueOnly(panel3Text)}.
+
+## Panel 4 (Bottom)
+Camera: ${getRandomAngle()}.
+Visual Action (Do NOT write this as text on the canvas, draw it visually): ${extractActionOnly(panel4Text)}.
+Dialogue (ONLY write this inside speech bubbles): ${extractDialogueOnly(panel4Text)}.
+
+Important constraints:
+- Ensure the characters accurately reflect classic anime styles.
+- Do NOT merge panels. Keep 4 distinct panels with white gutters between them.
+- Do NOT write situation/narration explanations as text on the screen. The Visual Action must only be illustrated.
+- Write the Japanese spoken text clearly inside white manga speech bubbles.
+- Do NOT add random English text except for the watermark.
+- Maintain character consistency across all 4 panels.
+- Flow is from top panel to bottom panel.
+- Ensure the watermark is positioned at the absolute bottom edge of the image, with no extra whitespace below it.
+      `;
 
       // Wait a bit to simulate processing/syncing (Important for User Experience)
       await new Promise(resolve => setTimeout(resolve, 800));
@@ -1034,15 +935,19 @@ function App() {
     await new Promise(r => setTimeout(r, 800));
 
     try {
-      showStatus("Google Imagen 3 に送信中...");
+      showStatus("Google AI (Gemini/Imagen) に送信中...");
       setGenLog(prev => [...prev, "[NET] Establishing secure connection to Google Cloud...", "[NET] Uploading prompt payload (v88.1)..."]);
 
       await new Promise(r => setTimeout(r, 1000)); // More visibility
 
-      const base64Img = await generateImageWithImagen(finalPrompt);
-      setGenLog(prev => [...prev, "[SUCCESS] Data stream received from Imagen 3.", "[RENDER] Decoding Base64 image data...", "[RENDER] Rendering final canvas..."]);
+      const statCallback = (msg) => {
+        setGenLog(prev => [...prev, msg]);
+      };
 
-      setGeneratedImage(`data: image / png; base64, ${base64Img} `);
+      const base64Img = await generateImageWithImagen(finalPrompt, statCallback);
+      setGenLog(prev => [...prev, "[SUCCESS] Data stream received from Generation API.", "[RENDER] Decoding Base64 image data...", "[RENDER] Rendering final canvas..."]);
+
+      setGeneratedImage(`data:image/png;base64,${base64Img}`);
       showStatus("画像生成完了！");
       setGenLog(prev => [...prev, "[COMPLETE] Image successfully generated."]);
     } catch (error) {
@@ -1217,7 +1122,7 @@ function App() {
                       onChange={(e) => processFiles(e.target.files)}
                     />
                     <p className="text-xs font-bold text-slate-400">
-                      複数枚のキャラクターシートは <span className="text-blue-400">同時に（まとめて）</span> アップロードして下さい
+                      キャラクターシートをドロップ <span className="text-blue-400">（複数のキャラクターシートは、まとめてアップロードしてください）</span>
                     </p>
                     <p className="text-[10px] opacity-60 mt-1">
                       ※名前・性格・設定が明記されているシートを推奨
@@ -1593,7 +1498,7 @@ function App() {
                       className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg border border-white/10 active:scale-95 disabled:bg-slate-700 disabled:opacity-50 disabled:cursor-wait"
                     >
                       {isAssembling ? <Loader2 size={20} className="animate-spin" /> : <ImageIcon size={20} />}
-                      {isAssembling ? "再生成中..." : "画像を生成 (Imagen 3)"}
+                      {isAssembling ? "再生成中..." : "画像を生成する (STEP 4: Google AI)"}
                     </button>
                   </div>
 
@@ -1633,10 +1538,27 @@ function App() {
                 )}
               </div>
 
-              <div className="flex-1 flex items-center justify-center relative p-4 bg-[url('https://www.transparenttextures.com/patterns/dark-matter.png')]">
+              <div className="flex-1 flex flex-col items-center justify-center relative p-4 bg-[url('https://www.transparenttextures.com/patterns/dark-matter.png')]">
                 {
                   generatedImage ? (
-                    <img src={generatedImage} className="w-full h-full object-contain rounded-[1rem] shadow-2xl" alt="Generated Result" />
+                    <div className="w-full h-full flex flex-col items-center justify-center gap-4">
+                      <img src={generatedImage} className="max-w-full max-h-[70vh] object-contain shadow-2xl" alt="Generated Result" />
+                      <div className="w-full px-8">
+                        <button
+                          onClick={() => {
+                            const a = document.createElement('a');
+                            a.href = generatedImage;
+                            a.download = `nano_banana_2_comic_${new Date().getTime()}.png`;
+                            document.body.appendChild(a);
+                            a.click();
+                            document.body.removeChild(a);
+                          }}
+                          className="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg border border-white/20 active:scale-95"
+                        >
+                          <Download size={20} /> 画像をダウンロード (.png)
+                        </button>
+                      </div>
+                    </div>
                   ) : isGenerationError ? (
                     <div className="text-center p-6 space-y-6 max-w-lg mx-auto animate-in fade-in zoom-in duration-500">
                       <div className="bg-red-900/10 border border-red-500/30 rounded-3xl p-8 backdrop-blur-md">
@@ -1699,7 +1621,8 @@ function App() {
                               <div>
                                 <p className="text-xs font-bold text-green-200 mb-1">貼り付けて送信 <span className="text-yellow-400 text-[9px] ml-1">(思考モード推奨)</span></p>
                                 <p className="text-[10px] text-slate-400">
-                                  入力欄に貼り付け、モデルを<strong className="text-white">「思考モード (Flash Thinking)」</strong>にして送信してください。
+                                  入力欄に貼り付け、モデルを<strong className="text-white">「思考モード (Flash Thinking)」または画像生成能力のある最新モデル</strong>にして送信してください。<br />
+                                  <strong className="text-white">（※下位APIでの生成となった等の理由による画像崩れを防ぐため、こちらの手動生成を推奨しています）</strong>
                                   <br />
                                   <span className="text-orange-400 font-bold">※【推奨】より正確に描画させるため、STEP1で使用した「キャラクター設定画」も一緒に添付してください。</span>
                                 </p>
@@ -1750,11 +1673,11 @@ function App() {
 
       <style dangerouslySetInnerHTML={{
         __html: `
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(59, 130, 246, 0.2); border-radius: 10px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(59, 130, 246, 0.4); }
-  `}} />
+          .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+          .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+          .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(59, 130, 246, 0.2); border-radius: 10px; }
+          .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(59, 130, 246, 0.4); }
+    `}} />
     </div >
   );
 }
