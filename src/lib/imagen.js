@@ -64,7 +64,7 @@ export const generateImageWithImagen = async (prompt, onStatusUpdate) => {
                     // Find the image part in the response
                     const imagePart = data.candidates[0].content.parts.find(p => p.inlineData);
                     if (imagePart && imagePart.inlineData && imagePart.inlineData.data) {
-                        return { base64: imagePart.inlineData.data, model: modelId };
+                        return { base64Img: imagePart.inlineData.data, usedModel: modelId };
                     }
                 }
                 throw new Error(`Unexpected formats from Gemini model ${modelId}: missing inlineData`);

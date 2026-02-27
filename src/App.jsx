@@ -951,16 +951,35 @@ Important constraints:
       setGeneratedImage(`data:image/png;base64,${base64Img}`);
       if (generatedModelId && !generatedModelId.startsWith("gemini-3")) {
         setIsFallbackUsed(true);
+        setGenLog(prev => [
+          ...prev,
+          "[WARNING] 最新モデル(Nano Banana 2)への接続がタイムアウト等で失敗しました。",
+          "[WARNING] 代わりに下位APIで妥協版を出力したため、描写が大きく崩れている可能性があります。",
+          "[GUIDE] ★手動生成を推奨します★",
+          "[GUIDE] 1. 「プロンプトをコピー」ボタンを押す",
+          "[GUIDE] 2. Gemini(Web版)を開く: https://gemini.google.com/app",
+          "[GUIDE] 3. 貼り付けて「思考モード」で送信する",
+          "[COMPLETE] Image successfully generated (with warnings)."
+        ]);
       } else {
         setIsFallbackUsed(false);
+        setGenLog(prev => [...prev, "[COMPLETE] Image successfully generated."]);
       }
       showStatus("画像生成完了！");
-      setGenLog(prev => [...prev, "[COMPLETE] Image successfully generated."]);
     } catch (error) {
       console.error(error);
       setIsGenerationError(true);
-      setGeneratedImage(null); // Force null to trigger error UI
-      setGenLog(prev => [...prev, `[ERROR] ${error.message} `, "[SYSTEM] Sequence Aborted."]);
+      setGeneratedImage(null);
+      setGenLog(prev => [
+        ...prev,
+        `[ERROR] ${error.message} `,
+        "[SYSTEM] Sequence Aborted.",
+        "--------------------------------------------------",
+        "[ERROR GUIDE] 制限による生成失敗のため、手動生成への切り替えを推奨します。",
+        "[ERROR GUIDE] 1. 「プロンプトをコピー」ボタンを押す",
+        "[ERROR GUIDE] 2. Gemini (Web版) を開く: https://gemini.google.com/app",
+        "[ERROR GUIDE] 3. 貼り付けて「思考モード(Flash Thinking)」で送信する"
+      ]);
       showStatus(`生成エラー: ${error.message} `);
       // alert(`画像生成に失敗しました。\nエラー: ${ error.message } `); // Disable alert to show UI guide instead
     } finally {
@@ -1563,90 +1582,6 @@ Important constraints:
                         >
                           <Download size={20} /> 画像をダウンロード (.png)
                         </button>
-                        {isFallbackUsed && (
-                          <div className="mt-4 p-4 bg-orange-900/40 border border-orange-500/50 rounded-xl animate-in fade-in slide-in-from-bottom-2 duration-500">
-                            <p className="text-orange-400 font-bold text-sm flex items-center gap-2 mb-2">
-                              <AlertTriangle size={16} /> ※警告: 下位APIで生成されました
-                            </p>
-                            <p className="text-xs text-orange-200/80 leading-relaxed font-bold">
-                              最新モデル(Nano Banana 2)への接続が拒否/タイムアウトしたため、下位の画像生成専用AIで妥協版を出力しました。文字や描写が大きく崩れている可能性があります。<br />
-                              <span className="text-orange-400">プロンプトをコピーしてGemini(Web版)で手動生成</span>することを強く推奨します。
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ) : isGenerationError ? (
-                    <div className="text-center p-6 space-y-6 max-w-lg mx-auto animate-in fade-in zoom-in duration-500">
-                      <div className="bg-red-900/10 border border-red-500/30 rounded-3xl p-8 backdrop-blur-md">
-                        <div className="flex items-center justify-center gap-3 mb-4">
-                          <AlertTriangle size={32} className="text-red-500 animate-pulse" />
-                          <h3 className="text-lg font-black text-red-500 tracking-wider">画像生成機能の制限について</h3>
-                        </div>
-
-                        <div className="text-left bg-black/40 rounded-xl p-4 mb-6 border border-white/5 space-y-2">
-                          <p className="text-[11px] text-slate-300 leading-relaxed font-bold">
-                            申し訳ございません。現在、Google側のAPI仕様により、お客様のAPIキーでは<span className="text-red-400">「アプリ経由での画像生成」が許可されていません。</span>
-                          </p>
-                          <p className="text-[10px] text-slate-500 leading-relaxed">
-                            ※これはアプリの故障ではなく、Google Cloudの権限設定によるものです（Web版のGemini Advancedが使えても、API経由の利用は別途承認が必要な場合があります）。制限が解除されるまで、以下の「手動生成」を推奨します。
-                          </p>
-                        </div>
-
-                        <div className="space-y-4">
-                          <h4 className="text-sm font-bold text-white flex items-center justify-center gap-2">
-                            <span className="w-20 h-[1px] bg-white/20"></span>
-                            【 推奨される解決策 】
-                            <span className="w-20 h-[1px] bg-white/20"></span>
-                          </h4>
-
-                          <div className="bg-gradient-to-br from-blue-900/20 to-purple-900/20 rounded-xl p-6 border border-white/10 text-left space-y-4 shadow-lg overflow-y-auto max-h-[40vh] custom-scrollbar">
-                            {/* Step 1 */}
-                            <div className="flex items-start gap-4">
-                              <div className="bg-blue-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-1">1</div>
-                              <div>
-                                <p className="text-xs font-bold text-blue-200 mb-1">プロンプトをコピー</p>
-                                <button
-                                  onClick={copyPrompt}
-                                  className="text-[10px] bg-blue-600/20 hover:bg-blue-600 hover:text-white text-blue-300 px-3 py-1 rounded-lg transition-colors border border-blue-500/30 flex items-center gap-2"
-                                >
-                                  <Copy size={10} /> コピーする
-                                </button>
-                              </div>
-                            </div>
-
-                            {/* Step 2 */}
-                            <div className="flex items-start gap-4">
-                              <div className="bg-purple-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-1">2</div>
-                              <div>
-                                <p className="text-xs font-bold text-purple-200 mb-1">Gemini (Web版) を開く</p>
-                                <a
-                                  href="https://gemini.google.com/app"
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-[10px] text-purple-300 underline hover:text-white flex items-center gap-1"
-                                >
-                                  https://gemini.google.com/app <ExternalLink size={10} />
-                                </a>
-                                <p className="text-[9px] text-slate-500 mt-1">※別タブで開きます</p>
-                              </div>
-                            </div>
-
-                            {/* Step 3 */}
-                            <div className="flex items-start gap-4">
-                              <div className="bg-green-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-1">3</div>
-                              <div>
-                                <p className="text-xs font-bold text-green-200 mb-1">貼り付けて送信 <span className="text-yellow-400 text-[9px] ml-1">(思考モード推奨)</span></p>
-                                <p className="text-[10px] text-slate-400">
-                                  入力欄に貼り付け、モデルを<strong className="text-white">「思考モード (Flash Thinking)」または画像生成能力のある最新モデル</strong>にして送信してください。<br />
-                                  <strong className="text-white">（※画像崩れを防ぐため、こちらの手動生成を推奨しています）</strong>
-                                  <br />
-                                  <span className="text-orange-400 font-bold">※【推奨】より正確に描画させるため、STEP1で使用した「キャラクター設定画」も一緒に添付してください。</span>
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
                       </div>
                     </div>
                   ) : (
