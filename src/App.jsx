@@ -581,6 +581,7 @@ function App() {
             - CastListに含まれている **全てのキャラクターを必ず1回以上登場させること。**
             - 「メイン2人だけ」のような手抜きは禁止。全員に役割を与え、画面を賑やかにすること。
             - 人数が多い場合は、1コマに複数人を詰め込んで密度の高い会話劇にせよ。
+            - **【キャラ設定の完全保持】**: 各キャラクターの属性（例: ギャル、オタク、優等生など）や口調を絶対に混同するな。「ミク」と「リン」の口調が入れ替わるなどのエラーを厳格に禁止する。与えられた性格設定に忠実にセリフを書け。
  
          1. **「原則: 語るな、見せろ」 (Show, Don't Tell... but Explain Briefly)**:
             - 絵での表現が最優先。補足説明は許可するが、**「短く、簡潔に」**行え。
@@ -823,7 +824,9 @@ function App() {
           }
         });
 
-        if (formattedBubbles.length === 0) return "(No speech bubble)";
+        if (formattedBubbles.length === 0) {
+          return "(No speech bubble) (CRITICAL: Do NOT draw any speech bubbles or text. Emphasize character facial expressions, body language, and environmental atmosphere instead.)";
+        }
         // Join with space so it's treated as continuous text request, but separated logically
         return formattedBubbles.join(', ');
       };
