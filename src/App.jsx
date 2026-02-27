@@ -1577,6 +1577,20 @@ Important constraints:
                     </button>
                   </div>
 
+                  {/* PRO TIPS FOR EXTERNAL GENERATION */}
+                  <div className="mt-4 p-3 bg-orange-950/40 border border-orange-500/30 rounded-lg">
+                    <div className="flex items-start gap-2">
+                      <div className="mt-0.5 text-orange-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
+                      </div>
+                      <div className="text-xs text-orange-200/80 leading-relaxed font-sans">
+                        <span className="font-bold text-orange-300">💡 PRO TIP：究極の1枚を作りたい時は？</span><br />
+                        キャラの見た目が全然違うなど不満がある場合は、上の「コピペ」ボタンでプロンプトをコピーし、<a href="https://gemini.google.com/" target="_blank" rel="noreferrer" className="text-blue-400 hover:underline">Geminiブラウザ版🤖</a> に<strong>「元となるキャラシート画像」</strong>と一緒に直接貼り付けて生成させてください。<br />
+                        文字情報だけでなく画像をカンニングできるため、キャラのクオリティと再現度が飛躍的に向上します！
+                      </div>
+                    </div>
+                  </div>
+
                   {/* Generation Log Terminal */}
                   <div className="mt-4 p-4 bg-black/80 rounded-lg border border-white/10 font-mono text-xs text-green-400 h-32 overflow-y-auto">
                     <div className="opacity-50 mb-2 border-b border-white/10 pb-1 flex justify-between">
