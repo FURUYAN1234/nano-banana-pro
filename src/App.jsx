@@ -1653,9 +1653,19 @@ Important constraints:
                     <div className="text-center opacity-20 space-y-6">
                       {
                         isAssembling ? (
-                          <div className="relative" >
+                          <div className="relative flex flex-col items-center justify-center space-y-4" >
                             <Loader2 size={64} className="animate-spin text-blue-500 mx-auto" />
-                            <div className="absolute inset-0 blur-xl bg-blue-500/30 animate-pulse" />
+                            <div className="absolute inset-0 blur-xl bg-blue-500/20 animate-pulse" />
+
+                            <div className="z-10 bg-black/50 border border-blue-500/30 rounded-xl px-6 py-4 animate-in fade-in zoom-in duration-300 backdrop-blur-sm">
+                              <p className="text-sm font-black text-blue-400 tracking-widest animate-pulse flex items-center gap-2">
+                                GENERATING IMAGE <span className="flex space-x-1"><span className="animate-bounce delay-75">.</span><span className="animate-bounce delay-150">.</span><span className="animate-bounce delay-300">.</span></span>
+                              </p>
+                              <p className="text-[10px] text-blue-200/70 mt-2 font-bold max-w-xs mx-auto">
+                                高品質な画像を生成しています。<br />
+                                <span className="text-orange-300">※最大1〜2分程度かかる場合があります。このままお待ちください。</span>
+                              </p>
+                            </div>
                           </div>
                         ) : (
                           <BrainCircuit size={80} className="mx-auto" />
@@ -1672,13 +1682,11 @@ Important constraints:
           </div >
         </main >
 
-        {(!isAssembling && currentStep === 4) ? null : (
-          <footer className="text-center text-slate-700 text-[9px] font-bold tracking-[0.3em] uppercase py-10 flex items-center justify-center gap-4">
-            <span>Thinking Manga Engine &copy; 2026</span>
-            <span className="w-1 h-1 bg-slate-700 rounded-full" />
-            <span>Nano Banana Pro</span>
-          </footer>
-        )}
+        <footer className="text-center text-slate-700 text-[9px] font-bold tracking-[0.3em] uppercase py-10 flex items-center justify-center gap-4">
+          <span>Thinking Manga Engine &copy; 2026</span>
+          <span className="w-1 h-1 bg-slate-700 rounded-full" />
+          <span>Nano Banana Pro</span>
+        </footer>
       </div >
 
       {/* 通知 (日本語) */}
