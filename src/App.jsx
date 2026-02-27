@@ -171,7 +171,7 @@ class ErrorBoundary extends React.Component {
 function App() {
   // Force Build 2026-02-06 07:07 // Build 2026-02-06-01
 
-  const SYSTEM_VERSION = "v1.94 Alpha"; // [ZENITH UPGRADE]
+  const SYSTEM_VERSION = "v1.96 Alpha"; // [ZENITH UPGRADE]
   console.log("System Version Loaded:", SYSTEM_VERSION); // Debug Log
   const [apiKey, setApiKeyState] = useState("");
   const [showModal, setShowModal] = useState(false); // FIXEDCRITICAL RESTORE
@@ -424,8 +424,9 @@ function App() {
             - **服の文字**: 服に書かれている文字（例: "FURU"）は **(shirt with text "FURU":1.4)** のようにタグ化せよ。
             - 制服(Sailor/Blazer)、私服(Hoodie/T-shirt)の形状を特定せよ。
 
-        【3. OCR情報の反映】
+        【3. OCR情報の反映と性格のタグ化】
         ・読み取った名前、年齢、性格、社会的役割を正確に反映せよ。
+        ・**【最重要】**：画像生成AIにキャラクターの内面や立ち振る舞いを伝えるため、「性格(Mind)」の項目には**必ず英語の重み付きタグ**（例: (tsundere:1.2), (cheerful:1.3), (student council president:1.1) 等）を付与せよ。これを怠るとキャラクターの演技が死ぬ。
 
         【出力フォーマット】
         
@@ -437,7 +438,7 @@ function App() {
         | **髪(Hair)** | 色: [色]<br>長さ: [Short/Medium/Long]<br>構造: [Bob/Straight/Wavy/Spiky]<br>前髪: [形状] | **[WEIGHTS]: (chin-length bob:1.5), (orange hair:1.4), (messy:1.2)** |
         | **顔(Face)** | 目: [色/形]<br>肌: [色]<br>髭: [有無]<br>眼鏡: [有無] | **[WEIGHTS]: (white beard:1.5), (tanned skin:1.5), (black sunglasses:1.6)** （※眼鏡無しなら **(no glasses:1.5)** を絶対付与） |
         | **服装(Outfit)** | [服の詳細: 制服/私服、上着の有無など] | [weighted tags]: (sailor uniform:1.2), (hoodie:1.1) |
-        | **性格(Mind)** | **[OCR抽出]**: [ここにテキスト全文] | - |
+        | **性格(Mind)** | **[OCR抽出]**: [ここにテキスト全文] | **[WEIGHTS]: (cheerful:1.3), (energetic:1.2)** （※英語の性格タグを必須で記述） |
       `;
 
 
@@ -551,7 +552,7 @@ function App() {
     あなたはプロの風刺漫画脚本家です。
         
         ${inputMode === 'manual'
-          ? `「ユーザーが入力した以下のトピック」をテーマに4コマ漫画を作成してください。\n トピック: ${manualTopic}\n\n(重要指示): 入力がURLの場合は、**絶対に中身を想像（hallucinate）してはならない**。そのURLが何であるか100%確信できない場合は、トピック名を「URL解析不能」とし、「謎のリンクが送られてきた」というストーリーを作成せよ。`
+          ? `「ユーザーが入力した以下のトピックまたはURL」をテーマに4コマ漫画を作成してください。\n トピック: ${manualTopic}\n\n(重要指示): 入力に「http」から始まるURLが含まれている場合、**Geminiが持つ情報取得機能等を用いてそのリンク先の内容を読み取り、要約した上で**それをテーマにしたストーリーを作成せよ。`
           : `「${searchTopicKeywords}」に関する、** 指定された日付（${targetDate}）周辺の具体的かつ事実に即したニュース ** を1つ選定し、それをテーマにした4コマ漫画のシナリオを作成してください。`
         }
 
@@ -678,10 +679,9 @@ function App() {
       // If the User Input was a URL, but the AI generated a scenario clearly unrelated (e.g. Curling), we can't easily detect semantics,
       // but we can ensure the TOPIC reflects the input source.
 
-      // [v1.8.93] Quality Fix: Remove parenthetical text (e.g. stage directions) from dialogue
-      // Regex: Matches (text) or （text）
+      // [v1.95] Quality Fix: Do NOT remove parenthetical text to preserve inner monologues and emotions
       const cleanScenario = (text) => {
-        return text.replace(/[（(].*?[）)]/g, ''); // Remove content inside parens
+        return text;
       };
 
       parsedData.scenario = cleanScenario(parsedData.scenario);
@@ -795,49 +795,80 @@ function App() {
       ];
       const getRandomAngle = () => cameraAngles[Math.floor(Math.random() * cameraAngles.length)];
 
-      // [v1.8.102] Dialogue Cleaner & Formatter (Line-by-Line Fix + Speaker Extraction)
+      // [v1.95] Dialogue Cleaner & Formatter (Line-by-Line Fix + Speaker Extraction with Character Validation)
       const extractDialogueOnly = (fullPanelText) => {
         const lines = fullPanelText.split('\n');
-        const dialogLines = lines.filter(line => line.includes('：') || line.includes(':') || line.includes('「'));
+
+        // Extract valid characters from castList to prevent action instructions being misidentified as speakers
+        const validCharacters = [];
+        castList.split('\n').forEach(cLine => {
+          const m = cLine.replace(/\*\*/g, '').trim().match(/^##\s*(?:\d+\.\s*)?(.*)/);
+          if (m) validCharacters.push(m[1].trim());
+        });
 
         const formattedBubbles = [];
         let bubbleCount = 1;
 
-        dialogLines.forEach(line => {
-          let clean = line;
-          let speaker = "Speaker";
-
-          // Extract Speaker if present before colon or bracket
+        lines.forEach(line => {
+          // Check if line indicates dialogue
           const match = line.match(/^(.*?)(?:[:：]|「)/);
+          let isDialogue = false;
+          let speaker = "Speaker";
+          let clean = line;
+
           if (match && match[1].trim()) {
-            speaker = match[1].replace(/^(SFX|効果音|BGM|Action)/i, '').trim();
-            speaker = speaker.replace(/^[【\[（(]/, '').replace(/[】\]）)]$/, '').trim();
+            let tempSpeaker = match[1].replace(/^(SFX|効果音|BGM|Action)/i, '').trim();
+            tempSpeaker = tempSpeaker.replace(/^[【\[（(]/, '').replace(/[】\]）)]$/, '').trim();
+
+            // Validate if speaker is an actual character or generic known speaker
+            if (validCharacters.some(c => tempSpeaker.includes(c) || c.includes(tempSpeaker)) || tempSpeaker === "全員" || tempSpeaker === "Speaker") {
+              speaker = tempSpeaker;
+              isDialogue = true;
+            }
+          } else if (line.trim().startsWith('「')) {
+            isDialogue = true;
           }
 
-          // Remove Speaker Name and Colon
-          clean = clean.replace(/^.*?(?:[:：]|「)\s*/, '');
-          // Remove ALL Japanese Quotes and Brackets
-          clean = clean.replace(/[「」『』""（）()]/g, '');
-          clean = clean.trim();
+          if (isDialogue) {
+            // Remove Speaker Name and Colon
+            clean = clean.replace(/^.*?(?:[:：]|「)\s*/, '');
+            // [v1.95] KEEP quotes and parentheses to preserve nuances
+            clean = clean.trim();
 
-          if (clean) {
-            formattedBubbles.push(`(Speech Bubble ${bubbleCount} by ${speaker}: "${clean}")`);
-            bubbleCount++;
+            if (clean) {
+              formattedBubbles.push(`(Speech Bubble ${bubbleCount} by ${speaker}: "${clean}")`);
+              bubbleCount++;
+            }
           }
         });
 
         if (formattedBubbles.length === 0) {
           return "(No speech bubble) (CRITICAL: Do NOT draw any speech bubbles or text. Emphasize character facial expressions, body language, and environmental atmosphere instead.)";
         }
-        // Join with space so it's treated as continuous text request, but separated logically
         return formattedBubbles.join(', ');
       };
 
       const extractActionOnly = (fullPanelText) => {
         const lines = fullPanelText.split('\n');
-        // Extract everything EXCEPT dialogue lines, empty lines, and the "[Xコマ目]" header
+
+        const validCharacters = [];
+        castList.split('\n').forEach(cLine => {
+          const m = cLine.replace(/\*\*/g, '').trim().match(/^##\s*(?:\d+\.\s*)?(.*)/);
+          if (m) validCharacters.push(m[1].trim());
+        });
+
         const actionLines = lines.filter(line => {
-          const isDialogue = line.includes('：') || line.includes(':') || line.includes('「');
+          const match = line.match(/^(.*?)(?:[:：]|「)/);
+          let isDialogue = false;
+          if (match && match[1].trim()) {
+            let tempSpeaker = match[1].replace(/^(SFX|効果音|BGM|Action)/i, '').trim();
+            tempSpeaker = tempSpeaker.replace(/^[【\[（(]/, '').replace(/[】\]）)]$/, '').trim();
+            if (validCharacters.some(c => tempSpeaker.includes(c) || c.includes(tempSpeaker)) || tempSpeaker === "全員" || tempSpeaker === "Speaker") {
+              isDialogue = true;
+            }
+          } else if (line.trim().startsWith('「')) {
+            isDialogue = true;
+          }
           const isHeader = line.match(/^\[\d+コマ目/);
           const isEmpty = line.trim() === '';
           return !isDialogue && !isHeader && !isEmpty;
@@ -1398,12 +1429,12 @@ Important constraints:
                   <div className="space-y-2">
                     {/* Manual Mode */}
                     <div className="text-xs font-bold text-purple-300 text-center">
-                      ▼ 自由入力モード: 好きなネタを入力してください (<span className="text-red-400">URLは非推奨</span>: テキストコピペ推奨)
+                      ▼ 自由入力モード: 好きなネタやURLを入力してください (<span className="text-blue-400">URLからの自動読み取り対応</span>)
                     </div>
                     <textarea
                       value={manualTopic}
                       onChange={(e) => setManualTopic(e.target.value)}
-                      placeholder="例：&#13;&#10;・最近のAI技術の進化について&#13;&#10;・近所の猫が可愛かった話&#13;&#10;&#13;&#10;※URLを入力しても中身を参照できない場合があります（403エラー等）。&#13;&#10;記事の内容を直接コピペするか、具体的なトピックを文章で入力してください。"
+                      placeholder="例：&#13;&#10;・最近のAI技術の進化について&#13;&#10;・近所の猫が可愛かった話&#13;&#10;・https://example.com/news/12345&#13;&#10;&#13;&#10;※URLを入力すると、AIがリンク先の内容を参照して漫画化します。&#13;&#10;記事の内容を直接コピペするか、具体的なトピックを文章で入力してください。"
                       style={{ color: '#ffffff', backgroundColor: '#0f1115' }}
                       rows={10}
                       className="w-full bg-[#0f1115] border-2 border-purple-900/50 rounded-xl p-6 text-base text-white focus:border-purple-500 focus:shadow-md outline-none placeholder-slate-500 font-medium leading-relaxed resize-none"

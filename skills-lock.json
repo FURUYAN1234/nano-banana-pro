@@ -1,0 +1,480 @@
+{
+  "version": 1,
+  "skills": {
+    "ab-test-setup": {
+      "source": "coreyhaines31/marketingskills",
+      "sourceType": "github",
+      "computedHash": "557bd73c62d855d3974c4a335abf5632844f5a7c0e1b606861cbab8427e46ce6"
+    },
+    "ad-creative": {
+      "source": "coreyhaines31/marketingskills",
+      "sourceType": "github",
+      "computedHash": "95d4f76ddec2060a1890f380cebc1b5e7d5fc600b4e2c6c6816c31616e26e9d1"
+    },
+    "agent-md-refactor": {
+      "source": "softaworks/agent-toolkit",
+      "sourceType": "github",
+      "computedHash": "11d1ffbb2d9f180d63dabfb0b6c63a4632b4c0e2e6be1660c7651cef0f3f1c07"
+    },
+    "ai-seo": {
+      "source": "coreyhaines31/marketingskills",
+      "sourceType": "github",
+      "computedHash": "35de7c3ba587734c72508d0df02829080aec70fd3fe963318822ed825bb21103"
+    },
+    "algorithmic-art": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "computedHash": "7c446629c20a537aba3496490550bbfddf71b3bb71904c9c0056c9daa025a330"
+    },
+    "analytics-tracking": {
+      "source": "coreyhaines31/marketingskills",
+      "sourceType": "github",
+      "computedHash": "d57bcc866f78dc9b2f1887442362058a7c9ff1642a78c00205fdf7717137c1e2"
+    },
+    "backend-to-frontend-handoff-docs": {
+      "source": "softaworks/agent-toolkit",
+      "sourceType": "github",
+      "computedHash": "7c43829a6f1731fca5bd4f4341254016fff31b4130c3208b2e9f0dce2660283d"
+    },
+    "brand-guidelines": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "computedHash": "cf41642f38f35bcae5bbf59215f0ee629d5f6a54b4811454f6cb93bc9b12b69e"
+    },
+    "c4-architecture": {
+      "source": "softaworks/agent-toolkit",
+      "sourceType": "github",
+      "computedHash": "9192b5d6be529478a70d1a73f3d4ce83db12c2052c4e6df4accd445f21e906d4"
+    },
+    "canvas-design": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "computedHash": "21e7c68d336893e4f2aa8d269854fd5e253c89cfc6dd0e74fa487fe7e96abdeb"
+    },
+    "churn-prevention": {
+      "source": "coreyhaines31/marketingskills",
+      "sourceType": "github",
+      "computedHash": "a248046e41f5d2b31f9d145f29e1774d911e8d7daf4437a3dba08c9c04328e39"
+    },
+    "codex": {
+      "source": "softaworks/agent-toolkit",
+      "sourceType": "github",
+      "computedHash": "36d06fc81796999e18ca611c03ff7787c618a7ea744761093995962e147ccdf7"
+    },
+    "cold-email": {
+      "source": "coreyhaines31/marketingskills",
+      "sourceType": "github",
+      "computedHash": "36f62877fc78e9de62d9aca644e2e3c9b6880c8588f227acdc2f4c1d5e4a608f"
+    },
+    "command-creator": {
+      "source": "softaworks/agent-toolkit",
+      "sourceType": "github",
+      "computedHash": "0808dd1c7ddc68f07c072e090d1864decda125ce6dbdfc5122e6477eb1428fb8"
+    },
+    "commit-work": {
+      "source": "softaworks/agent-toolkit",
+      "sourceType": "github",
+      "computedHash": "c9362cbf8d20af2fba1789a57c27e94cf063c0cbe659f40898d31d2afa3b1cb8"
+    },
+    "competitor-alternatives": {
+      "source": "coreyhaines31/marketingskills",
+      "sourceType": "github",
+      "computedHash": "1f247ef6828fc169e68a225b50a5017fea79d54bc0940cd667b279a8c95c5471"
+    },
+    "content-strategy": {
+      "source": "coreyhaines31/marketingskills",
+      "sourceType": "github",
+      "computedHash": "8cbfec6d6425cfb09d6299feb09d06e5c5966e93cfe7c7685eb5ff8a4942317c"
+    },
+    "copy-editing": {
+      "source": "coreyhaines31/marketingskills",
+      "sourceType": "github",
+      "computedHash": "ba8aba123a728de9bba6f17b0663baf2f6fcf9e2613ac44ab66387799ecba066"
+    },
+    "copywriting": {
+      "source": "coreyhaines31/marketingskills",
+      "sourceType": "github",
+      "computedHash": "82f98239f6fb27c028e0339b25356c2ae4d1933689ee2d8b707f606381fc9170"
+    },
+    "crafting-effective-readmes": {
+      "source": "softaworks/agent-toolkit",
+      "sourceType": "github",
+      "computedHash": "cb11facecbb4a15f7ca6cfac2e740ac66798676c246c057879a71babb27c9a4f"
+    },
+    "daily-meeting-update": {
+      "source": "softaworks/agent-toolkit",
+      "sourceType": "github",
+      "computedHash": "a01be54c92bdfd8aa40ce77e7ff168531fe43543319850b8dc5824fd568fc68d"
+    },
+    "database-schema-designer": {
+      "source": "softaworks/agent-toolkit",
+      "sourceType": "github",
+      "computedHash": "f23c909d45c6207e974dbce0db4c648de13d586abb37057cfec34d62f25bb526"
+    },
+    "datadog-cli": {
+      "source": "softaworks/agent-toolkit",
+      "sourceType": "github",
+      "computedHash": "11b87a7b2610755693e0d21aa626c96ec536daa869c6f178ccfb170bfba404d6"
+    },
+    "dependency-updater": {
+      "source": "softaworks/agent-toolkit",
+      "sourceType": "github",
+      "computedHash": "3fc648ed28dfce104c7749318489af2c388de99dde2d85c145a4e028d994db41"
+    },
+    "design-system-starter": {
+      "source": "softaworks/agent-toolkit",
+      "sourceType": "github",
+      "computedHash": "e6df3b8d53a8333f44db1da91a10570488e46c3aea899476875aad894858a3b0"
+    },
+    "difficult-workplace-conversations": {
+      "source": "softaworks/agent-toolkit",
+      "sourceType": "github",
+      "computedHash": "e37c79cdcb3569a3f2c2eb875d993c495c6313165036d75b9b2fa5f117d802b2"
+    },
+    "doc-coauthoring": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "computedHash": "62cd7744438ee2aecc986c520bb603988a78ff6aaaf70a471bf4584fe0b78dae"
+    },
+    "docx": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "computedHash": "150be87ff7b18f273ad07da303adb1cf2ca21cc3e76db7a2cf0373405178a278"
+    },
+    "domain-name-brainstormer": {
+      "source": "softaworks/agent-toolkit",
+      "sourceType": "github",
+      "computedHash": "d8cdaa1279f4447fdd766bed9a566346ff2e72db822b4b3695fe033701903af6"
+    },
+    "draw-io": {
+      "source": "softaworks/agent-toolkit",
+      "sourceType": "github",
+      "computedHash": "f7318f5fd5207c3386eea323fe83398a6f126bb662b373e168566dc39470cb01"
+    },
+    "email-sequence": {
+      "source": "coreyhaines31/marketingskills",
+      "sourceType": "github",
+      "computedHash": "c32ccdf4816eef12987276b9cd72c995ecd784d0d1c22c37df075d4518f5519d"
+    },
+    "excalidraw": {
+      "source": "softaworks/agent-toolkit",
+      "sourceType": "github",
+      "computedHash": "f7d76efd72bebb97e2a398cd7fe2924927fcdab24d586bda2fcc867396b740c0"
+    },
+    "feedback-mastery": {
+      "source": "softaworks/agent-toolkit",
+      "sourceType": "github",
+      "computedHash": "29e2af48dc587059f389287ae51ba0ecd7b9c853223ddb9f679834edd91e5cae"
+    },
+    "form-cro": {
+      "source": "coreyhaines31/marketingskills",
+      "sourceType": "github",
+      "computedHash": "71e1f5b42e4bfae5f097889da53f26ea3c9a50a2026b9410d63b4b91b7933d38"
+    },
+    "free-tool-strategy": {
+      "source": "coreyhaines31/marketingskills",
+      "sourceType": "github",
+      "computedHash": "9f4238f2cb20360b800b1352bc5c6bea34a50d4465d5c0cdfbc42427c219c271"
+    },
+    "frontend-design": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "computedHash": "516bd2154eb843a8240e43d5b285229129853114ad7075a5e141e1c08e408c84"
+    },
+    "frontend-to-backend-requirements": {
+      "source": "softaworks/agent-toolkit",
+      "sourceType": "github",
+      "computedHash": "8c887221cfcf9f4cf25a8acc72798e911e0ce1c952f99fe75ed5b2554b48ea40"
+    },
+    "game-changing-features": {
+      "source": "softaworks/agent-toolkit",
+      "sourceType": "github",
+      "computedHash": "957248a5654c01fe82186b4b31199b0c618a9375c1d0024fd66568afbe12c48f"
+    },
+    "gemini": {
+      "source": "softaworks/agent-toolkit",
+      "sourceType": "github",
+      "computedHash": "feed23504518537af26b18b25ea80ea1ceb6d06084b1deeb3784d63ed151e6b4"
+    },
+    "gepetto": {
+      "source": "softaworks/agent-toolkit",
+      "sourceType": "github",
+      "computedHash": "76fa67fd2eac92fd8d4d22be2adaff981791f2009248b1813db9a8e0ab245dd8"
+    },
+    "humanizer": {
+      "source": "softaworks/agent-toolkit",
+      "sourceType": "github",
+      "computedHash": "c948e831d5fdfbe2e1fbbba1ebf8ab410a8f077ba529ddd522fd9ae40e6cc653"
+    },
+    "internal-comms": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "computedHash": "6e7e5d2f3bfa91e6ce302e629ff639bc82d95d2ce3454383531093cbeb8b38b0"
+    },
+    "jira": {
+      "source": "softaworks/agent-toolkit",
+      "sourceType": "github",
+      "computedHash": "8977d5956e0254ddef59889758353c28f919853ddb13c3b34be018a799154c4c"
+    },
+    "launch-strategy": {
+      "source": "coreyhaines31/marketingskills",
+      "sourceType": "github",
+      "computedHash": "00821fd6ed1e6b170bc1ea925f7b0ebd66e0e83093d68f1cabb4306441957fe3"
+    },
+    "lesson-learned": {
+      "source": "softaworks/agent-toolkit",
+      "sourceType": "github",
+      "computedHash": "58e2a4062f3f113177658ef822dfc52ca10997a41b71098a6ae809b8f5ab316c"
+    },
+    "marketing-ideas": {
+      "source": "coreyhaines31/marketingskills",
+      "sourceType": "github",
+      "computedHash": "b036877c0ee76bda06062f5d9bdaf6dbf93d09d64b8a6e42f674c5ac403f9e19"
+    },
+    "marketing-psychology": {
+      "source": "coreyhaines31/marketingskills",
+      "sourceType": "github",
+      "computedHash": "5811291830b4814a1e8a2dc6b080438b5c31540acd6dcf8b15676a2cbeacdb58"
+    },
+    "marp-slide": {
+      "source": "softaworks/agent-toolkit",
+      "sourceType": "github",
+      "computedHash": "73f1da9e6938b404525a6e33fb19033dcda3358a79d5b9aeecde73a13c049831"
+    },
+    "mcp-builder": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "computedHash": "f08cbdec74dba480ec5217363446dae154b7576b8c3d9b4cb17aff234f15973b"
+    },
+    "meme-factory": {
+      "source": "softaworks/agent-toolkit",
+      "sourceType": "github",
+      "computedHash": "a746b66da0219bd23de2a91ed5a21d2e951b92a56d89dd0193866950e927589f"
+    },
+    "mermaid-diagrams": {
+      "source": "softaworks/agent-toolkit",
+      "sourceType": "github",
+      "computedHash": "b6c206a3cab0333a1d3d3cf27114099d0d5f25eb07d86c8f12472b7aa7d59a4c"
+    },
+    "mui": {
+      "source": "softaworks/agent-toolkit",
+      "sourceType": "github",
+      "computedHash": "363bda5252637c682d30907de02efe538abc42843d1d20624d1e5e35823e996c"
+    },
+    "naming-analyzer": {
+      "source": "softaworks/agent-toolkit",
+      "sourceType": "github",
+      "computedHash": "0200d6f4b2edfe342c255c49f9c46b0937c079899f3c5255c2a624686777ca51"
+    },
+    "onboarding-cro": {
+      "source": "coreyhaines31/marketingskills",
+      "sourceType": "github",
+      "computedHash": "0f12cf5b6b2244ea2296e46dc5da9ca2cc83b5f4a861dff74f660bfceb701b7d"
+    },
+    "openapi-to-typescript": {
+      "source": "softaworks/agent-toolkit",
+      "sourceType": "github",
+      "computedHash": "703ab2a30b2113c9c18bf7982905c0b0f711f7476128ce30aa086585476af277"
+    },
+    "page-cro": {
+      "source": "coreyhaines31/marketingskills",
+      "sourceType": "github",
+      "computedHash": "3cb7b1a2e3e2b1dcddeaad50b57c3a3cd5291112c874ca601892021bc8518a19"
+    },
+    "paid-ads": {
+      "source": "coreyhaines31/marketingskills",
+      "sourceType": "github",
+      "computedHash": "be8c740ab3f74d52fad6fadea3a99b3f57cafd43a32bdcb20059f026005c3310"
+    },
+    "paywall-upgrade-cro": {
+      "source": "coreyhaines31/marketingskills",
+      "sourceType": "github",
+      "computedHash": "e379bdda8ebbfe350f509905357513732b8781c8e83c7ce6fcedd9086665046c"
+    },
+    "pdf": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "computedHash": "37226d4220d844377e6b2a386c51a011df4cd130855ff0b80bcc22f9c28abd57"
+    },
+    "perplexity": {
+      "source": "softaworks/agent-toolkit",
+      "sourceType": "github",
+      "computedHash": "1d32fbce001646737afa8208adaae6e8b1b6c74bd85eae492a9b89901e8c1668"
+    },
+    "plugin-forge": {
+      "source": "softaworks/agent-toolkit",
+      "sourceType": "github",
+      "computedHash": "6b8eaac56d39fad5f79a2495b506edbebf46d23d9b596aafc2428566c8f76bd7"
+    },
+    "popup-cro": {
+      "source": "coreyhaines31/marketingskills",
+      "sourceType": "github",
+      "computedHash": "76154e3ac1730b2ae87500c5950331d6d6e4391322a9a8977a646a3a06074c3a"
+    },
+    "pptx": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "computedHash": "2275e4d8dba1790d52f6619b3e2fed04edc948beef545a2ad18e4a1be644426d"
+    },
+    "pricing-strategy": {
+      "source": "coreyhaines31/marketingskills",
+      "sourceType": "github",
+      "computedHash": "1925eeb8764bd5aaab0efea3b8142729e8cd40048589ca1c85e00d5850989c42"
+    },
+    "product-marketing-context": {
+      "source": "coreyhaines31/marketingskills",
+      "sourceType": "github",
+      "computedHash": "92cbd8821a088cadc3d0a97c27dea47f58dc3865d38fedf305a9e07025eace77"
+    },
+    "professional-communication": {
+      "source": "softaworks/agent-toolkit",
+      "sourceType": "github",
+      "computedHash": "80bc71b76f37e46ae5628205c004a02c696d808ea63539ef7260c92222e1de98"
+    },
+    "programmatic-seo": {
+      "source": "coreyhaines31/marketingskills",
+      "sourceType": "github",
+      "computedHash": "ef03c611509291a4a492569d7c4e688e2ecf964ff9a8ae0364def34b3bfb8ecc"
+    },
+    "qa-test-planner": {
+      "source": "softaworks/agent-toolkit",
+      "sourceType": "github",
+      "computedHash": "8ee0d30acc14528eff0cf0b953f5adb6185a8ed65a72a489ae9297ddfee000b0"
+    },
+    "react-dev": {
+      "source": "softaworks/agent-toolkit",
+      "sourceType": "github",
+      "computedHash": "da3caa5f2bfd7274fad3f08524ff3ad4f427978773c3e77e7b14e44aaac31d78"
+    },
+    "react-useeffect": {
+      "source": "softaworks/agent-toolkit",
+      "sourceType": "github",
+      "computedHash": "1fdf524f8335afac6f44d3460d6d20e71db9c1d14643e4a31ea17d6463504447"
+    },
+    "reducing-entropy": {
+      "source": "softaworks/agent-toolkit",
+      "sourceType": "github",
+      "computedHash": "9e43d852830ac1fac136bb6a961dc843be4b3c977157b44432eb599337270ac3"
+    },
+    "referral-program": {
+      "source": "coreyhaines31/marketingskills",
+      "sourceType": "github",
+      "computedHash": "7b9e38b7dd5db0e929b7ccbed073653ea9c3ea0a9b16d758bbe10c8f626940d8"
+    },
+    "remotion-best-practices": {
+      "source": "remotion-dev/skills",
+      "sourceType": "github",
+      "computedHash": "7b8684825df186314a85cc61a83d0587cd61f824103ee546aef877a10f4f9255"
+    },
+    "requirements-clarity": {
+      "source": "softaworks/agent-toolkit",
+      "sourceType": "github",
+      "computedHash": "a23371d1cd5d8cfdd62af76ce0cd462095d35dfd612587ed30528b4a54105771"
+    },
+    "schema-markup": {
+      "source": "coreyhaines31/marketingskills",
+      "sourceType": "github",
+      "computedHash": "0cc14d6560037bf749f1d42b43cb1d770925b73979657fcf8578f1637c58ea94"
+    },
+    "seo-audit": {
+      "source": "coreyhaines31/marketingskills",
+      "sourceType": "github",
+      "computedHash": "9ba943642a232ac724060f34c3981dd8c1f21226d5a42d611dda6b4368e07c2f"
+    },
+    "session-handoff": {
+      "source": "softaworks/agent-toolkit",
+      "sourceType": "github",
+      "computedHash": "6401b3a156f4f756bb6faf54a633b3d092aea822115ef26858a8a6ce60b58a8e"
+    },
+    "ship-learn-next": {
+      "source": "softaworks/agent-toolkit",
+      "sourceType": "github",
+      "computedHash": "4df93407ee5223f5905178f134839dd0e100a5ddaba88c0e6a408dacb468d942"
+    },
+    "signup-flow-cro": {
+      "source": "coreyhaines31/marketingskills",
+      "sourceType": "github",
+      "computedHash": "534e85ca4ae0e8fc33acabd6b88b5b50b03e8844562fe29090a806f365f50aa5"
+    },
+    "skill-creator": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "computedHash": "e513e29a52533c4dd0aff72964c80d2d43c6fe9619ecb8766aabcd117e2b1acd"
+    },
+    "skill-judge": {
+      "source": "softaworks/agent-toolkit",
+      "sourceType": "github",
+      "computedHash": "14aa05080e7bb08f1da33a32c6e65e41ae67375f09747ab0a3432e3ffbf8506a"
+    },
+    "slack-gif-creator": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "computedHash": "e6ba2e516960ee584328162d2e16aa7fc7c800d807b87866c20f19c8419644f9"
+    },
+    "social-content": {
+      "source": "coreyhaines31/marketingskills",
+      "sourceType": "github",
+      "computedHash": "15c007a7929ef8613e2085f03240d76966a4e190a028b8bcd7cd65a2b5da92ac"
+    },
+    "template-skill": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "computedHash": "daf176f2cd0030d321982d3e813fd1a794a0b4744c5a92d2931a37001bb40fb9"
+    },
+    "theme-factory": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "computedHash": "0290eabfd6fea9fcfd59c12de15e3f4046593185089956802b6d48ba1d07f428"
+    },
+    "ui-ux-pro-max": {
+      "source": "nextlevelbuilder/ui-ux-pro-max-skill",
+      "sourceType": "github",
+      "computedHash": "4cfe5e95a230616c17d92b44e3cd37bae543ce087a7756a446a62f77d7c58a37"
+    },
+    "vercel-composition-patterns": {
+      "source": "vercel-labs/agent-skills",
+      "sourceType": "github",
+      "computedHash": "10eb4ec94577b79ae98c63ce3e7f35f8a6a06436a4011bff083b397de6960eeb"
+    },
+    "vercel-react-best-practices": {
+      "source": "vercel-labs/agent-skills",
+      "sourceType": "github",
+      "computedHash": "61f8c307aa8ce0c4c52da8886d42e344dab83f76f9b5360cf8923b25fb1d67bb"
+    },
+    "vercel-react-native-skills": {
+      "source": "vercel-labs/agent-skills",
+      "sourceType": "github",
+      "computedHash": "a804b4e848059822638c390359976f7021380bcefb1469d473aa4e9202c15ecb"
+    },
+    "web-artifacts-builder": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "computedHash": "8506451d6d3a3494ddca091b0f0ff7a9961ddd4301df2b6264dd3f98bed75b0a"
+    },
+    "web-design-guidelines": {
+      "source": "vercel-labs/agent-skills",
+      "sourceType": "github",
+      "computedHash": "d8e7d3afe37dcc8a97b99ffb5afdb4d0919ae0092ea8b68f44eb201f035e33ac"
+    },
+    "web-to-markdown": {
+      "source": "softaworks/agent-toolkit",
+      "sourceType": "github",
+      "computedHash": "673a5f2d7a2917b0cb4c9f54e8b130f56de336c1562349310555ca2b0f1e7d42"
+    },
+    "webapp-testing": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "computedHash": "5a6a18c0137cfbabec058e86fc1c8f6919d846a7b2a34ee978cc8ced866ee2e5"
+    },
+    "writing-clearly-and-concisely": {
+      "source": "softaworks/agent-toolkit",
+      "sourceType": "github",
+      "computedHash": "8941c21d5127d6f7d87cefd9b5175b96c9e0dec0c20c663d68b9cb4331847d0a"
+    },
+    "xlsx": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "computedHash": "cb7fba2177d0d35d14b3244272b25d1b05246e99b3468a087fe06c84193dbd20"
+    }
+  }
+}

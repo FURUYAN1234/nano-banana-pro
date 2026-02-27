@@ -95,10 +95,9 @@ export const callThinkingGemini = async (prompt, images = null, systemInstructio
                 setTimeout(() => reject(new Error(`Timeout awaiting response from ${modelId} (60s limit)`)), 60000)
             );
 
-            // [v1.8.66] Updated for Gemini 2.0 Flash: Use 'googleSearch' instead of 'googleSearchRetrieval'
-            const finalTools = (images && Array.isArray(images) && images.length > 0)
-                ? undefined
-                : [{ googleSearch: {} }];
+            // [v1.96] Updated for Gemini 2.0 Flash: Use 'googleSearch' instead of 'googleSearchRetrieval'
+            // [Fix] Enforce search tools even if images are present (important for URL grounding alongside char images)
+            const finalTools = [{ googleSearch: {} }];
 
             let result;
             try {
