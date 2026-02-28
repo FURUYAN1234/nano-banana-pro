@@ -79,12 +79,14 @@ A "Free Input" mode allows users to generate manga from any text, such as person
 ## 🔍 Deep Analysis (技術詳解)
 
 ### 🇯🇵 [JP] コード解析によるAI漫画システム詳解
+
 本システムの設計思想、**Absolute Physical Geometry Lock**（絶対的物理ジオメトリロック）、**Weighted Immutable Prompts**（重み付き不変プロンプト）などのコア技術、および法的・哲学的な考察を含む詳細な解析レポート（日本語版）です。
-- 📄 [詳細ドキュメントを表示する](https://docs.google.com/document/d/1iIJDdW3BjYR255oNUn4MKZs_wax_s7X2wGtE-1gmdDw/edit?tab=t.0)
+* 📄 [詳細ドキュメントを表示する](https://docs.google.com/document/d/1iIJDdW3BjYR255oNUn4MKZs_wax_s7X2wGtE-1gmdDw/edit?tab=t.0)
 
 ### 🇺🇸 [EN] Comprehensive Analysis of Autonomous AI Manga System
+
 A detailed analysis report (English version) covering the system's design philosophy, core technologies such as **Absolute Physical Geometry Lock** and **Weighted Immutable Prompts**, and legal/philosophical considerations.
-- 📄 [View Detailed Document](https://docs.google.com/document/d/17AaxAj4_IHGHjK5P8ndgoA-dFRyuDMdlCqK9qAU6X34/edit?usp=sharing)
+* 📄 [View Detailed Document](https://docs.google.com/document/d/17AaxAj4_IHGHjK5P8ndgoA-dFRyuDMdlCqK9qAU6X34/edit?usp=sharing)
 
 ---
 
@@ -188,3 +190,38 @@ Any commercial or educational use involving fees requires explicit prior written
 
 ---
 Developed by **FURU**
+
+---
+
+## 📦 Deployment & Release Guidelines (For AI Agent)
+
+When instructed to deploy or release a new version, the AI agent MUST strictly adhere to the following protocol:
+
+1. **Version Increment**: Increase the version number strictly by `0.01` (e.g., `v1.98 Alpha` -> `v1.99 Alpha`). **Do not use semantic versioning patches** (like `1.98.1`) unless explicitly told otherwise.
+2. **Execute Deployment**: Run the local build and deployment script (e.g. `npm run deploy` / `gh-pages` upload).
+3. **Commit & Tag**: Commit the version changes and push a corresponding tag (e.g., `git tag "v1.99-alpha"`).
+4. **Archive Check**: Verify that the generated `.zip` source code is available on GitHub and the latest version is effectively downloadable.
+5. **Release Notes Format**: Output the Release Notes in the exact Markdown format below so the user can copy-paste it directly into GitHub Releases.
+
+**[Required Markdown Format for Release Notes]**
+
+* Title MUST be bilingual (English / Japanese).
+* Body MUST use the `🚀 Updates / 更新内容` header.
+* Body content MUST be a nested list: Parent item is English, Child item is the Japanese translation.
+
+```markdown
+vX.XX Alpha: [Short Description in English] / [短い説明文（日本語）]
+```
+
+```markdown
+🚀 Updates / 更新内容
+
+[Brief summary of what this update is about in English]
+[このアップデートの簡単な概要（日本語）]
+
+🔧 Feature Restorations & Fixes / 復旧・修正された機能
+
+* **[Feature/Fix Name in English]**
+  * [Detailed explanation in English]
+  * [詳細な説明（日本語）]
+```
