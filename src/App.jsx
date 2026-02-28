@@ -171,7 +171,7 @@ class ErrorBoundary extends React.Component {
 function App() {
   // Force Build 2026-02-06 07:07 // Build 2026-02-06-01
 
-  const SYSTEM_VERSION = "v1.98 Alpha"; // [ZENITH UPGRADE]
+  const SYSTEM_VERSION = "v1.99 Alpha"; // [ZENITH UPGRADE]
   console.log("System Version Loaded:", SYSTEM_VERSION); // Debug Log
   const [apiKey, setApiKeyState] = useState("");
   const [showModal, setShowModal] = useState(false); // FIXEDCRITICAL RESTORE
@@ -521,7 +521,55 @@ function App() {
          (指示): 上記のユーザー入力（メモまたはURLの内容）を「ニュースソース」として扱い、シナリオを作成せよ。
          URLが含まれる場合は、そのリンク先の内容を推測・補完して構成せよ。
          `;
-      } else {
+
+        // [RESTORED] Direct URL Fetching Logic
+        const urlRegex = /(https?:\/\/[^\s]+)/g;
+        const urls = manualTopic.match(urlRegex);
+        if (urls && urls.length > 0) {
+          setScenarioThought(`> Found URL in manual input: ${urls[0]} \n> Fetching content via Proxy...`);
+          try {
+            // Fetch via proxy buffer to bypass CORS
+            const response = await fetch(`https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(urls[0])}`);
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            const html = await response.text();
+
+            // Extract text using native DOMParser
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, "text/html");
+            // Strip out script and style elements
+            const scripts = doc.querySelectorAll('script, style');
+            scripts.forEach(s => s.remove());
+
+            // Gather readable text primarily from content tags
+            const textElements = doc.querySelectorAll('h1, h2, h3, h4, p, li, article, section');
+            let extractedText = "";
+            textElements.forEach(el => {
+              if (el.textContent.trim()) {
+                extractedText += el.textContent.trim() + "\n";
+              }
+            });
+
+            // Fallback to body text if specific tags were empty
+            if (!extractedText.trim()) {
+              extractedText = doc.body.textContent || "";
+            }
+
+            // Clean up excess whitespace and limit length
+            const cleanText = extractedText.replace(/\s+/g, ' ').substring(0, 3000);
+
+            setScenarioThought(prev => prev + `\n> Content Extracted (${cleanText.length} chars). Injecting...`);
+            newsContext = `
+             【指定URLから独自のスクレイピングで抽出した内容】:
+             ${cleanText}
+             
+             (指示): 上記はユーザーが入力したURL（ ${urls[0]} ）から直接抽出した本文テキストである。この内容を「最も重要な一次情報ソース」として扱い、内容を要約・反映させた上でシナリオを作成せよ。
+             `;
+          } catch (fetchErr) {
+            console.error("URL Fetch Error: ", fetchErr);
+            setScenarioThought(prev => prev + `\n> Warning: Failed to fetch URL content (${fetchErr.message}). Relying on LLM internal knowledge.`);
+          }
+        }
+
       }
 
       // [v1.8.94] Location Randomizer Logic
@@ -540,7 +588,6 @@ function App() {
       const forcedLocation = locationList[Math.floor(Math.random() * locationList.length)];
       console.log("Forced Location:", forcedLocation); // Debug log
 
-      const castListSummary = castList.replace(/\n/g, ', ').substring(0, 200) + '...';
       const scenarioPrompt = `
         【Context Force Reboot】
         Ignore all previous instructions and conversation history.This is a fresh, standalone session.
@@ -552,7 +599,7 @@ function App() {
     あなたはプロの風刺漫画脚本家です。
         
         ${inputMode === 'manual'
-          ? `「ユーザーが入力した以下のトピックまたはURL」をテーマに4コマ漫画を作成してください。\n トピック: ${manualTopic}\n\n(重要指示): 入力に「http」から始まるURLが含まれている場合、**Geminiが持つ情報取得機能等を用いてそのリンク先の内容を読み取り、要約した上で**それをテーマにしたストーリーを作成せよ。`
+          ? `「ユーザーが入力した以下のトピックまたは抽出されたURLコンテンツ」をテーマに4コマ漫画を作成してください。\n トピック: ${manualTopic}\n\n${newsContext}`
           : `「${searchTopicKeywords}」に関する、** 指定された日付（${targetDate}）周辺の具体的かつ事実に即したニュース ** を1つ選定し、それをテーマにした4コマ漫画のシナリオを作成してください。`
         }
 
