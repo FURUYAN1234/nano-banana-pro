@@ -1,0 +1,20 @@
+be21ddac9e63dc8b0c798d2da946bc3a59e50764 HEAD@{0}: commit: docs: formalize deployment and release notes format
+4020d2b4244364afbd3e47c8bc960cda826284fd HEAD@{1}: commit: chore: strict version update to v1.98 Alpha
+8dedd355216bcf98a663d9aa9c344eaed4b8e557 HEAD@{2}: reset: moving to HEAD~1
+7228092d7ebeeb495eed45f269d30e04fb002f96 HEAD@{3}: commit: chore: bump version to 1.98.0
+8dedd355216bcf98a663d9aa9c344eaed4b8e557 HEAD@{4}: commit: v1.97 Alpha: Version Fix
+0564cc73d2eaf6cc1d98f798087930b20fdfd00a HEAD@{5}: commit: v1.96.0-alpha: Restore URL Grounding and Fix Dialogue Extraction
+5f70ef39b135a2821aa8e0f2cbb8a3086650ec0b HEAD@{6}: pull origin main: Fast-forward
+e4d45b93440909a88c42df07e1e6d9fce1d62821 HEAD@{7}: commit: chore: bump version to v1.94 Alpha
+6272fda125b425d647cdab61ba81214ec235e4eb HEAD@{8}: commit: chore: bump version to 1.94
+c8982079d3533d493d3fa8e3cbbee16ac892d8b8 HEAD@{9}: commit: fix: revert watermark placement to bottom right and strictly align it with the right edge of manga panels
+e95bc428d03b124593b481d270f47ce29729ecfb HEAD@{10}: commit: fix: completely remove hardcoded names to make it a universal tool
+fe035404e403b06ed10cd1b3f3127ac8e23ca44d HEAD@{11}: commit: fix: allow guest characters like news subjects to appear while preventing regular character leakage and visual action hallucinations
+d44ac1f445be1d51dfabfbae7c69f241c3c50eb2 HEAD@{12}: commit: fix: strictly prohibit non-castlist characters (like news figures) from appearing or speaking in generated scenarios
+a3a8da5dd1f19c1f28f9aea2b7adae521b8dab9d HEAD@{13}: commit: fix: generalize character personality matching instructions, removing specific names miku and rin
+d71a1055815bed48f8bc741db683fef09d083b7c HEAD@{14}: commit: fix: enforce strict character personality matching (miku vs rin) and add explicit visual rules for silent panels without speech bubbles
+7e4c3ff9d734367af59255814ff8b6f85a0dba42 HEAD@{15}: commit: fix: prompt tuning for gemini equal panel sizes, speedline suppression, and explicit no glasses rule
+7ef3a43a40df51c0c86c7a8368c98e65fbb93ca1 HEAD@{16}: commit: feat: expand camera angle pool to reduce repetitive close-ups and emphasize full body dynamic shots
+1331cfc28c535bbe05bff2983f07170c9d048c11 HEAD@{17}: commit: fix: extract only english tags from cast list to avoid text hallucination and fix markdown split bug
+d35d7cbcb2a710c80c4487f30786f187f2de7693 HEAD@{18}: commit: feat: explicitly extract and inject character placement rules per panel
+1d10bdfdad19e3936246d875015d88b4338c5ab7 HEAD@{19}: commit: fix: adjust prompt to prevent quality drop and strict zero left/right margins
