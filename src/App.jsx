@@ -171,7 +171,7 @@ class ErrorBoundary extends React.Component {
 function App() {
   // Force Build 2026-02-06 07:07 // Build 2026-02-06-01
 
-  const SYSTEM_VERSION = "v2.00 Alpha"; // [ZENITH UPGRADE]
+  const SYSTEM_VERSION = "v2.01 Alpha"; // [ZENITH UPGRADE]
   console.log("System Version Loaded:", SYSTEM_VERSION); // Debug Log
   const [apiKey, setApiKeyState] = useState("");
   const [showModal, setShowModal] = useState(false); // FIXEDCRITICAL RESTORE
@@ -993,6 +993,9 @@ The art style is: ${styleCore}.
 (Apply dramatic anime cinematic lighting and high-budget visual effects, but do not clutter the screen with excessive speedlines).
 
 Overall Setting: ${safeLocation}.
+
+CRITICAL VISUAL REPRODUCTION PROTOCOL:
+If an image is attached, you MUST reproduce the character designs from the attached reference image with 100% absolute fidelity. You MUST strictly confirm and maintain every detail: exact hairstyle, hair color, and the presence or absence of glasses for every character in every panel.
 
 Important Character Cast:
 ${VAR_CAST_LIST}
