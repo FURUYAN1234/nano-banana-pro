@@ -965,9 +965,10 @@ function App() {
         return `CRITICAL PLACEMENT: Follow the natural dialogue flow.`;
       };
 
-      // [v2.04] Anti-Cloning Constraint: Count characters strictly and enforce isolated presence rules per panel
+      // [v2.05] Anti-Cloning Constraint: Dynamically detect registered cast + potential unregistered speakers
       const extractCastLimitRule = (fullPanelText) => {
         const charsInPanel = new Set();
+        const unregSpeakers = new Set();
         const lines = fullPanelText.split('\n');
 
         // Find valid cast names
@@ -980,17 +981,39 @@ function App() {
           }
         });
 
-        // Scan panel text for mentions of valid cast
+        // Scan panel text for mentions of valid cast and unregistered speakers
         lines.forEach(line => {
           validCharacters.forEach(c => {
             if (line.includes(c)) charsInPanel.add(c);
           });
+
+          // Detect informal speakers like モブ, 客, 先生 that aren't in cast
+          const match = line.match(/^(.*?)(?:[:：]|「)/);
+          if (match && match[1].trim()) {
+            let speaker = match[1].replace(/^(SFX|効果音|BGM|Action|\(.*?\))/gi, '').replace(/^[【\[（(]/, '').replace(/[】\]）)]$/, '').trim();
+            if (speaker && !validCharacters.some(c => speaker.includes(c))) {
+              // Only add obvious people indicators to prevent adding context actions
+              if (speaker.match(/(モブ|客|店員|生徒|先生|群集|人々|男|女|子供|老人)/)) {
+                unregSpeakers.add(speaker);
+              }
+            }
+          }
         });
 
         const charsArray = Array.from(charsInPanel);
-        if (charsArray.length === 0) return "";
-        const formattedNames = charsArray.map(c => `[${c}]`).join(' and ');
-        return `CRITICAL CAST LIMIT: ONLY draw ${formattedNames} in this panel. Do NOT draw any background characters. The total number of people in this panel MUST be exactly ${charsArray.length}.`;
+        const unregArray = Array.from(unregSpeakers);
+
+        if (charsArray.length === 0 && unregArray.length === 0) return "";
+
+        const allNames = [...charsArray.map(c => `[${c}]`), ...unregArray];
+        const formattedNames = allNames.join(' and ');
+
+        // Relaxed rule: allow unregistered characters if detected, otherwise lock to registered format
+        if (unregArray.length > 0) {
+          return `CRITICAL CAST LIMIT: Draw exactly ${allNames.length} distinct people in focus: ${formattedNames}. Ensure no character is cloned.`;
+        } else {
+          return `CRITICAL CAST LIMIT: ONLY draw ${formattedNames} in this panel. Do NOT draw any extra background characters unless strictly necessary for the setting. The main cast in this panel MUST be exactly ${charsArray.length} people. NEVER draw the exact same character twice.`;
+        }
       };
 
       const VAR_PANEL_1_KI = `(Camera: ${getRandomAngle()}), (Background: ${cleanLocation}), (Action: ${extractActionOnly(panel1Text)}), ${extractDialogueOnly(panel1Text)}`;
