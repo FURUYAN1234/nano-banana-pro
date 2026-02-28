@@ -1,7 +1,7 @@
 {
   "name": "nano-banana-pro",
   "private": true,
-  "version": "2.04.0-alpha",
+  "version": "2.05.0-alpha",
   "homepage": "https://FURUYAN1234.github.io/nano-banana-pro",
   "type": "module",
   "scripts": {
