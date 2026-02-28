@@ -108,7 +108,29 @@ Windows環境下での文字化けや実行エラー（"Agent execution terminat
     - バグ修正 (Bugfix) や機能追加 (Feature) が含まれる場合、必ずバージョン番号をインクリメントすること。未更新の場合は更新してからデプロイすること。
 2. **リリースノート作成**:
     - GitHub Release 用に、**英語と日本語の併記**でタイトルと本文を作成すること。
-    - タイトルと本文は Markdown 形式で明確に分離して提示すること。
+    - コピー用のリリースノートは、必ず「タイトル」と「本文」を別々のMarkdownブロックに完全に分離して出力すること（絶対条件）。
+
+**[厳守するマークダウン出力フォーマット]**
+
+- タイトルと本文はそれぞれ独立したマークダウンブロックで出力する。
+
+```markdown
+vX.XX Alpha: [Short Description in English] / [短い説明文（日本語）]
+```
+
+```markdown
+🚀 Updates / 更新内容
+
+[Brief summary of what this update is about in English]
+[このアップデートの簡単な概要（日本語）]
+
+🔧 Feature Restorations & Fixes / 復旧・修正された機能
+
+* **[Feature/Fix Name in English]**
+  * [Detailed explanation in English]
+  * [詳細な説明（日本語）]
+```
+
 3. **アーカイブ検証**:
     - タグ打ち (`git tag vX.Y.Z`) 後、GitHub上で正しく Zip ファイルが生成され、ダウンロード可能かを確認すること（URLのあてずっぽうではなく、Releasesページからの導線確認）。
 
