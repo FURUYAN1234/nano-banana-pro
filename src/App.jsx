@@ -31,6 +31,8 @@ import {
 import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 
+const SYSTEM_VERSION = "v2.04.0 Alpha";
+
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
   const msg = errorMsg || "";
@@ -171,7 +173,7 @@ class ErrorBoundary extends React.Component {
 function App() {
   // Force Build 2026-02-06 07:07 // Build 2026-02-06-01
 
-  const SYSTEM_VERSION = "v2.02 Alpha"; // [ZENITH UPGRADE]
+  const SYSTEM_VERSION = "v2.2.NaN Alpha"; // [ZENITH UPGRADE]
   console.log("System Version Loaded:", SYSTEM_VERSION); // Debug Log
   const [apiKey, setApiKeyState] = useState("");
   const [showModal, setShowModal] = useState(false); // FIXEDCRITICAL RESTORE
@@ -881,6 +883,8 @@ function App() {
             clean = clean.replace(/^.*?(?:[:：]|「)\s*/, '');
             // Remove surrounding Japanese quotes to prevent hallucination in images
             clean = clean.replace(/^「+/, '').replace(/」+$/, '');
+            // [v2.04] Remove parenthetical stage directions (e.g. (ため息) or （笑顔）) to prevent them from rendering as printed text in balloons
+            clean = clean.replace(/（.*?）|\(.*?\)/g, '');
             clean = clean.trim();
 
             if (clean) {
@@ -961,6 +965,34 @@ function App() {
         return `CRITICAL PLACEMENT: Follow the natural dialogue flow.`;
       };
 
+      // [v2.04] Anti-Cloning Constraint: Count characters strictly and enforce isolated presence rules per panel
+      const extractCastLimitRule = (fullPanelText) => {
+        const charsInPanel = new Set();
+        const lines = fullPanelText.split('\n');
+
+        // Find valid cast names
+        const validCharacters = [];
+        castList.split('\n').forEach(cLine => {
+          const m = cLine.replace(/\*\*/g, '').trim().match(/^##\s*(?:\d+\.\s*)?(.*)/);
+          if (m) {
+            const nameOnly = m[1].trim().split('(')[0].trim().split('（')[0].trim();
+            if (nameOnly) validCharacters.push(nameOnly);
+          }
+        });
+
+        // Scan panel text for mentions of valid cast
+        lines.forEach(line => {
+          validCharacters.forEach(c => {
+            if (line.includes(c)) charsInPanel.add(c);
+          });
+        });
+
+        const charsArray = Array.from(charsInPanel);
+        if (charsArray.length === 0) return "";
+        const formattedNames = charsArray.map(c => `[${c}]`).join(' and ');
+        return `CRITICAL CAST LIMIT: ONLY draw ${formattedNames} in this panel. Do NOT draw any background characters. The total number of people in this panel MUST be exactly ${charsArray.length}.`;
+      };
+
       const VAR_PANEL_1_KI = `(Camera: ${getRandomAngle()}), (Background: ${cleanLocation}), (Action: ${extractActionOnly(panel1Text)}), ${extractDialogueOnly(panel1Text)}`;
       const VAR_PANEL_2_SHO = `(Camera: ${getRandomAngle()}), (Background: ${cleanLocation}), (Action: ${extractActionOnly(panel2Text)}), ${extractDialogueOnly(panel2Text)}`;
       const VAR_PANEL_3_TEN = `(Camera: ${getRandomAngle()}), (Background: ${cleanLocation}), (Action: ${extractActionOnly(panel3Text)}), ${extractDialogueOnly(panel3Text)}`;
@@ -1028,24 +1060,28 @@ CRITICAL ANTI-CLONING RULE: NEVER draw the exact same character twice inside a s
 ## Panel 1 (Top)
 Camera: ${getRandomAngle()} (Ensure camera is NOT flat eye-level).
 ${extractPlacementRule(panel1Text)}
+${extractCastLimitRule(panel1Text)}
 Visual Action (Do NOT write this as text on the canvas, draw it visually): ${extractActionOnly(panel1Text, extractPlacementRule(panel1Text))}.
 Dialogue (ONLY write this inside speech bubbles): ${extractDialogueOnly(panel1Text)}.
 
 ## Panel 2
 Camera: ${getRandomAngle()} (Ensure camera is NOT flat eye-level).
 ${extractPlacementRule(panel2Text)}
+${extractCastLimitRule(panel2Text)}
 Visual Action (Do NOT write this as text on the canvas, draw it visually): ${extractActionOnly(panel2Text, extractPlacementRule(panel2Text))}.
 Dialogue (ONLY write this inside speech bubbles): ${extractDialogueOnly(panel2Text)}.
 
 ## Panel 3
 Camera: ${getRandomAngle()} (Ensure camera is NOT flat eye-level).
 ${extractPlacementRule(panel3Text)}
+${extractCastLimitRule(panel3Text)}
 Visual Action (Do NOT write this as text on the canvas, draw it visually): ${extractActionOnly(panel3Text, extractPlacementRule(panel3Text))}.
 Dialogue (ONLY write this inside speech bubbles): ${extractDialogueOnly(panel3Text)}.
 
 ## Panel 4 (Bottom)
 Camera: ${getRandomAngle()} (Ensure camera is NOT flat eye-level).
 ${extractPlacementRule(panel4Text)}
+${extractCastLimitRule(panel4Text)}
 Visual Action (Do NOT write this as text on the canvas, draw it visually): ${extractActionOnly(panel4Text, extractPlacementRule(panel4Text))}.
 Dialogue (ONLY write this inside speech bubbles): ${extractDialogueOnly(panel4Text)}.
 
