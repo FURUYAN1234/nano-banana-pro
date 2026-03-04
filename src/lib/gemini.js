@@ -7,9 +7,9 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const MODEL_IDS = [
-    "gemini-2.0-flash",                   // Primary: Stable + Grounding Support
-    "gemini-1.5-pro",                     // Backup 1: Reliable High-Intel
-    "gemini-1.5-flash",                   // Backup 2: Fast
+    "gemini-2.5-flash",                   // Primary: Stable + Grounding Support
+    "gemini-1.5-pro-002",                 // Backup 1: Reliable High-Intel (Specific version)
+    "gemini-1.5-flash-002",               // Backup 2: Fast (Specific version)
     "gemini-pro-latest",                  // Fallback
     "gemini-flash-latest"                 // Fallback
 ];
@@ -79,11 +79,11 @@ export const callThinkingGemini = async (prompt, images = null, systemInstructio
                 finalPromptParts.push({ text: `[SYSTEM_INSTRUCTION_START]\n${systemInstruction}\n[SYSTEM_INSTRUCTION_END]\n\n` });
             }
 
-            finalPromptParts.push({ text: prompt });
-
             if (images && Array.isArray(images)) {
                 finalPromptParts.push(...images);
             }
+
+            finalPromptParts.push({ text: prompt });
 
             const modelParams = { model: modelId };
             // systemInstruction removed from modelParams to avoid API fragmentation
@@ -95,9 +95,8 @@ export const callThinkingGemini = async (prompt, images = null, systemInstructio
                 setTimeout(() => reject(new Error(`Timeout awaiting response from ${modelId} (60s limit)`)), 60000)
             );
 
-            // [v1.96] Updated for Gemini 2.0 Flash: Use 'googleSearch' instead of 'googleSearchRetrieval'
-            // [Fix] Enforce search tools even if images are present (important for URL grounding alongside char images)
-            const finalTools = [{ googleSearch: {} }];
+            // [Fix] Enforce search tools ONLY if NO images are present. Grounding + Multimodal often throws 400 errors.
+            const finalTools = (images && images.length > 0) ? [] : [{ googleSearch: {} }];
 
             let result;
             try {
@@ -121,7 +120,13 @@ export const callThinkingGemini = async (prompt, images = null, systemInstructio
                     console.warn(`[API] Grounding failed for ${modelId}, retrying without tools...`);
                     result = await model.generateContent({
                         contents: [{ role: "user", parts: finalPromptParts }],
-                        generationConfig: { temperature: 0.7, maxOutputTokens: 8192 }
+                        generationConfig: { temperature: 0.7, maxOutputTokens: 8192 },
+                        safetySettings: [
+                            { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
+                            { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
+                            { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
+                            { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" },
+                        ]
                     });
                 } else {
                     throw err;

@@ -31,7 +31,7 @@ import {
 import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 
-const SYSTEM_VERSION = "v2.06 Alpha";
+const SYSTEM_VERSION = "v2.07 Alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -365,10 +365,10 @@ function App() {
 
       const prompt = `
         /* SYSTEM: ABSOLUTE CONTEXT RESET. FORGET ALL PREVIOUS CHARACTERS. */
-        /* TARGET: Analyze ONLY the currently uploaded image. Do not recall past sessions. */
+        /* TARGET: Analyze ALL currently uploaded images. Do not recall past sessions. */
         
         あなたはプロの漫画家兼キャラクターデザイナー（解析特化）です。
-        以下の「絶対厳守ルール」に従い、現在の画像のみを解析してください。
+        以下の「絶対厳守ルール」に従い、現在の全ての画像を解析してください。
 
         【0. 画像スタイル判定 (Style Detection)】
         ・**最初に必ず「STYLE_TAG: MONOCHROME」または「STYLE_TAG: COLOR」と出力せよ。**

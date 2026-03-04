@@ -81,11 +81,13 @@ A "Free Input" mode allows users to generate manga from any text, such as person
 ### 🇯🇵 [JP] コード解析によるAI漫画システム詳解
 
 本システムの設計思想、**Absolute Physical Geometry Lock**（絶対的物理ジオメトリロック）、**Weighted Immutable Prompts**（重み付き不変プロンプト）などのコア技術、および法的・哲学的な考察を含む詳細な解析レポート（日本語版）です。
+
 * 📄 [詳細ドキュメントを表示する](https://docs.google.com/document/d/1iIJDdW3BjYR255oNUn4MKZs_wax_s7X2wGtE-1gmdDw/edit?tab=t.0)
 
 ### 🇺🇸 [EN] Comprehensive Analysis of Autonomous AI Manga System
 
 A detailed analysis report (English version) covering the system's design philosophy, core technologies such as **Absolute Physical Geometry Lock** and **Weighted Immutable Prompts**, and legal/philosophical considerations.
+
 * 📄 [View Detailed Document](https://docs.google.com/document/d/17AaxAj4_IHGHjK5P8ndgoA-dFRyuDMdlCqK9qAU6X34/edit?usp=sharing)
 
 ---
@@ -189,4 +191,11 @@ Usage of this system (including prompts and logic) in high-priced information pr
 Any commercial or educational use involving fees requires explicit prior written consent from the developer (FURU). 有料の教育目的や商用利用を検討される場合は、必ず事前に開発者（FURU）の書面による承諾を得てください。
 
 ---
+
+## 📝 ChangeLog
+
+* **v2.07 Alpha**: Fixed a bug where multiple image analysis would revert to fallback models and fail to process multiple characters due to strict safety settings acting up during `googleSearch` compatibility retry failovers.
+
+---
+
 Developed by **FURU**
