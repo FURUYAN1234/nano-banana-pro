@@ -31,7 +31,7 @@ import {
 import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 
-const SYSTEM_VERSION = "v2.08 Alpha";
+const SYSTEM_VERSION = "v2.09 Alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -1035,6 +1035,10 @@ function App() {
         if (tagsMatch && currentCharacter) {
           let tags = tagsMatch[1].trim();
           if (tags && tags !== "()" && tags !== "-") {
+            // [v2.09] Fix Outfit Override Hallucination: Strip outfit tags if custom outfit is specified
+            if (customOutfit.trim() && (line.includes('服装') || line.includes('Outfit'))) {
+              continue;
+            }
             cleanCastData += tags + ", ";
           }
         }
