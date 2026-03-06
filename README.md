@@ -194,6 +194,7 @@ Any commercial or educational use involving fees requires explicit prior written
 
 ## 📝 ChangeLog
 
+* **v2.10 Alpha**: AI画像生成時、ロゴが縦横に重複して描画される問題および英字タイポを抑制・修正するため、ウォーターマーク生成プロンプトを調整。
 * **v2.09 Alpha**: 指定服装（Outfit Override）利用時に、キャラクターの基本設定（制服など）のタグがプロンプトに混入し、衣装のハルシネーション（バグ）を引き起こす問題を修正。
 * **v2.08 Alpha**: API基盤の近代化（gemini-1.5系の廃止とgemini-2.5/2.0-pro系への移行）、Neural Processの完全日本語実況化、画像生成およびシナリオ構築時の品質プロンプト（システム辞書パラメータ・同一性保持・日本語SFX制約）強制適用化。
 * **v2.07 Alpha**: Grounding不具合（400エラー）時の自動ツールオフ機能追加、画像生成エラー時の詳細日本語ダイアログ表示、各種UI微調整。xed a bug where multiple image analysis would revert to fallback models and fail to process multiple characters due to strict safety settings acting up during `googleSearch` compatibility retry failovers.
