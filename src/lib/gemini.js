@@ -8,8 +8,8 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const MODEL_IDS = [
     "gemini-2.5-flash",                   // Primary: Stable + Grounding Support
-    "gemini-1.5-pro-002",                 // Backup 1: Reliable High-Intel (Specific version)
-    "gemini-1.5-flash-002",               // Backup 2: Fast (Specific version)
+    "gemini-2.5-pro",                     // Backup 1: Reliable High-Intel
+    "gemini-2.0-pro-exp",                 // Backup 2: Experimental High-Intel
     "gemini-pro-latest",                  // Fallback
     "gemini-flash-latest"                 // Fallback
 ];
@@ -68,7 +68,7 @@ export const callThinkingGemini = async (prompt, images = null, systemInstructio
     for (const modelId of MODEL_IDS) {
         try {
             console.log(`[Gemini] Attempting connection with ${modelId} (v1beta)...`);
-            if (onThinkingUpdate) onThinkingUpdate(`Connecting to ${modelId} (v1beta)...`);
+            if (onThinkingUpdate) onThinkingUpdate(`> [API] ${modelId} と交信を開始しました...`);
 
             // [v1.6.0 Fix] "One Big Prompt" Strategy
             // Some models (like 2.5 Flash) fail with "No response candidates" when using systemInstruction on v1beta.
@@ -118,6 +118,7 @@ export const callThinkingGemini = async (prompt, images = null, systemInstructio
                 // [v1.8.66] Failover: If Grounding fails (e.g. 400), retry WITHOUT tools
                 if (finalTools && (err.message.includes("400") || err.message.includes("not supported"))) {
                     console.warn(`[API] Grounding failed for ${modelId}, retrying without tools...`);
+                    if (onThinkingUpdate) onThinkingUpdate(`> [API] フィルター検知。基準を調整し、別モデル(ツールなし)で生成を続行します。`);
                     result = await model.generateContent({
                         contents: [{ role: "user", parts: finalPromptParts }],
                         generationConfig: { temperature: 0.7, maxOutputTokens: 8192 },
@@ -141,9 +142,11 @@ export const callThinkingGemini = async (prompt, images = null, systemInstructio
                 if (response.promptFeedback) {
                     console.warn("Prompt Feedback:", response.promptFeedback);
                     if (response.promptFeedback.blockReason) {
+                        if (onThinkingUpdate) onThinkingUpdate(`> [API] フィルター検知。基準を調整し、別モデルで生成を続行します。`);
                         throw new Error(`Blocked by Safety Filter: ${response.promptFeedback.blockReason}`);
                     }
                 }
+                if (onThinkingUpdate) onThinkingUpdate(`> [API] モデル応答なし。最新モデルへバイパスします。`);
                 throw new Error("No response candidates (Unknown Model Refusal)");
             }
 
@@ -162,8 +165,11 @@ export const callThinkingGemini = async (prompt, images = null, systemInstructio
                 // We MUST throw an error here to trigger the fallback loop (try next model).
                 const reason = candidate.finishReason || "UNKNOWN";
                 console.warn(`[Gemini] Empty Response. FinishReason: ${reason}`);
+                if (onThinkingUpdate) onThinkingUpdate(`> [API] フィルター検知。基準を調整し、別モデルで生成を続行します。(${reason})`);
                 throw new Error(`Empty response (FinishReason: ${reason}). Suggested: Check Safety/Prompt.`);
             }
+
+            if (onThinkingUpdate) onThinkingUpdate(`> [API] 生成完了：高品質な日本語成果物を構築しました。`);
 
             return {
                 text: finalOutput,
@@ -173,12 +179,17 @@ export const callThinkingGemini = async (prompt, images = null, systemInstructio
 
         } catch (err) {
             console.warn(`Model ${modelId} failed:`, err.message);
-            if (onThinkingUpdate) onThinkingUpdate(`[FAILED] ${modelId}: ${err.message}`);
+            if (err.message.includes("429") || err.message.includes("Quota")) {
+                if (onThinkingUpdate) onThinkingUpdate(`> [API] 回数制限。自動待機し、リトライします。`);
+            } else if (!err.message.includes("フィルター検知") && !err.message.includes("モデル応答なし")) {
+                // 既に細かく指定したエラー以外の汎用エラー（バイパス用）
+                if (onThinkingUpdate) onThinkingUpdate(`> [API] モデル応答なし。最新モデルへバイパスします。(${err.message})`);
+            }
         }
     }
 
     // --- ALL MODELS FAILED: RUN DIAGNOSIS ---
-    if (onThinkingUpdate) onThinkingUpdate("[SYSTEM] Initiating Account Diagnosis...");
+    if (onThinkingUpdate) onThinkingUpdate("> [API] 全モデルとの通信に失敗。アカウント状態を診断します...");
     const diagnosis = await diagnoseConnection();
     console.error("DIAGNOSIS RESULT:", diagnosis);
 

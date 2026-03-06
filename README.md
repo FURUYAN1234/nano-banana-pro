@@ -194,7 +194,8 @@ Any commercial or educational use involving fees requires explicit prior written
 
 ## 📝 ChangeLog
 
-* **v2.07 Alpha**: Fixed a bug where multiple image analysis would revert to fallback models and fail to process multiple characters due to strict safety settings acting up during `googleSearch` compatibility retry failovers.
+* **v2.08 Alpha**: API基盤の近代化（gemini-1.5系の廃止とgemini-2.5/2.0-pro系への移行）、Neural Processの完全日本語実況化、画像生成およびシナリオ構築時の品質プロンプト（システム辞書パラメータ・同一性保持・日本語SFX制約）強制適用化。
+* **v2.07 Alpha**: Grounding不具合（400エラー）時の自動ツールオフ機能追加、画像生成エラー時の詳細日本語ダイアログ表示、各種UI微調整。xed a bug where multiple image analysis would revert to fallback models and fail to process multiple characters due to strict safety settings acting up during `googleSearch` compatibility retry failovers.
 
 ---
 

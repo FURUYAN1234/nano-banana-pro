@@ -31,7 +31,7 @@ import {
 import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 
-const SYSTEM_VERSION = "v2.07 Alpha";
+const SYSTEM_VERSION = "v2.08 Alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -645,8 +645,10 @@ function App() {
         3. **オチと構図の多様化 (Variety Constraints)**:
            - **必須**: 「手前に大きく顔があるキャラ」「奥で小さく驚くキャラ」など、**遠近感**を強調せよ。棒立ちは厳禁。
            - **オチ**: 「全員泣いて終わり」等のワンパターンを禁止。シュールな静寂、無言の圧力、社会的死など多様にせよ。
-           
-        3. **4コマ目の演出**:
+           - **【表現・SFXルール】**: 擬音（SFX）は「日本語のみ」を使用せよ。英語の注釈、翻訳、アルファベット併記は一切禁止する。
+           - 演出において、パロディや時事ネタの文脈での固有名詞登場は「表現の結果」として許容する。
+
+        4. **4コマ目の演出**:
            - 必ずしもデフォルメ（SD）にする必要はない。ネタがシリアスなら、**劇画調のリアルな絶望顔**で落としても良い。ネタに合わせてスタイルを適応させよ。
 
         【出力フォーマット（絶対厳守・会話禁止）】
@@ -1073,10 +1075,18 @@ If an image is attached, you MUST reproduce the character designs from the attac
 Important Character Cast:
 ${VAR_CAST_LIST}
 ${customOutfit.trim() ? `All characters are wearing: ${customOutfit.trim()}.` : ''}
+【Character Identity Anchor】: Ensure absolute consistency of character appearance (hair, eyes, defining features) across all panels.
 
 Camera and Composition Rules:
 ${dynamicCamera}
 CRITICAL ANTI-CLONING RULE: NEVER draw the exact same character twice inside a single panel. A character can only appear ONCE per panel.
+CRITICAL COMPOSITION RATIO: Always maintain a strict 2:3 (Manga typical vertical/portrait) golden ratio structure within each panel setup. Do not deform the composition.
+
+Technical Quality Definitions (System Dictionary):
+(Meticulously clean line art: 1.5)
+(Subtle sub-surface scattering and backlighting: 1.4)
+(Cinematic depth of field with bokeh: 1.3)
+(Japanese SFX only: 1.5)
 
 
 ## Panel 1 (Top)
