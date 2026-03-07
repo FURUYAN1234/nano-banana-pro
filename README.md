@@ -194,6 +194,7 @@ Any commercial or educational use involving fees requires explicit prior written
 
 ## 📝 ChangeLog
 
+* **v2.11 Alpha**: 文字レンダリング精度向上のため、ウォーターマークのプロンプト構文を厳格化（余計な指示文字の混入防止）し、吹き出しテキストにフォント（bold sans-serif Japanese font）を明示的に指定。
 * **v2.10 Alpha**: AI画像生成時、ロゴが縦横に重複して描画される問題および英字タイポを抑制・修正するため、ウォーターマーク生成プロンプトを調整。
 * **v2.09 Alpha**: 指定服装（Outfit Override）利用時に、キャラクターの基本設定（制服など）のタグがプロンプトに混入し、衣装のハルシネーション（バグ）を引き起こす問題を修正。
 * **v2.08 Alpha**: API基盤の近代化（gemini-1.5系の廃止とgemini-2.5/2.0-pro系への移行）、Neural Processの完全日本語実況化、画像生成およびシナリオ構築時の品質プロンプト（システム辞書パラメータ・同一性保持・日本語SFX制約）強制適用化。
