@@ -31,7 +31,7 @@ import {
 import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 
-const SYSTEM_VERSION = "v2.11 Alpha";
+const SYSTEM_VERSION = "v2.16 Alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -635,6 +635,8 @@ function App() {
          1. **「原則: 語るな、見せろ」 (Show, Don't Tell... but Explain Briefly)**:
             - 絵での表現が最優先。補足説明は許可するが、**「短く、簡潔に」**行え。
             - 長文の自分語りや、説明調のセリフは厳禁。読者の読む気を削ぐな。
+            - **【最重要】ト書き（状況の説明）には、そのコマで「フキダシを発する」主役キャラクター（最大2名）の動作のみを記述し、それ以外のキャラクター（背後の登場人物など）は一切描写するな。"周りの4人も驚く"のような集団の描写も厳禁。**
+            - **【超重要】汗マークや怒りマークなどの「漫符」を描写する場合、文字ラベル（例: "POPPING VEIN", "LARGE SWEAT DROP"など）や設定資料に書かれるような矢印・注釈テキストを画面内に絶対に描画させないこと。純粋な視覚的シンボルのみを使用し、一切の英単語ラベルを排除せよ。**
  
          2. **テキストの量的制限 (Compact Text Quantity)**:
             - **厳守**: 1コマあたりのフキダシは**「最大2つまで」**。
@@ -804,7 +806,7 @@ function App() {
     CRITICAL COMPOSITION & GAG MANGA RULES:
     1. Do NOT draw characters just standing neutrally or looking directly at the camera. They MUST interact with each other.
     2. Always use dynamic and extreme camera angles: worm's-eye view, bird's-eye view, or tilted dutch angles. Use extreme perspective distortion (fisheye or ultra-wide lens) for dramatic effect. Avoid flat, boring shots.
-    3. [GAG VFX]: Use comic visual effects, but DO NOT over-use speedlines (action lines) unless it is a high-action scene. Add giant anime sweat drops, popping veins, or abstract backgrounds for punchlines/reactions. 
+    3. [GAG VFX]: Use comic visual effects for punchlines/reactions. Strictly DO NOT write any text labels like "sweat drops" or "popping veins" using the alphabet.
     4. [EXAGGERATED EMOTIONS]: FORCE extreme, comical, and highly exaggerated facial expressions! Do NOT draw neutral or slightly smiling faces. Exaggerate expressions (blank white eyes, jaw-dropping shock, intense fury, crying waterfalls) while strictly maintaining top-tier, beautiful anime art quality.
     5. [BODY ACTING]: Characters must physically react with their entire bodies (throwing arms up, falling, etc.). Exaggerate their gestures to the absolute limit. Do NOT over-use the "adjusting glasses" pose unless the character is explicitly wearing glasses.
     `;
@@ -952,7 +954,7 @@ function App() {
         dialogLines.forEach(line => {
           const match = line.match(/^(.*?)(?:[:：]|「)/);
           if (match && match[1].trim()) {
-            let speaker = match[1].replace(/^(SFX|効果音|BGM|Action|\(.*?\))/gi, '').replace(/^[【\[（(]/, '').replace(/[】\]）)]$/, '').trim();
+            let speaker = match[1].replace(/^(SFX|効果音|BGM|Action|状況|\(.*?\))/gi, '').replace(/^[【\[（(]/, '').replace(/[】\]）)]$/, '').trim();
             if (speaker && !speakers.includes(speaker)) {
               speakers.push(speaker);
             }
@@ -966,54 +968,48 @@ function App() {
         return `CRITICAL PLACEMENT: Follow the natural dialogue flow.`;
       };
 
-      // [v2.05] Anti-Cloning Constraint: Dynamically detect registered cast + potential unregistered speakers
       const extractCastLimitRule = (fullPanelText) => {
-        const charsInPanel = new Set();
-        const unregSpeakers = new Set();
         const lines = fullPanelText.split('\n');
 
-        // Find valid cast names
+        // Find valid cast names and create a lookup for full character objects
         const validCharacters = [];
+        const charLookup = {};
         castList.split('\n').forEach(cLine => {
           const m = cLine.replace(/\*\*/g, '').trim().match(/^##\s*(?:\d+\.\s*)?(.*)/);
           if (m) {
-            const nameOnly = m[1].trim().split('(')[0].trim().split('（')[0].trim();
-            if (nameOnly) validCharacters.push(nameOnly);
-          }
-        });
-
-        // Scan panel text for mentions of valid cast and unregistered speakers
-        lines.forEach(line => {
-          validCharacters.forEach(c => {
-            if (line.includes(c)) charsInPanel.add(c);
-          });
-
-          // Detect informal speakers like モブ, 客, 先生 that aren't in cast
-          const match = line.match(/^(.*?)(?:[:：]|「)/);
-          if (match && match[1].trim()) {
-            let speaker = match[1].replace(/^(SFX|効果音|BGM|Action|\(.*?\))/gi, '').replace(/^[【\[（(]/, '').replace(/[】\]）)]$/, '').trim();
-            if (speaker && !validCharacters.some(c => speaker.includes(c))) {
-              // Only add obvious people indicators to prevent adding context actions
-              if (speaker.match(/(モブ|客|店員|生徒|先生|群集|人々|男|女|子供|老人)/)) {
-                unregSpeakers.add(speaker);
-              }
+            const fullCharName = m[1].trim();
+            const nameOnly = fullCharName.split('(')[0].trim().split('（')[0].trim();
+            if (nameOnly) {
+              validCharacters.push(nameOnly);
+              charLookup[nameOnly] = { name: nameOnly, full: fullCharName };
             }
           }
         });
 
-        const charsArray = Array.from(charsInPanel);
-        const unregArray = Array.from(unregSpeakers);
+        // Extract speakers from the panel text for explicit placement
+        const speakers = [];
+        lines.forEach(line => {
+          const match = line.match(/^(.*?)(?:[:：]|「)/);
+          if (match && match[1].trim()) {
+            let speaker = match[1].replace(/^(SFX|効果音|BGM|Action|状況|\(.*?\))/gi, '').replace(/^[【\[（(]/, '').replace(/[】\]）)]$/, '').trim();
+            if (speaker && !speakers.includes(speaker) && validCharacters.includes(speaker)) {
+              speakers.push(speaker);
+            }
+          }
+        });
 
-        if (charsArray.length === 0 && unregArray.length === 0) return "";
+        // Define the actors for this panel only based on speakers for left/right
+        const rightActor = speakers.length > 0 ? speakers[0] : null;
+        const leftActor = speakers.length > 1 ? speakers[1] : null;
 
-        const allNames = [...charsArray.map(c => `[${c}]`), ...unregArray];
-        const formattedNames = allNames.join(' and ');
+        const panelActors = [];
+        if (rightActor) panelActors.push(`[${rightActor}]`);
+        if (leftActor) panelActors.push(`[${leftActor}]`);
 
-        // Relaxed rule: allow unregistered characters if detected, otherwise lock to registered format
-        if (unregArray.length > 0) {
-          return `CRITICAL CAST LIMIT: Draw exactly ${allNames.length} distinct people in focus: ${formattedNames}. Ensure no character is cloned.`;
+        if (panelActors.length > 0) {
+          return `CRITICAL CAST PLACEMENT: Ensure ${panelActors.join(' and ')} are the main focus. Other characters and background logic CAN exist in the scene. NEVER draw the exact same character twice.`;
         } else {
-          return `CRITICAL CAST LIMIT: ONLY draw ${formattedNames} in this panel. Do NOT draw any extra background characters unless strictly necessary for the setting. The main cast in this panel MUST be exactly ${charsArray.length} people. NEVER draw the exact same character twice.`;
+          return `CRITICAL CAST PLACEMENT: Follow the panel's action naturally. Other characters CAN exist in the scene. NEVER draw the exact same character twice.`;
         }
       };
 
@@ -1090,7 +1086,8 @@ Technical Quality Definitions (System Dictionary):
 (Meticulously clean line art: 1.5)
 (Subtle sub-surface scattering and backlighting: 1.4)
 (Cinematic depth of field with bokeh: 1.3)
-(Japanese SFX only: 1.5)
+(NO text or SFX outside of speech bubbles: 1.5)
+(ABSOLUTELY NO ENGLISH TEXT outside watermark. Do NOT draw terms like 'G-pen', 'Gleam', 'HA': 2.0)
 
 
 ## Panel 1 (Top)
