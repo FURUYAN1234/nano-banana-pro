@@ -31,7 +31,7 @@ import {
 import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 
-const SYSTEM_VERSION = "v2.18 Alpha";
+const SYSTEM_VERSION = "v2.19 Alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -947,6 +947,12 @@ function App() {
         return actionStr;
       };
 
+      // [v2.19] 案3: 各パネルに服装リマインドを自動注入（OUTFIT OVERRIDE設定時のみ）
+      const injectOutfitReminder = (actionText) => {
+        if (!customOutfit.trim()) return actionText;
+        return `(All characters are wearing ${customOutfit.trim()}) ${actionText}`;
+      };
+
       const extractPlacementRule = (fullPanelText) => {
         const lines = fullPanelText.split('\n');
         const dialogLines = lines.filter(line => line.includes('：') || line.includes(':') || line.includes('「'));
@@ -1077,6 +1083,11 @@ If an image is attached, you MUST reproduce the character designs from the attac
 - DO NOT change any character's hair color, hair length, or hairstyle between panels or from the reference.
 - DO NOT swap features between characters (e.g., giving Character A's hair color to Character B).
 - If a character has a unique charm point (mole, scar, freckles, snaggletooth), it MUST appear in EVERY panel.
+${customOutfit.trim() ? `
+REFERENCE IMAGE CLOTHING POLICY (CRITICAL):
+- The attached reference image must ONLY be used for: face shape, hairstyle, hair color, eye color, eye shape, skin tone, and accessories (glasses, hair clips, etc.).
+- COMPLETELY IGNORE the clothing/outfit shown in the reference image.
+- For clothing, follow ONLY the OUTFIT OVERRIDE instruction below. The reference image's clothing is IRRELEVANT.` : ''}
 
 Important Character Cast:
 ${VAR_CAST_LIST}
@@ -1100,28 +1111,28 @@ Technical Quality Definitions (System Dictionary):
 Camera: ${getRandomAngle()} (Ensure camera is NOT flat eye-level).
 ${extractPlacementRule(panel1Text)}
 ${extractCastLimitRule(panel1Text)}
-Visual Action (Do NOT write this as text on the canvas, draw it visually): ${extractActionOnly(panel1Text, extractPlacementRule(panel1Text))}.
+Visual Action (Do NOT write this as text on the canvas, draw it visually): ${injectOutfitReminder(extractActionOnly(panel1Text, extractPlacementRule(panel1Text)))}.
 Dialogue (ONLY write this inside speech bubbles): ${extractDialogueOnly(panel1Text)}.
 
 ## Panel 2
 Camera: ${getRandomAngle()} (Ensure camera is NOT flat eye-level).
 ${extractPlacementRule(panel2Text)}
 ${extractCastLimitRule(panel2Text)}
-Visual Action (Do NOT write this as text on the canvas, draw it visually): ${extractActionOnly(panel2Text, extractPlacementRule(panel2Text))}.
+Visual Action (Do NOT write this as text on the canvas, draw it visually): ${injectOutfitReminder(extractActionOnly(panel2Text, extractPlacementRule(panel2Text)))}.
 Dialogue (ONLY write this inside speech bubbles): ${extractDialogueOnly(panel2Text)}.
 
 ## Panel 3
 Camera: ${getRandomAngle()} (Ensure camera is NOT flat eye-level).
 ${extractPlacementRule(panel3Text)}
 ${extractCastLimitRule(panel3Text)}
-Visual Action (Do NOT write this as text on the canvas, draw it visually): ${extractActionOnly(panel3Text, extractPlacementRule(panel3Text))}.
+Visual Action (Do NOT write this as text on the canvas, draw it visually): ${injectOutfitReminder(extractActionOnly(panel3Text, extractPlacementRule(panel3Text)))}.
 Dialogue (ONLY write this inside speech bubbles): ${extractDialogueOnly(panel3Text)}.
 
 ## Panel 4 (Bottom)
 Camera: ${getRandomAngle()} (Ensure camera is NOT flat eye-level).
 ${extractPlacementRule(panel4Text)}
 ${extractCastLimitRule(panel4Text)}
-Visual Action (Do NOT write this as text on the canvas, draw it visually): ${extractActionOnly(panel4Text, extractPlacementRule(panel4Text))}.
+Visual Action (Do NOT write this as text on the canvas, draw it visually): ${injectOutfitReminder(extractActionOnly(panel4Text, extractPlacementRule(panel4Text)))}.
 Dialogue (ONLY write this inside speech bubbles): ${extractDialogueOnly(panel4Text)}.
 
 Important constraints:
