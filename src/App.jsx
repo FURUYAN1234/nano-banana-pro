@@ -31,7 +31,7 @@ import {
 import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 
-const SYSTEM_VERSION = "v2.16 Alpha";
+const SYSTEM_VERSION = "v2.18 Alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -1069,13 +1069,19 @@ The art style is: ${styleCore}.
 
 Overall Setting: ${safeLocation}.
 
-CRITICAL VISUAL REPRODUCTION PROTOCOL:
-If an image is attached, you MUST reproduce the character designs from the attached reference image with 100% absolute fidelity. You MUST strictly confirm and maintain every detail: exact hairstyle, hair color, and the presence or absence of glasses for every character in every panel.
+CRITICAL VISUAL REPRODUCTION PROTOCOL (v2.17 Enhanced):
+If an image is attached, you MUST reproduce the character designs from the attached reference image by strictly following these rules:
+- REPRODUCE the EXACT hairstyle (length, style, bangs), hair color, eye color, eye shape, and skin tone for each character in every panel.
+- REPRODUCE the EXACT presence or absence of accessories: glasses, hair clips, ribbons, earrings, hats, etc.
+- DO NOT add glasses to any character who does not wear them in the reference. DO NOT remove glasses from any character who DOES wear them.
+- DO NOT change any character's hair color, hair length, or hairstyle between panels or from the reference.
+- DO NOT swap features between characters (e.g., giving Character A's hair color to Character B).
+- If a character has a unique charm point (mole, scar, freckles, snaggletooth), it MUST appear in EVERY panel.
 
 Important Character Cast:
 ${VAR_CAST_LIST}
-${customOutfit.trim() ? `All characters are wearing: ${customOutfit.trim()}.` : ''}
-【Character Identity Anchor】: Ensure absolute consistency of character appearance (hair, eyes, defining features) across all panels.
+${customOutfit.trim() ? `OUTFIT OVERRIDE (Mandatory): All characters MUST be wearing the following outfit, overriding their default clothing: ${customOutfit.trim()}. If weighted tags are provided (e.g. "(swimsuit:1.5)"), apply them directly. Strictly follow this outfit specification.` : ''}
+【Character Identity Anchor (v2.17)】: Before drawing each panel, mentally confirm: "Does this character's hair color, hairstyle, eye color, glasses status, and outfit match the reference and previous panels?" If ANY detail differs, redraw it. Cross-panel consistency is MANDATORY.
 
 Camera and Composition Rules:
 ${dynamicCamera}

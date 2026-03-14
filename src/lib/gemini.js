@@ -9,9 +9,9 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 const MODEL_IDS = [
     "gemini-2.5-flash",                   // Primary: Stable + Grounding Support
     "gemini-2.5-pro",                     // Backup 1: Reliable High-Intel
-    "gemini-2.0-pro-exp",                 // Backup 2: Experimental High-Intel
-    "gemini-pro-latest",                  // Fallback
-    "gemini-flash-latest"                 // Fallback
+    "gemini-2.0-flash",                   // Backup 2: Stable GA (replaced gemini-2.0-pro-exp)
+    "gemini-2.5-flash-lite",              // Fallback 1: Lightweight (replaced gemini-pro-latest)
+    "gemini-2.0-flash-lite"               // Fallback 2: Lightweight (replaced gemini-flash-latest)
 ];
 
 // Store API key in memory ONLY (Security Requirement: No persistence)

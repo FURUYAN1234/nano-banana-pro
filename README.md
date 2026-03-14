@@ -194,6 +194,8 @@ Any commercial or educational use involving fees requires explicit prior written
 
 ## 📝 ChangeLog
 
+* **v2.18 Alpha**: APIモデル構成の最適化。テキスト生成のフォールバックチェーンから廃止リスクのあるモデル（`gemini-2.0-pro-exp`, `gemini-pro-latest`, `gemini-flash-latest`）を除去し、安定GA版（`gemini-2.0-flash`, `gemini-2.5-flash-lite`, `gemini-2.0-flash-lite`）に置換。画像生成チェーンからImagen 2レガシー（`image-generation-001`）を削除。
+* **v2.17 Alpha**: キャラクター忠実度の大幅改良。VISUAL REPRODUCTION PROTOCOLを具体的な再現指示＋ネガティブ禁止リスト（髪色変更禁止、眼鏡の追加/削除禁止等）に全面置換。Outfit Overrideをweighted tag形式に対応。Character Identity Anchorをパネル間の自己確認チェックリスト方式に強化。
 * **v2.16 Alpha**: キャスト制限を緩和し、画面の表現力を復元。英語テキストのハルシネーション（G-pen等）に対する禁止制約を強化。
 * **v2.15 Alpha**: AIが画像内のフキダシ外に謎の日本語テキスト（SFXや音喩）をハルシネーションする問題を修正。プロンプト内の `(Japanese SFX only: 1.5)` を削除・置換し、画面上に不要な文字がレンダリングされないよう抑制を強化。
 * **v2.14 Alpha**: プロンプトの論理バグ（`CRITICAL PLACEMENT` と `CRITICAL CAST LIMIT` の人数矛盾）を修正し、メインで発言するキャラクターのみを画面に配置するよう制約を強化。また、グローバルルールに残存していた漫符（popping veins等）の指定を削除し、キャラクターの増殖とテキストのハルシネーションを防止。
