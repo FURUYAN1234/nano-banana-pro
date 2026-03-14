@@ -82,13 +82,13 @@ A "Free Input" mode allows users to generate manga from any text, such as person
 
 本システムの設計思想、**Absolute Physical Geometry Lock**（絶対的物理ジオメトリロック）、**Weighted Immutable Prompts**（重み付き不変プロンプト）などのコア技術、および法的・哲学的な考察を含む詳細な解析レポート（日本語版）です。
 
-* 📄 [詳細ドキュメントを表示する](https://docs.google.com/document/d/1_k8zey6qHriOUSHXNbWlttaKiHXNEcK-23Kk97QU-p0/edit?usp=sharing)
+* 📄 [詳細ドキュメントを表示する](https://drive.google.com/file/d/1YG6S3DW4WtdkeMqLhC2AUQIqf6QgvMkW/view?usp=sharing)
 
 ### 🇺🇸 [EN] Comprehensive Analysis of Autonomous AI Manga System
 
 A detailed analysis report (English version) covering the system's design philosophy, core technologies such as **Absolute Physical Geometry Lock** and **Weighted Immutable Prompts**, and legal/philosophical considerations.
 
-* 📄 [View Detailed Document](https://docs.google.com/document/d/1q5LCR9zSrGFCESeglEJml4IMor17Mx-cOcJMrZWwpys/edit?usp=sharing)
+* 📄 [View Detailed Document](https://drive.google.com/file/d/19DoWhEjmSWa2jb2tXJeyuFNmcbvrq8gT/view?usp=sharing)
 
 ---
 
