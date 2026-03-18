@@ -31,7 +31,7 @@ import {
 import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 
-const SYSTEM_VERSION = "v2.19 Alpha";
+const SYSTEM_VERSION = "v2.20 Alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -1093,6 +1093,7 @@ Important Character Cast:
 ${VAR_CAST_LIST}
 ${customOutfit.trim() ? `OUTFIT OVERRIDE (Mandatory): All characters MUST be wearing the following outfit, overriding their default clothing: ${customOutfit.trim()}. If weighted tags are provided (e.g. "(swimsuit:1.5)"), apply them directly. Strictly follow this outfit specification.` : ''}
 【Character Identity Anchor (v2.17)】: Before drawing each panel, mentally confirm: "Does this character's hair color, hairstyle, eye color, glasses status, and outfit match the reference and previous panels?" If ANY detail differs, redraw it. Cross-panel consistency is MANDATORY.
+CROSS-PANEL OUTFIT CONSISTENCY (MANDATORY): Every character MUST wear the EXACT same outfit in ALL 4 panels. Do NOT change, add, or remove any clothing item between panels. If no outfit override is specified, use the outfit from the character reference sheet and keep it identical across every panel.
 
 Camera and Composition Rules:
 ${dynamicCamera}
