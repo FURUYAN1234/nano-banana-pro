@@ -115,10 +115,12 @@ export const callThinkingGemini = async (prompt, images = null, systemInstructio
                     timeoutPromise
                 ]);
             } catch (err) {
-                // [v1.8.66] Failover: If Grounding fails (e.g. 400), retry WITHOUT tools
-                if (finalTools && (err.message.includes("400") || err.message.includes("not supported"))) {
-                    console.warn(`[API] Grounding failed for ${modelId}, retrying without tools...`);
-                    if (onThinkingUpdate) onThinkingUpdate(`> [API] フィルター検知。基準を調整し、別モデル(ツールなし)で生成を続行します。`);
+                // [v2.20] Failover: If Grounding fails for ANY reason, retry WITHOUT tools
+                // ローカル環境ではCORS/リファラ制限等でgrounding固有のエラーが発生するため、
+                // エラー内容に関わらずツールなしで再試行する
+                if (finalTools.length > 0) {
+                    console.warn(`[API] Grounding failed for ${modelId} (${err.message}), retrying without tools...`);
+                    if (onThinkingUpdate) onThinkingUpdate(`> [API] Grounding失敗。ツールなしで同一モデルを再試行します...`);
                     result = await model.generateContent({
                         contents: [{ role: "user", parts: finalPromptParts }],
                         generationConfig: { temperature: 0.7, maxOutputTokens: 8192 },
