@@ -88,7 +88,7 @@ A "Free Input" mode allows users to generate manga from any text, such as person
 
 A detailed analysis report (English version) covering the system's design philosophy, core technologies such as **Absolute Physical Geometry Lock** and **Weighted Immutable Prompts**, and legal/philosophical considerations.
 
-* 📄 [View Detailed Document](https://drive.google.com/file/d/19DoWhEjmSWa2jb2tXJeyuFNmcbvrq8gT/view?usp=sharing)
+* 📄 [View Detailed Document](https://docs.google.com/document/d/1hOZeV13icbv6R7RLryD2iYpli9n5ujwatC9mi5IYJN8/edit?usp=sharing)
 
 ---
 
@@ -189,23 +189,6 @@ This project uses a hybrid license to balance technology sharing and intellectua
 Usage of this system (including prompts and logic) in high-priced information products, paid seminars, or any "get-rich-quick" schemes is strictly prohibited under the CC BY-NC-SA 4.0 license. 本システム（プロンプトおよびロジックを含む）を、高額な情報商材、有料セミナー、または「副業・稼げる」等の謳い文句を伴うビジネスに無断で使用することは、CC BY-NC-SA 4.0ライセンスに基づき、固く禁じます。
 
 Any commercial or educational use involving fees requires explicit prior written consent from the developer (FURU). 有料の教育目的や商用利用を検討される場合は、必ず事前に開発者（FURU）の書面による承諾を得てください。
-
----
-
-## 📝 ChangeLog
-
-* **v2.18 Alpha**: APIモデル構成の最適化。テキスト生成のフォールバックチェーンから廃止リスクのあるモデル（`gemini-2.0-pro-exp`, `gemini-pro-latest`, `gemini-flash-latest`）を除去し、安定GA版（`gemini-2.0-flash`, `gemini-2.5-flash-lite`, `gemini-2.0-flash-lite`）に置換。画像生成チェーンからImagen 2レガシー（`image-generation-001`）を削除。
-* **v2.17 Alpha**: キャラクター忠実度の大幅改良。VISUAL REPRODUCTION PROTOCOLを具体的な再現指示＋ネガティブ禁止リスト（髪色変更禁止、眼鏡の追加/削除禁止等）に全面置換。Outfit Overrideをweighted tag形式に対応。Character Identity Anchorをパネル間の自己確認チェックリスト方式に強化。
-* **v2.16 Alpha**: キャスト制限を緩和し、画面の表現力を復元。英語テキストのハルシネーション（G-pen等）に対する禁止制約を強化。
-* **v2.15 Alpha**: AIが画像内のフキダシ外に謎の日本語テキスト（SFXや音喩）をハルシネーションする問題を修正。プロンプト内の `(Japanese SFX only: 1.5)` を削除・置換し、画面上に不要な文字がレンダリングされないよう抑制を強化。
-* **v2.14 Alpha**: プロンプトの論理バグ（`CRITICAL PLACEMENT` と `CRITICAL CAST LIMIT` の人数矛盾）を修正し、メインで発言するキャラクターのみを画面に配置するよう制約を強化。また、グローバルルールに残存していた漫符（popping veins等）の指定を削除し、キャラクターの増殖とテキストのハルシネーションを防止。
-* **v2.13 Alpha**: キャラクターの汗や怒りマークなどの「漫符」を描写する際、画像生成AIが設定資料の注釈（"POPPING VEIN", "LARGE SWEAT DROP" 等）を画像内にテキストとして描き込んでしまうハルシネーションを完全に抑制するようプロンプトを強化。
-* **v2.12 Alpha**: 4コマ漫画のプロンプト生成時に発生していた、キャラクターの左右配置（「状況」が話者としてパースされるバグ）とセリフ順の矛盾、および不要な大勢のキャラクター描写を修正。
-* **v2.11 Alpha**: 文字レンダリング精度向上のため、ウォーターマークのプロンプト構文を厳格化（余計な指示文字の混入防止）し、吹き出しテキストにフォント（bold sans-serif Japanese font）を明示的に指定。
-* **v2.10 Alpha**: AI画像生成時、ロゴが縦横に重複して描画される問題および英字タイポを抑制・修正するため、ウォーターマーク生成プロンプトを調整。
-* **v2.09 Alpha**: 指定服装（Outfit Override）利用時に、キャラクターの基本設定（制服など）のタグがプロンプトに混入し、衣装のハルシネーション（バグ）を引き起こす問題を修正。
-* **v2.08 Alpha**: API基盤の近代化（gemini-1.5系の廃止とgemini-2.5/2.0-pro系への移行）、Neural Processの完全日本語実況化、画像生成およびシナリオ構築時の品質プロンプト（システム辞書パラメータ・同一性保持・日本語SFX制約）強制適用化。
-* **v2.07 Alpha**: Grounding不具合（400エラー）時の自動ツールオフ機能追加、画像生成エラー時の詳細日本語ダイアログ表示、各種UI微調整。xed a bug where multiple image analysis would revert to fallback models and fail to process multiple characters due to strict safety settings acting up during `googleSearch` compatibility retry failovers.
 
 ---
 
