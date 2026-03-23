@@ -31,7 +31,7 @@ import {
 import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 
-const SYSTEM_VERSION = "v2.21 Alpha";
+const SYSTEM_VERSION = "v2.22 Alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -855,7 +855,14 @@ function App() {
         const validCharacters = [];
         castList.split('\n').forEach(cLine => {
           const m = cLine.replace(/\*\*/g, '').trim().match(/^##\s*(?:\d+\.\s*)?(.*)/);
-          if (m) validCharacters.push(m[1].trim());
+          if (m) {
+            const fullName = m[1].trim();
+            validCharacters.push(fullName);
+            const jpName = fullName.split(/[\(]/)[0].trim();
+            if (jpName && jpName !== fullName) validCharacters.push(jpName);
+            const romajiMatch = fullName.match(/[\(]\s*(.*?)\s*[\)]/);
+            if (romajiMatch) validCharacters.push(romajiMatch[1].trim());
+          }
         });
 
         const formattedBubbles = [];
@@ -897,8 +904,24 @@ function App() {
           }
         });
 
+        // [v2.22] フォールバック: キャラ名マッチに失敗しても、カギ括弧「」で囲まれたテキストがあればセリフとして抽出
         if (formattedBubbles.length === 0) {
-          return "(No speech bubble) (CRITICAL: Do NOT draw any speech bubbles or text. Emphasize character facial expressions, body language, and environmental atmosphere instead.)";
+          const bracketDialogues = fullPanelText.match(/「([^」]+)」/g);
+          if (bracketDialogues && bracketDialogues.length > 0) {
+            bracketDialogues.forEach(bd => {
+              let dialogueText = bd.replace(/^「/, '').replace(/」$/, '').trim();
+              dialogueText = dialogueText.replace(/（.*?）|\(.*?\)/g, '').trim();
+              if (dialogueText) {
+                formattedBubbles.push(`(Speech Bubble ${bubbleCount}: "${dialogueText}")`);
+                bubbleCount++;
+              }
+            });
+          }
+        }
+
+        // [v2.22] 「吹き出し描くな」指示を廃止。セリフが無い場合でも描画を阻害しない
+        if (formattedBubbles.length === 0) {
+          return "(Characters interact without dialogue in this panel)";
         }
         return formattedBubbles.join(', ');
       };
@@ -909,7 +932,14 @@ function App() {
         const validCharacters = [];
         castList.split('\n').forEach(cLine => {
           const m = cLine.replace(/\*\*/g, '').trim().match(/^##\s*(?:\d+\.\s*)?(.*)/);
-          if (m) validCharacters.push(m[1].trim());
+          if (m) {
+            const fullName = m[1].trim();
+            validCharacters.push(fullName);
+            const jpName = fullName.split(/[\(]/)[0].trim();
+            if (jpName && jpName !== fullName) validCharacters.push(jpName);
+            const romajiMatch = fullName.match(/[\(]\s*(.*?)\s*[\)]/);
+            if (romajiMatch) validCharacters.push(romajiMatch[1].trim());
+          }
         });
 
         const actionLines = lines.filter(line => {
