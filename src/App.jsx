@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 
 // CANARY TEST
-console.log("HELLO_USER_FIXED_VERSION_1_8_36");
+console.log("HELLO_USER_FIXED_VERSION_2_25");
 
 import {
   Camera,
@@ -31,7 +31,7 @@ import {
 import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 
-const SYSTEM_VERSION = "v2.24 Alpha";
+const SYSTEM_VERSION = "v2.25 Alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -156,7 +156,7 @@ class ErrorBoundary extends React.Component {
     if (this.state.hasError) {
       return (
         <div style={{ padding: 40, background: '#111', color: '#f55', minHeight: '100vh' }}>
-          <h1>⚠️ SYSTEM CRASH (v1.8.47 Alpha)</h1>
+          <h1>⚠️ SYSTEM CRASH ({SYSTEM_VERSION})</h1>
           <pre style={{ background: '#000', padding: 20, whiteSpace: 'pre-wrap' }}>
             {this.state.error?.toString()}
             <br />
@@ -653,6 +653,24 @@ function App() {
         4. **4コマ目の演出**:
            - 必ずしもデフォルメ（SD）にする必要はない。ネタがシリアスなら、**劇画調のリアルな絶望顔**で落としても良い。ネタに合わせてスタイルを適応させよ。
 
+        5. **【感情絵柄タグ (Emotion Style Tag)】**:
+           - 各コマの冒頭に、そのコマの演出に最適な[EMOTION: XXX]タグを**必ず1つ**付与せよ。
+           - 選択肢（この中から選べ）:
+             - NORMAL: 通常の美麗アニメ作画。日常会話、穏やかなシーン。
+             - CHIBI_GAG: ちびキャラ化。ツッコミ、呆れ、軽いギャグ、恥ずかしさ。等身が2-3頭身に縮む。
+             - GEKIGA: 劇画調リアル。本気の怒り、覚悟、緊張、シリアスな決意。影が濃くなり顔が鋭くなる。
+             - SHOUJO: 少女漫画風キラキラ。感動、喜び、恋愛的ときめき。花びらや星が舞う。
+             - HORROR: ホラー演出。恐怖、ゾッとする瞬間。暗い影とコントラスト。
+             - BLANK: 白目・魂抜け。衝撃、絶望、思考停止。目が点になる。
+             - IMPACT: インパクトフレーム。大爆笑、大激怒、驚天動地。集中線で画面が爆発。
+             - WATERCOLOR: 水彩画風。ノスタルジック、回想シーン。
+             - SKETCH: ラフスケッチ風。混乱、パニック。
+             - RETRO: レトロ漫画風。昭和テイスト、コミカル。
+             - GLITTER: キラキラオーラ。自信満々、ドヤ顔、勝利宣言。
+             - SHADOW: シルエット演出。策略、不穏、腹黒。
+           - 【重要】毎回同じタグを繰り返すな。4コマの中で少なくとも2種類以上のタグを使い分けよ。
+           - オチのコマ（4コマ目）は特に、NORMAL以外のタグを優先的に選べ。
+
         【出力フォーマット（絶対厳守・会話禁止）】
         返答、挨拶、説明（「分かりました」「以下がシナリオです」等）は **一切出力しないこと**。
         以下の独自フォーマット **のみ** を出力してください。Markdownのコードブロックも不要です。
@@ -661,15 +679,19 @@ function App() {
         Location: [${customLocation.trim() ? "必ず『" + customLocation.trim() + "』にせよ" : "ニュースの内容に即した舞台（例: 砂漠、法廷、宇宙）。※教室は禁止"}]
         Scenario:
         [1コマ目: 起]
+        [EMOTION: XXX]
         (状況とセリフ...)
 
         [2コマ目: 承]
+        [EMOTION: XXX]
         (状況とセリフ...)
 
         [3コマ目: 転]
+        [EMOTION: XXX]
         (状況とセリフ...)
 
         [4コマ目: 結]
+        [EMOTION: XXX]
         (状況とセリフ...)
 
         シナリオ本文の要件:
@@ -801,6 +823,170 @@ function App() {
       const styleCore = isMonochrome
         ? "Draw in a traditional Japanese black and white manga style using G-pen ink lines, screentones, and manual hatching. The artwork should have high-contrast black and white shading without any color, similar to a professionally published comic."
         : "Draw in a high-budget, vibrant full-color TV anime style. The characters should have delicate and detailed anime features with beautiful eyes, cinematic lighting, and sharp clean ink contours. Ensure the artwork looks like an official Japanese animation illustration.";
+
+      // [v2.25] 感情連動スタイル定義 - 固有名詞ゼロ (Trademark Sanitization準拠)
+      const EMOTION_STYLES = {
+        NORMAL: {
+          style: '',
+          proportions: '',
+          vfx: '',
+        },
+        CHIBI_GAG: {
+          style: 'In THIS PANEL ONLY, draw ALL characters in a super-deformed chibi style with 2-3 head-to-body proportions. Use simplified round faces, dot-like eyes, and exaggerated tiny limbs. The art style shifts to a cute comedic register.',
+          proportions: 'OVERRIDE: Use 2-3 head proportions for this panel ONLY. The 6-7 head lock is SUSPENDED.',
+          vfx: '(Exaggerated sweat drops:1.3), (popping veins:1.2), (comedic steam from head)',
+        },
+        GEKIGA: {
+          style: 'In THIS PANEL ONLY, shift to a mature realistic illustration style with heavy ink shadows, sharp angular facial features, detailed muscle/bone structure visible through skin tension, and dramatic chiaroscuro lighting. Characters look older and more intense.',
+          proportions: 'Use 7-8 head proportions. Characters appear taller and more imposing.',
+          vfx: '(Heavy crosshatching shadows:1.4), (dramatic rim lighting:1.5), (high contrast black and white areas), (intense speed lines in background)',
+        },
+        SHOUJO: {
+          style: 'In THIS PANEL ONLY, shift to a soft romantic illustration style with sparkling highlights in the eyes, delicate thin linework, and dreamy soft-focus backgrounds filled with floating flower petals, sparkles, and light bokeh.',
+          proportions: '',
+          vfx: '(Sparkling star-shaped eye highlights:1.4), (floating cherry blossom petals:1.3), (soft pastel gradient background), (screen tone roses and bubbles)',
+        },
+        HORROR: {
+          style: 'In THIS PANEL ONLY, shift to a dark horror manga style with extreme shadow coverage (70%+ of panel), unsettling off-center composition, and characters lit from below or behind creating sinister silhouettes.',
+          proportions: '',
+          vfx: '(Dark heavy ink shadows covering most of panel:1.5), (dramatic underlighting:1.4), (distorted wide-angle perspective), (character eyes glowing in darkness)',
+        },
+        BLANK: {
+          style: 'In THIS PANEL ONLY, the affected character\'s eyes become completely white/blank dots with no pupils. Their face loses color (becomes pale/grey). A dark shadow or aura surrounds them. Their body is frozen stiff in a rigid pose.',
+          proportions: '',
+          vfx: '(Blank white circular eyes with no pupils:1.5), (desaturated pale skin:1.3), (dark depression aura emanating:1.3), (frozen stiff mannequin-like pose)',
+        },
+        IMPACT: {
+          style: 'In THIS PANEL ONLY, use an explosive impact-frame composition. The main character\'s expression fills 60-80% of the panel. Dramatic radial speed lines burst from the center. Panel borders may appear to crack or shatter from the intensity.',
+          proportions: 'OVERRIDE: Use 2-4 head proportions. Extreme close-up with foreshortening allowed.',
+          vfx: '(Explosive radial speed lines from center:1.5), (screen-filling extreme close-up face:1.4), (cracking panel borders:1.2), (intense dramatic backlight)',
+        },
+        WATERCOLOR: {
+          style: 'In THIS PANEL ONLY, shift to a soft watercolor painting style with blurred edges, transparent color washes, and visible paper texture. The mood is nostalgic and dreamlike.',
+          proportions: '',
+          vfx: '(Soft watercolor washes:1.4), (blurred dreamy edges:1.3), (muted warm sepia tones), (visible paper grain texture)',
+        },
+        SKETCH: {
+          style: 'In THIS PANEL ONLY, shift to a rough pencil sketch style with unfinished scratchy lines, chaotic composition, and multiple motion blur afterimages suggesting confusion or panic.',
+          proportions: '',
+          vfx: '(Rough pencil sketch lines:1.3), (unfinished hatching:1.2), (chaotic overlapping motion trails), (eraser smudge marks)',
+        },
+        RETRO: {
+          style: 'In THIS PANEL ONLY, shift to a 1970s-1980s retro manga style with halftone dot shading, thick bold outlines, limited color palette, and classic exaggerated sweat/shock visual metaphors.',
+          proportions: '',
+          vfx: '(Halftone dot pattern shading:1.4), (thick bold outlines:1.3), (retro limited color palette), (classic manga shock symbols)',
+        },
+        GLITTER: {
+          style: 'In THIS PANEL ONLY, the main character radiates confidence with dramatic backlighting, flowing hair caught in an imaginary wind, sparkle effects around their face, and a confident smirk or triumphant expression.',
+          proportions: '',
+          vfx: '(Dramatic golden backlight aura:1.4), (flowing hair in wind:1.3), (sparkle particle effects around face:1.3), (confident smirk expression)',
+        },
+        SHADOW: {
+          style: 'In THIS PANEL ONLY, the scheming character is rendered mostly in dark silhouette with only their eyes glowing visibly. A menacing dark aura surrounds them. The mood is sinister and calculating.',
+          proportions: '',
+          vfx: '(Character in dark silhouette:1.4), (glowing eyes in darkness:1.5), (dark menacing aura:1.3), (evil subtle smile barely visible)',
+        },
+      };
+
+      // [v2.25] パネルテキストからEMOTIONタグを抽出
+      const extractEmotionStyle = (panelText) => {
+        const match = panelText.match(/\[EMOTION:\s*(NORMAL|CHIBI_GAG|GEKIGA|SHOUJO|HORROR|BLANK|IMPACT|WATERCOLOR|SKETCH|RETRO|GLITTER|SHADOW)\s*\]/i);
+        if (match) {
+          const key = match[1].toUpperCase();
+          if (EMOTION_STYLES[key]) return key;
+        }
+        return 'NORMAL';
+      };
+
+      // [v2.25] パネルの感情スタイル指示を構築
+      const buildEmotionBlock = (panelText) => {
+        const emo = extractEmotionStyle(panelText);
+        if (emo === 'NORMAL') return '';
+        const s = EMOTION_STYLES[emo];
+        let block = `\nART STYLE SHIFT [${emo}]: ${s.style}`;
+        if (s.proportions) block += `\nPROPORTION OVERRIDE: ${s.proportions}`;
+        if (s.vfx) block += `\nVFX: ${s.vfx}`;
+        return block;
+      };
+
+      // [v2.25] キャスト解析結果からIdentity Matrixを自動生成
+      const buildIdentityMatrix = (castListText) => {
+        const characters = [];
+        let currentChar = null;
+
+        castListText.split('\n').forEach(line => {
+          const cleanLine = line.replace(/\*\*/g, '').trim();
+
+          // キャラ名ヘッダー検出
+          if (cleanLine.startsWith('## ')) {
+            if (currentChar) characters.push(currentChar);
+            const name = cleanLine.replace(/^##\s*(?:\d+\.\s*)?/, '').trim();
+            currentChar = {
+              name,
+              shortName: name.split(/[（(]/)[0].trim(),
+              hairColor: '',
+              hairStyle: '',
+              glasses: 'unknown',
+              features: []
+            };
+          }
+
+          if (!currentChar) return;
+
+          // 髪情報の抽出 (WEIGHTS行 + 髪カテゴリ行)
+          if (cleanLine.includes('髪') || cleanLine.toLowerCase().includes('hair')) {
+            const weightsMatch = cleanLine.match(/\[WEIGHTS?\]:\s*(.*?)(?:\||$)/i);
+            if (weightsMatch) {
+              const tags = weightsMatch[1];
+              const colorMatch = tags.match(/(red|orange|blonde|yellow|brown|black|silver|white|blue|pink|green|purple|ginger)\s*hair/i);
+              if (colorMatch) currentChar.hairColor = colorMatch[1];
+              const styleMatch = tags.match(/(bob|long[\s-]?hair|short[\s-]?hair|medium[\s-]?hair|twintails?|twin\s*tails?|ponytail|bun|braid|pixie|buzz)/i);
+              if (styleMatch) currentChar.hairStyle = styleMatch[1];
+            }
+          }
+
+          // 眼鏡情報の抽出
+          if (cleanLine.includes('眼鏡') || cleanLine.toLowerCase().includes('eyewear') || cleanLine.toLowerCase().includes('glasses')) {
+            if (cleanLine.includes('no glasses') || cleanLine.includes('眼鏡無し') || cleanLine.includes('なし') || cleanLine.includes('No Glasses') || cleanLine.includes('bare eyes')) {
+              currentChar.glasses = 'NO';
+            } else if (cleanLine.toLowerCase().includes('glasses') && !cleanLine.toLowerCase().includes('no glasses') && !cleanLine.toLowerCase().includes('bare eyes')) {
+              currentChar.glasses = 'YES';
+            }
+          }
+        });
+        if (currentChar) characters.push(currentChar);
+
+        if (characters.length === 0) return '';
+
+        let matrix = `\n【IDENTITY MATRIX - ABSOLUTE LOCK (v2.25)】\n`;
+        matrix += `Before drawing EACH panel, cross-check EVERY character against this matrix. ANY violation = CRITICAL FAILURE.\n`;
+
+        characters.forEach(c => {
+          const traits = [];
+          if (c.hairColor) traits.push(`${c.hairColor} hair`);
+          if (c.hairStyle) traits.push(c.hairStyle);
+          if (c.glasses === 'YES') traits.push('MUST HAVE glasses');
+          if (c.glasses === 'NO') traits.push('MUST NOT have glasses (bare eyes)');
+
+          matrix += `- [${c.shortName}]: ${traits.join(', ') || 'see reference image'}\n`;
+        });
+
+        matrix += `CROSS-CHECK: After completing each panel, verify every character's hair color and glasses status matches the matrix above. If ANY mismatch, redraw that character.\n`;
+        matrix += `Reading order: RIGHT-TO-LEFT (Japanese manga). The first speaker is on the RIGHT. Speech bubbles flow right-to-left.\n`;
+
+        return matrix;
+      };
+
+      // [v2.25] キャラ名からIdentity Matrixの特徴行を返すヘルパー
+      const getCharTraitsFromMatrix = (charName) => {
+        const matrix = buildIdentityMatrix(castList);
+        const line = matrix.split('\n').find(l => l.includes(`[${charName}]`));
+        if (line) {
+          const traits = line.split(':').slice(1).join(':').trim();
+          return traits;
+        }
+        return '';
+      };
 
       const dynamicCamera = `
     CRITICAL COMPOSITION & GAG MANGA RULES:
@@ -998,9 +1184,12 @@ function App() {
           }
         });
         if (speakers.length >= 2) {
-          return `CRITICAL PLACEMENT: ${speakers[0]} MUST be drawn on the RIGHT side. ${speakers[1]} MUST be drawn on the LEFT side.`;
+          const traits0 = getCharTraitsFromMatrix(speakers[0]);
+          const traits1 = getCharTraitsFromMatrix(speakers[1]);
+          return `CRITICAL PLACEMENT & IDENTITY:\n- RIGHT side: [${speakers[0]}] (${traits0 || 'see reference'})\n- LEFT side: [${speakers[1]}] (${traits1 || 'see reference'})\nVERIFY: Confirm hair color + glasses status for both characters match the Identity Matrix before finalizing.`;
         } else if (speakers.length === 1) {
-          return `CRITICAL PLACEMENT: ${speakers[0]} is the main focus of this panel.`;
+          const traits0 = getCharTraitsFromMatrix(speakers[0]);
+          return `CRITICAL PLACEMENT & IDENTITY: [${speakers[0]}] (${traits0 || 'see reference'}) is the main focus of this panel.`;
         }
         return `CRITICAL PLACEMENT: Follow the natural dialogue flow.`;
       };
@@ -1123,7 +1312,8 @@ REFERENCE IMAGE CLOTHING POLICY (CRITICAL):
 Important Character Cast:
 ${VAR_CAST_LIST}
 ${customOutfit.trim() ? `OUTFIT OVERRIDE (Mandatory): All characters MUST be wearing the following outfit, overriding their default clothing: ${customOutfit.trim()}. If weighted tags are provided (e.g. "(swimsuit:1.5)"), apply them directly. Strictly follow this outfit specification.` : ''}
-【Character Identity Anchor (v2.17)】: Before drawing each panel, mentally confirm: "Does this character's hair color, hairstyle, eye color, glasses status, and outfit match the reference and previous panels?" If ANY detail differs, redraw it. Cross-panel consistency is MANDATORY.
+【Character Identity Anchor (v2.25)】: Before drawing each panel, mentally confirm: "Does this character's hair color, hairstyle, eye color, glasses status, and outfit match the reference and previous panels?" If ANY detail differs, redraw it. Cross-panel consistency is MANDATORY.
+${buildIdentityMatrix(castList)}
 CROSS-PANEL OUTFIT CONSISTENCY (MANDATORY): Every character MUST wear the EXACT same outfit in ALL 4 panels. Do NOT change, add, or remove any clothing item between panels. If no outfit override is specified, use the outfit from the character reference sheet and keep it identical across every panel.
 
 Camera and Composition Rules:
@@ -1141,6 +1331,7 @@ Technical Quality Definitions (System Dictionary):
 
 ## Panel 1 (Top)
 Camera: ${getRandomAngle()} (Ensure camera is NOT flat eye-level).
+${buildEmotionBlock(panel1Text)}
 ${extractPlacementRule(panel1Text)}
 ${extractCastLimitRule(panel1Text)}
 Visual Action (Do NOT write this as text on the canvas, draw it visually): ${injectOutfitReminder(extractActionOnly(panel1Text, extractPlacementRule(panel1Text)))}.
@@ -1148,6 +1339,7 @@ Dialogue (ONLY write this inside speech bubbles): ${extractDialogueOnly(panel1Te
 
 ## Panel 2
 Camera: ${getRandomAngle()} (Ensure camera is NOT flat eye-level).
+${buildEmotionBlock(panel2Text)}
 ${extractPlacementRule(panel2Text)}
 ${extractCastLimitRule(panel2Text)}
 Visual Action (Do NOT write this as text on the canvas, draw it visually): ${injectOutfitReminder(extractActionOnly(panel2Text, extractPlacementRule(panel2Text)))}.
@@ -1155,6 +1347,7 @@ Dialogue (ONLY write this inside speech bubbles): ${extractDialogueOnly(panel2Te
 
 ## Panel 3
 Camera: ${getRandomAngle()} (Ensure camera is NOT flat eye-level).
+${buildEmotionBlock(panel3Text)}
 ${extractPlacementRule(panel3Text)}
 ${extractCastLimitRule(panel3Text)}
 Visual Action (Do NOT write this as text on the canvas, draw it visually): ${injectOutfitReminder(extractActionOnly(panel3Text, extractPlacementRule(panel3Text)))}.
@@ -1162,6 +1355,7 @@ Dialogue (ONLY write this inside speech bubbles): ${extractDialogueOnly(panel3Te
 
 ## Panel 4 (Bottom)
 Camera: ${getRandomAngle()} (Ensure camera is NOT flat eye-level).
+${buildEmotionBlock(panel4Text)}
 ${extractPlacementRule(panel4Text)}
 ${extractCastLimitRule(panel4Text)}
 Visual Action (Do NOT write this as text on the canvas, draw it visually): ${injectOutfitReminder(extractActionOnly(panel4Text, extractPlacementRule(panel4Text)))}.

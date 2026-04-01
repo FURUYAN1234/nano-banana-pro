@@ -7,11 +7,11 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const MODEL_IDS = [
-    "gemini-2.5-flash",                   // Primary: Stable + Grounding Support
-    "gemini-2.5-pro",                     // Backup 1: Reliable High-Intel
-    "gemini-2.5-flash-lite",              // Backup 2: Lightweight Stable
-    "gemini-3-flash-preview",             // Fallback 1: Next-Gen Preview (未検証)
-    "gemini-3.1-flash-lite-preview"       // Fallback 2: Next-Gen Lite Preview (未検証)
+    "gemini-3-flash-preview",             // Primary: Next-Gen (安全フィルター緩和期待)
+    "gemini-2.5-pro",                     // Backup 1: 高品質・安定・フィルター寛容
+    "gemini-2.5-flash",                   // Backup 2: 高速だが最近フィルター厳格化
+    "gemini-2.5-flash-lite",              // Fallback 1: 軽量安定
+    "gemini-3.1-flash-lite-preview"       // Fallback 2: Next-Gen Lite Preview
 ];
 
 // Store API key in memory ONLY (Security Requirement: No persistence)
