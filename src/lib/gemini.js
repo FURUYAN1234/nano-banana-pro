@@ -6,12 +6,23 @@
  */
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const MODEL_IDS = [
-    "gemini-3-flash-preview",             // Primary: Next-Gen (安全フィルター緩和期待)
-    "gemini-2.5-pro",                     // Backup 1: 高品質・安定・フィルター寛容
-    "gemini-2.5-flash",                   // Backup 2: 高速だが最近フィルター厳格化
+// テキストのみリクエスト用 (シナリオ生成等): Next-Gen優先
+const TEXT_MODEL_IDS = [
+    "gemini-3-flash-preview",             // Primary: Next-Gen (Grounding対応)
+    "gemini-2.5-pro",                     // Backup 1: 高品質・安定
+    "gemini-2.5-flash",                   // Backup 2: 高速
     "gemini-2.5-flash-lite",              // Fallback 1: 軽量安定
     "gemini-3.1-flash-lite-preview"       // Fallback 2: Next-Gen Lite Preview
+];
+
+// 画像付きリクエスト用 (キャラクターシート認識等): フィルター寛容モデル優先
+// gemini-3-flash-preview はアニメ画像で PROHIBITED_CONTENT を返すため3番目に降格
+const IMAGE_MODEL_IDS = [
+    "gemini-2.5-pro",                     // Primary: 画像認識実績あり・フィルター寛容
+    "gemini-2.5-flash",                   // Backup 1: 高速・画像対応
+    "gemini-3-flash-preview",             // Backup 2: Preview版、将来のフィルター緩和に期待
+    "gemini-2.5-flash-lite",              // Fallback 1: 軽量
+    "gemini-3.1-flash-lite-preview"       // Fallback 2: 最終保険
 ];
 
 // Store API key in memory ONLY (Security Requirement: No persistence)
@@ -64,6 +75,8 @@ export const callThinkingGemini = async (prompt, images = null, systemInstructio
 
     const genAI = new GoogleGenerativeAI(currentApiKey);
 
+    // 画像の有無に応じてモデルリストを動的に選択
+    const MODEL_IDS = (images && images.length > 0) ? IMAGE_MODEL_IDS : TEXT_MODEL_IDS;
 
     for (const modelId of MODEL_IDS) {
         try {
