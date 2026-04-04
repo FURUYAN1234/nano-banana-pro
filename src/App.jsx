@@ -31,7 +31,7 @@ import {
 import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 
-const SYSTEM_VERSION = "v2.27 Alpha";
+const SYSTEM_VERSION = "v2.28 Alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -725,6 +725,7 @@ function App() {
             - **厳守**: 1コマあたりのフキダシは**「最大2つまで」**。
             - セリフは**「短い一文」**に収めよ（例: 「なんだって！？」OK、「それはつまり...ということなのか？」NG）。
             - **禁止**: セリフ内に「(怒って)」「(笑いながら)」等のト書き・感情描写を入れるな。絵で表現せよ。
+             - **読点の義務**: セリフ内の適切な箇所には必ず読点（、）を入れよ。読点のない長文セリフは禁止。自然な日本語の句読点を維持せよ。
            - 画面の80%以上は「絵」でなければならない。文字で埋め尽くすな。
 
         3. **オチと構図の多様化 (Variety Constraints)**:
@@ -955,9 +956,9 @@ function App() {
           vfx: '(Rough pencil sketch lines:1.3), (unfinished hatching:1.2), (chaotic overlapping motion trails), (eraser smudge marks)',
         },
         RETRO: {
-          style: 'In THIS PANEL ONLY, shift to a 1970s-1980s retro manga style with halftone dot shading, thick bold outlines, limited color palette, and classic exaggerated sweat/shock visual metaphors.',
+          style: 'In THIS PANEL ONLY, shift to a 1970s-1980s retro manga style with halftone dot shading, thick bold outlines, and classic exaggerated sweat/shock visual metaphors. IMPORTANT: Maintain each character\'s original vibrant hair colors and eye colors accurately despite the retro art style shift. Do NOT desaturate or mute character colors.',
           proportions: '',
-          vfx: '(Halftone dot pattern shading:1.4), (thick bold outlines:1.3), (retro limited color palette), (classic manga shock symbols)',
+          vfx: '(Halftone dot pattern shading:1.4), (thick bold outlines:1.3), (retro manga panel borders), (classic manga shock symbols)',
         },
         GLITTER: {
           style: 'In THIS PANEL ONLY, the main character radiates confidence with dramatic backlighting, flowing hair caught in an imaginary wind, sparkle effects around their face, and a confident smirk or triumphant expression.',
@@ -1028,11 +1029,14 @@ function App() {
             }
           }
 
-          // 眼鏡情報の抽出
-          if (cleanLine.includes('眼鏡') || cleanLine.toLowerCase().includes('eyewear') || cleanLine.toLowerCase().includes('glasses')) {
-            if (cleanLine.includes('no glasses') || cleanLine.includes('眼鏡無し') || cleanLine.includes('なし') || cleanLine.includes('No Glasses') || cleanLine.includes('bare eyes')) {
+          // 眼鏡情報の抽出 (v2.28 修正: 「なし」単独マッチを廃止、日本語パターン拡充)
+          const lowerLine = cleanLine.toLowerCase();
+          if (cleanLine.includes('眼鏡') || cleanLine.includes('メガネ') || cleanLine.includes('めがね') || lowerLine.includes('eyewear') || lowerLine.includes('glasses')) {
+            // NO判定: 「眼鏡なし」「眼鏡無し」「メガネなし」等の明示的な否定パターンのみ
+            if (lowerLine.includes('no glasses') || lowerLine.includes('bare eyes') || cleanLine.includes('眼鏡なし') || cleanLine.includes('眼鏡無し') || cleanLine.includes('メガネなし') || cleanLine.includes('メガネ無し') || cleanLine.includes('めがねなし') || /眼鏡[：:]\s*(?:なし|無し|ナシ|None)/i.test(cleanLine) || /Eyewear[：:]\s*(?:なし|無し|None|No|N\/A)/i.test(cleanLine)) {
               currentChar.glasses = 'NO';
-            } else if (cleanLine.toLowerCase().includes('glasses') && !cleanLine.toLowerCase().includes('no glasses') && !cleanLine.toLowerCase().includes('bare eyes')) {
+            } else {
+              // 上記の否定パターンに該当しない場合、眼鏡関連キーワードが存在する = 眼鏡あり
               currentChar.glasses = 'YES';
             }
           }
@@ -1048,8 +1052,9 @@ function App() {
           const traits = [];
           if (c.hairColor) traits.push(`${c.hairColor} hair`);
           if (c.hairStyle) traits.push(c.hairStyle);
-          if (c.glasses === 'YES') traits.push('MUST HAVE glasses');
-          if (c.glasses === 'NO') traits.push('MUST NOT have glasses (bare eyes)');
+          if (c.glasses === 'YES') traits.push('MUST HAVE glasses (do NOT remove)');
+          else if (c.glasses === 'NO') traits.push('MUST NOT have glasses (bare eyes)');
+          else traits.push('check reference image for glasses status');
 
           matrix += `- [${c.shortName}]: ${traits.join(', ') || 'see reference image'}\n`;
         });
@@ -1256,13 +1261,22 @@ SPEECH BUBBLE PLACEMENT RULE (CRITICAL): Each character's speech bubble MUST be 
 
       const extractPlacementRule = (fullPanelText) => {
         const lines = fullPanelText.split('\n');
-        const dialogLines = lines.filter(line => line.includes('：') || line.includes(':') || line.includes('「'));
+        // [v2.28] EMOTIONタグ行・状況行をフィルタリングしてスピーカー抽出の汚染を防止
+        const dialogLines = lines.filter(line => {
+          const trimmed = line.trim();
+          // EMOTIONタグ行を除外
+          if (/^\[EMOTION:/i.test(trimmed)) return false;
+          // 状況説明行を除外
+          if (/^状況[：:]/i.test(trimmed)) return false;
+          return trimmed.includes('：') || trimmed.includes(':') || trimmed.includes('「');
+        });
         const speakers = [];
         dialogLines.forEach(line => {
           const match = line.match(/^(.*?)(?:[:：]|「)/);
           if (match && match[1].trim()) {
-            let speaker = match[1].replace(/^(SFX|効果音|BGM|Action|状況|\(.*?\))/gi, '').replace(/^[【\[（(]/, '').replace(/[】\]）)]$/, '').trim();
-            if (speaker && !speakers.includes(speaker)) {
+            let speaker = match[1].replace(/^(SFX|効果音|BGM|Action|状況|EMOTION|\(.*?\)|\[.*?\])/gi, '').replace(/^[【\[（(]/, '').replace(/[】\]）)]$/, '').trim();
+            // EMOTIONやスタイルタグ残骸をフィルタ
+            if (speaker && !speakers.includes(speaker) && !/^(EMOTION|NORMAL|CHIBI_GAG|GEKIGA|SHOUJO|HORROR|BLANK|IMPACT|WATERCOLOR|SKETCH|RETRO|GLITTER|SHADOW)$/i.test(speaker)) {
               speakers.push(speaker);
             }
           }
@@ -1383,7 +1397,8 @@ The final image MUST have a tall portrait aspect ratio exactly equivalent to an 
 CRITICAL LAYOUT COMMAND: 
 The canvas MUST be completely filled by the panels. The 4 manga panels MUST be extremely wide, occupying 95% of the total canvas width. 
 Do NOT draw large white margins on the left, right, top, or bottom edges.
-At the very top of the page, draw a large, bold, black Japanese text title that says: "${safeTopic}" in bold serif Japanese font.
+At the very top of the page, draw a large, bold, black Japanese text title that says exactly: ${safeTopic}
+Do NOT surround the title text with quotation marks, apostrophes, single quotes, or any other punctuation marks. Draw ONLY the raw Japanese characters of the title.
 Draw a tiny English watermark exactly ON the bottom-right border of the 4th panel that displays the exact text "Generated by Super FURU AI 4-koma ${SYSTEM_VERSION}" in clean sans-serif font. The watermark text MUST be written HORIZONTALLY (left-to-right reading direction), NEVER rotated 90 degrees, NEVER written vertically, and NEVER stacked one letter per line. Do NOT draw duplicated or overlapping watermarks. Do NOT add extra white space below the 4th panel for the watermark.
 
 CRITICAL PANEL SIZE COMMAND: The canvas MUST be divided into exactly 4 EQUAL horizontal panels stacked vertically from top to bottom. All 4 panels MUST be the EXACT SAME height and EXACT SAME width.
@@ -1463,6 +1478,7 @@ Important constraints:
 - Do NOT merge panels. Keep 4 distinct panels with white gutters between them.
 - Do NOT write situation/narration explanations as text on the screen. The Visual Action must only be illustrated.
 - Write the Japanese spoken text clearly inside white manga speech bubbles in a bold sans-serif Japanese font.
+- Japanese dialogue MUST include proper punctuation: commas (、) and periods (。). Do NOT omit commas from dialogue text.
 - Do NOT add random English text except for the watermark.
 - Maintain character consistency across all 4 panels.
 - Flow is from top panel to bottom panel.
