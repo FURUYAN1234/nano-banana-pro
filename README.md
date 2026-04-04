@@ -287,4 +287,34 @@ These terms are governed by the laws of Japan.
 
 ---
 
+## AI Manga Creative Suite / AIまんが制作エコシステム
+
+This project is part of an integrated ecosystem designed to support AI-powered manga and story creation.
+本プロジェクトは、AIを活用した漫画・ストーリー制作を支援する統合エコシステムの一部です。
+
+### Ecosystem Components / 構成システム
+
+#### 1. Nano Banana 2 Powered Super AI 4-koma System
+A system specialized in creating 4-panel manga with AI.
+AIを活用した4コマ漫画制作に特化したシステムです。
+- [Explanation / 解説](https://note.com/happy_duck780/n/ndf063558c1f5)
+- [Demo / デモ](https://furuyan1234.github.io/nano-banana-pro/)
+- [Code / コード](https://github.com/FURUYAN1234/nano-banana-pro)
+
+#### 2. AI Story Maker
+A tool for generating creative stories and plots using AI.
+AIを用いてクリエイティブなストーリーやプロットを生成するツールです。
+- [Explanation / 解説](https://note.com/happy_duck780/n/nd3d972922868)
+- [Demo / デモ](https://furuyan1234.github.io/story-maker/)
+- [Code / コード](https://github.com/FURUYAN1234/story-maker)
+
+#### 3. AI Character Sheet Maker
+An assistant for designing detailed character sheets and settings.
+詳細なキャラクターシートや設定をデザインするための支援ツールです。
+- [Explanation / 解説](https://note.com/happy_duck780/n/neccbebd7d957)
+- [Demo / デモ](https://furuyan1234.github.io/character-sheet-maker/)
+- [Code / コード](https://github.com/FURUYAN1234/character-sheet-maker)
+
+---
+
 Developed by **FURU**
