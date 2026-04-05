@@ -31,7 +31,7 @@ import {
 import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 
-const SYSTEM_VERSION = "v2.28 Alpha";
+const SYSTEM_VERSION = "v2.29 Alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -725,7 +725,7 @@ function App() {
             - **厳守**: 1コマあたりのフキダシは**「最大2つまで」**。
             - セリフは**「短い一文」**に収めよ（例: 「なんだって！？」OK、「それはつまり...ということなのか？」NG）。
             - **禁止**: セリフ内に「(怒って)」「(笑いながら)」等のト書き・感情描写を入れるな。絵で表現せよ。
-             - **読点の義務**: セリフ内の適切な箇所には必ず読点（、）を入れよ。読点のない長文セリフは禁止。自然な日本語の句読点を維持せよ。
+             - **句読点の義務**: セリフ内の適切な箇所には必ず読点（、）を入れよ。読点のない長文セリフは禁止。さらに、セリフの末尾には必ず句点（。）を付与せよ（例: 「なんだって。」「行くぞ。」）。句点のないセリフは不完全とみなす。
            - 画面の80%以上は「絵」でなければならない。文字で埋め尽くすな。
 
         3. **オチと構図の多様化 (Variety Constraints)**:
@@ -923,7 +923,7 @@ function App() {
         GEKIGA: {
           style: 'In THIS PANEL ONLY, shift to a mature realistic illustration style with heavy ink shadows, sharp angular facial features, detailed muscle/bone structure visible through skin tension, and dramatic chiaroscuro lighting. Characters look older and more intense.',
           proportions: 'Use 7-8 head proportions. Characters appear taller and more imposing.',
-          vfx: '(Heavy crosshatching shadows:1.4), (dramatic rim lighting:1.5), (high contrast black and white areas), (intense speed lines in background)',
+          vfx: '(Heavy crosshatching shadows:1.4), (dramatic rim lighting:1.5), (high contrast deep shadows with stark chiaroscuro lighting), (intense speed lines in background)',
         },
         SHOUJO: {
           style: 'In THIS PANEL ONLY, shift to a soft romantic illustration style with sparkling highlights in the eyes, delicate thin linework, and dreamy soft-focus backgrounds filled with floating flower petals, sparkles, and light bokeh.',
@@ -1029,17 +1029,27 @@ function App() {
             }
           }
 
-          // 眼鏡情報の抽出 (v2.28 修正: 「なし」単独マッチを廃止、日本語パターン拡充)
+          // [v2.29] 眼鏡情報の抽出 - 根本修正: WEIGHTSタグを権威ソースとする
           const lowerLine = cleanLine.toLowerCase();
-          if (cleanLine.includes('眼鏡') || cleanLine.includes('メガネ') || cleanLine.includes('めがね') || lowerLine.includes('eyewear') || lowerLine.includes('glasses')) {
-            // NO判定: 「眼鏡なし」「眼鏡無し」「メガネなし」等の明示的な否定パターンのみ
-            if (lowerLine.includes('no glasses') || lowerLine.includes('bare eyes') || cleanLine.includes('眼鏡なし') || cleanLine.includes('眼鏡無し') || cleanLine.includes('メガネなし') || cleanLine.includes('メガネ無し') || cleanLine.includes('めがねなし') || /眼鏡[：:]\s*(?:なし|無し|ナシ|None)/i.test(cleanLine) || /Eyewear[：:]\s*(?:なし|無し|None|No|N\/A)/i.test(cleanLine)) {
-              currentChar.glasses = 'NO';
-            } else {
-              // 上記の否定パターンに該当しない場合、眼鏡関連キーワードが存在する = 眼鏡あり
-              currentChar.glasses = 'YES';
+          const isWeightsLine = lowerLine.includes('[weight');
+          const glassesLocked = currentChar.glasses === 'LOCKED_NO' || currentChar.glasses === 'LOCKED_YES';
+          if (isWeightsLine && !glassesLocked) {
+            if (/\(no\s*glasses/i.test(lowerLine)) {
+              currentChar.glasses = 'LOCKED_NO';
+            } else if (/\(glasses/i.test(lowerLine) && !/no\s*glasses/i.test(lowerLine)) {
+              currentChar.glasses = 'LOCKED_YES';
             }
           }
+          if (!glassesLocked && !isWeightsLine) {
+            if (cleanLine.includes('眼鏡') || cleanLine.includes('メガネ') || lowerLine.includes('eyewear') || lowerLine.includes('glasses')) {
+              if (lowerLine.includes('no glasses') || lowerLine.includes('bare eyes') || /(?:なし|無し|None|No|N\/A)/i.test(cleanLine)) {
+                currentChar.glasses = 'NO';
+              } else {
+                currentChar.glasses = 'YES';
+              }
+            }
+          }
+
         });
         if (currentChar) characters.push(currentChar);
 
@@ -1052,8 +1062,8 @@ function App() {
           const traits = [];
           if (c.hairColor) traits.push(`${c.hairColor} hair`);
           if (c.hairStyle) traits.push(c.hairStyle);
-          if (c.glasses === 'YES') traits.push('MUST HAVE glasses (do NOT remove)');
-          else if (c.glasses === 'NO') traits.push('MUST NOT have glasses (bare eyes)');
+          if (c.glasses === 'YES' || c.glasses === 'LOCKED_YES') traits.push('MUST HAVE glasses (do NOT remove)');
+          else if (c.glasses === 'NO' || c.glasses === 'LOCKED_NO') traits.push('MUST NOT have glasses (bare eyes)');
           else traits.push('check reference image for glasses status');
 
           matrix += `- [${c.shortName}]: ${traits.join(', ') || 'see reference image'}\n`;
@@ -1161,7 +1171,13 @@ SPEECH BUBBLE PLACEMENT RULE (CRITICAL): Each character's speech bubble MUST be 
               isDialogue = true;
             }
           } else if (line.trim().startsWith('「')) {
-            isDialogue = true;
+            // [v2.29] 根本修正: 行全体が「...」で完結するセリフ形式のみを判定。
+            // 「没収」と書かれた袋を...のようなト書き中の引用語を誤検出しない。
+            const trimmedLine = line.trim();
+            const isFullQuoteLine = /^「[^」]+」[？！。、!?\s]*$/.test(trimmedLine);
+            if (isFullQuoteLine) {
+              isDialogue = true;
+            }
           }
 
           if (isDialogue) {
@@ -1181,13 +1197,21 @@ SPEECH BUBBLE PLACEMENT RULE (CRITICAL): Each character's speech bubble MUST be 
         });
 
         // [v2.22] フォールバック: キャラ名マッチに失敗しても、カギ括弧「」で囲まれたテキストがあればセリフとして抽出
+        // [v2.29] ト書き誤検出防止: カギ括弧内のテキストがト書き（状況説明）でないかをチェック
         if (formattedBubbles.length === 0) {
           const bracketDialogues = fullPanelText.match(/「([^」]+)」/g);
           if (bracketDialogues && bracketDialogues.length > 0) {
             bracketDialogues.forEach(bd => {
               let dialogueText = bd.replace(/^「/, '').replace(/」$/, '').trim();
               dialogueText = dialogueText.replace(/（.*?）|\(.*?\)/g, '').trim();
-              if (dialogueText) {
+              // [v2.29] ト書き判定: キャラ名2名以上+動作動詞を含む長文はト書きとみなしスキップ
+              const charNamesInText = validCharacters.filter(c => {
+                const nameOnly = c.split(/[\(（]/)[0].trim();
+                return nameOnly && dialogueText.includes(nameOnly);
+              });
+              const hasActionVerbs = /(?:走|逃|叫|倒|飛|投|握|振|開|閉|持|回|守|追|暴|掴|奪|叩|殴|蹴|泣|笑|怒|驚|震|立|座|歩|見|向|指|差|押|引|掲|置|取|抱|抜|落|転|上|下|入|出|乗|降|着|脱|食|飲|読|書|聞|話|歌|踊|遊|寝|起|止|始|続|終|帰|来|行|待|送|届|届|渡|受|返|払|買|売|借|貸|集|散|並|重|包|巻|結|解|切|折|曲|伸|縮|揺|動|止|消|現|隠|探|見つ)/.test(dialogueText);
+              const isLikelyNarration = (charNamesInText.length >= 2 && hasActionVerbs && dialogueText.length > 15);
+              if (dialogueText && !isLikelyNarration) {
                 formattedBubbles.push(`(Speech Bubble ${bubbleCount}: "${dialogueText}")`);
                 bubbleCount++;
               }
