@@ -31,7 +31,7 @@ import {
 import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 
-const SYSTEM_VERSION = "v2.31 Alpha";
+const SYSTEM_VERSION = "v2.32 Alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -725,7 +725,7 @@ function App() {
             - **厳守**: 1コマあたりのフキダシは**「最大2つまで」**。
             - セリフは**「短い一文」**に収めよ（例: 「なんだって！？」OK、「それはつまり...ということなのか？」NG）。
             - **禁止**: セリフ内に「(怒って)」「(笑いながら)」等のト書き・感情描写を入れるな。絵で表現せよ。
-             - **句読点の義務**: セリフ内の適切な箇所には必ず読点（、）を入れよ。読点のない長文セリフは禁止。さらに、セリフの末尾には必ず句点（。）を付与せよ（例: 「なんだって。」「行くぞ。」）。句点のないセリフは不完全とみなす。
+             - **句読点ルール**: セリフの末尾には必ず句点（。）を付与せよ（例: 「なんだって。」「行くぞ。」）。句点のないセリフは不完全とみなす。ただし**読点（、）は最小限にせよ**。漫画の吹き出しでは読点をほとんど使わないのが自然な表現。吹き出し内の改行やスペースが間（ま）の代わりになるため、読点は誤読防止に必要な場合のみ使うこと。
            - 画面の80%以上は「絵」でなければならない。文字で埋め尽くすな。
 
         3. **オチと構図の多様化 (Variety Constraints)**:
@@ -920,7 +920,7 @@ function App() {
           vfx: '(Exaggerated sweat drops:1.3), (popping veins:1.2), (comedic steam from head), (glasses preserved on chibi face if character wears them:1.5)',
         },
         GEKIGA: {
-          style: 'In THIS PANEL ONLY, shift to a mature realistic illustration style with heavy ink shadows, sharp angular facial features, detailed muscle/bone structure visible through skin tension, and dramatic chiaroscuro lighting. Characters look older and more intense.',
+          style: 'In THIS PANEL ONLY, shift to a mature realistic illustration style with heavy ink shadows, sharp angular facial features, detailed muscle/bone structure visible through skin tension, and dramatic chiaroscuro lighting. Characters look older and more intense. IMPORTANT: Keep the image in FULL COLOR (not black and white). Use deep vivid colors with high contrast shadows, not monochrome.',
           proportions: 'Use 7-8 head proportions. Characters appear taller and more imposing.',
           vfx: '(Heavy crosshatching shadows:1.4), (dramatic rim lighting:1.5), (high contrast deep shadows with stark chiaroscuro lighting), (intense speed lines in background)',
         },
@@ -1000,13 +1000,13 @@ function App() {
 
         // マルチキャラ用フォールバックが定義されている場合はそちらを使用
         if (isMultiChar && s.styleMulti) {
-          let block = `\nART STYLE SHIFT [${emo}]: ${s.styleMulti}`;
+          let block = `\n(Apply the following visual style to this panel only. Do NOT draw this instruction as text on the image): ${s.styleMulti}`;
           if (s.proportionsMulti) block += `\nPROPORTION OVERRIDE: ${s.proportionsMulti}`;
           if (s.vfxMulti) block += `\nVFX: ${s.vfxMulti}`;
           return block;
         }
 
-        let block = `\nART STYLE SHIFT [${emo}]: ${s.style}`;
+        let block = `\n(Apply the following visual style to this panel only. Do NOT draw this instruction as text on the image): ${s.style}`;
         if (s.proportions) block += `\nPROPORTION OVERRIDE: ${s.proportions}`;
         if (s.vfx) block += `\nVFX: ${s.vfx}`;
         return block;
@@ -1601,7 +1601,7 @@ Important constraints:
 - Do NOT merge panels. Keep 4 distinct panels with white gutters between them.
 - Do NOT write situation/narration explanations as text on the screen. The Visual Action must only be illustrated.
 - Write the Japanese spoken text clearly inside white manga speech bubbles in a bold sans-serif Japanese font.
-- Japanese dialogue MUST include proper punctuation: commas (、) and periods (。). Do NOT omit commas from dialogue text.
+- Japanese dialogue MUST end with a period (。). However, do NOT add unnecessary commas (、) inside dialogue. Manga speech bubbles rarely use commas in natural Japanese — line breaks and bubble shape provide natural pauses instead. Only use commas when absolutely necessary to prevent misreading.
 - Do NOT add random English text except for the watermark.
 - Maintain character consistency across all 4 panels.
 - Flow is from top panel to bottom panel.
