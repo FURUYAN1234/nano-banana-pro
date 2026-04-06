@@ -31,7 +31,7 @@ import {
 import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 
-const SYSTEM_VERSION = "v2.29 Alpha";
+const SYSTEM_VERSION = "v2.30 Alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -748,7 +748,6 @@ function App() {
              - BLANK: 白目・魂抜け。衝撃、絶望、思考停止。目が点になる。
              - IMPACT: インパクトフレーム。大爆笑、大激怒、驚天動地。集中線で画面が爆発。
              - WATERCOLOR: 水彩画風。ノスタルジック、回想シーン。
-             - SKETCH: ラフスケッチ風。混乱、パニック。
              - RETRO: レトロ漫画風。昭和テイスト、コミカル。
              - GLITTER: キラキラオーラ。自信満々、ドヤ顔、勝利宣言。
              - SHADOW: シルエット演出。策略、不穏、腹黒。
@@ -950,11 +949,6 @@ function App() {
           proportions: '',
           vfx: '(Soft watercolor washes:1.4), (blurred dreamy edges:1.3), (muted warm sepia tones), (visible paper grain texture)',
         },
-        SKETCH: {
-          style: 'In THIS PANEL ONLY, shift to a rough pencil sketch style with unfinished scratchy lines, chaotic composition, and multiple motion blur afterimages suggesting confusion or panic.',
-          proportions: '',
-          vfx: '(Rough pencil sketch lines:1.3), (unfinished hatching:1.2), (chaotic overlapping motion trails), (eraser smudge marks)',
-        },
         RETRO: {
           style: 'In THIS PANEL ONLY, shift to a 1970s-1980s retro manga style with halftone dot shading, thick bold outlines, and classic exaggerated sweat/shock visual metaphors. IMPORTANT: Maintain each character\'s original vibrant hair colors and eye colors accurately despite the retro art style shift. Do NOT desaturate or mute character colors.',
           proportions: '',
@@ -974,7 +968,7 @@ function App() {
 
       // [v2.25] パネルテキストからEMOTIONタグを抽出
       const extractEmotionStyle = (panelText) => {
-        const match = panelText.match(/\[EMOTION:\s*(NORMAL|CHIBI_GAG|GEKIGA|SHOUJO|HORROR|BLANK|IMPACT|WATERCOLOR|SKETCH|RETRO|GLITTER|SHADOW)\s*\]/i);
+        const match = panelText.match(/\[EMOTION:\s*(NORMAL|CHIBI_GAG|GEKIGA|SHOUJO|HORROR|BLANK|IMPACT|WATERCOLOR|RETRO|GLITTER|SHADOW)\s*\]/i);
         if (match) {
           const key = match[1].toUpperCase();
           if (EMOTION_STYLES[key]) return key;
@@ -1017,41 +1011,45 @@ function App() {
 
           if (!currentChar) return;
 
-          // 髪情報の抽出 (WEIGHTS行 + 髪カテゴリ行)
+          // [v2.30] 髪情報の抽出 - フォーマット非依存化
           if (cleanLine.includes('髪') || cleanLine.toLowerCase().includes('hair')) {
-            const weightsMatch = cleanLine.match(/\[WEIGHTS?\]:\s*(.*?)(?:\||$)/i);
-            if (weightsMatch) {
-              const tags = weightsMatch[1];
-              const colorMatch = tags.match(/(red|orange|blonde|yellow|brown|black|silver|white|blue|pink|green|purple|ginger)\s*hair/i);
-              if (colorMatch) currentChar.hairColor = colorMatch[1];
-              const styleMatch = tags.match(/(bob|long[\s-]?hair|short[\s-]?hair|medium[\s-]?hair|twintails?|twin\s*tails?|ponytail|bun|braid|pixie|buzz)/i);
-              if (styleMatch) currentChar.hairStyle = styleMatch[1];
-            }
+            const weightsMatch = cleanLine.match(/\[WEIGHTS?\]:\s*(.*)/i);
+            const tagsSource = weightsMatch ? weightsMatch[1].replace(/\|/g, '') : cleanLine;
+            const colorMatch = tagsSource.match(/(red|orange|blonde|yellow|brown|black|silver|white|blue|pink|green|purple|ginger)\s*hair/i);
+            if (colorMatch && !currentChar.hairColor) currentChar.hairColor = colorMatch[1];
+            const styleMatch = tagsSource.match(/(internal\s*round\s*bob|chin-length\s*bob|bob|long[\s-]?hair|short[\s-]?hair|medium[\s-]?hair|very\s*long\s*hair|waist-length\s*hair|twintails?|twin\s*tails?|ponytail|bun|braid|pixie|buzz|straight\s*bob|hime\s*cut)/i);
+            if (styleMatch && !currentChar.hairStyle) currentChar.hairStyle = styleMatch[1];
           }
 
-          // [v2.29] 眼鏡情報の抽出 - 根本修正: WEIGHTSタグを権威ソースとする
+          // [v2.30] 眼鏡情報の抽出 - 全面改修
           const lowerLine = cleanLine.toLowerCase();
-          const isWeightsLine = lowerLine.includes('[weight');
+          const hasWeightedNoGlasses = /\(no[\s_-]*glasses/i.test(lowerLine);
+          const hasWeightedGlasses = /\([^)]*glasses[\s:]/i.test(lowerLine) && !hasWeightedNoGlasses;
           const glassesLocked = currentChar.glasses === 'LOCKED_NO' || currentChar.glasses === 'LOCKED_YES';
-          if (isWeightsLine && !glassesLocked) {
-            if (/\(no\s*glasses/i.test(lowerLine)) {
+          if (!glassesLocked) {
+            if (hasWeightedNoGlasses) {
               currentChar.glasses = 'LOCKED_NO';
-            } else if (/\(glasses/i.test(lowerLine) && !/no\s*glasses/i.test(lowerLine)) {
+            } else if (hasWeightedGlasses) {
               currentChar.glasses = 'LOCKED_YES';
             }
           }
-          if (!glassesLocked && !isWeightsLine) {
-            if (cleanLine.includes('眼鏡') || cleanLine.includes('メガネ') || lowerLine.includes('eyewear') || lowerLine.includes('glasses')) {
-              if (lowerLine.includes('no glasses') || lowerLine.includes('bare eyes') || /(?:なし|無し|None|No|N\/A)/i.test(cleanLine)) {
-                currentChar.glasses = 'NO';
-              } else {
-                currentChar.glasses = 'YES';
-              }
+          const glassesNowLocked = currentChar.glasses === 'LOCKED_NO' || currentChar.glasses === 'LOCKED_YES';
+          if (!glassesNowLocked && (cleanLine.includes('眼鏡') || cleanLine.includes('メガネ') || lowerLine.includes('eyewear'))) {
+            if (lowerLine.includes('bare eyes') || /(?:なし|無し|None|N\/A)/i.test(cleanLine)) {
+              currentChar.glasses = 'NO';
+            } else if (/(?:あり|有り|有|着用)/i.test(cleanLine) || /(?:under-rim|round|square|oval|rimless|half-rim)/i.test(lowerLine)) {
+              currentChar.glasses = 'YES';
             }
           }
 
         });
         if (currentChar) characters.push(currentChar);
+
+        // [v2.30] デバッグ: 眼鏡判定結果をコンソールに出力
+        console.log('[IDENTITY MATRIX] Glasses detection results:');
+        characters.forEach(c => {
+          console.log(`  ${c.shortName}: glasses=${c.glasses}, hair=${c.hairColor} ${c.hairStyle}`);
+        });
 
         if (characters.length === 0) return '';
 
@@ -1091,7 +1089,7 @@ SPEECH BUBBLE PLACEMENT RULE (CRITICAL): Each character's speech bubble MUST be 
     CRITICAL COMPOSITION & GAG MANGA RULES:
     1. Do NOT draw characters just standing neutrally or looking directly at the camera. They MUST interact with each other.
     2. Always use dynamic and extreme camera angles: worm's-eye view, bird's-eye view, or tilted dutch angles. Use extreme perspective distortion (fisheye or ultra-wide lens) for dramatic effect. Avoid flat, boring shots.
-    3. [GAG VFX]: Use comic visual effects for punchlines/reactions. Strictly DO NOT write any text labels like "sweat drops" or "popping veins" using the alphabet.
+    3. [GAG VFX]: Use comic visual effects for punchlines/reactions. Strictly DO NOT write any text labels or sound effects (e.g., "ズコー") as text, floating words, or speech bubbles.
     4. [EXAGGERATED EMOTIONS]: FORCE extreme, comical, and highly exaggerated facial expressions! Do NOT draw neutral or slightly smiling faces. Exaggerate expressions (blank white eyes, jaw-dropping shock, intense fury, crying waterfalls) while strictly maintaining top-tier, beautiful anime art quality.
     5. [BODY ACTING]: Characters must physically react with their entire bodies (throwing arms up, falling, etc.). Exaggerate their gestures to the absolute limit. Do NOT over-use the "adjusting glasses" pose unless the character is explicitly wearing glasses.
     6. [ANTI-FLOATING-EYE RULE - CRITICAL]: Do NOT overlay or superimpose a close-up of a character's eyes or upper face as a floating background element behind other characters. Each character must be drawn as a complete figure within the scene. Avoid the "dramatic floating eye close-up in the background" manga trope entirely. Every character in the panel must exist physically within the scene's space, not as a ghostly overlay or background insert.
@@ -1259,7 +1257,12 @@ SPEECH BUBBLE PLACEMENT RULE (CRITICAL): Each character's speech bubble MUST be 
           return !isDialogue && !isHeader && !isEmpty;
         });
 
-        let actionStr = actionLines.join(' ').trim() || "Characters interacting dynamically based on dialogue.";
+        let actionStr = actionLines.join(' ').trim();
+        
+        // [v2.30] Sanitize action string to remove common trailing onomatopoeia/gag SFX that causes unwanted speech bubbles
+        actionStr = actionStr.replace(/[ 　]*(ズコー|ガーン|チーン|ドッ|バシッ|ドカーン|バーン)[。、！？!?\s]*$/g, '');
+        
+        actionStr = actionStr || "Characters interacting dynamically based on dialogue.";
 
         // [v2.02] Duplication Removal: If character is already forced in placement, gently remove them from the explicit action subject if possible to prevent cloning hallucination
         if (placementRule) {
@@ -1300,7 +1303,7 @@ SPEECH BUBBLE PLACEMENT RULE (CRITICAL): Each character's speech bubble MUST be 
           if (match && match[1].trim()) {
             let speaker = match[1].replace(/^(SFX|効果音|BGM|Action|状況|EMOTION|\(.*?\)|\[.*?\])/gi, '').replace(/^[【\[（(]/, '').replace(/[】\]）)]$/, '').trim();
             // EMOTIONやスタイルタグ残骸をフィルタ
-            if (speaker && !speakers.includes(speaker) && !/^(EMOTION|NORMAL|CHIBI_GAG|GEKIGA|SHOUJO|HORROR|BLANK|IMPACT|WATERCOLOR|SKETCH|RETRO|GLITTER|SHADOW)$/i.test(speaker)) {
+            if (speaker && !speakers.includes(speaker) && !/^(EMOTION|NORMAL|CHIBI_GAG|GEKIGA|SHOUJO|HORROR|BLANK|IMPACT|WATERCOLOR|RETRO|GLITTER|SHADOW)$/i.test(speaker)) {
               speakers.push(speaker);
             }
           }
@@ -1347,7 +1350,7 @@ SPEECH BUBBLE POSITION LOCK:
           }
         });
 
-        // Extract speakers from the panel text for explicit placement
+        // Extract speakers from dialogue lines
         const speakers = [];
         lines.forEach(line => {
           const match = line.match(/^(.*?)(?:[:：]|「)/);
@@ -1359,26 +1362,38 @@ SPEECH BUBBLE POSITION LOCK:
           }
         });
 
-        // Define the actors for this panel only based on speakers for left/right
+        // [v2.30] Visual Action テキストからも登場キャラ名を検出
+        const allPanelCharacters = [...speakers];
+        const fullText = fullPanelText;
+        validCharacters.forEach(charName => {
+          if (!allPanelCharacters.includes(charName) && fullText.includes(charName)) {
+            allPanelCharacters.push(charName);
+          }
+        });
+
         const rightActor = speakers.length > 0 ? speakers[0] : null;
         const leftActor = speakers.length > 1 ? speakers[1] : null;
-
         const panelActors = [];
         if (rightActor) panelActors.push(`[${rightActor}]`);
         if (leftActor) panelActors.push(`[${leftActor}]`);
 
+        const allCharBrackets = allPanelCharacters.map(c => `[${c}]`);
+
         if (panelActors.length > 0) {
-          return `CRITICAL CAST PLACEMENT: Ensure ${panelActors.join(' and ')} are the main focus. Other characters and background logic CAN exist in the scene. NEVER draw the exact same character twice.`;
+          let cloneWarning = `ANTI-CLONE REMINDER: ${allCharBrackets.join(', ')} — each appears EXACTLY ONCE. If a character is mentioned in both the placement rule AND the visual action, they are the SAME person — do NOT draw a second copy.`;
+          if (allPanelCharacters.length === 1) {
+            cloneWarning += `\nSOLO SHOT (SINGLE CHARACTER SCENE): Since only ${allCharBrackets[0]} is listed, THIS IS A SOLO SHOT. Do NOT draw ANY other person. Do NOT draw a second copy of ${allCharBrackets[0]}. Leave the surrounding space empty rather than adding people.`;
+          }
+          return `CRITICAL CAST PLACEMENT: Ensure ${panelActors.join(' and ')} are the main focus. ONLY the following characters may appear in this panel: ${allCharBrackets.join(', ')}. Each character appears EXACTLY ONCE. Do NOT draw any character who is not listed here. NEVER draw the exact same character twice.\n${cloneWarning}`;
         } else {
-          return `CRITICAL CAST PLACEMENT: Follow the panel's action naturally. Other characters CAN exist in the scene. NEVER draw the exact same character twice.`;
+          return `CRITICAL CAST PLACEMENT: Follow the panel's action naturally. NEVER draw the exact same character twice.`;
         }
       };
 
       const VAR_PANEL_1_KI = `(Camera: ${getRandomAngle()}), (Background: ${cleanLocation}), (Action: ${extractActionOnly(panel1Text)}), ${extractDialogueOnly(panel1Text)}`;
       const VAR_PANEL_2_SHO = `(Camera: ${getRandomAngle()}), (Background: ${cleanLocation}), (Action: ${extractActionOnly(panel2Text)}), ${extractDialogueOnly(panel2Text)}`;
       const VAR_PANEL_3_TEN = `(Camera: ${getRandomAngle()}), (Background: ${cleanLocation}), (Action: ${extractActionOnly(panel3Text)}), ${extractDialogueOnly(panel3Text)}`;
-      // [v1.9.5] Clean up Cast List to extract ONLY visual tags, removing all Japanese text
-      // This prevents the AI from hallucinating Japanese text onto the canvas based on personality descriptions.
+      // [v2.30] Clean up Cast List - フォーマット非依存WEIGHTSタグ抽出
       let cleanCastData = "";
       let currentCharacter = "";
       const castLines = castList.split('\n');
@@ -1388,16 +1403,19 @@ SPEECH BUBBLE POSITION LOCK:
           currentCharacter = line.replace(/^##\s*(?:\d+\.\s*)?/, '').trim();
           cleanCastData += `\n- Character [${currentCharacter}]: `;
         }
-        const tagsMatch = line.match(/(?:\[WEIGHTS?\]|\[weighted tags\]):\s*(.*?)(?:\||$)/i);
-        if (tagsMatch && currentCharacter) {
-          let tags = tagsMatch[1].trim();
+        if (!currentCharacter) continue;
+        if (customOutfit.trim() && (line.includes('服装') || line.includes('Outfit'))) continue;
+        const weightsMatch = line.match(/\[WEIGHTS?\]:\s*(.*)/i);
+        if (weightsMatch) {
+          let tags = weightsMatch[1].replace(/\|/g, '').trim();
           if (tags && tags !== "()" && tags !== "-") {
-            // [v2.09] Fix Outfit Override Hallucination: Strip outfit tags if custom outfit is specified
-            if (customOutfit.trim() && (line.includes('服装') || line.includes('Outfit'))) {
-              continue;
-            }
             cleanCastData += tags + ", ";
           }
+          continue;
+        }
+        const weightedTags = line.match(/\([a-zA-Z\s_-]+:\d+\.?\d*\)/g);
+        if (weightedTags && weightedTags.length >= 2) {
+          cleanCastData += weightedTags.join(', ') + ", ";
         }
       }
       if (!cleanCastData.trim()) {
@@ -1454,7 +1472,7 @@ CROSS-PANEL OUTFIT CONSISTENCY (MANDATORY): Every character MUST wear the EXACT 
 
 Camera and Composition Rules:
 ${dynamicCamera}
-CRITICAL ANTI-CLONING RULE: NEVER draw the exact same character twice inside a single panel. A character can only appear ONCE per panel.
+CRITICAL ANTI-CLONING RULE: NEVER draw the exact same character twice inside a single panel. A character can only appear ONCE per panel. Even if a character's name is mentioned multiple times in the instructions (e.g., in both the placement rule and the visual action description), they are still ONE person — draw them only ONCE.
 CRITICAL COMPOSITION RATIO: Always maintain a strict 2:3 (Manga typical vertical/portrait) golden ratio structure within each panel setup. Do not deform the composition.
 
 Technical Quality Definitions (System Dictionary):
