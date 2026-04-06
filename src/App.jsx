@@ -31,7 +31,7 @@ import {
 import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 
-const SYSTEM_VERSION = "v2.30 Alpha";
+const SYSTEM_VERSION = "v2.31 Alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -915,9 +915,9 @@ function App() {
           vfx: '',
         },
         CHIBI_GAG: {
-          style: 'In THIS PANEL ONLY, draw ALL characters in a super-deformed chibi style with 2-3 head-to-body proportions. Use simplified round faces, dot-like eyes, and exaggerated tiny limbs. The art style shifts to a cute comedic register.',
+          style: 'In THIS PANEL ONLY, draw ALL characters in a super-deformed chibi style with 2-3 head-to-body proportions. Use simplified round faces, dot-like eyes, and exaggerated tiny limbs. The art style shifts to a cute comedic register. CRITICAL GLASSES RULE: If a character wears glasses according to the Identity Matrix, their glasses MUST remain clearly visible even in chibi form. Draw oversized cute round glasses on their chibi face. Do NOT simplify away glasses — they are a core identity trait, not an optional accessory.',
           proportions: 'OVERRIDE: Use 2-3 head proportions for this panel ONLY. The 6-7 head lock is SUSPENDED.',
-          vfx: '(Exaggerated sweat drops:1.3), (popping veins:1.2), (comedic steam from head)',
+          vfx: '(Exaggerated sweat drops:1.3), (popping veins:1.2), (comedic steam from head), (glasses preserved on chibi face if character wears them:1.5)',
         },
         GEKIGA: {
           style: 'In THIS PANEL ONLY, shift to a mature realistic illustration style with heavy ink shadows, sharp angular facial features, detailed muscle/bone structure visible through skin tension, and dramatic chiaroscuro lighting. Characters look older and more intense.',
@@ -935,14 +935,18 @@ function App() {
           vfx: '(Dark heavy ink shadows covering most of panel:1.5), (dramatic underlighting:1.4), (distorted wide-angle perspective), (character eyes glowing in darkness)',
         },
         BLANK: {
-          style: 'In THIS PANEL ONLY, the affected character\'s eyes become completely white/blank dots with no pupils. Their face loses color (becomes pale/grey). A dark shadow or aura surrounds them. Their body is frozen stiff in a rigid pose.',
+          style: 'In THIS PANEL ONLY, the affected character\'s eyes become completely white/blank dots with no pupils. Their face loses color (becomes pale/grey). A dark shadow or aura surrounds them. Their body is frozen stiff in a rigid pose. CRITICAL GLASSES RULE: If a character wears glasses according to the Identity Matrix, their glasses MUST remain clearly visible on their face even with blank white eyes. Draw the glasses frames prominently and show the blank white eyes THROUGH the glasses lenses. Do NOT remove glasses for the blank eye effect.',
           proportions: '',
-          vfx: '(Blank white circular eyes with no pupils:1.5), (desaturated pale skin:1.3), (dark depression aura emanating:1.3), (frozen stiff mannequin-like pose)',
+          vfx: '(Blank white circular eyes with no pupils:1.5), (desaturated pale skin:1.3), (dark depression aura emanating:1.3), (frozen stiff mannequin-like pose), (glasses preserved if character wears them:1.5)',
         },
         IMPACT: {
           style: 'In THIS PANEL ONLY, use an explosive impact-frame composition. The main character\'s expression fills 60-80% of the panel. Dramatic radial speed lines burst from the center. Panel borders may appear to crack or shatter from the intensity.',
           proportions: 'OVERRIDE: Use 2-4 head proportions. Extreme close-up with foreshortening allowed.',
           vfx: '(Explosive radial speed lines from center:1.5), (screen-filling extreme close-up face:1.4), (cracking panel borders:1.2), (intense dramatic backlight)',
+          // [v2.31] マルチキャラパネル用フォールバック
+          styleMulti: 'In THIS PANEL ONLY, use a dramatic impact-frame composition with intense energy. Dramatic radial speed lines burst from the center of the panel. Panel borders may appear to crack or shatter from the intensity. IMPORTANT: Show ALL characters listed in the panel at full body or waist-up — do NOT zoom into a single face. Do NOT create a close-up of one character\'s face that fills most of the panel.',
+          proportionsMulti: '',
+          vfxMulti: '(Explosive radial speed lines from center:1.5), (cracking panel borders:1.2), (intense dramatic backlight), (dynamic action poses:1.3)',
         },
         WATERCOLOR: {
           style: 'In THIS PANEL ONLY, shift to a soft watercolor painting style with blurred edges, transparent color washes, and visible paper texture. The mood is nostalgic and dreamlike.',
@@ -955,9 +959,9 @@ function App() {
           vfx: '(Halftone dot pattern shading:1.4), (thick bold outlines:1.3), (retro manga panel borders), (classic manga shock symbols)',
         },
         GLITTER: {
-          style: 'In THIS PANEL ONLY, the main character radiates confidence with dramatic backlighting, flowing hair caught in an imaginary wind, sparkle effects around their face, and a confident smirk or triumphant expression.',
+          style: 'In THIS PANEL ONLY, the main character radiates confidence with dramatic golden backlighting, brilliant sparkle effects around their face, and a confident smirk or triumphant expression. Their hair is dramatically highlighted by the backlighting. Do NOT change any character\'s hair length or hairstyle from their reference description.',
           proportions: '',
-          vfx: '(Dramatic golden backlight aura:1.4), (flowing hair in wind:1.3), (sparkle particle effects around face:1.3), (confident smirk expression)',
+          vfx: '(Dramatic golden backlight aura:1.4), (brilliant sparkle highlights:1.3), (sparkle particle effects around face:1.3), (confident smirk expression)',
         },
         SHADOW: {
           style: 'In THIS PANEL ONLY, the scheming character is rendered mostly in dark silhouette with only their eyes glowing visibly. A menacing dark aura surrounds them. The mood is sinister and calculating.',
@@ -976,11 +980,32 @@ function App() {
         return 'NORMAL';
       };
 
-      // [v2.25] パネルの感情スタイル指示を構築
+      // [v2.31] パネルの感情スタイル指示を構築（マルチキャラ対応）
       const buildEmotionBlock = (panelText) => {
         const emo = extractEmotionStyle(panelText);
         if (emo === 'NORMAL') return '';
         const s = EMOTION_STYLES[emo];
+
+        // [v2.31] IMPACT等のソロ演出スタイルがマルチキャラパネルで使われた場合、
+        // 「顔アップで60-80%」指示がANTI-FLOATING-EYE RULEと矛盾するのを防ぐ
+        const speakersInPanel = [];
+        panelText.split('\n').forEach(line => {
+          const m = line.match(/^(.*?)(?:[:：]|「)/);
+          if (m && m[1].trim()) {
+            const sp = m[1].replace(/^[【\[（(]/, '').replace(/[】\]）)]$/, '').trim();
+            if (sp && !speakersInPanel.includes(sp)) speakersInPanel.push(sp);
+          }
+        });
+        const isMultiChar = speakersInPanel.length >= 2;
+
+        // マルチキャラ用フォールバックが定義されている場合はそちらを使用
+        if (isMultiChar && s.styleMulti) {
+          let block = `\nART STYLE SHIFT [${emo}]: ${s.styleMulti}`;
+          if (s.proportionsMulti) block += `\nPROPORTION OVERRIDE: ${s.proportionsMulti}`;
+          if (s.vfxMulti) block += `\nVFX: ${s.vfxMulti}`;
+          return block;
+        }
+
         let block = `\nART STYLE SHIFT [${emo}]: ${s.style}`;
         if (s.proportions) block += `\nPROPORTION OVERRIDE: ${s.proportions}`;
         if (s.vfx) block += `\nVFX: ${s.vfx}`;
@@ -1011,14 +1036,23 @@ function App() {
 
           if (!currentChar) return;
 
-          // [v2.30] 髪情報の抽出 - フォーマット非依存化
+          // [v2.31] 髪情報の抽出 - 特徴的スタイル優先ロジック
           if (cleanLine.includes('髪') || cleanLine.toLowerCase().includes('hair')) {
             const weightsMatch = cleanLine.match(/\[WEIGHTS?\]:\s*(.*)/i);
             const tagsSource = weightsMatch ? weightsMatch[1].replace(/\|/g, '') : cleanLine;
             const colorMatch = tagsSource.match(/(red|orange|blonde|yellow|brown|black|silver|white|blue|pink|green|purple|ginger)\s*hair/i);
             if (colorMatch && !currentChar.hairColor) currentChar.hairColor = colorMatch[1];
-            const styleMatch = tagsSource.match(/(internal\s*round\s*bob|chin-length\s*bob|bob|long[\s-]?hair|short[\s-]?hair|medium[\s-]?hair|very\s*long\s*hair|waist-length\s*hair|twintails?|twin\s*tails?|ponytail|bun|braid|pixie|buzz|straight\s*bob|hime\s*cut)/i);
-            if (styleMatch && !currentChar.hairStyle) currentChar.hairStyle = styleMatch[1];
+            // [v2.31] 特徴的スタイル（twintails, hime cut等）を汎用長さ記述（long hair等）より優先
+            // これにより Identity Matrix で「リン: long hair」ではなく「リン: twintails」と出力される
+            const distinctiveMatch = tagsSource.match(/(internal\s*round\s*bob|chin-length\s*bob|straight\s*bob|twintails?|twin\s*tails?|ponytail|hime\s*cut|bun|braid|pixie|buzz)/i);
+            const genericMatch = tagsSource.match(/(bob|very\s*long\s*hair|waist-length\s*hair|long[\s-]?hair|medium[\s-]?hair|short[\s-]?hair)/i);
+            if (!currentChar.hairStyle) {
+              if (distinctiveMatch) {
+                currentChar.hairStyle = distinctiveMatch[1];
+              } else if (genericMatch) {
+                currentChar.hairStyle = genericMatch[1];
+              }
+            }
           }
 
           // [v2.30] 眼鏡情報の抽出 - 全面改修
@@ -1156,16 +1190,22 @@ SPEECH BUBBLE PLACEMENT RULE (CRITICAL): Each character's speech bubble MUST be 
           // Check if line indicates dialogue
           const match = line.match(/^(.*?)(?:[:：]|「)/);
           let isDialogue = false;
-          let speaker = "Speaker";
           let clean = line;
 
           if (match && match[1].trim()) {
             let tempSpeaker = match[1].replace(/^(SFX|効果音|BGM|Action)/i, '').trim();
             tempSpeaker = tempSpeaker.replace(/^[【\[（(]/, '').replace(/[】\]）)]$/, '').trim();
 
-            // Validate if speaker is an actual character or generic known speaker
-            if (validCharacters.some(c => tempSpeaker.includes(c) || c.includes(tempSpeaker)) || tempSpeaker === "全員" || tempSpeaker === "Speaker") {
-              speaker = tempSpeaker;
+            // [v2.31] 話者名バリデーション強化: ト書き誤検出防止
+            // 「サエコが、売店のカウンターに」のような文章が話者名として誤検出されるのを防ぐ
+            const hasSentenceParticles = /[がをにでへはもとからまでより]/.test(tempSpeaker) && tempSpeaker.length > 5;
+            const isTooLong = tempSpeaker.length > 12;
+            if (hasSentenceParticles || isTooLong) {
+              // 文章構造を含む → ト書きなので話者名ではない
+            } else if (validCharacters.some(c => {
+              const nameOnly = c.split(/[（(]/)[0].trim();
+              return tempSpeaker === c || tempSpeaker === nameOnly || nameOnly === tempSpeaker;
+            }) || tempSpeaker === "全員" || tempSpeaker === "Speaker") {
               isDialogue = true;
             }
           } else if (line.trim().startsWith('「')) {
@@ -1188,7 +1228,7 @@ SPEECH BUBBLE PLACEMENT RULE (CRITICAL): Each character's speech bubble MUST be 
             clean = clean.trim();
 
             if (clean) {
-              formattedBubbles.push(`(Speech Bubble ${bubbleCount} by ${speaker}: "${clean}")`);
+              formattedBubbles.push(`(Speech Bubble ${bubbleCount}: "${clean}")`);
               bubbleCount++;
             }
           }
@@ -1297,14 +1337,36 @@ SPEECH BUBBLE PLACEMENT RULE (CRITICAL): Each character's speech bubble MUST be 
           if (/^状況[：:]/i.test(trimmed)) return false;
           return trimmed.includes('：') || trimmed.includes(':') || trimmed.includes('「');
         });
+        // [v2.31] キャラ名バリデーション用リスト
+        const validCharsForPlacement = [];
+        castList.split('\n').forEach(cLine => {
+          const m = cLine.replace(/\*\*/g, '').trim().match(/^##\s*(?:\d+\.\s*)?(.*)/);
+          if (m) {
+            const fullName = m[1].trim();
+            validCharsForPlacement.push(fullName);
+            const jpName = fullName.split(/[（(]/)[0].trim();
+            if (jpName && jpName !== fullName) validCharsForPlacement.push(jpName);
+          }
+        });
+
         const speakers = [];
         dialogLines.forEach(line => {
           const match = line.match(/^(.*?)(?:[:：]|「)/);
           if (match && match[1].trim()) {
             let speaker = match[1].replace(/^(SFX|効果音|BGM|Action|状況|EMOTION|\(.*?\)|\[.*?\])/gi, '').replace(/^[【\[（(]/, '').replace(/[】\]）)]$/, '').trim();
+            // [v2.31] ト書き誤検出防止: 助詞を含む長文は話者名ではない
+            const hasSentenceParticles = /[がをにでへはもとからまでより]/.test(speaker) && speaker.length > 5;
+            const isTooLong = speaker.length > 12;
+            if (hasSentenceParticles || isTooLong) return;
             // EMOTIONやスタイルタグ残骸をフィルタ
             if (speaker && !speakers.includes(speaker) && !/^(EMOTION|NORMAL|CHIBI_GAG|GEKIGA|SHOUJO|HORROR|BLANK|IMPACT|WATERCOLOR|RETRO|GLITTER|SHADOW)$/i.test(speaker)) {
-              speakers.push(speaker);
+              // [v2.31] キャラ名バリデーション: 登録キャラ名と一致する場合のみ話者として認定
+              if (validCharsForPlacement.some(c => {
+                const nameOnly = c.split(/[（(]/)[0].trim();
+                return speaker === c || speaker === nameOnly || nameOnly === speaker;
+              })) {
+                speakers.push(speaker);
+              }
             }
           }
         });
@@ -1371,6 +1433,19 @@ SPEECH BUBBLE POSITION LOCK:
           }
         });
 
+        // [v2.31] 吹き出し数カウント: セリフ行（「」付き）の数を数えて
+        // ソロショット判定の矛盾を防ぐ
+        let dialogueLineCount = 0;
+        lines.forEach(line => {
+          const trimmed = line.trim();
+          // 「」で囲まれたセリフ、または「話者：セリフ」形式をカウント
+          if (trimmed.includes('「') && trimmed.includes('」')) {
+            dialogueLineCount++;
+          } else if (/^[^（(【\[]*?[:：]\s*「/.test(trimmed)) {
+            dialogueLineCount++;
+          }
+        });
+
         const rightActor = speakers.length > 0 ? speakers[0] : null;
         const leftActor = speakers.length > 1 ? speakers[1] : null;
         const panelActors = [];
@@ -1381,8 +1456,14 @@ SPEECH BUBBLE POSITION LOCK:
 
         if (panelActors.length > 0) {
           let cloneWarning = `ANTI-CLONE REMINDER: ${allCharBrackets.join(', ')} — each appears EXACTLY ONCE. If a character is mentioned in both the placement rule AND the visual action, they are the SAME person — do NOT draw a second copy.`;
-          if (allPanelCharacters.length === 1) {
+          // [v2.31] ソロショット判定の改善:
+          // キャラ1人検出 AND 吹き出し2以上 → ソロショットにしない
+          // （吹き出し2つは通常2キャラの対話を意味するため）
+          if (allPanelCharacters.length === 1 && dialogueLineCount <= 1) {
             cloneWarning += `\nSOLO SHOT (SINGLE CHARACTER SCENE): Since only ${allCharBrackets[0]} is listed, THIS IS A SOLO SHOT. Do NOT draw ANY other person. Do NOT draw a second copy of ${allCharBrackets[0]}. Leave the surrounding space empty rather than adding people.`;
+          } else if (allPanelCharacters.length === 1 && dialogueLineCount >= 2) {
+            // 検出キャラ1人だが吹き出し2つ → 独白として扱う（ソロショットにはしない）
+            cloneWarning += `\nNOTE: Multiple speech bubbles in this panel are ALL spoken by ${allCharBrackets[0]} (monologue/soliloquy). Draw only ${allCharBrackets[0]} — do NOT add a second character just because there are multiple bubbles.`;
           }
           return `CRITICAL CAST PLACEMENT: Ensure ${panelActors.join(' and ')} are the main focus. ONLY the following characters may appear in this panel: ${allCharBrackets.join(', ')}. Each character appears EXACTLY ONCE. Do NOT draw any character who is not listed here. NEVER draw the exact same character twice.\n${cloneWarning}`;
         } else {
