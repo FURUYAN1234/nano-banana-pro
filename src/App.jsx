@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+﻿import React, { useState, useRef, useEffect } from 'react';
 
 // CANARY TEST
 console.log("HELLO_USER_FIXED_VERSION_2_25");
@@ -31,7 +31,7 @@ import {
 import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 
-const SYSTEM_VERSION = "v2.33 Alpha";
+const SYSTEM_VERSION = "v2.34 Alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -711,18 +711,23 @@ function App() {
          【シナリオ構成・演出の絶対厳守 (v1.8.94 Alpha)】
           0. **全員登場義務 (Mandatory All-Cast)**:
              - CastListに含まれている **全てのキャラクターを必ず1回以上登場させること。**
-             - 「メイン2人だけ」のような手抜きは禁止。全員に役割を与え、画面を賑やかにすること。
-             - 人数が多い場合は、1コマに複数人を詰め込んで密度の高い会話劇にせよ。
+             - 「メイン2人だけで4コマ全部回す」のような手抜きは禁止。全員に役割を与え、画面を賑やかにすること。
+             - **【人数バラエティの義務】**: 4コマで「話者数」を以下のルールで割り振れ:
+              ・話者1人のコマ（独白・リアクションショット）を**最低1つ**含めること
+              ・話者2人のコマ（掛け合い会話）を**最低1つ**含めること
+              ・残り2コマは話者1〜3人を自由に割り当てよ
+              ・**4コマ中3コマ以上が同じ話者数になるのは禁止**
+              ・CastListの全員が4コマのどこかに最低1回は登場すれば良い（全コマに全員出す必要はない）。
              - **【キャラ設定の完全保持】**: 提供された各キャラクターの属性（例: ギャル、オタク、優等生、ツッコミ役など）や固有の口調を絶対に混同するな。「Aキャラクター」と「Bキャラクター」の口調や性格が入れ替わるなどのエラーを厳格に禁止する。与えられた文字情報（性格設定）に完全に忠実なセリフを書け。
  
          1. **「原則: 語るな、見せろ」 (Show, Don't Tell... but Explain Briefly)**:
             - 絵での表現が最優先。補足説明は許可するが、**「短く、簡潔に」**行え。
             - 長文の自分語りや、説明調のセリフは厳禁。読者の読む気を削ぐな。
-            - **【最重要】ト書き（状況の説明）には、そのコマで「フキダシを発する」主役キャラクター（最大2名）の動作のみを記述し、それ以外のキャラクター（背後の登場人物など）は一切描写するな。"周りの4人も驚く"のような集団の描写も厳禁。**
+            - **【構図ルール】ト書き（状況の説明）では、主役の動作を中心に記述しつつ、同じコマにいる他キャラのリアクションや存在も簡潔に描写してよい。** 例: 「アカリがツッコむ。横でリンが呆れ、奥でサエコが爆笑している」のような群像描写は大歓迎。ただし1キャラあたりの描写は1文以内に留め、冗長にならないこと。同じ場面に居合わせている喋らないキャラがいる場合、ト書きの末尾に「（リアクション: キャラ名→表情や動作）」の形式で簡潔に添えよ。例: 「アカリがツッコむ（リアクション: リン→呆れ顔、サエコ→爆笑）」。4コマ中**最低2コマ**にはこのリアクション描写を含めること。
             - **【超重要】汗マークや怒りマークなどの「漫符」を描写する場合、文字ラベル（例: "POPPING VEIN", "LARGE SWEAT DROP"など）や設定資料に書かれるような矢印・注釈テキストを画面内に絶対に描画させないこと。純粋な視覚的シンボルのみを使用し、一切の英単語ラベルを排除せよ。**
  
          2. **テキストの量的制限 (Compact Text Quantity)**:
-            - **厳守**: 1コマあたりのフキダシは**「最大2つまで」**。
+            - **厳守**: 1コマあたりのフキダシは**「最大3つまで」**。（3人の掛け合いも積極活用せよ）
             - セリフは**「短い一文」**に収めよ（例: 「なんだって！？」OK、「それはつまり...ということなのか？」NG）。
             - **禁止**: セリフ内に「(怒って)」「(笑いながら)」等のト書き・感情描写を入れるな。絵で表現せよ。
              - **句読点・表現ルール**: セリフの末尾は必ず終止記号で締めよ。どの記号を使うかはセリフの感情・キャラの性格・場面の空気で自然に決めること。
@@ -1374,7 +1379,25 @@ SPEECH BUBBLE PLACEMENT RULE (CRITICAL): Each character's speech bubble MUST be 
             }
           }
         });
-        if (speakers.length >= 2) {
+        if (speakers.length >= 3) {
+          // [v2.33] 3-Zone Slotting: 3人以上の掛け合いパネル対応
+          const traits0 = getCharTraitsFromMatrix(speakers[0]);
+          const traits1 = getCharTraitsFromMatrix(speakers[1]);
+          const traits2 = getCharTraitsFromMatrix(speakers[2]);
+          return `CRITICAL PLACEMENT & IDENTITY (3-ZONE SLOTTING):
+- RIGHT ZONE: [${speakers[0]}] (${traits0 || 'see reference'}) — First speaker
+- CENTER ZONE: [${speakers[1]}] (${traits1 || 'see reference'}) — Second speaker
+- LEFT ZONE: [${speakers[2]}] (${traits2 || 'see reference'}) — Third speaker / Reactor
+VERIFY: Confirm hair color + glasses status for ALL three characters match the Identity Matrix.
+CHARACTER BODY POSITION LOCK (3-ZONE - DO NOT MIRROR):
+- [${speakers[0]}] MUST be on the RIGHT third of the panel.
+- [${speakers[1]}] MUST be in the CENTER of the panel.
+- [${speakers[2]}] MUST be on the LEFT third of the panel.
+- Maintain breathing room between zones to prevent overcrowding and attribute fusion.
+SPEECH BUBBLE FLOW (RIGHT-TO-LEFT):
+- [${speakers[0]}]'s bubble on the RIGHT, [${speakers[1]}]'s in CENTER, [${speakers[2]}]'s on LEFT.
+- Each bubble MUST point to its speaker. Flow: Right → Center → Left.`;
+        } else if (speakers.length >= 2) {
           const traits0 = getCharTraitsFromMatrix(speakers[0]);
           const traits1 = getCharTraitsFromMatrix(speakers[1]);
           // [v2.27] 人物+吹き出し位置固定ルール（左右入れ替わり全パターン対策）
@@ -1450,11 +1473,8 @@ SPEECH BUBBLE POSITION LOCK:
           }
         });
 
-        const rightActor = speakers.length > 0 ? speakers[0] : null;
-        const leftActor = speakers.length > 1 ? speakers[1] : null;
-        const panelActors = [];
-        if (rightActor) panelActors.push(`[${rightActor}]`);
-        if (leftActor) panelActors.push(`[${leftActor}]`);
+        // [v2.33] 3人掛け合い対応: スピーカー最大3名をメインアクターとして登録
+        const panelActors = speakers.slice(0, 3).map(s => `[${s}]`);
 
         const allCharBrackets = allPanelCharacters.map(c => `[${c}]`);
 
@@ -1469,7 +1489,14 @@ SPEECH BUBBLE POSITION LOCK:
             // 検出キャラ1人だが吹き出し2つ → 独白として扱う（ソロショットにはしない）
             cloneWarning += `\nNOTE: Multiple speech bubbles in this panel are ALL spoken by ${allCharBrackets[0]} (monologue/soliloquy). Draw only ${allCharBrackets[0]} — do NOT add a second character just because there are multiple bubbles.`;
           }
-          return `CRITICAL CAST PLACEMENT: Ensure ${panelActors.join(' and ')} are the main focus. ONLY the following characters may appear in this panel: ${allCharBrackets.join(', ')}. Each character appears EXACTLY ONCE. Do NOT draw any character who is not listed here. NEVER draw the exact same character twice.\n${cloneWarning}`;
+          // [v2.33] 非登場キャストを背景候補としてImagenに提示
+          const otherCast = validCharacters.filter(c => !allPanelCharacters.includes(c));
+          const otherBrackets = otherCast.map(c => `[${c}]`);
+          let backgroundHint = '';
+          if (otherBrackets.length > 0 && allPanelCharacters.length <= 3) {
+            backgroundHint = `\nSUGGESTED BACKGROUND CAST: ${otherBrackets.join(', ')} may also appear in the background or periphery of this panel as onlookers or reactors. When the scene takes place in a shared space (classroom, office, park, etc.), drawing them in the background adds visual richness. They must be clearly secondary (smaller, partially visible, or in the background) and must NOT be confused with the main speakers.`;
+          }
+          return `CRITICAL CAST PLACEMENT: Ensure ${panelActors.join(' and ')} are the main focus. The following named characters appear in this panel: ${allCharBrackets.join(', ')}. Each named character appears EXACTLY ONCE. NEVER draw the exact same named character twice.\n${cloneWarning}${backgroundHint}`;
         } else {
           return `CRITICAL CAST PLACEMENT: Follow the panel's action naturally. NEVER draw the exact same character twice.`;
         }
