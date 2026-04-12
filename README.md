@@ -317,7 +317,7 @@ An assistant for designing detailed character sheets and settings.
 
 #### 4. AI Comic Translation Tool
 A tool for translating Japanese manga to English using AI.
-AIを使って日本語漫画を英語に翻訳するツールです。
+AIを使って日本語漫画を多言語に翻訳するツールです。
 - [Explanation / 解説](https://note.com/happy_duck780/n/nbdf826604ce7)
 - [Demo / デモ](https://furuyan1234.github.io/comic-translation/)
 - [Code / コード](https://github.com/FURUYAN1234/comic-translation)
