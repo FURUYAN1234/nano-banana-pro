@@ -1,4 +1,4 @@
-﻿import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 
 // CANARY TEST
 console.log("HELLO_USER_FIXED_VERSION_2_25");
@@ -25,13 +25,14 @@ import {
   ArrowRight,
   Globe,
   Edit3,
-  Download
+  Download,
+  ChevronDown
 } from 'lucide-react';
 // --- Imports ---
 import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 
-const SYSTEM_VERSION = "v2.34 Alpha";
+const SYSTEM_VERSION = "v2.35 Alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -106,21 +107,20 @@ const applySafetyAgeUp = (promptText) => {
     appliedCount++;
   }
 
-  // --- レベル8: 危険なカメラアングルの緩和 ---
-  // ローアングル（Worm's Eye）だけが危険。上方向から見下ろす or 横からの構図に振り替える。
-  // 「退屈な棒立ちアイレベル」にはしない。ダイナミックさを維持する。
-  result = result.replace(
-    /Extreme Low Angle \(Worm's Eye view, Full Body\)/g,
-    'Extreme High Angle (Bird\'s Eye view, dramatic depth)'
-  );
-  result = result.replace(
-    /Extreme Low Angle \(Worm's Eye view\)/g,
-    'Dutch Angle (Tilted camera, dramatic action composition)'
-  );
-  result = result.replace(
-    /Cinematic Low Angle \(Epic perspective\)/g,
-    'Cinematic Over-the-shoulder (Epic perspective, dramatic depth)'
-  );
+  // --- レベル8: カメラアングル置換 → [v2.35] アオリ解禁のため無効化 ---
+  // ローアングル（Worm's Eye）等はそのまま出力。弾かれた場合は救済パネルで対応。
+  // result = result.replace(
+  //   /Extreme Low Angle \(Worm's Eye view, Full Body\)/g,
+  //   'Extreme High Angle (Bird\'s Eye view, dramatic depth)'
+  // );
+  // result = result.replace(
+  //   /Extreme Low Angle \(Worm's Eye view\)/g,
+  //   'Dutch Angle (Tilted camera, dramatic action composition)'
+  // );
+  // result = result.replace(
+  //   /Cinematic Low Angle \(Epic perspective\)/g,
+  //   'Cinematic Over-the-shoulder (Epic perspective, dramatic depth)'
+  // );
 
   if (appliedCount > 0) {
     console.log(`[Safety Age-Up v2.27c] ${appliedCount}種類のセーフティ変換を適用しました`);
@@ -364,6 +364,12 @@ function App() {
   const [colorMode, setColorMode] = useState("auto");
   const [isDragging, setIsDragging] = useState(false);
   const [genLog, setGenLog] = useState([]); // New Log State
+
+  // [v2.35] コンテンツポリシー救済パネル
+  const [policyErrorMsg, setPolicyErrorMsg] = useState("");
+  const [isFixingPolicy, setIsFixingPolicy] = useState(false);
+  const [policyFixLog, setPolicyFixLog] = useState("");
+  const [isPolicyPanelOpen, setIsPolicyPanelOpen] = useState(false);
 
   // Logic centralization for v1.4.9
   const isAssembleDisabled = isAssembling || !castList || castList.length < 20 || !scenario || scenario.length < 20 || isSearching || isAnalyzing; // [v1.8.83] Relaxed limits from 50 to 20
@@ -878,6 +884,10 @@ function App() {
     if (!castList || !scenario) return showStatus("キャストとシナリオが必要です。");
     setIsAssembling(true);
     setFinalPrompt(""); // Clear previous prompt to indicate loading
+    // [v2.35] 救済パネルリセット
+    setPolicyErrorMsg("");
+    setPolicyFixLog("");
+    setIsPolicyPanelOpen(false);
     setAssembleThought("スーパーフル・プロトコル v121.3 (Universal Master) を起動中... 全データの整合性をチェックしています...");
 
     // Fake Streaming Effect
@@ -1738,9 +1748,13 @@ Important constraints:
       let guideLines = [];
 
       if (errMsg.includes("sensitive") || errMsg.includes("Responsible AI") || errMsg.includes("400")) {
+        // [v2.35] 救済パネルにエラーメッセージを自動入力して展開
+        setPolicyErrorMsg(errMsg);
+        setIsPolicyPanelOpen(true);
         guideLines = [
           "[ERROR GUIDE] 🚨 プロンプトがAIの安全基準（NSFW等の検閲）に引っかかり、生成が拒否されました。",
-          "[ERROR GUIDE] 【対処法】「シナリオ」や「キャラクター設定」の中に、センシティブ・不適切な単語（服が破ける、過激な暴力、露骨な表現など）が含まれていないか確認し、削除して再試行してください。"
+          "[ERROR GUIDE] 【対処法】下の🛡️「コンテンツポリシー救済パネル」にエラーメッセージが自動入力されました。",
+          "[ERROR GUIDE] 「配慮版プロンプトを再生成する」ボタンを押すと、AIが安全な表現に修正します。"
         ];
       } else if (errMsg.includes("not found") || errMsg.includes("not supported") || errMsg.includes("404") || errMsg.includes("403")) {
         guideLines = [
@@ -1771,6 +1785,46 @@ Important constraints:
       // alert(`画像生成に失敗しました。\nエラー: ${ error.message } `); // Disable alert to show UI guide instead
     } finally {
       setIsAssembling(false);
+    }
+  };
+
+  // --- [v2.35] コンテンツポリシー救済: 配慮版プロンプト再生成 ---
+  const regenerateSafePrompt = async () => {
+    if (!finalPrompt || !policyErrorMsg.trim()) return;
+    setIsFixingPolicy(true);
+    setPolicyFixLog("コンテンツポリシーアドバイザーを起動中...");
+
+    try {
+      const metaPrompt = `あなたは画像生成プロンプトのコンテンツポリシーアドバイザーです。
+
+以下の画像生成プロンプトが、AIの安全基準（コンテンツポリシー）により拒否されました。
+
+【ユーザーからのエラー情報・AI回答】:
+${policyErrorMsg.trim()}
+
+【拒否された元のプロンプト】:
+${finalPrompt}
+
+【指示】:
+1. 上記プロンプトの中で、コンテンツポリシーに抵触している箇所（未成年と制服の組み合わせ、過激な表現、カメラアングルなど）を特定し、安全な表現に置換してください。
+2. 【最重要】置換した部分以外は**一切変更・省略せず、元のプロンプトの長さ、ディテール、フォーマット（英語のカンマ区切り）を完全に維持**してください。AI独自の要約や意図の簡略化は厳禁です。
+3. 修正後のプロンプト全文のみをそのままテキストで出力してください。説明や前置きは一切不要です。`;
+
+      const result = await callThinkingGemini(metaPrompt, [], null, (msg) => {
+        setPolicyFixLog(prev => prev + `\n> ${msg}`);
+      });
+
+      if (result.text && result.text.length > 100) {
+        setFinalPrompt(result.text.trim());
+        setPolicyFixLog(prev => prev + "\n> [SUCCESS] 配慮版プロンプトを生成しました。STEP3のプロンプト欄に反映済みです。");
+      } else {
+        setPolicyFixLog(prev => prev + "\n> [WARNING] AIの応答が短すぎます。エラーメッセージをより詳しく入力して再試行してください。");
+      }
+    } catch (error) {
+      console.error(error);
+      setPolicyFixLog(prev => prev + `\n> [ERROR] ${error.message}`);
+    } finally {
+      setIsFixingPolicy(false);
     }
   };
 
@@ -2326,6 +2380,76 @@ Important constraints:
                         文字情報だけでなく画像をカンニングできるため、キャラのクオリティと再現度が飛躍的に向上します！
                       </div>
                     </div>
+                  </div>
+
+                  {/* [v2.35] コンテンツポリシー救済パネル（折りたたみ式） */}
+                  <div className="mt-4 border border-yellow-500/30 rounded-lg overflow-hidden">
+                    <button
+                      className="w-full flex items-center justify-between px-3 py-2 bg-yellow-900/20 hover:bg-yellow-900/30 transition-colors cursor-pointer"
+                      onClick={() => setIsPolicyPanelOpen(!isPolicyPanelOpen)}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span>🛡️ コンテンツポリシーで画像生成が拒否された場合</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <span className="text-[9px] text-slate-600 font-mono">{isPolicyPanelOpen ? '閉じる' : 'クリックで開く'}</span>
+                        <ChevronDown size={14} className={`text-yellow-400/60 transition-transform duration-300 ${isPolicyPanelOpen ? 'rotate-180' : ''}`} />
+                      </div>
+                    </button>
+
+                    {isPolicyPanelOpen && (
+                      <div className="p-3 bg-yellow-950/20 space-y-3">
+                        <p className="text-[11px] text-yellow-200/70 leading-relaxed">
+                          GeminiのエラーメッセージやGeminiに理由を聞いた回答を下の欄に貼ってください。<br/>
+                          「配慮版プロンプトを再生成する」ボタンを押すとSTEP3のプロンプトが修正されて上書きされます。<br/>
+                          再度STEP4で画像を生成するかGeminiにプロンプトとキャラクターシートを貼って画像を生成してみて下さい。
+                        </p>
+
+                        <hr className="border-yellow-500/20" />
+
+                        <div className="text-[10px] text-slate-400 leading-relaxed">
+                          <p className="mb-1">💡 <strong className="text-yellow-300">Gemini Web版で拒否された場合の聞き方:</strong></p>
+                          <p className="mb-1">以下のテキストをGeminiにそのまま送ると、具体的な原因を教えてもらえます。<br/>Geminiの回答を下の欄に貼って「配慮版プロンプトを再生成する」を押してください。</p>
+                          <button
+                            className="text-[10px] bg-slate-700 hover:bg-slate-600 text-white px-2 py-1 rounded transition-colors"
+                            onClick={() => {
+                              navigator.clipboard.writeText("先ほどのプロンプトが拒否された理由を教えてください。具体的にどの単語・表現がコンテンツポリシーに違反していましたか？");
+                              showStatus("クリップボードにコピーしました");
+                            }}
+                          >
+                            📋 「先ほどのプロンプトが拒否された理由を教えてください…」をコピー
+                          </button>
+                        </div>
+
+                        <hr className="border-yellow-500/20" />
+
+                        <textarea
+                          style={{ color: '#ffffff', backgroundColor: '#000000' }}
+                          className="w-full bg-[#000000] text-white text-xs p-2 rounded border border-yellow-500/20 focus:border-yellow-500/50 outline-none min-h-[60px] font-mono placeholder-slate-500"
+                          value={policyErrorMsg}
+                          onChange={(e) => setPolicyErrorMsg(e.target.value)}
+                          placeholder={"例: I can't generate images that depict minors...\n例: Geminiの回答: 制服と未成年の組み合わせが原因...\n例: アオリ構図が弾かれたかもしれない"}
+                        />
+
+                        <button
+                          className="w-full bg-yellow-600 hover:bg-yellow-500 disabled:bg-slate-700 disabled:opacity-50 text-white font-bold py-2 rounded-lg flex items-center justify-center gap-2 transition-all text-sm"
+                          onClick={regenerateSafePrompt}
+                          disabled={isFixingPolicy || !policyErrorMsg.trim() || !finalPrompt}
+                        >
+                          {isFixingPolicy ? (
+                            <><Loader2 size={16} className="animate-spin" /> 分析・修正中...</>
+                          ) : (
+                            <><Wand2 size={16} /> 配慮版プロンプトを再生成する</>
+                          )}
+                        </button>
+
+                        {policyFixLog && (
+                          <pre className="text-[10px] text-green-400 bg-black/60 p-2 rounded whitespace-pre-wrap font-mono max-h-32 overflow-y-auto">
+                            {policyFixLog}
+                          </pre>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   {/* Generation Log Terminal */}
