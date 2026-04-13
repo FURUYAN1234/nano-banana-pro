@@ -32,7 +32,7 @@ import {
 import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 
-const SYSTEM_VERSION = "v2.36 Alpha";
+const SYSTEM_VERSION = "v2.37 Alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -1174,13 +1174,11 @@ SPEECH BUBBLE PLACEMENT RULE (CRITICAL): Each character's speech bubble MUST be 
         "Extreme Low Angle (Worm's Eye view, Full Body)",
         "Extreme High Angle (Bird's Eye view, looking down)",
         "Dutch Angle (Tilted camera, dramatic composition)",
-        "Dynamic Action Wide Shot (Full Body, dynamic pose)",
-        "Over-the-shoulder shot (Wide perspective)",
-        "Wide Establishing Shot (Entire scene visible)",
-        "Extreme Wide Angle Lens (Fisheye effect, dramatic depth)",
-        "Medium-Full Shot (Showing body language clearly)",
-        "Medium Shot (Waist-up, showing character interaction)",
-        "Cinematic Low Angle (Epic perspective)"
+        "Dynamic Action Wide Shot (Full Body, dynamic pose with vertical distortion)",
+        "Over-the-shoulder dramatic shot (Wide perspective, looking up/down at the subject)",
+        "Extreme Wide Angle Lens (Fisheye effect, dramatic depth and bending of lines)",
+        "Cinematic Low Angle (Epic perspective, looking up from the ground)",
+        "Dynamic Aerial Shot (Looking steeply down at the action)"
       ];
       const getRandomAngle = () => cameraAngles[Math.floor(Math.random() * cameraAngles.length)];
 
@@ -1593,7 +1591,7 @@ CROSS-PANEL OUTFIT CONSISTENCY (MANDATORY): Every character MUST wear the EXACT 
 Camera and Composition Rules:
 ${dynamicCamera}
 CRITICAL ANTI-CLONING RULE: NEVER draw the exact same character twice inside a single panel. A character can only appear ONCE per panel. Even if a character's name is mentioned multiple times in the instructions (e.g., in both the placement rule and the visual action description), they are still ONE person — draw them only ONCE.
-CRITICAL COMPOSITION RATIO: Always maintain a strict 2:3 (Manga typical vertical/portrait) golden ratio structure within each panel setup. Do not deform the composition.
+CRITICAL COMPOSITION RATIO: Always maintain a strict 2:3 (Manga typical vertical/portrait) golden ratio structure within each panel setup. While keeping this ratio, you MUST warp the interior perspective dramatically as instructed.
 
 Technical Quality Definitions (System Dictionary):
 (Meticulously clean line art: 1.5)
@@ -1607,28 +1605,28 @@ Technical Quality Definitions (System Dictionary):
 ${buildEmotionBlock(panel1Text)}
 ${extractPlacementRule(panel1Text)}
 ${extractCastLimitRule(panel1Text)}
-Visual Action (Do NOT write this as text on the canvas, draw it visually): [Camera Angle: ${getRandomAngle()} - Ensure camera is NOT flat eye-level] ${injectOutfitReminder(extractActionOnly(panel1Text, extractPlacementRule(panel1Text)))}.
+Visual Action (Do NOT write this as text on the canvas, draw it visually): The scene is shot from a ${getRandomAngle()} (CRITICAL: Ensure the camera is absolutely NOT flat or eye-level). In this dynamic perspective, we see: ${injectOutfitReminder(extractActionOnly(panel1Text, extractPlacementRule(panel1Text)))}.
 Dialogue (ONLY write this inside speech bubbles): ${extractDialogueOnly(panel1Text)}.
 
 ## Panel 2
 ${buildEmotionBlock(panel2Text)}
 ${extractPlacementRule(panel2Text)}
 ${extractCastLimitRule(panel2Text)}
-Visual Action (Do NOT write this as text on the canvas, draw it visually): [Camera Angle: ${getRandomAngle()} - Ensure camera is NOT flat eye-level] ${injectOutfitReminder(extractActionOnly(panel2Text, extractPlacementRule(panel2Text)))}.
+Visual Action (Do NOT write this as text on the canvas, draw it visually): The scene is shot from a ${getRandomAngle()} (CRITICAL: Ensure the camera is absolutely NOT flat or eye-level). In this dynamic perspective, we see: ${injectOutfitReminder(extractActionOnly(panel2Text, extractPlacementRule(panel2Text)))}.
 Dialogue (ONLY write this inside speech bubbles): ${extractDialogueOnly(panel2Text)}.
 
 ## Panel 3
 ${buildEmotionBlock(panel3Text)}
 ${extractPlacementRule(panel3Text)}
 ${extractCastLimitRule(panel3Text)}
-Visual Action (Do NOT write this as text on the canvas, draw it visually): [Camera Angle: ${getRandomAngle()} - Ensure camera is NOT flat eye-level] ${injectOutfitReminder(extractActionOnly(panel3Text, extractPlacementRule(panel3Text)))}.
+Visual Action (Do NOT write this as text on the canvas, draw it visually): The scene is shot from a ${getRandomAngle()} (CRITICAL: Ensure the camera is absolutely NOT flat or eye-level). In this dynamic perspective, we see: ${injectOutfitReminder(extractActionOnly(panel3Text, extractPlacementRule(panel3Text)))}.
 Dialogue (ONLY write this inside speech bubbles): ${extractDialogueOnly(panel3Text)}.
 
 ## Panel 4 (Bottom)
 ${buildEmotionBlock(panel4Text)}
 ${extractPlacementRule(panel4Text)}
 ${extractCastLimitRule(panel4Text)}
-Visual Action (Do NOT write this as text on the canvas, draw it visually): [Camera Angle: ${getRandomAngle()} - Ensure camera is NOT flat eye-level] ${injectOutfitReminder(extractActionOnly(panel4Text, extractPlacementRule(panel4Text)))}.
+Visual Action (Do NOT write this as text on the canvas, draw it visually): The scene is shot from a ${getRandomAngle()} (CRITICAL: Ensure the camera is absolutely NOT flat or eye-level). In this dynamic perspective, we see: ${injectOutfitReminder(extractActionOnly(panel4Text, extractPlacementRule(panel4Text)))}.
 Dialogue (ONLY write this inside speech bubbles): ${extractDialogueOnly(panel4Text)}.
 
 Important constraints:
