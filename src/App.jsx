@@ -32,7 +32,7 @@ import {
 import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 
-const SYSTEM_VERSION = "v2.40 Alpha";
+const SYSTEM_VERSION = "v2.41 Alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -371,6 +371,16 @@ function App() {
   const [policyFixLog, setPolicyFixLog] = useState("");
   const [isPolicyPanelOpen, setIsPolicyPanelOpen] = useState(false);
 
+  // [v2.41] シナリオ強化パネル
+  const [enhanceExpressions, setEnhanceExpressions] = useState(false); // 表情強化
+  const [enhanceBodyLang, setEnhanceBodyLang] = useState(false);       // ボディランゲージ強化
+  const [enhanceEffects, setEnhanceEffects] = useState(false);         // 照明・演出強化
+  const [enhanceBackgrounds, setEnhanceBackgrounds] = useState(false); // 背景強化
+  const [isEnhancing, setIsEnhancing] = useState(false);
+  const [enhanceLog, setEnhanceLog] = useState("");
+  const [isEnhancePanelOpen, setIsEnhancePanelOpen] = useState(false);
+  const [originalScenario, setOriginalScenario] = useState(""); // 強化前の原文保持用
+
   // Logic centralization for v1.4.9
   const isAssembleDisabled = isAssembling || !castList || castList.length < 20 || !scenario || scenario.length < 20 || isSearching || isAnalyzing; // [v1.8.83] Relaxed limits from 50 to 20
 
@@ -547,6 +557,89 @@ function App() {
     } finally {
       clearInterval(thinkTimer);
       setIsAnalyzing(false);
+    }
+  };
+
+  // --- Step 2.5: Scenario Enhancement (v2.41) ---
+  // シナリオ強化機能: 選択されたカテゴリに基づいてシナリオの演出を強化する
+  const enhanceScenario = async () => {
+    if (!scenario || scenario.length < 20) return showStatus("先にシナリオを生成してください。");
+    const anySelected = enhanceExpressions || enhanceBodyLang || enhanceEffects || enhanceBackgrounds;
+    if (!anySelected) return showStatus("少なくとも1つの強化カテゴリをONにしてください。");
+    if (isEnhancing) return;
+
+    setIsEnhancing(true);
+    setEnhanceLog("> [START] シナリオ強化を開始します...");
+
+    // 強化前の原文を保存（初回のみ。既に保存済みなら上書きしない）
+    if (!originalScenario) {
+      setOriginalScenario(scenario);
+      setEnhanceLog(prev => prev + "\n> [SAVE] 元のシナリオを保存しました（元に戻すボタンで復元可能）");
+    }
+
+    // カテゴリ別の強化指示を組み立て
+    const enhanceCategories = [];
+    if (enhanceExpressions) {
+      enhanceCategories.push("【表情の強化】各キャラの表情描写をもっと大げさ・劇的にしてください。例: 驚きなら「白目を剥いて口を大きく開け」、怒りなら「血管マーク浮かべて歯を食いしばり」、喜びなら「満面の笑みで目をキラキラ輝かせる」。微笑みや軽い驚きのような控えめな表現は、激しいリアクションに書き換えてください。");
+    }
+    if (enhanceBodyLang) {
+      enhanceCategories.push("【ボディランゲージの強化】棒立ちの状態を禁止します。全身で感情を表現するリアクションを追加してください。例: のけぞる、前のめりになる、腕を大きく振り上げる、机を叩く、椅子から転げ落ちる、相手の肩を掴む等。体全体を使った大きなアクションを書いてください。");
+    }
+    if (enhanceEffects) {
+      enhanceCategories.push("【照明・演出の強化】各コマの「状況」欄に映画的な演出効果を追加してください。例: 逆光で人物がシルエットになる、リムライトで輪郭が光る、光の粒子が舞う、パンチラインのコマには集中線やインパクトフレーム、衝撃波、まばゆい光などの視覚効果をト書きとして追記してください。");
+    }
+    if (enhanceBackgrounds) {
+      enhanceCategories.push("【背景の強化】各コマの背景描写を詳細にしてください。例: 教室なら机の配置や窓からの光、黒板の書き込み、壁のポスター等の小道具を追加。屋外なら天候、雲の形、木々、通行人、建物の描き込みなど空間の奥行きを出す要素を追記してください。");
+    }
+
+    setEnhanceLog(prev => prev + `\n> [CONFIG] 強化カテゴリ: ${enhanceCategories.length}個`);
+
+    const enhancePrompt = `あなたは4コマ漫画のシナリオ演出家です。以下のシナリオの**演出力**を大幅に強化してください。
+
+${enhanceCategories.join("\n\n")}
+
+【絶対に守るルール】
+- シナリオの形式・構造（Topic:, Location:, [1コマ目]〜[4コマ目]の書式）は一切変えない
+- セリフ（「」内の台詞）の文言は変えない
+- キャラクター名は変えない
+- 新しいキャラクターを追加しない
+- コマ数は4コマのまま
+- 出力は元のシナリオと完全に同じテキスト形式で返す（余計な説明や前置きは不要）
+
+【元のシナリオ】
+${scenario}
+
+上記シナリオの演出を指定カテゴリに沿って強化し、同じ形式で出力してください。`;
+
+    try {
+      setEnhanceLog(prev => prev + "\n> [API] Gemini にシナリオ強化をリクエスト中...");
+      const result = await callThinkingGemini(enhancePrompt, [], castList, (msg) => {
+        setEnhanceLog(prev => prev + `\n> [API] ${msg}`);
+      });
+
+      if (result && result.text && result.text.length > 50) {
+        setScenario(result.text.trim());
+        setEnhanceLog(prev => prev + `\n> [SUCCESS] シナリオを強化しました！（${result.text.length}文字）\n> [INFO] 「元に戻す」ボタンで強化前のシナリオに戻せます。`);
+        showStatus("シナリオ強化完了！");
+      } else {
+        setEnhanceLog(prev => prev + "\n> [ERROR] AIの応答が短すぎます。もう一度お試しください。");
+        showStatus("強化失敗: AIの応答が不十分です");
+      }
+    } catch (error) {
+      setEnhanceLog(prev => prev + `\n> [ERROR] ${error.message}`);
+      showStatus("強化エラー: " + error.message);
+    } finally {
+      setIsEnhancing(false);
+    }
+  };
+
+  // シナリオを強化前の原文に復元する
+  const revertScenario = () => {
+    if (originalScenario) {
+      setScenario(originalScenario);
+      setOriginalScenario("");
+      setEnhanceLog(prev => prev + "\n> [REVERT] 元のシナリオに復元しました。");
+      showStatus("シナリオを元に戻しました");
     }
   };
 
@@ -2220,6 +2313,120 @@ ${finalPrompt}
                     placeholder="ここに生成されたシナリオが表示されます..."
                   />
                 </div>
+
+                {/* [v2.41] シナリオ強化パネル（折りたたみ式） */}
+                {scenario && scenario.length > 20 && (
+                  <div className="mt-2 border border-orange-500/30 rounded-lg overflow-hidden">
+                    <button
+                      className="w-full flex items-center justify-between px-3 py-2 bg-orange-900/20 hover:bg-orange-900/30 transition-colors cursor-pointer"
+                      onClick={() => setIsEnhancePanelOpen(!isEnhancePanelOpen)}
+                    >
+                      <div className="flex items-center gap-2 text-sm">
+                        <span>🔥</span>
+                        <span className="font-bold text-orange-300">シナリオ強化 (Scenario Enhance)</span>
+                        {originalScenario && <span className="text-[9px] bg-green-600/30 text-green-300 px-1.5 py-0.5 rounded-full border border-green-500/30">強化済み</span>}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <span className="text-[9px] text-slate-600 font-mono">{isEnhancePanelOpen ? '閉じる' : 'クリックで開く'}</span>
+                        <ChevronDown size={14} className={`text-orange-400/60 transition-transform duration-300 ${isEnhancePanelOpen ? 'rotate-180' : ''}`} />
+                      </div>
+                    </button>
+
+                    {isEnhancePanelOpen && (
+                      <div className="p-4 bg-orange-950/10 space-y-3">
+                        <p className="text-[11px] text-orange-200/70 leading-relaxed">
+                          生成済みシナリオの演出を強化します。強化したいカテゴリをONにして「強化実行」を押してください。<br/>
+                          ⚠️ 演出が過激になるとSTEP4でコンテンツポリシーに引っかかる場合があります（既存の救済機能で対応可能）。
+                        </p>
+
+                        {/* 4つのトグルスイッチ */}
+                        <div className="grid grid-cols-2 gap-2">
+                          {/* 表情 */}
+                          <label className="flex items-center gap-2 p-2 rounded-lg bg-black/30 border border-white/5 cursor-pointer hover:border-orange-500/30 transition-colors">
+                            <div className={`relative w-10 h-5 rounded-full transition-colors duration-200 ${enhanceExpressions ? 'bg-orange-500' : 'bg-slate-700'}`}
+                              onClick={() => setEnhanceExpressions(!enhanceExpressions)}
+                            >
+                              <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-md transition-transform duration-200 ${enhanceExpressions ? 'translate-x-5' : 'translate-x-0.5'}`} />
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="text-xs font-bold text-white">😱 表情</span>
+                              <span className="text-[9px] text-slate-500">大げさな表情に強化</span>
+                            </div>
+                          </label>
+
+                          {/* ボディランゲージ */}
+                          <label className="flex items-center gap-2 p-2 rounded-lg bg-black/30 border border-white/5 cursor-pointer hover:border-orange-500/30 transition-colors">
+                            <div className={`relative w-10 h-5 rounded-full transition-colors duration-200 ${enhanceBodyLang ? 'bg-orange-500' : 'bg-slate-700'}`}
+                              onClick={() => setEnhanceBodyLang(!enhanceBodyLang)}
+                            >
+                              <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-md transition-transform duration-200 ${enhanceBodyLang ? 'translate-x-5' : 'translate-x-0.5'}`} />
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="text-xs font-bold text-white">🤸 身体</span>
+                              <span className="text-[9px] text-slate-500">全身リアクション追加</span>
+                            </div>
+                          </label>
+
+                          {/* 照明・演出 */}
+                          <label className="flex items-center gap-2 p-2 rounded-lg bg-black/30 border border-white/5 cursor-pointer hover:border-orange-500/30 transition-colors">
+                            <div className={`relative w-10 h-5 rounded-full transition-colors duration-200 ${enhanceEffects ? 'bg-orange-500' : 'bg-slate-700'}`}
+                              onClick={() => setEnhanceEffects(!enhanceEffects)}
+                            >
+                              <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-md transition-transform duration-200 ${enhanceEffects ? 'translate-x-5' : 'translate-x-0.5'}`} />
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="text-xs font-bold text-white">✨ 演出</span>
+                              <span className="text-[9px] text-slate-500">照明・VFXを追加</span>
+                            </div>
+                          </label>
+
+                          {/* 背景 */}
+                          <label className="flex items-center gap-2 p-2 rounded-lg bg-black/30 border border-white/5 cursor-pointer hover:border-orange-500/30 transition-colors">
+                            <div className={`relative w-10 h-5 rounded-full transition-colors duration-200 ${enhanceBackgrounds ? 'bg-orange-500' : 'bg-slate-700'}`}
+                              onClick={() => setEnhanceBackgrounds(!enhanceBackgrounds)}
+                            >
+                              <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-md transition-transform duration-200 ${enhanceBackgrounds ? 'translate-x-5' : 'translate-x-0.5'}`} />
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="text-xs font-bold text-white">🏙️ 背景</span>
+                              <span className="text-[9px] text-slate-500">背景描写を詳細化</span>
+                            </div>
+                          </label>
+                        </div>
+
+                        {/* 実行・元に戻すボタン */}
+                        <div className="flex gap-2">
+                          <button
+                            className="flex-1 bg-orange-600 hover:bg-orange-500 disabled:bg-slate-700 disabled:opacity-50 text-white font-bold py-2 rounded-lg flex items-center justify-center gap-2 transition-all text-sm"
+                            onClick={enhanceScenario}
+                            disabled={isEnhancing || !(enhanceExpressions || enhanceBodyLang || enhanceEffects || enhanceBackgrounds)}
+                          >
+                            {isEnhancing ? (
+                              <><Loader2 size={16} className="animate-spin" /> 強化中...</>
+                            ) : (
+                              <><Zap size={16} className="fill-yellow-300 text-black" /> シナリオ強化実行</>
+                            )}
+                          </button>
+
+                          {originalScenario && (
+                            <button
+                              className="bg-slate-700 hover:bg-slate-600 text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center gap-1 transition-all text-sm"
+                              onClick={revertScenario}
+                              disabled={isEnhancing}
+                            >
+                              ↩️ 元に戻す
+                            </button>
+                          )}
+                        </div>
+
+                        {/* ThinkingLog */}
+                        {enhanceLog && (
+                          <ThinkingLog thought={enhanceLog} />
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* 場所・服装設定プレビューは grid 外へ移動済み */}
 
