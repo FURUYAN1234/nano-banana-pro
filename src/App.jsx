@@ -32,7 +32,7 @@ import {
 import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 
-const SYSTEM_VERSION = "v2.35 Alpha";
+const SYSTEM_VERSION = "v2.36 Alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -1512,9 +1512,7 @@ SPEECH BUBBLE POSITION LOCK:
         }
       };
 
-      const VAR_PANEL_1_KI = `(Camera: ${getRandomAngle()}), (Background: ${cleanLocation}), (Action: ${extractActionOnly(panel1Text)}), ${extractDialogueOnly(panel1Text)}`;
-      const VAR_PANEL_2_SHO = `(Camera: ${getRandomAngle()}), (Background: ${cleanLocation}), (Action: ${extractActionOnly(panel2Text)}), ${extractDialogueOnly(panel2Text)}`;
-      const VAR_PANEL_3_TEN = `(Camera: ${getRandomAngle()}), (Background: ${cleanLocation}), (Action: ${extractActionOnly(panel3Text)}), ${extractDialogueOnly(panel3Text)}`;
+
       // [v2.30] Clean up Cast List - フォーマット非依存WEIGHTSタグ抽出
       let cleanCastData = "";
       let currentCharacter = "";
@@ -1606,35 +1604,31 @@ Technical Quality Definitions (System Dictionary):
 
 
 ## Panel 1 (Top)
-Camera: ${getRandomAngle()} (Ensure camera is NOT flat eye-level).
 ${buildEmotionBlock(panel1Text)}
 ${extractPlacementRule(panel1Text)}
 ${extractCastLimitRule(panel1Text)}
-Visual Action (Do NOT write this as text on the canvas, draw it visually): ${injectOutfitReminder(extractActionOnly(panel1Text, extractPlacementRule(panel1Text)))}.
+Visual Action (Do NOT write this as text on the canvas, draw it visually): [Camera Angle: ${getRandomAngle()} - Ensure camera is NOT flat eye-level] ${injectOutfitReminder(extractActionOnly(panel1Text, extractPlacementRule(panel1Text)))}.
 Dialogue (ONLY write this inside speech bubbles): ${extractDialogueOnly(panel1Text)}.
 
 ## Panel 2
-Camera: ${getRandomAngle()} (Ensure camera is NOT flat eye-level).
 ${buildEmotionBlock(panel2Text)}
 ${extractPlacementRule(panel2Text)}
 ${extractCastLimitRule(panel2Text)}
-Visual Action (Do NOT write this as text on the canvas, draw it visually): ${injectOutfitReminder(extractActionOnly(panel2Text, extractPlacementRule(panel2Text)))}.
+Visual Action (Do NOT write this as text on the canvas, draw it visually): [Camera Angle: ${getRandomAngle()} - Ensure camera is NOT flat eye-level] ${injectOutfitReminder(extractActionOnly(panel2Text, extractPlacementRule(panel2Text)))}.
 Dialogue (ONLY write this inside speech bubbles): ${extractDialogueOnly(panel2Text)}.
 
 ## Panel 3
-Camera: ${getRandomAngle()} (Ensure camera is NOT flat eye-level).
 ${buildEmotionBlock(panel3Text)}
 ${extractPlacementRule(panel3Text)}
 ${extractCastLimitRule(panel3Text)}
-Visual Action (Do NOT write this as text on the canvas, draw it visually): ${injectOutfitReminder(extractActionOnly(panel3Text, extractPlacementRule(panel3Text)))}.
+Visual Action (Do NOT write this as text on the canvas, draw it visually): [Camera Angle: ${getRandomAngle()} - Ensure camera is NOT flat eye-level] ${injectOutfitReminder(extractActionOnly(panel3Text, extractPlacementRule(panel3Text)))}.
 Dialogue (ONLY write this inside speech bubbles): ${extractDialogueOnly(panel3Text)}.
 
 ## Panel 4 (Bottom)
-Camera: ${getRandomAngle()} (Ensure camera is NOT flat eye-level).
 ${buildEmotionBlock(panel4Text)}
 ${extractPlacementRule(panel4Text)}
 ${extractCastLimitRule(panel4Text)}
-Visual Action (Do NOT write this as text on the canvas, draw it visually): ${injectOutfitReminder(extractActionOnly(panel4Text, extractPlacementRule(panel4Text)))}.
+Visual Action (Do NOT write this as text on the canvas, draw it visually): [Camera Angle: ${getRandomAngle()} - Ensure camera is NOT flat eye-level] ${injectOutfitReminder(extractActionOnly(panel4Text, extractPlacementRule(panel4Text)))}.
 Dialogue (ONLY write this inside speech bubbles): ${extractDialogueOnly(panel4Text)}.
 
 Important constraints:
