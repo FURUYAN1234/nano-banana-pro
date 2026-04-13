@@ -32,7 +32,7 @@ import {
 import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 
-const SYSTEM_VERSION = "v2.39 Alpha";
+const SYSTEM_VERSION = "v2.40 Alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -1174,11 +1174,13 @@ SPEECH BUBBLE PLACEMENT RULE (CRITICAL): Each character's speech bubble MUST be 
         "Extreme Low Angle (Worm's Eye view, Full Body)",
         "Extreme High Angle (Bird's Eye view, looking down)",
         "Dutch Angle (Tilted camera, dramatic composition)",
-        "Dynamic Action Wide Shot (Full Body, dynamic pose with vertical distortion)",
-        "Over-the-shoulder dramatic shot (Wide perspective, looking up/down at the subject)",
-        "Extreme Wide Angle Lens (Fisheye effect, dramatic depth and bending of lines)",
-        "Cinematic Low Angle (Epic perspective, looking up from the ground)",
-        "Dynamic Aerial Shot (Looking steeply down at the action)"
+        "Dynamic Action Wide Shot (Full Body, dynamic pose)",
+        "Over-the-shoulder shot (Wide perspective)",
+        "Wide Establishing Shot (Entire scene visible)",
+        "Extreme Wide Angle Lens (Fisheye effect, dramatic depth)",
+        "Medium-Full Shot (Showing body language clearly)",
+        "Medium Shot (Waist-up, showing character interaction)",
+        "Cinematic Low Angle (Epic perspective)"
       ];
       const getRandomAngle = () => cameraAngles[Math.floor(Math.random() * cameraAngles.length)];
 
@@ -1397,11 +1399,11 @@ SPEECH BUBBLE PLACEMENT RULE (CRITICAL): Each character's speech bubble MUST be 
 - CENTER ZONE: [${speakers[1]}] (${traits1 || 'see reference'}) — Second speaker
 - LEFT ZONE: [${speakers[2]}] (${traits2 || 'see reference'}) — Third speaker / Reactor
 VERIFY: Confirm hair color + glasses status for ALL three characters match the Identity Matrix.
-CHARACTER BODY POSITION LOCK (RELATIVE TO CAMERA):
-- From the camera's perspective, [${speakers[0]}] appears on the RIGHT side of the image frame.
-- From the camera's perspective, [${speakers[1]}] appears in the CENTER of the image frame.
-- From the camera's perspective, [${speakers[2]}] appears on the LEFT side of the image frame.
-- Maintain visual separation between characters to prevent attribute fusion, but allow dynamic depth.
+CHARACTER BODY POSITION LOCK (3-ZONE - DO NOT MIRROR):
+- [${speakers[0]}] MUST be on the RIGHT third of the panel.
+- [${speakers[1]}] MUST be in the CENTER of the panel.
+- [${speakers[2]}] MUST be on the LEFT third of the panel.
+- Maintain breathing room between zones to prevent overcrowding and attribute fusion.
 SPEECH BUBBLE FLOW (RIGHT-TO-LEFT):
 - [${speakers[0]}]'s bubble on the RIGHT, [${speakers[1]}]'s in CENTER, [${speakers[2]}]'s on LEFT.
 - Each bubble MUST point to its speaker. Flow: Right → Center → Left.`;
@@ -1414,13 +1416,13 @@ SPEECH BUBBLE FLOW (RIGHT-TO-LEFT):
 - RIGHT side: [${speakers[0]}] (${traits0 || 'see reference'})
 - LEFT side: [${speakers[1]}] (${traits1 || 'see reference'})
 VERIFY: Confirm hair color + glasses status for both characters match the Identity Matrix before finalizing.
-CHARACTER BODY POSITION LOCK (RELATIVE TO CAMERA):
-- From the camera's perspective, the character with ${traits0 || speakers[0] + "'s features"} appears on the RIGHT side of the final image frame.
-- From the camera's perspective, the character with ${traits1 || speakers[1] + "'s features"} appears on the LEFT side of the final image frame.
-- Do NOT swap, mirror, or reverse their visual screen placement.
+CHARACTER BODY POSITION LOCK (CRITICAL - DO NOT MIRROR):
+- The character with ${traits0 || speakers[0] + "'s features"} MUST be physically standing/sitting on the RIGHT half of the panel.
+- The character with ${traits1 || speakers[1] + "'s features"} MUST be physically standing/sitting on the LEFT half of the panel.
+- Do NOT swap, mirror, or reverse their positions under any circumstances.
 SPEECH BUBBLE POSITION LOCK:
-- [${speakers[0]}]'s speech bubble MUST appear on the RIGHT side of the frame, near [${speakers[0]}].
-- [${speakers[1]}]'s speech bubble MUST appear on the LEFT side of the frame, near [${speakers[1]}].
+- [${speakers[0]}]'s speech bubble MUST appear on the RIGHT side, directly above/beside [${speakers[0]}]'s head.
+- [${speakers[1]}]'s speech bubble MUST appear on the LEFT side, directly above/beside [${speakers[1]}]'s head.
 - Each bubble MUST point to its speaker. Do NOT swap bubble positions.`;
         } else if (speakers.length === 1) {
           const traits0 = getCharTraitsFromMatrix(speakers[0]);
@@ -1561,7 +1563,7 @@ At the very top of the page, draw a large, bold, black Japanese text title that 
 Do NOT surround the title text with quotation marks, apostrophes, single quotes, or any other punctuation marks. Draw ONLY the raw Japanese characters of the title.
 Draw a tiny English watermark exactly ON the bottom-right border of the 4th panel that displays the exact text "Generated by Super FURU AI 4-koma ${SYSTEM_VERSION}" in clean sans-serif font. The watermark text MUST be written HORIZONTALLY (left-to-right reading direction), NEVER rotated 90 degrees, NEVER written vertically, and NEVER stacked one letter per line. Do NOT draw duplicated or overlapping watermarks. Do NOT add extra white space below the 4th panel for the watermark.
 
-CRITICAL PANEL SIZE COMMAND: Frame a column of 4 horizontal panels stacked vertically. Maintain distinct frames, but allow the internal perspectives and angles to vary wildly between panels.
+CRITICAL PANEL SIZE COMMAND: The canvas MUST be divided into exactly 4 EQUAL horizontal panels stacked vertically from top to bottom. All 4 panels MUST be the EXACT SAME height and EXACT SAME width.
 The art style is: ${styleCore}.
 (Apply dramatic anime cinematic lighting and high-budget visual effects, but do not clutter the screen with excessive speedlines).
 
@@ -1591,6 +1593,7 @@ CROSS-PANEL OUTFIT CONSISTENCY (MANDATORY): Every character MUST wear the EXACT 
 Camera and Composition Rules:
 ${dynamicCamera}
 CRITICAL ANTI-CLONING RULE: NEVER draw the exact same character twice inside a single panel. A character can only appear ONCE per panel. Even if a character's name is mentioned multiple times in the instructions (e.g., in both the placement rule and the visual action description), they are still ONE person — draw them only ONCE.
+CRITICAL COMPOSITION RATIO: Always maintain a strict 2:3 (Manga typical vertical/portrait) golden ratio structure within each panel setup.
 
 Technical Quality Definitions (System Dictionary):
 (Meticulously clean line art: 1.5)
@@ -1604,28 +1607,32 @@ Technical Quality Definitions (System Dictionary):
 ${buildEmotionBlock(panel1Text)}
 ${extractPlacementRule(panel1Text)}
 ${extractCastLimitRule(panel1Text)}
-Visual Action (Do NOT write this as text on the canvas, draw it visually): **Shot from a ${getRandomAngle()} with extreme dramatic perspective**. DO NOT draw a flat scene. In this dynamic view, we see: ${injectOutfitReminder(extractActionOnly(panel1Text, extractPlacementRule(panel1Text)))}.
+Camera: ${getRandomAngle()} (Ensure camera is NOT flat eye-level).
+Visual Action (Do NOT write this as text on the canvas, draw it visually): ${injectOutfitReminder(extractActionOnly(panel1Text, extractPlacementRule(panel1Text)))}.
 Dialogue (ONLY write this inside speech bubbles): ${extractDialogueOnly(panel1Text)}.
 
 ## Panel 2
 ${buildEmotionBlock(panel2Text)}
 ${extractPlacementRule(panel2Text)}
 ${extractCastLimitRule(panel2Text)}
-Visual Action (Do NOT write this as text on the canvas, draw it visually): **Shot from a ${getRandomAngle()} with extreme dramatic perspective**. DO NOT draw a flat scene. In this dynamic view, we see: ${injectOutfitReminder(extractActionOnly(panel2Text, extractPlacementRule(panel2Text)))}.
+Camera: ${getRandomAngle()} (Ensure camera is NOT flat eye-level).
+Visual Action (Do NOT write this as text on the canvas, draw it visually): ${injectOutfitReminder(extractActionOnly(panel2Text, extractPlacementRule(panel2Text)))}.
 Dialogue (ONLY write this inside speech bubbles): ${extractDialogueOnly(panel2Text)}.
 
 ## Panel 3
 ${buildEmotionBlock(panel3Text)}
 ${extractPlacementRule(panel3Text)}
 ${extractCastLimitRule(panel3Text)}
-Visual Action (Do NOT write this as text on the canvas, draw it visually): **Shot from a ${getRandomAngle()} with extreme dramatic perspective**. DO NOT draw a flat scene. In this dynamic view, we see: ${injectOutfitReminder(extractActionOnly(panel3Text, extractPlacementRule(panel3Text)))}.
+Camera: ${getRandomAngle()} (Ensure camera is NOT flat eye-level).
+Visual Action (Do NOT write this as text on the canvas, draw it visually): ${injectOutfitReminder(extractActionOnly(panel3Text, extractPlacementRule(panel3Text)))}.
 Dialogue (ONLY write this inside speech bubbles): ${extractDialogueOnly(panel3Text)}.
 
 ## Panel 4 (Bottom)
 ${buildEmotionBlock(panel4Text)}
 ${extractPlacementRule(panel4Text)}
 ${extractCastLimitRule(panel4Text)}
-Visual Action (Do NOT write this as text on the canvas, draw it visually): **Shot from a ${getRandomAngle()} with extreme dramatic perspective**. DO NOT draw a flat scene. In this dynamic view, we see: ${injectOutfitReminder(extractActionOnly(panel4Text, extractPlacementRule(panel4Text)))}.
+Camera: ${getRandomAngle()} (Ensure camera is NOT flat eye-level).
+Visual Action (Do NOT write this as text on the canvas, draw it visually): ${injectOutfitReminder(extractActionOnly(panel4Text, extractPlacementRule(panel4Text)))}.
 Dialogue (ONLY write this inside speech bubbles): ${extractDialogueOnly(panel4Text)}.
 
 Important constraints:
