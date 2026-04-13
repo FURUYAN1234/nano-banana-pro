@@ -32,7 +32,7 @@ import {
 import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 
-const SYSTEM_VERSION = "v2.37 Alpha";
+const SYSTEM_VERSION = "v2.38 Alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -1397,11 +1397,11 @@ SPEECH BUBBLE PLACEMENT RULE (CRITICAL): Each character's speech bubble MUST be 
 - CENTER ZONE: [${speakers[1]}] (${traits1 || 'see reference'}) — Second speaker
 - LEFT ZONE: [${speakers[2]}] (${traits2 || 'see reference'}) — Third speaker / Reactor
 VERIFY: Confirm hair color + glasses status for ALL three characters match the Identity Matrix.
-CHARACTER BODY POSITION LOCK (3-ZONE - DO NOT MIRROR):
-- [${speakers[0]}] MUST be on the RIGHT third of the panel.
-- [${speakers[1]}] MUST be in the CENTER of the panel.
-- [${speakers[2]}] MUST be on the LEFT third of the panel.
-- Maintain breathing room between zones to prevent overcrowding and attribute fusion.
+CHARACTER BODY POSITION LOCK (RELATIVE TO CAMERA):
+- From the camera's perspective, [${speakers[0]}] appears on the RIGHT side of the image frame.
+- From the camera's perspective, [${speakers[1]}] appears in the CENTER of the image frame.
+- From the camera's perspective, [${speakers[2]}] appears on the LEFT side of the image frame.
+- Maintain visual separation between characters to prevent attribute fusion, but allow dynamic depth.
 SPEECH BUBBLE FLOW (RIGHT-TO-LEFT):
 - [${speakers[0]}]'s bubble on the RIGHT, [${speakers[1]}]'s in CENTER, [${speakers[2]}]'s on LEFT.
 - Each bubble MUST point to its speaker. Flow: Right → Center → Left.`;
@@ -1414,13 +1414,13 @@ SPEECH BUBBLE FLOW (RIGHT-TO-LEFT):
 - RIGHT side: [${speakers[0]}] (${traits0 || 'see reference'})
 - LEFT side: [${speakers[1]}] (${traits1 || 'see reference'})
 VERIFY: Confirm hair color + glasses status for both characters match the Identity Matrix before finalizing.
-CHARACTER BODY POSITION LOCK (CRITICAL - DO NOT MIRROR):
-- The character with ${traits0 || speakers[0] + "'s features"} MUST be physically standing/sitting on the RIGHT half of the panel.
-- The character with ${traits1 || speakers[1] + "'s features"} MUST be physically standing/sitting on the LEFT half of the panel.
-- Do NOT swap, mirror, or reverse their positions under any circumstances.
+CHARACTER BODY POSITION LOCK (RELATIVE TO CAMERA):
+- From the camera's perspective, the character with ${traits0 || speakers[0] + "'s features"} appears on the RIGHT side of the final image frame.
+- From the camera's perspective, the character with ${traits1 || speakers[1] + "'s features"} appears on the LEFT side of the final image frame.
+- Do NOT swap, mirror, or reverse their visual screen placement.
 SPEECH BUBBLE POSITION LOCK:
-- [${speakers[0]}]'s speech bubble MUST appear on the RIGHT side, directly above/beside [${speakers[0]}]'s head.
-- [${speakers[1]}]'s speech bubble MUST appear on the LEFT side, directly above/beside [${speakers[1]}]'s head.
+- [${speakers[0]}]'s speech bubble MUST appear on the RIGHT side of the frame, near [${speakers[0]}].
+- [${speakers[1]}]'s speech bubble MUST appear on the LEFT side of the frame, near [${speakers[1]}].
 - Each bubble MUST point to its speaker. Do NOT swap bubble positions.`;
         } else if (speakers.length === 1) {
           const traits0 = getCharTraitsFromMatrix(speakers[0]);
@@ -1602,31 +1602,35 @@ Technical Quality Definitions (System Dictionary):
 
 
 ## Panel 1 (Top)
+[SCENE CAMERA OVERRIDE]: The entire frame is shot from a ${getRandomAngle()} (CRITICAL: You MUST warp the perspective, use vanishing points, do NOT draw a flat eye-level theater stage!).
 ${buildEmotionBlock(panel1Text)}
 ${extractPlacementRule(panel1Text)}
 ${extractCastLimitRule(panel1Text)}
-Visual Action (Do NOT write this as text on the canvas, draw it visually): The scene is shot from a ${getRandomAngle()} (CRITICAL: Ensure the camera is absolutely NOT flat or eye-level). In this dynamic perspective, we see: ${injectOutfitReminder(extractActionOnly(panel1Text, extractPlacementRule(panel1Text)))}.
+Visual Action (Do NOT write this as text on the canvas, draw it visually): ${injectOutfitReminder(extractActionOnly(panel1Text, extractPlacementRule(panel1Text)))}.
 Dialogue (ONLY write this inside speech bubbles): ${extractDialogueOnly(panel1Text)}.
 
 ## Panel 2
+[SCENE CAMERA OVERRIDE]: The entire frame is shot from a ${getRandomAngle()} (CRITICAL: You MUST warp the perspective, use vanishing points, do NOT draw a flat eye-level theater stage!).
 ${buildEmotionBlock(panel2Text)}
 ${extractPlacementRule(panel2Text)}
 ${extractCastLimitRule(panel2Text)}
-Visual Action (Do NOT write this as text on the canvas, draw it visually): The scene is shot from a ${getRandomAngle()} (CRITICAL: Ensure the camera is absolutely NOT flat or eye-level). In this dynamic perspective, we see: ${injectOutfitReminder(extractActionOnly(panel2Text, extractPlacementRule(panel2Text)))}.
+Visual Action (Do NOT write this as text on the canvas, draw it visually): ${injectOutfitReminder(extractActionOnly(panel2Text, extractPlacementRule(panel2Text)))}.
 Dialogue (ONLY write this inside speech bubbles): ${extractDialogueOnly(panel2Text)}.
 
 ## Panel 3
+[SCENE CAMERA OVERRIDE]: The entire frame is shot from a ${getRandomAngle()} (CRITICAL: You MUST warp the perspective, use vanishing points, do NOT draw a flat eye-level theater stage!).
 ${buildEmotionBlock(panel3Text)}
 ${extractPlacementRule(panel3Text)}
 ${extractCastLimitRule(panel3Text)}
-Visual Action (Do NOT write this as text on the canvas, draw it visually): The scene is shot from a ${getRandomAngle()} (CRITICAL: Ensure the camera is absolutely NOT flat or eye-level). In this dynamic perspective, we see: ${injectOutfitReminder(extractActionOnly(panel3Text, extractPlacementRule(panel3Text)))}.
+Visual Action (Do NOT write this as text on the canvas, draw it visually): ${injectOutfitReminder(extractActionOnly(panel3Text, extractPlacementRule(panel3Text)))}.
 Dialogue (ONLY write this inside speech bubbles): ${extractDialogueOnly(panel3Text)}.
 
 ## Panel 4 (Bottom)
+[SCENE CAMERA OVERRIDE]: The entire frame is shot from a ${getRandomAngle()} (CRITICAL: You MUST warp the perspective, use vanishing points, do NOT draw a flat eye-level theater stage!).
 ${buildEmotionBlock(panel4Text)}
 ${extractPlacementRule(panel4Text)}
 ${extractCastLimitRule(panel4Text)}
-Visual Action (Do NOT write this as text on the canvas, draw it visually): The scene is shot from a ${getRandomAngle()} (CRITICAL: Ensure the camera is absolutely NOT flat or eye-level). In this dynamic perspective, we see: ${injectOutfitReminder(extractActionOnly(panel4Text, extractPlacementRule(panel4Text)))}.
+Visual Action (Do NOT write this as text on the canvas, draw it visually): ${injectOutfitReminder(extractActionOnly(panel4Text, extractPlacementRule(panel4Text)))}.
 Dialogue (ONLY write this inside speech bubbles): ${extractDialogueOnly(panel4Text)}.
 
 Important constraints:
