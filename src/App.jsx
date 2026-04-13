@@ -32,7 +32,7 @@ import {
 import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 
-const SYSTEM_VERSION = "v2.41 Alpha";
+const SYSTEM_VERSION = "v2.42 Alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -130,7 +130,7 @@ const applySafetyAgeUp = (promptText) => {
 
 
 // --- Thinking Log Component ---
-const ThinkingLog = ({ thought }) => {
+const ThinkingLog = ({ thought, containerHeight = "h-[180px]", scrollHeight = "h-[120px]" }) => {
   const scrollRef = useRef(null);
 
   useEffect(() => {
@@ -141,12 +141,12 @@ const ThinkingLog = ({ thought }) => {
 
   if (!thought) return null;
   return (
-    <div className="w-full bg-[#050505] border border-blue-500/20 rounded-2xl p-6 font-mono text-xs h-[180px] overflow-hidden relative group mt-4 animate-in fade-in slide-in-from-top-4">
+    <div className={`w-full bg-[#050505] border border-blue-500/20 rounded-2xl p-6 font-mono text-xs overflow-hidden relative group mt-4 animate-in fade-in slide-in-from-top-4 ${containerHeight}`}>
       <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-600 to-purple-600 animate-pulse" />
       <div className="flex items-center gap-2 text-blue-400 mb-4 uppercase tracking-widest font-bold">
         <BrainCircuit size={16} /> Neural Process (Thinking Mode)
       </div>
-      <div ref={scrollRef} className="h-[120px] overflow-y-auto custom-scrollbar text-blue-100 leading-relaxed whitespace-pre-wrap font-mono text-[10px] scroll-smooth">
+      <div ref={scrollRef} className={`${scrollHeight} overflow-y-auto custom-scrollbar text-blue-100 leading-relaxed whitespace-pre-wrap font-mono text-[10px] scroll-smooth`}>
         {thought}
         <span className="inline-block w-2 h-4 bg-blue-500 ml-1 animate-pulse" />
       </div>
@@ -2314,119 +2314,143 @@ ${finalPrompt}
                   />
                 </div>
 
-                {/* [v2.41] シナリオ強化パネル（折りたたみ式） */}
-                {scenario && scenario.length > 20 && (
-                  <div className="mt-2 border border-orange-500/30 rounded-lg overflow-hidden">
-                    <button
-                      className="w-full flex items-center justify-between px-3 py-2 bg-orange-900/20 hover:bg-orange-900/30 transition-colors cursor-pointer"
-                      onClick={() => setIsEnhancePanelOpen(!isEnhancePanelOpen)}
-                    >
-                      <div className="flex items-center gap-2 text-sm">
-                        <span>🔥</span>
-                        <span className="font-bold text-orange-300">シナリオ強化 (Scenario Enhance)</span>
-                        {originalScenario && <span className="text-[9px] bg-green-600/30 text-green-300 px-1.5 py-0.5 rounded-full border border-green-500/30">強化済み</span>}
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <span className="text-[9px] text-slate-600 font-mono">{isEnhancePanelOpen ? '閉じる' : 'クリックで開く'}</span>
-                        <ChevronDown size={14} className={`text-orange-400/60 transition-transform duration-300 ${isEnhancePanelOpen ? 'rotate-180' : ''}`} />
-                      </div>
-                    </button>
+                {/* [v2.41] シナリオ強化パネル（折りたたみ式）- 常時表示、シナリオ未生成時はぼかし */}
+                <div className={`mt-2 border rounded-lg overflow-hidden transition-all duration-300 ${
+                  scenario && scenario.length > 20 
+                    ? 'border-orange-500/30' 
+                    : 'border-slate-700/30 blur-[2px] opacity-40 grayscale pointer-events-none'
+                }`}>
+                  <button
+                    className="w-full flex items-center justify-between px-3 py-2 bg-orange-900/20 hover:bg-orange-900/30 transition-colors cursor-pointer"
+                    onClick={() => scenario && scenario.length > 20 && setIsEnhancePanelOpen(!isEnhancePanelOpen)}
+                  >
+                    <div className="flex items-center gap-2 text-sm">
+                      <span>🔥</span>
+                      <span className="font-bold text-orange-300">シナリオ強化 (Scenario Enhance)</span>
+                      {originalScenario && <span className="text-[9px] bg-green-600/30 text-green-300 px-1.5 py-0.5 rounded-full border border-green-500/30">強化済み</span>}
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <span className="text-[9px] text-slate-600 font-mono">{!(scenario && scenario.length > 20) ? 'シナリオ生成後に使用可能' : isEnhancePanelOpen ? '閉じる' : 'クリックで開く'}</span>
+                      <ChevronDown size={14} className={`text-orange-400/60 transition-transform duration-300 ${isEnhancePanelOpen ? 'rotate-180' : ''}`} />
+                    </div>
+                  </button>
 
-                    {isEnhancePanelOpen && (
-                      <div className="p-4 bg-orange-950/10 space-y-3">
-                        <p className="text-[11px] text-orange-200/70 leading-relaxed">
-                          生成済みシナリオの演出を強化します。強化したいカテゴリをONにして「強化実行」を押してください。<br/>
-                          ⚠️ 演出が過激になるとSTEP4でコンテンツポリシーに引っかかる場合があります（既存の救済機能で対応可能）。
-                        </p>
+                  {isEnhancePanelOpen && scenario && scenario.length > 20 && (
+                    <div className="p-4 bg-orange-950/10 space-y-3">
+                      <p className="text-[11px] text-orange-200/70 leading-relaxed">
+                        生成済みシナリオの演出を強化します。強化したいカテゴリをONにして「強化実行」を押してください。<br/>
+                        <span className="text-orange-300 font-bold">💡 複数回実行すると効果が重複し、より強力（カオス）な演出になります。</span><br/>
+                        ⚠️ 演出が過激になるとSTEP4でコンテンツポリシーに引っかかる場合があります（既存の救済機能で対応可能）。
+                      </p>
 
-                        {/* 4つのトグルスイッチ */}
-                        <div className="grid grid-cols-2 gap-2">
-                          {/* 表情 */}
-                          <label className="flex items-center gap-2 p-2 rounded-lg bg-black/30 border border-white/5 cursor-pointer hover:border-orange-500/30 transition-colors">
-                            <div className={`relative w-10 h-5 rounded-full transition-colors duration-200 ${enhanceExpressions ? 'bg-orange-500' : 'bg-slate-700'}`}
-                              onClick={() => setEnhanceExpressions(!enhanceExpressions)}
-                            >
-                              <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-md transition-transform duration-200 ${enhanceExpressions ? 'translate-x-5' : 'translate-x-0.5'}`} />
+                      {/* 4つのトグルスイッチ */}
+                      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                        {/* 表情 */}
+                        <label className={`relative flex items-center justify-center p-3 rounded-xl cursor-pointer border-2 border-b-4 transition-all duration-100 group overflow-hidden select-none active:border-b-2 active:translate-y-0.5 ${
+                          enhanceExpressions ? 'bg-white text-black border-slate-300' : 'bg-[#1e293b] text-slate-400 border-[#0f172a] hover:bg-[#334155]'
+                        }`}>
+                          <input type="checkbox" className="hidden" checked={enhanceExpressions} onChange={() => setEnhanceExpressions(!enhanceExpressions)} />
+                          {enhanceExpressions && (
+                            <div className="absolute top-2 right-2 bg-white text-blue-600 rounded-full p-0.5 shadow-sm">
+                              <CheckCircle2 size={12} strokeWidth={4} />
                             </div>
-                            <div className="flex flex-col">
-                              <span className="text-xs font-bold text-white">😱 表情</span>
-                              <span className="text-[9px] text-slate-500">大げさな表情に強化</span>
-                            </div>
-                          </label>
-
-                          {/* ボディランゲージ */}
-                          <label className="flex items-center gap-2 p-2 rounded-lg bg-black/30 border border-white/5 cursor-pointer hover:border-orange-500/30 transition-colors">
-                            <div className={`relative w-10 h-5 rounded-full transition-colors duration-200 ${enhanceBodyLang ? 'bg-orange-500' : 'bg-slate-700'}`}
-                              onClick={() => setEnhanceBodyLang(!enhanceBodyLang)}
-                            >
-                              <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-md transition-transform duration-200 ${enhanceBodyLang ? 'translate-x-5' : 'translate-x-0.5'}`} />
-                            </div>
-                            <div className="flex flex-col">
-                              <span className="text-xs font-bold text-white">🤸 身体</span>
-                              <span className="text-[9px] text-slate-500">全身リアクション追加</span>
-                            </div>
-                          </label>
-
-                          {/* 照明・演出 */}
-                          <label className="flex items-center gap-2 p-2 rounded-lg bg-black/30 border border-white/5 cursor-pointer hover:border-orange-500/30 transition-colors">
-                            <div className={`relative w-10 h-5 rounded-full transition-colors duration-200 ${enhanceEffects ? 'bg-orange-500' : 'bg-slate-700'}`}
-                              onClick={() => setEnhanceEffects(!enhanceEffects)}
-                            >
-                              <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-md transition-transform duration-200 ${enhanceEffects ? 'translate-x-5' : 'translate-x-0.5'}`} />
-                            </div>
-                            <div className="flex flex-col">
-                              <span className="text-xs font-bold text-white">✨ 演出</span>
-                              <span className="text-[9px] text-slate-500">照明・VFXを追加</span>
-                            </div>
-                          </label>
-
-                          {/* 背景 */}
-                          <label className="flex items-center gap-2 p-2 rounded-lg bg-black/30 border border-white/5 cursor-pointer hover:border-orange-500/30 transition-colors">
-                            <div className={`relative w-10 h-5 rounded-full transition-colors duration-200 ${enhanceBackgrounds ? 'bg-orange-500' : 'bg-slate-700'}`}
-                              onClick={() => setEnhanceBackgrounds(!enhanceBackgrounds)}
-                            >
-                              <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-md transition-transform duration-200 ${enhanceBackgrounds ? 'translate-x-5' : 'translate-x-0.5'}`} />
-                            </div>
-                            <div className="flex flex-col">
-                              <span className="text-xs font-bold text-white">🏙️ 背景</span>
-                              <span className="text-[9px] text-slate-500">背景描写を詳細化</span>
-                            </div>
-                          </label>
-                        </div>
-
-                        {/* 実行・元に戻すボタン */}
-                        <div className="flex gap-2">
-                          <button
-                            className="flex-1 bg-orange-600 hover:bg-orange-500 disabled:bg-slate-700 disabled:opacity-50 text-white font-bold py-2 rounded-lg flex items-center justify-center gap-2 transition-all text-sm"
-                            onClick={enhanceScenario}
-                            disabled={isEnhancing || !(enhanceExpressions || enhanceBodyLang || enhanceEffects || enhanceBackgrounds)}
-                          >
-                            {isEnhancing ? (
-                              <><Loader2 size={16} className="animate-spin" /> 強化中...</>
-                            ) : (
-                              <><Zap size={16} className="fill-yellow-300 text-black" /> シナリオ強化実行</>
-                            )}
-                          </button>
-
-                          {originalScenario && (
-                            <button
-                              className="bg-slate-700 hover:bg-slate-600 text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center gap-1 transition-all text-sm"
-                              onClick={revertScenario}
-                              disabled={isEnhancing}
-                            >
-                              ↩️ 元に戻す
-                            </button>
                           )}
-                        </div>
+                          <div className="text-center">
+                            <div className={`text-2xl mb-1 ${enhanceExpressions ? 'scale-110' : 'opacity-70 grayscale'}`}>😱</div>
+                            <div className="text-[11px] font-bold tracking-wider">表情追加</div>
+                            <div className="text-[9px] opacity-70 mt-1">大げさなリアクション</div>
+                          </div>
+                        </label>
 
-                        {/* ThinkingLog */}
-                        {enhanceLog && (
-                          <ThinkingLog thought={enhanceLog} />
-                        )}
+                        {/* ボディランゲージ */}
+                        <label className={`relative flex items-center justify-center p-3 rounded-xl cursor-pointer border-2 border-b-4 transition-all duration-100 group overflow-hidden select-none active:border-b-2 active:translate-y-0.5 ${
+                          enhanceBodyLang ? 'bg-white text-black border-slate-300' : 'bg-[#1e293b] text-slate-400 border-[#0f172a] hover:bg-[#334155]'
+                        }`}>
+                          <input type="checkbox" className="hidden" checked={enhanceBodyLang} onChange={() => setEnhanceBodyLang(!enhanceBodyLang)} />
+                          {enhanceBodyLang && (
+                            <div className="absolute top-2 right-2 bg-white text-blue-600 rounded-full p-0.5 shadow-sm">
+                              <CheckCircle2 size={12} strokeWidth={4} />
+                            </div>
+                          )}
+                          <div className="text-center">
+                            <div className={`text-2xl mb-1 ${enhanceBodyLang ? 'scale-110' : 'opacity-70 grayscale'}`}>🤸</div>
+                            <div className="text-[11px] font-bold tracking-wider">身体強化</div>
+                            <div className="text-[9px] opacity-70 mt-1">全身で感情を表現</div>
+                          </div>
+                        </label>
+
+                        {/* 照明・演出 */}
+                        <label className={`relative flex items-center justify-center p-3 rounded-xl cursor-pointer border-2 border-b-4 transition-all duration-100 group overflow-hidden select-none active:border-b-2 active:translate-y-0.5 ${
+                          enhanceEffects ? 'bg-white text-black border-slate-300' : 'bg-[#1e293b] text-slate-400 border-[#0f172a] hover:bg-[#334155]'
+                        }`}>
+                          <input type="checkbox" className="hidden" checked={enhanceEffects} onChange={() => setEnhanceEffects(!enhanceEffects)} />
+                          {enhanceEffects && (
+                            <div className="absolute top-2 right-2 bg-white text-blue-600 rounded-full p-0.5 shadow-sm">
+                              <CheckCircle2 size={12} strokeWidth={4} />
+                            </div>
+                          )}
+                          <div className="text-center">
+                            <div className={`text-2xl mb-1 ${enhanceEffects ? 'scale-110' : 'opacity-70 grayscale'}`}>✨</div>
+                            <div className="text-[11px] font-bold tracking-wider">演出強化</div>
+                            <div className="text-[9px] opacity-70 mt-1">照明効果やVFX</div>
+                          </div>
+                        </label>
+
+                        {/* 背景 */}
+                        <label className={`relative flex items-center justify-center p-3 rounded-xl cursor-pointer border-2 border-b-4 transition-all duration-100 group overflow-hidden select-none active:border-b-2 active:translate-y-0.5 ${
+                          enhanceBackgrounds ? 'bg-white text-black border-slate-300' : 'bg-[#1e293b] text-slate-400 border-[#0f172a] hover:bg-[#334155]'
+                        }`}>
+                          <input type="checkbox" className="hidden" checked={enhanceBackgrounds} onChange={() => setEnhanceBackgrounds(!enhanceBackgrounds)} />
+                          {enhanceBackgrounds && (
+                            <div className="absolute top-2 right-2 bg-white text-blue-600 rounded-full p-0.5 shadow-sm">
+                              <CheckCircle2 size={12} strokeWidth={4} />
+                            </div>
+                          )}
+                          <div className="text-center">
+                            <div className={`text-2xl mb-1 ${enhanceBackgrounds ? 'scale-110' : 'opacity-70 grayscale'}`}>🏙️</div>
+                            <div className="text-[11px] font-bold tracking-wider">背景強化</div>
+                            <div className="text-[9px] opacity-70 mt-1">描写を詳細化</div>
+                          </div>
+                        </label>
                       </div>
-                    )}
-                  </div>
-                )}
+
+                      {/* 選択中の内容を表示 */}
+                      <div className="text-xs text-orange-200/80 text-center font-mono py-1.5 bg-black/20 border border-white/5 rounded-md">
+                        Current Targets: {[enhanceExpressions && "表情", enhanceBodyLang && "身体", enhanceEffects && "演出", enhanceBackgrounds && "背景"].filter(Boolean).join(" / ") || "未選択"}
+                      </div>
+
+                      {/* 実行・元に戻すボタン */}
+                      <div className="flex gap-2">
+                        <button
+                          className="flex-1 bg-orange-600 hover:bg-orange-500 disabled:bg-slate-700 disabled:opacity-50 text-white font-bold py-2 rounded-lg flex items-center justify-center gap-2 transition-all text-sm"
+                          onClick={enhanceScenario}
+                          disabled={isEnhancing || !(enhanceExpressions || enhanceBodyLang || enhanceEffects || enhanceBackgrounds)}
+                        >
+                          {isEnhancing ? (
+                            <><Loader2 size={16} className="animate-spin" /> 強化中...</>
+                          ) : (
+                            <><Zap size={16} className="fill-yellow-300 text-black" /> シナリオ強化実行</>
+                          )}
+                        </button>
+
+                        <button
+                          className={`py-2 px-4 rounded-lg flex items-center justify-center gap-1 transition-all text-sm font-bold ${
+                            originalScenario 
+                              ? 'bg-red-800/60 hover:bg-red-700/60 text-red-200 border border-red-500/30' 
+                              : 'bg-slate-800 text-slate-600 border border-slate-700/30 cursor-not-allowed'
+                          }`}
+                          onClick={revertScenario}
+                          disabled={isEnhancing || !originalScenario}
+                        >
+                          ↩️ 強化前に戻す
+                        </button>
+                      </div>
+
+                      {/* ThinkingLog (パネルを開いた時点で表示) */}
+                      <ThinkingLog thought={enhanceLog || "> 待機中...強化したいカテゴリを選んで「シナリオ強化実行」ボタンを押してください。"} />
+                    </div>
+                  )}
+                </div>
 
                 {/* 場所・服装設定プレビューは grid 外へ移動済み */}
 
