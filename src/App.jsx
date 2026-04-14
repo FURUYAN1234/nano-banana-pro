@@ -32,7 +32,7 @@ import {
 import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 
-const SYSTEM_VERSION = "v2.43 Alpha";
+const SYSTEM_VERSION = "v2.44 Alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -356,6 +356,7 @@ function App() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [isAssembling, setIsAssembling] = useState(false);
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false); // [v2.44] STEP4専用state（isAssemblingとの混同を防止）
   const [isGenerationError, setIsGenerationError] = useState(false);
 
   // Thoughts
@@ -424,9 +425,10 @@ function App() {
     }
     if (files.length === 0) return;
     setIsAnalyzing(true);
-    setAnalyzeThought("Visual Cortex Protocols Initiated...\n> Scanning pixel data arrays...\n> Identifying character morphologies...");
+    setAnalyzeThought("キャラクター解析プロトコルを開始しました...\n> ピクセルデータをスキャン中...\n> キャラクター形態を識別中...");
 
-    // [v2.42] フェイクストリーミング＋経過時間表示（フォールバック待ち中にハングアップに見えない対策）
+    // [v2.44] フェイクストリーミング＋経過時間表示（フォールバック待ち中にハングアップに見えない対策）
+    // モデルフォールバック時もタイマーが継続するように、APIコールバック後も常に経過時間を更新する
     let thinkTickCount = 0;
     const thinkTimer = setInterval(() => {
       thinkTickCount++;
@@ -435,20 +437,22 @@ function App() {
         if (thinkTickCount <= 10) {
           const messages = [
             ".", ".", ".",
-            "\n> Extracting facial landmarks...",
-            "\n> Analyzing hair topology vectors...",
-            "\n> Detecting fashion attributes...",
+            "\n> 顔の特徴点を抽出中...",
+            "\n> 髪型トポロジーを解析中...",
+            "\n> ファッション属性を検出中...",
           ];
           return prev + messages[Math.floor(Math.random() * messages.length)];
         }
         // それ以降は経過時間をカウンター表示（上書き方式で行を増やさない）
         const elapsed = Math.floor(thinkTickCount * 0.8);
         // 既存の経過表示行を更新（なければ追加）
+        // [v2.44] APIコールバックが挿入されても、末尾のタイマー行を正確に更新する
         const timerLine = `\n> ⏳ AI応答を待機中... (${elapsed}秒経過)`;
-        const timerRegex = /\n> ⏳ AI応答を待機中\.\.\. \(\d+秒経過\)/;
+        const timerRegex = /\n> ⏳ AI応答を待機中\.\.\.\s*\(\d+秒経過\)/;
         if (timerRegex.test(prev)) {
           return prev.replace(timerRegex, timerLine);
         }
+        // タイマー行がまだない場合は末尾に追加
         return prev + timerLine;
       });
     }, 800);
@@ -617,6 +621,29 @@ function App() {
 
     setEnhanceLog(prev => prev + `\n> [CONFIG] 強化カテゴリ: ${enhanceCategories.length}個`);
 
+    // [v2.44] 経過時間カウンター（シナリオ強化API待機中のハングアップ防止）
+    let enhanceTickCount = 0;
+    const enhanceTimer = setInterval(() => {
+      enhanceTickCount++;
+      setEnhanceLog(prev => {
+        if (enhanceTickCount <= 5) {
+          const messages = [
+            "\n> [PROCESS] 演出データベースを参照中...",
+            "\n> [PROCESS] 感情ベクトルを計算中...",
+            "\n> [PROCESS] 表現パターンを最適化中...",
+          ];
+          return prev + messages[Math.floor(Math.random() * messages.length)];
+        }
+        const elapsed = Math.floor(enhanceTickCount * 0.8);
+        const timerLine = `\n> ⏳ AI応答を待機中... (${elapsed}秒経過)`;
+        const timerRegex = /\n> ⏳ AI応答を待機中\.\.\.\s*\(\d+秒経過\)/;
+        if (timerRegex.test(prev)) {
+          return prev.replace(timerRegex, timerLine);
+        }
+        return prev + timerLine;
+      });
+    }, 800);
+
     const enhancePrompt = `あなたは4コマ漫画のシナリオ演出家です。以下のシナリオの**演出力**を大幅に強化してください。
 
 ${enhanceCategories.join("\n\n")}
@@ -652,6 +679,7 @@ ${scenario}
       setEnhanceLog(prev => prev + `\n> [ERROR] ${error.message}`);
       showStatus("強化エラー: " + error.message);
     } finally {
+      clearInterval(enhanceTimer);
       setIsEnhancing(false);
     }
   };
@@ -713,6 +741,30 @@ ${scenario}
     // Exclude repetitive AI topics
     const searchTopicKeywords = `${randomCategory} -AI -人工知能 -ChatGPT -Gemini -生成AI -ロボット -テクノロジー -スマホ -IT`;
 
+    // [v2.44] フェイクストリーミング＋経過時間表示（STEP1と同様のUX統一）
+    let scenarioTickCount = 0;
+    const scenarioTimer = setInterval(() => {
+      scenarioTickCount++;
+      setScenarioThought(prev => {
+        if (scenarioTickCount <= 8) {
+          const messages = [
+            ".", ".", ".",
+            "\n> グローバルニュースデータベースをスキャン中...",
+            "\n> トレンドトピックをクロスリファレンス中...",
+            "\n> 関連記事をフィルタリング中...",
+            "\n> ナラティブフレームワークを構築中...",
+          ];
+          return prev + messages[Math.floor(Math.random() * messages.length)];
+        }
+        const elapsed = Math.floor(scenarioTickCount * 0.8);
+        const timerLine = `\n> ⏳ AI応答を待機中... (${elapsed}秒経過)`;
+        const timerRegex = /\n> ⏳ AI応答を待機中\.\.\.\s*\(\d+秒経過\)/;
+        if (timerRegex.test(prev)) {
+          return prev.replace(timerRegex, timerLine);
+        }
+        return prev + timerLine;
+      });
+    }, 800);
 
     try {
       // 1. Search for news OR Use Manual Input
@@ -993,6 +1045,7 @@ ${scenario}
       setScenarioThought(prev => prev + `\n\n[SYSTEM FAILURE]: ${error.message}\n--------------------------------------------------\n${translatedMsg}`);
       showStatus("シナリオ生成エラー");
     } finally {
+      clearInterval(scenarioTimer);
       setIsSearching(false);
     }
   };
@@ -1822,17 +1875,31 @@ Important constraints:
   };
   // --- Step 4: Image Generation ---
   const regenerateImage = async () => {
-    if (isAssembling || !finalPrompt) return;
-    setIsAssembling(true);
+    if (isGeneratingImage || !finalPrompt) return;
+    setIsGeneratingImage(true);
     setIsGenerationError(false);
-    setGenLog(["[SYSTEM] Sequence Started: Initializing generation protocols...", "[SYSTEM] Locking prompt parameters..."]);
+    setGenLog(["[1/5] プロンプトパラメータをロック中...", "[2/5] セーフティフィルターを検証中..."]);
+
+    // [v2.44] 進捗ステップ表示＋経過時間カウンター
+    let genTickCount = 0;
+    const genTimer = setInterval(() => {
+      genTickCount++;
+      const elapsed = Math.floor(genTickCount * 1.5);
+      setGenLog(prev => {
+        const lastEntry = prev[prev.length - 1];
+        if (lastEntry && lastEntry.startsWith("[WAIT]")) {
+          return [...prev.slice(0, -1), `[WAIT] ⏳ 画像生成API応答を待機中... (${elapsed}秒経過)`];
+        }
+        return [...prev, `[WAIT] ⏳ 画像生成API応答を待機中... (${elapsed}秒経過)`];
+      });
+    }, 1500);
 
     // Artificial delay to ensure user sees the process starting
     await new Promise(r => setTimeout(r, 800));
 
     try {
       showStatus("Google AI (Gemini/Imagen) に送信中...");
-      setGenLog(prev => [...prev, "[NET] Establishing secure connection to Google Cloud...", "[NET] Uploading prompt payload (v88.1)..."]);
+      setGenLog(prev => [...prev, "[3/5] Google Cloud へ接続中...", "[3/5] プロンプトデータをアップロード中..."]);
 
       await new Promise(r => setTimeout(r, 1000)); // More visibility
 
@@ -1841,7 +1908,7 @@ Important constraints:
       };
 
       const { base64Img, usedModel: generatedModelId } = await generateImageWithImagen(finalPrompt, statCallback);
-      setGenLog(prev => [...prev, `[SUCCESS] Data stream received from Generation API (${generatedModelId}).`, "[RENDER] Decoding Base64 image data...", "[RENDER] Rendering final canvas..."]);
+      setGenLog(prev => [...prev, `[4/5] データストリーム受信完了 (Model: ${generatedModelId})`, "[5/5] Base64画像データをデコード・レンダリング中..."]);
 
       setGeneratedImage(`data:image/png;base64,${base64Img}`);
       if (generatedModelId && !generatedModelId.startsWith("gemini-3")) {
@@ -1906,21 +1973,38 @@ Important constraints:
       showStatus(`生成エラー: ${error.message} `);
       // alert(`画像生成に失敗しました。\nエラー: ${ error.message } `); // Disable alert to show UI guide instead
     } finally {
-      setIsAssembling(false);
+      clearInterval(genTimer);
+      setIsGeneratingImage(false);
     }
   };
 
-  // --- [v2.42] コンテンツポリシー救済: 2段階置換方式 ---
+  // --- [v2.44] コンテンツポリシー救済: 2段階置換方式 + 進捗表示 ---
   // Phase 1: AIが「問題箇所 → 安全な置換」のJSONテーブルを出力
   // Phase 2: そのテーブルを機械的に元プロンプトに適用（全文再出力不要）
   const regenerateSafePrompt = async () => {
     if (!finalPrompt || !policyErrorMsg.trim()) return;
     setIsFixingPolicy(true);
-    setPolicyFixLog("コンテンツポリシーアドバイザーを起動中...");
+    setPolicyFixLog("> [Phase 0/5] コンテンツポリシーアドバイザーを起動中...");
+
+    // [v2.44] 経過時間カウンター
+    let policyTickCount = 0;
+    const policyTimer = setInterval(() => {
+      policyTickCount++;
+      setPolicyFixLog(prev => {
+        const elapsed = Math.floor(policyTickCount * 1.0);
+        const timerLine = `\n> ⏳ AI分析中... (${elapsed}秒経過)`;
+        const timerRegex = /\n> ⏳ AI分析中\.\.\.\s*\(\d+秒経過\)/;
+        if (timerRegex.test(prev)) {
+          return prev.replace(timerRegex, timerLine);
+        }
+        return prev + timerLine;
+      });
+    }, 1000);
 
     try {
-      // === Phase 1: 問題箇所の特定と置換テーブル生成 ===
-      setPolicyFixLog(prev => prev + "\n> [Phase 1] 問題箇所を特定中...");
+      // === Phase 1: エラーメッセージの解析 ===
+      setPolicyFixLog(prev => prev + "\n> [Phase 1/5] エラーメッセージを解析中...");
+      setPolicyFixLog(prev => prev + "\n> [Phase 2/5] 問題箇所の特定をAIにリクエスト中...");
 
       const metaPrompt = `あなたは画像生成プロンプトのコンテンツポリシー修正の専門家です。
 
@@ -1963,13 +2047,15 @@ JSON配列の最初の文字は [ 、最後の文字は ] であること。
         setPolicyFixLog(prev => prev + `\n> ${msg}`);
       });
 
+      setPolicyFixLog(prev => prev + "\n> [Phase 3/5] AIの応答を受信・解析中...");
+
       if (!result.text || result.text.trim().length < 10) {
         setPolicyFixLog(prev => prev + "\n> [ERROR] AIからの応答が空です。エラー情報をより詳しく入力して再試行してください。");
         return;
       }
 
-      // === Phase 2: 置換テーブルのパースと適用 ===
-      setPolicyFixLog(prev => prev + "\n> [Phase 2] 置換テーブルを適用中...");
+      // === Phase 4: 置換テーブルのパースと適用 ===
+      setPolicyFixLog(prev => prev + "\n> [Phase 4/5] 置換テーブルをプロンプトに適用中...");
 
       let replacements = [];
       try {
@@ -2018,7 +2104,7 @@ JSON配列の最初の文字は [ 、最後の文字は ] であること。
 
       if (appliedCount > 0) {
         setFinalPrompt(modifiedPrompt);
-        setPolicyFixLog(prev => prev + `\n> [SUCCESS] ${appliedCount}箇所を修正しました（${failedCount}箇所はスキップ）。STEP3のプロンプト欄に反映済みです。`);
+        setPolicyFixLog(prev => prev + `\n> [Phase 5/5] ✅ ${appliedCount}箇所を修正しました（${failedCount}箇所はスキップ）。STEP3のプロンプト欄に反映済みです。`);
         setPolicyFixLog(prev => prev + "\n> [GUIDE] 再度STEP4で画像生成するか、「プロンプトをコピー」してGemini Web版で生成してください。");
       } else {
         setPolicyFixLog(prev => prev + "\n> [WARNING] AIが提案した修正箇所がプロンプト内に見つかりませんでした。");
@@ -2029,6 +2115,7 @@ JSON配列の最初の文字は [ 、最後の文字は ] であること。
       console.error(error);
       setPolicyFixLog(prev => prev + `\n> [ERROR] ${error.message}`);
     } finally {
+      clearInterval(policyTimer);
       setIsFixingPolicy(false);
     }
   };
@@ -2749,11 +2836,11 @@ ${finalPrompt}
 
                     <button
                       onClick={() => { console.log("Regenerating..."); regenerateImage(); }}
-                      disabled={!finalPrompt || isAssembling}
+                      disabled={!finalPrompt || isGeneratingImage}
                       className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg border border-white/10 active:scale-95 disabled:bg-slate-700 disabled:opacity-50 disabled:cursor-wait"
                     >
-                      {isAssembling ? <Loader2 size={20} className="animate-spin" /> : <ImageIcon size={20} />}
-                      {isAssembling ? "再生成中..." : "画像を生成する (STEP 4: Google AI)"}
+                      {isGeneratingImage ? <Loader2 size={20} className="animate-spin" /> : <ImageIcon size={20} />}
+                      {isGeneratingImage ? "再生成中..." : "画像を生成する (STEP 4: Google AI)"}
                     </button>
                   </div>
 
@@ -2834,11 +2921,9 @@ ${finalPrompt}
                           )}
                         </button>
 
-                        {policyFixLog && (
-                          <pre className="text-[10px] text-green-400 bg-black/60 p-2 rounded whitespace-pre-wrap font-mono max-h-32 overflow-y-auto">
-                            {policyFixLog}
-                          </pre>
-                        )}
+                        <pre style={{ height: '240px' }} className="text-[10px] text-green-400 bg-black/60 p-2 rounded whitespace-pre-wrap font-mono overflow-y-auto">
+                          {policyFixLog || "> 待機中... 「配慮版プロンプトを再生成する」ボタンを押すとAI分析を開始します。"}
+                        </pre>
                       </div>
                     )}
                   </div>
@@ -2859,7 +2944,7 @@ ${finalPrompt}
                         </div>
                       ))
                     )}
-                    {isAssembling && <div className="animate-pulse">_</div>}
+                    {isGeneratingImage && <div className="animate-pulse">_</div>}
                   </div>
                 </div>
               </div>
