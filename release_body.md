@@ -1,11 +1,15 @@
-## Release Notes (v2.45 Alpha)
+## Nano Banana Pro v2.46 Alpha - UI Locking Mechanism Overhaul 🔒
 
-### 🎨 UI & UX Improvements (UI/UXの改善)
-- **Standardized Progress Windows**: Unified font sizes across all progress logs and explanation panels (STEP 4 & Content Policy) to `text-xs` (12px) for improved readability, while maintaining `11px` for high-density neural process logs. Fixed a bug where dynamic height changes caused UI layout shifts by enforcing a static `160px` height structure. 
-  (進捗窓のフォントサイズと高さを全ステップで統一。コンテンツポリシーやPRO TIPの説明は視認性の高い12pxに、プロセスログは情報密度の高い11pxに最適化。高さ変動によるレイアウト崩れをインラインスタイルで固定化しました。)
-- **Translated Thinking Logs**: Localized remaining English system messages in STEP 3's Neural Process logs into Japanese for a fully unified language experience.
-  (STEP3のプロンプト構築画面のシステムメッセージのうち、英語のままだった箇所をすべて日本語化しました。)
+### 🐞 Bug Fixes & Improvements (English)
+*   **STEP UI Disablement Overhaul**: Completely rewrote the UI element deactivation logic for steps that are currently locked (e.g. while processing or waiting for preceding steps). 
+    *   Replaced unreliable Tailwind `blur` filter classes with robust inline-styled overlay panels (`absolute inset-[-2px] z-[200] background-color: rgba(0,0,0,0.92) backdrop-filter: blur(8px)`).
+    *   This perfectly solves visual bugs caused by stacking context inconsistencies where locked panels remained clearly visible beneath blurred CSS filters.
+*   **Font Style Correction**: Removed unintended `italic` classes applied to placeholder text within the **Neural Process (Thinking Mode) log** and the **STEP 4 Image Generation standby message**, restoring consistent typography.
 
-### 🐛 Bug Fixes (バグ修正)
-- **Fixed Progress Timer Disappearance**: Resolved an issue where the sequential AI generation progress timer (e.g., "⏳ AI応答を待機中...") would scroll out of view when new status messages were appended by the API callback. The timer now dynamically detaches and re-appends to the bottom of the log stream, ensuring it is always visible.
-  (画像生成およびシナリオ強化中のタイマーが、リアルタイムに追記されるログに埋もれて見えなくなる問題を修正。タイマーが常に最新のログ末尾に再描画されるようにロジックを改修しました。)
+---
+
+### 🐞 バグ修正・改善事項 (日本語)
+*   **STEP非活性化ロジックの抜本的改修**: 処理中や前提条件を満たしていないブロック（STEP2〜4）が見えてしまう・操作可能になってしまう不具合を完全に修正しました。
+    *   CSSフィルターによる `blur` クラス指定を廃止し、**各要素上に強制的に被さるインラインスタイルの暗転オーバーレイ**（z-index: 200, バックドロップブラー付き）を配置する方式に変更しました。
+    *   これにより、スタッキングコンテキスト（階層構造）の問題に起因する親のフィルター貫通バグが完全に解消され、待機中は後続UIが確実に見えなくなり、操作もブロックされます。
+*   **フォントスタイルの修正**: **ThinkingLog** のプレースホルダーメッセージや、**STEP4出力エリア**の「待機中…」メッセージに誤って掛かっていた `italic` （斜体）のクラスを取り除き、通常のフォントスタイルに統一しました。

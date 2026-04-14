@@ -32,7 +32,7 @@ import {
 import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 
-const SYSTEM_VERSION = "v2.45 Alpha";
+const SYSTEM_VERSION = "v2.46 Alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -152,7 +152,7 @@ const ThinkingLog = ({ thought, containerHeight = "h-[180px]", scrollHeight = "h
       <div className="flex items-center gap-2 text-blue-400 mb-4 uppercase tracking-widest font-bold text-[11px]">
         <BrainCircuit size={16} /> Neural Process (Thinking Mode)
       </div>
-      <div ref={scrollRef} className={`${scrollHeight} overflow-y-auto custom-scrollbar leading-relaxed whitespace-pre-wrap font-mono text-[11px] scroll-smooth ${thought ? 'text-blue-100' : 'text-blue-300/30 italic'}`}>
+      <div ref={scrollRef} className={`${scrollHeight} overflow-y-auto custom-scrollbar leading-relaxed whitespace-pre-wrap font-mono text-[11px] scroll-smooth ${thought ? 'text-blue-100' : 'text-blue-300/30'}`}>
         {displayText || "> ボタンを押すとAI処理ログがここに表示されます..."}
         {thought && <span className="inline-block w-2 h-4 bg-blue-500 ml-1 animate-pulse" />}
       </div>
@@ -2381,12 +2381,14 @@ ${finalPrompt}
             </section>
 
             {/* 02: シナリオ設定 (Static Layout) */}
-            <section className={`p-8 rounded-xl bg-[#0f1115] border flex flex-col space-y-6 shadow-xl transition-all duration-300
+            <section className={`relative p-8 rounded-xl bg-[#0f1115] border flex flex-col space-y-6 shadow-xl transition-all duration-300
                  ${currentStep === 2 ? 'border-2 border-purple-500 shadow-[0_0_50px_rgba(168,85,247,0.2)] opacity-100' : 'border-white/5 opacity-60'}
                  ${currentStep > 2 ? 'border-purple-500/30 bg-purple-900/5 opacity-100' : ''}
-                 ${currentStep < 2 ? 'blur-[4px] opacity-30 grayscale pointer-events-none' : ''}
-                 ${isAssembling ? 'blur-sm opacity-50 pointer-events-none' : ''}
       `}>
+              {/* STEP2ロックオーバーレイ: STEP1未完了 or 解析中 or アッセンブル中 */}
+              {(currentStep < 2 || isAnalyzing || isAssembling) && (
+                <div style={{ position: 'absolute', inset: -2, zIndex: 200, backgroundColor: 'rgba(10,12,16,0.92)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', pointerEvents: 'auto', borderRadius: '0.875rem' }} />
+              )}
               <div className="flex items-center justify-between">
                 <div className={`flex items-center gap-3 text-xs font-black uppercase tracking-widest ${currentStep === 2 ? 'text-purple-400' : 'text-slate-500'} `}>
                   {/* FIX: Title update */}
@@ -2755,13 +2757,15 @@ ${finalPrompt}
 
           {/* 03: プロンプト生成 - Tailwind p-8等がJITで無視されるためインラインスタイルで適用 */}
           <section
-            style={{ padding: '16px', gap: '16px', borderRadius: '0', background: '#0f1115' }}
+            style={{ padding: '16px', gap: '16px', borderRadius: '0', background: '#0f1115', position: 'relative' }}
             className={`flex flex-col shadow-xl transition-all duration-300
               ${currentStep === 3 ? 'border-2 border-orange-500/50 shadow-[0_0_50px_rgba(249,115,22,0.15)] opacity-100' : 'border border-white/5 opacity-60'}
               ${currentStep > 3 ? 'border border-orange-500/30 opacity-100' : ''}
-              ${currentStep < 3 ? 'blur-[4px] opacity-30 grayscale pointer-events-none' : ''}
-              ${isSearching ? 'blur-sm opacity-50 pointer-events-none' : ''}
           `}>
+            {/* STEP3ロックオーバーレイ: STEP2未完了 or 解析中 or 検索中 */}
+            {(currentStep < 3 || isSearching || isAnalyzing) && (
+              <div style={{ position: 'absolute', inset: -2, zIndex: 200, backgroundColor: 'rgba(10,12,16,0.92)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', pointerEvents: 'auto' }} />
+            )}
             <div className={`flex items-center gap-3 text-sm font-black uppercase tracking-widest px-2 ${currentStep === 3 ? 'text-orange-400' : 'text-slate-500'}`}>
               <Wand2 size={24} /> STEP 03: プロンプト生成 (PROMPT ASSEMBLY)
             </div>
@@ -2790,8 +2794,12 @@ ${finalPrompt}
 
           {/* 出力結果 */}
           <div
-            className={`flex flex-col gap-12 mt-12 border-t border-white/5 pt-12 transition-all duration-1000 ${isAssembleDisabled ? 'blur-md opacity-30 grayscale pointer-events-none select-none' : 'opacity-100 blur-0'} `}
+            className="relative flex flex-col gap-12 mt-12 border-t border-white/5 pt-12 transition-all duration-500"
           >
+            {/* STEP4ロックオーバーレイ: finalPrompt未生成 or 解析中 */}
+            {(isAssembleDisabled || !finalPrompt) && (
+              <div style={{ position: 'absolute', inset: -2, zIndex: 200, backgroundColor: 'rgba(10,12,16,0.92)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', pointerEvents: 'auto', borderRadius: '0.625rem' }} />
+            )}
             {/* 左: プロンプト & 思考ログ */}
             <section className="relative group h-full">
               <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl blur opacity-10 group-hover:opacity-20 transition duration-1000"></div>
@@ -2945,7 +2953,7 @@ ${finalPrompt}
                       <span className="text-blue-500">v1.3.5 (Gemini 2.0 Native)</span>
                     </div>
                     {genLog.length === 0 ? (
-                      <div className="text-white/30 italic">待機中... 「画像を生成する」ボタンを押すと開始します。</div>
+                      <div className="text-white/30">待機中... 「画像を生成する」ボタンを押すと開始します。</div>
                     ) : (
                       genLog.map((log, i) => (
                         <div key={i} className="mb-1 leading-relaxed">
@@ -3062,3 +3070,5 @@ export default function AppWrapper() {
     </ErrorBoundary>
   );
 }
+
+
