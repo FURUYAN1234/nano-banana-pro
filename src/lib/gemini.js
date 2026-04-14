@@ -78,10 +78,21 @@ export const callThinkingGemini = async (prompt, images = null, systemInstructio
     // 画像の有無に応じてモデルリストを動的に選択
     const MODEL_IDS = (images && images.length > 0) ? IMAGE_MODEL_IDS : TEXT_MODEL_IDS;
 
+    let attemptIndex = 0;
     for (const modelId of MODEL_IDS) {
+        attemptIndex++;
         try {
             console.log(`[Gemini] Attempting connection with ${modelId} (v1beta)...`);
-            if (onThinkingUpdate) onThinkingUpdate(`> [API] ${modelId} と交信を開始しました...`);
+            if (onThinkingUpdate) {
+                if (attemptIndex === 1) {
+                    onThinkingUpdate(`> [API] ${modelId} と交信を開始しました...`);
+                } else {
+                    onThinkingUpdate(`> [API] 代替モデル ${modelId} で再解析を開始します... (${attemptIndex}/${MODEL_IDS.length})`);
+                    if (images && images.length > 0) {
+                        onThinkingUpdate(`> [API] ${images.length}枚の画像データを再送信中...`);
+                    }
+                }
+            }
 
             // [v1.6.0 Fix] "One Big Prompt" Strategy
             // Some models (like 2.5 Flash) fail with "No response candidates" when using systemInstruction on v1beta.

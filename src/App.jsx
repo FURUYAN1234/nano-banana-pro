@@ -32,7 +32,7 @@ import {
 import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 
-const SYSTEM_VERSION = "v2.42 Alpha";
+const SYSTEM_VERSION = "v2.43 Alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -63,14 +63,16 @@ const applySafetyAgeUp = (promptText) => {
     // --- レベル2: 制服タグの脱学校化 ---
     [/\(school uniform(:\d\.?\d?)\)/gi, '(formal outfit$1)'],
     [/\(academy uniform(:\d\.?\d?)\)/gi, '(formal outfit$1)'],
-    [/\(sailor uniform(:\d\.?\d?)\)/gi, '(sailor-style fashion outfit$1)'],
-    [/\(sailor-style academy uniform(:\d\.?\d?)\)/gi, '(sailor-style fashion outfit$1)'],
-    [/\(serafuku(:\d\.?\d?)\)/gi, '(sailor-style fashion outfit$1)'],
+    [/\(sailor uniform(:\d\.?\d?)\)/gi, '(elegant blouse with ribbon$1)'],
+    [/\(sailor-style academy uniform(:\d\.?\d?)\)/gi, '(elegant blouse with ribbon$1)'],
+    [/\(sailor-style fashion outfit(:\d\.?\d?)\)/gi, '(elegant blouse with ribbon$1)'],
+    [/\(serafuku(:\d\.?\d?)\)/gi, '(elegant blouse with ribbon$1)'],
     [/\(schoolgirl(:\d\.?\d?)\)/gi, '(woman$1)'],
     [/\(school girl(:\d\.?\d?)\)/gi, '(woman$1)'],
     [/\(high school(:\d\.?\d?)\)/gi, '(campus$1)'],
     // --- レベル3: 学校ロールの脱学校化 ---
     [/\(student council president(:\d\.?\d?)\)/gi, '(strict leader$1)'],
+    [/\(student council member(:\d\.?\d?)\)/gi, '(compliance officer$1)'],
     [/\(honor student(:\d\.?\d?)\)/gi, '(top academic$1)'],
     [/\(disciplinarian(:\d\.?\d?)\)/gi, '(strict authority figure$1)'],
     [/\(disciplinary committee member(:\d\.?\d?)\)/gi, '(strict authority figure$1)'],
@@ -79,6 +81,7 @@ const applySafetyAgeUp = (promptText) => {
     // --- レベル4: 服装の露出軽減 (Geminiフィードバック対応) ---
     [/\((?:plaid )?mini skirt(:\d\.?\d?)\)/gi, '(plaid skirt$1)'],
     [/\(miniskirt(:\d\.?\d?)\)/gi, '(skirt$1)'],
+    [/\(pleated skirt(:\d\.?\d?)\)/gi, '(professional skirt$1)'],
     // --- レベル5: ギャル/ティーン文化タグの脱色 ---
     [/\(gal(:\d\.?\d?)\)/gi, '(fashionable$1)'],
     [/\(gyaru(:\d\.?\d?)\)/gi, '(fashionable$1)'],
@@ -423,17 +426,30 @@ function App() {
     setIsAnalyzing(true);
     setAnalyzeThought("Visual Cortex Protocols Initiated...\n> Scanning pixel data arrays...\n> Identifying character morphologies...");
 
-    // Fake Streaming Effect for user engagement
+    // [v2.42] フェイクストリーミング＋経過時間表示（フォールバック待ち中にハングアップに見えない対策）
+    let thinkTickCount = 0;
     const thinkTimer = setInterval(() => {
+      thinkTickCount++;
       setAnalyzeThought(prev => {
-        if (prev.length > 800) return prev;
-        const messages = [
-          ".", ".", ".",
-          "\n> Extracting facial landmarks...",
-          "\n> Analyzing hair topology vectors...",
-          "\n> Detecting fashion attributes...",
-        ];
-        return prev + messages[Math.floor(Math.random() * messages.length)];
+        // 最初の10回（8秒間）はフェイクメッセージ
+        if (thinkTickCount <= 10) {
+          const messages = [
+            ".", ".", ".",
+            "\n> Extracting facial landmarks...",
+            "\n> Analyzing hair topology vectors...",
+            "\n> Detecting fashion attributes...",
+          ];
+          return prev + messages[Math.floor(Math.random() * messages.length)];
+        }
+        // それ以降は経過時間をカウンター表示（上書き方式で行を増やさない）
+        const elapsed = Math.floor(thinkTickCount * 0.8);
+        // 既存の経過表示行を更新（なければ追加）
+        const timerLine = `\n> ⏳ AI応答を待機中... (${elapsed}秒経過)`;
+        const timerRegex = /\n> ⏳ AI応答を待機中\.\.\. \(\d+秒経過\)/;
+        if (timerRegex.test(prev)) {
+          return prev.replace(timerRegex, timerLine);
+        }
+        return prev + timerLine;
       });
     }, 800);
 
@@ -547,7 +563,14 @@ function App() {
       });
       setCastList(result.text);
       setUsedModel(result.model); // [v1.7.0] Track Model
-      setAnalyzeThought(result.thought || "思考プロセスが完了しました。");
+      // [v2.42] 蓄積ログを保持し、完了メッセージとThinking Traceを追記（上書きしない）
+      setAnalyzeThought(prev => {
+        const separator = "\n\n--- ✅ 解析完了 ---\n";
+        const thoughtTrace = result.thought && result.thought !== "Standard processing complete (Thinking trace unavailable)."
+          ? `> [Thinking Trace]\n${result.thought}`
+          : "> Standard processing complete (Thinking trace unavailable).";
+        return prev + separator + thoughtTrace;
+      });
       showStatus("全キャラクターの解析が完了しました。");
     } catch (error) {
       console.error(error);
@@ -913,6 +936,8 @@ ${scenario}
 
         if (scenarioMatch) {
           parsedData.topic = titleMatch ? titleMatch[1].trim() : randomCategory;
+          // [v2.42] AIが「Topic: xxx」形式で出力した場合のプレフィックス除去
+          parsedData.topic = parsedData.topic.replace(/^Topic:\s*/i, '').trim();
           parsedData.location = locationMatch ? locationMatch[1].trim() : "Generic Background";
           parsedData.scenario = scenarioMatch[1].trim();
         } else {
@@ -1241,7 +1266,10 @@ SPEECH BUBBLE PLACEMENT RULE (CRITICAL): Each character's speech bubble MUST be 
     6. [ANTI-FLOATING-EYE RULE - CRITICAL]: Do NOT overlay or superimpose a close-up of a character's eyes or upper face as a floating background element behind other characters. Each character must be drawn as a complete figure within the scene. Avoid the "dramatic floating eye close-up in the background" manga trope entirely. Every character in the panel must exist physically within the scene's space, not as a ghostly overlay or background insert.
     `;
 
-      const cleanTopic = scenario.match(/## タイトル:\s*(.*?)(\n|$|!)/)?.[1]?.trim() || scenario.split('\n')[0].substring(0, 20);
+      // [v2.42] タイトル抽出 + 「Topic:」プレフィックス除去サニタイズ
+      let cleanTopic = scenario.match(/## タイトル:\s*(.*?)(\n|$|!)/)?.[1]?.trim() || scenario.split('\n')[0].substring(0, 20);
+      // AIが「Topic: xxx」というラベル付きで出力してしまうケースを除去
+      cleanTopic = cleanTopic.replace(/^Topic:\s*/i, '').trim();
 
       // FIX: If customLocation is set, IT is the absolute truth for the visual prompt, regardless of what the scenario text says.
       const scenarioLocationMatch = scenario.match(/Location:\s*(.*?)(\n|$)/i)?.[1]?.trim();
@@ -1592,14 +1620,17 @@ SPEECH BUBBLE POSITION LOCK:
             // 検出キャラ1人だが吹き出し2つ → 独白として扱う（ソロショットにはしない）
             cloneWarning += `\nNOTE: Multiple speech bubbles in this panel are ALL spoken by ${allCharBrackets[0]} (monologue/soliloquy). Draw only ${allCharBrackets[0]} — do NOT add a second character just because there are multiple bubbles.`;
           }
-          // [v2.33] 非登場キャストを背景候補としてImagenに提示
+          // [v2.42] 非登場キャストを背景候補としてImagenに提示（クローン防止強化版）
           const otherCast = validCharacters.filter(c => !allPanelCharacters.includes(c));
           const otherBrackets = otherCast.map(c => `[${c}]`);
           let backgroundHint = '';
-          if (otherBrackets.length > 0 && allPanelCharacters.length <= 3) {
+          if (otherBrackets.length > 0) {
             backgroundHint = `\nSUGGESTED BACKGROUND CAST: ${otherBrackets.join(', ')} may also appear in the background or periphery of this panel as onlookers or reactors. When the scene takes place in a shared space (classroom, office, park, etc.), drawing them in the background adds visual richness. They must be clearly secondary (smaller, partially visible, or in the background) and must NOT be confused with the main speakers.`;
           }
-          return `CRITICAL CAST PLACEMENT: Ensure ${panelActors.join(' and ')} are the main focus. The following named characters appear in this panel: ${allCharBrackets.join(', ')}. Each named character appears EXACTLY ONCE. NEVER draw the exact same named character twice.\n${cloneWarning}${backgroundHint}`;
+          // [v2.42] クローン防止: 合計人数と1人1回ルールを明示
+          const totalCount = allPanelCharacters.length + otherCast.length;
+          const totalCountHint = `\nTOTAL CHARACTER COUNT IN THIS PANEL: EXACTLY ${totalCount} distinct individuals. Each person appears ONLY ONCE. Do NOT draw any character twice — not as a foreground duplicate, not as a background copy, not as a reflection or silhouette of an already-present character.`;
+          return `CRITICAL CAST PLACEMENT: Ensure ${panelActors.join(' and ')} are the main focus. The following named characters appear in this panel: ${allCharBrackets.join(', ')}. Each named character appears EXACTLY ONCE. NEVER draw the exact same named character twice.\n${cloneWarning}${backgroundHint}${totalCountHint}`;
         } else {
           return `CRITICAL CAST PLACEMENT: Follow the panel's action naturally. NEVER draw the exact same character twice.`;
         }
@@ -1879,43 +1910,172 @@ Important constraints:
     }
   };
 
-  // --- [v2.35] コンテンツポリシー救済: 配慮版プロンプト再生成 ---
+  // --- [v2.42] コンテンツポリシー救済: 2段階置換方式 ---
+  // Phase 1: AIが「問題箇所 → 安全な置換」のJSONテーブルを出力
+  // Phase 2: そのテーブルを機械的に元プロンプトに適用（全文再出力不要）
   const regenerateSafePrompt = async () => {
     if (!finalPrompt || !policyErrorMsg.trim()) return;
     setIsFixingPolicy(true);
     setPolicyFixLog("コンテンツポリシーアドバイザーを起動中...");
 
     try {
-      const metaPrompt = `あなたは画像生成プロンプトのコンテンツポリシーアドバイザーです。
+      // === Phase 1: 問題箇所の特定と置換テーブル生成 ===
+      setPolicyFixLog(prev => prev + "\n> [Phase 1] 問題箇所を特定中...");
 
-以下の画像生成プロンプトが、AIの安全基準（コンテンツポリシー）により拒否されました。
+      const metaPrompt = `あなたは画像生成プロンプトのコンテンツポリシー修正の専門家です。
 
-【ユーザーからのエラー情報・AI回答】:
+以下の画像生成プロンプトがAIの安全基準（コンテンツポリシー）により拒否されました。
+
+【拒否理由・エラー情報】:
 ${policyErrorMsg.trim()}
 
-【拒否された元のプロンプト】:
+【拒否されたプロンプト（参照用・修正不要）】:
 ${finalPrompt}
 
-【指示】:
-1. 上記プロンプトの中で、コンテンツポリシーに抵触している箇所（未成年と制服の組み合わせ、過激な表現、カメラアングルなど）を特定し、安全な表現に置換してください。
-2. 【最重要】置換した部分以外は**一切変更・省略せず、元のプロンプトの長さ、ディテール、フォーマット（英語のカンマ区切り）を完全に維持**してください。AI独自の要約や意図の簡略化は厳禁です。
-3. 修正後のプロンプト全文のみをそのままテキストで出力してください。説明や前置きは一切不要です。`;
+【あなたのタスク】:
+上記プロンプトの中から、コンテンツポリシーに抵触している「単語・フレーズ」を全て特定し、それぞれに対して安全な代替表現を提案してください。
+
+【検出すべき問題カテゴリ】:
+1. 学校・未成年連想: classroom, 教室, 実習室, 校則, school, academy, sailor uniform, serafuku, student council, school rules, 授業 → オフィス・社会人設定に置換
+2. 制服・学生服: sailor-style, pleated skirt（学校文脈で使用時）, school blazer, 制服 → ビジネスウェア/カジュアルオフィスに置換
+3. 暴力表現: explosion, blast, 爆風, 叩きつけ, striking, slamming, 衝撃波, 激しく叩く → 劇的だが非暴力的な演出に置換
+4. 年齢・体型リスク: short height, loli, petite（未成年を連想させる文脈） → 成人の体型表現に置換
+5. 過激カメラ: worm's eye view（制服キャラとの組み合わせ時のみ） → より安全なアングルに置換
+6. 威嚇・ハラスメント: 怒りの炎, intense fury, 仁王立ち + 攻撃動作 → 威厳ある態度に変換
+
+【出力フォーマット - 厳守】:
+以下のJSON配列形式**のみ**を出力してください。説明文や前置き、マークダウンコードフェンスは一切不要です。
+JSON配列の最初の文字は [ 、最後の文字は ] であること。
+
+[
+  {"from": "問題のある元の表現（プロンプト内の正確な文字列）", "to": "安全な代替表現", "reason": "簡潔な理由"},
+  {"from": "...", "to": "...", "reason": "..."}
+]
+
+【重要ルール】:
+- "from"の値は、プロンプト内に**実在する正確な部分文字列**でなければならない。存在しない文字列を捏造しないこと。
+- 1つの"from"は可能な限り短い単位（単語〜1文程度）にすること。段落丸ごとの置換は禁止。
+- 問題のない箇所は絶対に含めないこと。修正が必要な箇所のみ列挙すること。
+- 最低3個、最大20個の置換ペアを出力すること。
+- "to"の表現は元と同程度の長さ・ディテールを維持すること。短縮・省略禁止。`;
 
       const result = await callThinkingGemini(metaPrompt, [], null, (msg) => {
         setPolicyFixLog(prev => prev + `\n> ${msg}`);
       });
 
-      if (result.text && result.text.length > 100) {
-        setFinalPrompt(result.text.trim());
-        setPolicyFixLog(prev => prev + "\n> [SUCCESS] 配慮版プロンプトを生成しました。STEP3のプロンプト欄に反映済みです。");
+      if (!result.text || result.text.trim().length < 10) {
+        setPolicyFixLog(prev => prev + "\n> [ERROR] AIからの応答が空です。エラー情報をより詳しく入力して再試行してください。");
+        return;
+      }
+
+      // === Phase 2: 置換テーブルのパースと適用 ===
+      setPolicyFixLog(prev => prev + "\n> [Phase 2] 置換テーブルを適用中...");
+
+      let replacements = [];
+      try {
+        // JSONブロックを抽出（マークダウンコードフェンス対応）
+        let jsonStr = result.text.trim();
+        const jsonMatch = jsonStr.match(/```(?:json)?\s*([\s\S]*?)```/);
+        if (jsonMatch) {
+          jsonStr = jsonMatch[1].trim();
+        }
+        // 先頭の [ を探す
+        const bracketStart = jsonStr.indexOf('[');
+        const bracketEnd = jsonStr.lastIndexOf(']');
+        if (bracketStart !== -1 && bracketEnd !== -1) {
+          jsonStr = jsonStr.substring(bracketStart, bracketEnd + 1);
+        }
+        replacements = JSON.parse(jsonStr);
+      } catch (parseError) {
+        console.error("JSON parse error:", parseError, "Raw:", result.text);
+        setPolicyFixLog(prev => prev + "\n> [WARNING] AIの出力をJSON解析できませんでした。フォールバック（全文再生成）モードに切り替えます...");
+        // フォールバック: 従来の全文再生成方式
+        await regenerateSafePromptFallback();
+        return;
+      }
+
+      if (!Array.isArray(replacements) || replacements.length === 0) {
+        setPolicyFixLog(prev => prev + "\n> [WARNING] 置換対象が見つかりませんでした。エラー情報をより具体的に入力して再試行してください。");
+        return;
+      }
+
+      // 置換を適用
+      let modifiedPrompt = finalPrompt;
+      let appliedCount = 0;
+      let failedCount = 0;
+
+      for (const rep of replacements) {
+        if (!rep.from || !rep.to) continue;
+        if (modifiedPrompt.includes(rep.from)) {
+          modifiedPrompt = modifiedPrompt.replace(rep.from, rep.to);
+          appliedCount++;
+          setPolicyFixLog(prev => prev + `\n> ✅ "${rep.from.substring(0, 40)}..." → "${rep.to.substring(0, 40)}..." (${rep.reason || ''})`);
+        } else {
+          failedCount++;
+          setPolicyFixLog(prev => prev + `\n> ⚠️ 未発見（スキップ）: "${rep.from.substring(0, 50)}..."`);
+        }
+      }
+
+      if (appliedCount > 0) {
+        setFinalPrompt(modifiedPrompt);
+        setPolicyFixLog(prev => prev + `\n> [SUCCESS] ${appliedCount}箇所を修正しました（${failedCount}箇所はスキップ）。STEP3のプロンプト欄に反映済みです。`);
+        setPolicyFixLog(prev => prev + "\n> [GUIDE] 再度STEP4で画像生成するか、「プロンプトをコピー」してGemini Web版で生成してください。");
       } else {
-        setPolicyFixLog(prev => prev + "\n> [WARNING] AIの応答が短すぎます。エラーメッセージをより詳しく入力して再試行してください。");
+        setPolicyFixLog(prev => prev + "\n> [WARNING] AIが提案した修正箇所がプロンプト内に見つかりませんでした。");
+        setPolicyFixLog(prev => prev + "\n> [GUIDE] フォールバック（全文再生成）モードに切り替えます...");
+        await regenerateSafePromptFallback();
       }
     } catch (error) {
       console.error(error);
       setPolicyFixLog(prev => prev + `\n> [ERROR] ${error.message}`);
     } finally {
       setIsFixingPolicy(false);
+    }
+  };
+
+  // --- [v2.42] フォールバック: 従来の全文再生成方式（JSONパース失敗時の保険） ---
+  const regenerateSafePromptFallback = async () => {
+    setPolicyFixLog(prev => prev + "\n> [Fallback] 全文再生成モードで修正中...");
+    try {
+      const fallbackPrompt = `あなたは画像生成プロンプトのコンテンツポリシー修正の専門家です。
+
+以下のプロンプトがAIの安全基準で拒否されました。以下の置換ルールを厳密に適用して、修正後のプロンプト全文を出力してください。
+
+【必須置換ルール（これらを全て適用）】:
+- 学校設定 → オフィス/IT企業/会議室に変更: 教室,実習室,classroom → モダンなIT企業のオフィス
+- 校則 → 業務規定/社内規定
+- セーラー服/sailor-style → ビジネスブラウス/professional business blouse
+- プリーツスカート/pleated skirt → テーラードスラックス/tailored slacks（学校文脈の場合のみ）
+- 爆風/explosion/blast → 颯爽と/劇的に/dramatic entrance
+- 叩きつけ/striking/slamming → 威風堂々と置く/firmly placing
+- 衝撃波 → 気迫/aura of authority
+- 怒りの炎/intense fury/rage → 強い決意/fierce determination
+- 校則を守りなさい → 業務規定を守りなさい
+- short height → petite build
+
+【拒否理由・エラー情報】:
+${policyErrorMsg.trim()}
+
+【修正対象のプロンプト】:
+${finalPrompt}
+
+【出力ルール】:
+- 上記の置換ルールに該当する箇所だけを修正し、それ以外は1文字も変更しないでください。
+- 修正後のプロンプト全文のみを出力してください。説明や前置きは不要です。`;
+
+      const result = await callThinkingGemini(fallbackPrompt, [], null, (msg) => {
+        setPolicyFixLog(prev => prev + `\n> ${msg}`);
+      });
+
+      if (result.text && result.text.length > 100) {
+        setFinalPrompt(result.text.trim());
+        setPolicyFixLog(prev => prev + "\n> [SUCCESS] フォールバック方式で配慮版プロンプトを生成しました。STEP3のプロンプト欄に反映済みです。");
+      } else {
+        setPolicyFixLog(prev => prev + "\n> [ERROR] フォールバックでも適切な応答が得られませんでした。エラーメッセージをより詳しく入力して再試行してください。");
+      }
+    } catch (error) {
+      console.error(error);
+      setPolicyFixLog(prev => prev + `\n> [Fallback ERROR] ${error.message}`);
     }
   };
 
@@ -2460,7 +2620,7 @@ ${finalPrompt}
 
           {/* 場所・服装設定プレビュー - STEP2以降のみ表示 */}
           <div className={`bg-[#1a1625] border border-blue-500/30 p-4 pb-5 rounded-xl flex flex-col gap-3 text-xs font-mono shadow-inner transition-all duration-300
-            ${currentStep < 2 ? 'blur-[4px] opacity-30 grayscale pointer-events-none' : ''}
+            ${!scenario ? 'blur-[4px] opacity-30 grayscale pointer-events-none' : ''}
           `}>
             <span className="text-blue-400 font-bold border-b border-blue-500/20 pb-2 w-full flex items-center gap-2">
               <Sparkles size={14} /> 場所・服装設定 (GENERATION PREVIEW)
@@ -2612,13 +2772,15 @@ ${finalPrompt}
                   </div>
 
                   {/* [v2.35] コンテンツポリシー救済パネル（折りたたみ式） */}
-                  <div className="mt-4 border border-yellow-500/30 rounded-lg overflow-hidden">
+                  <div className={`mt-4 border border-yellow-500/30 rounded-lg overflow-hidden ${!finalPrompt ? 'opacity-40 pointer-events-none' : ''}`}>
                     <button
-                      className="w-full flex items-center justify-between px-3 py-2 bg-yellow-900/20 hover:bg-yellow-900/30 transition-colors cursor-pointer"
+                      className="w-full flex items-center justify-between px-3 py-2 bg-yellow-900/20 hover:bg-yellow-900/30 transition-colors cursor-pointer disabled:cursor-not-allowed"
                       onClick={() => setIsPolicyPanelOpen(!isPolicyPanelOpen)}
+                      disabled={!finalPrompt}
                     >
                       <div className="flex items-center gap-2">
                         <span>🛡️ コンテンツポリシーで画像生成が拒否された場合</span>
+                        {!finalPrompt && <span className="text-[9px] text-slate-500">(STEP3完了後に利用可能)</span>}
                       </div>
                       <div className="flex items-center gap-1">
                         <span className="text-[9px] text-slate-600 font-mono">{isPolicyPanelOpen ? '閉じる' : 'クリックで開く'}</span>
