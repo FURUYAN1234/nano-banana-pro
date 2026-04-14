@@ -163,3 +163,45 @@ vX.XX Alpha: [Short Description in English] / [遏ｭ縺・ｪｬ譏取枚・域
 
 詳細は [docs/API_KEY_AND_PUBLIC_FILE_POLICY.md](./API_KEY_AND_PUBLIC_FILE_POLICY.md) に記載の通りですが、**いかなる場合も APIキーのハードコードおよび、公開すべきでないローカルの残骸ファイル（ログ、テストスクリプト、他プロジェクト用ドキュメントなど）を Git 管理下に含めることを固く禁じます。**
 
+
+---
+
+## 9. ローカル検証必須プロトコル (Local Verification Protocol) - MANDATORY
+
+**コードを変更した後は、必ずローカルサーバーを起動し、検証アドレスをユーザーに提示すること。これを省略することは禁止。**
+
+### ローカル開発サーバーの起動コマンド
+
+```powershell
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; npm run dev
+```
+
+### ローカル検証アドレス（固定）
+
+```
+http://localhost:5173/
+```
+
+### エージェントが守るべき手順
+
+1. **コード変更完了後**、上記コマンドで `npm run dev` を起動する（既に起動中の場合はスキップ可）
+2. **ユーザーに以下を必ず伝える:**
+   ```
+   ✅ ローカルで確認できます → http://localhost:5173/
+   ```
+3. サーバーが既に起動済みの場合は「起動済み」とアドレスを添えて伝える
+
+### サーバーが起動しない場合のトラブルシューティング
+
+```powershell
+# ポートが競合している場合は既存のNodeプロセスを終了
+taskkill /F /IM node.exe
+
+# Viteキャッシュをクリア
+Remove-Item -Recurse -Force node_modules\.vite -ErrorAction SilentlyContinue
+
+# 再起動
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; npm run dev
+```
+
+> **【絶対厳守】** UIに関わる変更（JSX・CSS）を行った後は、この手順を実施しないまま作業報告することを禁止する。

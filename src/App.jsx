@@ -32,7 +32,7 @@ import {
 import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 
-const SYSTEM_VERSION = "v2.44 Alpha";
+const SYSTEM_VERSION = "v2.45 Alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -133,7 +133,7 @@ const applySafetyAgeUp = (promptText) => {
 
 
 // --- Thinking Log Component ---
-const ThinkingLog = ({ thought, containerHeight = "h-[180px]", scrollHeight = "h-[120px]" }) => {
+const ThinkingLog = ({ thought, containerHeight = "h-[180px]", scrollHeight = "h-[120px]", placeholder = "" }) => {
   const scrollRef = useRef(null);
 
   useEffect(() => {
@@ -142,16 +142,19 @@ const ThinkingLog = ({ thought, containerHeight = "h-[180px]", scrollHeight = "h
     }
   }, [thought]);
 
-  if (!thought) return null;
+  // thoughtが空でも待機状態の枠を表示する（STEP3など）
+  const displayText = thought || placeholder;
+  if (!displayText && !placeholder) return null;
+
   return (
     <div className={`w-full bg-[#050505] border border-blue-500/20 rounded-2xl p-6 font-mono text-xs overflow-hidden relative group mt-4 animate-in fade-in slide-in-from-top-4 ${containerHeight}`}>
       <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-600 to-purple-600 animate-pulse" />
-      <div className="flex items-center gap-2 text-blue-400 mb-4 uppercase tracking-widest font-bold">
+      <div className="flex items-center gap-2 text-blue-400 mb-4 uppercase tracking-widest font-bold text-[11px]">
         <BrainCircuit size={16} /> Neural Process (Thinking Mode)
       </div>
-      <div ref={scrollRef} className={`${scrollHeight} overflow-y-auto custom-scrollbar text-blue-100 leading-relaxed whitespace-pre-wrap font-mono text-[10px] scroll-smooth`}>
-        {thought}
-        <span className="inline-block w-2 h-4 bg-blue-500 ml-1 animate-pulse" />
+      <div ref={scrollRef} className={`${scrollHeight} overflow-y-auto custom-scrollbar leading-relaxed whitespace-pre-wrap font-mono text-[11px] scroll-smooth ${thought ? 'text-blue-100' : 'text-blue-300/30 italic'}`}>
+        {displayText || "> ボタンを押すとAI処理ログがここに表示されます..."}
+        {thought && <span className="inline-block w-2 h-4 bg-blue-500 ml-1 animate-pulse" />}
       </div>
     </div>
   );
@@ -449,10 +452,11 @@ function App() {
         // [v2.44] APIコールバックが挿入されても、末尾のタイマー行を正確に更新する
         const timerLine = `\n> ⏳ AI応答を待機中... (${elapsed}秒経過)`;
         const timerRegex = /\n> ⏳ AI応答を待機中\.\.\.\s*\(\d+秒経過\)/;
+        // [v2.44 Fix] APIコールバックが⏳行のあとにメッセージを追加した場合でも
+        // 常に末尾に表示されるよう、既存⏳行を削除してから末尾に再追加する
         if (timerRegex.test(prev)) {
-          return prev.replace(timerRegex, timerLine);
+          return prev.replace(timerRegex, '') + timerLine;
         }
-        // タイマー行がまだない場合は末尾に追加
         return prev + timerLine;
       });
     }, 800);
@@ -637,8 +641,9 @@ function App() {
         const elapsed = Math.floor(enhanceTickCount * 0.8);
         const timerLine = `\n> ⏳ AI応答を待機中... (${elapsed}秒経過)`;
         const timerRegex = /\n> ⏳ AI応答を待機中\.\.\.\s*\(\d+秒経過\)/;
+        // [v2.44 Fix] 常に末尾に⏳行が表示されるよう既存行を削除して追記
         if (timerRegex.test(prev)) {
-          return prev.replace(timerRegex, timerLine);
+          return prev.replace(timerRegex, '') + timerLine;
         }
         return prev + timerLine;
       });
@@ -759,8 +764,9 @@ ${scenario}
         const elapsed = Math.floor(scenarioTickCount * 0.8);
         const timerLine = `\n> ⏳ AI応答を待機中... (${elapsed}秒経過)`;
         const timerRegex = /\n> ⏳ AI応答を待機中\.\.\.\s*\(\d+秒経過\)/;
+        // [v2.44 Fix] 常に末尾に⏳行が表示されるよう既存行を削除して追記
         if (timerRegex.test(prev)) {
-          return prev.replace(timerRegex, timerLine);
+          return prev.replace(timerRegex, '') + timerLine;
         }
         return prev + timerLine;
       });
@@ -1831,7 +1837,7 @@ Important constraints:
       // [v2.27] セーフティ年齢引き上げ変換を適用
       const safePrompt = applySafetyAgeUp(constructedPrompt.trim());
       setFinalPrompt(safePrompt);
-      setAssembleThought(prev => prev + "\n> Safety Age-Up Filter: APPLIED.\n> Optimization Vectors: CALCULATED.\n> Structure Lock: ACTIVE.\n> Satire Logic: REINFORCED.\n> [SUCCESS] Final Prompt Grid Assembled.");
+      setAssembleThought(prev => prev + "\n> セーフティ年齢フィルター: 適用済み\n> 最適化ベクトル: 計算完了\n> 構造ロック: 有効\n> 風刺ロジック: 強化済み\n> [完了] 最終プロンプトを構築しました。");
       showStatus("最終プロンプトの構築が完了しました。画像生成を開始します...");
 
       // Auto-trigger Image Generation handled by effect if needed, but manual button usually forces user to check.
@@ -2804,7 +2810,7 @@ ${finalPrompt}
                   </div>
                 </div>
 
-                <ThinkingLog thought={assembleThought} />
+                <ThinkingLog thought={assembleThought} placeholder="> ボタンを押すとプロンプト構築ログがここに表示されます..." />
 
                 <div className="flex flex-col h-full mt-4 gap-4">
 
@@ -2830,7 +2836,7 @@ ${finalPrompt}
                     </button>
 
                     {/* Instruction Footer */}
-                    <div className="bg-slate-900 border-t border-white/10 p-2 text-[10px] text-slate-500 text-center font-mono">
+                    <div className="bg-slate-900 border-t border-white/10 p-2 text-[11px] text-slate-500 text-center font-mono">
                       ※内容を修正したい場合は、上の「シナリオ」を直接書き換えてから、再度 <span className="text-orange-400 font-bold">「最終プロンプトを構築する」</span> を押してください。
                     </div>
 
@@ -2844,7 +2850,7 @@ ${finalPrompt}
                     </button>
                   </div>
 
-                  {/* PRO TIPS FOR EXTERNAL GENERATION */}
+                  {/* PRO TIPS FOR EXTERNAL GENERATION - 説明文統一規格: text-xs */}
                   <div className="mt-4 p-3 bg-orange-950/40 border border-orange-500/30 rounded-lg">
                     <div className="flex items-start gap-2">
                       <div className="mt-0.5 text-orange-400">
@@ -2861,23 +2867,23 @@ ${finalPrompt}
                   {/* [v2.35] コンテンツポリシー救済パネル（折りたたみ式） */}
                   <div className={`mt-4 border border-yellow-500/30 rounded-lg overflow-hidden ${!finalPrompt ? 'opacity-40 pointer-events-none' : ''}`}>
                     <button
-                      className="w-full flex items-center justify-between px-3 py-2 bg-yellow-900/20 hover:bg-yellow-900/30 transition-colors cursor-pointer disabled:cursor-not-allowed"
+                      className="w-full flex items-center justify-between px-3 py-2 bg-yellow-900/20 hover:bg-yellow-900/30 transition-colors cursor-pointer disabled:cursor-not-allowed text-xs"
                       onClick={() => setIsPolicyPanelOpen(!isPolicyPanelOpen)}
                       disabled={!finalPrompt}
                     >
                       <div className="flex items-center gap-2">
                         <span>🛡️ コンテンツポリシーで画像生成が拒否された場合</span>
-                        {!finalPrompt && <span className="text-[9px] text-slate-500">(STEP3完了後に利用可能)</span>}
+                        {!finalPrompt && <span className="text-[10px] text-slate-500">(STEP3完了後に利用可能)</span>}
                       </div>
                       <div className="flex items-center gap-1">
-                        <span className="text-[9px] text-slate-600 font-mono">{isPolicyPanelOpen ? '閉じる' : 'クリックで開く'}</span>
+                        <span className="text-[10px] text-slate-600 font-mono">{isPolicyPanelOpen ? '閉じる' : 'クリックで開く'}</span>
                         <ChevronDown size={14} className={`text-yellow-400/60 transition-transform duration-300 ${isPolicyPanelOpen ? 'rotate-180' : ''}`} />
                       </div>
                     </button>
 
                     {isPolicyPanelOpen && (
                       <div className="p-3 bg-yellow-950/20 space-y-3">
-                        <p className="text-[11px] text-yellow-200/70 leading-relaxed">
+                        <p className="text-xs text-yellow-200/80 leading-relaxed">
                           GeminiのエラーメッセージやGeminiに理由を聞いた回答を下の欄に貼ってください。<br/>
                           「配慮版プロンプトを再生成する」ボタンを押すとSTEP3のプロンプトが修正されて上書きされます。<br/>
                           再度STEP4で画像を生成するかGeminiにプロンプトとキャラクターシートを貼って画像を生成してみて下さい。
@@ -2885,11 +2891,11 @@ ${finalPrompt}
 
                         <hr className="border-yellow-500/20" />
 
-                        <div className="text-[10px] text-slate-400 leading-relaxed">
+                        <div className="text-xs text-slate-400 leading-relaxed">
                           <p className="mb-1">💡 <strong className="text-yellow-300">Gemini Web版で拒否された場合の聞き方:</strong></p>
                           <p className="mb-1">以下のテキストをGeminiにそのまま送ると、具体的な原因を教えてもらえます。<br/>Geminiの回答を下の欄に貼って「配慮版プロンプトを再生成する」を押してください。</p>
                           <button
-                            className="text-[10px] bg-slate-700 hover:bg-slate-600 text-white px-2 py-1 rounded transition-colors"
+                            className="text-xs bg-slate-700 hover:bg-slate-600 text-white px-2 py-1 rounded transition-colors"
                             onClick={() => {
                               navigator.clipboard.writeText("先ほどのプロンプトが拒否された理由を教えてください。具体的にどの単語・表現がコンテンツポリシーに違反していましたか？");
                               showStatus("クリップボードにコピーしました");
@@ -2921,25 +2927,29 @@ ${finalPrompt}
                           )}
                         </button>
 
-                        <pre style={{ height: '240px' }} className="text-[10px] text-green-400 bg-black/60 p-2 rounded whitespace-pre-wrap font-mono overflow-y-auto">
+                        {/* コンテンツポリシーログ - 統一規格: text-xs / 固定高さ160px */}
+                        <pre style={{ height: '160px', overflowY: 'auto' }} className="text-xs text-green-400 bg-black/60 p-3 rounded whitespace-pre-wrap font-mono custom-scrollbar leading-relaxed">
                           {policyFixLog || "> 待機中... 「配慮版プロンプトを再生成する」ボタンを押すとAI分析を開始します。"}
                         </pre>
                       </div>
                     )}
                   </div>
 
-                  {/* Generation Log Terminal */}
-                  <div className="mt-4 p-4 bg-black/80 rounded-lg border border-white/10 font-mono text-xs text-green-400 h-32 overflow-y-auto">
-                    <div className="opacity-50 mb-2 border-b border-white/10 pb-1 flex justify-between">
-                      <span>KERNEL LOG MONITOR</span>
-                      <span className="text-[10px] text-blue-500">v1.3.5 (Gemini 2.0 Native)</span>
+                  {/* Generation Log Terminal - 固定高さ: styleで明示指定（TailwindJITバイパス）, 統一規格: text-xs */}
+                  <div
+                    className="mt-4 p-3 bg-black/80 rounded-lg border border-white/10 font-mono text-xs text-green-400 custom-scrollbar"
+                    style={{ height: '160px', overflowY: 'auto' }}
+                  >
+                    <div className="opacity-50 mb-2 border-b border-white/10 pb-1 flex justify-between text-xs">
+                      <span>🖥 画像生成ログ (STEP 4)</span>
+                      <span className="text-blue-500">v1.3.5 (Gemini 2.0 Native)</span>
                     </div>
                     {genLog.length === 0 ? (
-                      <div className="text-white/30 italic">Ready to generate...</div>
+                      <div className="text-white/30 italic">待機中... 「画像を生成する」ボタンを押すと開始します。</div>
                     ) : (
                       genLog.map((log, i) => (
-                        <div key={i} className="mb-1">
-                          <span className="opacity-50 mr-2">{new Date().toLocaleTimeString()}</span>
+                        <div key={i} className="mb-1 leading-relaxed">
+                          <span className="opacity-40 mr-2">{new Date().toLocaleTimeString()}</span>
                           {log}
                         </div>
                       ))
