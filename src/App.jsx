@@ -32,7 +32,7 @@ import {
 import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 
-const SYSTEM_VERSION = "v2.48 Alpha";
+const SYSTEM_VERSION = "v2.49 Alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -2236,9 +2236,16 @@ ${finalPrompt}
                 <h1 className="text-4xl font-black tracking-tighter text-blue-400 drop-shadow-[0_0_10px_rgba(59,130,246,0.8)]">
                   Super FURU AI <span className="text-white text-2xl ml-2 tracking-widest">4-koma System</span> <span className="text-xs text-yellow-500 font-mono align-top ml-1">{SYSTEM_VERSION}</span>
                 </h1>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.4em] mt-1 pl-1">
-                  Social Satire Engine [ 演出強化版 ]
-                </p>
+                <div className="flex items-center justify-center gap-3 mt-1">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.4em]">
+                    Social Satire Engine [ 演出強化版 ]
+                  </p>
+                  {/* [v2.48] API認証状態バッジ - タイトル枠内に常時表示 */}
+                  <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[10px] font-black tracking-wider ${apiKey ? 'bg-green-500/15 border-green-500/40 text-green-400' : 'bg-red-500/15 border-red-500/40 text-red-400 animate-pulse'}`}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${apiKey ? 'bg-green-400 shadow-[0_0_6px_rgba(74,222,128,0.8)]' : 'bg-red-400'}`} />
+                    {apiKey ? '✅ API認証済' : '⚠ 未接続'}
+                  </div>
+                </div>
                 {/* [v1.7.0] Model Quality Badge */}
                 {usedModel && (() => {
                   const info = getModelBadgeInfo(usedModel);
@@ -3053,6 +3060,10 @@ ${finalPrompt}
 
             {/* 右: 生成画像エリア */}
             <section className="relative group bg-[#0d1117] rounded-xl border border-white/5 min-h-[600px] flex flex-col overflow-hidden">
+              {/* [v2.48] 描画エリアロックオーバーレイ: STEP3(finalPrompt)未完了時はぼかす */}
+              {!finalPrompt && !isAssembling && (
+                <div style={{ position: 'absolute', inset: 0, zIndex: 200, backgroundColor: 'rgba(10,12,16,0.85)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)', pointerEvents: 'auto', borderRadius: '0.75rem' }} />
+              )}
 
               {/* Title Header */}
               <div className="w-full bg-[#050608] border-b border-white/5 p-6 flex items-center justify-center z-20 shadow-xl">

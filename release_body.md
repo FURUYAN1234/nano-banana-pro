@@ -1,21 +1,25 @@
-# v2.47 Alpha - Camera Work & Dialogue Enhancement / カメラワーク・セリフ強化
+# v2.49 Alpha - API認証バッジ & 描画エリアロック
 
-## 🐛 Bug Fixes / バグ修正
+## 🇯🇵 日本語
 
-- **STEP3 "最終プロンプトを構築する" ボタン押下時にSTEP2エリアが消えるバグを修正**
-  - Fixed: STEP2 overlay incorrectly activated during STEP3 prompt assembly (`isAssembling` removed from STEP2 lock condition)
-- **STEP3構築中にSTEP4エリア（ボタン下）が真っ黒になりログが見えないバグを修正**
-  - Fixed: STEP4 overlay now hides during prompt assembly so users can see the build progress log
+### 新機能・改善
+- **API認証状態バッジ**: タイトル枠内に「✅ API認証済」/「⚠ 未接続」バッジを常時表示
+  - 緑色光るドット付きバッジ（認証済み時）
+  - 赤色点滅バッジ（未接続時）
+- **サブタイトル中央配置**: 「SOCIAL SATIRE ENGINE」とAPI認証バッジを水平中央揃えに修正
+- **描画エリアロックオーバーレイ**: STEP3（プロンプト構築）未完了時、STEP4の画像生成結果エリア全体にぼかしオーバーレイを表示
+  - 枠線・タイトルヘッダー・中央アイコン・「Ready to Start」テキストがボケた状態に
+  - STEP3完了後に初めてクリアに表示される
 
-## ✨ New Features / 新機能
+---
 
-### シナリオ強化パネル - 2カテゴリ追加 (4→6)
+## 🇺🇸 English
 
-- **📷 カメラワーク強化**: 各コマにアオリ・俯瞰・ダッチアングル・超広角等の映画的カメラアングル指示を追加
-  - ⚠️ アオリ等の過激なアングルはコンテンツポリシーに引っかかる場合がありますが、既存の救済機能で対応可能
-- **💬 セリフ・ギャグ強化**: 4コマ漫画の起承転結テンポを最大化。ツッコミのキレ向上、オチの破壊力最大化、伏線回収による笑い
-
-## 📐 UI Changes / UI変更
-
-- シナリオ強化パネルのグリッドレイアウトを `2x2` → `2x3` (lg: `3x2`) に拡張
-- Current Targets表示にカメラ・セリフカテゴリを追加
+### New Features & Improvements
+- **API Authentication Badge**: Persistent "✅ API Authenticated" / "⚠ Not Connected" badge displayed in title bar
+  - Green glowing dot badge (authenticated)
+  - Red pulsing badge (not connected)
+- **Subtitle Centering**: Centered "SOCIAL SATIRE ENGINE" text and API badge horizontally
+- **Drawing Area Lock Overlay**: Added blur overlay to STEP 4 image generation area when STEP 3 (prompt assembly) is not yet completed
+  - Border, title header, center icon, and "Ready to Start" text appear blurred
+  - Becomes clear only after STEP 3 completion
