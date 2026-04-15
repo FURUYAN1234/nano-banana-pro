@@ -32,7 +32,7 @@ import {
 import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 
-const SYSTEM_VERSION = "v2.49 Alpha";
+const SYSTEM_VERSION = "v2.50 Alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -750,6 +750,9 @@ ${scenario}
     setFinalPrompt(""); // Fix: Clear previous prompt to prevent "Instant Done" state
     setGeneratedImage(null); // Fix: Clear previous image
     setAssembleThought(""); // Fix: Clear previous assembly log
+    // [v2.50] シナリオ強化stateのリセット（新規シナリオ生成時に前回の強化状態が残る問題を修正）
+    setOriginalScenario(""); // 強化前の原文をクリア（「強化済み」バッジ消去 + 古いシナリオへの誤復元防止）
+    setEnhanceLog(""); // 強化ログをクリア
 
     let randomCategory = "";
 

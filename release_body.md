@@ -1,25 +1,5 @@
-# v2.49 Alpha - API認証バッジ & 描画エリアロック
-
 ## 🇯🇵 日本語
-
-### 新機能・改善
-- **API認証状態バッジ**: タイトル枠内に「✅ API認証済」/「⚠ 未接続」バッジを常時表示
-  - 緑色光るドット付きバッジ（認証済み時）
-  - 赤色点滅バッジ（未接続時）
-- **サブタイトル中央配置**: 「SOCIAL SATIRE ENGINE」とAPI認証バッジを水平中央揃えに修正
-- **描画エリアロックオーバーレイ**: STEP3（プロンプト構築）未完了時、STEP4の画像生成結果エリア全体にぼかしオーバーレイを表示
-  - 枠線・タイトルヘッダー・中央アイコン・「Ready to Start」テキストがボケた状態に
-  - STEP3完了後に初めてクリアに表示される
-
----
+- **不具合修正 (Bug Fix)**: 新しいシナリオを生成した際に、前回のシナリオ強化状態（元のシナリオ、強化ログ）がリセットされず、「強化済」の表示が残ったままになったり、「強化前に戻す」を実行した際に古いシナリオが復元されてしまう問題を修正しました。シナリオ生成開始時に確実に状態をクリアするようになりました。
 
 ## 🇺🇸 English
-
-### New Features & Improvements
-- **API Authentication Badge**: Persistent "✅ API Authenticated" / "⚠ Not Connected" badge displayed in title bar
-  - Green glowing dot badge (authenticated)
-  - Red pulsing badge (not connected)
-- **Subtitle Centering**: Centered "SOCIAL SATIRE ENGINE" text and API badge horizontally
-- **Drawing Area Lock Overlay**: Added blur overlay to STEP 4 image generation area when STEP 3 (prompt assembly) is not yet completed
-  - Border, title header, center icon, and "Ready to Start" text appear blurred
-  - Becomes clear only after STEP 3 completion
+- **Bug Fix**: Fixed an issue where the Scenario Enhancement state (original scenario, enhancement logs) was not properly reset when generating a new scenario. This caused the UI to incorrectly display the "Scenario Enhanced" status and the "Revert" button to unexpectedly restore a scenario from a previous session. States are now properly cleared at the beginning of scenario generation.
