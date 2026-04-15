@@ -1,15 +1,21 @@
-## Nano Banana Pro v2.46 Alpha - UI Locking Mechanism Overhaul 🔒
+# v2.47 Alpha - Camera Work & Dialogue Enhancement / カメラワーク・セリフ強化
 
-### 🐞 Bug Fixes & Improvements (English)
-*   **STEP UI Disablement Overhaul**: Completely rewrote the UI element deactivation logic for steps that are currently locked (e.g. while processing or waiting for preceding steps). 
-    *   Replaced unreliable Tailwind `blur` filter classes with robust inline-styled overlay panels (`absolute inset-[-2px] z-[200] background-color: rgba(0,0,0,0.92) backdrop-filter: blur(8px)`).
-    *   This perfectly solves visual bugs caused by stacking context inconsistencies where locked panels remained clearly visible beneath blurred CSS filters.
-*   **Font Style Correction**: Removed unintended `italic` classes applied to placeholder text within the **Neural Process (Thinking Mode) log** and the **STEP 4 Image Generation standby message**, restoring consistent typography.
+## 🐛 Bug Fixes / バグ修正
 
----
+- **STEP3 "最終プロンプトを構築する" ボタン押下時にSTEP2エリアが消えるバグを修正**
+  - Fixed: STEP2 overlay incorrectly activated during STEP3 prompt assembly (`isAssembling` removed from STEP2 lock condition)
+- **STEP3構築中にSTEP4エリア（ボタン下）が真っ黒になりログが見えないバグを修正**
+  - Fixed: STEP4 overlay now hides during prompt assembly so users can see the build progress log
 
-### 🐞 バグ修正・改善事項 (日本語)
-*   **STEP非活性化ロジックの抜本的改修**: 処理中や前提条件を満たしていないブロック（STEP2〜4）が見えてしまう・操作可能になってしまう不具合を完全に修正しました。
-    *   CSSフィルターによる `blur` クラス指定を廃止し、**各要素上に強制的に被さるインラインスタイルの暗転オーバーレイ**（z-index: 200, バックドロップブラー付き）を配置する方式に変更しました。
-    *   これにより、スタッキングコンテキスト（階層構造）の問題に起因する親のフィルター貫通バグが完全に解消され、待機中は後続UIが確実に見えなくなり、操作もブロックされます。
-*   **フォントスタイルの修正**: **ThinkingLog** のプレースホルダーメッセージや、**STEP4出力エリア**の「待機中…」メッセージに誤って掛かっていた `italic` （斜体）のクラスを取り除き、通常のフォントスタイルに統一しました。
+## ✨ New Features / 新機能
+
+### シナリオ強化パネル - 2カテゴリ追加 (4→6)
+
+- **📷 カメラワーク強化**: 各コマにアオリ・俯瞰・ダッチアングル・超広角等の映画的カメラアングル指示を追加
+  - ⚠️ アオリ等の過激なアングルはコンテンツポリシーに引っかかる場合がありますが、既存の救済機能で対応可能
+- **💬 セリフ・ギャグ強化**: 4コマ漫画の起承転結テンポを最大化。ツッコミのキレ向上、オチの破壊力最大化、伏線回収による笑い
+
+## 📐 UI Changes / UI変更
+
+- シナリオ強化パネルのグリッドレイアウトを `2x2` → `2x3` (lg: `3x2`) に拡張
+- Current Targets表示にカメラ・セリフカテゴリを追加

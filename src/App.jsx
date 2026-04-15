@@ -32,7 +32,7 @@ import {
 import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 
-const SYSTEM_VERSION = "v2.46 Alpha";
+const SYSTEM_VERSION = "v2.47 Alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -383,6 +383,8 @@ function App() {
   const [enhanceBodyLang, setEnhanceBodyLang] = useState(false);       // ボディランゲージ強化
   const [enhanceEffects, setEnhanceEffects] = useState(false);         // 照明・演出強化
   const [enhanceBackgrounds, setEnhanceBackgrounds] = useState(false); // 背景強化
+  const [enhanceCameraWork, setEnhanceCameraWork] = useState(false);   // [v2.47] カメラワーク強化
+  const [enhanceDialogue, setEnhanceDialogue] = useState(false);       // [v2.47] セリフ・ギャグ強化
   const [isEnhancing, setIsEnhancing] = useState(false);
   const [enhanceLog, setEnhanceLog] = useState("");
   const [isEnhancePanelOpen, setIsEnhancePanelOpen] = useState(false);
@@ -595,7 +597,7 @@ function App() {
   // シナリオ強化機能: 選択されたカテゴリに基づいてシナリオの演出を強化する
   const enhanceScenario = async () => {
     if (!scenario || scenario.length < 20) return showStatus("先にシナリオを生成してください。");
-    const anySelected = enhanceExpressions || enhanceBodyLang || enhanceEffects || enhanceBackgrounds;
+    const anySelected = enhanceExpressions || enhanceBodyLang || enhanceEffects || enhanceBackgrounds || enhanceCameraWork || enhanceDialogue;
     if (!anySelected) return showStatus("少なくとも1つの強化カテゴリをONにしてください。");
     if (isEnhancing) return;
 
@@ -621,6 +623,14 @@ function App() {
     }
     if (enhanceBackgrounds) {
       enhanceCategories.push("【背景の強化】各コマの背景描写を詳細にしてください。例: 教室なら机の配置や窓からの光、黒板の書き込み、壁のポスター等の小道具を追加。屋外なら天候、雲の形、木々、通行人、建物の描き込みなど空間の奥行きを出す要素を追記してください。");
+    }
+    // [v2.47] カメラワーク強化
+    if (enhanceCameraWork) {
+      enhanceCategories.push("【カメラワークの強化】各コマに映画的なカメラアングル指示を追加してください。各コマの「状況」欄の冒頭に [Camera: ○○] の形式でカメラ指示を追記してください。例:\n- ローアングル/アオリ（キャラを力強く・圧倒的に見せる）\n- 俯瞰/バードアイ（状況俯瞰・孤立感）\n- ダッチアングル（不安感・異常事態の演出）\n- 超広角/フィッシュアイ（誇張・コミカルな歪み）\n- 寄り/クローズアップ（表情の微細な変化）\n- 引き/ロングショット（全体の空気感）\n4コマ全てを同じアングルにしないでください。コマごとにアングルを変えてドラマチックな視覚的リズムを作ってください。特に4コマ目のオチにはインパクトのあるアングルを使ってください。⚠️ アオリ等の過激なアングルはコンテンツポリシーに引っかかる場合がありますが、救済機能で対応可能です。");
+    }
+    // [v2.47] セリフ・ギャグ強化
+    if (enhanceDialogue) {
+      enhanceCategories.push("【セリフ・ギャグの強化】4コマ漫画の起承転結のテンポを最大化してください。\n- ツッコミのキレを上げる（「なんでやねん」レベルの弱い定型ツッコミは禁止。もっと具体的で状況に即した面白いリアクションに書き換える）\n- オチ（4コマ目）の破壊力を最大化する。予想を裏切る展開や、前のコマの伏線回収で笑いを取る\n- セリフは短く鋭く。だらだら説明するセリフは削って、一言で刺さるセリフにする\n- 3コマ目に「溜め」を意識し、4コマ目への落差を最大化する\n- 可能なら言葉遊び、ダブルミーニング、予想の裏切りを仕込む");
     }
 
     setEnhanceLog(prev => prev + `\n> [CONFIG] 強化カテゴリ: ${enhanceCategories.length}個`);
@@ -2385,8 +2395,9 @@ ${finalPrompt}
                  ${currentStep === 2 ? 'border-2 border-purple-500 shadow-[0_0_50px_rgba(168,85,247,0.2)] opacity-100' : 'border-white/5 opacity-60'}
                  ${currentStep > 2 ? 'border-purple-500/30 bg-purple-900/5 opacity-100' : ''}
       `}>
-              {/* STEP2ロックオーバーレイ: STEP1未完了 or 解析中 or アッセンブル中 */}
-              {(currentStep < 2 || isAnalyzing || isAssembling) && (
+              {/* STEP2ロックオーバーレイ: STEP1未完了 or 解析中 */}
+              {/* [v2.47 BugFix] isAssemblingを除外: STEP3構築中にSTEP2が消えるバグ修正 */}
+              {(currentStep < 2 || isAnalyzing) && (
                 <div style={{ position: 'absolute', inset: -2, zIndex: 200, backgroundColor: 'rgba(10,12,16,0.92)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', pointerEvents: 'auto', borderRadius: '0.875rem' }} />
               )}
               <div className="flex items-center justify-between">
@@ -2598,8 +2609,8 @@ ${finalPrompt}
                         ⚠️ 演出が過激になるとSTEP4でコンテンツポリシーに引っかかる場合があります（既存の救済機能で対応可能）。
                       </p>
 
-                      {/* 4つのトグルスイッチ */}
-                      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                      {/* 6つのトグルスイッチ [v2.47] カメラワーク・セリフ追加 */}
+                      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
                         {/* 表情 */}
                         <label className={`relative flex items-center justify-center p-3 rounded-xl cursor-pointer border-2 border-b-4 transition-all duration-100 group overflow-hidden select-none active:border-b-2 active:translate-y-0.5 ${
                           enhanceExpressions ? 'bg-white text-black border-slate-300' : 'bg-[#1e293b] text-slate-400 border-[#0f172a] hover:bg-[#334155]'
@@ -2667,11 +2678,45 @@ ${finalPrompt}
                             <div className="text-[9px] opacity-70 mt-1">描写を詳細化</div>
                           </div>
                         </label>
+
+                        {/* [v2.47] カメラワーク */}
+                        <label className={`relative flex items-center justify-center p-3 rounded-xl cursor-pointer border-2 border-b-4 transition-all duration-100 group overflow-hidden select-none active:border-b-2 active:translate-y-0.5 ${
+                          enhanceCameraWork ? 'bg-white text-black border-slate-300' : 'bg-[#1e293b] text-slate-400 border-[#0f172a] hover:bg-[#334155]'
+                        }`}>
+                          <input type="checkbox" className="hidden" checked={enhanceCameraWork} onChange={() => setEnhanceCameraWork(!enhanceCameraWork)} />
+                          {enhanceCameraWork && (
+                            <div className="absolute top-2 right-2 bg-white text-blue-600 rounded-full p-0.5 shadow-sm">
+                              <CheckCircle2 size={12} strokeWidth={4} />
+                            </div>
+                          )}
+                          <div className="text-center">
+                            <div className={`text-2xl mb-1 ${enhanceCameraWork ? 'scale-110' : 'opacity-70 grayscale'}`}>📷</div>
+                            <div className="text-[11px] font-bold tracking-wider">カメラワーク</div>
+                            <div className="text-[9px] opacity-70 mt-1">アオリ・俯瞰等</div>
+                          </div>
+                        </label>
+
+                        {/* [v2.47] セリフ・ギャグ強化 */}
+                        <label className={`relative flex items-center justify-center p-3 rounded-xl cursor-pointer border-2 border-b-4 transition-all duration-100 group overflow-hidden select-none active:border-b-2 active:translate-y-0.5 ${
+                          enhanceDialogue ? 'bg-white text-black border-slate-300' : 'bg-[#1e293b] text-slate-400 border-[#0f172a] hover:bg-[#334155]'
+                        }`}>
+                          <input type="checkbox" className="hidden" checked={enhanceDialogue} onChange={() => setEnhanceDialogue(!enhanceDialogue)} />
+                          {enhanceDialogue && (
+                            <div className="absolute top-2 right-2 bg-white text-blue-600 rounded-full p-0.5 shadow-sm">
+                              <CheckCircle2 size={12} strokeWidth={4} />
+                            </div>
+                          )}
+                          <div className="text-center">
+                            <div className={`text-2xl mb-1 ${enhanceDialogue ? 'scale-110' : 'opacity-70 grayscale'}`}>💬</div>
+                            <div className="text-[11px] font-bold tracking-wider">セリフ強化</div>
+                            <div className="text-[9px] opacity-70 mt-1">ギャグ・オチ最大化</div>
+                          </div>
+                        </label>
                       </div>
 
                       {/* 選択中の内容を表示 */}
                       <div className="text-xs text-orange-200/80 text-center font-mono py-1.5 bg-black/20 border border-white/5 rounded-md">
-                        Current Targets: {[enhanceExpressions && "表情", enhanceBodyLang && "身体", enhanceEffects && "演出", enhanceBackgrounds && "背景"].filter(Boolean).join(" / ") || "未選択"}
+                        Current Targets: {[enhanceExpressions && "表情", enhanceBodyLang && "身体", enhanceEffects && "演出", enhanceBackgrounds && "背景", enhanceCameraWork && "カメラ", enhanceDialogue && "セリフ"].filter(Boolean).join(" / ") || "未選択"}
                       </div>
 
                       {/* 実行・元に戻すボタン */}
@@ -2679,7 +2724,7 @@ ${finalPrompt}
                         <button
                           className="flex-1 bg-orange-600 hover:bg-orange-500 disabled:bg-slate-700 disabled:opacity-50 text-white font-bold py-2 rounded-lg flex items-center justify-center gap-2 transition-all text-sm"
                           onClick={enhanceScenario}
-                          disabled={isEnhancing || !(enhanceExpressions || enhanceBodyLang || enhanceEffects || enhanceBackgrounds)}
+                          disabled={isEnhancing || !(enhanceExpressions || enhanceBodyLang || enhanceEffects || enhanceBackgrounds || enhanceCameraWork || enhanceDialogue)}
                         >
                           {isEnhancing ? (
                             <><Loader2 size={16} className="animate-spin" /> 強化中...</>
@@ -2797,7 +2842,8 @@ ${finalPrompt}
             className="relative flex flex-col gap-12 mt-12 border-t border-white/5 pt-12 transition-all duration-500"
           >
             {/* STEP4ロックオーバーレイ: finalPrompt未生成 or 解析中 */}
-            {(isAssembleDisabled || !finalPrompt) && (
+            {/* [v2.47 BugFix] isAssembling中は構築ログを見せるためオーバーレイを非表示にする */}
+            {!isAssembling && (isAssembleDisabled || !finalPrompt) && (
               <div style={{ position: 'absolute', inset: -2, zIndex: 200, backgroundColor: 'rgba(10,12,16,0.92)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', pointerEvents: 'auto', borderRadius: '0.625rem' }} />
             )}
             {/* 左: プロンプト & 思考ログ */}
