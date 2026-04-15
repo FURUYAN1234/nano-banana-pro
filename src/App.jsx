@@ -32,7 +32,7 @@ import {
 import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 
-const SYSTEM_VERSION = "v2.47 Alpha";
+const SYSTEM_VERSION = "v2.48 Alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -180,13 +180,13 @@ const StepGuide = ({ text, position = "top", visible = true }) => {
 // --- API Key Modal ---
 const ApiKeyModal = ({ isOpen, onSave }) => {
   const [key, setKey] = useState("");
-  const [error, setError] = useState(""); // Local error state
+  const [error, setError] = useState("");
 
   if (!isOpen) return null;
 
   const handleSave = () => {
     if (!key.trim()) {
-      setError("APIキーを入力してください (Required)");
+      setError("APIキーを入力してください");
       return;
     }
     setError("");
@@ -194,40 +194,52 @@ const ApiKeyModal = ({ isOpen, onSave }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/90 backdrop-blur-md">
-      <div className="bg-[#111] border border-blue-500/30 p-8 rounded-xl w-full max-w-md shadow-2xl relative">
-        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-purple-500" />
-        <h2 className="text-2xl font-black text-white mb-4 tracking-tighter uppercase flex items-center gap-2 italic">
-          <Zap className="fill-blue-500 text-blue-500" /> システム初期化
-        </h2>
-        <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-2 flex items-center justify-between">
-          <span>Google API Key (Gemini API)</span>
-          <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" className="text-cyan-400 hover:text-cyan-300 underline decoration-cyan-400/30 ml-2">
-            [Get Key]
+    <div className="fixed top-0 left-0 right-0 z-[99999] animate-in slide-in-from-top duration-300">
+      <div className="max-w-5xl mx-auto px-4 md:px-10 pt-4">
+        <div className="bg-[#0f1115]/95 backdrop-blur-2xl border border-blue-500/30 rounded-xl shadow-2xl shadow-blue-500/10 p-4 flex flex-col md:flex-row items-center gap-4">
+          {/* 左: アイコンとラベル */}
+          <div className="flex items-center gap-3 shrink-0">
+            <div className="p-2 bg-blue-600 rounded-lg animate-pulse">
+              <Zap size={18} className="text-white" />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-white">API Key が必要です</p>
+              <p className="text-[10px] text-slate-500">ブラウザメモリ内のみ保持・外部送信なし</p>
+            </div>
+          </div>
+
+          {/* 中央: 入力フィールド */}
+          <div className="flex-1 w-full md:w-auto">
+            <div className="flex gap-2">
+              <input
+                type="password"
+                value={key}
+                onChange={(e) => setKey(e.target.value)}
+                placeholder="Google AI API Key を入力..."
+                className="flex-1 bg-black/50 text-white placeholder:text-slate-600 px-4 py-2.5 rounded-lg border border-white/10 focus:border-blue-500 outline-none font-mono text-sm tracking-wider transition-all focus:shadow-[0_0_12px_rgba(59,130,246,0.2)]"
+                onKeyDown={(e) => e.key === 'Enter' && handleSave()}
+                autoFocus
+              />
+              <button
+                onClick={handleSave}
+                className="bg-blue-600 hover:bg-blue-500 text-white font-bold px-6 py-2.5 rounded-lg transition-all text-sm whitespace-nowrap active:scale-95"
+              >
+                接続
+              </button>
+            </div>
+            {error && <p className="text-red-400 text-[10px] mt-1 pl-1">{error}</p>}
+          </div>
+
+          {/* 右: Get Key リンク */}
+          <a
+            href="https://aistudio.google.com/app/apikey"
+            target="_blank"
+            rel="noreferrer"
+            className="text-[11px] text-cyan-400 hover:text-cyan-300 underline decoration-cyan-400/30 whitespace-nowrap shrink-0"
+          >
+            🔑 キーを取得
           </a>
-        </p>
-        <p className="text-[10px] text-slate-500 mb-6 flex items-center gap-1">
-          <span className="text-yellow-500">⚠</span> APIキーはブラウザ内にのみ保存され、外部へは送信されませんが、管理には十分ご注意ください。
-          {error && <span className="text-red-500 ml-2">{error}</span>}
-        </p>
-
-        <div className="mb-6">
-          <input
-            type="password"
-            value={key}
-            onChange={(e) => setKey(e.target.value)}
-            placeholder="APIキーを入力..."
-            className="w-full bg-white text-black placeholder:text-slate-400 p-3 rounded-xl border border-white/10 focus:border-blue-500 outline-none font-mono tracking-widest shadow-[0_0_15px_rgba(255,255,255,0.1)] focus:shadow-[0_0_20px_rgba(59,130,246,0.3)] transition-all"
-            onKeyDown={(e) => e.key === 'Enter' && handleSave()}
-          />
         </div>
-
-        <button
-          onClick={handleSave}
-          className="w-full block bg-blue-600 hover:bg-blue-500 text-white font-black py-4 rounded-xl uppercase tracking-widest transition-all shadow-lg shadow-blue-900/20"
-        >
-          システムに接続
-        </button>
       </div>
     </div>
   );
@@ -397,7 +409,7 @@ function App() {
   const [generatedImage, setGeneratedImage] = useState("");
 
   const handleSetKey = (key) => {
-    // Sanitize key: remove all non-ASCII characters (often users copy hidden chars or Japanese text by mistake)
+    // APIキーのサニタイズ: 非ASCII文字を除去（コピペ時の見えない文字対策）
     const cleanKey = key.replace(/[^\u0000-\u007F]/g, "").trim();
     if (cleanKey !== key) {
       showStatus("APIキーに含まれる不要な文字を自動削除しました。");
@@ -405,7 +417,8 @@ function App() {
     setApiKey(cleanKey);
     setApiKeyState(cleanKey);
     setShowModal(false);
-    // Force scroll to top to prevent layout shift confusion
+    // [v2.48] 接続完了のフィードバック
+    showStatus("✅ API接続完了！キャラクターシートをアップロードして開始してください。");
     window.scrollTo({ top: 0, behavior: 'instant' });
   };
 
@@ -685,6 +698,13 @@ ${scenario}
       if (result && result.text && result.text.length > 50) {
         setScenario(result.text.trim());
         setEnhanceLog(prev => prev + `\n> [SUCCESS] シナリオを強化しました！（${result.text.length}文字）\n> [INFO] 「元に戻す」ボタンで強化前のシナリオに戻せます。`);
+        // [v2.48] 強化完了後にカテゴリボタンをリセット（次の強化は白紙から選択）
+        setEnhanceExpressions(false);
+        setEnhanceBodyLang(false);
+        setEnhanceEffects(false);
+        setEnhanceBackgrounds(false);
+        setEnhanceCameraWork(false);
+        setEnhanceDialogue(false);
         showStatus("シナリオ強化完了！");
       } else {
         setEnhanceLog(prev => prev + "\n> [ERROR] AIの応答が短すぎます。もう一度お試しください。");
@@ -2122,6 +2142,8 @@ JSON配列の最初の文字は [ 、最後の文字は ] であること。
         setFinalPrompt(modifiedPrompt);
         setPolicyFixLog(prev => prev + `\n> [Phase 5/5] ✅ ${appliedCount}箇所を修正しました（${failedCount}箇所はスキップ）。STEP3のプロンプト欄に反映済みです。`);
         setPolicyFixLog(prev => prev + "\n> [GUIDE] 再度STEP4で画像生成するか、「プロンプトをコピー」してGemini Web版で生成してください。");
+        // [v2.48] 修正適用後にエラーメッセージ入力をクリア（古い情報の混入防止）
+        setPolicyErrorMsg("");
       } else {
         setPolicyFixLog(prev => prev + "\n> [WARNING] AIが提案した修正箇所がプロンプト内に見つかりませんでした。");
         setPolicyFixLog(prev => prev + "\n> [GUIDE] フォールバック（全文再生成）モードに切り替えます...");
@@ -2173,6 +2195,8 @@ ${finalPrompt}
       if (result.text && result.text.length > 100) {
         setFinalPrompt(result.text.trim());
         setPolicyFixLog(prev => prev + "\n> [SUCCESS] フォールバック方式で配慮版プロンプトを生成しました。STEP3のプロンプト欄に反映済みです。");
+        // [v2.48] フォールバック成功時もエラーメッセージ入力をクリア
+        setPolicyErrorMsg("");
       } else {
         setPolicyFixLog(prev => prev + "\n> [ERROR] フォールバックでも適切な応答が得られませんでした。エラーメッセージをより詳しく入力して再試行してください。");
       }
@@ -2274,19 +2298,26 @@ ${finalPrompt}
               <ImageIcon size={20} className={currentStep === 4 ? 'text-white' : 'text-slate-500'} />
             </div>
           </div>
-          <div className="hidden md:block text-right">
-            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">CURRENT MODE</p>
-            <p className="text-xl font-black italic tracking-tighter text-white">
-              {currentStep === 1 && <span className="text-blue-500">CHARACTER ANALYSIS</span>}
-              {currentStep === 2 && <span className="text-purple-500">SCENARIO GENERATION</span>}
-              {currentStep === 3 && <span className="text-orange-500">PROMPT ASSEMBLY</span>}
-              {currentStep === 4 && <span className="text-green-500">EXECUTION COMPLETE</span>}
-            </p>
+          <div className="hidden md:flex items-center gap-4">
+            {/* [v2.48] API接続状態バッジ */}
+            <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[10px] font-bold tracking-wider ${apiKey ? 'bg-green-500/10 border-green-500/30 text-green-400' : 'bg-red-500/10 border-red-500/30 text-red-400 animate-pulse'}`}>
+              <span className={`w-2 h-2 rounded-full ${apiKey ? 'bg-green-400' : 'bg-red-400'}`} />
+              {apiKey ? 'CONNECTED' : 'NO API KEY'}
+            </div>
+            <div className="text-right">
+              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">CURRENT MODE</p>
+              <p className="text-xl font-black italic tracking-tighter text-white">
+                {currentStep === 1 && <span className="text-blue-500">CHARACTER ANALYSIS</span>}
+                {currentStep === 2 && <span className="text-purple-500">SCENARIO GENERATION</span>}
+                {currentStep === 3 && <span className="text-orange-500">PROMPT ASSEMBLY</span>}
+                {currentStep === 4 && <span className="text-green-500">EXECUTION COMPLETE</span>}
+              </p>
+            </div>
           </div>
         </div>
 
-        <main className="space-y-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8" style={{ filter: apiKey ? 'none' : 'blur(10px)', pointerEvents: apiKey ? 'auto' : 'none' }}>
+        <main className="space-y-8" style={{ filter: apiKey ? 'none' : 'blur(10px)', pointerEvents: apiKey ? 'auto' : 'none', transition: 'filter 0.5s ease' }}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
 
             {/* 01: キャラクター入力 (Dynamic Style) */}
             <section
@@ -2841,9 +2872,8 @@ ${finalPrompt}
           <div
             className="relative flex flex-col gap-12 mt-12 border-t border-white/5 pt-12 transition-all duration-500"
           >
-            {/* STEP4ロックオーバーレイ: finalPrompt未生成 or 解析中 */}
-            {/* [v2.47 BugFix] isAssembling中は構築ログを見せるためオーバーレイを非表示にする */}
-            {!isAssembling && (isAssembleDisabled || !finalPrompt) && (
+            {/* [v2.48] 出力結果ロックオーバーレイ: STEP3未完了時は全体をぼかす */}
+            {(currentStep < 3 || isSearching || isAnalyzing) && (
               <div style={{ position: 'absolute', inset: -2, zIndex: 200, backgroundColor: 'rgba(10,12,16,0.92)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', pointerEvents: 'auto', borderRadius: '0.625rem' }} />
             )}
             {/* 左: プロンプト & 思考ログ */}
@@ -2888,6 +2918,13 @@ ${finalPrompt}
                       {isCopied ? <CheckCircle2 size={20} /> : <Copy size={20} />}
                       {isCopied ? "コピー完了" : "コピペ (他アプリ用: キャラシート添付を強く推奨)"}
                     </button>
+                  </div>{/* Buttons Row: コピペボタンまで */}
+
+                  {/* [v2.48] コピペボタンより下: finalPrompt未生成時にぼかし */}
+                  <div className="relative mt-2">
+                    {!isAssembling && !finalPrompt && (
+                      <div style={{ position: 'absolute', inset: -2, zIndex: 200, backgroundColor: 'rgba(10,12,16,0.85)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)', pointerEvents: 'auto', borderRadius: '0.625rem' }} />
+                    )}
 
                     {/* Instruction Footer */}
                     <div className="bg-slate-900 border-t border-white/10 p-2 text-[11px] text-slate-500 text-center font-mono">
@@ -2897,12 +2934,11 @@ ${finalPrompt}
                     <button
                       onClick={() => { console.log("Regenerating..."); regenerateImage(); }}
                       disabled={!finalPrompt || isGeneratingImage}
-                      className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg border border-white/10 active:scale-95 disabled:bg-slate-700 disabled:opacity-50 disabled:cursor-wait"
+                      className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg border border-white/10 active:scale-95 disabled:bg-slate-700 disabled:opacity-50 disabled:cursor-wait mt-4"
                     >
                       {isGeneratingImage ? <Loader2 size={20} className="animate-spin" /> : <ImageIcon size={20} />}
                       {isGeneratingImage ? "再生成中..." : "画像を生成する (STEP 4: Google AI)"}
                     </button>
-                  </div>
 
                   {/* PRO TIPS FOR EXTERNAL GENERATION - 説明文統一規格: text-xs */}
                   <div className="mt-4 p-3 bg-orange-950/40 border border-orange-500/30 rounded-lg">
@@ -3010,6 +3046,7 @@ ${finalPrompt}
                     )}
                     {isGeneratingImage && <div className="animate-pulse">_</div>}
                   </div>
+                  </div>{/* [v2.48] ぼかしラッパー閉じタグ */}
                 </div>
               </div>
             </section>
