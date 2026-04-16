@@ -1,5 +1,15 @@
-## 🇯🇵 日本語
-- **不具合修正 (Bug Fix)**: 新しいシナリオを生成した際に、前回のシナリオ強化状態（元のシナリオ、強化ログ）がリセットされず、「強化済」の表示が残ったままになったり、「強化前に戻す」を実行した際に古いシナリオが復元されてしまう問題を修正しました。シナリオ生成開始時に確実に状態をクリアするようになりました。
+## 🎯 Scenario-Driven Location & Outfit (v2.43 Architecture)
 
-## 🇺🇸 English
-- **Bug Fix**: Fixed an issue where the Scenario Enhancement state (original scenario, enhancement logs) was not properly reset when generating a new scenario. This caused the UI to incorrectly display the "Scenario Enhanced" status and the "Revert" button to unexpectedly restore a scenario from a previous session. States are now properly cleared at the beginning of scenario generation.
+### English
+- **Location & Outfit now read from scenario text** — no more STEP 2 re-generation needed to change location/outfit
+- Input fields serve as convenience shortcuts for STEP 2; afterwards, edit `Location:` / `Outfit:` lines directly in the scenario
+- GENERATION PREVIEW now shows real-time values parsed from scenario text
+- Outfit placeholder updated with "普段着" (casual wear) example
+- All existing outfit enforcement (per-panel injection + global OUTFIT OVERRIDE) fully maintained
+
+### 日本語
+- **場所・服装がシナリオテキストから直接読み取られるように変更** — 場所・服装の変更にSTEP 2の再実行が不要に
+- 入力欄はSTEP 2用の初期値ショートカットとして機能。以降はシナリオ内の `Location:` / `Outfit:` 行を直接編集するだけで反映
+- GENERATION PREVIEWがシナリオテキストからリアルタイムで値を取得・表示
+- 服装欄のプレースホルダーに「普段着」を追加
+- 既存の服装強制ロジック（各パネル注入 + グローバルOUTFIT OVERRIDE）は完全維持

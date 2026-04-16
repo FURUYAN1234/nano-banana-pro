@@ -32,7 +32,7 @@ import {
 import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 
-const SYSTEM_VERSION = "v2.50 Alpha";
+const SYSTEM_VERSION = "v2.51 Alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -982,6 +982,7 @@ ${scenario}
 
         Topic: [ニュースの見出し（15文字以内）]
         Location: [${customLocation.trim() ? "必ず『" + customLocation.trim() + "』にせよ" : "ニュースの内容に即した舞台（例: 砂漠、法廷、宇宙）。※教室は禁止"}]
+        Outfit: [${customOutfit.trim() ? "必ず『" + customOutfit.trim() + "』にせよ" : "なし（キャラシート準拠）"}]
         Scenario:
         [1コマ目: 起]
         [EMOTION: XXX]
@@ -1023,6 +1024,7 @@ ${scenario}
       try {
         const titleMatch = result.text.match(/Topic:\s*(.+)/i);
         const locationMatch = result.text.match(/Location:\s*(.+)/i);
+        const outfitMatch = result.text.match(/Outfit:\s*(.+)/i);
         const scenarioMatch = result.text.match(/Scenario:\s*([\s\S]+)/i);
 
         if (scenarioMatch) {
@@ -1030,6 +1032,7 @@ ${scenario}
           // [v2.42] AIが「Topic: xxx」形式で出力した場合のプレフィックス除去
           parsedData.topic = parsedData.topic.replace(/^Topic:\s*/i, '').trim();
           parsedData.location = locationMatch ? locationMatch[1].trim() : "Generic Background";
+          parsedData.outfit = outfitMatch ? outfitMatch[1].trim() : "";
           parsedData.scenario = scenarioMatch[1].trim();
         } else {
           // Fallback: Try JSON just in case the model ignored instructions, or raw
@@ -1068,12 +1071,13 @@ ${scenario}
       parsedData.scenario = cleanScenario(parsedData.scenario);
 
       setScenario(parsedData.scenario);
-      // We append the topic and location to the scenario text for visibility and parsing
-      setScenario(`## タイトル: ${parsedData.topic} !?\nLocation: ${parsedData.location || "Unspecified"}\n\n${parsedData.scenario} `);
+      // [v2.43] シナリオテキストにLocation/Outfit行を含めて表示・編集可能にする
+      const outfitLine = (customOutfit.trim() || parsedData.outfit) ? `\nOutfit: ${customOutfit.trim() || parsedData.outfit}` : '';
+      setScenario(`## タイトル: ${parsedData.topic} !?\nLocation: ${parsedData.location || "Unspecified"}${outfitLine}\n\n${parsedData.scenario} `);
 
-      // STEP2実行時に場所・服装を確定（ロック）する
+      // [v2.43] ロック値もセット（GENERATION PREVIEW表示用）
       setLockedLocation(customLocation.trim() || parsedData.location || "Unspecified");
-      setLockedOutfit(customOutfit.trim() || "");
+      setLockedOutfit(customOutfit.trim() || parsedData.outfit || "");
 
       setScenarioThought(prev => prev + `\n > Topic Selected: ${parsedData.topic} \n > Scenario Construction Complete.`);
       showStatus("シナリオの生成が完了しました！");
@@ -1363,9 +1367,12 @@ SPEECH BUBBLE PLACEMENT RULE (CRITICAL): Each character's speech bubble MUST be 
       // AIが「Topic: xxx」というラベル付きで出力してしまうケースを除去
       cleanTopic = cleanTopic.replace(/^Topic:\s*/i, '').trim();
 
-      // FIX: If customLocation is set, IT is the absolute truth for the visual prompt, regardless of what the scenario text says.
+      // [v2.43] シナリオテキストから場所・服装を読み取る（ユーザーの直接編集を反映）
       const scenarioLocationMatch = scenario.match(/Location:\s*(.*?)(\n|$)/i)?.[1]?.trim();
-      const cleanLocation = customLocation.trim() ? customLocation.trim() : (scenarioLocationMatch || "Generic Detailed Background");
+      const scenarioOutfitMatch = scenario.match(/Outfit:\s*(.*?)(\n|$)/i)?.[1]?.trim();
+      const cleanLocation = scenarioLocationMatch || "Generic Detailed Background";
+      // [v2.43] 服装もシナリオテキストから取得（「なし」やキャラシート準拠系は空扱い）
+      const activeOutfit = (scenarioOutfitMatch && !/^(なし|キャラシート準拠|none|default)/i.test(scenarioOutfitMatch)) ? scenarioOutfitMatch : "";
 
       // [v1.9.5] Remove markdown codeblock artifacts that leak into Visual Action extraction
       const cleanScenario = scenario.replace(/```(?:json|markdown)?/gi, '').trim();
@@ -1552,10 +1559,10 @@ SPEECH BUBBLE PLACEMENT RULE (CRITICAL): Each character's speech bubble MUST be 
         return actionStr;
       };
 
-      // [v2.19] 案3: 各パネルに服装リマインドを自動注入（OUTFIT OVERRIDE設定時のみ）
+      // [v2.43] 各パネルに服装リマインドを自動注入（シナリオテキストのOutfit行から取得）
       const injectOutfitReminder = (actionText) => {
-        if (!customOutfit.trim()) return actionText;
-        return `(All characters are wearing ${customOutfit.trim()}) ${actionText}`;
+        if (!activeOutfit) return actionText;
+        return `(All characters are wearing ${activeOutfit}) ${actionText}`;
       };
 
       const extractPlacementRule = (fullPanelText) => {
@@ -1740,7 +1747,7 @@ SPEECH BUBBLE POSITION LOCK:
           cleanCastData += `\n- Character [${currentCharacter}]: `;
         }
         if (!currentCharacter) continue;
-        if (customOutfit.trim() && (line.includes('服装') || line.includes('Outfit'))) continue;
+        if (activeOutfit && (line.includes('服装') || line.includes('Outfit'))) continue;
         const weightsMatch = line.match(/\[WEIGHTS?\]:\s*(.*)/i);
         if (weightsMatch) {
           let tags = weightsMatch[1].replace(/\|/g, '').trim();
@@ -1793,7 +1800,7 @@ If an image is attached, you MUST reproduce the character designs from the attac
 - DO NOT change any character's hair color, hair length, or hairstyle between panels or from the reference.
 - DO NOT swap features between characters (e.g., giving Character A's hair color to Character B).
 - If a character has a unique charm point (mole, scar, freckles, snaggletooth), it MUST appear in EVERY panel.
-${customOutfit.trim() ? `
+${activeOutfit ? `
 REFERENCE IMAGE CLOTHING POLICY (CRITICAL):
 - The attached reference image must ONLY be used for: face shape, hairstyle, hair color, eye color, eye shape, skin tone, and accessories (glasses, hair clips, etc.).
 - COMPLETELY IGNORE the clothing/outfit shown in the reference image.
@@ -1801,7 +1808,7 @@ REFERENCE IMAGE CLOTHING POLICY (CRITICAL):
 
 Important Character Cast:
 ${VAR_CAST_LIST}
-${customOutfit.trim() ? `OUTFIT OVERRIDE (Mandatory): All characters MUST be wearing the following outfit, overriding their default clothing: ${customOutfit.trim()}. If weighted tags are provided (e.g. "(swimsuit:1.5)"), apply them directly. Strictly follow this outfit specification.` : ''}
+${activeOutfit ? `OUTFIT OVERRIDE (Mandatory): All characters MUST be wearing the following outfit, overriding their default clothing: ${activeOutfit}. If weighted tags are provided (e.g. "(swimsuit:1.5)"), apply them directly. Strictly follow this outfit specification.` : ''}
 【Character Identity Anchor (v2.25)】: Before drawing each panel, mentally confirm: "Does this character's hair color, hairstyle, eye color, glasses status, and outfit match the reference and previous panels?" If ANY detail differs, redraw it. Cross-panel consistency is MANDATORY.
 ${buildIdentityMatrix(castList)}
 CROSS-PANEL OUTFIT CONSISTENCY (MANDATORY): Every character MUST wear the EXACT same outfit in ALL 4 panels. Do NOT change, add, or remove any clothing item between panels. If no outfit override is specified, use the outfit from the character reference sheet and keep it identical across every panel.
@@ -2572,7 +2579,7 @@ ${finalPrompt}
                       onChange={(e) => setCustomOutfit(e.target.value)}
                       style={{ color: '#ffffff', backgroundColor: '#111111' }}
                       className="w-full bg-[#111] text-white p-2 rounded border border-gray-700 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 outline-none text-sm placeholder-gray-600 font-mono"
-                      placeholder="例: 全員水着、黒のミリタリー装備、ナース服..."
+                      placeholder="例: 普段着、全員水着、黒のミリタリー装備、ナース服..."
                     />
                   </div>
                 </div>
@@ -2807,38 +2814,46 @@ ${finalPrompt}
               <Sparkles size={14} /> 場所・服装設定 (GENERATION PREVIEW)
             </span>
             <p className="text-[10px] text-slate-400 leading-relaxed">
-              ※以下を変更する場合は指定場所・指定服装を入力の上、『シナリオ作成を実行（STEP2）』ボタンをクリックして再生成してください。
+              ※以下はシナリオ内の <code className="text-blue-300">Location:</code> / <code className="text-purple-300">Outfit:</code> 行から自動取得されます。変更したい場合はシナリオ内の該当行を直接編集してください。
             </p>
-            <div className="text-gray-300" style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '6px' }}>
-              <Globe size={12} className="text-blue-400" />
-              <span>場所 (Location):</span>
-              <span style={{ fontWeight: 'bold', color: lockedLocation && customLocation && lockedLocation === customLocation ? '#c4b5fd' : '#ffffff' }}>
-                {lockedLocation || "AIおまかせ (Generic Background)"}
-              </span>
-              <span style={{
-                marginLeft: '6px', padding: '2px 6px', borderRadius: '4px', fontSize: '9px', whiteSpace: 'nowrap',
-                background: lockedLocation && customLocation && lockedLocation === customLocation ? 'rgba(88,28,135,0.5)' : 'rgba(29,78,216,0.3)',
-                color: lockedLocation && customLocation && lockedLocation === customLocation ? '#c4b5fd' : '#93c5fd',
-                border: `1px solid ${lockedLocation && customLocation && lockedLocation === customLocation ? 'rgba(139,92,246,0.4)' : 'rgba(59,130,246,0.3)'}`
-              }}>
-                {lockedLocation && customLocation && lockedLocation === customLocation ? '強制指定中' : '自動判定'}
-              </span>
-            </div>
-            <div className="text-gray-300" style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '6px', paddingBottom: '4px' }}>
-              <span className="text-green-400">👕</span>
-              <span>服装 (Outfit):</span>
-              <span style={{ fontWeight: 'bold', color: lockedOutfit ? '#c4b5fd' : '#ffffff' }}>
-                {lockedOutfit || "キャラシート準拠 (Default)"}
-              </span>
-              <span style={{
-                marginLeft: '6px', padding: '2px 6px', borderRadius: '4px', fontSize: '9px', whiteSpace: 'nowrap',
-                background: lockedOutfit ? 'rgba(88,28,135,0.5)' : 'rgba(29,78,216,0.3)',
-                color: lockedOutfit ? '#c4b5fd' : '#93c5fd',
-                border: `1px solid ${lockedOutfit ? 'rgba(139,92,246,0.4)' : 'rgba(59,130,246,0.3)'}`
-              }}>
-                {lockedOutfit ? '強制指定中' : '自動判定'}
-              </span>
-            </div>
+            {(() => {
+              // [v2.43] シナリオテキストからリアルタイムで場所・服装を取得
+              const previewLocation = scenario?.match(/Location:\s*(.*?)(\n|$)/i)?.[1]?.trim() || '';
+              const previewOutfitRaw = scenario?.match(/Outfit:\s*(.*?)(\n|$)/i)?.[1]?.trim() || '';
+              const previewOutfit = (previewOutfitRaw && !/^(なし|キャラシート準拠|none|default)/i.test(previewOutfitRaw)) ? previewOutfitRaw : '';
+              return (<>
+                <div className="text-gray-300" style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '6px' }}>
+                  <Globe size={12} className="text-blue-400" />
+                  <span>場所 (Location):</span>
+                  <span style={{ fontWeight: 'bold', color: previewLocation ? '#93c5fd' : '#ffffff' }}>
+                    {previewLocation || "AIおまかせ (Generic Background)"}
+                  </span>
+                  <span style={{
+                    marginLeft: '6px', padding: '2px 6px', borderRadius: '4px', fontSize: '9px', whiteSpace: 'nowrap',
+                    background: 'rgba(29,78,216,0.3)',
+                    color: '#93c5fd',
+                    border: '1px solid rgba(59,130,246,0.3)'
+                  }}>
+                    シナリオ連動
+                  </span>
+                </div>
+                <div className="text-gray-300" style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '6px', paddingBottom: '4px' }}>
+                  <span className="text-green-400">👕</span>
+                  <span>服装 (Outfit):</span>
+                  <span style={{ fontWeight: 'bold', color: previewOutfit ? '#c4b5fd' : '#ffffff' }}>
+                    {previewOutfit || "キャラシート準拠 (Default)"}
+                  </span>
+                  <span style={{
+                    marginLeft: '6px', padding: '2px 6px', borderRadius: '4px', fontSize: '9px', whiteSpace: 'nowrap',
+                    background: previewOutfit ? 'rgba(88,28,135,0.5)' : 'rgba(29,78,216,0.3)',
+                    color: previewOutfit ? '#c4b5fd' : '#93c5fd',
+                    border: `1px solid ${previewOutfit ? 'rgba(139,92,246,0.4)' : 'rgba(59,130,246,0.3)'}`
+                  }}>
+                    {previewOutfit ? '服装指定あり' : 'シナリオ連動'}
+                  </span>
+                </div>
+              </>);
+            })()}
           </div>
 
           {/* 03: プロンプト生成 - Tailwind p-8等がJITで無視されるためインラインスタイルで適用 */}
