@@ -14,3 +14,4 @@ description: Auto-Increment Version and Deploy (Turbo Mode)
 8. Run `npm run deploy` in `c:/Users/sx717/Antigravity/nano-banana-pro`
 9. Run `git log -n 1 origin/gh-pages` in `c:/Users/sx717/Antigravity/nano-banana-pro` to verify.
 10. Run `gh release create v$(node -p "require('./package.json').version") --title "v$(node -p "require('./package.json').version")" -F release_body.md` in `c:/Users/sx717/Antigravity/nano-banana-pro`
+11. Run `npm run deploy:hf` in `c:/Users/sx717/Antigravity/nano-banana-pro`
