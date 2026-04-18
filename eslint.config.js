@@ -5,9 +5,9 @@ import reactRefresh from 'eslint-plugin-react-refresh'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist']),
+  globalIgnores(['dist', '.agent', '.agents']),
   {
-    files: ['**/*.{js,jsx}'],
+    files: ['src/**/*.{js,jsx}'],
     extends: [
       js.configs.recommended,
       reactHooks.configs.flat.recommended,
@@ -19,6 +19,25 @@ export default defineConfig([
       parserOptions: {
         ecmaVersion: 'latest',
         ecmaFeatures: { jsx: true },
+        sourceType: 'module',
+      },
+    },
+    rules: {
+      'no-unused-vars': ['error', {
+        varsIgnorePattern: '^[A-Z_]|^set[A-Z]|^(lockedLocation|lockedOutfit|isFallbackUsed|isGenerationError|isAssembleDisabled)$',
+      }],
+      'no-control-regex': 'off',
+      'no-irregular-whitespace': 'off',
+      'no-useless-escape': 'off',
+    },
+  },
+  {
+    files: ['scripts/**/*.js', 'docs/**/*.js'],
+    languageOptions: {
+      ecmaVersion: 2020,
+      globals: globals.node,
+      parserOptions: {
+        ecmaVersion: 'latest',
         sourceType: 'module',
       },
     },

@@ -30,7 +30,7 @@ try {
         try {
             execSync('git pull origin main --rebase');
             console.log("✅ [Sync] Successfully rebased with remote.");
-        } catch (e) {
+        } catch {
             console.error("❌ [ERROR] Pull failed. Please resolve conflicts manually.");
             process.exit(1);
         }

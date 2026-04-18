@@ -1,58 +1,50 @@
 # HANDOFF
 
-## Goal
-マルチエージェント用ドキュメントアーキテクチャ（4本柱モデル）および、Hugging Face Spacesへの自動デプロイスクリプトの整備。
+## Status
+Task closed. Do not continue the CodexBar / Codebar / Codex overlay work.
 
-## Current Status
-整備完了。Antigravity側 (`C:\Users\sx717\Antigravity\nano-banana-pro`) から GitHub リモートリポジトリへ Push される状態。
+## User Decision
+The user explicitly stopped all Codebar-related work and also requested that the in-progress "Build Codex overlay system" task be treated as completely ended.
 
-## Done
-- `AGENTS.md` の作成（常駐ルールおよび Four-File Operating Model 記載）
-- `docs/project_standards.md` の作成（API待機ロジック、Geometry Lock 等の絶対防衛ライン明記）
-- `docs/deploy.md` の作成（HF Spaces向けプラットフォーム特有設定の記載）
-- `scripts/deploy_hf.ps1` の追加（HF自動デプロイスクリプト）
-- `package.json` の更新（`npm run deploy:hf` スクリプト追加）
-- `.agent/workflows/deploy.md` の更新（HFデプロイステップの追加）
+## Closed Scope
+- CodexBar / Codebar installation
+- Codex Usage Overlay installation
+- Build Codex overlay system
+- Any continuation, cleanup-by-feature, refactor, packaging, release, or installer work for the overlay system
 
-## Remaining Tasks
-- 特になし（Codex側での作業環境の同期待ち）
+## Important Context
+During a mistaken interpretation of the user's CodexBar install request, `npm run build` and `npm run dist` were executed inside:
 
-## Decisions
-- 各プロジェクトごとのコンテキスト汚染を防ぐため、アプリ固有のルールは `docs/project_standards.md` と `docs/deploy.md` に集約することとした。
+```text
+C:\Users\sx717\OneDrive\Documents\New project\codex-usage-overlay
+```
 
-## Constraints
-- 各種設定ファイル（`vite.config.js`）やHF向けの `README.md` 等、プラットフォーム固有の仕様は `docs/deploy.md` および絶対防衛ラインの指示に従い、勝手に書き換えないこと。
+Generated installer/portable outputs were removed afterward.
 
-## Touched Files
-- `AGENTS.md` [NEW]
-- `HANDOFF.md` [MODIFIED]
-- `docs/project_standards.md` [NEW]
-- `docs/deploy.md` [NEW]
-- `scripts/deploy_hf.ps1` [NEW]
-- `package.json` [MODIFIED]
-- `.agent/workflows/deploy.md` [MODIFIED]
+One generated file remained locked by Windows and could not be deleted safely at the time:
 
-## Entry Points
-- `AGENTS.md`
-- `HANDOFF.md`
+```text
+C:\Users\sx717\OneDrive\Documents\New project\codex-usage-overlay\release\win-unpacked\resources\app.asar
+```
 
-## Verification
-- [x] ルール策定およびファイル配置
-- [x] Git Push 準備完了
+Do not kill broad Codex/Electron/Windows processes to remove it. If cleanup is desired later, remove the `codex-usage-overlay\release` folder after the lock is gone or after a restart.
 
-## Risks / Assumptions
-- Codex側の作業ディレクトリ（`C:\Users\sx717\OneDrive\Documents\New project`）が同じ GitHub リモートリポジトリ（`FURUYAN1234/nano-banana-pro.git`）の clone であることを前提としている。
+## Guardrails For Next Agent
+- Do not continue overlay implementation.
+- Do not build, package, install, launch, or test CodexBar / Codebar / Codex Usage Overlay.
+- Do not generate installers.
+- Do not run `npm run dist` in `codex-usage-overlay`.
+- Do not modify app source as part of this closed task.
+- Only discuss or act on this area again if the user explicitly reopens it.
 
-## Diff Scope
-- Other (Documentation & CI/CD Scripts)
-
-## Project Rules
-- 詳細は `docs/project_standards.md`, `docs/deploy.md` 参照
+## Verification State
+- Installer execution did not complete.
+- No confirmed installation was found in:
+  - `%LOCALAPPDATA%\Programs\Codex Usage Overlay`
+  - `%LOCALAPPDATA%\codex-usage-overlay`
+  - Start Menu shortcut location
+  - Desktop shortcut location
+- Remaining known artifact: locked `release\win-unpacked\resources\app.asar`.
 
 ## Next Step
-Codex側は、作業再開の前に自身の作業ディレクトリ（`New project`）上で `git pull origin main` を行い、Antigravity側で追加された変更を取り込むこと。
-
-## Suggested Commands
-```bash
-git pull origin main
-```
+None. This task is closed by user request.

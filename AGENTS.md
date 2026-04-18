@@ -21,6 +21,7 @@ All apps should use this four-file structure for multi-agent development.
 2. `HANDOFF.md`
 3. `docs/project_standards.md`
 4. `docs/deploy.md`
+5. `docs/codex_pc_sync.md` (if present; shared multi-PC / multi-app sync rules)
 
 **Never infer deploy targets or platform rules from another app.**
 
