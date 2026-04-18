@@ -32,7 +32,7 @@ import {
 import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 
-const SYSTEM_VERSION = "v2.51 Alpha";
+const SYSTEM_VERSION = "v2.52 Alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -2974,7 +2974,7 @@ ${finalPrompt}
                       <div className="text-xs text-orange-200/80 leading-relaxed font-sans">
                         <span className="font-bold text-orange-300">💡 PRO TIP：究極の1枚を作りたい時は？</span><br />
                         キャラの見た目が全然違うなど不満がある場合は、上の「コピペ」ボタンでプロンプトをコピーし、<a href="https://gemini.google.com/" target="_blank" rel="noreferrer" className="text-blue-400 hover:underline">Geminiブラウザ版🤖</a> に<strong>「元となるキャラシート画像」</strong>と一緒に直接貼り付けて生成させてください。<br />
-                        文字情報だけでなく画像をカンニングできるため、キャラのクオリティと再現度が飛躍的に向上します！
+                        文字情報だけでなく画像を参照できるため、キャラのクオリティと再現度が飛躍的に向上します！
                       </div>
                     </div>
                   </div>
