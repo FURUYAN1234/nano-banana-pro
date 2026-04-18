@@ -1,24 +1,22 @@
-# deploy_hf.ps1 — Hugging Face Spaces 自動デプロイスクリプト
-# 使い方: npm run deploy:hf
-# 前提: GitHub Pages デプロイ（npm run deploy）が完了済みであること
+# deploy_hf.ps1 - Hugging Face Spaces deploy script
+# Usage: npm run deploy:hf (or: powershell -ExecutionPolicy Bypass -File scripts/deploy_hf.ps1)
+# Prerequisite: npm run build (or npm run deploy) completed
 
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 
-# === 設定 ===
-# npm run deploy:hf 経由の場合 $PSScriptRoot が空になるため、フォールバック付き
+# === Config ===
 if ($PSScriptRoot) {
     $ProjectRoot = Split-Path -Parent $PSScriptRoot
 } else {
     $ProjectRoot = (Get-Location).Path
 }
-$HfRoot = "C:\Users\sx717\Downloads\hf\nano-banana-pro\nano-banana-pro"
+$HfRoot = "C:\Users\sx717\Antigravity\hf-nano-banana-pro"
 $DistDir = Join-Path $ProjectRoot "dist"
 
-# === バージョン取得 ===
+# === Version ===
 $PackageJson = Get-Content (Join-Path $ProjectRoot "package.json") -Encoding UTF8 | ConvertFrom-Json
 $Version = $PackageJson.version
-# 表示用バージョン: "2.51.0-alpha" → "v2.51 Alpha"
-$DisplayVersion = $Version -replace '\.0-alpha$', '' -replace '^', 'v' 
+$DisplayVersion = $Version -replace '\.0-alpha$', '' -replace '^', 'v'
 $DisplayVersion = "$DisplayVersion Alpha"
 
 Write-Host ""
@@ -27,31 +25,31 @@ Write-Host "  HF Spaces Deploy: $DisplayVersion" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
-# === Step 1: dist が存在するか確認 ===
+# === Step 1: Ensure dist exists ===
 if (-not (Test-Path $DistDir)) {
-    Write-Host "[BUILD] dist/ が見つかりません。ビルドを実行します..." -ForegroundColor Yellow
+    Write-Host "[BUILD] dist/ not found. Building..." -ForegroundColor Yellow
     Push-Location $ProjectRoot
     npm run build
     if ($LASTEXITCODE -ne 0) {
-        Write-Host "[ERROR] ビルドに失敗しました。" -ForegroundColor Red
+        Write-Host "[ERROR] Build failed." -ForegroundColor Red
         Pop-Location
         exit 1
     }
     Pop-Location
 } else {
-    Write-Host "[OK] dist/ フォルダを検出しました。" -ForegroundColor Green
+    Write-Host "[OK] dist/ found." -ForegroundColor Green
 }
 
-# === Step 2: HF フォルダの存在確認 ===
+# === Step 2: Verify HF folder ===
 if (-not (Test-Path (Join-Path $HfRoot ".git"))) {
-    Write-Host "[ERROR] HF フォルダが見つかりません: $HfRoot" -ForegroundColor Red
-    Write-Host "        .git が存在するフォルダを確認してください。" -ForegroundColor Red
+    Write-Host "[ERROR] HF folder not found: $HfRoot" -ForegroundColor Red
+    Write-Host "        Clone from: https://huggingface.co/spaces/FURUYAN/nano-banana-pro" -ForegroundColor Red
     exit 1
 }
-Write-Host "[OK] HF フォルダを検出: $HfRoot" -ForegroundColor Green
+Write-Host "[OK] HF folder: $HfRoot" -ForegroundColor Green
 
-# === Step 3: HF フォルダのクリーンアップ（.git, .gitattributes, README.md は保持） ===
-Write-Host "[CLEAN] HF フォルダをクリーンアップ中..." -ForegroundColor Yellow
+# === Step 3: Clean HF folder (preserve .git, .gitattributes, README.md) ===
+Write-Host "[CLEAN] Cleaning HF folder..." -ForegroundColor Yellow
 $ProtectedItems = @(".git", ".gitattributes", "README.md")
 Get-ChildItem $HfRoot -Force | Where-Object {
     $ProtectedItems -notcontains $_.Name
@@ -61,15 +59,14 @@ Get-ChildItem $HfRoot -Force | Where-Object {
     } else {
         Remove-Item $_.FullName -Force
     }
-    Write-Host "  削除: $($_.Name)" -ForegroundColor DarkGray
+    Write-Host "  Deleted: $($_.Name)" -ForegroundColor DarkGray
 }
 
-# === Step 4: dist の中身を HF フォルダへコピー ===
-Write-Host "[COPY] dist/ → HF フォルダへコピー中..." -ForegroundColor Yellow
+# === Step 4: Copy dist contents to HF folder (NEVER overwrite README.md) ===
+Write-Host "[COPY] dist/ -> HF folder..." -ForegroundColor Yellow
 Get-ChildItem $DistDir -Force | ForEach-Object {
-    # README.md は絶対にコピーしない（HFの起動設定が含まれるため）
     if ($_.Name -eq "README.md") {
-        Write-Host "  スキップ: README.md（HF設定を保護）" -ForegroundColor Magenta
+        Write-Host "  SKIP: README.md (HF config protected)" -ForegroundColor Magenta
         return
     }
     $Destination = Join-Path $HfRoot $_.Name
@@ -78,43 +75,58 @@ Get-ChildItem $DistDir -Force | ForEach-Object {
     } else {
         Copy-Item $_.FullName $Destination -Force
     }
-    Write-Host "  コピー: $($_.Name)" -ForegroundColor DarkGray
+    Write-Host "  Copied: $($_.Name)" -ForegroundColor DarkGray
 }
 
-# === Step 5: Git 操作 ===
-Write-Host "[GIT] コミット＆プッシュ中..." -ForegroundColor Yellow
+# === Step 5: Verify vite base path in built index.html ===
+$BuiltIndex = Join-Path $HfRoot "index.html"
+if (Test-Path $BuiltIndex) {
+    $indexContent = Get-Content $BuiltIndex -Raw -Encoding UTF8
+    if ($indexContent -match 'src="/assets/' -or $indexContent -match 'href="/assets/') {
+        Write-Host "[WARN] Absolute paths detected in index.html! vite.config.js base may be wrong." -ForegroundColor Red
+    } else {
+        Write-Host "[OK] Relative paths confirmed in index.html." -ForegroundColor Green
+    }
+}
+
+# === Step 6: Git commit & push ===
+Write-Host "[GIT] Committing and pushing..." -ForegroundColor Yellow
 Push-Location $HfRoot
 
 git add .
 if ($LASTEXITCODE -ne 0) {
-    Write-Host "[ERROR] git add に失敗しました。" -ForegroundColor Red
+    Write-Host "[ERROR] git add failed." -ForegroundColor Red
     Pop-Location
     exit 1
 }
 
-$CommitMsg = "Update to $DisplayVersion"
+$CommitMsg = "Update to $DisplayVersion Final"
 git commit -m $CommitMsg
 if ($LASTEXITCODE -ne 0) {
-    Write-Host "[WARN] コミットするものがないか、エラーが発生しました。" -ForegroundColor Yellow
-    # 変更なしの可能性があるので続行
+    Write-Host "[WARN] Nothing to commit or commit error." -ForegroundColor Yellow
+}
+
+# Pull with auto-merge to avoid Vim prompt
+git pull --no-edit origin main
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "[WARN] git pull encountered issues." -ForegroundColor Yellow
 }
 
 git push origin main
 if ($LASTEXITCODE -ne 0) {
-    Write-Host "[ERROR] git push に失敗しました。" -ForegroundColor Red
-    Write-Host "        認証情報を確認してください。" -ForegroundColor Red
+    Write-Host "[ERROR] git push failed. Check credentials." -ForegroundColor Red
     Pop-Location
     exit 1
 }
 
 Pop-Location
 
-# === 完了 ===
+# === Done ===
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Green
-Write-Host "  HF Spaces デプロイ完了！" -ForegroundColor Green
-Write-Host "  バージョン: $DisplayVersion" -ForegroundColor Green
+Write-Host "  HF Spaces Deploy Complete!" -ForegroundColor Green
+Write-Host "  Version: $DisplayVersion" -ForegroundColor Green
 Write-Host "  URL: https://huggingface.co/spaces/FURUYAN/nano-banana-pro" -ForegroundColor Green
 Write-Host "========================================" -ForegroundColor Green
 Write-Host ""
-Write-Host "[TIP] 反映されない場合はブラウザキャッシュをクリアするか、シークレットモードで確認してください。" -ForegroundColor DarkGray
+Write-Host "[TIP] If not updated, clear browser cache or use incognito mode." -ForegroundColor DarkGray
