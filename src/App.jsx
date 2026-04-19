@@ -32,7 +32,7 @@ import {
 import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 
-const SYSTEM_VERSION = "v2.52 Alpha";
+const SYSTEM_VERSION = "v2.53 Alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -1352,14 +1352,44 @@ SPEECH BUBBLE PLACEMENT RULE (CRITICAL): Each character's speech bubble MUST be 
         return '';
       };
 
+      // [v2.53] ANTIGRAVITY HYPER-DYNAMIC CAMERA PROTOCOL v3.2 — Gemini推奨の構図・カメラワーク超強化
       const dynamicCamera = `
-    CRITICAL COMPOSITION & GAG MANGA RULES:
-    1. Do NOT draw characters just standing neutrally or looking directly at the camera. They MUST interact with each other.
-    2. Always use dynamic and extreme camera angles: worm's-eye view, bird's-eye view, or tilted dutch angles. Use extreme perspective distortion (fisheye or ultra-wide lens) for dramatic effect. Avoid flat, boring shots.
-    3. [GAG VFX]: Use comic visual effects for punchlines/reactions. Strictly DO NOT write any text labels or sound effects (e.g., "ズコー") as text, floating words, or speech bubbles.
-    4. [EXAGGERATED EMOTIONS]: FORCE extreme, comical, and highly exaggerated facial expressions! Do NOT draw neutral or slightly smiling faces. Exaggerate expressions (blank white eyes, jaw-dropping shock, intense fury, crying waterfalls) while strictly maintaining top-tier, beautiful anime art quality.
-    5. [BODY ACTING]: Characters must physically react with their entire bodies (throwing arms up, falling, etc.). Exaggerate their gestures to the absolute limit. Do NOT over-use the "adjusting glasses" pose unless the character is explicitly wearing glasses.
-    6. [ANTI-FLOATING-EYE RULE - CRITICAL]: Do NOT overlay or superimpose a close-up of a character's eyes or upper face as a floating background element behind other characters. Each character must be drawn as a complete figure within the scene. Avoid the "dramatic floating eye close-up in the background" manga trope entirely. Every character in the panel must exist physically within the scene's space, not as a ghostly overlay or background insert.
+ANTIGRAVITY HYPER-DYNAMIC CAMERA PROTOCOL (v3.2):
+
+§1. SUPREME COMPOSITION & CAMERA WORK (MANDATORY FOR ALL 4 PANELS):
+- [CORE MANDATE]: Artistic "distortion" and "impact" take priority over photographic realism. Every panel MUST use at least ONE of the following extreme lens effects:
+  * EXTREME FISH-EYE (Ultra Wide-Angle): Warp the world spherically from the center outward. Foreground objects bulge toward the viewer. Background curves away dramatically. The horizon bends visibly.
+  * DYNAMIC TELEPHOTO (Compression Effect): Make foreground characters appear MASSIVE while backgrounds seem unnaturally close. Flatten depth perception for dramatic impact.
+  * EXTREME DUTCH ANGLE: Tilt the entire frame 15 to 45 degrees. There must be ZERO perfectly horizontal lines in the panel. The world itself feels off-balance.
+  * ULTRA LOW ANGLE: Camera at ground level, looking UP at characters who tower above. Shoes and ground-level details are exaggerated in size.
+  * ULTRA HIGH ANGLE: Camera from ceiling/sky, looking DOWN on characters below. Heads and shoulders are exaggerated, legs diminish.
+- [FLAT SHOT BAN]: Eye-level, straight-on, symmetrical compositions are STRICTLY FORBIDDEN. If the camera does not feel dramatically tilted, warped, or positioned at an extreme angle, the composition has FAILED.
+- [BODY PERSPECTIVE DEFORMATION]: Characters' bodies MUST deform according to the chosen lens effect. Arms reaching toward the camera become oversized. Feet in a low-angle shot are drawn larger than heads. This distortion is INTENTIONAL and REQUIRED.
+- [OVERRIDE PROHIBITION — ABSOLUTE]: You MUST NOT override, soften, simplify, or ignore these camera effects for ANY reason — including "readability", "narrative flow", "visual clarity", or "aesthetic balance". The extreme distortion IS the intended artistic style. An image that looks "normal" or "readable" has FAILED. The goal is MAXIMUM visual impact through EXTREME camera distortion. If you find yourself thinking "this would look better as a normal shot", that thought is WRONG — apply the distortion HARDER.
+- [VISUAL PROOF OF COMPLIANCE]: Each panel MUST contain at least ONE of these visible proof elements: (a) a floor/ceiling/horizon line that is clearly NOT horizontal, (b) a character whose near-side body part is drawn at least 50% larger than their far-side body part, (c) visible barrel/pincushion distortion on straight architectural lines (walls, doors, tables bending). If NONE of these proofs are visible, the panel has FAILED.
+
+§2. CAST MANAGEMENT & CLONE PREVENTION (CRITICAL):
+- [SINGLE-INSTANCE RULE]: Each named character may appear ONLY ONCE per panel. Drawing the same character twice in any form (foreground + background copy, reflection, silhouette duplicate) is ABSOLUTELY FORBIDDEN.
+- [BACKGROUND CASTING]: When background people are needed, use cast members who are NOT the main speaker(s) of that panel. NEVER place a copy of the foreground character in the background.
+- [CLONE-PROTECTIVE LOGIC]: When placing main cast in the background, ensure their hair color and hairstyle do NOT match the foreground character.
+
+§3. IDENTITY ANCHORING (RESOURCE OPTIMIZATION):
+- Focus AI rendering resources on COMPOSITION and CAMERA DISTORTION. Character identity is maintained through these MINIMUM ANCHORS:
+  1. Hairstyle and hair color (identifiable at silhouette level)
+  2. Glasses presence/absence (mandatory for characters who wear them, forbidden for those who don't)
+  3. Exaggerated emotional expression (joy, anger, sadness, surprise expressed with entire body)
+- Clothing detail priority is LOWERED for background characters. Instead prioritize: body perspective deformation matching the camera's distortion. However, ALL named characters (both foreground AND background) MUST be drawn in the panel — do NOT omit background characters to save rendering resources.
+
+§4. GAG MANGA INTERACTION RULES:
+1. Do NOT draw characters just standing neutrally or looking directly at the camera. They MUST interact with each other.
+2. [GAG VFX]: Use comic visual effects for punchlines/reactions. Strictly DO NOT write any text labels or sound effects as text, floating words, or speech bubbles.
+3. [EXAGGERATED EMOTIONS]: FORCE extreme, comical, and highly exaggerated facial expressions! Do NOT draw neutral or slightly smiling faces. Exaggerate expressions (blank white eyes, jaw-dropping shock, intense fury, crying waterfalls) while strictly maintaining top-tier, beautiful anime art quality.
+4. [BODY ACTING]: Characters must physically react with their entire bodies (throwing arms up, falling, etc.). Exaggerate their gestures to the absolute limit. Do NOT over-use the "adjusting glasses" pose unless the character is explicitly wearing glasses.
+5. [ANTI-FLOATING-EYE RULE - CRITICAL]: Do NOT overlay or superimpose a close-up of a character's eyes or upper face as a floating background element behind other characters. Each character must be drawn as a complete figure within the scene. Every character in the panel must exist physically within the scene's space, not as a ghostly overlay or background insert.
+
+§5. PERSPECTIVE-ALIGNED VFX:
+- Impact lines (speed lines), explosions, lightning, and other visual effects MUST synchronize with the camera's perspective and distortion. If the panel uses fish-eye, speed lines must curve radially. If dutch angle, effects must tilt with the world.
+- Sound effect text (SFX, onomatopoeia drawn as art) MUST follow the 3D space distortion. Drawn impact text must curve and distort along the spatial warping of the scene. Do NOT place flat, undistorted text over a warped scene.
     `;
 
       // [v2.42] タイトル抽出 + 「Topic:」プレフィックス除去サニタイズ
@@ -1389,18 +1419,18 @@ SPEECH BUBBLE PLACEMENT RULE (CRITICAL): Each character's speech bubble MUST be 
       const panel3Text = extractPanel(cleanScenario, "3コマ目", "4コマ目");
       const panel4Text = extractPanel(cleanScenario, "4コマ目", "UNKNOWN");
 
-      // [v1.9.6] Dynamic Camera Angle Generator - Expanded for less close-ups & more dynamic wide/full-body shots
+      // [v2.53] HYPER-DYNAMIC Camera Angle Generator — 具体的パース歪み指示付き
       const cameraAngles = [
-        "Extreme Low Angle (Worm's Eye view, Full Body)",
-        "Extreme High Angle (Bird's Eye view, looking down)",
-        "Dutch Angle (Tilted camera, dramatic composition)",
-        "Dynamic Action Wide Shot (Full Body, dynamic pose)",
-        "Over-the-shoulder shot (Wide perspective)",
-        "Wide Establishing Shot (Entire scene visible)",
-        "Extreme Wide Angle Lens (Fisheye effect, dramatic depth)",
-        "Medium-Full Shot (Showing body language clearly)",
-        "Medium Shot (Waist-up, showing character interaction)",
-        "Cinematic Low Angle (Epic perspective)"
+        "EXTREME FISH-EYE LOW ANGLE: Camera at knee height, ultra-wide spherical distortion warps floor tiles outward, character legs appear massive while upper body curves away into the distance",
+        "DYNAMIC TELEPHOTO HIGH ANGLE: Looking down from above with telephoto compression, faces appear large while bodies compress vertically, background objects pushed unnaturally close",
+        "EXTREME DUTCH ANGLE (30° tilt): Entire scene tilted 30 degrees clockwise. Floor becomes a steep diagonal. Characters lean against the tilt for dynamic visual tension",
+        "ULTRA LOW ANGLE FISH-EYE: Camera on the floor looking straight up, extreme barrel distortion makes ceiling curve into a dome, characters tower overhead with exaggerated foreshortening of limbs",
+        "DRAMATIC TELEPHOTO MEDIUM SHOT: Telephoto compression brings background objects unnaturally close to characters, creating claustrophobic depth compression with flattened spatial layers",
+        "BIRD'S EYE DUTCH ANGLE (20° tilt): Directly overhead camera tilted 20 degrees, characters seen from above with foreshortened bodies, ground patterns stretch dynamically toward edges",
+        "EXTREME WIDE ANGLE OVER-THE-SHOULDER: Fish-eye distortion from behind one character's massive shoulder, the facing character curves away in the background with visible barrel distortion",
+        "CINEMATIC LOW ANGLE TELEPHOTO: Camera below chin level with telephoto lens making characters look imposing and heroic, background buildings and objects compress dramatically flat",
+        "DYNAMIC ACTION FISH-EYE WIDE SHOT: Full scene visible through spherical distortion, edges of panel curve dramatically, center characters pop forward with exaggerated depth separation",
+        "WORM'S EYE EXTREME DUTCH (15° tilt): Camera directly at ground level tilted 15 degrees, ant's-eye perspective makes shoes enormous and sky-high characters appear tiny, dramatic vanishing point overhead"
       ];
       const getRandomAngle = () => cameraAngles[Math.floor(Math.random() * cameraAngles.length)];
 
@@ -1724,11 +1754,11 @@ SPEECH BUBBLE POSITION LOCK:
           const otherBrackets = otherCast.map(c => `[${c}]`);
           let backgroundHint = '';
           if (otherBrackets.length > 0) {
-            backgroundHint = `\nSUGGESTED BACKGROUND CAST: ${otherBrackets.join(', ')} may also appear in the background or periphery of this panel as onlookers or reactors. When the scene takes place in a shared space (classroom, office, park, etc.), drawing them in the background adds visual richness. They must be clearly secondary (smaller, partially visible, or in the background) and must NOT be confused with the main speakers.`;
+            backgroundHint = `\nMANDATORY BACKGROUND CAST (DO NOT OMIT): ${otherBrackets.join(', ')} MUST also appear in this panel as visible background characters (onlookers, reactors, or bystanders). They are NOT optional — draw ALL of them. They must be clearly secondary (smaller scale, positioned behind/beside the main speakers) but still FULLY VISIBLE and RECOGNIZABLE by their hair color and hairstyle. Do NOT skip drawing them to "simplify" the composition. A panel missing these background characters has FEWER characters than required and is INCOMPLETE.`;
           }
           // [v2.42] クローン防止: 合計人数と1人1回ルールを明示
           const totalCount = allPanelCharacters.length + otherCast.length;
-          const totalCountHint = `\nTOTAL CHARACTER COUNT IN THIS PANEL: EXACTLY ${totalCount} distinct individuals. Each person appears ONLY ONCE. Do NOT draw any character twice — not as a foreground duplicate, not as a background copy, not as a reflection or silhouette of an already-present character.`;
+          const totalCountHint = `\nTOTAL CHARACTER COUNT IN THIS PANEL: EXACTLY ${totalCount} distinct individuals. Each person appears ONLY ONCE. Do NOT draw any character twice — not as a foreground duplicate, not as a background copy, not as a reflection or silhouette of an already-present character. If this panel contains FEWER than ${totalCount} visible characters, the panel is INCOMPLETE and must be redrawn with all ${totalCount} characters present.`;
           return `CRITICAL CAST PLACEMENT: Ensure ${panelActors.join(' and ')} are the main focus. The following named characters appear in this panel: ${allCharBrackets.join(', ')}. Each named character appears EXACTLY ONCE. NEVER draw the exact same named character twice.\n${cloneWarning}${backgroundHint}${totalCountHint}`;
         } else {
           return `CRITICAL CAST PLACEMENT: Follow the panel's action naturally. NEVER draw the exact same character twice.`;
@@ -1830,7 +1860,8 @@ Technical Quality Definitions (System Dictionary):
 ${buildEmotionBlock(panel1Text)}
 ${extractPlacementRule(panel1Text)}
 ${extractCastLimitRule(panel1Text)}
-Camera: ${getRandomAngle()} (Ensure camera is NOT flat eye-level).
+Camera: ${getRandomAngle()}.
+[MANDATORY LENS ENFORCEMENT — DO NOT IGNORE]: This camera angle is NOT a suggestion. It is a HARD REQUIREMENT. You MUST visually distort the entire panel composition to match the described lens effect. Specific proof required: (1) The floor/ground/horizon MUST be drawn at a visible angle — NOT flat horizontal. (2) Characters' body parts closest to the camera MUST be drawn significantly LARGER than parts farther away. (3) Background elements MUST bend, compress, or stretch according to the lens type. If this panel looks like a normal, undistorted, eye-level photograph, it has CRITICALLY FAILED. Do NOT choose readability over distortion — the distortion IS the art.
 Visual Action (Do NOT write this as text on the canvas, draw it visually): ${injectOutfitReminder(extractActionOnly(panel1Text, extractPlacementRule(panel1Text)))}.
 Dialogue (ONLY write this inside speech bubbles): ${extractDialogueOnly(panel1Text)}.
 
@@ -1838,7 +1869,8 @@ Dialogue (ONLY write this inside speech bubbles): ${extractDialogueOnly(panel1Te
 ${buildEmotionBlock(panel2Text)}
 ${extractPlacementRule(panel2Text)}
 ${extractCastLimitRule(panel2Text)}
-Camera: ${getRandomAngle()} (Ensure camera is NOT flat eye-level).
+Camera: ${getRandomAngle()}.
+[MANDATORY LENS ENFORCEMENT — DO NOT IGNORE]: This camera angle is NOT a suggestion. It is a HARD REQUIREMENT. You MUST visually distort the entire panel composition to match the described lens effect. Specific proof required: (1) The floor/ground/horizon MUST be drawn at a visible angle — NOT flat horizontal. (2) Characters' body parts closest to the camera MUST be drawn significantly LARGER than parts farther away. (3) Background elements MUST bend, compress, or stretch according to the lens type. If this panel looks like a normal, undistorted, eye-level photograph, it has CRITICALLY FAILED. Do NOT choose readability over distortion — the distortion IS the art.
 Visual Action (Do NOT write this as text on the canvas, draw it visually): ${injectOutfitReminder(extractActionOnly(panel2Text, extractPlacementRule(panel2Text)))}.
 Dialogue (ONLY write this inside speech bubbles): ${extractDialogueOnly(panel2Text)}.
 
@@ -1846,7 +1878,8 @@ Dialogue (ONLY write this inside speech bubbles): ${extractDialogueOnly(panel2Te
 ${buildEmotionBlock(panel3Text)}
 ${extractPlacementRule(panel3Text)}
 ${extractCastLimitRule(panel3Text)}
-Camera: ${getRandomAngle()} (Ensure camera is NOT flat eye-level).
+Camera: ${getRandomAngle()}.
+[MANDATORY LENS ENFORCEMENT — DO NOT IGNORE]: This camera angle is NOT a suggestion. It is a HARD REQUIREMENT. You MUST visually distort the entire panel composition to match the described lens effect. Specific proof required: (1) The floor/ground/horizon MUST be drawn at a visible angle — NOT flat horizontal. (2) Characters' body parts closest to the camera MUST be drawn significantly LARGER than parts farther away. (3) Background elements MUST bend, compress, or stretch according to the lens type. If this panel looks like a normal, undistorted, eye-level photograph, it has CRITICALLY FAILED. Do NOT choose readability over distortion — the distortion IS the art.
 Visual Action (Do NOT write this as text on the canvas, draw it visually): ${injectOutfitReminder(extractActionOnly(panel3Text, extractPlacementRule(panel3Text)))}.
 Dialogue (ONLY write this inside speech bubbles): ${extractDialogueOnly(panel3Text)}.
 
@@ -1854,7 +1887,8 @@ Dialogue (ONLY write this inside speech bubbles): ${extractDialogueOnly(panel3Te
 ${buildEmotionBlock(panel4Text)}
 ${extractPlacementRule(panel4Text)}
 ${extractCastLimitRule(panel4Text)}
-Camera: ${getRandomAngle()} (Ensure camera is NOT flat eye-level).
+Camera: ${getRandomAngle()}.
+[MANDATORY LENS ENFORCEMENT — DO NOT IGNORE]: This camera angle is NOT a suggestion. It is a HARD REQUIREMENT. You MUST visually distort the entire panel composition to match the described lens effect. Specific proof required: (1) The floor/ground/horizon MUST be drawn at a visible angle — NOT flat horizontal. (2) Characters' body parts closest to the camera MUST be drawn significantly LARGER than parts farther away. (3) Background elements MUST bend, compress, or stretch according to the lens type. If this panel looks like a normal, undistorted, eye-level photograph, it has CRITICALLY FAILED. Do NOT choose readability over distortion — the distortion IS the art.
 Visual Action (Do NOT write this as text on the canvas, draw it visually): ${injectOutfitReminder(extractActionOnly(panel4Text, extractPlacementRule(panel4Text)))}.
 Dialogue (ONLY write this inside speech bubbles): ${extractDialogueOnly(panel4Text)}.
 
@@ -1869,6 +1903,16 @@ Important constraints:
 - Flow is from top panel to bottom panel.
 - Ensure the watermark is positioned at the absolute bottom edge of the image, with no extra whitespace below it. The watermark MUST be HORIZONTAL text (left-to-right), NOT vertical or rotated.
 - CRITICAL COMPOSITION BAN: Do NOT draw floating close-up eyes, partial face crops, or ghostly face overlays in the background of any panel. Every character must be drawn as a complete physical presence within the scene. No "dramatic eye insert" or "background eye close-up" compositions allowed.
+
+FINAL COMPLIANCE CHECK (MANDATORY BEFORE OUTPUT):
+Before generating the final image, mentally verify ALL of the following. If ANY check fails, you MUST redraw the failing panel:
+- [ ] Panel 1: Does the camera angle show VISIBLE distortion? Is the horizon/floor NOT perfectly horizontal? Are body proportions warped by perspective?
+- [ ] Panel 2: Does the camera angle show VISIBLE distortion? Is this a DIFFERENT angle from Panel 1? Can you see clear perspective deformation?
+- [ ] Panel 3: Does the camera angle show VISIBLE distortion? Is this a DIFFERENT angle from Panels 1 and 2? Are architectural lines bending?
+- [ ] Panel 4: Does the camera angle show VISIBLE distortion? Is this a DIFFERENT angle from the previous panels? Are near-side body parts oversized?
+- [ ] ALL 4 panels use DIFFERENT camera angles from each other — no two panels share the same angle type.
+- [ ] ZERO panels look like a flat, normal, eye-level photograph.
+- [ ] You did NOT override the distortion for "readability" or "narrative flow" — the extreme distortion is the intended artistic style.
       `;
 
       // Wait a bit to simulate processing/syncing (Important for User Experience)
