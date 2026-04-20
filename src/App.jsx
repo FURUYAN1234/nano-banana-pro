@@ -32,7 +32,7 @@ import {
 import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 
-const SYSTEM_VERSION = "v2.54 Alpha";
+const SYSTEM_VERSION = "v2.55 Alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -546,7 +546,7 @@ function App() {
          - **重要**: 後ろ髪が見えなくても、**Ponytail, Twintails, Bun, Braid**の兆候を見逃すな。
          - 結っている＝**Long Hair**タグ必須。
 
-        C. **顔・アクセサリー (Face & Accessories)**:
+        C. **顔・アクセサリー (Face & Accessories)】**:
            - **【アイウェア (Eyewear)】**: 
              - **サングラスを絶対に見逃すな**。レンズが黒/不透明なら (black sunglasses:1.5)。
              - 透明レンズなら (glasses:1.2)。形状(Under-rim, Round)も特定せよ。
@@ -626,24 +626,24 @@ function App() {
     // カテゴリ別の強化指示を組み立て
     const enhanceCategories = [];
     if (enhanceExpressions) {
-      enhanceCategories.push("【表情の強化】各キャラの表情描写をもっと大げさ・劇的にしてください。例: 驚きなら「白目を剥いて口を大きく開け」、怒りなら「血管マーク浮かべて歯を食いしばり」、喜びなら「満面の笑みで目をキラキラ輝かせる」。微笑みや軽い驚きのような控えめな表現は、激しいリアクションに書き換えてください。");
+      enhanceCategories.push("【表情の強化】各キャラの表情描写を限界まで大げさ・劇的にしてください（基準ウェイト2.5〜3.0相当）。例: 驚きなら「眼球が飛び出るほど限界まで見開いた白目」、怒りなら「顔中の血管が爆発しそうなほど怒り狂う」、喜びなら「顔面が崩壊するほどの満面の笑みと滝のような涙」。微笑みや軽い驚きのような控えめな表現は絶対に禁止し、常軌を逸した激しいリアクションに書き換えてください。");
     }
     if (enhanceBodyLang) {
-      enhanceCategories.push("【ボディランゲージの強化】棒立ちの状態を禁止します。全身で感情を表現するリアクションを追加してください。例: のけぞる、前のめりになる、腕を大きく振り上げる、机を叩く、椅子から転げ落ちる、相手の肩を掴む等。体全体を使った大きなアクションを書いてください。");
+      enhanceCategories.push("【ボディランゲージの強化】棒立ちの状態を禁止します。通常の2倍以上の過剰なアクションで全身で感情を表現してください（基準ウェイト2.5〜3.0相当）。例: 画面を突き破る勢いで前のめりになる、腕を天井まで大きく振り上げる、机を粉砕する勢いで叩く、椅子から転げ落ちる等。体全体を使った異常なほど大きなアクションを書いてください。");
     }
     if (enhanceEffects) {
-      enhanceCategories.push("【照明・演出の強化】各コマの「状況」欄に映画的な演出効果を追加してください。例: 逆光で人物がシルエットになる、リムライトで輪郭が光る、光の粒子が舞う、パンチラインのコマには集中線やインパクトフレーム、衝撃波、まばゆい光などの視覚効果をト書きとして追記してください。");
+      enhanceCategories.push("【照明・演出の強化】各コマの「状況」欄に映画的・劇画的な演出効果を限界突破レベルで追加してください（基準ウェイト2.8相当）。例: 逆光で人物がシルエットになる、極端なリムライトで輪郭が光る、爆発的な光の粒子が舞う、パンチラインのコマには画面を覆い尽くす集中線やインパクトフレーム、激しい衝撃波、網膜を焼くようなまばゆい光などの視覚効果をト書きとして追記してください。");
     }
     if (enhanceBackgrounds) {
-      enhanceCategories.push("【背景の強化】各コマの背景描写を詳細にしてください。例: 教室なら机の配置や窓からの光、黒板の書き込み、壁のポスター等の小道具を追加。屋外なら天候、雲の形、木々、通行人、建物の描き込みなど空間の奥行きを出す要素を追記してください。");
+      enhanceCategories.push("【背景の強化】各コマの背景描写を徹底的に緻密で圧倒的な情報量にしてください。例: 教室なら机の細かい木目や窓からの強烈な光芒、黒板のびっしりとした書き込み、壁のポスター等の小道具を狂気的なまでに密に描き込む。屋外なら天候、雲の形、木々、通行人、建物の描き込みなど、空間の奥行きとパースペクティブを強調する要素を追記してください。背景のクオリティもウェイト2.8レベルを想定してください。");
     }
     // [v2.47] カメラワーク強化
     if (enhanceCameraWork) {
-      enhanceCategories.push("【カメラワークの強化】各コマに映画的なカメラアングル指示を追加してください。各コマの「状況」欄の冒頭に [Camera: ○○] の形式でカメラ指示を追記してください。例:\n- ローアングル/アオリ（キャラを力強く・圧倒的に見せる）\n- 俯瞰/バードアイ（状況俯瞰・孤立感）\n- ダッチアングル（不安感・異常事態の演出）\n- 超広角/フィッシュアイ（誇張・コミカルな歪み）\n- 寄り/クローズアップ（表情の微細な変化）\n- 引き/ロングショット（全体の空気感）\n4コマ全てを同じアングルにしないでください。コマごとにアングルを変えてドラマチックな視覚的リズムを作ってください。特に4コマ目のオチにはインパクトのあるアングルを使ってください。⚠️ アオリ等の過激なアングルはコンテンツポリシーに引っかかる場合がありますが、救済機能で対応可能です。");
+      enhanceCategories.push("【カメラワークの強化】各コマに極限的なカメラアングル指示を追加してください。各コマの「状況」欄の冒頭に [Camera: ○○] の形式で追記します。通常のカメラワークの限界レベルの歪み（ウェイト2.8〜3.0相当）を想定した指示にしてください。\n- ローアングル/アオリ（靴の裏が見え、頭が豆粒になるほどの極端な見上げ）\n- 俯瞰/バードアイ（真上から見下ろし、圧倒的なスケール感と孤立感）\n- ダッチアングル（画面が15度〜30度傾くような異常事態の演出）\n- 超広角/フィッシュアイ（画面の端が丸く歪むほどの誇張・コミカルな歪み）\n- 寄り/クローズアップ（毛穴が見えるほどの顔面ドアップ）\n- 引き/ロングショット（宇宙や上空からの空気感）\n4コマ全てを同じアングルにしないでください。コマごとにアングルを変えてドラマチックなダイナミズムを作ってください。⚠️ アオリ等の過激なアングルはコンテンツポリシーに引っかかる場合がありますが、救済機能で対応可能です。");
     }
     // [v2.47] セリフ・ギャグ強化
     if (enhanceDialogue) {
-      enhanceCategories.push("【セリフ・ギャグの強化】4コマ漫画の起承転結のテンポを最大化してください。\n- ツッコミのキレを上げる（「なんでやねん」レベルの弱い定型ツッコミは禁止。もっと具体的で状況に即した面白いリアクションに書き換える）\n- オチ（4コマ目）の破壊力を最大化する。予想を裏切る展開や、前のコマの伏線回収で笑いを取る\n- セリフは短く鋭く。だらだら説明するセリフは削って、一言で刺さるセリフにする\n- 3コマ目に「溜め」を意識し、4コマ目への落差を最大化する\n- 可能なら言葉遊び、ダブルミーニング、予想の裏切りを仕込む");
+      enhanceCategories.push("【セリフ・ギャグの強化】4コマ漫画の起承転結のテンポとテンションを最大限界（ウェイト3.0レベル）に引き上げてください。\n- ツッコミのキレを限界突破させる（弱い定型ツッコミは禁止。より過激で具体的、状況に即した叫び声に書き換える）\n- オチ（4コマ目）の破壊力を最大化する。予想を裏切る展開や劇的な伏線回収で笑いを取る\n- セリフは短く鋭く。だらだら説明するセリフは削って、一言で致命傷を与えるセリフにする\n- 3コマ目に「極限の溜め」を作り、4コマ目への落差を最大化する\n- 可能なら言葉遊び、ダブルミーニング、予想の裏切りを仕込む");
     }
 
     setEnhanceLog(prev => prev + `\n> [CONFIG] 強化カテゴリ: ${enhanceCategories.length}個`);
@@ -976,26 +976,28 @@ ${scenario}
            - 【重要】毎回同じタグを繰り返すな。4コマの中で少なくとも2種類以上のタグを使い分けよ。
            - オチのコマ（4コマ目）は特に、NORMAL以外のタグを優先的に選べ。
 
-        6. **【カメラ演出タグ (Camera Direction Tag)】**:
-           - 各コマの冒頭に、そのコマの演出に最適な[Camera: XXX]タグを**必ず1つ**付与せよ。
-           - 話の内容・感情・ドラマに合わせて最も効果的なカメラを選べ。**ランダムに選ぶな、演出意図を持って選べ。**
-           - 選択肢（この中から選べ）:
-             - フィッシュアイ/ローアングル: 登場人物が偉大・強大に見える場面、圧倒感、仰ぎ見るシーン
-             - 望遠/ハイアングル: 俯瞰で全体を見渡すシーン、群像劇、整然とした場面、冷静な観察
-             - ダッチアングル: 不安定・混乱・予期せぬ展開、ツッコミ、世界が揺らぐ場面
-             - 超ローアングル: 威圧感、見上げる構図、巨大なものとの対比、権威の表現
-             - 超ハイアングル: 見下ろし、孤立感、全景把握、客観的な視点
-             - 望遠圧縮: キャラの密集感、逃げ場のない緊張感、圧迫される大群
-             - フィッシュアイ/ワイド: 広大な空間の歪み、非日常感、パニック
-             - ワームズアイ: 地面からの極端な仰ぎ、足元のクローズアップ、虫の視点
-             - ドローン俯瞰: 高度数百メートルからの見下ろし、圧倒的なスケール感、無力感
-             - マクロ特写: 目元・指先などの極端な接近、緊迫感、微細な感情変化
+        6. **【カメラ演出タグ (Camera Direction Tag) — 極限物理描写モード v2.55】**:
+           - 各コマの冒頭に [Camera: XXX] タグを**必ず1つ**付与せよ。
+           - **【超重要・カメラ名だけでは不十分】**: [Camera: XXX] タグの直後に、**そのカメラアングルで物理的に何が見えるかの極限描写**を必ず1〜2文書け。
+           - カメラ名を書いただけ（例:「[Camera: ローアングル]」のみ）は**絶対に禁止**。
+           - **物理描写の書き方（全コマ必須）**: 「カメラがどこにあり」「何が巨大に見え」「何が歪み」「光がどう当たるか」を具体的に書け:
+              * 俯瞰/バードアイ → 「成層圏を突き抜け、銀河の果てから地球の一点を凝視するような極限の俯瞰。太陽光が海面で核爆発的な反射を放つ」
+              * ローアングル/アオリ → 「地面の亀裂から見上げる、靴の裏が画面の8割を占拠し頭部が豆粒ほどに遠ざかる。背後から大噴火の逆光が吹き荒れる」
+              * フィッシュアイ → 「画面の端が球体のように丸く歪み、中央の顔が巨大に膨れ上がり、周囲の建物が飴細工のようにぐにゃりと曲がる」
+              * ダッチアングル → 「世界が30度傾き、壁も床も天井も重力を忘れて斜めに流れ、キャラが滑り落ちそうな不安定感で画面が崩壊する」
+              * 望遠圧縮 → 「100m先の背景が目の前まで迫り、キャラと背景の距離感が消失し、圧迫的な密度で空間が潰れる」
+              * ワームズアイ → 「アリの目線から見上げ、靴底の泥の粒まで見える地面すれすれ。人間が巨人のようにそびえ立つ」
+              * マクロ特写 → 「瞳のハイライトの中に周囲の風景が映り込むほどの超接写。睫毛の一本一本が柱のように太い」
+           - 選択肢: 俯瞰/バードアイ、ローアングル/アオリ、ダッチアングル、超広角/フィッシュアイ、望遠圧縮、ワームズアイ、ドローン俯瞰、マクロ特写
            - 【制約】4コマの中で**同じカメラを2回以上使うのは禁止**。必ず4種類の異なるカメラを選べ。
-           - 【演出ガイドライン】:
-             * 1コマ目（起）: 場面の広さを見せるワイド系 or 観察的なハイアングル推奨
-             * 2コマ目（承）: 会話の緊張感を出す望遠圧縮 or 不穏なダッチアングル推奨
-             * 3コマ目（転）: 転換の衝撃を見せるローアングル系 or フィッシュアイ推奨
-             * 4コマ目（結）: オチの感情に合わせて自由選択（威圧のローアングル、絶望のハイアングル等）
+
+        7. **【リアクション描写の極限化 (Extreme Reaction Mandate v2.55)】**:
+           - 各コマのト書きに記載するキャラのリアクションは、**通常の3倍以上の過激さ**で書け。
+           - 「驚く」→「眼球がソケットから飛び出し背骨が物理限界を超えて逆Cの字にしなる」
+           - 「怒る」→「顔中の血管が爆発しそうなほど怒り狂い、足元の地面に大穴が穿たれる」
+           - 「喜ぶ」→「顔面が多幸感でドロドロに融解し、全身の毛穴から歓喜の汗を噴水のように噴き出す」
+           - 「慌てる」→「マッハを超える超高速移動で残像を残しながら物を隠す」
+           - 控えめな表現（微笑む、少し驚く、首を傾げる等）は**禁止**。常に限界突破させよ。
 
         【出力フォーマット（絶対厳守・会話禁止）】
         返答、挨拶、説明（「分かりました」「以下がシナリオです」等）は **一切出力しないこと**。
@@ -1384,11 +1386,11 @@ ANTIGRAVITY HYPER-DYNAMIC CAMERA PROTOCOL (v4.0):
 (extreme perspective distortion:2.8), (ABSOLUTELY NO eye-level shot:2.9), (NO flat symmetrical composition:2.9), (dramatic severe camera angle:2.7), (extreme visible lens distortion:2.6), (violently tilted horizon line:2.5), (heavily foreshortened body proportions:2.6), (extreme exaggerated depth of field:2.5)
 
 Available lens effects — EACH PANEL MUST USE ONE:
-  * (extreme fish-eye barrel distortion:2.8), (severe spherical warping:2.6), (massive bulging foreground:2.5) — Ultra wide-angle spherical distortion
-  * (extreme telephoto compression:2.7), (severely flattened depth layers:2.5), (dangerously close background:2.4) — Background crushes into foreground
-  * (severe dutch angle 45 degrees:2.7), (violently tilted world:2.6), (absolutely zero horizontal lines:2.5) — Frame tilted 15-45 degrees
-  * (ultra extreme low angle:2.7), (deep worm's eye view:2.6), (massive giant feet tiny head:2.5) — Camera at ground level looking UP
-  * (ultra extreme high angle:2.7), (steep bird's eye view:2.6), (heavily foreshortened legs:2.5) — Camera from above looking DOWN
+  * (extreme fish-eye barrel distortion:2.8), (massive bulging foreground:2.5), (lens curve warping straight lines:2.6), (subject face very close to curved glass:2.5) — Ultra wide-angle spherical distortion
+  * (extreme telephoto compression:2.7), (dangerously close background:2.4), (claustrophobic flattened space:2.5), (distant objects appear massive behind character:2.6) — Background crushes into foreground
+  * (severe dutch angle 45 degrees:2.7), (violently tilted world:2.6), (falling gravity sensation:2.5), (sideways slanted walls and floor:2.6) — Frame tilted 15-45 degrees
+  * (ultra extreme low angle:2.7), (deep worm's eye view:2.6), (staring up from the floor:2.7), (ceiling is clearly visible:2.8), (looking up at massive shoes:2.5) — Camera at ground level looking UP
+  * (ultra extreme high angle:2.7), (steep bird's eye view:2.6), (looking down at the floor:2.7), (character viewed from directly above their head:2.8), (wide shot of the ground beneath:2.5) — Camera from above looking DOWN
 
 [FLAT SHOT BAN]: (eye-level shot:0.1), (straight-on symmetrical:0.1) — Eye-level/straight compositions are FORBIDDEN. Weight them down to near-zero.
 [BODY DEFORMATION]: Characters' body parts closest to camera MUST be drawn 50%+ larger than far-side parts. This distortion is INTENTIONAL.
@@ -1398,11 +1400,12 @@ Available lens effects — EACH PANEL MUST USE ONE:
 - Background characters use cast members NOT speaking in that panel.
 
 §3. GAG MANGA INTERACTION RULES:
-1. Characters MUST interact — no neutral standing poses or direct camera stares.
-2. (exaggerated facial expressions:1.5), (extreme emotional reactions:1.4) — Force comical expressions: blank white eyes, jaw drops, fury, waterfall tears.
-3. (dynamic body language:1.4), (full body reactions:1.3) — Characters physically react with entire bodies.
-4. Do NOT overlay floating close-up eyes or ghostly face inserts as background elements.
-5. Do NOT draw "adjusting glasses" pose unless the character explicitly wears glasses.
+1. Characters MUST interact with each other or the environment.
+2. [NO CAMERA EYE CONTACT]: (absolutely NO looking at camera:1.7), (NO breaking the fourth wall:1.7), (looking at other characters or objects:1.3). Direct eye contact with the viewer is strictly FORBIDDEN.
+3. (extreme exaggerated facial expressions:1.9), (severe extreme emotional reactions:1.8) — Force comical expressions: blank white eyes, jaw drops, fury, waterfall tears.
+4. (extreme dynamic body language:1.9), (violent full body reactions:1.8) — Characters physically react with entire bodies.
+5. Do NOT overlay floating close-up eyes or ghostly face inserts as background elements.
+6. Do NOT draw "adjusting glasses" pose unless the character explicitly wears glasses.
 
 §4. PERSPECTIVE-ALIGNED VFX:
 - Speed lines, explosions, lightning MUST follow the panel's perspective distortion.
@@ -1470,7 +1473,8 @@ Available lens effects — EACH PANEL MUST USE ONE:
            const specificCamera = cameraMatch[1].trim();
            // AIが選んだカメラ名に、対応するプロンプト用の強力な歪み指示を組み合わせる
            // AIは必ずしも正確な書式を返さないことがあるため、汎用的な歪みプロンプトを付与
-           return `(Selected Camera: ${specificCamera}: 2.8), (EXTREME hyper-dynamic composition:2.6), (SEVERE dutch angle or extreme perspective distortion:2.7), (MASSIVE spherical or telephoto depth separation:2.5), (ABSOLUTELY NO flat normal photos:2.9)`;
+           // [v2.54.1] Prevent specificCamera (Japanese text) from leaking into prompt as literal text
+           return `(Extreme intense dynamic camera angle: 2.8), (EXTREME hyper-dynamic composition:2.6), (SEVERE dutch angle or extreme perspective distortion:2.7), (MASSIVE spherical or telephoto depth separation:2.5), (ABSOLUTELY NO flat normal photos:2.9), (NEVER draw text of camera names:3.0)`;
         }
         // AIがカメラタグを出力しなかった場合のフォールバック（重複なしランダム）
         const fallbackCamera = shuffledCameras[cameraSlotIndex % shuffledCameras.length];
@@ -1895,11 +1899,12 @@ CRITICAL ANTI-CLONING RULE: NEVER draw the exact same character twice inside a s
 CRITICAL COMPOSITION RATIO: Always maintain a strict 2:3 (Manga typical vertical/portrait) golden ratio structure within each panel setup.
 
 Technical Quality Definitions (System Dictionary):
-(Meticulously clean line art: 1.5)
-(Subtle sub-surface scattering and backlighting: 1.4)
-(Cinematic depth of field with bokeh: 1.3)
-(NO text or SFX outside of speech bubbles: 1.5)
-(ABSOLUTELY NO ENGLISH TEXT outside watermark. Do NOT draw terms like 'G-pen', 'Gleam', 'HA': 2.0)
+(highly detailed background architecture and environment: 2.5)
+(Meticulously clean line art: 2.5)
+(Subtle sub-surface scattering and backlighting: 2.4)
+(Cinematic depth of field with bokeh: 2.3)
+(ABSOLUTELY NO text or SFX outside of speech bubbles: 2.8)
+(ABSOLUTELY NO ENGLISH TEXT outside watermark. Do NOT draw terms like 'G-pen', 'Gleam', 'HA': 3.0)
 
 
 ## Panel 1 (Top)
@@ -1941,6 +1946,7 @@ Dialogue (ONLY write this inside speech bubbles): ${extractDialogueOnly(panel4Te
 Important constraints:
 - Ensure the characters accurately reflect classic anime styles.
 - Do NOT merge panels. Keep 4 distinct panels with white gutters between them.
+- ABSOLUTELY NO TEXT OR SFX BETWEEN PANELS. The white gutters separating the panels MUST be completely clean and pure white. Do not draw any labels, narration, or sound effects crossing or sitting inside the panel boundaries.
 - Do NOT write situation/narration explanations as text on the screen. The Visual Action must only be illustrated.
 - Write the Japanese spoken text clearly inside white manga speech bubbles in a bold sans-serif Japanese font.
 - Japanese dialogue MUST end with a period (。). However, do NOT add unnecessary commas (、) inside dialogue. Manga speech bubbles rarely use commas in natural Japanese — line breaks and bubble shape provide natural pauses instead. Only use commas when absolutely necessary to prevent misreading.
