@@ -32,7 +32,7 @@ import {
 import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 
-const SYSTEM_VERSION = "v2.57 Alpha";
+const SYSTEM_VERSION = "v2.58 Alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -639,7 +639,7 @@ function App() {
     }
     // [v2.47] カメラワーク強化
     if (enhanceCameraWork) {
-      enhanceCategories.push("【カメラワークの強化】各コマに極限的なカメラアングル指示を追加してください。各コマの「状況」欄の冒頭に [Camera: ○○] の形式で追記します。通常のカメラワークの限界レベルの歪み（ウェイト2.8〜3.0相当）を想定した指示にしてください。\n- ローアングル/アオリ（靴の裏が見え、頭が豆粒になるほどの極端な見上げ）\n- 俯瞰/バードアイ（真上から見下ろし、圧倒的なスケール感と孤立感）\n- ダッチアングル（画面が15度〜30度傾くような異常事態の演出）\n- 超広角/フィッシュアイ（画面の端が丸く歪むほどの誇張・コミカルな歪み。※ただし鼻が団子鼻(豚鼻)になる造形崩壊は絶対禁止）\n- 引き/ロングショット（宇宙や上空からの空気感）\n- パンニング/追跡ショット（キャラの移動方向にカメラが追従し、背景がモーションブラーで流れる）\n⚠️ クローズアップ・マクロ特写は全キャラ描画義務と矛盾するため使用禁止。\n4コマ全てを同じアングルにしないでください。コマごとにアングルを変えてドラマチックなダイナミズムを作ってください。⚠️ アオリ等の過激なアングルはコンテンツポリシーに引っかかる場合がありますが、救済機能で対応可能です。");
+      enhanceCategories.push("【カメラワークの強化】各コマに極限的なカメラアングル指示を追加してください。各コマの「状況」欄の冒頭に [Camera: ○○] の形式で追記します。通常のカメラワークの限界レベルの歪み（ウェイト2.8〜3.0相当）を想定した指示にしてください。\n- ローアングル/アオリ（キャラクターが巨人のように見上げられ、天井や空が大きく広がる極端な見上げ。※ただしキャラの全身は必ず描画し、靴だけのアップにはしないこと）\n- 俯瞰/バードアイ（真上から見下ろし、圧倒的なスケール感と孤立感）\n- ダッチアングル（画面が15度〜30度傾くような異常事態の演出）\n- 超広角/フィッシュアイ（画面の端が丸く歪むほどの誇張・コミカルな歪み。※ただし鼻が団子鼻(豚鼻)になる造形崩壊は絶対禁止）\n- 引き/ロングショット（宇宙や上空からの空気感）\n- パンニング/追跡ショット（キャラの移動方向にカメラが追従し、背景がモーションブラーで流れる）\n⚠️ クローズアップ・マクロ特写は全キャラ描画義務と矛盾するため使用禁止。靴や足だけのアップ画にならないこと。\n4コマ全てを同じアングルにしないでください。コマごとにアングルを変えてドラマチックなダイナミズムを作ってください。⚠️ アオリ等の過激なアングルはコンテンツポリシーに引っかかる場合がありますが、救済機能で対応可能です。");
     }
     // [v2.47] セリフ・ギャグ強化
     if (enhanceDialogue) {
@@ -982,11 +982,11 @@ ${scenario}
            - カメラ名を書いただけ（例:「[Camera: ローアングル]」のみ）は**絶対に禁止**。
            - **物理描写の書き方（全コマ必須）**: 「カメラがどこにあり」「何が巨大に見え」「何が歪み」「光がどう当たるか」を具体的に書け:
               * 俯瞰/バードアイ → 「成層圏を突き抜け、銀河の果てから地球の一点を凝視するような極限の俯瞰。太陽光が海面で核爆発的な反射を放つ」
-              * ローアングル/アオリ → 「地面の亀裂から見上げる、靴の裏が画面の8割を占拠し頭部が豆粒ほどに遠ざかる。背後から大噴火の逆光が吹き荒れる」
+              * ローアングル/アオリ → 「膝の高さから見上げ、キャラの全身がそびえ立つ巨人のように見え、背後の天井や空が大きく広がる。逆光が後ろから吹き荒れ、足元から頭頂までパースが効く。※靴だけのアップにはするな、必ずキャラの全身を描画せよ」
               * フィッシュアイ → 「画面の端が球体のように丸く歪むが、鼻が『団子鼻(豚鼻)』になる造形崩壊は絶対禁止。周囲の建物が飴細工のようにぐにゃりと曲がる」
               * ダッチアングル → 「世界が30度傾き、壁も床も天井も重力を忘れて斜めに流れ、キャラが滑り落ちそうな不安定感で画面が崩壊する」
               * 望遠圧縮 → 「100m先の背景が目の前まで迫り、キャラと背景の距離感が消失し、圧迫的な密度で空間が潰れる」
-              * ワームズアイ → 「アリの目線から見上げ、靴底の泥の粒まで見える地面すれすれ。人間が巨人のようにそびえ立つ」
+              * ワームズアイ → 「地面すれすれから見上げ、人間が巨人のようにそびえ立つ。足元の地面のディテールが鮮明に描かれつつ、キャラの全身が圧倒的スケールで画面に収まる。※靴だけのアップ画は禁止、必ず全身を描画せよ」
               * パンニング/追跡ショット → 「カメラがキャラの疾走を追いかけ、背景が流星群のようにモーションブラーで崩壊する。手前のキャラが画面を突き破る勢いで奥へ走り抜ける」
               * ⚠️ マクロ特写（顔・目の超接写）は全キャラ描画義務と矛盾するため**使用禁止**。
            - 選択肢: 俯瞰/バードアイ、ローアングル/アオリ、ダッチアングル、超広角/フィッシュアイ、望遠圧縮、ワームズアイ、ドローン俯瞰、パンニング/追跡ショット
@@ -1201,13 +1201,14 @@ ${scenario}
           vfx: '(Blank white circular eyes with no pupils:1.5), (desaturated pale skin:1.3), (dark depression aura emanating:1.3), (frozen stiff mannequin-like pose), (glasses preserved if character wears them:1.5)',
         },
         IMPACT: {
-          style: 'In THIS PANEL ONLY, use an explosive impact-frame composition. The main character\'s expression fills 60-80% of the panel. Dramatic radial speed lines burst from the center. Panel borders may appear to crack or shatter from the intensity.',
+          style: 'In THIS PANEL ONLY, use an explosive impact-frame composition. The main character\'s expression fills 60-80% of the panel. Dramatic radial speed lines burst from the center. The panel glows with intense energy aura radiating outward.',
           proportions: 'OVERRIDE: Use 2-4 head proportions. Extreme close-up with foreshortening allowed.',
-          vfx: '(Explosive radial speed lines from center:1.5), (screen-filling extreme close-up face:1.4), (cracking panel borders:1.2), (intense dramatic backlight)',
+          vfx: '(Explosive radial speed lines from center:1.5), (screen-filling extreme close-up face:1.4), (intense glowing energy aura:1.2), (intense dramatic backlight)',
           // [v2.31] マルチキャラパネル用フォールバック
-          styleMulti: 'In THIS PANEL ONLY, use a dramatic impact-frame composition with intense energy. Dramatic radial speed lines burst from the center of the panel. Panel borders may appear to crack or shatter from the intensity. IMPORTANT: Show ALL characters listed in the panel at full body or waist-up — do NOT zoom into a single face. Do NOT create a close-up of one character\'s face that fills most of the panel.',
+          // [v2.57] ひび割れ演出を削除し、エネルギー放射型演出に差し替え
+          styleMulti: 'In THIS PANEL ONLY, use a dramatic impact-frame composition with intense energy. Dramatic radial speed lines burst from the center of the panel. The panel glows with intense energy aura radiating outward. IMPORTANT: Show ALL characters listed in the panel at full body or waist-up — do NOT zoom into a single face. Do NOT create a close-up of one character\'s face that fills most of the panel. Do NOT draw cracks, fractures, or shattering effects on the panel borders.',
           proportionsMulti: '',
-          vfxMulti: '(Explosive radial speed lines from center:1.5), (cracking panel borders:1.2), (intense dramatic backlight), (dynamic action poses:1.3)',
+          vfxMulti: '(Explosive radial speed lines from center:1.5), (intense glowing energy aura:1.2), (intense dramatic backlight), (dynamic action poses:1.3)',
         },
         WATERCOLOR: {
           style: 'In THIS PANEL ONLY, shift to a soft watercolor painting style with blurred edges, transparent color washes, and visible paper texture. The mood is nostalgic and dreamlike.',
@@ -1390,7 +1391,7 @@ Available lens effects — EACH PANEL MUST USE ONE:
   * (extreme fish-eye barrel distortion:2.8), (massive bulging foreground:2.5), (lens curve warping straight lines:2.6), (subject face very close to curved glass:2.5) — Ultra wide-angle spherical distortion
   * (extreme telephoto compression:2.7), (dangerously close background:2.4), (claustrophobic flattened space:2.5), (distant objects appear massive behind character:2.6) — Background crushes into foreground
   * (severe dutch angle 45 degrees:2.7), (violently tilted world:2.6), (falling gravity sensation:2.5), (sideways slanted walls and floor:2.6) — Frame tilted 15-45 degrees
-  * (ultra extreme low angle:2.7), (deep worm's eye view:2.6), (staring up from the floor:2.7), (ceiling is clearly visible:2.8), (looking up at massive shoes:2.5) — Camera at ground level looking UP
+  * (ultra extreme low angle:2.7), (deep worm's eye view:2.6), (staring up from the floor:2.7), (ceiling is clearly visible:2.8), (towering full-body character from below:2.5) — Camera at ground level looking UP. IMPORTANT: Always show full body, NEVER crop to shoes only.
   * (ultra extreme high angle:2.7), (steep bird's eye view:2.6), (looking down at the floor:2.7), (character viewed from directly above their head:2.8), (wide shot of the ground beneath:2.5) — Camera from above looking DOWN
 
 [FLAT SHOT BAN]: (eye-level shot:0.1), (straight-on symmetrical:0.1) — Eye-level/straight compositions are FORBIDDEN. Weight them down to near-zero.
@@ -1451,7 +1452,7 @@ Available lens effects — EACH PANEL MUST USE ONE:
         "EXTREME WIDE ANGLE OVER-THE-SHOULDER: (fish-eye distortion:1.7), (over-the-shoulder composition:1.6), (barrel distortion:1.5). Fish-eye from behind one character's massive shoulder",
         "CINEMATIC LOW ANGLE TELEPHOTO: (extreme low angle:1.8), (telephoto compression:1.7), (imposing heroic pose:1.5). Camera below chin level, background compresses dramatically flat",
         "DYNAMIC ACTION FISH-EYE WIDE SHOT: (fish-eye barrel distortion:1.8), (spherical scene distortion:1.7), (exaggerated depth separation:1.6). Full scene through spherical distortion, edges curve dramatically",
-        "WORM'S EYE EXTREME DUTCH (15° tilt): (extreme low angle:1.8), (worm's eye view:1.7), (dutch angle 15 degrees:1.6), (giant shoes tiny heads:1.5). Camera at ground level tilted, ant's-eye perspective"
+        "WORM'S EYE EXTREME DUTCH (15° tilt): (extreme low angle:1.8), (worm's eye view:1.7), (dutch angle 15 degrees:1.6), (towering full-body from below:1.5). Camera at ground level tilted, ant's-eye perspective. NEVER crop to shoes only"
       ];
       // [v2.53.2] Fisher-Yatesシャッフルで4パネル全て異なるカメラアングルを保証
       // 旧getRandomAngle()は重複が発生していたため廃止

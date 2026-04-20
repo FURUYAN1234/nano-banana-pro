@@ -1,9 +1,9 @@
-### Changes / 更新内容
+## Nano Banana Pro v2.57.0-alpha
 
-- **[Fix]** Removed "Macro Close-up" from camera options to prevent the AI from generating huge face/eye close-ups that violate the "all characters must be fully drawn" rule.
-- **[Feature]** Replaced the macro option with "Panning/Tracking Shot" where the camera tracks characters with dynamic motion blur.
+### EN
+- **Enhancement**: Refined Fisheye (Ultra wide-angle) camera perspective prompt logic.
+  - Added strict prohibition against generating "bulbous noses" (pig noses) during fisheye distortion to prevent undesirable facial collapse while maintaining extreme visual perspective.
 
----
-
-- **[修正]** カメラ選択肢から「マクロ特写」（顔や瞳の極端なアップ）を削除しました。これにより、AIが全員を描画せずに画面全体に巨大な顔を生成してしまうグリッチを防止します。
-- **[機能追加]** マクロ特写の代わりに、「パンニング/追跡ショット」（キャラを追跡し背景がモーションブラーで流れる演出）を追加しました。
+### JP
+- **改善**: フィッシュアイ（超広角）アングル時のカメラプロンプト指示を修正しました。
+  - 極限の遠近感を出しつつも、「団子鼻（豚鼻）」になるような不細工な造形崩壊をシステム側で明示的に絶対禁止とするよう対応しました。
