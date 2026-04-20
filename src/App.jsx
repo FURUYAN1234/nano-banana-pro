@@ -32,7 +32,7 @@ import {
 import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 
-const SYSTEM_VERSION = "v2.53 Alpha";
+const SYSTEM_VERSION = "v2.54 Alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -976,6 +976,27 @@ ${scenario}
            - 【重要】毎回同じタグを繰り返すな。4コマの中で少なくとも2種類以上のタグを使い分けよ。
            - オチのコマ（4コマ目）は特に、NORMAL以外のタグを優先的に選べ。
 
+        6. **【カメラ演出タグ (Camera Direction Tag)】**:
+           - 各コマの冒頭に、そのコマの演出に最適な[Camera: XXX]タグを**必ず1つ**付与せよ。
+           - 話の内容・感情・ドラマに合わせて最も効果的なカメラを選べ。**ランダムに選ぶな、演出意図を持って選べ。**
+           - 選択肢（この中から選べ）:
+             - フィッシュアイ/ローアングル: 登場人物が偉大・強大に見える場面、圧倒感、仰ぎ見るシーン
+             - 望遠/ハイアングル: 俯瞰で全体を見渡すシーン、群像劇、整然とした場面、冷静な観察
+             - ダッチアングル: 不安定・混乱・予期せぬ展開、ツッコミ、世界が揺らぐ場面
+             - 超ローアングル: 威圧感、見上げる構図、巨大なものとの対比、権威の表現
+             - 超ハイアングル: 見下ろし、孤立感、全景把握、客観的な視点
+             - 望遠圧縮: キャラの密集感、逃げ場のない緊張感、圧迫される大群
+             - フィッシュアイ/ワイド: 広大な空間の歪み、非日常感、パニック
+             - ワームズアイ: 地面からの極端な仰ぎ、足元のクローズアップ、虫の視点
+             - ドローン俯瞰: 高度数百メートルからの見下ろし、圧倒的なスケール感、無力感
+             - マクロ特写: 目元・指先などの極端な接近、緊迫感、微細な感情変化
+           - 【制約】4コマの中で**同じカメラを2回以上使うのは禁止**。必ず4種類の異なるカメラを選べ。
+           - 【演出ガイドライン】:
+             * 1コマ目（起）: 場面の広さを見せるワイド系 or 観察的なハイアングル推奨
+             * 2コマ目（承）: 会話の緊張感を出す望遠圧縮 or 不穏なダッチアングル推奨
+             * 3コマ目（転）: 転換の衝撃を見せるローアングル系 or フィッシュアイ推奨
+             * 4コマ目（結）: オチの感情に合わせて自由選択（威圧のローアングル、絶望のハイアングル等）
+
         【出力フォーマット（絶対厳守・会話禁止）】
         返答、挨拶、説明（「分かりました」「以下がシナリオです」等）は **一切出力しないこと**。
         以下の独自フォーマット **のみ** を出力してください。Markdownのコードブロックも不要です。
@@ -986,18 +1007,22 @@ ${scenario}
         Scenario:
         [1コマ目: 起]
         [EMOTION: XXX]
+        [Camera: XXX]
         (状況とセリフ...)
 
         [2コマ目: 承]
         [EMOTION: XXX]
+        [Camera: XXX]
         (状況とセリフ...)
 
         [3コマ目: 転]
         [EMOTION: XXX]
+        [Camera: XXX]
         (状況とセリフ...)
 
         [4コマ目: 結]
         [EMOTION: XXX]
+        [Camera: XXX]
         (状況とセリフ...)
 
         シナリオ本文の要件:
@@ -1352,44 +1377,36 @@ SPEECH BUBBLE PLACEMENT RULE (CRITICAL): Each character's speech bubble MUST be 
         return '';
       };
 
-      // [v2.53] ANTIGRAVITY HYPER-DYNAMIC CAMERA PROTOCOL v3.2 — Gemini推奨の構図・カメラワーク超強化
-      const dynamicCamera = `
-ANTIGRAVITY HYPER-DYNAMIC CAMERA PROTOCOL (v3.2):
+            const dynamicCamera = `
+ANTIGRAVITY HYPER-DYNAMIC CAMERA PROTOCOL (v4.0):
 
-§1. SUPREME COMPOSITION & CAMERA WORK (MANDATORY FOR ALL 4 PANELS):
-- [CORE MANDATE]: Artistic "distortion" and "impact" take priority over photographic realism. Every panel MUST use at least ONE of the following extreme lens effects:
-  * EXTREME FISH-EYE (Ultra Wide-Angle): Warp the world spherically from the center outward. Foreground objects bulge toward the viewer. Background curves away dramatically. The horizon bends visibly.
-  * DYNAMIC TELEPHOTO (Compression Effect): Make foreground characters appear MASSIVE while backgrounds seem unnaturally close. Flatten depth perception for dramatic impact.
-  * EXTREME DUTCH ANGLE: Tilt the entire frame 15 to 45 degrees. There must be ZERO perfectly horizontal lines in the panel. The world itself feels off-balance.
-  * ULTRA LOW ANGLE: Camera at ground level, looking UP at characters who tower above. Shoes and ground-level details are exaggerated in size.
-  * ULTRA HIGH ANGLE: Camera from ceiling/sky, looking DOWN on characters below. Heads and shoulders are exaggerated, legs diminish.
-- [FLAT SHOT BAN]: Eye-level, straight-on, symmetrical compositions are STRICTLY FORBIDDEN. If the camera does not feel dramatically tilted, warped, or positioned at an extreme angle, the composition has FAILED.
-- [BODY PERSPECTIVE DEFORMATION]: Characters' bodies MUST deform according to the chosen lens effect. Arms reaching toward the camera become oversized. Feet in a low-angle shot are drawn larger than heads. This distortion is INTENTIONAL and REQUIRED.
-- [OVERRIDE PROHIBITION — ABSOLUTE]: You MUST NOT override, soften, simplify, or ignore these camera effects for ANY reason — including "readability", "narrative flow", "visual clarity", or "aesthetic balance". The extreme distortion IS the intended artistic style. An image that looks "normal" or "readable" has FAILED. The goal is MAXIMUM visual impact through EXTREME camera distortion. If you find yourself thinking "this would look better as a normal shot", that thought is WRONG — apply the distortion HARDER.
-- [VISUAL PROOF OF COMPLIANCE]: Each panel MUST contain at least ONE of these visible proof elements: (a) a floor/ceiling/horizon line that is clearly NOT horizontal, (b) a character whose near-side body part is drawn at least 50% larger than their far-side body part, (c) visible barrel/pincushion distortion on straight architectural lines (walls, doors, tables bending). If NONE of these proofs are visible, the panel has FAILED.
+§1. CAMERA DISTORTION WEIGHTS (MANDATORY — Apply these weighted tags to EVERY panel):
+(extreme perspective distortion:2.8), (ABSOLUTELY NO eye-level shot:2.9), (NO flat symmetrical composition:2.9), (dramatic severe camera angle:2.7), (extreme visible lens distortion:2.6), (violently tilted horizon line:2.5), (heavily foreshortened body proportions:2.6), (extreme exaggerated depth of field:2.5)
+
+Available lens effects — EACH PANEL MUST USE ONE:
+  * (extreme fish-eye barrel distortion:2.8), (severe spherical warping:2.6), (massive bulging foreground:2.5) — Ultra wide-angle spherical distortion
+  * (extreme telephoto compression:2.7), (severely flattened depth layers:2.5), (dangerously close background:2.4) — Background crushes into foreground
+  * (severe dutch angle 45 degrees:2.7), (violently tilted world:2.6), (absolutely zero horizontal lines:2.5) — Frame tilted 15-45 degrees
+  * (ultra extreme low angle:2.7), (deep worm's eye view:2.6), (massive giant feet tiny head:2.5) — Camera at ground level looking UP
+  * (ultra extreme high angle:2.7), (steep bird's eye view:2.6), (heavily foreshortened legs:2.5) — Camera from above looking DOWN
+
+[FLAT SHOT BAN]: (eye-level shot:0.1), (straight-on symmetrical:0.1) — Eye-level/straight compositions are FORBIDDEN. Weight them down to near-zero.
+[BODY DEFORMATION]: Characters' body parts closest to camera MUST be drawn 50%+ larger than far-side parts. This distortion is INTENTIONAL.
 
 §2. CAST MANAGEMENT & CLONE PREVENTION (CRITICAL):
-- [SINGLE-INSTANCE RULE]: Each named character may appear ONLY ONCE per panel. Drawing the same character twice in any form (foreground + background copy, reflection, silhouette duplicate) is ABSOLUTELY FORBIDDEN.
-- [BACKGROUND CASTING]: When background people are needed, use cast members who are NOT the main speaker(s) of that panel. NEVER place a copy of the foreground character in the background.
-- [CLONE-PROTECTIVE LOGIC]: When placing main cast in the background, ensure their hair color and hairstyle do NOT match the foreground character.
+- Each named character appears ONLY ONCE per panel. Drawing duplicates (foreground+background copy, reflection, silhouette) is FORBIDDEN.
+- Background characters use cast members NOT speaking in that panel.
 
-§3. IDENTITY ANCHORING (RESOURCE OPTIMIZATION):
-- Focus AI rendering resources on COMPOSITION and CAMERA DISTORTION. Character identity is maintained through these MINIMUM ANCHORS:
-  1. Hairstyle and hair color (identifiable at silhouette level)
-  2. Glasses presence/absence (mandatory for characters who wear them, forbidden for those who don't)
-  3. Exaggerated emotional expression (joy, anger, sadness, surprise expressed with entire body)
-- Clothing detail priority is LOWERED for background characters. Instead prioritize: body perspective deformation matching the camera's distortion. However, ALL named characters (both foreground AND background) MUST be drawn in the panel — do NOT omit background characters to save rendering resources.
+§3. GAG MANGA INTERACTION RULES:
+1. Characters MUST interact — no neutral standing poses or direct camera stares.
+2. (exaggerated facial expressions:1.5), (extreme emotional reactions:1.4) — Force comical expressions: blank white eyes, jaw drops, fury, waterfall tears.
+3. (dynamic body language:1.4), (full body reactions:1.3) — Characters physically react with entire bodies.
+4. Do NOT overlay floating close-up eyes or ghostly face inserts as background elements.
+5. Do NOT draw "adjusting glasses" pose unless the character explicitly wears glasses.
 
-§4. GAG MANGA INTERACTION RULES:
-1. Do NOT draw characters just standing neutrally or looking directly at the camera. They MUST interact with each other.
-2. [GAG VFX]: Use comic visual effects for punchlines/reactions. Strictly DO NOT write any text labels or sound effects as text, floating words, or speech bubbles.
-3. [EXAGGERATED EMOTIONS]: FORCE extreme, comical, and highly exaggerated facial expressions! Do NOT draw neutral or slightly smiling faces. Exaggerate expressions (blank white eyes, jaw-dropping shock, intense fury, crying waterfalls) while strictly maintaining top-tier, beautiful anime art quality.
-4. [BODY ACTING]: Characters must physically react with their entire bodies (throwing arms up, falling, etc.). Exaggerate their gestures to the absolute limit. Do NOT over-use the "adjusting glasses" pose unless the character is explicitly wearing glasses.
-5. [ANTI-FLOATING-EYE RULE - CRITICAL]: Do NOT overlay or superimpose a close-up of a character's eyes or upper face as a floating background element behind other characters. Each character must be drawn as a complete figure within the scene. Every character in the panel must exist physically within the scene's space, not as a ghostly overlay or background insert.
-
-§5. PERSPECTIVE-ALIGNED VFX:
-- Impact lines (speed lines), explosions, lightning, and other visual effects MUST synchronize with the camera's perspective and distortion. If the panel uses fish-eye, speed lines must curve radially. If dutch angle, effects must tilt with the world.
-- Sound effect text (SFX, onomatopoeia drawn as art) MUST follow the 3D space distortion. Drawn impact text must curve and distort along the spatial warping of the scene. Do NOT place flat, undistorted text over a warped scene.
+§4. PERSPECTIVE-ALIGNED VFX:
+- Speed lines, explosions, lightning MUST follow the panel's perspective distortion.
+- If fish-eye: effects curve radially. If dutch angle: effects tilt with the world.
     `;
 
       // [v2.42] タイトル抽出 + 「Topic:」プレフィックス除去サニタイズ
@@ -1419,20 +1436,47 @@ ANTIGRAVITY HYPER-DYNAMIC CAMERA PROTOCOL (v3.2):
       const panel3Text = extractPanel(cleanScenario, "3コマ目", "4コマ目");
       const panel4Text = extractPanel(cleanScenario, "4コマ目", "UNKNOWN");
 
-      // [v2.53] HYPER-DYNAMIC Camera Angle Generator — 具体的パース歪み指示付き
+      // [v2.53.3] HYPER-DYNAMIC Camera Angle Generator — 数値ウェイト付きタグ強化版
       const cameraAngles = [
-        "EXTREME FISH-EYE LOW ANGLE: Camera at knee height, ultra-wide spherical distortion warps floor tiles outward, character legs appear massive while upper body curves away into the distance",
-        "DYNAMIC TELEPHOTO HIGH ANGLE: Looking down from above with telephoto compression, faces appear large while bodies compress vertically, background objects pushed unnaturally close",
-        "EXTREME DUTCH ANGLE (30° tilt): Entire scene tilted 30 degrees clockwise. Floor becomes a steep diagonal. Characters lean against the tilt for dynamic visual tension",
-        "ULTRA LOW ANGLE FISH-EYE: Camera on the floor looking straight up, extreme barrel distortion makes ceiling curve into a dome, characters tower overhead with exaggerated foreshortening of limbs",
-        "DRAMATIC TELEPHOTO MEDIUM SHOT: Telephoto compression brings background objects unnaturally close to characters, creating claustrophobic depth compression with flattened spatial layers",
-        "BIRD'S EYE DUTCH ANGLE (20° tilt): Directly overhead camera tilted 20 degrees, characters seen from above with foreshortened bodies, ground patterns stretch dynamically toward edges",
-        "EXTREME WIDE ANGLE OVER-THE-SHOULDER: Fish-eye distortion from behind one character's massive shoulder, the facing character curves away in the background with visible barrel distortion",
-        "CINEMATIC LOW ANGLE TELEPHOTO: Camera below chin level with telephoto lens making characters look imposing and heroic, background buildings and objects compress dramatically flat",
-        "DYNAMIC ACTION FISH-EYE WIDE SHOT: Full scene visible through spherical distortion, edges of panel curve dramatically, center characters pop forward with exaggerated depth separation",
-        "WORM'S EYE EXTREME DUTCH (15° tilt): Camera directly at ground level tilted 15 degrees, ant's-eye perspective makes shoes enormous and sky-high characters appear tiny, dramatic vanishing point overhead"
+        "EXTREME FISH-EYE LOW ANGLE: (fish-eye barrel distortion:1.8), (extreme low angle:1.7), (bulging foreground objects:1.6), (curved horizon:1.5). Camera at knee height, spherical distortion warps floor outward, character legs appear massive",
+        "DYNAMIC TELEPHOTO HIGH ANGLE: (telephoto compression:1.8), (extreme high angle:1.7), (flattened depth:1.6), (compressed background:1.5). Looking down from above, faces large, bodies compress vertically",
+        "EXTREME DUTCH ANGLE (30° tilt): (dutch angle 30 degrees:1.8), (tilted horizon:1.7), (diagonal composition:1.6), (zero horizontal lines:1.5). Entire scene tilted 30 degrees, floor becomes steep diagonal",
+        "ULTRA LOW ANGLE FISH-EYE: (extreme low angle:1.8), (fish-eye distortion:1.7), (exaggerated foreshortening:1.6), (towering characters:1.5). Camera on floor looking straight up, ceiling curves into dome",
+        "DRAMATIC TELEPHOTO MEDIUM SHOT: (telephoto compression:1.8), (claustrophobic depth:1.7), (flattened spatial layers:1.6). Background objects unnaturally close to characters",
+        "BIRD'S EYE DUTCH ANGLE (20° tilt): (extreme high angle:1.8), (bird's eye view:1.7), (dutch angle 20 degrees:1.6), (foreshortened bodies:1.5). Directly overhead, tilted 20 degrees",
+        "EXTREME WIDE ANGLE OVER-THE-SHOULDER: (fish-eye distortion:1.7), (over-the-shoulder composition:1.6), (barrel distortion:1.5). Fish-eye from behind one character's massive shoulder",
+        "CINEMATIC LOW ANGLE TELEPHOTO: (extreme low angle:1.8), (telephoto compression:1.7), (imposing heroic pose:1.5). Camera below chin level, background compresses dramatically flat",
+        "DYNAMIC ACTION FISH-EYE WIDE SHOT: (fish-eye barrel distortion:1.8), (spherical scene distortion:1.7), (exaggerated depth separation:1.6). Full scene through spherical distortion, edges curve dramatically",
+        "WORM'S EYE EXTREME DUTCH (15° tilt): (extreme low angle:1.8), (worm's eye view:1.7), (dutch angle 15 degrees:1.6), (giant shoes tiny heads:1.5). Camera at ground level tilted, ant's-eye perspective"
       ];
-      const getRandomAngle = () => cameraAngles[Math.floor(Math.random() * cameraAngles.length)];
+      // [v2.53.2] Fisher-Yatesシャッフルで4パネル全て異なるカメラアングルを保証
+      // 旧getRandomAngle()は重複が発生していたため廃止
+      const shuffleArray = (arr) => {
+        const a = [...arr];
+        for (let i = a.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [a[i], a[j]] = [a[j], a[i]];
+        }
+        return a;
+      };
+      const shuffledCameras = shuffleArray(cameraAngles).slice(0, 4);
+      let cameraSlotIndex = 0;
+
+      // [v2.54.0] Extract AI selected camera tags, or fallback to Fisher-Yates generator
+      const getCameraForPanel = (panelText) => {
+        // [Camera: XXX] の抽出を試みる
+        const cameraMatch = panelText.match(/\[Camera:\s*(.*?)\]/i);
+        if (cameraMatch && cameraMatch[1]) {
+           const specificCamera = cameraMatch[1].trim();
+           // AIが選んだカメラ名に、対応するプロンプト用の強力な歪み指示を組み合わせる
+           // AIは必ずしも正確な書式を返さないことがあるため、汎用的な歪みプロンプトを付与
+           return `(Selected Camera: ${specificCamera}: 2.8), (EXTREME hyper-dynamic composition:2.6), (SEVERE dutch angle or extreme perspective distortion:2.7), (MASSIVE spherical or telephoto depth separation:2.5), (ABSOLUTELY NO flat normal photos:2.9)`;
+        }
+        // AIがカメラタグを出力しなかった場合のフォールバック（重複なしランダム）
+        const fallbackCamera = shuffledCameras[cameraSlotIndex % shuffledCameras.length];
+        cameraSlotIndex++;
+        return fallbackCamera;
+      };
 
       // [v1.95] Dialogue Cleaner & Formatter (Line-by-Line Fix + Speaker Extraction with Character Validation)
       const extractDialogueOnly = (fullPanelText) => {
@@ -1814,7 +1858,9 @@ The canvas MUST be completely filled by the panels. The 4 manga panels MUST be e
 Do NOT draw large white margins on the left, right, top, or bottom edges.
 At the very top of the page, draw a large, bold, black Japanese text title that says exactly: ${safeTopic}
 Do NOT surround the title text with quotation marks, apostrophes, single quotes, or any other punctuation marks. Draw ONLY the raw Japanese characters of the title.
-Draw a tiny English watermark exactly ON the bottom-right border of the 4th panel that displays the exact text "Generated by Super FURU AI 4-koma ${SYSTEM_VERSION}" in clean sans-serif font. The watermark text MUST be written HORIZONTALLY (left-to-right reading direction), NEVER rotated 90 degrees, NEVER written vertically, and NEVER stacked one letter per line. Do NOT draw duplicated or overlapping watermarks. Do NOT add extra white space below the 4th panel for the watermark.
+Draw a tiny English watermark exactly ON the bottom-right border of the 4th panel that displays the exact text "Generated by Super FURU AI 4-koma ${SYSTEM_VERSION}" in clean sans-serif font.
+ALSO draw a tiny Japanese watermark exactly ON the bottom-left border (outside the frame) of the 4th panel that displays the exact text "ネームから全自動の自律式統合AI漫画システム :https://x.gd/JiWor". Ensure its size does not interfere with the right watermark.
+Both watermark texts MUST be written HORIZONTALLY (left-to-right reading direction), NEVER rotated 90 degrees, NEVER written vertically, and NEVER stacked one letter per line. Do NOT draw duplicated or overlapping watermarks. Do NOT add extra white space below the 4th panel.
 
 CRITICAL PANEL SIZE COMMAND: The canvas MUST be divided into exactly 4 EQUAL horizontal panels stacked vertically from top to bottom. All 4 panels MUST be the EXACT SAME height and EXACT SAME width.
 The art style is: ${styleCore}.
@@ -1860,8 +1906,8 @@ Technical Quality Definitions (System Dictionary):
 ${buildEmotionBlock(panel1Text)}
 ${extractPlacementRule(panel1Text)}
 ${extractCastLimitRule(panel1Text)}
-Camera: ${getRandomAngle()}.
-[MANDATORY LENS ENFORCEMENT — DO NOT IGNORE]: This camera angle is NOT a suggestion. It is a HARD REQUIREMENT. You MUST visually distort the entire panel composition to match the described lens effect. Specific proof required: (1) The floor/ground/horizon MUST be drawn at a visible angle — NOT flat horizontal. (2) Characters' body parts closest to the camera MUST be drawn significantly LARGER than parts farther away. (3) Background elements MUST bend, compress, or stretch according to the lens type. If this panel looks like a normal, undistorted, eye-level photograph, it has CRITICALLY FAILED. Do NOT choose readability over distortion — the distortion IS the art.
+Camera: ${getCameraForPanel(panel1Text)}.
+[LENS ENFORCEMENT]: (apply ABOVE CAMERA DISTORTION MAX:2.9), (NEVER a normal photograph:3.0), (extreme severe perspective warping:2.7), (violently tilted non-horizontal horizon:2.6), (near-side body parts 200% larger:2.5). This is a LIFE OR DEATH REQUIREMENT, literally break the normal camera angle.
 Visual Action (Do NOT write this as text on the canvas, draw it visually): ${injectOutfitReminder(extractActionOnly(panel1Text, extractPlacementRule(panel1Text)))}.
 Dialogue (ONLY write this inside speech bubbles): ${extractDialogueOnly(panel1Text)}.
 
@@ -1869,8 +1915,8 @@ Dialogue (ONLY write this inside speech bubbles): ${extractDialogueOnly(panel1Te
 ${buildEmotionBlock(panel2Text)}
 ${extractPlacementRule(panel2Text)}
 ${extractCastLimitRule(panel2Text)}
-Camera: ${getRandomAngle()}.
-[MANDATORY LENS ENFORCEMENT — DO NOT IGNORE]: This camera angle is NOT a suggestion. It is a HARD REQUIREMENT. You MUST visually distort the entire panel composition to match the described lens effect. Specific proof required: (1) The floor/ground/horizon MUST be drawn at a visible angle — NOT flat horizontal. (2) Characters' body parts closest to the camera MUST be drawn significantly LARGER than parts farther away. (3) Background elements MUST bend, compress, or stretch according to the lens type. If this panel looks like a normal, undistorted, eye-level photograph, it has CRITICALLY FAILED. Do NOT choose readability over distortion — the distortion IS the art.
+Camera: ${getCameraForPanel(panel2Text)}.
+[LENS ENFORCEMENT]: (apply ABOVE CAMERA DISTORTION MAX:2.9), (NEVER a normal photograph:3.0), (extreme severe perspective warping:2.7), (violently tilted non-horizontal horizon:2.6), (near-side body parts 200% larger:2.5). This is a LIFE OR DEATH REQUIREMENT, literally break the normal camera angle.
 Visual Action (Do NOT write this as text on the canvas, draw it visually): ${injectOutfitReminder(extractActionOnly(panel2Text, extractPlacementRule(panel2Text)))}.
 Dialogue (ONLY write this inside speech bubbles): ${extractDialogueOnly(panel2Text)}.
 
@@ -1878,8 +1924,8 @@ Dialogue (ONLY write this inside speech bubbles): ${extractDialogueOnly(panel2Te
 ${buildEmotionBlock(panel3Text)}
 ${extractPlacementRule(panel3Text)}
 ${extractCastLimitRule(panel3Text)}
-Camera: ${getRandomAngle()}.
-[MANDATORY LENS ENFORCEMENT — DO NOT IGNORE]: This camera angle is NOT a suggestion. It is a HARD REQUIREMENT. You MUST visually distort the entire panel composition to match the described lens effect. Specific proof required: (1) The floor/ground/horizon MUST be drawn at a visible angle — NOT flat horizontal. (2) Characters' body parts closest to the camera MUST be drawn significantly LARGER than parts farther away. (3) Background elements MUST bend, compress, or stretch according to the lens type. If this panel looks like a normal, undistorted, eye-level photograph, it has CRITICALLY FAILED. Do NOT choose readability over distortion — the distortion IS the art.
+Camera: ${getCameraForPanel(panel3Text)}.
+[LENS ENFORCEMENT]: (apply ABOVE CAMERA DISTORTION MAX:2.9), (NEVER a normal photograph:3.0), (extreme severe perspective warping:2.7), (violently tilted non-horizontal horizon:2.6), (near-side body parts 200% larger:2.5). This is a LIFE OR DEATH REQUIREMENT, literally break the normal camera angle.
 Visual Action (Do NOT write this as text on the canvas, draw it visually): ${injectOutfitReminder(extractActionOnly(panel3Text, extractPlacementRule(panel3Text)))}.
 Dialogue (ONLY write this inside speech bubbles): ${extractDialogueOnly(panel3Text)}.
 
@@ -1887,8 +1933,8 @@ Dialogue (ONLY write this inside speech bubbles): ${extractDialogueOnly(panel3Te
 ${buildEmotionBlock(panel4Text)}
 ${extractPlacementRule(panel4Text)}
 ${extractCastLimitRule(panel4Text)}
-Camera: ${getRandomAngle()}.
-[MANDATORY LENS ENFORCEMENT — DO NOT IGNORE]: This camera angle is NOT a suggestion. It is a HARD REQUIREMENT. You MUST visually distort the entire panel composition to match the described lens effect. Specific proof required: (1) The floor/ground/horizon MUST be drawn at a visible angle — NOT flat horizontal. (2) Characters' body parts closest to the camera MUST be drawn significantly LARGER than parts farther away. (3) Background elements MUST bend, compress, or stretch according to the lens type. If this panel looks like a normal, undistorted, eye-level photograph, it has CRITICALLY FAILED. Do NOT choose readability over distortion — the distortion IS the art.
+Camera: ${getCameraForPanel(panel4Text)}.
+[LENS ENFORCEMENT]: (apply ABOVE CAMERA DISTORTION MAX:2.9), (NEVER a normal photograph:3.0), (extreme severe perspective warping:2.7), (violently tilted non-horizontal horizon:2.6), (near-side body parts 200% larger:2.5). This is a LIFE OR DEATH REQUIREMENT, literally break the normal camera angle.
 Visual Action (Do NOT write this as text on the canvas, draw it visually): ${injectOutfitReminder(extractActionOnly(panel4Text, extractPlacementRule(panel4Text)))}.
 Dialogue (ONLY write this inside speech bubbles): ${extractDialogueOnly(panel4Text)}.
 
