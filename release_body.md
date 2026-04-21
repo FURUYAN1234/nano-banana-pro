@@ -1,9 +1,11 @@
-## Nano Banana Pro v2.57.0-alpha
+## Nano Banana Pro v2.59.0-alpha
 
 ### EN
-- **Enhancement**: Refined Fisheye (Ultra wide-angle) camera perspective prompt logic.
-  - Added strict prohibition against generating "bulbous noses" (pig noses) during fisheye distortion to prevent undesirable facial collapse while maintaining extreme visual perspective.
+- **Optimization**: Completely overhauled the Gemini API model fallback lists in preparation for the deprecation of the official Imagen series models (June 24, 2026). Promoted `gemini-3.1-flash-lite-preview` and `gemini-2.5-flash-image` as primary free-tier fallbacks, and correctly updated modal payloads for native Gemini image generation. 
+- **System**: Implemented the multi-agent `Model Audit Protocol` across the standard `AGENTS.md` file, standardizing API availability checks across all 4 Antigravity applications.
+- **UI**: Added the new NEXT GEN (gemini-3.1) and LEGACY (imagen) badges to the user interface to visually delineate legacy and tier capacities appropriately.
 
 ### JP
-- **改善**: フィッシュアイ（超広角）アングル時のカメラプロンプト指示を修正しました。
-  - 極限の遠近感を出しつつも、「団子鼻（豚鼻）」になるような不細工な造形崩壊をシステム側で明示的に絶対禁止とするよう対応しました。
+- **最適化**: 2026年6月24日に予定されているImagen全系列の廃止に向けて、Gemini APIのモデルフォールバックリストを全面刷新しました。無料枠での動作を保証するため `gemini-3.1-flash-lite-preview` や `gemini-2.5-flash-image` を主要フォールバックに昇格させ、画像生成時の必須ペイロードを改修しました。
+- **システム**: `AGENTS.md` に「Gemini API モデル定期監査 (Model Audit Protocol)」ルールを追加し、全4アプリ共通でのAPI可用性自動チェック体制を確立しました。
+- **UI**: モデル表示バッジを更新し、次世代モデル（NEXT GEN）と廃止予定モデル（LEGACY）を視覚的に判別できるようにしました。

@@ -6,23 +6,25 @@
  */
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-// テキストのみリクエスト用 (シナリオ生成等): Next-Gen優先
+// テキストのみリクエスト用 (シナリオ生成等): Next-Gen優先・無料枠優先
+// ※ 2026年4月以降、Pro系は有料APIキー専用。Flash系は無料枠で利用可能。
 const TEXT_MODEL_IDS = [
-    "gemini-3-flash-preview",             // Primary: Next-Gen (Grounding対応)
-    "gemini-2.5-pro",                     // Backup 1: 高品質・安定
-    "gemini-2.5-flash",                   // Backup 2: 高速
-    "gemini-2.5-flash-lite",              // Fallback 1: 軽量安定
-    "gemini-3.1-flash-lite-preview"       // Fallback 2: Next-Gen Lite Preview
+    "gemini-3-flash-preview",             // Primary: Next-Gen Flash (無料枠OK・Grounding対応)
+    "gemini-3.1-flash-lite-preview",      // Backup 1: Next-Gen Lite (無料枠OK・最速)
+    "gemini-2.5-flash",                   // Backup 2: 安定実績 (無料枠OK)
+    "gemini-2.5-pro",                     // Fallback 1: 高品質 (有料APIキー専用 2026/04〜)
+    "gemini-2.5-flash-lite"               // Fallback 2: 軽量レガシー (無料枠OK)
 ];
 
 // 画像付きリクエスト用 (キャラクターシート認識等): フィルター寛容モデル優先
-// gemini-3-flash-preview はアニメ画像で PROHIBITED_CONTENT を返すため3番目に降格
+// gemini-3-flash-preview はアニメ画像で PROHIBITED_CONTENT を返すため後方に配置
+// ※ gemini-2.5-pro は画像認識性能最高だが有料APIキー専用 (2026/04〜)
 const IMAGE_MODEL_IDS = [
-    "gemini-2.5-pro",                     // Primary: 画像認識実績あり・フィルター寛容
-    "gemini-2.5-flash",                   // Backup 1: 高速・画像対応
-    "gemini-3-flash-preview",             // Backup 2: Preview版、将来のフィルター緩和に期待
-    "gemini-2.5-flash-lite",              // Fallback 1: 軽量
-    "gemini-3.1-flash-lite-preview"       // Fallback 2: 最終保険
+    "gemini-2.5-flash",                   // Primary: 画像認識実績・高速 (無料枠OK)
+    "gemini-2.5-pro",                     // Backup 1: 最高品質 (有料APIキー専用)
+    "gemini-3.1-flash-lite-preview",      // Backup 2: Next-Gen Lite (無料枠OK)
+    "gemini-3-flash-preview",             // Fallback 1: Next-Gen (アニメ画像でフィルターリスクあり)
+    "gemini-2.5-flash-lite"               // Fallback 2: 軽量レガシー
 ];
 
 // Store API key in memory ONLY (Security Requirement: No persistence)

@@ -32,7 +32,7 @@ import {
 import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 
-const SYSTEM_VERSION = "v2.58 Alpha";
+const SYSTEM_VERSION = "v2.59 Alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -333,28 +333,49 @@ function App() {
   const getModelBadgeInfo = (modelId) => {
     if (!modelId) return null;
 
-    if (modelId.includes("2.5-pro") || modelId.includes("3")) {
+    // Gemini 3.1系 = 最高品質 (Next-Gen)
+    if (modelId.includes("3.1")) {
       return {
-        label: "ULTRA HIGH QUALITY",
+        label: "NEXT GEN",
         tier: "Supreme",
         color: "bg-gradient-to-r from-yellow-600 to-yellow-400 text-black",
-        desc: "Gemini 2.5/3.0 Pro: 最高品質 (No Limits)"
+        desc: "Gemini 3.1: 最高品質 (Next Generation)"
       };
     }
-    if (modelId.includes("flash")) {
-      if (modelId.includes("lite") || modelId.includes("latest")) {
-        return {
-          label: "STANDARD QUALITY",
-          tier: "Lite",
-          color: "bg-gray-600 text-white",
-          desc: "Gemini Flash Lite: 標準品質 (API制限回避中...)"
-        };
-      }
+    // Gemini 3.0 Flash / 2.5 Pro = 高品質
+    if (modelId.includes("3-flash") || modelId.includes("2.5-pro")) {
       return {
         label: "HIGH QUALITY",
         tier: "Active",
         color: "bg-blue-600 text-white",
-        desc: "Gemini 2.5 Flash: 高品質 (高速)"
+        desc: "Gemini 3.0/2.5 Pro: 高品質"
+      };
+    }
+    // Gemini 2.5 Flash (画像生成含む) = 安定
+    if (modelId.includes("2.5-flash") && !modelId.includes("lite")) {
+      return {
+        label: "STABLE",
+        tier: "Active",
+        color: "bg-indigo-600 text-white",
+        desc: "Gemini 2.5 Flash: 安定・高速"
+      };
+    }
+    // Flash Lite系 = 標準品質
+    if (modelId.includes("lite") || modelId.includes("latest")) {
+      return {
+        label: "STANDARD QUALITY",
+        tier: "Lite",
+        color: "bg-gray-600 text-white",
+        desc: "Flash Lite: 標準品質 (API制限回避中...)"
+      };
+    }
+    // Imagen系 = レガシー
+    if (modelId.includes("imagen")) {
+      return {
+        label: "LEGACY",
+        tier: "Lite",
+        color: "bg-amber-700 text-white",
+        desc: "Imagen: レガシーモデル (2026/06廃止予定)"
       };
     }
     // Fallback
@@ -2056,6 +2077,7 @@ Before generating the final image, mentally verify ALL of the following. If ANY 
 
       setGeneratedImage(`data:image/png;base64,${base64Img}`);
       if (generatedModelId && !generatedModelId.startsWith("gemini-3")) {
+        // gemini-2.5系やimagen系はフォールバック扱い（妥協版警告を表示）
         setIsFallbackUsed(true);
         setGenLog(prev => [
           ...prev,

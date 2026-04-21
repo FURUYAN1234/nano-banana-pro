@@ -53,3 +53,35 @@ All apps should use this four-file structure for multi-agent development.
 ### 4. Knowledge Sync（記憶の共有化）
 - 迷ったら推測する前に `docs/` を読む。
 - 深刻なバグ修正、新たなプラットフォーム固有の仕様（Vite、HF Spaces、GH Pagesなど）を発見した場合、単にコードを直して終わりにせず、必ず `docs/troubleshooting.md` 等に事象と対策を書き残す。
+
+### 5. Gemini API モデル定期監査 (Model Audit Protocol) — 全アプリ共通
+
+本プロジェクト群（nano-banana-pro, comic-translation, character-sheet, story-maker）は全て Google Gemini API を使用しており、各アプリにモデルのフォールバックチェーンが存在する。
+
+#### トリガー条件（以下のいずれかに該当する場合に実施）
+- **デプロイ時**: バージョンアップ＋デプロイ指示を受けた際に、モデルリストの鮮度を簡易チェックする。
+- **メジャー修正時**: 機能追加やAPI周りの修正を行う際に、ついでにモデル可用性を確認する。
+- **前回監査から1ヶ月以上経過**: 前回の監査日時が1ヶ月以上前の場合、積極的に確認する。
+- **API エラー多発時**: 404、モデル未検出、Quota超過などのエラー報告を受けた場合は即時確認。
+
+#### 監査項目
+1. **廃止チェック**: フォールバック内のモデルが deprecated / shutdown されていないか Web検索で確認する。
+2. **新規モデル**: より高性能・安定した新モデルがリリースされていないか確認する。
+3. **無料枠変更**: Free tier の制限変更（Pro系の有料化等）がないか確認する。
+4. **フォールバック順序**: 上記を踏まえて、無料枠ユーザーが最もスムーズに使える順序になっているか再評価する。
+
+#### 監査対象ファイル（アプリ別）
+| アプリ | テキスト生成モデル | 画像生成モデル |
+|---|---|---|
+| nano-banana-pro | `src/lib/gemini.js` | `src/lib/imagen.js` |
+| comic-translation | Gemini APIクライアント該当ファイル | — |
+| character-sheet | Gemini APIクライアント該当ファイル | — |
+| story-maker | Gemini APIクライアント該当ファイル | — |
+
+#### 実施方法
+- `search_web` で「Gemini API available models [現在の年月]」「Imagen deprecated」等を検索し、最新情報を取得する。
+- 変更があった場合はユーザーに報告し、承認を得てから修正する。勝手にモデルを追加・削除しない。
+- 監査結果（最終確認日・変更の有無）を簡潔にユーザーに報告する。
+
+#### 最終監査記録
+- **2026-04-21**: 全モデル可用性確認済み。gemini-2.5-pro を有料専用として降格、gemini-3.1-flash-lite-preview を昇格、imagen-3.0系を削除、gemini-2.5-flash-image をフォールバックに追加。Imagen全系列は2026/06/24に廃止予定。

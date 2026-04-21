@@ -1,13 +1,13 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { getApiKey } from "./gemini";
 
-// Adding legacy models and fast models for maximum coverage
+// 画像生成モデル優先順位 (Geminiネイティブ優先)
+// ※ Imagen全系列は2026/06/24に完全廃止予定。Geminiネイティブへの移行が必須。
 const MODELS_TO_TRY = [
-    "gemini-3.1-flash-image-preview", // Nano Banana 2 NEXT GEN (Native Visual/Text Rendering)
-    "imagen-4.0-generate-001",      // Nano Banana 2 Primary
-    "imagen-4.0-fast-generate-001", // Nano Banana 2 Fast
-    "imagen-3.0-generate-001",      // Fallback (legacy insurance)
-    "imagen-3.0-fast-generate-001"  // Fallback (legacy insurance)
+    "gemini-3.1-flash-image-preview", // Primary: Nano Banana 2 NEXT GEN (最高品質)
+    "gemini-2.5-flash-image",         // Backup: Google公式推奨移行先 (安定・高速)
+    "imagen-4.0-generate-001",        // Legacy 1: 有料APIキー専用 (廃止予定 2026/06/24)
+    "imagen-4.0-fast-generate-001"    // Legacy 2: 有料・高速版 (廃止予定 2026/06/24)
 ];
 
 /**
@@ -36,6 +36,10 @@ export const generateImageWithImagen = async (prompt, onStatusUpdate) => {
 
             // Use the correct API endpoint and payload structure for Gemini vs Imagen models
             if (modelId.startsWith("gemini")) {
+                // gemini-2.5-flash-image は responseModalities に ["TEXT", "IMAGE"] が必要
+                const modalities = modelId.includes("2.5-flash-image")
+                    ? ["TEXT", "IMAGE"]
+                    : ["IMAGE"];
                 response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${currentApiKey}`, {
                     method: "POST",
                     headers: {
@@ -47,7 +51,7 @@ export const generateImageWithImagen = async (prompt, onStatusUpdate) => {
                             parts: [{ text: prompt }]
                         }],
                         generationConfig: {
-                            responseModalities: ["IMAGE"]
+                            responseModalities: modalities
                         }
                     }),
                     signal: controller.signal
