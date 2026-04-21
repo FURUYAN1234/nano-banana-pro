@@ -32,7 +32,7 @@ import {
 import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 
-const SYSTEM_VERSION = "v2.59 Alpha";
+const SYSTEM_VERSION = "v2.60 Alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -1013,13 +1013,6 @@ ${scenario}
            - 選択肢: 俯瞰/バードアイ、ローアングル/アオリ、ダッチアングル、超広角/フィッシュアイ、望遠圧縮、ワームズアイ、ドローン俯瞰、パンニング/追跡ショット
            - 【制約】4コマの中で**同じカメラを2回以上使うのは禁止**。必ず4種類の異なるカメラを選べ。
 
-        7. **【リアクション描写の極限化 (Extreme Reaction Mandate v2.55)】**:
-           - 各コマのト書きに記載するキャラのリアクションは、**通常の3倍以上の過激さ**で書け。
-           - 「驚く」→「眼球がソケットから飛び出し背骨が物理限界を超えて逆Cの字にしなる」
-           - 「怒る」→「顔中の血管が爆発しそうなほど怒り狂い、足元の地面に大穴が穿たれる」
-           - 「喜ぶ」→「顔面が多幸感でドロドロに融解し、全身の毛穴から歓喜の汗を噴水のように噴き出す」
-           - 「慌てる」→「マッハを超える超高速移動で残像を残しながら物を隠す」
-           - 控えめな表現（微笑む、少し驚く、首を傾げる等）は**禁止**。常に限界突破させよ。
 
         【出力フォーマット（絶対厳守・会話禁止）】
         返答、挨拶、説明（「分かりました」「以下がシナリオです」等）は **一切出力しないこと**。
@@ -1424,9 +1417,9 @@ Available lens effects — EACH PANEL MUST USE ONE:
 
 §3. GAG MANGA INTERACTION RULES:
 1. Characters MUST interact with each other or the environment.
-2. [NO CAMERA EYE CONTACT]: (absolutely NO looking at camera:1.7), (NO breaking the fourth wall:1.7), (looking at other characters or objects:1.3). Direct eye contact with the viewer is strictly FORBIDDEN.
-3. (extreme exaggerated facial expressions:1.9), (severe extreme emotional reactions:1.8) — Force comical expressions: blank white eyes, jaw drops, fury, waterfall tears.
-4. (extreme dynamic body language:1.9), (violent full body reactions:1.8) — Characters physically react with entire bodies.
+2. [NO CAMERA EYE CONTACT]: (absolutely NO looking at camera:2.5), (NO breaking the fourth wall:2.5), (characters always looking at other characters or objects in the scene:1.8), (eyes directed at conversation partner:1.5). Direct eye contact with the viewer is strictly FORBIDDEN. Characters must always look at each other, at objects, or away from the camera.
+3. (exaggerated facial expressions:1.3), (emotional reactions:1.2) — Comical expressions: blank white eyes, jaw drops, fury, waterfall tears.
+4. (dynamic body language:1.3), (full body reactions:1.2) — Characters physically react with entire bodies.
 5. Do NOT overlay floating close-up eyes or ghostly face inserts as background elements.
 6. Do NOT draw "adjusting glasses" pose unless the character explicitly wears glasses.
 
@@ -1489,14 +1482,40 @@ Available lens effects — EACH PANEL MUST USE ONE:
       let cameraSlotIndex = 0;
 
       // [v2.54.0] Extract AI selected camera tags, or fallback to Fisher-Yates generator
+      // [v2.60] AIのカメラ名から具体的なレンズ歪みウェイトタグへのマッピング辞書
+      const cameraLensMap = {
+        '俯瞰': '(ultra extreme high angle:2.7), (steep bird\'s eye view:2.6), (looking down at the floor:2.7), (character viewed from directly above their head:2.8), (wide shot of the ground beneath:2.5)',
+        'バードアイ': '(ultra extreme high angle:2.7), (steep bird\'s eye view:2.6), (looking down at the floor:2.7), (character viewed from directly above their head:2.8), (wide shot of the ground beneath:2.5)',
+        'ローアングル': '(ultra extreme low angle:2.7), (deep worm\'s eye view:2.6), (staring up from the floor:2.7), (ceiling is clearly visible:2.8), (towering full-body character from below:2.5)',
+        'アオリ': '(ultra extreme low angle:2.7), (deep worm\'s eye view:2.6), (staring up from the floor:2.7), (ceiling is clearly visible:2.8), (towering full-body character from below:2.5)',
+        'ダッチ': '(severe dutch angle 45 degrees:2.7), (violently tilted world:2.6), (falling gravity sensation:2.5), (sideways slanted walls and floor:2.6)',
+        'フィッシュアイ': '(extreme fish-eye barrel distortion:2.8), (massive bulging foreground:2.5), (lens curve warping straight lines:2.6), (subject face very close to curved glass:2.5)',
+        '超広角': '(extreme fish-eye barrel distortion:2.8), (massive bulging foreground:2.5), (lens curve warping straight lines:2.6), (subject face very close to curved glass:2.5)',
+        '望遠': '(extreme telephoto compression:2.7), (dangerously close background:2.4), (claustrophobic flattened space:2.5), (distant objects appear massive behind character:2.6)',
+        'ワームズアイ': '(ultra extreme low angle:2.7), (deep worm\'s eye view:2.6), (staring up from the floor:2.7), (towering full-body character from below:2.5)',
+        'ドローン': '(ultra extreme high angle:2.7), (aerial drone shot:2.5), (bird\'s eye view:2.6), (looking down at the floor:2.7)',
+        'パンニング': '(dynamic panning shot:2.5), (motion blur background:2.4), (tracking camera following movement:2.5), (speed lines directional:2.3)',
+        '追跡': '(dynamic panning shot:2.5), (motion blur background:2.4), (tracking camera following movement:2.5), (speed lines directional:2.3)',
+      };
+
       const getCameraForPanel = (panelText) => {
         // [Camera: XXX] の抽出を試みる
         const cameraMatch = panelText.match(/\[Camera:\s*(.*?)\]/i);
         if (cameraMatch && cameraMatch[1]) {
            const specificCamera = cameraMatch[1].trim();
-           // AIが選んだカメラ名に、対応するプロンプト用の強力な歪み指示を組み合わせる
-           // AIは必ずしも正確な書式を返さないことがあるため、汎用的な歪みプロンプトを付与
-           // [v2.54.1] Prevent specificCamera (Japanese text) from leaking into prompt as literal text
+           // [v2.60] AIのカメラ名をマッピング辞書で具体的なレンズ歪みタグに変換
+           let matchedLens = '';
+           for (const [keyword, lensTag] of Object.entries(cameraLensMap)) {
+             if (specificCamera.includes(keyword)) {
+               matchedLens = lensTag;
+               break;
+             }
+           }
+           // マッピングが見つかった場合はレンズ歪みタグ + 汎用歪みを結合
+           if (matchedLens) {
+             return `${matchedLens}, (EXTREME hyper-dynamic composition:2.6), (ABSOLUTELY NO flat normal photos:2.9), (NEVER draw text of camera names:3.0)`;
+           }
+           // マッピングなし → 汎用歪みプロンプトのみ
            return `(Extreme intense dynamic camera angle: 2.8), (EXTREME hyper-dynamic composition:2.6), (SEVERE dutch angle or extreme perspective distortion:2.7), (MASSIVE spherical or telephoto depth separation:2.5), (ABSOLUTELY NO flat normal photos:2.9), (NEVER draw text of camera names:3.0)`;
         }
         // AIがカメラタグを出力しなかった場合のフォールバック（重複なしランダム）
