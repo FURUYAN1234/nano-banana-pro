@@ -78,6 +78,23 @@ A "Free Input" mode allows users to generate manga from any text, such as person
 
 ## 🔍 Deep Analysis (技術詳解)
 
+### 🏗️ Unique Architecture Highlights / 固有アーキテクチャの要点
+
+This system is not a simple "prompt-and-generate" tool. It is a **multi-stage compiler** that transforms raw news into finished manga through a series of autonomous processing layers.
+本システムは単純な「プロンプト→生成」ツールではありません。生のニュースから完成漫画までを自律的な処理レイヤーの連鎖で変換する **マルチステージ・コンパイラ** です。
+
+* **Fully Autonomous "Storyboard-to-Screen" Pipeline**: The entire workflow — from news retrieval → scenario generation → cast analysis → prompt compilation → image generation — runs end-to-end with only an API key. Zero human intervention produces a finished manga.
+  ニュース取得→シナリオ生成→キャスト解析→プロンプト組立→画像生成の全5ステップを、APIキー入力のみで一気通貫。人間の介入ゼロで完成漫画を出力します。
+
+* **Cross-Stage Character Identity Lock**: Character information born in Step 2 (Scenario) is transformed into an Identity Matrix in Step 3 (Prompt Compilation) and injected into every panel of Step 4 (Image Generation). This cross-stage consistency guarantee is a design unique to this system.
+  Step 2で生まれたキャラ情報をStep 3でIdentity Matrix化し、Step 4の全パネルに注入。ステージを跨いだ一貫性保証は他のAI漫画ツールにない設計です。
+
+* **Scenario → Prompt Compiler**: An intermediate processing layer that "compiles" AI natural language scenarios into structured image prompts. Emotion tags → VFX conversion, camera names → lens distortion tag mapping, and speaker analysis → placement rule generation are all fully automated.
+  AIの自然言語シナリオを構造化プロンプトに「コンパイル」する中間処理層。感情タグ→VFX変換、カメラ名→レンズ歪みタグ変換、話者解析→配置ルール生成を全自動で行います。
+
+* **Deterministic Camera Diversity**: Fisher-Yates shuffle mathematically guarantees that all 4 panels use different camera angles — the probability of any two panels sharing the same angle is zero.
+  Fisher-Yatesシャッフルにより、4パネルが同じカメラアングルになる確率を数学的にゼロにします。
+
 ### 🇯🇵 [JP] コード解析によるAI漫画システム詳解
 
 本システムの設計思想、**Absolute Physical Geometry Lock**（絶対的物理ジオメトリロック）、**Weighted Immutable Prompts**（重み付き不変プロンプト）などのコア技術、および法的・哲学的な考察を含む詳細な解析レポート（日本語版）です。
@@ -106,13 +123,25 @@ Weights character-specific features to prevent "fusion" or blending between char
 Emulates physics-based lighting and SSS (Subsurface Scattering) for peak animation quality.
 物理ベースのライティング、SSS（肌の透過）をエミュレート。最高峰のアニメクオリティを追求します。
 
+4. **ANTIGRAVITY HYPER-DYNAMIC CAMERA PROTOCOL (v4.0)**
+AI-selected camera names (bird's eye, fish-eye, dutch angle, etc.) from the scenario stage are automatically converted into specific lens distortion weight tags during image generation. Fisher-Yates shuffle mathematically guarantees all 4 panels use different camera angles.
+AIがシナリオ段階で選んだカメラ名（俯瞰、フィッシュアイ、ダッチアングル等）を、画像生成時に具体的なレンズ歪みウェイトタグへ自動変換。Fisher-Yatesシャッフルにより4コマ全てが異なるカメラアングルになることを数学的に保証します。
+
+5. **IDENTITY MATRIX — Autonomous Character Consistency (v2.25)**
+Automatically analyzes hair color, hairstyle, and glasses status from character sheets and injects a "verification matrix" into every panel's prompt, forcing the AI to self-verify before drawing each panel. Includes anti-clone prevention (no duplicate character drawing), automatic background cast placement, solo shot detection, and 3-zone slotting for 3-character dialogues.
+キャラクターシートから髪色・髪型・メガネ有無を自動解析し、全コマのプロンプトに「照合マトリクス」として注入。AIが各コマを描く前に自己検証を強制します。クローン防止（同一キャラの二重描画禁止）、背景キャスト自動配置、ソロショット判定、3人掛け合い時のゾーンスロッティングまで全自動です。
+
+6. **Emotion Style Tag System — Per-Panel Art Style Switching**
+The scenario AI autonomously selects the optimal style tag for each panel's emotion (CHIBI_GAG / GEKIGA / SHOUJO / HORROR / BLANK / IMPACT, etc. — 11 styles). Art style, VFX, and proportions are automatically switched during image generation. Includes fallback styles for multi-character panels.
+シナリオ生成AIが各コマの感情に最適なスタイルタグ（CHIBI_GAG / GEKIGA / SHOUJO / HORROR / BLANK / IMPACT等11種）を自律選択。画像生成時に絵柄・VFX・プロポーションが自動切替されます。マルチキャラパネル用のフォールバックスタイルも搭載。
+
 ---
 
 ## 💻 Tech Stack / 技術スタック
 
-* **Frontend**: React 19 / Vite 7 / Tailwind CSS
-* **LLM/VFM**: Google Gemini API (1.5 Pro / Flash)
-* **Logic**: Automatic retry and model fallback mechanism for 429 errors.
+* **Frontend**: React 19 / Vite 7 / Tailwind CSS v4
+* **LLM/VFM**: Google Gemini API (3.x Flash / 2.5 Flash / 2.5 Pro) + Gemini Native Image Generation
+* **Logic**: Zenith Protocol — Multi-tier model fallback (5-model text cascade, 4-model image cascade) with automatic 429/404 retry and account-level model auto-discovery.
 
 ---
 
@@ -329,6 +358,16 @@ Developed by **FURU**
 ---
 
 ## 📋 ChangeLog
+
+### v2.60.0-alpha (2026-04-21)
+- **[Critical Fix]** Camera angle lens distortion weights not being applied to image generation — added `cameraLensMap` dictionary / カメラアングルのレンズ歪みウェイトが画像生成に反映されないバグを修正（cameraLensMap追加）
+- **[Fix]** Removed hardcoded Extreme Reaction Mandate from default prompt, restoring natural expressions / デフォルトシナリオの過剰演出（Extreme Reaction Mandate）を除去し、自然な表情に回復
+- **[Fix]** Increased NO EYE CONTACT weight from 1.7 to 2.5 to suppress characters looking at the camera / カメラ目線（第四の壁破壊）抑制ウェイトを1.7→2.5に強化
+
+### v2.59.0-alpha (2026-04-21)
+- **[Major]** Deprecated legacy Imagen models (scheduled for full removal 2026/06/24). Gemini Native Image Generation is now primary / Imagen全系列を廃止予定に伴い非推奨化。Geminiネイティブ画像生成をプライマリに
+- **[Major]** Rebuilt text/image model lists with Gemini 3.x generation priority / テキスト/画像モデルリストをGemini 3.x世代優先に再構築
+- **[New]** Added Gemini API Model Audit Protocol to AGENTS.md / Gemini APIモデル定期監査プロトコルをAGENTS.mdに追加
 
 ### v2.52.0-alpha
 - **[BugFix]** PRO TIPSの文章における「カンニングできる」という不適切な表現を「参照できる」に修正
