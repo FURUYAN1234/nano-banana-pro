@@ -359,6 +359,9 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v2.61.0-alpha (2026-04-22)
+- **[Fix]** Adjusted gutter width between manga panels (approx 3% of canvas height) to prevent panels from touching / 4コマのコマ間ガター（余白）をキャンバス高の約3%に広げ、コマ同士が密着するのを防止
+
 ### v2.60.0-alpha (2026-04-21)
 - **[Critical Fix]** Camera angle lens distortion weights not being applied to image generation — added `cameraLensMap` dictionary / カメラアングルのレンズ歪みウェイトが画像生成に反映されないバグを修正（cameraLensMap追加）
 - **[Fix]** Removed hardcoded Extreme Reaction Mandate from default prompt, restoring natural expressions / デフォルトシナリオの過剰演出（Extreme Reaction Mandate）を除去し、自然な表情に回復

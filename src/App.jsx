@@ -32,7 +32,7 @@ import {
 import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 
-const SYSTEM_VERSION = "v2.60 Alpha";
+const SYSTEM_VERSION = "v2.61 Alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -422,6 +422,7 @@ function App() {
   const [enhanceLog, setEnhanceLog] = useState("");
   const [isEnhancePanelOpen, setIsEnhancePanelOpen] = useState(false);
   const [originalScenario, setOriginalScenario] = useState(""); // 強化前の原文保持用
+  const [enableChatGPTMode, setEnableChatGPTMode] = useState(false); // [v2.61] ChatGPT Images 2.0 強化プロンプト
 
   // Logic centralization for v1.4.9
   const isAssembleDisabled = isAssembling || !castList || castList.length < 20 || !scenario || scenario.length < 20 || isSearching || isAnalyzing; // [v1.8.83] Relaxed limits from 50 to 20
@@ -1895,8 +1896,12 @@ SPEECH BUBBLE POSITION LOCK:
       // We skip callThinkingGemini because this step is pure assembly.
       // [v1.9.0] Nano Banana 2 (Imagen 4) Optimized Natural Language Prompt
       // Imagen 4 understands natural language perfectly and struggles with pseudocode.
-      const constructedPrompt = `
-Generate a highly detailed, professional 4-koma (4-panel vertical strip) manga.
+      // [v2.61] ChatGPTモード時は先頭にフォーマットアンカーを挿入（サンドイッチ構造）
+      const formatAnchor = enableChatGPTMode
+        ? `[FORMAT: A4 PORTRAIT 1024×1448px — DO NOT generate square, landscape, or extra-tall strip images]
+`
+        : '';
+      const constructedPrompt = `${formatAnchor}Generate a highly detailed, professional 4-koma (4-panel vertical strip) manga.
 The final image MUST have a tall portrait aspect ratio exactly equivalent to an A4 paper sheet (1:1.414 proportion).
 
 CRITICAL LAYOUT COMMAND: 
@@ -1909,6 +1914,7 @@ ALSO draw a tiny Japanese watermark exactly ON the bottom-left border (outside t
 Both watermark texts MUST be written HORIZONTALLY (left-to-right reading direction), NEVER rotated 90 degrees, NEVER written vertically, and NEVER stacked one letter per line. Do NOT draw duplicated or overlapping watermarks. Do NOT add extra white space below the 4th panel.
 
 CRITICAL PANEL SIZE COMMAND: The canvas MUST be divided into exactly 4 EQUAL horizontal panels stacked vertically from top to bottom. All 4 panels MUST be the EXACT SAME height and EXACT SAME width.
+CRITICAL GUTTER WIDTH: Between each pair of adjacent panels (Panel 1-2, Panel 2-3, Panel 3-4), there MUST be a THICK white gutter (gap) that is approximately 3% of the total canvas height (about 40-45 pixels). These gutters MUST be clearly visible as bold white separator bands. Do NOT let panels touch or nearly touch each other — the separation must be obvious and uniform between all panels.
 The art style is: ${styleCore}.
 (Apply dramatic anime cinematic lighting and high-budget visual effects, but do not clutter the screen with excessive speedlines).
 
@@ -2013,7 +2019,28 @@ Before generating the final image, mentally verify ALL of the following. If ANY 
       await new Promise(resolve => setTimeout(resolve, 800));
 
       // [v2.27] セーフティ年齢引き上げ変換を適用
-      const safePrompt = applySafetyAgeUp(constructedPrompt.trim());
+      let safePrompt = applySafetyAgeUp(constructedPrompt.trim());
+
+      // [v2.61] ChatGPT Images 2.0 強化プロンプト追加
+      if (enableChatGPTMode) {
+        const chatGPTEnhancement = `
+
+---
+[ 🔧 ChatGPT Images 2.0 — FORMAT ENFORCEMENT BLOCK v2 (この指示はGPT描画向け補助です) ]
+
+[ABSOLUTE FORMAT LOCK — HIGHEST PRIORITY — NON-NEGOTIABLE]
+This block OVERRIDES any conflicting instruction above.
+OUTPUT DIMENSIONS: The final image MUST be exactly 1024×1448 pixels (A4 portrait, 1:1.414 ratio).
+FORBIDDEN SHAPES: Do NOT output square (1:1), landscape (wider than tall), or extra-tall strip (1:2, 1:3, or taller). The ONLY acceptable shape is a moderately tall portrait where width is approximately 70% of height.
+SELF-CHECK: If your output width ÷ height is NOT between 0.68 and 0.73, the output is WRONG — regenerate at the correct A4 ratio.
+All dialogue inside speech bubbles MUST be written in vertical Japanese text only. Horizontal dialogue is forbidden.
+The visual reading flow MUST follow Japanese manga logic from RIGHT to LEFT. Panel composition, character placement, speech bubble placement, and eye guidance must all support right-to-left reading order.
+Priority weights: (A4 portrait 1024x1448:3.0), (vertical Japanese dialogue:3.0), (right-to-left manga flow:3.0), (any violation = complete failure:3.0)
+Final validation before output: if the image is not clearly A4 portrait (1024×1448), if any dialogue is horizontal, or if the reading flow is not right-to-left, discard the result and regenerate until all conditions are fully satisfied.`;
+        safePrompt = safePrompt + chatGPTEnhancement;
+        setAssembleThought(prev => prev + "\n> [ChatGPT Mode] FORMAT ENFORCEMENT BLOCK v2 を適用しました (先頭アンカー + 末尾ロック / 1024×1448px固定)");
+      }
+
       setFinalPrompt(safePrompt);
       setAssembleThought(prev => prev + "\n> セーフティ年齢フィルター: 適用済み\n> 最適化ベクトル: 計算完了\n> 構造ロック: 有効\n> 風刺ロジック: 強化済み\n> [完了] 最終プロンプトを構築しました。");
       showStatus("最終プロンプトの構築が完了しました。画像生成を開始します...");
@@ -3010,6 +3037,24 @@ ${finalPrompt}
               <Wand2 size={24} /> STEP 03: プロンプト生成 (PROMPT ASSEMBLY)
             </div>
 
+            {/* [v2.61] ChatGPT Images 2.0 強化プロンプト チェックボックス */}
+            <label className="flex items-center gap-3 px-3 py-2 bg-slate-800/50 border border-white/5 rounded-lg cursor-pointer hover:bg-slate-700/50 transition-colors group/chatgpt">
+              <input
+                type="checkbox"
+                checked={enableChatGPTMode}
+                onChange={(e) => setEnableChatGPTMode(e.target.checked)}
+                className="w-4 h-4 accent-orange-500 cursor-pointer"
+              />
+              <div className="flex flex-col">
+                <span className="text-xs font-bold text-slate-300 group-hover/chatgpt:text-white transition-colors">
+                  🧪 テスト機能：ChatGPT Images 2.0 強化プロンプト追加
+                </span>
+                <span className="text-[10px] text-slate-500">
+                  ONにすると、A4縦(1024×1448px)固定・縦書きセリフ・右→左読み順・禁止形状チェックが先頭＋末尾に追加されます
+                </span>
+              </div>
+            </label>
+
             <button
               onClick={assemblePrompt}
               disabled={isAssembling}
@@ -3113,7 +3158,8 @@ ${finalPrompt}
                       <div className="text-xs text-orange-200/80 leading-relaxed font-sans">
                         <span className="font-bold text-orange-300">💡 PRO TIP：究極の1枚を作りたい時は？</span><br />
                         キャラの見た目が全然違うなど不満がある場合は、上の「コピペ」ボタンでプロンプトをコピーし、<a href="https://gemini.google.com/" target="_blank" rel="noreferrer" className="text-blue-400 hover:underline">Geminiブラウザ版🤖</a> に<strong>「元となるキャラシート画像」</strong>と一緒に直接貼り付けて生成させてください。<br />
-                        文字情報だけでなく画像を参照できるため、キャラのクオリティと再現度が飛躍的に向上します！
+                        文字情報だけでなく画像を参照できるため、キャラのクオリティと再現度が飛躍的に向上します！<br />
+                        <span className="inline-block mt-2 text-[11px] text-cyan-300/80">🧪 <strong>ChatGPT対応（テスト）:</strong> STEP3の「ChatGPT Images 2.0 強化プロンプト追加」チェックをONにしてプロンプトを構築すると、A4縦(1024×1448px)固定・縦書きセリフ・右→左読み順・禁止形状チェック等の強制指示がプロンプト先頭＋末尾の両方に追加されます。そのプロンプトを<a href="https://chatgpt.com/" target="_blank" rel="noreferrer" className="text-blue-400 hover:underline">ChatGPTブラウザ版🤖</a>に「元となるキャラシート画像」と一緒に貼り付ければ、ChatGPTでも一応マンガ生成が可能です。</span>
                       </div>
                     </div>
                   </div>
