@@ -31,7 +31,7 @@ import {
 // --- Imports ---
 import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
-const SYSTEM_VERSION = "v2.63 Alpha";
+const SYSTEM_VERSION = "v2.64 Alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -3160,7 +3160,8 @@ ${finalPrompt}
                         文字情報だけでなく画像を参照できるため、キャラのクオリティと再現度が飛躍的に向上します！<br />
                         <span className="inline-block mt-2 text-[11px] text-cyan-300/80">
                           🧪 <strong>ChatGPT対応（テスト）:</strong> STEP3の「ChatGPT Images 2.0 強化プロンプト追加」チェックをONにしてプロンプトを構築して、<a href="https://chatgpt.com/" target="_blank" rel="noreferrer" className="text-blue-400 hover:underline">ChatGPTブラウザ版🤖</a>に「元となるキャラシート画像」と一緒に貼り付ければ、ChatGPTでもマンガ生成が可能です。<br/>
-                          ⚠️ <strong>ただしDALL-E 3の仕様上、どうしても細長い画像になってしまう場合:</strong> は、生成された画像をクリックし、上部メニューの<strong>「アスペクト比」</strong>ボタンから手動で縦横比を調整・修正してください。
+                          ※プロンプトを貼り付け後、必ず「テキストフィールドに表示」をクリックして、全文表示させてください。そのまま送信すると、勝手にプロンプトの解説を始めてしまいます。<br/>
+                          ⚠️ <strong>DALL-E 3の仕様上、どうしても細長い画像になってしまう場合:</strong> は、生成された画像をクリックし、上部メニューの<strong>「アスペクト比」</strong>ボタンから手動で縦横比を調整・修正してください。
                         </span>
                       </div>
                     </div>
