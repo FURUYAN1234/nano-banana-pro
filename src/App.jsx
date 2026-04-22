@@ -31,7 +31,7 @@ import {
 // --- Imports ---
 import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
-const SYSTEM_VERSION = "v2.62 Alpha";
+const SYSTEM_VERSION = "v2.63 Alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -1004,7 +1004,7 @@ ${scenario}
            - **物理描写の書き方（全コマ必須）**: 「カメラがどこにあり」「何が巨大に見え」「何が歪み」「光がどう当たるか」を具体的に書け:
               * 俯瞰/バードアイ → 「成層圏を突き抜け、銀河の果てから地球の一点を凝視するような極限の俯瞰。太陽光が海面で核爆発的な反射を放つ」
               * ローアングル/アオリ → 「膝の高さから見上げ、キャラの全身がそびえ立つ巨人のように見え、背後の天井や空が大きく広がる。逆光が後ろから吹き荒れ、足元から頭頂までパースが効く。※靴だけのアップにはするな、必ずキャラの全身を描画せよ」
-              * フィッシュアイ → 「画面の端が球体のように丸く歪むが、鼻が『団子鼻(豚鼻)』になる造形崩壊は絶対禁止。周囲の建物が飴細工のようにぐにゃりと曲がる」
+              * フィッシュアイ → 「分厚いアクリルガラス越しに見るように世界全体が丸く湾曲し、周囲の空間や背景が飴細工のようにぐにゃりと曲がる。※キャラクターの顔や鼻を歪ませたり大きくしたりする描写は絶対に書くな。背景のみを歪ませよ」
               * ダッチアングル → 「世界が30度傾き、壁も床も天井も重力を忘れて斜めに流れ、キャラが滑り落ちそうな不安定感で画面が崩壊する」
               * 望遠圧縮 → 「100m先の背景が目の前まで迫り、キャラと背景の距離感が消失し、圧迫的な密度で空間が潰れる」
               * ワームズアイ → 「地面すれすれから見上げ、人間が巨人のようにそびえ立つ。足元の地面のディテールが鮮明に描かれつつ、キャラの全身が圧倒的スケールで画面に収まる。※靴だけのアップ画は禁止、必ず全身を描画せよ」
@@ -2030,32 +2030,14 @@ Before generating the final image, mentally verify ALL of the following. If ANY 
         const chatGPTEnhancement = `
 
 ---
-[ 🔧 ChatGPT Images 2.0 — FORMAT ENFORCEMENT BLOCK v2 (この指示はGPT描画向け補助です) ]
-
-[ABSOLUTE FORMAT LOCK — HIGHEST PRIORITY — NON-NEGOTIABLE]
-This block OVERRIDES any conflicting instruction above.
-OUTPUT DIMENSIONS: The final image MUST be exactly 1024×1448 pixels (A4 portrait, 1:1.414 ratio).
-DALL-E 3 ASPECT RATIO COMMAND: You MUST generate this image in a "tall portrait" aspect ratio. Explicitly use portrait aspect ratio settings (e.g. 3:4 or 9:16 tall). Do NOT generate a square (1:1).
-TITLE PLACEMENT FIX: Do NOT draw the manga title floating in a massive white margin above the panels. The title MUST be integrated inside or directly touching the top of Panel 1. The panels MUST occupy 95% of the total canvas.
-FORBIDDEN SHAPES: Do NOT output square (1:1), landscape (wider than tall), or extra-tall strip (1:2, 1:3, or taller). The ONLY acceptable shape is a moderately tall portrait where width is approximately 70% of height.
-SELF-CHECK: If your output width ÷ height is NOT between 0.68 and 0.73, the output is WRONG — regenerate at the correct A4 ratio.
-All dialogue inside speech bubbles MUST be written in vertical Japanese text only. Horizontal dialogue is forbidden.
-The visual reading flow MUST follow Japanese manga logic from RIGHT to LEFT. Panel composition, character placement, speech bubble placement, and eye guidance must all support right-to-left reading order.
-Priority weights: (A4 portrait 1024x1448:3.0), (vertical Japanese dialogue:3.0), (right-to-left manga flow:3.0), (any violation = complete failure:3.0)
-Final validation before output: if the image is not clearly A4 portrait (1024×1448), if any dialogue is horizontal, or if the reading flow is not right-to-left, discard the result and regenerate until all conditions are fully satisfied.
-
-[VISUAL QUALITY OVERRIDE — CLEAN RENDERING MANDATE]
-The final image MUST exhibit pristine, broadcast-quality anime rendering:
-- Clean smooth gradients with silky tonal transitions (no harsh jumps between light and shadow)
-- Well-organized, high-definition linework — main characters rendered sharp and crisp
-- Clear, uncluttered backgrounds with natural atmospheric depth
-FORBIDDEN rendering artifacts (apply as hard negatives):
-- (NO film grain:3.0), (NO granular noise:3.0), (NO speckle noise:3.0), (NO gritty texture:3.0)
-- (NO excessive micro-detail clutter:3.0), (NO rough painterly texture:2.8)
-- (NO chromatic aberration:2.5), (NO lens flare overload:2.5), (NO HDR tone-mapping bloom:2.5)
-The overall look MUST be a pristine TV anime production frame — NOT a photograph, NOT a film scan, NOT a painterly oil texture. Think studio Ufotable / Kyoto Animation broadcast master.`;
+[ 🔧 ChatGPT / DALL-E 3 FORMAT ENFORCEMENT ]
+This block OVERRIDES any conflicting instructions. Keep it simple:
+- ASPECT RATIO: Make the aspect ratio 2:3. (Do NOT generate an extra-tall strip).
+- TEXT: All dialogue MUST be vertical Japanese. Read right-to-left.
+- TITLE: Draw the title at the top, but do NOT make the white margin excessively large.
+- RENDER QUALITY: Pristine TV anime style. NO film grain, NO noise, NO realistic texturing. NO lens flare, NO HDR bloom, NO excessive sparkles or clutter. Clean gradients and sharp ink lines.`;
         safePrompt = safePrompt + chatGPTEnhancement;
-        setAssembleThought(prev => prev + "\n> [ChatGPT Mode] FORMAT ENFORCEMENT BLOCK v2 + VISUAL QUALITY OVERRIDE を適用しました (先頭アンカー + 末尾ロック / 1024×1448px固定 / クリーン描画強制)");
+        setAssembleThought(prev => prev + "\n> [ChatGPT Mode] FORMAT ENFORCEMENT BLOCK (Simplified) を適用しました (アスペクト比2:3 / クリーン描画強制)");
       }
 
       setFinalPrompt(safePrompt);
@@ -3176,7 +3158,10 @@ ${finalPrompt}
                         <span className="font-bold text-orange-300">💡 PRO TIP：究極の1枚を作りたい時は？</span><br />
                         キャラの見た目が全然違うなど不満がある場合は、上の「コピペ」ボタンでプロンプトをコピーし、<a href="https://gemini.google.com/" target="_blank" rel="noreferrer" className="text-blue-400 hover:underline">Geminiブラウザ版🤖</a> に<strong>「元となるキャラシート画像」</strong>と一緒に直接貼り付けて生成させてください。<br />
                         文字情報だけでなく画像を参照できるため、キャラのクオリティと再現度が飛躍的に向上します！<br />
-                        <span className="inline-block mt-2 text-[11px] text-cyan-300/80">🧪 <strong>ChatGPT対応（テスト）:</strong> STEP3の「ChatGPT Images 2.0 強化プロンプト追加」チェックをONにしてプロンプトを構築すると、A4縦(1024×1448px)固定・縦書きセリフ・右→左読み順・禁止形状チェック等の強制指示がプロンプト先頭＋末尾の両方に追加されます。そのプロンプトを<a href="https://chatgpt.com/" target="_blank" rel="noreferrer" className="text-blue-400 hover:underline">ChatGPTブラウザ版🤖</a>に「元となるキャラシート画像」と一緒に貼り付ければ、ChatGPTでも一応マンガ生成が可能です。</span>
+                        <span className="inline-block mt-2 text-[11px] text-cyan-300/80">
+                          🧪 <strong>ChatGPT対応（テスト）:</strong> STEP3の「ChatGPT Images 2.0 強化プロンプト追加」チェックをONにしてプロンプトを構築して、<a href="https://chatgpt.com/" target="_blank" rel="noreferrer" className="text-blue-400 hover:underline">ChatGPTブラウザ版🤖</a>に「元となるキャラシート画像」と一緒に貼り付ければ、ChatGPTでもマンガ生成が可能です。<br/>
+                          ⚠️ <strong>ただしDALL-E 3の仕様上、どうしても細長い画像になってしまう場合:</strong> は、生成された画像をクリックし、上部メニューの<strong>「アスペクト比」</strong>ボタンから手動で縦横比を調整・修正してください。
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -3200,29 +3185,27 @@ ${finalPrompt}
 
                     {isPolicyPanelOpen && (
                       <div className="p-3 bg-yellow-950/20 space-y-3">
-                        <p className="text-xs text-yellow-200/80 leading-relaxed">
-                          GeminiのエラーメッセージやGeminiに理由を聞いた回答を下の欄に貼ってください。<br/>
-                          「配慮版プロンプトを再生成する」ボタンを押すとSTEP3のプロンプトが修正されて上書きされます。<br/>
-                          再度STEP4で画像を生成するかGeminiにプロンプトとキャラクターシートを貼って画像を生成してみて下さい。
-                        </p>
-
-                        <hr className="border-yellow-500/20" />
-
-                        <div className="text-xs text-slate-400 leading-relaxed">
-                          <p className="mb-1">💡 <strong className="text-yellow-300">Gemini Web版で拒否された場合の聞き方:</strong></p>
-                          <p className="mb-1">以下のテキストをGeminiにそのまま送ると、具体的な原因を教えてもらえます。<br/>Geminiの回答を下の欄に貼って「配慮版プロンプトを再生成する」を押してください。</p>
-                          <button
-                            className="text-xs bg-slate-700 hover:bg-slate-600 text-white px-2 py-1 rounded transition-colors"
-                            onClick={() => {
-                              navigator.clipboard.writeText("先ほどのプロンプトが拒否された理由を教えてください。具体的にどの単語・表現がコンテンツポリシーに違反していましたか？");
-                              showStatus("クリップボードにコピーしました");
-                            }}
-                          >
-                            📋 「先ほどのプロンプトが拒否された理由を教えてください…」をコピー
-                          </button>
+                        <div className="text-xs text-yellow-200/80 leading-relaxed space-y-2">
+                          <p>
+                            下の<strong className="text-yellow-100">『「先ほどのプロンプトが拒否された理由を教えてください」をコピー』</strong>ボタンをクリックし、クリップボードにコピーされたテキストを、AIにそのままペーストすると、具体的な原因を教えてもらえます。
+                          </p>
+                          <p>
+                            その回答を下の入力ボックスに貼り付けると、<strong className="text-yellow-100">「配慮版プロンプトを再生成する」</strong>ボタンが押せるようになります。そのボタンをクリックすると、STEP 3のプロンプトが安全な表現に自動で修正・上書きされます。
+                          </p>
+                          <p>
+                            その後、再度STEP 4で画像を生成するか、各AIブラウザ版にプロンプトを貼って画像を生成してみてください。
+                          </p>
                         </div>
 
-                        <hr className="border-yellow-500/20" />
+                        <button
+                          className="w-full text-xs bg-slate-700 hover:bg-slate-600 text-white px-3 py-2 rounded transition-colors flex items-center justify-center gap-2"
+                          onClick={() => {
+                            navigator.clipboard.writeText("先ほどのプロンプトが拒否された理由を教えてください。具体的にどの単語・表現がコンテンツポリシーに違反していましたか？");
+                            showStatus("クリップボードにコピーしました");
+                          }}
+                        >
+                          📋 「先ほどのプロンプトが拒否された理由を教えてください」をコピー
+                        </button>
 
                         <textarea
                           style={{ color: '#ffffff', backgroundColor: '#000000' }}
