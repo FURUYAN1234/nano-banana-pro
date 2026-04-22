@@ -1,4 +1,4 @@
-# Nano Banana 2 Powered Super AI 4-koma System
+# Nano Banana 2 and ChatGPT image 2.0 Powered Super AI 4-koma System
 
 > **"To what extent can humans step away from the creative process?"**
 > **「人間は、どこまで制作から降りられるのか？」**
@@ -74,6 +74,16 @@ A "Free Input" mode allows users to generate manga from any text, such as person
 > **Note**: Direct URL input is often blocked by security (403 errors). Copy-pasting the article text is recommended.
 > URLの直接入力はセキュリティによりブロックされることが多いため、記事のテキストを直接コピペすることを推奨します。
 
+### 🎬 Scenario Enhancement / シナリオ演出強化
+
+Users can amplify the AI's script direction with specific enhancement toggles (e.g., Extreme Expressions, Dynamic Body Language, Intense Lighting/VFX, Detailed Backgrounds, Extreme Camera Work, and Gag/Dialogue impact).
+シナリオの演出力を任意に引き上げる強化トグルを搭載。表情、ボディランゲージ、照明・エフェクト、背景描き込み、極限のカメラワーク、セリフ・ギャグのキレなど、特定要素を「限界突破（ウェイト3.0相当）」レベルに増幅可能です。
+
+### 🤖 ChatGPT Images 2.0 Mode / ChatGPT画像生成サポート
+
+A dedicated formatting protocol to optimize prompts for ChatGPT's DALL-E 3, enforcing A4 portrait orientation, vertical Japanese text, and right-to-left reading flow.
+ChatGPT (DALL-E 3) での生成に最適化された専用プロンプトモードを搭載。A4縦長のキャンバス指定や、日本語の縦書き・右から左への視線誘導など、ChatGPT特有の制約を突破するためのフォーマットを自動付与します。
+
 ---
 
 ## 🔍 Deep Analysis (技術詳解)
@@ -94,6 +104,9 @@ This system is not a simple "prompt-and-generate" tool. It is a **multi-stage co
 
 * **Deterministic Camera Diversity**: Fisher-Yates shuffle mathematically guarantees that all 4 panels use different camera angles — the probability of any two panels sharing the same angle is zero.
   Fisher-Yatesシャッフルにより、4パネルが同じカメラアングルになる確率を数学的にゼロにします。
+
+* **Cross-Platform Prompt Compatibility (ChatGPT Images 2.0)**: While optimized for Gemini, the system injects specific formatting constraints (such as A4 layout parameters and vertical text guidance) into the final prompt when ChatGPT mode is enabled, ensuring DALL-E 3 accurately renders standard manga layouts without artifacts.
+  Geminiに最適化しつつ、ChatGPTモード有効時にはA4レイアウト指定や縦書きテキスト誘導などの特殊フォーマットを最終プロンプトに注入。DALL-E 3でも破綻のない標準的な漫画レイアウトを出力できるよう設計されています。
 
 ### 🇯🇵 [JP] コード解析によるAI漫画システム詳解
 
@@ -140,7 +153,7 @@ The scenario AI autonomously selects the optimal style tag for each panel's emot
 ## 💻 Tech Stack / 技術スタック
 
 * **Frontend**: React 19 / Vite 7 / Tailwind CSS v4
-* **LLM/VFM**: Google Gemini API (3.x Flash / 2.5 Flash / 2.5 Pro) + Gemini Native Image Generation
+* **LLM/VFM**: Google Gemini API (3.x Flash / 2.5 Flash / 2.5 Pro) + Gemini Native Image Generation / ChatGPT Images 2.0 (DALL-E 3) Supported via Prompt Enhancement
 * **Logic**: Zenith Protocol — Multi-tier model fallback (5-model text cascade, 4-model image cascade) with automatic 429/404 retry and account-level model auto-discovery.
 
 ---
@@ -323,7 +336,7 @@ This project is part of an integrated ecosystem designed to support AI-powered m
 
 ### Ecosystem Components / 構成システム
 
-#### 1. Nano Banana 2 Powered Super AI 4-koma System
+#### 1. Nano Banana 2 and ChatGPT image 2.0 Powered Super AI 4-koma System
 A system specialized in creating 4-panel manga with AI.
 AIを活用した4コマ漫画制作に特化したシステムです。
 - [Explanation / 解説](https://note.com/happy_duck780/n/ndf063558c1f5)
@@ -358,6 +371,9 @@ Developed by **FURU**
 ---
 
 ## 📋 ChangeLog
+
+### v2.66.0-alpha (2026-04-23)
+- **[Docs]** Updated README to reflect ChatGPT Images 2.0 Mode and Scenario Enhancement features. / READMEを更新し、ChatGPT画像生成モードおよびシナリオ強化機能についての記載を実態に合わせて追記。
 
 ### v2.65.0-alpha (2026-04-22)
 - **[Fix]** PRO TIPのChatGPT向け案内文言から余計なコロン（：）を削除 / Removed an extra colon from the DALL-E 3 instructions in PRO TIP.

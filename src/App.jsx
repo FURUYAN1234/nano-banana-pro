@@ -31,7 +31,7 @@ import {
 // --- Imports ---
 import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
-const SYSTEM_VERSION = "v2.65 Alpha";
+const SYSTEM_VERSION = "v2.66 Alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
