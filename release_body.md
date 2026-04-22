@@ -1,4 +1,2 @@
-﻿## Release Notes
-
-- **[Fix]** Simplified DALL-E 3 ChatGPT instructions and clarified content policy rejection UI to explicitly support both Gemini and ChatGPT.
-- **[Fix]** DALL-E 3 (ChatGPT) 向けのアスペクト比変更指示およびコンテンツポリシー拒否時のUI文章を整理し、GeminiとChatGPT両対応であることを明記。
+### 🚀 Updates
+- **[Fix]** PRO TIPのChatGPT案内文言に「テキストフィールドに表示」の注意書きを追加し、DALL-E 3の文言を微修正 / Added a note about clicking "Show in text field" to the ChatGPT PRO TIP and slightly adjusted the DALL-E 3 wording.

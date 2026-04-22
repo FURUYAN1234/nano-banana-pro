@@ -359,6 +359,9 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v2.65.0-alpha (2026-04-22)
+- **[Fix]** PRO TIPのChatGPT向け案内文言から余計なコロン（：）を削除 / Removed an extra colon from the DALL-E 3 instructions in PRO TIP.
+
 ### v2.64.0-alpha (2026-04-22)
 - **[Fix]** PRO TIPのChatGPT案内文言に「テキストフィールドに表示」の注意書きを追加し、DALL-E 3の文言を微修正 / Added a note about clicking "Show in text field" to the ChatGPT PRO TIP and slightly adjusted the DALL-E 3 wording.
 
