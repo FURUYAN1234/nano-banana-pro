@@ -31,7 +31,7 @@ import {
 // --- Imports ---
 import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
-const SYSTEM_VERSION = "v2.66 Alpha";
+const SYSTEM_VERSION = "v2.67 Alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -2026,6 +2026,7 @@ Before generating the final image, mentally verify ALL of the following. If ANY 
       let safePrompt = applySafetyAgeUp(constructedPrompt.trim());
 
       // [v2.61] ChatGPT Images 2.0 強化プロンプト追加
+      // [v2.67] 案A: 人物浮き出し強化（アウトライン太め・背景デサチュレーション・被写体分離）を追加
       if (enableChatGPTMode) {
         const chatGPTEnhancement = `
 
@@ -2035,9 +2036,15 @@ This block OVERRIDES any conflicting instructions. Keep it simple:
 - ASPECT RATIO: Make the aspect ratio 2:3. (Do NOT generate an extra-tall strip).
 - TEXT: All dialogue MUST be vertical Japanese. Read right-to-left.
 - TITLE: Draw the title at the top, but do NOT make the white margin excessively large.
-- RENDER QUALITY: Pristine TV anime style. NO film grain, NO noise, NO realistic texturing. NO lens flare, NO HDR bloom, NO excessive sparkles or clutter. Clean gradients and sharp ink lines.`;
+- RENDER QUALITY: Pristine TV anime style. NO film grain, NO noise, NO realistic texturing. NO lens flare, NO HDR bloom, NO excessive sparkles or clutter. Clean gradients and sharp ink lines.
+
+[ 🖊️ CHARACTER SILHOUETTE ISOLATION — MANDATORY ]
+- THICK INK OUTLINE (G-PEN RULE): Every character's entire body silhouette MUST be surrounded by a THICK, SOLID BLACK ink outline, as if drawn with a professional manga G-pen nib. The character outline stroke weight MUST be 2x to 3x thicker than any background detail lines. This separates characters from the background and is NON-NEGOTIABLE.
+- BACKGROUND SIMPLIFICATION: The background behind characters MUST be rendered at a LOWER detail level than the characters themselves. Use simplified shapes, flattened tones, or screentone-style hatching for the background. Do NOT give the background the same line density or sharpness as the foreground characters.
+- DEPTH SEPARATION & DESATURATION: Background elements MUST appear visually lighter and less saturated than the characters in the foreground. Apply subtle atmospheric softening (soft edges, lighter values) to anything behind the characters, keeping the characters themselves crisp and fully opaque.
+- MANGA SPOTLIGHT EFFECT: Immediately behind each character, add a subtle radial white highlight or bright gradient glow — this is the classic manga "character pop" technique to make figures stand out against the environment.`;
         safePrompt = safePrompt + chatGPTEnhancement;
-        setAssembleThought(prev => prev + "\n> [ChatGPT Mode] FORMAT ENFORCEMENT BLOCK (Simplified) を適用しました (アスペクト比2:3 / クリーン描画強制)");
+        setAssembleThought(prev => prev + "\n> [ChatGPT Mode] FORMAT ENFORCEMENT BLOCK を適用しました (アスペクト比2:3 / クリーン描画強制)\n> [v2.67 案A] 人物浮き出し強化: Gペンアウトライン・背景簡略化・スポットライト効果を適用");
       }
 
       setFinalPrompt(safePrompt);

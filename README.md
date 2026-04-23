@@ -372,6 +372,9 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v2.67.0-alpha (2026-04-23)
+- **[Feature]** ChatGPT Images 2.0 強化プロンプトに人物浮き出し強化（Gペンアウトライン・背景簡略化・スポットライト効果）を追加 / Added Character Silhouette Isolation (G-Pen outline, background simplification, spotlight effect) to ChatGPT Images 2.0 Mode.
+
 ### v2.66.0-alpha (2026-04-23)
 - **[Docs]** Updated README to reflect ChatGPT Images 2.0 Mode and Scenario Enhancement features. / READMEを更新し、ChatGPT画像生成モードおよびシナリオ強化機能についての記載を実態に合わせて追記。
 
