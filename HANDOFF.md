@@ -1,58 +1,58 @@
-# HANDOFF (Nano Banana Pro → Codex)
+# HANDOFF
 
-## Snapshot Date
-2026-04-24T10:27:00+09:00
+## Goal
+マルチエージェント用ドキュメントアーキテクチャ（4本柱モデル）および、Hugging Face Spacesへの自動デプロイスクリプトの整備。
 
 ## Current Status
-- ✅ **v2.67.0-alpha** — 安定稼働中（GitHub Pages + HF Spaces デプロイ済み）
-- ブランチ: `main`
-- 未コミット変更: `release_body.md` のみ（前回リリースの残り、無害）
-- 直近5コミット:
-  - `f19c91b` Bump version and Deploy
-  - `5e61a44` Bump version to v2.66.0-alpha and Deploy
-  - `de1bcb8` Bump version to v2.65.0-alpha and Deploy
-  - `eab6adb` Bump version and Deploy
-  - `93aa27a` chore(release): v2.63.0-alpha
+整備完了。Antigravity側 (`C:\Users\sx717\Antigravity\nano-banana-pro`) から GitHub リモートリポジトリへ Push される状態。
 
-## Architecture & Key Files
-| 用途 | ファイル |
-|------|----------|
-| メインUI | `src/App.jsx` |
-| テキスト生成API | `src/lib/gemini.js` |
-| 画像生成API | `src/lib/imagen.js` |
-| バージョン同期スクリプト | `scripts/update_version.js` |
-| HFデプロイスクリプト | `scripts/deploy_hf.ps1` |
-| ビルド設定 | `vite.config.js` (base: `'./'` — 変更禁止) |
-
-## Rule Enforcement (重要)
-- 作業開始前に **必ず** `docs/project_standards.md` と `docs/deploy.md` を読むこと。
-- バージョン同期対象: `package.json`, `src/App.jsx` (SYSTEM_VERSION), `index.html` (<title>)
-- デプロイ先: GitHub Pages + Hugging Face Spaces（HFデプロイは本アプリのみ）
-- **`--prerelease` フラグ使用禁止**（全バージョンが `-alpha` のため `--latest` を使用）
-
-## Gemini API Model Audit
-- **最終監査日**: 2026-04-21
-- gemini-2.5-pro を有料専用として降格済み
-- gemini-3.1-flash-lite-preview を昇格済み
-- imagen-3.0系を削除済み（Imagen全系列は2026/06/24に廃止予定）
-- gemini-2.5-flash-image をフォールバックに追加済み
+## Done
+- `AGENTS.md` の作成（常駐ルールおよび Four-File Operating Model 記載）
+- `docs/project_standards.md` の作成（API待機ロジック、Geometry Lock 等の絶対防衛ライン明記）
+- `docs/deploy.md` の作成（HF Spaces向けプラットフォーム特有設定の記載）
+- `scripts/deploy_hf.ps1` の追加（HF自動デプロイスクリプト）
+- `package.json` の更新（`npm run deploy:hf` スクリプト追加）
+- `.agent/workflows/deploy.md` の更新（HFデプロイステップの追加）
 
 ## Remaining Tasks
-- 特になし（ユーザーからの新たな指示を待機中）
+- 特になし（Codex側での作業環境の同期待ち）
 
-## Verification State
-- GitHub Pages: https://furuyan1234.github.io/nano-banana-pro/
-- HF Spaces: https://huggingface.co/spaces/FURUYAN/nano-banana-pro
+## Decisions
+- 各プロジェクトごとのコンテキスト汚染を防ぐため、アプリ固有のルールは `docs/project_standards.md` と `docs/deploy.md` に集約することとした。
 
-## Risks
-なし
+## Constraints
+- 各種設定ファイル（`vite.config.js`）やHF向けの `README.md` 等、プラットフォーム固有の仕様は `docs/deploy.md` および絶対防衛ラインの指示に従い、勝手に書き換えないこと。
 
-## Entry Points for Codex
-1. `AGENTS.md` → 全体ルール
-2. `docs/project_standards.md` → コード規約・禁止事項
-3. `docs/deploy.md` → デプロイ手順（一気通貫フロー）
+## Touched Files
+- `AGENTS.md` [NEW]
+- `HANDOFF.md` [MODIFIED]
+- `docs/project_standards.md` [NEW]
+- `docs/deploy.md` [NEW]
+- `scripts/deploy_hf.ps1` [NEW]
+- `package.json` [MODIFIED]
+- `.agent/workflows/deploy.md` [MODIFIED]
 
-## Suggested First Command
+## Entry Points
+- `AGENTS.md`
+- `HANDOFF.md`
+
+## Verification
+- [x] ルール策定およびファイル配置
+- [x] Git Push 準備完了
+
+## Risks / Assumptions
+- Codex側の作業ディレクトリ（`C:\Users\sx717\OneDrive\Documents\Codex_App\New project`）が同じ GitHub リモートリポジトリ（`FURUYAN1234/nano-banana-pro.git`）の clone であることを前提としている。
+
+## Diff Scope
+- Other (Documentation & CI/CD Scripts)
+
+## Project Rules
+- 詳細は `docs/project_standards.md`, `docs/deploy.md` 参照
+
+## Next Step
+Codex側は、作業再開の前に自身の作業ディレクトリ（`New project`）上で `git pull origin main` を行い、Antigravity側で追加された変更を取り込むこと。
+
+## Suggested Commands
 ```bash
 git pull origin main
 ```
