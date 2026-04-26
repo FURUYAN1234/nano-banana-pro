@@ -31,7 +31,7 @@ import {
 // --- Imports ---
 import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
-const SYSTEM_VERSION = "v2.70 Alpha";
+const SYSTEM_VERSION = "v2.71 Alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -2040,6 +2040,7 @@ Important constraints:
 - ABSOLUTELY NO TEXT OR SFX BETWEEN PANELS. The white gutters separating the panels MUST be completely clean and pure white. Do not draw any labels, narration, or sound effects crossing or sitting inside the panel boundaries.
 - Do NOT write situation/narration explanations as text on the screen. The Visual Action must only be illustrated.
 - Write the Japanese spoken text clearly inside white manga speech bubbles in a bold sans-serif Japanese font.
+- SPEECH BUBBLE TEXT DIRECTION (CRITICAL): All Japanese dialogue inside speech bubbles MUST be written VERTICALLY (縦書き / tategaki). Characters are stacked top-to-bottom within each column, and multiple columns flow from RIGHT to LEFT. Do NOT write any dialogue horizontally inside speech bubbles. The ONLY horizontal text allowed is the title banner and the bottom watermark.
 - Japanese dialogue MUST end with a period (。). However, do NOT add unnecessary commas (、) inside dialogue. Manga speech bubbles rarely use commas in natural Japanese — line breaks and bubble shape provide natural pauses instead. Only use commas when absolutely necessary to prevent misreading.
 - Do NOT add random English text except for the watermark.
 - Maintain character consistency across all 4 panels.
@@ -2113,9 +2114,22 @@ If ANY fail condition occurs → regenerate immediately
 
 [ 🔧 ChatGPT / GPT-image 2.0 FORMAT ENFORCEMENT ]
 This block OVERRIDES any conflicting instructions:
-- TEXT: All dialogue MUST be vertical Japanese. Read right-to-left.
 - TITLE: Draw the title at the top, but do NOT make the white margin excessively large.
 - RENDER QUALITY: Pristine TV anime style. NO film grain, NO noise, NO realistic texturing. NO lens flare, NO HDR bloom, NO excessive sparkles or clutter. Clean gradients and sharp ink lines.
+
+[ 📝 VERTICAL TEXT PROTOCOL — ABSOLUTE MANDATORY (v2.71) ]
+ALL Japanese dialogue inside speech bubbles MUST be written VERTICALLY (縦書き / tategaki). This is NON-NEGOTIABLE.
+- VERTICAL WRITING DEFINITION: Each character (文字) is placed below the previous one, forming a top-to-bottom column. When a column is full, the next column starts to the LEFT of the current column. Reading order is RIGHT column first, then LEFT column.
+- EVERY speech bubble in ALL 4 panels MUST use vertical text. Zero exceptions.
+- Do NOT mix horizontal (横書き) and vertical (縦書き) text within the same image. All bubbles must be consistently vertical.
+- Punctuation marks (。！？、) must also follow vertical layout: drawn at the RIGHT side of the character cell, not breaking the vertical flow.
+- Small kana (っ、ゃ、ゅ、ょ) must remain in the vertical column, positioned at the upper-right of the character cell.
+- Long vowel marks (ー) must be drawn VERTICALLY (rotated 90° to become a vertical stroke ︱), NOT horizontally.
+- Exclamation/Question marks (！？) at the end of a sentence stay within the vertical column.
+- Speech bubbles should be TALL and NARROW (portrait-oriented) to naturally accommodate vertical text columns. Do NOT draw wide/landscape-oriented speech bubbles that force horizontal text.
+- The ONLY horizontal text in the entire image is: (1) the title banner at the top, (2) the watermark at the bottom edge.
+- If you are unsure, look at any professional Japanese manga — all speech bubbles use vertical text.
+- HARD FAIL: If ANY speech bubble contains horizontal Japanese text → the image is INVALID and must be regenerated.
 
 [ 🧹 ANTI-NOISE & ANTI-ARTIFACT PROTOCOL — MANDATORY ]
 - ZERO NOISE TOLERANCE: The final image MUST be completely free of visual noise, grain, micro-texture artifacts, dithering patterns, and any speckle-like artifacts. Every surface must be CLEAN and SMOOTH.
@@ -2135,7 +2149,7 @@ This block OVERRIDES any conflicting instructions:
 - BACKGROUND VALUE SHIFT: The background should be either slightly DARKER (for bright/daytime scenes) or slightly LIGHTER (for dark/night scenes) than the characters, creating natural figure-ground separation.
 - MANGA SPOTLIGHT EFFECT: Immediately behind each character, add a subtle radial white highlight or bright gradient glow — this is the classic manga "character pop" technique (逆光ハイライト) to make figures stand out against the environment.`;
         safePrompt = safePrompt + chatGPTEnhancement;
-        setAssembleThought(prev => prev + "\n> [ChatGPT Mode] STABLE LAYOUT FOUNDATION + FORMAT ENFORCEMENT を適用しました (A4縦1:1.414 / パネル剛体ロック / 歪み制約 / クリーン描画強制)\n> [v2.69] キャラ視認性強化: ノイズ除去プロトコル・白フチグロー・被写界深度分離・背景デサチュレーション適用");
+        setAssembleThought(prev => prev + "\n> [ChatGPT Mode] STABLE LAYOUT FOUNDATION + FORMAT ENFORCEMENT を適用しました (A4縦1:1.414 / パネル剛体ロック / 歪み制約 / クリーン描画強制)\n> [v2.69] キャラ視認性強化: ノイズ除去プロトコル・白フチグロー・被写界深度分離・背景デサチュレーション適用\n> [v2.71] 吹き出し縦書き強制プロトコル適用: VERTICAL TEXT PROTOCOL (横書き混在防止)");
       }
 
       setFinalPrompt(safePrompt);
