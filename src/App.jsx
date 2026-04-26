@@ -31,7 +31,7 @@ import {
 // --- Imports ---
 import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
-const SYSTEM_VERSION = "v2.68 Alpha";
+const SYSTEM_VERSION = "v2.69 Alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -417,8 +417,7 @@ function App() {
   const [enhanceBackgrounds, setEnhanceBackgrounds] = useState(false); // 背景強化
   const [enhanceCameraWork, setEnhanceCameraWork] = useState(false);   // [v2.47] カメラワーク強化
   const [enhanceDialogue, setEnhanceDialogue] = useState(false);       // [v2.47] セリフ・ギャグ強化
-  const [enhancePanelLayout, setEnhancePanelLayout] = useState(false); // [v2.68] コマ割り演出強化
-  const [enhanceTimeEffect, setEnhanceTimeEffect] = useState(false);   // [v2.68] 時間演出強化
+  // [v2.69] コマ割り演出・時間演出を削除（ChatGPT画像生成ではタグ形式の指示が解釈されず効果ゼロのため）
   const [isEnhancing, setIsEnhancing] = useState(false);
   const [enhanceLog, setEnhanceLog] = useState("");
   const [isEnhancePanelOpen, setIsEnhancePanelOpen] = useState(false);
@@ -633,7 +632,7 @@ function App() {
   // シナリオ強化機能: 選択されたカテゴリに基づいてシナリオの演出を強化する
   const enhanceScenario = async () => {
     if (!scenario || scenario.length < 20) return showStatus("先にシナリオを生成してください。");
-    const anySelected = enhanceExpressions || enhanceBodyLang || enhanceEffects || enhanceBackgrounds || enhanceCameraWork || enhanceDialogue || enhancePanelLayout || enhanceTimeEffect; // [v2.68] 新カテゴリ追加
+    const anySelected = enhanceExpressions || enhanceBodyLang || enhanceEffects || enhanceBackgrounds || enhanceCameraWork || enhanceDialogue;
     if (!anySelected) return showStatus("少なくとも1つの強化カテゴリをONにしてください。");
     if (isEnhancing) return;
 
@@ -649,7 +648,7 @@ function App() {
     // カテゴリ別の強化指示を組み立て
     const enhanceCategories = [];
     if (enhanceExpressions) {
-      enhanceCategories.push("【表情の強化】各キャラの表情描写を限界まで大げさ・劇的にしてください（基準ウェイト2.5〜3.0相当）。例: 驚きなら「眼球が飛び出るほど限界まで見開いた白目」、怒りなら「顔中の血管が爆発しそうなほど怒り狂う」、喜びなら「顔面が崩壊するほどの満面の笑みと滝のような涙」。微笑みや軽い驚きのような控えめな表現は絶対に禁止し、常軌を逸した激しいリアクションに書き換えてください。");
+      enhanceCategories.push("【表情の強化】各キャラの表情描写を限界まで大げさ・劇的にしてください（基準ウェイト2.5〜3.0相当）。例: 驚きなら「眼球が飛び出るほど限界まで見開いた白目」、怒りなら「顔中の血管が爆発しそうなほど怒り狂う」、喜びなら「顔面が崩壊するほどの満面の笑みと滝のような涙」。微笑みや軽い驚きのような控えめな表現は絶対に禁止し、常軌を逸した激しいリアクションに書き換えてください。\n\n⚠️【セリフ保護ルール - 絶対厳守】⚠️\n表情の強化描写は必ず「状況」欄（Visual Action / ト書き）にのみ記述すること。\n「」で囲まれたセリフ（Speech Bubble内の台詞テキスト）には、表情の描写文を絶対に書き込まないこと。\nセリフ欄には元のセリフをそのまま残すか、セリフとして自然な短い発言のみを書くこと。\n悪い例: Speech Bubble 1: \"顔中の血管がミミズのように…\" ← これは描写文であってセリフではない。禁止。\n良い例: 状況欄に「顔中の血管が浮き出るほど怒り狂う表情」と書き、セリフ欄は元の短い台詞を維持する。");
     }
     if (enhanceBodyLang) {
       enhanceCategories.push("【ボディランゲージの強化】棒立ちの状態を禁止します。通常の2倍以上の過剰なアクションで全身で感情を表現してください（基準ウェイト2.5〜3.0相当）。例: 画面を突き破る勢いで前のめりになる、腕を天井まで大きく振り上げる、机を粉砕する勢いで叩く、椅子から転げ落ちる等。体全体を使った異常なほど大きなアクションを書いてください。");
@@ -658,7 +657,7 @@ function App() {
       enhanceCategories.push("【照明・演出の強化】各コマの「状況」欄に映画的・劇画的な演出効果を限界突破レベルで追加してください（基準ウェイト2.8相当）。例: 逆光で人物がシルエットになる、極端なリムライトで輪郭が光る、爆発的な光の粒子が舞う、パンチラインのコマには画面を覆い尽くす集中線やインパクトフレーム、激しい衝撃波、網膜を焼くようなまばゆい光などの視覚効果をト書きとして追記してください。");
     }
     if (enhanceBackgrounds) {
-      enhanceCategories.push("【背景の強化】各コマの背景描写を徹底的に緻密で圧倒的な情報量にしてください。例: 教室なら机の細かい木目や窓からの強烈な光芒、黒板のびっしりとした書き込み、壁のポスター等の小道具を狂気的なまでに密に描き込む。屋外なら天候、雲の形、木々、通行人、建物の描き込みなど、空間の奥行きとパースペクティブを強調する要素を追記してください。背景のクオリティもウェイト2.8レベルを想定してください。");
+      enhanceCategories.push("【背景の強化】各コマの背景描写に奥行きと空間の説得力を追加してください。ただしノイズやチラつきを防ぐため、以下のルールを厳守すること。\n- 背景のディテールは「構造的に意味のある要素」のみを追加する（建物、家具、空、雲、木など大きな構造物）。ランダムな細かい模様・テクスチャ・粒子は追加禁止。\n- 背景の描き込み密度はキャラクターより低くすること（キャラの方が常に目立つように）。\n- 空間の奥行き感を出すために、前景・中景・遠景のレイヤー分離と色の明暗差（空気遠近法）を活用する。\n- 例: 教室なら窓からの柔らかい光と影の落ち方、黒板の文字、奥に見える廊下。屋外なら空の広がり、建物のシルエット、遠景のぼかし。\n- 「狂気的な密度」「びっしり描き込む」のような過剰な描き込み指示は禁止。画面がノイズだらけになる原因となる。");
     }
     // [v2.47] カメラワーク強化
     if (enhanceCameraWork) {
@@ -668,14 +667,7 @@ function App() {
     if (enhanceDialogue) {
       enhanceCategories.push("【セリフ・ギャグの強化】4コマ漫画の起承転結のテンポとテンションを最大限界（ウェイト3.0レベル）に引き上げてください。\n- ツッコミのキレを限界突破させる（弱い定型ツッコミは禁止。より過激で具体的、状況に即した叫び声に書き換える）\n- オチ（4コマ目）の破壊力を最大化する。予想を裏切る展開や劇的な伏線回収で笑いを取る\n- セリフは短く鋭く。だらだら説明するセリフは削って、一言で致命傷を与えるセリフにする\n- 3コマ目に「極限の溜め」を作り、4コマ目への落差を最大化する\n- 可能なら言葉遊び、ダブルミーニング、予想の裏切りを仕込む");
     }
-    // [v2.68] コマ割り演出強化
-    if (enhancePanelLayout) {
-      enhanceCategories.push("【コマ割り演出の強化】各コマの構図に漫画的なメリハリを加えるため、以下の演出指示を「状況」欄に追記してください。\n- 1コマ目は導入として落ち着いた構図（ロングショットや俯瞰で場面全体を見せる）\n- 2コマ目で緊張感を出す構図（キャラの上半身ミディアムショット、やや詰めた構図）\n- 3コマ目は溜めの極限構図（超クローズアップ指示、またはキャラ同士が画面内で対峙する緊迫構図）\n- 4コマ目はオチの解放構図（見開き風の横長ワイドショット感覚、または全員が画面内に収まるフルショット）\n- 各コマの状況欄に [LAYOUT: Wide/Medium/Close/Full] のタグを追記してください\n- 4コマ全てが同じ構図（全員同じ距離で同じサイズ）にならないことが絶対条件です");
-    }
-    // [v2.68] 時間演出強化
-    if (enhanceTimeEffect) {
-      enhanceCategories.push("【時間演出の強化】時間の流れを意識した映画的演出を追加してください。以下の技法から各コマに適切なものを選び、「状況」欄にト書きとして追記してください。\n- スローモーション描写: 決定的瞬間（飲み物をこぼす、物が落ちる、殴る直前等）を極端にスローに描写する指示（水滴が宙に浮く、髪が風でスローに靡く等）\n- タイムストップ/フリーズフレーム: 衝撃的な発言や出来事の直後、全員が石化したように動きを止める演出\n- 回想・フラッシュバック: コマの一部に過去の出来事を想起するような小さな挿入カットの描写（セピアトーン、ぼかし効果付き）\n- 時間経過の対比: 同じ場所の朝→夜、同じポーズの過去→現在のような対比描写\n- 各コマの状況欄に [TIME: Slow-Motion/Freeze/Flashback/TimeLapse] のようなタグを追記してください\n⚠️ 全コマに時間演出を入れる必要はありません。最も効果的な1〜2コマにのみ適用してください");
-    }
+    // [v2.69] コマ割り演出・時間演出は削除済み（ChatGPT画像生成ではタグ形式が解釈されず効果なし）
 
     setEnhanceLog(prev => prev + `\n> [CONFIG] 強化カテゴリ: ${enhanceCategories.length}個`);
 
@@ -736,8 +728,7 @@ ${scenario}
         setEnhanceBackgrounds(false);
         setEnhanceCameraWork(false);
         setEnhanceDialogue(false);
-        setEnhancePanelLayout(false);  // [v2.68]
-        setEnhanceTimeEffect(false);   // [v2.68]
+        // [v2.69] コマ割り・時間演出は削除済み
         showStatus("シナリオ強化完了！");
       } else {
         setEnhanceLog(prev => prev + "\n> [ERROR] AIの応答が短すぎます。もう一度お試しください。");
@@ -1871,30 +1862,33 @@ SPEECH BUBBLE POSITION LOCK:
         // [v2.33] 3人掛け合い対応: スピーカー最大3名をメインアクターとして登録
         const panelActors = speakers.slice(0, 3).map(s => `[${s}]`);
 
+        // [v2.69] 背景キャスト統合: SOLO SHOTとMANDATORY BACKGROUND CASTの矛盾を解消
+        // 背景キャストがいる場合は先にallPanelCharactersへ統合し、SOLO SHOTを出さない
+        const otherCast = validCharacters.filter(c => !allPanelCharacters.includes(c));
+        if (otherCast.length > 0) {
+          // 背景キャストが存在 → 全員をallPanelCharactersに統合（SOLO SHOTは発行しない）
+          otherCast.forEach(c => {
+            if (!allPanelCharacters.includes(c)) allPanelCharacters.push(c);
+          });
+        }
+
         const allCharBrackets = allPanelCharacters.map(c => `[${c}]`);
 
         if (panelActors.length > 0) {
           let cloneWarning = `ANTI-CLONE REMINDER: ${allCharBrackets.join(', ')} — each appears EXACTLY ONCE. If a character is mentioned in both the placement rule AND the visual action, they are the SAME person — do NOT draw a second copy.`;
-          // [v2.31] ソロショット判定の改善:
-          // キャラ1人検出 AND 吹き出し2以上 → ソロショットにしない
-          // （吹き出し2つは通常2キャラの対話を意味するため）
+          // [v2.69] ソロショット判定の改善:
+          // 本当にキャスト全体で1人（背景キャスト統合後でも1人）の場合のみSOLO SHOTを出す
+          // 背景キャストがいた場合はallPanelCharactersに既に統合済みなのでlength > 1になる
           if (allPanelCharacters.length === 1 && dialogueLineCount <= 1) {
             cloneWarning += `\nSOLO SHOT (SINGLE CHARACTER SCENE): Since only ${allCharBrackets[0]} is listed, THIS IS A SOLO SHOT. Do NOT draw ANY other person. Do NOT draw a second copy of ${allCharBrackets[0]}. Leave the surrounding space empty rather than adding people.`;
           } else if (allPanelCharacters.length === 1 && dialogueLineCount >= 2) {
             // 検出キャラ1人だが吹き出し2つ → 独白として扱う（ソロショットにはしない）
             cloneWarning += `\nNOTE: Multiple speech bubbles in this panel are ALL spoken by ${allCharBrackets[0]} (monologue/soliloquy). Draw only ${allCharBrackets[0]} — do NOT add a second character just because there are multiple bubbles.`;
           }
-          // [v2.42] 非登場キャストを背景候補としてImagenに提示（クローン防止強化版）
-          const otherCast = validCharacters.filter(c => !allPanelCharacters.includes(c));
-          const otherBrackets = otherCast.map(c => `[${c}]`);
-          let backgroundHint = '';
-          if (otherBrackets.length > 0) {
-            backgroundHint = `\nMANDATORY BACKGROUND CAST (DO NOT OMIT): ${otherBrackets.join(', ')} MUST also appear in this panel as visible background characters (onlookers, reactors, or bystanders). They are NOT optional — draw ALL of them. They must be clearly secondary (smaller scale, positioned behind/beside the main speakers) but still FULLY VISIBLE and RECOGNIZABLE by their hair color and hairstyle. Do NOT skip drawing them to "simplify" the composition. A panel missing these background characters has FEWER characters than required and is INCOMPLETE.`;
-          }
           // [v2.42] クローン防止: 合計人数と1人1回ルールを明示
-          const totalCount = allPanelCharacters.length + otherCast.length;
+          const totalCount = allPanelCharacters.length;
           const totalCountHint = `\nTOTAL CHARACTER COUNT IN THIS PANEL: EXACTLY ${totalCount} distinct individuals. Each person appears ONLY ONCE. Do NOT draw any character twice — not as a foreground duplicate, not as a background copy, not as a reflection or silhouette of an already-present character. If this panel contains FEWER than ${totalCount} visible characters, the panel is INCOMPLETE and must be redrawn with all ${totalCount} characters present.`;
-          return `CRITICAL CAST PLACEMENT: Ensure ${panelActors.join(' and ')} are the main focus. The following named characters appear in this panel: ${allCharBrackets.join(', ')}. Each named character appears EXACTLY ONCE. NEVER draw the exact same named character twice.\n${cloneWarning}${backgroundHint}${totalCountHint}`;
+          return `CRITICAL CAST PLACEMENT: Ensure ${panelActors.join(' and ')} are the main focus. The following named characters appear in this panel: ${allCharBrackets.join(', ')}. Each named character appears EXACTLY ONCE. NEVER draw the exact same named character twice.\n${cloneWarning}${totalCountHint}`;
         } else {
           return `CRITICAL CAST PLACEMENT: Follow the panel's action naturally. NEVER draw the exact same character twice.`;
         }
@@ -2071,7 +2065,7 @@ Before generating the final image, mentally verify ALL of the following. If ANY 
       let safePrompt = applySafetyAgeUp(constructedPrompt.trim());
 
       // [v2.61] ChatGPT Images 2.0 強化プロンプト追加
-      // [v2.67] 案A: 人物浮き出し強化（アウトライン太め・背景デサチュレーション・被写体分離）を追加
+      // [v2.69] キャラクター視認性 大幅強化（ノイズ除去・被写界深度・白フチグロー・背景分離）
       if (enableChatGPTMode) {
         const chatGPTEnhancement = `
 
@@ -2083,13 +2077,25 @@ This block OVERRIDES any conflicting instructions. Keep it simple:
 - TITLE: Draw the title at the top, but do NOT make the white margin excessively large.
 - RENDER QUALITY: Pristine TV anime style. NO film grain, NO noise, NO realistic texturing. NO lens flare, NO HDR bloom, NO excessive sparkles or clutter. Clean gradients and sharp ink lines.
 
+[ 🧹 ANTI-NOISE & ANTI-ARTIFACT PROTOCOL — MANDATORY ]
+- ZERO NOISE TOLERANCE: The final image MUST be completely free of visual noise, grain, micro-texture artifacts, dithering patterns, and any speckle-like artifacts. Every surface must be CLEAN and SMOOTH.
+- NO MICRO-DETAIL CLUTTER: Do NOT fill empty areas with random tiny dots, scratches, dust particles, or halftone-like noise patterns. Clean color fills and smooth gradients ONLY.
+- NO OVER-RENDERING: Do NOT apply photorealistic texture rendering (cloth weave, skin pores, hair strand noise) to anime-style characters. Keep surfaces FLAT and CLEAN as in professional TV anime cel-shading.
+- ANTI-FLICKER: Avoid rendering thin lines or patterns that create visual "flickering" or moiré effects. All lines must be bold and decisive.
+
 [ 🖊️ CHARACTER SILHOUETTE ISOLATION — MANDATORY ]
 - THICK INK OUTLINE (G-PEN RULE): Every character's entire body silhouette MUST be surrounded by a THICK, SOLID BLACK ink outline, as if drawn with a professional manga G-pen nib. The character outline stroke weight MUST be 2x to 3x thicker than any background detail lines. This separates characters from the background and is NON-NEGOTIABLE.
-- BACKGROUND SIMPLIFICATION: The background behind characters MUST be rendered at a LOWER detail level than the characters themselves. Use simplified shapes, flattened tones, or screentone-style hatching for the background. Do NOT give the background the same line density or sharpness as the foreground characters.
-- DEPTH SEPARATION & DESATURATION: Background elements MUST appear visually lighter and less saturated than the characters in the foreground. Apply subtle atmospheric softening (soft edges, lighter values) to anything behind the characters, keeping the characters themselves crisp and fully opaque.
-- MANGA SPOTLIGHT EFFECT: Immediately behind each character, add a subtle radial white highlight or bright gradient glow — this is the classic manga "character pop" technique to make figures stand out against the environment.`;
+- WHITE EDGE GLOW (HALO EFFECT): Between each character's thick ink outline and the background, render a subtle 2-3px semi-transparent WHITE GLOW (halo/rim light). This creates a clear visual "pop" that lifts the character off the background layer. This technique is standard in professional anime compositing (撮影処理).
+- CHARACTER COLOR PRIORITY: Characters MUST have HIGHER color saturation and HIGHER contrast than the background. Character skin, hair, and clothing colors should be vivid and punchy. The characters should visually "pop" as the first thing the viewer notices.
+
+[ 🌄 BACKGROUND TREATMENT — MANDATORY ]
+- BACKGROUND SIMPLIFICATION: The background behind characters MUST be rendered at a SIGNIFICANTLY LOWER detail level than the characters themselves. Use simplified shapes, flat color fills, or soft gradients. Do NOT give the background the same line density or sharpness as the foreground characters.
+- DEPTH OF FIELD SEPARATION: Apply a subtle soft-focus / depth-of-field blur to background elements, especially those far from the characters. Characters in the foreground must remain RAZOR SHARP while backgrounds have softer edges.
+- BACKGROUND DESATURATION: Background colors MUST be 30-50% less saturated than character colors. Apply a subtle wash-out or pastel effect to the background while keeping characters vibrant.
+- BACKGROUND VALUE SHIFT: The background should be either slightly DARKER (for bright/daytime scenes) or slightly LIGHTER (for dark/night scenes) than the characters, creating natural figure-ground separation.
+- MANGA SPOTLIGHT EFFECT: Immediately behind each character, add a subtle radial white highlight or bright gradient glow — this is the classic manga "character pop" technique (逆光ハイライト) to make figures stand out against the environment.`;
         safePrompt = safePrompt + chatGPTEnhancement;
-        setAssembleThought(prev => prev + "\n> [ChatGPT Mode] FORMAT ENFORCEMENT BLOCK を適用しました (アスペクト比2:3 / クリーン描画強制)\n> [v2.67 案A] 人物浮き出し強化: Gペンアウトライン・背景簡略化・スポットライト効果を適用");
+        setAssembleThought(prev => prev + "\n> [ChatGPT Mode] FORMAT ENFORCEMENT BLOCK を適用しました (アスペクト比2:3 / クリーン描画強制)\n> [v2.69] キャラ視認性強化: ノイズ除去プロトコル・白フチグロー・被写界深度分離・背景デサチュレーション適用");
       }
 
       setFinalPrompt(safePrompt);
@@ -2978,44 +2984,12 @@ ${finalPrompt}
                           </div>
                         </label>
 
-                        {/* [v2.68] コマ割り演出 */}
-                        <label className={`relative flex items-center justify-center p-3 rounded-xl cursor-pointer border-2 border-b-4 transition-all duration-100 group overflow-hidden select-none active:border-b-2 active:translate-y-0.5 ${
-                          enhancePanelLayout ? 'bg-white text-black border-slate-300' : 'bg-[#1e293b] text-slate-400 border-[#0f172a] hover:bg-[#334155]'
-                        }`}>
-                          <input type="checkbox" className="hidden" checked={enhancePanelLayout} onChange={() => setEnhancePanelLayout(!enhancePanelLayout)} />
-                          {enhancePanelLayout && (
-                            <div className="absolute top-2 right-2 bg-white text-blue-600 rounded-full p-0.5 shadow-sm">
-                              <CheckCircle2 size={12} strokeWidth={4} />
-                            </div>
-                          )}
-                          <div className="text-center">
-                            <div className={`text-2xl mb-1 ${enhancePanelLayout ? 'scale-110' : 'opacity-70 grayscale'}`}>🖼️</div>
-                            <div className="text-[11px] font-bold tracking-wider">コマ割り</div>
-                            <div className="text-[9px] opacity-70 mt-1">構図にメリハリ</div>
-                          </div>
-                        </label>
-
-                        {/* [v2.68] 時間演出 */}
-                        <label className={`relative flex items-center justify-center p-3 rounded-xl cursor-pointer border-2 border-b-4 transition-all duration-100 group overflow-hidden select-none active:border-b-2 active:translate-y-0.5 ${
-                          enhanceTimeEffect ? 'bg-white text-black border-slate-300' : 'bg-[#1e293b] text-slate-400 border-[#0f172a] hover:bg-[#334155]'
-                        }`}>
-                          <input type="checkbox" className="hidden" checked={enhanceTimeEffect} onChange={() => setEnhanceTimeEffect(!enhanceTimeEffect)} />
-                          {enhanceTimeEffect && (
-                            <div className="absolute top-2 right-2 bg-white text-blue-600 rounded-full p-0.5 shadow-sm">
-                              <CheckCircle2 size={12} strokeWidth={4} />
-                            </div>
-                          )}
-                          <div className="text-center">
-                            <div className={`text-2xl mb-1 ${enhanceTimeEffect ? 'scale-110' : 'opacity-70 grayscale'}`}>⏳</div>
-                            <div className="text-[11px] font-bold tracking-wider">時間演出</div>
-                            <div className="text-[9px] opacity-70 mt-1">スロモ・回想等</div>
-                          </div>
-                        </label>
+                        {/* [v2.69] コマ割り演出・時間演出は削除（ChatGPT画像生成でタグ形式が効果なしのため） */}
                       </div>
 
                       {/* 選択中の内容を表示 */}
                       <div className="text-xs text-orange-200/80 text-center font-mono py-1.5 bg-black/20 border border-white/5 rounded-md">
-                        Current Targets: {[enhanceExpressions && "表情", enhanceBodyLang && "身体", enhanceEffects && "演出", enhanceBackgrounds && "背景", enhanceCameraWork && "カメラ", enhanceDialogue && "セリフ", enhancePanelLayout && "コマ割り", enhanceTimeEffect && "時間演出"].filter(Boolean).join(" / ") || "未選択"} {/* [v2.68] 新カテゴリ追加 */}
+                        Current Targets: {[enhanceExpressions && "表情", enhanceBodyLang && "身体", enhanceEffects && "演出", enhanceBackgrounds && "背景", enhanceCameraWork && "カメラ", enhanceDialogue && "セリフ"].filter(Boolean).join(" / ") || "未選択"}
                       </div>
 
                       {/* 実行・元に戻すボタン */}
@@ -3023,7 +2997,7 @@ ${finalPrompt}
                         <button
                           className="flex-1 bg-orange-600 hover:bg-orange-500 disabled:bg-slate-700 disabled:opacity-50 text-white font-bold py-2 rounded-lg flex items-center justify-center gap-2 transition-all text-sm"
                           onClick={enhanceScenario}
-                          disabled={isEnhancing || !(enhanceExpressions || enhanceBodyLang || enhanceEffects || enhanceBackgrounds || enhanceCameraWork || enhanceDialogue || enhancePanelLayout || enhanceTimeEffect)} /* [v2.68] */
+                          disabled={isEnhancing || !(enhanceExpressions || enhanceBodyLang || enhanceEffects || enhanceBackgrounds || enhanceCameraWork || enhanceDialogue)}
                         >
                           {isEnhancing ? (
                             <><Loader2 size={16} className="animate-spin" /> 強化中...</>
@@ -3114,8 +3088,8 @@ ${finalPrompt}
               ${currentStep === 3 ? 'border-2 border-orange-500/50 shadow-[0_0_50px_rgba(249,115,22,0.15)] opacity-100' : 'border border-white/5 opacity-60'}
               ${currentStep > 3 ? 'border border-orange-500/30 opacity-100' : ''}
           `}>
-            {/* STEP3ロックオーバーレイ: STEP2未完了 or 解析中 or 検索中 */}
-            {(currentStep < 3 || isSearching || isAnalyzing) && (
+            {/* STEP3ロックオーバーレイ: STEP2未完了 or 解析中 or 検索中 or シナリオ強化中 */}
+            {(currentStep < 3 || isSearching || isAnalyzing || isEnhancing) && (
               <div style={{ position: 'absolute', inset: -2, zIndex: 200, backgroundColor: 'rgba(10,12,16,0.92)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', pointerEvents: 'auto' }} />
             )}
             <div className={`flex items-center gap-3 text-sm font-black uppercase tracking-widest px-2 ${currentStep === 3 ? 'text-orange-400' : 'text-slate-500'}`}>
@@ -3135,7 +3109,7 @@ ${finalPrompt}
                   🧪 テスト機能：ChatGPT Images 2.0 強化プロンプト追加
                 </span>
                 <span className="text-[10px] text-slate-500">
-                  ONにすると、A4縦(1024×1448px)固定・縦書きセリフ・右→左読み順・禁止形状チェックが先頭＋末尾に追加されます
+                  ONにすると、A4縦固定・縦書きセリフ・ノイズ除去・キャラ白フチグロー・被写界深度分離・背景デサチュレーションが適用されます
                 </span>
               </div>
             </label>
@@ -3166,8 +3140,8 @@ ${finalPrompt}
           <div
             className="relative flex flex-col gap-12 mt-12 border-t border-white/5 pt-12 transition-all duration-500"
           >
-            {/* [v2.48] 出力結果ロックオーバーレイ: STEP3未完了時は全体をぼかす */}
-            {(currentStep < 3 || isSearching || isAnalyzing) && (
+            {/* [v2.48] 出力結果ロックオーバーレイ: STEP3未完了 or シナリオ強化中は全体をぼかす */}
+            {(currentStep < 3 || isSearching || isAnalyzing || isEnhancing) && (
               <div style={{ position: 'absolute', inset: -2, zIndex: 200, backgroundColor: 'rgba(10,12,16,0.92)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', pointerEvents: 'auto', borderRadius: '0.625rem' }} />
             )}
             {/* 左: プロンプト & 思考ログ */}
@@ -3350,8 +3324,8 @@ ${finalPrompt}
 
             {/* 右: 生成画像エリア */}
             <section className="relative group bg-[#0d1117] rounded-xl border border-white/5 min-h-[600px] flex flex-col overflow-hidden">
-              {/* [v2.48] 描画エリアロックオーバーレイ: STEP3(finalPrompt)未完了時はぼかす */}
-              {!finalPrompt && !isAssembling && (
+              {/* [v2.48] 描画エリアロックオーバーレイ: STEP3未完了 or シナリオ強化中はぼかす */}
+              {(!finalPrompt && !isAssembling || isEnhancing) && (
                 <div style={{ position: 'absolute', inset: 0, zIndex: 200, backgroundColor: 'rgba(10,12,16,0.85)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)', pointerEvents: 'auto', borderRadius: '0.75rem' }} />
               )}
 

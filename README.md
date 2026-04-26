@@ -372,6 +372,9 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v2.69.0-alpha (2026-04-26)
+- **[Fix]** Resolved logical contradiction in Panel 4 prompt generation where "SOLO SHOT" and "MANDATORY BACKGROUND CAST" were emitted simultaneously. Background casts are now automatically merged into the panel characters list to prevent "SOLO SHOT" triggers when other characters are present. / Panel 4のプロンプトで「SOLO SHOT（他キャラ描くな）」と「MANDATORY BACKGROUND CAST（残り全員描け）」が同時出力される論理矛盾バグを修正。背景キャストがいる場合はSOLO SHOTを出力せず、自動的に全登場リストへ統合するように改善。
+
 ### v2.68.0-alpha (2026-04-26)
 - **[Feature]** Added 6 new EMOTION styles (SPEED, FLASHBACK, UKIYOE, POP_ART, SKETCH, NEON) and 2 new UI buttons for Scenario Enhancement (Panel Layout, Time Effect). / 6つの新しいEMOTIONスタイル（SPEED等）と、シナリオ強化用の「コマ割り」「時間演出」ボタンを追加。
 
