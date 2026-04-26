@@ -107,3 +107,18 @@ C:\Users\sx717\Antigravity\hf-nano-banana-pro
 - ❌ `gh-pages` ブランチの盲目的な削除や Force Push は禁止。
 - ❌ デプロイ完了報告前にリモート検証（`git show origin/gh-pages:index.html`）をスキップしない。
 - ❌ バージョン同期の3箇所（package.json, App.jsx, index.html）を実ファイルで確認せずにデプロイしない。
+- ❌ **GitHub Release の作成にブラウザサブエージェントを使用しない。** 必ず `gh release create` CLI を使うこと。サブエージェントは pre-release チェックボックスを誤ってONにするリスクがある。
+- ❌ **README.md をエンコーディング確認なしで編集しない。** 書き込み前に UTF-8 であることを確認し、文字化けテキストの追加を防ぐこと。
+
+## 自動チェック項目（pre_deploy_check.js で `npm run deploy` 時に自動検証）
+`npm run deploy` を実行すると、以下が自動的にチェックされる（不合格ならビルドが停止する）：
+
+| チェック | 内容 | 不合格時の動作 |
+|---|---|---|
+| Git Merge State | マージ中でないこと | ❌ BLOCK |
+| Git Sync | リモートと同期済みか | ⚠️ auto-rebase |
+| Version Sync | package.json / App.jsx / index.html のバージョン一致 | ❌ BLOCK |
+| ChangeLog | README.md に当該バージョンのエントリ存在 | ❌ BLOCK |
+| Encoding | README.md に文字化けパターン（半角カタカナ）がないか | ⚠️ WARNING |
+| .nojekyll | public/.nojekyll の存在 | ❌ BLOCK |
+
