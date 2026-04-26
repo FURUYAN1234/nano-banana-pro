@@ -31,7 +31,7 @@ import {
 // --- Imports ---
 import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
-const SYSTEM_VERSION = "v2.67 Alpha";
+const SYSTEM_VERSION = "v2.68 Alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -417,6 +417,8 @@ function App() {
   const [enhanceBackgrounds, setEnhanceBackgrounds] = useState(false); // 背景強化
   const [enhanceCameraWork, setEnhanceCameraWork] = useState(false);   // [v2.47] カメラワーク強化
   const [enhanceDialogue, setEnhanceDialogue] = useState(false);       // [v2.47] セリフ・ギャグ強化
+  const [enhancePanelLayout, setEnhancePanelLayout] = useState(false); // [v2.68] コマ割り演出強化
+  const [enhanceTimeEffect, setEnhanceTimeEffect] = useState(false);   // [v2.68] 時間演出強化
   const [isEnhancing, setIsEnhancing] = useState(false);
   const [enhanceLog, setEnhanceLog] = useState("");
   const [isEnhancePanelOpen, setIsEnhancePanelOpen] = useState(false);
@@ -631,7 +633,7 @@ function App() {
   // シナリオ強化機能: 選択されたカテゴリに基づいてシナリオの演出を強化する
   const enhanceScenario = async () => {
     if (!scenario || scenario.length < 20) return showStatus("先にシナリオを生成してください。");
-    const anySelected = enhanceExpressions || enhanceBodyLang || enhanceEffects || enhanceBackgrounds || enhanceCameraWork || enhanceDialogue;
+    const anySelected = enhanceExpressions || enhanceBodyLang || enhanceEffects || enhanceBackgrounds || enhanceCameraWork || enhanceDialogue || enhancePanelLayout || enhanceTimeEffect; // [v2.68] 新カテゴリ追加
     if (!anySelected) return showStatus("少なくとも1つの強化カテゴリをONにしてください。");
     if (isEnhancing) return;
 
@@ -665,6 +667,14 @@ function App() {
     // [v2.47] セリフ・ギャグ強化
     if (enhanceDialogue) {
       enhanceCategories.push("【セリフ・ギャグの強化】4コマ漫画の起承転結のテンポとテンションを最大限界（ウェイト3.0レベル）に引き上げてください。\n- ツッコミのキレを限界突破させる（弱い定型ツッコミは禁止。より過激で具体的、状況に即した叫び声に書き換える）\n- オチ（4コマ目）の破壊力を最大化する。予想を裏切る展開や劇的な伏線回収で笑いを取る\n- セリフは短く鋭く。だらだら説明するセリフは削って、一言で致命傷を与えるセリフにする\n- 3コマ目に「極限の溜め」を作り、4コマ目への落差を最大化する\n- 可能なら言葉遊び、ダブルミーニング、予想の裏切りを仕込む");
+    }
+    // [v2.68] コマ割り演出強化
+    if (enhancePanelLayout) {
+      enhanceCategories.push("【コマ割り演出の強化】各コマの構図に漫画的なメリハリを加えるため、以下の演出指示を「状況」欄に追記してください。\n- 1コマ目は導入として落ち着いた構図（ロングショットや俯瞰で場面全体を見せる）\n- 2コマ目で緊張感を出す構図（キャラの上半身ミディアムショット、やや詰めた構図）\n- 3コマ目は溜めの極限構図（超クローズアップ指示、またはキャラ同士が画面内で対峙する緊迫構図）\n- 4コマ目はオチの解放構図（見開き風の横長ワイドショット感覚、または全員が画面内に収まるフルショット）\n- 各コマの状況欄に [LAYOUT: Wide/Medium/Close/Full] のタグを追記してください\n- 4コマ全てが同じ構図（全員同じ距離で同じサイズ）にならないことが絶対条件です");
+    }
+    // [v2.68] 時間演出強化
+    if (enhanceTimeEffect) {
+      enhanceCategories.push("【時間演出の強化】時間の流れを意識した映画的演出を追加してください。以下の技法から各コマに適切なものを選び、「状況」欄にト書きとして追記してください。\n- スローモーション描写: 決定的瞬間（飲み物をこぼす、物が落ちる、殴る直前等）を極端にスローに描写する指示（水滴が宙に浮く、髪が風でスローに靡く等）\n- タイムストップ/フリーズフレーム: 衝撃的な発言や出来事の直後、全員が石化したように動きを止める演出\n- 回想・フラッシュバック: コマの一部に過去の出来事を想起するような小さな挿入カットの描写（セピアトーン、ぼかし効果付き）\n- 時間経過の対比: 同じ場所の朝→夜、同じポーズの過去→現在のような対比描写\n- 各コマの状況欄に [TIME: Slow-Motion/Freeze/Flashback/TimeLapse] のようなタグを追記してください\n⚠️ 全コマに時間演出を入れる必要はありません。最も効果的な1〜2コマにのみ適用してください");
     }
 
     setEnhanceLog(prev => prev + `\n> [CONFIG] 強化カテゴリ: ${enhanceCategories.length}個`);
@@ -726,6 +736,8 @@ ${scenario}
         setEnhanceBackgrounds(false);
         setEnhanceCameraWork(false);
         setEnhanceDialogue(false);
+        setEnhancePanelLayout(false);  // [v2.68]
+        setEnhanceTimeEffect(false);   // [v2.68]
         showStatus("シナリオ強化完了！");
       } else {
         setEnhanceLog(prev => prev + "\n> [ERROR] AIの応答が短すぎます。もう一度お試しください。");
@@ -1246,9 +1258,42 @@ ${scenario}
         },
       };
 
+      // [v2.68] 演出レパートリー拡充: 6つの新EMOTION_STYLES
+      // 元に戻す場合: このブロック（SPEED〜NEON）を削除し、extractEmotionStyleの正規表現からも除去すること
+      EMOTION_STYLES.SPEED = {
+        style: 'In THIS PANEL ONLY, the entire composition conveys extreme speed and motion. All characters are drawn with heavy motion blur trails behind them. Background becomes pure horizontal speed lines radiating from the direction of movement. The panel feels like a single frame captured from an intense chase or sudden dash.',
+        proportions: '',
+        vfx: '(Extreme horizontal speed lines filling background:1.5), (heavy motion blur on character bodies:1.4), (wind-blown hair and clothing:1.3), (dynamic forward-leaning running pose:1.3), (after-image ghosting effect:1.2)',
+      };
+      EMOTION_STYLES.FLASHBACK = {
+        style: 'In THIS PANEL ONLY, shift to a memory/flashback visual style. The entire panel is rendered in warm sepia tones with soft vignette darkening at the edges. Lines are slightly softer and hazier than normal panels. A dreamy, nostalgic atmosphere pervades the scene. Panel borders may appear wavy or fade out to indicate this is a memory.',
+        proportions: '',
+        vfx: '(Warm sepia color grading:1.5), (soft vignette darkening at panel edges:1.4), (dreamy soft-focus gaussian blur:1.3), (faded desaturated colors:1.2), (wavy or dissolved panel border edges:1.2)',
+      };
+      EMOTION_STYLES.UKIYOE = {
+        style: 'In THIS PANEL ONLY, shift to a Japanese ukiyo-e woodblock print style. Use flat areas of bold color with strong black outlines. Characters are drawn with stylized proportions reminiscent of Edo-period art. Backgrounds feature iconic elements like waves, mountains, or cherry blossoms in the flat ukiyo-e tradition. IMPORTANT: Maintain each character\'s identity (hair color, accessories) despite the art style shift.',
+        proportions: 'Characters may appear slightly elongated with elegant poses typical of ukiyo-e figure drawing.',
+        vfx: '(Flat bold color areas with no gradients:1.4), (thick black woodblock-style outlines:1.5), (stylized wave or cloud patterns in background:1.3), (traditional Japanese color palette - indigo vermillion ochre:1.3)',
+      };
+      EMOTION_STYLES.POP_ART = {
+        style: 'In THIS PANEL ONLY, shift to a vibrant pop art comic style inspired by Roy Lichtenstein. Use bold primary colors (red, blue, yellow), thick black outlines, and Ben-Day dot patterns for shading. The composition should feel graphic and punchy with high contrast. Speech bubbles should have bold jagged edges.',
+        proportions: '',
+        vfx: '(Bold Ben-Day halftone dot shading:1.5), (primary color palette - red blue yellow:1.4), (thick bold pop art outlines:1.4), (high contrast flat color fills:1.3), (retro comic book printing texture:1.2)',
+      };
+      EMOTION_STYLES.SKETCH = {
+        style: 'In THIS PANEL ONLY, the art style shifts to a rough pencil sketch or storyboard draft. Lines are loose, scratchy, and intentionally unfinished. Some areas may have construction lines or rough hatching visible. The effect suggests this panel is a "raw thought" or "unpolished reality" breaking through the clean manga surface. IMPORTANT: Characters must still be recognizable by their key features.',
+        proportions: '',
+        vfx: '(Rough pencil sketch lines:1.5), (visible construction guidelines:1.3), (loose crosshatch shading:1.4), (unfinished edges fading to white paper:1.3), (graphite pencil texture on paper grain:1.2)',
+      };
+      EMOTION_STYLES.NEON = {
+        style: 'In THIS PANEL ONLY, shift to a cyberpunk neon-lit aesthetic. The scene is bathed in intense neon glow from pink, cyan, and purple light sources. Characters have neon rim lighting outlining their silhouettes. The background is dark with glowing signs, light trails, and reflective wet surfaces. The mood is futuristic and electric.',
+        proportions: '',
+        vfx: '(Intense neon pink and cyan rim lighting:1.5), (dark background with glowing light sources:1.4), (reflective wet surface catching neon colors:1.3), (light bloom and lens flare from neon:1.3), (cyberpunk color palette - magenta cyan purple:1.4)',
+      };
+
       // [v2.25] パネルテキストからEMOTIONタグを抽出
       const extractEmotionStyle = (panelText) => {
-        const match = panelText.match(/\[EMOTION:\s*(NORMAL|CHIBI_GAG|GEKIGA|SHOUJO|HORROR|BLANK|IMPACT|WATERCOLOR|RETRO|GLITTER|SHADOW)\s*\]/i);
+        const match = panelText.match(/\[EMOTION:\s*(NORMAL|CHIBI_GAG|GEKIGA|SHOUJO|HORROR|BLANK|IMPACT|WATERCOLOR|RETRO|GLITTER|SHADOW|SPEED|FLASHBACK|UKIYOE|POP_ART|SKETCH|NEON)\s*\]/i); // [v2.68] 6新スタイル追加
         if (match) {
           const key = match[1].toUpperCase();
           if (EMOTION_STYLES[key]) return key;
@@ -2932,11 +2977,45 @@ ${finalPrompt}
                             <div className="text-[9px] opacity-70 mt-1">ギャグ・オチ最大化</div>
                           </div>
                         </label>
+
+                        {/* [v2.68] コマ割り演出 */}
+                        <label className={`relative flex items-center justify-center p-3 rounded-xl cursor-pointer border-2 border-b-4 transition-all duration-100 group overflow-hidden select-none active:border-b-2 active:translate-y-0.5 ${
+                          enhancePanelLayout ? 'bg-white text-black border-slate-300' : 'bg-[#1e293b] text-slate-400 border-[#0f172a] hover:bg-[#334155]'
+                        }`}>
+                          <input type="checkbox" className="hidden" checked={enhancePanelLayout} onChange={() => setEnhancePanelLayout(!enhancePanelLayout)} />
+                          {enhancePanelLayout && (
+                            <div className="absolute top-2 right-2 bg-white text-blue-600 rounded-full p-0.5 shadow-sm">
+                              <CheckCircle2 size={12} strokeWidth={4} />
+                            </div>
+                          )}
+                          <div className="text-center">
+                            <div className={`text-2xl mb-1 ${enhancePanelLayout ? 'scale-110' : 'opacity-70 grayscale'}`}>🖼️</div>
+                            <div className="text-[11px] font-bold tracking-wider">コマ割り</div>
+                            <div className="text-[9px] opacity-70 mt-1">構図にメリハリ</div>
+                          </div>
+                        </label>
+
+                        {/* [v2.68] 時間演出 */}
+                        <label className={`relative flex items-center justify-center p-3 rounded-xl cursor-pointer border-2 border-b-4 transition-all duration-100 group overflow-hidden select-none active:border-b-2 active:translate-y-0.5 ${
+                          enhanceTimeEffect ? 'bg-white text-black border-slate-300' : 'bg-[#1e293b] text-slate-400 border-[#0f172a] hover:bg-[#334155]'
+                        }`}>
+                          <input type="checkbox" className="hidden" checked={enhanceTimeEffect} onChange={() => setEnhanceTimeEffect(!enhanceTimeEffect)} />
+                          {enhanceTimeEffect && (
+                            <div className="absolute top-2 right-2 bg-white text-blue-600 rounded-full p-0.5 shadow-sm">
+                              <CheckCircle2 size={12} strokeWidth={4} />
+                            </div>
+                          )}
+                          <div className="text-center">
+                            <div className={`text-2xl mb-1 ${enhanceTimeEffect ? 'scale-110' : 'opacity-70 grayscale'}`}>⏳</div>
+                            <div className="text-[11px] font-bold tracking-wider">時間演出</div>
+                            <div className="text-[9px] opacity-70 mt-1">スロモ・回想等</div>
+                          </div>
+                        </label>
                       </div>
 
                       {/* 選択中の内容を表示 */}
                       <div className="text-xs text-orange-200/80 text-center font-mono py-1.5 bg-black/20 border border-white/5 rounded-md">
-                        Current Targets: {[enhanceExpressions && "表情", enhanceBodyLang && "身体", enhanceEffects && "演出", enhanceBackgrounds && "背景", enhanceCameraWork && "カメラ", enhanceDialogue && "セリフ"].filter(Boolean).join(" / ") || "未選択"}
+                        Current Targets: {[enhanceExpressions && "表情", enhanceBodyLang && "身体", enhanceEffects && "演出", enhanceBackgrounds && "背景", enhanceCameraWork && "カメラ", enhanceDialogue && "セリフ", enhancePanelLayout && "コマ割り", enhanceTimeEffect && "時間演出"].filter(Boolean).join(" / ") || "未選択"} {/* [v2.68] 新カテゴリ追加 */}
                       </div>
 
                       {/* 実行・元に戻すボタン */}
@@ -2944,7 +3023,7 @@ ${finalPrompt}
                         <button
                           className="flex-1 bg-orange-600 hover:bg-orange-500 disabled:bg-slate-700 disabled:opacity-50 text-white font-bold py-2 rounded-lg flex items-center justify-center gap-2 transition-all text-sm"
                           onClick={enhanceScenario}
-                          disabled={isEnhancing || !(enhanceExpressions || enhanceBodyLang || enhanceEffects || enhanceBackgrounds || enhanceCameraWork || enhanceDialogue)}
+                          disabled={isEnhancing || !(enhanceExpressions || enhanceBodyLang || enhanceEffects || enhanceBackgrounds || enhanceCameraWork || enhanceDialogue || enhancePanelLayout || enhanceTimeEffect)} /* [v2.68] */
                         >
                           {isEnhancing ? (
                             <><Loader2 size={16} className="animate-spin" /> 強化中...</>

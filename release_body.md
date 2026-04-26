@@ -1,9 +1,3 @@
-### 📝 Update Documentation for ChatGPT & Enhancements
+### v2.68.0-alpha (2026-04-26)
 
-#### English
-* **[Docs]** Updated `README.md` to formally document the new **ChatGPT Images 2.0 Mode** and **Scenario Enhancement** features.
-* Adjusted terminology to reflect compatibility with DALL-E 3, enforcing A4 aspect ratios and vertical text rules via prompt injection.
-
-#### 日本語
-* **[Docs]** `README.md` を更新し、新たに搭載された **ChatGPT画像生成サポート** および **シナリオ演出強化** 機能に関する公式ドキュメントを追加しました。
-* DALL-E 3生成に最適化されたA4縦長指定や、縦書きの視線誘導フォーマットに対応した設計であることを技術詳解に追記しました。
+- **[Feature]** Added 6 new EMOTION styles (SPEED, FLASHBACK, UKIYOE, POP_ART, SKETCH, NEON) and 2 new UI buttons for Scenario Enhancement (Panel Layout, Time Effect). / 6つの新しいEMOTIONスタイル（SPEED等）と、シナリオ強化用の「コマ割り」「時間演出」ボタンを追加。

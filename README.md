@@ -372,6 +372,9 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v2.68.0-alpha (2026-04-26)
+- **[Feature]** Added 6 new EMOTION styles (SPEED, FLASHBACK, UKIYOE, POP_ART, SKETCH, NEON) and 2 new UI buttons for Scenario Enhancement (Panel Layout, Time Effect). / 6つの新しいEMOTIONスタイル（SPEED等）と、シナリオ強化用の「コマ割り」「時間演出」ボタンを追加。
+
 ### v2.67.0-alpha (2026-04-23)
 - **[Feature]** ChatGPT Images 2.0 強化プロンプトに人物浮き出し強化（Gペンアウトライン・背景簡略化・スポットライト効果）を追加 / Added Character Silhouette Isolation (G-Pen outline, background simplification, spotlight effect) to ChatGPT Images 2.0 Mode.
 
