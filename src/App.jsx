@@ -31,7 +31,7 @@ import {
 // --- Imports ---
 import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
-const SYSTEM_VERSION = "v2.69 Alpha";
+const SYSTEM_VERSION = "v2.70 Alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -2070,9 +2070,49 @@ Before generating the final image, mentally verify ALL of the following. If ANY 
         const chatGPTEnhancement = `
 
 ---
-[ 🔧 ChatGPT / DALL-E 3 FORMAT ENFORCEMENT ]
-This block OVERRIDES any conflicting instructions. Keep it simple:
-- ASPECT RATIO: Make the aspect ratio 2:3. (Do NOT generate an extra-tall strip).
+[STABLE LAYOUT FOUNDATION — DO NOT BREAK]
+
+This image uses extreme perspective and dynamic camera effects,
+BUT the CANVAS STRUCTURE must remain completely stable.
+
+━━━━━━━━━━━━━━━━━━
+■ CANVAS LOCK (TOP PRIORITY)
+━━━━━━━━━━━━━━━━━━
+- Final output MUST be A4 portrait (1:1.414)
+- Resolution MUST be exactly 1024×1448 px
+- The OUTER FRAME must be a PERFECT RECTANGLE
+- No vertical stretching, no tall strip expansion
+
+■ PANEL FRAME IMMUTABILITY
+- The 4-panel structure is FIXED before rendering
+- Panels act as rigid containers
+- Camera distortion MUST NOT break panel boundaries
+- No bending, warping, or resizing of panels
+
+■ DISTORTION CONSTRAINT
+- Extreme perspective applies ONLY inside each panel
+- The panel borders MUST remain perfectly straight horizontal lines
+- Horizon tilt and lens distortion must NOT affect outer layout
+
+■ COMPOSITION PRIORITY
+Priority order MUST be:
+1. Panel layout integrity
+2. Canvas aspect ratio
+3. Readability of panels
+4. Camera effects
+
+If conflict occurs → REDUCE distortion, DO NOT break layout
+
+■ HARD FAIL CONDITIONS
+- Canvas becomes taller than A4 → FAIL
+- Panels become uneven → FAIL
+- Panel borders curve or tilt → FAIL
+- Image looks like vertical strip → FAIL
+
+If ANY fail condition occurs → regenerate immediately
+
+[ 🔧 ChatGPT / GPT-image 2.0 FORMAT ENFORCEMENT ]
+This block OVERRIDES any conflicting instructions:
 - TEXT: All dialogue MUST be vertical Japanese. Read right-to-left.
 - TITLE: Draw the title at the top, but do NOT make the white margin excessively large.
 - RENDER QUALITY: Pristine TV anime style. NO film grain, NO noise, NO realistic texturing. NO lens flare, NO HDR bloom, NO excessive sparkles or clutter. Clean gradients and sharp ink lines.
@@ -2095,7 +2135,7 @@ This block OVERRIDES any conflicting instructions. Keep it simple:
 - BACKGROUND VALUE SHIFT: The background should be either slightly DARKER (for bright/daytime scenes) or slightly LIGHTER (for dark/night scenes) than the characters, creating natural figure-ground separation.
 - MANGA SPOTLIGHT EFFECT: Immediately behind each character, add a subtle radial white highlight or bright gradient glow — this is the classic manga "character pop" technique (逆光ハイライト) to make figures stand out against the environment.`;
         safePrompt = safePrompt + chatGPTEnhancement;
-        setAssembleThought(prev => prev + "\n> [ChatGPT Mode] FORMAT ENFORCEMENT BLOCK を適用しました (アスペクト比2:3 / クリーン描画強制)\n> [v2.69] キャラ視認性強化: ノイズ除去プロトコル・白フチグロー・被写界深度分離・背景デサチュレーション適用");
+        setAssembleThought(prev => prev + "\n> [ChatGPT Mode] STABLE LAYOUT FOUNDATION + FORMAT ENFORCEMENT を適用しました (A4縦1:1.414 / パネル剛体ロック / 歪み制約 / クリーン描画強制)\n> [v2.69] キャラ視認性強化: ノイズ除去プロトコル・白フチグロー・被写界深度分離・背景デサチュレーション適用");
       }
 
       setFinalPrompt(safePrompt);
@@ -2133,6 +2173,8 @@ This block OVERRIDES any conflicting instructions. Keep it simple:
   };
 
   const [isCopied, setIsCopied] = useState(false);
+  const [isFixPromptCopied, setIsFixPromptCopied] = useState(false);
+  const [isPolicyCopied, setIsPolicyCopied] = useState(false);
 
   const copyPrompt = () => {
     if (!finalPrompt) return;
@@ -3221,8 +3263,86 @@ ${finalPrompt}
                         <span className="inline-block mt-2 text-[11px] text-cyan-300/80">
                           🧪 <strong>ChatGPT対応（テスト）:</strong> STEP3の「ChatGPT Images 2.0 強化プロンプト追加」チェックをONにしてプロンプトを構築して、<a href="https://chatgpt.com/" target="_blank" rel="noreferrer" className="text-blue-400 hover:underline">ChatGPTブラウザ版🤖</a>に「元となるキャラシート画像」と一緒に貼り付ければ、ChatGPTでもマンガ生成が可能です。<br/>
                           ※プロンプトを貼り付け後、必ず「テキストフィールドに表示」をクリックして、全文表示させてください。そのまま送信すると、勝手にプロンプトの解説を始めてしまいます。<br/>
-                          ⚠️ <strong>DALL-E 3の仕様上、どうしても細長い画像になってしまう場合</strong> は、生成された画像をクリックし、上部メニューの<strong>「アスペクト比」</strong>ボタンから手動で縦横比を調整・修正してください。
+                          🛡️ <strong>レイアウト安定化:</strong> チェックON時、A4縦比率ロック＋パネル剛体制約がプロンプトに自動埋込されます。<br/>
+                          ⚠️ それでも<strong>GPT-image 2.0の仕様上、どうしても細長い画像になってしまう場合</strong>は、ChatGPTのメニュー画面にある、「アスペクト比」ボタンで手動修正は行わず、以下の「画像比率事後修正プロンプト」ボタンでコピーしたプロンプトを貼り付けて再生成してください。
                         </span>
+                        <button
+                          className={`mt-2 ${isFixPromptCopied ? 'bg-green-600 border-green-500/30' : 'bg-slate-700 hover:bg-slate-600 border-white/10'} text-white px-3 py-1.5 rounded transition-all inline-flex items-center justify-center gap-1.5 border font-bold active:scale-95`}
+                          style={{ fontSize: '10px', minWidth: '120px', position: 'relative' }}
+                          onClick={() => {
+                            const fixPrompt = `[ABSOLUTE OVERRIDE — FORCE FULL REBUILD]
+
+You MUST discard the previously generated image completely.
+DO NOT crop, resize, extend, pad, or reuse any part of the previous image.
+This is NOT a correction. This is a FULL REGENERATION.
+
+THIS IS A STRUCTURAL CORRECTION TASK. PRIORITIZE LAYOUT OVER STYLE.
+
+━━━━━━━━━━━━━━━━━━
+■ CANVAS — HARD LOCK
+━━━━━━━━━━━━━━━━━━
+- Aspect ratio MUST be EXACTLY 1:1.414 (A4 portrait)
+- Resolution MUST be EXACTLY 1024×1448 px
+- Any taller-than-A4 output is STRICTLY FORBIDDEN
+- Any 3:4, square, or long-strip image is a FAILURE
+
+━━━━━━━━━━━━━━━━━━
+■ PANEL SYSTEM — HARD LOCK
+━━━━━━━━━━━━━━━━━━
+- EXACTLY 4 panels
+- Panels MUST be horizontal strips stacked vertically
+- ALL panels MUST be identical size (height & width)
+- Panels MUST fill ~95% of canvas width
+- NO extra margins on ANY edge (top/bottom/left/right)
+
+■ GUTTERS
+- Thick white gutters between panels (approx 3% height)
+- Gutters MUST be uniform
+- Panels MUST NOT touch
+
+━━━━━━━━━━━━━━━━━━
+■ ANTI-ANTIGRAVITY SAFETY
+━━━━━━━━━━━━━━━━━━
+- Antigravity / extreme camera distortion MUST NOT change canvas shape
+- Perspective distortion is allowed ONLY inside panels
+- The OUTER CANVAS must remain perfectly A4 rectangular
+- NO vertical stretching of entire image
+- NO panel deformation due to camera effects
+
+━━━━━━━━━━━━━━━━━━
+■ FULL RE-LAYOUT (CRITICAL)
+━━━━━━━━━━━━━━━━━━
+- You MUST rebuild ALL panel compositions from scratch
+- Recalculate framing, character placement, and camera for A4
+- DO NOT reuse previous layout, even partially
+- DO NOT "adjust" — COMPLETELY REDRAW
+
+━━━━━━━━━━━━━━━━━━
+■ STRICT FAILURE CONDITIONS
+━━━━━━━━━━━━━━━━━━
+If ANY of the following occurs, REGENERATE AGAIN automatically:
+- Canvas ratio is not exactly 1:1.414 → FAIL
+- Image is taller than A4 → FAIL
+- Panels are uneven → FAIL
+- Margins exist → FAIL
+- Panels look cropped or stretched → FAIL
+- Layout resembles previous image → FAIL
+
+Repeat regeneration until ALL conditions are satisfied.
+
+━━━━━━━━━━━━━━━━━━
+■ OUTPUT RULE
+━━━━━━━━━━━━━━━━━━
+Only output the corrected A4 4-panel manga image.
+No explanations. No partial results.`;
+                            navigator.clipboard.writeText(fixPrompt);
+                            setIsFixPromptCopied(true);
+                            setTimeout(() => setIsFixPromptCopied(false), 2000);
+                          }}
+                        >
+                          <span style={{ visibility: isFixPromptCopied ? 'hidden' : 'visible' }}>📋 画像比率事後修正プロンプト</span>
+                          {isFixPromptCopied && <span style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>✅ コピー完了</span>}
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -3245,8 +3365,8 @@ ${finalPrompt}
                     </button>
 
                     {isPolicyPanelOpen && (
-                      <div className="p-3 bg-yellow-950/20 space-y-3">
-                        <div className="text-xs text-yellow-200/80 leading-relaxed space-y-2">
+                      <div className="p-3 bg-yellow-950/20 space-y-3" style={{ fontSize: '12px' }}>
+                        <div className="text-yellow-200/80 leading-relaxed space-y-2" style={{ fontSize: '11px' }}>
                           <p>
                             下の<strong className="text-yellow-100">『「先ほどのプロンプトが拒否された理由を教えてください」をコピー』</strong>ボタンをクリックし、クリップボードにコピーされたテキストを、AIにそのままペーストすると、具体的な原因を教えてもらえます。
                           </p>
@@ -3259,13 +3379,16 @@ ${finalPrompt}
                         </div>
 
                         <button
-                          className="w-full text-xs bg-slate-700 hover:bg-slate-600 text-white px-3 py-2 rounded transition-colors flex items-center justify-center gap-2"
+                          className={`${isPolicyCopied ? 'bg-green-600 border-green-500/30' : 'bg-slate-700 hover:bg-slate-600 border-white/10'} text-white px-3 py-1.5 rounded transition-all inline-flex items-center justify-center gap-1.5 border font-bold active:scale-95`}
+                          style={{ fontSize: '10px', minWidth: '120px', position: 'relative' }}
                           onClick={() => {
                             navigator.clipboard.writeText("先ほどのプロンプトが拒否された理由を教えてください。具体的にどの単語・表現がコンテンツポリシーに違反していましたか？");
-                            showStatus("クリップボードにコピーしました");
+                            setIsPolicyCopied(true);
+                            setTimeout(() => setIsPolicyCopied(false), 2000);
                           }}
                         >
-                          📋 「先ほどのプロンプトが拒否された理由を教えてください」をコピー
+                          <span style={{ visibility: isPolicyCopied ? 'hidden' : 'visible' }}>📋 「先ほどのプロンプトが拒否された理由を教えてください」をコピー</span>
+                          {isPolicyCopied && <span style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>✅ コピー完了</span>}
                         </button>
 
                         <textarea
@@ -3277,7 +3400,8 @@ ${finalPrompt}
                         />
 
                         <button
-                          className="w-full bg-yellow-600 hover:bg-yellow-500 disabled:bg-slate-700 disabled:opacity-50 text-white font-bold py-2 rounded-lg flex items-center justify-center gap-2 transition-all text-sm"
+                          className="w-full bg-yellow-600 hover:bg-yellow-500 disabled:bg-slate-700 disabled:opacity-50 text-white font-bold py-1.5 rounded-lg flex items-center justify-center gap-2 transition-all"
+                          style={{ fontSize: '12px' }}
                           onClick={regenerateSafePrompt}
                           disabled={isFixingPolicy || !policyErrorMsg.trim() || !finalPrompt}
                         >
