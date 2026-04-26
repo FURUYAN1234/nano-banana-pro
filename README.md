@@ -372,6 +372,9 @@ Developed by **FURU**
 
 ## 搭 ChangeLog
 
+### v2.71.0-alpha (2026-04-27)
+- **[Fix]** Enforced vertical text (tategaki) in all speech bubbles via VERTICAL TEXT PROTOCOL — prevents horizontal/vertical text mixing in ChatGPT-generated manga. Added 12-rule detailed protocol covering character stacking direction, punctuation placement, small kana positioning, long vowel mark rotation, and bubble shape constraints. Also added base-level text direction rule for all modes. / 吹き出し内の縦書き（tategaki）をVERTICAL TEXT PROTOCOLで強制 — ChatGPT生成時の横書き混在を防止。文字の積み重ね方向・句読点配置・小仮名位置・長音符回転・吹き出し形状制約など12項目の詳細プロトコルを追加。全モード共通の基本テキスト方向ルールも追加。
+
 ### v2.70.0-alpha (2026-04-27)
 - **[Feature]** Merged STABLE LAYOUT FOUNDATION into ChatGPT enhancement block 窶・A4 portrait canvas lock, panel frame immutability, distortion constraints, and composition priority order are now auto-injected to prevent elongated images at generation time. / ChatGPT蠑ｷ蛹悶ヶ繝ｭ繝・け縺ｫSTABLE LAYOUT FOUNDATION繧堤ｵｱ蜷医・4邵ｦ豈皮紫繝ｭ繝・け繝ｻ繝代ロ繝ｫ蜑帑ｽ灘ｮ｣險繝ｻ豁ｪ縺ｿ蛻ｶ邏・・讒区・蜆ｪ蜈磯・ｽ阪ｒ蛻晏屓逕滓・譎ゅ↓閾ｪ蜍募沂霎ｼ縺励∫ｴｰ髟ｷ逕ｻ蜒上ｒ莠磯亟縲・
 - **[Feature]** Added post-generation aspect ratio fix prompt copy button for cases where prevention fails. / 莠磯亟縺ｧ繧らｴｰ髟ｷ逕ｻ蜒上′蜃ｺ縺溷ｴ蜷医・莠句ｾ御ｿｮ豁｣繝励Ο繝ｳ繝励ヨ繧ｳ繝斐・繝懊ち繝ｳ繧定ｿｽ蜉縲・
