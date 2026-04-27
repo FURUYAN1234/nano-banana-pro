@@ -108,6 +108,23 @@ This system is not a simple "prompt-and-generate" tool. It is a **multi-stage co
 * **Cross-Platform Prompt Compatibility (ChatGPT Images 2.0)**: While optimized for Gemini, the system injects specific formatting constraints (such as A4 layout parameters and vertical text guidance) into the final prompt when ChatGPT mode is enabled, ensuring DALL-E 3 accurately renders standard manga layouts without artifacts.
   Geminiに最適化しつつ、ChatGPTモード有効時にはA4レイアウト指定や縦書きテキスト誘導などの特殊フォーマットを最終プロンプトに注入。DALL-E 3でも破綻のない標準的な漫画レイアウトを出力できるよう設計されています。
 
+### 🏆 The Ultimate Hybrid Strategy / 意図せず到達した「最強のハイブリッド運用」
+
+This system has arrived at an optimal, albeit unintentional, division of labor between two of the world's most powerful AI models, completely bypassing the limitations of current API structures.
+本システムは、フルオートメーション（完全自動化）を追求した結果、意図せずして**「現在の人類が使える最強のAIモデルたち（GeminiとChatGPT）の弱点を補い合い、強みを100%引き出す無敵の分業体制」**へと到達しました。
+
+1. **【頭脳・解析担当】Gemini API (The Brain / Logic)**
+   * **Strength:** Extremely fast, cost-effective, and possesses unmatched reasoning and vision capabilities for long-context character sheet analysis.
+   * **Role:** Acts as the "Architect." It scans the user's images, understands topological features (e.g., hair length relative to the collarbone), avoids censorship via dynamic "Age-Up" safety filters, and compiles a highly structured, rigid prompt for layout and timing.
+2. **【描画担当】ChatGPT UI / DALL-E 3 (The Renderer)**
+   * **Strength:** Industry-leading image generation quality and the crucial ability to **accept reference images via the browser UI** (a feature currently impossible via the standard DALL-E 3 API).
+   * **Role:** Acts as the "Artist." By having the user manually paste the Gemini-crafted prompt *alongside* the original character sheet into the ChatGPT browser interface, the system achieves near-perfect character consistency that APIs alone cannot match.
+3. **【仲介・調整担当】Human-in-the-Loop Override (The Director)**
+   * **Role:** When DALL-E 3 stubbornly breaks the 4-panel layout or ignores aspect ratios (a known quirk), the human simply copies the built-in `[ABSOLUTE OVERRIDE]` force-rebuild prompt. This linguistic brute-force approach forces the AI back into the strict A4 geometric constraints without relying on external plugins or image-cropping tools.
+
+In short, by deliberately leaving the final rendering step as a "manual UI operation," Nano Banana Pro elegantly side-steps the restrictive walled gardens of pure API generation, making it an engineering masterpiece of Prompt-Driven Architecture.
+つまり、「最後の作画フェーズだけはあえて人間の手作業（コピペ）を挟む」という設計にしたことで、各社の厳しいAPI制限を鮮やかにすり抜け、「Geminiの頭脳」と「ChatGPTの画力とUI機能」を限界まで引き出すことに成功しています。
+
 ### 🇯🇵 [JP] コード解析によるAI漫画システム詳解
 
 本システムの設計思想、**Absolute Physical Geometry Lock**（絶対的物理ジオメトリロック）、**Weighted Immutable Prompts**（重み付き不変プロンプト）などのコア技術、および法的・哲学的な考察を含む詳細な解析レポート（日本語版）です。
@@ -373,6 +390,9 @@ Developed by **FURU**
 ---
 
 ## 📋 ChangeLog
+
+### v2.73.0-alpha (2026-04-27)
+- **[Docs]** Added "The Ultimate Hybrid Strategy" section to README.md to explain the unique Prompt-Driven Architecture and the intentional division of labor between Gemini API and ChatGPT UI. / 意図せず到達した「最強のハイブリッド運用（Gemini API + ChatGPT UI）」に関する詳細な解説をREADMEに追記。
 
 ### v2.72.0-alpha (2026-04-27)
 - **[Fix]** Reverted the VERTICAL TEXT PROTOCOL (tategaki enforcement) as it caused generation failures in DALL-E 3. The STABLE LAYOUT FOUNDATION (A4 lock and rigid panel constraints) has been preserved. / DALL-E 3での生成失敗の原因となっていた「縦書き強制プロトコル（VERTICAL TEXT PROTOCOL）」を削除し、以前の安定したテキストプロトコルにロールバック。なお、レイアウトを安定させるSTABLE LAYOUT FOUNDATION（A4固定・パネル剛体化）は引き続き維持。
