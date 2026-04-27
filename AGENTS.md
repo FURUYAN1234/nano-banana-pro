@@ -52,3 +52,8 @@ All apps should use this four-file structure for multi-agent development.
 - **警告**: 本プロジェクト (nano-banana-pro) において、デプロイやリリースを指示された場合、`npm run deploy` (GitHub Pages) だけでは**絶対に完了とみなさないこと**。
 - 汎用的なデプロイルールで満足せず、必ず `docs/deploy.md` を直接読み込み、**Phase 1 から Phase 7 までの全ての手順（特に Phase 6 の Hugging Face デプロイと Phase 7 のローカルフォルダ同期）を確実に実行する**こと。
 - この確認プロセスをスキップしたエージェントは重大なルール違反とみなされる。
+
+### 6. ファイル更新・デプロイ時の事前確認義務 (Mandatory User Approval)
+- **警告**: デプロイの実行や、ファイルの更新・リモートへのアップロード（`git push`）を行う際は、**絶対にAIの独断で実行してはならない**。
+- 必ず事前に「修正内容（差分）」をユーザーに提示し、「アップロード（またはデプロイ）してよいか」を尋ねること。
+- ユーザーから明確に「OK」の許可が出た後でのみ、確実に対象のコマンド（`git push` や `npm run deploy` 等）を実行すること。
