@@ -47,3 +47,8 @@ All apps should use this four-file structure for multi-agent development.
 ### 4. Knowledge Sync（記憶の共有化）
 - 迷ったら推測する前に `docs/` を読む。
 - 深刻なバグ修正、新たなプラットフォーム固有の仕様（Vite、HF Spaces、GH Pagesなど）を発見した場合、単にコードを直して終わりにせず、必ず `docs/troubleshooting.md` 等に事象と対策を書き残す。
+
+### 5. Deployment Guardrail (Hugging Face & Local Sync 漏れ防止)
+- **警告**: 本プロジェクト (nano-banana-pro) において、デプロイやリリースを指示された場合、`npm run deploy` (GitHub Pages) だけでは**絶対に完了とみなさないこと**。
+- 汎用的なデプロイルールで満足せず、必ず `docs/deploy.md` を直接読み込み、**Phase 1 から Phase 7 までの全ての手順（特に Phase 6 の Hugging Face デプロイと Phase 7 のローカルフォルダ同期）を確実に実行する**こと。
+- この確認プロセスをスキップしたエージェントは重大なルール違反とみなされる。
