@@ -374,6 +374,9 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v2.72.0-alpha (2026-04-27)
+- **[Fix]** Reverted the VERTICAL TEXT PROTOCOL (tategaki enforcement) as it caused generation failures in DALL-E 3. The STABLE LAYOUT FOUNDATION (A4 lock and rigid panel constraints) has been preserved. / DALL-E 3での生成失敗の原因となっていた「縦書き強制プロトコル（VERTICAL TEXT PROTOCOL）」を削除し、以前の安定したテキストプロトコルにロールバック。なお、レイアウトを安定させるSTABLE LAYOUT FOUNDATION（A4固定・パネル剛体化）は引き続き維持。
+
 ### v2.71.0-alpha (2026-04-27)
 - **[Fix]** Enforced vertical text (tategaki) in all speech bubbles via VERTICAL TEXT PROTOCOL — prevents horizontal/vertical text mixing in ChatGPT-generated manga. Added 12-rule detailed protocol covering character stacking direction, punctuation placement, small kana positioning, long vowel mark rotation, and bubble shape constraints. Also added base-level text direction rule for all modes. / 吹き出し内の縦書き（tategaki）をVERTICAL TEXT PROTOCOLで強制 — ChatGPT生成時の横書き混在を防止。文字の積み重ね方向・句読点配置・小仮名位置・長音符回転・吹き出し形状制約など12項目の詳細プロトコルを追加。全モード共通の基本テキスト方向ルールも追加。
 
