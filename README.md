@@ -150,9 +150,9 @@ A detailed analysis report (English version) covering the system's design philos
 
 ## 🛠 Featured Protocols: Super FURU Manga Protocol / 搭載プロトコル
 
-1. **ABSOLUTE PHYSICAL GEOMETRY LOCK**
-Controls 4-panel layout, aspect ratio, and perspective at the pixel level to suppress hallucinations.
-レイアウト、アスペクト比、パースをピクセル単位で制御。ハルシネーション（AIの誤描画）を物理的に抑制します。
+1. **ABSOLUTE PHYSICAL GEOMETRY LOCK & MARGIN CONTROL**
+Controls 4-panel layout, aspect ratio, and perspective at the pixel level, while explicitly enforcing rigid, properly-sized white margins (gutters) between panels. Unlike typical AI manga that suffer from absurdly wide white gaps or default entirely to borderless "full-bleed" (tachikiri) compositions, this system ensures a perfectly balanced, professional comic-book aesthetic.
+レイアウト、アスペクト比、パースをピクセル単位で制御すると同時に、コマとコマの間の「白い余白（ガター）」の幅を適正かつ厳格に強制します。一般的なAI漫画にありがちな「異様に余白が広すぎる」「逆に枠線がなく全コマがタチキリ（フチなし）になってしまう」といったレイアウトの制御不良を排除し、プロの商業誌のような美しく整頓されたページ構成を保証します。
 
 2. **Weighted Immutable Prompts**
 Weights character-specific features to prevent "fusion" or blending between characters.
