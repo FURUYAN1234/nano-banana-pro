@@ -1,4 +1,4 @@
-# Nano Banana 2 and ChatGPT image 2.0 Powered Super AI 4-koma System
+# Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System
 
 > **"To what extent can humans step away from the creative process?"**
 > **「人間は、どこまで制作から降りられるのか？」**
@@ -81,8 +81,8 @@ Users can amplify the AI's script direction with specific enhancement toggles (e
 
 ### 🤖 ChatGPT Images 2.0 Mode / ChatGPT画像生成サポート
 
-A dedicated formatting protocol to optimize prompts for ChatGPT's Chat GPT image 2.0, enforcing A4 portrait orientation, vertical Japanese text, and right-to-left reading flow.
-ChatGPT (Chat GPT image 2.0) での生成に最適化された専用プロンプトモードを搭載。A4縦長のキャンバス指定や、日本語の縦書き、右から左への視線誘導など、ChatGPT特有の制限を突破するためのフォーマットを自動付与します。
+A dedicated formatting protocol to optimize prompts for ChatGPT's ChatGPT Images 2.0, enforcing A4 portrait orientation, vertical Japanese text, and right-to-left reading flow.
+ChatGPT (ChatGPT Images 2.0) での生成に最適化された専用プロンプトモードを搭載。A4縦長のキャンバス指定や、日本語の縦書き、右から左への視線誘導など、ChatGPT特有の制限を突破するためのフォーマットを自動付与します。
 
 ---
 
@@ -105,8 +105,8 @@ This system is not a simple "prompt-and-generate" tool. It is a **multi-stage co
 * **Deterministic Camera Diversity**: Fisher-Yates shuffle mathematically guarantees that all 4 panels use different camera angles — the probability of any two panels sharing the same angle is zero.
   Fisher-Yatesシャッフルにより、4パネルが同じカメラアングルになる確率を数学的にゼロにします。
 
-* **Cross-Platform Prompt Compatibility (ChatGPT Images 2.0)**: While optimized for Gemini, the system injects specific formatting constraints (such as A4 layout parameters and vertical text guidance) into the final prompt when ChatGPT mode is enabled, ensuring Chat GPT image 2.0 accurately renders standard manga layouts without artifacts.
-  Geminiに最適化しつつ、ChatGPTモード有効時にはA4レイアウト指定や縦書きテキスト誘導などの特殊フォーマットを最終プロンプトに注入。Chat GPT image 2.0でも破綻のない標準的な漫画レイアウトを出力できるよう設計されています。
+* **Cross-Platform Prompt Compatibility (ChatGPT Images 2.0)**: While optimized for Gemini, the system injects specific formatting constraints (such as A4 layout parameters and vertical text guidance) into the final prompt when ChatGPT mode is enabled, ensuring ChatGPT Images 2.0 accurately renders standard manga layouts without artifacts.
+  Geminiに最適化しつつ、ChatGPTモード有効時にはA4レイアウト指定や縦書きテキスト誘導などの特殊フォーマットを最終プロンプトに注入。ChatGPT Images 2.0でも破綻のない標準的な漫画レイアウトを出力できるよう設計されています。
 
 ### 🏆 The Ultimate Hybrid Strategy / 「最強のハイブリッド運用」
 
@@ -117,19 +117,19 @@ This system has arrived at an optimal division of labor between two of the world
    * **Strength / 強み:** Extremely fast, cost-effective, and possesses unmatched reasoning and vision capabilities for long-context character sheet analysis. / 非常に高速かつ低コストであり、長文のキャラクター設定や画像解析において比類ない推論能力と視覚認識能力を持ちます。
    * **Role / 役割:** Acts as the "Architect." It scans the user's images, understands topological features (e.g., hair length relative to the collarbone), avoids censorship via dynamic "Age-Up" safety filters, and compiles a highly structured, rigid prompt for layout and timing. / 「設計者」として機能します。ユーザーの画像をスキャンしてトポロジー的特徴（鎖骨に対する髪の長さなど）を理解し、動的な安全フィルターで検閲を回避しつつ、レイアウトとコマ割りのための高度に構造化された厳密なプロンプトを構築します。
    * **Google Search Grounding (Auto-Deep Dive) / 自律的リサーチ機能:** When generating from text prompts without images, the system automatically enables Google Search Grounding. Gemini dynamically researches the theme in real-time, fetching background context and trivia not explicitly mentioned in the prompt, resulting in surprisingly rich and highly detailed scenario generation. / 画像無しのテキストお題で生成する際、システムは自動的にGoogle Search Groundingを有効化します。短いお題からGeminiが自律的にリアルタイムWeb検索を行い、プロンプトに書かれていない背景知識や雑学を勝手に深掘りしてシナリオに組み込むため、ユーザーの指定を遥かに超えるリッチで解像度の高いストーリー構築を実現します。
-2. **【描画担当】ChatGPT UI / Chat GPT image 2.0 (The Renderer)**
-   * **Strength / 強み:** Industry-leading image generation quality and the crucial ability to **accept reference images via the browser UI** (a feature currently impossible via the standard Chat GPT image 2.0 API). / 業界最高水準の画像生成品質と、**ブラウザUI経由で参照画像を受け付ける**という極めて重要な能力（現在の標準Chat GPT image 2.0 APIでは不可能な機能）を備えています。
+2. **【描画担当】ChatGPT UI / ChatGPT Images 2.0(The Renderer)**
+   * **Strength / 強み:** Industry-leading image generation quality and the crucial ability to **accept reference images via the browser UI** (a feature currently impossible via the standard ChatGPT Images 2.0 API). / 業界最高水準の画像生成品質と、**ブラウザUI経由で参照画像を受け付ける**という極めて重要な能力（現在の標準ChatGPT Images 2.0 APIでは不可能な機能）を備えています。
    * **Role / 役割:** Acts as the "Artist." By having the user manually paste the Gemini-crafted prompt *alongside* the original character sheet into the ChatGPT browser interface, the system achieves near-perfect character consistency that APIs alone cannot match. / 「作画者」として機能します。ユーザーがGeminiの構築したプロンプトをキャラクター設定画と*一緒に*手動でChatGPTに貼り付けることで、API単体では到達できない完璧に近いキャラクターの一貫性を実現します。
 3. **【仲介・調整担当】Human-in-the-Loop Override (The Director)**
-   * **Role / 役割:** When Chat GPT image 2.0 stubbornly breaks the 4-panel layout or ignores aspect ratios (a known quirk), the human simply copies the built-in `[ABSOLUTE OVERRIDE]` force-rebuild prompt. This linguistic brute-force approach forces the AI back into the strict A4 geometric constraints without relying on external plugins or image-cropping tools. / Chat GPT image 2.0が頑なに4コマレイアウトを崩したりアスペクト比を無視した場合（既知の癖）、人間は組み込みの `[ABSOLUTE OVERRIDE]` 強制再構築プロンプトをコピーして投げるだけです。この言語的な力技により、外部プラグイン等に頼ることなく、AIを厳密なA4幾何学制約へと強制的に引き戻します。
+   * **Role / 役割:** When ChatGPT Images 2.0 stubbornly breaks the 4-panel layout or ignores aspect ratios (a known quirk), the human simply copies the built-in `[ABSOLUTE OVERRIDE]` force-rebuild prompt. This linguistic brute-force approach forces the AI back into the strict A4 geometric constraints without relying on external plugins or image-cropping tools. / ChatGPT Images 2.0 が頑なに4コマレイアウトを崩したりアスペクト比を無視した場合（既知の癖）、人間は組み込みの `[ABSOLUTE OVERRIDE]` 強制再構築プロンプトをコピーして投げるだけです。この言語的な力技により、外部プラグイン等に頼ることなく、AIを厳密なA4幾何学制約へと強制的に引き戻します。
 
-In short, by deliberately leaving the final rendering step as a "manual UI operation," Nano Banana 2 and ChatGPT image 2.0 Powered Super AI 4-koma System elegantly side-steps the restrictive walled gardens of pure API generation, making it an engineering masterpiece of Prompt-Driven Architecture.
+In short, by deliberately leaving the final rendering step as a "manual UI operation," Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System elegantly side-steps the restrictive walled gardens of pure API generation, making it an engineering masterpiece of Prompt-Driven Architecture.
 つまり、「最後の作画フェーズだけはあえて人間の手作業（コピペ）を挟む」という設計にしたことで、各社の厳しいAPI制限を鮮やかにすり抜け、「Geminiの頭脳」と「ChatGPTの画力とUI機能」を限界まで引き出すことに成功しています。
 
 ### 📖 The Philosophy of the 1-Page (4-Koma) Limit / なぜ「1ページ（4コマ）制」にこだわるのか？
 
-While many users desire the ability to generate long, multi-page comic books, Nano Banana 2 and ChatGPT image 2.0 Powered Super AI 4-koma System intentionally restricts generation to a single 1-page (4-panel) format. This is not a technical limitation of the code, but a strategic decision based on the current boundaries of Generative AI:
-多くのユーザーは複数ページの長編漫画を全自動生成することを望みますが、Nano Banana 2 and ChatGPT image 2.0 Powered Super AI 4-koma System は意図的に「1ページ（4コマ）完結」のフォーマットに制限しています。これは実装上の妥協ではなく、現在の生成AIの限界を見据えた戦略的な選択です。
+While many users desire the ability to generate long, multi-page comic books, Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System intentionally restricts generation to a single 1-page (4-panel) format. This is not a technical limitation of the code, but a strategic decision based on the current boundaries of Generative AI:
+多くのユーザーは複数ページの長編漫画を全自動生成することを望みますが、Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System は意図的に「1ページ（4コマ）完結」のフォーマットに制限しています。これは実装上の妥協ではなく、現在の生成AIの限界を見据えた戦略的な選択です。
 
 1. **Content Dilution & Identity Drift (内容の希薄化とキャラクター崩壊):** The fundamental rule of current AI generation is that as page count increases, both story density and visual consistency decrease inversely. Stretching a prompt across multiple pages causes the AI to lose focus, resulting in hollow plotlines, repetitive dialogue, and inevitable visual distortions (costume changes, facial drift) without LoRA fine-tuning. This is precisely why typical multi-page AI comics often feature extremely limited casts (1 to 3 characters) engaged in simple, repetitive actions like "battling"—the creators must strip away complexity just to keep the AI from breaking down. A dense, high-impact 4-panel format is the absolute "sweet spot" for maximizing both narrative punch and zero-shot visual consistency. / 現在のAI生成における絶対的な法則として、「ページ数に反比例して、キャラクターのビジュアルだけでなく、話の構成や内容そのものも薄くなってしまう」という問題があります。複数ページにまたがってプロンプトを引き伸ばすと、AIのコンテキストが散漫になり、中身のないストーリーや同じセリフの反復、そして追加学習（LoRA）なしでは避けられないビジュアルの崩壊（Identity Drift）を引き起こします。**世にある複数ページのAI漫画が「登場人物が1〜3人程度で、ひたすらバトルしているだけの展開」になりがちなのは、まさにこれが原因です。** AIの破綻を防いでページ数を稼ぐために、複雑な掛け合いや緻密なストーリー構成を犠牲にせざるを得ないのです。物語の「オチ」の鋭さと、ゼロショットでの完璧な一貫性を両立できる限界のスイートスポットこそが、この「4コマ」という高密度なフォーマットなのです。
 2. **Cognitive Load for Human-in-the-Loop (作業負荷の最適化):** Because our Ultimate Hybrid Strategy requires the user to manually copy-paste the final prompt into ChatGPT to bypass API limitations, asking a human to do this for multiple pages would be tedious and agonizing. A 1-page output provides a perfectly "snackable" size for rapid, stress-free creation and social media sharing. / 最強のハイブリッド運用では、APIの制限を回避するためにユーザーが手動でChatGPTにプロンプトをコピペする必要があります。これを複数ページ分も手作業でやらせるのは苦痛でしかありません。SNSでサクッとシェアでき、ユーザーがストレスなく生成を楽しめるサイズ感として、1ページ（4コマ）が最適に機能します。
@@ -139,14 +139,14 @@ While many users desire the ability to generate long, multi-page comic books, Na
 In the typical AI workflow, creators upload a clean image of a character and provide a separate, lengthy text prompt detailing their traits. This system fundamentally rejects that approach. Instead, we require the character's setting text to be visually written *inside* the reference image itself (creating a "One-Sheet Context"). This yields three massive advantages:
 一般的なAI漫画の運用では、「キャラクターの画像ファイル」と「設定を書いた長文テキスト」を別々に入力するのが普通です。しかし、本システムはこの手法を根本から否定し、**「キャラクター設定のテキストは、画像の中に直接文字として書き込む（One-Sheet Context）」**という運用を推奨しています。これには3つの絶大なメリットがあります：
 
-1. **Multimodal Binding (視覚と概念の強固なロック):** When image and text are provided separately, models like Chat GPT image 2.0 often suffer from "attention split"—they either prioritize the text and ignore the face, or prioritize the face and forget the text. By embedding the text physically into the image, the Vision AI processes them as a single, unified entity. "This visual face" mathematically equals "these written traits," drastically reducing identity drift. / 画像とテキストを別々に入れると、AIは「どちらを優先すべきか」で迷い、文字設定を忘れたり画像を無視したりします。文字を画像内に埋め込むことで、Vision AIは「この姿＝この文字情報」として完全に同一の概念としてロックし、キャラクターのブレ（Identity Drift）を劇的に低下させます。
+1. **Multimodal Binding (視覚と概念の強固なロック):** When image and text are provided separately, models like ChatGPT Images 2.0 often suffer from "attention split"—they either prioritize the text and ignore the face, or prioritize the face and forget the text. By embedding the text physically into the image, the Vision AI processes them as a single, unified entity. "This visual face" mathematically equals "these written traits," drastically reducing identity drift. / 画像とテキストを別々に入れると、AIは「どちらを優先すべきか」で迷い、文字設定を忘れたり画像を無視したりします。文字を画像内に埋め込むことで、Vision AIは「この姿＝この文字情報」として完全に同一の概念としてロックし、キャラクターのブレ（Identity Drift）を劇的に低下させます。
 2. **Prompt Override Prevention (プロンプト競合の回避):** If you consume text tokens to describe the character's hair, eyes, and clothes, you steal precious attention away from the complex 4-panel layout constraints and scenario instructions. By offloading character traits into the image space, 100% of the text prompt tokens can be purely dedicated to "directing the manga." / テキスト側で「金髪で青目で…」と長々とキャラ設定を書くと、肝心の「漫画のコマ割りや演出」を指示するプロンプトの枠（トークンとAttention）を圧迫してしまいます。設定情報を画像（Vision側）に逃がすことで、テキストプロンプトのリソースを100%「漫画の演出」に全振りできるのです。
 3. **Frictionless Workflow (コピペ作業の排除):** For the human-in-the-loop, uploading one image is vastly superior to maintaining and pasting giant blocks of character lore alongside the layout prompts every single time. / 人間側の運用コストとして、毎回「画像」と「長文設定」の2つをコピペするのは苦痛です。文字入りのシートを1枚投げるだけで、AIが勝手に文字を読んで理解してくれる究極にスマートな運用が可能になります。
 
 ### 🎭 Comedy Structure Engineering / なぜAIに「面白くして」と言っても面白くならないのか？
 
 Most AI-generated manga suffers from a fundamental problem: telling the AI to "make it funny" produces bland, predictable content. This is not a capability limitation of AI—it is a **design failure** in the prompt. Nano Banana 2 and ChatGPT image 2.0 Powered Super AI 4-koma System solves this by embedding a structured comedy methodology directly into its scenario generation engine.
-AIに「面白くして」と指示しても、退屈で予測可能なコンテンツしか出てきません。これはAIの能力の問題ではなく、**プロンプト設計の破綻**です。Nano Banana 2 and ChatGPT image 2.0 Powered Super AI 4-koma System は、構造化されたお笑いメソッドをシナリオ生成エンジンに直接組み込むことでこの問題を解決しています。
+AIに「面白くして」と指示しても、退屈で予測可能なコンテンツしか出てきません。これはAIの能力の問題ではなく、**プロンプト設計の破綻**です。Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System は、構造化されたお笑いメソッドをシナリオ生成エンジンに直接組み込むことでこの問題を解決しています。
 
 **The Core Formula / 笑いの本質:**
 
@@ -448,7 +448,7 @@ This project is part of an integrated ecosystem designed to support AI-powered m
 
 ### Ecosystem Components / 構成システム
 
-#### 1. Nano Banana 2 and ChatGPT image 2.0 Powered Super AI 4-koma System
+#### 1. Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System
 A system specialized in creating 4-panel manga with AI.
 AIを活用した4コマ漫画制作に特化したシステムです。
 - [Explanation / 解説](https://note.com/happy_duck780/n/ndf063558c1f5)
@@ -511,7 +511,7 @@ Developed by **FURU**
 - **[Feature]** Added post-generation aspect ratio fix prompt copy button for cases where prevention fails. / 予防でも細長画像が出た場合の事後修正プロンプトコピーボタンを追加。
 - **[UI]** Unified all copy buttons (prompt copy, fix prompt, policy query) with consistent compact size, copy-complete toggle (2s green flash), and width-preserving text swap. / 全コピーボタン（プロンプト・修正・ポリシー）のサイズ・コピー完了トグル（2秒緑表示）・横幅維持を統一。
 - **[UI]** Fixed content policy panel font sizes and button styles to match PRO TIP section. / コンテンツポリシーパネルの文字サイズ・ボタンスタイルをPRO TIPセクションと統一。
-- **[Fix]** Updated ChatGPT format enforcement header from DALL-E 3 to GPT-image 2.0. / ChatGPTフォーマット強制ヘッダーをDALL-E 3からGPT-image 2.0に更新。
+- **[Fix]** Updated ChatGPT format enforcement header from DALL-E 3 to ChatGPT Images 2.0. / ChatGPTフォーマット強制ヘッダーをDALL-E 3からChatGPT Images 2.0に更新。
 
 ### v2.69.0-alpha (2026-04-26)
 - **[Fix]** Resolved logical contradiction in Panel 4 prompt generation where "SOLO SHOT" and "MANDATORY BACKGROUND CAST" were emitted simultaneously. Background casts are now automatically merged into the panel characters list to prevent "SOLO SHOT" triggers when other characters are present. / Panel 4のプロンプトで「SOLO SHOT（他キャラ描くな）」と「MANDATORY BACKGROUND CAST（残り全員描け）」が同時出力される論理矛盾バグを修正。背景キャストがいる場合はSOLO SHOTを出力せず、自動的に全登場リストへ統合するように改善。
@@ -523,7 +523,7 @@ Developed by **FURU**
 - **[Feature]** Added Character Silhouette Isolation (G-Pen outline, background simplification, spotlight effect) to ChatGPT Images 2.0 Mode. / ChatGPT Images 2.0 強化プロンプトに人物浮き出し強化（Gペンアウトライン・背景簡略化・スポットライト効果）を追加。
 
 ### v2.66.0-alpha (2026-04-23)
-- **[Docs]** Updated README to reflect ChatGPT Images 2.0 Mode and Scenario Enhancement features. / READMEを更新し、ChatGPT画像生成モードおよびシナリオ強化機能についての記載を実態に合わせて追記。
+- **[Docs]** Updated README to reflect ChatGPT Images 2.00 Mode and Scenario Enhancement features. / READMEを更新し、ChatGPT画像生成モードおよびシナリオ強化機能についての記載を実態に合わせて追記。
 
 ### v2.65.0-alpha (2026-04-22)
 - **[Fix]** Removed an extra colon from the DALL-E 3 instructions in PRO TIP. / PRO TIPのChatGPT向け案内文から余計なコロン（：）を削除。
