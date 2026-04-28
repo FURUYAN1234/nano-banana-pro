@@ -484,6 +484,13 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v2.76.0-alpha (2026-04-28)
+- **[Feature]** Added Visual Gag Auto-Mapping: each gap technique (exaggeration, reversal, absurdity, etc.) now auto-recommends matching EMOTION tags and visual gag directions in the scenario. / ズレ技法→ビジュアルギャグ自動マッピングを追加。誇張→CHIBI_GAG+身体変形、緊張と緩和→GEKIGA→BLANKの絵柄急変等、各技法に推奨EMOTIONタグと視覚演出を紐付け。
+- **[Feature]** Added Punchline Variety Enforcement (6 patterns): Explosion, Surreal Silence, Social Death, Self-Contained, Reversal Punchline, and Repetition Escalation. Prevents repetitive punchline patterns. / オチの多様化ルール（6系統: 爆発型/静寂型/社会的死型/自己完結型/逆転オチ型/天丼爆発型）を追加。ワンパターンなオチを防止。
+- **[Feature]** Added Gag Tone Variation (3 modes): High-Tension Explosion, Surreal Silence, and Intellectual Black Comedy. / ギャグのトーンバリエーション（ハイテンション爆発系/シュール静寂系/知性派ブラック系）を追加。
+- **[Feature]** Added Comedy Structure Verification Checklist to STEP2.5 enhancement prompt. AI self-validates Setup→Punchline structure, energy concentration, gap magnitude, visual gag presence, and dialogue-visual synergy before output. / STEP2.5強化プロンプトに笑い構造の検証チェックリストを追加。フリ→オチ構造・エネルギー集中度・ズレの大きさ・ビジュアルギャグ有無・セリフとビジュアルの連携を出力前に自己検証。
+- **[Docs]** Added Comedy Structure Engineering section to README with mathematical formulas, 3-layer architecture explanation, and system reproducibility analysis. / READMEにComedy Structure Engineeringセクションを追加（数式モデル・3層アーキテクチャ解説・再現性分析）。
+
 ### v2.75.0-alpha (2026-04-28)
 - **[Feature]** Integrated "Comedy Structure Engineering" methodology into both the base scenario generation prompt (STEP2) and the Dialogue/Gag Enhancement prompt (STEP2.5). The system now explicitly applies structured comedy techniques — including Setup (フリ), Gap/Deviation (ボケ), Punchline (ツッコミ/オチ), Repetition Escalation (天丼), Role Reversal (逆転), Absurdity (不条理), and Tension-Release (緊張と緩和) — to produce funnier, more dynamic 4-panel manga scenarios. / シナリオ生成（STEP2）とセリフ・ギャグ強化（STEP2.5）の両方に「お笑い構造メソッド」を統合。フリ→ボケ→ツッコミ→オチの構成マッピング、天丼・逆転・不条理・緊張と緩和・置換・誇張・ノリツッコミ・かぶせ等の技法を明示的に適用し、より面白くダイナミックな4コマ漫画シナリオを生成するよう改善。
 
