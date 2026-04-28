@@ -2,13 +2,13 @@
 
 ## Current Status
 - `nano-banana-pro` の「画像比率事後修正プロンプト」において、4コマ目下部の必須ウォーターマークが失われる問題を修正し、再描画の指示を追加しました（v2.74.0-alpha）。
-- `src/App.jsx`, `package.json`, `index.html`, `README.md` の4ファイルを更新済み。
+- v2.74.0-alpha のリリースとすべての環境（GitHub Pages, HF Spaces, ローカル `C:\nano-banana-pro-main`）へのデプロイ・同期が完了しました。
 
 ## Remaining Tasks / Next Steps
-- デプロイの完了（HFとローカル同期を含む全プロセス）を待機中。
+- 追加の要望がなければ、このタスクは完了です。
 
 ## Verification State
-- `nano-banana-pro` のコミットおよび `git push`、`npm run deploy`、`npm run deploy:hf` などのデプロイプロセスを進行中。
+- すべてのデプロイ環境で正常な更新を確認済み。
 
 ## Risks & Notes
-- デプロイプロセスにおいては `docs/deploy.md` に従い、全フェーズを実行すること。
+- デプロイプロセスにおいては `docs/deploy.md` に従い、全フェーズを実行完了。

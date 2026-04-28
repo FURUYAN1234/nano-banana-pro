@@ -1,3 +1,3 @@
-### v2.68.0-alpha (2026-04-26)
+**[Fix]** Updated the "ABSOLUTE OVERRIDE" forced layout-rebuild prompt to explicitly demand the inclusion of the required watermarks on the 4th panel.
 
-- **[Feature]** Added 6 new EMOTION styles (SPEED, FLASHBACK, UKIYOE, POP_ART, SKETCH, NEON) and 2 new UI buttons for Scenario Enhancement (Panel Layout, Time Effect). / 6つの新しいEMOTIONスタイル（SPEED等）と、シナリオ強化用の「コマ割り」「時間演出」ボタンを追加。
+**[修正]** 画像比率事後修正プロンプト（ABSOLUTE OVERRIDE）使用時に、4コマ目下部の必須ウォーターマークが消失する問題を修正。再構築時にも透かしを再描画するよう明示的な指示を追加。

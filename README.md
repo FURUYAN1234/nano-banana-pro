@@ -409,6 +409,9 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v2.75.0-alpha (2026-04-28)
+- **[Feature]** Integrated "Comedy Structure Engineering" methodology into both the base scenario generation prompt (STEP2) and the Dialogue/Gag Enhancement prompt (STEP2.5). The system now explicitly applies structured comedy techniques — including Setup (フリ), Gap/Deviation (ボケ), Punchline (ツッコミ/オチ), Repetition Escalation (天丼), Role Reversal (逆転), Absurdity (不条理), and Tension-Release (緊張と緩和) — to produce funnier, more dynamic 4-panel manga scenarios. / シナリオ生成（STEP2）とセリフ・ギャグ強化（STEP2.5）の両方に「お笑い構造メソッド」を統合。フリ→ボケ→ツッコミ→オチの構成マッピング、天丼・逆転・不条理・緊張と緩和・置換・誇張・ノリツッコミ・かぶせ等の技法を明示的に適用し、より面白くダイナミックな4コマ漫画シナリオを生成するよう改善。
+
 ### v2.74.0-alpha (2026-04-27)
 - **[Fix]** Updated the "ABSOLUTE OVERRIDE" forced layout-rebuild prompt to explicitly demand the inclusion of the required watermarks on the 4th panel. / 画像比率事後修正プロンプト（ABSOLUTE OVERRIDE）使用時に、4コマ目下部の必須ウォーターマークが消失する問題を修正。再構築時にも透かしを再描画するよう明示的な指示を追加。
 
