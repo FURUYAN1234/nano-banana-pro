@@ -81,8 +81,8 @@ Users can amplify the AI's script direction with specific enhancement toggles (e
 
 ### 🤖 ChatGPT Images 2.0 Mode / ChatGPT画像生成サポート
 
-A dedicated formatting protocol to optimize prompts for ChatGPT's DALL-E 3, enforcing A4 portrait orientation, vertical Japanese text, and right-to-left reading flow.
-ChatGPT (DALL-E 3) での生成に最適化された専用プロンプトモードを搭載。A4縦長のキャンバス指定や、日本語の縦書き、右から左への視線誘導など、ChatGPT特有の制限を突破するためのフォーマットを自動付与します。
+A dedicated formatting protocol to optimize prompts for ChatGPT's Chat GPT image 2.0, enforcing A4 portrait orientation, vertical Japanese text, and right-to-left reading flow.
+ChatGPT (Chat GPT image 2.0) での生成に最適化された専用プロンプトモードを搭載。A4縦長のキャンバス指定や、日本語の縦書き、右から左への視線誘導など、ChatGPT特有の制限を突破するためのフォーマットを自動付与します。
 
 ---
 
@@ -105,8 +105,8 @@ This system is not a simple "prompt-and-generate" tool. It is a **multi-stage co
 * **Deterministic Camera Diversity**: Fisher-Yates shuffle mathematically guarantees that all 4 panels use different camera angles — the probability of any two panels sharing the same angle is zero.
   Fisher-Yatesシャッフルにより、4パネルが同じカメラアングルになる確率を数学的にゼロにします。
 
-* **Cross-Platform Prompt Compatibility (ChatGPT Images 2.0)**: While optimized for Gemini, the system injects specific formatting constraints (such as A4 layout parameters and vertical text guidance) into the final prompt when ChatGPT mode is enabled, ensuring DALL-E 3 accurately renders standard manga layouts without artifacts.
-  Geminiに最適化しつつ、ChatGPTモード有効時にはA4レイアウト指定や縦書きテキスト誘導などの特殊フォーマットを最終プロンプトに注入。DALL-E 3でも破綻のない標準的な漫画レイアウトを出力できるよう設計されています。
+* **Cross-Platform Prompt Compatibility (ChatGPT Images 2.0)**: While optimized for Gemini, the system injects specific formatting constraints (such as A4 layout parameters and vertical text guidance) into the final prompt when ChatGPT mode is enabled, ensuring Chat GPT image 2.0 accurately renders standard manga layouts without artifacts.
+  Geminiに最適化しつつ、ChatGPTモード有効時にはA4レイアウト指定や縦書きテキスト誘導などの特殊フォーマットを最終プロンプトに注入。Chat GPT image 2.0でも破綻のない標準的な漫画レイアウトを出力できるよう設計されています。
 
 ### 🏆 The Ultimate Hybrid Strategy / 「最強のハイブリッド運用」
 
@@ -117,11 +117,11 @@ This system has arrived at an optimal division of labor between two of the world
    * **Strength / 強み:** Extremely fast, cost-effective, and possesses unmatched reasoning and vision capabilities for long-context character sheet analysis. / 非常に高速かつ低コストであり、長文のキャラクター設定や画像解析において比類ない推論能力と視覚認識能力を持ちます。
    * **Role / 役割:** Acts as the "Architect." It scans the user's images, understands topological features (e.g., hair length relative to the collarbone), avoids censorship via dynamic "Age-Up" safety filters, and compiles a highly structured, rigid prompt for layout and timing. / 「設計者」として機能します。ユーザーの画像をスキャンしてトポロジー的特徴（鎖骨に対する髪の長さなど）を理解し、動的な安全フィルターで検閲を回避しつつ、レイアウトとコマ割りのための高度に構造化された厳密なプロンプトを構築します。
    * **Google Search Grounding (Auto-Deep Dive) / 自律的リサーチ機能:** When generating from text prompts without images, the system automatically enables Google Search Grounding. Gemini dynamically researches the theme in real-time, fetching background context and trivia not explicitly mentioned in the prompt, resulting in surprisingly rich and highly detailed scenario generation. / 画像無しのテキストお題で生成する際、システムは自動的にGoogle Search Groundingを有効化します。短いお題からGeminiが自律的にリアルタイムWeb検索を行い、プロンプトに書かれていない背景知識や雑学を勝手に深掘りしてシナリオに組み込むため、ユーザーの指定を遥かに超えるリッチで解像度の高いストーリー構築を実現します。
-2. **【描画担当】ChatGPT UI / DALL-E 3 (The Renderer)**
-   * **Strength / 強み:** Industry-leading image generation quality and the crucial ability to **accept reference images via the browser UI** (a feature currently impossible via the standard DALL-E 3 API). / 業界最高水準の画像生成品質と、**ブラウザUI経由で参照画像を受け付ける**という極めて重要な能力（現在の標準DALL-E 3 APIでは不可能な機能）を備えています。
+2. **【描画担当】ChatGPT UI / Chat GPT image 2.0 (The Renderer)**
+   * **Strength / 強み:** Industry-leading image generation quality and the crucial ability to **accept reference images via the browser UI** (a feature currently impossible via the standard Chat GPT image 2.0 API). / 業界最高水準の画像生成品質と、**ブラウザUI経由で参照画像を受け付ける**という極めて重要な能力（現在の標準Chat GPT image 2.0 APIでは不可能な機能）を備えています。
    * **Role / 役割:** Acts as the "Artist." By having the user manually paste the Gemini-crafted prompt *alongside* the original character sheet into the ChatGPT browser interface, the system achieves near-perfect character consistency that APIs alone cannot match. / 「作画者」として機能します。ユーザーがGeminiの構築したプロンプトをキャラクター設定画と*一緒に*手動でChatGPTに貼り付けることで、API単体では到達できない完璧に近いキャラクターの一貫性を実現します。
 3. **【仲介・調整担当】Human-in-the-Loop Override (The Director)**
-   * **Role / 役割:** When DALL-E 3 stubbornly breaks the 4-panel layout or ignores aspect ratios (a known quirk), the human simply copies the built-in `[ABSOLUTE OVERRIDE]` force-rebuild prompt. This linguistic brute-force approach forces the AI back into the strict A4 geometric constraints without relying on external plugins or image-cropping tools. / DALL-E 3が頑なに4コマレイアウトを崩したりアスペクト比を無視した場合（既知の癖）、人間は組み込みの `[ABSOLUTE OVERRIDE]` 強制再構築プロンプトをコピーして投げるだけです。この言語的な力技により、外部プラグイン等に頼ることなく、AIを厳密なA4幾何学制約へと強制的に引き戻します。
+   * **Role / 役割:** When Chat GPT image 2.0 stubbornly breaks the 4-panel layout or ignores aspect ratios (a known quirk), the human simply copies the built-in `[ABSOLUTE OVERRIDE]` force-rebuild prompt. This linguistic brute-force approach forces the AI back into the strict A4 geometric constraints without relying on external plugins or image-cropping tools. / Chat GPT image 2.0が頑なに4コマレイアウトを崩したりアスペクト比を無視した場合（既知の癖）、人間は組み込みの `[ABSOLUTE OVERRIDE]` 強制再構築プロンプトをコピーして投げるだけです。この言語的な力技により、外部プラグイン等に頼ることなく、AIを厳密なA4幾何学制約へと強制的に引き戻します。
 
 In short, by deliberately leaving the final rendering step as a "manual UI operation," Nano Banana 2 and ChatGPT image 2.0 Powered Super AI 4-koma System elegantly side-steps the restrictive walled gardens of pure API generation, making it an engineering masterpiece of Prompt-Driven Architecture.
 つまり、「最後の作画フェーズだけはあえて人間の手作業（コピペ）を挟む」という設計にしたことで、各社の厳しいAPI制限を鮮やかにすり抜け、「Geminiの頭脳」と「ChatGPTの画力とUI機能」を限界まで引き出すことに成功しています。
@@ -139,7 +139,7 @@ While many users desire the ability to generate long, multi-page comic books, Na
 In the typical AI workflow, creators upload a clean image of a character and provide a separate, lengthy text prompt detailing their traits. This system fundamentally rejects that approach. Instead, we require the character's setting text to be visually written *inside* the reference image itself (creating a "One-Sheet Context"). This yields three massive advantages:
 一般的なAI漫画の運用では、「キャラクターの画像ファイル」と「設定を書いた長文テキスト」を別々に入力するのが普通です。しかし、本システムはこの手法を根本から否定し、**「キャラクター設定のテキストは、画像の中に直接文字として書き込む（One-Sheet Context）」**という運用を推奨しています。これには3つの絶大なメリットがあります：
 
-1. **Multimodal Binding (視覚と概念の強固なロック):** When image and text are provided separately, models like DALL-E 3 often suffer from "attention split"—they either prioritize the text and ignore the face, or prioritize the face and forget the text. By embedding the text physically into the image, the Vision AI processes them as a single, unified entity. "This visual face" mathematically equals "these written traits," drastically reducing identity drift. / 画像とテキストを別々に入れると、AIは「どちらを優先すべきか」で迷い、文字設定を忘れたり画像を無視したりします。文字を画像内に埋め込むことで、Vision AIは「この姿＝この文字情報」として完全に同一の概念としてロックし、キャラクターのブレ（Identity Drift）を劇的に低下させます。
+1. **Multimodal Binding (視覚と概念の強固なロック):** When image and text are provided separately, models like Chat GPT image 2.0 often suffer from "attention split"—they either prioritize the text and ignore the face, or prioritize the face and forget the text. By embedding the text physically into the image, the Vision AI processes them as a single, unified entity. "This visual face" mathematically equals "these written traits," drastically reducing identity drift. / 画像とテキストを別々に入れると、AIは「どちらを優先すべきか」で迷い、文字設定を忘れたり画像を無視したりします。文字を画像内に埋め込むことで、Vision AIは「この姿＝この文字情報」として完全に同一の概念としてロックし、キャラクターのブレ（Identity Drift）を劇的に低下させます。
 2. **Prompt Override Prevention (プロンプト競合の回避):** If you consume text tokens to describe the character's hair, eyes, and clothes, you steal precious attention away from the complex 4-panel layout constraints and scenario instructions. By offloading character traits into the image space, 100% of the text prompt tokens can be purely dedicated to "directing the manga." / テキスト側で「金髪で青目で…」と長々とキャラ設定を書くと、肝心の「漫画のコマ割りや演出」を指示するプロンプトの枠（トークンとAttention）を圧迫してしまいます。設定情報を画像（Vision側）に逃がすことで、テキストプロンプトのリソースを100%「漫画の演出」に全振りできるのです。
 3. **Frictionless Workflow (コピペ作業の排除):** For the human-in-the-loop, uploading one image is vastly superior to maintaining and pasting giant blocks of character lore alongside the layout prompts every single time. / 人間側の運用コストとして、毎回「画像」と「長文設定」の2つをコピペするのは苦痛です。文字入りのシートを1枚投げるだけで、AIが勝手に文字を読んで理解してくれる究極にスマートな運用が可能になります。
 
@@ -188,7 +188,7 @@ The scenario AI autonomously selects the optimal style tag for each panel's emot
 ## 💻 Tech Stack / 技術スタック
 
 * **Frontend**: React 19 / Vite 7 / Tailwind CSS v4
-* **LLM/VFM**: Google Gemini API (3.x Flash / 2.5 Flash / 2.5 Pro) + Gemini Native Image Generation / ChatGPT Images 2.0 (DALL-E 3) Supported via Prompt Enhancement
+* **LLM/VFM**: Google Gemini API (3.x Flash / 2.5 Flash / 2.5 Pro) + Gemini Native Image Generation / ChatGPT Images 2.0 Supported via Prompt Enhancement
 * **Logic**: Zenith Protocol - Multi-tier model fallback (5-model text cascade, 4-model image cascade) with automatic 429/404 retry and account-level model auto-discovery.
 
 ---
