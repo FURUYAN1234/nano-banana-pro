@@ -143,6 +143,81 @@ In the typical AI workflow, creators upload a clean image of a character and pro
 2. **Prompt Override Prevention (プロンプト競合の回避):** If you consume text tokens to describe the character's hair, eyes, and clothes, you steal precious attention away from the complex 4-panel layout constraints and scenario instructions. By offloading character traits into the image space, 100% of the text prompt tokens can be purely dedicated to "directing the manga." / テキスト側で「金髪で青目で…」と長々とキャラ設定を書くと、肝心の「漫画のコマ割りや演出」を指示するプロンプトの枠（トークンとAttention）を圧迫してしまいます。設定情報を画像（Vision側）に逃がすことで、テキストプロンプトのリソースを100%「漫画の演出」に全振りできるのです。
 3. **Frictionless Workflow (コピペ作業の排除):** For the human-in-the-loop, uploading one image is vastly superior to maintaining and pasting giant blocks of character lore alongside the layout prompts every single time. / 人間側の運用コストとして、毎回「画像」と「長文設定」の2つをコピペするのは苦痛です。文字入りのシートを1枚投げるだけで、AIが勝手に文字を読んで理解してくれる究極にスマートな運用が可能になります。
 
+### 🎭 Comedy Structure Engineering / なぜAIに「面白くして」と言っても面白くならないのか？
+
+Most AI-generated manga suffers from a fundamental problem: telling the AI to "make it funny" produces bland, predictable content. This is not a capability limitation of AI—it is a **design failure** in the prompt. Nano Banana 2 and ChatGPT image 2.0 Powered Super AI 4-koma System solves this by embedding a structured comedy methodology directly into its scenario generation engine.
+AIに「面白くして」と指示しても、退屈で予測可能なコンテンツしか出てきません。これはAIの能力の問題ではなく、**プロンプト設計の破綻**です。Nano Banana 2 and ChatGPT image 2.0 Powered Super AI 4-koma System は、構造化されたお笑いメソッドをシナリオ生成エンジンに直接組み込むことでこの問題を解決しています。
+
+**The Core Formula / 笑いの本質:**
+
+```
+L(x) = | E(x) - R(x) |
+
+L = Laughter    E = Expectation (reader's prediction)    R = Reality (actual outcome)
+Constraint: R(x) ∈ { comprehensible range } — too much deviation = confusion, not comedy
+```
+
+Laughter is the gap between expectation and reality. Without engineering *what* the reader expects (via Setup) and *how* reality deviates (via Gap techniques), the AI has no optimization target.
+笑いとは「予想」と「現実」のズレです。読者が何を予想するか（フリ）と、現実がどうズレるか（ボケ技法）を設計しなければ、AIには最適化対象がありません。
+
+**Three-Layer Architecture / 3層アーキテクチャ:**
+
+The system constructs comedy through three distinct engineering layers:
+本システムは3つの独立した設計層を通じてコメディを構築します：
+
+**Layer 1 — Gap Generation Engine `ΔG(x)` (6 techniques, minimum 2 required per scenario):**
+**第1層 — ズレ生成エンジン（6技法から最低2つ選択を義務化）：**
+
+| Technique | Formula | Example |
+|:--|:--|:--|
+| Substitution / 置換 | `Context(A) → Context(B)` | International summit → Kindergarten class meeting |
+| Exaggeration / 誇張 | `Scale(x) × 10³` | "Surprised" → "Soul departing body" |
+| Role Reversal / 逆転 | `Role(A) ↔ Role(B)` | Cool character loses composure |
+| Absurdity / 不条理 | `P(event) ≈ 0` injected boldly | Suddenly discussing curry |
+| Tension-Release / 緊張と緩和 | `Tension → MAX → 0` | 3 panels serious → total collapse |
+| Return to Sanity / 常識に戻る | `Chaos(all) + Normal(1)` | "Wait, this is obviously insane" |
+
+Multiple techniques multiply (not add) comedic impact: `L_total = ΔG₁ × ΔG₂ × α`
+複数技法は笑いを加算ではなく乗算で増幅します。
+
+**Layer 2 — 4-Panel Energy Distribution `P(i)` (Comedy-to-Panel Mapping):**
+**第2層 — 4コマへのエネルギー配分（笑いの構成マッピング）：**
+
+```
+P(1) ≈ 0.00  Panel 1 = Setup (フリ)     — Don't make them laugh. Build E(x).
+P(2) ≈ 0.15  Panel 2 = Deviation (ボケ)  — First gap. "Wait, what?"
+P(3) ≈ 0.25  Panel 3 = Escalation (溜め) — Accelerate or build extreme tension.
+P(4) ≈ 0.60  Panel 4 = Punchline (オチ)  — ALL energy concentrated here. 💥
+Σ P(i) = 1.00
+```
+
+The critical insight: **P(1) ≈ 0**. Panel 1's job is NOT to be funny—it builds the reader's expectation. A punchline without setup is a high jump without a run-up.
+最重要設計: 1コマ目では笑わせない。1コマ目の仕事は「読者の予想を作ること」。フリなしのボケは、助走なしの跳び箱です。
+
+**Layer 3 — Technique Selection (Golden Patterns):**
+**第3層 — テクニック選択（黄金パターン）：**
+
+The most powerful technique for 4-panel format is **Repetition Escalation (天丼)**: `T(n) = Base × 2^(n-1)` — Panel 1 plants a seed (×1), Panel 3 brings it back transformed (×2), Panel 4 detonates it (×4). Exponential energy accumulation through deliberate repetition.
+4コマ最強テクニックは**天丼**: 1コマ目で仕込み→3コマ目で変奏再登場→4コマ目で限界突破。指数関数的にエネルギーが蓄積されます。
+
+Additional techniques include Riding-Tsukkomi (ノリツッコミ: joining the joke then breaking it), Stacking (かぶせ: rapid-fire successive jokes), and Self-deprecation (自虐: characters weaponizing their own flaws).
+
+**Why This Methodology Alone Cannot Reproduce the System / なぜこのメソッドだけではシステムを再現できないのか:**
+
+The Comedy Structure Engineering described above governs only the **scenario text layer** (STEP2). The full system requires four additional layers that are not covered by comedy theory alone:
+上記のお笑い構造設計が制御するのは**シナリオテキスト層（STEP2）のみ**です。完全なシステムには、お笑い理論だけではカバーできない4つの追加レイヤーが必要です：
+
+```
+[STEP1] Character Analysis Engine     — Hair topology, gender lock, weighted tag generation
+[STEP2] Comedy Structure Engineering  — ★ Described above
+[STEP3] Scenario → Image Compiler     — EMOTION tags → VFX weights, Camera → lens distortion
+[STEP4] Identity Matrix + Geometry Lock — Per-panel character verification, A4 pixel-level control
+[STEP5] Zenith Protocol               — 5-model automatic fallback cascade
+```
+
+A "funny script" without the Scenario→Image Compiler produces flat, expressionless illustrations. The comedy methodology provides the *what*; the compiler provides the *how* to render it visually.
+「面白い脚本」があっても、シナリオ→画像コンパイラがなければ、無表情で平坦なイラストしか出力されません。お笑いメソッドは「何が面白いか」を設計し、コンパイラが「それをどう絵にするか」を処理します。
+
 ### 🇯🇵 [JP] コード解析によるAI漫画システム詳解
 
 本システムの設計思想、**Absolute Physical Geometry Lock**（絶対的物理ジオメトリロック）、**Weighted Immutable Prompts**（重み付き不変プロンプト）などのコア技術、および法的・哲学的な考察を含む詳細な解析レポート（日本語版）です。
