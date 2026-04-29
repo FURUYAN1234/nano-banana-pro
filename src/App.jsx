@@ -31,7 +31,7 @@ import {
 // --- Imports ---
 import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
-const SYSTEM_VERSION = "v2.76 Alpha";
+const SYSTEM_VERSION = "v2.77 Alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -654,7 +654,7 @@ function App() {
       enhanceCategories.push("【ボディランゲージの強化】棒立ちの状態を禁止します。通常の2倍以上の過剰なアクションで全身で感情を表現してください（基準ウェイト2.5〜3.0相当）。例: 画面を突き破る勢いで前のめりになる、腕を天井まで大きく振り上げる、机を粉砕する勢いで叩く、椅子から転げ落ちる等。体全体を使った異常なほど大きなアクションを書いてください。");
     }
     if (enhanceEffects) {
-      enhanceCategories.push("【照明・演出の強化】各コマの「状況」欄に映画的・劇画的な演出効果を限界突破レベルで追加してください（基準ウェイト2.8相当）。例: 逆光で人物がシルエットになる、極端なリムライトで輪郭が光る、爆発的な光の粒子が舞う、パンチラインのコマには画面を覆い尽くす集中線やインパクトフレーム、激しい衝撃波、網膜を焼くようなまばゆい光などの視覚効果をト書きとして追記してください。");
+      enhanceCategories.push("【照明・演出の強化】各コマの「状況」欄に映画的・劇画的な演出効果を限界突破レベルで追加してください（基準ウェイト2.8相当）。例: 逆光で人物がシルエットになる、極端なリムライトで輪郭が光る、柔らかい大気グロー(soft atmospheric glow)が画面を包む、パンチラインのコマには画面を覆い尽くす集中線やインパクトフレーム、気迫のオーラ、スムーズな光の拡散(smooth light diffusion)で画面を満たすなどの視覚効果をト書きとして追記してください。\n⚠️【ノイズ防止】光の演出で以下の表現は使用禁止（GPT-image-2でノイズの原因となる）:\n- sparkling light particles → 代わりに soft glow を使え\n- glowing dust → 代わりに clean bloom を使え\n- magical particles / floating embers → 代わりに subtle luminous edges / soft atmospheric glow を使え\n- Tyndall effect / volumetric dust → 代わりに smooth light diffusion / gentle rim light を使え");
     }
     if (enhanceBackgrounds) {
       enhanceCategories.push("【背景の強化】各コマの背景描写に奥行きと空間の説得力を追加してください。ただしノイズやチラつきを防ぐため、以下のルールを厳守すること。\n- 背景のディテールは「構造的に意味のある要素」のみを追加する（建物、家具、空、雲、木など大きな構造物）。ランダムな細かい模様・テクスチャ・粒子は追加禁止。\n- 背景の描き込み密度はキャラクターより低くすること（キャラの方が常に目立つように）。\n- 空間の奥行き感を出すために、前景・中景・遠景のレイヤー分離と色の明暗差（空気遠近法）を活用する。\n- 例: 教室なら窓からの柔らかい光と影の落ち方、黒板の文字、奥に見える廊下。屋外なら空の広がり、建物のシルエット、遠景のぼかし。\n- 「狂気的な密度」「びっしり描き込む」のような過剰な描き込み指示は禁止。画面がノイズだらけになる原因となる。");
@@ -2039,10 +2039,10 @@ CRITICAL ANTI-CLONING RULE: NEVER draw the exact same character twice inside a s
 CRITICAL COMPOSITION RATIO: Always maintain a strict 2:3 (Manga typical vertical/portrait) golden ratio structure within each panel setup.
 
 Technical Quality Definitions (System Dictionary):
-(highly detailed background architecture and environment: 2.5)
-(Meticulously clean line art: 2.5)
-(Subtle sub-surface scattering and backlighting: 2.4)
-(Cinematic depth of field with bokeh: 2.3)
+(clean anime illustration background with structured architecture and environment: 2.5)
+(Meticulously clean line art with smooth cel shading: 2.5)
+(Soft diffused backlighting with gentle rim light: 2.4)
+(Cinematic depth of field with soft bokeh, low texture density: 2.3)
 (ABSOLUTELY NO text or SFX outside of speech bubbles: 2.8)
 (ABSOLUTELY NO ENGLISH TEXT outside watermark. Do NOT draw terms like 'G-pen', 'Gleam', 'HA': 3.0)
 
@@ -2166,11 +2166,22 @@ This block OVERRIDES any conflicting instructions:
 - TITLE: Draw the title at the top, but do NOT make the white margin excessively large.
 - RENDER QUALITY: Pristine TV anime style. NO film grain, NO noise, NO realistic texturing. NO lens flare, NO HDR bloom, NO excessive sparkles or clutter. Clean gradients and sharp ink lines.
 
-[ 🧹 ANTI-NOISE & ANTI-ARTIFACT PROTOCOL — MANDATORY ]
+[ 🧹 ANTI-NOISE & ANTI-ARTIFACT PROTOCOL — MANDATORY (GPT-image-2 Enhanced) ]
 - ZERO NOISE TOLERANCE: The final image MUST be completely free of visual noise, grain, micro-texture artifacts, dithering patterns, and any speckle-like artifacts. Every surface must be CLEAN and SMOOTH.
 - NO MICRO-DETAIL CLUTTER: Do NOT fill empty areas with random tiny dots, scratches, dust particles, or halftone-like noise patterns. Clean color fills and smooth gradients ONLY.
 - NO OVER-RENDERING: Do NOT apply photorealistic texture rendering (cloth weave, skin pores, hair strand noise) to anime-style characters. Keep surfaces FLAT and CLEAN as in professional TV anime cel-shading.
 - ANTI-FLICKER: Avoid rendering thin lines or patterns that create visual "flickering" or moiré effects. All lines must be bold and decisive.
+
+[ ✅ POSITIVE SAFE RENDERING BLOCK — APPLY THESE STYLES ]
+Clean anime illustration finish, smooth cel shading, soft clean shading, smooth gradients, clean color surfaces, low texture density, refined but not overly detailed material response, controlled exposure, soft diffused lighting, no visible grain, no speckled texture, no pointillism, no stippling, no dithering, no halftone dots, no noisy particles, no glitter dust, no gritty film grain, no rough paper texture, no canvas grain, no over-sharpened details.
+
+[ 🚫 BANNED PROMPT WORD COMBINATIONS — NEVER USE THESE ]
+- Do NOT combine: ultra-detailed + film grain + cinematic
+- Do NOT combine: realistic texture + micro details
+- Do NOT combine: magical particles + glowing dust
+- Do NOT combine: high contrast + sharp details (use clean contrast + smooth edges instead)
+- Do NOT combine: illustrative realism + gritty texture
+- Do NOT use: paper grain, canvas texture, rough texture, grainy texture, overly crisp
 
 [ 🖊️ CHARACTER SILHOUETTE ISOLATION — MANDATORY ]
 - THICK INK OUTLINE (G-PEN RULE): Every character's entire body silhouette MUST be surrounded by a THICK, SOLID BLACK ink outline, as if drawn with a professional manga G-pen nib. The character outline stroke weight MUST be 2x to 3x thicker than any background detail lines. This separates characters from the background and is NON-NEGOTIABLE.

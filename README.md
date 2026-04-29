@@ -81,8 +81,8 @@ Users can amplify the AI's script direction with specific enhancement toggles (e
 
 ### 🤖 ChatGPT Images 2.0 Mode / ChatGPT画像生成サポート
 
-A dedicated formatting protocol to optimize prompts for ChatGPT's ChatGPT Images 2.0, enforcing A4 portrait orientation, vertical Japanese text, and right-to-left reading flow.
-ChatGPT (ChatGPT Images 2.0) での生成に最適化された専用プロンプトモードを搭載。A4縦長のキャンバス指定や、日本語の縦書き、右から左への視線誘導など、ChatGPT特有の制限を突破するためのフォーマットを自動付与します。
+A dedicated formatting protocol to optimize prompts for ChatGPT's ChatGPT Images 2.0, enforcing A4 portrait orientation, vertical Japanese text, and right-to-left reading flow. Includes a GPT-image-2 specific Anti-Noise Protocol with safe rendering keywords, banned word combinations, and light effect substitution rules to ensure clean, noise-free anime-quality output.
+ChatGPT (ChatGPT Images 2.0) での生成に最適化された専用プロンプトモードを搭載。A4縦長のキャンバス指定や、日本語の縦書き、右から左への視線誘導など、ChatGPT特有の制限を突破するためのフォーマットを自動付与します。さらにGPT-image-2特有のノイズ問題に対応するAnti-Noiseプロトコル（安全レンダリングキーワード・禁止ワード組み合わせ・光演出の代替表現）を搭載し、クリーンなアニメ品質の出力を保証します。
 
 ---
 
@@ -483,6 +483,9 @@ Developed by **FURU**
 ---
 
 ## 📋 ChangeLog
+
+### v2.77.0-alpha (2026-04-29)
+- **[Feature]** Enhanced GPT-image-2 Anti-Noise Protocol: Integrated comprehensive noise countermeasures based on community research. Added Positive Safe Rendering Block (smooth cel shading, clean color surfaces, low texture density, etc.), Banned Prompt Word Combinations (e.g., ultra-detailed + film grain), and Light Effect Substitution Table (sparkling particles → soft glow, glowing dust → clean bloom). Also replaced noise-inducing words in Technical Quality Definitions and Lighting Enhancement prompts. / GPT-image-2向けノイズ対策プロトコルを大幅強化。コミュニティの研究成果に基づき、ポジティブ安全レンダリングブロック（smooth cel shading, clean color surfaces, low texture density等）、禁止ワード組み合わせリスト（ultra-detailed + film grain等）、光の演出置き換え表（sparkling particles → soft glow, glowing dust → clean bloom等）を追加。Technical Quality定義と照明強化プロンプトからもノイズ誘発ワードを除去。
 
 ### v2.76.0-alpha (2026-04-28)
 - **[Feature]** Added Visual Gag Auto-Mapping: each gap technique (exaggeration, reversal, absurdity, etc.) now auto-recommends matching EMOTION tags and visual gag directions in the scenario. / ズレ技法→ビジュアルギャグ自動マッピングを追加。誇張→CHIBI_GAG+身体変形、緊張と緩和→GEKIGA→BLANKの絵柄急変等、各技法に推奨EMOTIONタグと視覚演出を紐付け。
