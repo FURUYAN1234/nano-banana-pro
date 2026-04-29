@@ -44,6 +44,10 @@ All apps should use this four-file structure for multi-agent development.
 - 新規実装やリファクタリングなど、「ついで」のコード修正を一切行わない。
 - 完全に現状をスナップショットとして `HANDOFF.md` へ出力し、後任エージェントが差分を安全にレビューできることを最優先とする。
 
+### 3.5. 破壊的変更前の防衛プロトコル (Safety Protocols)
+- **【編集前のスナップショット義務】**: `src/App.jsx` などのコアファイルを編集する際は、必ず事前にバックアップファイル（例: `temp_App_backup.jsx`）を作成し、いつでも元の状態にロールバックできるようにしてから作業を開始する。
+- **【Visual Regression（視覚的な後退）の確認義務】**: UIに変更を加えた後は、直ちに「作業完了」と報告しないこと。必ず `npm run dev` で起動し、ブラウザサブエージェント（`browser_subagent`）等を用いて「他の要素が崩れていないか」「意図したレイアウト通りか」を自己検証してから報告する。
+
 ### 4. Knowledge Sync（記憶の共有化）
 - 迷ったら推測する前に `docs/` を読む。
 - 深刻なバグ修正、新たなプラットフォーム固有の仕様（Vite、HF Spaces、GH Pagesなど）を発見した場合、単にコードを直して終わりにせず、必ず `docs/troubleshooting.md` 等に事象と対策を書き残す。
