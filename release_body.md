@@ -1,26 +1,17 @@
-## 🎭 Visual Gag Mapping, Punchline Variety & Comedy Verification / ビジュアルギャグ連動・オチ多様化・笑い構造検証
+# v2.77.0-alpha — Enhanced GPT-image-2 Anti-Noise Protocol / GPT-image-2ノイズ対策プロトコル大幅強化
 
-### What's New / 変更内容
+## What's New / 変更点
 
-**1. Visual Gag Auto-Mapping / ズレ技法→ビジュアルギャグ自動マッピング**
-- Each gap technique now auto-recommends EMOTION tags and visual gag directions.
-- 各ズレ技法にEMOTIONタグと視覚演出を自動紐付け。
-  - Exaggeration → CHIBI_GAG + body deformation / 誇張 → 身体変形
-  - Tension-Release → GEKIGA(1-3) → BLANK(4) style shift / 緊張と緩和 → 絵柄急変
-  - Absurdity → Background anomaly objects / 不条理 → 背景の異物配置
+### ✨ Feature / 新機能
 
-**2. Punchline Variety Enforcement / オチの多様化（6系統）**
-- Explosion / Surreal Silence / Social Death / Self-Contained / Reversal / Repetition Escalation
-- 爆発型/静寂型/社会的死型/自己完結型/逆転オチ型/天丼爆発型
+- **Enhanced GPT-image-2 Anti-Noise Protocol**: Integrated comprehensive noise countermeasures based on community research to significantly improve image quality when using ChatGPT Images 2.0 mode.
+  - **Positive Safe Rendering Block**: Injected safe rendering keywords (`smooth cel shading`, `clean color surfaces`, `low texture density`, etc.) to actively guide the model toward clean output.
+  - **Banned Prompt Word Combinations**: Explicitly blocked dangerous combinations (`ultra-detailed + film grain`, `realistic texture + micro details`, etc.) known to trigger noise artifacts.
+  - **Light Effect Substitution Table**: Replaced noise-inducing light effects (`sparkling particles` → `soft glow`, `glowing dust` → `clean bloom`, `Tyndall effect` → `smooth light diffusion`, etc.) in the Lighting Enhancement prompt.
+  - **Technical Quality Definitions Cleanup**: Replaced `highly detailed` → `clean anime illustration`, `sub-surface scattering` → `soft diffused backlighting with gentle rim light`, added `low texture density` and `smooth cel shading`.
 
-**3. Gag Tone Variation / ギャグのトーンバリエーション（3系統）**
-- High-Tension Explosion / Surreal Silence / Intellectual Black Comedy
-- ハイテンション爆発系/シュール静寂系/知性派ブラック系
-
-**4. Comedy Structure Verification / 笑い構造の検証チェックリスト**
-- AI self-validates 6 criteria before output: Setup→Punchline structure, energy concentration, gap magnitude, visual gag presence, repetition placement, and dialogue-visual synergy.
-- 出力前に6項目を自己検証: フリ→オチ構造、エネルギー集中度、ズレの大きさ、ビジュアルギャグ有無、天丼配置、セリフ×ビジュアル連携。
-
-**5. README Enhancement / README強化**
-- Added Comedy Structure Engineering deep analysis with mathematical formulas (`L(x) = |E(x) - R(x)|`), 3-layer architecture, and system reproducibility analysis.
-- 数式モデル・3層アーキテクチャ図解・再現性分析を含むComedy Structure Engineeringセクションを追加。
+- **GPT-image-2ノイズ対策プロトコル大幅強化**: コミュニティの研究成果に基づく包括的なノイズ対策を統合し、ChatGPT Images 2.0モード使用時の画質を大幅に向上。
+  - **ポジティブ安全レンダリングブロック**: 安全なレンダリングキーワード（`smooth cel shading`, `clean color surfaces`, `low texture density`等）を能動的に注入し、クリーンな出力を誘導。
+  - **禁止ワード組み合わせリスト**: ノイズを誘発する危険な組み合わせ（`ultra-detailed + film grain`, `realistic texture + micro details`等）を明示的にブロック。
+  - **光の演出置き換え表**: ノイズの原因となる光演出表現を安全な代替に自動変換（`sparkling particles` → `soft glow`, `glowing dust` → `clean bloom`, `Tyndall effect` → `smooth light diffusion`等）。
+  - **Technical Quality定義のクリーンアップ**: `highly detailed` → `clean anime illustration`、`sub-surface scattering` → `soft diffused backlighting with gentle rim light`に置換し、`low texture density`と`smooth cel shading`を追加。

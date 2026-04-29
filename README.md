@@ -484,7 +484,17 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
-### v2.77.0-alpha (2026-04-29)
+### v2.81.0-alpha (2026-04-29)
+- **[UI/UX]** Resolved visual artifact issue where background elements leaked through the sticky progress bar by switching to an opaque background. Moved main control buttons (Full Auto / Reset) directly into the sticky progress bar for constant accessibility. Improved reset functionality by separating 'Soft Reset' (keeps character sheet) from 'Hard Reset' (complete initialization). Fixed title wrapping issue causing icons to hide on narrow screens. / スティッキー・プログレスバーの背景が透けて下の要素が見えてしまう問題を不透明化により解決。主要なコントロールボタン（フルオート／やり直す）をプログレスバー内に移動し、常にアクセス可能に。キャラクターシートを保持する「ソフトリセット」と「完全リセット」を分離して使い勝手を向上。画面幅が狭い際にタイトルアイコンが隠れる問題を修正。
+
+### v2.80.0-alpha (2026-04-29)
+- **[Fix]** Fixed Full Auto stale state properly by passing generated strings directly. Fixed sticky progress bar hidden behind container overflow by using absolute fixed positioning with padding. Centered header components properly per user feedback. Updated guide text for Full Auto behavior. / フルオート時のステート更新の遅れ（クロージャ問題）を文字列の直接受け渡しにより完全に修正。`overflow-x-hidden`によるスティッキーバーの不具合を`fixed`配置とパディングで修正。ユーザーの要望に基づきヘッダーのボタン群を中央寄せに変更。フルオート時の挙動のガイド文を更新。
+
+### v2.79.0-alpha (2026-04-29)
+- **[Feature]** Refactored Full Auto execution using state-based `useEffect` trigger to resolve stale state closures causing pipeline stalls. Implemented a sticky global progress bar fixed to the top of the viewport. / フルオート実行ロジックをステート駆動（`useEffect`トリガー）にリファクタリングし、パイプラインの停止を引き起こす古いステートのクロージャ問題を解決。画面最上部に固定されるスティッキー・プログレスバーを実装。
+- **[UI/UX]** Centralized header buttons with strict 48px width centering. Added robust `abortFullAuto` logic for user interruption. / ヘッダーボタンを48px幅に統一して中央寄せに。ユーザーが中断できるよう堅牢な`abortFullAuto`ロジックを追加。
+
+### v2.78.0-alpha (2026-04-29)
 - **[Feature]** Enhanced GPT-image-2 Anti-Noise Protocol: Integrated comprehensive noise countermeasures based on community research. Added Positive Safe Rendering Block (smooth cel shading, clean color surfaces, low texture density, etc.), Banned Prompt Word Combinations (e.g., ultra-detailed + film grain), and Light Effect Substitution Table (sparkling particles → soft glow, glowing dust → clean bloom). Also replaced noise-inducing words in Technical Quality Definitions and Lighting Enhancement prompts. / GPT-image-2向けノイズ対策プロトコルを大幅強化。コミュニティの研究成果に基づき、ポジティブ安全レンダリングブロック（smooth cel shading, clean color surfaces, low texture density等）、禁止ワード組み合わせリスト（ultra-detailed + film grain等）、光の演出置き換え表（sparkling particles → soft glow, glowing dust → clean bloom等）を追加。Technical Quality定義と照明強化プロンプトからもノイズ誘発ワードを除去。
 
 ### v2.76.0-alpha (2026-04-28)
