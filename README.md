@@ -74,6 +74,16 @@ A "Free Input" mode allows users to generate manga from any text, such as person
 > **Note**: Direct URL input is often blocked by security (403 errors). Copy-pasting the article text is recommended.
 > URLの直接入力はセキュリティによりブロックされることが多いため、記事のテキストを直接コピーすることを推奨します。
 
+### ⚡ Full Auto Mode / フルオート生成モード
+
+With a single click, the system autonomously executes the entire pipeline (from scenario generation to prompt compilation and image rendering) without requiring manual advancement through each step.
+キャラクターとお題を設定した状態から、シナリオ生成・プロンプト構築・画像生成の全ステップを人間の介入なしに一気通貫で自律実行するモードです。
+
+### 🔁 Endless Mode / 無限ループモード
+
+An experimental feature that, upon completing a generation, automatically selects a new topic and continuously produces new manga while preserving the initial character settings.
+フルオート生成完了後、キャラクター設定を維持したまま、自動的に新しいニュースやランダムなお題を取得し、次々と新しいシナリオと漫画を延々と生成し続けるモードです（完全な放置運用が可能）。
+
 ### 🎬 Scenario Enhancement / シナリオ演出強化
 
 Users can amplify the AI's script direction with specific enhancement toggles (e.g., Extreme Expressions, Dynamic Body Language, Intense Lighting/VFX, Detailed Backgrounds, Extreme Camera Work, and Gag/Dialogue impact).
