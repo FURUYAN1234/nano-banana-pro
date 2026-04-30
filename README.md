@@ -516,7 +516,7 @@ Developed by **FURU**
 
 ### v2.88.0-alpha (2026-04-30)
 - **[Feature]** OpenAI API (ChatGPT Images 2.0) 直接生成のテスト機能を実装。専用のセキュアなモーダルUI（入力文字のマスク対応）を通じ、ブラウザのローカルストレージにAPIキーを保存し、アプリから直接画像生成APIを叩く基盤を構築。
-- **[System]** OpenAI API通信に対する180秒の強制タイムアウト（AbortController）セーフティ機能を実装。DALL-E 3サーバーの応答なしによる無限フリーズを防止。
+- **[System]** OpenAI API通信に対する180秒の強制タイムアウト（AbortController）セーフティ機能を実装。ChatGPT Images 2.0 サーバーの応答なしによる無限フリーズを防止。
 - **[System]** APIエラー（400文字数オーバー、401無効キー等）を動的に検知し、APIキーの状態（Google側かOpenAI側か）に応じて「手動生成への代替手順」を提示するインテリジェントなエラーハンドリングを追加。
 - **[UI]** 画像生成ログ（ターミナル）への自動追従スクロール機能を実装。生成中のステータス変動やエラーメッセージが常に最新の最下行で確認可能に。
 - **[Fix]** STEP2およびSTEP3のボタンを手動で押した際、非同期処理の競合によりシステムがクラッシュするイベント伝播バグを修正。
@@ -570,7 +570,7 @@ Developed by **FURU**
 - **[Docs]** Updated README to reflect ChatGPT Images 2.00 Mode and Scenario Enhancement features. / READMEを更新し、ChatGPT画像生成モードおよびシナリオ強化機能についての記載を実態に合わせて追記。
 
 ### v2.65.0-alpha (2026-04-22)
-- **[Fix]** Removed an extra colon from the DALL-E 3 instructions in PRO TIP. / PRO TIPのChatGPT向け案内文から余計なコロン（：）を削除。
+- **[Fix]** Removed an extra colon from the ChatGPT Images 2.0 instructions in PRO TIP. / PRO TIPのChatGPT向け案内文から余計なコロン（：）を削除。
 
 ### v2.64.0-alpha (2026-04-22)
 - **[Fix]** Added a note about clicking "Show in text field" to the ChatGPT PRO TIP and slightly adjusted the ChatGPT Imsages 2.0 wording. / PRO TIPのChatGPT案内文に「テキストフィールドに表示」の注意書きを追加し、ChatGPT Imsages 2.0 の文言を微修正。
