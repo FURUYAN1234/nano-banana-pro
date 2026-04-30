@@ -84,6 +84,10 @@ Users can amplify the AI's script direction with specific enhancement toggles (e
 A dedicated formatting protocol to optimize prompts for ChatGPT's ChatGPT Images 2.0, enforcing A4 portrait orientation, vertical Japanese text, and right-to-left reading flow. Includes a GPT-image-2 specific Anti-Noise Protocol with safe rendering keywords, banned word combinations, and light effect substitution rules to ensure clean, noise-free anime-quality output.
 ChatGPT (ChatGPT Images 2.0) での生成に最適化された専用プロンプトモードを搭載。A4縦長のキャンバス指定や、日本語の縦書き、右から左への視線誘導など、ChatGPT特有の制限を突破するためのフォーマットを自動付与します。さらにGPT-image-2特有のノイズ問題に対応するAnti-Noiseプロトコル（安全レンダリングキーワード・禁止ワード組み合わせ・光演出の代替表現）を搭載し、クリーンなアニメ品質の出力を保証します。
 
+> **🧪 OpenAI API Direct Execution (Experimental) / OpenAI API直接実行（テスト機能）**
+> v2.88にて、OpenAI APIキーを入力することでアプリ内から直接DALL-E 3を呼び出せるテスト機能を実装しました（キーはローカルストレージにのみ保存されるセキュア設計です）。しかし、OpenAIの画像APIには「4000文字の文字数制限」という厳格な壁があり、本システムが生成する3万文字超のプロンプトを直接投げるとエラーになります。
+> 現状、ChatGPTの「文章AI（GPT-4o）が長文を読み解き、画像AI（DALL-E 3）へ要約して渡す」というブラウザ版の処理能力をAPI単体で再現することはできないため、実運用においては引き続き**「プロンプトをコピーしてブラウザ版ChatGPTに手動で貼り付けるハイブリッド運用」**が最強のソリューションとなります。（将来的なAPI2段構え化の布石として搭載されています）
+
 ---
 
 ## 🔍 Deep Analysis (技術詳解)
@@ -496,6 +500,17 @@ Developed by **FURU**
 
 ### v2.82.0-alpha (2026-04-29)
 - **[System]** Emergency Revert & UI Stability Recovery. Reverted the codebase to v2.77.0-alpha to discard experimental layout regressions and ensure stable operation. Re-established the single, unified sticky header design. / 緊急ロールバックおよびUI安定性の回復。実験的なレイアウト改悪を破棄し、安定動作を保証するためv2.77.0-alphaの状態に完全に復元しました。
+
+### v2.88.0-alpha (2026-04-30)
+- **[Feature]** OpenAI API (ChatGPT Images 2.0) 直接生成のテスト機能を実装。専用のセキュアなモーダルUI（入力文字のマスク対応）を通じ、ブラウザのローカルストレージにAPIキーを保存し、アプリから直接画像生成APIを叩く基盤を構築。
+- **[System]** OpenAI API通信に対する180秒の強制タイムアウト（AbortController）セーフティ機能を実装。DALL-E 3サーバーの応答なしによる無限フリーズを防止。
+- **[System]** APIエラー（400文字数オーバー、401無効キー等）を動的に検知し、APIキーの状態（Google側かOpenAI側か）に応じて「手動生成への代替手順」を提示するインテリジェントなエラーハンドリングを追加。
+- **[UI]** 画像生成ログ（ターミナル）への自動追従スクロール機能を実装。生成中のステータス変動やエラーメッセージが常に最新の最下行で確認可能に。
+- **[Fix]** STEP2およびSTEP3のボタンを手動で押した際、非同期処理の競合によりシステムがクラッシュするイベント伝播バグを修正。
+- **[UI]** 画面幅やデバイス環境に依存しないレスポンシブなスティッキーヘッダーの再構築および、「画像比率事後修正プロンプト」ボタンのブロック独立化による視認性向上。
+
+### v2.86.0-alpha (2026-04-30)
+- **[Feature]** フルオート「無限ループ（Endless Mode）」機能を試験実装。生成完了後にキャラクター設定を保持したまま、新しいニュース・お題で自動的に次々とシナリオを生成し続ける機能を追加。
 
 ### v2.77.0-alpha (2026-04-29)
 - **[Feature]** Enhanced GPT-image-2 Anti-Noise Protocol: Integrated comprehensive noise countermeasures based on community research. Added Positive Safe Rendering Block (smooth cel shading, clean color surfaces, low texture density, etc.), Banned Prompt Word Combinations (e.g., ultra-detailed + film grain), and Light Effect Substitution Table (sparkling particles → soft glow, glowing dust → clean bloom). Also replaced noise-inducing words in Technical Quality Definitions and Lighting Enhancement prompts. / GPT-image-2向けノイズ対策プロトコルを大幅強化。コミュニティの研究成果に基づき、ポジティブ安全レンダリングブロック（smooth cel shading, clean color surfaces, low texture density等）、禁止ワード組み合わせリスト（ultra-detailed + film grain等）、光の演出置き換え表（sparkling particles → soft glow, glowing dust → clean bloom等）を追加。Technical Quality定義と照明強化プロンプトからもノイズ誘発ワードを除去。

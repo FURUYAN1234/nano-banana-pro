@@ -1,11 +1,9 @@
-## 📱 Responsive Layout & UI Polish / レスポンシブ対応およびUIの洗練
+### UI & System Stability Update
 
-### What's New / 変更内容
+- **Full Auto Pipeline Completion**: Finalized the UI/UX for the automated pipeline. Accurately reflects "Stopping..." (停止処理中...) even during asynchronous character analysis (Step 1) interruptions, ensuring a robust user experience.
+- **Visual Fix**: Corrected unreadable color combinations on disabled/aborting buttons, replacing them with high-contrast styles for maximum legibility.
 
-**1. Responsive Header Fix / ヘッダーのレスポンシブ対応**
-- Fixed text overflow and layout truncation on extremely narrow browser widths by implementing `flex-wrap` and `whitespace-normal` on the header elements. The sticky progress bar is now completely responsive and will not cut off text.
-- ブラウザ幅を極端に狭めた際に文字が見切れる問題を修正しました。ヘッダーの各要素に `flex-wrap` と `whitespace-normal` を導入し、完全なレスポンシブ対応を実現しました。
+### UI・システム安定化のアップデート
 
-**2. Full Auto Button Labeling Optimization / フルオートボタン表記の最適化**
-- Validated "Full Auto" button action-oriented labeling ("⚡ フルオート ON" / "⏹ フルオート中断") to provide optimal UX, and corrected the instructional text to accurately reflect the system's hard reset behavior upon interruption.
-- フルオートボタンのアクション指向の表記（「⚡ フルオート ON」 / 「⏹ フルオート中断」）を最適化し、中断後に再開した際の仕様（STEP2からの新シナリオ再生成）が説明文に正確に反映されるよう修正しました。
+- **フルオートパイプラインUI/UX完成**: キャラクター解析（STEP1）などの非同期処理中に中断した際でも、確実に「停止処理中...」のステータスを表示するよう修正し、より堅牢な操作性を実現しました。
+- **視認性の修正**: 中断中・無効化状態のボタン色が暗く見えなくなる問題を解消し、ハイコントラストでくっきり見えるスタイルに変更しました。

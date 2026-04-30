@@ -33,8 +33,9 @@ import {
 // --- Imports ---
 import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
+import { generateImageWithOpenAI } from './lib/openai';
 
-const SYSTEM_VERSION = "v2.87 Alpha";
+const SYSTEM_VERSION = "v2.88 Alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -179,8 +180,8 @@ const StepGuide = ({ text, position = "top", visible = true }) => {
   );
 };
 
-// --- API Key Modal ---
-const ApiKeyModal = ({ isOpen, onSave }) => {
+// --- API Key Modal (Dual Support for Google & OpenAI) ---
+const ApiKeyModal = ({ isOpen, onSave, onClose, provider = "google" }) => {
   const [key, setKey] = useState("");
   const [error, setError] = useState("");
 
@@ -193,19 +194,43 @@ const ApiKeyModal = ({ isOpen, onSave }) => {
     }
     setError("");
     onSave(key);
+    setKey(""); // Reset after save
   };
+
+  const isGoogle = provider === "google";
+  const title = isGoogle ? "API Key が必要です" : "OpenAI API Key が必要です";
+  const placeholder = isGoogle ? "Google AI API Key を入力..." : "sk-proj-...";
+  const linkUrl = isGoogle ? "https://aistudio.google.com/app/apikey" : "https://platform.openai.com/api-keys";
+  const linkText = isGoogle ? "🔑 キーを取得" : "🔑 OpenAI キーを取得";
+  const iconBgClass = isGoogle ? "bg-blue-600" : "bg-emerald-600";
+  const borderClass = isGoogle ? "border-blue-500/30" : "border-emerald-500/30";
+  const shadowClass = isGoogle ? "shadow-blue-500/10" : "shadow-emerald-500/10";
+  const btnClass = isGoogle ? "bg-blue-600 hover:bg-blue-500" : "bg-emerald-600 hover:bg-emerald-500";
+  const linkColorClass = isGoogle ? "text-cyan-400 hover:text-cyan-300 decoration-cyan-400/30" : "text-emerald-400 hover:text-emerald-300 decoration-emerald-400/30";
+  const focusBorderClass = isGoogle ? "focus:border-blue-500" : "focus:border-emerald-500";
+  const focusShadowClass = isGoogle ? "focus:shadow-[0_0_12px_rgba(59,130,246,0.2)]" : "focus:shadow-[0_0_12px_rgba(16,185,129,0.2)]";
 
   return (
     <div className="fixed top-0 left-0 right-0 z-[99999] animate-in slide-in-from-top duration-300">
-      <div className="max-w-5xl mx-auto px-4 md:px-10 pt-4">
-        <div className="bg-[#0f1115]/95 backdrop-blur-2xl border border-blue-500/30 rounded-xl shadow-2xl shadow-blue-500/10 p-4 flex flex-col md:flex-row items-center gap-4">
+      <div className="max-w-5xl mx-auto px-4 md:px-10 pt-4 relative">
+        <div className={`bg-[#0f1115]/95 backdrop-blur-2xl border ${borderClass} rounded-xl shadow-2xl ${shadowClass} p-4 flex flex-col md:flex-row items-center gap-4 relative pr-10`}>
+          {onClose && (
+            <button 
+              onClick={onClose}
+              className="absolute top-2 right-2 text-slate-500 hover:text-white p-1 rounded-full hover:bg-white/10 transition-colors"
+              title="キャンセル"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+          )}
+
           {/* 左: アイコンとラベル */}
           <div className="flex items-center gap-3 shrink-0">
-            <div className="p-2 bg-blue-600 rounded-lg animate-pulse">
+            <div className={`p-2 ${iconBgClass} rounded-lg animate-pulse`}>
               <Zap size={18} className="text-white" />
             </div>
             <div>
-              <p className="text-sm font-bold text-white">API Key が必要です</p>
+              <p className="text-sm font-bold text-white">{title}</p>
               <p className="text-[10px] text-slate-500">ブラウザメモリ内のみ保持・外部送信なし</p>
             </div>
           </div>
@@ -217,14 +242,14 @@ const ApiKeyModal = ({ isOpen, onSave }) => {
                 type="password"
                 value={key}
                 onChange={(e) => setKey(e.target.value)}
-                placeholder="Google AI API Key を入力..."
-                className="flex-1 bg-black/50 text-white placeholder:text-slate-600 px-4 py-2.5 rounded-lg border border-white/10 focus:border-blue-500 outline-none font-mono text-sm tracking-wider transition-all focus:shadow-[0_0_12px_rgba(59,130,246,0.2)]"
+                placeholder={placeholder}
+                className={`flex-1 bg-black/50 text-white placeholder:text-slate-600 px-4 py-2.5 rounded-lg border border-white/10 ${focusBorderClass} outline-none font-mono text-sm tracking-wider transition-all ${focusShadowClass}`}
                 onKeyDown={(e) => e.key === 'Enter' && handleSave()}
                 autoFocus
               />
               <button
                 onClick={handleSave}
-                className="bg-blue-600 hover:bg-blue-500 text-white font-bold px-6 py-2.5 rounded-lg transition-all text-sm whitespace-nowrap active:scale-95"
+                className={`${btnClass} text-white font-bold px-6 py-2.5 rounded-lg transition-all text-sm whitespace-nowrap active:scale-95`}
               >
                 接続
               </button>
@@ -234,12 +259,12 @@ const ApiKeyModal = ({ isOpen, onSave }) => {
 
           {/* 右: Get Key リンク */}
           <a
-            href="https://aistudio.google.com/app/apikey"
+            href={linkUrl}
             target="_blank"
             rel="noreferrer"
-            className="text-[11px] text-cyan-400 hover:text-cyan-300 underline decoration-cyan-400/30 whitespace-nowrap shrink-0"
+            className={`text-[11px] ${linkColorClass} underline whitespace-nowrap shrink-0`}
           >
-            🔑 キーを取得
+            {linkText}
           </a>
         </div>
       </div>
@@ -426,6 +451,18 @@ function App() {
   const [isEnhancePanelOpen, setIsEnhancePanelOpen] = useState(false);
   const [originalScenario, setOriginalScenario] = useState(""); // 強化前の原文保持用
   const [enableChatGPTMode, setEnableChatGPTMode] = useState(false); // [v2.61] ChatGPT Images 2.0 強化プロンプト
+  const [enableOpenAIApi, setEnableOpenAIApi] = useState(false); // [v2.87] ChatGPT Images 2.0 API
+  const [showOpenAIKeyModal, setShowOpenAIKeyModal] = useState(false); // [v2.88] Secure API key modal
+  const [openAIKeyInput, setOpenAIKeyInput] = useState("");
+
+  const handleToggleOpenAIApi = (checked) => {
+    if (checked) {
+      setOpenAIKeyInput(""); // フォームをリセット
+      setShowOpenAIKeyModal(true);
+    } else {
+      setEnableOpenAIApi(false);
+    }
+  };
 
   // [v2.78] フルオート生成モード
   const [isFullAutoMode, setIsFullAutoMode] = useState(false); // フルオート実行中フラグ
@@ -441,6 +478,14 @@ function App() {
   const step3Ref = useRef(null);
   const outputRef = useRef(null);
   const imageResultRef = useRef(null);
+  const genLogRef = useRef(null); // [v2.88] Auto-scroll for Image Gen Log
+
+  // [v2.88] Auto-scroll genLog terminal
+  useEffect(() => {
+    if (genLogRef.current) {
+      genLogRef.current.scrollTop = genLogRef.current.scrollHeight;
+    }
+  }, [genLog]);
 
   // Logic centralization for v1.4.9
   const isAssembleDisabled = isAssembling || !castList || castList.length < 20 || !scenario || scenario.length < 20 || isSearching || isAnalyzing; // [v1.8.83] Relaxed limits from 50 to 20
@@ -448,6 +493,7 @@ function App() {
   // Image Generation
   const [generatedImage, setGeneratedImage] = useState("");
   const [generationHistory, setGenerationHistory] = useState([]); // [v2.86] Generated Image History
+
 
   const handleSetKey = (key) => {
     // APIキーのサニタイズ: 非ASCII文字を除去（コピペ時の見えない文字対策）
@@ -805,8 +851,8 @@ ${scenario}
     if (!castList) return showStatus("先にキャラクターを解析してください。");
     if (isSearching) return;
 
-    // [v2.78] カテゴリオーバーライドがあればそれを使用（フルオート時）
-    const effectiveCategories = categoriesOverride || categories;
+    // [v2.78] カテゴリオーバーライドがあればそれを使用（フルオート時）。Eventオブジェクト誤爆回避のため配列かチェック
+    const effectiveCategories = Array.isArray(categoriesOverride) ? categoriesOverride : categories;
 
     // Manual Mode Check
     if (inputMode === 'manual' && !manualTopic.trim()) {
@@ -2320,9 +2366,11 @@ Clean anime illustration finish, smooth cel shading, soft clean shading, smooth 
       genTickCount++;
       const elapsed = Math.floor(genTickCount * 1.5);
       setGenLog(prev => {
-        const lastEntry = prev[prev.length - 1];
-        if (lastEntry && lastEntry.startsWith("[WAIT]")) {
-          return [...prev.slice(0, -1), `[WAIT] ⏳ 画像生成API応答を待機中... (${elapsed}秒経過)`];
+        const waitIndex = prev.findIndex(entry => entry.startsWith("[WAIT]"));
+        if (waitIndex !== -1) {
+          const newLog = [...prev];
+          newLog[waitIndex] = `[WAIT] ⏳ 画像生成API応答を待機中... (${elapsed}秒経過)`;
+          return newLog;
         }
         return [...prev, `[WAIT] ⏳ 画像生成API応答を待機中... (${elapsed}秒経過)`];
       });
@@ -2332,8 +2380,8 @@ Clean anime illustration finish, smooth cel shading, soft clean shading, smooth 
     await new Promise(r => setTimeout(r, 800));
 
     try {
-      showStatus("Google AI (Gemini/Imagen) に送信中...");
-      setGenLog(prev => [...prev, "[3/5] Google Cloud へ接続中...", "[3/5] プロンプトデータをアップロード中..."]);
+      showStatus(enableOpenAIApi ? "OpenAI (ChatGPT Images 2.0) に送信中..." : "Google AI (Gemini/Imagen) に送信中...");
+      setGenLog(prev => [...prev, "[3/5] クラウドAPIへ接続中...", "[3/5] プロンプトデータをアップロード中..."]);
 
       await new Promise(r => setTimeout(r, 1000)); // More visibility
 
@@ -2341,7 +2389,17 @@ Clean anime illustration finish, smooth cel shading, soft clean shading, smooth 
         setGenLog(prev => [...prev, msg]);
       };
 
-      const { base64Img, usedModel: generatedModelId } = await generateImageWithImagen(currentPrompt, statCallback);
+      let base64Img, generatedModelId;
+      if (enableOpenAIApi) {
+        // [Test] Call OpenAI directly instead of Imagen
+        const res = await generateImageWithOpenAI(currentPrompt, statCallback);
+        base64Img = res.base64Img;
+        generatedModelId = res.usedModel;
+      } else {
+        const res = await generateImageWithImagen(currentPrompt, statCallback);
+        base64Img = res.base64Img;
+        generatedModelId = res.usedModel;
+      }
       setGenLog(prev => [...prev, `[4/5] データストリーム受信完了 (Model: ${generatedModelId})`, "[5/5] Base64画像データをデコード・レンダリング中..."]);
 
       const finalImageStr = `data:image/png;base64,${base64Img}`;
@@ -2384,21 +2442,21 @@ Clean anime illustration finish, smooth cel shading, soft clean shading, smooth 
           "[ERROR GUIDE] 【対処法】下の🛡️「コンテンツポリシー救済パネル」にエラーメッセージが自動入力されました。",
           "[ERROR GUIDE] 「配慮版プロンプトを再生成する」ボタンを押すと、AIが安全な表現に修正します。"
         ];
-      } else if (errMsg.includes("not found") || errMsg.includes("not supported") || errMsg.includes("404") || errMsg.includes("403")) {
+      } else if (errMsg.includes("not found") || errMsg.includes("not supported") || errMsg.includes("404") || errMsg.includes("403") || errMsg.includes("401")) {
         guideLines = [
-          "[ERROR GUIDE] 🔑 現在のAPIキーでは、開発アプリ経由での画像生成が許可されていません（Google側の仕様）。",
-          "[ERROR GUIDE] 【対処法】このアプリ上での自動生成は一旦諦め、以下の「手動生成手段（Gemini Web版）」をご利用ください。",
+          `[ERROR GUIDE] 🔑 現在のAPIキーでは、開発アプリ経由での画像生成が許可されていないか、無効です（${enableOpenAIApi ? 'OpenAI側' : 'Google側'}の仕様・権限）。`,
+          `[ERROR GUIDE] 【対処法】このアプリ上での自動生成は一旦諦め、以下の「手動生成手段（${enableOpenAIApi ? 'ChatGPT' : 'Gemini'} Web版）」をご利用ください。`,
           "[ERROR GUIDE] 1. 「プロンプトをコピー」ボタンを押す",
-          "[ERROR GUIDE] 2. Gemini (Web版) を開く: https://gemini.google.com/app",
-          "[ERROR GUIDE] 3. 貼り付けて「思考モード(Flash Thinking)」で送信する"
+          `[ERROR GUIDE] 2. ${enableOpenAIApi ? 'ChatGPT' : 'Gemini'} (Web版) を開く: ${enableOpenAIApi ? 'https://chatgpt.com/' : 'https://gemini.google.com/app'}`,
+          `[ERROR GUIDE] 3. 貼り付けて送信する`
         ];
       } else {
         guideLines = [
-          "[ERROR GUIDE] ⏲️ タイムアウト、または予期せぬ通信エラーで生成に失敗しました（Google側の混雑など）。",
+          `[ERROR GUIDE] ⏲️ タイムアウト、または予期せぬ通信エラーで生成に失敗しました（${enableOpenAIApi ? 'OpenAI側' : 'Google側'}の混雑など）。`,
           "[ERROR GUIDE] 【対処法】しばらく時間（数分〜）を置いてから「画像を再生成」を試すか、以下の手動手順をご利用ください。",
           "[ERROR GUIDE] 1. 「プロンプトをコピー」ボタンを押す",
-          "[ERROR GUIDE] 2. Gemini (Web版) を開く: https://gemini.google.com/app",
-          "[ERROR GUIDE] 3. 貼り付けて「思考モード(Flash Thinking)」で送信する"
+          `[ERROR GUIDE] 2. ${enableOpenAIApi ? 'ChatGPT' : 'Gemini'} (Web版) を開く: ${enableOpenAIApi ? 'https://chatgpt.com/' : 'https://gemini.google.com/app'}`,
+          `[ERROR GUIDE] 3. 貼り付けて送信する`
         ];
       }
 
@@ -2763,10 +2821,33 @@ ${finalPrompt}
 
   return (
     <div className="min-h-screen bg-[#0a0c10] text-slate-100 font-sans selection:bg-blue-500/30 overflow-x-hidden">
-      <ApiKeyModal isOpen={showModal} onSave={handleSetKey} />
-
-
-
+      <ApiKeyModal isOpen={showModal} onSave={handleSetKey} provider="google" />
+      <ApiKeyModal 
+        isOpen={showOpenAIKeyModal} 
+        onSave={(key) => {
+          const newKey = key.trim();
+          const existingKey = localStorage.getItem("openai_api_key");
+          if (newKey === "" && existingKey) {
+            setEnableOpenAIApi(true);
+            showStatus("🔑 既存のOpenAI APIキーを適用しました。");
+            setShowOpenAIKeyModal(false);
+          } else if (newKey.startsWith("sk-")) {
+            localStorage.setItem("openai_api_key", newKey);
+            setEnableOpenAIApi(true);
+            showStatus("🔑 新しいOpenAI APIキーをセキュアに保存しました。");
+            setShowOpenAIKeyModal(false);
+          } else {
+            alert("エラー：APIキーは 'sk-' から始まる文字列である必要があります。");
+          }
+        }} 
+        onClose={() => {
+          setShowOpenAIKeyModal(false);
+          if (!localStorage.getItem("openai_api_key")) {
+            setEnableOpenAIApi(false); // 取消時はチェックを外す
+          }
+        }} 
+        provider="openai" 
+      />
       {/* STICKY TOP PROGRESS BAR */}
       <div className="fixed top-0 left-0 right-0 z-[100] bg-[#0f1115] border-b border-white/10 px-2 md:px-8 py-3 shadow-xl w-full">
         <div className="flex flex-wrap xl:flex-nowrap items-center justify-center max-w-7xl mx-auto w-full gap-y-3">
@@ -3511,7 +3592,7 @@ ${finalPrompt}
             </label>
 
             <button
-              onClick={assemblePrompt}
+              onClick={() => assemblePrompt()}
               disabled={isAssembling}
               className={`w-full relative bg-white hover:bg-slate-200 text-black py-6 rounded-xl font-black text-xl flex items-center justify-center gap-4 border-b-[6px] border-slate-300 active:border-b-0 active:translate-y-[6px] transition-all disabled:opacity-50 disabled:grayscale disabled:border-none disabled:bg-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed group/gen shadow-xl
                    ${currentStep === 3 ? 'ring-4 ring-orange-500 ring-offset-4 ring-offset-[#0a0c10]' : ''}
@@ -3596,13 +3677,33 @@ ${finalPrompt}
                       ※内容を修正したい場合は、上の「シナリオ」を直接書き換えてから、再度 <span className="text-orange-400 font-bold">「最終プロンプトを構築する」</span> を押してください。
                     </div>
 
+                    {/* [v2.87] ChatGPT Images 2.0 API Checkbox */}
+                    <label className="flex items-center gap-3 px-3 py-3 mt-4 bg-slate-800/50 border border-white/10 rounded-lg cursor-pointer hover:bg-slate-700/50 transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={enableOpenAIApi}
+                        onChange={(e) => handleToggleOpenAIApi(e.target.checked)}
+                        className="w-5 h-5 accent-blue-500 cursor-pointer"
+                      />
+                      <div className="flex flex-col opacity-60">
+                        <span className="text-sm font-bold text-slate-600">
+                          🧪 テスト機能：OpenAI API (ChatGPT Images 2.0) で直接画像生成する
+                        </span>
+                        <span className="text-[11px] text-slate-600 mt-1 leading-relaxed">
+                          【⚠現在API制限により実質非対応】OpenAIの画像APIは長文を理解できないため、この機能でフルオート生成を行うと文字数オーバーでエラーになります。<br/>
+                          現バージョンでは「プロンプトをコピー」を押し、キャラクター設定と共にブラウザ版ChatGPTへ手動で貼り付けてご使用ください。今後のアップデート（内部要約処理の実装）にご期待ください！<br/>
+                          <span className="text-slate-700 text-[10px]">※チェックを入れ直すことで別のAPIキーに変更可能です。</span>
+                        </span>
+                      </div>
+                    </label>
+
                     <button
                       onClick={() => { console.log("Regenerating..."); regenerateImage(); }}
                       disabled={!finalPrompt || isGeneratingImage}
-                      className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg border border-white/10 active:scale-95 disabled:bg-slate-700 disabled:opacity-50 disabled:cursor-wait mt-4"
+                      className={`w-full ${enableOpenAIApi ? 'bg-blue-600 hover:bg-blue-500' : 'bg-orange-600 hover:bg-orange-500'} text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg border border-white/10 active:scale-95 disabled:bg-slate-700 disabled:opacity-50 disabled:cursor-wait mt-4`}
                     >
                       {isGeneratingImage ? <Loader2 size={20} className="animate-spin" /> : <ImageIcon size={20} />}
-                      {isGeneratingImage ? "再生成中..." : "画像を生成する (STEP 4: Google AI)"}
+                      {isGeneratingImage ? "再生成中..." : `画像を生成する (STEP 4: ${enableOpenAIApi ? 'ChatGPT Images 2.0' : 'Google AI'})`}
                     </button>
 
                   {/* PRO TIPS FOR EXTERNAL GENERATION - 説明文統一規格: text-xs */}
@@ -3621,11 +3722,12 @@ ${finalPrompt}
                           🛡️ <strong>レイアウト安定化:</strong> チェックON時、A4縦比率ロック＋パネル剛体制約がプロンプトに自動埋込されます。<br/>
                           ⚠️ それでも<strong>GPT-image 2.0の仕様上、どうしても細長い画像になってしまう場合</strong>は、ChatGPTのメニュー画面にある、「アスペクト比」ボタンで手動修正は行わず、以下の「画像比率事後修正プロンプト」ボタンでコピーしたプロンプトを貼り付けて再生成してください。
                         </span>
-                        <button
-                          className={`mt-2 ${isFixPromptCopied ? 'bg-green-600 border-green-500/30' : 'bg-slate-700 hover:bg-slate-600 border-white/10'} text-white px-3 py-1.5 rounded transition-all inline-flex items-center justify-center gap-1.5 border font-bold active:scale-95`}
-                          style={{ fontSize: '10px', minWidth: '120px', position: 'relative' }}
-                          onClick={() => {
-                            const fixPrompt = `[ABSOLUTE OVERRIDE — FORCE FULL REBUILD]
+                        <div className="mt-3 block w-full">
+                          <button
+                            className={`mt-2 ${isFixPromptCopied ? 'bg-green-600 border-green-500/30' : 'bg-slate-700 hover:bg-slate-600 border-white/10'} text-white px-3 py-1.5 rounded transition-all inline-flex items-center justify-center gap-1.5 border font-bold active:scale-95`}
+                            style={{ fontSize: '10px', minWidth: '120px', position: 'relative' }}
+                            onClick={() => {
+                              const fixPrompt = `[ABSOLUTE OVERRIDE — FORCE FULL REBUILD]
 
 You MUST discard the previously generated image completely.
 DO NOT crop, resize, extend, pad, or reuse any part of the previous image.
@@ -3700,14 +3802,15 @@ Repeat regeneration until ALL conditions are satisfied.
 ━━━━━━━━━━━━━━━━━━
 Only output the corrected A4 4-panel manga image.
 No explanations. No partial results.`;
-                            navigator.clipboard.writeText(fixPrompt);
-                            setIsFixPromptCopied(true);
-                            setTimeout(() => setIsFixPromptCopied(false), 2000);
-                          }}
-                        >
-                          <span style={{ visibility: isFixPromptCopied ? 'hidden' : 'visible' }}>📋 画像比率事後修正プロンプト</span>
-                          {isFixPromptCopied && <span style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>✅ コピー完了</span>}
-                        </button>
+                              navigator.clipboard.writeText(fixPrompt);
+                              setIsFixPromptCopied(true);
+                              setTimeout(() => setIsFixPromptCopied(false), 2000);
+                            }}
+                          >
+                            <span style={{ visibility: isFixPromptCopied ? 'hidden' : 'visible' }}>📋 画像比率事後修正プロンプト</span>
+                            {isFixPromptCopied && <span style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>✅ コピー完了</span>}
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -3787,6 +3890,7 @@ No explanations. No partial results.`;
 
                   {/* Generation Log Terminal - 固定高さ: styleで明示指定（TailwindJITバイパス）, 統一規格: text-xs */}
                   <div
+                    ref={genLogRef}
                     className="mt-4 p-3 bg-black/80 rounded-lg border border-white/10 font-mono text-xs text-green-400 custom-scrollbar"
                     style={{ height: '160px', overflowY: 'auto' }}
                   >
@@ -4007,6 +4111,8 @@ No explanations. No partial results.`;
           </div>
         )
       }
+
+      {/* (OpenAI API Key Modal was unified with standard ApiKeyModal) */}
 
       <style dangerouslySetInnerHTML={{
         __html: `
