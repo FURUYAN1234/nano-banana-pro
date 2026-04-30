@@ -488,6 +488,9 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v2.89.0-alpha (2026-04-30)
+- **[Security]** OpenAI APIキーの管理手法を強化。ブラウザの`localStorage`への永続保存を完全廃止し、セキュアなインメモリ（RAM）上でのみ保持する設計にリファクタリング。ブラウザリロードでキーが安全に揮発することを保証。
+
 ### v2.87.0-alpha (2026-04-30)
 - **[System]** Finalized Full Auto pipeline UI/UX, explicitly ensuring accurate `isAborting` state feedback ("停止処理中...") even during asynchronous interruptions in Step 1 (character analysis), and fixed unreadable color styles during disabled/aborting states. / フルオート生成のUI/UXを完成。STEP1（キャラクター解析中）の非同期処理中に中断した際も、正確に「停止処理中...」のステータスフィードバックを表示するように修正し、無効化時のボタン色が見えなくなる問題を解消しました。
 

@@ -1,9 +1,10 @@
-### UI & System Stability Update
+## Nano Banana Pro v2.89.0-alpha Release
 
-- **Full Auto Pipeline Completion**: Finalized the UI/UX for the automated pipeline. Accurately reflects "Stopping..." (停止処理中...) even during asynchronous character analysis (Step 1) interruptions, ensuring a robust user experience.
-- **Visual Fix**: Corrected unreadable color combinations on disabled/aborting buttons, replacing them with high-contrast styles for maximum legibility.
+### Highlights 🚀
+* **Security Hardening (In-Memory Keys)**: Re-architected OpenAI API key management. All keys are now stored strictly in volatile memory (RAM) and are completely purged upon browser reload. Removed all `localStorage` persistence to guarantee maximum security.
+* **Codebase Clean-up & UI Stability**: Removed all temporary backup files, debug scripts, and raw text logs from the root directory. Restored the centered sticky progress bar UI and ensured fully responsive behavior for the "Full Auto" controls.
 
-### UI・システム安定化のアップデート
+### 日本語アップデート内容 🚀
+* **セキュリティ強化（完全インメモリ化）**: OpenAI APIキーの管理手法を再設計しました。キーは揮発性メモリ（RAM）上にのみ厳格に保持され、ブラウザのリロード時に完全に消滅します。`localStorage` への永続保存を廃止し、機密情報の漏洩リスクを根絶しました。
+* **コードベースの大掃除とUI安定化**: ルートディレクトリに存在していた大量のバックアップファイル、デバッグスクリプト、差分ログなどのゴミファイルを一括削除しました。また、進行状況バーを常に上部中央に固定（Sticky Top）するUIを復旧させ、フルオート機能の操作パネルをレスポンシブに最適化しました。
 
-- **フルオートパイプラインUI/UX完成**: キャラクター解析（STEP1）などの非同期処理中に中断した際でも、確実に「停止処理中...」のステータスを表示するよう修正し、より堅牢な操作性を実現しました。
-- **視認性の修正**: 中断中・無効化状態のボタン色が暗く見えなくなる問題を解消し、ハイコントラストでくっきり見えるスタイルに変更しました。

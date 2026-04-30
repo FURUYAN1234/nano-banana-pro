@@ -1,7 +1,17 @@
+let currentOpenAIApiKey = "";
+
+export const setOpenAIApiKey = (key) => {
+    currentOpenAIApiKey = key;
+};
+
+export const getOpenAIApiKey = () => {
+    return currentOpenAIApiKey;
+};
+
 export const generateImageWithOpenAI = async (prompt, statCallback) => {
   statCallback("[OpenAI] ChatGPT Images 2.0 にリクエストを送信中...");
   
-  const apiKey = localStorage.getItem("openai_api_key");
+  const apiKey = getOpenAIApiKey();
   if (!apiKey) {
     throw new Error("OpenAI APIキーが設定されていません。");
   }

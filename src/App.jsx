@@ -33,9 +33,9 @@ import {
 // --- Imports ---
 import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
-import { generateImageWithOpenAI } from './lib/openai';
+import { generateImageWithOpenAI, setOpenAIApiKey, getOpenAIApiKey } from './lib/openai';
 
-const SYSTEM_VERSION = "v2.88 Alpha";
+const SYSTEM_VERSION = "v2.89 Alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -2826,13 +2826,13 @@ ${finalPrompt}
         isOpen={showOpenAIKeyModal} 
         onSave={(key) => {
           const newKey = key.trim();
-          const existingKey = localStorage.getItem("openai_api_key");
+          const existingKey = getOpenAIApiKey();
           if (newKey === "" && existingKey) {
             setEnableOpenAIApi(true);
             showStatus("🔑 既存のOpenAI APIキーを適用しました。");
             setShowOpenAIKeyModal(false);
           } else if (newKey.startsWith("sk-")) {
-            localStorage.setItem("openai_api_key", newKey);
+            setOpenAIApiKey(newKey);
             setEnableOpenAIApi(true);
             showStatus("🔑 新しいOpenAI APIキーをセキュアに保存しました。");
             setShowOpenAIKeyModal(false);
@@ -2842,7 +2842,7 @@ ${finalPrompt}
         }} 
         onClose={() => {
           setShowOpenAIKeyModal(false);
-          if (!localStorage.getItem("openai_api_key")) {
+          if (!getOpenAIApiKey()) {
             setEnableOpenAIApi(false); // 取消時はチェックを外す
           }
         }} 
