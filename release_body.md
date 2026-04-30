@@ -1,15 +1,11 @@
-## 🚑 System Revert & UI Stability Recovery / 緊急ロールバックおよびUI安定性の回復
+## 📱 Responsive Layout & UI Polish / レスポンシブ対応およびUIの洗練
 
 ### What's New / 変更内容
 
-**1. Emergency UI Rollback / 緊急ロールバック**
-- Reverted the codebase to the stable `v2.77.0-alpha` state to discard experimental layout regressions.
-- 実験的なレイアウト変更（固定ヘッダー化や余白追加による崩れ）を破棄し、安定して動作していた `v2.77.0-alpha` の状態にシステムを完全に復元しました。
+**1. Responsive Header Fix / ヘッダーのレスポンシブ対応**
+- Fixed text overflow and layout truncation on extremely narrow browser widths by implementing `flex-wrap` and `whitespace-normal` on the header elements. The sticky progress bar is now completely responsive and will not cut off text.
+- ブラウザ幅を極端に狭めた際に文字が見切れる問題を修正しました。ヘッダーの各要素に `flex-wrap` と `whitespace-normal` を導入し、完全なレスポンシブ対応を実現しました。
 
-**2. Progress Bar Stabilization / プログレスバーの安定化**
-- Restored the single, unified sticky header design with proper control placement.
-- 余計なスクロールやヘッダーの干渉を防ぐため、従来のスッキリとしたスティッキーヘッダー設計に差し戻しました。
-
-**3. Tooling Error Prevention / ツーリングエラー防止**
-- Corrected Mojibake (character encoding corruption) introduced by incorrect file writing procedures.
-- ファイル書き込み時のエンコーディングミスによる文字化けを修正しました。
+**2. Full Auto Button Labeling Optimization / フルオートボタン表記の最適化**
+- Validated "Full Auto" button action-oriented labeling ("⚡ フルオート ON" / "⏹ フルオート中断") to provide optimal UX, and corrected the instructional text to accurately reflect the system's hard reset behavior upon interruption.
+- フルオートボタンのアクション指向の表記（「⚡ フルオート ON」 / 「⏹ フルオート中断」）を最適化し、中断後に再開した際の仕様（STEP2からの新シナリオ再生成）が説明文に正確に反映されるよう修正しました。

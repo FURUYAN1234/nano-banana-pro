@@ -484,6 +484,9 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v2.87.0-alpha (2026-04-30)
+- **[System]** Finalized Full Auto pipeline UI/UX, explicitly ensuring accurate `isAborting` state feedback ("停止処理中...") even during asynchronous interruptions in Step 1 (character analysis), and fixed unreadable color styles during disabled/aborting states. / フルオート生成のUI/UXを完成。STEP1（キャラクター解析中）の非同期処理中に中断した際も、正確に「停止処理中...」のステータスフィードバックを表示するように修正し、無効化時のボタン色が見えなくなる問題を解消しました。
+
 ### v2.85.0-alpha (2026-04-30)
 - **[UI Fix]** Fixed text overflow and layout truncation on extremely narrow browser widths by implementing `flex-wrap` and `whitespace-normal` on the header elements, making the sticky progress bar completely responsive. / ブラウザ幅を極端に狭めた際に文字が見切れる問題を修正。ヘッダーに `flex-wrap` と `whitespace-normal` を導入し、完全なレスポンシブ対応を実現しました。
 - **[UI Fix]** Validated "Full Auto" button action-oriented labeling ("⚡ フルオート ON" / "⏹ フルオート中断") to provide optimal UX, and corrected the instructional text to accurately reflect the system's hard reset behavior upon interruption. / フルオートボタンのアクション指向の表記（「⚡ フルオート ON」 / 「⏹ フルオート中断」）を最適化し、中断後に再開した際の仕様（STEP2からの新シナリオ再生成）が説明文に正確に反映されるよう修正しました。

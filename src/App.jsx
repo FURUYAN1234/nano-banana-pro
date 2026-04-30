@@ -33,7 +33,8 @@ import {
 // --- Imports ---
 import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
-const SYSTEM_VERSION = "v2.85 Alpha";
+
+const SYSTEM_VERSION = "v2.87 Alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -428,10 +429,13 @@ function App() {
 
   // [v2.78] フルオート生成モード
   const [isFullAutoMode, setIsFullAutoMode] = useState(false); // フルオート実行中フラグ
+  const [isEndlessMode, setIsEndlessMode] = useState(false); // [v2.86] 無限ループ生成フラグ
+  const isEndlessModeRef = useRef(false);
   const [fullAutoStep, setFullAutoStep] = useState(0); // 0=待機, 2=STEP2, 3=STEP3, 4=STEP4
   const [fullAutoCountdown, setFullAutoCountdown] = useState(0); // カウントダウン表示用
   const [triggerFullAuto, setTriggerFullAuto] = useState(0); // [v2.78] Effect Trigger
   const fullAutoAbortRef = useRef(false); // 中断フラグ（useRefで即時反映）
+  const [isAborting, setIsAborting] = useState(false); // 中断処理中フラグ
   // [v2.78] 自動スクロール用Ref
   const step2Ref = useRef(null);
   const step3Ref = useRef(null);
@@ -443,6 +447,7 @@ function App() {
 
   // Image Generation
   const [generatedImage, setGeneratedImage] = useState("");
+  const [generationHistory, setGenerationHistory] = useState([]); // [v2.86] Generated Image History
 
   const handleSetKey = (key) => {
     // APIキーのサニタイズ: 非ASCII文字を除去（コピペ時の見えない文字対策）
@@ -633,14 +638,26 @@ function App() {
       showStatus("全キャラクターの解析が完了しました。");
 
       // [v2.78] フルオート武装中なら自動的にSTEP2→3→4を開始
-      if (isFullAutoMode && !fullAutoAbortRef.current) {
-        setTriggerFullAuto(prev => prev + 1);
+      if (isFullAutoMode) {
+        if (!fullAutoAbortRef.current) {
+          setTriggerFullAuto(prev => prev + 1);
+        } else {
+          setIsFullAutoMode(false);
+          setFullAutoStep(0);
+          setIsAborting(false);
+          showStatus("⏹ フルオートを中断しました。");
+        }
       }
     } catch (error) {
       console.error(error);
       const translatedMsg = translateApiError(error.message);
       setAnalyzeThought(prev => prev + `\n\n[SYSTEM FAILURE]: ${error.message}\n--------------------------------------------------\n${translatedMsg}`);
       showStatus("解析エラー: " + error.message);
+      if (isFullAutoMode) {
+        setIsFullAutoMode(false);
+        setFullAutoStep(0);
+        setIsAborting(false);
+      }
     } finally {
       clearInterval(thinkTimer);
       setIsAnalyzing(false);
@@ -2327,7 +2344,10 @@ Clean anime illustration finish, smooth cel shading, soft clean shading, smooth 
       const { base64Img, usedModel: generatedModelId } = await generateImageWithImagen(currentPrompt, statCallback);
       setGenLog(prev => [...prev, `[4/5] データストリーム受信完了 (Model: ${generatedModelId})`, "[5/5] Base64画像データをデコード・レンダリング中..."]);
 
-      setGeneratedImage(`data:image/png;base64,${base64Img}`);
+      const finalImageStr = `data:image/png;base64,${base64Img}`;
+      setGeneratedImage(finalImageStr);
+      setGenerationHistory(prev => [{ id: Date.now(), img: finalImageStr }, ...prev]); // [v2.86] Add to history
+      
       if (generatedModelId && !generatedModelId.startsWith("gemini-3")) {
         // gemini-2.5系やimagen系はフォールバック扱い（妥協版警告を表示）
         setIsFallbackUsed(true);
@@ -2630,12 +2650,12 @@ ${finalPrompt}
     await new Promise(r => setTimeout(r, 200));
     step2Ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
-    // categoriesOverrideを直接渡してstate反映タイミングバグを回避
     const generatedScenario = await generateScenarioFromNews(overrideCategories);
     if (fullAutoAbortRef.current || !generatedScenario) {
       setIsFullAutoMode(false);
       setFullAutoStep(0);
-      if (fullAutoAbortRef.current) showStatus("フルオートを中断しました。");
+      setIsAborting(false);
+      if (fullAutoAbortRef.current) showStatus("⏹ フルオートを中断しました。");
       return;
     }
 
@@ -2649,7 +2669,8 @@ ${finalPrompt}
     if (fullAutoAbortRef.current || !generatedPrompt) {
       setIsFullAutoMode(false);
       setFullAutoStep(0);
-      if (fullAutoAbortRef.current) showStatus("フルオートを中断しました。");
+      setIsAborting(false);
+      if (fullAutoAbortRef.current) showStatus("⏹ フルオートを中断しました。");
       return;
     }
 
@@ -2664,11 +2685,29 @@ ${finalPrompt}
     await new Promise(r => setTimeout(r, 800));
     imageResultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
-    // フルオート完了（ボタン自動解除）
-    setIsFullAutoMode(false);
-    setFullAutoStep(0);
-    if (step4ok) {
-      showStatus("🎉 フルオート生成完了！4コマ漫画が生成されました！");
+    if (isEndlessModeRef.current) {
+      // 連続生成（エンドレスモード）
+      if (!fullAutoAbortRef.current) {
+        showStatus("🔄 連続生成モードON：次の作品を生成します...");
+        setTimeout(() => {
+          if (!fullAutoAbortRef.current) {
+            setTriggerFullAuto(prev => prev + 1);
+          }
+        }, 2000); // 少し待ってから次へ
+      } else {
+        setIsFullAutoMode(false);
+        setFullAutoStep(0);
+        setIsAborting(false);
+        showStatus("⏹ 連続生成を中断しました。");
+      }
+    } else {
+      // フルオート完了（通常モード：ボタン自動解除）
+      setIsFullAutoMode(false);
+      setFullAutoStep(0);
+      setIsAborting(false);
+      if (step4ok) {
+        showStatus("🎉 フルオート生成完了！4コマ漫画が生成されました！");
+      }
     }
   };
 
@@ -2678,13 +2717,20 @@ ${finalPrompt}
     if (isFullAutoMode) {
       // 実行中 or 武装中 → 中断/解除
       fullAutoAbortRef.current = true;
-      setIsFullAutoMode(false);
-      setFullAutoStep(0);
-      showStatus("フルオートを解除しました。");
+      if (fullAutoStep > 0 || isAnalyzing || isSearching || isAssembling || isGeneratingImage) {
+        setIsAborting(true);
+        showStatus("⚠️ 中断処理中...（現在のステップが完了するまでお待ちください）");
+      } else {
+        setIsFullAutoMode(false);
+        setFullAutoStep(0);
+        setIsAborting(false);
+        showStatus("フルオートを解除しました。");
+      }
       return;
     }
     
     fullAutoAbortRef.current = false;
+    setIsAborting(false);
     setIsFullAutoMode(true);
     
     if (castList && castList.length >= 20) {
@@ -2699,8 +2745,13 @@ ${finalPrompt}
   // フルオート中断
   const abortFullAuto = () => {
     fullAutoAbortRef.current = true;
-    setIsFullAutoMode(false);
-    setFullAutoStep(0);
+    if (fullAutoStep > 0 || isAnalyzing || isSearching || isAssembling || isGeneratingImage) {
+      setIsAborting(true);
+    } else {
+      setIsFullAutoMode(false);
+      setFullAutoStep(0);
+      setIsAborting(false);
+    }
   };
 
   // Determine Current Step
@@ -2721,7 +2772,7 @@ ${finalPrompt}
         <div className="flex flex-wrap xl:flex-nowrap items-center justify-center max-w-7xl mx-auto w-full gap-y-3">
           
           {/* Progress Steps (Center Left) */}
-          <div className="flex flex-wrap items-center justify-center gap-2 md:gap-4 shrink-0">
+          <div className={`flex flex-wrap items-center justify-center gap-2 md:gap-4 shrink-0 transition-opacity duration-300 ${!apiKey ? 'opacity-30' : 'opacity-100'}`}>
             {/* Step 1: 解析 */}
             <div className={`flex items-center gap-1.5 ${currentStep >= 1 ? 'opacity-100' : 'opacity-40'}`}>
               <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${currentStep === 1 ? 'bg-blue-500 text-white shadow-[0_0_10px_rgba(59,130,246,0.6)]' : currentStep > 1 ? 'bg-blue-600/50 text-blue-200' : 'bg-white/10 text-white/50'}`}>
@@ -2730,7 +2781,7 @@ ${finalPrompt}
               <span className="text-sm font-bold text-white tracking-wider">解析</span>
             </div>
             
-            <ArrowRight size={14} className="text-white/30 hidden sm:block" />
+            <ArrowRight size={14} className="text-white/30 shrink-0 mx-0.5 sm:mx-1" />
             
             {/* Step 2: シナリオ */}
             <div className={`flex items-center gap-1.5 ${currentStep >= 2 ? 'opacity-100' : 'opacity-40'}`}>
@@ -2740,7 +2791,7 @@ ${finalPrompt}
               <span className="text-sm font-bold text-white tracking-wider">シナリオ</span>
             </div>
             
-            <ArrowRight size={14} className="text-white/30 hidden sm:block" />
+            <ArrowRight size={14} className="text-white/30 shrink-0 mx-0.5 sm:mx-1" />
             
             {/* Step 3: プロンプト */}
             <div className={`flex items-center gap-1.5 ${currentStep >= 3 ? 'opacity-100' : 'opacity-40'}`}>
@@ -2750,7 +2801,7 @@ ${finalPrompt}
               <span className="text-sm font-bold text-white tracking-wider">プロンプト</span>
             </div>
             
-            <ArrowRight size={14} className="text-white/30 hidden sm:block" />
+            <ArrowRight size={14} className="text-white/30 shrink-0 mx-0.5 sm:mx-1" />
             
             {/* Step 4: 画像生成 */}
             <div className={`flex items-center gap-1.5 ${currentStep >= 4 ? 'opacity-100' : 'opacity-40'}`}>
@@ -2766,31 +2817,51 @@ ${finalPrompt}
           <div className="hidden xl:block w-12 lg:w-16 shrink-0"></div>
 
           {/* Controls (Center Right) - フルオートボタン＋説明文 */}
-          <div className="flex flex-wrap sm:flex-nowrap items-center justify-center gap-y-2 shrink-0 max-w-full">
-            {/* フルオートボタン */}
+          <div className="flex flex-wrap sm:flex-nowrap items-center justify-center gap-4 lg:gap-6 shrink-0 max-w-full">
+            {/* [v2.86] 連続生成(ループ)トグル */}
             <button
-              disabled={!apiKey}
-              onClick={handleFullAutoToggle}
-              title="画像をドロップするだけで4コマを全自動生成。完了後は自動OFF。生成中に押すと即中断。"
-              style={{ color: isFullAutoMode ? '#dc2626' : '#ffffff' }}
+              disabled={!apiKey || isAborting}
+              onClick={() => {
+                const nextState = !isEndlessMode;
+                setIsEndlessMode(nextState);
+                isEndlessModeRef.current = nextState;
+              }}
+              title="ONにすると、フルオート完了時に同じキャラクターで永遠にシナリオ生成と画像生成を繰り返します。完全停止するにはフルオート中断を押してください。"
+              style={{ color: isEndlessMode ? '#dc2626' : '#ffffff' }}
               className={`min-w-[160px] flex items-center justify-center gap-1.5 px-4 py-3 rounded-xl text-sm font-black tracking-widest transition-all duration-100 border-2 border-b-4 select-none shrink-0 active:border-b-2 active:translate-y-0.5 ${
-                isFullAutoMode
+                isEndlessMode
                   ? 'bg-red-50 border-red-300 shadow-lg'
                   : 'bg-[#2d3a4d] border-[#4a5568] hover:bg-[#3d4f66]'
-              } disabled:opacity-30 disabled:cursor-not-allowed`}
+              } disabled:opacity-50 disabled:cursor-not-allowed`}
             >
-              {isFullAutoMode ? <Square size={14} fill="currentColor" /> : <Zap size={14} />}
-              {isFullAutoMode ? 'フルオート中断' : '⚡ フルオート ON'}
+              <RefreshCw size={14} className={isEndlessMode ? 'animate-spin' : ''} style={{ animationDuration: '3s' }} />
+              <span className="whitespace-nowrap">{isEndlessMode ? '無限ループ設定 解除' : '無限ループ設定 ON'}</span>
+            </button>
+
+            {/* フルオートボタン */}
+            <button
+              disabled={!apiKey || isAborting}
+              onClick={handleFullAutoToggle}
+              title="画像をドロップするだけで4コマを全自動生成。完了後は自動OFF。生成中に押すと即中断。"
+              style={{ color: isFullAutoMode ? (isAborting ? '#ffffff' : '#dc2626') : '#ffffff' }}
+              className={`min-w-[160px] flex items-center justify-center gap-1.5 px-4 py-3 rounded-xl text-sm font-black tracking-widest transition-all duration-100 border-2 border-b-4 select-none shrink-0 active:border-b-2 active:translate-y-0.5 ${
+                isFullAutoMode
+                  ? (isAborting ? 'bg-slate-700 border-slate-500 shadow-none cursor-wait opacity-100' : 'bg-red-50 border-red-300 shadow-lg')
+                  : 'bg-[#2d3a4d] border-[#4a5568] hover:bg-[#3d4f66]'
+              } ${!apiKey && !isAborting ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
+              {isFullAutoMode ? (isAborting ? <Loader2 size={14} className="animate-spin" /> : <Square size={14} fill="currentColor" />) : <Zap size={14} />}
+              {isFullAutoMode ? (isAborting ? '停止処理中...' : 'フルオート中断') : '⚡ フルオート ON'}
             </button>
             
             {/* ================= ボタンと説明文の間の物理スペーサー ================= */}
             <div className="hidden sm:block w-6 shrink-0"></div>
 
-            {/* 説明文（2行構成、文字を切らない） */}
-            <div className="flex flex-col justify-center text-[10.5px] text-slate-400 leading-relaxed max-w-[600px] text-center sm:text-left">
-              {/* 狭い画面では折り返しを許可して見切れを防止 */}
-              <span className="whitespace-normal sm:whitespace-nowrap">　ONにして画像をドロップ、もしくは画像ドロップ後ＯＮ→全自動で4コマ生成。完了後は自動OFF。　</span>
-              <span className="whitespace-normal sm:whitespace-nowrap">　生成中は押して中断（以降はSTEPボタンで進めて下さい）。中断後再度ＯＮにすると、キャラ設定を維持して新シナリオで再生成を始めます。　</span>
+            {/* 説明文（3行構成、文字を切らない） */}
+            <div className={`flex flex-col justify-center text-[10.5px] leading-relaxed max-w-[600px] text-center sm:text-left transition-opacity duration-300 ${!apiKey ? 'text-slate-600 opacity-40' : 'text-slate-400'}`}>
+              <span className="whitespace-normal sm:whitespace-nowrap">　【⚡ フルオート ON】にして画像をドロップ、もしくはドロップ後に押す→全自動で生成。完了後は自動OFF。　</span>
+              <span className="whitespace-normal sm:whitespace-nowrap">　生成中は同ボタンで中断（以降はSTEPボタンで進行）。中断後再度押すと新シナリオで再生成を始めます。　</span>
+              <span className="whitespace-normal sm:whitespace-nowrap">　※「無限ループ設定」をONにしてフルオートを開始すると、完了後に自動で次の作品の生成を永遠に繰り返します。　</span>
             </div>
           </div>
         </div>
@@ -3743,9 +3814,38 @@ No explanations. No partial results.`;
             {/* 右: 生成画像エリア */}
             {/* [v2.78] フルオート自動スクロール用ref */}
             <section ref={imageResultRef} className="relative group bg-[#0d1117] rounded-xl border border-white/5 min-h-[600px] flex flex-col overflow-hidden">
-              {/* [v2.48] 描画エリアロックオーバーレイ: STEP3未完了 or シナリオ強化中はぼかす */}
-              {(!finalPrompt && !isAssembling || isEnhancing) && (
-                <div style={{ position: 'absolute', inset: 0, zIndex: 200, backgroundColor: 'rgba(10,12,16,0.85)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)', pointerEvents: 'auto', borderRadius: '0.75rem' }} />
+              {/* [v2.87] 描画エリアロックオーバーレイ (シナリオ強化、または フルオート時の待機中) */}
+              {(((!finalPrompt && !generatedImage && !isGeneratingImage) || isSearching || isAssembling || isEnhancing || (isFullAutoMode && fullAutoStep > 0 && fullAutoStep < 4)) && !isGeneratingImage) && (
+                <div style={{ position: 'absolute', inset: 0, zIndex: 200, backgroundColor: 'rgba(10,12,16,0.85)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)', pointerEvents: 'auto', borderRadius: '0.75rem' }} className="flex flex-col items-center justify-center">
+                  {(isSearching || isAssembling || isEnhancing || (isFullAutoMode && fullAutoStep > 0 && fullAutoStep < 4)) && (
+                    <div className="flex flex-col items-center gap-3 bg-black/60 px-8 py-6 rounded-2xl border border-white/10 shadow-2xl animate-pulse">
+                       <Loader2 size={36} className="animate-spin text-blue-500" />
+                       <span className="text-sm font-bold tracking-widest text-blue-400">
+                         {(isSearching || isAssembling) ? "シナリオ・プロンプト生成中..." : "自動生成 待機中..."}
+                       </span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* [v2.87] 画像生成中のオーバーレイ (古い画像がある場合でも上から被せる) */}
+              {isGeneratingImage && (
+                <div style={{ position: 'absolute', inset: 0, zIndex: 200, backgroundColor: 'rgba(10,12,16,0.85)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)', pointerEvents: 'auto', borderRadius: '0.75rem' }} className="flex flex-col items-center justify-center">
+                  <div className="relative flex flex-col items-center justify-center space-y-6 w-full max-w-md mx-auto">
+                    <Loader2 size={64} className="animate-spin text-blue-500 mx-auto" />
+                    <div className="absolute inset-0 blur-xl bg-blue-500/10 animate-pulse pointer-events-none" />
+
+                    <div className="z-10 bg-black/80 border border-blue-500/50 rounded-2xl px-8 py-6 shadow-[0_0_30px_rgba(59,130,246,0.3)] animate-in fade-in zoom-in duration-300 backdrop-blur-md w-full">
+                      <p className="text-lg font-black text-blue-400 tracking-widest animate-pulse flex items-center justify-center gap-2">
+                        GENERATING IMAGE <span className="flex space-x-1"><span className="animate-bounce delay-75">.</span><span className="animate-bounce delay-150">.</span><span className="animate-bounce delay-300">.</span></span>
+                      </p>
+                      <p className="text-xs text-blue-200/90 mt-4 font-bold text-center leading-relaxed">
+                        高品質な画像を生成しています。<br />
+                        <span className="text-orange-400">※最大1〜2分程度かかる場合があります。<br/>このままお待ちください。</span>
+                      </p>
+                    </div>
+                  </div>
+                </div>
               )}
 
               {/* Title Header */}
@@ -3764,7 +3864,32 @@ No explanations. No partial results.`;
                   generatedImage ? (
                     <div className="w-full h-full flex flex-col items-center justify-center gap-4">
                       <img src={generatedImage} className="max-w-full max-h-[70vh] object-contain shadow-2xl" alt="Generated Result" />
-                      <div className="w-full px-8">
+                      
+                      {/* [v2.87] 妥協版警告の復活 */}
+                      {isFallbackUsed && (
+                        <div className="w-full max-w-2xl bg-orange-500/10 border-l-4 border-orange-500 p-4 rounded-r-xl shadow-lg mt-2 mx-auto">
+                          <div className="flex items-start gap-3">
+                            <AlertTriangle className="text-orange-500 shrink-0 mt-0.5" size={20} />
+                            <div className="text-sm">
+                              <h4 className="text-orange-400 font-bold mb-1">【警告】下位モデル（妥協版）で生成されました</h4>
+                              <p className="text-orange-200/80 leading-relaxed mb-3">
+                                最新モデルへの接続が混雑等で失敗したため、旧モデルで生成されました。<br/>
+                                <span className="text-white font-bold">テキストの文字化けや、キャラクターの描写崩れ</span> が高確率で発生します。
+                              </p>
+                              <div className="bg-black/40 rounded p-3 text-left">
+                                <p className="text-orange-300 font-bold mb-2">完璧な画質で生成するための手動手順：</p>
+                                <ol className="list-decimal list-inside text-slate-300 space-y-1 text-xs">
+                                  <li>画面左側の「<span className="text-white font-bold">プロンプトをコピー</span>」ボタンを押す</li>
+                                  <li><a href="https://gemini.google.com/app" target="_blank" rel="noreferrer" className="text-blue-400 hover:underline">Gemini公式ウェブ版</a>を開く</li>
+                                  <li>コピーした文章を貼り付けて送信する</li>
+                                </ol>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="w-full px-8 mt-2">
                         <button
                           onClick={() => {
                             const a = document.createElement('a');
@@ -3786,37 +3911,82 @@ No explanations. No partial results.`;
                           最初（STEP 1）に戻る
                         </button>
                       </div>
+
                     </div>
                   ) : (
-                    <div className="text-center opacity-20 space-y-6">
-                      {
-                        isAssembling ? (
-                          <div className="relative flex flex-col items-center justify-center space-y-4" >
-                            <Loader2 size={64} className="animate-spin text-blue-500 mx-auto" />
-                            <div className="absolute inset-0 blur-xl bg-blue-500/20 animate-pulse" />
-
-                            <div className="z-10 bg-black/50 border border-blue-500/30 rounded-xl px-6 py-4 animate-in fade-in zoom-in duration-300 backdrop-blur-sm">
-                              <p className="text-sm font-black text-blue-400 tracking-widest animate-pulse flex items-center gap-2">
-                                GENERATING IMAGE <span className="flex space-x-1"><span className="animate-bounce delay-75">.</span><span className="animate-bounce delay-150">.</span><span className="animate-bounce delay-300">.</span></span>
-                              </p>
-                              <p className="text-[10px] text-blue-200/70 mt-2 font-bold max-w-xs mx-auto">
-                                高品質な画像を生成しています。<br />
-                                <span className="text-orange-300">※最大1〜2分程度かかる場合があります。このままお待ちください。</span>
-                              </p>
-                            </div>
-                          </div>
-                        ) : (
-                          <BrainCircuit size={80} className="mx-auto" />
-                        )
-                      }
+                    <div className="opacity-30 space-y-6 flex flex-col items-center justify-center w-full h-full text-center">
+                      <BrainCircuit size={80} className="mx-auto" />
                       <div className="space-y-2 text-center">
                         <p className="text-sm font-black uppercase tracking-[0.5em] text-slate-500">Ready to Start</p>
                         <p className="text-[10px] font-bold text-slate-600">ここに生成された4コマ漫画が表示されます</p>
                       </div>
-                    </div >
+                    </div>
                   )}
               </div>
             </section >
+
+            {/* [v2.86] 生成履歴ギャラリー (別セクション) */}
+            {generationHistory.length > 0 && (
+              <section className="relative bg-[#0a0c10] border border-white/10 rounded-2xl p-4 shadow-xl mt-6 mx-2 lg:mx-0">
+                {/* [v2.87] 生成中は履歴をロック（触れないようにする） */}
+                {(isSearching || isAssembling || isGeneratingImage || isEnhancing || (isFullAutoMode && fullAutoStep > 0 && fullAutoStep < 4)) && (
+                  <div style={{ position: 'absolute', inset: 0, zIndex: 10, backgroundColor: 'rgba(10,12,16,0.6)', backdropFilter: 'blur(2px)', pointerEvents: 'auto', borderRadius: '1rem' }} className="flex items-center justify-center">
+                    <span className="text-xs font-bold text-slate-400 bg-black/80 px-3 py-1 rounded-full border border-white/10 shadow-lg flex items-center gap-2">
+                      <Loader2 size={12} className="animate-spin" /> 生成中...
+                    </span>
+                  </div>
+                )}
+                <div className="flex items-center justify-between mb-4 border-b border-white/5 pb-2 relative z-0">
+                  <h4 className="text-slate-300 text-xs font-bold flex items-center gap-2">
+                    <ImageIcon size={14} className="text-blue-400" />
+                    生成履歴 ({generationHistory.length})
+                  </h4>
+                  <button
+                    onClick={() => {
+                      if(window.confirm('生成履歴をすべて削除しますか？')) {
+                        setGenerationHistory([]);
+                        setGeneratedImage("");
+                      }
+                    }}
+                    className="flex items-center gap-1 px-2 py-1 text-[10px] text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded transition-colors"
+                  >
+                    <Trash2 size={12} /> 全削除
+                  </button>
+                </div>
+                <div className="flex gap-3 overflow-x-auto custom-scrollbar pb-2 pt-1 px-1">
+                  {generationHistory.map((historyItem) => (
+                    <div
+                      key={historyItem.id}
+                      onClick={() => setGeneratedImage(historyItem.img)}
+                      style={{ width: '64px', height: '96px', flexShrink: 0 }}
+                      className={`relative rounded-md overflow-hidden cursor-pointer transition-all border-2 group ${
+                        generatedImage === historyItem.img 
+                          ? 'border-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.6)] scale-105 z-10' 
+                          : 'border-white/10 hover:border-white/30 opacity-70 hover:opacity-100'
+                      }`}
+                    >
+                      <img src={historyItem.img} className="w-full h-full object-cover" alt="History thumbnail" />
+                      {generatedImage === historyItem.img && (
+                        <div className="absolute top-1 right-1 bg-blue-500 text-white rounded-full p-0.5 shadow-lg">
+                          <Check size={10} strokeWidth={3} />
+                        </div>
+                      )}
+                      {/* 個別削除ボタン (Hover) */}
+                      <div 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setGenerationHistory(prev => prev.filter(h => h.id !== historyItem.id));
+                          if (generatedImage === historyItem.img) setGeneratedImage("");
+                        }}
+                        className="absolute top-1 left-1 bg-black/60 text-red-400 rounded-full p-1 opacity-0 group-hover:opacity-100 hover:bg-red-500 hover:text-white transition-all shadow-lg"
+                      >
+                        <Trash2 size={10} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
           </div >
           
 
