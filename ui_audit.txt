@@ -1,0 +1,143 @@
+
+======================
+Commit 0: Date:   Wed Apr 29 21:13:07 2026 +0900
+DIFF: -      // STEP1完了済み → 状態更新後に即実行させる
+DIFF: -      // STEP1未完了 → 武装待機
+BUTTON CHANGE: -            <button -              disabled={!apiKey || (!castList && !scenario)} -              onClick={partialReset} -              className="flex items-center gap-1.5 bg-white/5 hover:bg-white/10 text-slate-300 px-2 py-1.5 md:px-3 rounded-lg text-[10px] md:text-xs font-bold transition-colors border border-white/10 disabled:opacity-30 disabled:cursor-not-allowed" -              title="キャラクター設定を維持したまま、シナリオ以降をやり直す" -            > -              <RefreshCw size={12} /> <span className="hidden sm:inline">やり直す</span> -            </button>
+BUTTON CHANGE: -            <button -              disabled={!apiKey} -              onClick={handleFullAutoToggle} -              className={`flex items-center gap-1.5 px-3 md:px-4 py-1.5 rounded-lg text-[10px] md:text-xs font-bold transition-colors shadow-lg border ${ -                isFullAutoMode -                  ? 'bg-red-900/80 hover:bg-red-800 text-red-100 border-red-500/50 animate-pulse' -                  : 'bg-gradient-to-r from-blue-700 to-indigo-700 hover:from-blue-600 hover:to-indigo-600 text-white border-blue-400/30' -              } disabled:opacity-30 disabled:cursor-not-allowed`} -            > -              {isFullAutoMode ? ( -                <><Square size={12} fill="currentColor" /> 中断</> -              ) : ( -                <><Zap size={12} className={castList ? "text-yellow-300" : ""} /> フルオート</> -              )} -            </button>
+BUTTON CHANGE: +          <button onClick={resetAll} className="group flex items-center gap-2 bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white px-8 py-4 rounded-2xl font-bold transition-all border border-white/5 z-10"> +            <RefreshCw size={18} className="group-hover:rotate-180 transition-transform duration-500" /> 入力をリセット +          </button>
+BUTTON CHANGE: -            <button -              onClick={() => { -                partialReset(); -                window.scrollTo({ top: 0, behavior: 'smooth' }); -              }} -              className="max-w-2xl mx-auto w-full bg-gradient-to-r from-blue-900 to-indigo-900 hover:from-blue-800 hover:to-indigo-800 text-white font-black py-6 px-8 rounded-2xl flex items-center justify-center gap-3 transition-all shadow-[0_0_30px_rgba(59,130,246,0.3)] border border-blue-400/30 active:scale-95 group text-lg tracking-widest relative overflow-hidden" -            > -              <div className="absolute inset-0 bg-white/5 group-hover:bg-transparent transition-colors" /> -              <RefreshCw size={24} className="group-hover:-rotate-180 transition-transform duration-700" /> -              <span>同じキャラクターで <span className="text-yellow-300">もう一度生成する</span></span> -            </button>
+DIFF: -              全てを初期化する（別のキャラ画像を使う場合）
+BUTTON CHANGE: -            <button -              onClick={() => { -                resetAll(); -                window.scrollTo({ top: 0, behavior: 'smooth' }); -              }} -              className="text-xs text-slate-500 hover:text-red-400 font-bold underline decoration-slate-500/30 hover:decoration-red-400 transition-colors py-2 px-4" -            > -              全てを初期化する（別のキャラ画像を使う場合） -            </button>
+
+======================
+Commit 1: Date:   Wed Apr 29 19:39:07 2026 +0900
+DIFF: +      // STEP1完了済み → 状態更新後に即実行させる
+DIFF: +      // STEP1未完了 → 武装待機
+BUTTON CHANGE: +            <button +              disabled={!apiKey || (!castList && !scenario)} +              onClick={partialReset} +              className="flex items-center gap-1.5 bg-white/5 hover:bg-white/10 text-slate-300 px-2 py-1.5 md:px-3 rounded-lg text-[10px] md:text-xs font-bold transition-colors border border-white/10 disabled:opacity-30 disabled:cursor-not-allowed" +              title="キャラクター設定を維持したまま、シナリオ以降をやり直す" +            > +              <RefreshCw size={12} /> <span className="hidden sm:inline">やり直す</span> +            </button>
+BUTTON CHANGE: +            <button +              disabled={!apiKey} +              onClick={handleFullAutoToggle} +              className={`flex items-center gap-1.5 px-3 md:px-4 py-1.5 rounded-lg text-[10px] md:text-xs font-bold transition-colors shadow-lg border ${ +                isFullAutoMode +                  ? 'bg-red-900/80 hover:bg-red-800 text-red-100 border-red-500/50 animate-pulse' +                  : 'bg-gradient-to-r from-blue-700 to-indigo-700 hover:from-blue-600 hover:to-indigo-600 text-white border-blue-400/30' +              } disabled:opacity-30 disabled:cursor-not-allowed`} +            > +              {isFullAutoMode ? ( +                <><Square size={12} fill="currentColor" /> 中断</> +              ) : ( +                <><Zap size={12} className={castList ? "text-yellow-300" : ""} /> フルオート</> +              )} +            </button>
+BUTTON CHANGE: -          <button onClick={resetAll} className="group flex items-center gap-2 bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white px-8 py-4 rounded-2xl font-bold transition-all border border-white/5 z-10"> -            <RefreshCw size={18} className="group-hover:rotate-180 transition-transform duration-500" /> 入力をリセット -          </button>
+BUTTON CHANGE: +            <button +              onClick={() => { +                partialReset(); +                window.scrollTo({ top: 0, behavior: 'smooth' }); +              }} +              className="max-w-2xl mx-auto w-full bg-gradient-to-r from-blue-900 to-indigo-900 hover:from-blue-800 hover:to-indigo-800 text-white font-black py-6 px-8 rounded-2xl flex items-center justify-center gap-3 transition-all shadow-[0_0_30px_rgba(59,130,246,0.3)] border border-blue-400/30 active:scale-95 group text-lg tracking-widest relative overflow-hidden" +            > +              <div className="absolute inset-0 bg-white/5 group-hover:bg-transparent transition-colors" /> +              <RefreshCw size={24} className="group-hover:-rotate-180 transition-transform duration-700" /> +              <span>同じキャラクターで <span className="text-yellow-300">もう一度生成する</span></span> +            </button>
+DIFF: +              全てを初期化する（別のキャラ画像を使う場合）
+BUTTON CHANGE: +            <button +              onClick={() => { +                resetAll(); +                window.scrollTo({ top: 0, behavior: 'smooth' }); +              }} +              className="text-xs text-slate-500 hover:text-red-400 font-bold underline decoration-slate-500/30 hover:decoration-red-400 transition-colors py-2 px-4" +            > +              全てを初期化する（別のキャラ画像を使う場合） +            </button>
+
+======================
+Commit 2: Date:   Wed Apr 29 10:50:54 2026 +0900
+
+======================
+Commit 3: Date:   Tue Apr 28 12:51:22 2026 +0900
+
+======================
+Commit 4: Date:   Tue Apr 28 11:57:05 2026 +0900
+
+======================
+Commit 5: Date:   Mon Apr 27 19:18:05 2026 +0900
+
+======================
+Commit 6: Date:   Mon Apr 27 13:49:49 2026 +0900
+
+======================
+Commit 7: Date:   Mon Apr 27 09:59:47 2026 +0900
+
+======================
+Commit 8: Date:   Mon Apr 27 07:53:35 2026 +0900
+
+======================
+Commit 9: Date:   Mon Apr 27 07:25:13 2026 +0900
+
+======================
+Commit 10: Date:   Sun Apr 26 16:18:16 2026 +0900
+
+======================
+Commit 11: Date:   Sun Apr 26 10:39:52 2026 +0900
+
+======================
+Commit 12: Date:   Thu Apr 23 19:47:04 2026 +0900
+
+======================
+Commit 13: Date:   Thu Apr 23 06:53:03 2026 +0900
+
+======================
+Commit 14: Date:   Wed Apr 22 22:55:14 2026 +0900
+
+======================
+Commit 15: Date:   Wed Apr 22 22:45:02 2026 +0900
+
+======================
+Commit 16: Date:   Wed Apr 22 22:14:33 2026 +0900
+
+======================
+Commit 17: Date:   Wed Apr 22 20:43:46 2026 +0900
+
+======================
+Commit 18: Date:   Wed Apr 22 19:08:20 2026 +0900
+
+======================
+Commit 19: Date:   Tue Apr 21 21:52:10 2026 +0900
+
+======================
+Commit 20: Date:   Tue Apr 21 20:30:38 2026 +0900
+
+======================
+Commit 21: Date:   Mon Apr 20 22:13:01 2026 +0900
+
+======================
+Commit 22: Date:   Mon Apr 20 21:40:21 2026 +0900
+
+======================
+Commit 23: Date:   Mon Apr 20 13:58:15 2026 +0900
+
+======================
+Commit 24: Date:   Mon Apr 20 12:57:53 2026 +0900
+
+======================
+Commit 25: Date:   Mon Apr 20 10:45:08 2026 +0900
+
+======================
+Commit 26: Date:   Mon Apr 20 07:47:52 2026 +0900
+
+======================
+Commit 27: Date:   Sun Apr 19 08:14:48 2026 +0900
+
+======================
+Commit 28: Date:   Fri Apr 17 00:46:09 2026 +0900
+
+======================
+Commit 29: Date:   Wed Apr 15 21:37:52 2026 +0900
+
+======================
+Commit 30: Date:   Wed Apr 15 16:58:38 2026 +0900
+DIFF: +                  {/* [v2.48] API認証状態バッジ - タイトル枠内に常時表示 */}
+DIFF: +                    {apiKey ? '✅ API認証済' : '⚠ 未接続'}
+
+======================
+Commit 31: Date:   Wed Apr 15 15:23:18 2026 +0900
+DIFF: -          <Zap className="fill-blue-500 text-blue-500" /> システム初期化
+
+======================
+Commit 32: Date:   Wed Apr 15 10:18:55 2026 +0900
+DIFF: -              {/* STEP2ロックオーバーレイ: STEP1未完了 or 解析中 or アッセンブル中 */}
+DIFF: +              {/* STEP2ロックオーバーレイ: STEP1未完了 or 解析中 */}
+
+======================
+Commit 33: Date:   Wed Apr 15 07:37:38 2026 +0900
+DIFF: +              {/* STEP2ロックオーバーレイ: STEP1未完了 or 解析中 or アッセンブル中 */}
+
+======================
+Commit 34: Date:   Wed Apr 15 00:51:26 2026 +0900
+
+======================
+Commit 35: Date:   Tue Apr 14 20:44:37 2026 +0900
+DIFF: +    // [v2.44] フェイクストリーミング＋経過時間表示（STEP1と同様のUX統一）
+
+======================
+Commit 36: Date:   Tue Apr 14 13:53:40 2026 +0900
+
+======================
+Commit 37: Date:   Mon Apr 13 15:40:45 2026 +0900
+
+======================
+Commit 38: Date:   Mon Apr 13 14:13:55 2026 +0900
+
+======================
+Commit 39: Date:   Mon Apr 13 11:38:05 2026 +0900

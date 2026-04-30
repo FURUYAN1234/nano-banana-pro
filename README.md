@@ -484,6 +484,13 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v2.85.0-alpha (2026-04-30)
+- **[UI Fix]** Fixed text overflow and layout truncation on extremely narrow browser widths by implementing `flex-wrap` and `whitespace-normal` on the header elements, making the sticky progress bar completely responsive. / ブラウザ幅を極端に狭めた際に文字が見切れる問題を修正。ヘッダーに `flex-wrap` と `whitespace-normal` を導入し、完全なレスポンシブ対応を実現しました。
+- **[UI Fix]** Validated "Full Auto" button action-oriented labeling ("⚡ フルオート ON" / "⏹ フルオート中断") to provide optimal UX, and corrected the instructional text to accurately reflect the system's hard reset behavior upon interruption. / フルオートボタンのアクション指向の表記（「⚡ フルオート ON」 / 「⏹ フルオート中断」）を最適化し、中断後に再開した際の仕様（STEP2からの新シナリオ再生成）が説明文に正確に反映されるよう修正しました。
+
+### v2.83.0-alpha (2026-04-29)
+- **[System]** Complete restoration of v2.81 UI layout including centered sticky progress bar and correct full auto button logic. The broken regressions from v2.82 have been completely reverted. / v2.81のUIレイアウト（中央配置のスティッキー進捗バーや正しいフルオートボタンロジックを含む）を完全に復旧しました。v2.82で発生したレイアウト崩壊を排除しました。
+
 ### v2.82.0-alpha (2026-04-29)
 - **[System]** Emergency Revert & UI Stability Recovery. Reverted the codebase to v2.77.0-alpha to discard experimental layout regressions and ensure stable operation. Re-established the single, unified sticky header design. / 緊急ロールバックおよびUI安定性の回復。実験的なレイアウト改悪を破棄し、安定動作を保証するためv2.77.0-alphaの状態に完全に復元しました。
 

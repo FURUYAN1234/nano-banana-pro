@@ -1,0 +1,150 @@
+--- Commit: ﻿commit 2a75fa90e9b01a64b703baef89a30f90 Date: Wed Apr 29 21:13:07 2026 +0900
+-  // [v2.78] フルオート生成モード
+-  const [isFullAutoMode, setIsFullAutoMode] = useState(false); // フルオート実行中フラグ
+-      // [v2.78] フルオート武装中なら自動的にSTEP2→3→4を開始
+-      if (isFullAutoMode && !fullAutoAbortRef.current) {
+-  // [v2.78] 戻り値追加 + categoriesOverrideパラメータ追加（フルオート時のstate反映タイミングバグ修正）
+-    // [v2.78] カテゴリオーバーライドがあればそれを使用（フルオート時）
+-      return finalScenarioText; // [v2.79] フルオート連鎖用: テキスト自体を返す
+-      return null; // [v2.79] フルオート連鎖用: 失敗
+-  // [v2.79] 戻り値変更: フルオート連鎖用（文字列=成功, null=失敗）
+-      return safePrompt; // [v2.79] フルオート連鎖用: 成功
+-      return null; // [v2.79] フルオート連鎖用: 失敗
+-  // [v2.79] 戻り値変更: フルオート連鎖用（true=成功, false=失敗）
+-      return true; // [v2.78] フルオート連鎖用: 成功
+-      return false; // [v2.78] フルオート連鎖用: 失敗
+-  // [v2.78] フルオート生成トリガー監視
+-  // --- [v2.78] フルオート生成モード ---
+-    // フルオート開始
+-    // --- STEP2: シナリオ生成 ---
+-    // カテゴリをランダムで1〜2個選択し、直接オブジェクトとして生成
+-      if (fullAutoAbortRef.current) showStatus("フルオートを中断しました。");
+-      if (fullAutoAbortRef.current) showStatus("フルオートを中断しました。");
+-    // --- STEP4: 画像生成 ---
+-    // 最終スクロール: 生成画像へ
+-    // フルオート完了（ボタン自動解除）
+-      showStatus("🎉 フルオート生成完了！4コマ漫画が生成されました！");
+-  // [v2.78] フルオートトグルハンドラ
+-    if (isFullAutoMode) {
+-      showStatus("フルオートを解除しました。");
+-      showStatus("🚀 フルオート待機中: キャラクターシートをドロップしてください");
+-  // フルオート中断
+-            {/* Step 4: 画像生成 */}
+-              <span className="text-[10px] md:text-xs font-bold text-white tracking-wider">画像生成</span>
+-                isFullAutoMode
+-              {isFullAutoMode ? (
+-                <><Zap size={12} className={castList ? "text-yellow-300" : ""} /> フルオート</>
+-            {/* [v2.78] フルオート自動スクロール用ref */}
+-              <span>同じキャラクターで <span className="text-yellow-300">もう一度生成する</span></span>
+--- Commit: 38f8e21979a923f113b026809bc4630e757298ed Date: Wed Apr 29 19:39:07 2026 +0900
++  // [v2.78] フルオート生成モード
++  const [isFullAutoMode, setIsFullAutoMode] = useState(false); // フルオート実行中フラグ
++      // [v2.78] フルオート武装中なら自動的にSTEP2→3→4を開始
++      if (isFullAutoMode && !fullAutoAbortRef.current) {
++  // [v2.78] 戻り値追加 + categoriesOverrideパラメータ追加（フルオート時のstate反映タイミングバグ修正）
++    // [v2.78] カテゴリオーバーライドがあればそれを使用（フルオート時）
++      return finalScenarioText; // [v2.79] フルオート連鎖用: テキスト自体を返す
++      return null; // [v2.79] フルオート連鎖用: 失敗
++  // [v2.79] 戻り値変更: フルオート連鎖用（文字列=成功, null=失敗）
++      return safePrompt; // [v2.79] フルオート連鎖用: 成功
++      return null; // [v2.79] フルオート連鎖用: 失敗
++  // [v2.79] 戻り値変更: フルオート連鎖用（true=成功, false=失敗）
++      return true; // [v2.78] フルオート連鎖用: 成功
++      return false; // [v2.78] フルオート連鎖用: 失敗
++  // [v2.78] フルオート生成トリガー監視
++  // --- [v2.78] フルオート生成モード ---
++    // フルオート開始
++    // --- STEP2: シナリオ生成 ---
++    // カテゴリをランダムで1〜2個選択し、直接オブジェクトとして生成
++      if (fullAutoAbortRef.current) showStatus("フルオートを中断しました。");
++      if (fullAutoAbortRef.current) showStatus("フルオートを中断しました。");
++    // --- STEP4: 画像生成 ---
++    // 最終スクロール: 生成画像へ
++    // フルオート完了（ボタン自動解除）
++      showStatus("🎉 フルオート生成完了！4コマ漫画が生成されました！");
++  // [v2.78] フルオートトグルハンドラ
++    if (isFullAutoMode) {
++      showStatus("フルオートを解除しました。");
++      showStatus("🚀 フルオート待機中: キャラクターシートをドロップしてください");
++  // フルオート中断
++            {/* Step 4: 画像生成 */}
++              <span className="text-[10px] md:text-xs font-bold text-white tracking-wider">画像生成</span>
++                isFullAutoMode
++              {isFullAutoMode ? (
++                <><Zap size={12} className={castList ? "text-yellow-300" : ""} /> フルオート</>
++            {/* [v2.78] フルオート自動スクロール用ref */}
++              <span>同じキャラクターで <span className="text-yellow-300">もう一度生成する</span></span>
+--- Commit: 72e9b6801484403bbda4207e352a95f12c4b6b7c Date: Mon Apr 27 19:18:05 2026 +0900
++- Bottom-Left watermark: "ネームから全自動の自律式統合AI漫画システム :https://x.gd/JiWor"
+--- Commit: dd16da0a9a5a42027a6cd610c0c0c3a6507e2582 Date: Wed Apr 22 20:43:46 2026 +0900
+--- Commit: 636d6697073a288c1c2050ba133cded920dcdcf6 Date: Mon Apr 20 10:45:08 2026 +0900
++ALSO draw a tiny Japanese watermark exactly ON the bottom-left border (outside the frame) of the 4th panel that displays the exact text "ネームから全自動の自律式
+--- Commit: 30c2fe17295392f8b40228b691feac41e1df02f0 Date: Wed Apr 15 16:58:38 2026 +0900
++                  {/* [v2.48] API認証状態バッジ - タイトル枠内に常時表示 */}
++                    {apiKey ? '✅ API認証済' : '⚠ 未接続'}
+--- Commit: 01a66892309589af576127b219455e3f57984d12 Date: Wed Apr 15 15:23:18 2026 +0900
++              <Zap size={18} className="text-white" />
+-            {/* STEP4ロックオーバーレイ: finalPrompt未生成 or 解析中 */}
++                  {/* [v2.48] コピペボタンより下: finalPrompt未生成時にぼかし */}
+--- Commit: 29fbf38647d2626b438fae469f1c53425bf84abc Date: Mon Apr 13 15:40:45 2026 +0900
+-                          生成済みシナリオの演出を強化します。強化したいカテゴリをONにして「強化実行」を押してください。<br/>
++                {/* [v2.41] シナリオ強化パネル（折りたたみ式）- 常時表示、シナリオ未生成時はぼかし */}
++                      <span className="text-[9px] text-slate-600 font-mono">{!(scenario && scenario.length > 20) ? 'シナリオ生成後に使用可能' : isEnhancePanelOpe
++                        生成済みシナリオの演出を強化します。強化したいカテゴリをONにして「強化実行」を押してください。<br/>
+-                              <><Zap size={16} className="fill-yellow-300 text-black" /> シナリオ強化実行</>
++                            <><Zap size={16} className="fill-yellow-300 text-black" /> シナリオ強化実行</>
+--- Commit: e627f2e48e7ab4d777822c6036ff78316ccf52b7 Date: Mon Apr 13 14:13:55 2026 +0900
++    if (!scenario || scenario.length < 20) return showStatus("先にシナリオを生成してください。");
++                          生成済みシナリオの演出を強化します。強化したいカテゴリをONにして「強化実行」を押してください。<br/>
++                              <><Zap size={16} className="fill-yellow-300 text-black" /> シナリオ強化実行</>
+--- Commit: d4e0447d9163e161f4499dedc497747c84dce7ea Date: Mon Feb 23 22:50:31 2026 +0900
+-          {/* 03: プロンプト生成 (Static Layout) */}
++              ※以下を変更する場合は指定場所・指定服装を入力の上、『シナリオ作成を実行（STEP2）』ボタンをクリックして再生成してください。
++          {/* 03: プロンプト生成 - Tailwind p-8等がJITで無視されるためインラインスタイルで適用 */}
+-                    <Zap size={14} /> 構築されたプロンプト
+--- Commit: 14990a25cc4ebe6c245bf84f80e4b26b1e31a5b7 Date: Sat Feb 7 00:01:13 2026 +0900
+-            <Zap size={18} className="fill-current" /> Key変更
+--- Commit: c2e704157e02312a63802503e4dc3753b0572ba8 Date: Fri Feb 6 23:29:30 2026 +0900
++            <Zap size={18} className="fill-current" /> Key変更
+--- Commit: 581c8e2c545bb1f13d2a86458bf4818c5ffd965d Date: Fri Feb 6 20:24:57 2026 +0900
+-      showStatus(`生成エラー: ${error.message}`);
+-      // alert(`画像生成に失敗しました。\nエラー: ${error.message}`); // Disable alert to show UI guide instead
++      showStatus(`生成エラー: ${error.message} `);
++      // alert(`画像生成に失敗しました。\nエラー: ${ error.message } `); // Disable alert to show UI guide instead
++                  ▼ 生成されるキャラクター解析 (編集可)
+-                      <Zap size={24} className="fill-yellow-400 text-yellow-100" />
++                      <Zap size={24} className="fill-yellow-400 text-black" />
+-                    ▼ 生成されたシナリオ (編集可)
++                    ▼ 生成されるシナリオ (編集可)
++              <Wand2 size={24} /> STEP 03: プロンプト生成 (PROMPT ASSEMBLY)
+-                                  入力欄で <span className="border border-white/20 px-1 rounded bg-black">Ctrl + V</span> (または右クリック→貼り付け) して送信すれば、最高画質で生成
+--- Commit: 891b389360af71718fc46321f891b8acbb369b86 Date: Fri Feb 6 08:40:42 2026 +0900
+-    const searchTopic = `${randomCategory} -AI -人工知能 -ChatGPT -Gemini -生成AI -ロボット -テクノロジー -スマホ -IT`;
++    const searchTopicKeywords = `${randomCategory} -AI -人工知能 -ChatGPT -Gemini -生成AI -ロボット -テクノロジー -スマホ -IT`;
+-                  {isSearching ? <Loader2 size={24} className="animate-spin" /> : <Zap size={24} />}
+-                  <span>{isSearching ? "シナリオ生成中..." : "シナリオを自動生成する"}</span>
++                      <Zap size={24} className="fill-yellow-400 text-yellow-100" />
++                    ▼ 生成されたシナリオ (編集可)
++                    placeholder="ここに生成されたシナリオが表示されます..."
+--- Commit: c6da1318099e87061c889e1fe3ba43e1c61081a0 Date: Thu Jan 22 13:41:55 2026 +0900
++        | カテゴリ | 特徴の詳細（日本語） | 画像生成AI用 重み付きタグ (Weighted Immutable Prompts) |
++    const searchTopic = `${randomCategory} -AI - 人工知能 - ChatGPT - Gemini - 生成AI`;
++      showStatus("シナリオの生成が完了しました！");
++      showStatus("シナリオ生成エラー");
++      showStatus("最終プロンプトの構築が完了しました。画像生成を開始します...");
++      showStatus("生成エラー: " + error.message);
++      showStatus("画像生成完了！");
++      showStatus(`生成エラー: ${error.message}`);
++      // alert(`画像生成に失敗しました。\nエラー: ${error.message}`); // Disable alert to show UI guide instead
++                  {isSearching ? <Loader2 size={24} className="animate-spin" /> : <Zap size={24} />}
++                  <span>{isSearching ? "シナリオ生成中..." : "シナリオを自動生成する"}</span>
++          {/* 03: プロンプト生成 (Static Layout) */}
++                    <Zap size={14} /> 構築されたプロンプト
++                      placeholder="◀ 「最終プロンプトを構築する」ボタンを押すと、ここに生成されたプロンプトが表示されます。"
++                      {isAssembling ? "再生成中..." : "画像を生成 (Imagen 3)"}
++            {/* 右: 生成画像エリア */}
++                          <h3 className="text-lg font-black text-red-500 tracking-wider">画像生成機能の制限について</h3>
++                            申し訳ございません。現在、Google側のAPI仕様により、お客様のAPIキーでは<span className="text-red-400">「アプリ経由での画像生成」が許可されていません。</span>
++                            ※これはアプリの故障ではなく、Google Cloudの権限設定によるものです（Web版のGemini Advancedが使えても、API経由の利用は別途承認が必要な場合があります）。制限が解除されるまで、以下の「手動生成」を推奨します。
++                                  入力欄で <span className="border border-white/20 px-1 rounded bg-black">Ctrl + V</span> (または右クリック→貼り付け) して送信すれば、最高画質で生成
++                        <p className="text-[10px] font-bold text-slate-600">ここに生成された4コマ漫画が表示されます</p>

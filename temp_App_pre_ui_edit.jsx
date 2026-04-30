@@ -33,7 +33,7 @@ import {
 // --- Imports ---
 import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
-const SYSTEM_VERSION = "v2.85 Alpha";
+const SYSTEM_VERSION = "v2.82 Alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -429,7 +429,6 @@ function App() {
   // [v2.78] フルオート生成モード
   const [isFullAutoMode, setIsFullAutoMode] = useState(false); // フルオート実行中フラグ
   const [fullAutoStep, setFullAutoStep] = useState(0); // 0=待機, 2=STEP2, 3=STEP3, 4=STEP4
-  const [fullAutoCountdown, setFullAutoCountdown] = useState(0); // カウントダウン表示用
   const [triggerFullAuto, setTriggerFullAuto] = useState(0); // [v2.78] Effect Trigger
   const fullAutoAbortRef = useRef(false); // 中断フラグ（useRefで即時反映）
   // [v2.78] 自動スクロール用Ref
@@ -2645,7 +2644,7 @@ ${finalPrompt}
     await new Promise(r => setTimeout(r, 300));
 
     // stale state回避のため文字列を直接渡す
-    const generatedPrompt = await assemblePrompt(true, generatedScenario); 
+    const generatedPrompt = await assemblePrompt(true, generatedScenario);
     if (fullAutoAbortRef.current || !generatedPrompt) {
       setIsFullAutoMode(false);
       setFullAutoStep(0);
@@ -2658,8 +2657,8 @@ ${finalPrompt}
     outputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     await new Promise(r => setTimeout(r, 300));
 
-    const step4ok = await regenerateImage(true, generatedPrompt); 
-    
+    const step4ok = await regenerateImage(true, generatedPrompt);
+
     // 最終スクロール: 生成画像へ
     await new Promise(r => setTimeout(r, 800));
     imageResultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -2683,10 +2682,10 @@ ${finalPrompt}
       showStatus("フルオートを解除しました。");
       return;
     }
-    
+
     fullAutoAbortRef.current = false;
     setIsFullAutoMode(true);
-    
+
     if (castList && castList.length >= 20) {
       // STEP1完了済み → 状態更新後に即実行させる
       setTriggerFullAuto(prev => prev + 1);
@@ -2714,121 +2713,27 @@ ${finalPrompt}
     <div className="min-h-screen bg-[#0a0c10] text-slate-100 font-sans selection:bg-blue-500/30 overflow-x-hidden">
       <ApiKeyModal isOpen={showModal} onSave={handleSetKey} />
 
-
-
-      {/* STICKY TOP PROGRESS BAR */}
-      <div className="fixed top-0 left-0 right-0 z-[100] bg-[#0f1115] border-b border-white/10 px-2 md:px-8 py-3 shadow-xl w-full">
-        <div className="flex flex-wrap xl:flex-nowrap items-center justify-center max-w-7xl mx-auto w-full gap-y-3">
-          
-          {/* Progress Steps (Center Left) */}
-          <div className="flex flex-wrap items-center justify-center gap-2 md:gap-4 shrink-0">
-            {/* Step 1: 解析 */}
-            <div className={`flex items-center gap-1.5 ${currentStep >= 1 ? 'opacity-100' : 'opacity-40'}`}>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${currentStep === 1 ? 'bg-blue-500 text-white shadow-[0_0_10px_rgba(59,130,246,0.6)]' : currentStep > 1 ? 'bg-blue-600/50 text-blue-200' : 'bg-white/10 text-white/50'}`}>
-                {currentStep > 1 ? <Check size={16} /> : '1'}
-              </div>
-              <span className="text-sm font-bold text-white tracking-wider">解析</span>
-            </div>
-            
-            <ArrowRight size={14} className="text-white/30 hidden sm:block" />
-            
-            {/* Step 2: シナリオ */}
-            <div className={`flex items-center gap-1.5 ${currentStep >= 2 ? 'opacity-100' : 'opacity-40'}`}>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${currentStep === 2 ? 'bg-purple-500 text-white shadow-[0_0_10px_rgba(168,85,247,0.6)]' : currentStep > 2 ? 'bg-purple-600/50 text-purple-200' : 'bg-white/10 text-white/50'}`}>
-                {currentStep > 2 ? <Check size={16} /> : '2'}
-              </div>
-              <span className="text-sm font-bold text-white tracking-wider">シナリオ</span>
-            </div>
-            
-            <ArrowRight size={14} className="text-white/30 hidden sm:block" />
-            
-            {/* Step 3: プロンプト */}
-            <div className={`flex items-center gap-1.5 ${currentStep >= 3 ? 'opacity-100' : 'opacity-40'}`}>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${currentStep === 3 ? 'bg-orange-500 text-white shadow-[0_0_10px_rgba(249,115,22,0.6)]' : currentStep > 3 ? 'bg-orange-600/50 text-orange-200' : 'bg-white/10 text-white/50'}`}>
-                {currentStep > 3 ? <Check size={16} /> : '3'}
-              </div>
-              <span className="text-sm font-bold text-white tracking-wider">プロンプト</span>
-            </div>
-            
-            <ArrowRight size={14} className="text-white/30 hidden sm:block" />
-            
-            {/* Step 4: 画像生成 */}
-            <div className={`flex items-center gap-1.5 ${currentStep >= 4 ? 'opacity-100' : 'opacity-40'}`}>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${currentStep === 4 ? 'bg-green-500 text-white shadow-[0_0_10px_rgba(34,197,94,0.6)]' : currentStep > 4 ? 'bg-green-600/50 text-green-200 shadow-[0_0_10px_rgba(34,197,94,0.3)]' : 'bg-white/10 text-white/50'}`}>
-                {currentStep > 4 ? <Check size={16} /> : '4'}
-              </div>
-              {/* 物理的に全角スペースを右側に挿入して密着を防止 */}
-              <span className="text-sm font-bold text-white tracking-wider">画像生成　</span>
-            </div>
-          </div>
-
-          {/* ================= 絶対に潰れない物理スペーサー ================= */}
-          <div className="hidden xl:block w-12 lg:w-16 shrink-0"></div>
-
-          {/* Controls (Center Right) - フルオートボタン＋説明文 */}
-          <div className="flex flex-wrap sm:flex-nowrap items-center justify-center gap-y-2 shrink-0 max-w-full">
-            {/* フルオートボタン */}
-            <button
-              disabled={!apiKey}
-              onClick={handleFullAutoToggle}
-              title="画像をドロップするだけで4コマを全自動生成。完了後は自動OFF。生成中に押すと即中断。"
-              style={{ color: isFullAutoMode ? '#dc2626' : '#ffffff' }}
-              className={`min-w-[160px] flex items-center justify-center gap-1.5 px-4 py-3 rounded-xl text-sm font-black tracking-widest transition-all duration-100 border-2 border-b-4 select-none shrink-0 active:border-b-2 active:translate-y-0.5 ${
-                isFullAutoMode
-                  ? 'bg-red-50 border-red-300 shadow-lg'
-                  : 'bg-[#2d3a4d] border-[#4a5568] hover:bg-[#3d4f66]'
-              } disabled:opacity-30 disabled:cursor-not-allowed`}
-            >
-              {isFullAutoMode ? <Square size={14} fill="currentColor" /> : <Zap size={14} />}
-              {isFullAutoMode ? 'フルオート中断' : '⚡ フルオート ON'}
-            </button>
-            
-            {/* ================= ボタンと説明文の間の物理スペーサー ================= */}
-            <div className="hidden sm:block w-6 shrink-0"></div>
-
-            {/* 説明文（2行構成、文字を切らない） */}
-            <div className="flex flex-col justify-center text-[10.5px] text-slate-400 leading-relaxed max-w-[600px] text-center sm:text-left">
-              {/* 狭い画面では折り返しを許可して見切れを防止 */}
-              <span className="whitespace-normal sm:whitespace-nowrap">　ONにして画像をドロップ、もしくは画像ドロップ後ＯＮ→全自動で4コマ生成。完了後は自動OFF。　</span>
-              <span className="whitespace-normal sm:whitespace-nowrap">　生成中は押して中断（以降はSTEPボタンで進めて下さい）。中断後再度ＯＮにすると、キャラ設定を維持して新シナリオで再生成を始めます。　</span>
-            </div>
-          </div>
-        </div>
-        
-        {/* Progress Line */}
-        <div className="absolute bottom-0 left-0 h-[2px] bg-white/10 w-full">
-          <div className={`h-full transition-all duration-700 ease-out
-            ${currentStep === 1 ? 'w-1/4 bg-blue-500' :
-              currentStep === 2 ? 'w-2/4 bg-purple-500 shadow-[0_0_10px_rgba(168,85,247,0.5)]' :
-              currentStep === 3 ? 'w-3/4 bg-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.5)]' :
-              currentStep >= 4 ? 'w-full bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)]' : 'w-0'}
-          `} />
-        </div>
-      </div>
-
       {/* 背景装飾 */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-900/10 blur-[120px] rounded-full" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-900/10 blur-[120px] rounded-full" />
       </div>
 
-      <div className="relative z-10 max-w-5xl mx-auto px-4 pb-4 pt-[60px] md:px-10 md:pb-10 md:pt-[68px] space-y-8">
-        {/* === ヘッダー領域 === */}
-        <header className="flex flex-col items-center justify-center gap-6 bg-[#0f1115] p-6 md:p-8 rounded-xl border border-white/5 shadow-2xl relative overflow-hidden group">
+      <div className="relative max-w-5xl mx-auto p-4 md:p-10 space-y-8">
+        {/* ヘッダー */}
+        <header className="flex flex-col md:flex-row items-center justify-between gap-6 bg-[#0f1115] backdrop-blur-xl p-8 rounded-xl border border-white/5 shadow-2xl relative overflow-hidden group">
           <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/5 blur-[80px] rounded-full pointer-events-none" />
 
-          <div className="flex flex-col items-center text-center z-10 w-full">
-            <div className="flex flex-col items-center justify-center gap-2 mb-2 w-full max-w-full overflow-hidden">
-              <div className="flex flex-col items-center text-center max-w-full">
-                <div className="flex flex-row items-center justify-center gap-3 flex-nowrap text-center">
-                  <div className="p-2 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl shadow-lg shadow-blue-500/20 shrink-0">
-                    <BrainCircuit size={28} className="text-white" />
-                  </div>
-                  <h1 className="text-xl md:text-4xl font-black tracking-tighter text-blue-400 drop-shadow-[0_0_10px_rgba(59,130,246,0.8)] whitespace-nowrap">
-                    Super FURU AI <span className="text-white text-lg md:text-3xl ml-1 tracking-widest">4-koma System</span> <span className="text-lg md:text-3xl text-yellow-500 font-mono ml-2">{SYSTEM_VERSION}</span>
-                  </h1>
-                </div>
-                <div className="flex flex-col md:flex-row items-center justify-center gap-3 mt-2">
+          <div className="flex flex-col items-center md:items-start text-center md:text-left z-10">
+            <div className="flex items-center gap-4 mb-2">
+              <div className="p-3 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl shadow-lg shadow-blue-500/20">
+                <BrainCircuit size={32} className="text-white" />
+              </div>
+              <div>
+                <h1 className="text-4xl font-black tracking-tighter text-blue-400 drop-shadow-[0_0_10px_rgba(59,130,246,0.8)]">
+                  Super FURU AI <span className="text-white text-2xl ml-2 tracking-widest">4-koma System</span> <span className="text-xs text-yellow-500 font-mono align-top ml-1">{SYSTEM_VERSION}</span>
+                </h1>
+                <div className="flex items-center justify-center gap-3 mt-1">
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.4em]">
                     Social Satire Engine [ 演出強化版 ]
                   </p>
@@ -2837,23 +2742,13 @@ ${finalPrompt}
                     <span className={`w-1.5 h-1.5 rounded-full ${apiKey ? 'bg-green-400 shadow-[0_0_6px_rgba(74,222,128,0.8)]' : 'bg-red-400'}`} />
                     {apiKey ? '✅ API認証済' : '⚠ 未接続'}
                   </div>
-                  {/* 入力をリセットボタン - API認証済バッジの下 */}
-                  {apiKey && (
-                    <button
-                      onClick={partialReset}
-                      className="flex items-center gap-1.5 bg-white/5 hover:bg-white/10 text-slate-300 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors border border-white/10"
-                      title="キャラクター設定を維持したまま、シナリオ以降をやり直す"
-                    >
-                      <RefreshCw size={14} /> 入力をリセット
-                    </button>
-                  )}
                 </div>
                 {/* [v1.7.0] Model Quality Badge */}
                 {usedModel && (() => {
                   const info = getModelBadgeInfo(usedModel);
                   if (!info) return null;
                   return (
-                    <div className={`mt-3 inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-white/10 ${info.color} shadow-lg animate-in fade-in slide-in-from-top-2 cursor-help group/badge relative`}>
+                    <div className={`mt-3 inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-white/10 ${info.color} shadow-lg animate -in fade -in slide -in -from-top-2 cursor-help group / badge relative`}>
                       <span className="text-[10px] font-black uppercase tracking-widest">{info.label}</span>
                       <span className="w-[1px] h-3 bg-white/40" />
                       <span className="text-[10px] font-bold truncate max-w-[150px] md:max-w-none">{info.desc}</span>
@@ -2876,9 +2771,54 @@ ${finalPrompt}
               </div>
             </div>
           </div>
+
+          <button onClick={resetAll} className="group flex items-center gap-2 bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white px-8 py-4 rounded-2xl font-bold transition-all border border-white/5 z-10">
+            <RefreshCw size={18} className="group-hover:rotate-180 transition-transform duration-500" /> 入力をリセット
+          </button>
         </header>
 
-
+        {/* STATUS BAR (Sticky Mode Indicator) */}
+        <div className="sticky top-4 z-50 bg-[#0f1115]/90 backdrop-blur-2xl border border-white/10 p-4 rounded-xl shadow-2xl flex items-center justify-between gap-4">
+          <div className="flex items-center gap-4 flex-1">
+            <div className={`p-3 rounded-full ${currentStep === 1 ? 'bg-blue-600 animate-pulse' : 'bg-slate-800'} `}>
+              <Camera size={20} className={currentStep === 1 ? 'text-white' : 'text-slate-500'} />
+            </div>
+            <div className="h-1 flex-1 bg-slate-800 rounded-full overflow-hidden">
+              <div className={`h-full bg-blue-600 transition-all duration-500 ${currentStep >= 2 ? 'w-full' : 'w-0'} `} />
+            </div>
+            <div className={`p-3 rounded-full ${currentStep === 2 ? 'bg-purple-600 animate-pulse' : 'bg-slate-800'} `}>
+              <FileText size={20} className={currentStep === 2 ? 'text-white' : 'text-slate-500'} />
+            </div>
+            <div className="h-1 flex-1 bg-slate-800 rounded-full overflow-hidden">
+              <div className={`h-full bg-purple-600 transition-all duration-500 ${currentStep >= 3 ? 'w-full' : 'w-0'} `} />
+            </div>
+            <div className={`p-3 rounded-full ${currentStep === 3 ? 'bg-orange-600 animate-pulse' : 'bg-slate-800'} `}>
+              <Wand2 size={20} className={currentStep === 3 ? 'text-white' : 'text-slate-500'} />
+            </div>
+            <div className="h-1 flex-1 bg-slate-800 rounded-full overflow-hidden">
+              <div className={`h-full bg-green-600 transition-all duration-500 ${currentStep >= 4 ? 'w-full' : 'w-0'} `} />
+            </div>
+            <div className={`p-3 rounded-full ${currentStep === 4 ? 'bg-green-600 animate-pulse' : 'bg-slate-800'} `}>
+              <ImageIcon size={20} className={currentStep === 4 ? 'text-white' : 'text-slate-500'} />
+            </div>
+          </div>
+          <div className="hidden md:flex items-center gap-4">
+            {/* [v2.48] API接続状態バッジ */}
+            <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[10px] font-bold tracking-wider ${apiKey ? 'bg-green-500/10 border-green-500/30 text-green-400' : 'bg-red-500/10 border-red-500/30 text-red-400 animate-pulse'}`}>
+              <span className={`w-2 h-2 rounded-full ${apiKey ? 'bg-green-400' : 'bg-red-400'}`} />
+              {apiKey ? 'CONNECTED' : 'NO API KEY'}
+            </div>
+            <div className="text-right">
+              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">CURRENT MODE</p>
+              <p className="text-xl font-black italic tracking-tighter text-white">
+                {currentStep === 1 && <span className="text-blue-500">CHARACTER ANALYSIS</span>}
+                {currentStep === 2 && <span className="text-purple-500">SCENARIO GENERATION</span>}
+                {currentStep === 3 && <span className="text-orange-500">PROMPT ASSEMBLY</span>}
+                {currentStep === 4 && <span className="text-green-500">EXECUTION COMPLETE</span>}
+              </p>
+            </div>
+          </div>
+        </div>
 
         <main className="space-y-8" style={{ filter: apiKey ? 'none' : 'blur(10px)', pointerEvents: apiKey ? 'auto' : 'none', transition: 'filter 0.5s ease' }}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -2986,7 +2926,7 @@ ${finalPrompt}
             </section>
 
             {/* 02: シナリオ設定 (Static Layout) */}
-            <section ref={step2Ref} className={`relative p-8 rounded-xl bg-[#0f1115] border flex flex-col space-y-6 shadow-xl transition-all duration-300
+            <section className={`relative p-8 rounded-xl bg-[#0f1115] border flex flex-col space-y-6 shadow-xl transition-all duration-300
                  ${currentStep === 2 ? 'border-2 border-purple-500 shadow-[0_0_50px_rgba(168,85,247,0.2)] opacity-100' : 'border-white/5 opacity-60'}
                  ${currentStep > 2 ? 'border-purple-500/30 bg-purple-900/5 opacity-100' : ''}
       `}>
@@ -3407,7 +3347,6 @@ ${finalPrompt}
 
           {/* 03: プロンプト生成 - Tailwind p-8等がJITで無視されるためインラインスタイルで適用 */}
           <section
-            ref={step3Ref}
             style={{ padding: '16px', gap: '16px', borderRadius: '0', background: '#0f1115', position: 'relative' }}
             className={`flex flex-col shadow-xl transition-all duration-300
               ${currentStep === 3 ? 'border-2 border-orange-500/50 shadow-[0_0_50px_rgba(249,115,22,0.15)] opacity-100' : 'border border-white/5 opacity-60'}
@@ -3463,7 +3402,6 @@ ${finalPrompt}
 
           {/* 出力結果 */}
           <div
-            ref={outputRef}
             className="relative flex flex-col gap-12 mt-12 border-t border-white/5 pt-12 transition-all duration-500"
           >
             {/* [v2.48] 出力結果ロックオーバーレイ: STEP3未完了 or シナリオ強化中は全体をぼかす */}
@@ -3741,8 +3679,7 @@ No explanations. No partial results.`;
             </section>
 
             {/* 右: 生成画像エリア */}
-            {/* [v2.78] フルオート自動スクロール用ref */}
-            <section ref={imageResultRef} className="relative group bg-[#0d1117] rounded-xl border border-white/5 min-h-[600px] flex flex-col overflow-hidden">
+            <section className="relative group bg-[#0d1117] rounded-xl border border-white/5 min-h-[600px] flex flex-col overflow-hidden">
               {/* [v2.48] 描画エリアロックオーバーレイ: STEP3未完了 or シナリオ強化中はぼかす */}
               {(!finalPrompt && !isAssembling || isEnhancing) && (
                 <div style={{ position: 'absolute', inset: 0, zIndex: 200, backgroundColor: 'rgba(10,12,16,0.85)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)', pointerEvents: 'auto', borderRadius: '0.75rem' }} />
@@ -3778,13 +3715,6 @@ No explanations. No partial results.`;
                         >
                           <Download size={20} /> 画像をダウンロード (.png)
                         </button>
-                        
-                        <button
-                          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-                          className="w-full mt-4 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg border border-slate-600/50 active:scale-95"
-                        >
-                          最初（STEP 1）に戻る
-                        </button>
                       </div>
                     </div>
                   ) : (
@@ -3818,8 +3748,6 @@ No explanations. No partial results.`;
               </div>
             </section >
           </div >
-          
-
         </main >
 
         <footer className="text-center text-slate-700 text-[9px] font-bold tracking-[0.3em] uppercase py-10 flex items-center justify-center gap-4">

@@ -1,0 +1,68 @@
+﻿
+>        // Auto-trigger Image Generation handled by effect if needed, but manual button usually forces user to check.
+   
+  @@ -2238,7 +2209,6 @@ Clean anime illustration finish, smooth cel shading, soft clean shading, smooth
+> -            <button
+  -              disabled={!apiKey || (!castList && !scenario)}
+  -              onClick={partialReset}
+> -            </button>
+  -            
+> -            <button
+  -              disabled={!apiKey}
+  -              onClick={handleFullAutoToggle}
+> -            </button>
+  -          </div>
+  -        </div>
+> +          <button onClick={resetAll} className="group flex items-center gap-2 bg-white/5 hover:bg-white/10 text-slat
+e-400 hover:text-white px-8 py-4 rounded-2xl font-bold transition-all border border-white/5 z-10">
+  +            <RefreshCw size={18} className="group-hover:rotate-180 transition-transform duration-500" /> 入力をリセット
+> +          </button>
+           </header>
+   
+> -            <button
+  -              onClick={() => {
+  -                partialReset();
+> -            </button>
+  -
+> -            <button
+  -              onClick={() => {
+  -                resetAll();
+> -            </button>
+  -          </div>
+           </main >
+>     v2.81.0-alpha: Fix UI/UX per user feedback (bg opacity, button positions, title flex-wrap)
+  
+  diff --git a/src/App.jsx b/src/App.jsx
+>        // Auto-trigger Image Generation handled by effect if needed, but manual button usually forces user to check.
+   
+  @@ -2209,6 +2238,7 @@ Clean anime illustration finish, smooth cel shading, soft clean shading, smooth
+> +            <button
+  +              disabled={!apiKey || (!castList && !scenario)}
+  +              onClick={partialReset}
+> +            </button>
+  +            
+> +            <button
+  +              disabled={!apiKey}
+  +              onClick={handleFullAutoToggle}
+> +            </button>
+  +          </div>
+  +        </div>
+> -          <button onClick={resetAll} className="group flex items-center gap-2 bg-white/5 hover:bg-white/10 text-slat
+e-400 hover:text-white px-8 py-4 rounded-2xl font-bold transition-all border border-white/5 z-10">
+  -            <RefreshCw size={18} className="group-hover:rotate-180 transition-transform duration-500" /> 入力をリセット
+> -          </button>
+           </header>
+   
+> +            <button
+  +              onClick={() => {
+  +                partialReset();
+> +            </button>
+  +
+> +            <button
+  +              onClick={() => {
+  +                resetAll();
+> +            </button>
+  +          </div>
+           </main >
+
+

@@ -2716,103 +2716,13 @@ ${finalPrompt}
 
 
 
-      {/* STICKY TOP PROGRESS BAR */}
-      <div className="fixed top-0 left-0 right-0 z-[100] bg-[#0f1115] border-b border-white/10 px-2 md:px-8 py-3 shadow-xl w-full">
-        <div className="flex flex-wrap xl:flex-nowrap items-center justify-center max-w-7xl mx-auto w-full gap-y-3">
-          
-          {/* Progress Steps (Center Left) */}
-          <div className="flex flex-wrap items-center justify-center gap-2 md:gap-4 shrink-0">
-            {/* Step 1: 解析 */}
-            <div className={`flex items-center gap-1.5 ${currentStep >= 1 ? 'opacity-100' : 'opacity-40'}`}>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${currentStep === 1 ? 'bg-blue-500 text-white shadow-[0_0_10px_rgba(59,130,246,0.6)]' : currentStep > 1 ? 'bg-blue-600/50 text-blue-200' : 'bg-white/10 text-white/50'}`}>
-                {currentStep > 1 ? <Check size={16} /> : '1'}
-              </div>
-              <span className="text-sm font-bold text-white tracking-wider">解析</span>
-            </div>
-            
-            <ArrowRight size={14} className="text-white/30 hidden sm:block" />
-            
-            {/* Step 2: シナリオ */}
-            <div className={`flex items-center gap-1.5 ${currentStep >= 2 ? 'opacity-100' : 'opacity-40'}`}>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${currentStep === 2 ? 'bg-purple-500 text-white shadow-[0_0_10px_rgba(168,85,247,0.6)]' : currentStep > 2 ? 'bg-purple-600/50 text-purple-200' : 'bg-white/10 text-white/50'}`}>
-                {currentStep > 2 ? <Check size={16} /> : '2'}
-              </div>
-              <span className="text-sm font-bold text-white tracking-wider">シナリオ</span>
-            </div>
-            
-            <ArrowRight size={14} className="text-white/30 hidden sm:block" />
-            
-            {/* Step 3: プロンプト */}
-            <div className={`flex items-center gap-1.5 ${currentStep >= 3 ? 'opacity-100' : 'opacity-40'}`}>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${currentStep === 3 ? 'bg-orange-500 text-white shadow-[0_0_10px_rgba(249,115,22,0.6)]' : currentStep > 3 ? 'bg-orange-600/50 text-orange-200' : 'bg-white/10 text-white/50'}`}>
-                {currentStep > 3 ? <Check size={16} /> : '3'}
-              </div>
-              <span className="text-sm font-bold text-white tracking-wider">プロンプト</span>
-            </div>
-            
-            <ArrowRight size={14} className="text-white/30 hidden sm:block" />
-            
-            {/* Step 4: 画像生成 */}
-            <div className={`flex items-center gap-1.5 ${currentStep >= 4 ? 'opacity-100' : 'opacity-40'}`}>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${currentStep === 4 ? 'bg-green-500 text-white shadow-[0_0_10px_rgba(34,197,94,0.6)]' : currentStep > 4 ? 'bg-green-600/50 text-green-200 shadow-[0_0_10px_rgba(34,197,94,0.3)]' : 'bg-white/10 text-white/50'}`}>
-                {currentStep > 4 ? <Check size={16} /> : '4'}
-              </div>
-              {/* 物理的に全角スペースを右側に挿入して密着を防止 */}
-              <span className="text-sm font-bold text-white tracking-wider">画像生成　</span>
-            </div>
-          </div>
-
-          {/* ================= 絶対に潰れない物理スペーサー ================= */}
-          <div className="hidden xl:block w-12 lg:w-16 shrink-0"></div>
-
-          {/* Controls (Center Right) - フルオートボタン＋説明文 */}
-          <div className="flex flex-wrap sm:flex-nowrap items-center justify-center gap-y-2 shrink-0 max-w-full">
-            {/* フルオートボタン */}
-            <button
-              disabled={!apiKey}
-              onClick={handleFullAutoToggle}
-              title="画像をドロップするだけで4コマを全自動生成。完了後は自動OFF。生成中に押すと即中断。"
-              style={{ color: isFullAutoMode ? '#dc2626' : '#ffffff' }}
-              className={`min-w-[160px] flex items-center justify-center gap-1.5 px-4 py-3 rounded-xl text-sm font-black tracking-widest transition-all duration-100 border-2 border-b-4 select-none shrink-0 active:border-b-2 active:translate-y-0.5 ${
-                isFullAutoMode
-                  ? 'bg-red-50 border-red-300 shadow-lg'
-                  : 'bg-[#2d3a4d] border-[#4a5568] hover:bg-[#3d4f66]'
-              } disabled:opacity-30 disabled:cursor-not-allowed`}
-            >
-              {isFullAutoMode ? <Square size={14} fill="currentColor" /> : <Zap size={14} />}
-              {isFullAutoMode ? 'フルオート中断' : '⚡ フルオート ON'}
-            </button>
-            
-            {/* ================= ボタンと説明文の間の物理スペーサー ================= */}
-            <div className="hidden sm:block w-6 shrink-0"></div>
-
-            {/* 説明文（2行構成、文字を切らない） */}
-            <div className="flex flex-col justify-center text-[10.5px] text-slate-400 leading-relaxed max-w-[600px] text-center sm:text-left">
-              {/* 狭い画面では折り返しを許可して見切れを防止 */}
-              <span className="whitespace-normal sm:whitespace-nowrap">　ONにして画像をドロップ、もしくは画像ドロップ後ＯＮ→全自動で4コマ生成。完了後は自動OFF。　</span>
-              <span className="whitespace-normal sm:whitespace-nowrap">　生成中は押して中断（以降はSTEPボタンで進めて下さい）。中断後再度ＯＮにすると、キャラ設定を維持して新シナリオで再生成を始めます。　</span>
-            </div>
-          </div>
-        </div>
-        
-        {/* Progress Line */}
-        <div className="absolute bottom-0 left-0 h-[2px] bg-white/10 w-full">
-          <div className={`h-full transition-all duration-700 ease-out
-            ${currentStep === 1 ? 'w-1/4 bg-blue-500' :
-              currentStep === 2 ? 'w-2/4 bg-purple-500 shadow-[0_0_10px_rgba(168,85,247,0.5)]' :
-              currentStep === 3 ? 'w-3/4 bg-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.5)]' :
-              currentStep >= 4 ? 'w-full bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)]' : 'w-0'}
-          `} />
-        </div>
-      </div>
-
       {/* 背景装飾 */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-900/10 blur-[120px] rounded-full" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-900/10 blur-[120px] rounded-full" />
       </div>
 
-      <div className="relative z-10 max-w-5xl mx-auto px-4 pb-4 pt-[60px] md:px-10 md:pb-10 md:pt-[68px] space-y-8">
+      <div className="relative z-10 max-w-5xl mx-auto px-4 pb-4 pt-6 md:px-10 md:pb-10 md:pt-10 space-y-8">
         {/* === ヘッダー領域 === */}
         <header className="flex flex-col items-center justify-center gap-6 bg-[#0f1115] p-6 md:p-8 rounded-xl border border-white/5 shadow-2xl relative overflow-hidden group">
           <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/5 blur-[80px] rounded-full pointer-events-none" />
@@ -2825,7 +2735,7 @@ ${finalPrompt}
                     <BrainCircuit size={28} className="text-white" />
                   </div>
                   <h1 className="text-xl md:text-4xl font-black tracking-tighter text-blue-400 drop-shadow-[0_0_10px_rgba(59,130,246,0.8)] whitespace-nowrap">
-                    Super FURU AI <span className="text-white text-lg md:text-3xl ml-1 tracking-widest">4-koma System</span> <span className="text-lg md:text-3xl text-yellow-500 font-mono ml-2">{SYSTEM_VERSION}</span>
+                    Super FURU AI <span className="text-white text-lg md:text-3xl ml-1 tracking-widest">4-koma System</span> <span className="text-[10px] md:text-xs text-yellow-500 font-mono align-top ml-1">{SYSTEM_VERSION}</span>
                   </h1>
                 </div>
                 <div className="flex flex-col md:flex-row items-center justify-center gap-3 mt-2">
@@ -2837,16 +2747,6 @@ ${finalPrompt}
                     <span className={`w-1.5 h-1.5 rounded-full ${apiKey ? 'bg-green-400 shadow-[0_0_6px_rgba(74,222,128,0.8)]' : 'bg-red-400'}`} />
                     {apiKey ? '✅ API認証済' : '⚠ 未接続'}
                   </div>
-                  {/* 入力をリセットボタン - API認証済バッジの下 */}
-                  {apiKey && (
-                    <button
-                      onClick={partialReset}
-                      className="flex items-center gap-1.5 bg-white/5 hover:bg-white/10 text-slate-300 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors border border-white/10"
-                      title="キャラクター設定を維持したまま、シナリオ以降をやり直す"
-                    >
-                      <RefreshCw size={14} /> 入力をリセット
-                    </button>
-                  )}
                 </div>
                 {/* [v1.7.0] Model Quality Badge */}
                 {usedModel && (() => {
@@ -2878,7 +2778,98 @@ ${finalPrompt}
           </div>
         </header>
 
+        {/* === 古き良き進捗バー＆フルオートボタン === */}
+        <div className="bg-[#0f1115] border border-white/10 p-4 rounded-xl shadow-2xl w-full relative">
+          <div className="flex flex-col lg:flex-row items-center justify-between w-full gap-4">
+            
+            {/* Progress Steps (Left) */}
+            <div className="flex items-center gap-1 md:gap-4 overflow-x-auto custom-scrollbar flex-1 w-full pb-2 lg:pb-0">
+              {/* Step 1: 解析 */}
+              <div className={`flex items-center gap-1.5 md:gap-2 ${currentStep >= 1 ? 'opacity-100' : 'opacity-40'}`}>
+                <div className={`w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center font-bold text-xs md:text-sm ${currentStep === 1 ? 'bg-blue-500 text-white shadow-[0_0_10px_rgba(59,130,246,0.6)]' : currentStep > 1 ? 'bg-blue-600/50 text-blue-200' : 'bg-white/10 text-white/50'}`}>
+                  {currentStep > 1 ? <Check size={14} /> : '1'}
+                </div>
+                <span className="text-[10px] md:text-xs font-bold text-white tracking-wider">解析</span>
+              </div>
+              
+              <ArrowRight size={12} className="text-white/20 hidden md:block" />
+              
+              {/* Step 2: シナリオ */}
+              <div className={`flex items-center gap-1.5 md:gap-2 ${currentStep >= 2 ? 'opacity-100' : 'opacity-40'}`}>
+                <div className={`w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center font-bold text-xs md:text-sm ${currentStep === 2 ? 'bg-purple-500 text-white shadow-[0_0_10px_rgba(168,85,247,0.6)]' : currentStep > 2 ? 'bg-purple-600/50 text-purple-200' : 'bg-white/10 text-white/50'}`}>
+                  {currentStep > 2 ? <Check size={14} /> : '2'}
+                </div>
+                <span className="text-[10px] md:text-xs font-bold text-white tracking-wider">シナリオ</span>
+              </div>
+              
+              <ArrowRight size={12} className="text-white/20 hidden md:block" />
+              
+              {/* Step 3: プロンプト */}
+              <div className={`flex items-center gap-1.5 md:gap-2 ${currentStep >= 3 ? 'opacity-100' : 'opacity-40'}`}>
+                <div className={`w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center font-bold text-xs md:text-sm ${currentStep === 3 ? 'bg-orange-500 text-white shadow-[0_0_10px_rgba(249,115,22,0.6)]' : currentStep > 3 ? 'bg-orange-600/50 text-orange-200' : 'bg-white/10 text-white/50'}`}>
+                  {currentStep > 3 ? <Check size={14} /> : '3'}
+                </div>
+                <span className="text-[10px] md:text-xs font-bold text-white tracking-wider">プロンプト</span>
+              </div>
+              
+              <ArrowRight size={12} className="text-white/20 hidden md:block" />
+              
+              {/* Step 4: 画像生成 */}
+              <div className={`flex items-center gap-1.5 md:gap-2 ${currentStep >= 4 ? 'opacity-100' : 'opacity-40'}`}>
+                <div className={`w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center font-bold text-xs md:text-sm ${currentStep === 4 ? 'bg-green-500 text-white shadow-[0_0_10px_rgba(34,197,94,0.6)]' : currentStep > 4 ? 'bg-green-600/50 text-green-200 shadow-[0_0_10px_rgba(34,197,94,0.3)]' : 'bg-white/10 text-white/50'}`}>
+                  {currentStep > 4 ? <Check size={14} /> : '4'}
+                </div>
+                <span className="text-[10px] md:text-xs font-bold text-white tracking-wider">画像生成</span>
+              </div>
+            </div>
 
+            {/* Controls (Right) */}
+            <div className="flex flex-col md:flex-row items-center gap-3 shrink-0 lg:border-l border-t lg:border-t-0 border-white/10 lg:pl-4 pt-3 lg:pt-0 w-full lg:w-auto">
+              <div className="flex items-center gap-2">
+                <button
+                  disabled={!apiKey || (!castList && !scenario)}
+                  onClick={partialReset}
+                  className="flex items-center justify-center gap-1.5 bg-white/5 hover:bg-white/10 text-slate-300 px-3 py-2 rounded-lg text-[10px] md:text-xs font-bold transition-colors border border-white/10 disabled:opacity-30 disabled:cursor-not-allowed"
+                  title="キャラクター設定を維持したまま、シナリオ以降をやり直す"
+                >
+                  <RefreshCw size={14} /> やり直す
+                </button>
+                
+                <button
+                  disabled={!apiKey}
+                  onClick={handleFullAutoToggle}
+                  className={`flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg text-[10px] md:text-xs font-black transition-colors shadow-lg border ${
+                    isFullAutoMode
+                      ? 'bg-red-900/80 hover:bg-red-800 text-red-100 border-red-500/50 animate-pulse'
+                      : 'bg-gradient-to-r from-blue-700 to-indigo-700 hover:from-blue-600 hover:to-indigo-600 text-white border-blue-400/30'
+                  } disabled:opacity-30 disabled:cursor-not-allowed`}
+                >
+                  {isFullAutoMode ? (
+                    <><Square size={14} fill="currentColor" /> フルオート停止</>
+                  ) : (
+                    <><Zap size={14} className={castList && castList.length > 0 ? "text-yellow-300" : ""} /> ⚡ フルオート生成</>
+                  )}
+                </button>
+              </div>
+
+              {/* 説明文 */}
+              <div className="text-[9px] md:text-[10px] text-slate-400 leading-relaxed max-w-full lg:max-w-[280px]">
+                <p>※ 生成完了後にフルオートは自動でOFFになります。</p>
+                <p>※ やり直してONにすればキャラ維持のまま再生成できます。</p>
+              </div>
+            </div>
+          </div>
+          
+          {/* Progress Line */}
+          <div className="absolute bottom-0 left-0 h-[2px] bg-white/10 w-full rounded-b-xl overflow-hidden">
+            <div className={`h-full transition-all duration-700 ease-out
+              ${currentStep === 1 ? 'w-1/4 bg-blue-500' :
+                currentStep === 2 ? 'w-2/4 bg-purple-500 shadow-[0_0_10px_rgba(168,85,247,0.5)]' :
+                currentStep === 3 ? 'w-3/4 bg-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.5)]' :
+                currentStep >= 4 ? 'w-full bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)]' : 'w-0'}
+            `} />
+          </div>
+        </div>
 
         <main className="space-y-8" style={{ filter: apiKey ? 'none' : 'blur(10px)', pointerEvents: apiKey ? 'auto' : 'none', transition: 'filter 0.5s ease' }}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -3778,13 +3769,6 @@ No explanations. No partial results.`;
                         >
                           <Download size={20} /> 画像をダウンロード (.png)
                         </button>
-                        
-                        <button
-                          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-                          className="w-full mt-4 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg border border-slate-600/50 active:scale-95"
-                        >
-                          最初（STEP 1）に戻る
-                        </button>
                       </div>
                     </div>
                   ) : (
@@ -3819,7 +3803,30 @@ No explanations. No partial results.`;
             </section >
           </div >
           
+          {/* やり直しボタン群 (Always visible at the bottom of the main content area) */}
+          <div className="pt-10 border-t border-white/10 mt-16 w-full mb-16 pb-12 relative z-50 flex flex-col items-center gap-6">
+            <button
+              onClick={() => {
+                partialReset();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              className="max-w-2xl mx-auto w-full bg-gradient-to-r from-blue-900 to-indigo-900 hover:from-blue-800 hover:to-indigo-800 text-white font-black py-6 px-8 rounded-2xl flex items-center justify-center gap-3 transition-all shadow-[0_0_30px_rgba(59,130,246,0.3)] border border-blue-400/30 active:scale-95 group text-lg tracking-widest relative overflow-hidden"
+            >
+              <div className="absolute inset-0 bg-white/5 group-hover:bg-transparent transition-colors" />
+              <RefreshCw size={24} className="group-hover:-rotate-180 transition-transform duration-700" /> 
+              <span>キャラを維持して <span className="text-yellow-300">STEP1に戻る</span></span>
+            </button>
 
+            <button
+              onClick={() => {
+                resetAll();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              className="text-xs text-slate-500 hover:text-red-400 font-bold underline decoration-slate-500/30 hover:decoration-red-400 transition-colors py-2 px-4 flex items-center gap-1"
+            >
+              <Trash2 size={12} /> 全てを初期化する（別の画像を使う場合）
+            </button>
+          </div>
         </main >
 
         <footer className="text-center text-slate-700 text-[9px] font-bold tracking-[0.3em] uppercase py-10 flex items-center justify-center gap-4">

@@ -1,0 +1,188 @@
+Commit: 2a75fa9 | Date:   2026-04-29 | Bump version to v2.82.0-alpha: System Revert & UI Stability Recovery
+  REMOVED:
+    -  // [v2.78] フルオート生成モード
+    -  const [isFullAutoMode, setIsFullAutoMode] = useState(false); // フルオート実行中フラグ
+    -  const [fullAutoStep, setFullAutoStep] = useState(0); // 0=待機, 2=STEP2, 3=STEP3, 4=STEP4
+    -      // [v2.78] フルオート武装中なら自動的にSTEP2→3→4を開始
+    -      if (isFullAutoMode && !fullAutoAbortRef.current) {
+    -  // [v2.78] 戻り値追加 + categoriesOverrideパラメータ追加（フルオート時のstate反映タイミングバグ修正）
+    -    // [v2.78] カテゴリオーバーライドがあればそれを使用（フルオート時）
+    -      return finalScenarioText; // [v2.79] フルオート連鎖用: テキスト自体を返す
+    -      return null; // [v2.79] フルオート連鎖用: 失敗
+    -  // [v2.79] 戻り値変更: フルオート連鎖用（文字列=成功, null=失敗）
+    -      return safePrompt; // [v2.79] フルオート連鎖用: 成功
+    -      return null; // [v2.79] フルオート連鎖用: 失敗
+    -    showStatus("完全にリセットしました。");
+    -  const partialReset = () => {
+    -  // [v2.79] 戻り値変更: フルオート連鎖用（true=成功, false=失敗）
+    -      return true; // [v2.78] フルオート連鎖用: 成功
+    -      return false; // [v2.78] フルオート連鎖用: 失敗
+    -  // [v2.78] フルオート生成トリガー監視
+    -  // --- [v2.78] フルオート生成モード ---
+    -  // STEP2→3→4を自動連鎖実行する。handleFullAutoToggleから呼ばれる。
+    -    // フルオート開始
+    -    // --- STEP2: シナリオ生成 ---
+    -    // 自動スクロール: STEP2へ
+    -      if (fullAutoAbortRef.current) showStatus("フルオートを中断しました。");
+    -      if (fullAutoAbortRef.current) showStatus("フルオートを中断しました。");
+    -    // フルオート完了（ボタン自動解除）
+    -      showStatus("🎉 フルオート生成完了！4コマ漫画が生成されました！");
+    -  // [v2.78] フルオートトグルハンドラ
+    -  const handleFullAutoToggle = () => {
+    -    if (isFullAutoMode) {
+    -      showStatus("フルオートを解除しました。");
+    -      showStatus("🚀 フルオート待機中: キャラクターシートをドロップしてください");
+    -  // フルオート中断
+    -              onClick={partialReset}
+    -              title="キャラクター設定を維持したまま、シナリオ以降をやり直す"
+    -              <RefreshCw size={12} /> <span className="hidden sm:inline">やり直す</span>
+    -              onClick={handleFullAutoToggle}
+    -                isFullAutoMode
+    -              {isFullAutoMode ? (
+    -                <><Zap size={12} className={castList ? "text-yellow-300" : ""} /> フルオート</>
+    -            {/* [v2.78] フルオート自動スクロール用ref */}
+    -                partialReset();
+    -              <span>同じキャラクターで <span className="text-yellow-300">もう一度生成する</span></span>
+    -                resetAll();
+    -              全てを初期化する（別のキャラ画像を使う場合）
+  ADDED:
+    +    showStatus("メモリをリセットしました。");
+    +          <button onClick={resetAll} className="group flex items-center gap-2 bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white px-8 py-4 rounded-2xl font-bold transition-all border border-white/5 z-10">
+    +            <RefreshCw size={18} className="group-hover:rotate-180 transition-transform duration-500" /> 入力をリセット
+----------------------------------------
+Commit: 38f8e21 | Date:   2026-04-29 | v2.81.0-alpha: Fix UI/UX per user feedback (bg opacity, button positions, title flex-wrap)
+  REMOVED:
+    -    showStatus("メモリをリセットしました。");
+    -          <button onClick={resetAll} className="group flex items-center gap-2 bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white px-8 py-4 rounded-2xl font-bold transition-all border border-white/5 z-10">
+    -            <RefreshCw size={18} className="group-hover:rotate-180 transition-transform duration-500" /> 入力をリセット
+  ADDED:
+    +  // [v2.78] フルオート生成モード
+    +  const [isFullAutoMode, setIsFullAutoMode] = useState(false); // フルオート実行中フラグ
+    +  const [fullAutoStep, setFullAutoStep] = useState(0); // 0=待機, 2=STEP2, 3=STEP3, 4=STEP4
+    +      // [v2.78] フルオート武装中なら自動的にSTEP2→3→4を開始
+    +      if (isFullAutoMode && !fullAutoAbortRef.current) {
+    +  // [v2.78] 戻り値追加 + categoriesOverrideパラメータ追加（フルオート時のstate反映タイミングバグ修正）
+    +    // [v2.78] カテゴリオーバーライドがあればそれを使用（フルオート時）
+    +      return finalScenarioText; // [v2.79] フルオート連鎖用: テキスト自体を返す
+    +      return null; // [v2.79] フルオート連鎖用: 失敗
+    +  // [v2.79] 戻り値変更: フルオート連鎖用（文字列=成功, null=失敗）
+    +      return safePrompt; // [v2.79] フルオート連鎖用: 成功
+    +      return null; // [v2.79] フルオート連鎖用: 失敗
+    +    showStatus("完全にリセットしました。");
+    +  const partialReset = () => {
+    +  // [v2.79] 戻り値変更: フルオート連鎖用（true=成功, false=失敗）
+    +      return true; // [v2.78] フルオート連鎖用: 成功
+    +      return false; // [v2.78] フルオート連鎖用: 失敗
+    +  // [v2.78] フルオート生成トリガー監視
+    +  // --- [v2.78] フルオート生成モード ---
+    +  // STEP2→3→4を自動連鎖実行する。handleFullAutoToggleから呼ばれる。
+    +    // フルオート開始
+    +    // --- STEP2: シナリオ生成 ---
+    +    // 自動スクロール: STEP2へ
+    +      if (fullAutoAbortRef.current) showStatus("フルオートを中断しました。");
+    +      if (fullAutoAbortRef.current) showStatus("フルオートを中断しました。");
+    +    // フルオート完了（ボタン自動解除）
+    +      showStatus("🎉 フルオート生成完了！4コマ漫画が生成されました！");
+    +  // [v2.78] フルオートトグルハンドラ
+    +  const handleFullAutoToggle = () => {
+    +    if (isFullAutoMode) {
+    +      showStatus("フルオートを解除しました。");
+    +      showStatus("🚀 フルオート待機中: キャラクターシートをドロップしてください");
+    +  // フルオート中断
+    +              onClick={partialReset}
+    +              title="キャラクター設定を維持したまま、シナリオ以降をやり直す"
+    +              <RefreshCw size={12} /> <span className="hidden sm:inline">やり直す</span>
+    +              onClick={handleFullAutoToggle}
+    +                isFullAutoMode
+    +              {isFullAutoMode ? (
+    +                <><Zap size={12} className={castList ? "text-yellow-300" : ""} /> フルオート</>
+    +            {/* [v2.78] フルオート自動スクロール用ref */}
+    +                partialReset();
+    +              <span>同じキャラクターで <span className="text-yellow-300">もう一度生成する</span></span>
+    +                resetAll();
+    +              全てを初期化する（別のキャラ画像を使う場合）
+----------------------------------------
+Commit: 72e9b68 | Date:   2026-04-27 | Bump version to v2.74.0-alpha and update layout fix prompt with watermarks
+  ADDED:
+    +- Bottom-Left watermark: "ネームから全自動の自律式統合AI漫画システム :https://x.gd/JiWor"
+----------------------------------------
+Commit: 4ee0190 | Date:   2026-04-26 | Bump version to v2.69.0-alpha: Fix Panel 4 SOLO SHOT contradiction
+  REMOVED:
+    -            {/* STEP3ロックオーバーレイ: STEP2未完了 or 解析中 or 検索中 */}
+  ADDED:
+    +            {/* STEP3ロックオーバーレイ: STEP2未完了 or 解析中 or 検索中 or シナリオ強化中 */}
+----------------------------------------
+Commit: 636d669 | Date:   2026-04-20 | Bump version to v2.54.0-alpha: Apply Extreme Camera Weights & Add Left Watermark
+  ADDED:
+    +ALSO draw a tiny Japanese watermark exactly ON the bottom-left border (outside the frame) of the 4th panel that displays the exact text "ネームから全自動の自律式統合AI漫画システム :https://x.gd/JiWor". Ensure its size does not interfere with the right watermark.
+----------------------------------------
+Commit: c911ef1 | Date:   2026-04-17 | Bump version and Deploy
+  REMOVED:
+    -      // STEP2実行時に場所・服装を確定（ロック）する
+    -              ※以下を変更する場合は指定場所・指定服装を入力の上、『シナリオ作成を実行（STEP2）』ボタンをクリックして再生成してください。
+----------------------------------------
+Commit: 3743b6b | Date:   2026-04-15 | Bump version to v2.50 Alpha and Deploy: Fix Scenario Enhance state properly clearing on new generation
+  ADDED:
+    +    // [v2.50] シナリオ強化stateのリセット（新規シナリオ生成時に前回の強化状態が残る問題を修正）
+----------------------------------------
+Commit: 30c2fe1 | Date:   2026-04-15 | Bump version and Deploy
+  ADDED:
+    +                  {/* [v2.48] API認証状態バッジ - タイトル枠内に常時表示 */}
+    +                    {apiKey ? '✅ API認証済' : '⚠ 未接続'}
+----------------------------------------
+Commit: 01a6689 | Date:   2026-04-15 | feat: v2.48.0-alpha - UI fix blur/lock scope and API status badge
+  REMOVED:
+    -          <Zap className="fill-blue-500 text-blue-500" /> システム初期化
+  ADDED:
+    +        // [v2.48] 強化完了後にカテゴリボタンをリセット（次の強化は白紙から選択）
+----------------------------------------
+Commit: 8a16115 | Date:   2026-04-15 | Bump version and Deploy
+  REMOVED:
+    -              {/* STEP2ロックオーバーレイ: STEP1未完了 or 解析中 or アッセンブル中 */}
+  ADDED:
+    +              {/* STEP2ロックオーバーレイ: STEP1未完了 or 解析中 */}
+    +              {/* [v2.47 BugFix] isAssemblingを除外: STEP3構築中にSTEP2が消えるバグ修正 */}
+----------------------------------------
+Commit: e9fd856 | Date:   2026-04-15 | Bump version to v2.46 Alpha and Fix UI blur overlap / italic font issues
+  ADDED:
+    +              {/* STEP2ロックオーバーレイ: STEP1未完了 or 解析中 or アッセンブル中 */}
+    +            {/* STEP3ロックオーバーレイ: STEP2未完了 or 解析中 or 検索中 */}
+----------------------------------------
+Commit: 36019ee | Date:   2026-04-13 | Bump version to v2.35.0-alpha and deploy
+  ADDED:
+    +    // [v2.35] 救済パネルリセット
+----------------------------------------
+Commit: d4e0447 | Date:   2026-02-23 | Bump version to v1.9.1 Alpha and Fix STEP3 Outline
+  ADDED:
+    +  const [lockedLocation, setLockedLocation] = useState(''); // STEP2実行時に確定した場所
+    +  const [lockedOutfit, setLockedOutfit] = useState('');     // STEP2実行時に確定した服装
+    +      // STEP2実行時に場所・服装を確定（ロック）する
+    +          {/* 場所・服装設定プレビュー - STEP2以降のみ表示 */}
+    +              ※以下を変更する場合は指定場所・指定服装を入力の上、『シナリオ作成を実行（STEP2）』ボタンをクリックして再生成してください。
+----------------------------------------
+Commit: 1d39df2 | Date:   2026-02-02 | Release v1.8.4 Alpha: Structured Scenarios & Character Fidelity
+  REMOVED:
+    -          <Zap className="fill-blue-500 text-blue-500" /> システム初期化 <span className="text-[10px] not-italic text-slate-500 bg-black/50 px-2 py-1 rounded tracking-normal">v1.3.5</span>
+  ADDED:
+    +          <Zap className="fill-blue-500 text-blue-500" /> システム初期化
+----------------------------------------
+Commit: 9e62625 | Date:   2026-01-23 | Bump to v1.3.5
+  REMOVED:
+    -          <Zap className="fill-blue-500 text-blue-500" /> システム初期化 <span className="text-[10px] not-italic text-slate-500 bg-black/50 px-2 py-1 rounded tracking-normal">v1.3.0</span>
+  ADDED:
+    +          <Zap className="fill-blue-500 text-blue-500" /> システム初期化 <span className="text-[10px] not-italic text-slate-500 bg-black/50 px-2 py-1 rounded tracking-normal">v1.3.5</span>
+----------------------------------------
+Commit: 0983266 | Date:   2026-01-23 | Update UI to v1.3.0 and fix margin prompts
+  REMOVED:
+    -          <Zap className="fill-blue-500 text-blue-500" /> システム初期化
+  ADDED:
+    +          <Zap className="fill-blue-500 text-blue-500" /> システム初期化 <span className="text-[10px] not-italic text-slate-500 bg-black/50 px-2 py-1 rounded tracking-normal">v1.3.0</span>
+----------------------------------------
+Commit: c6da131 | Date:   2026-01-22 | Configure GitHub Pages deployment
+  ADDED:
+    +          <Zap className="fill-blue-500 text-blue-500" /> システム初期化
+    +  const resetAll = () => {
+    +    showStatus("メモリをリセットしました。");
+    +          <button onClick={resetAll} className="group flex items-center gap-2 bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white px-8 py-4 rounded-2xl font-bold transition-all border border-white/5 z-10">
+    +            <RefreshCw size={18} className="group-hover:rotate-180 transition-transform duration-500" /> 入力をリセット
+----------------------------------------

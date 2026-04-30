@@ -1,0 +1,2 @@
+commit 30c2fe17295392f8b40228b691feac41e1df02f0
++                    {apiKey ? '✅ API認証済' : '⚠ 未接続'}

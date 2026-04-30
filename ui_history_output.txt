@@ -1,0 +1,166 @@
+
+--- Commit 0: Date:   Wed Apr 29 21:13:07 2026 +0900
+-  // [v2.78] フルオート生成モード
+-  const [isFullAutoMode, setIsFullAutoMode] = useState(false); // フルオート実行中フラグ
+-  const [fullAutoStep, setFullAutoStep] = useState(0); // 0=待機, 2=STEP2, 3=STEP3, 4=STEP4
+-      // [v2.78] フルオート武装中なら自動的にSTEP2→3→4を開始
+-      if (isFullAutoMode && !fullAutoAbortRef.current) {
+-  // [v2.78] 戻り値追加 + categoriesOverrideパラメータ追加（フルオート時のstate反映タイミングバグ修正）
+-    // [v2.78] カテゴリオーバーライドがあればそれを使用（フルオート時）
+-      return finalScenarioText; // [v2.79] フルオート連鎖用: テキスト自体を返す
+-      return null; // [v2.79] フルオート連鎖用: 失敗
+-  // [v2.79] 戻り値変更: フルオート連鎖用（文字列=成功, null=失敗）
+-      return safePrompt; // [v2.79] フルオート連鎖用: 成功
+-      return null; // [v2.79] フルオート連鎖用: 失敗
+-  // [v2.79] 戻り値変更: フルオート連鎖用（true=成功, false=失敗）
+-      return true; // [v2.78] フルオート連鎖用: 成功
+-      return false; // [v2.78] フルオート連鎖用: 失敗
+-  // [v2.78] フルオート生成トリガー監視
+-  // --- [v2.78] フルオート生成モード ---
+-  // STEP2→3→4を自動連鎖実行する。handleFullAutoToggleから呼ばれる。
+-    // フルオート開始
+-    // --- STEP2: シナリオ生成 ---
+-    // 自動スクロール: STEP2へ
+-      if (fullAutoAbortRef.current) showStatus("フルオートを中断しました。");
+-    // --- STEP3: プロンプト組立 ---
+-      if (fullAutoAbortRef.current) showStatus("フルオートを中断しました。");
+-    // --- STEP4: 画像生成 ---
+-    // フルオート完了（ボタン自動解除）
+-      showStatus("🎉 フルオート生成完了！4コマ漫画が生成されました！");
+-  // [v2.78] フルオートトグルハンドラ
+-    if (isFullAutoMode) {
+-      showStatus("フルオートを解除しました。");
+-      // STEP1完了済み → 状態更新後に即実行させる
+-      // STEP1未完了 → 武装待機
+-      showStatus("🚀 フルオート待機中: キャラクターシートをドロップしてください");
+-  // フルオート中断
+-            <button
+-            <button
+-                isFullAutoMode
+-              {isFullAutoMode ? (
+-                <><Zap size={12} className={castList ? "text-yellow-300" : ""} /> フルオート</>
++          <button onClick={resetAll} className="group flex items-center gap-2 bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white px-8 py-4 rounded-2xl font-bold transition-all border border-white/5 z-10">
+-            {/* [v2.78] フルオート自動スクロール用ref */}
+-            <button
+-            <button
+-              全てを初期化する（別のキャラ画像を使う場合）
+
+--- Commit 1: Date:   Wed Apr 29 19:39:07 2026 +0900
++  // [v2.78] フルオート生成モード
++  const [isFullAutoMode, setIsFullAutoMode] = useState(false); // フルオート実行中フラグ
++  const [fullAutoStep, setFullAutoStep] = useState(0); // 0=待機, 2=STEP2, 3=STEP3, 4=STEP4
++      // [v2.78] フルオート武装中なら自動的にSTEP2→3→4を開始
++      if (isFullAutoMode && !fullAutoAbortRef.current) {
++  // [v2.78] 戻り値追加 + categoriesOverrideパラメータ追加（フルオート時のstate反映タイミングバグ修正）
++    // [v2.78] カテゴリオーバーライドがあればそれを使用（フルオート時）
++      return finalScenarioText; // [v2.79] フルオート連鎖用: テキスト自体を返す
++      return null; // [v2.79] フルオート連鎖用: 失敗
++  // [v2.79] 戻り値変更: フルオート連鎖用（文字列=成功, null=失敗）
++      return safePrompt; // [v2.79] フルオート連鎖用: 成功
++      return null; // [v2.79] フルオート連鎖用: 失敗
++  // [v2.79] 戻り値変更: フルオート連鎖用（true=成功, false=失敗）
++      return true; // [v2.78] フルオート連鎖用: 成功
++      return false; // [v2.78] フルオート連鎖用: 失敗
++  // [v2.78] フルオート生成トリガー監視
++  // --- [v2.78] フルオート生成モード ---
++  // STEP2→3→4を自動連鎖実行する。handleFullAutoToggleから呼ばれる。
++    // フルオート開始
++    // --- STEP2: シナリオ生成 ---
++    // 自動スクロール: STEP2へ
++      if (fullAutoAbortRef.current) showStatus("フルオートを中断しました。");
++    // --- STEP3: プロンプト組立 ---
++      if (fullAutoAbortRef.current) showStatus("フルオートを中断しました。");
++    // --- STEP4: 画像生成 ---
++    // フルオート完了（ボタン自動解除）
++      showStatus("🎉 フルオート生成完了！4コマ漫画が生成されました！");
++  // [v2.78] フルオートトグルハンドラ
++    if (isFullAutoMode) {
++      showStatus("フルオートを解除しました。");
++      // STEP1完了済み → 状態更新後に即実行させる
++      // STEP1未完了 → 武装待機
++      showStatus("🚀 フルオート待機中: キャラクターシートをドロップしてください");
++  // フルオート中断
++            <button
++            <button
++                isFullAutoMode
++              {isFullAutoMode ? (
++                <><Zap size={12} className={castList ? "text-yellow-300" : ""} /> フルオート</>
+-          <button onClick={resetAll} className="group flex items-center gap-2 bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white px-8 py-4 rounded-2xl font-bold transition-all border border-white/5 z-10">
++            {/* [v2.78] フルオート自動スクロール用ref */}
++            <button
++            <button
++              全てを初期化する（別のキャラ画像を使う場合）
+
+--- Commit 2: Date:   Wed Apr 29 10:50:54 2026 +0900
+
+--- Commit 3: Date:   Tue Apr 28 12:51:22 2026 +0900
+
+--- Commit 4: Date:   Tue Apr 28 11:57:05 2026 +0900
+
+--- Commit 5: Date:   Mon Apr 27 19:18:05 2026 +0900
+
+--- Commit 6: Date:   Mon Apr 27 13:49:49 2026 +0900
+
+--- Commit 7: Date:   Mon Apr 27 09:59:47 2026 +0900
+
+--- Commit 8: Date:   Mon Apr 27 07:53:35 2026 +0900
+
+--- Commit 9: Date:   Mon Apr 27 07:25:13 2026 +0900
++                        <button
+
+--- Commit 10: Date:   Sun Apr 26 16:18:16 2026 +0900
+-            {/* STEP3ロックオーバーレイ: STEP2未完了 or 解析中 or 検索中 */}
++            {/* STEP3ロックオーバーレイ: STEP2未完了 or 解析中 or 検索中 or シナリオ強化中 */}
+-            {/* [v2.48] 出力結果ロックオーバーレイ: STEP3未完了時は全体をぼかす */}
++            {/* [v2.48] 出力結果ロックオーバーレイ: STEP3未完了 or シナリオ強化中は全体をぼかす */}
+-              {/* [v2.48] 描画エリアロックオーバーレイ: STEP3(finalPrompt)未完了時はぼかす */}
++              {/* [v2.48] 描画エリアロックオーバーレイ: STEP3未完了 or シナリオ強化中はぼかす */}
+
+--- Commit 11: Date:   Sun Apr 26 10:39:52 2026 +0900
+
+--- Commit 12: Date:   Thu Apr 23 19:47:04 2026 +0900
+
+--- Commit 13: Date:   Thu Apr 23 06:53:03 2026 +0900
+
+--- Commit 14: Date:   Wed Apr 22 22:55:14 2026 +0900
+
+--- Commit 15: Date:   Wed Apr 22 22:45:02 2026 +0900
+
+--- Commit 16: Date:   Wed Apr 22 22:14:33 2026 +0900
+-                        <span className="inline-block mt-2 text-[11px] text-cyan-300/80">🧪 <strong>ChatGPT対応（テスト）:</strong> STEP3の「ChatGPT Images 2.0 強化プロンプト追加」チェックをONにしてプロンプトを構築すると、A4縦(1024×1448px)固定・縦書きセリフ・右→左読み順・禁止形状チェック等の強制指示がプロンプト先頭＋末尾の両方に追加されます。そのプロンプトを<a href="https://chatgpt.com/" target="_blank" rel="noreferrer" className="text-blue-400 hover:underline">ChatGPTブラウザ版🤖</a>に「元となるキャラシート画像」と一緒に貼り付ければ、ChatGPTでも一応マンガ生成が可能です。</span>
++                          🧪 <strong>ChatGPT対応（テスト）:</strong> STEP3の「ChatGPT Images 2.0 強化プロンプト追加」チェックをONにしてプロンプトを構築して、<a href="https://chatgpt.com/" target="_blank" rel="noreferrer" className="text-blue-400 hover:underline">ChatGPTブラウザ版🤖</a>に「元となるキャラシート画像」と一緒に貼り付ければ、ChatGPTでもマンガ生成が可能です。<br/>
+-                          「配慮版プロンプトを再生成する」ボタンを押すとSTEP3のプロンプトが修正されて上書きされます。<br/>
+-                          再度STEP4で画像を生成するかGeminiにプロンプトとキャラクターシートを貼って画像を生成してみて下さい。
+-                          <button
++                            その回答を下の入力ボックスに貼り付けると、<strong className="text-yellow-100">「配慮版プロンプトを再生成する」</strong>ボタンが押せるようになります。そのボタンをクリックすると、STEP 3のプロンプトが安全な表現に自動で修正・上書きされます。
++                            その後、再度STEP 4で画像を生成するか、各AIブラウザ版にプロンプトを貼って画像を生成してみてください。
++                        <button
+
+--- Commit 17: Date:   Wed Apr 22 20:43:46 2026 +0900
+
+--- Commit 18: Date:   Wed Apr 22 19:08:20 2026 +0900
++                        <span className="inline-block mt-2 text-[11px] text-cyan-300/80">🧪 <strong>ChatGPT対応（テスト）:</strong> STEP3の「ChatGPT Images 2.0 強化プロンプト追加」チェックをONにしてプロンプトを構築すると、A4縦(1024×1448px)固定・縦書きセリフ・右→左読み順・禁止形状チェック等の強制指示がプロンプト先頭＋末尾の両方に追加されます。そのプロンプトを<a href="https://chatgpt.com/" target="_blank" rel="noreferrer" className="text-blue-400 hover:underline">ChatGPTブラウザ版🤖</a>に「元となるキャラシート画像」と一緒に貼り付ければ、ChatGPTでも一応マンガ生成が可能です。</span>
+
+--- Commit 19: Date:   Tue Apr 21 21:52:10 2026 +0900
+
+--- Commit 20: Date:   Tue Apr 21 20:30:38 2026 +0900
+
+--- Commit 21: Date:   Mon Apr 20 22:13:01 2026 +0900
+
+--- Commit 22: Date:   Mon Apr 20 21:40:21 2026 +0900
+
+--- Commit 23: Date:   Mon Apr 20 13:58:15 2026 +0900
+
+--- Commit 24: Date:   Mon Apr 20 12:57:53 2026 +0900
+
+--- Commit 25: Date:   Mon Apr 20 10:45:08 2026 +0900
+
+--- Commit 26: Date:   Mon Apr 20 07:47:52 2026 +0900
+
+--- Commit 27: Date:   Sun Apr 19 08:14:48 2026 +0900
+
+--- Commit 28: Date:   Fri Apr 17 00:46:09 2026 +0900
+-      // STEP2実行時に場所・服装を確定（ロック）する
+-              ※以下を変更する場合は指定場所・指定服装を入力の上、『シナリオ作成を実行（STEP2）』ボタンをクリックして再生成してください。
+
+--- Commit 29: Date:   Wed Apr 15 21:37:52 2026 +0900

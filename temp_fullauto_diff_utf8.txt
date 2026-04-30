@@ -1,0 +1,602 @@
+﻿diff --git a/src/App.jsx b/src/App.jsx
+index fa3015a..1126610 100644
+--- a/src/App.jsx
++++ b/src/App.jsx
+@@ -23,6 +23,8 @@ import {
+   AlertTriangle,
+   ExternalLink,
+   ArrowRight,
++  Check,
++  Square,
+   Globe,
+   Edit3,
+   Download,
+@@ -31,7 +33,7 @@ import {
+ // --- Imports ---
+ import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
+ import { generateImageWithImagen } from './lib/imagen';
+-const SYSTEM_VERSION = "v2.77 Alpha";
++const SYSTEM_VERSION = "v2.81 Alpha";
+ 
+ // --- Error Translation Utility ---
+ const translateApiError = (errorMsg) => {
+@@ -424,6 +426,18 @@ function App() {
+   const [originalScenario, setOriginalScenario] = useState(""); // 強化前の原文保持用
+   const [enableChatGPTMode, setEnableChatGPTMode] = useState(false); // [v2.61] ChatGPT Images 2.0 強化プロンプト
+ 
++  // [v2.78] フルオート生成モード
++  const [isFullAutoMode, setIsFullAutoMode] = useState(false); // フルオート実行中フラグ
++  const [fullAutoStep, setFullAutoStep] = useState(0); // 0=待機, 2=STEP2, 3=STEP3, 4=STEP4
++  const [fullAutoCountdown, setFullAutoCountdown] = useState(0); // カウントダウン表示用
++  const [triggerFullAuto, setTriggerFullAuto] = useState(0); // [v2.78] Effect Trigger
++  const fullAutoAbortRef = useRef(false); // 中断フラグ（useRefで即時反映）
++  // [v2.78] 自動スクロール用Ref
++  const step2Ref = useRef(null);
++  const step3Ref = useRef(null);
++  const outputRef = useRef(null);
++  const imageResultRef = useRef(null);
++
+   // Logic centralization for v1.4.9
+   const isAssembleDisabled = isAssembling || !castList || castList.length < 20 || !scenario || scenario.length < 20 || isSearching || isAnalyzing; // [v1.8.83] Relaxed limits from 50 to 20
+ 
+@@ -617,6 +631,11 @@ function App() {
+         return prev + separator + thoughtTrace;
+       });
+       showStatus("全キャラクターの解析が完了しました。");
++
++      // [v2.78] フルオート武装中なら自動的にSTEP2→3→4を開始
++      if (isFullAutoMode && !fullAutoAbortRef.current) {
++        setTriggerFullAuto(prev => prev + 1);
++      }
+     } catch (error) {
+       console.error(error);
+       const translatedMsg = translateApiError(error.message);
+@@ -764,17 +783,21 @@ ${scenario}
+   };
+ 
+   // --- Step 2: Scenario ---
+-  const generateScenarioFromNews = async () => {
++  // [v2.78] 戻り値追加 + categoriesOverrideパラメータ追加（フルオート時のstate反映タイミングバグ修正）
++  const generateScenarioFromNews = async (categoriesOverride) => {
+     if (!castList) return showStatus("先にキャラクターを解析してください。");
+     if (isSearching) return;
+ 
++    // [v2.78] カテゴリオーバーライドがあればそれを使用（フルオート時）
++    const effectiveCategories = categoriesOverride || categories;
++
+     // Manual Mode Check
+     if (inputMode === 'manual' && !manualTopic.trim()) {
+       alert("自由入力トピックを入力してください。");
+       return;
+     }
+     // News Mode Check
+-    if (inputMode === 'news' && !categories.find(c => c.checked)) {
++    if (inputMode === 'news' && !effectiveCategories.find(c => c.checked)) {
+       alert("少なくとも1つのカテゴリを選択してください。");
+       return;
+     }
+@@ -796,7 +819,7 @@ ${scenario}
+       setScenario("");
+       setScenarioThought(`> Context Force Reboot: Initiated.\n > Mode: MANUAL INPUT \n > Target: ${manualTopic.substring(0, 30)}...`);
+     } else {
+-      const activeCats = categories.filter(c => c.checked);
++      const activeCats = effectiveCategories.filter(c => c.checked);
+       // FIX: Combined keywords from all selected categories
+       if (activeCats.length > 0) {
+         randomCategory = activeCats.map(c => c.keywords).join(' ');
+@@ -1175,12 +1198,15 @@ ${scenario}
+ 
+       setScenarioThought(prev => prev + `\n > Topic Selected: ${parsedData.topic} \n > Scenario Construction Complete.`);
+       showStatus("シナリオの生成が完了しました！");
++      const finalScenarioText = `## タイトル: ${parsedData.topic} !?\nLocation: ${parsedData.location || "Unspecified"}${outfitLine}\n\n${parsedData.scenario} `;
++      return finalScenarioText; // [v2.79] フルオート連鎖用: テキスト自体を返す
+ 
+     } catch (error) {
+       console.error(error);
+       const translatedMsg = translateApiError(error.message);
+       setScenarioThought(prev => prev + `\n\n[SYSTEM FAILURE]: ${error.message}\n--------------------------------------------------\n${translatedMsg}`);
+       showStatus("シナリオ生成エラー");
++      return null; // [v2.79] フルオート連鎖用: 失敗
+     } finally {
+       clearInterval(scenarioTimer);
+       setIsSearching(false);
+@@ -1188,8 +1214,10 @@ ${scenario}
+   };
+ 
+   // --- Step 3: Prompt Assembly (Super FURU v121.3) ---
+-  const assemblePrompt = async () => {
+-    if (!castList || !scenario) return showStatus("キャストとシナリオが必要です。");
++  // [v2.79] 戻り値変更: フルオート連鎖用（文字列=成功, null=失敗）
++  const assemblePrompt = async (skipGuard = false, overrideScenario = null) => {
++    const currentScenario = overrideScenario || scenario;
++    if (!skipGuard && (!castList || !currentScenario)) return showStatus("キャストとシナリオが必要です。");
+     setIsAssembling(true);
+     setFinalPrompt(""); // Clear previous prompt to indicate loading
+     // [v2.35] 救済パネルリセット
+@@ -1514,19 +1542,19 @@ Available lens effects — EACH PANEL MUST USE ONE:
+     `;
+ 
+       // [v2.42] タイトル抽出 + 「Topic:」プレフィックス除去サニタイズ
+-      let cleanTopic = scenario.match(/## タイトル:\s*(.*?)(\n|$|!)/)?.[1]?.trim() || scenario.split('\n')[0].substring(0, 20);
++      let cleanTopic = currentScenario.match(/## タイトル:\s*(.*?)(\n|$|!)/)?.[1]?.trim() || currentScenario.split('\n')[0].substring(0, 20);
+       // AIが「Topic: xxx」というラベル付きで出力してしまうケースを除去
+       cleanTopic = cleanTopic.replace(/^Topic:\s*/i, '').trim();
+ 
+       // [v2.43] シナリオテキストから場所・服装を読み取る（ユーザーの直接編集を反映）
+-      const scenarioLocationMatch = scenario.match(/Location:\s*(.*?)(\n|$)/i)?.[1]?.trim();
+-      const scenarioOutfitMatch = scenario.match(/Outfit:\s*(.*?)(\n|$)/i)?.[1]?.trim();
++      const scenarioLocationMatch = currentScenario.match(/Location:\s*(.*?)(\n|$)/i)?.[1]?.trim();
++      const scenarioOutfitMatch = currentScenario.match(/Outfit:\s*(.*?)(\n|$)/i)?.[1]?.trim();
+       const cleanLocation = scenarioLocationMatch || "Generic Detailed Background";
+       // [v2.43] 服装もシナリオテキストから取得（「なし」やキャラシート準拠系は空扱い）
+       const activeOutfit = (scenarioOutfitMatch && !/^(なし|キャラシート準拠|none|default)/i.test(scenarioOutfitMatch)) ? scenarioOutfitMatch : "";
+ 
+       // [v1.9.5] Remove markdown codeblock artifacts that leak into Visual Action extraction
+-      const cleanScenario = scenario.replace(/```(?:json|markdown)?/gi, '').trim();
++      const cleanScenario = currentScenario.replace(/```(?:json|markdown)?/gi, '').trim();
+ 
+       // [v1.8.3] Smart Splitter for Panels
+       const extractPanel = (text, header, nextHeader) => {
+@@ -2201,6 +2229,7 @@ Clean anime illustration finish, smooth cel shading, soft clean shading, smooth
+       setFinalPrompt(safePrompt);
+       setAssembleThought(prev => prev + "\n> セーフティ年齢フィルター: 適用済み\n> 最適化ベクトル: 計算完了\n> 構造ロック: 有効\n> 風刺ロジック: 強化済み\n> [完了] 最終プロンプトを構築しました。");
+       showStatus("最終プロンプトの構築が完了しました。画像生成を開始します...");
++      return safePrompt; // [v2.79] フルオート連鎖用: 成功
+ 
+       // Auto-trigger Image Generation handled by effect if needed, but manual button usually forces user to check.
+ 
+@@ -2209,6 +2238,7 @@ Clean anime illustration finish, smooth cel shading, soft clean shading, smooth
+       const translatedMsg = translateApiError(error.message);
+       setAssembleThought(prev => prev + `\n\n[SYSTEM FAILURE]: ${error.message}\n--------------------------------------------------\n${translatedMsg}`);
+       showStatus("生成エラー: " + error.message);
++      return null; // [v2.79] フルオート連鎖用: 失敗
+     } finally {
+       clearInterval(thinkTimer);
+       setIsAssembling(false);
+@@ -2229,7 +2259,22 @@ Clean anime illustration finish, smooth cel shading, soft clean shading, smooth
+     setCustomOutfit("");
+     setLockedLocation("");
+     setLockedOutfit("");
+-    showStatus("メモリをリセットしました。");
++    setIsFullAutoMode(false);
++    setFullAutoStep(0);
++    showStatus("完全にリセットしました。");
++  };
++
++  const partialReset = () => {
++    setScenario("");
++    setFinalPrompt("");
++    setImages([]);
++    setGeneratedImage(null);
++    setAnalyzeThought("");
++    setScenarioThought("");
++    setAssembleThought("");
++    setIsFullAutoMode(false);
++    setFullAutoStep(0);
++    showStatus("シナリオと画像をクリアしました。キャラクターは維持されています。");
+   };
+ 
+   const [isCopied, setIsCopied] = useState(false);
+@@ -2244,8 +2289,10 @@ Clean anime illustration finish, smooth cel shading, soft clean shading, smooth
+     showStatus("クリップボードにコピーしました！");
+   };
+   // --- Step 4: Image Generation ---
+-  const regenerateImage = async () => {
+-    if (isGeneratingImage || !finalPrompt) return;
++  // [v2.79] 戻り値変更: フルオート連鎖用（true=成功, false=失敗）
++  const regenerateImage = async (skipGuard = false, overridePrompt = null) => {
++    const currentPrompt = overridePrompt || finalPrompt;
++    if (isGeneratingImage || (!skipGuard && !currentPrompt)) return false;
+     setIsGeneratingImage(true);
+     setIsGenerationError(false);
+     setGenLog(["[1/5] プロンプトパラメータをロック中...", "[2/5] セーフティフィルターを検証中..."]);
+@@ -2277,7 +2324,7 @@ Clean anime illustration finish, smooth cel shading, soft clean shading, smooth
+         setGenLog(prev => [...prev, msg]);
+       };
+ 
+-      const { base64Img, usedModel: generatedModelId } = await generateImageWithImagen(finalPrompt, statCallback);
++      const { base64Img, usedModel: generatedModelId } = await generateImageWithImagen(currentPrompt, statCallback);
+       setGenLog(prev => [...prev, `[4/5] データストリーム受信完了 (Model: ${generatedModelId})`, "[5/5] Base64画像データをデコード・レンダリング中..."]);
+ 
+       setGeneratedImage(`data:image/png;base64,${base64Img}`);
+@@ -2299,6 +2346,7 @@ Clean anime illustration finish, smooth cel shading, soft clean shading, smooth
+         setGenLog(prev => [...prev, "[COMPLETE] Image successfully generated."]);
+       }
+       showStatus("画像生成完了！");
++      return true; // [v2.78] フルオート連鎖用: 成功
+     } catch (error) {
+       console.error(error);
+       setIsGenerationError(true);
+@@ -2342,6 +2390,7 @@ Clean anime illustration finish, smooth cel shading, soft clean shading, smooth
+         ...guideLines
+       ]);
+       showStatus(`生成エラー: ${error.message} `);
++      return false; // [v2.78] フルオート連鎖用: 失敗
+       // alert(`画像生成に失敗しました。\nエラー: ${ error.message } `); // Disable alert to show UI guide instead
+     } finally {
+       clearInterval(genTimer);
+@@ -2541,37 +2590,238 @@ ${finalPrompt}
+     }
+   };
+ 
++  // [v2.78] フルオート生成トリガー監視
++  // eslint-disable-next-line react-hooks/exhaustive-deps
++  useEffect(() => {
++    if (triggerFullAuto > 0 && !fullAutoAbortRef.current) {
++      runFullAuto();
++    }
++  }, [triggerFullAuto]);
++
++  // --- [v2.78] フルオート生成モード ---
++  // STEP2→3→4を自動連鎖実行する。handleFullAutoToggleから呼ばれる。
++  const runFullAuto = async () => {
++    if (!castList || castList.length < 20) {
++      showStatus("先にキャラクターシートをアップロードしてください。");
++      setIsFullAutoMode(false);
++      return;
++    }
++
++    // フルオート開始
++    fullAutoAbortRef.current = false;
++    setIsFullAutoMode(true);
++    setEnableChatGPTMode(false); // ChatGPTモードOFF（デモ用ノーマルモード）
++
++    // --- STEP2: シナリオ生成 ---
++    setFullAutoStep(2);
++    // カテゴリをランダムで1〜2個選択し、直接オブジェクトとして生成
++    const shuffled = [...categories].sort(() => Math.random() - 0.5);
++    const count = Math.random() > 0.5 ? 2 : 1;
++    const selectedIds = shuffled.slice(0, count).map(c => c.id);
++    const overrideCategories = categories.map(c => ({ ...c, checked: selectedIds.includes(c.id) }));
++    // UIにも反映
++    setCategories(overrideCategories);
++    // 場所・服装はAIまかせ（クリア）
++    setCustomLocation("");
++    setCustomOutfit("");
++    setInputMode("news"); // ニュース検索モード固定
++
++    // 自動スクロール: STEP2へ
++    await new Promise(r => setTimeout(r, 200));
++    step2Ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
++
++    // categoriesOverrideを直接渡してstate反映タイミングバグを回避
++    const generatedScenario = await generateScenarioFromNews(overrideCategories);
++    if (fullAutoAbortRef.current || !generatedScenario) {
++      setIsFullAutoMode(false);
++      setFullAutoStep(0);
++      if (fullAutoAbortRef.current) showStatus("フルオートを中断しました。");
++      return;
++    }
++
++    // --- STEP3: プロンプト組立 ---
++    setFullAutoStep(3);
++    step3Ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
++    await new Promise(r => setTimeout(r, 300));
++
++    // stale state回避のため文字列を直接渡す
++    const generatedPrompt = await assemblePrompt(true, generatedScenario); 
++    if (fullAutoAbortRef.current || !generatedPrompt) {
++      setIsFullAutoMode(false);
++      setFullAutoStep(0);
++      if (fullAutoAbortRef.current) showStatus("フルオートを中断しました。");
++      return;
++    }
++
++    // --- STEP4: 画像生成 ---
++    setFullAutoStep(4);
++    outputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
++    await new Promise(r => setTimeout(r, 300));
++
++    const step4ok = await regenerateImage(true, generatedPrompt); 
++    
++    // 最終スクロール: 生成画像へ
++    await new Promise(r => setTimeout(r, 800));
++    imageResultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
++
++    // フルオート完了（ボタン自動解除）
++    setIsFullAutoMode(false);
++    setFullAutoStep(0);
++    if (step4ok) {
++      showStatus("🎉 フルオート生成完了！4コマ漫画が生成されました！");
++    }
++  };
++
++  // [v2.78] フルオートトグルハンドラ
++  // castList有 → 即実行 / castList無 → 武装待機（ドロップで自動開始）
++  const handleFullAutoToggle = () => {
++    if (isFullAutoMode) {
++      // 実行中 or 武装中 → 中断/解除
++      fullAutoAbortRef.current = true;
++      setIsFullAutoMode(false);
++      setFullAutoStep(0);
++      showStatus("フルオートを解除しました。");
++      return;
++    }
++    
++    fullAutoAbortRef.current = false;
++    setIsFullAutoMode(true);
++    
++    if (castList && castList.length >= 20) {
++      // STEP1完了済み → 状態更新後に即実行させる
++      setTriggerFullAuto(prev => prev + 1);
++    } else {
++      // STEP1未完了 → 武装待機
++      showStatus("🚀 フルオート待機中: キャラクターシートをドロップしてください");
++    }
++  };
++
++  // フルオート中断
++  const abortFullAuto = () => {
++    fullAutoAbortRef.current = true;
++    setIsFullAutoMode(false);
++    setFullAutoStep(0);
++  };
++
+   // Determine Current Step
+   const currentStep = (!castList || castList.length < 1) ? 1
+     : (!scenario || scenario.length < 1) ? 2
+       : (!finalPrompt) ? 3
+-        : 4;
++        : (!generatedImage) ? 4
++          : 5;
+ 
+   return (
+     <div className="min-h-screen bg-[#0a0c10] text-slate-100 font-sans selection:bg-blue-500/30 overflow-x-hidden">
+       <ApiKeyModal isOpen={showModal} onSave={handleSetKey} />
+ 
++      {/* NEW STICKY TOP PROGRESS BAR */}
++      <div className="fixed top-0 left-0 right-0 z-[100] bg-[#0f1115] border-b border-white/10 flex items-center px-4 md:px-8 py-2 shadow-xl w-full h-[56px]">
++        <div className="flex-1 flex items-center justify-between max-w-7xl mx-auto w-full relative">
++          
++          {/* Progress Steps (Left) */}
++          <div className="flex items-center gap-1 md:gap-4 overflow-x-auto custom-scrollbar">
++            {/* Step 1: 解析 */}
++            <div className={`flex items-center gap-1.5 md:gap-2 ${currentStep >= 1 ? 'opacity-100' : 'opacity-40'}`}>
++              <div className={`w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center font-bold text-xs md:text-sm ${currentStep === 1 ? 'bg-blue-500 text-white shadow-[0_0_10px_rgba(59,130,246,0.6)]' : currentStep > 1 ? 'bg-blue-600/50 text-blue-200' : 'bg-white/10 text-white/50'}`}>
++                {currentStep > 1 ? <Check size={14} /> : '1'}
++              </div>
++              <span className="text-[10px] md:text-xs font-bold text-white tracking-wider">解析</span>
++            </div>
++            
++            <ArrowRight size={12} className="text-white/20 hidden md:block" />
++            
++            {/* Step 2: シナリオ */}
++            <div className={`flex items-center gap-1.5 md:gap-2 ${currentStep >= 2 ? 'opacity-100' : 'opacity-40'}`}>
++              <div className={`w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center font-bold text-xs md:text-sm ${currentStep === 2 ? 'bg-purple-500 text-white shadow-[0_0_10px_rgba(168,85,247,0.6)]' : currentStep > 2 ? 'bg-purple-600/50 text-purple-200' : 'bg-white/10 text-white/50'}`}>
++                {currentStep > 2 ? <Check size={14} /> : '2'}
++              </div>
++              <span className="text-[10px] md:text-xs font-bold text-white tracking-wider">シナリオ</span>
++            </div>
++            
++            <ArrowRight size={12} className="text-white/20 hidden md:block" />
++            
++            {/* Step 3: プロンプト */}
++            <div className={`flex items-center gap-1.5 md:gap-2 ${currentStep >= 3 ? 'opacity-100' : 'opacity-40'}`}>
++              <div className={`w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center font-bold text-xs md:text-sm ${currentStep === 3 ? 'bg-orange-500 text-white shadow-[0_0_10px_rgba(249,115,22,0.6)]' : currentStep > 3 ? 'bg-orange-600/50 text-orange-200' : 'bg-white/10 text-white/50'}`}>
++                {currentStep > 3 ? <Check size={14} /> : '3'}
++              </div>
++              <span className="text-[10px] md:text-xs font-bold text-white tracking-wider">プロンプト</span>
++            </div>
++            
++            <ArrowRight size={12} className="text-white/20 hidden md:block" />
++            
++            {/* Step 4: 画像生成 */}
++            <div className={`flex items-center gap-1.5 md:gap-2 ${currentStep >= 4 ? 'opacity-100' : 'opacity-40'}`}>
++              <div className={`w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center font-bold text-xs md:text-sm ${currentStep === 4 ? 'bg-green-500 text-white shadow-[0_0_10px_rgba(34,197,94,0.6)]' : currentStep > 4 ? 'bg-green-600/50 text-green-200 shadow-[0_0_10px_rgba(34,197,94,0.3)]' : 'bg-white/10 text-white/50'}`}>
++                {currentStep > 4 ? <Check size={14} /> : '4'}
++              </div>
++              <span className="text-[10px] md:text-xs font-bold text-white tracking-wider">画像生成</span>
++            </div>
++          </div>
++
++          {/* Controls (Right) */}
++          <div className="flex items-center gap-2 shrink-0 ml-2 md:ml-4 border-l border-white/10 pl-2 md:pl-4">
++            <button
++              disabled={!apiKey || (!castList && !scenario)}
++              onClick={partialReset}
++              className="flex items-center gap-1.5 bg-white/5 hover:bg-white/10 text-slate-300 px-2 py-1.5 md:px-3 rounded-lg text-[10px] md:text-xs font-bold transition-colors border border-white/10 disabled:opacity-30 disabled:cursor-not-allowed"
++              title="キャラクター設定を維持したまま、シナリオ以降をやり直す"
++            >
++              <RefreshCw size={12} /> <span className="hidden sm:inline">やり直す</span>
++            </button>
++            
++            <button
++              disabled={!apiKey}
++              onClick={handleFullAutoToggle}
++              className={`flex items-center gap-1.5 px-3 md:px-4 py-1.5 rounded-lg text-[10px] md:text-xs font-bold transition-colors shadow-lg border ${
++                isFullAutoMode
++                  ? 'bg-red-900/80 hover:bg-red-800 text-red-100 border-red-500/50 animate-pulse'
++                  : 'bg-gradient-to-r from-blue-700 to-indigo-700 hover:from-blue-600 hover:to-indigo-600 text-white border-blue-400/30'
++              } disabled:opacity-30 disabled:cursor-not-allowed`}
++            >
++              {isFullAutoMode ? (
++                <><Square size={12} fill="currentColor" /> 中断</>
++              ) : (
++                <><Zap size={12} className={castList ? "text-yellow-300" : ""} /> フルオート</>
++              )}
++            </button>
++          </div>
++        </div>
++        
++        {/* Progress Line */}
++        <div className="absolute bottom-0 left-0 h-[2px] bg-white/10 w-full">
++          <div className={`h-full transition-all duration-700 ease-out
++            ${currentStep === 1 ? 'w-1/4 bg-blue-500' :
++              currentStep === 2 ? 'w-2/4 bg-purple-500 shadow-[0_0_10px_rgba(168,85,247,0.5)]' :
++              currentStep === 3 ? 'w-3/4 bg-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.5)]' :
++              currentStep >= 4 ? 'w-full bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)]' : 'w-0'}
++          `} />
++        </div>
++      </div>
++
+       {/* 背景装飾 */}
+-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
++      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-900/10 blur-[120px] rounded-full" />
+         <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-900/10 blur-[120px] rounded-full" />
+       </div>
+ 
+-      <div className="relative max-w-5xl mx-auto p-4 md:p-10 space-y-8">
+-        {/* ヘッダー */}
+-        <header className="flex flex-col md:flex-row items-center justify-between gap-6 bg-[#0f1115] backdrop-blur-xl p-8 rounded-xl border border-white/5 shadow-2xl relative overflow-hidden group">
++      <div className="relative z-10 max-w-5xl mx-auto px-4 pb-4 pt-[60px] md:px-10 md:pb-10 md:pt-[68px] space-y-8">
++        {/* === ヘッダー領域 === */}
++        <header className="flex flex-col items-center justify-center gap-6 bg-[#0f1115] p-6 md:p-8 rounded-xl border border-white/5 shadow-2xl relative overflow-hidden group">
+           <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/5 blur-[80px] rounded-full pointer-events-none" />
+ 
+-          <div className="flex flex-col items-center md:items-start text-center md:text-left z-10">
+-            <div className="flex items-center gap-4 mb-2">
+-              <div className="p-3 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl shadow-lg shadow-blue-500/20">
+-                <BrainCircuit size={32} className="text-white" />
+-              </div>
+-              <div>
+-                <h1 className="text-4xl font-black tracking-tighter text-blue-400 drop-shadow-[0_0_10px_rgba(59,130,246,0.8)]">
+-                  Super FURU AI <span className="text-white text-2xl ml-2 tracking-widest">4-koma System</span> <span className="text-xs text-yellow-500 font-mono align-top ml-1">{SYSTEM_VERSION}</span>
+-                </h1>
+-                <div className="flex items-center justify-center gap-3 mt-1">
++          <div className="flex flex-col items-center text-center z-10 w-full">
++            <div className="flex flex-col items-center justify-center gap-2 mb-2 w-full max-w-full overflow-hidden">
++              <div className="flex flex-col items-center text-center max-w-full">
++                <div className="flex flex-row items-center justify-center gap-3 flex-nowrap text-center">
++                  <div className="p-2 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl shadow-lg shadow-blue-500/20 shrink-0">
++                    <BrainCircuit size={28} className="text-white" />
++                  </div>
++                  <h1 className="text-xl md:text-4xl font-black tracking-tighter text-blue-400 drop-shadow-[0_0_10px_rgba(59,130,246,0.8)] whitespace-nowrap">
++                    Super FURU AI <span className="text-white text-lg md:text-3xl ml-1 tracking-widest hidden sm:inline">4-koma System</span> <span className="text-[10px] md:text-xs text-yellow-500 font-mono align-top ml-1">{SYSTEM_VERSION}</span>
++                  </h1>
++                </div>
++                <div className="flex flex-col md:flex-row items-center justify-center gap-3 mt-2">
+                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.4em]">
+                     Social Satire Engine [ 演出強化版 ]
+                   </p>
+@@ -2586,7 +2836,7 @@ ${finalPrompt}
+                   const info = getModelBadgeInfo(usedModel);
+                   if (!info) return null;
+                   return (
+-                    <div className={`mt-3 inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-white/10 ${info.color} shadow-lg animate -in fade -in slide -in -from-top-2 cursor-help group / badge relative`}>
++                    <div className={`mt-3 inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-white/10 ${info.color} shadow-lg animate-in fade-in slide-in-from-top-2 cursor-help group/badge relative`}>
+                       <span className="text-[10px] font-black uppercase tracking-widest">{info.label}</span>
+                       <span className="w-[1px] h-3 bg-white/40" />
+                       <span className="text-[10px] font-bold truncate max-w-[150px] md:max-w-none">{info.desc}</span>
+@@ -2610,54 +2860,8 @@ ${finalPrompt}
+             </div>
+           </div>
+ 
+-          <button onClick={resetAll} className="group flex items-center gap-2 bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white px-8 py-4 rounded-2xl font-bold transition-all border border-white/5 z-10">
+-            <RefreshCw size={18} className="group-hover:rotate-180 transition-transform duration-500" /> 入力をリセット
+-          </button>
+         </header>
+ 
+-        {/* STATUS BAR (Sticky Mode Indicator) */}
+-        <div className="sticky top-4 z-50 bg-[#0f1115]/90 backdrop-blur-2xl border border-white/10 p-4 rounded-xl shadow-2xl flex items-center justify-between gap-4">
+-          <div className="flex items-center gap-4 flex-1">
+-            <div className={`p-3 rounded-full ${currentStep === 1 ? 'bg-blue-600 animate-pulse' : 'bg-slate-800'} `}>
+-              <Camera size={20} className={currentStep === 1 ? 'text-white' : 'text-slate-500'} />
+-            </div>
+-            <div className="h-1 flex-1 bg-slate-800 rounded-full overflow-hidden">
+-              <div className={`h-full bg-blue-600 transition-all duration-500 ${currentStep >= 2 ? 'w-full' : 'w-0'} `} />
+-            </div>
+-            <div className={`p-3 rounded-full ${currentStep === 2 ? 'bg-purple-600 animate-pulse' : 'bg-slate-800'} `}>
+-              <FileText size={20} className={currentStep === 2 ? 'text-white' : 'text-slate-500'} />
+-            </div>
+-            <div className="h-1 flex-1 bg-slate-800 rounded-full overflow-hidden">
+-              <div className={`h-full bg-purple-600 transition-all duration-500 ${currentStep >= 3 ? 'w-full' : 'w-0'} `} />
+-            </div>
+-            <div className={`p-3 rounded-full ${currentStep === 3 ? 'bg-orange-600 animate-pulse' : 'bg-slate-800'} `}>
+-              <Wand2 size={20} className={currentStep === 3 ? 'text-white' : 'text-slate-500'} />
+-            </div>
+-            <div className="h-1 flex-1 bg-slate-800 rounded-full overflow-hidden">
+-              <div className={`h-full bg-green-600 transition-all duration-500 ${currentStep >= 4 ? 'w-full' : 'w-0'} `} />
+-            </div>
+-            <div className={`p-3 rounded-full ${currentStep === 4 ? 'bg-green-600 animate-pulse' : 'bg-slate-800'} `}>
+-              <ImageIcon size={20} className={currentStep === 4 ? 'text-white' : 'text-slate-500'} />
+-            </div>
+-          </div>
+-          <div className="hidden md:flex items-center gap-4">
+-            {/* [v2.48] API接続状態バッジ */}
+-            <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[10px] font-bold tracking-wider ${apiKey ? 'bg-green-500/10 border-green-500/30 text-green-400' : 'bg-red-500/10 border-red-500/30 text-red-400 animate-pulse'}`}>
+-              <span className={`w-2 h-2 rounded-full ${apiKey ? 'bg-green-400' : 'bg-red-400'}`} />
+-              {apiKey ? 'CONNECTED' : 'NO API KEY'}
+-            </div>
+-            <div className="text-right">
+-              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">CURRENT MODE</p>
+-              <p className="text-xl font-black italic tracking-tighter text-white">
+-                {currentStep === 1 && <span className="text-blue-500">CHARACTER ANALYSIS</span>}
+-                {currentStep === 2 && <span className="text-purple-500">SCENARIO GENERATION</span>}
+-                {currentStep === 3 && <span className="text-orange-500">PROMPT ASSEMBLY</span>}
+-                {currentStep === 4 && <span className="text-green-500">EXECUTION COMPLETE</span>}
+-              </p>
+-            </div>
+-          </div>
+-        </div>
+-
+         <main className="space-y-8" style={{ filter: apiKey ? 'none' : 'blur(10px)', pointerEvents: apiKey ? 'auto' : 'none', transition: 'filter 0.5s ease' }}>
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+ 
+@@ -2764,7 +2968,7 @@ ${finalPrompt}
+             </section>
+ 
+             {/* 02: シナリオ設定 (Static Layout) */}
+-            <section className={`relative p-8 rounded-xl bg-[#0f1115] border flex flex-col space-y-6 shadow-xl transition-all duration-300
++            <section ref={step2Ref} className={`relative p-8 rounded-xl bg-[#0f1115] border flex flex-col space-y-6 shadow-xl transition-all duration-300
+                  ${currentStep === 2 ? 'border-2 border-purple-500 shadow-[0_0_50px_rgba(168,85,247,0.2)] opacity-100' : 'border-white/5 opacity-60'}
+                  ${currentStep > 2 ? 'border-purple-500/30 bg-purple-900/5 opacity-100' : ''}
+       `}>
+@@ -3185,6 +3389,7 @@ ${finalPrompt}
+ 
+           {/* 03: プロンプト生成 - Tailwind p-8等がJITで無視されるためインラインスタイルで適用 */}
+           <section
++            ref={step3Ref}
+             style={{ padding: '16px', gap: '16px', borderRadius: '0', background: '#0f1115', position: 'relative' }}
+             className={`flex flex-col shadow-xl transition-all duration-300
+               ${currentStep === 3 ? 'border-2 border-orange-500/50 shadow-[0_0_50px_rgba(249,115,22,0.15)] opacity-100' : 'border border-white/5 opacity-60'}
+@@ -3240,6 +3445,7 @@ ${finalPrompt}
+ 
+           {/* 出力結果 */}
+           <div
++            ref={outputRef}
+             className="relative flex flex-col gap-12 mt-12 border-t border-white/5 pt-12 transition-all duration-500"
+           >
+             {/* [v2.48] 出力結果ロックオーバーレイ: STEP3未完了 or シナリオ強化中は全体をぼかす */}
+@@ -3517,7 +3723,8 @@ No explanations. No partial results.`;
+             </section>
+ 
+             {/* 右: 生成画像エリア */}
+-            <section className="relative group bg-[#0d1117] rounded-xl border border-white/5 min-h-[600px] flex flex-col overflow-hidden">
++            {/* [v2.78] フルオート自動スクロール用ref */}
++            <section ref={imageResultRef} className="relative group bg-[#0d1117] rounded-xl border border-white/5 min-h-[600px] flex flex-col overflow-hidden">
+               {/* [v2.48] 描画エリアロックオーバーレイ: STEP3未完了 or シナリオ強化中はぼかす */}
+               {(!finalPrompt && !isAssembling || isEnhancing) && (
+                 <div style={{ position: 'absolute', inset: 0, zIndex: 200, backgroundColor: 'rgba(10,12,16,0.85)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)', pointerEvents: 'auto', borderRadius: '0.75rem' }} />
+@@ -3586,6 +3793,31 @@ No explanations. No partial results.`;
+               </div>
+             </section >
+           </div >
++          
++          {/* やり直しボタン群 (Always visible at the bottom of the main content area) */}
++          <div className="pt-10 border-t border-white/10 mt-16 w-full mb-16 pb-12 relative z-50 flex flex-col items-center gap-6">
++            <button
++              onClick={() => {
++                partialReset();
++                window.scrollTo({ top: 0, behavior: 'smooth' });
++              }}
++              className="max-w-2xl mx-auto w-full bg-gradient-to-r from-blue-900 to-indigo-900 hover:from-blue-800 hover:to-indigo-800 text-white font-black py-6 px-8 rounded-2xl flex items-center justify-center gap-3 transition-all shadow-[0_0_30px_rgba(59,130,246,0.3)] border border-blue-400/30 active:scale-95 group text-lg tracking-widest relative overflow-hidden"
++            >
++              <div className="absolute inset-0 bg-white/5 group-hover:bg-transparent transition-colors" />
++              <RefreshCw size={24} className="group-hover:-rotate-180 transition-transform duration-700" /> 
++              <span>同じキャラクターで <span className="text-yellow-300">もう一度生成する</span></span>
++            </button>
++
++            <button
++              onClick={() => {
++                resetAll();
++                window.scrollTo({ top: 0, behavior: 'smooth' });
++              }}
++              className="text-xs text-slate-500 hover:text-red-400 font-bold underline decoration-slate-500/30 hover:decoration-red-400 transition-colors py-2 px-4"
++            >
++              全てを初期化する（別のキャラ画像を使う場合）
++            </button>
++          </div>
+         </main >
+ 
+         <footer className="text-center text-slate-700 text-[9px] font-bold tracking-[0.3em] uppercase py-10 flex items-center justify-center gap-4">
