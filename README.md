@@ -95,8 +95,8 @@ A dedicated formatting protocol to optimize prompts for ChatGPT's ChatGPT Images
 ChatGPT (ChatGPT Images 2.0) での生成に最適化された専用プロンプトモードを搭載。A4縦長のキャンバス指定や、日本語の縦書き、右から左への視線誘導など、ChatGPT特有の制限を突破するためのフォーマットを自動付与します。さらにGPT-image-2特有のノイズ問題に対応するAnti-Noiseプロトコル（安全レンダリングキーワード・禁止ワード組み合わせ・光演出の代替表現）を搭載し、クリーンなアニメ品質の出力を保証します。
 
 > **🧪 OpenAI API Direct Execution (Experimental) / OpenAI API直接実行（テスト機能）**
-> v2.88にて、OpenAI APIキーを入力することでアプリ内から直接DALL-E 3を呼び出せるテスト機能を実装しました（キーはローカルストレージにのみ保存されるセキュア設計です）。しかし、OpenAIの画像APIには「4000文字の文字数制限」という厳格な壁があり、本システムが生成する3万文字超のプロンプトを直接投げるとエラーになります。
-> 現状、ChatGPTの「文章AI（GPT-4o）が長文を読み解き、画像AI（DALL-E 3）へ要約して渡す」というブラウザ版の処理能力をAPI単体で再現することはできないため、実運用においては引き続き**「プロンプトをコピーしてブラウザ版ChatGPTに手動で貼り付けるハイブリッド運用」**が最強のソリューションとなります。（将来的なAPI2段構え化の布石として搭載されています）
+> v2.88にて、OpenAI APIキーを入力することでアプリ内から直接ChatGPT Images 2.0を呼び出せるテスト機能を実装しました（キーはローカルストレージにのみ保存されるセキュア設計です）。しかし、OpenAIの画像APIには「4000文字の文字数制限」という厳格な壁があり、本システムが生成する3万文字超のプロンプトを直接投げるとエラーになります。
+> 現状、ChatGPTの「文章AIが長文を読み解き、画像AIへ要約して渡す」というブラウザ版の処理能力をAPI単体で再現することはできないため、実運用においては引き続き**「プロンプトをコピーしてブラウザ版ChatGPTに手動で貼り付けるハイブリッド運用」**が最強のソリューションとなります。（将来的なAPI2段構え化の布石として搭載されています）
 
 ---
 
@@ -545,7 +545,7 @@ Developed by **FURU**
 - **[Docs]** Added "The Ultimate Hybrid Strategy" section to README.md to explain the unique Prompt-Driven Architecture and the intentional division of labor between Gemini API and ChatGPT UI. / 意図せず到達した「最強のハイブリッド運用（Gemini API + ChatGPT UI）」に関する詳細な解説をREADMEに追記。
 
 ### v2.72.0-alpha (2026-04-27)
-- **[Fix]** Reverted the VERTICAL TEXT PROTOCOL (tategaki enforcement) as it caused generation failures in DALL-E 3. The STABLE LAYOUT FOUNDATION (A4 lock and rigid panel constraints) has been preserved. / DALL-E 3での生成失敗の原因となっていた「縦書き強制プロトコル（VERTICAL TEXT PROTOCOL）」を削除し、以前の安定したテキストプロトコルにロールバック。なお、レイアウトを安定させるSTABLE LAYOUT FOUNDATION（A4固定・パネル剛体化）は引き続き維持。
+- **[Fix]** Reverted the VERTICAL TEXT PROTOCOL (tategaki enforcement) as it caused generation failures in ChatGPT Imsages 2.0. The STABLE LAYOUT FOUNDATION (A4 lock and rigid panel constraints) has been preserved. / ChatGPT Imsages 2.0 での生成失敗の原因となっていた「縦書き強制プロトコル（VERTICAL TEXT PROTOCOL）」を削除し、以前の安定したテキストプロトコルにロールバック。なお、レイアウトを安定させるSTABLE LAYOUT FOUNDATION（A4固定・パネル剛体化）は引き続き維持。
 
 ### v2.71.0-alpha (2026-04-27)
 - **[Fix]** Enforced vertical text (tategaki) in all speech bubbles via VERTICAL TEXT PROTOCOL — prevents horizontal/vertical text mixing in ChatGPT-generated manga. Added 12-rule detailed protocol covering character stacking direction, punctuation placement, small kana positioning, long vowel mark rotation, and bubble shape constraints. Also added base-level text direction rule for all modes. / 吹き出し内の縦書き（tategaki）をVERTICAL TEXT PROTOCOLで強制 — ChatGPT生成時の横書き混在を防止。文字の積み重ね方向・句読点配置・小仮名位置・長音符回転・吹き出し形状制約など12項目の詳細プロトコルを追加。全モード共通の基本テキスト方向ルールも追加。
@@ -555,7 +555,7 @@ Developed by **FURU**
 - **[Feature]** Added post-generation aspect ratio fix prompt copy button for cases where prevention fails. / 予防でも細長画像が出た場合の事後修正プロンプトコピーボタンを追加。
 - **[UI]** Unified all copy buttons (prompt copy, fix prompt, policy query) with consistent compact size, copy-complete toggle (2s green flash), and width-preserving text swap. / 全コピーボタン（プロンプト・修正・ポリシー）のサイズ・コピー完了トグル（2秒緑表示）・横幅維持を統一。
 - **[UI]** Fixed content policy panel font sizes and button styles to match PRO TIP section. / コンテンツポリシーパネルの文字サイズ・ボタンスタイルをPRO TIPセクションと統一。
-- **[Fix]** Updated ChatGPT format enforcement header from DALL-E 3 to ChatGPT Images 2.0. / ChatGPTフォーマット強制ヘッダーをDALL-E 3からChatGPT Images 2.0に更新。
+- **[Fix]** Updated ChatGPT format enforcement header from ChatGPT Imsages 2.0 to ChatGPT Images 2.0. / ChatGPTフォーマット強制ヘッダーをChatGPT Imsages 2.0 からChatGPT Images 2.0に更新。
 
 ### v2.69.0-alpha (2026-04-26)
 - **[Fix]** Resolved logical contradiction in Panel 4 prompt generation where "SOLO SHOT" and "MANDATORY BACKGROUND CAST" were emitted simultaneously. Background casts are now automatically merged into the panel characters list to prevent "SOLO SHOT" triggers when other characters are present. / Panel 4のプロンプトで「SOLO SHOT（他キャラ描くな）」と「MANDATORY BACKGROUND CAST（残り全員描け）」が同時出力される論理矛盾バグを修正。背景キャストがいる場合はSOLO SHOTを出力せず、自動的に全登場リストへ統合するように改善。
@@ -573,13 +573,13 @@ Developed by **FURU**
 - **[Fix]** Removed an extra colon from the DALL-E 3 instructions in PRO TIP. / PRO TIPのChatGPT向け案内文から余計なコロン（：）を削除。
 
 ### v2.64.0-alpha (2026-04-22)
-- **[Fix]** Added a note about clicking "Show in text field" to the ChatGPT PRO TIP and slightly adjusted the DALL-E 3 wording. / PRO TIPのChatGPT案内文に「テキストフィールドに表示」の注意書きを追加し、DALL-E 3の文言を微修正。
+- **[Fix]** Added a note about clicking "Show in text field" to the ChatGPT PRO TIP and slightly adjusted the ChatGPT Imsages 2.0 wording. / PRO TIPのChatGPT案内文に「テキストフィールドに表示」の注意書きを追加し、ChatGPT Imsages 2.0 の文言を微修正。
 
 ### v2.63.0-alpha (2026-04-22)
-- **[Fix]** Simplified DALL-E 3 ChatGPT instructions and clarified content policy rejection UI to explicitly support both Gemini and ChatGPT. / DALL-E 3 (ChatGPT) 向けのアスペクト比変更指示およびコンテンツポリシー拒否時のUI文言を整理し、GeminiとChatGPT両対応であることを明記。
+- **[Fix]** Simplified ChatGPT Imsages 2.0 ChatGPT instructions and clarified content policy rejection UI to explicitly support both Gemini and ChatGPT. / ChatGPT Imsages 2.0 (ChatGPT) 向けのアスペクト比変更指示およびコンテンツポリシー拒否時のUI文言を整理し、GeminiとChatGPT両対応であることを明記。
 
 ### v2.62.0-alpha (2026-04-22)
-- **[Fix]** Updated watermark text to specify "Generated by ChatGPT" when ChatGPT mode is enabled, and explicitly added DALL-E 3 aspect ratio commands and title placement fixes to enforce A4 size. / ChatGPTモード時にウォーターマークへ「ChatGPT生成」の旨を明記するように変更し、DALL-E 3向けのアスペクト比指定とタイトル配置修正（白フチ問題）を明記してA4サイズを強制。
+- **[Fix]** Updated watermark text to specify "Generated by ChatGPT" when ChatGPT mode is enabled, and explicitly added ChatGPT Imsages 2.0 aspect ratio commands and title placement fixes to enforce A4 size. / ChatGPTモード時にウォーターマークへ「ChatGPT生成」の旨を明記するように変更し、ChatGPT Imsages 2.0 向けのアスペクト比指定とタイトル配置修正（白フチ問題）を明記してA4サイズを強制。
 
 ### v2.61.0-alpha (2026-04-22)
 - **[Fix]** Adjusted gutter width between manga panels (approx 3% of canvas height) to prevent panels from touching / 4コマのコマ間ガター（余白）をキャンバス高の約3%に広げ、コマ同士が密接するのを防止。
