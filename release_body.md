@@ -1,15 +1,15 @@
-# Nano Banana Pro v2.91.0-alpha
+# Nano Banana Pro v2.92.0-alpha
 
-## UI/UX Enhancements (シナリオ強化＆コンテンツポリシーUI改善)
+## Footer Copyright Fix (フッター・コピーライト表記修正)
 
 ### 🇯🇵 [Japanese]
-**「シナリオ強化」および「コンテンツポリシー」パネルのUIスタイルを統一・改善しました。**
+**フッターのコピーライト表記を実際の権利者名と最新のアプリケーション名を反映する形式に修正しました。**
 
-- ヘッダー部分に太字、左アクセントバー、大きなChevronアイコンを採用し、開閉可能な操作要素であることを明確化。
-- パネルの開閉文言を「クリックで開く」「クリックで閉じる」の日本語表記へ統一。
+- コピーライトを「© 2026 FURU」へ修正（システム名称ではなく制作者名へ変更）
+- アプリケーション名を初期の「Nano Banana Pro」から「NANO BANANA 2 & SUPER AI 4-KOMA SYSTEM」へ更新
 
 ### 🇺🇸 [English]
-**Unified and improved the UI styling for the "Scenario Enhancement" and "Content Policy" panels.**
+**Updated the footer copyright notice to accurately reflect the correct rightsholder and the latest application name.**
 
-- Applied bold text, a left accent bar, and a larger Chevron icon to the headers to clarify interactability.
-- Standardized the toggle text to Japanese ("クリックで開く" / "クリックで閉じる").
+- Fixed the copyright attribution to "© 2026 FURU" (changed from system name to author name).
+- Updated the application name from the initial "Nano Banana Pro" to "NANO BANANA 2 & SUPER AI 4-KOMA SYSTEM".
