@@ -56,6 +56,16 @@ Unlike conventional AI tools that assist humans, this system is based on the fol
 * **Physical Identity Enforcement / 同一性の物理的強制**: Maintains high-precision character consistency across all panels through a unique protocol.
   独自のプロトコルにより、キャラクター造形を全コマで高精度に維持します。
 
+### 🌟 Manifesto: The Ultimate Goal / マニフェスト：この技術が向かう先
+
+Our goal is not simply to "automate" manga creation, but to redefine the roles of human creators. By entrusting the grueling, repetitive, and labor-intensive tasks (such as drafting layouts, background rendering, and panel framing) entirely to AI, humans can focus solely on the most joyful part of creation: the core ideas, the direction, and the "funniness." 
+
+Ultimately, this project envisions a future where manga artists and animators are liberated from harsh working conditions, can lead human-like lives, and enjoy their leisure time while continuing to tell amazing stories.
+
+私たちの目標は、単にマンガ制作を「自動化」することではありません。背景の描き込み、コマ割り、レイアウトといった過酷で単調な労働をAIに完全委譲することで、人間は「面白いプロットを考える」「世界観をディレクションする」という最もクリエイティブで楽しい工程にのみ集中できるようになります。
+
+この技術の知見が今後のテクノロジーの進化に反映され、最終的に**「漫画家やアニメーターが、過酷な労働条件から解放され、人間らしい生活を送れるようになり、余暇を楽しめる世界」**が来ることを本プロジェクトの究極の目標としています。
+
 ---
 
 ## ✨ Features & Modes / 機能とモード
