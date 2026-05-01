@@ -35,7 +35,7 @@ import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 import { generateImageWithOpenAI, setOpenAIApiKey, getOpenAIApiKey } from './lib/openai';
 
-const SYSTEM_VERSION = "v2.91 Alpha";
+const SYSTEM_VERSION = "v2.92 Alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -4085,9 +4085,9 @@ No explanations. No partial results.`;
         </main >
 
         <footer className="text-center text-slate-700 text-[9px] font-bold tracking-[0.3em] uppercase py-10 flex items-center justify-center gap-4">
-          <span>Thinking Manga Engine &copy; 2026</span>
+          <span>&copy; 2026 FURU</span>
           <span className="w-1 h-1 bg-slate-700 rounded-full" />
-          <span>Nano Banana Pro</span>
+          <span>NANO BANANA 2 & SUPER AI 4-KOMA SYSTEM</span>
         </footer>
       </div >
 

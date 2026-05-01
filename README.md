@@ -555,6 +555,9 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v2.92.0-alpha (2026-05-01)
+- **[UI Fix]** フッターのコピーライト表記を実際の権利者名（FURU）と最新のアプリケーション名（NANO BANANA 2 & SUPER AI 4-KOMA SYSTEM）を反映する形式に修正しました。 / Updated the footer copyright notice to accurately reflect the correct rightsholder (FURU) and the latest application name (NANO BANANA 2 & SUPER AI 4-KOMA SYSTEM).
+
 ### v2.91.0-alpha (2026-05-01)
 - **[UI Fix]** 「シナリオ強化」および「コンテンツポリシー」パネルのUIスタイルを統一・改善。ヘッダー部分に太字、左アクセントバー、大きなChevronアイコンを採用し、開閉可能な操作要素であることを明確化。また「クリックで開く」「クリックで閉じる」の日本語表記へ統一。 / Unified and improved the UI styling for the "Scenario Enhancement" and "Content Policy" panels. Applied bold text, a left accent bar, and a larger Chevron icon to the headers to clarify interactability, and standardized the toggle text to Japanese ("クリックで開く" / "クリックで閉じる").
 
