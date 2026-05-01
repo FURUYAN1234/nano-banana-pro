@@ -1,10 +1,14 @@
-## Nano Banana Pro v2.89.0-alpha Release
+﻿## v2.90.0 Alpha — Punchline Randomizer & Reset Fix
 
-### Highlights 🚀
-* **Security Hardening (In-Memory Keys)**: Re-architected OpenAI API key management. All keys are now stored strictly in volatile memory (RAM) and are completely purged upon browser reload. Removed all `localStorage` persistence to guarantee maximum security.
-* **Codebase Clean-up & UI Stability**: Removed all temporary backup files, debug scripts, and raw text logs from the root directory. Restored the centered sticky progress bar UI and ensured fully responsive behavior for the "Full Auto" controls.
+### 🐛 Bug Fix
+- **Reset input button now clears analysis results**: Clicking "Reset Input" now also clears the character analysis results (castList) in addition to uploaded images. Previously, analysis results remained visible after reset.
+- **「入力をリセット」ボタンの修正**: リセット時にキャラクター解析結果（castList）もクリアされるようになりました。従来は解析結果が残ったままになっていたバグを修正しました。
 
-### 日本語アップデート内容 🚀
-* **セキュリティ強化（完全インメモリ化）**: OpenAI APIキーの管理手法を再設計しました。キーは揮発性メモリ（RAM）上にのみ厳格に保持され、ブラウザのリロード時に完全に消滅します。`localStorage` への永続保存を廃止し、機密情報の漏洩リスクを根絶しました。
-* **コードベースの大掃除とUI安定化**: ルートディレクトリに存在していた大量のバックアップファイル、デバッグスクリプト、差分ログなどのゴミファイルを一括削除しました。また、進行状況バーを常に上部中央に固定（Sticky Top）するUIを復旧させ、フルオート機能の操作パネルをレスポンシブに最適化しました。
+### ✨ Improvement
+- **Punchline type randomizer (Anti-Repetition System)**: Implemented a JS-side random selector that picks one of 8 punchline types on every generation. This prevents the AI from gravitating toward the same ending patterns (e.g., "character pointing", "collection gag"). The randomization happens in JavaScript, not inside the AI, to ensure true variety.
+- **オチランダム化システム（マンネリ防止）**: 生成ごとに8種類のオチタイプをJS側でランダムに決定し、AIに強制するシステムを実装。キャラクターのペルソナ（趣味・口癖）をそのままオチに使う「ペルソナ依存オチ」を明示的に禁止するAnti-Persona-Gravityルールも追加。
+
+### 🧹 Cleanup
+- Removed unused `resetAll` function from codebase.
+- 未使用の`resetAll`関数を削除。
 

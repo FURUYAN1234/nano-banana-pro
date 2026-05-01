@@ -1,4 +1,4 @@
-﻿import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 
 // CANARY TEST
 console.log("HELLO_USER_FIXED_VERSION_2_25");
@@ -35,7 +35,7 @@ import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 import { generateImageWithOpenAI, setOpenAIApiKey, getOpenAIApiKey } from './lib/openai';
 
-const SYSTEM_VERSION = "v2.90 Alpha";
+const SYSTEM_VERSION = "v2.91 Alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -3314,18 +3314,22 @@ ${finalPrompt}
                     ? 'border-orange-500/30' 
                     : 'border-slate-700/30 blur-[2px] opacity-40 grayscale pointer-events-none'
                 }`}>
+                  {/* [UI改善v2] 太字・大きめタイトル・太いボーダー・uppercase hint → クリック可能と明確に */}
                   <button
-                    className="w-full flex items-center justify-between px-3 py-2 bg-orange-900/20 hover:bg-orange-900/30 transition-colors cursor-pointer"
+                    className="w-full flex items-center justify-between px-4 py-3 bg-orange-900/25 hover:bg-orange-900/50 transition-all duration-150 cursor-pointer border-l-4 border-orange-500 hover:border-orange-400 group/enhance-hdr"
                     onClick={() => scenario && scenario.length > 20 && setIsEnhancePanelOpen(!isEnhancePanelOpen)}
                   >
-                    <div className="flex items-center gap-2 text-sm">
-                      <span>🔥</span>
-                      <span className="font-bold text-orange-300">シナリオ強化 (Scenario Enhance)</span>
-                      {originalScenario && <span className="text-[9px] bg-green-600/30 text-green-300 px-1.5 py-0.5 rounded-full border border-green-500/30">強化済み</span>}
+                    <div className="flex items-center gap-2">
+                      <span className="text-base">🔥</span>
+                      <span className="text-base font-black tracking-wide text-orange-200 group-hover/enhance-hdr:text-orange-100 transition-colors">シナリオ強化</span>
+                      <span className="text-xs font-bold text-orange-400/70 hidden sm:inline">Scenario Enhance</span>
+                      {originalScenario && <span className="text-[9px] bg-green-600/30 text-green-300 px-1.5 py-0.5 rounded-full border border-green-500/30 font-bold">✓ 強化済み</span>}
                     </div>
-                    <div className="flex items-center gap-1">
-                      <span className="text-[9px] text-slate-600 font-mono">{!(scenario && scenario.length > 20) ? 'シナリオ生成後に使用可能' : isEnhancePanelOpen ? '閉じる' : 'クリックで開く'}</span>
-                      <ChevronDown size={14} className={`text-orange-400/60 transition-transform duration-300 ${isEnhancePanelOpen ? 'rotate-180' : ''}`} />
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-black uppercase tracking-widest text-orange-400 group-hover/enhance-hdr:text-orange-300 transition-colors">
+                        {!(scenario && scenario.length > 20) ? 'シナリオ生成後に使用可能' : isEnhancePanelOpen ? '▲ クリックで閉じる' : '▼ クリックで開く'}
+                      </span>
+                      <ChevronDown size={18} className={`text-orange-400 group-hover/enhance-hdr:text-orange-300 transition-all duration-300 ${isEnhancePanelOpen ? 'rotate-180' : ''}`} />
                     </div>
                   </button>
 
@@ -3796,20 +3800,23 @@ No explanations. No partial results.`;
                     </div>
                   </div>
 
-                  {/* [v2.35] コンテンツポリシー救済パネル（折りたたみ式） */}
+                  {/* [v2.35] コンテンツポリシー救済パネル（折りたたみ式）[UI統一] シナリオ強化と同スタイル */}
                   <div className={`mt-4 border border-yellow-500/30 rounded-lg overflow-hidden ${!finalPrompt ? 'opacity-40 pointer-events-none' : ''}`}>
                     <button
-                      className="w-full flex items-center justify-between px-3 py-2 bg-yellow-900/20 hover:bg-yellow-900/30 transition-colors cursor-pointer disabled:cursor-not-allowed text-xs"
+                      className="w-full flex items-center justify-between px-4 py-3 bg-yellow-900/25 hover:bg-yellow-900/50 transition-all duration-150 cursor-pointer disabled:cursor-not-allowed border-l-4 border-yellow-500 hover:border-yellow-400 group/policy-hdr"
                       onClick={() => setIsPolicyPanelOpen(!isPolicyPanelOpen)}
                       disabled={!finalPrompt}
                     >
                       <div className="flex items-center gap-2">
-                        <span>🛡️ コンテンツポリシーで画像生成が拒否された場合</span>
+                        <span className="text-base">🛡️</span>
+                        <span className="text-base font-black tracking-wide text-yellow-200 group-hover/policy-hdr:text-yellow-100 transition-colors">コンテンツポリシーで画像生成が拒否された場合</span>
                         {!finalPrompt && <span className="text-[10px] text-slate-500">(STEP3完了後に利用可能)</span>}
                       </div>
-                      <div className="flex items-center gap-1">
-                        <span className="text-[10px] text-slate-600 font-mono">{isPolicyPanelOpen ? '閉じる' : 'クリックで開く'}</span>
-                        <ChevronDown size={14} className={`text-yellow-400/60 transition-transform duration-300 ${isPolicyPanelOpen ? 'rotate-180' : ''}`} />
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-yellow-400 group-hover/policy-hdr:text-yellow-300 transition-colors">
+                          {isPolicyPanelOpen ? 'クリックで閉じる' : 'クリックで開く'}
+                        </span>
+                        <ChevronDown size={18} className={`text-yellow-400 group-hover/policy-hdr:text-yellow-300 transition-all duration-300 ${isPolicyPanelOpen ? 'rotate-180' : ''}`} />
                       </div>
                     </button>
 

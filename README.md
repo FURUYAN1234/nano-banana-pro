@@ -555,6 +555,8 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v2.91.0-alpha (2026-05-01)
+- **[UI Fix]** 「シナリオ強化」および「コンテンツポリシー」パネルのUIスタイルを統一・改善。ヘッダー部分に太字、左アクセントバー、大きなChevronアイコンを採用し、開閉可能な操作要素であることを明確化。また「クリックで開く」「クリックで閉じる」の日本語表記へ統一。 / Unified and improved the UI styling for the "Scenario Enhancement" and "Content Policy" panels. Applied bold text, a left accent bar, and a larger Chevron icon to the headers to clarify interactability, and standardized the toggle text to Japanese ("クリックで開く" / "クリックで閉じる").
 
 ### v2.90.0-alpha (2026-05-01)
 - **[Fix]** Fixed a bug where the Reset Input button did not clear the character analysis results (castList). Now all data from STEP 1 onward is fully cleared on reset. / 「入力をリセット」ボタンを押した際に、キャラクター解析結果（castList）がクリアされなかったバグを修正。リセット時にSTEP1以降のデータが完全にクリアされるようになりました。
