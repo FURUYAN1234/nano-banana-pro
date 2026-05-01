@@ -565,6 +565,10 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v2.95.0-alpha (2026-05-02)
+- **[Feature]** Emotion Style Tag（画風パレット）を6種追加し、合計23種に拡張。`THICK_PAINT`（厚塗り）、`PASTEL`（パステル）、`CEL`（セル画風）、`DARK_ANIME`（ダーク調）、`THIN_LINE`（繊細線画）、`HIGH_SATURATION`（高彩度ビビッド）をAIが文脈から自動選択可能に。 / Expanded the Emotion Style Tag palette by 6 new styles (total 23): `THICK_PAINT`, `PASTEL`, `CEL`, `DARK_ANIME`, `THIN_LINE`, and `HIGH_SATURATION`, all automatically selected by AI based on scenario context.
+- **[Feature]** Anti-Persona-Gravity Protocol v1.0 を導入。特定の権威キャラ（風紀委員等）が4コマ目のオチを毎回独占するパターンを防止し、全キャラに均等にオチの主導権を分散させるシナリオ生成ルールを追加。 / Introduced Anti-Persona-Gravity Protocol v1.0 to prevent authoritative characters (e.g., discipline committee members) from monopolizing 4th-panel punchlines, distributing punchline ownership evenly across all cast members.
+
 ### v2.94.0-alpha (2026-05-01)
 - **[UI Fix]** フッターのコピーライト表記を正式なフルネーム（`NANO BANANA 2 & CHATGPT IMAGES 2.0 POWERED SUPER AI 4-KOMA SYSTEM`）へと修正しました。 / Updated the footer copyright text to use the full official application name (`NANO BANANA 2 & CHATGPT IMAGES 2.0 POWERED SUPER AI 4-KOMA SYSTEM`).
 

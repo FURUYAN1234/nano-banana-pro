@@ -35,7 +35,7 @@ import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 import { generateImageWithOpenAI, setOpenAIApiKey, getOpenAIApiKey } from './lib/openai';
 
-const SYSTEM_VERSION = "v2.94 Alpha";
+const SYSTEM_VERSION = "v2.95 Alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -1114,6 +1114,16 @@ ${scenario}
               * **ハイテンション爆発系**: 叫び・暴走・カオス。勢いで押し切る
               * **シュール静寂系**: 淡々とした狂気。ボケているのに本人は真顔。不気味な静けさが笑いになる
               * **知性派ブラック系**: 皮肉・風刺・ダブルミーニング。「よく考えたら怖い」タイプの笑い
+            - **【Anti-Persona-Gravity Protocol（ペルソナ引力抑制）v1.0】**:
+              * **問題**: 特定のキャラクター（特に「風紀委員」「委員長」「リーダー」等の権威的ペルソナを持つキャラ）が、そのペルソナの引力に引きずられて4コマ目のオチを毎回独占し、「裁定・没収・制裁・処罰・禁止命令」系のワンパターンなオチになりやすい。
+              * **対策（オチ担当キャラの強制分散）**: 4コマ目の「決めゼリフ」または「決定的行動（オチの主導権）」を担当するキャラクターは、CastList内の全キャラに均等に分散させよ。権威的キャラが毎回オチを支配するのは禁止。
+              * **具体的な分散パターン（以下を積極的に活用せよ）**:
+                - 普段ボケ役のキャラが4コマ目で急に核心を突く正論を言い放つ
+                - 普段おとなしい・天然キャラが4コマ目で最も破壊的な行動を取る
+                - 権威キャラが4コマ目では逆にツッコまれる側・被害者になる
+                - 全員が同時にボケて誰もツッコまないカオスで終わる
+                - モブキャラや通行人が最後に一番おいしいセリフを持っていく
+              * **注意**: 権威キャラがオチを担当すること自体は禁止しない。ただし連続使用を避け、他キャラにも均等にオチの見せ場を与えること。「いつも同じキャラが裁いて終わり」は読者に飽きられる最大の原因である。
 
         4. **4コマ目の演出**:
            - 必ずしもデフォルメ（SD）にする必要はない。ネタがシリアスなら、**劇画調のリアルな絶望顔**で落としても良い。ネタに合わせてスタイルを適応させよ。
@@ -1133,6 +1143,12 @@ ${scenario}
              - GLITTER: キラキラオーラ。自信満々、ドヤ顔、勝利宣言。
              - SHADOW: シルエット演出。策略、不穏、腹黒。
            - 【重要】毎回同じタグを繰り返すな。4コマの中で少なくとも2種類以上のタグを使い分けよ。
+              - THICK_PAINT: 厚塗りアニメ調。質感・光沢・立体感が強調される重厚な表現。政治・経済・軍事等のシリアスなニュースや、決意・覚悟の場面に。
+              - PASTEL: パステルアニメ調。淡い色合い、やわらかいタッチ、やさしい空気感。ほのぼの日常・癒し系の話題や、回想・夢の中の描写に。
+              - CEL: セル画風。フラットな色面、はっきりした影、くっきりした輪郭。昔のTVアニメのようなノスタルジックかつポップな表現。エンタメ・懐かしい話題に。
+              - DARK_ANIME: ダークアニメ調。暗いトーン、深い影、ミステリアスな雰囲気。事件・サスペンス・不穏なニュース・陰謀論的展開に。
+              - THIN_LINE: 繊細線画調。極細の描線、髪の毛一本一本まで繊細に描く美麗表現。感動系・エモーショナルな場面、静かな感情の機微に。
+              - HIGH_SATURATION: 高彩度ビビッド。鮮やかで目を引くパワフルな色彩。スポーツ・祭り・勝利・興奮等の派手でエネルギッシュな場面に。
            - オチのコマ（4コマ目）は特に、NORMAL以外のタグを優先的に選べ。
 
         6. **【カメラ演出タグ (Camera Direction Tag) — 極限物理描写モード v2.55】**:
@@ -1421,10 +1437,41 @@ ${scenario}
         proportions: '',
         vfx: '(Intense neon pink and cyan rim lighting:1.5), (dark background with glowing light sources:1.4), (reflective wet surface catching neon colors:1.3), (light bloom and lens flare from neon:1.3), (cyberpunk color palette - magenta cyan purple:1.4)',
       };
+      // [v2.95] 画風パレット拡張: 6つの新EMOTION_STYLES（厚塗り・パステル・セル画・ダーク・繊細線・高彩度）
+      EMOTION_STYLES.THICK_PAINT = {
+        style: 'In THIS PANEL ONLY, shift to a thick impasto digital painting style. Use heavy brush strokes with visible texture, rich color layering, and strong three-dimensional form through dramatic light and shadow modeling. The overall impression should feel weighty, substantial, and premium like a gallery painting.',
+        proportions: '',
+        vfx: '(Visible thick brush stroke texture:1.5), (rich oil painting color depth:1.4), (dramatic chiaroscuro light modeling:1.4), (three-dimensional form through heavy shading:1.3), (warm subsurface scattering on skin:1.2)',
+      };
+      EMOTION_STYLES.PASTEL = {
+        style: 'In THIS PANEL ONLY, shift to a soft pastel anime illustration style. Use light desaturated colors, gentle gradients, and a warm dreamy atmosphere. Lines are thin and delicate. The overall mood should feel gentle, healing, and calming like a picture book illustration.',
+        proportions: '',
+        vfx: '(Soft pastel color palette:1.5), (gentle gradient sky background:1.3), (warm diffused lighting:1.4), (thin delicate line art:1.3), (light bloom soft glow:1.2)',
+      };
+      EMOTION_STYLES.CEL = {
+        style: 'In THIS PANEL ONLY, shift to a classic cel animation style reminiscent of 1990s TV anime. Use flat solid color fills with clearly defined shadow areas (no gradients within shadow regions). Outlines are clean and consistent in weight. The color palette is bold but slightly muted compared to modern digital anime.',
+        proportions: '',
+        vfx: '(Flat cel-shaded color fills:1.5), (clearly defined hard-edge shadow areas:1.4), (consistent clean outlines:1.3), (slightly muted retro TV anime color palette:1.3), (simple solid color backgrounds:1.2)',
+      };
+      EMOTION_STYLES.DARK_ANIME = {
+        style: 'In THIS PANEL ONLY, shift to a dark atmospheric anime style. The overall brightness is significantly reduced. Deep shadows dominate the composition. Colors are desaturated except for occasional accent lighting (moonlight, streetlamp, screen glow). The mood is mysterious, tense, and foreboding.',
+        proportions: '',
+        vfx: '(Overall dark low-key lighting:1.5), (deep dramatic shadows covering 60% of panel:1.4), (desaturated muted color palette:1.3), (single accent light source creating rim light:1.4), (atmospheric fog or haze:1.2)',
+      };
+      EMOTION_STYLES.THIN_LINE = {
+        style: 'In THIS PANEL ONLY, shift to an ultra-fine detailed line art style. Every strand of hair, fabric fold, and facial feature is rendered with extremely thin precise lines. The level of detail is exceptionally high, creating a delicate and elegant visual impression. Colors are clean and precise.',
+        proportions: '',
+        vfx: '(Ultra-fine hairline pen strokes:1.5), (extremely detailed hair strand rendering:1.4), (precise delicate facial feature linework:1.4), (intricate fabric fold details:1.3), (clean precise coloring within fine outlines:1.3)',
+      };
+      EMOTION_STYLES.HIGH_SATURATION = {
+        style: 'In THIS PANEL ONLY, push all colors to maximum vivid saturation. The entire panel explodes with intense chromatic energy. Every color is cranked to its most vibrant extreme. The effect is eye-catching, energetic, and overwhelming in the best way.',
+        proportions: '',
+        vfx: '(Maximum color saturation boost:1.5), (vivid electric blue sky or background:1.4), (intense warm highlights on skin:1.3), (neon-bright accent colors on clothing:1.4), (color contrast pushed to extreme:1.3)',
+      };
 
       // [v2.25] パネルテキストからEMOTIONタグを抽出
       const extractEmotionStyle = (panelText) => {
-        const match = panelText.match(/\[EMOTION:\s*(NORMAL|CHIBI_GAG|GEKIGA|SHOUJO|HORROR|BLANK|IMPACT|WATERCOLOR|RETRO|GLITTER|SHADOW|SPEED|FLASHBACK|UKIYOE|POP_ART|SKETCH|NEON)\s*\]/i); // [v2.68] 6新スタイル追加
+        const match = panelText.match(/\[EMOTION:\s*(NORMAL|CHIBI_GAG|GEKIGA|SHOUJO|HORROR|BLANK|IMPACT|WATERCOLOR|RETRO|GLITTER|SHADOW|SPEED|FLASHBACK|UKIYOE|POP_ART|SKETCH|NEON|THICK_PAINT|PASTEL|CEL|DARK_ANIME|THIN_LINE|HIGH_SATURATION)\s*\]/i); // [v2.95] 画風パレット拡張
         if (match) {
           const key = match[1].toUpperCase();
           if (EMOTION_STYLES[key]) return key;
@@ -1894,7 +1941,7 @@ Available lens effects — EACH PANEL MUST USE ONE:
             const isTooLong = speaker.length > 12;
             if (hasSentenceParticles || isTooLong) return;
             // EMOTIONやスタイルタグ残骸をフィルタ
-            if (speaker && !speakers.includes(speaker) && !/^(EMOTION|NORMAL|CHIBI_GAG|GEKIGA|SHOUJO|HORROR|BLANK|IMPACT|WATERCOLOR|RETRO|GLITTER|SHADOW)$/i.test(speaker)) {
+            if (speaker && !speakers.includes(speaker) && !/^(EMOTION|NORMAL|CHIBI_GAG|GEKIGA|SHOUJO|HORROR|BLANK|IMPACT|WATERCOLOR|RETRO|GLITTER|SHADOW|SPEED|FLASHBACK|UKIYOE|POP_ART|SKETCH|NEON|THICK_PAINT|PASTEL|CEL|DARK_ANIME|THIN_LINE|HIGH_SATURATION)$/i.test(speaker)) {
               // [v2.31] キャラ名バリデーション: 登録キャラ名と一致する場合のみ話者として認定
               if (validCharsForPlacement.some(c => {
                 const nameOnly = c.split(/[（(]/)[0].trim();

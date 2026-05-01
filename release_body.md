@@ -1,15 +1,13 @@
-# Nano Banana Pro v2.93.0-alpha
+# Nano Banana Pro v2.94.0-alpha
 
-## Footer Visual Fix (フッター視認性改善)
+## Official App Name Integration (正式名称の適用)
 
 ### 🇯🇵 [Japanese]
-**フッターのコピーライト表記にて、文字が密着して視認性が下がる問題（「FURUNANO」と結合してしまう等）を解消しました。**
+**フッターのコピーライト表記に、アプリケーションの完全な正式名称を反映しました。**
 
-- ダークモード環境でも区切りが明確に視認できるよう、パイプ文字（`|`）によるセパレータと適切なマージンを導入しました。
-- 新しい表示: `© 2026 FURU | NANO BANANA 2 & SUPER AI 4-KOMA SYSTEM`
+- 新しい表示: `© 2026 FURU | NANO BANANA 2 & CHATGPT IMAGES 2.0 POWERED SUPER AI 4-KOMA SYSTEM`
 
 ### 🇺🇸 [English]
-**Fixed a visual issue in the footer copyright text where words would merge (e.g., "FURUNANO").**
+**Updated the footer copyright notice to reflect the full official application name.**
 
-- Introduced a visible pipe separator (`|`) and appropriate margins to ensure the boundary between the author and the system name is clearly visible even in dark mode environments.
-- New Display: `© 2026 FURU | NANO BANANA 2 & SUPER AI 4-KOMA SYSTEM`
+- New Display: `© 2026 FURU | NANO BANANA 2 & CHATGPT IMAGES 2.0 POWERED SUPER AI 4-KOMA SYSTEM`
