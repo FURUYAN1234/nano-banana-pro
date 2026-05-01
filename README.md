@@ -1,4 +1,4 @@
-# Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System
+﻿# Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System
 
 > **"To what extent can humans step away from the creative process?"**
 > **「人間は、どこまで制作から降りられるのか？」**
@@ -498,6 +498,11 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+
+### v2.90.0-alpha (2026-05-01)
+- **[Fix]** Fixed a bug where the Reset Input button did not clear the character analysis results (castList). Now all data from STEP 1 onward is fully cleared on reset. / 「入力をリセット」ボタンを押した際に、キャラクター解析結果（castList）がクリアされなかったバグを修正。リセット時にSTEP1以降のデータが完全にクリアされるようになりました。
+- **[Improve]** Implemented a JS-side random punchline type selector (8 types) to prevent repetitive endings. Also added Anti-Persona-Gravity rule to prevent character traits from being directly used as punchlines. / オチのマンネリ化を防ぐため、JS側でランダムにオチタイプ（8種類）を決定するシステムを実装。またキャラクターの固有設定（趣味・口癖等）がそのままオチに使われることを禁止するAnti-Persona-Gravityルールを追加。
+- **[Cleanup]** Removed unused esetAll function from codebase. / 未使用のesetAll関数をコードから削除。
 ### v2.89.0-alpha (2026-04-30)
 - **[Security]** OpenAI APIキーの管理手法を強化。ブラウザの`localStorage`への永続保存を完全廃止し、セキュアなインメモリ（RAM）上でのみ保持する設計にリファクタリング。ブラウザリロードでキーが安全に揮発することを保証。
 

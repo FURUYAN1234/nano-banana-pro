@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+﻿import React, { useState, useRef, useEffect } from 'react';
 
 // CANARY TEST
 console.log("HELLO_USER_FIXED_VERSION_2_25");
@@ -35,7 +35,7 @@ import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 import { generateImageWithOpenAI, setOpenAIApiKey, getOpenAIApiKey } from './lib/openai';
 
-const SYSTEM_VERSION = "v2.89 Alpha";
+const SYSTEM_VERSION = "v2.90 Alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -2307,27 +2307,8 @@ Clean anime illustration finish, smooth cel shading, soft clean shading, smooth 
       setIsAssembling(false);
     }
   };
-
-  const resetAll = () => {
-    setCastList("");
-    setScenario("");
-    setFinalPrompt("");
-    setImages([]);
-    setGeneratedImage(null);
-    setAnalyzeThought("");
-    setScenarioThought("");
-    setAssembleThought("");
-    setManualTopic("");
-    setCustomLocation("");
-    setCustomOutfit("");
-    setLockedLocation("");
-    setLockedOutfit("");
-    setIsFullAutoMode(false);
-    setFullAutoStep(0);
-    showStatus("完全にリセットしました。");
-  };
-
   const partialReset = () => {
+    setCastList("");          // [fix] 入力をリセット時に解析結果もクリア
     setScenario("");
     setFinalPrompt("");
     setImages([]);
@@ -2337,7 +2318,7 @@ Clean anime illustration finish, smooth cel shading, soft clean shading, smooth 
     setAssembleThought("");
     setIsFullAutoMode(false);
     setFullAutoStep(0);
-    showStatus("シナリオと画像をクリアしました。キャラクターは維持されています。");
+    showStatus("入力と解析結果をリセットしました。");
   };
 
   const [isCopied, setIsCopied] = useState(false);
