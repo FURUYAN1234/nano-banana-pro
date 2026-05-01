@@ -555,6 +555,9 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v2.94.0-alpha (2026-05-01)
+- **[UI Fix]** フッターのコピーライト表記を正式なフルネーム（`NANO BANANA 2 & CHATGPT IMAGES 2.0 POWERED SUPER AI 4-KOMA SYSTEM`）へと修正しました。 / Updated the footer copyright text to use the full official application name (`NANO BANANA 2 & CHATGPT IMAGES 2.0 POWERED SUPER AI 4-KOMA SYSTEM`).
+
 ### v2.93.0-alpha (2026-05-01)
 - **[UI Fix]** フッターのコピーライト表記にて、文字が密着して視認性が下がる問題（「FURUNANO」と結合してしまう等）を解消。表示を `© 2026 FURU | NANO BANANA 2 & SUPER AI 4-KOMA SYSTEM` に変更し、ダークモード環境でも区切りが明確に視認できるようパイプ文字によるセパレータと適切なマージンを導入しました。 / Fixed a visual issue in the footer copyright text where words would merge (e.g., "FURUNANO"). Changed the layout to use a visible pipe separator and appropriate margins (`© 2026 FURU | NANO BANANA 2 & SUPER AI 4-KOMA SYSTEM`) to ensure clarity even in dark mode environments.
 

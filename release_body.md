@@ -1,15 +1,15 @@
-# Nano Banana Pro v2.92.0-alpha
+# Nano Banana Pro v2.93.0-alpha
 
-## Footer Copyright Fix (フッター・コピーライト表記修正)
+## Footer Visual Fix (フッター視認性改善)
 
 ### 🇯🇵 [Japanese]
-**フッターのコピーライト表記を実際の権利者名と最新のアプリケーション名を反映する形式に修正しました。**
+**フッターのコピーライト表記にて、文字が密着して視認性が下がる問題（「FURUNANO」と結合してしまう等）を解消しました。**
 
-- コピーライトを「© 2026 FURU」へ修正（システム名称ではなく制作者名へ変更）
-- アプリケーション名を初期の「Nano Banana Pro」から「NANO BANANA 2 & SUPER AI 4-KOMA SYSTEM」へ更新
+- ダークモード環境でも区切りが明確に視認できるよう、パイプ文字（`|`）によるセパレータと適切なマージンを導入しました。
+- 新しい表示: `© 2026 FURU | NANO BANANA 2 & SUPER AI 4-KOMA SYSTEM`
 
 ### 🇺🇸 [English]
-**Updated the footer copyright notice to accurately reflect the correct rightsholder and the latest application name.**
+**Fixed a visual issue in the footer copyright text where words would merge (e.g., "FURUNANO").**
 
-- Fixed the copyright attribution to "© 2026 FURU" (changed from system name to author name).
-- Updated the application name from the initial "Nano Banana Pro" to "NANO BANANA 2 & SUPER AI 4-KOMA SYSTEM".
+- Introduced a visible pipe separator (`|`) and appropriate margins to ensure the boundary between the author and the system name is clearly visible even in dark mode environments.
+- New Display: `© 2026 FURU | NANO BANANA 2 & SUPER AI 4-KOMA SYSTEM`

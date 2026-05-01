@@ -35,7 +35,7 @@ import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 import { generateImageWithOpenAI, setOpenAIApiKey, getOpenAIApiKey } from './lib/openai';
 
-const SYSTEM_VERSION = "v2.93 Alpha";
+const SYSTEM_VERSION = "v2.94 Alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -4085,7 +4085,7 @@ No explanations. No partial results.`;
         </main >
 
         <footer className="text-center text-slate-500 text-[9px] font-bold tracking-[0.3em] uppercase py-10 px-4">
-          &copy; 2026 FURU <span className="mx-2 sm:mx-4">|</span> NANO BANANA 2 & SUPER AI 4-KOMA SYSTEM
+          &copy; 2026 FURU <span className="mx-2 sm:mx-4">|</span> NANO BANANA 2 & CHATGPT IMAGES 2.0 POWERED SUPER AI 4-KOMA SYSTEM
         </footer>
       </div >
 
