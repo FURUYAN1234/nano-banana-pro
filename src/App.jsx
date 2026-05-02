@@ -35,7 +35,7 @@ import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 import { generateImageWithOpenAI, setOpenAIApiKey, getOpenAIApiKey } from './lib/openai';
 
-const SYSTEM_VERSION = "v2.97 Alpha";
+const SYSTEM_VERSION = "v2.98 Alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -2769,7 +2769,8 @@ ${finalPrompt}
 
     // --- STEP4: 画像生成 ---
     setFullAutoStep(4);
-    outputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    // フルオート時、進捗がすべて見えるように画面の「一番下」までスクロールする
+    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
     await new Promise(r => setTimeout(r, 300));
 
     const step4ok = await regenerateImage(true, generatedPrompt); 

@@ -597,6 +597,10 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v2.98.0-alpha (2026-05-02)
+- **[UI/UX]** フルオート生成時、STEP4（画像生成）開始時にブラウザの表示位置を「画面の最下部（画像生成エリア）」まで自動スクロールするよう改善。ノートPC等の狭い画面でも進捗が隠れず確実に視認可能になりました。 / Improved auto-scrolling during Full-Auto mode. The viewport now correctly scrolls to the absolute bottom (Image Generation section) when STEP 4 starts, ensuring the progress and generated images are fully visible even on smaller screens.
+- **[Docs]** ドキュメントにおける日本語Markdownの太字パース不具合（カッコと文字間の隣接バグ）を修正し、今後の防衛ルールとして `project_standards.md` に明記しました。 / Fixed a Japanese Markdown bold parsing issue in the Manifesto section and added preventative guidelines to the project standards.
+
 ### v2.97.0-alpha (2026-05-02)
 - **[Feature]** 服装（Outfit）おまかせ選定時の「クローン化（全員が全く同じ服を着る問題）」を防止。AIへのプロンプト指示を修正し、「白のビキニ」等の細かすぎる指定ではなく「水着」「私服」「ナース服」等の**大分類のカテゴリー**に留めることで、画像AIがキャラクター個別の着こなしを適用する余白を確保しました。 / Prevented the "clone effect" in the Outfit Auto-Select system where all characters would wear the exact same specific clothing. Updated the AI prompt to output broad clothing categories (e.g., "swimwear", "casual wear", "nurse uniform") instead of overly specific descriptions, leaving room for the image generation AI to apply individual styling based on each character's identity.
 
