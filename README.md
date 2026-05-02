@@ -598,6 +598,9 @@ Developed by **FURU**
 ## 📋 ChangeLog
 
 ### v2.99.0-alpha (2026-05-02)
+- **[Feature]** GMC Gag Structure (GMCギャグ設計) を統合。ランダムな状況生成から、GMC（Goal, Motivation, Conflict）メソッドを用いたキャラ駆動の構成に変更し、強い欲求と理不尽な障害の衝突によりオチの爆発力を強化しました。 / Transitioned from random scenario generation to a structured conflict-driven approach using the Goal, Motivation, Conflict (GMC) framework.
+- **[Feature]** Guard C Implementation (Guard Cの導入)。AI特有の退屈な「まとめのナレーション」や「汎用的な弱いリアクション（やれやれ等）」、状況説明のセリフを完全に禁止する厳格なフィルターを導入しました。 / Integrated strict AI-cliché filters to completely eliminate boring narrative summaries, weak reactions, and lazy explanatory dialogue.
+- **[Feature]** Show, Don't Tell - Gag Action (物理的ギャグアクションの強制)。感情を言葉で説明するのではなく、極端な身体変形や物理的アクション（目玉が飛び出る等）で表現させるよう指示を強化しました。 / Tightened prompts to enforce visual dynamism over abstract emotions, forcing the AI to describe extreme physical changes.
 - **[UI/UX]** フルオート生成時、STEP4（画像生成）開始時にブラウザの表示位置を「画面の最下部（画像生成エリア）」まで自動スクロールするよう改善。ノートPC等の狭い画面でも進捗が隠れず確実に視認可能になりました。 / Improved auto-scrolling during Full-Auto mode. The viewport now correctly scrolls to the absolute bottom (Image Generation section) when STEP 4 starts, ensuring the progress and generated images are fully visible even on smaller screens.
 - **[Docs]** ドキュメントにおける日本語Markdownの太字パース不具合（カッコと文字間の隣接バグ）を修正し、今後の防衛ルールとして `project_standards.md` に明記しました。 / Fixed a Japanese Markdown bold parsing issue in the Manifesto section and added preventative guidelines to the project standards.
 
