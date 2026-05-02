@@ -64,7 +64,7 @@ Ultimately, this project envisions a future where manga artists and animators ar
 
 私たちの目標は、単にマンガ制作を「自動化」することではありません。背景の描き込み、コマ割り、レイアウトといった過酷で単調な労働をAIに完全委譲することで、人間は「面白いプロットを考える」「世界観をディレクションする」という最もクリエイティブで楽しい工程にのみ集中できるようになります。
 
-この技術の知見が今後のテクノロジーの進化に反映され、最終的に「**漫画家やアニメーターが、過酷な労働条件から解放され、人間らしい生活を送れるようになり、余暇を楽しめる世界**」が来ることを本プロジェクトの究極の目標としています。
+この技術の知見が今後のテクノロジーの進化に反映され、最終的に **「漫画家やアニメーターが、過酷な労働条件から解放され、人間らしい生活を送れるようになり、余暇を楽しめる世界」** が来ることを本プロジェクトの究極の目標としています。
 
 ---
 
@@ -111,14 +111,14 @@ ChatGPT (ChatGPT Images 2.0) での生成に最適化された専用プロンプ
 ### 🎨 Context-Aware Auto-Selection / 文脈認識型おまかせ自動選定
 
 Both the **Location** (場所) and **Outfit** (服装) fields support an "AI Auto-Select" mode. When either field is left blank, the system does not simply fall back to the character sheet's default — instead, it instructs the AI to **analyze the scenario context** and autonomously determine the most appropriate setting.
-「場所」と「服装」の両フィールドは「AIおまかせ」モードに対応しています。いずれかのフィールドが空欄の場合、キャラクターシートのデフォルト値をそのまま使うのではなく、**AIがシナリオの文脈を分析して、最も適切な場所・服装を自律的に判断・選定**します。
+「場所」と「服装」の両フィールドは「AIおまかせ」モードに対応しています。いずれかのフィールドが空欄の場合、キャラクターシートのデフォルト値をそのまま使うのではなく、 **AIがシナリオの文脈を分析して、最も適切な場所・服装を自律的に判断・選定** します。
 
 * **Location**: AI determines the most fitting background environment based on the scenario's plot, mood, and action (e.g., a beach scene → seaside resort, a political debate → parliament building).
   シナリオのプロット・雰囲気・アクションに基づき、AIが最適な背景環境を決定します（例：海のシーン→海辺のリゾート、政治討論→国会議事堂）。
 * **Outfit**: AI evaluates whether the character sheet's default clothing is contextually appropriate. If the scenario calls for a specific attire (swimwear for a pool episode, formal suits for a business meeting), the AI overrides the default with a **concrete clothing description** rather than vague defaults.
-  AIがキャラクターシートのデフォルト衣装がシナリオの文脈に適しているかを評価します。特定の衣装が求められるシーン（プール回なら水着、ビジネス会議ならスーツ）では、曖昧なデフォルトではなく**具体的な服装名**でオーバーライドします。
+  AIがキャラクターシートのデフォルト衣装がシナリオの文脈に適しているかを評価します。特定の衣装が求められるシーン（プール回なら水着、ビジネス会議ならスーツ）では、曖昧なデフォルトではなく **具体的な服装名** でオーバーライドします。
 * **UI Distinction / UI上の区別**: In the Generation Preview, user-specified values appear in **white text**, while AI-selected values appear in **blue text with an ✨ icon**, making it immediately clear which settings were chosen by the human and which by the AI.
-  生成プレビューでは、ユーザー指定値は**白文字**、AI選定値は**青文字＋✨アイコン**で表示され、人間とAIどちらが選んだ設定かが一目で識別できます。
+  生成プレビューでは、ユーザー指定値は **白文字** 、AI選定値は **青文字＋✨アイコン** で表示され、人間とAIどちらが選んだ設定かが一目で識別できます。
 
 ---
 
@@ -154,7 +154,7 @@ This system has arrived at an optimal division of labor between two of the world
    * **Role / 役割:** Acts as the "Architect." It scans the user's images, understands topological features (e.g., hair length relative to the collarbone), avoids censorship via dynamic "Age-Up" safety filters, and compiles a highly structured, rigid prompt for layout and timing. / 「設計者」として機能します。ユーザーの画像をスキャンしてトポロジー的特徴（鎖骨に対する髪の長さなど）を理解し、動的な安全フィルターで検閲を回避しつつ、レイアウトとコマ割りのための高度に構造化された厳密なプロンプトを構築します。
    * **Google Search Grounding (Auto-Deep Dive) / 自律的リサーチ機能:** When generating from text prompts without images, the system automatically enables Google Search Grounding. Gemini dynamically researches the theme in real-time, fetching background context and trivia not explicitly mentioned in the prompt, resulting in surprisingly rich and highly detailed scenario generation. / 画像無しのテキストお題で生成する際、システムは自動的にGoogle Search Groundingを有効化します。短いお題からGeminiが自律的にリアルタイムWeb検索を行い、プロンプトに書かれていない背景知識や雑学を勝手に深掘りしてシナリオに組み込むため、ユーザーの指定を遥かに超えるリッチで解像度の高いストーリー構築を実現します。
 2. **【描画担当】ChatGPT UI / ChatGPT Images 2.0(The Renderer)**
-   * **Strength / 強み:** Industry-leading image generation quality and the crucial ability to **accept reference images via the browser UI** (a feature currently impossible via the standard ChatGPT Images 2.0 API). / 業界最高水準の画像生成品質と、**ブラウザUI経由で参照画像を受け付ける**という極めて重要な能力（現在の標準ChatGPT Images 2.0 APIでは不可能な機能）を備えています。
+   * **Strength / 強み:** Industry-leading image generation quality and the crucial ability to **accept reference images via the browser UI** (a feature currently impossible via the standard ChatGPT Images 2.0 API). / 業界最高水準の画像生成品質と、 **ブラウザUI経由で参照画像を受け付ける** という極めて重要な能力（現在の標準ChatGPT Images 2.0 APIでは不可能な機能）を備えています。
    * **Role / 役割:** Acts as the "Artist." By having the user manually paste the Gemini-crafted prompt *alongside* the original character sheet into the ChatGPT browser interface, the system achieves near-perfect character consistency that APIs alone cannot match. / 「作画者」として機能します。ユーザーがGeminiの構築したプロンプトをキャラクター設定画と*一緒に*手動でChatGPTに貼り付けることで、API単体では到達できない完璧に近いキャラクターの一貫性を実現します。
 3. **【仲介・調整担当】Human-in-the-Loop Override (The Director)**
    * **Role / 役割:** When ChatGPT Images 2.0 stubbornly breaks the 4-panel layout or ignores aspect ratios (a known quirk), the human simply copies the built-in `[ABSOLUTE OVERRIDE]` force-rebuild prompt. This linguistic brute-force approach forces the AI back into the strict A4 geometric constraints without relying on external plugins or image-cropping tools. / ChatGPT Images 2.0 が頑なに4コマレイアウトを崩したりアスペクト比を無視した場合（既知の癖）、人間は組み込みの `[ABSOLUTE OVERRIDE]` 強制再構築プロンプトをコピーして投げるだけです。この言語的な力技により、外部プラグイン等に頼ることなく、AIを厳密なA4幾何学制約へと強制的に引き戻します。
@@ -311,7 +311,7 @@ The protocol injects an explicit distribution rule: the punchline's lead role (t
 **The Design Philosophy / 設計哲学:**
 
 The combined effect of all three mechanisms realizes a principle analogous to theater casting: **"The actors remain the same; the genre of the script changes every time, and no single actor hogs the curtain call."** The persona defines *how* a character speaks and reacts, the punchline type defines *what situation* they are placed in, and the distribution protocol ensures *who* gets the spotlight rotates fairly. When these three layers are decoupled, the same cast produces entirely different chemical reactions across generations — without ever breaking character.
-3つのメカニズムの複合効果は、演劇のキャスティングに似た原則を実現します：**「役者は同じ、脚本のジャンルが毎回変わり、カーテンコールを独占する役者はいない」**。ペルソナはキャラクターの「喋り方・反応の味」を規定し、オチタイプは「どんなシチュエーションに置かれるか」を規定し、分散プロトコルは「誰がスポットライトを浴びるか」を公平にローテーションします。この3層が分離されると、同じキャストでも生成のたびに全く異なる化学反応が生まれ——キャラクターの個性を壊すことなく、無限のバリエーションが得られます。
+3つのメカニズムの複合効果は、演劇のキャスティングに似た原則を実現します： **「役者は同じ、脚本のジャンルが毎回変わり、カーテンコールを独占する役者はいない」** 。ペルソナはキャラクターの「喋り方・反応の味」を規定し、オチタイプは「どんなシチュエーションに置かれるか」を規定し、分散プロトコルは「誰がスポットライトを浴びるか」を公平にローテーションします。この3層が分離されると、同じキャストでも生成のたびに全く異なる化学反応が生まれ——キャラクターの個性を壊すことなく、無限のバリエーションが得られます。
 
 ---
 
@@ -622,10 +622,10 @@ Developed by **FURU**
 - **[Docs]** ドキュメントにおける日本語Markdownの太字パース不具合（カッコと文字間の隣接バグ）を修正し、今後の防衛ルールとして `project_standards.md` に明記しました。 / Fixed a Japanese Markdown bold parsing issue in the Manifesto section and added preventative guidelines to the project standards.
 
 ### v2.97.0-alpha (2026-05-02)
-- **[Feature]** 服装（Outfit）おまかせ選定時の「クローン化（全員が全く同じ服を着る問題）」を防止。AIへのプロンプト指示を修正し、「白のビキニ」等の細かすぎる指定ではなく「水着」「私服」「ナース服」等の**大分類のカテゴリー**に留めることで、画像AIがキャラクター個別の着こなしを適用する余白を確保しました。 / Prevented the "clone effect" in the Outfit Auto-Select system where all characters would wear the exact same specific clothing. Updated the AI prompt to output broad clothing categories (e.g., "swimwear", "casual wear", "nurse uniform") instead of overly specific descriptions, leaving room for the image generation AI to apply individual styling based on each character's identity.
+- **[Feature]** 服装（Outfit）おまかせ選定時の「クローン化（全員が全く同じ服を着る問題）」を防止。AIへのプロンプト指示を修正し、「白のビキニ」等の細かすぎる指定ではなく「水着」「私服」「ナース服」等の **大分類のカテゴリー** に留めることで、画像AIがキャラクター個別の着こなしを適用する余白を確保しました。 / Prevented the "clone effect" in the Outfit Auto-Select system where all characters would wear the exact same specific clothing. Updated the AI prompt to output broad clothing categories (e.g., "swimwear", "casual wear", "nurse uniform") instead of overly specific descriptions, leaving room for the image generation AI to apply individual styling based on each character's identity.
 
 ### v2.96.0-alpha (2026-05-02)
-- **[Feature]** 服装（Outfit）の文脈認識型自動選定システムを実装。空欄の際、従来の「キャラシート準拠」デフォルト動作を廃止し、AIがシナリオの状況・場所・文脈を分析して、適切な服装（水着、スーツ、制服等）を**具体的な衣装名**で自律的に選定・適用するように改善しました。場所（Location）と同等の「AIおまかせ」挙動に統一。 / Implemented context-aware Outfit Auto-Select system. Replaced the previous "character sheet default" behavior: when left blank, AI now analyzes the scenario context (situation, location, mood) and autonomously assigns specific attire names (swimwear, suits, uniforms, etc.) instead of vague defaults. Unified with the same "AI Auto-Select" behavior as the Location field.
+- **[Feature]** 服装（Outfit）の文脈認識型自動選定システムを実装。空欄の際、従来の「キャラシート準拠」デフォルト動作を廃止し、AIがシナリオの状況・場所・文脈を分析して、適切な服装（水着、スーツ、制服等）を **具体的な衣装名** で自律的に選定・適用するように改善しました。場所（Location）と同等の「AIおまかせ」挙動に統一。 / Implemented context-aware Outfit Auto-Select system. Replaced the previous "character sheet default" behavior: when left blank, AI now analyzes the scenario context (situation, location, mood) and autonomously assigns specific attire names (swimwear, suits, uniforms, etc.) instead of vague defaults. Unified with the same "AI Auto-Select" behavior as the Location field.
 - **[UI]** 生成プレビュー（GENERATION PREVIEW）の場所・服装表示を統一。ユーザー手入力値は白文字、AIおまかせ選定値は青文字＋✨アイコンで視覚的に区別可能に。 / Unified the Generation Preview display for Location and Outfit fields. User-specified values shown in white, AI-selected values shown in blue with ✨ icon for clear visual distinction.
 - **[Infra]** ローカル開発環境向けにViteリバースプロキシを導入。`localhost`でのブラウザOriginヘッダーによるAPIキー拒否問題を解消。 / Added Vite reverse proxy for local development to bypass browser Origin header API key rejection on `localhost`.
 - **[Cleanup]** 不要な一時ファイル（バックアップ、テストスクリプト等）をリポジトリから整理・削除。 / Cleaned up unnecessary temporary files (backups, test scripts) from the repository.
@@ -649,9 +649,7 @@ Developed by **FURU**
 ### v2.90.0-alpha (2026-05-01)
 - **[Fix]** Fixed a bug where the Reset Input button did not clear the character analysis results (castList). Now all data from STEP 1 onward is fully cleared on reset. / 「入力をリセット」ボタンを押した際に、キャラクター解析結果（castList）がクリアされなかったバグを修正。リセット時にSTEP1以降のデータが完全にクリアされるようになりました。
 - **[Improve]** Implemented a JS-side random punchline type selector (8 types) to prevent repetitive endings. Also added Anti-Persona-Gravity rule to prevent character traits from being directly used as punchlines. / オチのマンネリ化を防ぐため、JS側でランダムにオチタイプ（8種類）を決定するシステムを実装。またキャラクターの固有設定（趣味・口癖等）がそのままオチに使われることを禁止するAnti-Persona-Gravityルールを追加。
-- **[Cleanup]** Removed unused 
-esetAll function from codebase. / 未使用の
-esetAll関数をコードから削除。
+- **[Cleanup]** Removed unused `resetAll` function from codebase. / 未使用の `resetAll` 関数をコードから削除。
 ### v2.89.0-alpha (2026-04-30)
 - **[Security]** OpenAI APIキーの管理手法を強化。ブラウザの`localStorage`への永続保存を完全廃止し、セキュアなインメモリ（RAM）上でのみ保持する設計にリファクタリング。ブラウザリロードでキーが安全に揮発することを保証。
 
