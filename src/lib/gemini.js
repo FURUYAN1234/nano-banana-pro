@@ -6,6 +6,12 @@
  */
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
+// ローカル開発時はViteプロキシ経由でAPIを呼ぶ（ブラウザのOriginヘッダーによるキー拒否を回避）
+// 本番ビルド（GitHub Pages等）では直接Google APIを叩く
+const GEMINI_BASE_URL = (typeof window !== 'undefined' && window.location.hostname === 'localhost')
+    ? '/gemini-api'
+    : 'https://generativelanguage.googleapis.com';
+
 // テキストのみリクエスト用 (シナリオ生成等): Next-Gen優先・無料枠優先
 // ※ 2026年4月以降、Pro系は有料APIキー専用。Flash系は無料枠で利用可能。
 const TEXT_MODEL_IDS = [
@@ -47,7 +53,7 @@ export const diagnoseConnection = async () => {
     if (!currentApiKey) return "API Key not set.";
     try {
         console.log("[Diagnostic] Fetching available models...");
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${currentApiKey}`);
+        const response = await fetch(`${GEMINI_BASE_URL}/v1beta/models?key=${currentApiKey}`);
         const data = await response.json();
 
         if (data.error) {
@@ -115,7 +121,7 @@ export const callThinkingGemini = async (prompt, images = null, systemInstructio
             // systemInstruction removed from modelParams to avoid API fragmentation
 
             // [v1.4.31] Keep v1beta
-            const model = genAI.getGenerativeModel(modelParams, { apiVersion: "v1beta" });
+            const model = genAI.getGenerativeModel(modelParams, { apiVersion: "v1beta", baseUrl: GEMINI_BASE_URL });
 
             const timeoutPromise = new Promise((_, reject) =>
                 setTimeout(() => reject(new Error(`Timeout awaiting response from ${modelId} (60s limit)`)), 60000)

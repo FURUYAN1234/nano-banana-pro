@@ -105,8 +105,20 @@ A dedicated formatting protocol to optimize prompts for ChatGPT's ChatGPT Images
 ChatGPT (ChatGPT Images 2.0) での生成に最適化された専用プロンプトモードを搭載。A4縦長のキャンバス指定や、日本語の縦書き、右から左への視線誘導など、ChatGPT特有の制限を突破するためのフォーマットを自動付与します。さらにGPT-image-2特有のノイズ問題に対応するAnti-Noiseプロトコル（安全レンダリングキーワード・禁止ワード組み合わせ・光演出の代替表現）を搭載し、クリーンなアニメ品質の出力を保証します。
 
 > **🧪 OpenAI API Direct Execution (Experimental) / OpenAI API直接実行（テスト機能）**
-> v2.88にて、OpenAI APIキーを入力することでアプリ内から直接ChatGPT Images 2.0を呼び出せるテスト機能を実装しました（キーはローカルストレージにのみ保存されるセキュア設計です）。しかし、OpenAIの画像APIには「4000文字の文字数制限」という厳格な壁があり、本システムが生成する3万文字超のプロンプトを直接投げるとエラーになります。
+> v2.88にて、OpenAI APIキーを入力することでアプリ内から直接ChatGPT Images 2.0を呼び出せるテスト機能を実装しました（v2.89以降、キーはブラウザのメモリ上（RAM）にのみ保持され、`localStorage`等への永続保存は行わないセキュア設計です。ブラウザをリロードするとキーは安全に揮発します）。しかし、OpenAIの画像APIには「4000文字の文字数制限」という厳格な壁があり、本システムが生成する3万文字超のプロンプトを直接投げるとエラーになります。
 > 現状、ChatGPTの「文章AIが長文を読み解き、画像AIへ要約して渡す」というブラウザ版の処理能力をAPI単体で再現することはできないため、実運用においては引き続き**「プロンプトをコピーしてブラウザ版ChatGPTに手動で貼り付けるハイブリッド運用」**が最強のソリューションとなります。（将来的なAPI2段構え化の布石として搭載されています）
+
+### 🎨 Context-Aware Auto-Selection / 文脈認識型おまかせ自動選定
+
+Both the **Location** (場所) and **Outfit** (服装) fields support an "AI Auto-Select" mode. When either field is left blank, the system does not simply fall back to the character sheet's default — instead, it instructs the AI to **analyze the scenario context** and autonomously determine the most appropriate setting.
+「場所」と「服装」の両フィールドは「AIおまかせ」モードに対応しています。いずれかのフィールドが空欄の場合、キャラクターシートのデフォルト値をそのまま使うのではなく、**AIがシナリオの文脈を分析して、最も適切な場所・服装を自律的に判断・選定**します。
+
+* **Location**: AI determines the most fitting background environment based on the scenario's plot, mood, and action (e.g., a beach scene → seaside resort, a political debate → parliament building).
+  シナリオのプロット・雰囲気・アクションに基づき、AIが最適な背景環境を決定します（例：海のシーン→海辺のリゾート、政治討論→国会議事堂）。
+* **Outfit**: AI evaluates whether the character sheet's default clothing is contextually appropriate. If the scenario calls for a specific attire (swimwear for a pool episode, formal suits for a business meeting), the AI overrides the default with a **concrete clothing description** rather than vague defaults.
+  AIがキャラクターシートのデフォルト衣装がシナリオの文脈に適しているかを評価します。特定の衣装が求められるシーン（プール回なら水着、ビジネス会議ならスーツ）では、曖昧なデフォルトではなく**具体的な服装名**でオーバーライドします。
+* **UI Distinction / UI上の区別**: In the Generation Preview, user-specified values appear in **white text**, while AI-selected values appear in **blue text with an ✨ icon**, making it immediately clear which settings were chosen by the human and which by the AI.
+  生成プレビューでは、ユーザー指定値は**白文字**、AI選定値は**青文字＋✨アイコン**で表示され、人間とAIどちらが選んだ設定かが一目で識別できます。
 
 ---
 
@@ -389,6 +401,11 @@ You can launch strict local environment with a single click.
 4. **Start**: The system will automatically install dependencies and launch the browser.
    必要なライブラリが自動インストールされ、ブラウザが立ち上がります。
 
+> [!NOTE]
+> **Local API Proxy / ローカルAPIプロキシ**
+> ローカル開発環境（`localhost`）では、ブラウザの`Origin`ヘッダーによりGoogle API側がAPIキーの使用を拒否する場合があります。この問題を回避するため、`vite.config.js` に `/gemini-api` パスへのリバースプロキシが設定されています。ローカル起動時、API通信はこのプロキシを経由して透過的にGoogle APIへ転送されます。本番ビルド（GitHub Pages等）では直接Google APIにアクセスするため、プロキシは使用されません。
+> In local development (`localhost`), browsers may reject API key usage due to the `Origin` header. A reverse proxy is configured in `vite.config.js` at the `/gemini-api` path to transparently route API calls through the Vite dev server. This proxy is only active during local development and is not used in production builds.
+
 ---
 
 ## ⚖️ Compliance & Legal Stance / 法的遵守について
@@ -579,6 +596,12 @@ Developed by **FURU**
 ---
 
 ## 📋 ChangeLog
+
+### v2.96.0-alpha (2026-05-02)
+- **[Feature]** 服装（Outfit）の文脈認識型自動選定システムを実装。空欄の際、従来の「キャラシート準拠」デフォルト動作を廃止し、AIがシナリオの状況・場所・文脈を分析して、適切な服装（水着、スーツ、制服等）を**具体的な衣装名**で自律的に選定・適用するように改善しました。場所（Location）と同等の「AIおまかせ」挙動に統一。 / Implemented context-aware Outfit Auto-Select system. Replaced the previous "character sheet default" behavior: when left blank, AI now analyzes the scenario context (situation, location, mood) and autonomously assigns specific attire names (swimwear, suits, uniforms, etc.) instead of vague defaults. Unified with the same "AI Auto-Select" behavior as the Location field.
+- **[UI]** 生成プレビュー（GENERATION PREVIEW）の場所・服装表示を統一。ユーザー手入力値は白文字、AIおまかせ選定値は青文字＋✨アイコンで視覚的に区別可能に。 / Unified the Generation Preview display for Location and Outfit fields. User-specified values shown in white, AI-selected values shown in blue with ✨ icon for clear visual distinction.
+- **[Infra]** ローカル開発環境向けにViteリバースプロキシを導入。`localhost`でのブラウザOriginヘッダーによるAPIキー拒否問題を解消。 / Added Vite reverse proxy for local development to bypass browser Origin header API key rejection on `localhost`.
+- **[Cleanup]** 不要な一時ファイル（バックアップ、テストスクリプト等）をリポジトリから整理・削除。 / Cleaned up unnecessary temporary files (backups, test scripts) from the repository.
 
 ### v2.95.0-alpha (2026-05-02)
 - **[Feature]** Emotion Style Tag（画風パレット）を6種追加し、合計23種に拡張。`THICK_PAINT`（厚塗り）、`PASTEL`（パステル）、`CEL`（セル画風）、`DARK_ANIME`（ダーク調）、`THIN_LINE`（繊細線画）、`HIGH_SATURATION`（高彩度ビビッド）をAIが文脈から自動選択可能に。 / Expanded the Emotion Style Tag palette by 6 new styles (total 23): `THICK_PAINT`, `PASTEL`, `CEL`, `DARK_ANIME`, `THIN_LINE`, and `HIGH_SATURATION`, all automatically selected by AI based on scenario context.

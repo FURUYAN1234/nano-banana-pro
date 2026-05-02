@@ -35,7 +35,7 @@ import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 import { generateImageWithOpenAI, setOpenAIApiKey, getOpenAIApiKey } from './lib/openai';
 
-const SYSTEM_VERSION = "v2.95 Alpha";
+const SYSTEM_VERSION = "v2.96 Alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -1039,7 +1039,14 @@ ${scenario}
        5. **【強制服装指定 (Outfit Lock)】**:
           - 今回のシナリオでは、CastListに記載された元の服装設定を完全に無視し、全員の服装を強制的に『${customOutfit.trim()}』に変更して描写・行動させよ。
           - 画像生成プロンプトでもこの指定タグが反映される前提で、シナリオ内のト書き(Action)テキストにも具体的な服装指定を含めること。
-          ` : ""}
+          ` : `
+       5. **【服装の自動選定 (Outfit Auto-Select)】**:
+          - ニュースの内容と場所(Location)に**「最も適した具体的な服装」**を選定し、Outfit行に出力せよ。
+          - **「キャラシート準拠」「制服」「デフォルト」等の曖昧な回答は禁止。** 必ず具体的な服装名を出力すること。
+          - 例: 海辺→「白のビキニ水着」、法廷→「黒スーツ＋白ブラウス」、道の駅→「カジュアルな私服（デニムショートパンツ＋Tシャツ）」、雪山→「ダウンジャケット＋スノーブーツ」
+          - Location選定と同じ要領で、「その場所にいて最も自然かつ絵になる服装」を想像力を発揮して選べ。
+          - 画像生成プロンプトでも選定した服装タグが反映される前提で、シナリオ内のト書き(Action)テキストにも具体的な服装描写を含めること。
+          `}
 
          【シナリオ構成・演出の絶対厳守 (v1.8.94 Alpha)】
           0. **全員登場義務 (Mandatory All-Cast)**:
@@ -1174,7 +1181,7 @@ ${scenario}
 
         Topic: [ニュースの見出し（15文字以内）]
         Location: [${customLocation.trim() ? "必ず『" + customLocation.trim() + "』にせよ" : "ニュースの内容に即した舞台（例: 砂漠、法廷、宇宙）。※教室は禁止"}]
-        Outfit: [${customOutfit.trim() ? "必ず『" + customOutfit.trim() + "』にせよ" : "なし（キャラシート準拠）"}]
+        Outfit: [${customOutfit.trim() ? "必ず『" + customOutfit.trim() + "』にせよ" : "場所・状況に最も適した具体的な服装名を記入せよ（例: カジュアルな私服、水着、スーツ等）。※「キャラシート準拠」「制服」「デフォルト」は禁止"}]
         Scenario:
         [1コマ目: 起]
         [EMOTION: XXX]
@@ -3298,7 +3305,7 @@ ${finalPrompt}
                   </div>
                   <div className="flex-1 bg-[#050505] p-3 rounded-xl border border-purple-500/20">
                     <label className="text-xs font-bold text-purple-400 mb-1 block flex items-center gap-1">
-                      <Sparkles size={14} /> 指定服装 (Outfit Override) <span className="text-[10px] text-gray-500 font-normal ml-auto">※空欄ならキャラシート準拠</span>
+                      <Sparkles size={14} /> 指定服装 (Outfit Override) <span className="text-[10px] text-gray-500 font-normal ml-auto">※空欄ならAIおまかせ</span>
                     </label>
                     <input
                       type="text"
@@ -3306,7 +3313,7 @@ ${finalPrompt}
                       onChange={(e) => setCustomOutfit(e.target.value)}
                       style={{ color: '#ffffff', backgroundColor: '#111111' }}
                       className="w-full bg-[#111] text-white p-2 rounded border border-gray-700 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 outline-none text-sm placeholder-gray-600 font-mono"
-                      placeholder="例: 普段着、全員水着、黒のミリタリー装備、ナース服..."
+                      placeholder="例: キャラシート準拠 / 全員水着 / ミリタリー装備..."
                     />
                   </div>
                 </div>
@@ -3552,37 +3559,36 @@ ${finalPrompt}
             {(() => {
               // [v2.43] シナリオテキストからリアルタイムで場所・服装を取得
               const previewLocation = scenario?.match(/Location:\s*(.*?)(\n|$)/i)?.[1]?.trim() || '';
-              const previewOutfitRaw = scenario?.match(/Outfit:\s*(.*?)(\n|$)/i)?.[1]?.trim() || '';
-              const previewOutfit = (previewOutfitRaw && !/^(なし|キャラシート準拠|none|default)/i.test(previewOutfitRaw)) ? previewOutfitRaw : '';
+              const previewOutfit = scenario?.match(/Outfit:\s*(.*?)(\n|$)/i)?.[1]?.trim() || '';
               return (<>
                 <div className="text-gray-300" style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '6px' }}>
                   <Globe size={12} className="text-blue-400" />
                   <span>場所 (Location):</span>
-                  <span style={{ fontWeight: 'bold', color: previewLocation ? '#93c5fd' : '#ffffff' }}>
-                    {previewLocation || "AIおまかせ (Generic Background)"}
+                  <span style={{ fontWeight: 'bold', color: customLocation.trim() ? '#ffffff' : '#93c5fd' }}>
+                    {previewLocation || (customLocation.trim() || "AIおまかせ")}
                   </span>
                   <span style={{
                     marginLeft: '6px', padding: '2px 6px', borderRadius: '4px', fontSize: '9px', whiteSpace: 'nowrap',
-                    background: 'rgba(29,78,216,0.3)',
-                    color: '#93c5fd',
-                    border: '1px solid rgba(59,130,246,0.3)'
+                    background: customLocation.trim() ? 'rgba(100,100,100,0.4)' : 'rgba(29,78,216,0.3)',
+                    color: customLocation.trim() ? '#d1d5db' : '#93c5fd',
+                    border: `1px solid ${customLocation.trim() ? 'rgba(150,150,150,0.3)' : 'rgba(59,130,246,0.3)'}`
                   }}>
-                    シナリオ連動
+                    {customLocation.trim() ? '手入力' : 'AIおまかせ'}
                   </span>
                 </div>
                 <div className="text-gray-300" style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '6px', paddingBottom: '4px' }}>
                   <span className="text-green-400">👕</span>
                   <span>服装 (Outfit):</span>
-                  <span style={{ fontWeight: 'bold', color: previewOutfit ? '#c4b5fd' : '#ffffff' }}>
-                    {previewOutfit || "キャラシート準拠 (Default)"}
+                  <span style={{ fontWeight: 'bold', color: customOutfit.trim() ? '#ffffff' : '#93c5fd' }}>
+                    {previewOutfit || (customOutfit.trim() || "AIおまかせ")}
                   </span>
                   <span style={{
                     marginLeft: '6px', padding: '2px 6px', borderRadius: '4px', fontSize: '9px', whiteSpace: 'nowrap',
-                    background: previewOutfit ? 'rgba(88,28,135,0.5)' : 'rgba(29,78,216,0.3)',
-                    color: previewOutfit ? '#c4b5fd' : '#93c5fd',
-                    border: `1px solid ${previewOutfit ? 'rgba(139,92,246,0.4)' : 'rgba(59,130,246,0.3)'}`
+                    background: customOutfit.trim() ? 'rgba(100,100,100,0.4)' : 'rgba(29,78,216,0.3)',
+                    color: customOutfit.trim() ? '#d1d5db' : '#93c5fd',
+                    border: `1px solid ${customOutfit.trim() ? 'rgba(150,150,150,0.3)' : 'rgba(59,130,246,0.3)'}`
                   }}>
-                    {previewOutfit ? '服装指定あり' : 'シナリオ連動'}
+                    {customOutfit.trim() ? '手入力' : 'AIおまかせ'}
                   </span>
                 </div>
               </>);
