@@ -234,14 +234,16 @@ The critical insight: **P(1) ≈ 0**. Panel 1's job is NOT to be funny—it buil
 **第3層 — テクニック選択（黄金パターン）：**
 
 The most powerful technique for 4-panel format is **Repetition Escalation (天丼)**: `T(n) = Base × 2^(n-1)` — Panel 1 plants a seed (×1), Panel 3 brings it back transformed (×2), Panel 4 detonates it (×4). Exponential energy accumulation through deliberate repetition.
-4コマ最強テクニックは**天丼**: 1コマ目で仕込み→3コマ目で変奏再登場→4コマ目で限界突破。指数関数的にエネルギーが蓄積されます。
+
+4コマ最強テクニックは **天丼** : 1コマ目で仕込み→3コマ目で変奏再登場→4コマ目で限界突破。指数関数的にエネルギーが蓄積されます。
 
 Additional techniques include Riding-Tsukkomi (ノリツッコミ: joining the joke then breaking it), Stacking (かぶせ: rapid-fire successive jokes), and Self-deprecation (自虐: characters weaponizing their own flaws).
 
 **Layer 4 — Punchline Diversity Engine (v2.95+) / 第4層 — オチ多様化エンジン（マンネリ防止）:**
 
 A critical failure mode of AI scenario generation is **Persona Gravity (ペルソナ引力)**: when the LLM is asked to "write a funny scenario using this character," it gravitates toward the character's most salient traits — resulting in the same punchline patterns appearing repeatedly across generations (e.g., a character who loves collecting always ends with a collecting joke; a character with a pointing gesture always ends with that gesture).
-AIシナリオ生成における重大な失敗モードが**ペルソナ引力（Persona Gravity）**です。「このキャラを使って面白いシナリオを書け」とLLMに指示すると、AIはキャラクターの最も顕著な特性（趣味・口癖・特技）に引き寄せられ、毎回同じパターンのオチに収束してしまいます（例：コレクター癖のキャラ → オチが必ずコレクションネタ、指さし癖のキャラ → オチが必ずその仕草）。
+
+AIシナリオ生成における重大な失敗モードが **ペルソナ引力（Persona Gravity）** です。「このキャラを使って面白いシナリオを書け」とLLMに指示すると、AIはキャラクターの最も顕著な特性（趣味・口癖・特技）に引き寄せられ、毎回同じパターンのオチに収束してしまいます（例：コレクター癖のキャラ → オチが必ずコレクションネタ、指さし癖のキャラ → オチが必ずその仕草）。
 
 This system neutralizes Persona Gravity through two complementary mechanisms:
 本システムは2つの相補的なメカニズムでペルソナ引力を無効化します：
@@ -249,7 +251,8 @@ This system neutralizes Persona Gravity through two complementary mechanisms:
 **Mechanism 1 — JS-Forced Punchline Randomizer (AIに選ばせない):**
 
 The key insight: **telling the LLM to "randomly choose" a punchline type is meaningless** — the LLM's probability distribution is fixed, and it will always select the most "natural" or "safe" option from its training data. The only correct implementation is for **JavaScript to make the selection** before the prompt is constructed, then inject the chosen type as a hard constraint.
-重要な洞察：**「ランダムに選んで」とLLMに指示しても意味がない**——LLMの確率分布は固定されており、学習データで最も「自然・安全」とされる選択肢を必ず選ぶからです。唯一の正しい実装は、**プロンプト構築前にJavaScriptが選択**し、選ばれたタイプを強制制約としてプロンプトに注入することです。
+
+重要な洞察： **「ランダムに選んで」とLLMに指示しても意味がない** ——LLMの確率分布は固定されており、学習データで最も「自然・安全」とされる選択肢を必ず選ぶからです。唯一の正しい実装は、 **プロンプト構築前にJavaScriptが選択** し、選ばれたタイプを強制制約としてプロンプトに注入することです。
 
 ```javascript
 // ボタンを押すたびにJSがランダム確定 → AIは選択の余地なし
@@ -259,6 +262,7 @@ const selectedPunchline = PUNCHLINE_TYPES[Math.floor(Math.random() * PUNCHLINE_T
 ```
 
 The 8 punchline archetypes (all character-agnostic):
+
 8種類のオチアーキタイプ（全てキャラ非依存）：
 
 | Type / タイプ | Description / 概要 |
@@ -275,6 +279,7 @@ The 8 punchline archetypes (all character-agnostic):
 **Mechanism 2 — Anti-Persona-Gravity Rule (ペルソナ固有設定のオチ禁止):**
 
 An explicit prompt-level prohibition prevents the LLM from using a character's personal traits, hobbies, or signature behaviors as the *subject matter* of the punchline.
+
 プロンプトレベルの明示的な禁止ルールにより、LLMがキャラクターの固有設定（趣味・口癖・特技）をオチの「ネタ」として直接使うことを防止します。
 
 ```
@@ -291,11 +296,11 @@ An explicit prompt-level prohibition prevents the LLM from using a character's p
 
 Mechanism 2 prevents persona *traits* from becoming the punchline topic. But a subtler form of Persona Gravity remains: **authoritative characters** (discipline committee members, student council presidents, etc.) tend to monopolize the 4th-panel punchline role itself — not because of their hobbies, but because their "authority" persona makes the LLM instinctively assign them the climactic line.
 
-メカニズム2はペルソナの「趣味・口癖」がオチのネタになることを防ぎます。しかし、より微細な引力が残ります：**権威キャラ**（風紀委員・生徒会長など）が、趣味の問題ではなく「権威ある立場」ゆえにLLMから4コマ目の決めゼリフを毎回割り当てられてしまう現象です。
+メカニズム2はペルソナの「趣味・口癖」がオチのネタになることを防ぎます。しかし、より微細な引力が残ります： **権威キャラ** （風紀委員・生徒会長など）が、趣味の問題ではなく「権威ある立場」ゆえにLLMから4コマ目の決めゼリフを毎回割り当てられてしまう現象です。
 
 The protocol injects an explicit distribution rule: the punchline's lead role (the character who delivers the decisive line or action in Panel 4) must be rotated across **all cast members equally**, with intentional priority given to comedic or "mob" characters who would normally be overlooked. Authority characters are not banned from punchlines — they simply lose their default priority.
 
-このプロトコルは明示的な分散ルールを注入します：4コマ目の決めゼリフや行動の主導権を**全キャストに均等にローテーション**させ、通常は埋もれがちなボケ役やモブキャラに意図的に優先権を与えます。権威キャラのオチは禁止ではなく、デフォルトの優先権を失うだけです。
+このプロトコルは明示的な分散ルールを注入します：4コマ目の決めゼリフや行動の主導権を **全キャストに均等にローテーション** させ、通常は埋もれがちなボケ役やモブキャラに意図的に優先権を与えます。権威キャラのオチは禁止ではなく、デフォルトの優先権を失うだけです。
 
 ```
 ❌ BEFORE (修正前): 風紀委員が毎回「許さない！」で締める → ワンパターン化
@@ -313,9 +318,10 @@ The combined effect of all three mechanisms realizes a principle analogous to th
 **Layer 5 — Narrative Depth & Cliché Prevention Engine (v2.99+) / 第5層 — 物語の深度とテンプレ防止エンジン:**
 
 Even with perfect structure and punchline distribution, AI tends to write safe, passive, and cliché dialogue. To force professional-grade comedic storytelling, the system implements three strict narrative constraints:
+
 完璧な構造とオチの分散があっても、AIは無難で受け身な「よくあるセリフ」を書きがちです。プロレベルのコメディシナリオを強制するため、本システムは3つの厳格な物語制約を実装しています：
 
-1. **GMC Gag Structure (GMCギャグ設計)**: Transitioned from "passive situational setups" to the **Goal, Motivation, Conflict (GMC)** framework. Characters are forced to have a strong, active desire (Goal/Motivation) in Panel 1, which immediately crashes into an absurd, irrational obstacle (Conflict) in Panel 2. The collision of strong desires against impossible walls generates a much more powerful comedic payoff. / 「受け身な状況設定」を廃止し、**GMC（Goal, Motivation, Conflict）メソッド**を導入。1コマ目でキャラクターに「強烈で能動的な欲求」を持たせ、2コマ目で「理不尽な障害」に衝突させます。強い欲求と絶対的な壁の衝突が、オチの爆発力を飛躍的に高めます。
+1. **GMC Gag Structure (GMCギャグ設計)**: Transitioned from "passive situational setups" to the **Goal, Motivation, Conflict (GMC)** framework. Characters are forced to have a strong, active desire (Goal/Motivation) in Panel 1, which immediately crashes into an absurd, irrational obstacle (Conflict) in Panel 2. The collision of strong desires against impossible walls generates a much more powerful comedic payoff. / 「受け身な状況設定」を廃止し、 **GMC（Goal, Motivation, Conflict）メソッド** を導入。1コマ目でキャラクターに「強烈で能動的な欲求」を持たせ、2コマ目で「理不尽な障害」に衝突させます。強い欲求と絶対的な壁の衝突が、オチの爆発力を飛躍的に高めます。
 2. **Guard C Implementation (Guard Cの導入)**: A strict negative-prompt filter targeting AI-specific linguistic clichés. It completely bans lazy explanatory dialogue, weak generic reactions (e.g., "yare yare"), and the ultimate comedy killer: boring narrative summary panels (e.g., "It was a lively day"). / AI特有の言語的テンプレを狙い撃ちにする厳格なネガティブプロンプト。状況説明のセリフ、汎用的な弱いリアクション（「やれやれ」「はぁ…」等）、そしてコメディの最大の敵である「まとめのナレーション（今日も賑やかな一日だった、等）」を完全に禁止します。
 3. **Show, Don't Tell - Gag Action (物理的ギャグアクションの強制)**: Emotions must not be explained; they must be visually demonstrated. The AI is strictly forbidden from using internal monologues to state "I'm surprised" or "I'm angry." Instead, it is forced to translate emotions into comedic physical actions (e.g., "hair standing on end", "doing a spit-take"). / 感情を言葉で説明してはならず、視覚的に証明しなければなりません。「驚いた」「怒った」とモノローグで語ることを固く禁じ、代わりにマンガ的な物理アクション（「髪の毛が逆立つ」「コーヒーを噴き出す」等）へ変換することを強制します。
 
