@@ -1,11 +1,8 @@
-## What's New / 変更点
+## 🎨 Context-Aware Outfit Auto-Selection / 文脈認識型 服装おまかせ選定
+Replaced the previous "character sheet default" behavior: when the Outfit field is left blank, AI now analyzes the scenario context (situation, location, mood) and autonomously assigns specific attire names (swimwear, suits, uniforms, etc.) instead of vague defaults. Unified with the same "AI Auto-Select" behavior as the Location field.
+服装（Outfit）の文脈認識型自動選定システムを実装。空欄の際、従来の「キャラシート準拠」デフォルト動作を廃止し、AIがシナリオの状況・場所・文脈を分析して、適切な服装（水着、スーツ、制服等）を具体的な衣装名で自律的に選定・適用するように改善しました。場所（Location）と同等の「AIおまかせ」挙動に統一されています。
 
-### 👗 Outfit Auto-Select / 服装自動選定システム
-
-The "Outfit" setting has been updated to mirror the intelligent behavior of the "Location" setting. When left blank, the AI now automatically judges whether the character's default outfit (from the character sheet) is appropriate for the generated scenario's location and context. If inappropriate (e.g., wearing a school uniform at the beach), the AI will autonomously select and assign a context-appropriate outfit (e.g., swimsuit).
-
-「服装 (Outfit)」設定のロジックを更新し、「場所 (Location)」設定と同様のAI自律判定機能を実装しました。ユーザーが服装を空欄にした場合、AIは生成されたシナリオの場所や状況を考慮し、キャラクターシートのデフォルト衣装が「その場にふさわしいか」を自動判定します。不適切な場合（例：海に制服でいる等）は、AIが自律的に状況に適した服装（例：水着）を選定しプロンプトに反映させます。
-
----
-
-**Full Changelog**: https://github.com/FURUYAN1234/nano-banana-pro/compare/v2.95.0-alpha...v2.96.0-alpha
+## 🖥️ UI & Infra Improvements / UIとインフラの改善
+* **Generation Preview / プレビュー表示の改善**: Unified the Generation Preview display for Location and Outfit fields. User-specified values are shown in white, while AI-selected values are shown in blue with an ✨ icon for clear visual distinction. / 生成プレビューでの場所・服装表示を統一。ユーザー手入力値は白文字、AIおまかせ選定値は青文字＋✨アイコンで視覚的に区別可能になりました。
+* **Local Proxy / ローカルプロキシ**: Added a Vite reverse proxy for local development to bypass browser Origin header API key rejection on `localhost`. / ローカル開発環境向けにViteリバースプロキシを導入し、`localhost`でのブラウザOriginヘッダーによるAPIキー拒否問題を解消しました。
+* **Cleanup / 整理**: Cleaned up unnecessary temporary files and backup scripts from the repository. / リポジトリから不要な一時ファイルやバックアップスクリプトを整理・削除しました。

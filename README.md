@@ -597,6 +597,9 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v2.97.0-alpha (2026-05-02)
+- **[Feature]** 服装（Outfit）おまかせ選定時の「クローン化（全員が全く同じ服を着る問題）」を防止。AIへのプロンプト指示を修正し、「白のビキニ」等の細かすぎる指定ではなく「水着」「私服」「ナース服」等の**大分類のカテゴリー**に留めることで、画像AIがキャラクター個別の着こなしを適用する余白を確保しました。 / Prevented the "clone effect" in the Outfit Auto-Select system where all characters would wear the exact same specific clothing. Updated the AI prompt to output broad clothing categories (e.g., "swimwear", "casual wear", "nurse uniform") instead of overly specific descriptions, leaving room for the image generation AI to apply individual styling based on each character's identity.
+
 ### v2.96.0-alpha (2026-05-02)
 - **[Feature]** 服装（Outfit）の文脈認識型自動選定システムを実装。空欄の際、従来の「キャラシート準拠」デフォルト動作を廃止し、AIがシナリオの状況・場所・文脈を分析して、適切な服装（水着、スーツ、制服等）を**具体的な衣装名**で自律的に選定・適用するように改善しました。場所（Location）と同等の「AIおまかせ」挙動に統一。 / Implemented context-aware Outfit Auto-Select system. Replaced the previous "character sheet default" behavior: when left blank, AI now analyzes the scenario context (situation, location, mood) and autonomously assigns specific attire names (swimwear, suits, uniforms, etc.) instead of vague defaults. Unified with the same "AI Auto-Select" behavior as the Location field.
 - **[UI]** 生成プレビュー（GENERATION PREVIEW）の場所・服装表示を統一。ユーザー手入力値は白文字、AIおまかせ選定値は青文字＋✨アイコンで視覚的に区別可能に。 / Unified the Generation Preview display for Location and Outfit fields. User-specified values shown in white, AI-selected values shown in blue with ✨ icon for clear visual distinction.

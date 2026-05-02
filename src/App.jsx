@@ -35,7 +35,7 @@ import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 import { generateImageWithOpenAI, setOpenAIApiKey, getOpenAIApiKey } from './lib/openai';
 
-const SYSTEM_VERSION = "v2.96 Alpha";
+const SYSTEM_VERSION = "v2.97 Alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -1041,11 +1041,11 @@ ${scenario}
           - 画像生成プロンプトでもこの指定タグが反映される前提で、シナリオ内のト書き(Action)テキストにも具体的な服装指定を含めること。
           ` : `
        5. **【服装の自動選定 (Outfit Auto-Select)】**:
-          - ニュースの内容と場所(Location)に**「最も適した具体的な服装」**を選定し、Outfit行に出力せよ。
-          - **「キャラシート準拠」「制服」「デフォルト」等の曖昧な回答は禁止。** 必ず具体的な服装名を出力すること。
-          - 例: 海辺→「白のビキニ水着」、法廷→「黒スーツ＋白ブラウス」、道の駅→「カジュアルな私服（デニムショートパンツ＋Tシャツ）」、雪山→「ダウンジャケット＋スノーブーツ」
-          - Location選定と同じ要領で、「その場所にいて最も自然かつ絵になる服装」を想像力を発揮して選べ。
-          - 画像生成プロンプトでも選定した服装タグが反映される前提で、シナリオ内のト書き(Action)テキストにも具体的な服装描写を含めること。
+          - ニュースの内容と場所(Location)に**「最も適した服装カテゴリー」**を選定し、Outfit行に出力せよ。
+          - **「キャラシート準拠」「デフォルト」等の曖昧な回答は禁止。** 必ず状況に適した服装の「属性」を出力すること。
+          - 例: 海辺→「水着（swimwear）」、法廷→「ビジネススーツ（business suit）」、道の駅→「私服（casual wear）」、雪山→「防寒着（winter clothes）」、宇宙→「宇宙服（spacesuit）」
+          - **⚠️【重要: クローン化防止】⚠️** 「白のビキニ」「デニムショートパンツ」のように細かく指定しすぎないこと。細かく指定すると全キャラクターが全く同じ服を着てしまうため、必ず**大分類のカテゴリー（ナース服、私服、パジャマなど）**に留め、個々の着こなしは画像AIに委ねよ。
+          - 画像生成プロンプトでも選定した服装タグが反映される前提で、シナリオ内のト書き(Action)テキストにもその服装に基づく自然な描写を含めること。
           `}
 
          【シナリオ構成・演出の絶対厳守 (v1.8.94 Alpha)】
