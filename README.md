@@ -626,6 +626,10 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v3.02.0-alpha (2026-05-03)
+- **[BugFix]** ChatGPTモード（GPT-image-2）で生成されるプロンプトにおいて、ページ全体に黒い外枠（border）が描画される問題を修正。`OUTER FRAME` という表現がDALL-Eに物理的な枠線描画として解釈されていたため、`image boundaries` に変更し、さらにANTI-NOISEセクションに枠線描画の明示的禁止（NO PAGE BORDERS）を追加するダブルブロック方式で対策しました。 / Fixed a bug in ChatGPT mode (GPT-image-2) where a black border was drawn around the entire page. The phrase "OUTER FRAME" was interpreted by DALL-E as a physical border drawing instruction; replaced with "image boundaries" and added explicit "NO PAGE BORDERS" rule to the ANTI-NOISE section as a double-block countermeasure.
+- **[Cleanup]** 古いバックアップファイル（`temp_App_backup.jsx`）をリポジトリから削除。世界公開リポジトリの美観を維持。 / Removed stale backup file (`temp_App_backup.jsx`) from the repository for a cleaner public-facing codebase.
+
 ### v3.01.0-alpha (2026-05-03)
 - **[BugFix]** 2周目以降のシナリオ生成時（STEP2・STEP3開始時）に、前回の「画像生成ログ（STEP4）」が残ってしまう不具合を修正し、常にクリーンな状態で進行状況を確認できるように改善しました。 / Fixed a bug where the image generation log from previous sessions remained visible; logs are now properly cleared at the start of new scenario or prompt generation steps.
 

@@ -35,7 +35,7 @@ import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 import { generateImageWithOpenAI, setOpenAIApiKey, getOpenAIApiKey } from './lib/openai';
 
-const SYSTEM_VERSION = "v3.01 Alpha";
+const SYSTEM_VERSION = "v3.02 Alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -2298,7 +2298,8 @@ BUT the CANVAS STRUCTURE must remain completely stable.
 ━━━━━━━━━━━━━━━━━━
 - Final output MUST be A4 portrait (1:1.414)
 - Resolution MUST be exactly 1024×1448 px
-- The OUTER FRAME must be a PERFECT RECTANGLE
+- The overall image boundaries must form a perfect rectangle
+- Do NOT draw any outer border lines, black frames, or decorative edges around the entire page. The page edges must be clean with no drawn borders.
 - No vertical stretching, no tall strip expansion
 
 ■ PANEL FRAME IMMUTABILITY
@@ -2340,6 +2341,7 @@ This block OVERRIDES any conflicting instructions:
 - NO MICRO-DETAIL CLUTTER: Do NOT fill empty areas with random tiny dots, scratches, dust particles, or halftone-like noise patterns. Clean color fills and smooth gradients ONLY.
 - NO OVER-RENDERING: Do NOT apply photorealistic texture rendering (cloth weave, skin pores, hair strand noise) to anime-style characters. Keep surfaces FLAT and CLEAN as in professional TV anime cel-shading.
 - ANTI-FLICKER: Avoid rendering thin lines or patterns that create visual "flickering" or moiré effects. All lines must be bold and decisive.
+- NO PAGE BORDERS: Do NOT draw any border, outline, or frame around the entire page or canvas edge. No black lines surrounding the image. The image must bleed cleanly to its edges.
 
 [ ✅ POSITIVE SAFE RENDERING BLOCK — APPLY THESE STYLES ]
 Clean anime illustration finish, smooth cel shading, soft clean shading, smooth gradients, clean color surfaces, low texture density, refined but not overly detailed material response, controlled exposure, soft diffused lighting, no visible grain, no speckled texture, no pointillism, no stippling, no dithering, no halftone dots, no noisy particles, no glitter dust, no gritty film grain, no rough paper texture, no canvas grain, no over-sharpened details.
