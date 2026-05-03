@@ -35,7 +35,7 @@ import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 import { generateImageWithOpenAI, setOpenAIApiKey, getOpenAIApiKey } from './lib/openai';
 
-const SYSTEM_VERSION = "v3.00 Alpha";
+const SYSTEM_VERSION = "v2.99 Alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -1068,7 +1068,6 @@ ${scenario}
  
          1. **「原則: 語るな、見せろ (Show, Don\'t Tell)」のギャグ特化**:
              - 絵での表現が最優先。説明調のセリフは厳禁。読者の読む気を削ぐな。
-             - **【サブテキスト（建前と本音のズレ）の強制】**: 状況をそのまま説明するセリフを完全禁止する。セリフを「建前」や「全く別の話題」にし、絵（ト書き・表情）と矛盾させる（例: 大汗をかいて震えながら「今日の夕飯、ハンバーグでいいかな？」と言う等）ことで、ギャグマンガ特有のシュールな笑いや「間」を演出せよ。
              - **【物理・身体変形アクションの強制】**: 感情のト書きは、具体的な物理アクションに変換せよ。「驚く」ではなく「髪の毛が逆立ち口から魂が抜ける」、「怒る」ではなく「顔から湯気を出して持っている物を手放す」等、画像生成AIが拾いやすい視覚的ダイナミズムを強制せよ。
             - **【構図ルール】ト書き（状況の説明）では、主役の動作を中心に記述しつつ、同じコマにいる他キャラのリアクションや存在も簡潔に描写してよい。** 例: 「アカリがツッコむ。横でリンが呆れ、奥でサエコが爆笑している」のような群像描写は大歓迎。ただし1キャラあたりの描写は1文以内に留め、冗長にならないこと。同じ場面に居合わせている喋らないキャラがいる場合、ト書きの末尾に「（リアクション: キャラ名→表情や動作）」の形式で簡潔に添えよ。例: 「アカリがツッコむ（リアクション: リン→呆れ顔、サエコ→爆笑）」。4コマ中**最低2コマ**にはこのリアクション描写を含めること。
             - **【超重要】汗マークや怒りマークなどの「漫符」を描写する場合、文字ラベル（例: "POPPING VEIN", "LARGE SWEAT DROP"など）や設定資料に書かれるような矢印・注釈テキストを画面内に絶対に描画させないこと。純粋な視覚的シンボルのみを使用し、一切の英単語ラベルを排除せよ。**
@@ -1092,11 +1091,10 @@ ${scenario}
 
         3.5 **【笑いの構造設計 (Comedy Structure Engineering)】**:
            - **大原則: 笑いは「予想された流れ」と「実際の流れ」のズレで作る。** 以下の技法を意識的に選択・組み合わせてシナリオを構成せよ。
-           - **【GMC+S ギャグ設計 (Goal, Motivation, Conflict, Stakes)】**:
+           - **【GMCギャグ設計 (Goal, Motivation, Conflict)】**:
               * **欲求 (Goal)**: キャラクターのしょうもない、または強烈な個人的欲望（例:「どうしてもプリンを食べたい」「誰より目立ちたい」等）を起点にせよ。
-              * **代償/危機 (Stakes)**: 「もしその欲求が達成できなかったらどうなるか？（例：社会的に死ぬ、存在が消える等）」という切実なリスクを1〜2コマ目で提示し、読者にオチへの期待（緊張感）を持たせよ。
               * **障害 (Conflict)**: その欲求を阻む、理不尽でスケールの違う障害（例:「店員が宇宙語しか話さない」「隕石が降ってくる」等）をぶつけよ。
-              * **決着 (Resolution)**: 欲求が最悪・最高の形で裏切られ、Stakes（代償）が爆発するオチを作れ。
+              * **決着 (Resolution)**: 欲求が最悪・最高の形で裏切られるオチを作れ。
             - **【ズレを作る技法（最低2つ選択せよ）】**:
              * **置換**: ニュースの出来事を全く別の文脈に言い換え、見え方の差を作る（例: 国際会議 → 幼稚園の学級会、宇宙開発 → 町内会の予算会議）
              * **誇張**: 反応・規模・感情を極端にして笑いにする。「ちょっと驚く」ではなく「宇宙の法則が乱れるレベルで驚愕する」
@@ -1198,7 +1196,6 @@ ${scenario}
         以下の独自フォーマット **のみ** を出力してください。Markdownのコードブロックも不要です。
 
         Topic: [ニュースの見出し（15文字以内）]
-        Logline: [誰が、何を求めて、どうなるかという1〜2行の強力なログライン（軸）。この軸から4コマ目まで絶対にブレないこと]
         Location: [${customLocation.trim() ? "必ず『" + customLocation.trim() + "』にせよ" : "ニュースの内容に即した舞台（例: 砂漠、法廷、宇宙）。※教室は禁止"}]
         Outfit: [${customOutfit.trim() ? "必ず『" + customOutfit.trim() + "』にせよ" : "場所・状況に最も適した具体的な服装名を記入せよ（例: カジュアルな私服、水着、スーツ等）。※「キャラシート準拠」「制服」「デフォルト」は禁止"}]
         Scenario:
@@ -1245,7 +1242,6 @@ ${scenario}
 
       try {
         const titleMatch = result.text.match(/Topic:\s*(.+)/i);
-        const loglineMatch = result.text.match(/Logline:\s*(.+)/i);
         const locationMatch = result.text.match(/Location:\s*(.+)/i);
         const outfitMatch = result.text.match(/Outfit:\s*(.+)/i);
         const scenarioMatch = result.text.match(/Scenario:\s*([\s\S]+)/i);
@@ -1254,7 +1250,6 @@ ${scenario}
           parsedData.topic = titleMatch ? titleMatch[1].trim() : randomCategory;
           // [v2.42] AIが「Topic: xxx」形式で出力した場合のプレフィックス除去
           parsedData.topic = parsedData.topic.replace(/^Topic:\s*/i, '').trim();
-          parsedData.logline = loglineMatch ? loglineMatch[1].trim() : "";
           parsedData.location = locationMatch ? locationMatch[1].trim() : "Generic Background";
           parsedData.outfit = outfitMatch ? outfitMatch[1].trim() : "";
           parsedData.scenario = scenarioMatch[1].trim();
@@ -1296,9 +1291,8 @@ ${scenario}
 
       setScenario(parsedData.scenario);
       // [v2.43] シナリオテキストにLocation/Outfit行を含めて表示・編集可能にする
-      const loglineLine = parsedData.logline ? `\nLogline: ${parsedData.logline}` : '';
       const outfitLine = (customOutfit.trim() || parsedData.outfit) ? `\nOutfit: ${customOutfit.trim() || parsedData.outfit}` : '';
-      setScenario(`## タイトル: ${parsedData.topic} !?${loglineLine}\nLocation: ${parsedData.location || "Unspecified"}${outfitLine}\n\n${parsedData.scenario} `);
+      setScenario(`## タイトル: ${parsedData.topic} !?\nLocation: ${parsedData.location || "Unspecified"}${outfitLine}\n\n${parsedData.scenario} `);
 
       // [v2.43] ロック値もセット（GENERATION PREVIEW表示用）
       setLockedLocation(customLocation.trim() || parsedData.location || "Unspecified");
@@ -1306,7 +1300,7 @@ ${scenario}
 
       setScenarioThought(prev => prev + `\n > Topic Selected: ${parsedData.topic} \n > Scenario Construction Complete.`);
       showStatus("シナリオの生成が完了しました！");
-      const finalScenarioText = `## タイトル: ${parsedData.topic} !?${loglineLine}\nLocation: ${parsedData.location || "Unspecified"}${outfitLine}\n\n${parsedData.scenario} `;
+      const finalScenarioText = `## タイトル: ${parsedData.topic} !?\nLocation: ${parsedData.location || "Unspecified"}${outfitLine}\n\n${parsedData.scenario} `;
       return finalScenarioText; // [v2.79] フルオート連鎖用: テキスト自体を返す
 
     } catch (error) {
