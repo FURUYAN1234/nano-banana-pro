@@ -626,6 +626,9 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v3.01.0-alpha (2026-05-03)
+- **[BugFix]** 2周目以降のシナリオ生成時（STEP2・STEP3開始時）に、前回の「画像生成ログ（STEP4）」が残ってしまう不具合を修正し、常にクリーンな状態で進行状況を確認できるように改善しました。 / Fixed a bug where the image generation log from previous sessions remained visible; logs are now properly cleared at the start of new scenario or prompt generation steps.
+
 ### v3.00.0-alpha (2026-05-03)
 - **[Major]** Story Makerエンジンから高度な物語技法（GMC+Sメソッド）を統合。「ログライン・アンカリング」による物語のブレ防止、「サブテキスト制約」による建前と本音のズレ（アイロニー）の強制、「Stakes（代償）」の吊り上げによるオチの爆発力強化を実装し、シナリオ品質が飛躍的に向上しました。 / Integrated advanced narrative techniques from the Story Maker engine (GMC+S methodology), including Logline Anchoring, Subtext-Enforced Dialogue, and Stakes Escalation to dramatically improve scenario quality and comedic impact.
 - **[UI]** 生成されたシナリオのヘッダーに、AIが構築した「Logline（ログライン）」を表示する機能を追加。プロットの設計図が可視化され、構成の意図が人間にも明確に伝わるようになりました。 / Added a visible "Logline" field to the generated scenario output, allowing users to clearly understand the AI's core narrative blueprint.

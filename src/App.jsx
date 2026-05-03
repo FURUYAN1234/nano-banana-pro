@@ -35,7 +35,7 @@ import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 import { generateImageWithOpenAI, setOpenAIApiKey, getOpenAIApiKey } from './lib/openai';
 
-const SYSTEM_VERSION = "v3.00 Alpha";
+const SYSTEM_VERSION = "v3.01 Alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -876,6 +876,7 @@ ${scenario}
     setFinalPrompt(""); // Fix: Clear previous prompt to prevent "Instant Done" state
     setGeneratedImage(null); // Fix: Clear previous image
     setAssembleThought(""); // Fix: Clear previous assembly log
+    setGenLog([]); // [v3.01] Clear previous image generation logs
     // [v2.50] シナリオ強化stateのリセット（新規シナリオ生成時に前回の強化状態が残る問題を修正）
     setOriginalScenario(""); // 強化前の原文をクリア（「強化済み」バッジ消去 + 古いシナリオへの誤復元防止）
     setEnhanceLog(""); // 強化ログをクリア
@@ -1328,6 +1329,7 @@ ${scenario}
     if (!skipGuard && (!castList || !currentScenario)) return showStatus("キャストとシナリオが必要です。");
     setIsAssembling(true);
     setFinalPrompt(""); // Clear previous prompt to indicate loading
+    setGenLog([]); // [v3.01] Clear previous image generation logs
     // [v2.35] 救済パネルリセット
     setPolicyErrorMsg("");
     setPolicyFixLog("");
