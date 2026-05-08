@@ -35,7 +35,7 @@ import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 import { generateImageWithOpenAI, setOpenAIApiKey, getOpenAIApiKey } from './lib/openai';
 
-const SYSTEM_VERSION = "v3.02 Alpha";
+const SYSTEM_VERSION = "v3.05.0-alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -2172,7 +2172,7 @@ At the very top of the page, draw a large, bold, black Japanese text title that 
 Do NOT surround the title text with quotation marks, apostrophes, single quotes, or any other punctuation marks. Draw ONLY the raw Japanese characters of the title.
 Draw a tiny English watermark exactly ON the bottom-right border of the 4th panel that displays the exact text "${watermarkEng}" in clean sans-serif font.
 ALSO draw a tiny Japanese watermark exactly ON the bottom-left border (outside the frame) of the 4th panel that displays the exact text "ネームから全自動の自律式統合AI漫画システム :https://x.gd/JiWor". Ensure its size does not interfere with the right watermark.
-Both watermark texts MUST be written HORIZONTALLY (left-to-right reading direction), NEVER rotated 90 degrees, NEVER written vertically, and NEVER stacked one letter per line. Do NOT draw duplicated or overlapping watermarks. Do NOT add extra white space below the 4th panel.
+Please ensure both watermark texts are drawn in a standard horizontal orientation (left-to-right reading direction). Do not draw them vertically or rotated. Do NOT draw duplicated or overlapping watermarks. Do NOT add any extra white space below the 4th panel.
 
 CRITICAL PANEL SIZE COMMAND: The canvas MUST be divided into exactly 4 EQUAL horizontal panels stacked vertically from top to bottom. All 4 panels MUST be the EXACT SAME height and EXACT SAME width.
 CRITICAL GUTTER WIDTH: Between each pair of adjacent panels (Panel 1-2, Panel 2-3, Panel 3-4), there MUST be a THICK white gutter (gap) that is approximately 3% of the total canvas height (about 40-45 pixels). These gutters MUST be clearly visible as bold white separator bands. Do NOT let panels touch or nearly touch each other — the separation must be obvious and uniform between all panels.
@@ -2262,7 +2262,7 @@ Important constraints:
 - Do NOT add random English text except for the watermark.
 - Maintain character consistency across all 4 panels.
 - Flow is from top panel to bottom panel.
-- Ensure the watermark is positioned at the absolute bottom edge of the image, with no extra whitespace below it. The watermark MUST be HORIZONTAL text (left-to-right), NOT vertical or rotated.
+- Ensure the watermark is positioned at the absolute bottom edge of the image, with no extra whitespace below it. The text must be oriented horizontally (left-to-right).
 - CRITICAL COMPOSITION BAN: Do NOT draw floating close-up eyes, partial face crops, or ghostly face overlays in the background of any panel. Every character must be drawn as a complete physical presence within the scene. No "dramatic eye insert" or "background eye close-up" compositions allowed.
 
 FINAL COMPLIANCE CHECK (MANDATORY BEFORE OUTPUT):
@@ -2312,47 +2312,19 @@ Characters must look at each other, never at the camera.
         );
         // [v3.04c] 不要な長文制約をさらにカット（ChatGPTの忘却防止）
         // ChatGPT向けに長大な制約ブロックをさらに削除
-        // ★ v3.04g: より強引なインデックスベースの削除ロジック
-        // 1. CRITICAL VISUAL REPRODUCTION PROTOCOL の削除
-        let start = safePrompt.indexOf('CRITICAL VISUAL REPRODUCTION PROTOCOL');
-        let end = safePrompt.indexOf('Important Character Cast:');
-        if (start !== -1 && end !== -1 && start < end) {
-            safePrompt = safePrompt.slice(0, start) + safePrompt.slice(end);
-        }
-        // REFERENCE IMAGE CLOTHING POLICY (もし残っていれば)
-        start = safePrompt.indexOf('REFERENCE IMAGE CLOTHING POLICY');
-        end = safePrompt.indexOf('Important Character Cast:');
-        if (start !== -1 && end !== -1 && start < end) {
-            safePrompt = safePrompt.slice(0, start) + safePrompt.slice(end);
-        }
-
-        // 2. 【Character Identity Anchor から Camera Rules: まで
-        start = safePrompt.indexOf('【Character Identity Anchor');
-        end = safePrompt.indexOf('Camera Rules:');
-        if (end === -1) end = safePrompt.indexOf('Camera and Composition Rules:');
-        if (start !== -1 && end !== -1 && start < end) {
-            // "Camera Rules:" を補ってつなぐ
-            safePrompt = safePrompt.slice(0, start) + safePrompt.slice(end);
-        }
-
-        // 3. Technical Quality Definitions から ## Panel 1 まで
-        start = safePrompt.indexOf('Technical Quality Definitions');
-        end = safePrompt.indexOf('## Panel 1');
-        if (start !== -1 && end !== -1 && start < end) {
-            safePrompt = safePrompt.slice(0, start) + safePrompt.slice(end);
-        }
-
-        // 4. Important constraints: から最後まで
-        start = safePrompt.indexOf('Important constraints:');
-        if (start !== -1) {
-            safePrompt = safePrompt.slice(0, start);
-        }
-        
-        // 念のため FINAL COMPLIANCE CHECK 以降も削除（上に含まれるはずだが）
-        start = safePrompt.indexOf('FINAL COMPLIANCE CHECK');
-        if (start !== -1) {
-            safePrompt = safePrompt.slice(0, start);
-        }
+        // ★ v3.04h: 正規表現ベースの強力な削除ロジック
+        safePrompt = safePrompt.replace(/CRITICAL VISUAL REPRODUCTION PROTOCOL[\s\S]*?(?=Important Character Cast:)/i, '');
+        safePrompt = safePrompt.replace(/REFERENCE IMAGE CLOTHING POLICY[\s\S]*?(?=Important Character Cast:)/i, '');
+        safePrompt = safePrompt.replace(/【Character Identity Anchor[\s\S]*?(?=Camera Rules:|Camera and Composition Rules:)/i, '');
+        safePrompt = safePrompt.replace(/Technical Quality Definitions[\s\S]*?(?=## Panel 1)/i, '');
+        safePrompt = safePrompt.replace(/Important constraints:[\s\S]*?(?=FINAL COMPLIANCE CHECK|## Panel 1)/i, '');
+        safePrompt = safePrompt.replace(/FINAL COMPLIANCE CHECK[\s\S]*?(?=## Panel 1)/i, '');
+        // 各パネルの中にある冗長な配置指示の削除
+        safePrompt = safePrompt.replace(/CRITICAL CAST PLACEMENT:[\s\S]*?(?=Camera:)/gi, '');
+        safePrompt = safePrompt.replace(/ANTI-CLONE REMINDER:[\s\S]*?(?=TOTAL CHARACTER COUNT IN THIS PANEL:|Camera:)/gi, '');
+        safePrompt = safePrompt.replace(/TOTAL CHARACTER COUNT IN THIS PANEL:[\s\S]*?(?=Camera:)/gi, '');
+        // LENS ENFORCEMENT もパネルごとに長いので消す (Camera Rules: に統合済み)
+        safePrompt = safePrompt.replace(/\[LENS ENFORCEMENT\]:[\s\S]*?(?=Visual Action)/gi, '');
 
         // [v3.03b] Technical Quality変換は重み付きタグ一括除去で不要化
 
@@ -2478,6 +2450,15 @@ Before output, verify:
       setIsAssembling(false);
     }
   };
+  
+  // [v3.04] ChatGPTモードのチェックボックスが切り替わった時、既にプロンプトが生成されていれば自動再構築する
+  useEffect(() => {
+    if (finalPrompt && !isAssembling && currentStep >= 3) {
+      assemblePrompt();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enableChatGPTMode]);
+
   const partialReset = () => {
     setCastList("");          // [fix] 入力をリセット時に解析結果もクリア
     setScenario("");
@@ -2510,7 +2491,13 @@ Before output, verify:
     if (isGeneratingImage || (!skipGuard && !currentPrompt)) return false;
     setIsGeneratingImage(true);
     setIsGenerationError(false);
-    setGenLog(["[1/5] プロンプトパラメータをロック中...", "[2/5] セーフティフィルターを検証中..."]);
+    
+    // [v3.04i] 進捗窓(genLog)にChatGPTモードのバッチ/警告を明示
+    const initialLogs = ["[1/5] プロンプトパラメータをロック中...", "[2/5] セーフティフィルターを検証中..."];
+    if (enableChatGPTMode) {
+      initialLogs.push("[2.5/5] ⚠️ [ChatGPT Mode] 有効: プロンプト構造の特殊最適化を適用中...");
+    }
+    setGenLog(initialLogs);
 
     // [v2.44] 進捗ステップ表示＋経過時間カウンター
     let genTickCount = 0;
@@ -3863,16 +3850,17 @@ ${finalPrompt}
                         </span>
                       </div>
                     </label>
-
                     <button
                       onClick={() => { console.log("Regenerating..."); regenerateImage(); }}
                       disabled={!finalPrompt || isGeneratingImage}
-                      className={`w-full ${enableOpenAIApi ? 'bg-blue-600 hover:bg-blue-500' : 'bg-orange-600 hover:bg-orange-500'} text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg border border-white/10 active:scale-95 disabled:bg-slate-700 disabled:opacity-50 disabled:cursor-wait mt-4`}
+                      className={`w-full ${enableOpenAIApi ? 'bg-blue-600 hover:bg-blue-500' : enableChatGPTMode ? 'bg-red-800 hover:bg-red-700' : 'bg-orange-600 hover:bg-orange-500'} text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg border border-white/10 active:scale-95 disabled:bg-slate-700 disabled:opacity-50 disabled:cursor-wait mt-4`}
                     >
                       {isGeneratingImage ? <Loader2 size={20} className="animate-spin" /> : <ImageIcon size={20} />}
-                      {isGeneratingImage ? "再生成中..." : `画像を生成する (STEP 4: ${enableOpenAIApi ? 'ChatGPT Images 2.0' : 'Google AI'})`}
+                      <div className="flex flex-col items-center">
+                        <span>{isGeneratingImage ? "再生成中..." : `画像を生成する (STEP 4: ${enableOpenAIApi ? 'ChatGPT Images 2.0 API' : enableChatGPTMode ? 'Gemini API [強引な生成]' : 'Google AI'})`}</span>
+                        {!enableOpenAIApi && enableChatGPTMode && <span className="text-[10px] text-red-200 mt-1">※このプロンプトでGemini API(STEP4)を実行すると、制約不足によりレイアウト崩れが発生する可能性があります。</span>}
+                      </div>
                     </button>
-
                   {/* PRO TIPS FOR EXTERNAL GENERATION - 説明文統一規格: text-xs */}
                   <div className="mt-4 p-3 bg-orange-950/40 border border-orange-500/30 rounded-lg">
                     <div className="flex items-start gap-2">
