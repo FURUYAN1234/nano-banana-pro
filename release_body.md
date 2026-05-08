@@ -1,9 +1,8 @@
-## What's New / 変更点
+﻿## 噫 v3.05-alpha Release
 
-### BugFix
-- **[BugFix]** Fixed a bug in ChatGPT mode (GPT-image-2) where a black border was drawn around the entire page. The phrase "OUTER FRAME" in the CANVAS LOCK section was interpreted by DALL-E as a physical border drawing instruction; replaced with "image boundaries" and added explicit "NO PAGE BORDERS" rule to the ANTI-NOISE section as a double-block countermeasure.
-- **[BugFix]** ChatGPTモード（GPT-image-2）で生成されるプロンプトにおいて、ページ全体に黒い外枠（border）が描画される問題を修正。CANVAS LOCKセクションの `OUTER FRAME` という表現がDALL-Eに物理的な枠線描画として解釈されていたため、`image boundaries` に変更し、さらにANTI-NOISEセクションに枠線描画の明示的禁止（NO PAGE BORDERS）を追加するダブルブロック方式で対策しました。
+### 菅 Bug Fixes
+* **ChatGPT Mode Prompt Architecture Fix:** Fixed a critical issue where aggressive regex was destroying the core panel layout instructions (e.g. `## Panel 1`), causing severe layout collapse in Gemini API when ChatGPT mode was enabled. (ChatGPT繝｢繝ｼ繝画怏蜉ｹ譎ゅ↓縲∬ｪ､縺｣縺滓ｭ｣隕剰｡ｨ迴ｾ縺ｫ繧医ｊ繝励Ο繝ｳ繝励ヨ縺ｮ繧ｳ繧｢讒矩縺梧ｶ亥､ｱ縺励√Ξ繧､繧｢繧ｦ繝亥ｴｩ螢翫ｒ蠑輔″襍ｷ縺薙☆閾ｴ蜻ｽ逧・↑繝舌げ繧剃ｿｮ豁｣縺励∪縺励◆)
 
-### Cleanup
-- **[Cleanup]** Removed stale backup file (`temp_App_backup.jsx`) from the repository for a cleaner public-facing codebase.
-- **[Cleanup]** 古いバックアップファイル（`temp_App_backup.jsx`）をリポジトリから削除。世界公開リポジトリの美観を維持。
+### 笨ｨ UI/UX Improvements
+* **ChatGPT Mode Notification:** Added a dedicated optimization badge/warning message (`[2.5/5] 笞・・[ChatGPT Mode] 譛牙柑...`) to the image generation progress log when ChatGPT mode is active. (ChatGPT繝｢繝ｼ繝画怏蜉ｹ譎ゅ∫判蜒冗函謌舌Ο繧ｰ縺ｫ騾ｲ謐玲怙驕ｩ蛹悶ヰ繝・メ繧定｡ｨ遉ｺ縺吶ｋ繧医≧縺ｫ謾ｹ蝟・＠縺ｾ縺励◆)
+* **Warning Label Correction:** Fixed missing punctuation at the end of the Gemini API warning message in the UI. (UI縺ｮ隴ｦ蜻翫Γ繝・そ繝ｼ繧ｸ縺ｮ譛ｫ蟆ｾ縺ｮ蜿･隱ｭ轤ｹ謚懊￠繧剃ｿｮ豁｣縺励∪縺励◆)
