@@ -1699,7 +1699,7 @@ Available lens effects — EACH PANEL MUST USE ONE:
 
       // [v1.8.3] Smart Splitter for Panels
       const extractPanel = (text, header, nextHeader) => {
-        const regex = new RegExp(`\\[${header}.*?\\]([\s\S]*?)(?=\\[${nextHeader}|$)`, 'i');
+        const regex = new RegExp(`\\[${header}.*?\\]([\\s\\S]*?)(?=\\[${nextHeader}|$)`, 'i');
         const match = text.match(regex);
         return match ? match[1].trim() : "";
       };
@@ -3806,7 +3806,7 @@ ${finalPrompt}
                         <span>ChatGPT専用 短縮プロンプトモード動作中</span>
                       </div>
                       <div className="text-xs text-orange-300">
-                        ※このプロンプトでGemini API(STEP4)を実行すると、制約不足によりレイアウト崩れが発生する可能性があります
+                        ※このプロンプトでGemini API(STEP4)を実行すると、制約不足によりレイアウト崩れが発生する可能性があります。
                       </div>
                     </div>
                   )}
