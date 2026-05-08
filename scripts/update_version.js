@@ -28,10 +28,10 @@ const baseVersionNum = parseFloat(versionMatch[1]);
 // Increment by 0.01 and fix to 2 decimal places to avoid floating point errors
 const newBaseVersionStr = (baseVersionNum + 0.01).toFixed(2);
 
-// the package.json needs proper semver, so we append .0-alpha
-const newPackageVersion = `${newBaseVersionStr}.0-alpha`;
+// the package.json and App.jsx now use the strict vX.Y-alpha format
+const newPackageVersion = `${newBaseVersionStr}-alpha`;
 // App.jsx and index.html use the display format
-const displayVersion = `v${newBaseVersionStr} Alpha`;
+const displayVersion = `v${newBaseVersionStr}-alpha`;
 
 console.log(`New Package Version: ${newPackageVersion}`);
 console.log(`New Display Version: ${displayVersion}`);
