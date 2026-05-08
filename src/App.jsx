@@ -1699,7 +1699,7 @@ Available lens effects — EACH PANEL MUST USE ONE:
 
       // [v1.8.3] Smart Splitter for Panels
       const extractPanel = (text, header, nextHeader) => {
-        const regex = new RegExp(`\\[${header}.*?\\]([\\s\\S]*?)(?=\\[${nextHeader}|$)`, 'i');
+        const regex = new RegExp(`\\[${header}.*?\\]([\s\S]*?)(?=\\[${nextHeader}|$)`, 'i');
         const match = text.match(regex);
         return match ? match[1].trim() : "";
       };
@@ -2285,7 +2285,88 @@ Before generating the final image, mentally verify ALL of the following. If ANY 
       // [v2.61] ChatGPT Images 2.0 強化プロンプト追加
       // [v2.69] キャラクター視認性 大幅強化（ノイズ除去・被写界深度・白フチグロー・背景分離）
       if (enableChatGPTMode) {
+        // [v3.03] ChatGPTの内部要約で重み付きタグが無視されるため、LENS ENFORCEMENTを自然言語に変換
+        safePrompt = safePrompt.replace(
+          /\[LENS ENFORCEMENT\]: \(apply ABOVE CAMERA DISTORTION MAX:2\.9\), \(NEVER a normal photograph:3\.0\), \(extreme severe perspective warping:2\.7\), \(violently tilted non-horizontal horizon:2\.6\), \(near-side body parts 200% larger:2\.5\)\. This is a LIFE OR DEATH REQUIREMENT, literally break the normal camera angle\./g,
+          'CAMERA ENFORCEMENT: The camera angle specified above MUST be clearly visible. Background architecture (bookshelves, floor, walls, ceiling, desks) MUST show the perspective distortion. Near-side body parts and props MUST be drawn larger than far-side parts. Do NOT simplify this into an ordinary eye-level shot.'
+        );
+        // [v3.03b] ChatGPT向け包括的プロンプト変換
+        // (1) 全ての重み付きタグ (tag:N.N) → tag に変換（ChatGPTでは無効な構文）
+        safePrompt = safePrompt.replace(/\(([^()]+?):(\d+\.\d+)\)/g, '$1');
+        // (2) ANTIGRAVITY CAMERA PROTOCOL全体を簡潔な自然言語に置換
+        safePrompt = safePrompt.replace(
+          /Camera and Composition Rules:[\s\S]*?§4\. PERSPECTIVE-ALIGNED VFX:[\s\S]*?If fish-eye: effects curve radially\. If dutch angle: effects tilt with the world\.\s*/,
+          `Camera Rules:
+Each of the 4 panels MUST use a DIFFERENT extreme camera angle. No two panels share the same angle.
+Available angles: bird's-eye (looking straight down), worm's-eye (looking straight up), dutch angle (tilted 30-45 degrees), fish-eye (barrel distortion), extreme telephoto (compressed depth).
+Eye-level shots are FORBIDDEN. Background architecture must visibly show perspective distortion.
+Characters closest to camera must be drawn larger. Each character appears only ONCE per panel.
+Characters must look at each other, never at the camera.
+
+`
+        );
+        // (3) FINAL COMPLIANCE CHECK を簡潔化
+        safePrompt = safePrompt.replace(
+          /FINAL COMPLIANCE CHECK \(MANDATORY BEFORE OUTPUT\):[\s\S]*?extreme distortion is the intended artistic style\.\s*/,
+          ''
+        );
+        // [v3.04c] 不要な長文制約をさらにカット（ChatGPTの忘却防止）
+        // ChatGPT向けに長大な制約ブロックをさらに削除
+        // ★ v3.04g: より強引なインデックスベースの削除ロジック
+        // 1. CRITICAL VISUAL REPRODUCTION PROTOCOL の削除
+        let start = safePrompt.indexOf('CRITICAL VISUAL REPRODUCTION PROTOCOL');
+        let end = safePrompt.indexOf('Important Character Cast:');
+        if (start !== -1 && end !== -1 && start < end) {
+            safePrompt = safePrompt.slice(0, start) + safePrompt.slice(end);
+        }
+        // REFERENCE IMAGE CLOTHING POLICY (もし残っていれば)
+        start = safePrompt.indexOf('REFERENCE IMAGE CLOTHING POLICY');
+        end = safePrompt.indexOf('Important Character Cast:');
+        if (start !== -1 && end !== -1 && start < end) {
+            safePrompt = safePrompt.slice(0, start) + safePrompt.slice(end);
+        }
+
+        // 2. 【Character Identity Anchor から Camera Rules: まで
+        start = safePrompt.indexOf('【Character Identity Anchor');
+        end = safePrompt.indexOf('Camera Rules:');
+        if (end === -1) end = safePrompt.indexOf('Camera and Composition Rules:');
+        if (start !== -1 && end !== -1 && start < end) {
+            // "Camera Rules:" を補ってつなぐ
+            safePrompt = safePrompt.slice(0, start) + safePrompt.slice(end);
+        }
+
+        // 3. Technical Quality Definitions から ## Panel 1 まで
+        start = safePrompt.indexOf('Technical Quality Definitions');
+        end = safePrompt.indexOf('## Panel 1');
+        if (start !== -1 && end !== -1 && start < end) {
+            safePrompt = safePrompt.slice(0, start) + safePrompt.slice(end);
+        }
+
+        // 4. Important constraints: から最後まで
+        start = safePrompt.indexOf('Important constraints:');
+        if (start !== -1) {
+            safePrompt = safePrompt.slice(0, start);
+        }
+        
+        // 念のため FINAL COMPLIANCE CHECK 以降も削除（上に含まれるはずだが）
+        start = safePrompt.indexOf('FINAL COMPLIANCE CHECK');
+        if (start !== -1) {
+            safePrompt = safePrompt.slice(0, start);
+        }
+
+        // [v3.03b] Technical Quality変換は重み付きタグ一括除去で不要化
+
         const chatGPTEnhancement = `
+
+---
+[GENERATION FAILURE PREVENTION — ABSOLUTE TOP PRIORITY]
+
+HIGHEST PRIORITY RULES (apply to EVERY panel):
+1. All speech bubble dialogue MUST be vertical Japanese (top-to-bottom, right-to-left columns). Horizontal text is forbidden.
+2. Draw ONLY the exact dialogue specified in each panel's Dialogue section. No extra text, SFX, narration, book spine text, sign text, or background text.
+3. Attached reference images are for character identity ONLY (hair, face, glasses). Do NOT reproduce the reference sheet layout, white background lineup, expression samples, or any reference image text.
+4. Do NOT simplify camera angles into ordinary eye-level shots. Each panel's specified camera effect must be clearly visible through background architecture distortion.
+5. The final image MUST be a new 4-panel manga story scene, NOT a character sheet, model sheet, poster, or character lineup.
 
 ---
 [STABLE LAYOUT FOUNDATION — DO NOT BREAK]
@@ -2364,9 +2445,19 @@ Clean anime illustration finish, smooth cel shading, soft clean shading, smooth 
 - DEPTH OF FIELD SEPARATION: Apply a subtle soft-focus / depth-of-field blur to background elements, especially those far from the characters. Characters in the foreground must remain RAZOR SHARP while backgrounds have softer edges.
 - BACKGROUND DESATURATION: Background colors MUST be 30-50% less saturated than character colors. Apply a subtle wash-out or pastel effect to the background while keeping characters vibrant.
 - BACKGROUND VALUE SHIFT: The background should be either slightly DARKER (for bright/daytime scenes) or slightly LIGHTER (for dark/night scenes) than the characters, creating natural figure-ground separation.
-- MANGA SPOTLIGHT EFFECT: Immediately behind each character, add a subtle radial white highlight or bright gradient glow — this is the classic manga "character pop" technique (逆光ハイライト) to make figures stand out against the environment.`;
+- MANGA SPOTLIGHT EFFECT: Immediately behind each character, add a subtle radial white highlight or bright gradient glow — this is the classic manga "character pop" technique (逆光ハイライト) to make figures stand out against the environment.
+
+[FINAL OUTPUT CHECK — REDRAW IF ANY ITEM FAILS]
+Before output, verify:
+- All speech bubble text is vertical Japanese, zero horizontal text.
+- No dialogue was added beyond what was specified in Dialogue sections.
+- No extra SFX, narration, book text, sign text, or background text was added.
+- The reference sheet layout was NOT reproduced. Output is a new manga scene.
+- Each panel's camera angle is clearly different and NOT ordinary eye-level.
+- Background architecture visibly shows perspective distortion in every panel.
+- Character glasses/no-glasses status matches the reference for every character.`;
         safePrompt = safePrompt + chatGPTEnhancement;
-        setAssembleThought(prev => prev + "\n> [ChatGPT Mode] STABLE LAYOUT FOUNDATION + FORMAT ENFORCEMENT を適用しました (A4縦1:1.414 / パネル剛体ロック / 歪み制約 / クリーン描画強制)\n> [v2.69] キャラ視認性強化: ノイズ除去プロトコル・白フチグロー・被写界深度分離・背景デサチュレーション適用");
+        setAssembleThought(prev => prev + "\n> [ChatGPT Mode v3.03] 事故防止プロトコル適用済み:\n>   ✅ 縦書きセリフ強制\n>   ✅ セリフ勝手追加禁止\n>   ✅ 参照画像キャラシート再現禁止\n>   ✅ カメラワーク平易化禁止\n>   ✅ LENS ENFORCEMENT → 自然言語変換\n>   ✅ 重み付きタグ → 自然言語変換\n>   ✅ 出力前チェックリスト追加\n> [v2.69] キャラ視認性強化: ノイズ除去・白フチグロー・被写界深度分離・背景デサチュレーション適用");
       }
 
       setFinalPrompt(safePrompt);
@@ -3648,11 +3739,11 @@ ${finalPrompt}
               />
               <div className="flex flex-col">
                 <span className="text-xs font-bold text-slate-300 group-hover/chatgpt:text-white transition-colors">
-                  🧪 テスト機能：ChatGPT Images 2.0 強化プロンプト追加
-                </span>
-                <span className="text-[10px] text-slate-500">
-                  ONにすると、A4縦固定・縦書きセリフ・ノイズ除去・キャラ白フチグロー・被写界深度分離・背景デサチュレーションが適用されます
-                </span>
+                    🛡️ ChatGPT専用プロンプトモード (v3.04)
+                  </span>
+                <span className="text-[10px] text-slate-500 text-orange-400/80">
+                    ※ChatGPT向けの超圧縮プロンプトに切り替えます。このモードのままGemini APIやWeb版Geminiで生成すると、指定フォーマットが合わず画像が著しく乱れる可能性があります。
+                  </span>
               </div>
             </label>
 
@@ -3708,6 +3799,17 @@ ${finalPrompt}
                 <ThinkingLog thought={assembleThought} placeholder="> ボタンを押すとプロンプト構築ログがここに表示されます..." />
 
                 <div className="flex flex-col h-full mt-4 gap-4">
+                  {enableChatGPTMode && finalPrompt && (
+                    <div className="bg-orange-950 border-2 border-orange-500 rounded-lg p-3 flex flex-col items-center justify-center gap-1 text-orange-400 shadow-xl mt-2 mb-2 animate-pulse z-50 relative">
+                      <div className="font-bold text-sm flex items-center gap-2">
+                        <span>🛡️</span>
+                        <span>ChatGPT専用 短縮プロンプトモード動作中</span>
+                      </div>
+                      <div className="text-xs text-orange-300">
+                        ※このプロンプトでGemini API(STEP4)を実行すると、制約不足によりレイアウト崩れが発生する可能性があります
+                      </div>
+                    </div>
+                  )}
 
                   <div className="relative flex-1">
                     <textarea
