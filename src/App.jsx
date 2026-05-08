@@ -35,7 +35,7 @@ import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 import { generateImageWithOpenAI, setOpenAIApiKey, getOpenAIApiKey } from './lib/openai';
 
-const SYSTEM_VERSION = "v3.10-alpha";
+const SYSTEM_VERSION = "v3.11-alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -2285,6 +2285,17 @@ Before generating the final image, mentally verify ALL of the following. If ANY 
       // [v2.61] ChatGPT Images 2.0 強化プロンプト追加
       // [v2.69] キャラクター視認性 大幅強化（ノイズ除去・被写界深度・白フチグロー・背景分離）
       if (enableChatGPTMode) {
+        // [v3.10] キャラシート再現防止プレフィックス（プロンプト冒頭に最優先指示を挿入）
+        // ChatGPTの画像モデルはプロンプト冒頭に最も強く反応するため、
+        // 「キャラシートを描くな」という指示をプロンプトの最初に配置する
+        const antiCharSheetPrefix = `[⚠️ ABSOLUTE FIRST PRIORITY — READ THIS BEFORE ANYTHING ELSE]
+YOU ARE GENERATING A NEW 4-PANEL MANGA SCENE. You are NOT creating a character sheet, model sheet, character lineup, expression chart, or reference sheet.
+The attached image is a CHARACTER REFERENCE ONLY — use it to identify hair color, eye shape, and glasses status. Do NOT reproduce its layout, white background, expression grid, or text labels.
+If your output looks like a character sheet or model sheet instead of a 4-panel manga story → YOU HAVE FAILED. Regenerate immediately as a manga scene.
+
+`;
+        safePrompt = antiCharSheetPrefix + safePrompt;
+
         // [v3.03] ChatGPTの内部要約で重み付きタグが無視されるため、LENS ENFORCEMENTを自然言語に変換
         safePrompt = safePrompt.replace(
           /\[LENS ENFORCEMENT\]: \(apply ABOVE CAMERA DISTORTION MAX:2\.9\), \(NEVER a normal photograph:3\.0\), \(extreme severe perspective warping:2\.7\), \(violently tilted non-horizontal horizon:2\.6\), \(near-side body parts 200% larger:2\.5\)\. This is a LIFE OR DEATH REQUIREMENT, literally break the normal camera angle\./g,
@@ -2336,9 +2347,9 @@ Characters must look at each other, never at the camera.
 HIGHEST PRIORITY RULES (apply to EVERY panel):
 1. All speech bubble dialogue MUST be vertical Japanese (top-to-bottom, right-to-left columns). Horizontal text is forbidden.
 2. Draw ONLY the exact dialogue specified in each panel's Dialogue section. No extra text, SFX, narration, book spine text, sign text, or background text.
-3. Attached reference images are for character identity ONLY (hair, face, glasses). Do NOT reproduce the reference sheet layout, white background lineup, expression samples, or any reference image text.
+3. ⚠️ CRITICAL: Attached reference images are for character identity ONLY (hair color, eye shape, glasses status). You MUST NOT reproduce the reference sheet layout. Do NOT draw a white background lineup, expression grid, character name labels, or any visual element from the reference image. The output MUST be a STORY SCENE with backgrounds, speech bubbles, and panel layouts.
 4. Do NOT simplify camera angles into ordinary eye-level shots. Each panel's specified camera effect must be clearly visible through background architecture distortion.
-5. The final image MUST be a new 4-panel manga story scene, NOT a character sheet, model sheet, poster, or character lineup.
+5. ⚠️ CRITICAL: The final image MUST be a new 4-panel manga STORY SCENE with backgrounds, dialogue, and action. If the output resembles a character sheet, model sheet, poster, expression chart, or character lineup in ANY way, it is a COMPLETE FAILURE. Each panel must show characters IN A SCENE (with a background environment), NOT standing on a blank/white background.
 
 ---
 [STABLE LAYOUT FOUNDATION — DO NOT BREAK]
@@ -2427,7 +2438,8 @@ Before output, verify:
 - The reference sheet layout was NOT reproduced. Output is a new manga scene.
 - Each panel's camera angle is clearly different and NOT ordinary eye-level.
 - Background architecture visibly shows perspective distortion in every panel.
-- Character glasses/no-glasses status matches the reference for every character.`;
+- Character glasses/no-glasses status matches the reference for every character.
+- ⚠️ FINAL GATE: Does the output have 4 distinct story panels with BACKGROUND ENVIRONMENTS and SPEECH BUBBLES? If it looks like a character sheet, expression chart, or white-background lineup → REJECT AND REDRAW AS A MANGA SCENE.`;
         safePrompt = safePrompt + chatGPTEnhancement;
         setAssembleThought(prev => prev + "\n> [ChatGPT Mode v3.03] 事故防止プロトコル適用済み:\n>   ✅ 縦書きセリフ強制\n>   ✅ セリフ勝手追加禁止\n>   ✅ 参照画像キャラシート再現禁止\n>   ✅ カメラワーク平易化禁止\n>   ✅ LENS ENFORCEMENT → 自然言語変換\n>   ✅ 重み付きタグ → 自然言語変換\n>   ✅ 出力前チェックリスト追加\n> [v2.69] キャラ視認性強化: ノイズ除去・白フチグロー・被写界深度分離・背景デサチュレーション適用");
       }

@@ -1,9 +1,5 @@
-## 🚀 v3.10-alpha: OpenAI API Text & Rule Update
+## 🚀 v3.11-alpha: Anti-Character-Sheet Reinforcement
 
-### 📝 UI / UI更新
+### 🐛 Bugfix / バグ修正
 
-*   **[UI]** OpenAIの画像API（ChatGPT Images 2.0）において、現在サードパーティ製アプリからの直接生成が事実上制限されている状況を受け、テスト機能の注意書きテキストを修正しました。 / Updated the disclaimer text for the OpenAI Image API test feature to clarify that direct generation from third-party apps is currently restricted by the API.
-
-### 🛡️ Rules / ルール追加
-
-*   **[Rules]** デプロイ前の事前監査プロトコル（Pre-flight Intelligence Audit）に、「OpenAI APIの制限解除チェック」を追加しました。将来的に制限が解除され次第、速やかに機能を再開する体制を整えました。 / Added an "OpenAI API restriction check" to the pre-deployment audit protocol to actively monitor when third-party image generation is allowed again.
+*   **[Bugfix]** ChatGPTモードで画像生成時、添付されたキャラクターシートを「4コマ漫画のシーン」ではなく「キャラクターシートそのもの」として再現してしまう重大なバグに対処しました。プロンプトの**冒頭**（ChatGPTが最も強く読み取る位置）にアンチ・キャラシート再現指示を挿入し、末尾のルールも大幅に強化しました。 / Fixed a critical issue where ChatGPT's image model reproduced the attached character reference sheet instead of generating a new 4-panel manga scene. Added a strong anti-reproduction directive at the **beginning** of the prompt (where the model pays most attention) and reinforced the footer rules.
