@@ -792,6 +792,9 @@ Developed by **FURU**
 - **[UI New]** APIキー入力UIをインラインバー形式に変更（フルスクリーンモーダル廃止）。
 - **[UI New]** コピーボタンより下（STEP4ボタン・PRO TIPS・コンテンツポリシーパネル）を`finalPrompt`未生成時にぼかすUI改善。
 
+### v3.10-alpha
+- **[UI/Rules]** OpenAI画像APIの直接生成制限に対応し、UIの注意書きテキストを修正。今後のデプロイ事前監査ルールに制限解除チェックを追加。
+
 ### v3.09-alpha
 - **[HotFix]** OpenAI `gpt-image-2` への移行後、画像生成で `400 Unknown parameter` が発生しエラーとなる不具合を修正。不要なパラメータ(`response_format`)を削除。
 

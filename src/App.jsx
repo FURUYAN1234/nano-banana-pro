@@ -35,7 +35,7 @@ import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 import { generateImageWithOpenAI, setOpenAIApiKey, getOpenAIApiKey } from './lib/openai';
 
-const SYSTEM_VERSION = "v3.09-alpha";
+const SYSTEM_VERSION = "v3.10-alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -3849,8 +3849,8 @@ ${finalPrompt}
                           🧪 テスト機能：OpenAI API (ChatGPT Images 2.0) で直接画像生成する
                         </span>
                         <span className="text-[11px] text-slate-600 mt-1 leading-relaxed">
-                          【⚠現在API制限により実質非対応】OpenAIの画像APIは長文を理解できないため、この機能でフルオート生成を行うと文字数オーバーでエラーになります。<br/>
-                          現バージョンでは「プロンプトをコピー」を押し、キャラクター設定と共にブラウザ版ChatGPTへ手動で貼り付けてご使用ください。今後のアップデート（内部要約処理の実装）にご期待ください！<br/>
+                          【⚠現在API制限により実質非対応】OpenAIの画像APIは現段階では、開発アプリ経由の画像生成が許可されていない為、エラーになります。<br/>
+                          「プロンプトをコピー」を押し、キャラクター設定と共にブラウザ版ChatGPTへ手動で貼り付けてご使用ください。<br/>
                           <span className="text-slate-700 text-[10px]">※チェックを入れ直すことで別のAPIキーに変更可能です。</span>
                         </span>
                       </div>
