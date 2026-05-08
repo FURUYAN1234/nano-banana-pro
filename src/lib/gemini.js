@@ -16,7 +16,7 @@ const GEMINI_BASE_URL = (typeof window !== 'undefined' && window.location.hostna
 // ※ 2026年4月以降、Pro系は有料APIキー専用。Flash系は無料枠で利用可能。
 const TEXT_MODEL_IDS = [
     "gemini-3-flash-preview",             // Primary: Next-Gen Flash (無料枠OK・Grounding対応)
-    "gemini-3.1-flash-lite-preview",      // Backup 1: Next-Gen Lite (無料枠OK・最速)
+    "gemini-3.1-flash-lite",              // Backup 1: Next-Gen Lite (GA・無料枠OK・最速)
     "gemini-2.5-flash",                   // Backup 2: 安定実績 (無料枠OK)
     "gemini-2.5-pro",                     // Fallback 1: 高品質 (有料APIキー専用 2026/04〜)
     "gemini-2.5-flash-lite"               // Fallback 2: 軽量レガシー (無料枠OK)
@@ -28,7 +28,7 @@ const TEXT_MODEL_IDS = [
 const IMAGE_MODEL_IDS = [
     "gemini-2.5-flash",                   // Primary: 画像認識実績・高速 (無料枠OK)
     "gemini-2.5-pro",                     // Backup 1: 最高品質 (有料APIキー専用)
-    "gemini-3.1-flash-lite-preview",      // Backup 2: Next-Gen Lite (無料枠OK)
+    "gemini-3.1-flash-lite",              // Backup 2: Next-Gen Lite (GA・無料枠OK)
     "gemini-3-flash-preview",             // Fallback 1: Next-Gen (アニメ画像でフィルターリスクあり)
     "gemini-2.5-flash-lite"               // Fallback 2: 軽量レガシー
 ];

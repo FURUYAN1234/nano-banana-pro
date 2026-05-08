@@ -792,6 +792,10 @@ Developed by **FURU**
 - **[UI New]** APIキー入力UIをインラインバー形式に変更（フルスクリーンモーダル廃止）。
 - **[UI New]** コピーボタンより下（STEP4ボタン・PRO TIPS・コンテンツポリシーパネル）を`finalPrompt`未生成時にぼかすUI改善。
 
+### v3.08-alpha
+- **[System]** OpenAI `dall-e-3` (5/12廃止) を `gpt-image-2` に、Gemini `gemini-3.1-flash-lite-preview` (5/25廃止) をGA版に緊急移行。デプロイ前のAPI事前監査プロトコルを導入。
+- **[System]** コピペボタンのモード別（Gemini/ChatGPT）テキスト動的切り替え機能を完全復元(v3.07-alpha)。
+
 ### v2.47.0-alpha (2026-04-14)
 - **[Feature]** シナリオ強化：カメラワーク強化トグル追加
 - **[Feature]** シナリオ強化：セリフやギャグ強化トグル追加

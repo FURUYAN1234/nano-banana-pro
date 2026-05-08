@@ -28,7 +28,7 @@ export const generateImageWithOpenAI = async (prompt, statCallback) => {
         "Authorization": `Bearer ${apiKey}`
       },
       body: JSON.stringify({
-        model: "dall-e-3",
+        model: "gpt-image-2",
         prompt: prompt,
         n: 1,
         size: "1024x1792", // OpenAI API supports 1024x1792 for vertical aspect ratio
@@ -57,7 +57,7 @@ export const generateImageWithOpenAI = async (prompt, statCallback) => {
   if (data.data && data.data.length > 0) {
     return {
       base64Img: data.data[0].b64_json,
-      usedModel: "dall-e-3"
+      usedModel: "gpt-image-2"
     };
   } else {
     throw new Error("APIレスポンスに画像データが含まれていませんでした。");
