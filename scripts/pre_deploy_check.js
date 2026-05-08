@@ -57,9 +57,8 @@ try {
     const titleMatch = indexHtml.match(/<title>Nano Banana Pro ([^<]+)<\/title>/);
     const htmlVersion = titleMatch ? titleMatch[1] : null;
 
-    // package.json のバージョンを正規化 (2.71.0-alpha → v2.71 Alpha)
-    const pkgParts = pkgVersion.split('.');
-    const pkgNormalized = `v${pkgParts[0]}.${pkgParts[1]} Alpha`;
+    // package.json のバージョンを正規化 (3.05.0-alpha → v3.05.0-alpha)
+    const pkgNormalized = `v${pkgVersion}`;
 
     let versionErrors = 0;
     if (!appVersion) {
