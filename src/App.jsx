@@ -35,7 +35,7 @@ import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 import { generateImageWithOpenAI, setOpenAIApiKey, getOpenAIApiKey } from './lib/openai';
 
-const SYSTEM_VERSION = "v3.06-alpha";
+const SYSTEM_VERSION = "v3.07-alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -3816,7 +3816,12 @@ ${finalPrompt}
                       className={`w-full ${isCopied ? 'bg-green-600' : 'bg-slate-800 hover:bg-slate-700'} text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all border border-white/10`}
                     >
                       {isCopied ? <CheckCircle2 size={20} /> : <Copy size={20} />}
-                      {isCopied ? "コピー完了" : "コピペ (他アプリ用: キャラシート添付を強く推奨)"}
+                      {isCopied 
+                        ? "コピー完了" 
+                        : enableChatGPTMode 
+                          ? "コピペ（ChatGPT専用　キャラシート添付は必須　他アプリでは互換性の問題により、正常な生成が出来ない場合があります。）"
+                          : "コピペ（他アプリ用　キャラシート添付を強く推奨　ChatGPTに貼り付けた場合、リソース不足により正常な生成が出来ないので、必ずChatGPT専用モードのプロンプトを使用して下さい。）"
+                      }
                     </button>
                   </div>{/* Buttons Row: コピペボタンまで */}
 

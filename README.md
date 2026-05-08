@@ -626,6 +626,9 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v3.07-alpha (2026-05-08)
+- **[HotFix]** コピペボタンのテキスト動的切り替え機能（Gemini/ChatGPTモード連動）がデプロイ時に一部欠落していた問題を修正し、完全に復元しました。 / Restored the dynamic copy button text switching functionality that was accidentally omitted during the previous deployment.
+
 ### v3.06-alpha (2026-05-08)
 - **[Feature]** コピペボタンのテキストを「ChatGPT専用プロンプトモード」のチェック状態に連動して動的に切り替わるよう修正。ユーザーの利便性と互換性問題への注意喚起を強化しました。 / Updated the copy button text to dynamically switch based on the "ChatGPT Mode" toggle state, improving usability and clearly warning users about cross-platform compatibility issues.
 - **[System]** バージョン自動更新スクリプト（`update_version.js`）を修正し、`vX.Y-alpha`の厳密なフォーマット（`.0` サフィックスの排除）を強制するよう改善しました。 / Fixed the version bump script (`update_version.js`) to strictly enforce the `vX.Y-alpha` semantic formatting by removing the unwanted `.0` suffix.
