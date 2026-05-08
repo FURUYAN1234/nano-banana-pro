@@ -792,6 +792,9 @@ Developed by **FURU**
 - **[UI New]** APIキー入力UIをインラインバー形式に変更（フルスクリーンモーダル廃止）。
 - **[UI New]** コピーボタンより下（STEP4ボタン・PRO TIPS・コンテンツポリシーパネル）を`finalPrompt`未生成時にぼかすUI改善。
 
+### v3.09-alpha
+- **[HotFix]** OpenAI `gpt-image-2` への移行後、画像生成で `400 Unknown parameter` が発生しエラーとなる不具合を修正。不要なパラメータ(`response_format`)を削除。
+
 ### v3.08-alpha
 - **[System]** OpenAI `dall-e-3` (5/12廃止) を `gpt-image-2` に、Gemini `gemini-3.1-flash-lite-preview` (5/25廃止) をGA版に緊急移行。デプロイ前のAPI事前監査プロトコルを導入。
 - **[System]** コピペボタンのモード別（Gemini/ChatGPT）テキスト動的切り替え機能を完全復元(v3.07-alpha)。

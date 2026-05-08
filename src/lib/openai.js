@@ -31,9 +31,7 @@ export const generateImageWithOpenAI = async (prompt, statCallback) => {
         model: "gpt-image-2",
         prompt: prompt,
         n: 1,
-        size: "1024x1792", // OpenAI API supports 1024x1792 for vertical aspect ratio
-        response_format: "b64_json",
-        style: "vivid"
+        size: "1024x1792" // OpenAI API supports 1024x1792 for vertical aspect ratio
       }),
       signal: controller.signal
     });
