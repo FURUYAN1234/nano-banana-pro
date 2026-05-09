@@ -626,6 +626,9 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v3.12-alpha (2026-05-09)
+- **[UI/UX]** UI/ログの完全日本語化を実施。思考トレース（Thinking Trace）が利用できない標準モデル使用時のメッセージを「通常処理が完了しました。」と簡潔化し、ユーザーの混乱を招く不要な注釈（「思考トレースは利用不可」や「推論ログなし」など）を排除しました。 / Localized UI logs to Japanese completely. Simplified the fallback message for standard models without Thinking Trace to "通常処理が完了しました。" (Normal processing completed), removing confusing annotations.
+
 ### v3.07-alpha (2026-05-08)
 - **[HotFix]** コピペボタンのテキスト動的切り替え機能（Gemini/ChatGPTモード連動）がデプロイ時に一部欠落していた問題を修正し、完全に復元しました。 / Restored the dynamic copy button text switching functionality that was accidentally omitted during the previous deployment.
 
