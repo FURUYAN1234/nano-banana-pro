@@ -207,7 +207,7 @@ export const callThinkingGemini = async (prompt, images = null, systemInstructio
 
             return {
                 text: finalOutput,
-                thought: thought || "Standard processing complete (Thinking trace unavailable).",
+                thought: thought || "通常処理が完了しました。",
                 model: modelId // [v1.7.0] Return the successful model ID for UI display
             };
 

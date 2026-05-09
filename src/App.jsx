@@ -35,7 +35,7 @@ import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 import { generateImageWithOpenAI, setOpenAIApiKey, getOpenAIApiKey } from './lib/openai';
 
-const SYSTEM_VERSION = "v3.11-alpha";
+const SYSTEM_VERSION = "v3.12-alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -676,9 +676,9 @@ function App() {
       // [v2.42] 蓄積ログを保持し、完了メッセージとThinking Traceを追記（上書きしない）
       setAnalyzeThought(prev => {
         const separator = "\n\n--- ✅ 解析完了 ---\n";
-        const thoughtTrace = result.thought && result.thought !== "Standard processing complete (Thinking trace unavailable)."
-          ? `> [Thinking Trace]\n${result.thought}`
-          : "> Standard processing complete (Thinking trace unavailable).";
+        const thoughtTrace = result.thought && result.thought !== "通常処理が完了しました（思考トレースは利用不可）。"
+          ? `> [思考トレース]\n${result.thought}`
+          : "> 通常処理が完了しました（思考トレースは利用不可）。";
         return prev + separator + thoughtTrace;
       });
       showStatus("全キャラクターの解析が完了しました。");
@@ -697,7 +697,7 @@ function App() {
     } catch (error) {
       console.error(error);
       const translatedMsg = translateApiError(error.message);
-      setAnalyzeThought(prev => prev + `\n\n[SYSTEM FAILURE]: ${error.message}\n--------------------------------------------------\n${translatedMsg}`);
+      setAnalyzeThought(prev => prev + `\n\n[システムエラー]: ${error.message}\n--------------------------------------------------\n${translatedMsg}`);
       showStatus("解析エラー: " + error.message);
       if (isFullAutoMode) {
         setIsFullAutoMode(false);
@@ -885,9 +885,9 @@ ${scenario}
 
     // Determine Topic
     if (inputMode === 'manual') {
-      randomCategory = "Manual Input";
+      randomCategory = "手動入力";
       setScenario("");
-      setScenarioThought(`> Context Force Reboot: Initiated.\n > Mode: MANUAL INPUT \n > Target: ${manualTopic.substring(0, 30)}...`);
+      setScenarioThought(`> コンテキスト強制リブート: 開始\n > モード: 手動入力 \n > 対象: ${manualTopic.substring(0, 30)}...`);
     } else {
       const activeCats = effectiveCategories.filter(c => c.checked);
       // FIX: Combined keywords from all selected categories
@@ -896,10 +896,10 @@ ${scenario}
 
         showStatus(`カテゴリ「${activeCats.map(c => c.label).join('・')}」で最新ニュースを検索中... (${targetDate})`);
         setScenario("");
-        setScenarioThought(`> Context Force Reboot: Initiated.\n > Target Category: ${activeCats.map(c => c.label).join(', ')} (Keywords: ${randomCategory}) \n > Target Date: ${targetDate} \n > Searching Google Grounding...`);
+        setScenarioThought(`> コンテキスト強制リブート: 開始\n > 対象カテゴリ: ${activeCats.map(c => c.label).join('、')} (キーワード: ${randomCategory}) \n > 対象日付: ${targetDate} \n > Google Grounding で検索中...`);
       } else {
         // Fallback if checked but empty (should not happen due to validation)
-        randomCategory = "Latest News";
+        randomCategory = "最新ニュース";
       }
     }
 
@@ -950,7 +950,7 @@ ${scenario}
         const urlRegex = /(https?:\/\/[^\s]+)/g;
         const urls = manualTopic.match(urlRegex);
         if (urls && urls.length > 0) {
-          setScenarioThought(`> Found URL in manual input: ${urls[0]} \n> Fetching content via Proxy...`);
+          setScenarioThought(`> 手動入力内にURLを検出: ${urls[0]} \n> プロキシ経由でコンテンツを取得中...`);
           try {
             // Fetch via proxy buffer to bypass CORS
             const response = await fetch(`https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(urls[0])}`);
@@ -981,7 +981,7 @@ ${scenario}
             // Clean up excess whitespace and limit length
             const cleanText = extractedText.replace(/\s+/g, ' ').substring(0, 3000);
 
-            setScenarioThought(prev => prev + `\n> Content Extracted (${cleanText.length} chars). Injecting...`);
+            setScenarioThought(prev => prev + `\n> コンテンツ抽出完了 (${cleanText.length}文字)。注入中...`);
             newsContext = `
              【指定URLから独自のスクレイピングで抽出した内容】:
              ${cleanText}
@@ -990,7 +990,7 @@ ${scenario}
              `;
           } catch (fetchErr) {
             console.error("URL Fetch Error: ", fetchErr);
-            setScenarioThought(prev => prev + `\n> Warning: Failed to fetch URL content (${fetchErr.message}). Relying on LLM internal knowledge.`);
+            setScenarioThought(prev => prev + `\n> 警告: URLコンテンツの取得に失敗しました (${fetchErr.message})。LLMの内部知識で補完します。`);
           }
         }
 
@@ -1305,7 +1305,7 @@ ${scenario}
       setLockedLocation(customLocation.trim() || parsedData.location || "Unspecified");
       setLockedOutfit(customOutfit.trim() || parsedData.outfit || "");
 
-      setScenarioThought(prev => prev + `\n > Topic Selected: ${parsedData.topic} \n > Scenario Construction Complete.`);
+      setScenarioThought(prev => prev + `\n > トピック選定: ${parsedData.topic} \n > シナリオ構築完了。`);
       showStatus("シナリオの生成が完了しました！");
       const finalScenarioText = `## タイトル: ${parsedData.topic} !?${loglineLine}\nLocation: ${parsedData.location || "Unspecified"}${outfitLine}\n\n${parsedData.scenario} `;
       return finalScenarioText; // [v2.79] フルオート連鎖用: テキスト自体を返す
@@ -1313,7 +1313,7 @@ ${scenario}
     } catch (error) {
       console.error(error);
       const translatedMsg = translateApiError(error.message);
-      setScenarioThought(prev => prev + `\n\n[SYSTEM FAILURE]: ${error.message}\n--------------------------------------------------\n${translatedMsg}`);
+      setScenarioThought(prev => prev + `\n\n[システムエラー]: ${error.message}\n--------------------------------------------------\n${translatedMsg}`);
       showStatus("シナリオ生成エラー");
       return null; // [v2.79] フルオート連鎖用: 失敗
     } finally {
@@ -1342,13 +1342,13 @@ ${scenario}
         if (prev.length > 800) return prev;
         const messages = [
           ".", ".", ".",
-          "\n> Optimizing narrative vectors...",
-          "\n> Adjusting geometry lock...",
-          "\n> Syncing character style weights...",
-          "\n> Enforcing panel borders...",
-          "\n> Checking prohibited content tags...",
-          "\n> Injecting satire logic...",
-          "\n> Finalizing 4-koma structure..."
+          "\n> 物語ベクトルを最適化中...",
+          "\n> ジオメトリロックを調整中...",
+          "\n> キャラクタースタイルの重みを同期中...",
+          "\n> パネル枠線を適用中...",
+          "\n> 禁止コンテンツタグをチェック中...",
+          "\n> 風刺ロジックを注入中...",
+          "\n> 4コマ構造を最終化中..."
         ];
         // Don't add random messages if we are done (safety)
         if (!isAssembling) return prev;
@@ -2454,7 +2454,7 @@ Before output, verify:
     } catch (error) {
       console.error(error);
       const translatedMsg = translateApiError(error.message);
-      setAssembleThought(prev => prev + `\n\n[SYSTEM FAILURE]: ${error.message}\n--------------------------------------------------\n${translatedMsg}`);
+      setAssembleThought(prev => prev + `\n\n[システムエラー]: ${error.message}\n--------------------------------------------------\n${translatedMsg}`);
       showStatus("生成エラー: " + error.message);
       return null; // [v2.79] フルオート連鎖用: 失敗
     } finally {
@@ -3386,7 +3386,7 @@ ${finalPrompt}
 
                     {/* Display Current Target for User Confidence */}
                     <div className="text-xs text-slate-500 text-center font-mono">
-                      Current Search Query: {categories.filter(c => c.checked).map(c => c.keywords).join(' ') || "None"} (Target: {targetDate})
+                      現在の検索クエリ: {categories.filter(c => c.checked).map(c => c.keywords).join(' ') || "なし"} (対象日付: {targetDate})
                     </div>
                   </div>
                 ) : (
@@ -3621,7 +3621,7 @@ ${finalPrompt}
 
                       {/* 選択中の内容を表示 */}
                       <div className="text-xs text-orange-200/80 text-center font-mono py-1.5 bg-black/20 border border-white/5 rounded-md">
-                        Current Targets: {[enhanceExpressions && "表情", enhanceBodyLang && "身体", enhanceEffects && "演出", enhanceBackgrounds && "背景", enhanceCameraWork && "カメラ", enhanceDialogue && "セリフ"].filter(Boolean).join(" / ") || "未選択"}
+                        強化対象: {[enhanceExpressions && "表情", enhanceBodyLang && "身体", enhanceEffects && "演出", enhanceBackgrounds && "背景", enhanceCameraWork && "カメラ", enhanceDialogue && "セリフ"].filter(Boolean).join(" / ") || "未選択"}
                       </div>
 
                       {/* 実行・元に戻すボタン */}
@@ -3831,7 +3831,7 @@ ${finalPrompt}
                       {isCopied 
                         ? "コピー完了" 
                         : enableChatGPTMode 
-                          ? "コピペ（ChatGPT専用　キャラシート添付は必須　他アプリでは互換性の問題により、正常な生成が出来ない場合があります。）"
+                          ? "コピペ（ChatGPT専用　キャラシート添付及び生成毎新規スレッド作成必須　他アプリにプロンプトを貼り付けた場合、正常な画像が生成されない場合があります。）"
                           : "コピペ（他アプリ用　キャラシート添付を強く推奨　ChatGPTに貼り付けた場合、リソース不足により正常な生成が出来ないので、必ずChatGPT専用モードのプロンプトを使用して下さい。）"
                       }
                     </button>
@@ -4116,7 +4116,7 @@ No explanations. No partial results.`;
 
                     <div className="z-10 bg-black/80 border border-blue-500/50 rounded-2xl px-8 py-6 shadow-[0_0_30px_rgba(59,130,246,0.3)] animate-in fade-in zoom-in duration-300 backdrop-blur-md w-full">
                       <p className="text-lg font-black text-blue-400 tracking-widest animate-pulse flex items-center justify-center gap-2">
-                        GENERATING IMAGE <span className="flex space-x-1"><span className="animate-bounce delay-75">.</span><span className="animate-bounce delay-150">.</span><span className="animate-bounce delay-300">.</span></span>
+                        画像生成中 <span className="flex space-x-1"><span className="animate-bounce delay-75">.</span><span className="animate-bounce delay-150">.</span><span className="animate-bounce delay-300">.</span></span>
                       </p>
                       <p className="text-xs text-blue-200/90 mt-4 font-bold text-center leading-relaxed">
                         高品質な画像を生成しています。<br />
