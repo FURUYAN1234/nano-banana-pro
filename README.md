@@ -99,14 +99,16 @@ An experimental feature that, upon completing a generation, automatically select
 Users can amplify the AI's script direction with specific enhancement toggles (e.g., Extreme Expressions, Dynamic Body Language, Intense Lighting/VFX, Detailed Backgrounds, Extreme Camera Work, and Gag/Dialogue impact).
 シナリオの演出力を任意に引き上げる強化トグルを搭載。表情、ボディランゲージ、照明・エフェクト、背景描き込み、極限のカメラワーク、セリフやギャグのキレなど、特定要素を「限界突破（ウェイト3.0相当）」レベルに増幅可能です。
 
-### 🤖 ChatGPT Images 2.0 Mode / ChatGPT画像生成サポート
+### 🤖 ChatGPT 専用プロンプトモード (外部生成モード) / ChatGPT Prompt Optimization
 
-A dedicated formatting protocol to optimize prompts for ChatGPT's ChatGPT Images 2.0, enforcing A4 portrait orientation, vertical Japanese text, and right-to-left reading flow. Includes a GPT-image-2 specific Anti-Noise Protocol with safe rendering keywords, banned word combinations, and light effect substitution rules to ensure clean, noise-free anime-quality output.
-ChatGPT (ChatGPT Images 2.0) での生成に最適化された専用プロンプトモードを搭載。A4縦長のキャンバス指定や、日本語の縦書き、右から左への視線誘導など、ChatGPT特有の制限を突破するためのフォーマットを自動付与します。さらにGPT-image-2特有のノイズ問題に対応するAnti-Noiseプロトコル（安全レンダリングキーワード・禁止ワード組み合わせ・光演出の代替表現）を搭載し、クリーンなアニメ品質の出力を保証します。
+A dedicated formatting protocol to optimize prompts for ChatGPT's image generation (currently `gpt-image-2`). Because ChatGPT tends to drop long instructions, this mode generates an "ultra-compressed prompt." It enforces A4 portrait orientation, vertical Japanese text, and includes an Anti-Noise Protocol. 
+ChatGPT（`gpt-image-2`ベース）での画像生成に最適化された専用の「超圧縮プロンプト」を出力するモードです。長文指示を忘れやすいChatGPTの特性に対応し、冗長な制約をカットしつつ、A4縦長のキャンバス指定や縦書きテキスト、GPT-image-2特有のノイズ対策を自動付与します。
+**※重要（最強のハイブリッド運用）**: このモードはAPI単体ではなく、**「生成されたプロンプトとキャラクター設定シート画像を一緒に、ブラウザ版ChatGPTの新規スレッドへ手動でコピー＆ペーストする」**ことで真価を発揮します。
 
 > **🧪 OpenAI API Direct Execution (Experimental) / OpenAI API直接実行（テスト機能）**
-> v2.88にて、OpenAI APIキーを入力することでアプリ内から直接ChatGPT Images 2.0を呼び出せるテスト機能を実装しました（v2.89以降、キーはブラウザのメモリ上（RAM）にのみ保持され、`localStorage`等への永続保存は行わないセキュア設計です。ブラウザをリロードするとキーは安全に揮発します）。しかし、OpenAIの画像APIには「4000文字の文字数制限」という厳格な壁があり、本システムが生成する3万文字超のプロンプトを直接投げるとエラーになります。
-> 現状、ChatGPTの「文章AIが長文を読み解き、画像AIへ要約して渡す」というブラウザ版の処理能力をAPI単体で再現することはできないため、実運用においては引き続き**「プロンプトをコピーしてブラウザ版ChatGPTに手動で貼り付けるハイブリッド運用」**が最強のソリューションとなります。（将来的なAPI2段構え化の布石として搭載されています）
+> OpenAI APIキーを入力することで、アプリ内から直接画像生成API（`gpt-image-2`）を呼び出せるテスト機能を実装しています（キーはRAM上にのみ保持され、ブラウザリロードで揮発するセキュア設計）。
+> しかし現在、OpenAIの画像APIには「4000文字の文字数制限」の壁があり、本システムが生成する長大なプロンプトを直接投げるとエラーになります。また、API経由の直接生成にはポリシー上の制限強化も確認されています。
+> 現状ではAPI単体で「文章AIが長文を読み解き、画像AIへ要約して渡す」というブラウザ版特有の処理能力を完全再現できないため、実運用においては引き続き**「ブラウザ版ChatGPTへの手動コピペ運用」**が唯一にして最強のソリューションとなります。（将来的な制限解除を見据えた布石として搭載されています）
 
 ### 🎨 Context-Aware Auto-Selection / 文脈認識型おまかせ自動選定
 
@@ -626,7 +628,12 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v3.14-alpha (2026-05-10)
+
+- **[Doc]** README.md内の「ChatGPT Images 2.0 Mode」および「OpenAI API Direct Execution」の記述を、最新仕様（`gpt-image-2`への移行、超圧縮プロンプトの採用、ブラウザ版ChatGPTへのハイブリッド手動コピペ運用前提）に正確に更新しました。 / Updated README.md to accurately reflect the latest ChatGPT optimization specs (migration to `gpt-image-2`, ultra-compressed prompts, and mandatory hybrid manual copy-paste workflow to the browser version).
+
 ### v3.13-alpha (2026-05-10)
+
 - **[Feature]** キャラクター解析結果および生成シナリオの出力エリア下部に専用のコピーボタン（クリップボードコピペ機能）を実装。コピー時の状態遷移（「コピー完了」のフラッシュ表示）および、生成前の非活性化（Disabled）を完全にサポートし、手作業によるコピー＆ペーストの作業効率を劇的に向上させました。 / Implemented dedicated copy-to-clipboard buttons below the character analysis and generated scenario text areas. Supports visual feedback (green "Copied" flash) and disabled state before generation, drastically improving the efficiency of manual copy-paste workflows.
 - **[BugFix]** `extractPanel`での髪色抽出において正規表現を修正し、`red hair tips` などの複合色指定から基本色が誤抽出されるバグ（シナリオブリード）を完全に解決しました。 / Fixed a regex extraction bug in `extractPanel` where compound colors like "red hair tips" caused inaccurate primary color parsing (scenario bleed), ensuring strict adherence to the exact hair descriptors.
 - **[Feature]** プロンプト内の `CAMERA ENFORCEMENT`（背景描写）におけるハードコード（bookshelves, desks 等）を撤廃し、AIが生成したシナリオ側の `Location` の値を動的に注入する仕組みに刷新。場所指定が全コマへ正確に反映されるようになりました。 / Eliminated hardcoded background elements (bookshelves, desks) in the `CAMERA ENFORCEMENT` section, replacing them with dynamic injection of the scenario's `Location` variable to ensure environmental consistency across all panels.
