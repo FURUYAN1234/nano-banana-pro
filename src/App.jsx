@@ -35,7 +35,7 @@ import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 import { generateImageWithOpenAI, setOpenAIApiKey, getOpenAIApiKey } from './lib/openai';
 
-const SYSTEM_VERSION = "v3.15-alpha";
+const SYSTEM_VERSION = "v3.16-alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -2376,16 +2376,17 @@ HIGHEST PRIORITY RULES (apply to EVERY panel):
 ■ PANELS: 4 equal horizontal panels, FIXED rigid containers. Camera distortion ONLY inside each panel — panel borders MUST remain perfectly straight.
 ■ PRIORITY: Layout integrity > Aspect ratio > Readability > Camera effects. If conflict → reduce distortion, do NOT break layout.
 
-[ 🔧 FORMAT ENFORCEMENT ]
+[ 🔧 FORMAT ENFORCEMENT & ANTI-GLITTER ]
 - TEXT: All dialogue vertical Japanese, right-to-left reading order.
 - TITLE: Draw at top, minimal white margin.
 - RENDER: Pristine TV anime style. NO film grain, NO noise, NO realistic texturing. Clean gradients and sharp ink lines. Dramatic anime lighting (rim light, backlighting, color temperature contrast) is ENCOURAGED.
-- SURFACE: Clean anime cel-shading. NO photorealistic textures (cloth weave, skin pores). NO halftone dots, dithering, grain, dust particles, or moiré patterns. NO page border lines around the canvas.
+- SURFACE: Clean anime cel-shading. ABSOLUTELY NO ChatGPT-style magical floating particles, NO glittering/sparkling effects, NO dust motes, NO lens flares, NO moiré patterns. Keep the air clean and empty. NO photorealistic textures (cloth weave, skin pores). NO page border lines around the canvas.
 
-[ 🖊️ CHARACTER VISUAL HIERARCHY — MANDATORY ]
-- Every character's silhouette MUST have a THICK BLACK ink outline (2-3x thicker than background lines) + subtle 2-3px WHITE GLOW between outline and background (anime compositing 撮影処理).
+[ 🖊️ CHARACTER VISUAL HIERARCHY & ANTI-CAMOUFLAGE — MANDATORY ]
+- Every character's silhouette MUST have a THICK, BOLD BLACK ink outline (2-3x thicker than background lines) to completely separate them from the background.
+- Add a subtle 2-3px WHITE GLOW (anime compositing 撮影処理) outside the character's outline to prevent blending.
 - Characters MUST have HIGHER saturation and contrast than background. Characters visually "pop" as first thing noticed.
-- Background: LOWER detail, soft-focus blur, 30-50% less saturation than characters. Slight radial white highlight behind each character (逆光ハイライト).
+- Background: LOWER detail, soft-focus blur, 30-50% less saturation than characters. Always use radial white backlighting (逆光ハイライト) behind characters to prevent camouflage.
 
 [ 🎬 CINEMATIC LIGHTING — MANDATORY ]
 - 3-point anime lighting: strong key light from one side (clear light/shadow on faces), soft fill opposite, rim light (逆光) separating character from background.

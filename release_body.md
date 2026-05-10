@@ -1,9 +1,19 @@
-# Nano Banana Pro v3.14-alpha
+## ✨ Anti-Camouflage & Anti-Glitter Protocol
 
-## 🚀 Latest Updates / 最新アップデート内容
+### 🇯🇵 日本語
+本リリース（v3.16-alpha）では、ChatGPT Images 2.0での生成時にキャラクターが背景と同化してしまう「カモフラージュ現象」と、DALL-E特有の「過剰なキラキラ感（パーティクルやレンズフレア等）」を排除するため、プロンプト・アーキテクチャを大幅に強化しました。
+極太の黒インクのアウトライン、2〜3pxの白発光（コンポジット効果）、そして逆光ハイライトを明示的に強制するネガティブ制約およびスタイル指定を組み込むことで、視認性が高く、よりプロフェッショナルな漫画の美しさを持つ画像生成を保証します。
 
-### [Doc] README Update for ChatGPT Optimization / ChatGPT最適化仕様の記述更新
-Updated `README.md` to accurately reflect the latest system specifications for the ChatGPT optimization mode. The documentation now details the migration to `gpt-image-2`, the implementation of ultra-compressed prompts, and clarifies that the mandatory hybrid manual copy-paste workflow (to the browser version of ChatGPT) is currently the optimal approach due to strict API rate limits.
+**アップデート内容:**
+- **[Feature]** キャラクターと背景の分離強化：極太のアウトラインと白発光によるコンポジット効果の強制。
+- **[Feature]** アンチ・グリッター制御：魔法のパーティクルやレンズフレア等、過剰なエフェクトの明示的な禁止。
 
-README.md内の「ChatGPT 外部生成モード」および「OpenAI API直接実行」に関する記述を、現在の最新仕様に合わせて正確に更新しました。
-具体的には、画像生成エンジンの `gpt-image-2` への移行、長文忘却対策としての「超圧縮プロンプト」の採用、およびAPIの厳しい文字数制限等の観点から、「ブラウザ版ChatGPTの新規スレッドへ手動コピペするハイブリッド運用」が最強の最適解である旨を明記しました。
+---
+
+### 🇺🇸 English
+In this release (v3.16-alpha), we have significantly strengthened the prompt architecture to eliminate the "camouflage effect" (where characters blend into backgrounds) and the excessive "sparkly/glittery" artifacts (particles, lens flares) typical in ChatGPT Images 2.0 generation.
+By explicitly enforcing negative constraints and style directives—such as thick black ink outlines, a 2-3px white compositing glow, and radial backlighting—we ensure highly visible, professional-grade manga aesthetics.
+
+**Updates:**
+- **[Feature]** Enhanced Character/Background Separation: Enforced thick outlines and white compositing glows.
+- **[Feature]** Anti-Glitter Control: Explicit prohibition of excessive effects like magical floating particles and lens flares.

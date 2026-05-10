@@ -631,6 +631,10 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v3.16-alpha (2026-05-10)
+
+- **[Feature]** ChatGPT Images 2.0での画像生成において、キャラクターが背景に埋没する問題（カモフラージュ現象）および過剰なキラキラ感（パーティクル・レンズフレア等）を解消するため、プロンプト・アーキテクチャを強化。極太の黒インクのアウトライン、2〜3pxの白発光（コンポジット効果）、そして逆光ハイライトを強制し、視認性とプロフェッショナルな漫画の美しさを確保しました。 / Strengthened the prompt architecture for ChatGPT Images 2.0 to resolve issues with characters blending into backgrounds (camouflage effect) and excessive "sparkly" artifacts (particles, lens flares, etc.). Enforced thick black ink outlines, a 2-3px white compositing glow, and radial backlighting to ensure visual clarity and professional manga aesthetics.
+
 ### v3.15-alpha (2026-05-10)
 
 - **[Feature]** FACS (Facial Action Coding System) エンジンを実装。従来の抽象的な感情タグを廃止し、Action Units（AU）を用いた解剖学的記述をプロンプトに注入するロジックを導入しました。これにより、表情の崩壊を物理レベルで抑制し、高度なキャラクター表現が可能になりました。 / Implemented the FACS (Facial Action Coding System) engine. Replaced vague emotional tags with anatomical descriptions using Action Units (AUs) injected directly into the prompt, effectively suppressing facial distortion at the physical level and enabling highly nuanced character expressions.
