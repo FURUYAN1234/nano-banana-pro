@@ -1,5 +1,5 @@
-## 🚀 v3.11-alpha: Anti-Character-Sheet Reinforcement
-
-### 🐛 Bugfix / バグ修正
-
-*   **[Bugfix]** ChatGPTモードで画像生成時、添付されたキャラクターシートを「4コマ漫画のシーン」ではなく「キャラクターシートそのもの」として再現してしまう重大なバグに対処しました。プロンプトの**冒頭**（ChatGPTが最も強く読み取る位置）にアンチ・キャラシート再現指示を挿入し、末尾のルールも大幅に強化しました。 / Fixed a critical issue where ChatGPT's image model reproduced the attached character reference sheet instead of generating a new 4-panel manga scene. Added a strong anti-reproduction directive at the **beginning** of the prompt (where the model pays most attention) and reinforced the footer rules.
+### v3.13-alpha (2026-05-10)
+- **[Feature]** キャラクター解析結果および生成シナリオの出力エリア下部に専用のコピーボタン（クリップボードコピペ機能）を実装。コピー時の状態遷移（「コピー完了」のフラッシュ表示）および、生成前の非活性化（Disabled）を完全にサポートし、手作業によるコピー＆ペーストの作業効率を劇的に向上させました。 / Implemented dedicated copy-to-clipboard buttons below the character analysis and generated scenario text areas. Supports visual feedback (green "Copied" flash) and disabled state before generation, drastically improving the efficiency of manual copy-paste workflows.
+- **[BugFix]** `extractPanel`での髪色抽出において正規表現を修正し、`red hair tips` などの複合色指定から基本色が誤抽出されるバグ（シナリオブリード）を完全に解決しました。 / Fixed a regex extraction bug in `extractPanel` where compound colors like "red hair tips" caused inaccurate primary color parsing (scenario bleed), ensuring strict adherence to the exact hair descriptors.
+- **[Feature]** プロンプト内の `CAMERA ENFORCEMENT`（背景描写）におけるハードコード（bookshelves, desks 等）を撤廃し、AIが生成したシナリオ側の `Location` の値を動的に注入する仕組みに刷新。場所指定が全コマへ正確に反映されるようになりました。 / Eliminated hardcoded background elements (bookshelves, desks) in the `CAMERA ENFORCEMENT` section, replacing them with dynamic injection of the scenario's `Location` variable to ensure environmental consistency across all panels.
+- **[Improve]** ダッチアングル（Dutch angle）のカメラワーク指示を「視覚的に傾きがイメージできる表現（キャラクターが横に滑る、家具も傾く等）」に刷新し、描画AIが確実にダイナミックな傾きを反映できるよう画力・演出効果を底上げしました。 / Enhanced the structural description for Dutch angle camera work by adding visually descriptive cues (e.g., characters sliding, furniture tilting), guaranteeing that the rendering AI fully commits to the dynamic, slanted perspective.

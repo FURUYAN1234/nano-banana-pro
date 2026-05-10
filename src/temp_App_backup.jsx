@@ -35,7 +35,7 @@ import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 import { generateImageWithOpenAI, setOpenAIApiKey, getOpenAIApiKey } from './lib/openai';
 
-const SYSTEM_VERSION = "v3.13-alpha";
+const SYSTEM_VERSION = "v3.12-alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -454,8 +454,7 @@ function App() {
   const [enableOpenAIApi, setEnableOpenAIApi] = useState(false); // [v2.87] ChatGPT Images 2.0 API
   const [showOpenAIKeyModal, setShowOpenAIKeyModal] = useState(false); // [v2.88] Secure API key modal
   const [openAIKeyInput, setOpenAIKeyInput] = useState("");
-  const [isCastListCopied, setIsCastListCopied] = useState(false);
-  const [isScenarioCopied, setIsScenarioCopied] = useState(false);
+
   const handleToggleOpenAIApi = (checked) => {
     if (checked) {
       setOpenAIKeyInput(""); // フォームをリセット
@@ -1571,7 +1570,7 @@ ${scenario}
           if (cleanLine.includes('髪') || cleanLine.toLowerCase().includes('hair')) {
             const weightsMatch = cleanLine.match(/\[WEIGHTS?\]:\s*(.*)/i);
             const tagsSource = weightsMatch ? weightsMatch[1].replace(/\|/g, '') : cleanLine;
-            const colorMatch = tagsSource.match(/(red|orange|blonde|yellow|brown|black|silver|white|blue|pink|green|purple|ginger)\s+hair(?!\s*(?:tip|end|gradient|streak|highlight|accent))/i);
+            const colorMatch = tagsSource.match(/(red|orange|blonde|yellow|brown|black|silver|white|blue|pink|green|purple|ginger)\s*hair/i);
             if (colorMatch && !currentChar.hairColor) currentChar.hairColor = colorMatch[1];
             // [v2.31] 特徴的スタイル（twintails, hime cut等）を汎用長さ記述（long hair等）より優先
             // これにより Identity Matrix で「リン: long hair」ではなく「リン: twintails」と出力される
@@ -2300,7 +2299,7 @@ If your output looks like a character sheet or model sheet instead of a 4-panel 
         // [v3.03] ChatGPTの内部要約で重み付きタグが無視されるため、LENS ENFORCEMENTを自然言語に変換
         safePrompt = safePrompt.replace(
           /\[LENS ENFORCEMENT\]: \(apply ABOVE CAMERA DISTORTION MAX:2\.9\), \(NEVER a normal photograph:3\.0\), \(extreme severe perspective warping:2\.7\), \(violently tilted non-horizontal horizon:2\.6\), \(near-side body parts 200% larger:2\.5\)\. This is a LIFE OR DEATH REQUIREMENT, literally break the normal camera angle\./g,
-          `CAMERA ENFORCEMENT: The camera angle specified above MUST be clearly visible. Background architecture (${cleanLocation} environment — buildings, ground, sky, surrounding structures) MUST show the perspective distortion. Near-side body parts and props MUST be drawn larger than far-side parts. Do NOT simplify this into an ordinary eye-level shot.`
+          'CAMERA ENFORCEMENT: The camera angle specified above MUST be clearly visible. Background architecture (bookshelves, floor, walls, ceiling, desks) MUST show the perspective distortion. Near-side body parts and props MUST be drawn larger than far-side parts. Do NOT simplify this into an ordinary eye-level shot.'
         );
         // [v3.03b] ChatGPT向け包括的プロンプト変換
         // (1) 全ての重み付きタグ (tag:N.N) → tag に変換（ChatGPTでは無効な構文）
@@ -2310,20 +2309,10 @@ If your output looks like a character sheet or model sheet instead of a 4-panel 
           /Camera and Composition Rules:[\s\S]*?§4\. PERSPECTIVE-ALIGNED VFX:[\s\S]*?If fish-eye: effects curve radially\. If dutch angle: effects tilt with the world\.\s*/,
           `Camera Rules:
 Each of the 4 panels MUST use a DIFFERENT extreme camera angle. No two panels share the same angle.
-
-CAMERA ANGLE DICTIONARY — apply the matching visual description:
-- Bird's-eye / 俯瞰: Camera looks STRAIGHT DOWN. The FLOOR is clearly visible. Characters' heads are closest. Bodies foreshorten vertically.
-- Worm's-eye / ローアングル: Camera at GROUND LEVEL looking UP. CEILING visible. Characters tower above. Legs massive, heads smaller.
-- Dutch angle / ダッチ: ENTIRE WORLD tilts 30-45 degrees. Walls and floor become steep diagonals. Characters appear to SLIDE sideways. Horizon severely slanted. All objects, furniture, and liquid surfaces tilt at the same angle as the world.
-- Fish-eye / 超広角: Barrel distortion warps straight lines into curves. Center objects bulge. Frame edges curve away.
-- Telephoto / 望遠: Background DANGEROUSLY close behind characters. Depth compressed flat. Claustrophobic.
-
-Eye-level shots are FORBIDDEN. Characters closest to camera MUST be drawn larger.
-Each character appears only ONCE per panel.
-Characters MUST look at each other or objects, NEVER at the camera (no 4th wall break).
-Show exaggerated manga comedy expressions: blank white eyes, jaw drops, fury veins, waterfall tears, blushing.
-Dynamic full-body reactions: recoiling, pointing dramatically, faceplanting. Hair and clothing react to emotion.
-VFX PERSPECTIVE RULE: Speed lines and impact effects MUST follow the panel's perspective distortion direction.
+Available angles: bird's-eye (looking straight down), worm's-eye (looking straight up), dutch angle (tilted 30-45 degrees), fish-eye (barrel distortion), extreme telephoto (compressed depth).
+Eye-level shots are FORBIDDEN. Background architecture must visibly show perspective distortion.
+Characters closest to camera must be drawn larger. Each character appears only ONCE per panel.
+Characters must look at each other, never at the camera.
 
 `
         );
@@ -2363,41 +2352,83 @@ HIGHEST PRIORITY RULES (apply to EVERY panel):
 5. ⚠️ CRITICAL: The final image MUST be a new 4-panel manga STORY SCENE with backgrounds, dialogue, and action. If the output resembles a character sheet, model sheet, poster, expression chart, or character lineup in ANY way, it is a COMPLETE FAILURE. Each panel must show characters IN A SCENE (with a background environment), NOT standing on a blank/white background.
 
 ---
-[STABLE LAYOUT — DO NOT BREAK]
+[STABLE LAYOUT FOUNDATION — DO NOT BREAK]
 
-■ CANVAS: A4 portrait (1:1.414), 1024×1448px. No vertical stretching, no outer border lines.
-■ PANELS: 4 equal horizontal panels, FIXED rigid containers. Camera distortion ONLY inside each panel — panel borders MUST remain perfectly straight.
-■ PRIORITY: Layout integrity > Aspect ratio > Readability > Camera effects. If conflict → reduce distortion, do NOT break layout.
+This image uses extreme perspective and dynamic camera effects,
+BUT the CANVAS STRUCTURE must remain completely stable.
 
-[ 🔧 FORMAT ENFORCEMENT ]
-- TEXT: All dialogue vertical Japanese, right-to-left reading order.
-- TITLE: Draw at top, minimal white margin.
-- RENDER: Pristine TV anime style. NO film grain, NO noise, NO realistic texturing. Clean gradients and sharp ink lines. Dramatic anime lighting (rim light, backlighting, color temperature contrast) is ENCOURAGED.
-- SURFACE: Clean anime cel-shading. NO photorealistic textures (cloth weave, skin pores). NO halftone dots, dithering, grain, dust particles, or moiré patterns. NO page border lines around the canvas.
+━━━━━━━━━━━━━━━━━━
+■ CANVAS LOCK (TOP PRIORITY)
+━━━━━━━━━━━━━━━━━━
+- Final output MUST be A4 portrait (1:1.414)
+- Resolution MUST be exactly 1024×1448 px
+- The overall image boundaries must form a perfect rectangle
+- Do NOT draw any outer border lines, black frames, or decorative edges around the entire page. The page edges must be clean with no drawn borders.
+- No vertical stretching, no tall strip expansion
 
-[ 🖊️ CHARACTER VISUAL HIERARCHY — MANDATORY ]
-- Every character's silhouette MUST have a THICK BLACK ink outline (2-3x thicker than background lines) + subtle 2-3px WHITE GLOW between outline and background (anime compositing 撮影処理).
-- Characters MUST have HIGHER saturation and contrast than background. Characters visually "pop" as first thing noticed.
-- Background: LOWER detail, soft-focus blur, 30-50% less saturation than characters. Slight radial white highlight behind each character (逆光ハイライト).
+■ PANEL FRAME IMMUTABILITY
+- The 4-panel structure is FIXED before rendering
+- Panels act as rigid containers
+- Camera distortion MUST NOT break panel boundaries
+- No bending, warping, or resizing of panels
 
-[ 🎬 CINEMATIC LIGHTING — MANDATORY ]
-- 3-point anime lighting: strong key light from one side (clear light/shadow on faces), soft fill opposite, rim light (逆光) separating character from background.
-- Warm/cool color temperature contrast: warm lit skin vs cool blue-purple shadows.
-- Volumetric light rays (god rays / 光芒) through windows when applicable.
-- Lighting direction MUST match camera angle — overhead shots get top-down light, low angles get under-lighting or backlighting.
+■ DISTORTION CONSTRAINT
+- Extreme perspective applies ONLY inside each panel
+- The panel borders MUST remain perfectly straight horizontal lines
+- Horizon tilt and lens distortion must NOT affect outer layout
 
-[ 🎭 ACTING & EXPRESSION — MANDATORY ]
-- Every character MUST show clear emotion through face and posture. NO mannequin faces.
-- Eyes: wide = surprise, narrowed = suspicion, sparkling = excitement, blank white = comedy shock.
-- Mouth: exaggerated — wide open screaming, tiny frustrated line, smug grin, wobbly crying mouth.
-- Hands: clenched fists (anger), open palms (surprise), pointing (accusation), covering mouth (shock).
-- Posture: leaning forward (aggressive), back (defensive), slumped (defeated), puffed up (proud).
+■ COMPOSITION PRIORITY
+Priority order MUST be:
+1. Panel layout integrity
+2. Canvas aspect ratio
+3. Readability of panels
+4. Camera effects
 
-[ 💫 DYNAMIC VFX — APPLY WHERE EMOTIONALLY APPROPRIATE ]
-- Wind: hair flowing, coats billowing, papers flying.
-- Emotion: subtle colored glow (warm=joy, cool=shock, red=anger) behind characters at emotional peaks.
-- Impact: radial speed lines or concentrated effect lines (集中線) behind reacting character in punchline panels.
-- Depth: slight aerial perspective haze on distant objects. Motion blur on fast-moving limbs.
+If conflict occurs → REDUCE distortion, DO NOT break layout
+
+■ HARD FAIL CONDITIONS
+- Canvas becomes taller than A4 → FAIL
+- Panels become uneven → FAIL
+- Panel borders curve or tilt → FAIL
+- Image looks like vertical strip → FAIL
+
+If ANY fail condition occurs → regenerate immediately
+
+[ 🔧 ChatGPT / GPT-image 2.0 FORMAT ENFORCEMENT ]
+This block OVERRIDES any conflicting instructions:
+- TEXT: All dialogue MUST be vertical Japanese. Read right-to-left.
+- TITLE: Draw the title at the top, but do NOT make the white margin excessively large.
+- RENDER QUALITY: Pristine TV anime style. NO film grain, NO noise, NO realistic texturing. NO lens flare, NO HDR bloom, NO excessive sparkles or clutter. Clean gradients and sharp ink lines.
+
+[ 🧹 ANTI-NOISE & ANTI-ARTIFACT PROTOCOL — MANDATORY (GPT-image-2 Enhanced) ]
+- ZERO NOISE TOLERANCE: The final image MUST be completely free of visual noise, grain, micro-texture artifacts, dithering patterns, and any speckle-like artifacts. Every surface must be CLEAN and SMOOTH.
+- NO MICRO-DETAIL CLUTTER: Do NOT fill empty areas with random tiny dots, scratches, dust particles, or halftone-like noise patterns. Clean color fills and smooth gradients ONLY.
+- NO OVER-RENDERING: Do NOT apply photorealistic texture rendering (cloth weave, skin pores, hair strand noise) to anime-style characters. Keep surfaces FLAT and CLEAN as in professional TV anime cel-shading.
+- ANTI-FLICKER: Avoid rendering thin lines or patterns that create visual "flickering" or moiré effects. All lines must be bold and decisive.
+- NO PAGE BORDERS: Do NOT draw any border, outline, or frame around the entire page or canvas edge. No black lines surrounding the image. The image must bleed cleanly to its edges.
+
+[ ✅ POSITIVE SAFE RENDERING BLOCK — APPLY THESE STYLES ]
+Clean anime illustration finish, smooth cel shading, soft clean shading, smooth gradients, clean color surfaces, low texture density, refined but not overly detailed material response, controlled exposure, soft diffused lighting, no visible grain, no speckled texture, no pointillism, no stippling, no dithering, no halftone dots, no noisy particles, no glitter dust, no gritty film grain, no rough paper texture, no canvas grain, no over-sharpened details.
+
+[ 🚫 BANNED PROMPT WORD COMBINATIONS — NEVER USE THESE ]
+- Do NOT combine: ultra-detailed + film grain + cinematic
+- Do NOT combine: realistic texture + micro details
+- Do NOT combine: magical particles + glowing dust
+- Do NOT combine: high contrast + sharp details (use clean contrast + smooth edges instead)
+- Do NOT combine: illustrative realism + gritty texture
+- Do NOT use: paper grain, canvas texture, rough texture, grainy texture, overly crisp
+
+[ 🖊️ CHARACTER SILHOUETTE ISOLATION — MANDATORY ]
+- THICK INK OUTLINE (G-PEN RULE): Every character's entire body silhouette MUST be surrounded by a THICK, SOLID BLACK ink outline, as if drawn with a professional manga G-pen nib. The character outline stroke weight MUST be 2x to 3x thicker than any background detail lines. This separates characters from the background and is NON-NEGOTIABLE.
+- WHITE EDGE GLOW (HALO EFFECT): Between each character's thick ink outline and the background, render a subtle 2-3px semi-transparent WHITE GLOW (halo/rim light). This creates a clear visual "pop" that lifts the character off the background layer. This technique is standard in professional anime compositing (撮影処理).
+- CHARACTER COLOR PRIORITY: Characters MUST have HIGHER color saturation and HIGHER contrast than the background. Character skin, hair, and clothing colors should be vivid and punchy. The characters should visually "pop" as the first thing the viewer notices.
+
+[ 🌄 BACKGROUND TREATMENT — MANDATORY ]
+- BACKGROUND SIMPLIFICATION: The background behind characters MUST be rendered at a SIGNIFICANTLY LOWER detail level than the characters themselves. Use simplified shapes, flat color fills, or soft gradients. Do NOT give the background the same line density or sharpness as the foreground characters.
+- DEPTH OF FIELD SEPARATION: Apply a subtle soft-focus / depth-of-field blur to background elements, especially those far from the characters. Characters in the foreground must remain RAZOR SHARP while backgrounds have softer edges.
+- BACKGROUND DESATURATION: Background colors MUST be 30-50% less saturated than character colors. Apply a subtle wash-out or pastel effect to the background while keeping characters vibrant.
+- BACKGROUND VALUE SHIFT: The background should be either slightly DARKER (for bright/daytime scenes) or slightly LIGHTER (for dark/night scenes) than the characters, creating natural figure-ground separation.
+- MANGA SPOTLIGHT EFFECT: Immediately behind each character, add a subtle radial white highlight or bright gradient glow — this is the classic manga "character pop" technique (逆光ハイライト) to make figures stand out against the environment.
 
 [FINAL OUTPUT CHECK — REDRAW IF ANY ITEM FAILS]
 Before output, verify:
@@ -3255,21 +3286,6 @@ ${finalPrompt}
                   className="flex-1 w-full min-h-[140px] p-6 rounded-2xl text-sm border border-white/5 focus:border-blue-500/50 outline-none leading-relaxed resize-none font-medium z-10 placeholder-slate-600"
                   placeholder="画像をアップロードして特徴を自動抽出、または直接入力して設定を記述します。"
                 />
-                {/* [v3.13] キャラクター解析結果 コピーボタン */}
-                <div className="mt-2 relative z-50">
-                  <button
-                    onClick={() => {
-                      navigator.clipboard.writeText(castList);
-                      setIsCastListCopied(true);
-                      setTimeout(() => setIsCastListCopied(false), 2000);
-                    }}
-                    disabled={!castList}
-                    className={`w-full ${isCastListCopied ? 'bg-green-600' : 'bg-slate-800 hover:bg-slate-700'} text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all border border-white/10 disabled:opacity-50 disabled:cursor-not-allowed`}
-                  >
-                    {isCastListCopied ? <CheckCircle2 size={20} /> : <Copy size={20} />}
-                    {isCastListCopied ? "コピー完了" : "コピペ（キャラクター解析結果をコピー）"}
-                  </button>
-                </div>
               </div>
             </section>
 
@@ -3461,21 +3477,6 @@ ${finalPrompt}
                     className="w-full min-h-[200px] p-6 rounded-2xl text-base border-2 border-slate-700/50 focus:border-blue-500 focus:shadow-md outline-none leading-relaxed resize-y font-medium placeholder-slate-700 font-mono"
                     placeholder="ここに生成されたシナリオが表示されます..."
                   />
-                  {/* [v3.13] シナリオ結果 コピーボタン */}
-                  <div className="mt-2 relative z-50">
-                    <button
-                      onClick={() => {
-                        navigator.clipboard.writeText(scenario);
-                        setIsScenarioCopied(true);
-                        setTimeout(() => setIsScenarioCopied(false), 2000);
-                      }}
-                      disabled={!scenario}
-                      className={`w-full ${isScenarioCopied ? 'bg-green-600' : 'bg-slate-800 hover:bg-slate-700'} text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all border border-white/10 disabled:opacity-50 disabled:cursor-not-allowed`}
-                    >
-                      {isScenarioCopied ? <CheckCircle2 size={20} /> : <Copy size={20} />}
-                      {isScenarioCopied ? "コピー完了" : "コピペ（生成されたシナリオをコピー）"}
-                    </button>
-                  </div>
                 </div>
 
                 {/* [v2.41] シナリオ強化パネル（折りたたみ式）- 常時表示、シナリオ未生成時はぼかし */}
