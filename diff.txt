@@ -1,0 +1,127 @@
+﻿diff --git a/release_body.md b/release_body.md
+index 5b8826a..8c3f815 100644
+--- a/release_body.md
++++ b/release_body.md
+@@ -1,5 +1,9 @@
+-### v3.13-alpha (2026-05-10)
+-- **[Feature]** キャラクター解析結果および生成シナリオの出力エリア下部に専用のコピーボタン（クリップボードコピペ機能）を実装。コピー時の状態遷移（「コピー完了」のフラッシュ表示）および、生成前の非活性化（Disabled）を完全にサポートし、手作業によるコピー＆ペーストの作業効率を劇的に向上させました。 / Implemented dedicated copy-to-clipboard buttons below the character analysis and generated scenario text areas. Supports visual feedback (green "Copied" flash) and disabled state before generation, drastically improving the efficiency of manual copy-paste workflows.
+-- **[BugFix]** `extractPanel`での髪色抽出において正規表現を修正し、`red hair tips` などの複合色指定から基本色が誤抽出されるバグ（シナリオブリード）を完全に解決しました。 / Fixed a regex extraction bug in `extractPanel` where compound colors like "red hair tips" caused inaccurate primary color parsing (scenario bleed), ensuring strict adherence to the exact hair descriptors.
+-- **[Feature]** プロンプト内の `CAMERA ENFORCEMENT`（背景描写）におけるハードコード（bookshelves, desks 等）を撤廃し、AIが生成したシナリオ側の `Location` の値を動的に注入する仕組みに刷新。場所指定が全コマへ正確に反映されるようになりました。 / Eliminated hardcoded background elements (bookshelves, desks) in the `CAMERA ENFORCEMENT` section, replacing them with dynamic injection of the scenario's `Location` variable to ensure environmental consistency across all panels.
+-- **[Improve]** ダッチアングル（Dutch angle）のカメラワーク指示を「視覚的に傾きがイメージできる表現（キャラクターが横に滑る、家具も傾く等）」に刷新し、描画AIが確実にダイナミックな傾きを反映できるよう画力・演出効果を底上げしました。 / Enhanced the structural description for Dutch angle camera work by adding visually descriptive cues (e.g., characters sliding, furniture tilting), guaranteeing that the rendering AI fully commits to the dynamic, slanted perspective.
++# Nano Banana Pro v3.14-alpha
++
++## 🚀 Latest Updates / 最新アップデート内容
++
++### [Doc] README Update for ChatGPT Optimization / ChatGPT最適化仕様の記述更新
++Updated `README.md` to accurately reflect the latest system specifications for the ChatGPT optimization mode. The documentation now details the migration to `gpt-image-2`, the implementation of ultra-compressed prompts, and clarifies that the mandatory hybrid manual copy-paste workflow (to the browser version of ChatGPT) is currently the optimal approach due to strict API rate limits.
++
++README.md内の「ChatGPT 外部生成モード」および「OpenAI API直接実行」に関する記述を、現在の最新仕様に合わせて正確に更新しました。
++具体的には、画像生成エンジンの `gpt-image-2` への移行、長文忘却対策としての「超圧縮プロンプト」の採用、およびAPIの厳しい文字数制限等の観点から、「ブラウザ版ChatGPTの新規スレッドへ手動コピペするハイブリッド運用」が最強の最適解である旨を明記しました。
+diff --git a/src/App.jsx b/src/App.jsx
+index 1af2f34..d9a91fa 100644
+--- a/src/App.jsx
++++ b/src/App.jsx
+@@ -445,6 +445,7 @@ function App() {
+   const [enhanceBackgrounds, setEnhanceBackgrounds] = useState(false); // 背景強化
+   const [enhanceCameraWork, setEnhanceCameraWork] = useState(false);   // [v2.47] カメラワーク強化
+   const [enhanceDialogue, setEnhanceDialogue] = useState(false);       // [v2.47] セリフ・ギャグ強化
++  const [enhanceFACS, setEnhanceFACS] = useState(false);               // [v3.14] FACS表情制御 (実験的)
+   // [v2.69] コマ割り演出・時間演出を削除（ChatGPT画像生成ではタグ形式の指示が解釈されず効果ゼロのため）
+   const [isEnhancing, setIsEnhancing] = useState(false);
+   const [enhanceLog, setEnhanceLog] = useState("");
+@@ -715,7 +716,7 @@ function App() {
+   // シナリオ強化機能: 選択されたカテゴリに基づいてシナリオの演出を強化する
+   const enhanceScenario = async () => {
+     if (!scenario || scenario.length < 20) return showStatus("先にシナリオを生成してください。");
+-    const anySelected = enhanceExpressions || enhanceBodyLang || enhanceEffects || enhanceBackgrounds || enhanceCameraWork || enhanceDialogue;
++    const anySelected = enhanceExpressions || enhanceBodyLang || enhanceEffects || enhanceBackgrounds || enhanceCameraWork || enhanceDialogue || enhanceFACS;
+     if (!anySelected) return showStatus("少なくとも1つの強化カテゴリをONにしてください。");
+     if (isEnhancing) return;
+ 
+@@ -750,6 +751,10 @@ function App() {
+     if (enhanceDialogue) {
+       enhanceCategories.push("【セリフ・ギャグの強化 — お笑い構造メソッド適用】4コマ漫画の笑いの構造を根本から再設計してください。\n\n■ ズレを作る技法（以下から最低2つ適用せよ）:\n- 【置換】状況や出来事を全く別の文脈に言い換えてセリフを書き直す（例: 深刻な会議 → 小学生の給食会議のようなセリフに）\n- 【誇張】リアクションや感情を極限まで増幅する。「驚く」→「魂が肉体から離脱するレベルで驚愕」\n- 【逆転】キャラの普段の立場・力関係を入れ替えたセリフにする（普段クールなキャラが取り乱す、普段バカなキャラが正論を言う等）\n- 【不条理】脈絡のない狂った要素を堂々とセリフに混ぜる。多少意味不明でも勢いで笑えればOK\n- 【緊張と緩和】3コマ目まで空気を極限まで張り詰めるセリフにし、4コマ目で完全崩壊させる\n- 【常識に戻る】全員が暴走する中、1人だけ冷静に「いや普通に考えておかしいだろ」と常識を提示する\n\n■ ズレを見せる構成技法:\n- 【フリ】1コマ目のセリフは「普通の予想」を作る前置き。ここでは笑わせなくてよい\n- 【ボケ】2コマ目でズレた発言を投入し「あれ？」と思わせる\n- 【ツッコミ】ボケで生まれたズレを鋭い一言で指摘して笑いを明確化する。弱い定型ツッコミは禁止、状況に即した具体的な叫び声にせよ\n- 【オチ】4コマ目でズレを確定し笑いを完成。全エネルギーをここに集中投下\n- 【天丼】1コマ目の小ネタを3コマ目で形を変えて再登場させ、4コマ目で爆発させる（4コマでは最強テクニック）\n- 【ノリツッコミ】ツッコミ役が一旦ボケに乗っかってから「いや待てよ！」と自分で崩す\n- 【かぶせ】ボケの直後にさらにもう一段ボケを重ねて畳み掛ける\n\n■ セリフの質的ルール:\n- セリフは短く鋭く。だらだら説明するセリフは削って、一言で致命傷を与えるセリフにする\n- 可能なら言葉遊び、ダブルミーニング、予想の裏切りを仕込む\n- 全てのセリフに笑いを無理に入れず、笑いの最大ポイントをオチに集中させる\n- ギャグ強度は最大。おとなしい優等生ギャグは禁止。強烈にボケまくれ");
+     }
++    // [v3.14] FACS表情制御
++    if (enhanceFACS) {
++      enhanceCategories.push("【FACS (Facial Action Coding System) エンジン】キャラクターの表情を「驚き」「悲しみ」といった抽象的な感情語ではなく、具体的な筋肉の動き（Action Units）と解剖学的な説明で描写してください。\n例:\n・驚愕: (AU1+AU2眉の引き上げ, AU5上眼瞼の引き上げ, AU26顎の下制)\n・激怒: (AU4眉の引き下げと寄せ, AU7眼瞼の収縮, AU10上唇の引き上げ)\n・歓喜: (AU6頬の引き上げ, AU12口角の引き上げ)\n状況欄（Visual Action）の表情描写に必ず具体的なAUベースの物理的変化（眉、目、口、頬の筋肉の動き）を明記し、AIが表情崩壊を起こさずに正確に描画できるようにしてください。");
++    }
+     // [v2.69] コマ割り演出・時間演出は削除済み（ChatGPT画像生成ではタグ形式が解釈されず効果なし）
+ 
+     setEnhanceLog(prev => prev + `\n> [CONFIG] 強化カテゴリ: ${enhanceCategories.length}個`);
+@@ -827,6 +832,7 @@ ${scenario}
+         setEnhanceBackgrounds(false);
+         setEnhanceCameraWork(false);
+         setEnhanceDialogue(false);
++        setEnhanceFACS(false);
+         // [v2.69] コマ割り・時間演出は削除済み
+         showStatus("シナリオ強化完了！");
+       } else {
+@@ -2195,7 +2201,15 @@ REFERENCE IMAGE CLOTHING POLICY (CRITICAL):
+ - The attached reference image must ONLY be used for: face shape, hairstyle, hair color, eye color, eye shape, skin tone, and accessories (glasses, hair clips, etc.).
+ - COMPLETELY IGNORE the clothing/outfit shown in the reference image.
+ - For clothing, follow ONLY the OUTFIT OVERRIDE instruction below. The reference image's clothing is IRRELEVANT.` : ''}
+-
++${enhanceFACS ? `
++[ 🧬 FACS EXPRESSION ENGINE (Action Units) — MANDATORY ]
++Instead of relying on abstract emotional tags, construct all facial expressions using physical anatomical Action Units (AU).
++- Surprise/Fear: (AU1+AU2 raised inner/outer brows:1.5), (AU5 upper lid raiser:1.5), (AU26 jaw drop:1.4)
++- Anger/Fury: (AU4 brow lowerer/knitter:1.6), (AU7 lid tightener:1.4), (AU10 upper lip raiser:1.3), (AU23 lip tightener:1.4)
++- Genuine Joy: (AU6 cheek raiser:1.4), (AU12 lip corner puller:1.5)
++- Sadness/Despair: (AU1 inner brow raiser:1.5), (AU4 brow lowerer:1.4), (AU15 lip corner depressor:1.5)
++CRITICAL: When rendering faces, emphasize specific muscle contractions (brows, eyelids, lips, cheeks) to create authentic, intense expressions. Avoid generic "emoji" faces.
++` : ''}
+ Important Character Cast:
+ ${VAR_CAST_LIST}
+ ${activeOutfit ? `OUTFIT OVERRIDE (Mandatory): All characters MUST be wearing the following outfit, overriding their default clothing: ${activeOutfit}. If weighted tags are provided (e.g. "(swimsuit:1.5)"), apply them directly. Strictly follow this outfit specification.` : ''}
+@@ -3511,8 +3525,8 @@ ${finalPrompt}
+                         ⚠️ 演出が過激になるとSTEP4でコンテンツポリシーに引っかかる場合があります（既存の救済機能で対応可能）。
+                       </p>
+ 
+-                      {/* 6つのトグルスイッチ [v2.47] カメラワーク・セリフ追加 */}
+-                      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
++                      {/* 7つのトグルスイッチ [v3.14] FACS追加 */}
++                      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                         {/* 表情 */}
+                         <label className={`relative flex items-center justify-center p-3 rounded-xl cursor-pointer border-2 border-b-4 transition-all duration-100 group overflow-hidden select-none active:border-b-2 active:translate-y-0.5 ${
+                           enhanceExpressions ? 'bg-white text-black border-slate-300' : 'bg-[#1e293b] text-slate-400 border-[#0f172a] hover:bg-[#334155]'
+@@ -3615,12 +3629,29 @@ ${finalPrompt}
+                           </div>
+                         </label>
+ 
++                        {/* [v3.14] FACS制御追加 */}
++                        <label className={`relative flex items-center justify-center p-3 rounded-xl cursor-pointer border-2 border-b-4 transition-all duration-100 group overflow-hidden select-none active:border-b-2 active:translate-y-0.5 ${
++                          enhanceFACS ? 'bg-white text-black border-slate-300' : 'bg-[#1e293b] text-slate-400 border-[#0f172a] hover:bg-[#334155]'
++                        }`}>
++                          <input type="checkbox" className="hidden" checked={enhanceFACS} onChange={() => setEnhanceFACS(!enhanceFACS)} />
++                          {enhanceFACS && (
++                            <div className="absolute top-2 right-2 bg-white text-blue-600 rounded-full p-0.5 shadow-sm">
++                              <CheckCircle2 size={12} strokeWidth={4} />
++                            </div>
++                          )}
++                          <div className="text-center">
++                            <div className={`text-2xl mb-1 ${enhanceFACS ? 'scale-110' : 'opacity-70 grayscale'}`}>🧬</div>
++                            <div className="text-[11px] font-bold tracking-wider">FACS制御</div>
++                            <div className="text-[9px] opacity-70 mt-1">筋肉単位の表情指定</div>
++                          </div>
++                        </label>
++
+                         {/* [v2.69] コマ割り演出・時間演出は削除（ChatGPT画像生成でタグ形式が効果なしのため） */}
+                       </div>
+ 
+                       {/* 選択中の内容を表示 */}
+                       <div className="text-xs text-orange-200/80 text-center font-mono py-1.5 bg-black/20 border border-white/5 rounded-md">
+-                        強化対象: {[enhanceExpressions && "表情", enhanceBodyLang && "身体", enhanceEffects && "演出", enhanceBackgrounds && "背景", enhanceCameraWork && "カメラ", enhanceDialogue && "セリフ"].filter(Boolean).join(" / ") || "未選択"}
++                        強化対象: {[enhanceExpressions && "表情", enhanceBodyLang && "身体", enhanceEffects && "演出", enhanceBackgrounds && "背景", enhanceCameraWork && "カメラ", enhanceDialogue && "セリフ", enhanceFACS && "FACS"].filter(Boolean).join(" / ") || "未選択"}
+                       </div>
+ 
+                       {/* 実行・元に戻すボタン */}
+@@ -3628,7 +3659,7 @@ ${finalPrompt}
+                         <button
+                           className="flex-1 bg-orange-600 hover:bg-orange-500 disabled:bg-slate-700 disabled:opacity-50 text-white font-bold py-2 rounded-lg flex items-center justify-center gap-2 transition-all text-sm"
+                           onClick={enhanceScenario}
+-                          disabled={isEnhancing || !(enhanceExpressions || enhanceBodyLang || enhanceEffects || enhanceBackgrounds || enhanceCameraWork || enhanceDialogue)}
++                          disabled={isEnhancing || !(enhanceExpressions || enhanceBodyLang || enhanceEffects || enhanceBackgrounds || enhanceCameraWork || enhanceDialogue || enhanceFACS)}
+                         >
+                           {isEnhancing ? (
+                             <><Loader2 size={16} className="animate-spin" /> 強化中...</>

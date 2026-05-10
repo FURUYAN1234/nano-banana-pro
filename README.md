@@ -140,6 +140,9 @@ This system is not a simple "prompt-and-generate" tool. It is a **multi-stage co
 * **Scenario → Prompt Compiler**: An intermediate processing layer that "compiles" AI natural language scenarios into structured image prompts. Emotion tags → VFX conversion, camera names → lens distortion tag mapping, and speaker analysis → placement rule generation are all fully automated.
   AIの自然言語シナリオを構造化プロンプトに「コンパイル」する中間処理。感情タグ→VFX変換、カメラ名→レンズ歪みタグ変換、話者解析→配置ルール生成を全自動で行います。
 
+* **FACS (Facial Action Coding System) Engine / FACS（顔面動作符号化システム）エンジン**: Replaces vague emotional tags with precise anatomical muscle movements (Action Units) injected directly into the prompt. This physical-level expression control drastically reduces facial distortion and maintains extreme character consistency.
+  従来の抽象的な感情タグを廃止し、解剖学的な筋肉の動き（Action Units）をプロンプトに直接注入します。物理レベルでの表情制御により、顔の崩れを劇的に抑えつつ、極めて高い一貫性を実現しています。
+
 * **Deterministic Camera Diversity**: Fisher-Yates shuffle mathematically guarantees that all 4 panels use different camera angles — the probability of any two panels sharing the same angle is zero.
   Fisher-Yatesシャッフルにより、4パネルが同じカメラアングルになる確率を数学的にゼロにします。
 
@@ -627,6 +630,11 @@ Developed by **FURU**
 ---
 
 ## 📋 ChangeLog
+
+### v3.15-alpha (2026-05-10)
+
+- **[Feature]** FACS (Facial Action Coding System) エンジンを実装。従来の抽象的な感情タグを廃止し、Action Units（AU）を用いた解剖学的記述をプロンプトに注入するロジックを導入しました。これにより、表情の崩壊を物理レベルで抑制し、高度なキャラクター表現が可能になりました。 / Implemented the FACS (Facial Action Coding System) engine. Replaced vague emotional tags with anatomical descriptions using Action Units (AUs) injected directly into the prompt, effectively suppressing facial distortion at the physical level and enabling highly nuanced character expressions.
+- **[System]** ChatGPT (DALL-E 3) 利用時の4000文字制限を回避するため、プロンプトアーキテクチャの超圧縮最適化を実施。命令文を「単語・箇条書き・MUST/NO構文」へと極限まで削ぎ落とし、クオリティを維持・向上させつつ安全圏での生成を実現しました。 / Executed ultra-compression optimization of the prompt architecture to bypass the 4,000-character limit when using ChatGPT (DALL-E 3). Instructions were ruthlessly stripped down to "keywords, bullet points, and MUST/NO syntax," ensuring safe generation while maintaining or even improving image quality.
 
 ### v3.14-alpha (2026-05-10)
 

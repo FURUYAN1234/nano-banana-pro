@@ -1,5 +1,9 @@
-### v3.13-alpha (2026-05-10)
-- **[Feature]** キャラクター解析結果および生成シナリオの出力エリア下部に専用のコピーボタン（クリップボードコピペ機能）を実装。コピー時の状態遷移（「コピー完了」のフラッシュ表示）および、生成前の非活性化（Disabled）を完全にサポートし、手作業によるコピー＆ペーストの作業効率を劇的に向上させました。 / Implemented dedicated copy-to-clipboard buttons below the character analysis and generated scenario text areas. Supports visual feedback (green "Copied" flash) and disabled state before generation, drastically improving the efficiency of manual copy-paste workflows.
-- **[BugFix]** `extractPanel`での髪色抽出において正規表現を修正し、`red hair tips` などの複合色指定から基本色が誤抽出されるバグ（シナリオブリード）を完全に解決しました。 / Fixed a regex extraction bug in `extractPanel` where compound colors like "red hair tips" caused inaccurate primary color parsing (scenario bleed), ensuring strict adherence to the exact hair descriptors.
-- **[Feature]** プロンプト内の `CAMERA ENFORCEMENT`（背景描写）におけるハードコード（bookshelves, desks 等）を撤廃し、AIが生成したシナリオ側の `Location` の値を動的に注入する仕組みに刷新。場所指定が全コマへ正確に反映されるようになりました。 / Eliminated hardcoded background elements (bookshelves, desks) in the `CAMERA ENFORCEMENT` section, replacing them with dynamic injection of the scenario's `Location` variable to ensure environmental consistency across all panels.
-- **[Improve]** ダッチアングル（Dutch angle）のカメラワーク指示を「視覚的に傾きがイメージできる表現（キャラクターが横に滑る、家具も傾く等）」に刷新し、描画AIが確実にダイナミックな傾きを反映できるよう画力・演出効果を底上げしました。 / Enhanced the structural description for Dutch angle camera work by adding visually descriptive cues (e.g., characters sliding, furniture tilting), guaranteeing that the rendering AI fully commits to the dynamic, slanted perspective.
+# Nano Banana Pro v3.14-alpha
+
+## 🚀 Latest Updates / 最新アップデート内容
+
+### [Doc] README Update for ChatGPT Optimization / ChatGPT最適化仕様の記述更新
+Updated `README.md` to accurately reflect the latest system specifications for the ChatGPT optimization mode. The documentation now details the migration to `gpt-image-2`, the implementation of ultra-compressed prompts, and clarifies that the mandatory hybrid manual copy-paste workflow (to the browser version of ChatGPT) is currently the optimal approach due to strict API rate limits.
+
+README.md内の「ChatGPT 外部生成モード」および「OpenAI API直接実行」に関する記述を、現在の最新仕様に合わせて正確に更新しました。
+具体的には、画像生成エンジンの `gpt-image-2` への移行、長文忘却対策としての「超圧縮プロンプト」の採用、およびAPIの厳しい文字数制限等の観点から、「ブラウザ版ChatGPTの新規スレッドへ手動コピペするハイブリッド運用」が最強の最適解である旨を明記しました。

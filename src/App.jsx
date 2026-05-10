@@ -35,7 +35,7 @@ import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 import { generateImageWithOpenAI, setOpenAIApiKey, getOpenAIApiKey } from './lib/openai';
 
-const SYSTEM_VERSION = "v3.14-alpha";
+const SYSTEM_VERSION = "v3.15-alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -445,6 +445,7 @@ function App() {
   const [enhanceBackgrounds, setEnhanceBackgrounds] = useState(false); // 背景強化
   const [enhanceCameraWork, setEnhanceCameraWork] = useState(false);   // [v2.47] カメラワーク強化
   const [enhanceDialogue, setEnhanceDialogue] = useState(false);       // [v2.47] セリフ・ギャグ強化
+  const [enhanceFACS, setEnhanceFACS] = useState(false);               // [v3.14] FACS表情制御 (実験的)
   // [v2.69] コマ割り演出・時間演出を削除（ChatGPT画像生成ではタグ形式の指示が解釈されず効果ゼロのため）
   const [isEnhancing, setIsEnhancing] = useState(false);
   const [enhanceLog, setEnhanceLog] = useState("");
@@ -470,6 +471,7 @@ function App() {
   const [isEndlessMode, setIsEndlessMode] = useState(false); // [v2.86] 無限ループ生成フラグ
   const isEndlessModeRef = useRef(false);
   const [fullAutoStep, setFullAutoStep] = useState(0); // 0=待機, 2=STEP2, 3=STEP3, 4=STEP4
+  // eslint-disable-next-line no-unused-vars
   const [fullAutoCountdown, setFullAutoCountdown] = useState(0); // カウントダウン表示用
   const [triggerFullAuto, setTriggerFullAuto] = useState(0); // [v2.78] Effect Trigger
   const fullAutoAbortRef = useRef(false); // 中断フラグ（useRefで即時反映）
@@ -715,7 +717,7 @@ function App() {
   // シナリオ強化機能: 選択されたカテゴリに基づいてシナリオの演出を強化する
   const enhanceScenario = async () => {
     if (!scenario || scenario.length < 20) return showStatus("先にシナリオを生成してください。");
-    const anySelected = enhanceExpressions || enhanceBodyLang || enhanceEffects || enhanceBackgrounds || enhanceCameraWork || enhanceDialogue;
+    const anySelected = enhanceExpressions || enhanceBodyLang || enhanceEffects || enhanceBackgrounds || enhanceCameraWork || enhanceDialogue || enhanceFACS;
     if (!anySelected) return showStatus("少なくとも1つの強化カテゴリをONにしてください。");
     if (isEnhancing) return;
 
@@ -749,6 +751,10 @@ function App() {
     // [v2.47] セリフ・ギャグ強化
     if (enhanceDialogue) {
       enhanceCategories.push("【セリフ・ギャグの強化 — お笑い構造メソッド適用】4コマ漫画の笑いの構造を根本から再設計してください。\n\n■ ズレを作る技法（以下から最低2つ適用せよ）:\n- 【置換】状況や出来事を全く別の文脈に言い換えてセリフを書き直す（例: 深刻な会議 → 小学生の給食会議のようなセリフに）\n- 【誇張】リアクションや感情を極限まで増幅する。「驚く」→「魂が肉体から離脱するレベルで驚愕」\n- 【逆転】キャラの普段の立場・力関係を入れ替えたセリフにする（普段クールなキャラが取り乱す、普段バカなキャラが正論を言う等）\n- 【不条理】脈絡のない狂った要素を堂々とセリフに混ぜる。多少意味不明でも勢いで笑えればOK\n- 【緊張と緩和】3コマ目まで空気を極限まで張り詰めるセリフにし、4コマ目で完全崩壊させる\n- 【常識に戻る】全員が暴走する中、1人だけ冷静に「いや普通に考えておかしいだろ」と常識を提示する\n\n■ ズレを見せる構成技法:\n- 【フリ】1コマ目のセリフは「普通の予想」を作る前置き。ここでは笑わせなくてよい\n- 【ボケ】2コマ目でズレた発言を投入し「あれ？」と思わせる\n- 【ツッコミ】ボケで生まれたズレを鋭い一言で指摘して笑いを明確化する。弱い定型ツッコミは禁止、状況に即した具体的な叫び声にせよ\n- 【オチ】4コマ目でズレを確定し笑いを完成。全エネルギーをここに集中投下\n- 【天丼】1コマ目の小ネタを3コマ目で形を変えて再登場させ、4コマ目で爆発させる（4コマでは最強テクニック）\n- 【ノリツッコミ】ツッコミ役が一旦ボケに乗っかってから「いや待てよ！」と自分で崩す\n- 【かぶせ】ボケの直後にさらにもう一段ボケを重ねて畳み掛ける\n\n■ セリフの質的ルール:\n- セリフは短く鋭く。だらだら説明するセリフは削って、一言で致命傷を与えるセリフにする\n- 可能なら言葉遊び、ダブルミーニング、予想の裏切りを仕込む\n- 全てのセリフに笑いを無理に入れず、笑いの最大ポイントをオチに集中させる\n- ギャグ強度は最大。おとなしい優等生ギャグは禁止。強烈にボケまくれ");
+    }
+    // [v3.14] FACS表情制御
+    if (enhanceFACS) {
+      enhanceCategories.push("【FACS (Facial Action Coding System) エンジン】キャラクターの表情を「驚き」「悲しみ」といった抽象的な感情語ではなく、具体的な筋肉の動き（Action Units）と解剖学的な説明で描写してください。\n例:\n・驚愕: (AU1+AU2眉の引き上げ, AU5上眼瞼の引き上げ, AU26顎の下制)\n・激怒: (AU4眉の引き下げと寄せ, AU7眼瞼の収縮, AU10上唇の引き上げ)\n・歓喜: (AU6頬の引き上げ, AU12口角の引き上げ)\n状況欄（Visual Action）の表情描写に必ず具体的なAUベースの物理的変化（眉、目、口、頬の筋肉の動き）を明記し、AIが表情崩壊を起こさずに正確に描画できるようにしてください。");
     }
     // [v2.69] コマ割り演出・時間演出は削除済み（ChatGPT画像生成ではタグ形式が解釈されず効果なし）
 
@@ -827,6 +833,7 @@ ${scenario}
         setEnhanceBackgrounds(false);
         setEnhanceCameraWork(false);
         setEnhanceDialogue(false);
+        setEnhanceFACS(false);
         // [v2.69] コマ割り・時間演出は削除済み
         showStatus("シナリオ強化完了！");
       } else {
@@ -2160,98 +2167,98 @@ SPEECH BUBBLE POSITION LOCK:
       // Imagen 4 understands natural language perfectly and struggles with pseudocode.
       // [v2.61] ChatGPTモード時は先頭にフォーマットアンカーを挿入（サンドイッチ構造）
       const formatAnchor = enableChatGPTMode
-        ? `[FORMAT: A4 PORTRAIT 1024×1448px — DO NOT generate square, landscape, or extra-tall strip images]
-`
+        ? `[FORMAT: A4 PORTRAIT 1024×1448px — NO square/landscape/tall]\n`
         : '';
-      const constructedPrompt = `${formatAnchor}Generate a highly detailed, professional 4-koma (4-panel vertical strip) manga.
-The final image MUST have a tall portrait aspect ratio exactly equivalent to an A4 paper sheet (1:1.414 proportion).
+      const constructedPrompt = `${formatAnchor}Generate highly detailed, professional 4-koma (4-panel vertical) manga.
+MUST have tall portrait aspect ratio (A4 paper, 1:1.414).
 
-CRITICAL LAYOUT COMMAND: 
-The canvas MUST be completely filled by the panels. The 4 manga panels MUST be extremely wide, occupying 95% of the total canvas width. 
-Do NOT draw large white margins on the left, right, top, or bottom edges.
-At the very top of the page, draw a large, bold, black Japanese text title that says exactly: ${safeTopic}
-Do NOT surround the title text with quotation marks, apostrophes, single quotes, or any other punctuation marks. Draw ONLY the raw Japanese characters of the title.
-Draw a tiny English watermark exactly ON the bottom-right border of the 4th panel that displays the exact text "${watermarkEng}" in clean sans-serif font.
-ALSO draw a tiny Japanese watermark exactly ON the bottom-left border (outside the frame) of the 4th panel that displays the exact text "ネームから全自動の自律式統合AI漫画システム :https://x.gd/JiWor". Ensure its size does not interfere with the right watermark.
-Please ensure both watermark texts are drawn in a standard horizontal orientation (left-to-right reading direction). Do not draw them vertically or rotated. Do NOT draw duplicated or overlapping watermarks. Do NOT add any extra white space below the 4th panel.
+LAYOUT:
+Canvas completely filled by panels (95% width). NO large white margins.
+Top page: draw large bold black Japanese text title EXACTLY: ${safeTopic}
+NO quotes/punctuation around title.
+Draw tiny English watermark ON bottom-right border of 4th panel: "${watermarkEng}" (clean sans-serif).
+Draw tiny Japanese watermark ON bottom-left border of 4th panel: "ネームから全自動の自律式統合AI漫画システム :https://x.gd/JiWor".
+Watermarks standard horizontal. NO overlap. NO extra white space below panel 4.
 
-CRITICAL PANEL SIZE COMMAND: The canvas MUST be divided into exactly 4 EQUAL horizontal panels stacked vertically from top to bottom. All 4 panels MUST be the EXACT SAME height and EXACT SAME width.
-CRITICAL GUTTER WIDTH: Between each pair of adjacent panels (Panel 1-2, Panel 2-3, Panel 3-4), there MUST be a THICK white gutter (gap) that is approximately 3% of the total canvas height (about 40-45 pixels). These gutters MUST be clearly visible as bold white separator bands. Do NOT let panels touch or nearly touch each other — the separation must be obvious and uniform between all panels.
-The art style is: ${styleCore}.
-(Apply dramatic anime cinematic lighting and high-budget visual effects, but do not clutter the screen with excessive speedlines).
+PANELS: Exactly 4 EQUAL horizontal panels, stacked vertically. EXACT SAME height/width.
+GUTTERS: THICK white gap (3% canvas height, 40-45px) between panels. Panels MUST NOT touch.
+Style: ${styleCore}.
+(Dramatic anime cinematic lighting, high-budget VFX, NO excessive speedlines).
+Setting: ${safeLocation}.
 
-Overall Setting: ${safeLocation}.
-
-CRITICAL VISUAL REPRODUCTION PROTOCOL (v2.17 Enhanced):
-If an image is attached, you MUST reproduce the character designs from the attached reference image by strictly following these rules:
-- REPRODUCE the EXACT hairstyle (length, style, bangs), hair color, eye color, eye shape, and skin tone for each character in every panel.
-- REPRODUCE the EXACT presence or absence of accessories: glasses, hair clips, ribbons, earrings, hats, etc.
-- DO NOT add glasses to any character who does not wear them in the reference. DO NOT remove glasses from any character who DOES wear them.
-- DO NOT change any character's hair color, hair length, or hairstyle between panels or from the reference.
-- DO NOT swap features between characters (e.g., giving Character A's hair color to Character B).
-- If a character has a unique charm point (mole, scar, freckles, snaggletooth), it MUST appear in EVERY panel.
+VISUAL REPRODUCTION:
+Strictly reproduce reference image designs:
+- EXACT hairstyle/color, eye color/shape, skin tone.
+- EXACT accessories (glasses, hats). NO add/remove.
+- NO feature swapping. Keep unique charm points in EVERY panel.
 ${activeOutfit ? `
-REFERENCE IMAGE CLOTHING POLICY (CRITICAL):
-- The attached reference image must ONLY be used for: face shape, hairstyle, hair color, eye color, eye shape, skin tone, and accessories (glasses, hair clips, etc.).
-- COMPLETELY IGNORE the clothing/outfit shown in the reference image.
-- For clothing, follow ONLY the OUTFIT OVERRIDE instruction below. The reference image's clothing is IRRELEVANT.` : ''}
-
-Important Character Cast:
+CLOTHING:
+- Reference image ONLY for face, hair, skin, accessories.
+- IGNORE reference clothing. Use ONLY the OUTFIT OVERRIDE below.` : ''}
+${enhanceFACS ? `
+[FACS ENGINE: Action Units(AU) MANDATORY]
+Construct facial expressions using anatomical AU tags, NOT abstract emotions.
+- Surprise/Fear: (AU1+AU2 raised brows:1.5), (AU5 upper lid raiser:1.5), (AU26 jaw drop:1.4)
+- Anger: (AU4 brow knitter:1.6), (AU7 lid tightener:1.4), (AU10 upper lip raiser:1.3), (AU23 lip tightener:1.4)
+- Joy: (AU6 cheek raiser:1.4), (AU12 lip corner puller:1.5)
+- Sadness: (AU1 inner brow raiser:1.5), (AU4 brow lowerer:1.4), (AU15 lip corner depressor:1.5)
+CRITICAL: Emphasize specific muscle contractions (brows/eyelids/lips/cheeks) for intense realism. NO generic emojis.` : ''}
+Cast:
 ${VAR_CAST_LIST}
-${activeOutfit ? `OUTFIT OVERRIDE (Mandatory): All characters MUST be wearing the following outfit, overriding their default clothing: ${activeOutfit}. If weighted tags are provided (e.g. "(swimsuit:1.5)"), apply them directly. Strictly follow this outfit specification.` : ''}
-【Character Identity Anchor (v2.25)】: Before drawing each panel, mentally confirm: "Does this character's hair color, hairstyle, eye color, glasses status, and outfit match the reference and previous panels?" If ANY detail differs, redraw it. Cross-panel consistency is MANDATORY.
+${activeOutfit ? `OUTFIT OVERRIDE: All characters MUST wear exactly: ${activeOutfit}. Apply tags directly.` : ''}
+【Identity Anchor】: Cross-panel consistency is MANDATORY. Redraw if hair/eyes/glasses/outfit mismatch.
 ${buildIdentityMatrix(castList)}
-CROSS-PANEL OUTFIT CONSISTENCY (MANDATORY): Every character MUST wear the EXACT same outfit in ALL 4 panels. Do NOT change, add, or remove any clothing item between panels. If no outfit override is specified, use the outfit from the character reference sheet and keep it identical across every panel.
+OUTFIT CONSISTENCY: Every character MUST wear EXACT same outfit in ALL 4 panels. NO changes.
 
-Camera and Composition Rules:
+Camera & Comp:
 ${dynamicCamera}
-CRITICAL ANTI-CLONING RULE: NEVER draw the exact same character twice inside a single panel. A character can only appear ONCE per panel. Even if a character's name is mentioned multiple times in the instructions (e.g., in both the placement rule and the visual action description), they are still ONE person — draw them only ONCE.
-CRITICAL COMPOSITION RATIO: Always maintain a strict 2:3 (Manga typical vertical/portrait) golden ratio structure within each panel setup.
+ANTI-CLONING: NEVER draw the same character twice in a single panel.
+COMPOSITION: Strict 2:3 golden ratio inside each panel.
 
-Technical Quality Definitions (System Dictionary):
-(clean anime illustration background with structured architecture and environment: 2.5)
-(Meticulously clean line art with smooth cel shading: 2.5)
-(Soft diffused backlighting with gentle rim light: 2.4)
-(Cinematic depth of field with soft bokeh, low texture density: 2.3)
-(ABSOLUTELY NO text or SFX outside of speech bubbles: 2.8)
-(ABSOLUTELY NO ENGLISH TEXT outside watermark. Do NOT draw terms like 'G-pen', 'Gleam', 'HA': 3.0)
+Tech Dict:
+(clean anime illustration background: 2.5)
+(Meticulous clean line art, smooth cel shading: 2.5)
+(Soft diffused backlight, rim light: 2.4)
+(Cinematic depth of field, soft bokeh: 2.3)
+(NO text/SFX outside speech bubbles: 2.8)
+(NO ENGLISH TEXT outside watermark. NO 'G-pen'/'HA': 3.0)
 
 
-## Panel 1 (Top)
+## Panel 1
 ${buildEmotionBlock(panel1Text)}
 ${extractPlacementRule(panel1Text)}
 ${extractCastLimitRule(panel1Text)}
 Camera: ${getCameraForPanel(panel1Text)}.
-[LENS ENFORCEMENT]: (apply ABOVE CAMERA DISTORTION MAX:2.9), (NEVER a normal photograph:3.0), (extreme severe perspective warping:2.7), (violently tilted non-horizontal horizon:2.6), (near-side body parts 200% larger:2.5). This is a LIFE OR DEATH REQUIREMENT, literally break the normal camera angle.
-Visual Action (Do NOT write this as text on the canvas, draw it visually): ${injectOutfitReminder(extractActionOnly(panel1Text, extractPlacementRule(panel1Text)))}.
-Dialogue (ONLY write this inside speech bubbles): ${extractDialogueOnly(panel1Text)}.
+[LENS]: (ABOVE CAMERA DISTORTION MAX:2.9), (NEVER normal photograph:3.0), (extreme severe perspective warp:2.7), (violently tilted horizon:2.6). Break normal camera angle.
+Action (Visual ONLY): ${injectOutfitReminder(extractActionOnly(panel1Text, extractPlacementRule(panel1Text)))}.
+Dialogue (ONLY inside bubbles): ${extractDialogueOnly(panel1Text)}.
 
 ## Panel 2
 ${buildEmotionBlock(panel2Text)}
 ${extractPlacementRule(panel2Text)}
 ${extractCastLimitRule(panel2Text)}
 Camera: ${getCameraForPanel(panel2Text)}.
-[LENS ENFORCEMENT]: (apply ABOVE CAMERA DISTORTION MAX:2.9), (NEVER a normal photograph:3.0), (extreme severe perspective warping:2.7), (violently tilted non-horizontal horizon:2.6), (near-side body parts 200% larger:2.5). This is a LIFE OR DEATH REQUIREMENT, literally break the normal camera angle.
-Visual Action (Do NOT write this as text on the canvas, draw it visually): ${injectOutfitReminder(extractActionOnly(panel2Text, extractPlacementRule(panel2Text)))}.
-Dialogue (ONLY write this inside speech bubbles): ${extractDialogueOnly(panel2Text)}.
+[LENS]: (ABOVE CAMERA DISTORTION MAX:2.9), (NEVER normal photograph:3.0), (extreme severe perspective warp:2.7), (violently tilted horizon:2.6). Break normal camera angle.
+Action (Visual ONLY): ${injectOutfitReminder(extractActionOnly(panel2Text, extractPlacementRule(panel2Text)))}.
+Dialogue (ONLY inside bubbles): ${extractDialogueOnly(panel2Text)}.
 
 ## Panel 3
 ${buildEmotionBlock(panel3Text)}
 ${extractPlacementRule(panel3Text)}
 ${extractCastLimitRule(panel3Text)}
 Camera: ${getCameraForPanel(panel3Text)}.
-[LENS ENFORCEMENT]: (apply ABOVE CAMERA DISTORTION MAX:2.9), (NEVER a normal photograph:3.0), (extreme severe perspective warping:2.7), (violently tilted non-horizontal horizon:2.6), (near-side body parts 200% larger:2.5). This is a LIFE OR DEATH REQUIREMENT, literally break the normal camera angle.
-Visual Action (Do NOT write this as text on the canvas, draw it visually): ${injectOutfitReminder(extractActionOnly(panel3Text, extractPlacementRule(panel3Text)))}.
-Dialogue (ONLY write this inside speech bubbles): ${extractDialogueOnly(panel3Text)}.
+[LENS]: (ABOVE CAMERA DISTORTION MAX:2.9), (NEVER normal photograph:3.0), (extreme severe perspective warp:2.7), (violently tilted horizon:2.6). Break normal camera angle.
+Action (Visual ONLY): ${injectOutfitReminder(extractActionOnly(panel3Text, extractPlacementRule(panel3Text)))}.
+Dialogue (ONLY inside bubbles): ${extractDialogueOnly(panel3Text)}.
 
-## Panel 4 (Bottom)
+## Panel 4
 ${buildEmotionBlock(panel4Text)}
 ${extractPlacementRule(panel4Text)}
 ${extractCastLimitRule(panel4Text)}
 Camera: ${getCameraForPanel(panel4Text)}.
-[LENS ENFORCEMENT]: (apply ABOVE CAMERA DISTORTION MAX:2.9), (NEVER a normal photograph:3.0), (extreme severe perspective warping:2.7), (violently tilted non-horizontal horizon:2.6), (near-side body parts 200% larger:2.5). This is a LIFE OR DEATH REQUIREMENT, literally break the normal camera angle.
-Visual Action (Do NOT write this as text on the canvas, draw it visually): ${injectOutfitReminder(extractActionOnly(panel4Text, extractPlacementRule(panel4Text)))}.
-Dialogue (ONLY write this inside speech bubbles): ${extractDialogueOnly(panel4Text)}.
+[LENS]: (ABOVE CAMERA DISTORTION MAX:2.9), (NEVER normal photograph:3.0), (extreme severe perspective warp:2.7), (violently tilted horizon:2.6). Break normal camera angle.
+Action (Visual ONLY): ${injectOutfitReminder(extractActionOnly(panel4Text, extractPlacementRule(panel4Text)))}.
+Dialogue (ONLY inside bubbles): ${extractDialogueOnly(panel4Text)}.
 
 Important constraints:
 - Ensure the characters accurately reflect classic anime styles.
@@ -2922,6 +2929,7 @@ ${finalPrompt}
   };
 
   // フルオート中断
+  // eslint-disable-next-line no-unused-vars
   const abortFullAuto = () => {
     fullAutoAbortRef.current = true;
     if (fullAutoStep > 0 || isAnalyzing || isSearching || isAssembling || isGeneratingImage) {
@@ -3511,8 +3519,8 @@ ${finalPrompt}
                         ⚠️ 演出が過激になるとSTEP4でコンテンツポリシーに引っかかる場合があります（既存の救済機能で対応可能）。
                       </p>
 
-                      {/* 6つのトグルスイッチ [v2.47] カメラワーク・セリフ追加 */}
-                      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+                      {/* 7つのトグルスイッチ [v3.14] FACS追加 */}
+                      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                         {/* 表情 */}
                         <label className={`relative flex items-center justify-center p-3 rounded-xl cursor-pointer border-2 border-b-4 transition-all duration-100 group overflow-hidden select-none active:border-b-2 active:translate-y-0.5 ${
                           enhanceExpressions ? 'bg-white text-black border-slate-300' : 'bg-[#1e293b] text-slate-400 border-[#0f172a] hover:bg-[#334155]'
@@ -3615,12 +3623,29 @@ ${finalPrompt}
                           </div>
                         </label>
 
+                        {/* [v3.14] FACS制御追加 */}
+                        <label className={`relative flex items-center justify-center p-3 rounded-xl cursor-pointer border-2 border-b-4 transition-all duration-100 group overflow-hidden select-none active:border-b-2 active:translate-y-0.5 ${
+                          enhanceFACS ? 'bg-white text-black border-slate-300' : 'bg-[#1e293b] text-slate-400 border-[#0f172a] hover:bg-[#334155]'
+                        }`}>
+                          <input type="checkbox" className="hidden" checked={enhanceFACS} onChange={() => setEnhanceFACS(!enhanceFACS)} />
+                          {enhanceFACS && (
+                            <div className="absolute top-2 right-2 bg-white text-blue-600 rounded-full p-0.5 shadow-sm">
+                              <CheckCircle2 size={12} strokeWidth={4} />
+                            </div>
+                          )}
+                          <div className="text-center">
+                            <div className={`text-2xl mb-1 ${enhanceFACS ? 'scale-110' : 'opacity-70 grayscale'}`}>🧬</div>
+                            <div className="text-[11px] font-bold tracking-wider">FACS制御</div>
+                            <div className="text-[9px] opacity-70 mt-1">筋肉単位の表情指定</div>
+                          </div>
+                        </label>
+
                         {/* [v2.69] コマ割り演出・時間演出は削除（ChatGPT画像生成でタグ形式が効果なしのため） */}
                       </div>
 
                       {/* 選択中の内容を表示 */}
                       <div className="text-xs text-orange-200/80 text-center font-mono py-1.5 bg-black/20 border border-white/5 rounded-md">
-                        強化対象: {[enhanceExpressions && "表情", enhanceBodyLang && "身体", enhanceEffects && "演出", enhanceBackgrounds && "背景", enhanceCameraWork && "カメラ", enhanceDialogue && "セリフ"].filter(Boolean).join(" / ") || "未選択"}
+                        強化対象: {[enhanceExpressions && "表情", enhanceBodyLang && "身体", enhanceEffects && "演出", enhanceBackgrounds && "背景", enhanceCameraWork && "カメラ", enhanceDialogue && "セリフ", enhanceFACS && "FACS"].filter(Boolean).join(" / ") || "未選択"}
                       </div>
 
                       {/* 実行・元に戻すボタン */}
@@ -3628,7 +3653,7 @@ ${finalPrompt}
                         <button
                           className="flex-1 bg-orange-600 hover:bg-orange-500 disabled:bg-slate-700 disabled:opacity-50 text-white font-bold py-2 rounded-lg flex items-center justify-center gap-2 transition-all text-sm"
                           onClick={enhanceScenario}
-                          disabled={isEnhancing || !(enhanceExpressions || enhanceBodyLang || enhanceEffects || enhanceBackgrounds || enhanceCameraWork || enhanceDialogue)}
+                          disabled={isEnhancing || !(enhanceExpressions || enhanceBodyLang || enhanceEffects || enhanceBackgrounds || enhanceCameraWork || enhanceDialogue || enhanceFACS)}
                         >
                           {isEnhancing ? (
                             <><Loader2 size={16} className="animate-spin" /> 強化中...</>
