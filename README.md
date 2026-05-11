@@ -699,8 +699,11 @@ Developed by **FURU**
 - **[Major]** Story Makerエンジンから高度な物語技法（GMC+Sメソッド）を統合。「ログライン・アンカリング」による物語のブレ防止、「サブテキスト制約」による建前と本音のズレ（アイロニー）の強制、「Stakes（代償）」の吊り上げによるオチの爆発力強化を実装し、シナリオ品質が飛躍的に向上しました。 / Integrated advanced narrative techniques from the Story Maker engine (GMC+S methodology), including Logline Anchoring, Subtext-Enforced Dialogue, and Stakes Escalation to dramatically improve scenario quality and comedic impact.
 - **[UI]** 生成されたシナリオのヘッダーに、AIが構築した「Logline（ログライン）」を表示する機能を追加。プロットの設計図が可視化され、構成の意図が人間にも明確に伝わるようになりました。 / Added a visible "Logline" field to the generated scenario output, allowing users to clearly understand the AI's core narrative blueprint.
 
+### v3.26-alpha
+- **[Docs/System]** 立ちポーズ高品質化のリリースノートおよびドキュメントにおける特定の外部参照記載を一般論に基づく表現に修正し、情報セキュリティ基準を適用しました。 / Applied information security standards to remove specific external references from the standing pose enhancement release notes and documentation, replacing them with generalized terminology.
+
 ### v3.25-alpha
-- **[Prompt/Visuals]** 外部ブログ記事「GPT-Image-2時代の立ちポーズプロンプト」のテクニックを基に、内部生成プロンプトおよび「1枚絵用コピーボタン」の両方に、立ちポーズの高品質化指示（「コントラポストによる体重移動」「足先を揃える」等）を統合しました。これにより、足元の破綻を防ぎ、より自然で魅力的な立ち姿を生成可能になりました。 / Integrated high-quality standing pose techniques ("contrapposto weight-shift", "keeping toes aligned together") from an external blog post into both the internal generation prompt and the Single-Illustration Copy Button, preventing messy foot generation and creating more natural, attractive postures.
+- **[Prompt/Visuals]** 最新の生成AIにおける空間表現のベストプラクティスを基に、内部生成プロンプトおよび「1枚絵用コピーボタン」の両方に、立ちポーズの高品質化指示（「コントラポストによる体重移動」「足先を揃える」等）を統合しました。これにより、足元の破綻を防ぎ、より自然で魅力的な立ち姿を生成可能になりました。 / Integrated industry best-practice standing pose techniques ("contrapposto weight-shift", "keeping toes aligned together") into both the internal generation prompt and the Single-Illustration Copy Button, preventing messy foot generation and creating more natural, attractive postures.
 
 ### v3.24-alpha
 - **[Feature]** ヘッダー部分に、Web版ChatGPTで手動で1枚絵を生成する際にシステム独自の強力な作画ノウハウ（クリーン・セルルック・プロトコル等）を持ち出せる「1枚絵 ChatGPT用プロトコル コピーボタン（β）」を追加しました。 / Added a "Single-Illustration Protocol Copy Button (Beta)" to the header, allowing users to extract the system's powerful drawing know-how (Clean Cel-Look Protocol, etc.) and paste it directly into the Web version of ChatGPT for manual high-quality single image generation.
