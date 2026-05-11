@@ -35,7 +35,7 @@ import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 import { generateImageWithOpenAI, setOpenAIApiKey, getOpenAIApiKey } from './lib/openai';
 
-const SYSTEM_VERSION = "v3.21-alpha";
+const SYSTEM_VERSION = "v3.22-alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -2405,6 +2405,7 @@ HIGHEST PRIORITY RULES (apply to EVERY panel):
 
 [FINAL OUTPUT CHECK — REDRAW IF ANY ITEM FAILS]
 Before output, verify:
+- SELF-REVIEW ANATOMY & TEXT: After drawing the image, carefully self-review the number of fingers on all hands, verify that there are no spelling mistakes or horizontal text, and fix them yourself before displaying the final result.
 - All speech bubble text is vertical Japanese, zero horizontal text.
 - No dialogue was added beyond what was specified in Dialogue sections.
 - No extra SFX, narration, book text, sign text, or background text was added.

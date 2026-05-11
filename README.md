@@ -698,6 +698,9 @@ Developed by **FURU**
 - **[Major]** Story Makerエンジンから高度な物語技法（GMC+Sメソッド）を統合。「ログライン・アンカリング」による物語のブレ防止、「サブテキスト制約」による建前と本音のズレ（アイロニー）の強制、「Stakes（代償）」の吊り上げによるオチの爆発力強化を実装し、シナリオ品質が飛躍的に向上しました。 / Integrated advanced narrative techniques from the Story Maker engine (GMC+S methodology), including Logline Anchoring, Subtext-Enforced Dialogue, and Stakes Escalation to dramatically improve scenario quality and comedic impact.
 - **[UI]** 生成されたシナリオのヘッダーに、AIが構築した「Logline（ログライン）」を表示する機能を追加。プロットの設計図が可視化され、構成の意図が人間にも明確に伝わるようになりました。 / Added a visible "Logline" field to the generated scenario output, allowing users to clearly understand the AI's core narrative blueprint.
 
+### v3.22-alpha
+- **[Prompt/Quality]** Added "Dangerous Secret Self-Review Command" (Anatomy & Text Self-Correction Protocol) to the Final Output Check to force the AI to self-review finger counts and spelling mistakes before generating the final image. / 海外のプロンプトハック「自己レビュー命令（危険な秘密）」を導入し、画像出力前にAI自身に指の数やスペルミスを強制自己確認させる仕組みを最終チェックリストに追加しました。
+
 ### v3.21-alpha
 - **[Prompt/Visuals]** Added "Flat colors, intentional negative space" and "Clear silhouettes, distinct physical separation" to the Ultra-Compressed Prompt to prevent the homogenized "Generic AI Face" look and make characters more inpaint-friendly. / プロンプトに「クリーン・セルルック（Flat colors, intentional negative space）」と「空間分離プロトコル（Clear silhouettes）」を追加し、汎用AI顔（均質化されたAI特有の画風）を抑制・修正を容易にしました。
 
