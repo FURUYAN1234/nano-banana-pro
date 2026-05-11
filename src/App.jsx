@@ -35,7 +35,7 @@ import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 import { generateImageWithOpenAI, setOpenAIApiKey, getOpenAIApiKey } from './lib/openai';
 
-const SYSTEM_VERSION = "v3.22-alpha";
+const SYSTEM_VERSION = "v3.24-alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -2979,7 +2979,7 @@ ${finalPrompt}
         provider="openai" 
       />
       {/* STICKY TOP PROGRESS BAR */}
-      <div className="fixed top-0 left-0 right-0 z-[100] bg-[#0f1115] border-b border-white/10 px-2 md:px-8 py-3 shadow-xl w-full">
+      <div className="fixed top-0 left-0 right-0 z-[100] bg-[#0f1115] border-b border-white/10 px-2 md:px-8 py-2 md:py-3 shadow-xl w-full flex flex-col gap-2 md:gap-3">
         <div className="flex flex-wrap xl:flex-nowrap items-center justify-center max-w-7xl mx-auto w-full gap-y-3">
           
           {/* Progress Steps (Center Left) */}
@@ -3077,6 +3077,54 @@ ${finalPrompt}
           </div>
         </div>
         
+        {/* [v3.23-alpha] Web版ChatGPT用 コピーボタン (β) */}
+        <div className="flex justify-center w-full max-w-7xl mx-auto px-2 pb-1">
+          <button
+            onClick={() => {
+              const protocol = `[ 🎨 ANTIGRAVITY ANIME-CEL PROTOCOL ]
+Apply the following strict visual constraints to your image generation. DO NOT ignore any of these rules.
+
+[ 1. FORMAT & ANTI-GLITTER (Clean Cel-Look) ]
+- RENDER: Pristine Japanese TV anime style. NO film grain, NO noise, NO realistic texturing. Clean gradients and sharp ink lines.
+- SURFACE: Clean anime cel-shading. Flat colors, intentional negative space. ABSOLUTELY NO magical floating particles, NO glittering/sparkling effects, NO dust motes, NO lens flares. Keep the air clean and empty. 
+
+[ 2. VISUAL HIERARCHY (Spatial Isolation) ]
+- LINE WEIGHT: Foreground characters MUST have 3px bold ink outlines. Background objects MUST have 1px thin lines.
+- SEPARATION: Add a subtle 2-3px WHITE GLOW (compositing effect) outside the character's outline. Characters MUST have higher saturation/contrast than the background.
+- BACKGROUND: Lower detail, soft-focus blur, 30-50% less saturation than characters. Radial backlighting behind characters is encouraged to prevent camouflage.
+
+[ 3. CINEMATIC LIGHTING & DETAILS ]
+- LIGHTING: 3-point anime lighting (key, fill, rim light). Use warm/cool color temperature contrast.
+- HAIR & EYES: Every character's hair MUST show an anime-style shine band (angel ring). Every character's eyes MUST have bright circular/star catchlight highlights (white sparkle reflections in pupils).
+- CAMERA: Use dynamic camera angles (high angle, low angle, wide-angle lens) with dramatic perspective distortion. Avoid flat, eye-level shots.
+
+[ 4. TEXT & MANGA RULES ]
+- If speech bubbles or texts are drawn, ALL text MUST be vertical Japanese. ZERO horizontal text.
+- Do not add random background text, floating letters, or unnecessary sound effects.
+
+[ 5. FINAL OUTPUT CHECK ]
+- SELF-REVIEW ANATOMY & TEXT: After drawing the image, carefully self-review the number of fingers on all hands, verify that there are no spelling mistakes or horizontal text, and fix them yourself internally before displaying the final result.`;
+              navigator.clipboard.writeText(protocol);
+              setIsPolicyCopied(true);
+              setTimeout(() => setIsPolicyCopied(false), 2000);
+            }}
+            title="Web版ChatGPT用の1枚絵生成プロンプトをクリップボードにコピーします。"
+            className={`w-full flex flex-row items-center justify-center gap-4 px-4 py-2.5 sm:py-3 rounded-xl text-sm font-black tracking-widest transition-all duration-100 border-2 border-b-4 select-none active:border-b-2 active:translate-y-0.5 overflow-hidden shadow-lg ${
+              isPolicyCopied
+                ? 'bg-white border-green-500 text-green-600'
+                : 'bg-white border-slate-300 hover:bg-slate-50 text-[#2d3a4d]'
+            }`}
+          >
+            <div className="flex items-center gap-1.5 shrink-0">
+              {isPolicyCopied ? <Check size={16} /> : <Copy size={16} />}
+              <span className="whitespace-nowrap">{isPolicyCopied ? 'コピー完了！' : '📋 1枚絵 ChatGPT用プロンプト（β）をコピー'}</span>
+            </div>
+            <span className="text-[10px] md:text-[11px] font-normal tracking-normal whitespace-nowrap shrink-0 text-slate-500">
+              【1枚絵用】Web版ChatGPTにキャラ画像を添付し「〇〇してる絵を描いて」と指示した後にペタッと貼り付けて送信すると、通常よりハイクオリティな画像を生成可能です。
+            </span>
+          </button>
+        </div>
+
         {/* Progress Line */}
         <div className="absolute bottom-0 left-0 h-[2px] bg-white/10 w-full">
           <div className={`h-full transition-all duration-700 ease-out
@@ -3094,7 +3142,7 @@ ${finalPrompt}
         <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-900/10 blur-[120px] rounded-full" />
       </div>
 
-      <div className="relative z-10 max-w-5xl mx-auto px-4 pb-4 pt-[60px] md:px-10 md:pb-10 md:pt-[68px] space-y-8">
+      <div className="relative z-10 max-w-5xl mx-auto px-4 pb-4 pt-[130px] md:px-10 md:pb-10 md:pt-[150px] space-y-8">
         {/* === ヘッダー領域 === */}
         <header className="flex flex-col items-center justify-center gap-6 bg-[#0f1115] p-6 md:p-8 rounded-xl border border-white/5 shadow-2xl relative overflow-hidden group">
           <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/5 blur-[80px] rounded-full pointer-events-none" />
@@ -4293,7 +4341,6 @@ No explanations. No partial results.`;
             )}
           </div >
           
-
         </main >
 
         <footer className="text-center text-slate-500 text-[9px] font-bold tracking-[0.3em] uppercase py-10 px-4">

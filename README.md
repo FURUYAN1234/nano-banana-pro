@@ -104,6 +104,7 @@ Users can amplify the AI's script direction with specific enhancement toggles (e
 A dedicated formatting protocol to optimize prompts for ChatGPT's image generation (currently `gpt-image-2`). Because ChatGPT tends to drop long instructions, this mode generates an "ultra-compressed prompt." It enforces A4 portrait orientation, vertical Japanese text, and includes an Anti-Noise Protocol. 
 ChatGPT（`gpt-image-2`ベース）での画像生成に最適化された専用の「超圧縮プロンプト」を出力するモードです。長文指示を忘れやすいChatGPTの特性に対応し、冗長な制約をカットしつつ、A4縦長のキャンバス指定や縦書きテキスト、GPT-image-2特有のノイズ対策を自動付与します。
 **※重要（最強のハイブリッド運用）**: このモードはAPI単体ではなく、**「生成されたプロンプトとキャラクター設定シート画像を一緒に、ブラウザ版ChatGPTの新規スレッドへ手動でコピー＆ペーストする」**ことで真価を発揮します。
+また、本システムの強力な作画ノウハウ（クリーン・セルルック・プロトコルや空間分離プロトコル）を、**1枚絵の生成用途としてWeb版ChatGPTに持ち出せる「1枚絵用プロトコル コピーボタン（β）」**を上部ヘッダーに搭載しています。手動で高画質なイラストを生成したい場合に活用してください。
 
 > **🧪 OpenAI API Direct Execution (Experimental) / OpenAI API直接実行（テスト機能）**
 > OpenAI APIキーを入力することで、アプリ内から直接画像生成API（`gpt-image-2`）を呼び出せるテスト機能を実装しています（キーはRAM上にのみ保持され、ブラウザリロードで揮発するセキュア設計）。
@@ -697,6 +698,10 @@ Developed by **FURU**
 ### v3.00.0-alpha (2026-05-03)
 - **[Major]** Story Makerエンジンから高度な物語技法（GMC+Sメソッド）を統合。「ログライン・アンカリング」による物語のブレ防止、「サブテキスト制約」による建前と本音のズレ（アイロニー）の強制、「Stakes（代償）」の吊り上げによるオチの爆発力強化を実装し、シナリオ品質が飛躍的に向上しました。 / Integrated advanced narrative techniques from the Story Maker engine (GMC+S methodology), including Logline Anchoring, Subtext-Enforced Dialogue, and Stakes Escalation to dramatically improve scenario quality and comedic impact.
 - **[UI]** 生成されたシナリオのヘッダーに、AIが構築した「Logline（ログライン）」を表示する機能を追加。プロットの設計図が可視化され、構成の意図が人間にも明確に伝わるようになりました。 / Added a visible "Logline" field to the generated scenario output, allowing users to clearly understand the AI's core narrative blueprint.
+
+### v3.24-alpha
+- **[Feature]** ヘッダー部分に、Web版ChatGPTで手動で1枚絵を生成する際にシステム独自の強力な作画ノウハウ（クリーン・セルルック・プロトコル等）を持ち出せる「1枚絵 ChatGPT用プロトコル コピーボタン（β）」を追加しました。 / Added a "Single-Illustration Protocol Copy Button (Beta)" to the header, allowing users to extract the system's powerful drawing know-how (Clean Cel-Look Protocol, etc.) and paste it directly into the Web version of ChatGPT for manual high-quality single image generation.
+- **[System]** 今後システム側の内部プロンプトが強化・アップデートされた際に、コピペ用ボタンのプロンプトテキストも同時に同期させる保守運用ルール（Prompt Synchronization Protocol）をプロジェクト防衛ラインに追加しました。 / Added the "Prompt Synchronization Protocol" to the project guardrails to ensure that future updates to the system's internal generation prompt are simultaneously synchronized with the copy-paste button's text.
 
 ### v3.22-alpha
 - **[Prompt/Quality]** Added "Dangerous Secret Self-Review Command" (Anatomy & Text Self-Correction Protocol) to the Final Output Check to force the AI to self-review finger counts and spelling mistakes before generating the final image. / 海外のプロンプトハック「自己レビュー命令（危険な秘密）」を導入し、画像出力前にAI自身に指の数やスペルミスを強制自己確認させる仕組みを最終チェックリストに追加しました。
