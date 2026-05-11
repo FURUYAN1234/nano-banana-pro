@@ -35,7 +35,7 @@ import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 import { generateImageWithOpenAI, setOpenAIApiKey, getOpenAIApiKey } from './lib/openai';
 
-const SYSTEM_VERSION = "v3.16-alpha";
+const SYSTEM_VERSION = "v3.17-alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -2544,7 +2544,8 @@ Before output, verify:
           "[GUIDE] ★手動生成を推奨します★",
           "[GUIDE] 1. 「プロンプトをコピー」ボタンを押す",
           "[GUIDE] 2. Gemini(Web版)を開く: https://gemini.google.com/app",
-          "[GUIDE] 3. 貼り付けて「思考モード」で送信する",
+          "[GUIDE] 3. 「元となるキャラクターシート画像」を一緒に添付する",
+          "[GUIDE] 4. 貼り付けて「思考モード」で送信する",
           "[COMPLETE] Image successfully generated (with warnings)."
         ]);
       } else {
@@ -2576,7 +2577,8 @@ Before output, verify:
           `[ERROR GUIDE] 【対処法】このアプリ上での自動生成は一旦諦め、以下の「手動生成手段（${enableOpenAIApi ? 'ChatGPT' : 'Gemini'} Web版）」をご利用ください。`,
           "[ERROR GUIDE] 1. 「プロンプトをコピー」ボタンを押す",
           `[ERROR GUIDE] 2. ${enableOpenAIApi ? 'ChatGPT' : 'Gemini'} (Web版) を開く: ${enableOpenAIApi ? 'https://chatgpt.com/' : 'https://gemini.google.com/app'}`,
-          `[ERROR GUIDE] 3. 貼り付けて送信する`
+          `[ERROR GUIDE] 3. 「元となるキャラクターシート画像」を一緒に添付する（※キャラ再現に必須）`,
+          `[ERROR GUIDE] 4. 貼り付けて送信する`
         ];
       } else {
         guideLines = [
@@ -2584,7 +2586,8 @@ Before output, verify:
           "[ERROR GUIDE] 【対処法】しばらく時間（数分〜）を置いてから「画像を再生成」を試すか、以下の手動手順をご利用ください。",
           "[ERROR GUIDE] 1. 「プロンプトをコピー」ボタンを押す",
           `[ERROR GUIDE] 2. ${enableOpenAIApi ? 'ChatGPT' : 'Gemini'} (Web版) を開く: ${enableOpenAIApi ? 'https://chatgpt.com/' : 'https://gemini.google.com/app'}`,
-          `[ERROR GUIDE] 3. 貼り付けて送信する`
+          `[ERROR GUIDE] 3. 「元となるキャラクターシート画像」を一緒に添付する（※キャラ再現に必須）`,
+          `[ERROR GUIDE] 4. 貼り付けて送信する`
         ];
       }
 

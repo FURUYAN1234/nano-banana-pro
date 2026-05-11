@@ -201,10 +201,10 @@ Constraint: R(x) ∈ { comprehensible range } — too much deviation = confusion
 Laughter is the gap between expectation and reality. Without engineering *what* the reader expects (via Setup) and *how* reality deviates (via Gap techniques), the AI has no optimization target.
 笑いとは「予想」と「現実」のズレです。読者が何を予想するか（フリ）と、現実がどうズレるか（ボケ技法）を設計しなければ、AIには最適化対象がありません。
 
-**Three-Layer Architecture / 3層アーキテクチャ:**
+**Six-Layer Architecture / 6層アーキテクチャ:**
 
-The system constructs comedy through three distinct engineering layers:
-本システムは3つの独立した設計層を通じてコメディを構築します：
+The system constructs comedy through six distinct engineering layers:
+本システムは6つの独立した設計層を通じてコメディを構築します：
 
 **Layer 1 — Gap Generation Engine `ΔG(x)` (6 techniques, minimum 2 required per scenario):**
 **第1層 — ズレ生成エンジン（6技法から最低2つ選択を義務化）：**
@@ -315,8 +315,8 @@ The protocol injects an explicit distribution rule: the punchline's lead role (t
 
 **The Design Philosophy / 設計哲学:**
 
-The combined effect of all three mechanisms realizes a principle analogous to theater casting: **"The actors remain the same; the genre of the script changes every time, and no single actor hogs the curtain call."** The persona defines *how* a character speaks and reacts, the punchline type defines *what situation* they are placed in, and the distribution protocol ensures *who* gets the spotlight rotates fairly. When these three layers are decoupled, the same cast produces entirely different chemical reactions across generations — without ever breaking character.
-3つのメカニズムの複合効果は、演劇のキャスティングに似た原則を実現します： **「役者は同じ、脚本のジャンルが毎回変わり、カーテンコールを独占する役者はいない」** 。ペルソナはキャラクターの「喋り方・反応の味」を規定し、オチタイプは「どんなシチュエーションに置かれるか」を規定し、分散プロトコルは「誰がスポットライトを浴びるか」を公平にローテーションします。この3層が分離されると、同じキャストでも生成のたびに全く異なる化学反応が生まれ——キャラクターの個性を壊すことなく、無限のバリエーションが得られます。
+The combined effect of all three mechanisms realizes a principle analogous to theater casting: **"The actors remain the same; the genre of the script changes every time, and no single actor hogs the curtain call."** The persona defines *how* a character speaks and reacts, the punchline type defines *what situation* they are placed in, and the distribution protocol ensures *who* gets the spotlight rotates fairly. When these three elements are decoupled, the same cast produces entirely different chemical reactions across generations — without ever breaking character.
+3つのメカニズムの複合効果は、演劇のキャスティングに似た原則を実現します： **「役者は同じ、脚本のジャンルが毎回変わり、カーテンコールを独占する役者はいない」** 。ペルソナはキャラクターの「喋り方・反応の味」を規定し、オチタイプは「どんなシチュエーションに置かれるか」を規定し、分散プロトコルは「誰がスポットライトを浴びるか」を公平にローテーションします。この3要素が分離されると、同じキャストでも生成のたびに全く異なる化学反応が生まれ——キャラクターの個性を壊すことなく、無限のバリエーションが得られます。
 
 ---
 
@@ -630,6 +630,10 @@ Developed by **FURU**
 ---
 
 ## 📋 ChangeLog
+
+### v3.17-alpha (2026-05-11)
+
+- **[UI/UX]** 画像生成APIエラー（権限エラー、タイムアウト、フォールバック発生時）に表示されるエラーガイドを刷新しました。AI制限等で手動生成（ChatGPT/Gemini Web版）へ誘導する際、キャラクターの一貫性を保つため「元となるキャラクターシート画像を一緒に添付すること」を必須の指示として明記しました。 / Revamped the error guides displayed during image generation API errors (permission errors, timeouts, and fallback occurrences). When directing users to manual generation (ChatGPT/Gemini Web) due to AI limitations, explicitly added instructions to "attach the original character sheet image" to ensure character consistency.
 
 ### v3.16-alpha (2026-05-10)
 
