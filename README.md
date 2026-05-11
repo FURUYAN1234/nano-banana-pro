@@ -698,6 +698,9 @@ Developed by **FURU**
 - **[Major]** Story Makerエンジンから高度な物語技法（GMC+Sメソッド）を統合。「ログライン・アンカリング」による物語のブレ防止、「サブテキスト制約」による建前と本音のズレ（アイロニー）の強制、「Stakes（代償）」の吊り上げによるオチの爆発力強化を実装し、シナリオ品質が飛躍的に向上しました。 / Integrated advanced narrative techniques from the Story Maker engine (GMC+S methodology), including Logline Anchoring, Subtext-Enforced Dialogue, and Stakes Escalation to dramatically improve scenario quality and comedic impact.
 - **[UI]** 生成されたシナリオのヘッダーに、AIが構築した「Logline（ログライン）」を表示する機能を追加。プロットの設計図が可視化され、構成の意図が人間にも明確に伝わるようになりました。 / Added a visible "Logline" field to the generated scenario output, allowing users to clearly understand the AI's core narrative blueprint.
 
+### v3.21-alpha
+- **[Prompt/Visuals]** Added "Flat colors, intentional negative space" and "Clear silhouettes, distinct physical separation" to the Ultra-Compressed Prompt to prevent the homogenized "AI Face/Masupi Face" look and make characters more inpaint-friendly. / プロンプトに「引き算の美学（Flat colors, intentional negative space）」と「インペイント向け分離構図（Clear silhouettes）」を追加し、マスピ顔（均質化されたAI絵）を抑制・修正を容易にしました。
+
 ### v2.99.0-alpha (2026-05-02)
 - **[Feature]** GMC Gag Structure (GMCギャグ設計) を統合。ランダムな状況生成から、GMC（Goal, Motivation, Conflict）メソッドを用いたキャラ駆動の構成に変更し、強い欲求と理不尽な障害の衝突によりオチの爆発力を強化しました。 / Transitioned from random scenario generation to a structured conflict-driven approach using the Goal, Motivation, Conflict (GMC) framework.
 - **[Feature]** Guard C Implementation (Guard Cの導入)。AI特有の退屈な「まとめのナレーション」や「汎用的な弱いリアクション（やれやれ等）」、状況説明のセリフを完全に禁止する厳格なフィルターを導入しました。 / Integrated strict AI-cliché filters to completely eliminate boring narrative summaries, weak reactions, and lazy explanatory dialogue.

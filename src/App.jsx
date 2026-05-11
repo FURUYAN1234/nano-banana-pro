@@ -35,7 +35,7 @@ import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 import { generateImageWithOpenAI, setOpenAIApiKey, getOpenAIApiKey } from './lib/openai';
 
-const SYSTEM_VERSION = "v3.20-alpha";
+const SYSTEM_VERSION = "v3.21-alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -2373,12 +2373,12 @@ HIGHEST PRIORITY RULES (apply to EVERY panel):
 - TEXT: All dialogue vertical Japanese, right-to-left reading order.
 - TITLE: Draw at top, minimal white margin.
 - RENDER: Pristine TV anime style. NO film grain, NO noise, NO realistic texturing. Clean gradients and sharp ink lines. Dramatic anime lighting (rim light, backlighting, color temperature contrast) is ENCOURAGED.
-- SURFACE: Clean anime cel-shading. ABSOLUTELY NO magical floating particles, NO glittering/sparkling effects, NO dust motes, NO lens flares, NO moiré patterns. Keep the air clean and empty. NO photorealistic textures (cloth weave, skin pores). NO page border lines around the canvas.
+- SURFACE: Clean anime cel-shading. Flat colors, limited color palette, intentional negative space (ANTI-MASUPI/AI-LOOK). ABSOLUTELY NO magical floating particles, NO glittering/sparkling effects, NO dust motes, NO lens flares, NO moiré patterns. Keep the air clean and empty. NO photorealistic textures (cloth weave, skin pores). NO page border lines around the canvas.
 
 [ 🖊️ CHARACTER VISUAL HIERARCHY & ANTI-CAMOUFLAGE — MANDATORY ]
 - LINE WEIGHT HIERARCHY: Foreground characters 3px bold ink outlines. Background objects 1px thin lines. This depth separation is MANDATORY.
 - Add a subtle 2-3px WHITE GLOW (anime compositing 撮影処理) outside the character's outline to prevent blending.
-- Characters MUST have HIGHER saturation and contrast than background. Characters visually "pop" as first thing noticed.
+- Characters MUST have HIGHER saturation and contrast than background. Characters visually "pop" as first thing noticed. Clear silhouettes, distinct physical separation between characters (INPAINT-READY COMPOSITION).
 - Background: LOWER detail, soft-focus blur, 30-50% less saturation than characters. Always use radial white backlighting (逆光ハイライト) behind characters to prevent camouflage.
 - HAIR RENDERING: Every character's hair MUST show anime-style shine band (天使の輪/angel ring highlight) — a curved white-to-transparent gradient streak across the hair.
 
