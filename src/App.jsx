@@ -2373,7 +2373,7 @@ HIGHEST PRIORITY RULES (apply to EVERY panel):
 - TEXT: All dialogue vertical Japanese, right-to-left reading order.
 - TITLE: Draw at top, minimal white margin.
 - RENDER: Pristine TV anime style. NO film grain, NO noise, NO realistic texturing. Clean gradients and sharp ink lines. Dramatic anime lighting (rim light, backlighting, color temperature contrast) is ENCOURAGED.
-- SURFACE: Clean anime cel-shading. Flat colors, limited color palette, intentional negative space (ANTI-MASUPI/AI-LOOK). ABSOLUTELY NO magical floating particles, NO glittering/sparkling effects, NO dust motes, NO lens flares, NO moiré patterns. Keep the air clean and empty. NO photorealistic textures (cloth weave, skin pores). NO page border lines around the canvas.
+- SURFACE: Clean anime cel-shading. Flat colors, limited color palette, intentional negative space (ANTI-GENERIC-AI-LOOK). ABSOLUTELY NO magical floating particles, NO glittering/sparkling effects, NO dust motes, NO lens flares, NO moiré patterns. Keep the air clean and empty. NO photorealistic textures (cloth weave, skin pores). NO page border lines around the canvas.
 
 [ 🖊️ CHARACTER VISUAL HIERARCHY & ANTI-CAMOUFLAGE — MANDATORY ]
 - LINE WEIGHT HIERARCHY: Foreground characters 3px bold ink outlines. Background objects 1px thin lines. This depth separation is MANDATORY.

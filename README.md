@@ -385,8 +385,8 @@ Weights character-specific features to prevent "fusion" or blending between char
 特徴量に重みを付与。キャラ同士が混ざり合う「フュージョン」を徹底的に防ぎます。
 
 3. **Animation Quality (Level EX-2) & Visual Polish Engine**
-Emulates physics-based lighting and SSS (Subsurface Scattering) for peak animation quality. Additionally enforces professional anime rendering standards: **mandatory eye catchlight highlights** (star-shaped or circular white reflections in pupils for "living" eyes), **anime hair shine band** (天使の輪 / angel ring — a curved gradient streak across hair), and a **line weight hierarchy** (foreground characters at 3px bold ink outlines, background objects at 1px thin lines) for clear depth separation.
-物理ベースのライティング、SSS（肌の透過）をエミュレートし最高峰のアニメクオリティを追求。加えて、プロのアニメ作画基準を強制適用：**目のキャッチライト**（瞳に星形または円形の白いハイライト反射を必須化し「生きた目」を実現）、**天使の輪**（髪に白〜透明のグラデーション光沢帯を強制描画）、**線の太さヒエラルキー**（前景キャラ3px太線/背景1px細線による奥行き分離の明確化）を全パネルに適用します。
+Emulates physics-based lighting and SSS (Subsurface Scattering) for peak animation quality. Additionally enforces professional anime rendering standards: **mandatory eye catchlight highlights**, **anime hair shine band** (天使の輪 / angel ring), and a **line weight hierarchy** (foreground 3px / background 1px) for clear depth separation. To prevent the homogenized "Generic AI Face" look, it integrates the **Clean Cel-Look Protocol** (flat colors, negative space) and the **Spatial Isolation Protocol** (distinct character silhouettes), making the output highly optimized for post-generation inpainting and manual correction.
+物理ベースのライティング、SSS（肌の透過）をエミュレートし最高峰のアニメクオリティを追求。加えて、プロのアニメ作画基準を強制適用：**目のキャッチライト**、**天使の輪**、**線の太さヒエラルキー**（前景キャラ3px太線/背景1px細線）を全パネルに適用します。さらに、均質化された「汎用AI顔」を抑制するため、**クリーン・セルルック・プロトコル**（フラットな塗りと意図的な余白）および**空間分離プロトコル**（キャラクターの物理的分離と明確なシルエット）を統合し、生成後のインペイント修正や加筆が極めて容易なコンポジションを出力します。
 
 4. **ANTIGRAVITY HYPER-DYNAMIC CAMERA PROTOCOL (v4.0)**
 AI-selected camera names (bird's eye, fish-eye, dutch angle, etc.) from the scenario stage are automatically converted into specific lens distortion weight tags during image generation. Fisher-Yates shuffle mathematically guarantees all 4 panels use different camera angles.
@@ -699,7 +699,7 @@ Developed by **FURU**
 - **[UI]** 生成されたシナリオのヘッダーに、AIが構築した「Logline（ログライン）」を表示する機能を追加。プロットの設計図が可視化され、構成の意図が人間にも明確に伝わるようになりました。 / Added a visible "Logline" field to the generated scenario output, allowing users to clearly understand the AI's core narrative blueprint.
 
 ### v3.21-alpha
-- **[Prompt/Visuals]** Added "Flat colors, intentional negative space" and "Clear silhouettes, distinct physical separation" to the Ultra-Compressed Prompt to prevent the homogenized "AI Face/Masupi Face" look and make characters more inpaint-friendly. / プロンプトに「引き算の美学（Flat colors, intentional negative space）」と「インペイント向け分離構図（Clear silhouettes）」を追加し、マスピ顔（均質化されたAI絵）を抑制・修正を容易にしました。
+- **[Prompt/Visuals]** Added "Flat colors, intentional negative space" and "Clear silhouettes, distinct physical separation" to the Ultra-Compressed Prompt to prevent the homogenized "Generic AI Face" look and make characters more inpaint-friendly. / プロンプトに「クリーン・セルルック（Flat colors, intentional negative space）」と「空間分離プロトコル（Clear silhouettes）」を追加し、汎用AI顔（均質化されたAI特有の画風）を抑制・修正を容易にしました。
 
 ### v2.99.0-alpha (2026-05-02)
 - **[Feature]** GMC Gag Structure (GMCギャグ設計) を統合。ランダムな状況生成から、GMC（Goal, Motivation, Conflict）メソッドを用いたキャラ駆動の構成に変更し、強い欲求と理不尽な障害の衝突によりオチの爆発力を強化しました。 / Transitioned from random scenario generation to a structured conflict-driven approach using the Goal, Motivation, Conflict (GMC) framework.
