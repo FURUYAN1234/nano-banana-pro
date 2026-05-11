@@ -35,7 +35,7 @@ import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 import { generateImageWithOpenAI, setOpenAIApiKey, getOpenAIApiKey } from './lib/openai';
 
-const SYSTEM_VERSION = "v3.18-alpha";
+const SYSTEM_VERSION = "v3.19-alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -2301,17 +2301,16 @@ If your output looks like a character sheet or model sheet instead of a 4-panel 
 `;
       safePrompt = antiCharSheetPrefix + safePrompt;
 
-      // [v3.03] 内部要約で重み付きタグが無視されるため、LENS ENFORCEMENTを自然言語に変換
+      // [v3.19] 超圧縮パイプライン (Regex修正版)
+      // ====================================================================
+      // BUG FIX #1: 重み付きタグ — コロン後のスペース有無を両方対応
+      // 旧: (tag:2.5) のみ対応 → 新: (tag: 2.5) も対応
+      safePrompt = safePrompt.replace(/\(([^()]+?):\s*(\d+\.\d+)\)/g, '$1');
+
+      // BUG FIX #2: ANTIGRAVITY CAMERA PROTOCOL — 実際のヘッダー "Camera & Comp:" にマッチ
+      // 旧: "Camera and Composition Rules:" を探していたが実際は "Camera & Comp:" で始まる
       safePrompt = safePrompt.replace(
-        /\[LENS ENFORCEMENT\]: \(apply ABOVE CAMERA DISTORTION MAX:2\.9\), \(NEVER a normal photograph:3\.0\), \(extreme severe perspective warping:2\.7\), \(violently tilted non-horizontal horizon:2\.6\), \(near-side body parts 200% larger:2\.5\)\. This is a LIFE OR DEATH REQUIREMENT, literally break the normal camera angle\./g,
-        `CAMERA ENFORCEMENT: The camera angle specified above MUST be clearly visible. Background architecture (${cleanLocation} environment — buildings, ground, sky, surrounding structures) MUST show the perspective distortion. Near-side body parts and props MUST be drawn larger than far-side parts. Do NOT simplify this into an ordinary eye-level shot.`
-      );
-      // [v3.03b] 全モデル向け包括的プロンプト変換
-      // (1) 全ての重み付きタグ (tag:N.N) → tag に変換（自然言語処理に特化）
-      safePrompt = safePrompt.replace(/\(([^()]+?):(\d+\.\d+)\)/g, '$1');
-      // (2) ANTIGRAVITY CAMERA PROTOCOL全体を簡潔な自然言語に置換
-      safePrompt = safePrompt.replace(
-        /Camera and Composition Rules:[\s\S]*?§4\. PERSPECTIVE-ALIGNED VFX:[\s\S]*?If fish-eye: effects curve radially\. If dutch angle: effects tilt with the world\.\s*/,
+        /Camera \& Comp:[\s\S]*?§4\. PERSPECTIVE-ALIGNED VFX:[\s\S]*?If fish-eye: effects curve radially\. If dutch angle: effects tilt with the world\.\s*/,
         `Camera Rules:
 Each of the 4 panels MUST use a DIFFERENT extreme camera angle. No two panels share the same angle.
 
@@ -2331,25 +2330,25 @@ VFX PERSPECTIVE RULE: Speed lines and impact effects MUST follow the panel's per
 
 `
       );
-      // (3) FINAL COMPLIANCE CHECK を簡潔化
-      safePrompt = safePrompt.replace(
-        /FINAL COMPLIANCE CHECK \(MANDATORY BEFORE OUTPUT\):[\s\S]*?extreme distortion is the intended artistic style\.\s*/,
-        ''
-      );
-      // [v3.04c] 不要な長文制約をさらにカット（AIの忘却防止・超圧縮）
-      // ★ v3.04h: 正規表現ベースの強力な削除ロジック
+
+      // BUG FIX #3: [LENS] ブロック削除 — 実際のタグ名は "[LENS]:" ("[LENS ENFORCEMENT]:" ではない)
+      // 各パネルの [LENS]:... 行を削除 (Camera Rules: に統合済み)
+      safePrompt = safePrompt.replace(/\[LENS\]:[^\n]*\n?/gi, '');
+
+      // BUG FIX #4: Important constraints + FINAL COMPLIANCE CHECK — 削除順序修正
+      // 旧: FINAL COMPLIANCE CHECKを先に消してしまい、Important constraintsのlookaheadが失敗
+      // 新: Important constraints から FINAL COMPLIANCE CHECK の末尾まで一括削除
+      safePrompt = safePrompt.replace(/Important constraints:[\s\S]*?the intended artistic style\.\s*/i, '');
+
+      // 残存レガシー削除 (念のため)
       safePrompt = safePrompt.replace(/CRITICAL VISUAL REPRODUCTION PROTOCOL[\s\S]*?(?=Important Character Cast:)/i, '');
       safePrompt = safePrompt.replace(/REFERENCE IMAGE CLOTHING POLICY[\s\S]*?(?=Important Character Cast:)/i, '');
-      safePrompt = safePrompt.replace(/【Character Identity Anchor[\s\S]*?(?=Camera Rules:|Camera and Composition Rules:)/i, '');
+      safePrompt = safePrompt.replace(/【Character Identity Anchor[\s\S]*?(?=Camera Rules:)/i, '');
       safePrompt = safePrompt.replace(/Technical Quality Definitions[\s\S]*?(?=## Panel 1)/i, '');
-      safePrompt = safePrompt.replace(/Important constraints:[\s\S]*?(?=FINAL COMPLIANCE CHECK|## Panel 1)/i, '');
-      safePrompt = safePrompt.replace(/FINAL COMPLIANCE CHECK[\s\S]*?(?=## Panel 1)/i, '');
       // 各パネルの中にある冗長な配置指示の削除
       safePrompt = safePrompt.replace(/CRITICAL CAST PLACEMENT:[\s\S]*?(?=Camera:)/gi, '');
       safePrompt = safePrompt.replace(/ANTI-CLONE REMINDER:[\s\S]*?(?=TOTAL CHARACTER COUNT IN THIS PANEL:|Camera:)/gi, '');
       safePrompt = safePrompt.replace(/TOTAL CHARACTER COUNT IN THIS PANEL:[\s\S]*?(?=Camera:)/gi, '');
-      // LENS ENFORCEMENT もパネルごとに長いので消す (Camera Rules: に統合済み)
-      safePrompt = safePrompt.replace(/\[LENS ENFORCEMENT\]:[\s\S]*?(?=Visual Action)/gi, '');
 
       const universalEnhancement = `
 
