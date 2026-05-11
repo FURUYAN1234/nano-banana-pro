@@ -384,19 +384,23 @@ Controls 4-panel layout, aspect ratio, and perspective at the pixel level, while
 Weights character-specific features to prevent "fusion" or blending between characters.
 特徴量に重みを付与。キャラ同士が混ざり合う「フュージョン」を徹底的に防ぎます。
 
-3. **Animation Quality (Level EX-2)**
-Emulates physics-based lighting and SSS (Subsurface Scattering) for peak animation quality.
-物理ベースのライティング、SSS（肌の透過）をエミュレート。最高峰のアニメクオリティを追求します。
+3. **Animation Quality (Level EX-2) & Visual Polish Engine**
+Emulates physics-based lighting and SSS (Subsurface Scattering) for peak animation quality. Additionally enforces professional anime rendering standards: **mandatory eye catchlight highlights** (star-shaped or circular white reflections in pupils for "living" eyes), **anime hair shine band** (天使の輪 / angel ring — a curved gradient streak across hair), and a **line weight hierarchy** (foreground characters at 3px bold ink outlines, background objects at 1px thin lines) for clear depth separation.
+物理ベースのライティング、SSS（肌の透過）をエミュレートし最高峰のアニメクオリティを追求。加えて、プロのアニメ作画基準を強制適用：**目のキャッチライト**（瞳に星形または円形の白いハイライト反射を必須化し「生きた目」を実現）、**天使の輪**（髪に白〜透明のグラデーション光沢帯を強制描画）、**線の太さヒエラルキー**（前景キャラ3px太線/背景1px細線による奥行き分離の明確化）を全パネルに適用します。
 
 4. **ANTIGRAVITY HYPER-DYNAMIC CAMERA PROTOCOL (v4.0)**
 AI-selected camera names (bird's eye, fish-eye, dutch angle, etc.) from the scenario stage are automatically converted into specific lens distortion weight tags during image generation. Fisher-Yates shuffle mathematically guarantees all 4 panels use different camera angles.
 AIがシナリオ段階で選んだカメラ名（俯瞰、フィッシュアイ、ダッチアングル等）を、画像生成時に具体的なレンズ歪みウェイトタグへ自動変換。Fisher-Yatesシャッフルにより4コマ全てが異なるカメラアングルになることを数学的に保証します。
 
-5. **IDENTITY MATRIX - Autonomous Character Consistency (v2.25)**
+5. **Cinematic Lighting & Color Palette Unity**
+Enforces professional 3-point anime lighting (key light, fill, rim/backlight), warm/cool color temperature contrast, and volumetric god rays. All 4 panels are required to share a **cohesive color palette** derived from the scene's setting and time of day, using harmonious complementary or analogous color schemes — preventing random color inconsistency across panels.
+プロフェッショナルな3点照明（キーライト、フィル、リム/逆光）、暖色/寒色の色温度コントラスト、ボリューメトリック光芒を強制。さらに、全4パネルがシーンの場面設定・時間帯から導出された**統一カラーパレット**を共有することを義務化し、パネル間での色調のバラつきを防止します。
+
+6. **IDENTITY MATRIX - Autonomous Character Consistency (v2.25)**
 Automatically analyzes hair color, hairstyle, and glasses status from character sheets and injects a "verification matrix" into every panel's prompt, forcing the AI to self-verify before drawing each panel. Includes anti-clone prevention (no duplicate character drawing), automatic background cast placement, solo shot detection, and 3-zone slotting for 3-character dialogues.
 キャラクターシートから髪色・髪型・メガネ有無を自動解析し、全コマのプロンプトに「照合マトリクス」として注入。AIが各コマを描く前に自己検証を強制します。クローン防止（同一キャラの二重描画禁止）、背景キャスト自動配置、ソロショット判定、3人掛け合い時の3ゾーンスロッティングまで全自動です。
 
-6. **Emotion Style Tag System - Per-Panel Art Style Switching (23 Styles)**
+7. **Emotion Style Tag System - Per-Panel Art Style Switching (23 Styles)**
    The scenario AI autonomously selects the optimal style tag for each panel's emotion from a palette of **23 distinct visual styles**. Core styles include CHIBI_GAG / GEKIGA / SHOUJO / HORROR / BLANK / IMPACT / WATERCOLOR / RETRO / GLITTER / SHADOW / SPEED / FLASHBACK / UKIYOE / POP_ART / SKETCH / NEON, plus context-aware styles added in v2.95: THICK_PAINT (impasto for serious/political), PASTEL (soft for heartwarming), CEL (retro cel animation), DARK_ANIME (atmospheric for suspense), THIN_LINE (delicate for emotional), and HIGH_SATURATION (vivid for excitement). Art style, VFX, and proportions are automatically switched during image generation. Includes fallback styles for multi-character panels.
    シナリオ生成AIが各コマの感情に最適なスタイルタグを**全23種の画風パレット**から自律選択。CHIBI_GAG / GEKIGA / SHOUJO / HORROR / BLANK / IMPACT / WATERCOLOR / RETRO / GLITTER / SHADOW / SPEED / FLASHBACK / UKIYOE / POP_ART / SKETCH / NEONに加え、v2.95で文脈対応型の新画風を追加：THICK_PAINT（厚塗り／政治・シリアス向け）、PASTEL（パステル／癒し向け）、CEL（セル画風／エンタメ向け）、DARK_ANIME（ダーク調／サスペンス向け）、THIN_LINE（繊細線画／感動向け）、HIGH_SATURATION（高彩度／興奮向け）。画像生成時に絵柄・VFX・プロポーションが自動切替されます。マルチキャラパネル用のフォールバックスタイルも搭載。
 
