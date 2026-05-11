@@ -631,6 +631,10 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v3.18-alpha (2026-05-11)
+
+- **[Feature]** Gemini環境での再現度低下に対策するため、ChatGPT向けに最適化していた「超圧縮・MUST/NO構文」のプロンプトアーキテクチャを全モデル（Geminiネイティブ環境を含む）に普遍的に適用しました。機能と品質を一切落とさず、自然言語の贅肉を削ぎ落とすことでAIのアテンションを集中させ、指示の遵守率向上を図りました。 / Applied the "ultra-compressed, MUST/NO syntax" prompt architecture, originally optimized for ChatGPT, universally across all models (including native Gemini environments) to combat decreased reproduction fidelity. By stripping away conversational filler without sacrificing any features or quality, the AI's attention is focused on critical rules, improving overall instruction adherence.
+
 ### v3.17-alpha (2026-05-11)
 
 - **[UI/UX]** 画像生成APIエラー（権限エラー、タイムアウト、フォールバック発生時）に表示されるエラーガイドを刷新しました。AI制限等で手動生成（ChatGPT/Gemini Web版）へ誘導する際、キャラクターの一貫性を保つため「元となるキャラクターシート画像を一緒に添付すること」を必須の指示として明記しました。 / Revamped the error guides displayed during image generation API errors (permission errors, timeouts, and fallback occurrences). When directing users to manual generation (ChatGPT/Gemini Web) due to AI limitations, explicitly added instructions to "attach the original character sheet image" to ensure character consistency.

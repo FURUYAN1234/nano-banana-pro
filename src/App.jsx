@@ -35,7 +35,7 @@ import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 import { generateImageWithOpenAI, setOpenAIApiKey, getOpenAIApiKey } from './lib/openai';
 
-const SYSTEM_VERSION = "v3.17-alpha";
+const SYSTEM_VERSION = "v3.18-alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -2290,32 +2290,29 @@ Before generating the final image, mentally verify ALL of the following. If ANY 
       // [v2.27] セーフティ年齢引き上げ変換を適用
       let safePrompt = applySafetyAgeUp(constructedPrompt.trim());
 
-      // [v2.61] ChatGPT Images 2.0 強化プロンプト追加
-      // [v2.69] キャラクター視認性 大幅強化（ノイズ除去・被写界深度・白フチグロー・背景分離）
-      if (enableChatGPTMode) {
-        // [v3.10] キャラシート再現防止プレフィックス（プロンプト冒頭に最優先指示を挿入）
-        // ChatGPTの画像モデルはプロンプト冒頭に最も強く反応するため、
-        // 「キャラシートを描くな」という指示をプロンプトの最初に配置する
-        const antiCharSheetPrefix = `[⚠️ ABSOLUTE FIRST PRIORITY — READ THIS BEFORE ANYTHING ELSE]
+      // [v3.18] Ultra-Compression for ALL Models (Gemini & ChatGPT)
+      // Geminiの再現度低下に対策するため、ChatGPT向けに作成した超圧縮・MUST/NO構文を全モデルに適用
+      // [v3.10] キャラシート再現防止プレフィックス（プロンプト冒頭に最優先指示を挿入）
+      const antiCharSheetPrefix = `[⚠️ ABSOLUTE FIRST PRIORITY — READ THIS BEFORE ANYTHING ELSE]
 YOU ARE GENERATING A NEW 4-PANEL MANGA SCENE. You are NOT creating a character sheet, model sheet, character lineup, expression chart, or reference sheet.
 The attached image is a CHARACTER REFERENCE ONLY — use it to identify hair color, eye shape, and glasses status. Do NOT reproduce its layout, white background, expression grid, or text labels.
 If your output looks like a character sheet or model sheet instead of a 4-panel manga story → YOU HAVE FAILED. Regenerate immediately as a manga scene.
 
 `;
-        safePrompt = antiCharSheetPrefix + safePrompt;
+      safePrompt = antiCharSheetPrefix + safePrompt;
 
-        // [v3.03] ChatGPTの内部要約で重み付きタグが無視されるため、LENS ENFORCEMENTを自然言語に変換
-        safePrompt = safePrompt.replace(
-          /\[LENS ENFORCEMENT\]: \(apply ABOVE CAMERA DISTORTION MAX:2\.9\), \(NEVER a normal photograph:3\.0\), \(extreme severe perspective warping:2\.7\), \(violently tilted non-horizontal horizon:2\.6\), \(near-side body parts 200% larger:2\.5\)\. This is a LIFE OR DEATH REQUIREMENT, literally break the normal camera angle\./g,
-          `CAMERA ENFORCEMENT: The camera angle specified above MUST be clearly visible. Background architecture (${cleanLocation} environment — buildings, ground, sky, surrounding structures) MUST show the perspective distortion. Near-side body parts and props MUST be drawn larger than far-side parts. Do NOT simplify this into an ordinary eye-level shot.`
-        );
-        // [v3.03b] ChatGPT向け包括的プロンプト変換
-        // (1) 全ての重み付きタグ (tag:N.N) → tag に変換（ChatGPTでは無効な構文）
-        safePrompt = safePrompt.replace(/\(([^()]+?):(\d+\.\d+)\)/g, '$1');
-        // (2) ANTIGRAVITY CAMERA PROTOCOL全体を簡潔な自然言語に置換
-        safePrompt = safePrompt.replace(
-          /Camera and Composition Rules:[\s\S]*?§4\. PERSPECTIVE-ALIGNED VFX:[\s\S]*?If fish-eye: effects curve radially\. If dutch angle: effects tilt with the world\.\s*/,
-          `Camera Rules:
+      // [v3.03] 内部要約で重み付きタグが無視されるため、LENS ENFORCEMENTを自然言語に変換
+      safePrompt = safePrompt.replace(
+        /\[LENS ENFORCEMENT\]: \(apply ABOVE CAMERA DISTORTION MAX:2\.9\), \(NEVER a normal photograph:3\.0\), \(extreme severe perspective warping:2\.7\), \(violently tilted non-horizontal horizon:2\.6\), \(near-side body parts 200% larger:2\.5\)\. This is a LIFE OR DEATH REQUIREMENT, literally break the normal camera angle\./g,
+        `CAMERA ENFORCEMENT: The camera angle specified above MUST be clearly visible. Background architecture (${cleanLocation} environment — buildings, ground, sky, surrounding structures) MUST show the perspective distortion. Near-side body parts and props MUST be drawn larger than far-side parts. Do NOT simplify this into an ordinary eye-level shot.`
+      );
+      // [v3.03b] 全モデル向け包括的プロンプト変換
+      // (1) 全ての重み付きタグ (tag:N.N) → tag に変換（自然言語処理に特化）
+      safePrompt = safePrompt.replace(/\(([^()]+?):(\d+\.\d+)\)/g, '$1');
+      // (2) ANTIGRAVITY CAMERA PROTOCOL全体を簡潔な自然言語に置換
+      safePrompt = safePrompt.replace(
+        /Camera and Composition Rules:[\s\S]*?§4\. PERSPECTIVE-ALIGNED VFX:[\s\S]*?If fish-eye: effects curve radially\. If dutch angle: effects tilt with the world\.\s*/,
+        `Camera Rules:
 Each of the 4 panels MUST use a DIFFERENT extreme camera angle. No two panels share the same angle.
 
 CAMERA ANGLE DICTIONARY — apply the matching visual description:
@@ -2333,31 +2330,28 @@ Dynamic full-body reactions: recoiling, pointing dramatically, faceplanting. Hai
 VFX PERSPECTIVE RULE: Speed lines and impact effects MUST follow the panel's perspective distortion direction.
 
 `
-        );
-        // (3) FINAL COMPLIANCE CHECK を簡潔化
-        safePrompt = safePrompt.replace(
-          /FINAL COMPLIANCE CHECK \(MANDATORY BEFORE OUTPUT\):[\s\S]*?extreme distortion is the intended artistic style\.\s*/,
-          ''
-        );
-        // [v3.04c] 不要な長文制約をさらにカット（ChatGPTの忘却防止）
-        // ChatGPT向けに長大な制約ブロックをさらに削除
-        // ★ v3.04h: 正規表現ベースの強力な削除ロジック
-        safePrompt = safePrompt.replace(/CRITICAL VISUAL REPRODUCTION PROTOCOL[\s\S]*?(?=Important Character Cast:)/i, '');
-        safePrompt = safePrompt.replace(/REFERENCE IMAGE CLOTHING POLICY[\s\S]*?(?=Important Character Cast:)/i, '');
-        safePrompt = safePrompt.replace(/【Character Identity Anchor[\s\S]*?(?=Camera Rules:|Camera and Composition Rules:)/i, '');
-        safePrompt = safePrompt.replace(/Technical Quality Definitions[\s\S]*?(?=## Panel 1)/i, '');
-        safePrompt = safePrompt.replace(/Important constraints:[\s\S]*?(?=FINAL COMPLIANCE CHECK|## Panel 1)/i, '');
-        safePrompt = safePrompt.replace(/FINAL COMPLIANCE CHECK[\s\S]*?(?=## Panel 1)/i, '');
-        // 各パネルの中にある冗長な配置指示の削除
-        safePrompt = safePrompt.replace(/CRITICAL CAST PLACEMENT:[\s\S]*?(?=Camera:)/gi, '');
-        safePrompt = safePrompt.replace(/ANTI-CLONE REMINDER:[\s\S]*?(?=TOTAL CHARACTER COUNT IN THIS PANEL:|Camera:)/gi, '');
-        safePrompt = safePrompt.replace(/TOTAL CHARACTER COUNT IN THIS PANEL:[\s\S]*?(?=Camera:)/gi, '');
-        // LENS ENFORCEMENT もパネルごとに長いので消す (Camera Rules: に統合済み)
-        safePrompt = safePrompt.replace(/\[LENS ENFORCEMENT\]:[\s\S]*?(?=Visual Action)/gi, '');
+      );
+      // (3) FINAL COMPLIANCE CHECK を簡潔化
+      safePrompt = safePrompt.replace(
+        /FINAL COMPLIANCE CHECK \(MANDATORY BEFORE OUTPUT\):[\s\S]*?extreme distortion is the intended artistic style\.\s*/,
+        ''
+      );
+      // [v3.04c] 不要な長文制約をさらにカット（AIの忘却防止・超圧縮）
+      // ★ v3.04h: 正規表現ベースの強力な削除ロジック
+      safePrompt = safePrompt.replace(/CRITICAL VISUAL REPRODUCTION PROTOCOL[\s\S]*?(?=Important Character Cast:)/i, '');
+      safePrompt = safePrompt.replace(/REFERENCE IMAGE CLOTHING POLICY[\s\S]*?(?=Important Character Cast:)/i, '');
+      safePrompt = safePrompt.replace(/【Character Identity Anchor[\s\S]*?(?=Camera Rules:|Camera and Composition Rules:)/i, '');
+      safePrompt = safePrompt.replace(/Technical Quality Definitions[\s\S]*?(?=## Panel 1)/i, '');
+      safePrompt = safePrompt.replace(/Important constraints:[\s\S]*?(?=FINAL COMPLIANCE CHECK|## Panel 1)/i, '');
+      safePrompt = safePrompt.replace(/FINAL COMPLIANCE CHECK[\s\S]*?(?=## Panel 1)/i, '');
+      // 各パネルの中にある冗長な配置指示の削除
+      safePrompt = safePrompt.replace(/CRITICAL CAST PLACEMENT:[\s\S]*?(?=Camera:)/gi, '');
+      safePrompt = safePrompt.replace(/ANTI-CLONE REMINDER:[\s\S]*?(?=TOTAL CHARACTER COUNT IN THIS PANEL:|Camera:)/gi, '');
+      safePrompt = safePrompt.replace(/TOTAL CHARACTER COUNT IN THIS PANEL:[\s\S]*?(?=Camera:)/gi, '');
+      // LENS ENFORCEMENT もパネルごとに長いので消す (Camera Rules: に統合済み)
+      safePrompt = safePrompt.replace(/\[LENS ENFORCEMENT\]:[\s\S]*?(?=Visual Action)/gi, '');
 
-        // [v3.03b] Technical Quality変換は重み付きタグ一括除去で不要化
-
-        const chatGPTEnhancement = `
+      const universalEnhancement = `
 
 ---
 [GENERATION FAILURE PREVENTION — ABSOLUTE TOP PRIORITY]
@@ -2380,7 +2374,7 @@ HIGHEST PRIORITY RULES (apply to EVERY panel):
 - TEXT: All dialogue vertical Japanese, right-to-left reading order.
 - TITLE: Draw at top, minimal white margin.
 - RENDER: Pristine TV anime style. NO film grain, NO noise, NO realistic texturing. Clean gradients and sharp ink lines. Dramatic anime lighting (rim light, backlighting, color temperature contrast) is ENCOURAGED.
-- SURFACE: Clean anime cel-shading. ABSOLUTELY NO ChatGPT-style magical floating particles, NO glittering/sparkling effects, NO dust motes, NO lens flares, NO moiré patterns. Keep the air clean and empty. NO photorealistic textures (cloth weave, skin pores). NO page border lines around the canvas.
+- SURFACE: Clean anime cel-shading. ABSOLUTELY NO magical floating particles, NO glittering/sparkling effects, NO dust motes, NO lens flares, NO moiré patterns. Keep the air clean and empty. NO photorealistic textures (cloth weave, skin pores). NO page border lines around the canvas.
 
 [ 🖊️ CHARACTER VISUAL HIERARCHY & ANTI-CAMOUFLAGE — MANDATORY ]
 - Every character's silhouette MUST have a THICK, BOLD BLACK ink outline (2-3x thicker than background lines) to completely separate them from the background.
@@ -2417,9 +2411,9 @@ Before output, verify:
 - Background architecture visibly shows perspective distortion in every panel.
 - Character glasses/no-glasses status matches the reference for every character.
 - ⚠️ FINAL GATE: Does the output have 4 distinct story panels with BACKGROUND ENVIRONMENTS and SPEECH BUBBLES? If it looks like a character sheet, expression chart, or white-background lineup → REJECT AND REDRAW AS A MANGA SCENE.`;
-        safePrompt = safePrompt + chatGPTEnhancement;
-        setAssembleThought(prev => prev + "\n> [ChatGPT Mode v3.03] 事故防止プロトコル適用済み:\n>   ✅ 縦書きセリフ強制\n>   ✅ セリフ勝手追加禁止\n>   ✅ 参照画像キャラシート再現禁止\n>   ✅ カメラワーク平易化禁止\n>   ✅ LENS ENFORCEMENT → 自然言語変換\n>   ✅ 重み付きタグ → 自然言語変換\n>   ✅ 出力前チェックリスト追加\n> [v2.69] キャラ視認性強化: ノイズ除去・白フチグロー・被写界深度分離・背景デサチュレーション適用");
-      }
+      safePrompt = safePrompt + universalEnhancement;
+      setAssembleThought(prev => prev + "\n> [v3.18] 超圧縮・事故防止プロトコル全モデル適用済み:\n>   ✅ 縦書きセリフ強制\n>   ✅ セリフ勝手追加禁止\n>   ✅ 参照画像キャラシート再現禁止\n>   ✅ カメラワーク平易化禁止\n>   ✅ LENS ENFORCEMENT → 自然言語変換\n>   ✅ 重み付きタグ → 自然言語変換\n>   ✅ キャラ視認性強化 (ノイズ除去・白フチグロー・背景デサチュレーション)\n>   ✅ 出力前チェックリスト追加");
+
 
       setFinalPrompt(safePrompt);
       setAssembleThought(prev => prev + "\n> セーフティ年齢フィルター: 適用済み\n> 最適化ベクトル: 計算完了\n> 構造ロック: 有効\n> 風刺ロジック: 強化済み\n> [完了] 最終プロンプトを構築しました。");
