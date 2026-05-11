@@ -35,7 +35,7 @@ import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 import { generateImageWithOpenAI, setOpenAIApiKey, getOpenAIApiKey } from './lib/openai';
 
-const SYSTEM_VERSION = "v3.24-alpha";
+const SYSTEM_VERSION = "v3.25-alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -2395,7 +2395,7 @@ HIGHEST PRIORITY RULES (apply to EVERY panel):
 - Eyes: wide = surprise, narrowed = suspicion, sparkling = excitement, blank white = comedy shock.
 - Mouth: exaggerated — wide open screaming, tiny frustrated line, smug grin, wobbly crying mouth.
 - Hands: clenched fists (anger), open palms (surprise), pointing (accusation), covering mouth (shock).
-- Posture: leaning forward (aggressive), back (defensive), slumped (defeated), puffed up (proud).
+- Posture: leaning forward (aggressive), back (defensive), slumped (defeated), puffed up (proud). For natural standing, use contrapposto weight-shift and keep toes aligned together.
 
 [ 💫 DYNAMIC VFX — APPLY WHERE EMOTIONALLY APPROPRIATE ]
 - Wind: hair flowing, coats billowing, papers flying.
@@ -3096,6 +3096,7 @@ Apply the following strict visual constraints to your image generation. DO NOT i
 [ 3. CINEMATIC LIGHTING & DETAILS ]
 - LIGHTING: 3-point anime lighting (key, fill, rim light). Use warm/cool color temperature contrast.
 - HAIR & EYES: Every character's hair MUST show an anime-style shine band (angel ring). Every character's eyes MUST have bright circular/star catchlight highlights (white sparkle reflections in pupils).
+- POSTURE: If standing, use dynamic contrapposto weight-shift (weight on one leg). Keep toes aligned together to prevent messy foot generation.
 - CAMERA: Use dynamic camera angles (high angle, low angle, wide-angle lens) with dramatic perspective distortion. Avoid flat, eye-level shots.
 
 [ 4. TEXT & MANGA RULES ]
