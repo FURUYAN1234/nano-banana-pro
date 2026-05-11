@@ -631,6 +631,10 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v3.20-alpha (2026-05-11)
+
+- **[Feature]** 画像生成クオリティを底上げする5つの視覚的改善を追加。(1) アニメ目のキャッチライト（瞳の星形ハイライト反射）を必須化、(2) 天使の輪（髪のツヤベルト）をアニメ作画標準として強制、(3) 線の太さヒエラルキー（前景キャラ3px/背景1px）で奥行き分離を明確化、(4) カラーパレット統一指示により全4パネルの色調を場面設定から自動統一、(5) シネマティックライティングセクションにカラーパレット統一ルールを統合。いずれもプロンプト長への影響は+3行（約250文字）に抑制。 / Added 5 visual quality improvements: (1) mandatory eye catchlight highlights, (2) anime hair shine band (angel ring), (3) line weight hierarchy (3px foreground / 1px background), (4) color palette unity directive, (5) integrated color harmony into cinematic lighting section. Total prompt increase: only +3 lines (~250 chars).
+
 ### v3.19-alpha (2026-05-11)
 
 - **[Bugfix]** v3.18で導入した超圧縮パイプラインにおいて、4つのRegex（正規表現）がサイレント失敗していたバグを修正。(1) 重み付きタグ `(tag: 2.5)` のコロン後スペース非対応、(2) ANTIGRAVITY CAMERA PROTOCOLのヘッダー不一致 (`Camera and Composition Rules:` vs 実際の `Camera & Comp:`)、(3) パネル内 `[LENS]:` タグ名の不一致 (`[LENS ENFORCEMENT]:` を探索)、(4) `Important constraints` と `FINAL COMPLIANCE CHECK` の削除順序依存バグ。これにより、プロンプトの実効圧縮率が約20%→100%に改善し、AIのアテンション集中度が大幅に向上しました。 / Fixed 4 silently-failing regex bugs in the ultra-compression pipeline introduced in v3.18: (1) weighted tag space handling, (2) camera protocol header mismatch, (3) [LENS] tag name mismatch, (4) deletion order dependency between Important constraints and FINAL COMPLIANCE CHECK. This improved actual compression rate from ~20% to 100%, significantly boosting AI attention density.

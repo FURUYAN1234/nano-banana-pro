@@ -35,7 +35,7 @@ import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 import { generateImageWithOpenAI, setOpenAIApiKey, getOpenAIApiKey } from './lib/openai';
 
-const SYSTEM_VERSION = "v3.19-alpha";
+const SYSTEM_VERSION = "v3.20-alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -2376,19 +2376,22 @@ HIGHEST PRIORITY RULES (apply to EVERY panel):
 - SURFACE: Clean anime cel-shading. ABSOLUTELY NO magical floating particles, NO glittering/sparkling effects, NO dust motes, NO lens flares, NO moiré patterns. Keep the air clean and empty. NO photorealistic textures (cloth weave, skin pores). NO page border lines around the canvas.
 
 [ 🖊️ CHARACTER VISUAL HIERARCHY & ANTI-CAMOUFLAGE — MANDATORY ]
-- Every character's silhouette MUST have a THICK, BOLD BLACK ink outline (2-3x thicker than background lines) to completely separate them from the background.
+- LINE WEIGHT HIERARCHY: Foreground characters 3px bold ink outlines. Background objects 1px thin lines. This depth separation is MANDATORY.
 - Add a subtle 2-3px WHITE GLOW (anime compositing 撮影処理) outside the character's outline to prevent blending.
 - Characters MUST have HIGHER saturation and contrast than background. Characters visually "pop" as first thing noticed.
 - Background: LOWER detail, soft-focus blur, 30-50% less saturation than characters. Always use radial white backlighting (逆光ハイライト) behind characters to prevent camouflage.
+- HAIR RENDERING: Every character's hair MUST show anime-style shine band (天使の輪/angel ring highlight) — a curved white-to-transparent gradient streak across the hair.
 
-[ 🎬 CINEMATIC LIGHTING — MANDATORY ]
+[ 🎬 CINEMATIC LIGHTING & COLOR — MANDATORY ]
 - 3-point anime lighting: strong key light from one side (clear light/shadow on faces), soft fill opposite, rim light (逆光) separating character from background.
 - Warm/cool color temperature contrast: warm lit skin vs cool blue-purple shadows.
 - Volumetric light rays (god rays / 光芒) through windows when applicable.
 - Lighting direction MUST match camera angle — overhead shots get top-down light, low angles get under-lighting or backlighting.
+- COLOR PALETTE UNITY: All 4 panels MUST share a cohesive color palette derived from the scene's setting and time of day. Use harmonious complementary or analogous color schemes — NOT random colors per panel.
 
 [ 🎭 ACTING & EXPRESSION — MANDATORY ]
 - Every character MUST show clear emotion through face and posture. NO mannequin faces.
+- EYE CATCHLIGHT: Every character's eyes MUST have bright star-shaped or circular catchlight highlights (white sparkle reflections in pupils). Eyes without catchlights look dead.
 - Eyes: wide = surprise, narrowed = suspicion, sparkling = excitement, blank white = comedy shock.
 - Mouth: exaggerated — wide open screaming, tiny frustrated line, smug grin, wobbly crying mouth.
 - Hands: clenched fists (anger), open palms (surprise), pointing (accusation), covering mouth (shock).

@@ -1,3 +1,3 @@
-Gemini環境での再現度低下に対策するため、ChatGPT向けに最適化していた「超圧縮・MUST/NO構文」のプロンプトアーキテクチャを全モデル（Geminiネイティブ環境を含む）に普遍的に適用しました。機能と品質を一切落とさず、自然言語の贅肉を削ぎ落とすことでAIのアテンションを集中させ、指示の遵守率向上を図りました。
+v3.18で導入した超圧縮パイプラインにおいて、4つのRegex（正規表現）がサイレント失敗していたバグを修正しました。プロンプトの実効圧縮率が約20%→100%に改善し、AIのアテンション集中度が大幅に向上しました。
 
-Applied the "ultra-compressed, MUST/NO syntax" prompt architecture, originally optimized for ChatGPT, universally across all models (including native Gemini environments) to combat decreased reproduction fidelity. By stripping away conversational filler without sacrificing any features or quality, the AI's attention is focused on critical rules, improving overall instruction adherence.
+Fixed 4 silently-failing regex bugs in the ultra-compression pipeline introduced in v3.18: (1) weighted tag space handling, (2) camera protocol header mismatch, (3) [LENS] tag name mismatch, (4) deletion order dependency between Important constraints and FINAL COMPLIANCE CHECK. This improved actual compression rate from ~20% to 100%, significantly boosting AI attention density.
