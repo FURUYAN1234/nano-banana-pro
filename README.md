@@ -636,37 +636,45 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
-### v3.20-alpha (2026-05-11)
+### v3.26-alpha (2026-05-11)
+- **[Docs/System]** 立ちポーズ高品質化のリリースノートおよびドキュメントにおける特定の外部参照記載を一般論に基づく表現に修正し、情報セキュリティ基準を適用しました。 / Applied information security standards to remove specific external references from the standing pose enhancement release notes and documentation, replacing them with generalized terminology.
 
+### v3.25-alpha (2026-05-11)
+- **[Prompt/Visuals]** 最新の生成AIにおける空間表現のベストプラクティスを基に、内部生成プロンプトおよび「1枚絵用コピーボタン」の両方に、立ちポーズの高品質化指示（「コントラポストによる体重移動」「足先を揃える」等）を統合しました。これにより、足元の破綻を防ぎ、より自然で魅力的な立ち姿を生成可能になりました。 / Integrated industry best-practice standing pose techniques ("contrapposto weight-shift", "keeping toes aligned together") into both the internal generation prompt and the Single-Illustration Copy Button, preventing messy foot generation and creating more natural, attractive postures.
+
+### v3.24-alpha (2026-05-11)
+- **[Feature]** ヘッダー部分に、Web版ChatGPTで手動で1枚絵を生成する際にシステム独自の強力な作画ノウハウ（クリーン・セルルック・プロトコル等）を持ち出せる「1枚絵 ChatGPT用プロトコル コピーボタン（β）」を追加しました。 / Added a "Single-Illustration Protocol Copy Button (Beta)" to the header, allowing users to extract the system's powerful drawing know-how (Clean Cel-Look Protocol, etc.) and paste it directly into the Web version of ChatGPT for manual high-quality single image generation.
+- **[System]** 今後システム側の内部プロンプトが強化・アップデートされた際に、コピペ用ボタンのプロンプトテキストも同時に同期させる保守運用ルール（Prompt Synchronization Protocol）をプロジェクト防衛ラインに追加しました。 / Added the "Prompt Synchronization Protocol" to the project guardrails to ensure that future updates to the system's internal generation prompt are simultaneously synchronized with the copy-paste button's text.
+
+### v3.22-alpha (2026-05-11)
+- **[Prompt/Quality]** Added "Dangerous Secret Self-Review Command" (Anatomy & Text Self-Correction Protocol) to the Final Output Check to force the AI to self-review finger counts and spelling mistakes before generating the final image. / 海外のプロンプトハック「自己レビュー命令（危険な秘密）」を導入し、画像出力前にAI自身に指の数やスペルミスを強制自己確認させる仕組みを最終チェックリストに追加しました。
+
+### v3.21-alpha (2026-05-11)
+- **[Prompt/Visuals]** Added "Flat colors, intentional negative space" and "Clear silhouettes, distinct physical separation" to the Ultra-Compressed Prompt to prevent the homogenized "Generic AI Face" look and make characters more inpaint-friendly. / プロンプトに「クリーン・セルルック（Flat colors, intentional negative space）」と「空間分離プロトコル（Clear silhouettes）」を追加し、汎用AI顔（均質化されたAI特有の画風）を抑制・修正を容易にしました。
+
+### v3.20-alpha (2026-05-11)
 - **[Feature]** 画像生成クオリティを底上げする5つの視覚的改善を追加。(1) アニメ目のキャッチライト（瞳の星形ハイライト反射）を必須化、(2) 天使の輪（髪のツヤベルト）をアニメ作画標準として強制、(3) 線の太さヒエラルキー（前景キャラ3px/背景1px）で奥行き分離を明確化、(4) カラーパレット統一指示により全4パネルの色調を場面設定から自動統一、(5) シネマティックライティングセクションにカラーパレット統一ルールを統合。いずれもプロンプト長への影響は+3行（約250文字）に抑制。 / Added 5 visual quality improvements: (1) mandatory eye catchlight highlights, (2) anime hair shine band (angel ring), (3) line weight hierarchy (3px foreground / 1px background), (4) color palette unity directive, (5) integrated color harmony into cinematic lighting section. Total prompt increase: only +3 lines (~250 chars).
 
 ### v3.19-alpha (2026-05-11)
-
 - **[Bugfix]** v3.18で導入した超圧縮パイプラインにおいて、4つのRegex（正規表現）がサイレント失敗していたバグを修正。(1) 重み付きタグ `(tag: 2.5)` のコロン後スペース非対応、(2) ANTIGRAVITY CAMERA PROTOCOLのヘッダー不一致 (`Camera and Composition Rules:` vs 実際の `Camera & Comp:`)、(3) パネル内 `[LENS]:` タグ名の不一致 (`[LENS ENFORCEMENT]:` を探索)、(4) `Important constraints` と `FINAL COMPLIANCE CHECK` の削除順序依存バグ。これにより、プロンプトの実効圧縮率が約20%→100%に改善し、AIのアテンション集中度が大幅に向上しました。 / Fixed 4 silently-failing regex bugs in the ultra-compression pipeline introduced in v3.18: (1) weighted tag space handling, (2) camera protocol header mismatch, (3) [LENS] tag name mismatch, (4) deletion order dependency between Important constraints and FINAL COMPLIANCE CHECK. This improved actual compression rate from ~20% to 100%, significantly boosting AI attention density.
 
 ### v3.18-alpha (2026-05-11)
-
 - **[Feature]** Gemini環境での再現度低下に対策するため、ChatGPT向けに最適化していた「超圧縮・MUST/NO構文」のプロンプトアーキテクチャを全モデル（Geminiネイティブ環境を含む）に普遍的に適用しました。機能と品質を一切落とさず、自然言語の贅肉を削ぎ落とすことでAIのアテンションを集中させ、指示の遵守率向上を図りました。 / Applied the "ultra-compressed, MUST/NO syntax" prompt architecture, originally optimized for ChatGPT, universally across all models (including native Gemini environments) to combat decreased reproduction fidelity. By stripping away conversational filler without sacrificing any features or quality, the AI's attention is focused on critical rules, improving overall instruction adherence.
 
 ### v3.17-alpha (2026-05-11)
-
 - **[UI/UX]** 画像生成APIエラー（権限エラー、タイムアウト、フォールバック発生時）に表示されるエラーガイドを刷新しました。AI制限等で手動生成（ChatGPT/Gemini Web版）へ誘導する際、キャラクターの一貫性を保つため「元となるキャラクターシート画像を一緒に添付すること」を必須の指示として明記しました。 / Revamped the error guides displayed during image generation API errors (permission errors, timeouts, and fallback occurrences). When directing users to manual generation (ChatGPT/Gemini Web) due to AI limitations, explicitly added instructions to "attach the original character sheet image" to ensure character consistency.
 
 ### v3.16-alpha (2026-05-10)
-
 - **[Feature]** ChatGPT Images 2.0での画像生成において、キャラクターが背景に埋没する問題（カモフラージュ現象）および過剰なキラキラ感（パーティクル・レンズフレア等）を解消するため、プロンプト・アーキテクチャを強化。極太の黒インクのアウトライン、2〜3pxの白発光（コンポジット効果）、そして逆光ハイライトを強制し、視認性とプロフェッショナルな漫画の美しさを確保しました。 / Strengthened the prompt architecture for ChatGPT Images 2.0 to resolve issues with characters blending into backgrounds (camouflage effect) and excessive "sparkly" artifacts (particles, lens flares, etc.). Enforced thick black ink outlines, a 2-3px white compositing glow, and radial backlighting to ensure visual clarity and professional manga aesthetics.
 
 ### v3.15-alpha (2026-05-10)
-
 - **[Feature]** FACS (Facial Action Coding System) エンジンを実装。従来の抽象的な感情タグを廃止し、Action Units（AU）を用いた解剖学的記述をプロンプトに注入するロジックを導入しました。これにより、表情の崩壊を物理レベルで抑制し、高度なキャラクター表現が可能になりました。 / Implemented the FACS (Facial Action Coding System) engine. Replaced vague emotional tags with anatomical descriptions using Action Units (AUs) injected directly into the prompt, effectively suppressing facial distortion at the physical level and enabling highly nuanced character expressions.
 - **[System]** ChatGPT (DALL-E 3) 利用時の4000文字制限を回避するため、プロンプトアーキテクチャの超圧縮最適化を実施。命令文を「単語・箇条書き・MUST/NO構文」へと極限まで削ぎ落とし、クオリティを維持・向上させつつ安全圏での生成を実現しました。 / Executed ultra-compression optimization of the prompt architecture to bypass the 4,000-character limit when using ChatGPT (DALL-E 3). Instructions were ruthlessly stripped down to "keywords, bullet points, and MUST/NO syntax," ensuring safe generation while maintaining or even improving image quality.
 
 ### v3.14-alpha (2026-05-10)
-
 - **[Doc]** README.md内の「ChatGPT Images 2.0 Mode」および「OpenAI API Direct Execution」の記述を、最新仕様（`gpt-image-2`への移行、超圧縮プロンプトの採用、ブラウザ版ChatGPTへのハイブリッド手動コピペ運用前提）に正確に更新しました。 / Updated README.md to accurately reflect the latest ChatGPT optimization specs (migration to `gpt-image-2`, ultra-compressed prompts, and mandatory hybrid manual copy-paste workflow to the browser version).
 
 ### v3.13-alpha (2026-05-10)
-
 - **[Feature]** キャラクター解析結果および生成シナリオの出力エリア下部に専用のコピーボタン（クリップボードコピペ機能）を実装。コピー時の状態遷移（「コピー完了」のフラッシュ表示）および、生成前の非活性化（Disabled）を完全にサポートし、手作業によるコピー＆ペーストの作業効率を劇的に向上させました。 / Implemented dedicated copy-to-clipboard buttons below the character analysis and generated scenario text areas. Supports visual feedback (green "Copied" flash) and disabled state before generation, drastically improving the efficiency of manual copy-paste workflows.
 - **[BugFix]** `extractPanel`での髪色抽出において正規表現を修正し、`red hair tips` などの複合色指定から基本色が誤抽出されるバグ（シナリオブリード）を完全に解決しました。 / Fixed a regex extraction bug in `extractPanel` where compound colors like "red hair tips" caused inaccurate primary color parsing (scenario bleed), ensuring strict adherence to the exact hair descriptors.
 - **[Feature]** プロンプト内の `CAMERA ENFORCEMENT`（背景描写）におけるハードコード（bookshelves, desks 等）を撤廃し、AIが生成したシナリオ側の `Location` の値を動的に注入する仕組みに刷新。場所指定が全コマへ正確に反映されるようになりました。 / Eliminated hardcoded background elements (bookshelves, desks) in the `CAMERA ENFORCEMENT` section, replacing them with dynamic injection of the scenario's `Location` variable to ensure environmental consistency across all panels.
@@ -674,203 +682,3 @@ Developed by **FURU**
 
 ### v3.12-alpha (2026-05-09)
 - **[UI/UX]** UI/ログの完全日本語化を実施。思考トレース（Thinking Trace）が利用できない標準モデル使用時のメッセージを「通常処理が完了しました。」と簡潔化し、ユーザーの混乱を招く不要な注釈（「思考トレースは利用不可」や「推論ログなし」など）を排除しました。 / Localized UI logs to Japanese completely. Simplified the fallback message for standard models without Thinking Trace to "通常処理が完了しました。" (Normal processing completed), removing confusing annotations.
-
-### v3.07-alpha (2026-05-08)
-- **[HotFix]** コピペボタンのテキスト動的切り替え機能（Gemini/ChatGPTモード連動）がデプロイ時に一部欠落していた問題を修正し、完全に復元しました。 / Restored the dynamic copy button text switching functionality that was accidentally omitted during the previous deployment.
-
-### v3.06-alpha (2026-05-08)
-- **[Feature]** コピペボタンのテキストを「ChatGPT専用プロンプトモード」のチェック状態に連動して動的に切り替わるよう修正。ユーザーの利便性と互換性問題への注意喚起を強化しました。 / Updated the copy button text to dynamically switch based on the "ChatGPT Mode" toggle state, improving usability and clearly warning users about cross-platform compatibility issues.
-- **[System]** バージョン自動更新スクリプト（`update_version.js`）を修正し、`vX.Y-alpha`の厳密なフォーマット（`.0` サフィックスの排除）を強制するよう改善しました。 / Fixed the version bump script (`update_version.js`) to strictly enforce the `vX.Y-alpha` semantic formatting by removing the unwanted `.0` suffix.
-
-### v3.05-alpha (2026-05-08)
-- **[BugFix]** `extractPanel`の正規表現エスケープ処理の不具合を修正し、シナリオテキストがプロンプトに漏れ出す問題（シナリオブリード）を解決しました。 / Fixed a regex escape issue in `extractPanel` that caused scenario text to bleed into the generated prompts.
-- **[Feature]** ChatGPTモード有効時に警告バッジを表示するUIを追加し、プロンプトの冗長性を削減するよう最適化しました。 / Added a warning badge UI when ChatGPT mode is active and optimized prompts for better length reduction.
-- **[System]** バージョン表記のルールを `vX.Y-alpha` の形式に統一し、デプロイ用スクリプトが正しくバージョンを検証できるよう修正しました。 / Standardized versioning format to `vX.Y-alpha` and updated deployment scripts to correctly validate semantic version strings.
-- **[Docs]** READMEの文字化け（エンコーディング不具合）を修正し、Hugging FaceのREADME同期ルールをドキュメントに追加しました。 / Fixed README encoding corruption (mojibake) and added Hugging Face README synchronization rules to the deployment documentation.
-
-### v3.02.0-alpha (2026-05-03)
-- **[BugFix]** ChatGPTモード（GPT-image-2）で生成されるプロンプトにおいて、ページ全体に黒い外枠（border）が描画される問題を修正。`OUTER FRAME` という表現がDALL-Eに物理的な枠線描画として解釈されていたため、`image boundaries` に変更し、さらにANTI-NOISEセクションに枠線描画の明示的禁止（NO PAGE BORDERS）を追加するダブルブロック方式で対策しました。 / Fixed a bug in ChatGPT mode (GPT-image-2) where a black border was drawn around the entire page. The phrase "OUTER FRAME" was interpreted by DALL-E as a physical border drawing instruction; replaced with "image boundaries" and added explicit "NO PAGE BORDERS" rule to the ANTI-NOISE section as a double-block countermeasure.
-- **[Cleanup]** 古いバックアップファイル（`temp_App_backup.jsx`）をリポジトリから削除。世界公開リポジトリの美観を維持。 / Removed stale backup file (`temp_App_backup.jsx`) from the repository for a cleaner public-facing codebase.
-
-### v3.01.0-alpha (2026-05-03)
-- **[BugFix]** 2周目以降のシナリオ生成時（STEP2・STEP3開始時）に、前回の「画像生成ログ（STEP4）」が残ってしまう不具合を修正し、常にクリーンな状態で進行状況を確認できるように改善しました。 / Fixed a bug where the image generation log from previous sessions remained visible; logs are now properly cleared at the start of new scenario or prompt generation steps.
-
-### v3.00.0-alpha (2026-05-03)
-- **[Major]** Story Makerエンジンから高度な物語技法（GMC+Sメソッド）を統合。「ログライン・アンカリング」による物語のブレ防止、「サブテキスト制約」による建前と本音のズレ（アイロニー）の強制、「Stakes（代償）」の吊り上げによるオチの爆発力強化を実装し、シナリオ品質が飛躍的に向上しました。 / Integrated advanced narrative techniques from the Story Maker engine (GMC+S methodology), including Logline Anchoring, Subtext-Enforced Dialogue, and Stakes Escalation to dramatically improve scenario quality and comedic impact.
-- **[UI]** 生成されたシナリオのヘッダーに、AIが構築した「Logline（ログライン）」を表示する機能を追加。プロットの設計図が可視化され、構成の意図が人間にも明確に伝わるようになりました。 / Added a visible "Logline" field to the generated scenario output, allowing users to clearly understand the AI's core narrative blueprint.
-
-### v3.26-alpha
-- **[Docs/System]** 立ちポーズ高品質化のリリースノートおよびドキュメントにおける特定の外部参照記載を一般論に基づく表現に修正し、情報セキュリティ基準を適用しました。 / Applied information security standards to remove specific external references from the standing pose enhancement release notes and documentation, replacing them with generalized terminology.
-
-### v3.25-alpha
-- **[Prompt/Visuals]** 最新の生成AIにおける空間表現のベストプラクティスを基に、内部生成プロンプトおよび「1枚絵用コピーボタン」の両方に、立ちポーズの高品質化指示（「コントラポストによる体重移動」「足先を揃える」等）を統合しました。これにより、足元の破綻を防ぎ、より自然で魅力的な立ち姿を生成可能になりました。 / Integrated industry best-practice standing pose techniques ("contrapposto weight-shift", "keeping toes aligned together") into both the internal generation prompt and the Single-Illustration Copy Button, preventing messy foot generation and creating more natural, attractive postures.
-
-### v3.24-alpha
-- **[Feature]** ヘッダー部分に、Web版ChatGPTで手動で1枚絵を生成する際にシステム独自の強力な作画ノウハウ（クリーン・セルルック・プロトコル等）を持ち出せる「1枚絵 ChatGPT用プロトコル コピーボタン（β）」を追加しました。 / Added a "Single-Illustration Protocol Copy Button (Beta)" to the header, allowing users to extract the system's powerful drawing know-how (Clean Cel-Look Protocol, etc.) and paste it directly into the Web version of ChatGPT for manual high-quality single image generation.
-- **[System]** 今後システム側の内部プロンプトが強化・アップデートされた際に、コピペ用ボタンのプロンプトテキストも同時に同期させる保守運用ルール（Prompt Synchronization Protocol）をプロジェクト防衛ラインに追加しました。 / Added the "Prompt Synchronization Protocol" to the project guardrails to ensure that future updates to the system's internal generation prompt are simultaneously synchronized with the copy-paste button's text.
-
-### v3.22-alpha
-- **[Prompt/Quality]** Added "Dangerous Secret Self-Review Command" (Anatomy & Text Self-Correction Protocol) to the Final Output Check to force the AI to self-review finger counts and spelling mistakes before generating the final image. / 海外のプロンプトハック「自己レビュー命令（危険な秘密）」を導入し、画像出力前にAI自身に指の数やスペルミスを強制自己確認させる仕組みを最終チェックリストに追加しました。
-
-### v3.21-alpha
-- **[Prompt/Visuals]** Added "Flat colors, intentional negative space" and "Clear silhouettes, distinct physical separation" to the Ultra-Compressed Prompt to prevent the homogenized "Generic AI Face" look and make characters more inpaint-friendly. / プロンプトに「クリーン・セルルック（Flat colors, intentional negative space）」と「空間分離プロトコル（Clear silhouettes）」を追加し、汎用AI顔（均質化されたAI特有の画風）を抑制・修正を容易にしました。
-
-### v2.99.0-alpha (2026-05-02)
-- **[Feature]** GMC Gag Structure (GMCギャグ設計) を統合。ランダムな状況生成から、GMC（Goal, Motivation, Conflict）メソッドを用いたキャラ駆動の構成に変更し、強い欲求と理不尽な障害の衝突によりオチの爆発力を強化しました。 / Transitioned from random scenario generation to a structured conflict-driven approach using the Goal, Motivation, Conflict (GMC) framework.
-- **[Feature]** Guard C Implementation (Guard Cの導入)。AI特有の退屈な「まとめのナレーション」や「汎用的な弱いリアクション（やれやれ等）」、状況説明のセリフを完全に禁止する厳格なフィルターを導入しました。 / Integrated strict AI-cliché filters to completely eliminate boring narrative summaries, weak reactions, and lazy explanatory dialogue.
-- **[Feature]** Show, Don't Tell - Gag Action (物理的ギャグアクションの強制)。感情を言葉で説明するのではなく、マンガ的な物理アクション（髪の毛が逆立つ、コーヒーを噴き出す等）で表現させるよう指示を強化しました。 / Tightened prompts to enforce visual dynamism over abstract emotions, forcing the AI to describe comedic physical actions (e.g., hair standing on end, doing a spit-take).
-- **[UI/UX]** フルオート生成時、STEP4（画像生成）開始時にブラウザの表示位置を「画面の最下部（画像生成エリア）」まで自動スクロールするよう改善。ノートPC等の狭い画面でも進捗が隠れず確実に視認可能になりました。 / Improved auto-scrolling during Full-Auto mode. The viewport now correctly scrolls to the absolute bottom (Image Generation section) when STEP 4 starts, ensuring the progress and generated images are fully visible even on smaller screens.
-- **[Docs]** ドキュメントにおける日本語Markdownの太字パース不具合（カッコと文字間の隣接バグ）を修正し、今後の防衛ルールとして `project_standards.md` に明記しました。 / Fixed a Japanese Markdown bold parsing issue in the Manifesto section and added preventative guidelines to the project standards.
-
-### v2.97.0-alpha (2026-05-02)
-- **[Feature]** 服装（Outfit）おまかせ選定時の「クローン化（全員が全く同じ服を着る問題）」を防止。AIへのプロンプト指示を修正し、「白のビキニ」等の細かすぎる指定ではなく「水着」「私服」「ナース服」等の **大分類のカテゴリー** に留めることで、画像AIがキャラクター個別の着こなしを適用する余白を確保しました。 / Prevented the "clone effect" in the Outfit Auto-Select system where all characters would wear the exact same specific clothing. Updated the AI prompt to output broad clothing categories (e.g., "swimwear", "casual wear", "nurse uniform") instead of overly specific descriptions, leaving room for the image generation AI to apply individual styling based on each character's identity.
-
-### v2.96.0-alpha (2026-05-02)
-- **[Feature]** 服装（Outfit）の文脈認識型自動選定システムを実装。空欄の際、従来の「キャラシート準拠」デフォルト動作を廃止し、AIがシナリオの状況・場所・文脈を分析して、適切な服装（水着、スーツ、制服等）を **具体的な衣装名** で自律的に選定・適用するように改善しました。場所（Location）と同等の「AIおまかせ」挙動に統一。 / Implemented context-aware Outfit Auto-Select system. Replaced the previous "character sheet default" behavior: when left blank, AI now analyzes the scenario context (situation, location, mood) and autonomously assigns specific attire names (swimwear, suits, uniforms, etc.) instead of vague defaults. Unified with the same "AI Auto-Select" behavior as the Location field.
-- **[UI]** 生成プレビュー（GENERATION PREVIEW）の場所・服装表示を統一。ユーザー手入力値は白文字、AIおまかせ選定値は青文字＋✨アイコンで視覚的に区別可能に。 / Unified the Generation Preview display for Location and Outfit fields. User-specified values shown in white, AI-selected values shown in blue with ✨ icon for clear visual distinction.
-- **[Infra]** ローカル開発環境向けにViteリバースプロキシを導入。`localhost`でのブラウザOriginヘッダーによるAPIキー拒否問題を解消。 / Added Vite reverse proxy for local development to bypass browser Origin header API key rejection on `localhost`.
-- **[Cleanup]** 不要な一時ファイル（バックアップ、テストスクリプト等）をリポジトリから整理・削除。 / Cleaned up unnecessary temporary files (backups, test scripts) from the repository.
-
-### v2.95.0-alpha (2026-05-02)
-- **[Feature]** Emotion Style Tag（画風パレット）を6種追加し、合計23種に拡張。`THICK_PAINT`（厚塗り）、`PASTEL`（パステル）、`CEL`（セル画風）、`DARK_ANIME`（ダーク調）、`THIN_LINE`（繊細線画）、`HIGH_SATURATION`（高彩度ビビッド）をAIが文脈から自動選択可能に。 / Expanded the Emotion Style Tag palette by 6 new styles (total 23): `THICK_PAINT`, `PASTEL`, `CEL`, `DARK_ANIME`, `THIN_LINE`, and `HIGH_SATURATION`, all automatically selected by AI based on scenario context.
-- **[Feature]** Anti-Persona-Gravity Protocol v1.0 を導入。特定の権威キャラ（風紀委員等）が4コマ目のオチを毎回独占するパターンを防止し、全キャラに均等にオチの主導権を分散させるシナリオ生成ルールを追加。 / Introduced Anti-Persona-Gravity Protocol v1.0 to prevent authoritative characters (e.g., discipline committee members) from monopolizing 4th-panel punchlines, distributing punchline ownership evenly across all cast members.
-
-### v2.94.0-alpha (2026-05-01)
-- **[UI Fix]** フッターのコピーライト表記を正式なフルネーム（`NANO BANANA 2 & CHATGPT IMAGES 2.0 POWERED SUPER AI 4-KOMA SYSTEM`）へと修正しました。 / Updated the footer copyright text to use the full official application name (`NANO BANANA 2 & CHATGPT IMAGES 2.0 POWERED SUPER AI 4-KOMA SYSTEM`).
-
-### v2.93.0-alpha (2026-05-01)
-- **[UI Fix]** フッターのコピーライト表記にて、文字が密着して視認性が下がる問題（「FURUNANO」と結合してしまう等）を解消。表示を `© 2026 FURU | NANO BANANA 2 & SUPER AI 4-KOMA SYSTEM` に変更し、ダークモード環境でも区切りが明確に視認できるようパイプ文字によるセパレータと適切なマージンを導入しました。 / Fixed a visual issue in the footer copyright text where words would merge (e.g., "FURUNANO"). Changed the layout to use a visible pipe separator and appropriate margins (`© 2026 FURU | NANO BANANA 2 & SUPER AI 4-KOMA SYSTEM`) to ensure clarity even in dark mode environments.
-
-### v2.92.0-alpha (2026-05-01)
-- **[UI Fix]** フッターのコピーライト表記を実際の権利者名（FURU）と最新のアプリケーション名（NANO BANANA 2 & SUPER AI 4-KOMA SYSTEM）を反映する形式に修正しました。 / Updated the footer copyright notice to accurately reflect the correct rightsholder (FURU) and the latest application name (NANO BANANA 2 & SUPER AI 4-KOMA SYSTEM).
-
-### v2.91.0-alpha (2026-05-01)
-- **[UI Fix]** 「シナリオ強化」および「コンテンツポリシー」パネルのUIスタイルを統一・改善。ヘッダー部分に太字、左アクセントバー、大きなChevronアイコンを採用し、開閉可能な操作要素であることを明確化。また「クリックで開く」「クリックで閉じる」の日本語表記へ統一。 / Unified and improved the UI styling for the "Scenario Enhancement" and "Content Policy" panels. Applied bold text, a left accent bar, and a larger Chevron icon to the headers to clarify interactability, and standardized the toggle text to Japanese ("クリックで開く" / "クリックで閉じる").
-
-### v2.90.0-alpha (2026-05-01)
-- **[Fix]** Fixed a bug where the Reset Input button did not clear the character analysis results (castList). Now all data from STEP 1 onward is fully cleared on reset. / 「入力をリセット」ボタンを押した際に、キャラクター解析結果（castList）がクリアされなかったバグを修正。リセット時にSTEP1以降のデータが完全にクリアされるようになりました。
-- **[Improve]** Implemented a JS-side random punchline type selector (8 types) to prevent repetitive endings. Also added Anti-Persona-Gravity rule to prevent character traits from being directly used as punchlines. / オチのマンネリ化を防ぐため、JS側でランダムにオチタイプ（8種類）を決定するシステムを実装。またキャラクターの固有設定（趣味・口癖等）がそのままオチに使われることを禁止するAnti-Persona-Gravityルールを追加。
-- **[Cleanup]** Removed unused `resetAll` function from codebase. / 未使用の `resetAll` 関数をコードから削除。
-### v2.89.0-alpha (2026-04-30)
-- **[Security]** OpenAI APIキーの管理手法を強化。ブラウザの`localStorage`への永続保存を完全廃止し、セキュアなインメモリ（RAM）上でのみ保持する設計にリファクタリング。ブラウザリロードでキーが安全に揮発することを保証。
-
-### v2.87.0-alpha (2026-04-30)
-- **[System]** Finalized Full Auto pipeline UI/UX, explicitly ensuring accurate `isAborting` state feedback ("停止処理中...") even during asynchronous interruptions in Step 1 (character analysis), and fixed unreadable color styles during disabled/aborting states. / フルオート生成のUI/UXを完成。STEP1（キャラクター解析中）の非同期処理中に中断した際も、正確に「停止処理中...」のステータスフィードバックを表示するように修正し、無効化時のボタン色が見えなくなる問題を解消しました。
-
-### v2.85.0-alpha (2026-04-30)
-- **[UI Fix]** Fixed text overflow and layout truncation on extremely narrow browser widths by implementing `flex-wrap` and `whitespace-normal` on the header elements, making the sticky progress bar completely responsive. / ブラウザ幅を極端に狭めた際に文字が見切れる問題を修正。ヘッダーに `flex-wrap` と `whitespace-normal` を導入し、完全なレスポンシブ対応を実現しました。
-- **[UI Fix]** Validated "Full Auto" button action-oriented labeling ("⚡ フルオート ON" / "⏹ フルオート中断") to provide optimal UX, and corrected the instructional text to accurately reflect the system's hard reset behavior upon interruption. / フルオートボタンのアクション指向の表記（「⚡ フルオート ON」 / 「⏹ フルオート中断」）を最適化し、中断後に再開した際の仕様（STEP2からの新シナリオ再生成）が説明文に正確に反映されるよう修正しました。
-
-### v2.83.0-alpha (2026-04-29)
-- **[System]** Complete restoration of v2.81 UI layout including centered sticky progress bar and correct full auto button logic. The broken regressions from v2.82 have been completely reverted. / v2.81のUIレイアウト（中央配置のスティッキー進捗バーや正しいフルオートボタンロジックを含む）を完全に復旧しました。v2.82で発生したレイアウト崩壊を排除しました。
-
-### v2.82.0-alpha (2026-04-29)
-- **[System]** Emergency Revert & UI Stability Recovery. Reverted the codebase to v2.77.0-alpha to discard experimental layout regressions and ensure stable operation. Re-established the single, unified sticky header design. / 緊急ロールバックおよびUI安定性の回復。実験的なレイアウト改悪を破棄し、安定動作を保証するためv2.77.0-alphaの状態に完全に復元しました。
-
-### v2.88.0-alpha (2026-04-30)
-- **[Feature]** OpenAI API (ChatGPT Images 2.0) 直接生成のテスト機能を実装。専用のセキュアなモーダルUI（入力文字のマスク対応）を通じ、ブラウザのローカルストレージにAPIキーを保存し、アプリから直接画像生成APIを叩く基盤を構築。
-- **[System]** OpenAI API通信に対する180秒の強制タイムアウト（AbortController）セーフティ機能を実装。ChatGPT Images 2.0 サーバーの応答なしによる無限フリーズを防止。
-- **[System]** APIエラー（400文字数オーバー、401無効キー等）を動的に検知し、APIキーの状態（Google側かOpenAI側か）に応じて「手動生成への代替手順」を提示するインテリジェントなエラーハンドリングを追加。
-- **[UI]** 画像生成ログ（ターミナル）への自動追従スクロール機能を実装。生成中のステータス変動やエラーメッセージが常に最新の最下行で確認可能に。
-- **[Fix]** STEP2およびSTEP3のボタンを手動で押した際、非同期処理の競合によりシステムがクラッシュするイベント伝播バグを修正。
-- **[UI]** 画面幅やデバイス環境に依存しないレスポンシブなスティッキーヘッダーの再構築および、「画像比率事後修正プロンプト」ボタンのブロック独立化による視認性向上。
-
-### v2.86.0-alpha (2026-04-30)
-- **[Feature]** フルオート「無限ループ（Endless Mode）」機能を試験実装。生成完了後にキャラクター設定を保持したまま、新しいニュース・お題で自動的に次々とシナリオを生成し続ける機能を追加。
-
-### v2.77.0-alpha (2026-04-29)
-- **[Feature]** Enhanced GPT-image-2 Anti-Noise Protocol: Integrated comprehensive noise countermeasures based on community research. Added Positive Safe Rendering Block (smooth cel shading, clean color surfaces, low texture density, etc.), Banned Prompt Word Combinations (e.g., ultra-detailed + film grain), and Light Effect Substitution Table (sparkling particles → soft glow, glowing dust → clean bloom). Also replaced noise-inducing words in Technical Quality Definitions and Lighting Enhancement prompts. / GPT-image-2向けノイズ対策プロトコルを大幅強化。コミュニティの研究成果に基づき、ポジティブ安全レンダリングブロック（smooth cel shading, clean color surfaces, low texture density等）、禁止ワード組み合わせリスト（ultra-detailed + film grain等）、光の演出置き換え表（sparkling particles → soft glow, glowing dust → clean bloom等）を追加。Technical Quality定義と照明強化プロンプトからもノイズ誘発ワードを除去。
-
-### v2.76.0-alpha (2026-04-28)
-- **[Feature]** Added Visual Gag Auto-Mapping: each gap technique (exaggeration, reversal, absurdity, etc.) now auto-recommends matching EMOTION tags and visual gag directions in the scenario. / ズレ技法→ビジュアルギャグ自動マッピングを追加。誇張→CHIBI_GAG+身体変形、緊張と緩和→GEKIGA→BLANKの絵柄急変等、各技法に推奨EMOTIONタグと視覚演出を紐付け。
-- **[Feature]** Added Punchline Variety Enforcement (6 patterns): Explosion, Surreal Silence, Social Death, Self-Contained, Reversal Punchline, and Repetition Escalation. Prevents repetitive punchline patterns. / オチの多様化ルール（6系統: 爆発型/静寂型/社会的死型/自己完結型/逆転オチ型/天丼爆発型）を追加。ワンパターンなオチを防止。
-- **[Feature]** Added Gag Tone Variation (3 modes): High-Tension Explosion, Surreal Silence, and Intellectual Black Comedy. / ギャグのトーンバリエーション（ハイテンション爆発系/シュール静寂系/知性派ブラック系）を追加。
-- **[Feature]** Added Comedy Structure Verification Checklist to STEP2.5 enhancement prompt. AI self-validates Setup→Punchline structure, energy concentration, gap magnitude, visual gag presence, and dialogue-visual synergy before output. / STEP2.5強化プロンプトに笑い構造の検証チェックリストを追加。フリ→オチ構造・エネルギー集中度・ズレの大きさ・ビジュアルギャグ有無・セリフとビジュアルの連携を出力前に自己検証。
-- **[Docs]** Added Comedy Structure Engineering section to README with mathematical formulas, 3-layer architecture explanation, and system reproducibility analysis. / READMEにComedy Structure Engineeringセクションを追加（数式モデル・3層アーキテクチャ解説・再現性分析）。
-
-### v2.75.0-alpha (2026-04-28)
-- **[Feature]** Integrated "Comedy Structure Engineering" methodology into both the base scenario generation prompt (STEP2) and the Dialogue/Gag Enhancement prompt (STEP2.5). The system now explicitly applies structured comedy techniques — including Setup (フリ), Gap/Deviation (ボケ), Punchline (ツッコミ/オチ), Repetition Escalation (天丼), Role Reversal (逆転), Absurdity (不条理), and Tension-Release (緊張と緩和) — to produce funnier, more dynamic 4-panel manga scenarios. / シナリオ生成（STEP2）とセリフ・ギャグ強化（STEP2.5）の両方に「お笑い構造メソッド」を統合。フリ→ボケ→ツッコミ→オチの構成マッピング、天丼・逆転・不条理・緊張と緩和・置換・誇張・ノリツッコミ・かぶせ等の技法を明示的に適用し、より面白くダイナミックな4コマ漫画シナリオを生成するよう改善。
-
-### v2.74.0-alpha (2026-04-27)
-- **[Fix]** Updated the "ABSOLUTE OVERRIDE" forced layout-rebuild prompt to explicitly demand the inclusion of the required watermarks on the 4th panel. / 画像比率事後修正プロンプト（ABSOLUTE OVERRIDE）使用時に、4コマ目下部の必須ウォーターマークが消失する問題を修正。再構築時にも透かしを再描画するよう明示的な指示を追加。
-
-### v2.73.0-alpha (2026-04-27)
-- **[Docs]** Added "The Ultimate Hybrid Strategy" section to README.md to explain the unique Prompt-Driven Architecture and the intentional division of labor between Gemini API and ChatGPT UI. / 意図せず到達した「最強のハイブリッド運用（Gemini API + ChatGPT UI）」に関する詳細な解説をREADMEに追記。
-
-### v2.72.0-alpha (2026-04-27)
-- **[Fix]** Reverted the VERTICAL TEXT PROTOCOL (tategaki enforcement) as it caused generation failures in ChatGPT Imsages 2.0. The STABLE LAYOUT FOUNDATION (A4 lock and rigid panel constraints) has been preserved. / ChatGPT Imsages 2.0 での生成失敗の原因となっていた「縦書き強制プロトコル（VERTICAL TEXT PROTOCOL）」を削除し、以前の安定したテキストプロトコルにロールバック。なお、レイアウトを安定させるSTABLE LAYOUT FOUNDATION（A4固定・パネル剛体化）は引き続き維持。
-
-### v2.71.0-alpha (2026-04-27)
-- **[Fix]** Enforced vertical text (tategaki) in all speech bubbles via VERTICAL TEXT PROTOCOL — prevents horizontal/vertical text mixing in ChatGPT-generated manga. Added 12-rule detailed protocol covering character stacking direction, punctuation placement, small kana positioning, long vowel mark rotation, and bubble shape constraints. Also added base-level text direction rule for all modes. / 吹き出し内の縦書き（tategaki）をVERTICAL TEXT PROTOCOLで強制 — ChatGPT生成時の横書き混在を防止。文字の積み重ね方向・句読点配置・小仮名位置・長音符回転・吹き出し形状制約など12項目の詳細プロトコルを追加。全モード共通の基本テキスト方向ルールも追加。
-
-### v2.70.0-alpha (2026-04-27)
-- **[Feature]** Merged STABLE LAYOUT FOUNDATION into ChatGPT enhancement block - A4 portrait canvas lock, panel frame immutability, distortion constraints, and composition priority order are now auto-injected to prevent elongated images at generation time. / ChatGPT強化ブロックにSTABLE LAYOUT FOUNDATIONを統合。A4縦比率ロック・パネル剛体宣言・歪み制約・構成優先順位を初回生成時に自動埋込し、細長画像を予防。
-- **[Feature]** Added post-generation aspect ratio fix prompt copy button for cases where prevention fails. / 予防でも細長画像が出た場合の事後修正プロンプトコピーボタンを追加。
-- **[UI]** Unified all copy buttons (prompt copy, fix prompt, policy query) with consistent compact size, copy-complete toggle (2s green flash), and width-preserving text swap. / 全コピーボタン（プロンプト・修正・ポリシー）のサイズ・コピー完了トグル（2秒緑表示）・横幅維持を統一。
-- **[UI]** Fixed content policy panel font sizes and button styles to match PRO TIP section. / コンテンツポリシーパネルの文字サイズ・ボタンスタイルをPRO TIPセクションと統一。
-- **[Fix]** Updated ChatGPT format enforcement header from ChatGPT Imsages 2.0 to ChatGPT Images 2.0. / ChatGPTフォーマット強制ヘッダーをChatGPT Imsages 2.0 からChatGPT Images 2.0に更新。
-
-### v2.69.0-alpha (2026-04-26)
-- **[Fix]** Resolved logical contradiction in Panel 4 prompt generation where "SOLO SHOT" and "MANDATORY BACKGROUND CAST" were emitted simultaneously. Background casts are now automatically merged into the panel characters list to prevent "SOLO SHOT" triggers when other characters are present. / Panel 4のプロンプトで「SOLO SHOT（他キャラ描くな）」と「MANDATORY BACKGROUND CAST（残り全員描け）」が同時出力される論理矛盾バグを修正。背景キャストがいる場合はSOLO SHOTを出力せず、自動的に全登場リストへ統合するように改善。
-
-### v2.68.0-alpha (2026-04-26)
-- **[Feature]** Added 6 new EMOTION styles (SPEED, FLASHBACK, UKIYOE, POP_ART, SKETCH, NEON) and 2 new UI buttons for Scenario Enhancement (Panel Layout, Time Effect). / 6つの新しいEMOTIONスタイル（SPEED等）と、シナリオ強化用の「コマ割り」「時間演出」ボタンを追加。
-
-### v2.67.0-alpha (2026-04-23)
-- **[Feature]** Added Character Silhouette Isolation (G-Pen outline, background simplification, spotlight effect) to ChatGPT Images 2.0 Mode. / ChatGPT Images 2.0 強化プロンプトに人物浮き出し強化（Gペンアウトライン・背景簡略化・スポットライト効果）を追加。
-
-### v2.66.0-alpha (2026-04-23)
-- **[Docs]** Updated README to reflect ChatGPT Images 2.00 Mode and Scenario Enhancement features. / READMEを更新し、ChatGPT画像生成モードおよびシナリオ強化機能についての記載を実態に合わせて追記。
-
-### v2.65.0-alpha (2026-04-22)
-- **[Fix]** Removed an extra colon from the ChatGPT Images 2.0 instructions in PRO TIP. / PRO TIPのChatGPT向け案内文から余計なコロン（：）を削除。
-
-### v2.64.0-alpha (2026-04-22)
-- **[Fix]** Added a note about clicking "Show in text field" to the ChatGPT PRO TIP and slightly adjusted the ChatGPT Imsages 2.0 wording. / PRO TIPのChatGPT案内文に「テキストフィールドに表示」の注意書きを追加し、ChatGPT Imsages 2.0 の文言を微修正。
-
-### v2.63.0-alpha (2026-04-22)
-- **[Fix]** Simplified ChatGPT Imsages 2.0 ChatGPT instructions and clarified content policy rejection UI to explicitly support both Gemini and ChatGPT. / ChatGPT Imsages 2.0 (ChatGPT) 向けのアスペクト比変更指示およびコンテンツポリシー拒否時のUI文言を整理し、GeminiとChatGPT両対応であることを明記。
-
-### v2.62.0-alpha (2026-04-22)
-- **[Fix]** Updated watermark text to specify "Generated by ChatGPT" when ChatGPT mode is enabled, and explicitly added ChatGPT Imsages 2.0 aspect ratio commands and title placement fixes to enforce A4 size. / ChatGPTモード時にウォーターマークへ「ChatGPT生成」の旨を明記するように変更し、ChatGPT Imsages 2.0 向けのアスペクト比指定とタイトル配置修正（白フチ問題）を明記してA4サイズを強制。
-
-### v2.61.0-alpha (2026-04-22)
-- **[Fix]** Adjusted gutter width between manga panels (approx 3% of canvas height) to prevent panels from touching / 4コマのコマ間ガター（余白）をキャンバス高の約3%に広げ、コマ同士が密接するのを防止。
-
-### v2.60.0-alpha (2026-04-21)
-- **[Critical Fix]** Camera angle lens distortion weights not being applied to image generation - added `cameraLensMap` dictionary / カメラアングルのレンズ歪みウェイトが画像生成に反映されないバグを修正（cameraLensMap追加）。
-- **[Fix]** Removed hardcoded Extreme Reaction Mandate from default prompt, restoring natural expressions / デフォルトシナリオの過剰演出（Extreme Reaction Mandate）を除去し、自然な表情に回復。
-- **[Fix]** Increased NO EYE CONTACT weight from 1.7 to 2.5 to suppress characters looking at the camera / カメラ目線（第四の壁破壊）抑制ウェイトを1.7→2.5に強化。
-
-### v2.59.0-alpha (2026-04-21)
-- **[Major]** Deprecated legacy Imagen models (scheduled for full removal 2026/06/24). Gemini Native Image Generation is now primary / Imagen全系列を廃止予定に伴い非推奨化、Geminiネイティブ画像生成をプライマリに。
-- **[Major]** Rebuilt text/image model lists with Gemini 3.x generation priority / テキスト・画像モデルリストをGemini 3.x世代優先に再構築。
-- **[New]** Added Gemini API Model Audit Protocol to AGENTS.md / Gemini APIモデル定期監査プロトコルをAGENTS.mdに追加。
-
-### v2.52.0-alpha
-- **[BugFix]** PRO TIPSの文言における「カンニングできる」という不適切な表現を「参照できる」に修正。
-
-### v2.48.0-alpha (2026-04-15)
-- **[UI Fix]** APIキー未入力時のぼかし挙動を修正。出力結果エリア（プロンプト欄・コピーボタン・PRO TIPS・画像生成ログ・生成画像エリア）が`currentStep < 3`の時に正しくロックされるよう修正。
-- **[UI Fix]** STEP3構築中にプロンプト欄やDYNAMIC ENGINE等が丸見えになっていた構造上の不備を修正（出力結果divにロックオーバーレイを追加）。
-- **[UI New]** ステータスバーにAPI接続状態バッジ（🟢 CONNECTED / 🔴 NO API KEY）を常時表示。
-- **[UI New]** APIキー入力UIをインラインバー形式に変更（フルスクリーンモーダル廃止）。
-- **[UI New]** コピーボタンより下（STEP4ボタン・PRO TIPS・コンテンツポリシーパネル）を`finalPrompt`未生成時にぼかすUI改善。
-
-### v3.11-alpha
-- **[Bugfix]** ChatGPTモードでキャラシートが再現される問題に対処。プロンプト冒頭にアンチ・キャラシート再現指示を挿入し、末尾ルールも強化。
-
-### v3.10-alpha
-- **[UI/Rules]** OpenAI画像APIの直接生成制限に対応し、UIの注意書きテキストを修正。今後のデプロイ事前監査ルールに制限解除チェックを追加。
-
-### v3.09-alpha
-- **[HotFix]** OpenAI `gpt-image-2` への移行後、画像生成で `400 Unknown parameter` が発生しエラーとなる不具合を修正。不要なパラメータ(`response_format`)を削除。
-
-### v3.08-alpha
-- **[System]** OpenAI `dall-e-3` (5/12廃止) を `gpt-image-2` に、Gemini `gemini-3.1-flash-lite-preview` (5/25廃止) をGA版に緊急移行。デプロイ前のAPI事前監査プロトコルを導入。
-- **[System]** コピペボタンのモード別（Gemini/ChatGPT）テキスト動的切り替え機能を完全復元(v3.07-alpha)。
-
-### v2.47.0-alpha (2026-04-14)
-- **[Feature]** シナリオ強化：カメラワーク強化トグル追加
-- **[Feature]** シナリオ強化：セリフやギャグ強化トグル追加
-- **[BugFix]** STEP3構築中にSTEP2が消えるバグ修正（isAssembling条件除外）
