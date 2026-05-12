@@ -1,4 +1,4 @@
-﻿# Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System
+# Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System
 
 > **"To what extent can humans step away from the creative process?"**
 > **�u�l�Ԃ́A�ǂ��܂Ő��삩��~�����̂��H�v**
@@ -636,6 +636,10 @@ Developed by **FURU**
 
 ## ? ChangeLog
 
+### v3.33-alpha (2026-05-12)
+- **[UI/UX]** シナリオのヘッダーテキスト（編集可能なテキストエリア）内にも、AIが選択・適用した「オチの方向性（Punchline）」を明示的に表示するように修正しました。これにより、GENERATION PREVIEWだけでなく、出力されたテキストをコピーする際にもどのオチが使われたのかが一目で確認可能になります。 / Appended the explicitly selected "Punchline" directive to the scenario text output block, allowing users to verify and copy the chosen comedic direction directly from the generated scenario header.
+- **[System]** バージョンを v3.33-alpha に同期。 / Synchronized version to v3.33-alpha.
+
 ### v3.32-alpha (2026-05-12)
 - **[UI/UX/System]** UIとプロンプトの表記を同期しました。getPunchlineLabelヘルパーを導入し、UI上で「静寂型 (シュール)」などの日本語名称が選択された際、プロンプトにも同じ文言が渡されるように修正。これにより、オチの指示がAIに伝わりやすくなりました。 / Localized the "Punchline Director" directives. Introduced the getPunchlineLabel helper to ensure that the selected Japanese punchline names (e.g., "静寂型 (シュール)") are directly injected into the AI prompt and clearly displayed in the UI. This significantly improves the accuracy of manga punchline direction and faithfully reflects the user's selected comedic intent.
 - **[System]** App.jsx, index.html, package.json のバージョンを v3.32-alpha に同期しました。 / Synchronized version to v3.32-alpha across project files.
@@ -705,4 +709,5 @@ Developed by **FURU**
 
 ### v3.12-alpha (2026-05-09)
 - **[UI/UX]** UI/���O�̊��S���{�ꉻ�����{�B�v�l�g���[�X�iThinking Trace�j�����p�ł��Ȃ��W�����f���g�p���̃��b�Z�[�W���u�ʏ폈�����������܂����B�v�ƊȌ������A���[�U�[�̍����������s�v�Ȓ��߁i�u�v�l�g���[�X�͗��p�s�v��u���_���O�Ȃ��v�Ȃǁj��r�����܂����B / Localized UI logs to Japanese completely. Simplified the fallback message for standard models without Thinking Trace to "�ʏ폈�����������܂����B" (Normal processing completed), removing confusing annotations.
+
 

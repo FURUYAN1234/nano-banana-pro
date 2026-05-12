@@ -35,7 +35,7 @@ import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 import { generateImageWithOpenAI, setOpenAIApiKey, getOpenAIApiKey } from './lib/openai';
 
-const SYSTEM_VERSION = "v3.32-alpha";
+const SYSTEM_VERSION = "v3.33-alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -1286,6 +1286,7 @@ ${scenario}
           parsedData.logline = loglineMatch ? loglineMatch[1].trim() : "";
           parsedData.location = locationMatch ? locationMatch[1].trim() : "Generic Background";
           parsedData.outfit = outfitMatch ? outfitMatch[1].trim() : "";
+          parsedData.punchline = punchlineMatch ? punchlineMatch[1].trim() : "";
           parsedData.scenario = scenarioMatch[1].trim();
         } else {
           // Fallback: Try JSON just in case the model ignored instructions, or raw
@@ -1327,7 +1328,8 @@ ${scenario}
       // [v2.43] シナリオテキストにLocation/Outfit行を含めて表示・編集可能にする
       const loglineLine = parsedData.logline ? `\nLogline: ${parsedData.logline}` : '';
       const outfitLine = (customOutfit.trim() || parsedData.outfit) ? `\nOutfit: ${customOutfit.trim() || parsedData.outfit}` : '';
-      setScenario(`## タイトル: ${parsedData.topic} !?${loglineLine}\nLocation: ${parsedData.location || "Unspecified"}${outfitLine}\n\n${parsedData.scenario} `);
+      const punchlineLine = parsedData.punchline ? `\nPunchline: ${parsedData.punchline}` : '';
+      setScenario(`## タイトル: ${parsedData.topic} !?${loglineLine}\nLocation: ${parsedData.location || "Unspecified"}${outfitLine}${punchlineLine}\n\n${parsedData.scenario} `);
 
       // [v2.43] ロック値もセット（GENERATION PREVIEW表示用）
       setLockedLocation(customLocation.trim() || parsedData.location || "Unspecified");
@@ -1335,7 +1337,7 @@ ${scenario}
 
       setScenarioThought(prev => prev + `\n > トピック選定: ${parsedData.topic} \n > シナリオ構築完了。`);
       showStatus("シナリオの生成が完了しました！");
-      const finalScenarioText = `## タイトル: ${parsedData.topic} !?${loglineLine}\nLocation: ${parsedData.location || "Unspecified"}${outfitLine}\n\n${parsedData.scenario} `;
+      const finalScenarioText = `## タイトル: ${parsedData.topic} !?${loglineLine}\nLocation: ${parsedData.location || "Unspecified"}${outfitLine}${punchlineLine}\n\n${parsedData.scenario} `;
       return finalScenarioText; // [v2.79] フルオート連鎖用: テキスト自体を返す
 
     } catch (error) {
@@ -4401,5 +4403,6 @@ export default function AppWrapper() {
     </ErrorBoundary>
   );
 }
+
 
 
