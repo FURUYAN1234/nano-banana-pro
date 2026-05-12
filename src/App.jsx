@@ -35,7 +35,7 @@ import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 import { generateImageWithOpenAI, setOpenAIApiKey, getOpenAIApiKey } from './lib/openai';
 
-const SYSTEM_VERSION = "v3.40-alpha";
+const SYSTEM_VERSION = "v3.41-alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -461,7 +461,6 @@ function App() {
   const [enhanceBackgrounds, setEnhanceBackgrounds] = useState(false); // 背景強化
   const [enhanceCameraWork, setEnhanceCameraWork] = useState(false);   // [v2.47] カメラワーク強化
   const [enhanceDialogue, setEnhanceDialogue] = useState(false);       // [v2.47] セリフ・ギャグ強化
-  const [enhanceFACS, setEnhanceFACS] = useState(false);               // [v3.14] FACS表情制御 (実験的)
   // [v2.69] コマ割り演出・時間演出を削除（ChatGPT画像生成ではタグ形式の指示が解釈されず効果ゼロのため）
   const [isEnhancing, setIsEnhancing] = useState(false);
   const [enhanceLog, setEnhanceLog] = useState("");
@@ -749,7 +748,15 @@ function App() {
     // カテゴリ別の強化指示を組み立て
     const enhanceCategories = [];
     if (enhanceExpressions) {
-      enhanceCategories.push("【表情の強化】各キャラの表情描写を限界まで大げさ・劇的にしてください（基準ウェイト2.5〜3.0相当）。例: 驚きなら「髪の毛が逆立ち白目をむくほど限界まで見開いた目」、怒りなら「顔が真っ赤になり湯気が出るほど怒り狂う」、喜びなら「顔のパーツが画面からはみ出るほどの満面の笑みと滝のような涙」。微笑みや軽い驚きのような控えめな表現は絶対に禁止し、常軌を逸した激しいリアクションに書き換えてください。\n\n⚠️【セリフ保護ルール - 絶対厳守】⚠️\n表情の強化描写は必ず「状況」欄（Visual Action / ト書き）にのみ記述すること。\n「」で囲まれたセリフ（Speech Bubble内の台詞テキスト）には、表情の描写文を絶対に書き込まないこと。\nセリフ欄には元のセリフをそのまま残すか、セリフとして自然な短い発言のみを書くこと。\n悪い例: Speech Bubble 1: \"顔が真っ赤になり湯気が出るように…\" ← これは描写文であってセリフではない。禁止。\n良い例: 状況欄に「顔が真っ赤になり湯気が出るほど怒り狂う表情」と書き、セリフ欄は元の短い台詞を維持する。");
+      enhanceCategories.push("【表情データベースによる表情の強化】各キャラの表情描写を限界まで大げさ・劇的にしてください（基準ウェイト2.5〜3.0相当）。キャラクターの感情を「怒る」「悲しむ」などの抽象語で済ませず、以下の【マンガ表情データベース】から最適なものを選択・組み合わせてト書きに物理的な視覚描写として追加してください。\n" +
+        "【マンガ表情データベース】\n" +
+        "・驚愕・絶望系：瞳孔を開く、白目になる、顔に斜線の影（青ざめる）、滝のような冷や汗、口を大きく開けて震える、髪の毛が逆立ち限界まで見開いた目\n" +
+        "・激怒系：額に青筋（血管マーク）、白目のない黒目だけの鋭い眼光、歯を食いしばる、瞳に炎が宿る、顔が真っ赤になり湯気が出る\n" +
+        "・歓喜・興奮系：目をキラキラ輝かせる（星マーク）、頬を赤らめる、とろけたような笑顔、鼻息が荒い、顔のパーツが画面からはみ出るほどの満面の笑み\n" +
+        "・狂気・シュール系：光の消えたハイライト無しの瞳、不気味な三日月型の笑顔、無表情（点目）で真顔、虚無の目\n" +
+        "・泣き系：滝のように噴き出す涙、目尻に涙を浮かべてうるうるさせる、顔をくしゃくしゃにして号泣\n\n" +
+        "微笑みや軽い驚きのような控えめな表現は絶対に禁止し、常軌を逸した激しいリアクションに書き換えてください。\n\n" +
+        "⚠️【セリフ保護ルール - 絶対厳守】⚠️\n表情の強化描写は必ず「状況」欄（Visual Action / ト書き）にのみ記述すること。\n「」で囲まれたセリフ（Speech Bubble内の台詞テキスト）には、表情の描写文を絶対に書き込まないこと。\nセリフ欄には元のセリフをそのまま残すか、セリフとして自然な短い発言のみを書くこと。\n悪い例: Speech Bubble 1: \"顔が真っ赤になり湯気が出るように…\" ← これは描写文であってセリフではない。禁止。\n良い例: 状況欄に「顔が真っ赤になり湯気が出るほど怒り狂う表情」と書き、セリフ欄は元の短い台詞を維持する。");
     }
     if (enhanceBodyLang) {
       enhanceCategories.push("【ボディランゲージの強化】棒立ちの状態を禁止します。通常の2倍以上の過剰なアクションで全身で感情を表現してください（基準ウェイト2.5〜3.0相当）。例: 画面を突き破る勢いで前のめりになる、腕を天井まで大きく振り上げる、机を粉砕する勢いで叩く、椅子から転げ落ちる等。体全体を使った異常なほど大きなアクションを書いてください。");
@@ -767,10 +774,6 @@ function App() {
     // [v2.47] セリフ・ギャグ強化
     if (enhanceDialogue) {
       enhanceCategories.push("【セリフ・ギャグの強化 — お笑い構造メソッド適用】4コマ漫画の笑いの構造を根本から再設計してください。\n\n■ ズレを作る技法（以下から最低2つ適用せよ）:\n- 【置換】状況や出来事を全く別の文脈に言い換えてセリフを書き直す（例: 深刻な会議 → 小学生の給食会議のようなセリフに）\n- 【誇張】リアクションや感情を極限まで増幅する。「驚く」→「魂が肉体から離脱するレベルで驚愕」\n- 【逆転】キャラの普段の立場・力関係を入れ替えたセリフにする（普段クールなキャラが取り乱す、普段バカなキャラが正論を言う等）\n- 【不条理】脈絡のない狂った要素を堂々とセリフに混ぜる。多少意味不明でも勢いで笑えればOK\n- 【緊張と緩和】3コマ目まで空気を極限まで張り詰めるセリフにし、4コマ目で完全崩壊させる\n- 【常識に戻る】全員が暴走する中、1人だけ冷静に「いや普通に考えておかしいだろ」と常識を提示する\n\n■ ズレを見せる構成技法:\n- 【フリ】1コマ目のセリフは「普通の予想」を作る前置き。ここでは笑わせなくてよい\n- 【ボケ】2コマ目でズレた発言を投入し「あれ？」と思わせる\n- 【ツッコミ】ボケで生まれたズレを鋭い一言で指摘して笑いを明確化する。弱い定型ツッコミは禁止、状況に即した具体的な叫び声にせよ\n- 【オチ】4コマ目でズレを確定し笑いを完成。全エネルギーをここに集中投下\n- 【天丼】1コマ目の小ネタを3コマ目で形を変えて再登場させ、4コマ目で爆発させる（4コマでは最強テクニック）\n- 【ノリツッコミ】ツッコミ役が一旦ボケに乗っかってから「いや待てよ！」と自分で崩す\n- 【かぶせ】ボケの直後にさらにもう一段ボケを重ねて畳み掛ける\n\n■ セリフの質的ルール:\n- セリフは短く鋭く。だらだら説明するセリフは削って、一言で致命傷を与えるセリフにする\n- 可能なら言葉遊び、ダブルミーニング、予想の裏切りを仕込む\n- 全てのセリフに笑いを無理に入れず、笑いの最大ポイントをオチに集中させる\n- ギャグ強度は最大。おとなしい優等生ギャグは禁止。強烈にボケまくれ");
-    }
-    // [v3.14] FACS表情制御
-    if (enhanceFACS) {
-      enhanceCategories.push("【FACS (Facial Action Coding System) エンジン】キャラクターの表情を「驚き」「悲しみ」といった抽象的な感情語ではなく、具体的な筋肉の動き（Action Units）と解剖学的な説明で描写してください。\n例:\n・驚愕: (AU1+AU2眉の引き上げ, AU5上眼瞼の引き上げ, AU26顎の下制)\n・激怒: (AU4眉の引き下げと寄せ, AU7眼瞼の収縮, AU10上唇の引き上げ)\n・歓喜: (AU6頬の引き上げ, AU12口角の引き上げ)\n状況欄（Visual Action）の表情描写に必ず具体的なAUベースの物理的変化（眉、目、口、頬の筋肉の動き）を明記し、AIが表情崩壊を起こさずに正確に描画できるようにしてください。");
     }
     // [v2.69] コマ割り演出・時間演出は削除済み（ChatGPT画像生成ではタグ形式が解釈されず効果なし）
 
@@ -2330,14 +2333,6 @@ ${activeOutfit ? `
 CLOTHING:
 - Reference image ONLY for face, hair, skin, accessories.
 - IGNORE reference clothing. Use ONLY the OUTFIT OVERRIDE below.` : ''}
-${enhanceFACS ? `
-[FACS ENGINE: Action Units(AU) MANDATORY]
-Construct facial expressions using anatomical AU tags, NOT abstract emotions.
-- Surprise/Fear: (AU1+AU2 raised brows:1.5), (AU5 upper lid raiser:1.5), (AU26 jaw drop:1.4)
-- Anger: (AU4 brow knitter:1.6), (AU7 lid tightener:1.4), (AU10 upper lip raiser:1.3), (AU23 lip tightener:1.4)
-- Joy: (AU6 cheek raiser:1.4), (AU12 lip corner puller:1.5)
-- Sadness: (AU1 inner brow raiser:1.5), (AU4 brow lowerer:1.4), (AU15 lip corner depressor:1.5)
-CRITICAL: Emphasize specific muscle contractions (brows/eyelids/lips/cheeks) for intense realism. NO generic emojis.` : ''}
 Cast:
 ${VAR_CAST_LIST}
 ${activeOutfit ? `OUTFIT OVERRIDE: All characters MUST wear exactly: ${activeOutfit}. Apply tags directly.` : ''}
@@ -3719,29 +3714,12 @@ Apply the following strict visual constraints to your image generation. DO NOT i
                           </div>
                         </label>
 
-                        {/* [v3.14] FACS制御追加 */}
-                        <label className={`relative flex items-center justify-center p-3 rounded-xl cursor-pointer border-2 border-b-4 transition-all duration-100 group overflow-hidden select-none active:border-b-2 active:translate-y-0.5 ${
-                          enhanceFACS ? 'bg-white text-black border-slate-300' : 'bg-[#1e293b] text-slate-400 border-[#0f172a] hover:bg-[#334155]'
-                        }`}>
-                          <input type="checkbox" className="hidden" checked={enhanceFACS} onChange={() => setEnhanceFACS(!enhanceFACS)} />
-                          {enhanceFACS && (
-                            <div className="absolute top-2 right-2 bg-white text-blue-600 rounded-full p-0.5 shadow-sm">
-                              <CheckCircle2 size={12} strokeWidth={4} />
-                            </div>
-                          )}
-                          <div className="text-center">
-                            <div className={`text-2xl mb-1 ${enhanceFACS ? 'scale-110' : 'opacity-70 grayscale'}`}>🧬</div>
-                            <div className="text-[11px] font-bold tracking-wider">FACS制御</div>
-                            <div className="text-[9px] opacity-70 mt-1">筋肉単位の表情指定</div>
-                          </div>
-                        </label>
-
                         {/* [v2.69] コマ割り演出・時間演出は削除（ChatGPT画像生成でタグ形式が効果なしのため） */}
                       </div>
 
                       {/* 選択中の内容を表示 */}
                       <div className="text-xs text-orange-200/80 text-center font-mono py-1.5 bg-black/20 border border-white/5 rounded-md">
-                        強化対象: {[enhanceExpressions && "表情", enhanceBodyLang && "身体", enhanceEffects && "演出", enhanceBackgrounds && "背景", enhanceCameraWork && "カメラ", enhanceDialogue && "セリフ", enhanceFACS && "FACS"].filter(Boolean).join(" / ") || "未選択"}
+                        強化対象: {[enhanceExpressions && "表情", enhanceBodyLang && "身体", enhanceEffects && "演出", enhanceBackgrounds && "背景", enhanceCameraWork && "カメラ", enhanceDialogue && "セリフ"].filter(Boolean).join(" / ") || "未選択"}
                       </div>
 
                       {/* 実行・元に戻すボタン */}
@@ -3749,7 +3727,7 @@ Apply the following strict visual constraints to your image generation. DO NOT i
                         <button
                           className="flex-1 bg-orange-600 hover:bg-orange-500 disabled:bg-slate-700 disabled:opacity-50 text-white font-bold py-2 rounded-lg flex items-center justify-center gap-2 transition-all text-sm"
                           onClick={enhanceScenario}
-                          disabled={isEnhancing || !(enhanceExpressions || enhanceBodyLang || enhanceEffects || enhanceBackgrounds || enhanceCameraWork || enhanceDialogue || enhanceFACS)}
+                          disabled={isEnhancing || !(enhanceExpressions || enhanceBodyLang || enhanceEffects || enhanceBackgrounds || enhanceCameraWork || enhanceDialogue)}
                         >
                           {isEnhancing ? (
                             <><Loader2 size={16} className="animate-spin" /> 強化中...</>

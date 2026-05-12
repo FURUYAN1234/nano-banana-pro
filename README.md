@@ -102,7 +102,7 @@ Users can amplify the AI's script direction with specific enhancement toggles (e
 ### 🎰 Punchline Director (v3.31+) / オチ・ディレクター
 
 A UI-based control that lets users manually select the comedic direction of the 4th-panel punchline — or leave it to AI. When set to a specific type, the selection is injected as a hard constraint into the scenario prompt, **overriding AI's natural tendency** to always pick the "safest" joke.
-UIからオチ（4コマ目）の方向性を手動で選択できるコントロールです。「Auto（AIおまかせ）」のほか、13種類の具体的なオチパターン（爆発型 / 静寂型 / 感動詐欺 / 天丼 / 夢オチ / サイコホラー / 打ち切りエンド 等）から指定可能。選択されたオチは **JavaScriptが決定し、AIへの強制指示としてプロンプトに注入** されるため、AIが「無難な選択肢」に逃げることを許しません。
+UIからオチ（4コマ目）の方向性を手動で選択できるコントロールです。「Auto（AIおまかせ）」のほか、10種類の具体的なオチパターン（爆発型 / 静寂型 / 感動詐欺 / 天丼 / 夢オチ / サイコホラー / 打ち切りエンド 等）から指定可能。選択されたオチは **JavaScriptが決定し、AIへの強制指示としてプロンプトに注入** されるため、AIが「無難な選択肢」に逃げることを許しません。
 
 * **Auto Mode / おまかせモード**: AI picks the best punchline type for the scenario. This is the default. / AIがシナリオに最適なオチを自律選択します。デフォルト設定です。
 * **Forced Mode / 強制指定モード**: Human selects a specific punchline type (e.g., "Dream" or "PsychoHorror"). The AI is given no choice. / 人間が特定のオチを選択。AIに選択の余地はありません。
@@ -656,6 +656,9 @@ Developed by **FURU**
 ---
 
 ## 📋 ChangeLog
+
+### v3.41-alpha (2026-05-12)
+- **[Refactor]** 実験的だった「FACSエンジン」を完全削除し、より画像生成AIに最適化された「マンガ表情データベース」へ置換。抽象的な感情ではなく、視覚的・物理的なアクション（青筋、白目など）を直接プロンプトへ注入することで表情の表現力を大幅に強化。 / Replaced experimental FACS engine with a robust "Manga Expression Database", forcibly injecting highly visual cues to maximize expression fidelity and eliminate abstract emotion prompts.
 
 ### v3.40-alpha (2026-05-12)
 - **[Fix]** `extractActionOnly` 関数において、コロン(`:`)を含むト書きがセリフとして誤検出・削除されるバグを修正し、ト書きの欠落を防止。 / Fixed a critical bug in `extractActionOnly` where stage directions containing colons were falsely identified as dialogue and deleted, preventing action omission.
