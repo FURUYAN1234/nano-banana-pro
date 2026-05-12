@@ -130,7 +130,75 @@ try {
     }
     console.log("✅ [Jekyll] public/.nojekyll exists");
 
-    console.log("🎉 [Pre-Deploy] All checks passed!");
+    // ============================================================
+    // 8. HANDOFF.md VERSION SYNC CHECK
+    // ============================================================
+    console.log("📝 [Handoff] Checking HANDOFF.md for current version entry...");
+    const handoffRaw = fs.existsSync('HANDOFF.md') ? fs.readFileSync('HANDOFF.md', 'utf-8') : '';
+    if (handoffRaw && !handoffRaw.includes(pkgNormalized)) {
+        console.error(`❌ [Handoff] HANDOFF.md does not contain the current version "${pkgNormalized}"`);
+        console.error("   Update HANDOFF.md to reflect the latest state before deploying!");
+        process.exit(1);
+    }
+    console.log(`✅ [Handoff] Found entry for ${pkgNormalized} in HANDOFF.md`);
+
+    // ============================================================
+    // 9. GARBAGE FILE CHECK (§5 Deployment Guardrail)
+    // ============================================================
+    console.log("🧹 [Hygiene] Checking for temporary or garbage files...");
+    const rootFiles = fs.readdirSync(process.cwd());
+    const garbagePatterns = [/\.txt$/, /\.py$/, /^temp_.*\.jsx?$/, /^release_notes.*\.md$/];
+    const foundGarbage = rootFiles.filter(file => 
+        garbagePatterns.some(pattern => pattern.test(file)) && 
+        file !== 'overview.txt' && file !== 'robots.txt' // exclude legitimate txt files if any
+    );
+
+    if (foundGarbage.length > 0) {
+        console.error(`❌ [Hygiene] Garbage files detected in project root: ${foundGarbage.join(', ')}`);
+        console.error("   Delete these temporary files before deploying.");
+        process.exit(1);
+    }
+    console.log("✅ [Hygiene] No garbage files found.");
+
+    // ============================================================
+    // 10. SECURITY & PROPER NOUN CHECK (§5 & §4)
+    // ============================================================
+    console.log("🔐 [Security] Scanning for API keys and forbidden nouns...");
+    
+    // Function to scan files
+    const scanFile = (filePath, content) => {
+        // API Keys (OpenAI, Gemini)
+        if (/sk-(proj|ant)-[a-zA-Z0-9_-]+/.test(content)) return `OpenAI API Key found in ${filePath}`;
+        if (/AIza[0-9A-Za-z-_]{35}/.test(content)) return `Google/Gemini API Key found in ${filePath}`;
+        
+        // Forbidden Nouns
+        if (/DALL[- ]?E\s*3/i.test(content) && !filePath.includes('project_standards.md')) {
+            return `Forbidden noun "DALL-E 3" found in ${filePath}. Use "ChatGPT Image 2.0" instead.`;
+        }
+        
+        return null;
+    };
+
+    const filesToScan = ['src/App.jsx', 'index.html', 'README.md', 'docs/project_standards.md', 'HANDOFF.md'];
+    const scanErrors = [];
+
+    filesToScan.forEach(file => {
+        if (fs.existsSync(file)) {
+            const content = fs.readFileSync(file, 'utf-8');
+            const error = scanFile(file, content);
+            if (error) scanErrors.push(error);
+        }
+    });
+
+    if (scanErrors.length > 0) {
+        console.error("❌ [Security] Security or Compliance audit failed:");
+        scanErrors.forEach(err => console.error(`   - ${err}`));
+        console.error("   Fix these issues before deploying.");
+        process.exit(1);
+    }
+    console.log("✅ [Security] Source code is clean from API keys and forbidden nouns.");
+
+    console.log("🎉 [Pre-Deploy] All strict deployment and security checks passed!");
 
 } catch (error) {
     console.error("❌ [ERROR] Pre-deploy validation failed:", error.message);

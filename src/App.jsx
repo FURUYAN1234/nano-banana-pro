@@ -2212,7 +2212,7 @@ SPEECH BUBBLE POSITION LOCK:
       
       if (enableChatGPTMode) {
         // [v3.31] Ultra-Clean ChatGPT Optimized Natural Language Prompt
-        // DALL-E 3 requires descriptive English, NO pseudocode, NO weights, NO negative prompts.
+        // ChatGPT Image 2.0 requires descriptive English, NO pseudocode, NO weights, NO negative prompts.
         rawPrompt = `[🔥 ABSOLUTE FIRST PRIORITY 🚨 READ THIS BEFORE ANYTHING ELSE]
 YOU ARE GENERATING A NEW 4-PANEL MANGA SCENE. You are NOT creating a character sheet, model sheet, character lineup, expression chart, or reference sheet.
 The attached image is a CHARACTER REFERENCE ONLY 🚨 use it to identify hair color, eye shape, and glasses status. Do NOT reproduce its layout, white background, expression grid, or text labels.
