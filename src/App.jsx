@@ -35,7 +35,7 @@ import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 import { generateImageWithOpenAI, setOpenAIApiKey, getOpenAIApiKey } from './lib/openai';
 
-const SYSTEM_VERSION = "v3.41-alpha";
+const SYSTEM_VERSION = "v3.42-alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -1851,14 +1851,13 @@ Available lens effects — EACH PANEL MUST USE ONE:
           let clean = line;
 
           if (match && match[1].trim()) {
-            let tempSpeaker = match[1].replace(/^(SFX|効果音|BGM|Action)/i, '').trim();
-            tempSpeaker = tempSpeaker.replace(/^[【\[（(]/, '').replace(/[】\]）)]$/, '').trim();
+            let tempSpeaker = match[1].replace(/^[【\[（(]/, '').replace(/[】\]）)]$/, '').trim();
 
             // [v2.31] 話者名バリデーション強化: ト書き誤検出防止
             // 「サエコが、売店のカウンターに」のような文章が話者名として誤検出されるのを防ぐ
             const hasSentenceParticles = /[がをにでへはもとからまでより]/.test(tempSpeaker) && tempSpeaker.length > 5;
             const isTooLong = tempSpeaker.length > 12;
-            const isMetaTag = /^(Camera|Location|Outfit|EMOTION|状況|Action|リアクション|Reaction|設定)$/i.test(tempSpeaker);
+            const isMetaTag = /^(Camera|Location|Outfit|EMOTION|状況|Action|リアクション|Reaction|設定|物理描写|SFX|効果音|BGM|ナレーション|テロップ)$/i.test(tempSpeaker);
 
             if (hasSentenceParticles || isTooLong || isMetaTag) {
               // 文章構造やメタタグを含む → ト書き・メタデータなので話者名ではない

@@ -1,0 +1,2 @@
+## Updates in v3.42-alpha
+- **[Bugfix]** 物理描写やSFXなどのト書きがセリフ（吹き出し）として誤抽出されるパーサーのバグを修正。 / Fixed a parser bug where physical descriptions and SFX were incorrectly extracted as dialogue speech bubbles.

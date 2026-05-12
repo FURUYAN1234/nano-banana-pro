@@ -657,6 +657,9 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v3.42-alpha (2026-05-12)
+- **[Bugfix]** 物理描写やSFXなどのト書きがセリフ（吹き出し）として誤抽出されるパーサーのバグを修正。 / Fixed a parser bug where physical descriptions and SFX were incorrectly extracted as dialogue speech bubbles.
+
 ### v3.41-alpha (2026-05-12)
 - **[Refactor]** 実験的だった「FACSエンジン」を完全削除し、より画像生成AIに最適化された「マンガ表情データベース」へ置換。抽象的な感情ではなく、視覚的・物理的なアクション（青筋、白目など）を直接プロンプトへ注入することで表情の表現力を大幅に強化。 / Replaced experimental FACS engine with a robust "Manga Expression Database", forcibly injecting highly visual cues to maximize expression fidelity and eliminate abstract emotion prompts.
 
