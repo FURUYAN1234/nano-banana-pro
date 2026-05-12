@@ -636,6 +636,10 @@ Developed by **FURU**
 
 ## ? ChangeLog
 
+### v3.34-alpha (2026-05-12)
+- **[Feature]** オチ・ディレクター（Punchline Director）に4つの新しいオチのパターンを追加し、合計10個（＋Auto）の充実したリストにアップデートしました。追加されたのは「夢オチ (ループ)」「サイコホラー (狂気)」「盛大な勘違い (すれ違い)」「打ち切りエンド (俺たちの戦いはこれからだ)」です。これにより、さらに多彩で予測不能なカオスシナリオを意図的に生成できるようになりました。 / Expanded the Punchline Director by adding 4 new distinct comedy patterns: Dream, PsychoHorror, Misunderstanding, and CanceledEnding, bringing the total to 10 (+Auto).
+- **[System]** バージョンを v3.34-alpha に同期。 / Synchronized version to v3.34-alpha.
+
 ### v3.33-alpha (2026-05-12)
 - **[UI/UX]** シナリオのヘッダーテキスト（編集可能なテキストエリア）内にも、AIが選択・適用した「オチの方向性（Punchline）」を明示的に表示するように修正しました。これにより、GENERATION PREVIEWだけでなく、出力されたテキストをコピーする際にもどのオチが使われたのかが一目で確認可能になります。 / Appended the explicitly selected "Punchline" directive to the scenario text output block, allowing users to verify and copy the chosen comedic direction directly from the generated scenario header.
 - **[System]** バージョンを v3.33-alpha に同期。 / Synchronized version to v3.33-alpha.
@@ -709,5 +713,6 @@ Developed by **FURU**
 
 ### v3.12-alpha (2026-05-09)
 - **[UI/UX]** UI/���O�̊��S���{�ꉻ�����{�B�v�l�g���[�X�iThinking Trace�j�����p�ł��Ȃ��W�����f���g�p���̃��b�Z�[�W���u�ʏ폈�����������܂����B�v�ƊȌ������A���[�U�[�̍����������s�v�Ȓ��߁i�u�v�l�g���[�X�͗��p�s�v��u���_���O�Ȃ��v�Ȃǁj��r�����܂����B / Localized UI logs to Japanese completely. Simplified the fallback message for standard models without Thinking Trace to "�ʏ폈�����������܂����B" (Normal processing completed), removing confusing annotations.
+
 
 

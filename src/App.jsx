@@ -35,7 +35,7 @@ import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 import { generateImageWithOpenAI, setOpenAIApiKey, getOpenAIApiKey } from './lib/openai';
 
-const SYSTEM_VERSION = "v3.33-alpha";
+const SYSTEM_VERSION = "v3.34-alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -306,6 +306,10 @@ const getPunchlineLabel = (type) => {
     case "Metafiction": return "メタフィクション";
     case "Unreasonable": return "理不尽な制裁";
     case "RunningGag": return "天丼";
+    case "Dream": return "夢オチ (ループ)";
+    case "PsychoHorror": return "サイコホラー (狂気)";
+    case "Misunderstanding": return "盛大な勘違い (すれ違い)";
+    case "CanceledEnding": return "打ち切りエンド (俺たちの戦いはこれからだ)";
     default: return "自動 (AIにおまかせ)";
   }
 };
@@ -3482,6 +3486,10 @@ Apply the following strict visual constraints to your image generation. DO NOT i
                       <option value="Metafiction">📖 メタフィクション (枠を越える)</option>
                       <option value="Unreasonable">🔨 理不尽な制裁 (突然の暴力)</option>
                       <option value="RunningGag">🔁 天丼 (同じボケの最終形態)</option>
+                      <option value="Dream">🛏️ 夢オチ (ループの恐怖)</option>
+                      <option value="PsychoHorror">🔪 サイコホラー (突然の狂気)</option>
+                      <option value="Misunderstanding">🤷 盛大な勘違い (すれ違いの頂点)</option>
+                      <option value="CanceledEnding">🏃 打ち切りエンド (俺たちの戦いはこれからだ)</option>
                     </select>
                   </div>
                 </div>
@@ -4403,6 +4411,7 @@ export default function AppWrapper() {
     </ErrorBoundary>
   );
 }
+
 
 
 
