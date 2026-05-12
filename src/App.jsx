@@ -35,7 +35,7 @@ import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 import { generateImageWithOpenAI, setOpenAIApiKey, getOpenAIApiKey } from './lib/openai';
 
-const SYSTEM_VERSION = "v3.42-alpha";
+const SYSTEM_VERSION = "v3.43-alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -3098,35 +3098,65 @@ ${finalPrompt}
         <div className="flex justify-center w-full max-w-7xl mx-auto px-2 pb-1">
           <button
             onClick={() => {
-              const protocol = `[ 🎨 ANTIGRAVITY ANIME-CEL PROTOCOL ]
-Apply the following strict visual constraints to your image generation. DO NOT ignore any of these rules.
+              const protocol = `[ 🎨 ANTIGRAVITY EMOTIONAL CINEMA ENGINE v2.0 ]
+You are a world-class anime film director and cinematographer. Your mission is to create a SINGLE breathtaking illustration that makes the viewer FEEL something powerful — not just see a character standing there.
 
-[ 1. FORMAT & ANTI-GLITTER ]
-- RENDER: Pristine Japanese TV anime style. NO film grain, NO noise, NO realistic texturing. Clean gradients and sharp ink lines.
-- SURFACE: Rich cinematic lighting, glowing highlights, and deep shadows. ABSOLUTELY NO magical floating particles, NO glittering/sparkling effects, NO dust motes, NO lens flares. Keep the air clean and empty. 
+READ the user's instruction carefully. Detect the EMOTIONAL VECTOR (joy, sadness, anger, tension, love, loneliness, triumph, fear, nostalgia, serenity, chaos, comedy, etc.) from their text — even if they only say something simple like "draw her eating ramen." Find the hidden emotion and AMPLIFY it through every visual element below.
 
-[ 2. VISUAL HIERARCHY (Spatial Isolation) ]
-- LINE WEIGHT: Foreground characters MUST have 3px bold ink outlines. Background objects MUST have 1px thin lines.
-- SEPARATION: Add a subtle 2-3px WHITE GLOW (compositing effect) outside the character's outline. Characters MUST have higher saturation/contrast than the background.
-- BACKGROUND: Lower detail, soft-focus blur, 30-50% less saturation than characters. Radial backlighting behind characters is encouraged to prevent camouflage.
+If the user gives NO emotional direction at all, DEFAULT to creating an image that radiates warmth, narrative depth, and cinematic beauty — as if this frame is the most emotionally pivotal moment in an anime film.
 
-[ 3. CINEMATIC LIGHTING & DETAILS ]
-- LIGHTING: 3-point anime lighting (key, fill, rim light). Use warm/cool color temperature contrast.
-- HAIR & EYES: Every character's hair MUST show an anime-style shine band (angel ring). Every character's eyes MUST have bright circular/star catchlight highlights (white sparkle reflections in pupils).
-- POSTURE: If standing, use dynamic contrapposto weight-shift (weight on one leg). Keep toes aligned together to prevent messy foot generation.
-- CAMERA: Use dynamic camera angles (high angle, low angle, wide-angle lens) with dramatic perspective distortion. Avoid flat, eye-level shots.
+[ 1. EMOTIONAL ACTING & EXPRESSION — The Soul of the Image ]
+- FACE: Characters MUST show rich, layered facial expressions. Use the Facial Action Coding System (FACS): combine specific Action Units (brow furrow + lip tremble + glistening eyes = suppressed tears). NEVER draw a flat, neutral, default expression. Every face tells a story.
+- EYES: Eyes are the emotional anchor. Draw large, detailed anime eyes with multiple layers: iris gradient, bright catchlight highlights (circular + star sparkle), visible emotion (tears welling, fire burning, light fading, stars sparkling). Eye moisture level should match the emotion.
+- BODY LANGUAGE: The entire body must act. Clenched fists for determination, slumped shoulders for defeat, wind-caught hair for freedom, mid-gesture frozen motion for surprise. Weight distribution must feel natural and dynamic — use contrapposto, dynamic lean, or full-body action poses. NEVER use a stiff T-pose or mannequin stance.
+- MICRO-EXPRESSIONS: Add subtle secondary expressions — a slight lip quiver, one eyebrow raised higher than the other, fingers gripping fabric unconsciously. These details create emotional depth that separates masterwork from generic output.
 
-[ 4. TEXT & MANGA RULES ]
-- If speech bubbles or texts are drawn, ALL text MUST be vertical Japanese. ZERO horizontal text.
-- Do not add random background text, floating letters, or unnecessary sound effects.
+[ 2. CINEMATIC CAMERA & LENS — The Director's Eye ]
+Choose the camera angle and lens that BEST serves the emotion. Here is your toolkit:
+- INTIMACY/VULNERABILITY: Tight close-up (bust shot or face), shallow depth of field (f/1.4 bokeh), slight Dutch angle for unease, or straight-on for confrontation.
+- POWER/TRIUMPH: Extreme low angle (worm's-eye view) looking UP at the character. Wide-angle lens (24mm) for imposing presence. Character dominates the frame.
+- LONELINESS/SMALLNESS: Extreme wide shot with the character tiny in a vast environment. High angle (bird's-eye) looking DOWN. The emptiness around them IS the emotion.
+- ACTION/CHAOS: Dynamic diagonal composition, motion blur on extremities, speed lines radiating from impact point, camera tilted 15-30° Dutch angle.
+- NOSTALGIA/MEMORY: Soft telephoto lens (85-135mm) compression, warm color grading, slight vignette at edges, dreamy shallow focus.
+- COMEDY/ABSURDITY: Exaggerated wide-angle (fisheye-adjacent) for comedic distortion, super-deformed reaction shots, dramatic zoom lines.
+- EPIC/CINEMATIC: Sweeping wide establishing shot with golden ratio composition, atmospheric perspective, volumetric light shafts.
+IMPORTANT: NEVER default to a flat, eye-level, center-framed shot. Every camera choice must be INTENTIONAL and emotion-driven.
 
-[ 5. FINAL OUTPUT CHECK ]
-- SELF-REVIEW ANATOMY & TEXT: After drawing the image, carefully self-review the number of fingers on all hands, verify that there are no spelling mistakes or horizontal text, and fix them yourself internally before displaying the final result.`;
+[ 3. DRAMATIC LIGHTING & COLOR PSYCHOLOGY ]
+Lighting is emotion made visible. Match the lighting setup to the feeling:
+- JOY/WARMTH: Golden hour warm key light (3000K), soft fill, orange-pink rim light. Warm color palette dominance.
+- SADNESS/MELANCHOLY: Cool blue-grey key light, minimal fill (high shadow ratio), single warm accent light (a streetlamp, a phone screen) as a beacon of hope. Desaturated palette with one warm accent color.
+- ANGER/INTENSITY: Hard directional red-orange key light from below or side, deep black shadows, high contrast. Saturated reds and magentas.
+- TENSION/SUSPENSE: Single harsh spotlight creating extreme contrast, character half-lit half-shadow (split lighting). Cool teal shadows vs warm highlights.
+- LOVE/TENDERNESS: Soft diffused backlight creating a luminous halo, warm fill, cherry-blossom pink and peach tones. Ethereal glow.
+- TRIUMPH/GLORY: Dramatic backlight explosion (contre-jour), golden rim light outlining the entire silhouette, lens flare from behind.
+- FEAR/HORROR: Underlighting (flashlight-under-chin effect), sickly green or purple color cast, deep vignette swallowing the edges.
+- NOSTALGIA: Warm sepia-shifted color grading, soft gaussian glow, muted but harmonious palette.
+TECHNIQUE: Always use 3-point anime lighting as a BASE (key + fill + rim), then MODIFY it for emotional effect. Use warm/cool color temperature CONTRAST — never flat uniform lighting.
+
+[ 4. ATMOSPHERIC VFX & ENVIRONMENTAL STORYTELLING ]
+The environment and effects must ECHO the character's emotion, not just be a backdrop:
+- Wind direction, particle effects (petals, leaves, snow, embers, rain), volumetric fog/mist, god rays, and atmospheric haze should all serve the emotional narrative.
+- ENVIRONMENTAL EMPATHY: If the character is sad, the sky could be overcast with a single break in the clouds. If joyful, golden light floods the scene. If angry, the environment reacts (cracking ground, swirling debris).
+- DEPTH LAYERS: Create clear foreground (blurred elements close to camera), midground (character in sharp focus), and background (atmospheric depth) for cinematic parallax.
+- ANTI-GLITTER RULE: Do NOT add random magical floating particles, sparkles, or fairy dust unless the emotion specifically calls for it (like wonder or magic). Keep the air intentional.
+
+[ 5. ART STYLE & VISUAL FIDELITY ]
+- RENDER: High-budget Japanese TV anime feature film quality. Clean cel-shading with rich color depth, sharp ink contour lines, smooth gradients. NO photorealistic texturing, NO film grain, NO noise.
+- LINE WEIGHT HIERARCHY: Foreground characters get 3px bold ink outlines. Background objects get 1px thin lines. This creates instant visual depth.
+- CHARACTER SEPARATION: Add a subtle 2-3px white glow (compositing rim) outside the character's outline to prevent blending with the background. Characters MUST have higher saturation and contrast than their environment.
+- HAIR: Must show a glossy anime-style shine band (angel ring / tenshi no wa). Individual strand detail at edges.
+- SKIN: Warm subsurface scattering hint on lit areas. Clean shadows with slight color shift (warm light = cool shadow, cool light = warm shadow).
+
+[ 6. TEXT & OUTPUT RULES ]
+- If speech bubbles or text are drawn, ALL text MUST be vertical Japanese. ZERO horizontal text.
+- Do not add random background text, floating letters, or unnecessary sound effects unless the scene demands it.
+- SELF-REVIEW: After drawing, carefully verify finger count on all hands (exactly 5), check for text errors, and fix internally before displaying the final result.`;
               navigator.clipboard.writeText(protocol);
               setIsPolicyCopied(true);
               setTimeout(() => setIsPolicyCopied(false), 2000);
             }}
-            title="Web版ChatGPT用の1枚絵生成プロンプトをクリップボードにコピーします。"
+            title="Web版ChatGPT用の1枚絵エモーショナル演出プロンプトをクリップボードにコピーします。指示内容の感情を自動検知し、カメラ・ライティング・表情・VFXを最適化します。"
             className={`w-full flex flex-row items-center justify-center gap-4 px-4 py-2.5 sm:py-3 rounded-xl text-sm font-black tracking-widest transition-all duration-100 border-2 border-b-4 select-none active:border-b-2 active:translate-y-0.5 overflow-hidden shadow-lg ${
               isPolicyCopied
                 ? 'bg-white border-green-500 text-green-600'
@@ -3135,10 +3165,10 @@ Apply the following strict visual constraints to your image generation. DO NOT i
           >
             <div className="flex items-center gap-1.5 shrink-0">
               {isPolicyCopied ? <Check size={16} /> : <Copy size={16} />}
-              <span className="whitespace-nowrap">{isPolicyCopied ? 'コピー完了！' : '📋 1枚絵 ChatGPT用プロンプト（β）をコピー'}</span>
+              <span className="whitespace-nowrap">{isPolicyCopied ? 'コピー完了！' : '🎬 1枚絵 ChatGPT用 感情シネマプロンプトをコピー'}</span>
             </div>
             <span className="text-[10px] md:text-[11px] font-normal tracking-normal whitespace-nowrap shrink-0 text-slate-500">
-              【1枚絵用】Web版ChatGPTにキャラ画像を添付し「〇〇してる絵を描いて」と指示した後にペタッと貼り付けて送信すると、通常よりハイクオリティな画像を生成可能です。
+              【1枚絵用】ChatGPTにキャラ画像を添付→指示を書く→このプロンプトを貼り付けて送信。指示の文脈からエモーショナルな演出を自動で適用します。
             </span>
           </button>
         </div>

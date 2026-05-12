@@ -657,6 +657,9 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v3.43-alpha (2026-05-12)
+- **[Feature]** 1枚絵用のプロンプトを刷新。「ANTIGRAVITY EMOTIONAL CINEMA ENGINE v2.0」を導入し、指示内容から感情ベクトルを自動検知してカメラワーク、ライティング、表情、VFXを最適化する演出機能を追加。 / Completely overhauled the 1-panel image generation prompt to the "ANTIGRAVITY EMOTIONAL CINEMA ENGINE v2.0", adding emotional vector detection that automatically optimizes camera work, lighting, acting, and VFX based on the user's instruction.
+
 ### v3.42-alpha (2026-05-12)
 - **[Bugfix]** 物理描写やSFXなどのト書きがセリフ（吹き出し）として誤抽出されるパーサーのバグを修正。 / Fixed a parser bug where physical descriptions and SFX were incorrectly extracted as dialogue speech bubbles.
 
