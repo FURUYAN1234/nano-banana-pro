@@ -1216,6 +1216,7 @@ ${scenario}
         Logline: [誰が、何を求めて、どうなるかという1〜2行の強力なログライン（軸）。この軸から4コマ目まで絶対にブレないこと]
         Location: [${customLocation.trim() ? "必ず『" + customLocation.trim() + "』にせよ" : "ニュースの内容に即した舞台（例: 砂漠、法廷、宇宙）。※教室は禁止"}]
         Outfit: [${customOutfit.trim() ? "必ず『" + customOutfit.trim() + "』にせよ" : "場所・状況に最も適した具体的な服装名を記入せよ（例: カジュアルな私服、水着、スーツ等）。※「キャラシート準拠」「制服」「デフォルト」は禁止"}]
+        Punchline: [オチの方向性（例: 爆発型、天丼爆発型、シュール、感動詐欺など）]
         Scenario:
         [1コマ目: 起]
         [EMOTION: XXX]
@@ -1263,6 +1264,7 @@ ${scenario}
         const loglineMatch = result.text.match(/Logline:\s*(.+)/i);
         const locationMatch = result.text.match(/Location:\s*(.+)/i);
         const outfitMatch = result.text.match(/Outfit:\s*(.+)/i);
+        const punchlineMatch = result.text.match(/Punchline:\s*(.+)/i);
         const scenarioMatch = result.text.match(/Scenario:\s*([\s\S]+)/i);
 
         if (scenarioMatch) {
@@ -3735,15 +3737,16 @@ Apply the following strict visual constraints to your image generation. DO NOT i
             ${!scenario ? 'blur-[4px] opacity-30 grayscale pointer-events-none' : ''}
           `}>
             <span className="text-blue-400 font-bold border-b border-blue-500/20 pb-2 w-full flex items-center gap-2">
-              <Sparkles size={14} /> 場所・服装設定 (GENERATION PREVIEW)
+              <Sparkles size={14} /> 場所・服装・オチ設定 (GENERATION PREVIEW)
             </span>
             <p className="text-[10px] text-slate-400 leading-relaxed">
-              ※以下はシナリオ内の <code className="text-blue-300">Location:</code> / <code className="text-purple-300">Outfit:</code> 行から自動取得されます。変更したい場合はシナリオ内の該当行を直接編集してください。
+              ※以下はシナリオ内の <code className="text-blue-300">Location:</code> / <code className="text-purple-300">Outfit:</code> / <code className="text-yellow-300">Punchline:</code> 行から自動取得されます。変更したい場合はシナリオ内の該当行を直接編集してください。
             </p>
             {(() => {
               // [v2.43] シナリオテキストからリアルタイムで場所・服装を取得
               const previewLocation = scenario?.match(/Location:\s*(.*?)(\n|$)/i)?.[1]?.trim() || '';
               const previewOutfit = scenario?.match(/Outfit:\s*(.*?)(\n|$)/i)?.[1]?.trim() || '';
+              const previewPunchline = scenario?.match(/Punchline:\s*(.*?)(\n|$)/i)?.[1]?.trim() || '';
               return (<>
                 <div className="text-gray-300" style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '6px' }}>
                   <Globe size={12} className="text-blue-400" />
@@ -3760,7 +3763,7 @@ Apply the following strict visual constraints to your image generation. DO NOT i
                     {customLocation.trim() ? '手入力' : 'AIおまかせ'}
                   </span>
                 </div>
-                <div className="text-gray-300" style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '6px', paddingBottom: '4px' }}>
+                <div className="text-gray-300" style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '6px' }}>
                   <span className="text-green-400">👕</span>
                   <span>服装 (Outfit):</span>
                   <span style={{ fontWeight: 'bold', color: customOutfit.trim() ? '#ffffff' : '#93c5fd' }}>
@@ -3773,6 +3776,21 @@ Apply the following strict visual constraints to your image generation. DO NOT i
                     border: `1px solid ${customOutfit.trim() ? 'rgba(150,150,150,0.3)' : 'rgba(59,130,246,0.3)'}`
                   }}>
                     {customOutfit.trim() ? '手入力' : 'AIおまかせ'}
+                  </span>
+                </div>
+                <div className="text-gray-300" style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '6px', paddingBottom: '4px' }}>
+                  <span className="text-yellow-400">🎬</span>
+                  <span>オチ (Punchline):</span>
+                  <span style={{ fontWeight: 'bold', color: previewPunchline || punchlineType !== 'Auto' ? '#ffffff' : '#93c5fd' }}>
+                    {previewPunchline || (punchlineType === 'Auto' ? "AIおまかせ" : punchlineType)}
+                  </span>
+                  <span style={{
+                    marginLeft: '6px', padding: '2px 6px', borderRadius: '4px', fontSize: '9px', whiteSpace: 'nowrap',
+                    background: punchlineType !== 'Auto' ? 'rgba(100,100,100,0.4)' : 'rgba(29,78,216,0.3)',
+                    color: punchlineType !== 'Auto' ? '#d1d5db' : '#93c5fd',
+                    border: `1px solid ${punchlineType !== 'Auto' ? 'rgba(150,150,150,0.3)' : 'rgba(59,130,246,0.3)'}`
+                  }}>
+                    {punchlineType !== 'Auto' ? '強制指定' : 'AIおまかせ'}
                   </span>
                 </div>
               </>);
