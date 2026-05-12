@@ -657,6 +657,9 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v3.44-alpha (2026-05-13)
+- **[Fix]** ヘッダーのプログレスバーおよび各種ボタンにおいて、`whitespace-nowrap` による折り返し禁止設定を解除し、`flex-wrap` を適用することで狭い画面幅でのレイアウト崩れを修正。 / Fixed layout breaking on narrow screen widths by removing `whitespace-nowrap` constraints and applying `flex-wrap` to the header progress bar and various buttons.
+
 ### v3.43-alpha (2026-05-12)
 - **[Feature]** 1枚絵用のプロンプトを刷新。「ANTIGRAVITY EMOTIONAL CINEMA ENGINE v2.0」を導入し、指示内容から感情ベクトルを自動検知してカメラワーク、ライティング、表情、VFXを最適化する演出機能を追加。 / Completely overhauled the 1-panel image generation prompt to the "ANTIGRAVITY EMOTIONAL CINEMA ENGINE v2.0", adding emotional vector detection that automatically optimizes camera work, lighting, acting, and VFX based on the user's instruction.
 
@@ -729,7 +732,4 @@ Developed by **FURU**
 
 ### v3.14-alpha (2026-05-10)
 - **[Feature]** FACS制御UIトグルをシナリオ強化パネルに追加。 / Added FACS control UI toggle to the Scenario Enhancement panel.
-
-### v3.00.0-alpha (2026-05-03)
-- **[Major]** Story Makerエンジンから高度な物語技法（GMC+Sメソッド）を統合。ログライン・アンカリング、サブテキスト制約、Stakes（代償）の吊り上げによるオチの爆発力強化を実装。 / Integrated advanced narrative techniques from the Story Maker engine (GMC+S methodology).
 

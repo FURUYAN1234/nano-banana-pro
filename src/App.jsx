@@ -35,7 +35,7 @@ import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 import { generateImageWithOpenAI, setOpenAIApiKey, getOpenAIApiKey } from './lib/openai';
 
-const SYSTEM_VERSION = "v3.43-alpha";
+const SYSTEM_VERSION = "v3.44-alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -2996,7 +2996,7 @@ ${finalPrompt}
         provider="openai" 
       />
       {/* STICKY TOP PROGRESS BAR */}
-      <div className="fixed top-0 left-0 right-0 z-[100] bg-[#0f1115] border-b border-white/10 px-2 md:px-8 py-2 md:py-3 shadow-xl w-full flex flex-col gap-2 md:gap-3">
+      <div className="fixed top-0 left-0 right-0 z-[100] bg-[#0f1115] border-b border-white/10 px-2 md:px-8 py-2 md:py-3 shadow-xl w-full flex flex-col gap-2 md:gap-3 overflow-x-hidden">
         <div className="flex flex-wrap xl:flex-nowrap items-center justify-center max-w-7xl mx-auto w-full gap-y-3">
           
           {/* Progress Steps (Center Left) */}
@@ -3085,11 +3085,11 @@ ${finalPrompt}
             {/* ================= ボタンと説明文の間の物理スペーサー ================= */}
             <div className="hidden sm:block w-6 shrink-0"></div>
 
-            {/* 説明文（3行構成、文字を切らない） */}
+            {/* 説明文（3行構成、折り返し対応） */}
             <div className={`flex flex-col justify-center text-[10.5px] leading-relaxed max-w-[600px] text-center sm:text-left transition-opacity duration-300 ${!apiKey ? 'text-slate-600 opacity-40' : 'text-slate-400'}`}>
-              <span className="whitespace-normal sm:whitespace-nowrap">　【⚡ フルオート ON】にして画像をドロップ、もしくはドロップ後に押す→全自動で生成。完了後は自動OFF。　</span>
-              <span className="whitespace-normal sm:whitespace-nowrap">　生成中は同ボタンで中断（以降はSTEPボタンで進行）。中断後再度押すと新シナリオで再生成を始めます。　</span>
-              <span className="whitespace-normal sm:whitespace-nowrap">　※「無限ループ設定」をONにしてフルオートを開始すると、完了後に自動で次の作品の生成を永遠に繰り返します。　</span>
+              <span className="whitespace-normal">　【⚡ フルオート ON】にして画像をドロップ、もしくはドロップ後に押す→全自動で生成。完了後は自動OFF。　</span>
+              <span className="whitespace-normal">　生成中は同ボタンで中断（以降はSTEPボタンで進行）。中断後再度押すと新シナリオで再生成を始めます。　</span>
+              <span className="whitespace-normal">　※「無限ループ設定」をONにしてフルオートを開始すると、完了後に自動で次の作品の生成を永遠に繰り返します。　</span>
             </div>
           </div>
         </div>
@@ -3157,7 +3157,7 @@ The environment and effects must ECHO the character's emotion, not just be a bac
               setTimeout(() => setIsPolicyCopied(false), 2000);
             }}
             title="Web版ChatGPT用の1枚絵エモーショナル演出プロンプトをクリップボードにコピーします。指示内容の感情を自動検知し、カメラ・ライティング・表情・VFXを最適化します。"
-            className={`w-full flex flex-row items-center justify-center gap-4 px-4 py-2.5 sm:py-3 rounded-xl text-sm font-black tracking-widest transition-all duration-100 border-2 border-b-4 select-none active:border-b-2 active:translate-y-0.5 overflow-hidden shadow-lg ${
+            className={`w-full flex flex-wrap items-center justify-center gap-2 sm:gap-4 px-4 py-2.5 sm:py-3 rounded-xl text-sm font-black tracking-widest transition-all duration-100 border-2 border-b-4 select-none active:border-b-2 active:translate-y-0.5 shadow-lg ${
               isPolicyCopied
                 ? 'bg-white border-green-500 text-green-600'
                 : 'bg-white border-slate-300 hover:bg-slate-50 text-[#2d3a4d]'
@@ -3167,7 +3167,7 @@ The environment and effects must ECHO the character's emotion, not just be a bac
               {isPolicyCopied ? <Check size={16} /> : <Copy size={16} />}
               <span className="whitespace-nowrap">{isPolicyCopied ? 'コピー完了！' : '🎬 1枚絵 ChatGPT用 感情シネマプロンプトをコピー'}</span>
             </div>
-            <span className="text-[10px] md:text-[11px] font-normal tracking-normal whitespace-nowrap shrink-0 text-slate-500">
+            <span className="text-[10px] md:text-[11px] font-normal tracking-normal whitespace-normal text-center text-slate-500">
               【1枚絵用】ChatGPTにキャラ画像を添付→指示を書く→このプロンプトを貼り付けて送信。指示の文脈からエモーショナルな演出を自動で適用します。
             </span>
           </button>
