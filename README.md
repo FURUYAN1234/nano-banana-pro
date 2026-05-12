@@ -657,6 +657,9 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v3.40-alpha (2026-05-12)
+- **[Fix]** `extractActionOnly` 関数において、コロン(`:`)を含むト書きがセリフとして誤検出・削除されるバグを修正し、ト書きの欠落を防止。 / Fixed a critical bug in `extractActionOnly` where stage directions containing colons were falsely identified as dialogue and deleted, preventing action omission.
+
 ### v3.39-alpha (2026-05-12)
 - **[Fix]** `extractActionOnly` 関数の正規表現を修正し、ト書きやリアクション指定文字(`(リアクション: ...)`)がChatGPTのフキダシとして誤描画されるバグを解決。 / Fixed regex in `extractActionOnly` to prevent action tags and reactions from being hallucinogenically rendered as speech bubbles by ChatGPT.
 - **[Feature]** プロンプトのコンプライアンスチェックに手と指の解剖学的構造（左右の手の向き、指の本数）を検証する厳格な制約を追加。 / Added strict anatomical constraints (left/right hand orientation, exactly 5 fingers) to the final compliance check.

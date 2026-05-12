@@ -35,7 +35,7 @@ import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 import { generateImageWithOpenAI, setOpenAIApiKey, getOpenAIApiKey } from './lib/openai';
 
-const SYSTEM_VERSION = "v3.39-alpha";
+const SYSTEM_VERSION = "v3.40-alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -1943,12 +1943,21 @@ Available lens effects — EACH PANEL MUST USE ONE:
           if (match && match[1].trim()) {
             let tempSpeaker = match[1].replace(/^(SFX|効果音|BGM|Action)/i, '').trim();
             tempSpeaker = tempSpeaker.replace(/^[【\[（(]/, '').replace(/[】\]）)]$/, '').trim();
+            const hasSentenceParticles = /[がをにでへはもとからまでより]/.test(tempSpeaker) && tempSpeaker.length > 5;
+            const isTooLong = tempSpeaker.length > 12;
             const isMetaTag = /^(Camera|Location|Outfit|EMOTION|状況|Action|リアクション|Reaction|設定)$/i.test(tempSpeaker);
-            if (!isMetaTag && (validCharacters.some(c => tempSpeaker.includes(c) || c.includes(tempSpeaker)) || tempSpeaker === "全員" || tempSpeaker === "Speaker" || match[0].trim().endsWith(':') || match[0].trim().endsWith('：'))) {
+            
+            if (hasSentenceParticles || isTooLong || isMetaTag) {
+              // Not a dialogue speaker
+            } else if (validCharacters.some(c => tempSpeaker.includes(c) || c.includes(tempSpeaker)) || tempSpeaker === "全員" || tempSpeaker === "Speaker" || match[0].trim().endsWith(':') || match[0].trim().endsWith('：')) {
               isDialogue = true;
             }
           } else if (line.trim().startsWith('「')) {
-            isDialogue = true;
+            const trimmedLine = line.trim();
+            const isFullQuoteLine = /^「[^」]+」[？！。、!?\s]*$/.test(trimmedLine);
+            if (isFullQuoteLine) {
+              isDialogue = true;
+            }
           }
           const isHeader = line.match(/^\[\d+コマ目/);
           const isEmpty = line.trim() === '';
