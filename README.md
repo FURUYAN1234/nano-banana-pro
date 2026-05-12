@@ -657,6 +657,10 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v3.39-alpha (2026-05-12)
+- **[Fix]** `extractActionOnly` 関数の正規表現を修正し、ト書きやリアクション指定文字(`(リアクション: ...)`)がChatGPTのフキダシとして誤描画されるバグを解決。 / Fixed regex in `extractActionOnly` to prevent action tags and reactions from being hallucinogenically rendered as speech bubbles by ChatGPT.
+- **[Feature]** プロンプトのコンプライアンスチェックに手と指の解剖学的構造（左右の手の向き、指の本数）を検証する厳格な制約を追加。 / Added strict anatomical constraints (left/right hand orientation, exactly 5 fingers) to the final compliance check.
+
 ### v3.38-alpha (2026-05-12)
 - **[Feature]** 「限界突破パッチ (Breakthrough Patch)」適用。空間拘束ロジック（FOREGROUND / BACKGROUND）を実装し、AI特有のクローン（同一キャラ重複）バグを完全消滅。 / Applied "Breakthrough Patch": Implemented FOREGROUND/BACKGROUND spatial constraints to completely eliminate AI clone bugs.
 - **[Feature]** タイポグラフィ強要ルール（ZERO spaces）を追加し、ChatGPT出力時の不自然な日本語カーニングを解消。 / Added strict typography rules (ZERO spaces) to eliminate unnatural Japanese kerning in ChatGPT outputs.

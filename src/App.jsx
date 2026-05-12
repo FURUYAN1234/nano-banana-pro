@@ -35,7 +35,7 @@ import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 import { generateImageWithOpenAI, setOpenAIApiKey, getOpenAIApiKey } from './lib/openai';
 
-const SYSTEM_VERSION = "v3.38-alpha";
+const SYSTEM_VERSION = "v3.39-alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -1960,6 +1960,9 @@ Available lens effects — EACH PANEL MUST USE ONE:
         // [v2.30] Sanitize action string to remove common trailing onomatopoeia/gag SFX that causes unwanted speech bubbles
         actionStr = actionStr.replace(/[ 　]*(ズコー|ガーン|チーン|ドッ|バシッ|ドカーン|バーン)[。、！？!?\s]*$/g, '');
         
+        // [v3.39] ト書き・リアクション指示のカッコを外し、テキストとしての描画を防ぐ
+        actionStr = actionStr.replace(/[（(](?:Camera|Location|Outfit|EMOTION|状況|Action|リアクション|Reaction|設定)[:：]?\s*(.*?)[)）]/gi, '$1');
+
         actionStr = actionStr || "Characters interacting dynamically based on dialogue.";
 
         // [v2.02] Duplication Removal: If character is already forced in placement, gently remove them from the explicit action subject if possible to prevent cloning hallucination
@@ -2287,6 +2290,7 @@ FINAL COMPLIANCE CHECK:
 - Output is NOT a character sheet.
 - No floating close-up eyes or partial face crops in the background. Every character must be drawn as a complete physical presence.
 - No anatomical distortion from excessive fisheye lens.
+- Strict anatomy check: Verify correct left/right hand orientation and exactly 5 fingers per hand.
 `;
       } else {
         // [v3.31] Gemini / Imagen 4 Optimized Prompt (Allows weights, brackets, detailed format rules)
@@ -2405,6 +2409,7 @@ Before generating the final image, mentally verify ALL of the following. If ANY 
 - [ ] ALL 4 panels use DIFFERENT camera angles from each other — no two panels share the same angle type.
 - [ ] ZERO panels look like a flat, normal, eye-level photograph.
 - [ ] You did NOT override the distortion for "readability" or "narrative flow" — the extreme distortion is the intended artistic style.
+- [ ] Strict anatomy check: Verify correct left/right hand orientation and exactly 5 fingers per hand.
       `;
         
         // Ensure that Gemini also gets the Anti-Character Sheet rules at the top
