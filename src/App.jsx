@@ -35,7 +35,7 @@ import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 import { generateImageWithOpenAI, setOpenAIApiKey, getOpenAIApiKey } from './lib/openai';
 
-const SYSTEM_VERSION = "v3.26-alpha";
+const SYSTEM_VERSION = "v3.31-alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -1821,12 +1821,14 @@ Available lens effects — EACH PANEL MUST USE ONE:
             // 「サエコが、売店のカウンターに」のような文章が話者名として誤検出されるのを防ぐ
             const hasSentenceParticles = /[がをにでへはもとからまでより]/.test(tempSpeaker) && tempSpeaker.length > 5;
             const isTooLong = tempSpeaker.length > 12;
-            if (hasSentenceParticles || isTooLong) {
-              // 文章構造を含む → ト書きなので話者名ではない
+            const isMetaTag = /^(Camera|Location|Outfit|EMOTION|状況|Action)$/i.test(tempSpeaker);
+
+            if (hasSentenceParticles || isTooLong || isMetaTag) {
+              // 文章構造やメタタグを含む → ト書き・メタデータなので話者名ではない
             } else if (validCharacters.some(c => {
               const nameOnly = c.split(/[（(]/)[0].trim();
               return tempSpeaker === c || tempSpeaker === nameOnly || nameOnly === tempSpeaker;
-            }) || tempSpeaker === "全員" || tempSpeaker === "Speaker") {
+            }) || tempSpeaker === "全員" || tempSpeaker === "Speaker" || match[0].trim().endsWith(':') || match[0].trim().endsWith('：')) {
               isDialogue = true;
             }
           } else if (line.trim().startsWith('「')) {
@@ -1907,7 +1909,8 @@ Available lens effects — EACH PANEL MUST USE ONE:
           if (match && match[1].trim()) {
             let tempSpeaker = match[1].replace(/^(SFX|効果音|BGM|Action)/i, '').trim();
             tempSpeaker = tempSpeaker.replace(/^[【\[（(]/, '').replace(/[】\]）)]$/, '').trim();
-            if (validCharacters.some(c => tempSpeaker.includes(c) || c.includes(tempSpeaker)) || tempSpeaker === "全員" || tempSpeaker === "Speaker") {
+            const isMetaTag = /^(Camera|Location|Outfit|EMOTION|状況|Action)$/i.test(tempSpeaker);
+            if (!isMetaTag && (validCharacters.some(c => tempSpeaker.includes(c) || c.includes(tempSpeaker)) || tempSpeaker === "全員" || tempSpeaker === "Speaker" || match[0].trim().endsWith(':') || match[0].trim().endsWith('：'))) {
               isDialogue = true;
             }
           } else if (line.trim().startsWith('「')) {
@@ -1978,14 +1981,15 @@ Available lens effects — EACH PANEL MUST USE ONE:
             // [v2.31] ト書き誤検出防止: 助詞を含む長文は話者名ではない
             const hasSentenceParticles = /[がをにでへはもとからまでより]/.test(speaker) && speaker.length > 5;
             const isTooLong = speaker.length > 12;
-            if (hasSentenceParticles || isTooLong) return;
+            const isMetaTag = /^(Camera|Location|Outfit|EMOTION|状況|Action)$/i.test(speaker);
+            if (hasSentenceParticles || isTooLong || isMetaTag) return;
             // EMOTIONやスタイルタグ残骸をフィルタ
             if (speaker && !speakers.includes(speaker) && !/^(EMOTION|NORMAL|CHIBI_GAG|GEKIGA|SHOUJO|HORROR|BLANK|IMPACT|WATERCOLOR|RETRO|GLITTER|SHADOW|SPEED|FLASHBACK|UKIYOE|POP_ART|SKETCH|NEON|THICK_PAINT|PASTEL|CEL|DARK_ANIME|THIN_LINE|HIGH_SATURATION)$/i.test(speaker)) {
-              // [v2.31] キャラ名バリデーション: 登録キャラ名と一致する場合のみ話者として認定
+              // [v2.31] キャラ名バリデーション: 登録キャラ名と一致する場合、またはコロンで明示的に話者として指定されている場合は認定
               if (validCharsForPlacement.some(c => {
                 const nameOnly = c.split(/[（(]/)[0].trim();
                 return speaker === c || speaker === nameOnly || nameOnly === speaker;
-              })) {
+              }) || match[0].trim().endsWith(':') || match[0].trim().endsWith('：')) {
                 speakers.push(speaker);
               }
             }
@@ -2165,11 +2169,89 @@ SPEECH BUBBLE POSITION LOCK:
       // We skip callThinkingGemini because this step is pure assembly.
       // [v1.9.0] Nano Banana 2 (Imagen 4) Optimized Natural Language Prompt
       // Imagen 4 understands natural language perfectly and struggles with pseudocode.
-      // [v2.61] ChatGPTモード時は先頭にフォーマットアンカーを挿入（サンドイッチ構造）
-      const formatAnchor = enableChatGPTMode
-        ? `[FORMAT: A4 PORTRAIT 1024×1448px — NO square/landscape/tall]\n`
-        : '';
-      const constructedPrompt = `${formatAnchor}Generate highly detailed, professional 4-koma (4-panel vertical) manga.
+      // [v3.31] ChatGPTモード時は専用の超圧縮プロンプトを使用、Gemini時は最適化版を使用する分岐構造
+      let rawPrompt = "";
+      
+      if (enableChatGPTMode) {
+        // [v3.31] Ultra-Clean ChatGPT Optimized Natural Language Prompt
+        // DALL-E 3 requires descriptive English, NO pseudocode, NO weights, NO negative prompts.
+        rawPrompt = `[🔥 ABSOLUTE FIRST PRIORITY 🚨 READ THIS BEFORE ANYTHING ELSE]
+YOU ARE GENERATING A NEW 4-PANEL MANGA SCENE. You are NOT creating a character sheet, model sheet, character lineup, expression chart, or reference sheet.
+The attached image is a CHARACTER REFERENCE ONLY 🚨 use it to identify hair color, eye shape, and glasses status. Do NOT reproduce its layout, white background, expression grid, or text labels.
+
+Generate a highly detailed, professional 4-koma (4-panel vertical) manga.
+MUST have tall portrait aspect ratio (A4 paper, 1:1.414).
+
+LAYOUT & FORMAT:
+- Canvas completely filled by panels (95% width). NO large white margins.
+- Top page: draw large bold black Japanese text title EXACTLY: ${safeTopic}
+- Draw tiny English watermark ON bottom-right border of 4th panel: "${watermarkEng}"
+- Exactly 4 EQUAL horizontal panels, stacked vertically with thick white gutters between them. Panels MUST NOT touch.
+
+ART STYLE:
+- Pristine TV anime style. Clean cel-shading, dynamic lighting, no photorealistic textures.
+- Foreground characters have bold ink outlines. Add a subtle white glow outside the character's outline to prevent blending with the background.
+- Backgrounds should have slightly lower saturation and softer focus to make characters pop.
+- ${styleCore}
+- Setting: ${safeLocation}
+
+CAMERA & PERSPECTIVE RULES:
+Each of the 4 panels MUST use a DIFFERENT extreme camera angle (Bird's-eye, Worm's-eye, Dutch angle, Telephoto, etc.). No two panels share the same angle. Eye-level shots are FORBIDDEN.
+However, AVOID extreme fisheye distortion that warps human anatomy (no gigantic noses, bulging limbs, or anatomical collapse). Keep character proportions strictly accurate while still using dramatic angles.
+
+CHARACTERS & IDENTITY:
+- Strictly reproduce reference image designs (hair, eyes, skin, accessories). NO feature swapping.
+- NEVER draw the same character twice in a single panel.
+- Characters MUST look at each other or objects, NEVER at the camera.
+- Exaggerated manga comedy expressions and full-body reactions are required.
+- ${activeOutfit ? `All characters MUST wear exactly: ${activeOutfit}.` : 'OUTFIT CONSISTENCY: Every character MUST wear EXACT same outfit in ALL 4 panels.'}
+- Cast details: ${VAR_CAST_LIST}
+- Identity Anchor: ${buildIdentityMatrix(castList)}
+
+PANEL DESCRIPTIONS:
+
+## Panel 1
+${buildEmotionBlock(panel1Text)}
+${extractPlacementRule(panel1Text).replace(/\\[/g, '').replace(/\\]/g, '')}
+${extractCastLimitRule(panel1Text).replace(/\\[/g, '').replace(/\\]/g, '')}
+Camera: ${getCameraForPanel(panel1Text)}
+Action: ${injectOutfitReminder(extractActionOnly(panel1Text, extractPlacementRule(panel1Text)))}
+Dialogue (Japanese text inside speech bubbles only): ${extractDialogueOnly(panel1Text)}
+
+## Panel 2
+${buildEmotionBlock(panel2Text)}
+${extractPlacementRule(panel2Text).replace(/\\[/g, '').replace(/\\]/g, '')}
+${extractCastLimitRule(panel2Text).replace(/\\[/g, '').replace(/\\]/g, '')}
+Camera: ${getCameraForPanel(panel2Text)}
+Action: ${injectOutfitReminder(extractActionOnly(panel2Text, extractPlacementRule(panel2Text)))}
+Dialogue (Japanese text inside speech bubbles only): ${extractDialogueOnly(panel2Text)}
+
+## Panel 3
+${buildEmotionBlock(panel3Text)}
+${extractPlacementRule(panel3Text).replace(/\\[/g, '').replace(/\\]/g, '')}
+${extractCastLimitRule(panel3Text).replace(/\\[/g, '').replace(/\\]/g, '')}
+Camera: ${getCameraForPanel(panel3Text)}
+Action: ${injectOutfitReminder(extractActionOnly(panel3Text, extractPlacementRule(panel3Text)))}
+Dialogue (Japanese text inside speech bubbles only): ${extractDialogueOnly(panel3Text)}
+
+## Panel 4
+${buildEmotionBlock(panel4Text)}
+${extractPlacementRule(panel4Text).replace(/\\[/g, '').replace(/\\]/g, '')}
+${extractCastLimitRule(panel4Text).replace(/\\[/g, '').replace(/\\]/g, '')}
+Camera: ${getCameraForPanel(panel4Text)}
+Action: ${injectOutfitReminder(extractActionOnly(panel4Text, extractPlacementRule(panel4Text)))}
+Dialogue (Japanese text inside speech bubbles only): ${extractDialogueOnly(panel4Text)}
+
+FINAL COMPLIANCE CHECK:
+- Output is a new manga scene with 4 distinct story panels, backgrounds, and vertical Japanese speech bubbles.
+- Output is NOT a character sheet.
+- No floating close-up eyes or partial face crops in the background. Every character must be drawn as a complete physical presence.
+- No anatomical distortion from excessive fisheye lens.
+`;
+      } else {
+        // [v3.31] Gemini / Imagen 4 Optimized Prompt (Allows weights, brackets, detailed format rules)
+        rawPrompt = `[FORMAT: A4 PORTRAIT 1024x1448px 🚨 NO square/landscape/tall]
+Generate highly detailed, professional 4-koma (4-panel vertical) manga.
 MUST have tall portrait aspect ratio (A4 paper, 1:1.414).
 
 LAYOUT:
@@ -2177,7 +2259,7 @@ Canvas completely filled by panels (95% width). NO large white margins.
 Top page: draw large bold black Japanese text title EXACTLY: ${safeTopic}
 NO quotes/punctuation around title.
 Draw tiny English watermark ON bottom-right border of 4th panel: "${watermarkEng}" (clean sans-serif).
-Draw tiny Japanese watermark ON bottom-left border of 4th panel: "ネームから全自動の自律式統合AI漫画システム :https://x.gd/JiWor".
+Draw tiny Japanese watermark ON bottom-left border of 4th panel: "【🚨人間以外のAI無断転載・再学習禁止】 :https://x.gd/JiWor".
 Watermarks standard horizontal. NO overlap. NO extra white space below panel 4.
 
 PANELS: Exactly 4 EQUAL horizontal panels, stacked vertically. EXACT SAME height/width.
@@ -2283,139 +2365,25 @@ Before generating the final image, mentally verify ALL of the following. If ANY 
 - [ ] ZERO panels look like a flat, normal, eye-level photograph.
 - [ ] You did NOT override the distortion for "readability" or "narrative flow" — the extreme distortion is the intended artistic style.
       `;
+        
+        // Ensure that Gemini also gets the Anti-Character Sheet rules at the top
+        const antiCharSheetPrefix = `[🔥 ABSOLUTE FIRST PRIORITY 🚨 READ THIS BEFORE ANYTHING ELSE]
+YOU ARE GENERATING A NEW 4-PANEL MANGA SCENE. You are NOT creating a character sheet, model sheet, character lineup, expression chart, or reference sheet.
+The attached image is a CHARACTER REFERENCE ONLY 🚨 use it to identify hair color, eye shape, and glasses status. Do NOT reproduce its layout, white background, expression grid, or text labels.
+If your output looks like a character sheet or model sheet instead of a 4-panel manga story — YOU HAVE FAILED. Regenerate immediately as a manga scene.
+
+`;
+        rawPrompt = antiCharSheetPrefix + rawPrompt;
+      }
 
       // Wait a bit to simulate processing/syncing (Important for User Experience)
       await new Promise(resolve => setTimeout(resolve, 800));
 
       // [v2.27] セーフティ年齢引き上げ変換を適用
-      let safePrompt = applySafetyAgeUp(constructedPrompt.trim());
+      let safePrompt = applySafetyAgeUp(rawPrompt.trim());
 
-      // [v3.18] Ultra-Compression for ALL Models (Gemini & ChatGPT)
-      // Geminiの再現度低下に対策するため、ChatGPT向けに作成した超圧縮・MUST/NO構文を全モデルに適用
-      // [v3.10] キャラシート再現防止プレフィックス（プロンプト冒頭に最優先指示を挿入）
-      const antiCharSheetPrefix = `[⚠️ ABSOLUTE FIRST PRIORITY — READ THIS BEFORE ANYTHING ELSE]
-YOU ARE GENERATING A NEW 4-PANEL MANGA SCENE. You are NOT creating a character sheet, model sheet, character lineup, expression chart, or reference sheet.
-The attached image is a CHARACTER REFERENCE ONLY — use it to identify hair color, eye shape, and glasses status. Do NOT reproduce its layout, white background, expression grid, or text labels.
-If your output looks like a character sheet or model sheet instead of a 4-panel manga story → YOU HAVE FAILED. Regenerate immediately as a manga scene.
+      setAssembleThought(prev => prev + "\\n> [v3.31] 事故防止プロトコル全モデル適用済み:\\n>   ✅ 縦書きセリフ強制\\n>   ✅ セリフ勝手追加禁止\\n>   ✅ 参照画像キャラシート再現禁止\\n>   ✅ カメラワーク平易化禁止\\n>   ✅ プロンプト分岐 (ChatGPT/Gemini)\\n>   ✅ 出力前チェックリスト追加");
 
-`;
-      safePrompt = antiCharSheetPrefix + safePrompt;
-
-      // [v3.19] 超圧縮パイプライン (Regex修正版)
-      // ====================================================================
-      // BUG FIX #1: 重み付きタグ — コロン後のスペース有無を両方対応
-      // 旧: (tag:2.5) のみ対応 → 新: (tag: 2.5) も対応
-      safePrompt = safePrompt.replace(/\(([^()]+?):\s*(\d+\.\d+)\)/g, '$1');
-
-      // BUG FIX #2: ANTIGRAVITY CAMERA PROTOCOL — 実際のヘッダー "Camera & Comp:" にマッチ
-      // 旧: "Camera and Composition Rules:" を探していたが実際は "Camera & Comp:" で始まる
-      safePrompt = safePrompt.replace(
-        /Camera \& Comp:[\s\S]*?§4\. PERSPECTIVE-ALIGNED VFX:[\s\S]*?If fish-eye: effects curve radially\. If dutch angle: effects tilt with the world\.\s*/,
-        `Camera Rules:
-Each of the 4 panels MUST use a DIFFERENT extreme camera angle. No two panels share the same angle.
-
-CAMERA ANGLE DICTIONARY — apply the matching visual description:
-- Bird's-eye / 俯瞰: Camera looks STRAIGHT DOWN. The FLOOR is clearly visible. Characters' heads are closest. Bodies foreshorten vertically.
-- Worm's-eye / ローアングル: Camera at GROUND LEVEL looking UP. CEILING visible. Characters tower above. Legs massive, heads smaller.
-- Dutch angle / ダッチ: ENTIRE WORLD tilts 30-45 degrees. Walls and floor become steep diagonals. Characters appear to SLIDE sideways. Horizon severely slanted. All objects, furniture, and liquid surfaces tilt at the same angle as the world.
-- Fish-eye / 超広角: Barrel distortion warps straight lines into curves. Center objects bulge. Frame edges curve away.
-- Telephoto / 望遠: Background DANGEROUSLY close behind characters. Depth compressed flat. Claustrophobic.
-
-Eye-level shots are FORBIDDEN. Characters closest to camera MUST be drawn larger.
-Each character appears only ONCE per panel.
-Characters MUST look at each other or objects, NEVER at the camera (no 4th wall break).
-Show exaggerated manga comedy expressions: blank white eyes, jaw drops, fury veins, waterfall tears, blushing.
-Dynamic full-body reactions: recoiling, pointing dramatically, faceplanting. Hair and clothing react to emotion.
-VFX PERSPECTIVE RULE: Speed lines and impact effects MUST follow the panel's perspective distortion direction.
-
-`
-      );
-
-      // BUG FIX #3: [LENS] ブロック削除 — 実際のタグ名は "[LENS]:" ("[LENS ENFORCEMENT]:" ではない)
-      // 各パネルの [LENS]:... 行を削除 (Camera Rules: に統合済み)
-      safePrompt = safePrompt.replace(/\[LENS\]:[^\n]*\n?/gi, '');
-
-      // BUG FIX #4: Important constraints + FINAL COMPLIANCE CHECK — 削除順序修正
-      // 旧: FINAL COMPLIANCE CHECKを先に消してしまい、Important constraintsのlookaheadが失敗
-      // 新: Important constraints から FINAL COMPLIANCE CHECK の末尾まで一括削除
-      safePrompt = safePrompt.replace(/Important constraints:[\s\S]*?the intended artistic style\.\s*/i, '');
-
-      // 残存レガシー削除 (念のため)
-      safePrompt = safePrompt.replace(/CRITICAL VISUAL REPRODUCTION PROTOCOL[\s\S]*?(?=Important Character Cast:)/i, '');
-      safePrompt = safePrompt.replace(/REFERENCE IMAGE CLOTHING POLICY[\s\S]*?(?=Important Character Cast:)/i, '');
-      safePrompt = safePrompt.replace(/【Character Identity Anchor[\s\S]*?(?=Camera Rules:)/i, '');
-      safePrompt = safePrompt.replace(/Technical Quality Definitions[\s\S]*?(?=## Panel 1)/i, '');
-      // 各パネルの中にある冗長な配置指示の削除
-      safePrompt = safePrompt.replace(/CRITICAL CAST PLACEMENT:[\s\S]*?(?=Camera:)/gi, '');
-      safePrompt = safePrompt.replace(/ANTI-CLONE REMINDER:[\s\S]*?(?=TOTAL CHARACTER COUNT IN THIS PANEL:|Camera:)/gi, '');
-      safePrompt = safePrompt.replace(/TOTAL CHARACTER COUNT IN THIS PANEL:[\s\S]*?(?=Camera:)/gi, '');
-
-      const universalEnhancement = `
-
----
-[GENERATION FAILURE PREVENTION — ABSOLUTE TOP PRIORITY]
-
-HIGHEST PRIORITY RULES (apply to EVERY panel):
-1. All speech bubble dialogue MUST be vertical Japanese (top-to-bottom, right-to-left columns). Horizontal text is forbidden.
-2. Draw ONLY the exact dialogue specified in each panel's Dialogue section. No extra text, SFX, narration, book spine text, sign text, or background text.
-3. ⚠️ CRITICAL: Attached reference images are for character identity ONLY (hair color, eye shape, glasses status). You MUST NOT reproduce the reference sheet layout. Do NOT draw a white background lineup, expression grid, character name labels, or any visual element from the reference image. The output MUST be a STORY SCENE with backgrounds, speech bubbles, and panel layouts.
-4. Do NOT simplify camera angles into ordinary eye-level shots. Each panel's specified camera effect must be clearly visible through background architecture distortion.
-5. ⚠️ CRITICAL: The final image MUST be a new 4-panel manga STORY SCENE with backgrounds, dialogue, and action. If the output resembles a character sheet, model sheet, poster, expression chart, or character lineup in ANY way, it is a COMPLETE FAILURE. Each panel must show characters IN A SCENE (with a background environment), NOT standing on a blank/white background.
-
----
-[STABLE LAYOUT — DO NOT BREAK]
-
-■ CANVAS: A4 portrait (1:1.414), 1024×1448px. No vertical stretching, no outer border lines.
-■ PANELS: 4 equal horizontal panels, FIXED rigid containers. Camera distortion ONLY inside each panel — panel borders MUST remain perfectly straight.
-■ PRIORITY: Layout integrity > Aspect ratio > Readability > Camera effects. If conflict → reduce distortion, do NOT break layout.
-
-[ 🔧 FORMAT ENFORCEMENT & ANTI-GLITTER ]
-- TEXT: All dialogue vertical Japanese, right-to-left reading order.
-- TITLE: Draw at top, minimal white margin.
-- RENDER: Pristine TV anime style. NO film grain, NO noise, NO realistic texturing. Clean gradients and sharp ink lines. Dramatic anime lighting (rim light, backlighting, color temperature contrast) is ENCOURAGED.
-- SURFACE: Clean anime cel-shading. Flat colors, limited color palette, intentional negative space (ANTI-GENERIC-AI-LOOK). ABSOLUTELY NO magical floating particles, NO glittering/sparkling effects, NO dust motes, NO lens flares, NO moiré patterns. Keep the air clean and empty. NO photorealistic textures (cloth weave, skin pores). NO page border lines around the canvas.
-
-[ 🖊️ CHARACTER VISUAL HIERARCHY & ANTI-CAMOUFLAGE — MANDATORY ]
-- LINE WEIGHT HIERARCHY: Foreground characters 3px bold ink outlines. Background objects 1px thin lines. This depth separation is MANDATORY.
-- Add a subtle 2-3px WHITE GLOW (anime compositing 撮影処理) outside the character's outline to prevent blending.
-- Characters MUST have HIGHER saturation and contrast than background. Characters visually "pop" as first thing noticed. Clear silhouettes, distinct physical separation between characters (INPAINT-READY COMPOSITION).
-- Background: LOWER detail, soft-focus blur, 30-50% less saturation than characters. Always use radial white backlighting (逆光ハイライト) behind characters to prevent camouflage.
-- HAIR RENDERING: Every character's hair MUST show anime-style shine band (天使の輪/angel ring highlight) — a curved white-to-transparent gradient streak across the hair.
-
-[ 🎬 CINEMATIC LIGHTING & COLOR — MANDATORY ]
-- 3-point anime lighting: strong key light from one side (clear light/shadow on faces), soft fill opposite, rim light (逆光) separating character from background.
-- Warm/cool color temperature contrast: warm lit skin vs cool blue-purple shadows.
-- Volumetric light rays (god rays / 光芒) through windows when applicable.
-- Lighting direction MUST match camera angle — overhead shots get top-down light, low angles get under-lighting or backlighting.
-- COLOR PALETTE UNITY: All 4 panels MUST share a cohesive color palette derived from the scene's setting and time of day. Use harmonious complementary or analogous color schemes — NOT random colors per panel.
-
-[ 🎭 ACTING & EXPRESSION — MANDATORY ]
-- Every character MUST show clear emotion through face and posture. NO mannequin faces.
-- EYE CATCHLIGHT: Every character's eyes MUST have bright star-shaped or circular catchlight highlights (white sparkle reflections in pupils). Eyes without catchlights look dead.
-- Eyes: wide = surprise, narrowed = suspicion, sparkling = excitement, blank white = comedy shock.
-- Mouth: exaggerated — wide open screaming, tiny frustrated line, smug grin, wobbly crying mouth.
-- Hands: clenched fists (anger), open palms (surprise), pointing (accusation), covering mouth (shock).
-- Posture: leaning forward (aggressive), back (defensive), slumped (defeated), puffed up (proud). For natural standing, use contrapposto weight-shift and keep toes aligned together.
-
-[ 💫 DYNAMIC VFX — APPLY WHERE EMOTIONALLY APPROPRIATE ]
-- Wind: hair flowing, coats billowing, papers flying.
-- Emotion: subtle colored glow (warm=joy, cool=shock, red=anger) behind characters at emotional peaks.
-- Impact: radial speed lines or concentrated effect lines (集中線) behind reacting character in punchline panels.
-- Depth: slight aerial perspective haze on distant objects. Motion blur on fast-moving limbs.
-
-[FINAL OUTPUT CHECK — REDRAW IF ANY ITEM FAILS]
-Before output, verify:
-- SELF-REVIEW ANATOMY & TEXT: After drawing the image, carefully self-review the number of fingers on all hands, verify that there are no spelling mistakes or horizontal text, and fix them yourself before displaying the final result.
-- All speech bubble text is vertical Japanese, zero horizontal text.
-- No dialogue was added beyond what was specified in Dialogue sections.
-- No extra SFX, narration, book text, sign text, or background text was added.
-- The reference sheet layout was NOT reproduced. Output is a new manga scene.
-- Each panel's camera angle is clearly different and NOT ordinary eye-level.
-- Background architecture visibly shows perspective distortion in every panel.
-- Character glasses/no-glasses status matches the reference for every character.
-- ⚠️ FINAL GATE: Does the output have 4 distinct story panels with BACKGROUND ENVIRONMENTS and SPEECH BUBBLES? If it looks like a character sheet, expression chart, or white-background lineup → REJECT AND REDRAW AS A MANGA SCENE.`;
-      safePrompt = safePrompt + universalEnhancement;
-      setAssembleThought(prev => prev + "\n> [v3.18] 超圧縮・事故防止プロトコル全モデル適用済み:\n>   ✅ 縦書きセリフ強制\n>   ✅ セリフ勝手追加禁止\n>   ✅ 参照画像キャラシート再現禁止\n>   ✅ カメラワーク平易化禁止\n>   ✅ LENS ENFORCEMENT → 自然言語変換\n>   ✅ 重み付きタグ → 自然言語変換\n>   ✅ キャラ視認性強化 (ノイズ除去・白フチグロー・背景デサチュレーション)\n>   ✅ 出力前チェックリスト追加");
 
 
       setFinalPrompt(safePrompt);
@@ -3084,9 +3052,9 @@ ${finalPrompt}
               const protocol = `[ 🎨 ANTIGRAVITY ANIME-CEL PROTOCOL ]
 Apply the following strict visual constraints to your image generation. DO NOT ignore any of these rules.
 
-[ 1. FORMAT & ANTI-GLITTER (Clean Cel-Look) ]
+[ 1. FORMAT & ANTI-GLITTER ]
 - RENDER: Pristine Japanese TV anime style. NO film grain, NO noise, NO realistic texturing. Clean gradients and sharp ink lines.
-- SURFACE: Clean anime cel-shading. Flat colors, intentional negative space. ABSOLUTELY NO magical floating particles, NO glittering/sparkling effects, NO dust motes, NO lens flares. Keep the air clean and empty. 
+- SURFACE: Rich cinematic lighting, glowing highlights, and deep shadows. ABSOLUTELY NO magical floating particles, NO glittering/sparkling effects, NO dust motes, NO lens flares. Keep the air clean and empty. 
 
 [ 2. VISUAL HIERARCHY (Spatial Isolation) ]
 - LINE WEIGHT: Foreground characters MUST have 3px bold ink outlines. Background objects MUST have 1px thin lines.
