@@ -311,7 +311,7 @@ function App() {
   const [customOutfit, setCustomOutfit] = useState(''); // [v1.8.103] Custom Outfit Override
   const [lockedLocation, setLockedLocation] = useState(''); // STEP2実行時に確定した場所
   const [lockedOutfit, setLockedOutfit] = useState('');     // STEP2実行時に確定した服装
-
+  const [punchlineType, setPunchlineType] = useState('Auto'); // [v3.31] Punchline Director
 
   const [categories, setCategories] = useState([
     { id: 'politics', label: '政治・経済', icon: '💼', checked: false, keywords: '最新 政治 経済 社会ニュース' },
@@ -1131,13 +1131,19 @@ ${scenario}
               * **不条理を使った場合**: → 背景に脈絡のない巨大オブジェクト（巨大バナナ、空飛ぶ鯨、唐突な富士山等）を配置。状況欄に「背景に○○が何の説明もなく存在する」と明記
               * **置換を使った場合**: → 元の文脈と置換先のビジュアル差を最大化。「国際会議の荘厳なテーブルに幼稚園児の工作道具が並んでいる」等、視覚的ミスマッチを明記
               * **常識に戻るを使った場合**: → 暴走キャラに[EMOTION: IMPACT]や[EMOTION: CHIBI_GAG]、常識キャラだけ[EMOTION: NORMAL]で冷静な表情。温度差を絵で表現する
-            - **【オチの多様化 (Punchline Variety Enforcement)】**: 4コマ目のオチが毎回同じパターンにならないよう、以下の6系統からネタに最適なものを選択せよ。
+            - ${punchlineType === 'Auto' ? `**【オチの多様化 (Punchline Variety Enforcement)】**: 4コマ目のオチが毎回同じパターンにならないよう、以下の6系統からネタに最適なものを選択せよ。
               * **爆発型**: 全員が限界突破。叫び・暴走・カオスで画面爆発（推奨EMOTION: IMPACT, CHIBI_GAG）
               * **静寂型（シュール）**: 全員が無言で固まる。沈黙と虚無が最大の笑い（推奨EMOTION: BLANK）
               * **社会的死型**: キャラが社会的に取り返しのつかない状況に陥る（推奨EMOTION: SHADOW, HORROR）
               * **自己完結型**: ボケた本人だけが満足して終わり。周囲全員ドン引き（推奨EMOTION: NORMAL + CHIBI_GAG混在）
               * **逆転オチ型**: 最後にツッコミ役がもっとヤバいことを言い出す等、予想の逆（推奨EMOTION: GEKIGA）
-              * **天丼爆発型**: 繰り返しネタが最終形態に進化して限界突破（推奨EMOTION: IMPACT）
+              * **天丼爆発型**: 繰り返しネタが最終形態に進化して限界突破（推奨EMOTION: IMPACT）` : 
+              punchlineType === 'Surreal' ? `**【強制オチ指定: 静寂型（シュール）】**: 4コマ目のオチは必ず「静寂型（シュール）」にすること。全員が無言で固まる、沈黙と虚無による笑いを生み出せ。推奨EMOTION: BLANK` :
+              punchlineType === 'Explosion' ? `**【強制オチ指定: 爆発型】**: 4コマ目のオチは必ず「爆発型」にすること。全員が限界突破し、叫び・暴走・カオスで画面を爆発させろ。推奨EMOTION: IMPACT, CHIBI_GAG` :
+              punchlineType === 'FakeEmotion' ? `**【強制オチ指定: 感動詐欺】**: 4コマ目のオチは必ず「感動詐欺（いい話風の狂気）」にすること。狂った状況のまま、なぜか感動的なBGMが流れているような理不尽なイイハナシダナーで終わらせろ。` :
+              punchlineType === 'Metafiction' ? `**【強制オチ指定: メタフィクション】**: 4コマ目のオチは必ず「メタフィクション」にすること。漫画の枠線、作者、読者、システム自体に言及し、次元の壁を破壊しろ。` :
+              punchlineType === 'Unreasonable' ? `**【強制オチ指定: 理不尽な制裁】**: 4コマ目のオチは必ず「理不尽な制裁」にすること。一番まともなキャラが突然物理的・社会的に取り返しのつかない制裁を受ける、または全員が破滅しろ。` :
+              punchlineType === 'RunningGag' ? `**【強制オチ指定: 天丼】**: 4コマ目のオチは必ず「天丼（繰り返しギャグの最終形態）」にすること。1〜3コマ目のボケを最終コマで限界突破させて被せろ。` : ''}
             - **【ギャグのトーンバリエーション】**: 毎回同じテンションにならないよう、以下3系統のトーンをネタに合わせて使い分けよ:
               * **ハイテンション爆発系**: 叫び・暴走・カオス。勢いで押し切る
               * **シュール静寂系**: 淡々とした狂気。ボケているのに本人は真顔。不気味な静けさが笑いになる
@@ -3442,6 +3448,25 @@ Apply the following strict visual constraints to your image generation. DO NOT i
                       className="w-full bg-[#111] text-white p-2 rounded border border-gray-700 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 outline-none text-sm placeholder-gray-600 font-mono"
                       placeholder="例: キャラシート準拠 / 全員水着 / ミリタリー装備..."
                     />
+                  </div>
+                  <div className="flex-1 bg-[#050505] p-3 rounded-xl border border-yellow-500/20">
+                    <label className="text-xs font-bold text-yellow-400 mb-1 block flex items-center gap-1">
+                      <span>🎬</span> オチ・ディレクター <span className="text-[10px] text-gray-500 font-normal ml-auto">※オチの方向性指定</span>
+                    </label>
+                    <select
+                      value={punchlineType}
+                      onChange={(e) => setPunchlineType(e.target.value)}
+                      style={{ color: '#ffffff', backgroundColor: '#111111' }}
+                      className="w-full bg-[#111] text-white p-2 rounded border border-gray-700 focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500 outline-none text-sm font-mono cursor-pointer"
+                    >
+                      <option value="Auto">🤖 自動 (AIにおまかせ)</option>
+                      <option value="Surreal">❄️ 静寂型 (シュール/無言)</option>
+                      <option value="Explosion">🔥 爆発型 (カオス/叫び)</option>
+                      <option value="FakeEmotion">😢 感動詐欺 (いい話風の狂気)</option>
+                      <option value="Metafiction">📖 メタフィクション (枠を越える)</option>
+                      <option value="Unreasonable">🔨 理不尽な制裁 (突然の暴力)</option>
+                      <option value="RunningGag">🔁 天丼 (同じボケの最終形態)</option>
+                    </select>
                   </div>
                 </div>
 
