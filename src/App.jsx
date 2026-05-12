@@ -35,7 +35,7 @@ import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 import { generateImageWithOpenAI, setOpenAIApiKey, getOpenAIApiKey } from './lib/openai';
 
-const SYSTEM_VERSION = "v3.31-alpha";
+const SYSTEM_VERSION = "v3.32-alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -297,6 +297,18 @@ class ErrorBoundary extends React.Component {
     return this.props.children;
   }
 }
+
+const getPunchlineLabel = (type) => {
+  switch (type) {
+    case "Surreal": return "静寂型 (シュール)";
+    case "Explosion": return "爆発型 (カオス)";
+    case "FakeEmotion": return "感動詐欺";
+    case "Metafiction": return "メタフィクション";
+    case "Unreasonable": return "理不尽な制裁";
+    case "RunningGag": return "天丼";
+    default: return "自動 (AIにおまかせ)";
+  }
+};
 
 function App() {
   // Force Build 2026-02-06 07:07 // Build 2026-02-06-01
@@ -1216,7 +1228,7 @@ ${scenario}
         Logline: [誰が、何を求めて、どうなるかという1〜2行の強力なログライン（軸）。この軸から4コマ目まで絶対にブレないこと]
         Location: [${customLocation.trim() ? "必ず『" + customLocation.trim() + "』にせよ" : "ニュースの内容に即した舞台（例: 砂漠、法廷、宇宙）。※教室は禁止"}]
         Outfit: [${customOutfit.trim() ? "必ず『" + customOutfit.trim() + "』にせよ" : "場所・状況に最も適した具体的な服装名を記入せよ（例: カジュアルな私服、水着、スーツ等）。※「キャラシート準拠」「制服」「デフォルト」は禁止"}]
-        Punchline: [オチの方向性（例: 爆発型、天丼爆発型、シュール、感動詐欺など）]
+        Punchline: [${punchlineType !== 'Auto' ? "必ず『" + getPunchlineLabel(punchlineType) + "』と記載せよ" : "適用したオチの方向性（例: 爆発型、天丼爆発型、シュール、感動詐欺など）"}]
         Scenario:
         [1コマ目: 起]
         [EMOTION: XXX]
@@ -3782,7 +3794,7 @@ Apply the following strict visual constraints to your image generation. DO NOT i
                   <span className="text-yellow-400">🎬</span>
                   <span>オチ (Punchline):</span>
                   <span style={{ fontWeight: 'bold', color: previewPunchline || punchlineType !== 'Auto' ? '#ffffff' : '#93c5fd' }}>
-                    {previewPunchline || (punchlineType === 'Auto' ? "AIおまかせ" : punchlineType)}
+                    {previewPunchline || (punchlineType === 'Auto' ? "AIおまかせ" : getPunchlineLabel(punchlineType))}
                   </span>
                   <span style={{
                     marginLeft: '6px', padding: '2px 6px', borderRadius: '4px', fontSize: '9px', whiteSpace: 'nowrap',

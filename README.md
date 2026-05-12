@@ -1,4 +1,4 @@
-# Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System
+﻿# Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System
 
 > **"To what extent can humans step away from the creative process?"**
 > **�u�l�Ԃ́A�ǂ��܂Ő��삩��~�����̂��H�v**
@@ -636,6 +636,10 @@ Developed by **FURU**
 
 ## ? ChangeLog
 
+### v3.32-alpha (2026-05-12)
+- **[UI/UX/System]** UIとプロンプトの表記を同期しました。getPunchlineLabelヘルパーを導入し、UI上で「静寂型 (シュール)」などの日本語名称が選択された際、プロンプトにも同じ文言が渡されるように修正。これにより、オチの指示がAIに伝わりやすくなりました。 / Localized the "Punchline Director" directives. Introduced the getPunchlineLabel helper to ensure that the selected Japanese punchline names (e.g., "静寂型 (シュール)") are directly injected into the AI prompt and clearly displayed in the UI. This significantly improves the accuracy of manga punchline direction and faithfully reflects the user's selected comedic intent.
+- **[System]** App.jsx, index.html, package.json のバージョンを v3.32-alpha に同期しました。 / Synchronized version to v3.32-alpha across project files.
+
 ### v3.31-alpha (2026-05-12)
 - **[Bugfix]** `extractPlacementRule`�̐��K�\�����C�����A`[Camera: ...]`��`[Location: ...]`���̃��^�^�O���u�Q�X�g�L�����v�Ƃ��Č�F������A�b�҂̔z�u�i�E�E���j�⎋���U���i�E���獶�j��j�󂵂Ă����v���I�ȃo�O���C�����܂����B / Fixed a critical bug where meta-tags like `[Camera]` were parsed as guest characters, destroying character placement and right-to-left eye movement.
 - **[UI/UX]** �u�I�`�E�f�B���N�^�[�iPunchline Director�j�v�̃h���b�v�_�E�����j���[�̉����ɁA�I�������I�`�̕��������������e�L�X�g�G���A��ǉ����A�A�C�R����^�C�g�������Ŕ��f����s�ւ����������܂����B / Added explanatory text below the Punchline Director dropdown to clarify what each comedic style does.
@@ -701,3 +705,4 @@ Developed by **FURU**
 
 ### v3.12-alpha (2026-05-09)
 - **[UI/UX]** UI/���O�̊��S���{�ꉻ�����{�B�v�l�g���[�X�iThinking Trace�j�����p�ł��Ȃ��W�����f���g�p���̃��b�Z�[�W���u�ʏ폈�����������܂����B�v�ƊȌ������A���[�U�[�̍����������s�v�Ȓ��߁i�u�v�l�g���[�X�͗��p�s�v��u���_���O�Ȃ��v�Ȃǁj��r�����܂����B / Localized UI logs to Japanese completely. Simplified the fallback message for standard models without Thinking Trace to "�ʏ폈�����������܂����B" (Normal processing completed), removing confusing annotations.
+
