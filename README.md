@@ -657,6 +657,16 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v3.38-alpha (2026-05-12)
+- **[Feature]** 「限界突破パッチ (Breakthrough Patch)」適用。空間拘束ロジック（FOREGROUND / BACKGROUND）を実装し、AI特有のクローン（同一キャラ重複）バグを完全消滅。 / Applied "Breakthrough Patch": Implemented FOREGROUND/BACKGROUND spatial constraints to completely eliminate AI clone bugs.
+- **[Feature]** タイポグラフィ強要ルール（ZERO spaces）を追加し、ChatGPT出力時の不自然な日本語カーニングを解消。 / Added strict typography rules (ZERO spaces) to eliminate unnatural Japanese kerning in ChatGPT outputs.
+- **[Feature]** 物理座標指定（地面平置き、上空10m等）をカメラ辞書に追加し、Geminiのカメラアングル無視（平坦な写真化）を強力に矯正。 / Added physical camera placement coordinates to aggressively correct Gemini's tendency to ignore extreme angles.
+- **[Fix]** `App.jsx` クローン対策パッチ適用時のWindowsエスケープエラーを修正。 / Fixed Windows escape sequence error during clone patch application in App.jsx.
+
+### v3.36-alpha (2026-05-12)
+- **[Fix]** シナリオ解析（extractDialogueOnly）のセリフ抽出判定を強化。「リアクション」や「設定」といったメタ情報タグが誤ってセリフ（話者）として画像生成プロンプトに混入する不具合を修正。 / Fixed a bug in scenario parsing where metadata tags like 'Reaction' or 'Setting' were incorrectly extracted as dialogue and injected into the prompt.
+- **[Fix]** タイトル描画プロンプトに含まれていたEXACTLY:の記述を削除。Geminiモデルがタイトル文字としてそのままEXACTLY:を描画してしまう問題を解消。 / Removed the 'EXACTLY:' instruction from the title prompt to prevent Gemini from drawing it as part of the comic title.
+
 ### v3.35-alpha (2026-05-12)
 - **[Fix]** Autoモード時のAI自律選択オチ候補を6種から10種に拡張し、UIの手動選択肢と完全同期。 / Expanded Auto mode punchline candidates from 6 to 10 types, fully synchronized with manual UI selection.
 - **[Fix]** ChatGPTプロンプトに欠落していた左側日本語ウォーターマーク（「ネームから全自動の自律式統合AI漫画システム」）を追加。Gemini側の誤ったウォーターマーク文言も正規のものに修正。全プロンプト（3箇所）を統一。 / Added missing left-side Japanese watermark to ChatGPT prompt and corrected Gemini watermark text. All 3 watermark locations now unified.
@@ -706,3 +716,4 @@ Developed by **FURU**
 
 ### v3.00.0-alpha (2026-05-03)
 - **[Major]** Story Makerエンジンから高度な物語技法（GMC+Sメソッド）を統合。ログライン・アンカリング、サブテキスト制約、Stakes（代償）の吊り上げによるオチの爆発力強化を実装。 / Integrated advanced narrative techniques from the Story Maker engine (GMC+S methodology).
+

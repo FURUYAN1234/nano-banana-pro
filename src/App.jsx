@@ -35,7 +35,7 @@ import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 import { generateImageWithOpenAI, setOpenAIApiKey, getOpenAIApiKey } from './lib/openai';
 
-const SYSTEM_VERSION = "v3.35-alpha";
+const SYSTEM_VERSION = "v3.38-alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -1701,8 +1701,8 @@ Available lens effects — EACH PANEL MUST USE ONE:
   * (extreme fish-eye barrel distortion:2.8), (massive bulging foreground:2.5), (lens curve warping straight lines:2.6), (subject face very close to curved glass:2.5) — Ultra wide-angle spherical distortion
   * (extreme telephoto compression:2.7), (dangerously close background:2.4), (claustrophobic flattened space:2.5), (distant objects appear massive behind character:2.6) — Background crushes into foreground
   * (severe dutch angle 45 degrees:2.7), (violently tilted world:2.6), (falling gravity sensation:2.5), (sideways slanted walls and floor:2.6) — Frame tilted 15-45 degrees
-  * (ultra extreme low angle:2.7), (deep worm's eye view:2.6), (staring up from the floor:2.7), (ceiling is clearly visible:2.8), (towering full-body character from below:2.5) — Camera at ground level looking UP. IMPORTANT: Always show full body, NEVER crop to shoes only.
-  * (ultra extreme high angle:2.7), (steep bird's eye view:2.6), (looking down at the floor:2.7), (character viewed from directly above their head:2.8), (wide shot of the ground beneath:2.5) — Camera from above looking DOWN
+  * (ultra extreme low angle:2.7), (deep worm's eye view:2.6), (staring up from the floor:2.7), (ceiling is clearly visible:2.8), (towering full-body character from below:2.5), (PHYSICAL CAMERA PLACEMENT: placed flat on the ground looking straight up at the sky:2.0) — Camera at ground level looking UP. IMPORTANT: Always show full body, NEVER crop to shoes only.
+  * (ultra extreme high angle:2.7), (steep bird's eye view:2.6), (looking down at the floor:2.7), (PHYSICAL CAMERA PLACEMENT: suspended 10 meters in the air looking straight down at the ground:2.0), (character viewed from directly above their head:2.8), (wide shot of the ground beneath:2.5), (PHYSICAL CAMERA PLACEMENT: suspended 10 meters in the air looking straight down at the ground:2.0) — Camera from above looking DOWN
 
 [FLAT SHOT BAN]: (eye-level shot:0.1), (straight-on symmetrical:0.1) — Eye-level/straight compositions are FORBIDDEN. Weight them down to near-zero.
 [BODY DEFORMATION]: Characters' body parts closest to camera MUST be drawn 50%+ larger than far-side parts. This distortion is INTENTIONAL.
@@ -1780,16 +1780,16 @@ Available lens effects — EACH PANEL MUST USE ONE:
       // [v2.54.0] Extract AI selected camera tags, or fallback to Fisher-Yates generator
       // [v2.60] AIのカメラ名から具体的なレンズ歪みウェイトタグへのマッピング辞書
       const cameraLensMap = {
-        '俯瞰': '(ultra extreme high angle:2.7), (steep bird\'s eye view:2.6), (looking down at the floor:2.7), (character viewed from directly above their head:2.8), (wide shot of the ground beneath:2.5)',
-        'バードアイ': '(ultra extreme high angle:2.7), (steep bird\'s eye view:2.6), (looking down at the floor:2.7), (character viewed from directly above their head:2.8), (wide shot of the ground beneath:2.5)',
-        'ローアングル': '(ultra extreme low angle:2.7), (deep worm\'s eye view:2.6), (staring up from the floor:2.7), (ceiling is clearly visible:2.8), (towering full-body character from below:2.5)',
-        'アオリ': '(ultra extreme low angle:2.7), (deep worm\'s eye view:2.6), (staring up from the floor:2.7), (ceiling is clearly visible:2.8), (towering full-body character from below:2.5)',
+        '俯瞰': '(ultra extreme high angle:2.7), (steep bird\'s eye view:2.6), (looking down at the floor:2.7), (PHYSICAL CAMERA PLACEMENT: suspended 10 meters in the air looking straight down at the ground:2.0), (character viewed from directly above their head:2.8), (wide shot of the ground beneath:2.5), (PHYSICAL CAMERA PLACEMENT: suspended 10 meters in the air looking straight down at the ground:2.0)',
+        'バードアイ': '(ultra extreme high angle:2.7), (steep bird\'s eye view:2.6), (looking down at the floor:2.7), (PHYSICAL CAMERA PLACEMENT: suspended 10 meters in the air looking straight down at the ground:2.0), (character viewed from directly above their head:2.8), (wide shot of the ground beneath:2.5), (PHYSICAL CAMERA PLACEMENT: suspended 10 meters in the air looking straight down at the ground:2.0)',
+        'ローアングル': '(ultra extreme low angle:2.7), (deep worm\'s eye view:2.6), (staring up from the floor:2.7), (ceiling is clearly visible:2.8), (towering full-body character from below:2.5), (PHYSICAL CAMERA PLACEMENT: placed flat on the ground looking straight up at the sky:2.0)',
+        'アオリ': '(ultra extreme low angle:2.7), (deep worm\'s eye view:2.6), (staring up from the floor:2.7), (ceiling is clearly visible:2.8), (towering full-body character from below:2.5), (PHYSICAL CAMERA PLACEMENT: placed flat on the ground looking straight up at the sky:2.0)',
         'ダッチ': '(severe dutch angle 45 degrees:2.7), (violently tilted world:2.6), (falling gravity sensation:2.5), (sideways slanted walls and floor:2.6)',
         'フィッシュアイ': '(extreme fish-eye barrel distortion:2.8), (massive bulging foreground:2.5), (lens curve warping straight lines:2.6), (subject face very close to curved glass:2.5)',
         '超広角': '(extreme fish-eye barrel distortion:2.8), (massive bulging foreground:2.5), (lens curve warping straight lines:2.6), (subject face very close to curved glass:2.5)',
         '望遠': '(extreme telephoto compression:2.7), (dangerously close background:2.4), (claustrophobic flattened space:2.5), (distant objects appear massive behind character:2.6)',
-        'ワームズアイ': '(ultra extreme low angle:2.7), (deep worm\'s eye view:2.6), (staring up from the floor:2.7), (towering full-body character from below:2.5)',
-        'ドローン': '(ultra extreme high angle:2.7), (aerial drone shot:2.5), (bird\'s eye view:2.6), (looking down at the floor:2.7)',
+        'ワームズアイ': '(ultra extreme low angle:2.7), (deep worm\'s eye view:2.6), (staring up from the floor:2.7), (towering full-body character from below:2.5), (PHYSICAL CAMERA PLACEMENT: placed flat on the ground looking straight up at the sky:2.0)',
+        'ドローン': '(ultra extreme high angle:2.7), (aerial drone shot:2.5), (bird\'s eye view:2.6), (looking down at the floor:2.7), (PHYSICAL CAMERA PLACEMENT: suspended 10 meters in the air looking straight down at the ground:2.0)',
         'パンニング': '(dynamic panning shot:2.5), (motion blur background:2.4), (tracking camera following movement:2.5), (speed lines directional:2.3)',
         '追跡': '(dynamic panning shot:2.5), (motion blur background:2.4), (tracking camera following movement:2.5), (speed lines directional:2.3)',
       };
@@ -1855,7 +1855,7 @@ Available lens effects — EACH PANEL MUST USE ONE:
             // 「サエコが、売店のカウンターに」のような文章が話者名として誤検出されるのを防ぐ
             const hasSentenceParticles = /[がをにでへはもとからまでより]/.test(tempSpeaker) && tempSpeaker.length > 5;
             const isTooLong = tempSpeaker.length > 12;
-            const isMetaTag = /^(Camera|Location|Outfit|EMOTION|状況|Action)$/i.test(tempSpeaker);
+            const isMetaTag = /^(Camera|Location|Outfit|EMOTION|状況|Action|リアクション|Reaction|設定)$/i.test(tempSpeaker);
 
             if (hasSentenceParticles || isTooLong || isMetaTag) {
               // 文章構造やメタタグを含む → ト書き・メタデータなので話者名ではない
@@ -1943,7 +1943,7 @@ Available lens effects — EACH PANEL MUST USE ONE:
           if (match && match[1].trim()) {
             let tempSpeaker = match[1].replace(/^(SFX|効果音|BGM|Action)/i, '').trim();
             tempSpeaker = tempSpeaker.replace(/^[【\[（(]/, '').replace(/[】\]）)]$/, '').trim();
-            const isMetaTag = /^(Camera|Location|Outfit|EMOTION|状況|Action)$/i.test(tempSpeaker);
+            const isMetaTag = /^(Camera|Location|Outfit|EMOTION|状況|Action|リアクション|Reaction|設定)$/i.test(tempSpeaker);
             if (!isMetaTag && (validCharacters.some(c => tempSpeaker.includes(c) || c.includes(tempSpeaker)) || tempSpeaker === "全員" || tempSpeaker === "Speaker" || match[0].trim().endsWith(':') || match[0].trim().endsWith('：'))) {
               isDialogue = true;
             }
@@ -2015,7 +2015,7 @@ Available lens effects — EACH PANEL MUST USE ONE:
             // [v2.31] ト書き誤検出防止: 助詞を含む長文は話者名ではない
             const hasSentenceParticles = /[がをにでへはもとからまでより]/.test(speaker) && speaker.length > 5;
             const isTooLong = speaker.length > 12;
-            const isMetaTag = /^(Camera|Location|Outfit|EMOTION|状況|Action)$/i.test(speaker);
+            const isMetaTag = /^(Camera|Location|Outfit|EMOTION|状況|Action|リアクション|Reaction|設定)$/i.test(speaker);
             if (hasSentenceParticles || isTooLong || isMetaTag) return;
             // EMOTIONやスタイルタグ残骸をフィルタ
             if (speaker && !speakers.includes(speaker) && !/^(EMOTION|NORMAL|CHIBI_GAG|GEKIGA|SHOUJO|HORROR|BLANK|IMPACT|WATERCOLOR|RETRO|GLITTER|SHADOW|SPEED|FLASHBACK|UKIYOE|POP_ART|SKETCH|NEON|THICK_PAINT|PASTEL|CEL|DARK_ANIME|THIN_LINE|HIGH_SATURATION)$/i.test(speaker)) {
@@ -2149,10 +2149,14 @@ SPEECH BUBBLE POSITION LOCK:
             // 検出キャラ1人だが吹き出し2つ → 独白として扱う（ソロショットにはしない）
             cloneWarning += `\nNOTE: Multiple speech bubbles in this panel are ALL spoken by ${allCharBrackets[0]} (monologue/soliloquy). Draw only ${allCharBrackets[0]} — do NOT add a second character just because there are multiple bubbles.`;
           }
-          // [v2.42] クローン防止: 合計人数と1人1回ルールを明示
-          const totalCount = allPanelCharacters.length;
-          const totalCountHint = `\nTOTAL CHARACTER COUNT IN THIS PANEL: EXACTLY ${totalCount} distinct individuals. Each person appears ONLY ONCE. Do NOT draw any character twice — not as a foreground duplicate, not as a background copy, not as a reflection or silhouette of an already-present character. If this panel contains FEWER than ${totalCount} visible characters, the panel is INCOMPLETE and must be redrawn with all ${totalCount} characters present.`;
-          return `CRITICAL CAST PLACEMENT: Ensure ${panelActors.join(' and ')} are the main focus. The following named characters appear in this panel: ${allCharBrackets.join(', ')}. Each named character appears EXACTLY ONCE. NEVER draw the exact same named character twice.\n${cloneWarning}${totalCountHint}`;
+          // [v2.42] クローン防止: 空間（前景・後景）で縛る
+          const foreground = panelActors.join(' and ');
+          const bgActors = allCharBrackets.filter(b => !panelActors.includes(b));
+          const background = bgActors.length > 0 ? bgActors.join(', ') : 'NO ONE ELSE';
+          
+          const spatialConstraint = `\nFOREGROUND MUST CONTAIN ONLY: ${foreground}.\nBACKGROUND MUST CONTAIN ONLY: ${background}.\nABSOLUTELY NO OTHER HUMANS ALLOWED. Do not draw any character in the background if they are already in the foreground. Total EXACTLY ${allPanelCharacters.length} distinct individuals.`;
+
+          return `CRITICAL CAST PLACEMENT: Ensure ${foreground} are the main focus.\n${cloneWarning}${spatialConstraint}`;
         } else {
           return `CRITICAL CAST PLACEMENT: Follow the panel's action naturally. NEVER draw the exact same character twice.`;
         }
@@ -2218,7 +2222,7 @@ MUST have tall portrait aspect ratio (A4 paper, 1:1.414).
 
 LAYOUT & FORMAT:
 - Canvas completely filled by panels (95% width). NO large white margins.
-- Top page: draw large bold black Japanese text title EXACTLY: ${safeTopic}
+- Top page: draw large bold black Japanese text title: "${safeTopic}"
 - Draw tiny English watermark ON bottom-right border of 4th panel: "${watermarkEng}"
 - Draw tiny Japanese watermark ON bottom-left border of 4th panel: "ネームから全自動の自律式統合AI漫画システム :https://x.gd/JiWor"
 - Watermarks standard horizontal. NO overlap. NO extra white space below panel 4.
@@ -2292,7 +2296,7 @@ MUST have tall portrait aspect ratio (A4 paper, 1:1.414).
 
 LAYOUT:
 Canvas completely filled by panels (95% width). NO large white margins.
-Top page: draw large bold black Japanese text title EXACTLY: ${safeTopic}
+Top page: draw large bold black Japanese text title: "${safeTopic}"
 NO quotes/punctuation around title.
 Draw tiny English watermark ON bottom-right border of 4th panel: "${watermarkEng}" (clean sans-serif).
 Draw tiny Japanese watermark ON bottom-left border of 4th panel: "ネームから全自動の自律式統合AI漫画システム :https://x.gd/JiWor".
@@ -2385,6 +2389,7 @@ Important constraints:
 - Do NOT write situation/narration explanations as text on the screen. The Visual Action must only be illustrated.
 - Write the Japanese spoken text clearly inside white manga speech bubbles in a bold sans-serif Japanese font.
 - Japanese dialogue MUST end with a period (。). However, do NOT add unnecessary commas (、) inside dialogue. Manga speech bubbles rarely use commas in natural Japanese — line breaks and bubble shape provide natural pauses instead. Only use commas when absolutely necessary to prevent misreading.
+- TYPOGRAPHY RULE: Write Japanese text tightly with ZERO spaces between words. Do NOT insert any gaps or spaces between characters. (no letter spacing:1.5), (tight kerning:1.5).
 - Do NOT add random English text except for the watermark.
 - Maintain character consistency across all 4 panels.
 - Flow is from top panel to bottom panel.
@@ -4421,6 +4426,9 @@ export default function AppWrapper() {
     </ErrorBoundary>
   );
 }
+
+
+
 
 
 
