@@ -1,19 +1,17 @@
 # HANDOFF
 
 ## Current Status
-- 1枚絵用（ChatGPT Images 2.0向け）のプロンプトを「ANTIGRAVITY EMOTIONAL CINEMA ENGINE v2.0」へ刷新しました。
-- 感情ベクトルの自動検知、シネマティックなカメラワーク・ライティング・表情・VFXの適用が実装され、画像生成テストにて正常な効果を確認済み。
-- UIのボタンテキストも最新の機能説明に合わせて更新されました。
-- システムバージョンは `v3.43-alpha` に更新されています。
+- ヘッダーバーおよび各種ボタンにおける `whitespace-nowrap` によるレイアウト崩れを修正し、`flex-wrap` を適用することで狭い画面幅でのレスポンシブ対応を完了しました。
+- システムバージョンは `v3.44-alpha` に更新されています。
 
 ## Done Items
-- `src/App.jsx` の1枚絵コピー用プロンプトをv2.0へ更新。
-- 同ボタンのラベルおよび説明テキストを更新。
-- バージョン番号の同期（package.json, App.jsx, index.html, README.md）。
-- ローカル環境での表示と機能のテスト確認。
+- `src/App.jsx` のヘッダー、進捗表示、およびコピーボタンのクラス定義を `flex-wrap` に修正。
+- 狭い画面幅（ナロービュー）での動作検証完了。
+- バージョン番号の同期（package.json, App.jsx, index.html, README.md, hf-nano-banana-pro/README.md）。
 
 ## Remaining Tasks
-- GitHub Pages へのデプロイ（これから実行）。
+- GitHub Pages へのデプロイ実行。
+- Hugging Face Spaces へのデプロイ実行。
 
 ## Risks & Notes
 - デプロイを実行する際は、本プロジェクトの `docs/deploy.md` の手順に必ず従うこと。
