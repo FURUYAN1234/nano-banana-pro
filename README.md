@@ -102,10 +102,11 @@ Users can amplify the AI's script direction with specific enhancement toggles (e
 ### 🎰 Punchline Director (v3.31+) / オチ・ディレクター
 
 A UI-based control that lets users manually select the comedic direction of the 4th-panel punchline — or leave it to AI. When set to a specific type, the selection is injected as a hard constraint into the scenario prompt, **overriding AI's natural tendency** to always pick the "safest" joke.
-UIからオチ（4コマ目）の方向性を手動で選択できるコントロールです。「Auto（AIおまかせ）」のほか、10種類の具体的なオチパターン（爆発型 / 静寂型 / 感動詐欺 / 天丼 / 夢オチ / サイコホラー / 打ち切りエンド 等）から指定可能。選択されたオチは **JavaScriptが決定し、AIへの強制指示としてプロンプトに注入** されるため、AIが「無難な選択肢」に逃げることを許しません。
+UIからオチ（4コマ目）の方向性を手動で選択できるコントロールです。「Auto（AIおまかせ）」のほか、11種類の具体的なオチパターン（爆発型 / 静寂型 / 感動詐欺 / 天丼 / 夢オチ / サイコホラー / 打ち切りエンド / ドキュメンタリー 等）から指定可能。選択されたオチは **JavaScriptが決定し、AIへの強制指示としてプロンプトに注入** されるため、AIが「無難な選択肢」に逃げることを許しません。
 
 * **Auto Mode / おまかせモード**: AI picks the best punchline type for the scenario. This is the default. / AIがシナリオに最適なオチを自律選択します。デフォルト設定です。
 * **Forced Mode / 強制指定モード**: Human selects a specific punchline type (e.g., "Dream" or "PsychoHorror"). The AI is given no choice. / 人間が特定のオチを選択。AIに選択の余地はありません。
+* **Documentary Mode / ドキュメンタリーモード**: A special punchline mode that faithfully visualizes serious news. Includes a built-in "3-Tier Hybrid Content Sanitizer" that performs semantic replacement on critical WMD/terrorism triggers and masks secondary crime triggers with "●", allowing sensitive real-world topics to bypass AI safety filters without losing narrative meaning. / シリアスなニュースを原文の温度感に忠実なまま漫画化するための特殊設定です。AIの安全検閲を突破するため「3層ハイブリッド・コンテンツサニタイザー」を内蔵しており、核兵器やテロといった即死級のセンシティブワードを「完全な意味置換」や「●伏せ字」に自動変換し、元記事の文脈を保ったまま画像生成を成功に導きます。
 * **Copy Integration / コピー連携**: The selected punchline type is embedded in the scenario output header (`Punchline: 爆発型`), so copying the scenario to ChatGPT automatically carries the comedic intent. / 選択されたオチの種類はシナリオ出力ヘッダーに埋め込まれ、ChatGPTへのコピペ時にも意図が自動的に伝わります。
 
 ### 🤖 ChatGPT Images 2.0 Mode / ChatGPT画像生成サポート
