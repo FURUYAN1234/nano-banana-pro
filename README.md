@@ -633,33 +633,33 @@ This project is part of an integrated ecosystem designed to support AI-powered m
 ### Ecosystem Components / 構成システム
 
 #### 1. Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System
-A system specialized in creating 4-panel manga with AI.
-AIを活用した4コマ漫画制作に特化したシステムです。
+A system specialized in creating 4-panel manga with AI. / AIを活用した4コマ漫画制作に特化したシステムです。
 - [Explanation / 解説](https://note.com/happy_duck780/n/ndf063558c1f5)
 - [Demo / デモ](https://furuyan1234.github.io/nano-banana-pro/)
 - [Code / コード](https://github.com/FURUYAN1234/nano-banana-pro)
 
 #### 2. AI Story Maker
-A tool for generating creative stories and plots using AI.
-AIを用いてクリエイティブなストーリーやプロットを生成するツールです。
+A tool for generating creative stories and plots using AI. / AIを用いてクリエイティブなストーリーやプロットを生成するツールです。
 - [Explanation / 解説](https://note.com/happy_duck780/n/nd3d972922868)
 - [Demo / デモ](https://furuyan1234.github.io/story-maker/)
 - [Code / コード](https://github.com/FURUYAN1234/story-maker)
 
 #### 3. AI Character Sheet Maker
-An assistant for designing detailed character sheets and settings.
-詳細なキャラクターシートや設定をデザインするための支援ツールです。
+An assistant for designing detailed character sheets and settings. / 詳細なキャラクターシートや設定をデザインするための支援ツールです。
 - [Explanation / 解説](https://note.com/happy_duck780/n/neccbebd7d957)
 - [Demo / デモ](https://furuyan1234.github.io/character-sheet-maker/)
 - [Code / コード](https://github.com/FURUYAN1234/character-sheet-maker)
 
 #### 4. AI Comic Translation Tool
-A tool for translating manga into 10 languages using AI. 
-AIを使って漫画を10言語に翻訳するツールです。
+A tool for translating manga into 10 languages using AI. / AIを使って漫画を10言語に翻訳するツールです。
 - [Explanation / 解説](https://note.com/happy_duck780/n/nbdf826604ce7)
 - [Demo / デモ](https://furuyan1234.github.io/comic-translation/)
 - [Code / コード](https://github.com/FURUYAN1234/comic-translation)
 
+#### 5. 360° AI Panorama Generator
+A tool that generates seamless 360-degree spatial backgrounds to provide background assets for manga and video. / シームレスな360度空間の背景を生成し、漫画や動画の背景素材として提供するツールです。
+- [Demo / デモ](https://furuyan1234.github.io/panoforge/)
+- [Code / コード](https://github.com/FURUYAN1234/panoforge)
 ---
 
 Developed by **FURU**
