@@ -1,6 +1,3 @@
-## Update Summary
-Completely overhauled the 1-panel image generation prompt to the "ANTIGRAVITY EMOTIONAL CINEMA ENGINE v2.0". It automatically detects emotional vectors from user instructions and optimizes camera work, lighting, character acting, and VFX to produce highly cinematic anime illustrations.
-
-## 更新内容
-1枚絵生成用のプロンプトを刷新し、「ANTIGRAVITY EMOTIONAL CINEMA ENGINE v2.0」を導入しました。
-このアップデートにより、ユーザーの短い指示内容から自動的に感情ベクトルを検知し、それに適したシネマティックなカメラワーク、ライティング、繊細な表情演技、VFXを適用して、一枚の映画のようなドラマチックなアニメイラストを出力します。
+### 🚀 Latest Updates / 最新のアップデート
+- **[Bugfix] Parser Logic Enhancement / パーサーロジックのバグ修正**
+  - セリフ抽出およびキャラクター配置ロジックにおいて、効果音（シーーーン、ゴゴゴ等）やリアクション指示（例：「リアクション: 全員→...」）が誤って話者名として認識され、画面上に無効な吹き出しとして描画されたり、配置ルールに混入する致命的なバグを修正しました。 / Fixed a critical bug in the dialogue and placement extraction logic where sound effects and reaction directives were mistakenly identified as speakers and injected into speech bubbles and placement rules.

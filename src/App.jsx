@@ -35,7 +35,7 @@ import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 import { generateImageWithOpenAI, setOpenAIApiKey, getOpenAIApiKey } from './lib/openai';
 
-const SYSTEM_VERSION = "v3.44-alpha";
+const SYSTEM_VERSION = "v3.45-alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -1858,9 +1858,13 @@ Available lens effects — EACH PANEL MUST USE ONE:
             const hasSentenceParticles = /[がをにでへはもとからまでより]/.test(tempSpeaker) && tempSpeaker.length > 5;
             const isTooLong = tempSpeaker.length > 12;
             const isMetaTag = /^(Camera|Location|Outfit|EMOTION|状況|Action|リアクション|Reaction|設定|物理描写|SFX|効果音|BGM|ナレーション|テロップ)$/i.test(tempSpeaker);
+            // [v2.45] 効果音パターン検出: 同じ文字(長音含む)の繰り返しは効果音（シーーーン、ゴゴゴ等）
+            const isSoundEffect = /^[^a-zA-Z]*([\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF])([ーッっ]*\1){1,}[ーッっ！!ン]*$/u.test(tempSpeaker.replace(/[（(].*$/, '').trim());
+            // [v2.45] リアクション指示混入検出: 「（リアクション」等が話者名に含まれていたら除外
+            const hasReactionTag = /[（(]\s*リアクション/i.test(match[1]);
 
-            if (hasSentenceParticles || isTooLong || isMetaTag) {
-              // 文章構造やメタタグを含む → ト書き・メタデータなので話者名ではない
+            if (hasSentenceParticles || isTooLong || isMetaTag || isSoundEffect || hasReactionTag) {
+              // 文章構造・メタタグ・効果音・リアクション指示を含む → 話者名ではない
             } else if (validCharacters.some(c => {
               const nameOnly = c.split(/[（(]/)[0].trim();
               return tempSpeaker === c || tempSpeaker === nameOnly || nameOnly === tempSpeaker;
@@ -1948,9 +1952,12 @@ Available lens effects — EACH PANEL MUST USE ONE:
             const hasSentenceParticles = /[がをにでへはもとからまでより]/.test(tempSpeaker) && tempSpeaker.length > 5;
             const isTooLong = tempSpeaker.length > 12;
             const isMetaTag = /^(Camera|Location|Outfit|EMOTION|状況|Action|リアクション|Reaction|設定)$/i.test(tempSpeaker);
+            // [v2.45] 効果音パターン検出
+            const isSoundEffect = /^[^a-zA-Z]*([\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF])([ーッっ]*\1){1,}[ーッっ！!ン]*$/u.test(tempSpeaker.replace(/[（(].*$/, '').trim());
+            const hasReactionTag = /[（(]\s*リアクション/i.test(match[1]);
             
-            if (hasSentenceParticles || isTooLong || isMetaTag) {
-              // Not a dialogue speaker
+            if (hasSentenceParticles || isTooLong || isMetaTag || isSoundEffect || hasReactionTag) {
+              // Not a dialogue speaker (meta tag, sound effect, or reaction directive)
             } else if (validCharacters.some(c => tempSpeaker.includes(c) || c.includes(tempSpeaker)) || tempSpeaker === "全員" || tempSpeaker === "Speaker" || match[0].trim().endsWith(':') || match[0].trim().endsWith('：')) {
               isDialogue = true;
             }
@@ -2030,7 +2037,10 @@ Available lens effects — EACH PANEL MUST USE ONE:
             const hasSentenceParticles = /[がをにでへはもとからまでより]/.test(speaker) && speaker.length > 5;
             const isTooLong = speaker.length > 12;
             const isMetaTag = /^(Camera|Location|Outfit|EMOTION|状況|Action|リアクション|Reaction|設定)$/i.test(speaker);
-            if (hasSentenceParticles || isTooLong || isMetaTag) return;
+            // [v2.45] 効果音パターン検出
+            const isSoundEffect = /^[^a-zA-Z]*([\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF])([ーッっ]*\1){1,}[ーッっ！!ン]*$/u.test(speaker.replace(/[（(].*$/, '').trim());
+            const hasReactionTag = /[（(]\s*リアクション/i.test(match[1]);
+            if (hasSentenceParticles || isTooLong || isMetaTag || isSoundEffect || hasReactionTag) return;
             // EMOTIONやスタイルタグ残骸をフィルタ
             if (speaker && !speakers.includes(speaker) && !/^(EMOTION|NORMAL|CHIBI_GAG|GEKIGA|SHOUJO|HORROR|BLANK|IMPACT|WATERCOLOR|RETRO|GLITTER|SHADOW|SPEED|FLASHBACK|UKIYOE|POP_ART|SKETCH|NEON|THICK_PAINT|PASTEL|CEL|DARK_ANIME|THIN_LINE|HIGH_SATURATION)$/i.test(speaker)) {
               // [v2.31] キャラ名バリデーション: 登録キャラ名と一致する場合、またはコロンで明示的に話者として指定されている場合は認定

@@ -657,6 +657,9 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v3.45-alpha (2026-05-13)
+- **[Bugfix]** セリフ抽出およびキャラ配置ロジックにおいて、効果音（シーーーン、ゴゴゴ等）や「（リアクション: ...）」等のト書きが話者名として誤認され、吹き出しや配置ルールに混入するバグを修正。 / Fixed a critical bug in the dialogue and placement extraction logic where sound effects and reaction directives were mistakenly identified as speakers and injected into speech bubbles and placement rules.
+
 ### v3.44-alpha (2026-05-13)
 - **[Fix]** ヘッダーのプログレスバーおよび各種ボタンにおいて、`whitespace-nowrap` による折り返し禁止設定を解除し、`flex-wrap` を適用することで狭い画面幅でのレイアウト崩れを修正。 / Fixed layout breaking on narrow screen widths by removing `whitespace-nowrap` constraints and applying `flex-wrap` to the header progress bar and various buttons.
 

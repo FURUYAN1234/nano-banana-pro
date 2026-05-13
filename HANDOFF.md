@@ -1,13 +1,15 @@
 # HANDOFF
 
 ## Current Status
-- ヘッダーバーおよび各種ボタンにおける `whitespace-nowrap` によるレイアウト崩れを修正し、`flex-wrap` を適用することで狭い画面幅でのレスポンシブ対応を完了しました。
-- システムバージョンは `v3.44-alpha` に更新されています。
+- セリフ抽出およびキャラ配置ロジックにおいて、効果音や「（リアクション: ...）」等のト書きが話者名として誤認され、吹き出しや配置指示に混入する致命的なバグを修正完了しました。
+- AGENTS.md に「バグ修正・コード変更後のローカル検証提示義務」のルールを追加完了しました。
+- システムバージョンは `v3.45-alpha` に更新されています。
 
 ## Done Items
-- `src/App.jsx` のヘッダー、進捗表示、およびコピーボタンのクラス定義を `flex-wrap` に修正。
-- 狭い画面幅（ナロービュー）での動作検証完了。
-- バージョン番号の同期（package.json, App.jsx, index.html, README.md, hf-nano-banana-pro/README.md）。
+- `src/App.jsx` の `isMetaTag` 判定条件に、効果音パターンの検出ロジックとリアクション指示の検出ロジックを追加し、3つの抽出関数に適用しました。
+- 修正後のローカル動作検証にて、偽の吹き出しが排除されたことを確認。
+- AGENTS.md にセクション 3.6 を追加。
+- バージョン番号の同期（package.json, App.jsx, index.html, README.md）。
 
 ## Remaining Tasks
 - GitHub Pages へのデプロイ実行。
@@ -15,4 +17,3 @@
 
 ## Risks & Notes
 - デプロイを実行する際は、本プロジェクトの `docs/deploy.md` の手順に必ず従うこと。
-- 次回以降、UIやコアロジックを修正する際は必ず `temp_App_backup.jsx` 等のバックアップを作成してから着手すること。
