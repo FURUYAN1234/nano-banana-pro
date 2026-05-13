@@ -35,7 +35,7 @@ import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 import { generateImageWithOpenAI, setOpenAIApiKey, getOpenAIApiKey } from './lib/openai';
 
-const SYSTEM_VERSION = "v3.45-alpha";
+const SYSTEM_VERSION = "v3.46-alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -472,6 +472,7 @@ function App() {
   const [openAIKeyInput, setOpenAIKeyInput] = useState("");
   const [isCastListCopied, setIsCastListCopied] = useState(false);
   const [isScenarioCopied, setIsScenarioCopied] = useState(false);
+  const [isMetaSaved, setIsMetaSaved] = useState(false); // [v3.46] メタデータ保存フィードバック
   const handleToggleOpenAIApi = (checked) => {
     if (checked) {
       setOpenAIKeyInput(""); // フォームをリセット
@@ -3987,6 +3988,67 @@ The environment and effects must ECHO the character's emotion, not just be a bac
                           ? "コピペ（ChatGPT専用　キャラシート添付及び生成毎新規スレッド作成必須　他アプリにプロンプトを貼り付けた場合、正常な画像が生成されない場合があります。）"
                           : "コピペ（他アプリ用　キャラシート添付を強く推奨　ChatGPTに貼り付けた場合、リソース不足により正常な生成が出来ないので、必ずChatGPT専用モードのプロンプトを使用して下さい。）"
                       }
+                    </button>
+
+                    {/* [v3.46] メタデータ保存ボタン */}
+                    <button
+                      onClick={() => {
+                        // --- メタデータ構築 ---
+                        const now = new Date();
+                        const promptMode = enableChatGPTMode ? 'ChatGPT専用プロンプト' : 'Gemini用プロンプト';
+                        const metadata = {
+                          "ファイル情報": {
+                            "フォーマットバージョン": 1,
+                            "アプリバージョン": SYSTEM_VERSION,
+                            "保存日時": now.toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }),
+                            "ISO日時": now.toISOString()
+                          },
+                          "プロンプト判別": {
+                            "モード": promptMode,
+                            "ChatGPTモード": enableChatGPTMode,
+                            "説明": enableChatGPTMode
+                              ? "ChatGPT Images 2.0 専用に最適化されたプロンプトです。Geminiには非対応です。"
+                              : "Gemini用プロンプトです。ChatGPTに貼り付けるとレイアウトが崩れる可能性があります。"
+                          },
+                          "キャラクターシート解析結果": castList || "(未解析)",
+                          "シナリオ": scenario || "(未生成)",
+                          "最終プロンプト": finalPrompt || "(未生成)",
+                          "生成設定": {
+                            "パンチラインタイプ": punchlineType,
+                            "カラーモード": colorMode,
+                            "強化オプション": {
+                              "表情強化": enhanceExpressions,
+                              "ボディランゲージ強化": enhanceBodyLang,
+                              "照明・演出強化": enhanceEffects,
+                              "背景強化": enhanceBackgrounds,
+                              "カメラワーク強化": enhanceCameraWork,
+                              "セリフ・ギャグ強化": enhanceDialogue
+                            }
+                          }
+                        };
+                        // --- JSONダウンロード ---
+                        const jsonStr = JSON.stringify(metadata, null, 2);
+                        const blob = new Blob([jsonStr], { type: 'application/json;charset=utf-8' });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        const titleMatch = scenario?.match(/タイトル[:：]\s*(.+)/);
+                        const titleSlug = titleMatch ? titleMatch[1].trim().substring(0, 20).replace(/[\\/:*?"<>|]/g, '_') : 'untitled';
+                        const ts = `${String(now.getFullYear()).slice(-2)}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}${String(now.getSeconds()).padStart(2,'0')}`;
+                        a.download = `AI_4-koma_metadata_${titleSlug}_${ts}.json`;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(url);
+                        // --- フィードバック ---
+                        setIsMetaSaved(true);
+                        setTimeout(() => setIsMetaSaved(false), 2500);
+                      }}
+                      disabled={!finalPrompt}
+                      className={`w-full ${isMetaSaved ? 'bg-green-600' : 'bg-amber-900/50 hover:bg-amber-800/60'} ${isMetaSaved ? 'text-white' : 'text-amber-400'} font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-all border ${isMetaSaved ? 'border-green-500/50' : 'border-amber-700/30'} disabled:opacity-30 disabled:cursor-not-allowed text-sm`}
+                    >
+                      {isMetaSaved ? <CheckCircle2 size={16} /> : <Download size={16} />}
+                      {isMetaSaved ? '保存完了！' : '📂 メタデータ保存 (JSON)'}
                     </button>
                   </div>{/* Buttons Row: コピペボタンまで */}
 

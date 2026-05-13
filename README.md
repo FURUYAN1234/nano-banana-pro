@@ -129,6 +129,16 @@ Both the **Location** (場所) and **Outfit** (服装) fields support an "AI Aut
 * **UI Distinction / UI上の区別**: In the Generation Preview, user-specified values appear in **white text**, while AI-selected values appear in **blue text with an ✨ icon**, making it immediately clear which settings were chosen by the human and which by the AI.
   生成プレビューでは、ユーザー指定値は **白文字** 、AI選定値は **青文字＋✨アイコン** で表示され、人間とAIどちらが選んだ設定かが一目で識別できます。
 
+### 🛡️ Audit Trail Metadata (v3.46+) / 監査用メタデータ保存
+
+To meet professional compliance and provenance requirements, the system features a dedicated "Metadata Download" button. When a prompt is generated, users can download a sidecar JSON file containing the full audit trail.
+商用利用やコンプライアンス要件（来歴証明）を満たすため、「監査用メタデータ保存」機能を搭載。プロンプト生成時に、生成プロセス全体を記録したJSONファイルをダウンロードできます。
+
+* **Comprehensive Records / 完全な記録**: The JSON includes the timestamp, target model (ChatGPT/Gemini), extracted character sheet logic, scenario script, full prompt text, and all generation settings (Punchline type, Enhancement flags).
+  JSONにはタイムスタンプ、対象モデル（ChatGPTかGeminiか）、抽出されたキャラクター設定、シナリオ全文、プロンプト全文、およびすべての生成設定（オチのタイプや演出強化フラグ）が記録されます。
+* **Plagiarism Defense / パクリ・トレース疑惑への防衛**: By presenting this JSON, creators can definitively prove *what* prompt and settings were used to generate the artwork, proving that no direct image-to-image copying or banned content was requested.
+  このJSONを提示することで、「どのような指示と設定でこの画像を出力したか」を客観的に証明でき、既存作品のトレースやパクリ指示を行っていないことの強力な証明（証跡）となります。
+
 ---
 
 ## 🔍 Deep Analysis (技術詳解)
@@ -656,6 +666,9 @@ Developed by **FURU**
 ---
 
 ## 📋 ChangeLog
+
+### v3.46-alpha (2026-05-13)
+- **[Feature]** プロンプト生成時に、生成設定・シナリオ・プロンプト全文をJSON形式でダウンロードできる「監査用メタデータ保存」機能を追加。業務利用時の来歴証明およびパクリ疑惑への防衛証跡として活用可能。 / Added "Audit Trail Metadata" download feature to export the full scenario, settings, and prompt as a JSON file, serving as a provenance record and defense against plagiarism accusations for professional use.
 
 ### v3.45-alpha (2026-05-13)
 - **[Bugfix]** セリフ抽出およびキャラ配置ロジックにおいて、効果音（シーーーン、ゴゴゴ等）や「（リアクション: ...）」等のト書きが話者名として誤認され、吹き出しや配置ルールに混入するバグを修正。 / Fixed a critical bug in the dialogue and placement extraction logic where sound effects and reaction directives were mistakenly identified as speakers and injected into speech bubbles and placement rules.
