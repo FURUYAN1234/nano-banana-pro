@@ -677,7 +677,7 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
-### v3.51-alpha
+### v3.52-alpha
   - 🔄 **360° Panorama Viewer Upgrade**: Replaced Canvas 2D viewer with a robust Three.js-based spherical viewer (identical to PanoForge) to fix freezing bugs.
   - 🎭 **Outfit Override Protocol**: Enforced strict rules requiring the AI to ignore reference character clothing in favor of scenario-specified outfits (e.g., casual wear, spacesuits) while applying 360° background lighting contexts.
 

@@ -38,7 +38,7 @@ import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 import { generateImageWithOpenAI, setOpenAIApiKey, getOpenAIApiKey } from './lib/openai';
 
-const SYSTEM_VERSION = "v3.51-alpha";
+const SYSTEM_VERSION = "v3.52-alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -4905,6 +4905,13 @@ DO NOT crop, resize, extend, pad, or reuse any part of the previous image.
 This is NOT a correction. This is a FULL REGENERATION.
 
 THIS IS A STRUCTURAL CORRECTION TASK. PRIORITIZE LAYOUT OVER STYLE.
+
+━━━━━━━━━━━━━━━━━━
+■ ART STYLE PRESERVATION (CRITICAL)
+━━━━━━━━━━━━━━━━━━
+- You MUST maintain the high-quality lighting, shading, and rich details of the original manga style.
+- DO NOT simplify the art style or colors. 
+- "Prioritizing layout" does NOT mean you can degrade the artistic rendering quality.
 
 ━━━━━━━━━━━━━━━━━━
 ■ CANVAS — HARD LOCK

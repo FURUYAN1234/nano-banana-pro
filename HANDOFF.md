@@ -1,4 +1,4 @@
-﻿# HANDOFF.md (v3.51-alpha)
+﻿# HANDOFF.md (v3.52-alpha)
 
 ## Current Status
 - 360度パノラマ背景の順次処理（並列処理によるGemini APIフリーズ回避）と、ドロップ窓への360度サムネイル（112px）表示機能を \src/App.jsx\ に実装済みです。
