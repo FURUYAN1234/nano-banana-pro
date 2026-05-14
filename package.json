@@ -1,7 +1,7 @@
 {
   "name": "nano-banana-pro",
   "private": true,
-  "version": "3.47-alpha",
+  "version": "3.50-alpha",
   "homepage": "https://FURUYAN1234.github.io/nano-banana-pro",
   "type": "module",
   "scripts": {
@@ -21,7 +21,8 @@
     "lucide-react": "^0.562.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "tailwind-merge": "^3.4.0"
+    "tailwind-merge": "^3.4.0",
+    "three": "^0.184.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",

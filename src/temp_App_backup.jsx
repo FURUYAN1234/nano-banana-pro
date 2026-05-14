@@ -1,10 +1,7 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 
 // CANARY TEST
 console.log("HELLO_USER_FIXED_VERSION_2_25");
-
-import * as THREE from 'three';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 import {
   Camera,
@@ -38,7 +35,7 @@ import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 import { generateImageWithOpenAI, setOpenAIApiKey, getOpenAIApiKey } from './lib/openai';
 
-const SYSTEM_VERSION = "v3.50-alpha";
+const SYSTEM_VERSION = "v3.49-alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -420,120 +417,6 @@ const ThinkingLog = ({ thought, containerHeight = "h-[180px]", scrollHeight = "h
     </div>
   );
 };
-
-// --- [v3.50] 360° パノラマビューアーコンポーネント ---
-// Canvas 2D でequirectangular画像をインタラクティブに表示
-// マウスドラッグで水平・垂直パン、ホイールでズームイン/アウト
-// タッチ操作対応（モバイル用）
-// ※DPRスケーリング無し（CSS pixel = Canvas pixel で統一）
-const Panorama360Viewer = ({ imageSrc, height = 200 }) => {
-  const containerRef = useRef(null);
-
-  useEffect(() => {
-    if (!containerRef.current || !imageSrc) return;
-
-    const container = containerRef.current;
-    const scene = new THREE.Scene();
-    
-    // カメラ（FOV75、中心に配置）
-    const fov = 75;
-    const aspect = container.clientWidth / container.clientHeight;
-    const camera = new THREE.PerspectiveCamera(fov, aspect, 0.1, 1100);
-    camera.position.set(0, 0, 0.1); 
-
-    // レンダラー
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(container.clientWidth, container.clientHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    container.appendChild(renderer.domElement);
-
-    // OrbitControls
-    const controls = new OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.08;
-    controls.rotateSpeed = -0.3;
-    controls.enableZoom = false; // ホイールでの標準ズームは無効化
-    controls.enablePan = false;
-    controls.autoRotate = false; // 必要に応じてtrueに
-
-    // テクスチャロード（PanoForgeと同様）
-    const loader = new THREE.TextureLoader();
-    let sphere = null;
-    loader.load(imageSrc, (texture) => {
-      texture.mapping = THREE.EquirectangularReflectionMapping;
-      texture.colorSpace = THREE.SRGBColorSpace;
-
-      const geometry = new THREE.SphereGeometry(500, 60, 40);
-      geometry.scale(-1, 1, 1); // 内側から見るため反転
-
-      const material = new THREE.MeshBasicMaterial({ map: texture });
-      sphere = new THREE.Mesh(geometry, material);
-      scene.add(sphere);
-    });
-
-    // FOVベースのズーム（PanoForge互換）
-    let currentFov = fov;
-    const onWheel = (e) => {
-      e.preventDefault();
-      const delta = e.deltaY > 0 ? 5 : -5;
-      currentFov = Math.max(30, Math.min(120, currentFov + delta));
-      camera.fov = currentFov;
-      camera.updateProjectionMatrix();
-    };
-    container.addEventListener('wheel', onWheel, { passive: false });
-
-    // リサイズハンドラ
-    const observer = new ResizeObserver(() => {
-      if (container.clientWidth === 0 || container.clientHeight === 0) return;
-      camera.aspect = container.clientWidth / container.clientHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(container.clientWidth, container.clientHeight);
-    });
-    observer.observe(container);
-
-    // アニメーションループ
-    let animationId = null;
-    const animate = () => {
-      animationId = requestAnimationFrame(animate);
-      controls.update();
-      renderer.render(scene, camera);
-    };
-    animate();
-
-    // クリーンアップ
-    return () => {
-      cancelAnimationFrame(animationId);
-      observer.disconnect();
-      container.removeEventListener('wheel', onWheel);
-      if (sphere) {
-        sphere.geometry.dispose();
-        sphere.material.dispose();
-      }
-      renderer.dispose();
-      if (container.contains(renderer.domElement)) {
-        container.removeChild(renderer.domElement);
-      }
-    };
-  }, [imageSrc]);
-
-  return (
-    <div
-      ref={containerRef}
-      style={{
-        width: '100%',
-        height: height + 'px',
-        cursor: 'grab',
-        borderRadius: '8px',
-        overflow: 'hidden',
-        position: 'relative'
-      }}
-      onMouseDown={(e) => e.currentTarget.style.cursor = 'grabbing'}
-      onMouseUp={(e) => e.currentTarget.style.cursor = 'grab'}
-      onMouseLeave={(e) => e.currentTarget.style.cursor = 'grab'}
-    />
-  );
-};
-
 // --- Guide Balloon Component ---
 const StepGuide = ({ text, position = "top", visible = true }) => {
   if (!visible) return null;
@@ -689,6 +572,7 @@ const getPunchlineLabel = (type) => {
 
 function App() {
   // Force Build 2026-02-06 07:07 // Build 2026-02-06-01
+
   console.log("System Version Loaded:", SYSTEM_VERSION); // Debug Log
   const [apiKey, setApiKeyState] = useState("");
   const [showModal, setShowModal] = useState(false); // FIXEDCRITICAL RESTORE
@@ -834,7 +718,6 @@ function App() {
   const [enhanceCameraWork, setEnhanceCameraWork] = useState(false);   // [v2.47] カメラワーク強化
   const [enhanceDialogue, setEnhanceDialogue] = useState(false);       // [v2.47] セリフ・ギャグ強化
   // [v2.69] コマ割り演出・時間演出を削除（ChatGPT画像生成ではタグ形式の指示が解釈されず効果ゼロのため）
-  const [enhanceFACS, setEnhanceFACS] = useState(false);               // [v3.50 Fix] FACS表情強化（欠落修正）
   const [isEnhancing, setIsEnhancing] = useState(false);
   const [enhanceLog, setEnhanceLog] = useState("");
   const [isEnhancePanelOpen, setIsEnhancePanelOpen] = useState(false);
@@ -855,7 +738,6 @@ function App() {
   const [is360Analyzing, setIs360Analyzing] = useState(false);        // 解析中フラグ
   const [bg360Error, setBg360Error] = useState('');                    // バリデーションエラー
   const [is360DragOver, setIs360DragOver] = useState(false);          // ドラッグオーバー状態
-  const [bg360Enabled, setBg360Enabled] = useState(false);            // [v3.50 Fix] 360°背景有効化フラグ（欠落修正 — これが無いとドロップ時にReferenceErrorでハングアップしていた）
 
   const handleToggleOpenAIApi = (checked) => {
     if (checked) {
@@ -1119,19 +1001,17 @@ function App() {
       });
     }
 
-    // [v3.50] 360度画像が検出された場合、バックグラウンドで空間解析を実行
-    // ※ v3.48時点ではこのブロックがtry-catchの外にあり、さらに bg360Enabled state が未定義だったため
-    //    ReferenceErrorで processFiles 全体が即死し、isAnalyzingもthinkTimerもクリーンアップされなかった。
+    // [v3.48] 360度画像が検出された場合、バックグラウンドで空間解析を実行
     if (detected360File) {
-      try {
-        setBg360Enabled(true);
-        setBg360Image(detected360File.base64);
-        const base64Data = detected360File.base64.split(',')[1];
-        const imagePart = {
-          inlineData: { mimeType: detected360File.mimeType, data: base64Data }
-        };
-        setBg360ImageParts(imagePart);
+      setBg360Enabled(true);
+      setBg360Image(detected360File.base64);
+      const base64Data = detected360File.base64.split(',')[1];
+      const imagePart = {
+        inlineData: { mimeType: detected360File.mimeType, data: base64Data }
+      };
+      setBg360ImageParts(imagePart);
 
+      try {
         setIs360Analyzing(true);
         setAnalyzeThought(prev => prev + `\n> 🌐 360°空間解析を実行中... (API通信保護のため順次処理)`);
         const analysisPrompt = `この360度パノラマ画像（equirectangular形式）を分析し、以下の情報を**必ずJSON形式**で返答してください。それ以外のテキストは一切出力しないでください。
@@ -1955,13 +1835,7 @@ ${scenario}
       const loglineLine = parsedData.logline ? `\nLogline: ${parsedData.logline}` : '';
       const outfitLine = (customOutfit.trim() || parsedData.outfit) ? `\nOutfit: ${customOutfit.trim() || parsedData.outfit}` : '';
       const punchlineLine = parsedData.punchline ? `\nPunchline: ${parsedData.punchline}` : '';
-      // [v3.50] 360°背景モードのヘッダー情報
-      const bg360HeaderLine = bg360Image
-        ? (bg360Enabled
-          ? `\n🌐 360°背景: ON (${bg360Analysis?.location || '解析済み'} / ${bg360Analysis?.spatialType === 'indoor' ? '室内' : bg360Analysis?.spatialType === 'outdoor' ? '屋外' : '複合'}) — 添付ファイル: キャラシート＋360°画像`
-          : `\n🌐 360°背景: OFF — 背景はAIが自由選定 / 添付ファイル: キャラシートのみ`)
-        : '';
-      setScenario(`## タイトル: ${parsedData.topic} !?${loglineLine}\nLocation: ${parsedData.location || "Unspecified"}${outfitLine}${punchlineLine}${bg360HeaderLine}\n\n${parsedData.scenario} `);
+      setScenario(`## タイトル: ${parsedData.topic} !?${loglineLine}\nLocation: ${parsedData.location || "Unspecified"}${outfitLine}${punchlineLine}\n\n${parsedData.scenario} `);
 
       // [v2.43] ロック値もセット（GENERATION PREVIEW表示用）
       setLockedLocation(customLocation.trim() || parsedData.location || "Unspecified");
@@ -1969,7 +1843,7 @@ ${scenario}
 
       setScenarioThought(prev => prev + `\n > トピック選定: ${parsedData.topic} \n > シナリオ構築完了。`);
       showStatus("シナリオの生成が完了しました！");
-      const finalScenarioText = `## タイトル: ${parsedData.topic} !?${loglineLine}\nLocation: ${parsedData.location || "Unspecified"}${outfitLine}${punchlineLine}${bg360HeaderLine}\n\n${parsedData.scenario} `;
+      const finalScenarioText = `## タイトル: ${parsedData.topic} !?${loglineLine}\nLocation: ${parsedData.location || "Unspecified"}${outfitLine}${punchlineLine}\n\n${parsedData.scenario} `;
       return finalScenarioText; // [v2.79] フルオート連鎖用: テキスト自体を返す
 
     } catch (error) {
@@ -2854,10 +2728,8 @@ SPEECH BUBBLE POSITION LOCK:
       if (enableChatGPTMode) {
         // [v3.31] Ultra-Clean ChatGPT Optimized Natural Language Prompt
         // ChatGPT Image 2.0 requires descriptive English, NO pseudocode, NO weights, NO negative prompts.
-        rawPrompt = `🎨 OUTPUT: Generate a SINGLE IMAGE only. Do NOT respond with text or descriptions. DRAW the manga directly.
-
-[🔥 ABSOLUTE FIRST PRIORITY 🚨 READ THIS BEFORE ANYTHING ELSE]
-YOU ARE GENERATING A NEW 4-PANEL MANGA SCENE as an IMAGE. You are NOT creating a character sheet, model sheet, character lineup, expression chart, or reference sheet.
+        rawPrompt = `[🔥 ABSOLUTE FIRST PRIORITY 🚨 READ THIS BEFORE ANYTHING ELSE]
+YOU ARE GENERATING A NEW 4-PANEL MANGA SCENE. You are NOT creating a character sheet, model sheet, character lineup, expression chart, or reference sheet.
 The attached image is a CHARACTER REFERENCE ONLY 🚨 use it to identify hair color, eye shape, and glasses status. Do NOT reproduce its layout, white background, expression grid, or text labels.
 
 Generate a highly detailed, professional 4-koma (4-panel vertical) manga.
@@ -2880,8 +2752,6 @@ ART STYLE:
 ${bg360Image && bg360Analysis && bg360Enabled ? `
 BACKGROUND REFERENCE IMAGE:
 Among ALL attached images, identify the one with a panoramic 2:1 width-to-height aspect ratio (equirectangular format). That image is the 360° BACKGROUND REFERENCE — NOT a character sheet. All other attached images are CHARACTER REFERENCE sheets.
-⚠️ CRITICAL: This panoramic image is ONLY for background reference (colors, lighting, architecture). Do NOT imitate its 2:1 wide aspect ratio. Your OUTPUT must remain A4 PORTRAIT (1:1.414 tall) with 4 vertical panels. The panoramic image is NOT a layout template.
-⚠️ CRITICAL: DO NOT copy any character clothing or outfits from the 360° background image. Characters MUST wear the specified outfits.
 Use the 360° background image's lighting direction (${bg360Analysis.lighting}), spatial layout, and environmental details as the consistent setting for all panels. Match shadow directions and ambient color temperature to the background reference. At least 3 of 4 panels must use this background environment.
 ` : ''}
 
@@ -2891,11 +2761,10 @@ However, AVOID extreme fisheye distortion that warps human anatomy (no gigantic 
 
 CHARACTERS & IDENTITY:
 - Strictly reproduce reference image designs (hair, eyes, skin, accessories). NO feature swapping.
-- Reference images are ONLY for face, hair, skin, and accessories.
-${activeOutfit ? `- IGNORE reference clothing. All characters MUST wear exactly: ${activeOutfit}.` : '- OUTFIT CONSISTENCY: Every character MUST wear EXACT same outfit in ALL 4 panels.'}
 - NEVER draw the same character twice in a single panel.
 - Characters MUST look at each other or objects, NEVER at the camera.
 - Exaggerated manga comedy expressions and full-body reactions are required.
+- ${activeOutfit ? `All characters MUST wear exactly: ${activeOutfit}.` : 'OUTFIT CONSISTENCY: Every character MUST wear EXACT same outfit in ALL 4 panels.'}
 - Cast details: ${VAR_CAST_LIST}
 - Identity Anchor: ${buildIdentityMatrix(castList)}
 
@@ -2962,7 +2831,6 @@ Setting: ${safeLocation}.
 ${bg360Image && bg360Analysis && bg360Enabled ? `
 BACKGROUND REFERENCE IMAGE:
 Among ALL attached images, identify the one with a panoramic 2:1 width-to-height aspect ratio (equirectangular format). That image is the 360° BACKGROUND REFERENCE — NOT a character sheet. All other attached images are CHARACTER REFERENCE sheets.
-⚠️ CRITICAL: The panoramic image is ONLY for background reference. DO NOT copy any character clothing or outfits from the 360° background image.
 Use the 360° background's lighting direction (${bg360Analysis.lighting}), spatial layout, objects (${bg360Analysis.objects || 'various'}), and mood (${bg360Analysis.mood || 'contextual'}) as the consistent setting for all panels.
 Match shadow directions and ambient color temperature to the 360° background reference.
 At least 3 of 4 panels MUST use this background environment. 1 panel may deviate for flashback/imagination scenes.
@@ -3060,15 +2928,11 @@ Before generating the final image, mentally verify ALL of the following. If ANY 
 - [ ] Strict anatomy check: Verify correct left/right hand orientation and exactly 5 fingers per hand.
       `;
         
-        // [v3.50] Gemini用: 画像生成強制 + キャラシート防止プレフィックス
-        // Geminiがテキスト応答モードに入るのを防止するため、冒頭で画像出力を強制指示
-        const antiCharSheetPrefix = `🎨 OUTPUT FORMAT: Generate a SINGLE IMAGE. Do NOT respond with text, descriptions, explanations, or code. Your ONLY output must be one generated image file. Any text response is a FAILURE.
-
-[🔥 ABSOLUTE FIRST PRIORITY 🚨 READ THIS BEFORE ANYTHING ELSE]
-YOU ARE GENERATING A NEW 4-PANEL MANGA SCENE as an IMAGE. You are NOT creating a character sheet, model sheet, character lineup, expression chart, or reference sheet.
+        // Ensure that Gemini also gets the Anti-Character Sheet rules at the top
+        const antiCharSheetPrefix = `[🔥 ABSOLUTE FIRST PRIORITY 🚨 READ THIS BEFORE ANYTHING ELSE]
+YOU ARE GENERATING A NEW 4-PANEL MANGA SCENE. You are NOT creating a character sheet, model sheet, character lineup, expression chart, or reference sheet.
 The attached image is a CHARACTER REFERENCE ONLY 🚨 use it to identify hair color, eye shape, and glasses status. Do NOT reproduce its layout, white background, expression grid, or text labels.
 If your output looks like a character sheet or model sheet instead of a 4-panel manga story — YOU HAVE FAILED. Regenerate immediately as a manga scene.
-Do NOT describe the image in text. Do NOT write a prompt. DRAW the image directly.
 
 `;
         rawPrompt = antiCharSheetPrefix + rawPrompt;
@@ -3984,7 +3848,7 @@ The environment and effects must ECHO the character's emotion, not just be a bac
                       onChange={(e) => processFiles(e.target.files)}
                     />
                     <p className="text-xs font-bold text-slate-400">
-                      キャラクターシートをドロップ <span className="text-blue-400">（複数のキャラクターシートはまとめてアップロード。360°背景がある場合は同時にドロップしてください）</span>
+                      キャラクターシートをドロップ <span className="text-blue-400">（複数のキャラクターシートは、まとめてアップロードしてください）</span>
                     </p>
                     <p className="text-[10px] opacity-60 mt-1">
                       ※名前・性格・設定が明記されているシートを推奨
@@ -4167,69 +4031,63 @@ The environment and effects must ECHO the character's emotion, not just be a bac
 
                 <div className="flex flex-col md:flex-row gap-4 mb-4">
                   <div className={`flex-1 p-3 rounded-xl border ${(bg360Image && bg360Enabled) ? 'bg-[#050a14] border-cyan-500/30' : 'bg-[#050505] border-gray-700/50'}`}>
-                    {/* ラベル行: 360画像あり → ON/OFFトグル付き / なし → 通常ラベル */}
-                    <label className="text-xs font-bold mb-2 block flex items-center gap-1" style={{ color: (bg360Image && bg360Enabled) ? '#67e8f9' : '#ffffff' }}>
-                      <Globe size={14} />
-                      {bg360Image
-                        ? (bg360Enabled ? '🌐 360°背景 (ON)' : '指定場所 (Location Override)')
-                        : '指定場所 (Location Override)'
-                      }
-                      <span className="text-[10px] font-normal ml-auto flex items-center gap-2">
-                        {/* 解析中インジケーター */}
-                        {is360Analyzing && (
-                          <span className="text-yellow-400 animate-pulse flex items-center gap-1"><Loader2 size={10} className="animate-spin" /> 解析中...</span>
-                        )}
-                        {/* 360°画像がある場合のみ ON/OFF トグルボタンを表示 */}
-                        {bg360Image && (
-                          <button
-                            onClick={(e) => {
-                              e.preventDefault();
-                              setBg360Enabled(!bg360Enabled);
-                              showStatus(bg360Enabled ? '360°背景をOFFにしました（手入力が優先されます）' : '360°背景をONにしました');
-                            }}
-                            className={`px-3 py-1 rounded-md border text-[11px] font-bold transition-all ${
-                              bg360Enabled
-                                ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40 hover:bg-red-500/20 hover:text-red-300 hover:border-red-500/40'
-                                : 'bg-green-500/10 text-green-400 border-green-500/30 hover:bg-green-500/20'
-                            }`}
-                            title={bg360Enabled ? 'クリックで360°背景をOFF → 自由入力に切り替え' : 'クリックで360°背景をON → パノラマビューアーに切り替え'}
-                          >
-                            {bg360Enabled ? '🌐 ON → OFFにする' : '🌐 OFF → ONにする'}
-                          </button>
-                        )}
-                        {/* 360画像がない場合のヒント */}
-                        {!bg360Image && (
-                          <span className="text-gray-500">※空欄ならAIおまかせ</span>
-                        )}
-                      </span>
+                    <label className="text-xs font-bold mb-1 block flex items-center gap-1" style={{ color: (bg360Image && bg360Enabled) ? '#67e8f9' : '#ffffff' }}>
+                      {bg360Image ? (
+                        <>
+                          <Globe size={14} /> 背景 (360°画像)
+                          <span className="text-[10px] font-normal ml-auto flex items-center gap-2">
+                            {is360Analyzing && (
+                              <span className="text-yellow-400 animate-pulse flex items-center gap-1"><Loader2 size={10} className="animate-spin" /> 解析中...</span>
+                            )}
+                            {bg360Enabled && <span className="px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">🌐 画像解析</span>}
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault();
+                                setBg360Enabled(!bg360Enabled);
+                                showStatus(bg360Enabled ? '360°背景を無効化しました（手入力が優先されます）' : '360°背景を有効化しました');
+                              }}
+                              className={`px-2 py-0.5 rounded border transition-colors ${
+                                bg360Enabled
+                                  ? 'bg-red-500/10 text-red-400 border-red-500/30 hover:bg-red-500/20'
+                                  : 'bg-green-500/10 text-green-400 border-green-500/30 hover:bg-green-500/20'
+                              }`}
+                              title={bg360Enabled ? 'クリックで360°背景をOFF' : 'クリックで360°背景をON'}
+                            >
+                              {bg360Enabled ? 'OFFにする' : 'ONにする'}
+                            </button>
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <Globe size={14} /> 指定場所 (Location Override) <span className="text-[10px] text-gray-500 font-normal ml-auto">※空欄ならAIおまかせ</span>
+                        </>
+                      )}
                     </label>
-
-                    {/* コンテンツ部分: ON → パノラマビューアー / OFF or 未読込 → テキスト入力 */}
-                    {bg360Image && bg360Enabled ? (
-                      /* 360°ビューアーモード */
-                      <div className="space-y-2">
-                        <Panorama360Viewer imageSrc={bg360Image} height={160} />
+                    {/* 360°検出時: 超小型サムネイル + 入力フィールド */}
+                    {bg360Image && (
+                      <div className={`flex items-center gap-2 mb-1 transition-opacity ${bg360Enabled ? 'opacity-100' : 'opacity-40'}`}>
+                        <div className="shrink-0 w-8 h-4 rounded-sm overflow-hidden border border-cyan-500/20">
+                          <img src={bg360Image} alt="360° BG" className="w-full h-full object-cover" />
+                        </div>
                         {bg360Analysis && (
-                          <div className="flex flex-wrap items-center gap-2 text-[10px] text-slate-400">
-                            <span className="px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-300 border border-cyan-500/20">📍 {bg360Analysis.location}</span>
-                            <span className="px-2 py-0.5 rounded bg-slate-800 border border-slate-700">☀️ {bg360Analysis.lighting}</span>
-                            <span className="px-2 py-0.5 rounded bg-slate-800 border border-slate-700">{bg360Analysis.spatialType === 'indoor' ? '🏠 室内' : bg360Analysis.spatialType === 'outdoor' ? '🌳 屋外' : '🔀 複合'}</span>
-                            {bg360Analysis.mood && <span className="px-2 py-0.5 rounded bg-slate-800 border border-slate-700">🎭 {bg360Analysis.mood}</span>}
-                          </div>
+                          <span className="text-[10px] text-slate-500">
+                            ☀️ {bg360Analysis.lighting} | {bg360Analysis.spatialType === 'indoor' ? '室内' : bg360Analysis.spatialType === 'outdoor' ? '屋外' : '複合'}
+                          </span>
                         )}
-                        <p className="text-[9px] text-slate-600 text-center">ドラッグで回転 / ホイールでズーム</p>
                       </div>
-                    ) : (
-                      /* テキスト入力モード（360画像OFF時、または360画像未読込時） */
-                      <input
-                        type="text"
-                        value={customLocation}
-                        onChange={(e) => setCustomLocation(e.target.value)}
-                        style={{ color: '#ffffff', backgroundColor: '#111111' }}
-                        className="w-full p-2 rounded border border-gray-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-sm font-mono placeholder-gray-600"
-                        placeholder="例: サイバーパンクな裏路地、炎上する宇宙船..."
-                      />
                     )}
+                    <input
+                      type="text"
+                      value={customLocation}
+                      onChange={(e) => setCustomLocation(e.target.value)}
+                      style={{ color: (bg360Image && bg360Enabled) ? '#67e8f9' : '#ffffff', backgroundColor: '#111111' }}
+                      className={`w-full p-2 rounded border outline-none text-sm font-mono placeholder-gray-600 ${
+                        (bg360Image && bg360Enabled)
+                          ? 'border-cyan-500/30 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400'
+                          : 'border-gray-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500'
+                      }`}
+                      placeholder={bg360Image ? '360°画像から自動設定された場所、または手動編集' : '例: サイバーパンクな裏路地、炎上する宇宙船...'}
+                    />
                   </div>
 
 
@@ -4701,25 +4559,23 @@ The environment and effects must ECHO the character's emotion, not just be a bac
 
                   {/* Buttons Row */}
                   <div className="flex flex-col gap-4 mt-2 relative z-50">
-                    {/* [v3.50] 360°背景モード時のリマインダーバナー — bg360Enabled ON時のみ表示 */}
-                    {bg360Image && bg360Analysis && bg360Enabled && finalPrompt && (
-                      <div className="bg-[#0a1628] border border-cyan-500/30 rounded-xl p-4 space-y-3">
-                        <div className="flex items-start gap-4">
-                          <div className="flex-1 space-y-1">
-                            <div className="text-xs font-bold text-cyan-300 flex items-center gap-1">
-                              <Globe size={12} /> 🌐 360°背景モード (ON)
-                            </div>
-                            <p className="text-[10px] text-slate-400 leading-relaxed">
-                              このプロンプトと一緒に以下を添付してください：<br />
-                              <span className="text-white">✅ キャラクターシート（いつも通り）</span><br />
-                              <span className="text-cyan-300">✅ 360°背景画像（読み込み済みのファイル）</span><br />
-                              <span className="text-slate-500">※AIがアスペクト比2:1の画像を自動的に背景参照として認識します</span>
-                            </p>
-                          </div>
+                    {/* [v3.48] 360°背景モード時のリマインダーバナー */}
+                    {bg360Image && bg360Analysis && finalPrompt && (
+                      <div className="bg-[#0a1628] border border-cyan-500/30 rounded-xl p-4 flex items-start gap-4">
+                        <div className="shrink-0 w-24 h-12 rounded-lg overflow-hidden border border-cyan-500/20">
+                          <img src={bg360Image} alt="360° BG" className="w-full h-full object-cover" />
                         </div>
-                        {/* 360°インタラクティブビューアー */}
-                        <Panorama360Viewer imageSrc={bg360Image} height={120} />
-                        <p className="text-[9px] text-slate-600 text-center">ドラッグで回転 / ホイールでズーム</p>
+                        <div className="flex-1 space-y-1">
+                          <div className="text-xs font-bold text-cyan-300 flex items-center gap-1">
+                            <Globe size={12} /> 360°背景モード
+                          </div>
+                          <p className="text-[10px] text-slate-400 leading-relaxed">
+                            このプロンプトと一緒に以下を添付してください：<br />
+                            <span className="text-white">✅ キャラクターシート（いつも通り）</span><br />
+                            <span className="text-cyan-300">✅ 360°背景画像（読み込み済みのファイル）</span><br />
+                            <span className="text-slate-500">※AIがアスペクト比2:1の画像を自動的に背景参照として認識します</span>
+                          </p>
+                        </div>
                       </div>
                     )}
                     <button
@@ -4730,13 +4586,13 @@ The environment and effects must ECHO the character's emotion, not just be a bac
                       {isCopied ? <CheckCircle2 size={20} /> : <Copy size={20} />}
                       {isCopied 
                         ? "コピー完了" 
-                        : (bg360Image && bg360Enabled)
+                        : bg360Image
                           ? (enableChatGPTMode
-                            ? "コピペ（ChatGPT専用　📎キャラシート＋🌐360°背景画像を添付　生成毎新規スレッド作成必須）"
-                            : "コピペ（他アプリ用　📎キャラシート＋🌐360°背景画像を添付　ChatGPTには必ず専用モードを使用）")
+                            ? "コピペ（ChatGPT専用　キャラシート＋360°背景画像を添付　生成毎新規スレッド作成必須）"
+                            : "コピペ（他アプリ用　キャラシート＋360°背景画像を添付　ChatGPTには必ず専用モードを使用）")
                           : (enableChatGPTMode 
-                            ? "コピペ（ChatGPT専用　📎キャラシート添付及び生成毎新規スレッド作成必須）"
-                            : "コピペ（他アプリ用　📎キャラシート添付を強く推奨　ChatGPTには必ずChatGPT専用モードを使用して下さい）")
+                            ? "コピペ（ChatGPT専用　キャラシート添付及び生成毎新規スレッド作成必須　他アプリにプロンプトを貼り付けた場合、正常な画像が生成されない場合があります。）"
+                            : "コピペ（他アプリ用　キャラシート添付を強く推奨　ChatGPTに貼り付けた場合、リソース不足により正常な生成が出来ないので、必ずChatGPT専用モードのプロンプトを使用して下さい。）")
                       }
                     </button>
 
@@ -4773,13 +4629,6 @@ The environment and effects must ECHO the character's emotion, not just be a bac
                               "背景強化": enhanceBackgrounds,
                               "カメラワーク強化": enhanceCameraWork,
                               "セリフ・ギャグ強化": enhanceDialogue
-                            },
-                            "360度背景": {
-                              "画像読込": !!bg360Image,
-                              "有効": bg360Enabled,
-                              "場所": bg360Analysis?.location || "(未解析)",
-                              "空間タイプ": bg360Analysis?.spatialType || "(未解析)",
-                              "光源": bg360Analysis?.lighting || "(未解析)"
                             }
                           }
                         };

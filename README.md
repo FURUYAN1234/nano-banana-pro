@@ -669,6 +669,17 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v3.50-alpha
+  - 🔄 **360° Panorama Viewer Upgrade**: Replaced Canvas 2D viewer with a robust Three.js-based spherical viewer (identical to PanoForge) to fix freezing bugs.
+  - 🎭 **Outfit Override Protocol**: Enforced strict rules requiring the AI to ignore reference character clothing in favor of scenario-specified outfits (e.g., casual wear, spacesuits) while applying 360° background lighting contexts.
+
+### v3.49-alpha (2026-05-14)
+- **[Fix]** 360度パノラマ背景のAPI並列処理フリーズ問題（Gemini 429/Timeout）を完全解決するため、シーケンシャルな直列実行に移行。「ゼロクリック360度検出」時に背景解析が完了してからキャラクター解析に移行するようロジックを修正。
+- **[Enhancement]** ドロップゾーンUIに360度画像の検出確認用サムネイル（地球アイコン付き）と、状態視認性を高めるシアン色の枠線インジケーター（`bg360Enabled`）を実装。
+
+### v3.48-alpha (2026-05-14)
+- **[Feature]** キャラクターシートと一緒に360度画像（2:1比率）をドロップするだけで自動判別し、背景として読み込む「ゼロクリック360度検出」を実装。不要な折りたたみパネルを削除し、UXを大幅に改善。 / Implemented "Zero-Click 360 Detection": Just drop a 360-degree image (2:1 ratio) alongside character sheets to automatically detect and load it as a background. Removed unnecessary collapsible panels, significantly improving UX.
+
 ### v3.47-alpha (2026-05-13)
 - **[Enhancement]** ドキュメンタリーモード用のコンテンツサニタイザーをv3.0にアップデート。核兵器や大惨事などの「即死級トリガー」を完全な意味置換（例：「核兵器」→「禁断の兵器」）で回避しつつ、犯罪・暴力用語は「●」伏せ字（Tier 2）、英語キーワード等は完全置換（Tier 3）とする3層ハイブリッド設計を実装し、ニュース本文の安全な漫画化率を大幅に向上。 / Upgraded Content Sanitizer to v3.0 for Documentary Mode. Implemented a 3-tier hybrid design that uses full semantic replacement for critical triggers (WMDs, etc.) to evade strict AI filters, while retaining readable "●"-censoring for secondary sensitive terms (crime/violence) to preserve comedic and narrative fidelity.
 
