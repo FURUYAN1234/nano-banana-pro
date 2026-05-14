@@ -147,6 +147,7 @@ By dragging and dropping a 360-degree equirectangular image alongside your chara
 
 * **Interactive 360° Viewer (v3.50+) / インタラクティブ360度ビューアー**: The imported 360-degree background is displayed in a dedicated spherical viewer powered by Three.js, allowing you to freely pan and zoom the environment just like a 360° video. / 取り込まれた360度パノラマ背景は、Three.jsベースの専用球体ビューアーでプレビュー表示され、360度動画のようにマウスやタッチ操作で自由に見回すことができます。
 * **Outfit Override Protocol / 衣装オーバーライド機能**: When a 360° background is applied, the AI intelligently ignores the character's default clothing if necessary, automatically changing their outfits to match the new background's context (e.g., changing into a spacesuit if the background is outer space). / 360度背景が適用された場合、AIは背景の文脈に合わせてキャラクターのデフォルト衣装を適切に無視し、自動的に環境に合わせた服装（宇宙空間なら宇宙服など）へ着替えさせる高度な調整を行います。
+* **Autonomous Camera AI (v3.53+) / 自律カメラワークAI**: After scenario generation, a dedicated Camera AI autonomously designs optimal camera perspectives (yaw, pitch, FOV) for each of the 4 panels based on the spatial analysis of the 360° background. The system then uses a Canvas API-based equirectangular cropping engine to extract per-panel background views from the panorama, ensuring each panel has a unique, cinematically composed background angle. / シナリオ生成後、専用のカメラAIが360°背景の空間解析に基づき、4コマそれぞれに最適なカメラ方角（yaw/pitch/FOV）を自律設計します。その後、Canvas APIベースの正距円筒図法クロッピングエンジンがパノラマから各コマの背景ビューを切り出し、映画的に構図された固有の背景アングルを保証します。
 
 ---
 
@@ -677,6 +678,12 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v3.53-alpha (2026-05-15)
+  - 🎬 **360° Autonomous Camera AI**: After scenario generation, a dedicated Camera AI autonomously designs optimal camera perspectives (yaw, pitch, FOV) for each panel based on spatial analysis. / シナリオ生成後、専用カメラAIが空間解析に基づき各コマに最適なカメラ方角を自律設計。
+  - 🔲 **Canvas Equirectangular Crop Engine**: Implemented Canvas API-based perspective projection to extract per-panel background views from 360° panoramas with horizontal wrap-around support. / 360°パノラマからCanvas APIベースの透視投影でコマ別背景ビューを切り出すクロップエンジンを実装。
+  - 🔒 **Step 3 Lock Guard**: Added `is360CameraWorking` state to block prompt construction until camera work design and background cropping are fully completed, preventing race conditions. / カメラワーク設計＋クロップ完了までSTEP3をブロックするガード条件を追加し、競合状態を防止。
+  - 🖼️ **Camera Work Preview UI**: Added a visual preview grid showing AI-designed camera angles for each panel with direction labels and FOV info. / 各コマのAI設計カメラアングルを方角ラベル・FOV情報付きで表示するプレビューグリッドを追加。
+
 ### v3.52-alpha
   - 🔄 **360° Panorama Viewer Upgrade**: Replaced Canvas 2D viewer with a robust Three.js-based spherical viewer (identical to PanoForge) to fix freezing bugs.
   - 🎭 **Outfit Override Protocol**: Enforced strict rules requiring the AI to ignore reference character clothing in favor of scenario-specified outfits (e.g., casual wear, spacesuits) while applying 360° background lighting contexts.
@@ -759,17 +766,4 @@ Developed by **FURU**
 
 ### v3.20-alpha (2026-05-10)
 - **[Feature]** 5つの視覚品質強化を実装: 瞳キャッチライト強制、髪のエンジェルリング（天使の輪）強制、線の太さ階層制御、カラーパレット統一制御、シネマティックライティング強化。 / Added 5 visual quality improvements: eye catchlight enforcement, angel ring hair shine, line weight hierarchy, color palette unity, and cinematic lighting enhancement.
-
-### v3.19-alpha (2026-05-10)
-- **[Fix]** 超圧縮パイプラインで4つの正規表現バグが無言で失敗していた問題を修正。 / Fixed 4 silently-failing regex bugs in the ultra-compression pipeline.
-
-### v3.16-alpha (2026-05-10)
-- **[Feature]** Anti-Camouflage & Anti-Glitter Protocol実装。キャラクターが背景に溶け込む問題とチラチラ光粒子ノイズを根絶。 / Implemented Anti-Camouflage & Anti-Glitter Protocol to eliminate character-background blending and sparkle particle noise.
-
-### v3.15-alpha (2026-05-10)
-- **[Feature]** FACS（Facial Action Coding System）エンジン統合。抽象的感情語の代わりに解剖学的なAction Units（筋肉の動き）で表情を指定可能に。 / Integrated FACS engine for anatomical expression control using Action Units instead of abstract emotion words.
-- **[Feature]** プロンプト超圧縮アーキテクチャ（MUST/NO方式）を全面導入。トークン効率を最大化。 / Implemented ultra-compressed prompt architecture (MUST/NO format) for maximum token efficiency.
-
-### v3.14-alpha (2026-05-10)
-- **[Feature]** FACS制御UIトグルをシナリオ強化パネルに追加。 / Added FACS control UI toggle to the Scenario Enhancement panel.
 

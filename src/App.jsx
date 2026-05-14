@@ -38,7 +38,7 @@ import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 import { generateImageWithOpenAI, setOpenAIApiKey, getOpenAIApiKey } from './lib/openai';
 
-const SYSTEM_VERSION = "v3.52-alpha";
+const SYSTEM_VERSION = "v3.53-alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -856,6 +856,78 @@ function App() {
   const [bg360Error, setBg360Error] = useState('');                    // バリデーションエラー
   const [is360DragOver, setIs360DragOver] = useState(false);          // ドラッグオーバー状態
   const [bg360Enabled, setBg360Enabled] = useState(false);            // [v3.50 Fix] 360°背景有効化フラグ（欠落修正 — これが無いとドロップ時にReferenceErrorでハングアップしていた）
+  const [bg360CameraWork, setBg360CameraWork] = useState(null);        // [v3.53] 360°カメラワーク設計結果 {panels: [{panel, camera, yaw, pitch, fov, reasoning}]}
+  const [bg360CroppedPanels, setBg360CroppedPanels] = useState(null);   // [v3.53 Phase2] 各コマ用クロップ済み背景画像 [base64, base64, base64, base64]
+  const [is360CameraWorking, setIs360CameraWorking] = useState(false);  // [v3.53] カメラワーク設計＋クロップ処理中フラグ（Step3ブロック用）
+
+  // [v3.53 Phase2] 360°正距円筒図法（equirectangular）画像から指定方角の透視投影ビューをクロップする関数
+  // yaw: 水平方角（0°=正面, 90°=右, 180°=背面, 270°=左）
+  // pitch: 垂直方角（0°=水平, +上向き, -下向き）
+  // fov: 視野角（60°=望遠, 90°=標準, 120°=広角）
+  const cropEquirectangular = (base64Img, yaw, pitch, fov, outputWidth = 640, outputHeight = 480) => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const canvas = document.createElement('canvas');
+          canvas.width = outputWidth;
+          canvas.height = outputHeight;
+          const ctx = canvas.getContext('2d');
+
+          const imgW = img.width;
+          const imgH = img.height;
+
+          // equirectangular: 横幅=360°, 縦幅=180°
+          // yawからピクセル位置を計算（0°=画像中央, wrapping対応）
+          const normalizedYaw = ((yaw % 360) + 360) % 360;
+          const centerX = (normalizedYaw / 360) * imgW;
+
+          // FOVからクロップ幅を計算
+          const cropW = (fov / 360) * imgW;
+
+          // pitchからY中心を計算（0°=画像中央, ±90°=上下端）
+          const centerY = (imgH / 2) - (pitch / 180) * imgH;
+
+          // クロップ高さ（アスペクト比維持）
+          const cropH = cropW * (outputHeight / outputWidth);
+
+          const startX = centerX - cropW / 2;
+          const startY = Math.max(0, Math.min(imgH - cropH, centerY - cropH / 2));
+          const clampedCropH = Math.min(cropH, imgH);
+
+          // 水平方向のラップアラウンド処理
+          if (startX >= 0 && startX + cropW <= imgW) {
+            // ラップなし — そのまま描画
+            ctx.drawImage(img, startX, startY, cropW, clampedCropH, 0, 0, outputWidth, outputHeight);
+          } else if (startX < 0) {
+            // 左端を超えた → 右端からラップ
+            const overflowW = -startX;
+            const mainW = cropW - overflowW;
+            const mainRatio = mainW / cropW;
+            // 右端部分（ラップ）
+            ctx.drawImage(img, imgW - overflowW, startY, overflowW, clampedCropH, 0, 0, outputWidth * (1 - mainRatio), outputHeight);
+            // メイン部分
+            ctx.drawImage(img, 0, startY, mainW, clampedCropH, outputWidth * (1 - mainRatio), 0, outputWidth * mainRatio, outputHeight);
+          } else {
+            // 右端を超えた → 左端からラップ
+            const mainW = imgW - startX;
+            const overflowW = cropW - mainW;
+            const mainRatio = mainW / cropW;
+            // メイン部分
+            ctx.drawImage(img, startX, startY, mainW, clampedCropH, 0, 0, outputWidth * mainRatio, outputHeight);
+            // 左端部分（ラップ）
+            ctx.drawImage(img, 0, startY, overflowW, clampedCropH, outputWidth * mainRatio, 0, outputWidth * (1 - mainRatio), outputHeight);
+          }
+
+          resolve(canvas.toDataURL('image/jpeg', 0.85));
+        } catch (err) {
+          reject(err);
+        }
+      };
+      img.onerror = () => reject(new Error('画像の読み込みに失敗しました'));
+      img.src = base64Img;
+    });
+  };
 
   const handleToggleOpenAIApi = (checked) => {
     if (checked) {
@@ -1987,7 +2059,7 @@ ${scenario}
           ? `\n🌐 360°背景: ON (${bg360Analysis?.location || '解析済み'} / ${bg360Analysis?.spatialType === 'indoor' ? '室内' : bg360Analysis?.spatialType === 'outdoor' ? '屋外' : '複合'}) — 添付ファイル: キャラシート＋360°画像`
           : `\n🌐 360°背景: OFF — 背景はAIが自由選定 / 添付ファイル: キャラシートのみ`)
         : '';
-      setScenario(`## タイトル: ${parsedData.topic} !?${loglineLine}\nLocation: ${parsedData.location || "Unspecified"}${outfitLine}${punchlineLine}${bg360HeaderLine}\n\n${parsedData.scenario} `);
+      // [v3.53] 元のsetScenarioはカメラワーク処理後に統合版として呼ばれるため、ここでは省略
 
       // [v2.43] ロック値もセット（GENERATION PREVIEW表示用）
       setLockedLocation(customLocation.trim() || parsedData.location || "Unspecified");
@@ -1995,7 +2067,126 @@ ${scenario}
 
       setScenarioThought(prev => prev + `\n > トピック選定: ${parsedData.topic} \n > シナリオ構築完了。`);
       showStatus("シナリオの生成が完了しました！");
-      const finalScenarioText = `## タイトル: ${parsedData.topic} !?${loglineLine}\nLocation: ${parsedData.location || "Unspecified"}${outfitLine}${punchlineLine}${bg360HeaderLine}\n\n${parsedData.scenario} `;
+
+      // [v3.53] 360°カメラワーク自律設計 (Pass 1: AI Camera Work Design)
+      // 360°背景が有効な場合、AIにシナリオの各コマに最適な方角を判断させる
+      let cameraWorkHeaderLine = '';
+      if (bg360Image && bg360Analysis && bg360Enabled && bg360ImageParts) {
+        try {
+          setScenarioThought(prev => prev + `\n > 🎬 [360° Camera AI] カメラワーク自律設計を開始...`);
+          showStatus('🎬 360°カメラワーク設計中...');
+          setIs360CameraWorking(true); // [v3.53] Step3ブロック開始
+
+          const cameraWorkPrompt = `あなたは映画監督兼シネマトグラファーです。
+以下の4コマ漫画シナリオと360度パノラマ背景画像を分析し、各コマに最適なカメラの方角を設計してください。
+
+【シナリオ】
+${parsedData.scenario}
+
+【360°背景の解析情報】
+- 場所: ${bg360Analysis.location}
+- 光源: ${bg360Analysis.lighting}
+- 空間タイプ: ${bg360Analysis.spatialType}
+- 特徴物: ${bg360Analysis.objects || 'なし'}
+- 雰囲気: ${bg360Analysis.mood || '不明'}
+
+【設計ルール】
+1. 各コマは360°空間の**異なる方角**を活用し、空間の立体感を演出すること
+2. yawは0°=正面、90°=右、180°=背面、270°=左
+3. pitchは0°=水平、正の値=上向き、負の値=下向き（±30°以内推奨）
+4. FOVはカメラのショットに合わせて調整（60°=望遠、90°=標準、120°=広角）
+5. 光源方向を考慮し、逆光・順光・サイドライトを各コマで使い分けること
+6. 4コマ中少なくとも3コマは異なるyaw方向（差が45°以上）にすること
+
+**必ず以下のJSON形式のみで出力してください。それ以外のテキストは一切不要です。**
+{
+  "panels": [
+    {
+      "panel": 1,
+      "camera": "ショットタイプ（例: establishing_shot, close_up, medium_shot, wide_shot）",
+      "yaw": 0,
+      "pitch": 0,
+      "fov": 90,
+      "reasoning": "この方角を選んだ理由（日本語・1文）"
+    },
+    { "panel": 2, "camera": "...", "yaw": 0, "pitch": 0, "fov": 90, "reasoning": "..." },
+    { "panel": 3, "camera": "...", "yaw": 0, "pitch": 0, "fov": 90, "reasoning": "..." },
+    { "panel": 4, "camera": "...", "yaw": 0, "pitch": 0, "fov": 90, "reasoning": "..." }
+  ]
+}`;
+
+          const cameraWorkResult = await callThinkingGemini(cameraWorkPrompt, [bg360ImageParts], null, (msg) => {
+            setScenarioThought(prev => prev + `\n > [Camera AI] ${msg}`);
+          });
+
+          // JSONをパース
+          const cwJsonStr = cameraWorkResult.text.match(/\{[\s\S]*\}/)?.[0];
+          if (cwJsonStr) {
+            const cameraWork = JSON.parse(cwJsonStr);
+            setBg360CameraWork(cameraWork);
+
+            // 進捗窓にカメラワーク設計結果を表示
+            const yawToDirection = (yaw) => {
+              const dirs = ['北(正面)', '北東', '東(右)', '南東', '南(背面)', '南西', '西(左)', '北西'];
+              return dirs[Math.round(((yaw % 360 + 360) % 360) / 45) % 8];
+            };
+            const shotTypeJa = (type) => {
+              const map = { 'establishing_shot': 'ロングショット', 'wide_shot': 'ワイドショット', 'medium_shot': 'ミドルショット', 'close_up': 'クローズアップ', 'extreme_close_up': '超クローズアップ', 'over_the_shoulder': '肩越しショット', 'bird_eye': '俯瞰', 'worm_eye': 'アオリ' };
+              return map[type] || type;
+            };
+
+            let cwDisplayLines = '\n > 🎬 ══════ 360° カメラワーク設計完了 ══════';
+            cameraWork.panels.forEach(p => {
+              cwDisplayLines += `\n > 🎬 コマ${p.panel}: ${yawToDirection(p.yaw)} (yaw:${p.yaw}°) / ${shotTypeJa(p.camera)} / FOV:${p.fov}°`;
+              cwDisplayLines += `\n >    └─ ${p.reasoning}`;
+            });
+            cwDisplayLines += '\n > 🎬 ══════════════════════════════════';
+
+            setScenarioThought(prev => prev + cwDisplayLines);
+            showStatus('🎬 360°カメラワーク設計完了！背景クロップを開始...');
+
+            // [v3.53 Phase2] 各コマの方角に基づいて360°画像をクロップ
+            try {
+              setScenarioThought(prev => prev + '\n > 🔲 [Crop] 360°画像から各コマの方角ビューをクロップ中...');
+              const croppedResults = [];
+              for (const panel of cameraWork.panels) {
+                const cropped = await cropEquirectangular(
+                  bg360Image,
+                  panel.yaw,
+                  panel.pitch || 0,
+                  panel.fov || 90
+                );
+                croppedResults.push(cropped);
+              }
+              setBg360CroppedPanels(croppedResults);
+              setScenarioThought(prev => prev + `\n > 🔲 [Crop] ✅ ${croppedResults.length}枚のクロップ画像を生成しました`);
+              showStatus('🎬 カメラワーク設計＋背景クロップ完了！');
+              setIs360CameraWorking(false); // [v3.53] Step3ブロック解除
+            } catch (cropErr) {
+              console.warn('[360° Crop] Cropping failed:', cropErr);
+              setScenarioThought(prev => prev + `\n > ⚠️ [Crop] クロップに失敗しました: ${cropErr.message}（スキップ）`);
+              setIs360CameraWorking(false); // [v3.53] 失敗時もブロック解除
+            }
+
+            // シナリオヘッダーに追加する文字列を構築
+            cameraWorkHeaderLine = '\n🎬 360° Camera Work:';
+            cameraWork.panels.forEach(p => {
+              cameraWorkHeaderLine += `\n  Panel${p.panel}: ${yawToDirection(p.yaw)}(${p.yaw}°) ${shotTypeJa(p.camera)} FOV${p.fov}° — ${p.reasoning}`;
+            });
+          } else {
+            console.warn('[360° Camera AI] JSON parse failed, skipping camera work');
+            setScenarioThought(prev => prev + '\n > ⚠️ [Camera AI] カメラワーク設計のJSON解析に失敗しました（スキップ）');
+            setIs360CameraWorking(false); // [v3.53] JSON解析失敗時もブロック解除
+          }
+        } catch (cwErr) {
+          console.warn('[360° Camera AI] Camera work design failed:', cwErr);
+          setScenarioThought(prev => prev + `\n > ⚠️ [Camera AI] カメラワーク設計に失敗しました: ${cwErr.message}（スキップ — シナリオ生成には影響しません）`);
+          setIs360CameraWorking(false); // [v3.53] 失敗時もブロック解除
+        }
+      }
+
+      const finalScenarioText = `## タイトル: ${parsedData.topic} !?${loglineLine}\nLocation: ${parsedData.location || "Unspecified"}${outfitLine}${punchlineLine}${bg360HeaderLine}${cameraWorkHeaderLine}\n\n${parsedData.scenario} `;
+      setScenario(finalScenarioText);
       return finalScenarioText; // [v2.79] フルオート連鎖用: テキスト自体を返す
 
     } catch (error) {
@@ -3160,6 +3351,9 @@ Do NOT describe the image in text. Do NOT write a prompt. DRAW the image directl
     setBg360Image(null);
     setBg360ImageParts(null);
     setBg360Analysis(null);
+    setBg360CameraWork(null); // [v3.53] カメラワーク設計結果もリセット
+    setBg360CroppedPanels(null); // [v3.53 Phase2] クロップ画像もリセット
+    setIs360CameraWorking(false); // [v3.53] カメラワーク処理フラグリセット
     showStatus("入力と解析結果をリセットしました。");
   };
 
@@ -4626,9 +4820,19 @@ The environment and effects must ECHO the character's emotion, not just be a bac
               ${currentStep === 3 ? 'border-2 border-orange-500/50 shadow-[0_0_50px_rgba(249,115,22,0.15)] opacity-100' : 'border border-white/5 opacity-60'}
               ${currentStep > 3 ? 'border border-orange-500/30 opacity-100' : ''}
           `}>
-            {/* STEP3ロックオーバーレイ: STEP2未完了 or 解析中 or 検索中 or シナリオ強化中 */}
-            {(currentStep < 3 || isSearching || isAnalyzing || isEnhancing) && (
-              <div style={{ position: 'absolute', inset: -2, zIndex: 200, backgroundColor: 'rgba(10,12,16,0.92)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', pointerEvents: 'auto' }} />
+            {/* STEP3ロックオーバーレイ: STEP2未完了 or 解析中 or 検索中 or シナリオ強化中 or [v3.53]カメラワーク処理中 */}
+            {(currentStep < 3 || isSearching || isAnalyzing || isEnhancing || is360CameraWorking) && (
+              <div style={{ position: 'absolute', inset: -2, zIndex: 200, backgroundColor: 'rgba(10,12,16,0.92)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', pointerEvents: 'auto' }}
+              >
+                {/* [v3.53] カメラワーク処理中のメッセージ */}
+                {is360CameraWorking && currentStep >= 3 && (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
+                    <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-cyan-400"></div>
+                    <p className="text-cyan-300 text-sm font-bold animate-pulse">🎬 360° カメラワーク設計＋背景クロップ中...</p>
+                    <p className="text-slate-500 text-xs">完了すると自動的にアンロックされます</p>
+                  </div>
+                )}
+              </div>
             )}
             <div className={`flex items-center gap-3 text-sm font-black uppercase tracking-widest px-2 ${currentStep === 3 ? 'text-orange-400' : 'text-slate-500'}`}>
               <Wand2 size={24} /> STEP 03: プロンプト生成 (PROMPT ASSEMBLY)
@@ -4654,7 +4858,7 @@ The environment and effects must ECHO the character's emotion, not just be a bac
 
             <button
               onClick={() => assemblePrompt()}
-              disabled={isAssembling}
+              disabled={isAssembling || is360CameraWorking}
               className={`w-full relative bg-white hover:bg-slate-200 text-black py-6 rounded-xl font-black text-xl flex items-center justify-center gap-4 border-b-[6px] border-slate-300 active:border-b-0 active:translate-y-[6px] transition-all disabled:opacity-50 disabled:grayscale disabled:border-none disabled:bg-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed group/gen shadow-xl
                    ${currentStep === 3 ? 'ring-4 ring-orange-500 ring-offset-4 ring-offset-[#0a0c10]' : ''}
               `}
@@ -4747,6 +4951,35 @@ The environment and effects must ECHO the character's emotion, not just be a bac
                         {/* 360°インタラクティブビューアー */}
                         <Panorama360Viewer imageSrc={bg360Image} height={120} />
                         <p className="text-[9px] text-slate-600 text-center">ドラッグで回転 / ホイールでズーム</p>
+
+                        {/* [v3.53 Phase2] カメラワーク＋クロップ画像プレビュー */}
+                        {bg360CameraWork && bg360CroppedPanels && bg360CroppedPanels.length === 4 && (
+                          <div className="mt-2 border-t border-cyan-500/20 pt-3">
+                            <div className="text-[10px] font-bold text-amber-300 mb-2 flex items-center gap-1">
+                              🎬 AI Camera Work — コマ別方角プレビュー
+                            </div>
+                            <div className="grid grid-cols-4 gap-1.5">
+                              {bg360CameraWork.panels.map((panel, idx) => {
+                                const dirs = ['北(正面)', '北東', '東(右)', '南東', '南(背面)', '南西', '西(左)', '北西'];
+                                const dirLabel = dirs[Math.round(((panel.yaw % 360 + 360) % 360) / 45) % 8];
+                                return (
+                                  <div key={idx} className="relative">
+                                    <img
+                                      src={bg360CroppedPanels[idx]}
+                                      alt={`Panel ${panel.panel} - ${dirLabel}`}
+                                      className="w-full aspect-[4/3] object-cover rounded-md border border-cyan-500/30 shadow-lg"
+                                    />
+                                    <div className="absolute bottom-0 left-0 right-0 bg-black/70 text-[8px] text-cyan-200 px-1 py-0.5 rounded-b-md text-center leading-tight">
+                                      <span className="font-bold">コマ{panel.panel}</span> {dirLabel}<br />
+                                      <span className="text-slate-400">{panel.yaw}° / FOV{panel.fov}°</span>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                            <p className="text-[8px] text-slate-600 text-center mt-1">各コマで使用される背景の方角</p>
+                          </div>
+                        )}
                       </div>
                     )}
                     <button
