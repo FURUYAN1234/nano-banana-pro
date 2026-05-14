@@ -142,8 +142,8 @@ To meet professional compliance and provenance requirements, the system features
 
 ### 🌐 Zero-Click 360° Background Detection (v3.48+) / ゼロクリック360度パノラマ背景連携
 
-By dragging and dropping a 360-degree equirectangular image (2:1 ratio) alongside your character sheets, the system automatically detects it as a 360° background. The imported background is analyzed by the AI, and its location, lighting, and spatial context are seamlessly integrated into the manga's scenario and image generation prompts.
-キャラクターシートと一緒に「360度パノラマ画像（2:1比率）」をドロップエリアに放り込むだけで、システムが自動的に背景素材として認識・読み込む「ゼロクリック360度検出」を搭載しています。読み込まれた360度背景はAIによって解析され、その場所の環境、ライティング、空間構成がシナリオおよび画像生成プロンプトにシームレスに統合されます。
+By dragging and dropping a 360-degree equirectangular image alongside your character sheets, the system automatically detects it as a 360° background. This feature strictly validates both the "2:1 aspect ratio" and the presence of embedded "360° metadata (e.g., equirectangular)", ensuring that normal wide images are never falsely detected. The imported background is analyzed by the AI, and its location, lighting, and spatial context are seamlessly integrated into the manga's scenario and image generation prompts.
+キャラクターシートと一緒に「360度パノラマ画像」をドロップエリアに放り込むだけで、システムが自動的に背景素材として認識・読み込む「ゼロクリック360度検出」を搭載しています。この機能は画像の「2:1の比率」に加え、内部に埋め込まれた「360°メタデータ（equirectangular等）」をバイナリ走査で厳密にチェックするため、通常の横長画像を誤認識することはありません。読み込まれた360度背景はAIによって解析され、その場所の環境、ライティング、空間構成がシナリオおよび画像生成プロンプトにシームレスに統合されます。
 
 * **Interactive 360° Viewer (v3.50+) / インタラクティブ360度ビューアー**: The imported 360-degree background is displayed in a dedicated spherical viewer powered by Three.js, allowing you to freely pan and zoom the environment just like a 360° video. / 取り込まれた360度パノラマ背景は、Three.jsベースの専用球体ビューアーでプレビュー表示され、360度動画のようにマウスやタッチ操作で自由に見回すことができます。
 * **Outfit Override Protocol / 衣装オーバーライド機能**: When a 360° background is applied, the AI intelligently ignores the character's default clothing if necessary, automatically changing their outfits to match the new background's context (e.g., changing into a spacesuit if the background is outer space). / 360度背景が適用された場合、AIは背景の文脈に合わせてキャラクターのデフォルト衣装を適切に無視し、自動的に環境に合わせた服装（宇宙空間なら宇宙服など）へ着替えさせる高度な調整を行います。
@@ -677,7 +677,7 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
-### v3.50-alpha
+### v3.51-alpha
   - 🔄 **360° Panorama Viewer Upgrade**: Replaced Canvas 2D viewer with a robust Three.js-based spherical viewer (identical to PanoForge) to fix freezing bugs.
   - 🎭 **Outfit Override Protocol**: Enforced strict rules requiring the AI to ignore reference character clothing in favor of scenario-specified outfits (e.g., casual wear, spacesuits) while applying 360° background lighting contexts.
 

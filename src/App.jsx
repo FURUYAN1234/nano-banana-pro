@@ -38,7 +38,7 @@ import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 import { generateImageWithOpenAI, setOpenAIApiKey, getOpenAIApiKey } from './lib/openai';
 
-const SYSTEM_VERSION = "v3.50-alpha";
+const SYSTEM_VERSION = "v3.51-alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -1090,15 +1090,41 @@ function App() {
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
 
-      // [v3.48] アスペクト比2:1チェック（360度 equirectangular判定）
+      // [v3.48] アスペクト比2:1チェック ＆ XMPメタデータ判定（360度 equirectangular判定）
       const is360 = await new Promise((resolve) => {
-        const img = new Image();
-        img.onload = () => {
-          const ratio = img.naturalWidth / img.naturalHeight;
-          resolve(Math.abs(ratio - 2.0) < 0.15); // 誤差15%許容
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const buffer = e.target.result;
+          const view = new Uint8Array(buffer);
+          let metadataFound = false;
+          // XMP等に含まれる文字列 "equirectangular" を探す (ASCII判定)
+          const searchString = "equirectangular";
+          let matchIndex = 0;
+          for (let j = 0; j < Math.min(view.length, 65536); j++) {
+            if (view[j] === searchString.charCodeAt(matchIndex)) {
+              matchIndex++;
+              if (matchIndex === searchString.length) {
+                metadataFound = true;
+                break;
+              }
+            } else {
+              matchIndex = 0;
+            }
+          }
+
+          const img = new Image();
+          img.onload = () => {
+            const ratio = img.naturalWidth / img.naturalHeight;
+            const isRatioValid = Math.abs(ratio - 2.0) < 0.15; // 誤差15%許容
+            // 比率2:1かつメタデータが存在する場合のみ360度画像として扱う
+            resolve(isRatioValid && metadataFound); 
+          };
+          img.onerror = () => resolve(false);
+          img.src = URL.createObjectURL(file);
         };
-        img.onerror = () => resolve(false);
-        img.src = URL.createObjectURL(file);
+        // 最初の64KBだけ読み込んでメタデータ判定
+        const slice = file.slice(0, 65536);
+        reader.readAsArrayBuffer(slice);
       });
 
       const reader = new FileReader();
@@ -3984,10 +4010,11 @@ The environment and effects must ECHO the character's emotion, not just be a bac
                       onChange={(e) => processFiles(e.target.files)}
                     />
                     <p className="text-xs font-bold text-slate-400">
-                      キャラクターシートをドロップ <span className="text-blue-400">（複数のキャラクターシートはまとめてアップロード。360°背景がある場合は同時にドロップしてください）</span>
+                      キャラクターシートをドロップ <span className="text-blue-400">（複数シートはまとめてアップロード。360°背景がある場合は同時にドロップしてください）</span>
                     </p>
                     <p className="text-[10px] opacity-60 mt-1">
-                      ※名前・性格・設定が明記されているシートを推奨
+                      ※名前・性格・設定が明記されているシートを推奨。
+                      <br/>※360°背景の自動認識には「比率2:1」かつ「内部に360°メタデータ(equirectangular等)を持つ画像」である必要があります。
                     </p>
                     <div className="mt-3 flex flex-col items-center gap-1 group/preview">
                       <span className="text-[9px] uppercase tracking-widest opacity-40 group-hover/preview:text-blue-400 transition-colors">推奨見本 (例)</span>
