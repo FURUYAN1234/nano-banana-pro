@@ -140,6 +140,14 @@ To meet professional compliance and provenance requirements, the system features
 * **Plagiarism Defense / パクリ・トレース疑惑への防衛**: By presenting this JSON, creators can definitively prove *what* prompt and settings were used to generate the artwork, proving that no direct image-to-image copying or banned content was requested.
   このJSONを提示することで、「どのような指示と設定でこの画像を出力したか」を客観的に証明でき、既存作品のトレースやパクリ指示を行っていないことの強力な証明（証跡）となります。
 
+### 🌐 Zero-Click 360° Background Detection (v3.48+) / ゼロクリック360度パノラマ背景連携
+
+By dragging and dropping a 360-degree equirectangular image (2:1 ratio) alongside your character sheets, the system automatically detects it as a 360° background. The imported background is analyzed by the AI, and its location, lighting, and spatial context are seamlessly integrated into the manga's scenario and image generation prompts.
+キャラクターシートと一緒に「360度パノラマ画像（2:1比率）」をドロップエリアに放り込むだけで、システムが自動的に背景素材として認識・読み込む「ゼロクリック360度検出」を搭載しています。読み込まれた360度背景はAIによって解析され、その場所の環境、ライティング、空間構成がシナリオおよび画像生成プロンプトにシームレスに統合されます。
+
+* **Interactive 360° Viewer (v3.50+) / インタラクティブ360度ビューアー**: The imported 360-degree background is displayed in a dedicated spherical viewer powered by Three.js, allowing you to freely pan and zoom the environment just like a 360° video. / 取り込まれた360度パノラマ背景は、Three.jsベースの専用球体ビューアーでプレビュー表示され、360度動画のようにマウスやタッチ操作で自由に見回すことができます。
+* **Outfit Override Protocol / 衣装オーバーライド機能**: When a 360° background is applied, the AI intelligently ignores the character's default clothing if necessary, automatically changing their outfits to match the new background's context (e.g., changing into a spacesuit if the background is outer space). / 360度背景が適用された場合、AIは背景の文脈に合わせてキャラクターのデフォルト衣装を適切に無視し、自動的に環境に合わせた服装（宇宙空間なら宇宙服など）へ着替えさせる高度な調整を行います。
+
 ---
 
 ## 🔍 Deep Analysis (技術詳解)
