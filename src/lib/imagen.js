@@ -15,8 +15,9 @@ const MODELS_TO_TRY = [
  * Returns the base64 image data.
  * @param {string} prompt プロンプト
  * @param {function} onStatusUpdate UI更新用コールバック(文言)
+ * @param {Array<string>} referenceImages [v3.53 Phase3] 参照画像のbase64配列（data:プレフィックス付きまたはrawBase64）。Geminiモデル使用時にマルチモーダル入力として添付。
  */
-export const generateImageWithImagen = async (prompt, onStatusUpdate) => {
+export const generateImageWithImagen = async (prompt, onStatusUpdate, referenceImages = []) => {
     const currentApiKey = getApiKey();
     if (!currentApiKey) throw new Error("API Key is not set.");
 
@@ -40,6 +41,19 @@ export const generateImageWithImagen = async (prompt, onStatusUpdate) => {
                 const modalities = modelId.includes("2.5-flash-image")
                     ? ["TEXT", "IMAGE"]
                     : ["IMAGE"];
+
+                // [v3.53 Phase3] 参照画像パーツを構築（360°クロップ画像等）
+                const imageParts = referenceImages.map(img => {
+                    // data:image/png;base64,XXXX 形式から rawBase64 を抽出
+                    const rawBase64 = img.includes(',') ? img.split(',')[1] : img;
+                    const mimeMatch = img.match(/^data:(image\/[a-zA-Z+]+);base64,/);
+                    const mimeType = mimeMatch ? mimeMatch[1] : 'image/png';
+                    return { inlineData: { mimeType, data: rawBase64 } };
+                });
+                if (imageParts.length > 0 && onStatusUpdate) {
+                    onStatusUpdate(`[REF] ${imageParts.length}枚の参照画像を添付してマルチモーダル生成を実行`);
+                }
+
                 response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${currentApiKey}`, {
                     method: "POST",
                     headers: {
@@ -48,7 +62,7 @@ export const generateImageWithImagen = async (prompt, onStatusUpdate) => {
                     body: JSON.stringify({
                         contents: [{
                             role: "user",
-                            parts: [{ text: prompt }]
+                            parts: [{ text: prompt }, ...imageParts]
                         }],
                         generationConfig: {
                             responseModalities: modalities

@@ -38,7 +38,7 @@ import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 import { generateImageWithOpenAI, setOpenAIApiKey, getOpenAIApiKey } from './lib/openai';
 
-const SYSTEM_VERSION = "v3.53-alpha";
+const SYSTEM_VERSION = "v3.54-alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -3094,13 +3094,31 @@ ART STYLE:
 - Backgrounds should have slightly lower saturation and softer focus to make characters pop.
 - ${styleCore}
 - Setting: ${safeLocation}
-${bg360Image && bg360Analysis && bg360Enabled ? `
+${bg360Image && bg360Analysis && bg360Enabled ? (
+  bg360CroppedPanels && bg360CroppedPanels.length === 4 && !enableChatGPTMode
+  ? `
+BACKGROUND REFERENCE IMAGES (Per-Panel Cropped Views):
+4 background reference images are attached after the text prompt. These are NOT character sheets.
+- Image 1 → Background for Panel 1
+- Image 2 → Background for Panel 2
+- Image 3 → Background for Panel 3
+- Image 4 → Background for Panel 4
+Each image is a perspective-cropped view extracted from a 360° panorama, showing the exact camera angle and scenery for that panel.
+⚠️ CRITICAL RULES:
+- Use each background image as the visual reference for its corresponding panel. Match the colors, lighting (${bg360Analysis.lighting}), architecture, and environmental details.
+- DO NOT copy any character clothing or outfits from the background images.
+- Your OUTPUT must remain A4 PORTRAIT (1:1.414 tall) with 4 vertical panels. Do NOT replicate the landscape aspect ratio of the background images.
+- Draw characters IN FRONT of these backgrounds. The characters are the foreground subjects; the background images provide the scenery behind them.
+- Match shadow directions and ambient color temperature to the background references.
+`
+  : `
 BACKGROUND REFERENCE IMAGE:
 Among ALL attached images, identify the one with a panoramic 2:1 width-to-height aspect ratio (equirectangular format). That image is the 360° BACKGROUND REFERENCE — NOT a character sheet. All other attached images are CHARACTER REFERENCE sheets.
 ⚠️ CRITICAL: This panoramic image is ONLY for background reference (colors, lighting, architecture). Do NOT imitate its 2:1 wide aspect ratio. Your OUTPUT must remain A4 PORTRAIT (1:1.414 tall) with 4 vertical panels. The panoramic image is NOT a layout template.
 ⚠️ CRITICAL: DO NOT copy any character clothing or outfits from the 360° background image. Characters MUST wear the specified outfits.
 Use the 360° background image's lighting direction (${bg360Analysis.lighting}), spatial layout, and environmental details as the consistent setting for all panels. Match shadow directions and ambient color temperature to the background reference. At least 3 of 4 panels must use this background environment.
-` : ''}
+`
+) : ''}
 
 CAMERA & PERSPECTIVE RULES:
 Each of the 4 panels MUST use a DIFFERENT extreme camera angle (Bird's-eye, Worm's-eye, Dutch angle, Telephoto, etc.). No two panels share the same angle. Eye-level shots are FORBIDDEN.
@@ -3176,14 +3194,31 @@ GUTTERS: THICK white gap (3% canvas height, 40-45px) between panels. Panels MUST
 Style: ${styleCore}.
 (Dramatic anime cinematic lighting, high-budget VFX, NO excessive speedlines).
 Setting: ${safeLocation}.
-${bg360Image && bg360Analysis && bg360Enabled ? `
+${bg360Image && bg360Analysis && bg360Enabled ? (
+  bg360CroppedPanels && bg360CroppedPanels.length === 4
+  ? `
+BACKGROUND REFERENCE IMAGES (Per-Panel Cropped Views):
+4 background reference images are attached after the text prompt. These are NOT character sheets.
+- Image 1 → Background for Panel 1
+- Image 2 → Background for Panel 2
+- Image 3 → Background for Panel 3
+- Image 4 → Background for Panel 4
+Each image is a perspective-cropped view from a 360° panorama showing the exact scenery for that panel.
+⚠️ RULES:
+- Use each background image as the visual reference for its corresponding panel's scenery. Match colors, lighting (${bg360Analysis.lighting}), objects (${bg360Analysis.objects || 'various'}), and mood (${bg360Analysis.mood || 'contextual'}).
+- DO NOT copy any character clothing or outfits from the background images.
+- Draw characters IN FRONT of these backgrounds.
+- Match shadow directions and ambient color temperature to the references.
+`
+  : `
 BACKGROUND REFERENCE IMAGE:
 Among ALL attached images, identify the one with a panoramic 2:1 width-to-height aspect ratio (equirectangular format). That image is the 360° BACKGROUND REFERENCE — NOT a character sheet. All other attached images are CHARACTER REFERENCE sheets.
 ⚠️ CRITICAL: The panoramic image is ONLY for background reference. DO NOT copy any character clothing or outfits from the 360° background image.
 Use the 360° background's lighting direction (${bg360Analysis.lighting}), spatial layout, objects (${bg360Analysis.objects || 'various'}), and mood (${bg360Analysis.mood || 'contextual'}) as the consistent setting for all panels.
 Match shadow directions and ambient color temperature to the 360° background reference.
 At least 3 of 4 panels MUST use this background environment. 1 panel may deviate for flashback/imagination scenes.
-` : ''}
+`
+) : ''}
 
 VISUAL REPRODUCTION:
 Strictly reproduce reference image designs:
@@ -3419,7 +3454,14 @@ Do NOT describe the image in text. Do NOT write a prompt. DRAW the image directl
         base64Img = res.base64Img;
         generatedModelId = res.usedModel;
       } else {
-        const res = await generateImageWithImagen(currentPrompt, statCallback);
+        // [v3.53 Phase3] 360°クロップ済み背景画像がある場合、参照画像として添付
+        const refImages = (bg360CroppedPanels && bg360Enabled && bg360CroppedPanels.length === 4)
+          ? bg360CroppedPanels
+          : [];
+        if (refImages.length > 0) {
+          statCallback(`[REF] 360°背景クロップ画像 ${refImages.length}枚を参照画像として添付`);
+        }
+        const res = await generateImageWithImagen(currentPrompt, statCallback, refImages);
         base64Img = res.base64Img;
         generatedModelId = res.usedModel;
       }
@@ -4958,7 +5000,7 @@ The environment and effects must ECHO the character's emotion, not just be a bac
                             <div className="text-[10px] font-bold text-amber-300 mb-2 flex items-center gap-1">
                               🎬 AI Camera Work — コマ別方角プレビュー
                             </div>
-                            <div className="grid grid-cols-4 gap-1.5">
+                            <div className="grid grid-cols-4 gap-2">
                               {bg360CameraWork.panels.map((panel, idx) => {
                                 const dirs = ['北(正面)', '北東', '東(右)', '南東', '南(背面)', '南西', '西(左)', '北西'];
                                 const dirLabel = dirs[Math.round(((panel.yaw % 360 + 360) % 360) / 45) % 8];
@@ -4969,15 +5011,14 @@ The environment and effects must ECHO the character's emotion, not just be a bac
                                       alt={`Panel ${panel.panel} - ${dirLabel}`}
                                       className="w-full aspect-[4/3] object-cover rounded-md border border-cyan-500/30 shadow-lg"
                                     />
-                                    <div className="absolute bottom-0 left-0 right-0 bg-black/70 text-[8px] text-cyan-200 px-1 py-0.5 rounded-b-md text-center leading-tight">
-                                      <span className="font-bold">コマ{panel.panel}</span> {dirLabel}<br />
-                                      <span className="text-slate-400">{panel.yaw}° / FOV{panel.fov}°</span>
+                                    <div className="absolute bottom-0 left-0 right-0 bg-black/80 text-[7px] text-cyan-200 px-1 py-0.5 rounded-b-md text-center truncate">
+                                      <span className="font-bold">コマ{panel.panel}</span> {dirLabel} <span className="text-slate-400">FOV{panel.fov}°</span>
                                     </div>
                                   </div>
                                 );
                               })}
                             </div>
-                            <p className="text-[8px] text-slate-600 text-center mt-1">各コマで使用される背景の方角</p>
+                            <p className="text-[8px] text-slate-600 text-center mt-2">各コマで使用される背景の方角</p>
                           </div>
                         )}
                       </div>

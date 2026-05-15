@@ -695,8 +695,13 @@ Developed by **FURU**
 ### v3.48-alpha (2026-05-14)
 - **[Feature]** キャラクターシートと一緒に360度画像（2:1比率）をドロップするだけで自動判別し、背景として読み込む「ゼロクリック360度検出」を実装。不要な折りたたみパネルを削除し、UXを大幅に改善。 / Implemented "Zero-Click 360 Detection": Just drop a 360-degree image (2:1 ratio) alongside character sheets to automatically detect and load it as a background. Removed unnecessary collapsible panels, significantly improving UX.
 
+### v3.54-alpha (2026-05-15)
+- **[Feature]** 360°背景統合パイプライン（Phase 3）の完了と安定化。Geminiモードで4枚のクロップ画像をマルチモーダル参照として注入し、コマ別の方角に合わせた精密な背景描画を実現。 / Completed 360° background integration pipeline. Injected 4 cropped perspective images as multimodal references in Gemini mode for highly accurate per-panel scenery generation.
+- **[Fix]** カメラワーク確認UIにおいて、テキスト（「各コマで使用される背景の方角」）と画像オーバーレイが重なって表示されるレイアウト崩れを修正。 / Fixed UI layout issue where text and image overlays overlapped in the camera work preview panel.
+
 ### v3.47-alpha (2026-05-13)
 - **[Enhancement]** ドキュメンタリーモード用のコンテンツサニタイザーをv3.0にアップデート。核兵器や大惨事などの「即死級トリガー」を完全な意味置換（例：「核兵器」→「禁断の兵器」）で回避しつつ、犯罪・暴力用語は「●」伏せ字（Tier 2）、英語キーワード等は完全置換（Tier 3）とする3層ハイブリッド設計を実装し、ニュース本文の安全な漫画化率を大幅に向上。 / Upgraded Content Sanitizer to v3.0 for Documentary Mode. Implemented a 3-tier hybrid design that uses full semantic replacement for critical triggers (WMDs, etc.) to evade strict AI filters, while retaining readable "●"-censoring for secondary sensitive terms (crime/violence) to preserve comedic and narrative fidelity.
+
 
 ### v3.46-alpha (2026-05-13)
 - **[Feature]** プロンプト生成時に、生成設定・シナリオ・プロンプト全文をJSON形式でダウンロードできる「監査用メタデータ保存」機能を追加。業務利用時の来歴証明およびパクリ疑惑への防衛証跡として活用可能。 / Added "Audit Trail Metadata" download feature to export the full scenario, settings, and prompt as a JSON file, serving as a provenance record and defense against plagiarism accusations for professional use.
