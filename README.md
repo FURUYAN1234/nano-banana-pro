@@ -672,6 +672,11 @@ A tool that generates seamless 360-degree spatial backgrounds to provide backgro
 - [Explanation / 解説](https://note.com/happy_duck780/n/nb53b121fef88)
 - [Demo / デモ](https://furuyan1234.github.io/panoforge/)
 - [Code / コード](https://github.com/FURUYAN1234/panoforge)
+
+#### 6. AI Voice Comic Maker
+A tool to automatically convert static 4-koma manga into fully voiced animated videos. / 静止画の4コマ漫画をフルボイスの動画に自動変換するツールです。
+- [Explanation / 解説](https://note.com/happy_duck780/n/ndc6533c1512f)
+- [Code / コード](https://github.com/FURUYAN1234/ai-voice-comic-maker)
 ---
 
 Developed by **FURU**
