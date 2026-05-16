@@ -31,6 +31,14 @@ This project aims to intentionally exclude humans from the creative process, all
 <https://www.youtube.com/watch?v=FmSQ267vrZg>
 *(Click to watch / 動画を再生)*
 
+### 🎙️ AI Voice Comic Maker Integration / フルボイス動画化アプリとの連携
+
+This system's output can be seamlessly integrated with **[AI Voice Comic Maker](https://github.com/FURUYAN1234/ai-voice-comic-maker)**. 
+By importing the 4-koma manga generated here into the AI Voice Comic Maker, it automatically adds dynamic camera panning, BGM, and fully-voiced character dialogue (via VOICEVOX), instantly converting your static manga into highly immersive vertical short videos for TikTok or YouTube Shorts.
+
+本システムで生成した「Super FURUフォーマット」の4コマ漫画画像は、姉妹アプリである **[AI Voice Comic Maker](https://github.com/FURUYAN1234/ai-voice-comic-maker)** とシームレスに連携可能です。
+生成された画像をAI Voice Comic Makerに読み込ませるだけで、AIが画像を再解析し、ダイナミックなカメラワーク、感情に連動したBGM、そしてフルボイス（VOICEVOX）のセリフを自動付与します。これにより、静止画のマンガがワンクリックでTikTokやYouTube Shorts向けの没入感あふれる縦型ショート動画へと変換されます。
+
 ---
 
 ## 📰 Media & Community / メディア掲載・コミュニティ
