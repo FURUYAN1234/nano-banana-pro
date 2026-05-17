@@ -40,7 +40,7 @@ import { generateImageWithImagen } from './lib/imagen';
 import { generateImageWithOpenAI, setOpenAIApiKey, getOpenAIApiKey } from './lib/openai';
 import { callAI, setActiveEngine, getActiveEngine, getEngineDisplayName } from './lib/ai-provider';
 
-const SYSTEM_VERSION = "v3.59-alpha";
+const SYSTEM_VERSION = "v3.60-alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -5359,27 +5359,7 @@ The environment and effects must ECHO the character's emotion, not just be a bac
                       ※内容を修正したい場合は、上の「シナリオ」を直接書き換えてから、再度 <span className="text-orange-400 font-bold">「最終プロンプトを構築する」</span> を押してください。
                     </div>
 
-                    {/* [v2.87] ChatGPT Images 2.0 API Checkbox — Dual Engine化により不要（OpenAI: 自動ON / Gemini: 不要） */}
-                    {false && (
-                    <label className="flex items-center gap-3 px-3 py-3 mt-4 bg-slate-800/50 border border-white/10 rounded-lg cursor-pointer hover:bg-slate-700/50 transition-colors">
-                      <input
-                        type="checkbox"
-                        checked={enableOpenAIApi}
-                        onChange={(e) => handleToggleOpenAIApi(e.target.checked)}
-                        className="w-5 h-5 accent-blue-500 cursor-pointer"
-                      />
-                      <div className="flex flex-col">
-                        <span className="text-sm font-bold text-blue-400">
-                          🚀 OpenAI API (ChatGPT Images 2.0) で直接画像生成する
-                        </span>
-                        <span className="text-[11px] text-slate-400 mt-1 leading-relaxed">
-                          ONにするとOpenAI APIキーを使い、アプリ内で直接gpt-image-2による画像生成を実行します。生成に2〜4分程度かかる場合があります。<br/>
-                          手動で生成したい場合は「プロンプトをコピー」を押し、キャラクター設定と共にブラウザ版ChatGPTへ貼り付けてください。<br/>
-                          <span className="text-slate-500 text-[10px]">※チェックを入れ直すことで別のAPIキーに変更可能です。</span>
-                        </span>
-                      </div>
-                    </label>
-                    )}
+
                     <button
                       onClick={() => { console.log("Regenerating..."); regenerateImage(); }}
                       disabled={!finalPrompt || isGeneratingImage}
@@ -5650,7 +5630,7 @@ No explanations. No partial results.`;
                       </p>
                       <p className="text-xs text-blue-200/90 mt-4 font-bold text-center leading-relaxed">
                         高品質な画像を生成しています。<br />
-                        <span className="text-orange-400">※最大1〜2分程度かかる場合があります。<br/>このままお待ちください。</span>
+                        <span className="text-orange-400">※最大2〜4分程度かかる場合があります。<br/>このままお待ちください。</span>
                       </p>
                     </div>
                   </div>

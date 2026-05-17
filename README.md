@@ -749,6 +749,11 @@ Developed by **FURU**
 ### v3.46-alpha (2026-05-13)
 - **[Feature]** プロンプト生成時に、生成設定・シナリオ・プロンプト全文をJSON形式でダウンロードできる「監査用メタデータ保存」機能を追加。業務利用時の来歴証明およびパクリ疑惑への防衛証跡として活用可能。 / Added "Audit Trail Metadata" download feature to export the full scenario, settings, and prompt as a JSON file, serving as a provenance record and defense against plagiarism accusations for professional use.
 
+### v3.60-alpha
+- **UI/UX Refinement**:
+  - 画像生成待機中オーバーレイの表示テキストを修正（ChatGPT Images 2.0の実測時間に合わせ、1〜2分から2〜4分に表記ゆれを統一）。
+  - デュアルエンジン化により不要となったAPIトグルチェックボックスの不要コードをパージ。
+
 ### v3.59-alpha (2026-05-18)
 - **[Docs]** READMEの「Dual-API Architecture」を刷新し、起動時からエンジンが完全に分岐する最新のアーキテクチャ設計を反映。正式名称「Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System」として各所を更新。 / Completely rewrote the Dual-API Architecture documentation to reflect the new completely bifurcated engine design from startup. Updated project title across the codebase.
 
