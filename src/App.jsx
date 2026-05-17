@@ -38,7 +38,7 @@ import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 import { generateImageWithOpenAI, setOpenAIApiKey, getOpenAIApiKey } from './lib/openai';
 
-const SYSTEM_VERSION = "v3.55-alpha";
+const SYSTEM_VERSION = "v3.56-alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -611,6 +611,9 @@ const ApiKeyModal = ({ isOpen, onSave, onClose, provider = "google" }) => {
           <div className="flex-1 w-full md:w-auto">
             <div className="flex gap-2">
               <input
+                id={isGoogle ? "gemini-api-key-input" : "openai-api-key-input"}
+                name={isGoogle ? "gemini-api-key-input" : "openai-api-key-input"}
+                autoComplete="new-password"
                 type="password"
                 value={key}
                 onChange={(e) => setKey(e.target.value)}

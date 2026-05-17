@@ -693,6 +693,9 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v3.56-alpha (2026-05-17)
+  - 🛠️ **API Key Autofill Fix**: Resolved an issue where browser password managers (autofill) confused the OpenAI API key input field with the Gemini API key field by explicitly setting unique `id`, `name`, and `autoComplete="new-password"` attributes for each provider.
+
 ### v3.55-alpha (2026-05-17)
   - 🚀 **ChatGPT Mode Prompt Optimization**: Reduced Gemini-specific weight tags (`:1.5` etc.) from ChatGPT mode prompts, trimming over 2,000 characters to prevent copy-paste limit errors.
   - 🎥 **Natural Language Camera Directives**: Replaced abstract lens distortion tags with natural language cinematic descriptions (e.g., "Worm's-eye view looking up from ground level") for ChatGPT mode, significantly improving camera angle diversity and instruction adherence.
