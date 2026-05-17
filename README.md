@@ -123,11 +123,14 @@ A dedicated formatting protocol to optimize prompts for ChatGPT's ChatGPT Images
 ChatGPT (ChatGPT Images 2.0) での生成に最適化された専用プロンプトモードを搭載。A4縦長のキャンバス指定や、日本語の縦書き、右から左への視線誘導など、ChatGPT特有の制限を突破するためのフォーマットを自動付与します。さらにGPT-image-2特有のノイズ問題に対応するAnti-Noiseプロトコル（安全レンダリングキーワード・禁止ワード組み合わせ・光演出の代替表現）を搭載し、クリーンなアニメ品質の出力を保証します。
 
 > **🧪 OpenAI API Direct Execution (Experimental) / OpenAI API直接実行（テスト機能）**
+> A test feature to call ChatGPT Images 2.0 directly from the app is implemented. The API key is securely held only in the browser's memory (RAM) and is never persistently stored in `localStorage` or elsewhere (it volatilizes safely upon reload).
 > アプリ内から直接ChatGPT Images 2.0を呼び出せるテスト機能を実装しています。APIキーはブラウザのメモリ上（RAM）にのみ保持され、`localStorage`等への永続保存は行わないセキュア設計です（リロードで安全に揮発します）。
 > 
-> **【なぜ中継サーバー（バックエンド）を導入して完全自動化しないのか？】**
-> 現在のOpenAI APIは、セキュリティ仕様（CORS制限）によりブラウザからの直接通信を弾くため、APIを直接叩くには専用の中継サーバーを立てるのが一般的です。しかし、Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System は「サーバー保守費用が完全無料（ゼロ・メンテナンス）であり、APIキーがユーザーのブラウザから外部のサーバーへ一切送信されない（究極のプライバシー）」**という完全分散型の静的アプリ（GitHub Pages完結）であることを最大の設計理念としています。
+> **【Why Not Fully Automate with a Backend Proxy? / なぜ中継サーバー（バックエンド）を導入して完全自動化しないのか？】**
+> Current OpenAI API security policies (CORS restrictions) block direct communication from browsers. Normally, a dedicated backend proxy server is required to bypass this. However, the core design philosophy of the "Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System" is to be a fully decentralized, static application (100% GitHub Pages) boasting **"Zero Maintenance (No server costs)" and "Ultimate Privacy (API keys are never transmitted from the user's browser to any external servers)"**.
+> 現在のOpenAI APIは、セキュリティ仕様（CORS制限）によりブラウザからの直接通信を弾くため、APIを直接叩くには専用の中継サーバーを立てるのが一般的です。しかし、Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System は**「サーバー保守費用が完全無料（ゼロ・メンテナンス）であり、APIキーがユーザーのブラウザから外部のサーバーへ一切送信されない（究極のプライバシー）」**という完全分散型の静的アプリ（GitHub Pages完結）であることを最大の設計理念としています。
 > 
+> Introducing a middleman server would destroy these "beautiful and secure premises". Therefore, despite the minor inconvenience, we define the **"Manual workflow of generating ultra-compressed prompts and copy-pasting them into the official ChatGPT interface"** as the ultimate architecture—the most logical choice across security, cost, and maintainability.
 > もし中継サーバーを挟むと、これらの「美しく安全な前提」が全て崩壊してしまいます。そのため、多少の手間がかかっても**「超圧縮したプロンプトを生成し、本家ChatGPTの画面にコピペする手動運用」**こそが、セキュリティ・コスト・保守性の全方位において最も理にかなった最強のアーキテクチャであると定義しています。
 
 ### 🎨 Context-Aware Auto-Selection / 文脈認識型おまかせ自動選定
