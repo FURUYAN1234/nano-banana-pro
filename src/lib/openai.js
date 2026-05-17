@@ -17,7 +17,7 @@ export const generateImageWithOpenAI = async (prompt, statCallback) => {
   }
 
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 180000); // 180s timeout (DALL-E 3 can be slow)
+  const timeoutId = setTimeout(() => controller.abort(), 240000); // 240s timeout（gpt-image-2は2分以上かかる実績あり）
 
   let response;
   try {
@@ -33,7 +33,8 @@ export const generateImageWithOpenAI = async (prompt, statCallback) => {
         n: 1,
         size: "1024x1792", // OpenAI API supports 1024x1792 for vertical aspect ratio
         quality: "high", // [v3.55] 最高品質モード: テキスト描画精度・ディテールが大幅向上（EvoLinkAI推奨設定）
-        response_format: "b64_json", // [v3.55] 明示的にbase64応答を要求
+        // ※ gpt-image-2 は response_format ではなく output_format を使用する別仕様。
+        //    デフォルトで b64_json が返るため明示指定は不要。
       }),
       signal: controller.signal
     });

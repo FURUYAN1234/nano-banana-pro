@@ -38,7 +38,7 @@ import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 import { generateImageWithOpenAI, setOpenAIApiKey, getOpenAIApiKey } from './lib/openai';
 
-const SYSTEM_VERSION = "v3.56-alpha";
+const SYSTEM_VERSION = "v3.57-alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -566,7 +566,6 @@ const ApiKeyModal = ({ isOpen, onSave, onClose, provider = "google" }) => {
     }
     setError("");
     onSave(key);
-    setKey(""); // Reset after save
   };
 
   const isGoogle = provider === "google";
@@ -610,10 +609,11 @@ const ApiKeyModal = ({ isOpen, onSave, onClose, provider = "google" }) => {
           {/* 中央: 入力フィールド */}
           <div className="flex-1 w-full md:w-auto">
             <div className="flex gap-2">
+              <form onSubmit={(e) => { e.preventDefault(); handleSave(); }} action={isGoogle ? '/gemini-key' : '/openai-key'} method="dialog">
               <input
                 id={isGoogle ? "gemini-api-key-input" : "openai-api-key-input"}
-                name={isGoogle ? "gemini-api-key-input" : "openai-api-key-input"}
-                autoComplete="new-password"
+                name={isGoogle ? "gemini-api-key" : "openai-api-key"}
+                autoComplete={isGoogle ? "section-gemini current-password" : "section-openai current-password"}
                 type="password"
                 value={key}
                 onChange={(e) => setKey(e.target.value)}
@@ -628,6 +628,7 @@ const ApiKeyModal = ({ isOpen, onSave, onClose, provider = "google" }) => {
               >
                 接続
               </button>
+              </form>
             </div>
             {error && <p className="text-red-400 text-[10px] mt-1 pl-1">{error}</p>}
           </div>
@@ -3500,7 +3501,8 @@ Do NOT describe the image in text. Do NOT write a prompt. DRAW the image directl
 
       let base64Img, generatedModelId;
       if (enableOpenAIApi) {
-        // [Test] Call OpenAI directly instead of Imagen
+        // [v3.56] OpenAI API直接生成
+        statCallback("[INFO] ⏳ gpt-image-2 の画像生成には通常2〜4分かかります。しばらくお待ちください...");
         const res = await generateImageWithOpenAI(currentPrompt, statCallback);
         base64Img = res.base64Img;
         generatedModelId = res.usedModel;
@@ -3522,7 +3524,9 @@ Do NOT describe the image in text. Do NOT write a prompt. DRAW the image directl
       setGeneratedImage(finalImageStr);
       setGenerationHistory(prev => [{ id: Date.now(), img: finalImageStr }, ...prev]); // [v2.86] Add to history
       
-      if (generatedModelId && !generatedModelId.startsWith("gemini-3")) {
+      // [v3.56] OpenAIモデル (gpt-image-2等) は正規モデルとして扱い、フォールバック警告を出さない
+      const isOpenAIModel = generatedModelId && generatedModelId.startsWith("gpt-");
+      if (generatedModelId && !generatedModelId.startsWith("gemini-3") && !isOpenAIModel) {
         // gemini-2.5系やimagen系はフォールバック扱い（妥協版警告を表示）
         setIsFallbackUsed(true);
         setGenLog(prev => [
@@ -3531,9 +3535,9 @@ Do NOT describe the image in text. Do NOT write a prompt. DRAW the image directl
           "[WARNING] 代わりに下位APIで妥協版を出力したため、描写が大きく崩れている可能性があります。",
           "[GUIDE] ★手動生成を推奨します★",
           "[GUIDE] 1. 「プロンプトをコピー」ボタンを押す",
-          "[GUIDE] 2. Gemini(Web版)を開く: https://gemini.google.com/app",
+          `[GUIDE] 2. ${enableOpenAIApi ? 'ChatGPT' : 'Gemini'}(Web版)を開く: ${enableOpenAIApi ? 'https://chatgpt.com/' : 'https://gemini.google.com/app'}`,
           "[GUIDE] 3. 「元となるキャラクターシート画像」を一緒に添付する",
-          "[GUIDE] 4. 貼り付けて「思考モード」で送信する",
+          `[GUIDE] 4. 貼り付けて${enableOpenAIApi ? '送信する' : '「思考モード」で送信する'}`,
           "[COMPLETE] Image successfully generated (with warnings)."
         ]);
       } else {
@@ -3550,7 +3554,18 @@ Do NOT describe the image in text. Do NOT write a prompt. DRAW the image directl
       const errMsg = error.message || "";
       let guideLines = [];
 
-      if (errMsg.includes("sensitive") || errMsg.includes("Responsible AI") || errMsg.includes("400")) {
+      if (errMsg.includes("Unknown parameter") || errMsg.includes("invalid") || errMsg.includes("Invalid")) {
+        // [v3.56] APIリクエストのパラメータ不正（コンテンツポリシーとは無関係）
+        guideLines = [
+          `[ERROR GUIDE] ⚙️ APIリクエストのパラメータが不正です（${enableOpenAIApi ? 'OpenAI' : 'Google'}側の仕様変更の可能性）。`,
+          "[ERROR GUIDE] 【原因】APIの仕様が更新され、送信パラメータが無効になっている可能性があります。",
+          "[ERROR GUIDE] 【対処法】開発者にこのエラーメッセージを報告してください。または以下の手動手段をご利用ください。",
+          "[ERROR GUIDE] 1. 「プロンプトをコピー」ボタンを押す",
+          `[ERROR GUIDE] 2. ${enableOpenAIApi ? 'ChatGPT' : 'Gemini'} (Web版) を開く: ${enableOpenAIApi ? 'https://chatgpt.com/' : 'https://gemini.google.com/app'}`,
+          `[ERROR GUIDE] 3. 「元となるキャラクターシート画像」を一緒に添付する（※キャラ再現に必須）`,
+          `[ERROR GUIDE] 4. 貼り付けて送信する`
+        ];
+      } else if (errMsg.includes("sensitive") || errMsg.includes("Responsible AI") || (errMsg.includes("400") && !errMsg.includes("Unknown parameter"))) {
         // [v2.35] 救済パネルにエラーメッセージを自動入力して展開
         setPolicyErrorMsg(errMsg);
         setIsPolicyPanelOpen(true);
@@ -5180,14 +5195,14 @@ The environment and effects must ECHO the character's emotion, not just be a bac
                         onChange={(e) => handleToggleOpenAIApi(e.target.checked)}
                         className="w-5 h-5 accent-blue-500 cursor-pointer"
                       />
-                      <div className="flex flex-col opacity-60">
-                        <span className="text-sm font-bold text-slate-600">
-                          🧪 テスト機能：OpenAI API (ChatGPT Images 2.0) で直接画像生成する
+                      <div className="flex flex-col">
+                        <span className="text-sm font-bold text-blue-400">
+                          🚀 OpenAI API (ChatGPT Images 2.0) で直接画像生成する
                         </span>
-                        <span className="text-[11px] text-slate-600 mt-1 leading-relaxed">
-                          【⚠現在API制限により実質非対応】OpenAIの画像APIは現段階では、開発アプリ経由の画像生成が許可されていない為、エラーになります。<br/>
-                          「プロンプトをコピー」を押し、キャラクター設定と共にブラウザ版ChatGPTへ手動で貼り付けてご使用ください。<br/>
-                          <span className="text-slate-700 text-[10px]">※チェックを入れ直すことで別のAPIキーに変更可能です。</span>
+                        <span className="text-[11px] text-slate-400 mt-1 leading-relaxed">
+                          ONにするとOpenAI APIキーを使い、アプリ内で直接gpt-image-2による画像生成を実行します。生成に2〜4分程度かかる場合があります。<br/>
+                          手動で生成したい場合は「プロンプトをコピー」を押し、キャラクター設定と共にブラウザ版ChatGPTへ貼り付けてください。<br/>
+                          <span className="text-slate-500 text-[10px]">※チェックを入れ直すことで別のAPIキーに変更可能です。</span>
                         </span>
                       </div>
                     </label>
@@ -5490,7 +5505,7 @@ No explanations. No partial results.`;
                                 <p className="text-orange-300 font-bold mb-2">完璧な画質で生成するための手動手順：</p>
                                 <ol className="list-decimal list-inside text-slate-300 space-y-1 text-xs">
                                   <li>画面左側の「<span className="text-white font-bold">プロンプトをコピー</span>」ボタンを押す</li>
-                                  <li><a href="https://gemini.google.com/app" target="_blank" rel="noreferrer" className="text-blue-400 hover:underline">Gemini公式ウェブ版</a>を開く</li>
+                                  <li><a href={enableOpenAIApi ? "https://chatgpt.com/" : "https://gemini.google.com/app"} target="_blank" rel="noreferrer" className="text-blue-400 hover:underline">{enableOpenAIApi ? 'ChatGPT公式ウェブ版' : 'Gemini公式ウェブ版'}</a>を開く</li>
                                   <li>コピーした文章を貼り付けて送信する</li>
                                 </ol>
                               </div>
