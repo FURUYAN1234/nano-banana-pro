@@ -1,13 +1,13 @@
-# HANDOFF.md (v3.58-alpha)
+# HANDOFF.md (v3.59-alpha)
 
 ## Current Status
-- v3.58-alpha デプロイ中。READMEのデュアルAPI設計や上級者向けUIオプションに関するドキュメント最適化（Gemini API関連の追記）を完了。
+- v3.59-alpha デプロイ準備中。READMEの「Dual-API Architecture」を刷新し、起動時からエンジンが完全に分岐する最新アーキテクチャ設計を反映。正式名称「Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System」として各所を更新。
 
 ## Done
-- `README.md`: 「デュアルAPI設計」セクションで、描画担当として「Gemini API (Nano Banana 2)」を選択可能である旨を追記。
-- `README.md`: 「【上級者向け】Browser UI Option」セクションで、手動コピペ運用にChatGPTだけでなくGeminiブラウザ版も含まれることを明記。
-- `src/App.jsx`: UIのプロンプト出力箇所の「テスト」表記を削除し正式機能として明記。
-- `package.json`, `index.html`, `src/App.jsx`: バージョンをv3.58-alphaへ更新。
+- `README.md`: 「デュアルAPI設計」セクションを大幅改訂し、Gemini EngineとChatGPT Engineの分岐を明記。不要になったDirect Generation注記を削除。
+- `package.json`, `index.html`, `src/App.jsx`: バージョンをv3.59-alphaへ更新し、`index.html`のタイトルを正式名称に変更。
+- `scripts/pre_deploy_check.js`: `index.html`のタイトル変更に合わせて正規表現を修正。
+- 一時ファイル（temp_App_backup.jsx等）を削除。
 
 ## Remaining / Next Steps
 - デプロイの完了確認（GitHub Pages等）。

@@ -31,14 +31,16 @@ import {
   Globe,
   Edit3,
   Download,
-  ChevronDown
+  ChevronDown,
+  LogOut
 } from 'lucide-react';
 // --- Imports ---
-import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
+import { setApiKey, getApiKey } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 import { generateImageWithOpenAI, setOpenAIApiKey, getOpenAIApiKey } from './lib/openai';
+import { callAI, setActiveEngine, getActiveEngine, getEngineDisplayName } from './lib/ai-provider';
 
-const SYSTEM_VERSION = "v3.58-alpha";
+const SYSTEM_VERSION = "v3.59-alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -552,10 +554,21 @@ const StepGuide = ({ text, position = "top", visible = true }) => {
   );
 };
 
-// --- API Key Modal (Dual Support for Google & OpenAI) ---
+// --- API Key Modal (Dual Engine Support) ---
+// [v3.59] 起動時モーダル（provider="google"）は Dual Engine 対応:
+//   - sk- で始まるキー → ChatGPT Engine（全ルーチンがOpenAI API経由）
+//   - それ以外 → Gemini Engine（従来通り）
 const ApiKeyModal = ({ isOpen, onSave, onClose, provider = "google" }) => {
   const [key, setKey] = useState("");
   const [error, setError] = useState("");
+
+  // [v3.59] モーダルが開くたびに入力をリセット（前のAPIキーが残らないようにする）
+  useEffect(() => {
+    if (isOpen) {
+      setKey("");
+      setError("");
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -569,22 +582,38 @@ const ApiKeyModal = ({ isOpen, onSave, onClose, provider = "google" }) => {
   };
 
   const isGoogle = provider === "google";
-  const title = isGoogle ? "API Key が必要です" : "OpenAI API Key が必要です";
-  const placeholder = isGoogle ? "Google AI API Key を入力..." : "sk-proj-...";
-  const linkUrl = isGoogle ? "https://aistudio.google.com/app/apikey" : "https://platform.openai.com/api-keys";
-  const linkText = isGoogle ? "🔑 キーを取得" : "🔑 OpenAI キーを取得";
-  const iconBgClass = isGoogle ? "bg-blue-600" : "bg-emerald-600";
-  const borderClass = isGoogle ? "border-blue-500/30" : "border-emerald-500/30";
-  const shadowClass = isGoogle ? "shadow-blue-500/10" : "shadow-emerald-500/10";
-  const btnClass = isGoogle ? "bg-blue-600 hover:bg-blue-500" : "bg-emerald-600 hover:bg-emerald-500";
-  const linkColorClass = isGoogle ? "text-cyan-400 hover:text-cyan-300 decoration-cyan-400/30" : "text-emerald-400 hover:text-emerald-300 decoration-emerald-400/30";
-  const focusBorderClass = isGoogle ? "focus:border-blue-500" : "focus:border-emerald-500";
-  const focusShadowClass = isGoogle ? "focus:shadow-[0_0_12px_rgba(59,130,246,0.2)]" : "focus:shadow-[0_0_12px_rgba(16,185,129,0.2)]";
+  const isOpenAIProvider = provider === "openai";
+
+  // [v3.59] 起動時モーダルは統合表示
+  const isDualMode = isGoogle; // 起動時のみ Dual Engine UI
+
+  // 入力中のキーがOpenAI形式かどうかをリアルタイム判定
+  const isOpenAIKey = key.trim().startsWith("sk-");
+
+  const title = isOpenAIProvider ? "OpenAI API Key が必要です"
+    : isDualMode ? "AI Engine を選択" : "API Key が必要です";
+  const placeholder = isDualMode ? "Gemini AI Key または OpenAI Key (sk-...) を入力..."
+    : isOpenAIProvider ? "sk-proj-..." : "Google AI API Key を入力...";
+
+  // リンクURLはDual Mode時は入力内容に応じて動的に切り替え
+  const geminiLinkUrl = "https://aistudio.google.com/app/apikey";
+  const openaiLinkUrl = "https://platform.openai.com/api-keys";
+  const linkUrl = isOpenAIProvider ? openaiLinkUrl : geminiLinkUrl;
+  const linkText = isOpenAIProvider ? "🔑 OpenAI キーを取得" : "🔑 キーを取得";
+
+  // Dual Mode時のテーマカラーは入力内容で動的に変わる
+  const activeColor = isDualMode && isOpenAIKey ? 'emerald' : (isOpenAIProvider ? 'emerald' : 'blue');
+  const iconBgClass = activeColor === 'emerald' ? "bg-emerald-600" : "bg-blue-600";
+  const borderClass = activeColor === 'emerald' ? "border-emerald-500/30" : "border-blue-500/30";
+  const shadowClass = activeColor === 'emerald' ? "shadow-emerald-500/10" : "shadow-blue-500/10";
+  const btnClass = activeColor === 'emerald' ? "bg-emerald-600 hover:bg-emerald-500" : "bg-blue-600 hover:bg-blue-500";
+  const focusBorderClass = activeColor === 'emerald' ? "focus:border-emerald-500" : "focus:border-blue-500";
+  const focusShadowClass = activeColor === 'emerald' ? "focus:shadow-[0_0_12px_rgba(16,185,129,0.2)]" : "focus:shadow-[0_0_12px_rgba(59,130,246,0.2)]";
 
   return (
     <div className="fixed top-0 left-0 right-0 z-[99999] animate-in slide-in-from-top duration-300">
       <div className="max-w-5xl mx-auto px-4 md:px-10 pt-4 relative">
-        <div className={`bg-[#0f1115]/95 backdrop-blur-2xl border ${borderClass} rounded-xl shadow-2xl ${shadowClass} p-4 flex flex-col md:flex-row items-center gap-4 relative pr-10`}>
+        <div className={`bg-[#0f1115]/95 backdrop-blur-2xl border ${borderClass} rounded-xl shadow-2xl ${shadowClass} p-4 flex flex-col gap-4 relative pr-10 transition-all duration-300`}>
           {onClose && (
             <button 
               onClick={onClose}
@@ -595,53 +624,94 @@ const ApiKeyModal = ({ isOpen, onSave, onClose, provider = "google" }) => {
             </button>
           )}
 
-          {/* 左: アイコンとラベル */}
-          <div className="flex items-center gap-3 shrink-0">
-            <div className={`p-2 ${iconBgClass} rounded-lg animate-pulse`}>
-              <Zap size={18} className="text-white" />
+          {/* 上段: アイコン + ラベル + 入力 */}
+          <div className="flex flex-col md:flex-row items-center gap-4">
+            {/* 左: アイコンとラベル */}
+            <div className="flex items-center gap-3 shrink-0">
+              <div className={`p-2 ${iconBgClass} rounded-lg animate-pulse transition-colors duration-300`}>
+                <Zap size={18} className="text-white" />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-white">{title}</p>
+                <p className="text-[10px] text-slate-500">ブラウザメモリ内のみ保持・外部送信なし</p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm font-bold text-white">{title}</p>
-              <p className="text-[10px] text-slate-500">ブラウザメモリ内のみ保持・外部送信なし</p>
+
+            {/* 中央: 入力フィールド */}
+            <div className="flex-1 w-full md:w-auto">
+              <div className="flex gap-2">
+                <form onSubmit={(e) => { e.preventDefault(); handleSave(); }} action={isOpenAIKey ? '/openai-key' : '/gemini-key'} method="dialog" className="flex gap-2 flex-1" autoComplete="off">
+                <input
+                  id="dual-engine-api-key-input"
+                  name={isOpenAIKey ? "openai-api-key" : "gemini-api-key"}
+                  autoComplete="off"
+                  data-lpignore="true"
+                  data-form-type="other"
+                  type="password"
+                  value={key}
+                  onChange={(e) => setKey(e.target.value)}
+                  placeholder={placeholder}
+                  className={`flex-1 bg-black/50 text-white placeholder:text-slate-600 px-4 py-2.5 rounded-lg border border-white/10 ${focusBorderClass} outline-none font-mono text-sm tracking-wider transition-all ${focusShadowClass}`}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSave()}
+                  autoFocus
+                />
+                <button
+                  onClick={handleSave}
+                  className={`${btnClass} text-white font-bold px-6 py-2.5 rounded-lg transition-all text-sm whitespace-nowrap active:scale-95`}
+                >
+                  接続
+                </button>
+                </form>
+              </div>
+              {error && <p className="text-red-400 text-[10px] mt-1 pl-1">{error}</p>}
             </div>
           </div>
 
-          {/* 中央: 入力フィールド */}
-          <div className="flex-1 w-full md:w-auto">
-            <div className="flex gap-2">
-              <form onSubmit={(e) => { e.preventDefault(); handleSave(); }} action={isGoogle ? '/gemini-key' : '/openai-key'} method="dialog">
-              <input
-                id={isGoogle ? "gemini-api-key-input" : "openai-api-key-input"}
-                name={isGoogle ? "gemini-api-key" : "openai-api-key"}
-                autoComplete={isGoogle ? "section-gemini current-password" : "section-openai current-password"}
-                type="password"
-                value={key}
-                onChange={(e) => setKey(e.target.value)}
-                placeholder={placeholder}
-                className={`flex-1 bg-black/50 text-white placeholder:text-slate-600 px-4 py-2.5 rounded-lg border border-white/10 ${focusBorderClass} outline-none font-mono text-sm tracking-wider transition-all ${focusShadowClass}`}
-                onKeyDown={(e) => e.key === 'Enter' && handleSave()}
-                autoFocus
-              />
-              <button
-                onClick={handleSave}
-                className={`${btnClass} text-white font-bold px-6 py-2.5 rounded-lg transition-all text-sm whitespace-nowrap active:scale-95`}
+          {/* 下段: Dual Engine 説明 + キー取得リンク */}
+          {isDualMode ? (
+            <div className="flex flex-col md:flex-row items-center justify-between gap-3 border-t border-white/5 pt-3">
+              {/* エンジン自動判定インジケーター */}
+              <div className="flex items-center gap-3">
+                <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full border text-[10px] font-bold transition-all duration-300 ${
+                  isOpenAIKey 
+                    ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-400' 
+                    : key.trim() 
+                      ? 'bg-blue-500/15 border-blue-500/40 text-blue-400'
+                      : 'bg-white/5 border-white/10 text-slate-500'
+                }`}>
+                  <span className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
+                    isOpenAIKey ? 'bg-emerald-400' : key.trim() ? 'bg-blue-400' : 'bg-slate-600'
+                  }`} />
+                  {isOpenAIKey ? '🟢 ChatGPT Engine で起動' : key.trim() ? '🔵 Gemini Engine で起動' : '入力待ち...'}
+                </div>
+                {isOpenAIKey && (
+                  <span className="text-[9px] text-amber-400/70">⚠ 従量課金（OpenAI API）</span>
+                )}
+              </div>
+              {/* キー取得リンク（両方表示） */}
+              <div className="flex items-center gap-4">
+                <a href={geminiLinkUrl} target="_blank" rel="noreferrer" className="text-[11px] text-cyan-400 hover:text-cyan-300 underline decoration-cyan-400/30 whitespace-nowrap">
+                  🔵 Gemini キー取得（無料）
+                </a>
+                <span className="text-slate-600 text-[10px]">|</span>
+                <a href={openaiLinkUrl} target="_blank" rel="noreferrer" className="text-[11px] text-emerald-400 hover:text-emerald-300 underline decoration-emerald-400/30 whitespace-nowrap">
+                  🟢 OpenAI キー取得（従量課金）
+                </a>
+              </div>
+            </div>
+          ) : (
+            /* 非Dualモード（OpenAI単体モーダル）: 従来通り */
+            <div className="flex justify-end">
+              <a
+                href={linkUrl}
+                target="_blank"
+                rel="noreferrer"
+                className={`text-[11px] ${activeColor === 'emerald' ? 'text-emerald-400 hover:text-emerald-300 decoration-emerald-400/30' : 'text-cyan-400 hover:text-cyan-300 decoration-cyan-400/30'} underline whitespace-nowrap shrink-0`}
               >
-                接続
-              </button>
-              </form>
+                {linkText}
+              </a>
             </div>
-            {error && <p className="text-red-400 text-[10px] mt-1 pl-1">{error}</p>}
-          </div>
-
-          {/* 右: Get Key リンク */}
-          <a
-            href={linkUrl}
-            target="_blank"
-            rel="noreferrer"
-            className={`text-[11px] ${linkColorClass} underline whitespace-nowrap shrink-0`}
-          >
-            {linkText}
-          </a>
+          )}
         </div>
       </div>
     </div>
@@ -696,6 +766,7 @@ function App() {
   console.log("System Version Loaded:", SYSTEM_VERSION); // Debug Log
   const [apiKey, setApiKeyState] = useState("");
   const [showModal, setShowModal] = useState(false); // FIXEDCRITICAL RESTORE
+  const [selectedEngine, setSelectedEngine] = useState('gemini'); // [v3.59] Dual Engine: 'gemini' | 'openai'
   const [inputMode, setInputMode] = useState("news"); // 'news' | 'manual'
   const [manualTopic, setManualTopic] = useState("");
   const [searchTopic, setSearchTopic] = useState("");
@@ -795,6 +866,24 @@ function App() {
         tier: "Lite",
         color: "bg-amber-700 text-white",
         desc: "Imagen: レガシーモデル (2026/06廃止予定)"
+      };
+    }
+    // [v3.59] OpenAI GPT系モデル
+    if (modelId.includes("gpt-4") || modelId.includes("gpt-3")) {
+      return {
+        label: "ChatGPT",
+        tier: "Active",
+        color: "bg-emerald-600 text-white",
+        desc: `OpenAI ${modelId}: テキスト生成`
+      };
+    }
+    // [v3.59] OpenAI 画像生成モデル
+    if (modelId.includes("gpt-image") || modelId.includes("dall-e")) {
+      return {
+        label: "ChatGPT IMG",
+        tier: "Active",
+        color: "bg-emerald-500 text-white",
+        desc: `OpenAI ${modelId}: 画像生成`
       };
     }
     // Fallback
@@ -980,11 +1069,30 @@ function App() {
     if (cleanKey !== key) {
       showStatus("APIキーに含まれる不要な文字を自動削除しました。");
     }
-    setApiKey(cleanKey);
-    setApiKeyState(cleanKey);
-    setShowModal(false);
-    // [v2.48] 接続完了のフィードバック
-    showStatus("✅ API接続完了！キャラクターシートをアップロードして開始してください。");
+
+    // [v3.59] Dual Engine: APIキーのプレフィックスでエンジンを自動判定
+    if (cleanKey.startsWith("sk-")) {
+      // OpenAI APIキー → ChatGPTエンジンに切り替え
+      setOpenAIApiKey(cleanKey);
+      setActiveEngine('openai');
+      setSelectedEngine('openai');
+      setEnableOpenAIApi(true); // 画像生成もOpenAI経由に
+      setEnableChatGPTMode(true); // プロンプトもChatGPT最適化
+      // Gemini APIキーは不要だがダミーで空文字回避（UI表示用）
+      setApiKeyState('openai-engine-active');
+      setShowModal(false);
+      showStatus("✅ ChatGPT Engine 接続完了！全ステップがChatGPT APIで動作します。");
+      console.log("[Dual Engine] Switched to OpenAI/ChatGPT mode");
+    } else {
+      // Gemini APIキー → 従来のGeminiエンジン（デフォルト）
+      setApiKey(cleanKey);
+      setApiKeyState(cleanKey);
+      setActiveEngine('gemini');
+      setSelectedEngine('gemini');
+      setShowModal(false);
+      showStatus("✅ Gemini Engine 接続完了！キャラクターシートをアップロードして開始してください。");
+      console.log("[Dual Engine] Using Gemini mode (default)");
+    }
     window.scrollTo({ top: 0, behavior: 'instant' });
   };
 
@@ -1065,7 +1173,7 @@ function App() {
   "mood": "空間の雰囲気を一言で（例: 放課後の静けさ）"
 }`;
 
-      const analysisResult = await callThinkingGemini(analysisPrompt, [imagePart], null, (msg) => {
+      const analysisResult = await callAI(analysisPrompt, [imagePart], null, (msg) => {
         console.log(`[360° BG Analysis] ${msg}`);
       });
 
@@ -1245,7 +1353,7 @@ function App() {
   "objects": "特徴的なオブジェクト3つ以内（例: 木製の机、黒板、カーテン）",
   "mood": "空間の雰囲気を一言で（例: 放課後の静けさ）"
 }`;
-        const analysisResult = await callThinkingGemini(analysisPrompt, [imagePart], null, () => {});
+        const analysisResult = await callAI(analysisPrompt, [imagePart], null, () => {});
         const jsonStr = analysisResult.text.match(/\{[\s\S]*\}/)?.[0];
         if (jsonStr) {
           const analysis = JSON.parse(jsonStr);
@@ -1372,7 +1480,7 @@ function App() {
       `;
 
 
-      const result = await callThinkingGemini(prompt, imageParts, null, (msg) => {
+      const result = await callAI(prompt, imageParts, null, (msg) => {
         setAnalyzeThought(prev => prev + `\n> ${msg}`);
       });
       setCastList(result.text);
@@ -1523,8 +1631,8 @@ ${scenario}
 上記シナリオの演出を指定カテゴリに沿って強化し、同じ形式で出力してください。`;
 
     try {
-      setEnhanceLog(prev => prev + "\n> [API] Gemini にシナリオ強化をリクエスト中...");
-      const result = await callThinkingGemini(enhancePrompt, [], castList, (msg) => {
+      setEnhanceLog(prev => prev + `\n> [API] ${selectedEngine === 'openai' ? 'OpenAI' : 'Gemini'} にシナリオ強化をリクエスト中...`);
+      const result = await callAI(enhancePrompt, [], castList, (msg) => {
         setEnhanceLog(prev => prev + `\n> [API] ${msg}`);
       });
 
@@ -1989,7 +2097,7 @@ ${scenario}
       // Call Gemini with the Cast List context to ensure character consistnecy in logic
       // [v3.48] 360度背景画像が読み込まれている場合はマルチモーダル入力として添付
       const scenarioImages = (bg360ImageParts && bg360Enabled) ? [bg360ImageParts] : [];
-      const result = await callThinkingGemini(scenarioPrompt, scenarioImages, castList, (msg) => {
+      const result = await callAI(scenarioPrompt, scenarioImages, castList, (msg) => {
         setScenarioThought(prev => prev + `\n > [API] ${msg} `);
       });
       setUsedModel(result.model); // [v1.7.0] Track Model
@@ -2119,7 +2227,7 @@ ${parsedData.scenario}
   ]
 }`;
 
-          const cameraWorkResult = await callThinkingGemini(cameraWorkPrompt, [bg360ImageParts], null, (msg) => {
+          const cameraWorkResult = await callAI(cameraWorkPrompt, [bg360ImageParts], null, (msg) => {
             setScenarioThought(prev => prev + `\n > [Camera AI] ${msg}`);
           });
 
@@ -3421,8 +3529,34 @@ Do NOT describe the image in text. Do NOT write a prompt. DRAW the image directl
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enableChatGPTMode]);
 
+  // [v3.59] ソフトリセット: キャラクター解析(STEP1)を保持し、STEP2以降をリセット
   const partialReset = () => {
-    setCastList("");          // [fix] 入力をリセット時に解析結果もクリア
+    // castList は保持する（キャラクター解析結果）
+    // images は保持する（ドロップしたキャラクターシート画像）
+    // analyzeThought は保持する（STEP1のログ）
+    setScenario("");
+    setFinalPrompt("");
+    setGeneratedImage(null);
+    setScenarioThought("");
+    setAssembleThought("");
+    setGenLog([]);
+    setIsFullAutoMode(false);
+    setFullAutoStep(0);
+    // [v3.48-alpha2] Clear manual inputs and 360 background on reset
+    setCustomLocation("");
+    setCustomOutfit("");
+    setBg360Image(null);
+    setBg360ImageParts(null);
+    setBg360Analysis(null);
+    setBg360CameraWork(null); // [v3.53] カメラワーク設計結果もリセット
+    setBg360CroppedPanels(null); // [v3.53 Phase2] クロップ画像もリセット
+    setIs360CameraWorking(false); // [v3.53] カメラワーク処理フラグリセット
+    showStatus("シナリオ以降をリセットしました。キャラクター解析は保持しています。");
+  };
+
+  // [v3.59] ハードリセット: 全データ消去 + APIキー再入力モーダルを表示
+  const hardReset = () => {
+    setCastList("");
     setScenario("");
     setFinalPrompt("");
     setImages([]);
@@ -3432,16 +3566,27 @@ Do NOT describe the image in text. Do NOT write a prompt. DRAW the image directl
     setAssembleThought("");
     setIsFullAutoMode(false);
     setFullAutoStep(0);
-    // [v3.48-alpha2] Clear all manual inputs and 360 background on reset
     setCustomLocation("");
     setCustomOutfit("");
     setBg360Image(null);
     setBg360ImageParts(null);
     setBg360Analysis(null);
-    setBg360CameraWork(null); // [v3.53] カメラワーク設計結果もリセット
-    setBg360CroppedPanels(null); // [v3.53 Phase2] クロップ画像もリセット
-    setIs360CameraWorking(false); // [v3.53] カメラワーク処理フラグリセット
-    showStatus("入力と解析結果をリセットしました。");
+    setBg360CameraWork(null);
+    setBg360CroppedPanels(null);
+    setIs360CameraWorking(false);
+    setUsedModel(null);
+    setGenerationHistory([]);
+    setGenLog([]);
+    // [v3.59] APIキー完全クリア: React state + gemini lib + OpenAI lib + ai-provider
+    setApiKeyState("");           // React state (UI表示用)
+    setApiKey("");                // gemini lib のキーストア
+    setOpenAIApiKey("");          // OpenAI lib のキーストア
+    setActiveEngine("");          // ai-provider のエンジン設定
+    setSelectedEngine("");        // React state のエンジン選択
+    setEnableOpenAIApi(false);
+    setEnableChatGPTMode(false);
+    setShowModal(true);
+    showStatus("全データをリセットしました。APIキーを再入力してください。");
   };
 
   const [isCopied, setIsCopied] = useState(false);
@@ -3466,7 +3611,13 @@ Do NOT describe the image in text. Do NOT write a prompt. DRAW the image directl
     // [v3.04i] 進捗窓(genLog)にChatGPTモードのバッチ/警告を明示
     const initialLogs = ["[1/5] プロンプトパラメータをロック中...", "[2/5] セーフティフィルターを検証中..."];
     if (enableChatGPTMode) {
-      initialLogs.push("[2.5/5] ⚠️ [ChatGPT Mode] 有効: プロンプト構造の特殊最適化を適用中...");
+      if (selectedEngine === 'openai') {
+        // OpenAI Engine では ChatGPT プロンプトは当然の標準動作 → 情報表示
+        initialLogs.push("[2.5/5] ✅ ChatGPT Engine: プロンプト最適化を適用中...");
+      } else {
+        // Gemini Engine で手動で ChatGPT モードを ON にした場合 → 注意表示
+        initialLogs.push("[2.5/5] ⚠️ [ChatGPT Mode] 有効: プロンプト構造の特殊最適化を適用中...");
+      }
     }
     setGenLog(initialLogs);
 
@@ -3675,7 +3826,7 @@ JSON配列の最初の文字は [ 、最後の文字は ] であること。
 - 最低3個、最大20個の置換ペアを出力すること。
 - "to"の表現は元と同程度の長さ・ディテールを維持すること。短縮・省略禁止。`;
 
-      const result = await callThinkingGemini(metaPrompt, [], null, (msg) => {
+      const result = await callAI(metaPrompt, [], null, (msg) => {
         setPolicyFixLog(prev => prev + `\n> ${msg}`);
       });
 
@@ -3737,7 +3888,7 @@ JSON配列の最初の文字は [ 、最後の文字は ] であること。
       if (appliedCount > 0) {
         setFinalPrompt(modifiedPrompt);
         setPolicyFixLog(prev => prev + `\n> [Phase 5/5] ✅ ${appliedCount}箇所を修正しました（${failedCount}箇所はスキップ）。STEP3のプロンプト欄に反映済みです。`);
-        setPolicyFixLog(prev => prev + "\n> [GUIDE] 再度STEP4で画像生成するか、「プロンプトをコピー」してGemini Web版で生成してください。");
+        setPolicyFixLog(prev => prev + `\n> [GUIDE] 再度STEP4で画像生成するか、「プロンプトをコピー」して${selectedEngine === 'openai' ? 'ChatGPT' : 'Gemini'} Web版で生成してください。`);
         // [v2.48] 修正適用後にエラーメッセージ入力をクリア（古い情報の混入防止）
         setPolicyErrorMsg("");
       } else {
@@ -3784,7 +3935,7 @@ ${finalPrompt}
 - 上記の置換ルールに該当する箇所だけを修正し、それ以外は1文字も変更しないでください。
 - 修正後のプロンプト全文のみを出力してください。説明や前置きは不要です。`;
 
-      const result = await callThinkingGemini(fallbackPrompt, [], null, (msg) => {
+      const result = await callAI(fallbackPrompt, [], null, (msg) => {
         setPolicyFixLog(prev => prev + `\n> ${msg}`);
       });
 
@@ -4083,7 +4234,8 @@ ${finalPrompt}
           </div>
         </div>
         
-        {/* [v3.23-alpha] Web版ChatGPT用 コピーボタン (β) */}
+        {/* [v3.23-alpha] Web版ChatGPT用 コピーボタン (β) — OpenAI Engine (API直接生成) 時のみ表示 */}
+        {(selectedEngine === 'openai' || enableOpenAIApi) && (
         <div className="flex justify-center w-full max-w-7xl mx-auto px-2 pb-1">
           <button
             onClick={() => {
@@ -4161,6 +4313,7 @@ The environment and effects must ECHO the character's emotion, not just be a bac
             </span>
           </button>
         </div>
+        )}
 
         {/* Progress Line */}
         <div className="absolute bottom-0 left-0 h-[2px] bg-white/10 w-full">
@@ -4200,19 +4353,28 @@ The environment and effects must ECHO the character's emotion, not just be a bac
                     Social Satire Engine [ 演出強化版 ]
                   </p>
                   {/* [v2.48] API認証状態バッジ - タイトル枠内に常時表示 */}
-                  <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[10px] font-black tracking-wider ${apiKey ? 'bg-green-500/15 border-green-500/40 text-green-400' : 'bg-red-500/15 border-red-500/40 text-red-400 animate-pulse'}`}>
-                    <span className={`w-1.5 h-1.5 rounded-full ${apiKey ? 'bg-green-400 shadow-[0_0_6px_rgba(74,222,128,0.8)]' : 'bg-red-400'}`} />
-                    {apiKey ? '✅ API認証済' : '⚠ 未接続'}
+                  <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[10px] font-black tracking-wider ${apiKey ? (selectedEngine === 'openai' ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-400' : 'bg-green-500/15 border-green-500/40 text-green-400') : 'bg-red-500/15 border-red-500/40 text-red-400 animate-pulse'}`}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${apiKey ? (selectedEngine === 'openai' ? 'bg-emerald-400 shadow-[0_0_6px_rgba(16,185,129,0.8)]' : 'bg-green-400 shadow-[0_0_6px_rgba(74,222,128,0.8)]') : 'bg-red-400'}`} />
+                    {apiKey ? (selectedEngine === 'openai' ? '✅ ChatGPT Engine' : '✅ Gemini Engine') : '⚠ 未接続'}
                   </div>
-                  {/* 入力をリセットボタン - API認証済バッジの下 */}
+                  {/* [v3.59] ソフトリセットボタン: キャラ保持 + シナリオ以降リセット */}
                   {apiKey && (
-                    <button
-                      onClick={partialReset}
-                      className="flex items-center gap-1.5 bg-white/5 hover:bg-white/10 text-slate-300 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors border border-white/10"
-                      title="キャラクター設定を維持したまま、シナリオ以降をやり直す"
-                    >
-                      <RefreshCw size={14} /> 入力をリセット
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={partialReset}
+                        className="flex items-center gap-1.5 bg-white/5 hover:bg-white/10 text-slate-300 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors border border-white/10"
+                        title="キャラクター解析を保持したまま、シナリオ・プロンプト・画像をリセットします"
+                      >
+                        <RefreshCw size={12} /> シナリオから再生成
+                      </button>
+                      <button
+                        onClick={hardReset}
+                        className="flex items-center gap-1.5 bg-red-950/50 hover:bg-red-900/60 text-red-300 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors border border-red-500/20"
+                        title="全データを消去してAPIキーの再入力画面に戻ります（エンジン切替もこちら）"
+                      >
+                        <LogOut size={12} /> エンジン変更・全リセット
+                      </button>
+                    </div>
                   )}
                 </div>
                 {/* [v1.7.0] Model Quality Badge */}
@@ -4946,7 +5108,8 @@ The environment and effects must ECHO the character's emotion, not just be a bac
               <Wand2 size={24} /> STEP 03: プロンプト生成 (PROMPT ASSEMBLY)
             </div>
 
-            {/* [v2.61] ChatGPT Images 2.0 強化プロンプト チェックボックス */}
+            {/* [v2.61] ChatGPT Images 2.0 強化プロンプト チェックボックス — Dual Engine化により不要（OpenAI: 自動ON / Gemini: 不要） */}
+            {false && (
             <label className="flex items-center gap-3 px-3 py-2 bg-slate-800/50 border border-white/5 rounded-lg cursor-pointer hover:bg-slate-700/50 transition-colors group/chatgpt">
               <input
                 type="checkbox"
@@ -4963,6 +5126,7 @@ The environment and effects must ECHO the character's emotion, not just be a bac
                   </span>
               </div>
             </label>
+            )}
 
             <button
               onClick={() => assemblePrompt()}
@@ -5016,7 +5180,8 @@ The environment and effects must ECHO the character's emotion, not just be a bac
                 <ThinkingLog thought={assembleThought} placeholder="> ボタンを押すとプロンプト構築ログがここに表示されます..." />
 
                 <div className="flex flex-col h-full mt-4 gap-4">
-                  {enableChatGPTMode && finalPrompt && (
+                  {/* [v3.59] Dual Engine化によりChatGPT警告バナー不要（OpenAI: 正常動作 / Gemini: チェックボックス消去済み） */}
+                  {false && enableChatGPTMode && finalPrompt && selectedEngine !== 'openai' && (
                     <div className="bg-orange-950 border-2 border-orange-500 rounded-lg p-3 flex flex-col items-center justify-center gap-1 text-orange-400 shadow-xl mt-2 mb-2 animate-pulse z-50 relative">
                       <div className="font-bold text-sm flex items-center gap-2">
                         <span>🛡️</span>
@@ -5097,13 +5262,17 @@ The environment and effects must ECHO the character's emotion, not just be a bac
                       {isCopied ? <CheckCircle2 size={20} /> : <Copy size={20} />}
                       {isCopied 
                         ? "コピー完了" 
-                        : (bg360Image && bg360Enabled)
-                          ? (enableChatGPTMode
-                            ? "コピペ（ChatGPT専用　📎キャラシート＋🌐360°背景画像を添付　生成毎新規スレッド作成必須）"
-                            : "コピペ（他アプリ用　📎キャラシート＋🌐360°背景画像を添付　ChatGPTには必ず専用モードを使用）")
-                          : (enableChatGPTMode 
-                            ? "コピペ（ChatGPT専用　📎キャラシート添付及び生成毎新規スレッド作成必須）"
-                            : "コピペ（他アプリ用　📎キャラシート添付を強く推奨　ChatGPTには必ずChatGPT専用モードを使用して下さい）")
+                        : selectedEngine === 'openai'
+                          ? (bg360Image && bg360Enabled)
+                            ? "コピペ（手動生成用　📎キャラシート＋🌐360°背景画像を添付）"
+                            : "コピペ（手動生成用　📎キャラシート添付推奨）"
+                          : (bg360Image && bg360Enabled)
+                            ? (enableChatGPTMode
+                              ? "コピペ（ChatGPT専用　📎キャラシート＋🌐360°背景画像を添付　生成毎新規スレッド作成必須）"
+                              : "コピペ（他アプリ用　📎キャラシート＋🌐360°背景画像を添付　ChatGPTには必ず専用モードを使用）")
+                            : (enableChatGPTMode 
+                              ? "コピペ（ChatGPT専用　📎キャラシート添付及び生成毎新規スレッド作成必須）"
+                              : "コピペ（他アプリ用　📎キャラシート添付を強く推奨　ChatGPTには必ずChatGPT専用モードを使用して下さい）")
                       }
                     </button>
 
@@ -5112,7 +5281,7 @@ The environment and effects must ECHO the character's emotion, not just be a bac
                       onClick={() => {
                         // --- メタデータ構築 ---
                         const now = new Date();
-                        const promptMode = enableChatGPTMode ? 'ChatGPT専用プロンプト' : 'Gemini用プロンプト';
+                        const promptMode = selectedEngine === 'openai' ? 'ChatGPT Engine (自動)' : (enableChatGPTMode ? 'ChatGPT専用プロンプト' : 'Gemini用プロンプト');
                         const metadata = {
                           "ファイル情報": {
                             "フォーマットバージョン": 1,
@@ -5122,10 +5291,13 @@ The environment and effects must ECHO the character's emotion, not just be a bac
                           },
                           "プロンプト判別": {
                             "モード": promptMode,
+                            "AIエンジン": selectedEngine === 'openai' ? 'ChatGPT' : 'Gemini',
                             "ChatGPTモード": enableChatGPTMode,
-                            "説明": enableChatGPTMode
-                              ? "ChatGPT Images 2.0 専用に最適化されたプロンプトです。Geminiには非対応です。"
-                              : "Gemini用プロンプトです。ChatGPTに貼り付けるとレイアウトが崩れる可能性があります。"
+                            "説明": selectedEngine === 'openai'
+                              ? "ChatGPT Engine で全ルーチンを実行。ChatGPT Images 2.0 専用プロンプトが自動生成されます。"
+                              : enableChatGPTMode
+                                ? "ChatGPT Images 2.0 専用に最適化されたプロンプトです。Geminiには非対応です。"
+                                : "Gemini用プロンプトです。ChatGPTに貼り付けるとレイアウトが崩れる可能性があります。"
                           },
                           "キャラクターシート解析結果": castList || "(未解析)",
                           "シナリオ": scenario || "(未生成)",
@@ -5187,7 +5359,8 @@ The environment and effects must ECHO the character's emotion, not just be a bac
                       ※内容を修正したい場合は、上の「シナリオ」を直接書き換えてから、再度 <span className="text-orange-400 font-bold">「最終プロンプトを構築する」</span> を押してください。
                     </div>
 
-                    {/* [v2.87] ChatGPT Images 2.0 API Checkbox */}
+                    {/* [v2.87] ChatGPT Images 2.0 API Checkbox — Dual Engine化により不要（OpenAI: 自動ON / Gemini: 不要） */}
+                    {false && (
                     <label className="flex items-center gap-3 px-3 py-3 mt-4 bg-slate-800/50 border border-white/10 rounded-lg cursor-pointer hover:bg-slate-700/50 transition-colors">
                       <input
                         type="checkbox"
@@ -5206,15 +5379,15 @@ The environment and effects must ECHO the character's emotion, not just be a bac
                         </span>
                       </div>
                     </label>
+                    )}
                     <button
                       onClick={() => { console.log("Regenerating..."); regenerateImage(); }}
                       disabled={!finalPrompt || isGeneratingImage}
-                      className={`w-full ${enableOpenAIApi ? 'bg-blue-600 hover:bg-blue-500' : enableChatGPTMode ? 'bg-red-800 hover:bg-red-700' : 'bg-orange-600 hover:bg-orange-500'} text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg border border-white/10 active:scale-95 disabled:bg-slate-700 disabled:opacity-50 disabled:cursor-wait mt-4`}
+                      className={`w-full ${selectedEngine === 'openai' ? 'bg-emerald-600 hover:bg-emerald-500' : 'bg-orange-600 hover:bg-orange-500'} text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg border border-white/10 active:scale-95 disabled:bg-slate-700 disabled:opacity-50 disabled:cursor-wait mt-4`}
                     >
                       {isGeneratingImage ? <Loader2 size={20} className="animate-spin" /> : <ImageIcon size={20} />}
                       <div className="flex flex-col items-center">
-                        <span>{isGeneratingImage ? "再生成中..." : `画像を生成する (STEP 4: ${enableOpenAIApi ? 'ChatGPT Images 2.0 API' : enableChatGPTMode ? 'Gemini API [強引な生成]' : 'Google AI'})`}</span>
-                        {!enableOpenAIApi && enableChatGPTMode && <span className="text-[10px] text-red-200 mt-1">※このプロンプトでGemini API(STEP4)を実行すると、制約不足によりレイアウト崩れが発生する可能性があります。</span>}
+                        <span>{isGeneratingImage ? "再生成中..." : `画像を生成する (STEP 4: ${selectedEngine === 'openai' ? 'ChatGPT Images 2.0' : 'Google AI'})`}</span>
                       </div>
                     </button>
                   {/* PRO TIPS FOR EXTERNAL GENERATION - 説明文統一規格: text-xs */}
@@ -5225,14 +5398,22 @@ The environment and effects must ECHO the character's emotion, not just be a bac
                       </div>
                       <div className="text-xs text-orange-200/80 leading-relaxed font-sans">
                         <span className="font-bold text-orange-300">💡 PRO TIP：究極の1枚を作りたい時は？</span><br />
-                        キャラの見た目が全然違うなど不満がある場合は、上の「コピペ」ボタンでプロンプトをコピーし、<a href="https://gemini.google.com/" target="_blank" rel="noreferrer" className="text-blue-400 hover:underline">Geminiブラウザ版🤖</a> に<strong>「元となるキャラシート画像」</strong>と一緒に直接貼り付けて生成させてください。<br />
-                        文字情報だけでなく画像を参照できるため、キャラのクオリティと再現度が飛躍的に向上します！<br />
-                        <span className="inline-block mt-2 text-[11px] text-cyan-300/80">
-                          🚀 <strong>ChatGPT対応:</strong> STEP3の「ChatGPT Images 2.0 強化プロンプト追加」チェックをONにしてプロンプトを構築して、<a href="https://chatgpt.com/" target="_blank" rel="noreferrer" className="text-blue-400 hover:underline">ChatGPTブラウザ版🤖</a>に「元となるキャラシート画像」と一緒に貼り付ければ、ChatGPTでもマンガ生成が可能です。<br/>
-                          ※プロンプトを貼り付け後、必ず「テキストフィールドに表示」をクリックして、全文表示させてください。そのまま送信すると、勝手にプロンプトの解説を始めてしまいます。<br/>
-                          🛡️ <strong>レイアウト安定化:</strong> チェックON時、A4縦比率ロック＋パネル剛体制約がプロンプトに自動埋込されます。<br/>
-                          ⚠️ それでも<strong>GPT-image 2.0の仕様上、どうしても細長い画像になってしまう場合</strong>は、ChatGPTのメニュー画面にある、「アスペクト比」ボタンで手動修正は行わず、以下の「画像比率事後修正プロンプト」ボタンでコピーしたプロンプトを貼り付けて再生成してください。
-                        </span>
+                        {selectedEngine === 'openai' ? (
+                          <>
+                            キャラの見た目が全然違うなど不満がある場合は、上の「コピペ」ボタンでプロンプトをコピーし、<a href="https://chatgpt.com/" target="_blank" rel="noreferrer" className="text-blue-400 hover:underline">ChatGPTブラウザ版🤖</a>に<strong>「元となるキャラシート画像」</strong>と一緒に直接貼り付けて生成させてください。<br />
+                            文字情報だけでなく画像を参照できるため、キャラのクオリティと再現度が飛躍的に向上します！<br />
+                            <span className="inline-block mt-2 text-[11px] text-cyan-300/80">
+                              ⚠️ <strong>GPT-image 2.0の仕様上、どうしても細長い画像になってしまう場合</strong>は、ChatGPTのメニュー画面にある「アスペクト比」ボタンで手動修正は行わず、以下の「画像比率事後修正プロンプト」ボタンでコピーしたプロンプトを貼り付けて再生成してください。
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            キャラの見た目が全然違うなど不満がある場合は、上の「コピペ」ボタンでプロンプトをコピーし、<a href="https://gemini.google.com/" target="_blank" rel="noreferrer" className="text-blue-400 hover:underline">Geminiブラウザ版🤖</a> に<strong>「元となるキャラシート画像」</strong>と一緒に直接貼り付けて生成させてください。<br />
+                            文字情報だけでなく画像を参照できるため、キャラのクオリティと再現度が飛躍的に向上します！
+                          </>
+                        )}
+                        {/* 画像比率事後修正プロンプト — OpenAI Engine時のみ表示（Geminiではアスペクト比問題が起きにくいため不要） */}
+                        {selectedEngine === 'openai' && (
                         <div className="mt-3 block w-full">
                           <button
                             className={`mt-2 ${isFixPromptCopied ? 'bg-green-600 border-green-500/30' : 'bg-slate-700 hover:bg-slate-600 border-white/10'} text-white px-3 py-1.5 rounded transition-all inline-flex items-center justify-center gap-1.5 border font-bold active:scale-95`}
@@ -5329,6 +5510,7 @@ No explanations. No partial results.`;
                             {isFixPromptCopied && <span style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>✅ コピー完了</span>}
                           </button>
                         </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -5385,7 +5567,9 @@ No explanations. No partial results.`;
                           className="w-full bg-[#000000] text-white text-xs p-2 rounded border border-yellow-500/20 focus:border-yellow-500/50 outline-none min-h-[60px] font-mono placeholder-slate-500"
                           value={policyErrorMsg}
                           onChange={(e) => setPolicyErrorMsg(e.target.value)}
-                          placeholder={"例: I can't generate images that depict minors...\n例: Geminiの回答: 制服と未成年の組み合わせが原因...\n例: アオリ構図が弾かれたかもしれない"}
+                          placeholder={selectedEngine === 'openai'
+                            ? "例: Your request was rejected as a result of our safety system...\n例: content_policy_violation と表示された\n例: アオリ構図が弾かれたかもしれない"
+                            : "例: I can't generate images that depict minors...\n例: Geminiの回答: 制服と未成年の組み合わせが原因...\n例: アオリ構図が弾かれたかもしれない"}
                         />
 
                         <button
@@ -5417,7 +5601,7 @@ No explanations. No partial results.`;
                   >
                     <div className="opacity-50 mb-2 border-b border-white/10 pb-1 flex justify-between text-xs">
                       <span>🖥 画像生成ログ (STEP 4)</span>
-                      <span className="text-blue-500">v1.3.5 (Gemini 2.0 Native)</span>
+                      <span className={selectedEngine === 'openai' ? "text-emerald-500" : "text-blue-500"}>{selectedEngine === 'openai' ? 'v1.3.5 (ChatGPT Images 2.0)' : 'v1.3.5 (Gemini 2.0 Native)'}</span>
                     </div>
                     {genLog.length === 0 ? (
                       <div className="text-white/30">待機中... 「画像を生成する」ボタンを押すと開始します。</div>
