@@ -1,24 +1,23 @@
-# HANDOFF.md (v3.57-alpha)
+# HANDOFF.md (v3.58-alpha)
 
 ## Current Status
-- v3.57-alphaデプロイ待ち。OpenAI APIの本格利用に向けたUI、状態管理、エラーハンドリングを改善し、タイムアウト時間を延長。
+- v3.58-alpha デプロイ中。READMEのデュアルAPI設計や上級者向けUIオプションに関するドキュメント最適化（Gemini API関連の追記）を完了。
 
 ## Done
-- `App.jsx`: パスワードマネージャーによるAPIキー保存の競合を避けるため、GeminiとOpenAIでフォーム（`action`、`autoComplete="current-password"`）を分離し、保存時のリセット処理を削除。
-- `App.jsx`: OpenAI APIの画像生成時における進行中表示（2〜4分待機）を追加。
-- `App.jsx`: OpenAIモデルでの生成完了時に誤ってフォールバック警告が表示されるバグを修正。
-- `src/lib/openai.js`: 無効な `response_format` パラメータを削除し、タイムアウトを240秒に延長。
-- `README.md`: OpenAI APIの「テスト機能」を「正式機能（アプリ内直接生成）」に昇格させ、ChangeLogを更新。
+- `README.md`: 「デュアルAPI設計」セクションで、描画担当として「Gemini API (Nano Banana 2)」を選択可能である旨を追記。
+- `README.md`: 「【上級者向け】Browser UI Option」セクションで、手動コピペ運用にChatGPTだけでなくGeminiブラウザ版も含まれることを明記。
+- `src/App.jsx`: UIのプロンプト出力箇所の「テスト」表記を削除し正式機能として明記。
+- `package.json`, `index.html`, `src/App.jsx`: バージョンをv3.58-alphaへ更新。
 
 ## Remaining / Next Steps
-- OpenAI APIの稼働状況の監視、必要に応じたUI文言の微調整。
+- デプロイの完了確認（GitHub Pages等）。
+- GitHubリリース作成およびCドライブへのバックアップ（展開）の実行。
 
 ## Risks
 - なし。
 
-## Files Modified (v3.57-alpha)
-- `src/App.jsx`
-- `src/lib/openai.js`
-- `package.json`
-- `index.html`
+## Files Modified (v3.58-alpha)
 - `README.md`
+- `src/App.jsx`
+- `index.html`
+- `package.json`

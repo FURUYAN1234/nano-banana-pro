@@ -747,6 +747,12 @@ Developed by **FURU**
 ### v3.43-alpha (2026-05-12)
 - **[Feature]** 1枚絵用のプロンプトを刷新。「ANTIGRAVITY EMOTIONAL CINEMA ENGINE v2.0」を導入し、指示内容から感情ベクトルを自動検知してカメラワーク、ライティング、表情、VFXを最適化する演出機能を追加。 / Completely overhauled the 1-panel image generation prompt to the "ANTIGRAVITY EMOTIONAL CINEMA ENGINE v2.0", adding emotional vector detection that automatically optimizes camera work, lighting, acting, and VFX based on the user's instruction.
 
+### v3.58-alpha (2026-05-17)
+- **[Docs]** READMEの「デュアルAPI設計」セクションの加筆・修正（描画担当としてのGemini API、および上級者向けブラウザUI運用へのGeminiの追記）。 / Documentation updates reflecting Gemini API and Gemini Web UI as valid rendering options alongside OpenAI API.
+
+### v3.57-alpha (2026-05-17)
+- **[Docs]** OpenAI API (gpt-image-2) 正式対応に伴いREADMEを全面改訂。中継サーバーの記述を削除し「デュアルAPI設計」へ刷新。 / Comprehensive README update for official OpenAI API integration, replacing old hybrid strategy with Dual-API architecture.
+
 ### v3.42-alpha (2026-05-12)
 - **[Bugfix]** 物理描写やSFXなどのト書きがセリフ（吹き出し）として誤抽出されるパーサーのバグを修正。 / Fixed a parser bug where physical descriptions and SFX were incorrectly extracted as dialogue speech bubbles.
 
