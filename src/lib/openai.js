@@ -31,7 +31,9 @@ export const generateImageWithOpenAI = async (prompt, statCallback) => {
         model: "gpt-image-2",
         prompt: prompt,
         n: 1,
-        size: "1024x1792" // OpenAI API supports 1024x1792 for vertical aspect ratio
+        size: "1024x1792", // OpenAI API supports 1024x1792 for vertical aspect ratio
+        quality: "high", // [v3.55] 最高品質モード: テキスト描画精度・ディテールが大幅向上（EvoLinkAI推奨設定）
+        response_format: "b64_json", // [v3.55] 明示的にbase64応答を要求
       }),
       signal: controller.signal
     });

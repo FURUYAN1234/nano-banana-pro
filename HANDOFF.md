@@ -1,26 +1,25 @@
-# HANDOFF.md (v3.54-alpha)
+# HANDOFF.md (v3.55-alpha)
 
 ## Current Status
-- v3.54-alpha デプロイ中。360°背景統合パイプライン（Phase 3）完了。Geminiモードでのマルチモーダル注入を確認。
+- v3.55-alpha デプロイ中。ChatGPTモードのプロンプト最適化（文字数大幅削減）およびGPT-Image-2のAPIリクエストパラメータ最適化完了。
 - GitHub Pages + Hugging Face Spaces へのデプロイ準備完了。
 
 ## Done
-- 360°背景のクロップ画像を、Geminiのマルチモーダル参照画像（inlineData）として注入するパイプライン構築。
-- プロンプト構築ロジックの動的最適化（Per-Panel Cropped Views 指示への切り替え）。
-- STEP 4 `regenerateImage` におけるクロップ画像の自動抽出とAPIへの送信。
-- カメラワークプレビューUIのテキスト重なり（レイアウト崩れ）修正。
+- `openai.js`: GPT-Image-2 APIコール時の `quality: "high"`, `response_format: "b64_json"` パラメータ追加。
+- `App.jsx`: ChatGPTモード時のカメラ指示をGeminiウェイトタグではなく自然言語に変更 (`getCameraForChatGPT`)。
+- `App.jsx`: キャスト制限ルールのGeminiウェイトタグをChatGPTモード時に除去 (`stripWeightTags`)。
+- `package.json`, `index.html`, `README.md` のバージョン更新およびChangeLog追記。
 
 ## Remaining / Next Steps
-- 実戦環境での微調整（生成結果のライティング・背景の一致度の継続的な確認）。
-- 安全性フィルター回避（マルチモーダル入力によるコンテンツブロック）への対策微調整。
+- ChatGPT側での長文テキストコピペエラーが頻発しないかの確認と、生成画像のカメラワーク・品質の継続検証。
+- OpenAI APIの将来的な仕様変更・機能拡張（画像入力対応等）へのキャッチアップ。
 
 ## Risks
-- Gemini 2.0 Flash は2026年6月1日にシャットダウン予定（本プロジェクトは2.5 Flash使用中のため影響なし）。
-- Canvas API クロッピングは大きな画像（8K以上）でメモリ制約が発生する可能性あり。
+- APIが正式解放された際、`quality: "high"` 指定が正しく反映・動作するか未知の仕様変更の可能性あり。
 
-## Files Modified (v3.54-alpha)
-- `src/lib/imagen.js` — マルチモーダル（inlineData）対応
-- `src/App.jsx` — プロンプト動的切り替え、背景クロップ注入、UIレイアウト修正
-- `package.json` — v3.54-alpha
-- `index.html` — v3.54-alpha
+## Files Modified (v3.55-alpha)
+- `src/lib/openai.js` — APIパラメータ最適化
+- `src/App.jsx` — ChatGPTモード時のプロンプト文字数削減（カメラ・キャスト）
+- `package.json` — v3.55-alpha
+- `index.html` — v3.55-alpha
 - `README.md` — ChangeLog 更新

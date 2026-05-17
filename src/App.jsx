@@ -38,7 +38,7 @@ import { setApiKey, getApiKey, callThinkingGemini } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 import { generateImageWithOpenAI, setOpenAIApiKey, getOpenAIApiKey } from './lib/openai';
 
-const SYSTEM_VERSION = "v3.54-alpha";
+const SYSTEM_VERSION = "v3.55-alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -2657,6 +2657,35 @@ Available lens effects — EACH PANEL MUST USE ONE:
         return fallbackCamera;
       };
 
+      // [v3.55] ChatGPT用: Geminiウェイトタグを自然言語に変換（プロンプト文字数圧縮）
+      // (tag name:2.7) → tag name に変換し、重複や冗長な修飾を除去
+      const stripWeightTags = (text) => {
+        return text
+          .replace(/\(([^()]+?):\d+\.?\d*\)/g, '$1')  // (tag:2.7) → tag
+          .replace(/,\s*,+/g, ',')                      // 連続カンマ除去
+          .replace(/,\s*$/g, '')                         // 末尾カンマ除去
+          .replace(/^\s*,\s*/g, '')                      // 先頭カンマ除去
+          .trim();
+      };
+
+      // [v3.55] ChatGPT用: カメラタグの自然言語化（~1300文字削減）
+      const getCameraForChatGPT = (panelText) => {
+        const cameraMatch = panelText.match(/\[Camera:\s*(.*?)\]/i);
+        if (cameraMatch && cameraMatch[1]) {
+          // シナリオのカメラ説明（日本語の具体的な演出指示）をそのまま使う
+          return cameraMatch[1].trim();
+        }
+        // フォールバック: ランダムカメラの自然言語版
+        const fallbackCameras = [
+          'Extreme bird\'s-eye view from directly above',
+          'Worm\'s-eye view from ground level looking up',
+          'Dutch angle with 30-45 degree tilt',
+          'Telephoto close-up with background compression',
+          'Wide-angle shot with exaggerated perspective'
+        ];
+        return fallbackCameras[cameraSlotIndex % fallbackCameras.length];
+      };
+
       // [v1.95] Dialogue Cleaner & Formatter (Line-by-Line Fix + Speaker Extraction with Character Validation)
       const extractDialogueOnly = (fullPanelText) => {
         const lines = fullPanelText.split('\n');
@@ -3052,6 +3081,9 @@ SPEECH BUBBLE POSITION LOCK:
 
       const VAR_CAST_LIST = cleanCastData.trim();
 
+      // [v3.55] ChatGPT用: キャストデータからウェイトタグを除去して自然言語化（~850文字削減）
+      const VAR_CAST_LIST_CHATGPT = enableChatGPTMode ? stripWeightTags(VAR_CAST_LIST) : VAR_CAST_LIST;
+
       // Ensure we always have non-empty prompt texts
       const safeLocation = cleanLocation || "Detailed Background";
       const safeTopic = cleanTopic || "4-koma Manga";
@@ -3082,16 +3114,17 @@ MUST have tall portrait aspect ratio (A4 paper, 1:1.414).
 
 LAYOUT & FORMAT:
 - Canvas completely filled by panels (95% width). NO large white margins.
-- Top page: draw large bold black Japanese text title: "${safeTopic}"
-- Draw tiny English watermark ON bottom-right border of 4th panel: "${watermarkEng}"
-- Draw tiny Japanese watermark ON bottom-left border of 4th panel: "ネームから全自動の自律式統合AI漫画システム :https://x.gd/JiWor"
+- Top page: draw large bold black Japanese text that reads exactly "${safeTopic}" in a clean sans-serif font, centered at the top.
+- Draw tiny English watermark text that reads "${watermarkEng}" positioned at the bottom-right corner of the 4th panel, in a small clean sans-serif font.
+- Draw tiny Japanese watermark text that reads "ネームから全自動の自律式統合AI漫画システム :https://x.gd/JiWor" positioned at the bottom-left corner of the 4th panel.
 - Watermarks standard horizontal. NO overlap. NO extra white space below panel 4.
 - Exactly 4 EQUAL horizontal panels, stacked vertically with thick white gutters between them. Panels MUST NOT touch.
 
 ART STYLE:
-- Pristine TV anime style. Clean cel-shading, dynamic lighting, no photorealistic textures.
-- Foreground characters have bold ink outlines. Add a subtle white glow outside the character's outline to prevent blending with the background.
-- Backgrounds should have slightly lower saturation and softer focus to make characters pop.
+- High-budget TV anime production quality. Pristine clean cel-shading with smooth gradient shadows and rich saturated color palette.
+- Cinematic color grading with smooth light diffusion and gentle rim lighting on character edges.
+- Foreground characters have bold ink outlines with varied line weight. Add a subtle white glow outside the character's outline to prevent blending with the background.
+- Backgrounds should have slightly lower saturation and softer focus (shallow depth of field) to make characters pop.
 - ${styleCore}
 - Setting: ${safeLocation}
 ${bg360Image && bg360Analysis && bg360Enabled ? (
@@ -3121,8 +3154,14 @@ Use the 360° background image's lighting direction (${bg360Analysis.lighting}),
 ) : ''}
 
 CAMERA & PERSPECTIVE RULES:
-Each of the 4 panels MUST use a DIFFERENT extreme camera angle (Bird's-eye, Worm's-eye, Dutch angle, Telephoto, etc.). No two panels share the same angle. Eye-level shots are FORBIDDEN.
-However, AVOID extreme fisheye distortion that warps human anatomy (no gigantic noses, bulging limbs, or anatomical collapse). Keep character proportions strictly accurate while still using dramatic angles.
+Each of the 4 panels MUST use a DIFFERENT dramatic camera angle. Use specific cinematic techniques:
+- Bird's-eye view looking straight down from above
+- Worm's-eye view looking up from ground level (characters towering overhead)
+- Dutch angle with horizon tilted 30-45 degrees for tension
+- Close-up telephoto shot with shallow depth of field and background bokeh
+- Wide-angle lens shot (14mm equivalent) with exaggerated perspective
+No two panels share the same angle. Standard eye-level shots are FORBIDDEN.
+Keep character proportions strictly accurate — dramatic angles yes, anatomical distortion no.
 
 CHARACTERS & IDENTITY:
 - Strictly reproduce reference image designs (hair, eyes, skin, accessories). NO feature swapping.
@@ -3131,8 +3170,9 @@ ${activeOutfit ? `- IGNORE reference clothing. All characters MUST wear exactly:
 - NEVER draw the same character twice in a single panel.
 - Characters MUST look at each other or objects, NEVER at the camera.
 - Exaggerated manga comedy expressions and full-body reactions are required.
-- Cast details: ${VAR_CAST_LIST}
+- Cast details: ${VAR_CAST_LIST_CHATGPT}
 - Identity Anchor: ${buildIdentityMatrix(castList)}
+- CROSS-PANEL CONSISTENCY: All characters must maintain exactly the same face, hair, and outfit across all 4 panels. If a character has glasses, they MUST have glasses in every panel. Preserve exact hair color, eye color, and skin tone in every panel.
 
 PANEL DESCRIPTIONS:
 
@@ -3140,7 +3180,7 @@ PANEL DESCRIPTIONS:
 ${buildEmotionBlock(panel1Text)}
 ${extractPlacementRule(panel1Text).replace(/\\[/g, '').replace(/\\]/g, '')}
 ${extractCastLimitRule(panel1Text).replace(/\\[/g, '').replace(/\\]/g, '')}
-Camera: ${getCameraForPanel(panel1Text)}
+Camera: ${enableChatGPTMode ? getCameraForChatGPT(panel1Text) : getCameraForPanel(panel1Text)}
 Action: ${injectOutfitReminder(extractActionOnly(panel1Text, extractPlacementRule(panel1Text)))}
 Dialogue (Japanese text inside speech bubbles only): ${extractDialogueOnly(panel1Text)}
 
@@ -3148,7 +3188,7 @@ Dialogue (Japanese text inside speech bubbles only): ${extractDialogueOnly(panel
 ${buildEmotionBlock(panel2Text)}
 ${extractPlacementRule(panel2Text).replace(/\\[/g, '').replace(/\\]/g, '')}
 ${extractCastLimitRule(panel2Text).replace(/\\[/g, '').replace(/\\]/g, '')}
-Camera: ${getCameraForPanel(panel2Text)}
+Camera: ${enableChatGPTMode ? getCameraForChatGPT(panel2Text) : getCameraForPanel(panel2Text)}
 Action: ${injectOutfitReminder(extractActionOnly(panel2Text, extractPlacementRule(panel2Text)))}
 Dialogue (Japanese text inside speech bubbles only): ${extractDialogueOnly(panel2Text)}
 
@@ -3156,7 +3196,7 @@ Dialogue (Japanese text inside speech bubbles only): ${extractDialogueOnly(panel
 ${buildEmotionBlock(panel3Text)}
 ${extractPlacementRule(panel3Text).replace(/\\[/g, '').replace(/\\]/g, '')}
 ${extractCastLimitRule(panel3Text).replace(/\\[/g, '').replace(/\\]/g, '')}
-Camera: ${getCameraForPanel(panel3Text)}
+Camera: ${enableChatGPTMode ? getCameraForChatGPT(panel3Text) : getCameraForPanel(panel3Text)}
 Action: ${injectOutfitReminder(extractActionOnly(panel3Text, extractPlacementRule(panel3Text)))}
 Dialogue (Japanese text inside speech bubbles only): ${extractDialogueOnly(panel3Text)}
 
@@ -3164,9 +3204,17 @@ Dialogue (Japanese text inside speech bubbles only): ${extractDialogueOnly(panel
 ${buildEmotionBlock(panel4Text)}
 ${extractPlacementRule(panel4Text).replace(/\\[/g, '').replace(/\\]/g, '')}
 ${extractCastLimitRule(panel4Text).replace(/\\[/g, '').replace(/\\]/g, '')}
-Camera: ${getCameraForPanel(panel4Text)}
+Camera: ${enableChatGPTMode ? getCameraForChatGPT(panel4Text) : getCameraForPanel(panel4Text)}
 Action: ${injectOutfitReminder(extractActionOnly(panel4Text, extractPlacementRule(panel4Text)))}
 Dialogue (Japanese text inside speech bubbles only): ${extractDialogueOnly(panel4Text)}
+
+THINGS TO AVOID:
+- No plastic-looking skin or digital over-sharpening on characters.
+- No watermarks or logos other than the specified watermarks above.
+- No random English text scattered across panels.
+- No floating close-up eyes or ghostly face overlays in backgrounds.
+- No character sheet layout, expression grid, or reference sheet appearance.
+- No extra characters beyond those specified in each panel.
 
 FINAL COMPLIANCE CHECK:
 - Output is a new manga scene with 4 distinct story panels, backgrounds, and vertical Japanese speech bubbles.

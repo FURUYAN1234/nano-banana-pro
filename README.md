@@ -693,6 +693,11 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v3.55-alpha (2026-05-17)
+  - 🚀 **ChatGPT Mode Prompt Optimization**: Reduced Gemini-specific weight tags (`:1.5` etc.) from ChatGPT mode prompts, trimming over 2,000 characters to prevent copy-paste limit errors.
+  - 🎥 **Natural Language Camera Directives**: Replaced abstract lens distortion tags with natural language cinematic descriptions (e.g., "Worm's-eye view looking up from ground level") for ChatGPT mode, significantly improving camera angle diversity and instruction adherence.
+  - ⚙️ **API Quality Parameters**: Injected `quality: "high"` and `response_format: "b64_json"` into the OpenAI API request body to maximize generation fidelity for future direct API integrations.
+
 ### v3.53-alpha (2026-05-15)
   - 🎬 **360° Autonomous Camera AI**: After scenario generation, a dedicated Camera AI autonomously designs optimal camera perspectives (yaw, pitch, FOV) for each panel based on spatial analysis. / シナリオ生成後、専用カメラAIが空間解析に基づき各コマに最適なカメラ方角を自律設計。
   - 🔲 **Canvas Equirectangular Crop Engine**: Implemented Canvas API-based perspective projection to extract per-panel background views from 360° panoramas with horizontal wrap-around support. / 360°パノラマからCanvas APIベースの透視投影でコマ別背景ビューを切り出すクロップエンジンを実装。
