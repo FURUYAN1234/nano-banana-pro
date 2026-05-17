@@ -125,13 +125,10 @@ ChatGPT (ChatGPT Images 2.0) での生成に最適化された専用プロンプ
 > **🚀 OpenAI API Direct Generation / OpenAI API アプリ内直接生成**
 > By entering your OpenAI API key, you can generate images directly within the app using gpt-image-2 (ChatGPT Images 2.0) — no copy-pasting required. Generation typically takes 2–4 minutes. The API key is securely held only in the browser's memory (RAM) and is never persistently stored in `localStorage` or elsewhere (it volatilizes safely upon reload). The browser's password manager can save Gemini and OpenAI keys separately for convenient reuse.
 > OpenAI APIキーを入力することで、コピペ不要でアプリ内から直接 gpt-image-2（ChatGPT Images 2.0）による画像生成が可能です。生成には通常2〜4分かかります。APIキーはブラウザのメモリ上（RAM）にのみ保持され、`localStorage`等への永続保存は行わないセキュア設計です（リロードで安全に揮発します）。ブラウザのパスワードマネージャーにより、GeminiキーとOpenAIキーを別々に記憶・自動入力できます。
-> 
-> **【Why Not Use a Backend Proxy? / なぜ中継サーバー（バックエンド）を使わないのか？】**
-> Many AI web apps route API calls through a backend proxy server. However, the core design philosophy of the "Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System" is to be a fully decentralized, static application (100% GitHub Pages) boasting **"Zero Maintenance (No server costs)" and "Ultimate Privacy (API keys are never transmitted from the user's browser to any external servers)"**.
-> 多くのAI Webアプリは中継サーバー（バックエンド）を経由してAPIを呼び出しますが、Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System は**「サーバー保守費用が完全無料（ゼロ・メンテナンス）であり、APIキーがユーザーのブラウザから外部のサーバーへ一切送信されない（究極のプライバシー）」**という完全分散型の静的アプリ（GitHub Pages完結）であることを最大の設計理念としています。
-> 
-> Introducing a middleman server would destroy these "beautiful and secure premises". Therefore, we define the **"Fully client-side architecture where all API calls are made directly from the user's browser"** as the ultimate design—the most logical choice across security, cost, and maintainability.
-> もし中継サーバーを挟むと、これらの「美しく安全な前提」が全て崩壊してしまいます。そのため、**「全てのAPI通信をユーザーのブラウザから直接行う完全クライアントサイド設計」**こそが、セキュリティ・コスト・保守性の全方位において最も理にかなった最強のアーキテクチャであると定義しています。
+>
+> **🔒 Security Architecture / セキュリティ設計**
+> This app is a **fully client-side static application** hosted on GitHub Pages. All API calls (Gemini / OpenAI) are made directly from the user's browser — no backend proxy, no middleman server. API keys never leave the user's device.
+> 本アプリは GitHub Pages 上の **完全クライアントサイド静的アプリ** です。全てのAPI通信（Gemini / OpenAI）はユーザーのブラウザから直接実行され、中継サーバーは一切介在しません。APIキーがユーザーのデバイスから外部へ送信されることはありません。
 
 ### 🎨 Context-Aware Auto-Selection / 文脈認識型おまかせ自動選定
 
@@ -190,23 +187,21 @@ This system is not a simple "prompt-and-generate" tool. It is a **multi-stage co
 * **Cross-Platform Prompt Compatibility (ChatGPT Images 2.0)**: While optimized for Gemini, the system injects specific formatting constraints (such as A4 layout parameters and vertical text guidance) into the final prompt when ChatGPT mode is enabled, ensuring ChatGPT Images 2.0 accurately renders standard manga layouts without artifacts.
   Geminiに最適化しつつ、ChatGPTモード有効時にはA4レイアウト指定や縦書きテキスト誘導などの特殊フォーマットを最終プロンプトに注入。ChatGPT Images 2.0でも破綻のない標準的な漫画レイアウトを出力できるよう設計されています。
 
-### 🏆 The Ultimate Hybrid Strategy / 「最強のハイブリッド運用」
+### 🏆 The Dual-API Architecture / 「デュアルAPI設計」
 
-This system has arrived at an optimal division of labor between two of the world's most powerful AI models, completely bypassing the limitations of current API structures.
-本システムは、フルオートメーション（完全自動化）を追求した結果、**「現在の人類が使える最強のAIモデルたち（GeminiとChatGPT）の弱点を補い合い、強みを100%引き出す無敵の分業体制」**へと到達しました。
+This system integrates two of the world's most powerful AI APIs to achieve a fully automated manga production pipeline.
+本システムは、世界最高峰の2つのAI APIを統合し、完全自動化されたマンガ制作パイプラインを実現しています。
 
 1. **【頭脳・解析担当】Gemini API (The Brain / Logic)**
    * **Strength / 強み:** Extremely fast, cost-effective, and possesses unmatched reasoning and vision capabilities for long-context character sheet analysis. / 非常に高速かつ低コストであり、長文のキャラクター設定や画像解析において比類ない推論能力と視覚認識能力を持ちます。
    * **Role / 役割:** Acts as the "Architect." It scans the user's images, understands topological features (e.g., hair length relative to the collarbone), avoids censorship via dynamic "Age-Up" safety filters, and compiles a highly structured, rigid prompt for layout and timing. / 「設計者」として機能します。ユーザーの画像をスキャンしてトポロジー的特徴（鎖骨に対する髪の長さなど）を理解し、動的な安全フィルターで検閲を回避しつつ、レイアウトとコマ割りのための高度に構造化された厳密なプロンプトを構築します。
    * **Google Search Grounding (Auto-Deep Dive) / 自律的リサーチ機能:** When generating from text prompts without images, the system automatically enables Google Search Grounding. Gemini dynamically researches the theme in real-time, fetching background context and trivia not explicitly mentioned in the prompt, resulting in surprisingly rich and highly detailed scenario generation. / 画像無しのテキストお題で生成する際、システムは自動的にGoogle Search Groundingを有効化します。短いお題からGeminiが自律的にリアルタイムWeb検索を行い、プロンプトに書かれていない背景知識や雑学を勝手に深掘りしてシナリオに組み込むため、ユーザーの指定を遥かに超えるリッチで解像度の高いストーリー構築を実現します。
-2. **【描画担当】ChatGPT UI / ChatGPT Images 2.0(The Renderer)**
-   * **Strength / 強み:** Industry-leading image generation quality and the crucial ability to **accept reference images via the browser UI** (a feature currently impossible via the standard ChatGPT Images 2.0 API). / 業界最高水準の画像生成品質と、 **ブラウザUI経由で参照画像を受け付ける** という極めて重要な能力（現在の標準ChatGPT Images 2.0 APIでは不可能な機能）を備えています。
-   * **Role / 役割:** Acts as the "Artist." By having the user manually paste the Gemini-crafted prompt *alongside* the original character sheet into the ChatGPT browser interface, the system achieves near-perfect character consistency that APIs alone cannot match. / 「作画者」として機能します。ユーザーがGeminiの構築したプロンプトをキャラクター設定画と*一緒に*手動でChatGPTに貼り付けることで、API単体では到達できない完璧に近いキャラクターの一貫性を実現します。
-3. **【仲介・調整担当】Human-in-the-Loop Override (The Director)**
-   * **Role / 役割:** When ChatGPT Images 2.0 stubbornly breaks the 4-panel layout or ignores aspect ratios (a known quirk), the human simply copies the built-in `[ABSOLUTE OVERRIDE]` force-rebuild prompt. This linguistic brute-force approach forces the AI back into the strict A4 geometric constraints without relying on external plugins or image-cropping tools. / ChatGPT Images 2.0 が頑なに4コマレイアウトを崩したりアスペクト比を無視した場合（既知の癖）、人間は組み込みの `[ABSOLUTE OVERRIDE]` 強制再構築プロンプトをコピーして投げるだけです。この言語的な力技により、外部プラグイン等に頼ることなく、AIを厳密なA4幾何学制約へと強制的に引き戻します。
-
-In short, by deliberately leaving the final rendering step as a "manual UI operation," Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System elegantly side-steps the restrictive walled gardens of pure API generation, making it an engineering masterpiece of Prompt-Driven Architecture.
-つまり、「最後の作画フェーズだけはあえて人間の手作業（コピペ）を挟む」という設計にしたことで、各社の厳しいAPI制限を鮮やかにすり抜け、「Geminiの頭脳」と「ChatGPTの画力とUI機能」を限界まで引き出すことに成功しています。
+2. **【描画担当】OpenAI API / gpt-image-2 (The Renderer)**
+   * **Strength / 強み:** Industry-leading image generation quality. With the OpenAI API (gpt-image-2) now directly integrated into the app, image generation runs fully in-browser without any copy-paste workflow. / 業界最高水準の画像生成品質。OpenAI API（gpt-image-2）のアプリ内直接統合により、コピペ不要で完全にブラウザ内で画像生成が完結します。
+   * **Role / 役割:** Acts as the "Artist." The Gemini-crafted prompt is sent directly to the OpenAI API, which renders the final manga image with high fidelity. / 「作画者」として機能します。Geminiが構築したプロンプトをOpenAI APIへ直接送信し、高品質なマンガ画像を出力します。
+3. **【上級者向け】ChatGPT Browser UI Option (Advanced / Optional)**
+   * For users seeking even higher quality through **reference image attachment** (a feature unavailable via the API), the system also supports manually copying the generated prompt into the ChatGPT browser UI alongside character sheet images. This achieves near-perfect character consistency that API-only generation cannot match. / **参照画像の添付** （APIでは利用不可な機能）によるさらなる高品質を求める上級者向けに、生成されたプロンプトをキャラクター設定画と共にChatGPTブラウザUIへ手動コピーする運用もサポートしています。これにより、API単体では到達できない完璧に近いキャラクターの一貫性を実現します。
+   * When ChatGPT Images 2.0 stubbornly breaks the 4-panel layout or ignores aspect ratios, the built-in `[ABSOLUTE OVERRIDE]` force-rebuild prompt can be used to force the AI back into strict A4 geometric constraints. / ChatGPT Images 2.0 が4コマレイアウトを崩した場合、組み込みの `[ABSOLUTE OVERRIDE]` 強制再構築プロンプトで厳密なA4制約へ強制的に修正できます。
 
 ### 📖 The Philosophy of the 1-Page (4-Koma) Limit / なぜ「1ページ（4コマ）制」にこだわるのか？
 
@@ -214,7 +209,7 @@ While many users desire the ability to generate long, multi-page comic books, Na
 多くのユーザーは複数ページの長編漫画を全自動生成することを望みますが、Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System は意図的に「1ページ（4コマ）完結」のフォーマットに制限しています。これは実装上の妥協ではなく、現在の生成AIの限界を見据えた戦略的な選択です。
 
 1. **Content Dilution & Identity Drift (内容の希薄化とキャラクター崩壊):** The fundamental rule of current AI generation is that as page count increases, both story density and visual consistency decrease inversely. Stretching a prompt across multiple pages causes the AI to lose focus, resulting in hollow plotlines, repetitive dialogue, and inevitable visual distortions (costume changes, facial drift) without LoRA fine-tuning. This is precisely why typical multi-page AI comics often feature extremely limited casts (1 to 3 characters) engaged in simple, repetitive actions like "battling"—the creators must strip away complexity just to keep the AI from breaking down. A dense, high-impact 4-panel format is the absolute "sweet spot" for maximizing both narrative punch and zero-shot visual consistency. / 現在のAI生成における絶対的な法則として、「ページ数に反比例して、キャラクターのビジュアルだけでなく、話の構成や内容そのものも薄くなってしまう」という問題があります。複数ページにまたがってプロンプトを引き伸ばすと、AIのコンテキストが散漫になり、中身のないストーリーや同じセリフの反復、そして追加学習（LoRA）なしでは避けられないビジュアルの崩壊（Identity Drift）を引き起こします。**世にある複数ページのAI漫画が「登場人物が1〜3人程度で、ひたすらバトルしているだけの展開」になりがちなのは、まさにこれが原因です。** AIの破綻を防いでページ数を稼ぐために、複雑な掛け合いや緻密なストーリー構成を犠牲にせざるを得ないのです。物語の「オチ」の鋭さと、ゼロショットでの完璧な一貫性を両立できる限界のスイートスポットこそが、この「4コマ」という高密度なフォーマットなのです。
-2. **Cognitive Load for Human-in-the-Loop (作業負荷の最適化):** Because our Ultimate Hybrid Strategy requires the user to manually copy-paste the final prompt into Gemini or ChatGPT to bypass API limitations, asking a human to do this for multiple pages would be tedious and agonizing. A 1-page output provides a perfectly "snackable" size for rapid, stress-free creation and social media sharing. / 最強のハイブリッド運用では、APIの制限を回避するためにユーザーが手動でGeminiやChatGPTにプロンプトをコピペする必要があります。これを複数ページ分も手作業でやらせるのは苦痛でしかありません。SNSでサクッとシェアでき、ユーザーがストレスなく生成を楽しめるサイズ感として、1ページ（4コマ）が最適に機能します。
+2. **API Cost & Generation Time Optimization (APIコスト・生成時間の最適化):** Each image generation call to the AI API incurs cost and takes 2–4 minutes. A 1-page (4-panel) output provides the optimal balance between narrative density and generation efficiency, making it perfectly "snackable" for rapid creation and social media sharing. / AI APIへの画像生成リクエストにはコストと2〜4分の待ち時間が伴います。1ページ（4コマ）完結は、物語の密度と生成効率の最適なバランスを提供し、SNSでサクッとシェアでき、ユーザーがストレスなく生成を楽しめるサイズ感として機能します。
 
 ### 📖 The Philosophy of the Embedded Character Sheet / なぜ「設定テキスト入りのキャラクターシート画像」を使うのか？
 
