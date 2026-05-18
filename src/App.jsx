@@ -40,7 +40,7 @@ import { generateImageWithImagen } from './lib/imagen';
 import { generateImageWithOpenAI, setOpenAIApiKey, getOpenAIApiKey } from './lib/openai';
 import { callAI, setActiveEngine, getActiveEngine, getEngineDisplayName } from './lib/ai-provider';
 
-const SYSTEM_VERSION = "v3.60-alpha";
+const SYSTEM_VERSION = "v3.62-alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -5370,6 +5370,11 @@ The environment and effects must ECHO the character's emotion, not just be a bac
                         <span>{isGeneratingImage ? "再生成中..." : `画像を生成する (STEP 4: ${selectedEngine === 'openai' ? 'ChatGPT Images 2.0' : 'Google AI'})`}</span>
                       </div>
                     </button>
+                    {/* [v3.59] API制約の注意書き — リファレンス画像添付不可の明示 */}
+                    <p className="text-[10px] text-slate-500 text-center mt-2 leading-relaxed px-2">
+                      ⚠️ API経由ではキャラクターシートや360°背景画像を添付できないため、<span className="text-amber-400/80">テキストプロンプトのみによる近似生成</span>となります。
+                      正確なキャラ再現が必要な場合は、下の <span className="text-orange-300">PRO TIP</span> を参照してブラウザ版で手動生成してください。
+                    </p>
                   {/* PRO TIPS FOR EXTERNAL GENERATION - 説明文統一規格: text-xs */}
                   <div className="mt-4 p-3 bg-orange-950/40 border border-orange-500/30 rounded-lg">
                     <div className="flex items-start gap-2">
@@ -5380,7 +5385,7 @@ The environment and effects must ECHO the character's emotion, not just be a bac
                         <span className="font-bold text-orange-300">💡 PRO TIP：究極の1枚を作りたい時は？</span><br />
                         {selectedEngine === 'openai' ? (
                           <>
-                            キャラの見た目が全然違うなど不満がある場合は、上の「コピペ」ボタンでプロンプトをコピーし、<a href="https://chatgpt.com/" target="_blank" rel="noreferrer" className="text-blue-400 hover:underline">ChatGPTブラウザ版🤖</a>に<strong>「元となるキャラシート画像」</strong>と一緒に直接貼り付けて生成させてください。<br />
+                            キャラの見た目が全然違うなど不満がある場合は、上の「コピペ」ボタンでプロンプトをコピーし、<a href="https://chatgpt.com/" target="_blank" rel="noreferrer" className="text-blue-400 hover:underline">ChatGPTブラウザ版🤖</a>に<strong>「元となるキャラシート画像{bg360Image && bg360Enabled ? '＋STEP1で貼り付けた360°背景画像' : ''}」</strong>と一緒に直接貼り付けて生成させてください。<br />
                             文字情報だけでなく画像を参照できるため、キャラのクオリティと再現度が飛躍的に向上します！<br />
                             <span className="inline-block mt-2 text-[11px] text-cyan-300/80">
                               ⚠️ <strong>GPT-image 2.0の仕様上、どうしても細長い画像になってしまう場合</strong>は、ChatGPTのメニュー画面にある「アスペクト比」ボタンで手動修正は行わず、以下の「画像比率事後修正プロンプト」ボタンでコピーしたプロンプトを貼り付けて再生成してください。
@@ -5388,7 +5393,7 @@ The environment and effects must ECHO the character's emotion, not just be a bac
                           </>
                         ) : (
                           <>
-                            キャラの見た目が全然違うなど不満がある場合は、上の「コピペ」ボタンでプロンプトをコピーし、<a href="https://gemini.google.com/" target="_blank" rel="noreferrer" className="text-blue-400 hover:underline">Geminiブラウザ版🤖</a> に<strong>「元となるキャラシート画像」</strong>と一緒に直接貼り付けて生成させてください。<br />
+                            キャラの見た目が全然違うなど不満がある場合は、上の「コピペ」ボタンでプロンプトをコピーし、<a href="https://gemini.google.com/" target="_blank" rel="noreferrer" className="text-blue-400 hover:underline">Geminiブラウザ版🤖</a> に<strong>「元となるキャラシート画像{bg360Image && bg360Enabled ? '＋STEP1で貼り付けた360°背景画像' : ''}」</strong>と一緒に直接貼り付けて生成させてください。<br />
                             文字情報だけでなく画像を参照できるため、キャラのクオリティと再現度が飛躍的に向上します！
                           </>
                         )}
