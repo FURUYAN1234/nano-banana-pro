@@ -1,21 +1,28 @@
-﻿# HANDOFF.md (v3.62-alpha)
+# HANDOFF.md (v3.63-alpha)
 
 ## Current Status
-- v3.62-alpha デプロイ準備中。将来的なAPI拡張に備え、デュアルエンジンアーキテクチャのUI実装と文言を最適化。
+- v3.63-alpha デプロイ中。起動バッチ（start_app.bat）のポート衝突修正を含む。
 
 ## Done
-- src/App.jsx: 画像生成ボタン付近のプロンプトに関する注記（リファレンス画像添付不可）を更新。
-- package.json, index.html, src/App.jsx, README.md, hf-nano-banana-pro/README.md: バージョンをv3.62-alphaへ更新。
+- vite.config.js: port: 5173, strictPort: true を追加（ポート固定）。
+- start_app.bat: 前セッションで修正済み（他プロジェクトとの競合解消）。
+- package.json, index.html, src/App.jsx: バージョンをv3.63-alphaへ更新。
+- README.md: ChangeLogを降順に整理し、v3.63-alphaエントリを追加。
+- hf-nano-banana-pro/README.md: v3.63-alphaに更新。
 
 ## Remaining / Next Steps
-- デプロイの完了確認（GitHub Pages, HF Spaces）。
-- GitHubリリース作成およびCドライブへのバックアップ（展開）の実行。
+- GitHub Pages デプロイ検証。
+- タグ打ち・GitHub Release作成。
+- HF Spaces デプロイ。
+- Cドライブへのバックアップ。
 
 ## Risks
 - なし。
 
-## Files Modified (v3.62-alpha)
+## Files Modified (v3.63-alpha)
+- vite.config.js
 - README.md
-- src/App.jsx
 - index.html
 - package.json
+- src/App.jsx
+- release_body.md
