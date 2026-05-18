@@ -58,7 +58,7 @@ export const callOpenAIText = async (prompt, images = null, systemInstruction = 
             if (systemInstruction) {
                 messages.push({
                     role: "system",
-                    content: systemInstruction
+                    content: systemInstruction + "\n\n【システムレベルの絶対遵守フォーマット（System Formatting Constraints）】\n全ての「セリフ」の末尾には、必ず終止記号（。、！、？、！？、♪、♡など）をつけてください。「…」や「～」のみで終わるセリフはシステムエラーを引き起こすため、いかなる場合も絶対に禁止します（正しい例: 「……。」「～！」）。"
                 });
             }
 

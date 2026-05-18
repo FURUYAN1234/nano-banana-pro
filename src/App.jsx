@@ -40,7 +40,7 @@ import { generateImageWithImagen } from './lib/imagen';
 import { generateImageWithOpenAI, setOpenAIApiKey, getOpenAIApiKey } from './lib/openai';
 import { callAI, setActiveEngine, getActiveEngine, getEngineDisplayName } from './lib/ai-provider';
 
-const SYSTEM_VERSION = "v3.64-alpha";
+const SYSTEM_VERSION = "v3.65-alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -2092,6 +2092,10 @@ ${scenario}
         - 構成: 起承転結（4段）。
         - 内容: ニュースに対する辛辣な風刺や、キャラの個性を活かしたドタバタ劇。
         - 文体: 各コマの「状況」「セリフ」が明確にわかる文章。
+
+        ⚠️【最終確認・絶対厳守】⚠️
+        全てのセリフの末尾に必ず「。」や「！」等の終止記号がついているか出力前に確認せよ。
+        「…」や「～」など、終止記号なしで終わるセリフはシステムエラーとなるため完全禁止とする。
         `;
 
       // Call Gemini with the Cast List context to ensure character consistnecy in logic
