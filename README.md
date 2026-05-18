@@ -706,129 +706,50 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
-### v3.57-alpha (2026-05-17)
-- **[Feature]** OpenAI API (ChatGPT Images 2.0) による画像生成を「テスト機能」から「正式機能」へ昇格。アプリ内で直接生成可能になった旨をドキュメントに追記。 / Promoted OpenAI API generation from experimental to official feature, updated docs to reflect in-app direct generation.
-- **[Feature]** APIキー保存ロジックを改善。Gemini用とOpenAI用のパスワード保存フォームを分離し、ブラウザのパスワードマネージャーが両方のキーを別々に自動記憶・復元できるよう最適化。 / Improved API key saving logic to allow browser password managers to independently save and autocomplete Gemini and OpenAI keys.
-- **[Fix]** OpenAI API（gpt-image-2）で正常に生成完了したにもかかわらず「下位モデルで妥協生成された」と誤判定されるフォールバック警告バグを修正。 / Fixed a fallback warning bug where successful OpenAI generations were falsely flagged as compromised lower-tier generations.
-- **[Fix]** OpenAI画像APIで無効なパラメータ（`response_format`）を送信していた問題を修正。また、APIレスポンスエラー時のメッセージ分岐を修正し、不正なパラメータエラー時に「コンテンツポリシー（NSFW）違反」と誤案内される問題を解消。 / Removed invalid `response_format` parameter from OpenAI API requests and fixed error handling to differentiate bad requests from content policy violations.
-- **[Fix]** OpenAI APIのタイムアウト時間を180秒から240秒に延長し、混雑時のタイムアウトを緩和。進捗ログに2〜4分かかる旨の事前案内を追加。 / Extended OpenAI API timeout from 180s to 240s and added a waiting time notice to the progress log.
-
-### v3.56-alpha (2026-05-17)
-  - 🛠️ **API Key Autofill Fix**: Resolved an issue where browser password managers (autofill) confused the OpenAI API key input field with the Gemini API key field by explicitly setting unique `id`, `name`, and `autoComplete="new-password"` attributes for each provider.
-
-### v3.55-alpha (2026-05-17)
-  - 🚀 **ChatGPT Mode Prompt Optimization**: Reduced Gemini-specific weight tags (`:1.5` etc.) from ChatGPT mode prompts, trimming over 2,000 characters to prevent copy-paste limit errors.
-  - 🎥 **Natural Language Camera Directives**: Replaced abstract lens distortion tags with natural language cinematic descriptions (e.g., "Worm's-eye view looking up from ground level") for ChatGPT mode, significantly improving camera angle diversity and instruction adherence.
-  - ⚙️ **API Quality Parameters**: Injected `quality: "high"` and `response_format: "b64_json"` into the OpenAI API request body to maximize generation fidelity for future direct API integrations.
-
-### v3.53-alpha (2026-05-15)
-  - 🎬 **360° Autonomous Camera AI**: After scenario generation, a dedicated Camera AI autonomously designs optimal camera perspectives (yaw, pitch, FOV) for each panel based on spatial analysis. / シナリオ生成後、専用カメラAIが空間解析に基づき各コマに最適なカメラ方角を自律設計。
-  - 🔲 **Canvas Equirectangular Crop Engine**: Implemented Canvas API-based perspective projection to extract per-panel background views from 360° panoramas with horizontal wrap-around support. / 360°パノラマからCanvas APIベースの透視投影でコマ別背景ビューを切り出すクロップエンジンを実装。
-  - 🔒 **Step 3 Lock Guard**: Added `is360CameraWorking` state to block prompt construction until camera work design and background cropping are fully completed, preventing race conditions. / カメラワーク設計＋クロップ完了までSTEP3をブロックするガード条件を追加し、競合状態を防止。
-  - 🖼️ **Camera Work Preview UI**: Added a visual preview grid showing AI-designed camera angles for each panel with direction labels and FOV info. / 各コマのAI設計カメラアングルを方角ラベル・FOV情報付きで表示するプレビューグリッドを追加。
-
-### v3.52-alpha
-  - 🔄 **360° Panorama Viewer Upgrade**: Replaced Canvas 2D viewer with a robust Three.js-based spherical viewer (identical to PanoForge) to fix freezing bugs.
-  - 🎭 **Outfit Override Protocol**: Enforced strict rules requiring the AI to ignore reference character clothing in favor of scenario-specified outfits (e.g., casual wear, spacesuits) while applying 360° background lighting contexts.
-
-### v3.49-alpha (2026-05-14)
-- **[Fix]** 360度パノラマ背景のAPI並列処理フリーズ問題（Gemini 429/Timeout）を完全解決するため、シーケンシャルな直列実行に移行。「ゼロクリック360度検出」時に背景解析が完了してからキャラクター解析に移行するようロジックを修正。
-- **[Enhancement]** ドロップゾーンUIに360度画像の検出確認用サムネイル（地球アイコン付き）と、状態視認性を高めるシアン色の枠線インジケーター（`bg360Enabled`）を実装。
-
-### v3.48-alpha (2026-05-14)
-- **[Feature]** キャラクターシートと一緒に360度画像（2:1比率）をドロップするだけで自動判別し、背景として読み込む「ゼロクリック360度検出」を実装。不要な折りたたみパネルを削除し、UXを大幅に改善。 / Implemented "Zero-Click 360 Detection": Just drop a 360-degree image (2:1 ratio) alongside character sheets to automatically detect and load it as a background. Removed unnecessary collapsible panels, significantly improving UX.
-
-### v3.54-alpha (2026-05-15)
-- **[Feature]** 360°背景統合パイプライン（Phase 3）の完了と安定化。Geminiモードで4枚のクロップ画像をマルチモーダル参照として注入し、コマ別の方角に合わせた精密な背景描画を実現。 / Completed 360° background integration pipeline. Injected 4 cropped perspective images as multimodal references in Gemini mode for highly accurate per-panel scenery generation.
-- **[Fix]** カメラワーク確認UIにおいて、テキスト（「各コマで使用される背景の方角」）と画像オーバーレイが重なって表示されるレイアウト崩れを修正。 / Fixed UI layout issue where text and image overlays overlapped in the camera work preview panel.
-
-### v3.47-alpha (2026-05-13)
-- **[Enhancement]** ドキュメンタリーモード用のコンテンツサニタイザーをv3.0にアップデート。核兵器や大惨事などの「即死級トリガー」を完全な意味置換（例：「核兵器」→「禁断の兵器」）で回避しつつ、犯罪・暴力用語は「●」伏せ字（Tier 2）、英語キーワード等は完全置換（Tier 3）とする3層ハイブリッド設計を実装し、ニュース本文の安全な漫画化率を大幅に向上。 / Upgraded Content Sanitizer to v3.0 for Documentary Mode. Implemented a 3-tier hybrid design that uses full semantic replacement for critical triggers (WMDs, etc.) to evade strict AI filters, while retaining readable "●"-censoring for secondary sensitive terms (crime/violence) to preserve comedic and narrative fidelity.
-
-
-### v3.46-alpha (2026-05-13)
-- **[Feature]** プロンプト生成時に、生成設定・シナリオ・プロンプト全文をJSON形式でダウンロードできる「監査用メタデータ保存」機能を追加。業務利用時の来歴証明およびパクリ疑惑への防衛証跡として活用可能。 / Added "Audit Trail Metadata" download feature to export the full scenario, settings, and prompt as a JSON file, serving as a provenance record and defense against plagiarism accusations for professional use.
+### v3.63-alpha (2026-05-18)
+- **[Fix]** 起動バッチ（`start_app.bat`）が他プロジェクトと競合する問題を修正。`vite.config.js` にポート固定（`port: 5173`, `strictPort: true`）を追加し、複数プロジェクト同時起動時のポート衝突を防止。 / Fixed startup batch file conflict with other projects. Added port pinning (`port: 5173`, `strictPort: true`) to `vite.config.js` to prevent port collisions when running multiple projects simultaneously.
 
 ### v3.62-alpha (2026-05-18)
-- **[Feature]** 将来的なAPI拡張に備え、デュアルエンジンアーキテクチャ（OpenAI / Gemini）のUI実装と文言を最適化。将来の新規AIエンジン（Anthropic等）追加に耐えうる拡張可能な設計を維持し、画像生成ボタン付近のプロンプトに関する注記（リファレンス画像添付制限の明示など）を更新。 / Prepared UI and text descriptions for the dual-engine architecture (OpenAI / Gemini) to ensure scalability for future API integrations, updating the image generation prompt constraints note.
+- **[Feature]** 将来的なAPI拡張に備え、デュアルエンジンアーキテクチャ（OpenAI / Gemini）のUI実装と文言を最適化。 / Prepared UI and text descriptions for the dual-engine architecture to ensure scalability for future API integrations.
 
-### v3.60-alpha
-- **UI/UX Refinement**:
-  - 画像生成待機中オーバーレイの表示テキストを修正（ChatGPT Images 2.0の実測時間に合わせ、1〜2分から2〜4分に表記ゆれを統一）。
-  - デュアルエンジン化により不要となったAPIトグルチェックボックスの不要コードをパージ。
+### v3.60-alpha (2026-05-18)
+- **[UI/UX]** 画像生成待機中オーバーレイの表示テキストを修正（1〜2分→2〜4分に統一）。不要なAPIトグルコードをパージ。 / Unified overlay wait time text and purged deprecated API toggle code.
 
 ### v3.59-alpha (2026-05-18)
-- **[Docs]** READMEの「Dual-API Architecture」を刷新し、起動時からエンジンが完全に分岐する最新のアーキテクチャ設計を反映。正式名称「Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System」として各所を更新。 / Completely rewrote the Dual-API Architecture documentation to reflect the new completely bifurcated engine design from startup. Updated project title across the codebase.
-
-### v3.45-alpha (2026-05-13)
-- **[Bugfix]** セリフ抽出およびキャラ配置ロジックにおいて、効果音（シーーーン、ゴゴゴ等）や「（リアクション: ...）」等のト書きが話者名として誤認され、吹き出しや配置ルールに混入するバグを修正。 / Fixed a critical bug in the dialogue and placement extraction logic where sound effects and reaction directives were mistakenly identified as speakers and injected into speech bubbles and placement rules.
-
-### v3.44-alpha (2026-05-13)
-- **[Fix]** ヘッダーのプログレスバーおよび各種ボタンにおいて、`whitespace-nowrap` による折り返し禁止設定を解除し、`flex-wrap` を適用することで狭い画面幅でのレイアウト崩れを修正。 / Fixed layout breaking on narrow screen widths by removing `whitespace-nowrap` constraints and applying `flex-wrap` to the header progress bar and various buttons.
-
-### v3.43-alpha (2026-05-12)
-- **[Feature]** 1枚絵用のプロンプトを刷新。「ANTIGRAVITY EMOTIONAL CINEMA ENGINE v2.0」を導入し、指示内容から感情ベクトルを自動検知してカメラワーク、ライティング、表情、VFXを最適化する演出機能を追加。 / Completely overhauled the 1-panel image generation prompt to the "ANTIGRAVITY EMOTIONAL CINEMA ENGINE v2.0", adding emotional vector detection that automatically optimizes camera work, lighting, acting, and VFX based on the user's instruction.
+- **[Docs]** READMEの「Dual-API Architecture」を刷新し、起動時からエンジンが完全に分岐する最新設計を反映。 / Rewrote Dual-API Architecture documentation to reflect the new bifurcated engine design.
 
 ### v3.58-alpha (2026-05-17)
-- **[Docs]** READMEの「デュアルAPI設計」セクションの加筆・修正（描画担当としてのGemini API、および上級者向けブラウザUI運用へのGeminiの追記）。 / Documentation updates reflecting Gemini API and Gemini Web UI as valid rendering options alongside OpenAI API.
+- **[Docs]** READMEの「デュアルAPI設計」セクションの加筆・修正。 / Documentation updates reflecting Gemini API and Gemini Web UI as valid rendering options.
 
 ### v3.57-alpha (2026-05-17)
-- **[Docs]** OpenAI API (gpt-image-2) 正式対応に伴いREADMEを全面改訂。中継サーバーの記述を削除し「デュアルAPI設計」へ刷新。 / Comprehensive README update for official OpenAI API integration, replacing old hybrid strategy with Dual-API architecture.
+- **[Feature]** OpenAI API (ChatGPT Images 2.0) を「テスト機能」から「正式機能」へ昇格。パスワードマネージャーの分離保存最適化。 / Promoted OpenAI API generation from experimental to official. Improved API key saving logic.
+- **[Fix]** フォールバック警告の誤判定バグ、無効パラメータ送信、タイムアウト延長（180s→240s）。 / Fixed false fallback warnings, invalid parameter issues, extended timeout to 240s.
 
-### v3.42-alpha (2026-05-12)
-- **[Bugfix]** 物理描写やSFXなどのト書きがセリフ（吹き出し）として誤抽出されるパーサーのバグを修正。 / Fixed a parser bug where physical descriptions and SFX were incorrectly extracted as dialogue speech bubbles.
+### v3.56-alpha (2026-05-17)
+- **[Fix]** ブラウザのパスワードマネージャーがOpenAI/GeminiのAPIキーを混同する問題を修正。 / Fixed API key autofill confusion between OpenAI and Gemini input fields.
 
-### v3.41-alpha (2026-05-12)
-- **[Refactor]** 実験的だった「FACSエンジン」を完全削除し、より画像生成AIに最適化された「マンガ表情データベース」へ置換。抽象的な感情ではなく、視覚的・物理的なアクション（青筋、白目など）を直接プロンプトへ注入することで表情の表現力を大幅に強化。 / Replaced experimental FACS engine with a robust "Manga Expression Database", forcibly injecting highly visual cues to maximize expression fidelity and eliminate abstract emotion prompts.
+### v3.55-alpha (2026-05-17)
+- **[Feature]** ChatGPTモードのプロンプト最適化（2,000文字削減）。自然言語カメラ指示への置換。 / ChatGPT mode prompt optimization and natural language camera directives.
 
-### v3.40-alpha (2026-05-12)
-- **[Fix]** `extractActionOnly` 関数において、コロン(`:`)を含むト書きがセリフとして誤検出・削除されるバグを修正し、ト書きの欠落を防止。 / Fixed a critical bug in `extractActionOnly` where stage directions containing colons were falsely identified as dialogue and deleted, preventing action omission.
+### v3.54-alpha (2026-05-15)
+- **[Feature]** 360°背景統合パイプライン（Phase 3）の完了。マルチモーダル参照としてクロップ画像を注入。 / Completed 360° background integration pipeline with multimodal reference injection.
 
-### v3.39-alpha (2026-05-12)
-- **[Fix]** `extractActionOnly` 関数の正規表現を修正し、ト書きやリアクション指定文字(`(リアクション: ...)`)がChatGPTのフキダシとして誤描画されるバグを解決。 / Fixed regex in `extractActionOnly` to prevent action tags and reactions from being hallucinogenically rendered as speech bubbles by ChatGPT.
-- **[Feature]** プロンプトのコンプライアンスチェックに手と指の解剖学的構造（左右の手の向き、指の本数）を検証する厳格な制約を追加。 / Added strict anatomical constraints (left/right hand orientation, exactly 5 fingers) to the final compliance check.
+### v3.53-alpha (2026-05-15)
+- **[Feature]** 360° 自律カメラAI、Canvas正距円筒クロップエンジン、Step 3ロックガードを実装。 / Implemented 360° Autonomous Camera AI, Canvas crop engine, and Step 3 lock guard.
 
-### v3.38-alpha (2026-05-12)
-- **[Feature]** 「限界突破パッチ (Breakthrough Patch)」適用。空間拘束ロジック（FOREGROUND / BACKGROUND）を実装し、AI特有のクローン（同一キャラ重複）バグを完全消滅。 / Applied "Breakthrough Patch": Implemented FOREGROUND/BACKGROUND spatial constraints to completely eliminate AI clone bugs.
-- **[Feature]** タイポグラフィ強要ルール（ZERO spaces）を追加し、ChatGPT出力時の不自然な日本語カーニングを解消。 / Added strict typography rules (ZERO spaces) to eliminate unnatural Japanese kerning in ChatGPT outputs.
-- **[Feature]** 物理座標指定（地面平置き、上空10m等）をカメラ辞書に追加し、Geminiのカメラアングル無視（平坦な写真化）を強力に矯正。 / Added physical camera placement coordinates to aggressively correct Gemini's tendency to ignore extreme angles.
-- **[Fix]** `App.jsx` クローン対策パッチ適用時のWindowsエスケープエラーを修正。 / Fixed Windows escape sequence error during clone patch application in App.jsx.
+### v3.52-alpha (2026-05-15)
+- **[Feature]** 360°パノラマビューアーをThree.jsベースに刷新。衣装オーバーライドプロトコル追加。 / Upgraded 360° viewer to Three.js-based spherical viewer. Added Outfit Override Protocol.
 
-### v3.36-alpha (2026-05-12)
-- **[Fix]** シナリオ解析（extractDialogueOnly）のセリフ抽出判定を強化。「リアクション」や「設定」といったメタ情報タグが誤ってセリフ（話者）として画像生成プロンプトに混入する不具合を修正。 / Fixed a bug in scenario parsing where metadata tags like 'Reaction' or 'Setting' were incorrectly extracted as dialogue and injected into the prompt.
-- **[Fix]** タイトル描画プロンプトに含まれていたEXACTLY:の記述を削除。Geminiモデルがタイトル文字としてそのままEXACTLY:を描画してしまう問題を解消。 / Removed the 'EXACTLY:' instruction from the title prompt to prevent Gemini from drawing it as part of the comic title.
+### v3.49-alpha (2026-05-14)
+- **[Fix]** 360度パノラマ背景のAPI並列処理フリーズ問題を直列実行で解決。ドロップゾーンUIにインジケーター追加。 / Fixed 360° panorama API parallelism freeze with sequential execution. Added drop zone indicators.
 
-### v3.35-alpha (2026-05-12)
-- **[Fix]** Autoモード時のAI自律選択オチ候補を6種から10種に拡張し、UIの手動選択肢と完全同期。 / Expanded Auto mode punchline candidates from 6 to 10 types, fully synchronized with manual UI selection.
-- **[Fix]** ChatGPTプロンプトに欠落していた左側日本語ウォーターマーク（「ネームから全自動の自律式統合AI漫画システム」）を追加。Gemini側の誤ったウォーターマーク文言も正規のものに修正。全プロンプト（3箇所）を統一。 / Added missing left-side Japanese watermark to ChatGPT prompt and corrected Gemini watermark text. All 3 watermark locations now unified.
-- **[Docs]** READMEのFeatured Protocolsに新規5プロトコル（FACS / Anti-Camouflage & Anti-Glitter / 超圧縮プロンプト / セルフレビュー / シネマティックライティング）とオチ・ディレクターの機能解説を追記。アーキテクチャ記述を3層→6層に修正。 / Added 5 new protocols and Punchline Director feature docs to README. Fixed architecture description from 3-layer to 6-layer.
+### v3.48-alpha (2026-05-14)
+- **[Feature]** 「ゼロクリック360度検出」を実装。キャラシートと360度画像を同時ドロップで自動判別。 / Implemented "Zero-Click 360 Detection" for automatic 360° background recognition.
 
-### v3.34-alpha (2026-05-12)
-- **[Feature]** Punchline Director（オチ・ディレクター）を大幅拡張。4つの新オチパターン（夢オチ / サイコホラー / 盛大な勘違い / 打ち切りエンド）を追加し、合計10種類（＋Auto）のオチが選択可能に。UIドロップダウンとプロンプト注入ロジックを完全同期。 / Expanded the Punchline Director with 4 new comedy patterns (Dream, PsychoHorror, Misunderstanding, CanceledEnding), bringing the total to 10 (+Auto).
-- **[Fix]** 進捗ログ（assembleThought）のエスケープ文字バグ（\\n が改行されず文字として表示される問題）を修正。 / Fixed escaped newline rendering bug in progress log display.
+### v3.47-alpha (2026-05-13)
+- **[Enhancement]** ドキュメンタリーモード用コンテンツサニタイザーをv3.0に更新（3層ハイブリッド設計）。 / Upgraded Content Sanitizer to v3.0 with 3-tier hybrid design for Documentary Mode.
 
-### v3.33-alpha (2026-05-12)
-- **[Feature]** シナリオ出力テキストのヘッダーにPunchline（オチ）の方向性を明示的に追記するよう修正。コピー時にオチの種類が確認可能に。 / Appended the Punchline directive to scenario text output header for copy verification.
+### v3.46-alpha (2026-05-13)
+- **[Feature]** 「監査用メタデータ保存」機能を追加（JSON形式でプロンプト全文をダウンロード可能）。 / Added Audit Trail Metadata download feature for provenance and plagiarism defense.
 
-### v3.32-alpha (2026-05-12)
-- **[Feature]** Punchline Director（オチ制御）に日本語ローカライズとプロンプト同期を追加。UIドロップダウンとシナリオプロンプトの自動連携を強化。 / Enhanced Punchline Director with Japanese localization and prompt synchronization.
-
-### v3.31-alpha (2026-05-11)
-- **[Feature]** 事故防止プロトコルを全モデル（ChatGPT / Gemini）に統一適用。縦書きセリフ強制、セリフ勝手追加禁止、参照画像キャラシート再現禁止、カメラワーク平易化禁止、出力前チェックリスト追加。 / Applied accident prevention protocol universally across all models: vertical text enforcement, no unauthorized dialogue additions, no character sheet reproduction, camera work simplification ban, and pre-output checklist.
-- **[Fix]** コピーボタンで出力されるプロンプトにChatGPT用フォーマットが正しく適用されるよう同期修正。 / Synced copy button prompt output with ChatGPT formatting.
-
-### v3.26-alpha (2026-05-11)
-- **[Feature]** キャラクター解析の安定性向上とエラーハンドリング強化。 / Improved character analysis stability and error handling.
-
-### v3.25-alpha (2026-05-11)
-- **[Feature]** 立ちポーズ技法の高度化（コントラポスト強制、足先揃え指示）をプロンプトに統合。 / Integrated advanced standing pose techniques (contrapposto enforcement, toe alignment) into prompts.
-
-### v3.24-alpha (2026-05-11)
-- **[Feature]** READMEのChangeLog自動降順整理とパージルールを確立。 / Established automatic changelog ordering and pruning rules.
-
-### v3.22-alpha (2026-05-11)
-- **[Feature]** 出力前セルフレビュープロトコル追加。AIが画像生成前にプロンプトの論理矛盾を自己検証。 / Added Self-Review Protocol for pre-generation prompt logic validation.
-
-### v3.20-alpha (2026-05-10)
-- **[Feature]** 5つの視覚品質強化を実装: 瞳キャッチライト強制、髪のエンジェルリング（天使の輪）強制、線の太さ階層制御、カラーパレット統一制御、シネマティックライティング強化。 / Added 5 visual quality improvements: eye catchlight enforcement, angel ring hair shine, line weight hierarchy, color palette unity, and cinematic lighting enhancement.
 

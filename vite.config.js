@@ -6,6 +6,8 @@ export default defineConfig({
   plugins: [react()],
   base: './',
   server: {
+    port: 5173,
+    strictPort: true,
     // ローカル開発時にブラウザのOriginヘッダーでAPIキーが拒否される問題を回避
     // 本番ビルド（GitHub Pages等）では使用されない
     proxy: {
