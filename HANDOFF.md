@@ -1,28 +1,26 @@
-# HANDOFF.md (v3.63-alpha)
+# HANDOFF.md (v3.64-alpha)
 
 ## Current Status
-- v3.63-alpha デプロイ中。起動バッチ（start_app.bat）のポート衝突修正を含む。
+- v3.64-alpha デプロイ準備中。起動バッチ（start_app.bat）の先頭にプロセスリセット機能を追加。
 
 ## Done
-- vite.config.js: port: 5173, strictPort: true を追加（ポート固定）。
-- start_app.bat: 前セッションで修正済み（他プロジェクトとの競合解消）。
-- package.json, index.html, src/App.jsx: バージョンをv3.63-alphaへ更新。
-- README.md: ChangeLogを降順に整理し、v3.63-alphaエントリを追加。
-- hf-nano-banana-pro/README.md: v3.63-alphaに更新。
+- start_app.bat 等のバッチファイルに `taskkill /F /IM node.exe` を追加し、ゾンビプロセスをクリーンアップするように修正。
+- package.json, index.html, src/App.jsx: バージョンをv3.64-alphaへ更新。
+- README.md: ChangeLogを更新し、v3.64-alphaエントリを追加。
 
 ## Remaining / Next Steps
-- GitHub Pages デプロイ検証。
+- GitHub Pages デプロイ（実行中）。
 - タグ打ち・GitHub Release作成。
-- HF Spaces デプロイ。
-- Cドライブへのバックアップ。
+- Cドライブへのバックアップ（ZIP展開）。
 
 ## Risks
 - なし。
 
-## Files Modified (v3.63-alpha)
-- vite.config.js
-- README.md
-- index.html
+## Files Modified (v3.64-alpha)
 - package.json
 - src/App.jsx
-- release_body.md
+- index.html
+- README.md
+- start_app.bat
+- HANDOFF.md
+

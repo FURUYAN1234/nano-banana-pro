@@ -706,6 +706,9 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v3.64-alpha (2026-05-18)
+- **[Fix]** 起動用バッチファイル（`start_app.bat`など）の先頭にプロセスリセット処理を追加。起動時のポート競合や前回のキャッシュ残りを完全に防止。 / Added a cleanup routine to startup batch files to terminate zombie processes (e.g., Node.js), resolving port collision and cache persistence issues.
+
 ### v3.63-alpha (2026-05-18)
 - **[Fix]** 起動バッチ（`start_app.bat`）が他プロジェクトと競合する問題を修正。`vite.config.js` にポート固定（`port: 5173`, `strictPort: true`）を追加し、複数プロジェクト同時起動時のポート衝突を防止。 / Fixed startup batch file conflict with other projects. Added port pinning (`port: 5173`, `strictPort: true`) to `vite.config.js` to prevent port collisions when running multiple projects simultaneously.
 

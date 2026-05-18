@@ -40,7 +40,7 @@ import { generateImageWithImagen } from './lib/imagen';
 import { generateImageWithOpenAI, setOpenAIApiKey, getOpenAIApiKey } from './lib/openai';
 import { callAI, setActiveEngine, getActiveEngine, getEngineDisplayName } from './lib/ai-provider';
 
-const SYSTEM_VERSION = "v3.63-alpha";
+const SYSTEM_VERSION = "v3.64-alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {

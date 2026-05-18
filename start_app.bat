@@ -1,6 +1,9 @@
-@echo off
+﻿@echo off
 setlocal
 cd /d "%~dp0"
+
+echo [System] Clearing zombie node processes...
+taskkill /F /IM node.exe >nul 2>&1
 
 echo [Nano Banana Pro] Starting system...
 
@@ -44,3 +47,4 @@ exit /b
 echo [ERROR] Failed to start server.
 pause
 exit /b
+
