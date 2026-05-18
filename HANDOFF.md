@@ -1,27 +1,25 @@
-# HANDOFF.md (v3.65-alpha)
+# HANDOFF.md (v3.66-alpha)
 
 ## Current Status
-- v3.65-alpha デプロイ準備中。OpenAI APIの句読点省略問題を解決。
+- v3.66-alpha デプロイ準備中。ChatGPTモードでの生成画像のノイズ低減プロンプトの調整を完了。
 
 ## Done
-- src/App.jsx: シナリオプロンプトの末尾に句読点ルールの絶対厳守リマインダーを追記。
-- src/lib/openai-text.js: Systemメッセージに句読点ルールの強制を追加（サンドイッチ手法）。
-- package.json, index.html, src/App.jsx: バージョンをv3.65-alphaへ更新。
+- src/App.jsx: ART STYLEセクションにNOISE REDUCTION等の指示を追加。
+- package.json, index.html, src/App.jsx: バージョンをv3.66-alphaへ更新。
 - README.md: ChangeLogを更新。
+- hf-nano-banana-pro/README.md: ChangeLogを更新。
 
 ## Remaining / Next Steps
-- GitHub Pages デプロイ（実行中）。
-- タグ打ち・GitHub Release作成。
-- Cドライブへのバックアップ（ZIP展開）。
+- デプロイの完了とローカル確認。
+- バックアップスクリプトの実行（ps1）。
 
 ## Risks
 - なし。
 
-## Files Modified (v3.65-alpha)
+## Files Modified (v3.66-alpha)
 - package.json
 - src/App.jsx
 - index.html
 - README.md
-- src/lib/openai-text.js
 - HANDOFF.md
 

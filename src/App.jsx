@@ -40,7 +40,7 @@ import { generateImageWithImagen } from './lib/imagen';
 import { generateImageWithOpenAI, setOpenAIApiKey, getOpenAIApiKey } from './lib/openai';
 import { callAI, setActiveEngine, getActiveEngine, getEngineDisplayName } from './lib/ai-provider';
 
-const SYSTEM_VERSION = "v3.65-alpha";
+const SYSTEM_VERSION = "v3.66-alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -3241,6 +3241,7 @@ ART STYLE:
 - Cinematic color grading with smooth light diffusion and gentle rim lighting on character edges.
 - Foreground characters have bold ink outlines with varied line weight. Add a subtle white glow outside the character's outline to prevent blending with the background.
 - Backgrounds should have slightly lower saturation and softer focus (shallow depth of field) to make characters pop.
+- NOISE REDUCTION: Strictly avoid intricate micro-textures, grainy noise, rough surfaces, excessive gloss, random sparkling, or muddy overlays. Keep character surfaces incredibly smooth and clean, while maintaining dramatic cel-shading. Prioritize readable silhouettes and bold outlines over excessive micro-details.
 - ${styleCore}
 - Setting: ${safeLocation}
 ${bg360Image && bg360Analysis && bg360Enabled ? (

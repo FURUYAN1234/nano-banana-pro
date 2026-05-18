@@ -706,6 +706,9 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v3.66-alpha (2026-05-19)
+- **[Enhancement]** ChatGPTモードのプロンプトを最適化。GPT-Image-2特有のガビガビや不要なノイズ（キラキラ・微細なテクスチャ）を抑制し、クリーンで明瞭なセルルックとドラマチックな陰影を保つよう画質調整指示を追加。 / Optimized the ChatGPT mode prompt by adding image quality adjustment instructions. This suppresses GPT-Image-2 specific noise (graininess, excessive glitter, micro-textures) while maintaining a clean, clear cel-look and dramatic cel-shading.
+
 ### v3.65-alpha (2026-05-18)
 - **[Fix]** OpenAI(ChatGPT)利用時に、セリフの末尾から句読点（。や！）が欠落する問題を修正。SystemプロンプトとUserプロンプトの両方から「絶対厳守フォーマット」として句読点の付与を強制（サンドイッチ手法）するように改善。 / Fixed an issue where OpenAI (ChatGPT) would omit punctuation marks at the end of character dialogue. Implemented a "Sandwich Method" by enforcing strict punctuation formatting rules in both System and User prompts to guarantee compliance.
 
