@@ -716,6 +716,7 @@ Developed by **FURU**
 ## 📋 ChangeLog
 
 ### v3.72-alpha (2026-05-19)
+- **[Fix]** ダイアログ抽出ロジック（`extractDialogueOnly`）を改善し、カッコ付きト書きや段落形式のシナリオでもセリフを取りこぼさずに抽出できるよう正規表現フォールバックを修正。 / Improved dialogue extraction logic (`extractDialogueOnly`) to accurately parse multi-character and paragraph-formatted scenarios without missing speech bubbles.
 - **[UI/UX]** シナリオ入力欄のプレースホルダーとラベルを更新し、外部生成ツール（Story Maker等）からの直接的なシナリオコピー＆ペースト（Topic:, Location: 等を含むテキスト）に対応していることを明記。UI上での利用手順を直感化。 / Updated the scenario input placeholder and label to explicitly state that users can directly paste externally generated scenarios (e.g., from Story Maker) containing tags like `Topic:` and `Location:`, clarifying the cross-tool workflow directly within the UI.
 
 ### v3.71-alpha (2026-05-19)

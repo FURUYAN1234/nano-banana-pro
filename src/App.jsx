@@ -2874,14 +2874,16 @@ Available lens effects — EACH PANEL MUST USE ONE:
 
           if (match && match[1].trim()) {
             let tempSpeaker = match[1].replace(/^[【\[（(]/, '').replace(/[】\]）)]$/, '').trim();
+            // ベースとなる話者名（カッコ内のト書きを無視）
+            let tempSpeakerBase = tempSpeaker.replace(/[（(].*?[）)]/g, '').trim();
 
             // [v2.31] 話者名バリデーション強化: ト書き誤検出防止
             // 「サエコが、売店のカウンターに」のような文章が話者名として誤検出されるのを防ぐ
-            const hasSentenceParticles = /[がをにでへはもとからまでより]/.test(tempSpeaker) && tempSpeaker.length > 5;
-            const isTooLong = tempSpeaker.length > 12;
-            const isMetaTag = /^(Camera|Location|Outfit|EMOTION|状況|Action|リアクション|Reaction|設定|物理描写|SFX|効果音|BGM|ナレーション|テロップ)$/i.test(tempSpeaker);
+            const hasSentenceParticles = /[がをにでへはもとからまでより]/.test(tempSpeakerBase) && tempSpeakerBase.length > 5;
+            const isTooLong = tempSpeakerBase.length > 20; // 複数人「アカリ・ヒカリ・ミク・リン」を許容するため長めに変更
+            const isMetaTag = /^(Camera|Location|Outfit|EMOTION|状況|Action|リアクション|Reaction|設定|物理描写|SFX|効果音|BGM|ナレーション|テロップ)$/i.test(tempSpeakerBase);
             // [v2.45] 効果音パターン検出: 同じ文字(長音含む)の繰り返しは効果音（シーーーン、ゴゴゴ等）
-            const isSoundEffect = /^[^a-zA-Z]*([\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF])([ーッっ]*\1){1,}[ーッっ！!ン]*$/u.test(tempSpeaker.replace(/[（(].*$/, '').trim());
+            const isSoundEffect = /^[^a-zA-Z]*([\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF])([ーッっ]*\1){1,}[ーッっ！!ン]*$/u.test(tempSpeakerBase);
             // [v2.45] リアクション指示混入検出: 「（リアクション」等が話者名に含まれていたら除外
             const hasReactionTag = /[（(]\s*リアクション/i.test(match[1]);
 
@@ -2889,8 +2891,8 @@ Available lens effects — EACH PANEL MUST USE ONE:
               // 文章構造・メタタグ・効果音・リアクション指示を含む → 話者名ではない
             } else if (validCharacters.some(c => {
               const nameOnly = c.split(/[（(]/)[0].trim();
-              return tempSpeaker === c || tempSpeaker === nameOnly || nameOnly === tempSpeaker;
-            }) || tempSpeaker === "全員" || tempSpeaker === "Speaker" || match[0].trim().endsWith(':') || match[0].trim().endsWith('：')) {
+              return tempSpeakerBase === c || tempSpeakerBase === nameOnly || nameOnly === tempSpeakerBase || tempSpeakerBase.includes(nameOnly);
+            }) || tempSpeakerBase.includes("全員") || tempSpeakerBase === "Speaker" || match[0].trim().endsWith(':') || match[0].trim().endsWith('：')) {
               isDialogue = true;
             }
           } else if (line.trim().startsWith('「')) {
@@ -2906,6 +2908,8 @@ Available lens effects — EACH PANEL MUST USE ONE:
           if (isDialogue) {
             // Remove Speaker Name and Colon
             clean = clean.replace(/^.*?(?:[:：]|「)\s*/, '');
+            // トリムを行ってからカッコを除去（末尾のスペースで除去漏れが発生するのを防ぐため）
+            clean = clean.trim();
             // Remove surrounding Japanese quotes to prevent hallucination in images
             clean = clean.replace(/^「+/, '').replace(/」+$/, '');
             // [v2.04] Remove parenthetical stage directions (e.g. (ため息) or （笑顔）) to prevent them from rendering as printed text in balloons
