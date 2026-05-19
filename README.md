@@ -98,6 +98,12 @@ With a single click, the system autonomously executes the entire pipeline (from 
 キャラクターとお題を設定した状態から、シナリオ生成・プロンプト構築・画像生成の全ステップを人間の介入なしに一気通貫で自律実行するモードです。
 
 ### 🔁 Endless Mode / 無限ループモード
+The system continuously generates completely new manga infinitely until the user explicitly stops it. It combines trend crawling and image generation loops.
+ユーザーが停止ボタンを押すまで、無限に新しい漫画を生成し続ける機能です。トレンド取得と画像生成のループを全自動で延々と回します。
+
+### 🧠 Local RAG Dictionary / 自律型ローカルRAG辞書
+Integrates a strictly structured local knowledge base (`knowledge.js`) that dynamically extracts location-specific props, ambient details, and emotion-based physical reactions. This RAG (Retrieval-Augmented Generation) pipeline forces the AI to use concrete objects instead of vague descriptions, drastically improving narrative resolution.
+あらかじめ構築されたローカルRAG辞書（`knowledge.js`）を内蔵。設定された場所（Location）特有の小道具や環境情報、キャラクターの感情に合わせた物理的なリアクションを動的に抽出し、プロンプトへ強制注入します。これにより、AI特有の「抽象的でフワッとした描写」を排除し、ディテールに富んだ高品質なシナリオを生成します。
 
 An experimental feature that, upon completing a generation, automatically selects a new topic and continuously produces new manga while preserving the initial character settings.
 フルオート生成完了後、キャラクター設定を維持したまま、自動的に新しいニュースやランダムなお題を取得し、次々と新しいシナリオと漫画を延々と生成し続けるモードです（完全な放置運用が可能）。
