@@ -1,15 +1,13 @@
-# HANDOFF.md (v3.69-alpha)
+# HANDOFF.md (v3.70-alpha)
 
 ## Current Status
-- v3.69-alpha デプロイ準備中。
-- v3.68-alphaでローカルRAG（`knowledge.js`）を統合し、指定された場所や感情に基づくディテールの動的注入を実装。
+- v3.70-alpha デプロイ準備中。
 - v3.69-alphaでOpenAI (gpt-image-2) 生成時のタイムアウトを4分から5分へ延長し、UI上の待機表示を「2〜5分」へ修正。
+- v3.70-alphaでローカルRAG（`knowledge.js`）へITカテゴリ（ソフトウェア開発、SIer、インフラ、AI、セキュリティ等）を追加。
 
 ## Done
-- src/lib/knowledge.js: 新規作成、RAG辞書統合 (v3.68-alpha)
-- src/App.jsx: プロンプトパイプラインの刷新、タイマーテキストの修正 (v3.68-alpha, v3.69-alpha)
-- src/lib/openai.js: タイムアウトを300秒(5分)へ延長 (v3.69-alpha)
-- package.json, index.html, src/App.jsx: バージョンをv3.69-alphaへ一斉更新。
+- src/lib/knowledge.js: ITカテゴリを追加 (v3.70-alpha)
+- package.json, index.html, src/App.jsx: バージョンをv3.70-alphaへ一斉更新。
 - README.md: ChangeLogを更新。
 - HANDOFF.md: バージョンを更新。
 

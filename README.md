@@ -715,6 +715,9 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v3.70-alpha (2026-05-19)
+- **[Feature]** ローカルRAG（知識辞書 `knowledge.js`）に「ソフトウェア開発」「SIer・炎上プロジェクト」「インフラ・ネットワーク」「AI開発」「ハッカー・セキュリティ」の5つのIT・テクノロジー系カテゴリを追加。IT関連のニュースやシナリオにおいて、より解像度の高いディテール（小道具・環境音など）を描写可能に。 / Added 5 IT/technology categories (Software Development, SIer/Troubled Projects, Infrastructure/Network, AI Development, Hacker/Security) to the Local RAG knowledge dictionary. This enables higher resolution detailing in IT-related scenarios and news generation.
+
 ### v3.69-alpha (2026-05-19)
 - **[Update]** OpenAI (gpt-image-2) 生成時のタイムアウト設定を延長（4分→5分）し、UI上の待機時間案内表示を「2〜4分」から「2〜5分」へ修正。生成が長時間に及ぶケースでのエラー発生頻度を低減。 / Extended OpenAI (gpt-image-2) generation timeout limit from 4 to 5 minutes (300 seconds). Updated the UI wait-time message to reflect "2-5 minutes". This reduces premature timeout errors during extended generation periods.
 

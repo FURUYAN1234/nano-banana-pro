@@ -41,7 +41,7 @@ import { generateImageWithOpenAI, setOpenAIApiKey, getOpenAIApiKey } from './lib
 import { callAI, setActiveEngine, getActiveEngine, getEngineDisplayName } from './lib/ai-provider';
 import { getLocationDetails, getRandomReactions } from './lib/knowledge';
 
-const SYSTEM_VERSION = "v3.69-alpha";
+const SYSTEM_VERSION = "v3.70-alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
