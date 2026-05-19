@@ -41,7 +41,7 @@ import { generateImageWithOpenAI, setOpenAIApiKey, getOpenAIApiKey } from './lib
 import { callAI, setActiveEngine, getActiveEngine, getEngineDisplayName } from './lib/ai-provider';
 import { getLocationDetails, getRandomReactions } from './lib/knowledge';
 
-const SYSTEM_VERSION = "v3.71-alpha";
+const SYSTEM_VERSION = "v3.72-alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -4844,14 +4844,14 @@ The environment and effects must ECHO the character's emotion, not just be a bac
                 {/* RESULT TEXTAREA (Fix Overlap) */}
                 <div className="flex flex-col gap-2">
                   <span className="px-2 bg-[#0f1115] text-xs font-bold text-slate-400 w-fit rounded">
-                    ▼ 生成されるシナリオ (編集可)
+                    ▼ 生成されるシナリオ (編集可 / 外部シナリオ貼付OK)
                   </span>
                   <textarea
                     value={scenario}
                     onChange={(e) => setScenario(e.target.value)}
                     style={{ color: '#ffffff', backgroundColor: '#000000', opacity: 1 }}
                     className="w-full min-h-[200px] p-6 rounded-2xl text-base border-2 border-slate-700/50 focus:border-blue-500 focus:shadow-md outline-none leading-relaxed resize-y font-medium placeholder-slate-700 font-mono"
-                    placeholder="ここに生成されたシナリオが表示されます..."
+                    placeholder="ここに生成されたシナリオが表示されます。💡 Story Maker等で作成した4コマ用シナリオがある場合は、STEP1のキャラクターシート解析後ここに直接貼り付けてSTEP3に進めます（STEP2の「シナリオ作成を実行」はスキップ可）。貼り付け可能なシナリオの仕様は Topic: / Location: / Outfit: / Punchline: / Scenario: の形式に準拠してください。"
                   />
                   {/* [v3.13] シナリオ結果 コピーボタン */}
                   <div className="mt-2 relative z-50">

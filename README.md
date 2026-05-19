@@ -715,6 +715,9 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v3.72-alpha (2026-05-19)
+- **[UI/UX]** シナリオ入力欄のプレースホルダーとラベルを更新し、外部生成ツール（Story Maker等）からの直接的なシナリオコピー＆ペースト（Topic:, Location: 等を含むテキスト）に対応していることを明記。UI上での利用手順を直感化。 / Updated the scenario input placeholder and label to explicitly state that users can directly paste externally generated scenarios (e.g., from Story Maker) containing tags like `Topic:` and `Location:`, clarifying the cross-tool workflow directly within the UI.
+
 ### v3.71-alpha (2026-05-19)
 - **[Docs]** story-maker側からの要請に基づき、プロジェクト間の直接ファイル編集（クロスプロジェクト汚染）を禁止し、NBP側からの一方的な参照による同期体制へ移行するためのルール整備と仕様ドキュメント(`docs/scenario_spec.md`)を作成。 / Established Cross-Project Isolation rules to prevent autonomous file modification in the `story-maker` project and generated a dedicated `scenario_spec.md` for safe parser specification syncing.
 

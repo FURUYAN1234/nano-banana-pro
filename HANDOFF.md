@@ -1,14 +1,13 @@
-# HANDOFF.md (v3.71-alpha)
+# HANDOFF.md (v3.72-alpha)
 
 ## Current Status
-- v3.71-alpha デプロイ準備中。
-- story-maker側からの要請に基づき、プロジェクト間の直接ファイル編集（クロスプロジェクト汚染）を禁止し、NBP側からの一方的な参照による同期体制へ移行するためのルール整備と仕様ドキュメント(`docs/scenario_spec.md`)を作成しました。
+- v3.72-alpha デプロイ準備中。
+- シナリオ入力欄のUIを更新し、外部生成ツール（Story Maker等）からの直接的なシナリオコピー＆ペーストに対応していることを明記しました。
 
 ## Done
-- docs/project_standards.md: Cross-Project Isolationセクションを追加 (v3.71-alpha)
-- docs/scenario_spec.md: 新規作成 (v3.71-alpha)
-- package.json, index.html, src/App.jsx: バージョンをv3.71-alphaへ一斉更新。
-- README.md: ChangeLogを更新し、古い履歴をパージ。
+- src/App.jsx: シナリオ入力欄のプレースホルダーとラベルを更新。
+- package.json, index.html, src/App.jsx: バージョンをv3.72-alphaへ一斉更新。
+- README.md: ChangeLogを更新。
 - HANDOFF.md: バージョンを更新。
 
 ## Remaining / Next Steps
