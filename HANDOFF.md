@@ -1,13 +1,14 @@
-# HANDOFF.md (v3.66-alpha)
+# HANDOFF.md (v3.67-alpha)
 
 ## Current Status
-- v3.66-alpha デプロイ準備中。ChatGPTモードでの生成画像のノイズ低減プロンプトの調整を完了。
+- v3.67-alpha デプロイ準備中。ナラティブエンジンの3つの新ガード（Knowledge Boundary, Guard S, Guard M）の競合を解消するパッチを適用完了。
 
 ## Done
-- src/App.jsx: ART STYLEセクションにNOISE REDUCTION等の指示を追加。
-- package.json, index.html, src/App.jsx: バージョンをv3.66-alphaへ更新。
+- src/App.jsx: Knowledge Boundaryの「知らない＝登場禁止」ではない補足追加、Guard Sのト書き1文制限追加、Guard Mに対するドキュメンタリーモード優先順位を明記。
+- package.json, index.html, src/App.jsx: バージョンをv3.67-alphaへ更新。
 - README.md: ChangeLogを更新。
 - hf-nano-banana-pro/README.md: ChangeLogを更新。
+- HANDOFF.md: バージョンを更新。
 
 ## Remaining / Next Steps
 - デプロイの完了とローカル確認。
@@ -16,7 +17,7 @@
 ## Risks
 - なし。
 
-## Files Modified (v3.66-alpha)
+## Files Modified (v3.67-alpha)
 - package.json
 - src/App.jsx
 - index.html

@@ -373,13 +373,16 @@ Even with perfect structure and punchline distribution, AI tends to write safe, 
 
 **Layer 6 — Advanced Narrative Integration (v3.00+) / 第6層 — 高度な物語メソッドの統合:**
 
-To further elevate the 4-panel format to professional storytelling standards, the system integrates advanced narrative techniques from the Story Maker engine:
+To further elevate the 4-panel format to professional storytelling standards, the system integrates advanced narrative techniques developed across our AI Creative Suite ecosystem:
 
-4コマ漫画をプロレベルの物語水準へと引き上げるため、Story Makerエンジンから高度な物語技法を統合しました：
+4コマ漫画をプロレベルの物語水準へと引き上げるため、AIクリエイティブスイート全体で培った高度な物語技法を統合しています：
 
 1. **Logline Anchoring (ログライン・アンカリング)**: The AI is forced to establish a single, clear logline before generating the panels. This acts as a structural anchor, ensuring that the setup (Panel 1) and the punchline (Panel 4) remain tightly connected, preventing the story from drifting or losing its core comedic premise. / シナリオ生成前に、必ず「ログライン（1行の物語の核）」を明文化させます。これが構造的な「錨（アンカー）」として機能し、1コマ目（フリ）と4コマ目（オチ）が強固に結びつき、物語がブレたり面白さの軸が失われるのを防ぎます。
 2. **Subtext-Enforced Dialogue (サブテキスト制約)**: Characters are forbidden from simply stating what is happening. The AI is trained to create a "gap" between what a character says (the facade) and what is actually occurring or what they truly feel (the reality). This irony generates natural, character-driven humor without relying on slapstick. / キャラクターが「見たまま」を説明することを禁止。言葉（建前）と実際の行動・感情（本音）の間に「ズレ（サブテキスト）」を生み出させます。このアイロニーにより、単なるドタバタではない、キャラクターの内面に基づいた自然な笑いを生み出します。
 3. **Stakes & Escalation (代償とインフレーション)**: Every conflict must have real "Stakes" (what the character loses if they fail). By raising the stakes in Panel 3, the final resolution or punchline in Panel 4 becomes significantly more impactful, transforming a mild joke into a dramatic climax. / すべての対立には「代償（失敗したらどうなるか）」が設定されます。3コマ目で代償（ピンチ）を吊り上げることで、4コマ目の解決（または爆発）のインパクトが飛躍的に高まり、単なる「ちょっとした冗談」が「ドラマチックなオチ」へと変貌します。
+4. **Guard S — Sensory Balance Enforcement (五感バランスの強制)**: Stage directions (ト書き) are prohibited from relying solely on visual descriptions. Each panel must include at least one non-visual sensory element — auditory (footsteps, creaking doors), tactile (cold wind, sweat), olfactory (food aromas, damp air), or interoceptive (stomach tightening, chills). Across all 4 panels, a minimum of 2 distinct sensory types must be used. This transforms static pose-collections into living, breathing scenes that the image generation AI can interpret as atmospheric compositions rather than flat character arrangements. / ト書き（状況・アクション描写）が視覚情報のみに偏ることを禁止。各コマに聴覚（足音、軋む音）、触覚（風の冷たさ、汗）、嗅覚（料理の匂い、湿った空気）、体内感覚（胃が締まる、背筋が凍る）のいずれかを最低1つ含めることを義務化。4コマ全体では最低2種類の感覚を使用。これにより画像生成AIが「空気感」を拾い、単なるポーズ集から「生きた場面」へと進化します。
+5. **Guard M — Metaphor Quality Gate (比喩クリシェ排除)**: A strict negative filter that bans overused AI-default metaphors (e.g., "time stood still", "heart leaped out", "heavy as lead", "struck by lightning") from both stage directions and dialogue. Instead, the AI is forced to construct metaphors from materials native to the panel's setting (Location) — for example, ramen shop → "silence stretched like overcooked noodles"; courtroom → "words as cold as a verdict". Metaphor usage is capped at 2 per scenario to prevent dilution of visual information density. / ト書き・セリフの両方において、AI特有の使い古された定型比喩（「時間が止まった」「心臓が飛び出しそう」「鉛のように重い」「雷に打たれたような」等）を完全禁止するネガティブフィルター。代わりに、そのコマの舞台（Location）に由来する素材から比喩を構築することを強制します（例：ラーメン屋→「麺のように伸びきった沈黙」、法廷→「判決文のように冷たく響く」）。比喩は1シナリオ最大2つに制限し、情報密度の低下を防止。
+6. **Knowledge Boundary Lock (キャラクター知識境界の遵守)**: Before writing each character's dialogue, the AI must verify what that character actually knows versus what they don't. Characters with "otaku" personality settings are prohibited from suddenly demonstrating political expertise; "airhead" characters cannot deliver logical analysis — unless the gap is intentionally used as a reversal gag. Cross-panel information leaks are also blocked: a character who was absent from a scene cannot react to events they didn't witness (unless hearsay is explicitly described). This prevents the common AI failure mode of homogenizing all characters into omniscient, interchangeable speakers. / 各キャラのセリフを書く前に、そのキャラが「何を知っていて、何を知らないか」の確認を義務化。「オタク」設定のキャラが政治を語ったり、「天然」キャラが論理分析したりするのは、逆転ギャグでない限り禁止。コマ間の情報漏洩も遮断：ある場面にいなかったキャラが、見ていない出来事に反応するのは禁止（伝聞の描写がない限り）。AIが全キャラを「何でも知っている同質的な話者」に均質化するハルシネーションを防止します。
 
 ---
 
@@ -706,8 +709,12 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v3.67-alpha (2026-05-19)
+- **[Fix]** ナラティブエンジンのルール間矛盾を解消する3つのパッチを適用（1. キャラクター知識境界に「知らない＝登場禁止ではない」の補足を追記、2. Guard S（五感強制）によるト書き肥大化を防ぐため「1文以内」の量的制限を追加、3. Guard M（比喩制約）よりもドキュメンタリーモードの原文忠実性が優先される旨を明記）。 / Applied 3 patches to resolve minor conflicts between narrative engine rules (1. Clarified that Knowledge Boundary does not prohibit appearances; 2. Added a 1-sentence limit to Guard S to prevent bloated stage directions; 3. Clarified that Documentary Mode's source fidelity takes precedence over Guard M).
+
 ### v3.66-alpha (2026-05-19)
 - **[Enhancement]** ChatGPTモードのプロンプトを最適化。GPT-Image-2特有のガビガビや不要なノイズ（キラキラ・微細なテクスチャ）を抑制し、クリーンで明瞭なセルルックとドラマチックな陰影を保つよう画質調整指示を追加。 / Optimized the ChatGPT mode prompt by adding image quality adjustment instructions. This suppresses GPT-Image-2 specific noise (graininess, excessive glitter, micro-textures) while maintaining a clean, clear cel-look and dramatic cel-shading.
+- **[Enhancement]** ナラティブエンジン強化：3つの新ガードを導入。Guard S（五感バランス強制：視覚偏重を禁止し聴覚・触覚・嗅覚・体内感覚を義務化）、Guard M（比喩クリシェ排除：AI定型比喩を禁止し舞台由来の独自比喩を強制）、Knowledge Boundary Lock（キャラ知識境界遵守：キャラが知らない情報を喋るハルシネーションを防止）。 / Narrative Engine Enhancement: Introduced 3 new guards — Guard S (Sensory Balance Enforcement: mandates non-visual sensory elements in stage directions), Guard M (Metaphor Quality Gate: bans cliché metaphors and forces location-derived originals), and Knowledge Boundary Lock (prevents characters from speaking about information they couldn't know).
 
 ### v3.65-alpha (2026-05-18)
 - **[Fix]** OpenAI(ChatGPT)利用時に、セリフの末尾から句読点（。や！）が欠落する問題を修正。SystemプロンプトとUserプロンプトの両方から「絶対厳守フォーマット」として句読点の付与を強制（サンドイッチ手法）するように改善。 / Fixed an issue where OpenAI (ChatGPT) would omit punctuation marks at the end of character dialogue. Implemented a "Sandwich Method" by enforcing strict punctuation formatting rules in both System and User prompts to guarantee compliance.
