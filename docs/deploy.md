@@ -116,6 +116,9 @@ C:\Users\sx717\Antigravity\hf-nano-banana-pro
 - ❌ バージョン同期の3箇所（package.json, App.jsx, index.html）を実ファイルで確認せずにデプロイしない。
 - ❌ **GitHub Release の作成にブラウザサブエージェントを使用しない。** 必ず `gh release create` CLI を使うこと。サブエージェントは pre-release チェックボックスを誤ってONにするリスクがある。
 - ❌ **README.md をエンコーディング確認なしで編集しない。** 書き込み前に UTF-8 であることを確認し、文字化けテキストの追加を防ぐこと。
+- ❌ **【超重要】既存のバージョン番号・Gitタグ・リリースを上書き・強制修正してはならない。** 誤ったバージョンでコミット・デプロイしてしまった場合は、`gh release edit` や `git tag -f` 等による「過去の修正（歴史改竄）」を絶対に行わず、**必ず新しいバージョン番号（パッチバージョンのインクリメント）を発行して「修正版」として前へ進めること（Fail Forwardの原則）**。過去のリリースをいじるとGitHub ReleasesでDraftが残ったり、Latestタグが破壊されたりする大惨事を引き起こすため厳禁である。
+- ❌ **【超重要】デプロイやバージョン更新の前に、必ず現在のリモートの状況を確認すること。** AIがセッションを跨いだり記憶が飛んでいるケースに備え、デプロイやコミットの前に必ず `git tag` や `gh release list` を実行し、今から付与しようとしているバージョン番号が既に発行済みでないかを厳密に監査してから作業に入ること。
+- ❌ **【超重要】PowerShell の `Set-Content` 等でコードファイル（`.js`, `.jsx`, `.json` 等）を編集してはならない。** 特に Windows PS 5.1 環境では、`-Encoding UTF8` を指定しても**BOM（Byte Order Mark）が混入**し、Viteのビルド（`SyntaxError: Unexpected token '﻿'`）やESMのパースを完全に破壊する。ファイルの編集には必ず専用のAI置換ツールか、Node.jsスクリプトを使用すること。
 
 ## 自動チェック項目（pre_deploy_check.js で `npm run deploy` 時に自動検証）
 `npm run deploy` を実行すると、以下が自動的にチェックされる（不合格ならビルドが停止する）：
