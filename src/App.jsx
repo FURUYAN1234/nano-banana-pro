@@ -39,8 +39,9 @@ import { setApiKey, getApiKey } from './lib/gemini';
 import { generateImageWithImagen } from './lib/imagen';
 import { generateImageWithOpenAI, setOpenAIApiKey, getOpenAIApiKey } from './lib/openai';
 import { callAI, setActiveEngine, getActiveEngine, getEngineDisplayName } from './lib/ai-provider';
+import { getLocationDetails, getRandomReactions } from './lib/knowledge';
 
-const SYSTEM_VERSION = "v3.67-alpha";
+const SYSTEM_VERSION = "v3.69-alpha";
 
 // --- Error Translation Utility ---
 const translateApiError = (errorMsg) => {
@@ -1833,6 +1834,13 @@ ${scenario}
       const forcedLocation = locationList[Math.floor(Math.random() * locationList.length)];
       console.log("Forced Location:", forcedLocation); // Debug log
 
+      // [v3.68] ローカルRAGによるディテールの動的注入
+      const activeLocation = bg360Image && bg360Analysis && bg360Enabled 
+        ? bg360Analysis.location 
+        : (customLocation.trim() ? customLocation.trim() : forcedLocation);
+      const ragLocationDetails = getLocationDetails(activeLocation);
+      const ragReactions = getRandomReactions();
+
       const scenarioPrompt = `
         【Context Force Reboot】
         Ignore all previous instructions and conversation history.This is a fresh, standalone session.
@@ -1887,6 +1895,13 @@ ${scenario}
           - **⚠️【重要: クローン化防止】⚠️** 「白のビキニ」「デニムショートパンツ」のように細かく指定しすぎないこと。細かく指定すると全キャラクターが全く同じ服を着てしまうため、必ず**大分類のカテゴリー（ナース服、私服、パジャマなど）**に留め、個々の着こなしは画像AIに委ねよ。
           - 画像生成プロンプトでも選定した服装タグが反映される前提で、シナリオ内のト書き(Action)テキストにもその服装に基づく自然な描写を含めること。
           `}
+
+       6. **【環境・リアクションのディテール注入 (Local RAG)】**:
+          以下のデータベースを参照し、指定された場所の小道具や環境、感情に応じた限界突破リアクションを、**シナリオのト書き(Action)に必ず組み込んで描写**せよ。AI特有の抽象的な表現は禁止する。
+          
+          ${ragLocationDetails}
+          
+          ${ragReactions}
 
          【シナリオ構成・演出の絶対厳守 (v2.99 Alpha)】
           0. **全員登場義務 (Mandatory All-Cast)**:
@@ -3686,7 +3701,7 @@ Do NOT describe the image in text. Do NOT write a prompt. DRAW the image directl
       let base64Img, generatedModelId;
       if (enableOpenAIApi) {
         // [v3.56] OpenAI API直接生成
-        statCallback("[INFO] ⏳ gpt-image-2 の画像生成には通常2〜4分かかります。しばらくお待ちください...");
+        statCallback("[INFO] ⏳ gpt-image-2 の画像生成には通常2〜5分かかります。しばらくお待ちください...");
         const res = await generateImageWithOpenAI(currentPrompt, statCallback);
         base64Img = res.base64Img;
         generatedModelId = res.usedModel;
@@ -5668,7 +5683,7 @@ No explanations. No partial results.`;
                       </p>
                       <p className="text-xs text-blue-200/90 mt-4 font-bold text-center leading-relaxed">
                         高品質な画像を生成しています。<br />
-                        <span className="text-orange-400">※最大2〜4分程度かかる場合があります。<br/>このままお待ちください。</span>
+                        <span className="text-orange-400">※最大2〜5分程度かかる場合があります。<br/>このままお待ちください。</span>
                       </p>
                     </div>
                   </div>

@@ -709,6 +709,12 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v3.69-alpha (2026-05-19)
+- **[Update]** OpenAI (gpt-image-2) 生成時のタイムアウト設定を延長（4分→5分）し、UI上の待機時間案内表示を「2〜4分」から「2〜5分」へ修正。生成が長時間に及ぶケースでのエラー発生頻度を低減。 / Extended OpenAI (gpt-image-2) generation timeout limit from 4 to 5 minutes (300 seconds). Updated the UI wait-time message to reflect "2-5 minutes". This reduces premature timeout errors during extended generation periods.
+
+### v3.68-alpha (2026-05-19)
+- **[Feature]** ローカルRAG（知識辞書 `knowledge.js`）を統合。指定された場所（Location）特有の小道具・環境音、および感情に応じた物理的リアクションのアクションリストを動的に抽出し、シナリオ生成プロンプトへ強制注入する仕組みを追加。これにより、AI特有の「抽象的でフワッとした描写」を防ぎ、よりディテールに富んだ描写を実現。 / Integrated Local RAG (Knowledge Dictionary `knowledge.js`). Dynamically extracts location-specific props/ambient sounds and emotion-based physical reactions to inject into the scenario generation prompt, preventing vague AI descriptions and ensuring rich, detailed output.
+
 ### v3.67-alpha (2026-05-19)
 - **[Fix]** ナラティブエンジンのルール間矛盾を解消する3つのパッチを適用（1. キャラクター知識境界に「知らない＝登場禁止ではない」の補足を追記、2. Guard S（五感強制）によるト書き肥大化を防ぐため「1文以内」の量的制限を追加、3. Guard M（比喩制約）よりもドキュメンタリーモードの原文忠実性が優先される旨を明記）。 / Applied 3 patches to resolve minor conflicts between narrative engine rules (1. Clarified that Knowledge Boundary does not prohibit appearances; 2. Added a 1-sentence limit to Guard S to prevent bloated stage directions; 3. Clarified that Documentary Mode's source fidelity takes precedence over Guard M).
 

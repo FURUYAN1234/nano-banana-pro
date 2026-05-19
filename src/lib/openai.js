@@ -17,7 +17,7 @@ export const generateImageWithOpenAI = async (prompt, statCallback) => {
   }
 
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 240000); // 240s timeout（gpt-image-2は2分以上かかる実績あり）
+  const timeoutId = setTimeout(() => controller.abort(), 300000); // 300s timeout（gpt-image-2は3分以上かかる実績あり）
 
   let response;
   try {
@@ -40,7 +40,7 @@ export const generateImageWithOpenAI = async (prompt, statCallback) => {
     });
   } catch (e) {
     if (e.name === 'AbortError' || e.message.includes('aborted')) {
-      throw new Error("API Time out (180秒経過による強制切断)。サーバーが混雑しているか、応答がありません。");
+      throw new Error("API Time out (300秒経過による強制切断)。サーバーが混雑しているか、応答がありません。");
     }
     throw e;
   } finally {
