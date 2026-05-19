@@ -715,6 +715,9 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v3.71-alpha (2026-05-19)
+- **[Docs]** story-maker側からの要請に基づき、プロジェクト間の直接ファイル編集（クロスプロジェクト汚染）を禁止し、NBP側からの一方的な参照による同期体制へ移行するためのルール整備と仕様ドキュメント(`docs/scenario_spec.md`)を作成。 / Established Cross-Project Isolation rules to prevent autonomous file modification in the `story-maker` project and generated a dedicated `scenario_spec.md` for safe parser specification syncing.
+
 ### v3.70-alpha (2026-05-19)
 - **[Feature]** ローカルRAG（知識辞書 `knowledge.js`）に「ソフトウェア開発」「SIer・炎上プロジェクト」「インフラ・ネットワーク」「AI開発」「ハッカー・セキュリティ」の5つのIT・テクノロジー系カテゴリを追加。IT関連のニュースやシナリオにおいて、より解像度の高いディテール（小道具・環境音など）を描写可能に。 / Added 5 IT/technology categories (Software Development, SIer/Troubled Projects, Infrastructure/Network, AI Development, Hacker/Security) to the Local RAG knowledge dictionary. This enables higher resolution detailing in IT-related scenarios and news generation.
 
@@ -758,29 +761,3 @@ Developed by **FURU**
 
 ### v3.56-alpha (2026-05-17)
 - **[Fix]** ブラウザのパスワードマネージャーがOpenAI/GeminiのAPIキーを混同する問題を修正。 / Fixed API key autofill confusion between OpenAI and Gemini input fields.
-
-### v3.55-alpha (2026-05-17)
-- **[Feature]** ChatGPTモードのプロンプト最適化（2,000文字削減）。自然言語カメラ指示への置換。 / ChatGPT mode prompt optimization and natural language camera directives.
-
-### v3.54-alpha (2026-05-15)
-- **[Feature]** 360°背景統合パイプライン（Phase 3）の完了。マルチモーダル参照としてクロップ画像を注入。 / Completed 360° background integration pipeline with multimodal reference injection.
-
-### v3.53-alpha (2026-05-15)
-- **[Feature]** 360° 自律カメラAI、Canvas正距円筒クロップエンジン、Step 3ロックガードを実装。 / Implemented 360° Autonomous Camera AI, Canvas crop engine, and Step 3 lock guard.
-
-### v3.52-alpha (2026-05-15)
-- **[Feature]** 360°パノラマビューアーをThree.jsベースに刷新。衣装オーバーライドプロトコル追加。 / Upgraded 360° viewer to Three.js-based spherical viewer. Added Outfit Override Protocol.
-
-### v3.49-alpha (2026-05-14)
-- **[Fix]** 360度パノラマ背景のAPI並列処理フリーズ問題を直列実行で解決。ドロップゾーンUIにインジケーター追加。 / Fixed 360° panorama API parallelism freeze with sequential execution. Added drop zone indicators.
-
-### v3.48-alpha (2026-05-14)
-- **[Feature]** 「ゼロクリック360度検出」を実装。キャラシートと360度画像を同時ドロップで自動判別。 / Implemented "Zero-Click 360 Detection" for automatic 360° background recognition.
-
-### v3.47-alpha (2026-05-13)
-- **[Enhancement]** ドキュメンタリーモード用コンテンツサニタイザーをv3.0に更新（3層ハイブリッド設計）。 / Upgraded Content Sanitizer to v3.0 with 3-tier hybrid design for Documentary Mode.
-
-### v3.46-alpha (2026-05-13)
-- **[Feature]** 「監査用メタデータ保存」機能を追加（JSON形式でプロンプト全文をダウンロード可能）。 / Added Audit Trail Metadata download feature for provenance and plagiarism defense.
-
-
