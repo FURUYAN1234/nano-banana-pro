@@ -1,13 +1,13 @@
-# HANDOFF.md (v3.72-alpha)
+# HANDOFF.md (v3.73-alpha)
 
 ## Current Status
-- v3.72-alpha デプロイ準備中。
+- v3.73-alpha デプロイ準備中。
 - シナリオ入力欄のUIを更新し、外部生成ツール（Story Maker等）からの直接的なシナリオコピー＆ペーストに対応していることを明記しました。
 
 ## Done
 - src/App.jsx: ダイアログ抽出ロジック（`extractDialogueOnly`）を改善し、カッコ付きト書きや段落形式のシナリオでもセリフを取りこぼさずに抽出できるよう修正。
 - src/App.jsx: シナリオ入力欄のプレースホルダーとラベルを更新。
-- package.json, index.html, src/App.jsx: バージョンをv3.72-alphaへ一斉更新。
+- package.json, index.html, src/App.jsx: バージョンをv3.73-alphaへ一斉更新。
 - README.md: ChangeLogを更新。
 - HANDOFF.md: バージョンを更新。
 
