@@ -162,14 +162,32 @@ The environment and effects must ECHO the character's emotion, not just be a bac
 - Wind direction, particle effects (petals, leaves, snow, embers, rain), volumetric fog/mist, god rays, and atmospheric haze should all serve the emotional narrative.
 - ENVIRONMENTAL EMPATHY: If the character is sad, the sky could be overcast with a single break in the clouds. If joyful, golden light floods the scene. If angry, the environment reacts (cracking ground, swirling debris).
 - DEPTH LAYERS: Create clear foreground (blurred elements close to camera), midground (character in sharp focus), and background (atmospheric depth) for cinematic parallax.
-- ANTI-GLITTER RULE: Do NOT add random magical floating particles, sparkles, or fairy dust unless the emotion specifically calls for it (like wonder or magic). Keep the air intentional.
+- ANTI-GLITTER & ANTI-NOISE PROTOCOL:
+  * ABSOLUTELY NO ChatGPT-style magical floating particles, NO glittering/sparkling effects, NO dust motes, NO lens flares, NO moiré patterns. Keep the air completely clean and empty.
+  * ZERO NOISE TOLERANCE: The final image MUST be completely free of visual noise, grain, micro-texture artifacts, dithering patterns, and any speckle-like artifacts. Every surface must be CLEAN and SMOOTH.
+  * NO MICRO-DETAIL CLUTTER: Do NOT fill empty areas with random tiny dots, scratches, dust particles, or halftone-like noise patterns. Clean color fills and smooth gradients ONLY.
+  * NO OVER-RENDERING: Do NOT apply photorealistic texture rendering (cloth weave, skin pores, hair strand noise) to anime-style characters. Keep surfaces FLAT and CLEAN as in professional TV anime cel-shading.
 
 [ 5. ART STYLE & VISUAL FIDELITY ]
 - RENDER: High-budget Japanese TV anime feature film quality. Clean cel-shading with rich color depth, sharp ink contour lines, smooth gradients. NO photorealistic texturing, NO film grain, NO noise.
+- POSITIVE SAFE RENDERING STYLE: Clean anime illustration finish, smooth cel shading, soft clean shading, smooth gradients, clean color surfaces, low texture density, refined but not overly detailed material response, controlled exposure, soft diffused lighting, no visible grain, no speckled texture, no pointillism, no stippling, no dithering, no halftone dots, no noisy particles, no glitter dust, no gritty film grain, no rough paper texture, no canvas grain, no over-sharpened details.
+- BANNED PROMPT WORD COMBINATIONS — NEVER USE THESE:
+  * Do NOT combine: ultra-detailed + film grain + cinematic
+  * Do NOT combine: realistic texture + micro details
+  * Do NOT combine: magical particles + glowing dust
+  * Do NOT combine: high contrast + sharp details (use clean contrast + smooth edges instead)
+  * Do NOT combine: illustrative realism + gritty texture
+  * Do NOT use: paper grain, canvas texture, rough texture, grainy texture, overly crisp
 - LINE WEIGHT HIERARCHY: Foreground characters get 3px bold ink outlines. Background objects get 1px thin lines. This creates instant visual depth.
 - CHARACTER SEPARATION: Add a subtle 2-3px white glow (compositing rim) outside the character's outline to prevent blending with the background. Characters MUST have higher saturation and contrast than their environment.
 - HAIR: Must show a glossy anime-style shine band (angel ring / tenshi no wa). Individual strand detail at edges.
 - SKIN: Warm subsurface scattering hint on lit areas. Clean shadows with slight color shift (warm light = cool shadow, cool light = warm shadow).
+- THINGS TO AVOID:
+  * No floating close-up eyes or ghostly face overlays in backgrounds.
+  * No character sheet layout, expression grid, or reference sheet appearance.
+  * No extra characters beyond those specified.
+  * No sparkling light particles, no glowing dust, no magical particles, no floating embers, no volumetric dust.
+  * No film grain, paper grain, canvas texture, or rough textures.
 
 [ 6. TEXT & OUTPUT RULES ]
 - If speech bubbles or text are drawn, ALL text MUST be vertical Japanese. ZERO horizontal text.

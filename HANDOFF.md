@@ -1,8 +1,12 @@
-# HANDOFF.md (v4.0.0 / Stable Release)
+# HANDOFF.md (v4.01-alpha)
 
 ## Current Status
-- **Full Modularization & Cleanup Complete** (完全モジュール化＆最終クリーンアップ完了)
-  - v3.79 ～ v3.90 まで12回のイテレーションを経て、5,000行超のモノリシック `App.jsx` を完全にモジュール化。古いリリースノートの削除、セキュリティ監査、コードメトリクスの最終レビューを実施済み。
+- **Anti-Glitter / Anti-Noise Prompt Engine Sync Complete** (チラつき防止プロンプトの同期適用完了)
+  - `src/lib/prompts.js` にて強化されたノイズ除去・アンチキラキラ設定（Anti-Glitter & Anti-Noise Protocol）を、コントロールバー（`src/components/ControlBar.jsx`）の「1枚絵 ChatGPT用 感情シネマプロンプト」変数側にも同期。
+
+## Done (v4.01-alpha)
+- **Prompt Sync**: コントロールバー内の 1-pane emotional cinema prompt のクリーン化。
+- **Version Bump**: `package.json`, `constants.js`, `index.html`, `README.md`, `HANDOFF.md` のバージョンを `4.01-alpha` に同期。
 
 ## Done (v4.0.0 / Stable Release)
 - **Stable Transition**: `-alpha` のプレリリースタグを解除し、正式版 `v4.0.0` に移行。

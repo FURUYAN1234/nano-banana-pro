@@ -916,6 +916,9 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v4.01-alpha (2026-05-20)
+- ** [Fix] ** プロンプトエンジンのチラつき・キラキラ防止プロトコル（Anti-Glitter & Anti-Noise Protocol）強化に伴い、コントロールバーの「1枚絵 ChatGPT用 感情シネマプロンプトをコピー」ボタン内のプロンプト変数も同様のノイズ除去設定に同期適用。 / Synchronized noise reduction and anti-glitter settings to the 1-pane emotional cinema prompt inside the ControlBar to match the updated prompts.js engine.
+
 ### v4.0.0 (2026-05-20) — 正式版リリース / Stable Release
 - ** [Release] ** システムの完全モジュール化、非同期ステート同期バグの解決、およびリセット機能の修正を経て、正式版 **`v4.0.0`** としてリリース。プレリリースタグ（`-alpha`）を解除し、安定版として稼働を開始。 / Officially released as stable **`v4.0.0`** following complete modularization, asynchronous state sync fixes, and reset function validation. Removed the `-alpha` tag for stable production.
 - ** [Fix] ** 「エンジン変更・全リセット」および「シナリオから再生成（ソフトリセット）」実行時に、カテゴリ選択状態（ `categories` ）、自由入力トピック（ `manualTopic` ）、演出強化オプション（表情、ボディランゲージ、照明等）、ポリシー修正ログなどの各種設定ステートが初期値に初期化されないリセット漏れの不具合を修正。 (v3.91-alpha) / Fixed a bug where category selections, manual topics, scenario enhancement options, and policy logs were not cleared upon executing partialReset or hardReset. (v3.91-alpha)

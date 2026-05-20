@@ -595,7 +595,20 @@ ART STYLE:
 - Cinematic color grading with smooth light diffusion and gentle rim lighting on character edges.
 - Foreground characters have bold ink outlines with varied line weight. Add a subtle white glow outside the character's outline to prevent blending with the background.
 - Backgrounds should have slightly lower saturation and softer focus (shallow depth of field) to make characters pop.
-- NOISE REDUCTION: Strictly avoid intricate micro-textures, grainy noise, rough surfaces, excessive gloss, random sparkling, or muddy overlays. Keep character surfaces incredibly smooth and clean, while maintaining dramatic cel-shading. Prioritize readable silhouettes and bold outlines over excessive micro-details.
+- NOISE REDUCTION (Anti-Glitter & Anti-Noise Protocol):
+  * ABSOLUTELY NO ChatGPT-style magical floating particles, NO glittering/sparkling effects, NO dust motes, NO lens flares, NO moiré patterns. Keep the air completely clean and empty.
+  * ZERO NOISE TOLERANCE: The final image MUST be completely free of visual noise, grain, micro-texture artifacts, dithering patterns, and any speckle-like artifacts. Every surface must be CLEAN and SMOOTH.
+  * NO MICRO-DETAIL CLUTTER: Do NOT fill empty areas with random tiny dots, scratches, dust particles, or halftone-like noise patterns. Clean color fills and smooth gradients ONLY.
+  * NO OVER-RENDERING: Do NOT apply photorealistic texture rendering (cloth weave, skin pores, hair strand noise) to anime-style characters. Keep surfaces FLAT and CLEAN as in professional TV anime cel-shading.
+- [ POSITIVE SAFE RENDERING BLOCK — APPLY THESE STYLES ]
+  Clean anime illustration finish, smooth cel shading, soft clean shading, smooth gradients, clean color surfaces, low texture density, refined but not overly detailed material response, controlled exposure, soft diffused lighting, no visible grain, no speckled texture, no pointillism, no stippling, no dithering, no halftone dots, no noisy particles, no glitter dust, no gritty film grain, no rough paper texture, no canvas grain, no over-sharpened details.
+- [ BANNED PROMPT WORD COMBINATIONS — NEVER USE THESE ]
+  * Do NOT combine: ultra-detailed + film grain + cinematic
+  * Do NOT combine: realistic texture + micro details
+  * Do NOT combine: magical particles + glowing dust
+  * Do NOT combine: high contrast + sharp details (use clean contrast + smooth edges instead)
+  * Do NOT combine: illustrative realism + gritty texture
+  * Do NOT use: paper grain, canvas texture, rough texture, grainy texture, overly crisp
 - ${styleCore}
 - Setting: ${safeLocation}
 ${bg360Block}
@@ -632,6 +645,8 @@ THINGS TO AVOID:
 - No floating close-up eyes or ghostly face overlays in backgrounds.
 - No character sheet layout, expression grid, or reference sheet appearance.
 - No extra characters beyond those specified in each panel.
+- No sparkling light particles, no glowing dust, no magical particles, no floating embers, no volumetric dust.
+- No film grain, paper grain, canvas texture, or rough textures.
 
 FINAL COMPLIANCE CHECK:
 - Output is a new manga scene with 4 distinct story panels, backgrounds, and vertical Japanese speech bubbles.
