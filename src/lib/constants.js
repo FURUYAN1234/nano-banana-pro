@@ -1,7 +1,7 @@
 // --- 定数・タグ定義 (constants.js) ---
 // App.jsx から抽出された共有定数
 
-export const SYSTEM_VERSION = "v3.75-alpha";
+export const SYSTEM_VERSION = "v3.77-alpha";
 
 // --- Punchline ラベル変換関数 ---
 export const getPunchlineLabel = (type) => {
@@ -38,13 +38,13 @@ export const DEFAULT_CATEGORIES = [
 export const getModelBadgeInfo = (modelId) => {
   if (!modelId) return null;
 
-  // Gemini 3.1系 = 最高品質 (Next-Gen)
-  if (modelId.includes("3.1")) {
+  // Gemini 3.5 / 3.1系 = 最高品質 (Next-Gen)
+  if (modelId.includes("3.5") || modelId.includes("3.1")) {
     return {
       label: "NEXT GEN",
       tier: "Supreme",
       color: "bg-gradient-to-r from-yellow-600 to-yellow-400 text-black",
-      desc: "Gemini 3.1: 最高品質 (Next Generation)"
+      desc: `Gemini ${modelId.includes("3.5") ? "3.5" : "3.1"}: 最高品質 (Next Generation)`
     };
   }
   // Gemini 3.0 Flash / 2.5 Pro = 高品質

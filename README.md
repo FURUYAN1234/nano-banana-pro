@@ -715,6 +715,13 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v3.77-alpha (2026-05-20)
+- ** [Gemini API] ** 新モデル ** gemini-3.5-flash ** への対応、リファクタリング後のビルドおよび安全なデプロイ完了。 / Deployed the updated build with support for the new `gemini-3.5-flash` model.
+
+### v3.76-alpha (2026-05-20)
+- ** [Gemini API] ** 新モデル ** gemini-3.5-flash ** に対応。モデル死活監査に基づき、`TEXT_MODEL_IDS` および `IMAGE_MODEL_IDS` の優先順位を更新。また、`getModelBadgeInfo` バッジ表示に `Gemini 3.5` を追加。 / Supported the new `gemini-3.5-flash` model. Updated Text and Image model priority lists based on model deprecation audit. Updated `getModelBadgeInfo` to properly display the `Gemini 3.5` model badge in the UI.
+- ** [Refactor] ** 前回のパノラマ・プロンプト外部化リファクタリングを反映した安全な一貫ビルドをテスト・デプロイ。 / Verified and deployed the clean build following the panorama/prompt modularization refactoring from the previous phase.
+
 ### v3.75-alpha (2026-05-20)
 - ** [Refactor] ** `App.jsx` 内の360°パノラマ画像処理ロジックおよびインラインのプロンプト定義（STEP1のキャラ解析、STEP2の演出強化、360°背景画像解析）を外部モジュール（`src/lib/panorama360.js`, `src/lib/prompts.js`）へ分離・集約。保守性を大幅に改善。 / Modularized the 360-degree panorama image processing and inline prompt templates (STEP 1 character analysis, STEP 2 scenario enhancement, 360-degree background analysis) from `App.jsx` into `src/lib/panorama360.js` and `src/lib/prompts.js`, significantly improving code maintainability.
 
