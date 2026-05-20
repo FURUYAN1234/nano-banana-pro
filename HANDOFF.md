@@ -4,6 +4,15 @@
 - **Full Modularization & Cleanup Complete** (完全モジュール化＆最終クリーンアップ完了)
   - v3.79 ～ v3.90 まで12回のイテレーションを経て、5,000行超のモノリシック `App.jsx` を完全にモジュール化。古いリリースノートの削除、セキュリティ監査、コードメトリクスの最終レビューを実施済み。
 
+## Done (v4.0.0 / Stable Release)
+- **Stable Transition**: `-alpha` のプレリリースタグを解除し、正式版 `v4.0.0` に移行。
+- **State Reset Fix**: 「エンジン変更・全リセット（`hardReset`）」および「シナリオから再生成（`partialReset`）」で、カテゴリ、演出オプション、ポリシーログ等が綺麗に初期化されるように修正。
+- **Deployment & Sync**: GitHub Pages / Hugging Face Spaces へのデプロイを完了。GitHub Release から `C:\nano-banana-pro-main` を自動同期。
+- **Full Backup**: `backup_full.ps1` を実行し、Google Drive へのフルバックアップZIP（60.2 MB）の保存を完了。
+
+## Done (v3.91-alpha)
+- **Reset Bugfix**: リセット時に各種設定ステート（`categories`, `manualTopic`, 演出強化フラグ等）が初期化されない不具合を修正。
+
 ## Done (v3.89-alpha)
 - `src/hooks/useMangaWorkflow.js` [NEW]: `src/App.jsx` にあった全ビジネスロジック（113以上の状態変数・関数）を内包するカスタムフックを新規作成。
 - `src/App.jsx` [UPDATED]: ビジネスロジックを完全削除し、 `useMangaWorkflow` から変数・ハンドラをデストラクチャリングして UI コンポーネントに結合。
@@ -34,11 +43,8 @@
 - `src/lib/safety-filters.js`: エラー翻訳・セーフティフィルター分離。
 
 ## Remaining / Next Steps (Priority Order)
-1. **ロードマップ：正式版（Alphaなし）への移行**:
-   - ユーザーから「Alphaなしで」と指示があった場合、メジャーバージョンを **v4.0.0** に切り上げ、正式版（Stable）としてリリースする。
-   - その際、 `docs/deploy.md` の「全バージョンが -alpha である」という記述箇所を更新する。
-2. **リファクタリングの継続**: 順次さらなる細分化（カスタムフックの抽出等）が必要な場合に検討。
-3. **システム稼働の監視**: 新モデルへの移行や API の安定性を継続チェック。
+1. **システム稼働の監視**: 新モデルへの移行や API の安定性を継続チェック。
+2. **パフォーマンス・チューニング**: 必要に応じて、コンポーネントの再レンダリング最適化を検討。
 
 ## Risks
 - `isFullAutoModeRef.current` によるステートラグ解消は完璧だが、他の長時間の非同期処理（画像生成やシナリオ生成など）でも、実行中にユーザーが設定を切り替えた場合のステート一貫性について注意深く実装する必要がある。
