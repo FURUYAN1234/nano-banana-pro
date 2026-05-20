@@ -1,4 +1,4 @@
-# HANDOFF.md (v3.80-alpha / Deploy Process)
+# HANDOFF.md (v3.81-alpha / Deploy Process)
 
 ## Current Status
 - **BUG FIX COMPLETED** (バグ修正完了)

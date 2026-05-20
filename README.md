@@ -715,7 +715,10 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 717: 
-718: ### v3.80-alpha (2026-05-20)
+718: ### v3.81-alpha (2026-05-20)
+- ** [Refactor & Clean] ** 一時不要ファイルの削除と、リポジトリのクリーンアップ、およびデプロイ・リリースフローのフル自動化プロトコルの適用。 / Cleaned up temporary files, optimized repository aesthetics, and implemented full release automation protocols.
+
+### v3.80-alpha (2026-05-20)
 719: - ** [Fix] ** リファクタリング後に発生していた React マウントおよびレンダリング時の ** 2つの致命的エラー ** （`App.jsx` 内のタイポ `step4Ref` 、および `Step4Panel.jsx` 内での `Wand2` インポート漏れ）を修正。さらに、ランタイムエラー検知用に ** ErrorBoundary ** を導入し、クラッシュ耐性を強化。 / Fixed two critical React mounting and rendering errors (undefined `step4Ref` typo in `App.jsx` and missing `Wand2` import in `Step4Panel.jsx`) caused by refactoring. Integrated `ErrorBoundary` to catch runtime errors and improve crash resilience.
 720: 
 721: ### v3.79-alpha (2026-05-20)
