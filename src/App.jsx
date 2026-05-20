@@ -42,8 +42,8 @@ import { getLocationDetails, getRandomReactions } from './lib/knowledge';
 import { SYSTEM_VERSION, getPunchlineLabel, DEFAULT_CATEGORIES, getModelBadgeInfo, EMOTION_STYLES, cameraAngles, cameraLensMap, DYNAMIC_CAMERA_PROTOCOL, ANTI_CHARSHEET_PREFIX } from './lib/constants';
 import { translateApiError, applySafetyAgeUp, sanitizeForDocumentary } from './lib/safety-filters';
 import { cropEquirectangular, validate360Image, get360AnalysisPrompt, parse360Analysis } from './lib/panorama360';
-import { getCharacterAnalysisPrompt, getScenarioEnhancePrompt, getScenarioPrompt, getPolicyAnalysisPrompt, getPolicyFallbackPrompt } from './lib/prompts';
-import { buildIdentityMatrix, getCharTraitsFromMatrix, extractDialogueOnly, extractActionOnly, injectOutfitReminder, extractPlacementRule, extractCastLimitRule, getCameraForPanel, getCameraForChatGPT, stripWeightTags } from './lib/panel-utils';
+import { getCharacterAnalysisPrompt, getScenarioEnhancePrompt, getScenarioPrompt, getPolicyAnalysisPrompt, getPolicyFallbackPrompt, buildChatGPTMangaPrompt, buildGeminiMangaPrompt } from './lib/prompts';
+import { buildIdentityMatrix, getCharTraitsFromMatrix, extractDialogueOnly, extractActionOnly, injectOutfitReminder, extractPlacementRule, extractCastLimitRule, getCameraForPanel, getCameraForChatGPT, stripWeightTags, extractEmotionStyle, buildEmotionBlock, cleanCastList } from './lib/panel-utils';
 import ThinkingLog from './components/ThinkingLog';
 import Panorama360Viewer from './components/Panorama360Viewer';
 import StepGuide from './components/StepGuide';
@@ -1092,50 +1092,7 @@ ${parsedData.scenario}
       const styleCore = isMonochrome
         ? "Draw in a traditional Japanese black and white manga style using G-pen ink lines, screentones, and manual hatching. The artwork should have high-contrast black and white shading without any color, similar to a professionally published comic."
         : "Draw in a high-budget, vibrant full-color TV anime style. The characters should have delicate and detailed anime features with beautiful eyes, cinematic lighting, and sharp clean ink contours. Ensure the artwork looks like an official Japanese animation illustration.";
-
-      // EMOTION_STYLES -> constants.js に外部化済み
-
-      // [v2.25] パネルテキストからEMOTIONタグを抽出
-      const extractEmotionStyle = (panelText) => {
-        const match = panelText.match(/\[EMOTION:\s*(NORMAL|CHIBI_GAG|GEKIGA|SHOUJO|HORROR|BLANK|IMPACT|WATERCOLOR|RETRO|GLITTER|SHADOW|SPEED|FLASHBACK|UKIYOE|POP_ART|SKETCH|NEON|THICK_PAINT|PASTEL|CEL|DARK_ANIME|THIN_LINE|HIGH_SATURATION)\s*\]/i); // [v2.95] 画風パレット拡張
-        if (match) {
-          const key = match[1].toUpperCase();
-          if (EMOTION_STYLES[key]) return key;
-        }
-        return 'NORMAL';
-      };
-
-      // [v2.31] パネルの感情スタイル指示を構築（マルチキャラ対応）
-      const buildEmotionBlock = (panelText) => {
-        const emo = extractEmotionStyle(panelText);
-        if (emo === 'NORMAL') return '';
-        const s = EMOTION_STYLES[emo];
-
-        // [v2.31] IMPACT等のソロ演出スタイルがマルチキャラパネルで使われた場合、
-        // 「顔アップで60-80%」指示がANTI-FLOATING-EYE RULEと矛盾するのを防ぐ
-        const speakersInPanel = [];
-        panelText.split('\n').forEach(line => {
-          const m = line.match(/^(.*?)(?:[:：]|「)/);
-          if (m && m[1].trim()) {
-            const sp = m[1].replace(/^[【\[（(]/, '').replace(/[】\]）)]$/, '').trim();
-            if (sp && !speakersInPanel.includes(sp)) speakersInPanel.push(sp);
-          }
-        });
-        const isMultiChar = speakersInPanel.length >= 2;
-
-        // マルチキャラ用フォールバックが定義されている場合はそちらを使用
-        if (isMultiChar && s.styleMulti) {
-          let block = `\n(Apply the following visual style to this panel only. Do NOT draw this instruction as text on the image): ${s.styleMulti}`;
-          if (s.proportionsMulti) block += `\nPROPORTION OVERRIDE: ${s.proportionsMulti}`;
-          if (s.vfxMulti) block += `\nVFX: ${s.vfxMulti}`;
-          return block;
-        }
-
-        let block = `\n(Apply the following visual style to this panel only. Do NOT draw this instruction as text on the image): ${s.style}`;
-        if (s.proportions) block += `\nPROPORTION OVERRIDE: ${s.proportions}`;
-        if (s.vfx) block += `\nVFX: ${s.vfx}`;
-        return block;
-      };
+      // extractEmotionStyle, buildEmotionBlock -> panel-utils.js に外部化済み
 
       // [v2.25] キャスト解析結果からIdentity Matrixを自動生成
 
@@ -1197,40 +1154,8 @@ ${parsedData.scenario}
 
 
       // [v2.43] 各パネルに服装リマインドを自動注入（シナリオテキストのOutfit行から取得）
-
-
-
-
-      // [v2.30] Clean up Cast List - フォーマット非依存WEIGHTSタグ抽出
-      let cleanCastData = "";
-      let currentCharacter = "";
-      const castLines = castList.split('\n');
-      for (let i = 0; i < castLines.length; i++) {
-        const line = castLines[i].replace(/\*\*/g, '').trim();
-        if (line.startsWith('## ')) {
-          currentCharacter = line.replace(/^##\s*(?:\d+\.\s*)?/, '').trim();
-          cleanCastData += `\n- Character [${currentCharacter}]: `;
-        }
-        if (!currentCharacter) continue;
-        if (activeOutfit && (line.includes('服装') || line.includes('Outfit'))) continue;
-        const weightsMatch = line.match(/\[WEIGHTS?\]:\s*(.*)/i);
-        if (weightsMatch) {
-          let tags = weightsMatch[1].replace(/\|/g, '').trim();
-          if (tags && tags !== "()" && tags !== "-") {
-            cleanCastData += tags + ", ";
-          }
-          continue;
-        }
-        const weightedTags = line.match(/\([a-zA-Z\s_-]+:\d+\.?\d*\)/g);
-        if (weightedTags && weightedTags.length >= 2) {
-          cleanCastData += weightedTags.join(', ') + ", ";
-        }
-      }
-      if (!cleanCastData.trim()) {
-        cleanCastData = castList.trim(); // fallback
-      }
-
-      const VAR_CAST_LIST = cleanCastData.trim();
+      // [v2.30] キャストリスト解析 -> panel-utils.js cleanCastList に外部化済み
+      const VAR_CAST_LIST = cleanCastList(castList, activeOutfit);
 
       // [v3.55] ChatGPT用: キャストデータからウェイトタグを除去して自然言語化（~850文字削減）
       const VAR_CAST_LIST_CHATGPT = enableChatGPTMode ? stripWeightTags(VAR_CAST_LIST) : VAR_CAST_LIST;
@@ -1244,278 +1169,54 @@ ${parsedData.scenario}
         ? `Generated by ChatGPT with Super FURU AI 4-koma ${SYSTEM_VERSION}`
         : `Generated by Super FURU AI 4-koma ${SYSTEM_VERSION}`;
 
-      // [v1.8.79 Deterministic Fix] Construct Prompt Directly in Logic (No AI Hallucination Risk)
-      // We skip callThinkingGemini because this step is pure assembly.
-      // [v1.9.0] Nano Banana 2 (Imagen 4) Optimized Natural Language Prompt
-      // Imagen 4 understands natural language perfectly and struggles with pseudocode.
       // [v3.31] ChatGPTモード時は専用の超圧縮プロンプトを使用、Gemini時は最適化版を使用する分岐構造
       let rawPrompt = "";
-      
+
+      // パネルセクション文字列のビルド (ChatGPT/Gemini共通)
+      const panels = [panel1Text, panel2Text, panel3Text, panel4Text];
+      let panelSections = "";
+
       if (enableChatGPTMode) {
-        // [v3.31] Ultra-Clean ChatGPT Optimized Natural Language Prompt
-        // ChatGPT Image 2.0 requires descriptive English, NO pseudocode, NO weights, NO negative prompts.
-        rawPrompt = `🎨 OUTPUT: Generate a SINGLE IMAGE only. Do NOT respond with text or descriptions. DRAW the manga directly.
+        // ChatGPTモード: パネルセクション構築
+        panelSections = panels.map((pt, i) => {
+          const num = i + 1;
+          return `## Panel ${num}
+${buildEmotionBlock(pt)}
+${extractPlacementRule(pt, castList).replace(/\\\\[/g, '').replace(/\\\\]/g, '')}
+${extractCastLimitRule(pt, castList).replace(/\\\\[/g, '').replace(/\\\\]/g, '')}
+Camera: ${getCameraForChatGPT(pt, cameraState)}
+Action: ${injectOutfitReminder(extractActionOnly(pt, castList, extractPlacementRule(pt, castList)), activeOutfit)}
+Dialogue (Japanese text inside speech bubbles only): ${extractDialogueOnly(pt, castList)}`;
+        }).join('\n\n');
 
-[🔥 ABSOLUTE FIRST PRIORITY 🚨 READ THIS BEFORE ANYTHING ELSE]
-YOU ARE GENERATING A NEW 4-PANEL MANGA SCENE as an IMAGE. You are NOT creating a character sheet, model sheet, character lineup, expression chart, or reference sheet.
-The attached image is a CHARACTER REFERENCE ONLY 🚨 use it to identify hair color, eye shape, and glasses status. Do NOT reproduce its layout, white background, expression grid, or text labels.
-
-Generate a highly detailed, professional 4-koma (4-panel vertical) manga.
-MUST have tall portrait aspect ratio (A4 paper, 1:1.414).
-
-LAYOUT & FORMAT:
-- Canvas completely filled by panels (95% width). NO large white margins.
-- Top page: draw large bold black Japanese text that reads exactly "${safeTopic}" in a clean sans-serif font, centered at the top.
-- Draw tiny English watermark text that reads "${watermarkEng}" positioned at the bottom-right corner of the 4th panel, in a small clean sans-serif font.
-- Draw tiny Japanese watermark text that reads "ネームから全自動の自律式統合AI漫画システム :https://x.gd/JiWor" positioned at the bottom-left corner of the 4th panel.
-- Watermarks standard horizontal. NO overlap. NO extra white space below panel 4.
-- Exactly 4 EQUAL horizontal panels, stacked vertically with thick white gutters between them. Panels MUST NOT touch.
-
-ART STYLE:
-- High-budget TV anime production quality. Pristine clean cel-shading with smooth gradient shadows and rich saturated color palette.
-- Cinematic color grading with smooth light diffusion and gentle rim lighting on character edges.
-- Foreground characters have bold ink outlines with varied line weight. Add a subtle white glow outside the character's outline to prevent blending with the background.
-- Backgrounds should have slightly lower saturation and softer focus (shallow depth of field) to make characters pop.
-- NOISE REDUCTION: Strictly avoid intricate micro-textures, grainy noise, rough surfaces, excessive gloss, random sparkling, or muddy overlays. Keep character surfaces incredibly smooth and clean, while maintaining dramatic cel-shading. Prioritize readable silhouettes and bold outlines over excessive micro-details.
-- ${styleCore}
-- Setting: ${safeLocation}
-${bg360Image && bg360Analysis && bg360Enabled ? (
-  bg360CroppedPanels && bg360CroppedPanels.length === 4 && !enableChatGPTMode
-  ? `
-BACKGROUND REFERENCE IMAGES (Per-Panel Cropped Views):
-4 background reference images are attached after the text prompt. These are NOT character sheets.
-- Image 1 → Background for Panel 1
-- Image 2 → Background for Panel 2
-- Image 3 → Background for Panel 3
-- Image 4 → Background for Panel 4
-Each image is a perspective-cropped view extracted from a 360° panorama, showing the exact camera angle and scenery for that panel.
-⚠️ CRITICAL RULES:
-- Use each background image as the visual reference for its corresponding panel. Match the colors, lighting (${bg360Analysis.lighting}), architecture, and environmental details.
-- DO NOT copy any character clothing or outfits from the background images.
-- Your OUTPUT must remain A4 PORTRAIT (1:1.414 tall) with 4 vertical panels. Do NOT replicate the landscape aspect ratio of the background images.
-- Draw characters IN FRONT of these backgrounds. The characters are the foreground subjects; the background images provide the scenery behind them.
-- Match shadow directions and ambient color temperature to the background references.
-`
-  : `
-BACKGROUND REFERENCE IMAGE:
-Among ALL attached images, identify the one with a panoramic 2:1 width-to-height aspect ratio (equirectangular format). That image is the 360° BACKGROUND REFERENCE — NOT a character sheet. All other attached images are CHARACTER REFERENCE sheets.
-⚠️ CRITICAL: This panoramic image is ONLY for background reference (colors, lighting, architecture). Do NOT imitate its 2:1 wide aspect ratio. Your OUTPUT must remain A4 PORTRAIT (1:1.414 tall) with 4 vertical panels. The panoramic image is NOT a layout template.
-⚠️ CRITICAL: DO NOT copy any character clothing or outfits from the 360° background image. Characters MUST wear the specified outfits.
-Use the 360° background image's lighting direction (${bg360Analysis.lighting}), spatial layout, and environmental details as the consistent setting for all panels. Match shadow directions and ambient color temperature to the background reference. At least 3 of 4 panels must use this background environment.
-`
-) : ''}
-
-CAMERA & PERSPECTIVE RULES:
-Each of the 4 panels MUST use a DIFFERENT dramatic camera angle. Use specific cinematic techniques:
-- Bird's-eye view looking straight down from above
-- Worm's-eye view looking up from ground level (characters towering overhead)
-- Dutch angle with horizon tilted 30-45 degrees for tension
-- Close-up telephoto shot with shallow depth of field and background bokeh
-- Wide-angle lens shot (14mm equivalent) with exaggerated perspective
-No two panels share the same angle. Standard eye-level shots are FORBIDDEN.
-Keep character proportions strictly accurate — dramatic angles yes, anatomical distortion no.
-
-CHARACTERS & IDENTITY:
-- Strictly reproduce reference image designs (hair, eyes, skin, accessories). NO feature swapping.
-- Reference images are ONLY for face, hair, skin, and accessories.
-${activeOutfit ? `- IGNORE reference clothing. All characters MUST wear exactly: ${activeOutfit}.` : '- OUTFIT CONSISTENCY: Every character MUST wear EXACT same outfit in ALL 4 panels.'}
-- NEVER draw the same character twice in a single panel.
-- Characters MUST look at each other or objects, NEVER at the camera.
-- Exaggerated manga comedy expressions and full-body reactions are required.
-- Cast details: ${VAR_CAST_LIST_CHATGPT}
-- Identity Anchor: ${buildIdentityMatrix(castList)}
-- CROSS-PANEL CONSISTENCY: All characters must maintain exactly the same face, hair, and outfit across all 4 panels. If a character has glasses, they MUST have glasses in every panel. Preserve exact hair color, eye color, and skin tone in every panel.
-
-PANEL DESCRIPTIONS:
-
-## Panel 1
-${buildEmotionBlock(panel1Text)}
-${extractPlacementRule(panel1Text, castList).replace(/\\[/g, '').replace(/\\]/g, '')}
-${extractCastLimitRule(panel1Text, castList).replace(/\\[/g, '').replace(/\\]/g, '')}
-Camera: ${enableChatGPTMode ? getCameraForChatGPT(panel1Text, cameraState) : getCameraForPanel(panel1Text, shuffledCameras, cameraState)}
-Action: ${injectOutfitReminder(extractActionOnly(panel1Text, castList, extractPlacementRule(panel1Text, castList)), activeOutfit)}
-Dialogue (Japanese text inside speech bubbles only): ${extractDialogueOnly(panel1Text, castList)}
-
-## Panel 2
-${buildEmotionBlock(panel2Text)}
-${extractPlacementRule(panel2Text, castList).replace(/\\[/g, '').replace(/\\]/g, '')}
-${extractCastLimitRule(panel2Text, castList).replace(/\\[/g, '').replace(/\\]/g, '')}
-Camera: ${enableChatGPTMode ? getCameraForChatGPT(panel2Text, cameraState) : getCameraForPanel(panel2Text, shuffledCameras, cameraState)}
-Action: ${injectOutfitReminder(extractActionOnly(panel2Text, castList, extractPlacementRule(panel2Text, castList)), activeOutfit)}
-Dialogue (Japanese text inside speech bubbles only): ${extractDialogueOnly(panel2Text, castList)}
-
-## Panel 3
-${buildEmotionBlock(panel3Text)}
-${extractPlacementRule(panel3Text, castList).replace(/\\[/g, '').replace(/\\]/g, '')}
-${extractCastLimitRule(panel3Text, castList).replace(/\\[/g, '').replace(/\\]/g, '')}
-Camera: ${enableChatGPTMode ? getCameraForChatGPT(panel3Text, cameraState) : getCameraForPanel(panel3Text, shuffledCameras, cameraState)}
-Action: ${injectOutfitReminder(extractActionOnly(panel3Text, castList, extractPlacementRule(panel3Text, castList)), activeOutfit)}
-Dialogue (Japanese text inside speech bubbles only): ${extractDialogueOnly(panel3Text, castList)}
-
-## Panel 4
-${buildEmotionBlock(panel4Text)}
-${extractPlacementRule(panel4Text, castList).replace(/\\[/g, '').replace(/\\]/g, '')}
-${extractCastLimitRule(panel4Text, castList).replace(/\\[/g, '').replace(/\\]/g, '')}
-Camera: ${enableChatGPTMode ? getCameraForChatGPT(panel4Text, cameraState) : getCameraForPanel(panel4Text, shuffledCameras, cameraState)}
-Action: ${injectOutfitReminder(extractActionOnly(panel4Text, castList, extractPlacementRule(panel4Text, castList)), activeOutfit)}
-Dialogue (Japanese text inside speech bubbles only): ${extractDialogueOnly(panel4Text, castList)}
-
-THINGS TO AVOID:
-- No plastic-looking skin or digital over-sharpening on characters.
-- No watermarks or logos other than the specified watermarks above.
-- No random English text scattered across panels.
-- No floating close-up eyes or ghostly face overlays in backgrounds.
-- No character sheet layout, expression grid, or reference sheet appearance.
-- No extra characters beyond those specified in each panel.
-
-FINAL COMPLIANCE CHECK:
-- Output is a new manga scene with 4 distinct story panels, backgrounds, and vertical Japanese speech bubbles.
-- Output is NOT a character sheet.
-- No floating close-up eyes or partial face crops in the background. Every character must be drawn as a complete physical presence.
-- No anatomical distortion from excessive fisheye lens.
-- Strict anatomy check: Verify correct left/right hand orientation and exactly 5 fingers per hand.
-`;
+        rawPrompt = buildChatGPTMangaPrompt({
+          safeTopic, watermarkEng, styleCore, safeLocation,
+          bg360Image, bg360Analysis, bg360Enabled, bg360CroppedPanels, enableChatGPTMode,
+          VAR_CAST_LIST_CHATGPT, identityMatrix: buildIdentityMatrix(castList), activeOutfit,
+          panelSections
+        });
       } else {
-        // [v3.31] Gemini / Imagen 4 Optimized Prompt (Allows weights, brackets, detailed format rules)
-        rawPrompt = `[FORMAT: A4 PORTRAIT 1024x1448px 🚨 NO square/landscape/tall]
-Generate highly detailed, professional 4-koma (4-panel vertical) manga.
-MUST have tall portrait aspect ratio (A4 paper, 1:1.414).
-
-LAYOUT:
-Canvas completely filled by panels (95% width). NO large white margins.
-Top page: draw large bold black Japanese text title: "${safeTopic}"
-NO quotes/punctuation around title.
-Draw tiny English watermark ON bottom-right border of 4th panel: "${watermarkEng}" (clean sans-serif).
-Draw tiny Japanese watermark ON bottom-left border of 4th panel: "ネームから全自動の自律式統合AI漫画システム :https://x.gd/JiWor".
-Watermarks standard horizontal. NO overlap. NO extra white space below panel 4.
-
-PANELS: Exactly 4 EQUAL horizontal panels, stacked vertically. EXACT SAME height/width.
-GUTTERS: THICK white gap (3% canvas height, 40-45px) between panels. Panels MUST NOT touch.
-Style: ${styleCore}.
-(Dramatic anime cinematic lighting, high-budget VFX, NO excessive speedlines).
-Setting: ${safeLocation}.
-${bg360Image && bg360Analysis && bg360Enabled ? (
-  bg360CroppedPanels && bg360CroppedPanels.length === 4
-  ? `
-BACKGROUND REFERENCE IMAGES (Per-Panel Cropped Views):
-4 background reference images are attached after the text prompt. These are NOT character sheets.
-- Image 1 → Background for Panel 1
-- Image 2 → Background for Panel 2
-- Image 3 → Background for Panel 3
-- Image 4 → Background for Panel 4
-Each image is a perspective-cropped view from a 360° panorama showing the exact scenery for that panel.
-⚠️ RULES:
-- Use each background image as the visual reference for its corresponding panel's scenery. Match colors, lighting (${bg360Analysis.lighting}), objects (${bg360Analysis.objects || 'various'}), and mood (${bg360Analysis.mood || 'contextual'}).
-- DO NOT copy any character clothing or outfits from the background images.
-- Draw characters IN FRONT of these backgrounds.
-- Match shadow directions and ambient color temperature to the references.
-`
-  : `
-BACKGROUND REFERENCE IMAGE:
-Among ALL attached images, identify the one with a panoramic 2:1 width-to-height aspect ratio (equirectangular format). That image is the 360° BACKGROUND REFERENCE — NOT a character sheet. All other attached images are CHARACTER REFERENCE sheets.
-⚠️ CRITICAL: The panoramic image is ONLY for background reference. DO NOT copy any character clothing or outfits from the 360° background image.
-Use the 360° background's lighting direction (${bg360Analysis.lighting}), spatial layout, objects (${bg360Analysis.objects || 'various'}), and mood (${bg360Analysis.mood || 'contextual'}) as the consistent setting for all panels.
-Match shadow directions and ambient color temperature to the 360° background reference.
-At least 3 of 4 panels MUST use this background environment. 1 panel may deviate for flashback/imagination scenes.
-`
-) : ''}
-
-VISUAL REPRODUCTION:
-Strictly reproduce reference image designs:
-- EXACT hairstyle/color, eye color/shape, skin tone.
-- EXACT accessories (glasses, hats). NO add/remove.
-- NO feature swapping. Keep unique charm points in EVERY panel.
-${activeOutfit ? `
-CLOTHING:
-- Reference image ONLY for face, hair, skin, accessories.
-- IGNORE reference clothing. Use ONLY the OUTFIT OVERRIDE below.` : ''}
-Cast:
-${VAR_CAST_LIST}
-${activeOutfit ? `OUTFIT OVERRIDE: All characters MUST wear exactly: ${activeOutfit}. Apply tags directly.` : ''}
-【Identity Anchor】: Cross-panel consistency is MANDATORY. Redraw if hair/eyes/glasses/outfit mismatch.
-${buildIdentityMatrix(castList)}
-OUTFIT CONSISTENCY: Every character MUST wear EXACT same outfit in ALL 4 panels. NO changes.
-
-Camera & Comp:
-${dynamicCamera}
-ANTI-CLONING: NEVER draw the same character twice in a single panel.
-COMPOSITION: Strict 2:3 golden ratio inside each panel.
-
-Tech Dict:
-(clean anime illustration background: 2.5)
-(Meticulous clean line art, smooth cel shading: 2.5)
-(Soft diffused backlight, rim light: 2.4)
-(Cinematic depth of field, soft bokeh: 2.3)
-(NO text/SFX outside speech bubbles: 2.8)
-(NO ENGLISH TEXT outside watermark. NO 'G-pen'/'HA': 3.0)
-
-
-## Panel 1
-${buildEmotionBlock(panel1Text)}
-${extractPlacementRule(panel1Text, castList)}
-${extractCastLimitRule(panel1Text, castList)}
-Camera: ${getCameraForPanel(panel1Text, shuffledCameras, cameraState)}.
+        // Geminiモード: パネルセクション構築
+        panelSections = panels.map((pt, i) => {
+          const num = i + 1;
+          return `## Panel ${num}
+${buildEmotionBlock(pt)}
+${extractPlacementRule(pt, castList)}
+${extractCastLimitRule(pt, castList)}
+Camera: ${getCameraForPanel(pt, shuffledCameras, cameraState)}.
 [LENS]: (ABOVE CAMERA DISTORTION MAX:2.9), (NEVER normal photograph:3.0), (extreme severe perspective warp:2.7), (violently tilted horizon:2.6). Break normal camera angle.
-Action (Visual ONLY): ${injectOutfitReminder(extractActionOnly(panel1Text, castList, extractPlacementRule(panel1Text, castList)), activeOutfit)}.
-Dialogue (ONLY inside bubbles): ${extractDialogueOnly(panel1Text, castList)}.
+Action (Visual ONLY): ${injectOutfitReminder(extractActionOnly(pt, castList, extractPlacementRule(pt, castList)), activeOutfit)}.
+Dialogue (ONLY inside bubbles): ${extractDialogueOnly(pt, castList)}.`;
+        }).join('\n\n');
 
-## Panel 2
-${buildEmotionBlock(panel2Text)}
-${extractPlacementRule(panel2Text, castList)}
-${extractCastLimitRule(panel2Text, castList)}
-Camera: ${getCameraForPanel(panel2Text, shuffledCameras, cameraState)}.
-[LENS]: (ABOVE CAMERA DISTORTION MAX:2.9), (NEVER normal photograph:3.0), (extreme severe perspective warp:2.7), (violently tilted horizon:2.6). Break normal camera angle.
-Action (Visual ONLY): ${injectOutfitReminder(extractActionOnly(panel2Text, castList, extractPlacementRule(panel2Text, castList)), activeOutfit)}.
-Dialogue (ONLY inside bubbles): ${extractDialogueOnly(panel2Text, castList)}.
-
-## Panel 3
-${buildEmotionBlock(panel3Text)}
-${extractPlacementRule(panel3Text, castList)}
-${extractCastLimitRule(panel3Text, castList)}
-Camera: ${getCameraForPanel(panel3Text, shuffledCameras, cameraState)}.
-[LENS]: (ABOVE CAMERA DISTORTION MAX:2.9), (NEVER normal photograph:3.0), (extreme severe perspective warp:2.7), (violently tilted horizon:2.6). Break normal camera angle.
-Action (Visual ONLY): ${injectOutfitReminder(extractActionOnly(panel3Text, castList, extractPlacementRule(panel3Text, castList)), activeOutfit)}.
-Dialogue (ONLY inside bubbles): ${extractDialogueOnly(panel3Text, castList)}.
-
-## Panel 4
-${buildEmotionBlock(panel4Text)}
-${extractPlacementRule(panel4Text, castList)}
-${extractCastLimitRule(panel4Text, castList)}
-Camera: ${getCameraForPanel(panel4Text, shuffledCameras, cameraState)}.
-[LENS]: (ABOVE CAMERA DISTORTION MAX:2.9), (NEVER normal photograph:3.0), (extreme severe perspective warp:2.7), (violently tilted horizon:2.6). Break normal camera angle.
-Action (Visual ONLY): ${injectOutfitReminder(extractActionOnly(panel4Text, castList, extractPlacementRule(panel4Text, castList)), activeOutfit)}.
-Dialogue (ONLY inside bubbles): ${extractDialogueOnly(panel4Text, castList)}.
-
-Important constraints:
-- Ensure the characters accurately reflect classic anime styles.
-- Do NOT merge panels. Keep 4 distinct panels with white gutters between them.
-- ABSOLUTELY NO TEXT OR SFX BETWEEN PANELS. The white gutters separating the panels MUST be completely clean and pure white. Do not draw any labels, narration, or sound effects crossing or sitting inside the panel boundaries.
-- Do NOT write situation/narration explanations as text on the screen. The Visual Action must only be illustrated.
-- Write the Japanese spoken text clearly inside white manga speech bubbles in a bold sans-serif Japanese font.
-- Japanese dialogue MUST end with a period (。). However, do NOT add unnecessary commas (、) inside dialogue. Manga speech bubbles rarely use commas in natural Japanese — line breaks and bubble shape provide natural pauses instead. Only use commas when absolutely necessary to prevent misreading.
-- TYPOGRAPHY RULE: Write Japanese text tightly with ZERO spaces between words. Do NOT insert any gaps or spaces between characters. (no letter spacing:1.5), (tight kerning:1.5).
-- Do NOT add random English text except for the watermark.
-- Maintain character consistency across all 4 panels.
-- Flow is from top panel to bottom panel.
-- Ensure the watermark is positioned at the absolute bottom edge of the image, with no extra whitespace below it. The text must be oriented horizontally (left-to-right).
-- CRITICAL COMPOSITION BAN: Do NOT draw floating close-up eyes, partial face crops, or ghostly face overlays in the background of any panel. Every character must be drawn as a complete physical presence within the scene. No "dramatic eye insert" or "background eye close-up" compositions allowed.
-
-FINAL COMPLIANCE CHECK (MANDATORY BEFORE OUTPUT):
-Before generating the final image, mentally verify ALL of the following. If ANY check fails, you MUST redraw the failing panel:
-- [ ] Panel 1: Does the camera angle show VISIBLE distortion? Is the horizon/floor NOT perfectly horizontal? Are body proportions warped by perspective?
-- [ ] Panel 2: Does the camera angle show VISIBLE distortion? Is this a DIFFERENT angle from Panel 1? Can you see clear perspective deformation?
-- [ ] Panel 3: Does the camera angle show VISIBLE distortion? Is this a DIFFERENT angle from Panels 1 and 2? Are architectural lines bending?
-- [ ] Panel 4: Does the camera angle show VISIBLE distortion? Is this a DIFFERENT angle from the previous panels? Are near-side body parts oversized?
-- [ ] ALL 4 panels use DIFFERENT camera angles from each other — no two panels share the same angle type.
-- [ ] ZERO panels look like a flat, normal, eye-level photograph.
-- [ ] You did NOT override the distortion for "readability" or "narrative flow" — the extreme distortion is the intended artistic style.
-- [ ] Strict anatomy check: Verify correct left/right hand orientation and exactly 5 fingers per hand.
-      `;
-        
         // [v3.50] Gemini用: 画像生成強制 + キャラシート防止プレフィックス
-        // Geminiがテキスト応答モードに入るのを防止するため、冒頭で画像出力を強制指示
         const antiCharSheetPrefix = ANTI_CHARSHEET_PREFIX;
-        rawPrompt = antiCharSheetPrefix + rawPrompt;
+        rawPrompt = antiCharSheetPrefix + buildGeminiMangaPrompt({
+          safeTopic, watermarkEng, styleCore, safeLocation,
+          bg360Image, bg360Analysis, bg360Enabled, bg360CroppedPanels,
+          VAR_CAST_LIST, identityMatrix: buildIdentityMatrix(castList), activeOutfit,
+          dynamicCamera, panelSections
+        });
       }
 
       // Wait a bit to simulate processing/syncing (Important for User Experience)

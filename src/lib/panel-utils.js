@@ -1,4 +1,4 @@
-import { cameraLensMap } from './constants';
+import { cameraLensMap, EMOTION_STYLES } from './constants';
 
 // --- Panel Utility Functions (App.jsx assemblePrompt -> externalized) ---
 // assemblePrompt 内で定義されていたパネル解析・プロンプト組立ユーティリティ群
@@ -523,4 +523,81 @@ export const extractCastLimitRule = (fullPanelText, castList) => {
   } else {
     return `CRITICAL CAST PLACEMENT: Follow the panel's action naturally. NEVER draw the exact same character twice.`;
   }
+};
+
+// --- Emotion Style Functions (Phase 3-C: App.jsx assemblePrompt -> externalized) ---
+
+// [v2.25] パネルテキストからEMOTIONタグを抽出
+export const extractEmotionStyle = (panelText) => {
+  const match = panelText.match(/\[EMOTION:\s*(NORMAL|CHIBI_GAG|GEKIGA|SHOUJO|HORROR|BLANK|IMPACT|WATERCOLOR|RETRO|GLITTER|SHADOW|SPEED|FLASHBACK|UKIYOE|POP_ART|SKETCH|NEON|THICK_PAINT|PASTEL|CEL|DARK_ANIME|THIN_LINE|HIGH_SATURATION)\s*\]/i); // [v2.95] 画風パレット拡張
+  if (match) {
+    const key = match[1].toUpperCase();
+    if (EMOTION_STYLES[key]) return key;
+  }
+  return 'NORMAL';
+};
+
+// [v2.31] パネルの感情スタイル指示を構築（マルチキャラ対応）
+export const buildEmotionBlock = (panelText) => {
+  const emo = extractEmotionStyle(panelText);
+  if (emo === 'NORMAL') return '';
+  const s = EMOTION_STYLES[emo];
+
+  // [v2.31] IMPACT等のソロ演出スタイルがマルチキャラパネルで使われた場合、
+  // 「顔アップで60-80%」指示がANTI-FLOATING-EYE RULEと矛盾するのを防ぐ
+  const speakersInPanel = [];
+  panelText.split('\n').forEach(line => {
+    const m = line.match(/^(.*?)(?:[:：]|「)/);
+    if (m && m[1].trim()) {
+      const sp = m[1].replace(/^[【\[（(]/, '').replace(/[】\]）)]$/, '').trim();
+      if (sp && !speakersInPanel.includes(sp)) speakersInPanel.push(sp);
+    }
+  });
+  const isMultiChar = speakersInPanel.length >= 2;
+
+  // マルチキャラ用フォールバックが定義されている場合はそちらを使用
+  if (isMultiChar && s.styleMulti) {
+    let block = `\n(Apply the following visual style to this panel only. Do NOT draw this instruction as text on the image): ${s.styleMulti}`;
+    if (s.proportionsMulti) block += `\nPROPORTION OVERRIDE: ${s.proportionsMulti}`;
+    if (s.vfxMulti) block += `\nVFX: ${s.vfxMulti}`;
+    return block;
+  }
+
+  let block = `\n(Apply the following visual style to this panel only. Do NOT draw this instruction as text on the image): ${s.style}`;
+  if (s.proportions) block += `\nPROPORTION OVERRIDE: ${s.proportions}`;
+  if (s.vfx) block += `\nVFX: ${s.vfx}`;
+  return block;
+};
+
+// --- Clean Cast List (Phase 3-C: castList parsing -> externalized) ---
+// [v2.30] キャストリストからWEIGHTSタグを抽出してクリーンなデータに整形
+export const cleanCastList = (castList, activeOutfit) => {
+  let cleanCastData = "";
+  let currentCharacter = "";
+  const castLines = castList.split('\n');
+  for (let i = 0; i < castLines.length; i++) {
+    const line = castLines[i].replace(/\*\*/g, '').trim();
+    if (line.startsWith('## ')) {
+      currentCharacter = line.replace(/^##\s*(?:\d+\.\s*)?/, '').trim();
+      cleanCastData += `\n- Character [${currentCharacter}]: `;
+    }
+    if (!currentCharacter) continue;
+    if (activeOutfit && (line.includes('服装') || line.includes('Outfit'))) continue;
+    const weightsMatch = line.match(/\[WEIGHTS?\]:\s*(.*)/i);
+    if (weightsMatch) {
+      let tags = weightsMatch[1].replace(/\|/g, '').trim();
+      if (tags && tags !== "()" && tags !== "-") {
+        cleanCastData += tags + ", ";
+      }
+      continue;
+    }
+    const weightedTags = line.match(/\([a-zA-Z\s_-]+:\d+\.?\d*\)/g);
+    if (weightedTags && weightedTags.length >= 2) {
+      cleanCastData += weightedTags.join(', ') + ", ";
+    }
+  }
+  if (!cleanCastData.trim()) {
+    cleanCastData = castList.trim(); // fallback
+  }
+  return cleanCastData.trim();
 };

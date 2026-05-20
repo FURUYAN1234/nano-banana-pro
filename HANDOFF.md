@@ -1,18 +1,16 @@
-# HANDOFF.md (v3.78-alpha / Deploy Process)
+# HANDOFF.md (v3.79-alpha / Deploy Process)
 
 ## Current Status
 - **DEPLOYMENT** (デプロイ実行中)
-- 最新バージョン `v3.78-alpha` の本番デプロイプロセスを開始。
-- `src/App.jsx` を 4,844行 → **3,801行** (1,043行削減) まで圧縮完了。
-- Phase 3-B（パネル解析ユーティリティ関数 `src/lib/panel-utils.js` への切り出し、クロージャバグ修正）完了。
-- ビルド成功（`npm run build` 通過）＆ローカル動作確認済み。
-- ユーザー指示「画像まででたのでいったんデフロイして」に基づき、デプロイ手順を実行中。
+- 最新バージョン `v3.79-alpha` の本番デプロイプロセスを開始。
+- `src/App.jsx` を 3,801行 → **3,503行** (298行削減) まで圧縮完了。
+- Phase 3-C (プロンプトビルダー外部化および `extractEmotionStyle`, `buildEmotionBlock`, `cleanCastList` 等の `panel-utils.js` への移行) 完了。
+- ユーザー指示「画像が出力できたのでデプロイ後続きの作業を続けて」に基づき、デプロイ手順を実行中。
 
 ## Done (Phase 3)
-- `src/lib/panorama360.js` [NEW]: `cropEquirectangular`, `validate360Image`, `get360AnalysisPrompt`, `parse360Analysis` を App.jsx から抽出・統合。
-- `src/lib/prompts.js` [NEW]: `getCharacterAnalysisPrompt` (STEP1用 78行), `getScenarioEnhancePrompt` (STEP2.5用 33行) を App.jsx から抽出。
-- `src/lib/constants.js` [UPDATED]: `getModelBadgeInfo` 関数を追加 (App.jsx から移動)。
-- `src/App.jsx` [UPDATED]: 上記モジュールのインポートに置換、インラインプロンプト・関数定義を削除。
+- `src/lib/panel-utils.js` [UPDATED]: `extractEmotionStyle`, `buildEmotionBlock`, `cleanCastList` などのユーティリティ関数群を外部化。
+- `src/lib/prompts.js` [UPDATED]: ChatGPT/Gemini 用の巨大マンガプロンプトテンプレートをビルダー関数 (`buildChatGPTMangaPrompt`, `buildGeminiMangaPrompt`) として外部化。
+- `src/App.jsx` [UPDATED]: プロンプト定義を削除し、ビルダー呼び出しに置換。ファイルサイズを大幅に削減。
 
 ## Done (Previous Phases 1-2, already committed)
 - `src/lib/constants.js`: 定数およびカテゴリ定義の切り出し。
