@@ -1,15 +1,17 @@
-# HANDOFF.md (v3.86-alpha / Full Auto Bugfix & Deploy)
+# HANDOFF.md (v3.87-alpha / Stale State Closure Bugfix & Deploy)
 
 ## Current Status
-- **SCENARIO GENERATION & POLICY FIXER REFACTOR COMPLETED** (シナリオ生成・ポリシー自動修正ロジックの外部モジュール化完了)
-- **FULL AUTO STATE SYNC BUG FIXED** (フルオート生成モード時のステート同期遅れによる不具合を修正)
-- `App.jsx` 内のシナリオ生成ロジックを `src/lib/scenario-provider.js` に、ポリシー自動修正ロジックを `src/lib/policy-fixer.js` にそれぞれ抽出・外部化。
-- フルオート生成時に React のステート更新ラグによって手動入力モードと誤判定されたり、意図しない ChatGPT モードがオンになったりする不具合を、引数によるオーバーライドを導入して完全に解消。
-- ローカル環境での画像生成および一連の動作の動作検証を完了。
+- **FULL AUTO CHARACTER ANALYSIS SYNC BUG FIXED** (キャラクター解析中にフルオートを押した場合のステート同期バグ修正完了)
+- `App.jsx` 内の非同期関数 `processFiles`（キャラクター解析）実行中にユーザーがフルオートボタンを押した場合、非同期処理のクロージャ内に古いステート `isFullAutoMode = false` がキャプチャされてしまい、解析完了後にフルオートが始まらないバグを修正。
+- `isFullAutoModeRef` を導入し、 `processFiles` 内で最新のフルオートモード状態を参照できるようにすることで、認識中にフルオートボタンを押した場合でも完了後に自動でSTEP2→3→4へと進むようにした。
+- ローカル環境でビルド動作確認を行い、正常にビルドできることを確認。
+
+## Done (v3.87-alpha)
+- `src/App.jsx` [UPDATED]: `isFullAutoModeRef` を定義して `isFullAutoMode` ステートと同期させ、非同期関数 `processFiles` 内で `isFullAutoMode` の代わりに `isFullAutoModeRef.current` をチェックするように修正。
+- `HANDOFF.md`, `package.json`, `src/lib/constants.js`, `index.html`, `README.md` のバージョンを `3.87-alpha` に同期。
 
 ## Done (v3.86-alpha)
 - `src/App.jsx` [UPDATED]: `generateScenarioFromNews` および `assemblePrompt` にオーバーライド用引数を追加し、`runFullAuto` 内でこれらを明示的に渡すことでステートラグによる不具合を修正。
-- `HANDOFF.md`, `package.json`, `src/lib/constants.js`, `index.html`, `README.md` のバージョンを `3.86-alpha` に同期。
 
 ## Done (Phase 3 - Part 2)
 - `src/lib/scenario-provider.js` [NEW]: シナリオ生成処理（ ** `generateScenario` ** / ** `generateScenarioStream` ** ）および数百行に及ぶ巨大なシナリオ生成プロンプトテンプレートを外部ファイル化。
@@ -23,20 +25,17 @@
 
 ## Done (Previous Phases 1-2, already committed)
 - `src/lib/constants.js`: 定数およびカテゴリ定義の切り出し。
-- `src/lib/ai-provider.js`: AI交信用のバックエンド統合および Zenith Protocol フォールバック制御の分離。
+- `src/lib/ai-provider.js`: AI交信用のバックエンド統合および Zenith Protocol フォールバック制御 of 分離。
 - `src/lib/imagen.js` & `src/lib/gemini.js`: 画像生成ロジックの分離.
 - `src/lib/safety-filters.js`: エラー翻訳・セーフティフィルター分離。
 
 ## Remaining / Next Steps (Priority Order)
-1. **Phase 3 残り**: App.jsx 内の他のプロンプトテンプレート外出し
-   - STEP2 シナリオ生成プロンプト (~数百行の巨大テンプレート)
-   - ポリシー修正プロンプト (`regenerateSafePrompt`, `regenerateSafePromptFallback`)
-2. **Phase 4**: JSX UIコンポーネント分割 (~1,700行のJSX部)
+1. **Phase 4**: JSX UIコンポーネント分割 (~1,700行のJSX部)
    - Header, Step1Panel, Step2Panel, Step3Panel, Step4Panel
-3. **リファクタリングの継続**: デプロイ完了後、残りの分割作業を再開する。
+2. **リファクタリングの継続**: デプロイ完了後、残りの分割作業を再開する。
 
 ## Risks
-- `assemblePrompt` からの state 依存ロジック切り出しは成功したものの、今後のシナリオ生成（STEP2）の外部化においても、`setScenario` や各 thought state とのやり取りを慎重に処理する必要あり。
+- `isFullAutoModeRef.current` によるステートラグ解消は完璧だが、他の長時間の非同期処理（画像生成やシナリオ生成など）でも、実行中にユーザーが設定を切り替えた場合のステート一貫性について注意深く実装する必要がある。
 
 ## Architecture (Current)
 ```
@@ -49,7 +48,7 @@ src/
 │   ├── imagen.js        (Image generation)
 │   ├── knowledge.js     (RAG knowledge base)
 │   ├── panorama360.js   (360° image processing)
-│   ├── prompt-assembler.js [NEW] (buildMangaPrompt)
+│   ├── prompt-assembler.js (buildMangaPrompt)
 │   ├── prompts.js       (Prompt templates)
 │   └── safety-filters.js (Error translation, safety)
 └── components/

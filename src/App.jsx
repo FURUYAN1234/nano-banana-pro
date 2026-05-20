@@ -179,6 +179,10 @@ function App() {
 
   // [v2.78] フルオート生成モード
   const [isFullAutoMode, setIsFullAutoMode] = useState(false); // フルオート実行中フラグ
+  const isFullAutoModeRef = useRef(false);
+  useEffect(() => {
+    isFullAutoModeRef.current = isFullAutoMode;
+  }, [isFullAutoMode]);
   const [isEndlessMode, setIsEndlessMode] = useState(false); // [v2.86] 無限ループ生成フラグ
   const isEndlessModeRef = useRef(false);
   const [fullAutoStep, setFullAutoStep] = useState(0); // 0=待機, 2=STEP2, 3=STEP3, 4=STEP4
@@ -498,7 +502,7 @@ function App() {
       showStatus("全キャラクターの解析が完了しました。");
 
       // [v2.78] フルオート武装中なら自動的にSTEP2→3→4を開始
-      if (isFullAutoMode) {
+      if (isFullAutoModeRef.current) {
         if (!fullAutoAbortRef.current) {
           setTriggerFullAuto(prev => prev + 1);
         } else {
@@ -513,7 +517,7 @@ function App() {
       const translatedMsg = translateApiError(error.message);
       setAnalyzeThought(prev => prev + `\n\n[システムエラー]: ${error.message}\n--------------------------------------------------\n${translatedMsg}`);
       showStatus("解析エラー: " + error.message);
-      if (isFullAutoMode) {
+      if (isFullAutoModeRef.current) {
         setIsFullAutoMode(false);
         setFullAutoStep(0);
         setIsAborting(false);

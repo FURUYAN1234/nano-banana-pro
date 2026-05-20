@@ -910,6 +910,9 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v3.87-alpha (2026-05-20)
+- ** [Fix] ** キャラクター解析（認識）中にフルオートボタンを押した場合に、非同期処理のクロージャ内に古いステート `isFullAutoMode = false` がキャプチャされてしまい、解析完了後にフルオートが開始されない React のバグ（Stale State Closure Bug）を修正。`isFullAutoModeRef` を導入して `processFiles` 内で最新のフルオートモード状態を参照可能に。 / Fixed a React stale state closure bug where triggering Full Auto during character analysis failed to start the process upon completion because `processFiles` captured `isFullAutoMode = false`. Introduced `isFullAutoModeRef` to resolve this issue.
+
 ### v3.86-alpha (2026-05-20)
 - ** [Fix] ** フルオート生成モード時に、非同期ステートの同期遅れによって手動入力モード（ `inputMode === 'manual'` ）と誤判定されてエラーが発生する（または ChatGPT モードが意図せずオンのまま実行される）不具合を修正。`generateScenarioFromNews` および `assemblePrompt` に引数によるオーバーライドを導入し、Reactのステート更新ラグを回避。 / Fixed a bug in Full Auto mode where asynchronous state sync lags caused the system to mistakenly evaluate the input mode as 'manual' or keep ChatGPT mode enabled. Introduced parameter overrides for `generateScenarioFromNews` and `assemblePrompt` to eliminate React state race conditions.
 
