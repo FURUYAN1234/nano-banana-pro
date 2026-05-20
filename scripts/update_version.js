@@ -8,16 +8,15 @@ const projectRoot = path.join(__dirname, '..');
 
 // File Paths
 const packageJsonPath = path.join(projectRoot, 'package.json');
-const appJsxPath = path.join(projectRoot, 'src', 'App.jsx');
+const constantsPath = path.join(projectRoot, 'src', 'lib', 'constants.js');
 const indexHtmlPath = path.join(projectRoot, 'index.html');
 
 // 1. Read package.json to get current version
 const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
-const currentVersion = packageJson.version; // e.g. "2.04.0-alpha"
+const currentVersion = packageJson.version; // e.g. "3.73-alpha"
 console.log(`Current Version: ${currentVersion}`);
 
 // 2. Increment Patch Version strictly by 0.01
-// Extract the major.minor part from package.json version
 const versionMatch = currentVersion.match(/^(\d+\.\d+)/);
 if (!versionMatch) {
     console.error("Invalid version format in package.json");
@@ -28,9 +27,8 @@ const baseVersionNum = parseFloat(versionMatch[1]);
 // Increment by 0.01 and fix to 2 decimal places to avoid floating point errors
 const newBaseVersionStr = (baseVersionNum + 0.01).toFixed(2);
 
-// the package.json and App.jsx now use the strict vX.Y-alpha format
+// the package.json and constants.js use the strict vX.Y-alpha format
 const newPackageVersion = `${newBaseVersionStr}-alpha`;
-// App.jsx and index.html use the display format
 const displayVersion = `v${newBaseVersionStr}-alpha`;
 
 console.log(`New Package Version: ${newPackageVersion}`);
@@ -41,23 +39,23 @@ packageJson.version = newPackageVersion;
 fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2) + '\n');
 console.log(`Updated package.json to ${newPackageVersion}`);
 
-// 4. Update src/App.jsx
-let appJsx = fs.readFileSync(appJsxPath, 'utf8');
-const appJsxRegex = /const SYSTEM_VERSION = "v.*?";/;
-const newAppJsxLine = `const SYSTEM_VERSION = "${displayVersion}";`;
-if (appJsxRegex.test(appJsx)) {
-    appJsx = appJsx.replace(appJsxRegex, newAppJsxLine);
-    fs.writeFileSync(appJsxPath, appJsx);
-    console.log(`Updated src/App.jsx to ${displayVersion}`);
+// 4. Update src/lib/constants.js
+let constantsJs = fs.readFileSync(constantsPath, 'utf8');
+const constantsRegex = /export const SYSTEM_VERSION = "v.*?";/;
+const newConstantsLine = `export const SYSTEM_VERSION = "${displayVersion}";`;
+if (constantsRegex.test(constantsJs)) {
+    constantsJs = constantsJs.replace(constantsRegex, newConstantsLine);
+    fs.writeFileSync(constantsPath, constantsJs);
+    console.log(`Updated src/lib/constants.js to ${displayVersion}`);
 } else {
-    console.error("Could not find SYSTEM_VERSION in App.jsx");
+    console.error("Could not find SYSTEM_VERSION in constants.js");
     process.exit(1);
 }
 
 // 5. Update index.html
 let indexHtml = fs.readFileSync(indexHtmlPath, 'utf8');
-const indexHtmlRegex = /<title>Nano Banana Pro v.*?<\/title>/;
-const newIndexHtmlLine = `<title>Nano Banana Pro ${displayVersion}</title>`;
+const indexHtmlRegex = /<title>Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System v.*?<\/title>/;
+const newIndexHtmlLine = `<title>Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System ${displayVersion}</title>`;
 if (indexHtmlRegex.test(indexHtml)) {
     indexHtml = indexHtml.replace(indexHtmlRegex, newIndexHtmlLine);
     fs.writeFileSync(indexHtmlPath, indexHtml);

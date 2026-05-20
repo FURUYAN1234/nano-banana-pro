@@ -47,9 +47,9 @@ try {
     const packageJson = JSON.parse(fs.readFileSync('package.json', 'utf-8'));
     const pkgVersion = packageJson.version; // "x.y.z-alpha"
 
-    // App.jsx の SYSTEM_VERSION を取得
-    const appJsx = fs.readFileSync('src/App.jsx', 'utf-8');
-    const appVersionMatch = appJsx.match(/const SYSTEM_VERSION\s*=\s*"([^"]+)"/);
+    // src/lib/constants.js の SYSTEM_VERSION を取得
+    const constantsJs = fs.readFileSync('src/lib/constants.js', 'utf-8');
+    const appVersionMatch = constantsJs.match(/export const SYSTEM_VERSION\s*=\s*"([^"]+)"/);
     const appVersion = appVersionMatch ? appVersionMatch[1] : null;
 
     // index.html の <title> を取得

@@ -715,6 +715,9 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v3.74-alpha (2026-05-20)
+- **[Refactor]** 巨大化した `App.jsx`（5,880行）からUIコンポーネント（ThinkingLog, Panorama360Viewer, StepGuide, ApiKeyModal, ErrorBoundary）および定数・セーフティフィルタ群を別ファイルに分割・抽出（ファイルサイズを12.4%削減）。品質維持・保守性を向上。 / Extracted UI components (ThinkingLog, Panorama360Viewer, StepGuide, ApiKeyModal, ErrorBoundary) and safety/constant definitions from the monolithic `App.jsx` into individual modular files, reducing `App.jsx` line count by 12.4% while maintaining full behavior parity.
+
 ### v3.73-alpha (2026-05-19)
 - **[Fix]** ダイアログ抽出ロジック（`extractDialogueOnly`）を改善し、カッコ付きト書きや段落形式のシナリオでもセリフを取りこぼさずに抽出できるよう正規表現フォールバックを修正。 / Improved dialogue extraction logic (`extractDialogueOnly`) to accurately parse multi-character and paragraph-formatted scenarios without missing speech bubbles.
 
@@ -757,13 +760,3 @@ Developed by **FURU**
 
 ### v3.59-alpha (2026-05-18)
 - **[Docs]** READMEの「Dual-API Architecture」を刷新し、起動時からエンジンが完全に分岐する最新設計を反映。 / Rewrote Dual-API Architecture documentation to reflect the new bifurcated engine design.
-
-### v3.58-alpha (2026-05-17)
-- **[Docs]** READMEの「デュアルAPI設計」セクションの加筆・修正。 / Documentation updates reflecting Gemini API and Gemini Web UI as valid rendering options.
-
-### v3.57-alpha (2026-05-17)
-- **[Feature]** OpenAI API (ChatGPT Images 2.0) を「テスト機能」から「正式機能」へ昇格。パスワードマネージャーの分離保存最適化。 / Promoted OpenAI API generation from experimental to official. Improved API key saving logic.
-- **[Fix]** フォールバック警告の誤判定バグ、無効パラメータ送信、タイムアウト延長（180s→240s）。 / Fixed false fallback warnings, invalid parameter issues, extended timeout to 240s.
-
-### v3.56-alpha (2026-05-17)
-- **[Fix]** ブラウザのパスワードマネージャーがOpenAI/GeminiのAPIキーを混同する問題を修正。 / Fixed API key autofill confusion between OpenAI and Gemini input fields.
