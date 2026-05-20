@@ -44,6 +44,7 @@ import { translateApiError, applySafetyAgeUp, sanitizeForDocumentary } from './l
 import { cropEquirectangular, validate360Image, get360AnalysisPrompt, parse360Analysis } from './lib/panorama360';
 import { getCharacterAnalysisPrompt, getScenarioEnhancePrompt, getScenarioPrompt, getPolicyAnalysisPrompt, getPolicyFallbackPrompt, buildChatGPTMangaPrompt, buildGeminiMangaPrompt } from './lib/prompts';
 import { buildIdentityMatrix, getCharTraitsFromMatrix, extractDialogueOnly, extractActionOnly, injectOutfitReminder, extractPlacementRule, extractCastLimitRule, getCameraForPanel, getCameraForChatGPT, stripWeightTags, extractEmotionStyle, buildEmotionBlock, cleanCastList } from './lib/panel-utils';
+import { buildMangaPrompt } from './lib/prompt-assembler';
 import ThinkingLog from './components/ThinkingLog';
 import Panorama360Viewer from './components/Panorama360Viewer';
 import StepGuide from './components/StepGuide';

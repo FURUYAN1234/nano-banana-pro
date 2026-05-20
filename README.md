@@ -910,6 +910,9 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v3.83-alpha (2026-05-20)
+- ** [Fix] ** リファクタリングによって発生した `buildMangaPrompt is not defined` ランタイムエラー（`src/App.jsx` 内のインポート漏れ）を修正。 / Fixed runtime error `buildMangaPrompt is not defined` in `src/App.jsx` by adding the missing import statement.
+
 ### v3.82-alpha (2026-05-20)
 - ** [Refactor] ** `App.jsx` 内のプロンプト構築関数 `assemblePrompt` のリファクタリングを完了し、外部モジュール `buildMangaPrompt` を用いたステート管理の整理とクリーンアップを実施。 / Refactored `assemblePrompt` in `App.jsx` to integrate with `buildMangaPrompt` module, cleaning up state variables and enhancing async stability.
 
@@ -917,29 +920,20 @@ Developed by **FURU**
 - ** [Refactor & Clean] ** 一時不要ファイルの削除と、リポジトリのクリーンアップ、およびデプロイ・リリースフローのフル自動化プロトコルの適用。 / Cleaned up temporary files, optimized repository aesthetics, and implemented full release automation protocols.
 
 ### v3.80-alpha (2026-05-20)
-722: - ** [Refactor] ** Phase 3-C: `assemblePrompt` 内の ChatGPT / Gemini 用巨大プロンプトテンプレートを `src/lib/prompts.js` のビルダー関数（`buildChatGPTMangaPrompt`, `buildGeminiMangaPrompt`）として外部化。さらに `extractEmotionStyle`, `buildEmotionBlock`, `cleanCastList` を `src/lib/panel-utils.js` に移動し、`App.jsx` を約300行削減。 / Externalized ChatGPT and Gemini prompt templates from `assemblePrompt` into builder functions in `prompts.js`, and moved emotion style helpers and cast list parser into `panel-utils.js`, reducing `App.jsx` by ~300 lines.
-723: 
-724: ### v3.78-alpha (2026-05-20)
-725: - ** [Refactor] ** Phase 3-B: `App.jsx` 内のパネル解析・プロンプト組み立て用ユーティリティ関数群を `src/lib/panel-utils.js` に外部化。React state (`castList` 等) のクロージャ参照バグを引数渡し方式に変更して解決。 / Moved panel parsing and prompt assembly utility functions to `src/lib/panel-utils.js`, resolving closure reference errors for React state variables.
-726: 
-727: ### v3.77-alpha (2026-05-20)
-728: - ** [Gemini API] ** 新モデル ** gemini-3.5-flash ** への対応、リファクタリング後のビルドおよび安全なデプロイ完了。 / Deployed the updated build with support for the new `gemini-3.5-flash` model.
-729: 
-730: ### v3.76-alpha (2026-05-20)
-731: - ** [Gemini API] ** 新モデル ** gemini-3.5-flash ** に対応。モデル死活監査に基づき、`TEXT_MODEL_IDS` および `IMAGE_MODEL_IDS` の優先順位を更新。また、`getModelBadgeInfo` バッジ表示に ** Gemini 3.5 ** を追加。 / Supported the new `gemini-3.5-flash` model. Updated Text and Image model priority lists based on model deprecation audit. Updated `getModelBadgeInfo` to properly display the `Gemini 3.5` model badge in the UI.
-732: - ** [Refactor] ** 前回のパノラマ・プロンプト外部化リファクタリングを反映した安全な一貫ビルドをテスト・デプロイ。 / Verified and deployed the clean build following the panorama/prompt modularization refactoring from the previous phase.
-733: 
-734: ### v3.75-alpha (2026-05-20)
-735: - ** [Refactor] ** `App.jsx` 内の360°パノラマ画像処理ロジックおよびインラインのプロンプト定義（STEP1のキャラ解析、STEP2の演出強化、360°背景画像解析）を外部モジュール（`src/lib/panorama360.js`, `src/lib/prompts.js`）へ分離・集約。保守性を大幅に改善。 / Modularized the 360-degree panorama image processing and inline prompt templates from `App.jsx` into `src/lib/panorama360.js` and `src/lib/prompts.js`, significantly improving code maintainability.
-736: 
-737: ### v3.74-alpha (2026-05-20)
-738: - ** [Refactor] ** 巨大化した `App.jsx`（5,880行）からUIコンポーネント（ThinkingLog, Panorama360Viewer, StepGuide, ApiKeyModal, ErrorBoundary）および定数・セーフティフィルタ群を別ファイルに分割・抽出（ファイルサイズを12.4%削減）。品質維持・保守性を向上。 / Extracted UI components and safety/constant definitions from the monolithic `App.jsx` into individual modular files, reducing `App.jsx` line count by 12.4%.
-739: 
-740: ### v3.73-alpha (2026-05-19)
-741: - ** [Fix] ** ダイアログ抽出ロジック（`extractDialogueOnly`）を改善し、カッコ付きト書きや段落形式のシナリオでもセリフを取りこぼさずに抽出できるよう正規表現フォールバックを修正。 / Improved dialogue extraction logic to accurately parse multi-character and paragraph-formatted scenarios without missing speech bubbles.
-742: 
-743: ### v3.72-alpha (2026-05-19)
-744: - ** [UI/UX] ** シナリオ入力欄のプレースホルダーとラベルを更新し、外部生成ツール（Story Maker等）からの直接的なシナリオコピー＆ペーストに対応していることを明記。 / Updated the scenario input placeholder to explicitly state support for pasting externally generated scenarios from tools like Story Maker.
-745: 
-746: ### v3.71-alpha (2026-05-19)
-747: - ** [Docs] ** プロジェクト間の直接ファイル編集（クロスプロジェクト汚染）を禁止するルール整備と仕様ドキュメント(`docs/scenario_spec.md`)を作成。 / Established Cross-Project Isolation rules and generated `scenario_spec.md` for safe parser specification syncing.
+- ** [Fix] ** リファクタリング後に発生していた React マウントおよびレンダリング時の ** 2つの致命的エラー ** （`App.jsx` 内のタイポ `step4Ref` 、および `Step4Panel.jsx` 内での `Wand2` インポート漏れ）を修正。さらに、ランタイムエラー検知用に ** ErrorBoundary ** を導入し、クラッシュ耐性を強化。 / Fixed two critical React mounting and rendering errors (undefined `step4Ref` typo in `App.jsx` and missing `Wand2` import in `Step4Panel.jsx`) caused by refactoring. Integrated `ErrorBoundary` to catch runtime errors and improve crash resilience.
+
+### v3.79-alpha (2026-05-20)
+- ** [Refactor] ** Phase 3-C: `assemblePrompt` 内の ChatGPT / Gemini 用巨大プロンプトテンプレートを `src/lib/prompts.js` のビルダー関数（`buildChatGPTMangaPrompt`, `buildGeminiMangaPrompt`）として外部化。さらに `extractEmotionStyle`, `buildEmotionBlock`, `cleanCastList` を `src/lib/panel-utils.js` に移動し、`App.jsx` を約300行削減。 / Externalized ChatGPT and Gemini prompt templates from `assemblePrompt` into builder functions in `prompts.js`, and moved emotion style helpers and cast list parser into `panel-utils.js`, reducing `App.jsx` by ~300 lines.
+
+### v3.78-alpha (2026-05-20)
+- ** [Refactor] ** Phase 3-B: `App.jsx` 内のパネル解析・プロンプト組み立て用ユーティリティ関数群を `src/lib/panel-utils.js` に外部化。React state (`castList` 等) のクロージャ参照バグを引数渡し方式に変更して解決。 / Moved panel parsing and prompt assembly utility functions to `src/lib/panel-utils.js`, resolving closure reference errors for React state variables.
+
+### v3.77-alpha (2026-05-20)
+- ** [Gemini API] ** 新モデル ** gemini-3.5-flash ** への対応、リファクタリング後のビルドおよび安全なデプロイ完了。 / Deployed the updated build with support for the new `gemini-3.5-flash` model.
+
+### v3.76-alpha (2026-05-20)
+- ** [Gemini API] ** 新モデル ** gemini-3.5-flash ** に対応。モデル死活監査に基づき、`TEXT_MODEL_IDS` および `IMAGE_MODEL_IDS` の優先順位を更新。また、`getModelBadgeInfo` バッジ表示に ** Gemini 3.5 ** を追加。 / Supported the new `gemini-3.5-flash` model. Updated Text and Image model priority lists based on model deprecation audit. Updated `getModelBadgeInfo` to properly display the `Gemini 3.5` model badge in the UI.
+- ** [Refactor] ** 前回のパノラマ・プロンプト外部化リファクタリングを反映した安全な一貫ビルドをテスト・デプロイ。 / Verified and deployed the clean build following the panorama/prompt modularization refactoring from the previous phase.
+
+### v3.75-alpha (2026-05-20)
+- ** [Refactor] ** `App.jsx` 内の360°パノラマ画像処理ロジックおよびインラインのプロンプト定義（STEP1のキャラ解析、STEP2の演出強化、360°背景画像解析）を外部モジュール（`src/lib/panorama360.js`, `src/lib/prompts.js`）へ分離・集約。保守性を大幅に改善。 / Modularized the 360-degree panorama image processing and inline prompt templates from `App.jsx` into `src/lib/panorama360.js` and `src/lib/prompts.js`, significantly improving code maintainability.
