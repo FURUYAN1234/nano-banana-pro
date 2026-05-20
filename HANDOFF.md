@@ -1,12 +1,12 @@
-# HANDOFF.md (v3.77-alpha / Deploy Process)
+# HANDOFF.md (v3.78-alpha / Deploy Process)
 
 ## Current Status
 - **DEPLOYMENT** (デプロイ実行中)
-- 最新バージョン `v3.77-alpha` の本番デプロイプロセスを開始。
-- `src/App.jsx` を 5,157行 → **4,844行** (313行削減) まで圧縮完了。
-- Phase 3-A（360°パノラマロジックおよび一部巨大プロンプトテンプレートの分離）完了。
+- 最新バージョン `v3.78-alpha` の本番デプロイプロセスを開始。
+- `src/App.jsx` を 4,844行 → **3,801行** (1,043行削減) まで圧縮完了。
+- Phase 3-B（パネル解析ユーティリティ関数 `src/lib/panel-utils.js` への切り出し、クロージャバグ修正）完了。
 - ビルド成功（`npm run build` 通過）＆ローカル動作確認済み。
-- ユーザー指示「画像まででたのでいったんデプロイして」に基づき、デプロイ手順を実行中。
+- ユーザー指示「画像まででたのでいったんデフロイして」に基づき、デプロイ手順を実行中。
 
 ## Done (Phase 3)
 - `src/lib/panorama360.js` [NEW]: `cropEquirectangular`, `validate360Image`, `get360AnalysisPrompt`, `parse360Analysis` を App.jsx から抽出・統合。

@@ -715,6 +715,10 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v3.78-alpha (2026-05-20)
+- ** [Refactor] ** `App.jsx` 内のパネル解析・プロンプト組み立て用ユーティリティ関数群（`extractDialogueOnly` や `extractActionOnly` 等）を `src/lib/panel-utils.js` に外部化。React state である `castList` などのクロージャ参照バグを引数渡し方式に変更して完全に解決し、ビルドおよび実行の安定性を確保。 / Refactored panel-parsing and prompt-assembly utility functions from `App.jsx` to `src/lib/panel-utils.js`. Resolved closure reference errors for `castList` and other React state variables by passing them as function parameters, ensuring build and runtime stability.
+
+
 ### v3.77-alpha (2026-05-20)
 - ** [Gemini API] ** 新モデル ** gemini-3.5-flash ** への対応、リファクタリング後のビルドおよび安全なデプロイ完了。 / Deployed the updated build with support for the new `gemini-3.5-flash` model.
 

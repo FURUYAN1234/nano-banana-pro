@@ -452,3 +452,77 @@ export const getScenarioPrompt = ({
           「…」や「～」など、終止記号なしで終わるセリフはシステムエラーとなるため完全禁止とする。
           `;
 };
+
+
+// --- ポリシー修正分析プロンプト (App.jsx -> externalized) ---
+// Phase 1: 問題箇所の特定と置換テーブルの生成
+export const getPolicyAnalysisPrompt = (policyErrorMsg, finalPrompt) => {
+  return `あなたは画像生成プロンプトのコンテンツポリシー修正の専門家です。
+
+
+以下の画像生成プロンプトがAIの安全基準（コンテンツポリシー）により拒否されました。
+
+【拒否理由・エラー情報】:
+${policyErrorMsg.trim()}
+
+【拒否されたプロンプト（参照用・修正不要）】:
+${finalPrompt}
+
+【あなたのタスク】:
+上記プロンプトの中から、コンテンツポリシーに抵触している「単語・フレーズ」を全て特定し、それぞれに対して安全な代替表現を提案してください。
+
+【検出すべき問題カテゴリ】:
+1. 学校・未成年連想: classroom, 教室, 実習室, 校則, school, academy, sailor uniform, serafuku, student council, school rules, 授業 → オフィス・社会人設定に置換
+2. 制服・学生服: sailor-style, pleated skirt（学校文脈で使用時）, school blazer, 制服 → ビジネスウェア/カジュアルオフィスに置換
+3. 暴力表現: explosion, blast, 爆風, 叩きつけ, striking, slamming, 衝撃波, 激しく叩く → 劇的だが非暴力的な演出に置換
+4. 年齢・体型リスク: short height, loli, petite（未成年を連想させる文脈） → 成人の体型表現に置換
+5. 過激カメラ: worm's eye view（制服キャラとの組み合わせ時のみ） → より安全なアングルに置換
+6. 威嚇・ハラスメント: 怒りの炎, intense fury, 仁王立ち + 攻撃動作 → 威厳ある態度に変換
+
+【出力フォーマット - 厳守】:
+以下のJSON配列形式**のみ**を出力してください。説明文や前置き、マークダウンコードフェンスは一切不要です。
+JSON配列の最初の文字は [ 、最後の文字は ] であること。
+
+[
+  {"from": "問題のある元の表現（プロンプト内の正確な文字列）", "to": "安全な代替表現", "reason": "簡潔な理由"},
+  {"from": "...", "to": "...", "reason": "..."}
+]
+
+【重要ルール】:
+- "from"の値は、プロンプト内に**実在する正確な部分文字列**でなければならない。存在しない文字列を捏造しないこと。
+- 1つの"from"は可能な限り短い単位（単語〜1文程度）にすること。段落丸ごとの置換は禁止。
+- 問題のない箇所は絶対に含めないこと。修正が必要な箇所のみ列挙すること。
+- 最低3個、最大20個の置換ペアを出力すること。
+- "to"の表現は元と同程度の長さ・ディテールを維持すること。短縮・省略禁止。`;
+};
+
+
+// --- ポリシー修正フォールバックプロンプト (App.jsx -> externalized) ---
+// 全文再生成方式（JSONパース失敗時の保険）
+export const getPolicyFallbackPrompt = (policyErrorMsg, finalPrompt) => {
+  return `あなたは画像生成プロンプトのコンテンツポリシー修正の専門家です。
+
+以下のプロンプトがAIの安全基準で拒否されました。以下の置換ルールを厳密に適用して、修正後のプロンプト全文を出力してください。
+
+【必須置換ルール（これらを全て適用）】:
+- 学校設定 → オフィス/IT企業/会議室に変更: 教室,実習室,classroom → モダンなIT企業のオフィス
+- 校則 → 業務規定/社内規定
+- セーラー服/sailor-style → ビジネスブラウス/professional business blouse
+- プリーツスカート/pleated skirt → テーラードスラックス/tailored slacks（学校文脈の場合のみ）
+- 爆風/explosion/blast → 颯爽と/劇的に/dramatic entrance
+- 叩きつけ/striking/slamming → 威風堂々と置く/firmly placing
+- 衝撃波 → 気迫/aura of authority
+- 怒りの炎/intense fury/rage → 強い決意/fierce determination
+- 校則を守りなさい → 業務規定を守りなさい
+- short height → petite build
+
+【拒否理由・エラー情報】:
+${policyErrorMsg.trim()}
+
+【修正対象のプロンプト】:
+${finalPrompt}
+
+【出力ルール】:
+- 上記の置換ルールに該当する箇所だけを修正し、それ以外は1文字も変更しないでください。
+- 修正後のプロンプト全文のみを出力してください。説明や前置きは不要です。`;
+};
