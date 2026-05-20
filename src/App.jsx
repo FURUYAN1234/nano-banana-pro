@@ -39,8 +39,10 @@ import { callAI, setActiveEngine, getActiveEngine, getEngineDisplayName } from '
 import { getLocationDetails, getRandomReactions } from './lib/knowledge';
 
 // --- Refactored Imports (Phase 1-2) ---
-import { SYSTEM_VERSION, getPunchlineLabel, DEFAULT_CATEGORIES } from './lib/constants';
+import { SYSTEM_VERSION, getPunchlineLabel, DEFAULT_CATEGORIES, getModelBadgeInfo } from './lib/constants';
 import { translateApiError, applySafetyAgeUp, sanitizeForDocumentary } from './lib/safety-filters';
+import { cropEquirectangular, validate360Image, get360AnalysisPrompt, parse360Analysis } from './lib/panorama360';
+import { getCharacterAnalysisPrompt, getScenarioEnhancePrompt } from './lib/prompts';
 import ThinkingLog from './components/ThinkingLog';
 import Panorama360Viewer from './components/Panorama360Viewer';
 import StepGuide from './components/StepGuide';
@@ -96,81 +98,7 @@ function App() {
     }
   }, []);
 
-  // [v1.7.0] Helper to determine model tier and badge info
-  const getModelBadgeInfo = (modelId) => {
-    if (!modelId) return null;
-
-    // Gemini 3.1系 = 最高品質 (Next-Gen)
-    if (modelId.includes("3.1")) {
-      return {
-        label: "NEXT GEN",
-        tier: "Supreme",
-        color: "bg-gradient-to-r from-yellow-600 to-yellow-400 text-black",
-        desc: "Gemini 3.1: 最高品質 (Next Generation)"
-      };
-    }
-    // Gemini 3.0 Flash / 2.5 Pro = 高品質
-    if (modelId.includes("3-flash") || modelId.includes("2.5-pro")) {
-      return {
-        label: "HIGH QUALITY",
-        tier: "Active",
-        color: "bg-blue-600 text-white",
-        desc: "Gemini 3.0/2.5 Pro: 高品質"
-      };
-    }
-    // Gemini 2.5 Flash (画像生成含む) = 安定
-    if (modelId.includes("2.5-flash") && !modelId.includes("lite")) {
-      return {
-        label: "STABLE",
-        tier: "Active",
-        color: "bg-indigo-600 text-white",
-        desc: "Gemini 2.5 Flash: 安定・高速"
-      };
-    }
-    // Flash Lite系 = 標準品質
-    if (modelId.includes("lite") || modelId.includes("latest")) {
-      return {
-        label: "STANDARD QUALITY",
-        tier: "Lite",
-        color: "bg-gray-600 text-white",
-        desc: "Flash Lite: 標準品質 (API制限回避中...)"
-      };
-    }
-    // Imagen系 = レガシー
-    if (modelId.includes("imagen")) {
-      return {
-        label: "LEGACY",
-        tier: "Lite",
-        color: "bg-amber-700 text-white",
-        desc: "Imagen: レガシーモデル (2026/06廃止予定)"
-      };
-    }
-    // [v3.59] OpenAI GPT系モデル
-    if (modelId.includes("gpt-4") || modelId.includes("gpt-3")) {
-      return {
-        label: "ChatGPT",
-        tier: "Active",
-        color: "bg-emerald-600 text-white",
-        desc: `OpenAI ${modelId}: テキスト生成`
-      };
-    }
-    // [v3.59] OpenAI 画像生成モデル
-    if (modelId.includes("gpt-image") || modelId.includes("dall-e")) {
-      return {
-        label: "ChatGPT IMG",
-        tier: "Active",
-        color: "bg-emerald-500 text-white",
-        desc: `OpenAI ${modelId}: 画像生成`
-      };
-    }
-    // Fallback
-    return {
-      label: "UNKNOWN MODEL",
-      tier: "Unknown",
-      color: "bg-slate-600 text-white",
-      desc: modelId
-    };
-  };
+  // getModelBadgeInfo → src/lib/constants.js に移動済み
   const [images, setImages] = useState([]);
 
   // States for Steps
@@ -230,74 +158,7 @@ function App() {
   const [bg360CroppedPanels, setBg360CroppedPanels] = useState(null);   // [v3.53 Phase2] 各コマ用クロップ済み背景画像 [base64, base64, base64, base64]
   const [is360CameraWorking, setIs360CameraWorking] = useState(false);  // [v3.53] カメラワーク設計＋クロップ処理中フラグ（Step3ブロック用）
 
-  // [v3.53 Phase2] 360°正距円筒図法（equirectangular）画像から指定方角の透視投影ビューをクロップする関数
-  // yaw: 水平方角（0°=正面, 90°=右, 180°=背面, 270°=左）
-  // pitch: 垂直方角（0°=水平, +上向き, -下向き）
-  // fov: 視野角（60°=望遠, 90°=標準, 120°=広角）
-  const cropEquirectangular = (base64Img, yaw, pitch, fov, outputWidth = 640, outputHeight = 480) => {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      img.onload = () => {
-        try {
-          const canvas = document.createElement('canvas');
-          canvas.width = outputWidth;
-          canvas.height = outputHeight;
-          const ctx = canvas.getContext('2d');
-
-          const imgW = img.width;
-          const imgH = img.height;
-
-          // equirectangular: 横幅=360°, 縦幅=180°
-          // yawからピクセル位置を計算（0°=画像中央, wrapping対応）
-          const normalizedYaw = ((yaw % 360) + 360) % 360;
-          const centerX = (normalizedYaw / 360) * imgW;
-
-          // FOVからクロップ幅を計算
-          const cropW = (fov / 360) * imgW;
-
-          // pitchからY中心を計算（0°=画像中央, ±90°=上下端）
-          const centerY = (imgH / 2) - (pitch / 180) * imgH;
-
-          // クロップ高さ（アスペクト比維持）
-          const cropH = cropW * (outputHeight / outputWidth);
-
-          const startX = centerX - cropW / 2;
-          const startY = Math.max(0, Math.min(imgH - cropH, centerY - cropH / 2));
-          const clampedCropH = Math.min(cropH, imgH);
-
-          // 水平方向のラップアラウンド処理
-          if (startX >= 0 && startX + cropW <= imgW) {
-            // ラップなし — そのまま描画
-            ctx.drawImage(img, startX, startY, cropW, clampedCropH, 0, 0, outputWidth, outputHeight);
-          } else if (startX < 0) {
-            // 左端を超えた → 右端からラップ
-            const overflowW = -startX;
-            const mainW = cropW - overflowW;
-            const mainRatio = mainW / cropW;
-            // 右端部分（ラップ）
-            ctx.drawImage(img, imgW - overflowW, startY, overflowW, clampedCropH, 0, 0, outputWidth * (1 - mainRatio), outputHeight);
-            // メイン部分
-            ctx.drawImage(img, 0, startY, mainW, clampedCropH, outputWidth * (1 - mainRatio), 0, outputWidth * mainRatio, outputHeight);
-          } else {
-            // 右端を超えた → 左端からラップ
-            const mainW = imgW - startX;
-            const overflowW = cropW - mainW;
-            const mainRatio = mainW / cropW;
-            // メイン部分
-            ctx.drawImage(img, startX, startY, mainW, clampedCropH, 0, 0, outputWidth * mainRatio, outputHeight);
-            // 左端部分（ラップ）
-            ctx.drawImage(img, 0, startY, overflowW, clampedCropH, outputWidth * mainRatio, 0, outputWidth * (1 - mainRatio), outputHeight);
-          }
-
-          resolve(canvas.toDataURL('image/jpeg', 0.85));
-        } catch (err) {
-          reject(err);
-        }
-      };
-      img.onerror = () => reject(new Error('画像の読み込みに失敗しました'));
-      img.src = base64Img;
-    });
-  };
+  // cropEquirectangular → src/lib/panorama360.js に移動済み
 
   const handleToggleOpenAIApi = (checked) => {
     if (checked) {
@@ -378,29 +239,7 @@ function App() {
     setTimeout(() => setStatus(""), 4000);
   };
 
-  // [v3.48] 360度背景画像バリデーション＆解析
-  const validate360Image = (file) => {
-    return new Promise((resolve, reject) => {
-      const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
-      if (!validTypes.includes(file.type)) {
-        reject(`対応していない形式です（${file.type}）。JPEG/PNG/WebP のみ対応。`);
-        return;
-      }
-      const img = new Image();
-      img.onload = () => {
-        const aspectRatio = img.naturalWidth / img.naturalHeight;
-        const is2to1 = Math.abs(aspectRatio - 2.0) < 0.15; // 誤差15%許容（PanoForge出力の微小なズレに対応）
-        if (!is2to1) {
-          reject(`360度画像ではありません（アスペクト比 ${aspectRatio.toFixed(2)}:1 — 2:1が必要）。PanoForge等で生成した equirectangular 画像をお使いください。`);
-          return;
-        }
-        const warning = img.naturalWidth < 2048 ? `解像度が低めです（${img.naturalWidth}px — 2048px以上推奨）` : null;
-        resolve({ width: img.naturalWidth, height: img.naturalHeight, aspectRatio, warning });
-      };
-      img.onerror = () => reject('画像の読み込みに失敗しました。');
-      img.src = URL.createObjectURL(file);
-    });
-  };
+  // validate360Image → src/lib/panorama360.js に移動済み
 
   // 360度画像をBase64に変換してGemini API送信用パーツを生成
   const process360Image = async (file) => {
@@ -439,48 +278,18 @@ function App() {
       // 場所テキスト入力をクリア（背景画像が場所の上位互換として機能するため）
       setCustomLocation('');
 
-      // Geminiで空間解析を実行
-      const analysisPrompt = `この360度パノラマ画像（equirectangular形式）を分析し、以下の情報を**必ずJSON形式**で返答してください。それ以外のテキストは一切出力しないでください。
-
-{
-  "location": "場所の種類と具体的な特徴（例: 教室（窓際席・午後）、カフェテラス（都市部・夕暮れ）等）",
-  "lighting": "主光源の方向と種類の簡潔な説明（例: 左側の大窓から自然光 + 天井蛍光灯）",
-  "spatialType": "空間タイプ（indoor/outdoor/mixed）",
-  "objects": "特徴的なオブジェクト3つ以内（例: 木製の机、黒板、カーテン）",
-  "mood": "空間の雰囲気を一言で（例: 放課後の静けさ）"
-}`;
-
-      const analysisResult = await callAI(analysisPrompt, [imagePart], null, (msg) => {
+      // Geminiで空間解析を実行（プロンプトは panorama360.js に外部化済み）
+      const analysisResult = await callAI(get360AnalysisPrompt(), [imagePart], null, (msg) => {
         console.log(`[360° BG Analysis] ${msg}`);
       });
 
-      // JSONをパース
-      try {
-        const jsonStr = analysisResult.text.match(/\{[\s\S]*\}/)?.[0];
-        if (jsonStr) {
-          const analysis = JSON.parse(jsonStr);
-          setBg360Analysis(analysis);
-          showStatus(`✅ 360°背景を読み込みました: ${analysis.location}`);
-        } else {
-          // JSONパース失敗時のフォールバック
-          setBg360Analysis({
-            location: '360°パノラマ画像',
-            lighting: '自動解析',
-            spatialType: 'unknown',
-            objects: '',
-            mood: ''
-          });
-          showStatus('✅ 360°背景を読み込みました（解析結果は簡略化されています）');
-        }
-      } catch (parseErr) {
-        console.warn('[360° BG] Analysis JSON parse failed:', parseErr);
-        setBg360Analysis({
-          location: '360°パノラマ画像',
-          lighting: '自動解析',
-          spatialType: 'unknown',
-          objects: '',
-          mood: ''
-        });
+      // JSONをパース（パーサーは panorama360.js に外部化済み）
+      const analysis = parse360Analysis(analysisResult.text);
+      setBg360Analysis(analysis);
+      if (analysis.location !== '360°パノラマ画像') {
+        showStatus(`✅ 360°背景を読み込みました: ${analysis.location}`);
+      } else {
+        showStatus('✅ 360°背景を読み込みました（解析結果は簡略化されています）');
       }
     } catch (err) {
       console.error('[360° BG] Validation/Processing failed:', err);
@@ -621,27 +430,12 @@ function App() {
 
         setIs360Analyzing(true);
         setAnalyzeThought(prev => prev + `\n> 🌐 360°空間解析を実行中... (API通信保護のため順次処理)`);
-        const analysisPrompt = `この360度パノラマ画像（equirectangular形式）を分析し、以下の情報を**必ずJSON形式**で返答してください。それ以外のテキストは一切出力しないでください。
-
-{
-  "location": "場所の種類と具体的な特徴（例: 教室（窓際席・午後）、カフェテラス（都市部・夕暮れ）等）",
-  "lighting": "主光源の方向と種類の簡潔な説明（例: 左側の大窓から自然光 + 天井蛍光灯）",
-  "spatialType": "空間タイプ（indoor/outdoor/mixed）",
-  "objects": "特徴的なオブジェクト3つ以内（例: 木製の机、黒板、カーテン）",
-  "mood": "空間の雰囲気を一言で（例: 放課後の静けさ）"
-}`;
-        const analysisResult = await callAI(analysisPrompt, [imagePart], null, () => {});
-        const jsonStr = analysisResult.text.match(/\{[\s\S]*\}/)?.[0];
-        if (jsonStr) {
-          const analysis = JSON.parse(jsonStr);
-          setBg360Analysis(analysis);
-          setCustomLocation(analysis.location); // 指定場所に自動入力
-          showStatus(`🌐 360°背景を検出: ${analysis.location}`);
-          setAnalyzeThought(prev => prev + `\n> 🌐 空間解析完了: ${analysis.location}`);
-        } else {
-          setBg360Analysis({ location: '360°パノラマ画像', lighting: '自動解析', spatialType: 'unknown', objects: '', mood: '' });
-          setCustomLocation('360°パノラマ画像');
-        }
+        const analysisResult = await callAI(get360AnalysisPrompt(), [imagePart], null, () => {});
+        const analysis = parse360Analysis(analysisResult.text);
+        setBg360Analysis(analysis);
+        setCustomLocation(analysis.location);
+        showStatus(`🌐 360°背景を検出: ${analysis.location}`);
+        setAnalyzeThought(prev => prev + `\n> 🌐 空間解析完了: ${analysis.location}`);
       } catch (err) {
         console.warn('[360° BG] Analysis failed:', err);
         setBg360Analysis({ location: '360°パノラマ画像', lighting: '不明', spatialType: 'unknown', objects: '', mood: '' });
@@ -677,85 +471,8 @@ function App() {
         };
       });
 
-      const prompt = `
-        /* SYSTEM: ABSOLUTE CONTEXT RESET. FORGET ALL PREVIOUS CHARACTERS. */
-        /* TARGET: Analyze ALL currently uploaded images. Do not recall past sessions. */
-        
-        あなたはプロの漫画家兼キャラクターデザイナー（解析特化）です。
-        以下の「絶対厳守ルール」に従い、現在の全ての画像を解析してください。
-
-        【0. 画像スタイル判定 (Style Detection)】
-        ・**最初に必ず「STYLE_TAG: MONOCHROME」または「STYLE_TAG: COLOR」と出力せよ。**
-
-        【1. キャラクター数と同一性の完全一致 (Count & Identity)】
-        ・画像内の**「固有名を持つキャラ」**を全てリストアップせよ。入力画像が複数ある場合、**全ての画像を確認し、全キャラクターを抽出せよ**。絶対に1人で止まるな。
-
-        【2. 特徴の超精密分解 (High-Fidelity Decomposition)】
-
-        A. **【性別と年齢 (Gender & Age)】**:
-           - **最重要**: 性別を間違えるな。ショートカットの女性を男性と誤認するな。
-           - 女性なら (female:1.6), (woman:1.4)、男性なら (male:1.6), (man:1.4) を必ず付与せよ。
-           - 年齢感も記述せよ (young adult, adult, elderly)。"girl", "boy", "teenager", "child" は使用禁止。
-
-        B. **髪の完全構造化 (Strict Hair Analysis)**:
-           - **【ハゲ/坊主 (Bald/Buzz)】**: 
-             - 髪が無い場合は**「Bald」**、坊主なら**「Buzz Cut」**とせよ。
-           - **【色 (Tone/Color)】**: 
-             - 白黒の場合: 「ベタ(黒)→Black」「トーン(灰)→Brown/Dirty Blonde」「白→Silver/Blonde」。
-             - カラーの場合: 「赤(Red)」「茶(Brown)」「オレンジ(Ginger)」を厳密区別せよ。
-           - **【構造 (Structure) - 重要】**: 
-             - **髪のトポロジー解析 (Hair Topology Vectors)**:
-               - **毛先座標 (End Points)**: 毛先がどこにあるか？(顎ライン、肩ライン、鎖骨下、腰)。
-               - **重要 (Black Hair Warning)**: **黒髪は制服やアウトラインと同化して短く見えやすい。**
-             - 「肩に掛かっているか？」「背中に線があるか？」を凝視せよ。
-             - **姫カット(Sidelocks/Hime-cut)**がある場合、後ろ髪が長い確率が極めて高い。**安易にBobと判定するな。**
-           - **絶対長 (Absolute Length)**: 
-             - **Bob**: 毛先が「顎〜首」で止まっている。完全に宙に浮いている。
-             - **Medium**: 毛先が「肩」に触れている。
-             - **Long**: 毛先が「鎖骨」より下。**黒髪の場合は特に注意して探せ。**
-           - **アカリの判定**: もし毛先が内側にカールの軌跡を描いているなら「Internal Round Bob」。外に跳ねているなら「Flicked Bob」。断定せよ。
-         - **シルエット (Volume)**:
-           - 頭頂部のボリューム、サイドの膨らみを記述せよ。
-         - 単なる「Short」は禁止。「Chin-length Bob」や「Shoulder-length Layered」など具体的に。
-       - **【前髪 (Bangs)】**: Hime, Parted, Blunt, Asymmetric.
-       - **【アレンジ (Arrangement)】**: 
-         - **重要**: 後ろ髪が見えなくても、**Ponytail, Twintails, Bun, Braid**の兆候を見逃すな。
-         - 結っている＝**Long Hair**タグ必須。
-
-        C. **顔・アクセサリー (Face & Accessories)】**:
-           - **【アイウェア (Eyewear)】**: 
-             - **サングラスを絶対に見逃すな**。レンズが黒/不透明なら (black sunglasses:1.5)。
-             - 透明レンズなら (glasses:1.2)。形状(Under-rim, Round)も特定せよ。
-             - **【最重要リスク】** 眼鏡をかけていない場合は、他のキャラの眼鏡が伝染するハルシネーションを防ぐため、必ず **(no glasses:1.5)** と出力せよ。
-           - **【髭 (Facial Hair)】**: 
-             - **絶対に髭を見逃すな**。(white beard:1.5), (mustache:1.5), (stubble:1.2).
-             - 老人キャラは髭がある確率が高い。
-           - **【目 (Eyes)】**: ツリ目(Tsurime)、タレ目(Tareme)、瞳の色。
-           - **【特徴 (Charm Points)】**: 
-             - ホクロ(Mole under eye/mouth)、八重歯(Snaggletooth)、そばかす(Freckles)等の個性を絶対に見逃すな。
-           - **【肌 (Skin)】**: Tanned, Pale, Dark skinを正確に記述。
-
-        D. **服装・テキスト (Outfit & Text)**:
-            - **服の文字**: 服に書かれている文字（例: "FURU"）は **(shirt with text "FURU":1.4)** のようにタグ化せよ。
-            - 制服(Sailor/Blazer)、私服(Hoodie/T-shirt)の形状を特定せよ。
-
-        【3. OCR情報の反映と性格のタグ化】
-        ・読み取った名前、年齢、性格、社会的役割を正確に反映せよ。
-        ・**【最重要】**：画像生成AIにキャラクターの内面や立ち振る舞いを伝えるため、「性格(Mind)」の項目には**必ず英語の重み付きタグ**（例: (tsundere:1.2), (cheerful:1.3), (student council president:1.1) 等）を付与せよ。これを怠るとキャラクターの演技が死ぬ。
-
-        【出力フォーマット】
-        
-        ## 1. [OCRで読み取った正確な名前]
-
-        | カテゴリ | 特徴の詳細（日本語） | 画像生成AI用 重み付きタグ (Weighted Immutable Prompts) |
-        | :--- | :--- | :--- |
-        | **基本(Base)** | 性別: [性別]<br>年齢: [年齢] | **[WEIGHTS]: (female:1.6), (woman:1.4), (young adult:1.2)** |
-        | **髪(Hair)** | 色: [色]<br>長さ: [Short/Medium/Long]<br>構造: [Bob/Straight/Wavy/Spiky]<br>前髪: [形状] | **[WEIGHTS]: (chin-length bob:1.5), (orange hair:1.4), (messy:1.2)** |
-        | **顔(Face)** | 目: [色/形]<br>肌: [色]<br>髭: [有無]<br>眼鏡: [有無] | **[WEIGHTS]: (white beard:1.5), (tanned skin:1.5), (black sunglasses:1.6)** （※眼鏡無しなら **(no glasses:1.5)** を絶対付与） |
-        | **服装(Outfit)** | [服の詳細: 制服/私服、上着の有無など] | [weighted tags]: (formal outfit:1.2), (hoodie:1.1) |
-        | **性格(Mind)** | **[OCR抽出]**: [ここにテキスト全文] | **[WEIGHTS]: (cheerful:1.3), (energetic:1.2)** （※英語の性格タグを必須で記述） |
-      `;
-
+      // キャラクター解析プロンプト（テンプレートは prompts.js に外部化済み）
+      const prompt = getCharacterAnalysisPrompt();
 
       const result = await callAI(prompt, imageParts, null, (msg) => {
         setAnalyzeThought(prev => prev + `\n> ${msg}`);
@@ -874,38 +591,8 @@ function App() {
       });
     }, 800);
 
-    const enhancePrompt = `あなたは4コマ漫画のシナリオ演出家です。以下のシナリオの**演出力**を大幅に強化してください。
-
-${enhanceCategories.join("\n\n")}
-
-【Guard C: AI定型文の絶対排除】
-以下のAI特有の退屈な表現をシナリオ（ト書き・セリフ）から完全に排除・書き換えよ:
-- 感想・まとめのナレーション（「〜な一日だった」「〜と誰もが思った」「〜な出来事であった」等は絶対禁止。綺麗にまとめず余韻をぶった斬れ）
-- 汎用的で弱い感嘆（「ふふっ」「やれやれ」「まあいいか」等は絶対禁止。キャラに合った鋭いリアクションにせよ）
-- 状況をそのまま口で説明するセリフ（「〇〇が××してしまったぞ！」等は禁止。絵で状況は見せ、セリフは感情やツッコミに特化せよ）
-
-【笑い構造の検証チェック — 出力前に必ず自己検証せよ】
-以下のチェックリストを出力前に確認し、不合格項目があればシナリオを修正してから出力すること:
-□ フリ→オチ構造: 1コマ目が「読者の予想を作るフリ」として機能しているか？ 1コマ目でいきなりボケていないか？
-□ オチ集中: 4コマ目に笑いのエネルギーが最も集中しているか？ 2〜3コマ目にオチを消費して4コマ目が弱くなっていないか？
-□ ズレの大きさ: 予想（E）と実際（R）のギャップは十分に大きいか？ 「ちょっと変」ではなく「完全に予想外」になっているか？
-□ 天丼チェック: 天丼を使っている場合、1コマ目の仕込み→3コマ目の変奏→4コマ目の爆発が正しく配置されているか？
-□ ビジュアルギャグ: 各コマの「状況」欄に、ズレ技法に対応した視覚的ギャグ演出（身体変形、背景の異物、EMOTIONタグの急変等）が含まれているか？ テキストだけで笑いを作っていないか？
-□ セリフとビジュアルの連携: ボケのセリフに対応するビジュアルリアクション（ツッコミ役の表情崩壊、周囲の硬直等）が状況欄に書かれているか？
-
-【絶対に守るルール】
-- シナリオの形式・構造（Topic:, Location:, [1コマ目]〜[4コマ目]の書式）は一切変えない
-- セリフ（「」内の台詞）の文言は変えない（ただし「セリフ・ギャグの強化」カテゴリが指定されている場合はセリフの変更を許可する）
-- キャラクター名は変えない
-- 新しいキャラクターを追加しない
-- コマ数は4コマのまま
-- 出力は元のシナリオと完全に同じテキスト形式で返す（余計な説明や前置きは不要）
-- 上記チェックリストの検証結果は出力に含めない（内部処理として実行し、修正後のシナリオのみ出力せよ）
-
-【元のシナリオ】
-${scenario}
-
-上記シナリオの演出を指定カテゴリに沿って強化し、同じ形式で出力してください。`;
+    // シナリオ強化プロンプト（テンプレートは prompts.js に外部化済み）
+    const enhancePrompt = getScenarioEnhancePrompt(scenario, enhanceCategories);
 
     try {
       setEnhanceLog(prev => prev + `\n> [API] ${selectedEngine === 'openai' ? 'OpenAI' : 'Gemini'} にシナリオ強化をリクエスト中...`);

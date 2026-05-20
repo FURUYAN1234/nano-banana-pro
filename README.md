@@ -715,48 +715,33 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v3.75-alpha (2026-05-20)
+- ** [Refactor] ** `App.jsx` 内の360°パノラマ画像処理ロジックおよびインラインのプロンプト定義（STEP1のキャラ解析、STEP2の演出強化、360°背景画像解析）を外部モジュール（`src/lib/panorama360.js`, `src/lib/prompts.js`）へ分離・集約。保守性を大幅に改善。 / Modularized the 360-degree panorama image processing and inline prompt templates (STEP 1 character analysis, STEP 2 scenario enhancement, 360-degree background analysis) from `App.jsx` into `src/lib/panorama360.js` and `src/lib/prompts.js`, significantly improving code maintainability.
+
 ### v3.74-alpha (2026-05-20)
-- **[Refactor]** 巨大化した `App.jsx`（5,880行）からUIコンポーネント（ThinkingLog, Panorama360Viewer, StepGuide, ApiKeyModal, ErrorBoundary）および定数・セーフティフィルタ群を別ファイルに分割・抽出（ファイルサイズを12.4%削減）。品質維持・保守性を向上。 / Extracted UI components (ThinkingLog, Panorama360Viewer, StepGuide, ApiKeyModal, ErrorBoundary) and safety/constant definitions from the monolithic `App.jsx` into individual modular files, reducing `App.jsx` line count by 12.4% while maintaining full behavior parity.
+- ** [Refactor] ** 巨大化した `App.jsx`（5,880行）からUIコンポーネント（ThinkingLog, Panorama360Viewer, StepGuide, ApiKeyModal, ErrorBoundary）および定数・セーフティフィルタ群を別ファイルに分割・抽出（ファイルサイズを12.4%削減）。品質維持・保守性を向上。 / Extracted UI components (ThinkingLog, Panorama360Viewer, StepGuide, ApiKeyModal, ErrorBoundary) and safety/constant definitions from the monolithic `App.jsx` into individual modular files, reducing `App.jsx` line count by 12.4% while maintaining full behavior parity.
 
 ### v3.73-alpha (2026-05-19)
-- **[Fix]** ダイアログ抽出ロジック（`extractDialogueOnly`）を改善し、カッコ付きト書きや段落形式のシナリオでもセリフを取りこぼさずに抽出できるよう正規表現フォールバックを修正。 / Improved dialogue extraction logic (`extractDialogueOnly`) to accurately parse multi-character and paragraph-formatted scenarios without missing speech bubbles.
+- ** [Fix] ** ダイアログ抽出ロジック（`extractDialogueOnly`）を改善し、カッコ付きト書きや段落形式のシナリオでもセリフを取りこぼさずに抽出できるよう正規表現フォールバックを修正。 / Improved dialogue extraction logic (`extractDialogueOnly`) to accurately parse multi-character and paragraph-formatted scenarios without missing speech bubbles.
 
 ### v3.72-alpha (2026-05-19)
-- **[UI/UX]** シナリオ入力欄のプレースホルダーとラベルを更新し、外部生成ツール（Story Maker等）からの直接的なシナリオコピー＆ペースト（Topic:, Location: 等を含むテキスト）に対応していることを明記。UI上での利用手順を直感化。 / Updated the scenario input placeholder and label to explicitly state that users can directly paste externally generated scenarios (e.g., from Story Maker) containing tags like `Topic:` and `Location:`, clarifying the cross-tool workflow directly within the UI.
+- ** [UI/UX] ** シナリオ入力欄のプレースホルダーとラベルを更新し、外部生成ツール（Story Maker等）からの直接的なシナリオコピー＆ペースト（Topic:, Location: 等を含むテキスト）に対応していることを明記。UI上での利用手順を直感化。 / Updated the scenario input placeholder and label to explicitly state that users can directly paste externally generated scenarios (e.g., from Story Maker) containing tags like `Topic:` and `Location:`, clarifying the cross-tool workflow directly within the UI.
 
 ### v3.71-alpha (2026-05-19)
-- **[Docs]** story-maker側からの要請に基づき、プロジェクト間の直接ファイル編集（クロスプロジェクト汚染）を禁止し、NBP側からの一方的な参照による同期体制へ移行するためのルール整備と仕様ドキュメント(`docs/scenario_spec.md`)を作成。 / Established Cross-Project Isolation rules to prevent autonomous file modification in the `story-maker` project and generated a dedicated `scenario_spec.md` for safe parser specification syncing.
+- ** [Docs] ** story-maker側からの要請に基づき、プロジェクト間の直接ファイル編集（クロスプロジェクト汚染）を禁止し、NBP側からの一方的な参照による同期体制へ移行するためのルール整備と仕様ドキュメント(`docs/scenario_spec.md`)を作成。 / Established Cross-Project Isolation rules to prevent autonomous file modification in the `story-maker` project and generated a dedicated `scenario_spec.md` for safe parser specification syncing.
 
 ### v3.70-alpha (2026-05-19)
-- **[Feature]** ローカルRAG（知識辞書 `knowledge.js`）に「ソフトウェア開発」「SIer・炎上プロジェクト」「インフラ・ネットワーク」「AI開発」「ハッカー・セキュリティ」の5つのIT・テクノロジー系カテゴリを追加。IT関連のニュースやシナリオにおいて、より解像度の高いディテール（小道具・環境音など）を描写可能に。 / Added 5 IT/technology categories (Software Development, SIer/Troubled Projects, Infrastructure/Network, AI Development, Hacker/Security) to the Local RAG knowledge dictionary. This enables higher resolution detailing in IT-related scenarios and news generation.
+- ** [Feature] ** ローカルRAG（知識辞書 `knowledge.js`）に「ソフトウェア開発」「SIer・炎上プロジェクト」「インフラ・ネットワーク」「AI開発」「ハッカー・セキュリティ」の5つのIT・テクノロジー系カテゴリを追加。IT関連のニュースやシナリオにおいて、より解像度の高いディテール（小道具・環境音など）を描写可能に。 / Added 5 IT/technology categories (Software Development, SIer/Troubled Projects, Infrastructure/Network, AI Development, Hacker/Security) to the Local RAG knowledge dictionary. This enables higher resolution detailing in IT-related scenarios and news generation.
 
 ### v3.69-alpha (2026-05-19)
-- **[Update]** OpenAI (gpt-image-2) 生成時のタイムアウト設定を延長（4分→5分）し、UI上の待機時間案内表示を「2〜4分」から「2〜5分」へ修正。生成が長時間に及ぶケースでのエラー発生頻度を低減。 / Extended OpenAI (gpt-image-2) generation timeout limit from 4 to 5 minutes (300 seconds). Updated the UI wait-time message to reflect "2-5 minutes". This reduces premature timeout errors during extended generation periods.
+- ** [Update] ** OpenAI (gpt-image-2) 生成時のタイムアウト設定を延長（4分→5分）し、UI上の待機時間案内表示を「2〜4分」から「2〜5分」へ修正。生成が長時間に及ぶケースでのエラー発生頻度を低減。 / Extended OpenAI (gpt-image-2) generation timeout limit from 4 to 5 minutes (300 seconds). Updated the UI wait-time message to reflect "2-5 minutes". This reduces premature timeout errors during extended generation periods.
 
 ### v3.68-alpha (2026-05-19)
-- **[Feature]** ローカルRAG（知識辞書 `knowledge.js`）を統合。指定された場所（Location）特有の小道具・環境音、および感情に応じた物理的リアクションのアクションリストを動的に抽出し、シナリオ生成プロンプトへ強制注入する仕組みを追加。これにより、AI特有の「抽象的でフワッとした描写」を防ぎ、よりディテールに富んだ描写を実現。 / Integrated Local RAG (Knowledge Dictionary `knowledge.js`). Dynamically extracts location-specific props/ambient sounds and emotion-based physical reactions to inject into the scenario generation prompt, preventing vague AI descriptions and ensuring rich, detailed output.
+- ** [Feature] ** ローカルRAG（知識辞書 `knowledge.js`）を統合。指定された場所（Location）特有の小道具・環境音、および感情に応じた物理的リアクションのアクションリストを動的に抽出し、シナリオ生成プロンプトへ強制注入する仕組みを追加。これにより、AI特有の「抽象的でフワッとした描写」を防ぎ、よりディテールに富んだ描写を実現。 / Integrated Local RAG (Knowledge Dictionary `knowledge.js`). Dynamically extracts location-specific props/ambient sounds and emotion-based physical reactions to inject into the scenario generation prompt, preventing vague AI descriptions and ensuring rich, detailed output.
 
 ### v3.67-alpha (2026-05-19)
-- **[Fix]** ナラティブエンジンのルール間矛盾を解消する3つのパッチを適用（1. キャラクター知識境界に「知らない＝登場禁止ではない」の補足を追記、2. Guard S（五感強制）によるト書き肥大化を防ぐため「1文以内」の量的制限を追加、3. Guard M（比喩制約）よりもドキュメンタリーモードの原文忠実性が優先される旨を明記）。 / Applied 3 patches to resolve minor conflicts between narrative engine rules (1. Clarified that Knowledge Boundary does not prohibit appearances; 2. Added a 1-sentence limit to Guard S to prevent bloated stage directions; 3. Clarified that Documentary Mode's source fidelity takes precedence over Guard M).
+- ** [Fix] ** ナラティブエンジンのルール間矛盾を解消する3つのパッチを適用（1. キャラクター知識境界に「知らない＝登場禁止ではない」の補足を追記、2. Guard S（五感強制）によるト書き肥大化を防ぐため「1文以内」の量的制限を追加、3. Guard M（比喩制約）よりもドキュメンタリーモードの原文忠実性が優先される旨を明記）。 / Applied 3 patches to resolve minor conflicts between narrative engine rules (1. Clarified that Knowledge Boundary does not prohibit appearances; 2. Added a 1-sentence limit to Guard S to prevent bloated stage directions; 3. Clarified that Documentary Mode's source fidelity takes precedence over Guard M).
 
 ### v3.66-alpha (2026-05-19)
-- **[Enhancement]** ChatGPTモードのプロンプトを最適化。GPT-Image-2特有のガビガビや不要なノイズ（キラキラ・微細なテクスチャ）を抑制し、クリーンで明瞭なセルルックとドラマチックな陰影を保つよう画質調整指示を追加。 / Optimized the ChatGPT mode prompt by adding image quality adjustment instructions. This suppresses GPT-Image-2 specific noise (graininess, excessive glitter, micro-textures) while maintaining a clean, clear cel-look and dramatic cel-shading.
-- **[Enhancement]** ナラティブエンジン強化：3つの新ガードを導入。Guard S（五感バランス強制：視覚偏重を禁止し聴覚・触覚・嗅覚・体内感覚を義務化）、Guard M（比喩クリシェ排除：AI定型比喩を禁止し舞台由来の独自比喩を強制）、Knowledge Boundary Lock（キャラ知識境界遵守：キャラが知らない情報を喋るハルシネーションを防止）。 / Narrative Engine Enhancement: Introduced 3 new guards — Guard S (Sensory Balance Enforcement: mandates non-visual sensory elements in stage directions), Guard M (Metaphor Quality Gate: bans cliché metaphors and forces location-derived originals), and Knowledge Boundary Lock (prevents characters from speaking about information they couldn't know).
-
-### v3.65-alpha (2026-05-18)
-- **[Fix]** OpenAI(ChatGPT)利用時に、セリフの末尾から句読点（。や！）が欠落する問題を修正。SystemプロンプトとUserプロンプトの両方から「絶対厳守フォーマット」として句読点の付与を強制（サンドイッチ手法）するように改善。 / Fixed an issue where OpenAI (ChatGPT) would omit punctuation marks at the end of character dialogue. Implemented a "Sandwich Method" by enforcing strict punctuation formatting rules in both System and User prompts to guarantee compliance.
-
-### v3.64-alpha (2026-05-18)
-- **[Fix]** 起動用バッチファイル（`start_app.bat`など）の先頭にプロセスリセット処理を追加。起動時のポート競合や前回のキャッシュ残りを完全に防止。 / Added a cleanup routine to startup batch files to terminate zombie processes (e.g., Node.js), resolving port collision and cache persistence issues.
-
-### v3.63-alpha (2026-05-18)
-- **[Fix]** 起動バッチ（`start_app.bat`）が他プロジェクトと競合する問題を修正。`vite.config.js` にポート固定（`port: 5173`, `strictPort: true`）を追加し、複数プロジェクト同時起動時のポート衝突を防止。 / Fixed startup batch file conflict with other projects. Added port pinning (`port: 5173`, `strictPort: true`) to `vite.config.js` to prevent port collisions when running multiple projects simultaneously.
-
-### v3.62-alpha (2026-05-18)
-- **[Feature]** 将来的なAPI拡張に備え、デュアルエンジンアーキテクチャ（OpenAI / Gemini）のUI実装と文言を最適化。 / Prepared UI and text descriptions for the dual-engine architecture to ensure scalability for future API integrations.
-
-### v3.60-alpha (2026-05-18)
-- **[UI/UX]** 画像生成待機中オーバーレイの表示テキストを修正（1〜2分→2〜4分に統一）。不要なAPIトグルコードをパージ。 / Unified overlay wait time text and purged deprecated API toggle code.
-
-### v3.59-alpha (2026-05-18)
-- **[Docs]** READMEの「Dual-API Architecture」を刷新し、起動時からエンジンが完全に分岐する最新設計を反映。 / Rewrote Dual-API Architecture documentation to reflect the new bifurcated engine design.
+- ** [Enhancement] ** ChatGPTモードのプロンプトを最適化。GPT-Image-2特有のガビガビや不要なノイズ（キラキラ・微細なテクスチャ）を抑制し、クリーンで明瞭なセルルックとドラマチックな陰影を保つよう画質調整指示を追加。 / Optimized the ChatGPT mode prompt by adding image quality adjustment instructions. This suppresses GPT-Image-2 specific noise (graininess, excessive glitter, micro-textures) while maintaining a clean, clear cel-look and dramatic cel-shading.
+- ** [Enhancement] ** ナラティブエンジン強化：3つの新ガードを導入。Guard S（五感バランス強制：視覚偏重を禁止し聴覚・触覚・嗅覚・体内感覚を義務化）、Guard M（比喩クリシェ排除：AI定型比喩を禁止し舞台由来の独自比喩を強制）、Knowledge Boundary Lock（キャラ知識境界遵守：キャラが知らない情報を喋るハルシネーションを防止）。 / Narrative Engine Enhancement: Introduced 3 new guards — Guard S (Sensory Balance Enforcement: mandates non-visual sensory elements in stage directions), Guard M (Metaphor Quality Gate: bans cliché metaphors and forces location-derived originals), and Knowledge Boundary Lock (prevents characters from speaking about information they couldn't know).
