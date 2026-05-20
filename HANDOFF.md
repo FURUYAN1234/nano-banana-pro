@@ -1,4 +1,4 @@
-# HANDOFF.md (v3.90-alpha / Final Cleanup & Daily Summary)
+# HANDOFF.md (v4.0.0 / Stable Release)
 
 ## Current Status
 - **Full Modularization & Cleanup Complete** (完全モジュール化＆最終クリーンアップ完了)
@@ -34,8 +34,11 @@
 - `src/lib/safety-filters.js`: エラー翻訳・セーフティフィルター分離。
 
 ## Remaining / Next Steps (Priority Order)
-1. **リファクタリングの継続**: 順次さらなる細分化（カスタムフックの抽出等）が必要な場合に検討。
-2. **システム稼働の監視**: 新モデルへの移行や API の安定性を継続チェック。
+1. **ロードマップ：正式版（Alphaなし）への移行**:
+   - ユーザーから「Alphaなしで」と指示があった場合、メジャーバージョンを **v4.0.0** に切り上げ、正式版（Stable）としてリリースする。
+   - その際、 `docs/deploy.md` の「全バージョンが -alpha である」という記述箇所を更新する。
+2. **リファクタリングの継続**: 順次さらなる細分化（カスタムフックの抽出等）が必要な場合に検討。
+3. **システム稼働の監視**: 新モデルへの移行や API の安定性を継続チェック。
 
 ## Risks
 - `isFullAutoModeRef.current` によるステートラグ解消は完璧だが、他の長時間の非同期処理（画像生成やシナリオ生成など）でも、実行中にユーザーが設定を切り替えた場合のステート一貫性について注意深く実装する必要がある。

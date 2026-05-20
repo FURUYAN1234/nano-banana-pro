@@ -916,6 +916,13 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v4.0.0 (2026-05-20) — 正式版リリース / Stable Release
+- ** [Release] ** システムの完全モジュール化、非同期ステート同期バグの解決、およびリセット機能の修正を経て、正式版 **`v4.0.0`** としてリリース。プレリリースタグ（`-alpha`）を解除し、安定版として稼働を開始。 / Officially released as stable **`v4.0.0`** following complete modularization, asynchronous state sync fixes, and reset function validation. Removed the `-alpha` tag for stable production.
+- ** [Fix] ** 「エンジン変更・全リセット」および「シナリオから再生成（ソフトリセット）」実行時に、カテゴリ選択状態（ `categories` ）、自由入力トピック（ `manualTopic` ）、演出強化オプション（表情、ボディランゲージ、照明等）、ポリシー修正ログなどの各種設定ステートが初期値に初期化されないリセット漏れの不具合を修正。 (v3.91-alpha) / Fixed a bug where category selections, manual topics, scenario enhancement options, and policy logs were not cleared upon executing partialReset or hardReset. (v3.91-alpha)
+
+### v3.91-alpha (2026-05-20)
+- ** [Fix] ** 「エンジン変更・全リセット」および「シナリオから再生成（ソフトリセット）」実行時に、カテゴリ選択状態（ `categories` ）、自由入力トピック（ `manualTopic` ）、演出強化オプション（表情、ボディランゲージ、照明等）、ポリシー修正ログなどの各種設定ステートが初期値に初期化されないリセット漏れの不具合を修正。 / Fixed a bug where category selections, manual topics, scenario enhancement options (expressions, body language, effects, etc.), and policy fix logs were not cleared upon executing partialReset or hardReset.
+
 ### v3.90-alpha (2026-05-20) — 本日の作業総括 / Daily Work Summary
 本日 (2026-05-20) は v3.79-alpha から v3.90-alpha まで **12回のイテレーション** を実施し、モノリシック `App.jsx` (5,000行超) の完全モジュール化を達成しました。以下が主要な変更です。
 

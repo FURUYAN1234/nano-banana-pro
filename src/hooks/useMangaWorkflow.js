@@ -863,6 +863,40 @@ export default function useMangaWorkflow() {
     setBg360CameraWork(null); // [v3.53] カメラワーク設計結果もリセット
     setBg360CroppedPanels(null); // [v3.53 Phase2] クロップ画像もリセット
     setIs360CameraWorking(false); // [v3.53] カメラワーク処理フラグリセット
+    
+    // [v3.91-alpha] カテゴリ選択やシナリオ関連設定を完全に初期化
+    setCategories(DEFAULT_CATEGORIES);
+    setManualTopic("");
+    setSearchTopic("");
+    setLockedLocation("");
+    setLockedOutfit("");
+    setBg360Enabled(false);
+    setPunchlineType("Auto");
+    setInputMode("news");
+    setOriginalScenario("");
+    
+    // 演出強化系の設定を全リセット
+    setEnhanceExpressions(false);
+    setEnhanceBodyLang(false);
+    setEnhanceEffects(false);
+    setEnhanceBackgrounds(false);
+    setEnhanceCameraWork(false);
+    setEnhanceDialogue(false);
+    setEnhanceFACS(false);
+    setIsEnhancing(false);
+    setEnhanceLog("");
+    setIsEnhancePanelOpen(false);
+    
+    // ポリシーリセット
+    setPolicyErrorMsg("");
+    setIsFixingPolicy(false);
+    setPolicyFixLog("");
+    setIsPolicyPanelOpen(false);
+    
+    // コピー状態リセット
+    setIsScenarioCopied(false);
+    setIsMetaSaved(false);
+
     showStatus("シナリオ以降をリセットしました。キャラクター解析は保持しています。");
   };
 
@@ -889,6 +923,41 @@ export default function useMangaWorkflow() {
     setUsedModel(null);
     setGenerationHistory([]);
     setGenLog([]);
+
+    // [v3.91-alpha] カテゴリ選択やシナリオ関連設定を完全に初期化
+    setCategories(DEFAULT_CATEGORIES);
+    setManualTopic("");
+    setSearchTopic("");
+    setLockedLocation("");
+    setLockedOutfit("");
+    setBg360Enabled(false);
+    setPunchlineType("Auto");
+    setInputMode("news");
+    setOriginalScenario("");
+    
+    // 演出強化系の設定を全リセット
+    setEnhanceExpressions(false);
+    setEnhanceBodyLang(false);
+    setEnhanceEffects(false);
+    setEnhanceBackgrounds(false);
+    setEnhanceCameraWork(false);
+    setEnhanceDialogue(false);
+    setEnhanceFACS(false);
+    setIsEnhancing(false);
+    setEnhanceLog("");
+    setIsEnhancePanelOpen(false);
+    
+    // ポリシーリセット
+    setPolicyErrorMsg("");
+    setIsFixingPolicy(false);
+    setPolicyFixLog("");
+    setIsPolicyPanelOpen(false);
+    
+    // コピー状態リセット
+    setIsCastListCopied(false);
+    setIsScenarioCopied(false);
+    setIsMetaSaved(false);
+
     // [v3.59] APIキー完全クリア: React state + gemini lib + OpenAI lib + ai-provider
     setApiKeyState("");           // React state (UI表示用)
     setApiKey("");                // gemini lib のキーストア
