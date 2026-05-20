@@ -54,7 +54,7 @@ try {
 
     // index.html の <title> を取得
     const indexHtml = fs.readFileSync('index.html', 'utf-8');
-    const titleMatch = indexHtml.match(/<title>Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System ([^<]+)<\/title>/);
+    const titleMatch = indexHtml.match(/<title>(?:Nano Banana Pro|Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System) ([^<]+)<\/title>/);
     const htmlVersion = titleMatch ? titleMatch[1] : null;
 
     // package.json のバージョンを正規化 (3.05.0-alpha → v3.05.0-alpha)

@@ -13,35 +13,43 @@ const indexHtmlPath = path.join(projectRoot, 'index.html');
 
 // 1. Read package.json to get current version
 const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
-const currentVersion = packageJson.version; // e.g. "3.73-alpha"
+const currentVersion = packageJson.version; // e.g. "4.01-alpha"
 console.log(`Current Version: ${currentVersion}`);
 
-// 2. Increment Patch Version strictly by 0.01
-const versionMatch = currentVersion.match(/^(\d+\.\d+)/);
-if (!versionMatch) {
-    console.error("Invalid version format in package.json");
-    process.exit(1);
+// 2. Parse and increment version strictly using x.y.z format
+let major = 4;
+let minor = 0;
+let patch = 1;
+
+const semverMatch = currentVersion.match(/^(\d+)\.(\d+)\.(\d+)/);
+if (semverMatch) {
+    major = parseInt(semverMatch[1]);
+    minor = parseInt(semverMatch[2]);
+    patch = parseInt(semverMatch[3]) + 1; // Increment patch
+} else {
+    // If version is like "4.01-alpha", we normalize to "4.0.1" (or "4.0.1" since current is 4.01-alpha)
+    const legacyMatch = currentVersion.match(/^(\d+)\.(\d+)/);
+    if (legacyMatch) {
+        major = parseInt(legacyMatch[1]);
+        minor = 0;
+        patch = 1;
+    }
 }
 
-const baseVersionNum = parseFloat(versionMatch[1]);
-// Increment by 0.01 and fix to 2 decimal places to avoid floating point errors
-const newBaseVersionStr = (baseVersionNum + 0.01).toFixed(2);
+const newVersion = `${major}.${minor}.${patch}`;
+const displayVersion = `v${newVersion}`;
 
-// the package.json and constants.js use the strict vX.Y-alpha format
-const newPackageVersion = `${newBaseVersionStr}-alpha`;
-const displayVersion = `v${newBaseVersionStr}-alpha`;
-
-console.log(`New Package Version: ${newPackageVersion}`);
+console.log(`New Version: ${newVersion}`);
 console.log(`New Display Version: ${displayVersion}`);
 
 // 3. Update package.json
-packageJson.version = newPackageVersion;
+packageJson.version = newVersion;
 fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2) + '\n');
-console.log(`Updated package.json to ${newPackageVersion}`);
+console.log(`Updated package.json to ${newVersion}`);
 
 // 4. Update src/lib/constants.js
 let constantsJs = fs.readFileSync(constantsPath, 'utf8');
-const constantsRegex = /export const SYSTEM_VERSION = "v.*?";/;
+const constantsRegex = /export const SYSTEM_VERSION = ".*?";/;
 const newConstantsLine = `export const SYSTEM_VERSION = "${displayVersion}";`;
 if (constantsRegex.test(constantsJs)) {
     constantsJs = constantsJs.replace(constantsRegex, newConstantsLine);
@@ -54,14 +62,14 @@ if (constantsRegex.test(constantsJs)) {
 
 // 5. Update index.html
 let indexHtml = fs.readFileSync(indexHtmlPath, 'utf8');
-const indexHtmlRegex = /<title>Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System v.*?<\/title>/;
-const newIndexHtmlLine = `<title>Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System ${displayVersion}</title>`;
+const indexHtmlRegex = /<title>.*?<\/title>/;
+const newIndexHtmlLine = `<title>Nano Banana Pro ${displayVersion}</title>`;
 if (indexHtmlRegex.test(indexHtml)) {
     indexHtml = indexHtml.replace(indexHtmlRegex, newIndexHtmlLine);
     fs.writeFileSync(indexHtmlPath, indexHtml);
     console.log(`Updated index.html to ${displayVersion}`);
 } else {
-    console.error("Could not find <title> with version in index.html");
+    console.error("Could not find <title> in index.html");
     process.exit(1);
 }
 

@@ -916,7 +916,7 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
-### v4.01-alpha (2026-05-20)
+### v4.0.1 (2026-05-20)
 - ** [Fix] ** プロンプトエンジンのチラつき・キラキラ防止プロトコル（Anti-Glitter & Anti-Noise Protocol）強化に伴い、コントロールバーの「1枚絵 ChatGPT用 感情シネマプロンプトをコピー」ボタン内のプロンプト変数も同様のノイズ除去設定に同期適用。 / Synchronized noise reduction and anti-glitter settings to the 1-pane emotional cinema prompt inside the ControlBar to match the updated prompts.js engine.
 
 ### v4.0.0 (2026-05-20) — 正式版リリース / Stable Release
