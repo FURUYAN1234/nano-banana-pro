@@ -916,6 +916,19 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v3.90-alpha (2026-05-20) — 本日の作業総括 / Daily Work Summary
+本日 (2026-05-20) は v3.79-alpha から v3.90-alpha まで **12回のイテレーション** を実施し、モノリシック `App.jsx` (5,000行超) の完全モジュール化を達成しました。以下が主要な変更です。
+
+- ** [Refactor] ** 巨大プロンプトテンプレート（ChatGPT / Gemini 用）を `src/lib/prompts.js` に外部化し、感情スタイルヘルパー・キャストリストパーサーを `src/lib/panel-utils.js` に分離 (v3.79)
+- ** [Fix] ** リファクタリング起因の致命的ランタイムエラー2件（ `step4Ref` タイポ、 `Wand2` インポート漏れ）を修正し、 `ErrorBoundary` によるクラッシュ耐性を導入 (v3.80)
+- ** [Refactor] ** シナリオ生成・ポリシー自動修正ロジックを `scenario-provider.js` / `policy-fixer.js` に外部化 (v3.81-v3.85)
+- ** [Fix] ** フルオートモードのステート同期バグ2件（ `inputMode` 誤判定、 `isFullAutoMode` の Stale Closure）を修正。 `useRef` による最新値追跡と引数オーバーライドパターンを導入 (v3.86-v3.87)
+- ** [Refactor] ** 上部コントロールバーを `<ControlBar>` コンポーネントとして外部分離 (v3.88)
+- ** [Refactor] ** 全ビジネスロジック（113以上のステート変数・関数）をカスタムフック `useMangaWorkflow` ( `src/hooks/useMangaWorkflow.js` ) に完全外部化。 `App.jsx` を **約420行** の UI シェルへスリム化 (v3.89)
+- ** [Clean] ** 古いリリースノート8件 (`docs/release_v1.8.x` 等) の削除、一時バックアップファイルの削除、リポジトリ全体のセキュリティ・衛生監査を実施 (v3.90)
+
+**Today (2026-05-20):** Executed 12 iterations from v3.79-alpha to v3.90-alpha, achieving full modularization of the monolithic App.jsx (5,000+ lines). Key changes include: externalizing prompt templates, fixing critical runtime errors, extracting scenario/policy logic into modules, resolving Full Auto mode state sync bugs, splitting the ControlBar into its own component, and finally decoupling all business logic into the `useMangaWorkflow` custom hook — slimming App.jsx to ~420 lines. Cleaned up 8 stale release docs and performed a full security/hygiene audit.
+
 ### v3.89-alpha (2026-05-20)
 - ** [Refactor] ** `src/App.jsx` 内の巨大なビジネスロジック（ステート・Ref・副作用・補助関数など）をカスタムフック `useMangaWorkflow` ( `src/hooks/useMangaWorkflow.js` ) に完全外部化。 `src/App.jsx` を UI レンダリング専用のコンポーネント（約340行）へ大幅にスリム化。 / Decoupled all business logic (state, refs, effects, and auxiliary functions) from `src/App.jsx` into the custom hook `useMangaWorkflow` in `src/hooks/useMangaWorkflow.js`, slimming down `src/App.jsx` to a clean UI-only rendering component (~340 lines).
 

@@ -1,8 +1,8 @@
-# HANDOFF.md (v3.89-alpha / Hook Extraction & Refactor)
+# HANDOFF.md (v3.90-alpha / Final Cleanup & Daily Summary)
 
 ## Current Status
-- **Business Logic Hook Extraction Complete** (ビジネスロジックのカスタムフック化完了)
-  - `src/App.jsx` 内の巨大なビジネスロジック（全ステート、Ref、useEffect副作用、API通信ハンドラなど）を `src/hooks/useMangaWorkflow.js` に完全外部化。 `src/App.jsx` は純粋に UI をレンダリングし、フックから値をデストラクチャリングして流し込む薄いコンポーネント（約340行）へスリム化。
+- **Full Modularization & Cleanup Complete** (完全モジュール化＆最終クリーンアップ完了)
+  - v3.79 ～ v3.90 まで12回のイテレーションを経て、5,000行超のモノリシック `App.jsx` を完全にモジュール化。古いリリースノートの削除、セキュリティ監査、コードメトリクスの最終レビューを実施済み。
 
 ## Done (v3.89-alpha)
 - `src/hooks/useMangaWorkflow.js` [NEW]: `src/App.jsx` にあった全ビジネスロジック（113以上の状態変数・関数）を内包するカスタムフックを新規作成。
