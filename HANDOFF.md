@@ -1,10 +1,10 @@
-# HANDOFF.md (v3.83-alpha / Refactor & Deploy)
+# HANDOFF.md (v3.84-alpha / Refactor & Deploy)
 
 ## Current Status
-- **PROMPT ASSEMBLER REFACTOR COMPLETED & BUG FIXED** (プロンプト組立ロジックの外部化およびランタイムエラー修正完了)
-- `App.jsx` 内の複雑なプロンプト構築関数 `assemblePrompt` を `src/lib/prompt-assembler.js` に抽出・外部化しました。
-- 【Fix】前回のリリースで発生していた `buildMangaPrompt is not defined` インポート漏れエラーを修正。
-- プロダクションビルド (`npm run build`) はエラーなく成功しており、構文的な健全性を保証しています。
+- **PROMPT ASSEMBLER REFACTOR COMPLETED, BUG FIXED & OFFICIALLY DEPLOYED** (プロンプト組立ロジック外部化・バグ修正・正式リリース完了)
+- `App.jsx` 内の複雑なプロンプト構築関数 `assemblePrompt` を `src/lib/prompt-assembler.js` に抽出・外部化。
+- インポート漏れエラー（`buildMangaPrompt is not defined`）を修正し、ローカル環境での画像生成完了を検証の上、本番正式リリースを完了しました。
+- プロダクションビルド (`npm run build`) はエラーなく成功し、本番デプロイチェックを通過しました。
 - ローカル開発サーバーは正常に動作しています。
 
 ## Done (Phase 3)

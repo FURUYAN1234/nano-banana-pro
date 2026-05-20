@@ -910,6 +910,9 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v3.84-alpha (2026-05-20)
+- ** [Release] ** ローカル環境での画像生成成功を検証し、本番環境へのデプロイおよびリリースを正式に完了。 / Verified successful image generation in the local environment, and officially completed deployment and release to production.
+
 ### v3.83-alpha (2026-05-20)
 - ** [Fix] ** リファクタリングによって発生した `buildMangaPrompt is not defined` ランタイムエラー（`src/App.jsx` 内のインポート漏れ）を修正。 / Fixed runtime error `buildMangaPrompt is not defined` in `src/App.jsx` by adding the missing import statement.
 
