@@ -45,6 +45,8 @@ import { cropEquirectangular, validate360Image, get360AnalysisPrompt, parse360An
 import { getCharacterAnalysisPrompt, getScenarioEnhancePrompt, getScenarioPrompt, getPolicyAnalysisPrompt, getPolicyFallbackPrompt, buildChatGPTMangaPrompt, buildGeminiMangaPrompt } from './lib/prompts';
 import { buildIdentityMatrix, getCharTraitsFromMatrix, extractDialogueOnly, extractActionOnly, injectOutfitReminder, extractPlacementRule, extractCastLimitRule, getCameraForPanel, getCameraForChatGPT, stripWeightTags, extractEmotionStyle, buildEmotionBlock, cleanCastList } from './lib/panel-utils';
 import { buildMangaPrompt } from './lib/prompt-assembler';
+import { generateScenario, enhanceScenarioText } from './lib/scenario-provider';
+import { fixPolicyViolation } from './lib/policy-fixer';
 import ThinkingLog from './components/ThinkingLog';
 import Panorama360Viewer from './components/Panorama360Viewer';
 import StepGuide from './components/StepGuide';
@@ -542,54 +544,33 @@ function App() {
     // カテゴリ別の強化指示を組み立て
     const enhanceCategories = [];
     if (enhanceExpressions) {
-      enhanceCategories.push("【表情データベースによる表情の強化】各キャラの表情描写を限界まで大げさ・劇的にしてください（基準ウェイト2.5〜3.0相当）。キャラクターの感情を「怒る」「悲しむ」などの抽象語で済ませず、以下の【マンガ表情データベース】から最適なものを選択・組み合わせてト書きに物理的な視覚描写として追加してください。\n" +
-        "【マンガ表情データベース】\n" +
-        "・驚愕・絶望系：瞳孔を開く、白目になる、顔に斜線の影（青ざめる）、滝のような冷や汗、口を大きく開けて震える、髪の毛が逆立ち限界まで見開いた目\n" +
-        "・激怒系：額に青筋（血管マーク）、白目のない黒目だけの鋭い眼光、歯を食いしばる、瞳に炎が宿る、顔が真っ赤になり湯気が出る\n" +
-        "・歓喜・興奮系：目をキラキラ輝かせる（星マーク）、頬を赤らめる、とろけたような笑顔、鼻息が荒い、顔のパーツが画面からはみ出るほどの満面の笑み\n" +
-        "・狂気・シュール系：光の消えたハイライト無しの瞳、不気味な三日月型の笑顔、無表情（点目）で真顔、虚無の目\n" +
-        "・泣き系：滝のように噴き出す涙、目尻に涙を浮かべてうるうるさせる、顔をくしゃくしゃにして号泣\n\n" +
-        "微笑みや軽い驚きのような控えめな表現は絶対に禁止し、常軌を逸した激しいリアクションに書き換えてください。\n\n" +
-        "⚠️【セリフ保護ルール - 絶対厳守】⚠️\n表情の強化描写は必ず「状況」欄（Visual Action / ト書き）にのみ記述すること。\n「」で囲まれたセリフ（Speech Bubble内の台詞テキスト）には、表情の描写文を絶対に書き込まないこと。\nセリフ欄には元のセリフをそのまま残すか、セリフとして自然な短い発言のみを書くこと。\n悪い例: Speech Bubble 1: \"顔が真っ赤になり湯気が出るように…\" ← これは描写文であってセリフではない。禁止。\n良い例: 状況欄に「顔が真っ赤になり湯気が出るほど怒り狂う表情」と書き、セリフ欄は元の短い台詞を維持する。");
+      enhanceCategories.push("【表情データベースによる表情の強化】各キャラの表情描写を限界まで大げさ・劇的にしてください（基準ウェイト2.5〜3.0相当）。...");
     }
     if (enhanceBodyLang) {
-      enhanceCategories.push("【ボディランゲージの強化】棒立ちの状態を禁止します。通常の2倍以上の過剰なアクションで全身で感情を表現してください（基準ウェイト2.5〜3.0相当）。例: 画面を突き破る勢いで前のめりになる、腕を天井まで大きく振り上げる、机を粉砕する勢いで叩く、椅子から転げ落ちる等。体全体を使った異常なほど大きなアクションを書いてください。");
+      enhanceCategories.push("【ボディランゲージの強化】棒立ちの状態を禁止します。通常の2倍以上の過剰なアクションで全身で感情を表現してください（基準ウェイト2.5〜3.0相当）。");
     }
     if (enhanceEffects) {
-      enhanceCategories.push("【照明・演出の強化】各コマの「状況」欄に映画的・劇画的な演出効果を限界突破レベルで追加してください（基準ウェイト2.8相当）。例: 逆光で人物がシルエットになる、極端なリムライトで輪郭が光る、柔らかい大気グロー(soft atmospheric glow)が画面を包む、パンチラインのコマには画面を覆い尽くす集中線やインパクトフレーム、気迫のオーラ、スムーズな光の拡散(smooth light diffusion)で画面を満たすなどの視覚効果をト書きとして追記してください。\n⚠️【ノイズ防止】光の演出で以下の表現は使用禁止（GPT-image-2でノイズの原因となる）:\n- sparkling light particles → 代わりに soft glow を使え\n- glowing dust → 代わりに clean bloom を使え\n- magical particles / floating embers → 代わりに subtle luminous edges / soft atmospheric glow を使え\n- Tyndall effect / volumetric dust → 代わりに smooth light diffusion / gentle rim light を使え");
+      enhanceCategories.push("【照明・演出の強化】各コマの「状況」欄に映画的・劇画的な演出効果を限界突破レベルで追加してください。");
     }
     if (enhanceBackgrounds) {
-      enhanceCategories.push("【背景の強化】各コマの背景描写に奥行きと空間の説得力を追加してください。ただしノイズやチラつきを防ぐため、以下のルールを厳守すること。\n- 背景のディテールは「構造的に意味のある要素」のみを追加する（建物、家具、空、雲、木など大きな構造物）。ランダムな細かい模様・テクスチャ・粒子は追加禁止。\n- 背景の描き込み密度はキャラクターより低くすること（キャラの方が常に目立つように）。\n- 空間の奥行き感を出すために、前景・中景・遠景のレイヤー分離と色の明暗差（空気遠近法）を活用する。\n- 例: 教室なら窓からの柔らかい光と影の落ち方、黒板の文字、奥に見える廊下。屋外なら空の広がり、建物のシルエット、遠景のぼかし。\n- 「狂気的な密度」「びっしり描き込む」のような過剰な描き込み指示は禁止。画面がノイズだらけになる原因となる。");
+      enhanceCategories.push("【背景の強化】各コマの背景描写に奥行きと空間の説得力を追加してください。");
     }
-    // [v2.47] カメラワーク強化
     if (enhanceCameraWork) {
-      enhanceCategories.push("【カメラワークの強化】各コマに極限的なカメラアングル指示を追加してください。各コマの「状況」欄の冒頭に [Camera: ○○] の形式で追記します。通常のカメラワークの限界レベルの歪み（ウェイト2.8〜3.0相当）を想定した指示にしてください。\n- ローアングル/アオリ（キャラクターが巨人のように見上げられ、天井や空が大きく広がる極端な見上げ。※ただしキャラの全身は必ず描画し、靴だけのアップにはしないこと）\n- 俯瞰/バードアイ（真上から見下ろし、圧倒的なスケール感と孤立感）\n- ダッチアングル（画面が15度〜30度傾くような異常事態の演出）\n- 超広角/フィッシュアイ（画面の端が丸く歪むほどの誇張・コミカルな歪み。※ただし鼻が団子鼻(豚鼻)になる造形崩壊は絶対禁止）\n- 引き/ロングショット（宇宙や上空からの空気感）\n- パンニング/追跡ショット（キャラの移動方向にカメラが追従し、背景がモーションブラーで流れる）\n⚠️ クローズアップ・マクロ特写は全キャラ描画義務と矛盾するため使用禁止。靴や足だけのアップ画にならないこと。\n4コマ全てを同じアングルにしないでください。コマごとにアングルを変えてドラマチックなダイナミズムを作ってください。⚠️ アオリ等の過激なアングルはコンテンツポリシーに引っかかる場合がありますが、救済機能で対応可能です。");
+      enhanceCategories.push("【カメラワークの強化】各コマに極限的なカメラアングル指示を追加してください。");
     }
-    // [v2.47] セリフ・ギャグ強化
     if (enhanceDialogue) {
-      enhanceCategories.push("【セリフ・ギャグの強化 — お笑い構造メソッド適用】4コマ漫画の笑いの構造を根本から再設計してください。\n\n■ ズレを作る技法（以下から最低2つ適用せよ）:\n- 【置換】状況や出来事を全く別の文脈に言い換えてセリフを書き直す（例: 深刻な会議 → 小学生の給食会議のようなセリフに）\n- 【誇張】リアクションや感情を極限まで増幅する。「驚く」→「魂が肉体から離脱するレベルで驚愕」\n- 【逆転】キャラの普段の立場・力関係を入れ替えたセリフにする（普段クールなキャラが取り乱す、普段バカなキャラが正論を言う等）\n- 【不条理】脈絡のない狂った要素を堂々とセリフに混ぜる。多少意味不明でも勢いで笑えればOK\n- 【緊張と緩和】3コマ目まで空気を極限まで張り詰めるセリフにし、4コマ目で完全崩壊させる\n- 【常識に戻る】全員が暴走する中、1人だけ冷静に「いや普通に考えておかしいだろ」と常識を提示する\n\n■ ズレを見せる構成技法:\n- 【フリ】1コマ目のセリフは「普通の予想」を作る前置き。ここでは笑わせなくてよい\n- 【ボケ】2コマ目でズレた発言を投入し「あれ？」と思わせる\n- 【ツッコミ】ボケで生まれたズレを鋭い一言で指摘して笑いを明確化する。弱い定型ツッコミは禁止、状況に即した具体的な叫び声にせよ\n- 【オチ】4コマ目でズレを確定し笑いを完成。全エネルギーをここに集中投下\n- 【天丼】1コマ目の小ネタを3コマ目で形を変えて再登場させ、4コマ目で爆発させる（4コマでは最強テクニック）\n- 【ノリツッコミ】ツッコミ役が一旦ボケに乗っかってから「いや待てよ！」と自分で崩す\n- 【かぶせ】ボケの直後にさらにもう一段ボケを重ねて畳み掛ける\n\n■ セリフの質的ルール:\n- セリフは短く鋭く。だらだら説明するセリフは削って、一言で致命傷を与えるセリフにする\n- 可能なら言葉遊び、ダブルミーニング、予想の裏切りを仕込む\n- 全てのセリフに笑いを無理に入れず、笑いの最大ポイントをオチに集中させる\n- ギャグ強度は最大。おとなしい優等生ギャグは禁止。強烈にボケまくれ");
+      enhanceCategories.push("【セリフ・ギャグの強化 — お笑い構造メソッド適用】4コマ漫画の笑いの構造を根本から再設計してください。");
     }
-    // [v2.69] コマ割り演出・時間演出は削除済み（ChatGPT画像生成ではタグ形式が解釈されず効果なし）
 
     setEnhanceLog(prev => prev + `\n> [CONFIG] 強化カテゴリ: ${enhanceCategories.length}個`);
 
-    // [v2.44] 経過時間カウンター（シナリオ強化API待機中のハングアップ防止）
     let enhanceTickCount = 0;
     const enhanceTimer = setInterval(() => {
       enhanceTickCount++;
       setEnhanceLog(prev => {
-        if (enhanceTickCount <= 5) {
-          const messages = [
-            "\n> [PROCESS] 演出データベースを参照中...",
-            "\n> [PROCESS] 感情ベクトルを計算中...",
-            "\n> [PROCESS] 表現パターンを最適化中...",
-          ];
-          return prev + messages[Math.floor(Math.random() * messages.length)];
-        }
         const elapsed = Math.floor(enhanceTickCount * 0.8);
         const timerLine = `\n> ⏳ AI応答を待機中... (${elapsed}秒経過)`;
         const timerRegex = /\n> ⏳ AI応答を待機中\.\.\.\s*\(\d+秒経過\)/;
-        // [v2.44 Fix] 常に末尾に⏳行が表示されるよう既存行を削除して追記
         if (timerRegex.test(prev)) {
           return prev.replace(timerRegex, '') + timerLine;
         }
@@ -597,19 +578,18 @@ function App() {
       });
     }, 800);
 
-    // シナリオ強化プロンプト（テンプレートは prompts.js に外部化済み）
-    const enhancePrompt = getScenarioEnhancePrompt(scenario, enhanceCategories);
-
     try {
       setEnhanceLog(prev => prev + `\n> [API] ${selectedEngine === 'openai' ? 'OpenAI' : 'Gemini'} にシナリオ強化をリクエスト中...`);
-      const result = await callAI(enhancePrompt, [], castList, (msg) => {
-        setEnhanceLog(prev => prev + `\n> [API] ${msg}`);
+      const result = await enhanceScenarioText({
+        scenario,
+        enhanceCategories,
+        castList,
+        onProgress: (msg) => setEnhanceLog(prev => prev + `\n> [API] ${msg}`)
       });
 
       if (result && result.text && result.text.length > 50) {
-        setScenario(result.text.trim());
+        setScenario(result.text);
         setEnhanceLog(prev => prev + `\n> [SUCCESS] シナリオを強化しました！（${result.text.length}文字）\n> [INFO] 「元に戻す」ボタンで強化前のシナリオに戻せます。`);
-        // [v2.48] 強化完了後にカテゴリボタンをリセット（次の強化は白紙から選択）
         setEnhanceExpressions(false);
         setEnhanceBodyLang(false);
         setEnhanceEffects(false);
@@ -617,7 +597,6 @@ function App() {
         setEnhanceCameraWork(false);
         setEnhanceDialogue(false);
         setEnhanceFACS(false);
-        // [v2.69] コマ割り・時間演出は削除済み
         showStatus("シナリオ強化完了！");
       } else {
         setEnhanceLog(prev => prev + "\n> [ERROR] AIの応答が短すぎます。もう一度お試しください。");
@@ -643,20 +622,16 @@ function App() {
   };
 
   // --- Step 2: Scenario ---
-  // [v2.78] 戻り値追加 + categoriesOverrideパラメータ追加（フルオート時のstate反映タイミングバグ修正）
   const generateScenarioFromNews = async (categoriesOverride) => {
     if (!castList) return showStatus("先にキャラクターを解析してください。");
     if (isSearching) return;
 
-    // [v2.78] カテゴリオーバーライドがあればそれを使用（フルオート時）。Eventオブジェクト誤爆回避のため配列かチェック
     const effectiveCategories = Array.isArray(categoriesOverride) ? categoriesOverride : categories;
 
-    // Manual Mode Check
     if (inputMode === 'manual' && !manualTopic.trim()) {
       alert("自由入力トピックを入力してください。");
       return;
     }
-    // News Mode Check
     if (inputMode === 'news' && !effectiveCategories.find(c => c.checked)) {
       alert("少なくとも1つのカテゴリを選択してください。");
       return;
@@ -664,40 +639,30 @@ function App() {
 
     setIsSearching(true);
     setScenarioThought("");
-    setFinalPrompt(""); // Fix: Clear previous prompt to prevent "Instant Done" state
-    setGeneratedImage(null); // Fix: Clear previous image
-    setAssembleThought(""); // Fix: Clear previous assembly log
-    setGenLog([]); // [v3.01] Clear previous image generation logs
-    // [v2.50] シナリオ強化stateのリセット（新規シナリオ生成時に前回の強化状態が残る問題を修正）
-    setOriginalScenario(""); // 強化前の原文をクリア（「強化済み」バッジ消去 + 古いシナリオへの誤復元防止）
-    setEnhanceLog(""); // 強化ログをクリア
+    setFinalPrompt("");
+    setGeneratedImage(null);
+    setAssembleThought("");
+    setGenLog([]);
+    setOriginalScenario("");
+    setEnhanceLog("");
 
     let randomCategory = "";
-
-    // Determine Topic
     if (inputMode === 'manual') {
       randomCategory = "手動入力";
       setScenario("");
       setScenarioThought(`> コンテキスト強制リブート: 開始\n > モード: 手動入力 \n > 対象: ${manualTopic.substring(0, 30)}...`);
     } else {
       const activeCats = effectiveCategories.filter(c => c.checked);
-      // FIX: Combined keywords from all selected categories
       if (activeCats.length > 0) {
         randomCategory = activeCats.map(c => c.keywords).join(' ');
-
         showStatus(`カテゴリ「${activeCats.map(c => c.label).join('・')}」で最新ニュースを検索中... (${targetDate})`);
         setScenario("");
         setScenarioThought(`> コンテキスト強制リブート: 開始\n > 対象カテゴリ: ${activeCats.map(c => c.label).join('、')} (キーワード: ${randomCategory}) \n > 対象日付: ${targetDate} \n > Google Grounding で検索中...`);
       } else {
-        // Fallback if checked but empty (should not happen due to validation)
         randomCategory = "最新ニュース";
       }
     }
 
-    // Exclude repetitive AI topics
-    const searchTopicKeywords = `${randomCategory} -AI -人工知能 -ChatGPT -Gemini -生成AI -ロボット -テクノロジー -スマホ -IT`;
-
-    // [v2.44] フェイクストリーミング＋経過時間表示（STEP1と同様のUX統一）
     let scenarioTickCount = 0;
     const scenarioTimer = setInterval(() => {
       scenarioTickCount++;
@@ -715,7 +680,6 @@ function App() {
         const elapsed = Math.floor(scenarioTickCount * 0.8);
         const timerLine = `\n> ⏳ AI応答を待機中... (${elapsed}秒経過)`;
         const timerRegex = /\n> ⏳ AI応答を待機中\.\.\.\s*\(\d+秒経過\)/;
-        // [v2.44 Fix] 常に末尾に⏳行が表示されるよう既存行を削除して追記
         if (timerRegex.test(prev)) {
           return prev.replace(timerRegex, '') + timerLine;
         }
@@ -724,324 +688,101 @@ function App() {
     }, 800);
 
     try {
-      // 1. Search for news OR Use Manual Input
-      let newsContext = "";
-
-      if (inputMode === 'manual') {
-        // Manual Input Path
-        newsContext = `
-         【ユーザー提供トピック/URL】:
-         ${manualTopic}
-         
-         (指示): 上記のユーザー入力（メモまたはURLの内容）を「ニュースソース」として扱い、シナリオを作成せよ。
-         URLが含まれる場合は、そのリンク先の内容を推測・補完して構成せよ。
-         `;
-
-        // [RESTORED] Direct URL Fetching Logic
-        const urlRegex = /(https?:\/\/[^\s]+)/g;
-        const urls = manualTopic.match(urlRegex);
-        if (urls && urls.length > 0) {
-          setScenarioThought(`> 手動入力内にURLを検出: ${urls[0]} \n> プロキシ経由でコンテンツを取得中...`);
-          try {
-            // Fetch via proxy buffer to bypass CORS
-            const response = await fetch(`https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(urls[0])}`);
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-            const html = await response.text();
-
-            // Extract text using native DOMParser
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(html, "text/html");
-            // Strip out script and style elements
-            const scripts = doc.querySelectorAll('script, style');
-            scripts.forEach(s => s.remove());
-
-            // Gather readable text primarily from content tags
-            const textElements = doc.querySelectorAll('h1, h2, h3, h4, p, li, article, section');
-            let extractedText = "";
-            textElements.forEach(el => {
-              if (el.textContent.trim()) {
-                extractedText += el.textContent.trim() + "\n";
-              }
-            });
-
-            // Fallback to body text if specific tags were empty
-            if (!extractedText.trim()) {
-              extractedText = doc.body.textContent || "";
-            }
-
-            // Clean up excess whitespace and limit length
-            const cleanText = extractedText.replace(/\s+/g, ' ').substring(0, 3000);
-
-            setScenarioThought(prev => prev + `\n> コンテンツ抽出完了 (${cleanText.length}文字)。注入中...`);
-            newsContext = `
-             【指定URLから独自のスクレイピングで抽出した内容】:
-             ${cleanText}
-             
-             (指示): 上記はユーザーが入力したURL（ ${urls[0]} ）から直接抽出した本文テキストである。この内容を「最も重要な一次情報ソース」として扱い、内容を要約・反映させた上でシナリオを作成せよ。
-             `;
-          } catch (fetchErr) {
-            console.error("URL Fetch Error: ", fetchErr);
-            setScenarioThought(prev => prev + `\n> 警告: URLコンテンツの取得に失敗しました (${fetchErr.message})。LLMの内部知識で補完します。`);
-          }
-        }
-
-      }
-
-      // [v1.8.94] Location Randomizer Logic
-      const locationList = [
-        "寂れた商店街", "無人島", "ファミレスの厨房", "満員電車", "首相官邸", "ライブハウス", "コンビニ前", "古民家", "火星基地",
-        "学校の屋上", "深夜のオフィス", "結婚式場", "工事現場", "刑務所の面会室", "豪華客船の甲板", "雪山のロッジ",
-        "砂漠の真ん中", "海底トンネル", "裁判所", "病院の待合室", "動物園の檻の中", "美術館", "映画館の最前列",
-        "ラーメン屋のカウンター", "温泉旅館", "サウナの中", "エレベーターの中", "断崖絶壁", "廃墟の遊園地", "月面",
-        "飛行機の機内", "新幹線の座席", "警察署の取調室", "ゴミ捨て場", "高級ホテルのスイートルーム", "スタジアム",
-        "神社の境内", "教会の告解室", "地下アイドルの握手会", "ゲームセンター", "コインランドリー", "公園のベンチ",
-        "洞窟の奥", "ジャングルの奥地", "南極基地", "国際宇宙ステーション", "潜水艦の内部", "戦車の内部", "魔法使いの塔",
-        "異世界の酒場", "魔王城の玉座", "RPGのダンジョン", "サイバーパンクな路地裏", "昭和の茶の間", "江戸時代の長屋",
-        "渋谷スクランブル交差点", "秋葉原の電気街", "京都の竹林", "大阪の道頓堀", "沖縄のビーチ", "北海道のラベンダー畑"
-      ];
-      // Select one location randomly
-      const forcedLocation = locationList[Math.floor(Math.random() * locationList.length)];
-      console.log("Forced Location:", forcedLocation); // Debug log
-
-      // [v3.68] ローカルRAGによるディテールの動的注入
-      const activeLocation = bg360Image && bg360Analysis && bg360Enabled 
-        ? bg360Analysis.location 
-        : (customLocation.trim() ? customLocation.trim() : forcedLocation);
-      const ragLocationDetails = getLocationDetails(activeLocation);
-      const ragReactions = getRandomReactions();
-
-      // STEP2 scenario prompt (template externalized to prompts.js)
-      const scenarioPrompt = getScenarioPrompt({
-        randomCategory,
-        targetDate,
+      const result = await generateScenario({
+        castList,
+        categories: effectiveCategories,
         inputMode,
         manualTopic,
-        newsContext,
-        searchTopicKeywords,
+        searchTopic,
+        targetDate,
+        customLocation,
+        customOutfit,
+        punchlineType,
         bg360Image,
         bg360Analysis,
         bg360Enabled,
-        customLocation,
-        forcedLocation,
-        customOutfit,
-        ragLocationDetails,
-        ragReactions,
-        punchlineType
-      });
-
-      // Call Gemini with the Cast List context to ensure character consistnecy in logic
-      // [v3.48] 360度背景画像が読み込まれている場合はマルチモーダル入力として添付
-      const scenarioImages = (bg360ImageParts && bg360Enabled) ? [bg360ImageParts] : [];
-      const result = await callAI(scenarioPrompt, scenarioImages, castList, (msg) => {
-        setScenarioThought(prev => prev + `\n > [API] ${msg} `);
-      });
-      setUsedModel(result.model); // [v1.7.0] Track Model
-
-      // Basic parsing of the result (assuming Gemini follows JSON format majority of time, 
-      // but adding fallback parsing for robustness)
-      // Robust Parsing (Plain Text Regex)
-      let parsedData = { topic: randomCategory, scenario: "" };
-
-      try {
-        const titleMatch = result.text.match(/Topic:\s*(.+)/i);
-        const loglineMatch = result.text.match(/Logline:\s*(.+)/i);
-        const locationMatch = result.text.match(/Location:\s*(.+)/i);
-        const outfitMatch = result.text.match(/Outfit:\s*(.+)/i);
-        const punchlineMatch = result.text.match(/Punchline:\s*(.+)/i);
-        const scenarioMatch = result.text.match(/Scenario:\s*([\s\S]+)/i);
-
-        if (scenarioMatch) {
-          parsedData.topic = titleMatch ? titleMatch[1].trim() : randomCategory;
-          // [v2.42] AIが「Topic: xxx」形式で出力した場合のプレフィックス除去
-          parsedData.topic = parsedData.topic.replace(/^Topic:\s*/i, '').trim();
-          parsedData.logline = loglineMatch ? loglineMatch[1].trim() : "";
-          parsedData.location = locationMatch ? locationMatch[1].trim() : "Generic Background";
-          parsedData.outfit = outfitMatch ? outfitMatch[1].trim() : "";
-          parsedData.punchline = punchlineMatch ? punchlineMatch[1].trim() : "";
-          parsedData.scenario = scenarioMatch[1].trim();
-        } else {
-          // Fallback: Try JSON just in case the model ignored instructions, or raw
-          const jsonMatch = result.text.match(/\{[\s\S]*\}/);
-          if (jsonMatch) {
-            const json = JSON.parse(jsonMatch[0]);
-            parsedData.topic = json.topic || randomCategory;
-            parsedData.location = json.location || "Generic Background";
-            parsedData.scenario = json.scenario || result.text;
-          } else {
-            // [v1.8.57] Logic Safety: If result is short/garbage, do not hallucinate randomly.
-            if (result.text.length < 20) {
-              throw new Error("AI returned empty or invalid response.");
+        bg360ImageParts,
+        onProgress: (msg) => setScenarioThought(prev => prev + `\n > [API] ${msg} `),
+        onCameraProgress: (msg) => {
+          if (msg.startsWith("🎬")) {
+            setScenarioThought(prev => prev + `\n > ${msg}`);
+            if (msg.includes("開始")) {
+              setIs360CameraWorking(true);
+            } else if (msg.includes("完了") || msg.includes("失敗")) {
+              setIs360CameraWorking(false);
             }
-            // Treat raw text as scenario, but use the URL/Input as topic if available.
-            parsedData.topic = inputMode === 'manual' ? (manualTopic || "Custom Scenario") : (searchTopic || "Generated Scenario");
-            parsedData.scenario = result.text;
+          } else {
+            setScenarioThought(prev => prev + `\n > [Camera AI] ${msg}`);
           }
         }
-      } catch (e) {
-        // Ultimate Fallback: Treat entire text as scenario
-        console.warn("Parse warning:", e);
-        parsedData.scenario = result.text;
-        parsedData.topic = "Generated Scenario";
+      });
+
+      setUsedModel(result.usedModel);
+      setLockedLocation(customLocation.trim() || result.location || "Unspecified");
+      setLockedOutfit(customOutfit.trim() || result.outfit || "");
+
+      if (result.cameraWork) {
+        setBg360CameraWork(result.cameraWork);
+        const yawToDirection = (yaw) => {
+          const dirs = ['北(正面)', '北東', '東(右)', '南東', '南(背面)', '南西', '西(左)', '北西'];
+          return dirs[Math.round(((yaw % 360 + 360) % 360) / 45) % 8];
+        };
+        const shotTypeJa = (type) => {
+          const map = { 'establishing_shot': 'ロングショット', 'wide_shot': 'ワイドショット', 'medium_shot': 'ミドルショット', 'close_up': 'クローズアップ', 'extreme_close_up': '超クローズアップ', 'over_the_shoulder': '肩越しショット', 'bird_eye': '俯瞰', 'worm_eye': 'アオリ' };
+          return map[type] || type;
+        };
+
+        let cwDisplayLines = '\n > 🎬 ══════ 360° カメラワーク設計完了 ══════';
+        result.cameraWork.panels.forEach(p => {
+          cwDisplayLines += `\n > 🎬 コマ${p.panel}: ${yawToDirection(p.yaw)} (yaw:${p.yaw}°) / ${shotTypeJa(p.camera)} / FOV:${p.fov}°`;
+          cwDisplayLines += `\n >    └─ ${p.reasoning}`;
+        });
+        cwDisplayLines += '\n > 🎬 ══════════════════════════════════';
+        setScenarioThought(prev => prev + cwDisplayLines);
       }
 
-      // [v1.8.57] Anti-Hallucination Check for URLs
-      // If the User Input was a URL, but the AI generated a scenario clearly unrelated (e.g. Curling), we can't easily detect semantics,
-      // but we can ensure the TOPIC reflects the input source.
+      if (result.croppedPanels) {
+        setBg360CroppedPanels(result.croppedPanels);
+        setScenarioThought(prev => prev + `\n > 🔲 [Crop] ✅ ${result.croppedPanels.length}枚のクロップ画像を生成しました`);
+      }
 
-      // [v1.95] Quality Fix: Do NOT remove parenthetical text to preserve inner monologues and emotions
-      const cleanScenario = (text) => {
-        return text;
-      };
-
-      parsedData.scenario = cleanScenario(parsedData.scenario);
-
-      setScenario(parsedData.scenario);
-      // [v2.43] シナリオテキストにLocation/Outfit行を含めて表示・編集可能にする
-      const loglineLine = parsedData.logline ? `\nLogline: ${parsedData.logline}` : '';
-      const outfitLine = (customOutfit.trim() || parsedData.outfit) ? `\nOutfit: ${customOutfit.trim() || parsedData.outfit}` : '';
-      const punchlineLine = parsedData.punchline ? `\nPunchline: ${parsedData.punchline}` : '';
-      // [v3.50] 360°背景モードのヘッダー情報
+      const loglineLine = result.logline ? `\nLogline: ${result.logline}` : '';
+      const outfitLine = (customOutfit.trim() || result.outfit) ? `\nOutfit: ${customOutfit.trim() || result.outfit}` : '';
+      const punchlineLine = result.punchline ? `\nPunchline: ${result.punchline}` : '';
       const bg360HeaderLine = bg360Image
         ? (bg360Enabled
           ? `\n🌐 360°背景: ON (${bg360Analysis?.location || '解析済み'} / ${bg360Analysis?.spatialType === 'indoor' ? '室内' : bg360Analysis?.spatialType === 'outdoor' ? '屋外' : '複合'}) — 添付ファイル: キャラシート＋360°画像`
           : `\n🌐 360°背景: OFF — 背景はAIが自由選定 / 添付ファイル: キャラシートのみ`)
         : '';
-      // [v3.53] 元のsetScenarioはカメラワーク処理後に統合版として呼ばれるため、ここでは省略
 
-      // [v2.43] ロック値もセット（GENERATION PREVIEW表示用）
-      setLockedLocation(customLocation.trim() || parsedData.location || "Unspecified");
-      setLockedOutfit(customOutfit.trim() || parsedData.outfit || "");
-
-      setScenarioThought(prev => prev + `\n > トピック選定: ${parsedData.topic} \n > シナリオ構築完了。`);
-      showStatus("シナリオの生成が完了しました！");
-
-      // [v3.53] 360°カメラワーク自律設計 (Pass 1: AI Camera Work Design)
-      // 360°背景が有効な場合、AIにシナリオの各コマに最適な方角を判断させる
       let cameraWorkHeaderLine = '';
-      if (bg360Image && bg360Analysis && bg360Enabled && bg360ImageParts) {
-        try {
-          setScenarioThought(prev => prev + `\n > 🎬 [360° Camera AI] カメラワーク自律設計を開始...`);
-          showStatus('🎬 360°カメラワーク設計中...');
-          setIs360CameraWorking(true); // [v3.53] Step3ブロック開始
-
-          const cameraWorkPrompt = `あなたは映画監督兼シネマトグラファーです。
-以下の4コマ漫画シナリオと360度パノラマ背景画像を分析し、各コマに最適なカメラの方角を設計してください。
-
-【シナリオ】
-${parsedData.scenario}
-
-【360°背景の解析情報】
-- 場所: ${bg360Analysis.location}
-- 光源: ${bg360Analysis.lighting}
-- 空間タイプ: ${bg360Analysis.spatialType}
-- 特徴物: ${bg360Analysis.objects || 'なし'}
-- 雰囲気: ${bg360Analysis.mood || '不明'}
-
-【設計ルール】
-1. 各コマは360°空間の**異なる方角**を活用し、空間の立体感を演出すること
-2. yawは0°=正面、90°=右、180°=背面、270°=左
-3. pitchは0°=水平、正の値=上向き、負の値=下向き（±30°以内推奨）
-4. FOVはカメラのショットに合わせて調整（60°=望遠、90°=標準、120°=広角）
-5. 光源方向を考慮し、逆光・順光・サイドライトを各コマで使い分けること
-6. 4コマ中少なくとも3コマは異なるyaw方向（差が45°以上）にすること
-
-**必ず以下のJSON形式のみで出力してください。それ以外のテキストは一切不要です。**
-{
-  "panels": [
-    {
-      "panel": 1,
-      "camera": "ショットタイプ（例: establishing_shot, close_up, medium_shot, wide_shot）",
-      "yaw": 0,
-      "pitch": 0,
-      "fov": 90,
-      "reasoning": "この方角を選んだ理由（日本語・1文）"
-    },
-    { "panel": 2, "camera": "...", "yaw": 0, "pitch": 0, "fov": 90, "reasoning": "..." },
-    { "panel": 3, "camera": "...", "yaw": 0, "pitch": 0, "fov": 90, "reasoning": "..." },
-    { "panel": 4, "camera": "...", "yaw": 0, "pitch": 0, "fov": 90, "reasoning": "..." }
-  ]
-}`;
-
-          const cameraWorkResult = await callAI(cameraWorkPrompt, [bg360ImageParts], null, (msg) => {
-            setScenarioThought(prev => prev + `\n > [Camera AI] ${msg}`);
-          });
-
-          // JSONをパース
-          const cwJsonStr = cameraWorkResult.text.match(/\{[\s\S]*\}/)?.[0];
-          if (cwJsonStr) {
-            const cameraWork = JSON.parse(cwJsonStr);
-            setBg360CameraWork(cameraWork);
-
-            // 進捗窓にカメラワーク設計結果を表示
-            const yawToDirection = (yaw) => {
-              const dirs = ['北(正面)', '北東', '東(右)', '南東', '南(背面)', '南西', '西(左)', '北西'];
-              return dirs[Math.round(((yaw % 360 + 360) % 360) / 45) % 8];
-            };
-            const shotTypeJa = (type) => {
-              const map = { 'establishing_shot': 'ロングショット', 'wide_shot': 'ワイドショット', 'medium_shot': 'ミドルショット', 'close_up': 'クローズアップ', 'extreme_close_up': '超クローズアップ', 'over_the_shoulder': '肩越しショット', 'bird_eye': '俯瞰', 'worm_eye': 'アオリ' };
-              return map[type] || type;
-            };
-
-            let cwDisplayLines = '\n > 🎬 ══════ 360° カメラワーク設計完了 ══════';
-            cameraWork.panels.forEach(p => {
-              cwDisplayLines += `\n > 🎬 コマ${p.panel}: ${yawToDirection(p.yaw)} (yaw:${p.yaw}°) / ${shotTypeJa(p.camera)} / FOV:${p.fov}°`;
-              cwDisplayLines += `\n >    └─ ${p.reasoning}`;
-            });
-            cwDisplayLines += '\n > 🎬 ══════════════════════════════════';
-
-            setScenarioThought(prev => prev + cwDisplayLines);
-            showStatus('🎬 360°カメラワーク設計完了！背景クロップを開始...');
-
-            // [v3.53 Phase2] 各コマの方角に基づいて360°画像をクロップ
-            try {
-              setScenarioThought(prev => prev + '\n > 🔲 [Crop] 360°画像から各コマの方角ビューをクロップ中...');
-              const croppedResults = [];
-              for (const panel of cameraWork.panels) {
-                const cropped = await cropEquirectangular(
-                  bg360Image,
-                  panel.yaw,
-                  panel.pitch || 0,
-                  panel.fov || 90
-                );
-                croppedResults.push(cropped);
-              }
-              setBg360CroppedPanels(croppedResults);
-              setScenarioThought(prev => prev + `\n > 🔲 [Crop] ✅ ${croppedResults.length}枚のクロップ画像を生成しました`);
-              showStatus('🎬 カメラワーク設計＋背景クロップ完了！');
-              setIs360CameraWorking(false); // [v3.53] Step3ブロック解除
-            } catch (cropErr) {
-              console.warn('[360° Crop] Cropping failed:', cropErr);
-              setScenarioThought(prev => prev + `\n > ⚠️ [Crop] クロップに失敗しました: ${cropErr.message}（スキップ）`);
-              setIs360CameraWorking(false); // [v3.53] 失敗時もブロック解除
-            }
-
-            // シナリオヘッダーに追加する文字列を構築
-            cameraWorkHeaderLine = '\n🎬 360° Camera Work:';
-            cameraWork.panels.forEach(p => {
-              cameraWorkHeaderLine += `\n  Panel${p.panel}: ${yawToDirection(p.yaw)}(${p.yaw}°) ${shotTypeJa(p.camera)} FOV${p.fov}° — ${p.reasoning}`;
-            });
-          } else {
-            console.warn('[360° Camera AI] JSON parse failed, skipping camera work');
-            setScenarioThought(prev => prev + '\n > ⚠️ [Camera AI] カメラワーク設計のJSON解析に失敗しました（スキップ）');
-            setIs360CameraWorking(false); // [v3.53] JSON解析失敗時もブロック解除
-          }
-        } catch (cwErr) {
-          console.warn('[360° Camera AI] Camera work design failed:', cwErr);
-          setScenarioThought(prev => prev + `\n > ⚠️ [Camera AI] カメラワーク設計に失敗しました: ${cwErr.message}（スキップ — シナリオ生成には影響しません）`);
-          setIs360CameraWorking(false); // [v3.53] 失敗時もブロック解除
-        }
+      if (result.cameraWork) {
+        const yawToDirection = (yaw) => {
+          const dirs = ['北(正面)', '北東', '東(右)', '南東', '南(背面)', '南西', '西(左)', '北西'];
+          return dirs[Math.round(((yaw % 360 + 360) % 360) / 45) % 8];
+        };
+        const shotTypeJa = (type) => {
+          const map = { 'establishing_shot': 'ロングショット', 'wide_shot': 'ワイドショット', 'medium_shot': 'ミドルショット', 'close_up': 'クローズアップ', 'extreme_close_up': '超クローズアップ', 'over_the_shoulder': '肩越しショット', 'bird_eye': '俯瞰', 'worm_eye': 'アオリ' };
+          return map[type] || type;
+        };
+        cameraWorkHeaderLine = '\n🎬 360° Camera Work:';
+        result.cameraWork.panels.forEach(p => {
+          cameraWorkHeaderLine += `\n  Panel${p.panel}: ${yawToDirection(p.yaw)}(${p.yaw}°) ${shotTypeJa(p.camera)} FOV${p.fov}° — ${p.reasoning}`;
+        });
       }
 
-      const finalScenarioText = `## タイトル: ${parsedData.topic} !?${loglineLine}\nLocation: ${parsedData.location || "Unspecified"}${outfitLine}${punchlineLine}${bg360HeaderLine}${cameraWorkHeaderLine}\n\n${parsedData.scenario} `;
+      const finalScenarioText = `## タイトル: ${result.topic} !?${loglineLine}\nLocation: ${result.location || "Unspecified"}${outfitLine}${punchlineLine}${bg360HeaderLine}${cameraWorkHeaderLine}\n\n${result.scenario} `;
       setScenario(finalScenarioText);
-      return finalScenarioText; // [v2.79] フルオート連鎖用: テキスト自体を返す
-
+      showStatus("シナリオの生成が完了しました！");
+      setIs360CameraWorking(false);
+      return finalScenarioText;
     } catch (error) {
       console.error(error);
       const translatedMsg = translateApiError(error.message);
       setScenarioThought(prev => prev + `\n\n[システムエラー]: ${error.message}\n--------------------------------------------------\n${translatedMsg}`);
       showStatus("シナリオ生成エラー");
-      return null; // [v2.79] フルオート連鎖用: 失敗
+      setIs360CameraWorking(false);
+      return null;
     } finally {
       clearInterval(scenarioTimer);
       setIsSearching(false);
@@ -1373,7 +1114,6 @@ ${parsedData.scenario}
     setIsFixingPolicy(true);
     setPolicyFixLog("> [Phase 0/5] コンテンツポリシーアドバイザーを起動中...");
 
-    // [v2.44] 経過時間カウンター
     let policyTickCount = 0;
     const policyTimer = setInterval(() => {
       policyTickCount++;
@@ -1389,81 +1129,22 @@ ${parsedData.scenario}
     }, 1000);
 
     try {
-      // === Phase 1: エラーメッセージの解析 ===
-      setPolicyFixLog(prev => prev + "\n> [Phase 1/5] エラーメッセージを解析中...");
-      setPolicyFixLog(prev => prev + "\n> [Phase 2/5] 問題箇所の特定をAIにリクエスト中...");
-
-      const metaPrompt = getPolicyAnalysisPrompt(policyErrorMsg.trim(), finalPrompt);
-
-      const result = await callAI(metaPrompt, [], null, (msg) => {
-        setPolicyFixLog(prev => prev + `\n> ${msg}`);
+      const result = await fixPolicyViolation({
+        finalPrompt,
+        policyErrorMsg,
+        selectedEngine,
+        onProgress: (msg) => setPolicyFixLog(prev => prev + `\n> ${msg}`)
       });
 
-      setPolicyFixLog(prev => prev + "\n> [Phase 3/5] AIの応答を受信・解析中...");
-
-      if (!result.text || result.text.trim().length < 10) {
-        setPolicyFixLog(prev => prev + "\n> [ERROR] AIからの応答が空です。エラー情報をより詳しく入力して再試行してください。");
-        return;
-      }
-
-      // === Phase 4: 置換テーブルのパースと適用 ===
-      setPolicyFixLog(prev => prev + "\n> [Phase 4/5] 置換テーブルをプロンプトに適用中...");
-
-      let replacements = [];
-      try {
-        // JSONブロックを抽出（マークダウンコードフェンス対応）
-        let jsonStr = result.text.trim();
-        const jsonMatch = jsonStr.match(/```(?:json)?\s*([\s\S]*?)```/);
-        if (jsonMatch) {
-          jsonStr = jsonMatch[1].trim();
-        }
-        // 先頭の [ を探す
-        const bracketStart = jsonStr.indexOf('[');
-        const bracketEnd = jsonStr.lastIndexOf(']');
-        if (bracketStart !== -1 && bracketEnd !== -1) {
-          jsonStr = jsonStr.substring(bracketStart, bracketEnd + 1);
-        }
-        replacements = JSON.parse(jsonStr);
-      } catch (parseError) {
-        console.error("JSON parse error:", parseError, "Raw:", result.text);
-        setPolicyFixLog(prev => prev + "\n> [WARNING] AIの出力をJSON解析できませんでした。フォールバック（全文再生成）モードに切り替えます...");
-        // フォールバック: 従来の全文再生成方式
-        await regenerateSafePromptFallback();
-        return;
-      }
-
-      if (!Array.isArray(replacements) || replacements.length === 0) {
-        setPolicyFixLog(prev => prev + "\n> [WARNING] 置換対象が見つかりませんでした。エラー情報をより具体的に入力して再試行してください。");
-        return;
-      }
-
-      // 置換を適用
-      let modifiedPrompt = finalPrompt;
-      let appliedCount = 0;
-      let failedCount = 0;
-
-      for (const rep of replacements) {
-        if (!rep.from || !rep.to) continue;
-        if (modifiedPrompt.includes(rep.from)) {
-          modifiedPrompt = modifiedPrompt.replace(rep.from, rep.to);
-          appliedCount++;
-          setPolicyFixLog(prev => prev + `\n> ✅ "${rep.from.substring(0, 40)}..." → "${rep.to.substring(0, 40)}..." (${rep.reason || ''})`);
+      if (result.success && result.modifiedPrompt) {
+        setFinalPrompt(result.modifiedPrompt);
+        if (result.method === "replacement") {
+          setPolicyFixLog(prev => prev + `\n> [Phase 5/5] ✅ ${result.appliedCount}箇所を修正しました（${result.failedCount}箇所はスキップ）。STEP3のプロンプト欄に反映済みです。`);
         } else {
-          failedCount++;
-          setPolicyFixLog(prev => prev + `\n> ⚠️ 未発見（スキップ）: "${rep.from.substring(0, 50)}..."`);
+          setPolicyFixLog(prev => prev + "\n> [SUCCESS] フォールバック方式で配慮版プロンプトを生成しました。STEP3のプロンプト欄に反映済みです。");
         }
-      }
-
-      if (appliedCount > 0) {
-        setFinalPrompt(modifiedPrompt);
-        setPolicyFixLog(prev => prev + `\n> [Phase 5/5] ✅ ${appliedCount}箇所を修正しました（${failedCount}箇所はスキップ）。STEP3のプロンプト欄に反映済みです。`);
         setPolicyFixLog(prev => prev + `\n> [GUIDE] 再度STEP4で画像生成するか、「プロンプトをコピー」して${selectedEngine === 'openai' ? 'ChatGPT' : 'Gemini'} Web版で生成してください。`);
-        // [v2.48] 修正適用後にエラーメッセージ入力をクリア（古い情報の混入防止）
         setPolicyErrorMsg("");
-      } else {
-        setPolicyFixLog(prev => prev + "\n> [WARNING] AIが提案した修正箇所がプロンプト内に見つかりませんでした。");
-        setPolicyFixLog(prev => prev + "\n> [GUIDE] フォールバック（全文再生成）モードに切り替えます...");
-        await regenerateSafePromptFallback();
       }
     } catch (error) {
       console.error(error);
@@ -1471,30 +1152,6 @@ ${parsedData.scenario}
     } finally {
       clearInterval(policyTimer);
       setIsFixingPolicy(false);
-    }
-  };
-
-  // --- [v2.42] フォールバック: 従来の全文再生成方式（JSONパース失敗時の保険） ---
-  const regenerateSafePromptFallback = async () => {
-    setPolicyFixLog(prev => prev + "\n> [Fallback] 全文再生成モードで修正中...");
-    try {
-      const fallbackPrompt = getPolicyFallbackPrompt(policyErrorMsg.trim(), finalPrompt);
-
-      const result = await callAI(fallbackPrompt, [], null, (msg) => {
-        setPolicyFixLog(prev => prev + `\n> ${msg}`);
-      });
-
-      if (result.text && result.text.length > 100) {
-        setFinalPrompt(result.text.trim());
-        setPolicyFixLog(prev => prev + "\n> [SUCCESS] フォールバック方式で配慮版プロンプトを生成しました。STEP3のプロンプト欄に反映済みです。");
-        // [v2.48] フォールバック成功時もエラーメッセージ入力をクリア
-        setPolicyErrorMsg("");
-      } else {
-        setPolicyFixLog(prev => prev + "\n> [ERROR] フォールバックでも適切な応答が得られませんでした。エラーメッセージをより詳しく入力して再試行してください。");
-      }
-    } catch (error) {
-      console.error(error);
-      setPolicyFixLog(prev => prev + `\n> [Fallback ERROR] ${error.message}`);
     }
   };
 

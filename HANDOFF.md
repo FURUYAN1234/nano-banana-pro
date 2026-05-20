@@ -1,17 +1,20 @@
-# HANDOFF.md (v3.84-alpha / Refactor & Deploy)
+# HANDOFF.md (v3.85-alpha / Refactor & Deploy)
 
 ## Current Status
-- **PROMPT ASSEMBLER REFACTOR COMPLETED, BUG FIXED & OFFICIALLY DEPLOYED** (プロンプト組立ロジック外部化・バグ修正・正式リリース完了)
-- `App.jsx` 内の複雑なプロンプト構築関数 `assemblePrompt` を `src/lib/prompt-assembler.js` に抽出・外部化。
-- インポート漏れエラー（`buildMangaPrompt is not defined`）を修正し、ローカル環境での画像生成完了を検証の上、本番正式リリースを完了しました。
-- プロダクションビルド (`npm run build`) はエラーなく成功し、本番デプロイチェックを通過しました。
-- ローカル開発サーバーは正常に動作しています。
+- **SCENARIO GENERATION & POLICY FIXER REFACTOR COMPLETED** (シナリオ生成・ポリシー自動修正ロジックの外部モジュール化完了)
+- `App.jsx` 内のシナリオ生成ロジックを `src/lib/scenario-provider.js` に、ポリシー自動修正ロジックを `src/lib/policy-fixer.js` にそれぞれ抽出・外部化。
+- これにより、`App.jsx` を約350行削減し、保守性を向上。
+- ローカル環境での画像生成および一連の動作の動作検証を完了。
 
-## Done (Phase 3)
-- `src/lib/prompt-assembler.js` [NEW]: `assemblePrompt` 内のプロンプト構築ロジックを `buildMangaPrompt` として完全に外出しし、状態管理のクリーンアップを実施。
-- `src/lib/panel-utils.js` [UPDATED]: `extractEmotionStyle`, `buildEmotionBlock`, `cleanCastList` などのユーティリティ関数群を外部化。
-- `src/lib/prompts.js` [UPDATED]: ChatGPT/Gemini 用の巨大マンガプロンプトテンプレートをビルダー関数 (`buildChatGPTMangaPrompt`, `buildGeminiMangaPrompt`) として外部化。
-- `src/App.jsx` [UPDATED]: プロンプト構築処理を `buildMangaPrompt` の呼び出しに置換し、さらにコードをクリーンアップ。
+## Done (Phase 3 - Part 2)
+- `src/lib/scenario-provider.js` [NEW]: シナリオ生成処理（ ** `generateScenario` ** / ** `generateScenarioStream` ** ）および数百行に及ぶ巨大なシナリオ生成プロンプトテンプレートを外部ファイル化。
+- `src/lib/policy-fixer.js` [NEW]: コンテンツポリシーの自動修正処理（ ** `regenerateSafePrompt` ** / ** `regenerateSafePromptFallback` ** ）および付随するプロンプト定義を外部ファイル化。
+- `src/App.jsx` [UPDATED]: シナリオ生成およびポリシー自動修正処理を外部モジュール呼び出しに差し替え。
+
+## Done (Phase 3 - Part 1)
+- `src/lib/prompt-assembler.js` [NEW]: `assemblePrompt` 内のプロンプト構築ロジックを `buildMangaPrompt` として外出し。
+- `src/lib/panel-utils.js` [UPDATED]: ユーティリティ関数群（`extractEmotionStyle` 等）を外部化。
+- `src/lib/prompts.js` [UPDATED]: ChatGPT/Gemini 用の巨大マンガプロンプトテンプレートをビルダー関数として外部化。
 
 ## Done (Previous Phases 1-2, already committed)
 - `src/lib/constants.js`: 定数およびカテゴリ定義の切り出し。

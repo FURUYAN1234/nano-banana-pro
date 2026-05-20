@@ -910,6 +910,9 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v3.85-alpha (2026-05-20)
+- ** [Refactor] ** シナリオ生成およびコンテンツポリシー自動修正ロジックの外部モジュール化（ ** `scenario-provider.js` ** および ** `policy-fixer.js` ** ）を完了し、 ** `App.jsx` ** の肥大化を解消（約350行削減）。 / Extracted scenario generation and policy fixer logic into dedicated modules, reducing the size of `App.jsx` by ~350 lines.
+
 ### v3.84-alpha (2026-05-20)
 - ** [Release] ** ローカル環境での画像生成成功を検証し、本番環境へのデプロイおよびリリースを正式に完了。 / Verified successful image generation in the local environment, and officially completed deployment and release to production.
 
