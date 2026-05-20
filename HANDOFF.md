@@ -1,10 +1,13 @@
-# HANDOFF.md (v3.88-alpha / ControlBar Modularization & Deploy)
+# HANDOFF.md (v3.89-alpha / Hook Extraction & Refactor)
 
 ## Current Status
-- **ControlBar Component Modularized** (上部コントロールバーの外部コンポーネント化完了)
-- `src/App.jsx` 内の上部プログレスバー / 設定操作ボタンを `<ControlBar>` （ `src/components/ControlBar.jsx` ）へ分割・抽出し、JSXコード量を大幅に削減（約190行）。インポートパスのバグを解消し、一貫ビルドと動作を検証完了。
-- **FULL AUTO CHARACTER ANALYSIS SYNC BUG FIXED** (キャラクター解析中にフルオートを押した場合のステート同期バグ修正完了)
-- `isFullAutoModeRef` を導入し、 `processFiles` 内で最新のフルオートモード状態を参照できるようにすることで、認識中にフルオートボタンを押した場合でも完了後に自動でSTEP2→3→4へと進むようにした。
+- **Business Logic Hook Extraction Complete** (ビジネスロジックのカスタムフック化完了)
+  - `src/App.jsx` 内の巨大なビジネスロジック（全ステート、Ref、useEffect副作用、API通信ハンドラなど）を `src/hooks/useMangaWorkflow.js` に完全外部化。 `src/App.jsx` は純粋に UI をレンダリングし、フックから値をデストラクチャリングして流し込む薄いコンポーネント（約340行）へスリム化。
+
+## Done (v3.89-alpha)
+- `src/hooks/useMangaWorkflow.js` [NEW]: `src/App.jsx` にあった全ビジネスロジック（113以上の状態変数・関数）を内包するカスタムフックを新規作成。
+- `src/App.jsx` [UPDATED]: ビジネスロジックを完全削除し、 `useMangaWorkflow` から変数・ハンドラをデストラクチャリングして UI コンポーネントに結合。
+- `HANDOFF.md`, `package.json`, `src/lib/constants.js`, `index.html`, `README.md` のバージョンを `3.89-alpha` に同期。
 
 ## Done (v3.88-alpha)
 - `src/components/ControlBar.jsx` [NEW]: 上部プログレスバーおよび各種操作ボタン群（フルオート、無限ループ等）を外部コンポーネントとして新規作成。
@@ -40,7 +43,7 @@
 ## Architecture (Current)
 ```
 src/
-├── App.jsx            (1,602行 — モジュール分割・集約完了)
+├── App.jsx            (約340行 — UIシェル)
 ├── lib/
 │   ├── ai-provider.js   (Zenith Protocol, callAI)
 │   ├── constants.js     (SYSTEM_VERSION, categories, getModelBadgeInfo)
@@ -53,6 +56,8 @@ src/
 │   ├── safety-filters.js (Error translation, safety)
 │   ├── scenario-provider.js (generateScenario)
 │   └── policy-fixer.js  (regenerateSafePrompt)
+├── hooks/
+│   └── useMangaWorkflow.js (全ビジネスロジック・113変数定義)
 └── components/
     ├── ControlBar.jsx   (Sticky top progress & controls)
     ├── SystemHeader.jsx

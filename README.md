@@ -165,11 +165,11 @@ By dragging and dropping a 360-degree equirectangular image alongside your chara
 * **Phase 3 Multimodal Background Injection (v3.54+) / マルチモーダル背景注入**: The per-panel background views extracted by the crop engine are injected directly into Gemini as multimodal inlineData reference images. This ensures the AI produces highly accurate environments that perfectly match the intended camera angle and lighting for each panel. / クロップエンジンによって切り出されたコマ別の背景ビューは、マルチモーダル参照画像（inlineData）として直接Geminiに注入されます。これにより、AIは各コマの意図したカメラアングルとライティングに完璧に一致する、極めて正確な環境を描画します。
 * **Lighting & Shadow Synchronization / 光源と影の自動同期**: The AI extracts the primary light source direction and ambient color temperature from the 360° background. It then rigidly enforces these lighting parameters in the prompt for each panel (e.g., "Match shadow directions to the background reference"). This ensures characters do not look "pasted on" but rather perfectly blend into the environmental lighting, creating a highly cohesive and cinematic composite. / AIが360度背景から「主光源の方向」と「環境光の色温度」を自動抽出し、各コマの画像生成プロンプトに強力な制約として注入します。「キャラクターの影の落ちる方向を背景に合わせる」などの指示により、合成特有の「浮遊感」を完全に払拭し、空間に完璧に馴染んだシネマティックな画面を構築します。
 
-### 📦 UI Component Modularization (v3.88+) / UIコンポーネントの完全モジュール化
+### 📦 UI Component & Hook Modularization (v3.89+) / UIコンポーネント完全モジュール化とフック分離
 
-To address the extreme complexity of a 5,000+ line monolith, the frontend architecture has been systematically decoupled into dedicated component files inside `src/components/` (e.g., `<ControlBar>`, `<SystemHeader>`, `<ApiKeyModal>`, and `<Step1Panel>` through `<Step4Panel>`). This modularization isolates concerns, reduces side-effects in React's state management, and shrinks the core `App.jsx` file to a manageable size, facilitating safer local development and faster builds.
-5,000行を超える巨大モノリスの問題を解消するため、フロントエンド UI 構成要素を `src/components/` 配下の独立したコンポーネント（`<ControlBar>`、`<SystemHeader>`、`<ApiKeyModal>`、および各ステップに対応する `<Step1Panel>` 〜 `<Step4Panel>`）へと完全に分割・モジュール化しました。これにより、各機能の結合度が下がり、React のステート更新に伴う不要な再レンダリングやバグを防ぎ、コアとなる `App.jsx` を大幅に軽量化。安全なローカル開発と迅速なビルド・デプロイを実現しています。
+To address the extreme complexity of a 5,000+ line monolith, the frontend architecture has been systematically decoupled. Individual UI elements are isolated into dedicated component files inside `src/components/`, while all state management, side-effects, and business logic are extracted into a single custom Hook `useMangaWorkflow` inside `src/hooks/useMangaWorkflow.js`. This modularization dramatically simplifies `src/App.jsx` to a clean UI shell, reduces side-effects in React's state management, and speeds up build/deploy workflows.
 
+5,000行を超える巨大モノリスの問題を完全に解消するため、フロントエンド UI 構成要素を `src/components/` 配下の独立したコンポーネントへと完全にモジュール化し、さらにすべてのステート管理や非同期通信・ビジネスロジックを **`src/hooks/useMangaWorkflow.js`** 内のカスタムフック **`useMangaWorkflow`** として完全に外部化・分離しました。これにより、各機能の結合度が下がり、コアとなる **`src/App.jsx`** は約340行のクリーンな UI シェルへとスリム化。開発の安全性とビルド・デプロイ効率が極限まで向上しました。
 
 ---
 
@@ -915,6 +915,9 @@ Developed by **FURU**
 ---
 
 ## 📋 ChangeLog
+
+### v3.89-alpha (2026-05-20)
+- ** [Refactor] ** `src/App.jsx` 内の巨大なビジネスロジック（ステート・Ref・副作用・補助関数など）をカスタムフック `useMangaWorkflow` ( `src/hooks/useMangaWorkflow.js` ) に完全外部化。 `src/App.jsx` を UI レンダリング専用のコンポーネント（約340行）へ大幅にスリム化。 / Decoupled all business logic (state, refs, effects, and auxiliary functions) from `src/App.jsx` into the custom hook `useMangaWorkflow` in `src/hooks/useMangaWorkflow.js`, slimming down `src/App.jsx` to a clean UI-only rendering component (~340 lines).
 
 ### v3.88-alpha (2026-05-20)
 - ** [Refactor] ** 上部のプログレスバーおよび操作ボタン群を <ControlBar> コンポーネント（ src/components/ControlBar.jsx ）として外部ファイルに分離し、 src/App.jsx の JSX 部を約190行削減。モジュール間のインポート参照バグを修正し、安定した一貫ビルドを検証。 / Extracted the sticky top control bar from src/App.jsx into <ControlBar> component in src/components/ControlBar.jsx, reducing code clutter and decreasing App.jsx size by ~190 lines. Fixed import path issues to ensure a clean build.
