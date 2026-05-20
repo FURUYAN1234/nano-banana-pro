@@ -49,6 +49,10 @@ import Panorama360Viewer from './components/Panorama360Viewer';
 import StepGuide from './components/StepGuide';
 import ApiKeyModal from './components/ApiKeyModal';
 import ErrorBoundary from './components/ErrorBoundary';
+import Step1Panel from './components/Step1Panel';
+import Step2Panel from './components/Step2Panel';
+import Step3Panel from './components/Step3Panel';
+import Step4Panel from './components/Step4Panel';
 
 function App() {
   // Force Build 2026-02-06 07:07 // Build 2026-02-06-01
@@ -2087,597 +2091,76 @@ The environment and effects must ECHO the character's emotion, not just be a bac
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
 
             {/* 01: キャラクター入力 (Dynamic Style) */}
-            <section
-              onDragOver={(e) => { e.preventDefault(); if (apiKey) setIsDragging(true); }}
-              onDragLeave={() => setIsDragging(false)}
-              onDrop={(e) => { e.preventDefault(); setIsDragging(false); if (apiKey) processFiles(e.dataTransfer.files); }}
-              className={`group p-8 rounded-xl border-2 transition-all flex flex-col relative overflow-hidden duration-500 min-h-[300px] justify-center
-                ${isDragging ? 'border-blue-500 bg-blue-500/20 border-solid scale-105 shadow-2xl z-20' : 'border-dashed border-slate-700 bg-[#0f1115] hover:border-slate-500 hover:bg-[#161b22]'}
-                ${currentStep === 1 && !isDragging ? 'border-blue-500/50 shadow-[0_0_30px_rgba(59,130,246,0.1)]' : ''}
-                ${currentStep > 1 ? 'border-blue-500/30 bg-blue-900/5' : ''}
-      `}
-            >
-              <div className="flex items-center justify-between mb-6 z-10">
-                <div className={`flex items-center gap-3 text-xs font-black uppercase tracking-widest ${currentStep === 1 ? 'text-blue-400' : 'text-slate-500'} `}>
-                  <Camera size={18} /> STEP 01: キャラクター解析 (Character Analysis)
-                </div>
-                {isAnalyzing && <Loader2 size={18} className="animate-spin text-blue-400" />}
-                {currentStep > 1 && <CheckCircle2 size={18} className="text-blue-500" />}
-              </div>
-
-              <div className="flex flex-wrap gap-2 mb-6 z-10 p-4 bg-[#0a0c10] rounded-3xl border border-white/10 h-[130px] overflow-y-auto custom-scrollbar content-start">
-                {images.map((img, i) => (
-                  <div key={i} className="relative w-[56px] min-w-[56px] max-w-[56px] h-14 flex-shrink-0 rounded-lg overflow-hidden border border-white/10 group/img transition-all hover:scale-110 hover:z-50 hover:shadow-xl hover:border-blue-400 cursor-pointer">
-                    <img src={img} className="w-full h-full object-cover shadow-sm" />
-                    <button onClick={() => setImages(images.filter((_, idx) => idx !== i))} className="absolute inset-0 bg-black/60 opacity-0 group-hover/img:opacity-100 flex items-center justify-center text-white transition-all backdrop-blur-[1px]"><Trash2 size={16} /></button>
-                  </div>
-                ))}
-                {bg360Image && (
-                  <div className={`relative w-[112px] min-w-[112px] max-w-[112px] h-14 flex-shrink-0 rounded-lg overflow-hidden border ${bg360Enabled ? 'border-cyan-500/50' : 'border-slate-700'} transition-all`} title="360°パノラマ背景 (下の「場所設定」から詳細確認可能)">
-                    <img src={bg360Image} className={`w-full h-full object-cover shadow-sm ${bg360Enabled ? 'opacity-100' : 'opacity-40 grayscale'}`} />
-                    <div className="absolute bottom-0 left-0 right-0 bg-black/80 text-[8px] text-cyan-300 text-center font-bold px-1 py-0.5 truncate flex items-center justify-center gap-1">
-                      <Globe size={8} /> 360° BACKGROUND
-                    </div>
-                  </div>
-                )}
-                <label className="w-14 h-14 flex flex-col items-center justify-center cursor-pointer rounded-lg border border-dashed border-white/10 hover:border-blue-500 hover:bg-blue-500/10 transition-all text-slate-500 hover:text-blue-400 group/add">
-                  {isAnalyzing ? (
-                    <Loader2 size={16} className="animate-spin" />
-                  ) : (
-                    <>
-                      <Plus size={16} className="group-hover/add:scale-125 transition-transform" />
-                    </>
-                  )}
-                  <input
-                    type="file"
-                    multiple
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => processFiles(e.target.files)}
-                    disabled={isAnalyzing}
-                  />
-                </label>
-
-                {images.length === 0 && !isAnalyzing && (
-                  <label className="flex-1 flex flex-col items-center justify-center text-slate-500 ml-4 cursor-pointer hover:bg-white/5 rounded-xl transition-colors p-4 border border-transparent hover:border-white/10">
-                    <input
-                      type="file"
-                      multiple
-                      accept="image/*"
-                      className="hidden"
-                      onChange={(e) => processFiles(e.target.files)}
-                    />
-                    <p className="text-xs font-bold text-slate-400">
-                      キャラクターシートをドロップ <span className="text-blue-400">（複数シートはまとめてアップロード。360°背景がある場合は同時にドロップしてください）</span>
-                    </p>
-                    <p className="text-[10px] opacity-60 mt-1">
-                      ※名前・性格・設定が明記されているシートを推奨。
-                      <br/>※360°背景の自動認識には「比率2:1」かつ「内部に360°メタデータ(equirectangular等)を持つ画像」である必要があります。
-                    </p>
-                    <div className="mt-3 flex flex-col items-center gap-1 group/preview">
-                      <span className="text-[9px] uppercase tracking-widest opacity-40 group-hover/preview:text-blue-400 transition-colors">推奨見本 (例)</span>
-                      <img
-                        src={`${import.meta.env.BASE_URL}example_sheet.jpg`}
-                        alt="Example"
-                        className="h-24 w-auto rounded-lg border border-white/10 opacity-50 group-hover/preview:opacity-100 transition-opacity shadow-2xl skew-x-[-2deg] hover:skew-x-0 duration-500"
-                      />
-                    </div>
-                  </label>
-                )}
-
-                {isAnalyzing && (
-                  <div className="flex-1 flex items-center gap-3 ml-4 animate-in fade-in slide-in-from-left-4">
-                    <span className="relative flex h-3 w-3">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-3 w-3 bg-blue-500"></span>
-                    </span>
-                    <div className="text-xs font-mono text-blue-300">
-                      Analyzing {images.length} chars... <span className="text-slate-500 ml-2 text-[10px]">(数十秒〜数分待機)</span>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* FIX: Log moved ABOVE result textarea as per user request */}
-              <div className="mb-4">
-                <ThinkingLog thought={analyzeThought} />
-              </div>
-
-              <div className="flex flex-col gap-2 w-full">
-                <span className="px-2 bg-[#0f1115] text-xs font-bold text-slate-400 w-fit rounded">
-                  ▼ 生成されるキャラクター解析 (編集可)
-                </span>
-                <textarea
-                  value={castList}
-                  onChange={(e) => setCastList(e.target.value)}
-                  style={{ color: '#ffffff', backgroundColor: '#08090b', opacity: 1 }}
-                  className="flex-1 w-full min-h-[140px] p-6 rounded-2xl text-sm border border-white/5 focus:border-blue-500/50 outline-none leading-relaxed resize-none font-medium z-10 placeholder-slate-600"
-                  placeholder="画像をアップロードして特徴を自動抽出、または直接入力して設定を記述します。"
-                />
-                {/* [v3.13] キャラクター解析結果 コピーボタン */}
-                <div className="mt-2 relative z-50">
-                  <button
-                    onClick={() => {
-                      navigator.clipboard.writeText(castList);
-                      setIsCastListCopied(true);
-                      setTimeout(() => setIsCastListCopied(false), 2000);
-                    }}
-                    disabled={!castList}
-                    className={`w-full ${isCastListCopied ? 'bg-green-600' : 'bg-slate-800 hover:bg-slate-700'} text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all border border-white/10 disabled:opacity-50 disabled:cursor-not-allowed`}
-                  >
-                    {isCastListCopied ? <CheckCircle2 size={20} /> : <Copy size={20} />}
-                    {isCastListCopied ? "コピー完了" : "コピペ（キャラクター解析結果をコピー）"}
-                  </button>
-                </div>
-              </div>
-            </section>
+            <Step1Panel
+              isDragging={isDragging}
+              setIsDragging={setIsDragging}
+              apiKey={apiKey}
+              processFiles={processFiles}
+              currentStep={currentStep}
+              isAnalyzing={isAnalyzing}
+              images={images}
+              setImages={setImages}
+              bg360Image={bg360Image}
+              bg360Enabled={bg360Enabled}
+              analyzeThought={analyzeThought}
+              castList={castList}
+              setCastList={setCastList}
+              isCastListCopied={isCastListCopied}
+              setIsCastListCopied={setIsCastListCopied}
+            />
 
             {/* 02: シナリオ設定 (Static Layout) */}
-            <section ref={step2Ref} className={`relative p-8 rounded-xl bg-[#0f1115] border flex flex-col space-y-6 shadow-xl transition-all duration-300
-                 ${currentStep === 2 ? 'border-2 border-purple-500 shadow-[0_0_50px_rgba(168,85,247,0.2)] opacity-100' : 'border-white/5 opacity-60'}
-                 ${currentStep > 2 ? 'border-purple-500/30 bg-purple-900/5 opacity-100' : ''}
-      `}>
-              {/* STEP2ロックオーバーレイ: STEP1未完了 or 解析中 */}
-              {/* [v2.47 BugFix] isAssemblingを除外: STEP3構築中にSTEP2が消えるバグ修正 */}
-              {(currentStep < 2 || isAnalyzing) && (
-                <div style={{ position: 'absolute', inset: -2, zIndex: 200, backgroundColor: 'rgba(10,12,16,0.92)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', pointerEvents: 'auto', borderRadius: '0.875rem' }} />
-              )}
-              <div className="flex items-center justify-between">
-                <div className={`flex items-center gap-3 text-xs font-black uppercase tracking-widest ${currentStep === 2 ? 'text-purple-400' : 'text-slate-500'} `}>
-                  {/* FIX: Title update */}
-                  <FileText size={18} /> STEP 02: シナリオ構築設定 (Scenario Settings)
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-6 mt-4">
-                {/* Mode Toggle */}
-                <div className="grid grid-cols-2 gap-4 p-1 bg-slate-900/50 rounded-2xl border border-white/5">
-                  <button
-                    onClick={() => setInputMode('news')}
-                    className={`py-4 rounded-xl text-sm font-black tracking-widest transition-all 
-                        ${inputMode === 'news'
-                        ? 'bg-white text-black border-b-[4px] border-slate-300 translate-y-0 shadow-lg'
-                        : 'bg-[#1e293b] text-slate-500 border-b-[4px] border-[#0f172a] hover:bg-[#334155] hover:text-slate-300'
-                      } `}
-                  >
-                    <span className="mr-2">🌐</span> ニュース検索
-                  </button>
-                  <button
-                    onClick={() => setInputMode('manual')}
-                    className={`py-4 rounded-xl text-sm font-black tracking-widest transition-all 
-                        ${inputMode === 'manual'
-                        ? 'bg-white text-black border-b-[4px] border-slate-300 translate-y-0 shadow-lg'
-                        : 'bg-[#1e293b] text-slate-500 border-b-[4px] border-[#0f172a] hover:bg-[#334155] hover:text-slate-300'
-                      } `}
-                  >
-                    <span className="mr-2">✏️</span> 自由入力
-                  </button>
-                </div>
-
-                {/* INPUT AREA */}
-                {inputMode === 'news' ? (
-                  <div className="space-y-4">
-                    {/* FIX: Calendar Restoration */}
-                    <div className="flex items-center gap-4 bg-slate-900/80 p-4 rounded-xl border border-white/5">
-                      <span className="text-xs font-bold text-slate-400">📅 対象日付 (Target Date):</span>
-                      <input
-                        type="date"
-                        value={targetDate}
-                        onChange={(e) => setTargetDate(e.target.value)}
-                        style={{ colorScheme: 'dark' }}
-                        className="bg-transparent text-white font-mono font-bold outline-none border-b border-white/20 focus:border-blue-500 py-1 px-2"
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                      <div className="col-span-2 lg:col-cols-4 mb-2 text-xs font-bold text-slate-400 text-center">
-                        ▼ 検索するカテゴリを選択してください
-                      </div>
-                      {categories.map((cat) => (
-                        <label
-                          key={cat.id}
-                          className={`
-                            relative flex items-center justify-center p-4 rounded-xl cursor-pointer border-2 border-b-4 transition-all duration-100 group overflow-hidden select-none active: border-b-2 active: translate-y-0.5
-                            ${cat.checked
-                              ? 'bg-white text-black border-slate-300'
-                              : 'bg-[#1e293b] text-slate-400 border-[#0f172a] hover:bg-[#334155]'
-                            }
-      `}
-                        >
-                          <input
-                            type="checkbox"
-                            className="hidden"
-                            checked={cat.checked}
-                            onChange={() => toggleCategory(cat.id)}
-                          />
-                          {cat.checked && (
-                            <div className="absolute top-2 right-2 bg-white text-blue-600 rounded-full p-0.5 shadow-sm">
-                              <CheckCircle2 size={12} strokeWidth={4} />
-                            </div>
-                          )}
-                          <div className="text-center">
-                            <div className={`text-2xl mb-2 ${cat.checked ? 'scale-110' : 'opacity-70 grayscale'} `}>
-                              {cat.icon}
-                            </div>
-                            <div className="text-[11px] font-bold tracking-wider">
-                              {cat.label}
-                            </div>
-                          </div>
-                        </label>
-                      ))}
-                    </div>
-
-                    {/* Display Current Target for User Confidence */}
-                    <div className="text-xs text-slate-500 text-center font-mono">
-                      現在の検索クエリ: {categories.filter(c => c.checked).map(c => c.keywords).join(' ') || "なし"} (対象日付: {targetDate})
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    {/* Manual Mode */}
-                    <div className="text-xs font-bold text-purple-300 text-center">
-                      ▼ 自由入力モード: 好きなネタやURLを入力してください (<span className="text-blue-400">URLからの自動読み取り対応</span>)
-                    </div>
-                    <textarea
-                      value={manualTopic}
-                      onChange={(e) => setManualTopic(e.target.value)}
-                      placeholder="例：&#13;&#10;・最近のAI技術の進化について&#13;&#10;・近所の猫が可愛かった話&#13;&#10;・https://example.com/news/12345&#13;&#10;&#13;&#10;※URLを入力すると、AIがリンク先の内容を参照して漫画化します。&#13;&#10;記事の内容を直接コピペするか、具体的なトピックを文章で入力してください。"
-                      style={{ color: '#ffffff', backgroundColor: '#0f1115' }}
-                      rows={10}
-                      className="w-full bg-[#0f1115] border-2 border-purple-900/50 rounded-xl p-6 text-base text-white focus:border-purple-500 focus:shadow-md outline-none placeholder-slate-500 font-medium leading-relaxed resize-none"
-                    />
-                  </div>
-                )}
-
-
-                <div className="flex flex-col md:flex-row gap-4 mb-4">
-                  <div className={`flex-1 p-3 rounded-xl border ${(bg360Image && bg360Enabled) ? 'bg-[#050a14] border-cyan-500/30' : 'bg-[#050505] border-gray-700/50'}`}>
-                    {/* ラベル行: 360画像あり → ON/OFFトグル付き / なし → 通常ラベル */}
-                    <label className="text-xs font-bold mb-2 block flex items-center gap-1" style={{ color: (bg360Image && bg360Enabled) ? '#67e8f9' : '#ffffff' }}>
-                      <Globe size={14} />
-                      {bg360Image
-                        ? (bg360Enabled ? '🌐 360°背景 (ON)' : '指定場所 (Location Override)')
-                        : '指定場所 (Location Override)'
-                      }
-                      <span className="text-[10px] font-normal ml-auto flex items-center gap-2">
-                        {/* 解析中インジケーター */}
-                        {is360Analyzing && (
-                          <span className="text-yellow-400 animate-pulse flex items-center gap-1"><Loader2 size={10} className="animate-spin" /> 解析中...</span>
-                        )}
-                        {/* 360°画像がある場合のみ ON/OFF トグルボタンを表示 */}
-                        {bg360Image && (
-                          <button
-                            onClick={(e) => {
-                              e.preventDefault();
-                              setBg360Enabled(!bg360Enabled);
-                              showStatus(bg360Enabled ? '360°背景をOFFにしました（手入力が優先されます）' : '360°背景をONにしました');
-                            }}
-                            className={`px-3 py-1 rounded-md border text-[11px] font-bold transition-all ${
-                              bg360Enabled
-                                ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40 hover:bg-red-500/20 hover:text-red-300 hover:border-red-500/40'
-                                : 'bg-green-500/10 text-green-400 border-green-500/30 hover:bg-green-500/20'
-                            }`}
-                            title={bg360Enabled ? 'クリックで360°背景をOFF → 自由入力に切り替え' : 'クリックで360°背景をON → パノラマビューアーに切り替え'}
-                          >
-                            {bg360Enabled ? '🌐 ON → OFFにする' : '🌐 OFF → ONにする'}
-                          </button>
-                        )}
-                        {/* 360画像がない場合のヒント */}
-                        {!bg360Image && (
-                          <span className="text-gray-500">※空欄ならAIおまかせ</span>
-                        )}
-                      </span>
-                    </label>
-
-                    {/* コンテンツ部分: ON → パノラマビューアー / OFF or 未読込 → テキスト入力 */}
-                    {bg360Image && bg360Enabled ? (
-                      /* 360°ビューアーモード */
-                      <div className="space-y-2">
-                        <Panorama360Viewer imageSrc={bg360Image} height={160} />
-                        {bg360Analysis && (
-                          <div className="flex flex-wrap items-center gap-2 text-[10px] text-slate-400">
-                            <span className="px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-300 border border-cyan-500/20">📍 {bg360Analysis.location}</span>
-                            <span className="px-2 py-0.5 rounded bg-slate-800 border border-slate-700">☀️ {bg360Analysis.lighting}</span>
-                            <span className="px-2 py-0.5 rounded bg-slate-800 border border-slate-700">{bg360Analysis.spatialType === 'indoor' ? '🏠 室内' : bg360Analysis.spatialType === 'outdoor' ? '🌳 屋外' : '🔀 複合'}</span>
-                            {bg360Analysis.mood && <span className="px-2 py-0.5 rounded bg-slate-800 border border-slate-700">🎭 {bg360Analysis.mood}</span>}
-                          </div>
-                        )}
-                        <p className="text-[9px] text-slate-600 text-center">ドラッグで回転 / ホイールでズーム</p>
-                      </div>
-                    ) : (
-                      /* テキスト入力モード（360画像OFF時、または360画像未読込時） */
-                      <input
-                        type="text"
-                        value={customLocation}
-                        onChange={(e) => setCustomLocation(e.target.value)}
-                        style={{ color: '#ffffff', backgroundColor: '#111111' }}
-                        className="w-full p-2 rounded border border-gray-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-sm font-mono placeholder-gray-600"
-                        placeholder="例: サイバーパンクな裏路地、炎上する宇宙船..."
-                      />
-                    )}
-                  </div>
-
-
-                  <div className="flex-1 bg-[#050505] p-3 rounded-xl border border-purple-500/20">
-                    <label className="text-xs font-bold text-purple-400 mb-1 block flex items-center gap-1">
-                      <Sparkles size={14} /> 指定服装 (Outfit Override) <span className="text-[10px] text-gray-500 font-normal ml-auto">※空欄ならAIおまかせ</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={customOutfit}
-                      onChange={(e) => setCustomOutfit(e.target.value)}
-                      style={{ color: '#ffffff', backgroundColor: '#111111' }}
-                      className="w-full bg-[#111] text-white p-2 rounded border border-gray-700 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 outline-none text-sm placeholder-gray-600 font-mono"
-                      placeholder="例: キャラシート準拠 / 全員水着 / ミリタリー装備..."
-                    />
-                  </div>
-                  <div className="flex-1 bg-[#050505] p-3 rounded-xl border border-yellow-500/20">
-                    <label className="text-xs font-bold text-yellow-400 mb-1 block flex items-center gap-1">
-                      <span>🎬</span> オチ・ディレクター <span className="text-[10px] text-gray-500 font-normal ml-auto">※オチの方向性指定</span>
-                    </label>
-                    <select
-                      value={punchlineType}
-                      onChange={(e) => setPunchlineType(e.target.value)}
-                      style={{ color: '#ffffff', backgroundColor: '#111111' }}
-                      className="w-full bg-[#111] text-white p-2 rounded border border-gray-700 focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500 outline-none text-sm font-mono cursor-pointer"
-                    >
-                      <option value="Auto">🤖 自動 (AIにおまかせ)</option>
-                      <option value="Surreal">❄️ 静寂型 (シュール/無言)</option>
-                      <option value="Explosion">🔥 爆発型 (カオス/叫び)</option>
-                      <option value="FakeEmotion">😢 感動詐欺 (いい話風の狂気)</option>
-                      <option value="Metafiction">📖 メタフィクション (枠を越える)</option>
-                      <option value="Unreasonable">🔨 理不尽な制裁 (突然の暴力)</option>
-                      <option value="RunningGag">🔁 天丼 (同じボケの最終形態)</option>
-                      <option value="Dream">🛏️ 夢オチ (ループの恐怖)</option>
-                      <option value="PsychoHorror">🔪 サイコホラー (突然の狂気)</option>
-                      <option value="Misunderstanding">🤷 盛大な勘違い (すれ違いの頂点)</option>
-                      <option value="CanceledEnding">🏃 打ち切りエンド (俺たちの戦いはこれからだ)</option>
-                      <option value="Documentary">📰 ドキュメンタリー (原文忠実＋オチだけ漫画化)</option>
-                    </select>
-                  </div>
-                </div>
-
-                {/* EXECUTE BUTTON (White Style) */}
-                <button
-                  onClick={generateScenarioFromNews}
-                  disabled={isSearching || currentStep < 1}
-                  className="w-full relative bg-white hover:bg-slate-200 text-black py-6 rounded-xl font-black text-xl flex items-center justify-center gap-4 border-b-[6px] border-slate-300 active:border-b-0 active:translate-y-[6px] transition-all disabled:opacity-50 disabled:grayscale disabled:border-none disabled:bg-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed group/gen shadow-xl"
-                >
-                  {isSearching ? (
-                    <>
-                      <Loader2 size={24} className="animate-spin" />
-                      <span className="animate-pulse">SCENARIO GENERATING...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Zap size={24} className="fill-yellow-400 text-black" />
-                      <span>シナリオ作成を実行 (STEP 2)</span>
-                      <ArrowRight size={24} className="opacity-60" />
-                    </>
-                  )}
-                </button>
-              </div>
-
-              {/* RESULT & LOG AREA */}
-              <div className="space-y-4 mt-6">
-                {/* Log */}
-                {scenarioThought && (
-                  <div className="mt-4">
-                    <ThinkingLog thought={scenarioThought} />
-                  </div>
-                )}
-
-                {/* RESULT TEXTAREA (Fix Overlap) */}
-                <div className="flex flex-col gap-2">
-                  <span className="px-2 bg-[#0f1115] text-xs font-bold text-slate-400 w-fit rounded">
-                    ▼ 生成されるシナリオ (編集可 / 外部シナリオ貼付OK)
-                  </span>
-                  <textarea
-                    value={scenario}
-                    onChange={(e) => setScenario(e.target.value)}
-                    style={{ color: '#ffffff', backgroundColor: '#000000', opacity: 1 }}
-                    className="w-full min-h-[200px] p-6 rounded-2xl text-base border-2 border-slate-700/50 focus:border-blue-500 focus:shadow-md outline-none leading-relaxed resize-y font-medium placeholder-slate-700 font-mono"
-                    placeholder="ここに生成されたシナリオが表示されます。💡 Story Maker等で作成した4コマ用シナリオがある場合は、STEP1のキャラクターシート解析後ここに直接貼り付けてSTEP3に進めます（STEP2の「シナリオ作成を実行」はスキップ可）。貼り付け可能なシナリオの仕様は Topic: / Location: / Outfit: / Punchline: / Scenario: の形式に準拠してください。"
-                  />
-                  {/* [v3.13] シナリオ結果 コピーボタン */}
-                  <div className="mt-2 relative z-50">
-                    <button
-                      onClick={() => {
-                        navigator.clipboard.writeText(scenario);
-                        setIsScenarioCopied(true);
-                        setTimeout(() => setIsScenarioCopied(false), 2000);
-                      }}
-                      disabled={!scenario}
-                      className={`w-full ${isScenarioCopied ? 'bg-green-600' : 'bg-slate-800 hover:bg-slate-700'} text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all border border-white/10 disabled:opacity-50 disabled:cursor-not-allowed`}
-                    >
-                      {isScenarioCopied ? <CheckCircle2 size={20} /> : <Copy size={20} />}
-                      {isScenarioCopied ? "コピー完了" : "コピペ（生成されたシナリオをコピー）"}
-                    </button>
-                  </div>
-                </div>
-
-                {/* [v2.41] シナリオ強化パネル（折りたたみ式）- 常時表示、シナリオ未生成時はぼかし */}
-                <div className={`mt-2 border rounded-lg overflow-hidden transition-all duration-300 ${
-                  scenario && scenario.length > 20 
-                    ? 'border-orange-500/30' 
-                    : 'border-slate-700/30 blur-[2px] opacity-40 grayscale pointer-events-none'
-                }`}>
-                  {/* [UI改善v2] 太字・大きめタイトル・太いボーダー・uppercase hint → クリック可能と明確に */}
-                  <button
-                    className="w-full flex items-center justify-between px-4 py-3 bg-orange-900/25 hover:bg-orange-900/50 transition-all duration-150 cursor-pointer border-l-4 border-orange-500 hover:border-orange-400 group/enhance-hdr"
-                    onClick={() => scenario && scenario.length > 20 && setIsEnhancePanelOpen(!isEnhancePanelOpen)}
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className="text-base">🔥</span>
-                      <span className="text-base font-black tracking-wide text-orange-200 group-hover/enhance-hdr:text-orange-100 transition-colors">シナリオ強化</span>
-                      <span className="text-xs font-bold text-orange-400/70 hidden sm:inline">Scenario Enhance</span>
-                      {originalScenario && <span className="text-[9px] bg-green-600/30 text-green-300 px-1.5 py-0.5 rounded-full border border-green-500/30 font-bold">✓ 強化済み</span>}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-black uppercase tracking-widest text-orange-400 group-hover/enhance-hdr:text-orange-300 transition-colors">
-                        {!(scenario && scenario.length > 20) ? 'シナリオ生成後に使用可能' : isEnhancePanelOpen ? '▲ クリックで閉じる' : '▼ クリックで開く'}
-                      </span>
-                      <ChevronDown size={18} className={`text-orange-400 group-hover/enhance-hdr:text-orange-300 transition-all duration-300 ${isEnhancePanelOpen ? 'rotate-180' : ''}`} />
-                    </div>
-                  </button>
-
-                  {isEnhancePanelOpen && scenario && scenario.length > 20 && (
-                    <div className="p-4 bg-orange-950/10 space-y-3">
-                      <p className="text-[11px] text-orange-200/70 leading-relaxed">
-                        生成済みシナリオの演出を強化します。強化したいカテゴリをONにして「強化実行」を押してください。<br/>
-                        <span className="text-orange-300 font-bold">💡 複数回実行すると効果が重複し、より強力（カオス）な演出になります。</span><br/>
-                        ⚠️ 演出が過激になるとSTEP4でコンテンツポリシーに引っかかる場合があります（既存の救済機能で対応可能）。
-                      </p>
-
-                      {/* 7つのトグルスイッチ [v3.14] FACS追加 */}
-                      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                        {/* 表情 */}
-                        <label className={`relative flex items-center justify-center p-3 rounded-xl cursor-pointer border-2 border-b-4 transition-all duration-100 group overflow-hidden select-none active:border-b-2 active:translate-y-0.5 ${
-                          enhanceExpressions ? 'bg-white text-black border-slate-300' : 'bg-[#1e293b] text-slate-400 border-[#0f172a] hover:bg-[#334155]'
-                        }`}>
-                          <input type="checkbox" className="hidden" checked={enhanceExpressions} onChange={() => setEnhanceExpressions(!enhanceExpressions)} />
-                          {enhanceExpressions && (
-                            <div className="absolute top-2 right-2 bg-white text-blue-600 rounded-full p-0.5 shadow-sm">
-                              <CheckCircle2 size={12} strokeWidth={4} />
-                            </div>
-                          )}
-                          <div className="text-center">
-                            <div className={`text-2xl mb-1 ${enhanceExpressions ? 'scale-110' : 'opacity-70 grayscale'}`}>😱</div>
-                            <div className="text-[11px] font-bold tracking-wider">表情追加</div>
-                            <div className="text-[9px] opacity-70 mt-1">大げさなリアクション</div>
-                          </div>
-                        </label>
-
-                        {/* ボディランゲージ */}
-                        <label className={`relative flex items-center justify-center p-3 rounded-xl cursor-pointer border-2 border-b-4 transition-all duration-100 group overflow-hidden select-none active:border-b-2 active:translate-y-0.5 ${
-                          enhanceBodyLang ? 'bg-white text-black border-slate-300' : 'bg-[#1e293b] text-slate-400 border-[#0f172a] hover:bg-[#334155]'
-                        }`}>
-                          <input type="checkbox" className="hidden" checked={enhanceBodyLang} onChange={() => setEnhanceBodyLang(!enhanceBodyLang)} />
-                          {enhanceBodyLang && (
-                            <div className="absolute top-2 right-2 bg-white text-blue-600 rounded-full p-0.5 shadow-sm">
-                              <CheckCircle2 size={12} strokeWidth={4} />
-                            </div>
-                          )}
-                          <div className="text-center">
-                            <div className={`text-2xl mb-1 ${enhanceBodyLang ? 'scale-110' : 'opacity-70 grayscale'}`}>🤸</div>
-                            <div className="text-[11px] font-bold tracking-wider">身体強化</div>
-                            <div className="text-[9px] opacity-70 mt-1">全身で感情を表現</div>
-                          </div>
-                        </label>
-
-                        {/* 照明・演出 */}
-                        <label className={`relative flex items-center justify-center p-3 rounded-xl cursor-pointer border-2 border-b-4 transition-all duration-100 group overflow-hidden select-none active:border-b-2 active:translate-y-0.5 ${
-                          enhanceEffects ? 'bg-white text-black border-slate-300' : 'bg-[#1e293b] text-slate-400 border-[#0f172a] hover:bg-[#334155]'
-                        }`}>
-                          <input type="checkbox" className="hidden" checked={enhanceEffects} onChange={() => setEnhanceEffects(!enhanceEffects)} />
-                          {enhanceEffects && (
-                            <div className="absolute top-2 right-2 bg-white text-blue-600 rounded-full p-0.5 shadow-sm">
-                              <CheckCircle2 size={12} strokeWidth={4} />
-                            </div>
-                          )}
-                          <div className="text-center">
-                            <div className={`text-2xl mb-1 ${enhanceEffects ? 'scale-110' : 'opacity-70 grayscale'}`}>✨</div>
-                            <div className="text-[11px] font-bold tracking-wider">演出強化</div>
-                            <div className="text-[9px] opacity-70 mt-1">照明効果やVFX</div>
-                          </div>
-                        </label>
-
-                        {/* 背景 */}
-                        <label className={`relative flex items-center justify-center p-3 rounded-xl cursor-pointer border-2 border-b-4 transition-all duration-100 group overflow-hidden select-none active:border-b-2 active:translate-y-0.5 ${
-                          enhanceBackgrounds ? 'bg-white text-black border-slate-300' : 'bg-[#1e293b] text-slate-400 border-[#0f172a] hover:bg-[#334155]'
-                        }`}>
-                          <input type="checkbox" className="hidden" checked={enhanceBackgrounds} onChange={() => setEnhanceBackgrounds(!enhanceBackgrounds)} />
-                          {enhanceBackgrounds && (
-                            <div className="absolute top-2 right-2 bg-white text-blue-600 rounded-full p-0.5 shadow-sm">
-                              <CheckCircle2 size={12} strokeWidth={4} />
-                            </div>
-                          )}
-                          <div className="text-center">
-                            <div className={`text-2xl mb-1 ${enhanceBackgrounds ? 'scale-110' : 'opacity-70 grayscale'}`}>🏙️</div>
-                            <div className="text-[11px] font-bold tracking-wider">背景強化</div>
-                            <div className="text-[9px] opacity-70 mt-1">描写を詳細化</div>
-                          </div>
-                        </label>
-
-                        {/* [v2.47] カメラワーク */}
-                        <label className={`relative flex items-center justify-center p-3 rounded-xl cursor-pointer border-2 border-b-4 transition-all duration-100 group overflow-hidden select-none active:border-b-2 active:translate-y-0.5 ${
-                          enhanceCameraWork ? 'bg-white text-black border-slate-300' : 'bg-[#1e293b] text-slate-400 border-[#0f172a] hover:bg-[#334155]'
-                        }`}>
-                          <input type="checkbox" className="hidden" checked={enhanceCameraWork} onChange={() => setEnhanceCameraWork(!enhanceCameraWork)} />
-                          {enhanceCameraWork && (
-                            <div className="absolute top-2 right-2 bg-white text-blue-600 rounded-full p-0.5 shadow-sm">
-                              <CheckCircle2 size={12} strokeWidth={4} />
-                            </div>
-                          )}
-                          <div className="text-center">
-                            <div className={`text-2xl mb-1 ${enhanceCameraWork ? 'scale-110' : 'opacity-70 grayscale'}`}>📷</div>
-                            <div className="text-[11px] font-bold tracking-wider">カメラワーク</div>
-                            <div className="text-[9px] opacity-70 mt-1">アオリ・俯瞰等</div>
-                          </div>
-                        </label>
-
-                        {/* [v2.47] セリフ・ギャグ強化 */}
-                        <label className={`relative flex items-center justify-center p-3 rounded-xl cursor-pointer border-2 border-b-4 transition-all duration-100 group overflow-hidden select-none active:border-b-2 active:translate-y-0.5 ${
-                          enhanceDialogue ? 'bg-white text-black border-slate-300' : 'bg-[#1e293b] text-slate-400 border-[#0f172a] hover:bg-[#334155]'
-                        }`}>
-                          <input type="checkbox" className="hidden" checked={enhanceDialogue} onChange={() => setEnhanceDialogue(!enhanceDialogue)} />
-                          {enhanceDialogue && (
-                            <div className="absolute top-2 right-2 bg-white text-blue-600 rounded-full p-0.5 shadow-sm">
-                              <CheckCircle2 size={12} strokeWidth={4} />
-                            </div>
-                          )}
-                          <div className="text-center">
-                            <div className={`text-2xl mb-1 ${enhanceDialogue ? 'scale-110' : 'opacity-70 grayscale'}`}>💬</div>
-                            <div className="text-[11px] font-bold tracking-wider">セリフ強化</div>
-                            <div className="text-[9px] opacity-70 mt-1">ギャグ・オチ最大化</div>
-                          </div>
-                        </label>
-
-                        {/* [v2.69] コマ割り演出・時間演出は削除（ChatGPT画像生成でタグ形式が効果なしのため） */}
-                      </div>
-
-                      {/* 選択中の内容を表示 */}
-                      <div className="text-xs text-orange-200/80 text-center font-mono py-1.5 bg-black/20 border border-white/5 rounded-md">
-                        強化対象: {[enhanceExpressions && "表情", enhanceBodyLang && "身体", enhanceEffects && "演出", enhanceBackgrounds && "背景", enhanceCameraWork && "カメラ", enhanceDialogue && "セリフ"].filter(Boolean).join(" / ") || "未選択"}
-                      </div>
-
-                      {/* 実行・元に戻すボタン */}
-                      <div className="flex gap-2">
-                        <button
-                          className="flex-1 bg-orange-600 hover:bg-orange-500 disabled:bg-slate-700 disabled:opacity-50 text-white font-bold py-2 rounded-lg flex items-center justify-center gap-2 transition-all text-sm"
-                          onClick={enhanceScenario}
-                          disabled={isEnhancing || !(enhanceExpressions || enhanceBodyLang || enhanceEffects || enhanceBackgrounds || enhanceCameraWork || enhanceDialogue)}
-                        >
-                          {isEnhancing ? (
-                            <><Loader2 size={16} className="animate-spin" /> 強化中...</>
-                          ) : (
-                            <><Zap size={16} className="fill-yellow-300 text-black" /> シナリオ強化実行</>
-                          )}
-                        </button>
-
-                        <button
-                          className={`py-2 px-4 rounded-lg flex items-center justify-center gap-1 transition-all text-sm font-bold ${
-                            originalScenario 
-                              ? 'bg-red-800/60 hover:bg-red-700/60 text-red-200 border border-red-500/30' 
-                              : 'bg-slate-800 text-slate-600 border border-slate-700/30 cursor-not-allowed'
-                          }`}
-                          onClick={revertScenario}
-                          disabled={isEnhancing || !originalScenario}
-                        >
-                          ↩️ 強化前に戻す
-                        </button>
-                      </div>
-
-                      {/* ThinkingLog (パネルを開いた時点で表示) */}
-                      <ThinkingLog thought={enhanceLog || "> 待機中...強化したいカテゴリを選んで「シナリオ強化実行」ボタンを押してください。"} />
-                    </div>
-                  )}
-                </div>
-
-                {/* 場所・服装設定プレビューは grid 外へ移動済み */}
-
-              </div>
-            </section>
+            <Step2Panel
+              step2Ref={step2Ref}
+              currentStep={currentStep}
+              isAnalyzing={isAnalyzing}
+              inputMode={inputMode}
+              setInputMode={setInputMode}
+              targetDate={targetDate}
+              setTargetDate={setTargetDate}
+              categories={categories}
+              toggleCategory={toggleCategory}
+              manualTopic={manualTopic}
+              setManualTopic={setManualTopic}
+              bg360Image={bg360Image}
+              bg360Enabled={bg360Enabled}
+              setBg360Enabled={setBg360Enabled}
+              bg360Analysis={bg360Analysis}
+              is360Analyzing={is360Analyzing}
+              customLocation={customLocation}
+              setCustomLocation={setCustomLocation}
+              customOutfit={customOutfit}
+              setCustomOutfit={setCustomOutfit}
+              punchlineType={punchlineType}
+              setPunchlineType={setPunchlineType}
+              isSearching={isSearching}
+              generateScenarioFromNews={generateScenarioFromNews}
+              scenarioThought={scenarioThought}
+              scenario={scenario}
+              setScenario={setScenario}
+              isScenarioCopied={isScenarioCopied}
+              setIsScenarioCopied={setIsScenarioCopied}
+              originalScenario={originalScenario}
+              isEnhancePanelOpen={isEnhancePanelOpen}
+              setIsEnhancePanelOpen={setIsEnhancePanelOpen}
+              enhanceExpressions={enhanceExpressions}
+              setEnhanceExpressions={setEnhanceExpressions}
+              enhanceBodyLang={enhanceBodyLang}
+              setEnhanceBodyLang={setEnhanceBodyLang}
+              enhanceEffects={enhanceEffects}
+              setEnhanceEffects={setEnhanceEffects}
+              enhanceBackgrounds={enhanceBackgrounds}
+              setEnhanceBackgrounds={setEnhanceBackgrounds}
+              enhanceCameraWork={enhanceCameraWork}
+              setEnhanceCameraWork={setEnhanceCameraWork}
+              enhanceDialogue={enhanceDialogue}
+              setEnhanceDialogue={setEnhanceDialogue}
+              isEnhancing={isEnhancing}
+              enhanceScenario={enhanceScenario}
+              revertScenario={revertScenario}
+              enhanceLog={enhanceLog}
+              showStatus={showStatus}
+            />
           </div>
 
           {/* 場所・服装設定プレビュー - STEP2以降のみ表示 */}
@@ -2757,641 +2240,75 @@ The environment and effects must ECHO the character's emotion, not just be a bac
           </div>
 
           {/* 03: プロンプト生成 - Tailwind p-8等がJITで無視されるためインラインスタイルで適用 */}
-          <section
-            ref={step3Ref}
-            style={{ padding: '16px', gap: '16px', borderRadius: '0', background: '#0f1115', position: 'relative' }}
-            className={`flex flex-col shadow-xl transition-all duration-300
-              ${currentStep === 3 ? 'border-2 border-orange-500/50 shadow-[0_0_50px_rgba(249,115,22,0.15)] opacity-100' : 'border border-white/5 opacity-60'}
-              ${currentStep > 3 ? 'border border-orange-500/30 opacity-100' : ''}
-          `}>
-            {/* STEP3ロックオーバーレイ: STEP2未完了 or 解析中 or 検索中 or シナリオ強化中 or [v3.53]カメラワーク処理中 */}
-            {(currentStep < 3 || isSearching || isAnalyzing || isEnhancing || is360CameraWorking) && (
-              <div style={{ position: 'absolute', inset: -2, zIndex: 200, backgroundColor: 'rgba(10,12,16,0.92)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', pointerEvents: 'auto' }}
-              >
-                {/* [v3.53] カメラワーク処理中のメッセージ */}
-                {is360CameraWorking && currentStep >= 3 && (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
-                    <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-cyan-400"></div>
-                    <p className="text-cyan-300 text-sm font-bold animate-pulse">🎬 360° カメラワーク設計＋背景クロップ中...</p>
-                    <p className="text-slate-500 text-xs">完了すると自動的にアンロックされます</p>
-                  </div>
-                )}
-              </div>
-            )}
-            <div className={`flex items-center gap-3 text-sm font-black uppercase tracking-widest px-2 ${currentStep === 3 ? 'text-orange-400' : 'text-slate-500'}`}>
-              <Wand2 size={24} /> STEP 03: プロンプト生成 (PROMPT ASSEMBLY)
-            </div>
-
-            {/* [v2.61] ChatGPT Images 2.0 強化プロンプト チェックボックス — Dual Engine化により不要（OpenAI: 自動ON / Gemini: 不要） */}
-            {false && (
-            <label className="flex items-center gap-3 px-3 py-2 bg-slate-800/50 border border-white/5 rounded-lg cursor-pointer hover:bg-slate-700/50 transition-colors group/chatgpt">
-              <input
-                type="checkbox"
-                checked={enableChatGPTMode}
-                onChange={(e) => setEnableChatGPTMode(e.target.checked)}
-                className="w-4 h-4 accent-orange-500 cursor-pointer"
-              />
-              <div className="flex flex-col">
-                <span className="text-xs font-bold text-slate-300 group-hover/chatgpt:text-white transition-colors">
-                    🛡️ ChatGPT専用プロンプトモード (v3.04)
-                  </span>
-                <span className="text-[10px] text-slate-500 text-orange-400/80">
-                    ※ChatGPT向けの超圧縮プロンプトに切り替えます。このモードのままGemini APIやWeb版Geminiで生成すると、指定フォーマットが合わず画像が著しく乱れる可能性があります。
-                  </span>
-              </div>
-            </label>
-            )}
-
-            <button
-              onClick={() => assemblePrompt()}
-              disabled={isAssembling || is360CameraWorking}
-              className={`w-full relative bg-white hover:bg-slate-200 text-black py-6 rounded-xl font-black text-xl flex items-center justify-center gap-4 border-b-[6px] border-slate-300 active:border-b-0 active:translate-y-[6px] transition-all disabled:opacity-50 disabled:grayscale disabled:border-none disabled:bg-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed group/gen shadow-xl
-                   ${currentStep === 3 ? 'ring-4 ring-orange-500 ring-offset-4 ring-offset-[#0a0c10]' : ''}
-              `}
-            >
-              {isAssembling ? (
-                <>
-                  <Loader2 size={24} className="animate-spin" />
-                  <span className="animate-pulse">ASSEMBLING PROMPT...</span>
-                </>
-              ) : (
-                <>
-                  <Wand2 size={24} className={`text-blue-600 ${currentStep === 3 ? 'animate-bounce' : ''} `} />
-                  <span>最終プロンプトを構築する (STEP 3)</span>
-                  <ArrowRight size={24} className="opacity-60" />
-                </>
-              )}
-            </button>
-          </section>
+            <Step3Panel
+              step3Ref={step3Ref}
+              currentStep={currentStep}
+              isSearching={isSearching}
+              isAnalyzing={isAnalyzing}
+              isEnhancing={isEnhancing}
+              is360CameraWorking={is360CameraWorking}
+              assemblePrompt={assemblePrompt}
+              isAssembling={isAssembling}
+            />
 
           {/* 出力結果 */}
-          <div
-            ref={outputRef}
-            className="relative flex flex-col gap-12 mt-12 border-t border-white/5 pt-12 transition-all duration-500"
-          >
-            {/* [v2.48] 出力結果ロックオーバーレイ: STEP3未完了 or シナリオ強化中は全体をぼかす */}
-            {(currentStep < 3 || isSearching || isAnalyzing || isEnhancing) && (
-              <div style={{ position: 'absolute', inset: -2, zIndex: 200, backgroundColor: 'rgba(10,12,16,0.92)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', pointerEvents: 'auto', borderRadius: '0.625rem' }} />
-            )}
-            {/* 左: プロンプト & 思考ログ */}
-            <section className="relative group h-full">
-              <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl blur opacity-10 group-hover:opacity-20 transition duration-1000"></div>
-              <div className="relative bg-[#0d1117] p-8 rounded-xl border border-white/5 shadow-3xl h-full flex flex-col">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-3 ml-auto">
-                    <button
-                      onClick={copyPrompt}
-                      disabled={!finalPrompt}
-                      className="bg-[#1c2128] hover:bg-white hover:text-black text-slate-400 p-2 rounded-lg transition-all border border-white/10"
-                      title="プロンプトをコピー"
-                    >
-                      <Copy size={14} />
-                    </button>
-                    <span className="text-[9px] font-mono text-slate-600">DYNAMIC ENGINE V1.2.3</span>
-                  </div>
-                </div>
-
-                <ThinkingLog thought={assembleThought} placeholder="> ボタンを押すとプロンプト構築ログがここに表示されます..." />
-
-                <div className="flex flex-col h-full mt-4 gap-4">
-                  {/* [v3.59] Dual Engine化によりChatGPT警告バナー不要（OpenAI: 正常動作 / Gemini: チェックボックス消去済み） */}
-                  {false && enableChatGPTMode && finalPrompt && selectedEngine !== 'openai' && (
-                    <div className="bg-orange-950 border-2 border-orange-500 rounded-lg p-3 flex flex-col items-center justify-center gap-1 text-orange-400 shadow-xl mt-2 mb-2 animate-pulse z-50 relative">
-                      <div className="font-bold text-sm flex items-center gap-2">
-                        <span>🛡️</span>
-                        <span>ChatGPT専用 短縮プロンプトモード動作中</span>
-                      </div>
-                      <div className="text-xs text-orange-300">
-                        ※このプロンプトでGemini API(STEP4)を実行すると、制約不足によりレイアウト崩れが発生する可能性があります。
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="relative flex-1">
-                    <textarea
-                      value={finalPrompt}
-                      readOnly
-                      style={{ color: '#ffffff', backgroundColor: '#000000', opacity: 1 }}
-                      className="w-full h-full min-h-[300px] text-xs font-mono border-none resize-none focus:outline-none leading-relaxed overflow-y-auto custom-scrollbar rounded-xl p-4 placeholder-slate-500"
-                      placeholder="◀ 「最終プロンプトを構築する」ボタンを押すと、ここに生成されたプロンプトが表示されます。"
-                    />
-                  </div>
-
-                  {/* Buttons Row */}
-                  <div className="flex flex-col gap-4 mt-2 relative z-50">
-                    {/* [v3.50] 360°背景モード時のリマインダーバナー — bg360Enabled ON時のみ表示 */}
-                    {bg360Image && bg360Analysis && bg360Enabled && finalPrompt && (
-                      <div className="bg-[#0a1628] border border-cyan-500/30 rounded-xl p-4 space-y-3">
-                        <div className="flex items-start gap-4">
-                          <div className="flex-1 space-y-1">
-                            <div className="text-xs font-bold text-cyan-300 flex items-center gap-1">
-                              <Globe size={12} /> 🌐 360°背景モード (ON)
-                            </div>
-                            <p className="text-[10px] text-slate-400 leading-relaxed">
-                              このプロンプトと一緒に以下を添付してください：<br />
-                              <span className="text-white">✅ キャラクターシート（いつも通り）</span><br />
-                              <span className="text-cyan-300">✅ 360°背景画像（読み込み済みのファイル）</span><br />
-                              <span className="text-slate-500">※AIがアスペクト比2:1の画像を自動的に背景参照として認識します</span>
-                            </p>
-                          </div>
-                        </div>
-                        {/* 360°インタラクティブビューアー */}
-                        <Panorama360Viewer imageSrc={bg360Image} height={120} />
-                        <p className="text-[9px] text-slate-600 text-center">ドラッグで回転 / ホイールでズーム</p>
-
-                        {/* [v3.53 Phase2] カメラワーク＋クロップ画像プレビュー */}
-                        {bg360CameraWork && bg360CroppedPanels && bg360CroppedPanels.length === 4 && (
-                          <div className="mt-2 border-t border-cyan-500/20 pt-3">
-                            <div className="text-[10px] font-bold text-amber-300 mb-2 flex items-center gap-1">
-                              🎬 AI Camera Work — コマ別方角プレビュー
-                            </div>
-                            <div className="grid grid-cols-4 gap-2">
-                              {bg360CameraWork.panels.map((panel, idx) => {
-                                const dirs = ['北(正面)', '北東', '東(右)', '南東', '南(背面)', '南西', '西(左)', '北西'];
-                                const dirLabel = dirs[Math.round(((panel.yaw % 360 + 360) % 360) / 45) % 8];
-                                return (
-                                  <div key={idx} className="relative">
-                                    <img
-                                      src={bg360CroppedPanels[idx]}
-                                      alt={`Panel ${panel.panel} - ${dirLabel}`}
-                                      className="w-full aspect-[4/3] object-cover rounded-md border border-cyan-500/30 shadow-lg"
-                                    />
-                                    <div className="absolute bottom-0 left-0 right-0 bg-black/80 text-[7px] text-cyan-200 px-1 py-0.5 rounded-b-md text-center truncate">
-                                      <span className="font-bold">コマ{panel.panel}</span> {dirLabel} <span className="text-slate-400">FOV{panel.fov}°</span>
-                                    </div>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                            <p className="text-[8px] text-slate-600 text-center mt-2">各コマで使用される背景の方角</p>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                    <button
-                      onClick={copyPrompt}
-                      disabled={!finalPrompt}
-                      className={`w-full ${isCopied ? 'bg-green-600' : 'bg-slate-800 hover:bg-slate-700'} text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all border border-white/10`}
-                    >
-                      {isCopied ? <CheckCircle2 size={20} /> : <Copy size={20} />}
-                      {isCopied 
-                        ? "コピー完了" 
-                        : selectedEngine === 'openai'
-                          ? (bg360Image && bg360Enabled)
-                            ? "コピペ（手動生成用　📎キャラシート＋🌐360°背景画像を添付）"
-                            : "コピペ（手動生成用　📎キャラシート添付推奨）"
-                          : (bg360Image && bg360Enabled)
-                            ? (enableChatGPTMode
-                              ? "コピペ（ChatGPT専用　📎キャラシート＋🌐360°背景画像を添付　生成毎新規スレッド作成必須）"
-                              : "コピペ（他アプリ用　📎キャラシート＋🌐360°背景画像を添付　ChatGPTには必ず専用モードを使用）")
-                            : (enableChatGPTMode 
-                              ? "コピペ（ChatGPT専用　📎キャラシート添付及び生成毎新規スレッド作成必須）"
-                              : "コピペ（他アプリ用　📎キャラシート添付を強く推奨　ChatGPTには必ずChatGPT専用モードを使用して下さい）")
-                      }
-                    </button>
-
-                    {/* [v3.46] メタデータ保存ボタン */}
-                    <button
-                      onClick={() => {
-                        // --- メタデータ構築 ---
-                        const now = new Date();
-                        const promptMode = selectedEngine === 'openai' ? 'ChatGPT Engine (自動)' : (enableChatGPTMode ? 'ChatGPT専用プロンプト' : 'Gemini用プロンプト');
-                        const metadata = {
-                          "ファイル情報": {
-                            "フォーマットバージョン": 1,
-                            "アプリバージョン": SYSTEM_VERSION,
-                            "保存日時": now.toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }),
-                            "ISO日時": now.toISOString()
-                          },
-                          "プロンプト判別": {
-                            "モード": promptMode,
-                            "AIエンジン": selectedEngine === 'openai' ? 'ChatGPT' : 'Gemini',
-                            "ChatGPTモード": enableChatGPTMode,
-                            "説明": selectedEngine === 'openai'
-                              ? "ChatGPT Engine で全ルーチンを実行。ChatGPT Images 2.0 専用プロンプトが自動生成されます。"
-                              : enableChatGPTMode
-                                ? "ChatGPT Images 2.0 専用に最適化されたプロンプトです。Geminiには非対応です。"
-                                : "Gemini用プロンプトです。ChatGPTに貼り付けるとレイアウトが崩れる可能性があります。"
-                          },
-                          "キャラクターシート解析結果": castList || "(未解析)",
-                          "シナリオ": scenario || "(未生成)",
-                          "最終プロンプト": finalPrompt || "(未生成)",
-                          "生成設定": {
-                            "パンチラインタイプ": punchlineType,
-                            "カラーモード": colorMode,
-                            "強化オプション": {
-                              "表情強化": enhanceExpressions,
-                              "ボディランゲージ強化": enhanceBodyLang,
-                              "照明・演出強化": enhanceEffects,
-                              "背景強化": enhanceBackgrounds,
-                              "カメラワーク強化": enhanceCameraWork,
-                              "セリフ・ギャグ強化": enhanceDialogue
-                            },
-                            "360度背景": {
-                              "画像読込": !!bg360Image,
-                              "有効": bg360Enabled,
-                              "場所": bg360Analysis?.location || "(未解析)",
-                              "空間タイプ": bg360Analysis?.spatialType || "(未解析)",
-                              "光源": bg360Analysis?.lighting || "(未解析)"
-                            }
-                          }
-                        };
-                        // --- JSONダウンロード ---
-                        const jsonStr = JSON.stringify(metadata, null, 2);
-                        const blob = new Blob([jsonStr], { type: 'application/json;charset=utf-8' });
-                        const url = URL.createObjectURL(blob);
-                        const a = document.createElement('a');
-                        a.href = url;
-                        const titleMatch = scenario?.match(/タイトル[:：]\s*(.+)/);
-                        const titleSlug = titleMatch ? titleMatch[1].trim().substring(0, 20).replace(/[\\/:*?"<>|]/g, '_') : 'untitled';
-                        const ts = `${String(now.getFullYear()).slice(-2)}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}${String(now.getSeconds()).padStart(2,'0')}`;
-                        a.download = `AI_4-koma_metadata_${titleSlug}_${ts}.json`;
-                        document.body.appendChild(a);
-                        a.click();
-                        document.body.removeChild(a);
-                        URL.revokeObjectURL(url);
-                        // --- フィードバック ---
-                        setIsMetaSaved(true);
-                        setTimeout(() => setIsMetaSaved(false), 2500);
-                      }}
-                      disabled={!finalPrompt}
-                      className={`w-full ${isMetaSaved ? 'bg-green-600' : 'bg-amber-900/50 hover:bg-amber-800/60'} ${isMetaSaved ? 'text-white' : 'text-amber-400'} font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-all border ${isMetaSaved ? 'border-green-500/50' : 'border-amber-700/30'} disabled:opacity-30 disabled:cursor-not-allowed text-sm`}
-                    >
-                      {isMetaSaved ? <CheckCircle2 size={16} /> : <Download size={16} />}
-                      {isMetaSaved ? '保存完了！' : '📂 メタデータ保存 (JSON)'}
-                    </button>
-                  </div>{/* Buttons Row: コピペボタンまで */}
-
-                  {/* [v2.48] コピペボタンより下: finalPrompt未生成時にぼかし */}
-                  <div className="relative mt-2">
-                    {!isAssembling && !finalPrompt && (
-                      <div style={{ position: 'absolute', inset: -2, zIndex: 200, backgroundColor: 'rgba(10,12,16,0.85)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)', pointerEvents: 'auto', borderRadius: '0.625rem' }} />
-                    )}
-
-                    {/* Instruction Footer */}
-                    <div className="bg-slate-900 border-t border-white/10 p-2 text-[11px] text-slate-500 text-center font-mono">
-                      ※内容を修正したい場合は、上の「シナリオ」を直接書き換えてから、再度 <span className="text-orange-400 font-bold">「最終プロンプトを構築する」</span> を押してください。
-                    </div>
-
-
-                    <button
-                      onClick={() => { console.log("Regenerating..."); regenerateImage(); }}
-                      disabled={!finalPrompt || isGeneratingImage}
-                      className={`w-full ${selectedEngine === 'openai' ? 'bg-emerald-600 hover:bg-emerald-500' : 'bg-orange-600 hover:bg-orange-500'} text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg border border-white/10 active:scale-95 disabled:bg-slate-700 disabled:opacity-50 disabled:cursor-wait mt-4`}
-                    >
-                      {isGeneratingImage ? <Loader2 size={20} className="animate-spin" /> : <ImageIcon size={20} />}
-                      <div className="flex flex-col items-center">
-                        <span>{isGeneratingImage ? "再生成中..." : `画像を生成する (STEP 4: ${selectedEngine === 'openai' ? 'ChatGPT Images 2.0' : 'Google AI'})`}</span>
-                      </div>
-                    </button>
-                    {/* [v3.59] API制約の注意書き — リファレンス画像添付不可の明示 */}
-                    <p className="text-[10px] text-slate-500 text-center mt-2 leading-relaxed px-2">
-                      ⚠️ API経由ではキャラクターシートや360°背景画像を添付できないため、<span className="text-amber-400/80">テキストプロンプトのみによる近似生成</span>となります。
-                      正確なキャラ再現が必要な場合は、下の <span className="text-orange-300">PRO TIP</span> を参照してブラウザ版で手動生成してください。
-                    </p>
-                  {/* PRO TIPS FOR EXTERNAL GENERATION - 説明文統一規格: text-xs */}
-                  <div className="mt-4 p-3 bg-orange-950/40 border border-orange-500/30 rounded-lg">
-                    <div className="flex items-start gap-2">
-                      <div className="mt-0.5 text-orange-400">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
-                      </div>
-                      <div className="text-xs text-orange-200/80 leading-relaxed font-sans">
-                        <span className="font-bold text-orange-300">💡 PRO TIP：究極の1枚を作りたい時は？</span><br />
-                        {selectedEngine === 'openai' ? (
-                          <>
-                            キャラの見た目が全然違うなど不満がある場合は、上の「コピペ」ボタンでプロンプトをコピーし、<a href="https://chatgpt.com/" target="_blank" rel="noreferrer" className="text-blue-400 hover:underline">ChatGPTブラウザ版🤖</a>に<strong>「元となるキャラシート画像{bg360Image && bg360Enabled ? '＋STEP1で貼り付けた360°背景画像' : ''}」</strong>と一緒に直接貼り付けて生成させてください。<br />
-                            文字情報だけでなく画像を参照できるため、キャラのクオリティと再現度が飛躍的に向上します！<br />
-                            <span className="inline-block mt-2 text-[11px] text-cyan-300/80">
-                              ⚠️ <strong>GPT-image 2.0の仕様上、どうしても細長い画像になってしまう場合</strong>は、ChatGPTのメニュー画面にある「アスペクト比」ボタンで手動修正は行わず、以下の「画像比率事後修正プロンプト」ボタンでコピーしたプロンプトを貼り付けて再生成してください。
-                            </span>
-                          </>
-                        ) : (
-                          <>
-                            キャラの見た目が全然違うなど不満がある場合は、上の「コピペ」ボタンでプロンプトをコピーし、<a href="https://gemini.google.com/" target="_blank" rel="noreferrer" className="text-blue-400 hover:underline">Geminiブラウザ版🤖</a> に<strong>「元となるキャラシート画像{bg360Image && bg360Enabled ? '＋STEP1で貼り付けた360°背景画像' : ''}」</strong>と一緒に直接貼り付けて生成させてください。<br />
-                            文字情報だけでなく画像を参照できるため、キャラのクオリティと再現度が飛躍的に向上します！
-                          </>
-                        )}
-                        {/* 画像比率事後修正プロンプト — OpenAI Engine時のみ表示（Geminiではアスペクト比問題が起きにくいため不要） */}
-                        {selectedEngine === 'openai' && (
-                        <div className="mt-3 block w-full">
-                          <button
-                            className={`mt-2 ${isFixPromptCopied ? 'bg-green-600 border-green-500/30' : 'bg-slate-700 hover:bg-slate-600 border-white/10'} text-white px-3 py-1.5 rounded transition-all inline-flex items-center justify-center gap-1.5 border font-bold active:scale-95`}
-                            style={{ fontSize: '10px', minWidth: '120px', position: 'relative' }}
-                            onClick={() => {
-                              const fixPrompt = `[ABSOLUTE OVERRIDE — FORCE FULL REBUILD]
-
-You MUST discard the previously generated image completely.
-DO NOT crop, resize, extend, pad, or reuse any part of the previous image.
-This is NOT a correction. This is a FULL REGENERATION.
-
-THIS IS A STRUCTURAL CORRECTION TASK. PRIORITIZE LAYOUT OVER STYLE.
-
-━━━━━━━━━━━━━━━━━━
-■ ART STYLE PRESERVATION (CRITICAL)
-━━━━━━━━━━━━━━━━━━
-- You MUST maintain the high-quality lighting, shading, and rich details of the original manga style.
-- DO NOT simplify the art style or colors. 
-- "Prioritizing layout" does NOT mean you can degrade the artistic rendering quality.
-
-━━━━━━━━━━━━━━━━━━
-■ CANVAS — HARD LOCK
-━━━━━━━━━━━━━━━━━━
-- Aspect ratio MUST be EXACTLY 1:1.414 (A4 portrait)
-- Resolution MUST be EXACTLY 1024×1448 px
-- Any taller-than-A4 output is STRICTLY FORBIDDEN
-- Any 3:4, square, or long-strip image is a FAILURE
-
-━━━━━━━━━━━━━━━━━━
-■ PANEL SYSTEM — HARD LOCK
-━━━━━━━━━━━━━━━━━━
-- EXACTLY 4 panels
-- Panels MUST be horizontal strips stacked vertically
-- ALL panels MUST be identical size (height & width)
-- Panels MUST fill ~95% of canvas width
-- NO extra margins on ANY edge (top/bottom/left/right)
-
-■ GUTTERS
-- Thick white gutters between panels (approx 3% height)
-- Gutters MUST be uniform
-- Panels MUST NOT touch
-
-━━━━━━━━━━━━━━━━━━
-■ WATERMARK RE-APPLICATION (CRITICAL)
-━━━━━━━━━━━━━━━━━━
-- You MUST REDRAW the watermarks exactly on the 4th panel.
-- Bottom-Right watermark: "Generated by ChatGPT with Super FURU AI 4-koma ${SYSTEM_VERSION}"
-- Bottom-Left watermark: "ネームから全自動の自律式統合AI漫画システム :https://x.gd/JiWor"
-- Both MUST be horizontal text (left-to-right). NEVER rotate 90 degrees.
-- Do NOT forget to include them in this new generation.
-
-━━━━━━━━━━━━━━━━━━
-■ ANTI-ANTIGRAVITY SAFETY
-━━━━━━━━━━━━━━━━━━
-- Antigravity / extreme camera distortion MUST NOT change canvas shape
-- Perspective distortion is allowed ONLY inside panels
-- The OUTER CANVAS must remain perfectly A4 rectangular
-- NO vertical stretching of entire image
-- NO panel deformation due to camera effects
-
-━━━━━━━━━━━━━━━━━━
-■ FULL RE-LAYOUT (CRITICAL)
-━━━━━━━━━━━━━━━━━━
-- You MUST rebuild ALL panel compositions from scratch
-- Recalculate framing, character placement, and camera for A4
-- DO NOT reuse previous layout, even partially
-- DO NOT "adjust" — COMPLETELY REDRAW
-
-━━━━━━━━━━━━━━━━━━
-■ STRICT FAILURE CONDITIONS
-━━━━━━━━━━━━━━━━━━
-If ANY of the following occurs, REGENERATE AGAIN automatically:
-- Canvas ratio is not exactly 1:1.414 → FAIL
-- Image is taller than A4 → FAIL
-- Panels are uneven → FAIL
-- Margins exist → FAIL
-- Panels look cropped or stretched → FAIL
-- Layout resembles previous image → FAIL
-- Watermarks are missing → FAIL
-
-Repeat regeneration until ALL conditions are satisfied.
-
-━━━━━━━━━━━━━━━━━━
-■ OUTPUT RULE
-━━━━━━━━━━━━━━━━━━
-Only output the corrected A4 4-panel manga image.
-No explanations. No partial results.`;
-                              navigator.clipboard.writeText(fixPrompt);
-                              setIsFixPromptCopied(true);
-                              setTimeout(() => setIsFixPromptCopied(false), 2000);
-                            }}
-                          >
-                            <span style={{ visibility: isFixPromptCopied ? 'hidden' : 'visible' }}>📋 画像比率事後修正プロンプト</span>
-                            {isFixPromptCopied && <span style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>✅ コピー完了</span>}
-                          </button>
-                        </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* [v2.35] コンテンツポリシー救済パネル（折りたたみ式）[UI統一] シナリオ強化と同スタイル */}
-                  <div className={`mt-4 border border-yellow-500/30 rounded-lg overflow-hidden ${!finalPrompt ? 'opacity-40 pointer-events-none' : ''}`}>
-                    <button
-                      className="w-full flex items-center justify-between px-4 py-3 bg-yellow-900/25 hover:bg-yellow-900/50 transition-all duration-150 cursor-pointer disabled:cursor-not-allowed border-l-4 border-yellow-500 hover:border-yellow-400 group/policy-hdr"
-                      onClick={() => setIsPolicyPanelOpen(!isPolicyPanelOpen)}
-                      disabled={!finalPrompt}
-                    >
-                      <div className="flex items-center gap-2">
-                        <span className="text-base">🛡️</span>
-                        <span className="text-base font-black tracking-wide text-yellow-200 group-hover/policy-hdr:text-yellow-100 transition-colors">コンテンツポリシーで画像生成が拒否された場合</span>
-                        {!finalPrompt && <span className="text-[10px] text-slate-500">(STEP3完了後に利用可能)</span>}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-black uppercase tracking-widest text-yellow-400 group-hover/policy-hdr:text-yellow-300 transition-colors">
-                          {isPolicyPanelOpen ? 'クリックで閉じる' : 'クリックで開く'}
-                        </span>
-                        <ChevronDown size={18} className={`text-yellow-400 group-hover/policy-hdr:text-yellow-300 transition-all duration-300 ${isPolicyPanelOpen ? 'rotate-180' : ''}`} />
-                      </div>
-                    </button>
-
-                    {isPolicyPanelOpen && (
-                      <div className="p-3 bg-yellow-950/20 space-y-3" style={{ fontSize: '12px' }}>
-                        <div className="text-yellow-200/80 leading-relaxed space-y-2" style={{ fontSize: '11px' }}>
-                          <p>
-                            下の<strong className="text-yellow-100">『「先ほどのプロンプトが拒否された理由を教えてください」をコピー』</strong>ボタンをクリックし、クリップボードにコピーされたテキストを、AIにそのままペーストすると、具体的な原因を教えてもらえます。
-                          </p>
-                          <p>
-                            その回答を下の入力ボックスに貼り付けると、<strong className="text-yellow-100">「配慮版プロンプトを再生成する」</strong>ボタンが押せるようになります。そのボタンをクリックすると、STEP 3のプロンプトが安全な表現に自動で修正・上書きされます。
-                          </p>
-                          <p>
-                            その後、再度STEP 4で画像を生成するか、各AIブラウザ版にプロンプトを貼って画像を生成してみてください。
-                          </p>
-                        </div>
-
-                        <button
-                          className={`${isPolicyCopied ? 'bg-green-600 border-green-500/30' : 'bg-slate-700 hover:bg-slate-600 border-white/10'} text-white px-3 py-1.5 rounded transition-all inline-flex items-center justify-center gap-1.5 border font-bold active:scale-95`}
-                          style={{ fontSize: '10px', minWidth: '120px', position: 'relative' }}
-                          onClick={() => {
-                            navigator.clipboard.writeText("先ほどのプロンプトが拒否された理由を教えてください。具体的にどの単語・表現がコンテンツポリシーに違反していましたか？");
-                            setIsPolicyCopied(true);
-                            setTimeout(() => setIsPolicyCopied(false), 2000);
-                          }}
-                        >
-                          <span style={{ visibility: isPolicyCopied ? 'hidden' : 'visible' }}>📋 「先ほどのプロンプトが拒否された理由を教えてください」をコピー</span>
-                          {isPolicyCopied && <span style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>✅ コピー完了</span>}
-                        </button>
-
-                        <textarea
-                          style={{ color: '#ffffff', backgroundColor: '#000000' }}
-                          className="w-full bg-[#000000] text-white text-xs p-2 rounded border border-yellow-500/20 focus:border-yellow-500/50 outline-none min-h-[60px] font-mono placeholder-slate-500"
-                          value={policyErrorMsg}
-                          onChange={(e) => setPolicyErrorMsg(e.target.value)}
-                          placeholder={selectedEngine === 'openai'
-                            ? "例: Your request was rejected as a result of our safety system...\n例: content_policy_violation と表示された\n例: アオリ構図が弾かれたかもしれない"
-                            : "例: I can't generate images that depict minors...\n例: Geminiの回答: 制服と未成年の組み合わせが原因...\n例: アオリ構図が弾かれたかもしれない"}
-                        />
-
-                        <button
-                          className="w-full bg-yellow-600 hover:bg-yellow-500 disabled:bg-slate-700 disabled:opacity-50 text-white font-bold py-1.5 rounded-lg flex items-center justify-center gap-2 transition-all"
-                          style={{ fontSize: '12px' }}
-                          onClick={regenerateSafePrompt}
-                          disabled={isFixingPolicy || !policyErrorMsg.trim() || !finalPrompt}
-                        >
-                          {isFixingPolicy ? (
-                            <><Loader2 size={16} className="animate-spin" /> 分析・修正中...</>
-                          ) : (
-                            <><Wand2 size={16} /> 配慮版プロンプトを再生成する</>
-                          )}
-                        </button>
-
-                        {/* コンテンツポリシーログ - 統一規格: text-xs / 固定高さ160px */}
-                        <pre style={{ height: '160px', overflowY: 'auto' }} className="text-xs text-green-400 bg-black/60 p-3 rounded whitespace-pre-wrap font-mono custom-scrollbar leading-relaxed">
-                          {policyFixLog || "> 待機中... 「配慮版プロンプトを再生成する」ボタンを押すとAI分析を開始します。"}
-                        </pre>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Generation Log Terminal - 固定高さ: styleで明示指定（TailwindJITバイパス）, 統一規格: text-xs */}
-                  <div
-                    ref={genLogRef}
-                    className="mt-4 p-3 bg-black/80 rounded-lg border border-white/10 font-mono text-xs text-green-400 custom-scrollbar"
-                    style={{ height: '160px', overflowY: 'auto' }}
-                  >
-                    <div className="opacity-50 mb-2 border-b border-white/10 pb-1 flex justify-between text-xs">
-                      <span>🖥 画像生成ログ (STEP 4)</span>
-                      <span className={selectedEngine === 'openai' ? "text-emerald-500" : "text-blue-500"}>{selectedEngine === 'openai' ? 'v1.3.5 (ChatGPT Images 2.0)' : 'v1.3.5 (Gemini 2.0 Native)'}</span>
-                    </div>
-                    {genLog.length === 0 ? (
-                      <div className="text-white/30">待機中... 「画像を生成する」ボタンを押すと開始します。</div>
-                    ) : (
-                      genLog.map((log, i) => (
-                        <div key={i} className="mb-1 leading-relaxed">
-                          <span className="opacity-40 mr-2">{new Date().toLocaleTimeString()}</span>
-                          {log}
-                        </div>
-                      ))
-                    )}
-                    {isGeneratingImage && <div className="animate-pulse">_</div>}
-                  </div>
-                  </div>{/* [v2.48] ぼかしラッパー閉じタグ */}
-                </div>
-              </div>
-            </section>
-
-            {/* 右: 生成画像エリア */}
-            {/* [v2.78] フルオート自動スクロール用ref */}
-            <section ref={imageResultRef} className="relative group bg-[#0d1117] rounded-xl border border-white/5 min-h-[600px] flex flex-col overflow-hidden">
-              {/* [v2.87] 描画エリアロックオーバーレイ (シナリオ強化、または フルオート時の待機中) */}
-              {(((!finalPrompt && !generatedImage && !isGeneratingImage) || isSearching || isAssembling || isEnhancing || (isFullAutoMode && fullAutoStep > 0 && fullAutoStep < 4)) && !isGeneratingImage) && (
-                <div style={{ position: 'absolute', inset: 0, zIndex: 200, backgroundColor: 'rgba(10,12,16,0.85)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)', pointerEvents: 'auto', borderRadius: '0.75rem' }} className="flex flex-col items-center justify-center">
-                  {(isSearching || isAssembling || isEnhancing || (isFullAutoMode && fullAutoStep > 0 && fullAutoStep < 4)) && (
-                    <div className="flex flex-col items-center gap-3 bg-black/60 px-8 py-6 rounded-2xl border border-white/10 shadow-2xl animate-pulse">
-                       <Loader2 size={36} className="animate-spin text-blue-500" />
-                       <span className="text-sm font-bold tracking-widest text-blue-400">
-                         {(isSearching || isAssembling) ? "シナリオ・プロンプト生成中..." : "自動生成 待機中..."}
-                       </span>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* [v2.87] 画像生成中のオーバーレイ (古い画像がある場合でも上から被せる) */}
-              {isGeneratingImage && (
-                <div style={{ position: 'absolute', inset: 0, zIndex: 200, backgroundColor: 'rgba(10,12,16,0.85)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)', pointerEvents: 'auto', borderRadius: '0.75rem' }} className="flex flex-col items-center justify-center">
-                  <div className="relative flex flex-col items-center justify-center space-y-6 w-full max-w-md mx-auto">
-                    <Loader2 size={64} className="animate-spin text-blue-500 mx-auto" />
-                    <div className="absolute inset-0 blur-xl bg-blue-500/10 animate-pulse pointer-events-none" />
-
-                    <div className="z-10 bg-black/80 border border-blue-500/50 rounded-2xl px-8 py-6 shadow-[0_0_30px_rgba(59,130,246,0.3)] animate-in fade-in zoom-in duration-300 backdrop-blur-md w-full">
-                      <p className="text-lg font-black text-blue-400 tracking-widest animate-pulse flex items-center justify-center gap-2">
-                        画像生成中 <span className="flex space-x-1"><span className="animate-bounce delay-75">.</span><span className="animate-bounce delay-150">.</span><span className="animate-bounce delay-300">.</span></span>
-                      </p>
-                      <p className="text-xs text-blue-200/90 mt-4 font-bold text-center leading-relaxed">
-                        高品質な画像を生成しています。<br />
-                        <span className="text-orange-400">※最大2〜5分程度かかる場合があります。<br/>このままお待ちください。</span>
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Title Header */}
-              <div className="w-full bg-[#050608] border-b border-white/5 p-6 flex items-center justify-center z-20 shadow-xl">
-                {mangaTitle ? (
-                  <h3 className="text-2xl md:text-3xl font-black text-white tracking-widest leading-relaxed text-center drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]">
-                    {mangaTitle}
-                  </h3>
-                ) : (
-                  <div className="h-8 w-32 bg-white/5 rounded-full animate-pulse" />
-                )}
-              </div>
-
-              <div className="flex-1 flex flex-col items-center justify-center relative p-4 bg-[url('https://www.transparenttextures.com/patterns/dark-matter.png')]">
-                {
-                  generatedImage ? (
-                    <div className="w-full h-full flex flex-col items-center justify-center gap-4">
-                      <img src={generatedImage} className="max-w-full max-h-[70vh] object-contain shadow-2xl" alt="Generated Result" />
-                      
-                      {/* [v2.87] 妥協版警告の復活 */}
-                      {isFallbackUsed && (
-                        <div className="w-full max-w-2xl bg-orange-500/10 border-l-4 border-orange-500 p-4 rounded-r-xl shadow-lg mt-2 mx-auto">
-                          <div className="flex items-start gap-3">
-                            <AlertTriangle className="text-orange-500 shrink-0 mt-0.5" size={20} />
-                            <div className="text-sm">
-                              <h4 className="text-orange-400 font-bold mb-1">【警告】下位モデル（妥協版）で生成されました</h4>
-                              <p className="text-orange-200/80 leading-relaxed mb-3">
-                                最新モデルへの接続が混雑等で失敗したため、旧モデルで生成されました。<br/>
-                                <span className="text-white font-bold">テキストの文字化けや、キャラクターの描写崩れ</span> が高確率で発生します。
-                              </p>
-                              <div className="bg-black/40 rounded p-3 text-left">
-                                <p className="text-orange-300 font-bold mb-2">完璧な画質で生成するための手動手順：</p>
-                                <ol className="list-decimal list-inside text-slate-300 space-y-1 text-xs">
-                                  <li>画面左側の「<span className="text-white font-bold">プロンプトをコピー</span>」ボタンを押す</li>
-                                  <li><a href={enableOpenAIApi ? "https://chatgpt.com/" : "https://gemini.google.com/app"} target="_blank" rel="noreferrer" className="text-blue-400 hover:underline">{enableOpenAIApi ? 'ChatGPT公式ウェブ版' : 'Gemini公式ウェブ版'}</a>を開く</li>
-                                  <li>コピーした文章を貼り付けて送信する</li>
-                                </ol>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      <div className="w-full px-8 mt-2">
-                        <button
-                          onClick={() => {
-                            const a = document.createElement('a');
-                            a.href = generatedImage;
-                            a.download = `nano_banana_2_comic_${new Date().getTime()}.png`;
-                            document.body.appendChild(a);
-                            a.click();
-                            document.body.removeChild(a);
-                          }}
-                          className="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg border border-white/20 active:scale-95"
-                        >
-                          <Download size={20} /> 画像をダウンロード (.png)
-                        </button>
-                        
-                        <button
-                          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-                          className="w-full mt-4 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg border border-slate-600/50 active:scale-95"
-                        >
-                          最初（STEP 1）に戻る
-                        </button>
-                      </div>
-
-                    </div>
-                  ) : (
-                    <div className="opacity-30 space-y-6 flex flex-col items-center justify-center w-full h-full text-center">
-                      <BrainCircuit size={80} className="mx-auto" />
-                      <div className="space-y-2 text-center">
-                        <p className="text-sm font-black uppercase tracking-[0.5em] text-slate-500">Ready to Start</p>
-                        <p className="text-[10px] font-bold text-slate-600">ここに生成された4コマ漫画が表示されます</p>
-                      </div>
-                    </div>
-                  )}
-              </div>
-            </section >
+          <Step4Panel
+              outputRef={outputRef}
+              currentStep={currentStep}
+              isSearching={isSearching}
+              isAnalyzing={isAnalyzing}
+              isEnhancing={isEnhancing}
+              finalPrompt={finalPrompt}
+              copyPrompt={copyPrompt}
+              assembleThought={assembleThought}
+              enableChatGPTMode={enableChatGPTMode}
+              selectedEngine={selectedEngine}
+              bg360Image={bg360Image}
+              bg360Analysis={bg360Analysis}
+              bg360Enabled={bg360Enabled}
+              bg360CameraWork={bg360CameraWork}
+              bg360CroppedPanels={bg360CroppedPanels}
+              isCopied={isCopied}
+              isMetaSaved={isMetaSaved}
+              setIsMetaSaved={setIsMetaSaved}
+              castList={castList}
+              scenario={scenario}
+              punchlineType={punchlineType}
+              colorMode={colorMode}
+              enhanceExpressions={enhanceExpressions}
+              enhanceBodyLang={enhanceBodyLang}
+              enhanceEffects={enhanceEffects}
+              enhanceBackgrounds={enhanceBackgrounds}
+              enhanceCameraWork={enhanceCameraWork}
+              enhanceDialogue={enhanceDialogue}
+              SYSTEM_VERSION={SYSTEM_VERSION}
+              isAssembling={isAssembling}
+              regenerateImage={regenerateImage}
+              isGeneratingImage={isGeneratingImage}
+              isFixPromptCopied={isFixPromptCopied}
+              setIsFixPromptCopied={setIsFixPromptCopied}
+              isPolicyPanelOpen={isPolicyPanelOpen}
+              setIsPolicyPanelOpen={setIsPolicyPanelOpen}
+              isPolicyCopied={isPolicyCopied}
+              setIsPolicyCopied={setIsPolicyCopied}
+              policyErrorMsg={policyErrorMsg}
+              setPolicyErrorMsg={setPolicyErrorMsg}
+              regenerateSafePrompt={regenerateSafePrompt}
+              isFixingPolicy={isFixingPolicy}
+              policyFixLog={policyFixLog}
+              genLogRef={genLogRef}
+              genLog={genLog}
+              imageResultRef={imageResultRef}
+              generatedImage={generatedImage}
+              isFullAutoMode={isFullAutoMode}
+              fullAutoStep={fullAutoStep}
+              mangaTitle={mangaTitle}
+              isFallbackUsed={isFallbackUsed}
+              enableOpenAIApi={enableOpenAIApi}
+              setGeneratedImage={setGeneratedImage}
+              generationHistory={generationHistory}
+              setGenerationHistory={setGenerationHistory}
+            />
 
             {/* [v2.86] 生成履歴ギャラリー (別セクション) */}
             {generationHistory.length > 0 && (
@@ -3455,9 +2372,8 @@ No explanations. No partial results.`;
                 </div>
               </section>
             )}
-          </div >
           
-        </main >
+          </main >
 
         <footer className="text-center text-slate-500 text-[9px] font-bold tracking-[0.3em] uppercase py-10 px-4">
           &copy; 2026 FURU <span className="mx-2 sm:mx-4">|</span> NANO BANANA 2 & CHATGPT IMAGES 2.0 POWERED SUPER AI 4-KOMA SYSTEM

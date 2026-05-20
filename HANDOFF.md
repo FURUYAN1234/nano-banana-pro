@@ -1,11 +1,11 @@
-# HANDOFF.md (v3.79-alpha / Deploy Process)
+# HANDOFF.md (v3.80-alpha / Deploy Process)
 
 ## Current Status
-- **DEPLOYMENT** (デプロイ実行中)
-- 最新バージョン `v3.79-alpha` の本番デプロイプロセスを開始。
-- `src/App.jsx` を 3,801行 → **3,503行** (298行削減) まで圧縮完了。
-- Phase 3-C (プロンプトビルダー外部化および `extractEmotionStyle`, `buildEmotionBlock`, `cleanCastList` 等の `panel-utils.js` への移行) 完了。
-- ユーザー指示「画像が出力できたのでデプロイ後続きの作業を続けて」に基づき、デプロイ手順を実行中。
+- **BUG FIX COMPLETED** (バグ修正完了)
+- リファクタリング（コンポーネント分割）後に発生していた、React のマウント・レンダリング時の 2つの致命的エラー（`App.jsx` での `step4Ref` 未定義エラー、および `Step4Panel.jsx` での `Wand2` アイコンのインポート漏れ）を特定し、修正しました。
+- `src/main.jsx` に `ErrorBoundary` を追加し、今後のランタイムエラー時にも真っ白な画面にならず、エラーログが表示されるようにガードを施しました。
+- ローカル開発サーバー (`http://localhost:5173/`) は正常起動中で、HTTP レスポンス 200 OK が返ることを確認しています。
+- (Playwright によるブラウザ検証は、システム側の環境制限 `could not read protocol padding: EOF` により失敗していますが、HMR接続およびHTTP疎通は正常です)
 
 ## Done (Phase 3)
 - `src/lib/panel-utils.js` [UPDATED]: `extractEmotionStyle`, `buildEmotionBlock`, `cleanCastList` などのユーティリティ関数群を外部化。

@@ -12,7 +12,9 @@ const ApiKeyModal = ({ isOpen, onSave, onClose, provider = "google" }) => {
   // [v3.59] モーダルが開くたびに入力をリセット（前のAPIキーが残らないようにする）
   useEffect(() => {
     if (isOpen) {
+      /* eslint-disable-next-line react-hooks/set-state-in-effect */
       setKey("");
+      /* eslint-disable-next-line react-hooks/set-state-in-effect */
       setError("");
     }
   }, [isOpen]);
