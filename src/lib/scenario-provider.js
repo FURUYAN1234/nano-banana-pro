@@ -111,6 +111,8 @@ export async function generateScenario({
     ? bg360Analysis.location 
     : (customLocation.trim() ? customLocation.trim() : forcedLocation);
   
+  onProgress(`ローカルRAGにアクセス中...\n> 舞台「${activeLocation}」に関する演出情報および感情リアクション辞書を取得中...`);
+
   const ragLocationDetails = getLocationDetails(activeLocation);
   const ragReactions = getRandomReactions();
 

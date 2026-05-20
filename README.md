@@ -916,6 +916,9 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v4.0.2 (2026-05-20)
+- ** [Fix & UX] ** ローカルRAGの舞台設定および感情辞書取得時の進行状況表示（ ** onProgress ** ）を追加し、シナリオ生成開始時のローディング詳細フィードバックを強化。 / Added progress feedback ( ** onProgress ** ) when fetching location details and emotional dictionaries from local RAG to enhance user experience during scenario generation.
+
 ### v4.0.1 (2026-05-20)
 - ** [Fix] ** プロンプトエンジンのチラつき・キラキラ防止プロトコル（Anti-Glitter & Anti-Noise Protocol）強化に伴い、コントロールバーの「1枚絵 ChatGPT用 感情シネマプロンプトをコピー」ボタン内のプロンプト変数も同様のノイズ除去設定に同期適用。 / Synchronized noise reduction and anti-glitter settings to the 1-pane emotional cinema prompt inside the ControlBar to match the updated prompts.js engine.
 
