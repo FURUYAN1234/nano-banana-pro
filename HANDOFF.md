@@ -1,8 +1,12 @@
-# HANDOFF.md (v4.0.1)
+# HANDOFF.md (v4.0.2)
 
 ## Current Status
-- **Anti-Glitter / Anti-Noise Prompt Engine Sync Complete** (チラつき防止プロンプトの同期適用完了)
-  - `src/lib/prompts.js` にて強化されたノイズ除去・アンチキラキラ設定（Anti-Glitter & Anti-Noise Protocol）を、コントロールバー（`src/components/ControlBar.jsx`）の「1枚絵 ChatGPT用 感情シネマプロンプト」変数側にも同期。
+- **Local RAG UX Progress Indicator Added** (ローカルRAG進捗表示の追加)
+  - シナリオ生成開始時にローカルRAG（舞台設定や感情辞書）を読み込む際のローディング詳細表示（ ** onProgress ** ）を追加。
+
+## Done (v4.0.2)
+- **Local RAG UX**: シナリオ生成開始時の進行状況表示の強化。
+- **Version Sync**: ** package.json ** , ** constants.js ** , ** index.html ** , ** README.md ** , ** HANDOFF.md ** のバージョンを ** 4.0.2 ** に同期。
 
 ## Done (v4.0.1)
 - **Prompt Sync**: コントロールバー内の 1-pane emotional cinema prompt のクリーン化。
