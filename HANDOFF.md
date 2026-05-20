@@ -1,10 +1,15 @@
-# HANDOFF.md (v3.85-alpha / Refactor & Deploy)
+# HANDOFF.md (v3.86-alpha / Full Auto Bugfix & Deploy)
 
 ## Current Status
 - **SCENARIO GENERATION & POLICY FIXER REFACTOR COMPLETED** (シナリオ生成・ポリシー自動修正ロジックの外部モジュール化完了)
+- **FULL AUTO STATE SYNC BUG FIXED** (フルオート生成モード時のステート同期遅れによる不具合を修正)
 - `App.jsx` 内のシナリオ生成ロジックを `src/lib/scenario-provider.js` に、ポリシー自動修正ロジックを `src/lib/policy-fixer.js` にそれぞれ抽出・外部化。
-- これにより、`App.jsx` を約350行削減し、保守性を向上。
+- フルオート生成時に React のステート更新ラグによって手動入力モードと誤判定されたり、意図しない ChatGPT モードがオンになったりする不具合を、引数によるオーバーライドを導入して完全に解消。
 - ローカル環境での画像生成および一連の動作の動作検証を完了。
+
+## Done (v3.86-alpha)
+- `src/App.jsx` [UPDATED]: `generateScenarioFromNews` および `assemblePrompt` にオーバーライド用引数を追加し、`runFullAuto` 内でこれらを明示的に渡すことでステートラグによる不具合を修正。
+- `HANDOFF.md`, `package.json`, `src/lib/constants.js`, `index.html`, `README.md` のバージョンを `3.86-alpha` に同期。
 
 ## Done (Phase 3 - Part 2)
 - `src/lib/scenario-provider.js` [NEW]: シナリオ生成処理（ ** `generateScenario` ** / ** `generateScenarioStream` ** ）および数百行に及ぶ巨大なシナリオ生成プロンプトテンプレートを外部ファイル化。

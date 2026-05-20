@@ -910,6 +910,9 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v3.86-alpha (2026-05-20)
+- ** [Fix] ** フルオート生成モード時に、非同期ステートの同期遅れによって手動入力モード（ `inputMode === 'manual'` ）と誤判定されてエラーが発生する（または ChatGPT モードが意図せずオンのまま実行される）不具合を修正。`generateScenarioFromNews` および `assemblePrompt` に引数によるオーバーライドを導入し、Reactのステート更新ラグを回避。 / Fixed a bug in Full Auto mode where asynchronous state sync lags caused the system to mistakenly evaluate the input mode as 'manual' or keep ChatGPT mode enabled. Introduced parameter overrides for `generateScenarioFromNews` and `assemblePrompt` to eliminate React state race conditions.
+
 ### v3.85-alpha (2026-05-20)
 - ** [Refactor] ** シナリオ生成およびコンテンツポリシー自動修正ロジックの外部モジュール化（ ** `scenario-provider.js` ** および ** `policy-fixer.js` ** ）を完了し、 ** `App.jsx` ** の肥大化を解消（約350行削減）。 / Extracted scenario generation and policy fixer logic into dedicated modules, reducing the size of `App.jsx` by ~350 lines.
 

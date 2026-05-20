@@ -622,17 +622,18 @@ function App() {
   };
 
   // --- Step 2: Scenario ---
-  const generateScenarioFromNews = async (categoriesOverride) => {
+  const generateScenarioFromNews = async (categoriesOverride, inputModeOverride = null) => {
     if (!castList) return showStatus("先にキャラクターを解析してください。");
     if (isSearching) return;
 
     const effectiveCategories = Array.isArray(categoriesOverride) ? categoriesOverride : categories;
+    const effectiveInputMode = inputModeOverride || inputMode;
 
-    if (inputMode === 'manual' && !manualTopic.trim()) {
+    if (effectiveInputMode === 'manual' && !manualTopic.trim()) {
       alert("自由入力トピックを入力してください。");
       return;
     }
-    if (inputMode === 'news' && !effectiveCategories.find(c => c.checked)) {
+    if (effectiveInputMode === 'news' && !effectiveCategories.find(c => c.checked)) {
       alert("少なくとも1つのカテゴリを選択してください。");
       return;
     }
@@ -647,7 +648,7 @@ function App() {
     setEnhanceLog("");
 
     let randomCategory = "";
-    if (inputMode === 'manual') {
+    if (effectiveInputMode === 'manual') {
       randomCategory = "手動入力";
       setScenario("");
       setScenarioThought(`> コンテキスト強制リブート: 開始\n > モード: 手動入力 \n > 対象: ${manualTopic.substring(0, 30)}...`);
@@ -691,7 +692,7 @@ function App() {
       const result = await generateScenario({
         castList,
         categories: effectiveCategories,
-        inputMode,
+        inputMode: effectiveInputMode,
         manualTopic,
         searchTopic,
         targetDate,
@@ -791,7 +792,7 @@ function App() {
 
   // --- Step 3: Prompt Assembly (Super FURU v121.3) ---
   // [v2.79] 戻り値変更: フルオート連鎖用（文字列=成功, null=失敗）
-  const assemblePrompt = async (skipGuard = false, overrideScenario = null) => {
+  const assemblePrompt = async (skipGuard = false, overrideScenario = null, enableChatGPTModeOverride = null) => {
     const currentScenario = overrideScenario || scenario;
     if (!skipGuard && (!castList || !currentScenario)) return showStatus("キャストとシナリオが必要です。");
     setIsAssembling(true);
@@ -802,6 +803,8 @@ function App() {
     setPolicyFixLog("");
     setIsPolicyPanelOpen(false);
     setAssembleThought("スーパーフル・プロトコル v121.3 (Universal Master) を起動中... 全データの整合性をチェックしています...");
+
+    const effectiveChatGPTMode = enableChatGPTModeOverride !== null ? enableChatGPTModeOverride : enableChatGPTMode;
 
     // Fake Streaming Effect
     const thinkTimer = setInterval(() => {
@@ -831,7 +834,7 @@ function App() {
         scenario: currentScenario,
         castList,
         colorMode,
-        enableChatGPTMode,
+        enableChatGPTMode: effectiveChatGPTMode,
         bg360Image,
         bg360Analysis,
         bg360Enabled,
@@ -1195,7 +1198,7 @@ function App() {
     await new Promise(r => setTimeout(r, 200));
     step2Ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
-    const generatedScenario = await generateScenarioFromNews(overrideCategories);
+    const generatedScenario = await generateScenarioFromNews(overrideCategories, "news");
     if (fullAutoAbortRef.current || !generatedScenario) {
       setIsFullAutoMode(false);
       setFullAutoStep(0);
@@ -1210,7 +1213,7 @@ function App() {
     await new Promise(r => setTimeout(r, 300));
 
     // stale state回避のため文字列を直接渡す
-    const generatedPrompt = await assemblePrompt(true, generatedScenario); 
+    const generatedPrompt = await assemblePrompt(true, generatedScenario, false); 
     if (fullAutoAbortRef.current || !generatedPrompt) {
       setIsFullAutoMode(false);
       setFullAutoStep(0);
