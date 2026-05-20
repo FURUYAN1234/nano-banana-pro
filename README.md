@@ -165,6 +165,12 @@ By dragging and dropping a 360-degree equirectangular image alongside your chara
 * **Phase 3 Multimodal Background Injection (v3.54+) / マルチモーダル背景注入**: The per-panel background views extracted by the crop engine are injected directly into Gemini as multimodal inlineData reference images. This ensures the AI produces highly accurate environments that perfectly match the intended camera angle and lighting for each panel. / クロップエンジンによって切り出されたコマ別の背景ビューは、マルチモーダル参照画像（inlineData）として直接Geminiに注入されます。これにより、AIは各コマの意図したカメラアングルとライティングに完璧に一致する、極めて正確な環境を描画します。
 * **Lighting & Shadow Synchronization / 光源と影の自動同期**: The AI extracts the primary light source direction and ambient color temperature from the 360° background. It then rigidly enforces these lighting parameters in the prompt for each panel (e.g., "Match shadow directions to the background reference"). This ensures characters do not look "pasted on" but rather perfectly blend into the environmental lighting, creating a highly cohesive and cinematic composite. / AIが360度背景から「主光源の方向」と「環境光の色温度」を自動抽出し、各コマの画像生成プロンプトに強力な制約として注入します。「キャラクターの影の落ちる方向を背景に合わせる」などの指示により、合成特有の「浮遊感」を完全に払拭し、空間に完璧に馴染んだシネマティックな画面を構築します。
 
+### 📦 UI Component Modularization (v3.88+) / UIコンポーネントの完全モジュール化
+
+To address the extreme complexity of a 5,000+ line monolith, the frontend architecture has been systematically decoupled into dedicated component files inside `src/components/` (e.g., `<ControlBar>`, `<SystemHeader>`, `<ApiKeyModal>`, and `<Step1Panel>` through `<Step4Panel>`). This modularization isolates concerns, reduces side-effects in React's state management, and shrinks the core `App.jsx` file to a manageable size, facilitating safer local development and faster builds.
+5,000行を超える巨大モノリスの問題を解消するため、フロントエンド UI 構成要素を `src/components/` 配下の独立したコンポーネント（`<ControlBar>`、`<SystemHeader>`、`<ApiKeyModal>`、および各ステップに対応する `<Step1Panel>` 〜 `<Step4Panel>`）へと完全に分割・モジュール化しました。これにより、各機能の結合度が下がり、React のステート更新に伴う不要な再レンダリングやバグを防ぎ、コアとなる `App.jsx` を大幅に軽量化。安全なローカル開発と迅速なビルド・デプロイを実現しています。
+
+
 ---
 
 ## 🔍 Deep Analysis (技術詳解)
@@ -910,42 +916,32 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v3.88-alpha (2026-05-20)
+- ** [Refactor] ** 上部のプログレスバーおよび操作ボタン群を <ControlBar> コンポーネント（ src/components/ControlBar.jsx ）として外部ファイルに分離し、 src/App.jsx の JSX 部を約190行削減。モジュール間のインポート参照バグを修正し、安定した一貫ビルドを検証。 / Extracted the sticky top control bar from src/App.jsx into <ControlBar> component in src/components/ControlBar.jsx, reducing code clutter and decreasing App.jsx size by ~190 lines. Fixed import path issues to ensure a clean build.
+
 ### v3.87-alpha (2026-05-20)
-- ** [Fix] ** キャラクター解析（認識）中にフルオートボタンを押した場合に、非同期処理のクロージャ内に古いステート `isFullAutoMode = false` がキャプチャされてしまい、解析完了後にフルオートが開始されない React のバグ（Stale State Closure Bug）を修正。`isFullAutoModeRef` を導入して `processFiles` 内で最新のフルオートモード状態を参照可能に。 / Fixed a React stale state closure bug where triggering Full Auto during character analysis failed to start the process upon completion because `processFiles` captured `isFullAutoMode = false`. Introduced `isFullAutoModeRef` to resolve this issue.
+- ** [Fix] ** キャラクター解析（認識）中にフルオートボタンを押した場合に、非同期処理のクロージャ内に古いステート isFullAutoMode = false がキャプチャされてしまい、解析完了後にフルオートが開始されない React のバグ（Stale State Closure Bug）を修正。isFullAutoModeRef を導入して processFiles 内で最新のフルオートモード状態を参照可能に。 / Fixed a React stale state closure bug where triggering Full Auto during character analysis failed to start the process upon completion because processFiles captured isFullAutoMode = false. Introduced isFullAutoModeRef to resolve this issue.
 
 ### v3.86-alpha (2026-05-20)
-- ** [Fix] ** フルオート生成モード時に、非同期ステートの同期遅れによって手動入力モード（ `inputMode === 'manual'` ）と誤判定されてエラーが発生する（または ChatGPT モードが意図せずオンのまま実行される）不具合を修正。`generateScenarioFromNews` および `assemblePrompt` に引数によるオーバーライドを導入し、Reactのステート更新ラグを回避。 / Fixed a bug in Full Auto mode where asynchronous state sync lags caused the system to mistakenly evaluate the input mode as 'manual' or keep ChatGPT mode enabled. Introduced parameter overrides for `generateScenarioFromNews` and `assemblePrompt` to eliminate React state race conditions.
+- ** [Fix] ** フルオート生成モード時に、非同期ステートの同期遅れによって手動入力モード（ inputMode === 'manual' ）と誤判定されてエラーが発生する（または ChatGPT モードが意図せずオンのまま実行される）不具合を修正。 generateScenarioFromNews および assemblePrompt に引数によるオーバーライドを導入し、Reactのステート更新ラグを回避。 / Fixed a bug in Full Auto mode where asynchronous state sync lags caused the system to mistakenly evaluate the input mode as 'manual' or keep ChatGPT mode enabled. Introduced parameter overrides for generateScenarioFromNews and assemblePrompt to eliminate React state race conditions.
 
 ### v3.85-alpha (2026-05-20)
-- ** [Refactor] ** シナリオ生成およびコンテンツポリシー自動修正ロジックの外部モジュール化（ ** `scenario-provider.js` ** および ** `policy-fixer.js` ** ）を完了し、 ** `App.jsx` ** の肥大化を解消（約350行削減）。 / Extracted scenario generation and policy fixer logic into dedicated modules, reducing the size of `App.jsx` by ~350 lines.
+- ** [Refactor] ** シナリオ生成およびコンテンツポリシー自動修正ロジックの外部モジュール化（ ** scenario-provider.js ** および ** policy-fixer.js ** ）を完了し、 ** App.jsx ** の肥大化を解消（約350行削減）。 / Extracted scenario generation and policy fixer logic into dedicated modules, reducing the size of App.jsx by ~350 lines.
 
 ### v3.84-alpha (2026-05-20)
 - ** [Release] ** ローカル環境での画像生成成功を検証し、本番環境へのデプロイおよびリリースを正式に完了。 / Verified successful image generation in the local environment, and officially completed deployment and release to production.
 
 ### v3.83-alpha (2026-05-20)
-- ** [Fix] ** リファクタリングによって発生した `buildMangaPrompt is not defined` ランタイムエラー（`src/App.jsx` 内のインポート漏れ）を修正。 / Fixed runtime error `buildMangaPrompt is not defined` in `src/App.jsx` by adding the missing import statement.
+- ** [Fix] ** リファクタリングによって発生した buildMangaPrompt is not defined ランタイムエラー（src/App.jsx 内のインポート漏れ）を修正。 / Fixed runtime error buildMangaPrompt is not defined in src/App.jsx by adding the missing import statement.
 
 ### v3.82-alpha (2026-05-20)
-- ** [Refactor] ** `App.jsx` 内のプロンプト構築関数 `assemblePrompt` のリファクタリングを完了し、外部モジュール `buildMangaPrompt` を用いたステート管理の整理とクリーンアップを実施。 / Refactored `assemblePrompt` in `App.jsx` to integrate with `buildMangaPrompt` module, cleaning up state variables and enhancing async stability.
+- ** [Refactor] ** App.jsx 内のプロンプト構築関数 assemblePrompt のリファクタリングを完了し、外部モジュール buildMangaPrompt を用いたステート管理の整理とクリーンアップを実施。 / Refactored assemblePrompt in App.jsx to integrate with buildMangaPrompt module, cleaning up state variables and enhancing async stability.
 
 ### v3.81-alpha (2026-05-20)
 - ** [Refactor & Clean] ** 一時不要ファイルの削除と、リポジトリのクリーンアップ、およびデプロイ・リリースフローのフル自動化プロトコルの適用。 / Cleaned up temporary files, optimized repository aesthetics, and implemented full release automation protocols.
 
 ### v3.80-alpha (2026-05-20)
-- ** [Fix] ** リファクタリング後に発生していた React マウントおよびレンダリング時の ** 2つの致命的エラー ** （`App.jsx` 内のタイポ `step4Ref` 、および `Step4Panel.jsx` 内での `Wand2` インポート漏れ）を修正。さらに、ランタイムエラー検知用に ** ErrorBoundary ** を導入し、クラッシュ耐性を強化。 / Fixed two critical React mounting and rendering errors (undefined `step4Ref` typo in `App.jsx` and missing `Wand2` import in `Step4Panel.jsx`) caused by refactoring. Integrated `ErrorBoundary` to catch runtime errors and improve crash resilience.
+- ** [Fix] ** リファクタリング後に発生していた React マウントおよびレンダリング時の ** 2つの致命的エラー ** （App.jsx 内のタイポ step4Ref 、および Step4Panel.jsx 内での Wand2 インポート漏れ）を修正。さらに、ランタイムエラー検知用に ** ErrorBoundary ** を導入し、クラッシュ耐性を強化。 / Fixed two critical React mounting and rendering errors (undefined step4Ref typo in App.jsx and missing Wand2 import in Step4Panel.jsx) caused by refactoring. Integrated ErrorBoundary to catch runtime errors and improve crash resilience.
 
 ### v3.79-alpha (2026-05-20)
-- ** [Refactor] ** Phase 3-C: `assemblePrompt` 内の ChatGPT / Gemini 用巨大プロンプトテンプレートを `src/lib/prompts.js` のビルダー関数（`buildChatGPTMangaPrompt`, `buildGeminiMangaPrompt`）として外部化。さらに `extractEmotionStyle`, `buildEmotionBlock`, `cleanCastList` を `src/lib/panel-utils.js` に移動し、`App.jsx` を約300行削減。 / Externalized ChatGPT and Gemini prompt templates from `assemblePrompt` into builder functions in `prompts.js`, and moved emotion style helpers and cast list parser into `panel-utils.js`, reducing `App.jsx` by ~300 lines.
-
-### v3.78-alpha (2026-05-20)
-- ** [Refactor] ** Phase 3-B: `App.jsx` 内のパネル解析・プロンプト組み立て用ユーティリティ関数群を `src/lib/panel-utils.js` に外部化。React state (`castList` 等) のクロージャ参照バグを引数渡し方式に変更して解決。 / Moved panel parsing and prompt assembly utility functions to `src/lib/panel-utils.js`, resolving closure reference errors for React state variables.
-
-### v3.77-alpha (2026-05-20)
-- ** [Gemini API] ** 新モデル ** gemini-3.5-flash ** への対応、リファクタリング後のビルドおよび安全なデプロイ完了。 / Deployed the updated build with support for the new `gemini-3.5-flash` model.
-
-### v3.76-alpha (2026-05-20)
-- ** [Gemini API] ** 新モデル ** gemini-3.5-flash ** に対応。モデル死活監査に基づき、`TEXT_MODEL_IDS` および `IMAGE_MODEL_IDS` の優先順位を更新。また、`getModelBadgeInfo` バッジ表示に ** Gemini 3.5 ** を追加。 / Supported the new `gemini-3.5-flash` model. Updated Text and Image model priority lists based on model deprecation audit. Updated `getModelBadgeInfo` to properly display the `Gemini 3.5` model badge in the UI.
-- ** [Refactor] ** 前回のパノラマ・プロンプト外部化リファクタリングを反映した安全な一貫ビルドをテスト・デプロイ。 / Verified and deployed the clean build following the panorama/prompt modularization refactoring from the previous phase.
-
-### v3.75-alpha (2026-05-20)
-- ** [Refactor] ** `App.jsx` 内の360°パノラマ画像処理ロジックおよびインラインのプロンプト定義（STEP1のキャラ解析、STEP2の演出強化、360°背景画像解析）を外部モジュール（`src/lib/panorama360.js`, `src/lib/prompts.js`）へ分離・集約。保守性を大幅に改善。 / Modularized the 360-degree panorama image processing and inline prompt templates from `App.jsx` into `src/lib/panorama360.js` and `src/lib/prompts.js`, significantly improving code maintainability.
+- ** [Refactor] ** Phase 3-C: assemblePrompt 内の ChatGPT / Gemini 用巨大プロンプトテンプレートを src/lib/prompts.js のビルダー関数（buildChatGPTMangaPrompt, buildGeminiMangaPrompt）として外部化。さらに extractEmotionStyle, buildEmotionBlock, cleanCastList を src/lib/panel-utils.js に移動し、App.jsx を約300行削減。 / Externalized ChatGPT and Gemini prompt templates from assemblePrompt into builder functions in prompts.js, and moved emotion style helpers and cast list parser into panel-utils.js, reducing App.jsx by ~300 lines.

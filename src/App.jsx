@@ -56,6 +56,10 @@ import Step1Panel from './components/Step1Panel';
 import Step2Panel from './components/Step2Panel';
 import Step3Panel from './components/Step3Panel';
 import Step4Panel from './components/Step4Panel';
+import ControlBar from './components/ControlBar';
+import SystemHeader from './components/SystemHeader';
+import GenerationPreview from './components/GenerationPreview';
+import GenerationHistory from './components/GenerationHistory';
 
 function App() {
   // Force Build 2026-02-06 07:07 // Build 2026-02-06-01
@@ -1344,198 +1348,24 @@ function App() {
         }} 
         provider="openai" 
       />
-      {/* STICKY TOP PROGRESS BAR */}
-      <div className="fixed top-0 left-0 right-0 z-[100] bg-[#0f1115] border-b border-white/10 px-2 md:px-8 py-2 md:py-3 shadow-xl w-full flex flex-col gap-2 md:gap-3 overflow-x-hidden">
-        <div className="flex flex-wrap xl:flex-nowrap items-center justify-center max-w-7xl mx-auto w-full gap-y-3">
-          
-          {/* Progress Steps (Center Left) */}
-          <div className={`flex flex-wrap items-center justify-center gap-2 md:gap-4 shrink-0 transition-opacity duration-300 ${!apiKey ? 'opacity-30' : 'opacity-100'}`}>
-            {/* Step 1: 解析 */}
-            <div className={`flex items-center gap-1.5 ${currentStep >= 1 ? 'opacity-100' : 'opacity-40'}`}>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${currentStep === 1 ? 'bg-blue-500 text-white shadow-[0_0_10px_rgba(59,130,246,0.6)]' : currentStep > 1 ? 'bg-blue-600/50 text-blue-200' : 'bg-white/10 text-white/50'}`}>
-                {currentStep > 1 ? <Check size={16} /> : '1'}
-              </div>
-              <span className="text-sm font-bold text-white tracking-wider">解析</span>
-            </div>
-            
-            <ArrowRight size={14} className="text-white/30 shrink-0 mx-0.5 sm:mx-1" />
-            
-            {/* Step 2: シナリオ */}
-            <div className={`flex items-center gap-1.5 ${currentStep >= 2 ? 'opacity-100' : 'opacity-40'}`}>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${currentStep === 2 ? 'bg-purple-500 text-white shadow-[0_0_10px_rgba(168,85,247,0.6)]' : currentStep > 2 ? 'bg-purple-600/50 text-purple-200' : 'bg-white/10 text-white/50'}`}>
-                {currentStep > 2 ? <Check size={16} /> : '2'}
-              </div>
-              <span className="text-sm font-bold text-white tracking-wider">シナリオ</span>
-            </div>
-            
-            <ArrowRight size={14} className="text-white/30 shrink-0 mx-0.5 sm:mx-1" />
-            
-            {/* Step 3: プロンプト */}
-            <div className={`flex items-center gap-1.5 ${currentStep >= 3 ? 'opacity-100' : 'opacity-40'}`}>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${currentStep === 3 ? 'bg-orange-500 text-white shadow-[0_0_10px_rgba(249,115,22,0.6)]' : currentStep > 3 ? 'bg-orange-600/50 text-orange-200' : 'bg-white/10 text-white/50'}`}>
-                {currentStep > 3 ? <Check size={16} /> : '3'}
-              </div>
-              <span className="text-sm font-bold text-white tracking-wider">プロンプト</span>
-            </div>
-            
-            <ArrowRight size={14} className="text-white/30 shrink-0 mx-0.5 sm:mx-1" />
-            
-            {/* Step 4: 画像生成 */}
-            <div className={`flex items-center gap-1.5 ${currentStep >= 4 ? 'opacity-100' : 'opacity-40'}`}>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${currentStep === 4 ? 'bg-green-500 text-white shadow-[0_0_10px_rgba(34,197,94,0.6)]' : currentStep > 4 ? 'bg-green-600/50 text-green-200 shadow-[0_0_10px_rgba(34,197,94,0.3)]' : 'bg-white/10 text-white/50'}`}>
-                {currentStep > 4 ? <Check size={16} /> : '4'}
-              </div>
-              {/* 物理的に全角スペースを右側に挿入して密着を防止 */}
-              <span className="text-sm font-bold text-white tracking-wider">画像生成　</span>
-            </div>
-          </div>
-
-          {/* ================= 絶対に潰れない物理スペーサー ================= */}
-          <div className="hidden xl:block w-12 lg:w-16 shrink-0"></div>
-
-          {/* Controls (Center Right) - フルオートボタン＋説明文 */}
-          <div className="flex flex-wrap sm:flex-nowrap items-center justify-center gap-4 lg:gap-6 shrink-0 max-w-full">
-            {/* [v2.86] 連続生成(ループ)トグル */}
-            <button
-              disabled={!apiKey || isAborting}
-              onClick={() => {
-                const nextState = !isEndlessMode;
-                setIsEndlessMode(nextState);
-                isEndlessModeRef.current = nextState;
-              }}
-              title="ONにすると、フルオート完了時に同じキャラクターで永遠にシナリオ生成と画像生成を繰り返します。完全停止するにはフルオート中断を押してください。"
-              style={{ color: isEndlessMode ? '#dc2626' : '#ffffff' }}
-              className={`min-w-[160px] flex items-center justify-center gap-1.5 px-4 py-3 rounded-xl text-sm font-black tracking-widest transition-all duration-100 border-2 border-b-4 select-none shrink-0 active:border-b-2 active:translate-y-0.5 ${
-                isEndlessMode
-                  ? 'bg-red-50 border-red-300 shadow-lg'
-                  : 'bg-[#2d3a4d] border-[#4a5568] hover:bg-[#3d4f66]'
-              } disabled:opacity-50 disabled:cursor-not-allowed`}
-            >
-              <RefreshCw size={14} className={isEndlessMode ? 'animate-spin' : ''} style={{ animationDuration: '3s' }} />
-              <span className="whitespace-nowrap">{isEndlessMode ? '無限ループ設定 解除' : '無限ループ設定 ON'}</span>
-            </button>
-
-            {/* フルオートボタン */}
-            <button
-              disabled={!apiKey || isAborting}
-              onClick={handleFullAutoToggle}
-              title="画像をドロップするだけで4コマを全自動生成。完了後は自動OFF。生成中に押すと即中断。"
-              style={{ color: isFullAutoMode ? (isAborting ? '#ffffff' : '#dc2626') : '#ffffff' }}
-              className={`min-w-[160px] flex items-center justify-center gap-1.5 px-4 py-3 rounded-xl text-sm font-black tracking-widest transition-all duration-100 border-2 border-b-4 select-none shrink-0 active:border-b-2 active:translate-y-0.5 ${
-                isFullAutoMode
-                  ? (isAborting ? 'bg-slate-700 border-slate-500 shadow-none cursor-wait opacity-100' : 'bg-red-50 border-red-300 shadow-lg')
-                  : 'bg-[#2d3a4d] border-[#4a5568] hover:bg-[#3d4f66]'
-              } ${!apiKey && !isAborting ? 'opacity-50 cursor-not-allowed' : ''}`}
-            >
-              {isFullAutoMode ? (isAborting ? <Loader2 size={14} className="animate-spin" /> : <Square size={14} fill="currentColor" />) : <Zap size={14} />}
-              {isFullAutoMode ? (isAborting ? '停止処理中...' : 'フルオート中断') : '⚡ フルオート ON'}
-            </button>
-            
-            {/* ================= ボタンと説明文の間の物理スペーサー ================= */}
-            <div className="hidden sm:block w-6 shrink-0"></div>
-
-            {/* 説明文（3行構成、折り返し対応） */}
-            <div className={`flex flex-col justify-center text-[10.5px] leading-relaxed max-w-[600px] text-center sm:text-left transition-opacity duration-300 ${!apiKey ? 'text-slate-600 opacity-40' : 'text-slate-400'}`}>
-              <span className="whitespace-normal">　【⚡ フルオート ON】にして画像をドロップ、もしくはドロップ後に押す→全自動で生成。完了後は自動OFF。　</span>
-              <span className="whitespace-normal">　生成中は同ボタンで中断（以降はSTEPボタンで進行）。中断後再度押すと新シナリオで再生成を始めます。　</span>
-              <span className="whitespace-normal">　※「無限ループ設定」をONにしてフルオートを開始すると、完了後に自動で次の作品の生成を永遠に繰り返します。　</span>
-            </div>
-          </div>
-        </div>
+      <ControlBar
+        currentStep={currentStep}
+        apiKey={apiKey}
+        isEndlessMode={isEndlessMode}
+        setIsEndlessMode={setIsEndlessMode}
+        isEndlessModeRef={isEndlessModeRef}
+        isAborting={isAborting}
+        handleFullAutoToggle={handleFullAutoToggle}
+        isFullAutoMode={isFullAutoMode}
+        selectedEngine={selectedEngine}
+        enableOpenAIApi={enableOpenAIApi}
+        isPolicyCopied={isPolicyCopied}
+        setIsPolicyCopied={setIsPolicyCopied}
+        showStatus={showStatus}
+      />
+      
         
-        {/* [v3.23-alpha] Web版ChatGPT用 コピーボタン (β) — OpenAI Engine (API直接生成) 時のみ表示 */}
-        {(selectedEngine === 'openai' || enableOpenAIApi) && (
-        <div className="flex justify-center w-full max-w-7xl mx-auto px-2 pb-1">
-          <button
-            onClick={() => {
-              const protocol = `[ 🎨 ANTIGRAVITY EMOTIONAL CINEMA ENGINE v2.0 ]
-You are a world-class anime film director and cinematographer. Your mission is to create a SINGLE breathtaking illustration that makes the viewer FEEL something powerful — not just see a character standing there.
-
-READ the user's instruction carefully. Detect the EMOTIONAL VECTOR (joy, sadness, anger, tension, love, loneliness, triumph, fear, nostalgia, serenity, chaos, comedy, etc.) from their text — even if they only say something simple like "draw her eating ramen." Find the hidden emotion and AMPLIFY it through every visual element below.
-
-If the user gives NO emotional direction at all, DEFAULT to creating an image that radiates warmth, narrative depth, and cinematic beauty — as if this frame is the most emotionally pivotal moment in an anime film.
-
-[ 1. EMOTIONAL ACTING & EXPRESSION — The Soul of the Image ]
-- FACE: Characters MUST show rich, layered facial expressions. Use the Facial Action Coding System (FACS): combine specific Action Units (brow furrow + lip tremble + glistening eyes = suppressed tears). NEVER draw a flat, neutral, default expression. Every face tells a story.
-- EYES: Eyes are the emotional anchor. Draw large, detailed anime eyes with multiple layers: iris gradient, bright catchlight highlights (circular + star sparkle), visible emotion (tears welling, fire burning, light fading, stars sparkling). Eye moisture level should match the emotion.
-- BODY LANGUAGE: The entire body must act. Clenched fists for determination, slumped shoulders for defeat, wind-caught hair for freedom, mid-gesture frozen motion for surprise. Weight distribution must feel natural and dynamic — use contrapposto, dynamic lean, or full-body action poses. NEVER use a stiff T-pose or mannequin stance.
-- MICRO-EXPRESSIONS: Add subtle secondary expressions — a slight lip quiver, one eyebrow raised higher than the other, fingers gripping fabric unconsciously. These details create emotional depth that separates masterwork from generic output.
-
-[ 2. CINEMATIC CAMERA & LENS — The Director's Eye ]
-Choose the camera angle and lens that BEST serves the emotion. Here is your toolkit:
-- INTIMACY/VULNERABILITY: Tight close-up (bust shot or face), shallow depth of field (f/1.4 bokeh), slight Dutch angle for unease, or straight-on for confrontation.
-- POWER/TRIUMPH: Extreme low angle (worm's-eye view) looking UP at the character. Wide-angle lens (24mm) for imposing presence. Character dominates the frame.
-- LONELINESS/SMALLNESS: Extreme wide shot with the character tiny in a vast environment. High angle (bird's-eye) looking DOWN. The emptiness around them IS the emotion.
-- ACTION/CHAOS: Dynamic diagonal composition, motion blur on extremities, speed lines radiating from impact point, camera tilted 15-30° Dutch angle.
-- NOSTALGIA/MEMORY: Soft telephoto lens (85-135mm) compression, warm color grading, slight vignette at edges, dreamy shallow focus.
-- COMEDY/ABSURDITY: Exaggerated wide-angle (fisheye-adjacent) for comedic distortion, super-deformed reaction shots, dramatic zoom lines.
-- EPIC/CINEMATIC: Sweeping wide establishing shot with golden ratio composition, atmospheric perspective, volumetric light shafts.
-IMPORTANT: NEVER default to a flat, eye-level, center-framed shot. Every camera choice must be INTENTIONAL and emotion-driven.
-
-[ 3. DRAMATIC LIGHTING & COLOR PSYCHOLOGY ]
-Lighting is emotion made visible. Match the lighting setup to the feeling:
-- JOY/WARMTH: Golden hour warm key light (3000K), soft fill, orange-pink rim light. Warm color palette dominance.
-- SADNESS/MELANCHOLY: Cool blue-grey key light, minimal fill (high shadow ratio), single warm accent light (a streetlamp, a phone screen) as a beacon of hope. Desaturated palette with one warm accent color.
-- ANGER/INTENSITY: Hard directional red-orange key light from below or side, deep black shadows, high contrast. Saturated reds and magentas.
-- TENSION/SUSPENSE: Single harsh spotlight creating extreme contrast, character half-lit half-shadow (split lighting). Cool teal shadows vs warm highlights.
-- LOVE/TENDERNESS: Soft diffused backlight creating a luminous halo, warm fill, cherry-blossom pink and peach tones. Ethereal glow.
-- TRIUMPH/GLORY: Dramatic backlight explosion (contre-jour), golden rim light outlining the entire silhouette, lens flare from behind.
-- FEAR/HORROR: Underlighting (flashlight-under-chin effect), sickly green or purple color cast, deep vignette swallowing the edges.
-- NOSTALGIA: Warm sepia-shifted color grading, soft gaussian glow, muted but harmonious palette.
-TECHNIQUE: Always use 3-point anime lighting as a BASE (key + fill + rim), then MODIFY it for emotional effect. Use warm/cool color temperature CONTRAST — never flat uniform lighting.
-
-[ 4. ATMOSPHERIC VFX & ENVIRONMENTAL STORYTELLING ]
-The environment and effects must ECHO the character's emotion, not just be a backdrop:
-- Wind direction, particle effects (petals, leaves, snow, embers, rain), volumetric fog/mist, god rays, and atmospheric haze should all serve the emotional narrative.
-- ENVIRONMENTAL EMPATHY: If the character is sad, the sky could be overcast with a single break in the clouds. If joyful, golden light floods the scene. If angry, the environment reacts (cracking ground, swirling debris).
-- DEPTH LAYERS: Create clear foreground (blurred elements close to camera), midground (character in sharp focus), and background (atmospheric depth) for cinematic parallax.
-- ANTI-GLITTER RULE: Do NOT add random magical floating particles, sparkles, or fairy dust unless the emotion specifically calls for it (like wonder or magic). Keep the air intentional.
-
-[ 5. ART STYLE & VISUAL FIDELITY ]
-- RENDER: High-budget Japanese TV anime feature film quality. Clean cel-shading with rich color depth, sharp ink contour lines, smooth gradients. NO photorealistic texturing, NO film grain, NO noise.
-- LINE WEIGHT HIERARCHY: Foreground characters get 3px bold ink outlines. Background objects get 1px thin lines. This creates instant visual depth.
-- CHARACTER SEPARATION: Add a subtle 2-3px white glow (compositing rim) outside the character's outline to prevent blending with the background. Characters MUST have higher saturation and contrast than their environment.
-- HAIR: Must show a glossy anime-style shine band (angel ring / tenshi no wa). Individual strand detail at edges.
-- SKIN: Warm subsurface scattering hint on lit areas. Clean shadows with slight color shift (warm light = cool shadow, cool light = warm shadow).
-
-[ 6. TEXT & OUTPUT RULES ]
-- If speech bubbles or text are drawn, ALL text MUST be vertical Japanese. ZERO horizontal text.
-- Do not add random background text, floating letters, or unnecessary sound effects unless the scene demands it.
-- SELF-REVIEW: After drawing, carefully verify finger count on all hands (exactly 5), check for text errors, and fix internally before displaying the final result.`;
-              navigator.clipboard.writeText(protocol);
-              setIsPolicyCopied(true);
-              setTimeout(() => setIsPolicyCopied(false), 2000);
-            }}
-            title="Web版ChatGPT用の1枚絵エモーショナル演出プロンプトをクリップボードにコピーします。指示内容の感情を自動検知し、カメラ・ライティング・表情・VFXを最適化します。"
-            className={`w-full flex flex-wrap items-center justify-center gap-2 sm:gap-4 px-4 py-2.5 sm:py-3 rounded-xl text-sm font-black tracking-widest transition-all duration-100 border-2 border-b-4 select-none active:border-b-2 active:translate-y-0.5 shadow-lg ${
-              isPolicyCopied
-                ? 'bg-white border-green-500 text-green-600'
-                : 'bg-white border-slate-300 hover:bg-slate-50 text-[#2d3a4d]'
-            }`}
-          >
-            <div className="flex items-center gap-1.5 shrink-0">
-              {isPolicyCopied ? <Check size={16} /> : <Copy size={16} />}
-              <span className="whitespace-nowrap">{isPolicyCopied ? 'コピー完了！' : '🎬 1枚絵 ChatGPT用 感情シネマプロンプトをコピー'}</span>
-            </div>
-            <span className="text-[10px] md:text-[11px] font-normal tracking-normal whitespace-normal text-center text-slate-500">
-              【1枚絵用】ChatGPTにキャラ画像を添付→指示を書く→このプロンプトを貼り付けて送信。指示の文脈からエモーショナルな演出を自動で適用します。
-            </span>
-          </button>
-        </div>
-        )}
-
-        {/* Progress Line */}
-        <div className="absolute bottom-0 left-0 h-[2px] bg-white/10 w-full">
-          <div className={`h-full transition-all duration-700 ease-out
-            ${currentStep === 1 ? 'w-1/4 bg-blue-500' :
-              currentStep === 2 ? 'w-2/4 bg-purple-500 shadow-[0_0_10px_rgba(168,85,247,0.5)]' :
-              currentStep === 3 ? 'w-3/4 bg-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.5)]' :
-              currentStep >= 4 ? 'w-full bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)]' : 'w-0'}
-          `} />
-        </div>
-      </div>
-
-      {/* 背景装飾 */}
+         {/* 背景装飾 */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-900/10 blur-[120px] rounded-full" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-900/10 blur-[120px] rounded-full" />
@@ -1543,78 +1373,15 @@ The environment and effects must ECHO the character's emotion, not just be a bac
 
       <div className="relative z-10 max-w-5xl mx-auto px-4 pb-4 pt-[130px] md:px-10 md:pb-10 md:pt-[150px] space-y-8">
         {/* === ヘッダー領域 === */}
-        <header className="flex flex-col items-center justify-center gap-6 bg-[#0f1115] p-6 md:p-8 rounded-xl border border-white/5 shadow-2xl relative overflow-hidden group">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/5 blur-[80px] rounded-full pointer-events-none" />
-
-          <div className="flex flex-col items-center text-center z-10 w-full">
-            <div className="flex flex-col items-center justify-center gap-2 mb-2 w-full max-w-full overflow-hidden">
-              <div className="flex flex-col items-center text-center max-w-full">
-                <div className="flex flex-row items-center justify-center gap-3 flex-nowrap text-center">
-                  <div className="p-2 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl shadow-lg shadow-blue-500/20 shrink-0">
-                    <BrainCircuit size={28} className="text-white" />
-                  </div>
-                  <h1 className="text-xl md:text-4xl font-black tracking-tighter text-blue-400 drop-shadow-[0_0_10px_rgba(59,130,246,0.8)] whitespace-nowrap">
-                    Super FURU AI <span className="text-white text-lg md:text-3xl ml-1 tracking-widest">4-koma System</span> <span className="text-lg md:text-3xl text-yellow-500 font-mono ml-2">{SYSTEM_VERSION}</span>
-                  </h1>
-                </div>
-                <div className="flex flex-col md:flex-row items-center justify-center gap-3 mt-2">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.4em]">
-                    Social Satire Engine [ 演出強化版 ]
-                  </p>
-                  {/* [v2.48] API認証状態バッジ - タイトル枠内に常時表示 */}
-                  <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[10px] font-black tracking-wider ${apiKey ? (selectedEngine === 'openai' ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-400' : 'bg-green-500/15 border-green-500/40 text-green-400') : 'bg-red-500/15 border-red-500/40 text-red-400 animate-pulse'}`}>
-                    <span className={`w-1.5 h-1.5 rounded-full ${apiKey ? (selectedEngine === 'openai' ? 'bg-emerald-400 shadow-[0_0_6px_rgba(16,185,129,0.8)]' : 'bg-green-400 shadow-[0_0_6px_rgba(74,222,128,0.8)]') : 'bg-red-400'}`} />
-                    {apiKey ? (selectedEngine === 'openai' ? '✅ ChatGPT Engine' : '✅ Gemini Engine') : '⚠ 未接続'}
-                  </div>
-                  {/* [v3.59] ソフトリセットボタン: キャラ保持 + シナリオ以降リセット */}
-                  {apiKey && (
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={partialReset}
-                        className="flex items-center gap-1.5 bg-white/5 hover:bg-white/10 text-slate-300 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors border border-white/10"
-                        title="キャラクター解析を保持したまま、シナリオ・プロンプト・画像をリセットします"
-                      >
-                        <RefreshCw size={12} /> シナリオから再生成
-                      </button>
-                      <button
-                        onClick={hardReset}
-                        className="flex items-center gap-1.5 bg-red-950/50 hover:bg-red-900/60 text-red-300 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors border border-red-500/20"
-                        title="全データを消去してAPIキーの再入力画面に戻ります（エンジン切替もこちら）"
-                      >
-                        <LogOut size={12} /> エンジン変更・全リセット
-                      </button>
-                    </div>
-                  )}
-                </div>
-                {/* [v1.7.0] Model Quality Badge */}
-                {usedModel && (() => {
-                  const info = getModelBadgeInfo(usedModel);
-                  if (!info) return null;
-                  return (
-                    <div className={`mt-3 inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-white/10 ${info.color} shadow-lg animate-in fade-in slide-in-from-top-2 cursor-help group/badge relative`}>
-                      <span className="text-[10px] font-black uppercase tracking-widest">{info.label}</span>
-                      <span className="w-[1px] h-3 bg-white/40" />
-                      <span className="text-[10px] font-bold truncate max-w-[150px] md:max-w-none">{info.desc}</span>
-
-                      {/* Tooltip for Explanation */}
-                      <div className="absolute left-0 top-full mt-2 w-64 p-3 bg-[#0f1115] border border-white/20 rounded-xl text-[10px] text-slate-300 z-50 invisible group-hover/badge:visible shadow-2xl backdrop-blur-xl">
-                        <p className="font-bold text-white mb-1 border-b border-white/10 pb-1">AIモデル品質情報</p>
-                        <p>現在 <span className="font-mono text-blue-300">{usedModel}</span> を使用中。</p>
-                        {info.tier === "Lite" && (
-                          <div className="mt-2 text-yellow-500 bg-yellow-500/10 p-2 rounded relative">
-                            <AlertTriangle size={10} className="absolute top-2 right-2" />
-                            <span className="font-bold block mb-1">⚠️ 品質制限モード</span>
-                            API制限(429)回避のため、軽量モデルを使用中。生成品質が低下する場合があります。上限解除までお待ちください。
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })()}
-              </div>
-            </div>
-          </div>
-        </header>
+        <SystemHeader
+          SYSTEM_VERSION={SYSTEM_VERSION}
+          apiKey={apiKey}
+          selectedEngine={selectedEngine}
+          partialReset={partialReset}
+          hardReset={hardReset}
+          usedModel={usedModel}
+          getModelBadgeInfo={getModelBadgeInfo}
+        />
 
 
 
@@ -1694,81 +1461,16 @@ The environment and effects must ECHO the character's emotion, not just be a bac
             />
           </div>
 
-          {/* 場所・服装設定プレビュー - STEP2以降のみ表示 */}
-          <div className={`bg-[#1a1625] border border-blue-500/30 p-4 pb-5 rounded-xl flex flex-col gap-3 text-xs font-mono shadow-inner transition-all duration-300
-            ${!scenario ? 'blur-[4px] opacity-30 grayscale pointer-events-none' : ''}
-          `}>
-            <span className="text-blue-400 font-bold border-b border-blue-500/20 pb-2 w-full flex items-center gap-2">
-              <Sparkles size={14} /> {bg360Image ? '背景・服装・オチ設定' : '場所・服装・オチ設定'} (GENERATION PREVIEW)
-            </span>
-            <p className="text-[10px] text-slate-400 leading-relaxed">
-              ※以下はシナリオ内の <code className="text-blue-300">Location:</code> / <code className="text-purple-300">Outfit:</code> / <code className="text-yellow-300">Punchline:</code> 行から自動取得されます。変更したい場合はシナリオ内の該当行を直接編集してください。
-            </p>
-            {(() => {
-              // [v2.43] シナリオテキストからリアルタイムで場所・服装を取得
-              const previewLocation = scenario?.match(/Location:\s*(.*?)(\n|$)/i)?.[1]?.trim() || '';
-              const previewOutfit = scenario?.match(/Outfit:\s*(.*?)(\n|$)/i)?.[1]?.trim() || '';
-              const previewPunchline = scenario?.match(/Punchline:\s*(.*?)(\n|$)/i)?.[1]?.trim() || '';
-              // [v3.48] 360度背景画像の有無で場所表示を動的切り替え
-              const has360Bg = !!bg360Image && !!bg360Analysis && bg360Enabled;
-              const locationLabel = has360Bg ? '背景 (Background)' : '場所 (Location)';
-              const locationValue = has360Bg
-                ? (previewLocation || bg360Analysis?.location || '360°画像')
-                : (previewLocation || (customLocation.trim() || "AIおまかせ"));
-              const locationBadge = has360Bg ? '画像解析' : (customLocation.trim() ? '手入力' : 'AIおまかせ');
-              const locationColor = has360Bg ? '#67e8f9' : (customLocation.trim() ? '#ffffff' : '#93c5fd');
-              const badgeBg = has360Bg ? 'rgba(6,182,212,0.3)' : (customLocation.trim() ? 'rgba(100,100,100,0.4)' : 'rgba(29,78,216,0.3)');
-              const badgeColor = has360Bg ? '#67e8f9' : (customLocation.trim() ? '#d1d5db' : '#93c5fd');
-              const badgeBorder = has360Bg ? 'rgba(6,182,212,0.4)' : (customLocation.trim() ? 'rgba(150,150,150,0.3)' : 'rgba(59,130,246,0.3)');
-              return (<>
-                <div className="text-gray-300" style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '6px' }}>
-                  {has360Bg ? <Globe size={12} className="text-cyan-400" /> : <Globe size={12} className="text-blue-400" />}
-                  <span>{locationLabel}:</span>
-                  <span style={{ fontWeight: 'bold', color: locationColor }}>
-                    {locationValue}
-                  </span>
-                  <span style={{
-                    marginLeft: '6px', padding: '2px 6px', borderRadius: '4px', fontSize: '9px', whiteSpace: 'nowrap',
-                    background: badgeBg,
-                    color: badgeColor,
-                    border: `1px solid ${badgeBorder}`
-                  }}>
-                    {locationBadge}
-                  </span>
-                </div>
-                <div className="text-gray-300" style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '6px' }}>
-                  <span className="text-green-400">👕</span>
-                  <span>服装 (Outfit):</span>
-                  <span style={{ fontWeight: 'bold', color: customOutfit.trim() ? '#ffffff' : '#93c5fd' }}>
-                    {previewOutfit || (customOutfit.trim() || "AIおまかせ")}
-                  </span>
-                  <span style={{
-                    marginLeft: '6px', padding: '2px 6px', borderRadius: '4px', fontSize: '9px', whiteSpace: 'nowrap',
-                    background: customOutfit.trim() ? 'rgba(100,100,100,0.4)' : 'rgba(29,78,216,0.3)',
-                    color: customOutfit.trim() ? '#d1d5db' : '#93c5fd',
-                    border: `1px solid ${customOutfit.trim() ? 'rgba(150,150,150,0.3)' : 'rgba(59,130,246,0.3)'}`
-                  }}>
-                    {customOutfit.trim() ? '手入力' : 'AIおまかせ'}
-                  </span>
-                </div>
-                <div className="text-gray-300" style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '6px', paddingBottom: '4px' }}>
-                  <span className="text-yellow-400">🎬</span>
-                  <span>オチ (Punchline):</span>
-                  <span style={{ fontWeight: 'bold', color: previewPunchline || punchlineType !== 'Auto' ? '#ffffff' : '#93c5fd' }}>
-                    {previewPunchline || (punchlineType === 'Auto' ? "AIおまかせ" : getPunchlineLabel(punchlineType))}
-                  </span>
-                  <span style={{
-                    marginLeft: '6px', padding: '2px 6px', borderRadius: '4px', fontSize: '9px', whiteSpace: 'nowrap',
-                    background: punchlineType !== 'Auto' ? 'rgba(100,100,100,0.4)' : 'rgba(29,78,216,0.3)',
-                    color: punchlineType !== 'Auto' ? '#d1d5db' : '#93c5fd',
-                    border: `1px solid ${punchlineType !== 'Auto' ? 'rgba(150,150,150,0.3)' : 'rgba(59,130,246,0.3)'}`
-                  }}>
-                    {punchlineType !== 'Auto' ? '強制指定' : 'AIおまかせ'}
-                  </span>
-                </div>
-              </>);
-            })()}
-          </div>
+          <GenerationPreview
+            scenario={scenario}
+            bg360Image={bg360Image}
+            bg360Analysis={bg360Analysis}
+            bg360Enabled={bg360Enabled}
+            customLocation={customLocation}
+            customOutfit={customOutfit}
+            punchlineType={punchlineType}
+            getPunchlineLabel={getPunchlineLabel}
+          />
 
           {/* 03: プロンプト生成 - Tailwind p-8等がJITで無視されるためインラインスタイルで適用 */}
             <Step3Panel
@@ -1841,68 +1543,18 @@ The environment and effects must ECHO the character's emotion, not just be a bac
               setGenerationHistory={setGenerationHistory}
             />
 
-            {/* [v2.86] 生成履歴ギャラリー (別セクション) */}
-            {generationHistory.length > 0 && (
-              <section className="relative bg-[#0a0c10] border border-white/10 rounded-2xl p-4 shadow-xl mt-6 mx-2 lg:mx-0">
-                {/* [v2.87] 生成中は履歴をロック（触れないようにする） */}
-                {(isSearching || isAssembling || isGeneratingImage || isEnhancing || (isFullAutoMode && fullAutoStep > 0 && fullAutoStep < 4)) && (
-                  <div style={{ position: 'absolute', inset: 0, zIndex: 10, backgroundColor: 'rgba(10,12,16,0.6)', backdropFilter: 'blur(2px)', pointerEvents: 'auto', borderRadius: '1rem' }} className="flex items-center justify-center">
-                    <span className="text-xs font-bold text-slate-400 bg-black/80 px-3 py-1 rounded-full border border-white/10 shadow-lg flex items-center gap-2">
-                      <Loader2 size={12} className="animate-spin" /> 生成中...
-                    </span>
-                  </div>
-                )}
-                <div className="flex items-center justify-between mb-4 border-b border-white/5 pb-2 relative z-0">
-                  <h4 className="text-slate-300 text-xs font-bold flex items-center gap-2">
-                    <ImageIcon size={14} className="text-blue-400" />
-                    生成履歴 ({generationHistory.length})
-                  </h4>
-                  <button
-                    onClick={() => {
-                      if(window.confirm('生成履歴をすべて削除しますか？')) {
-                        setGenerationHistory([]);
-                        setGeneratedImage("");
-                      }
-                    }}
-                    className="flex items-center gap-1 px-2 py-1 text-[10px] text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded transition-colors"
-                  >
-                    <Trash2 size={12} /> 全削除
-                  </button>
-                </div>
-                <div className="flex gap-3 overflow-x-auto custom-scrollbar pb-2 pt-1 px-1">
-                  {generationHistory.map((historyItem) => (
-                    <div
-                      key={historyItem.id}
-                      onClick={() => setGeneratedImage(historyItem.img)}
-                      style={{ width: '64px', height: '96px', flexShrink: 0 }}
-                      className={`relative rounded-md overflow-hidden cursor-pointer transition-all border-2 group ${
-                        generatedImage === historyItem.img 
-                          ? 'border-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.6)] scale-105 z-10' 
-                          : 'border-white/10 hover:border-white/30 opacity-70 hover:opacity-100'
-                      }`}
-                    >
-                      <img src={historyItem.img} className="w-full h-full object-cover" alt="History thumbnail" />
-                      {generatedImage === historyItem.img && (
-                        <div className="absolute top-1 right-1 bg-blue-500 text-white rounded-full p-0.5 shadow-lg">
-                          <Check size={10} strokeWidth={3} />
-                        </div>
-                      )}
-                      {/* 個別削除ボタン (Hover) */}
-                      <div 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setGenerationHistory(prev => prev.filter(h => h.id !== historyItem.id));
-                          if (generatedImage === historyItem.img) setGeneratedImage("");
-                        }}
-                        className="absolute top-1 left-1 bg-black/60 text-red-400 rounded-full p-1 opacity-0 group-hover:opacity-100 hover:bg-red-500 hover:text-white transition-all shadow-lg"
-                      >
-                        <Trash2 size={10} />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            )}
+            <GenerationHistory
+              generationHistory={generationHistory}
+              setGenerationHistory={setGenerationHistory}
+              generatedImage={generatedImage}
+              setGeneratedImage={setGeneratedImage}
+              isSearching={isSearching}
+              isAssembling={isAssembling}
+              isGeneratingImage={isGeneratingImage}
+              isEnhancing={isEnhancing}
+              isFullAutoMode={isFullAutoMode}
+              fullAutoStep={fullAutoStep}
+            />
           
           </main >
 
