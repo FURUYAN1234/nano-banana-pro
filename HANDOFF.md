@@ -1,8 +1,11 @@
-# HANDOFF.md (v4.0.2)
+# HANDOFF.md (v4.0.3)
 
 ## Current Status
-- **Local RAG UX Progress Indicator Added** (ローカルRAG進捗表示の追加)
-  - シナリオ生成開始時にローカルRAG（舞台設定や感情辞書）を読み込む際のローディング詳細表示（ ** onProgress ** ）を追加。
+- **Bug Fixes for Sensory Labels**: 五感ラベル（聴覚・触覚・嗅覚・体内感覚・視覚）およびメタタグによる誤認識バグ（Speech Bubble、アクターZONE、EMOTIONスタイル誤切替の合計4箇所）の修正完了。
+
+## Done (v4.0.3)
+- **Bug Fixes**: 吹き出しへの五感ラベル混入バグおよびアクターZONE・EMOTIONスタイル誤切替の修正。
+- **Version Sync**: ** package.json ** , ** constants.js ** , ** index.html ** , ** README.md ** , ** HANDOFF.md ** のバージョンを ** 4.0.3 ** に同期。
 
 ## Done (v4.0.2)
 - **Local RAG UX**: シナリオ生成開始時の進行状況表示の強化。
