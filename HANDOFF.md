@@ -2,22 +2,22 @@
 
 ## 現在のステータス (v4.0.7)
 - **Pending Verification** (検証待ち)
-- `prompts.js` における「白目オチ（`BLANK`）」の偏りを是正するためのプロンプト修正が完了し、Viteローカルサーバーで動作確認ができる状態です。
+- オチ感情の `BLANK`（白目）偏りの是正、および進捗ログのタイムスタンプ表示削除について、GitHub Pages へのデプロイおよび C:\nano-banana-pro-main への展開が完了し、検証待ちの状態です。
 
 ## 完了した項目 (Done)
-- [x] `prompts.js` のバックアップ作成（[temp_prompts_backup.js](file:///c:/Users/sx717/Antigravity/nano-banana-pro/src/lib/temp_prompts_backup.js) に退避済み）
-- [x] `prompts.js` の修正
-  - ズレ技法（誇張、緊張と緩和）マッピングにおける `BLANK` 推奨を `IMPACT` / `CHIBI_GAG` に変更・緩和
-  - 個別オチ（Surreal, Dream, Misunderstanding, CanceledEnding 等）での `BLANK` 優先順位を引き下げ、代替感情を追記
-  - コメディトーン「シュール静寂系」での `BLANK` 優先順位を引き下げ
-  - 感情タグ定義 `BLANK` への乱用防止警告の追加
-- [x] タスク管理ファイル `task.md` の更新
-- [x] 検証報告書 `walkthrough.md` の作成
+- [x] `prompts.js` 内の `BLANK` 優先度是正（Surreal, Dream, Misunderstanding, CanceledEnding オチ、および SurrealQuiet コメディトーン、BLANKタグ定義の修正）
+- [x] `Step4Panel.jsx` の進捗ログのタイムスタンプ削除
+- [x] バージョンアップ（v4.0.7）と各ファイル同期（package.json, constants.js, index.html, README.md, Hugging Face README.md）
+- [x] プロダクションビルドおよび GitHub Pages デプロイ (`npm run deploy`)
+- [x] Gitコミット・プッシュ、および GitHub リリース（v4.0.7）作成
+- [x] リリースZIPのダウンロード検証および `C:\nano-banana-pro-main` への差し替え
 
 ## 残タスク (Remaining Tasks)
-- [ ] ローカルサーバーでの再生成テストとオチの多様性確認（ユーザー検証）
-- [ ] 本番デプロイ前のセキュリティ監査とデプロイ（※ユーザーの承諾後に実施）
+- [ ] リモート環境およびローカル環境での動作検証
+  - リモートURL: https://furuyan1234.github.io/nano-banana-pro/ (またはクエリパラメータ付き https://furuyan1234.github.io/nano-banana-pro/?v=4.0.7)
+  - ローカルURL: http://localhost:5173/ (開発サーバー)
+- [ ] 動作結果（オチで白目が過剰に選ばれないこと、タイムスタンプが消えていること）の最終確認
 
 ## 検証状態 (Verification State)
-- ローカル開発サーバー: `http://localhost:5173/` が起動中。
-- ファイルの変更は Vite HMR により即座に反映されています。
+- デプロイ検証完了: リモートの gh-pages ブランチの index.html にて v4.0.7 の反映を確認済み。
+- Cドライブ差し替え完了: `C:\nano-banana-pro-main` が最新の v4.0.7 で更新されていることを確認済み。
