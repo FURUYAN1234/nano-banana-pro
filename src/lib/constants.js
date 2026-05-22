@@ -1,7 +1,7 @@
 // --- 定数・タグ定義 (constants.js) ---
 // App.jsx から抽出された共有定数
 
-export const SYSTEM_VERSION = "v4.0.5";
+export const SYSTEM_VERSION = "v4.0.6";
 
 // --- Punchline ラベル変換関数 ---
 export const getPunchlineLabel = (type) => {

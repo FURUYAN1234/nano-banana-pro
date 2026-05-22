@@ -102,8 +102,8 @@ The system continuously generates completely new manga infinitely until the user
 ユーザーが停止ボタンを押すまで、無限に新しい漫画を生成し続ける機能です。トレンド取得と画像生成のループを全自動で延々と回します。
 
 ### 🧠 Local RAG Dictionary / 自律型ローカルRAG辞書
-Integrates a strictly structured local knowledge base (`knowledge.js`) that dynamically extracts location-specific props, ambient details, and emotion-based physical reactions. The location dictionary has been massively expanded to 61 unique and chaotic environments (including microscopic worlds and alternate dimensions). This RAG (Retrieval-Augmented Generation) pipeline forces the AI to use concrete objects instead of vague descriptions, drastically improving narrative resolution.
-あらかじめ構築されたローカルRAG辞書（`knowledge.js`）を内蔵。設定された場所（Location）特有の小道具や環境情報、キャラクターの感情に合わせた物理的なリアクションを動的に抽出し、プロンプトへ強制注入します。バージョン4.0.5でロケーション辞書が61箇所へと超絶拡張され、「電子基板のミクロ世界」や「異次元の幾何学空間」などカオスな舞台設定が可能になりました。これにより、AI特有の「抽象的でフワッとした描写」を排除し、ディテールに富んだ高品質なシナリオを生成します。
+Integrates a strictly structured local knowledge base (`knowledge.js`) that dynamically extracts location-specific props, ambient details, and emotion-based physical reactions. The location dictionary has been massively expanded to over 100 unique and chaotic environments (including microscopic worlds and alternate dimensions). This RAG (Retrieval-Augmented Generation) pipeline forces the AI to use concrete objects instead of vague descriptions, drastically improving narrative resolution.
+あらかじめ構築されたローカルRAG辞書（`knowledge.js`）を内蔵。設定された場所（Location）特有の小道具や環境情報、キャラクターの感情に合わせた物理的なリアクションを動的に抽出し、プロンプトへ強制注入します。バージョン4.0.5でロケーション辞書が101箇所へと超絶拡張され、「電子基板のミクロ世界」や「異次元の幾何学空間」などカオスな舞台設定が可能になりました。これにより、AI特有の「抽象的でフワッとした描写」を排除し、ディテールに富んだ高品質なシナリオを生成します。
 
 An experimental feature that, upon completing a generation, automatically selects a new topic and continuously produces new manga while preserving the initial character settings.\nフルオート生成完了後、キャラクター設定を維持したまま、自動的に新しいニュースやランダムなお題を取得し、次々と新しいシナリオと漫画を延々と生成し続けるモードです（完全な放置運用が可能）。\n\n### 🎬 Scenario Enhancement / シナリオ演出強化
 
@@ -115,10 +115,24 @@ Users can amplify the AI's script direction with specific enhancement toggles (e
 A UI-based control that lets users manually select the comedic direction of the 4th-panel punchline — or leave it to AI. When set to a specific type, the selection is injected as a hard constraint into the scenario prompt, **overriding AI's natural tendency** to always pick the "safest" joke.
 UIからオチ（4コマ目）の方向性を手動で選択できるコントロールです。「Auto（AIおまかせ）」のほか、11種類の具体的なオチパターン（爆発型 / 静寂型 / 感動詐欺 / 天丼 / 夢オチ / サイコホラー / 打ち切りエンド / ドキュメンタリー 等）から指定可能。選択されたオチは **JavaScriptが決定し、AIへの強制指示としてプロンプトに注入** されるため、AIが「無難な選択肢」に逃げることを許しません。
 
-* **Auto Mode / おまかせモード**: AI picks the best punchline type for the scenario. This is the default. / AIがシナリオに最適なオチを自律選択します。デフォルト設定です。
+* **Auto Mode / おまかせモード**: AI picks the best punchline type for the scenario, now enhanced with a deterministic random selection from 10 comedic punchline models to guarantee maximum story variety. This is the default. / AIがシナリオに最適なオチを自律選択します。バージョン4.0.6以降、オチの偏りを防ぐためにJavaScript側で10種類のオチパターンから決定論的にランダム選定してAIに注入するため、ネタの多様性が保証されます。デフォルト設定です。
 * **Forced Mode / 強制指定モード**: Human selects a specific punchline type (e.g., "Dream" or "PsychoHorror"). The AI is given no choice. / 人間が特定のオチを選択。AIに選択の余地はありません。
 * **Documentary Mode / ドキュメンタリーモード**: A special punchline mode that faithfully visualizes serious news. Includes a built-in "3-Tier Hybrid Content Sanitizer" that performs semantic replacement on critical WMD/terrorism triggers and masks secondary crime triggers with "●", allowing sensitive real-world topics to bypass AI safety filters without losing narrative meaning. / シリアスなニュースを原文の温度感に忠実なまま漫画化するための特殊設定です。AIの安全検閲を突破するため「3層ハイブリッド・コンテンツサニタイザー」を内蔵しており、核兵器やテロといった即死級のセンシティブワードを「完全な意味置換」や「●伏せ字」に自動変換し、元記事の文脈を保ったまま画像生成を成功に導きます。
 * **Browser UI Integration / ブラウザUI連携**: The selected punchline type is embedded in the scenario output header (`Punchline: 爆発型`), so if you choose to use the manual "Browser UI Option" to save API costs, copying the scenario to ChatGPT or Gemini automatically carries the comedic intent. / 選択されたオチの種類はシナリオ出力ヘッダーに埋め込まれ、APIを使わずに手動でChatGPTやGeminiのWeb画面にコピペする際にも意図が自動的に伝わります。
+
+### 🎭 Comedy Tone Engine (v4.0.6+) / コメディトーン・エンジン
+
+To break the monotony of generated scripts, the system now features a comedy tone controller that dynamically influences the narrative style and execution of jokes. It randomly selects or enforces one of three distinct comedic registers:
+
+- ** HighTension (ハイテンション爆発系) **: Characters scream, overreact, and spiral out of control. Best for chaotic and high-energy setups.
+- ** SurrealQuiet (シュール静寂系) **: Characters maintain deadpan expressions and cold reactions in bizarre situations, relying on awkward pauses and weird silence.
+- ** IntellectualBlack (知性派ブラック系) **: Adds modern satire, dark humor, and sharp irony. The humor arises from subtle, underlying madness.
+
+AIが生成するストーリーのノリが一パターンになるのを防ぐため、物語のトーンとギャグの表現スタイルを動的に操作するコメディトーン・エンジンを搭載しています。システムが以下の3つのトーンから自動的にランダム選定し、AIへ指示します。
+
+- ** HighTension (ハイテンション爆発系) **: キャラクターが叫び、オーバーリアクションをし、感情的に限界突破して暴走します。勢いとカオスで笑いを誘う設定です。
+- ** SurrealQuiet (シュール静寂系) **: 狂った状況下でもキャラクターはあえて無表情・真顔を貫き、淡々とした温度感の低いリアクションや奇妙な「間」でシュールな笑いを演出します。
+- ** IntellectualBlack (知性派ブラック系) **: 現代社会の風刺や痛烈な皮肉、ダブルミーニングを散りばめ、「よく考えると恐ろしい事実や狂気」が浮かび上がる知的な笑いを構築します。
 
 ### 🤖 ChatGPT Images 2.0 Anti-Noise Protocol / OpenAI特有ノイズ除去プロトコル
 
@@ -915,8 +929,15 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v4.0.6 (2026-05-23)
+- ** [Feature] ** コメディトーン（ハイテンション爆発系、シュール静寂系、知性派ブラック系）の演出指示を JavaScript 側で自動ランダムまたは指定可能に拡張 / Extended comedy tone registers (HighTension, SurrealQuiet, IntellectualBlack) to be dynamically randomized or specified via JavaScript constraints
+- ** [Feature] ** オチ（Punchline）タイプが「Auto」の場合の決定論的ランダム選定ロジックを導入し、コメディの偏りを防止 / Introduced deterministic random selection for "Auto" punchline mode from 10 comedy models to prevent narrative monotony
+- ** [Fix] ** シナリオのセリフ内言及バグを修正（「ダミー話者」がセリフ内に紛れ込む挙動や、全角括弧による吹き出しパース不全を完全に防止） / Fixed script speaker parser bugs that caused dummy speakers or full-width quotes to disrupt comic bubble rendering
+- ** [Fix] ** キャラクターの服装 weights 設定（ `[WEIGHTS]` ）が衣装指定と衝突するのを防ぐため、`activeOutfit` 適用時は服装 weights を正しく除外するようにパースロジックを修正 / Fixed a bug where character outfit weights collided with custom outfit selection by ensuring weights are stripped when activeOutfit is set
+- ** [Fix] ** 大文字で出力される漫符（EMOTION）のハルシネーションが発生しても、安定してフォールバックできるよう正規化ロジックを強化 / Hardened emotion parser to safely normalize uppercase emotion style hallucinations
+
 ### v4.0.5 (2026-05-22)
-- **[Feature]** Local RAG の Location 辞書を 61 箇所に超絶拡張（異次元空間やミクロ世界などカオスな舞台を追加） / Massively expanded the Local RAG Location dictionary to 61 unique environments (including alternate dimensions and microscopic worlds)
+- **[Feature]** Local RAG の Location 辞書を 101 箇所に超絶拡張（異次元空間やミクロ世界などカオスな舞台を追加） / Massively expanded the Local RAG Location dictionary to 101 unique environments (including alternate dimensions and microscopic worlds)
 - **[Fix]** UI下部の生成履歴ギャラリーが二重に表示されるコンポーネント重複バグを修正 / Fixed a UI bug where the generation history gallery was duplicated due to redundant components
 
 ### v4.0.4 (2026-05-22)

@@ -1,7 +1,20 @@
-# HANDOFF.md (v4.0.5)
+# HANDOFF.md (v4.0.6)
 
 ## Current Status
-- **Bug Fixes for Sensory Labels**: 五感ラベル（聴覚・触覚・嗅覚・体内感覚・視覚）およびメタタグによる誤認識バグ（Speech Bubble、アクターZONE、EMOTIONスタイル誤切替の合計4箇所）の修正完了。
+- **Release Ready**: v4.0.6 リリース準備完了。
+
+## 監査ステータス (Meta-Audit Verification)
+- **Status**: `[x] Verified` | `[ ] Pending Verification (Executor -> Inspector)`
+- **Executor (実行担当)**: Antigravity / 2026-05-23
+- **Inspector (検証担当)**: Antigravity / 2026-05-23
+
+## Done (v4.0.6)
+- **Feature**: コメディトーン（ハイテンション爆発系、シュール静寂系、知性派ブラック系）の演出指示を JavaScript 側で自動ランダムまたは指定可能に拡張。
+- **Feature**: オチ（Punchline）タイプが「Auto」の場合の決定論的ランダム選定ロジックを導入し、コメディの偏りを防止。
+- **Bug Fix**: シナリオのセリフ内言及バグを修正（「ダミー話者」がセリフ内に紛れ込む挙動や、全角括弧による吹き出しパース不全を完全に防止）。
+- **Bug Fix**: キャラクターの服装 weights 設定（ `[WEIGHTS]` ）がカスタム衣装指定と衝突するのを防ぐため、`activeOutfit` 適用時は服装 weights を正しく除外するようにパースロジックを修正。
+- **Bug Fix**: 大文字で出力される漫符（EMOTION）のハルシネーションが発生しても、安定してフォールバックできるよう正規化ロジックを強化。
+- **Version Sync**: ** package.json ** , ** constants.js ** , ** index.html ** , ** README.md ** , ** HANDOFF.md ** のバージョンを ** 4.0.6 ** に同期。
 
 ## Done (v4.0.5)
 - **Feature**: 作風json（Story Maker生成）のドラッグ＆ドロップ適用機能を追加。UIに適用状況を表示し、シナリオ生成・画像生成プロンプトに全体的なアートディレクションとして適用。

@@ -166,13 +166,20 @@ export const extractDialogueOnly = (fullPanelText, castList) => {
   // Extract valid characters from castList to prevent action instructions being misidentified as speakers
   const validCharacters = [];
   castList.split('\n').forEach(cLine => {
-    const m = cLine.replace(/\*\*/g, '').trim().match(/^##\s*(?:\d+\.\s*)?(.*)/);
+    const cleanLine = cLine.replace(/\*\*/g, '').trim();
+    // Pattern 1: ## 1. アカリ
+    let m = cleanLine.match(/^##\s*(?:\d+\.\s*)?(.*)/);
+    // Pattern 2: - Character [アカリ]:
+    if (!m) {
+      const m2 = cleanLine.match(/^-?\s*Character\s*\[(.*?)\]/i);
+      if (m2) m = m2;
+    }
     if (m) {
-      const fullName = m[1].trim();
+      const fullName = m[1].split(':')[0].trim(); // Remove trailing colon if any
       validCharacters.push(fullName);
-      const jpName = fullName.split(/[\(]/)[0].trim();
+      const jpName = fullName.split(/[\(（]/)[0].trim();
       if (jpName && jpName !== fullName) validCharacters.push(jpName);
-      const romajiMatch = fullName.match(/[\(]\s*(.*?)\s*[\)]/);
+      const romajiMatch = fullName.match(/[\(（]\s*(.*?)\s*[\)）]/);
       if (romajiMatch) validCharacters.push(romajiMatch[1].trim());
     }
   });
@@ -193,7 +200,8 @@ export const extractDialogueOnly = (fullPanelText, castList) => {
 
       // [v2.31] 話者名バリデーション強化: ト書き誤検出防止
       // 「サエコが、売店のカウンターに」のような文章が話者名として誤検出されるのを防ぐ
-      const hasSentenceParticles = /[がをにでへはもとからまでより]/.test(tempSpeakerBase) && tempSpeakerBase.length > 5;
+      const hasSentenceParticles = /(?:が|を|に|で|へ|は|も|と|から|まで|より)/.test(tempSpeakerBase) && tempSpeakerBase.length > 5;
+      const endsWithParticle = /(?:が|を|に|で|へ|は|も|と|から|まで|より)$/.test(tempSpeakerBase);
       const isTooLong = tempSpeakerBase.length > 20; // 複数人「アカリ・ヒカリ・ミク・リン」を許容するため長めに変更
       const isMetaTag = /^(Camera|Location|Outfit|EMOTION|状況|Action|リアクション|Reaction|設定|物理描写|SFX|効果音|BGM|ナレーション|テロップ|聴覚|触覚|嗅覚|体内感覚|視覚)$/i.test(tempSpeakerBase);
       // [v2.45] 効果音パターン検出: 同じ文字(長音含む)の繰り返しは効果音（シーーーン、ゴゴゴ等）
@@ -201,7 +209,7 @@ export const extractDialogueOnly = (fullPanelText, castList) => {
       // [v2.45] リアクション指示混入検出: 「（リアクション」等が話者名に含まれていたら除外
       const hasReactionTag = /[（(]\s*リアクション/i.test(match[1]);
 
-      if (hasSentenceParticles || isTooLong || isMetaTag || isSoundEffect || hasReactionTag) {
+      if (hasSentenceParticles || endsWithParticle || isTooLong || isMetaTag || isSoundEffect || hasReactionTag) {
         // 文章構造・メタタグ・効果音・リアクション指示を含む → 話者名ではない
       } else if (validCharacters.some(c => {
         const nameOnly = c.split(/[（(]/)[0].trim();
@@ -267,6 +275,30 @@ export const extractDialogueOnly = (fullPanelText, castList) => {
   return formattedBubbles.join(', ');
 };
 
+export const cleanseActionGagSymbols = (actionText) => {
+  if (!actionText) return actionText;
+  
+  const gagSymbols = {
+    'POPPING VEIN': 'a cartoon popping vein symbol (symbolic representation only, do NOT draw the letters "POPPING VEIN" or any text)',
+    'POPPING VEINS': 'cartoon popping vein symbols (symbolic representation only, do NOT draw the letters "POPPING VEINS" or any text)',
+    'LARGE SWEAT DROP': 'a cartoon sweat drop symbol on the head (symbolic representation only, do NOT draw the letters "LARGE SWEAT DROP" or any text)',
+    'LARGE SWEAT DROPS': 'cartoon sweat drop symbols (symbolic representation only, do NOT draw the letters "LARGE SWEAT DROPS" or any text)',
+    'SWEAT DROP': 'a cartoon sweat drop symbol (symbolic representation only, do NOT draw the letters "SWEAT DROP" or any text)',
+    'SWEAT DROPS': 'cartoon sweat drop symbols (symbolic representation only, do NOT draw the letters "SWEAT DROPS" or any text)',
+    'ANGER MARK': 'a cartoon anger mark (symbolic representation only, do NOT draw the letters "ANGER MARK" or any text)',
+    'ANGER MARKS': 'cartoon anger marks (symbolic representation order, do NOT draw the letters "ANGER MARKS" or any text)',
+    'SHOCK LINES': 'cartoon shock lines (symbolic representation only, do NOT draw the letters "SHOCK LINES" or any text)',
+    'SPEED LINES': 'dynamic speed lines (symbolic representation only, do NOT draw the letters "SPEED LINES" or any text)'
+  };
+  
+  let cleansed = actionText;
+  for (const [key, replacement] of Object.entries(gagSymbols)) {
+    const regex = new RegExp(`\\b${key}\\b`, 'gi');
+    cleansed = cleansed.replace(regex, replacement);
+  }
+  return cleansed;
+};
+
 export const extractActionOnly = (fullPanelText, castList, placementRule = "") => {
   const lines = fullPanelText.split('\n');
 
@@ -276,9 +308,9 @@ export const extractActionOnly = (fullPanelText, castList, placementRule = "") =
     if (m) {
       const fullName = m[1].trim();
       validCharacters.push(fullName);
-      const jpName = fullName.split(/[\(]/)[0].trim();
+      const jpName = fullName.split(/[\(（]/)[0].trim();
       if (jpName && jpName !== fullName) validCharacters.push(jpName);
-      const romajiMatch = fullName.match(/[\(]\s*(.*?)\s*[\)]/);
+      const romajiMatch = fullName.match(/[\(（]\s*(.*?)\s*[\)）]/);
       if (romajiMatch) validCharacters.push(romajiMatch[1].trim());
     }
   });
@@ -336,7 +368,7 @@ export const extractActionOnly = (fullPanelText, castList, placementRule = "") =
     });
   }
 
-  return actionStr;
+  return cleanseActionGagSymbols(actionStr);
 };
 
 export const injectOutfitReminder = (actionText, activeOutfit) => {
@@ -349,21 +381,35 @@ export const extractPlacementRule = (fullPanelText, castList) => {
   // [v2.28] EMOTIONタグ行・状況行をフィルタリングしてスピーカー抽出の汚染を防止
   const dialogLines = lines.filter(line => {
     const trimmed = line.trim();
-    // EMOTIONタグ行を除外
     if (/^\[EMOTION:/i.test(trimmed)) return false;
-    // 状況説明行を除外
     if (/^状況[：:]/i.test(trimmed)) return false;
     return trimmed.includes('：') || trimmed.includes(':') || trimmed.includes('「');
   });
-  // [v2.31] キャラ名バリデーション用リスト
+
+  // キャラ名バリデーション用リストと名寄せマップ
   const validCharsForPlacement = [];
+  const charLookup = {};
   castList.split('\n').forEach(cLine => {
     const m = cLine.replace(/\*\*/g, '').trim().match(/^##\s*(?:\d+\.\s*)?(.*)/);
     if (m) {
       const fullName = m[1].trim();
-      validCharsForPlacement.push(fullName);
-      const jpName = fullName.split(/[（(]/)[0].trim();
-      if (jpName && jpName !== fullName) validCharsForPlacement.push(jpName);
+      const nameOnly = fullName.split(/[（(]/)[0].trim();
+      if (nameOnly) {
+        if (!validCharsForPlacement.includes(nameOnly)) {
+          validCharsForPlacement.push(nameOnly);
+        }
+        charLookup[nameOnly] = nameOnly;
+        
+        // ローマ字名対応
+        const romajiMatch = fullName.match(/[\(（]\s*(.*?)\s*[\)）]/);
+        if (romajiMatch) {
+          const romaji = romajiMatch[1].trim();
+          if (!validCharsForPlacement.includes(romaji)) {
+            validCharsForPlacement.push(romaji);
+          }
+          charLookup[romaji] = nameOnly;
+        }
+      }
     }
   });
 
@@ -371,27 +417,27 @@ export const extractPlacementRule = (fullPanelText, castList) => {
   dialogLines.forEach(line => {
     const match = line.match(/^(.*?)(?:[:：]|「)/);
     if (match && match[1].trim()) {
-      let speaker = match[1].replace(/^(SFX|効果音|BGM|Action|状況|EMOTION|\(.*?\)|\[.*?\])/gi, '').replace(/^[【\[（(]/, '').replace(/[】\]）)]$/, '').trim();
-      // [v2.31] ト書き誤検出防止: 助詞を含む長文は話者名ではない
+      let speaker = match[1].replace(/^(SFX|効果音|BGM|Action|状況|EMOTION|[\(（].*?[\)）]|\[.*?\])/gi, '').replace(/^[【\[（(]/, '').replace(/[】\]）)]$/, '').trim();
       const hasSentenceParticles = /[がをにでへはもとからまでより]/.test(speaker) && speaker.length > 5;
       const isTooLong = speaker.length > 12;
       const isMetaTag = /^(Camera|Location|Outfit|EMOTION|状況|Action|リアクション|Reaction|設定|聴覚|触覚|嗅覚|体内感覚|視覚|物理描写|SFX|効果音|BGM|ナレーション|テロップ)$/i.test(speaker);
-      // [v2.45] 効果音パターン検出
       const isSoundEffect = /^[^a-zA-Z]*([\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF])([ーッっ]*\1){1,}[ーッっ！!ン]*$/u.test(speaker.replace(/[（(].*$/, '').trim());
       const hasReactionTag = /[（(]\s*リアクション/i.test(match[1]);
-      if (hasSentenceParticles || isTooLong || isMetaTag || isSoundEffect || hasReactionTag) return;
-      // EMOTIONやスタイルタグ残骸をフィルタ
-      if (speaker && !speakers.includes(speaker) && !/^(EMOTION|NORMAL|CHIBI_GAG|GEKIGA|SHOUJO|HORROR|BLANK|IMPACT|WATERCOLOR|RETRO|GLITTER|SHADOW|SPEED|FLASHBACK|UKIYOE|POP_ART|SKETCH|NEON|THICK_PAINT|PASTEL|CEL|DARK_ANIME|THIN_LINE|HIGH_SATURATION)$/i.test(speaker)) {
-        // [v2.31] キャラ名バリデーション: 登録キャラ名と一致する場合、またはコロンで明示的に話者として指定されている場合は認定
-        if (validCharsForPlacement.some(c => {
-          const nameOnly = c.split(/[（(]/)[0].trim();
-          return speaker === c || speaker === nameOnly || nameOnly === speaker;
-        }) || match[0].trim().endsWith(':') || match[0].trim().endsWith('：')) {
-          speakers.push(speaker);
+      const isDummySpeaker = /^(全員|みんな|Speaker)$/i.test(speaker);
+      if (hasSentenceParticles || isTooLong || isMetaTag || isSoundEffect || hasReactionTag || isDummySpeaker) return;
+      if (speaker && !/^(EMOTION|NORMAL|CHIBI_GAG|GEKIGA|SHOUJO|HORROR|BLANK|IMPACT|WATERCOLOR|RETRO|GLITTER|SHADOW|SPEED|FLASHBACK|UKIYOE|POP_ART|SKETCH|NEON|THICK_PAINT|PASTEL|CEL|DARK_ANIME|THIN_LINE|HIGH_SATURATION)$/i.test(speaker)) {
+        // キャラ名判定と名寄せ
+        const matchedChar = validCharsForPlacement.find(c => speaker === c || speaker.includes(c) || c.includes(speaker));
+        if (matchedChar || match[0].trim().endsWith(':') || match[0].trim().endsWith('：')) {
+          const canonicalName = matchedChar ? charLookup[matchedChar] : speaker;
+          if (!speakers.includes(canonicalName)) {
+            speakers.push(canonicalName);
+          }
         }
       }
     }
   });
+
   if (speakers.length >= 3) {
     // [v2.33] 3-Zone Slotting: 3人以上の掛け合いパネル対応
     const traits0 = getCharTraitsFromMatrix(speakers[0], castList);
@@ -438,6 +484,7 @@ export const extractCastLimitRule = (fullPanelText, castList) => {
   const lines = fullPanelText.split('\n');
 
   // Find valid cast names and create a lookup for full character objects
+  // 日本語名とローマ字名両方に対応できるようにする
   const validCharacters = [];
   const charLookup = {};
   castList.split('\n').forEach(cLine => {
@@ -446,8 +493,20 @@ export const extractCastLimitRule = (fullPanelText, castList) => {
       const fullCharName = m[1].trim();
       const nameOnly = fullCharName.split('(')[0].trim().split('（')[0].trim();
       if (nameOnly) {
-        validCharacters.push(nameOnly);
+        if (!validCharacters.includes(nameOnly)) {
+          validCharacters.push(nameOnly);
+        }
         charLookup[nameOnly] = { name: nameOnly, full: fullCharName };
+        
+        // ローマ字名も名寄せ登録
+        const romajiMatch = fullCharName.match(/[\(（]\s*(.*?)\s*[\)）]/);
+        if (romajiMatch) {
+          const romaji = romajiMatch[1].trim();
+          if (!validCharacters.includes(romaji)) {
+            validCharacters.push(romaji);
+          }
+          charLookup[romaji] = { name: nameOnly, full: fullCharName };
+        }
       }
     }
   });
@@ -457,28 +516,65 @@ export const extractCastLimitRule = (fullPanelText, castList) => {
   lines.forEach(line => {
     const match = line.match(/^(.*?)(?:[:：]|「)/);
     if (match && match[1].trim()) {
-      let speaker = match[1].replace(/^(SFX|効果音|BGM|Action|状況|\(.*?\))/gi, '').replace(/^[【\[（(]/, '').replace(/[】\]）)]$/, '').trim();
-      if (speaker && !speakers.includes(speaker) && validCharacters.includes(speaker)) {
-        speakers.push(speaker);
+      let speaker = match[1].replace(/^(SFX|効果音|BGM|Action|状況|[\(（].*?[\)）])/gi, '').replace(/^[【\[（(]/, '').replace(/[】\]）)]$/, '').trim();
+      if (speaker) {
+        if (speaker === "全員" || speaker === "Speaker") return;
+        const matchedChar = validCharacters.find(c => speaker === c || speaker.includes(c) || c.includes(speaker));
+        if (matchedChar) {
+          const canonicalName = charLookup[matchedChar].name;
+          if (!speakers.includes(canonicalName)) {
+            speakers.push(canonicalName);
+          }
+        }
       }
     }
   });
 
-  // [v2.30] Visual Action テキストからも登場キャラ名を検出
+  // [v3.95] セリフ行以外のテキストを抽出して登場人物を検出する (セリフ内言及によるキャラ誤認バグの完全排除)
+  const actionAndMetaLines = [];
+  lines.forEach(line => {
+    const match = line.match(/^(.*?)(?:[:：]|「)/);
+    let isDialogue = false;
+    if (match && match[1].trim()) {
+      let tempSpeaker = match[1].replace(/^(SFX|効果音|BGM|Action)/i, '').trim();
+      tempSpeaker = tempSpeaker.replace(/^[【\[（(]/, '').replace(/[】\]）)]$/, '').trim();
+      const hasSentenceParticles = /[がをにでへはもとからまでより]/.test(tempSpeaker) && tempSpeaker.length > 5;
+      const isTooLong = tempSpeaker.length > 12;
+      const isMetaTag = /^(Camera|Location|Outfit|EMOTION|状況|Action|リアクション|Reaction|設定|聴覚|触覚|嗅覚|体内感覚|視覚|物理描写|SFX|効果音|BGM|ナレーション|テロップ)$/i.test(tempSpeaker);
+      const isSoundEffect = /^[^a-zA-Z]*([\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF])([ーッっ]*\1){1,}[ーッっ！!ン]*$/u.test(tempSpeaker.replace(/[（(].*$/, '').trim());
+      const hasReactionTag = /[（(]\s*リアクション/i.test(match[1]);
+      
+      if (hasSentenceParticles || isTooLong || isMetaTag || isSoundEffect || hasReactionTag) {
+        // メタタグ等
+      } else if (validCharacters.some(c => tempSpeaker.includes(c) || c.includes(tempSpeaker)) || tempSpeaker === "全員" || tempSpeaker === "Speaker" || match[0].trim().endsWith(':') || match[0].trim().endsWith('：')) {
+        isDialogue = true;
+      }
+    } else if (line.trim().startsWith('「')) {
+      const trimmedLine = line.trim();
+      const isFullQuoteLine = /^「[^」]+」[？！。、!?\s]*$/.test(trimmedLine);
+      if (isFullQuoteLine) {
+        isDialogue = true;
+      }
+    }
+    if (!isDialogue) {
+      actionAndMetaLines.push(line);
+    }
+  });
+  const actionAndMetaText = actionAndMetaLines.join('\n');
+
+  // Visual Action テキストからも登場キャラ名を検出
   const allPanelCharacters = [...speakers];
-  const fullText = fullPanelText;
   validCharacters.forEach(charName => {
-    if (!allPanelCharacters.includes(charName) && fullText.includes(charName)) {
-      allPanelCharacters.push(charName);
+    const canonicalName = charLookup[charName].name;
+    if (!allPanelCharacters.includes(canonicalName) && actionAndMetaText.includes(charName)) {
+      allPanelCharacters.push(canonicalName);
     }
   });
 
-  // [v2.31] 吹き出し数カウント: セリフ行（「」付き）の数を数えて
-  // ソロショット判定の矛盾を防ぐ
+  // 吹き出し数カウント: セリフ行（「」付き）の数を数えてソロショット判定の矛盾を防ぐ
   let dialogueLineCount = 0;
   lines.forEach(line => {
     const trimmed = line.trim();
-    // 「」で囲まれたセリフ、または「話者：セリフ」形式をカウント
     if (trimmed.includes('「') && trimmed.includes('」')) {
       dialogueLineCount++;
     } else if (/^[^（(【\[]*?[:：]\s*「/.test(trimmed)) {
@@ -486,42 +582,48 @@ export const extractCastLimitRule = (fullPanelText, castList) => {
     }
   });
 
-  // [v2.33] 3人掛け合い対応: スピーカー最大3名をメインアクターとして登録
+  // スピーカー最大3名をメインアクターとして登録
   const panelActors = speakers.slice(0, 3).map(s => `[${s}]`);
 
-  // [v2.69] 背景キャスト統合: SOLO SHOTとMANDATORY BACKGROUND CASTの矛盾を解消
-  // 背景キャストがいる場合は先にallPanelCharactersへ統合し、SOLO SHOTを出さない
-  const otherCast = validCharacters.filter(c => !allPanelCharacters.includes(c));
-  if (otherCast.length > 0) {
-    // 背景キャストが存在 → 全員をallPanelCharactersに統合（SOLO SHOTは発行しない）
-    otherCast.forEach(c => {
-      if (!allPanelCharacters.includes(c)) allPanelCharacters.push(c);
-    });
-  }
+  // [v2.69] 背景キャスト統合ロジックを完全廃止 (No-Show 除外指示への置換)
+  // このコマに一切登場しないキャラ（No-Show）を特定
+  const canonicalValidCharacters = [...new Set(Object.values(charLookup).map(obj => obj.name))];
+  const noShowCharacters = canonicalValidCharacters.filter(c => !allPanelCharacters.includes(c));
 
   const allCharBrackets = allPanelCharacters.map(c => `[${c}]`);
 
   if (panelActors.length > 0) {
     let cloneWarning = `ANTI-CLONE REMINDER: ${allCharBrackets.join(', ')} — each appears EXACTLY ONCE. If a character is mentioned in both the placement rule AND the visual action, they are the SAME person — do NOT draw a second copy.`;
-    // [v2.69] ソロショット判定の改善:
-    // 本当にキャスト全体で1人（背景キャスト統合後でも1人）の場合のみSOLO SHOTを出す
-    // 背景キャストがいた場合はallPanelCharactersに既に統合済みなのでlength > 1になる
+    
     if (allPanelCharacters.length === 1 && dialogueLineCount <= 1) {
       cloneWarning += `\nSOLO SHOT (SINGLE CHARACTER SCENE): Since only ${allCharBrackets[0]} is listed, THIS IS A SOLO SHOT. Do NOT draw ANY other person. Do NOT draw a second copy of ${allCharBrackets[0]}. Leave the surrounding space empty rather than adding people.`;
     } else if (allPanelCharacters.length === 1 && dialogueLineCount >= 2) {
-      // 検出キャラ1人だが吹き出し2つ → 独白として扱う（ソロショットにはしない）
       cloneWarning += `\nNOTE: Multiple speech bubbles in this panel are ALL spoken by ${allCharBrackets[0]} (monologue/soliloquy). Draw only ${allCharBrackets[0]} — do NOT add a second character just because there are multiple bubbles.`;
     }
-    // [v2.42] クローン防止: 空間（前景・後景）で縛る
+    
+    // クローン防止: 空間（前景・後景）で縛る
     const foreground = panelActors.join(' and ');
     const bgActors = allCharBrackets.filter(b => !panelActors.includes(b));
     const background = bgActors.length > 0 ? bgActors.join(', ') : 'NO ONE ELSE';
     
-    const spatialConstraint = `\nFOREGROUND MUST CONTAIN ONLY: ${foreground}.\nBACKGROUND MUST CONTAIN ONLY: ${background}.\nABSOLUTELY NO OTHER HUMANS ALLOWED. Do not draw any character in the background if they are already in the foreground. Total EXACTLY ${allPanelCharacters.length} distinct individuals.`;
+    // 登場しないキャラへの強力な除外指示（Negative Constraints）を生成
+    let negativeConstraint = "";
+    if (noShowCharacters.length > 0) {
+      const noShowNames = noShowCharacters.map(c => `[${c}]`).join(', ');
+      negativeConstraint = `\nDo NOT draw ${noShowNames} in this panel. They are completely absent from this scene.`;
+    }
+
+    const spatialConstraint = `\nFOREGROUND MUST CONTAIN ONLY: ${foreground}.\nBACKGROUND MUST CONTAIN ONLY: ${background}.${negativeConstraint}\nABSOLUTELY NO OTHER HUMANS ALLOWED. Do not draw any character in the background if they are already in the foreground. Total EXACTLY ${allPanelCharacters.length} distinct individuals.`;
 
     return `CRITICAL CAST PLACEMENT: Ensure ${foreground} are the main focus.\n${cloneWarning}${spatialConstraint}`;
   } else {
-    return `CRITICAL CAST PLACEMENT: Follow the panel's action naturally. NEVER draw the exact same character twice.`;
+    // 登場キャラクターが検出されなかった場合でも、キャスト全体から除外指示を出すことは可能
+    let negativeConstraint = "";
+    if (canonicalValidCharacters.length > 0) {
+      const allNames = canonicalValidCharacters.map(c => `[${c}]`).join(', ');
+      negativeConstraint = `\nDo NOT draw ${allNames} unless explicitly required.`;
+    }
+    return `CRITICAL CAST PLACEMENT: Follow the panel's action naturally. NEVER draw the exact same character twice.${negativeConstraint}`;
   }
 };
 
@@ -578,15 +680,24 @@ export const buildEmotionBlock = (panelText) => {
 export const cleanCastList = (castList, activeOutfit) => {
   let cleanCastData = "";
   let currentCharacter = "";
+  let isParsingOutfit = false;
   const castLines = castList.split('\n');
   for (let i = 0; i < castLines.length; i++) {
     const line = castLines[i].replace(/\*\*/g, '').trim();
     if (line.startsWith('## ')) {
       currentCharacter = line.replace(/^##\s*(?:\d+\.\s*)?/, '').trim();
       cleanCastData += `\n- Character [${currentCharacter}]: `;
+      isParsingOutfit = false;
     }
     if (!currentCharacter) continue;
-    if (activeOutfit && (line.includes('服装') || line.includes('Outfit'))) continue;
+    
+    const isCategoryHeader = line.includes('**基本') || line.includes('**髪') || line.includes('**顔') || line.includes('**服装') || line.includes('**性格');
+    if (isCategoryHeader) {
+      isParsingOutfit = line.includes('服装') || line.includes('Outfit');
+    }
+
+    if (activeOutfit && (isParsingOutfit || line.includes('服装') || line.includes('Outfit'))) continue;
+    
     const weightsMatch = line.match(/\[WEIGHTS?\]:\s*(.*)/i);
     if (weightsMatch) {
       let tags = weightsMatch[1].replace(/\|/g, '').trim();

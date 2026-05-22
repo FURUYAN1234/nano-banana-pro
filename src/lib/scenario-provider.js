@@ -108,6 +108,30 @@ export async function generateScenario({
   const ragLocationDetails = getLocationDetails(activeLocation);
   const ragReactions = getReactionGuidelines();
 
+  // オチタイプの決定論的ランダム化 (Auto時の偏り防止)
+  let activePunchlineType = punchlineType;
+  if (!punchlineType || punchlineType === 'Auto') {
+    const punchlineOptions = [
+      'Explosion',       // 爆発型
+      'Surreal',         // 静寂型（シュール）
+      'FakeEmotion',     // 感動詐欺
+      'Metafiction',     // メタ崩壊型
+      'Unreasonable',    // 理不尽な制裁型
+      'RunningGag',      // 天丼爆発型
+      'Dream',           // 夢オチ型
+      'PsychoHorror',    // サイコホラー型
+      'Misunderstanding', // 盛大な勘違い型
+      'CanceledEnding'   // 打ち切りエンド型
+    ];
+    activePunchlineType = punchlineOptions[Math.floor(Math.random() * punchlineOptions.length)];
+  }
+
+  // コメディトーン（作風・ノリ）のランダム決定
+  const comedyToneOptions = ['HighTension', 'SurrealQuiet', 'IntellectualBlack'];
+  const activeComedyTone = comedyToneOptions[Math.floor(Math.random() * comedyToneOptions.length)];
+
+  onProgress(`📝 演出設計: [オチ] ${activePunchlineType} / [トーン] ${activeComedyTone}`);
+
   if (styleJson) {
     onProgress(`📝 [作風適用] 外部JSONの作風『${styleJson.style_name}』をシナリオ構成に注入します...`);
   }
@@ -128,7 +152,8 @@ export async function generateScenario({
     customOutfit,
     ragLocationDetails,
     ragReactions,
-    punchlineType,
+    punchlineType: activePunchlineType,
+    comedyTone: activeComedyTone,
     styleJson
   });
 
