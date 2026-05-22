@@ -1,4 +1,4 @@
-# Nano Banana 2 Super AI 4-koma System
+# Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System
 
 > **"To what extent can humans step away from the creative process?"**
 > **「人間は、どこまで制作から降りられるのか？」**
@@ -217,8 +217,8 @@ This system features a completely bifurcated Dual-API Architecture from the very
 
 ### 📖 The Philosophy of the 1-Page (4-Koma) Limit / なぜ「1ページ（4コマ）制」にこだわるのか？
 
-While many users desire the ability to generate long, multi-page comic books, Nano Banana 2 Super AI 4-koma System intentionally restricts generation to a single 1-page (4-panel) format. This is not a technical limitation of the code, but a strategic decision based on the current boundaries of Generative AI:
-多くのユーザーは複数ページの長編漫画を全自動生成することを望みますが、Nano Banana 2 Super AI 4-koma System は意図的に「1ページ（4コマ）完結」のフォーマットに制限しています。これは実装上の妥協ではなく、現在の生成AIの限界を見据えた戦略的な選択です。
+While many users desire the ability to generate long, multi-page comic books, Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System intentionally restricts generation to a single 1-page (4-panel) format. This is not a technical limitation of the code, but a strategic decision based on the current boundaries of Generative AI:
+多くのユーザーは複数ページの長編漫画を全自動生成することを望みますが、Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System は意図的に「1ページ（4コマ）完結」のフォーマットに制限しています。これは実装上の妥協ではなく、現在の生成AIの限界を見据えた戦略的な選択です。
 
 1. **Content Dilution & Identity Drift (内容の希薄化とキャラクター崩壊):** The fundamental rule of current AI generation is that as page count increases, both story density and visual consistency decrease inversely. Stretching a prompt across multiple pages causes the AI to lose focus, resulting in hollow plotlines, repetitive dialogue, and inevitable visual distortions (costume changes, facial drift) without LoRA fine-tuning. This is precisely why typical multi-page AI comics often feature extremely limited casts (1 to 3 characters) engaged in simple, repetitive actions like "battling"—the creators must strip away complexity just to keep the AI from breaking down. A dense, high-impact 4-panel format is the absolute "sweet spot" for maximizing both narrative punch and zero-shot visual consistency. / 現在のAI生成における絶対的な法則として、「ページ数に反比例して、キャラクターのビジュアルだけでなく、話の構成や内容そのものも薄くなってしまう」という問題があります。複数ページにまたがってプロンプトを引き伸ばすと、AIのコンテキストが散漫になり、中身のないストーリーや同じセリフの反復、そして追加学習（LoRA）なしでは避けられないビジュアルの崩壊（Identity Drift）を引き起こします。**世にある複数ページのAI漫画が「登場人物が1〜3人程度で、ひたすらバトルしているだけの展開」になりがちなのは、まさにこれが原因です。** AIの破綻を防いでページ数を稼ぐために、複雑な掛け合いや緻密なストーリー構成を犠牲にせざるを得ないのです。物語の「オチ」の鋭さと、ゼロショットでの完璧な一貫性を両立できる限界のスイートスポットこそが、この「4コマ」という高密度なフォーマットなのです。
 2. **API Cost & Generation Time Optimization (APIコスト・生成時間の最適化):** Each image generation call to the AI API incurs cost and takes 2–4 minutes. A 1-page (4-panel) output provides the optimal balance between narrative density and generation efficiency, making it perfectly "snackable" for rapid creation and social media sharing. / AI APIへの画像生成リクエストにはコストと2〜4分の待ち時間が伴います。1ページ（4コマ）完結は、物語の密度と生成効率の最適なバランスを提供し、SNSでサクッとシェアでき、ユーザーがストレスなく生成を楽しめるサイズ感として機能します。
@@ -678,7 +678,7 @@ This project is part of an integrated ecosystem designed to support AI-powered m
 
 ### Ecosystem Components / 構成システム
 
-#### 1. Nano Banana 2 Super AI 4-koma System
+#### 1. Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System
 A system specialized in creating 4-panel manga with AI. / AIを活用した4コマ漫画制作に特化したシステムです。
 - [Explanation / 解説](https://note.com/happy_duck780/n/ndf063558c1f5)
 - [Demo / デモ](https://furuyan1234.github.io/nano-banana-pro/)
@@ -873,7 +873,7 @@ This project is part of an integrated ecosystem designed to support AI-powered m
 
 ### Ecosystem Components / 構成システム
 
-#### 1. Nano Banana 2 Super AI 4-koma System
+#### 1. Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System
 A system specialized in creating 4-panel manga with AI. / AIを活用した4コマ漫画制作に特化したシステムです。
 - [Explanation / 解説](https://note.com/happy_duck780/n/ndf063558c1f5)
 - [Demo / デモ](https://furuyan1234.github.io/nano-banana-pro/)
