@@ -9,9 +9,10 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 // ※DPRスケーリング無し（CSS pixel = Canvas pixel で統一）
 const Panorama360Viewer = ({ imageSrc, height = 200 }) => {
   const containerRef = useRef(null);
+  const [webglFailed, setWebglFailed] = React.useState(false);
 
   useEffect(() => {
-    if (!containerRef.current || !imageSrc) return;
+    if (!containerRef.current || !imageSrc || webglFailed) return;
 
     const container = containerRef.current;
     const scene = new THREE.Scene();
@@ -23,7 +24,14 @@ const Panorama360Viewer = ({ imageSrc, height = 200 }) => {
     camera.position.set(0, 0, 0.1); 
 
     // レンダラー
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    let renderer;
+    try {
+      renderer = new THREE.WebGLRenderer({ antialias: true });
+    } catch (e) {
+      console.error("WebGL Context creation failed:", e);
+      setWebglFailed(true);
+      return;
+    }
     renderer.setSize(container.clientWidth, container.clientHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     container.appendChild(renderer.domElement);
@@ -90,9 +98,12 @@ const Panorama360Viewer = ({ imageSrc, height = 200 }) => {
         sphere.geometry.dispose();
         sphere.material.dispose();
       }
-      renderer.dispose();
-      if (container.contains(renderer.domElement)) {
-        container.removeChild(renderer.domElement);
+      if (renderer) {
+        renderer.dispose();
+        renderer.forceContextLoss(); // WebGLコンテキストの枯渇を防ぐために即時解放
+        if (container.contains(renderer.domElement)) {
+          container.removeChild(renderer.domElement);
+        }
       }
     };
   }, [imageSrc]);
@@ -111,7 +122,15 @@ const Panorama360Viewer = ({ imageSrc, height = 200 }) => {
       onMouseDown={(e) => e.currentTarget.style.cursor = 'grabbing'}
       onMouseUp={(e) => e.currentTarget.style.cursor = 'grab'}
       onMouseLeave={(e) => e.currentTarget.style.cursor = 'grab'}
-    />
+    >
+      {webglFailed && (
+        <img 
+          src={imageSrc} 
+          alt="360 Panorama Fallback" 
+          style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+        />
+      )}
+    </div>
   );
 };
 

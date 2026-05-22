@@ -96,10 +96,17 @@ export const getCharacterAnalysisPrompt = () => {
  * @param {string[]} enhanceCategories - 強化カテゴリの配列
  * @returns {string} 強化プロンプト
  */
-export const getScenarioEnhancePrompt = (scenario, enhanceCategories) => {
+export const getScenarioEnhancePrompt = (scenario, enhanceCategories, styleJson) => {
   return `あなたは4コマ漫画のシナリオ演出家です。以下のシナリオの**演出力**を大幅に強化してください。
 
 ${enhanceCategories.join("\n\n")}
+
+${styleJson ? `【作風完全上書き指令 (Style Override)】
+以下の「作風情報」を最優先事項として適用し、シナリオ全体のトーン、セリフの語彙、空気感を根本的に改変せよ:
+- 作風名: ${styleJson.style_name}
+- 作風詳細指示:
+${styleJson.reproduction_prompt}
+${styleJson.anti_patterns ? `- 絶対禁止事項:\n${styleJson.anti_patterns}` : ''}` : ''}
 
 【Guard C: AI定型文の絶対排除】
 以下のAI特有の退屈な表現をシナリオ（ト書き・セリフ）から完全に排除・書き換えよ:
@@ -150,7 +157,8 @@ export const getScenarioPrompt = ({
   customOutfit,
   ragLocationDetails,
   ragReactions,
-  punchlineType
+  punchlineType,
+  styleJson
 }) => {
   return `
          【Context Force Reboot】
@@ -213,6 +221,14 @@ export const getScenarioPrompt = ({
             ${ragLocationDetails}
             
             ${ragReactions}
+
+${styleJson ? `         7. **【作風完全適用の義務 (Strict Style Adherence)】**:
+            以下の「作風プロンプト」を最優先事項としてシナリオ全体のトーン、セリフ、空気感に完全に適用せよ。
+            - 作風名: ${styleJson.style_name}
+            - 作風詳細指示:
+${styleJson.reproduction_prompt}
+${styleJson.anti_patterns ? `            - 絶対禁止事項:\n${styleJson.anti_patterns}` : ''}
+            (指示): この作風特有の語彙、リズム、テーマ性を全コマに浸透させよ。` : ''}
 
           【シナリオ構成・演出の絶対厳守 (v2.99 Alpha)】
             0. **全員登場義務 (Mandatory All-Cast)**:

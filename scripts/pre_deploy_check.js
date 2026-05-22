@@ -179,7 +179,7 @@ try {
         return null;
     };
 
-    const filesToScan = ['src/App.jsx', 'index.html', 'README.md', 'docs/project_standards.md', 'HANDOFF.md'];
+    const filesToScan = ['src/lib/constants.js', 'index.html', 'README.md', 'docs/project_standards.md', 'HANDOFF.md'];
     const scanErrors = [];
 
     filesToScan.forEach(file => {

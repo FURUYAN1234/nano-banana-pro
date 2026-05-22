@@ -29,7 +29,9 @@ export default function Step1Panel({
   isCastListCopied,
   setIsCastListCopied,
   currentStep,
-  setShowModal
+  setShowModal,
+  styleJson,
+  setStyleJson
 }) {
   return (
     <section
@@ -80,6 +82,24 @@ export default function Step1Panel({
             </div>
           </div>
         )}
+        {styleJson && (
+          <div
+            className={`relative w-[112px] min-w-[112px] max-w-[112px] h-14 flex-shrink-0 rounded-lg overflow-hidden border border-purple-500/50 bg-purple-900/30 flex items-center justify-center group/style transition-all shadow-sm`}
+            title={`適用中の作風: ${styleJson.style_name}\n\nクリックして解除`}
+          >
+            <div className="text-center p-1 w-full">
+              <span className="text-[8px] block opacity-70 text-purple-300 font-bold mb-0.5">適用中の作風</span>
+              <div className="text-[10px] text-white font-bold leading-tight line-clamp-2">{styleJson.style_name}</div>
+            </div>
+            <button
+              onClick={() => setStyleJson(null)}
+              className="absolute inset-0 bg-black/70 opacity-0 group-hover/style:opacity-100 flex items-center justify-center text-white transition-all backdrop-blur-[2px]"
+            >
+              <Trash2 size={16} />
+              <span className="text-[10px] ml-1 font-bold">解除</span>
+            </button>
+          </div>
+        )}
         <label className="w-14 h-14 flex flex-col items-center justify-center cursor-pointer rounded-lg border border-dashed border-white/10 hover:border-blue-500 hover:bg-blue-500/10 transition-all text-slate-500 hover:text-blue-400 group/add">
           {isAnalyzing ? (
             <Loader2 size={16} className="animate-spin" />
@@ -118,11 +138,11 @@ export default function Step1Panel({
               }}
             />
             <p className="text-xs font-bold text-slate-400">
-              キャラクターシートをドロップ <span className="text-blue-400">（複数シートはまとめてアップロード。360°背景がある場合は同時にドロップしてください）</span>
+              キャラクターシートをドロップ <span className="text-blue-400">（複数シートはまとめてアップロード。360°背景や作風jsonも同時にドロップできます）</span>
             </p>
             <p className="text-[10px] opacity-60 mt-1">
               ※名前・性格・設定が明記されているシートを推奨。
-              <br />※360°背景の自動認識には「比率2:1」かつ「内部に360°メタデータ(equirectangular等)を持つ画像」である必要があります。
+              <br />※Story Makerが出力した「作風json」を投げ込むと、シナリオの作風が変化します。
             </p>
             <div className="mt-3 flex flex-col items-center gap-1 group/preview">
               <span className="text-[9px] uppercase tracking-widest opacity-40 group-hover/preview:text-blue-400 transition-colors">推奨見本 (例)</span>

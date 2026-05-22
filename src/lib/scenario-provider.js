@@ -22,6 +22,7 @@ export async function generateScenario({
   bg360Analysis,
   bg360Enabled,
   bg360ImageParts,
+  styleJson,
   onProgress,
   onCameraProgress
 }) {
@@ -116,6 +117,10 @@ export async function generateScenario({
   const ragLocationDetails = getLocationDetails(activeLocation);
   const ragReactions = getRandomReactions();
 
+  if (styleJson) {
+    onProgress(`📝 [作風適用] 外部JSONの作風『${styleJson.style_name}』をシナリオ構成に注入します...`);
+  }
+
   // 4. シナリオプロンプトの構築とAPI呼び出し
   const scenarioPrompt = getScenarioPrompt({
     randomCategory,
@@ -132,7 +137,8 @@ export async function generateScenario({
     customOutfit,
     ragLocationDetails,
     ragReactions,
-    punchlineType
+    punchlineType,
+    styleJson
   });
 
   const scenarioImages = (bg360ImageParts && bg360Enabled) ? [bg360ImageParts] : [];
@@ -265,9 +271,10 @@ export async function enhanceScenarioText({
   scenario,
   enhanceCategories,
   castList,
+  styleJson,
   onProgress
 }) {
-  const enhancePrompt = getScenarioEnhancePrompt(scenario, enhanceCategories);
+  const enhancePrompt = getScenarioEnhancePrompt(scenario, enhanceCategories, styleJson);
   const result = await callAI(enhancePrompt, [], castList, onProgress);
   return {
     text: result.text.trim(),

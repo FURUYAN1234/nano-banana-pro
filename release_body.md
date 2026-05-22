@@ -1,5 +1,10 @@
 ## What's New / 更新内容
 
+### v4.0.4 (2026-05-22)
+
+- **[Feature]** 作風json（Story Maker生成）のドラッグ＆ドロップ適用機能を追加 / Added drag & drop support for Style JSON (from Story Maker) to apply art direction globally
+- **[Fix]** 360度画像読み込み時のWebGLコンテキスト枯渇によるクラッシュを修正 / Fixed WebGL context exhaustion crash when loading 360 images
+
 ### v4.0.3 (2026-05-21)
 
 - ** [Fix & UX] ** 吹き出しへの五感ラベル混入バグおよびアクターZONE・EMOTIONスタイル誤切替の修正 / Fix sensory label hallucination in speech bubbles and incorrect actor ZONE/EMOTION style transitions

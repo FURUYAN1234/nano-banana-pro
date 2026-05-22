@@ -65,7 +65,8 @@ export default function Step2Panel({
   enhanceScenario,
   revertScenario,
   enhanceLog,
-  showStatus
+  showStatus,
+  styleJson
 }) {
   return (
     <section
@@ -314,9 +315,16 @@ export default function Step2Panel({
 
         {/* RESULT TEXTAREA */}
         <div className="flex flex-col gap-2">
-          <span className="px-2 bg-[#0f1115] text-xs font-bold text-slate-400 w-fit rounded">
-            ▼ 生成されるシナリオ (編集可 / 外部シナリオ貼付OK)
-          </span>
+          <div className="flex items-center gap-3">
+            <span className="px-2 bg-[#0f1115] text-xs font-bold text-slate-400 w-fit rounded">
+              ▼ 生成されるシナリオ (編集可 / 外部シナリオ貼付OK)
+            </span>
+            {styleJson && scenario && scenario.length > 20 && (
+              <span className="px-2 py-0.5 rounded bg-purple-900/50 text-purple-300 text-[10px] font-bold border border-purple-500/30 flex items-center gap-1 shadow-sm">
+                <Sparkles size={10} /> 作風適用済: {styleJson.style_name}
+              </span>
+            )}
+          </div>
           <textarea
             value={scenario}
             onChange={(e) => setScenario(e.target.value)}

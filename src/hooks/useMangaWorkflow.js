@@ -68,6 +68,7 @@ export default function useMangaWorkflow() {
 
   // getModelBadgeInfo → src/lib/constants.js に移動済み
   const [images, setImages] = useState([]);
+  const [styleJson, setStyleJson] = useState(null); // [v3.90] Style Analyzer Engine JSON
 
   // States for Steps
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -328,9 +329,30 @@ export default function useMangaWorkflow() {
 
     const imageArray = [];
     let detected360File = null; // [v3.48] 360度画像自動検出用
+    let detectedStyleJson = null; // [v3.90] 作風JSON
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
+
+      // [v3.90] 作風JSONのチェック
+      if (file.name.endsWith('.json') || file.type === 'application/json') {
+        try {
+          const text = await file.text();
+          const json = JSON.parse(text);
+          if (json.style_name && json.reproduction_prompt) {
+            detectedStyleJson = json;
+            setStyleJson(json);
+            showStatus(`作風を適用: ${json.style_name}`);
+            setAnalyzeThought(prev => prev + `\n> 🎭 作風JSONを検出: ${json.style_name}`);
+          } else {
+            showStatus("⚠️ 無効なJSONです。作風解析エンジンの出力を使用してください。");
+            setAnalyzeThought(prev => prev + `\n> ⚠️ 読み込まれたJSONは作風解析エンジン用ではありませんでした。`);
+          }
+        } catch (e) {
+          showStatus("⚠️ JSONファイルの読み込みに失敗しました。");
+        }
+        continue;
+      }
 
       // [v3.48] アスペクト比2:1チェック ＆ XMPメタデータ判定（360度 equirectangular判定）
       const is360 = await new Promise((resolve) => {
@@ -428,6 +450,9 @@ export default function useMangaWorkflow() {
     if (imageArray.length === 0) {
       clearInterval(thinkTimer);
       setIsAnalyzing(false);
+      if (detectedStyleJson) {
+        setAnalyzeThought(prev => prev + `\n> ✅ 作風JSONを読み込みました。`);
+      }
       return;
     }
 
@@ -548,6 +573,7 @@ export default function useMangaWorkflow() {
         scenario,
         enhanceCategories,
         castList,
+        styleJson,
         onProgress: (msg) => setEnhanceLog(prev => prev + `\n> [API] ${msg}`)
       });
 
@@ -667,6 +693,7 @@ export default function useMangaWorkflow() {
         bg360Analysis,
         bg360Enabled,
         bg360ImageParts,
+        styleJson,
         onProgress: (msg) => setScenarioThought(prev => prev + `\n > [API] ${msg} `),
         onCameraProgress: (msg) => {
           if (msg.startsWith("🎬")) {
@@ -1452,6 +1479,7 @@ export default function useMangaWorkflow() {
     setScenario,
     setShowModal,
     setShowOpenAIKeyModal,
+    setStyleJson,
     setTargetDate,
     showModal,
     showOpenAIKeyModal,
@@ -1459,6 +1487,7 @@ export default function useMangaWorkflow() {
     status,
     step2Ref,
     step3Ref,
+    styleJson,
     targetDate,
     toggleCategory,
     usedModel,

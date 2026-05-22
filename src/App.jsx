@@ -143,6 +143,8 @@ function App() {
     status,
     step2Ref,
     step3Ref,
+    styleJson,
+    setStyleJson,
     targetDate,
     toggleCategory,
     usedModel,
@@ -234,6 +236,8 @@ function App() {
               setCastList={setCastList}
               isCastListCopied={isCastListCopied}
               setIsCastListCopied={setIsCastListCopied}
+              styleJson={styleJson}
+              setStyleJson={setStyleJson}
             />
 
             {/* 02: シナリオ設定 (Static Layout) */}
@@ -287,6 +291,7 @@ function App() {
               revertScenario={revertScenario}
               enhanceLog={enhanceLog}
               showStatus={showStatus}
+              styleJson={styleJson}
             />
           </div>
 
