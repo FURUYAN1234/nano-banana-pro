@@ -503,7 +503,6 @@ No explanations. No partial results.`;
                 ) : (
                   genLog.map((log, i) => (
                     <div key={i} className="mb-1 leading-relaxed">
-                      <span className="opacity-40 mr-2">{new Date().toLocaleTimeString()}</span>
                       {log}
                     </div>
                   ))

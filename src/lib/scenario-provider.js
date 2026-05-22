@@ -157,8 +157,7 @@ export async function generateScenario({
     styleJson
   });
 
-  const scenarioImages = (bg360ImageParts && bg360Enabled) ? [bg360ImageParts] : [];
-  const result = await callAI(scenarioPrompt, scenarioImages, castList, onProgress);
+  const result = await callAI(scenarioPrompt, [], castList, onProgress);
 
   // 5. 応答のパース
   let parsedData = { topic: randomCategory, scenario: "" };

@@ -15,24 +15,20 @@ const GEMINI_BASE_URL = (typeof window !== 'undefined' && window.location.hostna
 // テキストのみリクエスト用 (シナリオ生成等): Next-Gen優先・無料枠優先
 // ※ 2026年4月以降、Pro系は有料APIキー専用。Flash系は無料枠で利用可能。
 const TEXT_MODEL_IDS = [
-    "gemini-3.5-flash",                   // Primary: 最強・最新 (GA・無料枠OK・Grounding対応)
-    "gemini-3-flash-preview",             // Backup 1: Next-Gen Flash (無料枠OK・Grounding対応)
-    "gemini-3.1-flash-lite",              // Backup 2: Next-Gen Lite (GA・無料枠OK・最速)
-    "gemini-2.5-flash",                   // Backup 3: 安定実績 (無料枠OK)
-    "gemini-2.5-pro",                     // Fallback 1: 高品質 (有料APIキー専用)
-    "gemini-2.5-flash-lite"               // Fallback 2: 軽量レガシー (無料枠OK)
+    "gemini-2.5-flash",
+    "gemini-2.0-flash",
+    "gemini-2.5-pro",
+    "gemini-1.5-flash",
+    "gemini-1.5-pro"
 ];
 
 // 画像付きリクエスト用 (キャラクターシート認識等): フィルター寛容モデル優先
-// gemini-3-flash-preview / gemini-3.5-flash はアニメ画像で PROHIBITED_CONTENT を返す可能性があるため後方に配置
-// ※ gemini-2.5-pro は画像認識性能最高だが有料APIキー専用 (2026/04〜)
 const IMAGE_MODEL_IDS = [
-    "gemini-2.5-flash",                   // Primary: 画像認識実績・高速 (無料枠OK)
-    "gemini-2.5-pro",                     // Backup 1: 最高品質 (有料APIキー専用)
-    "gemini-3.1-flash-lite",              // Backup 2: Next-Gen Lite (GA・無料枠OK)
-    "gemini-3.5-flash",                   // Fallback 1: 最強・最新 (アニメ画像でフィルターリスクあり)
-    "gemini-3-flash-preview",             // Fallback 2: Next-Gen (アニメ画像でフィルターリスクあり)
-    "gemini-2.5-flash-lite"               // Fallback 3: 軽量レガシー
+    "gemini-2.5-flash",
+    "gemini-2.5-pro",
+    "gemini-2.0-flash",
+    "gemini-1.5-flash",
+    "gemini-1.5-pro"
 ];
 
 // Store API key in memory ONLY (Security Requirement: No persistence)

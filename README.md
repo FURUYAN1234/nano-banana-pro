@@ -929,6 +929,9 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v4.0.7 (2026-05-23)
+- ** [Fix & UX] ** オチ感情のBLANK（白目）偏りの是正および進捗ログのタイムスタンプ表示を削除 / Fixed BLANK (white eyes) bias in punchline emotions and removed timestamp from progress logs
+
 ### v4.0.6 (2026-05-23)
 - ** [Feature] ** コメディトーン（ハイテンション爆発系、シュール静寂系、知性派ブラック系）の演出指示を JavaScript 側で自動ランダムまたは指定可能に拡張 / Extended comedy tone registers (HighTension, SurrealQuiet, IntellectualBlack) to be dynamically randomized or specified via JavaScript constraints
 - ** [Feature] ** オチ（Punchline）タイプが「Auto」の場合の決定論的ランダム選定ロジックを導入し、コメディの偏りを防止 / Introduced deterministic random selection for "Auto" punchline mode from 10 comedy models to prevent narrative monotony
