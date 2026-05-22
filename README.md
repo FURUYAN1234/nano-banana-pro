@@ -207,7 +207,7 @@ This system features a completely bifurcated Dual-API Architecture from the very
 2. **ChatGPT Engine Mode (OpenAI Ecosystem) / ChatGPTエンジンモード**
    * **Hybrid Precision / ハイブリッド高精度描画:** Uses Gemini as the "Brain" to parse complex character topologies and structure the 4-panel layout, but switches entirely to OpenAI's gpt-image-2 (ChatGPT Images 2.0) for the final "Artist" rendering step.
    * **Strength / 強み:** Provides industry-leading artistic quality and nuance directly in-browser. The prompt is automatically translated into ChatGPT Images 2.0 specific formatting (A4 portrait, vertical Japanese text, Anti-Noise Protocol) before being sent.
-   * **Role / 役割:** 解析・構成の頭脳はGeminiの推論能力を使いつつ、作画プロセスをOpenAIの最高峰モデル（gpt-image-2）に完全委譲するモード。ChatGPTの制限を突破する専用フォーマット（縦長A4・縦書き誘導・ノイズ除去キーワード）が自動適用され、コピペ不要でアプリ内から直接アニメ品質の画像を出力します（生成に2〜4分程度かかります）。
+   * **Role / 役割:** 解析・構成の頭脳はGeminiの推論能力を使いつつ、作画プロセスをOpenAIの最高峰モデル（gpt-image-2）に完全委譲するモード。ChatGPTの制限を突破する専用フォーマット（縦長A4・縦書き誘導・ノイズ除去キーワード）が自動適用され、コピペ不要でアプリ内から直接アニメ品質の画像を出力します（生成に2〜5分程度かかります）。
 
 3. **【上級者向け】Browser UI Option (Advanced / Optional) / ブラウザUI連携運用**
    * While direct API generation is seamless, users seeking **absolute character consistency** (by attaching reference images—a feature currently limited in standard APIs) or looking to **minimize API billing costs** can utilize the Browser UI Option.
