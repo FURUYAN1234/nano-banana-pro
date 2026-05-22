@@ -5,7 +5,7 @@ import { setApiKey, getApiKey } from '../lib/gemini';
 import { generateImageWithImagen } from '../lib/imagen';
 import { generateImageWithOpenAI, setOpenAIApiKey, getOpenAIApiKey } from '../lib/openai';
 import { callAI, setActiveEngine, getActiveEngine, getEngineDisplayName } from '../lib/ai-provider';
-import { getLocationDetails, getRandomReactions } from '../lib/knowledge';
+import { getLocationDetails } from '../lib/knowledge';
 
 // --- Refactored Imports (Phase 1-2) ---
 import { SYSTEM_VERSION, getPunchlineLabel, DEFAULT_CATEGORIES, getModelBadgeInfo, EMOTION_STYLES, cameraAngles, cameraLensMap, DYNAMIC_CAMERA_PROTOCOL, ANTI_CHARSHEET_PREFIX } from '../lib/constants';

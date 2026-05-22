@@ -102,8 +102,8 @@ The system continuously generates completely new manga infinitely until the user
 ユーザーが停止ボタンを押すまで、無限に新しい漫画を生成し続ける機能です。トレンド取得と画像生成のループを全自動で延々と回します。
 
 ### 🧠 Local RAG Dictionary / 自律型ローカルRAG辞書
-Integrates a strictly structured local knowledge base (`knowledge.js`) that dynamically extracts location-specific props, ambient details, and emotion-based physical reactions. This RAG (Retrieval-Augmented Generation) pipeline forces the AI to use concrete objects instead of vague descriptions, drastically improving narrative resolution.
-あらかじめ構築されたローカルRAG辞書（`knowledge.js`）を内蔵。設定された場所（Location）特有の小道具や環境情報、キャラクターの感情に合わせた物理的なリアクションを動的に抽出し、プロンプトへ強制注入します。これにより、AI特有の「抽象的でフワッとした描写」を排除し、ディテールに富んだ高品質なシナリオを生成します。
+Integrates a strictly structured local knowledge base (`knowledge.js`) that dynamically extracts location-specific props, ambient details, and emotion-based physical reactions. The location dictionary has been massively expanded to 61 unique and chaotic environments (including microscopic worlds and alternate dimensions). This RAG (Retrieval-Augmented Generation) pipeline forces the AI to use concrete objects instead of vague descriptions, drastically improving narrative resolution.
+あらかじめ構築されたローカルRAG辞書（`knowledge.js`）を内蔵。設定された場所（Location）特有の小道具や環境情報、キャラクターの感情に合わせた物理的なリアクションを動的に抽出し、プロンプトへ強制注入します。バージョン4.0.5でロケーション辞書が61箇所へと超絶拡張され、「電子基板のミクロ世界」や「異次元の幾何学空間」などカオスな舞台設定が可能になりました。これにより、AI特有の「抽象的でフワッとした描写」を排除し、ディテールに富んだ高品質なシナリオを生成します。
 
 An experimental feature that, upon completing a generation, automatically selects a new topic and continuously produces new manga while preserving the initial character settings.\nフルオート生成完了後、キャラクター設定を維持したまま、自動的に新しいニュースやランダムなお題を取得し、次々と新しいシナリオと漫画を延々と生成し続けるモードです（完全な放置運用が可能）。\n\n### 🎬 Scenario Enhancement / シナリオ演出強化
 
@@ -914,6 +914,10 @@ Developed by **FURU**
 ---
 
 ## 📋 ChangeLog
+
+### v4.0.5 (2026-05-22)
+- **[Feature]** Local RAG の Location 辞書を 61 箇所に超絶拡張（異次元空間やミクロ世界などカオスな舞台を追加） / Massively expanded the Local RAG Location dictionary to 61 unique environments (including alternate dimensions and microscopic worlds)
+- **[Fix]** UI下部の生成履歴ギャラリーが二重に表示されるコンポーネント重複バグを修正 / Fixed a UI bug where the generation history gallery was duplicated due to redundant components
 
 ### v4.0.4 (2026-05-22)
 - **[Feature]** 作風json（Story Maker生成）のドラッグ＆ドロップ適用機能を追加 / Added drag & drop support for Style json (from Story Maker) to apply art direction globally

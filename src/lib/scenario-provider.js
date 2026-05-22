@@ -1,5 +1,6 @@
 import { callAI } from './ai-provider';
-import { getLocationDetails, getRandomReactions } from './knowledge';
+import { getLocationDetails, getReactionGuidelines } from './knowledge';
+import { locationDetails } from './locations.js';
 import { getScenarioPrompt, getScenarioEnhancePrompt } from './prompts';
 import { cropEquirectangular } from './panorama360';
 
@@ -95,17 +96,7 @@ export async function generateScenario({
   }
 
   // 3. ロケーション決定とRAG
-  const locationList = [
-    "寂れた商店街", "無人島", "ファミレスの厨房", "満員電車", "首相官邸", "ライブハウス", "コンビニ前", "古民家", "火星基地",
-    "学校の屋上", "深夜のオフィス", "結婚式場", "工事現場", "刑務所の面会室", "豪華客船の甲板", "雪山のロッジ",
-    "砂漠の真ん中", "海底トンネル", "裁判所", "病院の待合室", "動物園の檻の中", "美術館", "映画館の最前列",
-    "ラーメン屋のカウンター", "温泉旅館", "サウナの中", "エレベーターの中", "断崖絶壁", "廃墟の遊園地", "月面",
-    "飛行機の機内", "新幹線の座席", "警察署の取調室", "ゴミ捨て場", "高級ホテルのスイートルーム", "スタジアム",
-    "神社の境内", "教会の告解室", "地下アイドルの握手会", "ゲームセンター", "コインランドリー", "公園 of the bench",
-    "洞窟の奥", "ジャングルの奥地", "南極基地", "国際宇宙ステーション", "潜水艦の内部", "戦車の内部", "魔法使いの塔",
-    "異世界の酒場", "魔王城の玉座", "RPGのダンジョン", "サイバーパンクな路地裏", "昭和の茶の間", "江戸時代の長屋",
-    "渋谷スクランブル交差点", "秋葉原の電気街", "京都の竹林", "大阪の道頓堀", "沖縄のビーチ", "北海道のラベンダー畑"
-  ];
+  const locationList = Object.keys(locationDetails);
   const forcedLocation = locationList[Math.floor(Math.random() * locationList.length)];
   
   const activeLocation = bg360Image && bg360Analysis && bg360Enabled 
@@ -115,7 +106,7 @@ export async function generateScenario({
   onProgress(`ローカルRAGにアクセス中...\n> 舞台「${activeLocation}」に関する演出情報および感情リアクション辞書を取得中...`);
 
   const ragLocationDetails = getLocationDetails(activeLocation);
-  const ragReactions = getRandomReactions();
+  const ragReactions = getReactionGuidelines();
 
   if (styleJson) {
     onProgress(`📝 [作風適用] 外部JSONの作風『${styleJson.style_name}』をシナリオ構成に注入します...`);
