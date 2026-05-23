@@ -202,7 +202,11 @@ function App() {
         <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-900/10 blur-[120px] rounded-full" />
       </div>
 
-      <div className="relative z-10 max-w-5xl mx-auto px-4 pb-4 pt-[130px] md:px-10 md:pb-10 md:pt-[150px] space-y-8">
+      <div className={`relative z-10 max-w-5xl mx-auto px-4 pb-4 space-y-8 md:px-10 md:pb-10 ${
+        (selectedEngine === 'openai' || enableOpenAIApi)
+          ? 'pt-[130px] md:pt-[150px]'
+          : 'pt-[55px] md:pt-[65px]'
+      }`}>
         {/* === ヘッダー領域 === */}
         <SystemHeader
           SYSTEM_VERSION={SYSTEM_VERSION}

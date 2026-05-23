@@ -293,6 +293,10 @@ export default function useMangaWorkflow() {
       return;
     }
     if (files.length === 0) return;
+
+    // 非同期処理に入る前に、現在のキャストリストの値を保持しておく（累積・マージ用）
+    const currentCastList = castList;
+
     setIsAnalyzing(true);
     setAnalyzeThought("キャラクター解析プロトコルを開始しました...\n> ピクセルデータをスキャン中...\n> キャラクター形態を識別中...");
 
@@ -469,7 +473,10 @@ export default function useMangaWorkflow() {
       });
 
       // キャラクター解析プロンプト（テンプレートは prompts.js に外部化済み）
-      const prompt = getCharacterAnalysisPrompt();
+      let prompt = getCharacterAnalysisPrompt();
+      if (currentCastList && currentCastList.trim().length > 10) {
+        prompt += `\n\n\n【最重要: 既存キャストリストのマージ指示】\n現在、すでに以下のキャストリストが存在します。\n既存のキャラクターの設定や、ユーザーによる手動修正内容を一切変更・削除することなく維持してください。\n今回新しく提供された画像から解析された新キャラクターの情報を、既存のフォーマットに合わせて重複しないように末尾に追加（マージ）した、最終的なキャストリストを出力してください。\n既存のキャラクターが今回追加された画像と同一であると明確に判断できる場合は、既存の設定に新しい特徴をマージ・追記しても構いませんが、基本的には既存の情報を消さないでください。\n\n【既存のキャストリスト】\n${currentCastList}`;
+      }
 
       const result = await callAI(prompt, imageParts, null, (msg) => {
         setAnalyzeThought(prev => prev + `\n> ${msg}`);

@@ -1,23 +1,12 @@
 # HANDOFF.md
 
-## 現在のステータス (v4.0.7)
-- **Pending Verification** (検証待ち)
-- オチ感情の `BLANK`（白目）偏りの是正、および進捗ログのタイムスタンプ表示削除について、GitHub Pages へのデプロイおよび C:\nano-banana-pro-main への展開が完了し、検証待ちの状態です。
+## 現在のステータス (v4.0.8)
+- **Completed** (完了)
+- キャラクターシートの累積追加認識（マージ）およびコントロールバー下の黒い不要な隙間の解消、STEP1ドロップ説明文の修正が完了しました。
 
 ## 完了した項目 (Done)
-- [x] `prompts.js` 内の `BLANK` 優先度是正（Surreal, Dream, Misunderstanding, CanceledEnding オチ、および SurrealQuiet コメディトーン、BLANKタグ定義の修正）
-- [x] `Step4Panel.jsx` の進捗ログのタイムスタンプ削除
-- [x] バージョンアップ（v4.0.7）と各ファイル同期（package.json, constants.js, index.html, README.md, Hugging Face README.md）
-- [x] プロダクションビルドおよび GitHub Pages デプロイ (`npm run deploy`)
-- [x] Gitコミット・プッシュ、および GitHub リリース（v4.0.7）作成
-- [x] リリースZIPのダウンロード検証および `C:\nano-banana-pro-main` への差し替え
-
-## 残タスク (Remaining Tasks)
-- [ ] リモート環境およびローカル環境での動作検証
-  - リモートURL: https://furuyan1234.github.io/nano-banana-pro/ (またはクエリパラメータ付き https://furuyan1234.github.io/nano-banana-pro/?v=4.0.7)
-  - ローカルURL: http://localhost:5173/ (開発サーバー)
-- [ ] 動作結果（オチで白目が過剰に選ばれないこと、タイムスタンプが消えていること）の最終確認
-
-## 検証状態 (Verification State)
-- デプロイ検証完了: リモートの gh-pages ブランチの index.html にて v4.0.7 の反映を確認済み。
-- Cドライブ差し替え完了: `C:\nano-banana-pro-main` が最新の v4.0.7 で更新されていることを確認済み。
+- [x] キャラクターシートを順次追加でドロップした際に既存の解析結果（castList）を消さずにマージ・追記するロジック（useMangaWorkflow.js）の実装
+- [x] コピーボタン非表示時に上部パディングを動的調整（pt-[55px] md:pt-[65px]）するレイアウト修正（App.jsx）
+- [x] ドロップエリアの説明文を「まとめて、もしくは都度追加アップロード」に更新（Step1Panel.jsx）
+- [x] バージョンアップ（v4.0.8）と各ファイル同期（package.json, constants.js, index.html, README.md）
+- [x] ローカル開発環境での動作確認の完了

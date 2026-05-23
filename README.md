@@ -929,6 +929,10 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v4.0.8 (2026-05-24)
+- ** [Feature] ** キャラクターシートの累積追加認識（マージ）に対応。追加ドロップ時に既存のキャストリストが消えず、インテリジェントにマージ・追記されるように改善 / Supported cumulative character sheet analysis. When dropping additional sheets, the existing cast list is preserved and new analysis results are merged intelligently.
+
+
 ### v4.0.7 (2026-05-23)
 - ** [Fix & UX] ** オチ感情のBLANK（白目）偏りの是正および進捗ログのタイムスタンプ表示を削除 / Fixed BLANK (white eyes) bias in punchline emotions and removed timestamp from progress logs
 
@@ -987,24 +991,3 @@ Developed by **FURU**
 
 ### v3.86-alpha (2026-05-20)
 - ** [Fix] ** フルオート生成モード時に、非同期ステートの同期遅れによって手動入力モード（ inputMode === 'manual' ）と誤判定されてエラーが発生する（または ChatGPT モードが意図せずオンのまま実行される）不具合を修正。 generateScenarioFromNews および assemblePrompt に引数によるオーバーライドを導入し、Reactのステート更新ラグを回避。 / Fixed a bug in Full Auto mode where asynchronous state sync lags caused the system to mistakenly evaluate the input mode as 'manual' or keep ChatGPT mode enabled. Introduced parameter overrides for generateScenarioFromNews and assemblePrompt to eliminate React state race conditions.
-
-### v3.85-alpha (2026-05-20)
-- ** [Refactor] ** シナリオ生成およびコンテンツポリシー自動修正ロジックの外部モジュール化（ ** scenario-provider.js ** および ** policy-fixer.js ** ）を完了し、 ** App.jsx ** の肥大化を解消（約350行削減）。 / Extracted scenario generation and policy fixer logic into dedicated modules, reducing the size of App.jsx by ~350 lines.
-
-### v3.84-alpha (2026-05-20)
-- ** [Release] ** ローカル環境での画像生成成功を検証し、本番環境へのデプロイおよびリリースを正式に完了。 / Verified successful image generation in the local environment, and officially completed deployment and release to production.
-
-### v3.83-alpha (2026-05-20)
-- ** [Fix] ** リファクタリングによって発生した buildMangaPrompt is not defined ランタイムエラー（src/App.jsx 内のインポート漏れ）を修正。 / Fixed runtime error buildMangaPrompt is not defined in src/App.jsx by adding the missing import statement.
-
-### v3.82-alpha (2026-05-20)
-- ** [Refactor] ** App.jsx 内のプロンプト構築関数 assemblePrompt のリファクタリングを完了し、外部モジュール buildMangaPrompt を用いたステート管理の整理とクリーンアップを実施。 / Refactored assemblePrompt in App.jsx to integrate with buildMangaPrompt module, cleaning up state variables and enhancing async stability.
-
-### v3.81-alpha (2026-05-20)
-- ** [Refactor & Clean] ** 一時不要ファイルの削除と、リポジトリのクリーンアップ、およびデプロイ・リリースフローのフル自動化プロトコルの適用。 / Cleaned up temporary files, optimized repository aesthetics, and implemented full release automation protocols.
-
-### v3.80-alpha (2026-05-20)
-- ** [Fix] ** リファクタリング後に発生していた React マウントおよびレンダリング時の ** 2つの致命的エラー ** （App.jsx 内のタイポ step4Ref 、および Step4Panel.jsx 内での Wand2 インポート漏れ）を修正。さらに、ランタイムエラー検知用に ** ErrorBoundary ** を導入し、クラッシュ耐性を強化。 / Fixed two critical React mounting and rendering errors (undefined step4Ref typo in App.jsx and missing Wand2 import in Step4Panel.jsx) caused by refactoring. Integrated ErrorBoundary to catch runtime errors and improve crash resilience.
-
-### v3.79-alpha (2026-05-20)
-- ** [Refactor] ** Phase 3-C: assemblePrompt 内の ChatGPT / Gemini 用巨大プロンプトテンプレートを src/lib/prompts.js のビルダー関数（buildChatGPTMangaPrompt, buildGeminiMangaPrompt）として外部化。さらに extractEmotionStyle, buildEmotionBlock, cleanCastList を src/lib/panel-utils.js に移動し、App.jsx を約300行削減。 / Externalized ChatGPT and Gemini prompt templates from assemblePrompt into builder functions in prompts.js, and moved emotion style helpers and cast list parser into panel-utils.js, reducing App.jsx by ~300 lines.

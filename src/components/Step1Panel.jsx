@@ -138,7 +138,7 @@ export default function Step1Panel({
               }}
             />
             <p className="text-xs font-bold text-slate-400">
-              キャラクターシートをドロップ <span className="text-blue-400">（複数シートはまとめてアップロード。360°背景や作風jsonも同時にドロップできます）</span>
+              キャラクターシートをドロップ <span className="text-blue-400">（まとめて、もしくは都度追加アップロード。360°背景や作風jsonも同時にドロップできます）</span>
             </p>
             <p className="text-[10px] opacity-60 mt-1">
               ※名前・性格・設定が明記されているシートを推奨。
