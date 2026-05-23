@@ -929,6 +929,9 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v4.0.9 (2026-05-23)
+- ** [Fix & UX] ** 画像生成時の共通プロンプトから白目の演技指示を削除し、様々なオチの表情が白目に偏る問題を解決 / Removed blank white eyes instruction from global camera prompt to resolve blank-eye bias in visual punchlines
+
 ### v4.0.8 (2026-05-24)
 - ** [Feature] ** キャラクターシートの累積追加認識（マージ）に対応。追加ドロップ時に既存のキャストリストが消えず、インテリジェントにマージ・追記されるように改善 / Supported cumulative character sheet analysis. When dropping additional sheets, the existing cast list is preserved and new analysis results are merged intelligently.
 

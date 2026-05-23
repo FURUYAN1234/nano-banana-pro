@@ -1,12 +1,10 @@
 # HANDOFF.md
 
-## 現在のステータス (v4.0.8)
+## 現在のステータス (v4.0.9)
 - **Completed** (完了)
-- キャラクターシートの累積追加認識（マージ）およびコントロールバー下の黒い不要な隙間の解消、STEP1ドロップ説明文の修正が完了しました。
+- 画像生成時の共通プロンプトから白目の演技指示を削除し、様々なオチの表情が白目に偏る問題を解決しました。
 
 ## 完了した項目 (Done)
-- [x] キャラクターシートを順次追加でドロップした際に既存の解析結果（castList）を消さずにマージ・追記するロジック（useMangaWorkflow.js）の実装
-- [x] コピーボタン非表示時に上部パディングを動的調整（pt-[55px] md:pt-[65px]）するレイアウト修正（App.jsx）
-- [x] ドロップエリアの説明文を「まとめて、もしくは都度追加アップロード」に更新（Step1Panel.jsx）
-- [x] バージョンアップ（v4.0.8）と各ファイル同期（package.json, constants.js, index.html, README.md）
-- [x] ローカル開発環境での動作確認の完了
+- [x] `constants.js` の `DYNAMIC_CAMERA_PROTOCOL` から `blank white eyes` の指示を削除し、 `funny sweat drops` に差し替え（白目オチ偏りの是正）
+- [x] バージョンアップ（v4.0.9）と各ファイル同期（package.json, constants.js, index.html, README.md, hf-nano-banana-pro/README.md）
+- [x] ローカル開発環境でのビルド確認および動作検証の完了

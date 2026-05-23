@@ -1,7 +1,7 @@
 // --- 定数・タグ定義 (constants.js) ---
 // App.jsx から抽出された共有定数
 
-export const SYSTEM_VERSION = "v4.0.8";
+export const SYSTEM_VERSION = "v4.0.9";
 
 // --- Punchline ラベル変換関数 ---
 export const getPunchlineLabel = (type) => {
@@ -292,7 +292,7 @@ Available lens effects — EACH PANEL MUST USE ONE:
 §3. GAG MANGA INTERACTION RULES:
 1. Characters MUST interact with each other or the environment.
 2. [NO CAMERA EYE CONTACT]: (absolutely NO looking at camera:2.5), (NO breaking the fourth wall:2.5), (characters always looking at other characters or objects in the scene:1.8), (eyes directed at conversation partner:1.5). Direct eye contact with the viewer is strictly FORBIDDEN. Characters must always look at each other, at objects, or away from the camera.
-3. (exaggerated facial expressions:1.3), (emotional reactions:1.2) — Comical expressions: blank white eyes, jaw drops, fury, waterfall tears.
+3. (exaggerated facial expressions:1.3), (emotional reactions:1.2) — Comical expressions: jaw drops, fury, waterfall tears, funny sweat drops.
 4. (dynamic body language:1.3), (full body reactions:1.2) — Characters physically react with entire bodies.
 5. Do NOT overlay floating close-up eyes or ghostly face inserts as background elements.
 6. Do NOT draw "adjusting glasses" pose unless the character explicitly wears glasses.
