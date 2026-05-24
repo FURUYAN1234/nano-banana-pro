@@ -929,6 +929,9 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v4.0.10 (2026-05-24)
+- ** [Fix & UX] ** ResizeObserverを導入して上部コントロールバーの高さを動的監視し、エンジン切替時やレスポンシブ時の黒い空白行を自動調整するよう改善 / Introduced ResizeObserver to dynamically track ControlBar height and automatically eliminate excess black space across responsive breakpoints and engine toggles
+
 ### v4.0.9 (2026-05-23)
 - ** [Fix & UX] ** 画像生成時の共通プロンプトから白目の演技指示を削除し、様々なオチの表情が白目に偏る問題を解決 / Removed blank white eyes instruction from global camera prompt to resolve blank-eye bias in visual punchlines
 

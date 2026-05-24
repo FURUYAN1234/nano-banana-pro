@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 // CANARY TEST
 console.log("HELLO_USER_FIXED_VERSION_2_25");
@@ -150,6 +150,28 @@ function App() {
     usedModel,
   } = useMangaWorkflow();
 
+  const [controlBarHeight, setControlBarHeight] = useState(70);
+  const controlBarRef = useRef(null);
+
+  useEffect(() => {
+    if (!controlBarRef.current) return;
+
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (let entry of entries) {
+        const height = entry.borderBoxSize
+          ? (entry.borderBoxSize[0] ? entry.borderBoxSize[0].blockSize : entry.target.getBoundingClientRect().height)
+          : entry.target.getBoundingClientRect().height;
+        // Add 12px margin beneath control bar for optimal breathing room
+        setControlBarHeight(height + 12);
+      }
+    });
+
+    resizeObserver.observe(controlBarRef.current);
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [apiKey, selectedEngine, enableOpenAIApi, currentStep]);
+
   return (
     <div className="min-h-screen bg-[#0a0c10] text-slate-100 font-sans selection:bg-blue-500/30 overflow-x-hidden">
       <ApiKeyModal isOpen={showModal} onSave={handleSetKey} provider="google" />
@@ -180,6 +202,7 @@ function App() {
         provider="openai" 
       />
       <ControlBar
+        controlBarRef={controlBarRef}
         currentStep={currentStep}
         apiKey={apiKey}
         isEndlessMode={isEndlessMode}
@@ -202,11 +225,10 @@ function App() {
         <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-900/10 blur-[120px] rounded-full" />
       </div>
 
-      <div className={`relative z-10 max-w-5xl mx-auto px-4 pb-4 space-y-8 md:px-10 md:pb-10 ${
-        (selectedEngine === 'openai' || enableOpenAIApi)
-          ? 'pt-[130px] md:pt-[150px]'
-          : 'pt-[55px] md:pt-[65px]'
-      }`}>
+      <div 
+        style={{ paddingTop: `${controlBarHeight}px` }}
+        className="relative z-10 max-w-5xl mx-auto px-4 pb-4 space-y-8 md:px-10 md:pb-10"
+      >
         {/* === ヘッダー領域 === */}
         <SystemHeader
           SYSTEM_VERSION={SYSTEM_VERSION}

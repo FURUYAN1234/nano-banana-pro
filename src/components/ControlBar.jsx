@@ -3,6 +3,7 @@ import { Check, ArrowRight, RefreshCw, Zap, Square, Loader2, Copy } from 'lucide
 import { getOpenAIApiKey } from '../lib/openai';
 
 export default function ControlBar({
+  controlBarRef,
   currentStep,
   apiKey,
   isEndlessMode,
@@ -18,7 +19,7 @@ export default function ControlBar({
   showStatus
 }) {
   return (
-    <div className="fixed top-0 left-0 right-0 z-[100] bg-[#0f1115] border-b border-white/10 px-2 md:px-8 py-2 md:py-3 shadow-xl w-full flex flex-col gap-2 md:gap-3 overflow-x-hidden">
+    <div ref={controlBarRef} className="fixed top-0 left-0 right-0 z-[100] bg-[#0f1115] border-b border-white/10 px-2 md:px-8 py-2 md:py-3 shadow-xl w-full flex flex-col gap-2 md:gap-3 overflow-x-hidden">
       <div className="flex flex-wrap xl:flex-nowrap items-center justify-center max-w-7xl mx-auto w-full gap-y-3">
         
         {/* Progress Steps (Center Left) */}
