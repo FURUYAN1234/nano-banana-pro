@@ -275,7 +275,8 @@ ${parsedData.scenario}
     scenario: parsedData.scenario,
     cameraWork,
     croppedPanels,
-    usedModel: result.model
+    usedModel: result.model,
+    thought: result.thought
   };
 }
 
@@ -293,6 +294,7 @@ export async function enhanceScenarioText({
   const result = await callAI(enhancePrompt, [], castList, onProgress);
   return {
     text: result.text.trim(),
-    usedModel: result.model
+    usedModel: result.model,
+    thought: result.thought
   };
 }

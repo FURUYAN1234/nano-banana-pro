@@ -52,9 +52,29 @@ export const getEngineDisplayName = () => {
  * App.jsx 側は callAI を呼ぶだけで、内部のエンジン差異を意識しなくてよい。
  */
 export const callAI = async (prompt, images = null, systemInstruction = null, onThinkingUpdate) => {
+    let result;
     if (activeEngine === 'openai') {
-        return callOpenAIText(prompt, images, systemInstruction, onThinkingUpdate);
+        result = await callOpenAIText(prompt, images, systemInstruction, onThinkingUpdate);
+    } else {
+        result = await callThinkingGemini(prompt, images, systemInstruction, onThinkingUpdate);
     }
-    // デフォルト: Gemini（従来通り、何も変わらない）
-    return callThinkingGemini(prompt, images, systemInstruction, onThinkingUpdate);
+
+    // 思考プロセス（<thought>タグ）の抽出と分離処理（両API対応）
+    if (result && result.text) {
+        const thoughtRegex = /<thought>([\s\S]*?)<\/thought>/i;
+        const match = result.text.match(thoughtRegex);
+        if (match) {
+            const extractedThought = match[1].trim();
+            // text から thought タグ部分を削除してクリーンにする
+            result.text = result.text.replace(thoughtRegex, '').trim();
+            
+            // thought フィールドを更新またはマージ
+            if (result.thought && result.thought !== "通常処理が完了しました。" && result.thought !== "通常処理が完了しました（思考トレースは利用不可）。" && !result.thought.includes("による処理が完了しました。")) {
+                result.thought = `${result.thought}\n\n[プロンプト内思考プロセス]\n${extractedThought}`;
+            } else {
+                result.thought = extractedThought;
+            }
+        }
+    }
+    return result;
 };

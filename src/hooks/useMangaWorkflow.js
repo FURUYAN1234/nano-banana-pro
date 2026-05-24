@@ -586,7 +586,14 @@ export default function useMangaWorkflow() {
 
       if (result && result.text && result.text.length > 50) {
         setScenario(result.text);
-        setEnhanceLog(prev => prev + `\n> [SUCCESS] シナリオを強化しました！（${result.text.length}文字）\n> [INFO] 「元に戻す」ボタンで強化前のシナリオに戻せます。`);
+        setEnhanceLog(prev => {
+          const baseLog = prev + `\n> [SUCCESS] シナリオを強化しました！（${result.text.length}文字）\n> [INFO] 「元に戻す」ボタンで強化前のシナリオに戻せます。`;
+          if (result.thought) {
+            const separator = "\n\n--- ✅ シナリオ強化完了 (思考トレース) ---\n";
+            return baseLog + separator + result.thought;
+          }
+          return baseLog;
+        });
         setEnhanceExpressions(false);
         setEnhanceBodyLang(false);
         setEnhanceEffects(false);
@@ -774,6 +781,14 @@ export default function useMangaWorkflow() {
       setScenario(finalScenarioText);
       showStatus("シナリオの生成が完了しました！");
       setIs360CameraWorking(false);
+
+      if (result.thought) {
+        setScenarioThought(prev => {
+          const separator = "\n\n--- ✅ シナリオ生成完了 (思考トレース) ---\n";
+          return prev + separator + result.thought;
+        });
+      }
+
       return finalScenarioText;
     } catch (error) {
       console.error(error);

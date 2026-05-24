@@ -101,17 +101,25 @@ With a single click, the system autonomously executes the entire pipeline (from 
 キャラクターとお題を設定した状態から、シナリオ生成・プロンプト構築・画像生成の全ステップを人間の介入なしに一気通貫で自律実行するモードです。
 
 ### 🔁 Endless Mode / 無限ループモード
-The system continuously generates completely new manga infinitely until the user explicitly stops it. It combines trend crawling and image generation loops.
-ユーザーが停止ボタンを押すまで、無限に新しい漫画を生成し続ける機能です。トレンド取得と画像生成のループを全自動で延々と回します。
+The system continuously generates completely new manga infinitely until the user explicitly stops it. It combines trend crawling and image generation loops. Upon completing a generation, it automatically selects a new topic and continuously produces new manga while preserving the initial character settings (enabling fully autonomous operation).
+ユーザーが停止ボタンを押すまで、無限に新しい漫画を生成し続ける機能です。トレンド取得と画像生成のループを全自動で延々と回します。フルオート生成完了後、キャラクター設定を維持したまま、自動的に新しいニュースやランダムなお題を取得し、次々と新しいシナリオと漫画を延々と生成し続けるモードです（完全な放置運用が可能）。
 
 ### 🧠 Local RAG Dictionary / 自律型ローカルRAG辞書
 Integrates a strictly structured local knowledge base (`knowledge.js`) that dynamically extracts location-specific props, ambient details, and emotion-based physical reactions. The location dictionary has been massively expanded to over 100 unique and chaotic environments (including microscopic worlds and alternate dimensions). This RAG (Retrieval-Augmented Generation) pipeline forces the AI to use concrete objects instead of vague descriptions, drastically improving narrative resolution.
 あらかじめ構築されたローカルRAG辞書（`knowledge.js`）を内蔵。設定された場所（Location）特有の小道具や環境情報、キャラクターの感情に合わせた物理的なリアクションを動的に抽出し、プロンプトへ強制注入します。バージョン4.0.5でロケーション辞書が101箇所へと超絶拡張され、「電子基板のミクロ世界」や「異次元の幾何学空間」などカオスな舞台設定が可能になりました。これにより、AI特有の「抽象的でフワッとした描写」を排除し、ディテールに富んだ高品質なシナリオを生成します。
 
-An experimental feature that, upon completing a generation, automatically selects a new topic and continuously produces new manga while preserving the initial character settings.\nフルオート生成完了後、キャラクター設定を維持したまま、自動的に新しいニュースやランダムなお題を取得し、次々と新しいシナリオと漫画を延々と生成し続けるモードです（完全な放置運用が可能）。\n\n### 🎬 Scenario Enhancement / シナリオ演出強化
+### 🧠 Thinking Mode Log Synchronization (v4.1.3+) / 思考プロセス両API同期・可観測性機能
+A visual synchronization feature that captures and displays the AI's internal thoughts and reasoning process (Semi-Formal Reasoning, Verbalized Confidence, and Self-Correction loops) across both **Gemini Engine** and **OpenAI Engine**.
+- **Unified Parsing & Extraction / 統一タグパース機能:** For Gemini, it retrieves native API thoughts. For OpenAI (which does not expose native thought fields in standard APIs), the system embeds a structured Chain of Thought wrapping structure (`'<thought>'` tags) in the prompt. The `callAI` router automatically parses, extracts, and isolates this thought trace from the final scenario, dynamically outputting it to the progress log window without polluting the generated scenario body.
+- **Improved Output Quality / 自己修復によるクオリティ保証:** By enforcing CoT and self-correction checks (e.g. self-grading 0-100 points, self-adjusting if under 80 points) inside the thoughts, both engines achieve identical reasoning depth and produce higher narrative-resolution manga.
 
+両API（Gemini/OpenAI）において、AIの内部推論プロセス（前提整理・パストレース・確信度自己判定と自己修復）を視覚的に同期・可観測化する機能です。
+- ** 統一タグパース・分離処理 ** : Geminiのネイティブ思考モードに加え、OpenAIでもプロンプト指示によるChain of Thought抽出技術（`'<thought>'`タグ分離）を搭載。ルーター層が応答からタグ部分を自動で切り出し、シナリオ本文を汚すことなく、思考ログのみを経過ログ窓へと動的に流し込みます。
+- ** 自己修復による品質保証 ** : 思考プロセス内でAI自身に「お題の反映度」「キャラ一貫性」「構図・セリフの制約」を自己採点（0〜100点）させ、80点未満なら自己修復（書き直し）を強制することで、両エンジンで同等の深い推論を経た高品質なシナリオ生成を実現します。
+
+### 🎬 Scenario Enhancement / シナリオ演出強化
 Users can amplify the AI's script direction with specific enhancement toggles (e.g., Extreme Expressions, Dynamic Body Language, Intense Lighting/VFX, Detailed Backgrounds, Extreme Camera Work, and Gag/Dialogue impact).
-シナリオの演出力を任意に引き上げる強化トグルを搭載。表情、ボディランゲージ、照明・エフェクト、背景描き込み、極限のカメラワーク、セリフやギャグのキレなど、特定要素を「限界突破（ウェイト3.0相当）」レベルに増幅可能です。
+シネマライティング、FACSによる劇的な表情、過剰な全身アクション、360度カメラ背景に対応したパース、セリフやギャグのキレなど、シナリオの演出力を任意に「限界突破（ウェイト3.0相当）」レベルに引き上げる強化トグル群です。
 
 ### 🎰 Punchline Director (v3.31+) / オチ・ディレクター
 
@@ -931,6 +939,9 @@ Developed by **FURU**
 ---
 
 ## 📋 ChangeLog
+
+### v4.1.3 (2026-05-24)
+- **[Feature]** Thinking Mode Log Synchronization supporting both Gemini and OpenAI engines. Implemented pseudo-thought tag ('<thought>') extraction in the router layer to isolate thought traces into the progress log window. / GeminiとOpenAIの両エンジンにおける思考プロセス（Thinking Mode / CoT）の同期・可観測化に対応。ルーター層での ** '<thought>' ** タグ自動抽出により、自己修復を含む思考トレースを経過窓に表示するよう改善
 
 ### v4.1.2 (2026-05-24)
 - **[Fix & UX]** Alpha表記の完全排除とスクリプトバグ修正、ドキュメントの再整備 / Completely removed Alpha branding, fixed update scripts, and cleaned up documentation
