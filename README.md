@@ -5,6 +5,9 @@
 >
 > An experimental web application that leads AI manga production beyond "automation" to full "unmanned" autonomy.
 > AIによるマンガ制作を「自動化」ではなく、その先にある「無人化」へと導く実験的Webアプリケーション。
+>
+> <img width="2848" height="1490" alt="AI_Creative_Studio" src="https://github.com/user-attachments/assets/d9b97ee9-5051-4f99-8bd3-fb82967d5c12" />
+
 
 > [!TIP]
 > **Detailed Commentary Available / 詳細な解説記事を公開中**
@@ -20,6 +23,7 @@ This project aims to intentionally exclude humans from the creative process, all
 
 ![Sample Output](assets/samples/sample.png)
 ![Retro Sample](assets/samples/retro_sample.jpg)
+![Uploading AI_Creative_Studio.png…]()
 
 ### 🎥 Operation Tutorial / 動作手順動画
 
