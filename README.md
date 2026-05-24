@@ -929,6 +929,9 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v4.1.0 (2026-05-24)
+- ** [Fix & UX] ** ResizeObserverを導入して上部コントロールバーの高さを動的監視し、エンジン切替時やレスポンシブ時の黒い空白行を自動調整するよう改善 / Introduced ResizeObserver to dynamically track ControlBar height and automatically eliminate excess black space across responsive breakpoints and engine toggles
+
 ### v4.0.10 (2026-05-24)
 - ** [Fix & UX] ** ResizeObserverを導入して上部コントロールバーの高さを動的監視し、エンジン切替時やレスポンシブ時の黒い空白行を自動調整するよう改善 / Introduced ResizeObserver to dynamically track ControlBar height and automatically eliminate excess black space across responsive breakpoints and engine toggles
 
