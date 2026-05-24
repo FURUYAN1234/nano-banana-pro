@@ -33,8 +33,8 @@ const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
 // Markdownの太字表示崩れを防止するためのスペース補正関数
 function sanitizeMarkdownBold(text) {
   if (!text) return text;
-  // ** の外側と内側に半角スペースを挿入し、重複スペースを1つに縮退させる
-  let t = text.replace(/\*\*/g, ' ** ');
+  // ** の外側（前後）に半角スペースを挿入し、内側は密着させる（例: "これは**太字**です" -> "これは **太字** です"）
+  let t = text.replace(/\*\*([^*]+)\*\*/g, ' **$1** ');
   t = t.replace(/[ ]+/g, ' ');
   t = t.replace(/^- \*\*/g, '- **');
   return t.trim();
@@ -44,9 +44,9 @@ function sanitizeMarkdownBold(text) {
 const cleanJa = sanitizeMarkdownBold(changesJa);
 const cleanEn = sanitizeMarkdownBold(changesEn);
 
-// 追加するChangeLogエントリの生成
-const entryJa = `- ** [Fix & UX] ** ${cleanJa} / ${cleanEn}`;
-const entryEn = `- ** [Fix & UX] ** ${cleanJa} / ${cleanEn}`; // 同期表記
+// 追加するChangeLogエントリの生成 (太字の内側に余計なスペースを入れない)
+const entryJa = `- **[Fix & UX]** ${cleanJa} / ${cleanEn}`;
+const entryEn = `- **[Fix & UX]** ${cleanJa} / ${cleanEn}`; // 同期表記
 
 const targetFiles = {
   packageJson: path.join(__dirname, '../package.json'),

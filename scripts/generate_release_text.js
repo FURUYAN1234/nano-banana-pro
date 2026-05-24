@@ -11,16 +11,16 @@ const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
 const version = packageJson.version;
 
 console.log("\n================ [ GitHub Release Template ] ================");
-console.log(`Tag version: v${version}-alpha`);
+console.log(`Tag version: v${version}`);
 console.log(`Target: main`);
 console.log("");
 
 console.log("👇 [Title]");
-console.log(`v${version} Alpha - Identity Locking & SFX Fix / キャラ同一性強化とオノマトペ抽出修正`);
+console.log(`v${version} - Update / 更新内容`);
 console.log("");
 
 console.log("👇 [Body]");
-console.log(`## 🚀 Changes in v${version} Alpha /変更点`);
+console.log(`## 🚀 Changes in v${version} / 変更点`);
 console.log("");
 console.log(`### 🎨 Character Consistency Logic / キャラクター同一性の強化`);
 console.log(`- **Anti-Cloning Enforcement (クローン防止プロトコルの強化)**:`);

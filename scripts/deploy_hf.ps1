@@ -16,8 +16,7 @@ $DistDir = Join-Path $ProjectRoot "dist"
 # === Version ===
 $PackageJson = Get-Content (Join-Path $ProjectRoot "package.json") -Encoding UTF8 | ConvertFrom-Json
 $Version = $PackageJson.version
-$DisplayVersion = $Version -replace '\.0-alpha$', '' -replace '^', 'v'
-$DisplayVersion = "$DisplayVersion Alpha"
+$DisplayVersion = "v$Version"
 
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Cyan

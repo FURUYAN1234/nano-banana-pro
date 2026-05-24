@@ -129,7 +129,7 @@ export const buildMangaPrompt = ({
   let panelSections = "";
 
   if (enableChatGPTMode) {
-    // ChatGPT (DALL-E 3) 向けプロンプトの構築
+    // ChatGPT Image 2.0 向けプロンプトの構築
     panelSections = panels.map((pt, i) => {
       const num = i + 1;
       return `## Panel ${num}

@@ -929,6 +929,9 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v4.1.2 (2026-05-24)
+- **[Fix & UX]** Alpha表記の完全排除とスクリプトバグ修正、ドキュメントの再整備 / Completely removed Alpha branding, fixed update scripts, and cleaned up documentation
+
 ### v4.1.1 (2026-05-24)
 - ** [Fix & UX] ** バージョン繰り上げルールの明文化とドキュメント整備 / Documented special version bump rules and updated logs
 
