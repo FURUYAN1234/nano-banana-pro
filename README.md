@@ -22,7 +22,6 @@ This project aims to intentionally exclude humans from the creative process, all
 
 ![Sample Output](assets/samples/sample.png)
 ![Retro Sample](assets/samples/retro_sample.jpg)
-![Uploading AI_Creative_Studio.png…]()
 
 ### 🎥 Operation Tutorial / 動作手順動画
 
