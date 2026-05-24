@@ -247,24 +247,41 @@ export const extractDialogueOnly = (fullPanelText, castList) => {
 
   // [v2.22] フォールバック: キャラ名マッチに失敗しても、カギ括弧「」で囲まれたテキストがあればセリフとして抽出
   // [v2.29] ト書き誤検出防止: カギ括弧内のテキストがト書き（状況説明）でないかをチェック
+  // [v4.1.6 Fix] カギ括弧の直前にキャスト名が存在する場合のみセリフとしてパースし、ロゴ名や第三者のボイス（齊藤氏等）の誤抽出を防止
   if (formattedBubbles.length === 0) {
-    const bracketDialogues = fullPanelText.match(/「([^」]+)」/g);
-    if (bracketDialogues && bracketDialogues.length > 0) {
-      bracketDialogues.forEach(bd => {
-        let dialogueText = bd.replace(/^「/, '').replace(/」$/, '').trim();
-        dialogueText = dialogueText.replace(/（.*?）|\(.*?\)/g, '').trim();
-        // [v2.29] ト書き判定: キャラ名2名以上+動作動詞を含む長文はト書きとみなしスキップ
-        const charNamesInText = validCharacters.filter(c => {
-          const nameOnly = c.split(/[\(（]/)[0].trim();
-          return nameOnly && dialogueText.includes(nameOnly);
-        });
-        const hasActionVerbs = /(?:走|逃|叫|倒|飛|投|握|振|開|閉|持|回|守|追|暴|掴|奪|叩|殴|蹴|泣|笑|怒|驚|震|立|座|歩|見|向|指|差|押|引|掲|置|取|抱|抜|落|転|上|下|入|出|乗|降|着|脱|食|飲|読|書|聞|話|歌|踊|遊|寝|起|止|始|続|終|帰|来|行|待|送|届|届|渡|受|返|払|買|売|借|貸|集|散|並|重|包|巻|結|解|切|折|曲|伸|縮|揺|動|止|消|現|隠|探|見つ)/.test(dialogueText);
-        const isLikelyNarration = (charNamesInText.length >= 2 && hasActionVerbs && dialogueText.length > 15);
-        if (dialogueText && !isLikelyNarration) {
-          formattedBubbles.push(`(Speech Bubble ${bubbleCount}: "${dialogueText}")`);
-          bubbleCount++;
-        }
+    const regex = /「([^」]+)」/g;
+    let match;
+    let lastIndex = 0;
+    while ((match = regex.exec(fullPanelText)) !== null) {
+      let dialogueText = match[1].trim();
+      dialogueText = dialogueText.replace(/（.*?）|\(.*?\)/g, '').trim();
+      
+      // カギ括弧の直前のテキスト（前のカギ括弧の末尾から、現在のカギ括弧の先頭まで）を取得
+      const prevText = fullPanelText.substring(lastIndex, match.index);
+      lastIndex = regex.lastIndex;
+
+      // prevText の中に、有効なキャラクター名が含まれているか確認
+      const hasValidSpeakerInPrevText = validCharacters.some(c => {
+        const nameOnly = c.split(/[（(]/)[0].trim();
+        return nameOnly && prevText.includes(nameOnly);
       });
+
+      if (!hasValidSpeakerInPrevText) {
+        // 直前にキャスト名がない場合は、セリフではなく引用や他人の発言としてスキップ
+        continue;
+      }
+
+      // [v2.29] ト書き判定: キャラ名2名以上+動作動詞を含む長文はト書きとみなしスキップ
+      const charNamesInText = validCharacters.filter(c => {
+        const nameOnly = c.split(/[\(（]/)[0].trim();
+        return nameOnly && dialogueText.includes(nameOnly);
+      });
+      const hasActionVerbs = /(?:走|逃|叫|倒|飛|投|握|振|開|閉|持|回|守|追|暴|掴|奪|叩|殴|蹴|泣|笑|怒|驚|震|立|座|歩|見|向|指|差|押|引|掲|置|取|抱|抜|落|転|上|下|入|出|乗|降|着|脱|食|飲|読|書|聞|話|歌|踊|遊|寝|起|止|始|続|終|帰|来|行|待|送|届|届|渡|受|返|払|買|売|借|貸|集|散|並|重|包|巻|結|解|切|折|曲|伸|縮|揺|動|止|消|現|隠|探|見つ)/.test(dialogueText);
+      const isLikelyNarration = (charNamesInText.length >= 2 && hasActionVerbs && dialogueText.length > 15);
+      if (dialogueText && !isLikelyNarration) {
+        formattedBubbles.push(`(Speech Bubble ${bubbleCount}: "${dialogueText}")`);
+        bubbleCount++;
+      }
     }
   }
 
