@@ -15,20 +15,20 @@ const GEMINI_BASE_URL = (typeof window !== 'undefined' && window.location.hostna
 // テキストのみリクエスト用 (シナリオ生成等): Next-Gen優先・無料枠優先
 // ※ 2026年4月以降、Pro系は有料APIキー専用。Flash系は無料枠で利用可能。
 const TEXT_MODEL_IDS = [
+    "gemini-3.5-flash",
     "gemini-2.5-flash",
-    "gemini-2.0-flash",
     "gemini-2.5-pro",
-    "gemini-1.5-flash",
-    "gemini-1.5-pro"
+    "gemini-flash-latest",
+    "gemini-pro-latest"
 ];
 
 // 画像付きリクエスト用 (キャラクターシート認識等): フィルター寛容モデル優先
 const IMAGE_MODEL_IDS = [
+    "gemini-3.5-flash",
     "gemini-2.5-flash",
     "gemini-2.5-pro",
-    "gemini-2.0-flash",
-    "gemini-1.5-flash",
-    "gemini-1.5-pro"
+    "gemini-flash-latest",
+    "gemini-pro-latest"
 ];
 
 // Store API key in memory ONLY (Security Requirement: No persistence)
@@ -77,7 +77,7 @@ export const diagnoseConnection = async () => {
  * Robustly calls the Gemini API with Auto-Discovery on failure.
  */
 export const callThinkingGemini = async (prompt, images = null, systemInstruction = null, onThinkingUpdate) => {
-    if (!currentApiKey) throw new Error("API Key is initialized.");
+    if (!currentApiKey) throw new Error("API Key is not set.");
 
     const genAI = new GoogleGenerativeAI(currentApiKey);
 
@@ -151,16 +151,19 @@ export const callThinkingGemini = async (prompt, images = null, systemInstructio
                 if (finalTools.length > 0) {
                     console.warn(`[API] Grounding failed for ${modelId} (${err.message}), retrying without tools...`);
                     if (onThinkingUpdate) onThinkingUpdate(`> [API] Grounding失敗。ツールなしで同一モデルを再試行します...`);
-                    result = await model.generateContent({
-                        contents: [{ role: "user", parts: finalPromptParts }],
-                        generationConfig: { temperature: 0.7, maxOutputTokens: 8192 },
-                        safetySettings: [
-                            { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
-                            { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
-                            { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
-                            { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" },
-                        ]
-                    });
+                    result = await Promise.race([
+                        model.generateContent({
+                            contents: [{ role: "user", parts: finalPromptParts }],
+                            generationConfig: { temperature: 0.7, maxOutputTokens: 8192 },
+                            safetySettings: [
+                                { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
+                                { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
+                                { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
+                                { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" },
+                            ]
+                        }),
+                        timeoutPromise
+                    ]);
                 } else {
                     throw err;
                 }

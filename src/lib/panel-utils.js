@@ -98,6 +98,29 @@ SPEECH BUBBLE PLACEMENT RULE (CRITICAL): Each character's speech bubble MUST be 
   return matrix;
 };
 
+/**
+ * [v4.1.7] Determine if a speaker name refers to a person (either registered cast or third-party/mob)
+ * @param {string} name - The name to test
+ * @param {Array<string>} validCharacters - List of registered cast names
+ * @returns {boolean} True if it looks like a person
+ */
+export const isLikelyPerson = (name, validCharacters = []) => {
+  const cleanName = name.replace(/[（(].*?[）)]/g, '').trim();
+  if (!cleanName) return false;
+
+  // Check registered cast list
+  const isCast = validCharacters.some(c => {
+    const nameOnly = c.split(/[（(]/)[0].trim();
+    return cleanName === c || cleanName === nameOnly || nameOnly === cleanName || cleanName.includes(nameOnly);
+  });
+  if (isCast) return true;
+
+  // Person-indicative keywords (Japanese terms for suffix/roles, and 'mob'/'speaker')
+  const personKeywords = /(?:氏|モブ|客|観客|司会|ナレーター|アナウンサー|男性|女性|男|女|スタッフ|社長|主催者|委員長|先生|選手|声|人|キャラ)$/;
+  return personKeywords.test(cleanName) || cleanName.toLowerCase().includes('mob') || cleanName.toLowerCase().includes('speaker');
+};
+
+
 export const getCharTraitsFromMatrix = (charName, castList) => {
   const matrix = buildIdentityMatrix(castList);
   const line = matrix.split('\n').find(l => l.includes(`[${charName}]`));
@@ -211,10 +234,7 @@ export const extractDialogueOnly = (fullPanelText, castList) => {
 
       if (hasSentenceParticles || endsWithParticle || isTooLong || isMetaTag || isSoundEffect || hasReactionTag) {
         // 文章構造・メタタグ・効果音・リアクション指示を含む → 話者名ではない
-      } else if (validCharacters.some(c => {
-        const nameOnly = c.split(/[（(]/)[0].trim();
-        return tempSpeakerBase === c || tempSpeakerBase === nameOnly || nameOnly === tempSpeakerBase || tempSpeakerBase.includes(nameOnly);
-      }) || tempSpeakerBase.includes("全員") || tempSpeakerBase === "Speaker" || match[0].trim().endsWith(':') || match[0].trim().endsWith('：')) {
+      } else if (isLikelyPerson(tempSpeakerBase, validCharacters) || tempSpeakerBase.includes("全員") || tempSpeakerBase === "Speaker" || match[0].trim().endsWith(':') || match[0].trim().endsWith('：')) {
         isDialogue = true;
       }
     } else if (line.trim().startsWith('「')) {
@@ -260,14 +280,14 @@ export const extractDialogueOnly = (fullPanelText, castList) => {
       const prevText = fullPanelText.substring(lastIndex, match.index);
       lastIndex = regex.lastIndex;
 
-      // prevText の中に、有効なキャラクター名が含まれているか確認
-      const hasValidSpeakerInPrevText = validCharacters.some(c => {
+      // prevText の中に、有効なキャラクター名（キャストまたはモブなどの人物）が含まれているか確認
+      const hasValidSpeakerInPrevText = isLikelyPerson(prevText, validCharacters) || validCharacters.some(c => {
         const nameOnly = c.split(/[（(]/)[0].trim();
         return nameOnly && prevText.includes(nameOnly);
       });
 
       if (!hasValidSpeakerInPrevText) {
-        // 直前にキャスト名がない場合は、セリフではなく引用や他人の発言としてスキップ
+        // 直前にキャスト名や人物名がない場合は、セリフではなく引用や他人の発言としてスキップ
         continue;
       }
 
@@ -347,7 +367,7 @@ export const extractActionOnly = (fullPanelText, castList, placementRule = "") =
       
       if (hasSentenceParticles || isTooLong || isMetaTag || isSoundEffect || hasReactionTag) {
         // Not a dialogue speaker (meta tag, sound effect, or reaction directive)
-      } else if (validCharacters.some(c => tempSpeaker.includes(c) || c.includes(tempSpeaker)) || tempSpeaker === "全員" || tempSpeaker === "Speaker" || match[0].trim().endsWith(':') || match[0].trim().endsWith('：')) {
+      } else if (isLikelyPerson(tempSpeaker, validCharacters) || tempSpeaker === "全員" || tempSpeaker === "Speaker" || match[0].trim().endsWith(':') || match[0].trim().endsWith('：')) {
         isDialogue = true;
       }
     } else if (line.trim().startsWith('「')) {
@@ -445,7 +465,7 @@ export const extractPlacementRule = (fullPanelText, castList) => {
       if (speaker && !/^(EMOTION|NORMAL|CHIBI_GAG|GEKIGA|SHOUJO|HORROR|BLANK|IMPACT|WATERCOLOR|RETRO|GLITTER|SHADOW|SPEED|FLASHBACK|UKIYOE|POP_ART|SKETCH|NEON|THICK_PAINT|PASTEL|CEL|DARK_ANIME|THIN_LINE|HIGH_SATURATION)$/i.test(speaker)) {
         // キャラ名判定と名寄せ
         const matchedChar = validCharsForPlacement.find(c => speaker === c || speaker.includes(c) || c.includes(speaker));
-        if (matchedChar || match[0].trim().endsWith(':') || match[0].trim().endsWith('：')) {
+        if (matchedChar || isLikelyPerson(speaker, validCharsForPlacement) || match[0].trim().endsWith(':') || match[0].trim().endsWith('：')) {
           const canonicalName = matchedChar ? charLookup[matchedChar] : speaker;
           if (!speakers.includes(canonicalName)) {
             speakers.push(canonicalName);
@@ -542,6 +562,10 @@ export const extractCastLimitRule = (fullPanelText, castList) => {
           if (!speakers.includes(canonicalName)) {
             speakers.push(canonicalName);
           }
+        } else if (isLikelyPerson(speaker, validCharacters)) {
+          if (!speakers.includes(speaker)) {
+            speakers.push(speaker);
+          }
         }
       }
     }
@@ -563,7 +587,7 @@ export const extractCastLimitRule = (fullPanelText, castList) => {
       
       if (hasSentenceParticles || isTooLong || isMetaTag || isSoundEffect || hasReactionTag) {
         // メタタグ等
-      } else if (validCharacters.some(c => tempSpeaker.includes(c) || c.includes(tempSpeaker)) || tempSpeaker === "全員" || tempSpeaker === "Speaker" || match[0].trim().endsWith(':') || match[0].trim().endsWith('：')) {
+      } else if (isLikelyPerson(tempSpeaker, validCharacters) || tempSpeaker === "全員" || tempSpeaker === "Speaker" || match[0].trim().endsWith(':') || match[0].trim().endsWith('：')) {
         isDialogue = true;
       }
     } else if (line.trim().startsWith('「')) {

@@ -817,7 +817,7 @@ export default function useMangaWorkflow() {
     setIsPolicyPanelOpen(false);
     setAssembleThought("スーパーフル・プロトコル v121.3 (Universal Master) を起動中... 全データの整合性をチェックしています...");
 
-    const effectiveChatGPTMode = enableChatGPTModeOverride !== null ? enableChatGPTModeOverride : enableChatGPTMode;
+    const effectiveChatGPTMode = typeof enableChatGPTModeOverride === 'boolean' ? enableChatGPTModeOverride : enableChatGPTMode;
 
     // Fake Streaming Effect
     const thinkTimer = setInterval(() => {

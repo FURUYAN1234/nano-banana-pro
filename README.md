@@ -939,6 +939,9 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v4.1.7 (2026-05-25)
+- **[Fix & UX]** モブキャラ判定のバグ修正、ChatGPTトグルの無効化バグ修正、Gemini APIのモデルID更新 / Fix mob parsing bug, resolve ChatGPT toggle disabled bug, and update Gemini API model IDs
+
 ### v4.1.6 (2026-05-25)
 - **[Fix & Feature]** プロンプト内の白目（BLANK）に対する過剰な禁止命令を排除し、他のリアクションとバランスよく自律選択するよう指示を調整。Windows環境下での改行コード問題（CRLF/LF）をGit側でLFに統一することで、編集時のフリーズバグを根絶。 / Rebalanced BLANK (blank eye) emotional prompt directives to encourage diverse facial reactions. Fixed CRLF/LF encoding mismatch under Windows environment via gitattributes to prevent editor hang issue.
 

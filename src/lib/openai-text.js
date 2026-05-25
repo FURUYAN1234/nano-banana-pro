@@ -77,10 +77,19 @@ export const callOpenAIText = async (prompt, images = null, systemInstruction = 
                                 detail: "high"
                             }
                         });
-                        if (onThinkingUpdate) {
-                            onThinkingUpdate(`> [API] 画像データを OpenAI Vision 形式に変換して送信中...`);
-                        }
+                    } else if (typeof img === 'string' && img.startsWith('data:image/')) {
+                        // 直接Base64文字列が渡された場合
+                        userContent.push({
+                            type: "image_url",
+                            image_url: {
+                                url: img,
+                                detail: "high"
+                            }
+                        });
                     }
+                }
+                if (userContent.length > 0 && onThinkingUpdate) {
+                    onThinkingUpdate(`> [API] 画像データを OpenAI Vision 形式に変換して送信中...`);
                 }
             }
 
