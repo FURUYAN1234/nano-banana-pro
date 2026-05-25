@@ -1,14 +1,13 @@
 # HANDOFF.md
 
-## 現在のステータス (v4.1.7)
+## 現在のステータス (v4.1.8)
 - **Completed** (完了)
-- キャスト以外の人物やリアクション指定を含んだ複雑なシナリオでも正常にパースできるバグ修正、ChatGPTトグルの無効化バグ修正、Gemini APIのモデルID更新を完了し、バージョン \`v4.1.7\` として動作検証を行いました。
+- 状況演出や背景、カメラワークといったト書き指示がセリフ（吹き出し）に誤混入してしまうバグ、および `[演出]` というゴーストキャラクターが混入するバグを修正し、バージョン `v4.1.8` として動作検証を行いました。
 
 ## 完了した項目 (Done)
-- [x] モブキャラや非キャストのパース処理（isLikelyPerson）のバグ修正
-- [x] ChatGPTモードトグルの無効化バグの修正
-- [x] Gemini APIのモデルIDの最新化（gemini-3.5-flash等の適用）
-- [x] バージョンアップ（v4.1.7）と各ファイル同期（package.json, constants.js, index.html, README.md, HANDOFF.md）
+- [x] ト書き（状況演出、背景、カメラワーク）がセリフに誤混入するバグの修正（`panel-utils.js` 内のメタタグ正規表現に `背景`、`カメラワーク` 等を追加）
+- [x] ゴーストキャラクター `[演出]` が混入するバグの修正（置換正規表現の修正）
+- [x] バージョンアップ（v4.1.8）と各ファイル同期（package.json, constants.js, index.html, README.md, hf-nano-banana-pro/README.md, HANDOFF.md）
 
 ## 残りのタスク (Remaining Tasks)
 - なし
