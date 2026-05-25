@@ -226,7 +226,7 @@ export const extractDialogueOnly = (fullPanelText, castList) => {
       const hasSentenceParticles = /(?:が|を|に|で|へ|は|も|と|から|まで|より)/.test(tempSpeakerBase) && tempSpeakerBase.length > 5;
       const endsWithParticle = /(?:が|を|に|で|へ|は|も|と|から|まで|より)$/.test(tempSpeakerBase);
       const isTooLong = tempSpeakerBase.length > 20; // 複数人「アカリ・ヒカリ・ミク・リン」を許容するため長めに変更
-      const isMetaTag = /^(Camera|Location|Outfit|EMOTION|状況|Action|リアクション|Reaction|設定|物理描写|SFX|効果音|BGM|ナレーション|テロップ|聴覚|触覚|嗅覚|体内感覚|視覚)$/i.test(tempSpeakerBase);
+      const isMetaTag = /^(Camera|Location|Outfit|EMOTION|状況(?:演出)?|Action|リアクション|Reaction|設定|物理描写|SFX|効果音|BGM|ナレーション|テロップ|聴覚|触覚|嗅覚|体内感覚|視覚|背景|Background|カメラワーク|CameraWork|Camera\s*Work)$/i.test(tempSpeakerBase);
       // [v2.45] 効果音パターン検出: 同じ文字(長音含む)の繰り返しは効果音（シーーーン、ゴゴゴ等）
       const isSoundEffect = /^[^a-zA-Z]*([\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF])([ーッっ]*\1){1,}[ーッっ！!ン]*$/u.test(tempSpeakerBase);
       // [v2.45] リアクション指示混入検出: 「（リアクション」等が話者名に含まれていたら除外
@@ -360,7 +360,7 @@ export const extractActionOnly = (fullPanelText, castList, placementRule = "") =
       tempSpeaker = tempSpeaker.replace(/^[【\[（(]/, '').replace(/[】\]）)]$/, '').trim();
       const hasSentenceParticles = /[がをにでへはもとからまでより]/.test(tempSpeaker) && tempSpeaker.length > 5;
       const isTooLong = tempSpeaker.length > 12;
-      const isMetaTag = /^(Camera|Location|Outfit|EMOTION|状況|Action|リアクション|Reaction|設定|聴覚|触覚|嗅覚|体内感覚|視覚|物理描写|SFX|効果音|BGM|ナレーション|テロップ)$/i.test(tempSpeaker);
+      const isMetaTag = /^(Camera|Location|Outfit|EMOTION|状況(?:演出)?|Action|リアクション|Reaction|設定|聴覚|触覚|嗅覚|体内感覚|視覚|物理描写|SFX|効果音|BGM|ナレーション|テロップ|背景|Background|カメラワーク|CameraWork|Camera\s*Work)$/i.test(tempSpeaker);
       // [v2.45] 効果音パターン検出
       const isSoundEffect = /^[^a-zA-Z]*([\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF])([ーッっ]*\1){1,}[ーッっ！!ン]*$/u.test(tempSpeaker.replace(/[（(].*$/, '').trim());
       const hasReactionTag = /[（(]\s*リアクション/i.test(match[1]);
@@ -388,7 +388,7 @@ export const extractActionOnly = (fullPanelText, castList, placementRule = "") =
   actionStr = actionStr.replace(/[ 　]*(ズコー|ガーン|チーン|ドッ|バシッ|ドカーン|バーン)[。、！？!?\s]*$/g, '');
   
   // [v3.39] ト書き・リアクション指示のカッコを外し、テキストとしての描画を防ぐ
-  actionStr = actionStr.replace(/[（(](?:Camera|Location|Outfit|EMOTION|状況|Action|リアクション|Reaction|設定)[:：]?\s*(.*?)[)）]/gi, '$1');
+  actionStr = actionStr.replace(/[（(](?:Camera|Location|Outfit|EMOTION|状況(?:演出)?|Action|リアクション|Reaction|設定|背景|Background|カメラワーク|CameraWork|Camera\s*Work)[:：]?\s*(.*?)[)）]/gi, '$1');
 
   actionStr = actionStr || "Characters interacting dynamically based on dialogue.";
 
@@ -419,7 +419,7 @@ export const extractPlacementRule = (fullPanelText, castList) => {
   const dialogLines = lines.filter(line => {
     const trimmed = line.trim();
     if (/^\[EMOTION:/i.test(trimmed)) return false;
-    if (/^状況[：:]/i.test(trimmed)) return false;
+    if (/^状況(?:演出)?[：:]/i.test(trimmed)) return false;
     return trimmed.includes('：') || trimmed.includes(':') || trimmed.includes('「');
   });
 
@@ -454,10 +454,10 @@ export const extractPlacementRule = (fullPanelText, castList) => {
   dialogLines.forEach(line => {
     const match = line.match(/^(.*?)(?:[:：]|「)/);
     if (match && match[1].trim()) {
-      let speaker = match[1].replace(/^(SFX|効果音|BGM|Action|状況|EMOTION|[\(（].*?[\)）]|\[.*?\])/gi, '').replace(/^[【\[（(]/, '').replace(/[】\]）)]$/, '').trim();
+      let speaker = match[1].replace(/^(SFX|効果音|BGM|Action|状況(?:演出)?|EMOTION|[\(（].*?[\)）]|\[.*?\])/gi, '').replace(/^[【\[（(]/, '').replace(/[】\]）)]$/, '').trim();
       const hasSentenceParticles = /[がをにでへはもとからまでより]/.test(speaker) && speaker.length > 5;
       const isTooLong = speaker.length > 12;
-      const isMetaTag = /^(Camera|Location|Outfit|EMOTION|状況|Action|リアクション|Reaction|設定|聴覚|触覚|嗅覚|体内感覚|視覚|物理描写|SFX|効果音|BGM|ナレーション|テロップ)$/i.test(speaker);
+      const isMetaTag = /^(Camera|Location|Outfit|EMOTION|状況(?:演出)?|Action|リアクション|Reaction|設定|聴覚|触覚|嗅覚|体内感覚|視覚|物理描写|SFX|効果音|BGM|ナレーション|テロップ|背景|Background|カメラワーク|CameraWork|Camera\s*Work)$/i.test(speaker);
       const isSoundEffect = /^[^a-zA-Z]*([\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF])([ーッっ]*\1){1,}[ーッっ！!ン]*$/u.test(speaker.replace(/[（(].*$/, '').trim());
       const hasReactionTag = /[（(]\s*リアクション/i.test(match[1]);
       const isDummySpeaker = /^(全員|みんな|Speaker)$/i.test(speaker);
@@ -553,7 +553,7 @@ export const extractCastLimitRule = (fullPanelText, castList) => {
   lines.forEach(line => {
     const match = line.match(/^(.*?)(?:[:：]|「)/);
     if (match && match[1].trim()) {
-      let speaker = match[1].replace(/^(SFX|効果音|BGM|Action|状況|[\(（].*?[\)）])/gi, '').replace(/^[【\[（(]/, '').replace(/[】\]）)]$/, '').trim();
+      let speaker = match[1].replace(/^(SFX|効果音|BGM|Action|状況(?:演出)?|[\(（].*?[\)）])/gi, '').replace(/^[【\[（(]/, '').replace(/[】\]）)]$/, '').trim();
       if (speaker) {
         if (speaker === "全員" || speaker === "Speaker") return;
         const matchedChar = validCharacters.find(c => speaker === c || speaker.includes(c) || c.includes(speaker));
@@ -581,7 +581,7 @@ export const extractCastLimitRule = (fullPanelText, castList) => {
       tempSpeaker = tempSpeaker.replace(/^[【\[（(]/, '').replace(/[】\]）)]$/, '').trim();
       const hasSentenceParticles = /[がをにでへはもとからまでより]/.test(tempSpeaker) && tempSpeaker.length > 5;
       const isTooLong = tempSpeaker.length > 12;
-      const isMetaTag = /^(Camera|Location|Outfit|EMOTION|状況|Action|リアクション|Reaction|設定|聴覚|触覚|嗅覚|体内感覚|視覚|物理描写|SFX|効果音|BGM|ナレーション|テロップ)$/i.test(tempSpeaker);
+      const isMetaTag = /^(Camera|Location|Outfit|EMOTION|状況(?:演出)?|Action|リアクション|Reaction|設定|聴覚|触覚|嗅覚|体内感覚|視覚|物理描写|SFX|効果音|BGM|ナレーション|テロップ|背景|Background|カメラワーク|CameraWork|Camera\s*Work)$/i.test(tempSpeaker);
       const isSoundEffect = /^[^a-zA-Z]*([\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF])([ーッっ]*\1){1,}[ーッっ！!ン]*$/u.test(tempSpeaker.replace(/[（(].*$/, '').trim());
       const hasReactionTag = /[（(]\s*リアクション/i.test(match[1]);
       
@@ -689,7 +689,7 @@ export const buildEmotionBlock = (panelText) => {
   // [v2.31] IMPACT等のソロ演出スタイルがマルチキャラパネルで使われた場合、
   // 「顔アップで60-80%」指示がANTI-FLOATING-EYE RULEと矛盾するのを防ぐ
   // [v3.83] 五感ラベル・メタタグがスピーカーとして誤カウントされるのを防止
-  const META_TAG_FILTER = /^(Camera|Location|Outfit|EMOTION|状況|Action|リアクション|Reaction|設定|聴覚|触覚|嗅覚|体内感覚|視覚|物理描写|SFX|効果音|BGM|ナレーション|テロップ)$/i;
+  const META_TAG_FILTER = /^(Camera|Location|Outfit|EMOTION|状況(?:演出)?|Action|リアクション|Reaction|設定|聴覚|触覚|嗅覚|体内感覚|視覚|物理描写|SFX|効果音|BGM|ナレーション|テロップ|背景|Background|カメラワーク|CameraWork|Camera\s*Work)$/i;
   const speakersInPanel = [];
   panelText.split('\n').forEach(line => {
     // EMOTIONタグ行を除外

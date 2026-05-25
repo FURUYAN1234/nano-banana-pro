@@ -939,6 +939,9 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v4.1.8 (2026-05-25)
+- **[Fix & UX]** 状況演出・背景・カメラワーク指示がセリフに誤認されるバグの修正 / Fixed bug where scene, background, and camera work directives were misidentified as dialogue
+
 ### v4.1.7 (2026-05-25)
 - **[Fix & UX]** モブキャラ判定のバグ修正、ChatGPTトグルの無効化バグ修正、Gemini APIのモデルID更新 / Fix mob parsing bug, resolve ChatGPT toggle disabled bug, and update Gemini API model IDs
 
