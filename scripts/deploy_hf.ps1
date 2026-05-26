@@ -10,7 +10,7 @@ if ($PSScriptRoot) {
 } else {
     $ProjectRoot = (Get-Location).Path
 }
-$HfRoot = "C:\Users\sx717\Antigravity\hf-nano-banana-pro"
+$HfRoot = Join-Path $env:USERPROFILE "Antigravity\hf-nano-banana-pro"
 $DistDir = Join-Path $ProjectRoot "dist"
 
 # === Version ===

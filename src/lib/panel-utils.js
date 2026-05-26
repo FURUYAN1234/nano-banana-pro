@@ -291,6 +291,17 @@ export const extractDialogueOnly = (fullPanelText, castList) => {
         continue;
       }
 
+      // [v4.1.9] 形状・記号・修飾表現の除外チェック
+      // 1. 長さが極めて短い、英数字・記号のみの文字列（例：Ω、∩、Aなど）は除外
+      const isPureSymbol = /^[A-Za-z0-9Ω∩αβγδεζηθικλμνξοπρστυφχψω\s\-\+\*\/\\＝\?？!！]{1,3}$/.test(dialogueText);
+
+      // 2. 直前のテキストの末尾が形状や表記指示、比喩表現などを示すものである場合は除外
+      const isNotDialogueIndicator = /(?:型|字|感|と書かれた|と書く|と書き|と書いた|という|のような|風の|的な|コード|キー|マーク|記号|ラベル|吹き出し|セリフ|ポーズ)$/.test(prevText.trim());
+
+      if (isPureSymbol || isNotDialogueIndicator) {
+        continue;
+      }
+
       // [v2.29] ト書き判定: キャラ名2名以上+動作動詞を含む長文はト書きとみなしスキップ
       const charNamesInText = validCharacters.filter(c => {
         const nameOnly = c.split(/[\(（]/)[0].trim();
