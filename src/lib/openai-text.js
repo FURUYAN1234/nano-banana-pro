@@ -167,6 +167,15 @@ export const callOpenAIText = async (prompt, images = null, systemInstruction = 
 
             const finalOutput = choice.message.content;
 
+            // [Safety Refusal Check]
+            // OpenAIのセーフティフィルターにより「I'm sorry, I can't assist with that」等の拒否メッセージが返ってきた場合、
+            // 生成成功とみなさずAPIエラー（フォールバック対象）として扱い、次のモデルを試す。
+            if (finalOutput.includes("I'm sorry") || finalOutput.includes("cannot assist") || finalOutput.includes("can't assist")) {
+                console.warn(`[OpenAI] ${modelId} returned safety refusal: "${finalOutput.trim()}"`);
+                if (onThinkingUpdate) onThinkingUpdate(`> [API] セーフティ拒否反応を検出。次のモデルへフォールバックします...`);
+                continue;
+            }
+
             if (onThinkingUpdate) onThinkingUpdate(`> [API] 生成完了：高品質な成果物を構築しました。`);
 
             return {

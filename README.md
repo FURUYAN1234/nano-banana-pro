@@ -1156,6 +1156,9 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v4.3.2 (2026-05-28)
+- ** [Fix] ** OpenAI APIのセーフティフィルター拒否応答に対する検知・フォールバック漏れの修正とデプロイ / Fixed a bug where OpenAI safety refusal response ("I'm sorry...") was treated as successful completion without falling back.
+
 ### v4.3.1
 - chore: Sync Gemini & OpenAI API models to latest stable version.
 
