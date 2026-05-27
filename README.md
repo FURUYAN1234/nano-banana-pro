@@ -1156,6 +1156,9 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v4.3.3 (2026-05-27)
+- **[Fix & UX]** OpenAIモデルの優先順位をgpt-4oに最適化し、キャッシュ機能を導入してフォールバック遅延を解消 / Optimized OpenAI model priority to gpt-4o and introduced success cache to prevent fallback delays
+
 ### v4.3.2 (2026-05-28)
 - ** [Fix] ** OpenAI APIのセーフティフィルター拒否応答に対する検知・フォールバック漏れの修正とデプロイ / Fixed a bug where OpenAI safety refusal response ("I'm sorry...") was treated as successful completion without falling back.
 

@@ -11,22 +11,27 @@
 
 import { getOpenAIApiKey } from './openai';
 
+// 一度接続成功したモデルのキャッシュ（再試行時の遅延防止）
+let lastSuccessfulOpenAIModel = null;
+let lastSuccessfulOpenAIVisionModel = null;
+
 // テキストのみリクエスト用モデルリスト（Zenith Protocol相当のフォールバック）
 const TEXT_MODEL_IDS = [
+    "gpt-4o",
+    "gpt-4o-mini",
     "gpt-5.5",
     "gpt-5.5-instant",
     "gpt-5.4",
     "gpt-5.4-mini",
-    "gpt-5.4-nano",
-    "gpt-4o",
-    "gpt-4o-mini"
+    "gpt-5.4-nano"
 ];
 
 // 画像付きリクエスト用モデルリスト（Vision対応モデル優先）
 const IMAGE_MODEL_IDS = [
+    "gpt-4o",
+    "gpt-4o-mini",
     "gpt-5.5",
     "gpt-5.4",
-    "gpt-4o",
     "gpt-5.4-mini"
 ];
 
@@ -39,11 +44,18 @@ export const callOpenAIText = async (prompt, images = null, systemInstruction = 
     const apiKey = getOpenAIApiKey();
     if (!apiKey) throw new Error("OpenAI APIキーが設定されていません。");
 
-    // 画像の有無に応じてモデルリストを動的に選択
-    const MODEL_IDS = (images && images.length > 0) ? IMAGE_MODEL_IDS : TEXT_MODEL_IDS;
+    // 画像の有無に応じてモデルリストを動的に選択し、キャッシュが存在する場合はそれを最優先する
+    const baseModelIds = (images && images.length > 0) ? IMAGE_MODEL_IDS : TEXT_MODEL_IDS;
+    const cachedModel = (images && images.length > 0) ? lastSuccessfulOpenAIVisionModel : lastSuccessfulOpenAIModel;
+    const MODEL_IDS = [];
+    if (cachedModel) {
+        MODEL_IDS.push(cachedModel);
+    }
+    MODEL_IDS.push(...baseModelIds);
+    const UNIQUE_MODEL_IDS = Array.from(new Set(MODEL_IDS));
 
     let attemptIndex = 0;
-    for (const modelId of MODEL_IDS) {
+    for (const modelId of UNIQUE_MODEL_IDS) {
         attemptIndex++;
         try {
             console.log(`[OpenAI] Attempting connection with ${modelId}...`);
@@ -177,6 +189,13 @@ export const callOpenAIText = async (prompt, images = null, systemInstruction = 
             }
 
             if (onThinkingUpdate) onThinkingUpdate(`> [API] 生成完了：高品質な成果物を構築しました。`);
+
+            // 成功したモデルをキャッシュに保存
+            if (images && images.length > 0) {
+                lastSuccessfulOpenAIVisionModel = modelId;
+            } else {
+                lastSuccessfulOpenAIModel = modelId;
+            }
 
             return {
                 text: finalOutput,
