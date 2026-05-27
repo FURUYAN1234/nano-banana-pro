@@ -1156,11 +1156,16 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v4.3.9 (2026-05-28)
+- ** [Fix & Saturated Colors] ** エフェクトの過剰なマイルド化や「レインボー否定」のネガティブプロンプト指定（虹色ノイズ除去など）を完全撤回し、画像全体の色彩が薄く劣化する問題を修正。感情絵柄（HIGH_SATURATION, IMPACT）本来の鮮やかでリッチな極彩色表現を復元。 / Reverted over-milding of effects and rainbow-negative prompt constraints. Fixed color washing degradation to fully restore rich, vibrant colors for HIGH_SATURATION and IMPACT emotions.
+- ** [Fix & Rich Story/Dialogue] ** シナリオ生成における一言だけの単調なセリフ（スカスカな対話）を厳禁化し、キャラクターの個性を活かしたテンポの良いコミカルな掛け合いを必須化。また、ト書き描写（状況描写）の指示を100〜180文字にさらに強化し、詳細な背景描写とポーズの描き込みを画像生成AIに引き継ぐように改善。 / Enforced a strict ban on single-word sparse dialogue to ensure rich, character-driven comedic interactions. Strengthened storyboard description rules to 100-180 characters, passing detailed background/pose attributes to the image generator.
+- ** [v4.3.9 Sync] ** package.json, constants.js, index.html, README.md を `v4.3.9` に同期。 / Synchronized version to `v4.3.9` across all files.
+
 ### v4.3.8 (2026-05-28)
-- **[Fix & Quality]** シナリオの対話・ト書きの充実化。一言だけの短すぎるセリフの乱用を防ぎ、キャラクターの掛け合いを強化。ト書きの描写量を80〜150文字確保し、画像生成時のポーズ・背景の描き込みと極彩色表現を向上。 / Enhanced scenario dialogue and storyboard density. Fixed dialogue sparseness to enforce natural comedic interactions. Restored full detail to storyboard prompts to improve pose/background rendering and color richness.
-- **[Fix]** 学校外シーン（讃岐うどん店などの店舗・私服時）におけるサエコの生徒会長ペルソナ引力による「校則違反没収オチ」を厳重に禁止するようシナリオ生成指示を強化。 / Enforced a strict ban on school-rules disciplinary punchlines when characters are in out-of-school/casual settings.
-- **[Fix]** 感情絵柄（HIGH_SATURATION, IMPACT）でのビビッドな極彩色を維持しつつ、不自然な虹色のスピードラインや多色ノイズを画像生成ネガティブプロンプトで強力に排除。 / Restored rich vibrant colors for HIGH_SATURATION and IMPACT emotions while explicitly filtering out multicolored speedlines and rainbow noise in image generator prompts.
-- **[v4.3.8 Sync]** package.json, constants.js, index.html, README.md を `v4.3.8` に同期。 / Synchronized version to `v4.3.8` across all registry files.
+- ** [Fix & Quality] ** シナリオの対話・ト書きの充実化。一言だけの短すぎるセリフの乱用を防ぎ、キャラクターの掛け合いを強化。ト書きの描写量を80〜150文字確保し、画像生成時のポーズ・背景の描き込みと極彩色表現を向上。 / Enhanced scenario dialogue and storyboard density. Fixed dialogue sparseness to enforce natural comedic interactions. Restored full detail to storyboard prompts to improve pose/background rendering and color richness.
+- ** [Fix] ** 学校外シーン（讃岐うどん店などの店舗・私服時）におけるサエコの生徒会長ペルソナ引力による「校則違反没収オチ」を厳重に禁止するようシナリオ生成指示を強化。 / Enforced a strict ban on school-rules disciplinary punchlines when characters are in out-of-school/casual settings.
+- ** [Fix] ** 感情絵柄（HIGH_SATURATION, IMPACT）でのビビッドな極彩色を維持しつつ、不自然な虹色のスピードラインや多色ノイズを画像生成ネガティブプロンプトで強力に排除。 / Restored rich vibrant colors for HIGH_SATURATION and IMPACT emotions while explicitly filtering out multicolored speedlines and rainbow noise in image generator prompts.
+- ** [v4.3.8 Sync] ** package.json, constants.js, index.html, README.md を `v4.3.8` に同期。 / Synchronized version to `v4.3.8` across all registry files.
 
 ### v4.3.7 (2026-05-28)
 - ** [Fix & Quality] ** シナリオ生成プロンプトの演出・笑い構造指示を復元し、セリフ密度とコント品質の劣化問題を修正。また、パーサーにおける `[1コマ目: 起]` などのヘッダー誤抽出バグを修正。 / Restored script direction and comedy structure rules in the scenario generator prompt to fix dialogue density and comedy quality degradation. Also fixed a parser bug where panel headers like `[Panel 1: Ki]` were misidentified as dialogue text.
@@ -1181,18 +1186,3 @@ Developed by **FURU**
 ### v4.2.6 (2026-05-27)
 - ** [UI & UX] ** 画面上の各種説明文、プレースホルダー、ボタンラベルを親しみやすい表現にリライト。特にコピーボタンの文言を簡素化し、その下部に状況連動型の詳細ガイドを配置。妥協版警告文を安心感のある「簡易モデル生成案内」にブラッシュアップ。 / Rewrote and simplified UI texts, placeholders, and button labels for better user friendliness. Replaced bulky copypaste buttons with a clean action and added guidelined subtitles. Polished fallback model warnings into reassuring guides.
 
-### v4.2.5 (2026-05-27)
-- ** [Fix & UX] ** 幽霊エラー残留バグ（手動救済後およびWeb切替時）の完全修正と、フルオート時の致命的エラー（401/403）からの確実な無限ループ脱出処理の実装 / Completely fixed the ghost error remnant bug (after manual rescue and web switch) and implemented a reliable escape from infinite loops during fatal errors (401/403) in Full Auto mode.
-
-### v4.2.4 (2026-05-27)
-- ** [Fix & UX] ** ポリシー自動修正実行中のメイン画像生成ボタンの非活性化による競合防止、およびデッドコードpolicyRetryCountRef of useMangaWorkflow.js の削除 / Prevented API conflicts by disabling the main image generation button during policy auto-fixing, and cleaned up unused policyRetryCountRef
-
-### v4.2.3 (2026-05-27)
-- ** [Fix & UX] ** 新規画像生成開始時のポリシーエラー状態クリア漏れによる、生成成功後のコピーボタン誤動作のバグ修正 / Fixed a bug where policy error state was not cleared on new generation start, causing copy button malfunction after success
-
-### v4.2.2 (2026-05-27)
-- ** [Fix & UX] ** ポリシーエラー時のコピペボタン押下による救済パネルの自動展開とメッセージボックス非表示（手動Web連携強化） / Auto-open rescue panel and close message box when clicking copy button during content policy error (enhanced manual Web workflow)
-
-### v4.2.1 (2026-05-27)
-- ** [Feature] ** API画像生成時のコンテンツポリシー違反を自動検出し、メッセージボックスで「自動修正して再生成」または「Web版に切り替え」を選択可能に。手動モードは回数制限なし、フルオートは3回自動リトライ後にメッセージボックス表示、エンドレスモードは3回失敗で次の作品にスキップ。Gemini / ChatGPT 両エンジン対応。 / Added automatic content policy violation detection for API image generation with a message box offering "Auto-fix & Regenerate" or "Switch to Web". Manual mode has unlimited retries, Full Auto retries 3 times automatically then shows the message box, and Endless mode skips to the next work after 3 failures. Supports both Gemini and ChatGPT engines.
-- ** [UX] ** メッセージボックス（選択UI）と手動救済パネル（折りたたみ式）を完全分離。メッセージボックスはエラー時に独立表示され、パネルはいつでも任意で開閉可能。 / Separated the policy choice message box (standalone dialog) from the manual rescue panel (collapsible). The message box appears independently on error, while the panel can be opened/closed at any time.

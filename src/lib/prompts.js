@@ -271,8 +271,8 @@ ${styleJson.anti_patterns ? `            - 絶対禁止事項:\n${styleJson.anti
               - **【超重要】汗マークや怒りマークなどの「漫符」を描写する場合、文字ラベル（例: "POPPING VEIN", "LARGE SWEAT DROP"など）や設定資料に書かれるような矢印・注釈テキストを画面内に絶対に描画させないこと。純粋な視覚的シンボルのみを使用し、一切の英単語ラベルを排除せよ。**
   
            2. **テキストの量的制限と対話の充実化 (Compact Text & Rich Dialogue)**:
-               - **厳守**: 1コマあたりのフキダシは**「最大3つまで」**。（3人の掛け合いも積極活用せよ）
-               - セリフは**「簡潔でテンポの良い対話」**にせよ。一言だけの短すぎるセリフ（例:「何！？」「えー！」「わー！」等）ばかりで対話がスカスカになり会話が成立しない状態は厳重に回避し、キャラクター同士の個性を活かしたコミカルで意味のある対話や掛け合いを展開せよ。
+               - **厳守**: 1コマあたりのフキダシは**「最大3つまで」**、かつ**「最低1つ以上」**。（3人の掛け合いも積極活用せよ）
+               - **会話の充実化**: 一言だけの単調な反応（例:「何！？」「えー！」「うわー！」「えっ」「きゃー」など）でコマを消費して、シナリオがスカスカになることは厳重に禁止する。各コマの対話は、必ず複数の文脈や意味のあるキャラクター同士のコミカルな掛け合い（セリフは1つあたり15文字〜35文字程度で、それぞれのキャラクターのペルソナや個性を活かしたテンポの良い対話）を展開させよ。単にリアクションだけをするコマを作らず、キャラクター同士で主張をぶつけ合ったり、ボケとツッコミが成立するように設計すること。
                - **禁止**: セリフ内に「(怒って)」「(笑いながら)」等のト書き・感情描写を入れるな。絵で表現せよ.
                - **句読点・表現ルール**: セリフの末尾は必ず終止記号で締めよ。どの記号を使うかはセリフの感情・キャラの性格・場面の空気で自然に決めること。
                  終止記号（単読で文末になれる）: 。/ ！/ ？/ ♪/ ♡/ っ/ ！？
@@ -396,7 +396,7 @@ ${styleJson.anti_patterns ? `            - 絶対禁止事項:\n${styleJson.anti
                 * 嗅覚: 料理の匂い、雨上がりの湿った空気、古い本の匂い
                 * 体内感覚: 胃がキュッとする、背筋が凍る、血が頭に昇る
               - **4コマ全体で、聴覚・触覚・嗅覚・体内感覚のうち最低2種類を使用せよ。**
-              - **描写量の確保**: 各コマの状況描写（ト書き）は、五感情報、具体的な表情・ポーズ、物理アクションを含め、**80〜150文字程度で詳細に描写**せよ。これによって画像生成時の背景やポーズの描き込みや色合いが豊かになる。単に「アカリが驚く」だけの薄いト書きは禁止する。
+              - **描写量の確保**: 各コマの状況描写（ト書き）は、五感情報、具体的な表情・ポーズ（目、眉、口の動きなど）、ダイナミックな物理アクション、およびその場の詳細な背景描写（オブジェクト、色、照明、物体の配置、何が巨大に、何が歪んで見えているかなど）を含め、**100〜180文字程度で極めて詳細に描写**せよ。単に「アカリが怒る」といった抽象的な表現や、1文だけで終わる薄いト書きは厳重に禁止する。ト書きで背景やアクション of ディテールを徹底的に記述することで、画像生成AIが背景の描き込みやキャラクターのポーズ、そして画面全体のビビッドでリッチな極彩色表現（薄い色味にしない）を完全に再現できるようにすること。
                 - これにより画像生成AIが「空気感」を拾い、単なるポーズ集から「生きた場面」に進化する。
 
            3.10 **【Guard M: 比喩素材の世界観準拠（クリシェ完全排除）】**:
@@ -655,7 +655,6 @@ ART STYLE:
 - Backgrounds should have slightly lower saturation and softer focus (shallow depth of field) to make characters pop.
 - NOISE REDUCTION (Anti-Glitter & Anti-Noise Protocol):
   * ABSOLUTELY NO ChatGPT-style magical floating particles, NO glittering/sparkling effects, NO dust motes, NO lens flares, NO moiré patterns. Keep the air completely clean and empty.
-  * ABSOLUTELY NO rainbow-colored speedlines, NO multi-colored energy auras, NO magical floating rainbow sparkles. Keep speedlines and glowing effects strictly monochrome (white, black, or matched to light sources) to maintain professional anime layout.
   * ZERO NOISE TOLERANCE: The final image MUST be completely free of visual noise, grain, micro-texture artifacts, dithering patterns, and any speckle-like artifacts. Every surface must be CLEAN and SMOOTH.
   * NO MICRO-DETAIL CLUTTER: Do NOT fill empty areas with random tiny dots, scratches, dust particles, or halftone-like noise patterns. Clean color fills and smooth gradients ONLY.
   * NO OVER-RENDERING: Do NOT apply photorealistic texture rendering (cloth weave, skin pores, hair strand noise) to anime-style characters. Keep surfaces FLAT and CLEAN as in professional TV anime cel-shading.
@@ -807,8 +806,6 @@ Tech Dict:
 (Cinematic depth of field, soft bokeh: 2.3)
 (NO text/SFX outside speech bubbles: 2.8)
 (NO ENGLISH TEXT outside watermark. NO 'G-pen'/'HA': 3.0)
-(ABSOLUTELY NO multicolored speed lines, NO rainbow streaks or lights, NO chromatic noise: 3.0)
-(Ensure speedlines and glowing effects are strictly white, black, or clean monochrome: 2.8)
 
 
 ${panelSections}
