@@ -1133,8 +1133,11 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v4.2.7 (2026-05-27)
+- ** [Fix & UX] ** 連続ループ生成（エンドレスモード）時、画像生成完了後に確実に STEP2 に逆スクロールして戻り、次の作品のシナリオ生成が視覚的に開始されるように修正。また、全自動モード「中断」押下時に API 通信の完了を待たずに即座に UI ロックを解除して通常状態に復帰するように改善。 / Fixed scrollback behavior in Endless mode to ensure the viewport smoothly returns to STEP 2 after image generation finishes, visualizing the next scenario creation. Also improved Full Auto cancellation to immediately release the UI lock and clear loaders without waiting for background API tasks to resolve.
+
 ### v4.2.6 (2026-05-27)
-- ** [UI & UX] ** 画面上の各種説明文、プレースホルダー、ボタンラベルを親しみやすい表現にリライト。特にコピーボタンの文言を簡素化し、その下部に状況連動型の詳細ガイドを配置。妥協版警告文を安心感のある「簡易モデル生成案内」にブラッシュアップ。 / Rewrote and simplified UI texts, placeholders, and button labels for better user friendliness. Replaced bulky copypaste buttons with a clean action and added dynamic guidelined subtitles. Polished fallback model warnings into reassuring guides.
+- ** [UI & UX] ** 画面上の各種説明文、プレースホルダー、ボタンラベルを親しみやすい表現にリライト。特にコピーボタンの文言を簡素化し、その下部に状況連動型の詳細ガイドを配置。妥協版警告文を安心感のある「簡易モデル生成案内」にブラッシュアップ。 / Rewrote and simplified UI texts, placeholders, and button labels for better user friendliness. Replaced bulky copypaste buttons with a clean action and added guidelined subtitles. Polished fallback model warnings into reassuring guides.
 
 ### v4.2.5 (2026-05-27)
 - ** [Fix & UX] ** 幽霊エラー残留バグ（手動救済後およびWeb切替時）の完全修正と、フルオート時の致命的エラー（401/403）からの確実な無限ループ脱出処理の実装 / Completely fixed the ghost error remnant bug (after manual rescue and web switch) and implemented a reliable escape from infinite loops during fatal errors (401/403) in Full Auto mode.

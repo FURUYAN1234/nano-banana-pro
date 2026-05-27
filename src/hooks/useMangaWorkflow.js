@@ -1398,6 +1398,20 @@ export default function useMangaWorkflow() {
     setIsFullAutoMode(true);
     setEnableChatGPTMode(false); // ChatGPTモードOFF（デモ用ノーマルモード）
 
+    // [v4.2.7] 新しい周回の開始時に、前回の生成データ（シナリオ、プロンプト、画像等）を即時リセット
+    // これにより currentStep が 2 に下がり、画面レイアウトの再レンダリングが先行して完了します
+    setScenario("");
+    setFinalPrompt("");
+    setGeneratedImage(null);
+    setScenarioThought("");
+    setAssembleThought("");
+    setGenLog([]);
+    setOriginalScenario("");
+    setEnhanceLog("");
+    setPolicyErrorMsg("");
+    lastPolicyErrorRef.current = "";
+    setShowPolicyChoice(false);
+
     // --- STEP2: シナリオ生成 ---
     setFullAutoStep(2);
     // カテゴリをランダムで1〜2個選択し、直接オブジェクトとして生成
@@ -1412,9 +1426,10 @@ export default function useMangaWorkflow() {
     setCustomOutfit("");
     setInputMode("news"); // ニュース検索モード固定
 
-    // 自動スクロール: STEP2へ
-    await new Promise(r => setTimeout(r, 200));
+    // 自動スクロール: STEP2へ (ステート更新に伴う再レンダリング完了を待ってからスクロールを実行)
+    await new Promise(r => setTimeout(r, 400));
     step2Ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    await new Promise(r => setTimeout(r, 600)); // スクロール完了をしっかり待つ
 
     const generatedScenario = await generateScenarioFromNews(overrideCategories, "news");
     if (fullAutoAbortRef.current || !generatedScenario) {
@@ -1567,15 +1582,18 @@ export default function useMangaWorkflow() {
     if (isFullAutoMode) {
       // 実行中 or 武装中 → 中断/解除
       fullAutoAbortRef.current = true;
-      if (fullAutoStep > 0 || isAnalyzing || isSearching || isAssembling || isGeneratingImage) {
-        setIsAborting(true);
-        showStatus("⚠️ 中断処理中...（現在のステップが完了するまでお待ちください）");
-      } else {
-        setIsFullAutoMode(false);
-        setFullAutoStep(0);
-        setIsAborting(false);
-        showStatus("フルオートを解除しました。");
-      }
+      
+      // [v4.2.7] 中断時にAPI通信の完了を待たず、即座にUIのローディング表示を消去して操作可能に戻す
+      setIsSearching(false);
+      setIsAssembling(false);
+      setIsGeneratingImage(false);
+      setIsFixingPolicy(false);
+      setIs360CameraWorking(false);
+      
+      setIsFullAutoMode(false);
+      setFullAutoStep(0);
+      setIsAborting(false);
+      showStatus("⏹ フルオートを中断しました。");
       return;
     }
     
@@ -1596,13 +1614,18 @@ export default function useMangaWorkflow() {
   // eslint-disable-next-line no-unused-vars
   const abortFullAuto = () => {
     fullAutoAbortRef.current = true;
-    if (fullAutoStep > 0 || isAnalyzing || isSearching || isAssembling || isGeneratingImage) {
-      setIsAborting(true);
-    } else {
-      setIsFullAutoMode(false);
-      setFullAutoStep(0);
-      setIsAborting(false);
-    }
+    
+    // [v4.2.7] 中断時に即座にUIのローディング状態を解除
+    setIsSearching(false);
+    setIsAssembling(false);
+    setIsGeneratingImage(false);
+    setIsFixingPolicy(false);
+    setIs360CameraWorking(false);
+    
+    setIsFullAutoMode(false);
+    setFullAutoStep(0);
+    setIsAborting(false);
+    showStatus("⏹ フルオートを中断しました。");
   };
 
   // Determine Current Step
