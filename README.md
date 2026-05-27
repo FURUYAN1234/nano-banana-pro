@@ -1133,6 +1133,9 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v4.2.3 (2026-05-27)
+- **[Fix & UX]** 新規画像生成開始時のポリシーエラー状態クリア漏れによる、生成成功後のコピーボタン誤動作のバグ修正 / Fixed a bug where policy error state was not cleared on new generation start, causing copy button malfunction after success
+
 ### v4.2.2 (2026-05-27)
 - **[Fix & UX]** ポリシーエラー時のコピペボタン押下による救済パネルの自動展開とメッセージボックス非表示（手動Web連携強化） / Auto-open rescue panel and close message box when clicking copy button during content policy error (enhanced manual Web workflow)
 

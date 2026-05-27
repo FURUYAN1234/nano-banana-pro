@@ -1063,6 +1063,11 @@ export default function useMangaWorkflow() {
     setIsGeneratingImage(true);
     setIsGenerationError(false);
     
+    // [v4.2.3] 新規の生成開始時にポリシーエラー関連ステートをリセット
+    setPolicyErrorMsg("");
+    lastPolicyErrorRef.current = "";
+    setShowPolicyChoice(false);
+    
     // [v3.04i] 進捗窓(genLog)にChatGPTモードのバッチ/警告を明示
     const initialLogs = ["[1/5] プロンプトパラメータをロック中...", "[2/5] セーフティフィルターを検証中..."];
     if (enableChatGPTMode) {
