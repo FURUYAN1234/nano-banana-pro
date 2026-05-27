@@ -1156,6 +1156,9 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v4.3.4 (2026-05-27)
+- **[Fix & UX]** OpenAIのModels APIによる動的モデル検知機能を導入 / Introduced OpenAI dynamic model detection using Models API
+
 ### v4.3.3 (2026-05-27)
 - **[Fix & UX]** OpenAIモデルの優先順位をgpt-4oに最適化し、キャッシュ機能を導入してフォールバック遅延を解消 / Optimized OpenAI model priority to gpt-4o and introduced success cache to prevent fallback delays
 

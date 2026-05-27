@@ -15,6 +15,33 @@ import { getOpenAIApiKey } from './openai';
 let lastSuccessfulOpenAIModel = null;
 let lastSuccessfulOpenAIVisionModel = null;
 
+// 動的取得した利用可能なモデルリストのキャッシュ
+let availableOpenAIModels = null;
+
+/**
+ * OpenAIの利用可能モデルを動的に取得する
+ */
+export const fetchAvailableOpenAIModels = async (apiKey) => {
+    if (availableOpenAIModels) return availableOpenAIModels;
+    try {
+        const response = await fetch("https://api.openai.com/v1/models", {
+            method: "GET",
+            headers: {
+                "Authorization": `Bearer ${apiKey}`
+            }
+        });
+        if (response.ok) {
+            const data = await response.json();
+            availableOpenAIModels = data.data.map(m => m.id);
+            console.log("[OpenAI] Dynamically fetched available models:", availableOpenAIModels);
+            return availableOpenAIModels;
+        }
+    } catch (e) {
+        console.warn("[OpenAI] Failed to fetch available models, fallback to hardcoded list:", e.message);
+    }
+    return null;
+};
+
 // テキストのみリクエスト用モデルリスト（Zenith Protocol相当のフォールバック）
 const TEXT_MODEL_IDS = [
     "gpt-4o",
@@ -46,12 +73,21 @@ export const callOpenAIText = async (prompt, images = null, systemInstruction = 
 
     // 画像の有無に応じてモデルリストを動的に選択し、キャッシュが存在する場合はそれを最優先する
     const baseModelIds = (images && images.length > 0) ? IMAGE_MODEL_IDS : TEXT_MODEL_IDS;
+
+    // 利用可能モデルの動的フィルタリング
+    let activeModels = baseModelIds;
+    const allowedModels = await fetchAvailableOpenAIModels(apiKey);
+    if (allowedModels && allowedModels.length > 0) {
+        activeModels = baseModelIds.filter(m => allowedModels.includes(m));
+        if (activeModels.length === 0) activeModels = baseModelIds; // 万が一の空フォールバック
+    }
+
     const cachedModel = (images && images.length > 0) ? lastSuccessfulOpenAIVisionModel : lastSuccessfulOpenAIModel;
     const MODEL_IDS = [];
     if (cachedModel) {
         MODEL_IDS.push(cachedModel);
     }
-    MODEL_IDS.push(...baseModelIds);
+    MODEL_IDS.push(...activeModels);
     const UNIQUE_MODEL_IDS = Array.from(new Set(MODEL_IDS));
 
     let attemptIndex = 0;
