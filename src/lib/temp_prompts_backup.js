@@ -642,7 +642,7 @@ LAYOUT & FORMAT:
 - Canvas completely filled by panels (95% width). NO large white margins.
 - Top page: draw large bold black Japanese text that reads exactly "${safeTopic}" in a clean sans-serif font, centered at the top.
 - Draw tiny English watermark text that reads "${watermarkEng}" positioned at the bottom-right corner of the 4th panel, in a small clean sans-serif font.
-- Draw tiny Japanese watermark text that reads "ネームから全自動の自律式統合AI漫画システム :https://note.com/happy_duck780" positioned at the bottom-left corner of the 4th panel, in an extremely small font size to prevent overlapping with the right watermark.
+- Draw tiny Japanese watermark text that reads "ネームから全自動の自律式統合AI漫画システム :https://x.com/FURUYAN123456" positioned at the bottom-left corner of the 4th panel, in an extremely small font size to prevent overlapping with the right watermark.
 - Watermarks standard horizontal. The Japanese watermark on the left and the English watermark on the right must be small enough and spaced apart so they do not touch or overlap. NO extra white space below panel 4.
 - Exactly 4 EQUAL horizontal panels, stacked vertically with thick white gutters between them. Panels MUST NOT touch.
 
@@ -769,7 +769,7 @@ Canvas completely filled by panels (95% width). NO large white margins.
 Top page: draw large bold black Japanese text title: "${safeTopic}"
 NO quotes/punctuation around title.
 Draw tiny English watermark ON bottom-right border of 4th panel: "${watermarkEng}" (clean sans-serif).
-Draw tiny Japanese watermark ON bottom-left border of 4th panel: "ネームから全自動の自律式統合AI漫画システム :https://note.com/happy_duck780" (in an extremely small font size to prevent overlapping with the right watermark).
+Draw tiny Japanese watermark ON bottom-left border of 4th panel: "ネームから全自動の自律式統合AI漫画システム :https://x.com/FURUYAN123456" (in an extremely small font size to prevent overlapping with the right watermark).
 Watermarks standard horizontal. The Japanese watermark on the left and the English watermark on the right must be small enough and spaced apart so they do not touch or overlap. NO extra white space below panel 4.
 
 PANELS: Exactly 4 EQUAL horizontal panels, stacked vertically. EXACT SAME height/width.

@@ -1156,6 +1156,9 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v4.2.8 (2026-05-27)
+- **[Fix & UX]** 日本語ウォーターマークのURLをnoteプロフィールに修正 / Updated Japanese watermark URL to note profile
+
 ### v4.2.7 (2026-05-27)
 - ** [Fix & UX] ** 連続ループ生成（エンドレスモード）時、画像生成完了後に確実に STEP2 に逆スクロールして戻り、次の作品のシナリオ生成が視覚的に開始されるように修正。また、全自動モード「中断」押下時に API 通信の完了を待たずに即座に UI ロックを解除して通常状態に復帰するように改善。 / Fixed scrollback behavior in Endless mode to ensure the viewport smoothly returns to STEP 2 after image generation finishes, visualizing the next scenario creation. Also improved Full Auto cancellation to immediately release the UI lock and clear loaders without waiting for background API tasks to resolve.
 - ** [Docs] ** READMEに「コンテンツポリシー自動救済システム（v4.2.1+） & Web版切替機能」の詳細な仕様および動作フローの解説を追加。 / Added detailed specifications and operation workflow explanation for the "Content Policy Auto-Rescue System (v4.2.1+) & Switch to Web" to README.md.
