@@ -47,6 +47,28 @@ try {
     const packageJson = JSON.parse(fs.readFileSync('package.json', 'utf-8'));
     const pkgVersion = packageJson.version; // "x.y.z-alpha"
 
+    // 4.5. Check Version Progression (パッチが9の次はマイナー繰り上げ規則の検証)
+    try {
+        const remotePkgRaw = execSync('git show origin/main:package.json').toString();
+        const remotePkg = JSON.parse(remotePkgRaw);
+        const remoteVer = remotePkg.version;
+        const remoteParts = remoteVer.split('-')[0].split('.').map(Number);
+        const localParts = pkgVersion.split('-')[0].split('.').map(Number);
+
+        if (remoteParts[2] === 9) {
+            const expectedMinor = remoteParts[1] + 1;
+            if (localParts[1] !== expectedMinor || localParts[2] !== 0) {
+                console.error(`❌ [Version Progression] RULE VIOLATION: Remote version is v${remoteVer}.`);
+                console.error(`   According to project rules, when the patch version is '9',`);
+                console.error(`   the next version must increment the minor version and reset patch to '0'.`);
+                console.error(`   (Expected next version: ${remoteParts[0]}.${expectedMinor}.0, got: ${pkgVersion})`);
+                process.exit(1);
+            }
+        }
+    } catch (e) {
+        console.warn("⚠️ [Version Progression] Warning: Could not verify version progression with origin/main: " + e.message);
+    }
+
     // src/lib/constants.js の SYSTEM_VERSION を取得
     const constantsJs = fs.readFileSync('src/lib/constants.js', 'utf-8');
     const appVersionMatch = constantsJs.match(/export const SYSTEM_VERSION\s*=\s*"([^"]+)"/);

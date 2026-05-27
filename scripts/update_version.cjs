@@ -24,6 +24,32 @@ if (!/^\d+\.\d+\.\d+(-\w+)?$/.test(newVersion)) {
   process.exit(1);
 }
 
+// 1.5. バージョン進行規則の強制バリデーション (パッチが9の次はマイナー繰り上げ)
+const packageJsonPath = path.join(__dirname, '../package.json');
+if (fs.existsSync(packageJsonPath)) {
+  try {
+    const pkg = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+    const currentVer = pkg.version;
+    const currentParts = currentVer.split('-')[0].split('.').map(Number);
+    const newParts = newVersion.split('-')[0].split('.').map(Number);
+
+    if (currentParts[2] === 9) {
+      const expectedMinor = currentParts[1] + 1;
+      if (newParts[1] !== expectedMinor || newParts[2] !== 0) {
+        console.error(`\n❌ Error: Invalid version progression!`);
+        console.error(`   Current version is v${currentVer}.`);
+        console.error(`   According to project rules, when the patch version is '9',`);
+        console.error(`   the next version must increment the minor version and reset patch to '0'.`);
+        console.error(`   (Expected next version: ${currentParts[0]}.${expectedMinor}.0, got: ${newVersion})`);
+        console.error(`   Version progression to ${newVersion} is STRICTLY FORBIDDEN.\n`);
+        process.exit(1);
+      }
+    }
+  } catch (err) {
+    console.warn('⚠️ Warning: Failed to parse package.json for version check:', err.message);
+  }
+}
+
 console.log(`\n========================================`);
 console.log(`  Updating Environment to v${newVersion}`);
 console.log(`========================================`);
