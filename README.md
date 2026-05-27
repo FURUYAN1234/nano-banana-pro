@@ -1156,6 +1156,9 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v4.3.0
+- chore: Sync Gemini API models to latest stable version.
+
 ### v4.2.9 (2026-05-27)
 - **[Fix & UX]** Scenario prompt misinterpretation fix / Fix scenario reinforcement prompt misinterpretation (dialogue extraction from parenthetical, group speaker detection, onomatopoeia filtering)
 

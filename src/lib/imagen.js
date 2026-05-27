@@ -4,10 +4,8 @@ import { getApiKey } from "./gemini";
 // 画像生成モデル優先順位 (Geminiネイティブ優先)
 // ※ Imagen全系列は2026/06/24に完全廃止予定。Geminiネイティブへの移行が必須。
 const MODELS_TO_TRY = [
-    "gemini-3.1-flash-image-preview", // Primary: Nano Banana 2 NEXT GEN (最高品質)
-    "gemini-2.5-flash-image",         // Backup: Google公式推奨移行先 (安定・高速)
-    "imagen-4.0-generate-001",        // Legacy 1: 有料APIキー専用 (廃止予定 2026/06/24)
-    "imagen-4.0-fast-generate-001"    // Legacy 2: 有料・高速版 (廃止予定 2026/06/24)
+    "gemini-3.1-flash-image-preview",
+    "gemini-2.5-flash-image"
 ];
 
 /**

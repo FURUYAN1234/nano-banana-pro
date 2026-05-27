@@ -16,19 +16,21 @@ const GEMINI_BASE_URL = (typeof window !== 'undefined' && window.location.hostna
 // ※ 2026年4月以降、Pro系は有料APIキー専用。Flash系は無料枠で利用可能。
 const TEXT_MODEL_IDS = [
     "gemini-3.5-flash",
+    "gemini-flash-latest",
     "gemini-2.5-flash",
     "gemini-2.5-pro",
-    "gemini-flash-latest",
-    "gemini-pro-latest"
+    "gemini-1.5-pro",
+    "gemini-1.5-flash"
 ];
 
 // 画像付きリクエスト用 (キャラクターシート認識等): フィルター寛容モデル優先
 const IMAGE_MODEL_IDS = [
     "gemini-3.5-flash",
+    "gemini-flash-latest",
     "gemini-2.5-flash",
     "gemini-2.5-pro",
-    "gemini-flash-latest",
-    "gemini-pro-latest"
+    "gemini-1.5-pro",
+    "gemini-1.5-flash"
 ];
 
 // Store API key in memory ONLY (Security Requirement: No persistence)
