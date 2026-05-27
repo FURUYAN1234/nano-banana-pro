@@ -1,4 +1,4 @@
-﻿# Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System
+# Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System
 
 > **"To what extent can humans step away from the creative process?"**
 > **「人間は、どこまで制作から降りられるのか？」**
@@ -1133,6 +1133,9 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v4.2.2 (2026-05-27)
+- **[Fix & UX]** ポリシーエラー時のコピペボタン押下による救済パネルの自動展開とメッセージボックス非表示（手動Web連携強化） / Auto-open rescue panel and close message box when clicking copy button during content policy error (enhanced manual Web workflow)
+
 ### v4.2.1 (2026-05-27)
 - **[Feature]** API画像生成時のコンテンツポリシー違反を自動検出し、メッセージボックスで「自動修正して再生成」または「Web版に切り替え」を選択可能に。手動モードは回数制限なし、フルオートは3回自動リトライ後にメッセージボックス表示、エンドレスモードは3回失敗で次の作品にスキップ。Gemini / ChatGPT 両エンジン対応。 / Added automatic content policy violation detection for API image generation with a message box offering \"Auto-fix & Regenerate\" or \"Switch to Web\". Manual mode has unlimited retries, Full Auto retries 3 times automatically then shows the message box, and Endless mode skips to the next work after 3 failures. Supports both Gemini and ChatGPT engines.
 - **[UX]** メッセージボックス（選択UI）と手動救済パネル（折りたたみ式）を完全分離。メッセージボックスはエラー時に独立表示され、パネルはいつでも任意で開閉可能。 / Separated the policy choice message box (standalone dialog) from the manual rescue panel (collapsible). The message box appears independently on error, while the panel can be opened/closed at any time.
@@ -1168,43 +1171,6 @@ Developed by **FURU**
 
 ### v4.1.0 (2026-05-24)
 - **[Fix & UX]** ResizeObserverを導入して上部コントロールバーの高さを動的監視し、エンジン切替時やレスポンシブ時の黒い空白行を自動調整するよう改善 / Introduced ResizeObserver to dynamically track ControlBar height and automatically eliminate excess black space across responsive breakpoints and engine toggles
-
-### v4.0.10 (2026-05-24)
-- **[Fix & UX]** ResizeObserverを導入して上部コントロールバーの高さを動的監視し、エンジン切替時やレスポンシブ時の黒い空白行を自動調整するよう改善 / Introduced ResizeObserver to dynamically track ControlBar height and automatically eliminate excess black space across responsive breakpoints and engine toggles
-
-### v4.0.9 (2026-05-23)
-- **[Fix & UX]** 画像生成時の共通プロンプトから白目の演技指示を削除し、様々なオチの表情が白目に偏る問題を解決 / Removed blank white eyes instruction from global camera prompt to resolve blank-eye bias in visual punchlines
-
-### v4.0.8 (2026-05-24)
-- **[Feature]** キャラクターシートの累積追加認識（マージ）に対応。追加ドロップ時に既存のキャストリストが消えず、インテリジェントにマージ・追記されるように改善 / Supported cumulative character sheet analysis. When dropping additional sheets, the existing cast list is preserved and new analysis results are merged intelligently.
-
-
-### v4.0.7 (2026-05-23)
-- **[Fix & UX]** オチ感情のBLANK（白目）偏りの是正および進捗ログのタイムスタンプ表示を削除 / Fixed BLANK (white eyes) bias in punchline emotions and removed timestamp from progress logs
-
-### v4.0.6 (2026-05-23)
-- **[Feature]** コメディトーン（ハイテンション爆発系、シュール静寂系、知性派ブラック系）の演出指示を JavaScript 側で自動ランダムまたは指定可能に拡張 / Extended comedy tone registers (HighTension, SurrealQuiet, IntellectualBlack) to be dynamically randomized or specified via JavaScript constraints
-- **[Feature]** オチ（Punchline）タイプが「Auto」の場合の決定論的ランダム選定ロジックを導入し、コメディの偏りを防止 / Introduced deterministic random selection for "Auto" punchline mode from 10 comedy models to prevent narrative monotony
-- **[Fix]** シナリオのセリフ内言及バグを修正（「ダミー話者」がセリフ内に紛れ込む挙動や、全角括弧による吹き出しパース不全を完全に防止） / Fixed script speaker parser bugs that caused dummy speakers or full-width quotes to disrupt comic bubble rendering
-- **[Fix]** キャラクターの服装 weights 設定（ `[WEIGHTS]` ）が衣装指定と衝突するのを防ぐため、`activeOutfit` 適用時は服装 weights を正しく除外するようにパースロジックを修正 / Fixed a bug where character outfit weights collided with custom outfit selection by ensuring weights are stripped when activeOutfit is set
-- **[Fix]** 大文字で出力される漫符（EMOTION）のハルシネーションが発生しても、安定してフォールバックできるよう正規化ロジックを強化 / Hardened emotion parser to safely normalize uppercase emotion style hallucinations
-
-### v4.0.5 (2026-05-22)
-- **[Feature]** Local RAG の Location 辞書を 101 箇所に超絶拡張（異次元空間やミクロ世界などカオスな舞台を追加） / Massively expanded the Local RAG Location dictionary to 101 unique environments (including alternate dimensions and microscopic worlds)
-- **[Fix]** UI下部の生成履歴ギャラリーが二重に表示されるコンポーネント重複バグを修正 / Fixed a UI bug where the generation history gallery was duplicated due to redundant components
-
-### v4.0.4 (2026-05-22)
-- **[Feature]** 作風json（Story Maker生成）のドラッグ＆ドロップ適用機能を追加 / Added drag & drop support for Style json (from Story Maker) to apply art direction globally
-- **[Fix]** 360度画像読み込み時のWebGLコンテキスト枯渇によるクラッシュを修正 / Fixed WebGL context exhaustion crash when loading 360 images
-
-### v4.0.3 (2026-05-21)
-- **[Fix & UX]** 吹き出しへの五感ラベル混入バグおよびアクターZONE・EMOTIONスタイル誤切替の修正 / Fix sensory label hallucination in speech bubbles and incorrect actor ZONE/EMOTION style transitions
-
-### v4.0.2 (2026-05-20)
-- **[Fix & UX]** ローカルRAGの舞台設定および感情辞書取得時の進行状況表示（ **onProgress** ）を追加し、シナリオ生成開始時のローディング詳細フィードバックを強化。 / Added progress feedback ( **onProgress** ) when fetching location details and emotional dictionaries from local RAG to enhance user experience during scenario generation.
-
-### v4.0.1 (2026-05-20)
-- **[Fix]** プロンプトエンジンのチラつき・キラキラ防止プロトコル（Anti-Glitter & Anti-Noise Protocol）強化に伴い、コントロールバーの「1枚絵 ChatGPT用 感情シネマプロンプトをコピー」ボタン内のプロンプト変数も同様のノイズ除去設定に同期適用。 / Synchronized noise reduction and anti-glitter settings to the 1-pane emotional cinema prompt inside the ControlBar to match the updated prompts.js engine.
 
 ### v4.0.0 (2026-05-20) — 正式版リリース / Stable Release
 - **[Release]** システムの完全モジュール化、非同期ステート同期バグの解決、およびリreset機能の修正を経て、正式版 **`v4.0.0`** としてリリース。プレリリースタグ（`-alpha`）を解除し、安定版として稼働を開始。 / Officially released as stable **`v4.0.0`** following complete modularization, asynchronous state sync fixes, and reset function validation. Removed the `-alpha` tag for stable production.

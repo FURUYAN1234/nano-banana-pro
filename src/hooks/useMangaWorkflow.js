@@ -1044,7 +1044,16 @@ export default function useMangaWorkflow() {
     navigator.clipboard.writeText(finalPrompt);
     setIsCopied(true);
     setTimeout(() => setIsCopied(false), 2000);
-    showStatus("クリップボードにコピーしました！");
+
+    // [v4.2.1] ポリシーエラーが出ている状態でコピーした場合
+    // → Web版に貼り付ける意思表示とみなし、救済パネルを展開＆メッセージボックスを閉じる
+    if (policyErrorMsg || lastPolicyErrorRef.current) {
+      setIsPolicyPanelOpen(true);
+      setShowPolicyChoice(false);
+      showStatus("📋 コピーしました → Web版に貼り付けて、下の🛡️救済パネルで手動対応できます");
+    } else {
+      showStatus("クリップボードにコピーしました！");
+    }
   };
   // --- Step 4: Image Generation ---
   // [v2.79] 戻り値変更: フルオート連鎖用（true=成功, false=失敗）
