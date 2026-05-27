@@ -1156,6 +1156,9 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v4.2.9 (2026-05-28)
+- ** [Fix] ** シナリオ解析バグ修正（ト書き括弧内カギ括弧のセリフ誤検出修正、グループスピーカーの全キャスト不在判定修正、ト書き内引用のセリフ化防止） / Scenario parsing fixes (dialogue extraction from parentheses, group speaker detection, onomatopoeia filtering)
+
 ### v4.2.8 (2026-05-27)
 - **[Fix & UX]** 日本語ウォーターマークのURLをnoteプロフィールに修正 / Updated Japanese watermark URL to note profile
 
