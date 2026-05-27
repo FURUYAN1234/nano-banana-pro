@@ -270,10 +270,10 @@ ${styleJson.anti_patterns ? `            - 絶対禁止事項:\n${styleJson.anti
               - **【構図ルール】ト書き（状況の説明）では、主役の動作を中心に記述しつつ、同じコマにいる他キャラのリアクションや存在も簡潔に描写してよい。** 例: 「アカリがツッコむ。横でリンが呆れ、奥でサエコが爆笑している」のような群像描写は大歓迎。ただし1キャラあたりの描写は1文以内に留め、冗長にならないこと。同じ場面に居合わせている喋らないキャラがいる場合、ト書きの末尾に「（リアクション: キャラ名→表情や動作）」の形式で簡潔に添えよ。例: 「アカリがツッコむ（リアクション: リン→呆れ顔、サエコ→爆笑）」。4コマ中**最低2コマ**にはこのリアクション描写を含めること。
               - **【超重要】汗マークや怒りマークなどの「漫符」を描写する場合、文字ラベル（例: "POPPING VEIN", "LARGE SWEAT DROP"など）や設定資料に書かれるような矢印・注釈テキストを画面内に絶対に描画させないこと。純粋な視覚的シンボルのみを使用し、一切の英単語ラベルを排除せよ。**
   
-           2. **テキストの量的制限 (Compact Text Quantity)**:
-              - **厳守**: 1コマあたりのフキダシは**「最大3つまで」**。（3人の掛け合いも積極活用せよ）
-              - セリフは**「短い一文」**に収めよ（例: 「なんだって！？」OK、「それはつまり...ということなのか？」NG）。
-              - **禁止**: セリフ内に「(怒って)」「(笑いながら)」等のト書き・感情描写を入れるな。絵で表現せよ.
+           2. **テキストの量的制限と対話の充実化 (Compact Text & Rich Dialogue)**:
+               - **厳守**: 1コマあたりのフキダシは**「最大3つまで」**。（3人の掛け合いも積極活用せよ）
+               - セリフは**「簡潔でテンポの良い対話」**にせよ。一言だけの短すぎるセリフ（例:「何！？」「えー！」「わー！」等）ばかりで対話がスカスカになり会話が成立しない状態は厳重に回避し、キャラクター同士の個性を活かしたコミカルで意味のある対話や掛け合いを展開せよ。
+               - **禁止**: セリフ内に「(怒って)」「(笑いながら)」等のト書き・感情描写を入れるな。絵で表現せよ.
                - **句読点・表現ルール**: セリフの末尾は必ず終止記号で締めよ。どの記号を使うかはセリフの感情・キャラの性格・場面の空気で自然に決めること。
                  終止記号（単読で文末になれる）: 。/ ！/ ？/ ♪/ ♡/ っ/ ！？
                  修飾記号（単独では文末にならない。必ず後ろに終止記号を添えよ）: ……→「……。」「……！」「……？」 / 〜→「〜！」「〜。」 / ー→「ー。」「ー！」
@@ -371,6 +371,8 @@ ${styleJson.anti_patterns ? `            - 絶対禁止事項:\n${styleJson.anti
               - **【Anti-Persona-Gravity Protocol（ペルソナ引力抑制）v2.0 — オチ多様化強制】**:
                 * **問題**: 特定のキャラクター（特に「風紀委員」「委員長」「リーダー」等の権威的ペルソナを持つキャラ）が、オチを毎回独占し、「裁定・没収・制裁・処罰・禁止命令」系のワンパターンなオチになりやすい。
                 * **対策（オチ担当キャラの強制分散）**: 4コマ目の「決めゼリフ」または「決定的行動（オチの主導権）」を担当するキャラクターは、CastList内の全キャラに均等に分散させよ。権威的キャラが毎回オチを支配するのは禁止。
+                * **【学校外の非学校シーンでの校則違反オチの厳禁】**:
+                  - プライベートなお出かけ（飲食店、観光地など）やカジュアルな私服設定の際、生徒会長などのペルソナに引っ張られて『校則違反！没収！制裁！』などの学校の枠組みをオチに持ち込むことを厳重に禁止する。舞台や状況に合わせた、その場所ならではの自然で面白いオチ（例: うどんが熱すぎて悶絶する、みかんの味が変でずっこける等）にせよ。
                 * **具体的な分散パターン（以下を積極的に活用せよ）**:
                   - 普段ボケ役のキャラが4コマ目で急に核心を突く正論を言い放つ
                   - 普段おとなしい・天然キャラが4コマ目で最も破壊的な行動を取る
@@ -394,8 +396,8 @@ ${styleJson.anti_patterns ? `            - 絶対禁止事項:\n${styleJson.anti
                 * 嗅覚: 料理の匂い、雨上がりの湿った空気、古い本の匂い
                 * 体内感覚: 胃がキュッとする、背筋が凍る、血が頭に昇る
               - **4コマ全体で、聴覚・触覚・嗅覚・体内感覚のうち最低2種類を使用せよ。**
-              - **量的制限**: 五感描写は1コマあたり**1文以内**に留めよ。物理アクション・群像リアクションと競合してト書きが肥大化するのを防ぐため、簡潔な挿入に徹すること。
-               - これにより画像生成AIが「空気感」を拾い、単なるポーズ集から「生きた場面」に進化する。
+              - **描写量の確保**: 各コマの状況描写（ト書き）は、五感情報、具体的な表情・ポーズ、物理アクションを含め、**80〜150文字程度で詳細に描写**せよ。これによって画像生成時の背景やポーズの描き込みや色合いが豊かになる。単に「アカリが驚く」だけの薄いト書きは禁止する。
+                - これにより画像生成AIが「空気感」を拾い、単なるポーズ集から「生きた場面」に進化する。
 
            3.10 **【Guard M: 比喩素材の世界観準拠（クリシェ完全排除）】**:
               - ト書きおよびセリフで比喩を使う場合、以下の使い古された定型比喩を**完全禁止**する：
@@ -653,6 +655,7 @@ ART STYLE:
 - Backgrounds should have slightly lower saturation and softer focus (shallow depth of field) to make characters pop.
 - NOISE REDUCTION (Anti-Glitter & Anti-Noise Protocol):
   * ABSOLUTELY NO ChatGPT-style magical floating particles, NO glittering/sparkling effects, NO dust motes, NO lens flares, NO moiré patterns. Keep the air completely clean and empty.
+  * ABSOLUTELY NO rainbow-colored speedlines, NO multi-colored energy auras, NO magical floating rainbow sparkles. Keep speedlines and glowing effects strictly monochrome (white, black, or matched to light sources) to maintain professional anime layout.
   * ZERO NOISE TOLERANCE: The final image MUST be completely free of visual noise, grain, micro-texture artifacts, dithering patterns, and any speckle-like artifacts. Every surface must be CLEAN and SMOOTH.
   * NO MICRO-DETAIL CLUTTER: Do NOT fill empty areas with random tiny dots, scratches, dust particles, or halftone-like noise patterns. Clean color fills and smooth gradients ONLY.
   * NO OVER-RENDERING: Do NOT apply photorealistic texture rendering (cloth weave, skin pores, hair strand noise) to anime-style characters. Keep surfaces FLAT and CLEAN as in professional TV anime cel-shading.
@@ -804,6 +807,8 @@ Tech Dict:
 (Cinematic depth of field, soft bokeh: 2.3)
 (NO text/SFX outside speech bubbles: 2.8)
 (NO ENGLISH TEXT outside watermark. NO 'G-pen'/'HA': 3.0)
+(ABSOLUTELY NO multicolored speed lines, NO rainbow streaks or lights, NO chromatic noise: 3.0)
+(Ensure speedlines and glowing effects are strictly white, black, or clean monochrome: 2.8)
 
 
 ${panelSections}

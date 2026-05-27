@@ -211,9 +211,6 @@ export const extractDialogueOnly = (fullPanelText, castList) => {
   let bubbleCount = 1;
 
   lines.forEach(line => {
-    // コマヘッダー行はスキップ
-    if (line.match(/^\[\d+コマ目/)) return;
-
     // [v4.2.9] 括弧（ト書き）内にカギ括弧が含まれる場合のセリフ誤検出を防止
     // 例: ヒカリ（眉が「ハ」の字に曲がり）「セリフ」→ 括弧内の「ハ」をセリフと誤認する問題を解決
     const lineForParsing = line.replace(/[（(][^）)]*[）)]/g, '');
@@ -463,7 +460,6 @@ export const extractPlacementRule = (fullPanelText, castList) => {
     const trimmed = line.trim();
     if (/^\[EMOTION:/i.test(trimmed)) return false;
     if (/^状況(?:演出)?[：:]/i.test(trimmed)) return false;
-    if (/^\[\d+コマ目/i.test(trimmed)) return false;
     return trimmed.includes('：') || trimmed.includes(':') || trimmed.includes('「');
   });
 

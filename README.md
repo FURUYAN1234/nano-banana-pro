@@ -1156,6 +1156,15 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v4.3.8 (2026-05-28)
+- **[Fix & Quality]** シナリオの対話・ト書きの充実化。一言だけの短すぎるセリフの乱用を防ぎ、キャラクターの掛け合いを強化。ト書きの描写量を80〜150文字確保し、画像生成時のポーズ・背景の描き込みと極彩色表現を向上。 / Enhanced scenario dialogue and storyboard density. Fixed dialogue sparseness to enforce natural comedic interactions. Restored full detail to storyboard prompts to improve pose/background rendering and color richness.
+- **[Fix]** 学校外シーン（讃岐うどん店などの店舗・私服時）におけるサエコの生徒会長ペルソナ引力による「校則違反没収オチ」を厳重に禁止するようシナリオ生成指示を強化。 / Enforced a strict ban on school-rules disciplinary punchlines when characters are in out-of-school/casual settings.
+- **[Fix]** 感情絵柄（HIGH_SATURATION, IMPACT）でのビビッドな極彩色を維持しつつ、不自然な虹色のスピードラインや多色ノイズを画像生成ネガティブプロンプトで強力に排除。 / Restored rich vibrant colors for HIGH_SATURATION and IMPACT emotions while explicitly filtering out multicolored speedlines and rainbow noise in image generator prompts.
+- **[v4.3.8 Sync]** package.json, constants.js, index.html, README.md を `v4.3.8` に同期。 / Synchronized version to `v4.3.8` across all registry files.
+
+### v4.3.7 (2026-05-28)
+- ** [Fix & Quality] ** シナリオ生成プロンプトの演出・笑い構造指示を復元し、セリフ密度とコント品質の劣化問題を修正。また、パーサーにおける `[1コマ目: 起]` などのヘッダー誤抽出バグを修正。 / Restored script direction and comedy structure rules in the scenario generator prompt to fix dialogue density and comedy quality degradation. Also fixed a parser bug where panel headers like `[Panel 1: Ki]` were misidentified as dialogue text.
+
 ### v4.3.6 (2026-05-28)
 - ** [Fix] ** シナリオ解析バグ修正（ト書き括弧内カギ括弧のセリフ誤検出修正、グループスピーカーの全キャスト不在判定修正、ト書き内引用のセリフ化防止） / Scenario parsing fixes (dialogue extraction from parentheses, group speaker detection, onomatopoeia filtering)
 
@@ -1163,7 +1172,7 @@ Developed by **FURU**
 - ** [Failure / Rollback] ** モデル自動取得機能による出力品質の劣化問題のため、v4.2.8へとロールバックを実行。 / Rolled back to v4.2.8 due to model-api auto-detection degradation issues.
 
 ### v4.2.8 (2026-05-27)
-- **[Fix & UX]** 日本語ウォーターマークのURLをnoteプロフィールに修正 / Updated Japanese watermark URL to note profile
+- ** [Fix & UX] ** 日本語ウォーターマークのURLをnoteプロフィールに修正 / Updated Japanese watermark URL to note profile
 
 ### v4.2.7 (2026-05-27)
 - ** [Fix & UX] ** 連続ループ生成（エンドレスモード）時、画像生成完了後に確実に STEP2 に逆スクロールして戻り、次の作品のシナリオ生成が視覚的に開始されるように修正。また、全自動モード「中断」押下時に API 通信の完了を待たずに即座に UI ロックを解除して通常状態に復帰するように改善。 / Fixed scrollback behavior in Endless mode to ensure the viewport smoothly returns to STEP 2 after image generation finishes, visualizing the next scenario creation. Also improved Full Auto cancellation to immediately release the UI lock and clear loaders without waiting for background API tasks to resolve.
@@ -1176,50 +1185,14 @@ Developed by **FURU**
 - ** [Fix & UX] ** 幽霊エラー残留バグ（手動救済後およびWeb切替時）の完全修正と、フルオート時の致命的エラー（401/403）からの確実な無限ループ脱出処理の実装 / Completely fixed the ghost error remnant bug (after manual rescue and web switch) and implemented a reliable escape from infinite loops during fatal errors (401/403) in Full Auto mode.
 
 ### v4.2.4 (2026-05-27)
-- **[Fix & UX]** ポリシー自動修正実行中のメイン画像生成ボタンの非活性化による競合防止、およびデッドコードpolicyRetryCountRef of useMangaWorkflow.js の削除 / Prevented API conflicts by disabling the main image generation button during policy auto-fixing, and cleaned up unused policyRetryCountRef
+- ** [Fix & UX] ** ポリシー自動修正実行中のメイン画像生成ボタンの非活性化による競合防止、およびデッドコードpolicyRetryCountRef of useMangaWorkflow.js の削除 / Prevented API conflicts by disabling the main image generation button during policy auto-fixing, and cleaned up unused policyRetryCountRef
 
 ### v4.2.3 (2026-05-27)
-- **[Fix & UX]** 新規画像生成開始時のポリシーエラー状態クリア漏れによる、生成成功後のコピーボタン誤動作のバグ修正 / Fixed a bug where policy error state was not cleared on new generation start, causing copy button malfunction after success
+- ** [Fix & UX] ** 新規画像生成開始時のポリシーエラー状態クリア漏れによる、生成成功後のコピーボタン誤動作のバグ修正 / Fixed a bug where policy error state was not cleared on new generation start, causing copy button malfunction after success
 
 ### v4.2.2 (2026-05-27)
-- **[Fix & UX]** ポリシーエラー時のコピペボタン押下による救済パネルの自動展開とメッセージボックス非表示（手動Web連携強化） / Auto-open rescue panel and close message box when clicking copy button during content policy error (enhanced manual Web workflow)
+- ** [Fix & UX] ** ポリシーエラー時のコピペボタン押下による救済パネルの自動展開とメッセージボックス非表示（手動Web連携強化） / Auto-open rescue panel and close message box when clicking copy button during content policy error (enhanced manual Web workflow)
 
 ### v4.2.1 (2026-05-27)
-- **[Feature]** API画像生成時のコンテンツポリシー違反を自動検出し、メッセージボックスで「自動修正して再生成」または「Web版に切り替え」を選択可能に。手動モードは回数制限なし、フルオートは3回自動リトライ後にメッセージボックス表示、エンドレスモードは3回失敗で次の作品にスキップ。Gemini / ChatGPT 両エンジン対応。 / Added automatic content policy violation detection for API image generation with a message box offering \"Auto-fix & Regenerate\" or \"Switch to Web\". Manual mode has unlimited retries, Full Auto retries 3 times automatically then shows the message box, and Endless mode skips to the next work after 3 failures. Supports both Gemini and ChatGPT engines.
-- **[UX]** メッセージボックス（選択UI）と手動救済パネル（折りたたみ式）を完全分離。メッセージボックスはエラー時に独立表示され、パネルはいつでも任意で開閉可能。 / Separated the policy choice message box (standalone dialog) from the manual rescue panel (collapsible). The message box appears independently on error, while the panel can be opened/closed at any time.
-
-### v4.2.0 (2026-05-27)
-- **[Fix & UX]** 演出強化版でト書き内の動作指示（「優越感ポーズ」等）がセリフ吹き出しとして誤抽出されるバグの修正 / Fixed a bug in enhanced direction mode where action indicators in stage directions (e.g. " superiority pose\)
-
-### v4.1.9 (2026-05-26)
-- **[Fix & UX]** ト書き内の形状表現（「Ω」型、「∩」字など）や表記指示（「〜」と書かれた札）がセリフとして誤抽出されるバグの修正 / Fixed bug where visual shape descriptions (e.g. "Ω"-shape, "∩"-shape) or written sign labels in stage directions were misidentified as dialogue text
-- **[Audit & Cleanup]** デプロイスクリプト内の個人情報（ローカル絶対パス）の排除とゴミファイル監査の実施 / Removed hardcoded local paths containing personal user information from deployment scripts and completed security/garbage audit
-
-### v4.1.8 (2026-05-25)
-- **[Fix & UX]** 状況演出・背景・カメラワーク指示がセリフに誤認されるバグの修正 / Fixed bug where scene, background, and camera work directives were misidentified as dialogue
-
-### v4.1.7 (2026-05-25)
-### v4.1.6 (2026-05-25)
-- **[Fix & Feature]** プロンプト内の白目（BLANK）に対する過剰な禁止命令を排除し、他のリアクションとバランスよく自律選択するよう指示を調整。Windows環境下での改行コード問題（CRLF/LF）をGit側でLFに統一することで、編集時のフリーズバグを根絶。 / Rebalanced BLANK (blank eye) emotional prompt directives to encourage diverse facial reactions. Fixed CRLF/LF encoding mismatch under Windows environment via gitattributes to prevent editor hang issue.
-
-### v4.1.5 (2026-05-24)
-- **[Feature]** Geminiエンジン使用時にもウォーターマーク表記に「Generated by Gemini」が含まれるように修正 / Fixed English watermark text to include "Generated by Gemini" when utilizing the Gemini engine
-
-### v4.1.4 (2026-05-24)
-- **[Fix & UX]** READMEのマークダウン太字表記の修正および「デプロイして」プロトコルによるリリース / Fixed markdown bold tags in README.md and executed the deploy protocol for release
-
-### v4.1.3 (2026-05-24)
-- **[Feature]** Thinking Mode Log Synchronization supporting both Gemini and OpenAI engines. Implemented pseudo-thought tag ('<thought>') extraction in the router layer to isolate thought traces into the progress log window. / GeminiとOpenAIの両エンジンにおける思考プロセス（Thinking Mode / CoT）の同期・可観測化に対応。ルーター層での **'<thought>'** タグ自動抽出により、自己修復を含む思考トレースを経過窓に表示するよう改善
-
-### v4.1.2 (2026-05-24)
-- **[Fix & UX]** Alpha表記の完全排除とスクリプトバグ修正、ドキュメントの再整備 / Completely removed Alpha branding, fixed update scripts, and cleaned up documentation
-
-### v4.1.1 (2026-05-24)
-- **[Fix & UX]** バージョン繰り上げルールの明文化とドキュメント整備 / Documented special version bump rules and updated logs
-
-### v4.1.0 (2026-05-24)
-- **[Fix & UX]** ResizeObserverを導入して上部コントロールバーの高さを動的監視し、エンジン切替時やレスポンシブ時の黒い空白行を自動調整するよう改善 / Introduced ResizeObserver to dynamically track ControlBar height and automatically eliminate excess black space across responsive breakpoints and engine toggles
-
-### v4.0.0 (2026-05-20) — 正式版リリース / Stable Release
-- **[Release]** システムの完全モジュール化、非同期ステート同期バグの解決、およびリreset機能の修正を経て、正式版 **`v4.0.0`** としてリリース。プレリリースタグ（`-alpha`）を解除し、安定版として稼働を開始。 / Officially released as stable **`v4.0.0`** following complete modularization, asynchronous state sync fixes, and reset function validation. Removed the `-alpha` tag for stable production.
-- **[Fix]** 「エンジン変更・全リセット」および「シナリオから再生成（ソフトリセット）」実行時に、カテゴリ選択状態（ `categories` ）、自由入力トピック（ `manualTopic` ）、演出強化オプション（表情、ボディランゲージ、照明等）、ポリシー修正ログなどの各種設定ステートが初期値に初期化されないリセット漏れの不具合を修正。 (v3.91-alpha) / Fixed a bug where category selections, manual topics, scenario enhancement options, and policy logs were not cleared upon executing partialReset or hardReset. (v3.91-alpha)
+- ** [Feature] ** API画像生成時のコンテンツポリシー違反を自動検出し、メッセージボックスで「自動修正して再生成」または「Web版に切り替え」を選択可能に。手動モードは回数制限なし、フルオートは3回自動リトライ後にメッセージボックス表示、エンドレスモードは3回失敗で次の作品にスキップ。Gemini / ChatGPT 両エンジン対応。 / Added automatic content policy violation detection for API image generation with a message box offering "Auto-fix & Regenerate" or "Switch to Web". Manual mode has unlimited retries, Full Auto retries 3 times automatically then shows the message box, and Endless mode skips to the next work after 3 failures. Supports both Gemini and ChatGPT engines.
+- ** [UX] ** メッセージボックス（選択UI）と手動救済パネル（折りたたみ式）を完全分離。メッセージボックスはエラー時に独立表示され、パネルはいつでも任意で開閉可能。 / Separated the policy choice message box (standalone dialog) from the manual rescue panel (collapsible). The message box appears independently on error, while the panel can be opened/closed at any time.
