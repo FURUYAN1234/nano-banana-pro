@@ -1133,6 +1133,9 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v4.2.4 (2026-05-27)
+- **[Fix & UX]** ポリシー自動修正実行中のメイン画像生成ボタンの非活性化による競合防止、およびデッドコードpolicyRetryCountRef of useMangaWorkflow.js の削除 / Prevented API conflicts by disabling the main image generation button during policy auto-fixing, and cleaned up unused policyRetryCountRef
+
 ### v4.2.3 (2026-05-27)
 - **[Fix & UX]** 新規画像生成開始時のポリシーエラー状態クリア漏れによる、生成成功後のコピーボタン誤動作のバグ修正 / Fixed a bug where policy error state was not cleared on new generation start, causing copy button malfunction after success
 

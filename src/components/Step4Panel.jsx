@@ -279,7 +279,7 @@ export default function Step4Panel({
 
               <button
                 onClick={regenerateImage}
-                disabled={!finalPrompt || isGeneratingImage}
+                disabled={!finalPrompt || isGeneratingImage || isFixingPolicy}
                 className={`w-full ${selectedEngine === 'openai' ? 'bg-emerald-600 hover:bg-emerald-500' : 'bg-orange-600 hover:bg-orange-500'} text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg border border-white/10 active:scale-95 disabled:bg-slate-700 disabled:opacity-50 disabled:cursor-wait mt-4`}
               >
                 {isGeneratingImage ? <Loader2 size={20} className="animate-spin" /> : <ImageIcon size={20} />}

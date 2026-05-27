@@ -96,7 +96,6 @@ export default function useMangaWorkflow() {
   // [v4.2.0] コンテンツポリシー自動修正＆リトライ選択UI
   const [showPolicyChoice, setShowPolicyChoice] = useState(false); // 選択UIの表示制御
   const [policyAutoRetrying, setPolicyAutoRetrying] = useState(false); // 自動リトライ中フラグ
-  const policyRetryCountRef = useRef(0); // リトライ回数（React stateではなくrefで即時参照）
   const MAX_POLICY_RETRIES = 3; // 最大リトライ回数
   const lastPolicyErrorRef = useRef(""); // 直近のポリシーエラーメッセージ（state更新待ち不要）
 
@@ -823,7 +822,6 @@ export default function useMangaWorkflow() {
     setPolicyFixLog("");
     setIsPolicyPanelOpen(false);
     setShowPolicyChoice(false); // [v4.2.0] 選択UIリセット
-    policyRetryCountRef.current = 0; // [v4.2.0] リトライカウンターリセット
     lastPolicyErrorRef.current = ""; // [v4.2.0] エラーメッセージrefリセット
     setAssembleThought("スーパーフル・プロトコル v121.3 (Universal Master) を起動中... 全データの整合性をチェックしています...");
 
@@ -952,7 +950,6 @@ export default function useMangaWorkflow() {
     setPolicyFixLog("");
     setIsPolicyPanelOpen(false);
     setShowPolicyChoice(false); // [v4.2.0]
-    policyRetryCountRef.current = 0;
     lastPolicyErrorRef.current = "";
     
     // コピー状態リセット
@@ -1015,7 +1012,6 @@ export default function useMangaWorkflow() {
     setPolicyFixLog("");
     setIsPolicyPanelOpen(false);
     setShowPolicyChoice(false); // [v4.2.0]
-    policyRetryCountRef.current = 0;
     lastPolicyErrorRef.current = "";
     
     // コピー状態リセット
@@ -1354,7 +1350,6 @@ export default function useMangaWorkflow() {
   const handlePolicySwitchToWeb = () => {
     setShowPolicyChoice(false); // メッセージボックスを閉じる
     setIsPolicyPanelOpen(true); // 手動救済パネルを展開する
-    policyRetryCountRef.current = 0; // カウンターリセット
 
     // プロンプトをクリップボードにコピー
     if (finalPrompt) {
@@ -1503,7 +1498,6 @@ export default function useMangaWorkflow() {
 
     // ポリシー関連のステートをクリーンアップ
     setShowPolicyChoice(false);
-    policyRetryCountRef.current = 0;
     lastPolicyErrorRef.current = "";
     setIsFixingPolicy(false);
 
