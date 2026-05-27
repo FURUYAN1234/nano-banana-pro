@@ -149,6 +149,29 @@ AIが生成するストーリーのノリが一パターンになるのを防ぐ
 When the OpenAI Engine is selected (or when using the Browser UI Option for ChatGPT), a dedicated formatting protocol is automatically applied to optimize prompts for ChatGPT Images 2.0. This enforces A4 portrait orientation, vertical Japanese text, and right-to-left reading flow. It also includes an OpenAI-specific Anti-Noise Protocol with safe rendering keywords, banned word combinations, and light effect substitution rules to ensure clean, noise-free anime-quality output.
 OpenAI Engine選択時（またはChatGPT向けのブラウザUI運用時）には、ChatGPT Images 2.0 での生成に最適化された専用プロンプトフォーマットが自動付与されます。A4縦長のキャンバス指定や、日本語の縦書き、右から左への視線誘導など、特有の制限を突破します。さらにOpenAIモデル特有のノイズ問題に対応するAnti-Noiseプロトコル（安全レンダリングキーワード・禁止ワード組み合わせ・光演出の代替表現）を搭載し、クリーンなアニメ品質の出力を保証します。
 
+### 🛡️ Content Policy Auto-Rescue System (v4.2.1+) / コンテンツポリシー自動救済システム & Web版切替機能
+
+The system includes a fully automated safety policy rescue pipeline to prevent generations from halting due to API safety filters or content censorship (NSFW, violence, etc.).
+APIの安全基準（NSFW、暴力表現などの検閲）による生成エラーでワークフローが完全に停止するのを防ぐため、高度なポリシー自動救済およびWeb連携システムを搭載しています。
+
+- **Dynamic Auto-Fix / 配慮版プロンプトの自動再生成**: 
+  When the image generator blocks a prompt due to safety filters, the AI Advisor automatically detects and analyzes the violation logs. It dynamically replaces sensitive keywords with mild, contextually appropriate synonyms and automatically retries the generation.
+  画像生成エンジンが安全フィルターによってブロックされた際、AIアドバイザーが自動的に検閲ログを解析。センシティブな単語を文脈に合わせた安全な表現に動的に置き換えた **「配慮版プロンプト」** を自動生成し、即座にリトライを行います。
+
+- **One-Click "Switch to Web" / 「Web版に切り替える」連携機能**: 
+  If API-level censorship continues to reject the prompt, a "Switch to Web" button appears on the screen. Clicking this button immediately copies the fully formatted prompt (optimized for the active engine) to your clipboard and opens the official web interface (Gemini or ChatGPT) in a new tab. Since web interfaces are often more resilient or easier to adjust, you can paste and generate without frustration.
+  API経由での生成拒否が続く場合、画面に **「Web版に切り替える」** ボタンが表示されます。このボタンをクリックすると、お使いのエンジン（GeminiまたはChatGPT）に合わせた専用プロンプトが自動的にクリップボードにコピーされ、同時に公式サイトが新しいタブで開きます。Web版にコピペするだけで、API制限を回避して生成を続行可能です。
+
+- **Unified Copy Workflow / 統一されたコピペ連携フロー**: 
+  The clipboard-copy and web redirection workflow operates identically for both Gemini and ChatGPT engines, providing a unified fallback experience regardless of your selected model.
+  GeminiとChatGPTのどちらのAPIエンジンを選択していても、ポリシーエラー発生時には全く同じ手順（ワンクリックコピー＆ブラウザ起動）で連携でき、エンジンの違いを意識せずに利用できます。
+
+- **Intelligent Auto-Mode Adaptations / 自動化モードとの高度な連携**:
+  - **Full Auto Mode / フルオートモード**: The system automatically attempts the "Auto-Fix" retry up to 3 times. If all attempts fail, it pauses and prompts the user for action.
+    フルオート生成中、ポリシーエラーが発生した場合はAIが最大3回まで配慮版での再生成とリトライを実行。それでも突破できない場合のみ一時停止し、ユーザーの介入を待ちます。
+  - **Endless Mode / 無限ループモード**: To ensure continuous, unmanned operation, if a specific topic fails 3 consecutive times due to policy violations, the system automatically skips the current topic and moves to the next news trend instead of freezing the loop.
+    無限ループモードの放置運用中、特定のニュースやお題でポリシーエラーが3回連続して解消できない場合、ループ全体のフリーズを防ぐため、そのお題を自動的にスキップして次のトピックへ自律的に移行します。
+
 > **🔒 Security Architecture / セキュリティ設計**
 > This app is a **fully client-side static application** hosted on GitHub Pages. All API calls (Gemini / OpenAI) are made directly from the user's browser — no backend proxy, no middleman server. API keys are securely held only in the browser's memory (RAM) and volatilize safely upon reload. They never leave the user's device.
 > 本アプリは GitHub Pages 上の **完全クライアントサイド静的アプリ** です。全てのAPI通信（Gemini / OpenAI）はユーザーのブラウザから直接実行され、中継サーバーは一切介在しません。APIキーはブラウザのメモリ上（RAM）にのみ保持され、リロードで安全に揮発します。ユーザーのデバイスから外部へ送信されることはありません。
@@ -1135,6 +1158,7 @@ Developed by **FURU**
 
 ### v4.2.7 (2026-05-27)
 - ** [Fix & UX] ** 連続ループ生成（エンドレスモード）時、画像生成完了後に確実に STEP2 に逆スクロールして戻り、次の作品のシナリオ生成が視覚的に開始されるように修正。また、全自動モード「中断」押下時に API 通信の完了を待たずに即座に UI ロックを解除して通常状態に復帰するように改善。 / Fixed scrollback behavior in Endless mode to ensure the viewport smoothly returns to STEP 2 after image generation finishes, visualizing the next scenario creation. Also improved Full Auto cancellation to immediately release the UI lock and clear loaders without waiting for background API tasks to resolve.
+- ** [Docs] ** READMEに「コンテンツポリシー自動救済システム（v4.2.1+） & Web版切替機能」の詳細な仕様および動作フローの解説を追加。 / Added detailed specifications and operation workflow explanation for the "Content Policy Auto-Rescue System (v4.2.1+) & Switch to Web" to README.md.
 
 ### v4.2.6 (2026-05-27)
 - ** [UI & UX] ** 画面上の各種説明文、プレースホルダー、ボタンラベルを親しみやすい表現にリライト。特にコピーボタンの文言を簡素化し、その下部に状況連動型の詳細ガイドを配置。妥協版警告文を安心感のある「簡易モデル生成案内」にブラッシュアップ。 / Rewrote and simplified UI texts, placeholders, and button labels for better user friendliness. Replaced bulky copypaste buttons with a clean action and added guidelined subtitles. Polished fallback model warnings into reassuring guides.
