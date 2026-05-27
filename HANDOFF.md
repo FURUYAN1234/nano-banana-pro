@@ -1,22 +1,47 @@
 # HANDOFF.md
 
-## 現在のステータス (v4.2.5 - ローカル修正完了・動作検証済み)
+## 現在のステータス (v4.2.6 - ローカル修正完了・動作検証済み)
 - **Completed** (完了)
-  - API画像生成時のコンテンツポリシー違反およびエラーハンドリング周辺のバグ監査と、追加のバグフィックスを完了。
-  - ローカル開発サーバー ([http://localhost:5173/](http://localhost:5173/)) を再起動し、動作検証をパス。
-  - リモートリポジトリへの `git push` はユーザーの承認待ち（保留中）。
+  - 画面表示の各種文章（プレースホルダー、ボタンラベル、説明文、警告メッセージ）のリライト・分かりやすさ向上を完了。
+  - バージョン番号を **v4.2.6** に引き上げ、`package.json`, `index.html`, `constants.js`, `README.md` と同期。
+  - ローカル開発サーバー ([http://localhost:5173/](http://localhost:5173/)) による動作検証およびプロダクションビルドテスト（`npm run build`）をクリア。
+  - ユーザーおよび自動レビューポリシーにより実装計画が承認済み。
+  - これより Git コミット・プッシュおよび本番環境へのデプロイを実行します。
 
-## 今回修正した項目 (Fixes)
-- [x] **手動救済成功時の `lastPolicyErrorRef` クリア漏れバグの修正** ([useMangaWorkflow.js](file:///c:/Users/sx717/Antigravity/nano-banana-pro/src/hooks/useMangaWorkflow.js))
-  - 手動ポリシー修正（`regenerateSafePrompt`）が成功して配慮版プロンプトが適用された際、`lastPolicyErrorRef.current` が古いエラーのまま残っていたため、プロンプトコピー時に再度救済パネルが展開されるバグを解決。
-- [x] **回復不能エラー（401/403/404）検出時のフルオート/エンドレスモード自動停止機能の実装** ([useMangaWorkflow.js](file:///c:/Users/sx717/Antigravity/nano-banana-pro/src/hooks/useMangaWorkflow.js))
-  - APIキー無効や権限不足などの致命的エラーが発生した際、エンドレスモードON時に無限リトライループに入るリスクを排除するため、即座に `fullAutoAbortRef.current = true` を設定して安全に停止させるフェイルセーフを導入。
-- [x] **同期的かつ安全なポリシー判定への切り替え** ([useMangaWorkflow.js](file:///c:/Users/sx717/Antigravity/nano-banana-pro/src/hooks/useMangaWorkflow.js))
-  - `runFullAuto` 終了後のポリシー判定 `hasPolicyError` において、React の非同期 state 更新によるタイミングラグを防ぐため、同期的に更新される `lastPolicyErrorRef.current` のみを使用した厳密な判定に変更。
-- [x] **エンドレスモード時におけるエラー表示の正確化** ([useMangaWorkflow.js](file:///c:/Users/sx717/Antigravity/nano-banana-pro/src/hooks/useMangaWorkflow.js))
-  - 一般エラー（通信タイムアウトなど）で失敗した際に、一律で「ポリシーエラーのため次へ進む」と表示されていたステータスメッセージを、エラー原因に応じて切り分けるように修正。
-- [x] **画像生成中の操作競合ガードの堅牢化** ([Step4Panel.jsx](file:///c:/Users/sx717/Antigravity/nano-banana-pro/src/components/Step4Panel.jsx))
-  - 画像生成中（`isGeneratingImage` が true）の際に、手動救済ボタン（配慮版プロンプト再生成）やメッセージボックスの「自動修正」「Web版へ切り替え」ボタンを `disabled` にし、プロンプト競合や並行リクエストを防ぐガードを追加。
+## 今回の変更内容 (UI & UX Rewrite)
+- [x] **キャラクター解析パネルの文言整理** ([Step1Panel.jsx](file:///c:/Users/sx717/Antigravity/nano-banana-pro/src/components/Step1Panel.jsx))
+  - タイトルを「STEP 01: キャラクター解析（設定の読み込み）」に変更。
+  - キャラクターシートのドロップエリアを親しみやすくわかりやすい案内にリライト。
+  - コピーボタンのラベルを「📋 キャラクター設定をコピー」に簡素化。
+- [x] **シナリオ設定パネルの文言整理** ([Step2Panel.jsx](file:///c:/Users/sx717/Antigravity/nano-banana-pro/src/components/Step2Panel.jsx))
+  - ラベル「Location Override」を「指定場所（背景の指定）」、「Outfit Override」を「指定服装（コスチューム指定）」に変更。
+  - 「オチ・ディレクター」を「ストーリーの結末（オチの方向性）」に変更。
+  - コピーボタンのラベルを「📋 シナリオをコピー」に簡素化。
+  - シナリオ演出強化エリア内の説明文と注意事項をより平易な日本語にリライト。
+- [x] **プロンプト生成パネルの文言整理** ([Step3Panel.jsx](file:///c:/Users/sx717/Antigravity/nano-banana-pro/src/components/Step3Panel.jsx))
+  - 「プロンプトを構築中」であることを直感的に伝える表現に変更。
+- [x] **画像生成出力パネルの文言整理** ([Step4Panel.jsx](file:///c:/Users/sx717/Antigravity/nano-banana-pro/src/components/Step4Panel.jsx))
+  - コピペボタンを「📋 プロンプトをコピーする」にスッキリと簡素化。
+  - ボタンの真下に、選択エンジンや背景設定に連動した丁寧な「手動コピペ手順ガイド」を配置。
+  - 「妥協版警告」を「簡易モデル（自動バックアップモデル）での生成案内」へと前向きな案内にリライト。
+  - ポリシー制限メッセージボックスのテキストを「⚠️ 画像生成が制限されました（ポリシー制限）」と「表現の一部がAIの安全基準（ポリシー）に触れたため、画像の生成がスキップされました」に変更。
+- [x] **コントロールバーとヘルプ文言の整理** ([ControlBar.jsx](file:///c:/Users/sx717/Antigravity/nano-banana-pro/src/components/ControlBar.jsx))
+  - ループ・フルオートのボタンテキストを「🔁 連続ループ生成 ON / 解除」「⚡ 全自動モード（フルオート） ON / 中断」に分かりやすく変更。
+  - ヘルプ説明文を箇条書きに整理し、視認性を向上。
+  - 1枚絵用の感情シネマプロンプトコピーボタンのテキストや注釈をスッキリ整理。
+- [x] **システムヘッダーの整理** ([SystemHeader.jsx](file:///c:/Users/sx717/Antigravity/nano-banana-pro/src/components/SystemHeader.jsx))
+  - リセット系のボタン説明を直感的にし、レート制限時のアラートを「⚠️ 一時的な接続制限モード」に変更。
+- [x] **エラーガイド文言の整理** ([safety-filters.js](file:///c:/Users/sx717/Antigravity/nano-banana-pro/src/lib/safety-filters.js) / [useMangaWorkflow.js](file:///c:/Users/sx717/Antigravity/nano-banana-pro/src/hooks/useMangaWorkflow.js))
+  - 通信エラーやキーエラー発生時の対処手順ガイドを優しく丁寧な日本語にブラッシュアップ。
+
+---
+
+## 残りのタスク (Remaining Tasks)
+- [ ] Git コミット＆プッシュ（`git push origin master`）
+- [ ] 本番環境へのデプロイ（`npm run deploy`）
+- [ ] タグ打ちおよび GitHub Release 作成
+- [ ] ZIP検証とCドライブ展開バックアップ
+の「自動修正」「Web版へ切り替え」ボタンを `disabled` にし、プロンプト競合や並行リクエストを防ぐガードを追加。
 
 ---
 

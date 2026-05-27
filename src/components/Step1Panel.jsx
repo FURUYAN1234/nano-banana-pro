@@ -53,7 +53,7 @@ export default function Step1Panel({
     >
       <div className="flex items-center justify-between mb-6 z-10">
         <div className={`flex items-center gap-3 text-xs font-black uppercase tracking-widest ${currentStep === 1 ? 'text-blue-400' : 'text-slate-500'} `}>
-          <Camera size={18} /> STEP 01: キャラクター解析 (Character Analysis)
+          <Camera size={18} /> STEP 01: キャラクター解析（設定の読み込み）
         </div>
         {isAnalyzing && <Loader2 size={18} className="animate-spin text-blue-400" />}
         {currentStep > 1 && <CheckCircle2 size={18} className="text-blue-500" />}
@@ -138,11 +138,11 @@ export default function Step1Panel({
               }}
             />
             <p className="text-xs font-bold text-slate-400">
-              キャラクターシートをドロップ <span className="text-blue-400">（まとめて、もしくは都度追加アップロード。360°背景や作風jsonも同時にドロップできます）</span>
+              キャラクター設定画像（キャラシート）をここにドロップしてください。 <span className="text-blue-400">（複数枚を同時に、または後から追加ドロップすることも可能です。360°背景画像や、作風設定のJSONファイルも一緒に読み込めます）</span>
             </p>
             <p className="text-[10px] opacity-60 mt-1">
-              ※名前・性格・設定が明記されているシートを推奨。
-              <br />※Story Makerが出力した「作風json」を投げ込むと、シナリオの作風が変化します。
+              ※名前や性格、特徴が書かれた設定シートを推奨。
+              <br />※Story Makerなどで出力した「作風json」ファイルを投げ込むと、漫画のタッチや作風が変化します。
             </p>
             <div className="mt-3 flex flex-col items-center gap-1 group/preview">
               <span className="text-[9px] uppercase tracking-widest opacity-40 group-hover/preview:text-blue-400 transition-colors">推奨見本 (例)</span>
@@ -174,7 +174,7 @@ export default function Step1Panel({
 
       <div className="flex flex-col gap-2 w-full">
         <span className="px-2 bg-[#0f1115] text-xs font-bold text-slate-400 w-fit rounded">
-          ▼ 生成されるキャラクター解析 (編集可)
+          ▼ 抽出されたキャラクター設定 (自由に編集・追加できます)
         </span>
         <textarea
           value={castList}
@@ -194,7 +194,7 @@ export default function Step1Panel({
             className={`w-full ${isCastListCopied ? 'bg-green-600' : 'bg-slate-800 hover:bg-slate-700'} text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all border border-white/10 disabled:opacity-50 disabled:cursor-not-allowed`}
           >
             {isCastListCopied ? <CheckCircle2 size={20} /> : <Copy size={20} />}
-            {isCastListCopied ? "コピー完了" : "コピペ（キャラクター解析結果をコピー）"}
+            {isCastListCopied ? "コピー完了" : "📋 キャラクター設定をコピー"}
           </button>
         </div>
       </div>

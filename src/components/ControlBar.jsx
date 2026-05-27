@@ -87,7 +87,7 @@ export default function ControlBar({
             } disabled:opacity-50 disabled:cursor-not-allowed`}
           >
             <RefreshCw size={14} className={isEndlessMode ? 'animate-spin' : ''} style={{ animationDuration: '3s' }} />
-            <span className="whitespace-nowrap">{isEndlessMode ? '無限ループ設定 解除' : '無限ループ設定 ON'}</span>
+            <span className="whitespace-nowrap">{isEndlessMode ? '🔁 連続ループ生成を解除' : '🔁 連続ループ生成 ON'}</span>
           </button>
 
           {/* フルオートボタン */}
@@ -103,16 +103,17 @@ export default function ControlBar({
             } ${!apiKey && !isAborting ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             {isFullAutoMode ? (isAborting ? <Loader2 size={14} className="animate-spin" /> : <Square size={14} fill="currentColor" />) : <Zap size={14} />}
-            {isFullAutoMode ? (isAborting ? '停止処理中...' : 'フルオート中断') : '⚡ フルオート ON'}
+            {isFullAutoMode ? (isAborting ? '停止処理中...' : '全自動モード 中断') : '⚡ 全自動モード（フルオート） ON'}
           </button>
           
           <div className="hidden sm:block w-6 shrink-0"></div>
 
           {/* 説明文 */}
-          <div className={`flex flex-col justify-center text-[10.5px] leading-relaxed max-w-[600px] text-center sm:text-left transition-opacity duration-300 ${!apiKey ? 'text-slate-600 opacity-40' : 'text-slate-400'}`}>
-            <span className="whitespace-normal">　【⚡ フルオート ON】にして画像をドロップ、もしくはドロップ後に押す→全自動で生成。完了後は自動OFF。　</span>
-            <span className="whitespace-normal">　生成中は同ボタンで中断（以降はSTEPボタンで進行）。中断後再度押すと新シナリオで再生成を始めます。　</span>
-            <span className="whitespace-normal">　※「無限ループ設定」をONにしてフルオートを開始すると、完了後に自動で次の作品の生成を永遠に繰り返します。　</span>
+          <div className={`flex flex-col justify-center text-[10px] leading-relaxed max-w-[650px] text-center sm:text-left transition-opacity duration-300 ${!apiKey ? 'text-slate-600 opacity-40' : 'text-slate-400'}`}>
+            <span className="whitespace-normal text-slate-300 font-bold">💡 全自動モード（フルオート）の使い方：</span>
+            <span className="whitespace-normal">・「⚡ 全自動モード ON」にして画像をドロップ（またはドロップ後にON）すると、4コマ漫画を全自動で最後まで生成します。</span>
+            <span className="whitespace-normal">・途中で中断したい場合は同じボタンで停止できます。以降は手動（各STEPボタン）で進行可能です。</span>
+            <span className="whitespace-normal">・「連続ループ生成」をONにすると、自動生成完了後に自動で次の作品（別のシナリオ）を永遠に作り続けます。</span>
           </div>
         </div>
       </div>
@@ -207,10 +208,10 @@ The environment and effects must ECHO the character's emotion, not just be a bac
           >
             <div className="flex items-center gap-1.5 shrink-0">
               {isPolicyCopied ? <Check size={16} /> : <Copy size={16} />}
-              <span className="whitespace-nowrap">{isPolicyCopied ? 'コピー完了！' : '🎬 1枚絵 ChatGPT用 感情シネマプロンプトをコピー'}</span>
+              <span className="whitespace-nowrap">{isPolicyCopied ? 'コピー完了！' : '🎬 ChatGPT用 1枚絵エモーショナルプロンプトをコピー'}</span>
             </div>
             <span className="text-[10px] md:text-[11px] font-normal tracking-normal whitespace-normal text-center text-slate-500">
-              【1枚絵用】ChatGPTにキャラ画像を添付→指示を書く→このプロンプトを貼り付けて送信。指示の文脈からエモーショナルな演出を自動で適用します。
+              【1枚絵用】プロンプトをコピーしてChatGPTのチャット欄に貼り付け、元のキャラクター画像と一緒に送信すると、シネマチックで感情豊かなイラストが生成されます。
             </span>
           </button>
         </div>

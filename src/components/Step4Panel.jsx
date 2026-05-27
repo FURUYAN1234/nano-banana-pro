@@ -120,7 +120,7 @@ export default function Step4Panel({
                 readOnly
                 style={{ color: '#ffffff', backgroundColor: '#000000', opacity: 1 }}
                 className="w-full h-full min-h-[300px] text-xs font-mono border-none resize-none focus:outline-none leading-relaxed overflow-y-auto custom-scrollbar rounded-xl p-4 placeholder-slate-500"
-                placeholder="◀ 「最終プロンプトを構築する」ボタンを押すと、ここに生成されたプロンプトが表示されます。"
+                placeholder="◀ 上の「画像用の指示文（プロンプト）を構築する」ボタンを押すと、ここに生成された指示文（プロンプト）が表示されます。"
               />
             </div>
 
@@ -182,21 +182,31 @@ export default function Step4Panel({
                 className={`w-full ${isCopied ? 'bg-green-600' : 'bg-slate-800 hover:bg-slate-700'} text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all border border-white/10`}
               >
                 {isCopied ? <CheckCircle2 size={20} /> : <Copy size={20} />}
-                {isCopied 
-                  ? "コピー完了" 
-                  : selectedEngine === 'openai'
-                    ? (bg360Image && bg360Enabled)
-                      ? "コピペ（手動生成用　📎キャラシート＋🌐360°背景画像を添付）"
-                      : "コピペ（手動生成用　📎キャラシート添付推奨）"
-                    : (bg360Image && bg360Enabled)
-                      ? (enableChatGPTMode
-                        ? "コピペ（ChatGPT専用　📎キャラシート＋🌐360°背景画像を添付　生成毎新規スレッド作成必須）"
-                        : "コピペ（他アプリ用　📎キャラシート＋🌐360°背景画像を添付　ChatGPTには必ず専用モードを使用）")
-                      : (enableChatGPTMode 
-                        ? "コピペ（ChatGPT専用　📎キャラシート添付及び生成毎新規スレッド作成必須）"
-                        : "コピペ（他アプリ用　📎キャラシート添付を強く推奨　ChatGPTには必ずChatGPT専用モードを使用して下さい）")
-                }
+                {isCopied ? "コピー完了！" : "📋 プロンプトをコピーする"}
               </button>
+
+              {/* コピーボタン下の親切な補足ガイド */}
+              {finalPrompt && (
+                <div className="text-[11px] text-slate-400 mt-1 leading-relaxed bg-slate-900/60 p-2.5 rounded-lg border border-white/5">
+                  {selectedEngine === 'openai' ? (
+                    (bg360Image && bg360Enabled) ? (
+                      <span>💡 <strong>【手動生成用】</strong> コピーしたプロンプトを <strong>ChatGPT公式Web版</strong> に貼り付け、<strong>キャラクターシート画像</strong> と <strong>360°背景画像</strong> を一緒に添付して送信してください。</span>
+                    ) : (
+                      <span>💡 <strong>【手動生成用】</strong> コピーしたプロンプトを <strong>ChatGPT公式Web版</strong> に貼り付け、<strong>キャラクターシート画像</strong> を一緒に添付して送信してください。</span>
+                    )
+                  ) : (
+                    enableChatGPTMode ? (
+                      <span>💡 <strong>【手動生成用（ChatGPT専用）】</strong> コピーしたプロンプトを <strong>ChatGPT公式Web版</strong> に貼り付け、<strong>キャラクターシート画像</strong>（および360°背景画像）を一緒に添付して送信してください。（※毎回新しいチャットで生成することを推奨）</span>
+                    ) : (
+                      (bg360Image && bg360Enabled) ? (
+                        <span>💡 <strong>【手動生成用】</strong> コピーしたプロンプトを外部の <strong>Gemini公式Web版</strong> などに貼り付け、<strong>キャラクターシート画像</strong> と <strong>360°背景画像</strong> を一緒に添付して送信してください。</span>
+                      ) : (
+                        <span>💡 <strong>【手動生成用】</strong> コピーしたプロンプトを外部の <strong>Gemini公式Web版</strong> などに貼り付け、<strong>キャラクターシート画像</strong> を一緒に添付して送信してください。</span>
+                      )
+                    )
+                  )}
+                </div>
+              )}
 
               {/* メタデータ保存ボタン */}
               <button
@@ -262,8 +272,7 @@ export default function Step4Panel({
                 disabled={!finalPrompt}
                 className={`w-full ${isMetaSaved ? 'bg-green-600' : 'bg-amber-900/50 hover:bg-amber-800/60'} ${isMetaSaved ? 'text-white' : 'text-amber-400'} font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-all border ${isMetaSaved ? 'border-green-500/50' : 'border-amber-700/30'} disabled:opacity-30 disabled:cursor-not-allowed text-sm`}
               >
-                {isMetaSaved ? <CheckCircle2 size={16} /> : <Download size={16} />}
-                {isMetaSaved ? '保存完了！' : '📂 メタデータ保存 (JSON)'}
+                {isMetaSaved ? '保存完了！' : '📂 設定ファイルを保存 (JSON)'}
               </button>
             </div>
 
@@ -284,12 +293,12 @@ export default function Step4Panel({
               >
                 {isGeneratingImage ? <Loader2 size={20} className="animate-spin" /> : <ImageIcon size={20} />}
                 <div className="flex flex-col items-center">
-                  <span>{isGeneratingImage ? "再生成中..." : `画像を生成する (STEP 4: ${selectedEngine === 'openai' ? 'ChatGPT Images 2.0' : 'Google AI'})`}</span>
+                  <span>{isGeneratingImage ? "画像を生成中..." : `画像を生成する (STEP 4: ${selectedEngine === 'openai' ? 'ChatGPT Images 2.0' : 'Google AI'})`}</span>
                 </div>
               </button>
               <p className="text-[10px] text-slate-500 text-center mt-2 leading-relaxed px-2">
-                ⚠️ API経由ではキャラクターシートや360°背景画像を添付できないため、<span className="text-amber-400/80">テキストプロンプトのみによる近似生成</span>となります。
-                正確なキャラ再現が必要な場合は、下の <span className="text-orange-300">PRO TIP</span> を参照してブラウザ版で手動生成してください。
+                ⚠️ このアプリ経由の自動生成では、キャラクター設定や背景の画像を直接添付できないため、<span className="text-amber-400/80">文章（テキスト）のみを元にした「おまかせ生成」</span>になります。
+                キャラクターの見た目や背景を正確に再現したい場合は、下の <span className="text-orange-300">💡 コツ（プロのやり方）</span> を参考に、ブラウザ版での手動生成をお試しください。
               </p>
 
               {/* PRO TIPS FOR EXTERNAL GENERATION */}
@@ -299,19 +308,19 @@ export default function Step4Panel({
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
                   </div>
                   <div className="text-xs text-orange-200/80 leading-relaxed font-sans">
-                    <span className="font-bold text-orange-300">💡 PRO TIP：究極の1枚を作りたい時は？</span><br />
+                    <span className="font-bold text-orange-300">💡 コツ（プロのやり方）：完璧な4コマ漫画を作りたい時は？</span><br />
                     {selectedEngine === 'openai' ? (
                       <>
-                        キャラの見た目が全然違うなど不満がある場合は、上の「コピペ」ボタンでプロンプトをコピーし、<a href="https://chatgpt.com/" target="_blank" rel="noreferrer" className="text-blue-400 hover:underline">ChatGPTブラウザ版🤖</a>に<strong>「元となるキャラシート画像{bg360Image && bg360Enabled ? '＋STEP1で貼り付けた360°背景画像' : ''}」</strong>と一緒に直接貼り付けて生成させてください。<br />
-                        文字情報だけでなく画像を参照できるため、キャラのクオリティと再現度が飛躍的に向上します！<br />
+                        キャラクターの見た目が崩れたり、背景がイメージと異なる場合は、上の「コピー」ボタンでプロンプトをコピーし、公式の <a href="https://chatgpt.com/" target="_blank" rel="noreferrer" className="text-blue-400 hover:underline">ChatGPTウェブ版 🤖</a> に<strong>「元のキャラクター設定画像（および360°背景画像）」</strong>と一緒に直接貼り付けて送信してください。<br />
+                        画像そのものを参照して生成するため、キャラクターのクオリティや再現度が劇的に向上します！<br />
                         <span className="inline-block mt-2 text-[11px] text-cyan-300/80">
-                          ⚠️ <strong>GPT-image 2.0の仕様上、どうしても細長い画像になってしまう場合</strong>は、ChatGPTのメニュー画面にある「アスペクト比」ボタンで手動修正は行わず、以下の「画像比率事後修正プロンプト」ボタンでコピーしたプロンプトを貼り付けて再生成してください。
+                          ⚠️ <strong>ChatGPTの仕様上、縦に細長すぎる画像になってしまう場合</strong>は、ChatGPT側の「アスペクト比」ボタンで手動修正するのではなく、以下の「画像比率修正プロンプト」をコピーしてChatGPTに貼り付けてみてください。綺麗な4コマの形に修正されます。
                         </span>
                       </>
                     ) : (
                       <>
-                        キャラの見た目が全然違うなど不満がある場合は、上の「コピペ」ボタンでプロンプトをコピーし、<a href="https://gemini.google.com/" target="_blank" rel="noreferrer" className="text-blue-400 hover:underline">Geminiブラウザ版🤖</a> に<strong>「元となるキャラシート画像{bg360Image && bg360Enabled ? '＋STEP1で貼り付けた360°背景画像' : ''}」</strong>と一緒に直接貼り付けて生成させてください。<br />
-                        文字情報だけでなく画像を参照できるため、キャラのクオリティと再現度が飛躍的に向上します！
+                        キャラクターの見た目が崩れたり、背景がイメージと異なる場合は、上の「コピー」ボタンでプロンプトをコピーし、公式の <a href="https://gemini.google.com/" target="_blank" rel="noreferrer" className="text-blue-400 hover:underline">Geminiウェブ版 🤖</a> に<strong>「元のキャラクター設定画像（および360°背景画像）」</strong>と一緒に直接貼り付けて送信してください。<br />
+                        画像そのものを参照して生成するため、キャラクターのクオリティや再現度が劇的に向上します！
                       </>
                     )}
 
@@ -408,7 +417,7 @@ No explanations. No partial results.`;
                             setTimeout(() => setIsFixPromptCopied(false), 2000);
                           }}
                         >
-                          <span style={{ visibility: isFixPromptCopied ? 'hidden' : 'visible' }}>📋 画像比率事後修正プロンプト</span>
+                          📋 画像比率修正プロンプトをコピー
                           {isFixPromptCopied && <span style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>✅ コピー完了</span>}
                         </button>
                       </div>
@@ -422,10 +431,10 @@ No explanations. No partial results.`;
                 <div className="mt-4 bg-gradient-to-r from-red-950/50 to-orange-950/50 border border-red-500/40 rounded-xl p-5 space-y-3 shadow-lg shadow-red-900/20">
                   <div className="flex items-center gap-2 text-red-300 font-bold" style={{ fontSize: '14px' }}>
                     <AlertTriangle size={20} className="text-red-400 animate-pulse" />
-                    <span>コンテンツポリシー違反が検出されました</span>
+                    <span>⚠️ 画像生成が制限されました（ポリシー制限）</span>
                   </div>
                   <p className="text-yellow-200/80 leading-relaxed" style={{ fontSize: '12px' }}>
-                    プロンプトがAIの安全基準に抵触したため画像生成が拒否されました。以下の方法で対応できます：
+                    表現の一部がAIの安全基準（ポリシー）に触れたため、画像の生成がスキップされました。以下の方法で解決できます：
                   </p>
                   <div className="flex flex-col sm:flex-row gap-2">
                     <button
@@ -450,7 +459,7 @@ No explanations. No partial results.`;
                     </button>
                   </div>
                   <p className="text-slate-400" style={{ fontSize: '10px' }}>
-                    💡 自動修正はAIが安全な表現に書き換えて再生成します。Web版はプロンプトをコピーして直接お試しいただけます。
+                    💡 「自動修正して再生成する」を選ぶと、AIが安全な表現に言葉を書き換えて再度作り直します。
                   </p>
                 </div>
               )}
@@ -464,7 +473,7 @@ No explanations. No partial results.`;
                 >
                   <div className="flex items-center gap-2">
                     <span className="text-base">🛡️</span>
-                    <span className="text-base font-black tracking-wide text-yellow-200 group-hover/policy-hdr:text-yellow-100 transition-colors">コンテンツポリシーで画像生成が拒否された場合</span>
+                    <span className="text-base font-black tracking-wide text-yellow-200 group-hover/policy-hdr:text-yellow-100 transition-colors">安全基準（ポリシー）に引っかかって画像が出ない場合</span>
                     {!finalPrompt && <span className="text-[10px] text-slate-500">(STEP3完了後に利用可能)</span>}
                   </div>
                   <div className="flex items-center gap-2">
@@ -479,10 +488,10 @@ No explanations. No partial results.`;
                   <div className="p-3 bg-yellow-950/20 space-y-3" style={{ fontSize: '12px' }}>
                     <div className="text-yellow-200/80 leading-relaxed space-y-2" style={{ fontSize: '11px' }}>
                       <p>
-                        下の<strong className="text-yellow-100">『「先ほどのプロンプトが拒否された理由を教えてください」をコピー』</strong>ボタンをクリックし、AIにそのままペーストすると、具体的な原因を教えてもらえます。
+                        下の <strong className="text-yellow-100">「質問メッセージをコピー」</strong> ボタンを押し、ChatGPTやGeminiのチャット欄に貼り付けて送信すると、具体的な制限の原因を教えてもらえます。
                       </p>
                       <p>
-                        その回答を下の入力ボックスに貼り付けると、<strong className="text-yellow-100">「配慮版プロンプトを再生成する」</strong>ボタンが押せるようになります。修正後、再度STEP4で画像を生成してみてください。
+                        AIから返ってきた回答を下の入力欄に貼り付けると、 <strong className="text-yellow-100">「表現を調整したプロンプトを再生成する」</strong> ボタンが押せるようになります。
                       </p>
                     </div>
 
@@ -495,7 +504,7 @@ No explanations. No partial results.`;
                         setTimeout(() => setIsPolicyCopied(false), 2000);
                       }}
                     >
-                      <span style={{ visibility: isPolicyCopied ? 'hidden' : 'visible' }}>📋 「先ほどのプロンプトが拒否された理由を教えてください」をコピー</span>
+                      <span style={{ visibility: isPolicyCopied ? 'hidden' : 'visible' }}>📋 制限の理由を尋ねる質問をコピー</span>
                       {isPolicyCopied && <span style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>✅ コピー完了</span>}
                     </button>
 
@@ -518,7 +527,7 @@ No explanations. No partial results.`;
                       {isFixingPolicy ? (
                         <><Loader2 size={16} className="animate-spin" /> 分析・修正中...</>
                       ) : (
-                        <><Wand2 size={16} /> 配慮版プロンプトを再生成する</>
+                        <><Wand2 size={16} /> 表現をマイルドに修正して再生成する</>
                       )}
                     </button>
 
@@ -614,17 +623,17 @@ No explanations. No partial results.`;
                   <div className="flex items-start gap-3">
                     <AlertTriangle className="text-orange-500 shrink-0 mt-0.5" size={20} />
                     <div className="text-sm">
-                      <h4 className="text-orange-400 font-bold mb-1">【警告】下位モデル（妥協版）で生成されました</h4>
+                      <h4 className="text-orange-400 font-bold mb-1">【ご案内】混雑のため一時的に簡易モデルで生成されました</h4>
                       <p className="text-orange-200/80 leading-relaxed mb-3">
-                        最新モデルへの接続が混雑等で失敗したため、旧モデルで生成されました。<br/>
-                        <span className="text-white font-bold">テキストの文字化けや、キャラクターの描写崩れ</span> が高確率で発生します。
+                        最新モデルへの接続が大変混み合っているため、一時的に自動バックアップ用のモデルで画像を生成しました。<br/>
+                        このため、<span className="text-white font-bold">セリフの文字化けや、キャラクターの見た目のズレ</span> が発生しやすくなっています。
                       </p>
                       <div className="bg-black/40 rounded p-3 text-left">
-                        <p className="text-orange-300 font-bold mb-2">完璧な画質で生成するための手動手順：</p>
+                        <p className="text-orange-300 font-bold mb-2">完璧な画質・正確なキャラクターで生成する手順：</p>
                         <ol className="list-decimal list-inside text-slate-300 space-y-1 text-xs">
-                          <li>画面左側の「<span className="text-white font-bold">プロンプトをコピー</span>」ボタンを押す</li>
-                          <li><a href={enableOpenAIApi ? "https://chatgpt.com/" : "https://gemini.google.com/app"} target="_blank" rel="noreferrer" className="text-blue-400 hover:underline">{enableOpenAIApi ? 'ChatGPT公式ウェブ版' : 'Gemini公式ウェブ版'}</a>を開く</li>
-                          <li>コピーした文章を貼り付けて送信する</li>
+                          <li>画面左側の「<span className="text-white font-bold">プロンプトをコピーする</span>」ボタンを押します。</li>
+                          <li><a href={enableOpenAIApi ? "https://chatgpt.com/" : "https://gemini.google.com/app"} target="_blank" rel="noreferrer" className="text-blue-400 hover:underline">{enableOpenAIApi ? 'ChatGPTウェブ版' : 'Geminiウェブ版'}</a> を開きます。</li>
+                          <li>コピーした文章を貼り付け、元のキャラクターシート画像を一緒に添付して送信してください。</li>
                         </ol>
                       </div>
                     </div>

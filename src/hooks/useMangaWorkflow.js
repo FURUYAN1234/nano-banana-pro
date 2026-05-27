@@ -1164,13 +1164,12 @@ export default function useMangaWorkflow() {
       if (errMsg.includes("Unknown parameter") || errMsg.includes("Invalid parameter")) {
         // [v3.56] APIリクエストのパラメータ不正（コンテンツポリシーとは無関係）
         guideLines = [
-          `[ERROR GUIDE] ⚙️ APIリクエストのパラメータが不正です（${enableOpenAIApi ? 'OpenAI' : 'Google'}側の仕様変更の可能性）。`,
-          "[ERROR GUIDE] 【原因】APIの仕様が更新され、送信パラメータが無効になっている可能性があります。",
-          "[ERROR GUIDE] 【対処法】開発者にこのエラーメッセージを報告してください。または以下の手動手段をご利用ください。",
-          "[ERROR GUIDE] 1. 「プロンプトをコピー」ボタンを押す",
-          `[ERROR GUIDE] 2. ${enableOpenAIApi ? 'ChatGPT' : 'Gemini'} (Web版) を開く: ${enableOpenAIApi ? 'https://chatgpt.com/' : 'https://gemini.google.com/app'}`,
-          `[ERROR GUIDE] 3. 「元となるキャラクターシート画像」を一緒に添付する（※キャラ再現に必須）`,
-          `[ERROR GUIDE] 4. 貼り付けて送信する`
+          `[ERROR GUIDE] ⚙️ APIパラメータの形式が不正です（${enableOpenAIApi ? 'OpenAI' : 'Google'}側の仕様変更の可能性）。`,
+          "[ERROR GUIDE] 【原因】AIモデルの仕様更新により、送信パラメータが合わなくなっている可能性があります。",
+          "[ERROR GUIDE] 【対処法】お手数ですが以下の手動手順で画像を生成してください。",
+          "[ERROR GUIDE] 1. 画面左下の「プロンプトをコピーする」ボタンを押します。",
+          `[ERROR GUIDE] 2. ${enableOpenAIApi ? 'ChatGPTウェブ版' : 'Geminiウェブ版'} を開きます: ${enableOpenAIApi ? 'https://chatgpt.com/' : 'https://gemini.google.com/app'}`,
+          `[ERROR GUIDE] 3. コピーしたプロンプトを貼り付け、元の「キャラクター設定画像」を一緒に添付して送信してください。`
         ];
       } else if (errMsg.includes("sensitive") || errMsg.includes("Responsible AI") || errMsg.includes("content_policy_violation") || (errMsg.includes("400") && (errMsg.includes("safety") || errMsg.includes("policy") || errMsg.includes("violation") || errMsg.includes("sensitive")))) {
         // [v4.2.0] コンテンツポリシーエラー → メッセージボックス表示（パネルは開かない）
@@ -1178,9 +1177,9 @@ export default function useMangaWorkflow() {
         lastPolicyErrorRef.current = errMsg; // ref経由で即時参照可能にする
         setShowPolicyChoice(true); // メッセージボックスを表示
         guideLines = [
-          "[ERROR GUIDE] 🚨 プロンプトがAIの安全基準（NSFW等の検閲）に引っかかり、生成が拒否されました。",
-          "[ERROR GUIDE] 【選択肢1】🔄「自動修正して再生成」→ AIが安全な表現に修正し自動リトライします。",
-          "[ERROR GUIDE] 【選択肢2】📋「Web版に切り替え」→ プロンプトをコピーしてWeb版で直接お試しください。"
+          "[ERROR GUIDE] 🚨 表現の一部がAIの安全基準（ポリシー）に触れたため、生成がスキップされました。",
+          "[ERROR GUIDE] 【自動修正】「自動修正して再生成する」を押すと、安全な言葉に書き換えて自動で作り直します。",
+          "[ERROR GUIDE] 【手動生成】プロンプトをコピーし、公式のウェブ版チャット等に貼り付けて直接お試しください。"
         ];
       } else if (errMsg.includes("not found") || errMsg.includes("not supported") || errMsg.includes("404") || errMsg.includes("403") || errMsg.includes("401")) {
         // フルオートおよびエンドレスモードを停止
@@ -1188,21 +1187,19 @@ export default function useMangaWorkflow() {
           fullAutoAbortRef.current = true;
         }
         guideLines = [
-          `[ERROR GUIDE] 🔑 現在のAPIキーでは、開発アプリ経由での画像生成が許可されていないか、無効です（${enableOpenAIApi ? 'OpenAI側' : 'Google側'}の仕様・権限）。`,
-          `[ERROR GUIDE] 【対処法】このアプリ上での自動生成は一旦諦め、以下の「手動生成手段（${enableOpenAIApi ? 'ChatGPT' : 'Gemini'} Web版）」をご利用ください。`,
-          "[ERROR GUIDE] 1. 「プロンプトをコピー」ボタンを押す",
-          `[ERROR GUIDE] 2. ${enableOpenAIApi ? 'ChatGPT' : 'Gemini'} (Web版) を開く: ${enableOpenAIApi ? 'https://chatgpt.com/' : 'https://gemini.google.com/app'}`,
-          `[ERROR GUIDE] 3. 「元となるキャラクターシート画像」を一緒に添付する（※キャラ再現に必須）`,
-          `[ERROR GUIDE] 4. 貼り付けて送信する`
+          `[ERROR GUIDE] 🔑 現在のAPIキーでは、本アプリ経由での画像生成が許可されていないか、無効になっています（${enableOpenAIApi ? 'OpenAI' : 'Google'}の権限設定）。`,
+          `[ERROR GUIDE] 【対処法】本アプリでの自動生成は一旦諦め、以下の手順で公式ウェブ版から手動で生成してください。`,
+          "[ERROR GUIDE] 1. 画面左下の「プロンプトをコピーする」ボタンを押します。",
+          `[ERROR GUIDE] 2. ${enableOpenAIApi ? 'ChatGPTウェブ版' : 'Geminiウェブ版'} を開きます: ${enableOpenAIApi ? 'https://chatgpt.com/' : 'https://gemini.google.com/app'}`,
+          `[ERROR GUIDE] 3. コピーしたプロンプトを貼り付け、元の「キャラクター設定画像」を一緒に添付して送信してください。`
         ];
       } else {
         guideLines = [
-          `[ERROR GUIDE] ⏲️ タイムアウト、または予期せぬ通信エラーで生成に失敗しました（${enableOpenAIApi ? 'OpenAI側' : 'Google側'}の混雑など）。`,
-          "[ERROR GUIDE] 【対処法】しばらく時間（数分〜）を置いてから「画像を再生成」を試すか、以下の手動手順をご利用ください。",
-          "[ERROR GUIDE] 1. 「プロンプトをコピー」ボタンを押す",
-          `[ERROR GUIDE] 2. ${enableOpenAIApi ? 'ChatGPT' : 'Gemini'} (Web版) を開く: ${enableOpenAIApi ? 'https://chatgpt.com/' : 'https://gemini.google.com/app'}`,
-          `[ERROR GUIDE] 3. 「元となるキャラクターシート画像」を一緒に添付する（※キャラ再現に必須）`,
-          `[ERROR GUIDE] 4. 貼り付けて送信する`
+          `[ERROR GUIDE] ⏲️ 接続タイムアウト、または一時的な通信エラーで生成に失敗しました（${enableOpenAIApi ? 'OpenAI' : 'Google'}サーバーの混雑など）。`,
+          "[ERROR GUIDE] 【対処法】数分時間を置いてから「画像を生成する」を再度試すか、以下の手順で公式ウェブ版から生成してください。",
+          "[ERROR GUIDE] 1. 画面左下の「プロンプトをコピーする」ボタンを押します。",
+          `[ERROR GUIDE] 2. ${enableOpenAIApi ? 'ChatGPTウェブ版' : 'Geminiウェブ版'} を開きます: ${enableOpenAIApi ? 'https://chatgpt.com/' : 'https://gemini.google.com/app'}`,
+          `[ERROR GUIDE] 3. コピーしたプロンプトを貼り付け、元の「キャラクター設定画像」を一緒に添付して送信してください。`
         ];
       }
 

@@ -40,16 +40,16 @@ export default function SystemHeader({
                   <button
                     onClick={partialReset}
                     className="flex items-center gap-1.5 bg-white/5 hover:bg-white/10 text-slate-300 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors border border-white/10"
-                    title="キャラクター解析を保持したまま、シナリオ・プロンプト・画像をリセットします"
+                    title="キャラクター設定は残したまま、シナリオ・指示文・画像をリセットして新しく作り直します"
                   >
-                    <RefreshCw size={12} /> シナリオから再生成
+                    <RefreshCw size={12} /> シナリオから作り直す
                   </button>
                   <button
                     onClick={hardReset}
                     className="flex items-center gap-1.5 bg-red-950/50 hover:bg-red-900/60 text-red-300 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors border border-red-500/20"
-                    title="全データを消去してAPIキーの再入力画面に戻ります（エンジン切替もこちら）"
+                    title="すべてのデータを削除し、最初のAPIキー入力画面に戻ります（AIエンジンの切り替えもここで行えます）"
                   >
-                    <LogOut size={12} /> エンジン変更・全リセット
+                    <LogOut size={12} /> 最初からやり直す（設定クリア）
                   </button>
                 </div>
               )}
@@ -70,8 +70,8 @@ export default function SystemHeader({
                     {info.tier === "Lite" && (
                       <div className="mt-2 text-yellow-500 bg-yellow-500/10 p-2 rounded relative">
                         <AlertTriangle size={10} className="absolute top-2 right-2" />
-                        <span className="font-bold block mb-1">⚠️ 品質制限モード</span>
-                        API制限(429)回避のため、軽量モデルを使用中。生成品質が低下する場合があります。上限解除までお待ちください。
+                        <span className="font-bold block mb-1">⚠️ 一時的な接続制限モード</span>
+                        APIアクセス制限を回避するため、自動的に軽量モデル（低消費）に切り替えています。画像やシナリオの品質が一時的に低下する場合がありますが、しばらくお待ちいただくと自動的に元の最高品質に戻ります。
                       </div>
                     )}
                   </div>

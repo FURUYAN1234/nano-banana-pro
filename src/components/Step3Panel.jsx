@@ -41,7 +41,7 @@ export default function Step3Panel({
         </div>
       )}
       <div className={`flex items-center gap-3 text-sm font-black uppercase tracking-widest px-2 ${currentStep === 3 ? 'text-orange-400' : 'text-slate-500'}`}>
-        <Wand2 size={24} /> STEP 03: プロンプト生成 (PROMPT ASSEMBLY)
+        <Wand2 size={24} /> STEP 03: プロンプト生成（画像指示文の構築）
       </div>
 
       <button
@@ -54,12 +54,12 @@ export default function Step3Panel({
         {isAssembling ? (
           <>
             <Loader2 size={24} className="animate-spin" />
-            <span className="animate-pulse">ASSEMBLING PROMPT...</span>
+            <span className="animate-pulse">指示文（プロンプト）を構築中...</span>
           </>
         ) : (
           <>
             <Wand2 size={24} className={`text-blue-600 ${currentStep === 3 ? 'animate-bounce' : ''} `} />
-            <span>最終プロンプトを構築する (STEP 3)</span>
+            <span>画像用の指示文（プロンプト）を構築する (STEP 3)</span>
             <ArrowRight size={24} className="opacity-60" />
           </>
         )}

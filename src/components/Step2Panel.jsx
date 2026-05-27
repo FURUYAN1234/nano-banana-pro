@@ -82,7 +82,7 @@ export default function Step2Panel({
       )}
       <div className="flex items-center justify-between">
         <div className={`flex items-center gap-3 text-xs font-black uppercase tracking-widest ${currentStep === 2 ? 'text-purple-400' : 'text-slate-500'} `}>
-          <FileText size={18} /> STEP 02: シナリオ構築設定 (Scenario Settings)
+          <FileText size={18} /> STEP 02: シナリオ構築設定（ストーリー設定）
         </div>
       </div>
 
@@ -171,12 +171,12 @@ export default function Step2Panel({
         ) : (
           <div className="space-y-2">
             <div className="text-xs font-bold text-purple-300 text-center">
-              ▼ 自由入力モード: 好きなネタやURLを入力してください (<span className="text-blue-400">URLからの自動読み取り対応</span>)
+              ▼ 自由入力：描きたいテーマや、ニュースのURLを自由に入力してください (<span className="text-blue-400">URLからの自動読み込みに対応</span>)
             </div>
             <textarea
               value={manualTopic}
               onChange={(e) => setManualTopic(e.target.value)}
-              placeholder="例：&#13;&#10;・最近のAI技術の進化について&#13;&#10;・近所の猫が可愛かった話&#13;&#10;・https://example.com/news/12345&#13;&#10;&#13;&#10;※URLを入力すると、AIがリンク先の内容を参照して漫画化します。&#13;&#10;記事の内容を直接コピペするか、具体的なトピックを文章で入力してください。"
+              placeholder="例：&#13;&#10;・最近のAI技術の進化について&#13;&#10;・近所の猫が可愛かった話&#13;&#10;・https://example.com/news/12345&#13;&#10;&#13;&#10;※WebサイトのURLを入力すると、AIがそのページの内容を読み込んで漫画化します。&#13;&#10;ニュース記事を直接コピー＆ペーストするか、作りたいお話のイメージを文章で入力してください。"
               style={{ color: '#ffffff', backgroundColor: '#0f1115' }}
               rows={10}
               className="w-full bg-[#0f1115] border-2 border-purple-900/50 rounded-xl p-6 text-base text-white focus:border-purple-500 focus:shadow-md outline-none placeholder-slate-500 font-medium leading-relaxed resize-none"
@@ -189,8 +189,8 @@ export default function Step2Panel({
             <label className="text-xs font-bold mb-2 block flex items-center gap-1" style={{ color: (bg360Image && bg360Enabled) ? '#67e8f9' : '#ffffff' }}>
               <Globe size={14} />
               {bg360Image
-                ? (bg360Enabled ? '🌐 360°背景 (ON)' : '指定場所 (Location Override)')
-                : '指定場所 (Location Override)'
+                ? (bg360Enabled ? '🌐 360°背景 (ON)' : '指定場所（背景の指定）')
+                : '指定場所（背景の指定）'
               }
               <span className="text-[10px] font-normal ml-auto flex items-center gap-2">
                 {is360Analyzing && (
@@ -239,14 +239,14 @@ export default function Step2Panel({
                 onChange={(e) => setCustomLocation(e.target.value)}
                 style={{ color: '#ffffff', backgroundColor: '#111111' }}
                 className="w-full p-2 rounded border border-gray-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-sm font-mono placeholder-gray-600"
-                placeholder="例: サイバーパンクな裏路地、炎上する宇宙船..."
+                placeholder="例: サイバーパンクな裏路地、炎上する宇宙船... (空欄ならAIにおまかせ)"
               />
             )}
           </div>
 
           <div className="flex-1 bg-[#050505] p-3 rounded-xl border border-purple-500/20">
             <label className="text-xs font-bold text-purple-400 mb-1 block flex items-center gap-1">
-              <Sparkles size={14} /> 指定服装 (Outfit Override) <span className="text-[10px] text-gray-500 font-normal ml-auto">※空欄ならAIおまかせ</span>
+              <Sparkles size={14} /> 指定服装（コスチューム指定） <span className="text-[10px] text-gray-500 font-normal ml-auto">※空欄ならAIおまかせ</span>
             </label>
             <input
               type="text"
@@ -254,12 +254,12 @@ export default function Step2Panel({
               onChange={(e) => setCustomOutfit(e.target.value)}
               style={{ color: '#ffffff', backgroundColor: '#111111' }}
               className="w-full bg-[#111] text-white p-2 rounded border border-gray-700 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 outline-none text-sm placeholder-gray-600 font-mono"
-              placeholder="例: キャラシート準拠 / 全員水着 / ミリタリー装備..."
+              placeholder="例: キャラシート通り / 全員水着 / ミリタリー装備... (空欄ならAIにおまかせ)"
             />
           </div>
           <div className="flex-1 bg-[#050505] p-3 rounded-xl border border-yellow-500/20">
             <label className="text-xs font-bold text-yellow-400 mb-1 block flex items-center gap-1">
-              <span>🎬</span> オチ・ディレクター <span className="text-[10px] text-gray-500 font-normal ml-auto">※オチの方向性指定</span>
+              <span>🎬</span> ストーリーの結末（オチの方向性） <span className="text-[10px] text-gray-500 font-normal ml-auto">※ストーリー展開の指定</span>
             </label>
             <select
               value={punchlineType}
@@ -317,7 +317,7 @@ export default function Step2Panel({
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-3">
             <span className="px-2 bg-[#0f1115] text-xs font-bold text-slate-400 w-fit rounded">
-              ▼ 生成されるシナリオ (編集可 / 外部シナリオ貼付OK)
+              ▼ 生成されたシナリオ (自由に編集・書き換えができます)
             </span>
             {styleJson && scenario && scenario.length > 20 && (
               <span className="px-2 py-0.5 rounded bg-purple-900/50 text-purple-300 text-[10px] font-bold border border-purple-500/30 flex items-center gap-1 shadow-sm">
@@ -330,7 +330,7 @@ export default function Step2Panel({
             onChange={(e) => setScenario(e.target.value)}
             style={{ color: '#ffffff', backgroundColor: '#000000', opacity: 1 }}
             className="w-full min-h-[200px] p-6 rounded-2xl text-base border-2 border-slate-700/50 focus:border-blue-500 focus:shadow-md outline-none leading-relaxed resize-y font-medium placeholder-slate-700 font-mono"
-            placeholder="ここに生成されたシナリオが表示されます。💡 Story Maker等で作成した4コマ用シナリオがある場合は、STEP1のキャラクターシート解析後ここに直接貼り付けてSTEP3に進めます（STEP2の「シナリオ作成を実行」はスキップ可）。貼り付け可能なシナリオの仕様は Topic: / Location: / Outfit: / Punchline: / Scenario: の形式に準拠してください。"
+            placeholder="ここに生成されたシナリオが表示されます。💡 他のアプリ（Story Maker等）で作成したシナリオをここに直接貼り付けて進めることもできます。（貼り付ける際は Topic: / Location: / Outfit: / Punchline: / Scenario: などの形式に合わせてください）"
           />
           <div className="mt-2 relative z-50">
             <button
@@ -343,7 +343,7 @@ export default function Step2Panel({
               className={`w-full ${isScenarioCopied ? 'bg-green-600' : 'bg-slate-800 hover:bg-slate-700'} text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all border border-white/10 disabled:opacity-50 disabled:cursor-not-allowed`}
             >
               {isScenarioCopied ? <CheckCircle2 size={20} /> : <Copy size={20} />}
-              {isScenarioCopied ? "コピー完了" : "コピペ（生成されたシナリオをコピー）"}
+              {isScenarioCopied ? "コピー完了" : "📋 シナリオをコピー"}
             </button>
           </div>
         </div>
@@ -375,9 +375,9 @@ export default function Step2Panel({
           {isEnhancePanelOpen && scenario && scenario.length > 20 && (
             <div className="p-4 bg-orange-950/10 space-y-3">
               <p className="text-[11px] text-orange-200/70 leading-relaxed">
-                生成済みシナリオの演出を強化します。強化したいカテゴリをONにして「強化実行」を押してください。<br/>
-                <span className="text-orange-300 font-bold">💡 複数回実行すると効果が重複し、より強力（カオス）な演出になります。</span><br/>
-                ⚠️ 演出が過激になるとSTEP4でコンテンツポリシーに引っかかる場合があります（既存の救済機能で対応可能）。
+                生成されたシナリオの演出（カメラワークや表情など）をさらに大げさ・詳細に強化します。強化したい項目をONにして「シナリオ強化実行」を押してください。<br/>
+                <span className="text-orange-300 font-bold">💡 何度も実行すると効果が重なり、よりパワフル（カオス）な展開になります。</span><br/>
+                ⚠️ 演出を過激にしすぎると、画像生成時に安全基準（ポリシー制限）にかかる場合があります。その際は画像生成画面の救済機能をお使いください。
               </p>
 
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
