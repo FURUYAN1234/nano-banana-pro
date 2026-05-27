@@ -1156,6 +1156,9 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v4.3.1
+- chore: Sync Gemini & OpenAI API models to latest stable version.
+
 ### v4.3.0
 - chore: Sync Gemini API models to latest stable version.
 
