@@ -1156,6 +1156,9 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v4.3.5 (2026-05-27)
+- **[Fix & UX]** Geminiモデル構成の最新化 / Updated Gemini model lists
+
 ### v4.3.4 (2026-05-27)
 - **[Fix & UX]** OpenAIのModels APIによる動的モデル検知機能を導入 / Introduced OpenAI dynamic model detection using Models API
 
