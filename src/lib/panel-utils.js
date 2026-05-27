@@ -243,7 +243,13 @@ export const extractDialogueOnly = (fullPanelText, castList) => {
       const trimmedLine = line.trim();
       const isFullQuoteLine = /^「[^」]+」[？！。、!?\s]*$/.test(trimmedLine);
       if (isFullQuoteLine) {
-        isDialogue = true;
+        // [v4.2.0] ト書き（動作指示）や極端に短い名詞の誤検出防止
+        const quoteContent = trimmedLine.match(/^「([^」]+)」/)?.[1] || '';
+        const isStageDirection = /(?:ポーズ|表情|リアクション|アクション|身振り|手振り|仕草|動作|姿勢|佇まい|構え|目線|視線|沈黙|間|無言|独白|ジェスチャー|モーション|立ち姿|座り|しぐさ|ため息|溜息|息|うなずき|頷き|首振り|指差し|腕組み|ガッツポーズ|ドヤ顔|苦笑い|苦笑|微笑|爆笑|号泣|絶叫|フリーズ|硬直|脱力|崩れ落ち|土下座|敬礼|拍手|握手|ハイタッチ|決めポーズ|威圧|威嚇|震え|よろめき|のけぞり|ずっこけ|ツッコミ|突っ込み)/.test(quoteContent);
+        const isTooShortForDialogue = quoteContent.length <= 4 && !/[がをにでへはもとからよねわ！？!?…。、]/.test(quoteContent);
+        if (!isStageDirection && !isTooShortForDialogue) {
+          isDialogue = true;
+        }
       }
     }
 
@@ -385,7 +391,13 @@ export const extractActionOnly = (fullPanelText, castList, placementRule = "") =
       const trimmedLine = line.trim();
       const isFullQuoteLine = /^「[^」]+」[？！。、!?\s]*$/.test(trimmedLine);
       if (isFullQuoteLine) {
-        isDialogue = true;
+        // [v4.2.0] ト書き（動作指示）や極端に短い名詞の誤検出防止
+        const quoteContent = trimmedLine.match(/^「([^」]+)」/)?.[1] || '';
+        const isStageDirection = /(?:ポーズ|表情|リアクション|アクション|身振り|手振り|仕草|動作|姿勢|佇まい|構え|目線|視線|沈黙|間|無言|独白|ジェスチャー|モーション|立ち姿|座り|しぐさ|ため息|溜息|息|うなずき|頷き|首振り|指差し|腕組み|ガッツポーズ|ドヤ顔|苦笑い|苦笑|微笑|爆笑|号泣|絶叫|フリーズ|硬直|脱力|崩れ落ち|土下座|敬礼|拍手|握手|ハイタッチ|決めポーズ|威圧|威嚇|震え|よろめき|のけぞり|ずっこけ|ツッコミ|突っ込み)/.test(quoteContent);
+        const isTooShortForDialogue = quoteContent.length <= 4 && !/[がをにでへはもとからよねわ！？!?…。、]/.test(quoteContent);
+        if (!isStageDirection && !isTooShortForDialogue) {
+          isDialogue = true;
+        }
       }
     }
     const isHeader = line.match(/^\[\d+コマ目/);
@@ -601,11 +613,19 @@ export const extractCastLimitRule = (fullPanelText, castList) => {
       } else if (isLikelyPerson(tempSpeaker, validCharacters) || tempSpeaker === "全員" || tempSpeaker === "Speaker" || match[0].trim().endsWith(':') || match[0].trim().endsWith('：')) {
         isDialogue = true;
       }
+    } else if (line.trim().startsWith('%NOTHING%')) { // dummy check to avoid duplicate tag
+      // noop
     } else if (line.trim().startsWith('「')) {
       const trimmedLine = line.trim();
       const isFullQuoteLine = /^「[^」]+」[？！。、!?\s]*$/.test(trimmedLine);
       if (isFullQuoteLine) {
-        isDialogue = true;
+        // [v4.2.0] ト書き（動作指示）や極端に短い名詞の誤検出防止
+        const quoteContent = trimmedLine.match(/^「([^」]+)」/)?.[1] || '';
+        const isStageDirection = /(?:ポーズ|表情|リアクション|アクション|身振り|手振り|仕草|動作|姿勢|佇まい|構え|目線|視線|沈黙|間|無言|独白|ジェスチャー|モーション|立ち姿|座り|しぐさ|ため息|溜息|息|うなずき|頷き|首振り|指差し|腕組み|ガッツポーズ|ドヤ顔|苦笑い|苦笑|微笑|爆笑|号泣|絶叫|フリーズ|硬直|脱力|崩れ落ち|土下座|敬礼|拍手|握手|ハイタッチ|決めポーズ|威圧|威嚇|震え|よろめき|のけぞり|ずっこけ|ツッコミ|突っ込み)/.test(quoteContent);
+        const isTooShortForDialogue = quoteContent.length <= 4 && !/[がをにでへはもとからよねわ！？!?…。、]/.test(quoteContent);
+        if (!isStageDirection && !isTooShortForDialogue) {
+          isDialogue = true;
+        }
       }
     }
     if (!isDialogue) {

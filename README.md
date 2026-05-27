@@ -1133,6 +1133,9 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v4.2.0 (2026-05-27)
+- **[Fix & UX]** 演出強化版でト書き内の動作指示（「優越感ポーズ」等）がセリフ吹き出しとして誤抽出されるバグの修正 / Fixed a bug in enhanced direction mode where action indicators in stage directions (e.g. " superiority pose\)
+
 ### v4.1.9 (2026-05-26)
 - **[Fix & UX]** ト書き内の形状表現（「Ω」型、「∩」字など）や表記指示（「〜」と書かれた札）がセリフとして誤抽出されるバグの修正 / Fixed bug where visual shape descriptions (e.g. "Ω"-shape, "∩"-shape) or written sign labels in stage directions were misidentified as dialogue text
 - **[Audit & Cleanup]** デプロイスクリプト内の個人情報（ローカル絶対パス）の排除とゴミファイル監査の実施 / Removed hardcoded local paths containing personal user information from deployment scripts and completed security/garbage audit
