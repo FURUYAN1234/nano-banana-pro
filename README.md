@@ -1133,6 +1133,9 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v4.2.5 (2026-05-27)
+- **[Fix & UX]** 幽霊エラー残留バグ（手動救済後およびWeb切替時）の完全修正と、フルオート時の致命的エラー（401/403）からの確実な無限ループ脱出処理の実装 / Completely fixed the ghost error remnant bug (after manual rescue and web switch) and implemented a reliable escape from infinite loops during fatal errors (401/403) in Full Auto mode.
+
 ### v4.2.4 (2026-05-27)
 - **[Fix & UX]** ポリシー自動修正実行中のメイン画像生成ボタンの非活性化による競合防止、およびデッドコードpolicyRetryCountRef of useMangaWorkflow.js の削除 / Prevented API conflicts by disabling the main image generation button during policy auto-fixing, and cleaned up unused policyRetryCountRef
 

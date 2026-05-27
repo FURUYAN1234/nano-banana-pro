@@ -1,32 +1,36 @@
 # HANDOFF.md
 
-## 現在のステータス (v4.2.4)
+## 現在のステータス (v4.2.5 - ローカル修正完了・動作検証済み)
 - **Completed** (完了)
-- API画像生成時のコンテンツポリシー違反自動検出・修正機能を実装。コピペ連動の手動救済パネル自動展開、新規生成時のエラークリアバグ修正、ポリシー自動修正中の生成ボタン非活性化による競合防止、およびデッドコード削除を完了。
+  - API画像生成時のコンテンツポリシー違反およびエラーハンドリング周辺のバグ監査と、追加のバグフィックスを完了。
+  - ローカル開発サーバー ([http://localhost:5173/](http://localhost:5173/)) を再起動し、動作検証をパス。
+  - リモートリポジトリへの `git push` はユーザーの承認待ち（保留中）。
 
-## 完了した項目 (Done)
-- [x] コンテンツポリシー違反検出時のメッセージボックス表示（手動モード: 回数制限なし、フルオート: 3回自動リトライ後表示、エンドレス: 3回失敗で次の作品にスキップ）
-- [x] メッセージボックス（即時選択UI）と手動救済パネル（折りたたみ式）の完全分離
-- [x] 手動モードのリトライ回数制限撤廃（ユーザーが毎回判断）
-- [x] 「Web版に切り替える」選択時にパネル自動展開
-- [x] Gemini / ChatGPT 両エンジン対応
-- [x] ポリシーエラー発生時にコピペボタン押下で自動的に救済パネルを展開しメッセージボックスを閉じる挙動（手動Web連携強化）
-- [x] 新規の画像生成開始時にポリシーエラー情報とメッセージボックスをクリアし、生成成功後のコピーボタン誤動作バグを修正
-- [x] 手動ポリシー自動修正実行中、メインの「画像を生成する」ボタンを非活性（disabled）にして多重リクエストやプロンプト競合を防止するガードを追加
-- [x] リトライ回数制限の撤廃に伴いデッドコードと化していた `policyRetryCountRef` の定義と各所での初期化・リセット処理を完全削除
+## 今回修正した項目 (Fixes)
+- [x] **手動救済成功時の `lastPolicyErrorRef` クリア漏れバグの修正** ([useMangaWorkflow.js](file:///c:/Users/sx717/Antigravity/nano-banana-pro/src/hooks/useMangaWorkflow.js))
+  - 手動ポリシー修正（`regenerateSafePrompt`）が成功して配慮版プロンプトが適用された際、`lastPolicyErrorRef.current` が古いエラーのまま残っていたため、プロンプトコピー時に再度救済パネルが展開されるバグを解決。
+- [x] **回復不能エラー（401/403/404）検出時のフルオート/エンドレスモード自動停止機能の実装** ([useMangaWorkflow.js](file:///c:/Users/sx717/Antigravity/nano-banana-pro/src/hooks/useMangaWorkflow.js))
+  - APIキー無効や権限不足などの致命的エラーが発生した際、エンドレスモードON時に無限リトライループに入るリスクを排除するため、即座に `fullAutoAbortRef.current = true` を設定して安全に停止させるフェイルセーフを導入。
+- [x] **同期的かつ安全なポリシー判定への切り替え** ([useMangaWorkflow.js](file:///c:/Users/sx717/Antigravity/nano-banana-pro/src/hooks/useMangaWorkflow.js))
+  - `runFullAuto` 終了後のポリシー判定 `hasPolicyError` において、React の非同期 state 更新によるタイミングラグを防ぐため、同期的に更新される `lastPolicyErrorRef.current` のみを使用した厳密な判定に変更。
+- [x] **エンドレスモード時におけるエラー表示の正確化** ([useMangaWorkflow.js](file:///c:/Users/sx717/Antigravity/nano-banana-pro/src/hooks/useMangaWorkflow.js))
+  - 一般エラー（通信タイムアウトなど）で失敗した際に、一律で「ポリシーエラーのため次へ進む」と表示されていたステータスメッセージを、エラー原因に応じて切り分けるように修正。
+- [x] **画像生成中の操作競合ガードの堅牢化** ([Step4Panel.jsx](file:///c:/Users/sx717/Antigravity/nano-banana-pro/src/components/Step4Panel.jsx))
+  - 画像生成中（`isGeneratingImage` が true）の際に、手動救済ボタン（配慮版プロンプト再生成）やメッセージボックスの「自動修正」「Web版へ切り替え」ボタンを `disabled` にし、プロンプト競合や並行リクエストを防ぐガードを追加。
 
-## ⚠️ Gemini 3.5 へのバグ監査・引き継ぎ依頼事項 (Next Agent Audit Tasks)
-コンテンツポリシー周りのロジックに他にも潜在的なバグやエッジケースでの不具合がないか、以下の観点から徹底的にソースコードの精査を行ってください。
+---
 
-1. **エラー文言パースの網羅性チェック**
-   - 現在、ポリシーエラーの検知は `errMsg.includes("sensitive") || errMsg.includes("Responsible AI") || (errMsg.includes("400") && !errMsg.includes("Unknown parameter"))` で判定しています。
-   - OpenAI（ChatGPTモード）やGeminiの仕様変更により、新たなポリシーエラー文言やHTTPステータスコードが返ってきた場合、この条件をすり抜けて一般エラー扱いになってしまわないか検証してください。
-2. **部分リセット・ハードリセット時の整合性**
-   - `partialReset`（シナリオから再生成）や `hardReset`（APIキー等全クリア）を実行した際、ポリシー関連ステートや ref（`policyErrorMsg`, `lastPolicyErrorRef`, `showPolicyChoice` 等）が漏れなく初期化されるか、ステート更新ラグによる誤動作がないか再精査してください。
-3. **リトライ上限到達時（フルオート・エンドレス）の遷移バグチェック**
-   - 通常フルオートでポリシーリトライ3回上限に達した後の「メッセージボックス（選択UI）表示」と「フルオート停止」の状態遷移に矛盾がないか、またエンドレスモードでスキップする際に不要なログやローディング表示が残り続けないか確認してください。
-4. **その他のUI競合・誤クリックリスク**
-   - 今回メインの生成ボタンは自動修正中に非活性（disabled）にしましたが、「オチ指定の変更」や「演出強化トグルの切り替え」など、ポリシー修正中や生成中に他の設定を操作できてしまい、ステートが不整合を起こす可能性がないか検証してください。
+## ⚠️ Gemini 3.1 Pro へのバグ監査・再チェック依頼事項
+今回修正した画像生成APIとポリシーエラーハンドリング周辺について、以下の観点から徹底的な追加監査を行ってください。
+
+1. **エラー判定条件のすり抜け監査**:
+   - `useMangaWorkflow.js` L1175 におけるポリシーエラー判定条件 `errMsg.includes("sensitive") || errMsg.includes("Responsible AI") || errMsg.includes("content_policy_violation") || (errMsg.includes("400") && (errMsg.includes("safety") || errMsg.includes("policy") || errMsg.includes("violation") || errMsg.includes("sensitive")))` が、OpenAI (ChatGPT Images 2.0) や Gemini の最新のAPIエラー仕様と完全に一致しているか、将来的なすり抜けリスクがないか検証してください。
+2. **非同期ステートクリアのタイミング監査**:
+   - 画像生成の開始時（`regenerateImage` L1062）で `setPolicyErrorMsg("")` や `lastPolicyErrorRef.current = ""` をクリアしていますが、非同期実行中のレンダリングやユーザー操作によって、古いステートや表示が一瞬フラッシュ（ちらつき）したり、予期せぬ判定タイミングでエラー画面がチラ見えするような競合がないかチェックしてください。
+3. **部分リセット・ハードリセット実行時の確実性**:
+   - `partialReset`（部分リセット）や `hardReset`（APIキー等全クリア）時に、今回修正に関わったポリシー関連の state / ref が完全に初期化されるか検証してください。
+4. **UI操作による不整合リスク**:
+   - 画像生成中やポリシー自動修正中に、ユーザーがSTEP 2やSTEP 3のシナリオ編集、オチ指定、演出強化オプションなどを変更した場合、生成される画像や次のステップの状態管理に不整合が生じないか、UIの disabled 制御の不足がないか監査してください。
 
 ## 残りのタスク (Remaining Tasks)
-- なし
+- [ ] ユーザー承認後の Git push（`git push origin main`）

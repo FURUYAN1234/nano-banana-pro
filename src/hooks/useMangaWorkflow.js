@@ -1161,7 +1161,7 @@ export default function useMangaWorkflow() {
       const errMsg = error.message || "";
       let guideLines = [];
 
-      if (errMsg.includes("Unknown parameter") || errMsg.includes("invalid") || errMsg.includes("Invalid")) {
+      if (errMsg.includes("Unknown parameter") || errMsg.includes("Invalid parameter")) {
         // [v3.56] APIリクエストのパラメータ不正（コンテンツポリシーとは無関係）
         guideLines = [
           `[ERROR GUIDE] ⚙️ APIリクエストのパラメータが不正です（${enableOpenAIApi ? 'OpenAI' : 'Google'}側の仕様変更の可能性）。`,
@@ -1172,7 +1172,7 @@ export default function useMangaWorkflow() {
           `[ERROR GUIDE] 3. 「元となるキャラクターシート画像」を一緒に添付する（※キャラ再現に必須）`,
           `[ERROR GUIDE] 4. 貼り付けて送信する`
         ];
-      } else if (errMsg.includes("sensitive") || errMsg.includes("Responsible AI") || (errMsg.includes("400") && !errMsg.includes("Unknown parameter"))) {
+      } else if (errMsg.includes("sensitive") || errMsg.includes("Responsible AI") || errMsg.includes("content_policy_violation") || (errMsg.includes("400") && (errMsg.includes("safety") || errMsg.includes("policy") || errMsg.includes("violation") || errMsg.includes("sensitive")))) {
         // [v4.2.0] コンテンツポリシーエラー → メッセージボックス表示（パネルは開かない）
         setPolicyErrorMsg(errMsg);
         lastPolicyErrorRef.current = errMsg; // ref経由で即時参照可能にする
@@ -1183,6 +1183,10 @@ export default function useMangaWorkflow() {
           "[ERROR GUIDE] 【選択肢2】📋「Web版に切り替え」→ プロンプトをコピーしてWeb版で直接お試しください。"
         ];
       } else if (errMsg.includes("not found") || errMsg.includes("not supported") || errMsg.includes("404") || errMsg.includes("403") || errMsg.includes("401")) {
+        // フルオートおよびエンドレスモードを停止
+        if (isFullAutoMode) {
+          fullAutoAbortRef.current = true;
+        }
         guideLines = [
           `[ERROR GUIDE] 🔑 現在のAPIキーでは、開発アプリ経由での画像生成が許可されていないか、無効です（${enableOpenAIApi ? 'OpenAI側' : 'Google側'}の仕様・権限）。`,
           `[ERROR GUIDE] 【対処法】このアプリ上での自動生成は一旦諦め、以下の「手動生成手段（${enableOpenAIApi ? 'ChatGPT' : 'Gemini'} Web版）」をご利用ください。`,
@@ -1257,6 +1261,7 @@ export default function useMangaWorkflow() {
         }
         setPolicyFixLog(prev => prev + `\n> [GUIDE] 再度STEP4で画像生成するか、「プロンプトをコピー」して${selectedEngine === 'openai' ? 'ChatGPT' : 'Gemini'} Web版で生成してください。`);
         setPolicyErrorMsg("");
+        lastPolicyErrorRef.current = "";
       }
     } catch (error) {
       console.error(error);
@@ -1350,6 +1355,12 @@ export default function useMangaWorkflow() {
   const handlePolicySwitchToWeb = () => {
     setShowPolicyChoice(false); // メッセージボックスを閉じる
     setIsPolicyPanelOpen(true); // 手動救済パネルを展開する
+
+    // [v4.2.4] Web版切り替え時にポリシーエラー情報をクリア
+    // これを行わないと、次回の通常コピー時に copyPrompt の条件判定で
+    // エラーが残っていると誤認され、救済パネルが再展開されるバグが発生する
+    setPolicyErrorMsg("");
+    lastPolicyErrorRef.current = "";
 
     // プロンプトをクリップボードにコピー
     if (finalPrompt) {
@@ -1497,15 +1508,14 @@ export default function useMangaWorkflow() {
     }
 
     // ポリシー関連のステートをクリーンアップ
-    setShowPolicyChoice(false);
-    lastPolicyErrorRef.current = "";
     setIsFixingPolicy(false);
 
-    // 3回リトライ全滅時のログ出力
-    if (!step4ok && fullAutoPolicyRetries >= MAX_POLICY_RETRIES) {
+    // ポリシーエラーで終了した時の処理
+    const hasPolicyError = !!lastPolicyErrorRef.current;
+    if (!step4ok && hasPolicyError) {
       setGenLog(prev => [
         ...prev,
-        `[FULL-AUTO POLICY-FIX] ⚠️ 自動修正の上限（${MAX_POLICY_RETRIES}回）に達しました。`,
+        `[FULL-AUTO POLICY-FIX] ⚠️ ポリシーエラーのため自動生成を停止しました（リトライ: ${fullAutoPolicyRetries}/${MAX_POLICY_RETRIES}回）。`,
         isEndlessModeRef.current
           ? "[FULL-AUTO] 次の作品に進みます..."
           : "[FULL-AUTO] ユーザーに判断を委ねます。メッセージボックスを表示します。"
@@ -1514,6 +1524,10 @@ export default function useMangaWorkflow() {
         // 通常フルオート: メッセージボックス（選択UI）を表示してユーザーに判断を委ねる
         setShowPolicyChoice(true);
       }
+    } else {
+      // 正常終了または一般のエラーで終了した場合は選択UIとエラーRefをクリア
+      setShowPolicyChoice(false);
+      lastPolicyErrorRef.current = "";
     }
     
     // 最終スクロール: 生成画像へ
@@ -1525,7 +1539,9 @@ export default function useMangaWorkflow() {
       if (!fullAutoAbortRef.current) {
         showStatus(step4ok
           ? "🔄 連続生成モードON：次の作品を生成します..."
-          : "🔄 ポリシーエラーのため次の作品に進みます...");
+          : hasPolicyError
+            ? "🔄 ポリシーエラーのため次の作品に進みます..."
+            : "🔄 生成エラーのため次の作品に進みます...");
         setTimeout(() => {
           if (!fullAutoAbortRef.current) {
             setTriggerFullAuto(prev => prev + 1);

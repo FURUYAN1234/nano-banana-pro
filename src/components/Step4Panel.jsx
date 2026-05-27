@@ -432,7 +432,7 @@ No explanations. No partial results.`;
                       className="flex-1 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-700 disabled:opacity-50 text-white font-bold py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 transition-all active:scale-95 border border-blue-400/30"
                       style={{ fontSize: '12px' }}
                       onClick={handlePolicyAutoFix}
-                      disabled={policyAutoRetrying || isFixingPolicy}
+                      disabled={policyAutoRetrying || isFixingPolicy || isGeneratingImage}
                     >
                       {policyAutoRetrying ? (
                         <><Loader2 size={16} className="animate-spin" /> 自動修正中...</>
@@ -444,7 +444,7 @@ No explanations. No partial results.`;
                       className="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-bold py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 transition-all active:scale-95 border border-white/10"
                       style={{ fontSize: '12px' }}
                       onClick={handlePolicySwitchToWeb}
-                      disabled={policyAutoRetrying}
+                      disabled={policyAutoRetrying || isGeneratingImage}
                     >
                       <ExternalLink size={16} /> Web版に切り替える
                     </button>
@@ -513,7 +513,7 @@ No explanations. No partial results.`;
                       className="w-full bg-yellow-600 hover:bg-yellow-500 disabled:bg-slate-700 disabled:opacity-50 text-white font-bold py-1.5 rounded-lg flex items-center justify-center gap-2 transition-all"
                       style={{ fontSize: '12px' }}
                       onClick={regenerateSafePrompt}
-                      disabled={isFixingPolicy || !policyErrorMsg.trim() || !finalPrompt}
+                      disabled={isFixingPolicy || isGeneratingImage || !policyErrorMsg.trim() || !finalPrompt}
                     >
                       {isFixingPolicy ? (
                         <><Loader2 size={16} className="animate-spin" /> 分析・修正中...</>
