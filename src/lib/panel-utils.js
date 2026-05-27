@@ -211,14 +211,16 @@ export const extractDialogueOnly = (fullPanelText, castList) => {
   let bubbleCount = 1;
 
   lines.forEach(line => {
-    // Check if line indicates dialogue
-    const match = line.match(/^(.*?)(?:[:：]|「)/);
+    // [v4.2.9] 括弧（ト書き）内にカギ括弧が含まれる場合のセリフ誤検出を防止
+    // 例: ヒカリ（眉が「ハ」の字に曲がり）「セリフ」→ 括弧内の「ハ」をセリフと誤認する問題を解決
+    const lineForParsing = line.replace(/[（(][^）)]*[）)]/g, '');
+    const match = lineForParsing.match(/^(.*?)(?:[:：]|「)/);
     let isDialogue = false;
-    let clean = line;
+    let clean = lineForParsing;
 
     if (match && match[1].trim()) {
       let tempSpeaker = match[1].replace(/^[【\[（(]/, '').replace(/[】\]）)]$/, '').trim();
-      // ベースとなる話者名（カッコ内のト書きを無視）
+      // [v4.2.9] 括弧は lineForParsing で既に除去済み。念のため残留括弧も除去
       let tempSpeakerBase = tempSpeaker.replace(/[（(].*?[）)]/g, '').trim();
 
       // [v2.31] 話者名バリデーション強化: ト書き誤検出防止
@@ -237,10 +239,10 @@ export const extractDialogueOnly = (fullPanelText, castList) => {
       } else if (isLikelyPerson(tempSpeakerBase, validCharacters) || tempSpeakerBase.includes("全員") || tempSpeakerBase === "Speaker" || match[0].trim().endsWith(':') || match[0].trim().endsWith('：')) {
         isDialogue = true;
       }
-    } else if (line.trim().startsWith('「')) {
+    } else if (lineForParsing.trim().startsWith('「')) {
       // [v2.29] 根本修正: 行全体が「...」で完結するセリフ形式のみを判定。
       // 「没収」と書かれた袋を...のようなト書き中の引用語を誤検出しない。
-      const trimmedLine = line.trim();
+      const trimmedLine = lineForParsing.trim();
       const isFullQuoteLine = /^「[^」]+」[？！。、!?\s]*$/.test(trimmedLine);
       if (isFullQuoteLine) {
         // [v4.2.0] ト書き（動作指示）や極端に短い名詞の誤検出防止
@@ -304,7 +306,20 @@ export const extractDialogueOnly = (fullPanelText, castList) => {
       // 2. 直前のテキストの末尾が形状や表記指示、比喩表現などを示すものである場合は除外
       const isNotDialogueIndicator = /(?:型|字|感|と書かれた|と書く|と書き|と書いた|という|のような|風の|的な|コード|キー|マーク|記号|ラベル|吹き出し|セリフ|ポーズ)$/.test(prevText.trim());
 
-      if (isPureSymbol || isNotDialogueIndicator) {
+      // [v4.2.9] 後続テキストのコンテキスト分析によるセリフ誤検出防止（防御層追加）
+      const postText = fullPanelText.substring(regex.lastIndex, Math.min(regex.lastIndex + 20, fullPanelText.length));
+      // 「ハ」の字、「V」の形 → 形状・比喩表現（セリフではない）
+      const isShapeDescription = /^の[字形]/.test(postText);
+      // 「ドン！」と突き出す → 引用的用法（と + 非発話動詞）。「セリフ」と言った等の発話動詞は除外
+      const isQuotativeNonSpeech = /^と/.test(postText) && !/^と(?:言|云|叫|囁|呟|答|返|述|告|宣|問|訊|尋|聞|話|語|伝|報|説|主張|反論|嘆|怒鳴|喚|吠|泣|笑|呼|命じ|指示|注意|警告|提案|同意)/.test(postText);
+      // 「ユーザー」のシルエット → ラベル・修飾語として使用（「X」の + 名詞）
+      const isLabelModifier = /^の[ァ-ヴぁ-ん\u4E00-\u9FFF]/.test(postText);
+      // カタカナのみの短い擬音語: ドン！, バン！, ガーン
+      const isOnomatopoeia = /^[\u30A0-\u30FFー！!]+$/.test(dialogueText) && dialogueText.replace(/[！!ー・]/g, '').length <= 3;
+      // 短すぎるセリフ（1-2文字のひらがな・カタカナで助詞・感嘆詞を含まない）
+      const isTooShortForFallback = dialogueText.length <= 2 && !/[がをにでへはもとからよねわ！？!?…。、]/.test(dialogueText);
+
+      if (isPureSymbol || isNotDialogueIndicator || isShapeDescription || isQuotativeNonSpeech || isLabelModifier || isOnomatopoeia || isTooShortForFallback) {
         continue;
       }
 
@@ -370,7 +385,9 @@ export const extractActionOnly = (fullPanelText, castList, placementRule = "") =
   });
 
   const actionLines = lines.filter(line => {
-    const match = line.match(/^(.*?)(?:[:：]|「)/);
+    // [v4.2.9] 括弧内カギ括弧の誤検出防止
+    const lineForParsing = line.replace(/[（(][^）)]*[）)]/g, '');
+    const match = lineForParsing.match(/^(.*?)(?:[:：]|「)/);
     let isDialogue = false;
     if (match && match[1].trim()) {
       let tempSpeaker = match[1].replace(/^(SFX|効果音|BGM|Action)/i, '').trim();
@@ -387,8 +404,8 @@ export const extractActionOnly = (fullPanelText, castList, placementRule = "") =
       } else if (isLikelyPerson(tempSpeaker, validCharacters) || tempSpeaker === "全員" || tempSpeaker === "Speaker" || match[0].trim().endsWith(':') || match[0].trim().endsWith('：')) {
         isDialogue = true;
       }
-    } else if (line.trim().startsWith('「')) {
-      const trimmedLine = line.trim();
+    } else if (lineForParsing.trim().startsWith('「')) {
+      const trimmedLine = lineForParsing.trim();
       const isFullQuoteLine = /^「[^」]+」[？！。、!?\s]*$/.test(trimmedLine);
       if (isFullQuoteLine) {
         // [v4.2.0] ト書き（動作指示）や極端に短い名詞の誤検出防止
@@ -475,9 +492,11 @@ export const extractPlacementRule = (fullPanelText, castList) => {
 
   const speakers = [];
   dialogLines.forEach(line => {
-    const match = line.match(/^(.*?)(?:[:：]|「)/);
+    // [v4.2.9] 括弧内カギ括弧の誤検出防止
+    const lineForParsing = line.replace(/[（(][^）)]*[）)]/g, '');
+    const match = lineForParsing.match(/^(.*?)(?:[:：]|「)/);
     if (match && match[1].trim()) {
-      let speaker = match[1].replace(/^(SFX|効果音|BGM|Action|状況(?:演出)?|EMOTION|[\(（].*?[\)）]|\[.*?\])/gi, '').replace(/^[【\[（(]/, '').replace(/[】\]）)]$/, '').trim();
+      let speaker = match[1].replace(/^(SFX|効果音|BGM|Action|状況(?:演出)?|EMOTION|\[.*?\])/gi, '').replace(/^[【\[（(]/, '').replace(/[】\]）)]$/, '').trim();
       const hasSentenceParticles = /[がをにでへはもとからまでより]/.test(speaker) && speaker.length > 5;
       const isTooLong = speaker.length > 12;
       const isMetaTag = /^(Camera|Location|Outfit|EMOTION|状況(?:演出)?|Action|リアクション|Reaction|設定|聴覚|触覚|嗅覚|体内感覚|視覚|物理描写|SFX|効果音|BGM|ナレーション|テロップ|背景|Background|カメラワーク|CameraWork|Camera\s*Work)$/i.test(speaker);
@@ -571,14 +590,24 @@ export const extractCastLimitRule = (fullPanelText, castList) => {
     }
   });
 
+  // [v4.2.9] canonicalValidCharacters を早期に計算（グループスピーカー検出で使用）
+  const canonicalValidCharacters = [...new Set(Object.values(charLookup).map(obj => obj.name))];
+
   // Extract speakers from dialogue lines
   const speakers = [];
+  let hasGroupSpeaker = false; // [v4.2.9] 「全員」「他全員」等のグループスピーカー検出フラグ
   lines.forEach(line => {
-    const match = line.match(/^(.*?)(?:[:：]|「)/);
+    // [v4.2.9] 括弧内カギ括弧の誤検出防止
+    const lineForParsing = line.replace(/[（(][^）)]*[）)]/g, '');
+    const match = lineForParsing.match(/^(.*?)(?:[:：]|「)/);
     if (match && match[1].trim()) {
-      let speaker = match[1].replace(/^(SFX|効果音|BGM|Action|状況(?:演出)?|[\(（].*?[\)）])/gi, '').replace(/^[【\[（(]/, '').replace(/[】\]）)]$/, '').trim();
+      let speaker = match[1].replace(/^(SFX|効果音|BGM|Action|状況(?:演出)?)/gi, '').replace(/^[【\[（(]/, '').replace(/[】\]）)]$/, '').trim();
       if (speaker) {
-        if (speaker === "全員" || speaker === "Speaker") return;
+        // [v4.2.9] 「全員」「他全員」「みんな」はスキップせず、グループフラグを立てて全キャスト追加
+        if (/(?:全員|みんな)/.test(speaker) || speaker === "Speaker") {
+          hasGroupSpeaker = true;
+          return;
+        }
         const matchedChar = validCharacters.find(c => speaker === c || speaker.includes(c) || c.includes(speaker));
         if (matchedChar) {
           const canonicalName = charLookup[matchedChar].name;
@@ -597,7 +626,9 @@ export const extractCastLimitRule = (fullPanelText, castList) => {
   // [v3.95] セリフ行以外のテキストを抽出して登場人物を検出する (セリフ内言及によるキャラ誤認バグの完全排除)
   const actionAndMetaLines = [];
   lines.forEach(line => {
-    const match = line.match(/^(.*?)(?:[:：]|「)/);
+    // [v4.2.9] 括弧内カギ括弧の誤検出防止
+    const lineForActionParsing = line.replace(/[（(][^）)]*[）)]/g, '');
+    const match = lineForActionParsing.match(/^(.*?)(?:[:：]|「)/);
     let isDialogue = false;
     if (match && match[1].trim()) {
       let tempSpeaker = match[1].replace(/^(SFX|効果音|BGM|Action)/i, '').trim();
@@ -615,8 +646,8 @@ export const extractCastLimitRule = (fullPanelText, castList) => {
       }
     } else if (line.trim().startsWith('%NOTHING%')) { // dummy check to avoid duplicate tag
       // noop
-    } else if (line.trim().startsWith('「')) {
-      const trimmedLine = line.trim();
+    } else if (lineForActionParsing.trim().startsWith('「')) {
+      const trimmedLine = lineForActionParsing.trim();
       const isFullQuoteLine = /^「[^」]+」[？！。、!?\s]*$/.test(trimmedLine);
       if (isFullQuoteLine) {
         // [v4.2.0] ト書き（動作指示）や極端に短い名詞の誤検出防止
@@ -643,6 +674,17 @@ export const extractCastLimitRule = (fullPanelText, castList) => {
     }
   });
 
+  // [v4.2.9] グループスピーカー（「全員」「他全員」）またはアクションテキスト内の
+  // 「全キャラ」「全員が」等の集団指示により、全キャストをパネル登場人物に追加
+  const hasGroupInAction = /(?:全キャラ|全員が|全員で|全員の|みんなが|みんなで)/.test(actionAndMetaText);
+  if (hasGroupSpeaker || hasGroupInAction) {
+    canonicalValidCharacters.forEach(c => {
+      if (!allPanelCharacters.includes(c)) {
+        allPanelCharacters.push(c);
+      }
+    });
+  }
+
   // 吹き出し数カウント: セリフ行（「」付き）の数を数えてソロショット判定の矛盾を防ぐ
   let dialogueLineCount = 0;
   lines.forEach(line => {
@@ -659,7 +701,7 @@ export const extractCastLimitRule = (fullPanelText, castList) => {
 
   // [v2.69] 背景キャスト統合ロジックを完全廃止 (No-Show 除外指示への置換)
   // このコマに一切登場しないキャラ（No-Show）を特定
-  const canonicalValidCharacters = [...new Set(Object.values(charLookup).map(obj => obj.name))];
+  // [v4.2.9] canonicalValidCharacters は L574 で早期計算済み
   const noShowCharacters = canonicalValidCharacters.filter(c => !allPanelCharacters.includes(c));
 
   const allCharBrackets = allPanelCharacters.map(c => `[${c}]`);

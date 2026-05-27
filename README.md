@@ -1156,6 +1156,9 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v4.2.9 (2026-05-27)
+- **[Fix & UX]** Scenario prompt misinterpretation fix / Fix scenario reinforcement prompt misinterpretation (dialogue extraction from parenthetical, group speaker detection, onomatopoeia filtering)
+
 ### v4.2.8 (2026-05-27)
 - **[Fix & UX]** 日本語ウォーターマークのURLをnoteプロフィールに修正 / Updated Japanese watermark URL to note profile
 
