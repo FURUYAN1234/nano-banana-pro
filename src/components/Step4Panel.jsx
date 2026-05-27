@@ -11,7 +11,9 @@ import {
   Trash2,
   Check,
   BrainCircuit,
-  Wand2
+  Wand2,
+  RefreshCw,
+  ExternalLink
 } from 'lucide-react';
 import ThinkingLog from './ThinkingLog';
 import Panorama360Viewer from './Panorama360Viewer';
@@ -74,7 +76,12 @@ export default function Step4Panel({
   enableOpenAIApi,
   setGeneratedImage,
   generationHistory,
-  setGenerationHistory
+  setGenerationHistory,
+  showPolicyChoice,
+  policyAutoRetrying,
+  handlePolicyAutoFix,
+  handlePolicySwitchToWeb,
+  MAX_POLICY_RETRIES
 }) {
   return (
     <div
@@ -410,7 +417,45 @@ No explanations. No partial results.`;
                 </div>
               </div>
 
-              {/* コンテンツポリシー救済パネル */}
+              {/* [v4.2.0] コンテンツポリシー選択メッセージボックス（パネルとは独立） */}
+              {showPolicyChoice && (
+                <div className="mt-4 bg-gradient-to-r from-red-950/50 to-orange-950/50 border border-red-500/40 rounded-xl p-5 space-y-3 shadow-lg shadow-red-900/20">
+                  <div className="flex items-center gap-2 text-red-300 font-bold" style={{ fontSize: '14px' }}>
+                    <AlertTriangle size={20} className="text-red-400 animate-pulse" />
+                    <span>コンテンツポリシー違反が検出されました</span>
+                  </div>
+                  <p className="text-yellow-200/80 leading-relaxed" style={{ fontSize: '12px' }}>
+                    プロンプトがAIの安全基準に抵触したため画像生成が拒否されました。以下の方法で対応できます：
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <button
+                      className="flex-1 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-700 disabled:opacity-50 text-white font-bold py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 transition-all active:scale-95 border border-blue-400/30"
+                      style={{ fontSize: '12px' }}
+                      onClick={handlePolicyAutoFix}
+                      disabled={policyAutoRetrying || isFixingPolicy}
+                    >
+                      {policyAutoRetrying ? (
+                        <><Loader2 size={16} className="animate-spin" /> 自動修正中...</>
+                      ) : (
+                        <><RefreshCw size={16} /> 自動修正して再生成する</>
+                      )}
+                    </button>
+                    <button
+                      className="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-bold py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 transition-all active:scale-95 border border-white/10"
+                      style={{ fontSize: '12px' }}
+                      onClick={handlePolicySwitchToWeb}
+                      disabled={policyAutoRetrying}
+                    >
+                      <ExternalLink size={16} /> Web版に切り替える
+                    </button>
+                  </div>
+                  <p className="text-slate-400" style={{ fontSize: '10px' }}>
+                    💡 自動修正はAIが安全な表現に書き換えて再生成します。Web版はプロンプトをコピーして直接お試しいただけます。
+                  </p>
+                </div>
+              )}
+
+              {/* コンテンツポリシー手動救済パネル（折りたたみ式・任意で開ける） */}
               <div className={`mt-4 border border-yellow-500/30 rounded-lg overflow-hidden ${!finalPrompt ? 'opacity-40 pointer-events-none' : ''}`}>
                 <button
                   className="w-full flex items-center justify-between px-4 py-3 bg-yellow-900/25 hover:bg-yellow-900/50 transition-all duration-150 cursor-pointer disabled:cursor-not-allowed border-l-4 border-yellow-500 hover:border-yellow-400 group/policy-hdr"
@@ -434,13 +479,10 @@ No explanations. No partial results.`;
                   <div className="p-3 bg-yellow-950/20 space-y-3" style={{ fontSize: '12px' }}>
                     <div className="text-yellow-200/80 leading-relaxed space-y-2" style={{ fontSize: '11px' }}>
                       <p>
-                        下の<strong className="text-yellow-100">『「先ほどのプロンプトが拒否された理由を教えてください」をコピー』</strong>ボタンをクリックし、クリップボードにコピーされたテキストを、AIにそのままペーストすると、具体的な原因を教えてもらえます。
+                        下の<strong className="text-yellow-100">『「先ほどのプロンプトが拒否された理由を教えてください」をコピー』</strong>ボタンをクリックし、AIにそのままペーストすると、具体的な原因を教えてもらえます。
                       </p>
                       <p>
-                        その回答を下の入力ボックスに貼り付けると、<strong className="text-yellow-100">「配慮版プロンプトを再生成する」</strong>ボタンが押せるようになります。そのボタンをクリックすると、STEP 3のプロンプトが安全な表現に自動で修正・上書きされます。
-                      </p>
-                      <p>
-                        その後、再度STEP 4で画像を生成するか、各AIブラウザ版にプロンプトを貼って画像を生成してみてください。
+                        その回答を下の入力ボックスに貼り付けると、<strong className="text-yellow-100">「配慮版プロンプトを再生成する」</strong>ボタンが押せるようになります。修正後、再度STEP4で画像を生成してみてください。
                       </p>
                     </div>
 

@@ -1,4 +1,4 @@
-# Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System
+﻿# Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System
 
 > **"To what extent can humans step away from the creative process?"**
 > **「人間は、どこまで制作から降りられるのか？」**
@@ -1133,6 +1133,10 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v4.2.1 (2026-05-27)
+- **[Feature]** API画像生成時のコンテンツポリシー違反を自動検出し、メッセージボックスで「自動修正して再生成」または「Web版に切り替え」を選択可能に。手動モードは回数制限なし、フルオートは3回自動リトライ後にメッセージボックス表示、エンドレスモードは3回失敗で次の作品にスキップ。Gemini / ChatGPT 両エンジン対応。 / Added automatic content policy violation detection for API image generation with a message box offering \"Auto-fix & Regenerate\" or \"Switch to Web\". Manual mode has unlimited retries, Full Auto retries 3 times automatically then shows the message box, and Endless mode skips to the next work after 3 failures. Supports both Gemini and ChatGPT engines.
+- **[UX]** メッセージボックス（選択UI）と手動救済パネル（折りたたみ式）を完全分離。メッセージボックスはエラー時に独立表示され、パネルはいつでも任意で開閉可能。 / Separated the policy choice message box (standalone dialog) from the manual rescue panel (collapsible). The message box appears independently on error, while the panel can be opened/closed at any time.
+
 ### v4.2.0 (2026-05-27)
 - **[Fix & UX]** 演出強化版でト書き内の動作指示（「優越感ポーズ」等）がセリフ吹き出しとして誤抽出されるバグの修正 / Fixed a bug in enhanced direction mode where action indicators in stage directions (e.g. " superiority pose\)
 
@@ -1205,31 +1209,3 @@ Developed by **FURU**
 ### v4.0.0 (2026-05-20) — 正式版リリース / Stable Release
 - **[Release]** システムの完全モジュール化、非同期ステート同期バグの解決、およびリreset機能の修正を経て、正式版 **`v4.0.0`** としてリリース。プレリリースタグ（`-alpha`）を解除し、安定版として稼働を開始。 / Officially released as stable **`v4.0.0`** following complete modularization, asynchronous state sync fixes, and reset function validation. Removed the `-alpha` tag for stable production.
 - **[Fix]** 「エンジン変更・全リセット」および「シナリオから再生成（ソフトリセット）」実行時に、カテゴリ選択状態（ `categories` ）、自由入力トピック（ `manualTopic` ）、演出強化オプション（表情、ボディランゲージ、照明等）、ポリシー修正ログなどの各種設定ステートが初期値に初期化されないリセット漏れの不具合を修正。 (v3.91-alpha) / Fixed a bug where category selections, manual topics, scenario enhancement options, and policy logs were not cleared upon executing partialReset or hardReset. (v3.91-alpha)
-
-### v3.91-alpha (2026-05-20)
-- **[Fix]** 「エンジン変更・全リセット」および「シナリオから再生成（ソフトリセット）」実行時に、カテゴリ選択状態（ `categories` ）、自由入力トピック（ `manualTopic` ）、演出強化オプション（表情、ボディランゲージ、照明等）、ポリシー修正ログなどの各種設定ステートが初期値に初期化されないリセット漏れの不具合を修正。 / Fixed a bug where category selections, manual topics, scenario enhancement options (expressions, body language, effects, etc.), and policy fix logs were not cleared upon executing partialReset or hardReset.
-
-### v3.90-alpha (2026-05-20) — 本日の作業総括 / Daily Work Summary
-本日 (2026-05-20) は v3.79-alpha から v3.90-alpha まで **12回のイテレーション** を実施し、モノリシック `App.jsx` (5,000行超) の完全モジュール化を達成しました。以下が主要な変更です。
-
-- **[Refactor]** 巨大プロンプトテンプレート（ChatGPT / Gemini 用）を `src/lib/prompts.js` に外部化し、感情スタイルヘルパー・キャストリストパーサーを `src/lib/panel-utils.js` に分離 (v3.79)
-- **[Fix]** リファクタリング起因の致命的ランタイムエラー2件（ `step4Ref` タイポ、 `Wand2` インポート漏れ）を修正し、 `ErrorBoundary` によるクラッシュ耐性を導入 (v3.80)
-- **[Refactor]** シナリオ生成・ポリシー自動修正ロジックを `scenario-provider.js` / `policy-fixer.js` に外部化 (v3.81-v3.85)
-- **[Fix]** フルオートモードのステート同期バグ2件（ `inputMode` 誤判定、 `isFullAutoMode` の Stale Closure）を修正。 `useRef` による最新値追跡と引数オーバーライドパターンを導入 (v3.86-v3.87)
-- **[Refactor]** 上部コントロールバーを `<ControlBar>` コンポーネントとして外部分離 (v3.88)
-- **[Refactor]** 全ビジネスロジック（113以上のステート変数・関数）をカスタムフック `useMangaWorkflow` ( `src/hooks/useMangaWorkflow.js` ) に完全外部化。 `App.jsx` を **約420行** の UI シェルへスリム化 (v3.89)
-- **[Clean]** 古いリリースノート8件 (`docs/release_v1.8.x` 等) の削除、一時バックアップファイルの削除、リポジトリ全体のセキュリティ・衛生監査を実施 (v3.90)
-
-**Today (2026-05-20):** Executed 12 iterations from v3.79-alpha to v3.90-alpha, achieving full modularization of the monolithic App.jsx (5,000+ lines). Key changes include: externalizing prompt templates, fixing critical runtime errors, extracting scenario/policy logic into modules, resolving Full Auto mode state sync bugs, splitting the ControlBar into its own component, and finally decoupling all business logic into the `useMangaWorkflow` custom hook — slimming App.jsx to ~420 lines. Cleaned up 8 stale release docs and performed a full security/hygiene audit.
-
-### v3.89-alpha (2026-05-20)
-- **[Refactor]** `src/App.jsx` 内の巨大なビジネスロジック（ステート・Ref・副作用・補助関数など）をカスタムフック `useMangaWorkflow` ( `src/hooks/useMangaWorkflow.js` ) に完全外部化。 `src/App.jsx` を UI レンダリング専用のコンポーネント（約340行）へ大幅にスリム化。 / Decoupled all business logic (state, refs, effects, and auxiliary functions) from `src/App.jsx` into the custom hook `useMangaWorkflow` in `src/hooks/useMangaWorkflow.js`, slimming down `src/App.jsx` to a clean UI-only rendering component (~340 lines).
-
-### v3.88-alpha (2026-05-20)
-- **[Refactor]** 上部のプログレスバーおよび操作ボタン群を <ControlBar> コンポーネント（ src/components/ControlBar.jsx ）として外部ファイルに分離し、 src/App.jsx の JSX 部を約190行削減。モジュール間のインポート参照バグを修正し、安定した一貫ビルドを検証。 / Extracted the sticky top control bar from src/App.jsx into <ControlBar> component in src/components/ControlBar.jsx, reducing code clutter and decreasing App.jsx size by ~190 lines. Fixed import path issues to ensure a clean build.
-
-### v3.87-alpha (2026-05-20)
-- **[Fix]** キャラクター解析（認識）中にフルオートボタンを押した場合に、非同期処理のクロージャ内に古いステート isFullAutoMode = false がキャプチャされてしまい、解析完了後にフルオートが開始されない React のバグ（Stale State Closure Bug）を修正。isFullAutoModeRef を導入して processFiles 内で最新のフルオートモード状態を参照可能に。 / Fixed a React stale state closure bug where triggering Full Auto during character analysis failed to start the process upon completion because processFiles captured isFullAutoMode = false. Introduced isFullAutoModeRef to resolve this issue.
-
-### v3.86-alpha (2026-05-20)
-- **[Fix]** フルオート生成モード時に、非同期ステートの同期遅れによって手動入力モード（ inputMode === 'manual' ）と誤判定されてエラーが発生する（または ChatGPT モードが意図せずオンのまま実行される）不具合を修正。 generateScenarioFromNews および assemblePrompt に引数によるオーバーライドを導入し、Reactのステート更新ラグを回避。 / Fixed a bug in Full Auto mode where asynchronous state sync lags caused the system to mistakenly evaluate the input mode as 'manual' or keep ChatGPT mode enabled. Introduced parameter overrides for generateScenarioFromNews and assemblePrompt to eliminate React state race conditions.

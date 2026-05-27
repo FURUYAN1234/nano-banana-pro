@@ -89,6 +89,11 @@ function App() {
     isMetaSaved,
     isPolicyCopied,
     isPolicyPanelOpen,
+    showPolicyChoice,
+    policyAutoRetrying,
+    handlePolicyAutoFix,
+    handlePolicySwitchToWeb,
+    MAX_POLICY_RETRIES,
     isScenarioCopied,
     isSearching,
     mangaTitle,
@@ -401,6 +406,11 @@ function App() {
               setGeneratedImage={setGeneratedImage}
               generationHistory={generationHistory}
               setGenerationHistory={setGenerationHistory}
+              showPolicyChoice={showPolicyChoice}
+              policyAutoRetrying={policyAutoRetrying}
+              handlePolicyAutoFix={handlePolicyAutoFix}
+              handlePolicySwitchToWeb={handlePolicySwitchToWeb}
+              MAX_POLICY_RETRIES={MAX_POLICY_RETRIES}
             />
 
             <GenerationHistory
