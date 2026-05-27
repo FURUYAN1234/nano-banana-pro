@@ -55,7 +55,9 @@ try {
         const remoteParts = remoteVer.split('-')[0].split('.').map(Number);
         const localParts = pkgVersion.split('-')[0].split('.').map(Number);
 
-        if (remoteParts[2] === 9) {
+        // [v4.2.9] リモートとローカルが同一バージョンの場合はスキップ（既にpush済みのデプロイ）
+        const isSameVersion = remoteParts[0] === localParts[0] && remoteParts[1] === localParts[1] && remoteParts[2] === localParts[2];
+        if (remoteParts[2] === 9 && !isSameVersion) {
             const expectedMinor = remoteParts[1] + 1;
             if (localParts[1] !== expectedMinor || localParts[2] !== 0) {
                 console.error(`❌ [Version Progression] RULE VIOLATION: Remote version is v${remoteVer}.`);
