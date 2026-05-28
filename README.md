@@ -1156,6 +1156,9 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v4.4.3 (2026-05-28)
+- **[Fix & Model Sanitization]** OpenAI画像生成APIクライアント（`openai.js`）内に残存していた「gpt-image-2」という架空モデルの定義を完全に排除し、実在モデルである「dall-e-3」に正常化。また不要なデバッグ用モデルリストスクリプト等を削除。 / Completely eradicated fictitious model ID "gpt-image-2" inside openai.js and standardized on "dall-e-3". Cleaned up obsolete diagnostic/test scripts.
+
 ### v4.4.2 (2026-05-28)
 - **[Fix & Model Sanitization]** 残存していた一部アプリ（`story-maker`, `short_movie`等）の内部リスト、および画像生成モデル優先順位定義内に残っていた「gemini-3.5-flash」「gemini-3.1」などの架空・プレビューモデルの定義を完全に排除し、実在モデル（`gemini-2.0-flash`, `imagen-3.0`等）へ正常化。 / Cleaned up remaining "gemini-3.5-flash" and "gemini-3.1" definitions inside story-maker, short_movie, and other modules, standardizing on verified active models.
 

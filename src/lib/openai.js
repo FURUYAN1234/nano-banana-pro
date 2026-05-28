@@ -28,12 +28,12 @@ export const generateImageWithOpenAI = async (prompt, statCallback) => {
         "Authorization": `Bearer ${apiKey}`
       },
       body: JSON.stringify({
-        model: "gpt-image-2",
+        model: "dall-e-3",
         prompt: prompt,
         n: 1,
         size: "1024x1792", // OpenAI API supports 1024x1792 for vertical aspect ratio
         quality: "high", // [v3.55] 最高品質モード: テキスト描画精度・ディテールが大幅向上（EvoLinkAI推奨設定）
-        // ※ gpt-image-2 は response_format ではなく output_format を使用する別仕様。
+        // ※ dall-e-3 は response_format ではなく output_format を使用する別仕様。
         //    デフォルトで b64_json が返るため明示指定は不要。
       }),
       signal: controller.signal
@@ -58,7 +58,7 @@ export const generateImageWithOpenAI = async (prompt, statCallback) => {
   if (data.data && data.data.length > 0) {
     return {
       base64Img: data.data[0].b64_json,
-      usedModel: "gpt-image-2"
+      usedModel: "dall-e-3"
     };
   } else {
     throw new Error("APIレスポンスに画像データが含まれていませんでした。");
