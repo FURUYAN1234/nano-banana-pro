@@ -1,19 +1,14 @@
 # HANDOFF.md
 
-## 現在のステータス (v4.4.0 - リリース・デプロイ検証完了)
+## 現在のステータス (v4.4.1 - リリース・デプロイ検証完了)
 - **Completed** (完了)
-  - 「エフェクト過剰マイルド化」「レインボー否定」のネガティブプロンプト指定（虹色ノイズ除去など）を完全撤回し、画像全体の色彩が薄く劣化する問題を修正。感情絵柄本来のビビッドでリッチな極彩色表現を復元。
-  - シナリオ生成における一言だけの単調なセリフ（スカスカな対話）を厳禁化し、キャラクターの個性を活かしたテンポの良いコミカルな掛け合いを必須化。
-  - ト書き描写（状況描写）の指示を100〜180文字に強化し、詳細な背景描写とアクション・ポーズの描き込みを強制化。
-  - **画像生成時のコントラストを大幅に強化**し、深い影（chiaroscuro）と力強いインクラインを再現。同時に、ChatGPTやGemini（Imagen 4）特有の「空気中の光るチリやホコリ、レンズフレア」などのキラキラ・チラチラノイズを徹底的に排除するプロンプト調整を適用。
-  - バージョン番号を **v4.4.0** に引き上げ、`package.json`, `index.html`, `src/lib/constants.js`, `README.md` (ChangeLog), `Hugging Face README.md` の同期を完了。
+  - 全アプリ（`nano-banana-pro`, `story-maker`, `character_sheet`, `comic_translation`, `Retouch`, `panoforge-main`, `remotion_video_2`）におけるAPIモデル自動取得トラップ、および存在しない架空モデル（gpt-5.xやgemini-3.x系列など）の静的定義を完全に根絶し、動作確認済みの実在モデル（gpt-4o, gpt-4o-mini, gemini-2.0-flash, gemini-1.5-flash/pro, imagen-3.0）に正常化。
+  - バージョン番号を **v4.4.1** に引き上げ、`package.json`, `index.html`, `src/lib/constants.js`, `README.md` (ChangeLog), `Hugging Face README.md` の同期を完了。
   - 本番ビルドテスト (`npm run build`) による文法・ビルドエラーが無いことを確認。
   - 本番環境（GitHub Pages）へのデプロイ (`npm run deploy`) を完了。
-  - 変更内容のコミットとプッシュ、およびアノテーテッドタグ打ち (`v4.4.0`) / リリース作成 (`gh release create`) を完了。
-  - `backup_full.ps1` に `-NoGui` スイッチを追加するバグ修正を適用（エージェント実行時のダイアログフリーズを解消）。
-  - ZIP検証と C ドライブローカル展開バックアップ (`C:\nano-banana-pro-main` の差し替え) を完了（`version: 4.4.0` 確認済み）。
-  - フルバックアップスクリプト (`backup_full.ps1 -NoGui`) の実行を完了。
+  - 変更内容のコミットとプッシュ、およびアノテーテッドタグ打ち (`v4.4.1`) / リリース作成 (`gh release create`) を完了。
+  - ZIP検証と C ドライブローカル展開バックアップ (`C:\nano-banana-pro-main` の差し替え) を完了（`version: 4.4.1` 確認済み）。
   - ローカル開発サーバー (Vite) を `http://localhost:5173/` にて再起動完了。
 
 ## 残りのタスク (Remaining Tasks)
-- [x] コントラスト強化およびキラキラ防止の両立動作検証（ChatGPTモードおよびGeminiモードの両エンジンにおいて、セリフ・演出ともに完全再現して高画質に生成されることを実機確認済み）。
+- なし (全アプリのクリーンアップおよびモデル正常化デプロイ完了)
