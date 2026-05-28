@@ -38,53 +38,35 @@ export const DEFAULT_CATEGORIES = [
 export const getModelBadgeInfo = (modelId) => {
   if (!modelId) return null;
 
-  // Gemini 3.5 / 3.1系 = 最高品質 (Next-Gen)
-  if (modelId.includes("3.5") || modelId.includes("3.1")) {
+  // Gemini 2.0系 = 最高品質 (推奨)
+  if (modelId.includes("2.0-flash") || modelId.includes("2.0")) {
     return {
-      label: "NEXT GEN",
+      label: "RECOMMENDED",
       tier: "Supreme",
       color: "bg-gradient-to-r from-yellow-600 to-yellow-400 text-black",
-      desc: `Gemini ${modelId.includes("3.5") ? "3.5" : "3.1"}: 最高品質 (Next Generation)`
+      desc: `Gemini 2.0: 最高品質 (推奨/高速)`
     };
   }
-  // Gemini 3.0 Flash / 2.5 Pro = 高品質
-  if (modelId.includes("3-flash") || modelId.includes("2.5-pro")) {
-    return {
-      label: "HIGH QUALITY",
-      tier: "Active",
-      color: "bg-blue-600 text-white",
-      desc: "Gemini 3.0/2.5 Pro: 高品質"
-    };
-  }
-  // Gemini 2.5 Flash (画像生成含む) = 安定
-  if (modelId.includes("2.5-flash") && !modelId.includes("lite")) {
+  // Gemini 1.5系 = 安定
+  if (modelId.includes("1.5-pro") || modelId.includes("1.5-flash") || modelId.includes("1.5")) {
     return {
       label: "STABLE",
       tier: "Active",
-      color: "bg-indigo-600 text-white",
-      desc: "Gemini 2.5 Flash: 安定・高速"
+      color: "bg-blue-600 text-white",
+      desc: `Gemini 1.5: 安定`
     };
   }
-  // Flash Lite系 = 標準品質
-  if (modelId.includes("lite") || modelId.includes("latest")) {
+  // Imagen系 = 標準
+  if (modelId.includes("imagen-3") || modelId.includes("imagen")) {
     return {
-      label: "STANDARD QUALITY",
-      tier: "Lite",
-      color: "bg-gray-600 text-white",
-      desc: "Flash Lite: 標準品質 (API制限回避中...)"
-    };
-  }
-  // Imagen系 = レガシー
-  if (modelId.includes("imagen")) {
-    return {
-      label: "LEGACY",
+      label: "IMAGEN",
       tier: "Lite",
       color: "bg-amber-700 text-white",
-      desc: "Imagen: レガシーモデル (2026/06廃止予定)"
+      desc: "Imagen: 画像生成標準"
     };
   }
-  // [v3.59] OpenAI GPT系モデル
-  if (modelId.includes("gpt-4") || modelId.includes("gpt-3")) {
+  // OpenAI GPT系モデル
+  if (modelId.includes("gpt-4o") || modelId.includes("gpt-4")) {
     return {
       label: "ChatGPT",
       tier: "Active",
@@ -92,8 +74,8 @@ export const getModelBadgeInfo = (modelId) => {
       desc: `OpenAI ${modelId}: テキスト生成`
     };
   }
-  // [v3.59] OpenAI 画像生成モデル
-  if (modelId.includes("gpt-image") || modelId.includes("dall-e")) {
+  // OpenAI 画像生成モデル (dall-e)
+  if (modelId.includes("dall-e")) {
     return {
       label: "ChatGPT IMG",
       tier: "Active",
@@ -103,8 +85,8 @@ export const getModelBadgeInfo = (modelId) => {
   }
   // Fallback
   return {
-    label: "UNKNOWN MODEL",
-    tier: "Unknown",
+    label: "ACTIVE MODEL",
+    tier: "Active",
     color: "bg-slate-600 text-white",
     desc: modelId
   };

@@ -41,10 +41,8 @@ export const generateImageWithImagen = async (prompt, onStatusUpdate, referenceI
 
             // Use the correct API endpoint and payload structure for Gemini vs Imagen models
             if (modelId.startsWith("gemini")) {
-                // gemini-2.5-flash-image は responseModalities に ["TEXT", "IMAGE"] が必要
-                const modalities = modelId.includes("2.5-flash-image")
-                    ? ["TEXT", "IMAGE"]
-                    : ["IMAGE"];
+                // gemini-2.0-flash は responseModalities に ["IMAGE"] が必要
+                const modalities = ["IMAGE"];
 
                 // [v3.53 Phase3] 参照画像パーツを構築（360°クロップ画像等）
                 const imageParts = referenceImages.map(img => {
