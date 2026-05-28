@@ -1,8 +1,7 @@
 /**
  * Gemini API Client for Nano Banana Pro (Thinking Mode Edition)
- * v1.4.32 Alpha (Auto-Discovery Mode)
- * Implements "Account Model Diagnosis" to solve the mystery of "All Models 404".
- * If connection fails, it asks the API: "What models DOES this user have access to?"
+ * (自動モデル探索機能は廃止され、指定された静的フォールバックリストを厳密に遵守します。)
+ * 接続エラー時の「Account Model Diagnosis」は、エラーログ出力のための診断専用です。
  */
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
@@ -13,7 +12,6 @@ const GEMINI_BASE_URL = (typeof window !== 'undefined' && window.location.hostna
     : 'https://generativelanguage.googleapis.com';
 
 // テキストのみリクエスト用 (シナリオ生成等): Next-Gen優先・無料枠優先
-// ※ 2026年4月以降、Pro系は有料APIキー専用。Flash系は無料枠で利用可能。
 const TEXT_MODEL_IDS = [
     "gemini-3.5-flash",
     "gemini-2.5-flash",

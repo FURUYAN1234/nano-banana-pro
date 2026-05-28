@@ -1,3 +1,6 @@
+// ※ OpenAIの画像生成はフォールバック配列を持たず、最高品質の単一モデルを直接指定します。
+const OPENAI_IMAGE_MODEL = "gpt-image-2";
+
 let currentOpenAIApiKey = "";
 
 export const setOpenAIApiKey = (key) => {
@@ -28,7 +31,7 @@ export const generateImageWithOpenAI = async (prompt, statCallback) => {
         "Authorization": `Bearer ${apiKey}`
       },
       body: JSON.stringify({
-        model: "gpt-image-2",
+        model: OPENAI_IMAGE_MODEL,
         prompt: prompt,
         n: 1,
         size: "1024x1792", // OpenAI API supports 1024x1792 for vertical aspect ratio
@@ -58,7 +61,7 @@ export const generateImageWithOpenAI = async (prompt, statCallback) => {
   if (data.data && data.data.length > 0) {
     return {
       base64Img: data.data[0].b64_json,
-      usedModel: "gpt-image-2"
+      usedModel: OPENAI_IMAGE_MODEL
     };
   } else {
     throw new Error("APIレスポンスに画像データが含まれていませんでした。");

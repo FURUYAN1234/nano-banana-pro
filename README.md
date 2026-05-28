@@ -1156,6 +1156,9 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v4.4.6 (2026-05-28)
+- **[Fix & UX]** GeminiとOpenAIのモデル構成を更新 / Update model configurations for Gemini and OpenAI
+
 ### v4.4.5 (2026-05-28)
 - **[Fix & UX]** v4.2.8のプロンプト仕様へ完全ロールバック / Rollback to v4.2.8 prompt specifications
 

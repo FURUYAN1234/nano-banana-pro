@@ -2,7 +2,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { getApiKey } from "./gemini";
 
 // 画像生成モデル優先順位 (Geminiネイティブ優先)
-// ※ Imagen全系列は2026/06/24に完全廃止予定。Geminiネイティブへの移行が必須。
+// ※ Imagen全系列は完全廃止予定のため、Geminiネイティブのみを指定。
 const MODELS_TO_TRY = [
     "gemini-3.1-flash-image-preview", // Primary: Geminiネイティブ (現在利用可能な最高品質)
     "gemini-2.5-flash-image"          // Backup: 安定版
