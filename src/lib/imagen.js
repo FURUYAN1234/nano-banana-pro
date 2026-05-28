@@ -28,7 +28,7 @@ export const generateImageWithImagen = async (prompt, onStatusUpdate, referenceI
             attemptedModels.push(modelId);
 
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 120000); // 120s max timeout for heavy processing (Gemini models might take longer)
+            const timeoutId = setTimeout(() => controller.abort(), 180000); // 180s max timeout for heavy processing (Gemini models might take longer)
 
             let response;
             let data;
@@ -127,7 +127,7 @@ export const generateImageWithImagen = async (prompt, onStatusUpdate, referenceI
         } catch (e) {
             let errorMsg = e.message;
             if (e.name === 'AbortError' || errorMsg.includes('aborted')) {
-                errorMsg = "API Time out (120秒経過による強制切断)";
+                errorMsg = "API Time out (180秒経過による強制切断)";
             }
             console.warn(`[ImageGen] Model ${modelId} failed:`, errorMsg);
             lastError = new Error(errorMsg);

@@ -488,7 +488,7 @@ No explanations. No partial results.`;
                   <div className="p-3 bg-yellow-950/20 space-y-3" style={{ fontSize: '12px' }}>
                     <div className="text-yellow-200/80 leading-relaxed space-y-2" style={{ fontSize: '11px' }}>
                       <p>
-                        下の <strong className="text-yellow-100">「質問メッセージをコピー」</strong> ボタンを押し、ChatGPTやGeminiのチャット欄に貼り付けて送信すると、具体的な制限の原因を教えてもらえます。
+                        web貼り付け方式でコンテンツエラーが出た場合は、下の <strong className="text-yellow-100">「質問メッセージをコピー」</strong> ボタンを押し、ChatGPTやGeminiのチャット欄に貼り付けて送信すると、より具体的な制限の原因を教えてもらえます。
                       </p>
                       <p>
                         AIから返ってきた回答を下の入力欄に貼り付けると、 <strong className="text-yellow-100">「表現を調整したプロンプトを再生成する」</strong> ボタンが押せるようになります。
@@ -594,7 +594,7 @@ No explanations. No partial results.`;
                 </p>
                 <p className="text-xs text-blue-200/90 mt-4 font-bold text-center leading-relaxed">
                   高品質な画像を生成しています。<br />
-                  <span className="text-orange-400">※最大2〜5分程度かかる場合があります。<br/>このままお待ちください。</span>
+                  <span className="text-orange-400">※最大2〜6分程度かかる場合があります。<br/>このままお待ちください。</span>
                 </p>
               </div>
             </div>

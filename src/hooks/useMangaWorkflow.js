@@ -1109,7 +1109,7 @@ export default function useMangaWorkflow() {
       let base64Img, generatedModelId;
       if (enableOpenAIApi) {
         // [v3.56] OpenAI API直接生成
-        statCallback("[INFO] ⏳ gpt-image-2 の画像生成には通常2〜5分かかります。しばらくお待ちください...");
+        statCallback("[INFO] ⏳ gpt-image-2 の画像生成には通常2〜6分かかります。しばらくお待ちください...");
         const res = await generateImageWithOpenAI(currentPrompt, statCallback);
         base64Img = res.base64Img;
         generatedModelId = res.usedModel;

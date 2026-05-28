@@ -104,9 +104,9 @@ export const callOpenAIText = async (prompt, images = null, systemInstruction = 
                 content: userContent.length === 1 ? prompt : userContent
             });
 
-            // タイムアウト設定（60秒）
+            // タイムアウト設定（120秒）
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 60000);
+            const timeoutId = setTimeout(() => controller.abort(), 120000);
 
             let response;
             try {
@@ -126,7 +126,7 @@ export const callOpenAIText = async (prompt, images = null, systemInstruction = 
                 });
             } catch (e) {
                 if (e.name === 'AbortError') {
-                    throw new Error(`Timeout awaiting response from ${modelId} (60s limit)`);
+                    throw new Error(`Timeout awaiting response from ${modelId} (120s limit)`);
                 }
                 throw e;
             } finally {

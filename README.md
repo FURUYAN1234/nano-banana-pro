@@ -1156,6 +1156,9 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v4.4.7 (2026-05-29)
+- **[Fix & UX]** タイムアウトの延長およびUI上の所要時間・安全ポリシーの案内文を修正 / Extended timeout and updated UI instructions for required time and safety policy
+
 ### v4.4.6 (2026-05-28)
 - **[Fix & UX]** GeminiとOpenAIのモデル構成を更新 / Update model configurations for Gemini and OpenAI
 

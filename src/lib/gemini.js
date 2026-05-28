@@ -120,7 +120,7 @@ export const callThinkingGemini = async (prompt, images = null, systemInstructio
             const model = genAI.getGenerativeModel(modelParams, { apiVersion: "v1beta", baseUrl: GEMINI_BASE_URL });
 
             const timeoutPromise = new Promise((_, reject) =>
-                setTimeout(() => reject(new Error(`Timeout awaiting response from ${modelId} (60s limit)`)), 60000)
+                setTimeout(() => reject(new Error(`Timeout awaiting response from ${modelId} (120s limit)`)), 120000)
             );
 
             // [Fix] Enforce search tools ONLY if NO images are present. Grounding + Multimodal often throws 400 errors.
