@@ -1133,7 +1133,7 @@ export default function useMangaWorkflow() {
       
       // [v3.56] OpenAIモデル (gpt-image-2等) は正規モデルとして扱い、フォールバック警告を出さない
       const isOpenAIModel = generatedModelId && generatedModelId.startsWith("gpt-");
-      if (generatedModelId && !generatedModelId.startsWith("gemini-3") && !isOpenAIModel) {
+      if (generatedModelId && !generatedModelId.startsWith("gemini-2.0") && !isOpenAIModel) {
         // gemini-2.5系やimagen系はフォールバック扱い（妥協版警告を表示）
         setIsFallbackUsed(true);
         setGenLog(prev => [
