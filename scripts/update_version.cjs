@@ -79,7 +79,7 @@ const targetFiles = {
   constantsJs: path.join(__dirname, '../src/lib/constants.js'),
   indexHtml: path.join(__dirname, '../index.html'),
   readmeMd: path.join(__dirname, '../README.md'),
-  hfReadmeMd: 'C:\\Users\\sx717\\Antigravity\\hf-nano-banana-pro\\README.md'
+  hfReadmeMd: path.join(__dirname, '../../hf-nano-banana-pro/README.md')
 };
 
 // 全ファイルの存在確認

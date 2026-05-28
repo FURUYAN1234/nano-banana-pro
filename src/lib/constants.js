@@ -1,7 +1,7 @@
 // --- 定数・タグ定義 (constants.js) ---
 // App.jsx から抽出された共有定数
 
-export const SYSTEM_VERSION = "v4.4.3";
+export const SYSTEM_VERSION = "v4.4.5";
 
 // --- Punchline ラベル変換関数 ---
 export const getPunchlineLabel = (type) => {
@@ -38,35 +38,53 @@ export const DEFAULT_CATEGORIES = [
 export const getModelBadgeInfo = (modelId) => {
   if (!modelId) return null;
 
-  // Gemini 2.0系 = 最高品質 (推奨)
-  if (modelId.includes("2.0-flash") || modelId.includes("2.0")) {
+  // Gemini 3.5 / 3.1系 = 最高品質 (Next-Gen)
+  if (modelId.includes("3.5") || modelId.includes("3.1")) {
     return {
-      label: "RECOMMENDED",
+      label: "NEXT GEN",
       tier: "Supreme",
       color: "bg-gradient-to-r from-yellow-600 to-yellow-400 text-black",
-      desc: `Gemini 2.0: 最高品質 (推奨/高速)`
+      desc: `Gemini ${modelId.includes("3.5") ? "3.5" : "3.1"}: 最高品質 (Next Generation)`
     };
   }
-  // Gemini 1.5系 = 安定
-  if (modelId.includes("1.5-pro") || modelId.includes("1.5-flash") || modelId.includes("1.5")) {
+  // Gemini 3.0 Flash / 2.5 Pro = 高品質
+  if (modelId.includes("3-flash") || modelId.includes("2.5-pro")) {
+    return {
+      label: "HIGH QUALITY",
+      tier: "Active",
+      color: "bg-blue-600 text-white",
+      desc: "Gemini 3.0/2.5 Pro: 高品質"
+    };
+  }
+  // Gemini 2.5 Flash (画像生成含む) = 安定
+  if (modelId.includes("2.5-flash") && !modelId.includes("lite")) {
     return {
       label: "STABLE",
       tier: "Active",
-      color: "bg-blue-600 text-white",
-      desc: `Gemini 1.5: 安定`
+      color: "bg-indigo-600 text-white",
+      desc: "Gemini 2.5 Flash: 安定・高速"
     };
   }
-  // Imagen系 = 標準
-  if (modelId.includes("imagen-3") || modelId.includes("imagen")) {
+  // Flash Lite系 = 標準品質
+  if (modelId.includes("lite") || modelId.includes("latest")) {
     return {
-      label: "IMAGEN",
+      label: "STANDARD QUALITY",
+      tier: "Lite",
+      color: "bg-gray-600 text-white",
+      desc: "Flash Lite: 標準品質 (API制限回避中...)"
+    };
+  }
+  // Imagen系 = レガシー
+  if (modelId.includes("imagen")) {
+    return {
+      label: "LEGACY",
       tier: "Lite",
       color: "bg-amber-700 text-white",
-      desc: "Imagen: 画像生成標準"
+      desc: "Imagen: レガシーモデル (2026/06廃止予定)"
     };
   }
-  // OpenAI GPT系モデル
-  if (modelId.includes("gpt-4o") || modelId.includes("gpt-4")) {
+  // [v3.59] OpenAI GPT系モデル
+  if (modelId.includes("gpt-4") || modelId.includes("gpt-3")) {
     return {
       label: "ChatGPT",
       tier: "Active",
@@ -74,8 +92,8 @@ export const getModelBadgeInfo = (modelId) => {
       desc: `OpenAI ${modelId}: テキスト生成`
     };
   }
-  // OpenAI 画像生成モデル (dall-e)
-  if (modelId.includes("dall-e")) {
+  // [v3.59] OpenAI 画像生成モデル
+  if (modelId.includes("gpt-image") || modelId.includes("dall-e")) {
     return {
       label: "ChatGPT IMG",
       tier: "Active",
@@ -85,8 +103,8 @@ export const getModelBadgeInfo = (modelId) => {
   }
   // Fallback
   return {
-    label: "ACTIVE MODEL",
-    tier: "Active",
+    label: "UNKNOWN MODEL",
+    tier: "Unknown",
     color: "bg-slate-600 text-white",
     desc: modelId
   };
@@ -200,9 +218,9 @@ EMOTION_STYLES.PASTEL = {
   vfx: '(Soft pastel color palette:1.5), (gentle gradient sky background:1.3), (warm diffused lighting:1.4), (thin delicate line art:1.3), (light bloom soft glow:1.2)',
 };
 EMOTION_STYLES.CEL = {
-  style: 'In THIS PANEL ONLY, shift to a classic cel animation style reminiscent of 1990s TV anime. Use flat solid color fills with clearly defined shadow areas (no gradients within shadow regions). Outlines are clean and consistent in weight. The color palette is bold but slightly muted compared to modern digital anime.',
+  style: 'In THIS PANEL ONLY, shift to a modern high-budget TV anime cel animation style. Use vibrant, highly saturated colors with clearly defined deep shadow areas. Outlines are bold and distinct to separate characters from the background. The color palette is rich, energetic, and visually popping.',
   proportions: '',
-  vfx: '(Flat cel-shaded color fills:1.5), (clearly defined hard-edge shadow areas:1.4), (consistent clean outlines:1.3), (slightly muted retro TV anime color palette:1.3), (simple solid color backgrounds:1.2)',
+  vfx: '(Modern high-budget TV anime cel shading:1.5), (vibrant highly saturated colors:1.5), (clearly defined hard-edge deep shadows:1.4), (bold prominent character outlines:1.4), (rich energetic color palette:1.3)',
 };
 EMOTION_STYLES.DARK_ANIME = {
   style: 'In THIS PANEL ONLY, shift to a dark atmospheric anime style. The overall brightness is significantly reduced. Deep shadows dominate the composition. Colors are desaturated except for occasional accent lighting (moonlight, streetlamp, screen glow). The mood is mysterious, tense, and foreboding.',

@@ -1109,7 +1109,7 @@ export default function useMangaWorkflow() {
       let base64Img, generatedModelId;
       if (enableOpenAIApi) {
         // [v3.56] OpenAI API直接生成
-        statCallback("[INFO] ⏳ dall-e-3 の画像生成には通常2〜5分かかります。しばらくお待ちください...");
+        statCallback("[INFO] ⏳ gpt-image-2 の画像生成には通常2〜5分かかります。しばらくお待ちください...");
         const res = await generateImageWithOpenAI(currentPrompt, statCallback);
         base64Img = res.base64Img;
         generatedModelId = res.usedModel;
@@ -1131,10 +1131,10 @@ export default function useMangaWorkflow() {
       setGeneratedImage(finalImageStr);
       setGenerationHistory(prev => [{ id: Date.now(), img: finalImageStr }, ...prev]); // [v2.86] Add to history
       
-      // [v3.56] OpenAIモデル (dall-e-3等) は正規モデルとして扱い、フォールバック警告を出さない
-      const isOpenAIModel = generatedModelId && (generatedModelId.startsWith("gpt-") || generatedModelId.startsWith("dall-"));
-      if (generatedModelId && !generatedModelId.startsWith("gemini-2.0") && !isOpenAIModel) {
-        // gemini-1.5系やimagen系はフォールバック扱い（妥協版警告を表示）
+      // [v3.56] OpenAIモデル (gpt-image-2等) は正規モデルとして扱い、フォールバック警告を出さない
+      const isOpenAIModel = generatedModelId && generatedModelId.startsWith("gpt-");
+      if (generatedModelId && !generatedModelId.startsWith("gemini-3") && !isOpenAIModel) {
+        // gemini-2.5系やimagen系はフォールバック扱い（妥協版警告を表示）
         setIsFallbackUsed(true);
         setGenLog(prev => [
           ...prev,

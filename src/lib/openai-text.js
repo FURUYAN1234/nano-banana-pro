@@ -5,7 +5,7 @@
  * callThinkingGemini と同一のインターフェースを提供し、
  * ai-provider.js 経由で透過的に切り替え可能にする。
  *
- * 対応モデル: GPT-4o / GPT-4o-mini
+ * 対応モデル: GPT-4.1 / GPT-4o
  * 機能: テキスト生成、Vision（画像認識）
  */
 
@@ -13,14 +13,17 @@ import { getOpenAIApiKey } from './openai';
 
 // テキストのみリクエスト用モデルリスト（Zenith Protocol相当のフォールバック）
 const TEXT_MODEL_IDS = [
-    "gpt-4o",          // Primary: 安定実績
-    "gpt-4o-mini",     // Backup: 高速・低コスト
+    "gpt-4.1",          // Primary: 高品質・1Mコンテキスト
+    "gpt-4.1-mini",     // Backup 1: コスト効率・高速
+    "gpt-4.1-nano",     // Backup 2: 最軽量・最速
+    "gpt-4o",           // Fallback: 安定実績
 ];
 
 // 画像付きリクエスト用モデルリスト（Vision対応モデル優先）
 const IMAGE_MODEL_IDS = [
-    "gpt-4o",          // Primary: Vision安定実績
-    "gpt-4o-mini",     // Backup: Visionコスト効率
+    "gpt-4.1",          // Primary: Vision対応・高品質
+    "gpt-4o",           // Backup 1: Vision安定実績
+    "gpt-4.1-mini",     // Backup 2: コスト効率
 ];
 
 /**
