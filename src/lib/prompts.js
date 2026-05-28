@@ -650,22 +650,24 @@ LAYOUT & FORMAT:
 
 ART STYLE:
 - High-budget TV anime production quality. Pristine clean cel-shading with smooth gradient shadows and rich saturated color palette.
-- Cinematic color grading with smooth light diffusion and gentle rim lighting on character edges.
+- Cinematic color grading with dramatic high-contrast lighting and deep crisp shadows. Avoid hazy bloom or foggy light diffusion.
 - Foreground characters have bold ink outlines with varied line weight. Add a subtle white glow outside the character's outline to prevent blending with the background.
 - Backgrounds should have slightly lower saturation and softer focus (shallow depth of field) to make characters pop.
 - NOISE REDUCTION (Anti-Glitter & Anti-Noise Protocol):
-  * ABSOLUTELY NO ChatGPT-style magical floating particles, NO glittering/sparkling effects, NO dust motes, NO lens flares, NO moiré patterns. Keep the air completely clean and empty.
+  * ABSOLUTELY NO ChatGPT-style magical floating particles, NO glittering/sparkling effects, NO dust motes, NO lens flares, NO moiré patterns. Keep the air completely clean, empty, and transparent.
   * ZERO NOISE TOLERANCE: The final image MUST be completely free of visual noise, grain, micro-texture artifacts, dithering patterns, and any speckle-like artifacts. Every surface must be CLEAN and SMOOTH.
   * NO MICRO-DETAIL CLUTTER: Do NOT fill empty areas with random tiny dots, scratches, dust particles, or halftone-like noise patterns. Clean color fills and smooth gradients ONLY.
   * NO OVER-RENDERING: Do NOT apply photorealistic texture rendering (cloth weave, skin pores, hair strand noise) to anime-style characters. Keep surfaces FLAT and CLEAN as in professional TV anime cel-shading.
 - [ POSITIVE SAFE RENDERING BLOCK — APPLY THESE STYLES ]
-  Clean anime illustration finish, smooth cel shading, soft clean shading, smooth gradients, clean color surfaces, low texture density, refined but not overly detailed material response, controlled exposure, soft diffused lighting, no visible grain, no speckled texture, no pointillism, no stippling, no dithering, no halftone dots, no noisy particles, no glitter dust, no gritty film grain, no rough paper texture, no canvas grain, no over-sharpened details.
+  Clean anime illustration finish, smooth cel shading, rich dramatic contrast with deep chiaroscuro shadows, deep solid black shadows, bold defined ink outlines, vibrant saturated colors, completely solid color fields, smooth gradients, clean color surfaces, low texture density, refined but not overly detailed material response, controlled exposure, clear sharp lighting, completely clean and transparent air, no visible grain, no speckled texture, no pointillism, no stippling, no dithering, no halftone dots, no noisy particles, no glitter dust, no gritty film grain, no rough paper texture, no canvas grain, no over-sharpened details, no hazy bloom, no foggy diffusion, no soft focus bloom, no atmospheric haze.
 - [ BANNED PROMPT WORD COMBINATIONS — NEVER USE THESE ]
   * Do NOT combine: ultra-detailed + film grain + cinematic
   * Do NOT combine: realistic texture + micro details
   * Do NOT combine: magical particles + glowing dust
-  * Do NOT combine: high contrast + sharp details (use clean contrast + smooth edges instead)
+  * Do NOT combine: over-sharpened details + noisy glitter (use rich high contrast + smooth defined edges instead)
   * Do NOT combine: illustrative realism + gritty texture
+  * Do NOT combine: soft focus + foggy bloom + hazy light
+  * Do NOT combine: dusty air + glowing particles + sparkles
   * Do NOT use: paper grain, canvas texture, rough texture, grainy texture, overly crisp
 - ${styleCore}
 - Setting: ${safeLocation}
@@ -802,8 +804,10 @@ COMPOSITION: Strict 2:3 golden ratio inside each panel.
 Tech Dict:
 (clean anime illustration background: 2.5)
 (Meticulous clean line art, smooth cel shading: 2.5)
-(Soft diffused backlight, rim light: 2.4)
+(Dramatic backlight with sharp rim light: 2.4)
 (Cinematic depth of field, soft bokeh: 2.3)
+(rich dramatic contrast with deep chiaroscuro shadows and solid dark areas: 2.6)
+(no hazy bloom, no foggy light diffusion, completely transparent air: 2.7)
 (NO text/SFX outside speech bubbles: 2.8)
 (NO ENGLISH TEXT outside watermark. NO 'G-pen'/'HA': 3.0)
 
