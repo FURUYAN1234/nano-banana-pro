@@ -1156,6 +1156,9 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v4.4.0 (2026-05-28)
+- **[Fix & UX]** 画像生成時のコントラストを強化し、もや・ノイズを排除 / Enhanced image contrast and eliminated hazy bloom or noise
+
 ### v4.3.9 (2026-05-28)
 - ** [Fix & Saturated Colors] ** エフェクトの過剰なマイルド化や「レインボー否定」のネガティブプロンプト指定（虹色ノイズ除去など）を完全撤回し、画像全体の色彩が薄く劣化する問題を修正。感情絵柄（HIGH_SATURATION, IMPACT）本来の鮮やかでリッチな極彩色表現を復元。 / Reverted over-milding of effects and rainbow-negative prompt constraints. Fixed color washing degradation to fully restore rich, vibrant colors for HIGH_SATURATION and IMPACT emotions.
 - ** [Fix & Rich Story/Dialogue] ** シナリオ生成における一言だけの単調なセリフ（スカスカな対話）を厳禁化し、キャラクターの個性を活かしたテンポの良いコミカルな掛け合いを必須化。また、ト書き描写（状況描写）の指示を100〜180文字にさらに強化し、詳細な背景描写とポーズの描き込みを画像生成AIに引き継ぐように改善。 / Enforced a strict ban on single-word sparse dialogue to ensure rich, character-driven comedic interactions. Strengthened storyboard description rules to 100-180 characters, passing detailed background/pose attributes to the image generator.
