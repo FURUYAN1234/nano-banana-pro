@@ -1,6 +1,12 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { getApiKey } from "./gemini";
 
+// ローカル開発時はViteプロキシ経由でAPIを呼ぶ（ブラウザのOriginヘッダーによるキー拒否を回避）
+// 本番ビルド（GitHub Pages等）では直接Google APIを叩く
+const GEMINI_BASE_URL = (typeof window !== 'undefined' && window.location.hostname === 'localhost')
+    ? '/gemini-api'
+    : 'https://generativelanguage.googleapis.com';
+
 // 画像生成モデル優先順位 (Geminiネイティブ優先)
 // ※ Imagen全系列は2026/06/24に完全廃止予定。Geminiネイティブへの移行が必須。
 const MODELS_TO_TRY = [
@@ -54,7 +60,7 @@ export const generateImageWithImagen = async (prompt, onStatusUpdate, referenceI
                     onStatusUpdate(`[REF] ${imageParts.length}枚の参照画像を添付してマルチモーダル生成を実行`);
                 }
 
-                response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${currentApiKey}`, {
+                response = await fetch(`${GEMINI_BASE_URL}/v1beta/models/${modelId}:generateContent?key=${currentApiKey}`, {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json"
@@ -88,7 +94,7 @@ export const generateImageWithImagen = async (prompt, onStatusUpdate, referenceI
 
             } else {
                 // Classic Imagen Model Logic
-                response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelId}:predict?key=${currentApiKey}`, {
+                response = await fetch(`${GEMINI_BASE_URL}/v1beta/models/${modelId}:predict?key=${currentApiKey}`, {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json"

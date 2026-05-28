@@ -1,29 +1,26 @@
 /**
  * OpenAI Chat Completions API Client for Nano Banana Pro
- * v1.0.0 - Dual Engine テキスト生成モジュール
+ * v1.2.1 - Dual Engine テキスト生成モジュール
  *
  * callThinkingGemini と同一のインターフェースを提供し、
  * ai-provider.js 経由で透過的に切り替え可能にする。
  *
- * 対応モデル: GPT-4.1 → GPT-4o (フォールバック)
- * 機能: テキスト生成、Vision（画像認識）、Web Search（Responses API）
+ * 対応モデル: GPT-4o / GPT-4o-mini
+ * 機能: テキスト生成、Vision（画像認識）
  */
 
 import { getOpenAIApiKey } from './openai';
 
 // テキストのみリクエスト用モデルリスト（Zenith Protocol相当のフォールバック）
 const TEXT_MODEL_IDS = [
-    "gpt-4.1",          // Primary: 高品質・1Mコンテキスト
-    "gpt-4.1-mini",     // Backup 1: コスト効率・高速
-    "gpt-4.1-nano",     // Backup 2: 最軽量・最速
-    "gpt-4o",           // Fallback: 安定実績
+    "gpt-4o",          // Primary: 安定実績
+    "gpt-4o-mini",     // Backup: 高速・低コスト
 ];
 
 // 画像付きリクエスト用モデルリスト（Vision対応モデル優先）
 const IMAGE_MODEL_IDS = [
-    "gpt-4.1",          // Primary: Vision対応・高品質
-    "gpt-4o",           // Backup 1: Vision安定実績
-    "gpt-4.1-mini",     // Backup 2: コスト効率
+    "gpt-4o",          // Primary: Vision安定実績
+    "gpt-4o-mini",     // Backup: Visionコスト効率
 ];
 
 /**
@@ -162,6 +159,13 @@ export const callOpenAIText = async (prompt, images = null, systemInstruction = 
             }
 
             const finalOutput = choice.message.content;
+
+            // [Safety Refusal Check]
+            if (finalOutput.includes("I'm sorry") || finalOutput.includes("cannot assist") || finalOutput.includes("can't assist")) {
+                console.warn(`[OpenAI] ${modelId} returned safety refusal: "${finalOutput.trim()}"`);
+                if (onThinkingUpdate) onThinkingUpdate(`> [API] セーフティ拒否反応を検出。次のモデルへフォールバックします...`);
+                continue;
+            }
 
             if (onThinkingUpdate) onThinkingUpdate(`> [API] 生成完了：高品質な成果物を構築しました。`);
 

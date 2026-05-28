@@ -1156,6 +1156,9 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v4.4.1 (2026-05-28)
+- **[Fix & Model Sanitization]** 全アプリにおけるAPIモデル自動取得トラップ、および存在しない架空モデル（gpt-5.xやgemini-3.x系列など）の静的定義を完全に根絶し、動作確認済みの実在モデル（gpt-4o, gpt-4o-mini, gemini-2.0-flash, gemini-1.5-flash/pro, imagen-3.0）に正常化。 / Completely eradicated automatic model updates and non-existent fictitious models (like gpt-5.x or gemini-3.x) across all application structures, standardizing on verified active models.
+
 ### v4.4.0 (2026-05-28)
 - **[Fix & UX]** 画像生成時のコントラストを強化し、もや・ノイズを排除 / Enhanced image contrast and eliminated hazy bloom or noise
 
