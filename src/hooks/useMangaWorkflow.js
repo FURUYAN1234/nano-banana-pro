@@ -785,6 +785,7 @@ export default function useMangaWorkflow() {
 
       const finalScenarioText = `## タイトル: ${result.topic} !?${loglineLine}\nLocation: ${result.location || "Unspecified"}${outfitLine}${punchlineLine}${bg360HeaderLine}${cameraWorkHeaderLine}\n\n${result.scenario} `;
       setScenario(finalScenarioText);
+      setMangaTitle(result.topic || ""); // タイトルをstateに保存（画像ダウンロード時のファイル名に使用）
       showStatus("シナリオの生成が完了しました！");
       setIs360CameraWorking(false);
 

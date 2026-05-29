@@ -1156,6 +1156,9 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v4.4.8 (2026-05-29)
+- **[Fix & UX]** API別にAI画像ダウンロード時のファイル名が動的に変わるように変更 / Dynamically customize image download filename by API type and title
+
 ### v4.4.7 (2026-05-29)
 - **[Fix & UX]** タイムアウトの延長およびUI上の所要時間・安全ポリシーの案内文を修正 / Extended timeout and updated UI instructions for required time and safety policy
 

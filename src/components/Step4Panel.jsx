@@ -646,7 +646,20 @@ No explanations. No partial results.`;
                   onClick={() => {
                     const a = document.createElement('a');
                     a.href = generatedImage;
-                    a.download = `nano_banana_2_comic_${new Date().getTime()}.png`;
+                    // API別ファイル名: AI_4koma_comic_{API名}_{タイトル}_{年月日時分秒14桁}.png
+                    const now = new Date();
+                    const apiName = selectedEngine === 'openai' ? 'ChatGPT' : 'Gemini';
+                    // タイトル取得: mangaTitle state → scenarioからの抽出 → フォールバック
+                    let rawTitle = mangaTitle;
+                    if (!rawTitle && scenario) {
+                      const m = scenario.match(/##\s*タイトル[:：]\s*(.+?)(?:\s*!|\s*$)/m);
+                      if (m) rawTitle = m[1].trim();
+                    }
+                    const titleSlug = rawTitle
+                      ? rawTitle.substring(0, 30).replace(/[\\/:*?"<>|\s]/g, '_')
+                      : 'untitled';
+                    const ts = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}${String(now.getSeconds()).padStart(2,'0')}`;
+                    a.download = `AI_4koma_comic_${apiName}_${titleSlug}_${ts}.png`;
                     document.body.appendChild(a);
                     a.click();
                     document.body.removeChild(a);
