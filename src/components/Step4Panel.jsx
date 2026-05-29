@@ -227,7 +227,9 @@ export default function Step4Panel({
                   const metadata = {
                     "ファイル情報": {
                       "フォーマットバージョン": 2,
+                      "生成ツール": "Super FURU AI 4-koma System",
                       "アプリバージョン": SYSTEM_VERSION,
+                      "リポジトリ": "https://github.com/FURUYAN1234/nano-banana-pro",
                       "保存日時": now.toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }),
                       "ISO日時": isoTime
                     },
