@@ -1160,6 +1160,9 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v4.5.2 (2026-05-29)
+- **[Fix & UX]** プロンプト生成システムのバグ修正（モブ制限解除・セリフ欠落防止・擬音除外） / Fixed prompt generation bugs (mob display, missing dialogue, SFX bubbles)
+
 ### v4.5.1 (2026-05-29)
 - **[Fix & UX]** JSONメタデータに生成アプリ名とリポジトリURLの出所明記を追加 / Added generating tool name and repository URL to Audit-Grade Metadata JSON for enhanced provenance
 

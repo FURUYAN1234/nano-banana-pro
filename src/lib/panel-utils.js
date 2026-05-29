@@ -108,6 +108,8 @@ export const isLikelyPerson = (name, validCharacters = []) => {
   const cleanName = name.replace(/[（(].*?[）)]/g, '').trim();
   if (!cleanName) return false;
 
+  if (cleanName === '全員' || cleanName === 'みんな') return true;
+
   // Check registered cast list
   const isCast = validCharacters.some(c => {
     const nameOnly = c.split(/[（(]/)[0].trim();
@@ -290,7 +292,7 @@ export const extractDialogueOnly = (fullPanelText, castList) => {
       const hasValidSpeakerInPrevText = isLikelyPerson(prevText, validCharacters) || validCharacters.some(c => {
         const nameOnly = c.split(/[（(]/)[0].trim();
         return nameOnly && prevText.includes(nameOnly);
-      });
+      }) || prevText.includes("全員") || prevText.includes("みんな");
 
       if (!hasValidSpeakerInPrevText) {
         // 直前にキャスト名や人物名がない場合は、セリフではなく引用や他人の発言としてスキップ
@@ -301,10 +303,15 @@ export const extractDialogueOnly = (fullPanelText, castList) => {
       // 1. 長さが極めて短い、英数字・記号のみの文字列（例：Ω、∩、Aなど）は除外
       const isPureSymbol = /^[A-Za-z0-9Ω∩αβγδεζηθικλμνξοπρστυφχψω\s\-\+\*\/\\＝\?？!！]{1,3}$/.test(dialogueText);
 
+      // 1.5 擬音語・擬態語の除外（バンッ！、ドカーン等）
+      const isSfx = /^(バン|ドン|ガン|ドカ|バキ|ドス|ガサ|ゴト|チリン|ピンポン|カチ|パチ|ドーン|バァーン|ドォーン|バーン|ドドド|ゴゴゴ|ザザザ|ピー|ピピッ|ガチャ|ギー)[ッー!！\s]*$/u.test(dialogueText);
+      const postText = fullPanelText.substring(regex.lastIndex, regex.lastIndex + 10);
+      const isSfxByPostText = /^(という音|という爆音|という銃声|という足音)/.test(postText);
+
       // 2. 直前のテキストの末尾が形状や表記指示、比喩表現などを示すものである場合は除外
       const isNotDialogueIndicator = /(?:型|字|感|と書かれた|と書く|と書き|と書いた|という|のような|風の|的な|コード|キー|マーク|記号|ラベル|吹き出し|セリフ|ポーズ)$/.test(prevText.trim());
 
-      if (isPureSymbol || isNotDialogueIndicator) {
+      if (isPureSymbol || isSfx || isSfxByPostText || isNotDialogueIndicator) {
         continue;
       }
 
@@ -685,7 +692,15 @@ export const extractCastLimitRule = (fullPanelText, castList) => {
       negativeConstraint = `\nDo NOT draw ${noShowNames} in this panel. They are completely absent from this scene.`;
     }
 
-    const spatialConstraint = `\nFOREGROUND MUST CONTAIN ONLY: ${foreground}.\nBACKGROUND MUST CONTAIN ONLY: ${background}.${negativeConstraint}\nABSOLUTELY NO OTHER HUMANS ALLOWED. Do not draw any character in the background if they are already in the foreground. Total EXACTLY ${allPanelCharacters.length} distinct individuals.`;
+    // [v4.2.1] モブキャラ検出ロジック：本文にモブが含まれる場合はABS制限を緩和する
+    const hasMob = /(モブ|スタッフ|観客|群衆|兵士|客|人々|クラスメイト|生徒たち|全員|みんな|ファンたち|ファン|通行人)/.test(fullPanelText);
+
+    let spatialConstraint;
+    if (hasMob) {
+      spatialConstraint = `\nFOREGROUND MUST CONTAIN ONLY: ${foreground}.\nBACKGROUND MUST CONTAIN ONLY: ${background} and background characters (mob).\n${negativeConstraint}\nAllow additional background characters (mobs) as required by the action. Do not draw any main character in the background if they are already in the foreground.`;
+    } else {
+      spatialConstraint = `\nFOREGROUND MUST CONTAIN ONLY: ${foreground}.\nBACKGROUND MUST CONTAIN ONLY: ${background}.${negativeConstraint}\nABSOLUTELY NO OTHER HUMANS ALLOWED. Do not draw any character in the background if they are already in the foreground. Total EXACTLY ${allPanelCharacters.length} distinct individuals.`;
+    }
 
     return `CRITICAL CAST PLACEMENT: Ensure ${foreground} are the main focus.\n${cloneWarning}${spatialConstraint}`;
   } else {
