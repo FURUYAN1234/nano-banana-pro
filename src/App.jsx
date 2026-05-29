@@ -402,6 +402,7 @@ function App() {
               fullAutoStep={fullAutoStep}
               mangaTitle={mangaTitle}
               isFallbackUsed={isFallbackUsed}
+              usedModel={usedModel}
               enableOpenAIApi={enableOpenAIApi}
               setGeneratedImage={setGeneratedImage}
               generationHistory={generationHistory}

@@ -73,6 +73,7 @@ export default function Step4Panel({
   fullAutoStep,
   mangaTitle,
   isFallbackUsed,
+  usedModel,
   enableOpenAIApi,
   setGeneratedImage,
   generationHistory,
@@ -210,15 +211,36 @@ export default function Step4Panel({
 
               {/* メタデータ保存ボタン */}
               <button
-                onClick={() => {
+                onClick={async () => {
                   const now = new Date();
+                  const isoTime = now.toISOString();
                   const promptMode = selectedEngine === 'openai' ? 'ChatGPT Engine (自動)' : (enableChatGPTMode ? 'ChatGPT専用プロンプト' : 'Gemini用プロンプト');
+                  
+                  // ハッシュ計算 (Proof of Generation)
+                  const dataToHash = `${scenario || ""}|${finalPrompt || ""}|${isoTime}|${SYSTEM_VERSION}`;
+                  const encoder = new TextEncoder();
+                  const data = encoder.encode(dataToHash);
+                  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+                  const hashArray = Array.from(new Uint8Array(hashBuffer));
+                  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
                   const metadata = {
                     "ファイル情報": {
-                      "フォーマットバージョン": 1,
+                      "フォーマットバージョン": 2,
                       "アプリバージョン": SYSTEM_VERSION,
                       "保存日時": now.toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }),
-                      "ISO日時": now.toISOString()
+                      "ISO日時": isoTime
+                    },
+                    "来歴と証跡 (Provenance & Audit)": {
+                      "使用モデル (Model Accountability)": usedModel || (selectedEngine === 'openai' ? "gpt-4o" : "gemini-3.5-flash"),
+                      "フォールバック発生 (Fallback Occurred)": !!isFallbackUsed,
+                      "生成証明ハッシュ (Proof of Generation)": hashHex,
+                      "ハッシュアルゴリズム": "SHA-256",
+                      "ハッシュ対象データ構成": "シナリオ本文 + 最終プロンプト + ISOタイムスタンプ + アプリバージョン",
+                      "コンテンツフットプリント (Content Footprint)": {
+                        "プロンプト文字数": finalPrompt ? finalPrompt.length : 0,
+                        "シナリオ文字数": scenario ? scenario.length : 0
+                      }
                     },
                     "プロンプト判別": {
                       "モード": promptMode,
