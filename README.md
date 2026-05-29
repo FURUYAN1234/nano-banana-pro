@@ -1156,6 +1156,9 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v4.4.9 (2026-05-29)
+- **[Fix & UX]** API別画像ダウンロードファイル名機能のリリースとPS1バックアップ同期 / Released dynamic filename customization and synced PS1 backup
+
 ### v4.4.8 (2026-05-29)
 - **[Fix & UX]** API別にAI画像ダウンロード時のファイル名が動的に変わるように変更 / Dynamically customize image download filename by API type and title
 
