@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { BrainCircuit, RefreshCw, LogOut, AlertTriangle } from 'lucide-react';
+import FallbackChainViewer from './FallbackChainViewer';
 
 export default function SystemHeader({
   SYSTEM_VERSION,
@@ -10,6 +11,8 @@ export default function SystemHeader({
   usedModel,
   getModelBadgeInfo
 }) {
+  const [showFallbackChain, setShowFallbackChain] = useState(false);
+
   return (
     <header className="flex flex-col items-center justify-center gap-6 bg-[#0f1115] p-6 md:p-8 rounded-xl border border-white/5 shadow-2xl relative overflow-hidden group">
       <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/5 blur-[80px] rounded-full pointer-events-none" />
@@ -29,6 +32,13 @@ export default function SystemHeader({
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.4em]">
                 Social Satire Engine [ 演出強化版 ]
               </p>
+              <button
+                onClick={() => setShowFallbackChain(true)}
+                className="text-[10px] text-slate-500 hover:text-blue-400 transition-colors cursor-pointer"
+                title="AIモデルフォールバックチェーンの構成を確認"
+              >
+                ⚙ Model Chain
+              </button>
               
               <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[10px] font-black tracking-wider ${apiKey ? (selectedEngine === 'openai' ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-400' : 'bg-green-500/15 border-green-500/40 text-green-400') : 'bg-red-500/15 border-red-500/40 text-red-400 animate-pulse'}`}>
                 <span className={`w-1.5 h-1.5 rounded-full ${apiKey ? (selectedEngine === 'openai' ? 'bg-emerald-400 shadow-[0_0_6px_rgba(16,185,129,0.8)]' : 'bg-green-400 shadow-[0_0_6px_rgba(74,222,128,0.8)]') : 'bg-red-400'}`} />
@@ -81,6 +91,10 @@ export default function SystemHeader({
           </div>
         </div>
       </div>
+      <FallbackChainViewer
+        isOpen={showFallbackChain}
+        onClose={() => setShowFallbackChain(false)}
+      />
     </header>
   );
 }

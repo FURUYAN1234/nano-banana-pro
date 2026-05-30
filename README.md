@@ -1160,6 +1160,10 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v4.5.3 (2026-05-30)
+- **[Feature]** AIモデルフォールバックチェーンビューア機能を追加。ヘッダーの「⚙ Model Chain」ボタンから現在の全STEPのモデル構成と更新履歴を一覧表示・コピー可能 / Added AI Model Fallback Chain Viewer with copy-to-clipboard
+- **[System]** デプロイ前モデル差分検出と更新履歴プロトコルを追加 / Added pre-deploy model diff detection and history protocol
+
 ### v4.5.2 (2026-05-29)
 - **[Fix & UX]** プロンプト生成システムのバグ修正（モブ制限解除・セリフ欠落防止・擬音除外） / Fixed prompt generation bugs (mob display, missing dialogue, SFX bubbles)
 
