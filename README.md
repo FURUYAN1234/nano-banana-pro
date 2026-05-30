@@ -1160,6 +1160,9 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v4.5.4 (2026-05-30)
+- **[Docs & UX]** フォールバックチェーン説明文の注意事項をより的確な表現に修正 / Updated the fallback chain note for clarity regarding API generation priority
+
 ### v4.5.3 (2026-05-30)
 - **[Feature]** AIモデルフォールバックチェーンビューア機能を追加。ヘッダーの「⚙ Model Chain」ボタンから現在の全STEPのモデル構成と更新履歴を一覧表示・コピー可能 / Added AI Model Fallback Chain Viewer with copy-to-clipboard
 - **[System]** デプロイ前モデル差分検出と更新履歴プロトコルを追加 / Added pre-deploy model diff detection and history protocol
