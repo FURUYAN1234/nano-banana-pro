@@ -1,25 +1,22 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
 // --- Imports (paths adjusted from ./lib/ to ../lib/) ---
 import { setApiKey, getApiKey } from '../lib/gemini';
 import { generateImageWithImagen } from '../lib/imagen';
-import { generateImageWithOpenAI, setOpenAIApiKey, getOpenAIApiKey } from '../lib/openai';
-import { callAI, setActiveEngine, getActiveEngine, getEngineDisplayName } from '../lib/ai-provider';
-import { getLocationDetails } from '../lib/knowledge';
+import { generateImageWithOpenAI, setOpenAIApiKey } from '../lib/openai';
+import { callAI, setActiveEngine } from '../lib/ai-provider';
 
 // --- Refactored Imports (Phase 1-2) ---
-import { SYSTEM_VERSION, getPunchlineLabel, DEFAULT_CATEGORIES, getModelBadgeInfo, EMOTION_STYLES, cameraAngles, cameraLensMap, DYNAMIC_CAMERA_PROTOCOL, ANTI_CHARSHEET_PREFIX } from '../lib/constants';
-import { translateApiError, applySafetyAgeUp, sanitizeForDocumentary } from '../lib/safety-filters';
-import { cropEquirectangular, validate360Image, get360AnalysisPrompt, parse360Analysis } from '../lib/panorama360';
-import { getCharacterAnalysisPrompt, getScenarioEnhancePrompt, getScenarioPrompt, getPolicyAnalysisPrompt, getPolicyFallbackPrompt, buildChatGPTMangaPrompt, buildGeminiMangaPrompt } from '../lib/prompts';
-import { buildIdentityMatrix, getCharTraitsFromMatrix, extractDialogueOnly, extractActionOnly, injectOutfitReminder, extractPlacementRule, extractCastLimitRule, getCameraForPanel, getCameraForChatGPT, stripWeightTags, extractEmotionStyle, buildEmotionBlock, cleanCastList } from '../lib/panel-utils';
+import { SYSTEM_VERSION, DEFAULT_CATEGORIES, EMOTION_STYLES, DYNAMIC_CAMERA_PROTOCOL, ANTI_CHARSHEET_PREFIX } from '../lib/constants';
+import { translateApiError } from '../lib/safety-filters';
+import { get360AnalysisPrompt, parse360Analysis } from '../lib/panorama360';
+import { getCharacterAnalysisPrompt } from '../lib/prompts';
 import { buildMangaPrompt } from '../lib/prompt-assembler';
 import { generateScenario, enhanceScenarioText } from '../lib/scenario-provider';
 import { fixPolicyViolation } from '../lib/policy-fixer';
 
 export default function useMangaWorkflow() {
   // Force Build 2026-02-06 07:07 // Build 2026-02-06-01
-  console.log("System Version Loaded:", SYSTEM_VERSION); // Debug Log
   const [apiKey, setApiKeyState] = useState("");
   const [showModal, setShowModal] = useState(false); // FIXEDCRITICAL RESTORE
   const [selectedEngine, setSelectedEngine] = useState('gemini'); // [v3.59] Dual Engine: 'gemini' | 'openai'
@@ -115,34 +112,21 @@ export default function useMangaWorkflow() {
   const [enableChatGPTMode, setEnableChatGPTMode] = useState(false); // [v2.61] ChatGPT Images 2.0 強化プロンプト
   const [enableOpenAIApi, setEnableOpenAIApi] = useState(false); // [v2.87] ChatGPT Images 2.0 API
   const [showOpenAIKeyModal, setShowOpenAIKeyModal] = useState(false); // [v2.88] Secure API key modal
-  const [openAIKeyInput, setOpenAIKeyInput] = useState("");
   const [isCastListCopied, setIsCastListCopied] = useState(false);
   const [isScenarioCopied, setIsScenarioCopied] = useState(false);
   const [isMetaSaved, setIsMetaSaved] = useState(false); // [v3.46] メタデータ保存フィードバック
 
   // [v3.48] 360度背景画像読み込み (Studio Shooting Protocol)
-  const [is360PanelOpen, setIs360PanelOpen] = useState(false);       // 折りたたみパネル開閉
   const [bg360Image, setBg360Image] = useState(null);                 // Base64プレビュー用
   const [bg360ImageParts, setBg360ImageParts] = useState(null);       // Gemini API送信用パーツ
   const [bg360Analysis, setBg360Analysis] = useState(null);           // AI解析結果 {location, lighting, spatialType}
   const [is360Analyzing, setIs360Analyzing] = useState(false);        // 解析中フラグ
-  const [bg360Error, setBg360Error] = useState('');                    // バリデーションエラー
-  const [is360DragOver, setIs360DragOver] = useState(false);          // ドラッグオーバー状態
   const [bg360Enabled, setBg360Enabled] = useState(false);            // [v3.50 Fix] 360°背景有効化フラグ（欠落修正 — これが無いとドロップ時にReferenceErrorでハングアップしていた）
   const [bg360CameraWork, setBg360CameraWork] = useState(null);        // [v3.53] 360°カメラワーク設計結果 {panels: [{panel, camera, yaw, pitch, fov, reasoning}]}
   const [bg360CroppedPanels, setBg360CroppedPanels] = useState(null);   // [v3.53 Phase2] 各コマ用クロップ済み背景画像 [base64, base64, base64, base64]
   const [is360CameraWorking, setIs360CameraWorking] = useState(false);  // [v3.53] カメラワーク設計＋クロップ処理中フラグ（Step3ブロック用）
 
   // cropEquirectangular → src/lib/panorama360.js に移動済み
-
-  const handleToggleOpenAIApi = (checked) => {
-    if (checked) {
-      setOpenAIKeyInput(""); // フォームをリセット
-      setShowOpenAIKeyModal(true);
-    } else {
-      setEnableOpenAIApi(false);
-    }
-  };
 
   // [v2.78] フルオート生成モード
   const [isFullAutoMode, setIsFullAutoMode] = useState(false); // フルオート実行中フラグ
@@ -220,76 +204,6 @@ export default function useMangaWorkflow() {
 
   // validate360Image → src/lib/panorama360.js に移動済み
 
-  // 360度画像をBase64に変換してGemini API送信用パーツを生成
-  const process360Image = async (file) => {
-    setBg360Error('');
-    setBg360Analysis(null);
-    setIs360Analyzing(true);
-
-    try {
-      // バリデーション
-      const validResult = await validate360Image(file);
-      if (validResult.warning) {
-        console.warn(`[360° BG] ${validResult.warning}`);
-      }
-
-      // Base64変換
-      const base64 = await new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = () => reject('ファイルの読み込みに失敗しました。');
-        reader.readAsDataURL(file);
-      });
-
-      // プレビュー用に保存
-      setBg360Image(base64);
-
-      // Gemini API送信用パーツを作成
-      const base64Data = base64.split(',')[1];
-      const imagePart = {
-        inlineData: {
-          mimeType: file.type,
-          data: base64Data
-        }
-      };
-      setBg360ImageParts(imagePart);
-
-      // 場所テキスト入力をクリア（背景画像が場所の上位互換として機能するため）
-      setCustomLocation('');
-
-      // Geminiで空間解析を実行（プロンプトは panorama360.js に外部化済み）
-      const analysisResult = await callAI(get360AnalysisPrompt(), [imagePart], null, (msg) => {
-        console.log(`[360° BG Analysis] ${msg}`);
-      });
-
-      // JSONをパース（パーサーは panorama360.js に外部化済み）
-      const analysis = parse360Analysis(analysisResult.text);
-      setBg360Analysis(analysis);
-      if (analysis.location !== '360°パノラマ画像') {
-        showStatus(`✅ 360°背景を読み込みました: ${analysis.location}`);
-      } else {
-        showStatus('✅ 360°背景を読み込みました（解析結果は簡略化されています）');
-      }
-    } catch (err) {
-      console.error('[360° BG] Validation/Processing failed:', err);
-      setBg360Error(typeof err === 'string' ? err : err.message || '画像の処理に失敗しました。');
-      setBg360Image(null);
-      setBg360ImageParts(null);
-    } finally {
-      setIs360Analyzing(false);
-    }
-  };
-
-  // 360度背景画像のクリア
-  const clear360Background = () => {
-    setBg360Image(null);
-    setBg360ImageParts(null);
-    setBg360Analysis(null);
-    setBg360Error('');
-    showStatus('360°背景画像を解除しました。');
-  };
-
-
 
   const processFiles = async (files) => {
     // API KEY CHECK
@@ -358,7 +272,7 @@ export default function useMangaWorkflow() {
             showStatus("⚠️ 無効なJSONです。作風解析エンジンの出力を使用してください。");
             setAnalyzeThought(prev => prev + `\n> ⚠️ 読み込まれたJSONは作風解析エンジン用ではありませんでした。`);
           }
-        } catch (e) {
+        } catch {
           showStatus("⚠️ JSONファイルの読み込みに失敗しました。");
         }
         continue;
@@ -1378,11 +1292,11 @@ export default function useMangaWorkflow() {
   };
 
   // [v2.78] フルオート生成トリガー監視
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (triggerFullAuto > 0 && !fullAutoAbortRef.current) {
       runFullAuto();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [triggerFullAuto]);
 
   // --- [v2.78] フルオート生成モード ---

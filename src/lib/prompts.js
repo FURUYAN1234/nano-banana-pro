@@ -167,7 +167,6 @@ export const getScenarioPrompt = ({
   bg360Analysis,
   bg360Enabled,
   customLocation,
-  forcedLocation,
   customOutfit,
   ragLocationDetails,
   ragReactions,

@@ -29,7 +29,7 @@ const Panorama360Viewer = ({ imageSrc, height = 200 }) => {
       renderer = new THREE.WebGLRenderer({ antialias: true });
     } catch (e) {
       console.error("WebGL Context creation failed:", e);
-      setWebglFailed(true);
+      queueMicrotask(() => setWebglFailed(true));
       return;
     }
     renderer.setSize(container.clientWidth, container.clientHeight);
@@ -106,7 +106,7 @@ const Panorama360Viewer = ({ imageSrc, height = 200 }) => {
         }
       }
     };
-  }, [imageSrc]);
+  }, [imageSrc, webglFailed]);
 
   return (
     <div

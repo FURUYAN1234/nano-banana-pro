@@ -1160,6 +1160,9 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v4.5.5 (2026-05-31)
+- **[Fix & Refactoring]** ポート競合の解消、コンポーネント間連携（setShowModal）の修正、ApiKeyModalの警告解消、およびLintエラー（未使用変数等）の完全クリーンアップ / Resolved port conflicts, fixed component props (setShowModal), addressed ApiKeyModal form warnings, and completely cleaned up Lint errors (unused variables, etc.)
+
 ### v4.5.4 (2026-05-30)
 - **[Docs & UX]** フォールバックチェーン説明文の注意事項をより的確な表現に修正 / Updated the fallback chain note for clarity regarding API generation priority
 

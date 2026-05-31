@@ -1,8 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 
-// CANARY TEST
-console.log("HELLO_USER_FIXED_VERSION_2_25");
-
 import {
   CheckCircle2
 } from 'lucide-react';
@@ -252,6 +249,7 @@ function App() {
 
             {/* 01: キャラクター入力 (Dynamic Style) */}
             <Step1Panel
+              setShowModal={setShowModal}
               isDragging={isDragging}
               setIsDragging={setIsDragging}
               apiKey={apiKey}

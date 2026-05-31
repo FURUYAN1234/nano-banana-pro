@@ -1,13 +1,12 @@
 # HANDOFF.md
 
-## 現在のステータス (Deploying v4.5.4)
-- **バージョン**: v4.5.4
+## 現在のステータス (Deploying v4.5.5)
+- **バージョン**: v4.5.5
 - **完了した項目**:
-  - [x] フォールバックチェーンビューア機能の実装（`FallbackChainViewer.jsx`, `fallback-chain-history.js`）
-  - [x] `SystemHeader.jsx` に「⚙ Model Chain」ボタン追加
-  - [x] `AGENTS.md` にフォールバックチェーン更新履歴プロトコル (Section 12) 追加
-  - [x] `pre_deploy_check.js` にモデルリスト差分検出ロジック (Section 11) 追加
-  - [x] バージョンアップ v4.5.2 → v4.5.4
+  - [x] ポート競合解消、App.jsxのsetShowModal受け渡し修正
+  - [x] ApiKeyModalのform submit警告解消
+  - [x] useMangaWorkflow.js等のデバッグログと未使用変数・importを完全削除
+  - [x] npm run lint エラーの完全クリーンアップ
 
 ## 検証待ちタスク (Pending Verification Tasks)
 - [ ] GitHub Pages デプロイ検証

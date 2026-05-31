@@ -9,8 +9,7 @@ import { getPolicyAnalysisPrompt, getPolicyFallbackPrompt } from './prompts';
 export async function fixPolicyViolation({
   finalPrompt,
   policyErrorMsg,
-  onProgress,
-  selectedEngine
+  onProgress
 }) {
   if (!finalPrompt || !policyErrorMsg) {
     throw new Error("プロンプトとエラーメッセージが必要です。");

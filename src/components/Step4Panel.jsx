@@ -75,14 +75,10 @@ export default function Step4Panel({
   isFallbackUsed,
   usedModel,
   enableOpenAIApi,
-  setGeneratedImage,
-  generationHistory,
-  setGenerationHistory,
   showPolicyChoice,
   policyAutoRetrying,
   handlePolicyAutoFix,
-  handlePolicySwitchToWeb,
-  MAX_POLICY_RETRIES
+  handlePolicySwitchToWeb
 }) {
   return (
     <div
