@@ -1160,6 +1160,9 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v4.5.8 (2026-05-31)
+- **[Fix & UX]** 吹き出し以外のテキストの読み上げ防止ガードレール実装 / Implemented guardrails to prevent non-speech bubble visual text from being rendered as speech bubbles
+
 ### v4.5.7 (2026-05-31)
 - **[Docs & UX]** Open AI API選択時（ChatGPTウェブ版での手動生成時）のプロンプト貼り付けに関する注意書き（「テキストフィールドに表示」のクリック必須）をPro Tipに追加 / Added a warning about clicking "Display in Text Field" when pasting prompts into ChatGPT Web.
 

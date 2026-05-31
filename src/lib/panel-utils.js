@@ -313,13 +313,17 @@ export const extractDialogueOnly = (fullPanelText, castList) => {
 
       // 1.5 擬音語・擬態語の除外（バンッ！、ドカーン等）
       const isSfx = /^(バン|ドン|ガン|ドカ|バキ|ドス|ガサ|ゴト|チリン|ピンポン|カチ|パチ|ドーン|バァーン|ドォーン|バーン|ドドド|ゴゴゴ|ザザザ|ピー|ピピッ|ガチャ|ギー)[ッー!！\s]*$/u.test(dialogueText);
-      const postText = fullPanelText.substring(regex.lastIndex, regex.lastIndex + 10);
+      const postText = fullPanelText.substring(regex.lastIndex, regex.lastIndex + 40);
       const isSfxByPostText = /^(という音|という爆音|という銃声|という足音)/.test(postText);
 
       // 2. 直前のテキストの末尾が形状や表記指示、比喩表現などを示すものである場合は除外
       const isNotDialogueIndicator = /(?:型|字|感|と書かれた|と書く|と書き|と書いた|という|のような|風の|的な|コード|キー|マーク|記号|ラベル|吹き出し|セリフ|ポーズ)$/.test(prevText.trim());
+      const preQuoteContext = prevText.slice(-40);
+      const isVisualTextByContext =
+        /(?:空中|宙|空間|画面|紙|原稿|黒板|ホワイトボード|看板|札|プレート|ノート|ページ|壁|床|文字|単語|タイトル|見出し|ラベル|テロップ|字幕|サイン|SFX|擬音)[^「」]{0,12}$/.test(preQuoteContext) ||
+        /^(?:と)?[^。！？\n]{0,16}(?:書|描|指書|なぞ|浮か|表示|投影|刻|印字|残像|光|輝|出現|出る|現れる|走る|切り裂く)/.test(postText);
 
-      if (isPureSymbol || isSfx || isSfxByPostText || isNotDialogueIndicator) {
+      if (isPureSymbol || isSfx || isSfxByPostText || isNotDialogueIndicator || isVisualTextByContext) {
         continue;
       }
 
