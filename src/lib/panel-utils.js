@@ -1,4 +1,4 @@
-import { cameraLensMap, EMOTION_STYLES } from './constants';
+import { cameraLensMap, cinematicCompositionMap, EMOTION_STYLES } from './constants';
 
 // --- Panel Utility Functions (App.jsx assemblePrompt -> externalized) ---
 // assemblePrompt 内で定義されていたパネル解析・プロンプト組立ユーティリティ群
@@ -138,6 +138,14 @@ export const getCameraForPanel = (panelText, shuffledCameras, cameraState) => {
   const cameraMatch = panelText.match(/\[Camera:\s*(.*?)\]/i);
   if (cameraMatch && cameraMatch[1]) {
      const specificCamera = cameraMatch[1].trim();
+
+     // [v4.5.6] シネマティック構図のチェック（歪みを加えず、美しさを強調）
+     for (const [keyword, lensTag] of Object.entries(cinematicCompositionMap)) {
+       if (specificCamera.toLowerCase().includes(keyword.toLowerCase())) {
+         return `${lensTag}, (masterpiece, best quality, highly detailed, professional photography:1.2), (ABSOLUTELY NO flat normal photos:2.9), (NEVER draw text of camera names:3.0)`;
+       }
+     }
+
      // [v2.60] AIのカメラ名をマッピング辞書で具体的なレンズ歪みタグに変換
      let matchedLens = '';
      for (const [keyword, lensTag] of Object.entries(cameraLensMap)) {

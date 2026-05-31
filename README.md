@@ -1160,6 +1160,9 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v4.5.6 (2026-05-31)
+- **[Fix & Prompt]** シネマティック構図の名称をオリジナルに変更し、ChatGPT用/Gemini用プロンプトを大幅に圧縮（不要なFINAL COMPLIANCE CHECKを削除）。これにより横並び（漫才構図）エラーを防止しつつ、1x4の縦長レイアウトと極彩色（Chic Cinematic）を維持 / Renamed cinematic compositions and heavily compressed ChatGPT/Gemini prompts to fix the 1x4 layout degradation and restore chic cinematic colors.
+
 ### v4.5.5 (2026-05-31)
 - **[Fix & Refactoring]** ポート競合の解消、コンポーネント間連携（setShowModal）の修正、ApiKeyModalの警告解消、およびLintエラー（未使用変数等）の完全クリーンアップ / Resolved port conflicts, fixed component props (setShowModal), addressed ApiKeyModal form warnings, and completely cleaned up Lint errors (unused variables, etc.)
 

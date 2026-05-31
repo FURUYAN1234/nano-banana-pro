@@ -433,21 +433,31 @@ ${styleJson.anti_patterns ? `            - 絶対禁止事項:\n${styleJson.anti
                 - HIGH_SATURATION: 高彩度ビビッド。鮮やかで目を引くパワフルな色彩。スポーツ・祭り・勝利・興奮等の派手でエネルギッシュな場面に。
              - オチのコマ（4コマ目）は特に、NORMAL以外のタグを優先的に選べ。
 
-          6. **【カメラ演出タグ (Camera Direction Tag) — 極限物理描写モード v2.55】**:
+          6. **【カメラ演出タグ (Camera Direction Tag) — 極限物理描写 & シネマティック構図 v4.5】**:
              - 各コマの冒頭に [Camera: XXX] タグを**必ず1つ**付与せよ。
-             - **【超重要・カメラ名だけでは不十分】**: [Camera: XXX] タグの直後に、**そのカメラアングルで物理的に何が見えるかの極限描写**を必ず1〜2文書け。
-             - カメラ名を書いただけ（例:「[Camera: ローアングル]」のみ）は**絶対に禁止**。
-             - **物理描写の書き方（全コマ必須）**: 「カメラがどこにあり」「何が巨大に見え」「何が歪み」「光がどう当たるか」を具体的に書け:
-                * 俯瞰/バードアイ → 「成層圏を突き抜け、銀河の果てから地球の一点を凝視するような極限の俯瞰。太陽光が海面で核爆発的な反射を放つ」
-                * ローアングル/アオリ → 「膝の高さから見上げ、キャラの全身がそびえ立つ巨人のように見え、背後の天井や空が大きく広がる。逆光が後ろから吹き荒れ、足元から頭頂までパースが効く。※靴だけのアップにはするな、必ずキャラの全身を描画せよ」
-                * フィッシュアイ → 「分厚いアクリルガラス越しに見るように世界全体が丸く湾曲し、周囲の空間や背景が飴細工のようにぐにゃりと曲がる。※キャラクターの顔や鼻を歪ませたり大きくしたりする描写は絶対に書くな。背景のみを歪ませよ」
-                * ダッチアングル → 「世界が30度傾き、壁も床も天井も重力を忘れて斜めに流れ、キャラが滑り落ちそうな不安定感で画面が崩壊する」
-                * 望遠圧縮 → 「100m先の背景が目の前まで迫り、キャラと背景の距離感が消失し、圧迫的な密度で空間が潰れる」
-                * ワームズアイ → 「地面すれすれから見上げ、人間が巨人のようにそびえ立つ。足元の地面のディテールが鮮明に描かれつつ、キャラの全身が圧倒的スケールで画面に収まる。※靴だけのアップ画は禁止、必ず全身を描画せよ」
-                * パンニング/追跡ショット → 「カメラがキャラの疾走を追いかけ、背景が流星群のようにモーションブラーで崩壊する。手前のキャラが画面を突き破る勢いで奥へ走り抜ける」
-                * ⚠️ マクロ特写（顔・目の超接写）は全キャラ描画義務と矛盾するため**使用禁止**。
+             - シーンの文脈（アクションか、エモーショナルか）に応じて、**【A. アクション向け極限カメラ】** または **【B. シネマティック構図10選】** のいずれかから最適なものを1つ選べ。
+             
+             **【A. アクション向け極限カメラ（歪み重視）】**: 激しい動き、狂気、ギャグの爆発シーンに使用。
              - 選択肢: 俯瞰/バードアイ、ローアングル/アオリ、ダッチアングル、超広角/フィッシュアイ、望遠圧縮、ワームズアイ、ドローン俯瞰、パンニング/追跡ショット
-             - 【制約】4コマの中で**同じカメラを2回以上使うのは禁止**。必ず4種類の異なるカメラを選べ。
+             - 物理描写の書き方（全コマ必須）: 「カメラがどこにあり」「何が巨大に見え」「何が歪み」「光がどう当たるか」を具体的に書け。
+                * 例（ローアングル）: 「膝の高さから見上げ、キャラの全身がそびえ立つ巨人のように見え、背後の天井や空が大きく広がる。逆光が後ろから吹き荒れる」
+             
+             **【B. シネマティック構図10選（美しさ・感情重視）】**: 歪ませず、プロの写真のような美しい構図で感情や空気を表現するシーンに使用。
+             - 選択肢（この通りに英語名で書くこと）: 
+                1. Epic Wide（壮大な背景・スケール感）
+                2. Dominant Low（強者感・見下し・ヒロイック）
+                3. Innocent High（あざと可愛い・上目遣い・弱さ）
+                4. Hyper Perspective（臨場感マックス・パース強調）
+                5. Aesthetic Thirds（黄金比の余白・プロの写真構図）
+                6. Over The Shoulder（振り返り美人・肩越しの視線）
+                7. Deep Emotion Close（瞳の奥の感情・顔のクローズアップ・背景ボケ）
+                8. Cinematic Slant（シネマティックな傾き・緊張感・疾走感）
+                9. Graceful Full Shot（美しい全身立ち絵・モデル体勢）
+                10. Bokeh Depth（手前ボケの立体感・没入感）
+             - 物理描写の書き方: 「どういう構図で」「光とボケがどう美しく演出しているか」を具体的に書け。
+                * 例（Aesthetic Thirds）: 「画面の三分の一にキャラクターを配置し、豊かな余白が美しい空気感を生む。プロの写真のような計算された構図」
+             
+             - 【制約】4コマの中で**同じカメラを2回以上使うのは禁止**。必ず4種類の異なるカメラを選べ。⚠️ マクロ特写（目だけの超接写等）は使用禁止。
 
 
           【出力フォーマット（絶対厳守・会話禁止）】
@@ -702,13 +712,6 @@ THINGS TO AVOID:
 - No extra characters beyond those specified in each panel.
 - No sparkling light particles, no glowing dust, no magical particles, no floating embers, no volumetric dust.
 - No film grain, paper grain, canvas texture, or rough textures.
-
-FINAL COMPLIANCE CHECK:
-- Output is a new manga scene with 4 distinct story panels, backgrounds, and vertical Japanese speech bubbles.
-- Output is NOT a character sheet.
-- No floating close-up eyes or partial face crops in the background. Every character must be drawn as a complete physical presence.
-- No anatomical distortion from excessive fisheye lens.
-- Strict anatomy check: Verify correct left/right hand orientation and exactly 5 fingers per hand.
 `;
 };
 
@@ -801,6 +804,7 @@ Tech Dict:
 (Meticulous clean line art, smooth cel shading: 2.5)
 (Soft diffused backlight, rim light: 2.4)
 (Cinematic depth of field, soft bokeh: 2.3)
+(chic cinematic color grading, elegant deep colors: 1.4)
 (NO text/SFX outside speech bubbles: 2.8)
 (NO ENGLISH TEXT outside watermark. NO 'G-pen'/'HA': 3.0)
 
@@ -820,16 +824,5 @@ Important constraints:
 - Flow is from top panel to bottom panel.
 - Ensure the watermark is positioned at the absolute bottom edge of the image, with no extra whitespace below it. The text must be oriented horizontally (left-to-right).
 - CRITICAL COMPOSITION BAN: Do NOT draw floating close-up eyes, partial face crops, or ghostly face overlays in the background of any panel. Every character must be drawn as a complete physical presence within the scene. No "dramatic eye insert" or "background eye close-up" compositions allowed.
-
-FINAL COMPLIANCE CHECK (MANDATORY BEFORE OUTPUT):
-Before generating the final image, mentally verify ALL of the following. If ANY check fails, you MUST redraw the failing panel:
-- [ ] Panel 1: Does the camera angle show VISIBLE distortion? Is the horizon/floor NOT perfectly horizontal? Are body proportions warped by perspective?
-- [ ] Panel 2: Does the camera angle show VISIBLE distortion? Is this a DIFFERENT angle from Panel 1? Can you see clear perspective deformation?
-- [ ] Panel 3: Does the camera angle show VISIBLE distortion? Is this a DIFFERENT angle from Panels 1 and 2? Are architectural lines bending?
-- [ ] Panel 4: Does the camera angle show VISIBLE distortion? Is this a DIFFERENT angle from the previous panels? Are near-side body parts oversized?
-- [ ] ALL 4 panels use DIFFERENT camera angles from each other — no two panels share the same angle type.
-- [ ] ZERO panels look like a flat, normal, eye-level photograph.
-- [ ] You did NOT override the distortion for "readability" or "narrative flow" — the extreme distortion is the intended artistic style.
-- [ ] Strict anatomy check: Verify correct left/right hand orientation and exactly 5 fingers per hand.
       `;
 };

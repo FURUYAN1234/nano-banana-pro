@@ -1,7 +1,7 @@
 // --- 定数・タグ定義 (constants.js) ---
 // App.jsx から抽出された共有定数
 
-export const SYSTEM_VERSION = "v4.5.5";
+export const SYSTEM_VERSION = "v4.5.6";
 
 // --- Punchline ラベル変換関数 ---
 export const getPunchlineLabel = (type) => {
@@ -268,47 +268,33 @@ export const cameraLensMap = {
   '追跡': '(dynamic panning shot:2.5), (motion blur background:2.4), (tracking camera following movement:2.5), (speed lines directional:2.3)',
 };
 
+// [v4.5.6] シネマティック構図10選マッピング辞書
+export const cinematicCompositionMap = {
+  'Epic Wide': '(dynamic wide-angle lens:1.5), (cinematic composition:1.4), (extreme depth of field:1.3), (environmental shot:1.2), (expansive background:1.2), (structural scale:1.3)',
+  'Dominant Low': '(low-angle shot:1.5), (looking down at viewer:1.4), (heroic posture:1.3), (powerful stance:1.3), (dramatic framing:1.4), (background convergence:1.2)',
+  'Innocent High': '(high-angle shot:1.5), (looking up at viewer:1.4), (cute expression:1.3), (emotional gaze:1.4), (upper body emphasis:1.3), (soft lighting:1.4), (vulnerable aesthetic:1.3)',
+  'Hyper Perspective': '(extreme foreshortening:1.6), (action pose:1.5), (reaching towards viewer:1.4), (dynamic hand gesture:1.3), (motion blur effect:1.2), (exaggerated scale:1.4), (intense perspective:1.5)',
+  'Aesthetic Thirds': '(rule of thirds composition:1.6), (off-center subject:1.5), (professional photography framing:1.4), (balanced negative space:1.5), (artistic breathing room:1.4), (aesthetic positioning:1.3)',
+  'Over The Shoulder': '(looking back:1.5), (over-the-shoulder shot:1.4), (turning head:1.4), (twisting waist:1.3), (dynamic hair flow:1.2), (enticing gaze:1.3), (side profile highlight:1.4)',
+  'Deep Emotion Close': '(closeup shot:1.5), (portrait composition:1.4), (large pupil:1.2), (detailed eyes:1.4), (shallow depth of field:1.5), (blurred background:1.6), (crisp focus on facial features:1.5)',
+  'Cinematic Slant': '(dutch angle:1.5), (tilted camera framing:1.4), (unstable composition:1.3), (dynamic tension:1.4), (diagonal lines:1.3), (stylish disorientation:1.2), (action movie vibe:1.3)',
+  'Graceful Full Shot': '(full body shot:1.5), (contrapposto pose:1.4), (twisting waist:1.3), (body line emphasis:1.4), (model posture:1.3), (elegant silhouette:1.4), (balanced framing:1.2)',
+  'Bokeh Depth': '(eye-level shot:1.5), (front view:1.2), (depth layer background:1.4), (foreground bokeh:1.6), (background blur:1.5), (layered composition:1.4), (high contrast depth:1.3), (immersive distance:1.4)'
+};
+
 // --- [v4.0] Dynamic Camera Protocol (App.jsx -> externalized) ---
-      export const DYNAMIC_CAMERA_PROTOCOL = `
-ANTIGRAVITY HYPER-DYNAMIC CAMERA PROTOCOL (v4.0):
-
-§1. CAMERA DISTORTION WEIGHTS (MANDATORY — Apply these weighted tags to EVERY panel):
-(extreme perspective distortion:2.8), (ABSOLUTELY NO eye-level shot:2.9), (NO flat symmetrical composition:2.9), (dramatic severe camera angle:2.7), (extreme visible lens distortion:2.6), (violently tilted horizon line:2.5), (heavily foreshortened body proportions:2.6), (extreme exaggerated depth of field:2.5)
-
-Available lens effects — EACH PANEL MUST USE ONE:
-  * (extreme fish-eye barrel distortion:2.8), (massive bulging foreground:2.5), (lens curve warping straight lines:2.6), (subject face very close to curved glass:2.5) — Ultra wide-angle spherical distortion
-  * (extreme telephoto compression:2.7), (dangerously close background:2.4), (claustrophobic flattened space:2.5), (distant objects appear massive behind character:2.6) — Background crushes into foreground
-  * (severe dutch angle 45 degrees:2.7), (violently tilted world:2.6), (falling gravity sensation:2.5), (sideways slanted walls and floor:2.6) — Frame tilted 15-45 degrees
-  * (ultra extreme low angle:2.7), (deep worm's eye view:2.6), (staring up from the floor:2.7), (ceiling is clearly visible:2.8), (towering full-body character from below:2.5), (PHYSICAL CAMERA PLACEMENT: placed flat on the ground looking straight up at the sky:2.0) — Camera at ground level looking UP. IMPORTANT: Always show full body, NEVER crop to shoes only.
-  * (ultra extreme high angle:2.7), (steep bird's eye view:2.6), (looking down at the floor:2.7), (PHYSICAL CAMERA PLACEMENT: suspended 10 meters in the air looking straight down at the ground:2.0), (character viewed from directly above their head:2.8), (wide shot of the ground beneath:2.5), (PHYSICAL CAMERA PLACEMENT: suspended 10 meters in the air looking straight down at the ground:2.0) — Camera from above looking DOWN
-
-[FLAT SHOT BAN]: (eye-level shot:0.1), (straight-on symmetrical:0.1) — Eye-level/straight compositions are FORBIDDEN. Weight them down to near-zero.
-[BODY DEFORMATION]: Characters' body parts closest to camera MUST be drawn 50%+ larger than far-side parts. This distortion is INTENTIONAL.
-
-§2. CAST MANAGEMENT & CLONE PREVENTION (CRITICAL):
-- Each named character appears ONLY ONCE per panel. Drawing duplicates (foreground+background copy, reflection, silhouette) is FORBIDDEN.
-- Background characters use cast members NOT speaking in that panel.
-
-§3. GAG MANGA INTERACTION RULES:
-1. Characters MUST interact with each other or the environment.
-2. [NO CAMERA EYE CONTACT]: (absolutely NO looking at camera:2.5), (NO breaking the fourth wall:2.5), (characters always looking at other characters or objects in the scene:1.8), (eyes directed at conversation partner:1.5). Direct eye contact with the viewer is strictly FORBIDDEN. Characters must always look at each other, at objects, or away from the camera.
-3. (exaggerated facial expressions:1.3), (emotional reactions:1.2) — Comical expressions: jaw drops, fury, waterfall tears, funny sweat drops.
-4. (dynamic body language:1.3), (full body reactions:1.2) — Characters physically react with entire bodies.
-5. Do NOT overlay floating close-up eyes or ghostly face inserts as background elements.
-6. Do NOT draw "adjusting glasses" pose unless the character explicitly wears glasses.
-
-§4. PERSPECTIVE-ALIGNED VFX:
-- Speed lines, explosions, lightning MUST follow the panel's perspective distortion.
-- If fish-eye: effects curve radially. If dutch angle: effects tilt with the world.
-    `;
+export const DYNAMIC_CAMERA_PROTOCOL = `
+ANTIGRAVITY CAMERA PROTOCOL:
+- DISTORTION: (extreme perspective distortion:2.8), (NO eye-level shot:2.9), (NO flat symmetrical composition:2.9), (severe camera angle:2.7), (exaggerated depth of field:2.5)
+- BODY DEFORM: Near body parts 50%+ larger than far parts.
+- ANTI-CLONE: Each character appears ONLY ONCE per panel.
+- NO EYE CONTACT: (NO looking at camera:2.5), (eyes directed at partner:1.5).
+- VFX MUST follow the panel's perspective distortion.
+`;
 
 // --- [v3.50] Anti-CharSheet Prefix (App.jsx -> externalized) ---
-export const ANTI_CHARSHEET_PREFIX = `🎨 OUTPUT FORMAT: Generate a SINGLE IMAGE. Do NOT respond with text, descriptions, explanations, or code. Your ONLY output must be one generated image file. Any text response is a FAILURE.
-
-[🔥 ABSOLUTE FIRST PRIORITY 🚨 READ THIS BEFORE ANYTHING ELSE]
-YOU ARE GENERATING A NEW 4-PANEL MANGA SCENE as an IMAGE. You are NOT creating a character sheet, model sheet, character lineup, expression chart, or reference sheet.
-The attached image is a CHARACTER REFERENCE ONLY 🚨 use it to identify hair color, eye shape, and glasses status. Do NOT reproduce its layout, white background, expression grid, or text labels.
-If your output looks like a character sheet or model sheet instead of a 4-panel manga story — YOU HAVE FAILED. Regenerate immediately as a manga scene.
-Do NOT describe the image in text. Do NOT write a prompt. DRAW the image directly.
-
+export const ANTI_CHARSHEET_PREFIX = `🎨 OUTPUT FORMAT: SINGLE IMAGE. NO TEXT.
+[🔥 CRITICAL RULES]
+- DRAW A 4-PANEL MANGA SCENE. NOT A CHARACTER SHEET.
+- Reference images are ONLY for hair/eyes/glasses. DO NOT copy their layout.
 `;
