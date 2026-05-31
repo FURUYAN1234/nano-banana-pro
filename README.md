@@ -1160,6 +1160,9 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v4.5.7 (2026-05-31)
+- **[Docs & UX]** Open AI API選択時（ChatGPTウェブ版での手動生成時）のプロンプト貼り付けに関する注意書き（「テキストフィールドに表示」のクリック必須）をPro Tipに追加 / Added a warning about clicking "Display in Text Field" when pasting prompts into ChatGPT Web.
+
 ### v4.5.6 (2026-05-31)
 - **[Fix & Prompt]** シネマティック構図の名称をオリジナルに変更し、ChatGPT用/Gemini用プロンプトを大幅に圧縮（不要なFINAL COMPLIANCE CHECKを削除）。これにより横並び（漫才構図）エラーを防止しつつ、1x4の縦長レイアウトと極彩色（Chic Cinematic）を維持 / Renamed cinematic compositions and heavily compressed ChatGPT/Gemini prompts to fix the 1x4 layout degradation and restore chic cinematic colors.
 

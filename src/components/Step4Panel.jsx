@@ -333,6 +333,9 @@ export default function Step4Panel({
                       <>
                         キャラクターの見た目が崩れたり、背景がイメージと異なる場合は、上の「コピー」ボタンでプロンプトをコピーし、公式の <a href="https://chatgpt.com/" target="_blank" rel="noreferrer" className="text-blue-400 hover:underline">ChatGPTウェブ版 🤖</a> に<strong>「元のキャラクター設定画像（および360°背景画像）」</strong>と一緒に直接貼り付けて送信してください。<br />
                         画像そのものを参照して生成するため、キャラクターのクオリティや再現度が劇的に向上します！<br />
+                        <span className="inline-block mt-2 text-[12px] text-yellow-300 font-bold bg-yellow-900/50 px-2 py-1.5 rounded border border-yellow-500/30">
+                          ⚠️ 注意：プロンプトを貼り付けた際、ファイルとして添付されてしまった場合は、必ず「テキストフィールドに表示」をクリックしてプロンプトの全文を展開してから、キャラクターシート等の画像を添付してください。
+                        </span><br />
                         <span className="inline-block mt-2 text-[11px] text-cyan-300/80">
                           ⚠️ <strong>ChatGPTの仕様上、縦に細長すぎる画像になってしまう場合</strong>は、ChatGPT側の「アスペクト比」ボタンで手動修正するのではなく、以下の「画像比率修正プロンプト」をコピーしてChatGPTに貼り付けてみてください。綺麗な4コマの形に修正されます。
                         </span>
