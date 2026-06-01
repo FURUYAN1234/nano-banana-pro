@@ -137,7 +137,7 @@ ${buildEmotionBlock(pt)}
 ${extractPlacementRule(pt, castList).replace(/\\\\[/g, '').replace(/\\\\]/g, '')}
 ${extractCastLimitRule(pt, castList).replace(/\\\\[/g, '').replace(/\\\\]/g, '')}
 Camera: ${getCameraForChatGPT(pt, cameraState)}
-Action (Visual ONLY, non-dialogue; quoted written words in this action are scene text, not speech bubbles): ${injectOutfitReminder(extractActionOnly(pt, castList, extractPlacementRule(pt, castList)), activeOutfit)}
+Action (Visual ONLY, non-dialogue; do NOT render quoted words as visible text unless this action explicitly says handwriting, signage, board text, label text, or screen text): ${injectOutfitReminder(extractActionOnly(pt, castList, extractPlacementRule(pt, castList)), activeOutfit)}
 Dialogue (Japanese text inside speech bubbles only): ${extractDialogueOnly(pt, castList)}`;
     }).join('\n\n');
 
@@ -157,7 +157,7 @@ ${extractPlacementRule(pt, castList)}
 ${extractCastLimitRule(pt, castList)}
 Camera: ${getCameraForPanel(pt, shuffledCameras, cameraState)}.
 [LENS]: (ABOVE CAMERA DISTORTION MAX:2.9), (NEVER normal photograph:3.0), (extreme severe perspective warp:2.7), (violently tilted horizon:2.6). Break normal camera angle.
-Action (Visual ONLY, non-dialogue; quoted written words in this action are scene text, not speech bubbles): ${injectOutfitReminder(extractActionOnly(pt, castList, extractPlacementRule(pt, castList)), activeOutfit)}.
+Action (Visual ONLY, non-dialogue; do NOT render quoted words as visible text unless this action explicitly says handwriting, signage, board text, label text, or screen text): ${injectOutfitReminder(extractActionOnly(pt, castList, extractPlacementRule(pt, castList)), activeOutfit)}.
 Dialogue (ONLY inside bubbles): ${extractDialogueOnly(pt, castList)}.`;
     }).join('\n\n');
 

@@ -701,8 +701,9 @@ ${outfitRule}
 
 TEXT RENDERING RULES:
 - Only Dialogue entries may become white manga speech bubbles.
-- If Action explicitly asks for written words, finger-writing, air-writing, signage, board text, labels, or text drawn as a visual effect, render those words as physical scene text at the described location. Do NOT wrap visual scene text in a speech bubble, caption box, narration box, or tail.
-- Never move Action text into speech bubbles. Keep visual written words visually attached to the hand/object/surface that creates them.
+- Action text is NOT visible lettering by default. Quoted ambience, SFX names, mood words, aura names, emotion labels, and narration terms must be illustrated through objects, lighting, motion, poses, and atmosphere only.
+- Render Action words as physical scene text ONLY when Action explicitly asks for handwriting, finger-writing, air-writing, signage, board text, label text, printed text, or screen text. Do NOT wrap visual scene text in a speech bubble, caption box, narration box, or tail.
+- Never move Action text into speech bubbles, captions, labels, or floating SFX. Keep any explicitly requested visual writing attached to the hand/object/surface that creates it.
 
 PANEL DESCRIPTIONS:
 
@@ -811,7 +812,8 @@ Tech Dict:
 (Cinematic depth of field, soft bokeh: 2.3)
 (chic cinematic color grading, elegant deep colors: 1.4)
 (NO random text/SFX outside speech bubbles: 2.8)
-(EXCEPT explicit visual scene text requested by Action, such as handwriting, air-writing, signs, labels, or board text: 2.8)
+(Action ambience words, SFX names, mood words, aura names, and emotion labels are NOT visible lettering: 2.8)
+(EXCEPT explicit visual scene text requested by Action, such as handwriting, air-writing, signs, labels, printed text, screen text, or board text: 2.8)
 (NO ENGLISH TEXT outside watermark. NO 'G-pen'/'HA': 3.0)
 
 
@@ -821,8 +823,8 @@ Important constraints:
 - Ensure the characters accurately reflect classic anime styles.
 - Do NOT merge panels. Keep 4 distinct panels with white gutters between them.
 - ABSOLUTELY NO TEXT OR SFX BETWEEN PANELS. The white gutters separating the panels MUST be completely clean and pure white. Do not draw any labels, narration, or sound effects crossing or sitting inside the panel boundaries.
-- Do NOT write situation/narration explanations as text on the screen. The Visual Action must only be illustrated, except explicit visual scene text requested by the action, such as handwriting, air-writing, signs, labels, or board text.
-- Only Dialogue entries may become white manga speech bubbles. If Visual Action contains quoted written words, render them as physical scene text at the described location without any speech bubble, caption box, narration box, or tail.
+- Do NOT write situation/narration explanations as text on the screen. The Visual Action must only be illustrated, except explicit visual scene text requested by the action, such as handwriting, air-writing, signs, labels, printed text, screen text, or board text.
+- Only Dialogue entries may become white manga speech bubbles. Quoted ambience, SFX names, mood words, aura names, emotion labels, and narration terms in Visual Action are NOT visible text. Render quoted Action words as physical scene text ONLY when the action explicitly requests visible writing.
 - Write the Japanese spoken text clearly inside white manga speech bubbles in a bold sans-serif Japanese font.
 - Japanese dialogue MUST end with a period (。). However, do NOT add unnecessary commas (、) inside dialogue. Manga speech bubbles rarely use commas in natural Japanese — line breaks and bubble shape provide natural pauses instead. Only use commas when absolutely necessary to prevent misreading.
 - TYPOGRAPHY RULE: Write Japanese text tightly with ZERO spaces between words. Do NOT insert any gaps or spaces between characters. (no letter spacing:1.5), (tight kerning:1.5).

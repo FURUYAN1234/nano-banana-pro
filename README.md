@@ -1160,6 +1160,9 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v4.5.9 (2026-06-01)
+- **[Fix & Prompt]** 引用語句（SFX・ムード・ナレーション等）の可視テキスト化を防止するようプロンプト抽出ロジックを強化し、必要な看板文字等のみを許可するホワイトリスト制御を追加 / Hardened prompt extraction logic to prevent non-visual quotes (SFX, mood, narration) from being rendered as text, adding a whitelist for necessary scene texts like signs.
+
 ### v4.5.8 (2026-05-31)
 - **[Fix & UX]** 吹き出し以外のテキストの読み上げ防止ガードレール実装 / Implemented guardrails to prevent non-speech bubble visual text from being rendered as speech bubbles
 

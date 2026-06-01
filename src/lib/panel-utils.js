@@ -372,6 +372,40 @@ export const cleanseActionGagSymbols = (actionText) => {
   return cleansed;
 };
 
+const WRITTEN_TEXT_CONTEXT_RE = /(?:\bwritten\b|\bhandwriting\b|air-writing|finger-writing|\bsignage\b|\bsign\b|\blabel\b|board text|screen text|printed text|text on|letters on|\u6587\u5b57|\u624b\u66f8\u304d|\u7a7a\u4e2d\u306b|\u66f8\u304b\u308c|\u66f8\u304f|\u66f8\u304d|\u66f8\u3044\u305f|\u770b\u677f|\u63b2\u793a|\u8cbc\u308a\u7d19|\u9ed2\u677f|\u30db\u30ef\u30a4\u30c8\u30dc\u30fc\u30c9|\u30ce\u30fc\u30c8\u306b|\u7d19\u306b|\u30b9\u30de\u30db\u753b\u9762|\u753b\u9762\u306b|\u8868\u793a|\u5370\u5b57|\u523b\u5370|\u30e9\u30d9\u30eb|\u6a19\u8b58)/i;
+const SOUND_CONTEXT_RE = /(?:sound|sfx|onomatopoeia|audio|hum|buzz|\u97f3|\u64ec\u97f3|\u52b9\u679c\u97f3|BGM|\u9cf4|\u30d6\u30fc\u30f3|\u30ce\u30a4\u30ba)/i;
+const MOOD_CONTEXT_RE = /(?:aura|mood|emotion|focus|silence|atmosphere|\u30aa\u30fc\u30e9|\u96f0\u56f2\u6c17|\u6c17\u914d|\u6c88\u9ed9|\u7a7a\u6c17|\u611f\u3058|\u30e0\u30fc\u30c9|\u8868\u60c5|\u611f\u60c5|\u72b6\u614b|\u96c6\u4e2d|\u6ca1\u5165|\u30d5\u30a9\u30fc\u30ab\u30b9|\u8996\u7dda|\u7dca\u5f35|\u4f59\u97fb|\u53cd\u5fdc)/i;
+const SPOKEN_TEXT_CONTEXT_RE = /(?:dialogue|speech|says|said|shouts|whispers|\u8a00|\u7b54|\u53eb|\u547c|\u545f|\u3064\u3076\u3084|\u8a71|\u554f|\u7591\u554f|\u7d76\u53eb|\u30bb\u30ea\u30d5)/i;
+const ACTION_QUOTED_TEXT_RE = /[\u300c\u300e"\u201c\u201d]([^\u300c\u300d\u300e\u300f"\u201c\u201d]{1,80})[\u300d\u300f"\u201c\u201d]/g;
+
+const protectNonDialogueTextHints = (actionText) => {
+  if (!actionText) return actionText;
+
+  return actionText.replace(ACTION_QUOTED_TEXT_RE, (match, _content, offset, fullText) => {
+    const leftContext = fullText.slice(Math.max(0, offset - 56), offset);
+    const rightContext = fullText.slice(offset + match.length, Math.min(fullText.length, offset + match.length + 56));
+    const context = `${leftContext} ${rightContext}`;
+
+    if (SOUND_CONTEXT_RE.test(context)) {
+      return 'a non-text ambient sound effect (show through environment, vibration, cold air, or reactions only; no visible letters)';
+    }
+
+    if (MOOD_CONTEXT_RE.test(context)) {
+      return 'a non-text mood or aura concept (show through poses, focus, lighting, and composition only; no visible letters)';
+    }
+
+    if (WRITTEN_TEXT_CONTEXT_RE.test(context)) {
+      return match;
+    }
+
+    if (SPOKEN_TEXT_CONTEXT_RE.test(context)) {
+      return 'the listed dialogue content (do not render this quoted text outside speech bubbles)';
+    }
+
+    return 'a quoted concept only (do not render these letters unless explicit visible writing is requested)';
+  });
+};
+
 export const extractActionOnly = (fullPanelText, castList, placementRule = "") => {
   const lines = fullPanelText.split('\n');
 
@@ -447,7 +481,7 @@ export const extractActionOnly = (fullPanelText, castList, placementRule = "") =
     });
   }
 
-  return cleanseActionGagSymbols(actionStr);
+  return protectNonDialogueTextHints(cleanseActionGagSymbols(actionStr));
 };
 
 export const injectOutfitReminder = (actionText, activeOutfit) => {
