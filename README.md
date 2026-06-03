@@ -1160,6 +1160,9 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v4.6.2 (2026-06-03)
+- **[Fix & UX]** 表情指定（「へ」等）の1〜2文字がプロンプトから欠落する不具合を修正 / Fixed a bug where 1-2 character expression modifiers like 'へ' were incorrectly suppressed from the prompt
+
 ### v4.6.1 (2026-06-03)
 - **[Fix & UX]** v4.6.0のリリースノートの英日併記漏れを修正 / Fixed missing English translation in v4.6.0 release notes
 

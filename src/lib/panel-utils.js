@@ -405,6 +405,11 @@ const protectNonDialogueTextHints = (actionText) => {
   if (!actionText) return actionText;
 
   return actionText.replace(ACTION_QUOTED_TEXT_RE, (match, _content, offset, fullText) => {
+    // 【NEW】1文字または2文字だけの引用（「へ」「あ」「V」など）は表情や記号の可能性が高いので保護する
+    if (_content.length <= 2) {
+      return match;
+    }
+
     const leftContext = fullText.slice(Math.max(0, offset - 56), offset);
     const rightContext = fullText.slice(offset + match.length, Math.min(fullText.length, offset + match.length + 56));
     const context = `${leftContext} ${rightContext}`;
