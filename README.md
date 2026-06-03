@@ -1160,6 +1160,9 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v4.6.3 (2026-06-03)
+- **[Fix & UX]** コロン形式ト書き・照明・SE行のセリフ誤抽出を修正、MOOD_CONTEXT_REの過剰マッチ修正 / Fixed stage direction lines (CharName: pose description), lighting/SE metadata, and MOOD_CONTEXT_RE over-matching from being incorrectly extracted as dialogue
+
 ### v4.6.2 (2026-06-03)
 - **[Fix & UX]** 表情指定（「へ」等）の1〜2文字がプロンプトから欠落する不具合を修正 / Fixed a bug where 1-2 character expression modifiers like 'へ' were incorrectly suppressed from the prompt
 

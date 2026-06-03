@@ -233,6 +233,10 @@ export const extractDialogueOnly = (fullPanelText, castList) => {
   let bubbleCount = 1;
 
   lines.forEach(line => {
+    // [v4.6.3] SE（効果音演出指示）行をスキップ: （SE: ...）や (SE: ...) の形式
+    const trimmedForSE = line.trim();
+    if (/^[（(]\s*SE\s*[:：]/i.test(trimmedForSE)) return;
+
     // Check if line indicates dialogue
     const match = line.match(/^(.*?)(?:[:：]|「)/);
     let isDialogue = false;
@@ -248,7 +252,8 @@ export const extractDialogueOnly = (fullPanelText, castList) => {
       const hasSentenceParticles = /(?:が|を|に|で|へ|は|も|と|から|まで|より)/.test(tempSpeakerBase) && tempSpeakerBase.length > 5;
       const endsWithParticle = /(?:が|を|に|で|へ|は|も|と|から|まで|より)$/.test(tempSpeakerBase);
       const isTooLong = tempSpeakerBase.length > 20; // 複数人「アカリ・ヒカリ・ミク・リン」を許容するため長めに変更
-      const isMetaTag = /^(Camera|Location|Outfit|EMOTION|状況(?:演出)?|Action|リアクション|Reaction|設定|物理描写|SFX|効果音|BGM|ナレーション|テロップ|聴覚|触覚|嗅覚|体内感覚|視覚|背景|Background|カメラワーク|CameraWork|Camera\s*Work)$/i.test(tempSpeakerBase);
+      // [v4.6.3] 照明・SE・演出など舞台指示用語をメタタグとして除外
+      const isMetaTag = /^(Camera|Location|Outfit|EMOTION|状況(?:演出)?|Action|リアクション|Reaction|設定|物理描写|SFX|SE|効果音|BGM|ナレーション|テロップ|聴覚|触覚|嗅覚|体内感覚|視覚|照明|光|演出|空間|構図|背景|Background|カメラワーク|CameraWork|Camera\s*Work)$/i.test(tempSpeakerBase);
       // [v2.45] 効果音パターン検出: 同じ文字(長音含む)の繰り返しは効果音（シーーーン、ゴゴゴ等）
       const isSoundEffect = /^[^a-zA-Z]*([\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF])([ーッっ]*\1){1,}[ーッっ！!ン]*$/u.test(tempSpeakerBase);
       // [v2.45] リアクション指示混入検出: 「（リアクション」等が話者名に含まれていたら除外
@@ -273,6 +278,16 @@ export const extractDialogueOnly = (fullPanelText, castList) => {
         if (!isStageDirection && !isTooShortForDialogue) {
           isDialogue = true;
         }
+      }
+    }
+
+    // [v4.6.3] コロン形式ト書き判定: 「キャラ名：描写テキスト」で「」を含まない長文はト書き（演出指示）
+    // 例: 「ミク：両腕ダルんと投げ出し、口を大きく開けて超あくび」はセリフではなくポーズ描写
+    if (isDialogue && match && (match[0].trim().endsWith(':') || match[0].trim().endsWith('：'))) {
+      const restOfLine = line.substring(match.index + match[0].length);
+      const hasNoQuotes = !/[「」]/.test(restOfLine);
+      if (hasNoQuotes && restOfLine.trim().length > 15) {
+        isDialogue = false;
       }
     }
 
@@ -397,7 +412,9 @@ export const cleanseActionGagSymbols = (actionText) => {
 
 const WRITTEN_TEXT_CONTEXT_RE = /(?:\bwritten\b|\bhandwriting\b|air-writing|finger-writing|\bsignage\b|\bsign\b|\blabel\b|board text|screen text|printed text|text on|letters on|\u6587\u5b57|\u624b\u66f8\u304d|\u7a7a\u4e2d\u306b|\u66f8\u304b\u308c|\u66f8\u304f|\u66f8\u304d|\u66f8\u3044\u305f|\u770b\u677f|\u63b2\u793a|\u8cbc\u308a\u7d19|\u9ed2\u677f|\u30db\u30ef\u30a4\u30c8\u30dc\u30fc\u30c9|\u30ce\u30fc\u30c8\u306b|\u7d19\u306b|\u30b9\u30de\u30db\u753b\u9762|\u753b\u9762\u306b|\u8868\u793a|\u5370\u5b57|\u523b\u5370|\u30e9\u30d9\u30eb|\u6a19\u8b58)/i;
 const SOUND_CONTEXT_RE = /(?:sound|sfx|onomatopoeia|audio|hum|buzz|\u97f3|\u64ec\u97f3|\u52b9\u679c\u97f3|BGM|\u9cf4|\u30d6\u30fc\u30f3|\u30ce\u30a4\u30ba)/i;
-const MOOD_CONTEXT_RE = /(?:aura|mood|emotion|focus|silence|atmosphere|\u30aa\u30fc\u30e9|\u96f0\u56f2\u6c17|\u6c17\u914d|\u6c88\u9ed9|\u7a7a\u6c17|\u611f\u3058|\u30e0\u30fc\u30c9|\u8868\u60c5|\u611f\u60c5|\u72b6\u614b|\u96c6\u4e2d|\u6ca1\u5165|\u30d5\u30a9\u30fc\u30ab\u30b9|\u8996\u7dda|\u7dca\u5f35|\u4f59\u97fb|\u53cd\u5fdc)/i;
+// [v4.6.3] MOOD_CONTEXT_RE から頻出語（表情・反応・状態・感情）を除外。
+// これらはセリフ周辺のト書きに頻繁に出現し、セリフのカギ括弧まで誤って置換してしまう原因となっていた。
+const MOOD_CONTEXT_RE = /(?:aura|mood|emotion|focus|silence|atmosphere|\u30aa\u30fc\u30e9|\u96f0\u56f2\u6c17|\u6c17\u914d|\u6c88\u9ed9|\u7a7a\u6c17|\u611f\u3058|\u30e0\u30fc\u30c9|\u96c6\u4e2d|\u6ca1\u5165|\u30d5\u30a9\u30fc\u30ab\u30b9|\u7dca\u5f35|\u4f59\u97fb)/i;
 const SPOKEN_TEXT_CONTEXT_RE = /(?:dialogue|speech|says|said|shouts|whispers|\u8a00|\u7b54|\u53eb|\u547c|\u545f|\u3064\u3076\u3084|\u8a71|\u554f|\u7591\u554f|\u7d76\u53eb|\u30bb\u30ea\u30d5)/i;
 const ACTION_QUOTED_TEXT_RE = /[\u300c\u300e"\u201c\u201d]([^\u300c\u300d\u300e\u300f"\u201c\u201d]{1,80})[\u300d\u300f"\u201c\u201d]/g;
 
@@ -405,8 +422,18 @@ const protectNonDialogueTextHints = (actionText) => {
   if (!actionText) return actionText;
 
   return actionText.replace(ACTION_QUOTED_TEXT_RE, (match, _content, offset, fullText) => {
-    // 【NEW】1文字または2文字だけの引用（「へ」「あ」「V」など）は表情や記号の可能性が高いので保護する
+    // [v4.6.2] 1〜2文字の引用（「へ」「O」など）は表情・記号として保護
     if (_content.length <= 2) {
+      return match;
+    }
+
+    // [v4.6.3] セリフ判定: カギ括弧の直前にキャラ名パターン（片仮名/漢字2〜8文字）がある場合、
+    // これはセリフである可能性が極めて高い。extractActionOnly が除去し損ねたセリフを
+    // ここで破壊すると extractDialogueOnly のフォールバックも失敗し、セリフが完全消失する。
+    const immediateLeft = fullText.slice(Math.max(0, offset - 12), offset).trimEnd();
+    // 直前が「キャラ名」パターン（カタカナ/漢字/ひらがな 1〜10文字 + 任意の空白）で終わっている場合はスキップ
+    const isLikelyDialogue = /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF\u25A0-\u25FF■]{1,10}\s*$/.test(immediateLeft);
+    if (isLikelyDialogue) {
       return match;
     }
 
@@ -457,8 +484,10 @@ export const extractActionOnly = (fullPanelText, castList, placementRule = "") =
       let tempSpeaker = match[1].replace(/^(SFX|効果音|BGM|Action)/i, '').trim();
       tempSpeaker = tempSpeaker.replace(/^[【\[（(]/, '').replace(/[】\]）)]$/, '').trim();
       const hasSentenceParticles = /[がをにでへはもとからまでより]/.test(tempSpeaker) && tempSpeaker.length > 5;
-      const isTooLong = tempSpeaker.length > 12;
-      const isMetaTag = /^(Camera|Location|Outfit|EMOTION|状況(?:演出)?|Action|リアクション|Reaction|設定|聴覚|触覚|嗅覚|体内感覚|視覚|物理描写|SFX|効果音|BGM|ナレーション|テロップ|背景|Background|カメラワーク|CameraWork|Camera\s*Work)$/i.test(tempSpeaker);
+      // [v4.6.3] extractDialogueOnly と閾値を統一（12→20）。不一致だとセリフがAction側に残り、protectNonDialogueTextHintsで破壊される
+      const isTooLong = tempSpeaker.length > 20;
+      // [v4.6.3] 照明・SE・演出など舞台指示用語をメタタグとして除外
+      const isMetaTag = /^(Camera|Location|Outfit|EMOTION|状況(?:演出)?|Action|リアクション|Reaction|設定|聴覚|触覚|嗅覚|体内感覚|視覚|照明|光|演出|空間|構図|物理描写|SFX|SE|効果音|BGM|ナレーション|テロップ|背景|Background|カメラワーク|CameraWork|Camera\s*Work)$/i.test(tempSpeaker);
       // [v2.45] 効果音パターン検出
       const isSoundEffect = /^[^a-zA-Z]*([\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF])([ーッっ]*\1){1,}[ーッっ！!ン]*$/u.test(tempSpeaker.replace(/[（(].*$/, '').trim());
       const hasReactionTag = /[（(]\s*リアクション/i.test(match[1]);
@@ -481,6 +510,16 @@ export const extractActionOnly = (fullPanelText, castList, placementRule = "") =
         }
       }
     }
+
+    // [v4.6.3] コロン形式ト書き判定: extractDialogueOnly と同期
+    if (isDialogue && match && (match[0].trim().endsWith(':') || match[0].trim().endsWith('：'))) {
+      const restOfLine = line.substring(match.index + match[0].length);
+      const hasNoQuotes = !/[「」]/.test(restOfLine);
+      if (hasNoQuotes && restOfLine.trim().length > 15) {
+        isDialogue = false;
+      }
+    }
+
     const isHeader = line.match(/^\[\d+コマ目/);
     const isEmpty = line.trim() === '';
     return !isDialogue && !isHeader && !isEmpty;
@@ -561,11 +600,17 @@ export const extractPlacementRule = (fullPanelText, castList) => {
       let speaker = match[1].replace(/^(SFX|効果音|BGM|Action|状況(?:演出)?|EMOTION|[\(（].*?[\)）]|\[.*?\])/gi, '').replace(/^[【\[（(]/, '').replace(/[】\]）)]$/, '').trim();
       const hasSentenceParticles = /[がをにでへはもとからまでより]/.test(speaker) && speaker.length > 5;
       const isTooLong = speaker.length > 12;
-      const isMetaTag = /^(Camera|Location|Outfit|EMOTION|状況(?:演出)?|Action|リアクション|Reaction|設定|聴覚|触覚|嗅覚|体内感覚|視覚|物理描写|SFX|効果音|BGM|ナレーション|テロップ|背景|Background|カメラワーク|CameraWork|Camera\s*Work)$/i.test(speaker);
+      // [v4.6.3] 照明・SE・演出など舞台指示用語をメタタグとして除外
+      const isMetaTag = /^(Camera|Location|Outfit|EMOTION|状況(?:演出)?|Action|リアクション|Reaction|設定|聴覚|触覚|嗅覚|体内感覚|視覚|照明|光|演出|空間|構図|物理描写|SFX|SE|効果音|BGM|ナレーション|テロップ|背景|Background|カメラワーク|CameraWork|Camera\s*Work)$/i.test(speaker);
       const isSoundEffect = /^[^a-zA-Z]*([\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF])([ーッっ]*\1){1,}[ーッっ！!ン]*$/u.test(speaker.replace(/[（(].*$/, '').trim());
       const hasReactionTag = /[（(]\s*リアクション/i.test(match[1]);
       const isDummySpeaker = /^(全員|みんな|Speaker)$/i.test(speaker);
       if (hasSentenceParticles || isTooLong || isMetaTag || isSoundEffect || hasReactionTag || isDummySpeaker) return;
+      // [v4.6.3] コロン形式ト書き判定: extractDialogueOnly と同期
+      if (match[0].trim().endsWith(':') || match[0].trim().endsWith('：')) {
+        const restOfLine = line.substring(match.index + match[0].length);
+        if (!/[「」]/.test(restOfLine) && restOfLine.trim().length > 15) return;
+      }
       if (speaker && !/^(EMOTION|NORMAL|CHIBI_GAG|GEKIGA|SHOUJO|HORROR|BLANK|IMPACT|WATERCOLOR|RETRO|GLITTER|SHADOW|SPEED|FLASHBACK|UKIYOE|POP_ART|SKETCH|NEON|THICK_PAINT|PASTEL|CEL|DARK_ANIME|THIN_LINE|HIGH_SATURATION)$/i.test(speaker)) {
         // キャラ名判定と名寄せ
         const matchedChar = validCharsForPlacement.find(c => speaker === c || speaker.includes(c) || c.includes(speaker));
