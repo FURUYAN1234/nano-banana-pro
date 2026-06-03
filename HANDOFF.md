@@ -1,14 +1,13 @@
 # HANDOFF.md
 
-## 現在のステータス (Deploying v4.6.3)
-- **バージョン**: v4.6.3
+## 現在のステータス (Deploying v4.6.4)
+- **バージョン**: v4.6.4
 - **最新の変更点**:
-  - コロン形式ト書き（キャラ名：ポーズ描写）のセリフ誤抽出を修正
-  - 照明・SE行がキャラ名として扱われる不具合を修正
-  - MOOD_CONTEXT_REの過剰マッチ（表情/反応等）を修正
-  - protectNonDialogueTextHintsがセリフのカギ括弧を破壊する不具合を修正
+  - セリフ抽出時の助詞（「と」「の」等）を含む特定文字長キャラクターのセリフ欠落バグを修正
+  - isExactCastMatchによる完全一致判定で、名前の後に続く発言内容が正しく描画されるように改善
+  - 空白や「・」の揺らぎに対する正規化処理を追加し、柔軟なキャストマッチングを実現
 
 ## 検証待ちタスク (Pending Verification Tasks)
-- [x] GitHub Pages デプロイ検証
-- [x] GitHub Release 作成
-- [x] `backup_launch.bat` によるPS1フルアプリバックアップ完了
+- [ ] GitHub Pages デプロイ検証
+- [ ] GitHub Release 作成
+- [ ] ZIP検証とローカルフォルダ差し替え

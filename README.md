@@ -1160,6 +1160,9 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v4.6.4 (2026-06-03)
+- **[Fix]** セリフ抽出時の助詞（「と」「の」等）を含む特定文字長キャラクターのセリフ欠落バグを修正し、全てのセリフを正しく描画できるように改善 / Fixed a dialogue extraction bug where character names containing specific particles were incorrectly filtered out, ensuring all speech bubbles render correctly.
+
 ### v4.6.3 (2026-06-03)
 - **[Fix & UX]** コロン形式ト書き・照明・SE行のセリフ誤抽出を修正、MOOD_CONTEXT_REの過剰マッチ修正 / Fixed stage direction lines (CharName: pose description), lighting/SE metadata, and MOOD_CONTEXT_RE over-matching from being incorrectly extracted as dialogue
 

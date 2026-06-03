@@ -249,8 +249,16 @@ export const extractDialogueOnly = (fullPanelText, castList) => {
 
       // [v2.31] 話者名バリデーション強化: ト書き誤検出防止
       // 「サエコが、売店のカウンターに」のような文章が話者名として誤検出されるのを防ぐ
-      const hasSentenceParticles = /(?:が|を|に|で|へ|は|も|と|から|まで|より)/.test(tempSpeakerBase) && tempSpeakerBase.length > 5;
-      const endsWithParticle = /(?:が|を|に|で|へ|は|も|と|から|まで|より)$/.test(tempSpeakerBase);
+      // [v4.6.4] キャスト名完全一致バイパス: 助詞を含むキャスト名（例: と■のよ■ゆき子）を正しく認識
+      // シナリオ内ではスペースが省略されることが多いため、スペース除去比較も行う
+      const normalizedSpeaker = tempSpeakerBase.replace(/[\s・]/g, '');
+      const isExactCastMatch = validCharacters.some(c => {
+        const nameOnly = c.split(/[（(]/)[0].trim();
+        const normalizedName = nameOnly.replace(/[\s・]/g, '');
+        return nameOnly && (tempSpeakerBase === nameOnly || tempSpeakerBase === c || normalizedSpeaker === normalizedName);
+      });
+      const hasSentenceParticles = !isExactCastMatch && /(?:が|を|に|で|へ|は|も|と|から|まで|より)/.test(tempSpeakerBase) && tempSpeakerBase.length > 5;
+      const endsWithParticle = !isExactCastMatch && /(?:が|を|に|で|へ|は|も|と|から|まで|より)$/.test(tempSpeakerBase);
       const isTooLong = tempSpeakerBase.length > 20; // 複数人「アカリ・ヒカリ・ミク・リン」を許容するため長めに変更
       // [v4.6.3] 照明・SE・演出など舞台指示用語をメタタグとして除外
       const isMetaTag = /^(Camera|Location|Outfit|EMOTION|状況(?:演出)?|Action|リアクション|Reaction|設定|物理描写|SFX|SE|効果音|BGM|ナレーション|テロップ|聴覚|触覚|嗅覚|体内感覚|視覚|照明|光|演出|空間|構図|背景|Background|カメラワーク|CameraWork|Camera\s*Work)$/i.test(tempSpeakerBase);
@@ -483,7 +491,14 @@ export const extractActionOnly = (fullPanelText, castList, placementRule = "") =
     if (match && match[1].trim()) {
       let tempSpeaker = match[1].replace(/^(SFX|効果音|BGM|Action)/i, '').trim();
       tempSpeaker = tempSpeaker.replace(/^[【\[（(]/, '').replace(/[】\]）)]$/, '').trim();
-      const hasSentenceParticles = /[がをにでへはもとからまでより]/.test(tempSpeaker) && tempSpeaker.length > 5;
+      // [v4.6.4] キャスト名完全一致バイパス: 助詞を含むキャスト名（例: と■のよ■ゆき子）を正しく認識
+      const normalizedSpeakerA = tempSpeaker.replace(/[\s・]/g, '');
+      const isExactCastMatch = validCharacters.some(c => {
+        const nameOnly = c.split(/[（(]/)[0].trim();
+        const normalizedName = nameOnly.replace(/[\s・]/g, '');
+        return nameOnly && (tempSpeaker === nameOnly || tempSpeaker === c || normalizedSpeakerA === normalizedName);
+      });
+      const hasSentenceParticles = !isExactCastMatch && /[がをにでへはもとからまでより]/.test(tempSpeaker) && tempSpeaker.length > 5;
       // [v4.6.3] extractDialogueOnly と閾値を統一（12→20）。不一致だとセリフがAction側に残り、protectNonDialogueTextHintsで破壊される
       const isTooLong = tempSpeaker.length > 20;
       // [v4.6.3] 照明・SE・演出など舞台指示用語をメタタグとして除外
@@ -598,7 +613,13 @@ export const extractPlacementRule = (fullPanelText, castList) => {
     const match = line.match(/^(.*?)(?:[:：]|「)/);
     if (match && match[1].trim()) {
       let speaker = match[1].replace(/^(SFX|効果音|BGM|Action|状況(?:演出)?|EMOTION|[\(（].*?[\)）]|\[.*?\])/gi, '').replace(/^[【\[（(]/, '').replace(/[】\]）)]$/, '').trim();
-      const hasSentenceParticles = /[がをにでへはもとからまでより]/.test(speaker) && speaker.length > 5;
+      // [v4.6.4] キャスト名完全一致バイパス: 助詞を含むキャスト名（例: と■のよ■ゆき子）を正しく認識
+      const normalizedSpeakerP = speaker.replace(/[\s・]/g, '');
+      const isExactCastMatchP = validCharsForPlacement.some(c => {
+        const normalizedName = c.replace(/[\s・]/g, '');
+        return c === speaker || normalizedSpeakerP === normalizedName;
+      });
+      const hasSentenceParticles = !isExactCastMatchP && /[がをにでへはもとからまでより]/.test(speaker) && speaker.length > 5;
       const isTooLong = speaker.length > 12;
       // [v4.6.3] 照明・SE・演出など舞台指示用語をメタタグとして除外
       const isMetaTag = /^(Camera|Location|Outfit|EMOTION|状況(?:演出)?|Action|リアクション|Reaction|設定|聴覚|触覚|嗅覚|体内感覚|視覚|照明|光|演出|空間|構図|物理描写|SFX|SE|効果音|BGM|ナレーション|テロップ|背景|Background|カメラワーク|CameraWork|Camera\s*Work)$/i.test(speaker);
@@ -728,7 +749,14 @@ export const extractCastLimitRule = (fullPanelText, castList) => {
     if (match && match[1].trim()) {
       let tempSpeaker = match[1].replace(/^(SFX|効果音|BGM|Action)/i, '').trim();
       tempSpeaker = tempSpeaker.replace(/^[【\[（(]/, '').replace(/[】\]）)]$/, '').trim();
-      const hasSentenceParticles = /[がをにでへはもとからまでより]/.test(tempSpeaker) && tempSpeaker.length > 5;
+      // [v4.6.4] キャスト名完全一致バイパス: 助詞を含むキャスト名（例: と■のよ■ゆき子）を正しく認識
+      const normalizedSpeakerC = tempSpeaker.replace(/[\s・]/g, '');
+      const isExactCastMatchC = validCharacters.some(c => {
+        const nameOnly = c.split(/[（(]/)[0].trim();
+        const normalizedName = nameOnly.replace(/[\s・]/g, '');
+        return nameOnly && (tempSpeaker === nameOnly || tempSpeaker === c || normalizedSpeakerC === normalizedName);
+      });
+      const hasSentenceParticles = !isExactCastMatchC && /[がをにでへはもとからまでより]/.test(tempSpeaker) && tempSpeaker.length > 5;
       const isTooLong = tempSpeaker.length > 12;
       const isMetaTag = /^(Camera|Location|Outfit|EMOTION|状況(?:演出)?|Action|リアクション|Reaction|設定|聴覚|触覚|嗅覚|体内感覚|視覚|物理描写|SFX|効果音|BGM|ナレーション|テロップ|背景|Background|カメラワーク|CameraWork|Camera\s*Work)$/i.test(tempSpeaker);
       const isSoundEffect = /^[^a-zA-Z]*([\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF])([ーッっ]*\1){1,}[ーッっ！!ン]*$/u.test(tempSpeaker.replace(/[（(].*$/, '').trim());
