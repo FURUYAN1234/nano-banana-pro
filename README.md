@@ -1160,6 +1160,9 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v4.6.1 (2026-06-03)
+- **[Fix & UX]** v4.6.0のリリースノートの英日併記漏れを修正 / Fixed missing English translation in v4.6.0 release notes
+
 ### v4.6.0 (2026-06-03)
 - **[Fix & UX]** セリフ抽出ロジックを修正し、「セリフ」（キャラ名）形式に対応 / Fixed dialogue extraction logic to support 'Dialogue' (Speaker) format
 
