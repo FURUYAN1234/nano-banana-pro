@@ -113,12 +113,13 @@ export const isLikelyPerson = (name, validCharacters = []) => {
   // Check registered cast list
   const isCast = validCharacters.some(c => {
     const nameOnly = c.split(/[（(]/)[0].trim();
-    return cleanName === c || cleanName === nameOnly || nameOnly === cleanName || cleanName.includes(nameOnly);
+    return cleanName === c || cleanName === nameOnly || nameOnly === cleanName || cleanName.includes(nameOnly) || (cleanName.length >= 2 && c.includes(cleanName));
   });
   if (isCast) return true;
 
   // Person-indicative keywords (Japanese terms for suffix/roles, and 'mob'/'speaker')
-  const personKeywords = /(?:氏|モブ|客|観客|司会|ナレーター|アナウンサー|男性|女性|男|女|スタッフ|社長|主催者|委員長|先生|選手|声|人|キャラ)$/;
+  // [v4.5.12] 観察者A や スタッフ1 のようなサフィックス付きにも対応、役割語を追加
+  const personKeywords = /(?:氏|モブ|客|観客|観察者|参加者|司会|ナレーター|アナウンサー|男性|女性|男|女|スタッフ|社長|主催者|委員長|先生|選手|声|人|キャラ)(?:[A-ZＡ-Ｚ0-9０-９\s]*)$/;
   return personKeywords.test(cleanName) || cleanName.toLowerCase().includes('mob') || cleanName.toLowerCase().includes('speaker');
 };
 
@@ -212,6 +213,17 @@ export const extractDialogueOnly = (fullPanelText, castList) => {
       validCharacters.push(fullName);
       const jpName = fullName.split(/[\(（]/)[0].trim();
       if (jpName && jpName !== fullName) validCharacters.push(jpName);
+      
+      // [v4.5.10] 姓名やスペース・中黒で区切られた部分名（例: 「と■の よ■ゆき子」の「よ■ゆき子」）もキャストとして登録する
+      const parts = jpName.split(/[\s・]/);
+      if (parts.length > 1) {
+        parts.forEach(p => {
+          if (p.trim() && !validCharacters.includes(p.trim())) {
+            validCharacters.push(p.trim());
+          }
+        });
+      }
+
       const romajiMatch = fullName.match(/[\(（]\s*(.*?)\s*[\)）]/);
       if (romajiMatch) validCharacters.push(romajiMatch[1].trim());
     }
@@ -251,7 +263,8 @@ export const extractDialogueOnly = (fullPanelText, castList) => {
       // [v2.29] 根本修正: 行全体が「...」で完結するセリフ形式のみを判定。
       // 「没収」と書かれた袋を...のようなト書き中の引用語を誤検出しない。
       const trimmedLine = line.trim();
-      const isFullQuoteLine = /^「[^」]+」[？！。、!?\s]*$/.test(trimmedLine);
+      // [v4.5.13] 「セリフ」（話者）の形式をサポートするため末尾のカッコを許容
+      const isFullQuoteLine = /^「[^」]+」[？！。、!?\s]*([（\(][^\)）]+[\)）])?$/.test(trimmedLine);
       if (isFullQuoteLine) {
         // [v4.2.0] ト書き（動作指示）や極端に短い名詞の誤検出防止
         const quoteContent = trimmedLine.match(/^「([^」]+)」/)?.[1] || '';
@@ -264,12 +277,18 @@ export const extractDialogueOnly = (fullPanelText, castList) => {
     }
 
     if (isDialogue) {
-      // Remove Speaker Name and Colon
-      clean = clean.replace(/^.*?(?:[:：]|「)\s*/, '');
-      // トリムを行ってからカッコを除去（末尾のスペースで除去漏れが発生するのを防ぐため）
-      clean = clean.trim();
-      // Remove surrounding Japanese quotes to prevent hallucination in images
-      clean = clean.replace(/^「+/, '').replace(/」+$/, '');
+      // [v4.5.13] 「セリフ」（キャラ）の形式の場合、前処理で正確に中身だけを抽出
+      const quoteMatch = clean.trim().match(/^「([^」]+)」/);
+      if (quoteMatch && clean.trim().startsWith('「')) {
+        clean = quoteMatch[1];
+      } else {
+        // Remove Speaker Name and Colon
+        clean = clean.replace(/^.*?(?:[:：]|「)\s*/, '');
+        // トリムを行ってからカッコを除去（末尾のスペースで除去漏れが発生するのを防ぐため）
+        clean = clean.trim();
+        // Remove surrounding Japanese quotes to prevent hallucination in images
+        clean = clean.replace(/^「+/, '').replace(/」+$/, '');
+      }
       // [v2.04] Remove parenthetical stage directions (e.g. (ため息) or （笑顔）) to prevent them from rendering as printed text in balloons
       clean = clean.replace(/（.*?）|\(.*?\)/g, '');
       clean = clean.trim();
@@ -323,7 +342,11 @@ export const extractDialogueOnly = (fullPanelText, castList) => {
         /(?:空中|宙|空間|画面|紙|原稿|黒板|ホワイトボード|看板|札|プレート|ノート|ページ|壁|床|文字|単語|タイトル|見出し|ラベル|テロップ|字幕|サイン|SFX|擬音)[^「」]{0,12}$/.test(preQuoteContext) ||
         /^(?:と)?[^。！？\n]{0,16}(?:書|描|指書|なぞ|浮か|表示|投影|刻|印字|残像|光|輝|出現|出る|現れる|走る|切り裂く)/.test(postText);
 
-      if (isPureSymbol || isSfx || isSfxByPostText || isNotDialogueIndicator || isVisualTextByContext) {
+      // [v4.5.11] 3. カギ括弧の直後が助詞（が、を、に、で、へ、も、から、より）などで名詞的に使われている場合は除外
+      // ※「の」は「〜の吹き出し」などの場合があるため、「と」は「〜と叫ぶ」などの場合があるため含めない。
+      const isUsedAsNoun = /^[がをにでへもからより]/.test(postText.trim());
+
+      if (isPureSymbol || isSfx || isSfxByPostText || isNotDialogueIndicator || isVisualTextByContext || isUsedAsNoun) {
         continue;
       }
 

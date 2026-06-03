@@ -1160,6 +1160,9 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v4.6.0 (2026-06-03)
+- **[Fix & UX]** セリフ抽出ロジックを修正し、「セリフ」（キャラ名）形式に対応 / Fixed dialogue extraction logic to support 'Dialogue' (Speaker) format
+
 ### v4.5.9 (2026-06-01)
 - **[Fix & Prompt]** 引用語句（SFX・ムード・ナレーション等）の可視テキスト化を防止するようプロンプト抽出ロジックを強化し、必要な看板文字等のみを許可するホワイトリスト制御を追加 / Hardened prompt extraction logic to prevent non-visual quotes (SFX, mood, narration) from being rendered as text, adding a whitelist for necessary scene texts like signs.
 
