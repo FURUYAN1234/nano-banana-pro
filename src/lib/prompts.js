@@ -650,8 +650,8 @@ MUST have tall portrait aspect ratio (A4 paper, 1:1.414).
 LAYOUT & FORMAT:
 - Canvas completely filled by panels (95% width). NO large white margins.
 - Top page: draw large bold black Japanese text that reads exactly "${safeTopic}" in a clean sans-serif font, centered at the top.
-- Draw tiny English watermark text that reads "${watermarkEng}" positioned at the bottom-right corner of the 4th panel, in a small clean sans-serif font.
-- Draw tiny Japanese watermark text that reads "ネームから全自動の自律式統合AI漫画システム :https://note.com/happy_duck780" positioned at the bottom-left corner of the 4th panel, in an extremely small font size to prevent overlapping with the right watermark.
+- Draw tiny English watermark text that reads EXACTLY "${watermarkEng}" positioned at the bottom-right corner of the 4th panel, in a small clean sans-serif font. VERBATIM COPY — do NOT paraphrase or alter any word.
+- Draw tiny Japanese watermark text that reads EXACTLY "ネームから全自動の自律式統合AI漫画システム :https://note.com/happy_duck780" positioned at the bottom-left corner of the 4th panel, in an extremely small font size to prevent overlapping with the right watermark. ⚠️ CRITICAL: The word "自律式" must appear EXACTLY as written. Do NOT replace it with topic-related words (e.g. do NOT write "高齢式" or any other variation). Copy the watermark string character-by-character.
 - Watermarks standard horizontal. The Japanese watermark on the left and the English watermark on the right must be small enough and spaced apart so they do not touch or overlap. NO extra white space below panel 4.
 - Exactly 4 EQUAL horizontal panels, stacked vertically with thick white gutters between them. Panels MUST NOT touch.
 
@@ -697,10 +697,12 @@ ${outfitRule}
 - Exaggerated manga comedy expressions and full-body reactions are required.
 - Cast details: ${VAR_CAST_LIST_CHATGPT}
 - Identity Anchor: ${identityMatrix}
-- CROSS-PANEL CONSISTENCY: All characters must maintain exactly the same face, hair, and outfit across all 4 panels. If a character has glasses, they MUST have glasses in every panel. Preserve exact hair color, eye color, and skin tone in every panel.
+- CROSS-PANEL CONSISTENCY: All characters must maintain exactly the same face, hair, and outfit across all 4 panels. If a character has glasses, they MUST have glasses in every panel. If a character does NOT have glasses, they MUST NOT gain glasses in any panel. Preserve exact hair color, eye color, and skin tone in every panel.
+- GLASSES VERIFICATION (MANDATORY): Before finalizing EACH panel, count the number of characters wearing glasses. Compare against the Identity Matrix above. If the count does not match, you have made an error — redraw the offending characters. Characters without glasses must have fully visible bare eyes with NO frames on their face.
 
 TEXT RENDERING RULES:
 - Only Dialogue entries may become white manga speech bubbles.
+- DIALOGUE TEXT IS VERBATIM: The Japanese text inside each Speech Bubble MUST be copied EXACTLY as written in the Dialogue section — character by character, punctuation by punctuation. Do NOT paraphrase, rephrase, summarize, add words, remove words, or substitute synonyms. If the dialogue says "甘い" you MUST write "甘い", NOT "ないはずよ" or any other rewording.
 - Action text is NOT visible lettering by default. Quoted ambience, SFX names, mood words, aura names, emotion labels, and narration terms must be illustrated through objects, lighting, motion, poses, and atmosphere only.
 - Render Action words as physical scene text ONLY when Action explicitly asks for handwriting, finger-writing, air-writing, signage, board text, label text, printed text, or screen text. Do NOT wrap visual scene text in a speech bubble, caption box, narration box, or tail.
 - Never move Action text into speech bubbles, captions, labels, or floating SFX. Keep any explicitly requested visual writing attached to the hand/object/surface that creates it.
@@ -776,8 +778,8 @@ LAYOUT:
 Canvas completely filled by panels (95% width). NO large white margins.
 Top page: draw large bold black Japanese text title: "${safeTopic}"
 NO quotes/punctuation around title.
-Draw tiny English watermark ON bottom-right border of 4th panel: "${watermarkEng}" (clean sans-serif).
-Draw tiny Japanese watermark ON bottom-left border of 4th panel: "ネームから全自動の自律式統合AI漫画システム :https://note.com/happy_duck780" (in an extremely small font size to prevent overlapping with the right watermark).
+Draw tiny English watermark ON bottom-right border of 4th panel: "${watermarkEng}" (clean sans-serif). VERBATIM COPY — do NOT paraphrase or alter any word.
+Draw tiny Japanese watermark ON bottom-left border of 4th panel: "ネームから全自動の自律式統合AI漫画システム :https://note.com/happy_duck780" (in an extremely small font size to prevent overlapping with the right watermark). ⚠️ CRITICAL: The word "自律式" must appear EXACTLY as written. Do NOT replace it with topic-related words. Copy character-by-character.
 Watermarks standard horizontal. The Japanese watermark on the left and the English watermark on the right must be small enough and spaced apart so they do not touch or overlap. NO extra white space below panel 4.
 
 PANELS: Exactly 4 EQUAL horizontal panels, stacked vertically. EXACT SAME height/width.
@@ -799,6 +801,7 @@ ${outfitOverride}
 【Identity Anchor】: Cross-panel consistency is MANDATORY. Redraw if hair/eyes/glasses/outfit mismatch.
 ${identityMatrix}
 OUTFIT CONSISTENCY: Every character MUST wear EXACT same outfit in ALL 4 panels. NO changes.
+GLASSES VERIFICATION (MANDATORY): Before finalizing EACH panel, count the number of characters wearing glasses. Compare against the Identity Matrix. If the count does not match, redraw. Characters without glasses must have fully visible bare eyes with NO frames.
 
 Camera & Comp:
 ${dynamicCamera}
@@ -826,6 +829,7 @@ Important constraints:
 - Do NOT write situation/narration explanations as text on the screen. The Visual Action must only be illustrated, except explicit visual scene text requested by the action, such as handwriting, air-writing, signs, labels, printed text, screen text, or board text.
 - Only Dialogue entries may become white manga speech bubbles. Quoted ambience, SFX names, mood words, aura names, emotion labels, and narration terms in Visual Action are NOT visible text. Render quoted Action words as physical scene text ONLY when the action explicitly requests visible writing.
 - Write the Japanese spoken text clearly inside white manga speech bubbles in a bold sans-serif Japanese font.
+- DIALOGUE TEXT IS VERBATIM: The text inside each Speech Bubble MUST be copied EXACTLY as written in the Dialogue section — character by character. Do NOT paraphrase, rephrase, or substitute synonyms.
 - Japanese dialogue MUST end with a period (。). However, do NOT add unnecessary commas (、) inside dialogue. Manga speech bubbles rarely use commas in natural Japanese — line breaks and bubble shape provide natural pauses instead. Only use commas when absolutely necessary to prevent misreading.
 - TYPOGRAPHY RULE: Write Japanese text tightly with ZERO spaces between words. Do NOT insert any gaps or spaces between characters. (no letter spacing:1.5), (tight kerning:1.5).
 - Do NOT add random English text except for the watermark.

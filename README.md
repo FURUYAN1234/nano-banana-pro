@@ -1160,6 +1160,11 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v4.6.5 (2026-06-04)
+- **[Fix]** セリフ抽出フォールバックにおける `lastIndex` 更新タイミングの致命的バグを修正。形状描写（「へ」の字等）がスキップされた際に話者コンテキストが途切れ、直後にある本来のセリフが消失する問題を解消 / Fixed a critical `lastIndex` regression in dialogue fallback extraction where skipped shape descriptions (e.g. 「へ」の字) would consume speaker context, causing the subsequent legitimate dialogue to be silently dropped
+- **[Fix]** 形状描写除外フィルタ（`isShapeDescription`）を新規追加。1〜2文字のカギ括弧（「へ」「Ω」「ω」等）の直後に「の字」「型」「の形」等が続く場合のみ非セリフとして除外 / Added shape description exclusion filter to prevent 1-2 character bracket text followed by shape indicators from being mistakenly extracted as dialogue
+- **[Fix]** 眼鏡なしキャラクターの Identity Matrix 防御を強化（「bare eyes, no frames — do NOT add glasses to this character」） / Strengthened no-glasses Identity Matrix defense with explicit frame prohibition
+
 ### v4.6.4 (2026-06-03)
 - **[Fix]** セリフ抽出時の助詞（「と」「の」等）を含む特定文字長キャラクターのセリフ欠落バグを修正し、全てのセリフを正しく描画できるように改善 / Fixed a dialogue extraction bug where character names containing specific particles were incorrectly filtered out, ensuring all speech bubbles render correctly.
 
@@ -1199,58 +1204,4 @@ Developed by **FURU**
 
 ### v4.5.2 (2026-05-29)
 - **[Fix & UX]** プロンプト生成システムのバグ修正（モブ制限解除・セリフ欠落防止・擬音除外） / Fixed prompt generation bugs (mob display, missing dialogue, SFX bubbles)
-
-### v4.5.1 (2026-05-29)
-- **[Fix & UX]** JSONメタデータに生成アプリ名とリポジトリURLの出所明記を追加 / Added generating tool name and repository URL to Audit-Grade Metadata JSON for enhanced provenance
-
-### v4.5.0 (2026-05-29)
-- **[Fix & UX]** 監査グレードJSON（来歴証明・改ざん防止ハッシュ）の出力機能を追加 / Added Audit-Grade JSON output with Proof of Generation hash
-
-### v4.4.9 (2026-05-29)
-- **[Fix & UX]** API別画像ダウンロードファイル名機能のリリースとPS1バックアップ同期 / Released dynamic filename customization and synced PS1 backup
-
-### v4.4.8 (2026-05-29)
-- **[Fix & UX]** API別にAI画像ダウンロード時のファイル名が動的に変わるように変更 / Dynamically customize image download filename by API type and title
-
-### v4.4.7 (2026-05-29)
-- **[Fix & UX]** タイムアウトの延長およびUI上の所要時間・安全ポリシーの案内文を修正 / Extended timeout and updated UI instructions for required time and safety policy
-
-### v4.4.6 (2026-05-28)
-- **[Fix & UX]** GeminiとOpenAIのモデル構成を更新 / Update model configurations for Gemini and OpenAI
-
-### v4.4.5 (2026-05-28)
-- **[Fix & UX]** v4.2.8のプロンプト仕様へ完全ロールバック / Rollback to v4.2.8 prompt specifications
-
-### v4.4.0 (2026-05-28)
-- **[Fix & UX]** 画像生成時のコントラストを強化し、もや・ノイズを排除 / Enhanced image contrast and eliminated hazy bloom or noise
-
-### v4.3.9 (2026-05-28)
-- ** [Fix & Saturated Colors] ** エフェクトの過剰なマイルド化や「レインボー否定」のネガティブプロンプト指定（虹色ノイズ除去など）を完全撤回し、画像全体の色彩が薄く劣化する問題を修正。感情絵柄（HIGH_SATURATION, IMPACT）本来の鮮やかでリッチな極彩色表現を復元。 / Reverted over-milding of effects and rainbow-negative prompt constraints. Fixed color washing degradation to fully restore rich, vibrant colors for HIGH_SATURATION and IMPACT emotions.
-- ** [Fix & Rich Story/Dialogue] ** シナリオ生成における一言だけの単調なセリフ（スカスカな対話）を厳禁化し、キャラクターの個性を活かしたテンポの良いコミカルな掛け合いを必須化。また、ト書き描写（状況描写）の指示を100〜180文字にさらに強化し、詳細な背景描写とポーズの描き込みを画像生成AIに引き継ぐように改善。 / Enforced a strict ban on single-word sparse dialogue to ensure rich, character-driven comedic interactions. Strengthened storyboard description rules to 100-180 characters, passing detailed background/pose attributes to the image generator.
-- ** [v4.3.9 Sync] ** package.json, constants.js, index.html, README.md を `v4.3.9` に同期。 / Synchronized version to `v4.3.9` across all files.
-
-### v4.3.8 (2026-05-28)
-- ** [Fix & Quality] ** シナリオの対話・ト書きの充実化。一言だけの短すぎるセリフの乱用を防ぎ、キャラクターの掛け合いを強化。ト書きの描写量を80〜150文字確保し、画像生成時のポーズ・背景の描き込みと極彩色表現を向上。 / Enhanced scenario dialogue and storyboard density. Fixed dialogue sparseness to enforce natural comedic interactions. Restored full detail to storyboard prompts to improve pose/background rendering and color richness.
-- ** [Fix] ** 学校外シーン（讃岐うどん店などの店舗・私服時）におけるサエコの生徒会長ペルソナ引力による「校則違反没収オチ」を厳重に禁止するようシナリオ生成指示を強化。 / Enforced a strict ban on school-rules disciplinary punchlines when characters are in out-of-school/casual settings.
-- ** [Fix] ** 感情絵柄（HIGH_SATURATION, IMPACT）でのビビッドな極彩色を維持しつつ、不自然な虹色のスピードラインや多色ノイズを画像生成ネガティブプロンプトで強力に排除。 / Restored rich vibrant colors for HIGH_SATURATION and IMPACT emotions while explicitly filtering out multicolored speedlines and rainbow noise in image generator prompts.
-- ** [v4.3.8 Sync] ** package.json, constants.js, index.html, README.md を `v4.3.8` に同期。 / Synchronized version to `v4.3.8` across all registry files.
-
-### v4.3.7 (2026-05-28)
-- ** [Fix & Quality] ** シナリオ生成プロンプトの演出・笑い構造指示を復元し、セリフ密度とコント品質の劣化問題を修正。また、パーサーにおける `[1コマ目: 起]` などのヘッダー誤抽出バグを修正。 / Restored script direction and comedy structure rules in the scenario generator prompt to fix dialogue density and comedy quality degradation. Also fixed a parser bug where panel headers like `[Panel 1: Ki]` were misidentified as dialogue text.
-
-### v4.3.6 (2026-05-28)
-- ** [Fix] ** シナリオ解析バグ修正（ト書き括弧内カギ括弧のセリフ誤検出修正、グループスピーカーの全キャスト不在判定修正、ト書き内引用のセリフ化防止） / Scenario parsing fixes (dialogue extraction from parentheses, group speaker detection, onomatopoeia filtering)
-
-### v4.2.9 - v4.3.5 (2026-05-28)
-- ** [Failure / Rollback] ** モデル自動取得機能による出力品質の劣化問題のため、v4.2.8へとロールバックを実行。 / Rolled back to v4.2.8 due to model-api auto-detection degradation issues.
-
-### v4.2.8 (2026-05-27)
-- ** [Fix & UX] ** 日本語ウォーターマークのURLをnoteプロフィールに修正 / Updated Japanese watermark URL to note profile
-
-### v4.2.7 (2026-05-27)
-- ** [Fix & UX] ** 連続ループ生成（エンドレスモード）時、画像生成完了後に確実に STEP2 に逆スクロールして戻り、次の作品のシナリオ生成が視覚的に開始されるように修正。また、全自動モード「中断」押下時に API 通信の完了を待たずに即座に UI ロックを解除して通常状態に復帰するように改善。 / Fixed scrollback behavior in Endless mode to ensure the viewport smoothly returns to STEP 2 after image generation finishes, visualizing the next scenario creation. Also improved Full Auto cancellation to immediately release the UI lock and clear loaders without waiting for background API tasks to resolve.
-- ** [Docs] ** READMEに「コンテンツポリシー自動救済システム（v4.2.1+） & Web版切替機能」の詳細な仕様および動作フローの解説を追加。 / Added detailed specifications and operation workflow explanation for the "Content Policy Auto-Rescue System (v4.2.1+) & Switch to Web" to README.md.
-
-### v4.2.6 (2026-05-27)
-- ** [UI & UX] ** 画面上の各種説明文、プレースホルダー、ボタンラベルを親しみやすい表現にリライト。特にコピーボタンの文言を簡素化し、その下部に状況連動型の詳細ガイドを配置。妥協版警告文を安心感のある「簡易モデル生成案内」にブラッシュアップ。 / Rewrote and simplified UI texts, placeholders, and button labels for better user friendliness. Replaced bulky copypaste buttons with a clean action and added guidelined subtitles. Polished fallback model warnings into reassuring guides.
 

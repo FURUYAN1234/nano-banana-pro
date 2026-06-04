@@ -85,7 +85,7 @@ export const buildIdentityMatrix = (castListText) => {
     if (c.hairColor) traits.push(`${c.hairColor} hair`);
     if (c.hairStyle) traits.push(c.hairStyle);
     if (c.glasses === 'YES' || c.glasses === 'LOCKED_YES') traits.push('MUST HAVE glasses (do NOT remove)');
-    else if (c.glasses === 'NO' || c.glasses === 'LOCKED_NO') traits.push('MUST NOT have glasses (bare eyes)');
+    else if (c.glasses === 'NO' || c.glasses === 'LOCKED_NO') traits.push('MUST NOT have glasses (bare eyes, no frames — do NOT add glasses to this character)');
     else traits.push('check reference image for glasses status');
 
     matrix += `- [${c.shortName}]: ${traits.join(', ') || 'see reference image'}\n`;
@@ -336,7 +336,9 @@ export const extractDialogueOnly = (fullPanelText, castList) => {
       
       // カギ括弧の直前のテキスト（前のカギ括弧の末尾から、現在のカギ括弧の先頭まで）を取得
       const prevText = fullPanelText.substring(lastIndex, match.index);
-      lastIndex = regex.lastIndex;
+      // [v4.6.5] lastIndex は「セリフとして処理された場合」のみ更新する（後述）。
+      // 非セリフ（形状描写「へ」の字、記号、SFX等）でスキップした場合は lastIndex を進めず、
+      // 話者コンテキスト（キャラ名を含むprevText）を次のマッチに引き継ぐ。
 
       // prevText の中に、有効なキャラクター名（キャストまたはモブなどの人物）が含まれているか確認
       const hasValidSpeakerInPrevText = isLikelyPerson(prevText, validCharacters) || validCharacters.some(c => {
@@ -369,7 +371,12 @@ export const extractDialogueOnly = (fullPanelText, castList) => {
       // ※「の」は「〜の吹き出し」などの場合があるため、「と」は「〜と叫ぶ」などの場合があるため含めない。
       const isUsedAsNoun = /^[がをにでへもからより]/.test(postText.trim());
 
-      if (isPureSymbol || isSfx || isSfxByPostText || isNotDialogueIndicator || isVisualTextByContext || isUsedAsNoun) {
+      // [v4.6.5] 4. 形状描写の除外: 「へ」の字、「Ω」型、「ω」型 等の1〜2文字カギ括弧は
+      // 口の形や図形を表す描写であり、セリフではない。直後に「の字」「型」「の形」等が続く場合は除外。
+      const isShapeDescription = dialogueText.length <= 2 && /^(?:の字|型|の形|の口|にゆが|に曲|に歪|に変形|に開|に大|のよう|みたい)/.test(postText.trim());
+
+      if (isPureSymbol || isSfx || isSfxByPostText || isNotDialogueIndicator || isVisualTextByContext || isUsedAsNoun || isShapeDescription) {
+        // [v4.6.5] 非セリフ — lastIndexを進めず、話者コンテキストを次のマッチに引き継ぐ
         continue;
       }
 
@@ -380,6 +387,8 @@ export const extractDialogueOnly = (fullPanelText, castList) => {
       });
       const hasActionVerbs = /(?:走|逃|叫|倒|飛|投|握|振|開|閉|持|回|守|追|暴|掴|奪|叩|殴|蹴|泣|笑|怒|驚|震|立|座|歩|見|向|指|差|押|引|掲|置|取|抱|抜|落|転|上|下|入|出|乗|降|着|脱|食|飲|読|書|聞|話|歌|踊|遊|寝|起|止|始|続|終|帰|来|行|待|送|届|届|渡|受|返|払|買|売|借|貸|集|散|並|重|包|巻|結|解|切|折|曲|伸|縮|揺|動|止|消|現|隠|探|見つ)/.test(dialogueText);
       const isLikelyNarration = (charNamesInText.length >= 2 && hasActionVerbs && dialogueText.length > 15);
+      // [v4.6.5] セリフとして処理された場合のみ lastIndex を更新
+      lastIndex = regex.lastIndex;
       if (dialogueText && !isLikelyNarration) {
         formattedBubbles.push(`(Speech Bubble ${bubbleCount}: "${dialogueText}")`);
         bubbleCount++;
