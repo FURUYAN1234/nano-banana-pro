@@ -233,9 +233,11 @@ export const extractDialogueOnly = (fullPanelText, castList) => {
   let bubbleCount = 1;
 
   lines.forEach(line => {
-    // [v4.6.3] SE（効果音演出指示）行をスキップ: （SE: ...）や (SE: ...) の形式
+    // [v4.6.5-fix] SE（効果音演出指示）行をスキップ: （SE: ...）や (SE: ...) の形式に加え、
+    // 「音響効果：」「SE：」「効果音：」等のコロン形式も除外
     const trimmedForSE = line.trim();
     if (/^[（(]\s*SE\s*[:：]/i.test(trimmedForSE)) return;
+    if (/^(?:音響効果|音響|音声|SE|効果音|SFX|BGM)\s*[:：]/i.test(trimmedForSE)) return;
 
     // Check if line indicates dialogue
     const match = line.match(/^(.*?)(?:[:：]|「)/);
@@ -261,7 +263,7 @@ export const extractDialogueOnly = (fullPanelText, castList) => {
       const endsWithParticle = !isExactCastMatch && /(?:が|を|に|で|へ|は|も|と|から|まで|より)$/.test(tempSpeakerBase);
       const isTooLong = tempSpeakerBase.length > 20; // 複数人「アカリ・ヒカリ・ミク・リン」を許容するため長めに変更
       // [v4.6.3] 照明・SE・演出など舞台指示用語をメタタグとして除外
-      const isMetaTag = /^(Camera|Location|Outfit|EMOTION|状況(?:演出)?|Action|リアクション|Reaction|設定|物理描写|SFX|SE|効果音|BGM|ナレーション|テロップ|聴覚|触覚|嗅覚|体内感覚|視覚|照明|光|演出|空間|構図|背景|Background|カメラワーク|CameraWork|Camera\s*Work)$/i.test(tempSpeakerBase);
+      const isMetaTag = /^(Camera|Location|Outfit|EMOTION|状況(?:演出)?|Action|リアクション|Reaction|設定|物理描写|SFX|SE|効果音|音響効果|音響|音声|BGM|ナレーション|テロップ|聴覚|触覚|嗅覚|体内感覚|視覚|照明|光|演出|空間|構図|背景|Background|カメラワーク|CameraWork|Camera\s*Work)$/i.test(tempSpeakerBase);
       // [v2.45] 効果音パターン検出: 同じ文字(長音含む)の繰り返しは効果音（シーーーン、ゴゴゴ等）
       const isSoundEffect = /^[^a-zA-Z]*([\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF])([ーッっ]*\1){1,}[ーッっ！!ン]*$/u.test(tempSpeakerBase);
       // [v2.45] リアクション指示混入検出: 「（リアクション」等が話者名に含まれていたら除外
@@ -355,16 +357,19 @@ export const extractDialogueOnly = (fullPanelText, castList) => {
       // 1. 長さが極めて短い、英数字・記号のみの文字列（例：Ω、∩、Aなど）は除外
       const isPureSymbol = /^[A-Za-z0-9Ω∩αβγδεζηθικλμνξοπρστυφχψω\s\-\+\*\/\\＝\?？!！]{1,3}$/.test(dialogueText);
 
-      // 1.5 擬音語・擬態語の除外（バンッ！、ドカーン等）
-      const isSfx = /^(バン|ドン|ガン|ドカ|バキ|ドス|ガサ|ゴト|チリン|ピンポン|カチ|パチ|ドーン|バァーン|ドォーン|バーン|ドドド|ゴゴゴ|ザザザ|ピー|ピピッ|ガチャ|ギー)[ッー!！\s]*$/u.test(dialogueText);
+      // [v4.6.5-fix2] 擬音語・擬態語の除外（バンッ！、ガチャン！、ガリッ！等）
+      // ン・リ・ル等の一般的なSFX語尾を許容するため suffix に追加
+      const isSfx = /^(バン|ドン|ガン|ドカ|バキ|ドス|ガサ|ゴト|チリン|ピンポン|カチ|パチ|ドーン|バァーン|ドォーン|バーン|ドドド|ゴゴゴ|ザザザ|ピー|ピピッ|ガチャ|ギー|ガリ|バタ|ガタ|ビリ|メリ|パリ|ドサ|ズド|ゴロ|キー|ギシ|ビシ|ガシャ|ミシ|カタ|コト|パタ|ジャリ|ズシ|グシャ|ベキ|メキ)[ッーン!！\s]*$/u.test(dialogueText);
       const postText = fullPanelText.substring(regex.lastIndex, regex.lastIndex + 40);
-      const isSfxByPostText = /^(という音|という爆音|という銃声|という足音)/.test(postText);
+      // [v4.6.5-fix2] 「〜と...音が」「〜と...鳴」等のSE文脈も検出
+      const isSfxByPostText = /^(という音|という爆音|という銃声|という足音|と[^\n「」]{0,20}(?:音が|音を|音で|異音|金属音|爆音|轟音|衝撃音))/.test(postText);
 
       // 2. 直前のテキストの末尾が形状や表記指示、比喩表現などを示すものである場合は除外
       const isNotDialogueIndicator = /(?:型|字|感|と書かれた|と書く|と書き|と書いた|という|のような|風の|的な|コード|キー|マーク|記号|ラベル|吹き出し|セリフ|ポーズ)$/.test(prevText.trim());
       const preQuoteContext = prevText.slice(-40);
+      // [v4.6.5-fix2] SE関連メタタグ（音響効果、効果音等）が直前にある場合も除外
       const isVisualTextByContext =
-        /(?:空中|宙|空間|画面|紙|原稿|黒板|ホワイトボード|看板|札|プレート|ノート|ページ|壁|床|文字|単語|タイトル|見出し|ラベル|テロップ|字幕|サイン|SFX|擬音)[^「」]{0,12}$/.test(preQuoteContext) ||
+        /(?:空中|宙|空間|画面|紙|原稿|黒板|ホワイトボード|看板|札|プレート|ノート|ページ|壁|床|文字|単語|タイトル|見出し|ラベル|テロップ|字幕|サイン|SFX|擬音|音響効果|効果音|SE|BGM|音響|音声)[^「」]{0,12}$/.test(preQuoteContext) ||
         /^(?:と)?[^。！？\n]{0,16}(?:書|描|指書|なぞ|浮か|表示|投影|刻|印字|残像|光|輝|出現|出る|現れる|走る|切り裂く)/.test(postText);
 
       // [v4.5.11] 3. カギ括弧の直後が助詞（が、を、に、で、へ、も、から、より）などで名詞的に使われている場合は除外
@@ -444,18 +449,22 @@ const protectNonDialogueTextHints = (actionText) => {
       return match;
     }
 
-    // [v4.6.3] セリフ判定: カギ括弧の直前にキャラ名パターン（片仮名/漢字2〜8文字）がある場合、
+    // [v4.6.5-fix2] セリフ判定: カギ括弧の直前にキャラ名パターン（片仮名/漢字/ひらがな + 任意の句読点）がある場合、
     // これはセリフである可能性が極めて高い。extractActionOnly が除去し損ねたセリフを
     // ここで破壊すると extractDialogueOnly のフォールバックも失敗し、セリフが完全消失する。
     const immediateLeft = fullText.slice(Math.max(0, offset - 12), offset).trimEnd();
-    // 直前が「キャラ名」パターン（カタカナ/漢字/ひらがな 1〜10文字 + 任意の空白）で終わっている場合はスキップ
-    const isLikelyDialogue = /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF\u25A0-\u25FF■]{1,10}\s*$/.test(immediateLeft);
+    // 直前が「キャラ名」パターン（CJK文字 + 任意の句読点・空白）で終わっている場合はスキップ
+    // [v4.6.5-fix2] 句読点（、。）やカッコ閉じ（）の直後でもCJK文字がその前にあればセリフと判定
+    const isLikelyDialogue = /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF\u25A0-\u25FF■][、。！？!?）)」』\s]*$/.test(immediateLeft);
     if (isLikelyDialogue) {
       return match;
     }
 
-    const leftContext = fullText.slice(Math.max(0, offset - 56), offset);
-    const rightContext = fullText.slice(offset + match.length, Math.min(fullText.length, offset + match.length + 56));
+    // [v4.6.5-fix2] 文脈ウィンドウを56→30文字に縮小。
+    // 隣接するセリフの語彙（「オーラ」「鳴らし」等）を誤って文脈として拾い、
+    // MOOD_CONTEXT_RE / SOUND_CONTEXT_RE が誤マッチする問題を防止。
+    const leftContext = fullText.slice(Math.max(0, offset - 30), offset);
+    const rightContext = fullText.slice(offset + match.length, Math.min(fullText.length, offset + match.length + 30));
     const context = `${leftContext} ${rightContext}`;
 
     if (SOUND_CONTEXT_RE.test(context)) {
@@ -511,7 +520,7 @@ export const extractActionOnly = (fullPanelText, castList, placementRule = "") =
       // [v4.6.3] extractDialogueOnly と閾値を統一（12→20）。不一致だとセリフがAction側に残り、protectNonDialogueTextHintsで破壊される
       const isTooLong = tempSpeaker.length > 20;
       // [v4.6.3] 照明・SE・演出など舞台指示用語をメタタグとして除外
-      const isMetaTag = /^(Camera|Location|Outfit|EMOTION|状況(?:演出)?|Action|リアクション|Reaction|設定|聴覚|触覚|嗅覚|体内感覚|視覚|照明|光|演出|空間|構図|物理描写|SFX|SE|効果音|BGM|ナレーション|テロップ|背景|Background|カメラワーク|CameraWork|Camera\s*Work)$/i.test(tempSpeaker);
+      const isMetaTag = /^(Camera|Location|Outfit|EMOTION|状況(?:演出)?|Action|リアクション|Reaction|設定|聴覚|触覚|嗅覚|体内感覚|視覚|照明|光|演出|空間|構図|物理描写|SFX|SE|効果音|音響効果|音響|音声|BGM|ナレーション|テロップ|背景|Background|カメラワーク|CameraWork|Camera\s*Work)$/i.test(tempSpeaker);
       // [v2.45] 効果音パターン検出
       const isSoundEffect = /^[^a-zA-Z]*([\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF])([ーッっ]*\1){1,}[ーッっ！!ン]*$/u.test(tempSpeaker.replace(/[（(].*$/, '').trim());
       const hasReactionTag = /[（(]\s*リアクション/i.test(match[1]);
@@ -631,7 +640,7 @@ export const extractPlacementRule = (fullPanelText, castList) => {
       const hasSentenceParticles = !isExactCastMatchP && /[がをにでへはもとからまでより]/.test(speaker) && speaker.length > 5;
       const isTooLong = speaker.length > 12;
       // [v4.6.3] 照明・SE・演出など舞台指示用語をメタタグとして除外
-      const isMetaTag = /^(Camera|Location|Outfit|EMOTION|状況(?:演出)?|Action|リアクション|Reaction|設定|聴覚|触覚|嗅覚|体内感覚|視覚|照明|光|演出|空間|構図|物理描写|SFX|SE|効果音|BGM|ナレーション|テロップ|背景|Background|カメラワーク|CameraWork|Camera\s*Work)$/i.test(speaker);
+      const isMetaTag = /^(Camera|Location|Outfit|EMOTION|状況(?:演出)?|Action|リアクション|Reaction|設定|聴覚|触覚|嗅覚|体内感覚|視覚|照明|光|演出|空間|構図|物理描写|SFX|SE|効果音|音響効果|音響|音声|BGM|ナレーション|テロップ|背景|Background|カメラワーク|CameraWork|Camera\s*Work)$/i.test(speaker);
       const isSoundEffect = /^[^a-zA-Z]*([\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF])([ーッっ]*\1){1,}[ーッっ！!ン]*$/u.test(speaker.replace(/[（(].*$/, '').trim());
       const hasReactionTag = /[（(]\s*リアクション/i.test(match[1]);
       const isDummySpeaker = /^(全員|みんな|Speaker)$/i.test(speaker);

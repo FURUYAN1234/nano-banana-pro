@@ -1160,6 +1160,11 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v4.6.6 (2026-06-09)
+- **[Fix]** 擬音語（ガチャン！、ガリッ！！等）がセリフ吹き出しに混入するバグを修正。`isSfx` 正規表現にカタカナ「ン」を語尾文字として追加し、SFXステムを18語拡充 / Fixed onomatopoeia (e.g. ガチャン！, ガリッ！！) leaking into speech bubbles by adding ン to the `isSfx` suffix pattern and expanding SFX stems by 18 words
+- **[Fix]** `protectNonDialogueTextHints` が隣接セリフの語彙（「オーラ」「鳴らし」等）を誤検知し、正当なセリフを破壊するバグを修正。文脈ウィンドウを56→30文字に縮小し、`isLikelyDialogue` 判定で日本語句読点を許容 / Fixed `protectNonDialogueTextHints` falsely matching vocabulary from adjacent dialogue lines by narrowing the context window from 56 to 30 characters and allowing Japanese punctuation in `isLikelyDialogue`
+- **[Fix]** `音響効果：` `効果音：` 等のSEメタタグ直後の擬音がフォールバックループで誤抽出される問題を修正。`preQuoteContext` と `isSfxByPostText` にSE関連パターンを追加 / Fixed SE meta-tags (音響効果：, 効果音：) followed by onomatopoeia being incorrectly extracted in fallback loop by adding SE-related patterns to context checks
+
 ### v4.6.5 (2026-06-04)
 - **[Fix]** セリフ抽出フォールバックにおける `lastIndex` 更新タイミングの致命的バグを修正。形状描写（「へ」の字等）がスキップされた際に話者コンテキストが途切れ、直後にある本来のセリフが消失する問題を解消 / Fixed a critical `lastIndex` regression in dialogue fallback extraction where skipped shape descriptions (e.g. 「へ」の字) would consume speaker context, causing the subsequent legitimate dialogue to be silently dropped
 - **[Fix]** 形状描写除外フィルタ（`isShapeDescription`）を新規追加。1〜2文字のカギ括弧（「へ」「Ω」「ω」等）の直後に「の字」「型」「の形」等が続く場合のみ非セリフとして除外 / Added shape description exclusion filter to prevent 1-2 character bracket text followed by shape indicators from being mistakenly extracted as dialogue
@@ -1202,6 +1207,4 @@ Developed by **FURU**
 - **[Feature]** AIモデルフォールバックチェーンビューア機能を追加。ヘッダーの「⚙ Model Chain」ボタンから現在の全STEPのモデル構成と更新履歴を一覧表示・コピー可能 / Added AI Model Fallback Chain Viewer with copy-to-clipboard
 - **[System]** デプロイ前モデル差分検出と更新履歴プロトコルを追加 / Added pre-deploy model diff detection and history protocol
 
-### v4.5.2 (2026-05-29)
-- **[Fix & UX]** プロンプト生成システムのバグ修正（モブ制限解除・セリフ欠落防止・擬音除外） / Fixed prompt generation bugs (mob display, missing dialogue, SFX bubbles)
 
