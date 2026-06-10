@@ -368,8 +368,9 @@ export const extractDialogueOnly = (fullPanelText, castList) => {
       const isNotDialogueIndicator = /(?:型|字|感|と書かれた|と書く|と書き|と書いた|という|のような|風の|的な|コード|キー|マーク|記号|ラベル|吹き出し|セリフ|ポーズ)$/.test(prevText.trim());
       const preQuoteContext = prevText.slice(-40);
       // [v4.6.5-fix2] SE関連メタタグ（音響効果、効果音等）が直前にある場合も除外
+      // [v4.6.6] 「一文字」「数文字」「何文字」等の複合語が「文字」に誤マッチする問題を修正
       const isVisualTextByContext =
-        /(?:空中|宙|空間|画面|紙|原稿|黒板|ホワイトボード|看板|札|プレート|ノート|ページ|壁|床|文字|単語|タイトル|見出し|ラベル|テロップ|字幕|サイン|SFX|擬音|音響効果|効果音|SE|BGM|音響|音声)[^「」]{0,12}$/.test(preQuoteContext) ||
+        /(?:空中|宙|空間|画面|紙|原稿|黒板|ホワイトボード|看板|札|プレート|ノート|ページ|壁|床|(?<![一数何])文字|単語|タイトル|見出し|ラベル|テロップ|字幕|サイン|SFX|擬音|音響効果|効果音|SE|BGM|音響|音声)[^「」]{0,12}$/.test(preQuoteContext) ||
         /^(?:と)?[^。！？\n]{0,16}(?:書|描|指書|なぞ|浮か|表示|投影|刻|印字|残像|光|輝|出現|出る|現れる|走る|切り裂く)/.test(postText);
 
       // [v4.5.11] 3. カギ括弧の直後が助詞（が、を、に、で、へ、も、から、より）などで名詞的に使われている場合は除外
@@ -380,7 +381,21 @@ export const extractDialogueOnly = (fullPanelText, castList) => {
       // 口の形や図形を表す描写であり、セリフではない。直後に「の字」「型」「の形」等が続く場合は除外。
       const isShapeDescription = dialogueText.length <= 2 && /^(?:の字|型|の形|の口|にゆが|に曲|に歪|に変形|に開|に大|のよう|みたい)/.test(postText.trim());
 
-      if (isPureSymbol || isSfx || isSfxByPostText || isNotDialogueIndicator || isVisualTextByContext || isUsedAsNoun || isShapeDescription) {
+      // [v4.6.6] 表情・動作・状態の描写テキスト除外
+      // 漫画の演出上カギ括弧で強調されているが、キャラが口に出すセリフではないもの
+      const isExpressionOrActionDescription = (() => {
+        // 1. 動作・状態イディオム（「言葉を失う」「息を呑む」等の慣用句）
+        if (/^(?:言葉を失う|声を失う|息を呑む|目を見張る|目を疑う|耳を疑う|言葉にならない|声にならない|声が出ない|二の句が継げない|開いた口が塞がらない|頭が真っ白になる|血の気が引く|腰が抜ける|鳥肌が立つ|固まる|フリーズ|硬直|沈黙|絶句|呆然|唖然|戦慄|絶望|覚醒|暴走|崩壊|発狂)$/.test(dialogueText)) {
+          return true;
+        }
+        // 2. 感情記述記号（＋やMAX等、口語では使わない表記）を含む表現描写
+        if (/[＋+×]/.test(dialogueText) && /(?:MAX|ＭＡＸ|全開|全力|怒り|呆れ|驚き|喜び|悲しみ|恐怖|焦り|困惑|嫉妬|不安|感動|興奮|緊張)/.test(dialogueText)) {
+          return true;
+        }
+        return false;
+      })();
+
+      if (isPureSymbol || isSfx || isSfxByPostText || isNotDialogueIndicator || isVisualTextByContext || isUsedAsNoun || isShapeDescription || isExpressionOrActionDescription) {
         // [v4.6.5] 非セリフ — lastIndexを進めず、話者コンテキストを次のマッチに引き継ぐ
         continue;
       }

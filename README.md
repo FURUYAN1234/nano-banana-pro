@@ -1160,6 +1160,9 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v4.6.7 (2026-06-10)
+- **[Fix & UX]** Dialogue extraction bugfix: expression/action descriptions no longer mistaken as dialogue / Dialogue extraction bugfix: expression/action descriptions no longer mistaken as dialogue
+
 ### v4.6.6 (2026-06-09)
 - **[Fix]** 擬音語（ガチャン！、ガリッ！！等）がセリフ吹き出しに混入するバグを修正。`isSfx` 正規表現にカタカナ「ン」を語尾文字として追加し、SFXステムを18語拡充 / Fixed onomatopoeia (e.g. ガチャン！, ガリッ！！) leaking into speech bubbles by adding ン to the `isSfx` suffix pattern and expanding SFX stems by 18 words
 - **[Fix]** `protectNonDialogueTextHints` が隣接セリフの語彙（「オーラ」「鳴らし」等）を誤検知し、正当なセリフを破壊するバグを修正。文脈ウィンドウを56→30文字に縮小し、`isLikelyDialogue` 判定で日本語句読点を許容 / Fixed `protectNonDialogueTextHints` falsely matching vocabulary from adjacent dialogue lines by narrowing the context window from 56 to 30 characters and allowing Japanese punctuation in `isLikelyDialogue`

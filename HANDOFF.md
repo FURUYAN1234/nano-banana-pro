@@ -1,11 +1,11 @@
 # HANDOFF.md
 
-## 現在のステータス (Deploying v4.6.6)
-- **バージョン**: v4.6.6
+## 現在のステータス (Deploying v4.6.7)
+- **バージョン**: v4.6.7
 - **最新の変更点**:
-  - 擬音語（ガチャン！、ガリッ！！等）がセリフ吹き出しに混入するバグを修正（isSfx正規表現にンを追加、SFXステム18語拡充）
-  - protectNonDialogueTextHintsが隣接セリフの語彙を誤検知し正当なセリフを破壊するバグを修正（文脈ウィンドウ56→30文字に縮小）
-  - 音響効果等のSEメタタグ直後の擬音がフォールバックループで誤抽出される問題を修正
+  - extractDialogueOnly fallback: 表情描写（「怒り＋呆れMAX」等）がセリフとして誤抽出されるバグを修正（isExpressionOrActionDescription追加）
+  - extractDialogueOnly fallback: 動作イディオム（「言葉を失う」等）がセリフ吹き出しに混入するバグを修正
+  - isVisualTextByContext: 「一文字」が「文字」に誤マッチし正規セリフ「ログ記録は…？」が消失するバグを修正（negative lookbehind追加）
 
 ## 検証待ちタスク (Pending Verification Tasks)
 - [ ] GitHub Pages デプロイ検証
