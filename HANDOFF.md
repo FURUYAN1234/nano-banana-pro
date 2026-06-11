@@ -1,11 +1,10 @@
 # HANDOFF.md
 
-## 現在のステータス (Deploying v4.6.7)
-- **バージョン**: v4.6.7
+## 現在のステータス (Deploying v4.6.8)
+- **バージョン**: v4.6.8
 - **最新の変更点**:
-  - extractDialogueOnly fallback: 表情描写（「怒り＋呆れMAX」等）がセリフとして誤抽出されるバグを修正（isExpressionOrActionDescription追加）
-  - extractDialogueOnly fallback: 動作イディオム（「言葉を失う」等）がセリフ吹き出しに混入するバグを修正
-  - isVisualTextByContext: 「一文字」が「文字」に誤マッチし正規セリフ「ログ記録は…？」が消失するバグを修正（negative lookbehind追加）
+  - ChatGPTエモーショナルプロンプト（EMOTIONAL CINEMA ENGINE）のセクション6に「横書き→縦書き強制修正」ルール（HORIZONTAL-TO-VERTICAL CORRECTION）を追加
+  - SELF-REVIEWチェックリストに吹き出し内テキスト方向の検証ステップを追加
 
 ## 検証待ちタスク (Pending Verification Tasks)
 - [ ] GitHub Pages デプロイ検証

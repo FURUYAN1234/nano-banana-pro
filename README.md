@@ -1,4 +1,4 @@
-﻿# Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System
+# Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System
 
 > **"To what extent can humans step away from the creative process?"**
 > **「人間は、どこまで制作から降りられるのか？」**
@@ -765,6 +765,9 @@ A tool to automatically convert static 4-koma manga into fully voiced animated v
 ---
 
 ## 📋 ChangeLog
+
+### v4.6.8 (2026-06-12)
+- **[Prompt]** ChatGPTエモーショナルプロンプト（EMOTIONAL CINEMA ENGINE）のテキストルールに「横書き→縦書き強制修正」指示を追加。吹き出し内テキストの縦書き（tategaki）を徹底し、SELF-REVIEWチェックリストにも検証ステップを追加 / Added HORIZONTAL-TO-VERTICAL CORRECTION rule to the Emotional Cinema Engine prompt, enforcing tategaki text in speech bubbles with an explicit self-review verification step
 
 ### v4.6.7 (2026-06-10)
 - **[Fix & UX]** Dialogue extraction bugfix: expression/action descriptions no longer mistaken as dialogue / Dialogue extraction bugfix: expression/action descriptions no longer mistaken as dialogue
