@@ -190,11 +190,10 @@ The environment and effects must ECHO the character's emotion, not just be a bac
   * No film grain, paper grain, canvas texture, or rough textures.
 
 [ 6. TEXT & OUTPUT RULES ]
-- If speech bubbles or text are drawn, ALL text MUST be vertical Japanese (tategaki). ZERO horizontal text allowed.
-- HORIZONTAL-TO-VERTICAL CORRECTION: If you detect ANY horizontal text (yokogaki) inside speech bubbles or dialogue balloons, you MUST redraw it as vertical text (tategaki, top-to-bottom, right-to-left columns). This is a MANDATORY fix — horizontal Japanese text in manga speech bubbles is a critical error.
+- If speech bubbles or text are drawn, ALL text MUST be vertical Japanese. ZERO horizontal text.
 - Do not add random background text, floating letters, or unnecessary sound effects unless the scene demands it.
 - Quoted ambience, SFX names, mood words, aura names, and emotion labels in the instruction are NOT visible lettering. Express them with environment, motion, lighting, and poses unless the prompt explicitly asks for handwriting, signage, labels, printed text, or screen text.
-- SELF-REVIEW: After drawing, carefully verify: (1) finger count on all hands (exactly 5), (2) ALL text inside speech bubbles is VERTICAL (tategaki) — if any horizontal text is found, immediately regenerate with vertical text, (3) check for text errors, and fix internally before displaying the final result.`;
+- SELF-REVIEW: After drawing, carefully verify finger count on all hands (exactly 5), check for text errors, and fix internally before displaying the final result.`;
               navigator.clipboard.writeText(protocol);
               setIsPolicyCopied(true);
               setTimeout(() => setIsPolicyCopied(false), 2000);

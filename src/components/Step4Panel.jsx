@@ -431,8 +431,21 @@ If ANY of the following occurs, REGENERATE AGAIN automatically:
 Repeat regeneration until ALL conditions are satisfied.
 
 ━━━━━━━━━━━━━━━━━━
+■ HORIZONTAL-TO-VERTICAL TEXT CORRECTION (CRITICAL)
+━━━━━━━━━━━━━━━━━━
+- ALL text inside speech bubbles MUST be vertical Japanese (tategaki: top-to-bottom, right-to-left columns).
+- If ANY speech bubble text is horizontal (yokogaki: left-to-right), you MUST redraw those bubbles with vertical text.
+- This applies to ALL panels — check every single speech bubble.
+- Horizontal text in speech bubbles is a FAILURE condition and requires immediate correction.
+
+━━━━━━━━━━━━━━━━━━
 ■ OUTPUT RULE
 ━━━━━━━━━━━━━━━━━━
+SELF-REVIEW before finalizing:
+1. Verify finger count on all visible hands (exactly 5 fingers each).
+2. Verify ALL speech bubble text is vertical (tategaki). If ANY horizontal text is found → REDRAW those bubbles immediately.
+3. Check for text errors or garbled characters and fix internally.
+
 Only output the corrected A4 4-panel manga image.
 No explanations. No partial results.`;
                             navigator.clipboard.writeText(fixPrompt);

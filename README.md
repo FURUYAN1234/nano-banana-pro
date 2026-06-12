@@ -767,7 +767,7 @@ A tool to automatically convert static 4-koma manga into fully voiced animated v
 ## 📋 ChangeLog
 
 ### v4.6.8 (2026-06-12)
-- **[Prompt]** ChatGPTエモーショナルプロンプト（EMOTIONAL CINEMA ENGINE）のテキストルールに「横書き→縦書き強制修正」指示を追加。吹き出し内テキストの縦書き（tategaki）を徹底し、SELF-REVIEWチェックリストにも検証ステップを追加 / Added HORIZONTAL-TO-VERTICAL CORRECTION rule to the Emotional Cinema Engine prompt, enforcing tategaki text in speech bubbles with an explicit self-review verification step
+- **[Prompt]** 画像比率修正プロンプト（ABSOLUTE OVERRIDE）に「横書き→縦書き強制修正」セクション（HORIZONTAL-TO-VERTICAL TEXT CORRECTION）を追加。吹き出し内テキストの縦書き（tategaki）を徹底し、SELF-REVIEWチェックリストに指の本数・縦書き・テキストエラーの3段階検証ステップを追加 / Added HORIZONTAL-TO-VERTICAL CORRECTION section to the aspect ratio fix prompt (ABSOLUTE OVERRIDE), enforcing tategaki text in speech bubbles with a 3-step SELF-REVIEW checklist
 
 ### v4.6.7 (2026-06-10)
 - **[Fix & UX]** Dialogue extraction bugfix: expression/action descriptions no longer mistaken as dialogue / Dialogue extraction bugfix: expression/action descriptions no longer mistaken as dialogue
