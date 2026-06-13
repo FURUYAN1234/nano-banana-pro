@@ -93,7 +93,7 @@ export const buildIdentityMatrix = (castListText) => {
 
   matrix += `CROSS-CHECK: After completing each panel, verify every character's hair color and glasses status matches the matrix above. If ANY mismatch, redraw that character.\n`;
   matrix += `Reading order: RIGHT-TO-LEFT (Japanese manga). The first speaker is on the RIGHT. Speech bubbles flow right-to-left.
-SPEECH BUBBLE PLACEMENT RULE (CRITICAL): Each character's speech bubble MUST be drawn directly above or beside THAT character's head. The RIGHT-side character's bubble MUST be on the RIGHT side of the panel. The LEFT-side character's bubble MUST be on the LEFT side. NEVER draw a character's speech bubble on the opposite side of where the character is standing.\n`;
+SPEECH BUBBLE PLACEMENT RULE (CRITICAL): Each character's speech bubble MUST be drawn directly above or beside THAT character's head — matching the character's ACTUAL position in the panel. If a character is in the CENTER of the panel, their bubble MUST also be in the CENTER — do NOT push it to the left or right edge. Each bubble's tail MUST point down to its speaker.\n`;
 
   return matrix;
 };
@@ -694,8 +694,9 @@ CHARACTER BODY POSITION LOCK (3-ZONE - DO NOT MIRROR):
 - [${speakers[2]}] MUST be on the LEFT third of the panel.
 - Maintain breathing room between zones to prevent overcrowding and attribute fusion.
 SPEECH BUBBLE FLOW (RIGHT-TO-LEFT):
-- [${speakers[0]}]'s bubble on the RIGHT, [${speakers[1]}]'s in CENTER, [${speakers[2]}]'s on LEFT.
-- Each bubble MUST point to its speaker. Flow: Right → Center → Left.`;
+- Each character's speech bubble MUST be placed directly above THAT character's head, matching their actual position in the panel.
+- If [${speakers[1]}] is in the CENTER, their bubble MUST also be centered — do NOT push it to an edge.
+- Each bubble's tail MUST point to its speaker. Flow: Right → Center → Left.`;
   } else if (speakers.length >= 2) {
     const traits0 = getCharTraitsFromMatrix(speakers[0], castList);
     const traits1 = getCharTraitsFromMatrix(speakers[1], castList);
@@ -709,10 +710,10 @@ CHARACTER BODY POSITION LOCK (CRITICAL - DO NOT MIRROR):
 - The character with ${traits0 || speakers[0] + "'s features"} MUST be physically standing/sitting on the RIGHT half of the panel.
 - The character with ${traits1 || speakers[1] + "'s features"} MUST be physically standing/sitting on the LEFT half of the panel.
 - Do NOT swap, mirror, or reverse their positions under any circumstances.
-SPEECH BUBBLE POSITION LOCK:
-- [${speakers[0]}]'s speech bubble MUST appear on the RIGHT side, directly above/beside [${speakers[0]}]'s head.
-- [${speakers[1]}]'s speech bubble MUST appear on the LEFT side, directly above/beside [${speakers[1]}]'s head.
-- Each bubble MUST point to its speaker. Do NOT swap bubble positions.`;
+SPEECH BUBBLE POSITION RULE:
+- Each character's speech bubble MUST be placed directly above or beside THAT character's head, matching the character's actual position in the panel.
+- If a character is positioned in the center of the panel, their bubble MUST also be centered — do NOT push it to the left or right edge.
+- Each bubble's tail MUST point down to its speaker. Do NOT swap bubble positions.`;
   } else if (speakers.length === 1) {
     const traits0 = getCharTraitsFromMatrix(speakers[0], castList);
     return `CRITICAL PLACEMENT & IDENTITY: [${speakers[0]}] (${traits0 || 'see reference'}) is the main focus of this panel.`;

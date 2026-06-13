@@ -766,6 +766,9 @@ A tool to automatically convert static 4-koma manga into fully voiced animated v
 
 ## 📋 ChangeLog
 
+### v4.6.9 (2026-06-13)
+- **[Fix & Prompt]** 吹き出しの位置指示を「絶対的なRIGHT/LEFT端固定」から「キャラの実際の位置に追従する相対配置」に変更。真ん中にいるキャラクターの吹き出しがコマの端に飛んで別人が喋っているように見える問題を解消 / Changed speech bubble placement from absolute RIGHT/LEFT edge locking to relative positioning that follows each character's actual position, fixing bubbles appearing at panel edges when the speaker is in the center
+
 ### v4.6.8 (2026-06-12)
 - **[Prompt]** 画像比率修正プロンプト（ABSOLUTE OVERRIDE）に「横書き→縦書き強制修正」セクション（HORIZONTAL-TO-VERTICAL TEXT CORRECTION）を追加。吹き出し内テキストの縦書き（tategaki）を徹底し、SELF-REVIEWチェックリストに指の本数・縦書き・テキストエラーの3段階検証ステップを追加 / Added HORIZONTAL-TO-VERTICAL CORRECTION section to the aspect ratio fix prompt (ABSOLUTE OVERRIDE), enforcing tategaki text in speech bubbles with a 3-step SELF-REVIEW checklist
 
@@ -812,10 +815,4 @@ A tool to automatically convert static 4-koma manga into fully voiced animated v
 ### v4.5.5 (2026-05-31)
 - **[Fix & Refactoring]** ポート競合の解消、コンポーネント間連携（setShowModal）の修正、ApiKeyModalの警告解消、およびLintエラー（未使用変数等）の完全クリーンアップ / Resolved port conflicts, fixed component props (setShowModal), addressed ApiKeyModal form warnings, and completely cleaned up Lint errors (unused variables, etc.)
 
-### v4.5.4 (2026-05-30)
-- **[Docs & UX]** フォールバックチェーン説明文の注意事項をより的確な表現に修正 / Updated the fallback chain note for clarity regarding API generation priority
-
-### v4.5.3 (2026-05-30)
-- **[Feature]** AIモデルフォールバックチェーンビューア機能を追加。ヘッダーの「⚙ Model Chain」ボタンから現在の全STEPのモデル構成と更新履歴を一覧表示・コピー可能 / Added AI Model Fallback Chain Viewer with copy-to-clipboard
-- **[System]** デプロイ前モデル差分検出と更新履歴プロトコルを追加 / Added pre-deploy model diff detection and history protocol
 

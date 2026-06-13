@@ -1,10 +1,10 @@
 # HANDOFF.md
 
-## 現在のステータス (Deploying v4.6.8)
-- **バージョン**: v4.6.8
+## 現在のステータス (Deploying v4.6.9)
+- **バージョン**: v4.6.9
 - **最新の変更点**:
-  - 画像比率修正プロンプト（ABSOLUTE OVERRIDE）に「横書き→縦書き強制修正」セクション（HORIZONTAL-TO-VERTICAL TEXT CORRECTION）を追加
-  - SELF-REVIEWチェックリストに指の本数・縦書き・テキストエラーの3段階検証ステップを追加
+  - 吹き出しの位置指示を「絶対的なRIGHT/LEFT端固定」から「キャラの実際の位置に追従する相対配置」に変更
+  - 真ん中にいるキャラの吹き出しがコマの端に飛んで別人が喋っているように見える問題を解消
 
 ## 検証待ちタスク (Pending Verification Tasks)
 - [ ] GitHub Pages デプロイ検証
