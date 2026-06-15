@@ -766,6 +766,9 @@ A tool to automatically convert static 4-koma manga into fully voiced animated v
 
 ## 📋 ChangeLog
 
+### v4.7.0 (2026-06-15)
+- **[Fix & UX]** セリフとキャラクター配置の不整合バグを修正し、セリフの帰属精度を向上 / Fixed a bug causing dialogue to speaker mismatch and improved dialogue attribution accuracy
+
 ### v4.6.9 (2026-06-13)
 - **[Fix & Prompt]** 吹き出しの位置指示を「絶対的なRIGHT/LEFT端固定」から「キャラの実際の位置に追従する相対配置」に変更。真ん中にいるキャラクターの吹き出しがコマの端に飛んで別人が喋っているように見える問題を解消 / Changed speech bubble placement from absolute RIGHT/LEFT edge locking to relative positioning that follows each character's actual position, fixing bubbles appearing at panel edges when the speaker is in the center
 
