@@ -123,6 +123,42 @@ export const isLikelyPerson = (name, validCharacters = []) => {
   return personKeywords.test(cleanName) || cleanName.toLowerCase().includes('mob') || cleanName.toLowerCase().includes('speaker');
 };
 
+const SPOKEN_QUOTE_POST_RE = /^\s*(?:と|って)?\s*(?:言|いう|言い|言う|言った|叫|叫び|叫ぶ|叫ん|呼|呼び|呟|つぶや|つぶやき|囁|ささや|ささやき|読み上げ|読みあげ|読み|発表|告げ|答|返|話|語|宣言|嘆|漏ら|口に|述べ|怒鳴|呻|うめ|唸|ツッコ|つっこ|突っ込|問|尋)/;
+
+const hasSpokenQuotePostContext = (postText = '') => SPOKEN_QUOTE_POST_RE.test(postText.trim());
+
+const isLikelyVisualLabelQuote = (dialogueText, prevText = '', postText = '') => {
+  const trimmedDialogue = dialogueText.trim();
+  const trimmedPost = postText.trim();
+  if (!trimmedDialogue || hasSpokenQuotePostContext(trimmedPost)) return false;
+
+  const hasSentenceEnding = /[。！？!?…]$/.test(trimmedDialogue);
+  const compactContext = `${prevText.slice(-30)}${trimmedPost.slice(0, 40)}`;
+  if (
+    !hasSentenceEnding &&
+    /(?:席|看板|札|プレート|ラベル|テロップ|字幕|見出し|タイトル|ロゴ|表示|文字|数字|数値|金額|名札|タグ|欄|枠|ボード|画面|スクリーン|モニター|ディスプレイ|サイン|案内|標識|速報|点滅|資料|項目|フォント)/.test(compactContext)
+  ) {
+    return true;
+  }
+
+  return false;
+};
+
+const findNearestSpeakerName = (prevText = '', validCharacters = []) => {
+  let best = { index: -1, name: '' };
+  validCharacters.forEach(c => {
+    const nameOnly = c.split(/[（(]/)[0].trim();
+    [c, nameOnly].forEach(candidate => {
+      if (!candidate) return;
+      const index = prevText.lastIndexOf(candidate);
+      if (index > best.index) {
+        best = { index, name: nameOnly || candidate };
+      }
+    });
+  });
+  return best.name;
+};
+
 
 export const getCharTraitsFromMatrix = (charName, castList) => {
   const matrix = buildIdentityMatrix(castList);
@@ -374,6 +410,7 @@ export const extractDialogueOnly = (fullPanelText, castList) => {
       const postText = fullPanelText.substring(regex.lastIndex, regex.lastIndex + 40);
       // [v4.6.5-fix2] 「〜と...音が」「〜と...鳴」等のSE文脈も検出
       const isSfxByPostText = /^(という音|という爆音|という銃声|という足音|と[^\n「」]{0,20}(?:音が|音を|音で|異音|金属音|爆音|轟音|衝撃音))/.test(postText);
+      const isSpokenQuoteByPostText = hasSpokenQuotePostContext(postText);
 
       // 2. 直前のテキストの末尾が形状や表記指示、比喩表現などを示すものである場合は除外
       const isNotDialogueIndicator = /(?:型|字|感|と書かれた|と書く|と書き|と書いた|という|のような|風の|的な|コード|キー|マーク|記号|ラベル|吹き出し|セリフ|ポーズ)$/.test(prevText.trim());
@@ -406,7 +443,9 @@ export const extractDialogueOnly = (fullPanelText, castList) => {
         return false;
       })();
 
-      if (isPureSymbol || isSfx || isSfxByPostText || isNotDialogueIndicator || isVisualTextByContext || isUsedAsNoun || isShapeDescription || isExpressionOrActionDescription) {
+      const isVisualLabelQuote = isLikelyVisualLabelQuote(dialogueText, prevText, postText);
+
+      if (!isSpokenQuoteByPostText && (isPureSymbol || isSfx || isSfxByPostText || isNotDialogueIndicator || isVisualTextByContext || isUsedAsNoun || isShapeDescription || isExpressionOrActionDescription || isVisualLabelQuote)) {
         // [v4.6.5] 非セリフ — lastIndexを進めず、話者コンテキストを次のマッチに引き継ぐ
         continue;
       }
@@ -422,11 +461,7 @@ export const extractDialogueOnly = (fullPanelText, castList) => {
       lastIndex = regex.lastIndex;
       if (dialogueText && !isLikelyNarration) {
         // [v4.6.10] フォールバックパスでもprevTextからスピーカー名を逆引き
-        const fallbackSpeaker = validCharacters.find(c => {
-          const nameOnly = c.split(/[（(]/)[0].trim();
-          return nameOnly && prevText.includes(nameOnly);
-        });
-        const fallbackSpeakerName = fallbackSpeaker ? fallbackSpeaker.split(/[（(]/)[0].trim() : '';
+        const fallbackSpeakerName = findNearestSpeakerName(prevText, validCharacters);
         const fbSpeakerTag = fallbackSpeakerName ? ` [${fallbackSpeakerName}]` : '';
         formattedBubbles.push(`(Speech Bubble ${bubbleCount}${fbSpeakerTag}: "${dialogueText}")`);
         bubbleCount++;
@@ -465,7 +500,7 @@ export const cleanseActionGagSymbols = (actionText) => {
   return cleansed;
 };
 
-const WRITTEN_TEXT_CONTEXT_RE = /(?:\bwritten\b|\bhandwriting\b|air-writing|finger-writing|\bsignage\b|\bsign\b|\blabel\b|board text|screen text|printed text|text on|letters on|\u6587\u5b57|\u624b\u66f8\u304d|\u7a7a\u4e2d\u306b|\u66f8\u304b\u308c|\u66f8\u304f|\u66f8\u304d|\u66f8\u3044\u305f|\u770b\u677f|\u63b2\u793a|\u8cbc\u308a\u7d19|\u9ed2\u677f|\u30db\u30ef\u30a4\u30c8\u30dc\u30fc\u30c9|\u30ce\u30fc\u30c8\u306b|\u7d19\u306b|\u30b9\u30de\u30db\u753b\u9762|\u753b\u9762\u306b|\u8868\u793a|\u5370\u5b57|\u523b\u5370|\u30e9\u30d9\u30eb|\u6a19\u8b58)/i;
+const WRITTEN_TEXT_CONTEXT_RE = /(?:\bwritten\b|\bhandwriting\b|air-writing|finger-writing|\bsignage\b|\bsign\b|\blabel\b|board text|screen text|printed text|text on|letters on|\u6587\u5b57|\u6570\u5b57|\u6570\u5024|\u91d1\u984d|\u624b\u66f8\u304d|\u7a7a\u4e2d\u306b|\u66f8\u304b\u308c|\u66f8\u304f|\u66f8\u304d|\u66f8\u3044\u305f|\u770b\u677f|\u63b2\u793a|\u8cbc\u308a\u7d19|\u9ed2\u677f|\u30db\u30ef\u30a4\u30c8\u30dc\u30fc\u30c9|\u30ce\u30fc\u30c8\u306b|\u7d19\u306b|\u8cc7\u6599|\u9805\u76ee|\u30b9\u30de\u30db\u753b\u9762|\u753b\u9762|\u30b9\u30af\u30ea\u30fc\u30f3|\u30e2\u30cb\u30bf\u30fc|\u30c7\u30a3\u30b9\u30d7\u30ec\u30a4|\u8868\u793a|\u901f\u5831|\u70b9\u6ec5|\u30d5\u30a9\u30f3\u30c8|\u5370\u5b57|\u523b\u5370|\u30e9\u30d9\u30eb|\u6a19\u8b58)/i;
 const SOUND_CONTEXT_RE = /(?:sound|sfx|onomatopoeia|audio|hum|buzz|\u97f3|\u64ec\u97f3|\u52b9\u679c\u97f3|BGM|\u9cf4|\u30d6\u30fc\u30f3|\u30ce\u30a4\u30ba)/i;
 // [v4.6.3] MOOD_CONTEXT_RE から頻出語（表情・反応・状態・感情）を除外。
 // これらはセリフ周辺のト書きに頻繁に出現し、セリフのカギ括弧まで誤って置換してしまう原因となっていた。
@@ -489,16 +524,20 @@ const protectNonDialogueTextHints = (actionText) => {
     // 直前が「キャラ名」パターン（CJK文字 + 任意の句読点・空白）で終わっている場合はスキップ
     // [v4.6.5-fix2] 句読点（、。）やカッコ閉じ（）の直後でもCJK文字がその前にあればセリフと判定
     const isLikelyDialogue = /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF\u25A0-\u25FF■][、。！？!?）)」』\s]*$/.test(immediateLeft);
-    if (isLikelyDialogue) {
-      return match;
-    }
-
     // [v4.6.5-fix2] 文脈ウィンドウを56→30文字に縮小。
     // 隣接するセリフの語彙（「オーラ」「鳴らし」等）を誤って文脈として拾い、
     // MOOD_CONTEXT_RE / SOUND_CONTEXT_RE が誤マッチする問題を防止。
     const leftContext = fullText.slice(Math.max(0, offset - 30), offset);
     const rightContext = fullText.slice(offset + match.length, Math.min(fullText.length, offset + match.length + 30));
     const context = `${leftContext} ${rightContext}`;
+
+    if (hasSpokenQuotePostContext(rightContext)) {
+      return 'the listed dialogue content (do not render this quoted text outside speech bubbles)';
+    }
+
+    if (WRITTEN_TEXT_CONTEXT_RE.test(context)) {
+      return match;
+    }
 
     if (SOUND_CONTEXT_RE.test(context)) {
       return 'a non-text ambient sound effect (show through environment, vibration, cold air, or reactions only; no visible letters)';
@@ -508,12 +547,12 @@ const protectNonDialogueTextHints = (actionText) => {
       return 'a non-text mood or aura concept (show through poses, focus, lighting, and composition only; no visible letters)';
     }
 
-    if (WRITTEN_TEXT_CONTEXT_RE.test(context)) {
-      return match;
-    }
-
     if (SPOKEN_TEXT_CONTEXT_RE.test(context)) {
       return 'the listed dialogue content (do not render this quoted text outside speech bubbles)';
+    }
+
+    if (isLikelyDialogue) {
+      return match;
     }
 
     return 'a quoted concept only (do not render these letters unless explicit visible writing is requested)';
@@ -845,6 +884,15 @@ export const extractCastLimitRule = (fullPanelText, castList) => {
 
   // Visual Action テキストからも登場キャラ名を検出
   const allPanelCharacters = [...speakers];
+  const canonicalValidCharacters = [...new Set(Object.values(charLookup).map(obj => obj.name))];
+  const hasAllMainCastCue = /(?:他キャラ全員|キャラ全員|全キャラ|全メンバー|全員集合|メンバー全員|主要人物全員)/.test(actionAndMetaText);
+  if (hasAllMainCastCue) {
+    canonicalValidCharacters.forEach((canonicalName) => {
+      if (!allPanelCharacters.includes(canonicalName)) {
+        allPanelCharacters.push(canonicalName);
+      }
+    });
+  }
   validCharacters.forEach(charName => {
     const canonicalName = charLookup[charName].name;
     if (!allPanelCharacters.includes(canonicalName) && actionAndMetaText.includes(charName)) {
@@ -868,7 +916,6 @@ export const extractCastLimitRule = (fullPanelText, castList) => {
 
   // [v2.69] 背景キャスト統合ロジックを完全廃止 (No-Show 除外指示への置換)
   // このコマに一切登場しないキャラ（No-Show）を特定
-  const canonicalValidCharacters = [...new Set(Object.values(charLookup).map(obj => obj.name))];
   const noShowCharacters = canonicalValidCharacters.filter(c => !allPanelCharacters.includes(c));
 
   const allCharBrackets = allPanelCharacters.map(c => `[${c}]`);

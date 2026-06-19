@@ -766,6 +766,10 @@ A tool to automatically convert static 4-koma manga into fully voiced animated v
 
 ## 📋 ChangeLog
 
+### v4.7.2 (2026-06-19)
+- **[Fix & UX]** A4比率のPNG出力を追加し、元画像を切らずに白キャンバス内へ収めるダウンロードを提供 / Added A4-ratio PNG export that fits the generated image inside a white canvas without cropping
+- **[Fix]** A4修正プロンプトでタイトルを再適用し、表示ラベル引用と実際の発話引用の分類を改善 / Re-applies titles in A4 repair prompts and improves classification between visual-label quotes and spoken dialogue quotes
+
 ### v4.7.1 (2026-06-19)
 - **[Fix & UX]** Fallback Chain履歴を最新のNano Banana 2/ChatGPT Images 2.0検証結果に同期 / Synced fallback-chain history with the latest Nano Banana 2 and ChatGPT Images 2.0 verification
 

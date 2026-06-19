@@ -29,6 +29,39 @@ const getGeneratedImageExtension = (dataUrl) => {
   }[mimeType] || 'png';
 };
 
+const A4_EXPORT_WIDTH = 1024;
+const A4_EXPORT_HEIGHT = 1448;
+
+const createA4PngDataUrl = (dataUrl) => new Promise((resolve, reject) => {
+  const img = new Image();
+  img.onload = () => {
+    const canvas = document.createElement('canvas');
+    canvas.width = A4_EXPORT_WIDTH;
+    canvas.height = A4_EXPORT_HEIGHT;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+      reject(new Error('Canvas context unavailable'));
+      return;
+    }
+
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    const scale = Math.min(canvas.width / img.naturalWidth, canvas.height / img.naturalHeight);
+    const drawWidth = Math.round(img.naturalWidth * scale);
+    const drawHeight = Math.round(img.naturalHeight * scale);
+    const dx = Math.round((canvas.width - drawWidth) / 2);
+    const dy = Math.round((canvas.height - drawHeight) / 2);
+
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(img, dx, dy, drawWidth, drawHeight);
+    resolve(canvas.toDataURL('image/png'));
+  };
+  img.onerror = () => reject(new Error('Generated image could not be loaded for A4 export'));
+  img.src = dataUrl;
+});
+
 /**
  * STEP 04: 4コマ漫画生成 ＆ 履歴パネル
  */
@@ -366,6 +399,21 @@ export default function Step4Panel({
                           className={`mt-2 ${isFixPromptCopied ? 'bg-green-600 border-green-500/30' : 'bg-slate-700 hover:bg-slate-600 border-white/10'} text-white px-3 py-1.5 rounded transition-all inline-flex items-center justify-center gap-1.5 border font-bold active:scale-95`}
                           style={{ fontSize: '10px', minWidth: '120px', position: 'relative' }}
                           onClick={() => {
+                            const titleFromPrompt =
+                              finalPrompt?.match(/Top page:\s*draw large bold black Japanese text that reads exactly "([^"]+)"/i)?.[1] ||
+                              finalPrompt?.match(/Top page:\s*draw large bold Japanese text title:\s*"([^"]+)"/i)?.[1] ||
+                              scenario?.match(/タイトル[:：]\s*([^\n]+)/)?.[1]?.trim().replace(/[!！?？]+$/, '').trim() ||
+                              "";
+                            const titleReapplyBlock = titleFromPrompt ? `
+━━━━━━━━━━━━━━━━━━
+■ TITLE RE-APPLICATION (CRITICAL)
+━━━━━━━━━━━━━━━━━━
+- You MUST REDRAW the top title exactly: "${titleFromPrompt}"
+- The title MUST be large bold black Japanese text centered above Panel 1.
+- The title is NOT optional. Do NOT omit it while fixing A4 size.
+- Reserve enough top title area inside the A4 canvas so the title is fully visible and not cropped.
+- Do NOT move the title into a speech bubble, caption box, panel background, watermark, or dialogue.
+` : "";
                             const fixPrompt = `[ABSOLUTE OVERRIDE — FORCE FULL REBUILD]
 
 You MUST discard the previously generated image completely.
@@ -402,6 +450,7 @@ THIS IS A STRUCTURAL CORRECTION TASK. PRIORITIZE LAYOUT OVER STYLE.
 - Thick white gutters between panels (approx 3% height)
 - Gutters MUST be uniform
 - Panels MUST NOT touch
+${titleReapplyBlock}
 
 ━━━━━━━━━━━━━━━━━━
 ■ WATERMARK RE-APPLICATION (CRITICAL)
@@ -438,6 +487,7 @@ If ANY of the following occurs, REGENERATE AGAIN automatically:
 - Panels are uneven → FAIL
 - Margins exist → FAIL
 - Panels look cropped or stretched → FAIL
+- Top title is missing, cropped, moved into a panel, or rewritten → FAIL
 - Layout resembles previous image → FAIL
 - Watermarks are missing → FAIL
 
@@ -458,6 +508,7 @@ SELF-REVIEW before finalizing:
 1. Verify finger count on all visible hands (exactly 5 fingers each).
 2. Verify ALL speech bubble text is vertical (tategaki). If ANY horizontal text is found → REDRAW those bubbles immediately.
 3. Check for text errors or garbled characters and fix internally.
+4. Verify the top title is present, centered, fully visible, and copied exactly.
 
 Only output the corrected A4 4-panel manga image.
 No explanations. No partial results.`;
@@ -715,9 +766,39 @@ No explanations. No partial results.`;
                   }}
                   className="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg border border-white/20 active:scale-95"
                 >
-                  <Download size={20} /> 画像をダウンロード (.{generatedImageExtension})
+                  <Download size={20} /> 元画像をダウンロード (.{generatedImageExtension})
                 </button>
-                
+
+                <button
+                  onClick={async () => {
+                    try {
+                      const a4Image = await createA4PngDataUrl(generatedImage);
+                      const a = document.createElement('a');
+                      a.href = a4Image;
+                      const now = new Date();
+                      const apiName = selectedEngine === 'openai' ? 'ChatGPT' : 'Gemini';
+                      let rawTitle = mangaTitle;
+                      if (!rawTitle && scenario) {
+                        const m = scenario.match(/##\s*タイトル[:：]\s*(.+?)(?:\s*!|\s*$)/m);
+                        if (m) rawTitle = m[1].trim();
+                      }
+                      const titleSlug = rawTitle
+                        ? rawTitle.substring(0, 30).replace(/[\\/:*?"<>|\s]/g, '_')
+                        : 'untitled';
+                      const ts = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}${String(now.getSeconds()).padStart(2,'0')}`;
+                      a.download = `AI_4koma_comic_A4_${apiName}_${titleSlug}_${ts}.png`;
+                      document.body.appendChild(a);
+                      a.click();
+                      document.body.removeChild(a);
+                    } catch (error) {
+                      alert(`A4版の作成に失敗しました: ${error.message}`);
+                    }
+                  }}
+                  className="w-full mt-4 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg border border-cyan-200/40 active:scale-95"
+                >
+                  <Download size={20} /> A4 PNGをダウンロード (1024×1448)
+                </button>
+
                 <button
                   onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
                   className="w-full mt-4 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg border border-slate-600/50 active:scale-95"

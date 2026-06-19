@@ -1,17 +1,15 @@
-v4.7.1: Fallback Chain History and Image API Compatibility / Fallback Chain履歴と画像API仕様追従
+v4.7.2: A4 PNG Export and Dialogue Classification Fixes / A4 PNG出力とセリフ分類修正
 
 ## What's New / 更新内容
 
-* Added the latest Fallback Chain history entry for the verified Nano Banana 2 and ChatGPT Images 2.0 paths.
-* Clarified that STEP 4 Gemini image generation uses `gemini-3.1-flash-image` with REST v1beta `responseModalities: ["TEXT", "IMAGE"]` only.
-* Clarified that Gemini `imageConfig` is intentionally not sent because the locally verified non-gray output path does not use it.
-* Documented the OpenAI STEP 4 image generation settings: `gpt-image-2`, PNG output, high quality, and a 600-second timeout.
-* Documented the scenario completeness guard that blocks image generation when any panel is missing or lacks quoted dialogue.
-* Added a quality caveat that in-image text is generated as pixels by the model, so exact character-for-character text fidelity cannot be guaranteed.
+* Added an A4 PNG download for generated 4-koma images. The original image is preserved and fit into a white `1024x1448` canvas without cropping.
+* Kept the original-image download available separately, so users can choose either the raw model output or the A4-ready export.
+* Strengthened the A4 repair prompt so the top title is explicitly redrawn and missing/cropped/moved titles are treated as failures.
+* Improved dialogue extraction so visual labels, signs, amount displays, and screen text are not promoted into speech bubbles.
+* Preserved spoken quote forms such as `...と呟く/叫ぶ/言う` as actual dialogue while keeping visible labels in Action.
 
-* 検証済みのNano Banana 2 / ChatGPT Images 2.0経路に合わせ、Fallback Chain履歴を追記しました。
-* STEP 4のGemini画像生成は `gemini-3.1-flash-image` を使い、REST v1beta の `responseModalities: ["TEXT", "IMAGE"]` のみで送信することを明記しました。
-* ローカル検証で非グレー画像が得られた経路に合わせ、Gemini画像生成では `imageConfig` を送信しないことを明記しました。
-* OpenAI STEP 4画像生成の設定として、`gpt-image-2`、PNG出力、高品質、600秒タイムアウトを明記しました。
-* 4コマ見出しや各コマの「」付きセリフが欠けている場合に画像生成を止める、シナリオ完全性ガードを明記しました。
-* 画像内文字はモデルがピクセルとして描画するため、完全な文字一致は保証できないという品質上の但し書きを追加しました。
+* A4比率PNGダウンロードを追加しました。生成元画像を切り抜かず、白い `1024x1448` キャンバス内に収めます。
+* 元画像ダウンロードも残し、モデル出力そのままとA4提出向け出力を選べるようにしました。
+* A4修正プロンプトでタイトル再描画を明示し、タイトル欠落・切れ・移動・書き換えを失敗条件にしました。
+* 看板、ラベル、金額表示、画面表示などの引用が吹き出し化されないよう、セリフ抽出を改善しました。
+* `...と呟く/叫ぶ/言う` 形式の発話引用はDialogueとして保持し、表示文字はAction側に残します。

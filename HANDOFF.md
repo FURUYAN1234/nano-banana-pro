@@ -1,19 +1,17 @@
 # HANDOFF.md
 
-## 現在のステータス (Completed)
-- **バージョン**: v4.7.1
-- **最新の変更点**:
-  - Fallback Chain履歴にNano Banana 2 / ChatGPT Images 2.0の検証済み経路を追記
-  - Gemini STEP4画像生成は `gemini-3.1-flash-image` + REST v1beta `responseModalities: ["TEXT", "IMAGE"]` のみを正として明記
-  - OpenAI STEP4画像生成は `gpt-image-2` / PNG / high / 600秒タイムアウトとして明記
-  - 4コマ見出しと各コマの「」付きセリフを事前検証し、不完全シナリオの画像生成を停止
-  - 画像内文字はモデルがピクセルとして描くため、完全一致は保証されない旨を履歴に明記
-- **状態**: v4.7.1 デプロイ検証中。
+## Current Status
+- **Version**: v4.7.2
+- **Latest changes**:
+  - Added an A4 PNG download path that keeps the original image intact and fits it into a white `1024x1448` canvas without cropping.
+  - Kept the original download path available as `元画像をダウンロード`.
+  - Strengthened the A4 repair prompt so the top title is explicitly redrawn and missing/cropped/moved/rewritten titles are treated as failures.
+  - Improved quote classification so visual labels, signs, amount displays, and screen text stay out of speech bubbles while spoken quote forms remain Dialogue.
+- **State**: v4.7.2 release/deploy in progress. Backup is not requested.
 
-## 検証待ちタスク (Pending Verification Tasks)
-- [ ] GitHub Pages デプロイ検証
-- [ ] GitHub Release 作成 (v4.7.1)
-- [ ] Hugging Face README同期の確認
+## Pending Verification Tasks
+- [ ] GitHub Pages deploy verification
+- [ ] GitHub Release creation (v4.7.2)
 
-## 次のステップ (Next Steps)
-- デプロイフローを完了する。バックアップはユーザーから明示指示がある場合のみ実行する。
+## Next Steps
+- Finish local checks, commit, deploy GitHub Pages, create/push tag, create GitHub Release, and update `PLAN.md`.
