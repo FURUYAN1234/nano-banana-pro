@@ -197,7 +197,7 @@ To meet professional compliance and provenance requirements, the system features
   ブラウザのWeb Crypto APIを使用し、シナリオ・プロンプト・タイムスタンプから成る **SHA-256 暗号学的フィンガープリント** を生成・記録します。後からテキストを手動改ざんするとハッシュが一致しなくなるため、「パクリ防止・捏造防止の強力なデジタルエビデンス」として機能します。
 * **Tool Identification (ツール名とリポジトリの明記)**: Clearly records the generating application name (`Super FURU AI 4-koma System`) and the exact GitHub repository URL to provide full transparency of the source system.
   JSON内に「生成ツール名」およびソースコードの公開先である「GitHubリポジトリURL」が自動で記録され、出所の透明性がさらに向上しました。
-* **Model Accountability & Footprint (モデル証跡とフットプリント)**: Accurately records which AI engine (e.g., `gemini-3.5-flash`, `gpt-4o`) was used, whether a fallback occurred, and the exact character count of the generated prompts and scenarios (surpassing 20,000+ characters), proving the scale and originality of the generation.
+* **Model Accountability & Footprint (モデル証跡とフットプリント)**: Accurately records which AI engine (e.g., `gemini-3.1-flash-image`, `gpt-image-2`) was used, whether a fallback occurred, and the exact character count of the generated prompts and scenarios (surpassing 20,000+ characters), proving the scale and originality of the generation.
   実際に使用されたモデルや、生成されたプロンプトの文字数（2万文字超）を正確に記録。「他人の簡単なプロンプトをパクったのではなく、独自の超巨大システムで生成したオリジナルであること」を証明します。
 * **Comprehensive Records / 完全な記録**: The json includes the timestamp, extracted character sheet logic, scenario script, full prompt text, and all generation settings (Punchline type, Enhancement flags).
   JSONには上記の監査データのほか、タイムスタンプ、抽出されたキャラクター設定、シナリオ全文、プロンプト全文、およびすべての生成設定（オチのタイプや演出強化フラグ）が記録されます。
@@ -251,14 +251,14 @@ This system features a completely bifurcated Dual-API Architecture from the very
 本システムは、起動（入り口）の時点から完全に二股に分かれた「デュアルAPIアーキテクチャ」を採用しています。ユーザーはアプリ起動時のAPIキー入力モーダルで、**「Gemini Engine」** または **「OpenAI Engine」** を明確に選択して起動します。この完全分岐により、ロジック・フォーマット・描画パイプラインが選択したエコシステム向けに最初から最後まで完璧に最適化されます。
 
 1. **Gemini Engine Mode (Google Ecosystem) / Geminiエンジンモード**
-   * **Full Native Integration / 完全ネイティブ統合:** Uses Google's Gemini models for both the "Brain" (Scenario/Prompt generation) and the "Artist" (Nano Banana 2 image generation). 
+   * **Full Native Integration / 完全ネイティブ統合:** Uses Google's Gemini models for both the "Brain" (Scenario/Prompt generation) and the "Artist" (Nano Banana 2 image generation).
    * **Strength / 強み:** Extremely fast, cost-effective, and deeply integrated with Google Search Grounding for automatic context deep-dives. It generates images natively within the app at astonishing speeds.
    * **Role / 役割:** シナリオ生成からプロンプト構築、画像生成（Nano Banana 2モデル）まで全てをGoogleエコシステム内で完結させるモード。圧倒的な生成速度と低コスト、Search Groundingによる自律的リサーチ能力が強みです。
 
 2. **OpenAI Engine Mode (OpenAI Ecosystem) / OpenAIエンジンモード**
-   * **Pure OpenAI Pipeline / 純粋なOpenAIパイプライン:** Uses advanced text models (like GPT-4o) as the "Brain" to parse complex character topologies and structure the 4-panel layout, and seamlessly hands off to OpenAI's image models (ChatGPT Images 2.0) for the final "Artist" rendering step.
+   * **Pure OpenAI Pipeline / 純粋なOpenAIパイプライン:** Uses advanced text models (like GPT-4.1) as the "Brain" to parse complex character topologies and structure the 4-panel layout, and seamlessly hands off to OpenAI's image models (ChatGPT Images 2.0) for the final "Artist" rendering step.
    * **Strength / 強み:** Provides industry-leading artistic quality and nuance directly in-browser. The prompt is automatically translated into OpenAI-specific formatting (A4 portrait, vertical Japanese text, Anti-Noise Protocol) before being sent.
-   * **Role / 役割:** 解析・構成の頭脳から画像生成まで、すべてのプロセスをOpenAIの最高峰モデル群に完全委譲するモード。専用フォーマット（縦長A4・縦書き誘導・ノイズ除去キーワード）が自動適用され、アプリ内から直接アニメ品質の画像を出力します（生成に2〜5分程度かかります）。
+   * **Role / 役割:** 解析・構成の頭脳から画像生成まで、すべてのプロセスをOpenAIの最高峰モデル群に完全委譲するモード。専用フォーマット（縦長A4・縦書き誘導・ノイズ除去キーワード）が自動適用され、アプリ内から直接アニメ品質の画像を出力します（生成に2〜10分程度かかります）。
 
 3. **【上級者向け】Browser UI Option (Advanced / Optional) / ブラウザUI連携運用**
    * While direct API generation is seamless, users seeking **absolute character consistency** (by attaching reference images—a feature currently limited in standard APIs) or looking to **minimize API billing costs** can utilize the Browser UI Option.
@@ -513,8 +513,8 @@ Automatically analyzes hair color, hairstyle, and glasses status from character 
    ChatGPT Images 2.0 の2大問題を根絶するプロトコル。(1) キャラクターが背景に溶け込む「カモフラージュ現象」を、極太インクアウトライン＋白グロー合成＋逆光リムライティングの3重強制で解決。(2) 過剰なキラキラ・パーティクルノイズ（グリッター）を、レンズフレア・光粒子・ボケの描画禁止で排除。
 
 9. **Ultra-Compressed Prompt Architecture — MUST/NO Format (v3.15+)**
-   Strips all natural language prose from image generation prompts, replacing them with keyword-only, bullet-point MUST/NO directives. This maximizes AI attention concentration and ensures critical instructions are never lost to token competition — especially vital for ChatGPT's 4000-character limit.
-   画像生成プロンプトから自然言語の散文を一切排除し、キーワードのみの箇条書き「MUST/NO」指示文に全面置換。AIのアテンション集中を最大化し、重要な指示がトークン競合で喪失するのを防止。ChatGPTの4000文字制限下で特に威力を発揮します。
+   Strips all natural language prose from image generation prompts, replacing them with keyword-only, bullet-point MUST/NO directives. This maximizes AI attention concentration and ensures critical instructions are never lost to token competition — especially vital near the current 32,000-character GPT image prompt ceiling.
+   画像生成プロンプトから自然言語の散文を一切排除し、キーワードのみの箇条書き「MUST/NO」指示文に全面置換。AIのアテンション集中を最大化し、重要な指示がトークン競合で喪失するのを防止。現在のGPT画像プロンプト上限32,000文字に近い巨大プロンプト運用で特に威力を発揮します。
 
 10. **Self-Review Protocol (v3.22+)**
     Before rendering, the AI is forced to self-audit its own prompt output for logical contradictions (e.g., conflicting camera angles, impossible character placements, finger count errors, and text spelling). This pre-generation sanity check catches AI-specific drawing failures before they become costly re-generation cycles.
@@ -529,7 +529,7 @@ Automatically analyzes hair color, hairstyle, and glasses status from character 
 ## 💻 Tech Stack / 技術スタック
 
 * **Frontend**: React 19 / Vite 7 / Tailwind CSS v4
-* **LLM/VFM**: Google Gemini API (3.x Flash / 2.5 Flash / 2.5 Pro) + Gemini Native Image Generation / ChatGPT Images 2.0 Supported via Prompt Enhancement
+* **LLM/VFM**: Google Gemini API (3.x Flash / 2.5 Flash / 2.5 Pro) + Gemini Native Image Generation (Nano Banana 2) / ChatGPT Images 2.0 Supported via Prompt Enhancement
 * **Logic**: Zenith Protocol - Multi-tier model fallback (5-model text cascade, 4-model image cascade) with automatic 429/404 retry and account-level model auto-discovery.
 
 ---
@@ -766,7 +766,12 @@ A tool to automatically convert static 4-koma manga into fully voiced animated v
 
 ## 📋 ChangeLog
 
+### v4.7.1 (2026-06-19)
+- **[Fix & UX]** Fallback Chain履歴を最新のNano Banana 2/ChatGPT Images 2.0検証結果に同期 / Synced fallback-chain history with the latest Nano Banana 2 and ChatGPT Images 2.0 verification
+
 ### v4.7.0 (2026-06-15)
+- **[API]** Gemini画像生成をNano Banana 2 `gemini-3.1-flash-image` 固定に更新し、ローカル検証で非グレー画像が得られた `responseModalities: ["TEXT", "IMAGE"]` 経路に統一 / Fixed Gemini image generation to Nano Banana 2 `gemini-3.1-flash-image` and unified on the locally verified non-gray `responseModalities: ["TEXT", "IMAGE"]` path
+- **[Guard]** STEP3/STEP4前に4コマシナリオ検証を追加し、全4コマと各コマ最低1つの「」付きセリフがない場合は古いプロンプト/画像を消して停止 / Added pre-STEP3/STEP4 scenario validation so incomplete four-panel scripts or panels without quoted dialogue clear stale prompts/images and stop generation
 - **[Fix & UX]** セリフとキャラクター配置の不整合バグを修正し、セリフの帰属精度を向上 / Fixed a bug causing dialogue to speaker mismatch and improved dialogue attribution accuracy
 
 ### v4.6.9 (2026-06-13)
@@ -817,5 +822,3 @@ A tool to automatically convert static 4-koma manga into fully voiced animated v
 
 ### v4.5.5 (2026-05-31)
 - **[Fix & Refactoring]** ポート競合の解消、コンポーネント間連携（setShowModal）の修正、ApiKeyModalの警告解消、およびLintエラー（未使用変数等）の完全クリーンアップ / Resolved port conflicts, fixed component props (setShowModal), addressed ApiKeyModal form warnings, and completely cleaned up Lint errors (unused variables, etc.)
-
-

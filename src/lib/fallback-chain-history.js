@@ -104,8 +104,7 @@ export const FALLBACK_CHAINS = [
     provider: 'Gemini',
     sourceFile: 'src/lib/imagen.js',
     models: [
-      { id: 'gemini-3.1-flash-image-preview', role: 'Primary', note: 'ネイティブ画像生成 最高品質' },
-      { id: 'gemini-2.5-flash-image', role: 'Backup', note: '安定版' },
+      { id: 'gemini-3.1-flash-image', role: 'Primary', note: 'Nano Banana 2 4コマ漫画生成用' },
     ]
   },
   {
@@ -127,6 +126,28 @@ export const FALLBACK_CHAINS = [
 //   date は必ず 'YYYY-MM-DD HH:MM JST' 形式で日時を記録すること。
 export const FALLBACK_CHAIN_HISTORY = [
   // ↑ 新しいエントリはここに追加する（降順）
+  {
+    version: 'v4.7.1',
+    date: '2026-06-19 17:26 JST',
+    note: 'Nano Banana 2とChatGPT Images 2.0の実検証結果に合わせ、STEP4画像生成の正しい送信設定と制限事項を履歴へ明記。',
+    changes: [
+      { step: 'STEP 4 (Gemini)', action: '構成', detail: 'gemini-3.1-flash-image（Nano Banana 2）固定。preview系へのロールバックなし' },
+      { step: 'STEP 4 (Gemini)', action: '設定', detail: 'REST v1beta / responseModalities=["TEXT","IMAGE"] のみ。imageConfigは送信しない' },
+      { step: 'STEP 4 (OpenAI)', action: '構成', detail: 'gpt-image-2 固定。1024x1792 / high / output_format=png / 600秒タイムアウト' },
+      { step: 'STEP 3-4', action: '安全対策', detail: '4コマ見出しと各コマ1つ以上の「」付きセリフを検証し、不完全シナリオの画像生成を停止' },
+      { step: '品質注記', action: '仕様', detail: '画像内文字はモデルがピクセルとして描画するため、完全な文字一致は保証されない' },
+    ]
+  },
+  {
+    version: 'v4.7.0',
+    date: '2026-06-19 15:37 JST',
+    note: 'Gemini画像生成モデルをpreview廃止予定に合わせて現行GA構成へ更新し、OpenAI画像生成の送信前ガードを追加。',
+    changes: [
+      { step: 'STEP 4 (Gemini)', action: '構成', detail: 'gemini-3.1-flash-image（Nano Banana 2）固定' },
+      { step: 'STEP 4 (Gemini)', action: '設定', detail: 'REST v1beta / responseModalities=["TEXT","IMAGE"] のみ（imageConfigなし）' },
+      { step: 'STEP 4 (OpenAI)', action: '安全対策', detail: 'gpt-image-2 プロンプト32,000文字上限チェック / output_format=png' },
+    ]
+  },
   {
     version: 'v4.5.2',
     date: '2026-05-30 11:09 JST',

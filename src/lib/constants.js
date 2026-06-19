@@ -1,7 +1,7 @@
 // --- 定数・タグ定義 (constants.js) ---
 // App.jsx から抽出された共有定数
 
-export const SYSTEM_VERSION = "v4.7.0";
+export const SYSTEM_VERSION = "v4.7.1";
 
 // --- Punchline ラベル変換関数 ---
 export const getPunchlineLabel = (type) => {
@@ -293,8 +293,9 @@ ANTIGRAVITY CAMERA PROTOCOL:
 `;
 
 // --- [v3.50] Anti-CharSheet Prefix (App.jsx -> externalized) ---
-export const ANTI_CHARSHEET_PREFIX = `🎨 OUTPUT FORMAT: SINGLE IMAGE. NO TEXT.
+export const ANTI_CHARSHEET_PREFIX = `🎨 OUTPUT FORMAT: SINGLE 4-PANEL MANGA PAGE.
 [🔥 CRITICAL RULES]
 - DRAW A 4-PANEL MANGA SCENE. NOT A CHARACTER SHEET.
+- TEXT POLICY: Draw ONLY the specified title, speech-bubble dialogue, and watermarks. Do NOT draw random labels, SFX, captions, or extra text.
 - Reference images are ONLY for hair/eyes/glasses. DO NOT copy their layout.
 `;

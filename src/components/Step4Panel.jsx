@@ -18,6 +18,17 @@ import {
 import ThinkingLog from './ThinkingLog';
 import Panorama360Viewer from './Panorama360Viewer';
 
+const getGeneratedImageExtension = (dataUrl) => {
+  const mimeMatch = typeof dataUrl === 'string' ? dataUrl.match(/^data:([^;,]+)/) : null;
+  const mimeType = (mimeMatch?.[1] || 'image/png').toLowerCase();
+  return {
+    'image/jpeg': 'jpg',
+    'image/jpg': 'jpg',
+    'image/png': 'png',
+    'image/webp': 'webp'
+  }[mimeType] || 'png';
+};
+
 /**
  * STEP 04: 4コマ漫画生成 ＆ 履歴パネル
  */
@@ -80,6 +91,8 @@ export default function Step4Panel({
   handlePolicyAutoFix,
   handlePolicySwitchToWeb
 }) {
+  const generatedImageExtension = getGeneratedImageExtension(generatedImage);
+
   return (
     <div
       ref={outputRef}
@@ -230,7 +243,7 @@ export default function Step4Panel({
                       "ISO日時": isoTime
                     },
                     "来歴と証跡 (Provenance & Audit)": {
-                      "使用モデル (Model Accountability)": usedModel || (selectedEngine === 'openai' ? "gpt-4o" : "gemini-3.5-flash"),
+                      "使用モデル (Model Accountability)": usedModel || (selectedEngine === 'openai' ? "gpt-image-2" : "gemini-3.1-flash-image"),
                       "フォールバック発生 (Fallback Occurred)": !!isFallbackUsed,
                       "生成証明ハッシュ (Proof of Generation)": hashHex,
                       "ハッシュアルゴリズム": "SHA-256",
@@ -583,7 +596,7 @@ No explanations. No partial results.`;
               >
                 <div className="opacity-50 mb-2 border-b border-white/10 pb-1 flex justify-between text-xs">
                   <span>🖥 画像生成ログ (STEP 4)</span>
-                  <span className={selectedEngine === 'openai' ? "text-emerald-500" : "text-blue-500"}>{selectedEngine === 'openai' ? 'v1.3.5 (ChatGPT Images 2.0)' : 'v1.3.5 (Gemini 2.0 Native)'}</span>
+                  <span className={selectedEngine === 'openai' ? "text-emerald-500" : "text-blue-500"}>{selectedEngine === 'openai' ? 'v1.3.5 (ChatGPT Images 2.0)' : 'v1.3.5 (Gemini Native Image)'}</span>
                 </div>
                 {genLog.length === 0 ? (
                   <div className="text-white/30">待機中... 「画像を生成する」ボタンを押すと開始します。</div>
@@ -695,14 +708,14 @@ No explanations. No partial results.`;
                       ? rawTitle.substring(0, 30).replace(/[\\/:*?"<>|\s]/g, '_')
                       : 'untitled';
                     const ts = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}${String(now.getSeconds()).padStart(2,'0')}`;
-                    a.download = `AI_4koma_comic_${apiName}_${titleSlug}_${ts}.png`;
+                    a.download = `AI_4koma_comic_${apiName}_${titleSlug}_${ts}.${generatedImageExtension}`;
                     document.body.appendChild(a);
                     a.click();
                     document.body.removeChild(a);
                   }}
                   className="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg border border-white/20 active:scale-95"
                 >
-                  <Download size={20} /> 画像をダウンロード (.png)
+                  <Download size={20} /> 画像をダウンロード (.{generatedImageExtension})
                 </button>
                 
                 <button

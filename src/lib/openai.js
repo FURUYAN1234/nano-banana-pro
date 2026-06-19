@@ -1,5 +1,8 @@
 // ※ OpenAIの画像生成はフォールバック配列を持たず、最高品質の単一モデルを直接指定します。
 const OPENAI_IMAGE_MODEL = "gpt-image-2";
+const OPENAI_IMAGE_TIMEOUT_MS = 600000;
+const OPENAI_IMAGE_TIMEOUT_SECONDS = OPENAI_IMAGE_TIMEOUT_MS / 1000;
+const OPENAI_IMAGE_PROMPT_MAX_CHARS = 32000;
 
 let currentOpenAIApiKey = "";
 
@@ -19,8 +22,16 @@ export const generateImageWithOpenAI = async (prompt, statCallback) => {
     throw new Error("OpenAI APIキーが設定されていません。");
   }
 
+  const promptLength = prompt?.length || 0;
+  if (promptLength > OPENAI_IMAGE_PROMPT_MAX_CHARS) {
+    throw new Error(`OpenAI画像生成プロンプトが長すぎます（${promptLength.toLocaleString()}文字 / 上限${OPENAI_IMAGE_PROMPT_MAX_CHARS.toLocaleString()}文字）。プロンプトを短くしてから再実行してください。`);
+  }
+  if (promptLength > OPENAI_IMAGE_PROMPT_MAX_CHARS * 0.9) {
+    statCallback(`[WARN] OpenAI画像生成プロンプトが上限に近づいています（${promptLength.toLocaleString()} / ${OPENAI_IMAGE_PROMPT_MAX_CHARS.toLocaleString()}文字）`);
+  }
+
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 360000); // 360s timeout（gpt-image-2は3分以上かかる実績あり、混雑時は更に延長）
+  const timeoutId = setTimeout(() => controller.abort(), OPENAI_IMAGE_TIMEOUT_MS); // gpt-image-2 high quality can exceed 6 minutes when congested.
 
   let response;
   try {
@@ -36,14 +47,15 @@ export const generateImageWithOpenAI = async (prompt, statCallback) => {
         n: 1,
         size: "1024x1792", // OpenAI API supports 1024x1792 for vertical aspect ratio
         quality: "high", // [v3.55] 最高品質モード: テキスト描画精度・ディテールが大幅向上（EvoLinkAI推奨設定）
+        output_format: "png",
         // ※ gpt-image-2 は response_format ではなく output_format を使用する別仕様。
-        //    デフォルトで b64_json が返るため明示指定は不要。
+        //    b64_json はデフォルトで返るため、画像形式のみ明示する。
       }),
       signal: controller.signal
     });
   } catch (e) {
     if (e.name === 'AbortError' || e.message.includes('aborted')) {
-      throw new Error("API Time out (360秒経過による強制切断)。サーバーが混雑しているか、応答がありません。");
+      throw new Error(`API Time out (${OPENAI_IMAGE_TIMEOUT_SECONDS}秒経過による強制切断)。サーバーが混雑しているか、応答がありません。`);
     }
     throw e;
   } finally {
@@ -61,6 +73,7 @@ export const generateImageWithOpenAI = async (prompt, statCallback) => {
   if (data.data && data.data.length > 0) {
     return {
       base64Img: data.data[0].b64_json,
+      mimeType: "image/png",
       usedModel: OPENAI_IMAGE_MODEL
     };
   } else {

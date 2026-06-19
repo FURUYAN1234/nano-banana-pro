@@ -1,12 +1,24 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import { getApiKey } from "./gemini";
+
+const isLocalGeminiHost = typeof window !== 'undefined'
+    && ['localhost', '127.0.0.1', '::1'].includes(window.location.hostname);
+const GEMINI_BASE_URL = isLocalGeminiHost
+    ? '/gemini-api'
+    : 'https://generativelanguage.googleapis.com';
 
 // 画像生成モデル優先順位 (Geminiネイティブ優先)
 // ※ Imagen全系列は完全廃止予定のため、Geminiネイティブのみを指定。
+// ※ 4コマ漫画生成は Nano Banana 2 API に固定する。
+//    Nano Banana Pro は高品質単枚絵寄りで、漫画レイアウトの再現性が落ちるため使わない。
 const MODELS_TO_TRY = [
-    "gemini-3.1-flash-image-preview", // Primary: Geminiネイティブ (現在利用可能な最高品質)
-    "gemini-2.5-flash-image"          // Backup: 安定版
+    "gemini-3.1-flash-image"    // Nano Banana 2: 4コマ漫画生成用
 ];
+
+const buildGeminiImageGenerationConfig = () => {
+    return {
+        responseModalities: ["TEXT", "IMAGE"]
+    };
+};
 
 /**
  * Generates an image using Gemini multimodality or Imagen 3 via Google AI SDK (if available/enabled for the key).
@@ -23,23 +35,19 @@ export const generateImageWithImagen = async (prompt, onStatusUpdate, referenceI
     let attemptedModels = [];
 
     for (const modelId of MODELS_TO_TRY) {
+        let timeoutId = null;
         try {
             console.log(`[ImageGen] Attempting generation with model: ${modelId}`);
             attemptedModels.push(modelId);
 
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 180000); // 180s max timeout for heavy processing (Gemini models might take longer)
+            timeoutId = setTimeout(() => controller.abort(), 180000); // 180s max timeout for heavy processing (Gemini models might take longer)
 
             let response;
             let data;
 
             // Use the correct API endpoint and payload structure for Gemini vs Imagen models
             if (modelId.startsWith("gemini")) {
-                // gemini-2.5-flash-image は responseModalities に ["TEXT", "IMAGE"] が必要
-                const modalities = modelId.includes("2.5-flash-image")
-                    ? ["TEXT", "IMAGE"]
-                    : ["IMAGE"];
-
                 // [v3.53 Phase3] 参照画像パーツを構築（360°クロップ画像等）
                 const imageParts = referenceImages.map(img => {
                     // data:image/png;base64,XXXX 形式から rawBase64 を抽出
@@ -52,23 +60,21 @@ export const generateImageWithImagen = async (prompt, onStatusUpdate, referenceI
                     onStatusUpdate(`[REF] ${imageParts.length}枚の参照画像を添付してマルチモーダル生成を実行`);
                 }
 
-                response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${currentApiKey}`, {
+                response = await fetch(`${GEMINI_BASE_URL}/v1beta/models/${modelId}:generateContent`, {
                     method: "POST",
                     headers: {
-                        "Content-Type": "application/json"
+                        "Content-Type": "application/json",
+                        "x-goog-api-key": currentApiKey
                     },
                     body: JSON.stringify({
                         contents: [{
                             role: "user",
                             parts: [{ text: prompt }, ...imageParts]
                         }],
-                        generationConfig: {
-                            responseModalities: modalities
-                        }
+                        generationConfig: buildGeminiImageGenerationConfig(modelId)
                     }),
                     signal: controller.signal
                 });
-                clearTimeout(timeoutId);
                 data = await response.json();
 
                 if (data.error) {
@@ -76,20 +82,42 @@ export const generateImageWithImagen = async (prompt, onStatusUpdate, referenceI
                 }
 
                 if (data.candidates && data.candidates.length > 0 && data.candidates[0].content && data.candidates[0].content.parts) {
-                    // Find the image part in the response
-                    const imagePart = data.candidates[0].content.parts.find(p => p.inlineData);
-                    if (imagePart && imagePart.inlineData && imagePart.inlineData.data) {
-                        return { base64Img: imagePart.inlineData.data, usedModel: modelId };
+                    const parts = data.candidates.flatMap(candidate => candidate.content?.parts || []);
+                    const responseImageParts = parts
+                        .filter(part => part.inlineData && part.inlineData.data)
+                        .sort((a, b) => (b.inlineData.data?.length || 0) - (a.inlineData.data?.length || 0));
+                    if (responseImageParts.length > 0) {
+                        if (onStatusUpdate) {
+                            const sizes = responseImageParts
+                                .map(part => `${part.inlineData.mimeType || 'image'}:${part.inlineData.data.length}`)
+                                .join(', ');
+                            onStatusUpdate(`[INFO] Gemini returned ${responseImageParts.length} image part(s). Selected largest: ${sizes}`);
+                        }
+                        const imagePart = responseImageParts[0];
+                        return {
+                            base64Img: imagePart.inlineData.data,
+                            mimeType: imagePart.inlineData.mimeType || 'image/png',
+                            usedModel: modelId
+                        };
+                    }
+                    const textResponse = parts
+                        .map(part => part.text)
+                        .filter(Boolean)
+                        .join(' ')
+                        .slice(0, 500);
+                    if (textResponse) {
+                        throw new Error(`Unexpected formats from Gemini model ${modelId}: missing inlineData. Text response: ${textResponse}`);
                     }
                 }
                 throw new Error(`Unexpected formats from Gemini model ${modelId}: missing inlineData`);
 
             } else {
                 // Classic Imagen Model Logic
-                response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelId}:predict?key=${currentApiKey}`, {
+                response = await fetch(`${GEMINI_BASE_URL}/v1beta/models/${modelId}:predict`, {
                     method: "POST",
                     headers: {
-                        "Content-Type": "application/json"
+                        "Content-Type": "application/json",
+                        "x-goog-api-key": currentApiKey
                     },
                     body: JSON.stringify({
                         instances: [
@@ -103,7 +131,6 @@ export const generateImageWithImagen = async (prompt, onStatusUpdate, referenceI
                     }),
                     signal: controller.signal
                 });
-                clearTimeout(timeoutId);
                 data = await response.json();
 
                 if (data.error) {
@@ -113,12 +140,12 @@ export const generateImageWithImagen = async (prompt, onStatusUpdate, referenceI
 
                 // Success check
                 if (data.predictions && data.predictions[0] && data.predictions[0].bytesBase64Encoded) {
-                    return { base64Img: data.predictions[0].bytesBase64Encoded, usedModel: modelId };
+                    return { base64Img: data.predictions[0].bytesBase64Encoded, mimeType: 'image/png', usedModel: modelId };
                 }
                 // Fallback for older/different formats
                 if (data.predictions && data.predictions[0] && typeof data.predictions[0] === 'string') {
                     // specific case where prediction IS the base64 string
-                    return { base64Img: data.predictions[0], usedModel: modelId };
+                    return { base64Img: data.predictions[0], mimeType: 'image/png', usedModel: modelId };
                 }
 
                 throw new Error(`Unexpected response format from Imagen model ${modelId}`);
@@ -132,6 +159,8 @@ export const generateImageWithImagen = async (prompt, onStatusUpdate, referenceI
             console.warn(`[ImageGen] Model ${modelId} failed:`, errorMsg);
             lastError = new Error(errorMsg);
             if (onStatusUpdate) onStatusUpdate(`[FAILED] ${modelId}: ${errorMsg}`);
+        } finally {
+            if (timeoutId) clearTimeout(timeoutId);
         }
     }
 

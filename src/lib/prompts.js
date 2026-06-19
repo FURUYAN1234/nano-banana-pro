@@ -473,25 +473,32 @@ ${styleJson.anti_patterns ? `            - 絶対禁止事項:\n${styleJson.anti
           [1コマ目: 起]
           [EMOTION: XXX]
           [Camera: XXX]
-          (状況とセリフ...)
+          状況: (視覚的な状況...)
+          キャラ名「短いセリフ。」
 
           [2コマ目: 承]
           [EMOTION: XXX]
           [Camera: XXX]
-          (状況とセリフ...)
+          状況: (視覚的な状況...)
+          キャラ名「短いセリフ。」
 
           [3コマ目: 転]
           [EMOTION: XXX]
           [Camera: XXX]
-          (状況とセリフ...)
+          状況: (視覚的な状況...)
+          キャラ名「短いセリフ。」
 
           [4コマ目: 結]
           [EMOTION: XXX]
           [Camera: XXX]
-          (状況とセリフ...)
+          状況: (視覚的な状況...)
+          キャラ名「短いセリフ。」
 
           シナリオ本文の要件:
           - 登場人物: ** 提供された CastList の全員 ** を使用してください。
+          - 台詞必須: [1コマ目]〜[4コマ目]の全コマに、必ず最低1つの「キャラ名「セリフ。」」形式のセリフを入れること。
+          - 台詞なし禁止: 「無言」「セリフなし」「台詞なし」「Characters interact without dialogue」のような無台詞指定は禁止。全コマで吹き出し用セリフを作ること。
+          - 途中終了禁止: [4コマ目: 結]の状況とセリフまで完全に書き切ること。2コマ目や3コマ目で出力を終えてはならない。
           - (禁止事項): AIが勝ために架空のオリジナルキャラクターを独自に創作して出演させることは禁止する。指定されたCastListのキャラクターのみをメインキャストとして扱うこと。
           - (許可事項): ニュースの当事者（スポーツ選手、政治家、怪人、動物、虫など）や名もなきモブキャラは、物語を面白くするために必要であれば自由に登場・発言させて構わない。
           - (ハルシネーション防止): ゲストを登場させる場合でも、画像生成時のVisual Actionに「意味不明な文字」や「描画不可能な複雑すぎる行動」が混入しないよう、シンプルで視覚的にわかりやすい行動に留めること。
@@ -500,6 +507,7 @@ ${styleJson.anti_patterns ? `            - 絶対禁止事項:\n${styleJson.anti
           - 文体: 各コマの「状況」「セリフ」が明確にわかる文章。
 
           ⚠️【最終確認・絶対厳守】⚠️
+          [1コマ目] [2コマ目] [3コマ目] [4コマ目] がすべて存在し、各コマに最低1つの「」付きセリフがあるか出力前に確認せよ。
           全てのセリフの末尾に必ず「。」や「！」等の終止記号がついているか出力前に確認せよ。
           「…」や「～」など、終止記号なしで終わるセリフはシステムエラーとなるため完全禁止とする。
 
@@ -702,6 +710,9 @@ ${outfitRule}
 
 TEXT RENDERING RULES:
 - Only Dialogue entries may become white manga speech bubbles.
+- ALL text inside speech bubbles MUST be vertical Japanese tategaki: characters flow top-to-bottom, columns ordered right-to-left. ZERO horizontal yokogaki text inside speech bubbles.
+- If any speech bubble text would be horizontal, redraw that bubble as vertical text before finalizing. Horizontal speech-bubble text is a failure condition.
+- Make speech bubbles tall/narrow enough for vertical Japanese columns while keeping the tails pointed at the correct speaker.
 - DIALOGUE TEXT IS VERBATIM: The Japanese text inside each Speech Bubble MUST be copied EXACTLY as written in the Dialogue section — character by character, punctuation by punctuation. Do NOT paraphrase, rephrase, summarize, add words, remove words, or substitute synonyms. If the dialogue says "甘い" you MUST write "甘い", NOT "ないはずよ" or any other rewording.
 - Action text is NOT visible lettering by default. Quoted ambience, SFX names, mood words, aura names, emotion labels, and narration terms must be illustrated through objects, lighting, motion, poses, and atmosphere only.
 - Render Action words as physical scene text ONLY when Action explicitly asks for handwriting, finger-writing, air-writing, signage, board text, label text, printed text, or screen text. Do NOT wrap visual scene text in a speech bubble, caption box, narration box, or tail.

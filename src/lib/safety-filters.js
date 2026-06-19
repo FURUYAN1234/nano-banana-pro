@@ -35,11 +35,13 @@ const applySafetyAgeUp = (promptText) => {
     [/\(school uniform(:\d\.?\d?)\)/gi, '(formal outfit$1)'],
     [/\(academy uniform(:\d\.?\d?)\)/gi, '(formal outfit$1)'],
     [/\(sailor uniform(:\d\.?\d?)\)/gi, '(elegant blouse with ribbon$1)'],
+    [/\(sailor fuku(:\d\.?\d?)\)/gi, '(elegant blouse with ribbon$1)'],
     [/\(sailor-style academy uniform(:\d\.?\d?)\)/gi, '(elegant blouse with ribbon$1)'],
     [/\(sailor-style fashion outfit(:\d\.?\d?)\)/gi, '(elegant blouse with ribbon$1)'],
     [/\(serafuku(:\d\.?\d?)\)/gi, '(elegant blouse with ribbon$1)'],
     [/\(schoolgirl(:\d\.?\d?)\)/gi, '(woman$1)'],
     [/\(school girl(:\d\.?\d?)\)/gi, '(woman$1)'],
+    [/\(high school student(:\d\.?\d?)\)/gi, '(young adult$1)'],
     [/\(high school(:\d\.?\d?)\)/gi, '(campus$1)'],
     // --- レベル3: 学校ロールの脱学校化 ---
     [/\(student council president(:\d\.?\d?)\)/gi, '(strict leader$1)'],
@@ -61,6 +63,18 @@ const applySafetyAgeUp = (promptText) => {
     [/\(short stature(:\d\.?\d?)\),?\s*/gi, ''],
     [/\(loli(:\d\.?\d?)\),?\s*/gi, ''],
     [/\(petite(:\d\.?\d?)\)/gi, '(slim$1)'],
+    [/女子高生/g, '成人女性'],
+    [/男子高生/g, '成人男性'],
+    [/高校生/g, '成人'],
+    [/中学生/g, '成人'],
+    [/小学生/g, '成人'],
+    [/未成年/g, '成人'],
+    [/少女/g, '女性'],
+    [/少年/g, '男性'],
+    [/セーラー服制服/g, 'リボン付きの上品なブラウス'],
+    [/セーラー服/g, 'リボン付きの上品なブラウス'],
+    [/学生服/g, 'フォーマルな服装'],
+    [/制服/g, 'フォーマルな服装'],
   ];
 
   let result = promptText;
@@ -72,13 +86,25 @@ const applySafetyAgeUp = (promptText) => {
   });
 
   // --- レベル7: 成人宣言ヘッダーの注入 ---
-  // "Important Character Cast:" の直前に「全員20歳以上の成人」を明示注入
-  if (result.includes('Important Character Cast:')) {
-    result = result.replace(
-      'Important Character Cast:',
-      'IMPORTANT AGE DECLARATION: All characters depicted in this image are adults aged 20 or older. None of the characters are minors.\n\nImportant Character Cast:'
-    );
-    appliedCount++;
+  // Gemini/ChatGPTそれぞれのキャラ見出し直前に「全員20歳以上の成人」を明示注入
+  const ageDeclaration = 'IMPORTANT AGE DECLARATION: All characters depicted in this image are adults aged 20 or older. None of the characters are minors.';
+  if (!result.includes(ageDeclaration)) {
+    if (result.includes('Important Character Cast:')) {
+      result = result.replace(
+        'Important Character Cast:',
+        `${ageDeclaration}\n\nImportant Character Cast:`
+      );
+      appliedCount++;
+    } else if (result.includes('- Cast details:')) {
+      result = result.replace(
+        '- Cast details:',
+        `${ageDeclaration}\n- Cast details:`
+      );
+      appliedCount++;
+    } else {
+      result = `${ageDeclaration}\n\n${result}`;
+      appliedCount++;
+    }
   }
 
   // --- レベル8: カメラアングル置換 → [v2.35] アオリ解禁のため無効化 ---

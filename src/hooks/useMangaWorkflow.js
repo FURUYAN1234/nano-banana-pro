@@ -14,6 +14,10 @@ import { getCharacterAnalysisPrompt } from '../lib/prompts';
 import { buildMangaPrompt } from '../lib/prompt-assembler';
 import { generateScenario, enhanceScenarioText } from '../lib/scenario-provider';
 import { fixPolicyViolation } from '../lib/policy-fixer';
+import {
+  formatMangaScenarioValidationIssue,
+  validateMangaScenario
+} from '../lib/scenario-validation';
 
 export default function useMangaWorkflow() {
   // Force Build 2026-02-06 07:07 // Build 2026-02-06-01
@@ -700,6 +704,18 @@ export default function useMangaWorkflow() {
       const finalScenarioText = `## タイトル: ${result.topic} !?${loglineLine}\nLocation: ${result.location || "Unspecified"}${outfitLine}${punchlineLine}${bg360HeaderLine}${cameraWorkHeaderLine}\n\n${result.scenario} `;
       setScenario(finalScenarioText);
       setMangaTitle(result.topic || ""); // タイトルをstateに保存（画像ダウンロード時のファイル名に使用）
+      const scenarioValidation = validateMangaScenario(finalScenarioText);
+      if (!scenarioValidation.ok) {
+        const validationIssue = formatMangaScenarioValidationIssue(scenarioValidation);
+        const validationMessage = `シナリオが不完全です。${validationIssue}`;
+        setFinalPrompt("");
+        setGeneratedImage(null);
+        setGenLog([]);
+        setScenarioThought(prev => prev + `\n\n[SCENARIO VALIDATION ERROR] ${validationMessage}\n> 4コマすべてに最低1つの「」付きセリフが必要です。STEP2を再実行してください。`);
+        showStatus(validationMessage);
+        setIs360CameraWorking(false);
+        return null;
+      }
       showStatus("シナリオの生成が完了しました！");
       setIs360CameraWorking(false);
 
@@ -729,6 +745,17 @@ export default function useMangaWorkflow() {
   const assemblePrompt = async (skipGuard = false, overrideScenario = null, enableChatGPTModeOverride = null) => {
     const currentScenario = overrideScenario || scenario;
     if (!skipGuard && (!castList || !currentScenario)) return showStatus("キャストとシナリオが必要です。");
+    const scenarioValidation = validateMangaScenario(currentScenario);
+    if (!scenarioValidation.ok) {
+      const validationIssue = formatMangaScenarioValidationIssue(scenarioValidation);
+      const validationMessage = `シナリオが不完全です。${validationIssue}`;
+      setFinalPrompt("");
+      setGeneratedImage(null);
+      setGenLog([]);
+      setAssembleThought(prev => `${prev ? `${prev}\n` : ''}> [SCENARIO VALIDATION ERROR] ${validationMessage}\n> STEP2で4コマすべてに「」付きセリフを作り直してください。`);
+      showStatus(validationMessage);
+      return null;
+    }
     setIsAssembling(true);
     setFinalPrompt(""); // Clear previous prompt to indicate loading
     setGenLog([]); // [v3.01] Clear previous image generation logs
@@ -1021,12 +1048,13 @@ export default function useMangaWorkflow() {
         setGenLog(prev => [...prev, msg]);
       };
 
-      let base64Img, generatedModelId;
+      let base64Img, generatedModelId, generatedMimeType = 'image/png';
       if (enableOpenAIApi) {
         // [v3.56] OpenAI API直接生成
-        statCallback("[INFO] ⏳ gpt-image-2 の画像生成には通常2〜6分かかります。しばらくお待ちください...");
+        statCallback("[INFO] ⏳ gpt-image-2 の画像生成には通常2〜10分かかります。しばらくお待ちください...");
         const res = await generateImageWithOpenAI(currentPrompt, statCallback);
         base64Img = res.base64Img;
+        generatedMimeType = res.mimeType || generatedMimeType;
         generatedModelId = res.usedModel;
       } else {
         // [v3.53 Phase3] 360°クロップ済み背景画像がある場合、参照画像として添付
@@ -1038,11 +1066,13 @@ export default function useMangaWorkflow() {
         }
         const res = await generateImageWithImagen(currentPrompt, statCallback, refImages);
         base64Img = res.base64Img;
+        generatedMimeType = res.mimeType || generatedMimeType;
         generatedModelId = res.usedModel;
       }
       setGenLog(prev => [...prev, `[4/5] データストリーム受信完了 (Model: ${generatedModelId})`, "[5/5] Base64画像データをデコード・レンダリング中..."]);
 
-      const finalImageStr = `data:image/png;base64,${base64Img}`;
+      const normalizedBase64Img = String(base64Img || '').replace(/\s+/g, '');
+      const finalImageStr = `data:${generatedMimeType};base64,${normalizedBase64Img}`;
       setGeneratedImage(finalImageStr);
       setGenerationHistory(prev => [{ id: Date.now(), img: finalImageStr }, ...prev]); // [v2.86] Add to history
       

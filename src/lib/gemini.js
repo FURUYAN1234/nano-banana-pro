@@ -3,13 +3,15 @@
  * (自動モデル探索機能は廃止され、指定された静的フォールバックリストを厳密に遵守します。)
  * 接続エラー時の「Account Model Diagnosis」は、エラーログ出力のための診断専用です。
  */
-import { GoogleGenerativeAI } from "@google/generative-ai";
 
 // ローカル開発時はViteプロキシ経由でAPIを呼ぶ（ブラウザのOriginヘッダーによるキー拒否を回避）
 // 本番ビルド（GitHub Pages等）では直接Google APIを叩く
-const GEMINI_BASE_URL = (typeof window !== 'undefined' && window.location.hostname === 'localhost')
+const isLocalGeminiHost = typeof window !== 'undefined'
+    && ['localhost', '127.0.0.1', '::1'].includes(window.location.hostname);
+const GEMINI_BASE_URL = isLocalGeminiHost
     ? '/gemini-api'
     : 'https://generativelanguage.googleapis.com';
+const GEMINI_TEXT_TIMEOUT_MS = 120000;
 
 // テキストのみリクエスト用 (シナリオ生成等): Next-Gen優先・無料枠優先
 const TEXT_MODEL_IDS = [
@@ -41,6 +43,50 @@ export const getApiKey = () => {
     return currentApiKey; // || localStorage.getItem("gemini_api_key"); // DISABLED by User Request
 };
 
+const GEMINI_SAFETY_SETTINGS = [
+    { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
+    { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
+    { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
+    { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" },
+];
+
+const postGeminiGenerateContent = async (modelId, requestBody) => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), GEMINI_TEXT_TIMEOUT_MS);
+    try {
+        const response = await fetch(`${GEMINI_BASE_URL}/v1beta/models/${modelId}:generateContent`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "x-goog-api-key": currentApiKey
+            },
+            body: JSON.stringify({
+                ...requestBody,
+                safetySettings: GEMINI_SAFETY_SETTINGS
+            }),
+            signal: controller.signal
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok || data.error) {
+            const error = data.error || {};
+            throw new Error(`${error.message || response.statusText} (Code: ${error.code || response.status})`);
+        }
+        return data;
+    } catch (e) {
+        if (e.name === 'AbortError' || e.message.includes('aborted')) {
+            throw new Error(`Timeout awaiting response from ${modelId} (${GEMINI_TEXT_TIMEOUT_MS / 1000}s limit)`);
+        }
+        throw e;
+    } finally {
+        clearTimeout(timeoutId);
+    }
+};
+
+const extractTextParts = (parts, includeThought = false) => parts
+    .filter(part => typeof part.text === 'string' && (includeThought ? part.thought : !part.thought))
+    .map(part => part.text)
+    .join('');
+
 /**
  * Diagnostic Function: Fetches the ACTUAL list of models available to this API key.
  * This effectively "solves" the guessing game.
@@ -49,7 +95,9 @@ export const diagnoseConnection = async () => {
     if (!currentApiKey) return "API Key not set.";
     try {
         console.log("[Diagnostic] Fetching available models...");
-        const response = await fetch(`${GEMINI_BASE_URL}/v1beta/models?key=${currentApiKey}`);
+        const response = await fetch(`${GEMINI_BASE_URL}/v1beta/models`, {
+            headers: { "x-goog-api-key": currentApiKey }
+        });
         const data = await response.json();
 
         if (data.error) {
@@ -76,8 +124,6 @@ export const diagnoseConnection = async () => {
  */
 export const callThinkingGemini = async (prompt, images = null, systemInstruction = null, onThinkingUpdate) => {
     if (!currentApiKey) throw new Error("API Key is not set.");
-
-    const genAI = new GoogleGenerativeAI(currentApiKey);
 
     // 画像の有無に応じてモデルリストを動的に選択
     const MODEL_IDS = (images && images.length > 0) ? IMAGE_MODEL_IDS : TEXT_MODEL_IDS;
@@ -113,35 +159,16 @@ export const callThinkingGemini = async (prompt, images = null, systemInstructio
 
             finalPromptParts.push({ text: prompt });
 
-            const modelParams = { model: modelId };
-            // systemInstruction removed from modelParams to avoid API fragmentation
-
-            // [v1.4.31] Keep v1beta
-            const model = genAI.getGenerativeModel(modelParams, { apiVersion: "v1beta", baseUrl: GEMINI_BASE_URL });
-
-            const timeoutPromise = new Promise((_, reject) =>
-                setTimeout(() => reject(new Error(`Timeout awaiting response from ${modelId} (120s limit)`)), 120000)
-            );
-
             // [Fix] Enforce search tools ONLY if NO images are present. Grounding + Multimodal often throws 400 errors.
             const finalTools = (images && images.length > 0) ? [] : [{ googleSearch: {} }];
 
             let result;
             try {
-                result = await Promise.race([
-                    model.generateContent({
-                        contents: [{ role: "user", parts: finalPromptParts }],
-                        tools: finalTools,
-                        generationConfig: { temperature: 0.7, maxOutputTokens: 8192 },
-                        safetySettings: [
-                            { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
-                            { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
-                            { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
-                            { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" },
-                        ]
-                    }),
-                    timeoutPromise
-                ]);
+                result = await postGeminiGenerateContent(modelId, {
+                    contents: [{ role: "user", parts: finalPromptParts }],
+                    ...(finalTools.length > 0 ? { tools: finalTools } : {}),
+                    generationConfig: { temperature: 0.7, maxOutputTokens: 8192 }
+                });
             } catch (err) {
                 // [v2.20] Failover: If Grounding fails for ANY reason, retry WITHOUT tools
                 // ローカル環境ではCORS/リファラ制限等でgrounding固有のエラーが発生するため、
@@ -149,25 +176,16 @@ export const callThinkingGemini = async (prompt, images = null, systemInstructio
                 if (finalTools.length > 0) {
                     console.warn(`[API] Grounding failed for ${modelId} (${err.message}), retrying without tools...`);
                     if (onThinkingUpdate) onThinkingUpdate(`> [API] Grounding失敗。ツールなしで同一モデルを再試行します...`);
-                    result = await Promise.race([
-                        model.generateContent({
-                            contents: [{ role: "user", parts: finalPromptParts }],
-                            generationConfig: { temperature: 0.7, maxOutputTokens: 8192 },
-                            safetySettings: [
-                                { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
-                                { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
-                                { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
-                                { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" },
-                            ]
-                        }),
-                        timeoutPromise
-                    ]);
+                    result = await postGeminiGenerateContent(modelId, {
+                        contents: [{ role: "user", parts: finalPromptParts }],
+                        generationConfig: { temperature: 0.7, maxOutputTokens: 8192 }
+                    });
                 } else {
                     throw err;
                 }
             }
 
-            const response = result.response;
+            const response = result;
             const candidates = response.candidates || [];
 
             if (!candidates.length) {
@@ -184,14 +202,9 @@ export const callThinkingGemini = async (prompt, images = null, systemInstructio
             }
 
             const candidate = candidates[0];
-            let finalOutput = "";
-            try { finalOutput = response.text(); } catch (e) { console.warn(e); }
-
             const responseParts = candidate.content?.parts || [];
-            let thought = "";
-            responseParts.forEach(part => {
-                if (part.thought) thought += part.thought;
-            });
+            const finalOutput = extractTextParts(responseParts, false);
+            const thought = extractTextParts(responseParts, true);
 
             if (!finalOutput) {
                 // [v1.7.1 Fix] If text is empty, it means the model refused or filtered the content.

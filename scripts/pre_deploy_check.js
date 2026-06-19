@@ -256,13 +256,17 @@ try {
         const historyPath = 'src/lib/fallback-chain-history.js';
         if (fs.existsSync(historyPath)) {
             const historyContent = fs.readFileSync(historyPath, 'utf-8');
+            const currentChainMatch = historyContent.match(/export const FALLBACK_CHAINS\s*=\s*\[([\s\S]*?)\];/);
+            const currentChainContent = currentChainMatch ? currentChainMatch[0] : historyContent;
             
-            // スナップショットからモデルIDを抽出
+            // 現在構成のスナップショットからモデルIDだけを抽出
             const snapshotModels = [];
             const idRegex = /id:\s*'([^']+)'/g;
             let idMatch;
-            while ((idMatch = idRegex.exec(historyContent)) !== null) {
-                snapshotModels.push(idMatch[1]);
+            while ((idMatch = idRegex.exec(currentChainContent)) !== null) {
+                if (!idMatch[1].startsWith('step')) {
+                    snapshotModels.push(idMatch[1]);
+                }
             }
 
             // 現在のソースコードのモデルを統合
@@ -295,4 +299,3 @@ try {
     console.error("❌ [ERROR] Pre-deploy validation failed:", error.message);
     process.exit(1);
 }
-

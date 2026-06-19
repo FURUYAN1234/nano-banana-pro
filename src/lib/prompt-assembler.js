@@ -24,6 +24,10 @@ import {
   ANTI_CHARSHEET_PREFIX, 
   cameraAngles 
 } from './constants';
+import {
+  formatMangaScenarioValidationIssue,
+  validateMangaScenario
+} from './scenario-validation';
 
 /**
  * Fisher-Yates アルゴリズムによる配列のシャッフル
@@ -71,6 +75,11 @@ export const buildMangaPrompt = ({
   punchlineType,
   systemVersion
 }) => {
+  const scenarioValidation = validateMangaScenario(scenario);
+  if (!scenarioValidation.ok) {
+    throw new Error(`Incomplete 4-koma scenario: ${formatMangaScenarioValidationIssue(scenarioValidation)}`);
+  }
+
   // カラーモードの判定 (モノクロ / カラー / 自動判定)
   let isMonochrome = colorMode === 'monochrome';
   if (colorMode === 'auto') {
