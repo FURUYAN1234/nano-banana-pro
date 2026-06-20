@@ -3,17 +3,90 @@ import { cameraLensMap, cinematicCompositionMap, EMOTION_STYLES } from './consta
 // --- Panel Utility Functions (App.jsx assemblePrompt -> externalized) ---
 // assemblePrompt 内で定義されていたパネル解析・プロンプト組立ユーティリティ群
 
+const CAST_HEADING_RE = /^##(?!#)\s*(?:\d+\.\s*)?(.*)/;
+const CHARACTER_LINE_RE = /^-?\s*Character\s*\[(.*?)\]/i;
+const NON_CHARACTER_SECTION_RE = /^(?:#\s*)?(?:備考|補足|注記|メモ|参考|注意|タイトル|作品名|シリーズ名|年号|比較ラベル|ラベル|ロゴ|看板|背景|Notes?|Remarks?|References?|Appendix)(?:\s*[:：].*)?$/i;
+const PANEL_HEADER_RE = /^\s*\[\s*\d+\s*コマ目(?:\s*[:：\]])/i;
+
+const normalizeCastDisplayName = (value = '') =>
+  String(value)
+    .replace(/\s*[:：]\s*$/, '')
+    .replace(/^(?:仮名|暫定名|名前|キャラ名|人物名|Name|Temporary\s+Name)\s*[:：]\s*/i, '')
+    .trim();
+
+const isValidCastHeadingName = (value = '') => {
+  const name = normalizeCastDisplayName(value);
+  if (!name || name.startsWith('#')) return false;
+  if (/^(?:STYLE_TAG|---|\|)/i.test(name)) return false;
+  if (NON_CHARACTER_SECTION_RE.test(name)) return false;
+  return true;
+};
+
+const pushUnique = (list, value) => {
+  const cleanValue = String(value || '').trim();
+  if (cleanValue && !list.includes(cleanValue)) list.push(cleanValue);
+};
+
+const collectCastNameEntries = (castListText = '') => {
+  const entries = [];
+  String(castListText).split('\n').forEach((line) => {
+    const cleanLine = line.replace(/\*\*/g, '').trim();
+    const match = cleanLine.match(CAST_HEADING_RE) || cleanLine.match(CHARACTER_LINE_RE);
+    if (!match) return;
+
+    const displayName = normalizeCastDisplayName(match[1]);
+    if (!isValidCastHeadingName(displayName)) return;
+
+    const aliases = [];
+    pushUnique(aliases, displayName);
+
+    const nameOnly = displayName.split(/[（(]/)[0].trim();
+    pushUnique(aliases, nameOnly);
+
+    nameOnly.split(/[\s・]/).forEach(part => pushUnique(aliases, part));
+
+    const romajiMatch = displayName.match(/[\(（]\s*(.*?)\s*[\)）]/);
+    if (romajiMatch) pushUnique(aliases, romajiMatch[1].trim());
+
+    entries.push({ displayName, nameOnly: nameOnly || displayName, aliases });
+  });
+  return entries;
+};
+
+const collectCastNames = (castListText = '') => {
+  const names = [];
+  collectCastNameEntries(castListText).forEach(entry => {
+    entry.aliases.forEach(alias => pushUnique(names, alias));
+  });
+  return names;
+};
+
+const buildCastLookup = (castListText = '') => {
+  const lookup = {};
+  collectCastNameEntries(castListText).forEach(entry => {
+    entry.aliases.forEach(alias => {
+      lookup[alias] = entry.nameOnly;
+    });
+  });
+  return lookup;
+};
+
 export const buildIdentityMatrix = (castListText) => {
   const characters = [];
   let currentChar = null;
 
   castListText.split('\n').forEach(line => {
     const cleanLine = line.replace(/\*\*/g, '').trim();
+    const headingMatch = cleanLine.match(CAST_HEADING_RE);
 
     // キャラ名ヘッダー検出
-    if (cleanLine.startsWith('## ')) {
+    if (headingMatch) {
       if (currentChar) characters.push(currentChar);
-      const name = cleanLine.replace(/^##\s*(?:\d+\.\s*)?/, '').trim();
+      const name = normalizeCastDisplayName(headingMatch[1]);
+      if (!isValidCastHeadingName(name)) {
+        currentChar = null;
+        return;
+      }
       currentChar = {
         name,
         shortName: name.split(/[（(]/)[0].trim(),
@@ -22,6 +95,11 @@ export const buildIdentityMatrix = (castListText) => {
         glasses: 'unknown',
         features: []
       };
+    }
+    if (!headingMatch && /^#{2,}/.test(cleanLine)) {
+      if (currentChar) characters.push(currentChar);
+      currentChar = null;
+      return;
     }
 
     if (!currentChar) return;
@@ -98,7 +176,9 @@ SPEECH BUBBLE PLACEMENT RULE (CRITICAL): Each character's speech bubble MUST be 
   return matrix;
 };
 
-const GENERIC_ROLE_SPEAKER_RE = /(?:男子|女子|男性|女性|青年|若者|ギャル|男|女|モブ|客|観客|観察者|参加者|司会|ナレーター|アナウンサー|スタッフ|社長|主催者|委員長|先生|選手|声|人|キャラ)(?:[A-ZＡ-Ｚ0-9０-９\s]*)$/;
+const GENERIC_ROLE_SPEAKER_RE = /(?:男性|女性|男子|女子|男|女|青年|若者|成人|高校生|高生|学生|生徒|先生|教師|作家|漫画家|編集者|記者|店員|会社員|社員|医師|看護師|警官|兵士|ギャル|モブ|客|観客|観察者|参加者|司会|ナレーター|アナウンサー|スタッフ|社長|主催者|委員長|選手|声|人|キャラ)(?:[A-ZＡ-Ｚ0-9０-９\s]*)$/;
+
+const PERSON_DESCRIPTOR_TOKEN_RE = /(?:黒髪|金髪|茶髪|銀髪|白髪|赤髪|青髪|緑髪|紫髪|ピンク髪|ブロンド|スーツ|制服|眼鏡|メガネ|グラス|ギャル|オタク|男性|女性|男子|女子|男|女|青年|若者|成人|高校生|高生|学生|生徒|先生|教師|作家|漫画家|編集者|記者|店員|会社員|社員|医師|看護師|警官|兵士|モブ|客|観客|観察者|参加者|司会|ナレーター|アナウンサー|スタッフ|社長|主催者|委員長|選手|人|キャラ)/g;
 
 const normalizeSpeakerKey = (value = '') =>
   String(value).split(/[（(]/)[0].trim().replace(/[\s・]/g, '');
@@ -106,6 +186,11 @@ const normalizeSpeakerKey = (value = '') =>
 const isGenericRoleSpeaker = (name = '') => {
   const cleanName = String(name).replace(/[（(].*?[）)]/g, '').trim();
   return GENERIC_ROLE_SPEAKER_RE.test(cleanName);
+};
+
+const getPersonDescriptorTokens = (value = '') => {
+  const cleanValue = normalizeSpeakerKey(normalizeCastDisplayName(value));
+  return [...new Set(cleanValue.match(PERSON_DESCRIPTOR_TOKEN_RE) || [])];
 };
 
 const findExactCastMatch = (speaker, validCharacters = []) => {
@@ -125,9 +210,25 @@ const findSpeakerCastMatch = (speaker, validCharacters = []) => {
   const exactMatch = findExactCastMatch(speaker, validCharacters);
   if (exactMatch) return exactMatch;
 
-  // Generic role labels such as "男子" or "ギャル" are valid speakers.
-  // Do not collapse them into a longer OCR title that merely contains the same substring.
-  if (isGenericRoleSpeaker(speaker)) return '';
+  if (isGenericRoleSpeaker(speaker)) {
+    const speakerTokens = getPersonDescriptorTokens(speaker);
+    const scoredMatches = validCharacters
+      .map(c => {
+        const castTokens = getPersonDescriptorTokens(c);
+        const overlap = speakerTokens.filter(token => castTokens.includes(token)).length;
+        return { name: c, overlap, castTokens };
+      })
+      .filter(match => match.overlap >= 2 || (speakerTokens.length === 1 && match.overlap === 1 && isGenericRoleSpeaker(match.name)));
+
+    scoredMatches.sort((a, b) => b.overlap - a.overlap);
+    if (scoredMatches.length && (scoredMatches.length === 1 || scoredMatches[0].overlap > scoredMatches[1].overlap)) {
+      return scoredMatches[0].name;
+    }
+
+    // Generic role labels such as "男子" or "ギャル" are valid speakers.
+    // Do not collapse them into a longer OCR title that merely contains the same substring.
+    return '';
+  }
 
   return validCharacters.find(c => {
     const nameOnly = c.split(/[（(]/)[0].trim();
@@ -272,41 +373,13 @@ export const extractDialogueOnly = (fullPanelText, castList) => {
   const lines = fullPanelText.split('\n');
 
   // Extract valid characters from castList to prevent action instructions being misidentified as speakers
-  const validCharacters = [];
-  castList.split('\n').forEach(cLine => {
-    const cleanLine = cLine.replace(/\*\*/g, '').trim();
-    // Pattern 1: ## 1. アカリ
-    let m = cleanLine.match(/^##\s*(?:\d+\.\s*)?(.*)/);
-    // Pattern 2: - Character [アカリ]:
-    if (!m) {
-      const m2 = cleanLine.match(/^-?\s*Character\s*\[(.*?)\]/i);
-      if (m2) m = m2;
-    }
-    if (m) {
-      const fullName = m[1].split(':')[0].trim(); // Remove trailing colon if any
-      validCharacters.push(fullName);
-      const jpName = fullName.split(/[\(（]/)[0].trim();
-      if (jpName && jpName !== fullName) validCharacters.push(jpName);
-      
-      // [v4.5.10] 姓名やスペース・中黒で区切られた部分名（例: 「と■の よ■ゆき子」の「よ■ゆき子」）もキャストとして登録する
-      const parts = jpName.split(/[\s・]/);
-      if (parts.length > 1) {
-        parts.forEach(p => {
-          if (p.trim() && !validCharacters.includes(p.trim())) {
-            validCharacters.push(p.trim());
-          }
-        });
-      }
-
-      const romajiMatch = fullName.match(/[\(（]\s*(.*?)\s*[\)）]/);
-      if (romajiMatch) validCharacters.push(romajiMatch[1].trim());
-    }
-  });
+  const validCharacters = collectCastNames(castList);
 
   const formattedBubbles = [];
   let bubbleCount = 1;
 
   lines.forEach(line => {
+    if (PANEL_HEADER_RE.test(line)) return;
     // [v4.6.5-fix] SE（効果音演出指示）行をスキップ: （SE: ...）や (SE: ...) の形式に加え、
     // 「音響効果：」「SE：」「効果音：」等のコロン形式も除外
     const trimmedForSE = line.trim();
@@ -597,20 +670,10 @@ const protectNonDialogueTextHints = (actionText) => {
 export const extractActionOnly = (fullPanelText, castList, placementRule = "") => {
   const lines = fullPanelText.split('\n');
 
-  const validCharacters = [];
-  castList.split('\n').forEach(cLine => {
-    const m = cLine.replace(/\*\*/g, '').trim().match(/^##\s*(?:\d+\.\s*)?(.*)/);
-    if (m) {
-      const fullName = m[1].trim();
-      validCharacters.push(fullName);
-      const jpName = fullName.split(/[\(（]/)[0].trim();
-      if (jpName && jpName !== fullName) validCharacters.push(jpName);
-      const romajiMatch = fullName.match(/[\(（]\s*(.*?)\s*[\)）]/);
-      if (romajiMatch) validCharacters.push(romajiMatch[1].trim());
-    }
-  });
+  const validCharacters = collectCastNames(castList);
 
   const actionLines = lines.filter(line => {
+    if (PANEL_HEADER_RE.test(line)) return false;
     const match = line.match(/^(.*?)(?:[:：]|「)/);
     let isDialogue = false;
     if (match && match[1].trim()) {
@@ -702,37 +765,15 @@ export const extractPlacementRule = (fullPanelText, castList) => {
   // [v2.28] EMOTIONタグ行・状況行をフィルタリングしてスピーカー抽出の汚染を防止
   const dialogLines = lines.filter(line => {
     const trimmed = line.trim();
+    if (PANEL_HEADER_RE.test(trimmed)) return false;
     if (/^\[EMOTION:/i.test(trimmed)) return false;
     if (/^状況(?:演出)?[：:]/i.test(trimmed)) return false;
     return trimmed.includes('：') || trimmed.includes(':') || trimmed.includes('「');
   });
 
   // キャラ名バリデーション用リストと名寄せマップ
-  const validCharsForPlacement = [];
-  const charLookup = {};
-  castList.split('\n').forEach(cLine => {
-    const m = cLine.replace(/\*\*/g, '').trim().match(/^##\s*(?:\d+\.\s*)?(.*)/);
-    if (m) {
-      const fullName = m[1].trim();
-      const nameOnly = fullName.split(/[（(]/)[0].trim();
-      if (nameOnly) {
-        if (!validCharsForPlacement.includes(nameOnly)) {
-          validCharsForPlacement.push(nameOnly);
-        }
-        charLookup[nameOnly] = nameOnly;
-        
-        // ローマ字名対応
-        const romajiMatch = fullName.match(/[\(（]\s*(.*?)\s*[\)）]/);
-        if (romajiMatch) {
-          const romaji = romajiMatch[1].trim();
-          if (!validCharsForPlacement.includes(romaji)) {
-            validCharsForPlacement.push(romaji);
-          }
-          charLookup[romaji] = nameOnly;
-        }
-      }
-    }
-  });
+  const validCharsForPlacement = collectCastNames(castList);
+  const charLookup = buildCastLookup(castList);
 
   const speakers = [];
   dialogLines.forEach(line => {
@@ -820,35 +861,16 @@ export const extractCastLimitRule = (fullPanelText, castList) => {
 
   // Find valid cast names and create a lookup for full character objects
   // 日本語名とローマ字名両方に対応できるようにする
-  const validCharacters = [];
-  const charLookup = {};
-  castList.split('\n').forEach(cLine => {
-    const m = cLine.replace(/\*\*/g, '').trim().match(/^##\s*(?:\d+\.\s*)?(.*)/);
-    if (m) {
-      const fullCharName = m[1].trim();
-      const nameOnly = fullCharName.split('(')[0].trim().split('（')[0].trim();
-      if (nameOnly) {
-        if (!validCharacters.includes(nameOnly)) {
-          validCharacters.push(nameOnly);
-        }
-        charLookup[nameOnly] = { name: nameOnly, full: fullCharName };
-        
-        // ローマ字名も名寄せ登録
-        const romajiMatch = fullCharName.match(/[\(（]\s*(.*?)\s*[\)）]/);
-        if (romajiMatch) {
-          const romaji = romajiMatch[1].trim();
-          if (!validCharacters.includes(romaji)) {
-            validCharacters.push(romaji);
-          }
-          charLookup[romaji] = { name: nameOnly, full: fullCharName };
-        }
-      }
-    }
-  });
+  const validCharacters = collectCastNames(castList);
+  const flatCharLookup = buildCastLookup(castList);
+  const charLookup = Object.fromEntries(
+    Object.entries(flatCharLookup).map(([alias, name]) => [alias, { name, full: name }])
+  );
 
   // Extract speakers from dialogue lines
   const speakers = [];
   lines.forEach(line => {
+    if (PANEL_HEADER_RE.test(line)) return;
     const match = line.match(/^(.*?)(?:[:：]|「)/);
     if (match && match[1].trim()) {
       let speaker = match[1].replace(/^(SFX|効果音|BGM|Action|状況(?:演出)?|[\(（].*?[\)）])/gi, '').replace(/^[【\[（(]/, '').replace(/[】\]）)]$/, '').trim();
@@ -872,6 +894,7 @@ export const extractCastLimitRule = (fullPanelText, castList) => {
   // [v3.95] セリフ行以外のテキストを抽出して登場人物を検出する (セリフ内言及によるキャラ誤認バグの完全排除)
   const actionAndMetaLines = [];
   lines.forEach(line => {
+    if (PANEL_HEADER_RE.test(line)) return;
     const match = line.match(/^(.*?)(?:[:：]|「)/);
     let isDialogue = false;
     if (match && match[1].trim()) {
@@ -1056,10 +1079,21 @@ export const cleanCastList = (castList, activeOutfit) => {
   const castLines = castList.split('\n');
   for (let i = 0; i < castLines.length; i++) {
     const line = castLines[i].replace(/\*\*/g, '').trim();
-    if (line.startsWith('## ')) {
-      currentCharacter = line.replace(/^##\s*(?:\d+\.\s*)?/, '').trim();
+    const headingMatch = line.match(CAST_HEADING_RE);
+    if (headingMatch) {
+      currentCharacter = normalizeCastDisplayName(headingMatch[1]);
+      if (!isValidCastHeadingName(currentCharacter)) {
+        currentCharacter = "";
+        isParsingOutfit = false;
+        continue;
+      }
       cleanCastData += `\n- Character [${currentCharacter}]: `;
       isParsingOutfit = false;
+    }
+    if (!headingMatch && /^#{2,}/.test(line)) {
+      currentCharacter = "";
+      isParsingOutfit = false;
+      continue;
     }
     if (!currentCharacter) continue;
     
