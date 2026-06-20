@@ -98,6 +98,43 @@ SPEECH BUBBLE PLACEMENT RULE (CRITICAL): Each character's speech bubble MUST be 
   return matrix;
 };
 
+const GENERIC_ROLE_SPEAKER_RE = /(?:男子|女子|男性|女性|青年|若者|ギャル|男|女|モブ|客|観客|観察者|参加者|司会|ナレーター|アナウンサー|スタッフ|社長|主催者|委員長|先生|選手|声|人|キャラ)(?:[A-ZＡ-Ｚ0-9０-９\s]*)$/;
+
+const normalizeSpeakerKey = (value = '') =>
+  String(value).split(/[（(]/)[0].trim().replace(/[\s・]/g, '');
+
+const isGenericRoleSpeaker = (name = '') => {
+  const cleanName = String(name).replace(/[（(].*?[）)]/g, '').trim();
+  return GENERIC_ROLE_SPEAKER_RE.test(cleanName);
+};
+
+const findExactCastMatch = (speaker, validCharacters = []) => {
+  const speakerKey = normalizeSpeakerKey(speaker);
+  return validCharacters.find(c => {
+    const nameOnly = c.split(/[（(]/)[0].trim();
+    return (
+      speaker === c ||
+      speaker === nameOnly ||
+      speakerKey === normalizeSpeakerKey(c) ||
+      speakerKey === normalizeSpeakerKey(nameOnly)
+    );
+  });
+};
+
+const findSpeakerCastMatch = (speaker, validCharacters = []) => {
+  const exactMatch = findExactCastMatch(speaker, validCharacters);
+  if (exactMatch) return exactMatch;
+
+  // Generic role labels such as "男子" or "ギャル" are valid speakers.
+  // Do not collapse them into a longer OCR title that merely contains the same substring.
+  if (isGenericRoleSpeaker(speaker)) return '';
+
+  return validCharacters.find(c => {
+    const nameOnly = c.split(/[（(]/)[0].trim();
+    return nameOnly && (speaker.includes(nameOnly) || nameOnly.includes(speaker));
+  });
+};
+
 /**
  * [v4.1.7] Determine if a speaker name refers to a person (either registered cast or third-party/mob)
  * @param {string} name - The name to test
@@ -109,6 +146,7 @@ export const isLikelyPerson = (name, validCharacters = []) => {
   if (!cleanName) return false;
 
   if (cleanName === '全員' || cleanName === 'みんな') return true;
+  if (isGenericRoleSpeaker(cleanName)) return true;
 
   // Check registered cast list
   const isCast = validCharacters.some(c => {
@@ -119,7 +157,7 @@ export const isLikelyPerson = (name, validCharacters = []) => {
 
   // Person-indicative keywords (Japanese terms for suffix/roles, and 'mob'/'speaker')
   // [v4.5.12] 観察者A や スタッフ1 のようなサフィックス付きにも対応、役割語を追加
-  const personKeywords = /(?:氏|モブ|客|観客|観察者|参加者|司会|ナレーター|アナウンサー|男性|女性|男|女|スタッフ|社長|主催者|委員長|先生|選手|声|人|キャラ)(?:[A-ZＡ-Ｚ0-9０-９\s]*)$/;
+  const personKeywords = GENERIC_ROLE_SPEAKER_RE;
   return personKeywords.test(cleanName) || cleanName.toLowerCase().includes('mob') || cleanName.toLowerCase().includes('speaker');
 };
 
@@ -313,11 +351,8 @@ export const extractDialogueOnly = (fullPanelText, castList) => {
       } else if (isLikelyPerson(tempSpeakerBase, validCharacters) || tempSpeakerBase.includes("全員") || tempSpeakerBase === "Speaker" || match[0].trim().endsWith(':') || match[0].trim().endsWith('：')) {
         isDialogue = true;
         // [v4.6.10] キャスト名を名寄せしてスピーカー名を保持
-        const matchedCast = validCharacters.find(c => {
-          const nameOnly = c.split(/[（(]/)[0].trim();
-          return nameOnly && (tempSpeakerBase === nameOnly || tempSpeakerBase === c || tempSpeakerBase.includes(nameOnly) || nameOnly.includes(tempSpeakerBase));
-        });
-        detectedSpeaker = matchedCast ? matchedCast.split(/[（(]/)[0].trim() : '';
+        const matchedCast = findSpeakerCastMatch(tempSpeakerBase, validCharacters);
+        detectedSpeaker = matchedCast ? matchedCast.split(/[（(]/)[0].trim() : tempSpeakerBase;
       }
     } else if (line.trim().startsWith('「')) {
       // [v2.29] 根本修正: 行全体が「...」で完結するセリフ形式のみを判定。
@@ -726,7 +761,7 @@ export const extractPlacementRule = (fullPanelText, castList) => {
       }
       if (speaker && !/^(EMOTION|NORMAL|CHIBI_GAG|GEKIGA|SHOUJO|HORROR|BLANK|IMPACT|WATERCOLOR|RETRO|GLITTER|SHADOW|SPEED|FLASHBACK|UKIYOE|POP_ART|SKETCH|NEON|THICK_PAINT|PASTEL|CEL|DARK_ANIME|THIN_LINE|HIGH_SATURATION)$/i.test(speaker)) {
         // キャラ名判定と名寄せ
-        const matchedChar = validCharsForPlacement.find(c => speaker === c || speaker.includes(c) || c.includes(speaker));
+        const matchedChar = findSpeakerCastMatch(speaker, validCharsForPlacement);
         if (matchedChar || isLikelyPerson(speaker, validCharsForPlacement) || match[0].trim().endsWith(':') || match[0].trim().endsWith('：')) {
           const canonicalName = matchedChar ? charLookup[matchedChar] : speaker;
           if (!speakers.includes(canonicalName)) {
@@ -819,7 +854,7 @@ export const extractCastLimitRule = (fullPanelText, castList) => {
       let speaker = match[1].replace(/^(SFX|効果音|BGM|Action|状況(?:演出)?|[\(（].*?[\)）])/gi, '').replace(/^[【\[（(]/, '').replace(/[】\]）)]$/, '').trim();
       if (speaker) {
         if (speaker === "全員" || speaker === "Speaker") return;
-        const matchedChar = validCharacters.find(c => speaker === c || speaker.includes(c) || c.includes(speaker));
+        const matchedChar = findSpeakerCastMatch(speaker, validCharacters);
         if (matchedChar) {
           const canonicalName = charLookup[matchedChar].name;
           if (!speakers.includes(canonicalName)) {

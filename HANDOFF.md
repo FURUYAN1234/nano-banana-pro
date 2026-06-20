@@ -1,17 +1,20 @@
 # HANDOFF.md
 
 ## Current Status
-- **Version**: v4.7.2
+- **Version**: v4.7.3
 - **Latest changes**:
-  - Added an A4 PNG download path that keeps the original image intact and fits it into a white `1024x1448` canvas without cropping.
-  - Kept the original download path available as `元画像をダウンロード`.
-  - Strengthened the A4 repair prompt so the top title is explicitly redrawn and missing/cropped/moved/rewritten titles are treated as failures.
-  - Improved quote classification so visual labels, signs, amount displays, and screen text stay out of speech bubbles while spoken quote forms remain Dialogue.
-- **State**: v4.7.2 release/deploy in progress. Backup is not requested.
+  - Added generic character-analysis rules so non-name/non-person OCR is not treated as a character name.
+  - When character names are absent, STEP1 now asks the model to split visible people into separate role-based provisional character sections.
+  - Preserved role speakers such as `男子` and `ギャル` through dialogue extraction, placement, and cast-limit rules.
+  - Prevented role-label dialogue from being collapsed into a longer OCR title substring, which caused missing speech bubbles and solo/monologue constraints.
+- **State**: v4.7.3 release/deploy plus PS1 full backup requested by the user; local implementation is complete and verification is in progress.
 
 ## Pending Verification Tasks
+- [ ] Local checks and build
 - [ ] GitHub Pages deploy verification
-- [ ] GitHub Release creation (v4.7.2)
+- [ ] GitHub Release creation (v4.7.3)
+- [ ] Hugging Face Spaces deploy verification
+- [ ] PS1 full backup and ZIP content verification
 
 ## Next Steps
-- Finish local checks, commit, deploy GitHub Pages, create/push tag, create GitHub Release, and update `PLAN.md`.
+- Finish local checks, commit, deploy GitHub Pages and HF Spaces, create/push tag, create GitHub Release, run PS1 full backup, verify ZIP contents, and update `PLAN.md`.

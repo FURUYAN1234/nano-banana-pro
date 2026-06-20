@@ -1,15 +1,13 @@
-v4.7.2: A4 PNG Export and Dialogue Classification Fixes / A4 PNG出力とセリフ分類修正
+v4.7.3: Role Speaker Dialogue Retention / 役割話者のセリフ保持修正
 
 ## What's New / 更新内容
 
-* Added an A4 PNG download for generated 4-koma images. The original image is preserved and fit into a white `1024x1448` canvas without cropping.
-* Kept the original-image download available separately, so users can choose either the raw model output or the A4-ready export.
-* Strengthened the A4 repair prompt so the top title is explicitly redrawn and missing/cropped/moved titles are treated as failures.
-* Improved dialogue extraction so visual labels, signs, amount displays, and screen text are not promoted into speech bubbles.
-* Preserved spoken quote forms such as `...と呟く/叫ぶ/言う` as actual dialogue while keeping visible labels in Action.
+* Fixed a prompt-assembly issue where role speakers such as `男子` and `ギャル` could be lost when character-sheet OCR produced a non-person heading instead of separate character names.
+* Preserved role speakers through dialogue extraction, placement rules, and cast-limit rules so both characters remain present and speech bubbles are not collapsed into a solo/monologue scene.
+* Added generic character-analysis guidance: OCR that does not look like a person name or person label must not become a character name.
+* When names are absent, the character analysis step now asks the model to split visible people into separate role-based provisional character sections.
 
-* A4比率PNGダウンロードを追加しました。生成元画像を切り抜かず、白い `1024x1448` キャンバス内に収めます。
-* 元画像ダウンロードも残し、モデル出力そのままとA4提出向け出力を選べるようにしました。
-* A4修正プロンプトでタイトル再描画を明示し、タイトル欠落・切れ・移動・書き換えを失敗条件にしました。
-* 看板、ラベル、金額表示、画面表示などの引用が吹き出し化されないよう、セリフ抽出を改善しました。
-* `...と呟く/叫ぶ/言う` 形式の発話引用はDialogueとして保持し、表示文字はAction側に残します。
+* キャラクターシートOCRが人物名ではない見出しを出した場合に、`男子` / `ギャル` などの役割話者が失われるプロンプト組み立て問題を修正しました。
+* セリフ抽出、配置ルール、人数制限ルールで役割話者を保持し、2人の掛け合いがソロ/独白扱いに潰れないようにしました。
+* 人名・人物ラベルとして成立していないOCR文字列をキャラクター名にしない汎用解析ルールを追加しました。
+* 名前が書かれていない人物は、見た目と役割に基づく仮人物名で分割するようキャラクター解析ステップを強化しました。

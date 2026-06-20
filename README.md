@@ -766,6 +766,9 @@ A tool to automatically convert static 4-koma manga into fully voiced animated v
 
 ## 📋 ChangeLog
 
+### v4.7.3 (2026-06-20)
+- **[Fix & UX]** 名前らしくないOCRをキャラクター名にせず、名前未記載の人物は役割ベースの仮名で分割する解析ルールを追加。男子/ギャルなどの役割話者をセリフ抽出・配置・人数制限で保持し、台詞欠落を防止。 / Added generic character-analysis rules so non-name OCR is not treated as a character name, and unnamed visible people are split into role-based provisional characters. Role speakers such as male student and gyaru are now preserved through dialogue extraction, placement, and cast-limit rules to prevent missing speech bubbles.
+
 ### v4.7.2 (2026-06-19)
 - **[Fix & UX]** A4比率のPNG出力を追加し、元画像を切らずに白キャンバス内へ収めるダウンロードを提供 / Added A4-ratio PNG export that fits the generated image inside a white canvas without cropping
 - **[Fix]** A4修正プロンプトでタイトルを再適用し、表示ラベル引用と実際の発話引用の分類を改善 / Re-applies titles in A4 repair prompts and improves classification between visual-label quotes and spoken dialogue quotes
