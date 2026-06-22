@@ -766,6 +766,9 @@ A tool to automatically convert static 4-koma manga into fully voiced animated v
 
 ## 📋 ChangeLog
 
+### v4.7.6 (2026-06-22)
+- **[Fix & Prompt]** Gemini用の最終画像生成プロンプトに、吹き出し内テキストの縦書き日本語・横書き禁止・縦長吹き出し形状の必須ルールを追加。検証用生成物をESLint対象から除外し、ローカル検証が `scratch/` に影響されないよう修正。 / Added mandatory vertical Japanese tategaki, horizontal text rejection, and tall/narrow speech-bubble shape rules to the Gemini final image prompt. Excluded generated verification artifacts from ESLint so local validation is not affected by `scratch/`.
+
 ### v4.7.5 (2026-06-22)
 - **[Fix & UX]** 全4コマ・全描画内容の最終自己監査ブロックをChatGPT/Gemini両プロンプトに追加し、吹き出し欠落・話者ズレ・余計な文字・描画内容不一致を生成前後に内部修正させるよう強化 / Added a final all-panel and all-rendered-content self-audit block to both ChatGPT and Gemini prompts, strengthening internal correction for missing speech bubbles, wrong speakers, extra text, and rendered-content mismatches
 
