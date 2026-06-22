@@ -1,11 +1,13 @@
-## English
+v4.7.4: Generic Dialogue Retention / 汎用セリフ保持修正
 
-- Added a mandatory final self-audit block to both ChatGPT Images 2.0 and Gemini/Nano Banana 2 prompt templates.
-- Each panel now audits Action, camera/composition, placement, cast limit, outfit, background, and Dialogue before final output.
-- The audit checks missing, moved, merged, or duplicated speech bubbles, incorrect bubble tails, random text/SFX/captions, extra or missing characters, outfit/glasses mismatches, merged panels, and dirty gutters.
+## What's New / 更新内容
 
-## 日本語
+* Fixed generic cast parsing so note/metadata headings are not treated as characters.
+* Normalized provisional-name heading labels before creating cast entries.
+* Preserved dialogue from person-like compound speaker labels by mapping them back to matching cast entries through generic descriptor tokens.
+* Excluded panel headers from dialogue extraction so panel labels cannot become speech bubbles.
 
-- ChatGPT Images 2.0 と Gemini/Nano Banana 2 の両プロンプトに、必須の最終自己監査ブロックを追加しました。
-- 各コマで Action、カメラ/構図、配置、人数制限、衣装、背景、Dialogue を最終出力前に監査するようにしました。
-- 吹き出しの欠落・移動・結合・重複、しっぽの話者ズレ、余計な文字/SFX/キャプション、キャラの増減、衣装/メガネ不一致、コマ結合、汚れた余白を内部修正対象にします。
+* 備考・補足などの非キャラクター見出しをキャラクター扱いしない汎用パースに修正しました。
+* 仮名・暫定名などの見出しラベルをキャラクター名から除去するようにしました。
+* 人物を表す複合ラベル話者を、汎用的な特徴トークンで対応するキャストへ名寄せし、台詞が落ちないようにしました。
+* コマ見出しをセリフ抽出から除外し、パネルラベルが吹き出し化されないようにしました。

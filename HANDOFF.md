@@ -1,21 +1,19 @@
 # HANDOFF.md
 
 ## Current Status
-- **Version**: v4.7.6
+- **Version**: v4.7.4
 - **Latest changes**:
-  - Added a shared final self-audit block to both ChatGPT and Gemini 4-koma prompt templates.
-  - Fixed the Gemini final image prompt so speech-bubble text must be vertical Japanese tategaki, horizontal bubble text is rejected, and bubbles must be tall/narrow enough for vertical columns.
-  - Excluded generated verification folders from ESLint so `scratch/` does not break local validation.
-  - The copied/internal final prompt now requires all four panels to be checked for Action, camera/composition, placement, cast limit, outfit, background, and Dialogue consistency.
-  - The audit requires every listed Speech Bubble to appear in the same panel exactly once, with the tail pointing to the correct speaker.
-  - The audit also rejects extra random text, captions, SFX, gutter text, missing/extra/cloned characters, wrong outfits, wrong glasses state, merged panels, dirty gutters, and character-sheet layouts.
-- **State**: v4.7.6 Gemini vertical speech-bubble prompt fix released and deployed. Do not run PS1 full backup unless newly requested.
+  - Added generic cast-heading parsing so non-character note/metadata sections are not treated as characters.
+  - Normalized provisional heading labels such as "temporary name" prefixes out of generated cast names.
+  - Preserved person-like compound speaker labels by mapping them back to the matching cast entry through generic descriptor tokens.
+  - Excluded panel headers from dialogue extraction so `[1コマ目: 起]` cannot become a speech bubble.
+- **State**: v4.7.4 local fix in progress. User explicitly stopped PS1 full backup; do not run backup unless newly requested.
 
 ## Pending Verification Tasks
-- [x] Local checks and build
-- [x] GitHub Pages deploy verification
-- [x] GitHub Release creation (v4.7.6)
-- [x] Hugging Face Spaces deploy verification
+- [ ] Local checks and build
+- [ ] GitHub Pages deploy verification if user approves redeploy
+- [ ] GitHub Release creation (v4.7.4) if redeployed
+- [ ] Hugging Face Spaces deploy verification if redeployed
 
 ## Next Steps
-- No pending release task. Do not run PS1 full backup unless newly requested.
+- Finish local checks. If redeploying, commit, deploy GitHub Pages and HF Spaces, create/push tag, create GitHub Release, and update `PLAN.md`. Do not run PS1 full backup.
