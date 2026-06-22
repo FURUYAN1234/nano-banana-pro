@@ -1,19 +1,19 @@
 # HANDOFF.md
 
 ## Current Status
-- **Version**: v4.7.4
+- **Version**: v4.7.5
 - **Latest changes**:
-  - Added generic cast-heading parsing so non-character note/metadata sections are not treated as characters.
-  - Normalized provisional heading labels such as "temporary name" prefixes out of generated cast names.
-  - Preserved person-like compound speaker labels by mapping them back to the matching cast entry through generic descriptor tokens.
-  - Excluded panel headers from dialogue extraction so `[1コマ目: 起]` cannot become a speech bubble.
-- **State**: v4.7.4 local fix in progress. User explicitly stopped PS1 full backup; do not run backup unless newly requested.
+  - Added a shared final self-audit block to both ChatGPT and Gemini 4-koma prompt templates.
+  - The copied/internal final prompt now requires all four panels to be checked for Action, camera/composition, placement, cast limit, outfit, background, and Dialogue consistency.
+  - The audit requires every listed Speech Bubble to appear in the same panel exactly once, with the tail pointing to the correct speaker.
+  - The audit also rejects extra random text, captions, SFX, gutter text, missing/extra/cloned characters, wrong outfits, wrong glasses state, merged panels, dirty gutters, and character-sheet layouts.
+- **State**: v4.7.5 prompt upgrade verified locally; deploy/release follow-through in progress. Do not run PS1 full backup unless newly requested.
 
 ## Pending Verification Tasks
-- [ ] Local checks and build
-- [ ] GitHub Pages deploy verification if user approves redeploy
-- [ ] GitHub Release creation (v4.7.4) if redeployed
-- [ ] Hugging Face Spaces deploy verification if redeployed
+- [x] Local checks and build
+- [ ] GitHub Pages deploy verification
+- [ ] GitHub Release creation (v4.7.5)
+- [ ] Hugging Face Spaces deploy verification
 
 ## Next Steps
-- Finish local checks. If redeploying, commit, deploy GitHub Pages and HF Spaces, create/push tag, create GitHub Release, and update `PLAN.md`. Do not run PS1 full backup.
+- Commit, deploy GitHub Pages and HF Spaces, create/push tag, create GitHub Release, update `PLAN.md`, and do not run PS1 full backup.

@@ -766,6 +766,9 @@ A tool to automatically convert static 4-koma manga into fully voiced animated v
 
 ## 📋 ChangeLog
 
+### v4.7.5 (2026-06-22)
+- **[Fix & UX]** 全4コマ・全描画内容の最終自己監査ブロックをChatGPT/Gemini両プロンプトに追加し、吹き出し欠落・話者ズレ・余計な文字・描画内容不一致を生成前後に内部修正させるよう強化 / Added a final all-panel and all-rendered-content self-audit block to both ChatGPT and Gemini prompts, strengthening internal correction for missing speech bubbles, wrong speakers, extra text, and rendered-content mismatches
+
 ### v4.7.4 (2026-06-20)
 - **[Fix & UX]** 補足/備考などの非キャラクター見出しをキャラ一覧から除外し、人物を表す複合ラベル話者を汎用的にキャストへ名寄せするよう修正。最終プロンプトでギャル側の台詞が欠落する問題を防止。 / Excludes non-character note sections from cast parsing and generically maps person-like compound speaker labels back to cast entries, preventing final prompts from dropping dialogue for descriptive speakers.
 

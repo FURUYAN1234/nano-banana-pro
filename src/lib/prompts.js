@@ -609,6 +609,18 @@ ${finalPrompt}
 // --- Manga Prompt Builder Functions (Phase 3-C: assemblePrompt -> externalized) ---
 // ChatGPT / Gemini 用の巨大プロンプトテンプレートを App.jsx から分離
 
+const FOUR_KOMA_SELF_AUDIT_BLOCK = `
+FINAL SELF-AUDIT BEFORE DISPLAYING THE IMAGE (MANDATORY, INTERNAL ONLY):
+- Inspect Panel 1, Panel 2, Panel 3, and Panel 4 one by one. Do not skip any panel.
+- For EACH panel, compare the finished drawing against that panel's Action, camera/composition, character placement, cast limit, outfit, background, and Dialogue instructions.
+- Every Speech Bubble listed in a panel's Dialogue line MUST appear in that same panel exactly once. No dialogue may be missing, moved to another panel, merged into a different speaker's bubble, or converted into narration/caption text.
+- Every speech bubble tail MUST point to the correct speaker in that panel. If the speaker is centered, the bubble must stay near that centered speaker; do not push it to an unrelated edge or character.
+- Every visible non-dialogue text element must be justified by the prompt: title, watermarks, explicit signage/label/screen/handwriting, or the listed Dialogue only. Remove any random labels, captions, SFX, floating letters, gutter text, or background text not explicitly requested.
+- Check all drawn content, not only text: no extra characters, no missing required characters, no duplicated/cloned characters, no wrong outfit, no wrong glasses state, no character-sheet layout, no floating eye/face overlays, no merged panels, and no dirty gutters.
+- If ANY panel fails this audit, redraw only the failing panel content internally and run the audit again before finalizing.
+- Do not print this audit, checklist, JSON, explanations, or correction notes. Output only the finished manga image.
+`;
+
 /**
  * ChatGPT (gpt-image-2) 用の4コマ漫画プロンプトを構築する
  * @param {Object} p - パラメータオブジェクト
@@ -727,6 +739,8 @@ PANEL DESCRIPTIONS:
 
 ${panelSections}
 
+${FOUR_KOMA_SELF_AUDIT_BLOCK}
+
 THINGS TO AVOID:
 - No plastic-looking skin or digital over-sharpening on characters.
 - No watermarks or logos other than the specified watermarks above.
@@ -837,6 +851,8 @@ Tech Dict:
 
 
 ${panelSections}
+
+${FOUR_KOMA_SELF_AUDIT_BLOCK}
 
 Important constraints:
 - Ensure the characters accurately reflect classic anime styles.
