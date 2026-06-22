@@ -1,7 +1,7 @@
 // --- 定数・タグ定義 (constants.js) ---
 // App.jsx から抽出された共有定数
 
-export const SYSTEM_VERSION = "v4.7.4";
+export const SYSTEM_VERSION = "v4.7.7";
 
 // --- Punchline ラベル変換関数 ---
 export const getPunchlineLabel = (type) => {
@@ -177,9 +177,9 @@ export const EMOTION_STYLES = {
 // [v2.68] 演出レパートリー拡充: 6つの新EMOTION_STYLES
 // 元に戻す場合: このブロック（SPEED〜NEON）を削除し、extractEmotionStyleの正規表現からも除去すること
 EMOTION_STYLES.SPEED = {
-  style: 'In THIS PANEL ONLY, the entire composition conveys extreme speed and motion. All characters are drawn with heavy motion blur trails behind them. Background becomes pure horizontal speed lines radiating from the direction of movement. The panel feels like a single frame captured from an intense chase or sudden dash.',
+  style: 'In THIS PANEL ONLY, the entire composition conveys extreme speed and motion. CRITICAL: Keep faces and eyes SHARP and clearly readable — apply motion blur ONLY to moving parts (legs, arms, hair tips, clothing edges). Background becomes directional speed lines radiating from the movement direction. The panel feels like a single frame captured from an intense chase or sudden dash, as if the camera is panning to track the subject.',
   proportions: '',
-  vfx: '(Extreme horizontal speed lines filling background:1.5), (heavy motion blur on character bodies:1.4), (wind-blown hair and clothing:1.3), (dynamic forward-leaning running pose:1.3), (after-image ghosting effect:1.2)',
+  vfx: '(sharp focus on face and eyes:1.5), (motion blur only on moving parts:1.4), (directional motion blur following movement:1.4), (extreme horizontal speed lines filling background:1.5), (wind-blown hair and clothing:1.3), (dynamic forward-leaning running pose:1.3), (after-image ghosting effect:1.2), (panning shot sense of speed:1.3)',
 };
 EMOTION_STYLES.FLASHBACK = {
   style: 'In THIS PANEL ONLY, shift to a memory/flashback visual style. The entire panel is rendered in warm sepia tones with soft vignette darkening at the edges. Lines are slightly softer and hazier than normal panels. A dreamy, nostalgic atmosphere pervades the scene. Panel borders may appear wavy or fade out to indicate this is a memory.',
@@ -236,6 +236,22 @@ EMOTION_STYLES.HIGH_SATURATION = {
   style: 'In THIS PANEL ONLY, push all colors to maximum vivid saturation. The entire panel explodes with intense chromatic energy. Every color is cranked to its most vibrant extreme. The effect is eye-catching, energetic, and overwhelming in the best way.',
   proportions: '',
   vfx: '(Maximum color saturation boost:1.5), (vivid electric blue sky or background:1.4), (intense warm highlights on skin:1.3), (neon-bright accent colors on clothing:1.4), (color contrast pushed to extreme:1.3)',
+};
+// [v4.7.5] 新EMOTION追加: 墨インク・モノクロアクセント・ゴールデンアワー
+EMOTION_STYLES.SUMI_INK = {
+  style: 'In THIS PANEL ONLY, shift to a dramatic Japanese ink splash aesthetic. The background features bold black sumi ink splashes and dynamic calligraphy brush strokes erupting behind or around the characters. Generous white negative space contrasts with the explosive ink. Characters remain clean and fully colored in the foreground while the ink effects create dramatic energy behind them. The mood is intense, elegant, and distinctly Japanese.',
+  proportions: '',
+  vfx: '(black sumi ink splash behind character:1.5), (dynamic calligraphy brush strokes:1.4), (white negative space background:1.4), (ink wash gradient:1.2), (controlled ink splatter:1.3), (clear character silhouette:1.4), (subtle red accent on key element:1.2)',
+};
+EMOTION_STYLES.MONOCHROME_ACCENT = {
+  style: 'In THIS PANEL ONLY, render the entire panel in dramatic grayscale monochrome EXCEPT for one single vivid color element (such as a key object, a character\'s eyes, or a critical item). This creates a cinematic selective-color effect that instantly draws the viewer\'s eye to the most important element in the scene. The contrast between the monochrome world and the single vivid color maximizes dramatic impact.',
+  proportions: '',
+  vfx: '(monochrome grayscale panel:1.5), (single vivid color accent on key element:1.5), (high contrast black and white:1.4), (dramatic selective color technique:1.4), (cinematic desaturated atmosphere:1.3), (sharp focus on colored element:1.3)',
+};
+EMOTION_STYLES.GOLDEN_HOUR = {
+  style: 'In THIS PANEL ONLY, bathe the entire scene in warm golden sunset lighting. Long dramatic shadows stretch across the ground. Everything is illuminated by rich amber-orange light from a low sun angle, creating an emotionally charged, cinematic atmosphere. Characters are warmly backlit with golden rim lighting outlining their silhouettes. The mood is nostalgic, beautiful, and emotionally resonant — perfect for fake-emotional endings or dramatic irony.',
+  proportions: '',
+  vfx: '(warm golden hour sunlight:1.5), (long dramatic shadows:1.4), (rich amber orange rim lighting:1.4), (low sun angle backlight:1.3), (warm color temperature shift:1.3), (cinematic emotional atmosphere:1.3), (soft lens diffusion:1.2)',
 };
 
 // [v2.53.3] HYPER-DYNAMIC Camera Angle Generator — 数値ウェイト付きタグ強化版

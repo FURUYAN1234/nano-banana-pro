@@ -278,6 +278,7 @@ ${styleJson.anti_patterns ? `            - 絶対禁止事項:\n${styleJson.anti
               - **厳守**: 1コマあたりのフキダシは**「最大3つまで」**。（3人の掛け合いも積極活用せよ）
               - セリフは**「短い一文」**に収めよ（例: 「なんだって！？」OK、「それはつまり...ということなのか？」NG）。
               - **禁止**: セリフ内に「(怒って)」「(笑いながら)」等のト書き・感情描写を入れるな。絵で表現せよ.
+
                - **句読点・表現ルール**: セリフの末尾は必ず終止記号で締めよ。どの記号を使うかはセリフの感情・キャラの性格・場面の空気で自然に決めること。
                  終止記号（単読で文末になれる）: 。/ ！/ ？/ ♪/ ♡/ っ/ ！？
                  修飾記号（単独では文末にならない。必ず後ろに終止記号を添えよ）: ……→「……。」「……！」「……？」 / 〜→「〜！」「〜。」 / ー→「ー。」「ー！」
@@ -436,6 +437,9 @@ ${styleJson.anti_patterns ? `            - 絶対禁止事項:\n${styleJson.anti
                 - DARK_ANIME: ダークアニメ調。暗いトーン、深い影、ミステリアスな雰囲気。事件・サスペンス・不穏なニュース・陰謀論的展開に。
                 - THIN_LINE: 繊細線画調。極細の描線、髪の毛一本一本まで繊細に描く美麗表現。感動系・エモーショナルな場面、静かな感情の機微に。
                 - HIGH_SATURATION: 高彩度ビビッド。鮮やかで目を引くパワフルな色彩。スポーツ・祭り・勝利・興奮等の派手でエネルギッシュな場面に。
+                - SUMI_INK: 墨インクスプラッシュ。キャラの背後に黒い墨が弾け、筆のストロークが走る和風演出。白い余白と墨のコントラストが強烈。和風バトルパロディ、必殺技、侍・書道ネタ、威厳ある登場シーンに。UKIYOEが「静的な平面表現」であるのに対し、SUMI_INKは「動的な墨の飛沫」。
+                - MONOCHROME_ACCENT: モノクロ一点カラー。画面全体をグレースケールにし、重要な要素だけ1色だけ鮮やかに残す映画的演出。「ここだけがおかしい」「これが全ての元凶」等の視覚的皮肉や衝撃的発見の強調に。
+                - GOLDEN_HOUR: ゴールデンアワー。黄金の夕暮れ光で全てを包み、長い影が伸びる映画的情景。感動詐欺オチとの相性が最高。SHOUJOの「花びら・キラキラ」やFLASHBACKの「セピア・回想」とは異なり、リアルな夕暮れの温かい光による「美しすぎる締め」。
              - オチのコマ（4コマ目）は特に、NORMAL以外のタグを優先的に選べ。
 
           6. **【カメラ演出タグ (Camera Direction Tag) — 極限物理描写 & シネマティック構図 v4.5】**:
@@ -736,6 +740,7 @@ THINGS TO AVOID:
 - No extra characters beyond those specified in each panel.
 - No sparkling light particles, no glowing dust, no magical particles, no floating embers, no volumetric dust.
 - No film grain, paper grain, canvas texture, or rough textures.
+- HAND ANATOMY (CRITICAL): All character hands MUST follow correct human anatomy. When a character points forward with their RIGHT hand, the thumb must be on the LEFT side from the viewer's perspective. When pointing with the LEFT hand, the thumb must be on the RIGHT side. Do NOT mirror, reverse, or flip hand orientation. Fingers must bend naturally — no backwards-bending joints or inverted wrists. If a hand looks anatomically wrong, redraw it before finalizing.
 `;
 };
 

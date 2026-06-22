@@ -800,7 +800,7 @@ export const extractPlacementRule = (fullPanelText, castList) => {
         const restOfLine = line.substring(match.index + match[0].length);
         if (!/[「」]/.test(restOfLine) && restOfLine.trim().length > 15) return;
       }
-      if (speaker && !/^(EMOTION|NORMAL|CHIBI_GAG|GEKIGA|SHOUJO|HORROR|BLANK|IMPACT|WATERCOLOR|RETRO|GLITTER|SHADOW|SPEED|FLASHBACK|UKIYOE|POP_ART|SKETCH|NEON|THICK_PAINT|PASTEL|CEL|DARK_ANIME|THIN_LINE|HIGH_SATURATION)$/i.test(speaker)) {
+      if (speaker && !/^(EMOTION|NORMAL|CHIBI_GAG|GEKIGA|SHOUJO|HORROR|BLANK|IMPACT|WATERCOLOR|RETRO|GLITTER|SHADOW|SPEED|FLASHBACK|UKIYOE|POP_ART|SKETCH|NEON|THICK_PAINT|PASTEL|CEL|DARK_ANIME|THIN_LINE|HIGH_SATURATION|SUMI_INK|MONOCHROME_ACCENT|GOLDEN_HOUR)$/i.test(speaker)) {
         // キャラ名判定と名寄せ
         const matchedChar = findSpeakerCastMatch(speaker, validCharsForPlacement);
         if (matchedChar || isLikelyPerson(speaker, validCharsForPlacement) || match[0].trim().endsWith(':') || match[0].trim().endsWith('：')) {
@@ -1024,8 +1024,10 @@ export const extractCastLimitRule = (fullPanelText, castList) => {
 // --- Emotion Style Functions (Phase 3-C: App.jsx assemblePrompt -> externalized) ---
 
 // [v2.25] パネルテキストからEMOTIONタグを抽出
+// [v4.7.5] 複合タグ対応: [EMOTION: IMPACT、MOTION_BLUR] のように無効なサブタグが
+// 「、」「,」で続く場合でも、最初の有効なタグ名だけを正しく抽出する
 export const extractEmotionStyle = (panelText) => {
-  const match = panelText.match(/\[EMOTION:\s*(NORMAL|CHIBI_GAG|GEKIGA|SHOUJO|HORROR|BLANK|IMPACT|WATERCOLOR|RETRO|GLITTER|SHADOW|SPEED|FLASHBACK|UKIYOE|POP_ART|SKETCH|NEON|THICK_PAINT|PASTEL|CEL|DARK_ANIME|THIN_LINE|HIGH_SATURATION)\s*\]/i); // [v2.95] 画風パレット拡張
+  const match = panelText.match(/\[EMOTION:\s*(NORMAL|CHIBI_GAG|GEKIGA|SHOUJO|HORROR|BLANK|IMPACT|WATERCOLOR|RETRO|GLITTER|SHADOW|SPEED|FLASHBACK|UKIYOE|POP_ART|SKETCH|NEON|THICK_PAINT|PASTEL|CEL|DARK_ANIME|THIN_LINE|HIGH_SATURATION|SUMI_INK|MONOCHROME_ACCENT|GOLDEN_HOUR)[^\]]*\]/i); // [v4.7.5] 複合タグ許容 + 墨インク・モノクロアクセント・ゴールデンアワー追加
   if (match) {
     const key = match[1].toUpperCase();
     if (EMOTION_STYLES[key]) return key;

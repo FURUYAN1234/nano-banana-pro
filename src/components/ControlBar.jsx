@@ -188,6 +188,7 @@ The environment and effects must ECHO the character's emotion, not just be a bac
   * No extra characters beyond those specified.
   * No sparkling light particles, no glowing dust, no magical particles, no floating embers, no volumetric dust.
   * No film grain, paper grain, canvas texture, or rough textures.
+  * HAND ANATOMY: All hands MUST follow correct human anatomy. Do NOT mirror, reverse, or flip hand orientation. Fingers must bend naturally with no backwards-bending joints or inverted wrists.
 
 [ 6. TEXT & OUTPUT RULES ]
 - If speech bubbles or text are drawn, ALL text MUST be vertical Japanese. ZERO horizontal text.

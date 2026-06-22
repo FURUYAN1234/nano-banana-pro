@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Antigravity 2.0 Version & ChangeLog Auto-Updater
+ * Antigravity IDE Version & ChangeLog Auto-Updater
  * Usage: node scripts/update_version.cjs <new_version> <changes_ja> <changes_en>
  * Example: node scripts/update_version.cjs 4.0.3 "ローカルRAGの進行状況表示を追加" "Added progress feedback for local RAG"
  */
