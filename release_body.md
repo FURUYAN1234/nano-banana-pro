@@ -1,13 +1,13 @@
-v4.7.8: Pointing-Hand Stability / 指差し手の安定化
+v4.7.9: Generic Dialogue & Prop Text Guard / 汎用台詞抽出・小物文字ガード
 
 ## What's New / 更新内容
 
-* Added a compact per-panel `HAND POSE LOCK` only when a panel contains pointing gestures.
-* Replaced fragile viewer-left/viewer-right thumb assumptions with character-body-based hand orientation rules.
-* Synchronized the Web prompt copy protocol with the same hand-anatomy guidance.
-* Preserved the v4.7.7 prompt/style improvements, including SPEED motion blur and the new emotion styles.
+* Fixed dialogue extraction so visual prop/sign quotes in Action text no longer become speech-bubble dialogue.
+* Added generic support for short third-party speaker labels such as staff, passersby, or other named non-reference speakers.
+* Fixed cast-limit prompts when the only dialogue speaker is outside the reference cast but the Action uses broad group cues such as "everyone", "all characters", "全員", "みんな", or "一同".
+* Added a soft incidental prop/background text policy: small context-appropriate text on props is allowed, but unrelated or dominant text must not replace dialogue, titles, watermarks, punchlines, or explicitly requested scene text.
 
-* 指差しを含むコマだけに、短い `HAND POSE LOCK` を追加しました。
-* 画面上の左右で親指位置を固定する不安定なルールをやめ、キャラクター本人の身体基準で手の左右を判断するルールに変更しました。
-* Web版コピー用プロトコルにも同じ手の解剖学ルールを同期しました。
-* SPEEDのモーションブレ改善と新規感情スタイル追加を含む、v4.7.7のプロンプト改善も引き継いでいます。
+* Action内の看板・旗・小物などの引用文字が、吹き出し台詞へ誤流入する問題を汎用的に修正しました。
+* スタッフ、通行人、モブなど、参照キャラ外の短い話者ラベル付き台詞を汎用的に扱えるようにしました。
+* 台詞話者が参照キャラ外で、Action側に「全員」「みんな」「一同」などの広いグループ指示がある場合に、メインキャラを誤って描画禁止しないようにしました。
+* 本・袋・ポスター・看板・画面・ラベル・服などの小物/背景文字について、文脈に合う短い装飾は許可しつつ、台詞・タイトル・透かし・オチ・明示指定文字列を置き換える文字は禁止するソフトガードを追加しました。

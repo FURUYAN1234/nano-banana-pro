@@ -266,6 +266,49 @@ const SPOKEN_QUOTE_POST_RE = /^\s*(?:と|って)?\s*(?:言|いう|言い|言う|
 
 const hasSpokenQuotePostContext = (postText = '') => SPOKEN_QUOTE_POST_RE.test(postText.trim());
 
+const INSTRUCTION_LINE_RE = /^\s*(?:\[?\s*(?:Camera|Location|Outfit|EMOTION|Action|Reaction|Background|CameraWork|Camera\s*Work)\s*[:：]|状況(?:演出)?\s*[:：]|リアクション\s*[:：]|設定\s*[:：]|物理描写\s*[:：]|SFX\s*[:：]|SE\s*[:：]|効果音\s*[:：]|音響効果\s*[:：]|音響\s*[:：]|音声\s*[:：]|BGM\s*[:：]|ナレーション\s*[:：]|テロップ\s*[:：]|背景\s*[:：]|カメラワーク\s*[:：]|Punchline\s*[:：])/i;
+
+const isInstructionLine = (line = '') => INSTRUCTION_LINE_RE.test(String(line).trim());
+
+const normalizeDialogueSpeakerPrefix = (value = '') =>
+  String(value)
+    .replace(/^[\s\-*・、。:：]+/, '')
+    .replace(/[【\[（(].*?[】\]）)]/g, '')
+    .replace(/^(?:セリフ|台詞|Dialogue|Speech\s*Bubble\s*\d*)\s*[:：-]?\s*/i, '')
+    .trim();
+
+const isGenericShortSpeakerPrefix = (value = '') => {
+  const clean = normalizeDialogueSpeakerPrefix(value);
+  if (!clean || clean.length > 18) return false;
+  if (!/[\u3040-\u30FF\u4E00-\u9FFFA-Za-zＡ-Ｚａ-ｚ]/u.test(clean)) return false;
+  if (/^(?:Camera|Location|Outfit|EMOTION|Action|Reaction|Background|Punchline)$/i.test(clean)) return false;
+  if (/[。！？!?…]/.test(clean)) return false;
+  if (/(?:が|を|に|で|へ|は|も|と|から|まで|より)$/.test(clean) && clean.length > 3) return false;
+  if (/(?:して|した|する|され|見て|持って|握って|座って|立って|走って|叫んで|つぶやいて)$/.test(clean)) return false;
+  return true;
+};
+
+const isExplicitSameLineSpeakerPrefix = (value = '', validCharacters = []) => {
+  const clean = normalizeDialogueSpeakerPrefix(value);
+  if (!isGenericShortSpeakerPrefix(clean)) return false;
+  if (clean === '全員' || clean === 'みんな' || clean === 'Speaker') return true;
+  return validCharacters.some(c => {
+    const nameOnly = c.split(/[（(]/)[0].trim();
+    return nameOnly && (
+      clean === c ||
+      clean === nameOnly ||
+      clean.replace(/[\s・]/g, '') === nameOnly.replace(/[\s・]/g, '')
+    );
+  }) || isGenericRoleSpeaker(clean);
+};
+
+const getExplicitSameLineSpeakerName = (value = '', validCharacters = []) => {
+  const clean = normalizeDialogueSpeakerPrefix(value);
+  const matchedCast = findSpeakerCastMatch(clean, validCharacters);
+  if (matchedCast) return matchedCast.split(/[（(]/)[0].trim();
+  return isExplicitSameLineSpeakerPrefix(clean, validCharacters) ? clean : '';
+};
+
 const isLikelyVisualLabelQuote = (dialogueText, prevText = '', postText = '') => {
   const trimmedDialogue = dialogueText.trim();
   const trimmedPost = postText.trim();
@@ -282,22 +325,6 @@ const isLikelyVisualLabelQuote = (dialogueText, prevText = '', postText = '') =>
 
   return false;
 };
-
-const findNearestSpeakerName = (prevText = '', validCharacters = []) => {
-  let best = { index: -1, name: '' };
-  validCharacters.forEach(c => {
-    const nameOnly = c.split(/[（(]/)[0].trim();
-    [c, nameOnly].forEach(candidate => {
-      if (!candidate) return;
-      const index = prevText.lastIndexOf(candidate);
-      if (index > best.index) {
-        best = { index, name: nameOnly || candidate };
-      }
-    });
-  });
-  return best.name;
-};
-
 
 export const getCharTraitsFromMatrix = (charName, castList) => {
   const matrix = buildIdentityMatrix(castList);
@@ -393,7 +420,8 @@ export const extractDialogueOnly = (fullPanelText, castList) => {
     // [v4.6.10] スピーカー名を保持してSpeech Bubbleに明記する
     let detectedSpeaker = '';
 
-    if (match && match[1].trim()) {
+    const isInstruction = isInstructionLine(line);
+    if (match && match[1].trim() && !isInstruction) {
       let tempSpeaker = match[1].replace(/^[【\[（(]/, '').replace(/[】\]）)]$/, '').trim();
       // ベースとなる話者名（カッコ内のト書きを無視）
       let tempSpeakerBase = tempSpeaker.replace(/[（(].*?[）)]/g, '').trim();
@@ -421,11 +449,11 @@ export const extractDialogueOnly = (fullPanelText, castList) => {
 
       if (hasSentenceParticles || endsWithParticle || isTooLong || isMetaTag || isSoundEffect || hasReactionTag) {
         // 文章構造・メタタグ・効果音・リアクション指示を含む → 話者名ではない
-      } else if (isLikelyPerson(tempSpeakerBase, validCharacters) || tempSpeakerBase.includes("全員") || tempSpeakerBase === "Speaker" || match[0].trim().endsWith(':') || match[0].trim().endsWith('：')) {
+      } else if (isLikelyPerson(tempSpeakerBase, validCharacters) || isGenericShortSpeakerPrefix(tempSpeakerBase) || tempSpeakerBase.includes("全員") || tempSpeakerBase === "Speaker" || match[0].trim().endsWith(':') || match[0].trim().endsWith('：')) {
         isDialogue = true;
         // [v4.6.10] キャスト名を名寄せしてスピーカー名を保持
         const matchedCast = findSpeakerCastMatch(tempSpeakerBase, validCharacters);
-        detectedSpeaker = matchedCast ? matchedCast.split(/[（(]/)[0].trim() : tempSpeakerBase;
+        detectedSpeaker = matchedCast ? matchedCast.split(/[（(]/)[0].trim() : normalizeDialogueSpeakerPrefix(tempSpeakerBase);
       }
     } else if (line.trim().startsWith('「')) {
       // [v2.29] 根本修正: 行全体が「...」で完結するセリフ形式のみを判定。
@@ -496,12 +524,18 @@ export const extractDialogueOnly = (fullPanelText, castList) => {
       // [v4.6.5] lastIndex は「セリフとして処理された場合」のみ更新する（後述）。
       // 非セリフ（形状描写「へ」の字、記号、SFX等）でスキップした場合は lastIndex を進めず、
       // 話者コンテキスト（キャラ名を含むprevText）を次のマッチに引き継ぐ。
+      const quoteLineStart = fullPanelText.lastIndexOf('\n', match.index) + 1;
+      const quoteLineEndRaw = fullPanelText.indexOf('\n', match.index);
+      const quoteLineEnd = quoteLineEndRaw === -1 ? fullPanelText.length : quoteLineEndRaw;
+      const quoteLine = fullPanelText.slice(quoteLineStart, quoteLineEnd);
+      const sameLinePrevText = fullPanelText.slice(quoteLineStart, match.index);
+      const sameLinePostText = fullPanelText.slice(regex.lastIndex, quoteLineEnd);
+      const postText = fullPanelText.substring(regex.lastIndex, regex.lastIndex + 40);
+      const isSpokenQuoteByPostText = hasSpokenQuotePostContext(sameLinePostText || postText);
 
-      // prevText の中に、有効なキャラクター名（キャストまたはモブなどの人物）が含まれているか確認
-      const hasValidSpeakerInPrevText = isLikelyPerson(prevText, validCharacters) || validCharacters.some(c => {
-        const nameOnly = c.split(/[（(]/)[0].trim();
-        return nameOnly && prevText.includes(nameOnly);
-      }) || prevText.includes("全員") || prevText.includes("みんな");
+      // Same-line speaker labels are reliable; loose carried context is too broad for visual quotes.
+      const hasSameLineSpeaker = isExplicitSameLineSpeakerPrefix(sameLinePrevText, validCharacters);
+      const hasValidSpeakerInPrevText = hasSameLineSpeaker || isSpokenQuoteByPostText;
 
       if (!hasValidSpeakerInPrevText) {
         // 直前にキャスト名や人物名がない場合は、セリフではなく引用や他人の発言としてスキップ
@@ -515,10 +549,10 @@ export const extractDialogueOnly = (fullPanelText, castList) => {
       // [v4.6.5-fix2] 擬音語・擬態語の除外（バンッ！、ガチャン！、ガリッ！等）
       // ン・リ・ル等の一般的なSFX語尾を許容するため suffix に追加
       const isSfx = /^(バン|ドン|ガン|ドカ|バキ|ドス|ガサ|ゴト|チリン|ピンポン|カチ|パチ|ドーン|バァーン|ドォーン|バーン|ドドド|ゴゴゴ|ザザザ|ピー|ピピッ|ガチャ|ギー|ガリ|バタ|ガタ|ビリ|メリ|パリ|ドサ|ズド|ゴロ|キー|ギシ|ビシ|ガシャ|ミシ|カタ|コト|パタ|ジャリ|ズシ|グシャ|ベキ|メキ)[ッーン!！\s]*$/u.test(dialogueText);
-      const postText = fullPanelText.substring(regex.lastIndex, regex.lastIndex + 40);
       // [v4.6.5-fix2] 「〜と...音が」「〜と...鳴」等のSE文脈も検出
       const isSfxByPostText = /^(という音|という爆音|という銃声|という足音|と[^\n「」]{0,20}(?:音が|音を|音で|異音|金属音|爆音|轟音|衝撃音))/.test(postText);
-      const isSpokenQuoteByPostText = hasSpokenQuotePostContext(postText);
+      const isInstructionQuoteWithoutSpeechVerb = isInstructionLine(quoteLine) && !hasSpokenQuotePostContext(sameLinePostText);
+      const isLooseContextOnly = !hasSameLineSpeaker && !isSpokenQuoteByPostText;
 
       // 2. 直前のテキストの末尾が形状や表記指示、比喩表現などを示すものである場合は除外
       const isNotDialogueIndicator = /(?:型|字|感|と書かれた|と書く|と書き|と書いた|という|のような|風の|的な|コード|キー|マーク|記号|ラベル|吹き出し|セリフ|ポーズ)$/.test(prevText.trim());
@@ -553,7 +587,7 @@ export const extractDialogueOnly = (fullPanelText, castList) => {
 
       const isVisualLabelQuote = isLikelyVisualLabelQuote(dialogueText, prevText, postText);
 
-      if (!isSpokenQuoteByPostText && (isPureSymbol || isSfx || isSfxByPostText || isNotDialogueIndicator || isVisualTextByContext || isUsedAsNoun || isShapeDescription || isExpressionOrActionDescription || isVisualLabelQuote)) {
+      if (isInstructionQuoteWithoutSpeechVerb || isLooseContextOnly || (!isSpokenQuoteByPostText && (isPureSymbol || isSfx || isSfxByPostText || isNotDialogueIndicator || isVisualTextByContext || isUsedAsNoun || isShapeDescription || isExpressionOrActionDescription || isVisualLabelQuote))) {
         // [v4.6.5] 非セリフ — lastIndexを進めず、話者コンテキストを次のマッチに引き継ぐ
         continue;
       }
@@ -569,7 +603,7 @@ export const extractDialogueOnly = (fullPanelText, castList) => {
       lastIndex = regex.lastIndex;
       if (dialogueText && !isLikelyNarration) {
         // [v4.6.10] フォールバックパスでもprevTextからスピーカー名を逆引き
-        const fallbackSpeakerName = findNearestSpeakerName(prevText, validCharacters);
+        const fallbackSpeakerName = getExplicitSameLineSpeakerName(sameLinePrevText, validCharacters);
         const fbSpeakerTag = fallbackSpeakerName ? ` [${fallbackSpeakerName}]` : '';
         formattedBubbles.push(`(Speech Bubble ${bubbleCount}${fbSpeakerTag}: "${dialogueText}")`);
         bubbleCount++;
@@ -676,7 +710,8 @@ export const extractActionOnly = (fullPanelText, castList, placementRule = "") =
     if (PANEL_HEADER_RE.test(line)) return false;
     const match = line.match(/^(.*?)(?:[:：]|「)/);
     let isDialogue = false;
-    if (match && match[1].trim()) {
+    const isInstruction = isInstructionLine(line);
+    if (match && match[1].trim() && !isInstruction) {
       let tempSpeaker = match[1].replace(/^(SFX|効果音|BGM|Action)/i, '').trim();
       tempSpeaker = tempSpeaker.replace(/^[【\[（(]/, '').replace(/[】\]）)]$/, '').trim();
       // [v4.6.4] キャスト名完全一致バイパス: 助詞を含むキャスト名（例: と■のよ■ゆき子）を正しく認識
@@ -698,10 +733,10 @@ export const extractActionOnly = (fullPanelText, castList, placementRule = "") =
       
       if (hasSentenceParticles || isTooLong || isMetaTag || isSoundEffect || hasReactionTag) {
         // Not a dialogue speaker (meta tag, sound effect, or reaction directive)
-      } else if (isLikelyPerson(tempSpeaker, validCharacters) || tempSpeaker === "全員" || tempSpeaker === "Speaker" || match[0].trim().endsWith(':') || match[0].trim().endsWith('：')) {
+      } else if (isLikelyPerson(tempSpeaker, validCharacters) || isGenericShortSpeakerPrefix(tempSpeaker) || tempSpeaker === "全員" || tempSpeaker === "Speaker" || match[0].trim().endsWith(':') || match[0].trim().endsWith('：')) {
         isDialogue = true;
       }
-    } else if (line.trim().startsWith('「')) {
+    } else if (!isInstruction && line.trim().startsWith('「')) {
       const trimmedLine = line.trim();
       const isFullQuoteLine = /^「[^」]+」[？！。、!?\s]*$/.test(trimmedLine);
       if (isFullQuoteLine) {
@@ -939,11 +974,12 @@ export const extractCastLimitRule = (fullPanelText, castList) => {
     }
   });
   const actionAndMetaText = actionAndMetaLines.join('\n');
+  const hasBroadGroupCue = /(?:全員|みんな|一同|全キャラ|全メンバー|主要人物全員|メンバー全員|全員集合|everyone|all characters|the whole group)/i.test(actionAndMetaText);
 
   // Visual Action テキストからも登場キャラ名を検出
   const allPanelCharacters = [...speakers];
   const canonicalValidCharacters = [...new Set(Object.values(charLookup).map(obj => obj.name))];
-  const hasAllMainCastCue = /(?:他キャラ全員|キャラ全員|全キャラ|全メンバー|全員集合|メンバー全員|主要人物全員)/.test(actionAndMetaText);
+  const hasAllMainCastCue = /(?:他キャラ全員|キャラ全員|全キャラ|全メンバー|全員集合|メンバー全員|主要人物全員|all characters|the whole main cast)/i.test(actionAndMetaText);
   if (hasAllMainCastCue) {
     canonicalValidCharacters.forEach((canonicalName) => {
       if (!allPanelCharacters.includes(canonicalName)) {
@@ -1012,6 +1048,10 @@ export const extractCastLimitRule = (fullPanelText, castList) => {
     return `CRITICAL CAST PLACEMENT: Ensure ${foreground} are the main focus.\n${cloneWarning}${spatialConstraint}`;
   } else {
     // 登場キャラクターが検出されなかった場合でも、キャスト全体から除外指示を出すことは可能
+    if (hasBroadGroupCue) {
+      return `CRITICAL CAST PLACEMENT: The action uses a broad group cue such as "all characters", "everyone", "全員", "みんな", or "一同". Treat that group as explicitly required by the panel action. Draw the relevant visible group described by the action, and if a speech bubble names a speaker outside the reference cast, draw exactly one generic adult speaker for that bubble. Do NOT exclude registered main characters solely because they are not dialogue speakers in this panel. NEVER draw the exact same character twice.`;
+    }
+
     let negativeConstraint = "";
     if (canonicalValidCharacters.length > 0) {
       const allNames = canonicalValidCharacters.map(c => `[${c}]`).join(', ');

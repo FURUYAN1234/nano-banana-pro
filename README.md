@@ -766,6 +766,9 @@ A tool to automatically convert static 4-koma manga into fully voiced animated v
 
 ## 📋 ChangeLog
 
+### v4.7.9 (2026-06-23)
+- **[Fix & UX]** 視覚小物・看板の引用文が吹き出し台詞へ誤流入する問題を汎用修正し、全員/みんな等の広域キャスト指示と小物文字のソフトガードを追加 / Generically fixed visual prop/sign quote leakage into speech bubbles, broad group cast cues, and soft incidental prop/background text handling
+
 ### v4.7.8 (2026-06-23)
 - **[Fix & UX]** 指差し時の左右反転を抑える手ポーズロックを追加 / Added pointing-hand pose lock to reduce mirrored hand orientation
 

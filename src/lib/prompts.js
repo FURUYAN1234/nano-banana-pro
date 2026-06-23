@@ -726,6 +726,8 @@ TEXT RENDERING RULES:
 - Action text is NOT visible lettering by default. Quoted ambience, SFX names, mood words, aura names, emotion labels, and narration terms must be illustrated through objects, lighting, motion, poses, and atmosphere only.
 - Render Action words as physical scene text ONLY when Action explicitly asks for handwriting, finger-writing, air-writing, signage, board text, label text, printed text, or screen text. Do NOT wrap visual scene text in a speech bubble, caption box, narration box, or tail.
 - Never move Action text into speech bubbles, captions, labels, or floating SFX. Keep any explicitly requested visual writing attached to the hand/object/surface that creates it.
+- Incidental prop/background text policy: Small readable text on props or background items (books, packages, posters, signs, screens, labels, clothing) may be added only as short, context-appropriate decoration. It must stay unobtrusive and must NEVER replace, contradict, or upstage the title, Dialogue entries, watermarks, punchline, or explicitly requested scene text.
+- If a prop normally has writing but no exact text is specified, prefer blank surfaces, abstract marks, or unreadable graphic shapes over large/dominant invented lettering. Do NOT invent extra speech, narration, SFX, plot-critical slogans, or main-gag text.
 
 PANEL DESCRIPTIONS:
 
@@ -734,7 +736,7 @@ ${panelSections}
 THINGS TO AVOID:
 - No plastic-looking skin or digital over-sharpening on characters.
 - No watermarks or logos other than the specified watermarks above.
-- No random English text scattered across panels.
+- No unrelated or dominant random English/Japanese text scattered across panels. Incidental prop/background text is allowed only under the TEXT RENDERING RULES above.
 - No floating close-up eyes or ghostly face overlays in backgrounds.
 - No character sheet layout, expression grid, or reference sheet appearance.
 - No extra characters beyond those specified in each panel.
@@ -835,10 +837,12 @@ Tech Dict:
 (Soft diffused backlight, rim light: 2.4)
 (Cinematic depth of field, soft bokeh: 2.3)
 (chic cinematic color grading, elegant deep colors: 1.4)
-(NO random text/SFX outside speech bubbles: 2.8)
+(NO unrelated or dominant random text/SFX outside speech bubbles: 2.8)
 (Action ambience words, SFX names, mood words, aura names, and emotion labels are NOT visible lettering: 2.8)
 (EXCEPT explicit visual scene text requested by Action, such as handwriting, air-writing, signs, labels, printed text, screen text, or board text: 2.8)
-(NO ENGLISH TEXT outside watermark. NO 'G-pen'/'HA': 3.0)
+(Small incidental text on props/background items may appear only as short, context-appropriate decoration and must never replace or upstage dialogue, title, watermarks, punchline, or explicit scene text: 2.2)
+(If prop text is not explicitly requested, prefer blank surfaces, abstract marks, or unreadable graphic shapes over large/dominant invented lettering: 2.0)
+(NO unrelated ENGLISH TEXT outside watermark or small context-appropriate prop/background decoration. NO 'G-pen'/'HA': 3.0)
 
 
 ${panelSections}
@@ -853,7 +857,7 @@ Important constraints:
 - DIALOGUE TEXT IS VERBATIM: The text inside each Speech Bubble MUST be copied EXACTLY as written in the Dialogue section — character by character. Do NOT paraphrase, rephrase, or substitute synonyms.
 - Japanese dialogue MUST end with a period (。). However, do NOT add unnecessary commas (、) inside dialogue. Manga speech bubbles rarely use commas in natural Japanese — line breaks and bubble shape provide natural pauses instead. Only use commas when absolutely necessary to prevent misreading.
 - TYPOGRAPHY RULE: Write Japanese text tightly with ZERO spaces between words. Do NOT insert any gaps or spaces between characters. (no letter spacing:1.5), (tight kerning:1.5).
-- Do NOT add random English text except for the watermark.
+- Do NOT add unrelated random English/Japanese text. Small readable text on props or background items (books, packages, posters, signs, screens, labels, clothing) is allowed only as short, context-appropriate decoration; it must never replace, contradict, or upstage dialogue, title, watermarks, punchline, or explicit scene text. If unsure, render blank surfaces, abstract marks, or unreadable graphic shapes.
 - Maintain character consistency across all 4 panels.
 - Flow is from top panel to bottom panel.
 - Ensure the watermark is positioned at the absolute bottom edge of the image, with no extra whitespace below it. The text must be oriented horizontally (left-to-right).
