@@ -766,6 +766,9 @@ A tool to automatically convert static 4-koma manga into fully voiced animated v
 
 ## 📋 ChangeLog
 
+### v4.7.8 (2026-06-23)
+- **[Fix & UX]** 指差し時の左右反転を抑える手ポーズロックを追加 / Added pointing-hand pose lock to reduce mirrored hand orientation
+
 ### v4.7.7 (2026-06-22)
 - **[Fix & UX]** 感情スタイルとVFX（SPEED）のブラー改善、新規感情スタイル（墨絵・モノクロアクセント・ゴールデンアワー）の追加、複合感情タグの抽出バグ修正、手の描画品質（反転・不自然な向き）を改善する解剖学的プロンプト制約の追加 / Improved SPEED emotion style motion blur, added 3 new emotion styles (Sumi Ink, Monochrome Accent, Golden Hour), fixed parsing for compound emotion tags, and integrated anatomical constraints to prevent mirrored or unnatural hand generations in ChatGPT Image 2.0 prompts.
 

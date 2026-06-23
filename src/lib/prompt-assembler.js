@@ -56,6 +56,20 @@ const extractPanel = (text, header, nextHeader) => {
   return match ? match[1].trim() : "";
 };
 
+const POINTING_GESTURE_RE = /(?:\bpoint(?:ing|s|ed)?\b|finger[-\s]?point|\u6307\u5dee|\u6307\u3055|\u6307\u3092(?:\u7a81\u304d\u7acb\u3066|\u5411\u3051|\u5dee\u3057|\u3055\u3057))/i;
+
+const appendPointingHandLock = (actionText) => {
+  if (!POINTING_GESTURE_RE.test(actionText)) return actionText;
+  return `${actionText}
+HAND POSE LOCK: For every pointing gesture in this panel, draw one clear index-finger point from the intended character's anatomically correct hand. The wrist and forearm must connect to that hand's same-side shoulder; judge left/right from the character's body, not screen-left/screen-right after camera flips. Keep the thumb on its natural anatomical side and redraw any mirrored hand, inverted wrist, or extra pointing hand`;
+};
+
+const buildPanelActionText = (panelText, castList, activeOutfit) => {
+  const placementRule = extractPlacementRule(panelText, castList);
+  const actionText = injectOutfitReminder(extractActionOnly(panelText, castList, placementRule), activeOutfit);
+  return appendPointingHandLock(actionText);
+};
+
 /**
  * ** [v3.82-alpha] ** 4コマ漫画プロンプトを構築する純粋なロジック関数
  * App.jsx からプロンプト組み立て処理を切り離し、再利用性を向上
@@ -146,7 +160,7 @@ ${buildEmotionBlock(pt)}
 ${extractPlacementRule(pt, castList).replace(/\\\\[/g, '').replace(/\\\\]/g, '')}
 ${extractCastLimitRule(pt, castList).replace(/\\\\[/g, '').replace(/\\\\]/g, '')}
 Camera: ${getCameraForChatGPT(pt, cameraState)}
-Action (Visual ONLY, non-dialogue; do NOT render quoted words as visible text unless this action explicitly says handwriting, signage, board text, label text, or screen text): ${injectOutfitReminder(extractActionOnly(pt, castList, extractPlacementRule(pt, castList)), activeOutfit)}
+Action (Visual ONLY, non-dialogue; do NOT render quoted words as visible text unless this action explicitly says handwriting, signage, board text, label text, or screen text): ${buildPanelActionText(pt, castList, activeOutfit)}
 Dialogue (Japanese text inside speech bubbles only): ${extractDialogueOnly(pt, castList)}`;
     }).join('\n\n');
 
@@ -166,7 +180,7 @@ ${extractPlacementRule(pt, castList)}
 ${extractCastLimitRule(pt, castList)}
 Camera: ${getCameraForPanel(pt, shuffledCameras, cameraState)}.
 [LENS]: (ABOVE CAMERA DISTORTION MAX:2.9), (NEVER normal photograph:3.0), (extreme severe perspective warp:2.7), (violently tilted horizon:2.6). Break normal camera angle.
-Action (Visual ONLY, non-dialogue; do NOT render quoted words as visible text unless this action explicitly says handwriting, signage, board text, label text, or screen text): ${injectOutfitReminder(extractActionOnly(pt, castList, extractPlacementRule(pt, castList)), activeOutfit)}.
+Action (Visual ONLY, non-dialogue; do NOT render quoted words as visible text unless this action explicitly says handwriting, signage, board text, label text, or screen text): ${buildPanelActionText(pt, castList, activeOutfit)}.
 Dialogue (ONLY inside bubbles): ${extractDialogueOnly(pt, castList)}.`;
     }).join('\n\n');
 

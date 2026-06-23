@@ -1,19 +1,20 @@
 # HANDOFF.md
 
 ## Current Status
-- **Version**: v4.7.7
+- **Version**: v4.7.8
 - **Latest changes**:
   - Improved SPEED emotion style motion blur (face stays sharp, only moving parts blur).
   - Added 3 new emotion styles: SUMI_INK, MONOCHROME_ACCENT, GOLDEN_HOUR (26 total).
   - Fixed parsing for compound emotion tags like `[EMOTION: IMPACT、MOTION_BLUR]` using `[^\]]*\]`.
   - Added anatomical constraint in ChatGPT Image 2.0 prompts to prevent mirrored or unnatural hands.
+  - Strengthened pointing-hand prompts without a large prompt-size increase: pointing panels now get a compact `HAND POSE LOCK`, and the global hand rule no longer uses fragile viewer-left/viewer-right thumb assumptions.
   - Removed UTF-8 BOM.
-- **State**: v4.7.7 ready for deploy and verification.
+- **State**: v4.7.8 release flow in progress: local prompt hardening is verified; deploy/release/backup verification is pending.
 
 ## Pending Verification Tasks
-- [x] Local checks and build
+- [x] Local checks and build (`node --check` for prompt JS, Vite prompt assembly proof, `npm run lint -- --max-warnings=0`, `git diff --check`, `npm run build`)
 - [ ] GitHub Pages deploy verification
-- [ ] GitHub Release creation (v4.7.7)
+- [ ] GitHub Release creation (v4.7.8)
 - [ ] Hugging Face Spaces deploy verification
 
 ## Next Steps

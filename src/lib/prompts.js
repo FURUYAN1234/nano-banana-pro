@@ -740,7 +740,7 @@ THINGS TO AVOID:
 - No extra characters beyond those specified in each panel.
 - No sparkling light particles, no glowing dust, no magical particles, no floating embers, no volumetric dust.
 - No film grain, paper grain, canvas texture, or rough textures.
-- HAND ANATOMY (CRITICAL): All character hands MUST follow correct human anatomy. When a character points forward with their RIGHT hand, the thumb must be on the LEFT side from the viewer's perspective. When pointing with the LEFT hand, the thumb must be on the RIGHT side. Do NOT mirror, reverse, or flip hand orientation. Fingers must bend naturally — no backwards-bending joints or inverted wrists. If a hand looks anatomically wrong, redraw it before finalizing.
+- HAND ANATOMY (CRITICAL): All character hands MUST follow correct human anatomy. If a gesture names the RIGHT or LEFT hand, attach that arm to the matching shoulder and judge the side from the character's body, not viewer-left/viewer-right under camera perspective. For pointing hands, keep the index finger, thumb, palm/knuckle side, wrist, and forearm mutually consistent. Do NOT mirror, reverse, or flip hand orientation. Fingers must bend naturally — no backwards-bending joints or inverted wrists. If a hand looks anatomically wrong, redraw it before finalizing.
 `;
 };
 
