@@ -800,7 +800,7 @@ MUST have tall portrait aspect ratio (A4 paper, 1:1.414).
 LAYOUT:
 Canvas completely filled by panels (95% width). NO large white margins.
 Top page: draw large bold black Japanese text title: "${safeTopic}"
-NO quotes/punctuation around title.
+Do NOT add quote marks around the title or invent extra punctuation. Preserve the exact punctuation already present in the specified title.
 Draw tiny English watermark ON bottom-right border of 4th panel: "${watermarkEng}" (clean sans-serif). VERBATIM COPY — do NOT paraphrase or alter any word.
 Draw tiny Japanese watermark ON bottom-left border of 4th panel: "ネームから全自動の自律式統合AI漫画システム :https://note.com/happy_duck780" (in an extremely small font size to prevent overlapping with the right watermark). ⚠️ CRITICAL: The word "自律式" must appear EXACTLY as written. Do NOT replace it with topic-related words. Copy character-by-character.
 Watermarks standard horizontal. The Japanese watermark on the left and the English watermark on the right must be small enough and spaced apart so they do not touch or overlap. NO extra white space below panel 4.

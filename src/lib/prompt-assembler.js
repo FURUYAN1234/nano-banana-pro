@@ -70,6 +70,15 @@ const buildPanelActionText = (panelText, castList, activeOutfit) => {
   return appendPointingHandLock(actionText);
 };
 
+const extractScenarioTitle = (scenarioText = '') => {
+  const titleLine = scenarioText.match(/##\s*タイトル\s*[:：]\s*([^\n]+)/)?.[1]?.trim();
+  const rawTitle = titleLine || scenarioText.split('\n')[0].substring(0, 20);
+  return rawTitle
+    .replace(/^Topic:\s*/i, '')
+    .replace(/\s+([!！?？]+)$/u, '$1')
+    .trim();
+};
+
 /**
  * ** [v3.82-alpha] ** 4コマ漫画プロンプトを構築する純粋なロジック関数
  * App.jsx からプロンプト組み立て処理を切り離し、再利用性を向上
@@ -112,8 +121,7 @@ export const buildMangaPrompt = ({
   const dynamicCamera = DYNAMIC_CAMERA_PROTOCOL;
 
   // タイトル抽出とサニタイズ
-  let cleanTopic = scenario.match(/## タイトル:\s*(.*?)(\n|$|!)/)?.[1]?.trim() || scenario.split('\n')[0].substring(0, 20);
-  cleanTopic = cleanTopic.replace(/^Topic:\s*/i, '').trim();
+  const cleanTopic = extractScenarioTitle(scenario);
 
   // シナリオテキストから場所・服装設定の読み取り
   const scenarioLocationMatch = scenario.match(/Location:\s*(.*?)(\n|$)/i)?.[1]?.trim();

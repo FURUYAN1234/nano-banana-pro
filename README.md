@@ -766,6 +766,9 @@ A tool to automatically convert static 4-koma manga into fully voiced animated v
 
 ## 📋 ChangeLog
 
+### v4.8.0 (2026-06-24)
+- **[Fix & UX]** 台詞抽出とタイトル句読点保持を汎用ルールで修正し、固有名詞ハードコード禁止ルールを明文化 / Fixed dialogue extraction and title punctuation preservation with generic rules, and documented the no-hardcoded-proper-nouns policy
+
 ### v4.7.9 (2026-06-23)
 - **[Fix & UX]** 視覚小物・看板の引用文が吹き出し台詞へ誤流入する問題を汎用修正し、全員/みんな等の広域キャスト指示と小物文字のソフトガードを追加 / Generically fixed visual prop/sign quote leakage into speech bubbles, broad group cast cues, and soft incidental prop/background text handling
 

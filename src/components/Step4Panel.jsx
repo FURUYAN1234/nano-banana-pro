@@ -402,7 +402,7 @@ export default function Step4Panel({
                             const titleFromPrompt =
                               finalPrompt?.match(/Top page:\s*draw large bold black Japanese text that reads exactly "([^"]+)"/i)?.[1] ||
                               finalPrompt?.match(/Top page:\s*draw large bold Japanese text title:\s*"([^"]+)"/i)?.[1] ||
-                              scenario?.match(/タイトル[:：]\s*([^\n]+)/)?.[1]?.trim().replace(/[!！?？]+$/, '').trim() ||
+                              scenario?.match(/タイトル[:：]\s*([^\n]+)/)?.[1]?.trim().replace(/\s+([!！?？]+)$/u, '$1') ||
                               "";
                             const titleReapplyBlock = titleFromPrompt ? `
 ━━━━━━━━━━━━━━━━━━

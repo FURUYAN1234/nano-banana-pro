@@ -176,9 +176,11 @@ SPEECH BUBBLE PLACEMENT RULE (CRITICAL): Each character's speech bubble MUST be 
   return matrix;
 };
 
-const GENERIC_ROLE_SPEAKER_RE = /(?:男性|女性|男子|女子|男|女|青年|若者|成人|高校生|高生|学生|生徒|先生|教師|作家|漫画家|編集者|記者|店員|会社員|社員|医師|看護師|警官|兵士|ギャル|モブ|客|観客|観察者|参加者|司会|ナレーター|アナウンサー|スタッフ|社長|主催者|委員長|選手|声|人|キャラ)(?:[A-ZＡ-Ｚ0-9０-９\s]*)$/;
+const GENERIC_ROLE_WORD_PATTERN = '男性|女性|男子|女子|男|女|青年|若者|成人|大人|中年|老人|老婦人|おじさん|おばさん|お兄さん|お姉さん|おじいさん|おばあさん|高校生|高生|学生|生徒|先生|教師|作家|漫画家|編集者|記者|店員|会社員|社員|医師|看護師|警官|兵士|ギャル|モブ|客|観客|観察者|参加者|司会|ナレーター|アナウンサー|スタッフ|社長|主催者|委員長|選手|声|人|キャラ';
+const GENERIC_ROLE_SPEAKER_RE = new RegExp(`(?:${GENERIC_ROLE_WORD_PATTERN})(?:[A-ZＡ-Ｚ0-9０-９\\s]*)$`);
 
-const PERSON_DESCRIPTOR_TOKEN_RE = /(?:黒髪|金髪|茶髪|銀髪|白髪|赤髪|青髪|緑髪|紫髪|ピンク髪|ブロンド|スーツ|制服|眼鏡|メガネ|グラス|ギャル|オタク|男性|女性|男子|女子|男|女|青年|若者|成人|高校生|高生|学生|生徒|先生|教師|作家|漫画家|編集者|記者|店員|会社員|社員|医師|看護師|警官|兵士|モブ|客|観客|観察者|参加者|司会|ナレーター|アナウンサー|スタッフ|社長|主催者|委員長|選手|人|キャラ)/g;
+const PERSON_DESCRIPTOR_TOKEN_RE = new RegExp(`(?:黒髪|金髪|茶髪|銀髪|白髪|赤髪|青髪|緑髪|紫髪|ピンク髪|ブロンド|スーツ|制服|眼鏡|メガネ|グラス|ギャル|オタク|${GENERIC_ROLE_WORD_PATTERN})`, 'g');
+const CONTEXT_ROLE_SPEAKER_RE = new RegExp(`([^\\s、。！？「」:：]{0,24}(?:${GENERIC_ROLE_WORD_PATTERN})(?:[A-ZＡ-Ｚ0-9０-９\\s]*))(?=\\s*(?:が|は|も|を|に|で|から|へ|と|、|。|！|？|!|\\?|$))`, 'gu');
 
 const normalizeSpeakerKey = (value = '') =>
   String(value).split(/[（(]/)[0].trim().replace(/[\s・]/g, '');
@@ -262,7 +264,7 @@ export const isLikelyPerson = (name, validCharacters = []) => {
   return personKeywords.test(cleanName) || cleanName.toLowerCase().includes('mob') || cleanName.toLowerCase().includes('speaker');
 };
 
-const SPOKEN_QUOTE_POST_RE = /^\s*(?:と|って)?\s*(?:言|いう|言い|言う|言った|叫|叫び|叫ぶ|叫ん|呼|呼び|呟|つぶや|つぶやき|囁|ささや|ささやき|読み上げ|読みあげ|読み|発表|告げ|答|返|話|語|宣言|嘆|漏ら|口に|述べ|怒鳴|呻|うめ|唸|ツッコ|つっこ|突っ込|問|尋)/;
+const SPOKEN_QUOTE_POST_RE = /^\s*(?:と|って)?\s*(?:[^「」。！？!?\n]{0,32})?(?:言|いう|言い|言う|言った|叫|叫び|叫ぶ|叫ん|呼|呼び|呟|つぶや|つぶやき|囁|ささや|ささやき|読み上げ|読みあげ|読み|発表|告げ|答|返|話|語|宣言|絶叫|嘆|漏ら|口に|述べ|怒鳴|呻|うめ|唸|ツッコ|つっこ|突っ込|問|尋)/;
 
 const hasSpokenQuotePostContext = (postText = '') => SPOKEN_QUOTE_POST_RE.test(postText.trim());
 
@@ -307,6 +309,37 @@ const getExplicitSameLineSpeakerName = (value = '', validCharacters = []) => {
   const matchedCast = findSpeakerCastMatch(clean, validCharacters);
   if (matchedCast) return matchedCast.split(/[（(]/)[0].trim();
   return isExplicitSameLineSpeakerPrefix(clean, validCharacters) ? clean : '';
+};
+
+const normalizeContextSpeakerCandidate = (value = '') =>
+  normalizeDialogueSpeakerPrefix(value)
+    .replace(/^(?:奥|手前|背後|後ろ|前|右|左|横|遠く|入口|出口|棚奥|店内|画面奥|背景|客席|会場|部屋|廊下|外|内側|外側)(?:の)?(?:から|より)/, '')
+    .trim();
+
+const getSpokenQuoteSpeakerName = (sameLinePrevText = '', validCharacters = []) => {
+  const explicitSpeaker = getExplicitSameLineSpeakerName(sameLinePrevText, validCharacters);
+  if (explicitSpeaker) return explicitSpeaker;
+
+  let bestMatch = { index: -1, speaker: '' };
+  validCharacters.forEach(c => {
+    const nameOnly = c.split(/[（(]/)[0].trim();
+    if (!nameOnly) return;
+    const index = sameLinePrevText.lastIndexOf(nameOnly);
+    if (index > bestMatch.index) {
+      bestMatch = { index, speaker: nameOnly };
+    }
+  });
+
+  CONTEXT_ROLE_SPEAKER_RE.lastIndex = 0;
+  let match;
+  while ((match = CONTEXT_ROLE_SPEAKER_RE.exec(sameLinePrevText)) !== null) {
+    const speaker = normalizeContextSpeakerCandidate(match[1]);
+    if (speaker && isLikelyPerson(speaker, validCharacters) && match.index > bestMatch.index) {
+      bestMatch = { index: match.index, speaker };
+    }
+  }
+
+  return bestMatch.speaker;
 };
 
 const isLikelyVisualLabelQuote = (dialogueText, prevText = '', postText = '') => {
@@ -402,10 +435,32 @@ export const extractDialogueOnly = (fullPanelText, castList) => {
   // Extract valid characters from castList to prevent action instructions being misidentified as speakers
   const validCharacters = collectCastNames(castList);
 
-  const formattedBubbles = [];
-  let bubbleCount = 1;
+  const speechBubbleEntries = [];
+  const bubbleKeys = new Set();
+  let bubbleSequence = 0;
 
+  const pushSpeechBubble = (speaker, text, order = Number.MAX_SAFE_INTEGER) => {
+    const cleanText = String(text || '').trim();
+    const cleanSpeaker = String(speaker || '').trim();
+    if (!cleanText) return;
+    const key = `${cleanSpeaker}\u0000${cleanText}`;
+    if (bubbleKeys.has(key)) return;
+    bubbleKeys.add(key);
+    speechBubbleEntries.push({
+      order,
+      sequence: bubbleSequence,
+      speaker: cleanSpeaker,
+      text: cleanText
+    });
+    bubbleSequence++;
+  };
+
+  let lineSearchStart = 0;
   lines.forEach(line => {
+    const lineStart = fullPanelText.indexOf(line, lineSearchStart);
+    const lineOrder = lineStart === -1 ? lineSearchStart : lineStart;
+    if (lineStart !== -1) lineSearchStart = lineStart + line.length;
+
     if (PANEL_HEADER_RE.test(line)) return;
     // [v4.6.5-fix] SE（効果音演出指示）行をスキップ: （SE: ...）や (SE: ...) の形式に加え、
     // 「音響効果：」「SE：」「効果音：」等のコロン形式も除外
@@ -499,19 +554,14 @@ export const extractDialogueOnly = (fullPanelText, castList) => {
       clean = clean.replace(/（.*?）|\(.*?\)/g, '');
       clean = clean.trim();
 
-      if (clean) {
-        // [v4.6.10] スピーカー名が特定できている場合はSpeech Bubbleに明記
-        const speakerTag = detectedSpeaker ? ` [${detectedSpeaker}]` : '';
-        formattedBubbles.push(`(Speech Bubble ${bubbleCount}${speakerTag}: "${clean}")`);
-        bubbleCount++;
-      }
+      pushSpeechBubble(detectedSpeaker, clean, lineOrder);
     }
   });
 
   // [v2.22] フォールバック: キャラ名マッチに失敗しても、カギ括弧「」で囲まれたテキストがあればセリフとして抽出
   // [v2.29] ト書き誤検出防止: カギ括弧内のテキストがト書き（状況説明）でないかをチェック
   // [v4.1.6 Fix] カギ括弧の直前にキャスト名が存在する場合のみセリフとしてパースし、ロゴ名や第三者のボイス（齊藤氏等）の誤抽出を防止
-  if (formattedBubbles.length === 0) {
+  {
     const regex = /「([^」]+)」/g;
     let match;
     let lastIndex = 0;
@@ -602,20 +652,24 @@ export const extractDialogueOnly = (fullPanelText, castList) => {
       // [v4.6.5] セリフとして処理された場合のみ lastIndex を更新
       lastIndex = regex.lastIndex;
       if (dialogueText && !isLikelyNarration) {
-        // [v4.6.10] フォールバックパスでもprevTextからスピーカー名を逆引き
-        const fallbackSpeakerName = getExplicitSameLineSpeakerName(sameLinePrevText, validCharacters);
-        const fbSpeakerTag = fallbackSpeakerName ? ` [${fallbackSpeakerName}]` : '';
-        formattedBubbles.push(`(Speech Bubble ${bubbleCount}${fbSpeakerTag}: "${dialogueText}")`);
-        bubbleCount++;
+        // Infer a nearby speaker for spoken quotes embedded inside action narration.
+        const fallbackSpeakerName = getSpokenQuoteSpeakerName(sameLinePrevText, validCharacters);
+        pushSpeechBubble(fallbackSpeakerName, dialogueText, match.index);
       }
     }
   }
 
   // [v2.22] 「吹き出し描くな」指示を廃止。セリフが無い場合でも描画を阻害しない
-  if (formattedBubbles.length === 0) {
+  if (speechBubbleEntries.length === 0) {
     return "(Characters interact without dialogue in this panel)";
   }
-  return formattedBubbles.join(', ');
+  return speechBubbleEntries
+    .sort((a, b) => a.order - b.order || a.sequence - b.sequence)
+    .map((entry, index) => {
+      const speakerTag = entry.speaker ? ` [${entry.speaker}]` : '';
+      return `(Speech Bubble ${index + 1}${speakerTag}: "${entry.text}")`;
+    })
+    .join(', ');
 };
 
 export const cleanseActionGagSymbols = (actionText) => {
