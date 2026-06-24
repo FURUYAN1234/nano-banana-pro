@@ -4,7 +4,7 @@ import {
   CheckCircle2
 } from 'lucide-react';
 // --- Imports ---
-import { setOpenAIApiKey, getOpenAIApiKey } from './lib/openai';
+import { getOpenAIApiKey } from './lib/openai';
 
 // --- Refactored Imports (Phase 1-2) ---
 import { SYSTEM_VERSION, getPunchlineLabel, getModelBadgeInfo } from './lib/constants';
@@ -174,27 +174,16 @@ function App() {
     };
   }, [apiKey, selectedEngine, enableOpenAIApi, currentStep]);
 
+  const isApiModalOpen = showModal || showOpenAIKeyModal;
+  const isMainLocked = !apiKey || isApiModalOpen;
+  const apiKeyForUnlockedUi = isMainLocked ? "" : apiKey;
+
   return (
     <div className="min-h-screen bg-[#0a0c10] text-slate-100 font-sans selection:bg-blue-500/30 overflow-x-hidden">
       <ApiKeyModal isOpen={showModal} onSave={handleSetKey} provider="google" />
       <ApiKeyModal 
         isOpen={showOpenAIKeyModal} 
-        onSave={(key) => {
-          const newKey = key.trim();
-          const existingKey = getOpenAIApiKey();
-          if (newKey === "" && existingKey) {
-            setEnableOpenAIApi(true);
-            showStatus("🔑 既存のOpenAI APIキーを適用しました。");
-            setShowOpenAIKeyModal(false);
-          } else if (newKey.startsWith("sk-")) {
-            setOpenAIApiKey(newKey);
-            setEnableOpenAIApi(true);
-            showStatus("🔑 新しいOpenAI APIキーをセキュアに保存しました。");
-            setShowOpenAIKeyModal(false);
-          } else {
-            alert("エラー：APIキーは 'sk-' から始まる文字列である必要があります。");
-          }
-        }} 
+        onSave={handleSetKey}
         onClose={() => {
           setShowOpenAIKeyModal(false);
           if (!getOpenAIApiKey()) {
@@ -206,7 +195,7 @@ function App() {
       <ControlBar
         controlBarRef={controlBarRef}
         currentStep={currentStep}
-        apiKey={apiKey}
+        apiKey={apiKeyForUnlockedUi}
         isEndlessMode={isEndlessMode}
         setIsEndlessMode={setIsEndlessMode}
         isEndlessModeRef={isEndlessModeRef}
@@ -234,7 +223,7 @@ function App() {
         {/* === ヘッダー領域 === */}
         <SystemHeader
           SYSTEM_VERSION={SYSTEM_VERSION}
-          apiKey={apiKey}
+          apiKey={apiKeyForUnlockedUi}
           selectedEngine={selectedEngine}
           partialReset={partialReset}
           hardReset={hardReset}
@@ -244,7 +233,7 @@ function App() {
 
 
 
-        <main className="space-y-8" style={{ filter: apiKey ? 'none' : 'blur(10px)', pointerEvents: apiKey ? 'auto' : 'none', transition: 'filter 0.5s ease' }}>
+        <main className="space-y-8" style={{ filter: isMainLocked ? 'blur(10px)' : 'none', pointerEvents: isMainLocked ? 'none' : 'auto', transition: 'filter 0.5s ease' }}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
 
             {/* 01: キャラクター入力 (Dynamic Style) */}
@@ -252,7 +241,7 @@ function App() {
               setShowModal={setShowModal}
               isDragging={isDragging}
               setIsDragging={setIsDragging}
-              apiKey={apiKey}
+              apiKey={apiKeyForUnlockedUi}
               processFiles={processFiles}
               currentStep={currentStep}
               isAnalyzing={isAnalyzing}

@@ -8,6 +8,7 @@ import { Zap } from 'lucide-react';
 const ApiKeyModal = ({ isOpen, onSave, onClose, provider = "google" }) => {
   const [key, setKey] = useState("");
   const [error, setError] = useState("");
+  const [isVerifying, setIsVerifying] = useState(false);
 
   // [v3.59] モーダルが開くたびに入力をリセット（前のAPIキーが残らないようにする）
   useEffect(() => {
@@ -17,6 +18,7 @@ const ApiKeyModal = ({ isOpen, onSave, onClose, provider = "google" }) => {
       if (cancelled) return;
       setKey("");
       setError("");
+      setIsVerifying(false);
     });
     return () => {
       cancelled = true;
@@ -25,13 +27,23 @@ const ApiKeyModal = ({ isOpen, onSave, onClose, provider = "google" }) => {
 
   if (!isOpen) return null;
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!key.trim()) {
       setError("APIキーを入力してください");
       return;
     }
     setError("");
-    onSave(key);
+    setIsVerifying(true);
+    try {
+      const result = await onSave(key);
+      if (result && result.ok === false) {
+        setError(result.message || "APIキーの検証に失敗しました");
+      }
+    } catch (error) {
+      setError(error?.message || "APIキーの検証に失敗しました");
+    } finally {
+      setIsVerifying(false);
+    }
   };
 
   const isGoogle = provider === "google";
@@ -106,16 +118,18 @@ const ApiKeyModal = ({ isOpen, onSave, onClose, provider = "google" }) => {
                   placeholder={placeholder}
                   className={`flex-1 bg-black/50 text-white placeholder:text-slate-600 px-4 py-2.5 rounded-lg border border-white/10 ${focusBorderClass} outline-none font-mono text-sm tracking-wider transition-all ${focusShadowClass}`}
                   autoFocus
+                  disabled={isVerifying}
                 />
                 <button
                   type="submit"
+                  disabled={isVerifying}
                   className={`${btnClass} text-white font-bold px-6 py-2.5 rounded-lg transition-all text-sm whitespace-nowrap active:scale-95`}
                 >
-                  接続
+                  {isVerifying ? "検証中..." : "接続"}
                 </button>
                 </form>
               </div>
-              {error && <p className="text-red-400 text-[10px] mt-1 pl-1">{error}</p>}
+              {error && <p className="text-red-400 text-[10px] mt-1 pl-1 whitespace-pre-wrap break-words">{error}</p>}
             </div>
           </div>
 
@@ -134,7 +148,7 @@ const ApiKeyModal = ({ isOpen, onSave, onClose, provider = "google" }) => {
                   <span className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
                     isOpenAIKey ? 'bg-emerald-400' : key.trim() ? 'bg-blue-400' : 'bg-slate-600'
                   }`} />
-                  {isOpenAIKey ? '🟢 ChatGPT Engine で起動' : key.trim() ? '🔵 Gemini Engine で起動' : '入力待ち...'}
+                  {isOpenAIKey ? '🟢 OpenAI形式（未検証）' : key.trim() ? '🔵 Gemini形式（未検証）' : '入力待ち...'}
                 </div>
                 {isOpenAIKey && (
                   <span className="text-[9px] text-amber-400/70">⚠ 従量課金（OpenAI API）</span>

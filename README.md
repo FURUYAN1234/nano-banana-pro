@@ -766,6 +766,9 @@ A tool to automatically convert static 4-koma manga into fully voiced animated v
 
 ## 📋 ChangeLog
 
+### v4.8.2 (2026-06-24)
+- **[Fix & UX]** APIキー入力時に形式チェックと実API疎通確認を必須化し、不正な文字列ではSTEP1へ進めないよう修正 / Require API-key format and live provider preflight before unlocking STEP 1, preventing arbitrary text from being treated as connected
+
 ### v4.8.1 (2026-06-24)
 - **[Fix & UX]** ChatGPT向けプロンプトをWeb貼付可能な長さへ汎用圧縮し、状況文引用の余計な吹き出し化を防止 / Generically compressed ChatGPT prompts into a web-paste-safe length and prevented action narration quotes from becoming extra speech bubbles
 

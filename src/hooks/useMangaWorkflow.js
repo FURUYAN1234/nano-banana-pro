@@ -14,6 +14,7 @@ import { getCharacterAnalysisPrompt } from '../lib/prompts';
 import { buildMangaPrompt } from '../lib/prompt-assembler';
 import { generateScenario, enhanceScenarioText } from '../lib/scenario-provider';
 import { fixPolicyViolation } from '../lib/policy-fixer';
+import { verifyApiKeyConnection } from '../lib/api-key-preflight';
 import {
   formatMangaScenarioValidationIssue,
   validateMangaScenario
@@ -58,13 +59,43 @@ export default function useMangaWorkflow() {
 
   // Initialize System
   useEffect(() => {
-    const savedKey = getApiKey();
-    if (savedKey) {
-      setApiKey(savedKey);
-      setApiKeyState(savedKey);
-    } else {
+    let cancelled = false;
+
+    const restoreVerifiedKey = async () => {
+      const savedKey = getApiKey();
+      if (!savedKey) {
+        setShowModal(true);
+        return;
+      }
+
+      const verification = await verifyApiKeyConnection(savedKey);
+      if (cancelled) return;
+
+      if (verification.ok && verification.provider === 'gemini') {
+        const cleanKey = verification.sanitizedKey;
+        setApiKey(cleanKey);
+        setApiKeyState(cleanKey);
+        setActiveEngine('gemini');
+        setSelectedEngine('gemini');
+        setShowModal(false);
+        return;
+      }
+
+      setApiKey("");
+      setApiKeyState("");
+      setOpenAIApiKey("");
+      setEnableOpenAIApi(false);
+      setEnableChatGPTMode(false);
+      setActiveEngine('gemini');
+      setSelectedEngine('gemini');
       setShowModal(true);
-    }
+      showStatus("保存済みAPIキーの検証に失敗しました。再入力してください。");
+    };
+
+    restoreVerifiedKey();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // getModelBadgeInfo → src/lib/constants.js に移動済み
@@ -168,7 +199,21 @@ export default function useMangaWorkflow() {
   const [generationHistory, setGenerationHistory] = useState([]); // [v2.86] Generated Image History
 
 
-  const handleSetKey = (key) => {
+  const handleSetKey = async (key) => {
+    showStatus("APIキーを検証中です...");
+    const verification = await verifyApiKeyConnection(key);
+    if (!verification.ok) {
+      setApiKeyState("");
+      setApiKey("");
+      setOpenAIApiKey("");
+      setEnableOpenAIApi(false);
+      setEnableChatGPTMode(false);
+      setActiveEngine('gemini');
+      setSelectedEngine('gemini');
+      showStatus(`APIキー検証失敗: ${verification.message}`);
+      return verification;
+    }
+    key = verification.sanitizedKey;
     // APIキーのサニタイズ: 非ASCII文字を除去（コピペ時の見えない文字対策）
     const cleanKey = key.replace(/[^\u0000-\u007F]/g, "").trim();
     if (cleanKey !== key) {
@@ -186,6 +231,7 @@ export default function useMangaWorkflow() {
       // Gemini APIキーは不要だがダミーで空文字回避（UI表示用）
       setApiKeyState('openai-engine-active');
       setShowModal(false);
+      setShowOpenAIKeyModal(false);
       showStatus("✅ ChatGPT Engine 接続完了！全ステップがChatGPT APIで動作します。");
       console.log("[Dual Engine] Switched to OpenAI/ChatGPT mode");
     } else {
@@ -195,6 +241,7 @@ export default function useMangaWorkflow() {
       setActiveEngine('gemini');
       setSelectedEngine('gemini');
       setShowModal(false);
+      setShowOpenAIKeyModal(false);
       showStatus("✅ Gemini Engine 接続完了！キャラクターシートをアップロードして開始してください。");
       console.log("[Dual Engine] Using Gemini mode (default)");
     }
