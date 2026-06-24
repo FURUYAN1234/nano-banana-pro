@@ -1,7 +1,7 @@
 # HANDOFF.md
 
 ## Current Status
-- **Version**: v4.8.2 API preflight fix release prep
+- **Version**: v4.8.2 API preflight fix released
 - **Latest changes**:
   - v4.8.1 release prep after v4.8.0: ChatGPT image prompts now stay in a web-paste-safe range by compacting repeated global/per-panel control text while preserving title, dialogue, watermarks, visual action detail, art-quality rules, cast limits, and identity/glasses locks. Dialogue labels now explicitly say `Dialogue (verbatim bubbles)` and the text rules forbid paraphrase, synonyms, softening, and added/omitted words.
   - Generic identity parser hardening: `- Character [Name]: ... glasses/no glasses ...` cast lines now feed the Identity Matrix, so glasses locks do not disappear when the cast list is already in cleaned Character-line form.
@@ -12,7 +12,7 @@
   - Regression tests added for embedded spoken quote extraction, visual quote exclusion, handwriting text exclusion, title punctuation preservation, and ChatGPT prompt length/critical-content preservation.
   - Production source scan for the user's sample-specific terms returned no matches; sample terms appear only in regression test fixtures.
   - v4.8.2 API key preflight fix: entering an arbitrary string or a shortened/invalid OpenAI-style key no longer unlocks STEP 1. API entry now requires provider format validation plus a live provider preflight (`Gemini /v1beta/models` or `OpenAI /v1/models`) before setting the app's connected state. Failed provider errors are sanitized so API key fragments are not rendered in the UI. The modal now labels typed keys as unverified format guesses until preflight succeeds, saved Gemini keys are re-verified on startup, and the header/control bar/STEP1 receive an empty API-key prop while any API modal is open so stale state cannot look connected.
-- **State**: v4.8.1 prompt budget/action-quote fix is released. v4.8.2 API preflight fix is locally implemented and verified, but not yet committed, pushed, deployed, released, locally synced, or backed up. The intermediate backup `antigravity_full_backup_2026-06-24_110219.zip` was created before the v4.8.2 API fix and must not be treated as final.
+- **State**: v4.8.2 API preflight fix is released and deployed. Main code commit `5f9ad7acc09011ee224a35a25acb9e704d66d1bc` is pushed to `origin/main`; GitHub Pages is `71aff4b86fe49bfceaa86284c973af1b397aa256`; Hugging Face Spaces is `9328cc2`; GitHub Release is `https://github.com/FURUYAN1234/nano-banana-pro/releases/tag/v4.8.2`; release ZIP has been synced to `C:\nano-banana-pro-main`. The intermediate backup `antigravity_full_backup_2026-06-24_110219.zip` was created before the v4.8.2 API fix and must not be treated as final. A fresh visible PS1 full backup is still pending after this handoff update is committed.
 
 ## Pending Verification Tasks
 - [x] Local prompt assembly proof for the failing scenario shape.
@@ -32,12 +32,14 @@
 - [x] v4.8.2 browser proof on `http://127.0.0.1:5173/?codexApiPreflightV482Browser=1`: entering a shortened OpenAI-looking dummy key shows `OpenAI形式（未検証）`, never shows `Engine で起動`, fails with the Japanese error `APIキーの形式が正しくありません。...`, keeps the header `未接続`, keeps `main` blurred and pointer-locked, and does not render the raw OpenAI provider error or the typed key fragment.
 - [x] Production source scan for the user's sample-specific terms and API key patterns returned no matches.
 - [x] `node scripts\pre_deploy_check.js` after this HANDOFF update.
-- [ ] Commit/push v4.8.2 API preflight fix.
-- [ ] GitHub Pages deploy verification for v4.8.2.
-- [ ] Hugging Face Spaces deploy verification for v4.8.2.
-- [ ] GitHub Release creation (v4.8.2).
-- [ ] Release ZIP download and `C:\nano-banana-pro-main` local sync for v4.8.2.
+- [x] Commit/push v4.8.2 API preflight fix: `5f9ad7acc09011ee224a35a25acb9e704d66d1bc`.
+- [x] GitHub Pages deploy verification for v4.8.2: `https://furuyan1234.github.io/nano-banana-pro/?v=20260624-v482-api-preflight-jp` returned title `Nano Banana Pro v4.8.2`, asset `assets/index-BPKQnvko.js`, Japanese API-key errors and unverified labels present, raw OpenAI error text and old English format error absent.
+- [x] GitHub Pages live UI API-error proof for v4.8.2: `https://furuyan1234.github.io/nano-banana-pro/?v=20260624-v482-live-ui-api-error` rejected a shortened OpenAI-looking dummy key with Japanese format error, kept `未接続`, kept `main` blurred/pointer-locked, and did not show raw provider errors or `Engine で起動`.
+- [x] Hugging Face Spaces deploy verification for v4.8.2: `https://furuyan-nano-banana-pro.static.hf.space/?v=20260624-v482-api-preflight-jp` returned title `Nano Banana Pro v4.8.2`, asset `assets/index-BPKQnvko.js`, Japanese API-key errors and unverified labels present, raw OpenAI error text and old English format error absent.
+- [x] Hugging Face Spaces live UI API-error proof for v4.8.2: `https://furuyan-nano-banana-pro.static.hf.space/?v=20260624-v482-live-ui-api-error` rejected a shortened OpenAI-looking dummy key with Japanese format error, kept `未接続`, kept `main` blurred/pointer-locked, and did not show raw provider errors or `Engine で起動`.
+- [x] GitHub Release creation (v4.8.2): `https://github.com/FURUYAN1234/nano-banana-pro/releases/tag/v4.8.2`.
+- [x] Release ZIP download and `C:\nano-banana-pro-main` local sync for v4.8.2: package version `4.8.2`, HTML title `Nano Banana Pro v4.8.2`, API preflight test present, no nested duplicate folder.
 - [ ] Final visible PS1 full backup verification after all v4.8.2 commits/pushes/deploys/docs are final.
 
 ## Next Steps
-- Finish the v4.8.2 release flow: pre-deploy check, commit/push, GitHub Pages, Hugging Face, GitHub Release, local ZIP sync, then a fresh visible black-window `scripts\backup_full.ps1 -NoGui` backup.
+- Commit/push this final handoff update, then run a fresh visible black-window `scripts\backup_full.ps1 -NoGui` backup and verify the ZIP contents.
