@@ -73,3 +73,39 @@ test('does not turn explicit handwriting quotes into speech bubbles', () => {
   assert.doesNotMatch(dialogue, /風紀/);
   assert.match(dialogue, /Speech Bubble 1 \[アカリ\]: "私、カロリーゼロのポテチ描いた！"/);
 });
+
+test('does not promote action quote fragments already covered by explicit dialogue', () => {
+  const panelText = `
+[3コマ目: 転]
+状況: リンが肩越しに原稿をめくりながら「90秒なら…」と目をギラギラさせてアカリに囁きかけ、アカリは口をへの字にして歯を食いしばりながら「35分は…」と顔面蒼白で言い放つ。
+リン「90秒なら我慢して見られるよ！」
+アカリ「35分は…とても最後まで見られない…」
+ミク「ひどいよー…。」
+`;
+
+  const dialogue = extractDialogueOnly(panelText, CAST_LIST);
+
+  assert.doesNotMatch(dialogue, /Speech Bubble \d \[リン\]: "90秒なら…"/);
+  assert.doesNotMatch(dialogue, /Speech Bubble \d \[アカリ\]: "35分は…"/);
+  assert.match(dialogue, /Speech Bubble 1 \[リン\]: "90秒なら我慢して見られるよ！"/);
+  assert.match(dialogue, /Speech Bubble 2 \[アカリ\]: "35分は…とても最後まで見られない…"/);
+  assert.match(dialogue, /Speech Bubble 3 \[ミク\]: "ひどいよー…。"/);
+});
+
+test('does not promote unowned action narration quotes into speech bubbles', () => {
+  const panelText = `
+[4コマ目: 結]
+状況: スタジオ全景、全員が机の上にペンや資料を「バンバンバンバン！！」と猛烈な勢いで叩きつけ、「今しかない！」の大絶叫がスタジオに轟く。
+アカリ「我々の仕事が奪われないうちにこの才能を潰そう！」
+リン「御意！」
+サエコ「AI作品は無条件で却下よね！」
+`;
+
+  const dialogue = extractDialogueOnly(panelText, CAST_LIST);
+
+  assert.doesNotMatch(dialogue, /Speech Bubble \d: "今しかない！"/);
+  assert.doesNotMatch(dialogue, /バンバンバンバン/);
+  assert.match(dialogue, /Speech Bubble 1 \[アカリ\]: "我々の仕事が奪われないうちにこの才能を潰そう！"/);
+  assert.match(dialogue, /Speech Bubble 2 \[リン\]: "御意！"/);
+  assert.match(dialogue, /Speech Bubble 3 \[サエコ\]: "AI作品は無条件で却下よね！"/);
+});

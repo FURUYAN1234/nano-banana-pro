@@ -657,92 +657,49 @@ Use the 360° background image's lighting direction (${bg360Analysis.lighting}),
 
   return `🎨 OUTPUT: Generate a SINGLE IMAGE only. Do NOT respond with text or descriptions. DRAW the manga directly.
 
-[🔥 ABSOLUTE FIRST PRIORITY 🚨 READ THIS BEFORE ANYTHING ELSE]
-YOU ARE GENERATING A NEW 4-PANEL MANGA SCENE as an IMAGE. You are NOT creating a character sheet, model sheet, character lineup, expression chart, or reference sheet.
-The attached image is a CHARACTER REFERENCE ONLY 🚨 use it to identify hair color, eye shape, and glasses status. Do NOT reproduce its layout, white background, expression grid, or text labels.
+ABSOLUTE TASK: create a NEW 4-panel vertical manga image, not a character/model/reference sheet. Attached character image is ONLY for face, hair, eyes, skin, and glasses; never copy its white layout, grids, labels, or clothing.
 
-Generate a highly detailed, professional 4-koma (4-panel vertical) manga.
-MUST have tall portrait aspect ratio (A4 paper, 1:1.414).
+FORMAT:
+- A4 portrait 1:1.414; 4 equal horizontal panels stacked vertically, 95% width, thick white gutters, no panels touching, no large margins, no extra space below panel 4.
+- Top title EXACTLY "${safeTopic}", large bold black Japanese sans-serif, centered.
+- Bottom-right 4th-panel watermark EXACTLY "${watermarkEng}", tiny horizontal sans-serif.
+- Bottom-left 4th-panel watermark EXACTLY "ネームから全自動の自律式統合AI漫画システム :https://note.com/happy_duck780", tiny horizontal sans-serif. Copy "自律式" character-by-character. Keep both watermarks small and separated.
 
-LAYOUT & FORMAT:
-- Canvas completely filled by panels (95% width). NO large white margins.
-- Top page: draw large bold black Japanese text that reads exactly "${safeTopic}" in a clean sans-serif font, centered at the top.
-- Draw tiny English watermark text that reads EXACTLY "${watermarkEng}" positioned at the bottom-right corner of the 4th panel, in a small clean sans-serif font. VERBATIM COPY — do NOT paraphrase or alter any word.
-- Draw tiny Japanese watermark text that reads EXACTLY "ネームから全自動の自律式統合AI漫画システム :https://note.com/happy_duck780" positioned at the bottom-left corner of the 4th panel, in an extremely small font size to prevent overlapping with the right watermark. ⚠️ CRITICAL: The word "自律式" must appear EXACTLY as written. Do NOT replace it with topic-related words (e.g. do NOT write "高齢式" or any other variation). Copy the watermark string character-by-character.
-- Watermarks standard horizontal. The Japanese watermark on the left and the English watermark on the right must be small enough and spaced apart so they do not touch or overlap. NO extra white space below panel 4.
-- Exactly 4 EQUAL horizontal panels, stacked vertically with thick white gutters between them. Panels MUST NOT touch.
-
-ART STYLE:
-- High-budget TV anime production quality. Pristine clean cel-shading with smooth gradient shadows and rich saturated color palette.
-- Cinematic color grading with smooth light diffusion and gentle rim lighting on character edges.
-- Foreground characters have bold ink outlines with varied line weight. Add a subtle white glow outside the character's outline to prevent blending with the background.
-- Backgrounds should have slightly lower saturation and softer focus (shallow depth of field) to make characters pop.
-- NOISE REDUCTION (Anti-Glitter & Anti-Noise Protocol):
-  * ABSOLUTELY NO ChatGPT-style magical floating particles, NO glittering/sparkling effects, NO dust motes, NO lens flares, NO moiré patterns. Keep the air completely clean and empty.
-  * ZERO NOISE TOLERANCE: The final image MUST be completely free of visual noise, grain, micro-texture artifacts, dithering patterns, and any speckle-like artifacts. Every surface must be CLEAN and SMOOTH.
-  * NO MICRO-DETAIL CLUTTER: Do NOT fill empty areas with random tiny dots, scratches, dust particles, or halftone-like noise patterns. Clean color fills and smooth gradients ONLY.
-  * NO OVER-RENDERING: Do NOT apply photorealistic texture rendering (cloth weave, skin pores, hair strand noise) to anime-style characters. Keep surfaces FLAT and CLEAN as in professional TV anime cel-shading.
-- [ POSITIVE SAFE RENDERING BLOCK — APPLY THESE STYLES ]
-  Clean anime illustration finish, smooth cel shading, soft clean shading, smooth gradients, clean color surfaces, low texture density, refined but not overly detailed material response, controlled exposure, soft diffused lighting, no visible grain, no speckled texture, no pointillism, no stippling, no dithering, no halftone dots, no noisy particles, no glitter dust, no gritty film grain, no rough paper texture, no canvas grain, no over-sharpened details.
-- [ BANNED PROMPT WORD COMBINATIONS — NEVER USE THESE ]
-  * Do NOT combine: ultra-detailed + film grain + cinematic
-  * Do NOT combine: realistic texture + micro details
-  * Do NOT combine: magical particles + glowing dust
-  * Do NOT combine: high contrast + sharp details (use clean contrast + smooth edges instead)
-  * Do NOT combine: illustrative realism + gritty texture
-  * Do NOT use: paper grain, canvas texture, rough texture, grainy texture, overly crisp
+ART / RENDERING QUALITY:
+- High-budget TV anime production: pristine clean cel shading, smooth gradients, rich saturated color, cinematic diffusion, gentle rim light, bold varied ink outlines, subtle white edge glow on foreground characters.
+- Characters pop: foreground crisp, backgrounds slightly softer/lower saturation with shallow depth of field.
+- CLEAN SURFACE PROTOCOL: no grain, speckles, dithering, halftone dots, paper/canvas/rough texture, skin pores, cloth weave, noisy micro-detail, over-sharpening, moire, dust motes, lens flare, random particles, glitter dust, or unintended floating sparkle. Keep intentional panel VFX clean and controlled.
 - ${styleCore}
 - Setting: ${safeLocation}
 ${bg360Block}
 
-CAMERA & PERSPECTIVE RULES:
-Each of the 4 panels MUST use a DIFFERENT dramatic camera angle. Use specific cinematic techniques:
-- Bird's-eye view looking straight down from above
-- Worm's-eye view looking up from ground level (characters towering overhead)
-- Dutch angle with horizon tilted 30-45 degrees for tension
-- Close-up telephoto shot with shallow depth of field and background bokeh
-- Wide-angle lens shot (14mm equivalent) with exaggerated perspective
-No two panels share the same angle. Standard eye-level shots are FORBIDDEN.
-Keep character proportions strictly accurate — dramatic angles yes, anatomical distortion no.
+CAMERA:
+- Each panel uses a DIFFERENT dramatic angle. Use bird's-eye, worm's-eye, Dutch 30-45 degrees, telephoto close-up with bokeh, or 14mm wide-angle as appropriate.
+- No standard eye-level repeats. Preserve anatomy/proportions despite perspective.
 
-CHARACTERS & IDENTITY:
-- Strictly reproduce reference image designs (hair, eyes, skin, accessories). NO feature swapping.
-- Reference images are ONLY for face, hair, skin, and accessories.
+CHARACTER IDENTITY:
+- Strictly reproduce reference face, hair, eyes, skin, and accessories. NO feature swapping.
 ${outfitRule}
-- NEVER draw the same character twice in a single panel.
-- Characters MUST look at each other or objects, NEVER at the camera.
-- Exaggerated manga comedy expressions and full-body reactions are required.
+- Adults 20+. Same face, hair, glasses status, skin tone, and outfit across all 4 panels. Characters look at each other/objects, never the camera. Full-body manga comedy reactions encouraged.
 - Cast details: ${VAR_CAST_LIST_CHATGPT}
 - Identity Anchor: ${identityMatrix}
-- CROSS-PANEL CONSISTENCY: All characters must maintain exactly the same face, hair, and outfit across all 4 panels. If a character has glasses, they MUST have glasses in every panel. If a character does NOT have glasses, they MUST NOT gain glasses in any panel. Preserve exact hair color, eye color, and skin tone in every panel.
-- GLASSES VERIFICATION (MANDATORY): Before finalizing EACH panel, count the number of characters wearing glasses. Compare against the Identity Matrix above. If the count does not match, you have made an error — redraw the offending characters. Characters without glasses must have fully visible bare eyes with NO frames on their face.
+- GLASSES CHECK: every panel must match the Identity Matrix; redraw any character with added/missing glasses or wrong hair.
 
-TEXT RENDERING RULES:
-- Only Dialogue entries may become white manga speech bubbles.
-- ALL text inside speech bubbles MUST be vertical Japanese tategaki: characters flow top-to-bottom, columns ordered right-to-left. ZERO horizontal yokogaki text inside speech bubbles.
-- If any speech bubble text would be horizontal, redraw that bubble as vertical text before finalizing. Horizontal speech-bubble text is a failure condition.
-- Make speech bubbles tall/narrow enough for vertical Japanese columns while keeping the tails pointed at the correct speaker.
-- DIALOGUE TEXT IS VERBATIM: The Japanese text inside each Speech Bubble MUST be copied EXACTLY as written in the Dialogue section — character by character, punctuation by punctuation. Do NOT paraphrase, rephrase, summarize, add words, remove words, or substitute synonyms. If the dialogue says "甘い" you MUST write "甘い", NOT "ないはずよ" or any other rewording.
-- Action text is NOT visible lettering by default. Quoted ambience, SFX names, mood words, aura names, emotion labels, and narration terms must be illustrated through objects, lighting, motion, poses, and atmosphere only.
-- Render Action words as physical scene text ONLY when Action explicitly asks for handwriting, finger-writing, air-writing, signage, board text, label text, printed text, or screen text. Do NOT wrap visual scene text in a speech bubble, caption box, narration box, or tail.
-- Never move Action text into speech bubbles, captions, labels, or floating SFX. Keep any explicitly requested visual writing attached to the hand/object/surface that creates it.
-- Incidental prop/background text policy: Small readable text on props or background items (books, packages, posters, signs, screens, labels, clothing) may be added only as short, context-appropriate decoration. It must stay unobtrusive and must NEVER replace, contradict, or upstage the title, Dialogue entries, watermarks, punchline, or explicitly requested scene text.
-- If a prop normally has writing but no exact text is specified, prefer blank surfaces, abstract marks, or unreadable graphic shapes over large/dominant invented lettering. Do NOT invent extra speech, narration, SFX, plot-critical slogans, or main-gag text.
+TEXT RULES:
+- Only Dialogue entries become white speech bubbles. Speech text MUST be vertical Japanese tategaki, copied verbatim character-by-character; no paraphrase, synonyms, softening, added/omitted words, or horizontal text.
+- Bubble position/tail must point to the actual speaker. Right-to-left Japanese manga reading order.
+- Action text is visual direction only: do NOT draw quoted ambience, SFX names, mood/aura/emotion labels, narration, or prompt labels as free text.
+- Draw scene text only when Action explicitly asks for handwriting, air/finger-writing, signage, labels, printed text, screen text, or board text. Prop/background text, if any, must be tiny, decorative, and never replace or upstage title, dialogue, watermarks, punchline, or explicit scene text.
+
+THINGS TO AVOID:
+- No plastic skin, over-sharpening, extra logos/watermarks, character-sheet/grid layout, floating/ghost eyes/faces, duplicate/extra characters/humans.
+- No unrelated/dominant random text; prop text only under TEXT RULES.
+- No sparkle/glow dust, embers, particles, volumetric dust, film/paper/canvas/rough grain/texture.
+- HAND ANATOMY: correct hands; named/pointing hands attach to same-side shoulder with natural index/thumb/palm/wrist/forearm. No mirrored, inverted, extra, or backward-bending hands.
 
 PANEL DESCRIPTIONS:
 
 ${panelSections}
-
-THINGS TO AVOID:
-- No plastic-looking skin or digital over-sharpening on characters.
-- No watermarks or logos other than the specified watermarks above.
-- No unrelated or dominant random English/Japanese text scattered across panels. Incidental prop/background text is allowed only under the TEXT RENDERING RULES above.
-- No floating close-up eyes or ghostly face overlays in backgrounds.
-- No character sheet layout, expression grid, or reference sheet appearance.
-- No extra characters beyond those specified in each panel.
-- No sparkling light particles, no glowing dust, no magical particles, no floating embers, no volumetric dust.
-- No film grain, paper grain, canvas texture, or rough textures.
-- HAND ANATOMY (CRITICAL): All character hands MUST follow correct human anatomy. If a gesture names the RIGHT or LEFT hand, attach that arm to the matching shoulder and judge the side from the character's body, not viewer-left/viewer-right under camera perspective. For pointing hands, keep the index finger, thumb, palm/knuckle side, wrist, and forearm mutually consistent. Do NOT mirror, reverse, or flip hand orientation. Fingers must bend naturally — no backwards-bending joints or inverted wrists. If a hand looks anatomically wrong, redraw it before finalizing.
 `;
 };
 

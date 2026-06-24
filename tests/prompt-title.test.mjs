@@ -62,11 +62,11 @@ test('preserves terminal title punctuation in ChatGPT prompt title', () => {
 
   assert.match(
     prompt,
-    /Top page: draw large bold black Japanese text that reads exactly "白黒ポテチ袋創作ブーム!\?"/
+    /Top title EXACTLY "白黒ポテチ袋創作ブーム!\?"/
   );
   assert.doesNotMatch(
     prompt,
-    /Top page: draw large bold black Japanese text that reads exactly "白黒ポテチ袋創作ブーム"/
+    /Top title EXACTLY "白黒ポテチ袋創作ブーム"/
   );
 });
 

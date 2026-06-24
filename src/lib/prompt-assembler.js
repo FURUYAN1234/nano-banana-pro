@@ -61,7 +61,7 @@ const POINTING_GESTURE_RE = /(?:\bpoint(?:ing|s|ed)?\b|finger[-\s]?point|\u6307\
 const appendPointingHandLock = (actionText) => {
   if (!POINTING_GESTURE_RE.test(actionText)) return actionText;
   return `${actionText}
-HAND POSE LOCK: For every pointing gesture in this panel, draw one clear index-finger point from the intended character's anatomically correct hand. The wrist and forearm must connect to that hand's same-side shoulder; judge left/right from the character's body, not screen-left/screen-right after camera flips. Keep the thumb on its natural anatomical side and redraw any mirrored hand, inverted wrist, or extra pointing hand`;
+HAND POSE LOCK: pointing hand must be anatomically correct, connected to same-side shoulder, natural index/thumb/palm/wrist/forearm; no mirrored, inverted, or extra pointing hand.`;
 };
 
 const buildPanelActionText = (panelText, castList, activeOutfit) => {
@@ -165,11 +165,11 @@ export const buildMangaPrompt = ({
       const num = i + 1;
       return `## Panel ${num}
 ${buildEmotionBlock(pt)}
-${extractPlacementRule(pt, castList).replace(/\\\\[/g, '').replace(/\\\\]/g, '')}
-${extractCastLimitRule(pt, castList).replace(/\\\\[/g, '').replace(/\\\\]/g, '')}
+${extractPlacementRule(pt, castList, { compact: true }).replace(/\\\\[/g, '').replace(/\\\\]/g, '')}
+${extractCastLimitRule(pt, castList, { compact: true }).replace(/\\\\[/g, '').replace(/\\\\]/g, '')}
 Camera: ${getCameraForChatGPT(pt, cameraState)}
-Action (Visual ONLY, non-dialogue; do NOT render quoted words as visible text unless this action explicitly says handwriting, signage, board text, label text, or screen text): ${buildPanelActionText(pt, castList, activeOutfit)}
-Dialogue (Japanese text inside speech bubbles only): ${extractDialogueOnly(pt, castList)}`;
+Action (visual only): ${buildPanelActionText(pt, castList, activeOutfit)}
+Dialogue (verbatim bubbles): ${extractDialogueOnly(pt, castList)}`;
     }).join('\n\n');
 
     rawPrompt = buildChatGPTMangaPrompt({

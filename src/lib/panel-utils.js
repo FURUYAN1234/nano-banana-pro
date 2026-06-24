@@ -77,7 +77,7 @@ export const buildIdentityMatrix = (castListText) => {
 
   castListText.split('\n').forEach(line => {
     const cleanLine = line.replace(/\*\*/g, '').trim();
-    const headingMatch = cleanLine.match(CAST_HEADING_RE);
+    const headingMatch = cleanLine.match(CAST_HEADING_RE) || cleanLine.match(CHARACTER_LINE_RE);
 
     // キャラ名ヘッダー検出
     if (headingMatch) {
@@ -125,13 +125,15 @@ export const buildIdentityMatrix = (castListText) => {
 
     // [v2.30] 眼鏡情報の抽出 - 全面改修
     const lowerLine = cleanLine.toLowerCase();
+    const hasPlainNoGlasses = /\bno[\s_-]*glasses\b/.test(lowerLine);
+    const hasPlainGlasses = /\bglasses\b/.test(lowerLine) && !hasPlainNoGlasses;
     const hasWeightedNoGlasses = /\(no[\s_-]*glasses/i.test(lowerLine);
     const hasWeightedGlasses = /\([^)]*glasses[\s:]/i.test(lowerLine) && !hasWeightedNoGlasses;
     const glassesLocked = currentChar.glasses === 'LOCKED_NO' || currentChar.glasses === 'LOCKED_YES';
     if (!glassesLocked) {
-      if (hasWeightedNoGlasses) {
+      if (hasWeightedNoGlasses || hasPlainNoGlasses) {
         currentChar.glasses = 'LOCKED_NO';
-      } else if (hasWeightedGlasses) {
+      } else if (hasWeightedGlasses || hasPlainGlasses) {
         currentChar.glasses = 'LOCKED_YES';
       }
     }
@@ -359,6 +361,23 @@ const isLikelyVisualLabelQuote = (dialogueText, prevText = '', postText = '') =>
   return false;
 };
 
+const normalizeDialogueCoverageText = (value = '') =>
+  String(value)
+    .replace(/[「」『』“”"'\s、。，．・…!！?？]/g, '')
+    .trim();
+
+const isCoveredByExistingSpeechBubble = (speechBubbleEntries, dialogueText = '') => {
+  const target = normalizeDialogueCoverageText(dialogueText);
+  if (target.length < 3) return false;
+
+  return speechBubbleEntries.some(entry => {
+    const existing = normalizeDialogueCoverageText(entry.text);
+    if (!existing) return false;
+    if (existing === target) return true;
+    return target.length >= 4 && existing.includes(target);
+  });
+};
+
 export const getCharTraitsFromMatrix = (charName, castList) => {
   const matrix = buildIdentityMatrix(castList);
   const line = matrix.split('\n').find(l => l.includes(`[${charName}]`));
@@ -368,6 +387,12 @@ export const getCharTraitsFromMatrix = (charName, castList) => {
   }
   return '';
 };
+
+const compactIdentityTraits = (traits = '') =>
+  String(traits || 'see reference')
+    .replace(/\s*\([^)]*(?:do NOT add glasses|do NOT remove)[^)]*\)/gi, '')
+    .replace(/\s+/g, ' ')
+    .trim();
 
 export const getCameraForPanel = (panelText, shuffledCameras, cameraState) => {
   // [Camera: XXX] の抽出を試みる
@@ -654,6 +679,8 @@ export const extractDialogueOnly = (fullPanelText, castList) => {
       if (dialogueText && !isLikelyNarration) {
         // Infer a nearby speaker for spoken quotes embedded inside action narration.
         const fallbackSpeakerName = getSpokenQuoteSpeakerName(sameLinePrevText, validCharacters);
+        if (!fallbackSpeakerName) continue;
+        if (isCoveredByExistingSpeechBubble(speechBubbleEntries, dialogueText)) continue;
         pushSpeechBubble(fallbackSpeakerName, dialogueText, match.index);
       }
     }
@@ -849,7 +876,8 @@ export const injectOutfitReminder = (actionText, activeOutfit) => {
   return `(All characters are wearing ${activeOutfit}) ${actionText}`;
 };
 
-export const extractPlacementRule = (fullPanelText, castList) => {
+export const extractPlacementRule = (fullPanelText, castList, options = {}) => {
+  const compact = Boolean(options.compact);
   const lines = fullPanelText.split('\n');
   // [v2.28] EMOTIONタグ行・状況行をフィルタリングしてスピーカー抽出の汚染を防止
   const dialogLines = lines.filter(line => {
@@ -907,6 +935,9 @@ export const extractPlacementRule = (fullPanelText, castList) => {
     const traits0 = getCharTraitsFromMatrix(speakers[0], castList);
     const traits1 = getCharTraitsFromMatrix(speakers[1], castList);
     const traits2 = getCharTraitsFromMatrix(speakers[2], castList);
+    if (compact) {
+      return `PLACEMENT/IDENTITY: RIGHT [${speakers[0]}] (${compactIdentityTraits(traits0)}), CENTER [${speakers[1]}] (${compactIdentityTraits(traits1)}), LEFT [${speakers[2]}] (${compactIdentityTraits(traits2)}). Keep slots exact; do NOT mirror/swap. Bubbles beside actual speakers with tails, right-to-left.`;
+    }
     return `CRITICAL PLACEMENT & IDENTITY (3-ZONE SLOTTING):
 - RIGHT ZONE: [${speakers[0]}] (${traits0 || 'see reference'}) — First speaker
 - CENTER ZONE: [${speakers[1]}] (${traits1 || 'see reference'}) — Second speaker
@@ -924,6 +955,9 @@ SPEECH BUBBLE FLOW (RIGHT-TO-LEFT):
   } else if (speakers.length >= 2) {
     const traits0 = getCharTraitsFromMatrix(speakers[0], castList);
     const traits1 = getCharTraitsFromMatrix(speakers[1], castList);
+    if (compact) {
+      return `PLACEMENT/IDENTITY: RIGHT [${speakers[0]}] (${compactIdentityTraits(traits0)}), LEFT [${speakers[1]}] (${compactIdentityTraits(traits1)}). Keep slots exact; do NOT mirror/swap. Bubbles beside actual speakers with tails.`;
+    }
     // [v2.27] 人物+吹き出し位置固定ルール（左右入れ替わり全パターン対策）
     // 髪色等の視覚的特徴で位置をアンカリングし、AIの左右鏡像化を防ぐ
     return `CRITICAL PLACEMENT & IDENTITY:
@@ -945,7 +979,8 @@ SPEECH BUBBLE POSITION RULE:
   return `CRITICAL PLACEMENT: Follow the natural dialogue flow.`;
 };
 
-export const extractCastLimitRule = (fullPanelText, castList) => {
+export const extractCastLimitRule = (fullPanelText, castList, options = {}) => {
+  const compact = Boolean(options.compact);
   const lines = fullPanelText.split('\n');
 
   // Find valid cast names and create a lookup for full character objects
@@ -1069,12 +1104,18 @@ export const extractCastLimitRule = (fullPanelText, castList) => {
   const allCharBrackets = allPanelCharacters.map(c => `[${c}]`);
 
   if (panelActors.length > 0) {
-    let cloneWarning = `ANTI-CLONE REMINDER: ${allCharBrackets.join(', ')} — each appears EXACTLY ONCE. If a character is mentioned in both the placement rule AND the visual action, they are the SAME person — do NOT draw a second copy.`;
+    let cloneWarning = compact
+      ? `CAST COUNT: ${allCharBrackets.join(', ')} each EXACTLY ONCE; no named-character duplicates.`
+      : `ANTI-CLONE REMINDER: ${allCharBrackets.join(', ')} — each appears EXACTLY ONCE. If a character is mentioned in both the placement rule AND the visual action, they are the SAME person — do NOT draw a second copy.`;
     
     if (allPanelCharacters.length === 1 && dialogueLineCount <= 1) {
-      cloneWarning += `\nSOLO SHOT (SINGLE CHARACTER SCENE): Since only ${allCharBrackets[0]} is listed, THIS IS A SOLO SHOT. Do NOT draw ANY other person. Do NOT draw a second copy of ${allCharBrackets[0]}. Leave the surrounding space empty rather than adding people.`;
+      cloneWarning += compact
+        ? `\nSOLO: only ${allCharBrackets[0]}; no other people or second copy.`
+        : `\nSOLO SHOT (SINGLE CHARACTER SCENE): Since only ${allCharBrackets[0]} is listed, THIS IS A SOLO SHOT. Do NOT draw ANY other person. Do NOT draw a second copy of ${allCharBrackets[0]}. Leave the surrounding space empty rather than adding people.`;
     } else if (allPanelCharacters.length === 1 && dialogueLineCount >= 2) {
-      cloneWarning += `\nNOTE: Multiple speech bubbles in this panel are ALL spoken by ${allCharBrackets[0]} (monologue/soliloquy). Draw only ${allCharBrackets[0]} — do NOT add a second character just because there are multiple bubbles.`;
+      cloneWarning += compact
+        ? `\nMONOLOGUE: all bubbles belong to ${allCharBrackets[0]}; no extra person.`
+        : `\nNOTE: Multiple speech bubbles in this panel are ALL spoken by ${allCharBrackets[0]} (monologue/soliloquy). Draw only ${allCharBrackets[0]} — do NOT add a second character just because there are multiple bubbles.`;
     }
     
     // クローン防止: 空間（前景・後景）で縛る
@@ -1086,7 +1127,9 @@ export const extractCastLimitRule = (fullPanelText, castList) => {
     let negativeConstraint = "";
     if (noShowCharacters.length > 0) {
       const noShowNames = noShowCharacters.map(c => `[${c}]`).join(', ');
-      negativeConstraint = `\nDo NOT draw ${noShowNames} in this panel. They are completely absent from this scene.`;
+      negativeConstraint = compact
+        ? `\nABSENT: do NOT draw ${noShowNames}.`
+        : `\nDo NOT draw ${noShowNames} in this panel. They are completely absent from this scene.`;
     }
 
     // [v4.2.1] モブキャラ検出ロジック：本文にモブが含まれる場合はABS制限を緩和する
@@ -1094,24 +1137,36 @@ export const extractCastLimitRule = (fullPanelText, castList) => {
 
     let spatialConstraint;
     if (hasMob) {
-      spatialConstraint = `\nFOREGROUND MUST CONTAIN ONLY: ${foreground}.\nBACKGROUND MUST CONTAIN ONLY: ${background} and background characters (mob).\n${negativeConstraint}\nAllow additional background characters (mobs) as required by the action. Do not draw any main character in the background if they are already in the foreground.`;
+      spatialConstraint = compact
+        ? `\nFG only: ${foreground}. BG only: ${background} plus required adult mobs.${negativeConstraint}\nNo repeated FG characters in BG.`
+        : `\nFOREGROUND MUST CONTAIN ONLY: ${foreground}.\nBACKGROUND MUST CONTAIN ONLY: ${background} and background characters (mob).\n${negativeConstraint}\nAllow additional background characters (mobs) as required by the action. Do not draw any main character in the background if they are already in the foreground.`;
     } else {
-      spatialConstraint = `\nFOREGROUND MUST CONTAIN ONLY: ${foreground}.\nBACKGROUND MUST CONTAIN ONLY: ${background}.${negativeConstraint}\nABSOLUTELY NO OTHER HUMANS ALLOWED. Do not draw any character in the background if they are already in the foreground. Total EXACTLY ${allPanelCharacters.length} distinct individuals.`;
+      spatialConstraint = compact
+        ? `\nFG only: ${foreground}. BG only: ${background}.${negativeConstraint}\nNO OTHER HUMANS: exactly ${allPanelCharacters.length} people.`
+        : `\nFOREGROUND MUST CONTAIN ONLY: ${foreground}.\nBACKGROUND MUST CONTAIN ONLY: ${background}.${negativeConstraint}\nABSOLUTELY NO OTHER HUMANS ALLOWED. Do not draw any character in the background if they are already in the foreground. Total EXACTLY ${allPanelCharacters.length} distinct individuals.`;
     }
 
-    return `CRITICAL CAST PLACEMENT: Ensure ${foreground} are the main focus.\n${cloneWarning}${spatialConstraint}`;
+    return compact
+      ? `CAST LIMIT: main focus ${foreground}.\n${cloneWarning}${spatialConstraint}`
+      : `CRITICAL CAST PLACEMENT: Ensure ${foreground} are the main focus.\n${cloneWarning}${spatialConstraint}`;
   } else {
     // 登場キャラクターが検出されなかった場合でも、キャスト全体から除外指示を出すことは可能
     if (hasBroadGroupCue) {
-      return `CRITICAL CAST PLACEMENT: The action uses a broad group cue such as "all characters", "everyone", "全員", "みんな", or "一同". Treat that group as explicitly required by the panel action. Draw the relevant visible group described by the action, and if a speech bubble names a speaker outside the reference cast, draw exactly one generic adult speaker for that bubble. Do NOT exclude registered main characters solely because they are not dialogue speakers in this panel. NEVER draw the exact same character twice.`;
+      return compact
+        ? `CRITICAL CAST PLACEMENT: broad group cue is required by the action; draw the relevant visible group, one generic adult for any non-cast speaker, and never duplicate the same character.`
+        : `CRITICAL CAST PLACEMENT: The action uses a broad group cue such as "all characters", "everyone", "全員", "みんな", or "一同". Treat that group as explicitly required by the panel action. Draw the relevant visible group described by the action, and if a speech bubble names a speaker outside the reference cast, draw exactly one generic adult speaker for that bubble. Do NOT exclude registered main characters solely because they are not dialogue speakers in this panel. NEVER draw the exact same character twice.`;
     }
 
     let negativeConstraint = "";
     if (canonicalValidCharacters.length > 0) {
       const allNames = canonicalValidCharacters.map(c => `[${c}]`).join(', ');
-      negativeConstraint = `\nDo NOT draw ${allNames} unless explicitly required.`;
+      negativeConstraint = compact
+        ? `\nABSENT unless explicitly required: ${allNames}.`
+        : `\nDo NOT draw ${allNames} unless explicitly required.`;
     }
-    return `CRITICAL CAST PLACEMENT: Follow the panel's action naturally. NEVER draw the exact same character twice.${negativeConstraint}`;
+    return compact
+      ? `CRITICAL CAST PLACEMENT: follow the action naturally; never duplicate a character.${negativeConstraint}`
+      : `CRITICAL CAST PLACEMENT: Follow the panel's action naturally. NEVER draw the exact same character twice.${negativeConstraint}`;
   }
 };
 
@@ -1154,13 +1209,13 @@ export const buildEmotionBlock = (panelText) => {
 
   // マルチキャラ用フォールバックが定義されている場合はそちらを使用
   if (isMultiChar && s.styleMulti) {
-    let block = `\n(Apply the following visual style to this panel only. Do NOT draw this instruction as text on the image): ${s.styleMulti}`;
+    let block = `\nPanel-only style (do not draw this text): ${s.styleMulti}`;
     if (s.proportionsMulti) block += `\nPROPORTION OVERRIDE: ${s.proportionsMulti}`;
     if (s.vfxMulti) block += `\nVFX: ${s.vfxMulti}`;
     return block;
   }
 
-  let block = `\n(Apply the following visual style to this panel only. Do NOT draw this instruction as text on the image): ${s.style}`;
+  let block = `\nPanel-only style (do not draw this text): ${s.style}`;
   if (s.proportions) block += `\nPROPORTION OVERRIDE: ${s.proportions}`;
   if (s.vfx) block += `\nVFX: ${s.vfx}`;
   return block;

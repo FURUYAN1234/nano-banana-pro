@@ -766,6 +766,9 @@ A tool to automatically convert static 4-koma manga into fully voiced animated v
 
 ## 📋 ChangeLog
 
+### v4.8.1 (2026-06-24)
+- **[Fix & UX]** ChatGPT向けプロンプトをWeb貼付可能な長さへ汎用圧縮し、状況文引用の余計な吹き出し化を防止 / Generically compressed ChatGPT prompts into a web-paste-safe length and prevented action narration quotes from becoming extra speech bubbles
+
 ### v4.8.0 (2026-06-24)
 - **[Fix & UX]** 台詞抽出とタイトル句読点保持を汎用ルールで修正し、固有名詞ハードコード禁止ルールを明文化 / Fixed dialogue extraction and title punctuation preservation with generic rules, and documented the no-hardcoded-proper-nouns policy
 
@@ -814,33 +817,3 @@ A tool to automatically convert static 4-koma manga into fully voiced animated v
 - **[Fix]** セリフ抽出フォールバックにおける `lastIndex` 更新タイミングの致命的バグを修正。形状描写（「へ」の字等）がスキップされた際に話者コンテキストが途切れ、直後にある本来のセリフが消失する問題を解消 / Fixed a critical `lastIndex` regression in dialogue fallback extraction where skipped shape descriptions (e.g. 「へ」の字) would consume speaker context, causing the subsequent legitimate dialogue to be silently dropped
 - **[Fix]** 形状描写除外フィルタ（`isShapeDescription`）を新規追加。1〜2文字のカギ括弧（「へ」「Ω」「ω」等）の直後に「の字」「型」「の形」等が続く場合のみ非セリフとして除外 / Added shape description exclusion filter to prevent 1-2 character bracket text followed by shape indicators from being mistakenly extracted as dialogue
 - **[Fix]** 眼鏡なしキャラクターの Identity Matrix 防御を強化（「bare eyes, no frames — do NOT add glasses to this character」） / Strengthened no-glasses Identity Matrix defense with explicit frame prohibition
-
-### v4.6.4 (2026-06-03)
-- **[Fix]** セリフ抽出時の助詞（「と」「の」等）を含む特定文字長キャラクターのセリフ欠落バグを修正し、全てのセリフを正しく描画できるように改善 / Fixed a dialogue extraction bug where character names containing specific particles were incorrectly filtered out, ensuring all speech bubbles render correctly.
-
-### v4.6.3 (2026-06-03)
-- **[Fix & UX]** コロン形式ト書き・照明・SE行のセリフ誤抽出を修正、MOOD_CONTEXT_REの過剰マッチ修正 / Fixed stage direction lines (CharName: pose description), lighting/SE metadata, and MOOD_CONTEXT_RE over-matching from being incorrectly extracted as dialogue
-
-### v4.6.2 (2026-06-03)
-- **[Fix & UX]** 表情指定（「へ」等）の1〜2文字がプロンプトから欠落する不具合を修正 / Fixed a bug where 1-2 character expression modifiers like 'へ' were incorrectly suppressed from the prompt
-
-### v4.6.1 (2026-06-03)
-- **[Fix & UX]** v4.6.0のリリースノートの英日併記漏れを修正 / Fixed missing English translation in v4.6.0 release notes
-
-### v4.6.0 (2026-06-03)
-- **[Fix & UX]** セリフ抽出ロジックを修正し、「セリフ」（キャラ名）形式に対応 / Fixed dialogue extraction logic to support 'Dialogue' (Speaker) format
-
-### v4.5.9 (2026-06-01)
-- **[Fix & Prompt]** 引用語句（SFX・ムード・ナレーション等）の可視テキスト化を防止するようプロンプト抽出ロジックを強化し、必要な看板文字等のみを許可するホワイトリスト制御を追加 / Hardened prompt extraction logic to prevent non-visual quotes (SFX, mood, narration) from being rendered as text, adding a whitelist for necessary scene texts like signs.
-
-### v4.5.8 (2026-05-31)
-- **[Fix & UX]** 吹き出し以外のテキストの読み上げ防止ガードレール実装 / Implemented guardrails to prevent non-speech bubble visual text from being rendered as speech bubbles
-
-### v4.5.7 (2026-05-31)
-- **[Docs & UX]** Open AI API選択時（ChatGPTウェブ版での手動生成時）のプロンプト貼り付けに関する注意書き（「テキストフィールドに表示」のクリック必須）をPro Tipに追加 / Added a warning about clicking "Display in Text Field" when pasting prompts into ChatGPT Web.
-
-### v4.5.6 (2026-05-31)
-- **[Fix & Prompt]** シネマティック構図の名称をオリジナルに変更し、ChatGPT用/Gemini用プロンプトを大幅に圧縮（不要なFINAL COMPLIANCE CHECKを削除）。これにより横並び（漫才構図）エラーを防止しつつ、1x4の縦長レイアウトと極彩色（Chic Cinematic）を維持 / Renamed cinematic compositions and heavily compressed ChatGPT/Gemini prompts to fix the 1x4 layout degradation and restore chic cinematic colors.
-
-### v4.5.5 (2026-05-31)
-- **[Fix & Refactoring]** ポート競合の解消、コンポーネント間連携（setShowModal）の修正、ApiKeyModalの警告解消、およびLintエラー（未使用変数等）の完全クリーンアップ / Resolved port conflicts, fixed component props (setShowModal), addressed ApiKeyModal form warnings, and completely cleaned up Lint errors (unused variables, etc.)
