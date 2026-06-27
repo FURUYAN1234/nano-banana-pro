@@ -773,6 +773,9 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 
 ## 📋 ChangeLog
 
+### v4.8.3 (2026-06-27)
+- **[Fix & UX]** ChatGPT/OpenAI と Gemini のプロンプト系統を明示化し、WebコピーとAPI生成の同一プロンプト化、脚本ロック、スタイルロック、台詞・小物・Action抽出の安定化、生成履歴メモリ抑制、A4固定書き出し削除を反映 / Aligned ChatGPT/OpenAI and Gemini provider-family prompt routing so Web copy and API generation share the same prompt, with stronger script/style/dialogue/prop/action extraction, smaller image-history memory, and removal of the fixed A4 export
+
 ### v4.8.2 (2026-06-24)
 - **[Fix & UX]** APIキー入力時に形式チェックと実API疎通確認を必須化し、不正な文字列ではSTEP1へ進めないよう修正 / Require API-key format and live provider preflight before unlocking STEP 1, preventing arbitrary text from being treated as connected
 

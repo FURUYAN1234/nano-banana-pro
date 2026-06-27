@@ -158,22 +158,21 @@ export const buildIdentityMatrix = (castListText) => {
   if (characters.length === 0) return '';
 
   let matrix = `\n【IDENTITY MATRIX - ABSOLUTE LOCK (v2.25)】\n`;
-  matrix += `Before drawing EACH panel, cross-check EVERY character against this matrix. ANY violation = CRITICAL FAILURE.\n`;
+  matrix += `Cross-check EVERY character in EACH panel. Any violation = redraw.\n`;
 
   characters.forEach(c => {
     const traits = [];
     if (c.hairColor) traits.push(`${c.hairColor} hair`);
     if (c.hairStyle) traits.push(c.hairStyle);
     if (c.glasses === 'YES' || c.glasses === 'LOCKED_YES') traits.push('MUST HAVE glasses (do NOT remove)');
-    else if (c.glasses === 'NO' || c.glasses === 'LOCKED_NO') traits.push('MUST NOT have glasses (bare eyes, no frames — do NOT add glasses to this character)');
+    else if (c.glasses === 'NO' || c.glasses === 'LOCKED_NO') traits.push('MUST NOT have glasses (bare eyes, no frames)');
     else traits.push('check reference image for glasses status');
 
     matrix += `- [${c.shortName}]: ${traits.join(', ') || 'see reference image'}\n`;
   });
 
-  matrix += `CROSS-CHECK: After completing each panel, verify every character's hair color and glasses status matches the matrix above. If ANY mismatch, redraw that character.\n`;
-  matrix += `Reading order: RIGHT-TO-LEFT (Japanese manga). The first speaker is on the RIGHT. Speech bubbles flow right-to-left.
-SPEECH BUBBLE PLACEMENT RULE (CRITICAL): Each character's speech bubble MUST be drawn directly above or beside THAT character's head — matching the character's ACTUAL position in the panel. If a character is in the CENTER of the panel, their bubble MUST also be in the CENTER — do NOT push it to the left or right edge. Each bubble's tail MUST point down to its speaker.\n`;
+  matrix += `CROSS-CHECK: hair color and glasses status must match; redraw mismatch.\n`;
+  matrix += `Reading order: RIGHT-TO-LEFT. Speech bubbles flow right-to-left; each bubble tail points to its speaker.\n`;
 
   return matrix;
 };
@@ -608,9 +607,10 @@ export const extractDialogueOnly = (fullPanelText, castList) => {
       const postText = fullPanelText.substring(regex.lastIndex, regex.lastIndex + 40);
       const isSpokenQuoteByPostText = hasSpokenQuotePostContext(sameLinePostText || postText);
 
-      // Same-line speaker labels are reliable; loose carried context is too broad for visual quotes.
+      // Same-line speaker labels are reliable. Speech verbs inside situation/reaction
+      // narration are visual direction, not final bubble contracts.
       const hasSameLineSpeaker = isExplicitSameLineSpeakerPrefix(sameLinePrevText, validCharacters);
-      const hasValidSpeakerInPrevText = hasSameLineSpeaker || isSpokenQuoteByPostText;
+      const hasValidSpeakerInPrevText = hasSameLineSpeaker;
 
       if (!hasValidSpeakerInPrevText) {
         // 直前にキャスト名や人物名がない場合は、セリフではなく引用や他人の発言としてスキップ
@@ -627,7 +627,7 @@ export const extractDialogueOnly = (fullPanelText, castList) => {
       // [v4.6.5-fix2] 「〜と...音が」「〜と...鳴」等のSE文脈も検出
       const isSfxByPostText = /^(という音|という爆音|という銃声|という足音|と[^\n「」]{0,20}(?:音が|音を|音で|異音|金属音|爆音|轟音|衝撃音))/.test(postText);
       const isInstructionQuoteWithoutSpeechVerb = isInstructionLine(quoteLine) && !hasSpokenQuotePostContext(sameLinePostText);
-      const isLooseContextOnly = !hasSameLineSpeaker && !isSpokenQuoteByPostText;
+      const isLooseContextOnly = !hasSameLineSpeaker;
 
       // 2. 直前のテキストの末尾が形状や表記指示、比喩表現などを示すものである場合は除外
       const isNotDialogueIndicator = /(?:型|字|感|と書かれた|と書く|と書き|と書いた|という|のような|風の|的な|コード|キー|マーク|記号|ラベル|吹き出し|セリフ|ポーズ)$/.test(prevText.trim());
@@ -723,7 +723,7 @@ export const cleanseActionGagSymbols = (actionText) => {
   return cleansed;
 };
 
-const WRITTEN_TEXT_CONTEXT_RE = /(?:\bwritten\b|\bhandwriting\b|air-writing|finger-writing|\bsignage\b|\bsign\b|\blabel\b|board text|screen text|printed text|text on|letters on|\u6587\u5b57|\u6570\u5b57|\u6570\u5024|\u91d1\u984d|\u624b\u66f8\u304d|\u7a7a\u4e2d\u306b|\u66f8\u304b\u308c|\u66f8\u304f|\u66f8\u304d|\u66f8\u3044\u305f|\u770b\u677f|\u63b2\u793a|\u8cbc\u308a\u7d19|\u9ed2\u677f|\u30db\u30ef\u30a4\u30c8\u30dc\u30fc\u30c9|\u30ce\u30fc\u30c8\u306b|\u7d19\u306b|\u8cc7\u6599|\u9805\u76ee|\u30b9\u30de\u30db\u753b\u9762|\u753b\u9762|\u30b9\u30af\u30ea\u30fc\u30f3|\u30e2\u30cb\u30bf\u30fc|\u30c7\u30a3\u30b9\u30d7\u30ec\u30a4|\u8868\u793a|\u901f\u5831|\u70b9\u6ec5|\u30d5\u30a9\u30f3\u30c8|\u5370\u5b57|\u523b\u5370|\u30e9\u30d9\u30eb|\u6a19\u8b58)/i;
+const WRITTEN_TEXT_CONTEXT_RE = /(?:\bwritten\b|\bhandwriting\b|air-writing|finger-writing|\bsignage\b|\bsign\b|\blabel\b|board text|screen text|printed text|text on|letters on|\bposter\b|\u6587\u5b57|\u6570\u5b57|\u6570\u5024|\u91d1\u984d|\u624b\u66f8\u304d|\u7a7a\u4e2d\u306b|\u66f8\u304b\u308c|\u66f8\u304f|\u66f8\u304d|\u66f8\u3044\u305f|\u770b\u677f|\u63b2\u793a|\u8cbc\u308a\u7d19|\u30dd\u30b9\u30bf\u30fc|\u9ed2\u677f|\u30db\u30ef\u30a4\u30c8\u30dc\u30fc\u30c9|\u30ce\u30fc\u30c8\u306b|\u7d19\u306b|\u8cc7\u6599|\u9805\u76ee|\u30b9\u30de\u30db\u753b\u9762|\u753b\u9762|\u30b9\u30af\u30ea\u30fc\u30f3|\u30e2\u30cb\u30bf\u30fc|\u30c7\u30a3\u30b9\u30d7\u30ec\u30a4|\u8868\u793a|\u901f\u5831|\u70b9\u6ec5|\u30d5\u30a9\u30f3\u30c8|\u5370\u5b57|\u523b\u5370|\u30e9\u30d9\u30eb|\u6a19\u8b58)/i;
 const SOUND_CONTEXT_RE = /(?:sound|sfx|onomatopoeia|audio|hum|buzz|\u97f3|\u64ec\u97f3|\u52b9\u679c\u97f3|BGM|\u9cf4|\u30d6\u30fc\u30f3|\u30ce\u30a4\u30ba)/i;
 // [v4.6.3] MOOD_CONTEXT_RE から頻出語（表情・反応・状態・感情）を除外。
 // これらはセリフ周辺のト書きに頻繁に出現し、セリフのカギ括弧まで誤って置換してしまう原因となっていた。
@@ -755,7 +755,7 @@ const protectNonDialogueTextHints = (actionText) => {
     const context = `${leftContext} ${rightContext}`;
 
     if (hasSpokenQuotePostContext(rightContext)) {
-      return 'the listed dialogue content (do not render this quoted text outside speech bubbles)';
+      return '';
     }
 
     if (WRITTEN_TEXT_CONTEXT_RE.test(context)) {
@@ -763,22 +763,22 @@ const protectNonDialogueTextHints = (actionText) => {
     }
 
     if (SOUND_CONTEXT_RE.test(context)) {
-      return 'a non-text ambient sound effect (show through environment, vibration, cold air, or reactions only; no visible letters)';
+      return '';
     }
 
     if (MOOD_CONTEXT_RE.test(context)) {
-      return 'a non-text mood or aura concept (show through poses, focus, lighting, and composition only; no visible letters)';
+      return '';
     }
 
     if (SPOKEN_TEXT_CONTEXT_RE.test(context)) {
-      return 'the listed dialogue content (do not render this quoted text outside speech bubbles)';
+      return '';
     }
 
     if (isLikelyDialogue) {
       return match;
     }
 
-    return 'a quoted concept only (do not render these letters unless explicit visible writing is requested)';
+    return '';
   });
 };
 
@@ -853,6 +853,19 @@ export const extractActionOnly = (fullPanelText, castList, placementRule = "") =
   // [v3.39] ト書き・リアクション指示のカッコを外し、テキストとしての描画を防ぐ
   actionStr = actionStr.replace(/[（(](?:Camera|Location|Outfit|EMOTION|状況(?:演出)?|Action|リアクション|Reaction|設定|背景|Background|カメラワーク|CameraWork|Camera\s*Work)[:：]?\s*(.*?)[)）]/gi, '$1');
 
+  // [FIX] 角括弧で囲まれた制御タグ（[EMOTION: ...]・[Camera: ...] 等）が
+  //   「visual only」のはずのアクション文に漏れ込むのを除去する。
+  //   これらは画像モデルにとって制御トークン/ノイズであり、(1) ラベル文字をそのまま
+  //   描画する、(2) パネルの Camera 欄と二重・競合してカメラ指定がブレる、
+  //   (3) 不明な感情タグ（例: OVERDRIVE_SUSPENSE）が意図しない画風へ誘導する、
+  //   といったシナリオ↔画像の不整合の原因になっていた。
+  //   ※ EMOTION はパネルの PANEL STYLE LOCK 欄、Camera は Camera 欄で既に正規化済み。
+  actionStr = actionStr.replace(/\[\s*(?:EMOTION|Camera|Location|Outfit|Action|Reaction|Background|カメラワーク|CameraWork|Camera\s*Work|Punchline)\s*[:：][^\]]*\]/gi, ' ');
+  // [FIX] 「状況:」「Situation:」等のラベル語だけを除去し、後続の視覚描写本文は残す。
+  actionStr = actionStr.replace(/(?:^|[\s　])(?:状況(?:演出)?|Situation)\s*[:：]\s*/gi, ' ');
+  // 上記除去で生じた連続スペースを圧縮
+  actionStr = actionStr.replace(/[ 　]{2,}/g, ' ').trim();
+
   actionStr = actionStr || "Characters interacting dynamically based on dialogue.";
 
   // [v2.02] Duplication Removal: If character is already forced in placement, gently remove them from the explicit action subject if possible to prevent cloning hallucination
@@ -868,7 +881,11 @@ export const extractActionOnly = (fullPanelText, castList, placementRule = "") =
     });
   }
 
-  return protectNonDialogueTextHints(cleanseActionGagSymbols(actionStr));
+  return protectNonDialogueTextHints(cleanseActionGagSymbols(actionStr))
+    .replace(/で\s*と(?=呟|つぶや|言|叫|話|問|答)/g, 'で')
+    .replace(/([。！？!?])\s*と(?:呟|つぶや|言|叫|話|問|答)[^、。！？!?]*[、。]?/g, '$1')
+    .replace(/[ 　]{2,}/g, ' ')
+    .trim();
 };
 
 export const injectOutfitReminder = (actionText, activeOutfit) => {
@@ -1172,16 +1189,55 @@ export const extractCastLimitRule = (fullPanelText, castList, options = {}) => {
 
 // --- Emotion Style Functions (Phase 3-C: App.jsx assemblePrompt -> externalized) ---
 
+const EMOTION_STYLE_ALIAS_RULES = [
+  ['HORROR', /\b(PANIC|GROTESQUE|FEAR|TERROR|CREEPY|SPOOKY|GHOST|HAUNT|DREAD)\b/],
+  ['BLANK', /\b(FROZEN|FREEZE|EMPTY|VOID|NUMB|STUNNED|STIFF|WHITEOUT|SOULLESS)\b/],
+  ['IMPACT', /\b(SHOCK|ABSURD|EXPLOSIVE|EXPLOSION|CRASH|IMPACT|ULTRA|EXTREME|OVERDRIVE|HYPER\s+GAG)\b/],
+  ['GLITTER', /\b(HYPER|ANTICIPATION|EXCITED|EXCITEMENT|JOY|TRIUMPH|CONFIDENT|CONFIDENCE|SPARKLE|SPARKLING)\b/],
+];
+
+const normalizeEmotionTagToKnownStyle = (rawTag = '') => {
+  const raw = String(rawTag || '').toUpperCase();
+  const knownKeys = Object.keys(EMOTION_STYLES).sort((a, b) => b.length - a.length);
+
+  const directKey = knownKeys.find((key) => {
+    const escaped = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return new RegExp(`(^|[^A-Z_])${escaped}($|[^A-Z_])`).test(raw);
+  });
+  if (directKey) return directKey;
+
+  const normalized = ` ${raw.replace(/[^A-Z]+/g, ' ')} `;
+  const alias = EMOTION_STYLE_ALIAS_RULES.find(([, pattern]) => pattern.test(normalized));
+  return alias ? alias[0] : 'NORMAL';
+};
+
 // [v2.25] パネルテキストからEMOTIONタグを抽出
-// [v4.7.5] 複合タグ対応: [EMOTION: IMPACT、MOTION_BLUR] のように無効なサブタグが
-// 「、」「,」で続く場合でも、最初の有効なタグ名だけを正しく抽出する
+// [v4.8.3] 自由記述風タグも既存の強い画風タグへ正規化する
 export const extractEmotionStyle = (panelText) => {
-  const match = panelText.match(/\[EMOTION:\s*(NORMAL|CHIBI_GAG|GEKIGA|SHOUJO|HORROR|BLANK|IMPACT|WATERCOLOR|RETRO|GLITTER|SHADOW|SPEED|FLASHBACK|UKIYOE|POP_ART|SKETCH|NEON|THICK_PAINT|PASTEL|CEL|DARK_ANIME|THIN_LINE|HIGH_SATURATION|SUMI_INK|MONOCHROME_ACCENT|GOLDEN_HOUR)[^\]]*\]/i); // [v4.7.5] 複合タグ許容 + 墨インク・モノクロアクセント・ゴールデンアワー追加
-  if (match) {
-    const key = match[1].toUpperCase();
-    if (EMOTION_STYLES[key]) return key;
-  }
-  return 'NORMAL';
+  const match = panelText.match(/\[EMOTION:\s*([^\]]+)\]/i);
+  return match ? normalizeEmotionTagToKnownStyle(match[1]) : 'NORMAL';
+};
+
+// [GAG-OVERLAY] 元の感情タグから「ギャグ／コメディ意図」を検出する。
+//   normalizeEmotionTagToKnownStyle と同様に非英字をスペース化してから語境界判定し、
+//   日本語のコメディ語は原文に対して直接判定する。
+const COMEDY_INTENT_EN_RE = /\s(?:GAG|COMIC|COMEDY|COMEDIC|FUNNY|HUMOR|HUMOUR|SILLY|GOOFY|WACKY|SLAPSTICK)\s/;
+const COMEDY_INTENT_JA_RE = /ギャグ|コメディ|コミカル|お笑い|笑い|ボケ|ツッコミ|ずっこけ|ズッコケ/;
+const rawTagHasComedyIntent = (rawTag = '') => {
+  const raw = String(rawTag || '');
+  const normalized = ` ${raw.toUpperCase().replace(/[^A-Z]+/g, ' ')} `;
+  return COMEDY_INTENT_EN_RE.test(normalized) || COMEDY_INTENT_JA_RE.test(raw);
+};
+
+// [GAG-OVERLAY] シリアス系の暗い画風に写像されたが、元タグがコメディ意図を持つ場合に
+//   「画風は維持しつつコミカルな崩しを許可」する加点オーバーレイを当てる対象スタイル。
+//   画風そのものは差し替えない（表現の幅を削らない＝ホラーコメディ等を成立させる）。
+const SERIOUS_STYLES_FOR_GAG_OVERLAY = new Set(['HORROR', 'GEKIGA', 'SHADOW', 'DARK_ANIME']);
+const GAG_INTENT_OVERLAY = `\nGAG INTENT OVERLAY: the source emotion is comedic at its core (a gag), so KEEP this panel's dark/dramatic rendering exactly as specified — lighting, heavy shadows, palette, and composition stay — but let the humor read THROUGH it. Allow exaggerated cartoon reactions, over-the-top expressions, and comedic timing inside this serious art style (horror-comedy / dramatic-comedy). Do NOT play it straight-serious, and do NOT flatten the dramatic styling into a plain chibi gag.`;
+
+const extractRawEmotionTag = (panelText) => {
+  const match = String(panelText || '').match(/\[EMOTION:\s*([^\]]+)\]/i);
+  return match ? match[1].trim() : '';
 };
 
 // [v2.31] パネルの感情スタイル指示を構築（マルチキャラ対応）
@@ -1189,6 +1245,14 @@ export const buildEmotionBlock = (panelText) => {
   const emo = extractEmotionStyle(panelText);
   if (emo === 'NORMAL') return '';
   const s = EMOTION_STYLES[emo];
+  const styleLock = `PANEL STYLE LOCK: ${emo}; visibly distinct linework, palette, shading, background/VFX. Change at least three visual axes; pose, expression, saturation, glow, or speed lines alone are insufficient.`;
+
+  // [GAG-OVERLAY] 元タグがコメディ意図を持ち、かつシリアス系の暗い画風に写像された場合のみ、
+  //   画風は維持したまま「コミカルな崩し許可」を加点する（例: [EMOTION: PANIC_GAG] → HORROR）。
+  const rawTag = extractRawEmotionTag(panelText);
+  const gagOverlay = (SERIOUS_STYLES_FOR_GAG_OVERLAY.has(emo) && rawTagHasComedyIntent(rawTag))
+    ? GAG_INTENT_OVERLAY
+    : '';
 
   // [v2.31] IMPACT等のソロ演出スタイルがマルチキャラパネルで使われた場合、
   // 「顔アップで60-80%」指示がANTI-FLOATING-EYE RULEと矛盾するのを防ぐ
@@ -1209,16 +1273,18 @@ export const buildEmotionBlock = (panelText) => {
 
   // マルチキャラ用フォールバックが定義されている場合はそちらを使用
   if (isMultiChar && s.styleMulti) {
-    let block = `\nPanel-only style (do not draw this text): ${s.styleMulti}`;
+    let block = `\n${styleLock}\nStyle: ${s.styleMulti}`;
     if (s.proportionsMulti) block += `\nPROPORTION OVERRIDE: ${s.proportionsMulti}`;
     if (s.vfxMulti) block += `\nVFX: ${s.vfxMulti}`;
-    return block;
+    if (s.surfaceException) block += `\nSTYLE EXCEPTION: ${s.surfaceException}. Keep faces/skin clean; do not add unrelated noise.`;
+    return block + gagOverlay;
   }
 
-  let block = `\nPanel-only style (do not draw this text): ${s.style}`;
+  let block = `\n${styleLock}\nStyle: ${s.style}`;
   if (s.proportions) block += `\nPROPORTION OVERRIDE: ${s.proportions}`;
   if (s.vfx) block += `\nVFX: ${s.vfx}`;
-  return block;
+  if (s.surfaceException) block += `\nSTYLE EXCEPTION: ${s.surfaceException}. Keep faces/skin clean; do not add unrelated noise.`;
+  return block + gagOverlay;
 };
 
 // --- Clean Cast List (Phase 3-C: castList parsing -> externalized) ---

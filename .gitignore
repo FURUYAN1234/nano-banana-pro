@@ -11,6 +11,8 @@ node_modules
 dist
 dist-ssr
 *.local
+scratch/
+HANDOFF_codex_*.md
 
 # Editor directories and files
 .vscode/*

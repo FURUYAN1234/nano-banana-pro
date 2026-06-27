@@ -45,7 +45,11 @@ export const generateImageWithOpenAI = async (prompt, statCallback) => {
         model: OPENAI_IMAGE_MODEL,
         prompt: prompt,
         n: 1,
-        size: "1024x1792", // OpenAI API supports 1024x1792 for vertical aspect ratio
+        // プロンプトは A4 portrait (1:1.414, 1024x1448) を要求している。
+        // gpt-image の縦長キャンバスで最も A4 に近いのは 1024x1536 (1:1.5)。
+        // 旧値 1024x1792 (1:1.75) は A4 より縦に長すぎ、(1) 生成画像のパネル下に余白が出る
+        // (2) A4書き出し時に左右ピラーボックスが出る、という二重の不整合を起こしていた。
+        size: "1024x1536", // A4 portrait に最も近い縦長サイズ（プロンプトのFORMAT指定と整合）
         quality: "high", // [v3.55] 最高品質モード: テキスト描画精度・ディテールが大幅向上（EvoLinkAI推奨設定）
         output_format: "png",
         // ※ gpt-image-2 は response_format ではなく output_format を使用する別仕様。

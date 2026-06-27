@@ -11,7 +11,12 @@ import { SYSTEM_VERSION, DEFAULT_CATEGORIES, EMOTION_STYLES, DYNAMIC_CAMERA_PROT
 import { translateApiError } from '../lib/safety-filters';
 import { get360AnalysisPrompt, parse360Analysis } from '../lib/panorama360';
 import { getCharacterAnalysisPrompt } from '../lib/prompts';
-import { buildMangaPrompt } from '../lib/prompt-assembler';
+import {
+  buildMangaPrompt,
+  PROMPT_PROVIDER_FAMILIES,
+  normalizePromptProviderFamily
+} from '../lib/prompt-assembler';
+import { addGenerationHistoryItem } from '../lib/generation-history';
 import { generateScenario, enhanceScenarioText } from '../lib/scenario-provider';
 import { fixPolicyViolation } from '../lib/policy-fixer';
 import { verifyApiKeyConnection } from '../lib/api-key-preflight';
@@ -197,6 +202,12 @@ export default function useMangaWorkflow() {
   // Image Generation
   const [generatedImage, setGeneratedImage] = useState("");
   const [generationHistory, setGenerationHistory] = useState([]); // [v2.86] Generated Image History
+
+  const getCurrentPromptProviderFamily = () => (
+    selectedEngine === 'openai' || enableOpenAIApi
+      ? PROMPT_PROVIDER_FAMILIES.CHATGPT
+      : PROMPT_PROVIDER_FAMILIES.GEMINI
+  );
 
 
   const handleSetKey = async (key) => {
@@ -789,7 +800,7 @@ export default function useMangaWorkflow() {
 
   // --- Step 3: Prompt Assembly (Super FURU v121.3) ---
   // [v2.79] 戻り値変更: フルオート連鎖用（文字列=成功, null=失敗）
-  const assemblePrompt = async (skipGuard = false, overrideScenario = null, enableChatGPTModeOverride = null) => {
+  const assemblePrompt = async (skipGuard = false, overrideScenario = null, providerFamilyOverride = null) => {
     const currentScenario = overrideScenario || scenario;
     if (!skipGuard && (!castList || !currentScenario)) return showStatus("キャストとシナリオが必要です。");
     const scenarioValidation = validateMangaScenario(currentScenario);
@@ -814,7 +825,9 @@ export default function useMangaWorkflow() {
     lastPolicyErrorRef.current = ""; // [v4.2.0] エラーメッセージrefリセット
     setAssembleThought("スーパーフル・プロトコル v121.3 (Universal Master) を起動中... 全データの整合性をチェックしています...");
 
-    const effectiveChatGPTMode = typeof enableChatGPTModeOverride === 'boolean' ? enableChatGPTModeOverride : enableChatGPTMode;
+    const effectiveProviderFamily = normalizePromptProviderFamily(
+      providerFamilyOverride || getCurrentPromptProviderFamily()
+    );
 
     // Fake Streaming Effect
     const thinkTimer = setInterval(() => {
@@ -844,7 +857,7 @@ export default function useMangaWorkflow() {
         scenario: currentScenario,
         castList,
         colorMode,
-        enableChatGPTMode: effectiveChatGPTMode,
+        providerFamily: effectiveProviderFamily,
         bg360Image,
         bg360Analysis,
         bg360Enabled,
@@ -885,7 +898,7 @@ export default function useMangaWorkflow() {
       assemblePrompt();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [enableChatGPTMode]);
+  }, [selectedEngine, enableOpenAIApi]);
 
   // [v3.59] ソフトリセット: キャラクター解析(STEP1)を保持し、STEP2以降をリセット
   const partialReset = () => {
@@ -1055,14 +1068,10 @@ export default function useMangaWorkflow() {
     
     // [v3.04i] 進捗窓(genLog)にChatGPTモードのバッチ/警告を明示
     const initialLogs = ["[1/5] プロンプトパラメータをロック中...", "[2/5] セーフティフィルターを検証中..."];
-    if (enableChatGPTMode) {
-      if (selectedEngine === 'openai') {
-        // OpenAI Engine では ChatGPT プロンプトは当然の標準動作 → 情報表示
-        initialLogs.push("[2.5/5] ✅ ChatGPT Engine: プロンプト最適化を適用中...");
-      } else {
-        // Gemini Engine で手動で ChatGPT モードを ON にした場合 → 注意表示
-        initialLogs.push("[2.5/5] ⚠️ [ChatGPT Mode] 有効: プロンプト構造の特殊最適化を適用中...");
-      }
+    if (getCurrentPromptProviderFamily() === PROMPT_PROVIDER_FAMILIES.CHATGPT) {
+      initialLogs.push("[2.5/5] ✅ ChatGPT Engine: ChatGPT-family prompt structure locked.");
+    } else {
+      initialLogs.push("[2.5/5] ✅ Gemini Engine: Gemini-family prompt structure locked.");
     }
     setGenLog(initialLogs);
 
@@ -1121,7 +1130,7 @@ export default function useMangaWorkflow() {
       const normalizedBase64Img = String(base64Img || '').replace(/\s+/g, '');
       const finalImageStr = `data:${generatedMimeType};base64,${normalizedBase64Img}`;
       setGeneratedImage(finalImageStr);
-      setGenerationHistory(prev => [{ id: Date.now(), img: finalImageStr }, ...prev]); // [v2.86] Add to history
+      setGenerationHistory(prev => addGenerationHistoryItem(prev, { id: Date.now(), img: finalImageStr }));
       
       // [v3.56] OpenAIモデル (gpt-image-2等) は正規モデルとして扱い、フォールバック警告を出さない
       const isOpenAIModel = generatedModelId && generatedModelId.startsWith("gpt-");
@@ -1388,7 +1397,7 @@ export default function useMangaWorkflow() {
     // フルオート開始
     fullAutoAbortRef.current = false;
     setIsFullAutoMode(true);
-    setEnableChatGPTMode(false); // ChatGPTモードOFF（デモ用ノーマルモード）
+    setEnableChatGPTMode(selectedEngine === 'openai' || enableOpenAIApi);
 
     // [v4.2.7] 新しい周回の開始時に、前回の生成データ（シナリオ、プロンプト、画像等）を即時リセット
     // これにより currentStep が 2 に下がり、画面レイアウトの再レンダリングが先行して完了します
@@ -1437,8 +1446,8 @@ export default function useMangaWorkflow() {
     step3Ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     await new Promise(r => setTimeout(r, 300));
 
-    // stale state回避のため文字列を直接渡す
-    const generatedPrompt = await assemblePrompt(true, generatedScenario, false); 
+    const fullAutoProviderFamily = getCurrentPromptProviderFamily();
+    const generatedPrompt = await assemblePrompt(true, generatedScenario, fullAutoProviderFamily);
     if (fullAutoAbortRef.current || !generatedPrompt) {
       setIsFullAutoMode(false);
       setFullAutoStep(0);

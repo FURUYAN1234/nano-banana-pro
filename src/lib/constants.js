@@ -1,7 +1,7 @@
 // --- 定数・タグ定義 (constants.js) ---
 // App.jsx から抽出された共有定数
 
-export const SYSTEM_VERSION = "v4.8.2";
+export const SYSTEM_VERSION = "v4.8.3";
 
 // --- Punchline ラベル変換関数 ---
 export const getPunchlineLabel = (type) => {
@@ -126,11 +126,13 @@ export const EMOTION_STYLES = {
     style: 'In THIS PANEL ONLY, shift to a mature realistic illustration style with heavy ink shadows, sharp angular facial features, detailed muscle/bone structure visible through skin tension, and dramatic chiaroscuro lighting. Characters look older and more intense. IMPORTANT: Keep the image in FULL COLOR (not black and white). Use deep vivid colors with high contrast shadows, not monochrome.',
     proportions: 'Use 7-8 head proportions. Characters appear taller and more imposing.',
     vfx: '(Heavy crosshatching shadows:1.4), (dramatic rim lighting:1.5), (high contrast deep shadows with stark chiaroscuro lighting), (intense speed lines in background)',
+    surfaceException: 'intentional crosshatching and deep ink shadows only',
   },
   SHOUJO: {
     style: 'In THIS PANEL ONLY, shift to a soft romantic illustration style with sparkling highlights in the eyes, delicate thin linework, and dreamy soft-focus backgrounds filled with floating flower petals, sparkles, and light bokeh.',
     proportions: '',
     vfx: '(Sparkling star-shaped eye highlights:1.4), (floating cherry blossom petals:1.3), (soft pastel gradient background), (screen tone roses and bubbles)',
+    surfaceException: 'controlled sparkle highlights, petals, bokeh, and screen-tone roses only',
   },
   HORROR: {
     style: 'In THIS PANEL ONLY, shift to a dark horror manga style with extreme shadow coverage (70%+ of panel), unsettling off-center composition, and characters lit from below or behind creating sinister silhouettes.',
@@ -146,6 +148,7 @@ export const EMOTION_STYLES = {
     style: 'In THIS PANEL ONLY, use an explosive impact-frame composition. The main character\'s expression fills 60-80% of the panel. Dramatic radial speed lines burst from the center. The panel glows with intense energy aura radiating outward.',
     proportions: 'OVERRIDE: Use 2-4 head proportions. Extreme close-up with foreshortening allowed.',
     vfx: '(Explosive radial speed lines from center:1.5), (screen-filling extreme close-up face:1.4), (intense glowing energy aura:1.2), (intense dramatic backlight)',
+    surfaceException: 'intentional radial speed lines and controlled impact aura only',
     // [v2.31] マルチキャラパネル用フォールバック
     // [v2.57] ひび割れ演出を削除し、エネルギー放射型演出に差し替え
     styleMulti: 'In THIS PANEL ONLY, use a dramatic impact-frame composition with intense energy. Dramatic radial speed lines burst from the center of the panel. The panel glows with intense energy aura radiating outward. IMPORTANT: Show ALL characters listed in the panel at full body or waist-up — do NOT zoom into a single face. Do NOT create a close-up of one character\'s face that fills most of the panel. Do NOT draw cracks, fractures, or shattering effects on the panel borders.',
@@ -156,16 +159,19 @@ export const EMOTION_STYLES = {
     style: 'In THIS PANEL ONLY, shift to a soft watercolor painting style with blurred edges, transparent color washes, and visible paper texture. The mood is nostalgic and dreamlike.',
     proportions: '',
     vfx: '(Soft watercolor washes:1.4), (blurred dreamy edges:1.3), (muted warm sepia tones), (visible paper grain texture)',
+    surfaceException: 'intentional watercolor wash and paper grain only',
   },
   RETRO: {
     style: 'In THIS PANEL ONLY, shift to a 1970s-1980s retro manga style with halftone dot shading, thick bold outlines, and classic exaggerated sweat/shock visual metaphors. IMPORTANT: Maintain each character\'s original vibrant hair colors and eye colors accurately despite the retro art style shift. Do NOT desaturate or mute character colors.',
     proportions: '',
     vfx: '(Halftone dot pattern shading:1.4), (thick bold outlines:1.3), (retro manga panel borders), (classic manga shock symbols)',
+    surfaceException: 'intentional halftone/screentone on backgrounds and retro panel borders only',
   },
   GLITTER: {
     style: 'In THIS PANEL ONLY, the main character radiates confidence with dramatic golden backlighting, brilliant sparkle effects around their face, and a confident smirk or triumphant expression. Their hair is dramatically highlighted by the backlighting. Do NOT change any character\'s hair length or hairstyle from their reference description.',
     proportions: '',
     vfx: '(Dramatic golden backlight aura:1.4), (brilliant sparkle highlights:1.3), (sparkle particle effects around face:1.3), (confident smirk expression)',
+    surfaceException: 'controlled sparkle highlights and aura around the acting character only',
   },
   SHADOW: {
     style: 'In THIS PANEL ONLY, the scheming character is rendered mostly in dark silhouette with only their eyes glowing visibly. A menacing dark aura surrounds them. The mood is sinister and calculating.',
@@ -180,6 +186,7 @@ EMOTION_STYLES.SPEED = {
   style: 'In THIS PANEL ONLY, the entire composition conveys extreme speed and motion. CRITICAL: Keep faces and eyes SHARP and clearly readable — apply motion blur ONLY to moving parts (legs, arms, hair tips, clothing edges). Background becomes directional speed lines radiating from the movement direction. The panel feels like a single frame captured from an intense chase or sudden dash, as if the camera is panning to track the subject.',
   proportions: '',
   vfx: '(sharp focus on face and eyes:1.5), (motion blur only on moving parts:1.4), (directional motion blur following movement:1.4), (extreme horizontal speed lines filling background:1.5), (wind-blown hair and clothing:1.3), (dynamic forward-leaning running pose:1.3), (after-image ghosting effect:1.2), (panning shot sense of speed:1.3)',
+  surfaceException: 'intentional directional speed lines and motion streaks only',
 };
 EMOTION_STYLES.FLASHBACK = {
   style: 'In THIS PANEL ONLY, shift to a memory/flashback visual style. The entire panel is rendered in warm sepia tones with soft vignette darkening at the edges. Lines are slightly softer and hazier than normal panels. A dreamy, nostalgic atmosphere pervades the scene. Panel borders may appear wavy or fade out to indicate this is a memory.',
@@ -195,27 +202,32 @@ EMOTION_STYLES.POP_ART = {
   style: 'In THIS PANEL ONLY, shift to a vibrant pop art comic style inspired by Roy Lichtenstein. Use bold primary colors (red, blue, yellow), thick black outlines, and Ben-Day dot patterns for shading. The composition should feel graphic and punchy with high contrast. Speech bubbles should have bold jagged edges.',
   proportions: '',
   vfx: '(Bold Ben-Day halftone dot shading:1.5), (primary color palette - red blue yellow:1.4), (thick bold pop art outlines:1.4), (high contrast flat color fills:1.3), (retro comic book printing texture:1.2)',
+  surfaceException: 'intentional Ben-Day dots and retro print texture only',
 };
 EMOTION_STYLES.SKETCH = {
   style: 'In THIS PANEL ONLY, the art style shifts to a rough pencil sketch or storyboard draft. Lines are loose, scratchy, and intentionally unfinished. Some areas may have construction lines or rough hatching visible. The effect suggests this panel is a "raw thought" or "unpolished reality" breaking through the clean manga surface. IMPORTANT: Characters must still be recognizable by their key features.',
   proportions: '',
   vfx: '(Rough pencil sketch lines:1.5), (visible construction guidelines:1.3), (loose crosshatch shading:1.4), (unfinished edges fading to white paper:1.3), (graphite pencil texture on paper grain:1.2)',
+  surfaceException: 'intentional pencil grain, rough hatching, and construction lines only',
 };
 EMOTION_STYLES.NEON = {
   style: 'In THIS PANEL ONLY, shift to a cyberpunk neon-lit aesthetic. The scene is bathed in intense neon glow from pink, cyan, and purple light sources. Characters have neon rim lighting outlining their silhouettes. The background is dark with glowing signs, light trails, and reflective wet surfaces. The mood is futuristic and electric.',
   proportions: '',
   vfx: '(Intense neon pink and cyan rim lighting:1.5), (dark background with glowing light sources:1.4), (reflective wet surface catching neon colors:1.3), (light bloom and lens flare from neon:1.3), (cyberpunk color palette - magenta cyan purple:1.4)',
+  surfaceException: 'controlled neon glow, bloom, lens flare, and wet reflections only',
 };
 // [v2.95] 画風パレット拡張: 6つの新EMOTION_STYLES（厚塗り・パステル・セル画・ダーク・繊細線・高彩度）
 EMOTION_STYLES.THICK_PAINT = {
   style: 'In THIS PANEL ONLY, shift to a thick impasto digital painting style. Use heavy brush strokes with visible texture, rich color layering, and strong three-dimensional form through dramatic light and shadow modeling. The overall impression should feel weighty, substantial, and premium like a gallery painting.',
   proportions: '',
   vfx: '(Visible thick brush stroke texture:1.5), (rich oil painting color depth:1.4), (dramatic chiaroscuro light modeling:1.4), (three-dimensional form through heavy shading:1.3), (warm subsurface scattering on skin:1.2)',
+  surfaceException: 'intentional visible brush-stroke texture and paint layering only',
 };
 EMOTION_STYLES.PASTEL = {
   style: 'In THIS PANEL ONLY, shift to a soft pastel anime illustration style. Use light desaturated colors, gentle gradients, and a warm dreamy atmosphere. Lines are thin and delicate. The overall mood should feel gentle, healing, and calming like a picture book illustration.',
   proportions: '',
   vfx: '(Soft pastel color palette:1.5), (gentle gradient sky background:1.3), (warm diffused lighting:1.4), (thin delicate line art:1.3), (light bloom soft glow:1.2)',
+  surfaceException: 'controlled soft bloom and pastel glow only',
 };
 EMOTION_STYLES.CEL = {
   style: 'In THIS PANEL ONLY, shift to a modern high-budget TV anime cel animation style. Use vibrant, highly saturated colors with clearly defined deep shadow areas. Outlines are bold and distinct to separate characters from the background. The color palette is rich, energetic, and visually popping.',
@@ -226,6 +238,7 @@ EMOTION_STYLES.DARK_ANIME = {
   style: 'In THIS PANEL ONLY, shift to a dark atmospheric anime style. The overall brightness is significantly reduced. Deep shadows dominate the composition. Colors are desaturated except for occasional accent lighting (moonlight, streetlamp, screen glow). The mood is mysterious, tense, and foreboding.',
   proportions: '',
   vfx: '(Overall dark low-key lighting:1.5), (deep dramatic shadows covering 60% of panel:1.4), (desaturated muted color palette:1.3), (single accent light source creating rim light:1.4), (atmospheric fog or haze:1.2)',
+  surfaceException: 'controlled atmospheric fog or haze only',
 };
 EMOTION_STYLES.THIN_LINE = {
   style: 'In THIS PANEL ONLY, shift to an ultra-fine detailed line art style. Every strand of hair, fabric fold, and facial feature is rendered with extremely thin precise lines. The level of detail is exceptionally high, creating a delicate and elegant visual impression. Colors are clean and precise.',
@@ -242,6 +255,7 @@ EMOTION_STYLES.SUMI_INK = {
   style: 'In THIS PANEL ONLY, shift to a dramatic Japanese ink splash aesthetic. The background features bold black sumi ink splashes and dynamic calligraphy brush strokes erupting behind or around the characters. Generous white negative space contrasts with the explosive ink. Characters remain clean and fully colored in the foreground while the ink effects create dramatic energy behind them. The mood is intense, elegant, and distinctly Japanese.',
   proportions: '',
   vfx: '(black sumi ink splash behind character:1.5), (dynamic calligraphy brush strokes:1.4), (white negative space background:1.4), (ink wash gradient:1.2), (controlled ink splatter:1.3), (clear character silhouette:1.4), (subtle red accent on key element:1.2)',
+  surfaceException: 'intentional sumi ink splashes, brush strokes, and ink wash only',
 };
 EMOTION_STYLES.MONOCHROME_ACCENT = {
   style: 'In THIS PANEL ONLY, render the entire panel in dramatic grayscale monochrome EXCEPT for one single vivid color element (such as a key object, a character\'s eyes, or a critical item). This creates a cinematic selective-color effect that instantly draws the viewer\'s eye to the most important element in the scene. The contrast between the monochrome world and the single vivid color maximizes dramatic impact.',
@@ -252,6 +266,7 @@ EMOTION_STYLES.GOLDEN_HOUR = {
   style: 'In THIS PANEL ONLY, bathe the entire scene in warm golden sunset lighting. Long dramatic shadows stretch across the ground. Everything is illuminated by rich amber-orange light from a low sun angle, creating an emotionally charged, cinematic atmosphere. Characters are warmly backlit with golden rim lighting outlining their silhouettes. The mood is nostalgic, beautiful, and emotionally resonant — perfect for fake-emotional endings or dramatic irony.',
   proportions: '',
   vfx: '(warm golden hour sunlight:1.5), (long dramatic shadows:1.4), (rich amber orange rim lighting:1.4), (low sun angle backlight:1.3), (warm color temperature shift:1.3), (cinematic emotional atmosphere:1.3), (soft lens diffusion:1.2)',
+  surfaceException: 'controlled golden rim light and soft lens diffusion only',
 };
 
 // [v2.53.3] HYPER-DYNAMIC Camera Angle Generator — 数値ウェイト付きタグ強化版

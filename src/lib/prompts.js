@@ -295,7 +295,7 @@ ${styleJson.anti_patterns ? `            - 絶対禁止事項:\n${styleJson.anti
           3.5 **【笑いの構造設計 (Comedy Structure Engineering)】**:
              - **大原則: 笑いは「予想された流れ」と「実際の流れ」のズレで作る。** 以下の技法を意識的に選択・組み合わせてシナリオを構成せよ。
              - **【GMC+S ギャグ設計 (Goal, Motivation, Conflict, Stakes)】**:
-                * **欲求 (Goal)**: キャラクターのしょうもない、または強烈な個人的欲望（例:「どうしてもプリンを食べたい」「誰より目立ちたい」等）を起点にせよ。
+                * **欲求 (Goal)**: キャラクターのしょうもない、または強烈な個人的欲望（例:「どうしても好物を食べたい」「誰より目立ちたい」等）を起点にせよ。
                 * **代償/危機 (Stakes)**: 「もしその欲求が達成できなかったらどうなるか？（例：社会的に死ぬ、存在が消える等）」という切実なリスクを1〜2コマ目で提示し、読者にオチへの期待（緊張感）を持たせよ。
                 * **障害 (Conflict)**: その欲求を阻む、理不尽でスケールの違う障害（例:「店員が宇宙語しか話さない」「隕石が降ってくる」等）をぶつけよ。
                 * **決着 (Resolution)**: 欲求が最悪・最高の形で裏切られ、Stakes（代償）が爆発するオチを作れ。
@@ -617,32 +617,32 @@ ${finalPrompt}
  * ChatGPT (gpt-image-2) 用の4コマ漫画プロンプトを構築する
  * @param {Object} p - パラメータオブジェクト
  */
+const compactChatGPTCastDetails = (castText = '') => String(castText)
+  .split('\n')
+  .map((line) => {
+    const match = line.match(/^\s*-\s*Character\s*\[([^\]]+)\]\s*:\s*(.*)$/i);
+    if (!match) return line.trim();
+    const traits = match[2]
+      .split(',')
+      .map((trait) => trait.trim())
+      .filter((trait) => trait && !/^(?:female|woman|male|man|young adult|adult)$/i.test(trait))
+      .slice(0, 8)
+      .join(', ');
+    return `- [${match[1]}]: ${traits}`;
+  })
+  .filter(Boolean)
+  .join('\n');
+
 export const buildChatGPTMangaPrompt = (p) => {
   const {
     safeTopic, watermarkEng, styleCore, safeLocation,
-    bg360Image, bg360Analysis, bg360Enabled, bg360CroppedPanels, enableChatGPTMode,
+    bg360Image, bg360Analysis, bg360Enabled,
     VAR_CAST_LIST_CHATGPT, identityMatrix, activeOutfit,
-    panelSections // 事前にビルドされた4パネル分のセクション文字列
+    scriptLock, panelSections // 事前にビルドされた4パネル分のセクション文字列
   } = p;
 
   const bg360Block = (bg360Image && bg360Analysis && bg360Enabled) ? (
-    (bg360CroppedPanels && bg360CroppedPanels.length === 4 && !enableChatGPTMode)
-    ? `
-BACKGROUND REFERENCE IMAGES (Per-Panel Cropped Views):
-4 background reference images are attached after the text prompt. These are NOT character sheets.
-- Image 1 → Background for Panel 1
-- Image 2 → Background for Panel 2
-- Image 3 → Background for Panel 3
-- Image 4 → Background for Panel 4
-Each image is a perspective-cropped view extracted from a 360° panorama, showing the exact camera angle and scenery for that panel.
-⚠️ CRITICAL RULES:
-- Use each background image as the visual reference for its corresponding panel. Match the colors, lighting (${bg360Analysis.lighting}), architecture, and environmental details.
-- DO NOT copy any character clothing or outfits from the background images.
-- Your OUTPUT must remain A4 PORTRAIT (1:1.414 tall) with 4 vertical panels. Do NOT replicate the landscape aspect ratio of the background images.
-- Draw characters IN FRONT of these backgrounds. The characters are the foreground subjects; the background images provide the scenery behind them.
-- Match shadow directions and ambient color temperature to the background references.
-`
-    : `
+    `
 BACKGROUND REFERENCE IMAGE:
 Among ALL attached images, identify the one with a panoramic 2:1 width-to-height aspect ratio (equirectangular format). That image is the 360° BACKGROUND REFERENCE — NOT a character sheet. All other attached images are CHARACTER REFERENCE sheets.
 ⚠️ CRITICAL: This panoramic image is ONLY for background reference (colors, lighting, architecture). Do NOT imitate its 2:1 wide aspect ratio. Your OUTPUT must remain A4 PORTRAIT (1:1.414 tall) with 4 vertical panels. The panoramic image is NOT a layout template.
@@ -654,48 +654,65 @@ Use the 360° background image's lighting direction (${bg360Analysis.lighting}),
   const outfitRule = activeOutfit
     ? `- IGNORE reference clothing. All characters MUST wear exactly: ${activeOutfit}.`
     : '- OUTFIT CONSISTENCY: Every character MUST wear EXACT same outfit in ALL 4 panels.';
+  const compactCastDetails = compactChatGPTCastDetails(VAR_CAST_LIST_CHATGPT);
+  return `OUTPUT: Single image. Draw manga directly.
 
-  return `🎨 OUTPUT: Generate a SINGLE IMAGE only. Do NOT respond with text or descriptions. DRAW the manga directly.
-
-ABSOLUTE TASK: create a NEW 4-panel vertical manga image, not a character/model/reference sheet. Attached character image is ONLY for face, hair, eyes, skin, and glasses; never copy its white layout, grids, labels, or clothing.
+ABSOLUTE TASK: new 4-panel manga, not a reference sheet. Use character refs only for face, hair, eyes, skin, glasses.
 
 FORMAT:
-- A4 portrait 1:1.414; 4 equal horizontal panels stacked vertically, 95% width, thick white gutters, no panels touching, no large margins, no extra space below panel 4.
-- Top title EXACTLY "${safeTopic}", large bold black Japanese sans-serif, centered.
-- Bottom-right 4th-panel watermark EXACTLY "${watermarkEng}", tiny horizontal sans-serif.
-- Bottom-left 4th-panel watermark EXACTLY "ネームから全自動の自律式統合AI漫画システム :https://note.com/happy_duck780", tiny horizontal sans-serif. Copy "自律式" character-by-character. Keep both watermarks small and separated.
+- A4 portrait 1:1.414; 4 equal horizontal panels, 95% width, thick white gutters, no large margins/space below panel 4.
+- Top title EXACTLY "${safeTopic}", large bold black, centered.
+- Bottom-right 4th-panel watermark EXACTLY "${watermarkEng}", tiny horizontal.
+- Bottom-left 4th-panel watermark EXACTLY "ネームから全自動の自律式統合AI漫画システム :https://note.com/happy_duck780", tiny horizontal. Copy "自律式" exactly.
+
+${scriptLock}
 
 ART / RENDERING QUALITY:
-- High-budget TV anime production: pristine clean cel shading, smooth gradients, rich saturated color, cinematic diffusion, gentle rim light, bold varied ink outlines, subtle white edge glow on foreground characters.
-- Characters pop: foreground crisp, backgrounds slightly softer/lower saturation with shallow depth of field.
-- CLEAN SURFACE PROTOCOL: no grain, speckles, dithering, halftone dots, paper/canvas/rough texture, skin pores, cloth weave, noisy micro-detail, over-sharpening, moire, dust motes, lens flare, random particles, glitter dust, or unintended floating sparkle. Keep intentional panel VFX clean and controlled.
+- Clean finish: crisp foreground, softer background, lighting.
+- CLEAN SURFACE PROTOCOL: no grain/speckles/dithering/rough texture/pores/moire/dust/particles/sparkle unless a panel style exception allows it.
 - ${styleCore}
 - Setting: ${safeLocation}
 ${bg360Block}
 
-CAMERA:
-- Each panel uses a DIFFERENT dramatic angle. Use bird's-eye, worm's-eye, Dutch 30-45 degrees, telephoto close-up with bokeh, or 14mm wide-angle as appropriate.
-- No standard eye-level repeats. Preserve anatomy/proportions despite perspective.
+CAMERA: vary angles; preserve anatomy and the script lock.
 
 CHARACTER IDENTITY:
-- Strictly reproduce reference face, hair, eyes, skin, and accessories. NO feature swapping.
+- Reproduce reference face, hair, eyes, skin, accessories. No feature swapping.
 ${outfitRule}
-- Adults 20+. Same face, hair, glasses status, skin tone, and outfit across all 4 panels. Characters look at each other/objects, never the camera. Full-body manga comedy reactions encouraged.
-- Cast details: ${VAR_CAST_LIST_CHATGPT}
+- Adults 20+. Same face/hair/glasses/skin/outfit across all panels.
+- Cast details: ${compactCastDetails}
 - Identity Anchor: ${identityMatrix}
-- GLASSES CHECK: every panel must match the Identity Matrix; redraw any character with added/missing glasses or wrong hair.
+- GLASSES CHECK: every panel must match the Identity Matrix.
+
+KEY PROP / OBJECT CONSISTENCY:
+- Render the key product/item/food/object EXACTLY as Action/Dialogue describes: category, container, shape, color, label. Do not substitute another object, dish, package, vessel, or generic prop.
+- Keep that key object identical every time; treat it as a second identity anchor.
 
 TEXT RULES:
 - Only Dialogue entries become white speech bubbles. Speech text MUST be vertical Japanese tategaki, copied verbatim character-by-character; no paraphrase, synonyms, softening, added/omitted words, or horizontal text.
-- Bubble position/tail must point to the actual speaker. Right-to-left Japanese manga reading order.
-- Action text is visual direction only: do NOT draw quoted ambience, SFX names, mood/aura/emotion labels, narration, or prompt labels as free text.
-- Draw scene text only when Action explicitly asks for handwriting, air/finger-writing, signage, labels, printed text, screen text, or board text. Prop/background text, if any, must be tiny, decorative, and never replace or upstage title, dialogue, watermarks, punchline, or explicit scene text.
+- Bubble tail points to the actual speaker; right-to-left Japanese manga reading order.
+- Action text is visual only. Do NOT draw ambience, SFX names, mood/aura/emotion labels, narration, situation/state words, or prompt labels as visible text.
+- Do not invent lettering. Draw scene text only when Action explicitly requests handwriting/signage/labels/printed/screen/board text; otherwise use blank/unreadable marks.
+
+DIALOGUE / BUBBLE QA LOCK:
+- Compare every bubble against Dialogue. If one character, punctuation mark, added word, omitted word, or speaker differs, redraw that bubble only.
+- Each bubble tail must point to the named speaker and stay beside that speaker's actual head/body position. Do not detach/swap/float bubbles.
+- No extra bubbles, captions, narration, title-like labels, or decorative words.
+
+CHARACTER QA PASS:
+- Compare hair color, hairstyle, eye color, glasses status, skin tone, outfit, and unique accessories against identity/cast rules.
+- Redraw feature swaps, added/missing glasses, hair/skin/outfit changes, merges, or wrong cast members.
+
+ART-STYLE DIFFERENCE QA LOCK:
+- Each PANEL STYLE LOCK must differ from adjacent panels in at least three of linework, palette, shading, background/VFX, texture/surface treatment.
+- Redraw if it still looks like the same clean anime style with only pose, expression, saturation, glow, or speed lines changed.
+- Style must not override script/dialogue/identity/key prop/A4 layout.
 
 THINGS TO AVOID:
-- No plastic skin, over-sharpening, extra logos/watermarks, character-sheet/grid layout, floating/ghost eyes/faces, duplicate/extra characters/humans.
+- No plastic skin, over-sharpening, extra logos/watermarks, character-sheet/grid layout, floating/ghost eyes/faces, duplicate/extra humans.
 - No unrelated/dominant random text; prop text only under TEXT RULES.
-- No sparkle/glow dust, embers, particles, volumetric dust, film/paper/canvas/rough grain/texture.
-- HAND ANATOMY: correct hands; named/pointing hands attach to same-side shoulder with natural index/thumb/palm/wrist/forearm. No mirrored, inverted, extra, or backward-bending hands.
+- No sparkle/glow dust, particles, film/paper/canvas/rough grain/texture unless a panel style exception allows it.
+- HAND ANATOMY: correct hands; pointing hands attach naturally. No mirrored, inverted, extra, or backward-bending hands.
 
 PANEL DESCRIPTIONS:
 
@@ -712,7 +729,7 @@ export const buildGeminiMangaPrompt = (p) => {
     safeTopic, watermarkEng, styleCore, safeLocation,
     bg360Image, bg360Analysis, bg360Enabled, bg360CroppedPanels,
     VAR_CAST_LIST, identityMatrix, activeOutfit,
-    dynamicCamera, panelSections // 事前にビルドされた4パネル分のセクション文字列
+    dynamicCamera, scriptLock, panelSections // 事前にビルドされた4パネル分のセクション文字列
   } = p;
 
   const bg360Block = (bg360Image && bg360Analysis && bg360Enabled) ? (
@@ -764,6 +781,9 @@ Watermarks standard horizontal. The Japanese watermark on the left and the Engli
 
 PANELS: Exactly 4 EQUAL horizontal panels, stacked vertically. EXACT SAME height/width.
 GUTTERS: THICK white gap (3% canvas height, 40-45px) between panels. Panels MUST NOT touch.
+
+${scriptLock}
+
 Style: ${styleCore}.
 (Dramatic anime cinematic lighting, high-budget VFX, NO excessive speedlines).
 Setting: ${safeLocation}.
@@ -783,6 +803,11 @@ ${identityMatrix}
 OUTFIT CONSISTENCY: Every character MUST wear EXACT same outfit in ALL 4 panels. NO changes.
 GLASSES VERIFICATION (MANDATORY): Before finalizing EACH panel, count the number of characters wearing glasses. Compare against the Identity Matrix. If the count does not match, redraw. Characters without glasses must have fully visible bare eyes with NO frames.
 
+KEY PROP / OBJECT CONSISTENCY:
+- If the story centers on a specific product, item, food, or object, render it EXACTLY as the Action/Dialogue describes (category, container, shape, color, named label). Do NOT substitute a different object, dish, or packaging.
+- Keep that key object identical across every panel it appears (same form, color, label, scale). Treat it as a second identity anchor; redraw on mismatch.
+- When a product type or container form is named, preserve that exact form factor; never reinterpret it as another dish, package, vessel, or generic prop.
+
 Camera & Comp:
 ${dynamicCamera}
 ANTI-CLONING: NEVER draw the same character twice in a single panel.
@@ -801,18 +826,27 @@ Tech Dict:
 (If prop text is not explicitly requested, prefer blank surfaces, abstract marks, or unreadable graphic shapes over large/dominant invented lettering: 2.0)
 (NO unrelated ENGLISH TEXT outside watermark or small context-appropriate prop/background decoration. NO 'G-pen'/'HA': 3.0)
 
+GEMINI STABILITY / QUALITY LOCK:
+- Use a richer professional manga finish than a flat template: layered foreground/midground/background, meaningful setting props, varied lighting, crisp line weight variation, and panel-specific atmosphere. Do not leave plain empty walls or generic blank rooms unless the script explicitly asks for emptiness.
+- Existing named cast only. Do NOT invent a new dominant person, black silhouette, monster, ghost, mascot, presenter, antagonist, or narrator figure. Background extras may appear only as small non-speaking atmosphere when the setting naturally needs a crowd; they must never become central, shadowed, named, or connected to a speech bubble.
+- If a panel says a shadow falls on a character, draw lighting/shadow ON that existing named character. Do NOT interpret "shadow" or a dark style tag as permission to create a separate black silhouette person.
+- Every Dialogue line must appear exactly once, in one bubble, attached to the named speaker. Do NOT duplicate a line, split one line into repeated bubbles, add new warning phrases, or create extra bubbles.
+- Dialogue punctuation is part of the script lock. Copy the dialogue exactly as written; do NOT add periods, commas, ellipses, exclamation marks, emphasis marks, or spacing unless they already exist in the Dialogue line.
+- Panel style may be dramatic, dark, or comedic, but style must never change the story, add cast members, replace the key prop, or make the page look like a clean generic anime template.
+
+PANEL DESCRIPTIONS:
 
 ${panelSections}
 
 Important constraints:
-- Ensure the characters accurately reflect classic anime styles.
+- Preserve the selected scenario style and each PANEL STYLE LOCK; do not collapse the page into generic classic anime or a flat template.
 - Do NOT merge panels. Keep 4 distinct panels with white gutters between them.
 - ABSOLUTELY NO TEXT OR SFX BETWEEN PANELS. The white gutters separating the panels MUST be completely clean and pure white. Do not draw any labels, narration, or sound effects crossing or sitting inside the panel boundaries.
 - Do NOT write situation/narration explanations as text on the screen. The Visual Action must only be illustrated, except explicit visual scene text requested by the action, such as handwriting, air-writing, signs, labels, printed text, screen text, or board text.
 - Only Dialogue entries may become white manga speech bubbles. Quoted ambience, SFX names, mood words, aura names, emotion labels, and narration terms in Visual Action are NOT visible text. Render quoted Action words as physical scene text ONLY when the action explicitly requests visible writing.
 - Write the Japanese spoken text clearly inside white manga speech bubbles in a bold sans-serif Japanese font.
 - DIALOGUE TEXT IS VERBATIM: The text inside each Speech Bubble MUST be copied EXACTLY as written in the Dialogue section — character by character. Do NOT paraphrase, rephrase, or substitute synonyms.
-- Japanese dialogue MUST end with a period (。). However, do NOT add unnecessary commas (、) inside dialogue. Manga speech bubbles rarely use commas in natural Japanese — line breaks and bubble shape provide natural pauses instead. Only use commas when absolutely necessary to prevent misreading.
+- Do NOT normalize punctuation. If the Dialogue line has no punctuation, keep it that way; if it has punctuation, copy only that exact punctuation.
 - TYPOGRAPHY RULE: Write Japanese text tightly with ZERO spaces between words. Do NOT insert any gaps or spaces between characters. (no letter spacing:1.5), (tight kerning:1.5).
 - Do NOT add unrelated random English/Japanese text. Small readable text on props or background items (books, packages, posters, signs, screens, labels, clothing) is allowed only as short, context-appropriate decoration; it must never replace, contradict, or upstage dialogue, title, watermarks, punchline, or explicit scene text. If unsure, render blank surfaces, abstract marks, or unreadable graphic shapes.
 - Maintain character consistency across all 4 panels.

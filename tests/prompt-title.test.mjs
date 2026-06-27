@@ -55,7 +55,7 @@ test('preserves terminal title punctuation in ChatGPT prompt title', () => {
     scenario: SCENARIO_WITH_PUNCTUATED_TITLE,
     castList: CAST_LIST,
     colorMode: 'color',
-    enableChatGPTMode: true,
+    providerFamily: 'chatgpt',
     punchlineType: 'Documentary',
     systemVersion: 'v4.7.9'
   });
@@ -75,7 +75,7 @@ test('preserves terminal title punctuation in Gemini prompt title', () => {
     scenario: SCENARIO_WITH_PUNCTUATED_TITLE,
     castList: CAST_LIST,
     colorMode: 'color',
-    enableChatGPTMode: false,
+    providerFamily: 'gemini',
     punchlineType: 'Documentary',
     systemVersion: 'v4.7.9'
   });
