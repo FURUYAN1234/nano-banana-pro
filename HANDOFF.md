@@ -1,7 +1,7 @@
 # HANDOFF.md
 
 ## Current Status
-- **Version**: v4.8.4 ChatGPT 2x upscale helper guidance emoji update is in release preparation.
+- **Version**: v4.8.4 ChatGPT 2x upscale helper guidance emoji update released and deployed; requested PS1 backup remains the final step.
 - **Previous public version**: v4.8.3 prompt-routing hardening released and deployed.
 - **Post-v4.8.2 local fix status**: Completed as v4.8.3. The serious provider prompt-routing bug found after the user's style/footer report is fixed by explicit provider families (`chatgpt` / `gemini`) in `src/lib/prompt-assembler.js` and `src/hooks/useMangaWorkflow.js`; prompt assembly branches on normalized `providerFamily`, not the legacy `enableChatGPTMode` boolean. ChatGPT Web copy and OpenAI API generation share the same ChatGPT-family final prompt; Gemini Web copy and Gemini API generation share the same Gemini-family final prompt. Generated-image history is capped to the latest item to reduce huge Data URL memory pressure after the in-app browser crash. Free-form EMOTION descriptors are normalized to existing strong style locks. Fresh ChatGPT Web regeneration from the final rebuilt prompt remains unverified.
 - **Latest changes**:
@@ -28,19 +28,19 @@
   - Action extraction control-token leak fix: `extractActionOnly` now strips bracketed control tags such as `[EMOTION: ...]` and `[Camera: ...]` from `Action (visual only)` while preserving the actual situation/action body. This prevents hidden routing/camera/emotion tokens from being sent to image models as visual content.
   - Gag-intent additive overlay: when a comedy/gag emotion tag maps to a serious/dark style such as `HORROR`, the style is preserved and only a short comedy-expression allowance is appended. This avoids flattening dramatic comedy into plain chibi gag while still rescuing the gag intent.
   - Action quote placeholder cleanup: `extractActionOnly` no longer injects English placeholder strings such as `the listed dialogue content` or `a non-text ambient sound effect` into visual action text. Explicit visible writing contexts now include poster text, while spoken quote fragments and dangling speech verbs such as `。と呟き、` are removed from action text without polluting the prompt.
-- **State**: v4.8.4 local release prep is in progress. Local source version files are synchronized to `4.8.4`; GitHub Pages, GitHub Release, Hugging Face Spaces, `C:\nano-banana-pro-main`, and the requested full PS1 backup still need final execution and evidence. Previous stable public state remains v4.8.3: main code commit `f66d7b2b506e65111b2d42f9629cd499de9b33cc`, tag `v4.8.3`, GitHub Release `https://github.com/FURUYAN1234/nano-banana-pro/releases/tag/v4.8.3`, GitHub Pages asset `assets/index-BoDe6TcM.js`, HF repo commit `b9b598e`, and local release copy `C:\nano-banana-pro-main` at package version `4.8.3`.
+- **State**: v4.8.4 is released and deployed. Main code commit/tag `0a53177047691b6ba971765298b0235623d32fde` is pushed to `origin/main`; GitHub Release is `https://github.com/FURUYAN1234/nano-banana-pro/releases/tag/v4.8.4`; GitHub Pages serves `Nano Banana Pro v4.8.4` with asset `assets/index-D70ScJbg.js`; Hugging Face Spaces repo commit is `35a7b259df4b8a5d2c631cb0780d4c3c299ba624`; Release ZIP has been synced to `C:\nano-banana-pro-main` with package version `4.8.4` and no nested duplicate folder. The requested full PS1 backup must run last, after this status update is committed and pushed.
 
 ## Pending Verification Tasks
 - [x] v4.8.4 RED/GREEN proof: `node --test tests\upscale-prompt-ui.test.mjs` failed before the UI sentence had the `✨` prefix, then passed after the sentence was updated.
 - [x] v4.8.4 version prep: `node scripts\update_version.cjs 4.8.4 ...` synchronized `package.json`, `src/lib/constants.js`, `index.html`, `README.md`, and `../hf-nano-banana-pro/README.md`; `package-lock.json` was limited to version-only changes; ChangeLog entries were pruned to the latest 15-ish entries.
 - [x] v4.8.4 local checks so far: full `node --test` suite passed 38/38; `npm run lint -- --max-warnings=0` passed; `npm run build` passed; `git diff --check -- . ':!dist'` passed; source scan found no `Eris_Create_Lab` or `GPT Native Super Resolution Ver2.1` strings.
-- [ ] v4.8.4 local browser proof on port 5173.
-- [ ] v4.8.4 `node scripts\pre_deploy_check.js` after this HANDOFF update.
-- [ ] v4.8.4 commit/push/tag/GitHub Release.
-- [ ] v4.8.4 GitHub Pages deploy proof.
-- [ ] v4.8.4 Hugging Face Spaces deploy proof.
-- [ ] v4.8.4 release ZIP and `C:\nano-banana-pro-main` sync proof.
-- [ ] v4.8.4 requested PS1 full backup proof.
+- [x] v4.8.4 local browser proof on port 5173: in-app browser loaded `http://127.0.0.1:5173/?codexEmojiDeployV484=1` with title `Nano Banana Pro v4.8.4`, visible version text, and zero browser error logs.
+- [x] v4.8.4 `node scripts\pre_deploy_check.js` after this HANDOFF update passed all strict deployment/security checks.
+- [x] v4.8.4 commit/push/tag/GitHub Release: commit and tag `0a53177047691b6ba971765298b0235623d32fde` pushed; GitHub Release created as Latest at `https://github.com/FURUYAN1234/nano-banana-pro/releases/tag/v4.8.4`.
+- [x] v4.8.4 GitHub Pages deploy proof: `origin/gh-pages` and live `https://furuyan1234.github.io/nano-banana-pro/?v=20260629-v484-upscale-emoji-1782737185-5` returned title `Nano Banana Pro v4.8.4`, asset `assets/index-D70ScJbg.js`, and deployed JS contains `v4.8.4`, `✨ ChatGPTの画像を2倍にアップスケールしたい場合`, and `画像2倍アップスケールプロンプトをコピー`.
+- [x] v4.8.4 Hugging Face Spaces deploy proof: `npm run deploy:hf` pushed HF repo commit `35a7b259df4b8a5d2c631cb0780d4c3c299ba624`; live `https://furuyan-nano-banana-pro.static.hf.space/?v=20260629-v484-upscale-emoji-1782737355-1` returned title `Nano Banana Pro v4.8.4`, asset `assets/index-D70ScJbg.js`, and deployed JS contains the v4.8.4 emoji guidance and copy-button text.
+- [x] v4.8.4 release ZIP and `C:\nano-banana-pro-main` sync proof: Release ZIP was downloaded, extracted, and copied to `C:\nano-banana-pro-main`; package version is `4.8.4`, HTML title is `Nano Banana Pro v4.8.4`, no nested duplicate folder exists, and source contains the emoji sentence/button.
+- [ ] v4.8.4 requested PS1 full backup proof: run only after this HANDOFF/PLAN status update is committed and pushed.
 - [x] v4.8.3 local pre-release verification: `node scripts\pre_deploy_check.js`, full `node --test` suite (36/36), `npm run lint -- --max-warnings=0`, `npm run build`, `git diff --check -- . ':!dist'`, and node syntax checks on touched JS files passed.
 - [x] v4.8.3 local browser proof: in-app browser on `http://127.0.0.1:5173/?codexVerify=v483-local` loaded `Nano Banana Pro v4.8.3`, rendered `Super FURU AI 4-koma System v4.8.3`, had no A4 export button, and reported zero console warnings/errors.
 - [x] v4.8.3 commit/push/tag/release: commit `f66d7b2b506e65111b2d42f9629cd499de9b33cc` was pushed to `origin/main`; tag `v4.8.3` was pushed; GitHub Release was created at `https://github.com/FURUYAN1234/nano-banana-pro/releases/tag/v4.8.3`.
