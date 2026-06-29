@@ -29,6 +29,41 @@ const getGeneratedImageExtension = (dataUrl) => {
   }[mimeType] || 'png';
 };
 
+const CHATGPT_2X_UPSCALE_PROMPT = `SELF-TRAINED 2X IMAGE UPSCALE TASK
+
+Use the attached image as the only visual source. Create a 2x upscaled version of that exact image.
+
+Execution rules:
+- Use only the Python environment available in this chat.
+- You may use standard Python libraries plus Pillow, NumPy, OpenCV if available, and PyTorch if available.
+- Do not install packages.
+- Do not download models, weights, checkpoints, ONNX files, datasets, or code from the internet.
+- Do not use any external pretrained super-resolution model.
+
+Method:
+1. Read the attached image and record its original width and height.
+2. If the image is very large, train on a resized working copy while preserving the original aspect ratio.
+3. Build training pairs from the image itself: crop random patches, downscale them to create low-resolution inputs, then learn low-resolution to high-resolution restoration from those pairs.
+4. Use a tiny residual CNN suitable for CPU execution. Keep it lightweight enough to finish quickly.
+5. Train briefly with an L1-style reconstruction objective and mild augmentation such as flips.
+6. Upscale the original image to exactly 2x width and 2x height with a high-quality interpolation baseline.
+7. Apply the trained CNN as a subtle restoration pass. Use tiled inference if needed to avoid memory issues.
+8. Preserve the original composition, colors, speech bubbles, Japanese text, title, watermarks, panel borders, and aspect ratio. Do not redraw, reinterpret, crop, extend, or change the story.
+
+Fallback:
+If PyTorch or GPU/CPU time is unavailable, make the best possible 2x result with Pillow/OpenCV interpolation plus conservative sharpening, and clearly say that the neural restoration pass was skipped.
+
+Output:
+- Display the 2x upscaled image directly in the chat/web page if the interface supports inline image display.
+- If inline display is not possible, provide a file link labeled exactly: 2倍アップスケール画像をダウンロード
+- After the image, report only this short Japanese summary:
+
+完了しました。2倍にアップスケールしました。
+入力: {input_width}x{input_height} px → 出力: {output_width}x{output_height} px
+
+Replace the placeholders with the measured pixel values.
+Do not include implementation notes unless an error prevents completion.`;
+
 /**
  * STEP 04: 4コマ漫画生成 ＆ 履歴パネル
  */
@@ -92,6 +127,7 @@ export default function Step4Panel({
   handlePolicySwitchToWeb
 }) {
   const generatedImageExtension = getGeneratedImageExtension(generatedImage);
+  const [isUpscalePromptCopied, setIsUpscalePromptCopied] = React.useState(false);
 
   return (
     <div
@@ -487,6 +523,23 @@ No explanations. No partial results.`;
                           📋 画像比率修正プロンプトをコピー
                           {isFixPromptCopied && <span style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>✅ コピー完了</span>}
                         </button>
+                        <div className="mt-3 pt-3 border-t border-orange-500/20">
+                          <p className="text-[11px] text-cyan-300/80 leading-relaxed">
+                            ✨ ChatGPTの画像を2倍にアップスケールしたい場合は、生成済画像に対して、以下の「画像2倍アップスケールプロンプト」をコピーしてChatGPTに貼り付けてみてください。高精細な画像に補正されます。
+                          </p>
+                          <button
+                            className={`mt-2 ${isUpscalePromptCopied ? 'bg-green-600 border-green-500/30' : 'bg-cyan-900/70 hover:bg-cyan-800/80 border-cyan-500/30'} text-white px-3 py-1.5 rounded transition-all inline-flex items-center justify-center gap-1.5 border font-bold active:scale-95`}
+                            style={{ fontSize: '10px', minWidth: '120px', position: 'relative' }}
+                            onClick={() => {
+                              navigator.clipboard.writeText(CHATGPT_2X_UPSCALE_PROMPT);
+                              setIsUpscalePromptCopied(true);
+                              setTimeout(() => setIsUpscalePromptCopied(false), 2000);
+                            }}
+                          >
+                            <span style={{ visibility: isUpscalePromptCopied ? 'hidden' : 'visible' }}>📋 画像2倍アップスケールプロンプトをコピー</span>
+                            {isUpscalePromptCopied && <span style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>✅ コピー完了</span>}
+                          </button>
+                        </div>
                       </div>
                     )}
                   </div>

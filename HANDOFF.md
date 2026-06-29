@@ -1,10 +1,11 @@
 # HANDOFF.md
 
 ## Current Status
-- **Version**: v4.8.3 prompt-routing hardening released and deployed.
-- **Previous public version**: v4.8.2 API preflight fix released.
+- **Version**: v4.8.4 ChatGPT 2x upscale helper guidance emoji update is in release preparation.
+- **Previous public version**: v4.8.3 prompt-routing hardening released and deployed.
 - **Post-v4.8.2 local fix status**: Completed as v4.8.3. The serious provider prompt-routing bug found after the user's style/footer report is fixed by explicit provider families (`chatgpt` / `gemini`) in `src/lib/prompt-assembler.js` and `src/hooks/useMangaWorkflow.js`; prompt assembly branches on normalized `providerFamily`, not the legacy `enableChatGPTMode` boolean. ChatGPT Web copy and OpenAI API generation share the same ChatGPT-family final prompt; Gemini Web copy and Gemini API generation share the same Gemini-family final prompt. Generated-image history is capped to the latest item to reduce huge Data URL memory pressure after the in-app browser crash. Free-form EMOTION descriptors are normalized to existing strong style locks. Fresh ChatGPT Web regeneration from the final rebuilt prompt remains unverified.
 - **Latest changes**:
+  - v4.8.4 release prep: STEP4のChatGPT 2倍アップスケール案内文の先頭に `✨` を追加し、案内文とコピー用ボタンの視認性を高めた。既存の英語アップスケールプロンプト、コピー処理、比率修正プロンプト、画像生成ロジックには変更なし。Regression test `tests/upscale-prompt-ui.test.mjs` now requires the emoji-prefixed sentence and still forbids copying the social-post title/source name.
   - Gemini stability/quality hardening: the Gemini-family prompt now adds a generic `GEMINI STABILITY / QUALITY LOCK` to reduce flat-template output, invented dominant cast/silhouette figures, shadow-as-new-character errors, dialogue duplication, extra warning phrases, and punctuation normalization. The old Gemini rule forcing Japanese dialogue to end with `。` was removed because it conflicted with verbatim script lock. The generic `classic anime styles` constraint was also replaced with a selected-style/PANEL STYLE LOCK preservation rule so Gemini does not collapse selected visual styles back to a generic anime look.
   - Provider-family architecture repair: `PROMPT_PROVIDER_FAMILIES` and `normalizePromptProviderFamily` now make Gemini/OpenAI prompt selection explicit; `useMangaWorkflow` derives the family from the active engine/API state and passes it to `buildMangaPrompt`; provider parity tests forbid Web/API split prompt variables and forbid prompt assembly branching on `enableChatGPTMode`.
   - Browser memory hardening: `src/lib/generation-history.js` caps generated image history to the latest item so giant PNG data URLs are not accumulated in the DOM.
@@ -27,9 +28,19 @@
   - Action extraction control-token leak fix: `extractActionOnly` now strips bracketed control tags such as `[EMOTION: ...]` and `[Camera: ...]` from `Action (visual only)` while preserving the actual situation/action body. This prevents hidden routing/camera/emotion tokens from being sent to image models as visual content.
   - Gag-intent additive overlay: when a comedy/gag emotion tag maps to a serious/dark style such as `HORROR`, the style is preserved and only a short comedy-expression allowance is appended. This avoids flattening dramatic comedy into plain chibi gag while still rescuing the gag intent.
   - Action quote placeholder cleanup: `extractActionOnly` no longer injects English placeholder strings such as `the listed dialogue content` or `a non-text ambient sound effect` into visual action text. Explicit visible writing contexts now include poster text, while spoken quote fragments and dangling speech verbs such as `。と呟き、` are removed from action text without polluting the prompt.
-- **State**: v4.8.3 is released and deployed. Main code commit `f66d7b2b506e65111b2d42f9629cd499de9b33cc` is pushed to `origin/main`; tag `v4.8.3` points to that commit; GitHub Release is `https://github.com/FURUYAN1234/nano-banana-pro/releases/tag/v4.8.3`; GitHub Pages serves `Nano Banana Pro v4.8.3` with asset `assets/index-BoDe6TcM.js`; Hugging Face Spaces repo commit is `b9b598e` and live static serves the same asset; release ZIP has been synced to `C:\nano-banana-pro-main` with package version `4.8.3` and no nested duplicate folder. No full backup was run because the user did not explicitly request backup.
+- **State**: v4.8.4 local release prep is in progress. Local source version files are synchronized to `4.8.4`; GitHub Pages, GitHub Release, Hugging Face Spaces, `C:\nano-banana-pro-main`, and the requested full PS1 backup still need final execution and evidence. Previous stable public state remains v4.8.3: main code commit `f66d7b2b506e65111b2d42f9629cd499de9b33cc`, tag `v4.8.3`, GitHub Release `https://github.com/FURUYAN1234/nano-banana-pro/releases/tag/v4.8.3`, GitHub Pages asset `assets/index-BoDe6TcM.js`, HF repo commit `b9b598e`, and local release copy `C:\nano-banana-pro-main` at package version `4.8.3`.
 
 ## Pending Verification Tasks
+- [x] v4.8.4 RED/GREEN proof: `node --test tests\upscale-prompt-ui.test.mjs` failed before the UI sentence had the `✨` prefix, then passed after the sentence was updated.
+- [x] v4.8.4 version prep: `node scripts\update_version.cjs 4.8.4 ...` synchronized `package.json`, `src/lib/constants.js`, `index.html`, `README.md`, and `../hf-nano-banana-pro/README.md`; `package-lock.json` was limited to version-only changes; ChangeLog entries were pruned to the latest 15-ish entries.
+- [x] v4.8.4 local checks so far: full `node --test` suite passed 38/38; `npm run lint -- --max-warnings=0` passed; `npm run build` passed; `git diff --check -- . ':!dist'` passed; source scan found no `Eris_Create_Lab` or `GPT Native Super Resolution Ver2.1` strings.
+- [ ] v4.8.4 local browser proof on port 5173.
+- [ ] v4.8.4 `node scripts\pre_deploy_check.js` after this HANDOFF update.
+- [ ] v4.8.4 commit/push/tag/GitHub Release.
+- [ ] v4.8.4 GitHub Pages deploy proof.
+- [ ] v4.8.4 Hugging Face Spaces deploy proof.
+- [ ] v4.8.4 release ZIP and `C:\nano-banana-pro-main` sync proof.
+- [ ] v4.8.4 requested PS1 full backup proof.
 - [x] v4.8.3 local pre-release verification: `node scripts\pre_deploy_check.js`, full `node --test` suite (36/36), `npm run lint -- --max-warnings=0`, `npm run build`, `git diff --check -- . ':!dist'`, and node syntax checks on touched JS files passed.
 - [x] v4.8.3 local browser proof: in-app browser on `http://127.0.0.1:5173/?codexVerify=v483-local` loaded `Nano Banana Pro v4.8.3`, rendered `Super FURU AI 4-koma System v4.8.3`, had no A4 export button, and reported zero console warnings/errors.
 - [x] v4.8.3 commit/push/tag/release: commit `f66d7b2b506e65111b2d42f9629cd499de9b33cc` was pushed to `origin/main`; tag `v4.8.3` was pushed; GitHub Release was created at `https://github.com/FURUYAN1234/nano-banana-pro/releases/tag/v4.8.3`.

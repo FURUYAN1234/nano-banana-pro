@@ -773,6 +773,9 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 
 ## 📋 ChangeLog
 
+### v4.8.4 (2026-06-29)
+- **[Fix & UX]** STEP4のChatGPT 2倍アップスケール案内文に視認性を高める絵文字を追加 / Added an emoji cue to the STEP4 ChatGPT 2x upscale helper guidance for clearer visibility
+
 ### v4.8.3 (2026-06-27)
 - **[Fix & UX]** ChatGPT/OpenAI と Gemini のプロンプト系統を明示化し、WebコピーとAPI生成の同一プロンプト化、脚本ロック、スタイルロック、台詞・小物・Action抽出の安定化、生成履歴メモリ抑制、A4固定書き出し削除を反映 / Aligned ChatGPT/OpenAI and Gemini provider-family prompt routing so Web copy and API generation share the same prompt, with stronger script/style/dialogue/prop/action extraction, smaller image-history memory, and removal of the fixed A4 export
 
@@ -817,16 +820,3 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 
 ### v4.6.8 (2026-06-12)
 - **[Prompt]** 画像比率修正プロンプト（ABSOLUTE OVERRIDE）に「横書き→縦書き強制修正」セクション（HORIZONTAL-TO-VERTICAL TEXT CORRECTION）を追加。吹き出し内テキストの縦書き（tategaki）を徹底し、SELF-REVIEWチェックリストに指の本数・縦書き・テキストエラーの3段階検証ステップを追加 / Added HORIZONTAL-TO-VERTICAL CORRECTION section to the aspect ratio fix prompt (ABSOLUTE OVERRIDE), enforcing tategaki text in speech bubbles with a 3-step SELF-REVIEW checklist
-
-### v4.6.7 (2026-06-10)
-- **[Fix & UX]** Dialogue extraction bugfix: expression/action descriptions no longer mistaken as dialogue / Dialogue extraction bugfix: expression/action descriptions no longer mistaken as dialogue
-
-### v4.6.6 (2026-06-09)
-- **[Fix]** 擬音語（ガチャン！、ガリッ！！等）がセリフ吹き出しに混入するバグを修正。`isSfx` 正規表現にカタカナ「ン」を語尾文字として追加し、SFXステムを18語拡充 / Fixed onomatopoeia (e.g. ガチャン！, ガリッ！！) leaking into speech bubbles by adding ン to the `isSfx` suffix pattern and expanding SFX stems by 18 words
-- **[Fix]** `protectNonDialogueTextHints` が隣接セリフの語彙（「オーラ」「鳴らし」等）を誤検知し、正当なセリフを破壊するバグを修正。文脈ウィンドウを56→30文字に縮小し、`isLikelyDialogue` 判定で日本語句読点を許容 / Fixed `protectNonDialogueTextHints` falsely matching vocabulary from adjacent dialogue lines by narrowing the context window from 56 to 30 characters and allowing Japanese punctuation in `isLikelyDialogue`
-- **[Fix]** `音響効果：` `効果音：` 等のSEメタタグ直後の擬音がフォールバックループで誤抽出される問題を修正。`preQuoteContext` と `isSfxByPostText` にSE関連パターンを追加 / Fixed SE meta-tags (音響効果：, 効果音：) followed by onomatopoeia being incorrectly extracted in fallback loop by adding SE-related patterns to context checks
-
-### v4.6.5 (2026-06-04)
-- **[Fix]** セリフ抽出フォールバックにおける `lastIndex` 更新タイミングの致命的バグを修正。形状描写（「へ」の字等）がスキップされた際に話者コンテキストが途切れ、直後にある本来のセリフが消失する問題を解消 / Fixed a critical `lastIndex` regression in dialogue fallback extraction where skipped shape descriptions (e.g. 「へ」の字) would consume speaker context, causing the subsequent legitimate dialogue to be silently dropped
-- **[Fix]** 形状描写除外フィルタ（`isShapeDescription`）を新規追加。1〜2文字のカギ括弧（「へ」「Ω」「ω」等）の直後に「の字」「型」「の形」等が続く場合のみ非セリフとして除外 / Added shape description exclusion filter to prevent 1-2 character bracket text followed by shape indicators from being mistakenly extracted as dialogue
-- **[Fix]** 眼鏡なしキャラクターの Identity Matrix 防御を強化（「bare eyes, no frames — do NOT add glasses to this character」） / Strengthened no-glasses Identity Matrix defense with explicit frame prohibition
