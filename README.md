@@ -773,6 +773,9 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 
 ## 📋 ChangeLog
 
+### v4.8.5 (2026-07-04)
+- **[Fix & UX]** STEP4の画像比率修正プロンプトコピーボタンで「コピー完了」が元ラベルに重ならないよう修正 / Fixed the STEP4 image aspect ratio prompt copy button so the temporary copied feedback no longer overlaps the original label
+
 ### v4.8.4 (2026-06-29)
 - **[Fix & UX]** STEP4のChatGPT 2倍アップスケール案内文に視認性を高める絵文字を追加 / Added an emoji cue to the STEP4 ChatGPT 2x upscale helper guidance for clearer visibility
 

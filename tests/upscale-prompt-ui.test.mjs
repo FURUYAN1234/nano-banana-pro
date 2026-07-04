@@ -12,6 +12,17 @@ test('ChatGPT tips include a separate 2x upscale prompt copy action', () => {
   assert.match(step4PanelSource, /2倍アップスケール画像をダウンロード/);
 });
 
+test('ratio fix copy button hides its base label while showing copied feedback', () => {
+  assert.match(
+    step4PanelSource,
+    /<span style={{ visibility: isFixPromptCopied \? 'hidden' : 'visible' }}>📋 画像比率修正プロンプトをコピー<\/span>/
+  );
+  assert.match(
+    step4PanelSource,
+    /isFixPromptCopied && <span style={{ position: 'absolute', left: '50%', transform: 'translateX\(-50%\)' }}>✅ コピー完了<\/span>/
+  );
+});
+
 test('upscale helper prompt is original and does not copy the social post title', () => {
   assert.doesNotMatch(step4PanelSource, /GPT Native Super Resolution Ver2\.1/);
   assert.doesNotMatch(step4PanelSource, /Eris Create Lab/);

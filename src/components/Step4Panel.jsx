@@ -520,7 +520,7 @@ No explanations. No partial results.`;
                             setTimeout(() => setIsFixPromptCopied(false), 2000);
                           }}
                         >
-                          📋 画像比率修正プロンプトをコピー
+                          <span style={{ visibility: isFixPromptCopied ? 'hidden' : 'visible' }}>📋 画像比率修正プロンプトをコピー</span>
                           {isFixPromptCopied && <span style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>✅ コピー完了</span>}
                         </button>
                         <div className="mt-3 pt-3 border-t border-orange-500/20">
