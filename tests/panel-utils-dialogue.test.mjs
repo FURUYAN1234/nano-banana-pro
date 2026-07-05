@@ -135,6 +135,24 @@ test('does not promote quotes inside situation or reaction notes into final spee
   assert.match(dialogue, /Speech Bubble 2 \[アカリ\]: "屋台の綿あめどこ？"/);
 });
 
+test('does not promote wrapped enhanced direction group reactions into speech bubbles', () => {
+  const speaker = '\u30df\u30af';
+  const shout = '\u30ae\u30e3\u30fc\u30c3\uff01';
+  const finalLine = '\u307e\u3042\u3001\u3069\u3063\u3061\u306b\u8ee2\u3093\u3067\u3082\u8acb\u6c42\u66f8\u306f\u9003\u3052\u3066\u3053\u306a\u3044\u3088\u306d\u2661';
+  const panelText = `
+[4\u30b3\u30de\u76ee: \u7d50]
+[EMOTION: DARK_ANIME\u2192COMEDY_DREAD]
+\u7a93\u306e\u5916\u306b\u5de8\u5927\u5316\u3057\u305f\u300c\u7a0e\u300d\u306e\u6587\u5b57\u3002
+\u5168\u54e1\u306f\u4e00\u77ac\u300c\u547c\u5438\u304c\u6b62\u307e\u3063\u305f\u300d\u3088\u3046\u306a\u786c\u76f4\u72b6\u614b\u304b\u3089\u4e00\u6589\u306b\u300c${shout}\u300d\u3068\u30ea\u30a2\u30af\u30b7\u30e7\u30f3\u7206\u767a\u3002
+${speaker}\u300c${finalLine}\u300d`;
+
+  const dialogue = extractDialogueOnly(panelText, CAST_LIST);
+
+  assert.equal(dialogue.includes(shout), false);
+  assert.equal(dialogue.includes('\u547c\u5438\u304c\u6b62\u307e\u3063\u305f'), false);
+  assert.equal(dialogue.includes(`Speech Bubble 1 [${speaker}]: "${finalLine}"`), true);
+});
+
 test('removes control tokens from visual action while keeping the situation body', () => {
   const panelText = `
 [1コマ目: 起]

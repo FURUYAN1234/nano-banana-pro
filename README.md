@@ -773,6 +773,9 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 
 ## 📋 ChangeLog
 
+### v4.8.6 (2026-07-05)
+- **[Fix & UX]** 演出強化後のト書きが吹き出し化される誤判定を修正 / Fixed enhanced-scenario narration/action lines being promoted into speech bubbles
+
 ### v4.8.5 (2026-07-04)
 - **[Fix & UX]** STEP4の画像比率修正プロンプトコピーボタンで「コピー完了」が元ラベルに重ならないよう修正 / Fixed the STEP4 image aspect ratio prompt copy button so the temporary copied feedback no longer overlaps the original label
 

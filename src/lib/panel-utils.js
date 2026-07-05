@@ -285,10 +285,25 @@ const isGenericShortSpeakerPrefix = (value = '') => {
   if (!clean || clean.length > 18) return false;
   if (!/[\u3040-\u30FF\u4E00-\u9FFFA-Za-zＡ-Ｚａ-ｚ]/u.test(clean)) return false;
   if (/^(?:Camera|Location|Outfit|EMOTION|Action|Reaction|Background|Punchline)$/i.test(clean)) return false;
+  if (isNarrationSubjectSpeakerCandidate(clean)) return false;
   if (/[。！？!?…]/.test(clean)) return false;
   if (/(?:が|を|に|で|へ|は|も|と|から|まで|より)$/.test(clean) && clean.length > 3) return false;
   if (/(?:して|した|する|され|見て|持って|握って|座って|立って|走って|叫んで|つぶやいて)$/.test(clean)) return false;
   return true;
+};
+
+const JA_GROUP_SUBJECT_RE = /^(?:全員|みんな|一同|全キャラ|全メンバー)(?:は|が|も|を|に|で|へ|と|から|まで|より).+/u;
+const JA_PARTICLE_AFTER_SUBJECT_RE = /^(?:は|が|も|を|に|で|へ|と|から|まで|より).+/u;
+
+const isNarrationSubjectSpeakerCandidate = (value = '', validCharacters = []) => {
+  const clean = normalizeDialogueSpeakerPrefix(value);
+  if (!clean) return false;
+  if (JA_GROUP_SUBJECT_RE.test(clean)) return true;
+
+  return validCharacters.some(c => {
+    const nameOnly = c.split(/[・（]/)[0].trim();
+    return nameOnly && clean.startsWith(nameOnly) && JA_PARTICLE_AFTER_SUBJECT_RE.test(clean.slice(nameOnly.length));
+  });
 };
 
 const isExplicitSameLineSpeakerPrefix = (value = '', validCharacters = []) => {
@@ -517,6 +532,7 @@ export const extractDialogueOnly = (fullPanelText, castList) => {
       });
       const hasSentenceParticles = !isExactCastMatch && /(?:が|を|に|で|へ|は|も|と|から|まで|より)/.test(tempSpeakerBase) && tempSpeakerBase.length > 5;
       const endsWithParticle = !isExactCastMatch && /(?:が|を|に|で|へ|は|も|と|から|まで|より)$/.test(tempSpeakerBase);
+      const isNarrationSubject = isNarrationSubjectSpeakerCandidate(tempSpeakerBase, validCharacters);
       const isTooLong = tempSpeakerBase.length > 20; // 複数人「アカリ・ヒカリ・ミク・リン」を許容するため長めに変更
       // [v4.6.3] 照明・SE・演出など舞台指示用語をメタタグとして除外
       // [v4.6.10] 「セリフ」「台詞」「Dialogue」をメタタグに追加（スピーカー誤認識防止）
@@ -526,7 +542,7 @@ export const extractDialogueOnly = (fullPanelText, castList) => {
       // [v2.45] リアクション指示混入検出: 「（リアクション」等が話者名に含まれていたら除外
       const hasReactionTag = /[（(]\s*リアクション/i.test(match[1]);
 
-      if (hasSentenceParticles || endsWithParticle || isTooLong || isMetaTag || isSoundEffect || hasReactionTag) {
+      if (hasSentenceParticles || endsWithParticle || isNarrationSubject || isTooLong || isMetaTag || isSoundEffect || hasReactionTag) {
         // 文章構造・メタタグ・効果音・リアクション指示を含む → 話者名ではない
       } else if (isLikelyPerson(tempSpeakerBase, validCharacters) || isGenericShortSpeakerPrefix(tempSpeakerBase) || tempSpeakerBase.includes("全員") || tempSpeakerBase === "Speaker" || match[0].trim().endsWith(':') || match[0].trim().endsWith('：')) {
         isDialogue = true;
@@ -803,6 +819,7 @@ export const extractActionOnly = (fullPanelText, castList, placementRule = "") =
         return nameOnly && (tempSpeaker === nameOnly || tempSpeaker === c || normalizedSpeakerA === normalizedName);
       });
       const hasSentenceParticles = !isExactCastMatch && /[がをにでへはもとからまでより]/.test(tempSpeaker) && tempSpeaker.length > 5;
+      const isNarrationSubject = isNarrationSubjectSpeakerCandidate(tempSpeaker, validCharacters);
       // [v4.6.3] extractDialogueOnly と閾値を統一（12→20）。不一致だとセリフがAction側に残り、protectNonDialogueTextHintsで破壊される
       const isTooLong = tempSpeaker.length > 20;
       // [v4.6.3] 照明・SE・演出など舞台指示用語をメタタグとして除外
@@ -812,7 +829,7 @@ export const extractActionOnly = (fullPanelText, castList, placementRule = "") =
       const isSoundEffect = /^[^a-zA-Z]*([\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF])([ーッっ]*\1){1,}[ーッっ！!ン]*$/u.test(tempSpeaker.replace(/[（(].*$/, '').trim());
       const hasReactionTag = /[（(]\s*リアクション/i.test(match[1]);
       
-      if (hasSentenceParticles || isTooLong || isMetaTag || isSoundEffect || hasReactionTag) {
+      if (hasSentenceParticles || isNarrationSubject || isTooLong || isMetaTag || isSoundEffect || hasReactionTag) {
         // Not a dialogue speaker (meta tag, sound effect, or reaction directive)
       } else if (isLikelyPerson(tempSpeaker, validCharacters) || isGenericShortSpeakerPrefix(tempSpeaker) || tempSpeaker === "全員" || tempSpeaker === "Speaker" || match[0].trim().endsWith(':') || match[0].trim().endsWith('：')) {
         isDialogue = true;
@@ -921,6 +938,7 @@ export const extractPlacementRule = (fullPanelText, castList, options = {}) => {
         return c === speaker || normalizedSpeakerP === normalizedName;
       });
       const hasSentenceParticles = !isExactCastMatchP && /[がをにでへはもとからまでより]/.test(speaker) && speaker.length > 5;
+      const isNarrationSubjectP = isNarrationSubjectSpeakerCandidate(speaker, validCharsForPlacement);
       const isTooLong = speaker.length > 12;
       // [v4.6.3] 照明・SE・演出など舞台指示用語をメタタグとして除外
       // [v4.6.10] 「セリフ」「台詞」「Dialogue」をメタタグに追加
@@ -928,7 +946,7 @@ export const extractPlacementRule = (fullPanelText, castList, options = {}) => {
       const isSoundEffect = /^[^a-zA-Z]*([\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF])([ーッっ]*\1){1,}[ーッっ！!ン]*$/u.test(speaker.replace(/[（(].*$/, '').trim());
       const hasReactionTag = /[（(]\s*リアクション/i.test(match[1]);
       const isDummySpeaker = /^(全員|みんな|Speaker)$/i.test(speaker);
-      if (hasSentenceParticles || isTooLong || isMetaTag || isSoundEffect || hasReactionTag || isDummySpeaker) return;
+      if (hasSentenceParticles || isNarrationSubjectP || isTooLong || isMetaTag || isSoundEffect || hasReactionTag || isDummySpeaker) return;
       // [v4.6.3] コロン形式ト書き判定: extractDialogueOnly と同期
       if (match[0].trim().endsWith(':') || match[0].trim().endsWith('：')) {
         const restOfLine = line.substring(match.index + match[0].length);
@@ -1016,6 +1034,7 @@ export const extractCastLimitRule = (fullPanelText, castList, options = {}) => {
     if (match && match[1].trim()) {
       let speaker = match[1].replace(/^(SFX|効果音|BGM|Action|状況(?:演出)?|[\(（].*?[\)）])/gi, '').replace(/^[【\[（(]/, '').replace(/[】\]）)]$/, '').trim();
       if (speaker) {
+        if (isNarrationSubjectSpeakerCandidate(speaker, validCharacters)) return;
         if (speaker === "全員" || speaker === "Speaker") return;
         const matchedChar = findSpeakerCastMatch(speaker, validCharacters);
         if (matchedChar) {
@@ -1049,13 +1068,14 @@ export const extractCastLimitRule = (fullPanelText, castList, options = {}) => {
         return nameOnly && (tempSpeaker === nameOnly || tempSpeaker === c || normalizedSpeakerC === normalizedName);
       });
       const hasSentenceParticles = !isExactCastMatchC && /[がをにでへはもとからまでより]/.test(tempSpeaker) && tempSpeaker.length > 5;
+      const isNarrationSubjectC = isNarrationSubjectSpeakerCandidate(tempSpeaker, validCharacters);
       const isTooLong = tempSpeaker.length > 12;
       // [v4.6.10] 「セリフ」「台詞」「Dialogue」をメタタグに追加
       const isMetaTag = /^(Camera|Location|Outfit|EMOTION|状況(?:演出)?|Action|リアクション|Reaction|設定|聴覚|触覚|嗅覚|体内感覚|視覚|物理描写|SFX|効果音|BGM|ナレーション|テロップ|背景|Background|カメラワーク|CameraWork|Camera\s*Work|セリフ|台詞|Dialogue|Punchline)$/i.test(tempSpeaker);
       const isSoundEffect = /^[^a-zA-Z]*([\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF])([ーッっ]*\1){1,}[ーッっ！!ン]*$/u.test(tempSpeaker.replace(/[（(].*$/, '').trim());
       const hasReactionTag = /[（(]\s*リアクション/i.test(match[1]);
       
-      if (hasSentenceParticles || isTooLong || isMetaTag || isSoundEffect || hasReactionTag) {
+      if (hasSentenceParticles || isNarrationSubjectC || isTooLong || isMetaTag || isSoundEffect || hasReactionTag) {
         // メタタグ等
       } else if (isLikelyPerson(tempSpeaker, validCharacters) || tempSpeaker === "全員" || tempSpeaker === "Speaker" || match[0].trim().endsWith(':') || match[0].trim().endsWith('：')) {
         isDialogue = true;
