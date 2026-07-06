@@ -417,7 +417,7 @@ function App() {
           </main >
 
         <footer className="text-center text-slate-500 text-[9px] font-bold tracking-[0.3em] uppercase py-10 px-4">
-          &copy; 2026 FURU <span className="mx-2 sm:mx-4">|</span> NANO BANANA 2 & CHATGPT IMAGES 2.0 POWERED SUPER AI 4-KOMA SYSTEM
+          &copy; 2026 FURU <span className="mx-2 sm:mx-4">|</span> SUPER FURU AI 4-KOMA SYSTEM
         </footer>
       </div >
 
