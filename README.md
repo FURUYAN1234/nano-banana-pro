@@ -20,6 +20,18 @@
 This project aims to intentionally exclude humans from the creative process, allowing AI to act as a director and complete everything from brainstorming to composition, direction, and rendering.
 本プロジェクトは、人間をクリエイティブな工程から意図的に排除し、AIがディレクターとして「ネタ出し・構成・演出・作画」のすべてを完結させることを目的としています。
 
+## Current Release Line / 現行リリース系統
+
+The current public line is **v4.8.7**. The product name shown to users is unified as **Super FURU AI 4-koma System**; **Nano Banana 2** and **ChatGPT Images 2.0** are treated as generation-engine families rather than the application name.
+現行公開系統は **v4.8.7** です。ユーザーに見せるプロダクト名は **Super FURU AI 4-koma System** に統一し、**Nano Banana 2** や **ChatGPT Images 2.0** はアプリ名ではなく生成エンジン系統として扱います。
+
+* **Provider-family prompts / プロバイダー系統別プロンプト**: Gemini API and Gemini Web share the Gemini-family final prompt, while OpenAI API and ChatGPT Web share the ChatGPT-family final prompt. The same story structure is kept, but the rendering instructions are tuned for each provider's failure modes.
+  Gemini API と Gemini Web は Gemini 系の最終プロンプトを共有し、OpenAI API と ChatGPT Web は ChatGPT 系の最終プロンプトを共有します。物語構造は共通に保ちつつ、作画指示は各プロバイダーの失敗傾向に合わせて分けています。
+* **API preflight / API事前検証**: The settings modal requires a valid-looking API key and performs a live preflight before STEP1 is unlocked. Random strings or unsupported provider formats fail closed instead of entering the generation flow.
+  設定モーダルではAPIキー形式の検証に加えてライブ事前検証を行い、STEP1へ進む前に利用可能性を確認します。ランダム文字列や非対応形式は生成フローに入れず停止します。
+* **STEP4 helper boundary / STEP4補助機能の境界**: Raw generated images remain downloadable as-is. The 2x upscale and aspect-ratio correction helpers generate copy-ready instructions for external image tools; they are not presented as deterministic in-app upscalers.
+  生成された元画像はそのまま保存できます。2xアップスケールやアスペクト比補正は外部画像ツール向けの貼り付け用補助プロンプトであり、アプリ内の決定論的アップスケーラーとしては扱いません。
+
 ![Sample Output](assets/samples/sample.png)
 ![Retro Sample](assets/samples/retro_sample.jpg)
 
