@@ -139,7 +139,7 @@ UIからオチ（4コマ目）の方向性を手動で選択できるコント�
 
 * **Auto Mode / おまかせモード**: AI picks the best punchline type for the scenario, now enhanced with a deterministic random selection from 10 comedic punchline models to guarantee maximum story variety. This is the default. / AIがシナリオに最適なオチを自律選択します。バージョン4.0.6以降、オチの偏りを防ぐためにJavaScript側で10種類のオチパターンから決定論的にランダム選定してAIに注入するため、ネタの多様性が保証されます。デフォルト設定です。
 * **Forced Mode / 強制指定モード**: Human selects a specific punchline type (e.g., "Dream" or "PsychoHorror"). The AI is given no choice. / 人間が特定のオチを選択。AIに選択の余地はありません。
-* **Documentary Mode / ドキュメンタリーモード**: A special punchline mode that faithfully visualizes serious news. Includes a built-in "3-Tier Hybrid Content Sanitizer" that performs semantic replacement on critical WMD/terrorism triggers and masks secondary crime triggers with "●", allowing sensitive real-world topics to bypass AI safety filters without losing narrative meaning. / シリアスなニュースを原文の温度感に忠実なまま漫画化するための特殊設定です。AIの安全検閲を突破するため「3層ハイブリッド・コンテンツサニタイザー」を内蔵しており、核兵器やテロといった即死級のセンシティブワードを「完全な意味置換」や「●伏せ字」に自動変換し、元記事の文脈を保ったまま画像生成を成功に導きます。
+* **Documentary Mode / ドキュメンタリーモード**: A special punchline mode that visualizes serious news while keeping the source context readable. It includes a built-in "3-Tier Hybrid Content Sanitizer" that rewrites high-risk or easily misunderstood wording into milder, policy-compatible phrasing and redacts only limited secondary terms when necessary, so sensitive real-world topics can be handled within each AI service's safety standards. / シリアスなニュースの文脈を保ちながら漫画化するための特殊設定です。「3層ハイブリッド・コンテンツサニタイザー」により、核兵器やテロなどの過激・誤解されやすい表現を、各AIサービスの安全基準に適合しやすい穏当な表現へ自動変換します。必要な場合のみ限定的に表記を抑え、元記事の意図を保ちながら安全に生成へ進めます。
 * **Browser UI Integration / ブラウザUI連携**: The selected punchline type is embedded in the scenario output header (`Punchline: 爆発型`), so if you choose to use the manual "Browser UI Option" to save API costs, copying the scenario to ChatGPT or Gemini automatically carries the comedic intent. / 選択されたオチの種類はシナリオ出力ヘッダーに埋め込まれ、APIを使わずに手動でChatGPTやGeminiのWeb画面にコピペする際にも意図が自動的に伝わります。
 
 ### 🎭 Comedy Tone Engine (v4.0.6+) / コメディトーン・エンジン
@@ -159,20 +159,20 @@ AIが生成するストーリーのノリが一パターンになるのを防ぐ
 ### 🤖 ChatGPT Images 2.0 Anti-Noise Protocol / OpenAI特有ノイズ除去プロトコル
 
 When the OpenAI Engine is selected (or when using the Browser UI Option for ChatGPT), a dedicated formatting protocol is automatically applied to optimize prompts for ChatGPT Images 2.0. This enforces A4 portrait orientation, vertical Japanese text, and right-to-left reading flow. It also includes an OpenAI-specific Anti-Noise Protocol with safe rendering keywords, banned word combinations, and light effect substitution rules to ensure clean, noise-free anime-quality output.
-OpenAI Engine選択時（またはChatGPT向けのブラウザUI運用時）には、ChatGPT Images 2.0 での生成に最適化された専用プロンプトフォーマットが自動付与されます。A4縦長のキャンバス指定や、日本語の縦書き、右から左への視線誘導など、特有の制限を突破します。さらにOpenAIモデル特有のノイズ問題に対応するAnti-Noiseプロトコル（安全レンダリングキーワード・禁止ワード組み合わせ・光演出の代替表現）を搭載し、クリーンなアニメ品質の出力を保証します。
+OpenAI Engine選択時（またはChatGPT向けのブラウザUI運用時）には、ChatGPT Images 2.0 での生成に最適化された専用プロンプトフォーマットが自動付与されます。A4縦長のキャンバス指定や、日本語の縦書き、右から左への視線誘導など、特有の描画要件に対応します。さらにOpenAIモデル特有のノイズ問題に対応するAnti-Noiseプロトコル（安全レンダリングキーワード・禁止ワード組み合わせ・光演出の代替表現）を搭載し、クリーンなアニメ品質の出力を保証します。
 
-### 🛡️ Content Policy Auto-Rescue System (v4.2.1+) / コンテンツポリシー自動救済システム & Web版切替機能
+### 🛡️ Content Policy Adjustment System (v4.2.1+) / コンテンツポリシー自動調整システム & Web版切替機能
 
-The system includes a fully automated safety policy rescue pipeline to prevent generations from halting due to API safety filters or content censorship (NSFW, violence, etc.).
-APIの安全基準（NSFW、暴力表現などの検閲）による生成エラーでワークフローが完全に停止するのを防ぐため、高度なポリシー自動救済およびWeb連携システムを搭載しています。
+The system includes an automated safety-policy adjustment pipeline that helps prevent the workflow from stopping when a prompt needs softer wording for provider safety checks.
+APIの安全基準に合わせて表現を穏当化する自動調整パイプラインを備えており、過激または誤解されやすい表現が原因で生成ワークフローが止まるのを防ぎます。
 
 - **Dynamic Auto-Fix / 配慮版プロンプトの自動再生成**: 
-  When the image generator blocks a prompt due to safety filters, the AI Advisor automatically detects and analyzes the violation logs. It dynamically replaces sensitive keywords with mild, contextually appropriate synonyms and automatically retries the generation.
-  画像生成エンジンが安全フィルターによってブロックされた際、AIアドバイザーが自動的に検閲ログを解析。センシティブな単語を文脈に合わせた安全な表現に動的に置き換えた **「配慮版プロンプト」** を自動生成し、即座にリトライを行います。
+  When the image generator returns a safety-policy block, the AI Advisor checks the provider response, rewrites high-risk or ambiguous wording into mild, context-preserving alternatives, and retries within the provider's safety rules.
+  画像生成エンジンが安全ポリシー上のブロックを返した場合、AIアドバイザーが応答内容を確認し、過激または誤解されやすい表現を文脈に沿った穏当な表現へ置き換えた **「配慮版プロンプト」** を生成し、各プロバイダーの安全基準内で再試行します。
 
 - **One-Click "Switch to Web" / 「Web版に切り替える」連携機能**: 
-  If API-level censorship continues to reject the prompt, a "Switch to Web" button appears on the screen. Clicking this button immediately copies the fully formatted prompt (optimized for the active engine) to your clipboard and opens the official web interface (Gemini or ChatGPT) in a new tab. Since web interfaces are often more resilient or easier to adjust, you can paste and generate without frustration.
-  API経由での生成拒否が続く場合、画面に **「Web版に切り替える」** ボタンが表示されます。このボタンをクリックすると、お使いのエンジン（GeminiまたはChatGPT）に合わせた専用プロンプトが自動的にクリップボードにコピーされ、同時に公式サイトが新しいタブで開きます。Web版にコピペするだけで、API制限を回避して生成を続行可能です。
+  If provider safety checks still reject the adjusted prompt, a "Switch to Web" button appears on the screen. Clicking this button copies the fully formatted prompt, optimized for the active engine, to your clipboard and opens the official web interface (Gemini or ChatGPT) in a new tab so the user can review and adjust the request in the provider's own UI.
+  API経由での生成拒否が続く場合、画面に **「Web版に切り替える」** ボタンが表示されます。このボタンをクリックすると、お使いのエンジン（GeminiまたはChatGPT）に合わせた専用プロンプトが自動的にクリップボードにコピーされ、同時に公式サイトが新しいタブで開きます。公式Web版上で内容を確認・調整しながら、各サービスの安全基準内で生成を進められます。
 
 - **Unified Copy Workflow / 統一されたコピペ連携フロー**: 
   The clipboard-copy and web redirection workflow operates identically for both Gemini and ChatGPT engines, providing a unified fallback experience regardless of your selected model.
@@ -180,7 +180,7 @@ APIの安全基準（NSFW、暴力表現などの検閲）による生成エラ�
 
 - **Intelligent Auto-Mode Adaptations / 自動化モードとの高度な連携**:
   - **Full Auto Mode / フルオートモード**: The system automatically attempts the "Auto-Fix" retry up to 3 times. If all attempts fail, it pauses and prompts the user for action.
-    フルオート生成中、ポリシーエラーが発生した場合はAIが最大3回まで配慮版での再生成とリトライを実行。それでも突破できない場合のみ一時停止し、ユーザーの介入を待ちます。
+    フルオート生成中、ポリシーエラーが発生した場合はAIが最大3回まで配慮版での再生成とリトライを実行。それでも安全基準内で生成できない場合のみ一時停止し、ユーザーの介入を待ちます。
   - **Endless Mode / 無限ループモード**: To ensure continuous, unmanned operation, if a specific topic fails 3 consecutive times due to policy violations, the system automatically skips the current topic and moves to the next news trend instead of freezing the loop.
     無限ループモードの放置運用中、特定のニュースやお題でポリシーエラーが3回連続して解消できない場合、ループ全体のフリーズを防ぐため、そのお題を自動的にスキップして次のトピックへ自律的に移行します。
 
