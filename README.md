@@ -22,8 +22,8 @@ This project aims to intentionally exclude humans from the creative process, all
 
 ## Current Release Line / 現行リリース系統
 
-The current public line is **v4.8.7**. The product name shown to users is unified as **Super FURU AI 4-koma System**; **Nano Banana 2** and **ChatGPT Images 2.0** are treated as generation-engine families rather than the application name.
-現行公開系統は **v4.8.7** です。ユーザーに見せるプロダクト名は **Super FURU AI 4-koma System** に統一し、**Nano Banana 2** や **ChatGPT Images 2.0** はアプリ名ではなく生成エンジン系統として扱います。
+The current public line is **v4.8.8**. The product name shown to users is unified as **Super FURU AI 4-koma System**; **Nano Banana 2** and **ChatGPT Images 2.0** are treated as generation-engine families rather than the application name.
+現行公開系統は **v4.8.8** です。ユーザーに見せるプロダクト名は **Super FURU AI 4-koma System** に統一し、**Nano Banana 2** や **ChatGPT Images 2.0** はアプリ名ではなく生成エンジン系統として扱います。
 
 * **Provider-family prompts / プロバイダー系統別プロンプト**: Gemini API and Gemini Web share the Gemini-family final prompt, while OpenAI API and ChatGPT Web share the ChatGPT-family final prompt. The same story structure is kept, but the rendering instructions are tuned for each provider's failure modes.
   Gemini API と Gemini Web は Gemini 系の最終プロンプトを共有し、OpenAI API と ChatGPT Web は ChatGPT 系の最終プロンプトを共有します。物語構造は共通に保ちつつ、作画指示は各プロバイダーの失敗傾向に合わせて分けています。
@@ -784,6 +784,9 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 ---
 
 ## 📋 ChangeLog
+
+### v4.8.8 (2026-07-15)
+- **[Fix & UX]** 会話シーンで話者・聞き手の視線と顔向きを自動調整 / Automatically stage speaker and listener eye-lines in conversation scenes
 
 ### v4.8.7 (2026-07-06)
 - **[Fix & UX]** 旧長名表記をSuper FURU AI 4-koma Systemに統一 / Aligned old long-form title references to Super FURU AI 4-koma System

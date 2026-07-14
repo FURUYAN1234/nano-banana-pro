@@ -194,6 +194,19 @@ export const getScenarioPrompt = ({
            : `「${searchTopicKeywords}」に関する、** 指定された日付（${targetDate}）周辺の具体的かつ事実に即したニュース ** を1つ選定し、それをテーマにした4コマ漫画のシナリオを作成してください。`
          }
 
+         ${inputMode === 'manual' ? `【ユーザー明示演出ロック（最優先・不変条件）】
+         - 手動入力にある事実、コマ順、セリフ原文、役割、および「誰が誰に話す／見る／向くか」という話者と聞き手の関係を不変条件として扱え。
+         - 話者と聞き手、視線の相手、リアクション相手を別のキャラクター同士へ変更・組み替えしてはならない。後述の話者数バラエティ、全員登場、ギャグ強化よりも、このロックを優先する。
+         - 相互視線、読者・画面・カメラを見ない、正面を向かない等の指定がある場合、該当する各コマの「状況」に、誰が誰を見ているかと、顔・目線・肩・胴体が相手へ向いていることを具体的に再記述せよ。
+         - カメラワークや自動構図が明示演出と衝突する場合は、必ずユーザーの演出指定を優先し、対面ツーショットまたは肩越し構図など成立するカメラへ変更せよ。
+         - 明示された禁止事項を、別の演出ルールや自動ギャグで復活させてはならない。` : ''}
+
+         【自動会話演出・視線設計（全入力モード必須）】
+         - 各コマで話者・聞き手・リアクション役を決め、会話中は顔・目線・肩・胴体を会話相手へ向ける。全員が読者・画面・カメラ正面を向く記念写真構図は禁止する。
+         - セリフが1人だけでも、相手が同席して反応するコマでは、話者が誰へ話し、聞き手が誰を見返すかを設計する。無言のリアクション役も現在の話者を見る。
+         - 読者、観客、配信カメラへ直接呼びかける演出が物語上明示されている場合だけ、該当する話者のカメラ目線を許可する。
+         - 誰が誰を見るか、横顔・斜め後ろ・肩越し等の向きを、各コマの「状況」にキャラクター名付きで具体的に書く。カメラタグはこの対人視線を壊さないものを選ぶ。
+
          【選定ルールの絶対厳守】
 
          1. **「AI」「人工知能」「ロボット」「スマホ」「SNS」等のIT系ネタは禁止（頻出のため）。**
@@ -685,28 +698,21 @@ ${outfitRule}
 - GLASSES CHECK: every panel must match the Identity Matrix.
 
 KEY PROP / OBJECT CONSISTENCY:
-- Render the key product/item/food/object EXACTLY as Action/Dialogue describes: category, container, shape, color, label. Do not substitute another object, dish, package, vessel, or generic prop.
-- Keep that key object identical every time; treat it as a second identity anchor.
+- Match the key object EXACTLY to Action/Dialogue (category, container, shape, color, label); never substitute it and keep it identical.
 
 TEXT RULES:
-- Only Dialogue entries become white speech bubbles. Speech text MUST be vertical Japanese tategaki, copied verbatim character-by-character; no paraphrase, synonyms, softening, added/omitted words, or horizontal text.
-- Bubble tail points to the actual speaker; right-to-left Japanese manga reading order.
-- Action text is visual only. Do NOT draw ambience, SFX names, mood/aura/emotion labels, narration, situation/state words, or prompt labels as visible text.
-- Do not invent lettering. Draw scene text only when Action explicitly requests handwriting/signage/labels/printed/screen/board text; otherwise use blank/unreadable marks.
+- Only Dialogue becomes white bubbles: vertical Japanese tategaki, verbatim character-by-character; no paraphrase, synonyms, softening, added/omitted words, or horizontal text.
+- Tails point to actual speakers; right-to-left manga order.
+- Action is visual only: no ambience/SFX/mood/aura/emotion/narration/state/prompt labels as text. Lettering only when Action requests handwriting/signage/label/print/screen/board text; otherwise unreadable marks.
 
 DIALOGUE / BUBBLE QA LOCK:
-- Compare every bubble against Dialogue. If one character, punctuation mark, added word, omitted word, or speaker differs, redraw that bubble only.
-- Each bubble tail must point to the named speaker and stay beside that speaker's actual head/body position. Do not detach/swap/float bubbles.
-- No extra bubbles, captions, narration, title-like labels, or decorative words.
+- If one character, punctuation mark, added word, omitted word, or speaker differs from Dialogue, redraw. Each bubble tail must point to the named speaker; no extra bubbles, captions, or narration.
 
 CHARACTER QA PASS:
-- Compare hair color, hairstyle, eye color, glasses status, skin tone, outfit, and unique accessories against identity/cast rules.
-- Redraw feature swaps, added/missing glasses, hair/skin/outfit changes, merges, or wrong cast members.
+- Match hair color, hairstyle, eye color, glasses status, skin tone, outfit, and accessories; redraw swaps, merges, or wrong cast.
 
 ART-STYLE DIFFERENCE QA LOCK:
-- Each PANEL STYLE LOCK must differ from adjacent panels in at least three of linework, palette, shading, background/VFX, texture/surface treatment.
-- Redraw if it still looks like the same clean anime style with only pose, expression, saturation, glow, or speed lines changed.
-- Style must not override script/dialogue/identity/key prop/A4 layout.
+- Adjacent PANEL STYLE LOCKs differ in at least three of linework, palette, shading, background/VFX, texture/surface treatment. Redraw the same clean anime style with only pose, expression, saturation, glow, or speed lines changed. Never override script/dialogue/identity/key prop/A4 layout.
 
 THINGS TO AVOID:
 - No plastic skin, over-sharpening, extra logos/watermarks, character-sheet/grid layout, floating/ghost eyes/faces, duplicate/extra humans.

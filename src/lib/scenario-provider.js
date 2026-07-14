@@ -3,6 +3,7 @@ import { getLocationDetails, getReactionGuidelines } from './knowledge';
 import { locationDetails } from './locations.js';
 import { getScenarioPrompt, getScenarioEnhancePrompt } from './prompts';
 import { cropEquirectangular } from './panorama360';
+import { applyManualStagingLocks } from './manual-staging';
 
 // [v3.85-alpha] シナリオ生成と強化ロジックの外部モジュール化
 
@@ -196,6 +197,10 @@ export async function generateScenario({
     console.warn("Parse warning:", e);
     parsedData.scenario = result.text;
     parsedData.topic = "Generated Scenario";
+  }
+
+  if (inputMode === 'manual') {
+    parsedData.scenario = applyManualStagingLocks(parsedData.scenario, manualTopic);
   }
 
   // 6. 360°カメラワーク自律設計

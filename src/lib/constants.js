@@ -1,7 +1,7 @@
 // --- 定数・タグ定義 (constants.js) ---
 // App.jsx から抽出された共有定数
 
-export const SYSTEM_VERSION = "v4.8.7";
+export const SYSTEM_VERSION = "v4.8.8";
 
 // --- Punchline ラベル変換関数 ---
 export const getPunchlineLabel = (type) => {
@@ -319,7 +319,7 @@ ANTIGRAVITY CAMERA PROTOCOL:
 - DISTORTION: (extreme perspective distortion:2.8), (NO eye-level shot:2.9), (NO flat symmetrical composition:2.9), (severe camera angle:2.7), (exaggerated depth of field:2.5)
 - BODY DEFORM: Near body parts 50%+ larger than far parts.
 - ANTI-CLONE: Each character appears ONLY ONCE per panel.
-- NO EYE CONTACT: (NO looking at camera:2.5), (eyes directed at partner:1.5).
+- EYE-LINE BASE: all visible gaze/face/torso aim at another character, never lens/front; speakers stay profile (one eye), or redraw.
 - VFX MUST follow the panel's perspective distortion.
 `;
 

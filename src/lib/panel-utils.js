@@ -715,6 +715,76 @@ export const extractDialogueOnly = (fullPanelText, castList) => {
     .join(', ');
 };
 
+const DIRECT_ADDRESS_SUBJECT_RE = /(?:読者|観客|視聴者|カメラ|配信|撮影|レンズ|第四の壁|メタフィクション|reader|viewer|audience|camera|livestream|broadcast|filming|fourth\s+wall|metafiction)/i;
+const DIRECT_ADDRESS_ACTION_RE = /(?:話しかけ|呼びかけ|語りかけ|訴えかけ|目線を向け|正面を向|見つめ|address(?:es|ing)?|speak(?:s|ing)?\s+to|talk(?:s|ing)?\s+to|look(?:s|ing)?\s+(?:at|into)|face(?:s|ing)?|stare(?:s|ing)?|gaze(?:s|ing)?)/i;
+const CAMERA_FACING_NEGATION_RE = /(?:(?:画面|カメラ|読者|観客|視聴者)[^\n。]{0,48}(?:厳禁|禁止|避け|しない|させない|向けない)|(?:never|do\s+not|don't|must\s+not|avoid)[^.\n]{0,48}(?:camera|reader|viewer|audience))/i;
+const CAMERA_INSTRUCTION_LINE_RE = /^\s*\[?\s*(?:Camera|カメラワーク|CameraWork|Camera\s*Work)\s*[:：][^\n]*$/gim;
+const INTERPERSONAL_STAGING_RE = /(?:話しかけ|語りかけ|呼びかけ|問いかけ|会話|相談|議論|打ち合わせ|返事|答え|叫ぶ|反応|リアクション|向かい合|見つめ合|振り向|speak(?:s|ing)?\s+to|talk(?:s|ing)?\s+to|ask(?:s|ing)?|answer(?:s|ing)?|repl(?:y|ies|ying)|respond(?:s|ing)?|react(?:s|ing)?|conversation|discuss(?:es|ing)?|shout(?:s|ing)?)/i;
+const LISTENER_OR_REACTOR_CUE_RE = /(?:全員|一同|みんな|相手|聞き手|編集者(?:たち|一同|[0-9０-９一二三四五六七八九十]+人)?|メンバー(?:たち|一同|[0-9０-９一二三四五六七八九十]+人)?|仲間(?:たち|一同)?|リアクション|反応|→|listeners?|interlocutors?|editors?|the\s+group|everyone|all\s+of\s+them|reactors?)/i;
+
+const escapeRegex = (value) => String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+const buildExplicitStagingSides = (text, castNames) => {
+  const marker = String(text).match(/\[USER STAGING LOCK - ABSOLUTE\]\s*:\s*([^\n]+)/i)?.[1] || '';
+  if (!marker) return '';
+
+  const sentences = marker.split(/(?<=[。！？!?])\s*/u).filter(Boolean);
+  for (const sentence of sentences) {
+    const sentenceNames = castNames.filter((name) => sentence.includes(name));
+    if (sentenceNames.length < 2) continue;
+
+    for (const target of sentenceNames) {
+      const escapedTarget = escapeRegex(target);
+      const japaneseTarget = new RegExp(`${escapedTarget}(?:の方)?に(?:向かって)?(?:話しかけ|語りかけ|呼びかけ|問いかけ)`);
+      const englishTarget = new RegExp(`(?:speak|talk|address)(?:s|ed|ing)?\\s+to\\s+\\[?${escapedTarget}\\]?`, 'i');
+      if (!japaneseTarget.test(sentence) && !englishTarget.test(sentence)) continue;
+
+      const sources = sentenceNames.filter((name) => name !== target);
+      if (sources.length === 0) continue;
+      return `SIDES> [${target}] ↔ ${sources.map((name) => `[${name}]`).join(',')}; strict inward profiles; no front; overrides placement.`;
+    }
+  }
+  return '';
+};
+
+export const buildPanelEyeLineRule = (panelText, castList) => {
+  const text = String(panelText || '');
+  const dialogue = extractDialogueOnly(text, castList);
+  const speakers = [...dialogue.matchAll(/Speech Bubble \d+ \[([^\]]+)\]/g)]
+    .map((match) => match[1].trim())
+    .filter((name, index, names) => name && names.indexOf(name) === index);
+  const actionAndDialogueText = text.replace(CAMERA_INSTRUCTION_LINE_RE, '');
+  const mentionedCastNames = [...new Set(collectCastNames(castList)
+    .map((name) => name.split('(')[0].trim())
+    .filter(Boolean))]
+    .filter((name) => actionAndDialogueText.includes(name));
+  const explicitDirectAddress = !CAMERA_FACING_NEGATION_RE.test(actionAndDialogueText)
+    && DIRECT_ADDRESS_SUBJECT_RE.test(actionAndDialogueText)
+    && DIRECT_ADDRESS_ACTION_RE.test(actionAndDialogueText);
+  const stagedSpeakerAndListener = speakers.length === 1
+    && INTERPERSONAL_STAGING_RE.test(actionAndDialogueText)
+    && (mentionedCastNames.length >= 2 || LISTENER_OR_REACTOR_CUE_RE.test(actionAndDialogueText));
+
+  if (explicitDirectAddress) {
+    return 'DIRECT-ADDRESS EXCEPTION: camera-facing is allowed only for the explicit in-story address; all others react toward that speaker or the described camera.';
+  }
+  if (/\[USER STAGING LOCK - ABSOLUTE\]/i.test(actionAndDialogueText)) {
+    const stagingSides = buildExplicitStagingSides(actionAndDialogueText, mentionedCastNames);
+    return `EYE-LINE LOCK: obey USER STAGING LOCK exactly for speakers and listeners; never lens/front unless explicit direct address. ${stagingSides} Camera yields.`;
+  }
+  if (speakers.length < 2 && !stagedSpeakerAndListener) return '';
+
+  const participants = mentionedCastNames.length > 0 ? mentionedCastNames : speakers;
+  const listeners = participants.filter((name) => !speakers.includes(name));
+  const roleStaging = speakers.length === 1
+    ? (listeners.length > 0
+      ? `[${speakers[0]}] profile → ${listeners.map((name) => `[${name}]`).join(', ')}; listeners look back.`
+      : `[${speakers[0]}] profile → described listener group; group looks back.`)
+    : `${speakers.map((name) => `[${name}]`).join(' ↔ ')} opposing profiles; pupils meet; reactors watch speaker.`;
+
+  return `EYE-LINE LOCK: ${roleStaging} Camera yields.`;
+};
+
 export const cleanseActionGagSymbols = (actionText) => {
   if (!actionText) return actionText;
   

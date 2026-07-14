@@ -13,6 +13,7 @@ import {
   injectOutfitReminder, 
   extractActionOnly, 
   extractDialogueOnly, 
+  buildPanelEyeLineRule,
   stripWeightTags 
 } from './panel-utils';
 import { 
@@ -57,6 +58,7 @@ const extractPanel = (text, header, nextHeader) => {
 };
 
 const POINTING_GESTURE_RE = /(?:\bpoint(?:ing|s|ed)?\b|finger[-\s]?point|\u6307\u5dee|\u6307\u3055|\u6307\u3092(?:\u7a81\u304d\u7acb\u3066|\u5411\u3051|\u5dee\u3057|\u3055\u3057))/i;
+const CONVERSATION_CAMERA = 'PURE 90° SIDE-ON; camera perpendicular to dialogue axis; opposing sides face inward in profile; NO OTS/front';
 
 const appendPointingHandLock = (actionText) => {
   if (!POINTING_GESTURE_RE.test(actionText)) return actionText;
@@ -217,20 +219,30 @@ export const buildMangaPrompt = ({
   let rawPrompt = "";
   const panels = [panel1Text, panel2Text, panel3Text, panel4Text];
   const scriptLock = buildStrictScriptLock({ safeTopic, panels, castList, activeOutfit });
+  const panelEyeLineRules = panels.map((panel) => buildPanelEyeLineRule(panel, castList));
+  const eyeLineBase = panelEyeLineRules.some((rule) => rule.startsWith('EYE-LINE LOCK'))
+    ? 'EYE-LINE BASE — STRICT SIDE OR REAR VIEW ONLY: all visible characters turn gaze/face/shoulders/torso toward another character, never lens/front. Keep the far eye of every visible character fully hidden by nose/face contour or head rear. If two eyes are visible on anyone, redraw the whole panel. No exception for listeners/reactors.'
+    : '';
   let panelSections = "";
 
   if (isChatGPTFamily) {
     // ChatGPT Image 2.0 向けプロンプトの構築
     panelSections = panels.map((pt, i) => {
       const num = i + 1;
+      const eyeLineRule = panelEyeLineRules[i];
+      const camera = eyeLineRule.startsWith('EYE-LINE LOCK')
+        ? CONVERSATION_CAMERA
+        : getCameraForChatGPT(pt, cameraState);
       return `## Panel ${num}
 ${buildEmotionBlock(pt)}
 ${extractPlacementRule(pt, castList, { compact: true }).replace(/\\\\[/g, '').replace(/\\\\]/g, '')}
 ${extractCastLimitRule(pt, castList, { compact: true }).replace(/\\\\[/g, '').replace(/\\\\]/g, '')}
-Camera: ${getCameraForChatGPT(pt, cameraState)}
+Camera: ${camera}
+${eyeLineRule}
 Action (visual only): ${buildPanelActionText(pt, castList, activeOutfit)}
 Dialogue (verbatim bubbles): ${extractDialogueOnly(pt, castList)}`;
     }).join('\n\n');
+    panelSections = eyeLineBase ? `${eyeLineBase}\n\n${panelSections}` : panelSections;
 
     rawPrompt = buildChatGPTMangaPrompt({
       safeTopic, watermarkEng, styleCore, safeLocation,
@@ -242,15 +254,25 @@ Dialogue (verbatim bubbles): ${extractDialogueOnly(pt, castList)}`;
     // Gemini (Imagen 3/4) 向けプロンプトの構築
     panelSections = panels.map((pt, i) => {
       const num = i + 1;
+      const eyeLineRule = panelEyeLineRules[i];
+      const isConversation = eyeLineRule.startsWith('EYE-LINE LOCK');
+      const camera = isConversation
+        ? CONVERSATION_CAMERA
+        : getCameraForPanel(pt, shuffledCameras, cameraState);
+      const lensRule = isConversation
+        ? '[LENS]: neutral side-on perspective; preserve inward-facing profiles.'
+        : '[LENS]: (ABOVE CAMERA DISTORTION MAX:2.9), (NEVER normal photograph:3.0), (extreme severe perspective warp:2.7), (violently tilted horizon:2.6). Break normal camera angle.';
       return `## Panel ${num}
 ${buildEmotionBlock(pt)}
 ${extractPlacementRule(pt, castList)}
 ${extractCastLimitRule(pt, castList)}
-Camera: ${getCameraForPanel(pt, shuffledCameras, cameraState)}.
-[LENS]: (ABOVE CAMERA DISTORTION MAX:2.9), (NEVER normal photograph:3.0), (extreme severe perspective warp:2.7), (violently tilted horizon:2.6). Break normal camera angle.
+Camera: ${camera}.
+${lensRule}
+${eyeLineRule}
 Action (Visual ONLY, non-dialogue; do NOT render quoted words as visible text unless this action explicitly says handwriting, signage, board text, label text, or screen text): ${buildPanelActionText(pt, castList, activeOutfit)}.
 Dialogue (ONLY inside bubbles): ${extractDialogueOnly(pt, castList)}.`;
     }).join('\n\n');
+    panelSections = eyeLineBase ? `${eyeLineBase}\n\n${panelSections}` : panelSections;
 
     const antiCharSheetPrefix = ANTI_CHARSHEET_PREFIX;
     rawPrompt = antiCharSheetPrefix + buildGeminiMangaPrompt({
