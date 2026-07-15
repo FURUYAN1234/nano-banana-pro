@@ -1,6 +1,7 @@
 # HANDOFF.md
 
 ## Current Status
+- **Version**: v4.9.0 conversational depth staging release in progress.
 - **Version**: v4.8.8 conversational eye-line auto-staging fix is prepared for deployment.
 - **Version**: v4.8.7 Super FURU title alignment is released and deployed.
 - **Previous public version**: v4.8.6 enhanced-scenario narration bubble extraction fix was released, deployed, and backed up.
