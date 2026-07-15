@@ -130,7 +130,7 @@ test('normal multi-speaker panels keep interlocutor eye-lines while requiring de
     assert.match(panel, /camera is physically behind \[SpeakerB\]'s shoulder/i);
     assert.match(panel, /EYE-LINE LOCK/);
     assert.match(panel, /address.*counterpart/i);
-    assert.match(panel, /Camera preserves the scenario direction/i);
+    assert.match(panel, /Camera preserves (?:the )?scenario direction/i);
   }
 });
 
