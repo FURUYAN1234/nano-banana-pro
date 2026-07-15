@@ -27,6 +27,10 @@ The current public line is **v4.8.8**. The product name shown to users is unifie
 
 * **Provider-family prompts / プロバイダー系統別プロンプト**: Gemini API and Gemini Web share the Gemini-family final prompt, while OpenAI API and ChatGPT Web share the ChatGPT-family final prompt. The same story structure is kept, but the rendering instructions are tuned for each provider's failure modes.
   Gemini API と Gemini Web は Gemini 系の最終プロンプトを共有し、OpenAI API と ChatGPT Web は ChatGPT 系の最終プロンプトを共有します。物語構造は共通に保ちつつ、作画指示は各プロバイダーの失敗傾向に合わせて分けています。
+* **Conversation eye-line staging / 会話シーンの視線演出**: Dialogue, replies, and listener/reaction cues are detected per panel. Conversation panels use inward-facing profiles or rear/side views so speakers and listeners look at each other instead of unintentionally facing the lens. A camera-facing composition remains available only when the story explicitly addresses the reader, audience, camera, or fourth wall.
+  各コマの台詞・応答・聞き手／リアクションの手がかりを検出し、会話コマでは話者と聞き手が互いへ視線を向ける横顔・後ろ姿中心の構図を適用します。物語上で読者・観客・カメラ・第四の壁へ明示的に呼びかける場合に限り、カメラ目線を例外として許可します。
+* **Manual staging priority / 手動演出指定の優先**: A topic instruction that explicitly describes a gaze, facing direction, listener, or panel-specific staging is copied into the corresponding scenario panels as a staging lock. The generated prompt obeys that lock before its automatic conversation rule, while still avoiding unintended camera-facing poses.
+  お題内で視線・顔の向き・聞き手・コマ別の演出を明示した場合は、その指示を該当シナリオコマへ演出ロックとして引き継ぎます。生成プロンプトは自動会話ルールよりこのロックを優先しつつ、意図しないカメラ目線は避けます。
 * **API preflight / API事前検証**: The settings modal requires a valid-looking API key and performs a live preflight before STEP1 is unlocked. Random strings or unsupported provider formats fail closed instead of entering the generation flow.
   設定モーダルではAPIキー形式の検証に加えてライブ事前検証を行い、STEP1へ進む前に利用可能性を確認します。ランダム文字列や非対応形式は生成フローに入れず停止します。
 * **STEP4 helper boundary / STEP4補助機能の境界**: Raw generated images remain downloadable as-is. The 2x upscale and aspect-ratio correction helpers generate copy-ready instructions for external image tools; they are not presented as deterministic in-app upscalers.
@@ -786,7 +790,7 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 ## 📋 ChangeLog
 
 ### v4.8.8 (2026-07-15)
-- **[Fix & UX]** 会話シーンで話者・聞き手の視線と顔向きを自動調整 / Automatically stage speaker and listener eye-lines in conversation scenes
+- **[Fix & UX]** 会話シーンで話者・聞き手の視線と顔向きを自動調整。明示的な読者・カメラへの呼びかけのみをカメラ目線の例外として残し、手動の視線・向き指定は自動ルールより優先 / Automatically stage speaker and listener eye-lines in conversation scenes, preserve camera-facing only for explicit in-story direct address, and prioritize manual staging directions over the automatic rule
 
 ### v4.8.7 (2026-07-06)
 - **[Fix & UX]** 旧長名表記をSuper FURU AI 4-koma Systemに統一 / Aligned old long-form title references to Super FURU AI 4-koma System
