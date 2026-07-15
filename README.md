@@ -789,6 +789,9 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 
 ## 📋 ChangeLog
 
+### v4.8.9 (2026-07-15)
+- **[Fix & UX]** 会話奥行きステージングを追加 / Add conversational depth staging
+
 ### v4.8.8 (2026-07-15)
 - **[Fix & UX]** 会話シーンで話者・聞き手の視線と顔向きを自動調整。明示的な読者・カメラへの呼びかけのみをカメラ目線の例外として残し、手動の視線・向き指定は自動ルールより優先 / Automatically stage speaker and listener eye-lines in conversation scenes, preserve camera-facing only for explicit in-story direct address, and prioritize manual staging directions over the automatic rule
 
