@@ -789,6 +789,9 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 
 ## 📋 ChangeLog
 
+### v4.8.9 (2026-07-15)
+- **[Fix & UX]** 会話奥行きステージングを追加 / Add conversational depth staging
+
 ### v4.9.0 (2026-07-15)
 - **[Fix & UX]** 会話奥行きステージングを追加 / Add conversational depth staging
 
