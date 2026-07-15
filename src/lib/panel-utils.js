@@ -741,10 +741,21 @@ const buildExplicitStagingSides = (text, castNames) => {
 
       const sources = sentenceNames.filter((name) => name !== target);
       if (sources.length === 0) continue;
-      return `SIDES> [${target}] ↔ ${sources.map((name) => `[${name}]`).join(',')}; strict inward profiles; no front; overrides placement.`;
+      return `SIDES> [${target}] ↔ ${sources.map((name) => `[${name}]`).join(',')}; three-quarter or rear/OTS staging; never lens/front; overrides placement.`;
     }
   }
   return '';
+};
+
+const buildRequiredDepthAssignment = (speakers, listeners, requireVisibleRear = false) => {
+  const primary = speakers[0] || 'active speaker';
+  const partner = speakers[1] || listeners[0] || 'described listener group';
+  const primaryLabel = primary === 'active speaker' ? primary : `[${primary}]`;
+  const partnerLabel = partner === 'described listener group' ? partner : `[${partner}]`;
+  const visibleRearCheck = requireVisibleRear
+    ? ` VISIBLE REAR DEPTH CHECK: camera is physically behind ${partnerLabel}'s shoulder; show the back of ${partnerLabel}'s head or shoulder foreground, facing ${primaryLabel}, not as backdrop.`
+    : '';
+  return `DEPTH ASSIGNMENT (REQUIRED): ${primaryLabel} PRIMARY THREE-QUARTER toward ${partnerLabel}; ${partnerLabel} BACK-THREE-QUARTER OR OVER-THE-SHOULDER PARTNER toward ${primaryLabel}. Do not render this exchange as two reader-facing frontal poses.${visibleRearCheck}`;
 };
 
 export const buildPanelEyeLineRule = (panelText, castList) => {
@@ -770,7 +781,8 @@ export const buildPanelEyeLineRule = (panelText, castList) => {
   }
   if (/\[USER STAGING LOCK - ABSOLUTE\]/i.test(actionAndDialogueText)) {
     const stagingSides = buildExplicitStagingSides(actionAndDialogueText, mentionedCastNames);
-    return `EYE-LINE LOCK: obey USER STAGING LOCK exactly for speakers and listeners; never lens/front unless explicit direct address. ${stagingSides} Camera yields.`;
+    const listeners = mentionedCastNames.filter((name) => !speakers.includes(name));
+    return `EYE-LINE LOCK: obey USER STAGING LOCK exactly for speakers and listeners; never lens/front unless explicit direct address. ${stagingSides} ${buildRequiredDepthAssignment(speakers, listeners, speakers.length >= 2)} Camera preserves the scenario direction.`;
   }
   if (speakers.length < 2 && !stagedSpeakerAndListener) return '';
 
@@ -778,11 +790,11 @@ export const buildPanelEyeLineRule = (panelText, castList) => {
   const listeners = participants.filter((name) => !speakers.includes(name));
   const roleStaging = speakers.length === 1
     ? (listeners.length > 0
-      ? `[${speakers[0]}] profile → ${listeners.map((name) => `[${name}]`).join(', ')}; listeners look back.`
-      : `[${speakers[0]}] profile → described listener group; group looks back.`)
-    : `${speakers.map((name) => `[${name}]`).join(' ↔ ')} opposing profiles; pupils meet; reactors watch speaker.`;
+      ? `[${speakers[0]}] addresses ${listeners.map((name) => `[${name}]`).join(', ')}; listeners look back.`
+      : `[${speakers[0]}] addresses the described listener group; group looks back.`)
+    : `${speakers.map((name) => `[${name}]`).join(' ↔ ')} address their counterparts; reactors watch the active speaker.`;
 
-  return `EYE-LINE LOCK: ${roleStaging} Camera yields.`;
+  return `EYE-LINE LOCK: ${roleStaging} never lens/front. ${buildRequiredDepthAssignment(speakers, listeners, speakers.length >= 2)} Camera preserves scenario direction.`;
 };
 
 export const cleanseActionGagSymbols = (actionText) => {

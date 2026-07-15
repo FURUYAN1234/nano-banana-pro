@@ -319,7 +319,7 @@ ANTIGRAVITY CAMERA PROTOCOL:
 - DISTORTION: (extreme perspective distortion:2.8), (NO eye-level shot:2.9), (NO flat symmetrical composition:2.9), (severe camera angle:2.7), (exaggerated depth of field:2.5)
 - BODY DEFORM: Near body parts 50%+ larger than far parts.
 - ANTI-CLONE: Each character appears ONLY ONCE per panel.
-- EYE-LINE BASE: all visible gaze/face/torso aim at another character, never lens/front; speakers stay profile (one eye), or redraw.
+- EYE-LINE BASE: during dialogue, visible gaze/face/torso aim at another character, never lens/front unless the story explicitly has an in-world direct address. Build depth with three-quarter faces, back-three-quarter or over-the-shoulder partner views, and foreground/midground/background layers; vary these arrangements across panels instead of flattening every conversation into side profiles.
 - VFX MUST follow the panel's perspective distortion.
 `;
 

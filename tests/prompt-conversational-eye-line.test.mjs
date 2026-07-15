@@ -112,23 +112,25 @@ Action: SpeakerA and SpeakerB discuss the draft.
 [USER STAGING LOCK - ABSOLUTE]: SpeakerBはSpeakerAの方に話しかける。互いに視線を合わせ、画面正面は禁止。
 SpeakerB「確認してください。」`;
 
-test('normal multi-speaker panels lock eye-lines to the interlocutor for both providers', () => {
+test('normal multi-speaker panels keep interlocutor eye-lines while requiring depth and varied views for both providers', () => {
   for (const providerFamily of ['chatgpt', 'gemini']) {
     const prompt = buildPrompt(providerFamily, NORMAL_CONVERSATION);
     const panel = panelTwoSection(prompt);
     assert.match(prompt, /never lens\/front/i);
-    assert.match(prompt, /STRICT SIDE OR REAR VIEW ONLY/i);
-    assert.match(prompt, /far eye of every visible character fully hidden/i);
-    assert.match(prompt, /two eyes are visible on anyone, redraw the whole panel/i);
-    assert.match(prompt, /No exception for listeners\/reactors/i);
-    assert.match(panel, /Camera: PURE 90° SIDE-ON/);
-    assert.match(panel, /camera perpendicular to dialogue axis/i);
-    assert.match(panel, /opposing sides face inward in profile/i);
-    assert.match(panel, /NO OTS\/front/i);
+    assert.match(prompt, /CONVERSATIONAL DEPTH BASE/i);
+    assert.doesNotMatch(prompt, /STRICT SIDE OR REAR VIEW ONLY/i);
+    assert.doesNotMatch(prompt, /far eye of every visible character fully hidden/i);
+    assert.match(panel, /Camera:/);
+    assert.doesNotMatch(panel, /PURE 90° SIDE-ON/);
+    assert.match(panel, /three-quarter/i);
+    assert.match(panel, /PRIMARY THREE-QUARTER/);
+    assert.match(panel, /BACK-THREE-QUARTER OR OVER-THE-SHOULDER PARTNER/);
+    assert.match(panel, /VISIBLE REAR DEPTH CHECK/);
+    assert.match(panel, /back of \[SpeakerB\]'s head or shoulder(?: in)? foreground/i);
+    assert.match(panel, /camera is physically behind \[SpeakerB\]'s shoulder/i);
     assert.match(panel, /EYE-LINE LOCK/);
-    assert.match(panel, /opposing profiles/i);
-    assert.match(panel, /pupils meet/i);
-    assert.match(panel, /Camera yields/i);
+    assert.match(panel, /address.*counterpart/i);
+    assert.match(panel, /Camera preserves the scenario direction/i);
   }
 });
 
@@ -144,9 +146,10 @@ test('a viewer-facing camera angle alone does not bypass the conversation lock',
   for (const providerFamily of ['chatgpt', 'gemini']) {
     const panel = panelTwoSection(buildPrompt(providerFamily, VIEWER_CAMERA_WITH_NORMAL_DIALOGUE));
     assert.doesNotMatch(panel, /looking up at viewer/i);
-    assert.match(panel, /Camera: PURE 90° SIDE-ON/);
+    assert.match(panel, /Camera:/);
+    assert.doesNotMatch(panel, /PURE 90° SIDE-ON/);
     assert.match(panel, /EYE-LINE LOCK/);
-    assert.ok(panel.indexOf('EYE-LINE LOCK') > panel.indexOf('Camera:'));
+    assert.match(panel, /never lens\/front/i);
   }
 });
 
@@ -169,8 +172,10 @@ test('single-speaker panels with an explicit cast interlocutor or reactor still 
   for (const providerFamily of ['chatgpt', 'gemini']) {
     const panel = panelTwoSection(buildPrompt(providerFamily, SINGLE_SPEAKER_WITH_REACTOR));
     assert.match(panel, /EYE-LINE LOCK/);
-    assert.match(panel, /\[SpeakerA\] profile → \[SpeakerB\]/);
+    assert.match(panel, /\[SpeakerA\] addresses \[SpeakerB\]/);
     assert.match(panel, /listeners look back/);
+    assert.match(panel, /\[SpeakerA\] PRIMARY THREE-QUARTER/);
+    assert.match(panel, /\[SpeakerB\] BACK-THREE-QUARTER OR OVER-THE-SHOULDER PARTNER/);
     assert.doesNotMatch(panel, /DIRECT-ADDRESS EXCEPTION/);
   }
 });
@@ -196,7 +201,7 @@ test('explicit user staging derives opposing conversation sides from cast names'
   for (const providerFamily of ['chatgpt', 'gemini']) {
     const panel = panelTwoSection(buildPrompt(providerFamily, EXPLICIT_USER_STAGING));
     assert.match(panel, /SIDES> \[SpeakerA\] ↔ \[SpeakerB\]/);
-    assert.match(panel, /strict inward profiles/);
-    assert.match(panel, /no front/i);
+    assert.match(panel, /three-quarter or rear\/OTS staging/);
+    assert.match(panel, /never lens\/front/i);
   }
 });

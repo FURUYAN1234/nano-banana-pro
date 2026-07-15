@@ -58,7 +58,25 @@ const extractPanel = (text, header, nextHeader) => {
 };
 
 const POINTING_GESTURE_RE = /(?:\bpoint(?:ing|s|ed)?\b|finger[-\s]?point|\u6307\u5dee|\u6307\u3055|\u6307\u3092(?:\u7a81\u304d\u7acb\u3066|\u5411\u3051|\u5dee\u3057|\u3055\u3057))/i;
-const CONVERSATION_CAMERA = 'PURE 90° SIDE-ON; camera perpendicular to dialogue axis; opposing sides face inward in profile; NO OTS/front';
+const sanitizeConversationCamera = (camera) => {
+  const withoutEnglishLensTarget = String(camera || '')
+    .replace(/\s*,?\s*\([^)]*(?:viewer|reader|audience|camera|lens)[^)]*\)/gi, '')
+    .replace(/(?:\s*[,;]\s*|\s+)(?:looking|look)(?:\s+(?:up|down))?\s+(?:at|into|toward)?\s*(?:the\s+)?(?:viewer|reader|audience|camera|lens)\b[^,;]*/gi, '')
+    .replace(/(?:\s*[,;]\s*|\s+)(?:facing|face|gazing|gaze|staring|stare)\s+(?:at|into|toward)?\s*(?:the\s+)?(?:viewer|reader|audience|camera|lens)\b[^,;]*/gi, '')
+    .replace(/(?:読者|観客|視聴者|カメラ|レンズ)(?:目線|に向け|へ向け|を見|を見る|を向け)/g, '')
+    .replace(/\s{2,}/g, ' ')
+    .replace(/\s*[,;]\s*$/, '')
+    .trim();
+  return withoutEnglishLensTarget || 'Dynamic three-quarter conversation shot with layered foreground and background';
+};
+
+const CHATGPT_WEB_COPY_SOFT_BUDGET = 15000;
+const compactChatGPTConversationRules = (prompt) => {
+  if (prompt.length <= CHATGPT_WEB_COPY_SOFT_BUDGET) return prompt;
+  return prompt
+    .replace(/CONVERSATIONAL DEPTH BASE:[^\n]*/g, 'CONVERSATIONAL DEPTH: counterpart gaze; varied 3/4 and OTS depth.')
+    .replace(/EYE-LINE LOCK:[^\n]*(?=\nAction \(visual only\):)/g, 'EYE-LINE: counterpart gaze, never lens; 3/4 speaker + visible OTS partner depth.');
+};
 
 const appendPointingHandLock = (actionText) => {
   if (!POINTING_GESTURE_RE.test(actionText)) return actionText;
@@ -221,7 +239,7 @@ export const buildMangaPrompt = ({
   const scriptLock = buildStrictScriptLock({ safeTopic, panels, castList, activeOutfit });
   const panelEyeLineRules = panels.map((panel) => buildPanelEyeLineRule(panel, castList));
   const eyeLineBase = panelEyeLineRules.some((rule) => rule.startsWith('EYE-LINE LOCK'))
-    ? 'EYE-LINE BASE — STRICT SIDE OR REAR VIEW ONLY: all visible characters turn gaze/face/shoulders/torso toward another character, never lens/front. Keep the far eye of every visible character fully hidden by nose/face contour or head rear. If two eyes are visible on anyone, redraw the whole panel. No exception for listeners/reactors.'
+    ? 'CONVERSATIONAL DEPTH BASE: speakers and listeners address one another, never the lens/front unless the script explicitly says they address an in-story camera or audience. Preserve natural depth with mixed three-quarter, back-three-quarter, and over-the-shoulder views plus foreground/midground/background layers. Do not force every participant into a pure side profile; vary the valid staging and camera position across panels.'
     : '';
   let panelSections = "";
 
@@ -230,9 +248,9 @@ export const buildMangaPrompt = ({
     panelSections = panels.map((pt, i) => {
       const num = i + 1;
       const eyeLineRule = panelEyeLineRules[i];
-      const camera = eyeLineRule.startsWith('EYE-LINE LOCK')
-        ? CONVERSATION_CAMERA
-        : getCameraForChatGPT(pt, cameraState);
+      const isConversation = eyeLineRule.startsWith('EYE-LINE LOCK');
+      const rawCamera = getCameraForChatGPT(pt, cameraState);
+      const camera = isConversation ? sanitizeConversationCamera(rawCamera) : rawCamera;
       return `## Panel ${num}
 ${buildEmotionBlock(pt)}
 ${extractPlacementRule(pt, castList, { compact: true }).replace(/\\\\[/g, '').replace(/\\\\]/g, '')}
@@ -250,17 +268,17 @@ Dialogue (verbatim bubbles): ${extractDialogueOnly(pt, castList)}`;
       VAR_CAST_LIST_CHATGPT, identityMatrix: buildIdentityMatrix(castList), activeOutfit,
       scriptLock, panelSections
     });
+    rawPrompt = compactChatGPTConversationRules(rawPrompt);
   } else {
     // Gemini (Imagen 3/4) 向けプロンプトの構築
     panelSections = panels.map((pt, i) => {
       const num = i + 1;
       const eyeLineRule = panelEyeLineRules[i];
       const isConversation = eyeLineRule.startsWith('EYE-LINE LOCK');
-      const camera = isConversation
-        ? CONVERSATION_CAMERA
-        : getCameraForPanel(pt, shuffledCameras, cameraState);
+      const rawCamera = getCameraForPanel(pt, shuffledCameras, cameraState);
+      const camera = isConversation ? sanitizeConversationCamera(rawCamera) : rawCamera;
       const lensRule = isConversation
-        ? '[LENS]: neutral side-on perspective; preserve inward-facing profiles.'
+        ? '[LENS]: preserve the scenario camera direction; build foreground/midground/background depth with a three-quarter speaker and a rear or over-the-shoulder counterpart/reactor when composition permits.'
         : '[LENS]: (ABOVE CAMERA DISTORTION MAX:2.9), (NEVER normal photograph:3.0), (extreme severe perspective warp:2.7), (violently tilted horizon:2.6). Break normal camera angle.';
       return `## Panel ${num}
 ${buildEmotionBlock(pt)}
