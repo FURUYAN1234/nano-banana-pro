@@ -1,6 +1,7 @@
 ﻿# HANDOFF.md
 
 ## Current Status
+- **Version**: v4.9.0 Gemini-only rear-foreground staging release preparation. Shared prompt and OpenAI routes are unchanged; the live Gemini API verification shows rear/shoulder foreground depth in the supplied four-panel scenario.
 - **Version**: v4.8.9 conversational depth staging release in progress.
 - **Version**: v4.8.8 conversational eye-line auto-staging fix is prepared for deployment.
 - **Version**: v4.8.7 Super FURU title alignment is released and deployed.

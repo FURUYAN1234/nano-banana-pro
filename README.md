@@ -789,6 +789,9 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 
 ## 📋 ChangeLog
 
+### v4.9.0 (2026-07-16)
+- **[Fix & UX]** Gemini会話コマで後ろ向き・肩越しの前景を必須化し、奥行きのある構図を強化。OpenAIと共通ルーチンは変更なし。 / Gemini-only rear-foreground lock for deeper conversational staging; OpenAI and shared routes unchanged.
+
 ### v4.8.9 (2026-07-15)
 - **[Fix & UX]** 会話奥行きステージングを追加 / Add conversational depth staging
 

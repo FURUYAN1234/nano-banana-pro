@@ -134,6 +134,16 @@ test('normal multi-speaker panels keep interlocutor eye-lines while requiring de
   }
 });
 
+test('Gemini conversation panels end with a mandatory rear-foreground depth lock without changing the ChatGPT prompt', () => {
+  const geminiPanel = panelTwoSection(buildPrompt('gemini', NORMAL_CONVERSATION));
+  const chatgptPanel = panelTwoSection(buildPrompt('chatgpt', NORMAL_CONVERSATION));
+
+  assert.match(geminiPanel, /GEMINI REAR-FOREGROUND LOCK \(ABSOLUTE\)/);
+  assert.match(geminiPanel, /MUST occupy the foreground/);
+  assert.match(geminiPanel, /Do NOT show \[SpeakerB\]'s face front-on/);
+  assert.doesNotMatch(chatgptPanel, /GEMINI REAR-FOREGROUND LOCK \(ABSOLUTE\)/);
+});
+
 test('explicit direct address preserves intentional camera-facing staging', () => {
   for (const providerFamily of ['chatgpt', 'gemini']) {
     const panel = panelTwoSection(buildPrompt(providerFamily, DIRECT_ADDRESS));

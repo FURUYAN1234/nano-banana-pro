@@ -278,8 +278,16 @@ Dialogue (verbatim bubbles): ${extractDialogueOnly(pt, castList)}`;
       const rawCamera = getCameraForPanel(pt, shuffledCameras, cameraState);
       const camera = isConversation ? sanitizeConversationCamera(rawCamera) : rawCamera;
       const lensRule = isConversation
-        ? '[LENS]: preserve the scenario camera direction; build foreground/midground/background depth with a three-quarter speaker and a rear or over-the-shoulder counterpart/reactor when composition permits.'
+        ? '[LENS]: preserve the scenario camera direction; build foreground/midground/background depth with a three-quarter speaker and a rear or over-the-shoulder counterpart/reactor.'
         : '[LENS]: (ABOVE CAMERA DISTORTION MAX:2.9), (NEVER normal photograph:3.0), (extreme severe perspective warp:2.7), (violently tilted horizon:2.6). Break normal camera angle.';
+      const geminiRearForegroundLock = isConversation
+        ? (() => {
+          const speakers = eyeLineRule.match(/EYE-LINE LOCK: \[([^\]]+)\][\s\S]*?\[([^\]]+)\]/);
+          if (!speakers) return '';
+          const [, primarySpeaker, rearPartner] = speakers;
+          return `GEMINI REAR-FOREGROUND LOCK (ABSOLUTE): Render this exchange from physically behind [${rearPartner}]. The back of [${rearPartner}]'s head or shoulder MUST occupy the foreground and face [${primarySpeaker}]. Do NOT show [${rearPartner}]'s face front-on. [${primarySpeaker}] remains the three-quarter speaking subject beyond that foreground shoulder. This is mandatory; do not replace it with two reader-facing portraits.`;
+        })()
+        : '';
       return `## Panel ${num}
 ${buildEmotionBlock(pt)}
 ${extractPlacementRule(pt, castList)}
@@ -288,7 +296,8 @@ Camera: ${camera}.
 ${lensRule}
 ${eyeLineRule}
 Action (Visual ONLY, non-dialogue; do NOT render quoted words as visible text unless this action explicitly says handwriting, signage, board text, label text, or screen text): ${buildPanelActionText(pt, castList, activeOutfit)}.
-Dialogue (ONLY inside bubbles): ${extractDialogueOnly(pt, castList)}.`;
+Dialogue (ONLY inside bubbles): ${extractDialogueOnly(pt, castList)}.
+${geminiRearForegroundLock}`;
     }).join('\n\n');
     panelSections = eyeLineBase ? `${eyeLineBase}\n\n${panelSections}` : panelSections;
 
