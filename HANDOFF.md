@@ -1,9 +1,9 @@
 ﻿# HANDOFF.md
 
 ## Current Status
-- **Version**: v4.9.0 Gemini-only rear-foreground staging release preparation. Shared prompt and OpenAI routes are unchanged; the live Gemini API verification shows rear/shoulder foreground depth in the supplied four-panel scenario.
-- **Version**: v4.8.9 conversational depth staging release in progress.
-- **Version**: v4.8.8 conversational eye-line auto-staging fix is prepared for deployment.
+- **Version**: v4.9.0 Gemini-only rear-foreground staging fix is released and deployed from commit `2abb7e1`. GitHub Pages and Hugging Face Spaces serve `Nano Banana Pro v4.9.0` with `assets/index-9CEHV2dI.js`; the bilingual GitHub Release and `C:\nano-banana-pro-main` release copy are verified.
+- **Previous public version**: v4.8.9 conversational depth staging release.
+- **Version**: v4.8.8 conversational eye-line auto-staging fix was released and deployed.
 - **Version**: v4.8.7 Super FURU title alignment is released and deployed.
 - **Previous public version**: v4.8.6 enhanced-scenario narration bubble extraction fix was released, deployed, and backed up.
 - **Post-v4.8.2 local fix status**: Completed as v4.8.3. The serious provider prompt-routing bug found after the user's style/footer report is fixed by explicit provider families (`chatgpt` / `gemini`) in `src/lib/prompt-assembler.js` and `src/hooks/useMangaWorkflow.js`; prompt assembly branches on normalized `providerFamily`, not the legacy `enableChatGPTMode` boolean. ChatGPT Web copy and OpenAI API generation share the same ChatGPT-family final prompt; Gemini Web copy and Gemini API generation share the same Gemini-family final prompt. Generated-image history is capped to the latest item to reduce huge Data URL memory pressure after the in-app browser crash. Free-form EMOTION descriptors are normalized to existing strong style locks. Fresh ChatGPT Web regeneration from the final rebuilt prompt remains unverified.
