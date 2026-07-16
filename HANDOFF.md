@@ -1,7 +1,7 @@
 ﻿# HANDOFF.md
 
 ## Current Status
-- **v4.9.1 correction release status**: `v4.10.0` was an erroneous increment: `4.9.0` must advance to `4.9.1`. Its GitHub Release and tag were removed; `v4.9.1` is the latest release. Pages, Hugging Face, and the local Release-copy must remain on `v4.9.1`; the earlier `antigravity_full_backup_2026-07-16_182512.zip` captures the erroneous state and is not acceptance evidence for v4.9.1.
+- **v4.9.1 correction release status**: `v4.10.0` was an erroneous increment: `4.9.0` must advance to `4.9.1`. Its GitHub Release and tag are removed; `v4.9.1` is the latest release. GitHub Pages returns HTTP 200 with title `Nano Banana Pro v4.9.1`; the Hugging Face Docker host returns HTTP 200 for HTML, CSS, JS, and SPA fallback; `C:\nano-banana-pro-main` reports package/title `4.9.1` with no nested folder. The earlier `antigravity_full_backup_2026-07-16_182512.zip` captures the erroneous state and is not acceptance evidence; a new final full backup is pending.
 - **Published application payload**: The generic hand-action allocation fix is the already-published application logic from source commit `73a7cfb`; no new application behavior was introduced while correcting the version identifiers to `v4.9.1`. The current release correction must describe this accurately and must not claim that `v4.9.1` newly added the behavior.
 - **Version**: v4.9.0 Gemini-only rear-foreground staging fix is released and deployed from commit `2abb7e1`. GitHub Pages and Hugging Face Spaces serve `Nano Banana Pro v4.9.0` with `assets/index-9CEHV2dI.js`; the bilingual GitHub Release and `C:\nano-banana-pro-main` release copy are verified.
 - **Previous public version**: v4.8.9 conversational depth staging release.
