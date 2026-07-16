@@ -1,6 +1,8 @@
 ﻿# HANDOFF.md
 
 ## Current Status
+- **v4.10.0 release preparation**: The generic hand-allocation fix and numbered-heading parser support are versioned for release. Local verification has passed; commit, public deployment, release publication, release-copy sync, and the requested final full backup are pending.
+- **Post-v4.9.0 local fix**: Generic hand-action budgeting now detects when the same named character is told to occupy both hands and point simultaneously. Prompt assembly changes only that character's two-hand occupation to a one-hand action, preserves other characters' two-hand actions, and adds an exact-two-hands allocation lock. The cast-name parser also accepts numbered Markdown headings such as `## 2. Name`, which the live character analyzer emits. RED/GREEN regression coverage passes for both ChatGPT and Gemini prompt families. A fresh OpenAI `gpt-image-2` run of the supplied five-character advertising scenario produced a 1024x1536 four-panel image; panel 2 visibly gives Rin one hand on her head and the other pointing, with no extra hand. Fresh suite 59/59, ESLint, predeploy/build, and `git diff --check` pass. This local fix is not committed, pushed, released, or deployed.
 - **Version**: v4.9.0 Gemini-only rear-foreground staging fix is released and deployed from commit `2abb7e1`. GitHub Pages and Hugging Face Spaces serve `Nano Banana Pro v4.9.0` with `assets/index-9CEHV2dI.js`; the bilingual GitHub Release and `C:\nano-banana-pro-main` release copy are verified.
 - **Previous public version**: v4.8.9 conversational depth staging release.
 - **Version**: v4.8.8 conversational eye-line auto-staging fix was released and deployed.

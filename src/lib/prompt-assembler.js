@@ -58,6 +58,49 @@ const extractPanel = (text, header, nextHeader) => {
 };
 
 const POINTING_GESTURE_RE = /(?:\bpoint(?:ing|s|ed)?\b|finger[-\s]?point|\u6307\u5dee|\u6307\u3055|\u6307\u3092(?:\u7a81\u304d\u7acb\u3066|\u5411\u3051|\u5dee\u3057|\u3055\u3057))/i;
+const TWO_HAND_OCCUPATION_RE = /\u4e21\u624b\u3067/;
+const escapeRegExp = (value) => String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+const extractCastNamesForAction = (castList) => {
+  const names = [];
+  for (const rawLine of String(castList || '').split('\n')) {
+    const line = rawLine.replace(/\*\*/g, '').trim();
+    const heading = line.match(/^##\s*(?:Character\s*)?\[?([^\]]+?)\]?\s*$/i);
+    const characterLine = line.match(/^-\s*Character\s*\[([^\]]+)\]\s*:/i);
+    const name = (heading?.[1] || characterLine?.[1] || '')
+      .trim()
+      .replace(/^(?:\d+|[０-９]+)[.)．、]\s*/, '');
+    if (name && !names.includes(name)) names.push(name);
+  }
+  return names;
+};
+
+const normalizeCompetingHandActions = (actionText, castList) => {
+  let normalized = String(actionText || '');
+  const names = extractCastNamesForAction(castList);
+  if (!names.length || !TWO_HAND_OCCUPATION_RE.test(normalized) || !POINTING_GESTURE_RE.test(normalized)) {
+    return { text: normalized, resolvedConflict: false };
+  }
+
+  const subjectRe = new RegExp(`(?:\\[)?(?:${names.map(escapeRegExp).join('|')})(?:\\])?(?:\u306f|\u304c)`, 'g');
+  const subjectStarts = [...normalized.matchAll(subjectRe)].map((match) => match.index);
+  let resolvedConflict = false;
+
+  for (let index = subjectStarts.length - 1; index >= 0; index--) {
+    const start = subjectStarts[index];
+    const end = subjectStarts[index + 1] ?? normalized.length;
+    const segment = normalized.slice(start, end);
+    if (!TWO_HAND_OCCUPATION_RE.test(segment) || !POINTING_GESTURE_RE.test(segment)) continue;
+
+    const resolvedSegment = segment.replace(/\u4e21\u624b\u3067/, '\u7247\u624b\u3067');
+    if (resolvedSegment === segment) continue;
+
+    normalized = `${normalized.slice(0, start)}${resolvedSegment}${normalized.slice(end)}`;
+    resolvedConflict = true;
+  }
+
+  return { text: normalized, resolvedConflict };
+};
 const sanitizeConversationCamera = (camera) => {
   const withoutEnglishLensTarget = String(camera || '')
     .replace(/\s*,?\s*\([^)]*(?:viewer|reader|audience|camera|lens)[^)]*\)/gi, '')
@@ -78,16 +121,20 @@ const compactChatGPTConversationRules = (prompt) => {
     .replace(/EYE-LINE LOCK:[^\n]*(?=\nAction \(visual only\):)/g, 'EYE-LINE: counterpart gaze, never lens; 3/4 speaker + visible OTS partner depth.');
 };
 
-const appendPointingHandLock = (actionText) => {
+const appendPointingHandLock = (actionText, resolvedConflict = false) => {
   if (!POINTING_GESTURE_RE.test(actionText)) return actionText;
+  const allocationLock = resolvedConflict
+    ? '\nHAND ALLOCATION LOCK: the same character uses one hand for the non-pointing gesture and the other hand for pointing; exactly two hands total. Never add a third hand to satisfy both actions.'
+    : '';
   return `${actionText}
-HAND POSE LOCK: pointing hand must be anatomically correct, connected to same-side shoulder, natural index/thumb/palm/wrist/forearm; no mirrored, inverted, or extra pointing hand.`;
+HAND POSE LOCK: pointing hand must be anatomically correct, connected to same-side shoulder, natural index/thumb/palm/wrist/forearm; no mirrored, inverted, or extra pointing hand.${allocationLock}`;
 };
 
 const buildPanelActionText = (panelText, castList, activeOutfit) => {
   const placementRule = extractPlacementRule(panelText, castList);
   const actionText = injectOutfitReminder(extractActionOnly(panelText, castList, placementRule), activeOutfit);
-  return appendPointingHandLock(actionText);
+  const normalizedAction = normalizeCompetingHandActions(actionText, castList);
+  return appendPointingHandLock(normalizedAction.text, normalizedAction.resolvedConflict);
 };
 
 const compactScriptLockOrReference = (text, maxLength, referenceText) => {

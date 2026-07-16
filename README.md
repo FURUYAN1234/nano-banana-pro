@@ -789,6 +789,9 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 
 ## 📋 ChangeLog
 
+### v4.10.0 (2026-07-16)
+- **[Fix & UX]** 同一人物の両手動作と指差しの競合を二本の手に配分し、番号付きキャラクター見出しも認識するよう改善 / Allocated conflicting two-hand and pointing actions within two hands and recognized numbered character headings
+
 ### v4.9.0 (2026-07-16)
 - **[Fix & UX]** Gemini会話コマで後ろ向き・肩越しの前景を必須化し、奥行きのある構図を強化。OpenAIと共通ルーチンは変更なし。 / Gemini-only rear-foreground lock for deeper conversational staging; OpenAI and shared routes unchanged.
 

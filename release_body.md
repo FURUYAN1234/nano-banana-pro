@@ -1,13 +1,9 @@
-v4.8.0: Generic Dialogue & Title Fix / 汎用台詞抽出とタイトル句読点修正
-
 ## What's New / 更新内容
 
-* Extracted spoken quotes embedded in action narration alongside explicit dialogue while preserving source order.
-* Preserved terminal title punctuation such as `!?` in generated manga prompts and Step 4 prompt rebuilds.
-* Documented the highest-priority rule that bug fixes must remain generic and must not hardcode proper nouns, sample words, character names, sample dialogue, product/place names, trend words, or one-off prompt fragments in production source.
-* Added regression tests for embedded spoken quote extraction, visual quote exclusion, handwriting text exclusion, and title punctuation preservation.
+* Added generic hand-allocation handling when one character is instructed to use both hands and point at the same time. The prompt now assigns the non-pointing action to one hand and pointing to the other, explicitly prohibiting a third hand.
+* Recognized numbered Markdown character headings such as `## 2. Character`, so the same protection applies to character settings produced by the analyzer.
+* Added regression coverage for the conflicting-action case and confirmed the fix through a real OpenAI `gpt-image-2` manga generation.
 
-* 状況文の中に埋め込まれた発話引用を、明示台詞と同時に抽出し、元の出現順を維持するよう修正しました。
-* 漫画タイトル末尾の `!?` などを、最終プロンプトおよびStep 4再構築時に保持するよう修正しました。
-* バグ修正は汎用ルールとして実装し、production source に固有名詞、サンプル語、キャラクター名、サンプル台詞、商品名、場所名、流行語、個別プロンプト片をハードコードしない最重要ルールを明文化しました。
-* 状況文内発話の抽出、視覚文字の台詞除外、手書き文字の台詞除外、タイトル句読点保持の回帰テストを追加しました。
+* 同一人物へ両手を使う動作と指差しが同時に指定された際、非指差し動作を片手、指差しをもう片手へ配分する汎用処理を追加し、三本目の手を明示的に禁止しました。
+* `## 2. キャラクター名` のような番号付きMarkdown人物見出しを認識し、キャラクター解析後の設定でも同じ保護を適用します。
+* 競合動作の回帰テストを追加し、実OpenAI `gpt-image-2` の4コマ生成で修正を確認しました。
