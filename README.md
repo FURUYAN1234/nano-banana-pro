@@ -790,7 +790,7 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 ## 📋 ChangeLog
 
 ### v4.9.1 (2026-07-16)
-- **[Fix & UX]** 4.10.0への誤った繰り上げを訂正し、同一人物の手配分修正を正しい4.9.1として再リリース / Corrected the erroneous 4.10.0 increment and reissued the generic hand-allocation fix as 4.9.1
+- **[Version correction]** `4.9.0`の次を誤って`4.10.0`としたため、アプリ本体ロジックを追加変更せず版番号を`4.9.1`へ訂正 / Corrected the erroneous `4.10.0` increment to `4.9.1` without adding or changing application logic
 
 ### v4.10.0 (2026-07-16)
 - **[Fix & UX]** 同一人物の両手動作と指差しの競合を二本の手に配分し、番号付きキャラクター見出しも認識するよう改善 / Allocated conflicting two-hand and pointing actions within two hands and recognized numbered character headings
