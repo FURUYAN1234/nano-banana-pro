@@ -790,7 +790,8 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 ## 📋 ChangeLog
 
 ### v4.9.1 (2026-07-16)
-- **[Version correction]** `4.9.0`の次を誤って`4.10.0`としたため、アプリ本体ロジックを追加変更せず版番号を`4.9.1`へ訂正 / Corrected the erroneous `4.10.0` increment to `4.9.1` without adding or changing application logic
+- **[Version correction]** `4.9.0`の次を誤って`4.10.0`としたため、正しい`4.9.1`へ訂正。誤版後の追加ロジックはなし / Corrected the erroneous `4.10.0` increment to `4.9.1`; no additional logic was added after the mistaken publication
+- **[Fix]** 同一人物の両手動作と指差しの競合を二本の手に配分し、番号付きキャラクター見出しも認識 / Allocated conflicting two-hand and pointing actions within two hands and recognized numbered character headings
 
 ### v4.9.0 (2026-07-16)
 - **[Fix & UX]** Gemini会話コマで後ろ向き・肩越しの前景を必須化し、奥行きのある構図を強化。OpenAIと共通ルーチンは変更なし。 / Gemini-only rear-foreground lock for deeper conversational staging; OpenAI and shared routes unchanged.
