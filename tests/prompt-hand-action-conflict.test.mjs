@@ -84,3 +84,16 @@ test('two-hand action is preserved when a different character performs the point
   assert.match(panel, /ミクは両手でケーキ皿を持ち/);
   assert.doesNotMatch(panel, /HAND ALLOCATION LOCK:/);
 });
+
+test('two-hand prop actions lock both hands, arms, and the prop to their owner in depth shots', () => {
+  const action = 'ミクが原稿を指で連打し、リンは資料を両手で豪快に閉じ、ヒカリはカップを置く。';
+
+  for (const providerFamily of ['chatgpt', 'gemini']) {
+    const panel = panelTwoSection(buildPrompt(providerFamily, action));
+
+    assert.match(panel, /リンは資料を両手で豪快に閉じ/);
+    assert.match(panel, /PROP-HAND OWNERSHIP LOCK:.*exactly two arms and two hands/);
+    assert.match(panel, /both continuously connected to that character's shoulders/);
+    assert.match(panel, /never emerge from behind their back/);
+  }
+});

@@ -130,11 +130,19 @@ const appendPointingHandLock = (actionText, resolvedConflict = false) => {
 HAND POSE LOCK: pointing hand must be anatomically correct, connected to same-side shoulder, natural index/thumb/palm/wrist/forearm; no mirrored, inverted, or extra pointing hand.${allocationLock}`;
 };
 
+const appendTwoHandPropOwnershipLock = (actionText) => {
+  if (!TWO_HAND_OCCUPATION_RE.test(actionText)) return actionText;
+  return `${actionText}
+PROP-HAND OWNERSHIP LOCK: when a character uses both hands to hold, close, open, or handle a prop, show exactly two arms and two hands, both continuously connected to that character's shoulders. Keep the prop in front of or beside that character's torso; hands, arms, and the prop never emerge from behind their back, cross into another character's body, or become an extra limb.`;
+};
+
 const buildPanelActionText = (panelText, castList, activeOutfit) => {
   const placementRule = extractPlacementRule(panelText, castList);
   const actionText = injectOutfitReminder(extractActionOnly(panelText, castList, placementRule), activeOutfit);
   const normalizedAction = normalizeCompetingHandActions(actionText, castList);
-  return appendPointingHandLock(normalizedAction.text, normalizedAction.resolvedConflict);
+  return appendTwoHandPropOwnershipLock(
+    appendPointingHandLock(normalizedAction.text, normalizedAction.resolvedConflict)
+  );
 };
 
 const compactScriptLockOrReference = (text, maxLength, referenceText) => {

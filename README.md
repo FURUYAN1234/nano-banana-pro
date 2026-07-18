@@ -789,6 +789,9 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 
 ## 📋 ChangeLog
 
+### v4.9.2 (2026-07-18)
+- **[Fix & UX]** 両手で扱う資料などの小道具を、所有者の二本の腕と手に固定し、背中から出る追加の手・他人の体を横切る腕を防止。実API画像でリンの資料操作を確認 / Locked two-hand prop actions to their owner's two arms and hands, preventing back-emerging extra limbs or cross-body arms; verified Rin's document action with a live API image
+
 ### v4.9.1 (2026-07-16)
 - **[Version correction]** `4.9.0`の次を誤って`4.10.0`としたため、正しい`4.9.1`へ訂正。誤版後の追加ロジックはなし / Corrected the erroneous `4.10.0` increment to `4.9.1`; no additional logic was added after the mistaken publication
 - **[Fix]** 同一人物の両手動作と指差しの競合を二本の手に配分し、番号付きキャラクター見出しも認識 / Allocated conflicting two-hand and pointing actions within two hands and recognized numbered character headings
