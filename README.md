@@ -789,6 +789,9 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 
 ## 📋 ChangeLog
 
+### v4.9.3 (2026-07-18)
+- **[Fix & UX]** HF SpacesデプロイでDockerfileとnginx設定を保護し、必須ランタイムファイル欠落時は公開前に停止。削除済みランタイムを復元 / Preserved Dockerfile and nginx configuration during HF Spaces deploys, failing before publication when required runtime files are missing; restored the deleted runtime
+
 ### v4.9.2 (2026-07-18)
 - **[Fix & UX]** 両手で扱う資料などの小道具を、所有者の二本の腕と手に固定し、背中から出る追加の手・他人の体を横切る腕を防止。実API画像でリンの資料操作を確認 / Locked two-hand prop actions to their owner's two arms and hands, preventing back-emerging extra limbs or cross-body arms; verified Rin's document action with a live API image
 

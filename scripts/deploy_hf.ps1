@@ -47,9 +47,19 @@ if (-not (Test-Path (Join-Path $HfRoot ".git"))) {
 }
 Write-Host "[OK] HF folder: $HfRoot" -ForegroundColor Green
 
-# === Step 3: Clean HF folder (preserve .git, .gitattributes, README.md) ===
+# === Step 3: Guard HF runtime files and clean generated assets ===
+$RequiredHfRuntimeFiles = @("Dockerfile", "nginx.conf")
+$MissingRuntimeFiles = @($RequiredHfRuntimeFiles | Where-Object {
+    -not (Test-Path (Join-Path $HfRoot $_))
+})
+if ($MissingRuntimeFiles.Count -gt 0) {
+    Write-Host "[ERROR] HF folder is missing required runtime file(s): $($MissingRuntimeFiles -join ', ')" -ForegroundColor Red
+    exit 1
+}
+
+# Preserve the Space runtime and metadata while replacing only built assets.
 Write-Host "[CLEAN] Cleaning HF folder..." -ForegroundColor Yellow
-$ProtectedItems = @(".git", ".gitattributes", "README.md")
+$ProtectedItems = @(".git", ".gitattributes", "README.md", "Dockerfile", "nginx.conf")
 Get-ChildItem $HfRoot -Force | Where-Object {
     $ProtectedItems -notcontains $_.Name
 } | ForEach-Object {
