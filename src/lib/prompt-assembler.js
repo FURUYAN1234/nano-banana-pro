@@ -118,7 +118,8 @@ const compactChatGPTConversationRules = (prompt) => {
   if (prompt.length <= CHATGPT_WEB_COPY_SOFT_BUDGET) return prompt;
   return prompt
     .replace(/CONVERSATIONAL DEPTH BASE:[^\n]*/g, 'CONVERSATIONAL DEPTH: counterpart gaze; varied 3/4 and OTS depth.')
-    .replace(/EYE-LINE LOCK:[^\n]*(?=\nAction \(visual only\):)/g, 'EYE-LINE: counterpart gaze, never lens; 3/4 speaker + visible OTS partner depth.');
+    .replace(/EYE-LINE LOCK:[^\n]*(?=\nAction \(visual only\):)/g, 'EYE-LINE: counterpart gaze, never lens; 3/4 speaker + visible OTS partner depth.')
+    .replace(/MANGA FINISH ASSIST:[^\n]*/g, 'FINISH: bubbles, light, anatomy, depth.');
 };
 
 const appendPointingHandLock = (actionText, resolvedConflict = false) => {

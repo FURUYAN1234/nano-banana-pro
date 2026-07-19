@@ -14,6 +14,68 @@ export const getOpenAIApiKey = () => {
     return currentOpenAIApiKey;
 };
 
+export const readOpenAIImageStream = async (response, statCallback = () => {}) => {
+  if (!response.body || typeof response.body.getReader !== 'function') {
+    throw new Error('OpenAI画像ストリームを読み取れませんでした。');
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  let finalImage = '';
+
+  const processEvent = (rawEvent) => {
+    const data = rawEvent
+      .split(/\r?\n/)
+      .filter((line) => line.startsWith('data:'))
+      .map((line) => line.slice(5).trimStart())
+      .join('\n')
+      .trim();
+
+    if (!data || data === '[DONE]') return;
+
+    let event;
+    try {
+      event = JSON.parse(data);
+    } catch {
+      throw new Error('OpenAI画像ストリームの応答形式が不正です。');
+    }
+
+    if (event.type === 'error' || event.error) {
+      throw new Error(event.error?.message || event.message || 'OpenAI画像生成ストリームでエラーが発生しました。');
+    }
+
+    if (event.type === 'image_generation.partial_image') {
+      statCallback(`[OpenAI] 途中画像を受信しました (${Number(event.partial_image_index || 0) + 1})。最終画像を待機中...`);
+    }
+
+    if (event.type === 'image_generation.completed' && event.b64_json) {
+      finalImage = event.b64_json;
+    }
+  };
+
+  while (true) {
+    const { value, done } = await reader.read();
+    buffer += decoder.decode(value || new Uint8Array(), { stream: !done });
+
+    let boundary = buffer.match(/\r?\n\r?\n/);
+    while (boundary) {
+      processEvent(buffer.slice(0, boundary.index));
+      buffer = buffer.slice(boundary.index + boundary[0].length);
+      boundary = buffer.match(/\r?\n\r?\n/);
+    }
+
+    if (done) break;
+  }
+
+  if (buffer.trim()) processEvent(buffer);
+  if (!finalImage) {
+    throw new Error('OpenAI画像ストリームに最終画像データが含まれていませんでした。');
+  }
+
+  return finalImage;
+};
+
 export const generateImageWithOpenAI = async (prompt, statCallback) => {
   statCallback("[OpenAI] ChatGPT Images 2.0 にリクエストを送信中...");
   
@@ -52,6 +114,8 @@ export const generateImageWithOpenAI = async (prompt, statCallback) => {
         size: "1024x1536", // A4 portrait に最も近い縦長サイズ（プロンプトのFORMAT指定と整合）
         quality: "high", // [v3.55] 最高品質モード: テキスト描画精度・ディテールが大幅向上（EvoLinkAI推奨設定）
         output_format: "png",
+        stream: true,
+        partial_images: 1,
         // ※ gpt-image-2 は response_format ではなく output_format を使用する別仕様。
         //    b64_json はデフォルトで返るため、画像形式のみ明示する。
       }),
@@ -69,6 +133,17 @@ export const generateImageWithOpenAI = async (prompt, statCallback) => {
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
     throw new Error(`OpenAI API Error: ${response.status} ${errorData.error?.message || response.statusText}`);
+  }
+
+  const contentType = response.headers?.get?.('content-type') || '';
+  if (contentType.includes('text/event-stream')) {
+    const base64Img = await readOpenAIImageStream(response, statCallback);
+    statCallback("[OpenAI] 画像の生成に成功しました。");
+    return {
+      base64Img,
+      mimeType: "image/png",
+      usedModel: OPENAI_IMAGE_MODEL
+    };
   }
 
   const data = await response.json();

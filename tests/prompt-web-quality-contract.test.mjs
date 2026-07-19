@@ -82,6 +82,11 @@ test('ChatGPT Web prompt has generic quality locks for dialogue, bubbles, charac
   assert.match(prompt, /DIALOGUE \/ BUBBLE QA LOCK/);
   assert.match(prompt, /CHARACTER QA PASS/);
   assert.match(prompt, /ART-STYLE DIFFERENCE QA LOCK/);
+  assert.match(prompt, /MANGA FINISH ASSIST/);
+  assert.match(prompt, /clean, intentional negative space inside each panel for required dialogue bubbles/i);
+  assert.match(prompt, /lighting direction, shadow direction, and color temperature consistent between cast and background/i);
+  assert.match(prompt, /anatomically coherent hands, faces, clothing, and hair/i);
+  assert.match(prompt, /make the setting, depth, and composition communicate the scripted moment/i);
   assert.match(prompt, /Draw in a high-budget, chic and cinematic full-color TV anime style/);
   assert.match(prompt, /official Japanese animation illustration/);
   assert.doesNotMatch(prompt, /Base style: full-color TV anime/);
@@ -104,6 +109,11 @@ test('Gemini prompt has stability locks for dialogue duplication, invented cast,
   assert.match(prompt, /Do NOT duplicate a line, split one line into repeated bubbles, add new warning phrases, or create extra bubbles/i);
   assert.match(prompt, /Do NOT normalize punctuation/i);
   assert.match(prompt, /Preserve the selected scenario style and each PANEL STYLE LOCK/i);
+  assert.match(prompt, /MANGA FINISH ASSIST/);
+  assert.match(prompt, /clean, intentional negative space inside each panel for required dialogue bubbles/i);
+  assert.match(prompt, /lighting direction, shadow direction, and color temperature consistent between cast and background/i);
+  assert.match(prompt, /anatomically coherent hands, faces, clothing, and hair/i);
+  assert.match(prompt, /make the setting, depth, and composition communicate the scripted moment/i);
   assert.doesNotMatch(prompt, /Japanese dialogue MUST end with a period/i);
   assert.doesNotMatch(prompt, /accurately reflect classic anime styles/i);
   assert.doesNotMatch(prompt, /デザイン募集|著作権|クッキー|現金/);

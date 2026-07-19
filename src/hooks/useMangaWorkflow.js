@@ -1162,7 +1162,12 @@ export default function useMangaWorkflow() {
       const errMsg = error.message || "";
       let guideLines = [];
 
-      if (errMsg.includes("Unknown parameter") || errMsg.includes("Invalid parameter")) {
+      if (errMsg.includes("OpenAI APIキーが設定されていません。")) {
+        setShowModal(true);
+        guideLines = [
+          "[ERROR GUIDE] OpenAI APIキーをメモリから読み取れませんでした。作業内容を保持したまま再入力画面を開きます。"
+        ];
+      } else if (errMsg.includes("Unknown parameter") || errMsg.includes("Invalid parameter")) {
         // [v3.56] APIリクエストのパラメータ不正（コンテンツポリシーとは無関係）
         guideLines = [
           `[ERROR GUIDE] ⚙️ APIパラメータの形式が不正です（${enableOpenAIApi ? 'OpenAI' : 'Google'}側の仕様変更の可能性）。`,

@@ -683,6 +683,7 @@ ${scriptLock}
 ART / RENDERING QUALITY:
 - Clean finish: crisp foreground, softer background, lighting.
 - CLEAN SURFACE PROTOCOL: no grain/speckles/dithering/rough texture/pores/moire/dust/particles/sparkle unless a panel style exception allows it.
+- MANGA FINISH ASSIST: preserve the script lock, cast identity, requested camera, and panel layout. Reserve clean, intentional negative space inside each panel for required dialogue bubbles; never create blank page margins or empty panels. Keep lighting direction, shadow direction, and color temperature consistent between cast and background within each panel. Draw anatomically coherent hands, faces, clothing, and hair; do not add limbs or change a scripted action to solve a pose. Use meaningful setting details, depth layers, and composition to make the setting, depth, and composition communicate the scripted moment.
 - ${styleCore}
 - Setting: ${safeLocation}
 ${bg360Block}
@@ -834,6 +835,7 @@ Tech Dict:
 
 GEMINI STABILITY / QUALITY LOCK:
 - Use a richer professional manga finish than a flat template: layered foreground/midground/background, meaningful setting props, varied lighting, crisp line weight variation, and panel-specific atmosphere. Do not leave plain empty walls or generic blank rooms unless the script explicitly asks for emptiness.
+- MANGA FINISH ASSIST: preserve the script lock, cast identity, requested camera, and panel layout. Reserve clean, intentional negative space inside each panel for required dialogue bubbles; never create blank page margins or empty panels. Keep lighting direction, shadow direction, and color temperature consistent between cast and background within each panel. Draw anatomically coherent hands, faces, clothing, and hair; do not add limbs or change a scripted action to solve a pose. Use meaningful setting details, depth layers, and composition to make the setting, depth, and composition communicate the scripted moment.
 - Existing named cast only. Do NOT invent a new dominant person, black silhouette, monster, ghost, mascot, presenter, antagonist, or narrator figure. Background extras may appear only as small non-speaking atmosphere when the setting naturally needs a crowd; they must never become central, shadowed, named, or connected to a speech bubble.
 - If a panel says a shadow falls on a character, draw lighting/shadow ON that existing named character. Do NOT interpret "shadow" or a dark style tag as permission to create a separate black silhouette person.
 - Every Dialogue line must appear exactly once, in one bubble, attached to the named speaker. Do NOT duplicate a line, split one line into repeated bubbles, add new warning phrases, or create extra bubbles.

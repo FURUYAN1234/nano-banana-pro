@@ -28,3 +28,12 @@ test('saved API keys are preflight-verified before restoring connected state', a
   assert.match(source, /verifyApiKeyConnection\(savedKey\)/);
   assert.match(source, /setShowModal\(true\);[\s\S]*?showStatus\("保存済みAPIキーの検証に失敗しました。再入力してください。"\)/);
 });
+
+test('a missing in-memory OpenAI key reopens the modal without clearing manga work', async () => {
+  const source = await readSource('../src/hooks/useMangaWorkflow.js');
+
+  assert.match(
+    source,
+    /errMsg\.includes\("OpenAI APIキーが設定されていません。"\)[\s\S]*?setShowModal\(true\)/,
+  );
+});

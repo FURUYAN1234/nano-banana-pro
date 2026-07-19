@@ -789,6 +789,9 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 
 ## 📋 ChangeLog
 
+### v4.9.4 (2026-07-19)
+- **[Fix & UX]** OpenAI画像生成をストリーミング化し、長時間生成の接続切れを回避。漫画の吹き出し余白・光源整合・人体整合・背景奥行きを両APIプロンプトへ追加 / Streamed OpenAI image responses to prevent long-generation connection drops and added manga finish assistance for bubble space, lighting, anatomy, and setting depth across both API prompt families
+
 ### v4.9.3 (2026-07-18)
 - **[Fix & UX]** HF SpacesデプロイでDockerfileとnginx設定を保護し、必須ランタイムファイル欠落時は公開前に停止。削除済みランタイムを復元 / Preserved Dockerfile and nginx configuration during HF Spaces deploys, failing before publication when required runtime files are missing; restored the deleted runtime
 
