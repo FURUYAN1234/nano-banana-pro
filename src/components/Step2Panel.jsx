@@ -275,7 +275,6 @@ export default function Step2Panel({
               <option value="Unreasonable">🔨 理不尽な制裁 (突然の暴力)</option>
               <option value="RunningGag">🔁 天丼 (同じボケの最終形態)</option>
               <option value="Dream">🛏️ 夢オチ (ループの恐怖)</option>
-              <option value="PsychoHorror">🔪 サイコホラー (突然の狂気)</option>
               <option value="Misunderstanding">🤷 盛大な勘違い (すれ違いの頂点)</option>
               <option value="CanceledEnding">🏃 打ち切りエンド (俺たちの戦いはこれからだ)</option>
               <option value="Documentary">📰 ドキュメンタリー (原文忠実＋オチだけ漫画化)</option>

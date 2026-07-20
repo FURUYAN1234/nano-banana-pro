@@ -113,7 +113,8 @@ test('free-form emotion descriptors are normalized to strong panel style locks',
   });
 
   assert.match(prompt, /PANEL STYLE LOCK: GLITTER;/);
-  assert.match(prompt, /PANEL STYLE LOCK: HORROR;/);
+  assert.match(prompt, /PANEL STYLE LOCK: GEKIGA;/);
+  assert.doesNotMatch(prompt, /PANEL STYLE LOCK: HORROR|dark horror manga style/i);
   assert.match(prompt, /PANEL STYLE LOCK: BLANK;/);
   assert.match(prompt, /PANEL STYLE LOCK: IMPACT;/);
 });

@@ -22,8 +22,16 @@ This project aims to intentionally exclude humans from the creative process, all
 
 ## Current Release Line / 現行リリース系統
 
-The current public line is **v4.8.8**. The product name shown to users is unified as **Super FURU AI 4-koma System**; **Nano Banana 2** and **ChatGPT Images 2.0** are treated as generation-engine families rather than the application name.
-現行公開系統は **v4.8.8** です。ユーザーに見せるプロダクト名は **Super FURU AI 4-koma System** に統一し、**Nano Banana 2** や **ChatGPT Images 2.0** はアプリ名ではなく生成エンジン系統として扱います。
+The current public line is **v4.9.5**. The product name shown to users is unified as **Super FURU AI 4-koma System**; **Nano Banana 2** and **ChatGPT Images 2.0** are treated as generation-engine families rather than the application name.
+
+### v4.9.4 safety and verification notes
+
+- **Dual provider verification:** Gemini and OpenAI API paths have both been smoke-tested through character analysis, scenario generation, prompt construction, and image generation. Gemini uses `gemini-3.5-flash` for text and `gemini-3.1-flash-image` for images; OpenAI uses `gpt-4.1` for text and `gpt-image-2` for images.
+- **Hybrid location policy:** Explicit locations, 360-degree background analysis, curated location names, and AI-generated scenario locations are checked for horror, gore, body interiors, organs, flesh, and creepy organic scenery. Unsafe explicit input fails closed; unsafe AI output receives one safe-location retry and then stops if it remains unsafe. With no explicit location, a safe curated anchor guides the model without forcing a random setting.
+- **Scenario content hygiene:** The complete scenario object (title, logline, action, dialogue, and punchline) is checked separately from the location policy for biological-horror, gore, weaponized-body, blood, organ, and secretion wording. Unsafe text receives one general-audience rewrite retry; repeated failure blocks image generation.
+- **Provider-family prompt locks:** Gemini-family and ChatGPT-family prompts retain their own rendering contracts while sharing dialogue, identity, key-prop, eye-line, hand-anatomy, and background-quality safeguards.
+- **API preflight:** The settings modal performs a live provider preflight before STEP 1. Unsupported formats, random strings, and failed model-endpoint checks do not unlock the generation flow.
+現行公開系統は **v4.9.5** です。ユーザーに見せるプロダクト名は **Super FURU AI 4-koma System** に統一し、**Nano Banana 2** や **ChatGPT Images 2.0** はアプリ名ではなく生成エンジン系統として扱います。
 
 * **Provider-family prompts / プロバイダー系統別プロンプト**: Gemini API and Gemini Web share the Gemini-family final prompt, while OpenAI API and ChatGPT Web share the ChatGPT-family final prompt. The same story structure is kept, but the rendering instructions are tuned for each provider's failure modes.
   Gemini API と Gemini Web は Gemini 系の最終プロンプトを共有し、OpenAI API と ChatGPT Web は ChatGPT 系の最終プロンプトを共有します。物語構造は共通に保ちつつ、作画指示は各プロバイダーの失敗傾向に合わせて分けています。
@@ -788,6 +796,9 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 ---
 
 ## 📋 ChangeLog
+
+### v4.9.5 (2026-07-20)
+- **[Fix & UX]** Added full scenario-content hygiene, safe hybrid location gates, and verified Gemini/OpenAI generation / Added full scenario-content hygiene, safe hybrid location gates, and verified Gemini/OpenAI generation
 
 ### v4.9.4 (2026-07-19)
 - **[Fix & UX]** OpenAI画像生成をストリーミング化し、長時間生成の接続切れを回避。漫画の吹き出し余白・光源整合・人体整合・背景奥行きを両APIプロンプトへ追加 / Streamed OpenAI image responses to prevent long-generation connection drops and added manga finish assistance for bubble space, lighting, anatomy, and setting depth across both API prompt families

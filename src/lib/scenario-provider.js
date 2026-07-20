@@ -4,8 +4,64 @@ import { locationDetails } from './locations.js';
 import { getScenarioPrompt, getScenarioEnhancePrompt } from './prompts';
 import { cropEquirectangular } from './panorama360';
 import { applyManualStagingLocks } from './manual-staging';
+import { createHybridLocationPlan, requestSafeScenario } from './location-policy';
+import { requestSafeScenarioContent } from './scenario-content-policy';
 
 // [v3.85-alpha] シナリオ生成と強化ロジックの外部モジュール化
+
+const parseScenarioResponse = (result, {
+  randomCategory,
+  inputMode,
+  manualTopic,
+  searchTopic
+}) => {
+  let parsedData = { topic: randomCategory, scenario: '' };
+
+  try {
+    const titleMatch = result.text.match(/Topic:\s*(.+)/i);
+    const loglineMatch = result.text.match(/Logline:\s*(.+)/i);
+    const locationMatch = result.text.match(/Location:\s*(.+)/i);
+    const outfitMatch = result.text.match(/Outfit:\s*(.+)/i);
+    const punchlineMatch = result.text.match(/Punchline:\s*(.+)/i);
+    const scenarioMatch = result.text.match(/Scenario:\s*([\s\S]+)/i);
+
+    if (scenarioMatch) {
+      parsedData.topic = titleMatch ? titleMatch[1].trim() : randomCategory;
+      parsedData.topic = parsedData.topic.replace(/^Topic:\s*/i, '').trim();
+      parsedData.logline = loglineMatch ? loglineMatch[1].trim() : '';
+      parsedData.location = locationMatch ? locationMatch[1].trim() : 'Generic Background';
+      parsedData.outfit = outfitMatch ? outfitMatch[1].trim() : '';
+      parsedData.punchline = punchlineMatch ? punchlineMatch[1].trim() : '';
+      parsedData.scenario = scenarioMatch[1].trim();
+    } else {
+      const jsonMatch = result.text.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        const json = JSON.parse(jsonMatch[0]);
+        parsedData.topic = json.topic || randomCategory;
+        parsedData.location = json.location || 'Generic Background';
+        parsedData.scenario = json.scenario || result.text;
+      } else {
+        if (result.text.length < 20) throw new Error('AI returned empty or invalid response.');
+        parsedData.topic = inputMode === 'manual'
+          ? (manualTopic || 'Custom Scenario')
+          : (searchTopic || 'Generated Scenario');
+        parsedData.location = 'Generic Background';
+        parsedData.scenario = result.text;
+      }
+    }
+  } catch (error) {
+    console.warn('Parse warning:', error);
+    parsedData.location = 'Generic Background';
+    parsedData.scenario = result.text;
+    parsedData.topic = 'Generated Scenario';
+  }
+
+  if (inputMode === 'manual') {
+    parsedData.scenario = applyManualStagingLocks(parsedData.scenario, manualTopic);
+  }
+
+  return parsedData;
+};
 
 /**
  * ニュースカテゴリまたは手動トピックから4コマ漫画のシナリオを生成する
@@ -97,20 +153,26 @@ export async function generateScenario({
   }
 
   // 3. ロケーション決定とRAG
-  const locationList = Object.keys(locationDetails);
-  const forcedLocation = locationList[Math.floor(Math.random() * locationList.length)];
-  
-  const activeLocation = bg360Image && bg360Analysis && bg360Enabled 
-    ? bg360Analysis.location 
-    : (customLocation.trim() ? customLocation.trim() : forcedLocation);
-  
-  onProgress(`ローカルRAGにアクセス中...\n> 舞台「${activeLocation}」に関する演出情報および感情リアクション辞書を取得中...`);
+  const backgroundLocation = bg360Image && bg360Analysis && bg360Enabled
+    ? bg360Analysis.location
+    : '';
+  const locationPlan = createHybridLocationPlan({
+    locationDetails,
+    customLocation,
+    backgroundLocation,
+    backgroundDetails: backgroundLocation ? bg360Analysis : null
+  });
+  const activeLocation = locationPlan.anchorName;
+
+  onProgress(locationPlan.mode === 'hybrid'
+    ? `安全ハイブリッド舞台を設計中...\n> 参考候補「${activeLocation}」を取得。AIは話題に合う別の安全な場所も考案できます。`
+    : `ローカルRAGにアクセス中...\n> 舞台「${activeLocation}」に関する演出情報および感情リアクション辞書を取得中...`);
 
   const ragLocationDetails = getLocationDetails(activeLocation);
   const ragReactions = getReactionGuidelines();
 
   // オチタイプの決定論的ランダム化 (Auto時の偏り防止)
-  let activePunchlineType = punchlineType;
+  let activePunchlineType = punchlineType === 'PsychoHorror' ? 'Surreal' : punchlineType;
   if (!punchlineType || punchlineType === 'Auto') {
     const punchlineOptions = [
       'Explosion',       // 爆発型
@@ -120,7 +182,6 @@ export async function generateScenario({
       'Unreasonable',    // 理不尽な制裁型
       'RunningGag',      // 天丼爆発型
       'Dream',           // 夢オチ型
-      'PsychoHorror',    // サイコホラー型
       'Misunderstanding', // 盛大な勘違い型
       'CanceledEnding'   // 打ち切りエンド型
     ];
@@ -149,8 +210,8 @@ export async function generateScenario({
     bg360Analysis,
     bg360Enabled,
     customLocation,
-    forcedLocation,
     customOutfit,
+    locationPlan,
     ragLocationDetails,
     ragReactions,
     punchlineType: activePunchlineType,
@@ -158,50 +219,23 @@ export async function generateScenario({
     styleJson
   });
 
-  const result = await callAI(scenarioPrompt, [], castList, onProgress);
-
-  // 5. 応答のパース
-  let parsedData = { topic: randomCategory, scenario: "" };
-  try {
-    const titleMatch = result.text.match(/Topic:\s*(.+)/i);
-    const loglineMatch = result.text.match(/Logline:\s*(.+)/i);
-    const locationMatch = result.text.match(/Location:\s*(.+)/i);
-    const outfitMatch = result.text.match(/Outfit:\s*(.+)/i);
-    const punchlineMatch = result.text.match(/Punchline:\s*(.+)/i);
-    const scenarioMatch = result.text.match(/Scenario:\s*([\s\S]+)/i);
-
-    if (scenarioMatch) {
-      parsedData.topic = titleMatch ? titleMatch[1].trim() : randomCategory;
-      parsedData.topic = parsedData.topic.replace(/^Topic:\s*/i, '').trim();
-      parsedData.logline = loglineMatch ? loglineMatch[1].trim() : "";
-      parsedData.location = locationMatch ? locationMatch[1].trim() : "Generic Background";
-      parsedData.outfit = outfitMatch ? outfitMatch[1].trim() : "";
-      parsedData.punchline = punchlineMatch ? punchlineMatch[1].trim() : "";
-      parsedData.scenario = scenarioMatch[1].trim();
-    } else {
-      const jsonMatch = result.text.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        const json = JSON.parse(jsonMatch[0]);
-        parsedData.topic = json.topic || randomCategory;
-        parsedData.location = json.location || "Generic Background";
-        parsedData.scenario = json.scenario || result.text;
-      } else {
-        if (result.text.length < 20) {
-          throw new Error("AI returned empty or invalid response.");
-        }
-        parsedData.topic = inputMode === 'manual' ? (manualTopic || "Custom Scenario") : (searchTopic || "Generated Scenario");
-        parsedData.scenario = result.text;
-      }
-    }
-  } catch (e) {
-    console.warn("Parse warning:", e);
-    parsedData.scenario = result.text;
-    parsedData.topic = "Generated Scenario";
-  }
-
-  if (inputMode === 'manual') {
-    parsedData.scenario = applyManualStagingLocks(parsedData.scenario, manualTopic);
-  }
+  const safeScenarioResult = await requestSafeScenario({
+    initialPrompt: scenarioPrompt,
+    requestScenario: (prompt) => requestSafeScenarioContent({
+      initialPrompt: prompt,
+      requestScenario: (contentPrompt) => callAI(contentPrompt, [], castList, onProgress),
+      onRetry: () => onProgress('シナリオ本文の表現衛生に合わない表現を検出したため、一般向けの表現で再生成します...')
+    }).then(({ response }) => response),
+    parseScenario: (response) => parseScenarioResponse(response, {
+      randomCategory,
+      inputMode,
+      manualTopic,
+      searchTopic
+    }),
+    onRetry: () => onProgress('安全ポリシーに合わない舞台表現を検出したため、一般向けの非生体ロケーションで再生成します...')
+  });
+  const result = safeScenarioResult.response;
+  const parsedData = safeScenarioResult.parsed;
 
   // 6. 360°カメラワーク自律設計
   let cameraWork = null;

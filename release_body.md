@@ -1,19 +1,22 @@
-## What's New / 更新内容
+## Nano Banana Pro v4.9.5
 
-### Version correction / バージョン訂正
+### 日本語
 
-* `v4.10.0` was an erroneous version number. The correct successor to `v4.9.0` is `v4.9.1`; the erroneous Release and tag were removed.
-* No additional application logic was added after the mistaken `v4.10.0` publication. The changes below are the actual contents introduced since `v4.9.0`.
+- シナリオ本文全体の表現衛生チェックを追加し、危険な生物・武器化・内臓表現などを検出した場合は再試行または fail-closed にします。
+- 背景ロケーションを安全なキュレーション候補または安全な新規ロケーションのハイブリッド方式に整理し、360度背景分析でも危険な有機表現を通しません。
+- Gemini と OpenAI のシナリオ→画像生成を実 API で検証しました（テキスト生成と画像生成の各段階）。
+- API キー、個人情報、固有名詞、ゴミファイル、Hugging Face 公開物をデプロイ前ゲートで検査します。
 
-* `v4.10.0` は誤った版番号です。`v4.9.0` の正しい次版は `v4.9.1` のため、誤ったReleaseとタグを削除しました。
-* 誤った `v4.10.0` 公開後に追加したアプリ本体ロジックはありません。以下は `v4.9.0` から実際に追加された内容です。
+### English
 
-### Included changes since v4.9.0 / v4.9.0からの実装内容
+- Added full-scenario wording hygiene checks with retry and fail-closed behavior for unsafe biological, weaponized, or body-interior content.
+- Hardened the background-location flow around a safe curated-or-new hybrid plan, including 360-degree background analysis safety checks.
+- Verified the scenario-to-image flow with real Gemini and OpenAI API runs across text and image-generation stages.
+- Added release gates for API-key/PII/proper-noun/garbage-file hygiene and Hugging Face publication checks.
 
-* Added generic hand-allocation handling when one character is instructed to use both hands and point at the same time. The prompt assigns the non-pointing action to one hand and pointing to the other, explicitly prohibiting a third hand.
-* Recognized numbered Markdown character headings such as `## 2. Character`, so the same protection applies to character settings produced by the analyzer.
-* Added regression coverage for the conflicting-action case and confirmed the fix through a real OpenAI `gpt-image-2` manga generation.
+### Verification
 
-* 同一人物へ両手を使う動作と指差しが同時に指定された際、非指差し動作を片手、指差しをもう片手へ配分する汎用処理を追加し、三本目の手を明示的に禁止しました。
-* `## 2. キャラクター名` のような番号付きMarkdown人物見出しを認識し、キャラクター解析後の設定でも同じ保護を適用します。
-* 競合動作の回帰テストを追加し、実OpenAI `gpt-image-2` の4コマ生成で修正を確認しました。
+- 79 automated tests passed.
+- ESLint passed.
+- Production build passed.
+- Strict pre-deploy security/version/hygiene checks passed for v4.9.5.

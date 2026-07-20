@@ -211,7 +211,7 @@ test('removes dangling speech verbs after stripping quoted spoken text from acti
   assert.doesNotMatch(action, /listed dialogue content/);
 });
 
-test('adds comedic overlay only when a comedy-tagged emotion maps to a serious style', () => {
+test('maps fear-like emotion tags to safe dramatic styling while preserving comedic intent', () => {
   const panicGagBlock = buildEmotionBlock(`
 [EMOTION: PANIC_GAG]
 アカリ「もうパソコン、触りたくない…。」
@@ -225,13 +225,15 @@ test('adds comedic overlay only when a comedy-tagged emotion maps to a serious s
 アカリ「もうパソコン、触りたくない…。」
 `);
 
-  assert.equal(extractEmotionStyle('[EMOTION: PANIC_GAG]'), 'HORROR');
-  assert.match(panicGagBlock, /PANEL STYLE LOCK: HORROR/);
+  assert.equal(extractEmotionStyle('[EMOTION: PANIC_GAG]'), 'GEKIGA');
+  assert.match(panicGagBlock, /PANEL STYLE LOCK: GEKIGA/);
+  assert.doesNotMatch(panicGagBlock, /PANEL STYLE LOCK: HORROR|dark horror manga style/i);
   assert.match(panicGagBlock, /GAG INTENT OVERLAY/);
   assert.match(panicGagBlock, /do NOT flatten the dramatic styling into a plain chibi gag/);
 
-  assert.equal(extractEmotionStyle('[EMOTION: PANIC]'), 'HORROR');
-  assert.match(purePanicBlock, /PANEL STYLE LOCK: HORROR/);
+  assert.equal(extractEmotionStyle('[EMOTION: PANIC]'), 'GEKIGA');
+  assert.match(purePanicBlock, /PANEL STYLE LOCK: GEKIGA/);
+  assert.doesNotMatch(purePanicBlock, /PANEL STYLE LOCK: HORROR|dark horror manga style/i);
   assert.doesNotMatch(purePanicBlock, /GAG INTENT OVERLAY/);
 
   assert.equal(extractEmotionStyle('[EMOTION: HYPER_GAG]'), 'IMPACT');

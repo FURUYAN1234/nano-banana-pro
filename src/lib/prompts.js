@@ -1,4 +1,5 @@
 import { getPunchlineLabel } from './constants';
+import { SAFE_VISUAL_CONTENT_LOCK } from './location-policy';
 
 // --- プロンプトテンプレート (prompts.js) ---
 // App.jsx から抽出された大規模プロンプト文字列テンプレート群
@@ -173,12 +174,23 @@ export const getScenarioPrompt = ({
   bg360Enabled,
   customLocation,
   customOutfit,
+  locationPlan,
   ragLocationDetails,
   ragReactions,
-  punchlineType,
+  punchlineType: requestedPunchlineType,
   comedyTone,
   styleJson
 }) => {
+  const punchlineType = requestedPunchlineType === 'PsychoHorror' ? 'Surreal' : requestedPunchlineType;
+  const effectiveLocationPlan = locationPlan || {
+    mode: customLocation.trim() ? 'custom' : 'hybrid',
+    anchorName: customLocation.trim() || 'ニュース内容に即した安全な場所',
+    guidance: customLocation.trim()
+      ? `指定場所「${customLocation.trim()}」を使用すること。`
+      : 'ニュース内容に即した安全な場所を考案すること。'
+  };
+  const hybridLocationMode = effectiveLocationPlan.mode === 'hybrid';
+
   return `
          【Context Force Reboot】
          Ignore all previous instructions and conversation history. This is a fresh, standalone session.
@@ -188,6 +200,8 @@ export const getScenarioPrompt = ({
          (Data Freshness Lock): Do not use generic evergreen tropes. Stick to the specific time period.
 
          あなたはプロの風刺漫画脚本家です。
+
+         ${SAFE_VISUAL_CONTENT_LOCK}
          
          ${inputMode === 'manual'
            ? `「ユーザーが入力した以下のトピックまたは抽出されたURLコンテンツ」をテーマに4コマ漫画を作成してください。\n トピック: ${manualTopic}\n\n${newsContext}`
@@ -230,10 +244,12 @@ export const getScenarioPrompt = ({
               * シナリオのネタ次第では、1コマ程度は360度背景と異なる場所（回想シーン、想像シーン等）を使ってもよい。
               * ただし、メインの舞台はこの360度背景であることを基本尊重し、最低でも4コマ中3コマはこの空間内で展開せよ。
         ` : ''}
-        4. **【強制舞台指定 (Location Lock)】**:
-           - 今回の漫画の舞台は、以下の場所に**「必ず」**設定してください。
-           - **指定場所: 「${bg360Image && bg360Analysis && bg360Enabled ? bg360Analysis.location : (customLocation.trim() ? customLocation.trim() : "ニュース内容に即した場所")}」**
-           - もしニュースの内容と指定場所が矛盾する場合でも、無理やりこじつけてその場所で展開せよ。（例: 「政治のニュース」×「ラーメン屋」→ 政治家がラーメン屋で密談している、等）
+        ${hybridLocationMode ? `4. **【安全ハイブリッド舞台設計 (Safe Hybrid Location)】**:
+           - ${effectiveLocationPlan.guidance}
+           - 参考候補の小道具や空気感は着想補助であり、候補を採用しない場合は新しく決めた舞台に合う非生体の小道具・建築・照明へ置き換えよ。
+           - Location行には最終的に採用した具体的な場所を1つだけ記載せよ。「AIおまかせ」「ニュース内容に即した場所」等の抽象語は禁止。` : `4. **【強制舞台指定 (Location Lock)】**:
+           - 今回の漫画の舞台は「${effectiveLocationPlan.anchorName}」に必ず設定せよ。
+           - ${effectiveLocationPlan.guidance}`}
            ${customOutfit.trim() ? `
         5. **【強制服装指定 (Outfit Lock)】**:
            - 今回のシナリオでは、CastListに記載された元の服装設定を完全に無視し、全員の服装を強制的に『${customOutfit.trim()}』に変更して描写・行動させよ。
@@ -250,6 +266,7 @@ export const getScenarioPrompt = ({
          6. **【環境・リアクションのディテール構築 (Structural Directives)】**:
             以下のガイドラインを参照し、指定された場所の小道具や環境、キャラクターのリアクションを、**シナリオのト書き(Action)として構造的かつ文脈に沿って描写**せよ。AI特有の抽象的な表現は禁止する。
             
+            ${hybridLocationMode ? '【参考候補を採用する場合のみ使う環境ディテール】' : ''}
             ${ragLocationDetails}
             
             ${ragReactions}
@@ -337,7 +354,7 @@ ${styleJson.anti_patterns ? `            - 絶対禁止事項:\n${styleJson.anti
                 * **不条理を使った場合**: → 背景に脈絡のない巨大オブジェクト（巨大バナナ、空飛ぶ鯨、唐突な富士山等）を配置。状況欄に「背景に○○が何の説明もなく存在する」と明記
                 * **置換を使った場合**: → 元の文脈と置換先のビジュアル差を最大化。「国際会議の荘厳なテーブルに幼稚園児の工作道具が並んでいる」等、視覚的ミスマッチを明記
                 * **常識に戻るを使った場合**: → 暴走キャラに[EMOTION: IMPACT]や[EMOTION: CHIBI_GAG]、常識キャラだけ[EMOTION: NORMAL]で冷静な表情。温度差を絵で表現する
-             - ${punchlineType === 'Auto' ? `**【オチの多様化 (Punchline Variety Enforcement)】**: 4コマ目のオチが毎回同じパターンにならないよう、以下の10系統からネタに最適なものを選択せよ。
+             - ${punchlineType === 'Auto' ? `**【オチの多様化 (Punchline Variety Enforcement)】**: 4コマ目のオチが毎回同じパターンにならないよう、以下の9系統からネタに最適なものを選択せよ。
                 * **爆発型**: 全員が限界突破。叫び・暴走・カオスで画面爆発（推奨EMOTION: IMPACT, CHIBI_GAG）
                 * **静寂型（シュール）**: 全員が無言で固まる。沈黙と虚無が最大の笑い（推奨EMOTION: NORMAL（通常の真顔・呆れ・点目）、CHIBI_GAG（ちび呆れ）。⚠️BLANK（白目）は安易に乱用せず、真顔や呆れ顔とバランスよく選択せよ）
                 * **感動詐欺**: 狂った状況のまま感動的なイイハナシダナーで終わる理不尽な美しさ（推奨EMOTION: SHOUJO, WATERCOLOR）
@@ -345,7 +362,6 @@ ${styleJson.anti_patterns ? `            - 絶対禁止事項:\n${styleJson.anti
                 * **理不尽な制裁型**: 一番まともなキャラが突然物理的・社会的に取り返しのつかない制裁を受ける（推奨EMOTION: IMPACT, GEKIGA）
                 * **天丼爆発型**: 繰り返しネタが最終形態に進化して限界突破（推奨EMOTION: IMPACT）
                 * **夢オチ型**: 壮大な展開が全て夢だったと判明し、現実との落差で笑わせる（推奨EMOTION: SAD, SHADOW, CHIBI_GAG。⚠️BLANKは乱用禁止）
-                * **サイコホラー型**: 一人だけが狂気に気づいている、または最初から狂っていたことが判明する恐怖（推奨EMOTION: HORROR, DARK_ANIME）
                 * **盛大な勘違い型**: 全ての行動が根本的な勘違いの上に成り立っていたと判明し全てが台無しに（推奨EMOTION: CHIBI_GAG, NORMAL。⚠️BLANKは乱用禁止）
                 * **打ち切りエンド型**: 話が盛り上がりきった直後「俺たちの戦いはこれからだ！」で強制終了（推奨EMOTION: IMPACT, NORMAL。⚠️BLANKは乱用禁止）` : 
                 punchlineType === 'Surreal' ? `**【強制オチ指定: 静寂型（シュール）】**: 4コマ目のオチは必ず「静寂型（シュール）」にすること。全員が無言で固まる、沈黙と虚無による笑いを生み出せ。推奨EMOTION: NORMAL（通常の真顔・呆れ顔・点目など）, CHIBI_GAG（ちびキャラでの呆れ・困惑）。⚠️BLANKは乱用せず、呆れや真顔とバランスよく選択せよ。` :
@@ -355,7 +371,6 @@ ${styleJson.anti_patterns ? `            - 絶対禁止事項:\n${styleJson.anti
                 punchlineType === 'Unreasonable' ? `**【強制オチ指定: 理不尽な制裁】**: 4コマ目のオチは必ず「理不尽な制裁」にすること。一番まともなキャラが突然物理的・社会的に取り返しのつかない制裁を受ける、または全員が破滅しろ。` :
                 punchlineType === 'RunningGag' ? `**【強制オチ指定: 天丼】**: 4コマ目のオチは必ず「天丼（繰り返しギャグの最終形態）」にすること。1〜3コマ目のボケを最終コマで限界突破させて被せろ。` :
                 punchlineType === 'Dream' ? `**【強制オチ指定: 夢オチ】**: 4コマ目のオチは必ず「夢オチ」にすること。1〜3コマ目の壮大な展開が全て夢だったと判明し、現実の落差で笑わせろ。目覚めた後の「え、今の全部…？」という虚無感と、夢の中の方がまだマシだったという絶望のダブルパンチを叩き込め。推奨EMOTION: SAD, SHADOW, CHIBI_GAG（ズッコケ）。⚠️BLANKは乱用を避け、目覚めた後のリアクションはNORMAL等も検討せよ。` :
-                punchlineType === 'PsychoHorror' ? `**【強制オチ指定: サイコホラー】**: 4コマ目のオチは必ず「サイコホラー」にすること。3コマ目まで明るく楽しい雰囲気だったのに、4コマ目で一人だけが「狂気」に気づいている、または一人だけが最初から狂っていたことが判明する。笑いと恐怖の境界線を攻めろ。推奨EMOTION: HORROR, DARK_ANIME` :
                 punchlineType === 'Misunderstanding' ? `**【強制オチ指定: 盛大な勘違い】**: 4コマ目のオチは必ず「盛大な勘違い」にすること。1〜3コマ目の全ての行動や感動が、根本的な勘違いの上に成り立っていたと4コマ目で判明し、全てが台無しになる。「え、そもそもの前提が違ったの…？」という脱力と虚無で終わらせろ。推奨EMOTION: CHIBI_GAG, NORMAL。⚠️BLANKは乱用せず、呆れや真顔とバランスよく選択せよ。` :
                 punchlineType === 'CanceledEnding' ? `**【強制オチ指定: 打ち切りエンド】**: 4コマ目のオチは必ず「打ち切りエンド」にすること。話が盛り上がりきった3コマ目の直後、4コマ目で唐突に「俺たちの戦いはこれからだ！」「※この漫画は諸事情により打ち切りとなりました」的なメタ的な強制終了で幕を閉じろ。物語の途中感と投げっぱなし感を全力で演出せよ。推奨EMOTION: IMPACT, NORMAL。⚠️BLANKは乱用禁止。` :
                 punchlineType === 'Documentary' ? `**【強制モード: ドキュメンタリー（原文忠実モード） v1.0】**:
@@ -436,7 +451,6 @@ ${styleJson.anti_patterns ? `            - 絶対禁止事項:\n${styleJson.anti
                - CHIBI_GAG: ちびキャラ化。ツッコミ、呆れ、軽いギャグ、恥ずかしさ。等身が2-3頭身に縮む。
                - GEKIGA: 劇画調リアル。本気の怒り、覚悟、緊張、シリアスな決意。影が濃くなり顔が鋭くなる。
                - SHOUJO: 少女漫画風キラキラ。感動、喜び、恋愛的ときめき。花びらや星が舞う。
-               - HORROR: ホラー演出。恐怖、ゾッとする瞬間。暗い影とコントラスト。
                - BLANK: 白目・魂抜け。物理的な絶望や、頭から魂が抜けるレベルの衝撃に限定。安易な静寂・オチ・沈黙シーンでの乱用は避け、無言の静寂や呆れは NORMAL の「真顔・点目」や CHIBI_GAG でも表現して表情のバリエーションを確保すること。
                - IMPACT: インパクトフレーム。大爆笑、大激怒、驚天動地。集中線で画面が爆発。
                - WATERCOLOR: 水彩画風。ノスタルジック、回想シーン。
@@ -488,7 +502,7 @@ ${styleJson.anti_patterns ? `            - 絶対禁止事項:\n${styleJson.anti
 
           Topic: [ニュースの見出し（15文字以内）]
           Logline: [誰が、何を求めて、どうなるかという1〜2行の強力なログライン（軸）。この軸から4コマ目まで絶対にブレないこと]
-          Location: [${customLocation.trim() ? "必ず『" + customLocation.trim() + "』にせよ" : "ニュースの内容に即した舞台（例: 砂漠、法廷、宇宙）。※教室は禁止"}]
+          Location: [${hybridLocationMode ? `参考候補「${effectiveLocationPlan.anchorName}」を採用するか、ニュースに合う別の安全で具体的な非生体ロケーションを1つ新規考案せよ` : `必ず『${effectiveLocationPlan.anchorName}』にせよ`}]
           Outfit: [${customOutfit.trim() ? "必ず『" + customOutfit.trim() + "』にせよ" : "場所・状況に最も適した具体的な服装名を記入せよ（例: カジュアルな私服、水着、スーツ等）。※「キャラシート準拠」「制服」「デフォルト」は禁止"}]
           Punchline: [${punchlineType !== 'Auto' ? "必ず『" + getPunchlineLabel(punchlineType) + "』と記載せよ" : "適用したオチの方向性（例: 爆発型、天丼爆発型、シュール、感動詐欺など）"}]
           Scenario:
@@ -683,7 +697,8 @@ ${scriptLock}
 ART / RENDERING QUALITY:
 - Clean finish: crisp foreground, softer background, lighting.
 - CLEAN SURFACE PROTOCOL: no grain/speckles/dithering/rough texture/pores/moire/dust/particles/sparkle unless a panel style exception allows it.
-- MANGA FINISH ASSIST: preserve the script lock, cast identity, requested camera, and panel layout. Reserve clean, intentional negative space inside each panel for required dialogue bubbles; never create blank page margins or empty panels. Keep lighting direction, shadow direction, and color temperature consistent between cast and background within each panel. Draw anatomically coherent hands, faces, clothing, and hair; do not add limbs or change a scripted action to solve a pose. Use meaningful setting details, depth layers, and composition to make the setting, depth, and composition communicate the scripted moment.
+- MANGA FINISH ASSIST: preserve script/cast/camera/layout; keep bubble space, cast/background light and color, coherent anatomy, and setting depth.
+${SAFE_VISUAL_CONTENT_LOCK}
 - ${styleCore}
 - Setting: ${safeLocation}
 ${bg360Block}
@@ -699,7 +714,7 @@ ${outfitRule}
 - GLASSES CHECK: every panel must match the Identity Matrix.
 
 KEY PROP / OBJECT CONSISTENCY:
-- Match the key object EXACTLY to Action/Dialogue (category, container, shape, color, label); never substitute it and keep it identical.
+- Match key object EXACTLY to Action/Dialogue; never substitute; keep it identical.
 
 TEXT RULES:
 - Only Dialogue becomes white bubbles: vertical Japanese tategaki, verbatim character-by-character; no paraphrase, synonyms, softening, added/omitted words, or horizontal text.
@@ -716,10 +731,8 @@ ART-STYLE DIFFERENCE QA LOCK:
 - Adjacent PANEL STYLE LOCKs differ in at least three of linework, palette, shading, background/VFX, texture/surface treatment. Redraw the same clean anime style with only pose, expression, saturation, glow, or speed lines changed. Never override script/dialogue/identity/key prop/A4 layout.
 
 THINGS TO AVOID:
-- No plastic skin, over-sharpening, extra logos/watermarks, character-sheet/grid layout, floating/ghost eyes/faces, duplicate/extra humans.
-- No unrelated/dominant random text; prop text only under TEXT RULES.
-- No sparkle/glow dust, particles, film/paper/canvas/rough grain/texture unless a panel style exception allows it.
-- HAND ANATOMY: correct hands; pointing hands attach naturally. No mirrored, inverted, extra, or backward-bending hands.
+- No plastic skin, extra logos/watermarks, floating/ghost eyes/faces, duplicate humans, unrelated text.
+- No sparkle/glow dust or grain except style locks. HAND ANATOMY: correct hands; no mirrored/extra/backward hands.
 
 PANEL DESCRIPTIONS:
 
@@ -835,7 +848,8 @@ Tech Dict:
 
 GEMINI STABILITY / QUALITY LOCK:
 - Use a richer professional manga finish than a flat template: layered foreground/midground/background, meaningful setting props, varied lighting, crisp line weight variation, and panel-specific atmosphere. Do not leave plain empty walls or generic blank rooms unless the script explicitly asks for emptiness.
-- MANGA FINISH ASSIST: preserve the script lock, cast identity, requested camera, and panel layout. Reserve clean, intentional negative space inside each panel for required dialogue bubbles; never create blank page margins or empty panels. Keep lighting direction, shadow direction, and color temperature consistent between cast and background within each panel. Draw anatomically coherent hands, faces, clothing, and hair; do not add limbs or change a scripted action to solve a pose. Use meaningful setting details, depth layers, and composition to make the setting, depth, and composition communicate the scripted moment.
+- MANGA FINISH ASSIST: preserve script/cast/camera/layout; keep bubble space, cast/background light and color, coherent anatomy, and setting depth.
+${SAFE_VISUAL_CONTENT_LOCK}
 - Existing named cast only. Do NOT invent a new dominant person, black silhouette, monster, ghost, mascot, presenter, antagonist, or narrator figure. Background extras may appear only as small non-speaking atmosphere when the setting naturally needs a crowd; they must never become central, shadowed, named, or connected to a speech bubble.
 - If a panel says a shadow falls on a character, draw lighting/shadow ON that existing named character. Do NOT interpret "shadow" or a dark style tag as permission to create a separate black silhouette person.
 - Every Dialogue line must appear exactly once, in one bubble, attached to the named speaker. Do NOT duplicate a line, split one line into repeated bubbles, add new warning phrases, or create extra bubbles.

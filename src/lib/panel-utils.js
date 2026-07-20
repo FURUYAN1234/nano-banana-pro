@@ -1306,11 +1306,11 @@ const normalizeEmotionTagToKnownStyle = (rawTag = '') => {
     const escaped = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     return new RegExp(`(^|[^A-Z_])${escaped}($|[^A-Z_])`).test(raw);
   });
-  if (directKey) return directKey;
+  if (directKey) return directKey === 'HORROR' ? 'GEKIGA' : directKey;
 
   const normalized = ` ${raw.replace(/[^A-Z]+/g, ' ')} `;
   const alias = EMOTION_STYLE_ALIAS_RULES.find(([, pattern]) => pattern.test(normalized));
-  return alias ? alias[0] : 'NORMAL';
+  return alias ? (alias[0] === 'HORROR' ? 'GEKIGA' : alias[0]) : 'NORMAL';
 };
 
 // [v2.25] パネルテキストからEMOTIONタグを抽出
