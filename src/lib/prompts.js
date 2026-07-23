@@ -698,6 +698,7 @@ ART / RENDERING QUALITY:
 - Clean finish: crisp foreground, softer background, lighting.
 - CLEAN SURFACE PROTOCOL: no grain/speckles/dithering/rough texture/pores/moire/dust/particles/sparkle unless a panel style exception allows it.
 - MANGA FINISH ASSIST: preserve script/cast/camera/layout; keep bubble space, cast/background light and color, coherent anatomy, and setting depth.
+- CLOTHING FOLD SHADOW ASSIST: for full-color clothing only, render overlapping, pinched, and intersecting fabric folds with a few crisp wedge-shaped triangular cel-shaded shadow planes. Make a distinct small dark triangular fill at each selected crease junction, not merely a soft fold gradient. Use them as form shadows, not printed patterns or random geometric marks; preserve the outfit, material, and scene lighting.
 ${SAFE_VISUAL_CONTENT_LOCK}
 - ${styleCore}
 - Setting: ${safeLocation}
@@ -733,6 +734,8 @@ ART-STYLE DIFFERENCE QA LOCK:
 THINGS TO AVOID:
 - No plastic skin, extra logos/watermarks, floating/ghost eyes/faces, duplicate humans, unrelated text.
 - No sparkle/glow dust or grain except style locks. HAND ANATOMY: correct hands; no mirrored/extra/backward hands.
+
+PANEL-BY-PANEL CLOTHING FOLD PRIORITY: When a panel shows folded clothing, render 2-4 distinct small dark triangular shadow fills at visible crease junctions. Use hard cel-shaded edges, especially on light shirts, blouses, jackets, and sleeves. These are localized form shadows only: never scatter triangles across smooth fabric or turn them into a print/pattern.
 
 PANEL DESCRIPTIONS:
 
@@ -849,12 +852,15 @@ Tech Dict:
 GEMINI STABILITY / QUALITY LOCK:
 - Use a richer professional manga finish than a flat template: layered foreground/midground/background, meaningful setting props, varied lighting, crisp line weight variation, and panel-specific atmosphere. Do not leave plain empty walls or generic blank rooms unless the script explicitly asks for emptiness.
 - MANGA FINISH ASSIST: preserve script/cast/camera/layout; keep bubble space, cast/background light and color, coherent anatomy, and setting depth.
+- CLOTHING FOLD SHADOW ASSIST: for full-color clothing only, render overlapping, pinched, and intersecting fabric folds with a few crisp wedge-shaped triangular cel-shaded shadow planes. Make a distinct small dark triangular fill at each selected crease junction, not merely a soft fold gradient. Use them as form shadows, not printed patterns or random geometric marks; preserve the outfit, material, and scene lighting.
 ${SAFE_VISUAL_CONTENT_LOCK}
 - Existing named cast only. Do NOT invent a new dominant person, black silhouette, monster, ghost, mascot, presenter, antagonist, or narrator figure. Background extras may appear only as small non-speaking atmosphere when the setting naturally needs a crowd; they must never become central, shadowed, named, or connected to a speech bubble.
 - If a panel says a shadow falls on a character, draw lighting/shadow ON that existing named character. Do NOT interpret "shadow" or a dark style tag as permission to create a separate black silhouette person.
 - Every Dialogue line must appear exactly once, in one bubble, attached to the named speaker. Do NOT duplicate a line, split one line into repeated bubbles, add new warning phrases, or create extra bubbles.
 - Dialogue punctuation is part of the script lock. Copy the dialogue exactly as written; do NOT add periods, commas, ellipses, exclamation marks, emphasis marks, or spacing unless they already exist in the Dialogue line.
 - Panel style may be dramatic, dark, or comedic, but style must never change the story, add cast members, replace the key prop, or make the page look like a clean generic anime template.
+
+PANEL-BY-PANEL CLOTHING FOLD PRIORITY: When a panel shows folded clothing, render 2-4 distinct small dark triangular shadow fills at visible crease junctions. Use hard cel-shaded edges, especially on light shirts, blouses, jackets, and sleeves. These are localized form shadows only: never scatter triangles across smooth fabric or turn them into a print/pattern.
 
 PANEL DESCRIPTIONS:
 

@@ -20,9 +20,9 @@
 This project aims to intentionally exclude humans from the creative process, allowing AI to act as a director and complete everything from brainstorming to composition, direction, and rendering.
 本プロジェクトは、人間をクリエイティブな工程から意図的に排除し、AIがディレクターとして「ネタ出し・構成・演出・作画」のすべてを完結させることを目的としています。
 
-The current public release is **v4.9.5**. / 現行公開版は **v4.9.5** です。 The user-facing product name is **Super FURU AI 4-koma System**; **Nano Banana 2** and **ChatGPT Images 2.0** are generation-engine families, not application names. / ユーザー向けプロダクト名は **Super FURU AI 4-koma System** に統一し、**Nano Banana 2** と **ChatGPT Images 2.0** はアプリ名ではなく生成エンジン系統として扱います。
+The current public release is **v4.9.6**. / 現行公開版は **v4.9.6** です。 The user-facing product name is **Super FURU AI 4-koma System**; **Nano Banana 2** and **ChatGPT Images 2.0** are generation-engine families, not application names. / ユーザー向けプロダクト名は **Super FURU AI 4-koma System** に統一し、**Nano Banana 2** と **ChatGPT Images 2.0** はアプリ名ではなく生成エンジン系統として扱います。
 
-The v4.9.5 implementation details include the following. / v4.9.5の実装詳細は以下のとおりです。
+The v4.9.6 implementation details include the following. / v4.9.6の実装詳細は以下のとおりです。
 
 - **Dual provider verification / 2プロバイダー検証:** Gemini and OpenAI API paths have both been smoke-tested through character analysis, scenario generation, prompt construction, and image generation. Gemini uses `gemini-3.5-flash` for text and `gemini-3.1-flash-image` for images; OpenAI uses `gpt-4.1` for text and `gpt-image-2` for images. / GeminiとOpenAIのAPI経路を、キャラクター解析、シナリオ生成、プロンプト構築、画像生成まで実APIで検証済みです。
 - **Hybrid location policy / 背景ロケーション方針:** Explicit locations, 360-degree background analysis, curated location names, and AI-generated scenario locations are checked for horror, gore, body interiors, organs, flesh, and creepy organic scenery. Unsafe explicit input fails closed; unsafe AI output receives one safe-location retry and then stops if it remains unsafe. / 明示場所、360度背景解析、キュレーション候補、AI生成場所を検査し、危険な入力・出力は再試行またはfail-closedにします。
@@ -788,6 +788,9 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 ---
 
 ## 📋 ChangeLog
+
+### v4.9.6 (2026-07-23)
+- **[Fix & UX]** 服のシワの重なりに局所的な三角セル影を追加し、共通リリース契約へ移行 / Added localized triangular cel-shaded clothing folds and migrated to the unified release contract
 
 ### v4.9.5 (2026-07-20)
 - **[Fix & UX]** Added full scenario-content hygiene, safe hybrid location gates, and verified Gemini/OpenAI generation / Added full scenario-content hygiene, safe hybrid location gates, and verified Gemini/OpenAI generation
