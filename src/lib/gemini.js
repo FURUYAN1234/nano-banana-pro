@@ -54,11 +54,10 @@ const postGeminiGenerateContent = async (modelId, requestBody) => {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), GEMINI_TEXT_TIMEOUT_MS);
     try {
-        const response = await fetch(`${GEMINI_BASE_URL}/v1beta/models/${modelId}:generateContent`, {
+        const response = await fetch(`${GEMINI_BASE_URL}/v1beta/models/${modelId}:generateContent?key=${encodeURIComponent(currentApiKey)}`, {
             method: "POST",
             headers: {
-                "Content-Type": "application/json",
-                "x-goog-api-key": currentApiKey
+                "Content-Type": "application/json"
             },
             body: JSON.stringify({
                 ...requestBody,
@@ -95,9 +94,7 @@ export const diagnoseConnection = async () => {
     if (!currentApiKey) return "API Key not set.";
     try {
         console.log("[Diagnostic] Fetching available models...");
-        const response = await fetch(`${GEMINI_BASE_URL}/v1beta/models`, {
-            headers: { "x-goog-api-key": currentApiKey }
-        });
+        const response = await fetch(`${GEMINI_BASE_URL}/v1beta/models?key=${encodeURIComponent(currentApiKey)}`);
         const data = await response.json();
 
         if (data.error) {
