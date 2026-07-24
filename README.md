@@ -1,6 +1,6 @@
 # Super FURU AI 4-koma System
 
-> Current source release candidate: **v4.9.9** / 現在のソース公開候補: **v4.9.9**
+> Current source release candidate: **v5.0.0** / 現在のソース公開候補: **v5.0.0**
 
 > **"To what extent can humans step away from the creative process?"**
 > **「人間は、どこまで制作から降りられるのか？」**
@@ -22,9 +22,9 @@
 This project aims to intentionally exclude humans from the creative process, allowing AI to act as a director and complete everything from brainstorming to composition, direction, and rendering.
 本プロジェクトは、人間をクリエイティブな工程から意図的に排除し、AIがディレクターとして「ネタ出し・構成・演出・作画」のすべてを完結させることを目的としています。
 
-The current public release is **v4.9.8**. / 現行公開版は **v4.9.8** です。 The user-facing product name is **Super FURU AI 4-koma System**; **Nano Banana 2** and **ChatGPT Images 2.0** are generation-engine families, not application names. / ユーザー向けプロダクト名は **Super FURU AI 4-koma System** に統一し、**Nano Banana 2** と **ChatGPT Images 2.0** はアプリ名ではなく生成エンジン系統として扱います。
+The current source release candidate is **v5.0.0**. / 現在のソース公開候補は **v5.0.0** です。 The user-facing product name is **Super FURU AI 4-koma System**; **Nano Banana 2** and **ChatGPT Images 2.0** are generation-engine families, not application names. / ユーザー向けプロダクト名は **Super FURU AI 4-koma System** に統一し、**Nano Banana 2** と **ChatGPT Images 2.0** はアプリ名ではなく生成エンジン系統として扱います。
 
-The v4.9.8 implementation details include the following. / v4.9.8の実装詳細は以下のとおりです。
+The v5.0.0 implementation details include the following. / v5.0.0の実装詳細は以下のとおりです。
 
 - **Seven scoped STEP2 enhancement controls / STEP2演出強化の7カテゴリ:** STEP2 provides independent controls for expressions, body acting, visual effects, background, camera work, dialogue rewrite, and gag direction. / STEP2の演出強化は「表情追加・身体強化・演出強化・背景強化・カメラワーク・セリフ書換・ギャグ演出」の7カテゴリを個別に選択できます。
 - **Selected-scope editing / 選択範囲だけを編集:** An enhancement response must change every selected category and must preserve metadata, the four-panel structure, speakers, and every unselected category. Cross-category bleed, calm-tone escalation, anatomy/body-horror escalation, and unintended background mutation are rejected. / 選択カテゴリには実変更を要求し、メタデータ、4コマ構造、話者、未選択カテゴリは保持します。他カテゴリへのはみ出し、静かなトーンの過激化、人体破綻の追加、背景OFF時の背景改変は不合格にします。
@@ -794,7 +794,7 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 
 ## 📋 ChangeLog
 
-### v4.9.9 (2026-07-24)
+### v5.0.0 (2026-07-24)
 - **[Fix & UX]** セリフ本文と話者・吹き出し尻尾メタデータを分離し、話者名の印字混入を防止。状況文中の明示的な発話も安全に抽出して吹き出し対応を改善 / Separated printable dialogue from speaker and bubble-tail metadata to prevent printed speaker-name leakage, with safer extraction of explicit spoken lines embedded in action text
 
 ### v4.9.8 (2026-07-24)

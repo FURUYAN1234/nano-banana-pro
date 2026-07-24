@@ -122,6 +122,7 @@ const compactChatGPTConversationRules = (prompt) => {
     .replace(/MANGA FINISH ASSIST:[^\n]*/g, 'FINISH: bubbles, anatomy.')
     .replace(/CLEAN SURFACE PROTOCOL:[^\n]*/g, 'CLEAN: no noise except style exceptions.')
     .replace(/CLOTHING FOLD SHADOW ASSIST:[^\n]*/g, 'FOLD SHADOWS: crisp triangular overlap shadows; no geometric patterns.')
+    .replace(/SAFE VISUAL CONTENT LOCK:[^\n]*/g, 'SAFE VISUAL: no gore/blood/body interiors/organs/flesh/organic horror; use ordinary architecture; preserve script/cast/dialogue/camera/layout.')
     .replace(/PANEL-BY-PANEL CLOTHING FOLD PRIORITY:[^\n]*/g, 'FOLD PRIORITY: 2-4 dark triangular crease shadows.')
     .replace(/- In each Dialogue block,[^\n]*/g, '- TEXT MAP: print only quoted TEXT values; never print TAILS names, IDs, labels, brackets, or metadata.')
     .replace(/- If one character, punctuation mark,[^\n]*/g, '- BUBBLE QA: copy TEXT exactly; each tail tip touches its mapped speaker mouth/head, never another person or empty space; no extra bubbles or names.')
@@ -180,11 +181,8 @@ const buildStrictScriptLock = ({ safeTopic, panels, castList, activeOutfit }) =>
       80,
       `EXACT Panel ${panelNumber} Action below`
     );
-    const dialogue = compactScriptLockOrReference(
-      formatScriptLockDialogue(extractDialogueOnly(panelText, castList)),
-      64,
-      `EXACT Panel ${panelNumber} Dialogue below`
-    );
+    const dialogue = formatScriptLockDialogue(extractDialogueOnly(panelText, castList))
+      || `EXACT Panel ${panelNumber} Dialogue below`;
     return `- Panel ${panelNumber} required story beat: ${storyBeat}
 - Panel ${panelNumber} required dialogue: ${dialogue}`;
   }).join('\n');
