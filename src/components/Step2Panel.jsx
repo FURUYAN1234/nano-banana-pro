@@ -70,6 +70,14 @@ export default function Step2Panel({
   showStatus,
   styleJson
 }) {
+  const allEnhancementCategoriesSelected = enhanceExpressions &&
+    enhanceBodyLang &&
+    enhanceEffects &&
+    enhanceBackgrounds &&
+    enhanceCameraWork &&
+    enhanceDialogue &&
+    enhanceGag;
+
   return (
     <section
       ref={step2Ref}
@@ -492,6 +500,36 @@ export default function Step2Panel({
                     <div className="text-[9px] opacity-70 mt-1">間・反応・オチ</div>
                   </div>
                 </label>
+
+                <button
+                  type="button"
+                  aria-pressed={allEnhancementCategoriesSelected}
+                  onClick={() => {
+                        const selectAllEnhancementCategories = !allEnhancementCategoriesSelected;
+                        setEnhanceExpressions(selectAllEnhancementCategories);
+                        setEnhanceBodyLang(selectAllEnhancementCategories);
+                        setEnhanceEffects(selectAllEnhancementCategories);
+                        setEnhanceBackgrounds(selectAllEnhancementCategories);
+                        setEnhanceCameraWork(selectAllEnhancementCategories);
+                        setEnhanceDialogue(selectAllEnhancementCategories);
+                        setEnhanceGag(selectAllEnhancementCategories);
+                  }}
+                  className={`relative flex items-center justify-center p-3 rounded-xl cursor-pointer border-2 border-b-4 transition-all duration-100 overflow-hidden select-none active:border-b-2 active:translate-y-0.5 ${
+                        allEnhancementCategoriesSelected
+                          ? 'bg-lime-300 text-slate-950 border-lime-100 hover:bg-lime-200 shadow-[0_0_18px_rgba(190,242,100,0.75)]'
+                          : 'bg-slate-800 text-slate-100 border-slate-500 hover:bg-slate-700'
+                  }`}
+                >
+                  <div className="text-center">
+                        <div className="text-2xl mb-1">{allEnhancementCategoriesSelected ? '✓' : '✦'}</div>
+                        <div className="text-[11px] font-bold tracking-wider">
+                          {allEnhancementCategoriesSelected ? '全選択中（全カテゴリを解除）' : '全カテゴリを選択'}
+                        </div>
+                        <div className="text-[9px] opacity-70 mt-1">
+                          {allEnhancementCategoriesSelected ? 'もう一度押すと全解除' : '7項目をまとめて選択'}
+                        </div>
+                  </div>
+                </button>
               </div>
 
               <div className="text-xs text-orange-200/80 text-center font-mono py-1.5 bg-black/20 border border-white/5 rounded-md">
