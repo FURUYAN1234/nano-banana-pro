@@ -794,6 +794,9 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 
 ## 📋 ChangeLog
 
+### v5.0.1 (2026-07-25)
+- **[UX]** シナリオ演出強化パネルの余白を「全カテゴリを選択」トグルに変更。7カテゴリを一括選択・解除でき、全選択中は黄緑の発光と明確な解除案内で状態差を判別可能に改善 / Replaced the empty scenario-enhancement grid slot with a select-all toggle for all seven categories, adding a bright lime active state and explicit clear instruction
+
 ### v5.0.0 (2026-07-24)
 - **[Fix & UX]** セリフ本文と話者・吹き出し尻尾メタデータを分離し、話者名の印字混入を防止。状況文中の明示的な発話も安全に抽出して吹き出し対応を改善 / Separated printable dialogue from speaker and bubble-tail metadata to prevent printed speaker-name leakage, with safer extraction of explicit spoken lines embedded in action text
 
