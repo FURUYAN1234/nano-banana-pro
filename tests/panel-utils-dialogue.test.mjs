@@ -38,7 +38,7 @@ const CAST_LIST = `
 - blonde hair
 `;
 
-test('does not promote embedded action quotes into final speech bubbles when explicit dialogue lines exist', () => {
+test('promotes distinctly spoken action quotes while preserving explicit dialogue order', () => {
   const panelText = `
 [4コマ目: 結]
 [EMOTION: ULTRA_IMPACT]
@@ -48,8 +48,8 @@ test('does not promote embedded action quotes into final speech bubbles when exp
 
   const dialogue = extractDialogueOnly(panelText, CAST_LIST);
 
-  assert.doesNotMatch(dialogue, /全部AIで自動生成できるのにー！/);
-  assert.match(dialogue, /Speech Bubble 1 \[全員\]: "お前のせいだー！！"/);
+  assert.match(dialogue, /Speech Bubble 1 \[謎のAI推進派おじさん\]: "全部AIで自動生成できるのにー！"/);
+  assert.match(dialogue, /Speech Bubble 2 \[全員\]: "お前のせいだー！！"/);
 });
 
 test('keeps embedded spoken quotes out of visual action text', () => {
@@ -115,7 +115,7 @@ test('does not promote unowned action narration quotes into speech bubbles', () 
   assert.match(dialogue, /Speech Bubble 3 \[サエコ\]: "AI作品は無条件で却下よね！"/);
 });
 
-test('does not promote quotes inside situation or reaction notes into final speech bubbles', () => {
+test('promotes only attributable spoken quotes inside situation notes and excludes reaction-only quotes', () => {
   const panelText = `
 [2コマ目: 承]
 [EMOTION: PANIC+GROTESQUE]
@@ -127,12 +127,12 @@ test('does not promote quotes inside situation or reaction notes into final spee
 
   const dialogue = extractDialogueOnly(panelText, CAST_LIST);
 
-  assert.doesNotMatch(dialogue, /綿あめ…！/);
-  assert.doesNotMatch(dialogue, /うぅ…/);
-  assert.doesNotMatch(dialogue, /職務質問！/);
-  assert.doesNotMatch(dialogue, /撤収！/);
-  assert.match(dialogue, /Speech Bubble 1 \[リン\]: "昭和の幽霊が出そうだね。"/);
-  assert.match(dialogue, /Speech Bubble 2 \[アカリ\]: "屋台の綿あめどこ？"/);
+  assert.match(dialogue, /Speech Bubble 1 \[アカリ\]: "綿あめ…！"/);
+  assert.match(dialogue, /Speech Bubble 2 \[アカリ\]: "うぅ…"/);
+  assert.match(dialogue, /Speech Bubble 3 \[サエコ\]: "職務質問！"/);
+  assert.match(dialogue, /Speech Bubble 4 \[リン\]: "昭和の幽霊が出そうだね。"/);
+  assert.match(dialogue, /Speech Bubble 5 \[アカリ\]: "屋台の綿あめどこ？"/);
+  assert.doesNotMatch(dialogue, /Speech Bubble \d+ \[サエコ\]: "撤収！"/);
 });
 
 test('does not promote wrapped enhanced direction group reactions into speech bubbles', () => {
@@ -209,6 +209,40 @@ test('removes dangling speech verbs after stripping quoted spoken text from acti
   assert.doesNotMatch(action, /尊重って新しいトレンド/);
   assert.doesNotMatch(action, /。と呟き/);
   assert.doesNotMatch(action, /listed dialogue content/);
+});
+
+test('promotes a generic-role spoken quote from situation text and leaves grammatical visual action', () => {
+  const panelText = `
+[4コマ目: 結]
+[EMOTION: IMPACT]
+状況: 司会者が突然マイクを掲げ「次の発表へ進みます！」と叫び、ステージの照明が落ちる。全員が大きくずっこける。
+全員「まだ終わってない！」`;
+
+  const dialogue = extractDialogueOnly(panelText, CAST_LIST);
+  const action = extractActionOnly(panelText, CAST_LIST);
+
+  assert.match(dialogue, /Speech Bubble 1 \[司会者\]: "次の発表へ進みます！"/);
+  assert.match(dialogue, /Speech Bubble 2 \[全員\]: "まだ終わってない！"/);
+  assert.match(action, /司会者が突然マイクを掲げ(?:て)?叫び、ステージの照明が落ちる/);
+  assert.doesNotMatch(action, /次の発表へ進みます/);
+  assert.doesNotMatch(action, /掲げと叫び/);
+});
+
+test('separates visible bubble lettering from speaker-name tail metadata for image prompts', () => {
+  const panelText = `
+[2コマ目: 承]
+リン「小さすぎるよ！」
+アカリ「これだけなの！？」`;
+
+  const dialogue = extractDialogueOnly(panelText, CAST_LIST, { forImagePrompt: true });
+
+  assert.match(dialogue, /TEXT \(PRINT VALUES ONLY\):/);
+  assert.match(dialogue, /B1="小さすぎるよ！"/);
+  assert.match(dialogue, /B2="これだけなの！？"/);
+  assert.match(dialogue, /TAILS \(METADATA; NEVER PRINT NAMES\):/);
+  assert.match(dialogue, /B1->\[リン\]/);
+  assert.match(dialogue, /B2->\[アカリ\]/);
+  assert.doesNotMatch(dialogue, /Speech Bubble \d+ \[[^\]]+\]:/);
 });
 
 test('maps fear-like emotion tags to safe dramatic styling while preserving comedic intent', () => {

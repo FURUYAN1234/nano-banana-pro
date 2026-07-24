@@ -728,11 +728,12 @@ KEY PROP / OBJECT CONSISTENCY:
 
 TEXT RULES:
 - Only Dialogue becomes white bubbles: vertical Japanese tategaki, verbatim character-by-character; no paraphrase, synonyms, softening, added/omitted words, or horizontal text.
+- In each Dialogue block, ONLY quoted values after "TEXT (PRINT VALUES ONLY)" are printed. Names in square brackets after "TAILS (METADATA; NEVER PRINT NAMES)" are routing metadata only: NEVER print speaker names, brackets, bubble IDs, field labels, quotation marks, or metadata.
 - Tails point to actual speakers; right-to-left manga order.
 - Action is visual only: no ambience/SFX/mood/aura/emotion/narration/state/prompt labels as text. Lettering only when Action requests handwriting/signage/label/print/screen/board text; otherwise unreadable marks.
 
 DIALOGUE / BUBBLE QA LOCK:
-- If one character, punctuation mark, added word, omitted word, or speaker differs from Dialogue, redraw. Each bubble tail must point to the named speaker; no extra bubbles, captions, or narration.
+- If one character, punctuation mark, added word, omitted word, or speaker differs from Dialogue, redraw. Each bubble tail tip must terminate at its assigned speaker's mouth/head silhouette, never at a neighbor or empty space. Trace every tail before final render; no extra bubbles, captions, narration, or printed speaker names.
 
 CHARACTER QA PASS:
 - Match hair color, hairstyle, eye color, glasses status, skin tone, outfit, and accessories; redraw swaps, merges, or wrong cast.
@@ -866,6 +867,8 @@ ${SAFE_VISUAL_CONTENT_LOCK}
 - Existing named cast only. Do NOT invent a new dominant person, black silhouette, monster, ghost, mascot, presenter, antagonist, or narrator figure. Background extras may appear only as small non-speaking atmosphere when the setting naturally needs a crowd; they must never become central, shadowed, named, or connected to a speech bubble.
 - If a panel says a shadow falls on a character, draw lighting/shadow ON that existing named character. Do NOT interpret "shadow" or a dark style tag as permission to create a separate black silhouette person.
 - Every Dialogue line must appear exactly once, in one bubble, attached to the named speaker. Do NOT duplicate a line, split one line into repeated bubbles, add new warning phrases, or create extra bubbles.
+- Only quoted values after "TEXT (PRINT VALUES ONLY)" are visible lettering. Names after "TAILS (METADATA; NEVER PRINT NAMES)" are routing metadata only: NEVER print speaker names, brackets, bubble IDs, field labels, quotation marks, or metadata.
+- Each bubble tail tip must terminate at its assigned speaker's mouth/head silhouette, never at a neighbor or empty space. Trace every tail before final render.
 - Dialogue punctuation is part of the script lock. Copy the dialogue exactly as written; do NOT add periods, commas, ellipses, exclamation marks, emphasis marks, or spacing unless they already exist in the Dialogue line.
 - Panel style may be dramatic, dark, or comedic, but style must never change the story, add cast members, replace the key prop, or make the page look like a clean generic anime template.
 
@@ -881,6 +884,7 @@ Important constraints:
 - ABSOLUTELY NO TEXT OR SFX BETWEEN PANELS. The white gutters separating the panels MUST be completely clean and pure white. Do not draw any labels, narration, or sound effects crossing or sitting inside the panel boundaries.
 - Do NOT write situation/narration explanations as text on the screen. The Visual Action must only be illustrated, except explicit visual scene text requested by the action, such as handwriting, air-writing, signs, labels, printed text, screen text, or board text.
 - Only Dialogue entries may become white manga speech bubbles. Quoted ambience, SFX names, mood words, aura names, emotion labels, and narration terms in Visual Action are NOT visible text. Render quoted Action words as physical scene text ONLY when the action explicitly requests visible writing.
+- Speaker names and square-bracket tail targets are never visible text.
 - Write the Japanese spoken text clearly inside white manga speech bubbles in a bold sans-serif Japanese font.
 - DIALOGUE TEXT IS VERBATIM: The text inside each Speech Bubble MUST be copied EXACTLY as written in the Dialogue section — character by character. Do NOT paraphrase, rephrase, or substitute synonyms.
 - Do NOT normalize punctuation. If the Dialogue line has no punctuation, keep it that way; if it has punctuation, copy only that exact punctuation.

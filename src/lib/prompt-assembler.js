@@ -122,7 +122,11 @@ const compactChatGPTConversationRules = (prompt) => {
     .replace(/MANGA FINISH ASSIST:[^\n]*/g, 'FINISH: bubbles, anatomy.')
     .replace(/CLEAN SURFACE PROTOCOL:[^\n]*/g, 'CLEAN: no noise except style exceptions.')
     .replace(/CLOTHING FOLD SHADOW ASSIST:[^\n]*/g, 'FOLD SHADOWS: crisp triangular overlap shadows; no geometric patterns.')
-    .replace(/PANEL-BY-PANEL CLOTHING FOLD PRIORITY:[^\n]*/g, 'FOLD PRIORITY: 2-4 dark triangular crease shadows.');
+    .replace(/PANEL-BY-PANEL CLOTHING FOLD PRIORITY:[^\n]*/g, 'FOLD PRIORITY: 2-4 dark triangular crease shadows.')
+    .replace(/- In each Dialogue block,[^\n]*/g, '- TEXT MAP: print only quoted TEXT values; never print TAILS names, IDs, labels, brackets, or metadata.')
+    .replace(/- If one character, punctuation mark,[^\n]*/g, '- BUBBLE QA: copy TEXT exactly; each tail tip touches its mapped speaker mouth/head, never another person or empty space; no extra bubbles or names.')
+    .replace(/- Action is visual only:[^\n]*/g, '- ACTION: visual only; no labels, narration, or SFX as text, except explicitly requested scene writing or signage.')
+    .replace(/CHARACTER QA PASS:\n-[^\n]*/g, 'CHARACTER QA: preserve identity and outfit; redraw swaps or merged cast.');
 };
 
 const appendPointingHandLock = (actionText, resolvedConflict = false) => {
@@ -317,7 +321,7 @@ ${extractCastLimitRule(pt, castList, { compact: true }).replace(/\\\\[/g, '').re
 Camera: ${camera}
 ${eyeLineRule}
 Action (visual only): ${buildPanelActionText(pt, castList, activeOutfit)}
-Dialogue (verbatim bubbles): ${extractDialogueOnly(pt, castList)}`;
+Dialogue (verbatim bubbles): ${extractDialogueOnly(pt, castList, { forImagePrompt: true })}`;
     }).join('\n\n');
     panelSections = eyeLineBase ? `${eyeLineBase}\n\n${panelSections}` : panelSections;
 
@@ -355,7 +359,7 @@ Camera: ${camera}.
 ${lensRule}
 ${eyeLineRule}
 Action (Visual ONLY, non-dialogue; do NOT render quoted words as visible text unless this action explicitly says handwriting, signage, board text, label text, or screen text): ${buildPanelActionText(pt, castList, activeOutfit)}.
-Dialogue (ONLY inside bubbles): ${extractDialogueOnly(pt, castList)}.
+Dialogue (ONLY inside bubbles): ${extractDialogueOnly(pt, castList, { forImagePrompt: true })}.
 ${geminiRearForegroundLock}`;
     }).join('\n\n');
     panelSections = eyeLineBase ? `${eyeLineBase}\n\n${panelSections}` : panelSections;

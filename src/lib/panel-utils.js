@@ -177,7 +177,7 @@ export const buildIdentityMatrix = (castListText) => {
   return matrix;
 };
 
-const GENERIC_ROLE_WORD_PATTERN = '男性|女性|男子|女子|男|女|青年|若者|成人|大人|中年|老人|老婦人|おじさん|おばさん|お兄さん|お姉さん|おじいさん|おばあさん|高校生|高生|学生|生徒|先生|教師|作家|漫画家|編集者|記者|店員|会社員|社員|医師|看護師|警官|兵士|ギャル|モブ|客|観客|観察者|参加者|司会|ナレーター|アナウンサー|スタッフ|社長|主催者|委員長|選手|声|人|キャラ';
+const GENERIC_ROLE_WORD_PATTERN = '男性|女性|男子|女子|男|女|青年|若者|成人|大人|中年|老人|老婦人|おじさん|おばさん|お兄さん|お姉さん|おじいさん|おばあさん|高校生|高生|学生|生徒|先生|教師|作家|漫画家|編集者|記者|店員|会社員|社員|医師|看護師|警官|兵士|ギャル|モブ|客|観客|観察者|参加者|司会者|司会|発表者|登壇者|案内役|ナレーター|アナウンサー|スタッフ|社長|主催者|委員長|選手|声|人|キャラ';
 const GENERIC_ROLE_SPEAKER_RE = new RegExp(`(?:${GENERIC_ROLE_WORD_PATTERN})(?:[A-ZＡ-Ｚ0-9０-９\\s]*)$`);
 
 const PERSON_DESCRIPTOR_TOKEN_RE = new RegExp(`(?:黒髪|金髪|茶髪|銀髪|白髪|赤髪|青髪|緑髪|紫髪|ピンク髪|ブロンド|スーツ|制服|眼鏡|メガネ|グラス|ギャル|オタク|${GENERIC_ROLE_WORD_PATTERN})`, 'g');
@@ -329,6 +329,7 @@ const getExplicitSameLineSpeakerName = (value = '', validCharacters = []) => {
 
 const normalizeContextSpeakerCandidate = (value = '') =>
   normalizeDialogueSpeakerPrefix(value)
+    .replace(/^(?:状況(?:演出)?|Situation|Action)\s*[:：]\s*/i, '')
     .replace(/^(?:奥|手前|背後|後ろ|前|右|左|横|遠く|入口|出口|棚奥|店内|画面奥|背景|客席|会場|部屋|廊下|外|内側|外側)(?:の)?(?:から|より)/, '')
     .trim();
 
@@ -468,7 +469,7 @@ export const getCameraForChatGPT = (panelText, cameraState) => {
   return fallbackCameras[cameraState.index % fallbackCameras.length];
 };
 
-export const extractDialogueOnly = (fullPanelText, castList) => {
+export const extractDialogueOnly = (fullPanelText, castList, options = {}) => {
   const lines = fullPanelText.split('\n');
 
   // Extract valid characters from castList to prevent action instructions being misidentified as speakers
@@ -624,9 +625,12 @@ export const extractDialogueOnly = (fullPanelText, castList) => {
       const isSpokenQuoteByPostText = hasSpokenQuotePostContext(sameLinePostText || postText);
 
       // Same-line speaker labels are reliable. Speech verbs inside situation/reaction
-      // narration are visual direction, not final bubble contracts.
+      // narration become bubble contracts only when a nearby person/role can be identified.
       const hasSameLineSpeaker = isExplicitSameLineSpeakerPrefix(sameLinePrevText, validCharacters);
-      const hasValidSpeakerInPrevText = hasSameLineSpeaker;
+      const inferredSpokenSpeaker = isSpokenQuoteByPostText
+        ? getSpokenQuoteSpeakerName(sameLinePrevText, validCharacters)
+        : '';
+      const hasValidSpeakerInPrevText = hasSameLineSpeaker || Boolean(inferredSpokenSpeaker);
 
       if (!hasValidSpeakerInPrevText) {
         // 直前にキャスト名や人物名がない場合は、セリフではなく引用や他人の発言としてスキップ
@@ -643,7 +647,8 @@ export const extractDialogueOnly = (fullPanelText, castList) => {
       // [v4.6.5-fix2] 「〜と...音が」「〜と...鳴」等のSE文脈も検出
       const isSfxByPostText = /^(という音|という爆音|という銃声|という足音|と[^\n「」]{0,20}(?:音が|音を|音で|異音|金属音|爆音|轟音|衝撃音))/.test(postText);
       const isInstructionQuoteWithoutSpeechVerb = isInstructionLine(quoteLine) && !hasSpokenQuotePostContext(sameLinePostText);
-      const isLooseContextOnly = !hasSameLineSpeaker;
+      const isLooseContextOnly = !hasValidSpeakerInPrevText;
+      const isReactionNoteQuote = /(?:リアクション|Reaction)\s*[:：][^。！？!?\n]*$/i.test(sameLinePrevText);
 
       // 2. 直前のテキストの末尾が形状や表記指示、比喩表現などを示すものである場合は除外
       const isNotDialogueIndicator = /(?:型|字|感|と書かれた|と書く|と書き|と書いた|という|のような|風の|的な|コード|キー|マーク|記号|ラベル|吹き出し|セリフ|ポーズ)$/.test(prevText.trim());
@@ -678,7 +683,7 @@ export const extractDialogueOnly = (fullPanelText, castList) => {
 
       const isVisualLabelQuote = isLikelyVisualLabelQuote(dialogueText, prevText, postText);
 
-      if (isInstructionQuoteWithoutSpeechVerb || isLooseContextOnly || (!isSpokenQuoteByPostText && (isPureSymbol || isSfx || isSfxByPostText || isNotDialogueIndicator || isVisualTextByContext || isUsedAsNoun || isShapeDescription || isExpressionOrActionDescription || isVisualLabelQuote))) {
+      if (isInstructionQuoteWithoutSpeechVerb || isLooseContextOnly || isReactionNoteQuote || (!isSpokenQuoteByPostText && (isPureSymbol || isSfx || isSfxByPostText || isNotDialogueIndicator || isVisualTextByContext || isUsedAsNoun || isShapeDescription || isExpressionOrActionDescription || isVisualLabelQuote))) {
         // [v4.6.5] 非セリフ — lastIndexを進めず、話者コンテキストを次のマッチに引き継ぐ
         continue;
       }
@@ -694,7 +699,7 @@ export const extractDialogueOnly = (fullPanelText, castList) => {
       lastIndex = regex.lastIndex;
       if (dialogueText && !isLikelyNarration) {
         // Infer a nearby speaker for spoken quotes embedded inside action narration.
-        const fallbackSpeakerName = getSpokenQuoteSpeakerName(sameLinePrevText, validCharacters);
+        const fallbackSpeakerName = inferredSpokenSpeaker || getSpokenQuoteSpeakerName(sameLinePrevText, validCharacters);
         if (!fallbackSpeakerName) continue;
         if (isCoveredByExistingSpeechBubble(speechBubbleEntries, dialogueText)) continue;
         pushSpeechBubble(fallbackSpeakerName, dialogueText, match.index);
@@ -706,8 +711,21 @@ export const extractDialogueOnly = (fullPanelText, castList) => {
   if (speechBubbleEntries.length === 0) {
     return "(Characters interact without dialogue in this panel)";
   }
-  return speechBubbleEntries
-    .sort((a, b) => a.order - b.order || a.sequence - b.sequence)
+  const orderedEntries = speechBubbleEntries
+    .sort((a, b) => a.order - b.order || a.sequence - b.sequence);
+
+  if (options.forImagePrompt) {
+    const visibleText = orderedEntries
+      .map((entry, index) => `B${index + 1}="${entry.text}"`)
+      .join('; ');
+    const tailTargets = orderedEntries
+      .map((entry, index) => entry.speaker ? `B${index + 1}->[${entry.speaker}]` : '')
+      .filter(Boolean)
+      .join('; ');
+    return `TEXT (PRINT VALUES ONLY): ${visibleText}. TAILS (METADATA; NEVER PRINT NAMES): ${tailTargets || 'match the visually speaking character'}.`;
+  }
+
+  return orderedEntries
     .map((entry, index) => {
       const speakerTag = entry.speaker ? ` [${entry.speaker}]` : '';
       return `(Speech Bubble ${index + 1}${speakerTag}: "${entry.text}")`;
@@ -832,7 +850,8 @@ const ACTION_QUOTED_TEXT_RE = /[\u300c\u300e"\u201c\u201d]([^\u300c\u300d\u300e\
 const protectNonDialogueTextHints = (actionText) => {
   if (!actionText) return actionText;
 
-  return actionText.replace(ACTION_QUOTED_TEXT_RE, (match, _content, offset, fullText) => {
+  const removedSpokenQuoteMarker = '\uE000';
+  const protectedText = actionText.replace(ACTION_QUOTED_TEXT_RE, (match, _content, offset, fullText) => {
     // [v4.6.2] 1〜2文字の引用（「へ」「O」など）は表情・記号として保護
     if (_content.length <= 2) {
       return match;
@@ -853,7 +872,7 @@ const protectNonDialogueTextHints = (actionText) => {
     const context = `${leftContext} ${rightContext}`;
 
     if (hasSpokenQuotePostContext(rightContext)) {
-      return '';
+      return removedSpokenQuoteMarker;
     }
 
     if (WRITTEN_TEXT_CONTEXT_RE.test(context)) {
@@ -878,6 +897,10 @@ const protectNonDialogueTextHints = (actionText) => {
 
     return '';
   });
+
+  return protectedText
+    .replace(/\uE000\s*(?:と|って)?\s*/g, '')
+    .replace(/\uE000/g, '');
 };
 
 export const extractActionOnly = (fullPanelText, castList, placementRule = "") => {

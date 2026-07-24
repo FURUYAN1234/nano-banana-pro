@@ -1,5 +1,7 @@
 # Super FURU AI 4-koma System
 
+> Current source release candidate: **v4.9.9** / 現在のソース公開候補: **v4.9.9**
+
 > **"To what extent can humans step away from the creative process?"**
 > **「人間は、どこまで制作から降りられるのか？」**
 >
@@ -791,6 +793,9 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 ---
 
 ## 📋 ChangeLog
+
+### v4.9.9 (2026-07-24)
+- **[Fix & UX]** セリフ本文と話者・吹き出し尻尾メタデータを分離し、話者名の印字混入を防止。状況文中の明示的な発話も安全に抽出して吹き出し対応を改善 / Separated printable dialogue from speaker and bubble-tail metadata to prevent printed speaker-name leakage, with safer extraction of explicit spoken lines embedded in action text
 
 ### v4.9.8 (2026-07-24)
 - **[Fix & UX]** READMEの詳細説明を7カテゴリ構成と選択範囲検証・自動修正仕様に同期 / Aligned README details with the seven scoped categories, validation, and corrective retry
