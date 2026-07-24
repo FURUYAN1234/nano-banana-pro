@@ -96,6 +96,7 @@ export default function Step4Panel({
   enhanceBackgrounds,
   enhanceCameraWork,
   enhanceDialogue,
+  enhanceGag,
   SYSTEM_VERSION,
   isAssembling,
   regenerateImage,
@@ -311,7 +312,8 @@ export default function Step4Panel({
                         "照明・演出強化": enhanceEffects,
                         "背景強化": enhanceBackgrounds,
                         "カメラワーク強化": enhanceCameraWork,
-                        "セリフ・ギャグ強化": enhanceDialogue
+                        "セリフ書換": enhanceDialogue,
+                        "ギャグ演出強化": enhanceGag
                       },
                       "360度背景": {
                         "画像読込": !!bg360Image,

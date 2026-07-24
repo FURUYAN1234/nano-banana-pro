@@ -142,9 +142,8 @@ export default function useMangaWorkflow() {
   const [enhanceEffects, setEnhanceEffects] = useState(false);         // 照明・演出強化
   const [enhanceBackgrounds, setEnhanceBackgrounds] = useState(false); // 背景強化
   const [enhanceCameraWork, setEnhanceCameraWork] = useState(false);   // [v2.47] カメラワーク強化
-  const [enhanceDialogue, setEnhanceDialogue] = useState(false);       // [v2.47] セリフ・ギャグ強化
-  // [v2.69] コマ割り演出・時間演出を削除（ChatGPT画像生成ではタグ形式の指示が解釈されず効果ゼロのため）
-  const [enhanceFACS, setEnhanceFACS] = useState(false);               // [v3.50 Fix] FACS表情強化（欠落修正）
+  const [enhanceDialogue, setEnhanceDialogue] = useState(false);       // セリフ書き換え
+  const [enhanceGag, setEnhanceGag] = useState(false);                 // ギャグの間・リアクション強化
   const [isEnhancing, setIsEnhancing] = useState(false);
   const [enhanceLog, setEnhanceLog] = useState("");
   const [isEnhancePanelOpen, setIsEnhancePanelOpen] = useState(false);
@@ -506,7 +505,7 @@ export default function useMangaWorkflow() {
   // シナリオ強化機能: 選択されたカテゴリに基づいてシナリオの演出を強化する
   const enhanceScenario = async () => {
     if (!scenario || scenario.length < 20) return showStatus("先にシナリオを生成してください。");
-    const anySelected = enhanceExpressions || enhanceBodyLang || enhanceEffects || enhanceBackgrounds || enhanceCameraWork || enhanceDialogue || enhanceFACS;
+    const anySelected = enhanceExpressions || enhanceBodyLang || enhanceEffects || enhanceBackgrounds || enhanceCameraWork || enhanceDialogue || enhanceGag;
     if (!anySelected) return showStatus("少なくとも1つの強化カテゴリをONにしてください。");
     if (isEnhancing) return;
 
@@ -519,28 +518,17 @@ export default function useMangaWorkflow() {
       setEnhanceLog(prev => prev + "\n> [SAVE] 元のシナリオを保存しました（元に戻すボタンで復元可能）");
     }
 
-    // カテゴリ別の強化指示を組み立て
-    const enhanceCategories = [];
-    if (enhanceExpressions) {
-      enhanceCategories.push("【表情データベースによる表情の強化】各キャラの表情描写を限界まで大げさ・劇的にしてください（基準ウェイト2.5〜3.0相当）。...");
-    }
-    if (enhanceBodyLang) {
-      enhanceCategories.push("【ボディランゲージの強化】棒立ちの状態を禁止します。通常の2倍以上の過剰なアクションで全身で感情を表現してください（基準ウェイト2.5〜3.0相当）。");
-    }
-    if (enhanceEffects) {
-      enhanceCategories.push("【照明・演出の強化】各コマの「状況」欄に映画的・劇画的な演出効果を限界突破レベルで追加してください。");
-    }
-    if (enhanceBackgrounds) {
-      enhanceCategories.push("【背景の強化】各コマの背景描写に奥行きと空間の説得力を追加してください。");
-    }
-    if (enhanceCameraWork) {
-      enhanceCategories.push("【カメラワークの強化】各コマに極限的なカメラアングル指示を追加してください。");
-    }
-    if (enhanceDialogue) {
-      enhanceCategories.push("【セリフ・ギャグの強化 — お笑い構造メソッド適用】4コマ漫画の笑いの構造を根本から再設計してください。");
-    }
+    const selectedCategories = [
+      enhanceExpressions && 'expressions',
+      enhanceBodyLang && 'body',
+      enhanceEffects && 'effects',
+      enhanceBackgrounds && 'background',
+      enhanceCameraWork && 'camera',
+      enhanceDialogue && 'dialogue',
+      enhanceGag && 'gag'
+    ].filter(Boolean);
 
-    setEnhanceLog(prev => prev + `\n> [CONFIG] 強化カテゴリ: ${enhanceCategories.length}個`);
+    setEnhanceLog(prev => prev + `\n> [CONFIG] 強化カテゴリ: ${selectedCategories.join(', ')}`);
 
     let enhanceTickCount = 0;
     const enhanceTimer = setInterval(() => {
@@ -560,16 +548,17 @@ export default function useMangaWorkflow() {
       setEnhanceLog(prev => prev + `\n> [API] ${selectedEngine === 'openai' ? 'OpenAI' : 'Gemini'} にシナリオ強化をリクエスト中...`);
       const result = await enhanceScenarioText({
         scenario,
-        enhanceCategories,
+        selectedCategories,
         castList,
         styleJson,
         onProgress: (msg) => setEnhanceLog(prev => prev + `\n> [API] ${msg}`)
       });
 
-      if (result && result.text && result.text.length > 50) {
+      if (result && result.text && result.validation?.ok) {
         setScenario(result.text);
         setEnhanceLog(prev => {
-          const baseLog = prev + `\n> [SUCCESS] シナリオを強化しました！（${result.text.length}文字）\n> [INFO] 「元に戻す」ボタンで強化前のシナリオに戻せます。`;
+          const retryInfo = result.attempts > 1 ? ` / 自動修正 ${result.attempts - 1}回` : '';
+          const baseLog = prev + `\n> [SUCCESS] 選択カテゴリだけを強化しました（${result.text.length}文字${retryInfo}）\n> [INFO] 「元に戻す」ボタンで強化前のシナリオに戻せます。`;
           if (result.thought) {
             const separator = "\n\n--- ✅ シナリオ強化完了 (思考トレース) ---\n";
             return baseLog + separator + result.thought;
@@ -582,7 +571,7 @@ export default function useMangaWorkflow() {
         setEnhanceBackgrounds(false);
         setEnhanceCameraWork(false);
         setEnhanceDialogue(false);
-        setEnhanceFACS(false);
+        setEnhanceGag(false);
         showStatus("シナリオ強化完了！");
       } else {
         setEnhanceLog(prev => prev + "\n> [ERROR] AIの応答が短すぎます。もう一度お試しください。");
@@ -941,7 +930,7 @@ export default function useMangaWorkflow() {
     setEnhanceBackgrounds(false);
     setEnhanceCameraWork(false);
     setEnhanceDialogue(false);
-    setEnhanceFACS(false);
+    setEnhanceGag(false);
     setIsEnhancing(false);
     setEnhanceLog("");
     setIsEnhancePanelOpen(false);
@@ -1003,7 +992,7 @@ export default function useMangaWorkflow() {
     setEnhanceBackgrounds(false);
     setEnhanceCameraWork(false);
     setEnhanceDialogue(false);
-    setEnhanceFACS(false);
+    setEnhanceGag(false);
     setIsEnhancing(false);
     setEnhanceLog("");
     setIsEnhancePanelOpen(false);
@@ -1665,6 +1654,7 @@ export default function useMangaWorkflow() {
     enhanceBodyLang,
     enhanceCameraWork,
     enhanceDialogue,
+    enhanceGag,
     enhanceEffects,
     enhanceExpressions,
     enhanceLog,
@@ -1733,6 +1723,7 @@ export default function useMangaWorkflow() {
     setEnhanceBodyLang,
     setEnhanceCameraWork,
     setEnhanceDialogue,
+    setEnhanceGag,
     setEnhanceEffects,
     setEnhanceExpressions,
     setGeneratedImage,

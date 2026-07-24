@@ -1,5 +1,6 @@
 import { getPunchlineLabel } from './constants';
 import { SAFE_VISUAL_CONTENT_LOCK } from './location-policy';
+import { buildScenarioEnhancementPrompt } from './scenario-enhancement';
 
 // --- プロンプトテンプレート (prompts.js) ---
 // App.jsx から抽出された大規模プロンプト文字列テンプレート群
@@ -103,6 +104,14 @@ export const getCharacterAnalysisPrompt = () => {
  * @returns {string} 強化プロンプト
  */
 export const getScenarioEnhancePrompt = (scenario, enhanceCategories, styleJson) => {
+  if (Array.isArray(enhanceCategories)) {
+    return buildScenarioEnhancementPrompt({
+      scenario,
+      selectedCategories: enhanceCategories,
+      styleJson
+    });
+  }
+
   return `あなたは4コマ漫画のシナリオ演出家です。以下のシナリオの**演出力**を大幅に強化してください。
 
 ${enhanceCategories.join("\n\n")}

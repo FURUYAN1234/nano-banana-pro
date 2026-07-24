@@ -49,6 +49,7 @@ function App() {
     enhanceBodyLang,
     enhanceCameraWork,
     enhanceDialogue,
+    enhanceGag,
     enhanceEffects,
     enhanceExpressions,
     enhanceLog,
@@ -117,6 +118,7 @@ function App() {
     setEnhanceBodyLang,
     setEnhanceCameraWork,
     setEnhanceDialogue,
+    setEnhanceGag,
     setEnhanceEffects,
     setEnhanceExpressions,
     setGeneratedImage,
@@ -304,6 +306,8 @@ function App() {
               setEnhanceCameraWork={setEnhanceCameraWork}
               enhanceDialogue={enhanceDialogue}
               setEnhanceDialogue={setEnhanceDialogue}
+              enhanceGag={enhanceGag}
+              setEnhanceGag={setEnhanceGag}
               isEnhancing={isEnhancing}
               enhanceScenario={enhanceScenario}
               revertScenario={revertScenario}
@@ -366,6 +370,7 @@ function App() {
               enhanceBackgrounds={enhanceBackgrounds}
               enhanceCameraWork={enhanceCameraWork}
               enhanceDialogue={enhanceDialogue}
+              enhanceGag={enhanceGag}
               SYSTEM_VERSION={SYSTEM_VERSION}
               isAssembling={isAssembling}
               regenerateImage={regenerateImage}

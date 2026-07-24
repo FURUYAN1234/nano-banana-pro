@@ -1,11 +1,15 @@
 import { callAI } from './ai-provider';
 import { getLocationDetails, getReactionGuidelines } from './knowledge';
 import { locationDetails } from './locations.js';
-import { getScenarioPrompt, getScenarioEnhancePrompt } from './prompts';
+import { getScenarioPrompt } from './prompts';
 import { cropEquirectangular } from './panorama360';
 import { applyManualStagingLocks } from './manual-staging';
 import { createHybridLocationPlan, requestSafeScenario } from './location-policy';
 import { requestSafeScenarioContent } from './scenario-content-policy';
+import {
+  buildScenarioEnhancementPrompt,
+  runValidatedScenarioEnhancement
+} from './scenario-enhancement';
 
 // [v3.85-alpha] シナリオ生成と強化ロジックの外部モジュール化
 
@@ -324,16 +328,31 @@ ${parsedData.scenario}
  */
 export async function enhanceScenarioText({
   scenario,
-  enhanceCategories,
+  selectedCategories,
   castList,
   styleJson,
   onProgress
 }) {
-  const enhancePrompt = getScenarioEnhancePrompt(scenario, enhanceCategories, styleJson);
-  const result = await callAI(enhancePrompt, [], castList, onProgress);
-  return {
-    text: result.text.trim(),
-    usedModel: result.model,
-    thought: result.thought
-  };
+  return runValidatedScenarioEnhancement({
+    originalScenario: scenario,
+    selectedCategories,
+    buildPrompt: ({ validationIssues }) =>
+      buildScenarioEnhancementPrompt({
+        scenario,
+        selectedCategories,
+        styleJson,
+        validationIssues
+      }),
+    requestEnhancement: async (prompt) => {
+      const result = await callAI(prompt, [], castList, onProgress);
+      return {
+        text: result.text,
+        usedModel: result.model,
+        thought: result.thought
+      };
+    },
+    onRetry: (validation) => {
+      onProgress?.(`出力検証NGのため自動修正します: ${validation.issueCodes.join(', ')}`);
+    }
+  });
 }

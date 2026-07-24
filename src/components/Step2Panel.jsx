@@ -61,6 +61,8 @@ export default function Step2Panel({
   setEnhanceCameraWork,
   enhanceDialogue,
   setEnhanceDialogue,
+  enhanceGag,
+  setEnhanceGag,
   isEnhancing,
   enhanceScenario,
   revertScenario,
@@ -374,9 +376,8 @@ export default function Step2Panel({
           {isEnhancePanelOpen && scenario && scenario.length > 20 && (
             <div className="p-4 bg-orange-950/10 space-y-3">
               <p className="text-[11px] text-orange-200/70 leading-relaxed">
-                生成されたシナリオの演出（カメラワークや表情など）をさらに大げさ・詳細に強化します。強化したい項目をONにして「シナリオ強化実行」を押してください。<br/>
-                <span className="text-orange-300 font-bold">💡 何度も実行すると効果が重なり、よりパワフル（カオス）な展開になります。</span><br/>
-                ⚠️ 演出を過激にしすぎると、画像生成時に安全基準（ポリシー制限）にかかる場合があります。その際は画像生成画面の救済機能をお使いください。
+                選択した項目だけを部分編集します。タイトル・Logline・場所・話者・未選択項目は保持され、変更漏れや他項目へのはみ出しは自動検証されます。<br/>
+                <span className="text-orange-300 font-bold">💡 「セリフ書換」は実際の発話を変更し、「ギャグ演出」はセリフを保ったまま間とリアクションを整えます。</span>
               </p>
 
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -471,21 +472,37 @@ export default function Step2Panel({
                   )}
                   <div className="text-center">
                     <div className={`text-2xl mb-1 ${enhanceDialogue ? 'scale-110' : 'opacity-70 grayscale'}`}>💬</div>
-                    <div className="text-[11px] font-bold tracking-wider">セリフ強化</div>
-                    <div className="text-[9px] opacity-70 mt-1">ギャグ・オチ最大化</div>
+                    <div className="text-[11px] font-bold tracking-wider">セリフ書換</div>
+                    <div className="text-[9px] opacity-70 mt-1">発話を必ず改善</div>
+                  </div>
+                </label>
+
+                <label className={`relative flex items-center justify-center p-3 rounded-xl cursor-pointer border-2 border-b-4 transition-all duration-100 group overflow-hidden select-none active:border-b-2 active:translate-y-0.5 ${
+                  enhanceGag ? 'bg-white text-black border-slate-300' : 'bg-[#1e293b] text-slate-400 border-[#0f172a] hover:bg-[#334155]'
+                }`}>
+                  <input type="checkbox" className="hidden" checked={enhanceGag} onChange={() => setEnhanceGag(!enhanceGag)} />
+                  {enhanceGag && (
+                    <div className="absolute top-2 right-2 bg-white text-blue-600 rounded-full p-0.5 shadow-sm">
+                      <CheckCircle2 size={12} strokeWidth={4} />
+                    </div>
+                  )}
+                  <div className="text-center">
+                    <div className={`text-2xl mb-1 ${enhanceGag ? 'scale-110' : 'opacity-70 grayscale'}`}>🎭</div>
+                    <div className="text-[11px] font-bold tracking-wider">ギャグ演出</div>
+                    <div className="text-[9px] opacity-70 mt-1">間・反応・オチ</div>
                   </div>
                 </label>
               </div>
 
               <div className="text-xs text-orange-200/80 text-center font-mono py-1.5 bg-black/20 border border-white/5 rounded-md">
-                強化対象: {[enhanceExpressions && "表情", enhanceBodyLang && "身体", enhanceEffects && "演出", enhanceBackgrounds && "背景", enhanceCameraWork && "カメラ", enhanceDialogue && "セリフ"].filter(Boolean).join(" / ") || "未選択"}
+                強化対象: {[enhanceExpressions && "表情", enhanceBodyLang && "身体", enhanceEffects && "演出", enhanceBackgrounds && "背景", enhanceCameraWork && "カメラ", enhanceDialogue && "セリフ", enhanceGag && "ギャグ"].filter(Boolean).join(" / ") || "未選択"}
               </div>
 
               <div className="flex gap-2">
                 <button
                   className="flex-1 bg-orange-600 hover:bg-orange-500 disabled:bg-slate-700 disabled:opacity-50 text-white font-bold py-2 rounded-lg flex items-center justify-center gap-2 transition-all text-sm"
                   onClick={enhanceScenario}
-                  disabled={isEnhancing || !(enhanceExpressions || enhanceBodyLang || enhanceEffects || enhanceBackgrounds || enhanceCameraWork || enhanceDialogue)}
+                  disabled={isEnhancing || !(enhanceExpressions || enhanceBodyLang || enhanceEffects || enhanceBackgrounds || enhanceCameraWork || enhanceDialogue || enhanceGag)}
                 >
                   {isEnhancing ? (
                     <><Loader2 size={16} className="animate-spin" /> 強化中...</>
