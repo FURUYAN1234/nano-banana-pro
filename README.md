@@ -1,6 +1,6 @@
 # Super FURU AI 4-koma System
 
-> Current source release candidate: **v5.0.1** / 現在のソース公開候補: **v5.0.1**
+> Current source release candidate: **v5.0.2** / 現在のソース公開候補: **v5.0.2**
 
 > **"To what extent can humans step away from the creative process?"**
 > **「人間は、どこまで制作から降りられるのか？」**
@@ -793,6 +793,9 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 ---
 
 ## 📋 ChangeLog
+
+### v5.0.2 (2026-07-25)
+- **[Bug Fix]** Quoted ambient sounds such as `「カチャ」という音` and `「ギシ…」という音` are treated as scene ambience, never as speech-bubble lettering. / `「カチャ」という音` や `「ギシ…」という音` のような引用付き環境音を、吹き出し文字ではなく場面演出として扱うよう修正しました。
 
 ### v5.0.1 (2026-07-25)
 - **[UX]** シナリオ演出強化パネルの余白を「全カテゴリを選択」トグルに変更。7カテゴリを一括選択・解除でき、全選択中は黄緑の発光と明確な解除案内で状態差を判別可能に改善 / Replaced the empty scenario-enhancement grid slot with a select-all toggle for all seven categories, adding a bright lime active state and explicit clear instruction

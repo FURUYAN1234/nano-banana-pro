@@ -265,9 +265,14 @@ export const isLikelyPerson = (name, validCharacters = []) => {
   return personKeywords.test(cleanName) || cleanName.toLowerCase().includes('mob') || cleanName.toLowerCase().includes('speaker');
 };
 
+const ACOUSTIC_QUOTE_POST_RE = /^\s*(?:という(?:音|爆音|銃声|足音)|っていう(?:音|爆音|銃声|足音)|と[^\n「」]{0,20}(?:音が|音を|音で|異音|金属音|爆音|轟音|衝撃音))/;
 const SPOKEN_QUOTE_POST_RE = /^\s*(?:と|って)?\s*(?:[^「」。！？!?\n]{0,32})?(?:言|いう|言い|言う|言った|叫|叫び|叫ぶ|叫ん|呼|呼び|呟|つぶや|つぶやき|囁|ささや|ささやき|読み上げ|読みあげ|読み|発表|告げ|答|返|話|語|宣言|絶叫|嘆|漏ら|口に|述べ|怒鳴|呻|うめ|唸|ツッコ|つっこ|突っ込|問|尋)/;
 
-const hasSpokenQuotePostContext = (postText = '') => SPOKEN_QUOTE_POST_RE.test(postText.trim());
+const hasAcousticQuotePostContext = (postText = '') => ACOUSTIC_QUOTE_POST_RE.test(postText.trim());
+const hasSpokenQuotePostContext = (postText = '') => {
+  const cleanPostText = postText.trim();
+  return !hasAcousticQuotePostContext(cleanPostText) && SPOKEN_QUOTE_POST_RE.test(cleanPostText);
+};
 
 const INSTRUCTION_LINE_RE = /^\s*(?:\[?\s*(?:Camera|Location|Outfit|EMOTION|Action|Reaction|Background|CameraWork|Camera\s*Work)\s*[:：]|状況(?:演出)?\s*[:：]|リアクション\s*[:：]|設定\s*[:：]|物理描写\s*[:：]|SFX\s*[:：]|SE\s*[:：]|効果音\s*[:：]|音響効果\s*[:：]|音響\s*[:：]|音声\s*[:：]|BGM\s*[:：]|ナレーション\s*[:：]|テロップ\s*[:：]|背景\s*[:：]|カメラワーク\s*[:：]|Punchline\s*[:：])/i;
 
@@ -645,7 +650,7 @@ export const extractDialogueOnly = (fullPanelText, castList, options = {}) => {
       // ン・リ・ル等の一般的なSFX語尾を許容するため suffix に追加
       const isSfx = /^(バン|ドン|ガン|ドカ|バキ|ドス|ガサ|ゴト|チリン|ピンポン|カチ|パチ|ドーン|バァーン|ドォーン|バーン|ドドド|ゴゴゴ|ザザザ|ピー|ピピッ|ガチャ|ギー|ガリ|バタ|ガタ|ビリ|メリ|パリ|ドサ|ズド|ゴロ|キー|ギシ|ビシ|ガシャ|ミシ|カタ|コト|パタ|ジャリ|ズシ|グシャ|ベキ|メキ)[ッーン!！\s]*$/u.test(dialogueText);
       // [v4.6.5-fix2] 「〜と...音が」「〜と...鳴」等のSE文脈も検出
-      const isSfxByPostText = /^(という音|という爆音|という銃声|という足音|と[^\n「」]{0,20}(?:音が|音を|音で|異音|金属音|爆音|轟音|衝撃音))/.test(postText);
+      const isSfxByPostText = hasAcousticQuotePostContext(postText);
       const isInstructionQuoteWithoutSpeechVerb = isInstructionLine(quoteLine) && !hasSpokenQuotePostContext(sameLinePostText);
       const isLooseContextOnly = !hasValidSpeakerInPrevText;
       const isReactionNoteQuote = /(?:リアクション|Reaction)\s*[:：][^。！？!?\n]*$/i.test(sameLinePrevText);
@@ -851,6 +856,7 @@ const protectNonDialogueTextHints = (actionText) => {
   if (!actionText) return actionText;
 
   const removedSpokenQuoteMarker = '\uE000';
+  const removedSoundQuoteMarker = '\uE001';
   const protectedText = actionText.replace(ACTION_QUOTED_TEXT_RE, (match, _content, offset, fullText) => {
     // [v4.6.2] 1〜2文字の引用（「へ」「O」など）は表情・記号として保護
     if (_content.length <= 2) {
@@ -870,6 +876,10 @@ const protectNonDialogueTextHints = (actionText) => {
     const leftContext = fullText.slice(Math.max(0, offset - 30), offset);
     const rightContext = fullText.slice(offset + match.length, Math.min(fullText.length, offset + match.length + 30));
     const context = `${leftContext} ${rightContext}`;
+
+    if (hasAcousticQuotePostContext(rightContext)) {
+      return removedSoundQuoteMarker;
+    }
 
     if (hasSpokenQuotePostContext(rightContext)) {
       return removedSpokenQuoteMarker;
@@ -899,6 +909,8 @@ const protectNonDialogueTextHints = (actionText) => {
   });
 
   return protectedText
+    .replace(/\uE001\s*(?:という|っていう)\s*(?=音|爆音|銃声|足音)/g, '')
+    .replace(/\uE001/g, '')
     .replace(/\uE000\s*(?:と|って)?\s*/g, '')
     .replace(/\uE000/g, '');
 };

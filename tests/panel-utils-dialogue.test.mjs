@@ -79,6 +79,35 @@ test('does not turn explicit handwriting quotes into speech bubbles', () => {
   assert.match(dialogue, /Speech Bubble 1 \[アカリ\]: "私、カロリーゼロのポテチ描いた！"/);
 });
 
+test('does not promote quoted ambient sounds into speech bubbles', () => {
+  const panelText = `
+[2コマ目: 承]
+状況: サエコが資料を指で押さえる。アカリはカップを戻し、遠くでスプーンの「カチャ」という音。
+サエコ「停止権限を持つみたい。」
+リン「罰金もあるんだ…。」
+`;
+
+  const dialogue = extractDialogueOnly(panelText, CAST_LIST);
+
+  assert.doesNotMatch(dialogue, /カチャ/);
+  assert.match(dialogue, /Speech Bubble 1 \[サエコ\]: "停止権限を持つみたい。"/);
+  assert.match(dialogue, /Speech Bubble 2 \[リン\]: "罰金もあるんだ…。"/);
+});
+
+test('removes quoted ambient-sound lettering while preserving grammatical visual action', () => {
+  const panelText = `
+[4コマ目: 結]
+状況: ミクがテーブルの下を凝視し、椅子の軋む「ギシ…」という音。
+ミク「スイッチはどこだろう？」
+`;
+
+  const action = extractActionOnly(panelText, CAST_LIST);
+
+  assert.doesNotMatch(action, /ギシ/);
+  assert.match(action, /椅子の軋む音/);
+  assert.doesNotMatch(action, /椅子の軋む(?:いう|という)音/);
+});
+
 test('does not promote action quote fragments already covered by explicit dialogue', () => {
   const panelText = `
 [3コマ目: 転]

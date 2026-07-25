@@ -99,6 +99,45 @@ test('Gemini-family prompt uses the same strict script lock concept without Web 
   assert.doesNotMatch(prompt, /\b(?:webPrompt|apiPrompt|promptForWeb|promptForApi|chatGPTWeb|openAIAPI|geminiWeb|geminiAPI)\b/i);
 });
 
+test('keeps quoted ambient sounds out of strict-script dialogue and visual lettering for both providers', () => {
+  const ambientSoundScenario = `
+## タイトル: 静かな会議!?
+Location: 会議室
+Outfit: カジュアルな私服
+
+[1コマ目: 起]
+状況: ミクが資料を開き、遠くでスプーンの「カチャ」という音。
+ミク「確認するよ。」
+[2コマ目: 承]
+状況: リンが静かにうなずく。
+リン「続けて。」
+[3コマ目: 転]
+状況: サエコが時計を見る。
+サエコ「時間ね。」
+[4コマ目: 結]
+状況: ヒカリが立ち上がり、椅子の軋む「ギシ…」という音。
+ヒカリ「終わりました。」
+`;
+
+  for (const providerFamily of ['chatgpt', 'gemini']) {
+    const prompt = buildMangaPrompt({
+      scenario: ambientSoundScenario,
+      castList: CAST_LIST,
+      colorMode: 'color',
+      providerFamily,
+      punchlineType: 'Auto',
+      systemVersion: 'v5.0.1-test'
+    });
+
+    assert.doesNotMatch(prompt, /カチャ|ギシ/);
+    assert.doesNotMatch(prompt, /スプーンの(?:いう|という)音|椅子の軋む(?:いう|という)音/);
+    assert.match(prompt, /スプーンの音/);
+    assert.match(prompt, /椅子の軋む音/);
+    assert.match(prompt, /Panel 1 required dialogue: ミク「確認するよ。」/);
+    assert.match(prompt, /Panel 4 required dialogue: ヒカリ「終わりました。」/);
+  }
+});
+
 const LONG_DIALOGUE = 'この状況さ、職人がホームセンターの客に「仕事取るな」って怒鳴ってるのと同じだよね…。本気で抗議するなら、店かメーカーに言わない？';
 const LONG_DIALOGUE_SCENARIO = `
 ## タイトル: 長台詞ロック検証!?
