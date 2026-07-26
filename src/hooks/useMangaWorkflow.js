@@ -1660,6 +1660,7 @@ export default function useMangaWorkflow() {
     enhanceLog,
     enhanceScenario,
     finalPrompt,
+    setFinalPrompt,
     fullAutoStep,
     genLog,
     genLogRef,

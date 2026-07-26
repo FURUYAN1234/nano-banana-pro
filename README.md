@@ -794,6 +794,9 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 
 ## 📋 ChangeLog
 
+### v5.0.3 (2026-07-26)
+- **[Fix & UX]** 最終プロンプトを直接編集できるようにし、編集内容をコピーとOpenAI/Gemini画像生成へ同一のまま渡すようにしました。OpenAI画像ストリームが最終イベント前に切断しても、受信済みの有効な途中画像を表示して失敗を回避します。 / Enabled direct editing of the final prompt and routed those edits unchanged to copy and OpenAI/Gemini image generation. When an OpenAI image stream drops after a valid partial image, the app now renders that received image instead of discarding it.
+
 ### v5.0.2 (2026-07-25)
 - **[Bug Fix]** Quoted ambient sounds such as `「カチャ」という音` and `「ギシ…」という音` are treated as scene ambience, never as speech-bubble lettering. / `「カチャ」という音` や `「ギシ…」という音` のような引用付き環境音を、吹き出し文字ではなく場面演出として扱うよう修正しました。
 

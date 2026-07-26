@@ -23,6 +23,7 @@ export const readOpenAIImageStream = async (response, statCallback = () => {}) =
   const decoder = new TextDecoder();
   let buffer = '';
   let finalImage = '';
+  let latestPartialImage = '';
 
   const processEvent = (rawEvent) => {
     const data = rawEvent
@@ -46,6 +47,9 @@ export const readOpenAIImageStream = async (response, statCallback = () => {}) =
     }
 
     if (event.type === 'image_generation.partial_image') {
+      if (event.b64_json) {
+        latestPartialImage = event.b64_json;
+      }
       statCallback(`[OpenAI] 途中画像を受信しました (${Number(event.partial_image_index || 0) + 1})。最終画像を待機中...`);
     }
 
@@ -54,18 +58,26 @@ export const readOpenAIImageStream = async (response, statCallback = () => {}) =
     }
   };
 
-  while (true) {
-    const { value, done } = await reader.read();
-    buffer += decoder.decode(value || new Uint8Array(), { stream: !done });
+  try {
+    while (true) {
+      const { value, done } = await reader.read();
+      buffer += decoder.decode(value || new Uint8Array(), { stream: !done });
 
-    let boundary = buffer.match(/\r?\n\r?\n/);
-    while (boundary) {
-      processEvent(buffer.slice(0, boundary.index));
-      buffer = buffer.slice(boundary.index + boundary[0].length);
-      boundary = buffer.match(/\r?\n\r?\n/);
+      let boundary = buffer.match(/\r?\n\r?\n/);
+      while (boundary) {
+        processEvent(buffer.slice(0, boundary.index));
+        buffer = buffer.slice(boundary.index + boundary[0].length);
+        boundary = buffer.match(/\r?\n\r?\n/);
+      }
+
+      if (done) break;
     }
-
-    if (done) break;
+  } catch (error) {
+    if (latestPartialImage) {
+      statCallback('[OpenAI] 最終イベントの受信前に接続が切れたため、受信済みの途中画像を採用します。');
+      return latestPartialImage;
+    }
+    throw error;
   }
 
   if (buffer.trim()) processEvent(buffer);

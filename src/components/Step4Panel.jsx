@@ -74,6 +74,7 @@ export default function Step4Panel({
   isAnalyzing,
   isEnhancing,
   finalPrompt,
+  setFinalPrompt,
   copyPrompt,
   assembleThought,
   enableChatGPTMode,
@@ -145,7 +146,10 @@ export default function Step4Panel({
         <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl blur opacity-10 group-hover:opacity-20 transition duration-1000"></div>
         <div className="relative bg-[#0d1117] p-8 rounded-xl border border-white/5 shadow-3xl h-full flex flex-col">
           <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3 ml-auto">
+            <label htmlFor="final-prompt-editor" className="text-[11px] font-bold text-orange-300">
+              最終プロンプト（直接編集できます）
+            </label>
+            <div className="flex items-center gap-3">
               <button
                 onClick={copyPrompt}
                 disabled={!finalPrompt}
@@ -163,10 +167,12 @@ export default function Step4Panel({
           <div className="flex flex-col h-full mt-4 gap-4">
             <div className="relative flex-1">
               <textarea
+                id="final-prompt-editor"
                 value={finalPrompt}
-                readOnly
+                onChange={(e) => setFinalPrompt(e.target.value)}
+                spellCheck={false}
                 style={{ color: '#ffffff', backgroundColor: '#000000', opacity: 1 }}
-                className="w-full h-full min-h-[300px] text-xs font-mono border-none resize-none focus:outline-none leading-relaxed overflow-y-auto custom-scrollbar rounded-xl p-4 placeholder-slate-500"
+                className="w-full h-full min-h-[300px] text-xs font-mono border border-white/10 resize-y focus:outline-none focus:border-orange-500/70 focus:ring-2 focus:ring-orange-500/20 leading-relaxed overflow-y-auto custom-scrollbar rounded-xl p-4 placeholder-slate-500 transition-colors"
                 placeholder="◀ 上の「画像用の指示文（プロンプト）を構築する」ボタンを押すと、ここに生成された指示文（プロンプト）が表示されます。"
               />
             </div>
@@ -354,7 +360,7 @@ export default function Step4Panel({
 
               {/* Instruction Footer */}
               <div className="bg-slate-900 border-t border-white/10 p-2 text-[11px] text-slate-500 text-center font-mono">
-                ※内容を修正したい場合は、上の「シナリオ」を直接書き換えてから、再度 <span className="text-orange-400 font-bold">「最終プロンプトを構築する」</span> を押してください。
+                この欄で直接編集できます。編集した内容が、プロンプトのコピーと画像生成の両方に使われます。
               </div>
 
               <button

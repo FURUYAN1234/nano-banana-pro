@@ -55,6 +55,7 @@ function App() {
     enhanceLog,
     enhanceScenario,
     finalPrompt,
+    setFinalPrompt,
     fullAutoStep,
     genLog,
     genLogRef,
@@ -348,6 +349,7 @@ function App() {
               isAnalyzing={isAnalyzing}
               isEnhancing={isEnhancing}
               finalPrompt={finalPrompt}
+              setFinalPrompt={setFinalPrompt}
               copyPrompt={copyPrompt}
               assembleThought={assembleThought}
               enableChatGPTMode={enableChatGPTMode}

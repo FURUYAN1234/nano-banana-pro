@@ -44,3 +44,21 @@ test('surfaces provider errors from the image stream', async () => {
     /image generation rejected/,
   );
 });
+
+test('keeps the latest decodable partial image when the stream drops before completion', async () => {
+  const encoder = new TextEncoder();
+  const response = {
+    body: new ReadableStream({
+      start(controller) {
+        controller.enqueue(encoder.encode('data: {"type":"image_generation.partial_image","partial_image_index":0,"b64_json":"usable-partial"}\n\n'));
+        setTimeout(() => controller.error(new TypeError('network error')), 0);
+      },
+    }),
+  };
+  const statuses = [];
+
+  const image = await readOpenAIImageStream(response, (status) => statuses.push(status));
+
+  assert.equal(image, 'usable-partial');
+  assert.equal(statuses.some((status) => status.includes('途中画像を採用')), true);
+});
