@@ -97,3 +97,25 @@ test('two-hand prop actions lock both hands, arms, and the prop to their owner i
     assert.match(panel, /never emerge from behind their back/);
   }
 });
+
+test('same-character prop placement plus crossed arms releases the prop before the final pose', () => {
+  const action = 'サエコは資料ファイルを机にトンと立て、背筋を伸ばし腕組み気味。アカリはカップケーキを食べる。';
+
+  for (const providerFamily of ['chatgpt', 'gemini']) {
+    const panel = panelTwoSection(buildPrompt(providerFamily, action));
+
+    assert.match(panel, /サエコは資料ファイルを机にトンと立て、背筋を伸ばし腕組み気味/);
+    assert.match(panel, /ARM-CROSS PROP RELEASE LOCK:/);
+    assert.match(panel, /prop remains self-supported on the surface/);
+    assert.match(panel, /both hands are completely released from the prop/);
+    assert.match(panel, /exactly two arms and two hands/);
+    assert.match(panel, /arms cross naturally in front of the torso/);
+  }
+});
+
+test('prop handling and crossed arms by different characters do not trigger a same-character release lock', () => {
+  const action = 'サエコは資料ファイルを机にトンと立てる。リンは腕を組む。';
+  const panel = panelTwoSection(buildPrompt('chatgpt', action));
+
+  assert.doesNotMatch(panel, /ARM-CROSS PROP RELEASE LOCK:/);
+});

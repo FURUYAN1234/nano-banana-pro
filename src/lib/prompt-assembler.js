@@ -59,6 +59,8 @@ const extractPanel = (text, header, nextHeader) => {
 
 const POINTING_GESTURE_RE = /(?:\bpoint(?:ing|s|ed)?\b|finger[-\s]?point|\u6307\u5dee|\u6307\u3055|\u6307\u3092(?:\u7a81\u304d\u7acb\u3066|\u5411\u3051|\u5dee\u3057|\u3055\u3057))/i;
 const TWO_HAND_OCCUPATION_RE = /\u4e21\u624b\u3067/;
+const ARM_CROSS_GESTURE_RE = /(?:\u8155\u3092?\u7d44|\u8155\u7d44\u307f)/;
+const PROP_PLACEMENT_RE = /\u3092[^\u3001\u3002\n]{0,50}(?:\u7f6e(?:\u304f|\u304d|\u3044\u305f|\u3044\u3066)|\u7acb\u3066(?:\u308b|\u305f|\u3066)?|\u8f09\u305b(?:\u308b|\u305f|\u3066)?|\u4e26\u3079(?:\u308b|\u305f|\u3066)?|\u30bb\u30c3\u30c8(?:\u3059\u308b|\u3057\u305f|\u3057\u3066)?|\u5dee\u3057\u8fbc(?:\u3080|\u3093\u3060|\u3093\u3067)|\u8a2d\u7f6e(?:\u3059\u308b|\u3057\u305f|\u3057\u3066)?)/;
 const escapeRegExp = (value) => String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 const extractCastNamesForAction = (castList) => {
@@ -145,12 +147,37 @@ const appendTwoHandPropOwnershipLock = (actionText) => {
 PROP-HAND OWNERSHIP LOCK: when a character uses both hands to hold, close, open, or handle a prop, show exactly two arms and two hands, both continuously connected to that character's shoulders. Keep the prop in front of or beside that character's torso; hands, arms, and the prop never emerge from behind their back, cross into another character's body, or become an extra limb.`;
 };
 
+const hasSameCharacterPropPlacementAndArmCross = (actionText, castList) => {
+  const normalized = String(actionText || '');
+  const names = extractCastNamesForAction(castList);
+  if (!names.length || !PROP_PLACEMENT_RE.test(normalized) || !ARM_CROSS_GESTURE_RE.test(normalized)) {
+    return false;
+  }
+
+  const subjectRe = new RegExp(`(?:\\[)?(?:${names.map(escapeRegExp).join('|')})(?:\\])?(?:\u306f|\u304c)`, 'g');
+  const subjectStarts = [...normalized.matchAll(subjectRe)].map((match) => match.index);
+  return subjectStarts.some((start, index) => {
+    const end = subjectStarts[index + 1] ?? normalized.length;
+    const segment = normalized.slice(start, end);
+    return PROP_PLACEMENT_RE.test(segment) && ARM_CROSS_GESTURE_RE.test(segment);
+  });
+};
+
+const appendArmCrossPropReleaseLock = (actionText, castList) => {
+  if (!hasSameCharacterPropPlacementAndArmCross(actionText, castList)) return actionText;
+  return `${actionText}
+ARM-CROSS PROP RELEASE LOCK: when the same character finishes placing a prop and then crosses their arms, render the final pose only. The prop remains self-supported on the surface, both hands are completely released from the prop, and exactly two arms and two hands remain connected to that character. The arms cross naturally in front of the torso; neither hand touches, supports, passes behind, or merges with the prop.`;
+};
+
 const buildPanelActionText = (panelText, castList, activeOutfit) => {
   const placementRule = extractPlacementRule(panelText, castList);
   const actionText = injectOutfitReminder(extractActionOnly(panelText, castList, placementRule), activeOutfit);
   const normalizedAction = normalizeCompetingHandActions(actionText, castList);
   return appendTwoHandPropOwnershipLock(
-    appendPointingHandLock(normalizedAction.text, normalizedAction.resolvedConflict)
+    appendPointingHandLock(
+      appendArmCrossPropReleaseLock(normalizedAction.text, castList),
+      normalizedAction.resolvedConflict
+    )
   );
 };
 
