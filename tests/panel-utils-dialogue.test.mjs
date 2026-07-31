@@ -94,6 +94,26 @@ test('does not promote quoted ambient sounds into speech bubbles', () => {
   assert.match(dialogue, /Speech Bubble 2 \[リン\]: "罰金もあるんだ…。"/);
 });
 
+test('keeps staging-and-gag directions and their explicit SFX out of speech bubbles', () => {
+  const panelText = `
+[2コマ目: 承]
+演出・ギャグ: ヒカリの手に汗が滲み、プラカードに「ギュッ」という擬音。空気がピリッと張り詰め、プラカード同士が「カサッ」と擦れる音。
+ヒカリ「プログラマーは、AI便利って言うけど…！」
+リン「こっちは生きるか死ぬかなんだから！」
+`;
+
+  const dialogue = extractDialogueOnly(panelText, CAST_LIST);
+  const action = extractActionOnly(panelText, CAST_LIST);
+
+  assert.doesNotMatch(dialogue, /演出・ギャグ|ヒカリの手に汗|ギュッ|カサッ/);
+  assert.match(dialogue, /Speech Bubble 1 \[ヒカリ\]: "プログラマーは、AI便利って言うけど…！"/);
+  assert.match(dialogue, /Speech Bubble 2 \[リン\]: "こっちは生きるか死ぬかなんだから！"/);
+  assert.doesNotMatch(action, /演出・ギャグ\s*[:：]/);
+  assert.match(action, /ヒカリの手に汗が滲み/);
+  assert.match(action, /「ギュッ」という擬音/);
+  assert.match(action, /「カサッ」と擦れる音/);
+});
+
 test('removes quoted ambient-sound lettering while preserving grammatical visual action', () => {
   const panelText = `
 [4コマ目: 結]

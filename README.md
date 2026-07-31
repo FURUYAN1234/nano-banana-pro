@@ -1,6 +1,6 @@
 # Super FURU AI 4-koma System
 
-> Current source release candidate: **v5.0.2** / 現在のソース公開候補: **v5.0.2**
+> Current source release candidate: **v5.0.4** / 現在のソース公開候補: **v5.0.4**
 
 > **"To what extent can humans step away from the creative process?"**
 > **「人間は、どこまで制作から降りられるのか？」**
@@ -22,7 +22,7 @@
 This project aims to intentionally exclude humans from the creative process, allowing AI to act as a director and complete everything from brainstorming to composition, direction, and rendering.
 本プロジェクトは、人間をクリエイティブな工程から意図的に排除し、AIがディレクターとして「ネタ出し・構成・演出・作画」のすべてを完結させることを目的としています。
 
-The current source release candidate is **v5.0.1**. / 現在のソース公開候補は **v5.0.1** です。 The user-facing product name is **Super FURU AI 4-koma System**; **Nano Banana 2** and **ChatGPT Images 2.0** are generation-engine families, not application names. / ユーザー向けプロダクト名は **Super FURU AI 4-koma System** に統一し、**Nano Banana 2** と **ChatGPT Images 2.0** はアプリ名ではなく生成エンジン系統として扱います。
+The current source release candidate is **v5.0.4**. / 現在のソース公開候補は **v5.0.4** です。 The user-facing product name is **Super FURU AI 4-koma System**; **Nano Banana 2** and **ChatGPT Images 2.0** are generation-engine families, not application names. / ユーザー向けプロダクト名は **Super FURU AI 4-koma System** に統一し、**Nano Banana 2** と **ChatGPT Images 2.0** はアプリ名ではなく生成エンジン系統として扱います。
 
 The v5.0.1 implementation details include the following. / v5.0.1の実装詳細は以下のとおりです。
 
@@ -793,6 +793,9 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 ---
 
 ## 📋 ChangeLog
+
+### v5.0.4 (2026-07-31)
+- **[Fix & UX]** 演出・ギャグの複合ラベルと音響文脈の擬音を台詞吹き出しから除外し、Actionの視覚演出として保持 / Excluded compound staging labels and acoustic-context sound effects from dialogue bubbles while preserving them as visual Action direction
 
 ### v5.0.3 (2026-07-26)
 - **[Fix & UX]** 最終プロンプトを直接編集できるようにし、編集内容をコピーとOpenAI/Gemini画像生成へ同一のまま渡すようにしました。OpenAI画像ストリームが最終イベント前に切断しても、受信済みの有効な途中画像を表示して失敗を回避します。 / Enabled direct editing of the final prompt and routed those edits unchanged to copy and OpenAI/Gemini image generation. When an OpenAI image stream drops after a valid partial image, the app now renders that received image instead of discarding it.

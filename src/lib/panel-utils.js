@@ -265,8 +265,10 @@ export const isLikelyPerson = (name, validCharacters = []) => {
   return personKeywords.test(cleanName) || cleanName.toLowerCase().includes('mob') || cleanName.toLowerCase().includes('speaker');
 };
 
-const ACOUSTIC_QUOTE_POST_RE = /^\s*(?:という(?:音|爆音|銃声|足音)|っていう(?:音|爆音|銃声|足音)|と[^\n「」]{0,20}(?:音が|音を|音で|異音|金属音|爆音|轟音|衝撃音))/;
+const ACOUSTIC_QUOTE_POST_RE = /^\s*(?:という[^\n「」]{0,12}音|っていう[^\n「」]{0,12}音|と[^\n「」]{0,20}(?:音(?:が|を|で|。|、|$)|異音|金属音|爆音|轟音|衝撃音))/;
 const SPOKEN_QUOTE_POST_RE = /^\s*(?:と|って)?\s*(?:[^「」。！？!?\n]{0,32})?(?:言|いう|言い|言う|言った|叫|叫び|叫ぶ|叫ん|呼|呼び|呟|つぶや|つぶやき|囁|ささや|ささやき|読み上げ|読みあげ|読み|発表|告げ|答|返|話|語|宣言|絶叫|嘆|漏ら|口に|述べ|怒鳴|呻|うめ|唸|ツッコ|つっこ|突っ込|問|尋)/;
+const STAGING_GAG_LINE_RE = /^\s*演出(?:[・･／/]ギャグ)?\s*[:：]/;
+const META_SPEAKER_LABEL_RE = /^(?:Camera|Location|Outfit|EMOTION|状況(?:演出)?|Action|リアクション|Reaction|設定|物理描写|SFX|SE|効果音|音響効果|音響|音声|BGM|ナレーション|テロップ|聴覚|触覚|嗅覚|体内感覚|視覚|照明|光|演出(?:[・･／/]ギャグ)?|空間|構図|背景|Background|カメラワーク|CameraWork|Camera\s*Work|セリフ|台詞|Dialogue|Punchline)$/i;
 
 const hasAcousticQuotePostContext = (postText = '') => ACOUSTIC_QUOTE_POST_RE.test(postText.trim());
 const hasSpokenQuotePostContext = (postText = '') => {
@@ -274,7 +276,7 @@ const hasSpokenQuotePostContext = (postText = '') => {
   return !hasAcousticQuotePostContext(cleanPostText) && SPOKEN_QUOTE_POST_RE.test(cleanPostText);
 };
 
-const INSTRUCTION_LINE_RE = /^\s*(?:\[?\s*(?:Camera|Location|Outfit|EMOTION|Action|Reaction|Background|CameraWork|Camera\s*Work)\s*[:：]|状況(?:演出)?\s*[:：]|リアクション\s*[:：]|設定\s*[:：]|物理描写\s*[:：]|SFX\s*[:：]|SE\s*[:：]|効果音\s*[:：]|音響効果\s*[:：]|音響\s*[:：]|音声\s*[:：]|BGM\s*[:：]|ナレーション\s*[:：]|テロップ\s*[:：]|背景\s*[:：]|カメラワーク\s*[:：]|Punchline\s*[:：])/i;
+const INSTRUCTION_LINE_RE = /^\s*(?:\[?\s*(?:Camera|Location|Outfit|EMOTION|Action|Reaction|Background|CameraWork|Camera\s*Work)\s*[:：]|状況(?:演出)?\s*[:：]|演出(?:[・･／/]ギャグ)?\s*[:：]|リアクション\s*[:：]|設定\s*[:：]|物理描写\s*[:：]|SFX\s*[:：]|SE\s*[:：]|効果音\s*[:：]|音響効果\s*[:：]|音響\s*[:：]|音声\s*[:：]|BGM\s*[:：]|ナレーション\s*[:：]|テロップ\s*[:：]|背景\s*[:：]|カメラワーク\s*[:：]|Punchline\s*[:：])/i;
 
 const isInstructionLine = (line = '') => INSTRUCTION_LINE_RE.test(String(line).trim());
 
@@ -542,7 +544,7 @@ export const extractDialogueOnly = (fullPanelText, castList, options = {}) => {
       const isTooLong = tempSpeakerBase.length > 20; // 複数人「アカリ・ヒカリ・ミク・リン」を許容するため長めに変更
       // [v4.6.3] 照明・SE・演出など舞台指示用語をメタタグとして除外
       // [v4.6.10] 「セリフ」「台詞」「Dialogue」をメタタグに追加（スピーカー誤認識防止）
-      const isMetaTag = /^(Camera|Location|Outfit|EMOTION|状況(?:演出)?|Action|リアクション|Reaction|設定|物理描写|SFX|SE|効果音|音響効果|音響|音声|BGM|ナレーション|テロップ|聴覚|触覚|嗅覚|体内感覚|視覚|照明|光|演出|空間|構図|背景|Background|カメラワーク|CameraWork|Camera\s*Work|セリフ|台詞|Dialogue|Punchline)$/i.test(tempSpeakerBase);
+      const isMetaTag = META_SPEAKER_LABEL_RE.test(tempSpeakerBase);
       // [v2.45] 効果音パターン検出: 同じ文字(長音含む)の繰り返しは効果音（シーーーン、ゴゴゴ等）
       const isSoundEffect = /^[^a-zA-Z]*([\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF])([ーッっ]*\1){1,}[ーッっ！!ン]*$/u.test(tempSpeakerBase);
       // [v2.45] リアクション指示混入検出: 「（リアクション」等が話者名に含まれていたら除外
@@ -941,7 +943,7 @@ export const extractActionOnly = (fullPanelText, castList, placementRule = "") =
       const isTooLong = tempSpeaker.length > 20;
       // [v4.6.3] 照明・SE・演出など舞台指示用語をメタタグとして除外
       // [v4.6.10] 「セリフ」「台詞」「Dialogue」をメタタグに追加
-      const isMetaTag = /^(Camera|Location|Outfit|EMOTION|状況(?:演出)?|Action|リアクション|Reaction|設定|聴覚|触覚|嗅覚|体内感覚|視覚|照明|光|演出|空間|構図|物理描写|SFX|SE|効果音|音響効果|音響|音声|BGM|ナレーション|テロップ|背景|Background|カメラワーク|CameraWork|Camera\s*Work|セリフ|台詞|Dialogue|Punchline)$/i.test(tempSpeaker);
+      const isMetaTag = META_SPEAKER_LABEL_RE.test(tempSpeaker);
       // [v2.45] 効果音パターン検出
       const isSoundEffect = /^[^a-zA-Z]*([\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF])([ーッっ]*\1){1,}[ーッっ！!ン]*$/u.test(tempSpeaker.replace(/[（(].*$/, '').trim());
       const hasReactionTag = /[（(]\s*リアクション/i.test(match[1]);
@@ -979,7 +981,15 @@ export const extractActionOnly = (fullPanelText, castList, placementRule = "") =
     return !isDialogue && !isHeader && !isEmpty;
   });
 
-  let actionStr = actionLines.join(' ').trim();
+  const stagingGagQuotes = [];
+  let actionStr = actionLines.map((line) => {
+    if (!STAGING_GAG_LINE_RE.test(line)) return line;
+    return line.replace(ACTION_QUOTED_TEXT_RE, (match) => {
+      const token = `\uE100${stagingGagQuotes.length}\uE101`;
+      stagingGagQuotes.push(match);
+      return token;
+    });
+  }).join(' ').trim();
   
   // [v2.30] Sanitize action string to remove common trailing onomatopoeia/gag SFX that causes unwanted speech bubbles
   actionStr = actionStr.replace(/[ 　]*(ズコー|ガーン|チーン|ドッ|バシッ|ドカーン|バーン)[。、！？!?\s]*$/g, '');
@@ -996,7 +1006,7 @@ export const extractActionOnly = (fullPanelText, castList, placementRule = "") =
   //   ※ EMOTION はパネルの PANEL STYLE LOCK 欄、Camera は Camera 欄で既に正規化済み。
   actionStr = actionStr.replace(/\[\s*(?:EMOTION|Camera|Location|Outfit|Action|Reaction|Background|カメラワーク|CameraWork|Camera\s*Work|Punchline)\s*[:：][^\]]*\]/gi, ' ');
   // [FIX] 「状況:」「Situation:」等のラベル語だけを除去し、後続の視覚描写本文は残す。
-  actionStr = actionStr.replace(/(?:^|[\s　])(?:状況(?:演出)?|Situation)\s*[:：]\s*/gi, ' ');
+  actionStr = actionStr.replace(/(?:^|[\s　])(?:状況(?:演出)?|演出(?:[・･／/]ギャグ)?|Situation)\s*[:：]\s*/gi, ' ');
   // 上記除去で生じた連続スペースを圧縮
   actionStr = actionStr.replace(/[ 　]{2,}/g, ' ').trim();
 
@@ -1016,6 +1026,7 @@ export const extractActionOnly = (fullPanelText, castList, placementRule = "") =
   }
 
   return protectNonDialogueTextHints(cleanseActionGagSymbols(actionStr))
+    .replace(/\uE100(\d+)\uE101/g, (_match, index) => stagingGagQuotes[Number(index)] || '')
     .replace(/で\s*と(?=呟|つぶや|言|叫|話|問|答)/g, 'で')
     .replace(/([。！？!?])\s*と(?:呟|つぶや|言|叫|話|問|答)[^、。！？!?]*[、。]?/g, '$1')
     .replace(/[ 　]{2,}/g, ' ')
@@ -1059,7 +1070,7 @@ export const extractPlacementRule = (fullPanelText, castList, options = {}) => {
       const isTooLong = speaker.length > 12;
       // [v4.6.3] 照明・SE・演出など舞台指示用語をメタタグとして除外
       // [v4.6.10] 「セリフ」「台詞」「Dialogue」をメタタグに追加
-      const isMetaTag = /^(Camera|Location|Outfit|EMOTION|状況(?:演出)?|Action|リアクション|Reaction|設定|聴覚|触覚|嗅覚|体内感覚|視覚|照明|光|演出|空間|構図|物理描写|SFX|SE|効果音|音響効果|音響|音声|BGM|ナレーション|テロップ|背景|Background|カメラワーク|CameraWork|Camera\s*Work|セリフ|台詞|Dialogue|Punchline)$/i.test(speaker);
+      const isMetaTag = META_SPEAKER_LABEL_RE.test(speaker);
       const isSoundEffect = /^[^a-zA-Z]*([\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF])([ーッっ]*\1){1,}[ーッっ！!ン]*$/u.test(speaker.replace(/[（(].*$/, '').trim());
       const hasReactionTag = /[（(]\s*リアクション/i.test(match[1]);
       const isDummySpeaker = /^(全員|みんな|Speaker)$/i.test(speaker);
@@ -1188,7 +1199,7 @@ export const extractCastLimitRule = (fullPanelText, castList, options = {}) => {
       const isNarrationSubjectC = isNarrationSubjectSpeakerCandidate(tempSpeaker, validCharacters);
       const isTooLong = tempSpeaker.length > 12;
       // [v4.6.10] 「セリフ」「台詞」「Dialogue」をメタタグに追加
-      const isMetaTag = /^(Camera|Location|Outfit|EMOTION|状況(?:演出)?|Action|リアクション|Reaction|設定|聴覚|触覚|嗅覚|体内感覚|視覚|物理描写|SFX|効果音|BGM|ナレーション|テロップ|背景|Background|カメラワーク|CameraWork|Camera\s*Work|セリフ|台詞|Dialogue|Punchline)$/i.test(tempSpeaker);
+      const isMetaTag = META_SPEAKER_LABEL_RE.test(tempSpeaker);
       const isSoundEffect = /^[^a-zA-Z]*([\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF])([ーッっ]*\1){1,}[ーッっ！!ン]*$/u.test(tempSpeaker.replace(/[（(].*$/, '').trim());
       const hasReactionTag = /[（(]\s*リアクション/i.test(match[1]);
       
@@ -1395,7 +1406,6 @@ export const buildEmotionBlock = (panelText) => {
   // 「顔アップで60-80%」指示がANTI-FLOATING-EYE RULEと矛盾するのを防ぐ
   // [v3.83] 五感ラベル・メタタグがスピーカーとして誤カウントされるのを防止
   // [v4.6.10] 「セリフ」「台詞」「Dialogue」をメタタグに追加
-  const META_TAG_FILTER = /^(Camera|Location|Outfit|EMOTION|状況(?:演出)?|Action|リアクション|Reaction|設定|聴覚|触覚|嗅覚|体内感覚|視覚|物理描写|SFX|効果音|BGM|ナレーション|テロップ|背景|Background|カメラワーク|CameraWork|Camera\s*Work|セリフ|台詞|Dialogue|Punchline)$/i;
   const speakersInPanel = [];
   panelText.split('\n').forEach(line => {
     // EMOTIONタグ行を除外
@@ -1403,7 +1413,7 @@ export const buildEmotionBlock = (panelText) => {
     const m = line.match(/^(.*?)(?:[:：]|「)/);
     if (m && m[1].trim()) {
       const sp = m[1].replace(/^[【\[（(]/, '').replace(/[】\]）)]$/, '').trim();
-      if (sp && !speakersInPanel.includes(sp) && !META_TAG_FILTER.test(sp)) speakersInPanel.push(sp);
+      if (sp && !speakersInPanel.includes(sp) && !META_SPEAKER_LABEL_RE.test(sp)) speakersInPanel.push(sp);
     }
   });
   const isMultiChar = speakersInPanel.length >= 2;

@@ -138,6 +138,50 @@ Outfit: カジュアルな私服
   }
 });
 
+test('routes staging-and-gag descriptions to visual action instead of speaker bubbles for both providers', () => {
+  const stagingScenario = `
+## タイトル: 生成AI観の対立デモ !?
+Location: 反AIのデモ会場
+Outfit: 反AIメッセージ入りの白いTシャツ
+
+[1コマ目: 起]
+演出・ギャグ: 背景に湯気のような熱気の揺らぎ。プラカードの「バンッ」という擬音が小さく浮かぶ。
+アカリ「AI反対ーー！！」
+ヒカリ「え、えっと…う、うん、そうだよね！」
+[2コマ目: 承]
+演出・ギャグ: ヒカリの手に汗が滲み、プラカードに「ギュッ」という擬音。プラカード同士が「カサッ」と擦れる音。
+ヒカリ「プログラマーは、AI便利って言うけど…！」
+リン「こっちは生きるか死ぬかなんだから！」
+[3コマ目: 転]
+演出・ギャグ: プラカードが振られる「ブンッ」という風切り音。
+ミク「AIに私たちの魂まで奪わせるかっての！」
+アカリ「私たちの仕事は私たちのものだよ！」
+[4コマ目: 結]
+全員「AI推進派はいなくなれー！！！」
+`;
+
+  for (const providerFamily of ['chatgpt', 'gemini']) {
+    const prompt = buildMangaPrompt({
+      scenario: stagingScenario,
+      castList: CAST_LIST,
+      colorMode: 'color',
+      providerFamily,
+      punchlineType: 'ドキュメンタリー',
+      systemVersion: 'v5.0.3-test'
+    });
+
+    assert.doesNotMatch(prompt, /\[演出・ギャグ\]|TAILS[^\n]*演出・ギャグ/);
+    assert.doesNotMatch(prompt, /B\d+="(?:背景に湯気|ヒカリの手に汗|プラカードが振られる|ギュッ|カサッ|ブンッ)/);
+    assert.doesNotMatch(prompt, /演出・ギャグ\s*[:：]/);
+    assert.match(prompt, /「バンッ」という擬音/);
+    assert.match(prompt, /「ギュッ」という擬音/);
+    assert.match(prompt, /「カサッ」と擦れる音/);
+    assert.match(prompt, /「ブンッ」という風切り音/);
+    assert.match(prompt, /Panel 1 required dialogue: アカリ「AI反対ーー！！」 \/ ヒカリ「え、えっと…う、うん、そうだよね！」/);
+    assert.match(prompt, /Panel 2 required dialogue: ヒカリ「プログラマーは、AI便利って言うけど…！」 \/ リン「こっちは生きるか死ぬかなんだから！」/);
+  }
+});
+
 const LONG_DIALOGUE = 'この状況さ、職人がホームセンターの客に「仕事取るな」って怒鳴ってるのと同じだよね…。本気で抗議するなら、店かメーカーに言わない？';
 const LONG_DIALOGUE_SCENARIO = `
 ## タイトル: 長台詞ロック検証!?
