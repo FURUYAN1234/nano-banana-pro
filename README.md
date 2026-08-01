@@ -794,6 +794,9 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 
 ## 📋 ChangeLog
 
+### v5.0.6 (2026-08-01)
+- **[Fix & UX]** 背景プリセットを24種類へ拡充し、話題適合ランキング・安全フィルター・4コマ背景アンカー継続を追加 / Expanded background presets to 24 with topic-aware ranking, safety filtering, and four-panel environmental anchor continuity
+
 ### v5.0.5 (2026-07-31)
 - **[Fix & UX]** 同一人物が資料を置いた後に腕組みする場面で、最終ポーズ・資料自立・両手解放・腕2本/手2つを固定 / Locked the final crossed-arm pose after prop placement, with a self-supported prop, released hands, and exactly two arms and hands
 

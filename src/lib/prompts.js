@@ -280,6 +280,8 @@ export const getScenarioPrompt = ({
             
             ${ragReactions}
 
+            ${effectiveLocationPlan.anchors?.length ? `【4コマ背景アンカー】\n${effectiveLocationPlan.anchors.map((anchor) => `・${anchor}`).join('\n')}\n上記のうち少なくとも1つを各コマで自然に見せ、同じ場所・時間帯・主光源を維持すること。` : ''}
+
 ${styleJson ? `         7. **【作風完全適用の義務 (Strict Style Adherence)】**:
             以下の「作風プロンプト」を最優先事項としてシナリオ全体のトーン、セリフ、空気感に完全に適用せよ。
             - 作風名: ${styleJson.style_name}

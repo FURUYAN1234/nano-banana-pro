@@ -17,6 +17,8 @@ const flattenLocationDetails = (value) => {
   return [String(value ?? '')];
 };
 
+import { rankBackgroundPresets } from './background-rag.js';
+
 export const SAFE_VISUAL_CONTENT_LOCK = `SAFE VISUAL CONTENT LOCK: No horror/gore/blood, body interiors, organs/viscera/brain/flesh/living tissue, or creepy organic backgrounds. Use external, non-organic settings; replace biological scenery with ordinary architecture without changing script/cast/dialogue/camera/layout.`;
 
 export const isSafeLocationContent = (...values) => {
@@ -46,6 +48,8 @@ export const createHybridLocationPlan = ({
   customLocation = '',
   backgroundLocation = '',
   backgroundDetails = null,
+  topicText = '',
+  moodText = '',
   random = Math.random
 } = {}) => {
   const normalizedBackground = String(backgroundLocation || '').trim();
@@ -65,15 +69,20 @@ export const createHybridLocationPlan = ({
     throw new Error('安全ポリシーを満たすロケーション候補がありません。');
   }
 
+  const ranked = rankBackgroundPresets({ locationDetails, topicText, moodText })
+    .filter(({ name }) => safeNames.includes(name));
+  const semanticWinner = ranked.find(({ score }) => score > 0);
   const randomValue = Number(random());
   const safeRandom = Number.isFinite(randomValue) ? Math.min(Math.max(randomValue, 0), 0.999999999) : 0;
-  const anchorName = safeNames[Math.floor(safeRandom * safeNames.length)];
+  const anchorName = semanticWinner?.name || safeNames[Math.floor(safeRandom * safeNames.length)];
+  const anchors = semanticWinner?.anchors || (locationDetails[anchorName]?.props || []).slice(0, 2);
 
   return {
     mode: 'hybrid',
     anchorName,
     anchorDetails: locationDetails[anchorName],
-    guidance: `安全な参考候補は「${anchorName}」。この候補を採用してもよいが、ニュース内容により適した別の安全な場所を新規に考案してもよい。最終的な舞台は非生体・非グロテスクで、一般向けの場所にすること。`
+    anchors,
+    guidance: `安全な参考候補は「${anchorName}」。この候補を採用してもよいが、ニュース内容により適した別の安全な場所を新規に考案してもよい。最終的な舞台は非生体・非グロテスクで、一般向けの場所にすること。${anchors.length ? ` 4コマを通して「${anchors.join('」「')}」を背景アンカーとして維持すること。` : ''}`
   };
 };
 

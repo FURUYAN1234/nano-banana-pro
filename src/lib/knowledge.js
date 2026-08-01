@@ -15,8 +15,8 @@ import { locationDetails } from './locations.js';
 
 
 
-export const getLocationDetails = (locationName) => {
-  const details = locationDetails[locationName];
+export const getLocationDetails = (locationName, availableLocations = locationDetails) => {
+  const details = availableLocations[locationName];
   if (details) {
     return `【環境設定データベース】\n・小道具(Props): ${details.props.join(", ")}\n・環境音: ${details.ambient}\n・視覚的特徴: ${details.visual}`;
   }

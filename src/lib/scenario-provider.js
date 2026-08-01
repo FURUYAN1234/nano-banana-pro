@@ -1,6 +1,7 @@
 import { callAI } from './ai-provider';
 import { getLocationDetails, getReactionGuidelines } from './knowledge';
 import { locationDetails } from './locations.js';
+import { getAvailableLocationDetails } from './background-rag.js';
 import { getScenarioPrompt } from './prompts';
 import { cropEquirectangular } from './panorama360';
 import { applyManualStagingLocks } from './manual-staging';
@@ -160,11 +161,16 @@ export async function generateScenario({
   const backgroundLocation = bg360Image && bg360Analysis && bg360Enabled
     ? bg360Analysis.location
     : '';
+  const availableLocations = getAvailableLocationDetails(locationDetails);
+  const comedyToneOptions = ['HighTension', 'SurrealQuiet', 'IntellectualBlack'];
+  const activeComedyTone = comedyToneOptions[Math.floor(Math.random() * comedyToneOptions.length)];
   const locationPlan = createHybridLocationPlan({
-    locationDetails,
+    locationDetails: availableLocations,
     customLocation,
     backgroundLocation,
-    backgroundDetails: backgroundLocation ? bg360Analysis : null
+    backgroundDetails: backgroundLocation ? bg360Analysis : null,
+    topicText: `${manualTopic || ''} ${searchTopic || ''} ${randomCategory}`,
+    moodText: activeComedyTone
   });
   const activeLocation = locationPlan.anchorName;
 
@@ -172,7 +178,7 @@ export async function generateScenario({
     ? `安全ハイブリッド舞台を設計中...\n> 参考候補「${activeLocation}」を取得。AIは話題に合う別の安全な場所も考案できます。`
     : `ローカルRAGにアクセス中...\n> 舞台「${activeLocation}」に関する演出情報および感情リアクション辞書を取得中...`);
 
-  const ragLocationDetails = getLocationDetails(activeLocation);
+  const ragLocationDetails = getLocationDetails(activeLocation, availableLocations);
   const ragReactions = getReactionGuidelines();
 
   // オチタイプの決定論的ランダム化 (Auto時の偏り防止)
@@ -191,10 +197,6 @@ export async function generateScenario({
     ];
     activePunchlineType = punchlineOptions[Math.floor(Math.random() * punchlineOptions.length)];
   }
-
-  // コメディトーン（作風・ノリ）のランダム決定
-  const comedyToneOptions = ['HighTension', 'SurrealQuiet', 'IntellectualBlack'];
-  const activeComedyTone = comedyToneOptions[Math.floor(Math.random() * comedyToneOptions.length)];
 
   onProgress(`📝 演出設計: [オチ] ${activePunchlineType} / [トーン] ${activeComedyTone}`);
 

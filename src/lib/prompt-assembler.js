@@ -29,6 +29,8 @@ import {
   formatMangaScenarioValidationIssue,
   validateMangaScenario
 } from './scenario-validation';
+import { locationDetails } from './locations';
+import { getAvailableLocationDetails } from './background-rag';
 
 /**
  * Fisher-Yates アルゴリズムによる配列のシャッフル
@@ -130,6 +132,13 @@ const compactChatGPTConversationRules = (prompt) => {
     .replace(/- If one character, punctuation mark,[^\n]*/g, '- BUBBLE QA: copy TEXT exactly; each tail tip touches its mapped speaker mouth/head, never another person or empty space; no extra bubbles or names.')
     .replace(/- Action is visual only:[^\n]*/g, '- ACTION: visual only; no labels, narration, or SFX as text, except explicitly requested scene writing or signage.')
     .replace(/CHARACTER QA PASS:\n-[^\n]*/g, 'CHARACTER QA: preserve identity and outfit; redraw swaps or merged cast.');
+};
+
+const buildBackgroundContinuityLock = (locationName) => {
+  const location = getAvailableLocationDetails(locationDetails)[locationName];
+  if (!location?.anchors?.length) return '';
+
+  return `BACKGROUND CONTINUITY LOCK: all four panels stay at the same location, "${locationName}". Keep its weather, time of day, and primary lighting consistent. In EVERY panel, visibly retain at least one recurring environmental anchor: ${location.anchors.map((anchor) => `"${anchor}"`).join(' / ')}. Never move the cast to a different place.`;
 };
 
 const appendPointingHandLock = (actionText, resolvedConflict = false) => {
@@ -316,6 +325,7 @@ export const buildMangaPrompt = ({
 
   const safeLocation = cleanLocation || "Detailed Background";
   const safeTopic = cleanTopic || "4-koma Manga";
+  const backgroundContinuityLock = buildBackgroundContinuityLock(safeLocation);
   
   // ウォーターマークテキストの作成
   const watermarkEng = isChatGPTFamily
@@ -356,6 +366,7 @@ Dialogue (verbatim bubbles): ${extractDialogueOnly(pt, castList, { forImagePromp
       VAR_CAST_LIST_CHATGPT, identityMatrix: buildIdentityMatrix(castList), activeOutfit,
       scriptLock, panelSections
     });
+    rawPrompt = `${rawPrompt}\n\n${backgroundContinuityLock}`;
     rawPrompt = compactChatGPTConversationRules(rawPrompt);
   } else {
     // Gemini (Imagen 3/4) 向けプロンプトの構築
@@ -396,6 +407,7 @@ ${geminiRearForegroundLock}`;
       VAR_CAST_LIST, identityMatrix: buildIdentityMatrix(castList), activeOutfit,
       dynamicCamera, scriptLock, panelSections
     });
+    rawPrompt = `${rawPrompt}\n\n${backgroundContinuityLock}`;
   }
 
   // 年齢セーフティフィルターの適用
