@@ -1,7 +1,7 @@
 const UNSAFE_LOCATION_PATTERNS = [
   /(?:ホラー|グロテスク|グロ描写|猟奇)/i,
   /(?:脳漿|脳みそ|脳のしわ|脳のシワ)/i,
-  /(?:内臓|臓器|腸内|胃の中|人体内部|体内(?:空間|世界|背景|内部|の中))/i,
+  /(?:内臓|臓器|腸内|胃(?:袋)?の中|人体内部|体内(?:空間|世界|背景|内部|の中))/i,
   /(?:肉壁|肉の壁|生体組織|有機組織|生体背景|生物的背景|有機的な背景|皮膚の壁|血まみれ|血しぶき|出血)/i,
   /\b(?:horror|body[ -]?horror|gore|gory|viscera|entrails|brain matter)\b/i,
   /\b(?:blood[ -]?(?:soaked|splattered|covered)|flesh wall|body cavity|internal organs?|intestines?)\b/i,
@@ -41,8 +41,7 @@ const buildExplicitPlan = (mode, name, details) => ({
   guidance: `指定場所「${name}」を使用すること。ホラー、グロ、人体内部、不気味な生体背景は禁止。`
 });
 
-export const createHybridLocationPlan = ({
-  locationDetails = {},
+export const createDynamicLocationPlan = ({
   customLocation = '',
   backgroundLocation = '',
   backgroundDetails = null
@@ -56,7 +55,7 @@ export const createHybridLocationPlan = ({
     if (!isSafeLocationContent(explicitLocation, explicitDetails)) {
       throw new Error('指定された場所は安全ポリシーにより使用できません。通常の非生体ロケーションを指定してください。');
     }
-    return buildExplicitPlan(normalizedBackground ? 'background' : 'custom', explicitLocation, locationDetails[explicitLocation]);
+    return buildExplicitPlan(normalizedBackground ? 'background' : 'custom', explicitLocation, explicitDetails);
   }
 
   return {
@@ -64,9 +63,11 @@ export const createHybridLocationPlan = ({
     anchorName: '',
     anchorDetails: null,
     anchors: [],
-    guidance: 'ニュース本文またはユーザー入力と、4コマで実際に行う行動を先に読み、出来事が最も自然に起きる安全で具体的な舞台を1つ選ぶこと。既定の背景候補や一般的な日常・夜・屋内という弱い一致を優先せず、シナリオとの因果関係を優先すること。最終的な舞台は非生体・非グロテスクで、一般向けの場所にすること。'
+    guidance: 'ニュース本文またはユーザー入力と、4コマで実際に行う行動を先に読み、出来事が最も自然に起きる安全で具体的な舞台を1つ自由に設計すること。既定候補や一般的な日常・夜・屋内という弱い一致に寄せず、シナリオとの因果関係を優先すること。最終的な舞台は非生体・非グロテスクで、一般向けの場所にすること。'
   };
 };
+
+export const createHybridLocationPlan = createDynamicLocationPlan;
 
 export const assertSafeScenarioOutput = ({ location = '', scenario = '' } = {}) => {
   if (!isSafeLocationContent(location, scenario)) {

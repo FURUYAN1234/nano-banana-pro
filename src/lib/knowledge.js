@@ -1,5 +1,5 @@
 /**
- * Nano Banana Pro Local RAG Knowledge Base
+ * Nano Banana Pro reaction knowledge
  * v1.0.0
  * 
  * 4コマ漫画のシナリオ生成において、AI特有の「抽象的でフワッとした描写」を防ぐための辞書データ。
@@ -8,22 +8,11 @@
 
 
 
-import { locationDetails } from './locations.js';
 
 
 
 
 
-
-export const getLocationDetails = (locationName, availableLocations = locationDetails) => {
-  const details = availableLocations[locationName];
-  if (details) {
-    return `【環境設定データベース】\n・小道具(Props): ${details.props.join(", ")}\n・環境音: ${details.ambient}\n・視覚的特徴: ${details.visual}`;
-  }
-  
-  // 登録されていない場所の場合は固定の小道具を押し付けず、AIに文脈から推測させる
-  return `【環境設定データベース】\n※指定された場所「${locationName}」ならではの具体的なディテール（小道具、環境音、視覚的特徴）を文脈から推測し、積極的に描写せよ。`;
-};
 
 /**
  * 感情表現やリアクションを構造的に構築するためのガイドライン

@@ -1,16 +1,19 @@
 import { callAI } from './ai-provider';
-import { getLocationDetails, getReactionGuidelines } from './knowledge';
-import { locationDetails } from './locations.js';
-import { getAvailableLocationDetails } from './background-rag.js';
+import { getReactionGuidelines } from './knowledge';
 import { getScenarioPrompt } from './prompts';
 import { cropEquirectangular } from './panorama360';
 import { applyManualStagingLocks } from './manual-staging';
-import { createHybridLocationPlan, requestSafeScenario } from './location-policy';
+import { createDynamicLocationPlan, requestSafeScenario } from './location-policy';
 import { requestSafeScenarioContent } from './scenario-content-policy';
 import {
   assertVisualStoryEvidence,
   VISUAL_STORY_EVIDENCE_RETRY_INSTRUCTION
 } from './visual-story-evidence';
+import {
+  assertDynamicBackground,
+  DYNAMIC_BACKGROUND_RETRY_INSTRUCTION,
+  parseDynamicBackground
+} from './dynamic-background';
 import {
   buildScenarioEnhancementPrompt,
   runValidatedScenarioEnhancement
@@ -41,6 +44,7 @@ const parseScenarioResponse = (result, {
       parsedData.logline = loglineMatch ? loglineMatch[1].trim() : '';
       parsedData.location = locationMatch ? locationMatch[1].trim() : 'Generic Background';
       parsedData.visualEvidence = visualEvidenceMatch ? visualEvidenceMatch[1].trim() : '';
+      parsedData.backgroundDesign = parseDynamicBackground(result.text);
       parsedData.outfit = outfitMatch ? outfitMatch[1].trim() : '';
       parsedData.punchline = punchlineMatch ? punchlineMatch[1].trim() : '';
       parsedData.scenario = scenarioMatch[1].trim();
@@ -51,6 +55,7 @@ const parseScenarioResponse = (result, {
         parsedData.topic = json.topic || randomCategory;
         parsedData.location = json.location || 'Generic Background';
         parsedData.visualEvidence = json.visualEvidence || '';
+        parsedData.backgroundDesign = json.backgroundDesign || parseDynamicBackground(result.text);
         parsedData.scenario = json.scenario || result.text;
       } else {
         if (result.text.length < 20) throw new Error('AI returned empty or invalid response.');
@@ -164,28 +169,18 @@ export async function generateScenario({
     }
   }
 
-  // 3. ロケーション決定とRAG
+  // 3. ロケーション決定と動的背景設計
   const backgroundLocation = bg360Image && bg360Analysis && bg360Enabled
     ? bg360Analysis.location
     : '';
-  const availableLocations = getAvailableLocationDetails(locationDetails);
   const comedyToneOptions = ['HighTension', 'SurrealQuiet', 'IntellectualBlack'];
   const activeComedyTone = comedyToneOptions[Math.floor(Math.random() * comedyToneOptions.length)];
-  const locationPlan = createHybridLocationPlan({
-    locationDetails: availableLocations,
+  const locationPlan = createDynamicLocationPlan({
     customLocation,
     backgroundLocation,
     backgroundDetails: backgroundLocation ? bg360Analysis : null
   });
-  const activeLocation = locationPlan.anchorName;
-
-  onProgress(locationPlan.mode === 'adaptive'
-    ? 'シナリオ適合舞台を設計中...\n> ニュース本文と4コマの行動から、最も自然な具体的ロケーションをAIが選定します。'
-    : `ローカルRAGにアクセス中...\n> 舞台「${activeLocation}」に関する演出情報および感情リアクション辞書を取得中...`);
-
-  const ragLocationDetails = activeLocation
-    ? getLocationDetails(activeLocation, availableLocations)
-    : '';
+  onProgress('動的背景を設計中...\n> 場所、空間構造、前景・中景・後景、光源、小道具、4コマ共通アンカーを内容から構築します。');
   const ragReactions = getReactionGuidelines();
 
   // オチタイプの決定論的ランダム化 (Auto時の偏り防止)
@@ -225,7 +220,6 @@ export async function generateScenario({
     customLocation,
     customOutfit,
     locationPlan,
-    ragLocationDetails,
     ragReactions,
     punchlineType: activePunchlineType,
     comedyTone: activeComedyTone,
@@ -245,9 +239,13 @@ export async function generateScenario({
       manualTopic,
       searchTopic
     }),
-    validateScenario: assertVisualStoryEvidence,
-    retryInstruction: VISUAL_STORY_EVIDENCE_RETRY_INSTRUCTION,
-    onRetry: () => onProgress('舞台の安全性または出来事を証明する視覚要素が不足したため、証拠を補って再生成します...')
+    validateScenario: (parsedScenario) => {
+      assertVisualStoryEvidence(parsedScenario);
+      assertDynamicBackground(parsedScenario);
+      return true;
+    },
+    retryInstruction: `${VISUAL_STORY_EVIDENCE_RETRY_INSTRUCTION}\n\n${DYNAMIC_BACKGROUND_RETRY_INSTRUCTION}`,
+    onRetry: () => onProgress('舞台の安全性、動的背景設計、または出来事を証明する視覚要素が不足したため、完全な背景情報を補って再生成します...')
   });
   const result = safeScenarioResult.response;
   const parsedData = safeScenarioResult.parsed;
@@ -325,6 +323,7 @@ ${parsedData.scenario}
     logline: parsedData.logline,
     location: parsedData.location,
     visualEvidence: parsedData.visualEvidence,
+    dynamicBackground: parsedData.backgroundDesign,
     outfit: parsedData.outfit,
     punchline: parsedData.punchline,
     scenario: parsedData.scenario,

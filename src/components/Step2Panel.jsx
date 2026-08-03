@@ -12,9 +12,6 @@ import {
 } from 'lucide-react';
 import ThinkingLog from './ThinkingLog';
 import Panorama360Viewer from './Panorama360Viewer';
-import { getAvailableLocationDetails, getBackgroundPresetOptions } from '../lib/background-rag';
-import { locationDetails } from '../lib/locations';
-import { isSafeLocationContent } from '../lib/location-policy';
 
 /**
  * STEP 02: シナリオ構築設定パネル
@@ -73,10 +70,6 @@ export default function Step2Panel({
   showStatus,
   styleJson
 }) {
-  const backgroundPresetOptions = getBackgroundPresetOptions({
-    locationDetails: getAvailableLocationDetails(locationDetails),
-    isSafe: isSafeLocationContent
-  });
   const allEnhancementCategoriesSelected = enhanceExpressions &&
     enhanceBodyLang &&
     enhanceEffects &&
@@ -231,7 +224,7 @@ export default function Step2Panel({
                   </button>
                 )}
                 {!bg360Image && (
-                  <span className="text-gray-500">※空欄ならAIおまかせ</span>
+                  <span className="text-gray-500">※空欄ならAIが内容から具体的な舞台を設計</span>
                 )}
               </span>
             </label>
@@ -251,24 +244,17 @@ export default function Step2Panel({
               </div>
             ) : (
               <div className="space-y-2">
-                <select
-                  aria-label="背景プリセット"
-                  value={backgroundPresetOptions.some(({ name }) => name === customLocation) ? customLocation : ''}
-                  onChange={(e) => setCustomLocation(e.target.value)}
-                  style={{ color: '#ffffff', backgroundColor: '#111111' }}
-                  className="w-full p-2 rounded border border-cyan-700/60 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 outline-none text-sm"
-                >
-                  <option value="">背景プリセットを選ぶ（または下に自由入力）</option>
-                  {backgroundPresetOptions.map(({ name, label }) => <option key={name} value={name}>{label}</option>)}
-                </select>
                 <input
                   type="text"
                   value={customLocation}
                   onChange={(e) => setCustomLocation(e.target.value)}
                   style={{ color: '#ffffff', backgroundColor: '#111111' }}
                   className="w-full p-2 rounded border border-gray-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-sm font-mono placeholder-gray-600"
-                  placeholder="例: サイバーパンクな裏路地、炎上する宇宙船... (空欄ならAIにおまかせ)"
+                  placeholder="例: 港の就航式会場、雨上がりの駅前広場...（空欄ならAIが内容から設計）"
                 />
+                <p className="text-[10px] text-slate-500 leading-relaxed">
+                  場所だけ指定できます。空間構造・前景／中景／後景・光源・環境音・小道具・4コマ共通アンカーは、内容に合わせて毎回自動設計されます。
+                </p>
               </div>
             )}
           </div>

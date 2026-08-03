@@ -29,8 +29,7 @@ import {
   formatMangaScenarioValidationIssue,
   validateMangaScenario
 } from './scenario-validation';
-import { locationDetails } from './locations';
-import { getAvailableLocationDetails } from './background-rag';
+import { buildDynamicBackgroundLock } from './dynamic-background';
 
 /**
  * Fisher-Yates アルゴリズムによる配列のシャッフル
@@ -132,13 +131,6 @@ const compactChatGPTConversationRules = (prompt) => {
     .replace(/- If one character, punctuation mark,[^\n]*/g, '- BUBBLE QA: copy TEXT exactly; each tail tip touches its mapped speaker mouth/head, never another person or empty space; no extra bubbles or names.')
     .replace(/- Action is visual only:[^\n]*/g, '- ACTION: visual only; no labels, narration, or SFX as text, except explicitly requested scene writing or signage.')
     .replace(/CHARACTER QA PASS:\n-[^\n]*/g, 'CHARACTER QA: preserve identity and outfit; redraw swaps or merged cast.');
-};
-
-const buildBackgroundContinuityLock = (locationName) => {
-  const location = getAvailableLocationDetails(locationDetails)[locationName];
-  if (!location?.anchors?.length) return '';
-
-  return `BACKGROUND CONTINUITY LOCK: all four panels stay at the same location, "${locationName}". Keep its weather, time of day, and primary lighting consistent. In EVERY panel, visibly retain at least one recurring environmental anchor: ${location.anchors.map((anchor) => `"${anchor}"`).join(' / ')}. Never move the cast to a different place.`;
 };
 
 const buildVisualStoryEvidenceLock = (scenario) => {
@@ -337,7 +329,7 @@ export const buildMangaPrompt = ({
 
   const safeLocation = cleanLocation || "Detailed Background";
   const safeTopic = cleanTopic || "4-koma Manga";
-  const backgroundContinuityLock = buildBackgroundContinuityLock(safeLocation);
+  const backgroundContinuityLock = buildDynamicBackgroundLock(scenario);
   const visualStoryEvidenceLock = buildVisualStoryEvidenceLock(scenario);
   
   // ウォーターマークテキストの作成

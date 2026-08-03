@@ -184,7 +184,6 @@ export const getScenarioPrompt = ({
   customLocation,
   customOutfit,
   locationPlan,
-  ragLocationDetails,
   ragReactions,
   punchlineType: requestedPunchlineType,
   comedyTone,
@@ -198,7 +197,6 @@ export const getScenarioPrompt = ({
       ? `指定場所「${customLocation.trim()}」を使用すること。`
       : 'ニュース本文と4コマの行動に最も適した安全で具体的な場所を考案すること。'
   };
-  const hybridLocationMode = effectiveLocationPlan.mode === 'hybrid';
   const adaptiveLocationMode = effectiveLocationPlan.mode === 'adaptive';
 
   return `
@@ -258,12 +256,17 @@ export const getScenarioPrompt = ({
            - ${effectiveLocationPlan.guidance}
            - ニュースや出来事の中心が実際に起きる場所、または登場人物がその出来事に自然に関われる場所を選べ。単に絵映えするだけの無関係な場所は禁止。
            - 選んだ舞台で4コマの全行動が物理的に成立するか確認し、その場所固有の小道具・建築・環境音・照明をト書きへ反映せよ。
-           - Location行には最終的に採用した具体的な場所を1つだけ記載せよ。「AIおまかせ」「ニュース内容に即した場所」等の抽象語は禁止。` : hybridLocationMode ? `4. **【安全ハイブリッド舞台設計 (Safe Hybrid Location)】**:
-           - ${effectiveLocationPlan.guidance}
-           - 参考候補の小道具や空気感は着想補助であり、候補を採用しない場合は新しく決めた舞台に合う非生体の小道具・建築・照明へ置き換えよ。
            - Location行には最終的に採用した具体的な場所を1つだけ記載せよ。「AIおまかせ」「ニュース内容に即した場所」等の抽象語は禁止。` : `4. **【強制舞台指定 (Location Lock)】**:
            - 今回の漫画の舞台は「${effectiveLocationPlan.anchorName}」に必ず設定せよ。
            - ${effectiveLocationPlan.guidance}`}
+        4.4 **【動的背景設計 (Dynamic Background Design)】**:
+           - プリセットや固定辞書を参照せず、今回決めたLocationと4コマの行動から、この作品専用の背景を設計せよ。
+           - 空間の入口・出口・人物の動線、前景・中景・後景、時刻と天候、主光源の位置・方向・色、環境音、触れたり動かしたりできる小道具・面を具体化せよ。
+           - 4コマを同じ場所だと識別できる短い固有物を2〜3個だけBackgroundAnchorsに記載し、その完全に同じ語を全4コマそれぞれの「状況」に最低1個コピーせよ。少なくとも2種類のアンカーを4コマ全体で使うこと。
+           - BackgroundLightingで宣言した時刻・天候・主光源を全4コマで固定し、途中のコマに別の時刻（例: 正午→夕日）や別の天候（例: 快晴→雨）を導入してはならない。
+           - 各コマでは固定アンカーのうち最低1個を見せ、建築、時刻、天候、主光源を途中で変更しないこと。
+           - BackgroundInteractionsにはキャラクターが触れる、通る、置く、反応する対象を2〜5個記載すること。
+           - BackgroundAvoidには、この舞台で起きやすい空間矛盾、時刻・天候・光源の変化、無関係な背景への置換、安全上の禁止物を具体的に記載すること。
         4.8 **【出来事を証明する視覚証拠 (Visual Story Evidence)】**:
            - 元のニュース本文またはユーザー入力から、その出来事であることを絵だけで証明できる、短く具体的で描画可能な名詞を3〜5個抽出せよ。
            - 抽出語は VisualEvidence 行に「、」区切りで記載し、その完全に同じ語を最低2コマの「状況」に分散してコピーせよ。4コマ全体で最低2種類の証拠を実際に使うこと。
@@ -285,12 +288,7 @@ export const getScenarioPrompt = ({
          6. **【環境・リアクションのディテール構築 (Structural Directives)】**:
             以下のガイドラインを参照し、指定された場所の小道具や環境、キャラクターのリアクションを、**シナリオのト書き(Action)として構造的かつ文脈に沿って描写**せよ。AI特有の抽象的な表現は禁止する。
             
-            ${hybridLocationMode ? '【参考候補を採用する場合のみ使う環境ディテール】' : ''}
-            ${ragLocationDetails}
-            
             ${ragReactions}
-
-            ${effectiveLocationPlan.anchors?.length ? `【4コマ背景アンカー】\n${effectiveLocationPlan.anchors.map((anchor) => `・${anchor}`).join('\n')}\n上記のうち少なくとも1つを各コマで自然に見せ、同じ場所・時間帯・主光源を維持すること。` : ''}
 
 ${styleJson ? `         7. **【作風完全適用の義務 (Strict Style Adherence)】**:
             以下の「作風プロンプト」を最優先事項としてシナリオ全体のトーン、セリフ、空気感に完全に適用せよ。
@@ -523,8 +521,15 @@ ${styleJson.anti_patterns ? `            - 絶対禁止事項:\n${styleJson.anti
 
           Topic: [ニュースの見出し（15文字以内）]
           Logline: [誰が、何を求めて、どうなるかという1〜2行の強力なログライン（軸）。この軸から4コマ目まで絶対にブレないこと]
-          Location: [${adaptiveLocationMode ? 'ニュース本文・出来事・4コマの行動に最も適した、安全で具体的な非生体ロケーションを1つ記入せよ' : hybridLocationMode ? `参考候補「${effectiveLocationPlan.anchorName}」を採用するか、ニュースに合う別の安全で具体的な非生体ロケーションを1つ新規考案せよ` : `必ず『${effectiveLocationPlan.anchorName}』にせよ`}]
+          Location: [${adaptiveLocationMode ? 'ニュース本文・出来事・4コマの行動に最も適した、安全で具体的な非生体ロケーションを1つ記入せよ' : `必ず『${effectiveLocationPlan.anchorName}』にせよ`}]
           VisualEvidence: [元トピックを絵だけで証明する具体的な名詞を3〜5個、「、」区切りで記入せよ]
+          BackgroundSpace: [空間タイプ、入口・出口、人物が移動できる経路を1行で記入せよ]
+          BackgroundLayers: [前景: ... / 中景: ... / 後景: ... の3層を1行で記入せよ]
+          BackgroundLighting: [時刻、天候、主光源、その位置・方向・色を1行で記入せよ]
+          BackgroundAtmosphere: [環境音、空気、群衆または自然現象を1行で記入せよ]
+          BackgroundAnchors: [全コマで場所を識別する短い固定物を2〜3個、「、」区切りで記入せよ]
+          BackgroundInteractions: [キャラクターが触れる・通る・置く・反応する小道具または面を2〜5個、「、」区切りで記入せよ]
+          BackgroundAvoid: [空間・光源・時刻・天候の矛盾、無関係な背景、安全上の禁止物を1行で記入せよ]
           Outfit: [${customOutfit.trim() ? "必ず『" + customOutfit.trim() + "』にせよ" : "場所・状況に最も適した具体的な服装名を記入せよ（例: カジュアルな私服、水着、スーツ等）。※「キャラシート準拠」「制服」「デフォルト」は禁止"}]
           Punchline: [${punchlineType !== 'Auto' ? "必ず『" + getPunchlineLabel(punchlineType) + "』と記載せよ" : "適用したオチの方向性（例: 爆発型、天丼爆発型、シュール、感動詐欺など）"}]
           Scenario:

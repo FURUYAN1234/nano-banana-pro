@@ -5,7 +5,7 @@ import { createServer } from 'vite';
 
 let server;
 let getScenarioPrompt;
-let createHybridLocationPlan;
+let createDynamicLocationPlan;
 
 before(async () => {
   server = await createServer({
@@ -14,7 +14,7 @@ before(async () => {
     server: { middlewareMode: true }
   });
   ({ getScenarioPrompt } = await server.ssrLoadModule('/src/lib/prompts.js'));
-  ({ createHybridLocationPlan } = await server.ssrLoadModule('/src/lib/location-policy.js'));
+  ({ createDynamicLocationPlan } = await server.ssrLoadModule('/src/lib/location-policy.js'));
 });
 
 after(async () => {
@@ -33,12 +33,11 @@ const buildScenarioPrompt = (overrides = {}) => getScenarioPrompt({
   bg360Enabled: false,
   customLocation: '',
   customOutfit: '',
-  ragLocationDetails: '小道具: 時計台、ベンチ',
   ragReactions: '会話相手を見る。',
   locationPlan: {
-    mode: 'hybrid',
+    mode: 'custom',
     anchorName: '駅前広場',
-    guidance: '安全な参考候補は「駅前広場」。この候補を採用してもよいが、ニュース内容により適した別の安全な場所を新規に考案してもよい。'
+    guidance: '指定場所「駅前広場」を使用すること。'
   },
   punchlineType: 'Auto',
   comedyTone: 'HighTension',
@@ -46,36 +45,18 @@ const buildScenarioPrompt = (overrides = {}) => getScenarioPrompt({
   ...overrides
 });
 
-test('scenario prompt describes a safe anchor-or-new-location hybrid instead of a forced random location', () => {
+test('scenario prompt locks an explicit location while designing its details dynamically', () => {
   const prompt = buildScenarioPrompt();
 
-  assert.match(prompt, /安全な参考候補は「駅前広場」/);
-  assert.match(prompt, /別の安全な場所を新規に考案してもよい/);
+  assert.match(prompt, /今回の漫画の舞台は「駅前広場」/);
+  assert.match(prompt, /動的背景設計/);
   assert.match(prompt, /SAFE VISUAL CONTENT LOCK/);
   assert.doesNotMatch(prompt, /指定場所: 「ニュース内容に即した場所」/);
   assert.doesNotMatch(prompt, /サイコホラー型|HORROR: ホラー演出/);
 });
 
 test('automatic location planning leaves the setting open for the scenario instead of preselecting a generic preset', () => {
-  const plan = createHybridLocationPlan({
-    locationDetails: {
-      'コインランドリー': {
-        props: ['大型乾燥機', '折りたたみ台'],
-        tags: ['洗濯', '夜', '日常', '屋内'],
-        anchors: ['大型乾燥機', '折りたたみ台'],
-        moods: ['コメディ']
-      },
-      '会議室': {
-        props: ['長机', 'プロジェクター'],
-        tags: ['会議', '仕事', '会社'],
-        anchors: ['長机', 'プロジェクター'],
-        moods: ['緊張']
-      }
-    },
-    topicText: '夜の日常を扱う新製品発表のニュース',
-    moodText: 'HighTension',
-    random: () => 0
-  });
+  const plan = createDynamicLocationPlan();
 
   assert.equal(plan.mode, 'adaptive');
   assert.equal(plan.anchorName, '');
@@ -94,7 +75,6 @@ test('adaptive location prompt requires a concrete story-fit setting without lea
       anchors: [],
       guidance: 'ニュース本文と4コマの行動を先に読み、出来事が自然に起きる具体的な舞台を選ぶこと。'
     },
-    ragLocationDetails: ''
   });
 
   assert.match(prompt, /ニュース本文と4コマの行動/);
@@ -113,12 +93,14 @@ test('legacy PsychoHorror input is normalized to a safe surreal ending', () => {
   assert.doesNotMatch(prompt, /サイコホラー|推奨EMOTION: HORROR|HORROR: ホラー演出/);
 });
 
-test('scenario provider consumes the hybrid plan and safe retry while the UI no longer offers PsychoHorror', async () => {
+test('scenario provider consumes dynamic background validation and safe retry while the UI no longer offers PsychoHorror', async () => {
   const providerSource = await readFile(new URL('../src/lib/scenario-provider.js', import.meta.url), 'utf8');
   const step2Source = await readFile(new URL('../src/components/Step2Panel.jsx', import.meta.url), 'utf8');
   const automaticOptions = providerSource.match(/const punchlineOptions = \[([\s\S]*?)\];/)?.[1] || '';
 
-  assert.match(providerSource, /createHybridLocationPlan/);
+  assert.match(providerSource, /createDynamicLocationPlan/);
+  assert.match(providerSource, /assertDynamicBackground/);
+  assert.match(providerSource, /DYNAMIC_BACKGROUND_RETRY_INSTRUCTION/);
   assert.match(providerSource, /requestSafeScenario/);
   assert.match(providerSource, /requestSafeScenarioContent/);
   assert.match(providerSource, /assertVisualStoryEvidence/);

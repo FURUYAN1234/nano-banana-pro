@@ -24,6 +24,7 @@ import {
   formatMangaScenarioValidationIssue,
   validateMangaScenario
 } from '../lib/scenario-validation';
+import { formatDynamicBackground } from '../lib/dynamic-background';
 
 export default function useMangaWorkflow() {
   // Force Build 2026-02-06 07:07 // Build 2026-02-06-01
@@ -725,6 +726,9 @@ export default function useMangaWorkflow() {
 
       const loglineLine = result.logline ? `\nLogline: ${result.logline}` : '';
       const visualEvidenceLine = result.visualEvidence ? `\nVisualEvidence: ${result.visualEvidence}` : '';
+      const dynamicBackgroundLines = result.dynamicBackground
+        ? `\n${formatDynamicBackground(result.dynamicBackground)}`
+        : '';
       const outfitLine = (customOutfit.trim() || result.outfit) ? `\nOutfit: ${customOutfit.trim() || result.outfit}` : '';
       const punchlineLine = result.punchline ? `\nPunchline: ${result.punchline}` : '';
       const bg360HeaderLine = bg360Image
@@ -749,7 +753,7 @@ export default function useMangaWorkflow() {
         });
       }
 
-      const finalScenarioText = `## タイトル: ${result.topic} !?${loglineLine}\nLocation: ${result.location || "Unspecified"}${visualEvidenceLine}${outfitLine}${punchlineLine}${bg360HeaderLine}${cameraWorkHeaderLine}\n\n${result.scenario} `;
+      const finalScenarioText = `## タイトル: ${result.topic} !?${loglineLine}\nLocation: ${result.location || "Unspecified"}${visualEvidenceLine}${dynamicBackgroundLines}${outfitLine}${punchlineLine}${bg360HeaderLine}${cameraWorkHeaderLine}\n\n${result.scenario} `;
       setScenario(finalScenarioText);
       setMangaTitle(result.topic || ""); // タイトルをstateに保存（画像ダウンロード時のファイル名に使用）
       const scenarioValidation = validateMangaScenario(finalScenarioText);

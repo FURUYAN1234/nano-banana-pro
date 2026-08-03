@@ -124,9 +124,9 @@ With a single click, the system autonomously executes the entire pipeline (from 
 The system continuously generates completely new manga infinitely until the user explicitly stops it. It combines trend crawling and image generation loops. Upon completing a generation, it automatically selects a new topic and continuously produces new manga while preserving the initial character settings (enabling fully autonomous operation).
 ユーザーが停止ボタンを押すまで、無限に新しい漫画を生成し続ける機能です。トレンド取得と画像生成のループを全自動で延々と回します。フルオート生成完了後、キャラクター設定を維持したまま、自動的に新しいニュースやランダムなお題を取得し、次々と新しいシナリオと漫画を延々と生成し続けるモードです（完全な放置運用が可能）。
 
-### 🧠 Local RAG Dictionary / 自律型ローカルRAG辞書
-Integrates a strictly structured local knowledge base (`knowledge.js`) that dynamically extracts location-specific props, ambient details, and emotion-based physical reactions. The location dictionary has been massively expanded to over 100 unique and chaotic environments (including microscopic worlds and alternate dimensions). This RAG (Retrieval-Augmented Generation) pipeline forces the AI to use concrete objects instead of vague descriptions, drastically improving narrative resolution.
-あらかじめ構築されたローカルRAG辞書（`knowledge.js`）を内蔵。設定された場所（Location）特有の小道具や環境情報、キャラクターの感情に合わせた物理的なリアクションを動的に抽出し、プロンプトへ強制注入します。バージョン4.0.5でロケーション辞書が101箇所へと超絶拡張され、「電子基板のミクロ世界」や「異次元の幾何学空間」などカオスな舞台設定が可能になりました。これにより、AI特有の「抽象的でフワッとした描写」を排除し、ディテールに富んだ高品質なシナリオを生成します。
+### 🧠 Dynamic Background Design / 動的背景設計
+Each story designs its own concrete environment instead of retrieving an exact-name preset. The scenario must define spatial circulation, foreground/midground/background layers, time/weather and primary lighting, atmosphere, interaction props, continuity anchors, and contradictions to avoid. Local validation rejects incomplete, unsafe, generic, or non-recurring designs before image generation, while the final ChatGPT/OpenAI and Gemini prompts lock the approved environment across all four panels.
+場所名の完全一致プリセットではなく、作品ごとに背景を動的設計します。空間の入口・出口と動線、前景・中景・後景、時刻・天候・主光源、環境音、触れられる小道具、4コマ共通アンカー、避けるべき矛盾を必須項目として生成します。ローカル検証が、不完全・危険・抽象的・コマ間で継続しない背景を画像生成前に拒否し、承認された背景だけをChatGPT/OpenAI系とGemini系の最終プロンプトへ固定します。
 
 ### 🧠 Thinking Mode Log Synchronization (v4.1.3+) / 思考プロセス両API同期・可観測性機能
 A visual synchronization feature that captures and displays the AI's internal thoughts and reasoning process (Semi-Formal Reasoning, Verbalized Confidence, and Self-Correction loops) across both **Gemini Engine** and **OpenAI Engine**.
@@ -793,6 +793,9 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 ---
 
 ## 📋 ChangeLog
+
+### v5.0.9 (2026-08-03)
+- **[Fix & UX]** 背景プリセットを廃止し、動的背景設計と4コマ継続検証へ移行 / Replaced background presets with dynamic per-story background design and four-panel continuity validation
 
 ### v5.0.8 (2026-08-03)
 - **[Fix & UX]** `VISUAL STORY EVIDENCE LOCK` を `STRICT SCRIPT LOCK` の直後・描画品質指定の前へ移動し、シナリオ固有の背景証拠を早期に優先します。 / Moved `VISUAL STORY EVIDENCE LOCK` directly after `STRICT SCRIPT LOCK` and before rendering guidance so scenario-specific visual evidence has early priority.
