@@ -133,3 +133,41 @@ Outfit: 通勤服
     assert.match(prompt, /In EVERY panel/i);
   }
 });
+
+test('carries dynamic story evidence from the scenario into every provider image prompt', () => {
+  const scenario = `
+## タイトル: 新しい施設の開業
+Location: 港の桟橋
+VisualEvidence: 式典看板、乗船ゲート、港湾職員
+Outfit: カジュアルな私服
+[1コマ目: 起]
+状況: 式典看板の前で話す。
+人物A「始まるよ！」
+[2コマ目: 承]
+状況: 乗船ゲートで港湾職員が案内する。
+人物B「こっちだよ！」
+[3コマ目: 転]
+状況: 桟橋で驚く。
+人物A「大きい！」
+[4コマ目: 結]
+状況: 全員で笑う。
+人物B「出航だ！」`;
+  const castList = `## 人物A\n- orange bob hair\n## 人物B\n- black long hair`;
+
+  for (const providerFamily of ['chatgpt', 'gemini']) {
+    const prompt = buildMangaPrompt({
+      scenario,
+      castList,
+      colorMode: 'color',
+      providerFamily,
+      punchlineType: 'Auto',
+      systemVersion: 'test'
+    });
+
+    assert.match(prompt, /VISUAL STORY EVIDENCE LOCK/);
+    assert.match(prompt, /式典看板/);
+    assert.match(prompt, /乗船ゲート/);
+    assert.match(prompt, /港湾職員/);
+    assert.match(prompt, /at least two panels/i);
+  }
+});

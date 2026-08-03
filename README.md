@@ -1,6 +1,6 @@
 # Super FURU AI 4-koma System
 
-> Current source release candidate: **v5.0.5** / 現在のソース公開候補: **v5.0.5**
+> Current source release candidate: **v5.0.7** / 現在のソース公開候補: **v5.0.7**
 
 > **"To what extent can humans step away from the creative process?"**
 > **「人間は、どこまで制作から降りられるのか？」**
@@ -22,7 +22,7 @@
 This project aims to intentionally exclude humans from the creative process, allowing AI to act as a director and complete everything from brainstorming to composition, direction, and rendering.
 本プロジェクトは、人間をクリエイティブな工程から意図的に排除し、AIがディレクターとして「ネタ出し・構成・演出・作画」のすべてを完結させることを目的としています。
 
-The current source release candidate is **v5.0.5**. / 現在のソース公開候補は **v5.0.5** です。 The user-facing product name is **Super FURU AI 4-koma System**; **Nano Banana 2** and **ChatGPT Images 2.0** are generation-engine families, not application names. / ユーザー向けプロダクト名は **Super FURU AI 4-koma System** に統一し、**Nano Banana 2** と **ChatGPT Images 2.0** はアプリ名ではなく生成エンジン系統として扱います。
+The current source release candidate is **v5.0.7**. / 現在のソース公開候補は **v5.0.7** です。 The user-facing product name is **Super FURU AI 4-koma System**; **Nano Banana 2** and **ChatGPT Images 2.0** are generation-engine families, not application names. / ユーザー向けプロダクト名は **Super FURU AI 4-koma System** に統一し、**Nano Banana 2** と **ChatGPT Images 2.0** はアプリ名ではなく生成エンジン系統として扱います。
 
 The v5.0.1 implementation details include the following. / v5.0.1の実装詳細は以下のとおりです。
 
@@ -793,6 +793,9 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 ---
 
 ## 📋 ChangeLog
+
+### v5.0.7 (2026-08-03)
+- **[Fix & UX]** シナリオの出来事を示す視覚証拠を抽出し画像に固定 / Added event-specific visual evidence extraction and image prompt lock
 
 ### v5.0.6 (2026-08-01)
 - **[Fix & UX]** 背景プリセットを24種類へ拡充し、話題適合ランキング・安全フィルター・4コマ背景アンカー継続を追加 / Expanded background presets to 24 with topic-aware ranking, safety filtering, and four-panel environmental anchor continuity

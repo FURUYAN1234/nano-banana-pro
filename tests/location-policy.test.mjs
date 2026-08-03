@@ -45,7 +45,7 @@ test('filters unsafe curated entries by name and all detail fields', () => {
   assert.deepEqual(getSafeCuratedLocationNames(details), ['海辺の図書館']);
 });
 
-test('creates a deterministic hybrid plan with a safe curated inspiration anchor', () => {
+test('keeps automatic settings adaptive while preserving an explicit safe location lock', () => {
   const details = {
     '屋上庭園': {
       props: ['ベンチ'],
@@ -59,15 +59,21 @@ test('creates a deterministic hybrid plan with a safe curated inspiration anchor
     }
   };
 
-  const plan = createHybridLocationPlan({
+  const plan = createHybridLocationPlan({ locationDetails: details });
+
+  assert.equal(plan.mode, 'adaptive');
+  assert.equal(plan.anchorName, '');
+  assert.deepEqual(plan.anchors, []);
+  assert.match(plan.guidance, /ニュース本文|ユーザー入力/);
+
+  const explicitPlan = createHybridLocationPlan({
     locationDetails: details,
-    random: () => 0.75
+    customLocation: '駅前広場'
   });
 
-  assert.equal(plan.mode, 'hybrid');
-  assert.equal(plan.anchorName, '駅前広場');
-  assert.match(plan.guidance, /参考候補/);
-  assert.match(plan.guidance, /別の安全な場所を新規に考案/);
+  assert.equal(explicitPlan.mode, 'custom');
+  assert.equal(explicitPlan.anchorName, '駅前広場');
+  assert.match(explicitPlan.guidance, /指定場所/);
 });
 
 test('fails closed for unsafe explicit locations and unsafe AI scenario output', () => {
@@ -154,4 +160,34 @@ test('fails closed after two unsafe AI scenario responses', async () => {
   );
 
   assert.equal(attempts, 2);
+});
+
+test('retries once when a scenario lacks required visual story evidence', async () => {
+  const responses = [
+    { text: 'first response' },
+    { text: 'second response' }
+  ];
+  let requests = 0;
+
+  const result = await requestSafeScenario({
+    initialPrompt: 'base prompt',
+    requestScenario: async (prompt) => {
+      if (requests === 1) assert.match(prompt, /VISUAL STORY EVIDENCE RETRY/);
+      return responses[requests++];
+    },
+    parseScenario: (response) => response.text === 'first response'
+      ? { location: '港', scenario: '人物が話している。', visualEvidence: '式典看板、乗船ゲート、港湾職員' }
+      : { location: '港', scenario: '[1コマ目] 式典看板。\n[2コマ目] 乗船ゲートと港湾職員。', visualEvidence: '式典看板、乗船ゲート、港湾職員' },
+    validateScenario: (parsed) => {
+      const coveredPanels = String(parsed.scenario).split(/\[\d+コマ目[^\]]*\]/).filter((panel) =>
+        /式典看板|乗船ゲート|港湾職員/.test(panel)
+      ).length;
+      if (coveredPanels < 2) throw new Error('visual_story_evidence_missing');
+    },
+    retryInstruction: 'VISUAL STORY EVIDENCE RETRY',
+    maxAttempts: 2
+  });
+
+  assert.equal(requests, 2);
+  assert.equal(result.parsed.scenario.includes('港湾職員'), true);
 });

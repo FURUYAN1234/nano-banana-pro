@@ -17,8 +17,6 @@ const flattenLocationDetails = (value) => {
   return [String(value ?? '')];
 };
 
-import { rankBackgroundPresets } from './background-rag.js';
-
 export const SAFE_VISUAL_CONTENT_LOCK = `SAFE VISUAL CONTENT LOCK: No horror/gore/blood, body interiors, organs/viscera/brain/flesh/living tissue, or creepy organic backgrounds. Use external, non-organic settings; replace biological scenery with ordinary architecture without changing script/cast/dialogue/camera/layout.`;
 
 export const isSafeLocationContent = (...values) => {
@@ -47,10 +45,7 @@ export const createHybridLocationPlan = ({
   locationDetails = {},
   customLocation = '',
   backgroundLocation = '',
-  backgroundDetails = null,
-  topicText = '',
-  moodText = '',
-  random = Math.random
+  backgroundDetails = null
 } = {}) => {
   const normalizedBackground = String(backgroundLocation || '').trim();
   const normalizedCustom = String(customLocation || '').trim();
@@ -64,25 +59,12 @@ export const createHybridLocationPlan = ({
     return buildExplicitPlan(normalizedBackground ? 'background' : 'custom', explicitLocation, locationDetails[explicitLocation]);
   }
 
-  const safeNames = getSafeCuratedLocationNames(locationDetails);
-  if (safeNames.length === 0) {
-    throw new Error('安全ポリシーを満たすロケーション候補がありません。');
-  }
-
-  const ranked = rankBackgroundPresets({ locationDetails, topicText, moodText })
-    .filter(({ name }) => safeNames.includes(name));
-  const semanticWinner = ranked.find(({ score }) => score > 0);
-  const randomValue = Number(random());
-  const safeRandom = Number.isFinite(randomValue) ? Math.min(Math.max(randomValue, 0), 0.999999999) : 0;
-  const anchorName = semanticWinner?.name || safeNames[Math.floor(safeRandom * safeNames.length)];
-  const anchors = semanticWinner?.anchors || (locationDetails[anchorName]?.props || []).slice(0, 2);
-
   return {
-    mode: 'hybrid',
-    anchorName,
-    anchorDetails: locationDetails[anchorName],
-    anchors,
-    guidance: `安全な参考候補は「${anchorName}」。この候補を採用してもよいが、ニュース内容により適した別の安全な場所を新規に考案してもよい。最終的な舞台は非生体・非グロテスクで、一般向けの場所にすること。${anchors.length ? ` 4コマを通して「${anchors.join('」「')}」を背景アンカーとして維持すること。` : ''}`
+    mode: 'adaptive',
+    anchorName: '',
+    anchorDetails: null,
+    anchors: [],
+    guidance: 'ニュース本文またはユーザー入力と、4コマで実際に行う行動を先に読み、出来事が最も自然に起きる安全で具体的な舞台を1つ選ぶこと。既定の背景候補や一般的な日常・夜・屋内という弱い一致を優先せず、シナリオとの因果関係を優先すること。最終的な舞台は非生体・非グロテスクで、一般向けの場所にすること。'
   };
 };
 
@@ -102,6 +84,8 @@ export const requestSafeScenario = async ({
   initialPrompt,
   requestScenario,
   parseScenario,
+  validateScenario = null,
+  retryInstruction = '',
   onRetry = () => {},
   maxAttempts = 2
 }) => {
@@ -110,12 +94,13 @@ export const requestSafeScenario = async ({
   for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
     const prompt = attempt === 0
       ? initialPrompt
-      : `${initialPrompt}\n\n${SAFE_LOCATION_RETRY_INSTRUCTION}`;
+      : `${initialPrompt}\n\n${SAFE_LOCATION_RETRY_INSTRUCTION}${retryInstruction ? `\n\n${retryInstruction}` : ''}`;
     const response = await requestScenario(prompt);
     const parsed = parseScenario(response);
 
     try {
       assertSafeScenarioOutput(parsed);
+      validateScenario?.(parsed);
       return { response, parsed, attempts: attempt + 1 };
     } catch (error) {
       lastSafetyError = error;

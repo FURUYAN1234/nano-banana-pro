@@ -5,6 +5,7 @@ import { createServer } from 'vite';
 
 let server;
 let getScenarioPrompt;
+let createHybridLocationPlan;
 
 before(async () => {
   server = await createServer({
@@ -13,6 +14,7 @@ before(async () => {
     server: { middlewareMode: true }
   });
   ({ getScenarioPrompt } = await server.ssrLoadModule('/src/lib/prompts.js'));
+  ({ createHybridLocationPlan } = await server.ssrLoadModule('/src/lib/location-policy.js'));
 });
 
 after(async () => {
@@ -54,6 +56,56 @@ test('scenario prompt describes a safe anchor-or-new-location hybrid instead of 
   assert.doesNotMatch(prompt, /サイコホラー型|HORROR: ホラー演出/);
 });
 
+test('automatic location planning leaves the setting open for the scenario instead of preselecting a generic preset', () => {
+  const plan = createHybridLocationPlan({
+    locationDetails: {
+      'コインランドリー': {
+        props: ['大型乾燥機', '折りたたみ台'],
+        tags: ['洗濯', '夜', '日常', '屋内'],
+        anchors: ['大型乾燥機', '折りたたみ台'],
+        moods: ['コメディ']
+      },
+      '会議室': {
+        props: ['長机', 'プロジェクター'],
+        tags: ['会議', '仕事', '会社'],
+        anchors: ['長机', 'プロジェクター'],
+        moods: ['緊張']
+      }
+    },
+    topicText: '夜の日常を扱う新製品発表のニュース',
+    moodText: 'HighTension',
+    random: () => 0
+  });
+
+  assert.equal(plan.mode, 'adaptive');
+  assert.equal(plan.anchorName, '');
+  assert.deepEqual(plan.anchors, []);
+  assert.doesNotMatch(plan.guidance, /コインランドリー|大型乾燥機|折りたたみ台/);
+  assert.match(plan.guidance, /ニュース本文|シナリオ/);
+});
+
+test('adaptive location prompt requires a concrete story-fit setting without leaking a preset anchor', () => {
+  const prompt = buildScenarioPrompt({
+    manualTopic: '港で新しい旅客船の就航式が開かれた',
+    newsContext: '旅客船の就航式と港の利用者についての記事本文',
+    locationPlan: {
+      mode: 'adaptive',
+      anchorName: '',
+      anchors: [],
+      guidance: 'ニュース本文と4コマの行動を先に読み、出来事が自然に起きる具体的な舞台を選ぶこと。'
+    },
+    ragLocationDetails: ''
+  });
+
+  assert.match(prompt, /ニュース本文と4コマの行動/);
+  assert.match(prompt, /最も適した具体的な舞台/);
+  assert.doesNotMatch(prompt, /強制舞台指定/);
+  assert.doesNotMatch(prompt, /コインランドリー|大型乾燥機|折りたたみ台/);
+  assert.match(prompt, /VisualEvidence:/);
+  assert.match(prompt, /3.{0,12}5個/);
+  assert.match(prompt, /最低2コマ/);
+});
+
 test('legacy PsychoHorror input is normalized to a safe surreal ending', () => {
   const prompt = buildScenarioPrompt({ punchlineType: 'PsychoHorror' });
 
@@ -69,6 +121,8 @@ test('scenario provider consumes the hybrid plan and safe retry while the UI no 
   assert.match(providerSource, /createHybridLocationPlan/);
   assert.match(providerSource, /requestSafeScenario/);
   assert.match(providerSource, /requestSafeScenarioContent/);
+  assert.match(providerSource, /assertVisualStoryEvidence/);
+  assert.match(providerSource, /VISUAL_STORY_EVIDENCE_RETRY_INSTRUCTION/);
   assert.match(providerSource, /punchlineType === 'PsychoHorror' \? 'Surreal'/);
   assert.doesNotMatch(automaticOptions, /PsychoHorror/);
   assert.doesNotMatch(step2Source, /value="PsychoHorror"/);

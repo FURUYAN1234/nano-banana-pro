@@ -141,6 +141,18 @@ const buildBackgroundContinuityLock = (locationName) => {
   return `BACKGROUND CONTINUITY LOCK: all four panels stay at the same location, "${locationName}". Keep its weather, time of day, and primary lighting consistent. In EVERY panel, visibly retain at least one recurring environmental anchor: ${location.anchors.map((anchor) => `"${anchor}"`).join(' / ')}. Never move the cast to a different place.`;
 };
 
+const buildVisualStoryEvidenceLock = (scenario) => {
+  const rawEvidence = String(scenario || '').match(/VisualEvidence:\s*(.*?)(?:\n|$)/i)?.[1] || '';
+  const evidence = [...new Set(rawEvidence
+    .replace(/^[\[【]|[\]】]$/g, '')
+    .split(/[、,，／/|]/)
+    .map((item) => item.trim())
+    .filter((item) => item.length >= 2))];
+  if (evidence.length < 2) return '';
+
+  return `VISUAL STORY EVIDENCE LOCK: visibly preserve the event-specific evidence from the approved scenario: ${evidence.map((item) => `"${item}"`).join(' / ')}. Show at least two distinct evidence items across at least two panels, exactly where the panel Actions place them. These are physical scene elements or participants, not extra captions or labels unless the Action explicitly requires readable signage. Never replace them with a generic attractive background.`;
+};
+
 const appendPointingHandLock = (actionText, resolvedConflict = false) => {
   if (!POINTING_GESTURE_RE.test(actionText)) return actionText;
   const allocationLock = resolvedConflict
@@ -326,6 +338,7 @@ export const buildMangaPrompt = ({
   const safeLocation = cleanLocation || "Detailed Background";
   const safeTopic = cleanTopic || "4-koma Manga";
   const backgroundContinuityLock = buildBackgroundContinuityLock(safeLocation);
+  const visualStoryEvidenceLock = buildVisualStoryEvidenceLock(scenario);
   
   // ウォーターマークテキストの作成
   const watermarkEng = isChatGPTFamily
@@ -366,7 +379,7 @@ Dialogue (verbatim bubbles): ${extractDialogueOnly(pt, castList, { forImagePromp
       VAR_CAST_LIST_CHATGPT, identityMatrix: buildIdentityMatrix(castList), activeOutfit,
       scriptLock, panelSections
     });
-    rawPrompt = `${rawPrompt}\n\n${backgroundContinuityLock}`;
+    rawPrompt = `${rawPrompt}\n\n${backgroundContinuityLock}\n\n${visualStoryEvidenceLock}`;
     rawPrompt = compactChatGPTConversationRules(rawPrompt);
   } else {
     // Gemini (Imagen 3/4) 向けプロンプトの構築
@@ -407,7 +420,7 @@ ${geminiRearForegroundLock}`;
       VAR_CAST_LIST, identityMatrix: buildIdentityMatrix(castList), activeOutfit,
       dynamicCamera, scriptLock, panelSections
     });
-    rawPrompt = `${rawPrompt}\n\n${backgroundContinuityLock}`;
+    rawPrompt = `${rawPrompt}\n\n${backgroundContinuityLock}\n\n${visualStoryEvidenceLock}`;
   }
 
   // 年齢セーフティフィルターの適用

@@ -8,6 +8,10 @@ import { applyManualStagingLocks } from './manual-staging';
 import { createHybridLocationPlan, requestSafeScenario } from './location-policy';
 import { requestSafeScenarioContent } from './scenario-content-policy';
 import {
+  assertVisualStoryEvidence,
+  VISUAL_STORY_EVIDENCE_RETRY_INSTRUCTION
+} from './visual-story-evidence';
+import {
   buildScenarioEnhancementPrompt,
   runValidatedScenarioEnhancement
 } from './scenario-enhancement';
@@ -26,6 +30,7 @@ const parseScenarioResponse = (result, {
     const titleMatch = result.text.match(/Topic:\s*(.+)/i);
     const loglineMatch = result.text.match(/Logline:\s*(.+)/i);
     const locationMatch = result.text.match(/Location:\s*(.+)/i);
+    const visualEvidenceMatch = result.text.match(/VisualEvidence:\s*(.+)/i);
     const outfitMatch = result.text.match(/Outfit:\s*(.+)/i);
     const punchlineMatch = result.text.match(/Punchline:\s*(.+)/i);
     const scenarioMatch = result.text.match(/Scenario:\s*([\s\S]+)/i);
@@ -35,6 +40,7 @@ const parseScenarioResponse = (result, {
       parsedData.topic = parsedData.topic.replace(/^Topic:\s*/i, '').trim();
       parsedData.logline = loglineMatch ? loglineMatch[1].trim() : '';
       parsedData.location = locationMatch ? locationMatch[1].trim() : 'Generic Background';
+      parsedData.visualEvidence = visualEvidenceMatch ? visualEvidenceMatch[1].trim() : '';
       parsedData.outfit = outfitMatch ? outfitMatch[1].trim() : '';
       parsedData.punchline = punchlineMatch ? punchlineMatch[1].trim() : '';
       parsedData.scenario = scenarioMatch[1].trim();
@@ -44,6 +50,7 @@ const parseScenarioResponse = (result, {
         const json = JSON.parse(jsonMatch[0]);
         parsedData.topic = json.topic || randomCategory;
         parsedData.location = json.location || 'Generic Background';
+        parsedData.visualEvidence = json.visualEvidence || '';
         parsedData.scenario = json.scenario || result.text;
       } else {
         if (result.text.length < 20) throw new Error('AI returned empty or invalid response.');
@@ -168,17 +175,17 @@ export async function generateScenario({
     locationDetails: availableLocations,
     customLocation,
     backgroundLocation,
-    backgroundDetails: backgroundLocation ? bg360Analysis : null,
-    topicText: `${manualTopic || ''} ${searchTopic || ''} ${randomCategory}`,
-    moodText: activeComedyTone
+    backgroundDetails: backgroundLocation ? bg360Analysis : null
   });
   const activeLocation = locationPlan.anchorName;
 
-  onProgress(locationPlan.mode === 'hybrid'
-    ? `安全ハイブリッド舞台を設計中...\n> 参考候補「${activeLocation}」を取得。AIは話題に合う別の安全な場所も考案できます。`
+  onProgress(locationPlan.mode === 'adaptive'
+    ? 'シナリオ適合舞台を設計中...\n> ニュース本文と4コマの行動から、最も自然な具体的ロケーションをAIが選定します。'
     : `ローカルRAGにアクセス中...\n> 舞台「${activeLocation}」に関する演出情報および感情リアクション辞書を取得中...`);
 
-  const ragLocationDetails = getLocationDetails(activeLocation, availableLocations);
+  const ragLocationDetails = activeLocation
+    ? getLocationDetails(activeLocation, availableLocations)
+    : '';
   const ragReactions = getReactionGuidelines();
 
   // オチタイプの決定論的ランダム化 (Auto時の偏り防止)
@@ -238,7 +245,9 @@ export async function generateScenario({
       manualTopic,
       searchTopic
     }),
-    onRetry: () => onProgress('安全ポリシーに合わない舞台表現を検出したため、一般向けの非生体ロケーションで再生成します...')
+    validateScenario: assertVisualStoryEvidence,
+    retryInstruction: VISUAL_STORY_EVIDENCE_RETRY_INSTRUCTION,
+    onRetry: () => onProgress('舞台の安全性または出来事を証明する視覚要素が不足したため、証拠を補って再生成します...')
   });
   const result = safeScenarioResult.response;
   const parsedData = safeScenarioResult.parsed;
@@ -315,6 +324,7 @@ ${parsedData.scenario}
     topic: parsedData.topic,
     logline: parsedData.logline,
     location: parsedData.location,
+    visualEvidence: parsedData.visualEvidence,
     outfit: parsedData.outfit,
     punchline: parsedData.punchline,
     scenario: parsedData.scenario,

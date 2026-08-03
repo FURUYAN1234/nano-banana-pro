@@ -192,13 +192,14 @@ export const getScenarioPrompt = ({
 }) => {
   const punchlineType = requestedPunchlineType === 'PsychoHorror' ? 'Surreal' : requestedPunchlineType;
   const effectiveLocationPlan = locationPlan || {
-    mode: customLocation.trim() ? 'custom' : 'hybrid',
-    anchorName: customLocation.trim() || 'ニュース内容に即した安全な場所',
+    mode: customLocation.trim() ? 'custom' : 'adaptive',
+    anchorName: customLocation.trim(),
     guidance: customLocation.trim()
       ? `指定場所「${customLocation.trim()}」を使用すること。`
-      : 'ニュース内容に即した安全な場所を考案すること。'
+      : 'ニュース本文と4コマの行動に最も適した安全で具体的な場所を考案すること。'
   };
   const hybridLocationMode = effectiveLocationPlan.mode === 'hybrid';
+  const adaptiveLocationMode = effectiveLocationPlan.mode === 'adaptive';
 
   return `
          【Context Force Reboot】
@@ -253,12 +254,21 @@ export const getScenarioPrompt = ({
               * シナリオのネタ次第では、1コマ程度は360度背景と異なる場所（回想シーン、想像シーン等）を使ってもよい。
               * ただし、メインの舞台はこの360度背景であることを基本尊重し、最低でも4コマ中3コマはこの空間内で展開せよ。
         ` : ''}
-        ${hybridLocationMode ? `4. **【安全ハイブリッド舞台設計 (Safe Hybrid Location)】**:
+        ${adaptiveLocationMode ? `4. **【内容適合舞台設計 (Story-Fit Location)】**:
+           - ${effectiveLocationPlan.guidance}
+           - ニュースや出来事の中心が実際に起きる場所、または登場人物がその出来事に自然に関われる場所を選べ。単に絵映えするだけの無関係な場所は禁止。
+           - 選んだ舞台で4コマの全行動が物理的に成立するか確認し、その場所固有の小道具・建築・環境音・照明をト書きへ反映せよ。
+           - Location行には最終的に採用した具体的な場所を1つだけ記載せよ。「AIおまかせ」「ニュース内容に即した場所」等の抽象語は禁止。` : hybridLocationMode ? `4. **【安全ハイブリッド舞台設計 (Safe Hybrid Location)】**:
            - ${effectiveLocationPlan.guidance}
            - 参考候補の小道具や空気感は着想補助であり、候補を採用しない場合は新しく決めた舞台に合う非生体の小道具・建築・照明へ置き換えよ。
            - Location行には最終的に採用した具体的な場所を1つだけ記載せよ。「AIおまかせ」「ニュース内容に即した場所」等の抽象語は禁止。` : `4. **【強制舞台指定 (Location Lock)】**:
            - 今回の漫画の舞台は「${effectiveLocationPlan.anchorName}」に必ず設定せよ。
            - ${effectiveLocationPlan.guidance}`}
+        4.8 **【出来事を証明する視覚証拠 (Visual Story Evidence)】**:
+           - 元のニュース本文またはユーザー入力から、その出来事であることを絵だけで証明できる、短く具体的で描画可能な名詞を3〜5個抽出せよ。
+           - 抽出語は VisualEvidence 行に「、」区切りで記載し、その完全に同じ語を最低2コマの「状況」に分散してコピーせよ。4コマ全体で最低2種類の証拠を実際に使うこと。
+           - 単なる場所名、天気、時刻、感情、抽象語ではなく、出来事固有の設備・主要物体・関係者・行為を優先すること。
+           - すべてのコマへ同じ物を不自然に置かず、出来事の導入・展開・結果が分かるコマへ自然に配置すること。
            ${customOutfit.trim() ? `
         5. **【強制服装指定 (Outfit Lock)】**:
            - 今回のシナリオでは、CastListに記載された元の服装設定を完全に無視し、全員の服装を強制的に『${customOutfit.trim()}』に変更して描写・行動させよ。
@@ -513,7 +523,8 @@ ${styleJson.anti_patterns ? `            - 絶対禁止事項:\n${styleJson.anti
 
           Topic: [ニュースの見出し（15文字以内）]
           Logline: [誰が、何を求めて、どうなるかという1〜2行の強力なログライン（軸）。この軸から4コマ目まで絶対にブレないこと]
-          Location: [${hybridLocationMode ? `参考候補「${effectiveLocationPlan.anchorName}」を採用するか、ニュースに合う別の安全で具体的な非生体ロケーションを1つ新規考案せよ` : `必ず『${effectiveLocationPlan.anchorName}』にせよ`}]
+          Location: [${adaptiveLocationMode ? 'ニュース本文・出来事・4コマの行動に最も適した、安全で具体的な非生体ロケーションを1つ記入せよ' : hybridLocationMode ? `参考候補「${effectiveLocationPlan.anchorName}」を採用するか、ニュースに合う別の安全で具体的な非生体ロケーションを1つ新規考案せよ` : `必ず『${effectiveLocationPlan.anchorName}』にせよ`}]
+          VisualEvidence: [元トピックを絵だけで証明する具体的な名詞を3〜5個、「、」区切りで記入せよ]
           Outfit: [${customOutfit.trim() ? "必ず『" + customOutfit.trim() + "』にせよ" : "場所・状況に最も適した具体的な服装名を記入せよ（例: カジュアルな私服、水着、スーツ等）。※「キャラシート準拠」「制服」「デフォルト」は禁止"}]
           Punchline: [${punchlineType !== 'Auto' ? "必ず『" + getPunchlineLabel(punchlineType) + "』と記載せよ" : "適用したオチの方向性（例: 爆発型、天丼爆発型、シュール、感動詐欺など）"}]
           Scenario:
