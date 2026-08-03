@@ -348,6 +348,9 @@ export const buildMangaPrompt = ({
   let rawPrompt = "";
   const panels = [panel1Text, panel2Text, panel3Text, panel4Text];
   const scriptLock = buildStrictScriptLock({ safeTopic, panels, castList, activeOutfit });
+  const sceneLocks = [scriptLock, visualStoryEvidenceLock, backgroundContinuityLock]
+    .filter(Boolean)
+    .join('\n');
   const panelEyeLineRules = panels.map((panel) => buildPanelEyeLineRule(panel, castList));
   const eyeLineBase = panelEyeLineRules.some((rule) => rule.startsWith('EYE-LINE LOCK'))
     ? 'CONVERSATIONAL DEPTH BASE: speakers and listeners address one another, never the lens/front unless the script explicitly says they address an in-story camera or audience. Preserve natural depth with mixed three-quarter, back-three-quarter, and over-the-shoulder views plus foreground/midground/background layers. Do not force every participant into a pure side profile; vary the valid staging and camera position across panels.'
@@ -377,9 +380,8 @@ Dialogue (verbatim bubbles): ${extractDialogueOnly(pt, castList, { forImagePromp
       safeTopic, watermarkEng, styleCore, safeLocation,
       bg360Image, bg360Analysis, bg360Enabled, bg360CroppedPanels,
       VAR_CAST_LIST_CHATGPT, identityMatrix: buildIdentityMatrix(castList), activeOutfit,
-      scriptLock, panelSections
+      scriptLock: sceneLocks, panelSections
     });
-    rawPrompt = `${rawPrompt}\n\n${backgroundContinuityLock}\n\n${visualStoryEvidenceLock}`;
     rawPrompt = compactChatGPTConversationRules(rawPrompt);
   } else {
     // Gemini (Imagen 3/4) 向けプロンプトの構築
@@ -418,9 +420,8 @@ ${geminiRearForegroundLock}`;
       safeTopic, watermarkEng, styleCore, safeLocation,
       bg360Image, bg360Analysis, bg360Enabled, bg360CroppedPanels,
       VAR_CAST_LIST, identityMatrix: buildIdentityMatrix(castList), activeOutfit,
-      dynamicCamera, scriptLock, panelSections
+      dynamicCamera, scriptLock: sceneLocks, panelSections
     });
-    rawPrompt = `${rawPrompt}\n\n${backgroundContinuityLock}\n\n${visualStoryEvidenceLock}`;
   }
 
   // 年齢セーフティフィルターの適用

@@ -171,3 +171,44 @@ Outfit: カジュアルな私服
     assert.match(prompt, /at least two panels/i);
   }
 });
+
+test('places visual story evidence immediately after the script lock and before style guidance', () => {
+  const scenario = `
+## タイトル: 開業式
+Location: 港の桟橋
+VisualEvidence: 式典看板、乗船ゲート、港湾職員
+Outfit: カジュアルな私服
+[1コマ目: 起]
+状況: 式典看板の前で話す。
+人物A「始まるよ！」
+[2コマ目: 承]
+状況: 乗船ゲートで港湾職員が案内する。
+人物B「こっちだよ！」
+[3コマ目: 転]
+状況: 桟橋で驚く。
+人物A「大きい！」
+[4コマ目: 結]
+状況: 全員で笑う。
+人物B「出航だ！」`;
+  const castList = `## 人物A\n- orange bob hair\n## 人物B\n- black long hair`;
+
+  for (const providerFamily of ['chatgpt', 'gemini']) {
+    const prompt = buildMangaPrompt({
+      scenario,
+      castList,
+      colorMode: 'color',
+      providerFamily,
+      punchlineType: 'Auto',
+      systemVersion: 'test'
+    });
+    const evidenceIndex = prompt.indexOf('VISUAL STORY EVIDENCE LOCK');
+    const scriptIndex = prompt.indexOf('STRICT SCRIPT LOCK');
+    const styleIndex = providerFamily === 'chatgpt'
+      ? prompt.indexOf('ART / RENDERING QUALITY')
+      : prompt.indexOf('Style:');
+
+    assert.ok(evidenceIndex > scriptIndex, `${providerFamily}: evidence must follow script lock`);
+    assert.ok(evidenceIndex < styleIndex, `${providerFamily}: evidence must precede style guidance`);
+    assert.doesNotMatch(prompt, /\n{3,}VISUAL STORY EVIDENCE LOCK/);
+  }
+});
