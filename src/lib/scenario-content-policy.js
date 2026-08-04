@@ -22,7 +22,7 @@ export const assertSafeScenarioContent = (scenario = {}) => {
   return true;
 };
 
-const SAFE_CONTENT_RETRY_INSTRUCTION = `SAFE SCENARIO CONTENT RETRY:
+export const SAFE_CONTENT_RETRY_INSTRUCTION = `SAFE SCENARIO CONTENT RETRY:
 Rewrite the complete scenario from scratch for a general audience. Remove biological-horror, gore, weaponized-body, blood, viscera, organ, and secretion wording. Keep the topic, cast, four-panel structure, dialogue intent, and comedy intact. Use ordinary food, props, or playful non-biological metaphors instead.`;
 
 export const requestSafeScenarioContent = async ({
@@ -32,21 +32,36 @@ export const requestSafeScenarioContent = async ({
   maxAttempts = 1
 }) => {
   let lastError = null;
+  let lastResponse = null;
 
   for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
     const prompt = attempt === 0
       ? initialPrompt
       : `${initialPrompt}\n\n${SAFE_CONTENT_RETRY_INSTRUCTION}`;
     const response = await requestScenario(prompt);
+    lastResponse = response;
 
     try {
       assertSafeScenarioContent(response);
       return { response, parsed: response, attempts: attempt + 1 };
     } catch (error) {
       lastError = error;
-      if (attempt + 1 < maxAttempts) onRetry(attempt + 1);
+      if (attempt + 1 < maxAttempts) {
+        onRetry({
+          attempt: attempt + 2,
+          maxAttempts
+        });
+      }
     }
   }
 
-  throw lastError || new Error('シナリオ本文の表現衛生ポリシーに違反する表現を検出しました。');
+  return {
+    response: lastResponse,
+    parsed: lastResponse,
+    attempts: maxAttempts,
+    validationWarning: {
+      code: 'SCENARIO_CONTENT',
+      message: lastError?.message || 'シナリオ本文の表現衛生ポリシーに違反する表現を検出しました。'
+    }
+  };
 };

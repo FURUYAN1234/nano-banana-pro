@@ -4,7 +4,11 @@ import { getScenarioPrompt } from './prompts';
 import { cropEquirectangular } from './panorama360';
 import { applyManualStagingLocks } from './manual-staging';
 import { createDynamicLocationPlan, requestSafeScenario } from './location-policy';
-import { requestSafeScenarioContent } from './scenario-content-policy';
+import {
+  assertSafeScenarioContent,
+  requestSafeScenarioContent,
+  SAFE_CONTENT_RETRY_INSTRUCTION
+} from './scenario-content-policy';
 import {
   assertVisualStoryEvidence,
   VISUAL_STORY_EVIDENCE_RETRY_INSTRUCTION
@@ -29,6 +33,7 @@ import {
 
 const scenarioRetryLabels = {
   SAFE_LOCATION: '安全な舞台設定',
+  SCENARIO_CONTENT: 'シナリオ本文の表現衛生',
   MANUAL_TOPIC_EXCLUSION: '手動入力の禁止条件',
   VISUAL_STORY_EVIDENCE: '出来事を証明する視覚要素',
   DYNAMIC_BACKGROUND: '動的背景設計',
@@ -46,6 +51,7 @@ const assertScenarioCheck = (code, check) => {
 
 const validateScenarioForRetry = ({ scenario, punchlineType, manualTopic }) => {
   const checks = [
+    ['SCENARIO_CONTENT', () => assertSafeScenarioContent(scenario)],
     ['MANUAL_TOPIC_EXCLUSION', () => assertManualTopicExclusions(scenario.scenario, manualTopic)],
     ['VISUAL_STORY_EVIDENCE', () => assertVisualStoryEvidence(scenario)],
     ['DYNAMIC_BACKGROUND', () => assertDynamicBackground(scenario)],
@@ -72,12 +78,14 @@ const validateScenarioForRetry = ({ scenario, punchlineType, manualTopic }) => {
   return true;
 };
 
-export const formatScenarioRetryProgress = ({ code } = {}) => {
+export const formatScenarioRetryProgress = ({ code, nextAttempt, maxAttempts } = {}) => {
   const label = scenarioRetryLabels[code] || 'シナリオ出力';
-  return `「${label}」の品質検証に通らなかったため、改善条件を追加してシナリオを再生成します...`;
+  const attemptPrefix = nextAttempt && maxAttempts ? `試行 ${nextAttempt}/${maxAttempts}: ` : '';
+  return `${attemptPrefix}「${label}」の品質検証に通らなかったため、改善条件を追加してシナリオを再生成します...`;
 };
 
 const scenarioQualityRetryInstructions = {
+  SCENARIO_CONTENT: SAFE_CONTENT_RETRY_INSTRUCTION,
   MANUAL_TOPIC_EXCLUSION: MANUAL_TOPIC_EXCLUSION_RETRY_INSTRUCTION,
   VISUAL_STORY_EVIDENCE: VISUAL_STORY_EVIDENCE_RETRY_INSTRUCTION,
   DYNAMIC_BACKGROUND: DYNAMIC_BACKGROUND_RETRY_INSTRUCTION,

@@ -39,14 +39,22 @@ test('allows harmless comedy and retries once with a safe rewrite instruction', 
   assert.match(prompts[1], /SAFE SCENARIO CONTENT RETRY/);
 });
 
-test('fails closed after two unsafe scenario responses', async () => {
-  await assert.rejects(
-    requestSafeScenarioContent({
-      initialPrompt: 'BASE PROMPT',
-      requestScenario: async () => ({ scenario: 'body-horror flesh weapon' }),
-      onRetry: () => {},
-      maxAttempts: 2
-    }),
-    /表現衛生/
-  );
+test('keeps the final candidate with a warning after three unsafe responses', async () => {
+  let requests = 0;
+  const retryEvents = [];
+
+  const result = await requestSafeScenarioContent({
+    initialPrompt: 'BASE PROMPT',
+    requestScenario: async () => ({ scenario: `body-horror flesh weapon ${++requests}` }),
+    onRetry: (event) => retryEvents.push(event),
+    maxAttempts: 3
+  });
+
+  assert.equal(requests, 3);
+  assert.equal(result.parsed.scenario, 'body-horror flesh weapon 3');
+  assert.equal(result.validationWarning.code, 'SCENARIO_CONTENT');
+  assert.deepEqual(retryEvents, [
+    { attempt: 2, maxAttempts: 3 },
+    { attempt: 3, maxAttempts: 3 }
+  ]);
 });

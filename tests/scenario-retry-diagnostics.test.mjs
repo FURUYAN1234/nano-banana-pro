@@ -63,10 +63,18 @@ test('scenario generation makes bounded, quality-directed retries rather than hi
   assert.match(source, /requestSafeScenario\(\{[\s\S]*?maxAttempts:\s*3[\s\S]*?\}\);/);
 });
 
-test('scenario content policy runs once instead of reissuing a hidden second API request', async () => {
+test('scenario content policy participates in the shared three-attempt quality loop', async () => {
   const source = await readFile(new URL('../src/lib/scenario-provider.js', import.meta.url), 'utf8');
 
   assert.match(source, /requestSafeScenarioContent\(\{[\s\S]*?maxAttempts:\s*1[\s\S]*?\}\)/);
+  assert.match(source, /\['SCENARIO_CONTENT',\s*\(\)\s*=>\s*assertSafeScenarioContent\(scenario\)\]/);
+  assert.match(source, /SCENARIO_CONTENT:\s*SAFE_CONTENT_RETRY_INSTRUCTION/);
+});
+
+test('retry progress reports the next total attempt out of three', async () => {
+  const source = await readFile(new URL('../src/lib/scenario-provider.js', import.meta.url), 'utf8');
+
+  assert.match(source, /試行 \$\{nextAttempt\}\/\$\{maxAttempts\}:/);
 });
 
 test('a safe scenario with a quality-gate warning remains usable after one API request', async () => {
@@ -117,6 +125,10 @@ test('a quality retry keeps the final safe scenario when the quality budget is e
   assert.deepEqual(retryEvents.map(({ attempt, code, kind }) => ({ attempt, code, kind })), [
     { attempt: 1, code: 'FINAL_PANEL_STAGING', kind: 'quality' },
     { attempt: 2, code: 'FINAL_PANEL_STAGING', kind: 'quality' }
+  ]);
+  assert.deepEqual(retryEvents.map(({ nextAttempt, maxAttempts }) => ({ nextAttempt, maxAttempts })), [
+    { nextAttempt: 2, maxAttempts: 3 },
+    { nextAttempt: 3, maxAttempts: 3 }
   ]);
 });
 

@@ -794,6 +794,9 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 
 ## 📋 ChangeLog
 
+### v5.1.7 (2026-08-04)
+- **[Fix & UX]** 表現衛生NGを共通の3試行品質評価へ統合し、上限到達後も最良候補を保持してSTEP3・画像生成へ継続。試行表示を2/3・3/3へ明確化 / Integrated scenario-content hygiene into the shared three-attempt quality loop, retaining the best candidate for STEP3 and image generation while showing explicit 2/3 and 3/3 attempt progress
+
 ### v5.1.6 (2026-08-04)
 - **[Fix & UX]** 開発中の更新でAPI接続を空にしない保護を追加 / Protected active API connections during development refreshes
 

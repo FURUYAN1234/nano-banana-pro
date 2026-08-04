@@ -118,6 +118,8 @@ export const requestSafeScenario = async ({
       if (attempt + 1 < maxAttempts) {
         onRetry({
           attempt: attempt + 1,
+          nextAttempt: attempt + 2,
+          maxAttempts,
           ...retryContext
         });
       }
@@ -163,6 +165,8 @@ export const requestSafeScenario = async ({
       };
       onRetry({
         attempt: attempt + 1,
+        nextAttempt: attempt + 2,
+        maxAttempts,
         ...retryContext
       });
     }
