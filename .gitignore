@@ -13,6 +13,8 @@ dist-ssr
 *.local
 scratch/
 HANDOFF_codex_*.md
+.playwright-cli/
+generated-result*.png
 
 # Editor directories and files
 .vscode/*

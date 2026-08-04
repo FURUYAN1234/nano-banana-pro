@@ -1,3 +1,8 @@
+import {
+  assertActiveFinalPanelStaging,
+  FINAL_PANEL_ACTIVE_STAGING_SCENARIO_CONTRACT
+} from './final-panel-staging.js';
+
 const CATEGORY_DEFINITIONS = Object.freeze({
   expressions: {
     label: '表情',
@@ -210,6 +215,7 @@ export const buildScenarioEnhancementPrompt = ({
 - 元にない事件、設定、キャラクター、場所、建造物を追加しない
 ${dialogueRule}
 ${backgroundRule}
+${FINAL_PANEL_ACTIVE_STAGING_SCENARIO_CONTRACT}
 
 【選択されたカテゴリ — 変更必須】
 ${selectedInstructions || '- なし'}
@@ -238,6 +244,24 @@ export const validateScenarioEnhancement = ({
   }
   if (candidate.text === original.text) {
     addIssue(issues, issueCodes, 'scenario_unchanged', 'シナリオ全体が変更されていません');
+  }
+
+  try {
+    assertActiveFinalPanelStaging({
+      scenario: candidate.text,
+      punchlineType: candidate.metadata.punchline
+    });
+  } catch (error) {
+    if (error?.message === 'passive_final_tableau') {
+      addIssue(
+        issues,
+        issueCodes,
+        'passive_final_tableau',
+        '4コマ目で脇役を横一列・棒立ち・無言の観客にせず、別々の物理アクションを割り当ててください'
+      );
+    } else {
+      throw error;
+    }
   }
 
   for (const field of METADATA_FIELDS) {

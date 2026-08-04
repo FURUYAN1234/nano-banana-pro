@@ -30,6 +30,7 @@ import {
   validateMangaScenario
 } from './scenario-validation';
 import { buildDynamicBackgroundLock } from './dynamic-background';
+import { FINAL_PANEL_ACTIVE_STAGING_IMAGE_LOCK } from './final-panel-staging';
 
 /**
  * Fisher-Yates アルゴリズムによる配列のシャッフル
@@ -119,7 +120,7 @@ const sanitizeConversationCamera = (camera) => {
 const CHATGPT_WEB_COPY_SOFT_BUDGET = 15000;
 const compactChatGPTConversationRules = (prompt) => {
   if (prompt.length <= CHATGPT_WEB_COPY_SOFT_BUDGET) return prompt;
-  return prompt
+  const compacted = prompt
     .replace(/CONVERSATIONAL DEPTH BASE:[^\n]*/g, 'CONVERSATIONAL DEPTH: counterpart gaze; varied 3/4 and OTS depth.')
     .replace(/EYE-LINE LOCK:[^\n]*(?=\nAction \(visual only\):)/g, 'EYE-LINE: counterpart gaze, never lens; 3/4 speaker + visible OTS partner depth.')
     .replace(/MANGA FINISH ASSIST:[^\n]*/g, 'FINISH: bubbles, anatomy.')
@@ -128,11 +129,23 @@ const compactChatGPTConversationRules = (prompt) => {
     .replace(/CLOTHING FOLD SHADOW ASSIST:[^\n]*/g, 'FOLD SHADOWS: crisp triangular overlap shadows; no geometric patterns.')
     .replace(/SAFE VISUAL CONTENT LOCK:[^\n]*/g, 'SAFE VISUAL: no gore/blood/organs/flesh/organic horror; ordinary architecture; preserve script/cast/dialogue/camera/layout.')
     .replace(/PANEL-BY-PANEL CLOTHING FOLD PRIORITY:[^\n]*/g, 'FOLD PRIORITY: 2-4 dark triangular crease shadows.')
+    .replace(/FINAL-PANEL ACTIVE STAGING LOCK:[^\n]*/g, 'FINAL-PANEL ACTIVE STAGING LOCK: no straight-line lineup; distinct physical action; faces, silhouettes, and hands readable.')
     .replace(/- In each Dialogue block,[^\n]*/g, '- TEXT MAP: print quoted TEXT only; no TAILS metadata.')
     .replace(/- If one character, punctuation mark,[^\n]*/g, '- BUBBLE QA: copy TEXT exactly; tails touch speaker mouth/head; no extra bubbles/names.')
     .replace(/- Action is visual only:[^\n]*/g, '- ACTION: visual only; no labels/narration/SFX if unscripted.')
     .replace(/CHARACTER QA PASS:\n-[^\n]*/g, 'CHARACTER QA: preserve identity and outfit; redraw swaps or merged cast.')
     .replace(/\n{3,}/g, '\n\n');
+
+  if (compacted.length <= CHATGPT_WEB_COPY_SOFT_BUDGET) return compacted;
+
+  return compacted
+    .replace(
+      /RICH PANEL COMPOSITION \/ CHARACTER CLARITY LOCK:[^\n]*/g,
+      'RICH PANEL: physical setting behind cast; keep face, silhouette, hands, and action crisp.'
+    )
+    .replace(/SAFE VISUAL:[^\n]*/g, 'SAFE: no gore, organs, flesh, or organic horror.')
+    .replace(/FOLD PRIORITY:[^\n]*/g, 'FOLD PRIORITY: crease shadows.')
+    .replace(/CHARACTER QA:[^\n]*/g, 'CHARACTER QA: preserve identity and outfit.');
 };
 
 const buildVisualStoryEvidenceLock = (scenario) => {
@@ -342,7 +355,8 @@ export const buildMangaPrompt = ({
   let rawPrompt = "";
   const panels = [panel1Text, panel2Text, panel3Text, panel4Text];
   const scriptLock = buildStrictScriptLock({ safeTopic, panels, castList, activeOutfit });
-  const sceneLocks = [scriptLock, visualStoryEvidenceLock, backgroundContinuityLock]
+  const finalPanelStagingLock = punchlineType === 'Surreal' ? '' : FINAL_PANEL_ACTIVE_STAGING_IMAGE_LOCK;
+  const sceneLocks = [scriptLock, visualStoryEvidenceLock, backgroundContinuityLock, finalPanelStagingLock]
     .filter(Boolean)
     .join('\n');
   const panelEyeLineRules = panels.map((panel) => buildPanelEyeLineRule(panel, castList));
@@ -426,5 +440,5 @@ ${geminiRearForegroundLock}`;
     safePrompt = sanitizeForDocumentary(safePrompt);
   }
 
-  return safePrompt;
+  return isChatGPTFamily ? compactChatGPTConversationRules(safePrompt) : safePrompt;
 };

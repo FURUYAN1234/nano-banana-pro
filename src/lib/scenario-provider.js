@@ -15,6 +15,10 @@ import {
   parseDynamicBackground
 } from './dynamic-background';
 import {
+  assertActiveFinalPanelStaging,
+  FINAL_PANEL_ACTIVE_STAGING_RETRY_INSTRUCTION
+} from './final-panel-staging';
+import {
   buildScenarioEnhancementPrompt,
   runValidatedScenarioEnhancement
 } from './scenario-enhancement';
@@ -242,9 +246,13 @@ export async function generateScenario({
     validateScenario: (parsedScenario) => {
       assertVisualStoryEvidence(parsedScenario);
       assertDynamicBackground(parsedScenario);
+      assertActiveFinalPanelStaging({
+        scenario: parsedScenario.scenario,
+        punchlineType: activePunchlineType
+      });
       return true;
     },
-    retryInstruction: `${VISUAL_STORY_EVIDENCE_RETRY_INSTRUCTION}\n\n${DYNAMIC_BACKGROUND_RETRY_INSTRUCTION}`,
+    retryInstruction: `${VISUAL_STORY_EVIDENCE_RETRY_INSTRUCTION}\n\n${DYNAMIC_BACKGROUND_RETRY_INSTRUCTION}\n\n${FINAL_PANEL_ACTIVE_STAGING_RETRY_INSTRUCTION}`,
     onRetry: () => onProgress('舞台の安全性、動的背景設計、または出来事を証明する視覚要素が不足したため、完全な背景情報を補って再生成します...')
   });
   const result = safeScenarioResult.response;

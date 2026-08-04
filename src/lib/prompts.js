@@ -1,5 +1,6 @@
 import { getPunchlineLabel } from './constants';
 import { SAFE_VISUAL_CONTENT_LOCK } from './location-policy';
+import { FINAL_PANEL_ACTIVE_STAGING_SCENARIO_CONTRACT } from './final-panel-staging';
 import { buildScenarioEnhancementPrompt } from './scenario-enhancement';
 
 // --- プロンプトテンプレート (prompts.js) ---
@@ -228,6 +229,10 @@ export const getScenarioPrompt = ({
          - セリフが1人だけでも、相手が同席して反応するコマでは、話者が誰へ話し、聞き手が誰を見返すかを設計する。無言のリアクション役も現在の話者を見る。
          - 読者、観客、配信カメラへ直接呼びかける演出が物語上明示されている場合だけ、該当する話者のカメラ目線を許可する。
          - 誰が誰を見るか、横顔・斜め後ろ・肩越し等の向きを、各コマの「状況」にキャラクター名付きで具体的に書く。カメラタグはこの対人視線を壊さないものを選ぶ。
+
+         ${punchlineType === 'Surreal'
+           ? '【4コマ目のシュールな静寂】: シュール指定では静かな間を使ってよいが、物語に必要な人物配置・視線・小道具を明記し、無関係な記念写真構図にはしないこと。'
+           : FINAL_PANEL_ACTIVE_STAGING_SCENARIO_CONTRACT}
 
          【選定ルールの絶対厳守】
 
