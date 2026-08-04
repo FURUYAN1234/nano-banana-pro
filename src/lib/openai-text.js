@@ -11,6 +11,8 @@
 
 import { getOpenAIApiKey } from './openai';
 
+const OPENAI_TEXT_TIMEOUT_MS = 120000;
+
 // テキストのみリクエスト用モデルリスト（Zenith Protocol相当のフォールバック）
 const TEXT_MODEL_IDS = [
     "gpt-4.1",          // Primary: 高品質・1Mコンテキスト
@@ -31,9 +33,10 @@ const IMAGE_MODEL_IDS = [
  * callThinkingGemini と同一のシグネチャ:
  *   (prompt, images, systemInstruction, onThinkingUpdate) => { text, thought, model }
  */
-export const callOpenAIText = async (prompt, images = null, systemInstruction = null, onThinkingUpdate) => {
+export const callOpenAIText = async (prompt, images = null, systemInstruction = null, onThinkingUpdate, options = {}) => {
     const apiKey = getOpenAIApiKey();
     if (!apiKey) throw new Error("OpenAI APIキーが設定されていません。");
+    const timeoutMs = options.timeoutMs ?? OPENAI_TEXT_TIMEOUT_MS;
 
     // 画像の有無に応じてモデルリストを動的に選択
     const MODEL_IDS = (images && images.length > 0) ? IMAGE_MODEL_IDS : TEXT_MODEL_IDS;
@@ -104,9 +107,9 @@ export const callOpenAIText = async (prompt, images = null, systemInstruction = 
                 content: userContent.length === 1 ? prompt : userContent
             });
 
-            // タイムアウト設定（120秒）
+            // 呼び出し元ごとのテキストAPI待機上限
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 120000);
+            const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
             let response;
             try {
@@ -126,7 +129,7 @@ export const callOpenAIText = async (prompt, images = null, systemInstruction = 
                 });
             } catch (e) {
                 if (e.name === 'AbortError') {
-                    throw new Error(`Timeout awaiting response from ${modelId} (120s limit)`);
+                    throw new Error(`Timeout awaiting response from ${modelId} (${timeoutMs / 1000}s limit)`);
                 }
                 throw e;
             } finally {

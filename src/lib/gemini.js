@@ -50,9 +50,9 @@ const GEMINI_SAFETY_SETTINGS = [
     { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" },
 ];
 
-const postGeminiGenerateContent = async (modelId, requestBody) => {
+const postGeminiGenerateContent = async (modelId, requestBody, timeoutMs = GEMINI_TEXT_TIMEOUT_MS) => {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), GEMINI_TEXT_TIMEOUT_MS);
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
     try {
         const response = await fetch(`${GEMINI_BASE_URL}/v1beta/models/${modelId}:generateContent`, {
             method: "POST",
@@ -74,7 +74,7 @@ const postGeminiGenerateContent = async (modelId, requestBody) => {
         return data;
     } catch (e) {
         if (e.name === 'AbortError' || e.message.includes('aborted')) {
-            throw new Error(`Timeout awaiting response from ${modelId} (${GEMINI_TEXT_TIMEOUT_MS / 1000}s limit)`);
+            throw new Error(`Timeout awaiting response from ${modelId} (${timeoutMs / 1000}s limit)`);
         }
         throw e;
     } finally {
@@ -122,8 +122,9 @@ export const diagnoseConnection = async () => {
 /**
  * Robustly calls the Gemini API with Auto-Discovery on failure.
  */
-export const callThinkingGemini = async (prompt, images = null, systemInstruction = null, onThinkingUpdate) => {
+export const callThinkingGemini = async (prompt, images = null, systemInstruction = null, onThinkingUpdate, options = {}) => {
     if (!currentApiKey) throw new Error("API Key is not set.");
+    const timeoutMs = options.timeoutMs ?? GEMINI_TEXT_TIMEOUT_MS;
 
     // 画像の有無に応じてモデルリストを動的に選択
     const MODEL_IDS = (images && images.length > 0) ? IMAGE_MODEL_IDS : TEXT_MODEL_IDS;
@@ -168,7 +169,7 @@ export const callThinkingGemini = async (prompt, images = null, systemInstructio
                     contents: [{ role: "user", parts: finalPromptParts }],
                     ...(finalTools.length > 0 ? { tools: finalTools } : {}),
                     generationConfig: { temperature: 0.7, maxOutputTokens: 8192 }
-                });
+                }, timeoutMs);
             } catch (err) {
                 // [v2.20] Failover: If Grounding fails for ANY reason, retry WITHOUT tools
                 // ローカル環境ではCORS/リファラ制限等でgrounding固有のエラーが発生するため、
@@ -179,7 +180,7 @@ export const callThinkingGemini = async (prompt, images = null, systemInstructio
                     result = await postGeminiGenerateContent(modelId, {
                         contents: [{ role: "user", parts: finalPromptParts }],
                         generationConfig: { temperature: 0.7, maxOutputTokens: 8192 }
-                    });
+                    }, timeoutMs);
                 } else {
                     throw err;
                 }

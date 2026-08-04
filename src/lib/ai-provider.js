@@ -51,12 +51,12 @@ export const getEngineDisplayName = () => {
  * activeEngine に応じて Gemini or OpenAI に自動ルーティングする。
  * App.jsx 側は callAI を呼ぶだけで、内部のエンジン差異を意識しなくてよい。
  */
-export const callAI = async (prompt, images = null, systemInstruction = null, onThinkingUpdate) => {
+export const callAI = async (prompt, images = null, systemInstruction = null, onThinkingUpdate, options = {}) => {
     let result;
     if (activeEngine === 'openai') {
-        result = await callOpenAIText(prompt, images, systemInstruction, onThinkingUpdate);
+        result = await callOpenAIText(prompt, images, systemInstruction, onThinkingUpdate, options);
     } else {
-        result = await callThinkingGemini(prompt, images, systemInstruction, onThinkingUpdate);
+        result = await callThinkingGemini(prompt, images, systemInstruction, onThinkingUpdate, options);
     }
 
     // 思考プロセス（<thought>タグ）の抽出と分離処理（両API対応）

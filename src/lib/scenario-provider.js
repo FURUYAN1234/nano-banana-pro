@@ -31,6 +31,8 @@ import {
   MANUAL_TOPIC_EXCLUSION_RETRY_INSTRUCTION
 } from './manual-topic-exclusions';
 
+const STEP2_TEXT_TIMEOUT_MS = 180_000;
+
 const scenarioRetryLabels = {
   SAFE_LOCATION: '安全な舞台設定',
   SCENARIO_CONTENT: 'シナリオ本文の表現衛生',
@@ -303,7 +305,7 @@ export async function generateScenario({
     initialPrompt: scenarioPrompt,
     requestScenario: (prompt) => requestSafeScenarioContent({
       initialPrompt: prompt,
-      requestScenario: (contentPrompt) => callAI(contentPrompt, [], castList, onProgress),
+      requestScenario: (contentPrompt) => callAI(contentPrompt, [], castList, onProgress, { timeoutMs: STEP2_TEXT_TIMEOUT_MS }),
       maxAttempts: 1
     }).then(({ response }) => response),
     parseScenario: (response) => parseScenarioResponse(response, {
@@ -430,7 +432,7 @@ export async function enhanceScenarioText({
         validationIssues
       }),
     requestEnhancement: async (prompt) => {
-      const result = await callAI(prompt, [], castList, onProgress);
+      const result = await callAI(prompt, [], castList, onProgress, { timeoutMs: STEP2_TEXT_TIMEOUT_MS });
       return {
         text: result.text,
         usedModel: result.model,

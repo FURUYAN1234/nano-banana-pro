@@ -1,6 +1,6 @@
 # Super FURU AI 4-koma System
 
-> Latest release: **v5.1.7** / 最新リリース: **v5.1.7**
+> Latest release: **v5.1.8** / 最新リリース: **v5.1.8**
 
 > **"To what extent can humans step away from the creative process?"**
 > **「人間は、どこまで制作から降りられるのか？」**
@@ -22,7 +22,7 @@
 This project aims to intentionally exclude humans from the creative process, allowing AI to act as a director and complete everything from brainstorming to composition, direction, and rendering.
 本プロジェクトは、人間をクリエイティブな工程から意図的に排除し、AIがディレクターとして「ネタ出し・構成・演出・作画」のすべてを完結させることを目的としています。
 
-The current implementation is **v5.1.7**. The product name is **Super FURU AI 4-koma System**; **Nano Banana 2** and **ChatGPT Images 2.0** identify image-generation engine families. / 現在の実装は **v5.1.7** です。製品名は **Super FURU AI 4-koma System** で、**Nano Banana 2** と **ChatGPT Images 2.0** は画像生成エンジン系統の名称です。
+The current implementation is **v5.1.8**. The product name is **Super FURU AI 4-koma System**; **Nano Banana 2** and **ChatGPT Images 2.0** identify image-generation engine families. / 現在の実装は **v5.1.8** です。製品名は **Super FURU AI 4-koma System** で、**Nano Banana 2** と **ChatGPT Images 2.0** は画像生成エンジン系統の名称です。
 
 Current behavior at a glance / 現行仕様の要点:
 
@@ -247,7 +247,7 @@ To address the extreme complexity of a 5,000+ line monolith, the frontend archit
 
 ## 🔍 Deep Analysis (技術詳解)
 
-### 🧭 Current v5.1.7 Processing Contract / 現行v5.1.7処理仕様
+### 🧭 Current v5.1.8 Processing Contract / 現行v5.1.8処理仕様
 
 | Stage | Input | Processing and validation | Output |
 |:--|:--|:--|:--|
@@ -820,6 +820,9 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 ---
 
 ## 📋 ChangeLog
+
+### v5.1.8 (2026-08-04)
+- **[Fix & UX]** STEP2のシナリオ作成・演出強化API待機上限を3分に延長し、STEP1/STEP3/画像生成の既存上限を維持 / Extended the STEP2 scenario creation and enhancement API timeout to three minutes while preserving existing STEP1, STEP3, and image-generation limits
 
 ### v5.1.7 (2026-08-04)
 - **[Fix & UX]** 表現衛生NGを共通の3試行品質評価へ統合し、上限到達後も最良候補を保持してSTEP3・画像生成へ継続。試行表示を2/3・3/3へ明確化 / Integrated scenario-content hygiene into the shared three-attempt quality loop, retaining the best candidate for STEP3 and image generation while showing explicit 2/3 and 3/3 attempt progress
