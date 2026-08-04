@@ -2,6 +2,7 @@ import { getPunchlineLabel } from './constants';
 import { SAFE_VISUAL_CONTENT_LOCK } from './location-policy';
 import { FINAL_PANEL_ACTIVE_STAGING_SCENARIO_CONTRACT } from './final-panel-staging';
 import { buildScenarioEnhancementPrompt } from './scenario-enhancement';
+import { buildManualTopicExclusionPrompt } from './manual-topic-exclusions';
 
 // --- プロンプトテンプレート (prompts.js) ---
 // App.jsx から抽出された大規模プロンプト文字列テンプレート群
@@ -222,7 +223,8 @@ export const getScenarioPrompt = ({
          - 話者と聞き手、視線の相手、リアクション相手を別のキャラクター同士へ変更・組み替えしてはならない。後述の話者数バラエティ、全員登場、ギャグ強化よりも、このロックを優先する。
          - 相互視線、読者・画面・カメラを見ない、正面を向かない等の指定がある場合、該当する各コマの「状況」に、誰が誰を見ているかと、顔・目線・肩・胴体が相手へ向いていることを具体的に再記述せよ。
          - カメラワークや自動構図が明示演出と衝突する場合は、必ずユーザーの演出指定を優先し、対面ツーショットまたは肩越し構図など成立するカメラへ変更せよ。
-         - 明示された禁止事項を、別の演出ルールや自動ギャグで復活させてはならない。` : ''}
+         - 明示された禁止事項を、別の演出ルールや自動ギャグで復活させてはならない。
+         ${buildManualTopicExclusionPrompt(manualTopic)}` : ''}
 
          【自動会話演出・視線設計（全入力モード必須）】
          - 各コマで話者・聞き手・リアクション役を決め、会話中は顔・目線・肩・胴体を会話相手へ向ける。全員が読者・画面・カメラ正面を向く記念写真構図は禁止する。

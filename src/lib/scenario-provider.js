@@ -22,9 +22,14 @@ import {
   buildScenarioEnhancementPrompt,
   runValidatedScenarioEnhancement
 } from './scenario-enhancement';
+import {
+  assertManualTopicExclusions,
+  MANUAL_TOPIC_EXCLUSION_RETRY_INSTRUCTION
+} from './manual-topic-exclusions';
 
 const scenarioRetryLabels = {
   SAFE_LOCATION: '安全な舞台設定',
+  MANUAL_TOPIC_EXCLUSION: '手動入力の禁止条件',
   VISUAL_STORY_EVIDENCE: '出来事を証明する視覚要素',
   DYNAMIC_BACKGROUND: '動的背景設計',
   FINAL_PANEL_STAGING: '4コマ目の能動アクション'
@@ -39,19 +44,44 @@ const assertScenarioCheck = (code, check) => {
   }
 };
 
-const validateScenarioForRetry = ({ scenario, punchlineType }) => {
-  assertScenarioCheck('VISUAL_STORY_EVIDENCE', () => assertVisualStoryEvidence(scenario));
-  assertScenarioCheck('DYNAMIC_BACKGROUND', () => assertDynamicBackground(scenario));
-  assertScenarioCheck('FINAL_PANEL_STAGING', () => assertActiveFinalPanelStaging({
-    scenario: scenario.scenario,
-    punchlineType
-  }));
+const validateScenarioForRetry = ({ scenario, punchlineType, manualTopic }) => {
+  const checks = [
+    ['MANUAL_TOPIC_EXCLUSION', () => assertManualTopicExclusions(scenario.scenario, manualTopic)],
+    ['VISUAL_STORY_EVIDENCE', () => assertVisualStoryEvidence(scenario)],
+    ['DYNAMIC_BACKGROUND', () => assertDynamicBackground(scenario)],
+    ['FINAL_PANEL_STAGING', () => assertActiveFinalPanelStaging({
+      scenario: scenario.scenario,
+      punchlineType
+    })]
+  ];
+  const failures = [];
+  for (const [code, check] of checks) {
+    try {
+      assertScenarioCheck(code, check);
+    } catch (error) {
+      failures.push({ code, message: error?.message || code });
+    }
+  }
+  if (failures.length > 0) {
+    const error = new Error(failures.map(({ message }) => message).join(' / '));
+    error.code = failures[0].code;
+    error.qualityScore = checks.length - failures.length;
+    error.qualityIssues = failures;
+    throw error;
+  }
   return true;
 };
 
 export const formatScenarioRetryProgress = ({ code } = {}) => {
   const label = scenarioRetryLabels[code] || 'シナリオ出力';
-  return `「${label}」の検証に通らなかったため、同じ入力で完全なシナリオを再生成します...`;
+  return `「${label}」の品質検証に通らなかったため、改善条件を追加してシナリオを再生成します...`;
+};
+
+const scenarioQualityRetryInstructions = {
+  MANUAL_TOPIC_EXCLUSION: MANUAL_TOPIC_EXCLUSION_RETRY_INSTRUCTION,
+  VISUAL_STORY_EVIDENCE: VISUAL_STORY_EVIDENCE_RETRY_INSTRUCTION,
+  DYNAMIC_BACKGROUND: DYNAMIC_BACKGROUND_RETRY_INSTRUCTION,
+  FINAL_PANEL_STAGING: FINAL_PANEL_ACTIVE_STAGING_RETRY_INSTRUCTION
 };
 
 // [v3.85-alpha] シナリオ生成と強化ロジックの外部モジュール化
@@ -276,9 +306,12 @@ export async function generateScenario({
     }),
     validateScenario: (parsedScenario) => validateScenarioForRetry({
       scenario: parsedScenario,
-      punchlineType: activePunchlineType
+      punchlineType: activePunchlineType,
+      manualTopic: inputMode === 'manual' ? manualTopic : ''
     }),
-    maxAttempts: 1
+    retryInstruction: ({ code }) => scenarioQualityRetryInstructions[code] || '',
+    onRetry: (retry) => onProgress(formatScenarioRetryProgress(retry)),
+    maxAttempts: 3
   });
   const result = safeScenarioResult.response;
   const parsedData = safeScenarioResult.parsed;
@@ -363,7 +396,8 @@ ${parsedData.scenario}
     cameraWork,
     croppedPanels,
     usedModel: result.model,
-    thought: result.thought
+    thought: result.thought,
+    validationWarning: safeScenarioResult.validationWarning || null
   };
 }
 

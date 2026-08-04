@@ -29,7 +29,7 @@ export const requestSafeScenarioContent = async ({
   initialPrompt,
   requestScenario,
   onRetry = () => {},
-  maxAttempts = 2
+  maxAttempts = 1
 }) => {
   let lastError = null;
 

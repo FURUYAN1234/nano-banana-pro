@@ -91,26 +91,80 @@ export const requestSafeScenario = async ({
   maxAttempts = 2
 }) => {
   let lastSafetyError = null;
+  let retryContext = null;
+  let bestQualityCandidate = null;
 
   for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+    const retryText = typeof retryInstruction === 'function'
+      ? retryInstruction(retryContext || {})
+      : retryInstruction;
     const prompt = attempt === 0
       ? initialPrompt
-      : `${initialPrompt}\n\n${SAFE_LOCATION_RETRY_INSTRUCTION}${retryInstruction ? `\n\n${retryInstruction}` : ''}`;
+      : retryContext?.kind === 'safety'
+        ? `${initialPrompt}\n\n${SAFE_LOCATION_RETRY_INSTRUCTION}${retryText ? `\n\n${retryText}` : ''}`
+        : `${initialPrompt}\n\n${retryText || 'QUALITY RETRY: Rewrite the complete scenario and correct the failed quality requirement while preserving the topic, cast, dialogue intent, and four-panel structure.'}`;
     const response = await requestScenario(prompt);
     const parsed = parseScenario(response);
 
     try {
       assertSafeScenarioOutput(parsed);
-      validateScenario?.(parsed);
-      return { response, parsed, attempts: attempt + 1 };
     } catch (error) {
       lastSafetyError = error;
+      retryContext = {
+        kind: 'safety',
+        code: typeof error?.code === 'string' ? error.code : 'SAFE_LOCATION',
+        message: error?.message || ''
+      };
       if (attempt + 1 < maxAttempts) {
         onRetry({
           attempt: attempt + 1,
-          code: typeof error?.code === 'string' ? error.code : 'SAFE_LOCATION'
+          ...retryContext
         });
       }
+      continue;
+    }
+
+    try {
+      validateScenario?.(parsed);
+      return { response, parsed, attempts: attempt + 1, validationWarning: null };
+    } catch (error) {
+      const qualityScore = Number.isFinite(error?.qualityScore) ? error.qualityScore : 0;
+      if (
+        !bestQualityCandidate
+        || qualityScore > bestQualityCandidate.qualityScore
+        || (qualityScore === bestQualityCandidate.qualityScore && attempt > bestQualityCandidate.attempt)
+      ) {
+        bestQualityCandidate = {
+          response,
+          parsed,
+          error,
+          attempt,
+          qualityScore
+        };
+      }
+      if (attempt + 1 >= maxAttempts) {
+        const selectedCandidate = bestQualityCandidate;
+        return {
+          response: selectedCandidate.response,
+          parsed: selectedCandidate.parsed,
+          attempts: attempt + 1,
+          validationWarning: {
+            code: typeof selectedCandidate.error?.code === 'string' ? selectedCandidate.error.code : 'SCENARIO_QUALITY',
+            message: selectedCandidate.error?.message || 'シナリオ品質検証に通りませんでした。',
+            qualityScore: selectedCandidate.qualityScore
+          }
+        };
+      }
+      lastSafetyError = error;
+      retryContext = {
+        kind: 'quality',
+        code: typeof error?.code === 'string' ? error.code : 'SCENARIO_QUALITY',
+        message: error?.message || ''
+      };
+      onRetry({
+        attempt: attempt + 1,
+        ...retryContext
+      });
     }
   }
 

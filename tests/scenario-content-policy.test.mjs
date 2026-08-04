@@ -30,7 +30,8 @@ test('allows harmless comedy and retries once with a safe rewrite instruction', 
       prompts.push(prompt);
       return responses[prompts.length - 1];
     },
-    onRetry: () => {}
+    onRetry: () => {},
+    maxAttempts: 2
   });
 
   assert.equal(result.attempts, 2);
@@ -43,7 +44,8 @@ test('fails closed after two unsafe scenario responses', async () => {
     requestSafeScenarioContent({
       initialPrompt: 'BASE PROMPT',
       requestScenario: async () => ({ scenario: 'body-horror flesh weapon' }),
-      onRetry: () => {}
+      onRetry: () => {},
+      maxAttempts: 2
     }),
     /表現衛生/
   );

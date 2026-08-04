@@ -746,18 +746,21 @@ export default function useMangaWorkflow() {
       setScenario(finalScenarioText);
       setMangaTitle(result.topic || ""); // タイトルをstateに保存（画像ダウンロード時のファイル名に使用）
       const scenarioValidation = validateMangaScenario(finalScenarioText);
+      const qualityWarnings = [];
+      if (result.validationWarning) {
+        qualityWarnings.push(`STEP2検証: ${result.validationWarning.code}: ${result.validationWarning.message}`);
+      }
       if (!scenarioValidation.ok) {
         const validationIssue = formatMangaScenarioValidationIssue(scenarioValidation);
-        const validationMessage = `シナリオが不完全です。${validationIssue}`;
-        setFinalPrompt("");
-        setGeneratedImage(null);
-        setGenLog([]);
-        setScenarioThought(prev => prev + `\n\n[SCENARIO VALIDATION ERROR] ${validationMessage}\n> 4コマすべてに最低1つの「」付きセリフが必要です。STEP2を再実行してください。`);
-        showStatus(validationMessage);
-        setIs360CameraWorking(false);
-        return null;
+        qualityWarnings.push(`4コマ検証: ${validationIssue}`);
       }
-      showStatus("シナリオの生成が完了しました！");
+      if (qualityWarnings.length > 0) {
+        const warningMessage = `シナリオ品質警告: ${qualityWarnings.join(' / ')}`;
+        setScenarioThought(prev => prev + `\n\n[SCENARIO QUALITY WARNING] ${warningMessage}\n> 自動再生成はしません。品質警告のままSTEP3・STEP4へ進めます。`);
+        showStatus(`${warningMessage} STEP3・STEP4は継続できます。`);
+      } else {
+        showStatus("シナリオの生成が完了しました！");
+      }
       setIs360CameraWorking(false);
 
       if (result.thought) {
@@ -790,12 +793,8 @@ export default function useMangaWorkflow() {
     if (!scenarioValidation.ok) {
       const validationIssue = formatMangaScenarioValidationIssue(scenarioValidation);
       const validationMessage = `シナリオが不完全です。${validationIssue}`;
-      setFinalPrompt("");
-      setGeneratedImage(null);
-      setGenLog([]);
-      setAssembleThought(prev => `${prev ? `${prev}\n` : ''}> [SCENARIO VALIDATION ERROR] ${validationMessage}\n> STEP2で4コマすべてに「」付きセリフを作り直してください。`);
-      showStatus(validationMessage);
-      return null;
+      setAssembleThought(prev => `${prev ? `${prev}\n` : ''}> [SCENARIO QUALITY WARNING] ${validationMessage}\n> 自動再生成はしません。品質警告のままSTEP4へ進めます。`);
+      showStatus(`${validationMessage} 品質警告のままSTEP4へ進めます。`);
     }
     setIsAssembling(true);
     setFinalPrompt(""); // Clear previous prompt to indicate loading

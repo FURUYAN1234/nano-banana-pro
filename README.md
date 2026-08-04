@@ -794,6 +794,9 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 
 ## 📋 ChangeLog
 
+### v5.1.4 (2026-08-04)
+- **[Fix & UX]** 品質再試行で最良候補を保持し、自由入力の禁止カテゴリを生成後にも検証 / Retained the best quality candidate and enforced manual exclusions after generation
+
 ### v5.1.3 (2026-08-04)
 - **[Fix & UX]** シナリオ生成の隠れた自動再試行を停止し、背景検証の誤検出と検証エラーの通信エラー誤表示を修正。画像受信後の自動視覚QA・自動再生成を停止。 / Disabled hidden scenario retries, fixed false background validation and validation-error messaging, and removed post-image automatic vision QA/regeneration.
 
