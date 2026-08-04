@@ -687,6 +687,13 @@ const compactChatGPTCastDetails = (castText = '') => String(castText)
   .filter(Boolean)
   .join('\n');
 
+const RICH_PANEL_COMPOSITION_LOCK = `RICH PANEL COMPOSITION / CHARACTER CLARITY LOCK:
+- Every panel shows one fixed environmental anchor plus at least two additional physical setting cues from declared layers or interaction props.
+- Panel VFX stay overlays behind or around the cast and never replace the physical setting or story evidence.
+- Keep face, eye direction, silhouette, hands, and key action crisp, unobstructed, and separated from busy details.
+- Render rich background detail at lower contrast and with softer edges than the cast.
+- Negative space is only for bubbles and figure separation; no broad blank walls, flat gradients, black voids, or empty fields unless the script requires physical emptiness.`;
+
 export const buildChatGPTMangaPrompt = (p) => {
   const {
     safeTopic, watermarkEng, styleCore, safeLocation,
@@ -725,6 +732,7 @@ ART / RENDERING QUALITY:
 - Clean finish: crisp foreground, softer background, lighting.
 - CLEAN SURFACE PROTOCOL: no grain/speckles/dithering/rough texture/pores/moire/dust/particles/sparkle unless a panel style exception allows it.
 - MANGA FINISH ASSIST: preserve script/cast/camera/layout; keep bubble space, cast/background light and color, coherent anatomy, and setting depth.
+${RICH_PANEL_COMPOSITION_LOCK}
 - CLOTHING FOLD SHADOW ASSIST: for full-color clothing only, render overlapping, pinched, and intersecting fabric folds with a few crisp wedge-shaped triangular cel-shaded shadow planes. Make a distinct small dark triangular fill at each selected crease junction, not merely a soft fold gradient. Use them as form shadows, not printed patterns or random geometric marks; preserve the outfit, material, and scene lighting.
 ${SAFE_VISUAL_CONTENT_LOCK}
 - ${styleCore}
@@ -879,6 +887,7 @@ Tech Dict:
 
 GEMINI STABILITY / QUALITY LOCK:
 - Use a richer professional manga finish than a flat template: layered foreground/midground/background, meaningful setting props, varied lighting, crisp line weight variation, and panel-specific atmosphere. Do not leave plain empty walls or generic blank rooms unless the script explicitly asks for emptiness.
+${RICH_PANEL_COMPOSITION_LOCK}
 - MANGA FINISH ASSIST: preserve script/cast/camera/layout; keep bubble space, cast/background light and color, coherent anatomy, and setting depth.
 - CLOTHING FOLD SHADOW ASSIST: for full-color clothing only, render overlapping, pinched, and intersecting fabric folds with a few crisp wedge-shaped triangular cel-shaded shadow planes. Make a distinct small dark triangular fill at each selected crease junction, not merely a soft fold gradient. Use them as form shadows, not printed patterns or random geometric marks; preserve the outfit, material, and scene lighting.
 ${SAFE_VISUAL_CONTENT_LOCK}

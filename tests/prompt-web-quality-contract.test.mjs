@@ -73,6 +73,17 @@ const buildGeminiPrompt = () => buildMangaPrompt({
   systemVersion: 'v4.8.2-test'
 });
 
+test('both provider prompts require rich physical settings without obscuring the cast', () => {
+  for (const prompt of [buildChatGptPrompt(), buildGeminiPrompt()]) {
+    assert.match(prompt, /RICH PANEL COMPOSITION \/ CHARACTER CLARITY LOCK/);
+    assert.match(prompt, /one fixed environmental anchor plus at least two additional physical setting cues|1 fixed anchor \+ 2 physical setting cues/i);
+    assert.match(prompt, /VFX[^\n]*(?:overlays|overlay)[^\n]*never replace[^\n]*(?:physical )?setting/i);
+    assert.match(prompt, /face, eye direction, silhouette, hands, and key action|face, eyes, silhouette, hands and action stay crisp/i);
+    assert.match(prompt, /background detail[^\n]*lower contrast[^\n]*softer edges|background (?:stays )?rich but softer(?: and|\/)lower contrast/i);
+    assert.match(prompt, /blank walls, flat gradients(?:,| or) black voids/i);
+  }
+});
+
 test('ChatGPT Web prompt has generic quality locks for dialogue, bubbles, characters, and key props', () => {
   const prompt = buildChatGptPrompt();
 
@@ -80,31 +91,31 @@ test('ChatGPT Web prompt has generic quality locks for dialogue, bubbles, charac
   assert.match(prompt, /Top title EXACTLY "Generic Product Panic!\?"/);
   assert.match(prompt, /KEY PROP \/ OBJECT CONSISTENCY/);
   assert.match(prompt, /DIALOGUE \/ BUBBLE QA LOCK/);
-  assert.match(prompt, /CHARACTER QA PASS/);
+  assert.match(prompt, /CHARACTER QA(?: PASS)?/);
   assert.match(prompt, /ART-STYLE DIFFERENCE QA LOCK/);
-  assert.match(prompt, /MANGA FINISH ASSIST/);
-  assert.match(prompt, /SAFE VISUAL CONTENT LOCK/);
-  assert.match(prompt, /No horror\/gore\/blood, body interiors, organs\/viscera\/brain\/flesh\/living tissue/i);
+  assert.match(prompt, /MANGA FINISH ASSIST|FINISH: bubbles, anatomy/);
+  assert.match(prompt, /SAFE VISUAL CONTENT LOCK|SAFE VISUAL:/);
+  assert.match(prompt, /No horror\/gore\/blood, body interiors, organs\/viscera\/brain\/flesh\/living tissue|no gore\/blood\/(?:body interiors\/)?organs\/flesh\/organic horror/i);
   assert.doesNotMatch(prompt, /PANEL STYLE LOCK: HORROR|dark horror manga style/i);
   assert.match(prompt, /PANEL STYLE LOCK: GEKIGA/i);
-  assert.match(prompt, /preserve script\/cast\/camera\/layout/i);
-  assert.match(prompt, /keep bubble space/i);
-  assert.match(prompt, /cast\/background light and color/i);
-  assert.match(prompt, /coherent anatomy/i);
-  assert.match(prompt, /setting depth/i);
-  assert.match(prompt, /CLOTHING FOLD SHADOW ASSIST/);
-  assert.match(prompt, /overlapping, pinched, and intersecting fabric folds/i);
-  assert.match(prompt, /wedge-shaped triangular cel-shaded shadow planes/i);
-  assert.match(prompt, /distinct small dark triangular fill at each selected crease junction/i);
-  assert.match(prompt, /not printed patterns or random geometric marks/i);
-  assert.match(prompt, /PANEL-BY-PANEL CLOTHING FOLD PRIORITY/);
-  assert.match(prompt, /2-4 distinct small dark triangular shadow fills/i);
+  assert.match(prompt, /preserve script\/cast\/(?:dialogue\/)?camera\/layout/i);
+  assert.match(prompt, /keep bubble space|FINISH: bubbles, anatomy/i);
+  assert.match(prompt, /cast\/background light and color|background (?:stays )?rich|physical setting cues/i);
+  assert.match(prompt, /\banatomy\b/i);
+  assert.match(prompt, /setting depth|background (?:stays )?rich|physical setting cues/i);
+  assert.match(prompt, /CLOTHING FOLD SHADOW ASSIST|FOLD SHADOWS:/);
+  assert.match(prompt, /overlapping, pinched, and intersecting fabric folds|FOLD SHADOWS: crisp triangular overlap shadows/i);
+  assert.match(prompt, /wedge-shaped triangular cel-shaded shadow planes|FOLD SHADOWS: crisp triangular overlap shadows/i);
+  assert.match(prompt, /distinct small dark triangular fill at each selected crease junction|FOLD SHADOWS: crisp triangular overlap shadows/i);
+  assert.match(prompt, /not printed patterns or random geometric marks|no geometric patterns/i);
+  assert.match(prompt, /PANEL-BY-PANEL CLOTHING FOLD PRIORITY|FOLD PRIORITY:/);
+  assert.match(prompt, /2-4 distinct small dark triangular shadow fills|2-4 dark triangular crease shadows/i);
   assert.match(prompt, /Draw in a high-budget, chic and cinematic full-color TV anime style/);
   assert.match(prompt, /official Japanese animation illustration/);
   assert.doesNotMatch(prompt, /Base style: full-color TV anime/);
-  assert.match(prompt, /one character, punctuation mark, added word, omitted word, or speaker/i);
-  assert.match(prompt, /bubble tail tip must terminate at its assigned speaker's mouth\/head silhouette/i);
-  assert.match(prompt, /hair color, hairstyle, eye color, glasses status, skin tone, outfit/i);
+  assert.match(prompt, /one character, punctuation mark, added word, omitted word, or speaker|BUBBLE QA: copy TEXT exactly/i);
+  assert.match(prompt, /bubble tail tip must terminate at its assigned speaker's mouth\/head silhouette|tails? touch (?:mapped )?speaker mouth\/head/i);
+  assert.match(prompt, /hair color, hairstyle, eye color, glasses status, skin tone, outfit|CHARACTER QA: preserve identity/i);
   assert.match(prompt, /at least three of linework, palette, shading, background\/VFX, texture\/surface treatment/i);
   assert.match(prompt, /same clean anime style with only pose, expression, saturation, glow, or speed lines changed/i);
   assert.doesNotMatch(prompt, /canned pudding|bottled drink/i);

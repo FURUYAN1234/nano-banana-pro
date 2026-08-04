@@ -123,14 +123,16 @@ const compactChatGPTConversationRules = (prompt) => {
     .replace(/CONVERSATIONAL DEPTH BASE:[^\n]*/g, 'CONVERSATIONAL DEPTH: counterpart gaze; varied 3/4 and OTS depth.')
     .replace(/EYE-LINE LOCK:[^\n]*(?=\nAction \(visual only\):)/g, 'EYE-LINE: counterpart gaze, never lens; 3/4 speaker + visible OTS partner depth.')
     .replace(/MANGA FINISH ASSIST:[^\n]*/g, 'FINISH: bubbles, anatomy.')
+    .replace(/RICH PANEL COMPOSITION \/ CHARACTER CLARITY LOCK:[\s\S]*?(?=\n- CLOTHING FOLD SHADOW ASSIST:)/g, 'RICH PANEL COMPOSITION / CHARACTER CLARITY LOCK: 1 fixed anchor + 2 physical setting cues/panel; VFX overlay, never replace setting; face, eyes, silhouette, hands and action stay crisp; background rich but softer/lower contrast; no blank walls, flat gradients or black voids.')
     .replace(/CLEAN SURFACE PROTOCOL:[^\n]*/g, 'CLEAN: no noise except style exceptions.')
     .replace(/CLOTHING FOLD SHADOW ASSIST:[^\n]*/g, 'FOLD SHADOWS: crisp triangular overlap shadows; no geometric patterns.')
-    .replace(/SAFE VISUAL CONTENT LOCK:[^\n]*/g, 'SAFE VISUAL: no gore/blood/body interiors/organs/flesh/organic horror; use ordinary architecture; preserve script/cast/dialogue/camera/layout.')
+    .replace(/SAFE VISUAL CONTENT LOCK:[^\n]*/g, 'SAFE VISUAL: no gore/blood/organs/flesh/organic horror; ordinary architecture; preserve script/cast/dialogue/camera/layout.')
     .replace(/PANEL-BY-PANEL CLOTHING FOLD PRIORITY:[^\n]*/g, 'FOLD PRIORITY: 2-4 dark triangular crease shadows.')
-    .replace(/- In each Dialogue block,[^\n]*/g, '- TEXT MAP: print only quoted TEXT values; never print TAILS names, IDs, labels, brackets, or metadata.')
-    .replace(/- If one character, punctuation mark,[^\n]*/g, '- BUBBLE QA: copy TEXT exactly; each tail tip touches its mapped speaker mouth/head, never another person or empty space; no extra bubbles or names.')
-    .replace(/- Action is visual only:[^\n]*/g, '- ACTION: visual only; no labels, narration, or SFX as text, except explicitly requested scene writing or signage.')
-    .replace(/CHARACTER QA PASS:\n-[^\n]*/g, 'CHARACTER QA: preserve identity and outfit; redraw swaps or merged cast.');
+    .replace(/- In each Dialogue block,[^\n]*/g, '- TEXT MAP: print quoted TEXT only; no TAILS metadata.')
+    .replace(/- If one character, punctuation mark,[^\n]*/g, '- BUBBLE QA: copy TEXT exactly; tails touch speaker mouth/head; no extra bubbles/names.')
+    .replace(/- Action is visual only:[^\n]*/g, '- ACTION: visual only; no labels/narration/SFX if unscripted.')
+    .replace(/CHARACTER QA PASS:\n-[^\n]*/g, 'CHARACTER QA: preserve identity and outfit; redraw swaps or merged cast.')
+    .replace(/\n{3,}/g, '\n\n');
 };
 
 const buildVisualStoryEvidenceLock = (scenario) => {
