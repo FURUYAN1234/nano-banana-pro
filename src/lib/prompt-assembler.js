@@ -289,10 +289,11 @@ export const buildMangaPrompt = ({
   bg360Enabled,
   bg360CroppedPanels,
   punchlineType,
-  systemVersion
+  systemVersion,
+  allowScenarioQualityWarning = false
 }) => {
   const scenarioValidation = validateMangaScenario(scenario);
-  if (!scenarioValidation.ok) {
+  if (!scenarioValidation.ok && !allowScenarioQualityWarning) {
     throw new Error(`Incomplete 4-koma scenario: ${formatMangaScenarioValidationIssue(scenarioValidation)}`);
   }
   const effectiveProviderFamily = normalizePromptProviderFamily(providerFamily);

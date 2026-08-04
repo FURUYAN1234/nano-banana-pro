@@ -431,6 +431,10 @@ export async function enhanceScenarioText({
     },
     onRetry: (validation) => {
       onProgress?.(`出力検証NGのため自動修正します: ${validation.issueCodes.join(', ')}`);
+    },
+    onWarning: (validation, _text, fallbackToOriginal) => {
+      const retained = fallbackToOriginal ? '元のシナリオ' : '最良の安全候補';
+      onProgress?.(`強化品質の再試行上限に達したため、${retained}を保持して続行します: ${validation.issueCodes.join(', ')}`);
     }
   });
 }

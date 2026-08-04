@@ -49,6 +49,23 @@ const DIALOGUE_SOFTENING_RE = /もしかしたら|かもしれない|かもね|�
 const BACKGROUND_CLAUSE_RE = /[^。！？\n]*(?:背景|壁|床|天井|空間|照明|スポットライト|景色|室内|屋外|建物|空調)[^。！？\n]*[。！？]?/g;
 const BACKGROUND_MUTATION_RE = /背景.{0,24}(?:変形|変化|歪|崩|爆発|追加)|(?:壁|床|天井|空間|建物|部屋).{0,24}(?:波打|ねじれ|渦巻|崩|割れ|変形|消失)/g;
 
+// These break the edit contract or produce an unsafe/structurally unusable scenario.
+// Missing a requested enhancement is a quality deficit, not a reason to discard an
+// otherwise safe candidate and block the image-generation workflow.
+const HARD_ENHANCEMENT_ISSUE_CODES = new Set([
+  'output_too_short',
+  'passive_final_tableau',
+  'metadata_changed',
+  'panel_structure_changed',
+  'speaker_sequence_changed',
+  'dialogue_changed_without_selection',
+  'camera_changed_without_selection',
+  'emotion_changed_without_selection',
+  'background_changed_without_selection',
+  'tone_escalation',
+  'anatomy_escalation'
+]);
+
 const normalizeText = (value) =>
   String(value || '')
     .replace(/<thought>[\s\S]*?<\/thought>/gi, '')
@@ -118,6 +135,15 @@ const addIssue = (issues, issueCodes, code, message) => {
   if (!issueCodes.includes(code)) issueCodes.push(code);
   if (!issues.includes(message)) issues.push(message);
 };
+
+const hasHardEnhancementIssue = (validation) =>
+  validation.issueCodes.some((code) => HARD_ENHANCEMENT_ISSUE_CODES.has(code));
+
+const scoreEnhancementCandidate = (text, validation) => (
+  validation.changedCategories.length * 1000 -
+  validation.issueCodes.length * 100 +
+  Math.min(normalizeText(text).length, 999) / 1000
+);
 
 const categoryChanged = (category, original, candidate) => {
   switch (category) {
@@ -441,10 +467,12 @@ export const runValidatedScenarioEnhancement = async ({
   buildPrompt,
   requestEnhancement,
   maxAttempts = 2,
-  onRetry
+  onRetry,
+  onWarning
 }) => {
   let validationIssues = [];
-  let lastValidation = null;
+  let lastResult = null;
+  let bestSafeCandidate = null;
 
   for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
     const prompt = buildPrompt({ attempt, validationIssues });
@@ -465,11 +493,46 @@ export const runValidatedScenarioEnhancement = async ({
       };
     }
 
-    lastValidation = validation;
+    if (!hasHardEnhancementIssue(validation)) {
+      const score = scoreEnhancementCandidate(text, validation);
+      if (!bestSafeCandidate || score > bestSafeCandidate.score) {
+        bestSafeCandidate = { result, text, validation, score };
+      }
+    }
+
+    lastResult = result;
     validationIssues = validation.issueCodes;
     if (attempt < maxAttempts) onRetry?.(validation, attempt);
   }
 
-  const codes = lastValidation?.issueCodes?.join(', ') || 'unknown_validation_error';
-  throw new Error(`シナリオ強化の検証に失敗しました: ${codes}`);
+  if (bestSafeCandidate) {
+    const retainedOriginal = bestSafeCandidate.text === normalizeText(originalScenario);
+    onWarning?.(bestSafeCandidate.validation, bestSafeCandidate.text, retainedOriginal);
+    return {
+      ...bestSafeCandidate.result,
+      text: bestSafeCandidate.text,
+      attempts: maxAttempts,
+      validation: bestSafeCandidate.validation,
+      validationWarning: true,
+      fallbackToOriginal: retainedOriginal
+    };
+  }
+
+  // Every generated candidate breached a non-negotiable editing contract. Keep the
+  // known-safe original so the user can continue to STEP3/STEP4 rather than lose work.
+  const originalText = normalizeText(originalScenario);
+  const originalValidation = validateScenarioEnhancement({
+    originalScenario,
+    candidateScenario: originalText,
+    selectedCategories
+  });
+  onWarning?.(originalValidation, originalText, true);
+  return {
+    ...lastResult,
+    text: originalText,
+    attempts: maxAttempts,
+    validation: originalValidation,
+    validationWarning: true,
+    fallbackToOriginal: true
+  };
 };

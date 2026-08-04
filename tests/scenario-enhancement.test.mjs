@@ -211,16 +211,58 @@ test('invalid first output is retried once and only a validated rewrite is retur
   assert.ok(prompts[1].includes('dialogue_unchanged'));
 });
 
-test('enhancement fails closed after two invalid outputs', async () => {
+test('enhancement preserves the original scenario after two unchanged outputs', async () => {
   assert.equal(typeof enhancementModule.runValidatedScenarioEnhancement, 'function');
 
-  await assert.rejects(
-    enhancementModule.runValidatedScenarioEnhancement({
-      originalScenario,
-      selectedCategories: ['dialogue'],
-      buildPrompt: () => 'prompt',
-      requestEnhancement: async () => ({ text: originalScenario, model: 'test-model' })
-    }),
-    /dialogue_unchanged/
+  const result = await enhancementModule.runValidatedScenarioEnhancement({
+    originalScenario,
+    selectedCategories: ['dialogue'],
+    buildPrompt: () => 'prompt',
+    requestEnhancement: async () => ({ text: originalScenario, model: 'test-model' })
+  });
+
+  assert.equal(result.text, originalScenario);
+  assert.equal(result.validationWarning, true);
+  assert.equal(result.fallbackToOriginal, true);
+});
+
+test('quality retries retain the strongest safe partial enhancement instead of stopping', async () => {
+  assert.equal(typeof enhancementModule.runValidatedScenarioEnhancement, 'function');
+  const bodyOnlyCandidate = originalScenario.replace(
+    '状況: 全員の体型やパーツ配置が明らかに狂っている。空調の微かな音だけがする。',
+    '状況: 全員が互いの姿勢を見比べながら、片手で互いを指し示す。空調の微かな音だけがする。'
   );
+  const responses = [bodyOnlyCandidate, originalScenario];
+
+  const result = await enhancementModule.runValidatedScenarioEnhancement({
+    originalScenario,
+    selectedCategories: ['expressions', 'body'],
+    buildPrompt: () => 'prompt',
+    requestEnhancement: async () => ({ text: responses.shift(), model: 'test-model' })
+  });
+
+  assert.equal(result.text, bodyOnlyCandidate);
+  assert.equal(result.validation.ok, false);
+  assert.equal(result.validationWarning, true);
+  assert.deepEqual(result.validation.issueCodes, ['expressions_unchanged']);
+  assert.equal(result.attempts, 2);
+});
+
+test('quality retries fall back to the original only when every candidate breaks an editing contract', async () => {
+  assert.equal(typeof enhancementModule.runValidatedScenarioEnhancement, 'function');
+  const unsafeCandidate = originalScenario.replace(
+    '[Camera: ローアングル/アオリ]',
+    '[Camera: 真上からの俯瞰]'
+  );
+
+  const result = await enhancementModule.runValidatedScenarioEnhancement({
+    originalScenario,
+    selectedCategories: ['dialogue'],
+    buildPrompt: () => 'prompt',
+    requestEnhancement: async () => ({ text: unsafeCandidate, model: 'test-model' })
+  });
+
+  assert.equal(result.text, originalScenario);
+  assert.equal(result.validationWarning, true);
+  assert.deepEqual(result.validation.issueCodes, ['scenario_unchanged', 'dialogue_unchanged']);
 });

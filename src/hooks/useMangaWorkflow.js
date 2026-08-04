@@ -555,11 +555,15 @@ export default function useMangaWorkflow() {
         onProgress: (msg) => setEnhanceLog(prev => prev + `\n> [API] ${msg}`)
       });
 
-      if (result && result.text && result.validation?.ok) {
+      if (result && result.text && (result.validation?.ok || result.validationWarning)) {
         setScenario(result.text);
         setEnhanceLog(prev => {
           const retryInfo = result.attempts > 1 ? ` / 自動修正 ${result.attempts - 1}回` : '';
-          const baseLog = prev + `\n> [SUCCESS] 選択カテゴリだけを強化しました（${result.text.length}文字${retryInfo}）\n> [INFO] 「元に戻す」ボタンで強化前のシナリオに戻せます。`;
+          const warningLog = result.validationWarning
+            ? `\n> [WARNING] 強化品質の再試行上限に達したため、${result.fallbackToOriginal ? '元のシナリオ' : '最良の安全候補'}を保持してSTEP3へ進めます: ${result.validation?.issueCodes?.join(', ') || 'quality_check'}`
+            : '';
+          const successLabel = result.fallbackToOriginal ? '元のシナリオを保持しました' : '選択カテゴリだけを強化しました';
+          const baseLog = prev + `\n> [SUCCESS] ${successLabel}（${result.text.length}文字${retryInfo}）${warningLog}\n> [INFO] 「元に戻す」ボタンで強化前のシナリオに戻せます。`;
           if (result.thought) {
             const separator = "\n\n--- ✅ シナリオ強化完了 (思考トレース) ---\n";
             return baseLog + separator + result.thought;
@@ -573,7 +577,7 @@ export default function useMangaWorkflow() {
         setEnhanceCameraWork(false);
         setEnhanceDialogue(false);
         setEnhanceGag(false);
-        showStatus("シナリオ強化完了！");
+        showStatus(result.validationWarning ? "強化品質の警告がありますが、STEP3へ進めます" : "シナリオ強化完了！");
       } else {
         setEnhanceLog(prev => prev + "\n> [ERROR] AIの応答が短すぎます。もう一度お試しください。");
         showStatus("強化失敗: AIの応答が不十分です");
@@ -845,7 +849,8 @@ export default function useMangaWorkflow() {
         bg360Enabled,
         bg360CroppedPanels,
         punchlineType,
-        systemVersion: SYSTEM_VERSION
+        systemVersion: SYSTEM_VERSION,
+        allowScenarioQualityWarning: true
       });
 
       // Wait a bit to simulate processing/syncing (Important for User Experience)
