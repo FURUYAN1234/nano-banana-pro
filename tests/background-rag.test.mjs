@@ -10,6 +10,53 @@ import {
   validateDynamicBackground
 } from '../src/lib/dynamic-background.js';
 
+test('accepts a complete design when panel-anchor rendering is delegated to the final image lock', () => {
+  const scenario = `
+[1コマ目: introduction]
+action: the advisor explains the service.
+[2コマ目: development]
+action: a character reads the material.
+[3コマ目: turn]
+action: another character checks the data.
+[4コマ目: punchline]
+action: everyone reacts to the conclusion.`;
+
+  const validation = validateDynamicBackground({
+    location: 'municipal service counter',
+    backgroundDesign: {
+      space: 'public concourse with accessible routes and a service counter',
+      layers: '前景: leaflet stand / 中景: consultation counter / 後景: station information wall',
+      lighting: 'overcast afternoon with ceiling fixtures as the main light',
+      atmosphere: 'quiet public-service ambience with distant footsteps',
+      anchors: ['consultation notice', 'service counter'],
+      interactions: ['leaflet stand', 'countertop'],
+      avoid: 'unrelated locations, conflicting weather, and unsafe scenery'
+    },
+    scenario
+  });
+
+  assert.equal(validation.ok, true, validation.issueCodes.join(', '));
+});
+
+test('does not treat hazards named only in BackgroundAvoid as unsafe scenery', () => {
+  const validation = validateDynamicBackground({
+    location: '駅前のテイクアウト受け取りカウンター',
+    backgroundDesign: {
+      space: '駅前の店舗入口と受け取りカウンターを見渡せる歩道空間',
+      layers: '前景: メニュー看板 / 中景: 受け取りカウンター / 後景: 駅前の店舗外観',
+      lighting: '昼の自然光と店舗看板の補助光',
+      atmosphere: '注文を待つ人の足音と店内からの調理音',
+      anchors: ['メニュー看板', '受け取りカウンター'],
+      interactions: ['注文端末', '受け取り口'],
+      avoid: 'horror, gore, blood, body interiors, and unrelated locations'
+    },
+    scenario: '[1コマ目: 起] 状況: メニュー看板の前で注文を確認する。'
+  });
+
+  assert.equal(validation.ok, true, validation.issueCodes.join(', '));
+  assert.ok(!validation.issueCodes.includes('background_unsafe'));
+});
+
 let viteServer;
 let buildMangaPrompt;
 
@@ -117,12 +164,11 @@ test('rejects incomplete, unsafe, or non-recurring dynamic backgrounds', () => {
   assert.equal(validation.ok, false);
   assert.ok(validation.issueCodes.includes('background_layers_incomplete'));
   assert.ok(validation.issueCodes.includes('background_anchor_count'));
-  assert.ok(validation.issueCodes.includes('background_anchor_panel_coverage'));
   assert.ok(validation.issueCodes.includes('background_unsafe'));
   assert.equal(buildDynamicBackgroundLock('Location: 雨の駅前'), '');
 });
 
-test('rejects a panel that drops all anchors or changes the declared time and weather', () => {
+test('rejects a declared time or weather conflict without requiring anchor words in every scenario panel', () => {
   const scenario = `[1コマ目: 起]\n状況: 花輪アーチと乗船ゲートの前に全員が並ぶ。\n[2コマ目: 承]\n状況: 紙テープだけが舞い、背景の固定物は見えない。\n[3コマ目: 転]\n状況: 花輪アーチへ紙テープが絡む。\n[4コマ目: 結]\n状況: 夕日を浴びた巨大旅客船が雨の中で出航する。`;
   const validation = validateDynamicBackground({
     location: '港の乗船ゲート前',
@@ -139,7 +185,6 @@ test('rejects a panel that drops all anchors or changes the declared time and we
   });
 
   assert.equal(validation.ok, false);
-  assert.ok(validation.issueCodes.includes('background_anchor_every_panel'));
   assert.ok(validation.issueCodes.includes('background_time_conflict'));
   assert.ok(validation.issueCodes.includes('background_weather_conflict'));
 });

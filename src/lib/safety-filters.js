@@ -6,7 +6,11 @@ const translateApiError = (errorMsg) => {
   const msg = errorMsg || "";
   const lowerMsg = msg.toLowerCase();
   
-  if (lowerMsg.includes("api key not valid") || lowerMsg.includes("api_key_invalid") || lowerMsg.includes("invalid api key") || lowerMsg.includes("api key is invalid")) {
+  if (lowerMsg.includes("dynamic_background_invalid")) {
+    return "[ERROR GUIDE] 🧩 背景設計の検証に失敗しました。通信エラーではありません。\n[対処法] 自動再生成は行いません。表示された検証コードを確認し、必要な場合だけ場所・背景指定を修正してSTEP 2を手動実行してください。";
+  } else if (msg.includes("シナリオ本文の表現衛生ポリシー")) {
+    return "[ERROR GUIDE] 🧩 シナリオ本文の表現衛生検証に失敗しました。通信エラーではありません。\n[対処法] 自動再生成は行いません。表現を見直してからSTEP 2を手動実行してください。";
+  } else if (lowerMsg.includes("api key not valid") || lowerMsg.includes("api_key_invalid") || lowerMsg.includes("invalid api key") || lowerMsg.includes("api key is invalid")) {
     return "[ERROR GUIDE] 🔑 APIキーが無効であるか、正しく設定されていません。\n[対処法] 接続設定パネル（画面右上のAPIキー入力欄など）から、入力された Gemini API キーが正しいか確認してください。";
   } else if (lowerMsg.includes("sensitive") || lowerMsg.includes("responsible ai") || lowerMsg.includes("safety") || lowerMsg.includes("blocked")) {
     return "[ERROR GUIDE] 🚨 送信内容がAIの安全基準（NSFW等の検閲）に引っかかり、処理がブロックされました。\n[対処法] 送信内容（画像・テキスト）に過激・不適切な表現がないか確認し、修正して再試行してください。";

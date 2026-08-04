@@ -25,11 +25,6 @@ import {
   validateMangaScenario
 } from '../lib/scenario-validation';
 import { formatDynamicBackground } from '../lib/dynamic-background';
-import {
-  buildImageAnatomyQaPrompt,
-  buildImageAnatomyRetryPrompt,
-  parseImageAnatomyQaResponse
-} from '../lib/image-anatomy-qa';
 
 export default function useMangaWorkflow() {
   // Force Build 2026-02-06 07:07 // Build 2026-02-06-01
@@ -140,7 +135,6 @@ export default function useMangaWorkflow() {
   const [showPolicyChoice, setShowPolicyChoice] = useState(false); // 選択UIの表示制御
   const [policyAutoRetrying, setPolicyAutoRetrying] = useState(false); // 自動リトライ中フラグ
   const MAX_POLICY_RETRIES = 3; // 最大リトライ回数
-  const VISUAL_QA_MAX_RETRIES = 1;
   const lastPolicyErrorRef = useRef(""); // 直近のポリシーエラーメッセージ（state更新待ち不要）
 
   // [v2.41] シナリオ強化パネル
@@ -1118,31 +1112,9 @@ export default function useMangaWorkflow() {
 
       const normalizedBase64Img = String(base64Img || '').replace(/\s+/g, '');
       const finalImageStr = `data:${generatedMimeType};base64,${normalizedBase64Img}`;
-      statCallback(`[QA] Vision anatomy review (${visualQaAttempt + 1}/${VISUAL_QA_MAX_RETRIES + 1})...`);
-      const visualQaImage = enableOpenAIApi
-        ? finalImageStr
-        : { inlineData: { mimeType: generatedMimeType, data: normalizedBase64Img } };
-      const qaResponse = await callAI(
-        buildImageAnatomyQaPrompt({ scenario, castList }),
-        [visualQaImage],
-        'Return only the requested JSON. Reject only clearly visible limb anatomy defects.',
-        statCallback
-      );
-      const visualQa = parseImageAnatomyQaResponse(qaResponse?.text);
-      if (!visualQa.pass) {
-        const issueSummary = visualQa.issues
-          .map((issue) => `panel ${issue.panel ?? '?'} ${issue.subject || 'character'}: ${issue.reason}`)
-          .join(' | ');
-        statCallback(`[QA] REJECTED: ${issueSummary}`);
-        if (visualQaAttempt < VISUAL_QA_MAX_RETRIES) {
-          statCallback(`[QA] Regenerating once with anatomy correction (${visualQaAttempt + 1}/${VISUAL_QA_MAX_RETRIES})...`);
-          return regenerateImage(true, buildImageAnatomyRetryPrompt(currentPrompt, visualQa.issues), visualQaAttempt + 1);
-        }
-        throw new Error(`Visual anatomy QA rejected the generated image after ${VISUAL_QA_MAX_RETRIES + 1} attempts: ${issueSummary}`);
-      }
-      statCallback('[QA] PASS: no visible extra, detached, or missing arm/hand detected.');
       setGeneratedImage(finalImageStr);
       setGenerationHistory(prev => addGenerationHistoryItem(prev, { id: Date.now(), img: finalImageStr }));
+      statCallback('[QA] 自動視覚QA・自動再生成は実行せず、受信済み画像をそのまま表示します。');
       
       // [v3.56] OpenAIモデル (gpt-image-2等) は正規モデルとして扱い、フォールバック警告を出さない
       const isOpenAIModel = generatedModelId && generatedModelId.startsWith("gpt-");

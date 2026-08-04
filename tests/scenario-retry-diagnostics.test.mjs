@@ -52,8 +52,14 @@ test('manual scenario input is labelled as user-provided rather than verified ex
   assert.doesNotMatch(providerSource, /LLMの内部知識で補完/);
 });
 
-test('scenario generation keeps one final background-validation attempt after a content rewrite', async () => {
+test('scenario generation never hides a semantic validation failure behind automatic retries', async () => {
   const source = await readFile(new URL('../src/lib/scenario-provider.js', import.meta.url), 'utf8');
 
-  assert.match(source, /requestSafeScenario\(\{[\s\S]*?maxAttempts:\s*3[\s\S]*?\}\);/);
+  assert.match(source, /requestSafeScenario\(\{[\s\S]*?maxAttempts:\s*1[\s\S]*?\}\);/);
+});
+
+test('scenario content policy runs once instead of reissuing a hidden second API request', async () => {
+  const source = await readFile(new URL('../src/lib/scenario-provider.js', import.meta.url), 'utf8');
+
+  assert.match(source, /requestSafeScenarioContent\(\{[\s\S]*?maxAttempts:\s*1[\s\S]*?\}\)/);
 });

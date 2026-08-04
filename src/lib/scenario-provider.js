@@ -266,7 +266,7 @@ export async function generateScenario({
     requestScenario: (prompt) => requestSafeScenarioContent({
       initialPrompt: prompt,
       requestScenario: (contentPrompt) => callAI(contentPrompt, [], castList, onProgress),
-      onRetry: () => onProgress('シナリオ本文の表現衛生に合わない表現を検出したため、一般向けの表現で再生成します...')
+      maxAttempts: 1
     }).then(({ response }) => response),
     parseScenario: (response) => parseScenarioResponse(response, {
       randomCategory,
@@ -278,9 +278,7 @@ export async function generateScenario({
       scenario: parsedScenario,
       punchlineType: activePunchlineType
     }),
-    retryInstruction: `${VISUAL_STORY_EVIDENCE_RETRY_INSTRUCTION}\n\n${DYNAMIC_BACKGROUND_RETRY_INSTRUCTION}\n\n${FINAL_PANEL_ACTIVE_STAGING_RETRY_INSTRUCTION}`,
-    maxAttempts: 3,
-    onRetry: (event) => onProgress(formatScenarioRetryProgress(event))
+    maxAttempts: 1
   });
   const result = safeScenarioResult.response;
   const parsedData = safeScenarioResult.parsed;

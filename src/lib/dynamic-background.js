@@ -21,10 +21,6 @@ const extractField = (text, label) => (
   String(text || '').match(new RegExp(`^${label}\\s*:\\s*(.+)$`, 'im'))?.[1]?.trim() || ''
 );
 
-const extractPanels = (scenario) => (
-  String(scenario || '').match(/\[\d+コマ目[^\]]*\][\s\S]*?(?=\[\d+コマ目[^\]]*\]|$)/g) || []
-);
-
 const CONTINUITY_GROUPS = {
   time: [
     /早朝|午前|朝日|朝(?:[、。\s]|$)/,
@@ -90,13 +86,6 @@ export const validateDynamicBackground = ({ location = '', backgroundDesign = {}
     issueCodes.push('background_interaction_count');
   }
 
-  const panels = extractPanels(scenario);
-  const anchors = Array.isArray(design.anchors) ? design.anchors : [];
-  const coveredPanels = panels.filter((panel) => anchors.some((anchor) => panel.includes(anchor)));
-  const usedAnchors = anchors.filter((anchor) => panels.some((panel) => panel.includes(anchor)));
-  if (coveredPanels.length < 3) issueCodes.push('background_anchor_panel_coverage');
-  if (panels.length !== 4 || coveredPanels.length !== panels.length) issueCodes.push('background_anchor_every_panel');
-  if (usedAnchors.length < 2) issueCodes.push('background_anchor_variety');
   if (hasContinuityConflict(design.lighting, scenario, CONTINUITY_GROUPS.time)) {
     issueCodes.push('background_time_conflict');
   }
@@ -104,13 +93,17 @@ export const validateDynamicBackground = ({ location = '', backgroundDesign = {}
     issueCodes.push('background_weather_conflict');
   }
 
-  if (!isSafeLocationContent(location, design)) issueCodes.push('background_unsafe');
+  // BackgroundAvoid is a negative instruction and is expected to name hazards
+  // such as "horror" or "body interiors".  Validate the pictured setting,
+  // not the words that explicitly forbid it.
+  const { avoid: _avoid, ...picturedDesign } = design;
+  if (!isSafeLocationContent(location, picturedDesign)) issueCodes.push('background_unsafe');
 
   return {
     ok: issueCodes.length === 0,
     design,
-    coveredPanels: coveredPanels.length,
-    usedAnchors,
+    coveredPanels: 0,
+    usedAnchors: [],
     issueCodes: [...new Set(issueCodes)]
   };
 };
