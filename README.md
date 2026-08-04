@@ -794,6 +794,9 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 
 ## 📋 ChangeLog
 
+### v5.1.6 (2026-08-04)
+- **[Fix & UX]** 開発中の更新でAPI接続を空にしない保護を追加 / Protected active API connections during development refreshes
+
 ### v5.1.5 (2026-08-04)
 - **[Fix & UX]** 強化品質の再試行で最良候補を保持し、品質警告でもSTEP3・STEP4を継続 / Retained the best enhancement candidate and continued through quality warnings
 

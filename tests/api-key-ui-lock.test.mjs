@@ -29,6 +29,15 @@ test('saved API keys are preflight-verified before restoring connected state', a
   assert.match(source, /setShowModal\(true\);[\s\S]*?showStatus\("保存済みAPIキーの検証に失敗しました。再入力してください。"\)/);
 });
 
+test('Vite refresh does not replay API bootstrap and clear an already connected in-memory engine', async () => {
+  const source = await readSource('../src/hooks/useMangaWorkflow.js');
+
+  assert.match(source, /const API_BOOTSTRAP_WINDOW_FLAG = '__nanoBananaApiBootstrapComplete';/);
+  assert.match(source, /if \(window\[API_BOOTSTRAP_WINDOW_FLAG\]\) return undefined;/);
+  assert.match(source, /window\[API_BOOTSTRAP_WINDOW_FLAG\] = true;/);
+  assert.doesNotMatch(source, /localStorage\.setItem\([^\n]*api.?key/i);
+});
+
 test('a missing in-memory OpenAI key reopens the modal without clearing manga work', async () => {
   const source = await readSource('../src/hooks/useMangaWorkflow.js');
 

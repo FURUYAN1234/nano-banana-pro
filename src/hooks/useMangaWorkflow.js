@@ -26,6 +26,10 @@ import {
 } from '../lib/scenario-validation';
 import { formatDynamicBackground } from '../lib/dynamic-background';
 
+// This flag carries no credential. It only prevents Vite/Fast Refresh from
+// replaying the mount-time key reset against an already connected in-memory UI.
+const API_BOOTSTRAP_WINDOW_FLAG = '__nanoBananaApiBootstrapComplete';
+
 export default function useMangaWorkflow() {
   // Force Build 2026-02-06 07:07 // Build 2026-02-06-01
   const [apiKey, setApiKeyState] = useState("");
@@ -65,6 +69,9 @@ export default function useMangaWorkflow() {
 
   // Initialize System
   useEffect(() => {
+    if (window[API_BOOTSTRAP_WINDOW_FLAG]) return undefined;
+    window[API_BOOTSTRAP_WINDOW_FLAG] = true;
+
     let cancelled = false;
 
     const restoreVerifiedKey = async () => {
