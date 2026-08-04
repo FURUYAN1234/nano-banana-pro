@@ -105,7 +105,12 @@ export const requestSafeScenario = async ({
       return { response, parsed, attempts: attempt + 1 };
     } catch (error) {
       lastSafetyError = error;
-      if (attempt + 1 < maxAttempts) onRetry(attempt + 1);
+      if (attempt + 1 < maxAttempts) {
+        onRetry({
+          attempt: attempt + 1,
+          code: typeof error?.code === 'string' ? error.code : 'SAFE_LOCATION'
+        });
+      }
     }
   }
 

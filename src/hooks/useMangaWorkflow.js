@@ -646,21 +646,10 @@ export default function useMangaWorkflow() {
       }
     }
 
-    let scenarioTickCount = 0;
+    const scenarioStartedAt = Date.now();
     const scenarioTimer = setInterval(() => {
-      scenarioTickCount++;
       setScenarioThought(prev => {
-        if (scenarioTickCount <= 8) {
-          const messages = [
-            ".", ".", ".",
-            "\n> グローバルニュースデータベースをスキャン中...",
-            "\n> トレンドトピックをクロスリファレンス中...",
-            "\n> 関連記事をフィルタリング中...",
-            "\n> ナラティブフレームワークを構築中...",
-          ];
-          return prev + messages[Math.floor(Math.random() * messages.length)];
-        }
-        const elapsed = Math.floor(scenarioTickCount * 0.8);
+        const elapsed = Math.floor((Date.now() - scenarioStartedAt) / 1000);
         const timerLine = `\n> ⏳ AI応答を待機中... (${elapsed}秒経過)`;
         const timerRegex = /\n> ⏳ AI応答を待機中\.\.\..*\(\d+秒経過\)/;
         if (timerRegex.test(prev)) {

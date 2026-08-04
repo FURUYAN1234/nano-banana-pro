@@ -23,6 +23,37 @@ import {
   runValidatedScenarioEnhancement
 } from './scenario-enhancement';
 
+const scenarioRetryLabels = {
+  SAFE_LOCATION: '安全な舞台設定',
+  VISUAL_STORY_EVIDENCE: '出来事を証明する視覚要素',
+  DYNAMIC_BACKGROUND: '動的背景設計',
+  FINAL_PANEL_STAGING: '4コマ目の能動アクション'
+};
+
+const assertScenarioCheck = (code, check) => {
+  try {
+    check();
+  } catch (error) {
+    error.code = code;
+    throw error;
+  }
+};
+
+const validateScenarioForRetry = ({ scenario, punchlineType }) => {
+  assertScenarioCheck('VISUAL_STORY_EVIDENCE', () => assertVisualStoryEvidence(scenario));
+  assertScenarioCheck('DYNAMIC_BACKGROUND', () => assertDynamicBackground(scenario));
+  assertScenarioCheck('FINAL_PANEL_STAGING', () => assertActiveFinalPanelStaging({
+    scenario: scenario.scenario,
+    punchlineType
+  }));
+  return true;
+};
+
+export const formatScenarioRetryProgress = ({ code } = {}) => {
+  const label = scenarioRetryLabels[code] || 'シナリオ出力';
+  return `「${label}」の検証に通らなかったため、同じ入力で完全なシナリオを再生成します...`;
+};
+
 // [v3.85-alpha] シナリオ生成と強化ロジックの外部モジュール化
 
 const parseScenarioResponse = (result, {
@@ -128,8 +159,8 @@ export async function generateScenario({
     【ユーザー提供トピック/URL】:
     ${manualTopic}
     
-    (指示): 上記のユーザー入力（メモまたはURLの内容）を「ニュースソース」として扱い、シナリオを作成せよ。
-    URLが含まれる場合は、そのリンク先の内容を推測・補完して構成せよ。
+    (扱い): 上記はユーザー提供のトピックまたはメモであり、外部事実として断定しない。入力文に書かれた内容だけを材料にシナリオを作成せよ。
+    URLが含まれる場合も、本文の取得に成功したときだけその抽出内容を使い、取得できなければURLの内容を推測・補完してはならない。
     `;
 
     const urlRegex = /(https?:\/\/[^\s]+)/g;
@@ -168,7 +199,7 @@ export async function generateScenario({
         `;
       } catch (fetchErr) {
         console.error("URL Fetch Error: ", fetchErr);
-        onProgress(`警告: URLコンテンツの取得に失敗しました (${fetchErr.message})。LLMの内部知識で補完します。`);
+        onProgress(`警告: URLコンテンツの取得に失敗しました (${fetchErr.message})。URLの内容は使用せず、ユーザー入力の本文だけでシナリオを作成します。`);
       }
     }
   }
@@ -243,17 +274,13 @@ export async function generateScenario({
       manualTopic,
       searchTopic
     }),
-    validateScenario: (parsedScenario) => {
-      assertVisualStoryEvidence(parsedScenario);
-      assertDynamicBackground(parsedScenario);
-      assertActiveFinalPanelStaging({
-        scenario: parsedScenario.scenario,
-        punchlineType: activePunchlineType
-      });
-      return true;
-    },
+    validateScenario: (parsedScenario) => validateScenarioForRetry({
+      scenario: parsedScenario,
+      punchlineType: activePunchlineType
+    }),
     retryInstruction: `${VISUAL_STORY_EVIDENCE_RETRY_INSTRUCTION}\n\n${DYNAMIC_BACKGROUND_RETRY_INSTRUCTION}\n\n${FINAL_PANEL_ACTIVE_STAGING_RETRY_INSTRUCTION}`,
-    onRetry: () => onProgress('舞台の安全性、動的背景設計、または出来事を証明する視覚要素が不足したため、完全な背景情報を補って再生成します...')
+    maxAttempts: 3,
+    onRetry: (event) => onProgress(formatScenarioRetryProgress(event))
   });
   const result = safeScenarioResult.response;
   const parsedData = safeScenarioResult.parsed;
