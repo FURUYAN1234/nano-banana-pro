@@ -46,6 +46,16 @@ try {
 
     const packageJson = JSON.parse(fs.readFileSync('package.json', 'utf-8'));
     const pkgVersion = packageJson.version; // "x.y.z-alpha"
+    const versionParts = /^(\d+)\.(\d+)\.(\d+)(?:-\w+)?$/.exec(pkgVersion);
+    if (!versionParts) {
+        console.error(`❌ [Version] Invalid version format: ${pkgVersion}`);
+        process.exit(1);
+    }
+    const [, , minor, patch] = versionParts.map(Number);
+    if (minor > 9 || patch > 9) {
+        console.error(`❌ [Version] Minor and patch components must be single digits: ${pkgVersion}`);
+        process.exit(1);
+    }
 
     // src/lib/constants.js の SYSTEM_VERSION を取得
     const constantsJs = fs.readFileSync('src/lib/constants.js', 'utf-8');

@@ -794,8 +794,8 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 
 ## 📋 ChangeLog
 
-### v5.0.10 (2026-08-04)
-- **[Fix & UX]** 4コマ漫画の画面密度と人物明瞭性を強化 / Improved four-panel scene density and character clarity
+### v5.1.0 (2026-08-04)
+- **[Fix & UX]** v5.0.9の次を番号規則どおりv5.1.0へ訂正し、桁上げを自動検査 / Corrected the release number from v5.0.9 to v5.1.0 and enforce carry validation
 
 ### v5.0.9 (2026-08-03)
 - **[Fix & UX]** 背景プリセットを廃止し、動的背景設計と4コマ継続検証へ移行 / Replaced background presets with dynamic per-story background design and four-panel continuity validation

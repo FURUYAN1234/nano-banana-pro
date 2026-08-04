@@ -50,11 +50,30 @@ const entryEn = `- **[Fix & UX]** ${cleanJa} / ${cleanEn}`; // 同期表記
 
 const targetFiles = {
   packageJson: path.join(__dirname, '../package.json'),
+  packageLock: path.join(__dirname, '../package-lock.json'),
   constantsJs: path.join(__dirname, '../src/lib/constants.js'),
   indexHtml: path.join(__dirname, '../index.html'),
   readmeMd: path.join(__dirname, '../README.md'),
   hfReadmeMd: path.join(process.env.USERPROFILE || '', 'Antigravity', 'hf-nano-banana-pro', 'README.md')
 };
+
+function parseVersion(version) {
+  const match = /^(\d+)\.(\d+)\.(\d+)(?:-\w+)?$/.exec(version);
+  if (!match) {
+    throw new Error(`Invalid version format: ${version}`);
+  }
+  return match.slice(1, 4).map(Number);
+}
+
+function getExpectedNextVersion(currentVersion) {
+  const [major, minor, patch] = parseVersion(currentVersion);
+
+  // Repair a previously published invalid two-digit component by carrying it.
+  if (minor > 9) return `${major + 1}.0.0`;
+  if (patch > 9) return `${major}.${minor + 1}.0`;
+  if (patch === 9) return minor === 9 ? `${major + 1}.0.0` : `${major}.${minor + 1}.0`;
+  return `${major}.${minor}.${patch + 1}`;
+}
 
 // 全ファイルの存在確認
 for (const [key, filePath] of Object.entries(targetFiles)) {
@@ -64,12 +83,30 @@ for (const [key, filePath] of Object.entries(targetFiles)) {
   }
 }
 
+const currentVersion = JSON.parse(fs.readFileSync(targetFiles.packageJson, 'utf8')).version;
+const [, nextMinor, nextPatch] = parseVersion(newVersion);
+if (nextMinor > 9 || nextPatch > 9) {
+  console.error('❌ Error: Minor and patch components must be single digits (0-9).');
+  process.exit(1);
+}
+
+const expectedVersion = getExpectedNextVersion(currentVersion);
+if (newVersion !== expectedVersion) {
+  console.error(`❌ Error: Version must advance from v${currentVersion} to v${expectedVersion} under the release numbering rule.`);
+  process.exit(1);
+}
+
 try {
   // 1. package.json の更新
-  console.log(`[1/5] Updating package.json...`);
+  console.log(`[1/5] Updating package.json and package-lock.json...`);
   const pkgContent = fs.readFileSync(targetFiles.packageJson, 'utf8');
   const updatedPkg = pkgContent.replace(/"version":\s*"[^"]+"/, `"version": "${newVersion}"`);
   fs.writeFileSync(targetFiles.packageJson, updatedPkg, 'utf8');
+  const packageLockContent = fs.readFileSync(targetFiles.packageLock, 'utf8');
+  const updatedPackageLock = packageLockContent
+    .replace(/"version":\s*"[^"]+"/, `"version": "${newVersion}"`)
+    .replace(/("":\s*\{\s*"name":\s*"nano-banana-pro",\s*"version":\s*")[^"]+"/, `$1${newVersion}"`);
+  fs.writeFileSync(targetFiles.packageLock, updatedPackageLock, 'utf8');
   console.log(`      -> version: "${newVersion}"`);
 
   // 2. src/lib/constants.js の更新
