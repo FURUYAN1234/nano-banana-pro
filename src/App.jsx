@@ -145,6 +145,7 @@ function App() {
     showModal,
     showOpenAIKeyModal,
     showStatus,
+    step1Reset,
     status,
     step2Ref,
     step3Ref,
@@ -229,6 +230,7 @@ function App() {
           apiKey={apiKeyForUnlockedUi}
           selectedEngine={selectedEngine}
           partialReset={partialReset}
+          step1Reset={step1Reset}
           hardReset={hardReset}
           usedModel={usedModel}
           getModelBadgeInfo={getModelBadgeInfo}

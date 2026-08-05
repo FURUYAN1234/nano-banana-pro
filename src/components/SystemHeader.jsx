@@ -7,6 +7,7 @@ export default function SystemHeader({
   apiKey,
   selectedEngine,
   partialReset,
+  step1Reset,
   hardReset,
   usedModel,
   getModelBadgeInfo
@@ -46,13 +47,20 @@ export default function SystemHeader({
               </div>
               
               {apiKey && (
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center justify-center gap-2">
                   <button
                     onClick={partialReset}
                     className="flex items-center gap-1.5 bg-white/5 hover:bg-white/10 text-slate-300 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors border border-white/10"
                     title="キャラクター設定は残したまま、シナリオ・指示文・画像をリセットして新しく作り直します"
                   >
-                    <RefreshCw size={12} /> シナリオから作り直す
+                    <RefreshCw size={12} /> シナリオ（STEP2）からやり直す
+                  </button>
+                  <button
+                    onClick={step1Reset}
+                    className="flex items-center gap-1.5 bg-blue-950/40 hover:bg-blue-900/50 text-blue-200 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors border border-blue-500/20"
+                    title="API接続は残したまま、キャラクターシート・抽出設定・解析ログと、それ以降の作業をリセットします"
+                  >
+                    <RefreshCw size={12} /> キャラクター解析（STEP1）からやり直す
                   </button>
                   <button
                     onClick={hardReset}

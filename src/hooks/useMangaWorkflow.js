@@ -955,6 +955,18 @@ export default function useMangaWorkflow() {
     showStatus("シナリオ以降をリセットしました。キャラクター解析は保持しています。");
   };
 
+  // STEP1 reset: preserve the configured API connection while discarding character analysis and dependent work.
+  const step1Reset = () => {
+    partialReset();
+    setCastList("");
+    setImages([]);
+    setAnalyzeThought("");
+    setStyleJson(null);
+    setIsCastListCopied(false);
+    setIsDragging(false);
+    showStatus("キャラクター解析からリセットしました。API接続は保持しています。");
+  };
+
   // [v3.59] ハードリセット: 全データ消去 + APIキー再入力モーダルを表示
   const hardReset = () => {
     setCastList("");
@@ -1753,6 +1765,7 @@ export default function useMangaWorkflow() {
     setShowModal,
     setShowOpenAIKeyModal,
     setStyleJson,
+    step1Reset,
     setTargetDate,
     showModal,
     showOpenAIKeyModal,
