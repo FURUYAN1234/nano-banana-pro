@@ -182,6 +182,60 @@ Outfit: 反AIメッセージ入りの白いTシャツ
   }
 });
 
+test('keeps expression-and-body descriptions with quoted shapes or reactions out of speech bubbles', () => {
+  const expressionScenario = `
+## タイトル: 米高官「インフレ優先」!?
+Location: 国会議事堂の会議室
+Outfit: ビジネススーツ
+
+[1コマ目: 起]
+状況: ミクが資料を掲げる。
+セリフ:
+ミク「見て見て！消費税1%下げ案だよ！」
+
+[2コマ目: 承]
+状況: ベッセント財務長官が資料を机に叩きつける。
+表情・身体: ベッセントは眉を吊り上げ、ミクは目を見開き、アカリの口も「へ」の字で驚き顔。ヒカリはペンを握り直す。
+セリフ:
+ベッセント「インフレ抑制が最優先だ！」
+ヒカリ「減税より…インフレ対策が先なんですか？」
+
+[3コマ目: 転]
+状況: サエコがスマホを見せる。
+セリフ:
+サエコ「Xでは賛否で大荒れよ。」
+
+[4コマ目: 結]
+状況: ミクが椅子の上で「インフレもギャルでぶっ飛ばすっしょ！」と絶叫する。
+表情・身体: ミクは両手を広げ、アカリはペットボトルを落として「あっ！」と驚いた顔。
+セリフ:
+ミク「インフレもギャルでぶっとばすっしょ！」
+サエコ「ギャル理論で経済回るわけないでしょ！」
+ヒカリ「椅子が倒れる…！」
+`;
+
+  for (const providerFamily of ['chatgpt', 'gemini']) {
+    const prompt = buildMangaPrompt({
+      scenario: expressionScenario,
+      castList: CAST_LIST,
+      colorMode: 'color',
+      providerFamily,
+      punchlineType: 'ドキュメンタリー',
+      systemVersion: 'v5.1.8-test'
+    });
+
+    assert.doesNotMatch(prompt, /表情・身体/);
+    assert.doesNotMatch(prompt, /B\d+="(?:ベッセントは眉を吊り上げ|ミクは両手を広げ)/);
+    assert.doesNotMatch(prompt, /B\d+="(?:へ|あっ！)"/);
+    assert.doesNotMatch(prompt, /Panel 4 required dialogue: ミク「インフレもギャルでぶっ飛ばすっしょ！」/);
+    assert.doesNotMatch(prompt, /B\d+="インフレもギャルでぶっ飛ばすっしょ！"/);
+    assert.match(prompt, /Panel 2 required dialogue: ベッセント「インフレ抑制が最優先だ！」 \/ ヒカリ「減税より…インフレ対策が先なんですか？」/);
+    assert.match(prompt, /Panel 4 required dialogue: ミク「インフレもギャルでぶっとばすっしょ！」 \/ サエコ「ギャル理論で経済回るわけないでしょ！」 \/ ヒカリ「椅子が倒れる…！」/);
+    assert.match(prompt, /ベッセントは眉を吊り上げ/);
+    assert.match(prompt, /ミクは両手を広げ/);
+  }
+});
+
 const LONG_DIALOGUE = 'この状況さ、職人がホームセンターの客に「仕事取るな」って怒鳴ってるのと同じだよね…。本気で抗議するなら、店かメーカーに言わない？';
 const LONG_DIALOGUE_SCENARIO = `
 ## タイトル: 長台詞ロック検証!?

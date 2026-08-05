@@ -268,7 +268,7 @@ export const isLikelyPerson = (name, validCharacters = []) => {
 const ACOUSTIC_QUOTE_POST_RE = /^\s*(?:という[^\n「」]{0,12}音|っていう[^\n「」]{0,12}音|と[^\n「」]{0,20}(?:音(?:が|を|で|。|、|$)|異音|金属音|爆音|轟音|衝撃音))/;
 const SPOKEN_QUOTE_POST_RE = /^\s*(?:と|って)?\s*(?:[^「」。！？!?\n]{0,32})?(?:言|いう|言い|言う|言った|叫|叫び|叫ぶ|叫ん|呼|呼び|呟|つぶや|つぶやき|囁|ささや|ささやき|読み上げ|読みあげ|読み|発表|告げ|答|返|話|語|宣言|絶叫|嘆|漏ら|口に|述べ|怒鳴|呻|うめ|唸|ツッコ|つっこ|突っ込|問|尋)/;
 const STAGING_GAG_LINE_RE = /^\s*演出(?:[・･／/]ギャグ)?\s*[:：]/;
-const META_SPEAKER_LABEL_RE = /^(?:Camera|Location|Outfit|EMOTION|状況(?:演出)?|Action|リアクション|Reaction|設定|物理描写|SFX|SE|効果音|音響効果|音響|音声|BGM|ナレーション|テロップ|聴覚|触覚|嗅覚|体内感覚|視覚|照明|光|演出(?:[・･／/]ギャグ)?|空間|構図|背景|Background|カメラワーク|CameraWork|Camera\s*Work|セリフ|台詞|Dialogue|Punchline)$/i;
+const META_SPEAKER_LABEL_RE = /^(?:Camera|Location|Outfit|EMOTION|状況(?:演出)?|Action|リアクション|Reaction|設定|物理描写|表情(?:[・･／/]身体)?|身体|動作|ポーズ|姿勢|目線|視線|SFX|SE|効果音|音響効果|音響|音声|BGM|ナレーション|テロップ|聴覚|触覚|嗅覚|体内感覚|視覚|照明|光|演出(?:[・･／/]ギャグ)?|空間|構図|背景|Background|カメラワーク|CameraWork|Camera\s*Work|セリフ|台詞|Dialogue|Punchline)$/i;
 
 const hasAcousticQuotePostContext = (postText = '') => ACOUSTIC_QUOTE_POST_RE.test(postText.trim());
 const hasSpokenQuotePostContext = (postText = '') => {
@@ -276,7 +276,7 @@ const hasSpokenQuotePostContext = (postText = '') => {
   return !hasAcousticQuotePostContext(cleanPostText) && SPOKEN_QUOTE_POST_RE.test(cleanPostText);
 };
 
-const INSTRUCTION_LINE_RE = /^\s*(?:\[?\s*(?:Camera|Location|Outfit|EMOTION|Action|Reaction|Background|CameraWork|Camera\s*Work)\s*[:：]|状況(?:演出)?\s*[:：]|演出(?:[・･／/]ギャグ)?\s*[:：]|リアクション\s*[:：]|設定\s*[:：]|物理描写\s*[:：]|SFX\s*[:：]|SE\s*[:：]|効果音\s*[:：]|音響効果\s*[:：]|音響\s*[:：]|音声\s*[:：]|BGM\s*[:：]|ナレーション\s*[:：]|テロップ\s*[:：]|背景\s*[:：]|カメラワーク\s*[:：]|Punchline\s*[:：])/i;
+const INSTRUCTION_LINE_RE = /^\s*(?:\[?\s*(?:Camera|Location|Outfit|EMOTION|Action|Reaction|Background|CameraWork|Camera\s*Work)\s*[:：]|状況(?:演出)?\s*[:：]|演出(?:[・･／/]ギャグ)?\s*[:：]|リアクション\s*[:：]|設定\s*[:：]|物理描写\s*[:：]|表情(?:[・･／/]身体)?\s*[:：]|身体\s*[:：]|動作\s*[:：]|ポーズ\s*[:：]|姿勢\s*[:：]|目線\s*[:：]|視線\s*[:：]|SFX\s*[:：]|SE\s*[:：]|効果音\s*[:：]|音響効果\s*[:：]|音響\s*[:：]|音声\s*[:：]|BGM\s*[:：]|ナレーション\s*[:：]|テロップ\s*[:：]|背景\s*[:：]|カメラワーク\s*[:：]|Punchline\s*[:：])/i;
 
 const isInstructionLine = (line = '') => INSTRUCTION_LINE_RE.test(String(line).trim());
 
@@ -397,6 +397,43 @@ const isCoveredByExistingSpeechBubble = (speechBubbleEntries, dialogueText = '')
     if (!existing) return false;
     if (existing === target) return true;
     return target.length >= 4 && existing.includes(target);
+  });
+};
+
+const dialogueEditDistance = (left = '', right = '') => {
+  const a = Array.from(left);
+  const b = Array.from(right);
+  const row = Array.from({ length: b.length + 1 }, (_, index) => index);
+
+  for (let i = 1; i <= a.length; i++) {
+    let diagonal = row[0];
+    row[0] = i;
+    for (let j = 1; j <= b.length; j++) {
+      const previous = row[j];
+      row[j] = Math.min(
+        row[j] + 1,
+        row[j - 1] + 1,
+        diagonal + (a[i - 1] === b[j - 1] ? 0 : 1)
+      );
+      diagonal = previous;
+    }
+  }
+
+  return row[b.length];
+};
+
+const isNearDuplicateSpeechForSpeaker = (speechBubbleEntries, speaker = '', dialogueText = '') => {
+  const target = normalizeDialogueCoverageText(dialogueText);
+  const speakerKey = normalizeSpeakerKey(speaker);
+  if (!speakerKey || target.length < 4) return false;
+
+  return speechBubbleEntries.some(entry => {
+    if (normalizeSpeakerKey(entry.speaker) !== speakerKey) return false;
+    const existing = normalizeDialogueCoverageText(entry.text);
+    if (!existing) return false;
+    const longest = Math.max(existing.length, target.length);
+    if (Math.abs(existing.length - target.length) > Math.max(1, Math.floor(longest * 0.15))) return false;
+    return dialogueEditDistance(existing, target) <= Math.max(1, Math.floor(longest * 0.15));
   });
 };
 
@@ -708,6 +745,7 @@ export const extractDialogueOnly = (fullPanelText, castList, options = {}) => {
         // Infer a nearby speaker for spoken quotes embedded inside action narration.
         const fallbackSpeakerName = inferredSpokenSpeaker || getSpokenQuoteSpeakerName(sameLinePrevText, validCharacters);
         if (!fallbackSpeakerName) continue;
+        if (isNearDuplicateSpeechForSpeaker(speechBubbleEntries, fallbackSpeakerName, dialogueText)) continue;
         if (isCoveredByExistingSpeechBubble(speechBubbleEntries, dialogueText)) continue;
         pushSpeechBubble(fallbackSpeakerName, dialogueText, match.index);
       }
@@ -1006,7 +1044,7 @@ export const extractActionOnly = (fullPanelText, castList, placementRule = "") =
   //   ※ EMOTION はパネルの PANEL STYLE LOCK 欄、Camera は Camera 欄で既に正規化済み。
   actionStr = actionStr.replace(/\[\s*(?:EMOTION|Camera|Location|Outfit|Action|Reaction|Background|カメラワーク|CameraWork|Camera\s*Work|Punchline)\s*[:：][^\]]*\]/gi, ' ');
   // [FIX] 「状況:」「Situation:」等のラベル語だけを除去し、後続の視覚描写本文は残す。
-  actionStr = actionStr.replace(/(?:^|[\s　])(?:状況(?:演出)?|演出(?:[・･／/]ギャグ)?|Situation)\s*[:：]\s*/gi, ' ');
+  actionStr = actionStr.replace(/(?:^|[\s　])(?:状況(?:演出)?|演出(?:[・･／/]ギャグ)?|表情(?:[・･／/]身体)?|身体|動作|ポーズ|姿勢|目線|視線|Situation)\s*[:：]\s*/gi, ' ');
   // 上記除去で生じた連続スペースを圧縮
   actionStr = actionStr.replace(/[ 　]{2,}/g, ' ').trim();
 
