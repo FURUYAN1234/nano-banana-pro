@@ -821,6 +821,9 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 
 ## 📋 ChangeLog
 
+### v5.2.1 (2026-08-05)
+- **[Fix & UX]** 演出・ギャグ構造ラベルを汎用的にActionへ振り分け、説明文の吹き出し化を防止 / Routed staging-gag structural labels to visual Action and prevented direction prose from becoming speech bubbles
+
 ### v5.2.0 (2026-08-05)
 - **[Fix & UX]** STEP1キャラクター解析リセットを追加し、API接続を保持したままキャラクターシート・抽出設定・解析ログとSTEP2以降を消去できるように改善 / Added a STEP1 character-analysis reset that preserves the API connection while clearing character sheets, extracted settings, analysis logs, and STEP2-plus work
 

@@ -114,6 +114,90 @@ test('keeps staging-and-gag directions and their explicit SFX out of speech bubb
   assert.match(action, /「カサッ」と擦れる音/);
 });
 
+test('keeps gag-direction prose out of speech bubbles when the structural label is reversed', () => {
+  const cases = [
+    {
+      panelText: `
+[2コマ目: 承]
+ギャグ演出: 「羞恥」の文字がカナの頭上で赤く点滅、カナは両手をバタバタ。
+カナ「この“共感性羞恥”…ガチで心えぐられるやつだよ…！」
+`,
+      expectedDialogue: 'この“共感性羞恥”…ガチで心えぐられるやつだよ…！',
+      directionText: '「羞恥」の文字がカナの頭上で赤く点滅、カナは両手をバタバタ。'
+    },
+    {
+      panelText: `
+[3コマ目: 転]
+ギャグ演出: ユリエの目がキラリと光り、背景に「観察中…」の小さな効果音。
+ユリエ「私たちの黒歴史、まさかこんな形で…さらされてたのかもね。」
+`,
+      expectedDialogue: '私たちの黒歴史、まさかこんな形で…さらされてたのかもね。',
+      directionText: 'ユリエの目がキラリと光り、背景に「観察中…」の小さな効果音。'
+    },
+    {
+      panelText: `
+[4コマ目: 結]
+ギャグ演出: ショウコの背後に「バグ多発！」の効果音マーク、リンの頭上に「バグ」の吹き出し、カナの頭上に「現実ショック」のフキダシ。
+ショウコ「現実の方が、バグだらけだよ。」
+`,
+      expectedDialogue: '現実の方が、バグだらけだよ。',
+      directionText: 'ショウコの背後に「バグ多発！」の効果音マーク、リンの頭上に「バグ」の吹き出し、カナの頭上に「現実ショック」のフキダシ。'
+    }
+  ];
+
+  const castList = `
+## リン
+- brown hair
+## カナ
+- orange hair
+## ユリエ
+- blonde hair
+## ショウコ
+- black hair
+`;
+
+  for (const { panelText, expectedDialogue, directionText } of cases) {
+    const dialogue = extractDialogueOnly(panelText, castList);
+    const action = extractActionOnly(panelText, castList);
+
+    assert.doesNotMatch(dialogue, /ギャグ演出|文字がカナの頭上|ユリエの目がキラリ|ショウコの背後/);
+    assert.match(dialogue, new RegExp(expectedDialogue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+    assert.doesNotMatch(action, /ギャグ演出\s*[:：]/);
+    assert.match(action, new RegExp(directionText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+  }
+});
+
+test('normalizes bullets, spacing, separators, and wrappers around staging-gag labels', () => {
+  const directionText = '「羞恥」の文字がカナの頭上で赤く点滅、カナは両手をバタバタ。';
+  const variants = [
+    `- ギャグ演出: ${directionText}`,
+    `* ギャグ 演出： ${directionText}`,
+    `・演出 ギャグ: ${directionText}`,
+    `【ギャグ演出: ${directionText}】`,
+    `[演出 / ギャグ： ${directionText}]`
+  ];
+  const castList = `
+## カナ
+- orange bob hair
+`;
+
+  for (const stagingLine of variants) {
+    const panelText = `
+[2コマ目: 承]
+${stagingLine}
+カナ「この“共感性羞恥”…ガチで心えぐられるやつだよ…！」
+`;
+    const dialogue = extractDialogueOnly(panelText, castList);
+    const action = extractActionOnly(panelText, castList);
+
+    assert.doesNotMatch(dialogue, /ギャグ|演出|文字がカナの頭上/);
+    assert.match(dialogue, /この“共感性羞恥”…ガチで心えぐられるやつだよ…！/);
+    assert.doesNotMatch(action, /(?:ギャグ\s*(?:[・･／/]\s*)?演出|演出\s*(?:[・･／/]\s*)?ギャグ)\s*[:：]/);
+    assert.doesNotMatch(action, /^[\s\S]*[【\[]|[】\]]\s*$/);
+    assert.match(action, /「羞恥」の文字がカナの頭上で赤く点滅、カナは両手をバタバタ。/);
+  }
+});
+
 test('removes quoted ambient-sound lettering while preserving grammatical visual action', () => {
   const panelText = `
 [4コマ目: 結]

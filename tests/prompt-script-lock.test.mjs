@@ -182,6 +182,112 @@ Outfit: 反AIメッセージ入りの白いTシャツ
   }
 });
 
+test('routes reversed gag-direction labels to visual action instead of dialogue for both providers', () => {
+  const scenario = `
+## タイトル: 美術部カノジョ新作話題!?
+Location: オタク女子の自宅リビング
+Outfit: カジュアルな私服
+
+[1コマ目: 起]
+状況: リンがSteamのウィッシュリスト画面を指す。
+リン「うちら、これモデルって言われても…否定しきれないよね。」
+[2コマ目: 承]
+ギャグ演出: 「羞恥」の文字がカナの頭上で赤く点滅、カナは両手をバタバタ。
+カナ「この“共感性羞恥”…ガチで心えぐられるやつだよ…！」
+[3コマ目: 転]
+ギャグ演出: ユリエの目がキラリと光り、背景に「観察中…」の小さな効果音。
+ユリエ「私たちの黒歴史、まさかこんな形で…さらされてたのかもね。」
+ショウコ「現実にもバグ、普通にいるよね…。」
+[4コマ目: 結]
+ギャグ演出: ショウコの背後に「バグ多発！」の効果音マーク、リンの頭上に「バグ」の吹き出し、カナの頭上に「現実ショック」のフキダシ。
+ショウコ「現実の方が、バグだらけだよ。」
+`;
+  const castList = `
+## リン
+- brown hair, twin tails, glasses
+## カナ
+- orange bob hair
+## ユリエ
+- blonde hair
+## ショウコ
+- black hair
+`;
+
+  for (const providerFamily of ['chatgpt', 'gemini']) {
+    const prompt = buildMangaPrompt({
+      scenario,
+      castList,
+      colorMode: 'color',
+      providerFamily,
+      punchlineType: 'Auto',
+      systemVersion: 'v5.1.9-test'
+    });
+
+    assert.doesNotMatch(prompt, /B\d+="(?:「羞恥」の文字が|ユリエの目がキラリ|ショウコの背後)/);
+    assert.doesNotMatch(prompt, /TAILS[^\n]*ギャグ演出/);
+    assert.doesNotMatch(prompt, /ギャグ演出\s*[:：]/);
+    assert.match(prompt, /Panel 2 required dialogue: カナ「この“共感性羞恥”…ガチで心えぐられるやつだよ…！」/);
+    assert.match(prompt, /Panel 3 required dialogue: ユリエ「私たちの黒歴史、まさかこんな形で…さらされてたのかもね。」 \/ ショウコ「現実にもバグ、普通にいるよね…。」/);
+    assert.match(prompt, /Panel 4 required dialogue: ショウコ「現実の方が、バグだらけだよ。」/);
+    assert.match(prompt, /「羞恥」の文字がカナの頭上で赤く点滅/);
+    assert.match(prompt, /背景に「観察中…」の小さな効果音/);
+    assert.match(prompt, /ショウコの背後に「バグ多発！」の効果音マーク/);
+  }
+});
+
+test('keeps formatted staging-gag label variants visual-only in provider prompts', () => {
+  const scenario = `
+## タイトル: 美術部カノジョ新作話題!?
+Location: オタク女子の自宅リビング
+Outfit: カジュアルな私服
+
+[1コマ目: 起]
+状況: リンがSteamのウィッシュリスト画面を指す。
+リン「うちら、これモデルって言われても…否定しきれないよね。」
+[2コマ目: 承]
+- ギャグ 演出: 「羞恥」の文字がカナの頭上で赤く点滅、カナは両手をバタバタ。
+カナ「この“共感性羞恥”…ガチで心えぐられるやつだよ…！」
+[3コマ目: 転]
+【演出 / ギャグ： ユリエの目がキラリと光り、背景に「観察中…」の小さな効果音。】
+ユリエ「私たちの黒歴史、まさかこんな形で…さらされてたのかもね。」
+ショウコ「現実にもバグ、普通にいるよね…。」
+[4コマ目: 結]
+* ギャグ・演出: ショウコの背後に「バグ多発！」の効果音マーク、リンの頭上に「バグ」の吹き出し、カナの頭上に「現実ショック」のフキダシ。
+ショウコ「現実の方が、バグだらけだよ。」
+`;
+  const castList = `
+## リン
+- brown hair, twin tails, glasses
+## カナ
+- orange bob hair
+## ユリエ
+- blonde wavy hair
+## ショウコ
+- black hair
+`;
+
+  for (const providerFamily of ['chatgpt', 'gemini']) {
+    const prompt = buildMangaPrompt({
+      scenario,
+      castList,
+      colorMode: 'color',
+      providerFamily,
+      punchlineType: 'Auto',
+      systemVersion: 'v5.1.9-test'
+    });
+
+    assert.doesNotMatch(prompt, /B\d+="(?:「羞恥」の文字が|ユリエの目がキラリ|ショウコの背後)/);
+    assert.doesNotMatch(prompt, /TAILS[^\n]*(?:ギャグ\s*演出|演出\s*[／/]\s*ギャグ)/);
+    assert.doesNotMatch(prompt, /(?:ギャグ\s*(?:[・･／/]\s*)?演出|演出\s*(?:[・･／/]\s*)?ギャグ)\s*[:：]/);
+    assert.match(prompt, /Panel 2 required dialogue: カナ「この“共感性羞恥”…ガチで心えぐられるやつだよ…！」/);
+    assert.match(prompt, /Panel 3 required dialogue: ユリエ「私たちの黒歴史、まさかこんな形で…さらされてたのかもね。」 \/ ショウコ「現実にもバグ、普通にいるよね…。」/);
+    assert.match(prompt, /Panel 4 required dialogue: ショウコ「現実の方が、バグだらけだよ。」/);
+    assert.match(prompt, /「羞恥」の文字がカナの頭上で赤く点滅/);
+    assert.match(prompt, /背景に「観察中…」の小さな効果音/);
+    assert.match(prompt, /ショウコの背後に「バグ多発！」の効果音マーク/);
+  }
+});
+
 test('keeps expression-and-body descriptions with quoted shapes or reactions out of speech bubbles', () => {
   const expressionScenario = `
 ## タイトル: 米高官「インフレ優先」!?
