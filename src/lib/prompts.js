@@ -3,6 +3,7 @@ import { SAFE_VISUAL_CONTENT_LOCK } from './location-policy';
 import { FINAL_PANEL_ACTIVE_STAGING_SCENARIO_CONTRACT } from './final-panel-staging';
 import { buildScenarioEnhancementPrompt } from './scenario-enhancement';
 import { buildManualTopicExclusionPrompt } from './manual-topic-exclusions';
+import { SHARED_IMAGE_QUALITY_CONTRACT } from './shared-image-quality';
 
 // --- プロンプトテンプレート (prompts.js) ---
 // App.jsx から抽出された大規模プロンプト文字列テンプレート群
@@ -737,6 +738,7 @@ FORMAT:
 ${scriptLock}
 
 ART / RENDERING QUALITY:
+${SHARED_IMAGE_QUALITY_CONTRACT}
 - Clean finish: crisp foreground, softer background, lighting.
 - CLEAN SURFACE PROTOCOL: no grain/speckles/dithering/rough texture/pores/moire/dust/particles/sparkle unless a panel style exception allows it.
 - MANGA FINISH ASSIST: preserve script/cast/camera/layout; keep bubble space, cast/background light and color, coherent anatomy, and setting depth.
@@ -894,6 +896,7 @@ Tech Dict:
 (NO unrelated ENGLISH TEXT outside watermark or small context-appropriate prop/background decoration. NO 'G-pen'/'HA': 3.0)
 
 GEMINI STABILITY / QUALITY LOCK:
+${SHARED_IMAGE_QUALITY_CONTRACT}
 - Use a richer professional manga finish than a flat template: layered foreground/midground/background, meaningful setting props, varied lighting, crisp line weight variation, and panel-specific atmosphere. Do not leave plain empty walls or generic blank rooms unless the script explicitly asks for emptiness.
 ${RICH_PANEL_COMPOSITION_LOCK}
 - MANGA FINISH ASSIST: preserve script/cast/camera/layout; keep bubble space, cast/background light and color, coherent anatomy, and setting depth.

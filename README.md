@@ -1,6 +1,6 @@
 # Super FURU AI 4-koma System
 
-> Latest release: **v5.1.9** / 最新リリース: **v5.1.9**
+> Latest release: **v5.2.2** / 最新リリース: **v5.2.2**
 
 > **"To what extent can humans step away from the creative process?"**
 > **「人間は、どこまで制作から降りられるのか？」**
@@ -820,6 +820,9 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 ---
 
 ## 📋 ChangeLog
+
+### v5.2.2 (2026-08-06)
+- **[Fix & UX]** 一枚絵と4コマで共通の品質契約を適用し、背景・照明・解剖・質感の基準を同期 / Applied one shared quality contract across single-image and four-panel prompts for setting, lighting, anatomy, and clean rendering
 
 ### v5.2.1 (2026-08-05)
 - **[Fix & UX]** 演出・ギャグ構造ラベルを汎用的にActionへ振り分け、説明文の吹き出し化を防止 / Routed staging-gag structural labels to visual Action and prevented direction prose from becoming speech bubbles

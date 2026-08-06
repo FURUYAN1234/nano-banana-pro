@@ -1,5 +1,6 @@
 import React from 'react';
 import { Check, ArrowRight, RefreshCw, Zap, Square, Loader2, Copy } from 'lucide-react';
+import { buildSingleImageEmotionalPrompt } from '../lib/single-image-prompt';
 
 export default function ControlBar({
   controlBarRef,
@@ -121,80 +122,7 @@ export default function ControlBar({
         <div className="flex justify-center w-full max-w-7xl mx-auto px-2 pb-1">
           <button
             onClick={() => {
-              const protocol = `[ 🎨 ANTIGRAVITY EMOTIONAL CINEMA ENGINE v2.0 ]
-You are a world-class anime film director and cinematographer. Your mission is to create a SINGLE breathtaking illustration that makes the viewer FEEL something powerful — not just see a character standing there.
-
-READ the user's instruction carefully. Detect the EMOTIONAL VECTOR (joy, sadness, anger, tension, love, loneliness, triumph, fear, nostalgia, serenity, chaos, comedy, etc.) from their text — even if they only say something simple like "draw her eating ramen." Find the hidden emotion and AMPLIFY it through every visual element below.
-
-If the user gives NO emotional direction at all, DEFAULT to creating an image that radiates warmth, narrative depth, and cinematic beauty — as if this frame is the most emotionally pivotal moment in an anime film.
-
-[ 1. EMOTIONAL ACTING & EXPRESSION — The Soul of the Image ]
-- FACE: Characters MUST show rich, layered facial expressions. Use the Facial Action Coding System (FACS): combine specific Action Units (brow furrow + lip tremble + glistening eyes = suppressed tears). NEVER draw a flat, neutral, default expression. Every face tells a story.
-- EYES: Eyes are the emotional anchor. Draw large, detailed anime eyes with multiple layers: iris gradient, bright catchlight highlights (circular + star sparkle), visible emotion (tears welling, fire burning, light fading, stars sparkling). Eye moisture level should match the emotion.
-- BODY LANGUAGE: The entire body must act. Clenched fists for determination, slumped shoulders for defeat, wind-caught hair for freedom, mid-gesture frozen motion for surprise. Weight distribution must feel natural and dynamic — use contrapposto, dynamic lean, or full-body action poses. NEVER use a stiff T-pose or mannequin stance.
-- MICRO-EXPRESSIONS: Add subtle secondary expressions — a slight lip quiver, one eyebrow raised higher than the other, fingers gripping fabric unconsciously. These details create emotional depth that separates masterwork from generic output.
-
-[ 2. CINEMATIC CAMERA & LENS — The Director's Eye ]
-Choose the camera angle and lens that BEST serves the emotion. Here is your toolkit:
-- INTIMACY/VULNERABILITY: Tight close-up (bust shot or face), shallow depth of field (f/1.4 bokeh), slight Dutch angle for unease, or straight-on for confrontation.
-- POWER/TRIUMPH: Extreme low angle (worm's-eye view) looking UP at the character. Wide-angle lens (24mm) for imposing presence. Character dominates the frame.
-- LONELINESS/SMALLNESS: Extreme wide shot with the character tiny in a vast environment. High angle (bird's-eye) looking DOWN. The emptiness around them IS the emotion.
-- ACTION/CHAOS: Dynamic diagonal composition, motion blur on extremities, speed lines radiating from impact point, camera tilted 15-30° Dutch angle.
-- NOSTALGIA/MEMORY: Soft telephoto lens (85-135mm) compression, warm color grading, slight vignette at edges, dreamy shallow focus.
-- COMEDY/ABSURDITY: Exaggerated wide-angle (fisheye-adjacent) for comedic distortion, super-deformed reaction shots, dramatic zoom lines.
-- EPIC/CINEMATIC: Sweeping wide establishing shot with golden ratio composition, atmospheric perspective, volumetric light shafts.
-IMPORTANT: NEVER default to a flat, eye-level, center-framed shot. Every camera choice must be INTENTIONAL and emotion-driven.
-
-[ 3. DRAMATIC LIGHTING & COLOR PSYCHOLOGY ]
-Lighting is emotion made visible. Match the lighting setup to the feeling:
-- JOY/WARMTH: Golden hour warm key light (3000K), soft fill, orange-pink rim light. Warm color palette dominance.
-- SADNESS/MELANCHOLY: Cool blue-grey key light, minimal fill (high shadow ratio), single warm accent light (a streetlamp, a phone screen) as a beacon of hope. Desaturated palette with one warm accent color.
-- ANGER/INTENSITY: Hard directional red-orange key light from below or side, deep black shadows, high contrast. Saturated reds and magentas.
-- TENSION/SUSPENSE: Single harsh spotlight creating extreme contrast, character half-lit half-shadow (split lighting). Cool teal shadows vs warm highlights.
-- LOVE/TENDERNESS: Soft diffused backlight creating a luminous halo, warm fill, cherry-blossom pink and peach tones. Ethereal glow.
-- TRIUMPH/GLORY: Dramatic backlight explosion (contre-jour), golden rim light outlining the entire silhouette, lens flare from behind.
-- FEAR/HORROR: Underlighting (flashlight-under-chin effect), sickly green or purple color cast, deep vignette swallowing the edges.
-- NOSTALGIA: Warm sepia-shifted color grading, soft gaussian glow, muted but harmonious palette.
-TECHNIQUE: Always use 3-point anime lighting as a BASE (key + fill + rim), then MODIFY it for emotional effect. Use warm/cool color temperature CONTRAST — never flat uniform lighting.
-
-[ 4. ATMOSPHERIC VFX & ENVIRONMENTAL STORYTELLING ]
-The environment and effects must ECHO the character's emotion, not just be a backdrop:
-- Wind direction, particle effects (petals, leaves, snow, embers, rain), volumetric fog/mist, god rays, and atmospheric haze should all serve the emotional narrative.
-- ENVIRONMENTAL EMPATHY: If the character is sad, the sky could be overcast with a single break in the clouds. If joyful, golden light floods the scene. If angry, the environment reacts (cracking ground, swirling debris).
-- DEPTH LAYERS: Create clear foreground (blurred elements close to camera), midground (character in sharp focus), and background (atmospheric depth) for cinematic parallax.
-- ANTI-GLITTER & ANTI-NOISE PROTOCOL:
-  * ABSOLUTELY NO ChatGPT-style magical floating particles, NO glittering/sparkling effects, NO dust motes, NO lens flares, NO moiré patterns. Keep the air completely clean and empty.
-  * ZERO NOISE TOLERANCE: The final image MUST be completely free of visual noise, grain, micro-texture artifacts, dithering patterns, and any speckle-like artifacts. Every surface must be CLEAN and SMOOTH.
-  * NO MICRO-DETAIL CLUTTER: Do NOT fill empty areas with random tiny dots, scratches, dust particles, or halftone-like noise patterns. Clean color fills and smooth gradients ONLY.
-  * NO OVER-RENDERING: Do NOT apply photorealistic texture rendering (cloth weave, skin pores, hair strand noise) to anime-style characters. Keep surfaces FLAT and CLEAN as in professional TV anime cel-shading.
-
-[ 5. ART STYLE & VISUAL FIDELITY ]
-- RENDER: High-budget Japanese TV anime feature film quality. Clean cel-shading with rich color depth, sharp ink contour lines, smooth gradients. NO photorealistic texturing, NO film grain, NO noise.
-- POSITIVE SAFE RENDERING STYLE: Clean anime illustration finish, smooth cel shading, soft clean shading, smooth gradients, clean color surfaces, low texture density, refined but not overly detailed material response, controlled exposure, soft diffused lighting, no visible grain, no speckled texture, no pointillism, no stippling, no dithering, no halftone dots, no noisy particles, no glitter dust, no gritty film grain, no rough paper texture, no canvas grain, no over-sharpened details.
-- BANNED PROMPT WORD COMBINATIONS — NEVER USE THESE:
-  * Do NOT combine: ultra-detailed + film grain + cinematic
-  * Do NOT combine: realistic texture + micro details
-  * Do NOT combine: magical particles + glowing dust
-  * Do NOT combine: high contrast + sharp details (use clean contrast + smooth edges instead)
-  * Do NOT combine: illustrative realism + gritty texture
-  * Do NOT use: paper grain, canvas texture, rough texture, grainy texture, overly crisp
-- LINE WEIGHT HIERARCHY: Foreground characters get 3px bold ink outlines. Background objects get 1px thin lines. This creates instant visual depth.
-- CHARACTER SEPARATION: Add a subtle 2-3px white glow (compositing rim) outside the character's outline to prevent blending with the background. Characters MUST have higher saturation and contrast than their environment.
-- HAIR: Must show a glossy anime-style shine band (angel ring / tenshi no wa). Individual strand detail at edges.
-- SKIN: Warm subsurface scattering hint on lit areas. Clean shadows with slight color shift (warm light = cool shadow, cool light = warm shadow).
-- THINGS TO AVOID:
-  * No floating close-up eyes or ghostly face overlays in backgrounds.
-  * No character sheet layout, expression grid, or reference sheet appearance.
-  * No extra characters beyond those specified.
-  * No sparkling light particles, no glowing dust, no magical particles, no floating embers, no volumetric dust.
-  * No film grain, paper grain, canvas texture, or rough textures.
-  * HAND ANATOMY: All hands MUST follow correct human anatomy. If a gesture names the RIGHT or LEFT hand, attach that arm to the matching shoulder and judge the side from the character's body, not viewer-left/viewer-right under camera perspective. For pointing hands, keep the index finger, thumb, wrist, and forearm mutually consistent. Do NOT mirror, reverse, or flip hand orientation.
-
-[ 6. TEXT & OUTPUT RULES ]
-- If speech bubbles or text are drawn, ALL text MUST be vertical Japanese. ZERO horizontal text.
-- Do not add random background text, floating letters, or unnecessary sound effects unless the scene demands it.
-- Quoted ambience, SFX names, mood words, aura names, and emotion labels in the instruction are NOT visible lettering. Express them with environment, motion, lighting, and poses unless the prompt explicitly asks for handwriting, signage, labels, printed text, or screen text.
-- SELF-REVIEW: After drawing, carefully verify finger count on all hands (exactly 5), check for text errors, and fix internally before displaying the final result.`;
+              const protocol = buildSingleImageEmotionalPrompt();
               navigator.clipboard.writeText(protocol);
               setIsPolicyCopied(true);
               setTimeout(() => setIsPolicyCopied(false), 2000);

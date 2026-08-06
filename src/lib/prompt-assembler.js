@@ -124,6 +124,7 @@ const compactChatGPTConversationRules = (prompt) => {
     .replace(/CONVERSATIONAL DEPTH BASE:[^\n]*/g, 'CONVERSATIONAL DEPTH: counterpart gaze; varied 3/4 and OTS depth.')
     .replace(/EYE-LINE LOCK:[^\n]*(?=\nAction \(visual only\):)/g, 'EYE-LINE: counterpart gaze, never lens; 3/4 speaker + visible OTS partner depth.')
     .replace(/MANGA FINISH ASSIST:[^\n]*/g, 'FINISH: bubbles, anatomy.')
+    .replace(/\[ SHARED IMAGE QUALITY CONTRACT[\s\S]*?(?=\n- Clean finish:)/g, 'SHARED IMAGE QUALITY CONTRACT: preserve cast/action/setting/camera; rich physical setting with depth; coherent anatomy and prop ownership; localized clothing-fold shadows; no invented or duplicate cast; clean surfaces.')
     .replace(/RICH PANEL COMPOSITION \/ CHARACTER CLARITY LOCK:[\s\S]*?(?=\n- CLOTHING FOLD SHADOW ASSIST:)/g, 'RICH PANEL COMPOSITION / CHARACTER CLARITY LOCK: 1 fixed anchor + 2 physical setting cues/panel; VFX overlay, never replace setting; face, eyes, silhouette, hands and action stay crisp; background rich but softer/lower contrast; no blank walls, flat gradients or black voids.')
     .replace(/CLEAN SURFACE PROTOCOL:[^\n]*/g, 'CLEAN: no noise except style exceptions.')
     .replace(/CLOTHING FOLD SHADOW ASSIST:[^\n]*/g, 'FOLD SHADOWS: crisp triangular overlap shadows; no geometric patterns.')
@@ -139,6 +140,7 @@ const compactChatGPTConversationRules = (prompt) => {
   if (compacted.length <= CHATGPT_WEB_COPY_SOFT_BUDGET) return compacted;
 
   return compacted
+    .replace(/SHARED IMAGE QUALITY CONTRACT:[^\n]*/g, 'SHARED QUALITY: preserve direction; rich setting; anatomy/props; folds; no duplicate cast; clean surfaces.')
     .replace(
       /RICH PANEL COMPOSITION \/ CHARACTER CLARITY LOCK:[^\n]*/g,
       'RICH PANEL: physical setting behind cast; keep face, silhouette, hands, and action crisp.'
