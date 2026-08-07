@@ -703,6 +703,11 @@ const RICH_PANEL_COMPOSITION_LOCK = `RICH PANEL COMPOSITION / CHARACTER CLARITY 
 - Render rich background detail at lower contrast and with softer edges than the cast.
 - Negative space is only for bubbles and figure separation; no broad blank walls, flat gradients, black voids, or empty fields unless the script requires physical emptiness.`;
 
+const CROSS_PANEL_WARDROBE_COLOR_LOCK = `CROSS-PANEL WARDROBE COLOR LOCK:
+- Before drawing, choose each named character's concrete garment items, base colors, accent colors, material, and pattern once; reuse that exact wardrobe assignment in every later panel. If only a broad category is given, individualize without cloning.
+- Every PANEL STYLE LOCK changes background/environment palette, VFX, linework, shading, and rendering treatment only; it must not recolor, replace, add, or remove that character's garments.
+- Local lighting may change highlights and shadows, but the garment's canonical base and accent colors remain recognizable. Monochrome panels preserve the same colors as tonal values.`;
+
 export const buildChatGPTMangaPrompt = (p) => {
   const {
     safeTopic, watermarkEng, styleCore, safeLocation,
@@ -754,6 +759,7 @@ CAMERA: vary angles; preserve anatomy and the script lock.
 CHARACTER IDENTITY:
 - Reproduce reference face, hair, eyes, skin, accessories. No feature swapping.
 ${outfitRule}
+${CROSS_PANEL_WARDROBE_COLOR_LOCK}
 - Adults 20+. Same face/hair/glasses/skin/outfit across all panels.
 - Cast details: ${compactCastDetails}
 - Identity Anchor: ${identityMatrix}
@@ -775,7 +781,7 @@ CHARACTER QA PASS:
 - Match hair color, hairstyle, eye color, glasses status, skin tone, outfit, and accessories; redraw swaps, merges, or wrong cast.
 
 ART-STYLE DIFFERENCE QA LOCK:
-- Adjacent PANEL STYLE LOCKs differ in at least three of linework, palette, shading, background/VFX, texture/surface treatment. Redraw the same clean anime style with only pose, expression, saturation, glow, or speed lines changed. Never override script/dialogue/identity/key prop/A4 layout.
+- Adjacent PANEL STYLE LOCKs differ in at least three of linework, environmental palette, shading, background/VFX, texture/surface treatment. Environmental palette changes apply to background, lighting treatment, and VFX, never to canonical garment colors. Redraw the same clean anime style with only pose, expression, saturation, glow, or speed lines changed. Never override script/dialogue/identity/key prop/A4 layout.
 
 THINGS TO AVOID:
 - No plastic skin, extra logos/watermarks, floating/ghost eyes/faces, duplicate humans, unrelated text.
@@ -869,6 +875,7 @@ ${VAR_CAST_LIST}
 ${outfitOverride}
 【Identity Anchor】: Cross-panel consistency is MANDATORY. Redraw if hair/eyes/glasses/outfit mismatch.
 ${identityMatrix}
+${CROSS_PANEL_WARDROBE_COLOR_LOCK}
 OUTFIT CONSISTENCY: Every character MUST wear EXACT same outfit in ALL 4 panels. NO changes.
 GLASSES VERIFICATION (MANDATORY): Before finalizing EACH panel, count the number of characters wearing glasses. Compare against the Identity Matrix. If the count does not match, redraw. Characters without glasses must have fully visible bare eyes with NO frames.
 

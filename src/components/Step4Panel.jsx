@@ -431,7 +431,16 @@ You MUST discard the previously generated image completely.
 DO NOT crop, resize, extend, pad, or reuse any part of the previous image.
 This is NOT a correction. This is a FULL REGENERATION.
 
-THIS IS A STRUCTURAL CORRECTION TASK. PRIORITIZE LAYOUT OVER STYLE.
+THIS IS A STRUCTURAL CORRECTION TASK. Rebuild page geometry only; source-image fidelity outranks layout and style.
+
+━━━━━━━━━━━━━━━━━━
+■ SOURCE FIDELITY LOCK (NON-NEGOTIABLE)
+━━━━━━━━━━━━━━━━━━
+- Treat the attached previous manga as the exact visual source. Rebuild only its A4 page geometry; do not reinterpret its story or character design.
+- Preserve every named character exactly: same faces, hair, skin, glasses, accessories, garment items, base colors, accents, materials, and patterns. Lighting may alter shading only; it must never recolor, swap, simplify, or replace clothing.
+- Do not add, remove, merge, duplicate, rename, or replace characters. Do not create extra background people that could be confused with the existing cast.
+- Keep the same story beats, character-to-action ownership, dialogue text, speech-bubble speakers, key props, setting, and time of day. Keep all visual evidence. Reframe a panel only as much as the A4 grid requires.
+- Keep panel order and each character's identity stable while rebuilding the four-panel grid. The source image is not merely style inspiration; it is the content that must survive the layout correction.
 
 ━━━━━━━━━━━━━━━━━━
 ■ ART STYLE PRESERVATION (CRITICAL)

@@ -23,6 +23,14 @@ test('ratio fix copy button hides its base label while showing copied feedback',
   );
 });
 
+test('ratio fix preserves source-image character and wardrobe continuity while rebuilding the page geometry', () => {
+  assert.match(step4PanelSource, /SOURCE FIDELITY LOCK/);
+  assert.match(step4PanelSource, /Treat the attached previous manga as the exact visual source/i);
+  assert.match(step4PanelSource, /same faces, hair, skin, glasses, accessories, garment items, base colors, accents, materials, and patterns/i);
+  assert.match(step4PanelSource, /Do not add, remove, merge, duplicate, rename, or replace characters/i);
+  assert.match(step4PanelSource, /Keep the same story beats, character-to-action ownership, dialogue text, speech-bubble speakers, key props, setting, and time of day/i);
+});
+
 test('upscale helper prompt is original and does not copy the social post title', () => {
   assert.doesNotMatch(step4PanelSource, /GPT Native Super Resolution Ver2\.1/);
   assert.doesNotMatch(step4PanelSource, /Eris Create Lab/);

@@ -64,16 +64,16 @@ test('selected texture-driven styles add compact panel exceptions to the final C
     systemVersion: 'v4.8.2-test'
   });
 
-  assert.match(prompt, /CLEAN SURFACE PROTOCOL:.*panel style exception/i);
+  assert.match(prompt, /CLEAN SURFACE PROTOCOL:.*panel style exception|CLEAN: no noise except style exceptions/i);
   assert.match(prompt, /STYLE EXCEPTION: intentional halftone\/screentone on backgrounds and retro panel borders only/i);
   assert.match(prompt, /STYLE EXCEPTION: intentional Ben-Day dots and retro print texture only/i);
   assert.match(prompt, /STYLE EXCEPTION: intentional watercolor wash and paper grain only/i);
   assert.match(prompt, /STYLE EXCEPTION: intentional pencil grain, rough hatching, and construction lines only/i);
   assert.equal((prompt.match(/PANEL STYLE LOCK:/g) || []).length, 4);
-  assert.match(prompt, /PANEL STYLE LOCK: RETRO; visibly distinct linework, palette, shading, background\/VFX.*Change at least three visual axes/i);
-  assert.match(prompt, /PANEL STYLE LOCK: POP_ART; visibly distinct linework, palette, shading, background\/VFX.*Change at least three visual axes/i);
-  assert.match(prompt, /PANEL STYLE LOCK: WATERCOLOR; visibly distinct linework, palette, shading, background\/VFX.*Change at least three visual axes/i);
-  assert.match(prompt, /PANEL STYLE LOCK: SKETCH; visibly distinct linework, palette, shading, background\/VFX.*Change at least three visual axes/i);
+  assert.match(prompt, /PANEL STYLE LOCK: RETRO; visibly distinct linework, environmental palette, shading, background\/VFX.*Change at least three visual axes/i);
+  assert.match(prompt, /PANEL STYLE LOCK: POP_ART; visibly distinct linework, environmental palette, shading, background\/VFX.*Change at least three visual axes/i);
+  assert.match(prompt, /PANEL STYLE LOCK: WATERCOLOR; visibly distinct linework, environmental palette, shading, background\/VFX.*Change at least three visual axes/i);
+  assert.match(prompt, /PANEL STYLE LOCK: SKETCH; visibly distinct linework, environmental palette, shading, background\/VFX.*Change at least three visual axes/i);
   assert.match(prompt, /pose, expression, saturation, glow, or speed lines alone are insufficient/i);
   assert.ok(
     prompt.length <= EMPIRICAL_CHATGPT_WEB_COPY_SOFT_BUDGET_CHARS,
@@ -95,10 +95,10 @@ test('selected light and motion styles keep their intended effects without globa
   assert.match(prompt, /STYLE EXCEPTION: controlled neon glow, bloom, lens flare, and wet reflections only/i);
   assert.match(prompt, /STYLE EXCEPTION: intentional directional speed lines and motion streaks only/i);
   assert.match(prompt, /STYLE EXCEPTION: intentional sumi ink splashes, brush strokes, and ink wash only/i);
-  assert.match(prompt, /PANEL STYLE LOCK: GLITTER; visibly distinct linework, palette, shading, background\/VFX.*Change at least three visual axes/i);
-  assert.match(prompt, /PANEL STYLE LOCK: NEON; visibly distinct linework, palette, shading, background\/VFX.*Change at least three visual axes/i);
-  assert.match(prompt, /PANEL STYLE LOCK: SPEED; visibly distinct linework, palette, shading, background\/VFX.*Change at least three visual axes/i);
-  assert.match(prompt, /PANEL STYLE LOCK: SUMI_INK; visibly distinct linework, palette, shading, background\/VFX.*Change at least three visual axes/i);
+  assert.match(prompt, /PANEL STYLE LOCK: GLITTER; visibly distinct linework, environmental palette, shading, background\/VFX.*Change at least three visual axes/i);
+  assert.match(prompt, /PANEL STYLE LOCK: NEON; visibly distinct linework, environmental palette, shading, background\/VFX.*Change at least three visual axes/i);
+  assert.match(prompt, /PANEL STYLE LOCK: SPEED; visibly distinct linework, environmental palette, shading, background\/VFX.*Change at least three visual axes/i);
+  assert.match(prompt, /PANEL STYLE LOCK: SUMI_INK; visibly distinct linework, environmental palette, shading, background\/VFX.*Change at least three visual axes/i);
   assert.doesNotMatch(prompt, /STYLE EXCEPTION:[^\n]{220,}/);
 });
 

@@ -131,6 +131,10 @@ const compactChatGPTConversationRules = (prompt) => {
     .replace(/SAFE VISUAL CONTENT LOCK:[^\n]*/g, 'SAFE VISUAL: no gore/blood/organs/flesh/organic horror; ordinary architecture; preserve script/cast/dialogue/camera/layout.')
     .replace(/PANEL-BY-PANEL CLOTHING FOLD PRIORITY:[^\n]*/g, 'FOLD PRIORITY: 2-4 dark triangular crease shadows.')
     .replace(/FINAL-PANEL ACTIVE STAGING LOCK:[^\n]*/g, 'FINAL-PANEL ACTIVE STAGING LOCK: no straight-line lineup; distinct physical action; faces, silhouettes, and hands readable.')
+    .replace(
+      /CROSS-PANEL WARDROBE COLOR LOCK:[\s\S]*?(?=\n- Adults)/g,
+      "CROSS-PANEL WARDROBE COLOR LOCK: choose each named character's garment items, base colors, accent colors, material, and pattern once; reuse that exact wardrobe assignment in every later panel. PANEL STYLE LOCK changes background/environment palette, VFX, and rendering treatment only; it must not recolor, replace, add, or remove garments. Lighting may change highlights and shadows, but the garment's canonical base and accent colors remain recognizable."
+    )
     .replace(/- In each Dialogue block,[^\n]*/g, '- TEXT MAP: print quoted TEXT only; no TAILS metadata.')
     .replace(/- If one character, punctuation mark,[^\n]*/g, '- BUBBLE QA: copy TEXT exactly; tails touch speaker mouth/head; no extra bubbles/names.')
     .replace(/- Action is visual only:[^\n]*/g, '- ACTION: visual only; no labels/narration/SFX if unscripted.')
@@ -147,6 +151,9 @@ const compactChatGPTConversationRules = (prompt) => {
     )
     .replace(/SAFE VISUAL:[^\n]*/g, 'SAFE: no gore, organs, flesh, or organic horror.')
     .replace(/FOLD PRIORITY:[^\n]*/g, 'FOLD PRIORITY: crease shadows.')
+    .replace(/CROSS-PANEL WARDROBE COLOR LOCK:[^\n]*/g, 'CROSS-PANEL WARDROBE COLOR LOCK: fix each character garment items/colors once; reuse in all panels; styles change background/VFX/rendering only; lighting changes shading only.')
+    .replace(/PANEL STYLE LOCK: ([^;\n]+); visibly distinct linework, environmental palette, shading, background\/VFX\.[^\n]*/g, 'PANEL STYLE LOCK: $1; vary 3+ rendering axes; environmental palette only; wardrobe colors fixed.')
+    .replace(/ART-STYLE DIFFERENCE QA LOCK:\n-[^\n]*/g, 'ART-STYLE DIFFERENCE QA LOCK:\n- Vary 3+ rendering axes between panels; wardrobe colors stay fixed; preserve script/identity/layout.')
     .replace(/CHARACTER QA:[^\n]*/g, 'CHARACTER QA: preserve identity and outfit.');
 };
 

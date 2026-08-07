@@ -84,6 +84,19 @@ test('both provider prompts require rich physical settings without obscuring the
   }
 });
 
+test('both provider prompts lock each named character wardrobe colors across panel styles', () => {
+  for (const prompt of [buildChatGptPrompt(), buildGeminiPrompt()]) {
+    assert.match(prompt, /CROSS-PANEL WARDROBE COLOR LOCK/);
+    assert.match(prompt, /choose each named character's (?:concrete )?garment items, base colors, accent colors, material, and pattern once/i);
+    assert.match(prompt, /reuse that exact wardrobe assignment in every later panel/i);
+    assert.match(prompt, /PANEL STYLE LOCK.*(?:background|environment).*VFX.*rendering treatment/i);
+    assert.match(prompt, /must not recolor, replace, add, or remove (?:that character's )?garments/i);
+    assert.match(prompt, /lighting may change highlights and shadows, but the garment's canonical base and accent colors remain recognizable/i);
+    assert.doesNotMatch(prompt, /PANEL STYLE LOCK:[^\n]*linework, palette, shading/i);
+    assert.match(prompt, /PANEL STYLE LOCK:[^\n]*linework, environmental palette, shading/i);
+  }
+});
+
 test('ChatGPT Web prompt has generic quality locks for dialogue, bubbles, characters, and key props', () => {
   const prompt = buildChatGptPrompt();
 
@@ -116,7 +129,7 @@ test('ChatGPT Web prompt has generic quality locks for dialogue, bubbles, charac
   assert.match(prompt, /one character, punctuation mark, added word, omitted word, or speaker|BUBBLE QA: copy TEXT exactly/i);
   assert.match(prompt, /bubble tail tip must terminate at its assigned speaker's mouth\/head silhouette|tails? touch (?:mapped )?speaker mouth\/head/i);
   assert.match(prompt, /hair color, hairstyle, eye color, glasses status, skin tone, outfit|CHARACTER QA: preserve identity/i);
-  assert.match(prompt, /at least three of linework, palette, shading, background\/VFX, texture\/surface treatment/i);
+  assert.match(prompt, /at least three of linework, environmental palette, shading, background\/VFX, texture\/surface treatment/i);
   assert.match(prompt, /same clean anime style with only pose, expression, saturation, glow, or speed lines changed/i);
   assert.doesNotMatch(prompt, /canned pudding|bottled drink/i);
 });

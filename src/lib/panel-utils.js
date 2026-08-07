@@ -1444,7 +1444,7 @@ export const buildEmotionBlock = (panelText) => {
   const emo = extractEmotionStyle(panelText);
   if (emo === 'NORMAL') return '';
   const s = EMOTION_STYLES[emo];
-  const styleLock = `PANEL STYLE LOCK: ${emo}; visibly distinct linework, palette, shading, background/VFX. Change at least three visual axes; pose, expression, saturation, glow, or speed lines alone are insufficient.`;
+  const styleLock = `PANEL STYLE LOCK: ${emo}; visibly distinct linework, environmental palette, shading, background/VFX. Change at least three visual axes; pose, expression, saturation, glow, or speed lines alone are insufficient. Environmental palette means background, lighting treatment, and VFX only; preserve every character's canonical garment base and accent colors.`;
 
   // [GAG-OVERLAY] 元タグがコメディ意図を持ち、かつシリアス系の暗い画風に写像された場合のみ、
   //   画風は維持したまま「コミカルな崩し許可」を加点する（例: [EMOTION: PANIC_GAG] → HORROR）。

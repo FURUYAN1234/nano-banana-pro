@@ -821,6 +821,9 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 
 ## 📋 ChangeLog
 
+### v5.2.3 (2026-08-07)
+- **[Fix & UX]** 4コマ全体でキャラクター衣装の色・柄を固定するクロスパネル衣装ロックと、元絵の顔・髪・服色・柄を保持する縦横比修正ロックを追加 / Added a cross-panel wardrobe color lock and an aspect-ratio correction lock that preserves the source faces, hair, garment colors, and patterns
+
 ### v5.2.2 (2026-08-06)
 - **[Fix & UX]** 一枚絵と4コマで共通の品質契約を適用し、背景・照明・解剖・質感の基準を同期 / Applied one shared quality contract across single-image and four-panel prompts for setting, lighting, anatomy, and clean rendering
 
