@@ -36,9 +36,8 @@ Current behavior at a glance / 現行仕様の要点:
 - **API preflight without key persistence / API事前確認とキー非保存:** The startup modal verifies provider connectivity before unlocking STEP1. Keys remain in memory; development refresh protection stores only a boolean bootstrap flag and does not persist the credential. / 起動時モーダルでプロバイダー接続を確認してからSTEP1を有効化します。APIキーはメモリ内だけで扱い、開発中の更新対策も認証情報ではなく初期化済みかどうかの真偽値だけを保持します。
 - **STEP4 helper boundary / STEP4補助機能の境界:** Generated images can be downloaded as received. The aspect-ratio correction and 2x upscale buttons copy instructions for external image tools; they are not in-app deterministic image processors. / 生成画像は受信した状態で保存できます。アスペクト比補正と2倍アップスケールのボタンは外部画像ツール向けの指示文をコピーする機能であり、アプリ内で画像処理を実行する機能ではありません。
 
-![Sample Output](assets/samples/sample.png)
-![Retro Sample](assets/samples/retro_sample.jpg)
 <img width="926" height="755" alt="スクリーンショット 2026-08-07 164856" src="https://github.com/user-attachments/assets/ecfc15ea-4040-43ad-a5ed-fb2e9d078335" />
+<img width="1055" height="1491" alt="ChatGPT Image 2026年8月7日 17_03_21" src="https://github.com/user-attachments/assets/b3006951-f524-44b5-be99-afe83d9c38ef" />
 
 ### 🎥 Operation Tutorial / 動作手順動画
 
