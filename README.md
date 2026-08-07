@@ -1,3 +1,4 @@
+<img width="926" height="755" alt="スクリーンショット 2026-08-07 164856" src="https://github.com/user-attachments/assets/ecfc15ea-4040-43ad-a5ed-fb2e9d078335" />
 # Super FURU AI 4-koma System
 
 > Latest release: **v5.2.2** / 最新リリース: **v5.2.2**
