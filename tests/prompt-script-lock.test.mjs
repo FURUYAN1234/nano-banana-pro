@@ -342,6 +342,67 @@ Outfit: ビジネススーツ
   }
 });
 
+test('markdown visual-direction sections never enter strict required dialogue for either provider', () => {
+  const scenario = `
+## タイトル: 区画テスト!?
+Location: 会議室
+Outfit: ビジネススーツ
+
+[1コマ目: 起]
+状況: ミクが資料を見る。
+**表情:**
+- ミク：眉をひそめ、口を引き結ぶ。
+**セリフ:**
+ミク「確認するよ。」
+
+[2コマ目: 承]
+状況: アカリが隣から覗き込む。
+**表情:**
+- アカリ：目をぱちくり、口が小さく「あ」の形。
+**身体/間合い:**
+- アカリは椅子ごと斜めに寄る。
+**セリフ:**
+アカリ「まだ出てきそう。」
+
+[3コマ目: 転]
+状況: ヒカリが職員証を握る。
+**演出:**
+- 「ゴー…」という空調音。
+**セリフ:**
+ヒカリ「話題になってる。」
+
+[4コマ目: 結]
+状況: 全員が脱力する。
+**表情:**
+- ミク：目が半分閉じて、口からため息の「ふー」が出ている。
+- リン：点目で無表情、口は一直線。
+- ヒカリ：やや頬を膨らませて無言。
+**背景:**
+- 書棚のファイルに沈黙。
+**セリフ:**
+アカリ「真面目に生きよう。」`;
+
+  for (const providerFamily of ['chatgpt', 'gemini']) {
+    const prompt = buildMangaPrompt({
+      scenario,
+      castList: CAST_LIST,
+      colorMode: 'color',
+      providerFamily,
+      punchlineType: 'ドキュメンタリー',
+      systemVersion: 'v5.2.3-test'
+    });
+    const scriptLock = prompt.slice(
+      prompt.indexOf('STRICT SCRIPT LOCK'),
+      prompt.indexOf('PANEL DESCRIPTIONS:')
+    );
+
+    assert.match(scriptLock, /Panel 2 required dialogue: アカリ「まだ出てきそう。」/);
+    assert.match(scriptLock, /Panel 4 required dialogue: アカリ「真面目に生きよう。」/);
+    assert.doesNotMatch(scriptLock, /表情「|身体\/間合い「|演出「|背景「|目をぱちくり|目が半分閉じて|点目で無表情|頬を膨らませ|ゴー|ふー/);
+    assert.doesNotMatch(prompt, /PLACEMENT\/IDENTITY:[^\n]*(?:\*\*表情|\*\*身体\/間合い|\*\*演出|\*\*背景)/);
+  }
+});
+
 const LONG_DIALOGUE = 'この状況さ、職人がホームセンターの客に「仕事取るな」って怒鳴ってるのと同じだよね…。本気で抗議するなら、店かメーカーに言わない？';
 const LONG_DIALOGUE_SCENARIO = `
 ## タイトル: 長台詞ロック検証!?

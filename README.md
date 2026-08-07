@@ -822,6 +822,9 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 
 ## 📋 ChangeLog
 
+### v5.2.4 (2026-08-07)
+- **[Fix & UX]** Markdown見出しの表情・身体・演出・背景を台詞と配置から除外し、視覚指示はActionへ保持。通常キャラクターシートの実API四コマで余計な吹き出しが出ないことを確認 / Exclude Markdown visual-section headings from dialogue and placement parsing while preserving visual directions in Action; verified with a normal character-sheet real API four-panel generation without extra bubbles
+
 ### v5.2.3 (2026-08-07)
 - **[Fix & UX]** 4コマ全体でキャラクター衣装の色・柄を固定するクロスパネル衣装ロックと、元絵の顔・髪・服色・柄を保持する縦横比修正ロックを追加 / Added a cross-panel wardrobe color lock and an aspect-ratio correction lock that preserves the source faces, hair, garment colors, and patterns
 

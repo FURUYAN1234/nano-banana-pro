@@ -285,6 +285,14 @@ const INSTRUCTION_LINE_RE = new RegExp(`^\\s*${STRUCTURAL_LINE_PREFIX_PATTERN}${
 
 const isInstructionLine = (line = '') => INSTRUCTION_LINE_RE.test(String(line).trim());
 
+const STRUCTURED_SCENARIO_SECTION_RE = /^\s*(?:[-+>・●▪◦]\s*|\*\s+)?\*{0,2}\s*(表情(?:[・･／/]身体)?|身体(?:[・･／/]間合い)?|演出|背景|Background|セリフ|台詞|Dialogue)\s*[:：]\s*\*{0,2}\s*$/i;
+
+const getStructuredScenarioSection = (line = '') => {
+  const match = String(line).match(STRUCTURED_SCENARIO_SECTION_RE);
+  if (!match) return '';
+  return /^(?:セリフ|台詞|Dialogue)$/i.test(match[1]) ? 'dialogue' : 'visual';
+};
+
 const stripMatchingStructuralWrapper = (line = '') => {
   const match = String(line).match(/^(\s*(?:[-*+>・●▪◦]\s*)?)([【\[（(])([\s\S]*)([】\]）)])\s*$/);
   if (!match) return line;
@@ -528,6 +536,32 @@ export const getCameraForChatGPT = (panelText, cameraState) => {
 export const extractDialogueOnly = (fullPanelText, castList, options = {}) => {
   const lines = fullPanelText.split('\n');
 
+  // Markdown scenario blocks such as **表情:** and **演出:** may contain
+  // quoted mouth shapes, breaths, or sound effects. Keep the whole visual
+  // section available to Action, but never promote its contents to bubbles.
+  const visualDirectionRanges = [];
+  let activeStructuredSection = '';
+  let sectionSearchStart = 0;
+  lines.forEach(line => {
+    const lineStart = fullPanelText.indexOf(line, sectionSearchStart);
+    const rangeStart = lineStart === -1 ? sectionSearchStart : lineStart;
+    if (lineStart !== -1) sectionSearchStart = lineStart + line.length;
+
+    const section = getStructuredScenarioSection(line);
+    if (PANEL_HEADER_RE.test(line)) {
+      activeStructuredSection = '';
+    } else if (section) {
+      activeStructuredSection = section;
+    } else if (activeStructuredSection === 'visual' && isInstructionLine(line)) {
+      activeStructuredSection = '';
+    }
+
+    if (activeStructuredSection === 'visual') {
+      visualDirectionRanges.push({ start: rangeStart, end: rangeStart + line.length });
+    }
+  });
+  const isVisualDirectionOffset = (offset) => visualDirectionRanges.some(({ start, end }) => offset >= start && offset <= end);
+
   // Extract valid characters from castList to prevent action instructions being misidentified as speakers
   const validCharacters = collectCastNames(castList);
 
@@ -558,6 +592,8 @@ export const extractDialogueOnly = (fullPanelText, castList, options = {}) => {
     if (lineStart !== -1) lineSearchStart = lineStart + line.length;
 
     if (PANEL_HEADER_RE.test(line)) return;
+    if (getStructuredScenarioSection(line)) return;
+    if (isVisualDirectionOffset(lineOrder)) return;
     // [v4.6.5-fix] SE（効果音演出指示）行をスキップ: （SE: ...）や (SE: ...) の形式に加え、
     // 「音響効果：」「SE：」「効果音：」等のコロン形式も除外
     const trimmedForSE = line.trim();
@@ -663,6 +699,7 @@ export const extractDialogueOnly = (fullPanelText, castList, options = {}) => {
     let match;
     let lastIndex = 0;
     while ((match = regex.exec(fullPanelText)) !== null) {
+      if (isVisualDirectionOffset(match.index)) continue;
       let dialogueText = match[1].trim();
       dialogueText = dialogueText.replace(/（.*?）|\(.*?\)/g, '').trim();
       
@@ -971,9 +1008,24 @@ export const extractActionOnly = (fullPanelText, castList, placementRule = "") =
   const lines = fullPanelText.split('\n');
 
   const validCharacters = collectCastNames(castList);
+  let activeStructuredSection = '';
 
   const actionLines = lines.filter(line => {
-    if (PANEL_HEADER_RE.test(line)) return false;
+    if (PANEL_HEADER_RE.test(line)) {
+      activeStructuredSection = '';
+      return false;
+    }
+    const structuredSection = getStructuredScenarioSection(line);
+    if (structuredSection) {
+      activeStructuredSection = structuredSection;
+      return false;
+    }
+    if (activeStructuredSection === 'visual' && isInstructionLine(line)) {
+      activeStructuredSection = '';
+    }
+    if (activeStructuredSection === 'visual') {
+      return line.trim() !== '';
+    }
     const match = line.match(/^(.*?)(?:[:：]|「)/);
     let isDialogue = false;
     const isInstruction = isInstructionLine(line);
@@ -1096,6 +1148,7 @@ export const extractPlacementRule = (fullPanelText, castList, options = {}) => {
   const dialogLines = lines.filter(line => {
     const trimmed = line.trim();
     if (PANEL_HEADER_RE.test(trimmed)) return false;
+    if (getStructuredScenarioSection(trimmed)) return false;
     if (/^\[EMOTION:/i.test(trimmed)) return false;
     if (/^状況(?:演出)?[：:]/i.test(trimmed)) return false;
     return trimmed.includes('：') || trimmed.includes(':') || trimmed.includes('「');

@@ -286,6 +286,34 @@ ${speaker}\u300c${finalLine}\u300d`;
   assert.equal(dialogue.includes(`Speech Bubble 1 [${speaker}]: "${finalLine}"`), true);
 });
 
+test('keeps markdown expression sections and quoted mouth-shape descriptions out of dialogue', () => {
+  const panelText = `
+[4コマ目: 結]
+**表情:**
+- アカリ：目をうるうるさせ、口をヘの字に曲げて脱力。
+- ミク：目が半分閉じて、口からため息の「ふー」が出ている。
+- リン：点目で無表情、口は一直線。
+- ヒカリ：やや頬を膨らませて無言。
+**身体/間合い:**
+- アカリは椅子で膝を抱え、体を小さくして前景。
+**演出:**
+- 「フー…」とため息、「カタ…」とペンが転がる音。
+**背景:**
+- 書棚のファイルに沈黙。
+**セリフ:**
+アカリ「もう、真面目に生きるしかない…。」`;
+
+  const dialogue = extractDialogueOnly(panelText, CAST_LIST);
+  const action = extractActionOnly(panelText, CAST_LIST);
+
+  assert.equal(dialogue, '(Speech Bubble 1 [アカリ]: "もう、真面目に生きるしかない…。")');
+  assert.doesNotMatch(dialogue, /表情|身体|演出|背景|目が半分閉じて|点目で無表情|頬を膨らませ|フー|カタ|\*\*/);
+  assert.match(action, /ミク：目が半分閉じて、口からため息/);
+  assert.match(action, /リン：点目で無表情、口は一直線。/);
+  assert.match(action, /ヒカリ：やや頬を膨らませて無言。/);
+  assert.match(action, /ため息.*ペンが転がる音。/);
+});
+
 test('removes control tokens from visual action while keeping the situation body', () => {
   const panelText = `
 [1コマ目: 起]
