@@ -403,6 +403,50 @@ Outfit: ビジネススーツ
   }
 });
 
+test('combined visual-direction labels stay out of dialogue and placement for both providers', () => {
+  const scenario = `
+## タイトル: 複合演出ラベル検証
+Location: スーパーマーケット
+Outfit: カジュアルな私服
+
+[1コマ目: 起]
+状況: 売り場でミクが商品棚を見る。
+ミク「新商品だね。」
+[2コマ目: 承]
+身体・表情・演出: ヒカリは眼鏡を上げ、サエコはPOPを見つめる。効果音「ピシッ」。
+ヒカリ「本気なんだ…！」
+サエコ「確認するわ。」
+[3コマ目: 転]
+身体・表情・演出: アカリは顔を紅潮させて両手を広げ、リンはカゴを持ちながら腰が引けている。ミクは額に汗、指を突き出している。「ゴゴゴゴ…」と棚から商品のプレッシャー効果音。
+ミク「これヤバい！」
+アカリ「もう離れられないっ！」
+リン「世界中に広がりそう…！」
+[4コマ目: 結]
+身体・表情・演出: サエコは口角をわずかに上げ、他のキャラは驚いている。波の中で「ドバーッ！」の効果音。
+サエコ「ここが終着駅よ。」`;
+
+  for (const providerFamily of ['chatgpt', 'gemini']) {
+    const prompt = buildMangaPrompt({
+      scenario,
+      castList: CAST_LIST,
+      colorMode: 'color',
+      providerFamily,
+      punchlineType: 'ドキュメンタリー',
+      systemVersion: 'v5.2.5-test'
+    });
+    const scriptLock = prompt.slice(
+      prompt.indexOf('STRICT SCRIPT LOCK'),
+      prompt.indexOf('PANEL DESCRIPTIONS:')
+    );
+
+    assert.match(scriptLock, /Panel 3 required dialogue: ミク「これヤバい！」 \/ アカリ「もう離れられないっ！」 \/ リン「世界中に広がりそう…！」/);
+    assert.match(prompt, /Action \([^)]*visual[^)]*\):[^\n]*アカリは顔を紅潮させて両手を広げ/i);
+    assert.doesNotMatch(scriptLock, /身体・表情・演出「|顔を紅潮|ゴゴゴゴ|ドバーッ/);
+    assert.doesNotMatch(prompt, /B\d+="(?:ヒカリは眼鏡を上げ|アカリは顔を紅潮|サエコは口角をわずかに上げ)/);
+    assert.doesNotMatch(prompt, /PLACEMENT\/IDENTITY:[^\n]*身体・表情・演出/);
+  }
+});
+
 const LONG_DIALOGUE = 'この状況さ、職人がホームセンターの客に「仕事取るな」って怒鳴ってるのと同じだよね…。本気で抗議するなら、店かメーカーに言わない？';
 const LONG_DIALOGUE_SCENARIO = `
 ## タイトル: 長台詞ロック検証!?

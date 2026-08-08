@@ -822,6 +822,9 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 
 ## 📋 ChangeLog
 
+### v5.2.6 (2026-08-08)
+- **[Fix & UX]** 吹き出し抽出が身体・表情・演出などの演出指示を台詞扱いしないようにし、OpenAI画像生成の衣装維持指示を安全判定に通る肯定表現へ修正 / Prevented visual direction labels from being parsed as dialogue bubbles and rewrote OpenAI wardrobe preservation guidance as safe positive instructions.
+
 ### v5.2.5 (2026-08-08)
 - **[Fix & UX]** 漫画タイトル末尾の固定『!?』連結を廃止し、内容に応じた無印・!・?・!?を保持。成人向け安全正規化とOpenAI画像リクエストを改善し、通常のSTEP2→STEP4実API生成で新規4コマを確認 / Removed the forced !? manga-title suffix and preserve no punctuation, !, ?, or !? according to the generated content. Improved adult-safe normalization and the OpenAI image request, verified through a normal STEP2-to-STEP4 real API four-panel run
 

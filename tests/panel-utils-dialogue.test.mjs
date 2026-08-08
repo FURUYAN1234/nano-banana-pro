@@ -7,6 +7,7 @@ let buildEmotionBlock;
 let extractEmotionStyle;
 let extractActionOnly;
 let extractDialogueOnly;
+let extractPlacementRule;
 
 before(async () => {
   server = await createServer({
@@ -19,6 +20,7 @@ before(async () => {
   extractEmotionStyle = panelUtils.extractEmotionStyle;
   extractActionOnly = panelUtils.extractActionOnly;
   extractDialogueOnly = panelUtils.extractDialogueOnly;
+  extractPlacementRule = panelUtils.extractPlacementRule;
 });
 
 after(async () => {
@@ -312,6 +314,29 @@ test('keeps markdown expression sections and quoted mouth-shape descriptions out
   assert.match(action, /リン：点目で無表情、口は一直線。/);
   assert.match(action, /ヒカリ：やや頬を膨らませて無言。/);
   assert.match(action, /ため息.*ペンが転がる音。/);
+});
+
+test('routes combined visual-direction labels to action without creating a speaker or bubble', () => {
+  const panelText = `
+[3コマ目: 転]
+[EMOTION: DARK_ANIME]
+状況: アカリが棚前で両手を広げ、リンとミクが反応する。
+身体・表情・演出: アカリは顔を紅潮させて両手を広げ、リンはカゴを持ちながら腰が引けている。ミクは額に汗、指を突き出している。「ゴゴゴゴ…」と棚からマヨ瓶のプレッシャー効果音。
+ミク「これヤバい！」
+アカリ「このコク…もう一生離れられないっ！」
+リン「世界がマヨで埋まる日、リアルにありそう…！」`;
+
+  const dialogue = extractDialogueOnly(panelText, CAST_LIST, { forImagePrompt: true });
+  const action = extractActionOnly(panelText, CAST_LIST);
+  const placement = extractPlacementRule(panelText, CAST_LIST, { compact: true });
+
+  assert.match(dialogue, /B1="これヤバい！"/);
+  assert.match(dialogue, /B2="このコク…もう一生離れられないっ！"/);
+  assert.match(dialogue, /B3="世界がマヨで埋まる日、リアルにありそう…！"/);
+  assert.doesNotMatch(dialogue, /身体・表情・演出|顔を紅潮|ゴゴゴゴ/);
+  assert.match(action, /アカリは顔を紅潮させて両手を広げ/);
+  assert.doesNotMatch(action, /身体・表情・演出\s*[:：]/);
+  assert.doesNotMatch(placement, /身体・表情・演出/);
 });
 
 test('removes control tokens from visual action while keeping the situation body', () => {

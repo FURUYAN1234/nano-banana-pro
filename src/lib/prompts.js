@@ -710,7 +710,7 @@ const RICH_PANEL_COMPOSITION_LOCK = `RICH PANEL COMPOSITION / CHARACTER CLARITY 
 
 const CROSS_PANEL_WARDROBE_COLOR_LOCK = `CROSS-PANEL WARDROBE COLOR LOCK:
 - Before drawing, choose each named character's concrete garment items, base colors, accent colors, material, and pattern once; reuse that exact wardrobe assignment in every later panel. If only a broad category is given, individualize without cloning.
-- Every PANEL STYLE LOCK changes background/environment palette, VFX, linework, shading, and rendering treatment only; it must not recolor, replace, add, or remove that character's garments.
+- Every PANEL STYLE LOCK changes background/environment palette, VFX, linework, shading, and rendering treatment only; keep every named character's garment item and its colors unchanged.
 - Local lighting may change highlights and shadows, but the garment's canonical base and accent colors remain recognizable. Monochrome panels preserve the same colors as tonal values.`;
 
 export const buildChatGPTMangaPrompt = (p) => {

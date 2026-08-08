@@ -90,7 +90,12 @@ test('both provider prompts lock each named character wardrobe colors across pan
     assert.match(prompt, /choose each named character's (?:concrete )?garment items, base colors, accent colors, material, and pattern once/i);
     assert.match(prompt, /reuse that exact wardrobe assignment in every later panel/i);
     assert.match(prompt, /PANEL STYLE LOCK.*(?:background|environment).*VFX.*rendering treatment/i);
-    assert.match(prompt, /must not recolor, replace, add, or remove (?:that character's )?garments/i);
+    assert.match(prompt, /keep every (?:named character's )?garment item and (?:its|their) colors unchanged/i);
+    assert.doesNotMatch(
+      prompt,
+      /remove (?:that character's )?garments/i,
+      'wardrobe continuity must use positive keep-language so image safety does not misread a negated undressing instruction'
+    );
     assert.match(prompt, /lighting may change highlights and shadows, but the garment's canonical base and accent colors remain recognizable/i);
     assert.doesNotMatch(prompt, /PANEL STYLE LOCK:[^\n]*linework, palette, shading/i);
     assert.match(prompt, /PANEL STYLE LOCK:[^\n]*linework, environmental palette, shading/i);

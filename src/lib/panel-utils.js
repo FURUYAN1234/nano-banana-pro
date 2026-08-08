@@ -269,10 +269,12 @@ const ACOUSTIC_QUOTE_POST_RE = /^\s*(?:という[^\n「」]{0,12}音|ってい�
 const SPOKEN_QUOTE_POST_RE = /^\s*(?:と|って)?\s*(?:[^「」。！？!?\n]{0,32})?(?:言|いう|言い|言う|言った|叫|叫び|叫ぶ|叫ん|呼|呼び|呟|つぶや|つぶやき|囁|ささや|ささやき|読み上げ|読みあげ|読み|発表|告げ|答|返|話|語|宣言|絶叫|嘆|漏ら|口に|述べ|怒鳴|呻|うめ|唸|ツッコ|つっこ|突っ込|問|尋)/;
 const STRUCTURAL_LINE_PREFIX_PATTERN = String.raw`(?:[-*+>・●▪◦]\s*)?[【\[（(]?\s*`;
 const STAGING_GAG_LABEL_PATTERN = String.raw`(?:演出(?:\s*[・･／/]?\s*ギャグ)?|ギャグ(?:\s*[・･／/]?\s*演出))`;
-const META_SPEAKER_LABEL_PATTERN = String.raw`(?:Camera|Location|Outfit|EMOTION|状況(?:演出)?|Action|リアクション|Reaction|設定|物理描写|表情(?:[・･／/]身体)?|身体|動作|ポーズ|姿勢|目線|視線|SFX|SE|効果音|音響効果|音響|音声|BGM|ナレーション|テロップ|聴覚|触覚|嗅覚|体内感覚|視覚|照明|光|${STAGING_GAG_LABEL_PATTERN}|空間|構図|背景|Background|カメラワーク|CameraWork|Camera\s*Work|セリフ|台詞|Dialogue|Punchline)`;
+const VISUAL_DIRECTION_LABEL_TOKEN_PATTERN = String.raw`(?:表情|身体|演出|動作|ポーズ|姿勢|目線|視線|間合い)`;
+const VISUAL_DIRECTION_LABEL_PATTERN = String.raw`(?:${VISUAL_DIRECTION_LABEL_TOKEN_PATTERN}(?:\s*[・･／/]\s*${VISUAL_DIRECTION_LABEL_TOKEN_PATTERN})*)`;
+const META_SPEAKER_LABEL_PATTERN = String.raw`(?:Camera|Location|Outfit|EMOTION|状況(?:演出)?|Action|リアクション|Reaction|設定|物理描写|${VISUAL_DIRECTION_LABEL_PATTERN}|SFX|SE|効果音|音響効果|音響|音声|BGM|ナレーション|テロップ|聴覚|触覚|嗅覚|体内感覚|視覚|照明|光|${STAGING_GAG_LABEL_PATTERN}|空間|構図|背景|Background|カメラワーク|CameraWork|Camera\s*Work|セリフ|台詞|Dialogue|Punchline)`;
 const STAGING_GAG_LINE_RE = new RegExp(`^\\s*${STRUCTURAL_LINE_PREFIX_PATTERN}${STAGING_GAG_LABEL_PATTERN}\\s*[:：]`);
 const META_SPEAKER_LABEL_RE = new RegExp(`^\\s*${STRUCTURAL_LINE_PREFIX_PATTERN}${META_SPEAKER_LABEL_PATTERN}\\s*[】\\]）)]?\\s*$`, 'i');
-const ACTION_VISUAL_LABEL_PATTERN = String.raw`(?:状況(?:演出)?|${STAGING_GAG_LABEL_PATTERN}|表情(?:[・･／/]身体)?|身体|動作|ポーズ|姿勢|目線|視線|Situation)`;
+const ACTION_VISUAL_LABEL_PATTERN = String.raw`(?:状況(?:演出)?|${STAGING_GAG_LABEL_PATTERN}|${VISUAL_DIRECTION_LABEL_PATTERN}|Situation)`;
 const ACTION_VISUAL_LABEL_RE = new RegExp(`(?:^|[\\s　])${STRUCTURAL_LINE_PREFIX_PATTERN}${ACTION_VISUAL_LABEL_PATTERN}\\s*[:：]\\s*`, 'gi');
 
 const hasAcousticQuotePostContext = (postText = '') => ACOUSTIC_QUOTE_POST_RE.test(postText.trim());
@@ -285,7 +287,10 @@ const INSTRUCTION_LINE_RE = new RegExp(`^\\s*${STRUCTURAL_LINE_PREFIX_PATTERN}${
 
 const isInstructionLine = (line = '') => INSTRUCTION_LINE_RE.test(String(line).trim());
 
-const STRUCTURED_SCENARIO_SECTION_RE = /^\s*(?:[-+>・●▪◦]\s*|\*\s+)?\*{0,2}\s*(表情(?:[・･／/]身体)?|身体(?:[・･／/]間合い)?|演出|背景|Background|セリフ|台詞|Dialogue)\s*[:：]\s*\*{0,2}\s*$/i;
+const STRUCTURED_SCENARIO_SECTION_RE = new RegExp(
+  `^\\s*(?:[-+>・●▪◦]\\s*|\\*\\s+)?\\*{0,2}\\s*(${VISUAL_DIRECTION_LABEL_PATTERN}|背景|Background|セリフ|台詞|Dialogue)\\s*[:：]\\s*\\*{0,2}\\s*$`,
+  'i'
+);
 
 const getStructuredScenarioSection = (line = '') => {
   const match = String(line).match(STRUCTURED_SCENARIO_SECTION_RE);
