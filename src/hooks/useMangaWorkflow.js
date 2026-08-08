@@ -25,6 +25,8 @@ import {
   validateMangaScenario
 } from '../lib/scenario-validation';
 import { formatDynamicBackground } from '../lib/dynamic-background';
+import { formatGeneratedMangaTitle } from '../lib/manga-title';
+import { isImagePolicyError } from '../lib/image-policy-error';
 
 // This flag carries no credential. It only prevents Vite/Fast Refresh from
 // replaying the mount-time key reset against an already connected in-memory UI.
@@ -495,6 +497,9 @@ export default function useMangaWorkflow() {
       }
     } catch (error) {
       console.error(error);
+      if (/API Key is not set|OpenAI APIキーが設定されていません/.test(String(error.message || ''))) {
+        setShowOpenAIKeyModal(true);
+      }
       const translatedMsg = translateApiError(error.message);
       setAnalyzeThought(prev => prev + `\n\n[システムエラー]: ${error.message}\n--------------------------------------------------\n${translatedMsg}`);
       showStatus("解析エラー: " + error.message);
@@ -753,9 +758,10 @@ export default function useMangaWorkflow() {
         });
       }
 
-      const finalScenarioText = `## タイトル: ${result.topic} !?${loglineLine}\nLocation: ${result.location || "Unspecified"}${visualEvidenceLine}${dynamicBackgroundLines}${outfitLine}${punchlineLine}${bg360HeaderLine}${cameraWorkHeaderLine}\n\n${result.scenario} `;
+      const generatedTitle = formatGeneratedMangaTitle(result.topic);
+      const finalScenarioText = `## タイトル: ${generatedTitle}${loglineLine}\nLocation: ${result.location || "Unspecified"}${visualEvidenceLine}${dynamicBackgroundLines}${outfitLine}${punchlineLine}${bg360HeaderLine}${cameraWorkHeaderLine}\n\n${result.scenario} `;
       setScenario(finalScenarioText);
-      setMangaTitle(result.topic || ""); // タイトルをstateに保存（画像ダウンロード時のファイル名に使用）
+      setMangaTitle(generatedTitle); // タイトルをstateに保存（画像ダウンロード時のファイル名に使用）
       const scenarioValidation = validateMangaScenario(finalScenarioText);
       const qualityWarnings = [];
       if (result.validationWarning) {
@@ -784,6 +790,9 @@ export default function useMangaWorkflow() {
       return finalScenarioText;
     } catch (error) {
       console.error(error);
+      if (/API Key is not set|OpenAI APIキーが設定されていません/.test(String(error.message || ''))) {
+        setShowOpenAIKeyModal(true);
+      }
       const translatedMsg = translateApiError(error.message);
       setScenarioThought(prev => prev + `\n\n[システムエラー]: ${error.message}\n--------------------------------------------------\n${translatedMsg}`);
       showStatus("シナリオ生成エラー");
@@ -1184,7 +1193,7 @@ export default function useMangaWorkflow() {
           `[ERROR GUIDE] 2. ${enableOpenAIApi ? 'ChatGPTウェブ版' : 'Geminiウェブ版'} を開きます: ${enableOpenAIApi ? 'https://chatgpt.com/' : 'https://gemini.google.com/app'}`,
           `[ERROR GUIDE] 3. コピーしたプロンプトを貼り付け、元の「キャラクター設定画像」を一緒に添付して送信してください。`
         ];
-      } else if (errMsg.includes("sensitive") || errMsg.includes("Responsible AI") || errMsg.includes("content_policy_violation") || (errMsg.includes("400") && (errMsg.includes("safety") || errMsg.includes("policy") || errMsg.includes("violation") || errMsg.includes("sensitive")))) {
+      } else if (isImagePolicyError(errMsg)) {
         // [v4.2.0] コンテンツポリシーエラー → メッセージボックス表示（パネルは開かない）
         setPolicyErrorMsg(errMsg);
         lastPolicyErrorRef.current = errMsg; // ref経由で即時参照可能にする

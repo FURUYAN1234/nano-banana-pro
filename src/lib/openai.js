@@ -4,7 +4,25 @@ const OPENAI_IMAGE_TIMEOUT_MS = 600000;
 const OPENAI_IMAGE_TIMEOUT_SECONDS = OPENAI_IMAGE_TIMEOUT_MS / 1000;
 const OPENAI_IMAGE_PROMPT_MAX_CHARS = 32000;
 
-let currentOpenAIApiKey = "";
+export const buildOpenAIImageRequestBody = (prompt) => ({
+  model: OPENAI_IMAGE_MODEL,
+  prompt,
+  n: 1,
+  size: "1024x1536",
+  quality: "high",
+  output_format: "png",
+  moderation: "low",
+  stream: true,
+  partial_images: 1,
+});
+
+let currentOpenAIApiKey = import.meta.hot?.data.openAIApiKey || "";
+
+if (import.meta.hot) {
+  import.meta.hot.dispose((data) => {
+    data.openAIApiKey = currentOpenAIApiKey;
+  });
+}
 
 export const setOpenAIApiKey = (key) => {
     currentOpenAIApiKey = key;
@@ -115,22 +133,7 @@ export const generateImageWithOpenAI = async (prompt, statCallback) => {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${apiKey}`
       },
-      body: JSON.stringify({
-        model: OPENAI_IMAGE_MODEL,
-        prompt: prompt,
-        n: 1,
-        // プロンプトは A4 portrait (1:1.414, 1024x1448) を要求している。
-        // gpt-image の縦長キャンバスで最も A4 に近いのは 1024x1536 (1:1.5)。
-        // 旧値 1024x1792 (1:1.75) は A4 より縦に長すぎ、(1) 生成画像のパネル下に余白が出る
-        // (2) A4書き出し時に左右ピラーボックスが出る、という二重の不整合を起こしていた。
-        size: "1024x1536", // A4 portrait に最も近い縦長サイズ（プロンプトのFORMAT指定と整合）
-        quality: "high", // [v3.55] 最高品質モード: テキスト描画精度・ディテールが大幅向上（EvoLinkAI推奨設定）
-        output_format: "png",
-        stream: true,
-        partial_images: 1,
-        // ※ gpt-image-2 は response_format ではなく output_format を使用する別仕様。
-        //    b64_json はデフォルトで返るため、画像形式のみ明示する。
-      }),
+      body: JSON.stringify(buildOpenAIImageRequestBody(prompt)),
       signal: controller.signal
     });
   } catch (e) {

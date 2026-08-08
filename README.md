@@ -1,6 +1,6 @@
 # Super FURU AI 4-koma System
 
-> Latest release: **v5.2.2** / 最新リリース: **v5.2.2**
+> Latest release: **v5.2.5** / 最新リリース: **v5.2.5**
 
 > **"To what extent can humans step away from the creative process?"**
 > **「人間は、どこまで制作から降りられるのか？」**
@@ -821,6 +821,9 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 ---
 
 ## 📋 ChangeLog
+
+### v5.2.5 (2026-08-08)
+- **[Fix & UX]** 漫画タイトル末尾の固定『!?』連結を廃止し、内容に応じた無印・!・?・!?を保持。成人向け安全正規化とOpenAI画像リクエストを改善し、通常のSTEP2→STEP4実API生成で新規4コマを確認 / Removed the forced !? manga-title suffix and preserve no punctuation, !, ?, or !? according to the generated content. Improved adult-safe normalization and the OpenAI image request, verified through a normal STEP2-to-STEP4 real API four-panel run
 
 ### v5.2.4 (2026-08-07)
 - **[Fix & UX]** Markdown見出しの表情・身体・演出・背景を台詞と配置から除外し、視覚指示はActionへ保持。通常キャラクターシートの実API四コマで余計な吹き出しが出ないことを確認 / Exclude Markdown visual-section headings from dialogue and placement parsing while preserving visual directions in Action; verified with a normal character-sheet real API four-panel generation without extra bubbles

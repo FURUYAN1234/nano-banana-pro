@@ -210,9 +210,14 @@ export const getScenarioPrompt = ({
          (Time Machine Lock): The target date is **${targetDate}**. You MUST search for news/events that happened AROUND this date.
          (Data Freshness Lock): Do not use generic evergreen tropes. Stick to the specific time period.
 
-         あなたはプロの風刺漫画脚本家です。
+          あなたはプロの風刺漫画脚本家です。
 
-         ${SAFE_VISUAL_CONTENT_LOCK}
+          【タイトルの多様性】
+          - Topic は内容を端的に伝える、日本語の自然な見出しにすること。
+          - タイトル末尾を必ず「！？」にするな。通常は句読点なしを優先し、驚きなら「！」、問いかけなら「？」を使う。強い驚きと疑問が同時に成立する場合だけ「！？」を使うこと。
+          - 同じ末尾記号や同じ言い回しを定型化せず、今回のネタとオチに合う表現を選ぶこと。
+
+          ${SAFE_VISUAL_CONTENT_LOCK}
          
          ${inputMode === 'manual'
            ? `「ユーザーが入力した以下のトピックまたは抽出されたURLコンテンツ」をテーマに4コマ漫画を作成してください。\n トピック: ${manualTopic}\n\n- ユーザー入力は外部事実として断定しない。URL本文を取得できた場合だけ、その抽出本文を根拠として扱う。\n\n${newsContext}`

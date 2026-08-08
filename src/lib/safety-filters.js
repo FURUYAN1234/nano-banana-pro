@@ -63,6 +63,31 @@ const applySafetyAgeUp = (promptText) => {
     [/\(gal(:\d\.?\d?)\)/gi, '(fashionable$1)'],
     [/\(gyaru(:\d\.?\d?)\)/gi, '(fashionable$1)'],
     [/\(gyaru style(:\d\.?\d?)\)/gi, '(trendy style$1)'],
+    // Plain comma-separated traits survive prompt compaction without weighted parentheses.
+    // Keep these generic so any generated cast is safely adult-coded before image submission.
+    [/\bsailor-style academy uniform\b/gi, 'elegant blouse with ribbon'],
+    [/\bsailor-style fashion outfit\b/gi, 'elegant blouse with ribbon'],
+    [/\bsailor uniform\b/gi, 'elegant blouse with ribbon'],
+    [/\bsailor fuku\b/gi, 'elegant blouse with ribbon'],
+    [/\bserafuku\b/gi, 'elegant blouse with ribbon'],
+    [/\bacademy uniform\b/gi, 'formal business attire'],
+    [/\bschool uniform\b/gi, 'formal business attire'],
+    [/\bhigh school student\b/gi, 'adult professional'],
+    [/\bschool ?girl\b/gi, 'adult woman'],
+    [/\bstudent council president\b/gi, 'workplace team leader'],
+    [/\bstudent council member\b/gi, 'workplace compliance officer'],
+    [/\bdisciplinary committee member\b/gi, 'strict adult authority figure'],
+    [/\bdisciplinary committee\b/gi, 'workplace compliance team'],
+    [/\bhonor student\b/gi, 'high-achieving adult'],
+    [/\bdisciplinarian\b/gi, 'strict adult authority figure'],
+    [/\bchildhood friend\b/gi, 'longtime adult friend'],
+    [/\bgyaru style\b/gi, 'fashionable style'],
+    [/\bgyaru\b/gi, 'fashionable adult'],
+    [/\botaku girl\b/gi, 'adult pop-culture enthusiast'],
+    [/\bgirl\b/gi, 'adult woman'],
+    [/super-deformed chibi style with 2-3 head-to-body proportions/gi, 'adult caricature style with mature proportions'],
+    [/simplified round faces, dot-like eyes, and exaggerated tiny limbs/gi, 'stylized mature faces, clear adult proportions, and simplified limbs'],
+    [/detailed muscle\/bone structure visible through skin tension/gi, 'mature facial structure and detailed fabric folds'],
     // --- レベル6: 幼く見える体型タグの排除 ---
     [/\(short stature(:\d\.?\d?)\),?\s*/gi, ''],
     [/\(loli(:\d\.?\d?)\),?\s*/gi, ''],
@@ -91,7 +116,7 @@ const applySafetyAgeUp = (promptText) => {
 
   // --- レベル7: 成人宣言ヘッダーの注入 ---
   // Gemini/ChatGPTそれぞれのキャラ見出し直前に「全員20歳以上の成人」を明示注入
-  const ageDeclaration = 'IMPORTANT AGE DECLARATION: All characters depicted in this image are adults aged 20 or older. None of the characters are minors.';
+  const ageDeclaration = 'IMPORTANT AGE DECLARATION: All characters depicted in this image are adults aged 20 or older.';
   if (!result.includes(ageDeclaration)) {
     if (result.includes('Important Character Cast:')) {
       result = result.replace(
