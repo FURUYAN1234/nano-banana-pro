@@ -30,12 +30,18 @@ import {
   assertManualTopicExclusions,
   MANUAL_TOPIC_EXCLUSION_RETRY_INSTRUCTION
 } from './manual-topic-exclusions';
+import {
+  assertSeasonalOutfit,
+  getSeasonContext,
+  SEASONAL_OUTFIT_RETRY_INSTRUCTION
+} from './seasonal-outfit';
 
 const STEP2_TEXT_TIMEOUT_MS = 180_000;
 
 const scenarioRetryLabels = {
   SAFE_LOCATION: '安全な舞台設定',
   SCENARIO_CONTENT: 'シナリオ本文の表現衛生',
+  SEASONAL_OUTFIT: '対象日付と服装の季節整合性',
   MANUAL_TOPIC_EXCLUSION: '手動入力の禁止条件',
   VISUAL_STORY_EVIDENCE: '出来事を証明する視覚要素',
   DYNAMIC_BACKGROUND: '動的背景設計',
@@ -51,9 +57,22 @@ const assertScenarioCheck = (code, check) => {
   }
 };
 
-const validateScenarioForRetry = ({ scenario, punchlineType, manualTopic }) => {
+const validateScenarioForRetry = ({
+  scenario,
+  punchlineType,
+  manualTopic,
+  seasonContext,
+  contextText,
+  customOutfit
+}) => {
   const checks = [
     ['SCENARIO_CONTENT', () => assertSafeScenarioContent(scenario)],
+    ['SEASONAL_OUTFIT', () => assertSeasonalOutfit({
+      outfit: scenario.outfit,
+      seasonContext,
+      contextText,
+      customOutfit
+    })],
     ['MANUAL_TOPIC_EXCLUSION', () => assertManualTopicExclusions(scenario.scenario, manualTopic)],
     ['VISUAL_STORY_EVIDENCE', () => assertVisualStoryEvidence(scenario)],
     ['DYNAMIC_BACKGROUND', () => assertDynamicBackground(scenario)],
@@ -80,14 +99,16 @@ const validateScenarioForRetry = ({ scenario, punchlineType, manualTopic }) => {
   return true;
 };
 
-export const formatScenarioRetryProgress = ({ code, nextAttempt, maxAttempts } = {}) => {
+export const formatScenarioRetryProgress = ({ code, message, nextAttempt, maxAttempts } = {}) => {
   const label = scenarioRetryLabels[code] || 'シナリオ出力';
   const attemptPrefix = nextAttempt && maxAttempts ? `試行 ${nextAttempt}/${maxAttempts}: ` : '';
-  return `${attemptPrefix}「${label}」の品質検証に通らなかったため、改善条件を追加してシナリオを再生成します...`;
+  const reason = message ? ` 理由: ${message}` : '';
+  return `${attemptPrefix}「${label}」の品質検証に通らなかったため、改善条件を追加してシナリオを再生成します...${reason}`;
 };
 
 const scenarioQualityRetryInstructions = {
   SCENARIO_CONTENT: SAFE_CONTENT_RETRY_INSTRUCTION,
+  SEASONAL_OUTFIT: SEASONAL_OUTFIT_RETRY_INSTRUCTION,
   MANUAL_TOPIC_EXCLUSION: MANUAL_TOPIC_EXCLUSION_RETRY_INSTRUCTION,
   VISUAL_STORY_EVIDENCE: VISUAL_STORY_EVIDENCE_RETRY_INSTRUCTION,
   DYNAMIC_BACKGROUND: DYNAMIC_BACKGROUND_RETRY_INSTRUCTION,
@@ -282,6 +303,7 @@ export async function generateScenario({
   }
 
   // 4. シナリオプロンプトの構築とAPI呼び出し
+  const seasonContext = getSeasonContext({ targetDate, inputMode });
   const scenarioPrompt = getScenarioPrompt({
     randomCategory,
     targetDate,
@@ -317,7 +339,16 @@ export async function generateScenario({
     validateScenario: (parsedScenario) => validateScenarioForRetry({
       scenario: parsedScenario,
       punchlineType: activePunchlineType,
-      manualTopic: inputMode === 'manual' ? manualTopic : ''
+      manualTopic: inputMode === 'manual' ? manualTopic : '',
+      seasonContext,
+      customOutfit,
+      contextText: [
+        manualTopic,
+        newsContext,
+        parsedScenario.topic,
+        parsedScenario.location,
+        parsedScenario.scenario
+      ].filter(Boolean).join('\n')
     }),
     retryInstruction: ({ code }) => scenarioQualityRetryInstructions[code] || '',
     onRetry: (retry) => onProgress(formatScenarioRetryProgress(retry)),

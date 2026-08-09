@@ -4,7 +4,7 @@ const OPENAI_IMAGE_TIMEOUT_MS = 600000;
 const OPENAI_IMAGE_TIMEOUT_SECONDS = OPENAI_IMAGE_TIMEOUT_MS / 1000;
 const OPENAI_IMAGE_PROMPT_MAX_CHARS = 32000;
 
-export const buildOpenAIImageRequestBody = (prompt) => ({
+export const buildOpenAIImageRequestBody = (prompt, { stream = true } = {}) => ({
   model: OPENAI_IMAGE_MODEL,
   prompt,
   n: 1,
@@ -12,9 +12,13 @@ export const buildOpenAIImageRequestBody = (prompt) => ({
   quality: "high",
   output_format: "png",
   moderation: "low",
-  stream: true,
-  partial_images: 1,
+  ...(stream ? { stream: true, partial_images: 1 } : {}),
 });
+
+const isBrowserStreamFetchFailure = (error) => (
+  error?.name === 'TypeError'
+  && /failed to fetch|networkerror|load failed/i.test(error?.message || '')
+);
 
 let currentOpenAIApiKey = import.meta.hot?.data.openAIApiKey || "";
 
@@ -125,17 +129,25 @@ export const generateImageWithOpenAI = async (prompt, statCallback) => {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), OPENAI_IMAGE_TIMEOUT_MS); // gpt-image-2 high quality can exceed 6 minutes when congested.
 
+  const fetchImage = (stream) => fetch("https://api.openai.com/v1/images/generations", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${apiKey}`
+    },
+    body: JSON.stringify(buildOpenAIImageRequestBody(prompt, { stream })),
+    signal: controller.signal
+  });
+
   let response;
   try {
-    response = await fetch("https://api.openai.com/v1/images/generations", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${apiKey}`
-      },
-      body: JSON.stringify(buildOpenAIImageRequestBody(prompt)),
-      signal: controller.signal
-    });
+    try {
+      response = await fetchImage(true);
+    } catch (error) {
+      if (!isBrowserStreamFetchFailure(error)) throw error;
+      statCallback('[WARN] 画像ストリーム接続に失敗したため、通常応答で1回再試行します...');
+      response = await fetchImage(false);
+    }
   } catch (e) {
     if (e.name === 'AbortError' || e.message.includes('aborted')) {
       throw new Error(`API Time out (${OPENAI_IMAGE_TIMEOUT_SECONDS}秒経過による強制切断)。サーバーが混雑しているか、応答がありません。`);

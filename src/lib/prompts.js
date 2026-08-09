@@ -3,6 +3,7 @@ import { SAFE_VISUAL_CONTENT_LOCK } from './location-policy';
 import { FINAL_PANEL_ACTIVE_STAGING_SCENARIO_CONTRACT } from './final-panel-staging';
 import { buildScenarioEnhancementPrompt } from './scenario-enhancement';
 import { buildManualTopicExclusionPrompt } from './manual-topic-exclusions';
+import { buildSeasonalOutfitInstruction, getSeasonContext } from './seasonal-outfit';
 import { SHARED_IMAGE_QUALITY_CONTRACT } from './shared-image-quality';
 
 // --- プロンプトテンプレート (prompts.js) ---
@@ -201,6 +202,13 @@ export const getScenarioPrompt = ({
       : 'ニュース本文と4コマの行動に最も適した安全で具体的な場所を考案すること。'
   };
   const adaptiveLocationMode = effectiveLocationPlan.mode === 'adaptive';
+  const seasonContext = getSeasonContext({ targetDate, inputMode });
+  const seasonalOutfitInstruction = buildSeasonalOutfitInstruction({
+    seasonContext,
+    inputMode,
+    manualTopic,
+    customOutfit
+  });
 
   return `
          【Context Force Reboot】
@@ -288,10 +296,12 @@ export const getScenarioPrompt = ({
            ${customOutfit.trim() ? `
         5. **【強制服装指定 (Outfit Lock)】**:
            - 今回のシナリオでは、CastListに記載された元の服装設定を完全に無視し、全員の服装を強制的に『${customOutfit.trim()}』に変更して描写・行動させよ。
+           - ${seasonalOutfitInstruction}
            - 画像生成プロンプトでもこの指定タグが反映される前提で、シナリオ内のト書き(Action)テキストにも具体的な服装指定を含めること。
            ` : `
         5. **【服装の自動選定 (Outfit Auto-Select)】**:
            - ニュースの内容と場所(Location)に**「最も適した服装カテゴリー」**を選定し、Outfit行に出力せよ。
+           - ${seasonalOutfitInstruction}
            - **「キャラシート準拠」「デフォルト」等の曖昧な回答は禁止。** 必ず状況に適した服装の「属性」を出力すること。
            - 例: 海辺→「水着（swimwear）」、法廷→「ビジネススーツ（business suit）」、道の駅→「私服（casual wear）」、雪山→「防寒着（winter clothes）」、宇宙→「宇宙服（spacesuit）」
            - **⚠️【重要: クローン化防止】⚠️** 「白のビキニ」「デニムショートパンツ」のように細かく指定しすぎないこと。細かく指定すると全キャラクターが全く同じ服を着てしまうため、必ず**大分類のカテゴリー（ナース服、私服、パジャマなど）**に留め、個々の着こなしは画像AIに委ねよ。
@@ -543,7 +553,7 @@ ${styleJson.anti_patterns ? `            - 絶対禁止事項:\n${styleJson.anti
           BackgroundAnchors: [全コマで場所を識別する短い固定物を2〜3個、「、」区切りで記入せよ]
           BackgroundInteractions: [キャラクターが触れる・通る・置く・反応する小道具または面を2〜5個、「、」区切りで記入せよ]
           BackgroundAvoid: [空間・光源・時刻・天候の矛盾、無関係な背景、安全上の禁止物を1行で記入せよ]
-          Outfit: [${customOutfit.trim() ? "必ず『" + customOutfit.trim() + "』にせよ" : "場所・状況に最も適した具体的な服装名を記入せよ（例: カジュアルな私服、水着、スーツ等）。※「キャラシート準拠」「制服」「デフォルト」は禁止"}]
+          Outfit: [${customOutfit.trim() ? "必ず『" + customOutfit.trim() + "』にせよ" : "イベント、職業、安全、場所、天候、屋内環境、季節の条件に最も適した具体的な服装カテゴリーを記入せよ。※「キャラシート準拠」「制服」「デフォルト」は禁止"}]
           Punchline: [${punchlineType !== 'Auto' ? "必ず『" + getPunchlineLabel(punchlineType) + "』と記載せよ" : "適用したオチの方向性（例: 爆発型、天丼爆発型、シュール、感動詐欺など）"}]
           Scenario:
           [1コマ目: 起]

@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import ThinkingLog from './ThinkingLog';
 import Panorama360Viewer from './Panorama360Viewer';
+import { getSeasonContext } from '../lib/seasonal-outfit';
 
 /**
  * STEP 02: シナリオ構築設定パネル
@@ -77,6 +78,7 @@ export default function Step2Panel({
     enhanceCameraWork &&
     enhanceDialogue &&
     enhanceGag;
+  const seasonContext = getSeasonContext({ targetDate, inputMode });
 
   return (
     <section
@@ -125,15 +127,22 @@ export default function Step2Panel({
         {inputMode === 'news' ? (
           <div className="space-y-4">
             {/* Calendar */}
-            <div className="flex items-center gap-4 bg-slate-900/80 p-4 rounded-xl border border-white/5">
+            <div className="flex flex-wrap items-center gap-4 bg-slate-900/80 p-4 rounded-xl border border-white/5">
               <span className="text-xs font-bold text-slate-400">📅 対象日付 (Target Date):</span>
-              <input
-                type="date"
-                value={targetDate}
-                onChange={(e) => setTargetDate(e.target.value)}
-                style={{ colorScheme: 'dark' }}
-                className="bg-transparent text-white font-mono font-bold outline-none border-b border-white/20 focus:border-blue-500 py-1 px-2"
-              />
+              <div className="flex flex-col items-start gap-1">
+                <input
+                  type="date"
+                  value={targetDate}
+                  onChange={(e) => setTargetDate(e.target.value)}
+                  style={{ colorScheme: 'dark' }}
+                  className="bg-transparent text-white font-mono font-bold outline-none border-b border-white/20 focus:border-blue-500 py-1 px-2"
+                />
+                {seasonContext && (
+                  <span className="text-[10px] font-mono text-cyan-300 whitespace-nowrap">
+                    季節目安: {seasonContext.label}（対象日付から自動）
+                  </span>
+                )}
+              </div>
             </div>
 
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">

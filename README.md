@@ -822,6 +822,9 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 
 ## 📋 ChangeLog
 
+### v5.2.7 (2026-08-09)
+- **[Fix & UX]** 対象日付の季節と行事・環境に合わせて衣装を選択し、夏冬の明白な不一致を具体的理由付きで再生成。ブラウザの画像ストリーム失敗時は通常応答で一度だけ再試行し、既存依存の高重要度脆弱性を修正 / Selects outfits from the target-date season, events, and environment; retries clear summer/winter mismatches with a concrete reason. Retries once with a normal response after browser image-stream failure and fixes high-severity dependency findings
+
 ### v5.2.6 (2026-08-08)
 - **[Fix & UX]** 吹き出し抽出が身体・表情・演出などの演出指示を台詞扱いしないようにし、OpenAI画像生成の衣装維持指示を安全判定に通る肯定表現へ修正 / Prevented visual direction labels from being parsed as dialogue bubbles and rewrote OpenAI wardrobe preservation guidance as safe positive instructions.
 
