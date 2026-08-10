@@ -36,6 +36,10 @@ import {
   MANGA_COMPOSITION_VARIETY_LOCK,
   MANGA_COMPOSITION_VARIETY_LOCK_COMPACT
 } from './composition-variety';
+import {
+  HAND_PROP_KINEMATICS_LOCK,
+  HAND_PROP_KINEMATICS_LOCK_COMPACT
+} from './hand-prop-kinematics';
 
 /**
  * Fisher-Yates アルゴリズムによる配列のシャッフル
@@ -64,52 +68,6 @@ const extractPanel = (text, header, nextHeader) => {
   return match ? match[1].trim() : "";
 };
 
-const POINTING_GESTURE_RE = /(?:\bpoint(?:ing|s|ed)?\b|finger[-\s]?point|\u6307\u5dee|\u6307\u3055|\u6307\u3092(?:\u7a81\u304d\u7acb\u3066|\u5411\u3051|\u5dee\u3057|\u3055\u3057))/i;
-const TWO_HAND_OCCUPATION_RE = /\u4e21\u624b\u3067/;
-const ARM_CROSS_GESTURE_RE = /(?:\u8155\u3092?\u7d44|\u8155\u7d44\u307f)/;
-const PROP_PLACEMENT_RE = /\u3092[^\u3001\u3002\n]{0,50}(?:\u7f6e(?:\u304f|\u304d|\u3044\u305f|\u3044\u3066)|\u7acb\u3066(?:\u308b|\u305f|\u3066)?|\u8f09\u305b(?:\u308b|\u305f|\u3066)?|\u4e26\u3079(?:\u308b|\u305f|\u3066)?|\u30bb\u30c3\u30c8(?:\u3059\u308b|\u3057\u305f|\u3057\u3066)?|\u5dee\u3057\u8fbc(?:\u3080|\u3093\u3060|\u3093\u3067)|\u8a2d\u7f6e(?:\u3059\u308b|\u3057\u305f|\u3057\u3066)?)/;
-const escapeRegExp = (value) => String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-
-const extractCastNamesForAction = (castList) => {
-  const names = [];
-  for (const rawLine of String(castList || '').split('\n')) {
-    const line = rawLine.replace(/\*\*/g, '').trim();
-    const heading = line.match(/^##\s*(?:Character\s*)?\[?([^\]]+?)\]?\s*$/i);
-    const characterLine = line.match(/^-\s*Character\s*\[([^\]]+)\]\s*:/i);
-    const name = (heading?.[1] || characterLine?.[1] || '')
-      .trim()
-      .replace(/^(?:\d+|[０-９]+)[.)．、]\s*/, '');
-    if (name && !names.includes(name)) names.push(name);
-  }
-  return names;
-};
-
-const normalizeCompetingHandActions = (actionText, castList) => {
-  let normalized = String(actionText || '');
-  const names = extractCastNamesForAction(castList);
-  if (!names.length || !TWO_HAND_OCCUPATION_RE.test(normalized) || !POINTING_GESTURE_RE.test(normalized)) {
-    return { text: normalized, resolvedConflict: false };
-  }
-
-  const subjectRe = new RegExp(`(?:\\[)?(?:${names.map(escapeRegExp).join('|')})(?:\\])?(?:\u306f|\u304c)`, 'g');
-  const subjectStarts = [...normalized.matchAll(subjectRe)].map((match) => match.index);
-  let resolvedConflict = false;
-
-  for (let index = subjectStarts.length - 1; index >= 0; index--) {
-    const start = subjectStarts[index];
-    const end = subjectStarts[index + 1] ?? normalized.length;
-    const segment = normalized.slice(start, end);
-    if (!TWO_HAND_OCCUPATION_RE.test(segment) || !POINTING_GESTURE_RE.test(segment)) continue;
-
-    const resolvedSegment = segment.replace(/\u4e21\u624b\u3067/, '\u7247\u624b\u3067');
-    if (resolvedSegment === segment) continue;
-
-    normalized = `${normalized.slice(0, start)}${resolvedSegment}${normalized.slice(end)}`;
-    resolvedConflict = true;
-  }
-
-  return { text: normalized, resolvedConflict };
-};
 const sanitizeConversationCamera = (camera) => {
   const withoutEnglishLensTarget = String(camera || '')
     .replace(/\s*,?\s*\([^)]*(?:viewer|reader|audience|camera|lens)[^)]*\)/gi, '')
@@ -123,11 +81,18 @@ const sanitizeConversationCamera = (camera) => {
 };
 
 const CHATGPT_WEB_COPY_SOFT_BUDGET = 15000;
+const compactConversationEyeLine = (line) => {
+  const depth = String(line).match(/DEPTH ASSIGNMENT \(REQUIRED\): (\[[^\]]+\]) PRIMARY THREE-QUARTER toward (\[[^\]]+\]); \[[^\]]+\] BACK-THREE-QUARTER OR OVER-THE-SHOULDER PARTNER toward \[[^\]]+\]/);
+  if (!depth) return line;
+  const [, primary, partner] = depth;
+  return `EYE-LINE LOCK: ${primary} address counterpart ${partner}; never lens/front. ${primary} PRIMARY THREE-QUARTER; ${partner} BACK-THREE-QUARTER OR OVER-THE-SHOULDER PARTNER. VISIBLE REAR DEPTH CHECK: camera is physically behind ${partner}'s shoulder; back of ${partner}'s head or shoulder foreground. Camera preserves scenario direction.`;
+};
+
 const compactChatGPTConversationRules = (prompt) => {
   if (prompt.length <= CHATGPT_WEB_COPY_SOFT_BUDGET) return prompt;
   const compacted = prompt
-    .replace(/CONVERSATIONAL DEPTH BASE:[^\n]*/g, 'CONVERSATIONAL DEPTH: counterpart gaze; varied 3/4 and OTS depth.')
-    .replace(/EYE-LINE LOCK:[^\n]*(?=\nAction \(visual only\):)/g, 'EYE-LINE: counterpart gaze, never lens; 3/4 speaker + visible OTS partner depth.')
+    .replace(/CONVERSATIONAL DEPTH BASE:[^\n]*/g, 'CONVERSATIONAL DEPTH BASE: counterpart gaze; varied three-quarter and OTS depth.')
+    .replace(/EYE-LINE LOCK:[^\n]*/g, compactConversationEyeLine)
     .replace(/MANGA FINISH ASSIST:[^\n]*/g, 'FINISH: bubbles, anatomy.')
     .replace(/\[ SHARED IMAGE QUALITY CONTRACT[\s\S]*?(?=\n- Clean finish:)/g, 'SHARED IMAGE QUALITY CONTRACT: preserve cast/action/setting/camera; rich physical setting with depth; coherent anatomy and prop ownership; localized clothing-fold shadows; no invented or duplicate cast; clean surfaces.')
     .replace(/RICH PANEL COMPOSITION \/ CHARACTER CLARITY LOCK:[\s\S]*?(?=\n- CLOTHING FOLD SHADOW ASSIST:)/g, 'RICH PANEL COMPOSITION / CHARACTER CLARITY LOCK: 1 fixed anchor + 2 physical setting cues/panel; VFX overlay, never replace setting; face, eyes, silhouette, hands and action stay crisp; background rich but softer/lower contrast; no blank walls, flat gradients or black voids.')
@@ -137,7 +102,7 @@ const compactChatGPTConversationRules = (prompt) => {
     .replace(/PANEL-BY-PANEL CLOTHING FOLD PRIORITY:[^\n]*/g, 'FOLD PRIORITY: 2-4 dark triangular crease shadows.')
     .replace(/FINAL-PANEL ACTIVE STAGING LOCK:[^\n]*/g, 'FINAL-PANEL ACTIVE STAGING LOCK: no straight-line lineup; distinct physical action; faces, silhouettes, and hands readable.')
     .replace(
-      /MANGA CAMERA \/ POSE VARIETY LOCK:[\s\S]*?(?=\n+(?:VISUAL STORY EVIDENCE LOCK|DYNAMIC BACKGROUND CONTINUITY LOCK|FINAL-PANEL ACTIVE STAGING LOCK|ART \/ RENDERING QUALITY:))/g,
+      /MANGA CAMERA \/ POSE VARIETY LOCK:[\s\S]*?(?=\n+(?:HAND \/ PROP KINEMATICS LOCK|VISUAL STORY EVIDENCE LOCK|DYNAMIC BACKGROUND CONTINUITY LOCK|FINAL-PANEL ACTIVE STAGING LOCK|ART \/ RENDERING QUALITY:))/g,
       'MANGA CAMERA / POSE VARIETY LOCK: >=3 azimuths; max 1 front-on; preserve script/camera/action/limbs; turn torso; stagger hands in depth; VFX follows angle.'
     )
     .replace(/COMPOSITION STAGING: PRESERVE EXPLICIT AZIMUTH:[^\n]*/g, 'COMPOSITION STAGING: preserve explicit azimuth; diagonal asymmetric body.')
@@ -158,6 +123,24 @@ const compactChatGPTConversationRules = (prompt) => {
   if (compacted.length <= CHATGPT_WEB_COPY_SOFT_BUDGET) return compacted;
 
   return compacted
+    .replace(/ABSOLUTE TASK:[^\n]*/g, 'ABSOLUTE TASK: new 4-panel manga page; refs only for identity.')
+    .replace(/- A4 portrait 1:1\.414;[^\n]*/g, '- A4 portrait 1:1.414; four equal horizontal panels; tight page.')
+    .replace(/- Top title EXACTLY ("[^"]+")[^\n]*/g, '- Top title EXACTLY $1.')
+    .replace(/- Bottom-right 4th-panel watermark EXACTLY ("[^"]+")[^\n]*/g, '- Bottom-right watermark EXACTLY $1.')
+    .replace(/- Bottom-left 4th-panel watermark EXACTLY ("[^"]+")[^\n]*/g, '- Bottom-left watermark EXACTLY $1.')
+    .replace(/- Clean finish:[^\n]*/g, '- CLEAN FINISH: crisp FG, soft BG, coherent light.')
+    .replace(/CAMERA: vary angles;[^\n]*/g, 'CAMERA: vary; preserve anatomy/script.')
+    .replace(/HAND \/ PROP KINEMATICS LOCK:[^\n]*/g, HAND_PROP_KINEMATICS_LOCK_COMPACT)
+    .replace(
+      /VISUAL STORY EVIDENCE LOCK: visibly preserve the event-specific evidence from the approved scenario: ([^\n]*?)\. Show at least two distinct evidence items[^\n]*/g,
+      'VISUAL STORY EVIDENCE LOCK: show $1; >=2 distinct items across >=2 panels where Actions place them; physical scene elements, not extra captions.'
+    )
+    .replace(
+      /DYNAMIC BACKGROUND CONTINUITY LOCK:[^\n]*?FIXED ANCHORS: ([^;\n]+);[^\n]*?INTERACTION PROPS\/SURFACES: ([^.\n]+)\. AVOID: ([^.\n]+)\.[^\n]*/g,
+      'DYNAMIC BACKGROUND CONTINUITY LOCK: keep declared Location/space/layers/light/weather across all panels. FIXED ANCHORS: $1 every panel. INTERACTION PROPS/SURFACES: $2. AVOID: $3.'
+    )
+    .replace(/MANGA CAMERA \/ POSE VARIETY LOCK:[^\n]*/g, 'MANGA CAMERA / POSE VARIETY LOCK: >=3 azimuths; max 1 front-on; preserve Action/limbs; stagger hands in depth.')
+    .replace(/FINAL-PANEL ACTIVE STAGING LOCK:[^\n]*/g, 'FINAL-PANEL ACTIVE STAGING LOCK: varied actions/depth; faces and hands readable.')
     .replace(/SHARED IMAGE QUALITY CONTRACT:[^\n]*/g, 'SHARED QUALITY: preserve direction; rich setting; anatomy/props; folds; no duplicate cast; clean surfaces.')
     .replace(
       /RICH PANEL COMPOSITION \/ CHARACTER CLARITY LOCK:[^\n]*/g,
@@ -165,7 +148,7 @@ const compactChatGPTConversationRules = (prompt) => {
     )
     .replace(/SAFE VISUAL:[^\n]*/g, 'SAFE: no gore, organs, flesh, or organic horror.')
     .replace(/FOLD PRIORITY:[^\n]*/g, 'FOLD PRIORITY: crease shadows.')
-    .replace(/CROSS-PANEL WARDROBE COLOR LOCK:[^\n]*/g, 'CROSS-PANEL WARDROBE COLOR LOCK: fix each character garment items/colors once; reuse in all panels; styles change background/VFX/rendering only; lighting changes shading only.')
+    .replace(/CROSS-PANEL WARDROBE COLOR LOCK:[^\n]*/g, "CROSS-PANEL WARDROBE COLOR LOCK: fix each character's outfit/colors once; reuse every panel; style and lighting never recolor them.")
     .replace(/PANEL STYLE LOCK: ([^;\n]+); visibly distinct linework, environmental palette, shading, background\/VFX\.[^\n]*/g, 'PANEL STYLE LOCK: $1; vary 3+ rendering axes; environmental palette only; wardrobe colors fixed.')
     .replace(/ART-STYLE DIFFERENCE QA LOCK:\n-[^\n]*/g, 'ART-STYLE DIFFERENCE QA LOCK:\n- Vary 3+ rendering axes between panels; wardrobe colors stay fixed; preserve script/identity/layout.')
     .replace(/CHARACTER QA:[^\n]*/g, 'CHARACTER QA: preserve identity and outfit.');
@@ -183,53 +166,9 @@ const buildVisualStoryEvidenceLock = (scenario) => {
   return `VISUAL STORY EVIDENCE LOCK: visibly preserve the event-specific evidence from the approved scenario: ${evidence.map((item) => `"${item}"`).join(' / ')}. Show at least two distinct evidence items across at least two panels, exactly where the panel Actions place them. These are physical scene elements or participants, not extra captions or labels unless the Action explicitly requires readable signage. Never replace them with a generic attractive background.`;
 };
 
-const appendPointingHandLock = (actionText, resolvedConflict = false) => {
-  if (!POINTING_GESTURE_RE.test(actionText)) return actionText;
-  const allocationLock = resolvedConflict
-    ? '\nHAND ALLOCATION LOCK: the same character uses one hand for the non-pointing gesture and the other hand for pointing; exactly two hands total. Never add a third hand to satisfy both actions.'
-    : '';
-  return `${actionText}
-HAND POSE LOCK: pointing hand must be anatomically correct, connected to same-side shoulder, natural index/thumb/palm/wrist/forearm; no mirrored, inverted, or extra pointing hand.${allocationLock}`;
-};
-
-const appendTwoHandPropOwnershipLock = (actionText) => {
-  if (!TWO_HAND_OCCUPATION_RE.test(actionText)) return actionText;
-  return `${actionText}
-PROP-HAND OWNERSHIP LOCK: when a character uses both hands to hold, close, open, or handle a prop, show exactly two arms and two hands, both continuously connected to that character's shoulders. Keep the prop in front of or beside that character's torso; hands, arms, and the prop never emerge from behind their back, cross into another character's body, or become an extra limb.`;
-};
-
-const hasSameCharacterPropPlacementAndArmCross = (actionText, castList) => {
-  const normalized = String(actionText || '');
-  const names = extractCastNamesForAction(castList);
-  if (!names.length || !PROP_PLACEMENT_RE.test(normalized) || !ARM_CROSS_GESTURE_RE.test(normalized)) {
-    return false;
-  }
-
-  const subjectRe = new RegExp(`(?:\\[)?(?:${names.map(escapeRegExp).join('|')})(?:\\])?(?:\u306f|\u304c)`, 'g');
-  const subjectStarts = [...normalized.matchAll(subjectRe)].map((match) => match.index);
-  return subjectStarts.some((start, index) => {
-    const end = subjectStarts[index + 1] ?? normalized.length;
-    const segment = normalized.slice(start, end);
-    return PROP_PLACEMENT_RE.test(segment) && ARM_CROSS_GESTURE_RE.test(segment);
-  });
-};
-
-const appendArmCrossPropReleaseLock = (actionText, castList) => {
-  if (!hasSameCharacterPropPlacementAndArmCross(actionText, castList)) return actionText;
-  return `${actionText}
-ARM-CROSS PROP RELEASE LOCK: when the same character finishes placing a prop and then crosses their arms, render the final pose only. The prop remains self-supported on the surface, both hands are completely released from the prop, and exactly two arms and two hands remain connected to that character. The arms cross naturally in front of the torso; neither hand touches, supports, passes behind, or merges with the prop.`;
-};
-
 const buildPanelActionText = (panelText, castList, activeOutfit) => {
   const placementRule = extractPlacementRule(panelText, castList);
-  const actionText = injectOutfitReminder(extractActionOnly(panelText, castList, placementRule), activeOutfit);
-  const normalizedAction = normalizeCompetingHandActions(actionText, castList);
-  return appendTwoHandPropOwnershipLock(
-    appendPointingHandLock(
-      appendArmCrossPropReleaseLock(normalizedAction.text, castList),
-      normalizedAction.resolvedConflict
-    )
-  );
+  return injectOutfitReminder(extractActionOnly(panelText, castList, placementRule), activeOutfit);
 };
 
 const compactScriptLockOrReference = (text, maxLength, referenceText) => {
@@ -383,7 +322,7 @@ export const buildMangaPrompt = ({
   const panels = [panel1Text, panel2Text, panel3Text, panel4Text];
   const scriptLock = buildStrictScriptLock({ safeTopic, panels, castList, activeOutfit });
   const finalPanelStagingLock = punchlineType === 'Surreal' ? '' : FINAL_PANEL_ACTIVE_STAGING_IMAGE_LOCK;
-  const sceneLocks = [scriptLock, compositionVarietyLock, visualStoryEvidenceLock, backgroundContinuityLock, finalPanelStagingLock]
+  const sceneLocks = [scriptLock, compositionVarietyLock, HAND_PROP_KINEMATICS_LOCK, visualStoryEvidenceLock, backgroundContinuityLock, finalPanelStagingLock]
     .filter(Boolean)
     .join('\n');
   const panelEyeLineRules = panels.map((panel) => buildPanelEyeLineRule(panel, castList));

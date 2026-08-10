@@ -1,6 +1,6 @@
 # Super FURU AI 4-koma System
 
-> Latest release: **v5.2.9** / 最新リリース: **v5.2.9**
+> Latest release: **v5.3.0** / 最新リリース: **v5.3.0**
 
 > **"To what extent can humans step away from the creative process?"**
 > **「人間は、どこまで制作から降りられるのか？」**
@@ -22,7 +22,7 @@
 This project aims to intentionally exclude humans from the creative process, allowing AI to act as a director and complete everything from brainstorming to composition, direction, and rendering.
 本プロジェクトは、人間をクリエイティブな工程から意図的に排除し、AIがディレクターとして「ネタ出し・構成・演出・作画」のすべてを完結させることを目的としています。
 
-The current implementation is **v5.2.9**. The product name is **Super FURU AI 4-koma System**; **Nano Banana 2** and **ChatGPT Image 2.0** identify image-generation engine families. / 現在の実装は **v5.2.9** です。製品名は **Super FURU AI 4-koma System** で、**Nano Banana 2** と **ChatGPT Image 2.0** は画像生成エンジン系統の名称です。
+The current implementation is **v5.3.0**. The product name is **Super FURU AI 4-koma System**; **Nano Banana 2** and **ChatGPT Image 2.0** identify image-generation engine families. / 現在の実装は **v5.3.0** です。製品名は **Super FURU AI 4-koma System** で、**Nano Banana 2** と **ChatGPT Image 2.0** は画像生成エンジン系統の名称です。
 
 Current behavior at a glance / 現行仕様の要点:
 
@@ -301,6 +301,9 @@ This system is not a simple "prompt-and-generate" tool. It is a **multi-stage co
 
 * **Camera Diversity Mapping**: Camera candidates are shuffled and mapped to panel-specific shot and lens guidance so the four panels do not default to the same view. The final renderer can still interpret visual instructions imperfectly, so this is a prompt-level composition control rather than a pixel-level guarantee.
   カメラ候補をシャッフルし、コマごとのショットとレンズ指示へ変換することで、4コマすべてが同じ構図へ寄るのを抑えます。最終描画モデルが指示を完全に再現するとは限らないため、ピクセル単位の保証ではなくプロンプト段階の構図制御です。
+
+* **Generic Hand / Prop Kinematics Contract**: STEP3 applies the same situation-agnostic hand and prop constraint to every scenario instead of branching on particular objects or gestures. It preserves the scripted Action, assigns subject-relative anatomical left/right sides, limits each hand to one simultaneous role/contact, keeps prop ownership separated between characters, resolves sequential actions to their final supported state, and checks palm/thumb/finger/wrist continuity. This reduces mirrored, detached, duplicated, or malformed hands but cannot guarantee perfect anatomy from a generative image model.
+  STEP3では、特定の小道具名やポーズを条件分岐するのではなく、全シナリオへ同じ汎用の手・小道具運動学契約を適用します。元のAction文を変更せず、人物基準の左右、片手あたり同時に1つの役割・接触、小道具の所有者分離、連続動作の最終状態と物体の支持、掌・親指・指・手首の連続性を指定します。左右反転、切断、重複、変形した手を抑えるためのプロンプト制御であり、生成画像モデルの解剖を完全保証するものではありません。
 
 * **Cross-Platform Prompt Compatibility (ChatGPT Image 2.0)**: When OpenAI Engine mode is enabled, the system injects formatting constraints such as A4 layout parameters and vertical-text guidance into the final prompt. These are prompt-level controls; the image model still determines the rendered result.
   OpenAIエンジンモード有効時には、A4レイアウト指定や縦書きテキスト誘導などのフォーマットを最終プロンプトに注入します。これはプロンプト段階の制御であり、最終的な描画結果は画像モデルの解釈に依存します。
@@ -792,6 +795,9 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 ---
 
 ## 📋 ChangeLog (latest 15 releases) / 変更履歴（最新15件）
+
+### v5.3.0 (2026-08-10)
+- **[Fix & UX]** 特定の物やポーズに依存しない手・小道具運動学契約を追加し、Actionを変更せず左右・接触・所有者・最終支持状態・指手首の連続性を保持 / Added a situation-agnostic hand and prop kinematics contract that preserves Action while locking side, contact, ownership, final support state, and finger/wrist continuity
 
 ### v5.2.9 (2026-08-10)
 - **[Fix & UX]** READMEの現行実装バージョン表記をv5.2.9へ訂正し、公開済みの構図バリエーション機能と整合 / Corrected the README current-implementation version to v5.2.9 so it matches the latest release and published manga composition variety description

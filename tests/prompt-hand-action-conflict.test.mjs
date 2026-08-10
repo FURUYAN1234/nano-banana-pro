@@ -64,58 +64,68 @@ const buildPrompt = (providerFamily, panelTwoAction) => buildMangaPrompt({
 const panelTwoSection = (prompt) =>
   prompt.match(/## Panel 2[\s\S]*?(?=## Panel 3)/)?.[0] || '';
 
-test('same-character two-hand occupation plus pointing is normalized to a two-hand allocation', () => {
+const handKinematicsLine = (prompt) =>
+  prompt.match(/^HAND \/ PROP KINEMATICS LOCK:.*$/m)?.[0] || '';
+
+test('all hand and prop situations use one shared kinematics contract without rewriting the action', () => {
   const action = 'ミクは両手でケーキ皿を持ち、リンは両手で頭を抱え、目を血走らせて画面を指差し、サエコは腕を組む。';
 
   for (const providerFamily of ['chatgpt', 'gemini']) {
-    const panel = panelTwoSection(buildPrompt(providerFamily, action));
+    const prompt = buildPrompt(providerFamily, action);
+    const panel = panelTwoSection(prompt);
+    const contract = handKinematicsLine(prompt);
 
     assert.match(panel, /ミクは両手でケーキ皿を持ち/);
-    assert.doesNotMatch(panel, /リンは両手で頭を抱え[^。\n]*指差/);
-    assert.match(panel, /リンは片手で頭を抱え/);
-    assert.match(panel, /HAND ALLOCATION LOCK:.*exactly two hands total/);
+    assert.match(panel, /リンは両手で頭を抱え[^。\n]*指差/);
+    assert.match(contract, /anatomical LEFT and RIGHT/i);
+    assert.match(contract, /one simultaneous role\/contact per hand/i);
+    assert.match(contract, /subject-relative.*not viewer-left\/viewer-right/i);
+    assert.match(contract, /palm.*thumb.*finger.*wrist/i);
+    assert.match(contract, /one owning actor per prop/i);
+    assert.match(contract, /final described state/i);
+    assert.doesNotMatch(prompt, /HAND ALLOCATION LOCK:/);
+    assert.doesNotMatch(prompt, /HAND POSE LOCK:/);
+    assert.doesNotMatch(prompt, /PROP-HAND OWNERSHIP LOCK:/);
+    assert.doesNotMatch(prompt, /ARM-CROSS PROP RELEASE LOCK:/);
   }
 });
 
-test('two-hand action is preserved when a different character performs the pointing', () => {
-  const action = 'ミクは両手でケーキ皿を持ち、リンは画面を指差し、サエコは腕を組む。';
-  const panel = panelTwoSection(buildPrompt('chatgpt', action));
-
-  assert.match(panel, /ミクは両手でケーキ皿を持ち/);
-  assert.doesNotMatch(panel, /HAND ALLOCATION LOCK:/);
-});
-
-test('two-hand prop actions lock both hands, arms, and the prop to their owner in depth shots', () => {
-  const action = 'ミクが原稿を指で連打し、リンは資料を両手で豪快に閉じ、ヒカリはカップを置く。';
+test('unrelated hand and prop actions receive the exact same situation-agnostic contract', () => {
+  const actions = [
+    'ミクは片手で箱を支え、もう片手で鍵を回す。',
+    'リンは両手で布を絞る。',
+    'サエコは皿を台に置いてから腕を組む。',
+    'アカリは相手から封筒を受け取る。'
+  ];
 
   for (const providerFamily of ['chatgpt', 'gemini']) {
-    const panel = panelTwoSection(buildPrompt(providerFamily, action));
+    const contracts = actions.map((action) => handKinematicsLine(buildPrompt(providerFamily, action)));
 
-    assert.match(panel, /リンは資料を両手で豪快に閉じ/);
-    assert.match(panel, /PROP-HAND OWNERSHIP LOCK:.*exactly two arms and two hands/);
-    assert.match(panel, /both continuously connected to that character's shoulders/);
-    assert.match(panel, /never emerge from behind their back/);
+    assert.ok(contracts.every(Boolean));
+    assert.equal(new Set(contracts).size, 1);
+    assert.doesNotMatch(contracts[0], /箱|鍵|布|皿|封筒|スマホ|新聞/);
   }
 });
 
-test('same-character prop placement plus crossed arms releases the prop before the final pose', () => {
+test('sequential prop placement and a later pose remain verbatim under the generic final-state rule', () => {
   const action = 'サエコは資料ファイルを机にトンと立て、背筋を伸ばし腕組み気味。アカリはカップケーキを食べる。';
 
   for (const providerFamily of ['chatgpt', 'gemini']) {
-    const panel = panelTwoSection(buildPrompt(providerFamily, action));
+    const prompt = buildPrompt(providerFamily, action);
+    const panel = panelTwoSection(prompt);
 
     assert.match(panel, /サエコは資料ファイルを机にトンと立て、背筋を伸ばし腕組み気味/);
-    assert.match(panel, /ARM-CROSS PROP RELEASE LOCK:/);
-    assert.match(panel, /prop remains self-supported on the surface/);
-    assert.match(panel, /both hands are completely released from the prop/);
-    assert.match(panel, /exactly two arms and two hands/);
-    assert.match(panel, /arms cross naturally in front of the torso/);
+    assert.match(handKinematicsLine(prompt), /released objects remain physically supported/i);
+    assert.doesNotMatch(prompt, /ARM-CROSS PROP RELEASE LOCK:/);
   }
 });
 
-test('prop handling and crossed arms by different characters do not trigger a same-character release lock', () => {
+test('different characters retain separate action ownership without sample-specific branches', () => {
   const action = 'サエコは資料ファイルを机にトンと立てる。リンは腕を組む。';
-  const panel = panelTwoSection(buildPrompt('chatgpt', action));
+  const prompt = buildPrompt('chatgpt', action);
+  const panel = panelTwoSection(prompt);
 
+  assert.match(panel, /サエコは資料ファイルを机にトンと立てる。リンは腕を組む/);
+  assert.match(handKinematicsLine(prompt), /never cross ownership between characters/i);
   assert.doesNotMatch(panel, /ARM-CROSS PROP RELEASE LOCK:/);
 });
