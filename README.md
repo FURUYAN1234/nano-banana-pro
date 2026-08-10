@@ -1,6 +1,6 @@
 # Super FURU AI 4-koma System
 
-> Latest release: **v5.2.5** / 最新リリース: **v5.2.5**
+> Latest release: **v5.2.7** / 最新リリース: **v5.2.7**
 
 > **"To what extent can humans step away from the creative process?"**
 > **「人間は、どこまで制作から降りられるのか？」**
@@ -22,16 +22,18 @@
 This project aims to intentionally exclude humans from the creative process, allowing AI to act as a director and complete everything from brainstorming to composition, direction, and rendering.
 本プロジェクトは、人間をクリエイティブな工程から意図的に排除し、AIがディレクターとして「ネタ出し・構成・演出・作画」のすべてを完結させることを目的としています。
 
-The current implementation is **v5.1.9**. The product name is **Super FURU AI 4-koma System**; **Nano Banana 2** and **ChatGPT Images 2.0** identify image-generation engine families. / 現在の実装は **v5.1.9** です。製品名は **Super FURU AI 4-koma System** で、**Nano Banana 2** と **ChatGPT Images 2.0** は画像生成エンジン系統の名称です。
+The current implementation is **v5.2.7**. The product name is **Super FURU AI 4-koma System**; **Nano Banana 2** and **ChatGPT Image 2.0** identify image-generation engine families. / 現在の実装は **v5.2.7** です。製品名は **Super FURU AI 4-koma System** で、**Nano Banana 2** と **ChatGPT Image 2.0** は画像生成エンジン系統の名称です。
 
 Current behavior at a glance / 現行仕様の要点:
 
 - **Four-stage workflow / 4段階ワークフロー:** STEP1 character analysis, STEP2 scenario generation and optional enhancement, STEP3 editable prompt assembly, and STEP4 image generation form one continuous pipeline. / STEP1のキャラクター解析、STEP2のシナリオ生成と任意の演出強化、STEP3の編集可能な画像プロンプト構築、STEP4の画像生成を一つの流れとして実行します。
 - **Three-attempt scenario quality selection / シナリオ品質は全3試行から選抜:** STEP2 evaluates scenario-content hygiene, manual-input exclusions, event-specific visual evidence, dynamic-background completeness, and final-panel staging. A full pass is accepted immediately. If all three attempts miss one or more quality targets, the highest-scoring usable candidate is retained with a concrete warning and remains available to STEP3 and STEP4. / STEP2では、本文の表現衛生、自由入力の禁止条件、出来事を示す視覚証拠、動的背景の完全性、4コマ目の能動演出を検証します。合格した時点で採用し、全3試行でも品質条件が残った場合は、最後の結果ではなく最高得点の利用可能な候補を警告付きで保持してSTEP3・STEP4へ進めます。
 - **Two-attempt scenario enhancement / 演出強化は初回＋自動修正1回:** The seven enhancement categories are validated against the original scenario. A first-pass success is accepted without an unnecessary retry. If correction is needed, the better usable enhancement is retained; when every generated rewrite violates a non-negotiable editing contract, the saved original scenario is restored so downstream work is not lost. / 7カテゴリの演出強化は元シナリオとの差分で検証します。初回で合格すれば追加生成は行いません。修正が必要な場合は利用可能な候補のうち良い方を保持し、すべての書換候補が構造・話者・未選択範囲などの必須契約を壊した場合は、保存済みの元シナリオを採用して後続作業を継続します。
+- **Season-aware outfit selection / 日付連動の衣装選定:** In date-specified news mode, STEP2 derives a read-only Japan-default seasonal hint from the selected date. Explicit user clothing, event uniforms, profession or safety gear, location, real weather, indoor conditions, and an overseas local season take priority over that hint; manual-input mode does not infer a season from a date. Empty or ambiguous outfits and clear unexplained summer/winter conflicts are retried with the exact failed check. / 日付指定ニュースモードでは、STEP2が対象日から日本基準の季節目安を読み取り専用で提示します。ユーザー指定衣装、行事衣装、職業・安全装備、場所、実際の天候、屋内環境、海外の現地季節は目安より優先し、自由入力モードでは日付から季節を推測しません。空・曖昧な衣装や根拠のない夏冬の明白な不一致は、失敗した検証項目を示して再生成します。
+- **Dialogue and visual-direction boundary / 台詞と視覚指示の境界:** Only explicit dialogue is sent to speech bubbles. Markdown headings and Action/visual directions remain drawing instructions, so expression, body, staging, and background notes are not rendered as extra bubble text. / 明示的な台詞だけを吹き出しへ渡します。Markdown見出しやAction・視覚指示は描画指示のまま保持し、表情・身体・演出・背景の説明を余計な吹き出し文字として描画しません。
 - **Dynamic background and visual-evidence locks / 動的背景と視覚証拠の固定:** Each story defines one concrete location, spatial layers, lighting, interaction props, fixed anchors, and drawable evidence specific to the event. Those items are carried into the final provider-specific prompt instead of being replaced by a generic attractive background. / 作品ごとに具体的な場所、空間レイヤー、照明、触れられる小道具、共通アンカー、出来事固有の描画可能な証拠を設計し、汎用背景へ置き換えられないよう最終プロンプトまで引き継ぎます。
 - **Editable provider-specific final prompt / 編集可能なプロバイダー別最終プロンプト:** ChatGPT-family and Gemini-family prompts use different rendering contracts while sharing script, identity, dialogue-tail, key-prop, eye-line, hand, rich-background, and active-final-panel safeguards. Manual edits in STEP3 are used by both copy actions and the subsequent API image request. / ChatGPT系とGemini系で描画契約を分けつつ、脚本、キャラクター同一性、吹き出し、主要小道具、視線、手、背景密度、4コマ目の能動演出を共通固定します。STEP3で直接編集した内容は、コピー操作とAPI画像生成の両方に反映されます。
-- **No hidden post-image regeneration / 画像受信後の隠れた再生成なし:** STEP4 displays the image returned by the selected provider and does not run automatic visual QA or automatic regeneration afterward. OpenAI streaming preserves the newest valid partial image only when the connection drops before the final event. Authentication, transport, malformed-response, and missing-image failures remain explicit errors because no usable final artifact exists. / STEP4は選択したAPIから受信した画像を表示し、その後に自動視覚QAや自動再生成を実行しません。OpenAIのストリーミング中に最終イベント前で通信が切れた場合に限り、受信済みの最新途中画像を救済します。認証失敗、通信失敗、応答形式不正、画像データ欠落は利用可能な成果物がないため、明示的なエラーとして扱います。
+- **No hidden post-image regeneration / 画像受信後の隠れた再生成なし:** STEP4 displays the image returned by the selected provider and does not run automatic visual QA or automatic regeneration afterward. OpenAI preserves the newest valid partial image when a stream ends before its final event; only a browser-level stream `Failed to fetch` is retried once as a normal non-stream response. Authentication, other transport failures, malformed responses, and missing-image failures remain explicit errors because no usable final artifact exists. / STEP4は選択したAPIから受信した画像を表示し、その後に自動視覚QAや自動再生成を実行しません。OpenAIのストリーミング中に最終イベント前で通信が切れた場合は受信済みの最新途中画像を救済し、ブラウザレベルのストリーム `Failed to fetch` に限って通常応答で1回だけ再試行します。認証失敗、その他の通信失敗、応答形式不正、画像データ欠落は利用可能な成果物がないため、明示的なエラーとして扱います。
 - **Verified provider routes / 検証済みAPI経路:** The current OpenAI route uses `gpt-4.1` as the primary text/vision model and `gpt-image-2` for 1024x1536 high-quality PNG generation. The Gemini route uses `gemini-3.5-flash` as the primary text/vision model and `gemini-3.1-flash-image` for manga image generation. / 現在のOpenAI経路はテキスト・画像認識の第一候補に`gpt-4.1`、1024x1536の高品質PNG生成に`gpt-image-2`を使用します。Gemini経路はテキスト・画像認識の第一候補に`gemini-3.5-flash`、漫画画像生成に`gemini-3.1-flash-image`を使用します。
 - **API preflight without key persistence / API事前確認とキー非保存:** The startup modal verifies provider connectivity before unlocking STEP1. Keys remain in memory; development refresh protection stores only a boolean bootstrap flag and does not persist the credential. / 起動時モーダルでプロバイダー接続を確認してからSTEP1を有効化します。APIキーはメモリ内だけで扱い、開発中の更新対策も認証情報ではなく初期化済みかどうかの真偽値だけを保持します。
 - **STEP4 helper boundary / STEP4補助機能の境界:** Generated images can be downloaded as received. The aspect-ratio correction and 2x upscale buttons copy instructions for external image tools; they are not in-app deterministic image processors. / 生成画像は受信した状態で保存できます。アスペクト比補正と2倍アップスケールのボタンは外部画像ツール向けの指示文をコピーする機能であり、アプリ内で画像処理を実行する機能ではありません。
@@ -76,8 +78,8 @@ By importing the 4-koma manga generated here into the AI Voice Comic Maker, it a
 Unlike conventional AI tools that assist humans, this system is based on the following philosophy:
 従来のAIツールが「人間の補助」であったのに対し、本システムは以下の思想に基づいています。
 
-* **Dynamic Trend Sync / トレンド動的同期**: Dynamically acquires the latest news to self-select topics based on current social trends.
-  実行当日の最新ニュースを動的に取得。社会情勢に合わせたネタをAIが自ら選定します。
+* **Date-aware topic research / 日付指定の話題調査**: In date-specified news mode, Gemini attempts Google Search Grounding when compatible; if Grounding is unavailable, it retries without the tool. The resulting topic is material for a comic, not an independently verified news report.
+  日付指定ニュースモードでは、Geminiが利用可能な場合にGoogle Search Groundingを試行し、利用できない場合はツールなしで再試行します。得られた話題は漫画の材料であり、独立に検証済みのニュース報道ではありません。
 * **Unmanned Direction / 無人ディレクション**: AI self-constructs the plot and determines the 4-panel structure without human intervention.
   人間の指示を待たず、AI自身がプロットを組み立て、4コマの構成を決定。
 * **Physical Identity Enforcement / 同一性の物理的強制**: Maintains high-precision character consistency across all panels through a unique protocol.
@@ -99,10 +101,16 @@ Ultimately, this project envisions a future where manga artists and animators ar
 
 ### 📅 Date-Specified News Search / 日付指定ニュース検索
 
-Users can specify a target date to retrieve and visualize past news trends.
-対象の日付を指定して、過去のニュースを取得・漫画化できます。
+Users can specify a target date and categories for a news-inspired four-panel scenario. Gemini attempts Grounding where compatible and otherwise continues without it, so generated content must not be treated as a verified news record.
+対象日とカテゴリを指定して、ニュース題材の4コマシナリオを作成できます。Geminiは利用可能な場合にGroundingを試し、利用できない場合はツールなしで継続するため、生成結果を検証済みのニュース記録として扱わないでください。
 
 * **Categories**: General, Technology, Business, Entertainment, Science, Health, Sports, Art.
+
+#### 🧥 Date-Linked Seasonal Outfit Rules / 日付連動の季節衣装ルール
+
+For date-specified news, STEP2 calculates a Japan-default seasonal hint from the selected target date and displays it as read-only guidance. It is an auto-selection aid, not a user setting and not a replacement for the story context. / 日付指定ニュースでは、STEP2が選択した対象日から日本基準の季節目安を算出し、読み取り専用の補助情報として表示します。これは自動選定の補助であり、ユーザー設定やストーリー文脈の置換ではありません。
+
+Priority is: explicit user outfit; event-specific clothing; profession, safety gear, location, real weather, or indoor environment; target-date season; then ordinary automatic selection. A concrete outfit category is required. The validator requests a complete scenario rewrite only for an empty or ambiguous outfit, or a clear unexplained seasonal conflict; cold regions, snow, ice rinks, heated pools, saunas, tropical locations, and comparable evidence remain valid exceptions. Manual input uses explicit topic/environment cues and does not infer a target-date season. / 優先順位は、ユーザー指定衣装、行事固有の服装、職業・安全装備・場所・実際の天候・屋内環境、対象日の季節、通常の自動選定です。衣装は具体的なカテゴリでなければなりません。検証は空・曖昧な衣装、または根拠のない明白な季節不一致だけで完全なシナリオ再生成を求めます。寒冷地・積雪・スケートリンク・温水プール・サウナ・熱帯地域など、文脈上の根拠がある例外は有効です。自由入力では話題・環境の明示的な手掛かりだけを用い、対象日から季節を推測しません。
 
 ### ✏️ Manual Input Mode / 自由入力モード
 
@@ -111,14 +119,16 @@ A "Free Input" mode allows users to generate manga from any text, such as person
 > **Note**: Direct URL input is often blocked by security (403 errors). Copy-pasting the article text is recommended.
 > URLの直接入力はセキュリティによりブロックされることが多いため、記事のテキストを直接コピーすることを推奨します。
 
+When a URL is entered, the app attempts to fetch its text through the CodeTabs public proxy. Only successfully extracted text is used as reference material; an unreachable URL is not treated as verified external evidence. / URLを入力すると、アプリはCodeTabsの公開プロキシ経由で本文取得を試みます。取得に成功した本文だけを参照材料とし、取得できないURLを検証済みの外部事実として扱いません。
+
 ### ⚡ Full Auto Mode / フルオート生成モード
 
 With a single click, the system autonomously executes the entire pipeline (from scenario generation to prompt compilation and image rendering) without requiring manual advancement through each step.
 キャラクターとお題を設定した状態から、シナリオ生成・プロンプト構築・画像生成の全ステップを人間の介入なしに一気通貫で自律実行するモードです。
 
 ### 🔁 Endless Mode / 無限ループモード
-The system continuously generates completely new manga infinitely until the user explicitly stops it. It combines trend crawling and image generation loops. Upon completing a generation, it automatically selects a new topic and continuously produces new manga while preserving the initial character settings (enabling fully autonomous operation).
-ユーザーが停止ボタンを押すまで、無限に新しい漫画を生成し続ける機能です。トレンド取得と画像生成のループを全自動で延々と回します。フルオート生成完了後、キャラクター設定を維持したまま、自動的に新しいニュースやランダムなお題を取得し、次々と新しいシナリオと漫画を延々と生成し続けるモードです（完全な放置運用が可能）。
+The system continuously runs the scenario-to-image workflow until the user explicitly stops it, preserving the initial character settings between runs. It requests the next topic from the selected provider; it is not a separately verified news-crawling service.
+ユーザーが停止ボタンを押すまで、初期キャラクター設定を維持したままシナリオから画像までの処理を連続実行します。次の話題は選択したプロバイダーへ要求するものであり、独立した検証済みニュースクローラーではありません。
 
 ### 🧠 Dynamic Background Design / 動的背景設計
 Each story designs its own concrete environment instead of retrieving an exact-name preset. The scenario specifies circulation, foreground/midground/background layers, time/weather and primary lighting, atmosphere, interaction props, two or three continuity anchors, and contradictions to avoid. It also extracts three to five drawable pieces of visual evidence tied to the event and requires at least two evidence types to recur across at least two panels. These details are carried into both provider-specific final prompts.
@@ -130,9 +140,9 @@ Incomplete, generic, or weakly recurring background output is a quality shortfal
 不完全・抽象的・継続性の弱い背景は「品質不足」として扱い、直ちに処理を止めません。STEP2は完全なシナリオを全3試行まで再生成し、すべての品質条件に合格できなかった場合も、利用可能な候補の中から最高得点のものを警告付きで保持します。一方、明示的に危険な場所、API・通信失敗、応答形式不正、利用可能な出力の欠落は、安全に継続できる成果物がないためエラーになります。
 
 ### 🧠 Generation Trace and Progress Logging / 生成トレースと進行ログ
-The progress window displays provider status, elapsed waiting time, validation results, retry counts, warnings, and model-generated process summaries when available. Structured `<thought>` blocks are separated from the scenario body by the provider router and shown as an explanatory trace. This is a model-authored summary for observability; it must not be interpreted as a complete disclosure of private model reasoning or as proof that both providers reason identically.
+The progress window combines client-side phase labels and elapsed waiting time with validation results, retry counts, warnings, and provider updates when available. Structured `<thought>` blocks are separated from the scenario body by the provider router and shown as an explanatory trace. This is a model-authored summary for observability, not a complete disclosure of private model reasoning or proof that both providers reason identically.
 
-進行ログには、接続先、待機時間、検証結果、試行回数、警告、利用可能な場合はモデルが生成した処理要約を表示します。応答内の構造化された `<thought>` ブロックはプロバイダールーターがシナリオ本文から分離し、説明用トレースとして表示します。これは動作を追いやすくするためのモデル生成要約であり、モデル内部の非公開推論を完全に開示するものでも、両プロバイダーの推論過程が同一であることを証明するものでもありません。
+進行ログには、クライアント側の処理段階表示と待機時間に加え、検証結果、試行回数、警告、利用可能な場合はプロバイダーからの更新を表示します。応答内の構造化された `<thought>` ブロックはプロバイダールーターがシナリオ本文から分離し、説明用トレースとして表示します。これは動作を追いやすくするためのモデル生成要約であり、モデル内部の非公開推論の完全な開示や、両プロバイダーの推論過程が同一であることの証明ではありません。
 
 ### 🎬 Scenario Enhancement / シナリオ演出強化
 STEP2 provides seven independently selectable categories: expressions, body acting, visual effects, background, camera work, dialogue rewrite, and gag direction. Only the selected categories may change. The validator requires a real change in every selected category while preserving the title, logline, location, outfit, punchline metadata, four-panel structure, speakers, and every unselected category. It also rejects cross-category bleed, unintended tone escalation, anatomy/body-horror escalation, explanatory dialogue expansion, and weakened punchlines.
@@ -167,37 +177,37 @@ AIが生成するストーリーのノリが一パターンになるのを防ぐ
 - **SurrealQuiet (シュール静寂系)** : 狂った状況下でもキャラクターはあえて無表情・真顔を貫き、淡々とした温度感の低いリアクションや奇妙な「間」でシュールな笑いを演出します。
 - **IntellectualBlack (知性派ブラック系)** : 現代社会の風刺や痛烈な皮肉、ダブルミーニングを散りばめ、「よく考えると恐ろしい事実や狂気」が浮かび上がる知的な笑いを構築します。
 
-### 🤖 ChatGPT Images 2.0 Anti-Noise Protocol / OpenAI特有ノイズ除去プロトコル
+### 🤖 ChatGPT Image 2.0 Anti-Noise Protocol / OpenAI特有ノイズ除去プロトコル
 
-When the OpenAI Engine is selected (or when using the Browser UI Option for ChatGPT), a dedicated formatting protocol is applied for ChatGPT Images 2.0. It specifies an A4 portrait composition, Japanese text direction, reading flow, safe rendering terms, prohibited term combinations, and light-effect substitutions. These prompt-level controls reduce common layout and visual-noise failures, but the image model still determines the final pixels.
-OpenAI Engine選択時（またはChatGPT向けのブラウザUI運用時）には、ChatGPT Images 2.0向けの専用プロンプトフォーマットを適用します。A4縦長構図、日本語文字の方向、視線誘導、安全な描画語、禁止語の組み合わせ、光演出の代替表現を指定します。これらはレイアウト崩れや視覚ノイズを抑えるプロンプト段階の制御であり、最終的な描画結果は画像モデルの解釈に依存します。
+When the OpenAI Engine is selected (or when using the Browser UI Option for ChatGPT), a dedicated formatting protocol is applied for ChatGPT Image 2.0. It specifies an A4 portrait composition, Japanese text direction, reading flow, safe rendering terms, prohibited term combinations, and light-effect substitutions. These prompt-level controls reduce common layout and visual-noise failures, but the image model still determines the final pixels.
+OpenAI Engine選択時（またはChatGPT向けのブラウザUI運用時）には、ChatGPT Image 2.0向けの専用プロンプトフォーマットを適用します。A4縦長構図、日本語文字の方向、視線誘導、安全な描画語、禁止語の組み合わせ、光演出の代替表現を指定します。これらはレイアウト崩れや視覚ノイズを抑えるプロンプト段階の制御であり、最終的な描画結果は画像モデルの解釈に依存します。
 
-### 🛡️ Content Policy Adjustment System (v4.2.1+) / コンテンツポリシー自動調整システム & Web版切替機能
+### 🛡️ Content Policy Adjustment System / コンテンツポリシー調整とWeb版案内
 
-The system includes an automated safety-policy adjustment pipeline that helps prevent the workflow from stopping when a prompt needs softer wording for provider safety checks.
-APIの安全基準に合わせて表現を穏当化する自動調整パイプラインを備えており、過激または誤解されやすい表現が原因で生成ワークフローが止まるのを防ぎます。
+When a provider returns a safety-policy block, the app presents recovery choices rather than treating it as a successful generation.
+プロバイダーが安全ポリシーによる拒否を返した場合、成功扱いにはせず、復旧方法を選べるようにします。
 
 - **Dynamic Auto-Fix / 配慮版プロンプトの自動再生成**: 
-  When the image generator returns a safety-policy block, the AI Advisor checks the provider response, rewrites high-risk or ambiguous wording into mild, context-preserving alternatives, and retries within the provider's safety rules.
-  画像生成エンジンが安全ポリシー上のブロックを返した場合、AIアドバイザーが応答内容を確認し、過激または誤解されやすい表現を文脈に沿った穏当な表現へ置き換えた **「配慮版プロンプト」** を生成し、各プロバイダーの安全基準内で再試行します。
+  In normal operation, the user chooses this option after a safety-policy block. The AI Advisor then rewrites high-risk or ambiguous wording into milder, context-preserving alternatives and submits one retry. If it is rejected again, the choice is shown again.
+  通常操作では、安全ポリシーによる拒否の後にユーザーがこの選択肢を選びます。AIアドバイザーが過激または誤解されやすい表現を文脈に沿った穏当な表現へ置き換え、1回再試行します。再び拒否された場合は、選択肢を再表示します。
 
 - **One-Click "Switch to Web" / 「Web版に切り替える」連携機能**: 
-  If provider safety checks still reject the adjusted prompt, a "Switch to Web" button appears on the screen. Clicking this button copies the fully formatted prompt, optimized for the active engine, to your clipboard and opens the official web interface (Gemini or ChatGPT) in a new tab so the user can review and adjust the request in the provider's own UI.
-  API経由での生成拒否が続く場合、画面に **「Web版に切り替える」** ボタンが表示されます。このボタンをクリックすると、お使いのエンジン（GeminiまたはChatGPT）に合わせた専用プロンプトが自動的にクリップボードにコピーされ、同時に公式サイトが新しいタブで開きます。公式Web版上で内容を確認・調整しながら、各サービスの安全基準内で生成を進められます。
+  A "Switch to Web" button copies the current provider-specific prompt and displays the official ChatGPT or Gemini destination in the recovery guidance. The user opens that Web UI, attaches the references, and submits the request there.
+  **「Web版に切り替える」** ボタンは、現在のプロバイダー向けプロンプトをコピーし、復旧案内に公式ChatGPTまたはGeminiの行き先を表示します。ユーザーがWeb UIを開き、参照画像を添付してそこで送信します。
 
 - **Unified Copy Workflow / 統一されたコピペ連携フロー**: 
-  The clipboard-copy and web redirection workflow operates identically for both Gemini and ChatGPT engines, providing a unified fallback experience regardless of your selected model.
-  GeminiとChatGPTのどちらのAPIエンジンを選択していても、ポリシーエラー発生時には全く同じ手順（ワンクリックコピー＆ブラウザ起動）で連携でき、エンジンの違いを意識せずに利用できます。
+  The clipboard-copy and recovery-guidance workflow is shared by both Gemini and ChatGPT engines; the destination and prompt family follow the selected provider.
+  GeminiとChatGPTのどちらでも、コピーと復旧案内の流れは共通です。行き先とプロンプト系統は選択中のプロバイダーに従います。
 
 - **Intelligent Auto-Mode Adaptations / 自動化モードとの高度な連携**:
   - **Full Auto Mode / フルオートモード**: The system automatically attempts the "Auto-Fix" retry up to 3 times. If all attempts fail, it pauses and prompts the user for action.
     フルオート生成中、ポリシーエラーが発生した場合はAIが最大3回まで配慮版での再生成とリトライを実行。それでも安全基準内で生成できない場合のみ一時停止し、ユーザーの介入を待ちます。
-  - **Endless Mode / 無限ループモード**: To ensure continuous, unmanned operation, if a specific topic fails 3 consecutive times due to policy violations, the system automatically skips the current topic and moves to the next news trend instead of freezing the loop.
+  - **Endless Mode / 無限ループモード**: If a topic repeatedly fails policy handling, the loop can skip it and continue with the next generated topic. This is continuity behavior, not a live-news retrieval guarantee.
     無限ループモードの放置運用中、特定のニュースやお題でポリシーエラーが3回連続して解消できない場合、ループ全体のフリーズを防ぐため、そのお題を自動的にスキップして次のトピックへ自律的に移行します。
 
 > **🔒 Security Architecture / セキュリティ設計**
-> This app is a **fully client-side static application** hosted on GitHub Pages. All API calls (Gemini / OpenAI) are made directly from the user's browser — no backend proxy, no middleman server. API keys are securely held only in the browser's memory (RAM) and volatilize safely upon reload. They never leave the user's device.
-> 本アプリは GitHub Pages 上の **完全クライアントサイド静的アプリ** です。全てのAPI通信（Gemini / OpenAI）はユーザーのブラウザから直接実行され、中継サーバーは一切介在しません。APIキーはブラウザのメモリ上（RAM）にのみ保持され、リロードで安全に揮発します。ユーザーのデバイスから外部へ送信されることはありません。
+> Production is a **client-side static application** hosted on GitHub Pages. Gemini and OpenAI requests are sent from the browser to their respective providers, so the API key is held in memory and is sent only with that provider request; it is not persisted by the app. In local development, Gemini requests use the Vite `/gemini-api` proxy. URL extraction in Free Input uses the CodeTabs public proxy and does not send API keys to it.
+> 本番は GitHub Pages 上の **クライアントサイド静的アプリ** です。GeminiとOpenAIへのリクエストはブラウザから各プロバイダーへ送られるため、APIキーはメモリ内で保持され、そのプロバイダーへのリクエストにだけ送信されます。アプリはキーを永続保存しません。ローカル開発ではGeminiリクエストにViteの `/gemini-api` プロキシを使います。自由入力のURL本文取得にはCodeTabsの公開プロキシを使い、そこへAPIキーは送信しません。
 
 ### 🎨 Context-Aware Auto-Selection / 文脈認識型おまかせ自動選定
 
@@ -211,24 +221,24 @@ Both the **Location** (場所) and **Outfit** (服装) fields support an "AI Aut
 * **UI Distinction / UI上の区別**: In the Generation Preview, user-specified values appear in **white text**, while AI-selected values appear in **blue text with an ✨ icon**, making it immediately clear which settings were chosen by the human and which by the AI.
   生成プレビューでは、ユーザー指定値は **白文字** 、AI選定値は **青文字＋✨アイコン** で表示され、人間とAIどちらが選んだ設定かが一目で識別できます。
 
-### 🛡️ Audit-Grade Metadata JSON (v4.4.9+) / 監査・来歴証明用メタデータ保存
+### 🛡️ Exportable Metadata JSON / 書き出し可能なメタデータJSON
 
-To meet professional compliance and provenance requirements, the system features a dedicated "Metadata Download" button. When a prompt is generated, users can download a sidecar json file containing a full audit-grade trail of the generation process.
-商用利用やコンプライアンス要件（来歴証明）を満たすため、「監査用メタデータ保存」機能を搭載。プロンプト生成時に、生成プロセス全体を記録したJSONファイルをダウンロードできます。バージョン4.4.9より、このJSONフォーマットは「AI Provenance (来歴証明) 標準」を意識した監査グレードにアップグレードされました。
+The "Metadata Download" button exports a sidecar JSON snapshot of the generation state for the user's own recordkeeping. It is an application-generated record, not an independently certified provenance or compliance artifact.
+「監査用メタデータ保存」ボタンは、生成時点の状態をサイドカーJSONとして書き出します。これは利用者の記録用にアプリが生成するデータであり、独立機関が認証した来歴証明やコンプライアンス証跡ではありません。
 
-* **Proof of Generation (生成証明ハッシュ)**: Uses the Web Crypto API (`crypto.subtle.digest`) to generate a SHA-256 cryptographic hash of the scenario, prompt, timestamp, and app version. This acts as a digital fingerprint to prove the prompt was generated by this system and has not been tampered with.
-  ブラウザのWeb Crypto APIを使用し、シナリオ・プロンプト・タイムスタンプから成る **SHA-256 暗号学的フィンガープリント** を生成・記録します。後からテキストを手動改ざんするとハッシュが一致しなくなるため、「パクリ防止・捏造防止の強力なデジタルエビデンス」として機能します。
+* **Generation fingerprint / 生成フィンガープリント**: Uses the Web Crypto API (`crypto.subtle.digest`) to record a SHA-256 hash of the scenario, prompt, timestamp, and app version. It supports comparison of the same recorded inputs; it does not by itself prove authorship, origin, or later non-tampering.
+  ブラウザのWeb Crypto APIを使用し、シナリオ・プロンプト・タイムスタンプ・アプリ版のSHA-256ハッシュを記録します。同じ入力の照合には使えますが、これだけで著作者・出所・後日の非改ざんを証明するものではありません。
 * **Tool Identification (ツール名とリポジトリの明記)**: Clearly records the generating application name (`Super FURU AI 4-koma System`) and the exact GitHub repository URL to provide full transparency of the source system.
   JSON内に「生成ツール名」およびソースコードの公開先である「GitHubリポジトリURL」が自動で記録され、出所の透明性がさらに向上しました。
-* **Model Accountability & Footprint (モデル証跡とフットプリント)**: Accurately records which AI engine (e.g., `gemini-3.1-flash-image`, `gpt-image-2`) was used, whether a fallback occurred, and the exact character count of the generated prompts and scenarios (surpassing 20,000+ characters), proving the scale and originality of the generation.
-  実際に使用されたモデルや、生成されたプロンプトの文字数（2万文字超）を正確に記録。「他人の簡単なプロンプトをパクったのではなく、独自の超巨大システムで生成したオリジナルであること」を証明します。
+* **Model and content footprint / モデルと内容の記録**: Records the reported image model (for example `gemini-3.1-flash-image` or `gpt-image-2`), fallback status, and character counts for the generated scenario and prompt. The values describe that exported run; they do not establish originality or quality.
+  使用された画像モデル（例: `gemini-3.1-flash-image`、`gpt-image-2`）、フォールバック状態、生成されたシナリオとプロンプトの文字数を記録します。値は書き出した実行内容を示すものであり、独自性や品質を証明するものではありません。
 * **Comprehensive Records / 完全な記録**: The json includes the timestamp, extracted character sheet logic, scenario script, full prompt text, and all generation settings (Punchline type, Enhancement flags).
   JSONには上記の監査データのほか、タイムスタンプ、抽出されたキャラクター設定、シナリオ全文、プロンプト全文、およびすべての生成設定（オチのタイプや演出強化フラグ）が記録されます。
 
 ### 🌐 Zero-Click 360° Background & Style json Detection (v4.0.0+) / ゼロクリック360度パノラマ背景 & 作風json連携
 
 By dragging and dropping a 360-degree equirectangular image or a Style json (generated by Story Maker) alongside your character sheets, the system automatically detects and applies them. 360° images are analyzed for spatial context and lighting, while Style JSONs automatically enforce specific art directions and visual aesthetics across the entire manga generation.
-キャラクターシートと一緒に「360度パノラマ画像」や「作風json（Story Makerで生成）」をドロップエリアに放り込むだけで、システムが自動的に背景素材や作風指定として認識・読み込む「ゼロクリック検出」を搭載しています。この機能は画像の「2:1の比率」や内部メタデータ、あるいはJSONの構造を厳密にチェックするため、誤認識することはありません。読み込まれた素材はAIによって解析され、背景の環境やライティング、または漫画全体のアートディレクション（画風やトーン）としてシナリオおよび画像生成プロンプトにシームレスに統合されます。
+キャラクターシートと一緒に「360度パノラマ画像」や「作風json（Story Makerで生成）」をドロップすると、アプリは背景素材または作風指定として検出を試みます。360度背景の判定は2:1に近いアスペクト比、作風JSONの判定はデータ構造に基づくため、検出結果とプレビューを確認してから生成してください。読み込まれた素材はAIに解析され、背景の環境・ライティング、または漫画全体のアートディレクションとしてシナリオと画像生成プロンプトに反映されます。
 
 * **Story Maker Integration (Style json) / Story Maker連携 (作風JSON)**: You can directly drop the json file generated by the "Story Maker" app. The system parses the json, extracts the core art direction (e.g., "watercolor", "cyberpunk", "retro anime"), and forcefully injects these style constraints into every generated panel, ensuring a highly consistent visual aesthetic. / 姉妹アプリである「Story Maker」で生成した作風jsonファイルをそのままドロップ可能です。システムがjsonを解析し、コアとなるアートディレクション（「水彩画風」「サイバーパンク」「レトロアニメ風」など）を抽出し、すべてのコマの画像生成プロンプトに強制注入することで、極めて一貫性の高いビジュアルスタイルを実現します。
 
@@ -248,7 +258,7 @@ To address the extreme complexity of a 5,000+ line monolith, the frontend archit
 
 ## 🔍 Deep Analysis (技術詳解)
 
-### 🧭 Current v5.1.9 Processing Contract / 現行v5.1.9処理仕様
+### 🧭 Current v5.2.7 Processing Contract / 現行v5.2.7処理仕様
 
 | Stage | Input | Processing and validation | Output |
 |:--|:--|:--|:--|
@@ -256,7 +266,7 @@ To address the extreme complexity of a 5,000+ line monolith, the frontend archit
 | STEP2 Scenario generation / シナリオ生成 | Character records, automatic topic or complete free input, outfit, punchline, tone / キャラクター記録、自動取得トピックまたは自由入力全文、服装、オチ、トーン | The complete four-panel scenario is checked for structure and dialogue, content hygiene, free-input exclusions, visual evidence, dynamic background, and active final-panel staging. Up to three total attempts are made. / 4コマ構造とセリフ、表現衛生、自由入力の禁止条件、視覚証拠、動的背景、4コマ目の能動演出を検証し、全3試行まで実行します。 | First fully valid candidate, or the highest-scoring usable candidate with a warning / 最初の完全合格候補、または警告付きの利用可能な最高得点候補 |
 | STEP2 Enhancement / 演出強化 | Saved scenario plus any of seven selected categories / 保存済みシナリオと選択した7カテゴリ | The initial rewrite is compared with the original. If needed, one correction is requested with exact issue codes. / 初回の書換を元シナリオと比較し、必要な場合だけ具体的なNG項目付きで1回修正します。 | Valid enhancement, best usable partial enhancement, or restored original / 合格した強化、利用可能な最良の部分合格候補、または復元した元シナリオ |
 | STEP3 Prompt assembly / プロンプト構築 | Accepted scenario, identity records, provider family, manual staging and 360° background data when present / 採用シナリオ、同一性情報、プロバイダー系統、手動演出と任意の360度背景情報 | Compiles provider-specific layout, script, dialogue-tail, identity, key-prop, evidence, background, eye-line, anatomy, camera, and finish-assist locks. The resulting text is directly editable. / レイアウト、脚本、吹き出し尻尾、同一性、小道具、証拠、背景、視線、人体、カメラ、仕上げ補助をプロバイダー別に構築し、完成文を直接編集できます。 | The exact editable prompt used by copy and API generation / コピーとAPI生成に使う編集可能な同一プロンプト |
-| STEP4 Image generation / 画像生成 | Current STEP3 prompt and character references / STEP3の現在のプロンプトとキャラクター参照 | Sends one image request to the selected provider. OpenAI uses streaming and can retain the newest valid partial only if the connection ends before the final image. / 選択したAPIへ画像生成を1回送信します。OpenAIはストリーミングを使い、最終画像の前に接続が切れた場合だけ、受信済みの最新途中画像を救済できます。 | Returned image displayed and downloadable as received / 受信画像をそのまま表示・保存 |
+| STEP4 Image generation / 画像生成 | Current STEP3 prompt and character references / STEP3の現在のプロンプトとキャラクター参照 | Sends one image request to the selected provider. OpenAI uses streaming, retains the newest valid partial when available, and retries once without streaming only after a browser-level stream `Failed to fetch`. / 選択したAPIへ画像生成を1回送信します。OpenAIはストリーミングを使い、利用可能なら最新の途中画像を保持し、ブラウザレベルのストリーム `Failed to fetch` の場合だけ通常応答で1回再試行します。 | Returned image displayed and downloadable as received / 受信画像をそのまま表示・保存 |
 
 The system distinguishes a correctable quality shortfall from a failure that leaves no usable artifact. This boundary prevents quality validation from becoming a terminal trap while keeping actual dependency failures visible.
 
@@ -267,7 +277,7 @@ The system distinguishes a correctable quality shortfall from a failure that lea
 | Scenario quality check remains NG after three attempts / シナリオ品質が全3試行後もNG | Retain the highest-scoring usable scenario, show the concrete warning, and allow STEP3/STEP4. / 利用可能な最高得点候補を保持し、具体的な警告を表示してSTEP3・STEP4を許可します。 |
 | Enhancement quality remains NG after two attempts / 演出強化が全2試行後もNG | Retain the best usable enhancement; if every rewrite breaks a hard edit contract, restore the original. Continue with a warning. / 利用可能な最良候補を保持し、全候補が必須編集契約を壊した場合は元シナリオを復元します。警告付きで継続します。 |
 | Explicit unsafe location or unusable scenario structure / 明示的に危険な場所、または利用不能なシナリオ構造 | Stop because a safe four-panel artifact cannot be constructed. / 安全な4コマ成果物を構築できないため停止します。 |
-| Authentication, HTTP, transport, parse, or missing-image failure / 認証、HTTP、通信、解析、画像欠落 | Show the actual dependency error and stop that run; do not relabel it as a timeout or quality warning. / 実際の依存関係エラーを表示してその実行を停止し、タイムアウトや品質警告へ誤変換しません。 |
+| Authentication, HTTP, transport, parse, or missing-image failure / 認証、HTTP、通信、解析、画像欠落 | Show the actual dependency error and stop that run, except for the one browser-stream fallback described above; do not relabel failures as a timeout or quality warning. / 上記のブラウザストリーム時の1回フォールバックを除き、実際の依存関係エラーを表示してその実行を停止し、タイムアウトや品質警告へ誤変換しません。 |
 | Image successfully received / 画像受信成功 | Display it without hidden post-image visual QA or automatic regeneration. The user decides whether to regenerate. / 画像受信後の隠れた視覚QAや自動再生成は行わず表示し、再生成するかはユーザーが判断します。 |
 
 Candidate selection is not “take the last response.” A fully valid first response is accepted immediately. Scoring is used only when the retry budget ends without a complete pass, and then the best usable candidate is retained even if an earlier attempt scored higher than the last one.
@@ -276,8 +286,8 @@ Candidate selection is not “take the last response.” A fully valid first res
 
 ### 🏗️ Unique Architecture Highlights / 固有アーキテクチャの要点
 
-This system is not a simple "prompt-and-generate" tool. It is a **multi-stage compiler** that transforms raw news into finished manga through a series of autonomous processing layers.
-本システムは単純な「プロンプト→生成」ツールではありません。生のニュースから完成漫画までを自律的な処理レイヤーの連鎖で変換する **マルチステージ・コンパイラ** です。
+This system is not a simple "prompt-and-generate" tool. It is a **multi-stage compiler** that transforms a selected or user-supplied topic into finished manga through a series of processing layers.
+本システムは単純な「プロンプト→生成」ツールではありません。選択またはユーザー入力された話題から完成漫画までを処理レイヤーの連鎖で変換する **マルチステージ・コンパイラ** です。
 
 * **Four-stage "Storyboard-to-Screen" Pipeline**: After the provider is connected and the character sheets and topic are supplied, STEP1 character analysis → STEP2 scenario generation and optional enhancement → STEP3 prompt compilation → STEP4 image generation can run as one continuous flow. Full Auto advances those stages without requiring a click at every boundary; manual operation remains available.
   プロバイダー接続後にキャラクターシートとお題を用意すると、STEP1キャラクター解析→STEP2シナリオ生成・任意の演出強化→STEP3プロンプト構築→STEP4画像生成を一続きで実行できます。フルオートでは段階ごとのクリックを省略でき、手動操作にも切り替えられます。
@@ -291,8 +301,8 @@ This system is not a simple "prompt-and-generate" tool. It is a **multi-stage co
 * **Camera Diversity Mapping**: Camera candidates are shuffled and mapped to panel-specific shot and lens guidance so the four panels do not default to the same view. The final renderer can still interpret visual instructions imperfectly, so this is a prompt-level composition control rather than a pixel-level guarantee.
   カメラ候補をシャッフルし、コマごとのショットとレンズ指示へ変換することで、4コマすべてが同じ構図へ寄るのを抑えます。最終描画モデルが指示を完全に再現するとは限らないため、ピクセル単位の保証ではなくプロンプト段階の構図制御です。
 
-* **Cross-Platform Prompt Compatibility (ChatGPT Images 2.0)**: When OpenAI Engine mode is enabled, the system injects specific formatting constraints (such as A4 layout parameters and vertical text guidance) into the final prompt, ensuring ChatGPT Images 2.0 accurately renders standard manga layouts without artifacts.
-  OpenAIエンジンモード有効時には、A4レイアウト指定や縦書きテキスト誘導などの特殊フォーマットを最終プロンプトに注入。OpenAIモデル（ChatGPT Images 2.0等）でも破綻のない標準的な漫画レイアウトを出力できるよう設計されています。
+* **Cross-Platform Prompt Compatibility (ChatGPT Image 2.0)**: When OpenAI Engine mode is enabled, the system injects formatting constraints such as A4 layout parameters and vertical-text guidance into the final prompt. These are prompt-level controls; the image model still determines the rendered result.
+  OpenAIエンジンモード有効時には、A4レイアウト指定や縦書きテキスト誘導などのフォーマットを最終プロンプトに注入します。これはプロンプト段階の制御であり、最終的な描画結果は画像モデルの解釈に依存します。
 
 ### 🏆 The Dual-API Architecture / 「デュアルAPI設計」
 
@@ -301,19 +311,19 @@ This system uses a dual-provider architecture. At startup, the user selects **Ge
 
 1. **Gemini Engine Mode (Google Ecosystem) / Geminiエンジンモード**
    * **Full Native Integration / 完全ネイティブ統合:** Uses Google's Gemini models for both the "Brain" (Scenario/Prompt generation) and the "Artist" (Nano Banana 2 image generation).
-   * **Strength / 強み:** Extremely fast, cost-effective, and deeply integrated with Google Search Grounding for automatic context deep-dives. It generates images natively within the app at astonishing speeds.
-   * **Role / 役割:** シナリオ生成からプロンプト構築、画像生成（Nano Banana 2モデル）まで全てをGoogleエコシステム内で完結させるモード。圧倒的な生成速度と低コスト、Search Groundingによる自律的リサーチ能力が強みです。
+   * **Grounding behavior / Groundingの動作:** Scenario calls attempt Google Search Grounding when the request is compatible; an error falls back to the same model without the tool. Image generation remains a separate Gemini image route.
+   * **Role / 役割:** シナリオ生成・プロンプト構築・画像生成をGoogle系のモデル経路で実行するモードです。シナリオ生成時は互換条件を満たす場合にSearch Groundingを試み、失敗時はツールなしで同一モデルへフォールバックします。画像生成は別のGemini画像経路です。
 
 2. **OpenAI Engine Mode (OpenAI Ecosystem) / OpenAIエンジンモード**
-   * **Pure OpenAI Pipeline / 純粋なOpenAIパイプライン:** Uses advanced text models (like GPT-4.1) as the "Brain" to parse complex character topologies and structure the 4-panel layout, and seamlessly hands off to OpenAI's image models (ChatGPT Images 2.0) for the final "Artist" rendering step.
+   * **Pure OpenAI Pipeline / 純粋なOpenAIパイプライン:** Uses advanced text models (like GPT-4.1) as the "Brain" to parse complex character topologies and structure the 4-panel layout, and seamlessly hands off to OpenAI's image models (ChatGPT Image 2.0) for the final "Artist" rendering step.
    * **Strength / 強み:** Provides industry-leading artistic quality and nuance directly in-browser. The prompt is automatically translated into OpenAI-specific formatting (A4 portrait, vertical Japanese text, Anti-Noise Protocol) before being sent.
-   * **Role / 役割:** 解析・構成の頭脳から画像生成まで、すべてのプロセスをOpenAIの最高峰モデル群に完全委譲するモード。専用フォーマット（縦長A4・縦書き誘導・ノイズ除去キーワード）が自動適用され、アプリ内から直接アニメ品質の画像を出力します（生成に2〜10分程度かかります）。
+   * **Role / 役割:** 解析・構成はOpenAIテキスト/画像認識モデル、画像生成は `gpt-image-2` を使うモードです。専用フォーマット（縦長A4・縦書き誘導・ノイズ抑制キーワード）を適用し、生成時間は混雑状況やリクエスト内容により変動します。
 
 3. **【上級者向け】Browser UI Option (Advanced / Optional) / ブラウザUI連携運用**
    * Users who prefer a subscription Web UI, want to attach reference images manually, or want to avoid a direct image-API call can use the Browser UI Option.
    * **How it works / 仕組み:** Click "Copy Prompt" after STEP3, then paste the exact current prompt into the official **ChatGPT or Gemini Web UI** with the character-sheet images. The provider-specific format is designed to preserve the same scenario and layout constraints, although the Web model still controls the final rendering.
    * サブスクリプション版Web UIを使いたい場合、参照画像を手動添付したい場合、画像APIの直接呼び出しを避けたい場合に利用できます。STEP3のプロンプトをコピーし、キャラクターシート画像と一緒に公式ChatGPT/Geminiへ貼り付けます。シナリオとレイアウト制約は同じ系統の形式で渡しますが、最終的な描画結果はWeb側モデルの解釈に依存します。
-   * When ChatGPT Images 2.0 stubbornly breaks the 4-panel layout or ignores aspect ratios, the built-in `[ABSOLUTE OVERRIDE]` force-rebuild prompt can be used to force the AI back into strict A4 geometric constraints. / Web版のChatGPTが4コマレイアウトを崩した場合、組み込みの `[ABSOLUTE OVERRIDE]` 強制再構築プロンプトで厳密なA4制約へ強制的に修正できます。
+   * When ChatGPT Image 2.0 breaks the 4-panel layout or ignores aspect ratios, the built-in `[ABSOLUTE OVERRIDE]` repair prompt adds stricter A4 constraints; the Web model still determines the final pixels. / Web版のChatGPTが4コマレイアウトを崩した場合、組み込みの `[ABSOLUTE OVERRIDE]` 修正プロンプトでA4制約を強めます。最終的なピクセルはWeb側モデルが決定します。
 
 ### 📖 The Philosophy of the 1-Page (4-Koma) Limit / なぜ「1ページ（4コマ）制」にこだわるのか？
 
@@ -328,7 +338,7 @@ While many users desire the ability to generate long, multi-page comic books, Su
 In the typical AI workflow, creators upload a clean image of a character and provide a separate, lengthy text prompt detailing their traits. This system fundamentally rejects that approach. Instead, we require the character's setting text to be visually written *inside* the reference image itself (creating a "One-Sheet Context"). This yields three massive advantages:
 一般的なAI漫画の運用では、「キャラクターの画像ファイル」と「設定を書いた長文テキスト」を別々に入力するのが普通です。しかし、本システムはこの手法を根本から否定し、**「キャラクター設定のテキストは、画像の中に直接文字として書き込む（One-Sheet Context）」**という運用を推奨しています。これには3つの絶大なメリットがあります：
 
-1. **Multimodal Binding (視覚と概念の強固なロック):** When image and text are provided separately, models like ChatGPT Images 2.0 often suffer from "attention split"—they either prioritize the text and ignore the face, or prioritize the face and forget the text. By embedding the text physically into the image, the Vision AI processes them as a single, unified entity. "This visual face" mathematically equals "these written traits," drastically reducing identity drift. / 画像とテキストを別々に入れると、AIは「どちらを優先すべきか」で迷い、文字設定を忘れたり画像を無視したりします。文字を画像内に埋め込むことで、Vision AIは「この姿＝この文字情報」として完全に同一の概念としてロックし、キャラクターのブレ（Identity Drift）を劇的に低下させます。
+1. **Multimodal Binding (視覚と概念の強固なロック):** When image and text are provided separately, models like ChatGPT Image 2.0 often suffer from "attention split"—they either prioritize the text and ignore the face, or prioritize the face and forget the text. By embedding the text physically into the image, the Vision AI processes them as a single, unified entity. "This visual face" mathematically equals "these written traits," drastically reducing identity drift. / 画像とテキストを別々に入れると、AIは「どちらを優先すべきか」で迷い、文字設定を忘れたり画像を無視したりします。文字を画像内に埋め込むことで、Vision AIは「この姿＝この文字情報」として完全に同一の概念としてロックし、キャラクターのブレ（Identity Drift）を劇的に低下させます。
 2. **Prompt Override Prevention (プロンプト競合の回避):** If you consume text tokens to describe the character's hair, eyes, and clothes, you steal precious attention away from the complex 4-panel layout constraints and scenario instructions. By offloading character traits into the image space, 100% of the text prompt tokens can be purely dedicated to "directing the manga." / テキスト側で「金髪で青目で…」と長々とキャラ設定を書くと、肝心の「漫画のコマ割りや演出」を指示するプロンプトの枠（トークンとAttention）を圧迫してしまいます。設定情報を画像（Vision側）に逃がすことで、テキストプロンプトのリソースを100%「漫画の演出」に全振りできるのです。
 3. **Frictionless Workflow (コピペ作業の排除):** For the human-in-the-loop, uploading one image is vastly superior to maintaining and pasting giant blocks of character lore alongside the layout prompts every single time. / 人間側の運用コストとして、毎回「画像」と「長文設定」の2つをコピペするのは苦痛です。文字入りのシートを1枚投げるだけで、AIが勝手に文字を読んで理解してくれる究極にスマートな運用が可能になります。
 
@@ -515,13 +525,13 @@ A "funny script" without the Scenario→Image Compiler produces flat, expression
 
 ### 🇯🇵 [JP] コード解析によるAI漫画システム詳解
 
-本システムの設計思想、**Absolute Physical Geometry Lock**（絶対的物理ジオメトリロック）、**Weighted Immutable Prompts**（重み付き不変プロンプト）などのコア技術、および法的・哲学的な考察を含む詳細な解析レポート（日本語版）です。
+本システムの設計思想や過去のプロトコル名、法的・哲学的な考察を含む詳細な解析レポート（日本語版）です。実装・利用条件の最新情報は、このREADMEと各プロバイダーの公式情報を優先してください。
 
 * 📄 [詳細ドキュメントを表示する](https://docs.google.com/document/d/1Uk24cAmH2CgYwC1y8_YPW6tp2-sD4OgDRWE8FTH4nTs/edit?usp=sharing)
 
 ### 🇺🇸 [EN] Comprehensive Analysis of Autonomous AI Manga System
 
-A detailed analysis report (English version) covering the system's design philosophy, core technologies such as **Absolute Physical Geometry Lock** and **Weighted Immutable Prompts**, and legal/philosophical considerations.
+A detailed analysis report (English version) covering the system's design philosophy, historical protocol names, and legal/philosophical considerations. For current implementation and service terms, use this README and the providers' official information.
 
 * 📄 [View Detailed Document](https://docs.google.com/document/d/1hOZeV13icbv6R7RLryD2iYpli9n5ujwatC9mi5IYJN8/edit?usp=sharing)
 
@@ -530,56 +540,36 @@ A detailed analysis report (English version) covering the system's design philos
 ## 🛠 Featured Protocols: Super FURU Manga Protocol / 搭載プロトコル
 
 1. **ABSOLUTE PHYSICAL GEOMETRY LOCK & MARGIN CONTROL**
-Controls 4-panel layout, aspect ratio, and perspective at the pixel level, while explicitly enforcing rigid, properly-sized white margins (gutters) between panels. Unlike typical AI manga that suffer from absurdly wide white gaps or default entirely to borderless "full-bleed" (tachikiri) compositions, this system ensures a perfectly balanced, professional comic-book aesthetic.
-レイアウト、アスペクト比、パースをピクセル単位で制御すると同時に、コマとコマの間の「白い余白（ガター）」の幅を適正かつ厳格に強制します。一般的なAI漫画にありがちな「異様に余白が広すぎる」「逆に枠線がなく全コマがタチキリ（フチなし）になってしまう」といったレイアウトの制御不良を排除し、プロの商業誌のような美しく整頓されたページ構成を保証します。
+Adds four-panel layout, aspect-ratio, perspective, and white-gutter constraints to the image prompt. These controls guide the renderer; they do not provide pixel-level control or guarantee the final layout.
+4コマのレイアウト、アスペクト比、パース、白いガターの制約を画像プロンプトへ加えます。これは描画モデルへの指示であり、ピクセル単位の制御や最終レイアウトの保証ではありません。
 
-2. **Weighted Immutable Prompts**
-Weights character-specific features to prevent "fusion" or blending between characters.
-特徴量に重みを付与。キャラ同士が混ざり合う「フュージョン」を徹底的に防ぎます。
+2. **ANTIGRAVITY HYPER-DYNAMIC CAMERA PROTOCOL (v4.0)**
+Camera names from the scenario stage are mapped to per-panel camera guidance, with a shuffled fallback set to vary the supplied directions. The renderer may still interpret those directions imperfectly.
+シナリオ段階のカメラ名をコマ別のカメラ指示へ変換し、シャッフルしたフォールバック候補で指示に変化を付けます。最終描画モデルがその指示を完全に再現するとは限りません。
 
-3. **Animation Quality (Level EX-2)**
-Emulates physics-based lighting and SSS (Subsurface Scattering) for peak animation quality.
-物理ベースのライティング、SSS（肌の透過）をエミュレート。最高峰のアニメクオリティを追求します。
+3. **IDENTITY MATRIX - Character Consistency Guidance (v2.25)**
+Character-sheet clues such as hair color, hairstyle, and glasses status are incorporated into panel prompts with character and placement constraints. These instructions reduce consistency drift, but image models can still make mistakes.
+キャラクターシートの髪色・髪型・メガネ有無などの手掛かりを、人物・配置の制約としてコマ別プロンプトに反映します。整合性の崩れを抑えるための指示であり、画像モデルの誤りを完全には防げません。
 
-4. **ANTIGRAVITY HYPER-DYNAMIC CAMERA PROTOCOL (v4.0)**
-AI-selected camera names (bird's eye, fish-eye, dutch angle, etc.) from the scenario stage are automatically converted into specific lens distortion weight tags during image generation. Fisher-Yates shuffle mathematically guarantees all 4 panels use different camera angles.
-AIがシナリオ段階で選んだカメラ名（俯瞰、フィッシュアイ、ダッチアングル等）を、画像生成時に具体的なレンズ歪みウェイトタグへ自動変換。Fisher-Yatesシャッフルにより4コマ全てが異なるカメラアングルになることを数学的に保証します。
-
-5. **IDENTITY MATRIX - Autonomous Character Consistency (v2.25)**
-Automatically analyzes hair color, hairstyle, and glasses status from character sheets and injects a "verification matrix" into every panel's prompt, forcing the AI to self-verify before drawing each panel. Includes anti-clone prevention (no duplicate character drawing), automatic background cast placement, solo shot detection, and 3-zone slotting for 3-character dialogues.
-キャラクターシートから髪色・髪型・メガネ有無を自動解析し、全コマのプロンプトに「照合マトリクス」として注入。AIが各コマを描く前に自己検証を強制します。クローン防止（同一キャラの二重描画禁止）、背景キャスト自動配置、ソロショット判定、3人掛け合い時の3ゾーンスロッティングまで全自動です。
-
-6. **Emotion Style Tag System - Per-Panel Art Style Switching (23 Styles)**
+4. **Emotion Style Tag System - Per-Panel Art Style Switching (23 Styles)**
    The scenario AI autonomously selects the optimal style tag for each panel's emotion from a palette of **23 distinct visual styles**. Core styles include CHIBI_GAG / GEKIGA / SHOUJO / HORROR / BLANK / IMPACT / WATERCOLOR / RETRO / GLITTER / SHADOW / SPEED / FLASHBACK / UKIYOE / POP_ART / SKETCH / NEON, plus context-aware styles added in v2.95: THICK_PAINT (impasto for serious/political), PASTEL (soft for heartwarming), CEL (retro cel animation), DARK_ANIME (atmospheric for suspense), THIN_LINE (delicate for emotional), and HIGH_SATURATION (vivid for excitement). Art style, VFX, and proportions are automatically switched during image generation. Includes fallback styles for multi-character panels.
    シナリオ生成AIが各コマの感情に最適なスタイルタグを**全23種の画風パレット**から自律選択。CHIBI_GAG / GEKIGA / SHOUJO / HORROR / BLANK / IMPACT / WATERCOLOR / RETRO / GLITTER / SHADOW / SPEED / FLASHBACK / UKIYOE / POP_ART / SKETCH / NEONに加え、v2.95で文脈対応型の新画風を追加：THICK_PAINT（厚塗り／政治・シリアス向け）、PASTEL（パステル／癒し向け）、CEL（セル画風／エンタメ向け）、DARK_ANIME（ダーク調／サスペンス向け）、THIN_LINE（繊細線画／感動向け）、HIGH_SATURATION（高彩度／興奮向け）。画像生成時に絵柄・VFX・プロポーションが自動切替されます。マルチキャラパネル用のフォールバックスタイルも搭載。
 
-7. **FACS Engine — Facial Action Coding System (v3.15+)**
-   Controls character expressions at the anatomical muscle level using Action Units (AU), replacing vague emotion words like "surprised" with precise physical instructions (e.g., AU1+AU2+AU5B = inner brow raise + outer brow raise + upper lid raise). This drastically reduces AI face distortion and ensures consistent, nuanced expressions across all 4 panels.
-   解剖学的な筋肉の動き（Action Units）で表情を制御するFACSエンジン。「驚いた」のような曖昧な感情語を廃止し、「AU1+AU2+AU5B（内眉挙上＋外眉挙上＋上瞼挙上）」のような物理的指示に置換。AIの顔面崩壊を劇的に抑制し、全4コマで一貫した繊細な表情表現を実現します。
+5. **Anti-Camouflage & Anti-Glitter Prompt Guidance (v3.16+)**
+   Adds prompt guidance to reduce character-background blending and unnecessary decorative noise. It does not guarantee that the image model will avoid every artifact.
+   キャラクターと背景の溶け込み、不要な装飾ノイズを抑えるプロンプト指示を加えます。画像モデルがすべてのアーティファクトを回避する保証ではありません。
 
-8. **Anti-Camouflage & Anti-Glitter Protocol (v3.16+)**
-   Eliminates two persistent ChatGPT Images 2.0 artifacts: (1) characters blending into backgrounds (camouflage), solved by enforcing thick ink outlines + white glow compositing + backlit rim lighting, and (2) excessive sparkle/particle noise (glitter), solved by banning lens flares, light particles, and bokeh effects from the rendering pipeline.
-   ChatGPT Images 2.0 の2大問題を根絶するプロトコル。(1) キャラクターが背景に溶け込む「カモフラージュ現象」を、極太インクアウトライン＋白グロー合成＋逆光リムライティングの3重強制で解決。(2) 過剰なキラキラ・パーティクルノイズ（グリッター）を、レンズフレア・光粒子・ボケの描画禁止で排除。
-
-9. **Ultra-Compressed Prompt Architecture — MUST/NO Format (v3.15+)**
-   Strips all natural language prose from image generation prompts, replacing them with keyword-only, bullet-point MUST/NO directives. This maximizes AI attention concentration and ensures critical instructions are never lost to token competition — especially vital near the current 32,000-character GPT image prompt ceiling.
-   画像生成プロンプトから自然言語の散文を一切排除し、キーワードのみの箇条書き「MUST/NO」指示文に全面置換。AIのアテンション集中を最大化し、重要な指示がトークン競合で喪失するのを防止。現在のGPT画像プロンプト上限32,000文字に近い巨大プロンプト運用で特に威力を発揮します。
-
-10. **Self-Review Protocol (v3.22+)**
-    Before rendering, the AI is forced to self-audit its own prompt output for logical contradictions (e.g., conflicting camera angles, impossible character placements, finger count errors, and text spelling). This pre-generation sanity check catches AI-specific drawing failures before they become costly re-generation cycles.
-    画像生成前に、AIが自身のプロンプト出力を自己監査する強制チェックリスト。カメラアングルの矛盾、不可能なキャラ配置、指の本数、テキストのスペルミスなど、AI特有の描画崩壊を事前に検出し、無駄な再生成サイクルを防ぎます。
-
-11. **Cinematic Lighting & Rich Shadow (v3.34+)**
-    Replaced the previous flat cel-shading base with a full cinematic lighting pipeline: directional key light, fill light, and rim light are enforced per panel. Rich shadows, volumetric depth, and natural color grading create a premium, theatrical visual quality that elevates the manga beyond typical AI-generated flat illustrations.
-    従来のフラットなセル塗りベースを廃止し、シネマティックライティング（指向性キーライト＋フィルライト＋リムライト）を全コマに強制適用。リッチな陰影、ボリューメトリックな奥行き感、ナチュラルなカラーグレーディングにより、一般的なAI生成のフラットなイラストを超える、映画的で重厚な画面品質を実現します。
+6. **Prompt Budget and Lighting Guidance**
+   The provider-specific prompt keeps the required script, character, layout, background, and lighting guidance within the supported request budget. Lighting and shadow instructions guide the renderer but do not guarantee a particular visual quality.
+   プロバイダー別プロンプトでは、必要な脚本・キャラクター・レイアウト・背景・照明の指示を対応するリクエスト予算内に収めます。照明と影の指示は描画を誘導するものであり、特定の画質を保証しません。
 
 ---
 
 ## 💻 Tech Stack / 技術スタック
 
 * **Frontend**: React 19 / Vite 7 / Tailwind CSS v4
-* **LLM/VFM**: Google Gemini API (3.x Flash / 2.5 Flash / 2.5 Pro) + Gemini Native Image Generation (Nano Banana 2) / ChatGPT Images 2.0 Supported via Prompt Enhancement
-* **Logic**: Zenith Protocol - Multi-tier model fallback (5-model text cascade, 4-model image cascade) with automatic 429/404 retry and account-level model auto-discovery.
+* **AI Routes**: Google Gemini API (text/scenario and Gemini native image routes) and OpenAI API (`gpt-4.1` text/vision, `gpt-image-2` image), selected in the app.
+* **Logic**: Provider-specific fallback and retry handling for supported errors; available models and provider responses determine the actual route.
 
 ---
 
@@ -587,17 +577,17 @@ Automatically analyzes hair color, hairstyle, and glasses status from character 
 
 ### ☁️ Cloud / Browser (Deploy)
 
-1. **Get API Key**: Obtain a Gemini API key at [Google AI Studio](https://aistudio.google.com/).
-   [Google AI Studio](https://aistudio.google.com/) で Gemini API キーを取得してください。
+1. **Get a provider API key**: Select a route in the startup modal, then obtain a Gemini API key from [Google AI Studio](https://aistudio.google.com/) or an OpenAI API key from [OpenAI Platform](https://platform.openai.com/api-keys). Never include a key in issue reports or documentation.
+   起動モーダルで経路を選び、[Google AI Studio](https://aistudio.google.com/) または [OpenAI Platform](https://platform.openai.com/api-keys) から対応するAPIキーを取得してください。APIキーをIssueや文書へ記載しないでください。
 
 > [!WARNING]
-> **API Billing Is Pay-As-You-Go (Even for Subscribers) / APIは従量課金です（サブスク加入者も対象）**
-> Even if you subscribe to a paid plan such as **Google One AI Premium** or **Gemini Advanced**, the **API is billed separately on a pay-per-use basis**. Your subscription covers only the browser-based Gemini UI (gemini.google.com / ChatGPT Plus for OpenAI), not API calls. If you are already paying for a subscription, using this app's API mode will result in **additional charges on top of your subscription fee**.
-> **Google One AI Premium** や **Gemini Advanced** などの有料プランに加入していても、 **APIは別途従量課金** です。サブスクリプションがカバーするのはブラウザ版Gemini UI（gemini.google.com / OpenAIの場合はChatGPT Plus）のみであり、API呼び出しは含まれません。サブスクに加入済みの方がAPI経由で利用すると、 **サブスク料金に加えてAPI利用料が別途発生** します。
+> **API Billing Is Separate / API課金は別管理です**
+> API usage, limits, and billing are governed by the selected provider's API account and current terms. A chat-product subscription does not automatically configure or include API usage; check the provider's API usage and pricing pages before generating.
+> APIの利用量・上限・課金は、選択したプロバイダーのAPIアカウントおよび最新の利用条件に従います。チャット製品のサブスクリプションだけでAPI利用が自動設定・付帯されるわけではありません。生成前に各プロバイダーのAPI利用状況・料金ページを確認してください。
 >
 > **💡 Recommendation for Subscribers / サブスク加入者への推奨:**
-> If you are already subscribed, we recommend using the **「Browser UI Option」** (described in the [Dual-API Architecture](#-the-dual-api-architecture--デュアルapi設計) section) — simply copy-paste the generated prompt into the Gemini or ChatGPT browser UI. This way, your subscription covers the generation cost at no additional charge.
-> サブスクに加入済みの場合は、 **「ブラウザUI運用」** （[デュアルAPI設計](#-the-dual-api-architecture--デュアルapi設計) セクション参照）の利用を推奨します。生成されたプロンプトをGeminiまたはChatGPTのブラウザUIにコピペするだけで、サブスク料金内で追加課金なしに画像生成が可能です。
+> The **「Browser UI Option」** (described in the [Dual-API Architecture](#-the-dual-api-architecture--デュアルapi設計) section) copies a prompt for manual use in a provider's browser UI. Availability, model choice, usage limits, and any charges are determined by that service and plan; this app does not promise that it is free.
+> **「ブラウザUI運用」**（[デュアルAPI設計](#-the-dual-api-architecture--デュアルapi設計) セクション参照）は、プロンプトをプロバイダーのブラウザUIへ手動利用するためにコピーします。利用可否・モデル選択・上限・料金はそのサービスとプランに依存し、本アプリが無料利用を保証するものではありません。
 
 2. **Access**: Open the deployed web app.
    Webアプリにアクセスし、APIキーを入力してスタートします。
@@ -622,50 +612,30 @@ You can launch strict local environment with a single click.
 
 ### Japanese Copyright Law (Article 30-4)
 
-This project is developed in full compliance with **Article 30-4 of the Japanese Copyright Act**, which allows for the exploitation of copyrighted works for information analysis and technological development of AI.
-本プロジェクトは、日本の著作権法第30条の4（情報解析目的等での利用）に基づき、技術検証および情報解析を目的として開発されており、法的に適正な範囲内で公開されています。
+This README is not legal advice and does not determine whether a particular input, output, or use is lawful. Review the applicable copyright law and obtain professional advice where needed.
+本READMEは法的助言ではなく、特定の入力・出力・利用が適法かどうかを判断するものではありません。適用法令を確認し、必要に応じて専門家へ相談してください。
 
 ### Official API Usage
 
-All generations are performed through the **official Google Gemini API**. This system adheres strictly to Google's "Generative AI Forbidden Use Policy" and Terms of Service.
-本システムはGoogle公式のGemini APIを介して動作しており、Googleが定める「生成AI禁止事項」および利用規約を厳格に遵守しています。
+The app can call the selected official Google Gemini or OpenAI API route. Users are responsible for complying with the applicable provider terms, usage policies, and local law.
+本アプリは、選択されたGoogle GeminiまたはOpenAIの公式API経路を呼び出します。利用者は、適用されるプロバイダー規約・利用ポリシー・法令を確認し、遵守する責任があります。
 
-### Autonomous & Deterministic Generation
+### Assisted Scenario-to-Image Generation
 
-Unlike simple image synthesis, this system uses an **autonomous "Unmanned" pipeline** and the **ABSOLUTE PHYSICAL GEOMETRY LOCK** protocol.
-
-* It does not aim to replicate specific existing artworks.
-* It generates original compositions based on real-time trend analysis and mathematical geometric constraints.
-本システムは、特定の作品の模倣を目的としたものではありません。リアルタイムのトレンド分析と、独自の「物理幾何学ロック」プロトコルに基づき、AIが自律的に構図を決定・生成するものであり、依拠性のない独自創作を志向しています。
+The app assembles a scenario and image prompt from the selected input, provider, and optional references. Prompt constraints guide composition, but the output is probabilistic and must be reviewed before use.
+本アプリは、選択した入力・プロバイダー・任意の参照情報からシナリオと画像プロンプトを組み立てます。構図の制約は描画を誘導するもので、出力は確率的です。利用前に必ず内容を確認してください。
 
 ### No-Profit & Research Focus
 
-The core logic (Prompts/Protocols) is released under **CC BY-NC-SA 4.0**. Any commercial misuse by third parties is strictly prohibited. This project exists solely for the advancement of AI agent technology and the democratization of creative tools.
-核心的なロジックはCC BY-NC-SA 4.0（非営利）の下で公開されています。第三者による悪質な商用利用はライセンス違反となります。本プロジェクトは、AIエージェント技術の発展と、創作ツールの民主化を目的とした研究成果です。
+The project is intended as a creative-assistance tool. This statement does not replace a repository license, provider terms, or local law.
+本プロジェクトは創作支援ツールを目的としています。この説明は、リポジトリのライセンス、プロバイダー規約、または適用法令に代わるものではありません。
 
 ---
 
 ## ⚖️ License & Rights / ライセンス・権利関係
 
-This project uses a hybrid license to balance technology sharing and intellectual property protection.
-技術の共有と創作の保護を両立するため、以下のハイブリッドライセンスを採用しています。
-
-* **Source Code**: [MIT License](https://opensource.org/licenses/MIT)
-  Applies to software logic and implementation code. / ソフトウェアの動作ロジックおよび実装コードに適用。
-* **Logic & Prompts**: [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ja)
-  Applies to original design philosophy and prompt structure. / 設計思想およびプロンプト構造に適用。
-* **Output Ownership / 生成物の帰属**:
-  The CC SA (ShareAlike) requirement **does not apply** to manga works generated by this system. Rights belong to the user.
-  本システムで生成されたマンガ作品に上記CCライセンスの継承義務は適用されません。権利はユーザーに帰属します。
-  *Maintaining the signature "Generated by Super FURU AI 4-Koma System" is strongly recommended.*
-  署名の維持を強く推奨します。
-
-**Commercial Use and Paid Seminars / 商用利用・有料セミナーについて**
-Usage of this system (including prompts and logic) in high-priced information products, paid seminars, or any "get-rich-quick" schemes is strictly prohibited under the CC BY-NC-SA 4.0 license.
-本システム（プロンプトおよびロジックを含む）を、高額な情報商材、有料セミナー、または「副業・稼げる」等の謳い文句を伴うビジネスに無断で使用することは、CC BY-NC-SA 4.0ライセンスに基づき、固く禁じます。
-
-Any commercial or educational use involving fees requires explicit prior written consent from the developer (FURU).
-有料の教育目的や商用利用を検討される場合は、必ず事前に開発者（FURU）の書面による承諾を得てください。
+No standalone `LICENSE` file is present in this repository at this revision. Before copying, redistributing, or using the code, prompts, or generated outputs commercially, confirm the current repository notice, the selected provider's terms, and applicable law. The app does not itself assign output ownership or waive provider conditions.
+このリビジョンのリポジトリには、単独の `LICENSE` ファイルはありません。コード・プロンプト・生成物を複製、再配布、商用利用する前に、最新のリポジトリ記載、選択したプロバイダーの規約、適用法令を確認してください。本アプリ自体が生成物の権利帰属を決めたり、プロバイダー条件を免除したりするものではありません。
 
 ---
 
@@ -820,7 +790,9 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 
 ---
 
-## 📋 ChangeLog
+## 📋 ChangeLog (latest 15 releases) / 変更履歴（最新15件）
+
+> Full release history is available on [GitHub Releases](https://github.com/FURUYAN1234/nano-banana-pro/releases). / 全履歴は [GitHub Releases](https://github.com/FURUYAN1234/nano-banana-pro/releases) で確認できます。
 
 ### v5.2.7 (2026-08-09)
 - **[Fix & UX]** 対象日付の季節と行事・環境に合わせて衣装を選択し、夏冬の明白な不一致を具体的理由付きで再生成。ブラウザの画像ストリーム失敗時は通常応答で一度だけ再試行し、既存依存の高重要度脆弱性を修正 / Selects outfits from the target-date season, events, and environment; retries clear summer/winter mismatches with a concrete reason. Retries once with a normal response after browser image-stream failure and fixes high-severity dependency findings
@@ -866,139 +838,3 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 
 ### v5.1.3 (2026-08-04)
 - **[Fix & UX]** シナリオ生成の隠れた自動再試行を停止し、背景検証の誤検出と検証エラーの通信エラー誤表示を修正。画像受信後の自動視覚QA・自動再生成を停止。 / Disabled hidden scenario retries, fixed false background validation and validation-error messaging, and removed post-image automatic vision QA/regeneration.
-
-### v5.1.2 (2026-08-04)
-- **[Fix & UX]** 手動シナリオの再試行理由を実際の検証項目へ表示し、未実行のニュース検索表示と未検証ニュース断定を除去。本文衛生の再生成後も背景検証を完走できるようにした。 / Show the exact failed scenario check, remove fake news-scanning progress and unverified news claims, and retain a final background-validation attempt after a content rewrite.
-
-### v5.1.1 (2026-08-04)
-- **[Fix & UX]** 画像生成後にVisionで腕・手の解剖を検査し、不合格なら1回だけ修正再生成して再度の不合格は表示せず停止 / Added post-generation Vision anatomy QA with one corrective retry and fail-closed rejection after a second failure
-
-### v5.1.0 (2026-08-04)
-- **[Fix & UX]** v5.0.9の次を番号規則どおりv5.1.0へ訂正し、桁上げを自動検査 / Corrected the release number from v5.0.9 to v5.1.0 and enforce carry validation
-
-### v5.0.9 (2026-08-03)
-- **[Fix & UX]** 背景プリセットを廃止し、動的背景設計と4コマ継続検証へ移行 / Replaced background presets with dynamic per-story background design and four-panel continuity validation
-
-### v5.0.8 (2026-08-03)
-- **[Fix & UX]** `VISUAL STORY EVIDENCE LOCK` を `STRICT SCRIPT LOCK` の直後・描画品質指定の前へ移動し、シナリオ固有の背景証拠を早期に優先します。 / Moved `VISUAL STORY EVIDENCE LOCK` directly after `STRICT SCRIPT LOCK` and before rendering guidance so scenario-specific visual evidence has early priority.
-
-### v5.0.7 (2026-08-03)
-- **[Fix & UX]** シナリオの出来事を示す視覚証拠を抽出し画像に固定 / Added event-specific visual evidence extraction and image prompt lock
-
-### v5.0.6 (2026-08-01)
-- **[Fix & UX]** 背景プリセットを24種類へ拡充し、話題適合ランキング・安全フィルター・4コマ背景アンカー継続を追加 / Expanded background presets to 24 with topic-aware ranking, safety filtering, and four-panel environmental anchor continuity
-
-### v5.0.5 (2026-07-31)
-- **[Fix & UX]** 同一人物が資料を置いた後に腕組みする場面で、最終ポーズ・資料自立・両手解放・腕2本/手2つを固定 / Locked the final crossed-arm pose after prop placement, with a self-supported prop, released hands, and exactly two arms and hands
-
-### v5.0.4 (2026-07-31)
-- **[Fix & UX]** 演出・ギャグの複合ラベルと音響文脈の擬音を台詞吹き出しから除外し、Actionの視覚演出として保持 / Excluded compound staging labels and acoustic-context sound effects from dialogue bubbles while preserving them as visual Action direction
-
-### v5.0.3 (2026-07-26)
-- **[Fix & UX]** 最終プロンプトを直接編集できるようにし、編集内容をコピーとOpenAI/Gemini画像生成へ同一のまま渡すようにしました。OpenAI画像ストリームが最終イベント前に切断しても、受信済みの有効な途中画像を表示して失敗を回避します。 / Enabled direct editing of the final prompt and routed those edits unchanged to copy and OpenAI/Gemini image generation. When an OpenAI image stream drops after a valid partial image, the app now renders that received image instead of discarding it.
-
-### v5.0.2 (2026-07-25)
-- **[Bug Fix]** Quoted ambient sounds such as `「カチャ」という音` and `「ギシ…」という音` are treated as scene ambience, never as speech-bubble lettering. / `「カチャ」という音` や `「ギシ…」という音` のような引用付き環境音を、吹き出し文字ではなく場面演出として扱うよう修正しました。
-
-### v5.0.1 (2026-07-25)
-- **[UX]** シナリオ演出強化パネルの余白を「全カテゴリを選択」トグルに変更。7カテゴリを一括選択・解除でき、全選択中は黄緑の発光と明確な解除案内で状態差を判別可能に改善 / Replaced the empty scenario-enhancement grid slot with a select-all toggle for all seven categories, adding a bright lime active state and explicit clear instruction
-
-### v5.0.0 (2026-07-24)
-- **[Fix & UX]** セリフ本文と話者・吹き出し尻尾メタデータを分離し、話者名の印字混入を防止。状況文中の明示的な発話も安全に抽出して吹き出し対応を改善 / Separated printable dialogue from speaker and bubble-tail metadata to prevent printed speaker-name leakage, with safer extraction of explicit spoken lines embedded in action text
-
-### v4.9.8 (2026-07-24)
-- **[Fix & UX]** READMEの詳細説明を7カテゴリ構成と選択範囲検証・自動修正仕様に同期 / Aligned README details with the seven scoped categories, validation, and corrective retry
-
-### v4.9.7 (2026-07-24)
-- **[Fix & UX]** STEP2演出強化を7カテゴリに分離し、選択カテゴリだけを変更する検証・自動修正を追加 / Separated STEP2 enhancement into seven scoped categories with validation and corrective retry
-
-### v4.9.6 (2026-07-23)
-- **[Fix & UX]** 服のシワの重なりに局所的な三角セル影を追加し、共通リリース契約へ移行 / Added localized triangular cel-shaded clothing folds and migrated to the unified release contract
-
-### v4.9.5 (2026-07-20)
-- **[Fix & UX]** Added full scenario-content hygiene, safe hybrid location gates, and verified Gemini/OpenAI generation / Added full scenario-content hygiene, safe hybrid location gates, and verified Gemini/OpenAI generation
-
-### v4.9.4 (2026-07-19)
-- **[Fix & UX]** OpenAI画像生成をストリーミング化し、長時間生成の接続切れを回避。漫画の吹き出し余白・光源整合・人体整合・背景奥行きを両APIプロンプトへ追加 / Streamed OpenAI image responses to prevent long-generation connection drops and added manga finish assistance for bubble space, lighting, anatomy, and setting depth across both API prompt families
-
-### v4.9.3 (2026-07-18)
-- **[Fix & UX]** HF SpacesデプロイでDockerfileとnginx設定を保護し、必須ランタイムファイル欠落時は公開前に停止。削除済みランタイムを復元 / Preserved Dockerfile and nginx configuration during HF Spaces deploys, failing before publication when required runtime files are missing; restored the deleted runtime
-
-### v4.9.2 (2026-07-18)
-- **[Fix & UX]** 両手で扱う資料などの小道具を、所有者の二本の腕と手に固定し、背中から出る追加の手・他人の体を横切る腕を防止。実API画像でリンの資料操作を確認 / Locked two-hand prop actions to their owner's two arms and hands, preventing back-emerging extra limbs or cross-body arms; verified Rin's document action with a live API image
-
-### v4.9.1 (2026-07-16)
-- **[Version correction]** `4.9.0`の次を誤って`4.10.0`としたため、正しい`4.9.1`へ訂正。誤版後の追加ロジックはなし / Corrected the erroneous `4.10.0` increment to `4.9.1`; no additional logic was added after the mistaken publication
-- **[Fix]** 同一人物の両手動作と指差しの競合を二本の手に配分し、番号付きキャラクター見出しも認識 / Allocated conflicting two-hand and pointing actions within two hands and recognized numbered character headings
-
-### v4.9.0 (2026-07-16)
-- **[Fix & UX]** Gemini会話コマで後ろ向き・肩越しの前景を必須化し、奥行きのある構図を強化。OpenAIと共通ルーチンは変更なし。 / Gemini-only rear-foreground lock for deeper conversational staging; OpenAI and shared routes unchanged.
-
-### v4.8.9 (2026-07-15)
-- **[Fix & UX]** 会話奥行きステージングを追加 / Add conversational depth staging
-
-### v4.9.0 (2026-07-15)
-- **[Fix & UX]** 会話奥行きステージングを追加 / Add conversational depth staging
-
-### v4.8.9 (2026-07-15)
-- **[Fix & UX]** 会話奥行きステージングを追加 / Add conversational depth staging
-
-### v4.8.8 (2026-07-15)
-- **[Fix & UX]** 会話シーンで話者・聞き手の視線と顔向きを自動調整。明示的な読者・カメラへの呼びかけのみをカメラ目線の例外として残し、手動の視線・向き指定は自動ルールより優先 / Automatically stage speaker and listener eye-lines in conversation scenes, preserve camera-facing only for explicit in-story direct address, and prioritize manual staging directions over the automatic rule
-
-### v4.8.7 (2026-07-06)
-- **[Fix & UX]** 旧長名表記をSuper FURU AI 4-koma Systemに統一 / Aligned old long-form title references to Super FURU AI 4-koma System
-
-### v4.8.6 (2026-07-05)
-- **[Fix & UX]** 演出強化後のト書きが吹き出し化される誤判定を修正 / Fixed enhanced-scenario narration/action lines being promoted into speech bubbles
-
-### v4.8.5 (2026-07-04)
-- **[Fix & UX]** STEP4の画像比率修正プロンプトコピーボタンで「コピー完了」が元ラベルに重ならないよう修正 / Fixed the STEP4 image aspect ratio prompt copy button so the temporary copied feedback no longer overlaps the original label
-
-### v4.8.4 (2026-06-29)
-- **[Fix & UX]** STEP4のChatGPT 2倍アップスケール案内文に視認性を高める絵文字を追加 / Added an emoji cue to the STEP4 ChatGPT 2x upscale helper guidance for clearer visibility
-
-### v4.8.3 (2026-06-27)
-- **[Fix & UX]** ChatGPT/OpenAI と Gemini のプロンプト系統を明示化し、WebコピーとAPI生成の同一プロンプト化、脚本ロック、スタイルロック、台詞・小物・Action抽出の安定化、生成履歴メモリ抑制、A4固定書き出し削除を反映 / Aligned ChatGPT/OpenAI and Gemini provider-family prompt routing so Web copy and API generation share the same prompt, with stronger script/style/dialogue/prop/action extraction, smaller image-history memory, and removal of the fixed A4 export
-
-### v4.8.2 (2026-06-24)
-- **[Fix & UX]** APIキー入力時に形式チェックと実API疎通確認を必須化し、不正な文字列ではSTEP1へ進めないよう修正 / Require API-key format and live provider preflight before unlocking STEP 1, preventing arbitrary text from being treated as connected
-
-### v4.8.1 (2026-06-24)
-- **[Fix & UX]** ChatGPT向けプロンプトをWeb貼付可能な長さへ汎用圧縮し、状況文引用の余計な吹き出し化を防止 / Generically compressed ChatGPT prompts into a web-paste-safe length and prevented action narration quotes from becoming extra speech bubbles
-
-### v4.8.0 (2026-06-24)
-- **[Fix & UX]** 台詞抽出とタイトル句読点保持を汎用ルールで修正し、固有名詞ハードコード禁止ルールを明文化 / Fixed dialogue extraction and title punctuation preservation with generic rules, and documented the no-hardcoded-proper-nouns policy
-
-### v4.7.9 (2026-06-23)
-- **[Fix & UX]** 視覚小物・看板の引用文が吹き出し台詞へ誤流入する問題を汎用修正し、全員/みんな等の広域キャスト指示と小物文字のソフトガードを追加 / Generically fixed visual prop/sign quote leakage into speech bubbles, broad group cast cues, and soft incidental prop/background text handling
-
-### v4.7.8 (2026-06-23)
-- **[Fix & UX]** 指差し時の左右反転を抑える手ポーズロックを追加 / Added pointing-hand pose lock to reduce mirrored hand orientation
-
-### v4.7.7 (2026-06-22)
-- **[Fix & UX]** 感情スタイルとVFX（SPEED）のブラー改善、新規感情スタイル（墨絵・モノクロアクセント・ゴールデンアワー）の追加、複合感情タグの抽出バグ修正、手の描画品質（反転・不自然な向き）を改善する解剖学的プロンプト制約の追加 / Improved SPEED emotion style motion blur, added 3 new emotion styles (Sumi Ink, Monochrome Accent, Golden Hour), fixed parsing for compound emotion tags, and integrated anatomical constraints to prevent mirrored or unnatural hand generations in ChatGPT Image 2.0 prompts.
-
-### v4.7.4 (2026-06-20)
-- **[Fix & UX]** 補足/備考などの非キャラクター見出しをキャラ一覧から除外し、人物を表す複合ラベル話者を汎用的にキャストへ名寄せするよう修正。最終プロンプトでギャル側の台詞が欠落する問題を防止。 / Excludes non-character note sections from cast parsing and generically maps person-like compound speaker labels back to cast entries, preventing final prompts from dropping dialogue for descriptive speakers.
-
-### v4.7.3 (2026-06-20)
-- **[Fix & UX]** 名前らしくないOCRをキャラクター名にせず、名前未記載の人物は役割ベースの仮名で分割する解析ルールを追加。男子/ギャルなどの役割話者をセリフ抽出・配置・人数制限で保持し、台詞欠落を防止。 / Added generic character-analysis rules so non-name OCR is not treated as a character name, and unnamed visible people are split into role-based provisional characters. Role speakers such as male student and gyaru are now preserved through dialogue extraction, placement, and cast-limit rules to prevent missing speech bubbles.
-
-### v4.7.2 (2026-06-19)
-- **[Fix & UX]** A4比率のPNG出力を追加し、元画像を切らずに白キャンバス内へ収めるダウンロードを提供 / Added A4-ratio PNG export that fits the generated image inside a white canvas without cropping
-- **[Fix]** A4修正プロンプトでタイトルを再適用し、表示ラベル引用と実際の発話引用の分類を改善 / Re-applies titles in A4 repair prompts and improves classification between visual-label quotes and spoken dialogue quotes
-
-### v4.7.1 (2026-06-19)
-- **[Fix & UX]** Fallback Chain履歴を最新のNano Banana 2/ChatGPT Images 2.0検証結果に同期 / Synced fallback-chain history with the latest Nano Banana 2 and ChatGPT Images 2.0 verification
-
-### v4.7.0 (2026-06-15)
-- **[API]** Gemini画像生成をNano Banana 2 `gemini-3.1-flash-image` 固定に更新し、ローカル検証で非グレー画像が得られた `responseModalities: ["TEXT", "IMAGE"]` 経路に統一 / Fixed Gemini image generation to Nano Banana 2 `gemini-3.1-flash-image` and unified on the locally verified non-gray `responseModalities: ["TEXT", "IMAGE"]` path
-- **[Guard]** STEP3/STEP4前に4コマシナリオ検証を追加し、全4コマと各コマ最低1つの「」付きセリフがない場合は古いプロンプト/画像を消して停止 / Added pre-STEP3/STEP4 scenario validation so incomplete four-panel scripts or panels without quoted dialogue clear stale prompts/images and stop generation
-- **[Fix & UX]** セリフとキャラクター配置の不整合バグを修正し、セリフの帰属精度を向上 / Fixed a bug causing dialogue to speaker mismatch and improved dialogue attribution accuracy
-
-### v4.6.9 (2026-06-13)
-- **[Fix & Prompt]** 吹き出しの位置指示を「絶対的なRIGHT/LEFT端固定」から「キャラの実際の位置に追従する相対配置」に変更。真ん中にいるキャラクターの吹き出しがコマの端に飛んで別人が喋っているように見える問題を解消 / Changed speech bubble placement from absolute RIGHT/LEFT edge locking to relative positioning that follows each character's actual position, fixing bubbles appearing at panel edges when the speaker is in the center
-
-### v4.6.8 (2026-06-12)
-- **[Prompt]** 画像比率修正プロンプト（ABSOLUTE OVERRIDE）に「横書き→縦書き強制修正」セクション（HORIZONTAL-TO-VERTICAL TEXT CORRECTION）を追加。吹き出し内テキストの縦書き（tategaki）を徹底し、SELF-REVIEWチェックリストに指の本数・縦書き・テキストエラーの3段階検証ステップを追加 / Added HORIZONTAL-TO-VERTICAL CORRECTION section to the aspect ratio fix prompt (ABSOLUTE OVERRIDE), enforcing tategaki text in speech bubbles with a 3-step SELF-REVIEW checklist
