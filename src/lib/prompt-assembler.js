@@ -31,6 +31,11 @@ import {
 } from './scenario-validation';
 import { buildDynamicBackgroundLock } from './dynamic-background';
 import { FINAL_PANEL_ACTIVE_STAGING_IMAGE_LOCK } from './final-panel-staging';
+import {
+  getPanelCompositionAssist,
+  MANGA_COMPOSITION_VARIETY_LOCK,
+  MANGA_COMPOSITION_VARIETY_LOCK_COMPACT
+} from './composition-variety';
 
 /**
  * Fisher-Yates アルゴリズムによる配列のシャッフル
@@ -131,6 +136,15 @@ const compactChatGPTConversationRules = (prompt) => {
     .replace(/SAFE VISUAL CONTENT LOCK:[^\n]*/g, 'SAFE VISUAL: no gore/blood/organs/flesh/organic horror; ordinary architecture; preserve script/cast/dialogue/camera/layout.')
     .replace(/PANEL-BY-PANEL CLOTHING FOLD PRIORITY:[^\n]*/g, 'FOLD PRIORITY: 2-4 dark triangular crease shadows.')
     .replace(/FINAL-PANEL ACTIVE STAGING LOCK:[^\n]*/g, 'FINAL-PANEL ACTIVE STAGING LOCK: no straight-line lineup; distinct physical action; faces, silhouettes, and hands readable.')
+    .replace(
+      /MANGA CAMERA \/ POSE VARIETY LOCK:[\s\S]*?(?=\n+(?:VISUAL STORY EVIDENCE LOCK|DYNAMIC BACKGROUND CONTINUITY LOCK|FINAL-PANEL ACTIVE STAGING LOCK|ART \/ RENDERING QUALITY:))/g,
+      'MANGA CAMERA / POSE VARIETY LOCK: >=3 azimuths; max 1 front-on; preserve script/camera/action/limbs; turn torso; stagger hands in depth; VFX follows angle.'
+    )
+    .replace(/COMPOSITION STAGING: PRESERVE EXPLICIT AZIMUTH:[^\n]*/g, 'COMPOSITION STAGING: preserve explicit azimuth; diagonal asymmetric body.')
+    .replace(/COMPOSITION STAGING: LEFT-FRONT OBLIQUE:[^\n]*/g, 'COMPOSITION STAGING: LEFT-FRONT OBLIQUE 35-55 degrees; unequal shoulder depth.')
+    .replace(/COMPOSITION STAGING: RIGHT-FRONT OBLIQUE:[^\n]*/g, 'COMPOSITION STAGING: RIGHT-FRONT OBLIQUE 35-55 degrees; near hand larger.')
+    .replace(/COMPOSITION STAGING: REAR THREE-QUARTER:[^\n]*/g, 'COMPOSITION STAGING: REAR THREE-QUARTER 30-50 degrees; layered depth.')
+    .replace(/COMPOSITION STAGING: DIAGONAL LEFT-FRONT:[^\n]*/g, 'COMPOSITION STAGING: DIAGONAL LEFT-FRONT 30-50 degrees; keep scripted tilt.')
     .replace(
       /CROSS-PANEL WARDROBE COLOR LOCK:[\s\S]*?(?=\n- Adults)/g,
       "CROSS-PANEL WARDROBE COLOR LOCK: choose each named character's garment items, base colors, accent colors, material, and pattern once; reuse that exact wardrobe assignment in every later panel. PANEL STYLE LOCK changes background/environment palette, VFX, and rendering treatment only; keep every garment item and its colors unchanged. Lighting may change highlights and shadows, but the garment's canonical base and accent colors remain recognizable."
@@ -356,6 +370,9 @@ export const buildMangaPrompt = ({
   const safeTopic = cleanTopic || "4-koma Manga";
   const backgroundContinuityLock = buildDynamicBackgroundLock(scenario);
   const visualStoryEvidenceLock = buildVisualStoryEvidenceLock(scenario);
+  const compositionVarietyLock = isChatGPTFamily
+    ? MANGA_COMPOSITION_VARIETY_LOCK_COMPACT
+    : MANGA_COMPOSITION_VARIETY_LOCK;
   
   // ウォーターマークテキストの作成
   const watermarkEng = isChatGPTFamily
@@ -366,7 +383,7 @@ export const buildMangaPrompt = ({
   const panels = [panel1Text, panel2Text, panel3Text, panel4Text];
   const scriptLock = buildStrictScriptLock({ safeTopic, panels, castList, activeOutfit });
   const finalPanelStagingLock = punchlineType === 'Surreal' ? '' : FINAL_PANEL_ACTIVE_STAGING_IMAGE_LOCK;
-  const sceneLocks = [scriptLock, visualStoryEvidenceLock, backgroundContinuityLock, finalPanelStagingLock]
+  const sceneLocks = [scriptLock, compositionVarietyLock, visualStoryEvidenceLock, backgroundContinuityLock, finalPanelStagingLock]
     .filter(Boolean)
     .join('\n');
   const panelEyeLineRules = panels.map((panel) => buildPanelEyeLineRule(panel, castList));
@@ -388,6 +405,7 @@ ${buildEmotionBlock(pt)}
 ${extractPlacementRule(pt, castList, { compact: true }).replace(/\\\\[/g, '').replace(/\\\\]/g, '')}
 ${extractCastLimitRule(pt, castList, { compact: true }).replace(/\\\\[/g, '').replace(/\\\\]/g, '')}
 Camera: ${camera}
+COMPOSITION STAGING: ${getPanelCompositionAssist(pt, num, { compact: true })}
 ${eyeLineRule}
 Action (visual only): ${buildPanelActionText(pt, castList, activeOutfit)}
 Dialogue (verbatim bubbles): ${extractDialogueOnly(pt, castList, { forImagePrompt: true })}`;
@@ -425,6 +443,7 @@ ${buildEmotionBlock(pt)}
 ${extractPlacementRule(pt, castList)}
 ${extractCastLimitRule(pt, castList)}
 Camera: ${camera}.
+COMPOSITION STAGING: ${getPanelCompositionAssist(pt, num)}
 ${lensRule}
 ${eyeLineRule}
 Action (Visual ONLY, non-dialogue; do NOT render quoted words as visible text unless this action explicitly says handwriting, signage, board text, label text, or screen text): ${buildPanelActionText(pt, castList, activeOutfit)}.

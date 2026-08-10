@@ -731,7 +731,7 @@ No explanations. No partial results.`;
                 </p>
                 <p className="text-xs text-blue-200/90 mt-4 font-bold text-center leading-relaxed">
                   高品質な画像を生成しています。<br />
-                  <span className="text-orange-400">※最大2〜6分程度かかる場合があります。<br/>このままお待ちください。</span>
+                  <span className="text-orange-400">※通常2〜10分程度かかります。<br/>このままお待ちください。</span>
                 </p>
               </div>
             </div>

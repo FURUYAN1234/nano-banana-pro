@@ -5,6 +5,7 @@ import { buildScenarioEnhancementPrompt } from './scenario-enhancement';
 import { buildManualTopicExclusionPrompt } from './manual-topic-exclusions';
 import { buildSeasonalOutfitInstruction, getSeasonContext } from './seasonal-outfit';
 import { SHARED_IMAGE_QUALITY_CONTRACT } from './shared-image-quality';
+import { SCENARIO_COMPOSITION_VARIETY_RULES } from './composition-variety';
 
 // --- プロンプトテンプレート (prompts.js) ---
 // App.jsx から抽出された大規模プロンプト文字列テンプレート群
@@ -536,6 +537,7 @@ ${styleJson.anti_patterns ? `            - 絶対禁止事項:\n${styleJson.anti
                 * 例（Aesthetic Thirds）: 「画面の三分の一にキャラクターを配置し、豊かな余白が美しい空気感を生む。プロの写真のような計算された構図」
              
              - 【制約】4コマの中で**同じカメラを2回以上使うのは禁止**。必ず4種類の異なるカメラを選べ。⚠️ マクロ特写（目だけの超接写等）は使用禁止。
+            ${SCENARIO_COMPOSITION_VARIETY_RULES}
 
 
           【出力フォーマット（絶対厳守・会話禁止）】

@@ -1,6 +1,6 @@
 # Super FURU AI 4-koma System
 
-> Latest release: **v5.2.7** / 最新リリース: **v5.2.7**
+> Latest release: **v5.2.8** / 最新リリース: **v5.2.8**
 
 > **"To what extent can humans step away from the creative process?"**
 > **「人間は、どこまで制作から降りられるのか？」**
@@ -27,6 +27,7 @@ The current implementation is **v5.2.7**. The product name is **Super FURU AI 4-
 Current behavior at a glance / 現行仕様の要点:
 
 - **Four-stage workflow / 4段階ワークフロー:** STEP1 character analysis, STEP2 scenario generation and optional enhancement, STEP3 editable prompt assembly, and STEP4 image generation form one continuous pipeline. / STEP1のキャラクター解析、STEP2のシナリオ生成と任意の演出強化、STEP3の編集可能な画像プロンプト構築、STEP4の画像生成を一つの流れとして実行します。
+- **Default manga composition variety / 通常生成の構図バリエーション:** STEP2 and STEP3 now specify subject-relative horizontal camera direction in addition to shot size, elevation, and tilt. Across four panels, the prompt limits flat front-on staging to one panel, varies shoulder/hip/face axes, and staggers two-handed actions in depth while preserving the requested action, props, cast, and dialogue. / STEP2とSTEP3では、画角・高低・傾きに加えて被写体基準の左右方向を通常生成へ自動指定します。4コマ全体で平面的な真正面構図を最大1コマに抑え、肩・腰・顔の向きと両手動作の前後差を変化させつつ、指定された動作・小道具・登場人物・セリフは保持します。
 - **Three-attempt scenario quality selection / シナリオ品質は全3試行から選抜:** STEP2 evaluates scenario-content hygiene, manual-input exclusions, event-specific visual evidence, dynamic-background completeness, and final-panel staging. A full pass is accepted immediately. If all three attempts miss one or more quality targets, the highest-scoring usable candidate is retained with a concrete warning and remains available to STEP3 and STEP4. / STEP2では、本文の表現衛生、自由入力の禁止条件、出来事を示す視覚証拠、動的背景の完全性、4コマ目の能動演出を検証します。合格した時点で採用し、全3試行でも品質条件が残った場合は、最後の結果ではなく最高得点の利用可能な候補を警告付きで保持してSTEP3・STEP4へ進めます。
 - **Two-attempt scenario enhancement / 演出強化は初回＋自動修正1回:** The seven enhancement categories are validated against the original scenario. A first-pass success is accepted without an unnecessary retry. If correction is needed, the better usable enhancement is retained; when every generated rewrite violates a non-negotiable editing contract, the saved original scenario is restored so downstream work is not lost. / 7カテゴリの演出強化は元シナリオとの差分で検証します。初回で合格すれば追加生成は行いません。修正が必要な場合は利用可能な候補のうち良い方を保持し、すべての書換候補が構造・話者・未選択範囲などの必須契約を壊した場合は、保存済みの元シナリオを採用して後続作業を継続します。
 - **Season-aware outfit selection / 日付連動の衣装選定:** In date-specified news mode, STEP2 derives a read-only Japan-default seasonal hint from the selected date. Explicit user clothing, event uniforms, profession or safety gear, location, real weather, indoor conditions, and an overseas local season take priority over that hint; manual-input mode does not infer a season from a date. Empty or ambiguous outfits and clear unexplained summer/winter conflicts are retried with the exact failed check. / 日付指定ニュースモードでは、STEP2が対象日から日本基準の季節目安を読み取り専用で提示します。ユーザー指定衣装、行事衣装、職業・安全装備、場所、実際の天候、屋内環境、海外の現地季節は目安より優先し、自由入力モードでは日付から季節を推測しません。空・曖昧な衣装や根拠のない夏冬の明白な不一致は、失敗した検証項目を示して再生成します。
@@ -791,6 +792,9 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 ---
 
 ## 📋 ChangeLog (latest 15 releases) / 変更履歴（最新15件）
+
+### v5.2.8 (2026-08-10)
+- **[Fix & UX]** 通常の4コマ生成で被写体基準の斜めカメラ・身体軸・両手の前後差を自動指定し、OpenAI画像生成中の待機表示を通常2〜10分に統一 / Added default subject-relative camera, body-axis, and two-hand depth variety for normal manga generation, and aligned the OpenAI wait overlay to the normal 2-to-10-minute expectation
 
 > Full release history is available on [GitHub Releases](https://github.com/FURUYAN1234/nano-banana-pro/releases). / 全履歴は [GitHub Releases](https://github.com/FURUYAN1234/nano-banana-pro/releases) で確認できます。
 
