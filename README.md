@@ -1,6 +1,6 @@
 # Super FURU AI 4-koma System
 
-> Latest release: **v5.2.8** / 最新リリース: **v5.2.8**
+> Latest release: **v5.2.9** / 最新リリース: **v5.2.9**
 
 > **"To what extent can humans step away from the creative process?"**
 > **「人間は、どこまで制作から降りられるのか？」**
@@ -22,7 +22,7 @@
 This project aims to intentionally exclude humans from the creative process, allowing AI to act as a director and complete everything from brainstorming to composition, direction, and rendering.
 本プロジェクトは、人間をクリエイティブな工程から意図的に排除し、AIがディレクターとして「ネタ出し・構成・演出・作画」のすべてを完結させることを目的としています。
 
-The current implementation is **v5.2.7**. The product name is **Super FURU AI 4-koma System**; **Nano Banana 2** and **ChatGPT Image 2.0** identify image-generation engine families. / 現在の実装は **v5.2.7** です。製品名は **Super FURU AI 4-koma System** で、**Nano Banana 2** と **ChatGPT Image 2.0** は画像生成エンジン系統の名称です。
+The current implementation is **v5.2.9**. The product name is **Super FURU AI 4-koma System**; **Nano Banana 2** and **ChatGPT Image 2.0** identify image-generation engine families. / 現在の実装は **v5.2.9** です。製品名は **Super FURU AI 4-koma System** で、**Nano Banana 2** と **ChatGPT Image 2.0** は画像生成エンジン系統の名称です。
 
 Current behavior at a glance / 現行仕様の要点:
 
@@ -792,6 +792,9 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 ---
 
 ## 📋 ChangeLog (latest 15 releases) / 変更履歴（最新15件）
+
+### v5.2.9 (2026-08-10)
+- **[Fix & UX]** READMEの現行実装バージョン表記をv5.2.9へ訂正し、公開済みの構図バリエーション機能と整合 / Corrected the README current-implementation version to v5.2.9 so it matches the latest release and published manga composition variety description
 
 ### v5.2.8 (2026-08-10)
 - **[Fix & UX]** 通常の4コマ生成で被写体基準の斜めカメラ・身体軸・両手の前後差を自動指定し、OpenAI画像生成中の待機表示を通常2〜10分に統一 / Added default subject-relative camera, body-axis, and two-hand depth variety for normal manga generation, and aligned the OpenAI wait overlay to the normal 2-to-10-minute expectation
