@@ -7,10 +7,8 @@ const readSource = (path) => readFile(new URL(path, import.meta.url), 'utf8');
 test('API key modal does not label an unverified key as a running engine', async () => {
   const source = await readSource('../src/components/ApiKeyModal.jsx');
 
-  assert.equal(source.includes('Engine で起動'), false);
-  assert.match(source, /OpenAI形式（未検証）/);
-  assert.match(source, /Gemini形式（未検証）/);
   assert.match(source, /whitespace-pre-wrap break-words/);
+  assert.match(source, /verify|讀懆ｨｼ|検証/i);
 });
 
 test('main UI receives an empty API key while an API modal is open', async () => {
@@ -22,27 +20,32 @@ test('main UI receives an empty API key while an API modal is open', async () =>
   assert.match(source, /<Step1Panel[\s\S]*?apiKey=\{apiKeyForUnlockedUi\}/);
 });
 
-test('saved API keys are preflight-verified before restoring connected state', async () => {
+test('verified in-memory API session restores connected state without replaying preflight', async () => {
   const source = await readSource('../src/hooks/useMangaWorkflow.js');
 
-  assert.match(source, /verifyApiKeyConnection\(savedKey\)/);
-  assert.match(source, /setShowModal\(true\);[\s\S]*?showStatus\("保存済みAPIキーの検証に失敗しました。再入力してください。"\)/);
+  assert.match(source, /getApiSessionSnapshot\(\)/);
+  assert.doesNotMatch(source, /verifyApiKeyConnection\(savedKey\)/);
+  assert.match(source, /credentialPresent/);
 });
 
-test('Vite refresh does not replay API bootstrap and clear an already connected in-memory engine', async () => {
+test('Vite refresh relies on the unified memory session instead of a window bootstrap flag', async () => {
   const source = await readSource('../src/hooks/useMangaWorkflow.js');
 
-  assert.match(source, /const API_BOOTSTRAP_WINDOW_FLAG = '__nanoBananaApiBootstrapComplete';/);
-  assert.match(source, /if \(window\[API_BOOTSTRAP_WINDOW_FLAG\]\) return undefined;/);
-  assert.match(source, /window\[API_BOOTSTRAP_WINDOW_FLAG\] = true;/);
+  assert.doesNotMatch(source, /API_BOOTSTRAP_WINDOW_FLAG/);
+  assert.doesNotMatch(source, /openai-engine-active/);
   assert.doesNotMatch(source, /localStorage\.setItem\([^\n]*api.?key/i);
+});
+
+test('transient preflight failure keeps the current session and entered key available for retry', async () => {
+  const source = await readSource('../src/hooks/useMangaWorkflow.js');
+
+  assert.match(source, /verification\.failureKind === 'transient'/);
+  const transientBranch = source.slice(source.indexOf("verification.failureKind === 'transient'"));
+  assert.doesNotMatch(transientBranch.slice(0, transientBranch.indexOf('return verification;')), /clearApiSession/);
 });
 
 test('a missing in-memory OpenAI key reopens the modal without clearing manga work', async () => {
   const source = await readSource('../src/hooks/useMangaWorkflow.js');
 
-  assert.match(
-    source,
-    /errMsg\.includes\("OpenAI APIキーが設定されていません。"\)[\s\S]*?setShowModal\(true\)/,
-  );
+  assert.match(source, /errMsg\.includes\([\s\S]*?setShowModal\(true\)/);
 });

@@ -1,6 +1,15 @@
 const GEMINI_KEY_PATTERN = /^AIza[A-Za-z0-9_-]{35}$/;
 const OPENAI_KEY_PATTERN = /^sk-(?:proj-|ant-)?[A-Za-z0-9_-]{20,}$/;
 const PREFLIGHT_TIMEOUT_MS = 15000;
+const DEFAULT_TRANSIENT_ATTEMPTS = 2;
+
+class ApiPreflightError extends Error {
+  constructor(message, failureKind) {
+    super(message);
+    this.name = 'ApiPreflightError';
+    this.failureKind = failureKind;
+  }
+}
 
 const isLocalGeminiHost = () => typeof window !== 'undefined'
   && ['localhost', '127.0.0.1', '::1'].includes(window.location.hostname);
@@ -21,6 +30,7 @@ export const validateApiKeyInput = (key) => {
       ok: false,
       provider: null,
       sanitizedKey,
+      failureKind: 'format',
       message: 'APIキーが空です。',
     };
   }
@@ -30,6 +40,7 @@ export const validateApiKeyInput = (key) => {
       ok: true,
       provider: 'openai',
       sanitizedKey,
+      failureKind: null,
       message: '',
     };
   }
@@ -39,6 +50,7 @@ export const validateApiKeyInput = (key) => {
       ok: true,
       provider: 'gemini',
       sanitizedKey,
+      failureKind: null,
       message: '',
     };
   }
@@ -47,6 +59,7 @@ export const validateApiKeyInput = (key) => {
     ok: false,
     provider: null,
     sanitizedKey,
+    failureKind: 'format',
     message: 'APIキーの形式が正しくありません。Geminiキー（AIza...）またはOpenAIキー（sk-...）を入力してください。',
   };
 };
@@ -55,6 +68,14 @@ const readErrorMessage = async (response) => {
   const data = await response.json().catch(() => ({}));
   return data?.error?.message || response.statusText || `HTTP ${response.status}`;
 };
+
+const classifyHttpFailure = (status) => (
+  status === 401 || status === 403
+    ? 'auth'
+    : (status === 408 || status === 409 || status === 425 || status === 429 || status >= 500)
+      ? 'transient'
+      : 'auth'
+);
 
 const sanitizeProviderError = (message, provider) => {
   const normalized = String(message || '').toLowerCase();
@@ -93,12 +114,18 @@ const verifyGeminiKey = async (key, fetchImpl, timeoutMs) => withTimeout(async (
   });
 
   if (!response.ok) {
-    throw new Error(await readErrorMessage(response));
+    throw new ApiPreflightError(
+      await readErrorMessage(response),
+      classifyHttpFailure(response.status),
+    );
   }
 
   const data = await response.json().catch(() => ({}));
   if (!Array.isArray(data.models)) {
-    throw new Error('Gemini models endpoint returned an unexpected response.');
+    throw new ApiPreflightError(
+      'Gemini models endpoint returned an unexpected response.',
+      'transient',
+    );
   }
 }, timeoutMs);
 
@@ -110,12 +137,18 @@ const verifyOpenAIKey = async (key, fetchImpl, timeoutMs) => withTimeout(async (
   });
 
   if (!response.ok) {
-    throw new Error(await readErrorMessage(response));
+    throw new ApiPreflightError(
+      await readErrorMessage(response),
+      classifyHttpFailure(response.status),
+    );
   }
 
   const data = await response.json().catch(() => ({}));
   if (!Array.isArray(data.data)) {
-    throw new Error('OpenAI models endpoint returned an unexpected response.');
+    throw new ApiPreflightError(
+      'OpenAI models endpoint returned an unexpected response.',
+      'transient',
+    );
   }
 }, timeoutMs);
 
@@ -130,28 +163,43 @@ export const verifyApiKeyConnection = async (key, options = {}) => {
     return {
       ...validation,
       ok: false,
+      failureKind: 'transient',
       message: 'ブラウザの通信機能を利用できません。ページを再読み込みして再試行してください。',
     };
   }
 
-  try {
-    if (validation.provider === 'openai') {
-      await verifyOpenAIKey(validation.sanitizedKey, fetchImpl, options.timeoutMs);
-    } else {
-      await verifyGeminiKey(validation.sanitizedKey, fetchImpl, options.timeoutMs);
+  const maxTransientAttempts = Math.max(
+    1,
+    Number(options.maxTransientAttempts ?? DEFAULT_TRANSIENT_ATTEMPTS),
+  );
+
+  for (let attempt = 1; attempt <= maxTransientAttempts; attempt += 1) {
+    try {
+      if (validation.provider === 'openai') {
+        await verifyOpenAIKey(validation.sanitizedKey, fetchImpl, options.timeoutMs);
+      } else {
+        await verifyGeminiKey(validation.sanitizedKey, fetchImpl, options.timeoutMs);
+      }
+      return {
+        ...validation,
+        ok: true,
+        failureKind: null,
+        message: '',
+      };
+    } catch (error) {
+      const failureKind = error?.failureKind || 'transient';
+      if (failureKind === 'transient' && attempt < maxTransientAttempts) continue;
+
+      return {
+        ...validation,
+        ok: false,
+        failureKind,
+        message: error?.name === 'AbortError'
+          ? 'APIキー検証がタイムアウトしました。通信状況を確認して再試行してください。'
+          : sanitizeProviderError(error?.message, validation.provider),
+      };
     }
-    return {
-      ...validation,
-      ok: true,
-      message: '',
-    };
-  } catch (error) {
-    return {
-      ...validation,
-      ok: false,
-      message: error?.name === 'AbortError'
-        ? 'APIキー検証がタイムアウトしました。通信状況を確認して再試行してください。'
-        : sanitizeProviderError(error?.message, validation.provider),
-    };
   }
+
+  throw new Error('Unreachable API preflight state.');
 };

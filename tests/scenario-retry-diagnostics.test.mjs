@@ -14,8 +14,8 @@ test('scenario retry passes the rejected validation code to its progress callbac
     parseScenario: (response) => ({ location: 'library', scenario: response.text }),
     validateScenario: (parsed) => {
       if (parsed.scenario === 'response 1') {
-        const error = new Error('dynamic background is incomplete');
-        error.code = 'DYNAMIC_BACKGROUND';
+        const error = new Error('visual story evidence is incomplete');
+        error.code = 'VISUAL_STORY_EVIDENCE';
         throw error;
       }
     },
@@ -24,7 +24,7 @@ test('scenario retry passes the rejected validation code to its progress callbac
   });
 
   assert.deepEqual(retryEvents.map(({ attempt, code, kind }) => ({ attempt, code, kind })), [
-    { attempt: 1, code: 'DYNAMIC_BACKGROUND', kind: 'quality' }
+    { attempt: 1, code: 'VISUAL_STORY_EVIDENCE', kind: 'quality' }
   ]);
 });
 
@@ -32,7 +32,8 @@ test('scenario retry UI reports the actual failed check and never claims an unre
   const source = await readFile(new URL('../src/lib/scenario-provider.js', import.meta.url), 'utf8');
 
   assert.match(source, /formatScenarioRetryProgress/);
-  assert.match(source, /DYNAMIC_BACKGROUND/);
+  assert.match(source, /VISUAL_STORY_EVIDENCE/);
+  assert.doesNotMatch(source, /DYNAMIC_BACKGROUND/);
   assert.doesNotMatch(source, /舞台の安全性、動的背景設計、または出来事を証明する視覚要素/);
 });
 
@@ -85,8 +86,8 @@ test('a safe scenario with a quality-gate warning remains usable after one API r
     requestScenario: async () => ({ text: `response ${++requests}` }),
     parseScenario: (response) => ({ location: '駅前広場', scenario: response.text }),
     validateScenario: () => {
-      const error = new Error('dynamic_background_invalid: background_layers_incomplete');
-      error.code = 'DYNAMIC_BACKGROUND';
+      const error = new Error('final_panel_staging_invalid');
+      error.code = 'FINAL_PANEL_STAGING';
       throw error;
     },
     maxAttempts: 1
@@ -95,8 +96,8 @@ test('a safe scenario with a quality-gate warning remains usable after one API r
   assert.equal(requests, 1);
   assert.equal(result.parsed.scenario, 'response 1');
   assert.deepEqual(result.validationWarning, {
-    code: 'DYNAMIC_BACKGROUND',
-    message: 'dynamic_background_invalid: background_layers_incomplete',
+    code: 'FINAL_PANEL_STAGING',
+    message: 'final_panel_staging_invalid',
     qualityScore: 0
   });
 });

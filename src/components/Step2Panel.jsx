@@ -262,7 +262,7 @@ export default function Step2Panel({
                   placeholder="例: 港の就航式会場、雨上がりの駅前広場...（空欄ならAIが内容から設計）"
                 />
                 <p className="text-[10px] text-slate-500 leading-relaxed">
-                  場所だけ指定できます。空間構造・前景／中景／後景・光源・環境音・小道具・4コマ共通アンカーは、内容に合わせて毎回自動設計されます。
+                  場所だけ指定できます。背景はLocationと明示された時刻・天候の整合だけを保ち、人物の手・腕・小道具と吹き出しの正確さを優先します。
                 </p>
               </div>
             )}

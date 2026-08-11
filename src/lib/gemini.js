@@ -1,3 +1,5 @@
+import { clearApiSession, getApiCredential, setApiSession } from './api-session.js';
+
 /**
  * Gemini API Client for Nano Banana Pro (Thinking Mode Edition)
  * (自動モデル探索機能は廃止され、指定された静的フォールバックリストを厳密に遵守します。)
@@ -31,16 +33,13 @@ const IMAGE_MODEL_IDS = [
     "gemini-pro-latest"
 ];
 
-// Store API key in memory ONLY (Security Requirement: No persistence)
-let currentApiKey = "";
-
 export const setApiKey = (key) => {
-    currentApiKey = key;
-    // localStorage.setItem("gemini_api_key", key); // DISABLED by User Request
+    if (key) setApiSession('gemini', key);
+    else clearApiSession('gemini');
 };
 
 export const getApiKey = () => {
-    return currentApiKey; // || localStorage.getItem("gemini_api_key"); // DISABLED by User Request
+    return getApiCredential('gemini');
 };
 
 const GEMINI_SAFETY_SETTINGS = [
@@ -58,7 +57,7 @@ const postGeminiGenerateContent = async (modelId, requestBody, timeoutMs = GEMIN
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
-                "x-goog-api-key": currentApiKey
+                "x-goog-api-key": getApiKey()
             },
             body: JSON.stringify({
                 ...requestBody,
@@ -92,11 +91,11 @@ const extractTextParts = (parts, includeThought = false) => parts
  * This effectively "solves" the guessing game.
  */
 export const diagnoseConnection = async () => {
-    if (!currentApiKey) return "API Key not set.";
+    if (!getApiKey()) return "API Key not set.";
     try {
         console.log("[Diagnostic] Fetching available models...");
         const response = await fetch(`${GEMINI_BASE_URL}/v1beta/models`, {
-            headers: { "x-goog-api-key": currentApiKey }
+            headers: { "x-goog-api-key": getApiKey() }
         });
         const data = await response.json();
 
@@ -123,7 +122,7 @@ export const diagnoseConnection = async () => {
  * Robustly calls the Gemini API with Auto-Discovery on failure.
  */
 export const callThinkingGemini = async (prompt, images = null, systemInstruction = null, onThinkingUpdate, options = {}) => {
-    if (!currentApiKey) throw new Error("API Key is not set.");
+    if (!getApiKey()) throw new Error("API Key is not set.");
     const timeoutMs = options.timeoutMs ?? GEMINI_TEXT_TIMEOUT_MS;
 
     // 画像の有無に応じてモデルリストを動的に選択

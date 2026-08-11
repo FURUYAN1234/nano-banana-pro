@@ -29,7 +29,7 @@ import {
   formatMangaScenarioValidationIssue,
   validateMangaScenario
 } from './scenario-validation';
-import { buildDynamicBackgroundLock } from './dynamic-background';
+import { buildSettingContinuityLock } from './setting-continuity';
 import { FINAL_PANEL_ACTIVE_STAGING_IMAGE_LOCK } from './final-panel-staging';
 import {
   getPanelCompositionAssist,
@@ -102,7 +102,7 @@ const compactChatGPTConversationRules = (prompt) => {
     .replace(/PANEL-BY-PANEL CLOTHING FOLD PRIORITY:[^\n]*/g, 'FOLD PRIORITY: 2-4 dark triangular crease shadows.')
     .replace(/FINAL-PANEL ACTIVE STAGING LOCK:[^\n]*/g, 'FINAL-PANEL ACTIVE STAGING LOCK: no straight-line lineup; distinct physical action; faces, silhouettes, and hands readable.')
     .replace(
-      /MANGA CAMERA \/ POSE VARIETY LOCK:[\s\S]*?(?=\n+(?:HAND \/ PROP KINEMATICS LOCK|VISUAL STORY EVIDENCE LOCK|DYNAMIC BACKGROUND CONTINUITY LOCK|FINAL-PANEL ACTIVE STAGING LOCK|ART \/ RENDERING QUALITY:))/g,
+      /MANGA CAMERA \/ POSE VARIETY LOCK:[\s\S]*?(?=\n+(?:HAND \/ PROP KINEMATICS LOCK|VISUAL STORY EVIDENCE LOCK|SETTING CONTINUITY \(LOW PRIORITY\)|FINAL-PANEL ACTIVE STAGING LOCK|ART \/ RENDERING QUALITY:))/g,
       'MANGA CAMERA / POSE VARIETY LOCK: >=3 azimuths; max 1 front-on; preserve script/camera/action/limbs; turn torso; stagger hands in depth; VFX follows angle.'
     )
     .replace(/COMPOSITION STAGING: PRESERVE EXPLICIT AZIMUTH:[^\n]*/g, 'COMPOSITION STAGING: preserve explicit azimuth; diagonal asymmetric body.')
@@ -135,22 +135,22 @@ const compactChatGPTConversationRules = (prompt) => {
       /VISUAL STORY EVIDENCE LOCK: visibly preserve the event-specific evidence from the approved scenario: ([^\n]*?)\. Show at least two distinct evidence items[^\n]*/g,
       'VISUAL STORY EVIDENCE LOCK: show $1; >=2 distinct items across >=2 panels where Actions place them; physical scene elements, not extra captions.'
     )
-    .replace(
-      /DYNAMIC BACKGROUND CONTINUITY LOCK:[^\n]*?FIXED ANCHORS: ([^;\n]+);[^\n]*?INTERACTION PROPS\/SURFACES: ([^.\n]+)\. AVOID: ([^.\n]+)\.[^\n]*/g,
-      'DYNAMIC BACKGROUND CONTINUITY LOCK: keep declared Location/space/layers/light/weather across all panels. FIXED ANCHORS: $1 every panel. INTERACTION PROPS/SURFACES: $2. AVOID: $3.'
-    )
+    .replace(/\n?SETTING CONTINUITY \(LOW PRIORITY\):[^\n]*/g, '')
     .replace(/MANGA CAMERA \/ POSE VARIETY LOCK:[^\n]*/g, 'MANGA CAMERA / POSE VARIETY LOCK: >=3 azimuths; max 1 front-on; preserve Action/limbs; stagger hands in depth.')
     .replace(/FINAL-PANEL ACTIVE STAGING LOCK:[^\n]*/g, 'FINAL-PANEL ACTIVE STAGING LOCK: varied actions/depth; faces and hands readable.')
     .replace(/SHARED IMAGE QUALITY CONTRACT:[^\n]*/g, 'SHARED QUALITY: preserve direction; rich setting; anatomy/props; folds; no duplicate cast; clean surfaces.')
     .replace(
       /RICH PANEL COMPOSITION \/ CHARACTER CLARITY LOCK:[^\n]*/g,
-      'RICH PANEL: physical setting behind cast; keep face, silhouette, hands, and action crisp.'
+      'RICH PANEL COMPOSITION / CHARACTER CLARITY LOCK: 1 fixed anchor + 2 physical setting cues/panel; VFX overlay, never replace physical setting; face, eyes, silhouette, hands and action stay crisp; background rich but softer/lower contrast; no blank walls, flat gradients or black voids.'
     )
-    .replace(/SAFE VISUAL:[^\n]*/g, 'SAFE: no gore, organs, flesh, or organic horror.')
-    .replace(/FOLD PRIORITY:[^\n]*/g, 'FOLD PRIORITY: crease shadows.')
-    .replace(/CROSS-PANEL WARDROBE COLOR LOCK:[^\n]*/g, "CROSS-PANEL WARDROBE COLOR LOCK: fix each character's outfit/colors once; reuse every panel; style and lighting never recolor them.")
-    .replace(/PANEL STYLE LOCK: ([^;\n]+); visibly distinct linework, environmental palette, shading, background\/VFX\.[^\n]*/g, 'PANEL STYLE LOCK: $1; vary 3+ rendering axes; environmental palette only; wardrobe colors fixed.')
-    .replace(/ART-STYLE DIFFERENCE QA LOCK:\n-[^\n]*/g, 'ART-STYLE DIFFERENCE QA LOCK:\n- Vary 3+ rendering axes between panels; wardrobe colors stay fixed; preserve script/identity/layout.')
+    .replace(/SAFE VISUAL:[^\n]*/g, 'SAFE VISUAL: no gore/blood/organs/flesh/organic horror; preserve script/cast/dialogue/camera/layout.')
+    .replace(/FOLD PRIORITY:[^\n]*/g, 'FOLD PRIORITY: 2-4 dark triangular crease shadows.')
+    .replace(/CROSS-PANEL WARDROBE COLOR LOCK:[^\n]*/g, "CROSS-PANEL WARDROBE COLOR LOCK: choose each named character's garment items, base colors, accent colors, material, and pattern once; reuse that exact wardrobe assignment in every later panel. PANEL STYLE LOCK changes background/environment palette, VFX, and rendering treatment only; keep every garment item and its colors unchanged. Lighting may change highlights and shadows, but the garment's canonical base and accent colors remain recognizable.")
+    .replace(/PANEL STYLE LOCK: ([^;\n]+); visibly distinct linework, environmental palette, shading, background\/VFX\.[^\n]*/g, 'PANEL STYLE LOCK: $1; vary linework, environmental palette, shading, background/VFX, rendering treatment; wardrobe colors fixed.')
+    .replace(/ART-STYLE DIFFERENCE QA LOCK:\n-[^\n]*/g, 'ART-STYLE DIFFERENCE QA LOCK:\n- Vary at least three of linework, environmental palette, shading, background/VFX, texture/surface treatment; reject the same clean anime style with only pose, expression, saturation, glow, or speed lines changed; wardrobe colors stay fixed; preserve script/identity/layout.')
+    .replace(/^Style: In THIS PANEL ONLY,[^\n]*/gm, 'Style: follow the named PANEL STYLE LOCK.')
+    .replace(/^VFX: [^\n]*/gm, 'VFX: style overlay only; preserve readable action.')
+    .replace(/^STYLE EXCEPTION:[^\n]*/gm, 'STYLE EXCEPTION: named texture only; clean faces.')
     .replace(/CHARACTER QA:[^\n]*/g, 'CHARACTER QA: preserve identity and outfit.');
 };
 
@@ -307,7 +307,7 @@ export const buildMangaPrompt = ({
 
   const safeLocation = cleanLocation || "Detailed Background";
   const safeTopic = cleanTopic || "4-koma Manga";
-  const backgroundContinuityLock = buildDynamicBackgroundLock(scenario);
+  const settingContinuityLock = buildSettingContinuityLock(scenario);
   const visualStoryEvidenceLock = buildVisualStoryEvidenceLock(scenario);
   const compositionVarietyLock = isChatGPTFamily
     ? MANGA_COMPOSITION_VARIETY_LOCK_COMPACT
@@ -322,7 +322,7 @@ export const buildMangaPrompt = ({
   const panels = [panel1Text, panel2Text, panel3Text, panel4Text];
   const scriptLock = buildStrictScriptLock({ safeTopic, panels, castList, activeOutfit });
   const finalPanelStagingLock = punchlineType === 'Surreal' ? '' : FINAL_PANEL_ACTIVE_STAGING_IMAGE_LOCK;
-  const sceneLocks = [scriptLock, compositionVarietyLock, HAND_PROP_KINEMATICS_LOCK, visualStoryEvidenceLock, backgroundContinuityLock, finalPanelStagingLock]
+  const sceneLocks = [scriptLock, compositionVarietyLock, HAND_PROP_KINEMATICS_LOCK, visualStoryEvidenceLock, settingContinuityLock, finalPanelStagingLock]
     .filter(Boolean)
     .join('\n');
   const panelEyeLineRules = panels.map((panel) => buildPanelEyeLineRule(panel, castList));

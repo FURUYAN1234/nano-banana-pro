@@ -45,11 +45,12 @@ const buildScenarioPrompt = (overrides = {}) => getScenarioPrompt({
   ...overrides
 });
 
-test('scenario prompt locks an explicit location while designing its details dynamically', () => {
+test('scenario prompt locks an explicit location while keeping background detail lightweight', () => {
   const prompt = buildScenarioPrompt();
 
   assert.match(prompt, /今回の漫画の舞台は「駅前広場」/);
-  assert.match(prompt, /動的背景設計/);
+  assert.match(prompt, /背景は軽量運用/);
+  assert.match(prompt, /人物の解剖学、手と小道具の所有関係、セリフと吹き出しの正確さを常に優先/);
   assert.match(prompt, /SAFE VISUAL CONTENT LOCK/);
   assert.doesNotMatch(prompt, /指定場所: 「ニュース内容に即した場所」/);
   assert.doesNotMatch(prompt, /サイコホラー型|HORROR: ホラー演出/);
@@ -93,14 +94,15 @@ test('legacy PsychoHorror input is normalized to a safe surreal ending', () => {
   assert.doesNotMatch(prompt, /サイコホラー|推奨EMOTION: HORROR|HORROR: ホラー演出/);
 });
 
-test('scenario provider consumes dynamic background validation and safe retry while the UI no longer offers PsychoHorror', async () => {
+test('scenario provider keeps safe location and visual evidence checks while the UI no longer offers PsychoHorror', async () => {
   const providerSource = await readFile(new URL('../src/lib/scenario-provider.js', import.meta.url), 'utf8');
   const step2Source = await readFile(new URL('../src/components/Step2Panel.jsx', import.meta.url), 'utf8');
   const automaticOptions = providerSource.match(/const punchlineOptions = \[([\s\S]*?)\];/)?.[1] || '';
 
   assert.match(providerSource, /createDynamicLocationPlan/);
-  assert.match(providerSource, /assertDynamicBackground/);
-  assert.match(providerSource, /DYNAMIC_BACKGROUND_RETRY_INSTRUCTION/);
+  assert.doesNotMatch(providerSource, /assertDynamicBackground|DYNAMIC_BACKGROUND_RETRY_INSTRUCTION/);
+  assert.doesNotMatch(providerSource, /動的背景を設計中|空間構造、前景・中景・後景/);
+  assert.match(providerSource, /背景詳細より人物の手・腕・小道具と吹き出しの正確さを優先/);
   assert.match(providerSource, /requestSafeScenario/);
   assert.match(providerSource, /requestSafeScenarioContent/);
   assert.match(providerSource, /assertVisualStoryEvidence/);
@@ -108,4 +110,6 @@ test('scenario provider consumes dynamic background validation and safe retry wh
   assert.match(providerSource, /punchlineType === 'PsychoHorror' \? 'Surreal'/);
   assert.doesNotMatch(automaticOptions, /PsychoHorror/);
   assert.doesNotMatch(step2Source, /value="PsychoHorror"/);
+  assert.doesNotMatch(step2Source, /空間構造・前景／中景／後景・光源・環境音・小道具・4コマ共通アンカー/);
+  assert.match(step2Source, /人物の手・腕・小道具と吹き出しの正確さを優先/);
 });

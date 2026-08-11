@@ -14,11 +14,6 @@ import {
   VISUAL_STORY_EVIDENCE_RETRY_INSTRUCTION
 } from './visual-story-evidence';
 import {
-  assertDynamicBackground,
-  DYNAMIC_BACKGROUND_RETRY_INSTRUCTION,
-  parseDynamicBackground
-} from './dynamic-background';
-import {
   assertActiveFinalPanelStaging,
   FINAL_PANEL_ACTIVE_STAGING_RETRY_INSTRUCTION
 } from './final-panel-staging';
@@ -44,7 +39,6 @@ const scenarioRetryLabels = {
   SEASONAL_OUTFIT: '対象日付と服装の季節整合性',
   MANUAL_TOPIC_EXCLUSION: '手動入力の禁止条件',
   VISUAL_STORY_EVIDENCE: '出来事を証明する視覚要素',
-  DYNAMIC_BACKGROUND: '動的背景設計',
   FINAL_PANEL_STAGING: '4コマ目の能動アクション'
 };
 
@@ -75,7 +69,6 @@ const validateScenarioForRetry = ({
     })],
     ['MANUAL_TOPIC_EXCLUSION', () => assertManualTopicExclusions(scenario.scenario, manualTopic)],
     ['VISUAL_STORY_EVIDENCE', () => assertVisualStoryEvidence(scenario)],
-    ['DYNAMIC_BACKGROUND', () => assertDynamicBackground(scenario)],
     ['FINAL_PANEL_STAGING', () => assertActiveFinalPanelStaging({
       scenario: scenario.scenario,
       punchlineType
@@ -111,7 +104,6 @@ const scenarioQualityRetryInstructions = {
   SEASONAL_OUTFIT: SEASONAL_OUTFIT_RETRY_INSTRUCTION,
   MANUAL_TOPIC_EXCLUSION: MANUAL_TOPIC_EXCLUSION_RETRY_INSTRUCTION,
   VISUAL_STORY_EVIDENCE: VISUAL_STORY_EVIDENCE_RETRY_INSTRUCTION,
-  DYNAMIC_BACKGROUND: DYNAMIC_BACKGROUND_RETRY_INSTRUCTION,
   FINAL_PANEL_STAGING: FINAL_PANEL_ACTIVE_STAGING_RETRY_INSTRUCTION
 };
 
@@ -140,7 +132,6 @@ const parseScenarioResponse = (result, {
       parsedData.logline = loglineMatch ? loglineMatch[1].trim() : '';
       parsedData.location = locationMatch ? locationMatch[1].trim() : 'Generic Background';
       parsedData.visualEvidence = visualEvidenceMatch ? visualEvidenceMatch[1].trim() : '';
-      parsedData.backgroundDesign = parseDynamicBackground(result.text);
       parsedData.outfit = outfitMatch ? outfitMatch[1].trim() : '';
       parsedData.punchline = punchlineMatch ? punchlineMatch[1].trim() : '';
       parsedData.scenario = scenarioMatch[1].trim();
@@ -151,7 +142,6 @@ const parseScenarioResponse = (result, {
         parsedData.topic = json.topic || randomCategory;
         parsedData.location = json.location || 'Generic Background';
         parsedData.visualEvidence = json.visualEvidence || '';
-        parsedData.backgroundDesign = json.backgroundDesign || parseDynamicBackground(result.text);
         parsedData.scenario = json.scenario || result.text;
       } else {
         if (result.text.length < 20) throw new Error('AI returned empty or invalid response.');
@@ -265,7 +255,7 @@ export async function generateScenario({
     }
   }
 
-  // 3. ロケーション決定と動的背景設計
+  // 3. ロケーション決定（背景詳細は軽量運用）
   const backgroundLocation = bg360Image && bg360Analysis && bg360Enabled
     ? bg360Analysis.location
     : '';
@@ -276,7 +266,7 @@ export async function generateScenario({
     backgroundLocation,
     backgroundDetails: backgroundLocation ? bg360Analysis : null
   });
-  onProgress('動的背景を設計中...\n> 場所、空間構造、前景・中景・後景、光源、小道具、4コマ共通アンカーを内容から構築します。');
+  onProgress('舞台を決定中...\n> Locationを定め、背景詳細より人物の手・腕・小道具と吹き出しの正確さを優先します。');
   const ragReactions = getReactionGuidelines();
 
   // オチタイプの決定論的ランダム化 (Auto時の偏り防止)
@@ -430,7 +420,6 @@ ${parsedData.scenario}
     logline: parsedData.logline,
     location: parsedData.location,
     visualEvidence: parsedData.visualEvidence,
-    dynamicBackground: parsedData.backgroundDesign,
     outfit: parsedData.outfit,
     punchline: parsedData.punchline,
     scenario: parsedData.scenario,

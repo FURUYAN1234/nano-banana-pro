@@ -1,4 +1,6 @@
 // ※ OpenAIの画像生成はフォールバック配列を持たず、最高品質の単一モデルを直接指定します。
+import { clearApiSession, getApiCredential, setApiSession } from './api-session.js';
+
 const OPENAI_IMAGE_MODEL = "gpt-image-2";
 const OPENAI_IMAGE_TIMEOUT_MS = 600000;
 const OPENAI_IMAGE_TIMEOUT_SECONDS = OPENAI_IMAGE_TIMEOUT_MS / 1000;
@@ -20,20 +22,13 @@ const isBrowserStreamFetchFailure = (error) => (
   && /failed to fetch|networkerror|load failed/i.test(error?.message || '')
 );
 
-let currentOpenAIApiKey = import.meta.hot?.data.openAIApiKey || "";
-
-if (import.meta.hot) {
-  import.meta.hot.dispose((data) => {
-    data.openAIApiKey = currentOpenAIApiKey;
-  });
-}
-
 export const setOpenAIApiKey = (key) => {
-    currentOpenAIApiKey = key;
+    if (key) setApiSession('openai', key);
+    else clearApiSession('openai');
 };
 
 export const getOpenAIApiKey = () => {
-    return currentOpenAIApiKey;
+    return getApiCredential('openai');
 };
 
 export const readOpenAIImageStream = async (response, statCallback = () => {}) => {

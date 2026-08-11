@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 
 // --- Imports (paths adjusted from ./lib/ to ../lib/) ---
-import { setApiKey, getApiKey } from '../lib/gemini';
+import { setApiKey } from '../lib/gemini';
 import { generateImageWithImagen } from '../lib/imagen';
 import { generateImageWithOpenAI, setOpenAIApiKey } from '../lib/openai';
 import { callAI, setActiveEngine } from '../lib/ai-provider';
@@ -20,23 +20,25 @@ import { addGenerationHistoryItem } from '../lib/generation-history';
 import { generateScenario, enhanceScenarioText } from '../lib/scenario-provider';
 import { fixPolicyViolation } from '../lib/policy-fixer';
 import { verifyApiKeyConnection } from '../lib/api-key-preflight';
+import { clearApiSession, getApiSessionSnapshot } from '../lib/api-session';
 import {
   formatMangaScenarioValidationIssue,
   validateMangaScenario
 } from '../lib/scenario-validation';
-import { formatDynamicBackground } from '../lib/dynamic-background';
 import { formatGeneratedMangaTitle } from '../lib/manga-title';
 import { isImagePolicyError } from '../lib/image-policy-error';
-
-// This flag carries no credential. It only prevents Vite/Fast Refresh from
-// replaying the mount-time key reset against an already connected in-memory UI.
-const API_BOOTSTRAP_WINDOW_FLAG = '__nanoBananaApiBootstrapComplete';
+import {
+  buildImageQualityQaPrompt,
+  formatImageQualityIssue,
+  parseImageQualityQaResponse
+} from '../lib/image-quality-qa';
 
 export default function useMangaWorkflow() {
   // Force Build 2026-02-06 07:07 // Build 2026-02-06-01
-  const [apiKey, setApiKeyState] = useState("");
+  const initialApiSession = getApiSessionSnapshot();
+  const [apiKey, setApiKeyState] = useState(initialApiSession.credentialPresent);
   const [showModal, setShowModal] = useState(false); // FIXEDCRITICAL RESTORE
-  const [selectedEngine, setSelectedEngine] = useState('gemini'); // [v3.59] Dual Engine: 'gemini' | 'openai'
+  const [selectedEngine, setSelectedEngine] = useState(initialApiSession.provider || 'gemini'); // [v3.59] Dual Engine: 'gemini' | 'openai'
   const [inputMode, setInputMode] = useState("news"); // 'news' | 'manual'
   const [manualTopic, setManualTopic] = useState("");
   const [searchTopic, setSearchTopic] = useState("");
@@ -71,46 +73,22 @@ export default function useMangaWorkflow() {
 
   // Initialize System
   useEffect(() => {
-    if (window[API_BOOTSTRAP_WINDOW_FLAG]) return undefined;
-    window[API_BOOTSTRAP_WINDOW_FLAG] = true;
-
-    let cancelled = false;
-
-    const restoreVerifiedKey = async () => {
-      const savedKey = getApiKey();
-      if (!savedKey) {
-        setShowModal(true);
-        return;
-      }
-
-      const verification = await verifyApiKeyConnection(savedKey);
-      if (cancelled) return;
-
-      if (verification.ok && verification.provider === 'gemini') {
-        const cleanKey = verification.sanitizedKey;
-        setApiKey(cleanKey);
-        setApiKeyState(cleanKey);
-        setActiveEngine('gemini');
-        setSelectedEngine('gemini');
-        setShowModal(false);
-        return;
-      }
-
-      setApiKey("");
-      setApiKeyState("");
-      setOpenAIApiKey("");
-      setEnableOpenAIApi(false);
-      setEnableChatGPTMode(false);
-      setActiveEngine('gemini');
-      setSelectedEngine('gemini');
+    const session = getApiSessionSnapshot();
+    if (!session.credentialPresent) {
+      setApiKeyState(false);
       setShowModal(true);
-      showStatus("保存済みAPIキーの検証に失敗しました。再入力してください。");
-    };
+      return;
+    }
 
-    restoreVerifiedKey();
-    return () => {
-      cancelled = true;
-    };
+    const provider = session.provider || 'gemini';
+    const useOpenAI = provider === 'openai';
+    setApiKeyState(true);
+    setActiveEngine(provider);
+    setSelectedEngine(provider);
+    setEnableOpenAIApi(useOpenAI);
+    setEnableChatGPTMode(useOpenAI);
+    setShowModal(false);
+    setShowOpenAIKeyModal(false);
   }, []);
 
   // getModelBadgeInfo → src/lib/constants.js に移動済み
@@ -223,7 +201,13 @@ export default function useMangaWorkflow() {
     showStatus("APIキーを検証中です...");
     const verification = await verifyApiKeyConnection(key);
     if (!verification.ok) {
-      setApiKeyState("");
+      if (verification.failureKind === 'transient') {
+        showStatus(`一時的な接続エラーです。入力は保持されています: ${verification.message}`);
+        return verification;
+      }
+
+      clearApiSession();
+      setApiKeyState(false);
       setApiKey("");
       setOpenAIApiKey("");
       setEnableOpenAIApi(false);
@@ -248,8 +232,7 @@ export default function useMangaWorkflow() {
       setSelectedEngine('openai');
       setEnableOpenAIApi(true); // 画像生成もOpenAI経由に
       setEnableChatGPTMode(true); // プロンプトもChatGPT最適化
-      // Gemini APIキーは不要だがダミーで空文字回避（UI表示用）
-      setApiKeyState('openai-engine-active');
+      setApiKeyState(true);
       setShowModal(false);
       setShowOpenAIKeyModal(false);
       showStatus("✅ ChatGPT Engine 接続完了！全ステップがChatGPT APIで動作します。");
@@ -257,7 +240,7 @@ export default function useMangaWorkflow() {
     } else {
       // Gemini APIキー → 従来のGeminiエンジン（デフォルト）
       setApiKey(cleanKey);
-      setApiKeyState(cleanKey);
+      setApiKeyState(true);
       setActiveEngine('gemini');
       setSelectedEngine('gemini');
       setShowModal(false);
@@ -731,9 +714,6 @@ export default function useMangaWorkflow() {
 
       const loglineLine = result.logline ? `\nLogline: ${result.logline}` : '';
       const visualEvidenceLine = result.visualEvidence ? `\nVisualEvidence: ${result.visualEvidence}` : '';
-      const dynamicBackgroundLines = result.dynamicBackground
-        ? `\n${formatDynamicBackground(result.dynamicBackground)}`
-        : '';
       const outfitLine = (customOutfit.trim() || result.outfit) ? `\nOutfit: ${customOutfit.trim() || result.outfit}` : '';
       const punchlineLine = result.punchline ? `\nPunchline: ${result.punchline}` : '';
       const bg360HeaderLine = bg360Image
@@ -759,7 +739,7 @@ export default function useMangaWorkflow() {
       }
 
       const generatedTitle = formatGeneratedMangaTitle(result.topic);
-      const finalScenarioText = `## タイトル: ${generatedTitle}${loglineLine}\nLocation: ${result.location || "Unspecified"}${visualEvidenceLine}${dynamicBackgroundLines}${outfitLine}${punchlineLine}${bg360HeaderLine}${cameraWorkHeaderLine}\n\n${result.scenario} `;
+      const finalScenarioText = `## タイトル: ${generatedTitle}${loglineLine}\nLocation: ${result.location || "Unspecified"}${visualEvidenceLine}${outfitLine}${punchlineLine}${bg360HeaderLine}${cameraWorkHeaderLine}\n\n${result.scenario} `;
       setScenario(finalScenarioText);
       setMangaTitle(generatedTitle); // タイトルをstateに保存（画像ダウンロード時のファイル名に使用）
       const scenarioValidation = validateMangaScenario(finalScenarioText);
@@ -1070,9 +1050,9 @@ export default function useMangaWorkflow() {
   };
   // --- Step 4: Image Generation ---
   // [v2.79] 戻り値変更: フルオート連鎖用（true=成功, false=失敗）
-  const regenerateImage = async (skipGuard = false, overridePrompt = null, visualQaAttempt = 0) => {
+  const regenerateImage = async (skipGuard = false, overridePrompt = null) => {
     const currentPrompt = overridePrompt || finalPrompt;
-    if ((isGeneratingImage && visualQaAttempt === 0) || (!skipGuard && !currentPrompt)) return false;
+    if (isGeneratingImage || (!skipGuard && !currentPrompt)) return false;
     setIsGeneratingImage(true);
     setIsGenerationError(false);
     
@@ -1146,7 +1126,47 @@ export default function useMangaWorkflow() {
       const finalImageStr = `data:${generatedMimeType};base64,${normalizedBase64Img}`;
       setGeneratedImage(finalImageStr);
       setGenerationHistory(prev => addGenerationHistoryItem(prev, { id: Date.now(), img: finalImageStr }));
-      statCallback('[QA] 自動視覚QA・自動再生成は実行せず、受信済み画像をそのまま表示します。');
+      statCallback('[QUALITY QA] 人物・手・小物・吹き出しを検査中です。画像は先に表示し、自動再生成は行いません。');
+
+      let qualityResult;
+      try {
+        const qualityPrompt = buildImageQualityQaPrompt({ scenario, castList });
+        const qualityResponse = await callAI(
+          qualityPrompt,
+          [{
+            inlineData: {
+              mimeType: generatedMimeType,
+              data: normalizedBase64Img
+            }
+          }],
+          null,
+          (msg) => statCallback(`[QUALITY QA] ${msg}`)
+        );
+        qualityResult = parseImageQualityQaResponse(qualityResponse.text);
+      } catch (qualityError) {
+        qualityResult = {
+          pass: false,
+          issues: [{
+            type: 'unverified',
+            panel: null,
+            subject: 'image quality review',
+            reason: qualityError?.message || 'Quality review request failed.'
+          }]
+        };
+      }
+
+      if (!qualityResult.pass) {
+        setIsGenerationError(true);
+        setGenLog(prev => [
+          ...prev,
+          '[QUALITY QA] ❌ NG — 生成画像は保持したまま自動処理を停止します。',
+          ...qualityResult.issues.map((issue) => `[QUALITY QA] ${formatImageQualityIssue(issue)}`)
+        ]);
+        showStatus('画像は表示しましたが、人物・手・小物・吹き出し品質ゲートはNGです。');
+        return false;
+      }
+
+      statCallback('[QUALITY QA] ✅ PASS — 人物・手・小物・吹き出しに明確な問題は検出されませんでした。');
       
       // [v3.56] OpenAIモデル (gpt-image-2等) は正規モデルとして扱い、フォールバック警告を出さない
       const isOpenAIModel = generatedModelId && generatedModelId.startsWith("gpt-");

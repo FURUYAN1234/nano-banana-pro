@@ -113,3 +113,41 @@ test('accepts an OpenAI key only after the models endpoint responds successfully
   assert.equal(result.provider, 'openai');
   assert.equal(result.sanitizedKey, openAiKey);
 });
+
+test('retries one transient first-read failure and accepts the same key without a reload', async () => {
+  let attempts = 0;
+  const result = await verifyApiKeyConnection(openAiKey, {
+    fetchImpl: async () => {
+      attempts += 1;
+      if (attempts === 1) throw new TypeError('Failed to fetch');
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({ data: [{ id: 'gpt-test' }] }),
+      };
+    },
+  });
+
+  assert.equal(attempts, 2);
+  assert.equal(result.ok, true);
+  assert.equal(result.provider, 'openai');
+});
+
+test('classifies authentication rejection without retrying it', async () => {
+  let attempts = 0;
+  const result = await verifyApiKeyConnection(openAiKey, {
+    fetchImpl: async () => {
+      attempts += 1;
+      return {
+        ok: false,
+        status: 401,
+        statusText: 'Unauthorized',
+        json: async () => ({ error: { message: 'Unauthorized' } }),
+      };
+    },
+  });
+
+  assert.equal(attempts, 1);
+  assert.equal(result.ok, false);
+  assert.equal(result.failureKind, 'auth');
+});

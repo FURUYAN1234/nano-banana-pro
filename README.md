@@ -1,6 +1,6 @@
 # Super FURU AI 4-koma System
 
-> Latest release: **v5.3.0** / 最新リリース: **v5.3.0**
+> Latest release: **v5.3.1** / 最新リリース: **v5.3.1**
 
 > **"To what extent can humans step away from the creative process?"**
 > **「人間は、どこまで制作から降りられるのか？」**
@@ -22,7 +22,7 @@
 This project aims to intentionally exclude humans from the creative process, allowing AI to act as a director and complete everything from brainstorming to composition, direction, and rendering.
 本プロジェクトは、人間をクリエイティブな工程から意図的に排除し、AIがディレクターとして「ネタ出し・構成・演出・作画」のすべてを完結させることを目的としています。
 
-The current implementation is **v5.3.0**. The product name is **Super FURU AI 4-koma System**; **Nano Banana 2** and **ChatGPT Image 2.0** identify image-generation engine families. / 現在の実装は **v5.3.0** です。製品名は **Super FURU AI 4-koma System** で、**Nano Banana 2** と **ChatGPT Image 2.0** は画像生成エンジン系統の名称です。
+The current implementation is **v5.3.1**. The product name is **Super FURU AI 4-koma System**; **Nano Banana 2** and **ChatGPT Image 2.0** identify image-generation engine families. / 現在の実装は **v5.3.1** です。製品名は **Super FURU AI 4-koma System** で、**Nano Banana 2** と **ChatGPT Image 2.0** は画像生成エンジン系統の名称です。
 
 Current behavior at a glance / 現行仕様の要点:
 
@@ -32,11 +32,11 @@ Current behavior at a glance / 現行仕様の要点:
 - **Two-attempt scenario enhancement / 演出強化は初回＋自動修正1回:** The seven enhancement categories are validated against the original scenario. A first-pass success is accepted without an unnecessary retry. If correction is needed, the better usable enhancement is retained; when every generated rewrite violates a non-negotiable editing contract, the saved original scenario is restored so downstream work is not lost. / 7カテゴリの演出強化は元シナリオとの差分で検証します。初回で合格すれば追加生成は行いません。修正が必要な場合は利用可能な候補のうち良い方を保持し、すべての書換候補が構造・話者・未選択範囲などの必須契約を壊した場合は、保存済みの元シナリオを採用して後続作業を継続します。
 - **Season-aware outfit selection / 日付連動の衣装選定:** In date-specified news mode, STEP2 derives a read-only Japan-default seasonal hint from the selected date. Explicit user clothing, event uniforms, profession or safety gear, location, real weather, indoor conditions, and an overseas local season take priority over that hint; manual-input mode does not infer a season from a date. Empty or ambiguous outfits and clear unexplained summer/winter conflicts are retried with the exact failed check. / 日付指定ニュースモードでは、STEP2が対象日から日本基準の季節目安を読み取り専用で提示します。ユーザー指定衣装、行事衣装、職業・安全装備、場所、実際の天候、屋内環境、海外の現地季節は目安より優先し、自由入力モードでは日付から季節を推測しません。空・曖昧な衣装や根拠のない夏冬の明白な不一致は、失敗した検証項目を示して再生成します。
 - **Dialogue and visual-direction boundary / 台詞と視覚指示の境界:** Only explicit dialogue is sent to speech bubbles. Markdown headings and Action/visual directions remain drawing instructions, so expression, body, staging, and background notes are not rendered as extra bubble text. / 明示的な台詞だけを吹き出しへ渡します。Markdown見出しやAction・視覚指示は描画指示のまま保持し、表情・身体・演出・背景の説明を余計な吹き出し文字として描画しません。
-- **Dynamic background and visual-evidence locks / 動的背景と視覚証拠の固定:** Each story defines one concrete location, spatial layers, lighting, interaction props, fixed anchors, and drawable evidence specific to the event. Those items are carried into the final provider-specific prompt instead of being replaced by a generic attractive background. / 作品ごとに具体的な場所、空間レイヤー、照明、触れられる小道具、共通アンカー、出来事固有の描画可能な証拠を設計し、汎用背景へ置き換えられないよう最終プロンプトまで引き継ぎます。
+- **Lightweight setting continuity / 軽量な舞台継続:** Only a concrete `Location` and explicit time or weather cues stay consistent across panels. Setting detail is deliberately lower priority than anatomy, hand/arm laterality, prop ownership, and exact bubble text. / 具体的な `Location` と明示的な時刻・天候だけをコマ間で整合させ、背景詳細より人物の解剖学、手・腕の左右、小道具の所有、吹き出し本文を優先します。
 - **Editable provider-specific final prompt / 編集可能なプロバイダー別最終プロンプト:** ChatGPT-family and Gemini-family prompts use different rendering contracts while sharing script, identity, dialogue-tail, key-prop, eye-line, hand, rich-background, and active-final-panel safeguards. Manual edits in STEP3 are used by both copy actions and the subsequent API image request. / ChatGPT系とGemini系で描画契約を分けつつ、脚本、キャラクター同一性、吹き出し、主要小道具、視線、手、背景密度、4コマ目の能動演出を共通固定します。STEP3で直接編集した内容は、コピー操作とAPI画像生成の両方に反映されます。
-- **No hidden post-image regeneration / 画像受信後の隠れた再生成なし:** STEP4 displays the image returned by the selected provider and does not run automatic visual QA or automatic regeneration afterward. OpenAI preserves the newest valid partial image when a stream ends before its final event; only a browser-level stream `Failed to fetch` is retried once as a normal non-stream response. Authentication, other transport failures, malformed responses, and missing-image failures remain explicit errors because no usable final artifact exists. / STEP4は選択したAPIから受信した画像を表示し、その後に自動視覚QAや自動再生成を実行しません。OpenAIのストリーミング中に最終イベント前で通信が切れた場合は受信済みの最新途中画像を救済し、ブラウザレベルのストリーム `Failed to fetch` に限って通常応答で1回だけ再試行します。認証失敗、その他の通信失敗、応答形式不正、画像データ欠落は利用可能な成果物がないため、明示的なエラーとして扱います。
+- **Visible post-image quality gate, no hidden regeneration / 可視品質ゲートと隠れた再生成なし:** STEP4 displays the provider image first, then performs one visible review for anatomy, hand side, prop ownership, bubble text, speaker-name leakage, and extra text. A failed review keeps the image visible and never auto-regenerates. OpenAI preserves the newest valid partial image when a stream ends before its final event; only a browser-level stream `Failed to fetch` is retried once as a normal non-stream response. / STEP4は選択したAPIから受信した画像を先に表示し、解剖学、手の左右、小道具の所有、吹き出し本文、話者名混入、余計な文字を1回だけ可視検査します。品質NGでも画像を残し、自動再生成は行いません。OpenAIのストリーミング中に最終イベント前で通信が切れた場合は受信済みの最新途中画像を救済し、ブラウザレベルのストリーム `Failed to fetch` に限って通常応答で1回だけ再試行します。
 - **Verified provider routes / 検証済みAPI経路:** The current OpenAI route uses `gpt-4.1` as the primary text/vision model and `gpt-image-2` for 1024x1536 high-quality PNG generation. The Gemini route uses `gemini-3.5-flash` as the primary text/vision model and `gemini-3.1-flash-image` for manga image generation. / 現在のOpenAI経路はテキスト・画像認識の第一候補に`gpt-4.1`、1024x1536の高品質PNG生成に`gpt-image-2`を使用します。Gemini経路はテキスト・画像認識の第一候補に`gemini-3.5-flash`、漫画画像生成に`gemini-3.1-flash-image`を使用します。
-- **API preflight without key persistence / API事前確認とキー非保存:** The startup modal verifies provider connectivity before unlocking STEP1. Keys remain in memory; development refresh protection stores only a boolean bootstrap flag and does not persist the credential. / 起動時モーダルでプロバイダー接続を確認してからSTEP1を有効化します。APIキーはメモリ内だけで扱い、開発中の更新対策も認証情報ではなく初期化済みかどうかの真偽値だけを保持します。
+- **API preflight without key persistence / API事前確認とキー非保存:** The startup modal verifies provider connectivity before unlocking STEP1. One verified browser-memory session owns the credential; a transient preflight error retries the same input once without a reload, and neither the credential nor a bootstrap flag is persisted. / 起動時モーダルでプロバイダー接続を確認してからSTEP1を有効化します。検証済みのブラウザメモリ内セッションだけが認証情報を保持し、一時エラーはリロードなしで同じ入力を1回だけ再試行します。認証情報も初期化フラグも永続化しません。
 - **STEP4 helper boundary / STEP4補助機能の境界:** Generated images can be downloaded as received. The aspect-ratio correction and 2x upscale buttons copy instructions for external image tools; they are not in-app deterministic image processors. / 生成画像は受信した状態で保存できます。アスペクト比補正と2倍アップスケールのボタンは外部画像ツール向けの指示文をコピーする機能であり、アプリ内で画像処理を実行する機能ではありません。
 
 <img width="926" height="755" alt="スクリーンショット 2026-08-07 164856" src="https://github.com/user-attachments/assets/ecfc15ea-4040-43ad-a5ed-fb2e9d078335" />
@@ -794,7 +794,10 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 
 ---
 
-## 📋 ChangeLog (latest 15 releases) / 変更履歴（最新15件）
+## 📋 ChangeLog
+
+### v5.3.1 (2026-08-11)
+- **[Fix & UX]** 初回API接続の再試行と、人物・手・小道具・吹き出しを優先する可視品質ゲートを追加。背景は軽量な継続情報へ縮小 / Added first-entry API retry plus a visible person, hand, prop, and bubble quality gate; reduced background handling to lightweight continuity (latest 15 releases) / 変更履歴（最新15件）
 
 ### v5.3.0 (2026-08-10)
 - **[Fix & UX]** 特定の物やポーズに依存しない手・小道具運動学契約を追加し、Actionを変更せず左右・接触・所有者・最終支持状態・指手首の連続性を保持 / Added a situation-agnostic hand and prop kinematics contract that preserves Action while locking side, contact, ownership, final support state, and finger/wrist continuity
