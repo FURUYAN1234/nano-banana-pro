@@ -7,5 +7,7 @@ test('reports a scenario-content validation failure instead of a network timeout
   const guide = translateApiError('シナリオ本文の表現衛生ポリシーに違反する表現を検出しました。');
 
   assert.match(guide, /シナリオ本文/);
+  assert.match(guide, /全3試行/);
+  assert.match(guide, /後続へ渡せるシナリオが残りませんでした/);
   assert.doesNotMatch(guide, /タイムアウト/);
 });

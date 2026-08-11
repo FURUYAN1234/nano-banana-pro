@@ -18,13 +18,18 @@ test('web copy and API generation use the same final prompt for both provider fa
   );
   assert.match(
     workflowSource,
-    /generateImageWithOpenAI\(\s*currentPrompt\s*,/,
-    'OpenAI API generation must send the same currentPrompt used by the Web-copy flow'
+    /generateImageCandidate\(\s*currentPrompt\s*\)/,
+    'initial API generation must send the same currentPrompt used by the Web-copy flow'
   );
   assert.match(
     workflowSource,
-    /generateImageWithImagen\(\s*currentPrompt\s*,/,
-    'Gemini API generation must send the same currentPrompt used by the Web-copy flow'
+    /generateImageWithOpenAI\(\s*prompt\s*,/,
+    'the shared candidate generator must forward its prompt to OpenAI unchanged'
+  );
+  assert.match(
+    workflowSource,
+    /generateImageWithImagen\(\s*prompt\s*,/,
+    'the shared candidate generator must forward its prompt to Gemini unchanged'
   );
 });
 

@@ -32,6 +32,7 @@ import {
   formatImageQualityIssue,
   parseImageQualityQaResponse
 } from '../lib/image-quality-qa';
+import { runImageQualityFailsafe } from '../lib/image-quality-failsafe';
 
 export default function useMangaWorkflow() {
   // Force Build 2026-02-06 07:07 // Build 2026-02-06-01
@@ -1099,74 +1100,119 @@ export default function useMangaWorkflow() {
         setGenLog(prev => [...prev, msg]);
       };
 
-      let base64Img, generatedModelId, generatedMimeType = 'image/png';
-      if (enableOpenAIApi) {
-        // [v3.56] OpenAI API直接生成
-        statCallback("[INFO] ⏳ gpt-image-2 の画像生成には通常2〜10分かかります。しばらくお待ちください...");
-        const res = await generateImageWithOpenAI(currentPrompt, statCallback);
-        base64Img = res.base64Img;
-        generatedMimeType = res.mimeType || generatedMimeType;
-        generatedModelId = res.usedModel;
-      } else {
-        // [v3.53 Phase3] 360°クロップ済み背景画像がある場合、参照画像として添付
-        const refImages = (bg360CroppedPanels && bg360Enabled && bg360CroppedPanels.length === 4)
-          ? bg360CroppedPanels
-          : [];
-        if (refImages.length > 0) {
-          statCallback(`[REF] 360°背景クロップ画像 ${refImages.length}枚を参照画像として添付`);
+      const generateImageCandidate = async (prompt, { repair = false } = {}) => {
+        let response;
+        if (enableOpenAIApi) {
+          statCallback(repair
+            ? '[QUALITY QA] ⏳ gpt-image-2 で限定修正版を生成中です...'
+            : '[INFO] ⏳ gpt-image-2 の画像生成には通常2〜10分かかります。しばらくお待ちください...');
+          response = await generateImageWithOpenAI(prompt, statCallback);
+        } else {
+          const refImages = (bg360CroppedPanels && bg360Enabled && bg360CroppedPanels.length === 4)
+            ? bg360CroppedPanels
+            : [];
+          if (refImages.length > 0) {
+            statCallback(`[REF] 360°背景クロップ画像 ${refImages.length}枚を参照画像として添付`);
+          }
+          response = await generateImageWithImagen(prompt, statCallback, refImages);
         }
-        const res = await generateImageWithImagen(currentPrompt, statCallback, refImages);
-        base64Img = res.base64Img;
-        generatedMimeType = res.mimeType || generatedMimeType;
-        generatedModelId = res.usedModel;
-      }
+
+        const normalizedImage = String(response.base64Img || '').replace(/\s+/g, '');
+        if (!normalizedImage) {
+          throw new Error('Image response did not include usable image data.');
+        }
+
+        return {
+          base64Img: normalizedImage,
+          mimeType: response.mimeType || 'image/png',
+          modelId: response.usedModel,
+        };
+      };
+
+      const reviewImageCandidate = async (candidate, candidatePrompt) => {
+        try {
+          const qualityPrompt = buildImageQualityQaPrompt({ scenario, castList, finalPrompt: candidatePrompt });
+          const qualityResponse = await callAI(
+            qualityPrompt,
+            [{
+              inlineData: {
+                mimeType: candidate.mimeType,
+                data: candidate.base64Img
+              }
+            }],
+            null,
+            (msg) => statCallback(`[QUALITY QA] ${msg}`)
+          );
+          return parseImageQualityQaResponse(qualityResponse.text);
+        } catch (qualityError) {
+          return {
+            pass: false,
+            issues: [{
+              type: 'unverified',
+              panel: null,
+              subject: 'image quality review',
+              reason: qualityError?.message || 'Quality review request failed.'
+            }]
+          };
+        }
+      };
+
+      const originalCandidate = await generateImageCandidate(currentPrompt);
+      let generatedModelId = originalCandidate.modelId;
+      let generatedMimeType = originalCandidate.mimeType;
       setGenLog(prev => [...prev, `[4/5] データストリーム受信完了 (Model: ${generatedModelId})`, "[5/5] Base64画像データをデコード・レンダリング中..."]);
 
-      const normalizedBase64Img = String(base64Img || '').replace(/\s+/g, '');
-      const finalImageStr = `data:${generatedMimeType};base64,${normalizedBase64Img}`;
+      const finalImageStr = `data:${generatedMimeType};base64,${originalCandidate.base64Img}`;
       setGeneratedImage(finalImageStr);
       setGenerationHistory(prev => addGenerationHistoryItem(prev, { id: Date.now(), img: finalImageStr }));
-      statCallback('[QUALITY QA] 人物・手・小物・吹き出しを検査中です。画像は先に表示し、自動再生成は行いません。');
+      statCallback('[QUALITY QA] 人物・手・小物・吹き出しを検査中です。画像は先に保存し、具体的なNGだけ1回限定修正します。');
 
-      let qualityResult;
-      try {
-        const qualityPrompt = buildImageQualityQaPrompt({ scenario, castList, finalPrompt: currentPrompt });
-        const qualityResponse = await callAI(
-          qualityPrompt,
-          [{
-            inlineData: {
-              mimeType: generatedMimeType,
-              data: normalizedBase64Img
-            }
-          }],
-          null,
-          (msg) => statCallback(`[QUALITY QA] ${msg}`)
-        );
-        qualityResult = parseImageQualityQaResponse(qualityResponse.text);
-      } catch (qualityError) {
-        qualityResult = {
-          pass: false,
-          issues: [{
-            type: 'unverified',
-            panel: null,
-            subject: 'image quality review',
-            reason: qualityError?.message || 'Quality review request failed.'
-          }]
-        };
-      }
+      const qualityOutcome = await runImageQualityFailsafe({
+        originalCandidate,
+        originalPrompt: currentPrompt,
+        reviewCandidate: reviewImageCandidate,
+        generateRepairCandidate: (repairPrompt) => generateImageCandidate(repairPrompt, { repair: true }),
+        onProgress: (msg) => statCallback(`[QUALITY QA] ${msg}`),
+      });
+      const qualityResult = qualityOutcome.finalReview;
 
-      if (!qualityResult.pass) {
-        setIsGenerationError(true);
+      if (!qualityOutcome.originalReview.pass) {
         setGenLog(prev => [
           ...prev,
-          '[QUALITY QA] ❌ NG — 生成画像は保持したまま自動処理を停止します。',
-          ...qualityResult.issues.map((issue) => `[QUALITY QA] ${formatImageQualityIssue(issue)}`)
+          '[QUALITY QA] ⚠️ 元画像の品質検査で問題を検出しました。',
+          ...qualityOutcome.originalReview.issues.map((issue) => `[QUALITY QA] ${formatImageQualityIssue(issue)}`)
         ]);
-        showStatus('画像は表示しましたが、人物・手・小物・吹き出し品質ゲートはNGです。');
-        return false;
+      }
+      if (qualityOutcome.repairReview && !qualityOutcome.repairReview.pass) {
+        setGenLog(prev => [
+          ...prev,
+          '[QUALITY QA] ⚠️ 修正版画像も品質検査NGでした。',
+          ...qualityOutcome.repairReview.issues.map((issue) => `[QUALITY QA] ${formatImageQualityIssue(issue)}`)
+        ]);
       }
 
-      statCallback('[QUALITY QA] ✅ PASS — 人物・手・小物・吹き出しに明確な問題は検出されませんでした。');
+      if (qualityOutcome.candidate !== originalCandidate) {
+        generatedModelId = qualityOutcome.candidate.modelId;
+        generatedMimeType = qualityOutcome.candidate.mimeType;
+        const repairedImageStr = `data:${generatedMimeType};base64,${qualityOutcome.candidate.base64Img}`;
+        setGeneratedImage(repairedImageStr);
+        setGenerationHistory(prev => addGenerationHistoryItem(prev, { id: Date.now(), img: repairedImageStr }));
+      }
+
+      if (qualityOutcome.validationWarning) {
+        setIsGenerationError(false);
+        setGenLog(prev => [
+          ...prev,
+          qualityOutcome.fallbackToOriginal
+            ? '[QUALITY QA] ⚠️ 保存済みの元画像を採用し、警告付きで後続作業を続行します。'
+            : '[QUALITY QA] ⚠️ 利用可能な画像を保持し、警告付きで後続作業を続行します。'
+        ]);
+        showStatus('品質ゲートは未合格ですが、保存済みの元画像を採用して後続作業を続行します。');
+      } else {
+        statCallback(qualityOutcome.attempts > 1
+          ? '[QUALITY QA] ✅ PASS — 1回の限定修正後、人物・手・小物・吹き出し品質ゲートを通過しました。'
+          : '[QUALITY QA] ✅ PASS — 人物・手・小物・吹き出しに明確な問題は検出されませんでした。');
+      }
       
       // [v3.56] OpenAIモデル (gpt-image-2等) は正規モデルとして扱い、フォールバック警告を出さない
       const isOpenAIModel = generatedModelId && generatedModelId.startsWith("gpt-");
@@ -1184,11 +1230,14 @@ export default function useMangaWorkflow() {
           `[GUIDE] 4. 貼り付けて${enableOpenAIApi ? '送信する' : '「思考モード」で送信する'}`,
           "[COMPLETE] Image successfully generated (with warnings)."
         ]);
+      } else if (!qualityResult.pass) {
+        setIsFallbackUsed(false);
+        setGenLog(prev => [...prev, "[COMPLETE] Image successfully generated (quality warning)."]);
       } else {
         setIsFallbackUsed(false);
         setGenLog(prev => [...prev, "[COMPLETE] Image successfully generated."]);
       }
-      showStatus("画像生成完了！");
+      showStatus(qualityResult.pass ? "画像生成完了！" : "画像生成完了（品質警告あり・画像は保持）");
       return true; // [v2.78] フルオート連鎖用: 成功
     } catch (error) {
       console.error(error);
