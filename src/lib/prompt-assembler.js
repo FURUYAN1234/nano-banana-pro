@@ -40,6 +40,10 @@ import {
   HAND_PROP_KINEMATICS_LOCK,
   HAND_PROP_KINEMATICS_LOCK_COMPACT
 } from './hand-prop-kinematics';
+import {
+  FUNCTIONAL_SURFACE_ORIENTATION_LOCK_COMPACT,
+  FUNCTIONAL_SURFACE_PANEL_CHECK
+} from './shared-image-quality';
 
 /**
  * Fisher-Yates アルゴリズムによる配列のシャッフル
@@ -85,7 +89,12 @@ const compactConversationEyeLine = (line) => {
   const depth = String(line).match(/DEPTH ASSIGNMENT \(REQUIRED\): (\[[^\]]+\]) PRIMARY THREE-QUARTER toward (\[[^\]]+\]); \[[^\]]+\] BACK-THREE-QUARTER OR OVER-THE-SHOULDER PARTNER toward \[[^\]]+\]/);
   if (!depth) return line;
   const [, primary, partner] = depth;
-  return `EYE-LINE LOCK: ${primary} address counterpart ${partner}; never lens/front. ${primary} PRIMARY THREE-QUARTER; ${partner} BACK-THREE-QUARTER OR OVER-THE-SHOULDER PARTNER. VISIBLE REAR DEPTH CHECK: camera is physically behind ${partner}'s shoulder; back of ${partner}'s head or shoulder foreground. Camera preserves scenario direction.`;
+  const staging = String(line).match(/^EYE-LINE LOCK:\s*(.*?)\s*DEPTH ASSIGNMENT \(REQUIRED\):/)?.[1]?.trim()
+    || `${primary} address counterpart ${partner}; never lens/front.`;
+  const consequence = String(line).match(/OTS FUNCTIONAL FACE CONSEQUENCE:.*?(?=\s+Camera preserves)/)?.[0]
+    || 'OTS FUNCTIONAL FACE CONSEQUENCE: derive target from Action, not holder—read/operate=self; submit/present/show=recipient.';
+  const explicitRearMarker = /EXPLICIT REAR CAMERA/i.test(line) ? ' EXPLICIT REAR CAMERA:' : '';
+  return `EYE-LINE LOCK: ${staging} ${primary} PRIMARY THREE-QUARTER; ${partner} BACK-THREE-QUARTER OR OVER-THE-SHOULDER PARTNER.${explicitRearMarker} VISIBLE REAR DEPTH CHECK: camera is physically behind ${partner}'s shoulder; back of ${partner}'s head or shoulder foreground. Do NOT show ${partner}'s face front-on. ${consequence} Camera preserves scenario direction.`;
 };
 
 const compactChatGPTConversationRules = (prompt) => {
@@ -94,7 +103,7 @@ const compactChatGPTConversationRules = (prompt) => {
     .replace(/CONVERSATIONAL DEPTH BASE:[^\n]*/g, 'CONVERSATIONAL DEPTH BASE: counterpart gaze; varied three-quarter and OTS depth.')
     .replace(/EYE-LINE LOCK:[^\n]*/g, compactConversationEyeLine)
     .replace(/MANGA FINISH ASSIST:[^\n]*/g, 'FINISH: bubbles, anatomy.')
-    .replace(/\[ SHARED IMAGE QUALITY CONTRACT[\s\S]*?(?=\n- Clean finish:)/g, 'SHARED IMAGE QUALITY CONTRACT: preserve cast/action/setting/camera; rich physical setting with depth; coherent anatomy and prop ownership; localized clothing-fold shadows; no invented or duplicate cast; clean surfaces.')
+    .replace(/\[ SHARED IMAGE QUALITY CONTRACT[\s\S]*?(?=\n- Clean finish:)/g, `SHARED IMAGE QUALITY CONTRACT: preserve cast/action/setting/camera; rich physical setting with depth; coherent anatomy and prop ownership; localized clothing-fold shadows; no invented or duplicate cast; clean surfaces.\n${FUNCTIONAL_SURFACE_ORIENTATION_LOCK_COMPACT}`)
     .replace(/RICH PANEL COMPOSITION \/ CHARACTER CLARITY LOCK:[\s\S]*?(?=\n- CLOTHING FOLD SHADOW ASSIST:)/g, 'RICH PANEL COMPOSITION / CHARACTER CLARITY LOCK: 1 fixed anchor + 2 physical setting cues/panel; VFX overlay, never replace setting; face, eyes, silhouette, hands and action stay crisp; background rich but softer/lower contrast; no blank walls, flat gradients or black voids.')
     .replace(/CLEAN SURFACE PROTOCOL:[^\n]*/g, 'CLEAN: no noise except style exceptions.')
     .replace(/CLOTHING FOLD SHADOW ASSIST:[^\n]*/g, 'FOLD SHADOWS: crisp triangular overlap shadows; no geometric patterns.')
@@ -122,7 +131,7 @@ const compactChatGPTConversationRules = (prompt) => {
 
   if (compacted.length <= CHATGPT_WEB_COPY_SOFT_BUDGET) return compacted;
 
-  return compacted
+  const maximallyCompacted = compacted
     .replace(/ABSOLUTE TASK:[^\n]*/g, 'ABSOLUTE TASK: new 4-panel manga page; refs only for identity.')
     .replace(/- A4 portrait 1:1\.414;[^\n]*/g, '- A4 portrait 1:1.414; four equal horizontal panels; tight page.')
     .replace(/- Top title EXACTLY ("[^"]+")[^\n]*/g, '- Top title EXACTLY $1.')
@@ -138,6 +147,12 @@ const compactChatGPTConversationRules = (prompt) => {
     .replace(/\n?SETTING CONTINUITY \(LOW PRIORITY\):[^\n]*/g, '')
     .replace(/MANGA CAMERA \/ POSE VARIETY LOCK:[^\n]*/g, 'MANGA CAMERA / POSE VARIETY LOCK: >=3 azimuths; max 1 front-on; preserve Action/limbs; stagger hands in depth.')
     .replace(/FINAL-PANEL ACTIVE STAGING LOCK:[^\n]*/g, 'FINAL-PANEL ACTIVE STAGING LOCK: varied actions/depth; faces and hands readable.')
+    .replace(/EYE-LINE LOCK:[^\n]*/g, (line) => (
+      /EXPLICIT DETAIL CAMERA LOCK|EXPLICIT REAR CAMERA/i.test(line)
+        ? line
+        : 'EYE-LINE LOCK: counterpart gaze; mixed three-quarter/rear-OTS depth; never lens/front; preserve scenario direction.'
+    ))
+    .replace(/FUNCTIONAL SURFACE PANEL CHECK:[^\n]*/g, 'FUNCTIONAL SURFACE PANEL CHECK: Action target; solve target-to-front/back geometry before projection.')
     .replace(/SHARED IMAGE QUALITY CONTRACT:[^\n]*/g, 'SHARED QUALITY: preserve direction; rich setting; anatomy/props; folds; no duplicate cast; clean surfaces.')
     .replace(
       /RICH PANEL COMPOSITION \/ CHARACTER CLARITY LOCK:[^\n]*/g,
@@ -146,12 +161,17 @@ const compactChatGPTConversationRules = (prompt) => {
     .replace(/SAFE VISUAL:[^\n]*/g, 'SAFE VISUAL: no gore/blood/organs/flesh/organic horror; preserve script/cast/dialogue/camera/layout.')
     .replace(/FOLD PRIORITY:[^\n]*/g, 'FOLD PRIORITY: 2-4 dark triangular crease shadows.')
     .replace(/CROSS-PANEL WARDROBE COLOR LOCK:[^\n]*/g, "CROSS-PANEL WARDROBE COLOR LOCK: choose each named character's garment items, base colors, accent colors, material, and pattern once; reuse that exact wardrobe assignment in every later panel. PANEL STYLE LOCK changes background/environment palette, VFX, and rendering treatment only; keep every garment item and its colors unchanged. Lighting may change highlights and shadows, but the garment's canonical base and accent colors remain recognizable.")
-    .replace(/PANEL STYLE LOCK: ([^;\n]+); visibly distinct linework, environmental palette, shading, background\/VFX\.[^\n]*/g, 'PANEL STYLE LOCK: $1; vary linework, environmental palette, shading, background/VFX, rendering treatment; wardrobe colors fixed.')
     .replace(/ART-STYLE DIFFERENCE QA LOCK:\n-[^\n]*/g, 'ART-STYLE DIFFERENCE QA LOCK:\n- Vary at least three of linework, environmental palette, shading, background/VFX, texture/surface treatment; reject the same clean anime style with only pose, expression, saturation, glow, or speed lines changed; wardrobe colors stay fixed; preserve script/identity/layout.')
     .replace(/^Style: In THIS PANEL ONLY,[^\n]*/gm, 'Style: follow the named PANEL STYLE LOCK.')
     .replace(/^VFX: [^\n]*/gm, 'VFX: style overlay only; preserve readable action.')
-    .replace(/^STYLE EXCEPTION:[^\n]*/gm, 'STYLE EXCEPTION: named texture only; clean faces.')
     .replace(/CHARACTER QA:[^\n]*/g, 'CHARACTER QA: preserve identity and outfit.');
+
+  if (maximallyCompacted.length <= CHATGPT_WEB_COPY_SOFT_BUDGET) return maximallyCompacted;
+
+  return maximallyCompacted.replace(
+    /CROSS-PANEL WARDROBE COLOR LOCK:[^\n]*/g,
+    'CROSS-PANEL WARDROBE COLOR LOCK: fix garment items/colors once; reuse in all panels; style and lighting never change canonical wardrobe.'
+  );
 };
 
 const buildVisualStoryEvidenceLock = (scenario) => {
@@ -345,6 +365,7 @@ ${extractPlacementRule(pt, castList, { compact: true }).replace(/\\\\[/g, '').re
 ${extractCastLimitRule(pt, castList, { compact: true }).replace(/\\\\[/g, '').replace(/\\\\]/g, '')}
 Camera: ${camera}
 COMPOSITION STAGING: ${getPanelCompositionAssist(pt, num, { compact: true })}
+${FUNCTIONAL_SURFACE_PANEL_CHECK}
 ${eyeLineRule}
 Action (visual only): ${buildPanelActionText(pt, castList, activeOutfit)}
 Dialogue (verbatim bubbles): ${extractDialogueOnly(pt, castList, { forImagePrompt: true })}`;
@@ -371,7 +392,7 @@ Dialogue (verbatim bubbles): ${extractDialogueOnly(pt, castList, { forImagePromp
         : '[LENS]: (ABOVE CAMERA DISTORTION MAX:2.9), (NEVER normal photograph:3.0), (extreme severe perspective warp:2.7), (violently tilted horizon:2.6). Break normal camera angle.';
       const geminiRearForegroundLock = isConversation
         ? (() => {
-          const speakers = eyeLineRule.match(/EYE-LINE LOCK: \[([^\]]+)\][\s\S]*?\[([^\]]+)\]/);
+          const speakers = eyeLineRule.match(/DEPTH ASSIGNMENT \(REQUIRED\): \[([^\]]+)\] PRIMARY THREE-QUARTER toward \[([^\]]+)\]/);
           if (!speakers) return '';
           const [, primarySpeaker, rearPartner] = speakers;
           return `GEMINI REAR-FOREGROUND LOCK (ABSOLUTE): Render this exchange from physically behind [${rearPartner}]. The back of [${rearPartner}]'s head or shoulder MUST occupy the foreground and face [${primarySpeaker}]. Do NOT show [${rearPartner}]'s face front-on. [${primarySpeaker}] remains the three-quarter speaking subject beyond that foreground shoulder. This is mandatory; do not replace it with two reader-facing portraits.`;
@@ -383,6 +404,7 @@ ${extractPlacementRule(pt, castList)}
 ${extractCastLimitRule(pt, castList)}
 Camera: ${camera}.
 COMPOSITION STAGING: ${getPanelCompositionAssist(pt, num)}
+${FUNCTIONAL_SURFACE_PANEL_CHECK}
 ${lensRule}
 ${eyeLineRule}
 Action (Visual ONLY, non-dialogue; do NOT render quoted words as visible text unless this action explicitly says handwriting, signage, board text, label text, or screen text): ${buildPanelActionText(pt, castList, activeOutfit)}.

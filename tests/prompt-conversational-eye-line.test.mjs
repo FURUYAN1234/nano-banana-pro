@@ -112,6 +112,30 @@ Action: SpeakerA and SpeakerB discuss the draft.
 [USER STAGING LOCK - ABSOLUTE]: SpeakerBはSpeakerAの方に話しかける。互いに視線を合わせ、画面正面は禁止。
 SpeakerB「確認してください。」`;
 
+const EXPLICIT_SHOULDER_CAMERA = `
+[Camera: SpeakerAの肩越し、スマホ画面越しにSpeakerBの顔が見える俯瞰]
+Action: SpeakerA reads and operates a smartphone while SpeakerB leans in and answers.
+SpeakerA「いま確認している。」
+SpeakerB「確認しました。」`;
+
+const EXPLICIT_SHOULDER_PRESENTATION = `
+[Camera: SpeakerAの肩越し、SpeakerBを見る中景]
+Action: SpeakerA presents the smartphone screen to SpeakerB for inspection.
+SpeakerA「この画面を見て。」
+SpeakerB「確認しました。」`;
+
+const EXPLICIT_SHOULDER_JAPANESE_VIEW = `
+[Camera: SpeakerAの肩越し、スマホ画面越しにSpeakerBを見る俯瞰]
+Action: SpeakerAがスマホを両手で持ち、画面を見る。SpeakerBは机の向こうから答える。
+SpeakerA「いま見ている。」
+SpeakerB「確認しました。」`;
+
+const EXPLICIT_OVERHEAD_DETAIL_CAMERA = `
+[Camera: SpeakerAの手元から真上寄り、書類とスタンプを強調する超接写]
+Action: SpeakerA stamps a document while SpeakerB watches from across the counter.
+SpeakerA「確認します。」
+SpeakerB「お願いします。」`;
+
 test('normal multi-speaker panels keep interlocutor eye-lines while requiring depth and varied views for both providers', () => {
   for (const providerFamily of ['chatgpt', 'gemini']) {
     const prompt = buildPrompt(providerFamily, NORMAL_CONVERSATION);
@@ -213,5 +237,57 @@ test('explicit user staging derives opposing conversation sides from cast names'
     assert.match(panel, /SIDES> \[SpeakerA\] ↔ \[SpeakerB\]/);
     assert.match(panel, /three-quarter or rear\/OTS staging/);
     assert.match(panel, /never lens\/front/i);
+  }
+});
+
+test('an explicit over-the-shoulder subject controls the rear foreground instead of dialogue order', () => {
+  for (const providerFamily of ['chatgpt', 'gemini']) {
+    const panel = panelTwoSection(buildPrompt(providerFamily, EXPLICIT_SHOULDER_CAMERA));
+    assert.match(panel, /camera is physically behind \[SpeakerA\]'s shoulder/i);
+    assert.match(panel, /EXPLICIT REAR CAMERA/i);
+    assert.match(panel, /back of \[SpeakerA\]'s head or shoulder(?: in)? foreground/i);
+    assert.doesNotMatch(panel, /camera is physically behind \[SpeakerB\]'s shoulder/i);
+    assert.match(panel, /OTS FUNCTIONAL FACE CONSEQUENCE:/);
+    assert.match(panel, /\[SpeakerA\].*(?:camera-visible|visible to camera|user\+camera|and camera)/i);
+    assert.match(panel, /\[SpeakerB\].*(?:back\/edge|back or edge)/i);
+    assert.match(panel, /Do NOT show \[SpeakerA\]'s face front-on/i);
+    assert.match(panel, /read\/operate=self/i);
+    assert.match(panel, /submit\/present\/show=recipient/i);
+    assert.match(panel, /SpeakerA.*reads\/operates.*front\+UI camera-visible/i);
+  }
+});
+
+test('an explicit presentation targets the recipient rather than the holder or camera', () => {
+  for (const providerFamily of ['chatgpt', 'gemini']) {
+    const panel = panelTwoSection(buildPrompt(providerFamily, EXPLICIT_SHOULDER_PRESENTATION));
+    assert.match(panel, /submit\/present\/show=recipient/i);
+    assert.match(panel, /derive visibility from recipient side/i);
+    assert.doesNotMatch(panel, /SpeakerA.*reads\/operates.*front\+UI camera-visible/i);
+  }
+});
+
+test('Japanese screen-viewing action keeps the screen front visible from the named shoulder camera', () => {
+  for (const providerFamily of ['chatgpt', 'gemini']) {
+    const panel = panelTwoSection(buildPrompt(providerFamily, EXPLICIT_SHOULDER_JAPANESE_VIEW));
+    assert.match(panel, /EXPLICIT REAR CAMERA/i);
+    assert.match(panel, /SpeakerA.*reads\/operates.*front\+UI camera-visible/i);
+  }
+});
+
+test('an explicit overhead hand-detail camera is not replaced with an invented rear shoulder', () => {
+  for (const providerFamily of ['chatgpt', 'gemini']) {
+    const panel = panelTwoSection(buildPrompt(providerFamily, EXPLICIT_OVERHEAD_DETAIL_CAMERA));
+    assert.match(panel, /手元から真上寄り/);
+    assert.match(panel, /EXPLICIT DETAIL CAMERA LOCK/);
+    assert.doesNotMatch(panel, /camera is physically behind \[SpeakerB\]'s shoulder/i);
+    assert.doesNotMatch(panel, /VISIBLE REAR DEPTH CHECK/);
+  }
+});
+
+test('every panel receives a local functional-surface projection check', () => {
+  for (const providerFamily of ['chatgpt', 'gemini']) {
+    const prompt = buildPrompt(providerFamily, NORMAL_CONVERSATION);
+    assert.equal((prompt.match(/FUNCTIONAL SURFACE PANEL CHECK:/g) || []).length, 4);
+    assert.match(prompt, /solve target-to-front\/back geometry before projection/i);
   }
 });

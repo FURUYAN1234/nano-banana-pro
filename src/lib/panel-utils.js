@@ -483,11 +483,12 @@ export const getCameraForPanel = (panelText, shuffledCameras, cameraState) => {
   const cameraMatch = panelText.match(/\[Camera:\s*(.*?)\]/i);
   if (cameraMatch && cameraMatch[1]) {
      const specificCamera = cameraMatch[1].trim();
+     const literalCameraPrefix = EXPLICIT_DETAIL_CAMERA_RE.test(specificCamera) ? `${specificCamera}; ` : '';
 
      // [v4.5.6] シネマティック構図のチェック（歪みを加えず、美しさを強調）
      for (const [keyword, lensTag] of Object.entries(cinematicCompositionMap)) {
        if (specificCamera.toLowerCase().includes(keyword.toLowerCase())) {
-         return `${lensTag}, (masterpiece, best quality, highly detailed, professional photography:1.2), (ABSOLUTELY NO flat normal photos:2.9), (NEVER draw text of camera names:3.0)`;
+         return `${literalCameraPrefix}${lensTag}, (masterpiece, best quality, highly detailed, professional photography:1.2), (ABSOLUTELY NO flat normal photos:2.9), (NEVER draw text of camera names:3.0)`;
        }
      }
 
@@ -501,10 +502,10 @@ export const getCameraForPanel = (panelText, shuffledCameras, cameraState) => {
      }
      // マッピングが見つかった場合はレンズ歪みタグ + 汎用歪みを結合
      if (matchedLens) {
-       return `${matchedLens}, (EXTREME hyper-dynamic composition:2.6), (ABSOLUTELY NO flat normal photos:2.9), (NEVER draw text of camera names:3.0)`;
+       return `${literalCameraPrefix}${matchedLens}, (EXTREME hyper-dynamic composition:2.6), (ABSOLUTELY NO flat normal photos:2.9), (NEVER draw text of camera names:3.0)`;
      }
      // マッピングなし → 汎用歪みプロンプトのみ
-     return `(Extreme intense dynamic camera angle: 2.8), (EXTREME hyper-dynamic composition:2.6), (SEVERE dutch angle or extreme perspective distortion:2.7), (MASSIVE spherical or telephoto depth separation:2.5), (ABSOLUTELY NO flat normal photos:2.9), (NEVER draw text of camera names:3.0)`;
+     return `${literalCameraPrefix}(Extreme intense dynamic camera angle: 2.8), (EXTREME hyper-dynamic composition:2.6), (SEVERE dutch angle or extreme perspective distortion:2.7), (MASSIVE spherical or telephoto depth separation:2.5), (ABSOLUTELY NO flat normal photos:2.9), (NEVER draw text of camera names:3.0)`;
   }
   // AIがカメラタグを出力しなかった場合のフォールバック（重複なしランダム）
   const fallbackCamera = shuffledCameras[cameraState.index % shuffledCameras.length];
@@ -836,6 +837,9 @@ const DIRECT_ADDRESS_SUBJECT_RE = /(?:読者|観客|視聴者|カメラ|配信|�
 const DIRECT_ADDRESS_ACTION_RE = /(?:話しかけ|呼びかけ|語りかけ|訴えかけ|目線を向け|正面を向|見つめ|address(?:es|ing)?|speak(?:s|ing)?\s+to|talk(?:s|ing)?\s+to|look(?:s|ing)?\s+(?:at|into)|face(?:s|ing)?|stare(?:s|ing)?|gaze(?:s|ing)?)/i;
 const CAMERA_FACING_NEGATION_RE = /(?:(?:画面|カメラ|読者|観客|視聴者)[^\n。]{0,48}(?:厳禁|禁止|避け|しない|させない|向けない)|(?:never|do\s+not|don't|must\s+not|avoid)[^.\n]{0,48}(?:camera|reader|viewer|audience))/i;
 const CAMERA_INSTRUCTION_LINE_RE = /^\s*\[?\s*(?:Camera|カメラワーク|CameraWork|Camera\s*Work)\s*[:：][^\n]*$/gim;
+const EXPLICIT_DETAIL_CAMERA_RE = /(?:手元|真上|超接写|接写|クローズアップ|overhead|top[- ]?down|hand[- ]?detail|macro|close[- ]?up)/i;
+const FUNCTIONAL_PRESENTATION_ACTION_RE = /(?:\bsubmit(?:s|ted|ting)?\b|\bpresent(?:s|ed|ing)?\b|\bshow(?:s|ed|ing)?\b|提出|提示|見せ|差し出)/i;
+const FUNCTIONAL_SELF_USE_ACTION_RE = /(?:\bread(?:s|ing)?\b|\boperate(?:s|d|ing)?\b|読む|読ん|操作|確認|(?:画面|文面|書類|本|地図|カード|表示)[^。\n]{0,24}(?:見る|見て|見つめ|凝視))/i;
 const INTERPERSONAL_STAGING_RE = /(?:話しかけ|語りかけ|呼びかけ|問いかけ|会話|相談|議論|打ち合わせ|返事|答え|叫ぶ|反応|リアクション|向かい合|見つめ合|振り向|speak(?:s|ing)?\s+to|talk(?:s|ing)?\s+to|ask(?:s|ing)?|answer(?:s|ing)?|repl(?:y|ies|ying)|respond(?:s|ing)?|react(?:s|ing)?|conversation|discuss(?:es|ing)?|shout(?:s|ing)?)/i;
 const LISTENER_OR_REACTOR_CUE_RE = /(?:全員|一同|みんな|相手|聞き手|編集者(?:たち|一同|[0-9０-９一二三四五六七八九十]+人)?|メンバー(?:たち|一同|[0-9０-９一二三四五六七八九十]+人)?|仲間(?:たち|一同)?|リアクション|反応|→|listeners?|interlocutors?|editors?|the\s+group|everyone|all\s+of\s+them|reactors?)/i;
 
@@ -864,13 +868,36 @@ const buildExplicitStagingSides = (text, castNames) => {
   return '';
 };
 
-const buildRequiredDepthAssignment = (speakers, listeners, requireVisibleRear = false) => {
-  const primary = speakers[0] || 'active speaker';
-  const partner = speakers[1] || listeners[0] || 'described listener group';
+const extractExplicitRearSubject = (text, castNames) => {
+  const cameraText = (String(text || '').match(CAMERA_INSTRUCTION_LINE_RE) || []).join(' ');
+  if (!cameraText) return '';
+
+  return castNames.find((name) => {
+    const escapedName = escapeRegex(name);
+    const japaneseShoulder = new RegExp(`\\[?${escapedName}\\]?(?:の)?(?:肩|ショルダー)(?:越し|ごし)`, 'i');
+    const englishShoulder = new RegExp(`(?:over|from\\s+behind|behind)\\s+(?:the\\s+)?\\[?${escapedName}\\]?(?:['’]s)?\\s+shoulder`, 'i');
+    return japaneseShoulder.test(cameraText) || englishShoulder.test(cameraText);
+  }) || '';
+};
+
+const buildRequiredDepthAssignment = (speakers, listeners, requireVisibleRear = false, explicitRearSubject = '', functionalActionMode = '') => {
+  const participants = [...new Set([...speakers, ...listeners])];
+  const partner = participants.includes(explicitRearSubject)
+    ? explicitRearSubject
+    : (speakers[1] || listeners[0] || 'described listener group');
+  const primary = speakers.find((name) => name !== partner)
+    || listeners.find((name) => name !== partner)
+    || speakers[0]
+    || 'active speaker';
   const primaryLabel = primary === 'active speaker' ? primary : `[${primary}]`;
   const partnerLabel = partner === 'described listener group' ? partner : `[${partner}]`;
+  const functionalConsequence = functionalActionMode === 'presentation'
+    ? `OTS FUNCTIONAL FACE CONSEQUENCE: derive target from Action, never holder—read/operate=self; submit/present/show=recipient. Face the recipient and derive visibility from recipient side.`
+    : functionalActionMode === 'self-use'
+      ? `OTS FUNCTIONAL FACE CONSEQUENCE: derive target from Action, never holder—read/operate=self; submit/present/show=recipient. ${partnerLabel} reads/operates: front+UI camera-visible to user+camera; ${primaryLabel} is across the object, so show its back/edge from camera unless Action targets ${primaryLabel}.`
+      : 'OTS FUNCTIONAL FACE CONSEQUENCE: Action target—read/operate=self; submit/present/show=recipient; visibility follows target side.';
   const visibleRearCheck = requireVisibleRear
-    ? ` VISIBLE REAR DEPTH CHECK: camera is physically behind ${partnerLabel}'s shoulder; show the back of ${partnerLabel}'s head or shoulder foreground, facing ${primaryLabel}, not as backdrop.`
+    ? `${explicitRearSubject ? ' EXPLICIT REAR CAMERA:' : ''} VISIBLE REAR DEPTH CHECK: camera is physically behind ${partnerLabel}'s shoulder; show the back of ${partnerLabel}'s head or shoulder foreground, facing ${primaryLabel}, not as backdrop. Do NOT show ${partnerLabel}'s face front-on. ${functionalConsequence}`
     : '';
   return `DEPTH ASSIGNMENT (REQUIRED): ${primaryLabel} PRIMARY THREE-QUARTER toward ${partnerLabel}; ${partnerLabel} BACK-THREE-QUARTER OR OVER-THE-SHOULDER PARTNER toward ${primaryLabel}. Do not render this exchange as two reader-facing frontal poses.${visibleRearCheck}`;
 };
@@ -886,6 +913,14 @@ export const buildPanelEyeLineRule = (panelText, castList) => {
     .map((name) => name.split('(')[0].trim())
     .filter(Boolean))]
     .filter((name) => actionAndDialogueText.includes(name));
+  const explicitRearSubject = extractExplicitRearSubject(text, [...new Set([...mentionedCastNames, ...speakers])]);
+  const cameraText = (text.match(CAMERA_INSTRUCTION_LINE_RE) || []).join(' ');
+  const explicitDetailCamera = !explicitRearSubject && EXPLICIT_DETAIL_CAMERA_RE.test(cameraText);
+  const functionalActionMode = FUNCTIONAL_PRESENTATION_ACTION_RE.test(actionAndDialogueText)
+    ? 'presentation'
+    : FUNCTIONAL_SELF_USE_ACTION_RE.test(actionAndDialogueText)
+      ? 'self-use'
+      : '';
   const explicitDirectAddress = !CAMERA_FACING_NEGATION_RE.test(actionAndDialogueText)
     && DIRECT_ADDRESS_SUBJECT_RE.test(actionAndDialogueText)
     && DIRECT_ADDRESS_ACTION_RE.test(actionAndDialogueText);
@@ -899,9 +934,13 @@ export const buildPanelEyeLineRule = (panelText, castList) => {
   if (/\[USER STAGING LOCK - ABSOLUTE\]/i.test(actionAndDialogueText)) {
     const stagingSides = buildExplicitStagingSides(actionAndDialogueText, mentionedCastNames);
     const listeners = mentionedCastNames.filter((name) => !speakers.includes(name));
-    return `EYE-LINE LOCK: obey USER STAGING LOCK exactly for speakers and listeners; never lens/front unless explicit direct address. ${stagingSides} ${buildRequiredDepthAssignment(speakers, listeners, speakers.length >= 2)} Camera preserves the scenario direction.`;
+    return `EYE-LINE LOCK: obey USER STAGING LOCK exactly for speakers and listeners; never lens/front unless explicit direct address. ${stagingSides} ${buildRequiredDepthAssignment(speakers, listeners, speakers.length >= 2, explicitRearSubject, functionalActionMode)} Camera preserves the scenario direction.`;
   }
-  if (speakers.length < 2 && !stagedSpeakerAndListener) return '';
+  if (speakers.length < 2 && !stagedSpeakerAndListener) {
+    return explicitDetailCamera
+      ? 'EXPLICIT DETAIL CAMERA LOCK: preserve the scripted overhead, hand-detail, or close-up framing; do not invent a rear shoulder or force frontal portraits.'
+      : '';
+  }
 
   const participants = mentionedCastNames.length > 0 ? mentionedCastNames : speakers;
   const listeners = participants.filter((name) => !speakers.includes(name));
@@ -911,7 +950,11 @@ export const buildPanelEyeLineRule = (panelText, castList) => {
       : `[${speakers[0]}] addresses the described listener group; group looks back.`)
     : `${speakers.map((name) => `[${name}]`).join(' ↔ ')} address their counterparts; reactors watch the active speaker.`;
 
-  return `EYE-LINE LOCK: ${roleStaging} never lens/front. ${buildRequiredDepthAssignment(speakers, listeners, speakers.length >= 2)} Camera preserves scenario direction.`;
+  if (explicitDetailCamera) {
+    return `EYE-LINE LOCK: ${roleStaging} never lens/front. EXPLICIT DETAIL CAMERA LOCK: preserve the scripted overhead, hand-detail, or close-up framing; do not invent a rear shoulder or force frontal portraits. Camera preserves scenario direction.`;
+  }
+
+  return `EYE-LINE LOCK: ${roleStaging} never lens/front. ${buildRequiredDepthAssignment(speakers, listeners, speakers.length >= 2, explicitRearSubject, functionalActionMode)} Camera preserves scenario direction.`;
 };
 
 export const cleanseActionGagSymbols = (actionText) => {

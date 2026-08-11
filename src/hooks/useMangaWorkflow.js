@@ -1130,7 +1130,7 @@ export default function useMangaWorkflow() {
 
       let qualityResult;
       try {
-        const qualityPrompt = buildImageQualityQaPrompt({ scenario, castList });
+        const qualityPrompt = buildImageQualityQaPrompt({ scenario, castList, finalPrompt: currentPrompt });
         const qualityResponse = await callAI(
           qualityPrompt,
           [{

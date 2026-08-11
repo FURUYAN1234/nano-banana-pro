@@ -14,6 +14,7 @@ test('image generation displays the received image before running one visible co
   assert.match(workflowSource, /\[QUALITY QA\].*人物・手・小物・吹き出し/);
   assert.match(workflowSource, /formatImageQualityIssue/);
   assert.match(workflowSource, /qualityResult\.pass/);
+  assert.match(workflowSource, /buildImageQualityQaPrompt\(\{ scenario, castList, finalPrompt: currentPrompt \}\)/);
 });
 
 test('quality failure keeps the image visible, stops full auto, and never auto-regenerates', () => {

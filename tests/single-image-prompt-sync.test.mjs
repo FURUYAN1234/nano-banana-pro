@@ -32,6 +32,15 @@ test('single-image copy prompt applies the current shared image-quality contract
   assert.match(prompt, /coherent anatomy/i);
   assert.match(prompt, /clothing-fold shadows/i);
   assert.match(prompt, /Do not invent, duplicate, merge, or replace characters/i);
+  assert.match(prompt, /FUNCTIONAL SURFACE ORIENTATION LOCK/);
+  assert.match(prompt, /front face toward (?:the )?actual operator, customer, or intended reader/i);
+  assert.match(prompt, /move the camera, never rotate the object toward the viewer/i);
+  assert.match(prompt, /documents, forms, printed pages, cards, books, maps/i);
+  assert.match(prompt, /direction-dependent information, control, optical, or service face/i);
+  assert.match(prompt, /receipts, tickets, menus, newspapers, keyboards, control panels, camera lenses, and rear monitors/i);
+  assert.match(prompt, /explicitly says.*present.*camera or viewer/i);
+  assert.match(prompt, /derive the intended target from the action, not from who holds the object/i);
+  assert.match(prompt, /read or operate means self.*submit, present, or show means the recipient/i);
 });
 
 test('single-image copy prompt retains its established emotional and rendering safeguards', () => {
@@ -77,6 +86,11 @@ Hero「行こう。」`;
       systemVersion: 'v5.2.1-test'
     });
     assert.match(prompt, /SHARED IMAGE QUALITY CONTRACT/);
+    assert.match(prompt, /FUNCTIONAL SURFACE ORIENTATION LOCK/);
+    assert.match(prompt, /move the camera, never rotate the object toward the viewer/i);
+    assert.match(prompt, /documents, forms, printed pages, cards, books, maps/i);
+    assert.match(prompt, /direction-dependent information, control, optical, or service face/i);
+    assert.match(prompt, /explicitly says.*present.*camera or viewer/i);
   }
 
   const controlBar = readFileSync(new URL('../src/components/ControlBar.jsx', import.meta.url), 'utf8');
