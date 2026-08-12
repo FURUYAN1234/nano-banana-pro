@@ -257,6 +257,62 @@ test('an explicit over-the-shoulder subject controls the rear foreground instead
   }
 });
 
+test('a named over-the-shoulder subject is one foreground cast instance and never repeated in the background', () => {
+  const castList = `
+## Focus
+- wavy blonde hair, no glasses
+## Observer
+- short blonde hair, glasses
+## MemberA
+- orange bob hair, no glasses
+## MemberB
+- brown twin tails, glasses
+## MemberC
+- long black hair, no glasses
+`;
+  const scenario = `
+## Title: Policy Meeting
+Location: meeting room
+Outfit: casual wear
+
+[1コマ目: 起]
+[EMOTION: THINKING]
+[Camera: Over Observer's shoulder, with Observer's rear head and shoulder at the lower-left edge]
+Focus leans forward and speaks. Observer occupies the camera-side shoulder foreground. MemberA reads notes, MemberB holds a document, and MemberC thinks with folded arms.
+Focus「What are we really protecting?」
+
+[2コマ目: 承]
+Action: MemberC writes on the board.
+MemberC「Who benefits?」
+
+[3コマ目: 転]
+Action: MemberB studies the document.
+MemberB「This happened before.」
+
+[4コマ目: 結]
+Action: MemberA lowers their eyes.
+MemberA「The loudest voice wins.」`;
+
+  for (const providerFamily of ['chatgpt', 'gemini']) {
+    const prompt = buildMangaPrompt({
+      scenario,
+      castList,
+      colorMode: 'color',
+      providerFamily,
+      punchlineType: 'Documentary',
+      systemVersion: 'v5.3.4-test'
+    });
+    const panel = prompt.match(/## Panel 1[\s\S]*?(?=## Panel 2)/)?.[0] || '';
+
+    assert.match(panel, /(?:CAST LIMIT: main focus \[Focus\]\.|CRITICAL CAST PLACEMENT: Ensure \[Focus\] are the main focus\.)/);
+    assert.match(panel, /(?:FG only|FOREGROUND MUST CONTAIN ONLY): \[Focus\] and \[Observer\]\./);
+    assert.match(panel, /(?:BG only|BACKGROUND MUST CONTAIN ONLY): \[MemberA\], \[MemberB\], \[MemberC\]\./);
+    assert.match(panel, /OTS CAST INSTANCE LOCK:.*\[Observer\].*(?:sole instance|one and only instance)/i);
+    assert.doesNotMatch(panel, /(?:BG only|BACKGROUND MUST CONTAIN ONLY):[^\n]*\[Observer\]/);
+    assert.match(panel, /(?:NO OTHER HUMANS: exactly 5 people|Total EXACTLY 5 distinct individuals)\./);
+  }
+});
+
 test('an explicit presentation targets the recipient rather than the holder or camera', () => {
   for (const providerFamily of ['chatgpt', 'gemini']) {
     const panel = panelTwoSection(buildPrompt(providerFamily, EXPLICIT_SHOULDER_PRESENTATION));

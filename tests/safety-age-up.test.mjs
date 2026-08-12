@@ -33,3 +33,17 @@ test('applySafetyAgeUp removes plain-text school and minor-coded character trait
   assert.match(result, /All characters depicted in this image are adults aged 20 or older/i);
   assert.doesNotMatch(result, /\bminors?\b/i);
 });
+
+test('applySafetyAgeUp preserves compound words in verbatim dialogue while still aging up a standalone role', () => {
+  const prompt = [
+    'Important Character Cast:',
+    '- [人物A]: 少年, short hair',
+    'Dialogue (verbatim bubbles): TEXT (PRINT VALUES ONLY): B1="これ、“青少年保護”って建前だけど、ホントは何を守りたいのかな？".',
+  ].join('\n');
+
+  const result = applySafetyAgeUp(prompt);
+
+  assert.match(result, /\[人物A\]: 男性, short hair/);
+  assert.match(result, /青少年保護/);
+  assert.doesNotMatch(result, /青男性保護/);
+});

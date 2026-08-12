@@ -1385,6 +1385,7 @@ export const extractCastLimitRule = (fullPanelText, castList, options = {}) => {
   // Visual Action テキストからも登場キャラ名を検出
   const allPanelCharacters = [...speakers];
   const canonicalValidCharacters = [...new Set(Object.values(charLookup).map(obj => obj.name))];
+  const explicitRearSubject = extractExplicitRearSubject(fullPanelText, canonicalValidCharacters);
   const hasAllMainCastCue = /(?:他キャラ全員|キャラ全員|全キャラ|全メンバー|全員集合|メンバー全員|主要人物全員|all characters|the whole main cast)/i.test(actionAndMetaText);
   if (hasAllMainCastCue) {
     canonicalValidCharacters.forEach((canonicalName) => {
@@ -1399,6 +1400,9 @@ export const extractCastLimitRule = (fullPanelText, castList, options = {}) => {
       allPanelCharacters.push(canonicalName);
     }
   });
+  if (explicitRearSubject && !allPanelCharacters.includes(explicitRearSubject)) {
+    allPanelCharacters.push(explicitRearSubject);
+  }
 
   // 吹き出し数カウント: セリフ行（「」付き）の数を数えてソロショット判定の矛盾を防ぐ
   let dialogueLineCount = 0;
@@ -1413,6 +1417,11 @@ export const extractCastLimitRule = (fullPanelText, castList, options = {}) => {
 
   // スピーカー最大3名をメインアクターとして登録
   const panelActors = speakers.slice(0, 3).map(s => `[${s}]`);
+  const explicitRearActor = explicitRearSubject ? `[${explicitRearSubject}]` : '';
+  const foregroundActors = [...new Set([
+    ...panelActors,
+    ...(explicitRearActor ? [explicitRearActor] : [])
+  ])];
 
   // [v2.69] 背景キャスト統合ロジックを完全廃止 (No-Show 除外指示への置換)
   // このコマに一切登場しないキャラ（No-Show）を特定
@@ -1420,7 +1429,8 @@ export const extractCastLimitRule = (fullPanelText, castList, options = {}) => {
 
   const allCharBrackets = allPanelCharacters.map(c => `[${c}]`);
 
-  if (panelActors.length > 0) {
+  if (foregroundActors.length > 0) {
+    const mainFocus = panelActors.length > 0 ? panelActors.join(' and ') : foregroundActors.join(' and ');
     let cloneWarning = compact
       ? `CAST COUNT: ${allCharBrackets.join(', ')} each EXACTLY ONCE; no named-character duplicates.`
       : `ANTI-CLONE REMINDER: ${allCharBrackets.join(', ')} — each appears EXACTLY ONCE. If a character is mentioned in both the placement rule AND the visual action, they are the SAME person — do NOT draw a second copy.`;
@@ -1436,9 +1446,14 @@ export const extractCastLimitRule = (fullPanelText, castList, options = {}) => {
     }
     
     // クローン防止: 空間（前景・後景）で縛る
-    const foreground = panelActors.join(' and ');
-    const bgActors = allCharBrackets.filter(b => !panelActors.includes(b));
+    const foreground = foregroundActors.join(' and ');
+    const bgActors = allCharBrackets.filter(b => !foregroundActors.includes(b));
     const background = bgActors.length > 0 ? bgActors.join(', ') : 'NO ONE ELSE';
+    const otsInstanceConstraint = explicitRearActor
+      ? (compact
+        ? `\nOTS CAST INSTANCE LOCK: ${explicitRearActor}'s rear head/shoulder foreground is that character's sole instance; never draw ${explicitRearActor} again or in BG.`
+        : `\nOTS CAST INSTANCE LOCK: The rear head/shoulder foreground depiction of ${explicitRearActor} is that character's one and only instance. Do not repeat ${explicitRearActor} elsewhere in the panel or background.`)
+      : '';
     
     // 登場しないキャラへの強力な除外指示（Negative Constraints）を生成
     let negativeConstraint = "";
@@ -1455,17 +1470,17 @@ export const extractCastLimitRule = (fullPanelText, castList, options = {}) => {
     let spatialConstraint;
     if (hasMob) {
       spatialConstraint = compact
-        ? `\nFG only: ${foreground}. BG only: ${background} plus required adult mobs.${negativeConstraint}\nNo repeated FG characters in BG.`
-        : `\nFOREGROUND MUST CONTAIN ONLY: ${foreground}.\nBACKGROUND MUST CONTAIN ONLY: ${background} and background characters (mob).\n${negativeConstraint}\nAllow additional background characters (mobs) as required by the action. Do not draw any main character in the background if they are already in the foreground.`;
+        ? `\nFG only: ${foreground}. BG only: ${background} plus required adult mobs.${negativeConstraint}${otsInstanceConstraint}\nNo repeated FG characters in BG.`
+        : `\nFOREGROUND MUST CONTAIN ONLY: ${foreground}.\nBACKGROUND MUST CONTAIN ONLY: ${background} and background characters (mob).\n${negativeConstraint}${otsInstanceConstraint}\nAllow additional background characters (mobs) as required by the action. Do not draw any main character in the background if they are already in the foreground.`;
     } else {
       spatialConstraint = compact
-        ? `\nFG only: ${foreground}. BG only: ${background}.${negativeConstraint}\nNO OTHER HUMANS: exactly ${allPanelCharacters.length} people.`
-        : `\nFOREGROUND MUST CONTAIN ONLY: ${foreground}.\nBACKGROUND MUST CONTAIN ONLY: ${background}.${negativeConstraint}\nABSOLUTELY NO OTHER HUMANS ALLOWED. Do not draw any character in the background if they are already in the foreground. Total EXACTLY ${allPanelCharacters.length} distinct individuals.`;
+        ? `\nFG only: ${foreground}. BG only: ${background}.${negativeConstraint}${otsInstanceConstraint}\nNO OTHER HUMANS: exactly ${allPanelCharacters.length} people.`
+        : `\nFOREGROUND MUST CONTAIN ONLY: ${foreground}.\nBACKGROUND MUST CONTAIN ONLY: ${background}.${negativeConstraint}${otsInstanceConstraint}\nABSOLUTELY NO OTHER HUMANS ALLOWED. Do not draw any character in the background if they are already in the foreground. Total EXACTLY ${allPanelCharacters.length} distinct individuals.`;
     }
 
     return compact
-      ? `CAST LIMIT: main focus ${foreground}.\n${cloneWarning}${spatialConstraint}`
-      : `CRITICAL CAST PLACEMENT: Ensure ${foreground} are the main focus.\n${cloneWarning}${spatialConstraint}`;
+      ? `CAST LIMIT: main focus ${mainFocus}.\n${cloneWarning}${spatialConstraint}`
+      : `CRITICAL CAST PLACEMENT: Ensure ${mainFocus} are the main focus.\n${cloneWarning}${spatialConstraint}`;
   } else {
     // 登場キャラクターが検出されなかった場合でも、キャスト全体から除外指示を出すことは可能
     if (hasBroadGroupCue) {

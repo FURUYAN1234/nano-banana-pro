@@ -1,7 +1,11 @@
 const GEMINI_KEY_PATTERN = /^AIza[A-Za-z0-9_-]{35}$/;
 const OPENAI_KEY_PATTERN = /^sk-(?:proj-|ant-)?[A-Za-z0-9_-]{20,}$/;
-const PREFLIGHT_TIMEOUT_MS = 15000;
-const DEFAULT_TRANSIENT_ATTEMPTS = 2;
+// A cold browser/VPN connection to the provider can exceed 15 seconds even
+// when the key is valid. One user submit must own the complete preflight: keep
+// the same in-memory credential and retry transient failures internally instead
+// of requiring a reload or a second paste.
+const PREFLIGHT_TIMEOUT_MS = 45000;
+const DEFAULT_TRANSIENT_ATTEMPTS = 3;
 
 class ApiPreflightError extends Error {
   constructor(message, failureKind) {

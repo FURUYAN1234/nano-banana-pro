@@ -169,6 +169,7 @@ export default function useMangaWorkflow() {
   const [fullAutoCountdown, setFullAutoCountdown] = useState(0); // カウントダウン表示用
   const [triggerFullAuto, setTriggerFullAuto] = useState(0); // [v2.78] Effect Trigger
   const fullAutoAbortRef = useRef(false); // 中断フラグ（useRefで即時反映）
+  const scenarioRunEpochRef = useRef(0); // Late STEP2/STEP3 results may update only their current run.
   const [isAborting, setIsAborting] = useState(false); // 中断処理中フラグ
   // [v2.78] 自動スクロール用Ref
   const step2Ref = useRef(null);
@@ -190,6 +191,20 @@ export default function useMangaWorkflow() {
   // Image Generation
   const [generatedImage, setGeneratedImage] = useState("");
   const [generationHistory, setGenerationHistory] = useState([]); // [v2.86] Generated Image History
+
+  const setScenarioFromUser = (nextScenario) => {
+    scenarioRunEpochRef.current += 1;
+    fullAutoAbortRef.current = true;
+    isFullAutoModeRef.current = false;
+    setIsFullAutoMode(false);
+    setFullAutoStep(0);
+    setIsAborting(false);
+    setIsSearching(false);
+    setIsAssembling(false);
+    setScenario(nextScenario);
+    setFinalPrompt("");
+    setGeneratedImage(null);
+  };
 
   const getCurrentPromptProviderFamily = () => (
     selectedEngine === 'openai' || enableOpenAIApi
@@ -602,6 +617,8 @@ export default function useMangaWorkflow() {
     if (!castList) return showStatus("先にキャラクターを解析してください。");
     if (isSearching) return;
 
+    const scenarioRunEpoch = ++scenarioRunEpochRef.current;
+
     const effectiveCategories = Array.isArray(categoriesOverride) ? categoriesOverride : categories;
     const effectiveInputMode = inputModeOverride || inputMode;
 
@@ -643,6 +660,7 @@ export default function useMangaWorkflow() {
     const scenarioStartedAt = Date.now();
     const scenarioTimer = setInterval(() => {
       setScenarioThought(prev => {
+        if (scenarioRunEpoch !== scenarioRunEpochRef.current) return prev;
         const elapsed = Math.floor((Date.now() - scenarioStartedAt) / 1000);
         const timerLine = `\n> ⏳ AI応答を待機中... (${elapsed}秒経過)`;
         const timerRegex = /\n> ⏳ AI応答を待機中\.\.\..*\(\d+秒経過\)/;
@@ -669,8 +687,12 @@ export default function useMangaWorkflow() {
         bg360Enabled,
         bg360ImageParts,
         styleJson,
-        onProgress: (msg) => setScenarioThought(prev => prev + `\n > [API] ${msg} `),
+        onProgress: (msg) => {
+          if (scenarioRunEpoch !== scenarioRunEpochRef.current) return;
+          setScenarioThought(prev => prev + `\n > [API] ${msg} `);
+        },
         onCameraProgress: (msg) => {
+          if (scenarioRunEpoch !== scenarioRunEpochRef.current) return;
           if (msg.startsWith("🎬")) {
             setScenarioThought(prev => prev + `\n > ${msg}`);
             if (msg.includes("開始")) {
@@ -683,6 +705,10 @@ export default function useMangaWorkflow() {
           }
         }
       });
+
+      if (scenarioRunEpoch !== scenarioRunEpochRef.current) {
+        return null;
+      }
 
       setUsedModel(result.usedModel);
       setLockedLocation(customLocation.trim() || result.location || "Unspecified");
@@ -770,6 +796,7 @@ export default function useMangaWorkflow() {
 
       return finalScenarioText;
     } catch (error) {
+      if (scenarioRunEpoch !== scenarioRunEpochRef.current) return null;
       console.error(error);
       if (/API Key is not set|OpenAI APIキーが設定されていません/.test(String(error.message || ''))) {
         setShowOpenAIKeyModal(true);
@@ -781,13 +808,16 @@ export default function useMangaWorkflow() {
       return null;
     } finally {
       clearInterval(scenarioTimer);
-      setIsSearching(false);
+      if (scenarioRunEpoch === scenarioRunEpochRef.current) {
+        setIsSearching(false);
+      }
     }
   };
 
   // --- Step 3: Prompt Assembly (Super FURU v121.3) ---
   // [v2.79] 戻り値変更: フルオート連鎖用（文字列=成功, null=失敗）
   const assemblePrompt = async (skipGuard = false, overrideScenario = null, providerFamilyOverride = null) => {
+    const promptScenarioEpoch = scenarioRunEpochRef.current;
     const currentScenario = overrideScenario || scenario;
     if (!skipGuard && (!castList || !currentScenario)) return showStatus("キャストとシナリオが必要です。");
     const scenarioValidation = validateMangaScenario(currentScenario);
@@ -852,6 +882,8 @@ export default function useMangaWorkflow() {
 
       // Wait a bit to simulate processing/syncing (Important for User Experience)
       await new Promise(resolve => setTimeout(resolve, 800));
+
+      if (promptScenarioEpoch !== scenarioRunEpochRef.current) return null;
 
       if (punchlineType === 'Documentary') {
         setAssembleThought(prev => prev + "\n> [ドキュメンタリーモード] コンテンツセーフティ・サニタイザー適用済み (危険ワードを安全な言い換えに自動変換)");
@@ -1673,6 +1705,7 @@ export default function useMangaWorkflow() {
     if (isFullAutoMode) {
       // 実行中 or 武装中 → 中断/解除
       fullAutoAbortRef.current = true;
+      scenarioRunEpochRef.current += 1;
       
       // [v4.2.7] 中断時にAPI通信の完了を待たず、即座にUIのローディング表示を消去して操作可能に戻す
       setIsSearching(false);
@@ -1705,6 +1738,7 @@ export default function useMangaWorkflow() {
   // eslint-disable-next-line no-unused-vars
   const abortFullAuto = () => {
     fullAutoAbortRef.current = true;
+    scenarioRunEpochRef.current += 1;
     
     // [v4.2.7] 中断時に即座にUIのローディング状態を解除
     setIsSearching(false);
@@ -1839,7 +1873,7 @@ export default function useMangaWorkflow() {
     setManualTopic,
     setPolicyErrorMsg,
     setPunchlineType,
-    setScenario,
+    setScenario: setScenarioFromUser,
     setShowModal,
     setShowOpenAIKeyModal,
     setStyleJson,

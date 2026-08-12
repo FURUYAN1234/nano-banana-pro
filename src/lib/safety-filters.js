@@ -96,8 +96,10 @@ const applySafetyAgeUp = (promptText) => {
     [/中学生/g, '成人'],
     [/小学生/g, '成人'],
     [/未成年/g, '成人'],
-    [/少女/g, '女性'],
-    [/少年/g, '男性'],
+    // Age up standalone person roles only. Do not corrupt compound words in
+    // verbatim dialogue or titles (for example 青少年保護 or 少年漫画).
+    [/(?<![\p{L}\p{N}々])少女(?=$|[\s,、。:：;；）)】\]のはがをにとへで])/gu, '女性'],
+    [/(?<![\p{L}\p{N}々])少年(?=$|[\s,、。:：;；）)】\]のはがをにとへで])/gu, '男性'],
     [/セーラー服制服/g, 'リボン付きの上品なブラウス'],
     [/セーラー服/g, 'リボン付きの上品なブラウス'],
     [/学生服/g, 'フォーマルな服装'],

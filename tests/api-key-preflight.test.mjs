@@ -133,6 +133,30 @@ test('retries one transient first-read failure and accepts the same key without 
   assert.equal(result.provider, 'openai');
 });
 
+test('survives two initial OpenAI timeouts and accepts the same key on the third internal attempt', async () => {
+  let attempts = 0;
+  const result = await verifyApiKeyConnection(openAiKey, {
+    fetchImpl: async () => {
+      attempts += 1;
+      if (attempts <= 2) {
+        const timeoutError = new Error('The operation was aborted');
+        timeoutError.name = 'AbortError';
+        throw timeoutError;
+      }
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({ data: [{ id: 'gpt-test' }] }),
+      };
+    },
+  });
+
+  assert.equal(attempts, 3);
+  assert.equal(result.ok, true);
+  assert.equal(result.provider, 'openai');
+  assert.equal(result.sanitizedKey, openAiKey);
+});
+
 test('classifies authentication rejection without retrying it', async () => {
   let attempts = 0;
   const result = await verifyApiKeyConnection(openAiKey, {
