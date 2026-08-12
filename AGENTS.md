@@ -81,6 +81,7 @@ All apps should use this four-file structure for multi-agent development.
 
 ### 9. Changelog Maintenance Protocol (ドキュメント整備義務)
 - **更新単位のREADME同期**: ユーザーに見える挙動、モード、API経路、検証・再試行、制約、または操作手順を変更したら、バージョン番号を変えない修正でも同じ変更単位で `README.md` の該当説明を現行実装へ同期する。ChangeLogだけを更新して本文の仕様を古いまま残してはならない。詳細な照合項目は `docs/project_standards.md` の 3.1 を正本とする。
+- **最高優先・版更新README完全性ゲート**: Nano Banana Pro の版番号を更新するたび、候補のcommit・push・tag・release・deployより前に、正本 `README.md` の「Latest release」「current implementation and latest release」「Current vX.Y.Z Processing Contract」を新バージョンへ更新する。さらに正本README、HF用README、Cドライブ配布コピーREADMEを全文走査し、旧版番号が現行表記として残っていないことを確認する。ChangeLog・過去リリースの履歴だけに存在する旧版番号は許容するが、現行を示す見出し・本文・最新リリース表示に残っていれば失敗である。この照合の出力なしに、README同期済み、候補準備済み、またはリリース完了とは絶対に報告してはならない。
 - **絶対にサボらない**: `README.md` の ChangeLog 更新はAIの重要な責務である。バージョン更新時は、最新の変更履歴を必ず**一番上（降順）**に追記すること。
 - **古い履歴のパージ**: ChangeLogが際限なく肥大化するのを防ぐため、履歴は常に**最新10〜15件程度**を維持し、古いものは容赦なく削除（パージ）すること。
 - **自律的修正**: ユーザーに「履歴が更新されていない」「順序がおかしい」と指摘されるのはエージェントの恥である。作業時に履歴の乱れを発見した場合は、指示されなくとも自律的に整理・整頓を実行すること。

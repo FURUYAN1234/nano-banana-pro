@@ -1,6 +1,6 @@
 # Super FURU AI 4-koma System
 
-> Latest release: **v5.3.4** / 最新リリース: **v5.3.4**
+> Latest release: **v5.3.5** / 最新リリース: **v5.3.5**
 
 > **"To what extent can humans step away from the creative process?"**
 > **「人間は、どこまで制作から降りられるのか？」**
@@ -22,7 +22,7 @@
 This project aims to intentionally exclude humans from the creative process, allowing AI to act as a director and complete everything from brainstorming to composition, direction, and rendering.
 本プロジェクトは、人間をクリエイティブな工程から意図的に排除し、AIがディレクターとして「ネタ出し・構成・演出・作画」のすべてを完結させることを目的としています。
 
-The current implementation and latest release are **v5.3.4**. The product name is **Super FURU AI 4-koma System**; **Nano Banana 2** and **ChatGPT Image 2.0** identify image-generation engine families. / 現在の実装および最新公開版は **v5.3.4** です。製品名は **Super FURU AI 4-koma System** で、**Nano Banana 2** と **ChatGPT Image 2.0** は画像生成エンジン系統の名称です。
+The current implementation and latest release are **v5.3.5**. The product name is **Super FURU AI 4-koma System**; **Nano Banana 2** and **ChatGPT Image 2.0** identify image-generation engine families. / 現在の実装および最新公開版は **v5.3.5** です。製品名は **Super FURU AI 4-koma System** で、**Nano Banana 2** と **ChatGPT Image 2.0** は画像生成エンジン系統の名称です。
 
 Current behavior at a glance / 現行仕様の要点:
 
@@ -279,7 +279,7 @@ To address the extreme complexity of a 5,000+ line monolith, the frontend archit
 
 ## 🔍 Deep Analysis (技術詳解)
 
-### 🧭 Current v5.3.3 Processing Contract / 現行v5.3.3処理仕様
+### 🧭 Current v5.3.5 Processing Contract / 現行v5.3.5処理仕様
 
 | Stage | Input | Processing and validation | Output |
 |:--|:--|:--|:--|
