@@ -1,6 +1,6 @@
 # Super FURU AI 4-koma System
 
-> Latest release: **v5.3.5** / 最新リリース: **v5.3.5**
+> Latest release: **v5.3.6** / 最新リリース: **v5.3.6**
 
 > **"To what extent can humans step away from the creative process?"**
 > **「人間は、どこまで制作から降りられるのか？」**
@@ -22,7 +22,7 @@
 This project aims to intentionally exclude humans from the creative process, allowing AI to act as a director and complete everything from brainstorming to composition, direction, and rendering.
 本プロジェクトは、人間をクリエイティブな工程から意図的に排除し、AIがディレクターとして「ネタ出し・構成・演出・作画」のすべてを完結させることを目的としています。
 
-The current implementation and latest release are **v5.3.5**. The product name is **Super FURU AI 4-koma System**; **Nano Banana 2** and **ChatGPT Image 2.0** identify image-generation engine families. / 現在の実装および最新公開版は **v5.3.5** です。製品名は **Super FURU AI 4-koma System** で、**Nano Banana 2** と **ChatGPT Image 2.0** は画像生成エンジン系統の名称です。
+The current implementation and latest release are **v5.3.6**. The product name is **Super FURU AI 4-koma System**; **Nano Banana 2** and **ChatGPT Image 2.0** identify image-generation engine families. / 現在の実装および最新公開版は **v5.3.6** です。製品名は **Super FURU AI 4-koma System** で、**Nano Banana 2** と **ChatGPT Image 2.0** は画像生成エンジン系統の名称です。
 
 Current behavior at a glance / 現行仕様の要点:
 
@@ -279,7 +279,7 @@ To address the extreme complexity of a 5,000+ line monolith, the frontend archit
 
 ## 🔍 Deep Analysis (技術詳解)
 
-### 🧭 Current v5.3.5 Processing Contract / 現行v5.3.5処理仕様
+### 🧭 Current v5.3.6 Processing Contract / 現行v5.3.6処理仕様
 
 | Stage | Input | Processing and validation | Output |
 |:--|:--|:--|:--|
@@ -659,8 +659,9 @@ The project is intended as a creative-assistance tool. This statement does not r
 
 ## ⚖️ License & Rights / ライセンス・権利関係
 
-No standalone `LICENSE` file is present in this repository at this revision. Before copying, redistributing, or using the code, prompts, or generated outputs commercially, confirm the current repository notice, the selected provider's terms, and applicable law. The app does not itself assign output ownership or waive provider conditions.
-このリビジョンのリポジトリには、単独の `LICENSE` ファイルはありません。コード・プロンプト・生成物を複製、再配布、商用利用する前に、最新のリポジトリ記載、選択したプロバイダーの規約、適用法令を確認してください。本アプリ自体が生成物の権利帰属を決めたり、プロバイダー条件を免除したりするものではありません。
+This project separates program code, original non-code creative content, brand use, generated outputs, and third-party software. FURU's original program source code is provided under the [MIT License](./LICENSE). Only the original non-code material explicitly identified in [LICENSE-CONTENT.md](./LICENSE-CONTENT.md) is released under CC BY-NC-SA 4.0. Brand use is governed by [TRADEMARKS.md](./TRADEMARKS.md), generated outputs by [OUTPUTS.md](./OUTPUTS.md), and direct dependency notices by [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md).
+
+本プロジェクトでは、プログラムコード、独自の非コード創作コンテンツ、名称利用、生成物、第三者ソフトウェアを分離して扱います。FURU が権利を有するプログラム・ソースコードは [MIT License](./LICENSE) で提供します。CC BY-NC-SA 4.0 の対象は、[LICENSE-CONTENT.md](./LICENSE-CONTENT.md) で明示した独自の非コード創作物に限られます。名称利用は [TRADEMARKS.md](./TRADEMARKS.md)、生成物の扱いは [OUTPUTS.md](./OUTPUTS.md)、直接依存関係の通知は [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md) を参照してください。
 
 ---
 
@@ -816,6 +817,10 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 ---
 
 ## 📋 ChangeLog
+
+### v5.3.6 (2026-08-14)
+- **[Docs & Rights]** Added an explicit MIT license for original program source code and separated the policy for original non-code content, brand use, generated outputs, and direct third-party dependencies / 独自プログラム・ソースコードのMIT Licenseを明示し、独自非コード創作物・名称利用・生成物・直接依存関係の方針を分離
+- **[Scope]** Added `LICENSE-CONTENT.md`, `TRADEMARKS.md`, `OUTPUTS.md`, and `THIRD_PARTY_NOTICES.md`; this release does not change generation logic, API-key handling, provider selection, or image-generation behavior / 上記の権利関係文書を追加。本リリースは生成ロジック、APIキー、プロバイダー選択、画像生成動作を変更しません
 
 ### v5.3.5 (2026-08-12)
 - **[Fix & UX]** API初回接続、全自動の遅延上書き、肩越しキャスト重複、複合語の誤置換を汎用修正 / Fixed first-submit API connection, stale full-auto overwrites, over-the-shoulder cast duplication, and compound-term rewrites
