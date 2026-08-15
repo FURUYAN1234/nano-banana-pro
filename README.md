@@ -39,7 +39,18 @@ Current behavior at a glance / 現行仕様の要点:
 - **Visible post-image quality failsafe / 可視画像品質フェイルセーフ:** STEP4 saves and displays the first provider image before reviewing anatomy, hand side, prop ownership, functional prop orientation, bubble text, speaker-name leakage, and extra text. A concrete NG triggers only one visible, issue-limited repair candidate. A passing repair replaces the original; if the repair remains NG or its request fails, the saved original image is restored and downstream work continues with a warning. An unverified QA result does not spend another image call. / STEP4は最初のAPI画像を保存・表示してから、解剖学、手の左右、小物の所有、機能面の向き、吹き出し本文、話者名混入、余計な文字を検査します。具体的なNGがある場合だけ、問題箇所に限定した修正版を1回生成します。修正版が合格すれば置換し、修正版もNGまたは取得失敗なら保存済みの元画像へ戻して、警告付きで後続作業を続行します。QA判定不能時は追加の画像API呼び出しを行いません。
 - **Verified provider routes / 検証済みAPI経路:** The current OpenAI route uses `gpt-4.1` as the primary text/vision model and `gpt-image-2` for 1024x1536 high-quality PNG generation. The Gemini route uses `gemini-3.5-flash` as the primary text/vision model and `gemini-3.1-flash-image` for manga image generation. / 現在のOpenAI経路はテキスト・画像認識の第一候補に`gpt-4.1`、1024x1536の高品質PNG生成に`gpt-image-2`を使用します。Gemini経路はテキスト・画像認識の第一候補に`gemini-3.5-flash`、漫画画像生成に`gemini-3.1-flash-image`を使用します。
 - **API preflight without key persistence / API事前確認とキー非保存:** The startup modal verifies provider connectivity before unlocking STEP1. One verified browser-memory session owns the credential; one submit keeps the same input for up to three internal transient attempts with a 45-second per-attempt timeout, so a cold connection does not require a reload or a second paste. Neither the credential nor a bootstrap flag is persisted. / 起動時モーダルでプロバイダー接続を確認してからSTEP1を有効化します。検証済みのブラウザメモリ内セッションだけが認証情報を保持し、1回の送信内で同じ入力を保持したまま、一時失敗を1試行45秒・最大3試行まで内部再試行します。再読み込みや再貼付は不要で、認証情報も初期化フラグも永続化しません。
-- **STEP4 helper boundary / STEP4補助機能の境界:** Generated images can be downloaded as received. The aspect-ratio correction and 2x upscale buttons copy instructions for external image tools; they are not in-app deterministic image processors. / 生成画像は受信した状態で保存できます。アスペクト比補正と2倍アップスケールのボタンは外部画像ツール向けの指示文をコピーする機能であり、アプリ内で画像処理を実行する機能ではありません。
+- **STEP4 helper boundary / STEP4補助機能の境界:** Generated images can be downloaded as received. The aspect-ratio correction and 2x upscale buttons copy instructions for external image tools; they are not in-app deterministic image processors. The MiniMax H3 helper copies a four-panel Reference-to-Video prompt-authoring instruction: attach the generated four-panel manga to an image-capable chat, paste the copied instruction to obtain the English H3 prompt, then connect that same manga as the ComfyUI MiniMax H3 `Reference Image` and paste the result into `Prompt`. / 生成画像は受信した状態で保存できます。アスペクト比補正と2倍アップスケールのボタンは外部画像ツール向けの指示文をコピーする機能であり、アプリ内で画像処理を実行する機能ではありません。MiniMax H3補助は、4コマ漫画を添付した画像対応チャットで英語のH3用プロンプトを作成するための指示文をコピーします。その後、同じ4コマ漫画をComfyUIのMiniMax H3 `Reference Image` に接続し、出力文を `Prompt` に貼り付けて実行します。
+
+### MiniMax H3 ComfyUI Reference-to-Video / 4コマ漫画の動画化補助
+
+STEP4で生成済みの4コマ漫画を、MiniMax H3のReference-to-Video（R2V / Ref2VA）ワークフローへ渡すための補助です。アプリ内で動画を生成・送信しません。ボタンは、画像対応チャットに4コマ漫画を読ませて、ComfyUIへ貼り付ける英語プロンプトを作らせる指示文だけをコピーします。
+
+1. STEP4の「元画像をダウンロード」で、生成済みの4コマ漫画をダウンロードします。
+2. 「MiniMax H3・ComfyUI用プロンプトをコピー」を押し、画像対応チャットに4コマ漫画を添付して、コピーした指示文を貼り付けて送信します。必要なら秒数・縦横比・BGM・演出を同時に指定できます。
+3. チャットから返った英語のMiniMax H3プロンプトをコピーします。元の4コマ漫画と、ここで得た英語プロンプトの組み合わせを変えないでください。
+4. ComfyUIでMiniMax H3 Reference-to-Videoを選択し、同じ4コマ漫画を `Reference Image` に接続します。英語プロンプトを `Prompt` に貼り付けて実行します。
+
+既定では、15秒・16:9・BGMあり・吹き出しを自然な日本語音声とリップシンクへ置換・画面上の吹き出しや字幕などの文字は表示しない・コミカルな演技とカメラワークを強める、という動画化指示になります。チャットで画像が読めない場合は、4コマ漫画を1枚だけ添付し直してください。
 
 ### Functional-surface orientation / 機能面の向き
 
@@ -817,6 +828,9 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 ---
 
 ## 📋 ChangeLog
+
+### v5.3.7 (2026-08-15)
+- **[Fix & UX]** MiniMax H3用のComfyUI動画化補助を追加し、4コマ漫画をReference Imageへ接続する手順をREADMEとSTEP4に明記 / Added a MiniMax H3 ComfyUI video-helper prompt and documented the four-panel Reference Image workflow in README and STEP4
 
 ### v5.3.6 (2026-08-14)
 - **[Docs & Rights]** Added an explicit MIT license for original program source code and separated the policy for original non-code content, brand use, generated outputs, and direct third-party dependencies / 独自プログラム・ソースコードのMIT Licenseを明示し、独自非コード創作物・名称利用・生成物・直接依存関係の方針を分離

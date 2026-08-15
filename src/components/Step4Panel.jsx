@@ -64,6 +64,71 @@ Output:
 Replace the placeholders with the measured pixel values.
 Do not include implementation notes unless an error prevents completion.`;
 
+const MINIMAX_H3_COMFYUI_PROMPT = `You are a prompt writer for the ComfyUI MiniMax H3 Reference-to-Video (R2V / Ref2VA) workflow.
+
+Conversation behavior:
+
+1. If no four-panel manga image is attached in the current request, do not generate an H3 prompt. Reply only in Japanese:
+「4コマ漫画を1枚添付してください。指定がなければ、15秒・16:9・BGMあり・吹き出しは日本語音声に置換・コミカルで演出強め、で作成します。」
+
+2. If the user asks how to use this system, do not generate an H3 prompt. Reply only in Japanese:
+「使い方：
+1. このチャットに4コマ漫画を1枚添付します。
+2. 必要なら、秒数・縦横比・BGM・演出などを指定します。
+3. このAIがMiniMax H3用の完成英語プロンプトを出力します。
+4. 出力された英語プロンプトを、ComfyUIのMiniMax H3 Reference-to-VideoワークフローのPrompt欄へ貼り付けます。
+5. 漫画画像はMiniMax H3 Reference-to-Videoの参照画像として接続して実行します。」
+
+3. When a four-panel manga image is attached, generate the final MiniMax H3 prompt immediately. Do not ask follow-up questions unless the image is unreadable.
+
+Default settings, unless the user explicitly overrides them:
+- duration: 15 seconds
+- aspect ratio: 16:9
+- BGM: enabled
+- replace all speech balloons with natural Japanese voice acting and accurate lip sync
+- no visible speech balloons, subtitles, captions, titles, logos, credits, watermarks, or any other visible text
+- strong comedic acting, camera work, transitions, lighting, sound design, and pacing
+
+Task:
+Convert one supplied Japanese four-panel manga page into one ready-to-paste MiniMax H3 video prompt. Treat the manga page as the single active reference image, <Picture 1>.
+
+Rules:
+- Preserve characters, costumes, props, setting, panel order, and emotional escalation from the manga.
+- Determine panel order from the actual visual layout. For conventional Japanese manga layouts, read top to bottom and right to left within a row, unless the layout clearly indicates another order.
+- Convert the panels into one continuous video that fits the requested duration.
+- Preserve legible dialogue exactly. Put dialogue only inside <d>[Japanese] ...</d>.
+- Assign stable speaker IDs in order of first spoken line: (S1), (S2), and so on.
+- Write all descriptions in English, except dialogue inside <d> tags.
+- Do not add unrelated characters, settings, or plot events.
+- Output only the final H3 prompt. Do not explain it and do not use Markdown fences.
+
+Use exactly this section order:
+
+subject_definitions:
+Define <Picture 1> as the four-panel storyboard reference. Define every main character, important object, setting, and visual style as <Subject N>.
+
+summary:
+Begin with [reference generation] and summarize the target video.
+
+retention_analysis:
+For every <Picture N> and <Subject N>, state where it appears and use one of:
+fully_preserved, partially_preserved, attribute_transfer, weak_reference.
+
+detailed_description:
+Start with one or two English sentences describing the overall visual style.
+Use one shot per manga panel.
+Write [Shot 1] with no timestamp.
+Start later shots with timestamps, such as [Shot 2] At 00:03.500,.
+Make the whole timeline fit exactly within the requested duration.
+For every shot, describe composition, subjects, action, acting, camera, lighting, physical sound, and dialogue.
+Keep all <Subject N> labels and speaker IDs consistent.
+
+overall_soundscape:
+Describe ambience and physical sound effects only.
+
+non_diegetic_music:
+Describe audience-only BGM, including instrumentation, tempo, and dynamic changes. Write N/A only when BGM is explicitly disabled.`;
+
 /**
  * STEP 04: 4コマ漫画生成 ＆ 履歴パネル
  */
@@ -130,6 +195,7 @@ export default function Step4Panel({
 }) {
   const generatedImageExtension = getGeneratedImageExtension(generatedImage);
   const [isUpscalePromptCopied, setIsUpscalePromptCopied] = React.useState(false);
+  const [isMiniMaxPromptCopied, setIsMiniMaxPromptCopied] = React.useState(false);
 
   return (
     <div
@@ -556,6 +622,29 @@ No explanations. No partial results.`;
                             <span style={{ visibility: isUpscalePromptCopied ? 'hidden' : 'visible' }}>📋 画像2倍アップスケールプロンプトをコピー</span>
                             {isUpscalePromptCopied && <span style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>✅ コピー完了</span>}
                           </button>
+                          <div className="mt-3 pt-3 border-t border-violet-500/20">
+                            <p className="text-[11px] text-violet-200/80 leading-relaxed">
+                              🎞️ 生成した4コマ漫画をMiniMax H3で動画化するための、ComfyUI向け英語プロンプト作成指示をコピーします。
+                            </p>
+                            <button
+                              className={`mt-2 ${isMiniMaxPromptCopied ? 'bg-green-600 border-green-500/30' : 'bg-violet-900/70 hover:bg-violet-800/80 border-violet-500/30'} text-white px-3 py-1.5 rounded transition-all inline-flex items-center justify-center gap-1.5 border font-bold active:scale-95`}
+                              style={{ fontSize: '10px', minWidth: '120px', position: 'relative' }}
+                              onClick={() => {
+                                navigator.clipboard.writeText(MINIMAX_H3_COMFYUI_PROMPT);
+                                setIsMiniMaxPromptCopied(true);
+                                setTimeout(() => setIsMiniMaxPromptCopied(false), 2000);
+                              }}
+                            >
+                              <span style={{ visibility: isMiniMaxPromptCopied ? 'hidden' : 'visible' }}>📋 MiniMax H3・ComfyUI用プロンプトをコピー</span>
+                              {isMiniMaxPromptCopied && <span style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>✅ コピー完了</span>}
+                            </button>
+                            <ol className="mt-2 space-y-1 text-[10px] leading-relaxed text-slate-400 list-decimal list-inside">
+                              <li>このボタンで指示文をコピー</li>
+                              <li>生成済みの4コマ漫画をチャットに添付し、コピーした指示文を貼り付けて送信</li>
+                              <li>ComfyUIでMiniMax H3 Reference-to-Videoを選択し、同じ4コマ漫画をReference Imageに接続</li>
+                              <li>出力された英語プロンプトをPrompt欄に貼り付けて実行</li>
+                            </ol>
+                          </div>
                         </div>
                       </div>
                     )}
