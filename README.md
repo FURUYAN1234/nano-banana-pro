@@ -1,6 +1,6 @@
 # Super FURU AI 4-koma System
 
-> Latest release: **v5.3.8** / 最新リリース: **v5.3.8**
+> Latest release: **v5.3.9** / 最新リリース: **v5.3.9**
 
 > **"To what extent can humans step away from the creative process?"**
 > **「人間は、どこまで制作から降りられるのか？」**
@@ -22,7 +22,7 @@
 This project aims to intentionally exclude humans from the creative process, allowing AI to act as a director and complete everything from brainstorming to composition, direction, and rendering.
 本プロジェクトは、人間をクリエイティブな工程から意図的に排除し、AIがディレクターとして「ネタ出し・構成・演出・作画」のすべてを完結させることを目的としています。
 
-The current implementation and latest release are **v5.3.8**. The product name is **Super FURU AI 4-koma System**; **Nano Banana 2** and **ChatGPT Image 2.0** identify image-generation engine families. / 現在の実装および最新公開版は **v5.3.8** です。製品名は **Super FURU AI 4-koma System** で、**Nano Banana 2** と **ChatGPT Image 2.0** は画像生成エンジン系統の名称です。
+The current implementation and latest release are **v5.3.9**. The product name is **Super FURU AI 4-koma System**; **Nano Banana 2** and **ChatGPT Image 2.0** identify image-generation engine families. / 現在の実装および最新公開版は **v5.3.9** です。製品名は **Super FURU AI 4-koma System** で、**Nano Banana 2** と **ChatGPT Image 2.0** は画像生成エンジン系統の名称です。
 
 Current behavior at a glance / 現行仕様の要点:
 
@@ -290,7 +290,7 @@ To address the extreme complexity of a 5,000+ line monolith, the frontend archit
 
 ## 🔍 Deep Analysis (技術詳解)
 
-### 🧭 Current v5.3.8 Processing Contract / 現行v5.3.8処理仕様
+### 🧭 Current v5.3.9 Processing Contract / 現行v5.3.9処理仕様
 
 | Stage | Input | Processing and validation | Output |
 |:--|:--|:--|:--|
@@ -828,6 +828,9 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 ---
 
 ## 📋 ChangeLog
+
+### v5.3.9 (2026-08-16)
+- **[Fix & UX]** MiniMax H3のコピープロンプトをBGM常時再生を必須化する契約へ差し替え / Replaced the MiniMax H3 copied prompt with a continuous mandatory BGM contract
 
 ### v5.3.8 (2026-08-16)
 - **[Fix & UX]** MiniMax H3・ComfyUI用案内を4手順へ更新し、チャットへの漫画添付・送信、出力プロンプトのコピー、画角と秒数の確認を明記 / Updated the MiniMax H3 ComfyUI helper to four steps covering manga attachment, prompt copying, and framing and duration confirmation

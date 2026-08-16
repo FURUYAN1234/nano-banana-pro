@@ -102,32 +102,45 @@ Rules:
 - Do not add unrelated characters, settings, or plot events.
 - Output only the final H3 prompt. Do not explain it and do not use Markdown fences.
 
+BGM enforcement rules:
+
+- When BGM is enabled, whether explicitly requested or enabled by default, treat it as a mandatory continuous audience-only audio layer, not as an optional mood suggestion.
+- The BGM must begin at 00:00.000, continue through the final frame, and remain clearly audible beneath all dialogue, ambience, sound effects, and transitions.
+- Do not allow dialogue, physical sound effects, dramatic pauses, scene transitions, or a final freeze frame to replace, mute, omit, or fully mask the BGM.
+- Briefly lower the BGM during dialogue only when necessary for intelligibility, but keep it perceptibly audible at all times. Do not describe the dialogue as completely foregrounded over the music.
+- In detailed_description, state once before [Shot 1] that a clearly audible continuous non-diegetic BGM is mandatory throughout the full video. In every individual shot, explicitly state that the BGM remains clearly audible and describe that shot’s musical variation.
+- In non_diegetic_music, begin with the exact word “MANDATORY:” whenever BGM is enabled. Explicitly require that the BGM is never absent, silent, muted, or replaced by ambience.
+- Specify concrete instrumentation, approximate BPM or tempo, rhythmic character, and a musical change for every shot. End the video with an audible musical resolution, sting, or sustained ending rather than an unexplained silent cutoff.
+- For comedic manga, prefer a clearly audible upbeat comedic anime score: pizzicato strings, marimba, playful woodwinds, light percussion, and small brass accents, unless the manga’s tone or the user’s instruction calls for another style.
+- Write “N/A” in non_diegetic_music only when the user explicitly disables BGM.
+
 Use exactly this section order:
 
 subject_definitions:
 Define <Picture 1> as the four-panel storyboard reference. Define every main character, important object, setting, and visual style as <Subject N>.
 
 summary:
-Begin with [reference generation] and summarize the target video.
+Begin with [reference generation] and summarize the target video. When BGM is enabled, explicitly state that a clearly audible continuous audience-only BGM plays throughout the entire target video.
 
 retention_analysis:
 For every <Picture N> and <Subject N>, state where it appears and use one of:
 fully_preserved, partially_preserved, attribute_transfer, weak_reference.
 
 detailed_description:
-Start with one or two English sentences describing the overall visual style.
+Start with one or two English sentences describing the overall visual style. Immediately after those style sentences, when BGM is enabled, state that a clearly audible continuous non-diegetic BGM is mandatory from 00:00.000 through the final frame.
 Use one shot per manga panel.
 Write [Shot 1] with no timestamp.
 Start later shots with timestamps, such as [Shot 2] At 00:03.500,.
 Make the whole timeline fit exactly within the requested duration.
-For every shot, describe composition, subjects, action, acting, camera, lighting, physical sound, and dialogue.
+For every shot, describe composition, subjects, action, acting, camera, lighting, physical sound, dialogue, and the continuing clearly audible BGM with its shot-specific musical variation.
 Keep all <Subject N> labels and speaker IDs consistent.
 
 overall_soundscape:
-Describe ambience and physical sound effects only.
+Describe ambience and physical sound effects only. When BGM is enabled, state that ambience and effects remain beneath the dialogue and the clearly audible continuous non-diegetic BGM. Do not include music details here.
 
 non_diegetic_music:
-Describe audience-only BGM, including instrumentation, tempo, and dynamic changes. Write N/A only when BGM is explicitly disabled.`;
+When BGM is enabled, begin with “MANDATORY:” and describe a clearly audible continuous audience-only BGM from 00:00.000 through the final frame. State that it must never be absent, silent, muted, or replaced by ambience. Specify instrumentation, tempo or BPM, rhythm, shot-by-shot dynamic changes, brief dialogue ducking only if necessary, and an audible musical resolution at the end.
+Write N/A only when BGM is explicitly disabled.`;
 
 /**
  * STEP 04: 4コマ漫画生成 ＆ 履歴パネル

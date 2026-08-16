@@ -14,6 +14,14 @@ test('MiniMax H3 helper copies the four-panel Reference-to-Video prompt', () => 
   assert.match(step4PanelSource, /non_diegetic_music:/);
 });
 
+test('MiniMax H3 copied prompt makes enabled BGM continuous and mandatory', () => {
+  assert.match(step4PanelSource, /BGM enforcement rules:/);
+  assert.match(step4PanelSource, /mandatory continuous audience-only audio layer/);
+  assert.match(step4PanelSource, /begin at 00:00\.000, continue through the final frame/);
+  assert.match(step4PanelSource, /begin with the exact word “MANDATORY:”/);
+  assert.match(step4PanelSource, /Write “N\/A” in non_diegetic_music only when the user explicitly disables BGM/);
+});
+
 test('MiniMax H3 helper explains the copy-to-ComfyUI reference workflow', () => {
   assert.match(step4PanelSource, /このボタンで指示文をコピー、同時に生成済みの4コマ漫画をチャットに添付し、送信/);
   assert.match(step4PanelSource, /出力されたプロンプトをコピー/);
