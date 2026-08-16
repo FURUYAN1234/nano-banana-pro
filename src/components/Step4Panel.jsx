@@ -639,10 +639,10 @@ No explanations. No partial results.`;
                               {isMiniMaxPromptCopied && <span style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>✅ コピー完了</span>}
                             </button>
                             <ol className="mt-2 space-y-1 text-[10px] leading-relaxed text-slate-400 list-decimal list-inside">
-                              <li>このボタンで指示文をコピー</li>
-                              <li>生成済みの4コマ漫画をチャットに添付し、コピーした指示文を貼り付けて送信</li>
+                              <li>このボタンで指示文をコピー、同時に生成済みの4コマ漫画をチャットに添付し、送信</li>
+                              <li>出力されたプロンプトをコピー</li>
                               <li>ComfyUIでMiniMax H3 Reference-to-Videoを選択し、同じ4コマ漫画をReference Imageに接続</li>
-                              <li>出力された英語プロンプトをPrompt欄に貼り付けて実行</li>
+                              <li>画角と秒数を確認の上、先ほど出力された英語プロンプトをPrompt欄に貼り付けて実行</li>
                             </ol>
                           </div>
                         </div>

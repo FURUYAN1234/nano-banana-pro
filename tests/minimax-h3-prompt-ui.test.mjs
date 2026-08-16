@@ -15,18 +15,19 @@ test('MiniMax H3 helper copies the four-panel Reference-to-Video prompt', () => 
 });
 
 test('MiniMax H3 helper explains the copy-to-ComfyUI reference workflow', () => {
-  assert.match(step4PanelSource, /このボタンで指示文をコピー/);
-  assert.match(step4PanelSource, /生成済みの4コマ漫画をチャットに添付/);
+  assert.match(step4PanelSource, /このボタンで指示文をコピー、同時に生成済みの4コマ漫画をチャットに添付し、送信/);
+  assert.match(step4PanelSource, /出力されたプロンプトをコピー/);
   assert.match(step4PanelSource, /ComfyUIでMiniMax H3 Reference-to-Videoを選択/);
   assert.match(step4PanelSource, /Reference Image/);
-  assert.match(step4PanelSource, /出力された英語プロンプトをPrompt欄に貼り付けて実行/);
+  assert.match(step4PanelSource, /画角と秒数を確認の上、先ほど出力された英語プロンプトをPrompt欄に貼り付けて実行/);
 });
 
 test('README documents the MiniMax H3 Reference-to-Video workflow separately from the in-app image pipeline', () => {
   assert.match(readmeSource, /MiniMax H3.*ComfyUI.*Reference-to-Video/);
   assert.match(readmeSource, /生成済みの4コマ漫画をダウンロード/);
-  assert.match(readmeSource, /画像対応チャットに4コマ漫画を添付/);
+  assert.match(readmeSource, /指示文をコピーし、同時に画像対応チャットへ4コマ漫画を添付して送信/);
+  assert.match(readmeSource, /出力された英語のMiniMax H3プロンプトをコピー/);
   assert.match(readmeSource, /Reference Image/);
-  assert.match(readmeSource, /Prompt.*貼り付けて実行/);
+  assert.match(readmeSource, /画角と秒数を確認してから、英語プロンプトを `Prompt` に貼り付けて実行/);
   assert.match(readmeSource, /アプリ内で動画を生成・送信しません/);
 });
