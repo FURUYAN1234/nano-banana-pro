@@ -1,6 +1,6 @@
 # Super FURU AI 4-koma System
 
-> Latest release: **v5.4.3** / 最新リリース: **v5.4.3**
+> Latest release: **v5.4.4** / 最新リリース: **v5.4.4**
 
 > **"To what extent can humans step away from the creative process?"**
 > **「人間は、どこまで制作から降りられるのか？」**
@@ -22,7 +22,7 @@
 This project aims to intentionally exclude humans from the creative process, allowing AI to act as a director and complete everything from brainstorming to composition, direction, and rendering.
 本プロジェクトは、人間をクリエイティブな工程から意図的に排除し、AIがディレクターとして「ネタ出し・構成・演出・作画」のすべてを完結させることを目的としています。
 
-The current implementation and latest release are **v5.4.3**. The product name is **Super FURU AI 4-koma System**; **Nano Banana 2** and **ChatGPT Image 2.0** identify image-generation engine families. / 現在の実装および最新公開版は **v5.4.3** です。製品名は **Super FURU AI 4-koma System** で、**Nano Banana 2** と **ChatGPT Image 2.0** は画像生成エンジン系統の名称です。
+The current implementation and latest release are **v5.4.4**. The product name is **Super FURU AI 4-koma System**; **Nano Banana 2** and **ChatGPT Image 2.0** identify image-generation engine families. / 現在の実装および最新公開版は **v5.4.4** です。製品名は **Super FURU AI 4-koma System** で、**Nano Banana 2** と **ChatGPT Image 2.0** は画像生成エンジン系統の名称です。
 
 Current behavior at a glance / 現行仕様の要点:
 
@@ -50,9 +50,9 @@ STEP4で生成済みの4コマ漫画を、MiniMax H3のReference-to-Video（R2V 
 3. チャットから出力された英語のMiniMax H3プロンプトをコピーします。元の4コマ漫画と、ここで得た英語プロンプトの組み合わせを変えないでください。
 4. ComfyUIでMiniMax H3 Reference-to-Videoを選択し、同じ4コマ漫画を `Reference Image` に接続します。画角と秒数を確認してから、英語プロンプトを `Prompt` に貼り付けて実行します。
 
-既定では、15秒・16:9・BGMあり・吹き出しを自然な日本語音声とリップシンクへ置換・画面上の吹き出しや字幕などの文字は表示しない・コミカルな演技とカメラワークを強める、という動画化指示になります。秒単位のカット・カメラ移動を開始・中間・終了の状態まで英語プロンプトへ展開し、実際にカットをまたぐ同一台詞だけを `scenetrans` で分割します。漢字の読み間違いを減らすため、台詞の原文とは別にひらがな・カタカナだけの読みガイドを話者ごとに付け、原文は表示・意味の固定、読みガイドは発話の固定に使います。躍動感は場面に合うアニメーション原則を1〜3個だけ選択して加え、静かな場面や原作と衝突する過剰な動きは加えません。チャットで画像が読めない場合は、4コマ漫画を1枚だけ添付し直してください。
+既定では、15秒・16:9・BGMあり・吹き出しを自然な日本語音声とリップシンクへ置換・吹き出しの輪郭や尻尾も映像から除去・コミカルな演技とカメラワークを強める、という動画化指示になります。各コマには、静止を指定されない限り、動作に沿う小さく明確なカメラ移動を一つ入れます。秒単位のカット・カメラ移動を開始・中間・終了の状態まで英語プロンプトへ展開し、実際にカットをまたぐ同一台詞だけを `scenetrans` で分割します。漢字の読み間違いを減らすため、H3へ渡す台詞そのものを確認済みのひらがな・カタカナだけで記述し、漢字の原文を `<d>` タグへ渡しません。チャットで画像が読めない場合は、4コマ漫画を1枚だけ添付し直してください。
 
-作品として公開する動画には、別の「MiniMax H3・作品公開用プロンプトをコピー」を使えます。これは冒頭のタイトルロゴと、終端の `ネームから～` / `note.com/happy_duck780` だけを画面上の文字として許可する専用指示です。外部PC・別ブラウザでも使える固定コピー文で、添付した4コマ画像からOCRでタイトルだけを取得します。タイトルは枠外にあってもOCR対象ですが、枠外文字を物語素材として使いません。4コマの各コマ内だけを物語・人物・台詞・動作・舞台の動画素材として扱います。OCRでタイトルを確実に読めない場合は、動画用プロンプトを作らずタイトルだけを確認します。タイトルの色・書体・表示位置、終端リンクの表示位置は、AIが各作品の人物・吹き出し・重要な動き・余白を見て選びます。文字色は背景と十分なコントラストを取らせ、必要なときだけ細い縁取り・影・小さな半透明敷き板で判読性を確保します。途中に余計な字幕・ロゴ・文字を出さないことを必須にします。
+「MiniMax H3・ComfyUI用プロンプトをコピー」は、冒頭のタイトルロゴと終端の `ネームから全自動の自律式統合AI漫画システム :https://note.com/happy_duck780` だけを実際に読める画面文字として許可する、作品公開用の指示も含んだ一つのコピー文です。外部PC・別ブラウザでも使え、添付した4コマ画像からOCRでタイトルだけを取得します。タイトルは枠外にあってもOCR対象ですが、枠外文字を物語素材として使いません。4コマの各コマ内だけを物語・人物・台詞・動作・舞台の動画素材として扱います。OCRでタイトルを確実に読めない場合は、動画用プロンプトを作らずタイトルだけを確認します。通常の日本式複数列レイアウトでは上から下・同じ段では右から左のコマ順を明記させます。タイトルは00:00.000から00:01.600だけで完全にフェードアウトし、その後は1ピクセルも残させません。終端表示は00:13.200から00:15.000だけです。背景の看板・端末・印刷物は自然な文字らしい質感を残せますが、実際の文字・数字・URLとして読める形にはしません。文字色は背景と十分なコントラストを取らせ、必要なときだけ細い縁取り・影・小さな半透明敷き板で判読性を確保します。外部チャットによるURLのリンク化を避けるため、H3本文にはURLを生で書かず、文字単位のURLトークンを空白なしで連結して終端一行を描画する指示を入れます。
 
 ### Functional-surface orientation / 機能面の向き
 
@@ -830,6 +830,9 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 ---
 
 ## 📋 ChangeLog
+
+### v5.4.4 (2026-08-17)
+- **[Fix & UX]** MiniMax H3の単一コピー文を、作品公開用タイトル・終端表記、吹き出し形状の完全除去、かなのみの日本語音声、各カットの明確なカメラ移動へ統合 / Unified the single MiniMax H3 copy prompt with publication title and ending credit, complete balloon-shape removal, kana-only Japanese speech, and clear camera movement in every shot
 
 ### v5.4.3 (2026-08-17)
 - **[Fix & UX]** MiniMax H3作品公開用コピーを追加し、添付4コマからのタイトルOCR、枠外非素材化、冒頭タイトルと終端クレジット表示を指定 / Added a MiniMax H3 publication copy prompt with title OCR, panel-only story material, an opening title, and ending credit

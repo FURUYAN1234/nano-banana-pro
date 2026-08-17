@@ -85,28 +85,28 @@ Default settings, unless the user explicitly overrides them:
 - duration: 15 seconds
 - aspect ratio: 16:9
 - BGM: enabled
-- replace all speech balloons with natural Japanese voice acting and accurate lip sync
-- no visible speech balloons, subtitles, captions, titles, logos, credits, watermarks, or any other visible text
-- strong comedic acting, camera work, transitions, lighting, sound design, and pacing
+- replace all speech balloons with natural Japanese voice acting and accurate lip sync; remove every original speech-balloon shape, border, tail, and white interior from the moving footage
+- the only readable textual elements in the final video are the opening title and ending credit production graphics; environmental signage may remain only as background-only visual texture that cannot be read as actual words, Japanese characters, numbers, or URLs
+- strong comedic acting, purposeful camera movement, transitions, lighting, sound design, and pacing
 
 Task:
 Convert one supplied Japanese four-panel manga page into one ready-to-paste MiniMax H3 video prompt. Treat the manga page as the single active reference image, <Picture 1>.
 
 Rules:
 - Preserve characters, costumes, props, setting, panel order, and emotional escalation from the manga.
-- Determine panel order from the actual visual layout. For conventional Japanese manga layouts, read top to bottom and right to left within a row, unless the layout clearly indicates another order.
+- Determine panel order from the actual visual layout. For conventional Japanese manga layouts, read top to bottom and right to left within each row, unless the layout clearly indicates another order. When describing panel order in subject_definitions or summary, explicitly keep that same order. Never reduce this to “top-to-bottom” only or reverse a row.
 - Convert the panels into one continuous video that fits the requested duration.
-- Preserve legible dialogue exactly. Put dialogue only inside <d>[Japanese] ...</d>.
+- Preserve the source dialogue's spoken meaning, order, and punctuation, but supply it to the H3 speech engine only in its verified kana reading inside <d>[Japanese] ...</d>.
 - Assign stable speaker IDs in order of first spoken line: (S1), (S2), and so on.
 - Write all descriptions in English, except dialogue inside <d> tags.
 - Do not add unrelated characters, settings, or plot events.
-- Output only the final H3 prompt. Do not explain it and do not use Markdown fences.
+- Output only the final ready-to-paste H3 prompt in plain text. Do not explain it and do not use Markdown fences. Do not use Markdown link syntax or auto-links.
 
 Japanese dialogue reading rules:
 
-- For every legible spoken Japanese line, preserve the original dialogue exactly inside <d>[Japanese] ...</d>. Do not translate, paraphrase, normalize, censor, omit, reorder, or merge its words.
-- Directly before every <d> tag, identify the stable speaker ID and provide a kana-only reading guide in quotation marks for that exact line. The guide must use hiragana and katakana only: no kanji and no romaji.
-- The spoken pronunciation must follow the kana reading guide, including compound-word readings, names, particles, long vowels, small kana, voiced sounds, and natural Japanese word boundaries. The <d> tag remains the exact dialogue transcript; the kana guide controls how it is read aloud.
+- All Japanese dialogue supplied to MiniMax H3 must be kana-only. For every legible spoken Japanese line, first determine its exact spoken wording and then put that verified hiragana/katakana reading inside <d>[Japanese] ...</d>. Do not put the original kanji transcript inside <d> tags or elsewhere in the final H3 prompt.
+- Directly before every <d> tag, identify the stable speaker ID and repeat the same kana-only dialogue in quotation marks. Both copies must use hiragana and katakana only: no kanji and no romaji.
+- The spoken pronunciation must follow the kana-only dialogue exactly, including compound-word readings, names, particles, long vowels, small kana, voiced sounds, natural Japanese word boundaries, and punctuation pauses.
 - Never guess, change, omit, or merge a reading. If a reading cannot be determined reliably from the manga and its story context, reply only in Japanese with a concise request for that line's reading instead of producing a potentially wrong H3 prompt.
 - Keep one active speaker at a time unless the manga explicitly requires a simultaneous group line. Describe each speaker's age-appropriate native Japanese voice, emotional delivery, and visible lip sync immediately next to that speaker's dialogue.
 
@@ -116,6 +116,7 @@ Animation performance rules:
 - Select only one to three compatible principles per shot from anticipation, slow-in/slow-out, arcs, follow-through, secondary action, staging, clear pose-to-pose acting, or restrained exaggeration.
 - Make the chosen principles physically visible through the relevant body, face, hair, clothing, prop, background, and camera behavior; keep the primary action readable and do not let secondary action obscure dialogue or the decisive gag.
 - Do not add cartoon exaggeration, squash-and-stretch, or extra motion when it conflicts with the reference manga, the requested tone, a quiet beat, or a physically grounded action.
+- Unless the user explicitly asks for a still shot, every shot must include one modest but clearly visible physically coherent camera trajectory plus visible primary acting. Do not write a static-hold instruction, “same stable composition,” or “no camera move” for the default dynamic-comedy mode.
 
 Temporal direction rewrite rules:
 
@@ -123,7 +124,7 @@ Temporal direction rewrite rules:
 - Make the shot boundaries and total timeline add up exactly to the requested duration. Use \`At 00:SS.mmm\` at each later-shot boundary and keep every stated duration physically possible within the total runtime.
 - For every requested camera move, specify the start, midpoint, and end state: viewpoint or angle, framing, subject distance, camera path, subject placement, and the exact timestamps for the change. For example, an arc/tracking request must state the opening view, the midpoint angle, the ending view, the constant or intentionally changing framing, and the physical parallax.
 - Keep motion continuous within a shot unless the plan explicitly calls for a cut. Preserve a stable horizon, focal length, and subject identity through the move; forbid unrequested zooms, reversals, freezes, duplicated limbs, or background warping.
-- Do not invent a camera move when neither the manga nor the user requests one. In that case, use only the camera changes visually established by the reference panels and describe simple, physically coherent transitions.
+- In the default dynamic-comedy mode, choose a simple camera move that supports the panel action: a short push-in, lateral track, vertical crane, or gentle arc. Do not use a locked camera unless the user explicitly requests one; do not use extreme zooms, reversals, or unstable camera shake.
 - Only when one spoken line genuinely continues across a planned shot boundary, split it at the exact cut using \`<d>[Japanese] first segment <scenetrans></d>\` before the cut and \`<d>[Japanese] <scenetrans>second segment</d>\` after it. Keep the same speaker ID, natural Japanese phrase boundary, continuous voice, and lip sync across the cut.
 - Do not split ordinary separate speech balloons into a fake cross-cut line. Do not use \`<scenetrans>\` for a line that begins and ends within one shot.
 
@@ -165,23 +166,24 @@ Describe ambience and physical sound effects only. When BGM is enabled, state th
 
 non_diegetic_music:
 When BGM is enabled, begin with “MANDATORY:” and describe a clearly audible continuous audience-only BGM from 00:00.000 through the final frame. State that it must never be absent, silent, muted, or replaced by ambience. Specify instrumentation, tempo or BPM, rhythm, shot-by-shot dynamic changes, brief dialogue ducking only if necessary, and an audible musical resolution at the end.
-Write N/A only when BGM is explicitly disabled.`;
-
-const MINIMAX_H3_PUBLICATION_PROMPT = `${MINIMAX_H3_COMFYUI_PROMPT}
+Write N/A only when BGM is explicitly disabled.
 
 Publication graphics override:
 
-This is an explicit exception to the generic no-visible-text rule above. For this publication-ready version, there are only two permitted visible-text elements in the entire video: the opening title card and the ending credit. Do not show any other titles, subtitles, captions, speech balloons, logos, watermarks, or visible text.
+This is an explicit exception to the generic no-visible-text rule above. For this publication-ready version, the only readable textual elements in the entire video are the opening title and the ending credit. Do not show subtitles, captions, speech balloons, logos, watermarks, or any other readable foreground text. Background signs, kiosk screens, placards, labels, and printed props may retain natural-looking text-like texture only when it is too small, blurred, distorted, or abstract to read as actual letters, Japanese words, numbers, or URLs.
 
 1. Perform OCR only to identify the four-panel manga title from the attached image. The title may be outside the panel grid, but it is not video scene material. Use the OCR title exactly as read. Do not invent a title. If OCR cannot read the title reliably, reply only in Japanese with a concise request for the title and do not generate the H3 prompt. Do not treat any text outside manga panels as a video source. The four manga panels alone provide the story, characters, dialogue, action, setting, and visual reference; the OCR title is a separate opening-only production graphic.
 
-2. In the final H3 prompt, add an opening title card from 00:00.000 through approximately 00:01.600 of a 15-second video. Display the exact title only once as a small, tasteful title logo in the visually quietest corner. Choose the corner autonomously after analyzing every panel, and keep a safe margin from faces, hands, speech balloons, decisive props, panel borders, and the first action. Choose the title's type weight, color, outline, subtle shadow, and restrained entrance animation to fit the manga's genre, palette, and emotional tone. Maintain strong contrast against its local background; if color alone is insufficient, add a thin outline, soft shadow, or minimal translucent backing without making a large label. The title must remain fully legible, then fade out completely by approximately 00:01.600. It must not behave like a subtitle or cover the story.
+2. In the final H3 prompt, add an opening title card only from 00:00.000 through 00:01.600 of a 15-second video. Display the exact title once as a small, tasteful title logo in the visually quietest corner. Choose the corner autonomously after analyzing every panel, and keep a safe margin from faces, hands, speech balloons, decisive props, panel borders, and the first action. Choose the title's type weight, color, outline, subtle shadow, and restrained entrance animation to fit the manga's genre, palette, and emotional tone. Maintain strong contrast against its local background; if color alone is insufficient, add a thin outline, soft shadow, or minimal translucent backing without making a large label. The title must fade out completely by 00:01.600. No title pixels may remain at or after 00:01.600. It must not behave like a subtitle or cover the story.
 
-3. From after the title fade through the ending credit, show no visible text at all. Preserve the normal H3 dialogue, reading-guide, BGM, timing, and animation rules above; spoken dialogue remains audio-only.
+3. From 00:01.600 through 00:13.200, show no readable foreground text at all: no title, ending credit, subtitles, captions, speech balloons, logos, watermarks, or text overlays. Remove every original speech-balloon shape, border, tail, and white interior; replace those regions with coherent scene background, lighting, or environmental detail. Preserve the normal H3 dialogue, kana-only speech, BGM, timing, and animation rules above; spoken dialogue remains audio-only.
 
-4. In the final approximately 1.800 seconds, add the ending credit only once in the visually quietest corner. Choose its exact screen position autonomously per video, avoiding faces, dialogue, action, and panel borders. Maintain strong contrast against its local background with an adaptive text color and, only when necessary, a thin outline, soft shadow, or minimal translucent backing. Fade the ending credit in gently, keep it compact and fully readable, then fade it out with the video. Render these two lines exactly, with no extra punctuation or text:
-ネームから～
-note.com/happy_duck780
+4. In a 15-second video, add the ending credit only from exactly 00:13.200 through 00:15.000, once in the visually quietest corner. Do not show the ending credit before 00:13.200, including anywhere earlier in the final story shot. Choose its exact screen position autonomously per video, avoiding faces, dialogue, action, and panel borders. Maintain strong contrast against its local background with an adaptive text color and, only when necessary, a thin outline, soft shadow, or minimal translucent backing. Fade the ending credit in gently from 00:13.200 to 00:13.450, keep it compact and fully readable, then fade it out from 00:14.720 through 00:15.000.
+
+Do not emit the ending credit as a literal URL in the authoring response, because chat renderers can transform or escape URLs. Instead, write this exact render instruction in the final H3 prompt and make MiniMax H3 perform the assembly at video render time:
+- Literal prefix (exact, including the ASCII space before the colon): ネームから全自動の自律式統合AI漫画システム :
+- URL character tokens (concatenate with no spaces): h t t p s : / / n o t e . c o m / h a p p y _ d u c k 7 8 0
+- Render the visible ending credit by concatenating that prefix and those URL character tokens, with no spaces, line breaks, brackets, backslashes, markup, or added characters. The character-token instruction itself is the complete credit specification; do not restate, spell out, or independently rewrite the assembled line anywhere else in the authoring response.
 
 5. State the exact opening title card and ending-credit timing, corner-placement rationale, title treatment, and fade behavior in detailed_description. The title and ending credit are production graphics, not dialogue: never put either inside <d> tags and never ask the characters to speak them.`;
 
@@ -252,7 +254,6 @@ export default function Step4Panel({
   const generatedImageExtension = getGeneratedImageExtension(generatedImage);
   const [isUpscalePromptCopied, setIsUpscalePromptCopied] = React.useState(false);
   const [isMiniMaxPromptCopied, setIsMiniMaxPromptCopied] = React.useState(false);
-  const [isMiniMaxPublicationPromptCopied, setIsMiniMaxPublicationPromptCopied] = React.useState(false);
 
   return (
     <div
@@ -704,23 +705,6 @@ No explanations. No partial results.`;
                               <li>ComfyUIでMiniMax H3 Reference-to-Videoを選択し、同じ4コマ漫画をReference Imageに接続</li>
                               <li>画角と秒数を確認の上、先ほど出力された英語プロンプトをPrompt欄に貼り付けて実行</li>
                             </ol>
-                            <div className="mt-3 pt-3 border-t border-violet-500/20">
-                              <p className="text-[11px] text-violet-200/80 leading-relaxed">
-                                ✨ 作品公開用：冒頭のタイトルロゴと、終端の「ネームから～ / note.com/happy_duck780」を作品に合わせた空きコーナーへ表示する動画用です。
-                              </p>
-                              <button
-                                className={`mt-2 ${isMiniMaxPublicationPromptCopied ? 'bg-green-600 border-green-500/30' : 'bg-fuchsia-900/70 hover:bg-fuchsia-800/80 border-fuchsia-500/30'} text-white px-3 py-1.5 rounded transition-all inline-flex items-center justify-center gap-1.5 border font-bold active:scale-95`}
-                                style={{ fontSize: '10px', minWidth: '120px', position: 'relative' }}
-                                onClick={() => {
-                                  navigator.clipboard.writeText(MINIMAX_H3_PUBLICATION_PROMPT);
-                                  setIsMiniMaxPublicationPromptCopied(true);
-                                  setTimeout(() => setIsMiniMaxPublicationPromptCopied(false), 2000);
-                                }}
-                              >
-                                <span style={{ visibility: isMiniMaxPublicationPromptCopied ? 'hidden' : 'visible' }}>📋 MiniMax H3・作品公開用プロンプトをコピー</span>
-                                {isMiniMaxPublicationPromptCopied && <span style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>✅ コピー完了</span>}
-                              </button>
-                            </div>
                           </div>
                         </div>
                       </div>
