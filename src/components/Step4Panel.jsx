@@ -86,7 +86,7 @@ Default settings, unless the user explicitly overrides them:
 - aspect ratio: 16:9
 - BGM: enabled
 - replace all speech balloons with natural Japanese voice acting and accurate lip sync; remove every original speech-balloon shape, border, tail, and white interior from the moving footage
-- the only readable textual elements in the final video are the opening title and ending credit production graphics; environmental signage may remain only as background-only visual texture that cannot be read as actual words, Japanese characters, numbers, or URLs
+- the only readable foreground textual elements in the final video are the opening title, dialogue captions, and ending credit production graphics; environmental signage may remain only as background-only visual texture that cannot be read as actual words, Japanese characters, numbers, or URLs
 - strong comedic acting, purposeful camera movement, transitions, lighting, sound design, and pacing
 
 Task:
@@ -96,19 +96,29 @@ Rules:
 - Preserve characters, costumes, props, setting, panel order, and emotional escalation from the manga.
 - Determine panel order from the actual visual layout. For conventional Japanese manga layouts, read top to bottom and right to left within each row, unless the layout clearly indicates another order. When describing panel order in subject_definitions or summary, explicitly keep that same order. Never reduce this to “top-to-bottom” only or reverse a row.
 - Convert the panels into one continuous video that fits the requested duration.
-- Preserve the source dialogue's spoken meaning, order, and punctuation, but supply it to the H3 speech engine only in its verified kana reading inside <d>[Japanese] ...</d>.
+- Preserve the source dialogue's spoken meaning, order, and punctuation. Supply it to the H3 speech engine only in its verified kana reading inside <d>[Japanese] ...</d>, and preserve the original Japanese source dialogue separately as the exact caption string.
 - Assign stable speaker IDs in order of first spoken line: (S1), (S2), and so on.
-- Write all descriptions in English, except dialogue inside <d> tags.
+- Write all descriptions in English, except the kana-only dialogue inside <d> tags and the original Japanese source dialogue inside caption_text fields.
 - Do not add unrelated characters, settings, or plot events.
 - Output only the final ready-to-paste H3 prompt in plain text. Do not explain it and do not use Markdown fences. Do not use Markdown link syntax or auto-links.
 
 Japanese dialogue reading rules:
 
-- All Japanese dialogue supplied to MiniMax H3 must be kana-only. For every legible spoken Japanese line, first determine its exact spoken wording and then put that verified hiragana/katakana reading inside <d>[Japanese] ...</d>. Do not put the original kanji transcript inside <d> tags or elsewhere in the final H3 prompt.
+- All Japanese dialogue supplied to MiniMax H3 must be kana-only. For every legible spoken Japanese line, first determine its exact spoken wording and then put that verified hiragana/katakana reading inside <d>[Japanese] ...</d>. Do not put the original kanji transcript inside <d> tags; use it only in the matching caption_text field below.
 - Directly before every <d> tag, identify the stable speaker ID and repeat the same kana-only dialogue in quotation marks. Both copies must use hiragana and katakana only: no kanji and no romaji.
 - The spoken pronunciation must follow the kana-only dialogue exactly, including compound-word readings, names, particles, long vowels, small kana, voiced sounds, natural Japanese word boundaries, and punctuation pauses.
 - Never guess, change, omit, or merge a reading. If a reading cannot be determined reliably from the manga and its story context, reply only in Japanese with a concise request for that line's reading instead of producing a potentially wrong H3 prompt.
 - Keep one active speaker at a time unless the manga explicitly requires a simultaneous group line. Describe each speaker's age-appropriate native Japanese voice, emotional delivery, and visible lip sync immediately next to that speaker's dialogue.
+
+Japanese dialogue caption rules:
+
+- For every legible spoken Japanese line, preserve the original Japanese source dialogue as the exact caption string. This source text is separate from the kana-only H3 speech input.
+- Immediately beside the matching speaker ID and <d>[Japanese] kana-only reading</d> line, write caption_text: 「exact original Japanese source dialogue」 once. Keep the source punctuation and quotation marks exactly as read from the manga.
+- Do not transcribe, paraphrase, normalize, omit, merge, translate, phoneticize, or invent caption text. If a source dialogue line is not legible, reply only in Japanese with a concise request for that exact line instead of generating a potentially wrong H3 prompt.
+- Reserve the bottom-center caption safe area for dialogue captions throughout the video. The opening title and ending credit must never occupy or overlap that caption safe area, even when they are visible at the same time as a spoken line.
+- For each line, render one clean, bold Japanese sans-serif bottom-center open caption using its caption_text. It must begin exactly when that line begins and disappear when that line ends, following the mapped shot timestamps and matching lip sync. A genuinely cut-spanning line using <scenetrans> keeps one unbroken caption_text active across that cut.
+- Maintain strong local contrast for every dialogue caption against its changing background. Caption contrast may use a thin outline, soft shadow, or minimal translucent backing only when needed; keep that treatment compact and avoid covering faces, hands, decisive props, or panel borders.
+- Do not make karaoke, word-by-word, phonetic, speaker-name, repeated, or duplicate captions. Do not add captions for narration, sound effects, title, ending credit, signs, props, or any text that is not an audible dialogue line.
 
 Animation performance rules:
 
@@ -170,15 +180,15 @@ Write N/A only when BGM is explicitly disabled.
 
 Publication graphics override:
 
-This is an explicit exception to the generic no-visible-text rule above. For this publication-ready version, the only readable textual elements in the entire video are the opening title and the ending credit. Do not show subtitles, captions, speech balloons, logos, watermarks, or any other readable foreground text. Background signs, kiosk screens, placards, labels, and printed props may retain natural-looking text-like texture only when it is too small, blurred, distorted, or abstract to read as actual letters, Japanese words, numbers, or URLs.
+This is an explicit exception to the generic no-visible-text rule above. For this publication-ready version, the only readable foreground textual elements in the entire video are the opening title, dialogue captions, and ending credit. Do not show speech balloons, logos, watermarks, labels, signs, speaker names, captions for non-dialogue text, or any other readable foreground text. Background signs, kiosk screens, placards, labels, and printed props may retain natural-looking text-like texture only when it is too small, blurred, distorted, or abstract to read as actual letters, Japanese words, numbers, or URLs.
 
 1. Perform OCR only to identify the four-panel manga title from the attached image. The title may be outside the panel grid, but it is not video scene material. Use the OCR title exactly as read. Do not invent a title. If OCR cannot read the title reliably, reply only in Japanese with a concise request for the title and do not generate the H3 prompt. Do not treat any text outside manga panels as a video source. The four manga panels alone provide the story, characters, dialogue, action, setting, and visual reference; the OCR title is a separate opening-only production graphic.
 
-2. In the final H3 prompt, add an opening title card only from 00:00.000 through 00:01.600 of a 15-second video. Display the exact title once as a small, tasteful title logo in the visually quietest corner. Choose the corner autonomously after analyzing every panel, and keep a safe margin from faces, hands, speech balloons, decisive props, panel borders, and the first action. Choose the title's type weight, color, outline, subtle shadow, and restrained entrance animation to fit the manga's genre, palette, and emotional tone. Maintain strong contrast against its local background; if color alone is insufficient, add a thin outline, soft shadow, or minimal translucent backing without making a large label. The title must fade out completely by 00:01.600. No title pixels may remain at or after 00:01.600. It must not behave like a subtitle or cover the story.
+2. In the final H3 prompt, add an opening title card only from 00:00.000 through 00:01.600 of a 15-second video. Display the exact title once as a small, tasteful title logo in the visually quietest corner. Choose the corner autonomously after analyzing every panel, and keep a safe margin from faces, hands, speech balloons, decisive props, panel borders, the first action, and the reserved bottom-center caption safe area. Choose the title's type weight, color, outline, subtle shadow, and restrained entrance animation to fit the manga's genre, palette, and emotional tone. Maintain strong contrast against its local background; if color alone is insufficient, add a thin outline, soft shadow, or minimal translucent backing without making a large label. The title must fade out completely by 00:01.600. No title pixels may remain at or after 00:01.600. It must not behave like a subtitle or cover the story.
 
-3. From 00:01.600 through 00:13.200, show no readable foreground text at all: no title, ending credit, subtitles, captions, speech balloons, logos, watermarks, or text overlays. Remove every original speech-balloon shape, border, tail, and white interior; replace those regions with coherent scene background, lighting, or environmental detail. Preserve the normal H3 dialogue, kana-only speech, BGM, timing, and animation rules above; spoken dialogue remains audio-only.
+3. From 00:01.600 through 00:13.200, show no readable foreground text except the exact dialogue captions mapped to audible spoken lines: no title, ending credit, speech balloons, logos, watermarks, speaker names, captions for non-dialogue text, or other overlays. Every dialogue caption must use its caption_text verbatim, remain bottom-center, begin exactly when that line begins, and disappear when that line ends. Remove every original speech-balloon shape, border, tail, and white interior; replace those regions with coherent scene background, lighting, or environmental detail. Preserve the normal H3 dialogue, kana-only speech, BGM, timing, and animation rules above.
 
-4. In a 15-second video, add the ending credit only from exactly 00:13.200 through 00:15.000, once in the visually quietest corner. Do not show the ending credit before 00:13.200, including anywhere earlier in the final story shot. Choose its exact screen position autonomously per video, avoiding faces, dialogue, action, and panel borders. Maintain strong contrast against its local background with an adaptive text color and, only when necessary, a thin outline, soft shadow, or minimal translucent backing. Fade the ending credit in gently from 00:13.200 to 00:13.450, keep it compact and fully readable, then fade it out from 00:14.720 through 00:15.000.
+4. In a 15-second video, add the ending credit only from exactly 00:13.200 through 00:15.000, once in the visually quietest corner. Do not show the ending credit before 00:13.200, including anywhere earlier in the final story shot. Choose its exact screen position autonomously per video, avoiding faces, dialogue, action, panel borders, and the reserved bottom-center caption safe area; it must never overlap a dialogue caption. Maintain strong contrast against its local background with an adaptive text color and, only when necessary, a thin outline, soft shadow, or minimal translucent backing. Fade the ending credit in gently from 00:13.200 to 00:13.450, keep it compact and fully readable, then fade it out from 00:14.720 through 00:15.000.
 
 Do not emit the ending credit as a literal URL in the authoring response, because chat renderers can transform or escape URLs. Instead, write this exact render instruction in the final H3 prompt and make MiniMax H3 perform the assembly at video render time:
 - Literal prefix (exact, including the ASCII space before the colon): ネームから全自動の自律式統合AI漫画システム :
@@ -686,6 +696,9 @@ No explanations. No partial results.`;
                             </p>
                             <p className="mt-1 text-[10px] text-violet-100/70 leading-relaxed">
                               デフォルト仕様：15秒・16:9・BGMあり・日本語音声・標準の躍動演出。秒数・画角・BGM・演出は個別指定があればそちらを優先します。
+                            </p>
+                            <p className="mt-1 text-[10px] text-violet-100/70 leading-relaxed">
+                              字幕は発話に合わせて画面下中央に表示し、元の吹き出しは映像から除去します。
                             </p>
                             <button
                               className={`mt-2 ${isMiniMaxPromptCopied ? 'bg-green-600 border-green-500/30' : 'bg-violet-900/70 hover:bg-violet-800/80 border-violet-500/30'} text-white px-3 py-1.5 rounded transition-all inline-flex items-center justify-center gap-1.5 border font-bold active:scale-95`}

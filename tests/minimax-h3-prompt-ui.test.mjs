@@ -73,7 +73,7 @@ test('the single MiniMax H3 helper includes publication graphics without a secon
   assert.match(step4PanelSource, /Publication graphics override/);
   assert.match(step4PanelSource, /opening title card/);
   assert.match(step4PanelSource, /fade out completely/);
-  assert.match(step4PanelSource, /only readable textual elements in the entire video are the opening title and the ending credit/);
+  assert.match(step4PanelSource, /opening title, dialogue captions, and ending credit/);
   assert.doesNotMatch(minimaxPromptSource, /https:\/\/note\.com\/happy_duck780/);
   assert.doesNotMatch(minimaxPromptSource, /ネームから～/);
   assert.match(step4PanelSource, /Do not invent a title/);
@@ -97,8 +97,20 @@ test('MiniMax H3 output keeps the credit literal and preserves Japanese right-to
   assert.match(step4PanelSource, /Never reduce this to “top-to-bottom” only/);
 });
 
-test('MiniMax H3 prompt keeps readable text to timed production graphics and removes manga balloons', () => {
-  assert.match(step4PanelSource, /only readable textual elements in the final video are the opening title and ending credit/);
+test('MiniMax H3 prompt renders exact source dialogue as timed open captions', () => {
+  assert.match(step4PanelSource, /opening title, dialogue captions, and ending credit/);
+  assert.match(step4PanelSource, /original Japanese source dialogue as the exact caption string/);
+  assert.match(step4PanelSource, /Do not transcribe, paraphrase, normalize, omit, merge/);
+  assert.match(step4PanelSource, /or invent caption text/);
+  assert.match(step4PanelSource, /bottom-center open caption/);
+  assert.match(step4PanelSource, /begin exactly when that line begins and disappear when that line ends/);
+  assert.match(step4PanelSource, /Do not make karaoke, word-by-word, phonetic/);
+  assert.doesNotMatch(step4PanelSource, /write `caption_text:/, 'the JavaScript template literal must not contain an unescaped Markdown backtick');
+  assert.match(step4PanelSource, /Maintain strong local contrast for every dialogue caption/);
+  assert.match(step4PanelSource, /Caption contrast may use a thin outline, soft shadow, or minimal translucent backing/);
+  assert.match(step4PanelSource, /Reserve the bottom-center caption safe area/);
+  assert.match(step4PanelSource, /opening title and ending credit must never occupy or overlap that caption safe area/);
+  assert.match(step4PanelSource, /All Japanese dialogue supplied to MiniMax H3 must be kana-only/);
   assert.match(step4PanelSource, /No title pixels may remain at or after 00:01\.600/);
   assert.match(step4PanelSource, /Do not show the ending credit before 00:13\.200/);
   assert.match(step4PanelSource, /remove every original speech-balloon shape, border, tail, and white interior/);
@@ -123,7 +135,7 @@ test('README documents the MiniMax H3 Reference-to-Video workflow separately fro
 test('README documents the MiniMax H3 timing and cross-cut dialogue safeguards', () => {
   assert.match(readmeSource, /秒単位のカット・カメラ移動を開始・中間・終了の状態まで英語プロンプトへ展開/);
   assert.match(readmeSource, /実際にカットをまたぐ同一台詞だけを `scenetrans` で分割/);
-  assert.match(readmeSource, /H3へ渡す台詞そのものを確認済みのひらがな・カタカナだけで記述/);
+  assert.match(readmeSource, /H3へ渡す音声台詞そのものを確認済みのひらがな・カタカナだけで記述/);
   assert.match(readmeSource, /タイトルは00:00\.000から00:01\.600だけで完全にフェードアウト/);
   assert.match(readmeSource, /終端表示は00:13\.200から00:15\.000だけ/);
 });
@@ -136,5 +148,15 @@ test('README documents the unified MiniMax H3 helper and its limited graphics', 
   assert.doesNotMatch(readmeSource, /ネームから～/);
   assert.match(readmeSource, /添付した4コマ画像からOCRでタイトルだけを取得/);
   assert.match(readmeSource, /枠外文字を物語素材として使いません/);
+  assert.match(readmeSource, /字幕は発話中だけ画面下中央に表示/);
+  assert.match(readmeSource, /タイトル・終端表示とは重ならない/);
+  assert.match(readmeSource, /H3が映像内へ生成する文字であり、外部字幕トラックではありません/);
   assert.doesNotMatch(readmeSource, /既存のNano Bananaウォーターマーク/);
+});
+
+test('the existing MiniMax H3 copy control explains its dialogue-caption behavior without adding a button', () => {
+  assert.match(step4PanelSource, /字幕は発話に合わせて画面下中央に表示/);
+  assert.doesNotMatch(step4PanelSource, /MINIMAX_H3_CAPTION_PROMPT/);
+  assert.doesNotMatch(step4PanelSource, /字幕.*プロンプトをコピー/);
+  assert.match(step4PanelSource, /MiniMax H3・ComfyUI用プロンプトをコピー/);
 });
