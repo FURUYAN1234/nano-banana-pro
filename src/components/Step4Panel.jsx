@@ -79,7 +79,7 @@ Conversation behavior:
 4. 出力された英語プロンプトを、ComfyUIのMiniMax H3 Reference-to-VideoワークフローのPrompt欄へ貼り付けます。
 5. 漫画画像はMiniMax H3 Reference-to-Videoの参照画像として接続して実行します。」
 
-3. When a four-panel manga image is attached, generate the final MiniMax H3 prompt immediately. Do not ask follow-up questions unless the image is unreadable.
+3. When a four-panel manga image is attached, generate the final MiniMax H3 prompt immediately. Do not ask follow-up questions unless the image is unreadable or a legible Japanese line has a reading that remains genuinely ambiguous from the visual and story context.
 
 Default settings, unless the user explicitly overrides them:
 - duration: 15 seconds
@@ -101,6 +101,21 @@ Rules:
 - Write all descriptions in English, except dialogue inside <d> tags.
 - Do not add unrelated characters, settings, or plot events.
 - Output only the final H3 prompt. Do not explain it and do not use Markdown fences.
+
+Japanese dialogue reading rules:
+
+- For every legible spoken Japanese line, preserve the original dialogue exactly inside <d>[Japanese] ...</d>. Do not translate, paraphrase, normalize, censor, omit, reorder, or merge its words.
+- Directly before every <d> tag, identify the stable speaker ID and provide a kana-only reading guide in quotation marks for that exact line. The guide must use hiragana and katakana only: no kanji and no romaji.
+- The spoken pronunciation must follow the kana reading guide, including compound-word readings, names, particles, long vowels, small kana, voiced sounds, and natural Japanese word boundaries. The <d> tag remains the exact dialogue transcript; the kana guide controls how it is read aloud.
+- Never guess, change, omit, or merge a reading. If a reading cannot be determined reliably from the manga and its story context, reply only in Japanese with a concise request for that line's reading instead of producing a potentially wrong H3 prompt.
+- Keep one active speaker at a time unless the manga explicitly requires a simultaneous group line. Describe each speaker's age-appropriate native Japanese voice, emotional delivery, and visible lip sync immediately next to that speaker's dialogue.
+
+Animation performance rules:
+
+- Use motion to make the story and emotional escalation more engaging while preserving the manga's intended tone, action, and character identity.
+- Select only one to three compatible principles per shot from anticipation, slow-in/slow-out, arcs, follow-through, secondary action, staging, clear pose-to-pose acting, or restrained exaggeration.
+- Make the chosen principles physically visible through the relevant body, face, hair, clothing, prop, background, and camera behavior; keep the primary action readable and do not let secondary action obscure dialogue or the decisive gag.
+- Do not add cartoon exaggeration, squash-and-stretch, or extra motion when it conflicts with the reference manga, the requested tone, a quiet beat, or a physically grounded action.
 
 Temporal direction rewrite rules:
 
@@ -648,6 +663,9 @@ No explanations. No partial results.`;
                           <div className="mt-3 pt-3 border-t border-violet-500/20">
                             <p className="text-[11px] text-violet-200/80 leading-relaxed">
                               🎞️ 生成した4コマ漫画をMiniMax H3で動画化するための、ComfyUI向け英語プロンプト作成指示をコピーします。
+                            </p>
+                            <p className="mt-1 text-[10px] text-violet-100/70 leading-relaxed">
+                              デフォルト仕様：15秒・16:9・BGMあり・日本語音声・標準の躍動演出。秒数・画角・BGM・演出は個別指定があればそちらを優先します。
                             </p>
                             <button
                               className={`mt-2 ${isMiniMaxPromptCopied ? 'bg-green-600 border-green-500/30' : 'bg-violet-900/70 hover:bg-violet-800/80 border-violet-500/30'} text-white px-3 py-1.5 rounded transition-all inline-flex items-center justify-center gap-1.5 border font-bold active:scale-95`}

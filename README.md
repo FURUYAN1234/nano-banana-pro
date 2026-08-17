@@ -1,6 +1,6 @@
 # Super FURU AI 4-koma System
 
-> Latest release: **v5.4.1** / 最新リリース: **v5.4.1**
+> Latest release: **v5.4.2** / 最新リリース: **v5.4.2**
 
 > **"To what extent can humans step away from the creative process?"**
 > **「人間は、どこまで制作から降りられるのか？」**
@@ -22,7 +22,7 @@
 This project aims to intentionally exclude humans from the creative process, allowing AI to act as a director and complete everything from brainstorming to composition, direction, and rendering.
 本プロジェクトは、人間をクリエイティブな工程から意図的に排除し、AIがディレクターとして「ネタ出し・構成・演出・作画」のすべてを完結させることを目的としています。
 
-The current implementation and latest release are **v5.4.1**. The product name is **Super FURU AI 4-koma System**; **Nano Banana 2** and **ChatGPT Image 2.0** identify image-generation engine families. / 現在の実装および最新公開版は **v5.4.1** です。製品名は **Super FURU AI 4-koma System** で、**Nano Banana 2** と **ChatGPT Image 2.0** は画像生成エンジン系統の名称です。
+The current implementation and latest release are **v5.4.2**. The product name is **Super FURU AI 4-koma System**; **Nano Banana 2** and **ChatGPT Image 2.0** identify image-generation engine families. / 現在の実装および最新公開版は **v5.4.2** です。製品名は **Super FURU AI 4-koma System** で、**Nano Banana 2** と **ChatGPT Image 2.0** は画像生成エンジン系統の名称です。
 
 Current behavior at a glance / 現行仕様の要点:
 
@@ -50,7 +50,7 @@ STEP4で生成済みの4コマ漫画を、MiniMax H3のReference-to-Video（R2V 
 3. チャットから出力された英語のMiniMax H3プロンプトをコピーします。元の4コマ漫画と、ここで得た英語プロンプトの組み合わせを変えないでください。
 4. ComfyUIでMiniMax H3 Reference-to-Videoを選択し、同じ4コマ漫画を `Reference Image` に接続します。画角と秒数を確認してから、英語プロンプトを `Prompt` に貼り付けて実行します。
 
-既定では、15秒・16:9・BGMあり・吹き出しを自然な日本語音声とリップシンクへ置換・画面上の吹き出しや字幕などの文字は表示しない・コミカルな演技とカメラワークを強める、という動画化指示になります。秒単位のカット・カメラ移動を開始・中間・終了の状態まで英語プロンプトへ展開し、実際にカットをまたぐ同一台詞だけを `scenetrans` で分割します。チャットで画像が読めない場合は、4コマ漫画を1枚だけ添付し直してください。
+既定では、15秒・16:9・BGMあり・吹き出しを自然な日本語音声とリップシンクへ置換・画面上の吹き出しや字幕などの文字は表示しない・コミカルな演技とカメラワークを強める、という動画化指示になります。秒単位のカット・カメラ移動を開始・中間・終了の状態まで英語プロンプトへ展開し、実際にカットをまたぐ同一台詞だけを `scenetrans` で分割します。漢字の読み間違いを減らすため、台詞の原文とは別にひらがな・カタカナだけの読みガイドを話者ごとに付け、原文は表示・意味の固定、読みガイドは発話の固定に使います。躍動感は場面に合うアニメーション原則を1〜3個だけ選択して加え、静かな場面や原作と衝突する過剰な動きは加えません。チャットで画像が読めない場合は、4コマ漫画を1枚だけ添付し直してください。
 
 ### Functional-surface orientation / 機能面の向き
 
@@ -290,7 +290,7 @@ To address the extreme complexity of a 5,000+ line monolith, the frontend archit
 
 ## 🔍 Deep Analysis (技術詳解)
 
-### 🧭 Current v5.4.1 Processing Contract / 現行v5.4.1処理仕様
+### 🧭 Current v5.4.2 Processing Contract / 現行v5.4.2処理仕様
 
 | Stage | Input | Processing and validation | Output |
 |:--|:--|:--|:--|
@@ -828,6 +828,9 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 ---
 
 ## 📋 ChangeLog
+
+### v5.4.2 (2026-08-17)
+- **[Fix & UX]** MiniMax H3のコピー指示に漢字の読みガイドと条件付きアニメーション演出を追加 / Added kana reading guidance and conditional animation direction to the MiniMax H3 copied prompt
 
 ### v5.4.1 (2026-08-17)
 - **[Fix & UX]** MiniMax H3のコピー指示へ秒単位のカメラ・カット設計と実際のカットまたぎ台詞規則を追加 / Added timed camera/cut planning and genuine cross-cut dialogue rules to the MiniMax H3 copy prompt

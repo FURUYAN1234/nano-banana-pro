@@ -35,12 +35,33 @@ test('MiniMax H3 copied prompt preserves only genuine cross-cut dialogue with sc
   assert.match(step4PanelSource, /Do not split ordinary separate speech balloons into a fake cross-cut line/);
 });
 
+test('MiniMax H3 copied prompt provides a kana reading guide for every Japanese dialogue line', () => {
+  assert.match(step4PanelSource, /Japanese dialogue reading rules:/);
+  assert.match(step4PanelSource, /preserve the original dialogue exactly inside <d>\[Japanese\]/);
+  assert.match(step4PanelSource, /kana-only reading guide/);
+  assert.match(step4PanelSource, /no kanji and no romaji/);
+  assert.match(step4PanelSource, /spoken pronunciation must follow the kana reading guide/);
+  assert.match(step4PanelSource, /Never guess, change, omit, or merge a reading/);
+});
+
+test('MiniMax H3 copied prompt selects compatible animation principles without overacting', () => {
+  assert.match(step4PanelSource, /Animation performance rules:/);
+  assert.match(step4PanelSource, /Select only one to three compatible principles/);
+  assert.match(step4PanelSource, /anticipation, slow-in\/slow-out, arcs, follow-through, secondary action, staging/);
+  assert.match(step4PanelSource, /Do not add cartoon exaggeration, squash-and-stretch, or extra motion/);
+});
+
 test('MiniMax H3 helper explains the copy-to-ComfyUI reference workflow', () => {
   assert.match(step4PanelSource, /このボタンで指示文をコピー、同時に生成済みの4コマ漫画をチャットに添付し、送信/);
   assert.match(step4PanelSource, /出力されたプロンプトをコピー/);
   assert.match(step4PanelSource, /ComfyUIでMiniMax H3 Reference-to-Videoを選択/);
   assert.match(step4PanelSource, /Reference Image/);
   assert.match(step4PanelSource, /画角と秒数を確認の上、先ほど出力された英語プロンプトをPrompt欄に貼り付けて実行/);
+});
+
+test('MiniMax H3 helper displays its default video specification next to the copy button', () => {
+  assert.match(step4PanelSource, /デフォルト仕様：15秒・16:9・BGMあり・日本語音声・標準の躍動演出。/);
+  assert.match(step4PanelSource, /個別指定があればそちらを優先/);
 });
 
 test('README documents the MiniMax H3 Reference-to-Video workflow separately from the in-app image pipeline', () => {
@@ -56,4 +77,6 @@ test('README documents the MiniMax H3 Reference-to-Video workflow separately fro
 test('README documents the MiniMax H3 timing and cross-cut dialogue safeguards', () => {
   assert.match(readmeSource, /秒単位のカット・カメラ移動を開始・中間・終了の状態まで英語プロンプトへ展開/);
   assert.match(readmeSource, /実際にカットをまたぐ同一台詞だけを `scenetrans` で分割/);
+  assert.match(readmeSource, /漢字の読み間違いを減らすため、台詞の原文とは別にひらがな・カタカナだけの読みガイド/);
+  assert.match(readmeSource, /場面に合うアニメーション原則を1〜3個だけ選択/);
 });
