@@ -96,6 +96,30 @@ test('does not promote quoted ambient sounds into speech bubbles', () => {
   assert.match(dialogue, /Speech Bubble 2 \[リン\]: "罰金もあるんだ…。"/);
 });
 
+test('routes combined acoustic and visual direction labels to action instead of bubbles', () => {
+  const cases = [
+    '効果音・演出',
+    '演出／効果音',
+    'SFX / 演出'
+  ];
+
+  for (const label of cases) {
+    const panelText = `
+[1コマ目: 起]
+${label}: 「ジジ…」と虫の音、アスファルトから陽炎が立つ。
+ミク「確認するよ。」
+`;
+
+    const dialogue = extractDialogueOnly(panelText, CAST_LIST);
+    const action = extractActionOnly(panelText, CAST_LIST);
+
+    assert.doesNotMatch(dialogue, /ジジ|虫の音|陽炎|効果音|SFX/);
+    assert.match(dialogue, /Speech Bubble 1 \[ミク\]: "確認するよ。"/);
+    assert.doesNotMatch(action, /(?:効果音|演出|SFX)\s*[・･／/]?\s*(?:効果音|演出)?\s*[:：]/);
+    assert.match(action, /「ジジ…」と虫の音、アスファルトから陽炎が立つ。/);
+  }
+});
+
 test('keeps staging-and-gag directions and their explicit SFX out of speech bubbles', () => {
   const panelText = `
 [2コマ目: 承]

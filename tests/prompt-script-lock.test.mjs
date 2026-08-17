@@ -182,6 +182,53 @@ Outfit: 反AIメッセージ入りの白いTシャツ
   }
 });
 
+test('keeps combined acoustic-direction prose out of strict dialogue for both providers', () => {
+  const scenario = `
+## タイトル: 夏の確認作業
+Location: 屋外駐車場
+Outfit: 私服
+
+[1コマ目: 起]
+状況: ミクが機材を掲げる。
+効果音・演出: 「ジジ…」と虫の音、アスファルトから陽炎が立つ。
+ミク「確認するよ。」
+
+[2コマ目: 承]
+状況: リンが機材を調べる。
+演出／効果音: 「ピッ」と電子音、機材に小さな汗マーク。
+リン「続けて。」
+
+[3コマ目: 転]
+状況: サエコが注意書きを掲げる。
+SFX / 演出: 「ピタッ…」とBGMが止まり、影が濃くなる。
+サエコ「止めて。」
+
+[4コマ目: 結]
+状況: アカリが地面を指さす。
+効果音・演出: 逆光、長い影、風の「サァ…」。
+アカリ「次へ進もう！」
+`;
+
+  for (const providerFamily of ['chatgpt', 'gemini']) {
+    const prompt = buildMangaPrompt({
+      scenario,
+      castList: CAST_LIST,
+      colorMode: 'color',
+      providerFamily,
+      punchlineType: 'Auto',
+      systemVersion: 'v5.3.9-test'
+    });
+
+    assert.doesNotMatch(prompt, /TAILS[^\n]*(?:効果音|SFX)/);
+    assert.doesNotMatch(prompt, /B\d+="(?:ジジ|ピッ|ピタッ|逆光)/);
+    assert.doesNotMatch(prompt, /Panel \d required dialogue: (?:効果音|演出|SFX)/);
+    assert.match(prompt, /Panel 1 required dialogue: ミク「確認するよ。」/);
+    assert.match(prompt, /Panel 4 required dialogue: アカリ「次へ進もう！」/);
+    assert.match(prompt, /「ジジ…」と虫の音、アスファルトから陽炎が立つ。/);
+    assert.match(prompt, /「ピタッ…」とBGMが止まり、影が濃くなる。/);
+  }
+});
+
 test('routes reversed gag-direction labels to visual action instead of dialogue for both providers', () => {
   const scenario = `
 ## タイトル: 美術部カノジョ新作話題!?

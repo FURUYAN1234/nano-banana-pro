@@ -269,13 +269,17 @@ const ACOUSTIC_QUOTE_POST_RE = /^\s*(?:という[^\n「」]{0,12}音|ってい�
 const SPOKEN_QUOTE_POST_RE = /^\s*(?:と|って)?\s*(?:[^「」。！？!?\n]{0,32})?(?:言|いう|言い|言う|言った|叫|叫び|叫ぶ|叫ん|呼|呼び|呟|つぶや|つぶやき|囁|ささや|ささやき|読み上げ|読みあげ|読み|発表|告げ|答|返|話|語|宣言|絶叫|嘆|漏ら|口に|述べ|怒鳴|呻|うめ|唸|ツッコ|つっこ|突っ込|問|尋)/;
 const STRUCTURAL_LINE_PREFIX_PATTERN = String.raw`(?:[-*+>・●▪◦]\s*)?[【\[（(]?\s*`;
 const STAGING_GAG_LABEL_PATTERN = String.raw`(?:演出(?:\s*[・･／/]?\s*ギャグ)?|ギャグ(?:\s*[・･／/]?\s*演出))`;
-const VISUAL_DIRECTION_LABEL_TOKEN_PATTERN = String.raw`(?:表情|身体|演出|動作|ポーズ|姿勢|目線|視線|間合い)`;
+const VISUAL_DIRECTION_LABEL_TOKEN_PATTERN = String.raw`(?:表情|身体|演出|動作|ポーズ|姿勢|目線|視線|間合い|SFX|SE|効果音|音響効果|音響|音声|BGM)`;
 const VISUAL_DIRECTION_LABEL_PATTERN = String.raw`(?:${VISUAL_DIRECTION_LABEL_TOKEN_PATTERN}(?:\s*[・･／/]\s*${VISUAL_DIRECTION_LABEL_TOKEN_PATTERN})*)`;
 const META_SPEAKER_LABEL_PATTERN = String.raw`(?:Camera|Location|Outfit|EMOTION|状況(?:演出)?|Action|リアクション|Reaction|設定|物理描写|${VISUAL_DIRECTION_LABEL_PATTERN}|SFX|SE|効果音|音響効果|音響|音声|BGM|ナレーション|テロップ|聴覚|触覚|嗅覚|体内感覚|視覚|照明|光|${STAGING_GAG_LABEL_PATTERN}|空間|構図|背景|Background|カメラワーク|CameraWork|Camera\s*Work|セリフ|台詞|Dialogue|Punchline)`;
 const STAGING_GAG_LINE_RE = new RegExp(`^\\s*${STRUCTURAL_LINE_PREFIX_PATTERN}${STAGING_GAG_LABEL_PATTERN}\\s*[:：]`);
 const META_SPEAKER_LABEL_RE = new RegExp(`^\\s*${STRUCTURAL_LINE_PREFIX_PATTERN}${META_SPEAKER_LABEL_PATTERN}\\s*[】\\]）)]?\\s*$`, 'i');
 const ACTION_VISUAL_LABEL_PATTERN = String.raw`(?:状況(?:演出)?|${STAGING_GAG_LABEL_PATTERN}|${VISUAL_DIRECTION_LABEL_PATTERN}|Situation)`;
 const ACTION_VISUAL_LABEL_RE = new RegExp(`(?:^|[\\s　])${STRUCTURAL_LINE_PREFIX_PATTERN}${ACTION_VISUAL_LABEL_PATTERN}\\s*[:：]\\s*`, 'gi');
+const ACOUSTIC_VISUAL_LINE_RE = new RegExp(
+  `^\\s*${STRUCTURAL_LINE_PREFIX_PATTERN}(?=[^:：]*(?:SFX|SE|効果音|音響効果|音響|音声|BGM))${VISUAL_DIRECTION_LABEL_PATTERN}\\s*[:：]`,
+  'i'
+);
 
 const hasAcousticQuotePostContext = (postText = '') => ACOUSTIC_QUOTE_POST_RE.test(postText.trim());
 const hasSpokenQuotePostContext = (postText = '') => {
@@ -1131,12 +1135,12 @@ export const extractActionOnly = (fullPanelText, castList, placementRule = "") =
     return !isDialogue && !isHeader && !isEmpty;
   });
 
-  const stagingGagQuotes = [];
+  const visualDirectionQuotes = [];
   let actionStr = actionLines.map((line) => {
-    if (!STAGING_GAG_LINE_RE.test(line)) return line;
+    if (!STAGING_GAG_LINE_RE.test(line) && !ACOUSTIC_VISUAL_LINE_RE.test(line)) return line;
     const protectedLine = line.replace(ACTION_QUOTED_TEXT_RE, (match) => {
-      const token = `\uE100${stagingGagQuotes.length}\uE101`;
-      stagingGagQuotes.push(match);
+      const token = `\uE100${visualDirectionQuotes.length}\uE101`;
+      visualDirectionQuotes.push(match);
       return token;
     });
     return stripMatchingStructuralWrapper(protectedLine);
@@ -1177,7 +1181,7 @@ export const extractActionOnly = (fullPanelText, castList, placementRule = "") =
   }
 
   return protectNonDialogueTextHints(cleanseActionGagSymbols(actionStr))
-    .replace(/\uE100(\d+)\uE101/g, (_match, index) => stagingGagQuotes[Number(index)] || '')
+    .replace(/\uE100(\d+)\uE101/g, (_match, index) => visualDirectionQuotes[Number(index)] || '')
     .replace(/で\s*と(?=呟|つぶや|言|叫|話|問|答)/g, 'で')
     .replace(/([。！？!?])\s*と(?:呟|つぶや|言|叫|話|問|答)[^、。！？!?]*[、。]?/g, '$1')
     .replace(/[ 　]{2,}/g, ' ')
@@ -1199,6 +1203,7 @@ export const extractPlacementRule = (fullPanelText, castList, options = {}) => {
     if (getStructuredScenarioSection(trimmed)) return false;
     if (/^\[EMOTION:/i.test(trimmed)) return false;
     if (/^状況(?:演出)?[：:]/i.test(trimmed)) return false;
+    if (isInstructionLine(trimmed)) return false;
     return trimmed.includes('：') || trimmed.includes(':') || trimmed.includes('「');
   });
 

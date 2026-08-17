@@ -1,6 +1,6 @@
 # Super FURU AI 4-koma System
 
-> Latest release: **v5.3.9** / 最新リリース: **v5.3.9**
+> Latest release: **v5.4.0** / 最新リリース: **v5.4.0**
 
 > **"To what extent can humans step away from the creative process?"**
 > **「人間は、どこまで制作から降りられるのか？」**
@@ -22,7 +22,7 @@
 This project aims to intentionally exclude humans from the creative process, allowing AI to act as a director and complete everything from brainstorming to composition, direction, and rendering.
 本プロジェクトは、人間をクリエイティブな工程から意図的に排除し、AIがディレクターとして「ネタ出し・構成・演出・作画」のすべてを完結させることを目的としています。
 
-The current implementation and latest release are **v5.3.9**. The product name is **Super FURU AI 4-koma System**; **Nano Banana 2** and **ChatGPT Image 2.0** identify image-generation engine families. / 現在の実装および最新公開版は **v5.3.9** です。製品名は **Super FURU AI 4-koma System** で、**Nano Banana 2** と **ChatGPT Image 2.0** は画像生成エンジン系統の名称です。
+The current implementation and latest release are **v5.4.0**. The product name is **Super FURU AI 4-koma System**; **Nano Banana 2** and **ChatGPT Image 2.0** identify image-generation engine families. / 現在の実装および最新公開版は **v5.4.0** です。製品名は **Super FURU AI 4-koma System** で、**Nano Banana 2** と **ChatGPT Image 2.0** は画像生成エンジン系統の名称です。
 
 Current behavior at a glance / 現行仕様の要点:
 
@@ -31,7 +31,7 @@ Current behavior at a glance / 現行仕様の要点:
 - **Three-attempt scenario quality selection / シナリオ品質は全3試行から選抜:** STEP2 evaluates scenario-content hygiene, manual-input exclusions, event-specific visual evidence, lightweight location/time/weather continuity, and final-panel staging. A full pass is accepted immediately. If all three attempts miss one or more quality targets, the highest-scoring usable candidate is retained with a concrete warning and remains available to STEP3 and STEP4. / STEP2では、本文の表現衛生、自由入力の禁止条件、出来事を示す視覚証拠、軽量な場所・時刻・天候の継続、4コマ目の能動演出を検証します。合格した時点で採用し、全3試行でも品質条件が残った場合は、最後の結果ではなく最高得点の利用可能な候補を警告付きで保持してSTEP3・STEP4へ進めます。
 - **Two-attempt scenario enhancement / 演出強化は初回＋自動修正1回:** The seven enhancement categories are validated against the original scenario. A first-pass success is accepted without an unnecessary retry. If correction is needed, the better usable enhancement is retained; when every generated rewrite violates a non-negotiable editing contract, the saved original scenario is restored so downstream work is not lost. / 7カテゴリの演出強化は元シナリオとの差分で検証します。初回で合格すれば追加生成は行いません。修正が必要な場合は利用可能な候補のうち良い方を保持し、すべての書換候補が構造・話者・未選択範囲などの必須契約を壊した場合は、保存済みの元シナリオを採用して後続作業を継続します。
 - **Season-aware outfit selection / 日付連動の衣装選定:** In date-specified news mode, STEP2 derives a read-only Japan-default seasonal hint from the selected date. Explicit user clothing, event uniforms, profession or safety gear, location, real weather, indoor conditions, and an overseas local season take priority over that hint; manual-input mode does not infer a season from a date. Empty or ambiguous outfits and clear unexplained summer/winter conflicts are retried with the exact failed check. / 日付指定ニュースモードでは、STEP2が対象日から日本基準の季節目安を読み取り専用で提示します。ユーザー指定衣装、行事衣装、職業・安全装備、場所、実際の天候、屋内環境、海外の現地季節は目安より優先し、自由入力モードでは日付から季節を推測しません。空・曖昧な衣装や根拠のない夏冬の明白な不一致は、失敗した検証項目を示して再生成します。
-- **Dialogue and visual-direction boundary / 台詞と視覚指示の境界:** Only explicit dialogue is sent to speech bubbles. Markdown headings and Action/visual directions remain drawing instructions, so expression, body, staging, and background notes are not rendered as extra bubble text. Age-up normalization applies to standalone person roles and does not rewrite compound words such as `青少年` inside verbatim dialogue. / 明示的な台詞だけを吹き出しへ渡します。Markdown見出しやAction・視覚指示は描画指示のまま保持し、表情・身体・演出・背景の説明を余計な吹き出し文字として描画しません。成人化変換は独立した人物属性だけに適用し、原文台詞内の `青少年` などの複合語を部分置換しません。
+- **Dialogue and visual-direction boundary / 台詞と視覚指示の境界:** Only explicit dialogue is sent to speech bubbles. Markdown headings and Action/visual directions remain drawing instructions, including combined acoustic-direction labels such as `効果音・演出`, so expression, body, staging, sound, and background notes are not rendered as extra bubble text or synthetic speakers. Age-up normalization applies to standalone person roles and does not rewrite compound words such as `青少年` inside verbatim dialogue. / 明示的な台詞だけを吹き出しへ渡します。Markdown見出しやAction・視覚指示に加え、`効果音・演出` のような音響・演出の複合ラベルも描画指示のまま保持し、表情・身体・演出・音響・背景の説明を余計な吹き出し文字や架空話者として描画しません。成人化変換は独立した人物属性だけに適用し、原文台詞内の `青少年` などの複合語を部分置換しません。
 - **Lightweight setting continuity / 軽量な舞台継続:** Only a concrete `Location` and explicit time or weather cues stay consistent across panels. Incidental setting detail is deliberately lower priority than anatomy, hand/arm laterality, functional prop orientation, prop ownership, and exact bubble text. / 具体的な `Location` と明示的な時刻・天候だけをコマ間で整合させ、付随的な背景詳細より人物の解剖学、手・腕の左右、機能面の向き、小道具の所有、吹き出し本文を優先します。
 - **Editable provider-specific final prompt / 編集可能なプロバイダー別最終プロンプト:** ChatGPT-family and Gemini-family prompts use different rendering contracts while sharing script, identity, dialogue-tail, key-prop, eye-line, hand, functional-surface orientation, rich-background, and active-final-panel safeguards. The action determines the target: reading/operating targets the actor, while submitting/presenting/showing targets the recipient. A tabletop page may correctly be face-up; its text baseline is oriented toward the intended reader. Showing a functional face requires a physically valid camera viewpoint instead of rotating it toward viewers, except when the script explicitly makes the camera/viewer the recipient. Manual edits in STEP3 are used by both copy actions and the subsequent API image request. / ChatGPT系とGemini系で描画契約を分けつつ、脚本、キャラクター同一性、吹き出し、主要小道具、視線、手、機能面の向き、背景密度、4コマ目の能動演出を共通固定します。小物の向け先は保持者ではなく動作で決め、読む・操作する場合は本人、提出・提示・見せる場合は受取人を対象にします。机上の書類は表向きでも正常で、文字の上下を読む相手へ合わせます。機能面を見せる場合は物を観客へ回さず物理的に成立する位置へカメラを置き、脚本でカメラ・読者への提示が明示された場合だけカメラを受取人とします。STEP3で直接編集した内容は、コピー操作とAPI画像生成の両方に反映されます。
 - **Named over-the-shoulder cast ownership / 名前付き肩越し人物の一個体固定:** In the structured four-panel prompt, a character explicitly named as the over-the-shoulder camera subject is assigned to the foreground exactly once. That rear head/shoulder depiction is the character's sole panel instance and is removed from the background cast list, while the speaking character remains the main focus. / 構造化された4コマ用プロンプトでは、肩越しカメラの基準人物として名前が明記されたキャラクターを、前景に1回だけ配置します。その後頭部・肩の描写を当該人物の唯一の登場として背景キャストから除外し、台詞を話す人物の主役指定は維持します。
@@ -290,7 +290,7 @@ To address the extreme complexity of a 5,000+ line monolith, the frontend archit
 
 ## 🔍 Deep Analysis (技術詳解)
 
-### 🧭 Current v5.3.9 Processing Contract / 現行v5.3.9処理仕様
+### 🧭 Current v5.4.0 Processing Contract / 現行v5.4.0処理仕様
 
 | Stage | Input | Processing and validation | Output |
 |:--|:--|:--|:--|
@@ -828,6 +828,9 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 ---
 
 ## 📋 ChangeLog
+
+### v5.4.0 (2026-08-17)
+- **[Fix & UX]** 複合音響・演出ラベルを視覚指示として処理し、引用された効果音や演出文が架空の話者・吹き出しにならないように修正 / Treat combined acoustic-direction labels as visual instructions so quoted sound cues and staging prose never become synthetic speakers or speech bubbles
 
 ### v5.3.9 (2026-08-16)
 - **[Fix & UX]** MiniMax H3のコピープロンプトをBGM常時再生を必須化する契約へ差し替え / Replaced the MiniMax H3 copied prompt with a continuous mandatory BGM contract
