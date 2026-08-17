@@ -102,6 +102,16 @@ Rules:
 - Do not add unrelated characters, settings, or plot events.
 - Output only the final H3 prompt. Do not explain it and do not use Markdown fences.
 
+Temporal direction rewrite rules:
+
+- Translate every requested timed cut, camera move, or transition into explicit shot timing rather than leaving it as a general intention.
+- Make the shot boundaries and total timeline add up exactly to the requested duration. Use \`At 00:SS.mmm\` at each later-shot boundary and keep every stated duration physically possible within the total runtime.
+- For every requested camera move, specify the start, midpoint, and end state: viewpoint or angle, framing, subject distance, camera path, subject placement, and the exact timestamps for the change. For example, an arc/tracking request must state the opening view, the midpoint angle, the ending view, the constant or intentionally changing framing, and the physical parallax.
+- Keep motion continuous within a shot unless the plan explicitly calls for a cut. Preserve a stable horizon, focal length, and subject identity through the move; forbid unrequested zooms, reversals, freezes, duplicated limbs, or background warping.
+- Do not invent a camera move when neither the manga nor the user requests one. In that case, use only the camera changes visually established by the reference panels and describe simple, physically coherent transitions.
+- Only when one spoken line genuinely continues across a planned shot boundary, split it at the exact cut using \`<d>[Japanese] first segment <scenetrans></d>\` before the cut and \`<d>[Japanese] <scenetrans>second segment</d>\` after it. Keep the same speaker ID, natural Japanese phrase boundary, continuous voice, and lip sync across the cut.
+- Do not split ordinary separate speech balloons into a fake cross-cut line. Do not use \`<scenetrans>\` for a line that begins and ends within one shot.
+
 BGM enforcement rules:
 
 - When BGM is enabled, whether explicitly requested or enabled by default, treat it as a mandatory continuous audience-only audio layer, not as an optional mood suggestion.

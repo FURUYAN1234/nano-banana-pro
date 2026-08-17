@@ -22,6 +22,19 @@ test('MiniMax H3 copied prompt makes enabled BGM continuous and mandatory', () =
   assert.match(step4PanelSource, /Write “N\/A” in non_diegetic_music only when the user explicitly disables BGM/);
 });
 
+test('MiniMax H3 copied prompt translates timed direction into H3 shot notation', () => {
+  assert.match(step4PanelSource, /Temporal direction rewrite rules:/);
+  assert.match(step4PanelSource, /Translate every requested timed cut, camera move, or transition into explicit shot timing/);
+  assert.match(step4PanelSource, /start, midpoint, and end state/);
+  assert.match(step4PanelSource, /Do not invent a camera move when neither the manga nor the user requests one/);
+});
+
+test('MiniMax H3 copied prompt preserves only genuine cross-cut dialogue with scenetrans', () => {
+  assert.match(step4PanelSource, /<scenetrans>/);
+  assert.match(step4PanelSource, /Only when one spoken line genuinely continues across a planned shot boundary/);
+  assert.match(step4PanelSource, /Do not split ordinary separate speech balloons into a fake cross-cut line/);
+});
+
 test('MiniMax H3 helper explains the copy-to-ComfyUI reference workflow', () => {
   assert.match(step4PanelSource, /このボタンで指示文をコピー、同時に生成済みの4コマ漫画をチャットに添付し、送信/);
   assert.match(step4PanelSource, /出力されたプロンプトをコピー/);
@@ -38,4 +51,9 @@ test('README documents the MiniMax H3 Reference-to-Video workflow separately fro
   assert.match(readmeSource, /Reference Image/);
   assert.match(readmeSource, /画角と秒数を確認してから、英語プロンプトを `Prompt` に貼り付けて実行/);
   assert.match(readmeSource, /アプリ内で動画を生成・送信しません/);
+});
+
+test('README documents the MiniMax H3 timing and cross-cut dialogue safeguards', () => {
+  assert.match(readmeSource, /秒単位のカット・カメラ移動を開始・中間・終了の状態まで英語プロンプトへ展開/);
+  assert.match(readmeSource, /実際にカットをまたぐ同一台詞だけを `scenetrans` で分割/);
 });
