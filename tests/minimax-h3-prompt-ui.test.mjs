@@ -64,6 +64,25 @@ test('MiniMax H3 helper displays its default video specification next to the cop
   assert.match(step4PanelSource, /個別指定があればそちらを優先/);
 });
 
+test('MiniMax H3 publication helper creates only a title-card and ending credit', () => {
+  assert.match(step4PanelSource, /MINIMAX_H3_PUBLICATION_PROMPT/);
+  assert.match(step4PanelSource, /MiniMax H3.*作品公開用プロンプトをコピー/);
+  assert.match(step4PanelSource, /navigator\.clipboard\.writeText\(MINIMAX_H3_PUBLICATION_PROMPT\)/);
+  assert.match(step4PanelSource, /opening title card/);
+  assert.match(step4PanelSource, /fade out completely/);
+  assert.match(step4PanelSource, /only two permitted visible-text elements/);
+  assert.match(step4PanelSource, /ネームから～/);
+  assert.match(step4PanelSource, /note\.com\/happy_duck780/);
+  assert.match(step4PanelSource, /Do not invent a title/);
+  assert.match(step4PanelSource, /Do not treat any text outside manga panels as a video source/);
+  assert.match(step4PanelSource, /Perform OCR only to identify the four-panel manga title from the attached image/);
+  assert.match(step4PanelSource, /If OCR cannot read the title reliably/);
+  assert.doesNotMatch(step4PanelSource, /buildMiniMaxH3PublicationPrompt/);
+  assert.match(step4PanelSource, /contrast against its local background/);
+  assert.doesNotMatch(step4PanelSource, /existing Nano Banana watermark/);
+  assert.doesNotMatch(step4PanelSource, /Nano Bananaウォーターマーク/);
+});
+
 test('README documents the MiniMax H3 Reference-to-Video workflow separately from the in-app image pipeline', () => {
   assert.match(readmeSource, /MiniMax H3.*ComfyUI.*Reference-to-Video/);
   assert.match(readmeSource, /生成済みの4コマ漫画をダウンロード/);
@@ -79,4 +98,14 @@ test('README documents the MiniMax H3 timing and cross-cut dialogue safeguards',
   assert.match(readmeSource, /実際にカットをまたぐ同一台詞だけを `scenetrans` で分割/);
   assert.match(readmeSource, /漢字の読み間違いを減らすため、台詞の原文とは別にひらがな・カタカナだけの読みガイド/);
   assert.match(readmeSource, /場面に合うアニメーション原則を1〜3個だけ選択/);
+});
+
+test('README documents the separate MiniMax H3 publication helper and its limited graphics', () => {
+  assert.match(readmeSource, /MiniMax H3・作品公開用プロンプトをコピー/);
+  assert.match(readmeSource, /冒頭のタイトルロゴ/);
+  assert.match(readmeSource, /ネームから～/);
+  assert.match(readmeSource, /note\.com\/happy_duck780/);
+  assert.match(readmeSource, /添付した4コマ画像からOCRでタイトルだけを取得/);
+  assert.match(readmeSource, /枠外文字を物語素材として使いません/);
+  assert.doesNotMatch(readmeSource, /既存のNano Bananaウォーターマーク/);
 });
