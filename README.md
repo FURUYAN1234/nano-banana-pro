@@ -831,6 +831,9 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 
 ## 📋 ChangeLog
 
+### v5.4.8 (2026-08-18)
+- **[Fix & UX]** STEP4のプロ向け補助操作を常時表示に復旧し、OpenAI画像生成状態を基準にSTEP4の表示・リンク・記録を統一 / Restored always-visible STEP4 pro helper actions and aligned STEP4 labels, links, and metadata with the effective OpenAI image-generation state
+
 ### v5.4.7 (2026-08-18)
 - **[Fix & UX]** 同一行の複数話者台詞を話者別に分離し、引用外のト書きが吹き出しに入らないよう修正 / Split inline multi-speaker dialogue by speaker and prevent quoted-text-external stage directions from entering bubbles
 

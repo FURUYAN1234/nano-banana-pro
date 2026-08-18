@@ -12,6 +12,25 @@ test('ChatGPT tips include a separate 2x upscale prompt copy action', () => {
   assert.match(step4PanelSource, /2倍アップスケール画像をダウンロード/);
 });
 
+test('external pro tools remain visible when the active in-app engine is Gemini', () => {
+  assert.doesNotMatch(
+    step4PanelSource,
+    /\{selectedEngine === 'openai' && \(\s*<div className="mt-3 block w-full">/
+  );
+});
+
+test('STEP4 uses the effective OpenAI image mode instead of a stale text-engine label', () => {
+  assert.match(
+    step4PanelSource,
+    /const isOpenAIImageMode = enableOpenAIApi \|\| selectedEngine === 'openai';/
+  );
+  assert.equal(
+    step4PanelSource.match(/selectedEngine === 'openai'/g)?.length,
+    1,
+    'selectedEngine may appear only inside the single effective STEP4 provider predicate'
+  );
+});
+
 test('ratio fix copy button hides its base label while showing copied feedback', () => {
   assert.match(
     step4PanelSource,

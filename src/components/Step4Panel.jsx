@@ -265,6 +265,10 @@ export default function Step4Panel({
   handlePolicyAutoFix,
   handlePolicySwitchToWeb
 }) {
+  // Image generation is governed by this flag. selectedEngine can be stale during
+  // an in-memory session transition, so all STEP4 labels and links use the same
+  // effective provider predicate as the image-generation route.
+  const isOpenAIImageMode = enableOpenAIApi || selectedEngine === 'openai';
   const generatedImageExtension = getGeneratedImageExtension(generatedImage);
   const [isUpscalePromptCopied, setIsUpscalePromptCopied] = React.useState(false);
   const [isMiniMaxPromptCopied, setIsMiniMaxPromptCopied] = React.useState(false);
@@ -379,7 +383,7 @@ export default function Step4Panel({
               {/* コピーボタン下の親切な補足ガイド */}
               {finalPrompt && (
                 <div className="text-[11px] text-slate-400 mt-1 leading-relaxed bg-slate-900/60 p-2.5 rounded-lg border border-white/5">
-                  {selectedEngine === 'openai' ? (
+                  {isOpenAIImageMode ? (
                     (bg360Image && bg360Enabled) ? (
                       <span>💡 <strong>【手動生成用】</strong> コピーしたプロンプトを <strong>ChatGPT公式Web版</strong> に貼り付け、<strong>キャラクターシート画像</strong> と <strong>360°背景画像</strong> を一緒に添付して送信してください。</span>
                     ) : (
@@ -404,7 +408,7 @@ export default function Step4Panel({
                 onClick={async () => {
                   const now = new Date();
                   const isoTime = now.toISOString();
-                  const promptMode = selectedEngine === 'openai' ? 'ChatGPT Engine (自動)' : (enableChatGPTMode ? 'ChatGPT専用プロンプト' : 'Gemini用プロンプト');
+                  const promptMode = isOpenAIImageMode ? 'ChatGPT Engine (自動)' : (enableChatGPTMode ? 'ChatGPT専用プロンプト' : 'Gemini用プロンプト');
                   
                   // ハッシュ計算 (Proof of Generation)
                   const dataToHash = `${scenario || ""}|${finalPrompt || ""}|${isoTime}|${SYSTEM_VERSION}`;
@@ -424,7 +428,7 @@ export default function Step4Panel({
                       "ISO日時": isoTime
                     },
                     "来歴と証跡 (Provenance & Audit)": {
-                      "使用モデル (Model Accountability)": usedModel || (selectedEngine === 'openai' ? "gpt-image-2" : "gemini-3.1-flash-image"),
+                      "使用モデル (Model Accountability)": usedModel || (isOpenAIImageMode ? "gpt-image-2" : "gemini-3.1-flash-image"),
                       "フォールバック発生 (Fallback Occurred)": !!isFallbackUsed,
                       "生成証明ハッシュ (Proof of Generation)": hashHex,
                       "ハッシュアルゴリズム": "SHA-256",
@@ -436,9 +440,9 @@ export default function Step4Panel({
                     },
                     "プロンプト判別": {
                       "モード": promptMode,
-                      "AIエンジン": selectedEngine === 'openai' ? 'ChatGPT' : 'Gemini',
+                      "AIエンジン": isOpenAIImageMode ? 'ChatGPT' : 'Gemini',
                       "ChatGPTモード": enableChatGPTMode,
-                      "説明": selectedEngine === 'openai'
+                      "説明": isOpenAIImageMode
                         ? "ChatGPT Engine で全ルーチンを実行。ChatGPT Images 2.0 専用プロンプトが自動生成されます。"
                         : enableChatGPTMode
                           ? "ChatGPT Images 2.0 専用に最適化されたプロンプトです。Geminiには非対応です。"
@@ -504,11 +508,11 @@ export default function Step4Panel({
               <button
                 onClick={regenerateImage}
                 disabled={!finalPrompt || isGeneratingImage || isFixingPolicy}
-                className={`w-full ${selectedEngine === 'openai' ? 'bg-emerald-600 hover:bg-emerald-500' : 'bg-orange-600 hover:bg-orange-500'} text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg border border-white/10 active:scale-95 disabled:bg-slate-700 disabled:opacity-50 disabled:cursor-wait mt-4`}
+                className={`w-full ${isOpenAIImageMode ? 'bg-emerald-600 hover:bg-emerald-500' : 'bg-orange-600 hover:bg-orange-500'} text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg border border-white/10 active:scale-95 disabled:bg-slate-700 disabled:opacity-50 disabled:cursor-wait mt-4`}
               >
                 {isGeneratingImage ? <Loader2 size={20} className="animate-spin" /> : <ImageIcon size={20} />}
                 <div className="flex flex-col items-center">
-                  <span>{isGeneratingImage ? "画像を生成中..." : `画像を生成する (STEP 4: ${selectedEngine === 'openai' ? 'ChatGPT Images 2.0' : 'Google AI'})`}</span>
+                  <span>{isGeneratingImage ? "画像を生成中..." : `画像を生成する (STEP 4: ${isOpenAIImageMode ? 'ChatGPT Images 2.0' : 'Google AI'})`}</span>
                 </div>
               </button>
               <p className="text-[10px] text-slate-500 text-center mt-2 leading-relaxed px-2">
@@ -524,7 +528,7 @@ export default function Step4Panel({
                   </div>
                   <div className="text-xs text-orange-200/80 leading-relaxed font-sans">
                     <span className="font-bold text-orange-300">💡 コツ（プロのやり方）：完璧な4コマ漫画を作りたい時は？</span><br />
-                    {selectedEngine === 'openai' ? (
+                    {isOpenAIImageMode ? (
                       <>
                         キャラクターの見た目が崩れたり、背景がイメージと異なる場合は、上の「コピー」ボタンでプロンプトをコピーし、公式の <a href="https://chatgpt.com/" target="_blank" rel="noreferrer" className="text-blue-400 hover:underline">ChatGPTウェブ版 🤖</a> に<strong>「元のキャラクター設定画像（および360°背景画像）」</strong>と一緒に直接貼り付けて送信してください。<br />
                         画像そのものを参照して生成するため、キャラクターのクオリティや再現度が劇的に向上します！<br />
@@ -542,8 +546,7 @@ export default function Step4Panel({
                       </>
                     )}
 
-                    {selectedEngine === 'openai' && (
-                      <div className="mt-3 block w-full">
+                    <div className="mt-3 block w-full">
                         <button
                           className={`mt-2 ${isFixPromptCopied ? 'bg-green-600 border-green-500/30' : 'bg-slate-700 hover:bg-slate-600 border-white/10'} text-white px-3 py-1.5 rounded transition-all inline-flex items-center justify-center gap-1.5 border font-bold active:scale-95`}
                           style={{ fontSize: '10px', minWidth: '120px', position: 'relative' }}
@@ -727,8 +730,7 @@ No explanations. No partial results.`;
                             </ol>
                           </div>
                         </div>
-                      </div>
-                    )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -820,7 +822,7 @@ No explanations. No partial results.`;
                       className="w-full bg-[#000000] text-white text-xs p-2 rounded border border-yellow-500/20 focus:border-yellow-500/50 outline-none min-h-[60px] font-mono placeholder-slate-500"
                       value={policyErrorMsg}
                       onChange={(e) => setPolicyErrorMsg(e.target.value)}
-                      placeholder={selectedEngine === 'openai'
+                      placeholder={isOpenAIImageMode
                         ? "例: Your request was rejected as a result of our safety system...\n例: content_policy_violation と表示された\n例: アオリ構図が弾かれたかもしれない"
                         : "例: I can't generate images that depict minors...\n例: Geminiの回答: 制服と未成年の組み合わせが原因...\n例: アオリ構図が弾かれたかもしれない"}
                     />
@@ -854,7 +856,7 @@ No explanations. No partial results.`;
               >
                 <div className="opacity-50 mb-2 border-b border-white/10 pb-1 flex justify-between text-xs">
                   <span>🖥 画像生成ログ (STEP 4)</span>
-                  <span className={selectedEngine === 'openai' ? "text-emerald-500" : "text-blue-500"}>{selectedEngine === 'openai' ? 'v1.3.5 (ChatGPT Images 2.0)' : 'v1.3.5 (Gemini Native Image)'}</span>
+                  <span className={isOpenAIImageMode ? "text-emerald-500" : "text-blue-500"}>{isOpenAIImageMode ? 'v1.3.5 (ChatGPT Images 2.0)' : 'v1.3.5 (Gemini Native Image)'}</span>
                 </div>
                 {genLog.length === 0 ? (
                   <div className="text-white/30">待機中... 「画像を生成する」ボタンを押すと開始します。</div>
@@ -955,7 +957,7 @@ No explanations. No partial results.`;
                     a.href = generatedImage;
                     // API別ファイル名: AI_4koma_comic_{API名}_{タイトル}_{年月日時分秒14桁}.png
                     const now = new Date();
-                    const apiName = selectedEngine === 'openai' ? 'ChatGPT' : 'Gemini';
+                    const apiName = isOpenAIImageMode ? 'ChatGPT' : 'Gemini';
                     // タイトル取得: mangaTitle state → scenarioからの抽出 → フォールバック
                     let rawTitle = mangaTitle;
                     if (!rawTitle && scenario) {
