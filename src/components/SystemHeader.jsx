@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { BrainCircuit, RefreshCw, LogOut, AlertTriangle } from 'lucide-react';
 import FallbackChainViewer from './FallbackChainViewer';
+import { getEffectiveEngine } from '../lib/engine-state';
 
 export default function SystemHeader({
   SYSTEM_VERSION,
   apiKey,
   selectedEngine,
+  enableOpenAIApi,
   partialReset,
   step1Reset,
   hardReset,
@@ -13,6 +15,7 @@ export default function SystemHeader({
   getModelBadgeInfo
 }) {
   const [showFallbackChain, setShowFallbackChain] = useState(false);
+  const isOpenAIEngine = getEffectiveEngine(selectedEngine, enableOpenAIApi) === 'openai';
 
   return (
     <header className="flex flex-col items-center justify-center gap-6 bg-[#0f1115] p-6 md:p-8 rounded-xl border border-white/5 shadow-2xl relative overflow-hidden group">
@@ -41,9 +44,9 @@ export default function SystemHeader({
                 ⚙ Model Chain
               </button>
               
-              <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[10px] font-black tracking-wider ${apiKey ? (selectedEngine === 'openai' ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-400' : 'bg-green-500/15 border-green-500/40 text-green-400') : 'bg-red-500/15 border-red-500/40 text-red-400 animate-pulse'}`}>
-                <span className={`w-1.5 h-1.5 rounded-full ${apiKey ? (selectedEngine === 'openai' ? 'bg-emerald-400 shadow-[0_0_6px_rgba(16,185,129,0.8)]' : 'bg-green-400 shadow-[0_0_6px_rgba(74,222,128,0.8)]') : 'bg-red-400'}`} />
-                {apiKey ? (selectedEngine === 'openai' ? '✅ ChatGPT Engine' : '✅ Gemini Engine') : '⚠ 未接続'}
+              <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[10px] font-black tracking-wider ${apiKey ? (isOpenAIEngine ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-400' : 'bg-green-500/15 border-green-500/40 text-green-400') : 'bg-red-500/15 border-red-500/40 text-red-400 animate-pulse'}`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${apiKey ? (isOpenAIEngine ? 'bg-emerald-400 shadow-[0_0_6px_rgba(16,185,129,0.8)]' : 'bg-green-400 shadow-[0_0_6px_rgba(74,222,128,0.8)]') : 'bg-red-400'}`} />
+                {apiKey ? (isOpenAIEngine ? '✅ ChatGPT Engine' : '✅ Gemini Engine') : '⚠ 未接続'}
               </div>
               
               {apiKey && (

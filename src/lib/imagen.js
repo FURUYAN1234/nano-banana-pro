@@ -14,9 +14,18 @@ const MODELS_TO_TRY = [
     "gemini-3.1-flash-image"    // Nano Banana 2: 4コマ漫画生成用
 ];
 
-const buildGeminiImageGenerationConfig = () => {
+export const buildGeminiImageGenerationConfig = ({ aspectRatio = "3:4", imageSize } = {}) => {
     return {
-        responseModalities: ["TEXT", "IMAGE"]
+        // Gemini 3 image models use the Interactions API.  Its REST payload
+        // deliberately uses snake_case; the former generateContent shape
+        // (generationConfig.responseFormat) returns HTTP 400 for "3:4".
+        type: "image",
+        // The Interactions endpoint currently accepts JPEG for generated
+        // image output.  PNG is accepted for input references, but rejected
+        // as response_format.mime_type (invalid_request).
+        mime_type: "image/jpeg",
+        aspect_ratio: aspectRatio,
+        ...(imageSize ? { image_size: imageSize } : {})
     };
 };
 
@@ -27,7 +36,7 @@ const buildGeminiImageGenerationConfig = () => {
  * @param {function} onStatusUpdate UI更新用コールバック(文言)
  * @param {Array<string>} referenceImages [v3.53 Phase3] 参照画像のbase64配列（data:プレフィックス付きまたはrawBase64）。Geminiモデル使用時にマルチモーダル入力として添付。
  */
-export const generateImageWithImagen = async (prompt, onStatusUpdate, referenceImages = []) => {
+export const generateImageWithImagen = async (prompt, onStatusUpdate, referenceImages = [], imageOptions = {}) => {
     const currentApiKey = getApiKey();
     if (!currentApiKey) throw new Error("API Key is not set.");
 
@@ -60,18 +69,23 @@ export const generateImageWithImagen = async (prompt, onStatusUpdate, referenceI
                     onStatusUpdate(`[REF] ${imageParts.length}枚の参照画像を添付してマルチモーダル生成を実行`);
                 }
 
-                response = await fetch(`${GEMINI_BASE_URL}/v1beta/models/${modelId}:generateContent`, {
+                response = await fetch(`${GEMINI_BASE_URL}/v1beta/interactions`, {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
                         "x-goog-api-key": currentApiKey
                     },
                     body: JSON.stringify({
-                        contents: [{
-                            role: "user",
-                            parts: [{ text: prompt }, ...imageParts]
-                        }],
-                        generationConfig: buildGeminiImageGenerationConfig(modelId)
+                        model: modelId,
+                        input: [
+                            { type: "text", text: prompt },
+                            ...imageParts.map(({ inlineData }) => ({
+                                type: "image",
+                                mime_type: inlineData.mimeType,
+                                data: inlineData.data
+                            }))
+                        ],
+                        response_format: buildGeminiImageGenerationConfig(imageOptions)
                     }),
                     signal: controller.signal
                 });
@@ -81,35 +95,30 @@ export const generateImageWithImagen = async (prompt, onStatusUpdate, referenceI
                     throw new Error(`${data.error.message} (Code: ${data.error.code})`);
                 }
 
-                if (data.candidates && data.candidates.length > 0 && data.candidates[0].content && data.candidates[0].content.parts) {
-                    const parts = data.candidates.flatMap(candidate => candidate.content?.parts || []);
-                    const responseImageParts = parts
-                        .filter(part => part.inlineData && part.inlineData.data)
-                        .sort((a, b) => (b.inlineData.data?.length || 0) - (a.inlineData.data?.length || 0));
-                    if (responseImageParts.length > 0) {
-                        if (onStatusUpdate) {
-                            const sizes = responseImageParts
-                                .map(part => `${part.inlineData.mimeType || 'image'}:${part.inlineData.data.length}`)
-                                .join(', ');
-                            onStatusUpdate(`[INFO] Gemini returned ${responseImageParts.length} image part(s). Selected largest: ${sizes}`);
-                        }
-                        const imagePart = responseImageParts[0];
-                        return {
-                            base64Img: imagePart.inlineData.data,
-                            mimeType: imagePart.inlineData.mimeType || 'image/png',
-                            usedModel: modelId
-                        };
+                // The SDK exposes `interaction.output_image` as a convenience
+                // property.  Raw REST responses instead retain image blocks in
+                // the completed model_output step.
+                const imagePart = (data.steps || [])
+                    .flatMap(step => step.content || [])
+                    .filter(part => part.type === "image" && part.data)
+                    .sort((a, b) => (b.data?.length || 0) - (a.data?.length || 0))[0];
+                if (imagePart?.data) {
+                    if (onStatusUpdate) {
+                        onStatusUpdate(`[INFO] Gemini returned image output: ${imagePart.mime_type || 'image/png'}:${imagePart.data.length}`);
                     }
-                    const textResponse = parts
-                        .map(part => part.text)
-                        .filter(Boolean)
-                        .join(' ')
-                        .slice(0, 500);
-                    if (textResponse) {
-                        throw new Error(`Unexpected formats from Gemini model ${modelId}: missing inlineData. Text response: ${textResponse}`);
-                    }
+                    return {
+                        base64Img: imagePart.data,
+                        mimeType: imagePart.mime_type || 'image/jpeg',
+                        usedModel: modelId
+                    };
                 }
-                throw new Error(`Unexpected formats from Gemini model ${modelId}: missing inlineData`);
+                const textResponse = (data.steps || [])
+                    .flatMap(step => step.content || [])
+                    .filter(part => part.type === "text" && part.text)
+                    .map(part => part.text)
+                    .join(" ")
+                    .slice(0, 500);
+                throw new Error(`Unexpected response format from Gemini Interactions API: missing image step${textResponse ? `. Text response: ${textResponse}` : ""}`);
 
             } else {
                 // Classic Imagen Model Logic

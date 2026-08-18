@@ -12,23 +12,21 @@ test('ChatGPT tips include a separate 2x upscale prompt copy action', () => {
   assert.match(step4PanelSource, /2倍アップスケール画像をダウンロード/);
 });
 
-test('external pro tools remain visible when the active in-app engine is Gemini', () => {
-  assert.doesNotMatch(
+test('OpenAI and Gemini each retain their own external-Web repair copy helpers', () => {
+  assert.match(
     step4PanelSource,
-    /\{selectedEngine === 'openai' && \(\s*<div className="mt-3 block w-full">/
+    /\{isOpenAIImageMode && \(\s*<div className="mt-3 block w-full">/
   );
+  assert.match(step4PanelSource, /Gemini用画像比率修正プロンプトをコピー/);
+  assert.match(step4PanelSource, /Gemini用2K高解像度プロンプトをコピー/);
+  assert.match(step4PanelSource, /アプリ内のGemini APIでは再加工しません/);
+  assert.match(step4PanelSource, /MiniMax H3・ComfyUI用プロンプトをコピー/);
 });
 
 test('STEP4 uses the effective OpenAI image mode instead of a stale text-engine label', () => {
-  assert.match(
-    step4PanelSource,
-    /const isOpenAIImageMode = enableOpenAIApi \|\| selectedEngine === 'openai';/
-  );
-  assert.equal(
-    step4PanelSource.match(/selectedEngine === 'openai'/g)?.length,
-    1,
-    'selectedEngine may appear only inside the single effective STEP4 provider predicate'
-  );
+  assert.match(step4PanelSource, /import \{ getEffectiveEngine \} from ['"]\.\.\/lib\/engine-state['"];/);
+  assert.match(step4PanelSource, /const isOpenAIImageMode = getEffectiveEngine\(selectedEngine, enableOpenAIApi\) === 'openai';/);
+  assert.doesNotMatch(step4PanelSource, /selectedEngine === 'openai'/);
 });
 
 test('ratio fix copy button hides its base label while showing copied feedback', () => {

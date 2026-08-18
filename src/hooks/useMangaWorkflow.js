@@ -33,6 +33,7 @@ import {
   parseImageQualityQaResponse
 } from '../lib/image-quality-qa';
 import { runImageQualityFailsafe } from '../lib/image-quality-failsafe';
+import { getEffectiveEngine } from '../lib/engine-state';
 
 export default function useMangaWorkflow() {
   // Force Build 2026-02-06 07:07 // Build 2026-02-06-01
@@ -144,6 +145,23 @@ export default function useMangaWorkflow() {
   const [isScenarioCopied, setIsScenarioCopied] = useState(false);
   const [isMetaSaved, setIsMetaSaved] = useState(false); // [v3.46] メタデータ保存フィードバック
 
+  // Legacy sessions can preserve one old flag across a hot update. Treat either
+  // OpenAI signal as authoritative and immediately restore one coherent engine.
+  const effectiveEngine = getEffectiveEngine(selectedEngine, enableOpenAIApi);
+  const isOpenAIEngine = effectiveEngine === 'openai';
+  useEffect(() => {
+    if (isOpenAIEngine && selectedEngine !== 'openai') {
+      setSelectedEngine('openai');
+      setActiveEngine('openai');
+    }
+    if (isOpenAIEngine && !enableOpenAIApi) {
+      setEnableOpenAIApi(true);
+    }
+    if (isOpenAIEngine && !enableChatGPTMode) {
+      setEnableChatGPTMode(true);
+    }
+  }, [enableChatGPTMode, enableOpenAIApi, isOpenAIEngine, selectedEngine]);
+
   // [v3.48] 360度背景画像読み込み (Studio Shooting Protocol)
   const [bg360Image, setBg360Image] = useState(null);                 // Base64プレビュー用
   const [bg360ImageParts, setBg360ImageParts] = useState(null);       // Gemini API送信用パーツ
@@ -207,7 +225,7 @@ export default function useMangaWorkflow() {
   };
 
   const getCurrentPromptProviderFamily = () => (
-    selectedEngine === 'openai' || enableOpenAIApi
+    isOpenAIEngine
       ? PROMPT_PROVIDER_FAMILIES.CHATGPT
       : PROMPT_PROVIDER_FAMILIES.GEMINI
   );
@@ -557,7 +575,7 @@ export default function useMangaWorkflow() {
     }, 800);
 
     try {
-      setEnhanceLog(prev => prev + `\n> [API] ${selectedEngine === 'openai' ? 'OpenAI' : 'Gemini'} にシナリオ強化をリクエスト中...`);
+      setEnhanceLog(prev => prev + `\n> [API] ${isOpenAIEngine ? 'OpenAI' : 'Gemini'} にシナリオ強化をリクエスト中...`);
       const result = await enhanceScenarioText({
         scenario,
         selectedCategories,
@@ -1083,7 +1101,7 @@ export default function useMangaWorkflow() {
   };
   // --- Step 4: Image Generation ---
   // [v2.79] 戻り値変更: フルオート連鎖用（true=成功, false=失敗）
-  const regenerateImage = async (skipGuard = false, overridePrompt = null) => {
+  const regenerateImage = async (skipGuard = false, overridePrompt = null, generationOptions = {}) => {
     const currentPrompt = overridePrompt || finalPrompt;
     if (isGeneratingImage || (!skipGuard && !currentPrompt)) return false;
     setIsGeneratingImage(true);
@@ -1123,7 +1141,7 @@ export default function useMangaWorkflow() {
     await new Promise(r => setTimeout(r, 800));
 
     try {
-      showStatus(enableOpenAIApi ? "OpenAI (ChatGPT Images 2.0) に送信中..." : "Google AI (Gemini/Imagen) に送信中...");
+      showStatus(isOpenAIEngine ? "OpenAI (ChatGPT Images 2.0) に送信中..." : "Google AI (Gemini/Imagen) に送信中...");
       setGenLog(prev => [...prev, "[3/5] クラウドAPIへ接続中...", "[3/5] プロンプトデータをアップロード中..."]);
 
       await new Promise(r => setTimeout(r, 1000)); // More visibility
@@ -1132,21 +1150,25 @@ export default function useMangaWorkflow() {
         setGenLog(prev => [...prev, msg]);
       };
 
+      const geminiReferenceImages = Array.isArray(generationOptions.referenceImages)
+        ? generationOptions.referenceImages
+        : ((bg360CroppedPanels && bg360Enabled && bg360CroppedPanels.length === 4)
+          ? bg360CroppedPanels
+          : []);
+      const geminiImageOptions = generationOptions.imageOptions || {};
+
       const generateImageCandidate = async (prompt, { repair = false } = {}) => {
         let response;
-        if (enableOpenAIApi) {
+        if (isOpenAIEngine) {
           statCallback(repair
             ? '[QUALITY QA] ⏳ gpt-image-2 で限定修正版を生成中です...'
             : '[INFO] ⏳ gpt-image-2 の画像生成には通常2〜10分かかります。しばらくお待ちください...');
           response = await generateImageWithOpenAI(prompt, statCallback);
         } else {
-          const refImages = (bg360CroppedPanels && bg360Enabled && bg360CroppedPanels.length === 4)
-            ? bg360CroppedPanels
-            : [];
-          if (refImages.length > 0) {
-            statCallback(`[REF] 360°背景クロップ画像 ${refImages.length}枚を参照画像として添付`);
+          if (geminiReferenceImages.length > 0) {
+            statCallback(`[REF] Gemini画像編集用の参照画像 ${geminiReferenceImages.length}枚を添付`);
           }
-          response = await generateImageWithImagen(prompt, statCallback, refImages);
+          response = await generateImageWithImagen(prompt, statCallback, geminiReferenceImages, geminiImageOptions);
         }
 
         const normalizedImage = String(response.base64Img || '').replace(/\s+/g, '');
@@ -1207,8 +1229,17 @@ export default function useMangaWorkflow() {
         onProgress: (msg) => statCallback(`[QUALITY QA] ${msg}`),
       });
       const qualityResult = qualityOutcome.finalReview;
+      const qualityReviewUnverified = Array.isArray(qualityOutcome.originalReview?.issues)
+        && qualityOutcome.originalReview.issues.length > 0
+        && qualityOutcome.originalReview.issues.every((issue) => issue?.type === 'unverified');
 
-      if (!qualityOutcome.originalReview.pass) {
+      if (!qualityOutcome.originalReview.pass && qualityReviewUnverified) {
+        setGenLog(prev => [
+          ...prev,
+          '[QUALITY QA] ℹ️ 画像品質レビューは未確認です。画像の具体的な問題は検出されていません。',
+          ...qualityOutcome.originalReview.issues.map((issue) => `[QUALITY QA] ${formatImageQualityIssue(issue)}`)
+        ]);
+      } else if (!qualityOutcome.originalReview.pass) {
         setGenLog(prev => [
           ...prev,
           '[QUALITY QA] ⚠️ 元画像の品質検査で問題を検出しました。',
@@ -1239,7 +1270,9 @@ export default function useMangaWorkflow() {
             ? '[QUALITY QA] ⚠️ 保存済みの元画像を採用し、警告付きで後続作業を続行します。'
             : '[QUALITY QA] ⚠️ 利用可能な画像を保持し、警告付きで後続作業を続行します。'
         ]);
-        showStatus('品質ゲートは未合格ですが、保存済みの元画像を採用して後続作業を続行します。');
+        showStatus(qualityReviewUnverified
+          ? '品質レビューは未確認ですが、画像生成は完了し保存済みの画像を採用します。'
+          : '品質ゲートは未合格ですが、保存済みの元画像を採用して後続作業を続行します。');
       } else {
         statCallback(qualityOutcome.attempts > 1
           ? '[QUALITY QA] ✅ PASS — 1回の限定修正後、人物・手・小物・吹き出し品質ゲートを通過しました。'
@@ -1257,9 +1290,9 @@ export default function useMangaWorkflow() {
           "[WARNING] 代わりに下位APIで妥協版を出力したため、描写が大きく崩れている可能性があります。",
           "[GUIDE] ★手動生成を推奨します★",
           "[GUIDE] 1. 「プロンプトをコピー」ボタンを押す",
-          `[GUIDE] 2. ${enableOpenAIApi ? 'ChatGPT' : 'Gemini'}(Web版)を開く: ${enableOpenAIApi ? 'https://chatgpt.com/' : 'https://gemini.google.com/app'}`,
+          `[GUIDE] 2. ${isOpenAIEngine ? 'ChatGPT' : 'Gemini'}(Web版)を開く: ${isOpenAIEngine ? 'https://chatgpt.com/' : 'https://gemini.google.com/app'}`,
           "[GUIDE] 3. 「元となるキャラクターシート画像」を一緒に添付する",
-          `[GUIDE] 4. 貼り付けて${enableOpenAIApi ? '送信する' : '「思考モード」で送信する'}`,
+          `[GUIDE] 4. 貼り付けて${isOpenAIEngine ? '送信する' : '「思考モード」で送信する'}`,
           "[COMPLETE] Image successfully generated (with warnings)."
         ]);
       } else if (!qualityResult.pass) {
@@ -1284,15 +1317,12 @@ export default function useMangaWorkflow() {
         guideLines = [
           "[ERROR GUIDE] OpenAI APIキーをメモリから読み取れませんでした。作業内容を保持したまま再入力画面を開きます。"
         ];
-      } else if (errMsg.includes("Unknown parameter") || errMsg.includes("Invalid parameter")) {
+      } else if (errMsg.includes("Unknown parameter") || errMsg.includes("Invalid parameter") || errMsg.includes("Invalid value at") || errMsg.includes("invalid_request") || errMsg.includes("Unexpected response format from Gemini Interactions API")) {
         // [v3.56] APIリクエストのパラメータ不正（コンテンツポリシーとは無関係）
         guideLines = [
-          `[ERROR GUIDE] ⚙️ APIパラメータの形式が不正です（${enableOpenAIApi ? 'OpenAI' : 'Google'}側の仕様変更の可能性）。`,
+          `[ERROR GUIDE] ⚙️ APIパラメータの形式が不正です（${isOpenAIEngine ? 'OpenAI' : 'Google'}側の仕様変更の可能性）。`,
           "[ERROR GUIDE] 【原因】AIモデルの仕様更新により、送信パラメータが合わなくなっている可能性があります。",
-          "[ERROR GUIDE] 【対処法】お手数ですが以下の手動手順で画像を生成してください。",
-          "[ERROR GUIDE] 1. 画面左下の「プロンプトをコピーする」ボタンを押します。",
-          `[ERROR GUIDE] 2. ${enableOpenAIApi ? 'ChatGPTウェブ版' : 'Geminiウェブ版'} を開きます: ${enableOpenAIApi ? 'https://chatgpt.com/' : 'https://gemini.google.com/app'}`,
-          `[ERROR GUIDE] 3. コピーしたプロンプトを貼り付け、元の「キャラクター設定画像」を一緒に添付して送信してください。`
+          "[ERROR GUIDE] 【対処法】アプリ側の送信形式を修正する必要があります。通信障害として再試行しても解決しません。"
         ];
       } else if (isImagePolicyError(errMsg)) {
         // [v4.2.0] コンテンツポリシーエラー → メッセージボックス表示（パネルは開かない）
@@ -1310,18 +1340,18 @@ export default function useMangaWorkflow() {
           fullAutoAbortRef.current = true;
         }
         guideLines = [
-          `[ERROR GUIDE] 🔑 現在のAPIキーでは、本アプリ経由での画像生成が許可されていないか、無効になっています（${enableOpenAIApi ? 'OpenAI' : 'Google'}の権限設定）。`,
+          `[ERROR GUIDE] 🔑 現在のAPIキーでは、本アプリ経由での画像生成が許可されていないか、無効になっています（${isOpenAIEngine ? 'OpenAI' : 'Google'}の権限設定）。`,
           `[ERROR GUIDE] 【対処法】本アプリでの自動生成は一旦諦め、以下の手順で公式ウェブ版から手動で生成してください。`,
           "[ERROR GUIDE] 1. 画面左下の「プロンプトをコピーする」ボタンを押します。",
-          `[ERROR GUIDE] 2. ${enableOpenAIApi ? 'ChatGPTウェブ版' : 'Geminiウェブ版'} を開きます: ${enableOpenAIApi ? 'https://chatgpt.com/' : 'https://gemini.google.com/app'}`,
+          `[ERROR GUIDE] 2. ${isOpenAIEngine ? 'ChatGPTウェブ版' : 'Geminiウェブ版'} を開きます: ${isOpenAIEngine ? 'https://chatgpt.com/' : 'https://gemini.google.com/app'}`,
           `[ERROR GUIDE] 3. コピーしたプロンプトを貼り付け、元の「キャラクター設定画像」を一緒に添付して送信してください。`
         ];
       } else {
         guideLines = [
-          `[ERROR GUIDE] ⏲️ 接続タイムアウト、または一時的な通信エラーで生成に失敗しました（${enableOpenAIApi ? 'OpenAI' : 'Google'}サーバーの混雑など）。`,
+          `[ERROR GUIDE] ⏲️ 接続タイムアウト、または一時的な通信エラーで生成に失敗しました（${isOpenAIEngine ? 'OpenAI' : 'Google'}サーバーの混雑など）。`,
           "[ERROR GUIDE] 【対処法】数分時間を置いてから「画像を生成する」を再度試すか、以下の手順で公式ウェブ版から生成してください。",
           "[ERROR GUIDE] 1. 画面左下の「プロンプトをコピーする」ボタンを押します。",
-          `[ERROR GUIDE] 2. ${enableOpenAIApi ? 'ChatGPTウェブ版' : 'Geminiウェブ版'} を開きます: ${enableOpenAIApi ? 'https://chatgpt.com/' : 'https://gemini.google.com/app'}`,
+          `[ERROR GUIDE] 2. ${isOpenAIEngine ? 'ChatGPTウェブ版' : 'Geminiウェブ版'} を開きます: ${isOpenAIEngine ? 'https://chatgpt.com/' : 'https://gemini.google.com/app'}`,
           `[ERROR GUIDE] 3. コピーしたプロンプトを貼り付け、元の「キャラクター設定画像」を一緒に添付して送信してください。`
         ];
       }
@@ -1379,7 +1409,7 @@ export default function useMangaWorkflow() {
         } else {
           setPolicyFixLog(prev => prev + "\n> [SUCCESS] フォールバック方式で配慮版プロンプトを生成しました。STEP3のプロンプト欄に反映済みです。");
         }
-        setPolicyFixLog(prev => prev + `\n> [GUIDE] 再度STEP4で画像生成するか、「プロンプトをコピー」して${selectedEngine === 'openai' ? 'ChatGPT' : 'Gemini'} Web版で生成してください。`);
+        setPolicyFixLog(prev => prev + `\n> [GUIDE] 再度STEP4で画像生成するか、「プロンプトをコピー」して${isOpenAIEngine ? 'ChatGPT' : 'Gemini'} Web版で生成してください。`);
         setPolicyErrorMsg("");
         lastPolicyErrorRef.current = "";
       }
@@ -1487,8 +1517,8 @@ export default function useMangaWorkflow() {
       navigator.clipboard.writeText(finalPrompt);
     }
 
-    const webUrl = enableOpenAIApi ? 'https://chatgpt.com/' : 'https://gemini.google.com/app';
-    const engineName = enableOpenAIApi ? 'ChatGPT' : 'Gemini';
+    const webUrl = isOpenAIEngine ? 'https://chatgpt.com/' : 'https://gemini.google.com/app';
+    const engineName = isOpenAIEngine ? 'ChatGPT' : 'Gemini';
 
     setGenLog(prev => [
       ...prev,
@@ -1519,7 +1549,7 @@ export default function useMangaWorkflow() {
     // フルオート開始
     fullAutoAbortRef.current = false;
     setIsFullAutoMode(true);
-    setEnableChatGPTMode(selectedEngine === 'openai' || enableOpenAIApi);
+    setEnableChatGPTMode(isOpenAIEngine);
 
     // [v4.2.7] 新しい周回の開始時に、前回の生成データ（シナリオ、プロンプト、画像等）を即時リセット
     // これにより currentStep が 2 に下がり、画面レイアウトの再レンダリングが先行して完了します

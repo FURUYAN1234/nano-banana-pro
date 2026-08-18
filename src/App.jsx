@@ -229,6 +229,7 @@ function App() {
           SYSTEM_VERSION={SYSTEM_VERSION}
           apiKey={apiKeyForUnlockedUi}
           selectedEngine={selectedEngine}
+          enableOpenAIApi={enableOpenAIApi}
           partialReset={partialReset}
           step1Reset={step1Reset}
           hardReset={hardReset}
@@ -377,7 +378,7 @@ function App() {
               enhanceGag={enhanceGag}
               SYSTEM_VERSION={SYSTEM_VERSION}
               isAssembling={isAssembling}
-              regenerateImage={regenerateImage}
+               regenerateImage={regenerateImage}
               isGeneratingImage={isGeneratingImage}
               isFixPromptCopied={isFixPromptCopied}
               setIsFixPromptCopied={setIsFixPromptCopied}

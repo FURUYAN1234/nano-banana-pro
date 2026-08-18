@@ -17,6 +17,8 @@ import {
 } from 'lucide-react';
 import ThinkingLog from './ThinkingLog';
 import Panorama360Viewer from './Panorama360Viewer';
+import { GEMINI_A4_RELAYOUT_PROMPT, GEMINI_2K_REFINEMENT_PROMPT } from '../lib/gemini-image-edit';
+import { getEffectiveEngine } from '../lib/engine-state';
 
 const getGeneratedImageExtension = (dataUrl) => {
   const mimeMatch = typeof dataUrl === 'string' ? dataUrl.match(/^data:([^;,]+)/) : null;
@@ -265,10 +267,10 @@ export default function Step4Panel({
   handlePolicyAutoFix,
   handlePolicySwitchToWeb
 }) {
-  // Image generation is governed by this flag. selectedEngine can be stale during
-  // an in-memory session transition, so all STEP4 labels and links use the same
-  // effective provider predicate as the image-generation route.
-  const isOpenAIImageMode = enableOpenAIApi || selectedEngine === 'openai';
+  // Image generation and every STEP4 label use one resolved provider. Legacy
+  // session flags can disagree during a hot update, so never branch on either
+  // raw flag directly.
+  const isOpenAIImageMode = getEffectiveEngine(selectedEngine, enableOpenAIApi) === 'openai';
   const generatedImageExtension = getGeneratedImageExtension(generatedImage);
   const [isUpscalePromptCopied, setIsUpscalePromptCopied] = React.useState(false);
   const [isMiniMaxPromptCopied, setIsMiniMaxPromptCopied] = React.useState(false);
@@ -546,6 +548,42 @@ export default function Step4Panel({
                       </>
                     )}
 
+                    {!isOpenAIImageMode && (
+                      <div className="mt-3 block w-full border-t border-blue-500/20 pt-3">
+                        <p className="text-[11px] text-cyan-200/90 leading-relaxed">
+                          ✨ <strong>Gemini Web用の修正プロンプト</strong>：生成結果の比率・人物・手足・コマ割りがおかしい場合は、下の文をコピーし、Geminiウェブ版に<strong>生成済み画像を添付</strong>して送信してください。
+                        </p>
+                        <button
+                          className={`mt-2 ${isFixPromptCopied ? 'bg-green-600 border-green-500/30' : 'bg-blue-900/70 hover:bg-blue-800/80 border-blue-500/30'} text-white px-3 py-1.5 rounded transition-all inline-flex items-center justify-center gap-1.5 border font-bold active:scale-95`}
+                          style={{ fontSize: '10px', minWidth: '120px', position: 'relative' }}
+                          onClick={() => {
+                            navigator.clipboard.writeText(GEMINI_A4_RELAYOUT_PROMPT);
+                            setIsFixPromptCopied(true);
+                            setTimeout(() => setIsFixPromptCopied(false), 2000);
+                          }}
+                        >
+                          <span style={{ visibility: isFixPromptCopied ? 'hidden' : 'visible' }}>📋 Gemini用画像比率修正プロンプトをコピー</span>
+                          {isFixPromptCopied && <span style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>✅ コピー完了</span>}
+                        </button>
+                        <button
+                          className={`mt-2 ml-2 ${isUpscalePromptCopied ? 'bg-green-600 border-green-500/30' : 'bg-cyan-900/70 hover:bg-cyan-800/80 border-cyan-500/30'} text-white px-3 py-1.5 rounded transition-all inline-flex items-center justify-center gap-1.5 border font-bold active:scale-95`}
+                          style={{ fontSize: '10px', minWidth: '120px', position: 'relative' }}
+                          onClick={() => {
+                            navigator.clipboard.writeText(GEMINI_2K_REFINEMENT_PROMPT);
+                            setIsUpscalePromptCopied(true);
+                            setTimeout(() => setIsUpscalePromptCopied(false), 2000);
+                          }}
+                        >
+                          <span style={{ visibility: isUpscalePromptCopied ? 'hidden' : 'visible' }}>📋 Gemini用2K高解像度プロンプトをコピー</span>
+                          {isUpscalePromptCopied && <span style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>✅ コピー完了</span>}
+                        </button>
+                        <p className="mt-2 text-[10px] text-slate-400 leading-relaxed">
+                          ※アプリ内のGemini APIでは再加工しません。コピーした文と画像をGeminiウェブ版へ貼り付ける手動修正用です。
+                        </p>
+                      </div>
+                    )}
+
+                    {isOpenAIImageMode && (
                     <div className="mt-3 block w-full">
                         <button
                           className={`mt-2 ${isFixPromptCopied ? 'bg-green-600 border-green-500/30' : 'bg-slate-700 hover:bg-slate-600 border-white/10'} text-white px-3 py-1.5 rounded transition-all inline-flex items-center justify-center gap-1.5 border font-bold active:scale-95`}
@@ -697,6 +735,9 @@ No explanations. No partial results.`;
                             <span style={{ visibility: isUpscalePromptCopied ? 'hidden' : 'visible' }}>📋 画像2倍アップスケールプロンプトをコピー</span>
                             {isUpscalePromptCopied && <span style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>✅ コピー完了</span>}
                           </button>
+                        </div>
+                    </div>
+                    )}
                           <div className="mt-3 pt-3 border-t border-violet-500/20">
                             <p className="text-[11px] text-violet-200/80 leading-relaxed">
                               🎞️ 生成した4コマ漫画をMiniMax H3で動画化するための、ComfyUI向け英語プロンプト作成指示をコピーします。
@@ -729,8 +770,6 @@ No explanations. No partial results.`;
                               <li>画角と秒数を確認の上、先ほど出力された英語プロンプトをPrompt欄に貼り付けて実行</li>
                             </ol>
                           </div>
-                        </div>
-                    </div>
                   </div>
                 </div>
               </div>
@@ -941,7 +980,7 @@ No explanations. No partial results.`;
                         <p className="text-orange-300 font-bold mb-2">完璧な画質・正確なキャラクターで生成する手順：</p>
                         <ol className="list-decimal list-inside text-slate-300 space-y-1 text-xs">
                           <li>画面左側の「<span className="text-white font-bold">プロンプトをコピーする</span>」ボタンを押します。</li>
-                          <li><a href={enableOpenAIApi ? "https://chatgpt.com/" : "https://gemini.google.com/app"} target="_blank" rel="noreferrer" className="text-blue-400 hover:underline">{enableOpenAIApi ? 'ChatGPTウェブ版' : 'Geminiウェブ版'}</a> を開きます。</li>
+                          <li><a href={isOpenAIImageMode ? "https://chatgpt.com/" : "https://gemini.google.com/app"} target="_blank" rel="noreferrer" className="text-blue-400 hover:underline">{isOpenAIImageMode ? 'ChatGPTウェブ版' : 'Geminiウェブ版'}</a> を開きます。</li>
                           <li>コピーした文章を貼り付け、元のキャラクターシート画像を一緒に添付して送信してください。</li>
                         </ol>
                       </div>

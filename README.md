@@ -831,6 +831,9 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 
 ## 📋 ChangeLog
 
+### v5.4.9 (2026-08-18)
+- **[Fix & UX]** OpenAIとGeminiの旧二重状態を単一の実効エンジンへ収束させ、OpenAI信号が片方だけ残ってもSTEP1からSTEP4をOpenAIへ同期 / Consolidated legacy OpenAI and Gemini flags into one effective engine so an OpenAI signal from either state synchronizes STEP1 through STEP4 to OpenAI
+
 ### v5.4.8 (2026-08-18)
 - **[Fix & UX]** STEP4のプロ向け補助操作を常時表示に復旧し、OpenAI画像生成状態を基準にSTEP4の表示・リンク・記録を統一 / Restored always-visible STEP4 pro helper actions and aligned STEP4 labels, links, and metadata with the effective OpenAI image-generation state
 

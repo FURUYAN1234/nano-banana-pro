@@ -1,6 +1,7 @@
 import React from 'react';
 import { Check, ArrowRight, RefreshCw, Zap, Square, Loader2, Copy } from 'lucide-react';
 import { buildSingleImageEmotionalPrompt } from '../lib/single-image-prompt';
+import { getEffectiveEngine } from '../lib/engine-state';
 
 export default function ControlBar({
   controlBarRef,
@@ -17,6 +18,8 @@ export default function ControlBar({
   isPolicyCopied,
   setIsPolicyCopied
 }) {
+  const isOpenAIEngine = getEffectiveEngine(selectedEngine, enableOpenAIApi) === 'openai';
+
   return (
     <div ref={controlBarRef} className="fixed top-0 left-0 right-0 z-[100] bg-[#0f1115] border-b border-white/10 px-2 md:px-8 py-2 md:py-3 shadow-xl w-full flex flex-col gap-2 md:gap-3 overflow-x-hidden">
       <div className="flex flex-wrap xl:flex-nowrap items-center justify-center max-w-7xl mx-auto w-full gap-y-3">
@@ -118,7 +121,7 @@ export default function ControlBar({
       </div>
       
       {/* Web版ChatGPT用 コピーボタン (β) */}
-      {(selectedEngine === 'openai' || enableOpenAIApi) && (
+      {isOpenAIEngine && (
         <div className="flex justify-center w-full max-w-7xl mx-auto px-2 pb-1">
           <button
             onClick={() => {
