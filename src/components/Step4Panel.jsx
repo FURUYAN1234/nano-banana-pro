@@ -19,6 +19,7 @@ import ThinkingLog from './ThinkingLog';
 import Panorama360Viewer from './Panorama360Viewer';
 import { GEMINI_A4_RELAYOUT_PROMPT, GEMINI_2K_REFINEMENT_PROMPT } from '../lib/gemini-image-edit';
 import { getEffectiveEngine } from '../lib/engine-state';
+import { MINIMAX_H3_COMFYUI_PROMPT } from '../lib/minimax-h3-prompt';
 
 const getGeneratedImageExtension = (dataUrl) => {
   const mimeMatch = typeof dataUrl === 'string' ? dataUrl.match(/^data:([^;,]+)/) : null;
@@ -66,7 +67,7 @@ Output:
 Replace the placeholders with the measured pixel values.
 Do not include implementation notes unless an error prevents completion.`;
 
-const MINIMAX_H3_COMFYUI_PROMPT = `You are a prompt writer for the ComfyUI MiniMax H3 Reference-to-Video (R2V / Ref2VA) workflow.
+export const LEGACY_MINIMAX_H3_COMFYUI_PROMPT = `You are a prompt writer for the ComfyUI MiniMax H3 Reference-to-Video (R2V / Ref2VA) workflow.
 
 Conversation behavior:
 
@@ -743,13 +744,7 @@ No explanations. No partial results.`;
                               🎞️ 生成した4コマ漫画をMiniMax H3で動画化するための、ComfyUI向け英語プロンプト作成指示をコピーします。
                             </p>
                             <p className="mt-1 text-[10px] text-violet-100/70 leading-relaxed">
-                              デフォルト仕様：15秒・16:9・BGMあり・日本語音声・標準の躍動演出。秒数・画角・BGM・演出は個別指定があればそちらを優先します。
-                            </p>
-                            <p className="mt-1 text-[10px] text-violet-100/70 leading-relaxed">
-                              字幕は発話に合わせて画面下中央に表示し、元の吹き出しは映像から除去します。
-                            </p>
-                            <p className="mt-1 text-[10px] text-violet-100/70 leading-relaxed">
-                              主役から背景人物まで、画面内の全キャラクターに役割に沿う自然な動きを指定します。
+                              デフォルト仕様：15秒・16:9・会話音声優先・字幕なし・BGMなし。
                             </p>
                             <button
                               className={`mt-2 ${isMiniMaxPromptCopied ? 'bg-green-600 border-green-500/30' : 'bg-violet-900/70 hover:bg-violet-800/80 border-violet-500/30'} text-white px-3 py-1.5 rounded transition-all inline-flex items-center justify-center gap-1.5 border font-bold active:scale-95`}
@@ -766,9 +761,17 @@ No explanations. No partial results.`;
                             <ol className="mt-2 space-y-1 text-[10px] leading-relaxed text-slate-400 list-decimal list-inside">
                               <li>このボタンで指示文をコピー、同時に生成済みの4コマ漫画をチャットに添付し、送信</li>
                               <li>出力されたプロンプトをコピー</li>
-                              <li>ComfyUIでMiniMax H3 Reference-to-Videoを選択し、同じ4コマ漫画をReference Imageに接続</li>
-                              <li>画角と秒数を確認の上、先ほど出力された英語プロンプトをPrompt欄に貼り付けて実行</li>
+                              <li>ComfyUIでは、同じ4コマ漫画を最初の参照入力 <code>ref_image_0</code> にだけ接続。<code>ref_image_1</code> 以降には接続しない（右側の無効な紫ノードも使わない）</li>
+                              <li>下の設定を確認してから、出力された英語プロンプトを <code>Prompt</code> 欄に貼り付けて実行</li>
                             </ol>
+                            <div className="mt-3 rounded border border-violet-400/25 bg-violet-950/25 p-2.5 text-[10px] leading-relaxed text-violet-100/85">
+                              <p className="font-bold text-violet-200">ComfyUIの開始設定（ノード名 → 設定欄）</p>
+                              <ol className="mt-1.5 space-y-1 list-decimal list-inside">
+                                <li><strong>画像を読み込む</strong> → 出力を <code>MiniMax H3 Reference to Video</code> の最初の参照入力 <code>ref_image_0</code> へ接続。<code>ref_image_1</code> 以降は未接続のままにします。</li>
+                                <li><strong>Resolution Selector (Size)</strong> → <code>アスペクト比: 16:9 (Widescreen)</code>、<code>メガピクセル: 0.4</code> から開始（15秒では 864×480）。VRAMに余裕があるときだけ 0.5→0.6 と段階的に上げます。15秒・1.0MPはGPUメモリエラーになりやすい設定です。</li>
+                                <li><strong>基本スケジューラー</strong> → <code>スケジューラー: normal</code>。テンプレートの <code>ステップ: 20</code> と <code>ノイズ除去: 1.00</code> は、まず変更しません。</li>
+                              </ol>
+                            </div>
                           </div>
                   </div>
                 </div>
