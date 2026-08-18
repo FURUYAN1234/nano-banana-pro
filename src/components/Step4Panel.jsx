@@ -123,6 +123,10 @@ Japanese dialogue caption rules:
 Animation performance rules:
 
 - Use motion to make the story and emotional escalation more engaging while preserving the manga's intended tone, action, and character identity.
+- Treat every visible character, including background and crowd characters, as an active performer rather than a static part of the scenery.
+- Every visible character must perform at least one role-appropriate, physically plausible movement in every shot where they are visible, unless the reference manga or the user explicitly requires that character to remain intentionally still.
+- Speaking and story-critical characters must visibly perform their dialogue, facial reaction, gesture, posture shift, or purposeful action. Background and crowd characters must perform restrained secondary action such as blinking, gaze shifts, breathing, weight shifts, hair or clothing response, prop handling, or a context-appropriate reaction.
+- Do not leave background or crowd characters as static cutouts, frozen poses, or duplicated looped motion. Keep their secondary action subtle, individually varied, and subordinate to the primary action, dialogue, caption safe area, and decisive gag.
 - Select only one to three compatible principles per shot from anticipation, slow-in/slow-out, arcs, follow-through, secondary action, staging, clear pose-to-pose acting, or restrained exaggeration.
 - Make the chosen principles physically visible through the relevant body, face, hair, clothing, prop, background, and camera behavior; keep the primary action readable and do not let secondary action obscure dialogue or the decisive gag.
 - Do not add cartoon exaggeration, squash-and-stretch, or extra motion when it conflicts with the reference manga, the requested tone, a quiet beat, or a physically grounded action.
@@ -699,6 +703,9 @@ No explanations. No partial results.`;
                             </p>
                             <p className="mt-1 text-[10px] text-violet-100/70 leading-relaxed">
                               字幕は発話に合わせて画面下中央に表示し、元の吹き出しは映像から除去します。
+                            </p>
+                            <p className="mt-1 text-[10px] text-violet-100/70 leading-relaxed">
+                              主役から背景人物まで、画面内の全キャラクターに役割に沿う自然な動きを指定します。
                             </p>
                             <button
                               className={`mt-2 ${isMiniMaxPromptCopied ? 'bg-green-600 border-green-500/30' : 'bg-violet-900/70 hover:bg-violet-800/80 border-violet-500/30'} text-white px-3 py-1.5 rounded transition-all inline-flex items-center justify-center gap-1.5 border font-bold active:scale-95`}

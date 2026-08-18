@@ -52,6 +52,14 @@ test('MiniMax H3 copied prompt selects compatible animation principles without o
   assert.match(step4PanelSource, /Do not add cartoon exaggeration, squash-and-stretch, or extra motion/);
 });
 
+test('MiniMax H3 copied prompt requires role-appropriate motion from every visible character', () => {
+  assert.match(step4PanelSource, /Treat every visible character, including background and crowd characters, as an active performer/);
+  assert.match(step4PanelSource, /Every visible character must perform at least one role-appropriate, physically plausible movement in every shot where they are visible/);
+  assert.match(step4PanelSource, /Speaking and story-critical characters must visibly perform their dialogue, facial reaction, gesture, posture shift, or purposeful action/);
+  assert.match(step4PanelSource, /Background and crowd characters must perform restrained secondary action such as blinking, gaze shifts, breathing, weight shifts, hair or clothing response, prop handling, or a context-appropriate reaction/);
+  assert.match(step4PanelSource, /Do not leave background or crowd characters as static cutouts, frozen poses, or duplicated looped motion/);
+});
+
 test('MiniMax H3 helper explains the copy-to-ComfyUI reference workflow', () => {
   assert.match(step4PanelSource, /このボタンで指示文をコピー、同時に生成済みの4コマ漫画をチャットに添付し、送信/);
   assert.match(step4PanelSource, /出力されたプロンプトをコピー/);
@@ -138,6 +146,8 @@ test('README documents the MiniMax H3 timing and cross-cut dialogue safeguards',
   assert.match(readmeSource, /H3へ渡す音声台詞そのものを確認済みのひらがな・カタカナだけで記述/);
   assert.match(readmeSource, /タイトルは00:00\.000から00:01\.600だけで完全にフェードアウト/);
   assert.match(readmeSource, /終端表示は00:13\.200から00:15\.000だけ/);
+  assert.match(readmeSource, /背景人物を含む画面内の全キャラクター/);
+  assert.match(readmeSource, /役割に沿う自然な動きを必須/);
 });
 
 test('README documents the unified MiniMax H3 helper and its limited graphics', () => {
