@@ -1,6 +1,6 @@
 # Super FURU AI 4-koma System
 
-> Latest release: **v5.5.1** / 最新リリース: **v5.5.1**
+> Latest release: **v5.5.2** / 最新リリース: **v5.5.2**
 
 > **"To what extent can humans step away from the creative process?"**
 > **「人間は、どこまで制作から降りられるのか？」**
@@ -22,7 +22,7 @@
 This project aims to intentionally exclude humans from the creative process, allowing AI to act as a director and complete everything from brainstorming to composition, direction, and rendering.
 本プロジェクトは、人間をクリエイティブな工程から意図的に排除し、AIがディレクターとして「ネタ出し・構成・演出・作画」のすべてを完結させることを目的としています。
 
-The current implementation and latest release are **v5.5.1**. The product name is **Super FURU AI 4-koma System**; **Nano Banana 2** and **ChatGPT Image 2.0** identify image-generation engine families. / 現在の実装および最新公開版は **v5.5.1** です。製品名は **Super FURU AI 4-koma System** で、**Nano Banana 2** と **ChatGPT Image 2.0** は画像生成エンジン系統の名称です。
+The current implementation and latest release are **v5.5.2**. The product name is **Super FURU AI 4-koma System**; **Nano Banana 2** and **ChatGPT Image 2.0** identify image-generation engine families. / 現在の実装および最新公開版は **v5.5.2** です。製品名は **Super FURU AI 4-koma System** で、**Nano Banana 2** と **ChatGPT Image 2.0** は画像生成エンジン系統の名称です。
 
 Current behavior at a glance / 現行仕様の要点:
 
@@ -294,7 +294,7 @@ To address the extreme complexity of a 5,000+ line monolith, the frontend archit
 
 ## 🔍 Deep Analysis (技術詳解)
 
-### 🧭 Current v5.5.1 Processing Contract / 現行v5.5.1処理仕様
+### 🧭 Current v5.5.2 Processing Contract / 現行v5.5.2処理仕様
 
 | Stage | Input | Processing and validation | Output |
 |:--|:--|:--|:--|
@@ -832,6 +832,9 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 ---
 
 ## 📋 ChangeLog
+
+### v5.5.2 (2026-08-19)
+- **[Fix & UX]** STEP4のMiniMax H3案内に、最初に選ぶべき `MiniMax H3 Reference-to-Video（R2V / Ref2VA）` ワークフローを独立した手順と設定項目として追加 / Added an explicit MiniMax H3 Reference-to-Video (R2V / Ref2VA) workflow-selection step and setting to the STEP4 guide
 
 ### v5.5.1 (2026-08-19)
 - **[Fix & UX]** MiniMax H3の会話音声・話者口パク固定・字幕なし・BGMなしを維持しながら、全員の役割別演技、カットごとの人物反応、寄り引き・横移動・縦移動・回り込みを使い分けるカメラ軌道を復元 / Restored role-appropriate acting for every visible character and varied push-pull, lateral, vertical, and orbiting camera paths while retaining dialogue-first audio, speaker-bound lip sync, no subtitles, and no default BGM

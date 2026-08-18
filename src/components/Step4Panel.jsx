@@ -761,12 +761,14 @@ No explanations. No partial results.`;
                             <ol className="mt-2 space-y-1 text-[10px] leading-relaxed text-slate-400 list-decimal list-inside">
                               <li>このボタンで指示文をコピー、同時に生成済みの4コマ漫画をチャットに添付し、送信</li>
                               <li>出力されたプロンプトをコピー</li>
-                              <li>ComfyUIでは、同じ4コマ漫画を最初の参照入力 <code>ref_image_0</code> にだけ接続。<code>ref_image_1</code> 以降には接続しない（右側の無効な紫ノードも使わない）</li>
+                              <li>ComfyUIで <code>MiniMax H3 Reference-to-Video（R2V / Ref2VA）</code> ワークフローを選択（テンプレートを読み込んでいる場合は、そのワークフローを開く）</li>
+                              <li>同じ4コマ漫画を最初の参照入力 <code>ref_image_0</code> にだけ接続。<code>ref_image_1</code> 以降には接続しない（右側の無効な紫ノードも使わない）</li>
                               <li>下の設定を確認してから、出力された英語プロンプトを <code>Prompt</code> 欄に貼り付けて実行</li>
                             </ol>
                             <div className="mt-3 rounded border border-violet-400/25 bg-violet-950/25 p-2.5 text-[10px] leading-relaxed text-violet-100/85">
-                              <p className="font-bold text-violet-200">ComfyUIの開始設定（ノード名 → 設定欄）</p>
+                              <p className="font-bold text-violet-200">ComfyUIの開始設定（ワークフローとノード名 → 設定欄）</p>
                               <ol className="mt-1.5 space-y-1 list-decimal list-inside">
+                                <li><strong>選ぶワークフロー</strong> → <code>MiniMax H3 Reference-to-Video（R2V / Ref2VA）</code>。別のMiniMaxテンプレートではなく、このワークフローを開きます。</li>
                                 <li><strong>画像を読み込む</strong> → 出力を <code>MiniMax H3 Reference to Video</code> の最初の参照入力 <code>ref_image_0</code> へ接続。<code>ref_image_1</code> 以降は未接続のままにします。</li>
                                 <li><strong>Resolution Selector (Size)</strong> → <code>アスペクト比: 16:9 (Widescreen)</code>、<code>メガピクセル: 0.4</code> から開始（15秒では 864×480）。VRAMに余裕があるときだけ 0.5→0.6 と段階的に上げます。15秒・1.0MPはGPUメモリエラーになりやすい設定です。</li>
                                 <li><strong>基本スケジューラー</strong> → <code>スケジューラー: normal</code>。テンプレートの <code>ステップ: 20</code> と <code>ノイズ除去: 1.00</code> は、まず変更しません。</li>

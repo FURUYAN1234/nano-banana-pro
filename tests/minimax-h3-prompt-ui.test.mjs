@@ -42,6 +42,8 @@ test('MiniMax H3 prompt restores varied character acting and camera paths withou
 });
 
 test('MiniMax H3 UI identifies the exact ComfyUI sockets and fields to set', () => {
+  assert.match(step4PanelSource, /MiniMax H3 Reference-to-Video（R2V \/ Ref2VA）.*ワークフローを選択/);
+  assert.match(step4PanelSource, /選ぶワークフロー.*MiniMax H3 Reference-to-Video（R2V \/ Ref2VA）/);
   assert.match(step4PanelSource, /最初の参照入力.*ref_image_0/);
   assert.match(step4PanelSource, /同じ4コマ漫画を最初の参照入力.*ref_image_0.*ref_image_1.*以降.*接続しない/);
   assert.match(step4PanelSource, /Resolution Selector \(Size\).*メガピクセル.*0\.4/);
