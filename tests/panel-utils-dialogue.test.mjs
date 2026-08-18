@@ -455,6 +455,27 @@ test('separates visible bubble lettering from speaker-name tail metadata for ima
   assert.doesNotMatch(dialogue, /Speech Bubble \d+ \[[^\]]+\]:/);
 });
 
+test('splits inline multi-speaker dialogue from stage directions without printing prose', () => {
+  const panelText = `
+[4コマ目: 結]
+状況: 全員がラウンジで騒ぎ、サエコが止めに入る。
+アカリ「みんなでこのホーム、ジャックしようー！」
+（サエコ「この暴走、即！退去命令よ！」、ミク→「最高すぎ！」と笑う、リン→「踊るしかないね！」、ヒカリ→「無理無理無理…！」と叫ぶ）`;
+
+  const dialogue = extractDialogueOnly(panelText, CAST_LIST, { forImagePrompt: true });
+
+  assert.match(dialogue, /B1="みんなでこのホーム、ジャックしようー！"/);
+  assert.match(dialogue, /B2="この暴走、即！退去命令よ！"/);
+  assert.match(dialogue, /B3="最高すぎ！"/);
+  assert.match(dialogue, /B4="踊るしかないね！"/);
+  assert.match(dialogue, /B5="無理無理無理…！"/);
+  assert.match(dialogue, /B2->\[サエコ\]/);
+  assert.match(dialogue, /B3->\[ミク\]/);
+  assert.match(dialogue, /B4->\[リン\]/);
+  assert.match(dialogue, /B5->\[ヒカリ\]/);
+  assert.doesNotMatch(dialogue, /と笑う|と叫ぶ|→|、ミク|、リン|、ヒカリ/);
+});
+
 test('maps fear-like emotion tags to safe dramatic styling while preserving comedic intent', () => {
   const panicGagBlock = buildEmotionBlock(`
 [EMOTION: PANIC_GAG]

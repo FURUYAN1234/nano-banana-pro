@@ -363,6 +363,32 @@ const getExplicitSameLineSpeakerName = (value = '', validCharacters = []) => {
   return isExplicitSameLineSpeakerPrefix(clean, validCharacters) ? clean : '';
 };
 
+const getImmediateInlineSpeakerName = (value = '', validCharacters = []) => {
+  const match = String(value).match(/(?:^|[、。！？!?…）)\s])([\p{L}\p{N}_・\s]{1,24})\s*(?:→|[-=]>|[:：])\s*$/u);
+  if (!match) return '';
+  return getExplicitSameLineSpeakerName(match[1], validCharacters);
+};
+
+const extractFirstAttributedDialogueText = (line = '', validCharacters = []) => {
+  const source = String(line);
+  const openingIndex = source.indexOf('「');
+  if (openingIndex === -1) return '';
+
+  let boundary = source.length;
+  let nextOpeningIndex = source.indexOf('「', openingIndex + 1);
+  while (nextOpeningIndex !== -1) {
+    if (getImmediateInlineSpeakerName(source.slice(0, nextOpeningIndex), validCharacters)) {
+      boundary = nextOpeningIndex;
+      break;
+    }
+    nextOpeningIndex = source.indexOf('「', nextOpeningIndex + 1);
+  }
+
+  const attributedSegment = source.slice(openingIndex + 1, boundary);
+  const closingIndex = attributedSegment.lastIndexOf('」');
+  return closingIndex === -1 ? '' : attributedSegment.slice(0, closingIndex);
+};
+
 const normalizeContextSpeakerCandidate = (value = '') =>
   normalizeDialogueSpeakerPrefix(value)
     .replace(/^(?:状況(?:演出)?|Situation|Action)\s*[:：]\s*/i, '')
@@ -685,6 +711,10 @@ export const extractDialogueOnly = (fullPanelText, castList, options = {}) => {
       const quoteMatch = clean.trim().match(/^「([^」]+)」/);
       if (quoteMatch && clean.trim().startsWith('「')) {
         clean = quoteMatch[1];
+      } else if (detectedSpeaker) {
+        const attributedQuote = extractFirstAttributedDialogueText(clean, validCharacters);
+        if (attributedQuote) clean = attributedQuote;
+        else clean = clean.replace(/^.*?(?:[:：])\s*/, '');
       } else {
         // Remove Speaker Name and Colon
         clean = clean.replace(/^.*?(?:[:：]|「)\s*/, '');
@@ -726,6 +756,7 @@ export const extractDialogueOnly = (fullPanelText, castList, options = {}) => {
       const sameLinePostText = fullPanelText.slice(regex.lastIndex, quoteLineEnd);
       const postText = fullPanelText.substring(regex.lastIndex, regex.lastIndex + 40);
       const isSpokenQuoteByPostText = hasSpokenQuotePostContext(sameLinePostText || postText);
+      const immediateInlineSpeaker = getImmediateInlineSpeakerName(sameLinePrevText, validCharacters);
 
       // Same-line speaker labels are reliable. Speech verbs inside situation/reaction
       // narration become bubble contracts only when a nearby person/role can be identified.
@@ -733,7 +764,7 @@ export const extractDialogueOnly = (fullPanelText, castList, options = {}) => {
       const inferredSpokenSpeaker = isSpokenQuoteByPostText
         ? getSpokenQuoteSpeakerName(sameLinePrevText, validCharacters)
         : '';
-      const hasValidSpeakerInPrevText = hasSameLineSpeaker || Boolean(inferredSpokenSpeaker);
+      const hasValidSpeakerInPrevText = hasSameLineSpeaker || Boolean(immediateInlineSpeaker) || Boolean(inferredSpokenSpeaker);
 
       if (!hasValidSpeakerInPrevText) {
         // 直前にキャスト名や人物名がない場合は、セリフではなく引用や他人の発言としてスキップ
@@ -802,7 +833,7 @@ export const extractDialogueOnly = (fullPanelText, castList, options = {}) => {
       lastIndex = regex.lastIndex;
       if (dialogueText && !isLikelyNarration) {
         // Infer a nearby speaker for spoken quotes embedded inside action narration.
-        const fallbackSpeakerName = inferredSpokenSpeaker || getSpokenQuoteSpeakerName(sameLinePrevText, validCharacters);
+        const fallbackSpeakerName = immediateInlineSpeaker || inferredSpokenSpeaker || getSpokenQuoteSpeakerName(sameLinePrevText, validCharacters);
         if (!fallbackSpeakerName) continue;
         if (isNearDuplicateSpeechForSpeaker(speechBubbleEntries, fallbackSpeakerName, dialogueText)) continue;
         if (isCoveredByExistingSpeechBubble(speechBubbleEntries, dialogueText)) continue;

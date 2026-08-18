@@ -494,6 +494,44 @@ Outfit: カジュアルな私服
   }
 });
 
+test('inline speaker stage directions never become printable bubble text for either provider', () => {
+  const scenario = `
+## タイトル: 台詞境界検証
+Location: ラウンジ
+Outfit: カジュアルな私服
+
+[1コマ目: 起]
+ミク「始めるよ。」
+[2コマ目: 承]
+リン「確認するね。」
+[3コマ目: 転]
+アカリ「お菓子タイムもあり！？」
+（ヒカリ→「ちょっと大胆すぎ…」と小声、サエコ→「規則は絶対よ！」と鋭く返す）
+[4コマ目: 結]
+アカリ「みんなでこのホーム、ジャックしようー！」
+（サエコ「この暴走、即！退去命令よ！」、ミク→「最高すぎ！」と笑う、リン→「踊るしかないね！」、ヒカリ→「無理無理無理…！」と叫ぶ）`;
+
+  for (const providerFamily of ['chatgpt', 'gemini']) {
+    const prompt = buildMangaPrompt({
+      scenario,
+      castList: CAST_LIST,
+      colorMode: 'color',
+      providerFamily,
+      punchlineType: 'Auto',
+      systemVersion: 'v5.4.6-test'
+    });
+    const scriptLock = prompt.slice(
+      prompt.indexOf('STRICT SCRIPT LOCK'),
+      prompt.indexOf('PANEL DESCRIPTIONS:')
+    );
+
+    assert.match(scriptLock, /Panel 3 required dialogue: アカリ「お菓子タイムもあり！？」 \/ ヒカリ「ちょっと大胆すぎ…」 \/ サエコ「規則は絶対よ！」/);
+    assert.match(scriptLock, /Panel 4 required dialogue: アカリ「みんなでこのホーム、ジャックしようー！」 \/ サエコ「この暴走、即！退去命令よ！」 \/ ミク「最高すぎ！」 \/ リン「踊るしかないね！」 \/ ヒカリ「無理無理無理…！」/);
+    assert.doesNotMatch(scriptLock, /と小声|と鋭く返す|と笑う|と叫ぶ|→/);
+    assert.doesNotMatch(prompt, /B\d+="[^"]*(?:と小声|と鋭く返す|と笑う|と叫ぶ|→)/);
+  }
+});
+
 const LONG_DIALOGUE = 'この状況さ、職人がホームセンターの客に「仕事取るな」って怒鳴ってるのと同じだよね…。本気で抗議するなら、店かメーカーに言わない？';
 const LONG_DIALOGUE_SCENARIO = `
 ## タイトル: 長台詞ロック検証!?
