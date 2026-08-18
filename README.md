@@ -1,6 +1,6 @@
 # Super FURU AI 4-koma System
 
-> Latest release: **v5.5.0** / 最新リリース: **v5.5.0**
+> Latest release: **v5.5.1** / 最新リリース: **v5.5.1**
 
 > **"To what extent can humans step away from the creative process?"**
 > **「人間は、どこまで制作から降りられるのか？」**
@@ -22,7 +22,7 @@
 This project aims to intentionally exclude humans from the creative process, allowing AI to act as a director and complete everything from brainstorming to composition, direction, and rendering.
 本プロジェクトは、人間をクリエイティブな工程から意図的に排除し、AIがディレクターとして「ネタ出し・構成・演出・作画」のすべてを完結させることを目的としています。
 
-The current implementation and latest release are **v5.5.0**. The product name is **Super FURU AI 4-koma System**; **Nano Banana 2** and **ChatGPT Image 2.0** identify image-generation engine families. / 現在の実装および最新公開版は **v5.5.0** です。製品名は **Super FURU AI 4-koma System** で、**Nano Banana 2** と **ChatGPT Image 2.0** は画像生成エンジン系統の名称です。
+The current implementation and latest release are **v5.5.1**. The product name is **Super FURU AI 4-koma System**; **Nano Banana 2** and **ChatGPT Image 2.0** identify image-generation engine families. / 現在の実装および最新公開版は **v5.5.1** です。製品名は **Super FURU AI 4-koma System** で、**Nano Banana 2** と **ChatGPT Image 2.0** は画像生成エンジン系統の名称です。
 
 Current behavior at a glance / 現行仕様の要点:
 
@@ -51,6 +51,8 @@ STEP4で生成済みの4コマ漫画を、MiniMax H3のReference-to-Video（R2V 
 4. ComfyUIでMiniMax H3 Reference-to-Videoを選択し、同じ4コマ漫画を最初の参照入力 `ref_image_0` にだけ接続します。`ref_image_1` 以降は未接続のままにします。`Resolution Selector (Size)` は `アスペクト比: 16:9 (Widescreen)` と `メガピクセル: 0.4`、`Float (Duration)` は `値: 15.0`、`基本スケジューラー` は `スケジューラー: normal` に設定してから、英語プロンプトを `Prompt` に貼り付けて実行します。15秒・1.0MPはGPUメモリエラーになりやすいため、まず0.4MPで確認します。
 
 既定では、15秒・16:9・会話音声優先・字幕なし・BGMなし・吹き出しの輪郭や尻尾も映像から除去、という動画化指示になります。会話の掛け合いを維持し、収まらない台詞だけを意味・話者・感情・オチへの役割を保ったまま短縮します。読みを守るために台詞全体をひらがなへ置換せず、曖昧な固有名詞・数字などだけを必要に応じてかなへ置き換えます。台詞中は指定された話者だけが口を動かし、他の人物は口を閉じたまま表情・視線・姿勢で反応します。感情はコマと話者に合わせ、全員を低いテンションへ固定しません。タイトルはShot 1だけ、終了クレジットとURLはShot 4で台詞が終わった後だけに表示します。チャットで画像が読めない場合は、4コマ漫画を1枚だけ添付し直してください。
+
+各コマでは、話者以外も口を閉じたまま役割に合った個別反応を行い、カメラは寄り引き・横移動・縦移動・回り込みを4カット内で使い分けます。回り込みや追従では開始・中間・終了の画角を指定し、話者の口元を保ったまま動かします。
 
 「MiniMax H3・ComfyUI用プロンプトをコピー」は、冒頭タイトルと終端の `ネームから全自動の自律式統合AI漫画システム :` および `https://note.com/happy_duck780` だけを実際に読める画面文字として許可する、作品公開用の指示も含んだ一つのコピー文です。字幕ボタンは追加しません。外部PC・別ブラウザでも使え、添付した4コマ画像からOCRでタイトルだけを取得します。タイトルは枠外にあってもOCR対象ですが、枠外文字を物語素材として使いません。4コマの各コマ内だけを物語・人物・台詞・動作・舞台の動画素材として扱います。OCRでタイトルを確実に読めない場合は、動画用プロンプトを作らずタイトルだけを確認します。通常の日本式複数列レイアウトでは上から下・同じ段では右から左のコマ順を明記させます。タイトルとクレジットは静的に表示し、フェードやスクロールを要求しません。背景の看板・端末・印刷物は、実際の文字・数字・URLとして読めない抽象的な質感へ置き換えます。
 
@@ -292,7 +294,7 @@ To address the extreme complexity of a 5,000+ line monolith, the frontend archit
 
 ## 🔍 Deep Analysis (技術詳解)
 
-### 🧭 Current v5.5.0 Processing Contract / 現行v5.5.0処理仕様
+### 🧭 Current v5.5.1 Processing Contract / 現行v5.5.1処理仕様
 
 | Stage | Input | Processing and validation | Output |
 |:--|:--|:--|:--|
@@ -830,6 +832,9 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 ---
 
 ## 📋 ChangeLog
+
+### v5.5.1 (2026-08-19)
+- **[Fix & UX]** MiniMax H3の会話音声・話者口パク固定・字幕なし・BGMなしを維持しながら、全員の役割別演技、カットごとの人物反応、寄り引き・横移動・縦移動・回り込みを使い分けるカメラ軌道を復元 / Restored role-appropriate acting for every visible character and varied push-pull, lateral, vertical, and orbiting camera paths while retaining dialogue-first audio, speaker-bound lip sync, no subtitles, and no default BGM
 
 ### v5.5.0 (2026-08-18)
 - **[Fix & UX]** MiniMax H3のコピー文を会話音声優先・字幕なし・BGMなし・話者口パク固定へ更新し、参照画像は `ref_image_0` のみ、`Resolution Selector (Size)`・`Float (Duration)`・`基本スケジューラー` の設定欄までSTEP4とREADMEで案内 / Updated the MiniMax H3 helper to prioritize voiced dialogue with no subtitles or default BGM, lock speaker mouth movement, and document the exact `ref_image_0`, resolution, duration, and scheduler settings in STEP4 and README

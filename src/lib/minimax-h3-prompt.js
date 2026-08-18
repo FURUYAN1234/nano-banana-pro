@@ -103,12 +103,14 @@ Speech-balloon and scene-text rules:
 
 Animation and camera rules:
 
-- Use one shot per manga panel and one primary action beat per shot.
-- Animate the panel's essential acting, reaction, gesture, prop use, or gag. Keep secondary motion restrained.
-- Speaking characters receive the clearest facial and mouth animation. Other visible characters may blink, breathe, shift gaze, or react silently with closed lips.
-- Do not require every visible character to perform a large independent action.
-- Use a static camera, a short push-in, a gentle lateral track, or a small arc according to what best preserves speaker isolation, speech clarity, and panel readability.
-- Complex camera choreography is subordinate to correct speaker binding, intelligible dialogue, and recognizable character performance.
+- Use one shot per manga panel with one clear primary action beat plus individualized supporting reactions.
+- Every visible character must perform at least one role-appropriate, physically plausible movement in every shot where that character is visible, unless the reference manga or the user explicitly requires intentional stillness.
+- Speaking and story-critical characters must visibly perform dialogue, facial reaction, gesture, posture shift, or purposeful action. Background and crowd characters must perform individually varied, restrained secondary action such as blinking, gaze shifts, breathing, weight shifts, hair or clothing response, prop handling, or a context-appropriate reaction.
+- Do not leave any visible character as a static cutout, frozen pose, or duplicated loop. Keep supporting actions distinct and subordinate to the active speaker, decisive story action, and gag.
+- For each shot, select one to three compatible animation principles from anticipation, slow-in/slow-out, arcs, follow-through, secondary action, staging, clear pose-to-pose acting, or restrained exaggeration. Make the selected principles visibly affect the relevant body, face, hair, clothing, prop, or background.
+- Every shot that is not explicitly still must use one modest but clearly visible, physically coherent camera trajectory that supports the panel action. Across the four shots, vary the camera path among a push-in or pull-back, lateral track, vertical crane, and gentle arc or orbit; do not repeat a short push-in as the default answer for every panel.
+- For an arc, lateral track, or vertical move, specify the start, midpoint, and end state: viewpoint, framing, subject distance, camera path, subject placement, and visible parallax. During dialogue, adapt the path to keep the named speaker identifiable and her mouth readable instead of suppressing the camera move.
+- Correct speaker-to-mouth binding, intelligible dialogue, and recognizable character performance remain mandatory; camera movement and supporting animation must be designed around those constraints, not removed because of them.
 - Preserve a stable horizon, character identity, limb count, prop ownership, and screen direction.
 - Use hard cuts between panels. Do not use morphing transitions between different panels.
 
@@ -165,7 +167,7 @@ retention_analysis:
 For <Picture 1> and every defined subject, state where it appears and use one of: fully_preserved, partially_preserved, attribute_transfer, weak_reference.
 
 detailed_description:
-Describe the overall visual style briefly. Then write exactly four shot blocks with contiguous time ranges. For each shot, describe composition, essential character positions, one primary action beat, restrained silent reactions, camera behavior, lighting, quiet physical sound, and every timed dialogue turn. Before every <d> block, state that the named speaker is the only moving mouth and all visible non-speakers keep their lips closed. Use normal Japanese orthography inside <d>, with kana only for individually ambiguous fragments. Do not include caption_text. State title and credit presence or absence explicitly in every shot.
+Describe the overall visual style briefly. Then write exactly four shot blocks with contiguous time ranges. For each shot, describe composition, essential character positions, a primary action beat plus individualized supporting reactions, visible character actions, a non-static camera trajectory when the source does not require stillness, lighting, quiet physical sound, and every timed dialogue turn. Before every <d> block, state that the named speaker is the only moving mouth and all visible non-speakers keep their lips closed. Use normal Japanese orthography inside <d>, with kana only for individually ambiguous fragments. Do not include caption_text. State title and credit presence or absence explicitly in every shot.
 
 overall_soundscape:
 Describe low-volume ambience and restrained physical effects. State that speech remains dominant, emotionally expressive, intelligible, and unobscured.

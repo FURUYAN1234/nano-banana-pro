@@ -30,6 +30,17 @@ test('MiniMax H3 prompt prevents speaker swaps without forcing all dialogue into
   assert.match(minimaxPromptSource, /Every visible non-speaking character keeps lips fully closed/);
 });
 
+test('MiniMax H3 prompt restores varied character acting and camera paths without weakening dialogue binding', () => {
+  assert.match(minimaxPromptSource, /Every visible character must perform at least one role-appropriate, physically plausible movement in every shot/);
+  assert.match(minimaxPromptSource, /Speaking and story-critical characters must visibly perform dialogue, facial reaction, gesture, posture shift, or purposeful action/);
+  assert.match(minimaxPromptSource, /Background and crowd characters must perform individually varied, restrained secondary action/);
+  assert.match(minimaxPromptSource, /Every shot that is not explicitly still must use one modest but clearly visible, physically coherent camera trajectory/);
+  assert.match(minimaxPromptSource, /Across the four shots, vary the camera path/);
+  assert.match(minimaxPromptSource, /For an arc, lateral track, or vertical move, specify the start, midpoint, and end state/);
+  assert.doesNotMatch(minimaxPromptSource, /Use a static camera, a short push-in, a gentle lateral track, or a small arc/);
+  assert.doesNotMatch(minimaxPromptSource, /Do not require every visible character to perform a large independent action/);
+});
+
 test('MiniMax H3 UI identifies the exact ComfyUI sockets and fields to set', () => {
   assert.match(step4PanelSource, /最初の参照入力.*ref_image_0/);
   assert.match(step4PanelSource, /同じ4コマ漫画を最初の参照入力.*ref_image_0.*ref_image_1.*以降.*接続しない/);
