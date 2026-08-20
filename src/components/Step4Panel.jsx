@@ -22,9 +22,7 @@ import { getEffectiveEngine } from '../lib/engine-state';
 import { MINIMAX_H3_COMFYUI_PROMPT } from '../lib/minimax-h3-prompt';
 
 const COMFYUI_WORKFLOW_FILENAME = 'Super-FURU-AI-4-koma-System-4-Panel-Manga-to-Video.json';
-const COMFYUI_WORKFLOW_DOWNLOAD_URL = import.meta.env.DEV
-  ? `${import.meta.env.BASE_URL}workflows/${COMFYUI_WORKFLOW_FILENAME}`
-  : `https://raw.githubusercontent.com/FURUYAN1234/nano-banana-pro/main/public/workflows/${COMFYUI_WORKFLOW_FILENAME}`;
+const COMFYUI_WORKFLOW_DOWNLOAD_URL = `${import.meta.env.BASE_URL}workflows/${COMFYUI_WORKFLOW_FILENAME}`;
 
 const H3_ACTION_BUTTON_STYLE = Object.freeze({
   fontSize: '10px',

@@ -14,6 +14,8 @@ const hashText = (value) => createHash('sha256').update(value, 'utf8').digest('h
 test('STEP4 exposes a separate ComfyUI workflow JSON download directly below the H3 copy action', () => {
   assert.match(step4PanelSource, /MiniMax H3・ComfyUI用プロンプトをコピー[\s\S]*ComfyUIワークフローJSONをダウンロード/);
   assert.match(step4PanelSource, /COMFYUI_WORKFLOW_DOWNLOAD_URL/);
+  assert.match(step4PanelSource, /const COMFYUI_WORKFLOW_DOWNLOAD_URL = `\$\{import\.meta\.env\.BASE_URL\}workflows\/\$\{COMFYUI_WORKFLOW_FILENAME\}`;/);
+  assert.doesNotMatch(step4PanelSource, /raw\.githubusercontent\.com\/FURUYAN1234\/nano-banana-pro/);
   assert.match(step4PanelSource, /<a[\s\S]*href=\{COMFYUI_WORKFLOW_DOWNLOAD_URL\}[\s\S]*download=\{COMFYUI_WORKFLOW_FILENAME\}[\s\S]*role="button"[\s\S]*ComfyUIワークフローJSONをダウンロード/);
   assert.doesNotMatch(step4PanelSource, /const downloadComfyUIWorkflow = \(\) =>/);
   assert.doesNotMatch(step4PanelSource, /anchor\.click\(\)/);
