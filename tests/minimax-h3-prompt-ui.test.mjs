@@ -1,14 +1,25 @@
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
+
+import { MINIMAX_H3_COMFYUI_PROMPT } from '../src/lib/minimax-h3-prompt.js';
 
 const step4PanelSource = readFileSync(new URL('../src/components/Step4Panel.jsx', import.meta.url), 'utf8');
 const readmeSource = readFileSync(new URL('../README.md', import.meta.url), 'utf8');
 const minimaxPromptSource = readFileSync(new URL('../src/lib/minimax-h3-prompt.js', import.meta.url), 'utf8');
 
+test('MiniMax H3 copied instruction exactly matches the supplied replacement', () => {
+  assert.equal(MINIMAX_H3_COMFYUI_PROMPT.length, 19824);
+  assert.equal(
+    createHash('sha256').update(MINIMAX_H3_COMFYUI_PROMPT, 'utf8').digest('hex'),
+    '39fc7a0a792f6b4de96ea8b2df923f93c37514cba80f6b85196e825201cb639f',
+  );
+});
+
 test('MiniMax H3 helper copies the current four-panel prompt-authoring instruction', () => {
   assert.match(step4PanelSource, /MiniMax H3.*ComfyUI用プロンプトをコピー/);
-  assert.match(step4PanelSource, /navigator\.clipboard\.writeText\(MINIMAX_H3_COMFYUI_PROMPT\)/);
+  assert.match(step4PanelSource, /await copyTextToClipboard\(MINIMAX_H3_COMFYUI_PROMPT\)/);
   assert.match(minimaxPromptSource, /Reference-to-Video \(R2V \/ Ref2VA\)/);
   assert.match(minimaxPromptSource, /subject_definitions:/);
   assert.match(minimaxPromptSource, /non_diegetic_music:/);
@@ -34,9 +45,12 @@ test('MiniMax H3 prompt restores varied character acting and camera paths withou
   assert.match(minimaxPromptSource, /Every visible character must perform at least one role-appropriate, physically plausible movement in every shot/);
   assert.match(minimaxPromptSource, /Speaking and story-critical characters must visibly perform dialogue, facial reaction, gesture, posture shift, or purposeful action/);
   assert.match(minimaxPromptSource, /Background and crowd characters must perform individually varied, restrained secondary action/);
-  assert.match(minimaxPromptSource, /Every shot that is not explicitly still must use one modest but clearly visible, physically coherent camera trajectory/);
-  assert.match(minimaxPromptSource, /Across the four shots, vary the camera path/);
-  assert.match(minimaxPromptSource, /For an arc, lateral track, or vertical move, specify the start, midpoint, and end state/);
+  assert.match(minimaxPromptSource, /Every shot that is not explicitly still uses one clearly visible, physically coherent primary camera route/);
+  assert.match(minimaxPromptSource, /Across the four shots, vary the route among lateral tracking, a gentle arc or orbit, a diagonal dolly with foreground parallax, and a low-to-high crane or reframe/);
+  assert.match(minimaxPromptSource, /For every route, specify start, midpoint, and end viewpoint, framing, subject placement, and visible parallax/);
+  assert.match(minimaxPromptSource, /Camera movement alone never counts as animation/);
+  assert.match(minimaxPromptSource, /In every shot, show at least two independently visible in-scene changes/);
+  assert.doesNotMatch(minimaxPromptSource, /one modest but clearly visible/);
   assert.doesNotMatch(minimaxPromptSource, /Use a static camera, a short push-in, a gentle lateral track, or a small arc/);
   assert.doesNotMatch(minimaxPromptSource, /Do not require every visible character to perform a large independent action/);
 });
@@ -58,4 +72,7 @@ test('README documents the current MiniMax H3 connection and starter settings', 
   assert.match(readmeSource, /Resolution Selector \(Size\)/);
   assert.match(readmeSource, /基本スケジューラー/);
   assert.match(readmeSource, /字幕なし/);
+  assert.match(readmeSource, /標準ワークフローを自分で使う場合/);
+  assert.match(readmeSource, /画像変換から動画化まで全部お任せにする場合/);
+  assert.match(readmeSource, /2つは別の操作/);
 });

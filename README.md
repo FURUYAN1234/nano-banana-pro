@@ -1,6 +1,6 @@
 # Super FURU AI 4-koma System
 
-> Latest release: **v5.5.2** / 最新リリース: **v5.5.2**
+> Latest release: **v5.5.3** / 最新リリース: **v5.5.3**
 
 > **"To what extent can humans step away from the creative process?"**
 > **「人間は、どこまで制作から降りられるのか？」**
@@ -22,7 +22,7 @@
 This project aims to intentionally exclude humans from the creative process, allowing AI to act as a director and complete everything from brainstorming to composition, direction, and rendering.
 本プロジェクトは、人間をクリエイティブな工程から意図的に排除し、AIがディレクターとして「ネタ出し・構成・演出・作画」のすべてを完結させることを目的としています。
 
-The current implementation and latest release are **v5.5.2**. The product name is **Super FURU AI 4-koma System**; **Nano Banana 2** and **ChatGPT Image 2.0** identify image-generation engine families. / 現在の実装および最新公開版は **v5.5.2** です。製品名は **Super FURU AI 4-koma System** で、**Nano Banana 2** と **ChatGPT Image 2.0** は画像生成エンジン系統の名称です。
+The current implementation and latest release are **v5.5.3**. The product name is **Super FURU AI 4-koma System**; **Nano Banana 2** and **ChatGPT Image 2.0** identify image-generation engine families. / 現在の実装および最新公開版は **v5.5.3** です。製品名は **Super FURU AI 4-koma System** で、**Nano Banana 2** と **ChatGPT Image 2.0** は画像生成エンジン系統の名称です。
 
 Current behavior at a glance / 現行仕様の要点:
 
@@ -43,18 +43,25 @@ Current behavior at a glance / 現行仕様の要点:
 
 ### MiniMax H3 ComfyUI Reference-to-Video / 4コマ漫画の動画化補助
 
-STEP4で生成済みの4コマ漫画を、MiniMax H3のReference-to-Video（R2V / Ref2VA）ワークフローへ渡すための補助です。アプリ内で動画を生成・送信しません。ボタンは、画像対応チャットに4コマ漫画を読ませて、ComfyUIへ貼り付ける英語プロンプトを作らせる指示文だけをコピーします。
+STEP4には用途の異なる2つの補助があります。2つは別の操作であり、両方を必ず使う手順ではありません。
 
-1. STEP4の「元画像をダウンロード」で、生成済みの4コマ漫画をダウンロードします。
-2. 「MiniMax H3・ComfyUI用プロンプトをコピー」を押し、指示文をコピーし、同時に画像対応チャットへ4コマ漫画を添付して送信します。必要なら秒数・縦横比・演出を同時に指定できます。既定は15秒・16:9・会話音声優先・字幕なし・BGMなしです。
-3. チャットから出力された英語のMiniMax H3プロンプトをコピーします。元の4コマ漫画と、ここで得た英語プロンプトの組み合わせを変えないでください。
-4. ComfyUIでMiniMax H3 Reference-to-Videoを選択し、同じ4コマ漫画を最初の参照入力 `ref_image_0` にだけ接続します。`ref_image_1` 以降は未接続のままにします。`Resolution Selector (Size)` は `アスペクト比: 16:9 (Widescreen)` と `メガピクセル: 0.4`、`Float (Duration)` は `値: 15.0`、`基本スケジューラー` は `スケジューラー: normal` に設定してから、英語プロンプトを `Prompt` に貼り付けて実行します。15秒・1.0MPはGPUメモリエラーになりやすいため、まず0.4MPで確認します。
+**標準ワークフローを自分で使う場合**
 
-既定では、15秒・16:9・会話音声優先・字幕なし・BGMなし・吹き出しの輪郭や尻尾も映像から除去、という動画化指示になります。会話の掛け合いを維持し、収まらない台詞だけを意味・話者・感情・オチへの役割を保ったまま短縮します。読みを守るために台詞全体をひらがなへ置換せず、曖昧な固有名詞・数字などだけを必要に応じてかなへ置き換えます。台詞中は指定された話者だけが口を動かし、他の人物は口を閉じたまま表情・視線・姿勢で反応します。感情はコマと話者に合わせ、全員を低いテンションへ固定しません。タイトルはShot 1だけ、終了クレジットとURLはShot 4で台詞が終わった後だけに表示します。チャットで画像が読めない場合は、4コマ漫画を1枚だけ添付し直してください。
+ComfyUI標準のMiniMax H3 Reference-to-Video（R2V / Ref2VA）を自分で設定して使う場合は、「MiniMax H3・ComfyUI用プロンプトをコピー」だけを使います。指示文と生成済みの4コマ漫画を画像対応チャットへ送り、返った英語プロンプトを標準ワークフローの `Prompt` 欄へ貼り付けます。この操作では専用ワークフローJSONをダウンロードしません。既定は15秒・16:9・会話音声優先・字幕なし・BGMなしです。
+
+**画像変換から動画化まで全部お任せにする場合**
+
+Nano Banana画像変換、H3プロンプト作成、MiniMax H3動画化、固定クレジット合成までを一連のノードで扱う場合は、「Download Workflow JSON / ComfyUIワークフローJSONをダウンロード」を使います。取得するJSONは、本体の「設定ファイルを保存（JSON）」とは別物です。JSON自体はブラウザで構文・ノード構成・初期値を確認できますが、動画生成とAPI呼び出しにはComfyUI本体、モデル、カスタムノードが必要です。
+
+ダウンロードしたワークフローでは、公開サンプル漫画が `LoadImage` の初期画像として選択されています。同じ4コマ漫画は最初の参照入力 `ref_image_0` にだけ接続し、`ref_image_1` 以降は未接続のままにします。`Resolution Selector (Size)` は `アスペクト比: 16:9 (Widescreen)` と `メガピクセル: 0.4`、`基本スケジューラー` は `スケジューラー: normal` から開始します。15秒・1.0MPはGPUメモリエラーになりやすいため、まず0.4MPで確認します。
+
+ワークフローには、MiniMax H3本体、`qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors` テキストエンコーダー、映像VAE、音声VAEが必要です。さらに `NanoBananaH3Transform` と `DeterministicEndCreditOverlay` のカスタムノードを導入してください。プロンプト生成・画像変換はGoogle Gemini API、OpenAI API、LM Studioを使うローカルLLMから選べます。Gemini/OpenAIのAPIキーはComfyUI側へ手動登録し、配布JSONには含めません。ローカルLLM経路だけLM Studioと、そのカスタムノードが対応するローカルモデルが必要です。LM Studioで使うQwen3-8Bと、H3本体が使うQwen3-VL-32Bテキストエンコーダーは別の役割です。配布JSONに個人の漫画画像、生成済み動画も入りません。
+
+既定では、15秒・16:9・会話音声優先・字幕なし・BGMなし・吹き出しの輪郭や尻尾も映像から除去、という動画化指示になります。会話の掛け合いを維持し、収まらない台詞だけを意味・話者・感情・オチへの役割を保ったまま短縮します。読みを守るために台詞全体をひらがなへ置換せず、曖昧な固有名詞・数字などだけを必要に応じてかなへ置き換えます。台詞中は指定された話者だけが口を動かし、他の人物は口を閉じたまま表情・視線・姿勢で反応します。感情はコマと話者に合わせ、全員を低いテンションへ固定しません。タイトルはShot 1だけに表示し、終了クレジットとURLはH3に生成させません。固定クレジットはワークフローがH3生成後に合成します。チャットで画像が読めない場合は、4コマ漫画を1枚だけ添付し直してください。
 
 各コマでは、話者以外も口を閉じたまま役割に合った個別反応を行い、カメラは寄り引き・横移動・縦移動・回り込みを4カット内で使い分けます。回り込みや追従では開始・中間・終了の画角を指定し、話者の口元を保ったまま動かします。
 
-「MiniMax H3・ComfyUI用プロンプトをコピー」は、冒頭タイトルと終端の `ネームから全自動の自律式統合AI漫画システム :` および `https://note.com/happy_duck780` だけを実際に読める画面文字として許可する、作品公開用の指示も含んだ一つのコピー文です。字幕ボタンは追加しません。外部PC・別ブラウザでも使え、添付した4コマ画像からOCRでタイトルだけを取得します。タイトルは枠外にあってもOCR対象ですが、枠外文字を物語素材として使いません。4コマの各コマ内だけを物語・人物・台詞・動作・舞台の動画素材として扱います。OCRでタイトルを確実に読めない場合は、動画用プロンプトを作らずタイトルだけを確認します。通常の日本式複数列レイアウトでは上から下・同じ段では右から左のコマ順を明記させます。タイトルとクレジットは静的に表示し、フェードやスクロールを要求しません。背景の看板・端末・印刷物は、実際の文字・数字・URLとして読めない抽象的な質感へ置き換えます。
+「MiniMax H3・ComfyUI用プロンプトをコピー」は、冒頭タイトルだけを実際に読める画面文字として許可し、H3側には終端クレジットやURLを生成させません。固定クレジットは配布ワークフローの `DeterministicEndCreditOverlay` が後段で合成します。字幕ボタンは追加しません。外部PC・別ブラウザでも使え、添付した4コマ画像からOCRでタイトルだけを取得します。タイトルは枠外にあってもOCR対象ですが、枠外文字を物語素材として使いません。4コマの各コマ内だけを物語・人物・台詞・動作・舞台の動画素材として扱います。OCRでタイトルを確実に読めない場合は、動画用プロンプトを作らずタイトルだけを確認します。通常の日本式複数列レイアウトでは上から下・同じ段では右から左のコマ順を明記させます。タイトルは固定の透明オーバーレイとして表示し、フェードやスクロールを要求しません。背景の看板・端末・印刷物は、実際の文字・数字・URLとして読めない抽象的な質感へ置き換えます。
 
 ### Functional-surface orientation / 機能面の向き
 
@@ -294,7 +301,7 @@ To address the extreme complexity of a 5,000+ line monolith, the frontend archit
 
 ## 🔍 Deep Analysis (技術詳解)
 
-### 🧭 Current v5.5.2 Processing Contract / 現行v5.5.2処理仕様
+### 🧭 Current v5.5.3 Processing Contract / 現行v5.5.3処理仕様
 
 | Stage | Input | Processing and validation | Output |
 |:--|:--|:--|:--|
@@ -832,6 +839,9 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 ---
 
 ## 📋 ChangeLog
+
+### v5.5.3 (2026-08-20)
+- **[Fix & UX]** ComfyUIワークフローJSONの配布と標準コピーボタンとの使い分けを追加 / Added ComfyUI workflow JSON distribution and separate guidance from the standard copy action
 
 ### v5.5.2 (2026-08-19)
 - **[Fix & UX]** STEP4のMiniMax H3案内に、最初に選ぶべき `MiniMax H3 Reference-to-Video（R2V / Ref2VA）` ワークフローを独立した手順と設定項目として追加 / Added an explicit MiniMax H3 Reference-to-Video (R2V / Ref2VA) workflow-selection step and setting to the STEP4 guide

@@ -21,6 +21,56 @@ import { GEMINI_A4_RELAYOUT_PROMPT, GEMINI_2K_REFINEMENT_PROMPT } from '../lib/g
 import { getEffectiveEngine } from '../lib/engine-state';
 import { MINIMAX_H3_COMFYUI_PROMPT } from '../lib/minimax-h3-prompt';
 
+const COMFYUI_WORKFLOW_FILENAME = 'Super-FURU-AI-4-koma-System-4-Panel-Manga-to-Video.json';
+const COMFYUI_WORKFLOW_DOWNLOAD_URL = import.meta.env.DEV
+  ? `${import.meta.env.BASE_URL}workflows/${COMFYUI_WORKFLOW_FILENAME}`
+  : `https://raw.githubusercontent.com/FURUYAN1234/nano-banana-pro/main/public/workflows/${COMFYUI_WORKFLOW_FILENAME}`;
+
+const H3_ACTION_BUTTON_STYLE = Object.freeze({
+  fontSize: '10px',
+  minWidth: '220px',
+  position: 'relative',
+  backgroundColor: '#f0f0f0',
+  color: '#000000',
+  border: '1px solid #000000',
+  borderRadius: '0px',
+  padding: '1px 6px',
+  fontFamily: 'Arial, sans-serif',
+  fontWeight: 400,
+  lineHeight: 'normal',
+  boxSizing: 'border-box',
+  textDecoration: 'none',
+  cursor: 'pointer',
+});
+
+const copyTextToClipboard = async (text) => {
+  const textarea = document.createElement('textarea');
+  textarea.value = text;
+  textarea.setAttribute('readonly', '');
+  textarea.style.position = 'fixed';
+  textarea.style.left = '-9999px';
+  textarea.style.opacity = '0';
+  document.body.appendChild(textarea);
+  textarea.focus();
+  textarea.select();
+  textarea.setSelectionRange(0, text.length);
+
+  let copied = false;
+  try {
+    copied = document.execCommand('copy');
+  } finally {
+    document.body.removeChild(textarea);
+  }
+  if (copied) return;
+
+  if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(text);
+    return;
+  }
+
+  throw new Error('Clipboard copy failed');
+};
+
 const getGeneratedImageExtension = (dataUrl) => {
   const mimeMatch = typeof dataUrl === 'string' ? dataUrl.match(/^data:([^;,]+)/) : null;
   const mimeType = (mimeMatch?.[1] || 'image/png').toLowerCase();
@@ -739,41 +789,71 @@ No explanations. No partial results.`;
                         </div>
                     </div>
                     )}
-                          <div className="mt-3 pt-3 border-t border-violet-500/20">
-                            <p className="text-[11px] text-violet-200/80 leading-relaxed">
-                              🎞️ 生成した4コマ漫画をMiniMax H3で動画化するための、ComfyUI向け英語プロンプト作成指示をコピーします。
-                            </p>
-                            <p className="mt-1 text-[10px] text-violet-100/70 leading-relaxed">
-                              デフォルト仕様：15秒・16:9・会話音声優先・字幕なし・BGMなし。
-                            </p>
-                            <button
-                              className={`mt-2 ${isMiniMaxPromptCopied ? 'bg-green-600 border-green-500/30' : 'bg-violet-900/70 hover:bg-violet-800/80 border-violet-500/30'} text-white px-3 py-1.5 rounded transition-all inline-flex items-center justify-center gap-1.5 border font-bold active:scale-95`}
-                              style={{ fontSize: '10px', minWidth: '120px', position: 'relative' }}
-                              onClick={() => {
-                                navigator.clipboard.writeText(MINIMAX_H3_COMFYUI_PROMPT);
-                                setIsMiniMaxPromptCopied(true);
-                                setTimeout(() => setIsMiniMaxPromptCopied(false), 2000);
-                              }}
-                            >
-                              <span style={{ visibility: isMiniMaxPromptCopied ? 'hidden' : 'visible' }}>📋 MiniMax H3・ComfyUI用プロンプトをコピー</span>
-                              {isMiniMaxPromptCopied && <span style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>✅ コピー完了</span>}
-                            </button>
-                            <ol className="mt-2 space-y-1 text-[10px] leading-relaxed text-slate-400 list-decimal list-inside">
-                              <li>このボタンで指示文をコピー、同時に生成済みの4コマ漫画をチャットに添付し、送信</li>
-                              <li>出力されたプロンプトをコピー</li>
-                              <li>ComfyUIで <code>MiniMax H3 Reference-to-Video（R2V / Ref2VA）</code> ワークフローを選択（テンプレートを読み込んでいる場合は、そのワークフローを開く）</li>
-                              <li>同じ4コマ漫画を最初の参照入力 <code>ref_image_0</code> にだけ接続。<code>ref_image_1</code> 以降には接続しない（右側の無効な紫ノードも使わない）</li>
-                              <li>下の設定を確認してから、出力された英語プロンプトを <code>Prompt</code> 欄に貼り付けて実行</li>
-                            </ol>
-                            <div className="mt-3 rounded border border-violet-400/25 bg-violet-950/25 p-2.5 text-[10px] leading-relaxed text-violet-100/85">
-                              <p className="font-bold text-violet-200">ComfyUIの開始設定（ワークフローとノード名 → 設定欄）</p>
-                              <ol className="mt-1.5 space-y-1 list-decimal list-inside">
-                                <li><strong>選ぶワークフロー</strong> → <code>MiniMax H3 Reference-to-Video（R2V / Ref2VA）</code>。別のMiniMaxテンプレートではなく、このワークフローを開きます。</li>
-                                <li><strong>画像を読み込む</strong> → 出力を <code>MiniMax H3 Reference to Video</code> の最初の参照入力 <code>ref_image_0</code> へ接続。<code>ref_image_1</code> 以降は未接続のままにします。</li>
-                                <li><strong>Resolution Selector (Size)</strong> → <code>アスペクト比: 16:9 (Widescreen)</code>、<code>メガピクセル: 0.4</code> から開始（15秒では 864×480）。VRAMに余裕があるときだけ 0.5→0.6 と段階的に上げます。15秒・1.0MPはGPUメモリエラーになりやすい設定です。</li>
-                                <li><strong>基本スケジューラー</strong> → <code>スケジューラー: normal</code>。テンプレートの <code>ステップ: 20</code> と <code>ノイズ除去: 1.00</code> は、まず変更しません。</li>
-                              </ol>
-                            </div>
+                          <div className="mt-3 space-y-5 border-t border-slate-600/40 pt-3">
+                            <section aria-labelledby="minimax-h3-prompt-heading">
+                              <div className="rounded-lg border border-slate-600/60 bg-slate-950/35 p-3">
+                                <h4 id="minimax-h3-prompt-heading" className="text-[12px] font-black text-white">標準ワークフローを自分で使う場合</h4>
+                                <p className="mt-1 text-[11px] leading-relaxed text-slate-300">
+                                  ComfyUI標準の <code>MiniMax H3 Reference-to-Video（R2V / Ref2VA）</code> を自分で設定して使う人向けです。生成した4コマ漫画からH3用の英語プロンプトを作る指示文だけをコピーします。この操作ではワークフローJSONをダウンロードしません。
+                                </p>
+                                <p className="mt-1 text-[10px] leading-relaxed text-slate-400">
+                                  デフォルト仕様：15秒・16:9・会話音声優先・字幕なし・BGMなし。
+                                </p>
+                                <button
+                                  className={`mt-2 ${isMiniMaxPromptCopied ? 'bg-green-600 border-green-500/30' : 'bg-slate-700 hover:bg-slate-600 border-white/10'} text-white px-3 py-1.5 rounded transition-all inline-flex items-center justify-center gap-1.5 border font-bold active:scale-95`}
+                                  style={H3_ACTION_BUTTON_STYLE}
+                                  onClick={async () => {
+                                    await copyTextToClipboard(MINIMAX_H3_COMFYUI_PROMPT);
+                                    setIsMiniMaxPromptCopied(true);
+                                    setTimeout(() => setIsMiniMaxPromptCopied(false), 2000);
+                                  }}
+                                >
+                                  <span style={{ visibility: isMiniMaxPromptCopied ? 'hidden' : 'visible' }}>📋 MiniMax H3・ComfyUI用プロンプトをコピー</span>
+                                  {isMiniMaxPromptCopied && <span style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>✅ コピー完了</span>}
+                                </button>
+                                <ol className="mt-2 space-y-1 text-[10px] leading-relaxed text-slate-300 list-decimal list-inside">
+                                  <li>この指示文をコピーし、生成済みの4コマ漫画と一緒にChatGPTまたはGeminiへ送信</li>
+                                  <li>出力されたMiniMax H3用の英語プロンプトをコピー</li>
+                                  <li>ComfyUIワークフローの <code>Prompt</code> 欄へ貼り付け</li>
+                                </ol>
+                              </div>
+                            </section>
+
+                            <section aria-labelledby="comfyui-workflow-heading">
+                              <div className="rounded-lg border border-slate-600/60 bg-slate-950/35 p-3">
+                                <h4 id="comfyui-workflow-heading" className="text-[12px] font-black text-white">画像変換から動画化まで全部お任せにする場合</h4>
+                                <p className="mt-1 text-[10px] leading-relaxed text-slate-300">
+                                  Nano Banana画像変換、H3プロンプト作成、MiniMax H3動画化、固定クレジット合成までを一連のノードで扱う人向けです。下のボタンで専用のComfyUIワークフローJSONを取得します。プロンプトのコピーボタンとは別の機能です。
+                                </p>
+                                <p className="mt-1 text-[10px] leading-relaxed text-slate-400">既存の設定ファイルとは別のJSONです。本体の「設定ファイルを保存（JSON）」は使用しません。</p>
+                                <a
+                                  href={COMFYUI_WORKFLOW_DOWNLOAD_URL}
+                                  download={COMFYUI_WORKFLOW_FILENAME}
+                                  role="button"
+                                  className="mt-2 bg-slate-700 hover:bg-slate-600 border-white/10 text-white px-3 py-1.5 rounded transition-all inline-flex items-center justify-center gap-1.5 border font-bold active:scale-95 no-underline"
+                                  style={H3_ACTION_BUTTON_STYLE}
+                                  aria-label="Download Workflow JSON / ComfyUIワークフローJSONをダウンロード"
+                                >
+                                  <Download size={13} /> Download Workflow JSON / ComfyUIワークフローJSONをダウンロード
+                                </a>
+                                <div className="mt-2 space-y-1 text-[10px] leading-relaxed text-slate-300">
+                                  <p>JSON自体はブラウザで構文・ノード構成・初期値を確認できます。動画生成とAPI呼び出しにはComfyUI本体、モデル、カスタムノードが必要です。</p>
+                                  <p>JSONにAPIキー、個人画像、生成済み動画は含まれていません。</p>
+                                  <p>必須：MiniMax H3対応版ComfyUI、H3本体モデル、<code>qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors</code>、映像VAE、音声VAE、<code>NanoBananaH3Transform</code> と <code>DeterministicEndCreditOverlay</code>。</p>
+                                  <p>画像変換・プロンプト生成はGoogle Gemini API、OpenAI API、またはLM Studioを使うローカルLLMから選択できます。Gemini/OpenAIのAPIキーはComfyUI側へ手動登録します。Qwen3-8BとH3用Qwen3-VL-32Bテキストエンコーダーは別物です。</p>
+                                </div>
+                                <div className="mt-3 rounded border border-slate-600/50 bg-black/20 p-2.5 text-[10px] leading-relaxed text-slate-300">
+                                  <p className="font-bold text-white">ワークフローを開いた後の開始設定</p>
+                                  <ol className="mt-1.5 space-y-1 list-decimal list-inside">
+                                    <li><strong>選ぶワークフロー</strong> → <code>MiniMax H3 Reference-to-Video（R2V / Ref2VA）</code> ワークフローを選択。</li>
+                                    <li><strong>LoadImage</strong> → 公開サンプル漫画が初期選択されていることを確認。</li>
+                                    <li><strong>MiniMax H3 Reference to Video</strong> → 同じ4コマ漫画を最初の参照入力 <code>ref_image_0</code> にだけ接続。<code>ref_image_1</code> 以降には接続しない。</li>
+                                    <li><strong>Resolution Selector (Size)</strong> → アスペクト比 <code>16:9 (Widescreen)</code>、メガピクセル <code>0.4</code> から開始（15秒では864×480）。</li>
+                                    <li><strong>基本スケジューラー</strong> → <code>normal</code>、<code>ステップ: 20</code>、<code>ノイズ除去: 1.00</code> から開始。</li>
+                                  </ol>
+                                </div>
+                              </div>
+                            </section>
                           </div>
                   </div>
                 </div>

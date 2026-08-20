@@ -25,7 +25,7 @@ Default settings unless the user explicitly overrides them:
 - quiet ambience and restrained physical sound effects only beneath dialogue
 - remove all original speech balloons from the animated footage
 - show the manga title only in Shot 1
-- show the ending production credit and URL only in Shot 4 after dialogue ends
+- do not generate an ending credit, URL, or any other readable end text; the workflow adds the exact fixed credit after generation
 - use exactly four shots, one shot per manga panel
 
 Task:
@@ -96,7 +96,7 @@ Speech-balloon and scene-text rules:
 
 - Remove every original speech-balloon shape, white interior, border, and tail from the moving footage.
 - Reconstruct balloon regions as coherent background, furniture, lighting, wall, sky, floor, or other scene detail appropriate to that panel.
-- Apart from the Shot 1 title and the Shot 4 production credit, generate no readable foreground text.
+- Apart from the Shot 1 title, generate no readable foreground text. Never generate a URL, ending credit, or publication text.
 - Convert writing on signs, tablets, papers, notebooks, boards, labels, screens, and props into small, blurred, abstract, unreadable visual texture.
 - Do not reproduce source dialogue as visual text after removing the speech balloons.
 - Never generate dialogue subtitles, open captions, closed captions, speaker labels, karaoke text, phonetic text, or caption_text fields.
@@ -106,11 +106,13 @@ Animation and camera rules:
 - Use one shot per manga panel with one clear primary action beat plus individualized supporting reactions.
 - Every visible character must perform at least one role-appropriate, physically plausible movement in every shot where that character is visible, unless the reference manga or the user explicitly requires intentional stillness.
 - Speaking and story-critical characters must visibly perform dialogue, facial reaction, gesture, posture shift, or purposeful action. Background and crowd characters must perform individually varied, restrained secondary action such as blinking, gaze shifts, breathing, weight shifts, hair or clothing response, prop handling, or a context-appropriate reaction.
-- Do not leave any visible character as a static cutout, frozen pose, or duplicated loop. Keep supporting actions distinct and subordinate to the active speaker, decisive story action, and gag.
+- Camera movement alone never counts as animation. Do not output a still manga panel, static character, or static background that merely slides, pans, tilts, zooms, or rotates across the frame. In every shot, show at least two independently visible in-scene changes: the active character executes a readable action with head/torso/arms/hands/prop, and at least one other character, prop, hair/clothing, or environmental element changes naturally in response. Describe the action's start pose, mid-action, and settled end pose. Require the generated detailed_description to name one primary actor, one visible verb-object action, and one separate reactive change for every shot; vague words such as "reacts" or "moves" alone are insufficient. Keep supporting actions distinct and subordinate to the active speaker, decisive story action, and gag.
 - For each shot, select one to three compatible animation principles from anticipation, slow-in/slow-out, arcs, follow-through, secondary action, staging, clear pose-to-pose acting, or restrained exaggeration. Make the selected principles visibly affect the relevant body, face, hair, clothing, prop, or background.
-- Every shot that is not explicitly still must use one modest but clearly visible, physically coherent camera trajectory that supports the panel action. Across the four shots, vary the camera path among a push-in or pull-back, lateral track, vertical crane, and gentle arc or orbit; do not repeat a short push-in as the default answer for every panel.
-- For an arc, lateral track, or vertical move, specify the start, midpoint, and end state: viewpoint, framing, subject distance, camera path, subject placement, and visible parallax. During dialogue, adapt the path to keep the named speaker identifiable and her mouth readable instead of suppressing the camera move.
-- Correct speaker-to-mouth binding, intelligible dialogue, and recognizable character performance remain mandatory; camera movement and supporting animation must be designed around those constraints, not removed because of them.
+- Every shot that is not explicitly still uses one clearly visible, physically coherent primary camera route that supports the panel action. Do not default to a short zoom. Across the four shots, vary the route among lateral tracking, a gentle arc or orbit, a diagonal dolly with foreground parallax, and a low-to-high crane or reframe.
+- Dialogue clarity is the hard priority. For any shot containing dialogue, use only one smooth lateral track or a gentle 10-to-20-degree arc. Begin with a stable 0.4-second face-readable composition, travel smoothly while the speaker is established, and settle before the line finishes. Do not combine camera moves, add a focus pull, whip pan, rapid spin, shake, fast zoom, or occlusion during speech.
+- Make non-dialogue beats visibly more dynamic: at the start or end of a shot, after a line, or during a silent reaction, use a larger but controlled diagonal dolly, arc, or low crane that creates obvious foreground/background parallax. Keep the active speaker's mouth unobstructed whenever dialogue resumes.
+- For every route, specify start, midpoint, and end viewpoint, framing, subject placement, and visible parallax. At 0.4 MP, make the travel legible rather than imperceptible, while retaining a stable horizon, screen direction, character identity, limb count, and prop ownership.
+- Correct speaker-to-mouth binding, intelligible dialogue, and recognizable character performance remain mandatory. Camera movement and supporting animation are designed around those constraints; never trade clear Japanese speech for spectacle.
 - Preserve a stable horizon, character identity, limb count, prop ownership, and screen direction.
 - Use hard cuts between panels. Do not use morphing transitions between different panels.
 
@@ -123,29 +125,22 @@ Timeline and publication-graphic rules:
 - Do not assign title or credit fade animations. Use hard shot boundaries to control where publication graphics exist.
 - Shot 1 contains the opening title and story action for Panel 1. The opening title is absent in Shots 2, 3, and 4.
 - Shots 2 and 3 contain no readable publication graphics.
-- Shot 4 contains the ending production credit only after its final essential spoken line has finished. The ending credit is absent in Shots 1, 2, and 3.
+- Shot 4 contains no generated ending credit, URL, or publication text. The workflow adds the fixed end credit after H3 generation.
 
 Opening title rules:
 
 - Perform OCR only to identify the manga title shown outside the panel grid.
 - Use the title exactly as read. Do not invent or paraphrase it.
 - If the title cannot be read reliably, reply in Japanese with a concise request for the title.
-- Render the exact title once as a compact, static graphic belonging only to Shot 1.
-- Place it in the visually quietest corner of Shot 1, clear of faces, mouths, hands, decisive props, and active speakers.
-- Use simple high-contrast Japanese sans-serif lettering with a thin outline or soft shadow only when needed.
+- Render the exact title once in Shot 1 only as compact text directly over the video, fixed to the upper-left corner with a small safe margin.
+- The title is a text-only transparent overlay: never use a white, black, colored, opaque, translucent, blurred, or rectangular background. Never create a title card, banner, label, placard, subtitle strip, speech balloon, panel, or box behind the title. The scene must remain visible behind every character.
+- Keep the title reliably readable against any scene: use adaptive high-contrast Japanese sans-serif lettering with a thin opposite-color outline and a subtle dark drop shadow. Do not use a filled background to obtain contrast.
 - Do not animate, fade, scroll, transform, duplicate, or move the title.
 
-Ending production credit rules:
+Ending text rules:
 
-- Render the ending production credit only in Shot 4 after all spoken dialogue has finished.
-- The visible credit consists of exactly these two lines:
-  Line 1: ネームから全自動の自律式統合AI漫画システム :
-  Line 2: https://note.com/happy_duck780
-- Write the URL as a literal raw URL only. Never use Markdown link syntax, square brackets, parentheses, angle brackets, character tokens, or URL duplication.
-- Keep the two lines static, compact, horizontal, and clearly separated.
-- Place them together in the visually quietest corner of Shot 4, clear of faces, mouths, hands, decisive props, and active speakers.
-- Use simple high-contrast Japanese sans-serif lettering with a thin outline or soft shadow only when needed.
-- Do not animate, fade, scroll, transform, duplicate, spell out, or ask a character to read the credit aloud.
+- Generate no ending production credit, URL, or other readable publication text.
+- The workflow composites the exact end credit after H3 generation.
 
 Sound rules:
 
@@ -161,13 +156,15 @@ subject_definitions:
 Define <Picture 1> as the only active four-panel storyboard reference. Define every speaking character with a stable speaker ID, distinctive visual identifier, screen position, and inferred voice. Define important non-speaking characters, props, setting, and visual style as additional subjects.
 
 summary:
-Begin with [reference generation]. State the duration, aspect ratio, one-reference contract, four-shot panel order, dialogue-first priority, absence of subtitles, speech-balloon removal, speaker-binding priority, Shot 1-only title, Shot 4-only ending credit, and whether BGM is absent or explicitly requested.
+Begin with [reference generation]. State the duration, aspect ratio, one-reference contract, four-shot panel order, dialogue-first priority, absence of subtitles, speech-balloon removal, speaker-binding priority, Shot 1-only title, no generated ending credit or URL, and whether BGM is absent or explicitly requested.
 
 retention_analysis:
 For <Picture 1> and every defined subject, state where it appears and use one of: fully_preserved, partially_preserved, attribute_transfer, weak_reference.
 
 detailed_description:
-Describe the overall visual style briefly. Then write exactly four shot blocks with contiguous time ranges. For each shot, describe composition, essential character positions, a primary action beat plus individualized supporting reactions, visible character actions, a non-static camera trajectory when the source does not require stillness, lighting, quiet physical sound, and every timed dialogue turn. Before every <d> block, state that the named speaker is the only moving mouth and all visible non-speakers keep their lips closed. Use normal Japanese orthography inside <d>, with kana only for individually ambiguous fragments. Do not include caption_text. State title and credit presence or absence explicitly in every shot.
+Motion and cinematography requirements: Use one purposeful primary camera route in each shot; never use a static frame or a zoom-only default. Across the four shots, use at least three distinct controlled route types: lateral tracking, gentle curved arc/orbit, diagonal dolly with foreground parallax, or low-to-high crane/reframe. Describe the start, travel, and end composition. In dialogue shots, select only a smooth lateral track or gentle arc and protect a stable, face-readable frame at the beginning and end of each line. Reserve the larger diagonal dolly, arc, crane, and strongest parallax for silent setup, post-line reaction, or punchline beats. Camera movement alone never counts as animation. Do not output a still manga panel or static characters that only slide diagonally, pan, tilt, zoom, or rotate. In every shot, require at least two independent visible in-scene changes: the active character performs a readable head/torso/arms/hands/prop action from a start pose through a mid-action to a settled end pose, and at least one other character, prop, hair/clothing, or environmental element changes naturally in response. Every visible main character performs a distinct, story-motivated action or reaction: turn, step, lean, gesture, raise/lower props, shift posture, react through eyes/head/shoulders/hands, or interact with another character. Avoid posed stillness and synchronized group motion.
+Audio and lip-sync guardrail: dialogue clarity has priority over spectacle. During every spoken line, keep the active speaker's face unobstructed and large enough to read; use only smooth controlled travel, never whip pans, rapid spins, shake, fast zooms, focus loss, or multiple simultaneous camera moves. Only the active speaker's lips move. Non-speakers may gesture and react through body, eyes, head, hands, and posture, but keep their mouths closed. Leave a stable beat before and after each dialogue turn so speech never overlaps a cut, an occlusion, or a violent camera move.
+Describe the overall visual style briefly. Then write exactly four shot blocks with contiguous time ranges. For each shot, describe composition, essential character positions, a primary action beat plus individualized supporting reactions, visible character actions, a non-static camera trajectory when the source does not require stillness, lighting, quiet physical sound, and every timed dialogue turn. Before every <d> block, state that the named speaker is the only moving mouth and all visible non-speakers keep their lips closed. Use normal Japanese orthography inside <d>, with kana only for individually ambiguous fragments. Do not include caption_text. State only title presence or absence explicitly in every shot; do not describe or generate an ending credit or URL.
 
 overall_soundscape:
 Describe low-volume ambience and restrained physical effects. State that speech remains dominant, emotionally expressive, intelligible, and unobscured.
