@@ -1,6 +1,6 @@
 # Super FURU AI 4-koma System
 
-> Latest release: **v5.5.4** / 最新リリース: **v5.5.4**
+> Latest release: **v5.5.6** / 最新リリース: **v5.5.6**
 
 > **"To what extent can humans step away from the creative process?"**
 > **「人間は、どこまで制作から降りられるのか？」**
@@ -22,7 +22,7 @@
 This project aims to intentionally exclude humans from the creative process, allowing AI to act as a director and complete everything from brainstorming to composition, direction, and rendering.
 本プロジェクトは、人間をクリエイティブな工程から意図的に排除し、AIがディレクターとして「ネタ出し・構成・演出・作画」のすべてを完結させることを目的としています。
 
-The current implementation and latest release are **v5.5.4**. The product name is **Super FURU AI 4-koma System**; **Nano Banana 2** and **ChatGPT Image 2.0** identify image-generation engine families. / 現在の実装および最新公開版は **v5.5.4** です。製品名は **Super FURU AI 4-koma System** で、**Nano Banana 2** と **ChatGPT Image 2.0** は画像生成エンジン系統の名称です。
+The current implementation and latest release are **v5.5.6**. The product name is **Super FURU AI 4-koma System**; **Nano Banana 2** and **ChatGPT Image 2.0** identify image-generation engine families. / 現在の実装および最新公開版は **v5.5.6** です。製品名は **Super FURU AI 4-koma System** で、**Nano Banana 2** と **ChatGPT Image 2.0** は画像生成エンジン系統の名称です。
 
 Current behavior at a glance / 現行仕様の要点:
 
@@ -50,15 +50,17 @@ STEP4 has two helpers for different use cases. They are separate actions; you do
 
 When you configure and use ComfyUI's standard MiniMax H3 Reference-to-Video (R2V / Ref2VA) workflow yourself, use only “Copy MiniMax H3 · ComfyUI Prompt.” Send the copied instruction and the generated four-panel manga to an image-capable chat, then paste the returned English prompt into the standard workflow's `Prompt` field. This route does not download the dedicated workflow JSON. The default is 15 seconds, 16:9, dialogue-first audio, no subtitles, and no BGM. / ComfyUI標準のMiniMax H3 Reference-to-Video（R2V / Ref2VA）を自分で設定して使う場合は、「MiniMax H3・ComfyUI用プロンプトをコピー」だけを使います。指示文と生成済みの4コマ漫画を画像対応チャットへ送り、返った英語プロンプトを標準ワークフローの `Prompt` 欄へ貼り付けます。この操作では専用ワークフローJSONをダウンロードしません。既定は15秒・16:9・会話音声優先・字幕なし・BGMなしです。
 
+For this standard ComfyUI route, select `MiniMax H3 Reference-to-Video (R2V / Ref2VA)`, connect the same four-panel manga only to `ref_image_0`, and leave `ref_image_1` onward disconnected. Start `Resolution Selector (Size)` at `Aspect ratio: 16:9 (Widescreen)` and `Megapixels: 0.4`, and `Basic Scheduler` at `Scheduler: normal`. / このComfyUI標準経路では、`MiniMax H3 Reference-to-Video（R2V / Ref2VA）` を選び、同じ4コマ漫画を最初の参照入力 `ref_image_0` にだけ接続して、`ref_image_1` 以降は未接続にします。`Resolution Selector (Size)` は `アスペクト比: 16:9 (Widescreen)` と `メガピクセル: 0.4`、`基本スケジューラー` は `スケジューラー: normal` から開始します。
+
 **Using the all-in-one workflow / 画像変換から動画化まで全部お任せにする場合**
 
-Use “Download Workflow JSON / ComfyUIワークフローJSONをダウンロード” when you want one chain of nodes for Nano Banana image transformation, H3 prompt creation, MiniMax H3 video generation, and the fixed credit overlay. This file is separate from the app's “Save Settings (JSON)” file. You can inspect the JSON syntax, nodes, and initial values in a browser, but video generation and API calls require ComfyUI itself, the required models, and the custom nodes. / Nano Banana画像変換、H3プロンプト作成、MiniMax H3動画化、固定クレジット合成までを一連のノードで扱う場合は、「Download Workflow JSON / ComfyUIワークフローJSONをダウンロード」を使います。取得するJSONは、本体の「設定ファイルを保存（JSON）」とは別物です。JSON自体はブラウザで構文・ノード構成・初期値を確認できますが、動画生成とAPI呼び出しにはComfyUI本体、モデル、カスタムノードが必要です。
+This route distributes the standard 20-step workflow and its required `ComfyUI-NanoBanana-H3` custom node as two separate direct downloads. Install the custom node first, fully restart ComfyUI, and only then download and load the workflow JSON. The JSON alone cannot run the workflow. / この経路では、標準20ステップ版ワークフローと必須の `ComfyUI-NanoBanana-H3` カスタムノードを、別々の直接ダウンロードとして配布します。先にカスタムノードを導入し、ComfyUIを完全に再起動してからワークフローJSONをダウンロードして読み込んでください。JSONだけでは実行できません。
 
-In the downloaded workflow, the public sample manga is preselected in `LoadImage`. Connect that same four-panel manga only to the first reference input, `ref_image_0`, and leave `ref_image_1` onward disconnected. Start `Resolution Selector (Size)` at `Aspect ratio: 16:9 (Widescreen)` and `Megapixels: 0.4`, and `Basic Scheduler` at `Scheduler: normal`. A 15-second run at 1.0 MP is prone to GPU-memory errors, so first confirm operation at 0.4 MP. / ダウンロードしたワークフローでは、公開サンプル漫画が `LoadImage` の初期画像として選択されています。同じ4コマ漫画は最初の参照入力 `ref_image_0` にだけ接続し、`ref_image_1` 以降は未接続のままにします。`Resolution Selector (Size)` は `アスペクト比: 16:9 (Widescreen)` と `メガピクセル: 0.4`、`基本スケジューラー` は `スケジューラー: normal` から開始します。15秒・1.0MPはGPUメモリエラーになりやすいため、まず0.4MPで確認します。
+Click “Nano Banana-H3 カスタムノードをダウンロード,” extract the ZIP, and place the whole folder at `ComfyUI/custom_nodes/ComfyUI-NanoBanana-H3/`. The ZIP root is `ComfyUI-NanoBanana-H3` and contains only `__init__.py`, `h3_prompt_system.txt`, and `web/nanobanana_h3.js`. After a full ComfyUI restart, download the workflow JSON and load it. / 「Nano Banana-H3 カスタムノードをダウンロード」を押してZIPを保存し、展開したフォルダ全体を `ComfyUI/custom_nodes/ComfyUI-NanoBanana-H3/` に配置します。ZIPのルートは `ComfyUI-NanoBanana-H3` で、`__init__.py`、`h3_prompt_system.txt`、`web/nanobanana_h3.js` だけを収録しています。ComfyUIを完全に再起動した後、ワークフローJSONをダウンロードして読み込んでください。
 
-The workflow requires the MiniMax H3 model, the `qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors` text encoder, a video VAE, and an audio VAE. Also install the `NanoBananaH3Transform` and `DeterministicEndCreditOverlay` custom nodes. For prompt generation and image transformation, choose Google Gemini API, OpenAI API, or a local LLM through LM Studio. Register Gemini/OpenAI API keys manually in ComfyUI; they are not included in the distributed JSON. Only the local-LLM route needs LM Studio and a local model supported by its custom node. Qwen3-8B used with LM Studio and the Qwen3-VL-32B text encoder used by H3 serve different roles. The distributed JSON contains no personal manga images or generated videos. / ワークフローには、MiniMax H3本体、`qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors` テキストエンコーダー、映像VAE、音声VAEが必要です。さらに `NanoBananaH3Transform` と `DeterministicEndCreditOverlay` のカスタムノードを導入してください。プロンプト生成・画像変換はGoogle Gemini API、OpenAI API、LM Studioを使うローカルLLMから選べます。Gemini/OpenAIのAPIキーはComfyUI側へ手動登録し、配布JSONには含めません。ローカルLLM経路だけLM Studioと、そのカスタムノードが対応するローカルモデルが必要です。LM Studioで使うQwen3-8Bと、H3本体が使うQwen3-VL-32Bテキストエンコーダーは別の役割です。配布JSONに個人の漫画画像、生成済み動画も入りません。
+The workflow requires the MiniMax H3 base model, its text encoder, a video VAE, and an audio VAE. Users must obtain them separately after agreeing to the distributor's license. In `Nano Banana Image Transform (H3)`, click “🔐 APIキー未登録／登録” and authenticate the user's own Nano Banana / Google Gemini API key; the key is not stored in the workflow JSON. If `NanoBananaH3Transform`, `DeterministicTitleWatermarkOverlay`, or `DeterministicEndCreditOverlay` cannot be loaded, the custom-node placement or the complete ComfyUI restart is unfinished. API keys, credentials, models, LoRA weights, manga images, and generated videos are not included in either download. / ワークフローにはMiniMax H3本体モデル、テキストエンコーダー、映像VAE、音声VAEが必要です。利用者自身が配布元のライセンスに同意して別途取得してください。`Nano Banana Image Transform (H3)` ノード内の「🔐 APIキー未登録／登録」を押し、利用者自身のNano Banana／Google Gemini APIキーを認証します。APIキーはワークフローJSONには保存されません。`NanoBananaH3Transform`、`DeterministicTitleWatermarkOverlay`、`DeterministicEndCreditOverlay` が読めない場合は、カスタムノードの配置またはComfyUIの完全な再起動が未完了です。APIキー、認証情報、モデル、LoRA重み、漫画画像、生成済み動画はいずれの配布物にも含まれません。
 
-By default, the video instruction is 15 seconds, 16:9, dialogue-first audio, no subtitles, no BGM, and removes speech-balloon outlines and tails from the video. It preserves the conversational exchange and shortens only lines that do not fit while retaining meaning, speaker, emotion, and the punchline's role. To preserve pronunciation, it does not replace every line with hiragana; it converts only ambiguous proper nouns, numbers, and similar items to kana when needed. Only the named speaker moves their mouth during a line; everyone else keeps their mouth closed and reacts through expression, eye-line, and posture. Emotion follows the panel and speaker rather than forcing everyone into a low-energy performance. The title appears only in Shot 1, and H3 must not generate ending credits or a URL. The workflow composites the fixed credit after H3 generation. If the chat cannot read the image, attach the four-panel manga again as one image. / 既定では、15秒・16:9・会話音声優先・字幕なし・BGMなし・吹き出しの輪郭や尻尾も映像から除去、という動画化指示になります。会話の掛け合いを維持し、収まらない台詞だけを意味・話者・感情・オチへの役割を保ったまま短縮します。読みを守るために台詞全体をひらがなへ置換せず、曖昧な固有名詞・数字などだけを必要に応じてかなへ置き換えます。台詞中は指定された話者だけが口を動かし、他の人物は口を閉じたまま表情・視線・姿勢で反応します。感情はコマと話者に合わせ、全員を低いテンションへ固定しません。タイトルはShot 1だけに表示し、終了クレジットとURLはH3に生成させません。固定クレジットはワークフローがH3生成後に合成します。チャットで画像が読めない場合は、4コマ漫画を1枚だけ添付し直してください。
+The standard workflow composites the title once at the upper left after H3 generation, using black text with a white outline and no background bar. / 標準版ワークフローでは、タイトルをH3生成後に左上へ一度だけ、黒字＋白縁・背景バーなしで合成します。
 
 In every panel, non-speakers keep their mouths closed while giving individual reactions that fit their roles. Across the four shots, the camera varies push-ins and pull-backs, lateral moves, vertical moves, and orbits. For an orbit or follow move, specify the opening, middle, and final framing while keeping the speaker's mouth visible. / 各コマでは、話者以外も口を閉じたまま役割に合った個別反応を行い、カメラは寄り引き・横移動・縦移動・回り込みを4カット内で使い分けます。回り込みや追従では開始・中間・終了の画角を指定し、話者の口元を保ったまま動かします。
 
@@ -302,7 +304,7 @@ To address the extreme complexity of a 5,000+ line monolith, the frontend archit
 
 ## 🔍 Deep Analysis (技術詳解)
 
-### 🧭 Current v5.5.4 Processing Contract / 現行v5.5.4処理仕様
+### 🧭 Current v5.5.6 Processing Contract / 現行v5.5.6処理仕様
 
 | Stage | Input | Processing and validation | Output |
 |:--|:--|:--|:--|
@@ -840,6 +842,9 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 ---
 
 ## 📋 ChangeLog
+
+### v5.5.6 (2026-08-21)
+- **[Fix & UX]** 標準20ステップ版ワークフローJSON、必須ComfyUI-NanoBanana-H3 ZIP、導入順の直接ダウンロード案内を追加 / Added the standard 20-step workflow JSON, required ComfyUI-NanoBanana-H3 ZIP, and ordered direct-download setup guidance
 
 ### v5.5.5 (2026-08-21)
 - **[Fix & UX]** 身体演技・カメラ多様化と一枚絵品質修正を追加 / Added body-acting and camera variety plus single-image quality-path repair

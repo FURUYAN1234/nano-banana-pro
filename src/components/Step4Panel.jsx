@@ -23,6 +23,8 @@ import { MINIMAX_H3_COMFYUI_PROMPT } from '../lib/minimax-h3-prompt';
 
 const COMFYUI_WORKFLOW_FILENAME = 'Super-FURU-AI-4-koma-System-4-Panel-Manga-to-Video.json';
 const COMFYUI_WORKFLOW_DOWNLOAD_URL = `${import.meta.env.BASE_URL}workflows/${COMFYUI_WORKFLOW_FILENAME}`;
+const COMFYUI_CUSTOM_NODE_FILENAME = 'ComfyUI-NanoBanana-H3.zip';
+const COMFYUI_CUSTOM_NODE_DOWNLOAD_URL = `${import.meta.env.BASE_URL}downloads/${COMFYUI_CUSTOM_NODE_FILENAME}`;
 
 const H3_ACTION_BUTTON_STYLE = Object.freeze({
   fontSize: '10px',
@@ -814,6 +816,15 @@ No explanations. No partial results.`;
                                   <li>出力されたMiniMax H3用の英語プロンプトをコピー</li>
                                   <li>ComfyUIワークフローの <code>Prompt</code> 欄へ貼り付け</li>
                                 </ol>
+                                <div className="mt-3 rounded border border-slate-600/50 bg-black/20 p-2.5 text-[10px] leading-relaxed text-slate-300">
+                                  <p className="font-bold text-white">標準ワークフローの開始設定</p>
+                                  <ol className="mt-1.5 space-y-1 list-decimal list-inside">
+                                    <li><strong>選ぶワークフロー</strong> → <code>MiniMax H3 Reference-to-Video（R2V / Ref2VA）</code> ワークフローを選択。</li>
+                                    <li><strong>MiniMax H3 Reference to Video</strong> → 同じ4コマ漫画を最初の参照入力 <code>ref_image_0</code> にだけ接続。<code>ref_image_1</code> 以降には接続しない。</li>
+                                    <li><strong>Resolution Selector (Size)</strong> → アスペクト比 <code>16:9 (Widescreen)</code>、メガピクセル <code>0.4</code> から開始。</li>
+                                    <li><strong>基本スケジューラー</strong> → <code>normal</code> から開始。</li>
+                                  </ol>
+                                </div>
                               </div>
                             </section>
 
@@ -824,6 +835,44 @@ No explanations. No partial results.`;
                                   Nano Banana画像変換、H3プロンプト作成、MiniMax H3動画化、固定クレジット合成までを一連のノードで扱う人向けです。下のボタンで専用のComfyUIワークフローJSONを取得します。プロンプトのコピーボタンとは別の機能です。
                                 </p>
                                 <p className="mt-1 text-[10px] leading-relaxed text-slate-400">既存の設定ファイルとは別のJSONです。本体の「設定ファイルを保存（JSON）」は使用しません。</p>
+                                <div className="mt-3 rounded border border-amber-400/40 bg-amber-950/25 p-3 text-[10px] leading-relaxed text-slate-200">
+                                  <p className="font-bold text-amber-200">
+                                    この標準版ワークフローには Nano Banana-H3 カスタムノードが必要です。先にカスタムノードを導入してComfyUIを再起動してから、ワークフローJSONを読み込んでください。JSONだけでは実行できません。
+                                  </p>
+                                  <a
+                                    href={COMFYUI_CUSTOM_NODE_DOWNLOAD_URL}
+                                    download={COMFYUI_CUSTOM_NODE_FILENAME}
+                                    role="button"
+                                    className="mt-2 bg-slate-700 hover:bg-slate-600 border-white/10 text-white px-3 py-1.5 rounded transition-all inline-flex items-center justify-center gap-1.5 border font-bold active:scale-95 no-underline"
+                                    style={H3_ACTION_BUTTON_STYLE}
+                                    aria-label="Nano Banana-H3 カスタムノードをダウンロード"
+                                  >
+                                    <Download size={13} /> Nano Banana-H3 カスタムノードをダウンロード
+                                  </a>
+                                  <ol className="mt-3 space-y-1.5 list-decimal pl-4">
+                                    <li>「Nano Banana-H3 カスタムノードをダウンロード」を押してZIPを保存します。</li>
+                                    <li>ZIPを展開し、フォルダごと <code>ComfyUI/custom_nodes/ComfyUI-NanoBanana-H3/</code> に配置します。</li>
+                                    <li>ComfyUIを完全に再起動します。</li>
+                                    <li>下のボタンからワークフローJSONをダウンロードし、ComfyUIへ読み込みます。</li>
+                                    <li><code>Nano Banana Image Transform (H3)</code> ノード内の「<strong>🔐 APIキー未登録／登録</strong>」を押し、利用者自身のNano Banana／Google Gemini APIキーを認証して保存します。APIキーはワークフローJSONには保存されません。</li>
+                                    <li>MiniMax H3の本体モデル・テキストエンコーダ・映像VAE・音声VAEは、利用者が別途導入します。</li>
+                                  </ol>
+                                  <div className="mt-3 border-t border-amber-300/20 pt-2">
+                                    <p className="font-bold text-white">次の3ノードが読めない場合</p>
+                                    <ul className="mt-1 list-disc space-y-0.5 pl-4 font-mono text-[9px] text-slate-300">
+                                      <li>NanoBananaH3Transform</li>
+                                      <li>DeterministicTitleWatermarkOverlay</li>
+                                      <li>DeterministicEndCreditOverlay</li>
+                                    </ul>
+                                    <p className="mt-1 text-slate-300">カスタムノードの配置、またはComfyUIの完全な再起動が未完了です。</p>
+                                  </div>
+                                </div>
+                                <div className="mt-3 space-y-1 text-[10px] leading-relaxed text-slate-300">
+                                  <p><strong>標準版は20ステップ版</strong> です。</p>
+                                  <p>タイトルはH3生成後に左上へ一度だけ合成されます。黒字＋白縁、背景バーなしです。</p>
+                                  <p>APIキー・モデル・漫画画像は配布物に含まれません。</p>
+                                  <p>MiniMax H3モデルは、利用者自身が配布元のライセンスに同意して取得してください。</p>
+                                </div>
                                 <a
                                   href={COMFYUI_WORKFLOW_DOWNLOAD_URL}
                                   download={COMFYUI_WORKFLOW_FILENAME}
@@ -835,20 +884,8 @@ No explanations. No partial results.`;
                                   <Download size={13} /> Download Workflow JSON / ComfyUIワークフローJSONをダウンロード
                                 </a>
                                 <div className="mt-2 space-y-1 text-[10px] leading-relaxed text-slate-300">
-                                  <p>JSON自体はブラウザで構文・ノード構成・初期値を確認できます。動画生成とAPI呼び出しにはComfyUI本体、モデル、カスタムノードが必要です。</p>
-                                  <p>JSONにAPIキー、個人画像、生成済み動画は含まれていません。</p>
-                                  <p>必須：MiniMax H3対応版ComfyUI、H3本体モデル、<code>qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors</code>、映像VAE、音声VAE、<code>NanoBananaH3Transform</code> と <code>DeterministicEndCreditOverlay</code>。</p>
-                                  <p>画像変換・プロンプト生成はGoogle Gemini API、OpenAI API、またはLM Studioを使うローカルLLMから選択できます。Gemini/OpenAIのAPIキーはComfyUI側へ手動登録します。Qwen3-8BとH3用Qwen3-VL-32Bテキストエンコーダーは別物です。</p>
-                                </div>
-                                <div className="mt-3 rounded border border-slate-600/50 bg-black/20 p-2.5 text-[10px] leading-relaxed text-slate-300">
-                                  <p className="font-bold text-white">ワークフローを開いた後の開始設定</p>
-                                  <ol className="mt-1.5 space-y-1 list-decimal list-inside">
-                                    <li><strong>選ぶワークフロー</strong> → <code>MiniMax H3 Reference-to-Video（R2V / Ref2VA）</code> ワークフローを選択。</li>
-                                    <li><strong>LoadImage</strong> → 公開サンプル漫画が初期選択されていることを確認。</li>
-                                    <li><strong>MiniMax H3 Reference to Video</strong> → 同じ4コマ漫画を最初の参照入力 <code>ref_image_0</code> にだけ接続。<code>ref_image_1</code> 以降には接続しない。</li>
-                                    <li><strong>Resolution Selector (Size)</strong> → アスペクト比 <code>16:9 (Widescreen)</code>、メガピクセル <code>0.4</code> から開始（15秒では864×480）。</li>
-                                    <li><strong>基本スケジューラー</strong> → <code>normal</code>、<code>ステップ: 20</code>、<code>ノイズ除去: 1.00</code> から開始。</li>
-                                  </ol>
+                                  <p>ZIPには <code>__init__.py</code>、<code>h3_prompt_system.txt</code>、<code>web/nanobanana_h3.js</code> のみを収録しています。</p>
+                                  <p>モデル重み、LoRA重み、APIキー、認証情報、漫画画像、生成済み動画は収録していません。</p>
                                 </div>
                               </div>
                             </section>
