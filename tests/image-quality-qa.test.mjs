@@ -7,6 +7,9 @@ import {
   parseImageQualityQaResponse,
 } from '../src/lib/image-quality-qa.js';
 
+const SINGLE_IMAGE_PROMPT = `[ ANTIGRAVITY EMOTIONAL CINEMA ENGINE v2.1 ]
+Create a SINGLE breathtaking illustration.`;
+
 test('quality prompt prioritizes anatomy, hand side, prop ownership, and bubble text over background', () => {
   const prompt = buildImageQualityQaPrompt({
     scenario: 'アカリ「行こう！」',
@@ -88,4 +91,19 @@ test('fails closed as unverified when the reviewer response cannot be parsed', (
   assert.equal(result.pass, false);
   assert.equal(result.issues[0].type, 'unverified');
   assert.match(result.issues[0].reason, /parse/i);
+});
+
+test('single-image QA inspects one scene without imposing a four-panel layout', () => {
+  const prompt = buildImageQualityQaPrompt({
+    scenario: '',
+    castList: '',
+    finalPrompt: SINGLE_IMAGE_PROMPT,
+    mode: 'single-image',
+  });
+
+  assert.match(prompt, /generated single illustration/i);
+  assert.match(prompt, /Inspect the supplied image as one continuous scene/i);
+  assert.match(prompt, /Do not expect or reward a panel grid, comic layout, speech bubbles, or dialogue/i);
+  assert.doesNotMatch(prompt, /generated four-panel manga page/i);
+  assert.doesNotMatch(prompt, /Inspect the supplied image panel by panel/i);
 });

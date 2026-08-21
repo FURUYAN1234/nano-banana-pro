@@ -1,5 +1,11 @@
 export const IMAGE_QUALITY_MAX_ATTEMPTS = 2;
 
+const SINGLE_IMAGE_PROMPT_RE = /\[\s*ANTIGRAVITY EMOTIONAL CINEMA ENGINE\b|Create a SINGLE breathtaking illustration/i;
+
+export const inferImageQualityMode = (prompt = '') => (
+  SINGLE_IMAGE_PROMPT_RE.test(String(prompt)) ? 'single-image' : 'four-panel'
+);
+
 const createUnverifiedReview = (reason) => ({
   pass: false,
   issues: [{
@@ -18,18 +24,25 @@ const formatRepairIssue = (issue = {}) => (
   `- panel ${issue.panel ?? 'unknown'} / ${issue.type || 'unverified'} / ${issue.subject || 'unspecified'}: ${issue.reason || 'visible issue'}`
 );
 
-export const buildImageQualityRepairPrompt = ({ originalPrompt = '', issues = [] } = {}) => {
+export const buildImageQualityRepairPrompt = ({ originalPrompt = '', issues = [], mode } = {}) => {
   const concreteIssues = issues
     .filter((issue) => issue?.type !== 'unverified')
     .slice(0, 8)
     .map(formatRepairIssue)
     .join('\n');
 
+  const effectiveMode = mode || inferImageQualityMode(originalPrompt);
+  const preservationLock = effectiveMode === 'single-image'
+    ? `Create a corrected replacement for the same single illustration.
+Do not introduce panels, panel borders, a comic page, a collage, additional scenes, new characters, or a new setting.
+Do not change the approved subject count, action, setting, camera, crop, or story beat.`
+    : `Create a corrected replacement for the same four-panel manga page.
+Do not change the approved dialogue, cast, panel order, or story action.`;
+
   return `${String(originalPrompt).trim()}
 
 IMAGE QUALITY CORRECTION ATTEMPT (bounded retry 2/${IMAGE_QUALITY_MAX_ATTEMPTS}):
-Create a corrected replacement for the same four-panel manga page.
-Do not change the approved dialogue, cast, panel order, or story action.
+${preservationLock}
 Correct only these concrete visible issues:
 ${concreteIssues || '- No concrete issue was supplied; preserve the approved page without adding content.'}
 Do not add speaker names, metadata, translations, annotations, or extra text.
@@ -42,6 +55,7 @@ export const runImageQualityFailsafe = async ({
   reviewCandidate,
   generateRepairCandidate,
   onProgress = () => {},
+  mode,
 } = {}) => {
   let originalReview;
   try {
@@ -78,6 +92,7 @@ export const runImageQualityFailsafe = async ({
   const repairPrompt = buildImageQualityRepairPrompt({
     originalPrompt,
     issues: originalReview.issues,
+    mode,
   });
   onProgress(`具体的な品質NGを限定修正する画像候補を再生成します（2/${IMAGE_QUALITY_MAX_ATTEMPTS}）。`);
 

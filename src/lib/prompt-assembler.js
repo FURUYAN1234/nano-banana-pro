@@ -34,13 +34,16 @@ import { FINAL_PANEL_ACTIVE_STAGING_IMAGE_LOCK } from './final-panel-staging';
 import {
   getPanelCompositionAssist,
   MANGA_COMPOSITION_VARIETY_LOCK,
-  MANGA_COMPOSITION_VARIETY_LOCK_COMPACT
+  MANGA_COMPOSITION_VARIETY_LOCK_COMPACT,
+  MANGA_GESTURE_VARIETY_LOCK,
+  MANGA_GESTURE_VARIETY_LOCK_COMPACT
 } from './composition-variety';
 import {
   HAND_PROP_KINEMATICS_LOCK,
   HAND_PROP_KINEMATICS_LOCK_COMPACT
 } from './hand-prop-kinematics';
 import {
+  BODY_ACTING_BASELINE_COMPACT,
   FUNCTIONAL_SURFACE_ORIENTATION_LOCK_COMPACT,
   FUNCTIONAL_SURFACE_PANEL_CHECK
 } from './shared-image-quality';
@@ -103,7 +106,7 @@ const compactChatGPTConversationRules = (prompt) => {
     .replace(/CONVERSATIONAL DEPTH BASE:[^\n]*/g, 'CONVERSATIONAL DEPTH BASE: counterpart gaze; varied three-quarter and OTS depth.')
     .replace(/EYE-LINE LOCK:[^\n]*/g, compactConversationEyeLine)
     .replace(/MANGA FINISH ASSIST:[^\n]*/g, 'FINISH: bubbles, anatomy.')
-    .replace(/\[ SHARED IMAGE QUALITY CONTRACT[\s\S]*?(?=\n- Clean finish:)/g, `SHARED IMAGE QUALITY CONTRACT: preserve cast/action/setting/camera; rich physical setting with depth; coherent anatomy and prop ownership; localized clothing-fold shadows; no invented or duplicate cast; clean surfaces.\n${FUNCTIONAL_SURFACE_ORIENTATION_LOCK_COMPACT}`)
+    .replace(/\[ SHARED IMAGE QUALITY CONTRACT[\s\S]*?(?=\n- Clean finish:)/g, `SHARED IMAGE QUALITY CONTRACT: preserve cast/action/setting/camera; rich setting/depth; coherent anatomy/prop ownership; localized fold shadows; no invented/duplicate cast; clean surfaces.\n${BODY_ACTING_BASELINE_COMPACT}\n${FUNCTIONAL_SURFACE_ORIENTATION_LOCK_COMPACT}`)
     .replace(/RICH PANEL COMPOSITION \/ CHARACTER CLARITY LOCK:[\s\S]*?(?=\n- CLOTHING FOLD SHADOW ASSIST:)/g, 'RICH PANEL COMPOSITION / CHARACTER CLARITY LOCK: 1 fixed anchor + 2 physical setting cues/panel; VFX overlay, never replace setting; face, eyes, silhouette, hands and action stay crisp; background rich but softer/lower contrast; no blank walls, flat gradients or black voids.')
     .replace(/CLEAN SURFACE PROTOCOL:[^\n]*/g, 'CLEAN: no noise except style exceptions.')
     .replace(/CLOTHING FOLD SHADOW ASSIST:[^\n]*/g, 'FOLD SHADOWS: crisp triangular overlap shadows; no geometric patterns.')
@@ -111,8 +114,8 @@ const compactChatGPTConversationRules = (prompt) => {
     .replace(/PANEL-BY-PANEL CLOTHING FOLD PRIORITY:[^\n]*/g, 'FOLD PRIORITY: 2-4 dark triangular crease shadows.')
     .replace(/FINAL-PANEL ACTIVE STAGING LOCK:[^\n]*/g, 'FINAL-PANEL ACTIVE STAGING LOCK: no straight-line lineup; distinct physical action; faces, silhouettes, and hands readable.')
     .replace(
-      /MANGA CAMERA \/ POSE VARIETY LOCK:[\s\S]*?(?=\n+(?:HAND \/ PROP KINEMATICS LOCK|VISUAL STORY EVIDENCE LOCK|SETTING CONTINUITY \(LOW PRIORITY\)|FINAL-PANEL ACTIVE STAGING LOCK|ART \/ RENDERING QUALITY:))/g,
-      'MANGA CAMERA / POSE VARIETY LOCK: >=3 azimuths; max 1 front-on; preserve script/camera/action/limbs; turn torso; stagger hands in depth; VFX follows angle.'
+      /MANGA CAMERA \/ POSE VARIETY LOCK:[\s\S]*?(?=\n+(?:BODY ACTING \/ GESTURE VARIETY LOCK|HAND \/ PROP KINEMATICS LOCK|VISUAL STORY EVIDENCE LOCK|SETTING CONTINUITY \(LOW PRIORITY\)|FINAL-PANEL ACTIVE STAGING LOCK|ART \/ RENDERING QUALITY:))/g,
+      'MANGA CAMERA / POSE VARIETY LOCK: >=3 azimuths; NO default eye-level shot; max 1 front-on; preserve script/camera/action/limbs; turn torso; stagger hands in depth; VFX follows angle.'
     )
     .replace(/COMPOSITION STAGING: PRESERVE EXPLICIT AZIMUTH:[^\n]*/g, 'COMPOSITION STAGING: preserve explicit azimuth; diagonal asymmetric body.')
     .replace(/COMPOSITION STAGING: LEFT-FRONT OBLIQUE:[^\n]*/g, 'COMPOSITION STAGING: LEFT-FRONT OBLIQUE 35-55 degrees; unequal shoulder depth.')
@@ -145,7 +148,7 @@ const compactChatGPTConversationRules = (prompt) => {
       'VISUAL STORY EVIDENCE LOCK: show $1; >=2 distinct items across >=2 panels where Actions place them; physical scene elements, not extra captions.'
     )
     .replace(/\n?SETTING CONTINUITY \(LOW PRIORITY\):[^\n]*/g, '')
-    .replace(/MANGA CAMERA \/ POSE VARIETY LOCK:[^\n]*/g, 'MANGA CAMERA / POSE VARIETY LOCK: >=3 azimuths; max 1 front-on; preserve Action/limbs; stagger hands in depth.')
+    .replace(/MANGA CAMERA \/ POSE VARIETY LOCK:[^\n]*/g, 'MANGA CAMERA / POSE VARIETY LOCK: >=3 azimuths; NO default eye-level shot; max 1 front-on; preserve Action/limbs; stagger hands in depth.')
     .replace(/FINAL-PANEL ACTIVE STAGING LOCK:[^\n]*/g, 'FINAL-PANEL ACTIVE STAGING LOCK: varied actions/depth; faces and hands readable.')
     .replace(/EYE-LINE LOCK:[^\n]*/g, (line) => (
       /EXPLICIT DETAIL CAMERA LOCK|EXPLICIT REAR CAMERA/i.test(line)
@@ -332,6 +335,9 @@ export const buildMangaPrompt = ({
   const compositionVarietyLock = isChatGPTFamily
     ? MANGA_COMPOSITION_VARIETY_LOCK_COMPACT
     : MANGA_COMPOSITION_VARIETY_LOCK;
+  const gestureVarietyLock = isChatGPTFamily
+    ? MANGA_GESTURE_VARIETY_LOCK_COMPACT
+    : MANGA_GESTURE_VARIETY_LOCK;
   
   // ウォーターマークテキストの作成
   const watermarkEng = isChatGPTFamily
@@ -342,7 +348,7 @@ export const buildMangaPrompt = ({
   const panels = [panel1Text, panel2Text, panel3Text, panel4Text];
   const scriptLock = buildStrictScriptLock({ safeTopic, panels, castList, activeOutfit });
   const finalPanelStagingLock = punchlineType === 'Surreal' ? '' : FINAL_PANEL_ACTIVE_STAGING_IMAGE_LOCK;
-  const sceneLocks = [scriptLock, compositionVarietyLock, HAND_PROP_KINEMATICS_LOCK, visualStoryEvidenceLock, settingContinuityLock, finalPanelStagingLock]
+  const sceneLocks = [scriptLock, compositionVarietyLock, gestureVarietyLock, HAND_PROP_KINEMATICS_LOCK, visualStoryEvidenceLock, settingContinuityLock, finalPanelStagingLock]
     .filter(Boolean)
     .join('\n');
   const panelEyeLineRules = panels.map((panel) => buildPanelEyeLineRule(panel, castList));

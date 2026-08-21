@@ -4,12 +4,17 @@ export const FUNCTIONAL_SURFACE_ORIENTATION_LOCK_COMPACT = 'FUNCTIONAL SURFACE O
 
 export const FUNCTIONAL_SURFACE_PANEL_CHECK = 'FUNCTIONAL SURFACE PANEL CHECK: solve target-to-front/back geometry before projection.';
 
+export const BODY_ACTING_BASELINE = `BODY ACTING BASELINE: A reference-sheet pose is identity evidence, not a recurring action or personality signature. Preserve every explicitly requested action. When the request does not require it, do not default to pointing, thrusting a hand or object toward the viewer, a symmetrical two-hand thrust, or striking a supporting surface as generic emphasis. Choose story-specific acting and resolve its action phase, weight-bearing support, center of gravity, left/right hand roles, and contact target. Keep the face, important hands, and story prop readable in a clean asymmetrical silhouette.`;
+
+export const BODY_ACTING_BASELINE_COMPACT = 'BODY ACTING BASELINE: do not default to pointing/thrusting/striking a supporting surface; action phase/weight-bearing support/contact target.';
+
 export const SHARED_IMAGE_QUALITY_CONTRACT = `
 [ SHARED IMAGE QUALITY CONTRACT — CURRENT NANO BANANA QUALITY BASELINE ]
 - Preserve the user's requested cast, action, setting, and camera. Quality enrichment must support those directions, never replace them.
 - Render a rich physical setting with meaningful environmental anchors and layered foreground, midground, and background; do not default to empty walls, flat gradients, or generic blank rooms unless physical emptiness is explicitly requested.
 - Keep lighting and color coherent between cast and setting: use a motivated key light, fill, and rim or equivalent emotional lighting, with the cast clear against a softer, lower-contrast background.
 - Keep coherent anatomy, especially hands, arms, and prop connections. Use exactly the limbs implied by each visible character and preserve natural ownership of held objects.
+- ${BODY_ACTING_BASELINE}
 - ${FUNCTIONAL_SURFACE_ORIENTATION_LOCK}
 - Add clothing-fold shadows only where fabric overlaps, pinches, or intersects: use clean, localized cel-shaded shadow planes, never random geometric patterns or texture noise.
 - Do not invent, duplicate, merge, or replace characters. Do not add a dominant silhouette, mascot, presenter, narrator, monster, or ghost unless the user explicitly requests one.

@@ -2,6 +2,10 @@ import {
   assertActiveFinalPanelStaging,
   FINAL_PANEL_ACTIVE_STAGING_SCENARIO_CONTRACT
 } from './final-panel-staging.js';
+import {
+  assertScenarioGestureVariety,
+  SCENARIO_GESTURE_VARIETY_RULES
+} from './composition-variety.js';
 
 const CATEGORY_DEFINITIONS = Object.freeze({
   expressions: {
@@ -55,6 +59,7 @@ const BACKGROUND_MUTATION_RE = /背景.{0,24}(?:変形|変化|歪|崩|爆発|追
 const HARD_ENHANCEMENT_ISSUE_CODES = new Set([
   'output_too_short',
   'passive_final_tableau',
+  'repeated_forward_extension_gesture',
   'metadata_changed',
   'panel_structure_changed',
   'speaker_sequence_changed',
@@ -242,6 +247,7 @@ export const buildScenarioEnhancementPrompt = ({
 ${dialogueRule}
 ${backgroundRule}
 ${FINAL_PANEL_ACTIVE_STAGING_SCENARIO_CONTRACT}
+${SCENARIO_GESTURE_VARIETY_RULES}
 
 【選択されたカテゴリ — 変更必須】
 ${selectedInstructions || '- なし'}
@@ -287,6 +293,42 @@ export const validateScenarioEnhancement = ({
       );
     } else {
       throw error;
+    }
+  }
+
+  let originalAlreadyRepeatsForwardExtension = false;
+  try {
+    assertScenarioGestureVariety({
+      scenario: original.text,
+      punchlineType: original.metadata.punchline,
+      protectedText: original.text
+    });
+  } catch (error) {
+    if (error?.message === 'repeated_forward_extension_gesture') {
+      originalAlreadyRepeatsForwardExtension = true;
+    } else {
+      throw error;
+    }
+  }
+
+  if (!originalAlreadyRepeatsForwardExtension) {
+    try {
+      assertScenarioGestureVariety({
+        scenario: candidate.text,
+        punchlineType: candidate.metadata.punchline,
+        protectedText: original.text
+      });
+    } catch (error) {
+      if (error?.message === 'repeated_forward_extension_gesture') {
+        addIssue(
+          issues,
+          issueCodes,
+          'repeated_forward_extension_gesture',
+          '指さし、正面への手出し、支持面を叩く動作を複数コマへ反復せず、物語固有の身体演技へ分散してください'
+        );
+      } else {
+        throw error;
+      }
     }
   }
 

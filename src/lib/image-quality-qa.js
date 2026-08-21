@@ -50,8 +50,16 @@ const extractFinalPromptGeometry = (finalPrompt) => String(finalPrompt || '')
   .join('\n')
   .slice(0, 10000);
 
-export const buildImageQualityQaPrompt = ({ scenario = '', castList = '', finalPrompt = '' } = {}) => `
-You are the visible quality gate for a generated four-panel manga page. Inspect the supplied image panel by panel and compare it with the approved scenario and cast.
+export const buildImageQualityQaPrompt = ({ scenario = '', castList = '', finalPrompt = '', mode = 'four-panel' } = {}) => {
+  const isSingleImage = mode === 'single-image';
+  const inspectionScope = isSingleImage
+    ? `You are the visible quality gate for a generated single illustration. Inspect the supplied image as one continuous scene and compare it with the submitted prompt.
+Do not expect or reward a panel grid, comic layout, speech bubbles, or dialogue unless the submitted prompt explicitly requests them.`
+    : 'You are the visible quality gate for a generated four-panel manga page. Inspect the supplied image panel by panel and compare it with the approved scenario and cast.';
+  const unitLabel = isSingleImage ? 'image' : 'panel';
+
+  return `
+${inspectionScope}
 
 Fail only for a clearly visible issue in one of these types:
 - anatomy: extra, missing, duplicated, detached, merged, or wrongly attached arms/hands; impossible limb connection.
@@ -61,8 +69,8 @@ Fail only for a clearly visible issue in one of these types:
 - camera_geometry: an explicitly named rear/over-the-shoulder character is instead shown front-on, or the required rear head/shoulder foreground and camera side are visibly reversed.
 - bubble_text: scripted dialogue is missing, duplicated, paraphrased, assigned to the wrong bubble, or not printed exactly once.
 - speaker_name: a speaker name prefix such as "アカリ:" or "アカリ「" is visibly printed inside a bubble instead of dialogue alone.
-- extra_text: a bubble or panel contains metadata, Action/Camera/EMOTION/TAILS labels, prompt fragments, annotations, translations, or other unscripted text.
-- unverified: panel anatomy or text is too cropped, obscured, or illegible to verify.
+- extra_text: a bubble or ${unitLabel} contains metadata, Action/Camera/EMOTION/TAILS labels, prompt fragments, annotations, translations, or other unscripted text.
+- unverified: ${unitLabel} anatomy or text is too cropped, obscured, or illegible to verify.
 
 Do not fail the image for background detail or background continuity. Backgrounds are lower priority than people, hands, functional prop orientation, and dialogue. A clearly wrong readable-face direction is a prop geometry defect even when the object sits on a counter or in the setting; it is not incidental background-detail grading. Do not infer a defect from ordinary perspective, foreshortening, occlusion, or cropping when the geometry is still plausible. Report only visible evidence; do not invent hidden defects.
 
@@ -86,6 +94,7 @@ ${String(castList).slice(0, 8000)}
 Submitted final image prompt (camera and geometry source of truth):
 ${extractFinalPromptGeometry(finalPrompt)}
 `.trim();
+};
 
 export const parseImageQualityQaResponse = (responseText) => {
   const parsed = extractJsonObject(responseText);

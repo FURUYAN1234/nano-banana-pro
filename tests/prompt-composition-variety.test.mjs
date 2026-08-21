@@ -120,9 +120,14 @@ test('normal STEP2 generation requires horizontal camera and pose variety by def
   const prompt = buildNormalScenarioPrompt();
 
   assert.match(prompt, /真正面は最大1コマ/);
+  assert.match(prompt, /アイレベル.*原則禁止/);
   assert.match(prompt, /被写体に対する水平方位/);
   assert.match(prompt, /肩・腰・顔/);
   assert.match(prompt, /両手.*前後差/);
+  assert.match(prompt, /参照画像.*ポーズ.*同一性資料/);
+  assert.match(prompt, /最低3種類.*身体演技/);
+  assert.match(prompt, /前方伸展ジェスチャー.*最大1コマ/);
+  assert.match(prompt, /指し示す.*支持面を叩く.*物語上必要/);
 });
 
 test('both final-prompt families retain the page lock and four panel staging assists', () => {
@@ -135,5 +140,11 @@ test('both final-prompt families retain the page lock and four panel staging ass
     assert.equal((prompt.match(/COMPOSITION STAGING:/g) || []).length, 4);
     assert.match(prompt, /RIGHT-FRONT OBLIQUE/);
     assert.match(prompt, /stagger.*hands.*depth/i);
+    assert.match(prompt, /BODY ACTING \/ GESTURE VARIETY LOCK/);
+    assert.match(prompt, /NO default eye-level shot/i);
+    assert.match(prompt, /reference-sheet pose is identity evidence, not a recurring action/i);
+    assert.match(prompt, /same forward-extension gesture family.*no more than one panel/i);
+    assert.match(prompt, /preserve.*explicitly scripted.*pointing.*surface impact/i);
+    assert.match(prompt, /action phase.*support.*contact/i);
   }
 });

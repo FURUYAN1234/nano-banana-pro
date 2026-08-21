@@ -41,6 +41,11 @@ test('single-image copy prompt applies the current shared image-quality contract
   assert.match(prompt, /explicitly says.*present.*camera or viewer/i);
   assert.match(prompt, /derive the intended target from the action, not from who holds the object/i);
   assert.match(prompt, /read or operate means self.*submit, present, or show means the recipient/i);
+  assert.match(prompt, /BODY ACTING BASELINE/);
+  assert.match(prompt, /Never default to a flat, eye-level, center-framed shot/i);
+  assert.match(prompt, /reference-sheet pose is identity evidence, not a recurring action/i);
+  assert.match(prompt, /do not default to pointing.*thrusting.*striking a supporting surface/i);
+  assert.match(prompt, /action phase.*weight-bearing support.*contact target/i);
 });
 
 test('single-image copy prompt retains its established emotional and rendering safeguards', () => {
@@ -91,6 +96,9 @@ Hero「行こう。」`;
     assert.match(prompt, /documents, forms, printed pages, cards, books, maps/i);
     assert.match(prompt, /direction-dependent information, control, optical, or service face/i);
     assert.match(prompt, /explicitly says.*present.*camera or viewer/i);
+    assert.match(prompt, /BODY ACTING BASELINE/);
+    assert.match(prompt, /reference-sheet pose is identity evidence, not a recurring action/i);
+    assert.match(prompt, /do not default to pointing.*thrusting.*striking a supporting surface/i);
   }
 
   const controlBar = readFileSync(new URL('../src/components/ControlBar.jsx', import.meta.url), 'utf8');

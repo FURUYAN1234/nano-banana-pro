@@ -32,7 +32,7 @@ import {
   formatImageQualityIssue,
   parseImageQualityQaResponse
 } from '../lib/image-quality-qa';
-import { runImageQualityFailsafe } from '../lib/image-quality-failsafe';
+import { inferImageQualityMode, runImageQualityFailsafe } from '../lib/image-quality-failsafe';
 import { getEffectiveEngine } from '../lib/engine-state';
 
 export default function useMangaWorkflow() {
@@ -1103,6 +1103,7 @@ export default function useMangaWorkflow() {
   // [v2.79] 戻り値変更: フルオート連鎖用（true=成功, false=失敗）
   const regenerateImage = async (skipGuard = false, overridePrompt = null, generationOptions = {}) => {
     const currentPrompt = overridePrompt || finalPrompt;
+    const qualityMode = inferImageQualityMode(currentPrompt);
     if (isGeneratingImage || (!skipGuard && !currentPrompt)) return false;
     setIsGeneratingImage(true);
     setIsGenerationError(false);
@@ -1185,7 +1186,7 @@ export default function useMangaWorkflow() {
 
       const reviewImageCandidate = async (candidate, candidatePrompt) => {
         try {
-          const qualityPrompt = buildImageQualityQaPrompt({ scenario, castList, finalPrompt: candidatePrompt });
+          const qualityPrompt = buildImageQualityQaPrompt({ scenario, castList, finalPrompt: candidatePrompt, mode: qualityMode });
           const qualityResponse = await callAI(
             qualityPrompt,
             [{
@@ -1224,6 +1225,7 @@ export default function useMangaWorkflow() {
       const qualityOutcome = await runImageQualityFailsafe({
         originalCandidate,
         originalPrompt: currentPrompt,
+        mode: qualityMode,
         reviewCandidate: reviewImageCandidate,
         generateRepairCandidate: (repairPrompt) => generateImageCandidate(repairPrompt, { repair: true }),
         onProgress: (msg) => statCallback(`[QUALITY QA] ${msg}`),

@@ -3,8 +3,12 @@ import test from 'node:test';
 
 import {
   buildImageQualityRepairPrompt,
+  inferImageQualityMode,
   runImageQualityFailsafe,
 } from '../src/lib/image-quality-failsafe.js';
+
+const SINGLE_IMAGE_PROMPT = `[ ANTIGRAVITY EMOTIONAL CINEMA ENGINE v2.1 ]
+Create a SINGLE breathtaking illustration.`;
 
 const candidate = (id) => ({ id, base64Img: id, mimeType: 'image/png', modelId: 'test-model' });
 const pass = { pass: true, issues: [] };
@@ -111,4 +115,24 @@ test('repair prompt preserves the approved prompt and limits edits to concrete v
   assert.match(prompt, /^APPROVED SCRIPT AND LAYOUT/);
   assert.match(prompt, /prop_ownership/);
   assert.match(prompt, /Do not change the approved dialogue, cast, panel order, or story action/);
+});
+
+test('single-image quality repair never turns the emotional illustration into a four-panel manga page', () => {
+  const originalPrompt = SINGLE_IMAGE_PROMPT;
+  const prompt = buildImageQualityRepairPrompt({
+    originalPrompt,
+    issues: [{
+      type: 'anatomy',
+      panel: 1,
+      subject: 'character right hand',
+      reason: 'impossible wrist and finger connection',
+    }],
+  });
+
+  assert.equal(inferImageQualityMode(originalPrompt), 'single-image');
+  assert.match(prompt, /same single illustration/i);
+  assert.match(prompt, /Do not introduce panels, panel borders, a comic page, a collage, additional scenes, new characters, or a new setting/i);
+  assert.match(prompt, /subject count, action, setting, camera, crop, or story beat/i);
+  assert.doesNotMatch(prompt, /same four-panel manga page/i);
+  assert.doesNotMatch(prompt, /panel order/i);
 });

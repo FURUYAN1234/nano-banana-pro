@@ -14,7 +14,9 @@ test('image generation displays the received image before running one visible co
   assert.match(workflowSource, /\[QUALITY QA\].*人物・手・小物・吹き出し/);
   assert.match(workflowSource, /formatImageQualityIssue/);
   assert.match(workflowSource, /qualityResult\.pass/);
-  assert.match(workflowSource, /buildImageQualityQaPrompt\(\{ scenario, castList, finalPrompt: candidatePrompt \}\)/);
+  assert.match(workflowSource, /const qualityMode = inferImageQualityMode\(currentPrompt\)/);
+  assert.match(workflowSource, /buildImageQualityQaPrompt\(\{ scenario, castList, finalPrompt: candidatePrompt, mode: qualityMode \}\)/);
+  assert.match(workflowSource, /originalPrompt: currentPrompt,[\s\S]*mode: qualityMode,/);
 });
 
 test('quality failure uses one bounded repair candidate and falls back to the saved original without stopping', () => {
