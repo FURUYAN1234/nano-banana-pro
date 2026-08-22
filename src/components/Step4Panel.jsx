@@ -854,7 +854,7 @@ No explanations. No partial results.`;
                                     <li>ZIPを展開し、フォルダごと <code>ComfyUI/custom_nodes/ComfyUI-NanoBanana-H3/</code> に配置します。</li>
                                     <li>ComfyUIを完全に再起動します。</li>
                                     <li>下のボタンからワークフローJSONをダウンロードし、ComfyUIへ読み込みます。</li>
-                                    <li><code>Nano Banana Image Transform (H3)</code> ノード内の「<strong>🔐 APIキー未登録／登録</strong>」を押し、利用者自身のNano Banana／Google Gemini APIキーを認証して保存します。APIキーはワークフローJSONには保存されません。</li>
+                                    <li><code>Nano Banana Image Transform (H3)</code> ノードで <code>Google Gemini API</code> または <code>ComfyUI API</code> を選び、「<strong>🔐 APIキー未登録／登録</strong>」から利用者自身のキーを認証して保存します。APIキーはワークフローJSONには保存されません。保存先はローカルの <code>ComfyUI/user/nanobanana_h3_credentials.json</code> で、暗号化されません。</li>
                                     <li>MiniMax H3の本体モデル・テキストエンコーダ・映像VAE・音声VAEは、利用者が別途導入します。</li>
                                   </ol>
                                   <div className="mt-3 border-t border-amber-300/20 pt-2">
@@ -864,12 +864,13 @@ No explanations. No partial results.`;
                                       <li>DeterministicTitleWatermarkOverlay</li>
                                       <li>DeterministicEndCreditOverlay</li>
                                     </ul>
-                                    <p className="mt-1 text-slate-300">カスタムノードの配置、またはComfyUIの完全な再起動が未完了です。</p>
+                                    <p className="mt-1 text-slate-300">多くの場合はカスタムノードの配置、またはComfyUIの完全な再起動が未完了です。解決しない場合は二重展開、ComfyUIの読込エラー、バージョン互換性も確認してください。</p>
                                   </div>
                                 </div>
                                 <div className="mt-3 space-y-1 text-[10px] leading-relaxed text-slate-300">
                                   <p><strong>標準版は20ステップ版</strong> です。</p>
-                                  <p>タイトルはH3生成後に左上へ一度だけ合成されます。黒字＋白縁、背景バーなしです。</p>
+                                  <p>この配布専用標準版の既定は、15秒・16:9・0.4MP・<code>simple</code>・20ステップです。上の手動ComfyUI標準経路の <code>normal</code> 設定とは対象が異なります。</p>
+                                  <p>H3生成後にタイトルと固定クレジットを合成します。タイトルは左上へ一度だけ、黒字＋白縁、背景バーなしです。</p>
                                   <p>APIキー・モデル・漫画画像は配布物に含まれません。</p>
                                   <p>MiniMax H3モデルは、利用者自身が配布元のライセンスに同意して取得してください。</p>
                                 </div>

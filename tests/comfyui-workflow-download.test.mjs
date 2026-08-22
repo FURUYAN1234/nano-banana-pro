@@ -82,6 +82,11 @@ test('STEP4 exposes the custom node before the standard workflow JSON as separat
   assert.match(step4PanelSource, /NanoBananaH3Transform/);
   assert.match(step4PanelSource, /DeterministicEndCreditOverlay/);
   assert.match(step4PanelSource, /APIキー.*含ま/);
+  assert.match(step4PanelSource, /Google Gemini API.*ComfyUI API/s);
+  assert.match(step4PanelSource, /ComfyUI\/user\/nanobanana_h3_credentials\.json/);
+  assert.match(step4PanelSource, /暗号化されません/);
+  assert.match(step4PanelSource, /多くの場合/);
+  assert.match(step4PanelSource, /simple.*20ステップ/s);
   assert.match(step4PanelSource, /この標準版ワークフローには Nano Banana-H3 カスタムノードが必要です/);
   assert.match(step4PanelSource, /JSONだけでは実行できません/);
   assert.match(step4PanelSource, /ComfyUI\/custom_nodes\/ComfyUI-NanoBanana-H3\//);
@@ -91,7 +96,7 @@ test('STEP4 exposes the custom node before the standard workflow JSON as separat
   assert.match(step4PanelSource, /MiniMax H3の本体モデル・テキストエンコーダ・映像VAE・音声VAE/);
   assert.match(step4PanelSource, /NanoBananaH3Transform[\s\S]*DeterministicTitleWatermarkOverlay[\s\S]*DeterministicEndCreditOverlay/);
   assert.match(step4PanelSource, /標準版は20ステップ版/);
-  assert.match(step4PanelSource, /H3生成後に左上へ一度だけ合成/);
+  assert.match(step4PanelSource, /H3生成後にタイトルと固定クレジットを合成/);
   assert.match(step4PanelSource, /黒字＋白縁、背景バーなし/);
   assert.match(step4PanelSource, /APIキー・モデル・漫画画像は配布物に含まれません/);
   assert.match(step4PanelSource, /配布元のライセンスに同意して取得/);
@@ -110,14 +115,20 @@ test('H3 copy keeps the synchronous selection fallback inside the original click
   assert.match(step4PanelSource, /textarea\.setSelectionRange\(0, text\.length\)/);
 });
 
-test('distributed standard workflow is the exact user-supplied 20-step JSON', () => {
+test('distributed standard workflow is the exact user-supplied 20-step JSON without PreviewImage', () => {
   assert.equal(existsSync(workflowUrl), true, 'ComfyUI workflow JSON must be distributed from public/workflows');
   if (!existsSync(workflowUrl)) return;
 
   const bytes = readFileSync(workflowUrl);
-  assert.equal(hashBytes(bytes), 'e7e653ebeefa44602a72b7615bba1541a1d0fde0fc7412eaa72e91a1071de3a6');
+  assert.equal(hashBytes(bytes), '9f21c48d7bd30b920f055ecf1b16969bfa709063780dd4c60053258df39f563b');
   const workflow = JSON.parse(bytes.toString('utf8'));
-  assert.equal(workflow.nodes.length, 27);
+  assert.equal(workflow.nodes.length, 26);
+  assert.equal(workflow.links.length, 30);
+  assert.ok(!workflow.nodes.some((node) => node.type === 'PreviewImage'));
+  assert.deepEqual(
+    workflow.nodes.find((node) => node.type === 'BasicScheduler')?.widgets_values,
+    ['simple', 20, 1],
+  );
   assert.ok(workflow.nodes.some((node) => node.type === 'NanoBananaH3Transform'));
   assert.ok(workflow.nodes.some((node) => node.type === 'DeterministicTitleWatermarkOverlay'));
   assert.ok(workflow.nodes.some((node) => node.type === 'DeterministicEndCreditOverlay'));
@@ -150,4 +161,11 @@ test('README keeps the custom-node-first installation contract in sync with STEP
   assert.match(readmeSource, /DeterministicTitleWatermarkOverlay/);
   assert.match(readmeSource, /DeterministicEndCreditOverlay/);
   assert.match(readmeSource, /黒字＋白縁・背景バーなし/);
+  assert.match(readmeSource, /固定クレジット/);
+  assert.match(readmeSource, /配布専用.*標準.*simple.*20ステップ/s);
+  assert.match(readmeSource, /手動.*標準.*normal/s);
+  assert.match(readmeSource, /Google Gemini API.*ComfyUI API/s);
+  assert.match(readmeSource, /ComfyUI\/user\/nanobanana_h3_credentials\.json/);
+  assert.match(readmeSource, /暗号化.*されません/);
+  assert.match(readmeSource, /多くの場合/);
 });
