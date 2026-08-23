@@ -120,7 +120,7 @@ test('distributed standard workflow is the exact user-supplied 20-step JSON with
   if (!existsSync(workflowUrl)) return;
 
   const bytes = readFileSync(workflowUrl);
-  assert.equal(hashBytes(bytes), '9f21c48d7bd30b920f055ecf1b16969bfa709063780dd4c60053258df39f563b');
+  assert.equal(hashBytes(bytes), '433d5a2364ace1422d92e7b1b54b91825ff1158d6c4f471d1b5dabb1971bed6f');
   const workflow = JSON.parse(bytes.toString('utf8'));
   assert.equal(workflow.nodes.length, 26);
   assert.equal(workflow.links.length, 30);
@@ -144,9 +144,9 @@ test('custom-node ZIP has the required root folder, exact source files, and no f
     'ComfyUI-NanoBanana-H3/h3_prompt_system.txt',
     'ComfyUI-NanoBanana-H3/web/nanobanana_h3.js',
   ]);
-  assert.equal(hashBytes(files.get('ComfyUI-NanoBanana-H3/__init__.py')), '77657d6ea68a7098cd2f1e40a6f6631054d6d6ae9c43323a10caaf5ff22d7af0');
+  assert.equal(hashBytes(files.get('ComfyUI-NanoBanana-H3/__init__.py')), 'a370f1cfaafe22d9d34629c356f86f999aa02079d98431ff94f91c9e23dfec6c');
   assert.equal(hashBytes(files.get('ComfyUI-NanoBanana-H3/h3_prompt_system.txt')), '808811a45c2fd33ee4148ad3ab6c235afa909505b68b362e9cfaa75002a7590e');
-  assert.equal(hashBytes(files.get('ComfyUI-NanoBanana-H3/web/nanobanana_h3.js')), '8d06430e83e1512be2a1c0f217457ee57b0d94a39edc76401f98ebd4c2cf45c5');
+  assert.equal(hashBytes(files.get('ComfyUI-NanoBanana-H3/web/nanobanana_h3.js')), '4beabe1a66efb6cbd6c371ccf2a64ca461af3d6419220b59ae9f025e3f933669');
   assert.doesNotMatch([...files.keys()].join('\n'), /(?:^|\/)(__pycache__|[^/]+\.(?:pyc|bak))(?:\/|$)/i);
 
   const combinedText = Buffer.concat([...files.values()]).toString('utf8');

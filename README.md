@@ -1,6 +1,6 @@
 # Super FURU AI 4-koma System
 
-> Latest release: **v5.5.7** / 最新リリース: **v5.5.7**
+> Latest release: **v5.5.8** / 最新リリース: **v5.5.8**
 
 > **"To what extent can humans step away from the creative process?"**
 > **「人間は、どこまで制作から降りられるのか？」**
@@ -22,7 +22,7 @@
 This project aims to intentionally exclude humans from the creative process, allowing AI to act as a director and complete everything from brainstorming to composition, direction, and rendering.
 本プロジェクトは、人間をクリエイティブな工程から意図的に排除し、AIがディレクターとして「ネタ出し・構成・演出・作画」のすべてを完結させることを目的としています。
 
-The current implementation and latest release are **v5.5.7**. The product name is **Super FURU AI 4-koma System**; **Nano Banana 2** and **ChatGPT Image 2.0** identify image-generation engine families. / 現在の実装および最新公開版は **v5.5.7** です。製品名は **Super FURU AI 4-koma System** で、**Nano Banana 2** と **ChatGPT Image 2.0** は画像生成エンジン系統の名称です。
+The current implementation and latest release are **v5.5.8**. The product name is **Super FURU AI 4-koma System**; **Nano Banana 2** and **ChatGPT Image 2.0** identify image-generation engine families. / 現在の実装および最新公開版は **v5.5.8** です。製品名は **Super FURU AI 4-koma System** で、**Nano Banana 2** と **ChatGPT Image 2.0** は画像生成エンジン系統の名称です。
 
 Current behavior at a glance / 現行仕様の要点:
 
@@ -304,7 +304,7 @@ To address the extreme complexity of a 5,000+ line monolith, the frontend archit
 
 ## 🔍 Deep Analysis (技術詳解)
 
-### 🧭 Current v5.5.7 Processing Contract / 現行v5.5.7処理仕様
+### 🧭 Current v5.5.8 Processing Contract / 現行v5.5.8処理仕様
 
 | Stage | Input | Processing and validation | Output |
 |:--|:--|:--|:--|
@@ -842,6 +842,9 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 ---
 
 ## 📋 ChangeLog
+
+### v5.5.8 (2026-08-23)
+- **[Fix & UX]** 更新済みの標準20ステップ版ワークフローJSONとComfyUI-NanoBanana-H3カスタムノードZIPを配布内容へ同期 / Synced the distributed standard 20-step workflow JSON and ComfyUI-NanoBanana-H3 custom-node ZIP with the updated supplied artifacts
 
 ### v5.5.7 (2026-08-23)
 - **[Fix & Docs]** 配布ワークフローを26ノード・30リンクの添付標準版へ同期し、手動 `normal` と配布専用 `simple`・20ステップを分離。APIキーの対応先、ローカル非暗号化保存、カスタムノード読込の追加原因を明記 / Synced the distributed workflow to the supplied 26-node, 30-link standard version; separated manual `normal` from dedicated-distribution `simple` / 20 steps; clarified supported API-key providers, unencrypted local storage, and additional custom-node loading causes
