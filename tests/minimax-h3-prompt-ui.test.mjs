@@ -10,10 +10,10 @@ const readmeSource = readFileSync(new URL('../README.md', import.meta.url), 'utf
 const minimaxPromptSource = readFileSync(new URL('../src/lib/minimax-h3-prompt.js', import.meta.url), 'utf8');
 
 test('MiniMax H3 copied instruction exactly matches the supplied replacement', () => {
-  assert.equal(MINIMAX_H3_COMFYUI_PROMPT.length, 19824);
+  assert.equal(MINIMAX_H3_COMFYUI_PROMPT.length, 22266);
   assert.equal(
     createHash('sha256').update(MINIMAX_H3_COMFYUI_PROMPT, 'utf8').digest('hex'),
-    '39fc7a0a792f6b4de96ea8b2df923f93c37514cba80f6b85196e825201cb639f',
+    '392c22212bb33a72ca48dad4d3aaf9368e0537400372b6ace67931946263eb5a',
   );
 });
 
@@ -23,6 +23,10 @@ test('MiniMax H3 helper copies the current four-panel prompt-authoring instructi
   assert.match(minimaxPromptSource, /Reference-to-Video \(R2V \/ Ref2VA\)/);
   assert.match(minimaxPromptSource, /subject_definitions:/);
   assert.match(minimaxPromptSource, /non_diegetic_music:/);
+  assert.match(minimaxPromptSource, /panel_cast\[1\]/);
+  assert.match(minimaxPromptSource, /immutable identity signature/);
+  assert.match(minimaxPromptSource, /Shot 1 contains the opening title/);
+  assert.doesNotMatch(minimaxPromptSource, /overlay_title:/);
 });
 
 test('MiniMax H3 prompt uses one reference image and prioritizes dialogue over subtitles and BGM', () => {
@@ -66,7 +70,7 @@ test('MiniMax H3 UI identifies the exact ComfyUI sockets and fields to set', () 
   assert.match(step4PanelSource, /基本スケジューラー.*normal/);
 });
 
-test('MiniMax H3 UI explains the feature and separates the two usage routes before their actions', () => {
+test('MiniMax H3 UI explains the feature and separates the standard-template and Turbo LoRA routes', () => {
   const introIndex = step4PanelSource.indexOf('4コマ漫画から動画を作る（MiniMax H3 / ComfyUI）');
   const manualIndex = step4PanelSource.indexOf('<h4 id="minimax-h3-prompt-heading"');
   const allInOneIndex = step4PanelSource.indexOf('<h4 id="comfyui-workflow-heading"');
@@ -78,8 +82,8 @@ test('MiniMax H3 UI explains the feature and separates the two usage routes befo
   assert.ok(introIndex < manualIndex, 'the introduction must precede the manual route');
   assert.ok(manualIndex < allInOneIndex, 'the manual route must precede the all-in-one route');
   assert.match(step4PanelSource, /MiniMax H3は、参照画像のキャラクター・構図・場面を引き継ぎながら動画を生成する/);
-  assert.match(step4PanelSource, /自分でComfyUIのMiniMax H3ワークフローを操作する/);
-  assert.match(step4PanelSource, /画像変換から動画化、クレジット合成までを専用ワークフローでまとめて行う/);
+  assert.match(step4PanelSource, /ComfyUI標準のMiniMax H3ワークフローを自分で操作する/);
+  assert.match(step4PanelSource, /Turbo LoRA専用ワークフロー/);
   assert.ok(manualIndex < promptButtonIndex && promptButtonIndex < allInOneIndex, 'the prompt copy action belongs directly under the manual route');
   assert.ok(allInOneIndex < customNodeButtonIndex && customNodeButtonIndex < workflowButtonIndex, 'install the custom node before offering the workflow JSON');
 });
@@ -90,7 +94,7 @@ test('README documents the current MiniMax H3 connection and starter settings', 
   assert.match(readmeSource, /Resolution Selector \(Size\)/);
   assert.match(readmeSource, /基本スケジューラー/);
   assert.match(readmeSource, /字幕なし/);
-  assert.match(readmeSource, /標準ワークフローを自分で使う場合/);
-  assert.match(readmeSource, /画像変換から動画化まで全部お任せにする場合/);
+  assert.match(readmeSource, /ComfyUI標準テンプレートを自分で使う場合/);
+  assert.match(readmeSource, /Turbo LoRA専用ワークフローを使う場合/);
   assert.match(readmeSource, /2つは別の操作/);
 });

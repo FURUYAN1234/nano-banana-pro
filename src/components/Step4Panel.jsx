@@ -21,7 +21,7 @@ import { GEMINI_A4_RELAYOUT_PROMPT, GEMINI_2K_REFINEMENT_PROMPT } from '../lib/g
 import { getEffectiveEngine } from '../lib/engine-state';
 import { MINIMAX_H3_COMFYUI_PROMPT } from '../lib/minimax-h3-prompt';
 
-const COMFYUI_WORKFLOW_FILENAME = 'Super-FURU-AI-4-koma-System-4-Panel-Manga-to-Video.json';
+const COMFYUI_WORKFLOW_FILENAME = 'Super-FURU-AI-4koma-H3-Turbo-v4-LoRA-8step.json';
 const COMFYUI_WORKFLOW_DOWNLOAD_URL = `${import.meta.env.BASE_URL}workflows/${COMFYUI_WORKFLOW_FILENAME}`;
 const COMFYUI_CUSTOM_NODE_FILENAME = 'ComfyUI-NanoBanana-H3.zip';
 const COMFYUI_CUSTOM_NODE_DOWNLOAD_URL = `${import.meta.env.BASE_URL}downloads/${COMFYUI_CUSTOM_NODE_FILENAME}`;
@@ -798,15 +798,15 @@ No explanations. No partial results.`;
                                 </p>
                                 <p className="mt-2 text-[10px] font-bold text-cyan-100">利用方法は2つあります。</p>
                                 <ul className="mt-1 space-y-1 text-[10px] leading-relaxed text-slate-300 list-disc pl-4">
-                                  <li><strong>自分でComfyUIのMiniMax H3ワークフローを操作する</strong>：下の「標準ワークフローを自分で使う場合」へ進みます。</li>
-                                  <li><strong>画像変換から動画化、クレジット合成までを専用ワークフローでまとめて行う</strong>：下の「画像変換から動画化まで全部お任せにする場合」へ進みます。</li>
+                                  <li><strong>ComfyUI標準のMiniMax H3ワークフローを自分で操作する</strong>：下の「ComfyUI標準テンプレートを自分で使う場合」へ進みます。</li>
+                                  <li><strong>Nano Bananaによる画像変換から動画生成、タイトル・固定クレジット合成まで行う</strong>：下の「Turbo LoRA専用ワークフローを使う場合」へ進みます。</li>
                                 </ul>
                               </div>
                             </section>
 
                             <section aria-labelledby="minimax-h3-prompt-heading">
                               <div className="rounded-lg border border-slate-600/60 bg-slate-950/35 p-3">
-                                <h4 id="minimax-h3-prompt-heading" className="text-[12px] font-black text-white">標準ワークフローを自分で使う場合</h4>
+                                <h4 id="minimax-h3-prompt-heading" className="text-[12px] font-black text-white">ComfyUI標準テンプレートを自分で使う場合</h4>
                                 <p className="mt-1 text-[11px] leading-relaxed text-slate-300">
                                   ComfyUI標準の <code>MiniMax H3 Reference-to-Video（R2V / Ref2VA）</code> を自分で設定して使う人向けです。生成した4コマ漫画からH3用の英語プロンプトを作る指示文だけをコピーします。この操作ではワークフローJSONをダウンロードしません。
                                 </p>
@@ -831,7 +831,7 @@ No explanations. No partial results.`;
                                   <li>ComfyUIワークフローの <code>Prompt</code> 欄へ貼り付け</li>
                                 </ol>
                                 <div className="mt-3 rounded border border-slate-600/50 bg-black/20 p-2.5 text-[10px] leading-relaxed text-slate-300">
-                                  <p className="font-bold text-white">標準ワークフローの開始設定</p>
+                                  <p className="font-bold text-white">標準テンプレートの開始設定</p>
                                   <ol className="mt-1.5 space-y-1 list-decimal list-inside">
                                     <li><strong>選ぶワークフロー</strong> → <code>MiniMax H3 Reference-to-Video（R2V / Ref2VA）</code> ワークフローを選択。</li>
                                     <li><strong>MiniMax H3 Reference to Video</strong> → 同じ4コマ漫画を最初の参照入力 <code>ref_image_0</code> にだけ接続。<code>ref_image_1</code> 以降には接続しない。</li>
@@ -839,19 +839,22 @@ No explanations. No partial results.`;
                                     <li><strong>基本スケジューラー</strong> → <code>normal</code> から開始。</li>
                                   </ol>
                                 </div>
+                                <p className="mt-2 text-[10px] leading-relaxed text-slate-400">
+                                  コピペ用指示文は、各コマの人物集合を <code>panel_cast[N]</code> として入力画像から毎回読み取り、人物ごとの識別署名も動的に作ります。特定の人数、髪色、眼鏡、服装、最終コマへの全員集合は固定しません。標準テンプレートには後段タイトル合成ノードがないため、タイトルはShot 1だけに表示します。
+                                </p>
                               </div>
                             </section>
 
                             <section aria-labelledby="comfyui-workflow-heading">
                               <div className="rounded-lg border border-slate-600/60 bg-slate-950/35 p-3">
-                                <h4 id="comfyui-workflow-heading" className="text-[12px] font-black text-white">画像変換から動画化まで全部お任せにする場合</h4>
+                                <h4 id="comfyui-workflow-heading" className="text-[12px] font-black text-white">Turbo LoRA専用ワークフローを使う場合</h4>
                                 <p className="mt-1 text-[10px] leading-relaxed text-slate-300">
-                                  Nano Banana画像変換、H3プロンプト作成、MiniMax H3動画化、固定クレジット合成までを一連のノードで扱う人向けです。下のボタンで専用のComfyUIワークフローJSONを取得します。プロンプトのコピーボタンとは別の機能です。
+                                  Nano Banana画像変換、H3プロンプト作成、MiniMax H3動画生成、タイトルと固定クレジットの合成までを一連のノードで扱う人向けです。下のボタンでTurbo v4 LoRA専用のComfyUIワークフローJSONを取得します。プロンプトのコピーボタンとは別の機能です。
                                 </p>
                                 <p className="mt-1 text-[10px] leading-relaxed text-slate-400">既存の設定ファイルとは別のJSONです。本体の「設定ファイルを保存（JSON）」は使用しません。</p>
                                 <div className="mt-3 rounded border border-amber-400/40 bg-amber-950/25 p-3 text-[10px] leading-relaxed text-slate-200">
                                   <p className="font-bold text-amber-200">
-                                    この標準版ワークフローには Nano Banana-H3 カスタムノードが必要です。先にカスタムノードを導入してComfyUIを再起動してから、ワークフローJSONを読み込んでください。JSONだけでは実行できません。
+                                    このワークフローには共通カスタムノード <code>ComfyUI-NanoBanana-H3</code> が必要です。カスタムノードは標準版・Turbo LoRA版で共通で、LoRA専用の別実装ではありません。先に導入してComfyUIを再起動してからJSONを読み込んでください。JSONだけでは実行できません。
                                   </p>
                                   <a
                                     href={COMFYUI_CUSTOM_NODE_DOWNLOAD_URL}
@@ -865,11 +868,11 @@ No explanations. No partial results.`;
                                   </a>
                                   <ol className="mt-3 space-y-1.5 list-decimal pl-4">
                                     <li>「Nano Banana-H3 カスタムノードをダウンロード」を押してZIPを保存します。</li>
-                                    <li>ZIPを展開し、フォルダごと <code>ComfyUI/custom_nodes/ComfyUI-NanoBanana-H3/</code> に配置します。</li>
+                                    <li>ZIPを展開し、フォルダごと <code>ComfyUI/custom_nodes/ComfyUI-NanoBanana-H3/</code> に配置します。最終配置が <code>ComfyUI/custom_nodes/ComfyUI-NanoBanana-H3/__init__.py</code> になることを確認します。</li>
                                     <li>ComfyUIを完全に再起動します。</li>
                                     <li>下のボタンからワークフローJSONをダウンロードし、ComfyUIへ読み込みます。</li>
-                                    <li><code>Nano Banana Image Transform (H3)</code> ノードで <code>Google Gemini API</code> または <code>ComfyUI API</code> を選び、「<strong>🔐 APIキー未登録／登録</strong>」から利用者自身のキーを認証して保存します。APIキーはワークフローJSONには保存されません。保存先はローカルの <code>ComfyUI/user/nanobanana_h3_credentials.json</code> で、暗号化されません。</li>
-                                    <li>MiniMax H3の本体モデル・テキストエンコーダ・映像VAE・音声VAEは、利用者が別途導入します。</li>
+                                    <li><code>Nano Banana Image Transform (H3)</code> ノードで <code>OpenAI API</code> または <code>Google Gemini API</code> を選び、「<strong>🔐 APIキー未登録／登録</strong>」から利用者自身のキーを認証して保存します。APIキーはワークフローJSONや配布ZIPには保存されません。保存先はローカルの <code>ComfyUI/user/nanobanana_h3_credentials.json</code> で、暗号化されません。</li>
+                                    <li>MiniMax H3の本体モデル・テキストエンコーダ・映像VAE・音声VAE・Turbo v4 LoRAは、利用者が別途導入します。</li>
                                   </ol>
                                   <div className="mt-3 border-t border-amber-300/20 pt-2">
                                     <p className="font-bold text-white">次の3ノードが読めない場合</p>
@@ -882,11 +885,12 @@ No explanations. No partial results.`;
                                   </div>
                                 </div>
                                 <div className="mt-3 space-y-1 text-[10px] leading-relaxed text-slate-300">
-                                  <p><strong>標準版は20ステップ版</strong> です。</p>
-                                  <p>この配布専用標準版の既定は、15秒・16:9・0.4MP・<code>simple</code>・20ステップです。上の手動ComfyUI標準経路の <code>normal</code> 設定とは対象が異なります。</p>
-                                  <p>H3生成後にタイトルと固定クレジットを合成します。タイトルは左上へ一度だけ、黒字＋白縁、背景バーなしです。</p>
-                                  <p>APIキー・モデル・漫画画像は配布物に含まれません。</p>
-                                  <p>MiniMax H3モデルは、利用者自身が配布元のライセンスに同意して取得してください。</p>
+                                  <p><strong>既定のTurbo LoRA設定</strong>：15秒・16:9・0.4MP・Turbo v4 LoRA（強度 <code>1.0</code>）・Euler sampler・Beta scheduler・8 steps。</p>
+                                  <p>ファイル名の「v4」はLoRAのバージョンです。実際のサンプリング設定は4 stepsではなく8 stepsです。</p>
+                                  <p>H3本体にはタイトル、字幕、URL、終了クレジットを生成させません。タイトルは <code>overlay_title</code> として抽出し、動画生成後に左上へ一度だけ、黒字＋白縁、背景バーなしで合成します。固定クレジットも後段ノードで合成します。</p>
+                                  <p>人物集合と識別署名は各入力漫画の各コマから動的に導出し、特定の人数や外見、最終フレームの構成を固定しません。</p>
+                                  <p>APIキー・認証情報・モデル・LoRA・漫画画像・生成動画は配布物に含まれません。</p>
+                                  <p>MiniMax H3モデルとTurbo LoRAは、利用者自身が配布元のライセンスに同意して取得してください。</p>
                                 </div>
                                 <a
                                   href={COMFYUI_WORKFLOW_DOWNLOAD_URL}
@@ -899,7 +903,7 @@ No explanations. No partial results.`;
                                   <Download size={13} /> Download Workflow JSON / ComfyUIワークフローJSONをダウンロード
                                 </a>
                                 <div className="mt-2 space-y-1 text-[10px] leading-relaxed text-slate-300">
-                                  <p>ZIPには <code>__init__.py</code>、<code>h3_prompt_system.txt</code>、<code>web/nanobanana_h3.js</code> のみを収録しています。</p>
+                                  <p>ZIPには <code>ComfyUI-NanoBanana-H3/__init__.py</code>、<code>ComfyUI-NanoBanana-H3/h3_prompt_system.txt</code>、<code>ComfyUI-NanoBanana-H3/web/nanobanana_h3.js</code> のみを収録しています。</p>
                                   <p>モデル重み、LoRA重み、APIキー、認証情報、漫画画像、生成済み動画は収録していません。</p>
                                 </div>
                               </div>

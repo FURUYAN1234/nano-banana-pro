@@ -1,6 +1,6 @@
 # Super FURU AI 4-koma System
 
-> Latest release: **v5.5.9** / 最新リリース: **v5.5.9**
+> Latest release: **v5.6.0** / 最新リリース: **v5.6.0**
 
 > **"To what extent can humans step away from the creative process?"**
 > **「人間は、どこまで制作から降りられるのか？」**
@@ -22,7 +22,7 @@
 This project aims to intentionally exclude humans from the creative process, allowing AI to act as a director and complete everything from brainstorming to composition, direction, and rendering.
 本プロジェクトは、人間をクリエイティブな工程から意図的に排除し、AIがディレクターとして「ネタ出し・構成・演出・作画」のすべてを完結させることを目的としています。
 
-The current implementation and latest release are **v5.5.9**. The product name is **Super FURU AI 4-koma System**; **Nano Banana 2** and **ChatGPT Image 2.0** identify image-generation engine families. / 現在の実装および最新公開版は **v5.5.9** です。製品名は **Super FURU AI 4-koma System** で、**Nano Banana 2** と **ChatGPT Image 2.0** は画像生成エンジン系統の名称です。
+The current implementation and latest release are **v5.6.0**. The product name is **Super FURU AI 4-koma System**; **Nano Banana 2** and **ChatGPT Image 2.0** identify image-generation engine families. / 現在の実装および最新公開版は **v5.6.0** です。製品名は **Super FURU AI 4-koma System** で、**Nano Banana 2** と **ChatGPT Image 2.0** は画像生成エンジン系統の名称です。
 
 Current behavior at a glance / 現行仕様の要点:
 
@@ -48,23 +48,23 @@ STEP4 has two helpers for different use cases. They are separate actions; you do
 
 **Create video from a four-panel manga / 4コマ漫画から動画を作る**
 
-Use the generated four-panel manga as a reference image to make a video with MiniMax H3 in ComfyUI. MiniMax H3 is a Reference-to-Video model that carries the characters, composition, and scene from the reference image into the generated video. Choose either the manual standard ComfyUI route below, or the dedicated all-in-one workflow that handles image transformation, video creation, and credit compositing together. / 生成した4コマ漫画を参照画像にして、ComfyUI上のMiniMax H3で動画を作れます。MiniMax H3は、参照画像のキャラクター・構図・場面を引き継ぎながら動画を生成するReference-to-Videoモデルです。下の「標準ワークフローを自分で使う場合」または、画像変換・動画化・クレジット合成をまとめて行う「画像変換から動画化まで全部お任せにする場合」のどちらかを選びます。
+Use the generated four-panel manga as a reference image to make a video with MiniMax H3 in ComfyUI. MiniMax H3 is a Reference-to-Video model that carries the characters, composition, and scene from the reference image into the generated video. Choose either the manual standard-template route or the dedicated Turbo LoRA workflow. / 生成した4コマ漫画を参照画像にして、ComfyUI上のMiniMax H3で動画を作れます。MiniMax H3は、参照画像のキャラクター・構図・場面を引き継ぎながら動画を生成するReference-to-Videoモデルです。下の「ComfyUI標準テンプレートを自分で使う場合」または「Turbo LoRA専用ワークフローを使う場合」のどちらかを選びます。
 
-**Using a standard workflow yourself / 標準ワークフローを自分で使う場合**
+**Using the ComfyUI standard template yourself / ComfyUI標準テンプレートを自分で使う場合**
 
-When you configure and use ComfyUI's standard MiniMax H3 Reference-to-Video (R2V / Ref2VA) workflow yourself, use only “Copy MiniMax H3 · ComfyUI Prompt.” Send the copied instruction and the generated four-panel manga to an image-capable chat, then paste the returned English prompt into the standard workflow's `Prompt` field. This route does not download the dedicated workflow JSON. The default is 15 seconds, 16:9, dialogue-first audio, no subtitles, and no BGM. / ComfyUI標準のMiniMax H3 Reference-to-Video（R2V / Ref2VA）を自分で設定して使う場合は、「MiniMax H3・ComfyUI用プロンプトをコピー」だけを使います。指示文と生成済みの4コマ漫画を画像対応チャットへ送り、返った英語プロンプトを標準ワークフローの `Prompt` 欄へ貼り付けます。この操作では専用ワークフローJSONをダウンロードしません。既定は15秒・16:9・会話音声優先・字幕なし・BGMなしです。
+When you configure and use ComfyUI's standard MiniMax H3 Reference-to-Video (R2V / Ref2VA) workflow yourself, use only “Copy MiniMax H3 · ComfyUI Prompt.” This route does not download the dedicated workflow JSON. The copied instruction derives `panel_cast[N]` and immutable identity signatures from every input panel without hard-coding cast size or appearance. Because the standard template has no downstream title compositor, the title remains a Shot 1-only instruction. / ComfyUI標準のMiniMax H3 Reference-to-Video（R2V / Ref2VA）を自分で設定して使う場合は、「MiniMax H3・ComfyUI用プロンプトをコピー」だけを使います。この操作では専用ワークフローJSONをダウンロードしません。コピー文は各入力コマから `panel_cast[N]` と識別署名を動的に導出し、人数や外見を固定しません。標準テンプレートには後段タイトル合成ノードがないため、タイトルはShot 1だけに表示します。
 
 For this manually configured standard ComfyUI route, select `MiniMax H3 Reference-to-Video (R2V / Ref2VA)`, connect the same four-panel manga only to `ref_image_0`, and leave `ref_image_1` onward disconnected. Start `Resolution Selector (Size)` at `Aspect ratio: 16:9 (Widescreen)` and `Megapixels: 0.4`, and `Basic Scheduler` at `Scheduler: normal`. / 手動で設定するこのComfyUI標準経路では、`MiniMax H3 Reference-to-Video（R2V / Ref2VA）` を選び、同じ4コマ漫画を最初の参照入力 `ref_image_0` にだけ接続して、`ref_image_1` 以降は未接続にします。`Resolution Selector (Size)` は `アスペクト比: 16:9 (Widescreen)` と `メガピクセル: 0.4`、`基本スケジューラー` は `スケジューラー: normal` から開始します。
 
-**Using the all-in-one workflow / 画像変換から動画化まで全部お任せにする場合**
+**Using the dedicated Turbo LoRA workflow / Turbo LoRA専用ワークフローを使う場合**
 
-This route distributes the dedicated standard 20-step workflow and its required `ComfyUI-NanoBanana-H3` custom node as two separate direct downloads. Its defaults are 15 seconds, 16:9, 0.4 MP, `simple`, and 20 steps; this is distinct from the `normal` scheduler described for the manually configured standard route above. Install the custom node first, fully restart ComfyUI, and only then download and load the workflow JSON. The JSON alone cannot run the workflow. / この経路では、配布専用の標準20ステップ版ワークフローと必須の `ComfyUI-NanoBanana-H3` カスタムノードを、別々の直接ダウンロードとして配布します。既定は15秒・16:9・0.4MP・`simple`・20ステップで、上記の手動設定用標準経路で説明した `normal` スケジューラーとは対象が異なります。先にカスタムノードを導入し、ComfyUIを完全に再起動してからワークフローJSONをダウンロードして読み込んでください。JSONだけでは実行できません。
+This route distributes `Super-FURU-AI-4koma-H3-Turbo-v4-LoRA-8step.json` and the shared `ComfyUI-NanoBanana-H3` custom node as separate direct downloads. The same custom node serves the standard and Turbo LoRA routes; there is no duplicated LoRA-only package. Defaults are 15 seconds, 16:9, 0.4 MP, Turbo v4 LoRA at strength `1.0`, Euler sampler, Beta scheduler, and 8 steps. “v4” names the LoRA version, not a 4-step setting. Install the custom node first, fully restart ComfyUI, and then load the JSON. / この経路では `Super-FURU-AI-4koma-H3-Turbo-v4-LoRA-8step.json` と共通の `ComfyUI-NanoBanana-H3` カスタムノードを別々に配布します。カスタムノードは標準版・Turbo LoRA版で共通で、LoRA専用パッケージを複製しません。既定は15秒・16:9・0.4MP・Turbo v4 LoRA（強度 `1.0`）・Euler・Beta・8 stepsです。「v4」はLoRAのバージョンで、4 stepsの意味ではありません。先にカスタムノードを導入し、ComfyUIを完全に再起動してからJSONを読み込んでください。
 
 Click “Nano Banana-H3 カスタムノードをダウンロード,” extract the ZIP, and place the whole folder at `ComfyUI/custom_nodes/ComfyUI-NanoBanana-H3/`. The ZIP root is `ComfyUI-NanoBanana-H3` and contains only `__init__.py`, `h3_prompt_system.txt`, and `web/nanobanana_h3.js`. After a full ComfyUI restart, download the workflow JSON and load it. / 「Nano Banana-H3 カスタムノードをダウンロード」を押してZIPを保存し、展開したフォルダ全体を `ComfyUI/custom_nodes/ComfyUI-NanoBanana-H3/` に配置します。ZIPのルートは `ComfyUI-NanoBanana-H3` で、`__init__.py`、`h3_prompt_system.txt`、`web/nanobanana_h3.js` だけを収録しています。ComfyUIを完全に再起動した後、ワークフローJSONをダウンロードして読み込んでください。
 
-The workflow requires the MiniMax H3 base model, its text encoder, a video VAE, and an audio VAE. Users must obtain them separately after agreeing to the distributor's license. In `Nano Banana Image Transform (H3)`, select either `Google Gemini API` or `ComfyUI API`, then click “🔐 APIキー未登録／登録” to authenticate the user's own key. The key is not stored in the workflow JSON; it is stored as unencrypted local JSON at `ComfyUI/user/nanobanana_h3_credentials.json`, so secure that PC accordingly. If `NanoBananaH3Transform`, `DeterministicTitleWatermarkOverlay`, or `DeterministicEndCreditOverlay` cannot be loaded, the custom-node placement or complete ComfyUI restart is the cause in many cases; also check duplicate extraction, ComfyUI load errors, and version compatibility. API keys, credentials, models, LoRA weights, manga images, and generated videos are not included in either download. / ワークフローにはMiniMax H3本体モデル、テキストエンコーダー、映像VAE、音声VAEが必要です。利用者自身が配布元のライセンスに同意して別途取得してください。`Nano Banana Image Transform (H3)` ノードでは `Google Gemini API` または `ComfyUI API` を選び、「🔐 APIキー未登録／登録」から利用者自身のキーを認証します。APIキーはワークフローJSONには保存されませんが、ローカルの `ComfyUI/user/nanobanana_h3_credentials.json` に暗号化されません（平文JSONとして保存されます）。そのPCを保護してください。`NanoBananaH3Transform`、`DeterministicTitleWatermarkOverlay`、`DeterministicEndCreditOverlay` が読めない場合は、多くの場合カスタムノードの配置またはComfyUIの完全な再起動が原因です。二重展開、ComfyUIの読込エラー、バージョン互換性も確認してください。APIキー、認証情報、モデル、LoRA重み、漫画画像、生成済み動画はいずれの配布物にも含まれません。
+The workflow requires the MiniMax H3 base model, text encoder, video and audio VAEs, and Turbo v4 LoRA. Users obtain them separately under their distributors' licenses. In `Nano Banana Image Transform (H3)`, select `OpenAI API` or `Google Gemini API`, then click “🔐 APIキー未登録／登録.” The key is absent from the workflow JSON and distribution ZIP; it is stored unencrypted at `ComfyUI/user/nanobanana_h3_credentials.json`. If `NanoBananaH3Transform`, `DeterministicTitleWatermarkOverlay`, or `DeterministicEndCreditOverlay` cannot be loaded, the cause is often custom-node placement or an incomplete ComfyUI restart; also check duplicate extraction, load errors, and version compatibility. API keys, credentials, models, LoRA weights, manga images, and generated videos are not distributed. / ワークフローにはMiniMax H3本体モデル、テキストエンコーダー、映像VAE、音声VAE、Turbo v4 LoRAが必要です。各配布元のライセンスに同意して利用者自身が取得してください。`Nano Banana Image Transform (H3)` では `OpenAI API` または `Google Gemini API` を選び、「🔐 APIキー未登録／登録」から認証します。APIキーはワークフローJSONや配布ZIPには含まれず、ローカルの `ComfyUI/user/nanobanana_h3_credentials.json` に保存され、暗号化されません。`NanoBananaH3Transform`、`DeterministicTitleWatermarkOverlay`、`DeterministicEndCreditOverlay` が読めない場合は、多くの場合カスタムノードの配置またはComfyUIの完全な再起動が未完了です。二重展開、読込エラー、バージョン互換性も確認してください。APIキー、認証情報、モデル、LoRA、漫画画像、生成動画は配布しません。
 
-After H3 generation, the dedicated standard workflow composites the title and fixed credit. It adds the title once at the upper left using black text with a white outline and no background bar. / 配布専用の標準版ワークフローでは、H3生成後にタイトルと固定クレジットを合成します。タイトルは左上へ一度だけ、黒字＋白縁・背景バーなしで合成します。
+The dedicated H3 prompt extracts the exact title as `overlay_title` metadata and removes it before H3 conditioning. `DeterministicTitleWatermarkOverlay` composites it once after decoding at the upper left using black text with a white outline and no background bar; `DeterministicEndCreditOverlay` adds the fixed credit afterward. / 専用H3プロンプトはタイトルを `overlay_title` として抽出し、H3の条件入力から除外します。`DeterministicTitleWatermarkOverlay` が動画生成後に左上へ一度だけ、黒字＋白縁・背景バーなしで合成し、`DeterministicEndCreditOverlay` が固定クレジットを後段で合成します。
 
 In every panel, non-speakers keep their mouths closed while giving individual reactions that fit their roles. Across the four shots, the camera varies push-ins and pull-backs, lateral moves, vertical moves, and orbits. For an orbit or follow move, specify the opening, middle, and final framing while keeping the speaker's mouth visible. / 各コマでは、話者以外も口を閉じたまま役割に合った個別反応を行い、カメラは寄り引き・横移動・縦移動・回り込みを4カット内で使い分けます。回り込みや追従では開始・中間・終了の画角を指定し、話者の口元を保ったまま動かします。
 
@@ -308,7 +308,7 @@ To address the extreme complexity of a 5,000+ line monolith, the frontend archit
 
 ## 🔍 Deep Analysis (技術詳解)
 
-### 🧭 Current v5.5.9 Processing Contract / 現行v5.5.9処理仕様
+### 🧭 Current v5.6.0 Processing Contract / 現行v5.6.0処理仕様
 
 | Stage | Input | Processing and validation | Output |
 |:--|:--|:--|:--|
@@ -846,6 +846,9 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 ---
 
 ## 📋 ChangeLog
+
+### v5.6.0 (2026-08-23)
+- **[Fix & UX]** MiniMax H3配布をTurbo v4 LoRA・8 steps版へ更新し、標準テンプレート用コピー文、共通カスタムノード、タイトル後段合成、API案内を同期 / Updated the MiniMax H3 distribution to Turbo v4 LoRA with 8 steps and synchronized the standard-template copy prompt, shared custom node, downstream title compositing, and API guidance
 
 ### v5.5.9 (2026-08-23)
 - **[Fix & UX]** MiniMax H3の最初の説明と、手動・全部お任せの選択導線を追加 / Added an introductory MiniMax H3 explanation and clear manual versus all-in-one workflow choices
