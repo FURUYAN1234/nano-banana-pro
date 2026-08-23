@@ -1,6 +1,6 @@
 # Super FURU AI 4-koma System
 
-> Latest release: **v5.5.8** / 最新リリース: **v5.5.8**
+> Latest release: **v5.5.9** / 最新リリース: **v5.5.9**
 
 > **"To what extent can humans step away from the creative process?"**
 > **「人間は、どこまで制作から降りられるのか？」**
@@ -22,7 +22,7 @@
 This project aims to intentionally exclude humans from the creative process, allowing AI to act as a director and complete everything from brainstorming to composition, direction, and rendering.
 本プロジェクトは、人間をクリエイティブな工程から意図的に排除し、AIがディレクターとして「ネタ出し・構成・演出・作画」のすべてを完結させることを目的としています。
 
-The current implementation and latest release are **v5.5.8**. The product name is **Super FURU AI 4-koma System**; **Nano Banana 2** and **ChatGPT Image 2.0** identify image-generation engine families. / 現在の実装および最新公開版は **v5.5.8** です。製品名は **Super FURU AI 4-koma System** で、**Nano Banana 2** と **ChatGPT Image 2.0** は画像生成エンジン系統の名称です。
+The current implementation and latest release are **v5.5.9**. The product name is **Super FURU AI 4-koma System**; **Nano Banana 2** and **ChatGPT Image 2.0** identify image-generation engine families. / 現在の実装および最新公開版は **v5.5.9** です。製品名は **Super FURU AI 4-koma System** で、**Nano Banana 2** と **ChatGPT Image 2.0** は画像生成エンジン系統の名称です。
 
 Current behavior at a glance / 現行仕様の要点:
 
@@ -45,6 +45,10 @@ Current behavior at a glance / 現行仕様の要点:
 ### MiniMax H3 ComfyUI Reference-to-Video / 4コマ漫画の動画化補助
 
 STEP4 has two helpers for different use cases. They are separate actions; you do not need to use both. / STEP4には用途の異なる2つの補助があります。2つは別の操作であり、両方を必ず使う手順ではありません。
+
+**Create video from a four-panel manga / 4コマ漫画から動画を作る**
+
+Use the generated four-panel manga as a reference image to make a video with MiniMax H3 in ComfyUI. MiniMax H3 is a Reference-to-Video model that carries the characters, composition, and scene from the reference image into the generated video. Choose either the manual standard ComfyUI route below, or the dedicated all-in-one workflow that handles image transformation, video creation, and credit compositing together. / 生成した4コマ漫画を参照画像にして、ComfyUI上のMiniMax H3で動画を作れます。MiniMax H3は、参照画像のキャラクター・構図・場面を引き継ぎながら動画を生成するReference-to-Videoモデルです。下の「標準ワークフローを自分で使う場合」または、画像変換・動画化・クレジット合成をまとめて行う「画像変換から動画化まで全部お任せにする場合」のどちらかを選びます。
 
 **Using a standard workflow yourself / 標準ワークフローを自分で使う場合**
 
@@ -304,7 +308,7 @@ To address the extreme complexity of a 5,000+ line monolith, the frontend archit
 
 ## 🔍 Deep Analysis (技術詳解)
 
-### 🧭 Current v5.5.8 Processing Contract / 現行v5.5.8処理仕様
+### 🧭 Current v5.5.9 Processing Contract / 現行v5.5.9処理仕様
 
 | Stage | Input | Processing and validation | Output |
 |:--|:--|:--|:--|
@@ -842,6 +846,9 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 ---
 
 ## 📋 ChangeLog
+
+### v5.5.9 (2026-08-23)
+- **[Fix & UX]** MiniMax H3の最初の説明と、手動・全部お任せの選択導線を追加 / Added an introductory MiniMax H3 explanation and clear manual versus all-in-one workflow choices
 
 ### v5.5.8 (2026-08-23)
 - **[Fix & UX]** 更新済みの標準20ステップ版ワークフローJSONとComfyUI-NanoBanana-H3カスタムノードZIPを配布内容へ同期 / Synced the distributed standard 20-step workflow JSON and ComfyUI-NanoBanana-H3 custom-node ZIP with the updated supplied artifacts

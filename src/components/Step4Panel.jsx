@@ -790,6 +790,20 @@ No explanations. No partial results.`;
                     </div>
                     )}
                           <div className="mt-3 space-y-5 border-t border-slate-600/40 pt-3">
+                            <section aria-labelledby="minimax-h3-intro-heading">
+                              <div className="rounded-lg border border-cyan-500/30 bg-cyan-950/15 p-3">
+                                <h4 id="minimax-h3-intro-heading" className="text-[13px] font-black text-white">4コマ漫画から動画を作る（MiniMax H3 / ComfyUI）</h4>
+                                <p className="mt-1 text-[11px] leading-relaxed text-slate-300">
+                                  生成した4コマ漫画を参照画像にして、MiniMax H3で動画を作るための案内です。MiniMax H3は、参照画像のキャラクター・構図・場面を引き継ぎながら動画を生成する Reference-to-Video モデルです。
+                                </p>
+                                <p className="mt-2 text-[10px] font-bold text-cyan-100">利用方法は2つあります。</p>
+                                <ul className="mt-1 space-y-1 text-[10px] leading-relaxed text-slate-300 list-disc pl-4">
+                                  <li><strong>自分でComfyUIのMiniMax H3ワークフローを操作する</strong>：下の「標準ワークフローを自分で使う場合」へ進みます。</li>
+                                  <li><strong>画像変換から動画化、クレジット合成までを専用ワークフローでまとめて行う</strong>：下の「画像変換から動画化まで全部お任せにする場合」へ進みます。</li>
+                                </ul>
+                              </div>
+                            </section>
+
                             <section aria-labelledby="minimax-h3-prompt-heading">
                               <div className="rounded-lg border border-slate-600/60 bg-slate-950/35 p-3">
                                 <h4 id="minimax-h3-prompt-heading" className="text-[12px] font-black text-white">標準ワークフローを自分で使う場合</h4>

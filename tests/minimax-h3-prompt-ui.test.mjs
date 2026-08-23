@@ -66,6 +66,24 @@ test('MiniMax H3 UI identifies the exact ComfyUI sockets and fields to set', () 
   assert.match(step4PanelSource, /基本スケジューラー.*normal/);
 });
 
+test('MiniMax H3 UI explains the feature and separates the two usage routes before their actions', () => {
+  const introIndex = step4PanelSource.indexOf('4コマ漫画から動画を作る（MiniMax H3 / ComfyUI）');
+  const manualIndex = step4PanelSource.indexOf('<h4 id="minimax-h3-prompt-heading"');
+  const allInOneIndex = step4PanelSource.indexOf('<h4 id="comfyui-workflow-heading"');
+  const promptButtonIndex = step4PanelSource.indexOf('MiniMax H3・ComfyUI用プロンプトをコピー', manualIndex);
+  const customNodeButtonIndex = step4PanelSource.indexOf('Nano Banana-H3 カスタムノードをダウンロード', allInOneIndex);
+  const workflowButtonIndex = step4PanelSource.indexOf('ComfyUIワークフローJSONをダウンロード', allInOneIndex);
+
+  assert.notEqual(introIndex, -1, 'the H3 helper needs a feature-level introduction');
+  assert.ok(introIndex < manualIndex, 'the introduction must precede the manual route');
+  assert.ok(manualIndex < allInOneIndex, 'the manual route must precede the all-in-one route');
+  assert.match(step4PanelSource, /MiniMax H3は、参照画像のキャラクター・構図・場面を引き継ぎながら動画を生成する/);
+  assert.match(step4PanelSource, /自分でComfyUIのMiniMax H3ワークフローを操作する/);
+  assert.match(step4PanelSource, /画像変換から動画化、クレジット合成までを専用ワークフローでまとめて行う/);
+  assert.ok(manualIndex < promptButtonIndex && promptButtonIndex < allInOneIndex, 'the prompt copy action belongs directly under the manual route');
+  assert.ok(allInOneIndex < customNodeButtonIndex && customNodeButtonIndex < workflowButtonIndex, 'install the custom node before offering the workflow JSON');
+});
+
 test('README documents the current MiniMax H3 connection and starter settings', () => {
   assert.match(readmeSource, /ref_image_0/);
   assert.match(readmeSource, /ref_image_1.*以降/);
