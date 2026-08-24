@@ -792,9 +792,9 @@ No explanations. No partial results.`;
                           <div className="mt-3 space-y-5 border-t border-slate-600/40 pt-3">
                             <section aria-labelledby="minimax-h3-intro-heading">
                               <div className="rounded-lg border border-cyan-500/30 bg-cyan-950/15 p-3">
-                                <h4 id="minimax-h3-intro-heading" className="text-[13px] font-black text-white">4コマ漫画から動画を作る（MiniMax H3 / ComfyUI）</h4>
+                                <h4 id="minimax-h3-intro-heading" className="text-[13px] font-black text-white">FURU four-panel manga to video / FURUの4コマ漫画を動画化（MiniMax H3 / ComfyUI）</h4>
                                 <p className="mt-1 text-[11px] leading-relaxed text-slate-300">
-                                  生成した4コマ漫画を参照画像にして、MiniMax H3で動画を作るための案内です。MiniMax H3は、参照画像のキャラクター・構図・場面を引き継ぎながら動画を生成する Reference-to-Video モデルです。
+                                  Convert one completed Super FURU AI four-panel manga page into a MiniMax H3 video while preserving its panel order, cast, dialogue ownership, actions, setting, and punchline. / 完成したSuper FURU AIの4コマ漫画1枚を、コマ順、登場人物、台詞の話者、動作、場所、オチを守ったMiniMax H3動画へ変換します。MiniMax H3は参照画像のキャラクター・構図・場面を引き継ぎながら動画を生成する Reference-to-Video モデルです。
                                 </p>
                                 <p className="mt-2 text-[10px] font-bold text-cyan-100">利用方法は2つあります。</p>
                                 <ul className="mt-1 space-y-1 text-[10px] leading-relaxed text-slate-300 list-disc pl-4">
@@ -849,7 +849,7 @@ No explanations. No partial results.`;
                               <div className="rounded-lg border border-slate-600/60 bg-slate-950/35 p-3">
                                 <h4 id="comfyui-workflow-heading" className="text-[12px] font-black text-white">Turbo LoRA専用ワークフローを使う場合</h4>
                                 <p className="mt-1 text-[10px] leading-relaxed text-slate-300">
-                                  Nano Banana画像変換、H3プロンプト作成、MiniMax H3動画生成、タイトルと固定クレジットの合成までを一連のノードで扱う人向けです。下のボタンでTurbo v4 LoRA専用のComfyUIワークフローJSONを取得します。プロンプトのコピーボタンとは別の機能です。
+                                  This route runs the FURU four-panel manga to video contract end-to-end: Nano Banana image conversion, H3 prompt creation, MiniMax H3 video generation, and deterministic title and end-credit compositing. / この経路はFURUの4コマ漫画を動画化する仕様を、Nano Banana画像変換、H3プロンプト作成、MiniMax H3動画生成、固定タイトルとエンドクレジットの合成まで一連のノードで実行します。下のボタンでTurbo v4 LoRA専用のComfyUIワークフローJSONを取得します。プロンプトのコピーボタンとは別の機能です。
                                 </p>
                                 <p className="mt-1 text-[10px] leading-relaxed text-slate-400">既存の設定ファイルとは別のJSONです。本体の「設定ファイルを保存（JSON）」は使用しません。</p>
                                 <div className="mt-3 rounded border border-amber-400/40 bg-amber-950/25 p-3 text-[10px] leading-relaxed text-slate-200">
@@ -872,7 +872,7 @@ No explanations. No partial results.`;
                                     <li>ComfyUIを完全に再起動します。</li>
                                     <li>下のボタンからワークフローJSONをダウンロードし、ComfyUIへ読み込みます。</li>
                                     <li><code>Nano Banana Image Transform (H3)</code> ノードで <code>OpenAI API</code> または <code>Google Gemini API</code> を選び、「<strong>🔐 APIキー未登録／登録</strong>」から利用者自身のキーを認証して保存します。APIキーはワークフローJSONや配布ZIPには保存されません。保存先はローカルの <code>ComfyUI/user/nanobanana_h3_credentials.json</code> で、暗号化されません。</li>
-                                    <li>MiniMax H3の本体モデル・テキストエンコーダ・映像VAE・音声VAE・Turbo v4 LoRAは、利用者が別途導入します。</li>
+                                    <li>ワークフローを開くと、MiniMax H3本体、テキストエンコーダ、映像VAE、音声VAE、Turbo v4 LoRAの不足項目に <code>Download</code> が表示されます。表示された項目をすべて取得し、モデル候補が更新されない場合はComfyUIを再起動します。各ローダーには配布URL、SHA256、保存先、ファイル名を登録済みです。ComfyUI Desktopは管理対象フォルダへ保存します。ブラウザ版でDownloadが通常のブラウザ保存になった場合だけ、表示された保存先へ手動で移動します。</li>
                                   </ol>
                                   <div className="mt-3 border-t border-amber-300/20 pt-2">
                                     <p className="font-bold text-white">次の3ノードが読めない場合</p>

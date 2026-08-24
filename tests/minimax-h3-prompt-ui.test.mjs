@@ -71,7 +71,7 @@ test('MiniMax H3 UI identifies the exact ComfyUI sockets and fields to set', () 
 });
 
 test('MiniMax H3 UI explains the feature and separates the standard-template and Turbo LoRA routes', () => {
-  const introIndex = step4PanelSource.indexOf('4コマ漫画から動画を作る（MiniMax H3 / ComfyUI）');
+  const introIndex = step4PanelSource.indexOf('FURU four-panel manga to video / FURUの4コマ漫画を動画化（MiniMax H3 / ComfyUI）');
   const manualIndex = step4PanelSource.indexOf('<h4 id="minimax-h3-prompt-heading"');
   const allInOneIndex = step4PanelSource.indexOf('<h4 id="comfyui-workflow-heading"');
   const promptButtonIndex = step4PanelSource.indexOf('MiniMax H3・ComfyUI用プロンプトをコピー', manualIndex);
@@ -81,7 +81,7 @@ test('MiniMax H3 UI explains the feature and separates the standard-template and
   assert.notEqual(introIndex, -1, 'the H3 helper needs a feature-level introduction');
   assert.ok(introIndex < manualIndex, 'the introduction must precede the manual route');
   assert.ok(manualIndex < allInOneIndex, 'the manual route must precede the all-in-one route');
-  assert.match(step4PanelSource, /MiniMax H3は、参照画像のキャラクター・構図・場面を引き継ぎながら動画を生成する/);
+  assert.match(step4PanelSource, /MiniMax H3は参照画像のキャラクター・構図・場面を引き継ぎながら動画を生成する/);
   assert.match(step4PanelSource, /ComfyUI標準のMiniMax H3ワークフローを自分で操作する/);
   assert.match(step4PanelSource, /Turbo LoRA専用ワークフロー/);
   assert.ok(manualIndex < promptButtonIndex && promptButtonIndex < allInOneIndex, 'the prompt copy action belongs directly under the manual route');

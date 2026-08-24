@@ -1,6 +1,6 @@
 # Super FURU AI 4-koma System
 
-> Latest release: **v5.6.0** / 最新リリース: **v5.6.0**
+> Latest release: **v5.6.1** / 最新リリース: **v5.6.1**
 
 > **"To what extent can humans step away from the creative process?"**
 > **「人間は、どこまで制作から降りられるのか？」**
@@ -22,7 +22,7 @@
 This project aims to intentionally exclude humans from the creative process, allowing AI to act as a director and complete everything from brainstorming to composition, direction, and rendering.
 本プロジェクトは、人間をクリエイティブな工程から意図的に排除し、AIがディレクターとして「ネタ出し・構成・演出・作画」のすべてを完結させることを目的としています。
 
-The current implementation and latest release are **v5.6.0**. The product name is **Super FURU AI 4-koma System**; **Nano Banana 2** and **ChatGPT Image 2.0** identify image-generation engine families. / 現在の実装および最新公開版は **v5.6.0** です。製品名は **Super FURU AI 4-koma System** で、**Nano Banana 2** と **ChatGPT Image 2.0** は画像生成エンジン系統の名称です。
+The current implementation and latest release are **v5.6.1**. The product name is **Super FURU AI 4-koma System**; **Nano Banana 2** and **ChatGPT Image 2.0** identify image-generation engine families. / 現在の実装および最新公開版は **v5.6.1** です。製品名は **Super FURU AI 4-koma System** で、**Nano Banana 2** と **ChatGPT Image 2.0** は画像生成エンジン系統の名称です。
 
 Current behavior at a glance / 現行仕様の要点:
 
@@ -59,6 +59,12 @@ For this manually configured standard ComfyUI route, select `MiniMax H3 Referenc
 **Using the dedicated Turbo LoRA workflow / Turbo LoRA専用ワークフローを使う場合**
 
 This route distributes `Super-FURU-AI-4koma-H3-Turbo-v4-LoRA-8step.json` and the shared `ComfyUI-NanoBanana-H3` custom node as separate direct downloads. The same custom node serves the standard and Turbo LoRA routes; there is no duplicated LoRA-only package. Defaults are 15 seconds, 16:9, 0.4 MP, Turbo v4 LoRA at strength `1.0`, Euler sampler, Beta scheduler, and 8 steps. “v4” names the LoRA version, not a 4-step setting. Install the custom node first, fully restart ComfyUI, and then load the JSON. / この経路では `Super-FURU-AI-4koma-H3-Turbo-v4-LoRA-8step.json` と共通の `ComfyUI-NanoBanana-H3` カスタムノードを別々に配布します。カスタムノードは標準版・Turbo LoRA版で共通で、LoRA専用パッケージを複製しません。既定は15秒・16:9・0.4MP・Turbo v4 LoRA（強度 `1.0`）・Euler・Beta・8 stepsです。「v4」はLoRAのバージョンで、4 stepsの意味ではありません。先にカスタムノードを導入し、ComfyUIを完全に再起動してからJSONを読み込んでください。
+
+**FURU four-panel manga to video / FURUの4コマ漫画を動画化**
+
+The dedicated workflow turns one completed Super FURU AI four-panel manga page into four contiguous MiniMax H3 shots. It retains panel order, panel-derived cast, speaker ownership, story action, setting, and punchline; it gives each visible character a role-appropriate movement, removes speech balloons, and adds the title and fixed end credit outside H3 after generation. / 専用ワークフローは、完成したSuper FURU AIの4コマ漫画1枚を連続する4つのMiniMax H3ショットに変換します。コマ順、各コマから導く登場人物、台詞の話者、物語上の動作、場所、オチを保ち、画面内の各人物へ役割に応じた動きを与え、吹き出しを除去します。タイトルと固定エンドクレジットは、H3生成後にワークフローが合成します。
+
+Each required loader embeds the verified filename, download URL, SHA256, and ComfyUI target folder for the Ref2VA diffusion model, Qwen3VL text encoder, video VAE, audio VAE, and Turbo v4 LoRA. When you open the workflow, ComfyUI can show `Download` for a missing registered model instead of only reporting an unresolved filename. ComfyUI Desktop saves to its managed model folder; browser-based ComfyUI can use the browser download path, in which case move the file to the folder shown by the model card and restart ComfyUI. / 必要な各ローダーには、Ref2VA拡散モデル、Qwen3VLテキストエンコーダ、映像VAE、音声VAE、Turbo v4 LoRAの検証済みファイル名、ダウンロードURL、SHA256、ComfyUI保存先を登録しています。ワークフローを開くと、ComfyUIは不明なファイル名だけを報告するのでなく、登録済みの不足モデルとして `Download` を表示できます。ComfyUI Desktopは管理対象のモデルフォルダへ保存します。ブラウザ版でブラウザ保存になった場合は、モデルカードの表示先へ移動してComfyUIを再起動してください。
 
 Click “Nano Banana-H3 カスタムノードをダウンロード,” extract the ZIP, and place the whole folder at `ComfyUI/custom_nodes/ComfyUI-NanoBanana-H3/`. The ZIP root is `ComfyUI-NanoBanana-H3` and contains only `__init__.py`, `h3_prompt_system.txt`, and `web/nanobanana_h3.js`. After a full ComfyUI restart, download the workflow JSON and load it. / 「Nano Banana-H3 カスタムノードをダウンロード」を押してZIPを保存し、展開したフォルダ全体を `ComfyUI/custom_nodes/ComfyUI-NanoBanana-H3/` に配置します。ZIPのルートは `ComfyUI-NanoBanana-H3` で、`__init__.py`、`h3_prompt_system.txt`、`web/nanobanana_h3.js` だけを収録しています。ComfyUIを完全に再起動した後、ワークフローJSONをダウンロードして読み込んでください。
 
@@ -308,7 +314,7 @@ To address the extreme complexity of a 5,000+ line monolith, the frontend archit
 
 ## 🔍 Deep Analysis (技術詳解)
 
-### 🧭 Current v5.6.0 Processing Contract / 現行v5.6.0処理仕様
+### 🧭 Current v5.6.1 Processing Contract / 現行v5.6.1処理仕様
 
 | Stage | Input | Processing and validation | Output |
 |:--|:--|:--|:--|
@@ -846,6 +852,9 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 ---
 
 ## 📋 ChangeLog
+
+### v5.6.1 (2026-08-24)
+- **[Fix & UX]** MiniMax H3の配布ワークフローへ5件すべてのモデルURL・SHA256・保存先を登録し、日英併記のFURU 4コマ動画化説明と不足モデルDownload案内を追加 / Registered URLs, SHA256 values, and target folders for all five MiniMax H3 models and added bilingual FURU four-panel manga-to-video guidance with missing-model download instructions
 
 ### v5.6.0 (2026-08-23)
 - **[Fix & UX]** MiniMax H3配布をTurbo v4 LoRA・8 steps版へ更新し、標準テンプレート用コピー文、共通カスタムノード、タイトル後段合成、API案内を同期 / Updated the MiniMax H3 distribution to Turbo v4 LoRA with 8 steps and synchronized the standard-template copy prompt, shared custom node, downstream title compositing, and API guidance

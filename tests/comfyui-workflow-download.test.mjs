@@ -95,7 +95,7 @@ test('STEP4 exposes the shared custom node before the Turbo LoRA workflow JSON a
   assert.match(step4PanelSource, /ComfyUIを完全に再起動/);
   assert.match(step4PanelSource, /🔐 APIキー未登録／登録/);
   assert.match(step4PanelSource, /APIキーはワークフローJSONや配布ZIPには保存されません/);
-  assert.match(step4PanelSource, /MiniMax H3の本体モデル・テキストエンコーダ・映像VAE・音声VAE/);
+  assert.match(step4PanelSource, /Turbo v4 LoRAの不足項目に <code>Download<\/code> が表示/);
   assert.match(step4PanelSource, /NanoBananaH3Transform[\s\S]*DeterministicTitleWatermarkOverlay[\s\S]*DeterministicEndCreditOverlay/);
   assert.match(step4PanelSource, /実際のサンプリング設定は4 stepsではなく8 steps/);
   assert.match(step4PanelSource, /overlay_title.*動画生成後.*一度だけ/s);
@@ -122,7 +122,7 @@ test('distributed Turbo v4 LoRA workflow has the supplied 8-step sampling and co
   if (!existsSync(workflowUrl)) return;
 
   const bytes = readFileSync(workflowUrl);
-  assert.equal(hashBytes(bytes), 'c35bac4b788fbd17166ef3c10bd3e36b3fa7784800f2ec5dfc38f37511aba42f');
+  assert.equal(hashBytes(bytes), '394064769f8f0603b4387851341e95c6f38ca4e79b62e667951a2cc54fab12fb');
   const workflow = JSON.parse(bytes.toString('utf8'));
   const workflowText = bytes.toString('utf8');
   assert.equal(workflow.nodes.length, 27);
@@ -155,8 +155,61 @@ test('distributed Turbo v4 LoRA workflow has the supplied 8-step sampling and co
   assert.equal(hasLink('NanoBananaH3Transform', 2, 'DeterministicTitleWatermarkOverlay', 2), true);
   assert.equal(hasLink('DeterministicTitleWatermarkOverlay', 0, 'DeterministicEndCreditOverlay', 0), true);
   assert.equal(hasLink('DeterministicEndCreditOverlay', 0, 'CreateVideo', 0), true);
-  assert.match(workflowText, /8 steps — Recommended/);
+  assert.match(workflowText, /Turbo v4 LoRA.*`8` steps/s);
   assert.doesNotMatch(workflowText, /4 steps —|6 steps —/);
+});
+
+test('distributed H3 workflow embeds verified one-click metadata and bilingual FURU four-panel guidance', () => {
+  const workflow = JSON.parse(readFileSync(workflowUrl, 'utf8'));
+  const modelEntries = workflow.nodes.flatMap((node) => node.properties?.models ?? []);
+
+  assert.deepEqual(modelEntries, [
+    {
+      name: 'minimax_h3_video_vae_fp16.safetensors',
+      url: 'https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/vae/minimax_h3_video_vae_fp16.safetensors?download=true',
+      hash: '7c1f131492e7eddacaac9069a61b81bdd39de5cc96561e677c5eab1cdce5e522',
+      hash_type: 'SHA256',
+      directory: 'vae',
+    },
+    {
+      name: 'minimax_h3_audio_vae_fp32.safetensors',
+      url: 'https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/vae/minimax_h3_audio_vae_fp32.safetensors?download=true',
+      hash: '8e505d95dd1561d47abd43d4238fd40d9bb1ae9e147ed0a4cba778d76ae4db48',
+      hash_type: 'SHA256',
+      directory: 'vae',
+    },
+    {
+      name: 'minimax_h3_ref2va_pruned_int8_convrot.safetensors',
+      url: 'https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/diffusion_models/minimax_h3_ref2va_pruned_int8_convrot.safetensors?download=true',
+      hash: '9255f52b6677845ad238f20dfaafa94727053694127ab7f255c048f0f9365779',
+      hash_type: 'SHA256',
+      directory: 'diffusion_models',
+    },
+    {
+      name: 'qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors',
+      url: 'https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/text_encoders/qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors?download=true',
+      hash: '35a88d51044231fe332301d7a62aa81e3f2cba62febeb446e2c1e3e0ef76f2c6',
+      hash_type: 'SHA256',
+      directory: 'text_encoders',
+    },
+    {
+      name: 'minimax_h3_turbo_v4_step600_ema_pruned_comfyui.safetensors',
+      url: 'https://huggingface.co/drbaph/MiniMax-H3-Turbo-Lora-ComfyUI/resolve/main/minimax_h3_turbo_v4_step600_ema_pruned_comfyui.safetensors?download=true',
+      hash: '7098acf3ee75028fd9fcd948f50fcc8d995057fabb76f86bd3ca2c0ffc58e409',
+      hash_type: 'SHA256',
+      directory: 'loras',
+    },
+  ]);
+
+  const workflowText = readFileSync(workflowUrl, 'utf8');
+  assert.match(workflowText, /FURU four-panel manga to video/);
+  assert.match(workflowText, /FURUの4コマ漫画を動画化/);
+  assert.match(workflowText, /Open this workflow: missing H3 model cards show Download/);
+  assert.match(workflowText, /ワークフローを開くと不足モデルにDownloadが表示/);
+  assert.match(step4PanelSource, /FURU four-panel manga to video/);
+  assert.match(step4PanelSource, /FURUの4コマ漫画を動画化/);
+  assert.match(readmeSource, /FURU four-panel manga to video/);
+  assert.match(readmeSource, /FURUの4コマ漫画を動画化/);
 });
 
 test('custom-node ZIP has the required root folder, exact source files, and no forbidden extras', () => {
