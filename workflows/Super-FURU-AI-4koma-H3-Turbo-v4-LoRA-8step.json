@@ -110,7 +110,7 @@
         }
       },
       "widgets_values": [
-        "# Super FURU AI 4-koma System — H3 Turbo v4 LoRA 8step版\n\n## 使い方\n1. **1. ④コマまんがを投入** で自分の4コマ画像を選択。\n2. 秒数と解像度を設定（検証条件は16:9・0.4MP・15秒）。\n3. **実行する** を押します。Turbo v4 LoRA＋Euler＋Beta＋8 stepsで、標準20ステップ版より高速に動画化します。\n\n## Turbo LoRA設定（重要）\nLoRA本体はJSONに同梱されません。利用者自身で次へ配置します。\n```\nComfyUI/models/loras/minimax_h3_turbo_v4_step600_ema_pruned_comfyui.safetensors\n```\nノード **H3 Turbo v4 LoRA（8step・強度1.0）** はこのファイル名と強度 `1.0`、BasicSchedulerは `beta`・`8 steps`、KSamplerは `euler` を前提にしています。ファイル名や強度を変える場合はノード設定も合わせて変更してください。\n\n## 人物整合ルール\nH3プロンプト生成時に、各コマの人物集合と人物ごとの識別署名を入力画像から動的に作成します。特定の人数、外見、最終ショットの全員表示は固定していません。各ショットは対応するコマから読み取った人物だけを維持するよう指示されます。\n\n## タイトル処理（重要）\n動画生成プロンプト生成時に `overlay_title` を抽出しますが、H3本体には文字・吹き出し・タイトルを描かせません。生成後にノード6が**左上へ一度だけ**、黒字＋白縁・背景なしで重ねます。二重タイトルや吹き出し混入を防ぐため、直接H3プロンプトへタイトルを追加しないでください。\n\n## 出力\n音声付きMP4がSaveVideoノードの指定先へ保存されます。`SELECT_YOUR_4KOMA_MANGA.png` は配布用プレースホルダーなので、実行前に必ず自分の画像へ差し替えてください。\n\n## Steps / ステップ数\n- **8 steps — Recommended / 推奨**：このv4 step-600 EMA LoRAの配布固定値です。ステップ数は変更せず、Euler・Beta・LoRA強度1.0と組み合わせて使用してください。\n\nこの公開版は **8 steps + Euler + Beta scheduler + LoRA strength 1.0** に設定済みです。被写体・動き・音声によって品質は変わるため、必要に応じて同じseedと条件で比較してください。"
+        "# FURU four-panel manga to video / FURUの4コマ漫画を動画化\n\nTurn one completed Super FURU AI four-panel manga page into a 15-second, 16:9 MiniMax H3 video with spoken dialogue, visible character acting, per-panel story order, a deterministic opening title, and a fixed end credit. This graph keeps the manga-derived cast, dialogue ownership, actions, setting, and punchline; it does not invent a fixed cast or force every person into every shot.\n\n完成したSuper FURU AIの4コマ漫画1枚を、会話音声・人物演技・各コマの物語順・固定タイトル・固定エンドクレジットを持つ15秒・16:9のMiniMax H3動画へ変換します。人物集合、台詞の話者、動作、場所、オチは元の漫画から読み取り、固定人数や全ショットへの強制登場は行いません。\n\n## Quick start / 使い方\n1. Install `ComfyUI-NanoBanana-H3`, fully restart ComfyUI, and open this workflow. / `ComfyUI-NanoBanana-H3` を導入してComfyUIを完全に再起動し、このワークフローを開きます。\n2. Open this workflow: missing H3 model cards show Download. Download every listed model, then restart or refresh the model list. / ワークフローを開くと不足モデルにDownloadが表示されます。表示された全モデルを取得し、モデル一覧を再読込またはComfyUIを再起動します。\n3. Select your completed four-panel manga in **1. ④コマまんがを投入**, keep 16:9 and 0.4 MP as the starting point, then run. / **1. ④コマまんがを投入** で完成した4コマ漫画を選び、まずは16:9・0.4MPのまま実行します。\n\n## Turbo v4 LoRA / Turbo v4 LoRA\nThe verified Turbo v4 LoRA is embedded as a downloadable model entry. This graph uses its filename, strength `1.0`, `euler`, `beta`, and `8` steps together; change them only as one deliberate experiment. / 検証済みTurbo v4 LoRAもダウンロード対象として登録済みです。このグラフではファイル名、強度 `1.0`、`euler`、`beta`、`8` stepsを組み合わせて使います。変更する場合は、この組合せを理解した検証として行ってください。\n\n## Model download behavior / モデル取得の挙動\nEach loader contains the exact source URL, SHA256, target folder, and expected filename. ComfyUI can therefore identify a missing model from this workflow instead of showing only an unresolved filename. Desktop installs to the managed model folder; in browser-based ComfyUI, Download can save through the browser, so move the downloaded file to the folder shown in the model card if necessary. / 各ローダーには正確な配布URL、SHA256、保存先、ファイル名を登録しています。そのためComfyUIは不明なファイル名だけでなく、このワークフローに必要なモデルとして認識できます。ComfyUI Desktopは管理対象フォルダへ保存します。ブラウザ版ではDownloadがブラウザ保存になる場合があるため、その場合はモデルカード表示の保存先へ移動してください。\n\n## FURU workflow contract / FURU動画化の仕様\nOne source page becomes exactly four contiguous video shots in manga panel order. The prompt builder derives `panel_cast[N]` and immutable identity signatures from each panel, preserves the corresponding people and spoken turns, removes speech balloons, and gives every visible character a role-appropriate movement. H3 does not draw title, subtitles, URLs, or end credits; the workflow composites the title once at upper left and the fixed credit after generation. / 1枚の入力ページを、漫画のコマ順に連続する4ショットへ変換します。プロンプト生成は各コマから `panel_cast[N]` と識別署名を導出し、対応人物と会話順を守り、吹き出しを除去し、画面内の各人物へ役割に応じた動きを与えます。H3本体にはタイトル、字幕、URL、エンドクレジットを描かせず、ワークフローが生成後にタイトルを左上へ1回、固定クレジットを合成します。\n\n## Output / 出力\nThe audio-enabled MP4 is saved by `SaveVideo`. `SELECT_YOUR_4KOMA_MANGA.png` is only a distribution placeholder; replace it before running. / 音声付きMP4は `SaveVideo` ノードが保存します。`SELECT_YOUR_4KOMA_MANGA.png` は配布用プレースホルダーなので、実行前に必ず自分の画像へ差し替えてください。"
       ],
       "color": "#222",
       "bgcolor": "#000"
@@ -140,7 +140,7 @@
         }
       },
       "widgets_values": [
-        "# 必須環境・モデル配置 / Required setup\n\n## MiniMax H3本体（各自で取得）\n```\nComfyUI/models/\n├── diffusion_models/minimax_h3_ref2va_pruned_int8_convrot.safetensors\n├── text_encoders/qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors\n├── vae/\n│   ├── minimax_h3_video_vae_fp16.safetensors\n│   └── minimax_h3_audio_vae_fp32.safetensors\n└── loras/minimax_h3_turbo_v4_step600_ema_pruned_comfyui.safetensors\n```\n\nMiniMax H3対応のComfyUIを使用し、モデル配置後はComfyUIを再起動します。\n\n## このワークフロー固有のノード\n`ComfyUI-NanoBanana-H3`に含まれる次の共通ノードが必要です。\n\n- NanoBananaH3Transform\n- DeterministicTitleWatermarkOverlay\n- DeterministicEndCreditOverlay\n\n`Nano Banana Image Transform (H3)`ノードでは`OpenAI API`または`Google Gemini API`を選択します。APIキーはワークフローに保存されず、ローカルの`ComfyUI/user/nanobanana_h3_credentials.json`へ暗号化なしで保存されます。\n\n## 配布時の注意\nモデル、LoRA、APIキー、認証情報、漫画画像、生成済み動画は配布物に含めません。各配布元のライセンスに従い、利用者が自分で取得・設定します。"
+        "# Required setup / 必須環境\n\n## Downloadable H3 model set / ダウンロード対象のH3モデル\nThis workflow registers all five required weights directly on their loader nodes. Open the workflow and use the missing-model Download action for the two VAEs, the Ref2VA diffusion model, the Qwen3VL text encoder, and the Turbo v4 LoRA. Every entry is pinned by filename, source URL, SHA256, and target directory. / このワークフローでは、必要な5つの重みを各ローダーノードに直接登録しています。ワークフローを開き、不足モデルのDownloadから映像VAE、音声VAE、Ref2VA拡散モデル、Qwen3VLテキストエンコーダ、Turbo v4 LoRAを取得してください。各項目はファイル名、配布URL、SHA256、保存先で固定しています。\n\n```\nComfyUI/models/\n├── diffusion_models/minimax_h3_ref2va_pruned_int8_convrot.safetensors\n├── text_encoders/qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors\n├── vae/\n│   ├── minimax_h3_video_vae_fp16.safetensors\n│   └── minimax_h3_audio_vae_fp32.safetensors\n└── loras/minimax_h3_turbo_v4_step600_ema_pruned_comfyui.safetensors\n```\n\nUse a MiniMax H3-capable ComfyUI version. After downloads finish, restart ComfyUI if the loader dropdowns do not refresh. / MiniMax H3に対応したComfyUIを使用してください。取得後にローダーの候補が更新されない場合はComfyUIを再起動します。\n\n## Workflow-specific custom nodes / このワークフロー固有のカスタムノード\nInstall `ComfyUI-NanoBanana-H3` before loading this graph. It supplies `NanoBananaH3Transform`, `DeterministicTitleWatermarkOverlay`, and `DeterministicEndCreditOverlay`; the model downloads do not replace this node package. / このグラフを開く前に `ComfyUI-NanoBanana-H3` を導入してください。このパッケージは `NanoBananaH3Transform`、`DeterministicTitleWatermarkOverlay`、`DeterministicEndCreditOverlay` を提供します。モデルのダウンロードだけでは、このカスタムノードは導入されません。\n\nIn `Nano Banana Image Transform (H3)`, select `OpenAI API` or `Google Gemini API` and add your own key through the node UI. The key is never embedded in this workflow or the distribution ZIP; ComfyUI stores it locally at `ComfyUI/user/nanobanana_h3_credentials.json` without encryption. / `Nano Banana Image Transform (H3)` では `OpenAI API` または `Google Gemini API` を選び、ノードUIから利用者自身のキーを登録します。APIキーはワークフローJSONや配布ZIPには保存されず、ComfyUIはローカルの `ComfyUI/user/nanobanana_h3_credentials.json` に暗号化なしで保存します。"
       ],
       "color": "#222",
       "bgcolor": "#000"
@@ -189,7 +189,9 @@
         "models": [
           {
             "name": "minimax_h3_video_vae_fp16.safetensors",
-            "url": "https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/vae/minimax_h3_video_vae_fp16.safetensors",
+            "url": "https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/vae/minimax_h3_video_vae_fp16.safetensors?download=true",
+            "hash": "7c1f131492e7eddacaac9069a61b81bdd39de5cc96561e677c5eab1cdce5e522",
+            "hash_type": "SHA256",
             "directory": "vae"
           }
         ],
@@ -247,7 +249,9 @@
         "models": [
           {
             "name": "minimax_h3_audio_vae_fp32.safetensors",
-            "url": "https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/vae/minimax_h3_audio_vae_fp32.safetensors",
+            "url": "https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/vae/minimax_h3_audio_vae_fp32.safetensors?download=true",
+            "hash": "8e505d95dd1561d47abd43d4238fd40d9bb1ae9e147ed0a4cba778d76ae4db48",
+            "hash_type": "SHA256",
             "directory": "vae"
           }
         ],
@@ -672,7 +676,9 @@
         "models": [
           {
             "name": "minimax_h3_ref2va_pruned_int8_convrot.safetensors",
-            "url": "https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/diffusion_models/minimax_h3_ref2va_pruned_int8_convrot.safetensors",
+            "url": "https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/diffusion_models/minimax_h3_ref2va_pruned_int8_convrot.safetensors?download=true",
+            "hash": "9255f52b6677845ad238f20dfaafa94727053694127ab7f255c048f0f9365779",
+            "hash_type": "SHA256",
             "directory": "diffusion_models"
           }
         ],
@@ -749,7 +755,9 @@
         "models": [
           {
             "name": "qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors",
-            "url": "https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/text_encoders/qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors",
+            "url": "https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/text_encoders/qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors?download=true",
+            "hash": "35a88d51044231fe332301d7a62aa81e3f2cba62febeb446e2c1e3e0ef76f2c6",
+            "hash_type": "SHA256",
             "directory": "text_encoders"
           }
         ],
@@ -1518,6 +1526,15 @@
         "cnr_id": "comfy-core",
         "ver": "0.33.0",
         "Node name for S&R": "LoraLoaderModelOnly",
+        "models": [
+          {
+            "name": "minimax_h3_turbo_v4_step600_ema_pruned_comfyui.safetensors",
+            "url": "https://huggingface.co/drbaph/MiniMax-H3-Turbo-Lora-ComfyUI/resolve/main/minimax_h3_turbo_v4_step600_ema_pruned_comfyui.safetensors?download=true",
+            "hash": "7098acf3ee75028fd9fcd948f50fcc8d995057fabb76f86bd3ca2c0ffc58e409",
+            "hash_type": "SHA256",
+            "directory": "loras"
+          }
+        ],
         "ue_properties": {
           "widget_ue_connectable": {},
           "version": "7.5.2",
