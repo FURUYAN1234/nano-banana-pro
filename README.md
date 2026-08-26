@@ -1,6 +1,6 @@
 # Super FURU AI 4-koma System
 
-> Latest release: **v5.6.2** / 最新リリース: **v5.6.2**
+> Latest release: **v5.6.3** / 最新リリース: **v5.6.3**
 
 > **"To what extent can humans step away from the creative process?"**
 > **「人間は、どこまで制作から降りられるのか？」**
@@ -22,7 +22,7 @@
 This project aims to intentionally exclude humans from the creative process, allowing AI to act as a director and complete everything from brainstorming to composition, direction, and rendering.
 本プロジェクトは、人間をクリエイティブな工程から意図的に排除し、AIがディレクターとして「ネタ出し・構成・演出・作画」のすべてを完結させることを目的としています。
 
-The current implementation and latest release are **v5.6.2**. The product name is **Super FURU AI 4-koma System**; **Nano Banana 2** and **ChatGPT Image 2.0** identify image-generation engine families. / 現在の実装および最新公開版は **v5.6.2** です。製品名は **Super FURU AI 4-koma System** で、**Nano Banana 2** と **ChatGPT Image 2.0** は画像生成エンジン系統の名称です。
+The current implementation and latest release are **v5.6.3**. The product name is **Super FURU AI 4-koma System**; **Nano Banana 2** and **ChatGPT Image 2.0** identify image-generation engine families. / 現在の実装および最新公開版は **v5.6.3** です。製品名は **Super FURU AI 4-koma System** で、**Nano Banana 2** と **ChatGPT Image 2.0** は画像生成エンジン系統の名称です。
 
 Current behavior at a glance / 現行仕様の要点:
 
@@ -314,7 +314,7 @@ To address the extreme complexity of a 5,000+ line monolith, the frontend archit
 
 ## 🔍 Deep Analysis (技術詳解)
 
-### 🧭 Current v5.6.2 Processing Contract / 現行v5.6.2処理仕様
+### 🧭 Current v5.6.3 Processing Contract / 現行v5.6.3処理仕様
 
 | Stage | Input | Processing and validation | Output |
 |:--|:--|:--|:--|
@@ -852,6 +852,9 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 ---
 
 ## 📋 ChangeLog
+
+### v5.6.3 (2026-08-26)
+- **[Fix & UX]** 配布ワークフローJSONの公開時バイト完全性を修正 / Preserve exact distributed workflow JSON bytes in published assets
 
 ### v5.6.2 (2026-08-26)
 - **[Fix & UX]** 2026-08-26のカスタムノードZIPとHybrid b25ワークフローを別々のダウンロードボタンへ更新し、旧版差し替え、ワークフロー配置、両Providerの導入案内を同期 / Updated separate download buttons with the 2026-08-26 custom-node ZIP and Hybrid b25 workflow, plus replacement, workflow-location, and dual-provider setup guidance

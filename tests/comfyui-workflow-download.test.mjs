@@ -14,6 +14,7 @@ const customNodeZipUrl = new URL(
   '../public/downloads/ComfyUI-NanoBanana-H3-Latest-2026-08-26.zip',
   import.meta.url,
 );
+const publishedAttributesUrl = new URL('../public/.gitattributes', import.meta.url);
 
 const hashText = (value) => createHash('sha256').update(value, 'utf8').digest('hex');
 const hashBytes = (value) => createHash('sha256').update(value).digest('hex');
@@ -132,6 +133,13 @@ test('distributed Turbo v4 LoRA workflow has the supplied 8-step sampling and co
   if (!existsSync(workflowUrl)) return;
 
   const bytes = readFileSync(workflowUrl);
+  assert.equal(
+    readFileSync(publishedAttributesUrl, 'utf8').includes(
+      'workflows/Super-FURU-AI-4koma-H3-Hybrid-b25-Turbo-v4-LoRA-8step-v1.json -text',
+    ),
+    true,
+    'the published Git attributes must preserve the supplier workflow bytes',
+  );
   assert.equal(hashBytes(bytes), '8a95fa2d2f38fdbb40f5533d82f3318a19223829dea42583edc7b12c37d30011');
   const workflow = JSON.parse(bytes.toString('utf8'));
   const workflowText = bytes.toString('utf8');
