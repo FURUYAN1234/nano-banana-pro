@@ -1,4 +1,4 @@
-import { cameraLensMap, cinematicCompositionMap, EMOTION_STYLES } from './constants';
+import { cameraLensMap, cinematicCompositionMap, EMOTION_STYLES } from './constants.js';
 
 // --- Panel Utility Functions (App.jsx assemblePrompt -> externalized) ---
 // assemblePrompt 内で定義されていたパネル解析・プロンプト組立ユーティリティ群

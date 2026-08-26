@@ -146,6 +146,9 @@ export const requestSafeScenario = async ({
       }
       if (attempt + 1 >= maxAttempts) {
         const selectedCandidate = bestQualityCandidate;
+        if (selectedCandidate.error?.blocking) {
+          throw selectedCandidate.error;
+        }
         return {
           response: selectedCandidate.response,
           parsed: selectedCandidate.parsed,

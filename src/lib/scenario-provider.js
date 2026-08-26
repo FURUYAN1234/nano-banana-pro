@@ -34,6 +34,10 @@ import {
   assertScenarioGestureVariety,
   GESTURE_VARIETY_RETRY_INSTRUCTION
 } from './composition-variety';
+import {
+  formatMangaScenarioValidationIssue,
+  validateMangaScenario
+} from './scenario-validation';
 
 const STEP2_TEXT_TIMEOUT_MS = 180_000;
 
@@ -44,7 +48,25 @@ const scenarioRetryLabels = {
   MANUAL_TOPIC_EXCLUSION: '手動入力の禁止条件',
   VISUAL_STORY_EVIDENCE: '出来事を証明する視覚要素',
   GESTURE_VARIETY: '身体演技とジェスチャーの多様性',
-  FINAL_PANEL_STAGING: '4コマ目の能動アクション'
+  FINAL_PANEL_STAGING: '4コマ目の能動アクション',
+  DIALOGUE_CONTRACT: '各コマの吹き出しセリフ'
+};
+
+export const DIALOGUE_CONTRACT_RETRY_INSTRUCTION = `DIALOGUE CONTRACT RETRY:
+The previous scenario cannot be compiled into speech bubbles. Rewrite the complete scenario from scratch.
+Every panel must contain at least one standalone dialogue line in exactly this form after its visual situation:
+キャラ名「短いセリフ。」
+Do not embed spoken dialogue inside 状況, Action, 表情, 演出, 背景, or other visual-direction lines. Do not output a no-dialogue instruction. Preserve the requested topic, cast, four-panel sequence, and output format.`;
+
+export const assertMangaScenarioDialogueContract = (scenarioText, castList) => {
+  const validation = validateMangaScenario(scenarioText, castList);
+  if (validation.ok) return true;
+
+  const error = new Error(formatMangaScenarioValidationIssue(validation));
+  error.code = 'DIALOGUE_CONTRACT';
+  error.qualityScore = 0;
+  error.blocking = true;
+  throw error;
 };
 
 const assertScenarioCheck = (code, check) => {
@@ -62,7 +84,8 @@ const validateScenarioForRetry = ({
   manualTopic,
   seasonContext,
   contextText,
-  customOutfit
+  customOutfit,
+  castList
 }) => {
   const checks = [
     ['SCENARIO_CONTENT', () => assertSafeScenarioContent(scenario)],
@@ -82,7 +105,8 @@ const validateScenarioForRetry = ({
     ['FINAL_PANEL_STAGING', () => assertActiveFinalPanelStaging({
       scenario: scenario.scenario,
       punchlineType
-    })]
+    })],
+    ['DIALOGUE_CONTRACT', () => assertMangaScenarioDialogueContract(scenario.scenario, castList)]
   ];
   const failures = [];
   for (const [code, check] of checks) {
@@ -115,7 +139,8 @@ const scenarioQualityRetryInstructions = {
   MANUAL_TOPIC_EXCLUSION: MANUAL_TOPIC_EXCLUSION_RETRY_INSTRUCTION,
   VISUAL_STORY_EVIDENCE: VISUAL_STORY_EVIDENCE_RETRY_INSTRUCTION,
   GESTURE_VARIETY: GESTURE_VARIETY_RETRY_INSTRUCTION,
-  FINAL_PANEL_STAGING: FINAL_PANEL_ACTIVE_STAGING_RETRY_INSTRUCTION
+  FINAL_PANEL_STAGING: FINAL_PANEL_ACTIVE_STAGING_RETRY_INSTRUCTION,
+  DIALOGUE_CONTRACT: DIALOGUE_CONTRACT_RETRY_INSTRUCTION
 };
 
 // [v3.85-alpha] シナリオ生成と強化ロジックの外部モジュール化
@@ -343,6 +368,7 @@ export async function generateScenario({
       manualTopic: inputMode === 'manual' ? manualTopic : '',
       seasonContext,
       customOutfit,
+      castList,
       contextText: [
         manualTopic,
         newsContext,

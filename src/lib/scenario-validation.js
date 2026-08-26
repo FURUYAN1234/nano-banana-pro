@@ -1,3 +1,5 @@
+import { extractDialogueOnly } from './panel-utils.js';
+
 const PANEL_NUMBER_MAP = new Map([
   ['1', 1],
   ['2', 2],
@@ -13,11 +15,6 @@ const PANEL_NUMBER_MAP = new Map([
   ['\u56DB', 4]
 ]);
 
-const DIALOGUE_QUOTE_SCAN_RE = /\u300C([^\u300D]{2,})\u300D/g;
-const DIALOGUE_META_LINE_RE = /^\s*(?:Camera|Location|Outfit|EMOTION|状況(?:演出)?|演出(?:[・･／/]ギャグ)?|Action|リアクション|Reaction|設定|物理描写|SFX|SE|効果音|音響効果|音響|音声|BGM|ナレーション|テロップ|背景|Background|カメラワーク|CameraWork|Camera\s*Work|Punchline)\s*[:：]/i;
-const SPOKEN_QUOTE_POST_RE = /^\s*(?:と|って)?\s*(?:[^「」。！？!?\n]{0,32})?(?:言|いう|言い|言う|言った|叫|叫び|叫ぶ|叫ん|呼|呼び|呟|つぶや|つぶやき|囁|ささや|ささやき|読み上げ|読みあげ|読み|発表|告げ|答|返|話|語|宣言|絶叫|嘆|漏ら|口に|述べ|怒鳴|呻|うめ|唸|ツッコ|つっこ|突っ込|問|尋)/;
-const VISUAL_TEXT_CONTEXT_RE = /(?:席|看板|札|プレート|ラベル|テロップ|字幕|見出し|タイトル|ロゴ|表示|文字|名札|タグ|欄|枠|ボード|画面|スクリーン|モニター|ディスプレイ|サイン|案内|標識|速報|点滅|資料|項目|フォント)/;
-const INSTRUCTION_LINE_RE = /^\s*(?:\[?\s*(?:Camera|Location|Outfit|EMOTION|Action|Reaction|Background|CameraWork|Camera\s*Work)\s*[:：]|状況(?:演出)?\s*[:：]|演出(?:[・･／/]ギャグ)?\s*[:：]|リアクション\s*[:：]|設定\s*[:：]|物理描写\s*[:：]|SFX\s*[:：]|SE\s*[:：]|効果音\s*[:：]|音響効果\s*[:：]|音響\s*[:：]|音声\s*[:：]|BGM\s*[:：]|ナレーション\s*[:：]|テロップ\s*[:：]|背景\s*[:：]|カメラワーク\s*[:：]|Punchline\s*[:：])/i;
 const NO_DIALOGUE_RE = /(?:\u7121\u8A00|\u53F0\u8A5E\s*(?:\u306A\u3057|\u7121\u3057)|\u30BB\u30EA\u30D5\s*(?:\u306A\u3057|\u7121\u3057)|\u305B\u308A\u3075\s*(?:\u306A\u3057|\u7121\u3057)|without\s+dialogue|no\s+dialogue|Characters interact without dialogue)/i;
 
 const stripThoughtBlocks = (text) => String(text || '').replace(/<thought>[\s\S]*?<\/thought>/gi, '');
@@ -26,60 +23,10 @@ const createPanelHeaderRegex = () => /\[\s*([1-4\uFF11-\uFF14\u4E00\u4E8C\u4E09\
 
 const normalizePanelNumber = (value) => PANEL_NUMBER_MAP.get(value) || null;
 
-const hasSpokenQuotePostContext = (postText = '') => SPOKEN_QUOTE_POST_RE.test(postText.trim());
+const NO_DIALOGUE_PLACEHOLDER = '(Characters interact without dialogue in this panel)';
 
-const isInstructionLine = (line = '') => INSTRUCTION_LINE_RE.test(String(line).trim());
-
-const normalizeDialogueSpeakerPrefix = (value = '') =>
-  String(value)
-    .replace(/^[\s\-*・、。:：]+/, '')
-    .replace(/[【\[（(].*?[】\]）)]/g, '')
-    .replace(/^(?:セリフ|台詞|Dialogue|Speech\s*Bubble\s*\d*)\s*[:：-]?\s*/i, '')
-    .trim();
-
-const isGenericShortSpeakerPrefix = (value = '') => {
-  const clean = normalizeDialogueSpeakerPrefix(value);
-  if (!clean || clean.length > 18) return false;
-  if (!/[\u3040-\u30FF\u4E00-\u9FFFA-Za-zＡ-Ｚａ-ｚ]/u.test(clean)) return false;
-  if (/[。！？!?…]/.test(clean)) return false;
-  if (/(?:が|を|に|で|へ|は|も|と|から|まで|より)$/.test(clean) && clean.length > 3) return false;
-  if (/(?:して|した|する|され|見て|持って|握って|座って|立って|走って|叫んで|つぶやいて)$/.test(clean)) return false;
-  return true;
-};
-
-const hasSpeechBubbleDialogue = (panelText) => String(panelText || '').split('\n').some((line) => {
-  const trimmed = line.trim();
-  if (!trimmed) return false;
-  const instructionLine = isInstructionLine(trimmed);
-
-  if (!instructionLine && /^\u300C[^\u300D]{2,}\u300D[？！。、!?\s]*$/.test(trimmed)) {
-    return true;
-  }
-
-  const explicitSpeakerLine = trimmed.match(/^([^「」\n]{1,24})\u300C([^\u300D]{2,})\u300D/);
-  const postExplicitQuoteText = explicitSpeakerLine ? trimmed.slice(explicitSpeakerLine[0].length) : '';
-  const explicitPrefix = explicitSpeakerLine?.[1]?.trim() || '';
-  if (
-    explicitSpeakerLine &&
-    !instructionLine &&
-    isGenericShortSpeakerPrefix(explicitPrefix) &&
-    !DIALOGUE_META_LINE_RE.test(trimmed) &&
-    !VISUAL_TEXT_CONTEXT_RE.test(`${explicitPrefix}${postExplicitQuoteText}`)
-  ) {
-    return true;
-  }
-
-  DIALOGUE_QUOTE_SCAN_RE.lastIndex = 0;
-  let quoteMatch;
-  while ((quoteMatch = DIALOGUE_QUOTE_SCAN_RE.exec(trimmed)) !== null) {
-    const postText = trimmed.slice(quoteMatch.index + quoteMatch[0].length);
-    if (hasSpokenQuotePostContext(postText)) {
-      return true;
-    }
-  }
-
-  return false;
-});
+const hasSpeechBubbleDialogue = (panelText, castList) =>
+  extractDialogueOnly(panelText, castList) !== NO_DIALOGUE_PLACEHOLDER;
 
 export const getScenarioPanelBlocks = (scenarioText) => {
   const text = stripThoughtBlocks(scenarioText);
@@ -109,14 +56,14 @@ export const getScenarioPanelBlocks = (scenarioText) => {
   });
 };
 
-export const validateMangaScenario = (scenarioText) => {
+export const validateMangaScenario = (scenarioText, castList = '') => {
   const panels = getScenarioPanelBlocks(scenarioText);
   const missingPanels = panels.filter((panel) => !panel.found).map((panel) => panel.num);
   const panelsMissingDialogue = panels
-    .filter((panel) => panel.found && !hasSpeechBubbleDialogue(panel.text))
+    .filter((panel) => panel.found && !hasSpeechBubbleDialogue(panel.text, castList))
     .map((panel) => panel.num);
   const silentPanels = panels
-    .filter((panel) => panel.found && NO_DIALOGUE_RE.test(panel.text) && !hasSpeechBubbleDialogue(panel.text))
+    .filter((panel) => panel.found && NO_DIALOGUE_RE.test(panel.text) && !hasSpeechBubbleDialogue(panel.text, castList))
     .map((panel) => panel.num);
 
   return {

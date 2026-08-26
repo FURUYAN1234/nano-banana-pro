@@ -277,8 +277,10 @@ export const buildMangaPrompt = ({
   systemVersion,
   allowScenarioQualityWarning = false
 }) => {
-  const scenarioValidation = validateMangaScenario(scenario);
-  if (!scenarioValidation.ok && !allowScenarioQualityWarning) {
+  const scenarioValidation = validateMangaScenario(scenario, castList);
+  const hasBlockingDialogueContractError =
+    scenarioValidation.panelsMissingDialogue.length > 0 || scenarioValidation.silentPanels.length > 0;
+  if (!scenarioValidation.ok && (!allowScenarioQualityWarning || hasBlockingDialogueContractError)) {
     throw new Error(`Incomplete 4-koma scenario: ${formatMangaScenarioValidationIssue(scenarioValidation)}`);
   }
   const effectiveProviderFamily = normalizePromptProviderFamily(providerFamily);

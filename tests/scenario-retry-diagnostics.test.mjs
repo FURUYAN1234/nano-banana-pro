@@ -64,6 +64,14 @@ test('scenario generation makes bounded, quality-directed retries rather than hi
   assert.match(source, /requestSafeScenario\(\{[\s\S]*?maxAttempts:\s*3[\s\S]*?\}\);/);
 });
 
+test('scenario generation retries a missing bubble contract before a prompt can be assembled', async () => {
+  const source = await readFile(new URL('../src/lib/scenario-provider.js', import.meta.url), 'utf8');
+
+  assert.match(source, /DIALOGUE_CONTRACT/);
+  assert.match(source, /assertMangaScenarioDialogueContract/);
+  assert.match(source, /DIALOGUE_CONTRACT_RETRY_INSTRUCTION/);
+});
+
 test('scenario content policy participates in the shared three-attempt quality loop', async () => {
   const source = await readFile(new URL('../src/lib/scenario-provider.js', import.meta.url), 'utf8');
 
@@ -153,6 +161,36 @@ test('a quality retry returns the highest-scoring safe scenario rather than blin
   assert.equal(result.validationWarning.message, 'quality issue in response 2');
 });
 
+test('a blocking dialogue contract retries and never returns an unusable scenario after its retry budget is exhausted', async () => {
+  let requests = 0;
+  const retryEvents = [];
+
+  await assert.rejects(
+    requestSafeScenario({
+      initialPrompt: 'BASE PROMPT',
+      requestScenario: async () => ({ text: `response ${++requests}` }),
+      parseScenario: (response) => ({ location: 'station', scenario: response.text }),
+      validateScenario: () => {
+        const error = new Error('panel(s) without speech-bubble dialogue: 1, 2, 3, 4');
+        error.code = 'DIALOGUE_CONTRACT';
+        error.qualityScore = 0;
+        error.blocking = true;
+        throw error;
+      },
+      retryInstruction: ({ code }) => `QUALITY RETRY: ${code}`,
+      onRetry: (event) => retryEvents.push(event),
+      maxAttempts: 3
+    }),
+    /speech-bubble dialogue/
+  );
+
+  assert.equal(requests, 3);
+  assert.deepEqual(retryEvents.map(({ attempt, code, kind }) => ({ attempt, code, kind })), [
+    { attempt: 1, code: 'DIALOGUE_CONTRACT', kind: 'quality' },
+    { attempt: 2, code: 'DIALOGUE_CONTRACT', kind: 'quality' }
+  ]);
+});
+
 test('quality-gate warnings do not block STEP3 or STEP4', async () => {
   const source = await readFile(new URL('../src/hooks/useMangaWorkflow.js', import.meta.url), 'utf8');
 
@@ -160,4 +198,12 @@ test('quality-gate warnings do not block STEP3 or STEP4', async () => {
   assert.match(source, /品質警告のままSTEP3・STEP4へ進めます/);
   assert.doesNotMatch(source, /STEP2を再実行してください/);
   assert.doesNotMatch(source, /STEP2で4コマすべてに「」付きセリフを作り直してください/);
+});
+
+test('dialogue-contract exhaustion directs the user to regenerate the scenario instead of sending a no-dialogue prompt to STEP4', async () => {
+  const source = await readFile(new URL('../src/hooks/useMangaWorkflow.js', import.meta.url), 'utf8');
+
+  assert.match(source, /error\?\.code === 'DIALOGUE_CONTRACT'/);
+  assert.match(source, /吹き出し用セリフを抽出できませんでした/);
+  assert.match(source, /STEP2の「シナリオ生成」をもう一度実行してください/);
 });

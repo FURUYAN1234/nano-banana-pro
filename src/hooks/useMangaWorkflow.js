@@ -787,7 +787,7 @@ export default function useMangaWorkflow() {
       const finalScenarioText = `## タイトル: ${generatedTitle}${loglineLine}\nLocation: ${result.location || "Unspecified"}${visualEvidenceLine}${outfitLine}${punchlineLine}${bg360HeaderLine}${cameraWorkHeaderLine}\n\n${result.scenario} `;
       setScenario(finalScenarioText);
       setMangaTitle(generatedTitle); // タイトルをstateに保存（画像ダウンロード時のファイル名に使用）
-      const scenarioValidation = validateMangaScenario(finalScenarioText);
+      const scenarioValidation = validateMangaScenario(finalScenarioText, castList);
       const qualityWarnings = [];
       if (result.validationWarning) {
         qualityWarnings.push(`STEP2検証: ${result.validationWarning.code}: ${result.validationWarning.message}`);
@@ -816,6 +816,13 @@ export default function useMangaWorkflow() {
     } catch (error) {
       if (scenarioRunEpoch !== scenarioRunEpochRef.current) return null;
       console.error(error);
+      if (error?.code === 'DIALOGUE_CONTRACT') {
+        const guidance = '吹き出し用セリフを抽出できませんでした。STEP2の「シナリオ生成」をもう一度実行してください。';
+        setScenarioThought(prev => `${prev}\n\n[DIALOGUE CONTRACT] ${guidance}\n> 自動再生成を3回試行しましたが、無台詞プロンプトはSTEP4へ渡していません。`);
+        showStatus(guidance);
+        setIs360CameraWorking(false);
+        return null;
+      }
       if (/API Key is not set|OpenAI APIキーが設定されていません/.test(String(error.message || ''))) {
         setShowOpenAIKeyModal(true);
       }
@@ -838,9 +845,15 @@ export default function useMangaWorkflow() {
     const promptScenarioEpoch = scenarioRunEpochRef.current;
     const currentScenario = overrideScenario || scenario;
     if (!skipGuard && (!castList || !currentScenario)) return showStatus("キャストとシナリオが必要です。");
-    const scenarioValidation = validateMangaScenario(currentScenario);
+    const scenarioValidation = validateMangaScenario(currentScenario, castList);
     if (!scenarioValidation.ok) {
       const validationIssue = formatMangaScenarioValidationIssue(scenarioValidation);
+      if (scenarioValidation.panelsMissingDialogue.length || scenarioValidation.silentPanels.length) {
+        const guidance = `吹き出し用セリフを抽出できませんでした。STEP2の「シナリオ生成」をもう一度実行してください。(${validationIssue})`;
+        setAssembleThought(prev => `${prev ? `${prev}\n` : ''}> [DIALOGUE CONTRACT] ${guidance}`);
+        showStatus(guidance);
+        return null;
+      }
       const validationMessage = `シナリオが不完全です。${validationIssue}`;
       setAssembleThought(prev => `${prev ? `${prev}\n` : ''}> [SCENARIO QUALITY WARNING] ${validationMessage}\n> 自動再生成はしません。品質警告のままSTEP4へ進めます。`);
       showStatus(`${validationMessage} 品質警告のままSTEP4へ進めます。`);

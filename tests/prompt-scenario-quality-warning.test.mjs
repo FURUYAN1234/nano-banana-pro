@@ -36,11 +36,6 @@ Punchline: ドキュメンタリー
 状況: ヒカリが資料を読む。
 ヒカリ「確認するね。」
 
-[3コマ目: 転]
-[EMOTION: NORMAL]
-[Camera: wide shot]
-状況: ミクが窓を見る。
-
 [4コマ目: 結]
 [EMOTION: NORMAL]
 [Camera: medium shot]
@@ -69,4 +64,20 @@ test('prompt assembly permits a quality warning only when the workflow explicitl
 
   assert.match(prompt, /アカリ「始めよう。/);
   assert.match(prompt, /サエコ「これで終わり。/);
+});
+
+test('prompt assembly never opts into a missing speech-bubble contract', () => {
+  const dialogueMissingScenario = incompleteScenario.replace(
+    '[4コマ目: 結]',
+    '[3コマ目: 転]\n状況: ミクが窓を見て「嫌な予感…！」とつぶやく。\n\n[4コマ目: 結]'
+  );
+
+  assert.throws(
+    () => buildMangaPrompt({
+      ...promptArgs,
+      scenario: dialogueMissingScenario,
+      allowScenarioQualityWarning: true
+    }),
+    /Incomplete 4-koma scenario/
+  );
 });
