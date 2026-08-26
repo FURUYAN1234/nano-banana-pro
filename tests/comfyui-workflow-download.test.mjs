@@ -6,6 +6,7 @@ import { inflateRawSync } from 'node:zlib';
 
 const step4PanelSource = readFileSync(new URL('../src/components/Step4Panel.jsx', import.meta.url), 'utf8');
 const readmeSource = readFileSync(new URL('../README.md', import.meta.url), 'utf8');
+const packageJson = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
 const workflowUrl = new URL(
   '../public/workflows/Super-FURU-AI-4koma-H3-Hybrid-b25-Turbo-v4-LoRA-8step-v1.json',
   import.meta.url,
@@ -139,6 +140,11 @@ test('distributed Turbo v4 LoRA workflow has the supplied 8-step sampling and co
     ),
     true,
     'the published Git attributes must preserve the supplier workflow bytes',
+  );
+  assert.match(
+    packageJson.scripts.deploy,
+    /gh-pages -d dist --dotfiles/,
+    'the static deploy must include the published Git attributes file',
   );
   assert.equal(hashBytes(bytes), '8a95fa2d2f38fdbb40f5533d82f3318a19223829dea42583edc7b12c37d30011');
   const workflow = JSON.parse(bytes.toString('utf8'));

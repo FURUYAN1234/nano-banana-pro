@@ -1,7 +1,7 @@
 {
   "name": "nano-banana-pro",
   "private": true,
-  "version": "5.6.3",
+  "version": "5.6.4",
   "homepage": "https://FURUYAN1234.github.io/nano-banana-pro",
   "type": "module",
   "scripts": {
@@ -9,7 +9,7 @@
     "build": "vite build",
     "release:preflight": "powershell -ExecutionPolicy Bypass -File ..\\scripts\\release_app_preflight.ps1 -App nano-banana-pro",
     "predeploy": "npm run release:preflight && node scripts/pre_deploy_check.js && npm run build",
-    "deploy": "gh-pages -d dist",
+    "deploy": "gh-pages -d dist --dotfiles",
     "deploy:hf": "powershell -ExecutionPolicy Bypass -File scripts/deploy_hf.ps1",
     "version:up": "node scripts/update_version.cjs",
     "lint": "eslint .",
