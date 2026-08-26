@@ -146,7 +146,7 @@ test('distributed Turbo v4 LoRA workflow has the supplied 8-step sampling and co
     /gh-pages -d dist --dotfiles/,
     'the static deploy must include the published Git attributes file',
   );
-  assert.equal(hashBytes(bytes), '8a95fa2d2f38fdbb40f5533d82f3318a19223829dea42583edc7b12c37d30011');
+  assert.equal(hashBytes(bytes), '2ca5573bebbc2c30e9a58be01941b761baa936181b4f2d6f66f929baccaa8606');
   const workflow = JSON.parse(bytes.toString('utf8'));
   const workflowText = bytes.toString('utf8');
   assert.equal(workflow.nodes.length, 27);
