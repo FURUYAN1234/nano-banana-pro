@@ -58,6 +58,18 @@ test('single-image copy prompt retains its established emotional and rendering s
   assert.match(prompt, /vertical Japanese only/i);
 });
 
+test('single-image copy prompt uses one fail-closed cinematic router without exceeding its baseline length', () => {
+  const prompt = buildSingleImageEmotionalPrompt();
+
+  assert.match(prompt, /CINEMATIC DEPTH ROUTER/);
+  assert.match(prompt, /one existing physical scene cue.*one optional/i);
+  assert.match(prompt, /Otherwise keep the baseline camera/i);
+  assert.match(prompt, /User camera, cast, action, anatomy, and text win/i);
+  assert.doesNotMatch(prompt, /frame_within_frame|story_reflection|prism_refraction|CINEMATIC_TECHNIQUES/);
+  assert.equal((prompt.match(/CINEMATIC DEPTH ROUTER/g) || []).length, 1);
+  assert.ok(prompt.length <= 6466, `expected no more than 6,466 chars, got ${prompt.length}`);
+});
+
 test('quality upgrades require real verification of both image-output paths', () => {
   const standards = readFileSync(new URL('../docs/project_standards.md', import.meta.url), 'utf8');
 

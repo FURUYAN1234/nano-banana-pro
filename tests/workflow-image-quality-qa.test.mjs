@@ -10,12 +10,14 @@ test('image generation displays the received image before running one visible co
 
   assert.ok(renderIndex >= 0);
   assert.ok(qaIndex > renderIndex);
-  assert.match(workflowSource, /inlineData:\s*\{\s*mimeType:\s*candidate\.mimeType,\s*data:\s*candidate\.base64Img/);
-  assert.match(workflowSource, /\[QUALITY QA\].*人物・手・小物・吹き出し/);
+  assert.match(workflowSource, /buildImageQualityQaImageParts\(\{[\s\S]*candidate,[\s\S]*referenceImages:\s*images/);
+  assert.match(workflowSource, /referenceImageCount:\s*qualityImageParts\.length - 1/);
+  assert.match(workflowSource, /callAI\([\s\S]*qualityPrompt,[\s\S]*qualityImageParts/);
+  assert.match(workflowSource, /\[QUALITY QA\].*キャラクターシート・人物・手・小物・吹き出し/);
   assert.match(workflowSource, /formatImageQualityIssue/);
   assert.match(workflowSource, /qualityResult\.pass/);
   assert.match(workflowSource, /const qualityMode = inferImageQualityMode\(currentPrompt\)/);
-  assert.match(workflowSource, /buildImageQualityQaPrompt\(\{ scenario, castList, finalPrompt: candidatePrompt, mode: qualityMode \}\)/);
+  assert.match(workflowSource, /buildImageQualityQaPrompt\(\{[\s\S]*scenario,[\s\S]*castList,[\s\S]*finalPrompt:\s*candidatePrompt,[\s\S]*mode:\s*qualityMode,[\s\S]*referenceImageCount/);
   assert.match(workflowSource, /originalPrompt: currentPrompt,[\s\S]*mode: qualityMode,/);
 });
 

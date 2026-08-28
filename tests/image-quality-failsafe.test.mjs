@@ -115,6 +115,8 @@ test('repair prompt preserves the approved prompt and limits edits to concrete v
   assert.match(prompt, /^APPROVED SCRIPT AND LAYOUT/);
   assert.match(prompt, /prop_ownership/);
   assert.match(prompt, /Do not change the approved dialogue, cast, panel order, or story action/);
+  assert.match(prompt, /exactly four separate visible panels/i);
+  assert.match(prompt, /original page geometry/i);
 });
 
 test('single-image quality repair never turns the emotional illustration into a four-panel manga page', () => {

@@ -1,4 +1,6 @@
 const ISSUE_TYPES = new Set([
+  'panel_layout',
+  'character_reference',
   'anatomy',
   'hand_side',
   'prop_ownership',
@@ -9,6 +11,28 @@ const ISSUE_TYPES = new Set([
   'extra_text',
   'unverified',
 ]);
+
+const parseReferenceImage = (image) => {
+  const match = String(image || '').match(/^data:(image\/[^;,]+);base64,([\s\S]+)$/i);
+  if (!match) return null;
+  const data = match[2].replace(/\s+/g, '');
+  if (!data) return null;
+  return { inlineData: { mimeType: match[1], data } };
+};
+
+export const buildImageQualityQaImageParts = ({ candidate = {}, referenceImages = [] } = {}) => {
+  const candidateData = String(candidate.base64Img || '').replace(/\s+/g, '');
+  const candidatePart = {
+    inlineData: {
+      mimeType: candidate.mimeType || 'image/png',
+      data: candidateData,
+    },
+  };
+  const referenceParts = (Array.isArray(referenceImages) ? referenceImages : [])
+    .map(parseReferenceImage)
+    .filter(Boolean);
+  return [candidatePart, ...referenceParts];
+};
 
 const stripCodeFence = (value) => String(value || '')
   .trim()
@@ -50,18 +74,37 @@ const extractFinalPromptGeometry = (finalPrompt) => String(finalPrompt || '')
   .join('\n')
   .slice(0, 10000);
 
-export const buildImageQualityQaPrompt = ({ scenario = '', castList = '', finalPrompt = '', mode = 'four-panel' } = {}) => {
+export const buildImageQualityQaPrompt = ({
+  scenario = '',
+  castList = '',
+  finalPrompt = '',
+  mode = 'four-panel',
+  referenceImageCount = 0,
+} = {}) => {
   const isSingleImage = mode === 'single-image';
   const inspectionScope = isSingleImage
     ? `You are the visible quality gate for a generated single illustration. Inspect the supplied image as one continuous scene and compare it with the submitted prompt.
 Do not expect or reward a panel grid, comic layout, speech bubbles, or dialogue unless the submitted prompt explicitly requests them.`
-    : 'You are the visible quality gate for a generated four-panel manga page. Inspect the supplied image panel by panel and compare it with the approved scenario and cast.';
+    : `You are the visible quality gate for a generated four-panel manga page. Inspect the supplied image panel by panel and compare it with the approved scenario and cast.
+The page must contain exactly four separate visible panels in the approved order. Report panel_layout if there are fewer or more than four panels, or if any panel is merged, omitted, duplicated, or reordered.`;
   const unitLabel = isSingleImage ? 'image' : 'panel';
+  const layoutIssueRule = isSingleImage
+    ? ''
+    : '- panel_layout: the page has fewer or more than four panels, or a required panel is merged, omitted, duplicated, or reordered.';
+  const referenceCount = Math.max(0, Number(referenceImageCount) || 0);
+  const referenceInspection = referenceCount > 0
+    ? `The first supplied image is the generated candidate. The following ${referenceCount} images are the approved character reference sheets.
+Compare every visible named cast member against those sheets. Report character_reference when a clearly visible outfit, hairstyle, hair color, eye color, eyewear, or defining accessories materially differ. The approved scenario or final prompt explicitly overrides a reference-sheet outfit only when it clearly requests a different outfit.`
+    : 'Only the generated candidate image is supplied; do not report character_reference without a reference sheet.';
 
   return `
 ${inspectionScope}
 
+${referenceInspection}
+
 Fail only for a clearly visible issue in one of these types:
+${layoutIssueRule}
+- character_reference: a named cast member materially differs from an attached approved reference sheet in outfit or defining visual identity, unless the approved scenario or final prompt explicitly overrides that feature.
 - anatomy: extra, missing, duplicated, detached, merged, or wrongly attached arms/hands; impossible limb connection.
 - hand_side: an explicitly scripted left/right hand or arm is reversed, or a hand visually belongs to the wrong character.
 - prop_ownership: a named prop is held, worn, used, or transferred by the wrong character, or connected to an impossible hand.

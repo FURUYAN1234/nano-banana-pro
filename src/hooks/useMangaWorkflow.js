@@ -28,6 +28,7 @@ import {
 import { formatGeneratedMangaTitle } from '../lib/manga-title';
 import { isImagePolicyError } from '../lib/image-policy-error';
 import {
+  buildImageQualityQaImageParts,
   buildImageQualityQaPrompt,
   formatImageQualityIssue,
   parseImageQualityQaResponse
@@ -1199,15 +1200,20 @@ export default function useMangaWorkflow() {
 
       const reviewImageCandidate = async (candidate, candidatePrompt) => {
         try {
-          const qualityPrompt = buildImageQualityQaPrompt({ scenario, castList, finalPrompt: candidatePrompt, mode: qualityMode });
+          const qualityImageParts = buildImageQualityQaImageParts({
+            candidate,
+            referenceImages: images,
+          });
+          const qualityPrompt = buildImageQualityQaPrompt({
+            scenario,
+            castList,
+            finalPrompt: candidatePrompt,
+            mode: qualityMode,
+            referenceImageCount: qualityImageParts.length - 1,
+          });
           const qualityResponse = await callAI(
             qualityPrompt,
-            [{
-              inlineData: {
-                mimeType: candidate.mimeType,
-                data: candidate.base64Img
-              }
-            }],
+            qualityImageParts,
             null,
             (msg) => statCallback(`[QUALITY QA] ${msg}`)
           );
@@ -1233,7 +1239,7 @@ export default function useMangaWorkflow() {
       const finalImageStr = `data:${generatedMimeType};base64,${originalCandidate.base64Img}`;
       setGeneratedImage(finalImageStr);
       setGenerationHistory(prev => addGenerationHistoryItem(prev, { id: Date.now(), img: finalImageStr }));
-      statCallback('[QUALITY QA] 人物・手・小物・吹き出しを検査中です。画像は先に保存し、具体的なNGだけ1回限定修正します。');
+      statCallback('[QUALITY QA] キャラクターシート・人物・手・小物・吹き出しを検査中です。画像は先に保存し、具体的なNGだけ1回限定修正します。');
 
       const qualityOutcome = await runImageQualityFailsafe({
         originalCandidate,

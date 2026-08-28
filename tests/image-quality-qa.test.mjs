@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
+  buildImageQualityQaImageParts,
   buildImageQualityQaPrompt,
   formatImageQualityIssue,
   parseImageQualityQaResponse,
@@ -15,11 +16,19 @@ test('quality prompt prioritizes anatomy, hand side, prop ownership, and bubble 
     scenario: 'アカリ「行こう！」',
     castList: 'アカリ: 主人公',
     finalPrompt: "## Panel 3\nCamera: ヒカリの肩越し\nFUNCTIONAL SURFACE PANEL CHECK: solve geometry\nVISIBLE REAR DEPTH CHECK: camera is physically behind [ヒカリ]'s shoulder\nAction (visual only): ヒカリがスマホを読む。\nUNRELATED_RENDERING_NOISE: should be removed",
+    referenceImageCount: 2,
   });
 
-  for (const type of ['anatomy', 'hand_side', 'prop_ownership', 'prop_orientation', 'camera_geometry', 'bubble_text', 'speaker_name', 'extra_text', 'unverified']) {
+  for (const type of ['panel_layout', 'character_reference', 'anatomy', 'hand_side', 'prop_ownership', 'prop_orientation', 'camera_geometry', 'bubble_text', 'speaker_name', 'extra_text', 'unverified']) {
     assert.match(prompt, new RegExp(type));
   }
+  assert.match(prompt, /first supplied image is the generated candidate/i);
+  assert.match(prompt, /following 2 images are the approved character reference sheets/i);
+  assert.match(prompt, /outfit, hairstyle, hair color, eye color, eyewear, or defining accessories/i);
+  assert.match(prompt, /scenario or final prompt explicitly overrides/i);
+  assert.match(prompt, /exactly four separate visible panels/i);
+  assert.match(prompt, /fewer or more than four panels/i);
+  assert.match(prompt, /merged, omitted, duplicated, or reordered/i);
   assert.match(prompt, /Do not fail the image for background detail or background continuity/);
   assert.match(prompt, /speaker name prefix/i);
   assert.match(prompt, /exactly once/i);
@@ -44,6 +53,35 @@ test('quality prompt prioritizes anatomy, hand side, prop ownership, and bubble 
   assert.doesNotMatch(prompt, /UNRELATED_RENDERING_NOISE/);
 });
 
+test('quality review image parts keep the candidate first and append valid character sheets', () => {
+  const parts = buildImageQualityQaImageParts({
+    candidate: { mimeType: 'image/png', base64Img: 'candidate-data' },
+    referenceImages: [
+      'data:image/jpeg;base64,reference-one',
+      'not-an-image',
+      'data:image/png;base64,reference-two',
+    ],
+  });
+
+  assert.deepEqual(parts, [
+    { inlineData: { mimeType: 'image/png', data: 'candidate-data' } },
+    { inlineData: { mimeType: 'image/jpeg', data: 'reference-one' } },
+    { inlineData: { mimeType: 'image/png', data: 'reference-two' } },
+  ]);
+});
+
+test('preserves character-sheet mismatches as a stable issue type', () => {
+  const result = parseImageQualityQaResponse(JSON.stringify({
+    pass: false,
+    issues: [
+      { type: 'character_reference', panel: 1, subject: 'アカリ', reason: 'sailor uniform was replaced by a vest uniform' },
+    ],
+  }));
+
+  assert.equal(result.pass, false);
+  assert.equal(result.issues[0].type, 'character_reference');
+});
+
 test('preserves explicit over-the-shoulder camera failures as a stable issue type', () => {
   const result = parseImageQualityQaResponse(JSON.stringify({
     pass: false,
@@ -54,6 +92,19 @@ test('preserves explicit over-the-shoulder camera failures as a stable issue typ
 
   assert.equal(result.pass, false);
   assert.equal(result.issues[0].type, 'camera_geometry');
+});
+
+test('preserves four-panel page-layout failures as a stable issue type', () => {
+  const result = parseImageQualityQaResponse(JSON.stringify({
+    pass: false,
+    issues: [
+      { type: 'panel_layout', panel: null, subject: 'manga page', reason: 'only two visible panels were rendered' },
+    ],
+  }));
+
+  assert.equal(result.pass, false);
+  assert.equal(result.issues[0].type, 'panel_layout');
+  assert.equal(result.issues[0].panel, null);
 });
 
 test('preserves functional-surface orientation failures as a stable issue type', () => {
@@ -99,6 +150,7 @@ test('single-image QA inspects one scene without imposing a four-panel layout', 
     castList: '',
     finalPrompt: SINGLE_IMAGE_PROMPT,
     mode: 'single-image',
+    referenceImageCount: 0,
   });
 
   assert.match(prompt, /generated single illustration/i);
@@ -106,4 +158,7 @@ test('single-image QA inspects one scene without imposing a four-panel layout', 
   assert.match(prompt, /Do not expect or reward a panel grid, comic layout, speech bubbles, or dialogue/i);
   assert.doesNotMatch(prompt, /generated four-panel manga page/i);
   assert.doesNotMatch(prompt, /Inspect the supplied image panel by panel/i);
+  assert.doesNotMatch(prompt, /exactly four separate visible panels/i);
+  assert.doesNotMatch(prompt, /panel_layout/);
+  assert.doesNotMatch(prompt, /following \d+ images are the approved character reference sheets/i);
 });

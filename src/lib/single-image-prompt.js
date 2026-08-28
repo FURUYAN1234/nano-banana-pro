@@ -1,4 +1,8 @@
 import { SHARED_IMAGE_QUALITY_CONTRACT } from './shared-image-quality';
+import { buildSingleImageCinematicRouter } from './cinematic-techniques';
+
+const LEGACY_SINGLE_IMAGE_CAMERA_SLOT = `- Choose a camera angle and lens that serve the requested emotion: intimate close-ups for vulnerability, low angles for power, wide shots for loneliness, diagonals for action, and stable framing for tender or observational scenes.
+- Never default to a flat, eye-level, center-framed shot. Keep any explicit user camera direction over automatic staging.`;
 
 export const buildSingleImageEmotionalPrompt = () => `[ ANTIGRAVITY EMOTIONAL CINEMA ENGINE v2.1 ]
 You are a world-class anime film director and cinematographer. Create a SINGLE breathtaking illustration that makes the viewer FEEL something powerful, not just see a character standing there.
@@ -10,8 +14,7 @@ Read the user's instruction carefully. Detect the emotional vector (joy, sadness
 - Use the Facial Action Coding System: combine specific brow, eyelid, mouth, and cheek cues instead of a generic face. Make the eyes the emotional anchor with clear iris depth and natural catchlights. Use posture, gesture, weight distribution, and restrained micro-expressions to show the story.
 
 [ 2. CINEMATIC CAMERA ]
-- Choose a camera angle and lens that serve the requested emotion: intimate close-ups for vulnerability, low angles for power, wide shots for loneliness, diagonals for action, and stable framing for tender or observational scenes.
-- Never default to a flat, eye-level, center-framed shot. Keep any explicit user camera direction over automatic staging.
+${buildSingleImageCinematicRouter(LEGACY_SINGLE_IMAGE_CAMERA_SLOT.length)}
 
 [ 3. LIGHTING & COLOR ]
 - Use emotional, motivated lighting: warm key and soft fill for joy, cool shadows with one warm practical accent for melancholy, controlled directional contrast for tension, and diffused backlight for tenderness.

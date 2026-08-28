@@ -37,7 +37,8 @@ export const buildImageQualityRepairPrompt = ({ originalPrompt = '', issues = []
 Do not introduce panels, panel borders, a comic page, a collage, additional scenes, new characters, or a new setting.
 Do not change the approved subject count, action, setting, camera, crop, or story beat.`
     : `Create a corrected replacement for the same four-panel manga page.
-Do not change the approved dialogue, cast, panel order, or story action.`;
+Preserve exactly four separate visible panels and the original page geometry.
+Do not merge, omit, duplicate, or reorder panels. Do not change the approved dialogue, cast, panel order, or story action.`;
 
   return `${String(originalPrompt).trim()}
 
