@@ -146,7 +146,7 @@ test('distributed Turbo v4 LoRA workflow has the supplied 8-step sampling and co
     /gh-pages -d dist --dotfiles/,
     'the static deploy must include the published Git attributes file',
   );
-  assert.equal(hashBytes(bytes), '2ca5573bebbc2c30e9a58be01941b761baa936181b4f2d6f66f929baccaa8606');
+  assert.equal(hashBytes(bytes), 'c43a72ee7853ba7066ea09f660674698aa9efb15628611f48d4b9c24493727bc');
   const workflow = JSON.parse(bytes.toString('utf8'));
   const workflowText = bytes.toString('utf8');
   assert.equal(workflow.nodes.length, 27);
@@ -168,9 +168,9 @@ test('distributed Turbo v4 LoRA workflow has the supplied 8-step sampling and co
     workflow.nodes
       .filter((node) => node.type === 'MarkdownNote')
       .map((node) => node.title)
-      .filter((title) => ['使い方・タイトル仕様', '配布前の必須環境・モデル配置', '解像度早見表'].includes(title))
+      .filter((title) => ['配布前の必須環境・モデル配置', '解像度早見表'].includes(title))
       .sort(),
-    ['使い方・タイトル仕様', '解像度早見表', '配布前の必須環境・モデル配置'].sort(),
+    ['解像度早見表', '配布前の必須環境・モデル配置'].sort(),
   );
   assert.deepEqual(
     workflow.nodes.find((node) => node.id === 141)?.widgets_values?.[0],

@@ -1,6 +1,6 @@
 # Super FURU AI 4-koma System
 
-> Latest release: **v5.6.7** / 最新リリース: **v5.6.7**
+> Latest release: **v5.6.8** / 最新リリース: **v5.6.8**
 
 > **"To what extent can humans step away from the creative process?"**
 > **「人間は、どこまで制作から降りられるのか？」**
@@ -22,7 +22,7 @@
 This project aims to intentionally exclude humans from the creative process, allowing AI to act as a director and complete everything from brainstorming to composition, direction, and rendering.
 本プロジェクトは、人間をクリエイティブな工程から意図的に排除し、AIがディレクターとして「ネタ出し・構成・演出・作画」のすべてを完結させることを目的としています。
 
-The current implementation and latest release are **v5.6.7**. The product name is **Super FURU AI 4-koma System**; **Nano Banana 2** and **gpt-image-2** identify the Gemini and OpenAI image-generation routes. / 現在の実装および最新公開版は **v5.6.7** です。製品名は **Super FURU AI 4-koma System** で、**Nano Banana 2** と **gpt-image-2** はGemini系・OpenAI系の画像生成経路の名称です。
+The current implementation and latest release are **v5.6.8**. The product name is **Super FURU AI 4-koma System**; **Nano Banana 2** and **gpt-image-2** identify the Gemini and OpenAI image-generation routes. / 現在の実装および最新公開版は **v5.6.8** です。製品名は **Super FURU AI 4-koma System** で、**Nano Banana 2** と **gpt-image-2** はGemini系・OpenAI系の画像生成経路の名称です。
 
 Current behavior at a glance / 現行仕様の要点:
 
@@ -315,7 +315,7 @@ To address the extreme complexity of a 5,000+ line monolith, the frontend archit
 
 ## 🔍 Deep Analysis (技術詳解)
 
-### 🧭 Current v5.6.7 Processing Contract / 現行v5.6.7処理仕様
+### 🧭 Current v5.6.8 Processing Contract / 現行v5.6.8処理仕様
 
 | Stage | Input | Processing and validation | Output |
 |:--|:--|:--|:--|
@@ -854,6 +854,9 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 ---
 
 ## 📋 ChangeLog
+
+### v5.6.8 (2026-08-28)
+- **[Fix & UX]** MiniMax H3の最新版・最強版配布ワークフローをユーザー提供のHybrid b25 Turbo v4 LoRA 8-step JSONへ差し替え / Replaced the latest MiniMax H3 workflow download with the user-provided Hybrid b25 Turbo v4 LoRA 8-step JSON
 
 ### v5.6.7 (2026-08-28)
 - **[Fix & UX]** 条件付き映像テクニックとキャラクターシート参照QAを追加し、固定長プロンプトを維持 / Adds conditional cinematic techniques and character-sheet QA while preserving fixed prompt length

@@ -89,19 +89,19 @@
       "id": 116,
       "type": "MarkdownNote",
       "pos": [
-        -3030,
-        4850
+        -4800,
+        4800
       ],
       "size": [
-        540,
-        1020
+        1100,
+        2300
       ],
       "flags": {},
       "order": 1,
       "mode": 0,
       "inputs": [],
       "outputs": [],
-      "title": "使い方・タイトル仕様",
+      "title": "【15秒・四コマ従来版】3本の違い・使い方",
       "properties": {
         "ue_properties": {
           "widget_ue_connectable": {},
@@ -110,7 +110,7 @@
         }
       },
       "widgets_values": [
-        "# FURU four-panel manga to video / FURUの4コマ漫画を動画化\n\nTurn one completed Super FURU AI four-panel manga page into a 15-second, 16:9 MiniMax H3 video with spoken dialogue, visible character acting, per-panel story order, a deterministic opening title, and a fixed end credit. This graph keeps the manga-derived cast, dialogue ownership, actions, setting, and punchline; it does not invent a fixed cast or force every person into every shot.\n\n完成したSuper FURU AIの4コマ漫画1枚を、会話音声・人物演技・各コマの物語順・固定タイトル・固定エンドクレジットを持つ15秒・16:9のMiniMax H3動画へ変換します。人物集合、台詞の話者、動作、場所、オチは元の漫画から読み取り、固定人数や全ショットへの強制登場は行いません。\n\n## Quick start / 使い方\n1. Install `ComfyUI-NanoBanana-H3`, fully restart ComfyUI, and open this workflow. / `ComfyUI-NanoBanana-H3` を導入してComfyUIを完全に再起動し、このワークフローを開きます。\n2. Open this workflow: missing H3 model cards show Download. Download every listed model, then restart or refresh the model list. / ワークフローを開くと不足モデルにDownloadが表示されます。表示された全モデルを取得し、モデル一覧を再読込またはComfyUIを再起動します。\n3. Select your completed four-panel manga in **1. ④コマまんがを投入**, keep 16:9 and 0.4 MP as the starting point, then run. / **1. ④コマまんがを投入** で完成した4コマ漫画を選び、まずは16:9・0.4MPのまま実行します。\n\n## Turbo v4 LoRA / Turbo v4 LoRA\nThe verified Turbo v4 LoRA is embedded as a downloadable model entry. This graph uses its filename, strength `1.0`, `euler`, `beta`, and `8` steps together; change them only as one deliberate experiment. / 検証済みTurbo v4 LoRAもダウンロード対象として登録済みです。このグラフではファイル名、強度 `1.0`、`euler`、`beta`、`8` stepsを組み合わせて使います。変更する場合は、この組合せを理解した検証として行ってください。\n\n## Model download behavior / モデル取得の挙動\nEach loader contains the exact source URL, SHA256, target folder, and expected filename. ComfyUI can therefore identify a missing model from this workflow instead of showing only an unresolved filename. Desktop installs to the managed model folder; in browser-based ComfyUI, Download can save through the browser, so move the downloaded file to the folder shown in the model card if necessary. / 各ローダーには正確な配布URL、SHA256、保存先、ファイル名を登録しています。そのためComfyUIは不明なファイル名だけでなく、このワークフローに必要なモデルとして認識できます。ComfyUI Desktopは管理対象フォルダへ保存します。ブラウザ版ではDownloadがブラウザ保存になる場合があるため、その場合はモデルカード表示の保存先へ移動してください。\n\n## FURU workflow contract / FURU動画化の仕様\nOne source page becomes exactly four contiguous video shots in manga panel order. The prompt builder derives `panel_cast[N]` and immutable identity signatures from each panel, preserves the corresponding people and spoken turns, removes speech balloons, and gives every visible character a role-appropriate movement. H3 does not draw title, subtitles, URLs, or end credits; the workflow composites the title once at upper left and the fixed credit after generation. / 1枚の入力ページを、漫画のコマ順に連続する4ショットへ変換します。プロンプト生成は各コマから `panel_cast[N]` と識別署名を導出し、対応人物と会話順を守り、吹き出しを除去し、画面内の各人物へ役割に応じた動きを与えます。H3本体にはタイトル、字幕、URL、エンドクレジットを描かせず、ワークフローが生成後にタイトルを左上へ1回、固定クレジットを合成します。\n\n## Post-generation QA / 生成後QA\nAfter each generation, inspect four frames distributed across the timeline and check the exact person count, hand/finger integrity, story-critical rigid props, and accidental readable text. Verify every intended Japanese line with transcription plus VAD; run Whisper/VAD in a separate virtual environment rather than installing it into ComfyUI. Treat wrong person count, identity, rigid structure, or spoken words as regeneration issues. Unintended speech in an otherwise usable silent shot and pitch-only accent problems may be repaired offline. Preserve the original 32 kHz stereo layout and exact sample duration for any audio repair so lip sync and later concatenation remain intact. / 各生成後に時間軸上の4フレームを静止画確認し、人数、手指、重要な剛体小物、意図しない文字を点検します。日本語台詞は文字起こし＋VADで照合し、Whisper/VADはComfyUIとは別の仮想環境に隔離してください。音声修復時は32kHzステレオとサンプル長を維持します。\n\n## Output / 出力\nThe audio-enabled MP4 is saved by `SaveVideo`. `SELECT_YOUR_4KOMA_MANGA.png` is only a distribution placeholder; replace it before running. / 音声付きMP4は `SaveVideo` ノードが保存します。`SELECT_YOUR_4KOMA_MANGA.png` は配布用プレースホルダーなので、実行前に必ず自分の画像へ差し替えてください。"
+        "# Hybrid-b25 LoRA 四コマ従来版（15秒）\n\n## 3本のワークフローの違い\n1. **四コマ長時間版（60秒）** — この15秒版の高速化、四コマ画像変換、タイトル、クレジットを残したまま長尺対応した後継版です。\n2. **汎用長時間版（60秒）** — 同じHybrid-b25 + Turbo v4 LoRA高速化構成から、四コマ専用機能だけを外した一般用途版です。\n3. **このファイル：四コマ従来版（15秒）** — 元の短時間版です。長時間版とは別ファイルであり、内容を上書きしていません。\n\n## この15秒版を選ぶ場合\n短い4コマ動画を従来どおり一度のH3生成で作りたい場合に使います。既定は15秒、16:9、0.4MP、Turbo v4 LoRA強度1.0、Euler、Beta、8 stepsです。60秒を作る場合は、このファイルの秒数だけを変更せず、必ず「【60秒】四コマ長時間版」を使用してください。\n\n# FURU four-panel manga to video / FURUの4コマ漫画を動画化\n\nTurn one completed Super FURU AI four-panel manga page into a 15-second, 16:9 MiniMax H3 video with spoken dialogue, visible character acting, per-panel story order, a deterministic opening title, and a fixed end credit. This graph keeps the manga-derived cast, dialogue ownership, actions, setting, and punchline; it does not invent a fixed cast or force every person into every shot.\n\n完成したSuper FURU AIの4コマ漫画1枚を、会話音声・人物演技・各コマの物語順・固定タイトル・固定エンドクレジットを持つ15秒・16:9のMiniMax H3動画へ変換します。人物集合、台詞の話者、動作、場所、オチは元の漫画から読み取り、固定人数や全ショットへの強制登場は行いません。\n\n## Quick start / 使い方\n1. Install `ComfyUI-NanoBanana-H3`, fully restart ComfyUI, and open this workflow. / `ComfyUI-NanoBanana-H3` を導入してComfyUIを完全に再起動し、このワークフローを開きます。\n2. Open this workflow: missing H3 model cards show Download. Download every listed model, then restart or refresh the model list. / ワークフローを開くと不足モデルにDownloadが表示されます。表示された全モデルを取得し、モデル一覧を再読込またはComfyUIを再起動します。\n3. Select your completed four-panel manga in **1. ④コマまんがを投入**, keep 16:9 and 0.4 MP as the starting point, then run. / **1. ④コマまんがを投入** で完成した4コマ漫画を選び、まずは16:9・0.4MPのまま実行します。\n\n## Turbo v4 LoRA / Turbo v4 LoRA\nThe verified Turbo v4 LoRA is embedded as a downloadable model entry. This graph uses its filename, strength `1.0`, `euler`, `beta`, and `8` steps together; change them only as one deliberate experiment. / 検証済みTurbo v4 LoRAもダウンロード対象として登録済みです。このグラフではファイル名、強度 `1.0`、`euler`、`beta`、`8` stepsを組み合わせて使います。変更する場合は、この組合せを理解した検証として行ってください。\n\n## Model download behavior / モデル取得の挙動\nEach loader contains the exact source URL, SHA256, target folder, and expected filename. ComfyUI can therefore identify a missing model from this workflow instead of showing only an unresolved filename. Desktop installs to the managed model folder; in browser-based ComfyUI, Download can save through the browser, so move the downloaded file to the folder shown in the model card if necessary. / 各ローダーには正確な配布URL、SHA256、保存先、ファイル名を登録しています。そのためComfyUIは不明なファイル名だけでなく、このワークフローに必要なモデルとして認識できます。ComfyUI Desktopは管理対象フォルダへ保存します。ブラウザ版ではDownloadがブラウザ保存になる場合があるため、その場合はモデルカード表示の保存先へ移動してください。\n\n## FURU workflow contract / FURU動画化の仕様\nOne source page becomes exactly four contiguous video shots in manga panel order. The prompt builder derives `panel_cast[N]` and immutable identity signatures from each panel, preserves the corresponding people and spoken turns, removes speech balloons, and gives every visible character a role-appropriate movement. H3 does not draw title, subtitles, URLs, or end credits; the workflow composites the title once at upper left and the fixed credit after generation. / 1枚の入力ページを、漫画のコマ順に連続する4ショットへ変換します。プロンプト生成は各コマから `panel_cast[N]` と識別署名を導出し、対応人物と会話順を守り、吹き出しを除去し、画面内の各人物へ役割に応じた動きを与えます。H3本体にはタイトル、字幕、URL、エンドクレジットを描かせず、ワークフローが生成後にタイトルを左上へ1回、固定クレジットを合成します。\n\n## Post-generation QA / 生成後QA\nAfter each generation, inspect four frames distributed across the timeline and check the exact person count, hand/finger integrity, story-critical rigid props, and accidental readable text. Verify every intended Japanese line with transcription plus VAD; run Whisper/VAD in a separate virtual environment rather than installing it into ComfyUI. Treat wrong person count, identity, rigid structure, or spoken words as regeneration issues. Unintended speech in an otherwise usable silent shot and pitch-only accent problems may be repaired offline. Preserve the original 32 kHz stereo layout and exact sample duration for any audio repair so lip sync and later concatenation remain intact. / 各生成後に時間軸上の4フレームを静止画確認し、人数、手指、重要な剛体小物、意図しない文字を点検します。日本語台詞は文字起こし＋VADで照合し、Whisper/VADはComfyUIとは別の仮想環境に隔離してください。音声修復時は32kHzステレオとサンプル長を維持します。\n\n## Output / 出力\nThe audio-enabled MP4 is saved by `SaveVideo`. `SELECT_YOUR_4KOMA_MANGA.png` is only a distribution placeholder; replace it before running. / 音声付きMP4は `SaveVideo` ノードが保存します。`SELECT_YOUR_4KOMA_MANGA.png` は配布用プレースホルダーなので、実行前に必ず自分の画像へ差し替えてください。"
       ],
       "color": "#222",
       "bgcolor": "#000"
@@ -2147,12 +2147,12 @@
   "groups": [
     {
       "id": 1,
-      "title": "配布・導入ガイド / Read before running",
+      "title": "この15秒従来版の説明（最初に読む）",
       "bounding": [
-        -3625,
-        4790,
-        1150,
-        1110
+        -4850,
+        4750,
+        1200,
+        2400
       ],
       "color": "#6c8ebf",
       "flags": {}
