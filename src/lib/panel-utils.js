@@ -191,6 +191,12 @@ const isGenericRoleSpeaker = (name = '') => {
   return GENERIC_ROLE_SPEAKER_RE.test(cleanName);
 };
 
+const isUnregisteredCharacterCategorySpeaker = (name = '', validCharacters = []) => {
+  const cleanName = String(name).replace(/[（(].*?[）)]/g, '').trim();
+  if (findExactCastMatch(cleanName, validCharacters)) return false;
+  return /の(?:キャラ|キャラクター)(?:[A-ZＡ-Ｚ0-9０-９\s]*)$/u.test(cleanName);
+};
+
 const getPersonDescriptorTokens = (value = '') => {
   const cleanValue = normalizeSpeakerKey(normalizeCastDisplayName(value));
   return [...new Set(cleanValue.match(PERSON_DESCRIPTOR_TOKEN_RE) || [])];
@@ -671,7 +677,9 @@ export const extractDialogueOnly = (fullPanelText, castList, options = {}) => {
       // [v2.45] リアクション指示混入検出: 「（リアクション」等が話者名に含まれていたら除外
       const hasReactionTag = /[（(]\s*リアクション/i.test(match[1]);
 
-      if (hasSentenceParticles || endsWithParticle || isNarrationSubject || isTooLong || isMetaTag || isSoundEffect || hasReactionTag) {
+      const isUnregisteredCharacterCategory = isUnregisteredCharacterCategorySpeaker(tempSpeakerBase, validCharacters);
+
+      if (hasSentenceParticles || endsWithParticle || isNarrationSubject || isTooLong || isMetaTag || isSoundEffect || hasReactionTag || isUnregisteredCharacterCategory) {
         // 文章構造・メタタグ・効果音・リアクション指示を含む → 話者名ではない
       } else if (isLikelyPerson(tempSpeakerBase, validCharacters) || isGenericShortSpeakerPrefix(tempSpeakerBase) || tempSpeakerBase.includes("全員") || tempSpeakerBase === "Speaker" || match[0].trim().endsWith(':') || match[0].trim().endsWith('：')) {
         isDialogue = true;
@@ -1133,7 +1141,9 @@ export const extractActionOnly = (fullPanelText, castList, placementRule = "") =
       const isSoundEffect = /^[^a-zA-Z]*([\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF])([ーッっ]*\1){1,}[ーッっ！!ン]*$/u.test(tempSpeaker.replace(/[（(].*$/, '').trim());
       const hasReactionTag = /[（(]\s*リアクション/i.test(match[1]);
       
-      if (hasSentenceParticles || isNarrationSubject || isTooLong || isMetaTag || isSoundEffect || hasReactionTag) {
+      const isUnregisteredCharacterCategory = isUnregisteredCharacterCategorySpeaker(tempSpeaker, validCharacters);
+
+      if (hasSentenceParticles || isNarrationSubject || isTooLong || isMetaTag || isSoundEffect || hasReactionTag || isUnregisteredCharacterCategory) {
         // Not a dialogue speaker (meta tag, sound effect, or reaction directive)
       } else if (isLikelyPerson(tempSpeaker, validCharacters) || isGenericShortSpeakerPrefix(tempSpeaker) || tempSpeaker === "全員" || tempSpeaker === "Speaker" || match[0].trim().endsWith(':') || match[0].trim().endsWith('：')) {
         isDialogue = true;

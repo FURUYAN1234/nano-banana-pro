@@ -1,4 +1,5 @@
-const STAGING_CUE_RE = /(?:話しかけ|語りかけ|呼びかけ|問いかけ|会話相手|聞き手|見つめ|視線|目線|正面|カメラ|画面|読者|観客|視聴者|向かい合|向き合|振り向|(?:を|へ|に)向(?:く|かう|ける|いて)|(?:を|へ|に)見(?:る|ない)|face(?:s|d|ing)?|look(?:s|ed|ing)?|gaze|eye[-\s]?line|address(?:es|ed|ing)?)/i;
+const STAGING_CUE_RE = /(?:話しかけ|語りかけ|呼びかけ|問いかけ|会話相手|聞き手|見つめ|視線|目線|向かい合|向き合|振り向|(?:を|へ|に)向(?:く|かう|ける|いて)|(?:読者|観客|視聴者|カメラ|画面)(?:正面)?(?:を|へ|に)?(?:見ない|向(?:く|かう|ける|いて))|(?:カメラ|画面)?正面.{0,8}(?:禁止|避け|向かない)|face(?:s|d|ing)?|look(?:s|ed|ing)?|gaze|eye[-\s]?line|address(?:es|ed|ing)?)/i;
+const INTERPERSONAL_VIEW_CUE_RE = /(?:^|[。！？!?]\s*)[^\s、。！？!?]{1,24}(?:は|が)[^\s、。！？!?]{1,24}(?:を|へ|に)見(?:る|ない)(?:[、。！？!?]|$)/u;
 const PANEL_REF_RE = /([1-4一二三四])\s*コマ目/gu;
 const PANEL_NUMBER = { '1': 1, '2': 2, '3': 3, '4': 4, 一: 1, 二: 2, 三: 3, 四: 4 };
 const LOCK_MARKER = '[USER STAGING LOCK - ABSOLUTE]';
@@ -13,7 +14,7 @@ const collectManualStagingDirectives = (manualTopic) => {
   const byPanel = new Map();
 
   splitDirectiveSentences(manualTopic).forEach((sentence) => {
-    if (!STAGING_CUE_RE.test(sentence)) return;
+    if (!STAGING_CUE_RE.test(sentence) && !INTERPERSONAL_VIEW_CUE_RE.test(sentence)) return;
     const panelNumbers = [...sentence.matchAll(PANEL_REF_RE)]
       .map((match) => PANEL_NUMBER[match[1]])
       .filter(Boolean);

@@ -46,6 +46,14 @@ test('non-staging manual content is not duplicated into panel actions', () => {
   assert.equal(result, SCENARIO);
 });
 
+test('topical prose mentioning viewers and looking at characters is not treated as staging', () => {
+  const manual = 'フィクションのキャラに最適解ばかり求める視聴者が増えている。つまらないことで悩むキャラを見ると、すぐ解決すれば終わると思う。読者の共感を生む人間らしい失敗が話題になっている。';
+  const result = applyManualStagingLocks(SCENARIO, manual);
+
+  assert.equal(result, SCENARIO);
+  assert.doesNotMatch(result, /USER STAGING LOCK/);
+});
+
 test('staging lock application is idempotent', () => {
   const once = applyManualStagingLocks(SCENARIO, 'BはAへ話しかけ、カメラを見ない。');
   assert.equal(applyManualStagingLocks(once, 'BはAへ話しかけ、カメラを見ない。'), once);

@@ -438,6 +438,22 @@ test('promotes a generic-role spoken quote from situation text and leaves gramma
   assert.doesNotMatch(action, /掲げと叫び/);
 });
 
+test('does not promote an unregistered descriptive character category to a speech-bubble speaker', () => {
+  const panelText = `
+[1コマ目: 起]
+状況: リビングでアカリがSNS投稿を見せ、ヒカリが画面をのぞき込む。
+フィクションのキャラ「つまらないことで悩むキャラを見ると、悟りを開けば終わると思う」
+アカリ「なんでみんなキャラに完璧ばっか求めるの！？」
+ヒカリ「ほんとだね、キャラも息つく暇ないよ。」`;
+
+  const dialogue = extractDialogueOnly(panelText, CAST_LIST, { forImagePrompt: true });
+
+  assert.doesNotMatch(dialogue, /つまらないことで悩むキャラ/);
+  assert.doesNotMatch(dialogue, /フィクションのキャラ/);
+  assert.match(dialogue, /B1="なんでみんなキャラに完璧ばっか求めるの！？"/);
+  assert.match(dialogue, /B2="ほんとだね、キャラも息つく暇ないよ。"/);
+});
+
 test('separates visible bubble lettering from speaker-name tail metadata for image prompts', () => {
   const panelText = `
 [2コマ目: 承]
