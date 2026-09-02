@@ -93,6 +93,8 @@ test('STEP4 exposes the shared custom node before the latest workflow JSON as se
   assert.match(step4PanelSource, /暗号化されません/);
   assert.match(step4PanelSource, /多くの場合/);
   assert.match(step4PanelSource, /Turbo v4 LoRA.*強度.*1\.0.*Euler.*Beta.*8 steps/s);
+  assert.match(step4PanelSource, /SpectrumApplyMiniMaxH3.*ComfyUI Manager.*ComfyUI-Spectrum-MiniMax-H3/s);
+  assert.match(step4PanelSource, /minimax_h3_video_vae_int8_convrot\.safetensors/);
   assert.match(step4PanelSource, /カスタムノードは標準版・Turbo LoRA版で共通/);
   assert.match(step4PanelSource, /JSONだけでは実行できません/);
   assert.match(step4PanelSource, /ComfyUI\/custom_nodes\/ComfyUI-NanoBanana-H3\//);
@@ -129,7 +131,7 @@ test('H3 copy keeps the synchronous selection fallback inside the original click
   assert.match(step4PanelSource, /textarea\.setSelectionRange\(0, text\.length\)/);
 });
 
-test('distributed Turbo v4 LoRA workflow has the supplied 8-step sampling and compositing contract', () => {
+test('distributed Turbo v4 LoRA workflow has the supplied Spectrum-accelerated 8-step sampling and compositing contract', () => {
   assert.equal(existsSync(workflowUrl), true, 'ComfyUI workflow JSON must be distributed from public/workflows');
   if (!existsSync(workflowUrl)) return;
 
@@ -146,11 +148,11 @@ test('distributed Turbo v4 LoRA workflow has the supplied 8-step sampling and co
     /gh-pages -d dist --dotfiles/,
     'the static deploy must include the published Git attributes file',
   );
-  assert.equal(hashBytes(bytes), 'c43a72ee7853ba7066ea09f660674698aa9efb15628611f48d4b9c24493727bc');
+  assert.equal(hashBytes(bytes), '83dea9a22988f06bfc3d7b406d2eb3bc031db60621f15ea5a2dec617f6249cae');
   const workflow = JSON.parse(bytes.toString('utf8'));
   const workflowText = bytes.toString('utf8');
-  assert.equal(workflow.nodes.length, 27);
-  assert.equal(workflow.links.length, 31);
+  assert.equal(workflow.nodes.length, 28);
+  assert.equal(workflow.links.length, 32);
   assert.ok(!workflow.nodes.some((node) => node.type === 'PreviewImage'));
   assert.deepEqual(
     workflow.nodes.find((node) => node.type === 'BasicScheduler')?.widgets_values,
@@ -161,6 +163,18 @@ test('distributed Turbo v4 LoRA workflow has the supplied 8-step sampling and co
     workflow.nodes.find((node) => node.type === 'LoraLoaderModelOnly')?.widgets_values,
     ['minimax_h3_turbo_v4_step600_ema_pruned_comfyui.safetensors', 1],
   );
+  assert.deepEqual(
+    workflow.nodes.find((node) => node.type === 'SpectrumApplyMiniMaxH3')?.widgets_values,
+    [true, 0.5, 1, 0.1, 2, 0.75, 1, 1, 8, false, 'system_ram', true, false, false, true, 0, 'system_ram', 'off', 0.65, false, false, 'coordinate_rls', 'hard_clip', 0.4, 'no_attenuation', 'balanced'],
+  );
+  assert.equal(
+    workflow.nodes.find((node) => node.type === 'SpectrumApplyMiniMaxH3')?.properties?.cnr_id,
+    'comfyui-spectrum-minimax-h3',
+  );
+  assert.equal(
+    workflow.nodes.find((node) => node.type === 'SpectrumApplyMiniMaxH3')?.properties?.ver,
+    '0.2.23',
+  );
   assert.ok(workflow.nodes.some((node) => node.type === 'NanoBananaH3Transform'));
   assert.ok(workflow.nodes.some((node) => node.type === 'DeterministicTitleWatermarkOverlay'));
   assert.ok(workflow.nodes.some((node) => node.type === 'DeterministicEndCreditOverlay'));
@@ -168,9 +182,9 @@ test('distributed Turbo v4 LoRA workflow has the supplied 8-step sampling and co
     workflow.nodes
       .filter((node) => node.type === 'MarkdownNote')
       .map((node) => node.title)
-      .filter((title) => ['配布前の必須環境・モデル配置', '解像度早見表'].includes(title))
+      .filter((title) => ['配布前の必須環境・Download配置', '解像度早見表'].includes(title))
       .sort(),
-    ['解像度早見表', '配布前の必須環境・モデル配置'].sort(),
+    ['解像度早見表', '配布前の必須環境・Download配置'].sort(),
   );
   assert.deepEqual(
     workflow.nodes.find((node) => node.id === 141)?.widgets_values?.[0],
@@ -188,8 +202,9 @@ test('distributed Turbo v4 LoRA workflow has the supplied 8-step sampling and co
     && link[3] === idOf(toType)
     && link[4] === toSlot
   ));
-  assert.equal(hasLink('LoraLoaderModelOnly', 0, 'BasicScheduler', 0), true);
-  assert.equal(hasLink('LoraLoaderModelOnly', 0, 'BasicGuider', 0), true);
+  assert.equal(hasLink('LoraLoaderModelOnly', 0, 'SpectrumApplyMiniMaxH3', 0), true);
+  assert.equal(hasLink('SpectrumApplyMiniMaxH3', 0, 'BasicScheduler', 0), true);
+  assert.equal(hasLink('SpectrumApplyMiniMaxH3', 0, 'BasicGuider', 0), true);
   assert.equal(hasLink('NanoBananaH3Transform', 0, 'MiniMaxH3ReferenceToVideo', 3), true);
   assert.equal(hasLink('NanoBananaH3Transform', 1, 'MiniMaxH3ReferenceToVideo', 8), true);
   assert.equal(hasLink('NanoBananaH3Transform', 2, 'DeterministicTitleWatermarkOverlay', 2), true);
@@ -197,6 +212,7 @@ test('distributed Turbo v4 LoRA workflow has the supplied 8-step sampling and co
   assert.equal(hasLink('DeterministicEndCreditOverlay', 0, 'CreateVideo', 0), true);
   assert.match(workflowText, /Turbo v4 LoRA.*`8` steps/s);
   assert.doesNotMatch(workflowText, /4 steps —|6 steps —/);
+  assert.doesNotMatch(workflowText, /AIza[0-9A-Za-z_-]{20,}|sk-[0-9A-Za-z_-]{20,}|BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY/);
 });
 
 test('distributed H3 workflow embeds verified one-click metadata and bilingual FURU four-panel guidance', () => {
@@ -205,9 +221,9 @@ test('distributed H3 workflow embeds verified one-click metadata and bilingual F
 
   assert.deepEqual(modelEntries, [
     {
-      name: 'minimax_h3_video_vae_fp16.safetensors',
-      url: 'https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/vae/minimax_h3_video_vae_fp16.safetensors?download=true',
-      hash: '7c1f131492e7eddacaac9069a61b81bdd39de5cc96561e677c5eab1cdce5e522',
+      name: 'minimax_h3_video_vae_int8_convrot.safetensors',
+      url: 'https://huggingface.co/Kijai/MiniMax-H3-experimental/resolve/main/minimax_h3_video_vae_int8_convrot.safetensors?download=true',
+      hash: '9bb2d96f218c76babd85e0611b85ca8fb330a90546c01a0005e8a58a59593410',
       hash_type: 'SHA256',
       directory: 'vae',
     },
@@ -244,8 +260,8 @@ test('distributed H3 workflow embeds verified one-click metadata and bilingual F
   const workflowText = readFileSync(workflowUrl, 'utf8');
   assert.match(workflowText, /FURU four-panel manga to video/);
   assert.match(workflowText, /FURUの4コマ漫画を動画化/);
-  assert.match(workflowText, /Open this workflow: missing H3 model cards show Download/);
-  assert.match(workflowText, /ワークフローを開くと不足モデルにDownloadが表示/);
+  assert.match(workflowText, /Open this workflow\. Missing H3 model cards show \*\*Download\*\*/);
+  assert.match(workflowText, /不足モデルのカードに出る \*\*Download\*\*/);
   assert.match(step4PanelSource, /FURU four-panel manga to video/);
   assert.match(step4PanelSource, /FURUの4コマ漫画を動画化/);
   assert.match(readmeSource, /FURU four-panel manga to video/);
@@ -273,6 +289,9 @@ test('custom-node ZIP has the required root folder, exact source files, and no f
 
 test('README keeps the custom-node-first installation contract in sync with STEP4', () => {
   assert.match(readmeSource, /Turbo v4 LoRA.*8 steps/s);
+  assert.match(readmeSource, /SpectrumApplyMiniMaxH3/);
+  assert.match(readmeSource, /ComfyUI Manager.*ComfyUI-Spectrum-MiniMax-H3/s);
+  assert.match(readmeSource, /minimax_h3_video_vae_int8_convrot\.safetensors/);
   assert.match(readmeSource, /ComfyUI\/custom_nodes\//);
   assert.match(readmeSource, /ComfyUI-NanoBanana-H3/);
   assert.match(readmeSource, /🔐 APIキー未登録／登録/);

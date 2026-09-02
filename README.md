@@ -1,6 +1,6 @@
 # Super FURU AI 4-koma System
 
-> Latest release: **v5.6.9** / 最新リリース: **v5.6.9**
+> Latest release: **v5.7.0** / 最新リリース: **v5.7.0**
 
 > **"To what extent can humans step away from the creative process?"**
 > **「人間は、どこまで制作から降りられるのか？」**
@@ -22,7 +22,7 @@
 This project aims to intentionally exclude humans from the creative process, allowing AI to act as a director and complete everything from brainstorming to composition, direction, and rendering.
 本プロジェクトは、人間をクリエイティブな工程から意図的に排除し、AIがディレクターとして「ネタ出し・構成・演出・作画」のすべてを完結させることを目的としています。
 
-The current implementation and latest release are **v5.6.9**. The product name is **Super FURU AI 4-koma System**; **Nano Banana 2** and **gpt-image-2** identify the Gemini and OpenAI image-generation routes. / 現在の実装および最新公開版は **v5.6.9** です。製品名は **Super FURU AI 4-koma System** で、**Nano Banana 2** と **gpt-image-2** はGemini系・OpenAI系の画像生成経路の名称です。
+The current implementation and latest release are **v5.7.0**. The product name is **Super FURU AI 4-koma System**; **Nano Banana 2** and **gpt-image-2** identify the Gemini and OpenAI image-generation routes. / 現在の実装および最新公開版は **v5.7.0** です。製品名は **Super FURU AI 4-koma System** で、**Nano Banana 2** と **gpt-image-2** はGemini系・OpenAI系の画像生成経路の名称です。
 
 Current behavior at a glance / 現行仕様の要点:
 
@@ -65,9 +65,9 @@ This route distributes `Super-FURU-AI-4koma-H3-Hybrid-b25-Turbo-v4-LoRA-8step-v1
 
 The dedicated workflow turns one completed Super FURU AI four-panel manga page into four contiguous MiniMax H3 shots. It retains panel order, panel-derived cast, speaker ownership, story action, setting, and punchline; it gives each visible character a role-appropriate movement, removes speech balloons, and adds the title and fixed end credit outside H3 after generation. / 専用ワークフローは、完成したSuper FURU AIの4コマ漫画1枚を連続する4つのMiniMax H3ショットに変換します。コマ順、各コマから導く登場人物、台詞の話者、物語上の動作、場所、オチを保ち、画面内の各人物へ役割に応じた動きを与え、吹き出しを除去します。タイトルと固定エンドクレジットは、H3生成後にワークフローが合成します。
 
-Each required loader embeds the verified filename, download URL, SHA256, and ComfyUI target folder for the Ref2VA diffusion model, Qwen3VL text encoder, video VAE, audio VAE, and Turbo v4 LoRA. When you open the workflow, ComfyUI can show `Download` for a missing registered model instead of only reporting an unresolved filename. ComfyUI Desktop saves to its managed model folder; browser-based ComfyUI can use the browser download path, in which case move the file to the folder shown by the model card and restart ComfyUI. / 必要な各ローダーには、Ref2VA拡散モデル、Qwen3VLテキストエンコーダ、映像VAE、音声VAE、Turbo v4 LoRAの検証済みファイル名、ダウンロードURL、SHA256、ComfyUI保存先を登録しています。ワークフローを開くと、ComfyUIは不明なファイル名だけを報告するのでなく、登録済みの不足モデルとして `Download` を表示できます。ComfyUI Desktopは管理対象のモデルフォルダへ保存します。ブラウザ版でブラウザ保存になった場合は、モデルカードの表示先へ移動してComfyUIを再起動してください。
+Each required loader embeds the verified filename, download URL, SHA256, and ComfyUI target folder for the Ref2VA diffusion model, Qwen3VL text encoder, `minimax_h3_video_vae_int8_convrot.safetensors`, audio VAE, and Turbo v4 LoRA. When you open the workflow, ComfyUI can show `Download` for a missing registered model instead of only reporting an unresolved filename. ComfyUI Desktop saves to its managed model folder; browser-based ComfyUI can use the browser download path, in which case move the file to the folder shown by the model card and restart ComfyUI. / 必要な各ローダーには、Ref2VA拡散モデル、Qwen3VLテキストエンコーダ、映像VAE `minimax_h3_video_vae_int8_convrot.safetensors`、音声VAE、Turbo v4 LoRAの検証済みファイル名、ダウンロードURL、SHA256、ComfyUI保存先を登録しています。ワークフローを開くと、ComfyUIは不明なファイル名だけを報告するのでなく、登録済みの不足モデルとして `Download` を表示できます。ComfyUI Desktopは管理対象のモデルフォルダへ保存します。ブラウザ版でブラウザ保存になった場合は、モデルカードの表示先へ移動してComfyUIを再起動してください。
 
-Click “Nano Bananaカスタムノードをダウンロード,” extract `ComfyUI-NanoBanana-H3-Latest-2026-08-26.zip`, and place the generated `ComfyUI-NanoBanana-H3` folder at `ComfyUI/custom_nodes/`. If an older folder with the same name exists, fully close ComfyUI, back up the old folder, and replace it as a folder; never mix old and new custom-node files. Save `Super-FURU-AI-4koma-H3-Hybrid-b25-Turbo-v4-LoRA-8step-v1.json` under `ComfyUI/user/default/workflows/`, then fully restart ComfyUI before opening it. / 「Nano Bananaカスタムノードをダウンロード」を押して `ComfyUI-NanoBanana-H3-Latest-2026-08-26.zip` を保存し、展開して生成された `ComfyUI-NanoBanana-H3` フォルダを `ComfyUI/custom_nodes/` へ配置します。同名の旧版がある場合はComfyUIを完全終了し、旧版をバックアップしてからフォルダ単位で差し替えます。新旧カスタムノードのファイルは混在させません。`Super-FURU-AI-4koma-H3-Hybrid-b25-Turbo-v4-LoRA-8step-v1.json` は `ComfyUI/user/default/workflows/` 以下へ保存し、開く前にComfyUIを完全に再起動してください。
+Click “Nano Bananaカスタムノードをダウンロード,” extract `ComfyUI-NanoBanana-H3-Latest-2026-08-26.zip`, and place the generated `ComfyUI-NanoBanana-H3` folder at `ComfyUI/custom_nodes/`. If an older folder with the same name exists, fully close ComfyUI, back up the old folder, and replace it as a folder; never mix old and new custom-node files. Install `ComfyUI-Spectrum-MiniMax-H3` through ComfyUI Manager for `SpectrumApplyMiniMaxH3`. Save `Super-FURU-AI-4koma-H3-Hybrid-b25-Turbo-v4-LoRA-8step-v1.json` under `ComfyUI/user/default/workflows/`, then fully restart ComfyUI before opening it. / 「Nano Bananaカスタムノードをダウンロード」を押して `ComfyUI-NanoBanana-H3-Latest-2026-08-26.zip` を保存し、展開して生成された `ComfyUI-NanoBanana-H3` フォルダを `ComfyUI/custom_nodes/` へ配置します。同名の旧版がある場合はComfyUIを完全終了し、旧版をバックアップしてからフォルダ単位で差し替えます。新旧カスタムノードのファイルは混在させません。`SpectrumApplyMiniMaxH3` 用の `ComfyUI-Spectrum-MiniMax-H3` はComfyUI Managerから導入します。`Super-FURU-AI-4koma-H3-Hybrid-b25-Turbo-v4-LoRA-8step-v1.json` は `ComfyUI/user/default/workflows/` 以下へ保存し、開く前にComfyUIを完全に再起動してください。
 
 The workflow requires the MiniMax H3 base model, text encoder, video and audio VAEs, and Turbo v4 LoRA. Users obtain them separately under their distributors' licenses. In node 4, `Nano Banana Image Transform (H3)`, select `Google Gemini API` or `OpenAI API`, then re-register your key on the destination PC through “🔐 APIキー未登録／登録.” One run uses the selected provider for both image transformation and H3-prompt creation: Google uses `gemini-3.1-flash-image` for image transformation and `gemini-2.5-flash` for prompt creation and image QA; OpenAI uses `gpt-image-2` and `gpt-4.1-mini` respectively. The key is absent from the workflow JSON and distribution ZIP; it is stored locally at `ComfyUI/user/nanobanana_h3_credentials.json` without encryption. If `NanoBananaH3Transform`, `DeterministicTitleWatermarkOverlay`, or `DeterministicEndCreditOverlay` cannot be loaded, the cause is often custom-node placement or an incomplete ComfyUI restart; also check duplicate extraction, load errors, and version compatibility. API keys, authentication files, model binaries, user images, and generated outputs are not distributed. / ワークフローにはMiniMax H3本体モデル、テキストエンコーダー、映像VAE、音声VAE、Turbo v4 LoRAが必要です。各配布元のライセンスに同意して利用者自身が取得してください。ノード4の `Nano Banana Image Transform (H3)` では `Google Gemini API` または `OpenAI API` を選び、「🔐 APIキー未登録／登録」から移行先PCでAPIキーを再登録します。1回の実行では、選択中のProviderが画像変換とH3プロンプト作成の両方に使われます。Googleは画像変換に `gemini-3.1-flash-image`、プロンプト作成・画像QAに `gemini-2.5-flash` を使い、OpenAIは画像変換に `gpt-image-2`、プロンプト作成・画像QAに `gpt-4.1-mini` を使います。APIキーはワークフローJSONや配布ZIPには含まれず、ローカルの `ComfyUI/user/nanobanana_h3_credentials.json` に保存され、暗号化されません。`NanoBananaH3Transform`、`DeterministicTitleWatermarkOverlay`、`DeterministicEndCreditOverlay` が読めない場合は、多くの場合カスタムノードの配置またはComfyUIの完全な再起動が未完了です。二重展開、読込エラー、バージョン互換性も確認してください。APIキー、認証ファイル、モデル本体、ユーザー画像、生成物は配布しません。
 
@@ -315,7 +315,7 @@ To address the extreme complexity of a 5,000+ line monolith, the frontend archit
 
 ## 🔍 Deep Analysis (技術詳解)
 
-### 🧭 Current v5.6.9 Processing Contract / 現行v5.6.9処理仕様
+### 🧭 Current v5.7.0 Processing Contract / 現行v5.7.0処理仕様
 
 | Stage | Input | Processing and validation | Output |
 |:--|:--|:--|:--|
@@ -854,6 +854,9 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 ---
 
 ## 📋 ChangeLog
+
+### v5.7.0 (2026-09-02)
+- **[Fix & UX]** MiniMax H3配布ワークフローをSpectrum高速化とINT8 ConvRot映像VAEを含む提供版へ更新し、必要なカスタムノード案内を追加。記事本文と未登録カテゴリが演出ロックや吹き出し話者へ混入する誤判定も修正 / Updated the distributed MiniMax H3 workflow with the supplied Spectrum acceleration and INT8 ConvRot video VAE, documented the required custom node, and fixed false staging-lock and speech-bubble speaker detection
 
 ### v5.6.9 (2026-08-29)
 - **[Fix & UX]** 記事本文を演出ロックへ誤って複製せず、未登録の説明カテゴリを吹き出し話者から除外して、日本語の縦書きセリフを原文どおり保持 / Prevent article prose from being copied into staging locks and exclude unregistered descriptive categories from speech bubbles while preserving verbatim vertical Japanese dialogue

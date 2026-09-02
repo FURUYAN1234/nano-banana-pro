@@ -870,20 +870,22 @@ No explanations. No partial results.`;
                                     <li>「Nano Bananaカスタムノードをダウンロード」を押して <code>ComfyUI-NanoBanana-H3-Latest-2026-08-26.zip</code> を保存します。</li>
                                     <li>ZIPを展開し、生成された <code>ComfyUI-NanoBanana-H3</code> フォルダを <code>ComfyUI/custom_nodes/</code> へ配置します。最終配置が <code>ComfyUI/custom_nodes/ComfyUI-NanoBanana-H3/__init__.py</code> になることを確認します。</li>
                                     <li>同名の旧版がある場合はComfyUIを完全終了し、旧版をバックアップしてからフォルダ単位で差し替えます。新旧カスタムノードのファイルは混在させません。</li>
+                                    <li><code>SpectrumApplyMiniMaxH3</code> を使うため、ComfyUI Managerから <code>ComfyUI-Spectrum-MiniMax-H3</code> を導入します。</li>
                                     <li>下のボタンから <code>Super-FURU-AI-4koma-H3-Hybrid-b25-Turbo-v4-LoRA-8step-v1.json</code> を保存し、<code>ComfyUI/user/default/workflows/</code> 以下へ配置します。</li>
                                     <li>カスタムノードとJSONの配置後、ComfyUIを完全に再起動してからワークフローを開きます。</li>
                                     <li><code>4. API設定＋画像変換＋H3プロンプト生成（同一Provider）</code> ノードで <code>OpenAI API</code> または <code>Google Gemini API</code> を選び、「<strong>🔐 APIキー未登録／登録</strong>」から移行先PCで利用者自身のキーを再登録します。1回の実行では、選択中の同一Providerが画像変換とH3プロンプト作成の両方に使われます。APIキーはワークフローJSONや配布ZIPには保存されず、登録情報はローカルの <code>ComfyUI/user/nanobanana_h3_credentials.json</code> に暗号化されません。</li>
                                     <li>Google Gemini APIでは画像変換に <code>gemini-3.1-flash-image</code>、H3プロンプト作成・画像QAに <code>gemini-2.5-flash</code> を使います。OpenAI APIでは画像変換に <code>gpt-image-2</code>、H3プロンプト作成・画像QAに <code>gpt-4.1-mini</code> を使います。</li>
-                                    <li>ワークフローを開くと、MiniMax H3本体、テキストエンコーダ、映像VAE、音声VAE、Turbo v4 LoRAの不足項目に <code>Download</code> が表示されます。表示された項目をすべて取得し、モデル候補が更新されない場合はComfyUIを再起動します。各ローダーには配布URL、SHA256、保存先、ファイル名を登録済みです。ComfyUI Desktopは管理対象フォルダへ保存します。ブラウザ版でDownloadが通常のブラウザ保存になった場合だけ、表示された保存先へ手動で移動します。</li>
+                                    <li>ワークフローを開くと、MiniMax H3本体、テキストエンコーダ、映像VAE <code>minimax_h3_video_vae_int8_convrot.safetensors</code>、音声VAE、Turbo v4 LoRAの不足項目に <code>Download</code> が表示されます。表示された項目をすべて取得し、モデル候補が更新されない場合はComfyUIを再起動します。各ローダーには配布URL、SHA256、保存先、ファイル名を登録済みです。ComfyUI Desktopは管理対象フォルダへ保存します。ブラウザ版でDownloadが通常のブラウザ保存になった場合だけ、表示された保存先へ手動で移動します。</li>
                                   </ol>
                                   <div className="mt-3 border-t border-amber-300/20 pt-2">
-                                    <p className="font-bold text-white">次の3ノードが読めない場合</p>
+                                    <p className="font-bold text-white">次の4ノードが読めない場合</p>
                                     <ul className="mt-1 list-disc space-y-0.5 pl-4 font-mono text-[9px] text-slate-300">
                                       <li>NanoBananaH3Transform</li>
                                       <li>DeterministicTitleWatermarkOverlay</li>
                                       <li>DeterministicEndCreditOverlay</li>
+                                      <li>SpectrumApplyMiniMaxH3</li>
                                     </ul>
-                                    <p className="mt-1 text-slate-300">多くの場合はカスタムノードの配置、またはComfyUIの完全な再起動が未完了です。解決しない場合は二重展開、ComfyUIの読込エラー、バージョン互換性も確認してください。</p>
+                                    <p className="mt-1 text-slate-300"><code>SpectrumApplyMiniMaxH3</code> だけが読めない場合は、ComfyUI Managerで <code>ComfyUI-Spectrum-MiniMax-H3</code> の導入状態を確認します。それ以外は、多くの場合カスタムノードの配置、またはComfyUIの完全な再起動が未完了です。解決しない場合は二重展開、ComfyUIの読込エラー、バージョン互換性も確認してください。</p>
                                   </div>
                                 </div>
                                 <div className="mt-3 space-y-1 text-[10px] leading-relaxed text-slate-300">
