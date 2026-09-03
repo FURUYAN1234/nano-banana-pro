@@ -93,7 +93,9 @@ test('STEP4 exposes the required four-node bundle before the latest workflow JSO
   assert.doesNotMatch(step4PanelSource, /ComfyUI API/);
   assert.match(step4PanelSource, /接続中のComfyUIサーバーのプロセスメモリ/);
   assert.match(step4PanelSource, /ワークフローのシート移動.*残/);
-  assert.match(step4PanelSource, /ワークフロー読込時.*選択中.*Provider.*未登録.*入力ダイアログ.*自動/s);
+  assert.match(step4PanelSource, /ワークフローを開いただけ.*入力ダイアログを表示(?:しません|せず)/s);
+  assert.match(step4PanelSource, /実行.*選択中.*Provider.*未登録.*入力ダイアログ/s);
+  assert.match(step4PanelSource, /認証.*成功.*同じ実行.*続/s);
   assert.match(step4PanelSource, /ComfyUIアプリ／サーバーを終了または再起動すると消去/);
   assert.match(step4PanelSource, /実行時だけ.*選択したAPI/s);
   assert.doesNotMatch(step4PanelSource, /nanobanana_h3_credentials\.json|暗号化されません/);
@@ -104,8 +106,8 @@ test('STEP4 exposes the required four-node bundle before the latest workflow JSO
   assert.match(step4PanelSource, /JSONだけでは実行できません/);
   assert.match(step4PanelSource, /ComfyUI\/custom_nodes\/ComfyUI-NanoBanana-H3\//);
   assert.match(step4PanelSource, /ComfyUIを完全に再起動/);
-  assert.match(step4PanelSource, /🔐 APIキー未登録／登録/);
-  assert.match(step4PanelSource, /ワークフローJSON、配布ZIP、設定ファイル、ディスクには保存されず/);
+  assert.match(step4PanelSource, /APIキー未登録／入力/);
+  assert.match(step4PanelSource, /ワークフローJSON、配布ZIP、設定ファイル.*ディスクには保存されず/);
   assert.match(step4PanelSource, /Fused Turbo本体.*テキストエンコーダ.*映像VAE.*音声VAE.*4モデル/s);
   assert.match(step4PanelSource, /独立したTurbo LoRA.*SLA LoRA.*不要/s);
   assert.match(step4PanelSource, /NanoBananaH3Transform[\s\S]*DeterministicTitleWatermarkOverlay[\s\S]*DeterministicEndCreditOverlay/);
@@ -156,8 +158,10 @@ test('distributed Fused Turbo workflow has the supplied Spectrum and SLA 8-step 
   );
   const workflow = JSON.parse(bytes.toString('utf8'));
   const workflowText = bytes.toString('utf8');
-  assert.match(workflowText, /接続中のComfyUIサーバーのプロセスメモリ/);
-  assert.match(workflowText, /ComfyUIを終了または再起動すると消去/);
+  assert.match(workflowText, /ComfyUIサーバー(?:の)?プロセスのメモリ/);
+  assert.match(workflowText, /ComfyUI(?:を)?終了・再起動で消去/);
+  assert.match(workflowText, /ワークフローを開いただけではAPI入力窓を表示しません/);
+  assert.match(workflowText, /実行する.*未登録.*API入力窓.*キュー投入を保留/s);
   assert.doesNotMatch(workflowText, /nanobanana_h3_credentials\.json|暗号化なしで保存/);
   assert.equal(workflow.nodes.length, 28);
   assert.equal(workflow.links.length, 32);
@@ -294,8 +298,9 @@ test('distribution bundle contains the four supplied custom-node packs without s
   assert.deepEqual([...nanoArchive.keys()].sort(), [
     'ComfyUI-NanoBanana-H3/__init__.py',
     'ComfyUI-NanoBanana-H3/h3_prompt_system.txt',
+    'ComfyUI-NanoBanana-H3/README_API_SECURITY.md',
     'ComfyUI-NanoBanana-H3/web/nanobanana_h3.js',
-  ]);
+  ].sort());
   assert.equal(hashBytes(nanoArchive.get('ComfyUI-NanoBanana-H3/h3_prompt_system.txt')), '8c44135df96071ef16c122cdc93f44845b744600367cdfbec46684aa5d992eaf');
   assert.doesNotMatch([...nanoArchive.keys()].join('\n'), /(?:^|\/)(__pycache__|[^/]+\.(?:pyc|bak)|[^/]+\.bak-[^/]+)(?:\/|$)/i);
 
@@ -304,21 +309,31 @@ test('distribution bundle contains the four supplied custom-node packs without s
   assert.match(pythonSource, /_SESSION_CREDENTIALS/);
   assert.equal(
     [...pythonSource.matchAll(/_SESSION_CREDENTIALS\.setdefault\(slot, \{\}\)\[provider\] = api_key/g)].length,
-    2,
-    'both credential registration routes must keep the key in process memory',
+    1,
+    'both credential registration routes must use the shared process-memory setter',
   );
   assert.equal(
     [...pythonSource.matchAll(/"storage": "process_memory"/g)].length,
-    3,
+    4,
     'registration and status responses must identify process-memory storage without returning a key',
   );
-  assert.doesNotMatch(pythonSource, /nanobanana_h3_credentials\.json|_read_credentials|_write_credentials|mkstemp|json\.dump/);
-  assert.match(browserSource, /ComfyUI.*プロセスメモリ/);
+  assert.doesNotMatch(pythonSource, /nanobanana_h3_credentials\.json|_read_credentials|_write_credentials|mkstemp|json\.dump|^import os$/m);
+  assert.match(browserSource, /ComfyUI.*(?:プロセスの)?メモリ/);
   assert.match(browserSource, /再起動.*消去/);
-  assert.match(browserSource, /afterConfigureGraph/);
+  assert.doesNotMatch(browserSource, /afterConfigureGraph/);
   assert.match(browserSource, /widgetValue\(node, "provider"/);
-  assert.match(browserSource, /if \(!status\.configured\) showCredentialDialog/);
+  assert.match(browserSource, /ensureWorkflowCredentialsForRun/);
+  assert.match(browserSource, /const originalQueuePrompt = app\.queuePrompt/);
+  assert.match(browserSource, /if \(!\(await ensureWorkflowCredentialsForRun\(\)\)\) return false/);
+  assert.match(browserSource, /return await originalQueuePrompt\.apply\(this, arguments\)/);
+  assert.match(browserSource, /if \(!button\) return/);
+  assert.match(browserSource, /認証して実行を続ける/);
   assert.doesNotMatch(browserSource, /認証して保存|ディスクへ保存します|JSONへ保存します|JSONに保存されます/);
+
+  const securityReadme = nanoArchive.get('ComfyUI-NanoBanana-H3/README_API_SECURITY.md').toString('utf8');
+  assert.match(securityReadme, /Loading a workflow never opens the credential dialog automatically/);
+  assert.match(securityReadme, /Execute\/Queue button/);
+  assert.match(securityReadme, /Successful verification resumes that same run automatically/);
 
   const bundleReadme = files.get(`${root}README_必ずお読みください.md`).toString('utf8');
   const authorPcReadme = files.get(`${root}README_ワークフロー作成PC用.md`).toString('utf8');
@@ -329,14 +344,18 @@ test('distribution bundle contains the four supplied custom-node packs without s
   assert.deepEqual(bundledWorkflow, readFileSync(workflowUrl));
   for (const documentText of [bundleReadme, verificationRecord, bundledWorkflow.toString('utf8')]) {
     assert.match(documentText, /プロセス(?:の)?メモリ/);
-    assert.match(documentText, /再起動.*消去/);
+    assert.match(documentText, /再起動.*(?:消去|未登録状態)/);
+    assert.match(documentText, /実行.*未登録.*入力/s);
+    assert.doesNotMatch(documentText, /ワークフロー読込時[^。\n]{0,120}入力ダイアログ[^。\n]{0,80}自動/);
     assert.doesNotMatch(documentText, /nanobanana_h3_credentials\.json|暗号化なしで保存|認証して保存/);
   }
   assert.match(authorPcReadme, /最重要チェック項目/);
   assert.match(authorPcReadme, /旧資格情報ファイル.*中身を開かず/s);
   assert.match(authorPcReadme, /ワークフローのシート移動.*保持/s);
   assert.match(authorPcReadme, /ComfyUI.*終了.*再起動.*消去/s);
-  assert.match(authorPcReadme, /選択中.*Provider.*入力ダイアログ.*自動/s);
+  assert.match(authorPcReadme, /ワークフローを開いただけでは.*入力.*表示されない/s);
+  assert.match(authorPcReadme, /実行.*Provider.*未登録.*入力ダイアログ/s);
+  assert.match(authorPcReadme, /認証成功後.*同じ実行.*続/s);
   assert.match(authorPcReadme, /APIキー値.*表示.*記録/s);
 
   const combinedText = Buffer.concat([...files.values()].filter((value) => value.length < 200_000)).toString('utf8');
@@ -352,7 +371,7 @@ test('README keeps the custom-node-first installation contract in sync with STEP
   assert.match(readmeSource, /minimax_h3_video_vae_int8_convrot\.safetensors/);
   assert.match(readmeSource, /ComfyUI\/custom_nodes\//);
   assert.match(readmeSource, /ComfyUI-NanoBanana-H3/);
-  assert.match(readmeSource, /🔐 APIキー未登録／登録/);
+  assert.match(readmeSource, /API設定ボタン/);
   assert.match(readmeSource, /NanoBananaH3Transform/);
   assert.match(readmeSource, /DeterministicTitleWatermarkOverlay/);
   assert.match(readmeSource, /DeterministicEndCreditOverlay/);
@@ -364,7 +383,9 @@ test('README keeps the custom-node-first installation contract in sync with STEP
   assert.doesNotMatch(readmeSource, /ComfyUI API/);
   assert.match(readmeSource, /接続中のComfyUIサーバーのプロセスメモリ/);
   assert.match(readmeSource, /ワークフローのシート移動.*残/);
-  assert.match(readmeSource, /ワークフロー読込時.*選択中.*Provider.*未登録.*入力ダイアログ.*自動/s);
+  assert.match(readmeSource, /ワークフローを開いただけ.*入力ダイアログを表示(?:しません|せず)/s);
+  assert.match(readmeSource, /実行.*選択中.*Provider.*未登録.*入力ダイアログ/s);
+  assert.match(readmeSource, /認証成功後.*同じ実行.*続/s);
   assert.match(readmeSource, /ComfyUIアプリ／サーバーを終了または再起動すると消去/);
   assert.doesNotMatch(readmeSource, /nanobanana_h3_credentials\.json|暗号化.*されません/);
   assert.match(readmeSource, /MiniMax-H3-4Koma-15s-FusedTurbo-Spectrum-SLA-Bundle-2026-09-03\.zip/);
@@ -384,8 +405,8 @@ test('every distributed workflow describes process-memory-only API credentials',
     const workflowText = readFileSync(new URL(entry.name, publicWorkflowDirectoryUrl), 'utf8');
     assert.doesNotMatch(
       workflowText,
-      /nanobanana_h3_credentials\.json|暗号化なしで保存|stored locally without encryption/,
-      `${entry.name} must not describe disk-persisted credentials`,
+      /nanobanana_h3_credentials\.json|暗号化なしで保存|stored locally without encryption|ワークフロー読込時[^。\n]{0,120}入力ダイアログ[^。\n]{0,80}自動/,
+      `${entry.name} must not describe disk persistence or the retired load-time credential dialog`,
     );
   }
 });
