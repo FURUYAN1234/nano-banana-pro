@@ -7,6 +7,12 @@ test('HF deploy preserves the Docker runtime and SPA routing configuration', asy
 
   assert.match(script, /\$ProtectedItems\s*=\s*@\([^\n]*"Dockerfile"/);
   assert.match(script, /\$ProtectedItems\s*=\s*@\([^\n]*"nginx\.conf"/);
+  assert.match(
+    script,
+    /\$CopyProtectedItems\s*=\s*@\([^\n]*"\.gitattributes"[^\n]*"README\.md"/,
+    'the dist copy must not replace Hugging Face-specific LFS attributes',
+  );
+  assert.match(script, /if \(\$CopyProtectedItems -contains \$_\.Name\)/);
   assert.match(script, /RequiredHfRuntimeFiles/);
   assert.match(script, /missing required runtime file/);
 });

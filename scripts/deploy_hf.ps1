@@ -71,11 +71,12 @@ Get-ChildItem $HfRoot -Force | Where-Object {
     Write-Host "  Deleted: $($_.Name)" -ForegroundColor DarkGray
 }
 
-# === Step 4: Copy dist contents to HF folder (NEVER overwrite README.md) ===
+# === Step 4: Copy dist contents to HF folder (preserve HF-specific files) ===
 Write-Host "[COPY] dist/ -> HF folder..." -ForegroundColor Yellow
+$CopyProtectedItems = @(".gitattributes", "README.md")
 Get-ChildItem $DistDir -Force | ForEach-Object {
-    if ($_.Name -eq "README.md") {
-        Write-Host "  SKIP: README.md (HF config protected)" -ForegroundColor Magenta
+    if ($CopyProtectedItems -contains $_.Name) {
+        Write-Host "  SKIP: $($_.Name) (HF config protected)" -ForegroundColor Magenta
         return
     }
     $Destination = Join-Path $HfRoot $_.Name

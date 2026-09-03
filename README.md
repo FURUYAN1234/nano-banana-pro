@@ -853,6 +853,9 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 
 ## 📋 ChangeLog
 
+### v5.7.6 (2026-09-03)
+- **[Fix & UX]** Hugging Face配布時にHF専用のLFS属性を保持し、既存の配布ZIPが通常Gitバイナリへ戻る不具合を修正 / Preserved Hugging Face-specific LFS attributes during deployment so existing distribution ZIPs cannot revert to regular Git binaries
+
 ### v5.7.5 (2026-09-03)
 - **[Distribution]** 提供された自動可変尺・Hybrid b25ワークフローと3フォルダのカスタムノード配布物へ更新し、独自統合ノードのGPL-3.0-or-later表記と第三者権利の除外を明記 / Updated to the supplied variable-duration Hybrid b25 workflow and three-folder custom-node distribution, with GPL-3.0-or-later notice for the original integration node and explicit third-party rights exclusions
 
