@@ -24,10 +24,14 @@ test('HF deploy tracks distribution ZIPs through the Hub LFS bridge without chan
   const copyIndex = script.indexOf('# === Step 5: Track HF binary downloads through the LFS/Xet bridge ===');
   const lfsTrackCommand = 'git lfs track "downloads/MiniMax-H3-4Koma-VariableDuration-H3BGM-Stable-Bundle-2026-09-04.zip"';
   const lfsTrackIndex = script.indexOf(lfsTrackCommand);
+  const workflowByteRule = '"workflows/Super-FURU-AI-4koma-H3-Hybrid-b25-VariableDuration-H3BGM-Stable-2026-09-04.json -text"';
+  const workflowByteRuleIndex = script.indexOf(workflowByteRule);
   const gitAddIndex = script.indexOf('git add .');
 
   assert.ok(copyIndex !== -1 && copyIndex < lfsTrackIndex, 'HF-only tracking must happen after the dist copy');
   assert.ok(lfsTrackIndex < gitAddIndex, 'ZIPs must be converted to pointers before git add');
+  assert.ok(lfsTrackIndex < workflowByteRuleIndex && workflowByteRuleIndex < gitAddIndex, 'the supplied workflow must be marked binary before git add');
+  assert.match(script, /Add-Content[^\n]*\.gitattributes[^\n]*HfBytePreservationRule/s);
   assert.match(script, /if \(\$LASTEXITCODE -ne 0\) \{\s*Write-Host "\[ERROR\] git lfs track failed\."/s);
   assert.doesNotMatch(script, /git lfs track "downloads\/\*\.zip"/);
   assert.doesNotMatch(pagesAttributes, /downloads\/\*\.zip\s+filter=lfs/);

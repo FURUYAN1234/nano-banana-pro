@@ -1,6 +1,6 @@
 # Super FURU AI 4-koma System
 
-> Latest release: **v5.7.7** / 最新リリース: **v5.7.7**
+> Latest release: **v5.7.8** / 最新リリース: **v5.7.8**
 
 > **"To what extent can humans step away from the creative process?"**
 > **「人間は、どこまで制作から降りられるのか？」**
@@ -855,6 +855,9 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 
 ## 📋 ChangeLog
 
+### v5.7.8 (2026-09-04)
+- **[Fix & UX]** Hugging Face配布時に新ワークフローJSONの改行変換を防ぎ、Pagesと同じバイトを保持 / Prevented line-ending normalization of the new workflow JSON on Hugging Face so it preserves the same bytes as Pages
+
 ### v5.7.7 (2026-09-04)
 - **[Fix & UX]** MiniMax H3配布を自動可変尺・H3生成BGM安定最新版ワークフローと3カスタムノードの検証済みセットへ更新 / Updated the MiniMax H3 distribution to the verified stable auto-duration H3-generated-BGM workflow and three-custom-node bundle
 
@@ -896,8 +899,5 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 
 ### v5.6.4 (2026-08-26)
 - **[Fix & UX]** 静的配布時にワークフローJSONのバイト列を保持 / Preserve workflow JSON bytes in static deployment
-
-### v5.6.3 (2026-08-26)
-- **[Fix & UX]** 配布ワークフローJSONの公開時バイト完全性を修正 / Preserve exact distributed workflow JSON bytes in published assets
 
 > Full release history is available on [GitHub Releases](https://github.com/FURUYAN1234/nano-banana-pro/releases). / 全履歴は [GitHub Releases](https://github.com/FURUYAN1234/nano-banana-pro/releases) で確認できます。

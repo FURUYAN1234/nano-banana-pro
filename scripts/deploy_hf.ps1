@@ -99,6 +99,17 @@ if ($LASTEXITCODE -ne 0) {
     Pop-Location
     exit 1
 }
+
+$HfBytePreservationRules = @(
+    "workflows/Super-FURU-AI-4koma-H3-Hybrid-b25-VariableDuration-H3BGM-Stable-2026-09-04.json -text"
+)
+$HfAttributeLines = @(Get-Content -LiteralPath (Join-Path $HfRoot ".gitattributes") -Encoding UTF8)
+foreach ($HfBytePreservationRule in $HfBytePreservationRules) {
+    if ($HfAttributeLines -cnotcontains $HfBytePreservationRule) {
+        Add-Content -LiteralPath (Join-Path $HfRoot ".gitattributes") -Value $HfBytePreservationRule -Encoding UTF8 -ErrorAction Stop
+        Write-Host "  Preserving exact bytes: $HfBytePreservationRule" -ForegroundColor DarkGray
+    }
+}
 Pop-Location
 
 # === Step 6: Verify vite base path in built index.html ===
