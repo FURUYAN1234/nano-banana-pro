@@ -1,6 +1,6 @@
 # Super FURU AI 4-koma System
 
-> Latest release: **v5.7.2** / 最新リリース: **v5.7.2**
+> Latest release: **v5.7.3** / 最新リリース: **v5.7.3**
 
 > **"To what extent can humans step away from the creative process?"**
 > **「人間は、どこまで制作から降りられるのか？」**
@@ -22,7 +22,7 @@
 This project aims to intentionally exclude humans from the creative process, allowing AI to act as a director and complete everything from brainstorming to composition, direction, and rendering.
 本プロジェクトは、人間をクリエイティブな工程から意図的に排除し、AIがディレクターとして「ネタ出し・構成・演出・作画」のすべてを完結させることを目的としています。
 
-The current implementation and latest release are **v5.7.2**. The product name is **Super FURU AI 4-koma System**; **Nano Banana 2** and **gpt-image-2** identify the Gemini and OpenAI image-generation routes. / 現在の実装および最新公開版は **v5.7.2** です。製品名は **Super FURU AI 4-koma System** で、**Nano Banana 2** と **gpt-image-2** はGemini系・OpenAI系の画像生成経路の名称です。
+The current implementation and latest release are **v5.7.3**. The product name is **Super FURU AI 4-koma System**; **Nano Banana 2** and **gpt-image-2** identify the Gemini and OpenAI image-generation routes. / 現在の実装および最新公開版は **v5.7.3** です。製品名は **Super FURU AI 4-koma System** で、**Nano Banana 2** と **gpt-image-2** はGemini系・OpenAI系の画像生成経路の名称です。
 
 Current behavior at a glance / 現行仕様の要点:
 
@@ -73,7 +73,7 @@ The bundle supplies `NanoBananaH3Transform`, `SpectrumApplyMiniMaxH3`, `H3SLAAtt
 
 Included packages: `ComfyUI-NanoBanana-H3`, `ComfyUI-Spectrum-MiniMax-H3`, `ComfyUI-PlagueKind-Nodes`, and `ComfyUI-MiniMax-H3-MotionCache-FastVAE`. / 収録パッケージは `ComfyUI-NanoBanana-H3`、`ComfyUI-Spectrum-MiniMax-H3`、`ComfyUI-PlagueKind-Nodes`、`ComfyUI-MiniMax-H3-MotionCache-FastVAE` です。
 
-The workflow requires four model files: the Fused Turbo diffusion model, text encoder, video VAE, and audio VAE. Users obtain them separately under their distributors' licenses; separate Turbo and SLA LoRA files are not required. In node 4, `Nano Banana Image Transform (H3)`, select `Google Gemini API` or `OpenAI API`, then re-register your key on the destination PC through “🔐 APIキー未登録／登録.” One run uses the selected provider for both image transformation and H3-prompt creation: Google uses `gemini-3.1-flash-image` for image transformation and `gemini-2.5-flash` for prompt creation and image QA; OpenAI uses `gpt-image-2` and `gpt-4.1-mini` respectively. The key is absent from the workflow JSON and distribution ZIP; it is stored locally at `ComfyUI/user/nanobanana_h3_credentials.json` without encryption. If a workflow node cannot be loaded, match its name to the four bundled custom-node packs and check extraction, dependencies, full ComfyUI restart, and GPU/CUDA/Triton compatibility. API keys, authentication files, model binaries, user images, and generated outputs are not distributed. / 必要なモデルはFused Turbo拡散モデル、テキストエンコーダー、映像VAE、音声VAEの4点で、独立したTurbo LoRAとSLA LoRAは不要です。各配布元のライセンスに同意して利用者自身が取得してください。ノード4の `Nano Banana Image Transform (H3)` では `Google Gemini API` または `OpenAI API` を選び、「🔐 APIキー未登録／登録」から移行先PCでAPIキーを再登録します。1回の実行では、選択中のProviderが画像変換とH3プロンプト作成の両方に使われます。Googleは画像変換に `gemini-3.1-flash-image`、プロンプト作成・画像QAに `gemini-2.5-flash` を使い、OpenAIは画像変換に `gpt-image-2`、プロンプト作成・画像QAに `gpt-4.1-mini` を使います。APIキーはワークフローJSONや配布ZIPには含まれず、ローカルの `ComfyUI/user/nanobanana_h3_credentials.json` に保存され、暗号化されません。ノードが読めない場合、多くの場合はカスタムノードの配置またはComfyUIの完全な再起動が未完了です。名前と同梱4パックを照合し、二重展開、依存関係、GPU・CUDA・Triton互換性も確認してください。APIキー、認証ファイル、モデル本体、ユーザー画像、生成物は配布しません。
+The workflow requires four model files: the Fused Turbo diffusion model, text encoder, video VAE, and audio VAE. Users obtain them separately under their distributors' licenses; separate Turbo and SLA LoRA files are not required. In node 4, `Nano Banana Image Transform (H3)`, select `Google Gemini API` or `OpenAI API`, then register your key through “🔐 APIキー未登録／登録.” When the workflow loads, the input dialog for the Provider already selected in the dropdown opens automatically only if that Provider is not registered in the running ComfyUI process. One run uses the selected provider for both image transformation and H3-prompt creation: Google uses `gemini-3.1-flash-image` for image transformation and `gemini-2.5-flash` for prompt creation and image QA; OpenAI uses `gpt-image-2` and `gpt-4.1-mini` respectively. The key is never saved in the workflow JSON, distribution ZIP, configuration files, or on disk. It is held only in the process memory of the currently connected ComfyUI server, survives workflow-sheet changes, is erased when the ComfyUI app/server exits or restarts, and is sent from that server to the selected API only while validating or running the workflow. This ComfyUI-node session is separate from the web app's browser-memory API session. If a workflow node cannot be loaded, match its name to the four bundled custom-node packs and check extraction, dependencies, full ComfyUI restart, and GPU/CUDA/Triton compatibility. API keys, authentication files, model binaries, user images, and generated outputs are not distributed. / 必要なモデルはFused Turbo拡散モデル、テキストエンコーダー、映像VAE、音声VAEの4点で、独立したTurbo LoRAとSLA LoRAは不要です。各配布元のライセンスに同意して利用者自身が取得してください。ノード4の `Nano Banana Image Transform (H3)` では `Google Gemini API` または `OpenAI API` を選び、「🔐 APIキー未登録／登録」からAPIキーを登録します。ワークフロー読込時、プルダウンで選択中のProviderが動作中のComfyUIプロセスに未登録なら、そのProviderの入力ダイアログが自動で開きます。1回の実行では、選択中のProviderが画像変換とH3プロンプト作成の両方に使われます。Googleは画像変換に `gemini-3.1-flash-image`、プロンプト作成・画像QAに `gemini-2.5-flash` を使い、OpenAIは画像変換に `gpt-image-2`、プロンプト作成・画像QAに `gpt-4.1-mini` を使います。APIキーはワークフローJSON、配布ZIP、設定ファイル、ディスクには保存されず、接続中のComfyUIサーバーのプロセスメモリだけに保持されます。ワークフローのシート移動や別ワークフローへの切替では残り、ComfyUIアプリ／サーバーを終了または再起動すると消去されます。認証確認または実行時だけ、そのサーバーから選択したAPIへ送信されます。このComfyUIノードのセッションは、Webアプリ本体のブラウザメモリ内APIセッションとは別です。ノードが読めない場合、多くの場合はカスタムノードの配置またはComfyUIの完全な再起動が未完了です。名前と同梱4パックを照合し、二重展開、依存関係、GPU・CUDA・Triton互換性も確認してください。APIキー、認証ファイル、モデル本体、ユーザー画像、生成物は配布しません。
 
 The dedicated H3 prompt extracts the exact title as `overlay_title` metadata and removes it before H3 conditioning. `DeterministicTitleWatermarkOverlay` composites it once after decoding at the upper left using black text with a white outline and no background bar; `DeterministicEndCreditOverlay` adds the fixed credit afterward. / 専用H3プロンプトはタイトルを `overlay_title` として抽出し、H3の条件入力から除外します。`DeterministicTitleWatermarkOverlay` が動画生成後に左上へ一度だけ、黒字＋白縁・背景バーなしで合成し、`DeterministicEndCreditOverlay` が固定クレジットを後段で合成します。
 
@@ -319,7 +319,7 @@ To address the extreme complexity of a 5,000+ line monolith, the frontend archit
 
 ## 🔍 Deep Analysis (技術詳解)
 
-### 🧭 Current v5.7.2 Processing Contract / 現行v5.7.2処理仕様
+### 🧭 Current v5.7.3 Processing Contract / 現行v5.7.3処理仕様
 
 | Stage | Input | Processing and validation | Output |
 |:--|:--|:--|:--|
@@ -859,6 +859,9 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 
 ## 📋 ChangeLog
 
+### v5.7.3 (2026-09-03)
+- **[Fix & UX]** ComfyUIカスタムノードのAPIキーをディスク保存からプロセスメモリ限定へ変更し、未登録時の選択Provider入力ダイアログ自動表示、MiniMax H3配布の最重要資格情報ゲート、ワークフロー作成PC用手順、全配布文書を同期 / Changed the ComfyUI custom node from disk-persisted API keys to process-memory-only credentials and synchronized the unregistered-provider auto-dialog, highest-priority MiniMax H3 credential gate, workflow-author-PC guide, and all distribution documentation
+
 ### v5.7.2 (2026-09-03)
 - **[Fix & UX]** Hugging Face配布ZIPをLFS／Xetブリッジ経由で公開し、Pagesの直接配布バイトを維持 / Publish the Hugging Face distribution ZIP through the LFS/Xet bridge while preserving direct Pages bytes
 
@@ -905,7 +908,7 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 - **[Fix & UX]** 更新済みの標準20ステップ版ワークフローJSONとComfyUI-NanoBanana-H3カスタムノードZIPを配布内容へ同期 / Synced the distributed standard 20-step workflow JSON and ComfyUI-NanoBanana-H3 custom-node ZIP with the updated supplied artifacts
 
 ### v5.5.7 (2026-08-23)
-- **[Fix & Docs]** 配布ワークフローを26ノード・30リンクの添付標準版へ同期し、手動 `normal` と配布専用 `simple`・20ステップを分離。APIキーの対応先、ローカル非暗号化保存、カスタムノード読込の追加原因を明記 / Synced the distributed workflow to the supplied 26-node, 30-link standard version; separated manual `normal` from dedicated-distribution `simple` / 20 steps; clarified supported API-key providers, unencrypted local storage, and additional custom-node loading causes
+- **[Fix & Docs]** 配布ワークフローを26ノード・30リンクの添付標準版へ同期し、手動 `normal` と配布専用 `simple`・20ステップを分離。当時のAPIキー対応先と保存仕様、カスタムノード読込の追加原因を明記（その保存仕様はv5.7.3で廃止） / Synced the distributed workflow to the supplied 26-node, 30-link standard version; separated manual `normal` from dedicated-distribution `simple` / 20 steps; documented the provider and credential behavior that existed at the time plus additional custom-node loading causes (that persistence behavior was removed in v5.7.3)
 
 ### v5.5.6 (2026-08-21)
 - **[Fix & UX]** 標準20ステップ版ワークフローJSON、必須ComfyUI-NanoBanana-H3 ZIP、導入順の直接ダウンロード案内を追加 / Added the standard 20-step workflow JSON, required ComfyUI-NanoBanana-H3 ZIP, and ordered direct-download setup guidance
