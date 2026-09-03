@@ -93,7 +93,7 @@ Get-ChildItem $DistDir -Force | ForEach-Object {
 # public/.gitattributes would turn GitHub Pages downloads into pointer files.
 Write-Host "[LFS] Tracking the MiniMax H3 distribution ZIP..." -ForegroundColor Yellow
 Push-Location $HfRoot
-git lfs track "downloads/MiniMax-H3-4Koma-VariableDuration-Hybrid-b25-Bundle-2026-09-03.zip"
+git lfs track "downloads/MiniMax-H3-4Koma-VariableDuration-H3BGM-Stable-Bundle-2026-09-04.zip"
 if ($LASTEXITCODE -ne 0) {
     Write-Host "[ERROR] git lfs track failed." -ForegroundColor Red
     Pop-Location

@@ -1,6 +1,6 @@
 # Super FURU AI 4-koma System
 
-> Latest release: **v5.7.5** / 最新リリース: **v5.7.5**
+> Latest release: **v5.7.7** / 最新リリース: **v5.7.7**
 
 > **"To what extent can humans step away from the creative process?"**
 > **「人間は、どこまで制作から降りられるのか？」**
@@ -22,7 +22,7 @@
 This project aims to intentionally exclude humans from the creative process, allowing AI to act as a director and complete everything from brainstorming to composition, direction, and rendering.
 本プロジェクトは、人間をクリエイティブな工程から意図的に排除し、AIがディレクターとして「ネタ出し・構成・演出・作画」のすべてを完結させることを目的としています。
 
-The current implementation and latest release are **v5.7.3**. The product name is **Super FURU AI 4-koma System**; **Nano Banana 2** and **gpt-image-2** identify the Gemini and OpenAI image-generation routes. / 現在の実装および最新公開版は **v5.7.3** です。製品名は **Super FURU AI 4-koma System** で、**Nano Banana 2** と **gpt-image-2** はGemini系・OpenAI系の画像生成経路の名称です。
+The current implementation and latest release are **v5.7.7**. The product name is **Super FURU AI 4-koma System**; **Nano Banana 2** and **gpt-image-2** identify the Gemini and OpenAI image-generation routes. / 現在の実装および最新公開版は **v5.7.7** です。製品名は **Super FURU AI 4-koma System** で、**Nano Banana 2** と **gpt-image-2** はGemini系・OpenAI系の画像生成経路の名称です。
 
 Current behavior at a glance / 現行仕様の要点:
 
@@ -55,19 +55,21 @@ Use the generated four-panel manga as a reference image to make a video with Min
 
 When you configure and use ComfyUI's standard MiniMax H3 Reference-to-Video (R2V / Ref2VA) workflow yourself, use only “Copy MiniMax H3 · ComfyUI Prompt.” This route does not download the dedicated workflow JSON. The copied instruction derives `panel_cast[N]` and immutable identity signatures from every input panel without hard-coding cast size or appearance. Because the standard template has no downstream title compositor, the title remains a Shot 1-only instruction. / ComfyUI標準のMiniMax H3 Reference-to-Video（R2V / Ref2VA）を自分で設定して使う場合は、「MiniMax H3・ComfyUI用プロンプトをコピー」だけを使います。この操作では専用ワークフローJSONをダウンロードしません。コピー文は各入力コマから `panel_cast[N]` と識別署名を動的に導出し、人数や外見を固定しません。標準テンプレートには後段タイトル合成ノードがないため、タイトルはShot 1だけに表示します。
 
-For this manually configured standard ComfyUI route, select `MiniMax H3 Reference-to-Video (R2V / Ref2VA)`, connect the same four-panel manga only to `ref_image_0`, and leave `ref_image_1` onward disconnected. Start `Resolution Selector (Size)` at `Aspect ratio: 16:9 (Widescreen)` and `Megapixels: 0.4`, and `Basic Scheduler` at `Scheduler: normal`. / 手動で設定するこのComfyUI標準経路では、`MiniMax H3 Reference-to-Video（R2V / Ref2VA）` を選び、同じ4コマ漫画を最初の参照入力 `ref_image_0` にだけ接続して、`ref_image_1` 以降は未接続にします。`Resolution Selector (Size)` は `アスペクト比: 16:9 (Widescreen)` と `メガピクセル: 0.4`、`基本スケジューラー` は `スケジューラー: normal` から開始します。
+For this manually configured standard ComfyUI route, select `MiniMax H3 Reference-to-Video (R2V / Ref2VA)`, connect the same four-panel manga only to `ref_image_0`, and leave `ref_image_1` onward disconnected. Start `Resolution Selector (Size)` at `Aspect ratio: 16:9 (Widescreen)` and `Megapixels: 0.4`, and `Basic Scheduler` at `Scheduler: normal`, with no subtitles or BGM. / 手動で設定するこのComfyUI標準経路では、`MiniMax H3 Reference-to-Video（R2V / Ref2VA）` を選び、同じ4コマ漫画を最初の参照入力 `ref_image_0` にだけ接続して、`ref_image_1` 以降は未接続にします。`Resolution Selector (Size)` は `アスペクト比: 16:9 (Widescreen)` と `メガピクセル: 0.4`、`基本スケジューラー` は `スケジューラー: normal` から開始し、字幕なし・BGMなしを既定にします。
 
-**Using the variable-duration Hybrid b25 workflow / 自動可変尺・Hybrid b25 配布ワークフローを使う場合**
+**Using the stable variable-duration Hybrid b25 + H3 BGM workflow / 自動可変尺・Hybrid b25 配布ワークフローを使う場合（H3生成BGM安定最新版）**
 
-This route distributes `Super-FURU-AI-4koma-H3-Hybrid-b25-VariableDuration-2026-09-03.json` and `MiniMax-H3-4Koma-VariableDuration-Hybrid-b25-Bundle-2026-09-03.zip` as separate direct downloads. The supplied JSON preserves its Hybrid b25, fast LoRA, Spectrum, and INT8 VAE settings. It turns the four panels into four story acts and chooses a duration in five-second increments from retained dialogue, up to 30 seconds. / この経路では `Super-FURU-AI-4koma-H3-Hybrid-b25-VariableDuration-2026-09-03.json` と `MiniMax-H3-4Koma-VariableDuration-Hybrid-b25-Bundle-2026-09-03.zip` を別々に配布します。提供JSONのHybrid b25・高速LoRA・Spectrum・INT8 VAE設定は変更しません。4コマを物語の4幕として扱い、保持した台詞量に合わせて5秒刻み・最大30秒の可変尺を選びます。
+This route distributes `Super-FURU-AI-4koma-H3-Hybrid-b25-VariableDuration-H3BGM-Stable-2026-09-04.json` and `MiniMax-H3-4Koma-VariableDuration-H3BGM-Stable-Bundle-2026-09-04.zip` as separate direct downloads. The supplied JSON preserves its Hybrid b25, fast LoRA, Spectrum, and INT8 VAE settings. It turns the four panels into four story acts, chooses a duration in five-second increments from retained dialogue up to 30 seconds, and asks MiniMax H3 itself to generate a quiet story-aware instrumental BGM while strongly ducking it under dialogue. / この経路では `Super-FURU-AI-4koma-H3-Hybrid-b25-VariableDuration-H3BGM-Stable-2026-09-04.json` と `MiniMax-H3-4Koma-VariableDuration-H3BGM-Stable-Bundle-2026-09-04.zip` を別々に配布します。提供JSONのHybrid b25・高速LoRA・Spectrum・INT8 VAE設定は変更しません。4コマを物語の4幕として扱い、保持した台詞量に合わせて5秒刻み・最大30秒の可変尺を選びます。MiniMax H3自身が内容に合う低音量BGMを動画・台詞と同時生成し、台詞中は強く抑えます。
 
 **FURU four-panel manga to video / FURUの4コマ漫画を動画化**
 
 The dedicated workflow turns one completed Super FURU AI four-panel manga page into four contiguous MiniMax H3 shots. It retains panel order, panel-derived cast, speaker ownership, story action, setting, and punchline; it gives each visible character a role-appropriate movement, removes speech balloons, and adds the title and fixed end credit outside H3 after generation. / 専用ワークフローは、完成したSuper FURU AIの4コマ漫画1枚を連続する4つのMiniMax H3ショットに変換します。コマ順、各コマから導く登場人物、台詞の話者、物語上の動作、場所、オチを保ち、画面内の各人物へ役割に応じた動きを与え、吹き出しを除去します。タイトルと固定エンドクレジットは、H3生成後にワークフローが合成します。
 
-The bundle contains three raw custom-node folders: `ComfyUI-NanoBanana-H3`, `ComfyUI-MiniMax-H3-Long-Video`, and `ComfyUI-Spectrum-MiniMax-H3`. Extract the outer ZIP, copy those three folders to `ComfyUI/custom_nodes/`, and fully restart ComfyUI. If an older folder has the same name, close ComfyUI and replace the folder without mixing old and new files. Save the workflow JSON under `ComfyUI/user/default/workflows/`. / 配布セットには `ComfyUI-NanoBanana-H3`、`ComfyUI-MiniMax-H3-Long-Video`、`ComfyUI-Spectrum-MiniMax-H3` の3フォルダを収録しています。外側ZIPを展開して3フォルダを `ComfyUI/custom_nodes/` へ配置し、ComfyUIを完全に再起動してください。同名の旧版がある場合はComfyUIを終了してフォルダごとに差し替え、新旧ファイルを混在させません。ワークフローJSONは `ComfyUI/user/default/workflows/` 以下へ保存します。
+The bundle contains three raw custom-node folders: `ComfyUI-NanoBanana-H3`, `ComfyUI-MiniMax-H3-Long-Video`, and `ComfyUI-Spectrum-MiniMax-H3`. Extract the outer ZIP, copy those three folders to `ComfyUI/custom_nodes/`, and fully restart ComfyUI. If an older folder has the same name, close ComfyUI and replace the folder without mixing old and new files. The included `セットアップ.ps1` can back up same-named folders before installation; inspect it before running, or perform the same replacement manually. Save the workflow JSON under `ComfyUI/user/default/workflows/`. / 配布セットには `ComfyUI-NanoBanana-H3`、`ComfyUI-MiniMax-H3-Long-Video`、`ComfyUI-Spectrum-MiniMax-H3` の3フォルダを収録しています。外側ZIPを展開して3フォルダを `ComfyUI/custom_nodes/` へ配置し、ComfyUIを完全に再起動してください。同名の旧版がある場合はComfyUIを終了してフォルダごとに差し替え、新旧ファイルを混在させません。同梱の `セットアップ.ps1` は同名フォルダを退避してから導入できます。実行前に内容を確認するか、同じ差し替えを手動で行ってください。ワークフローJSONは `ComfyUI/user/default/workflows/` 以下へ保存します。
 
-`ComfyUI-NanoBanana-H3` is an original integration node made for this workflow. Its original source is GPL-3.0-or-later; `ComfyUI-MiniMax-H3-Long-Video` is GPL-3.0-only and `ComfyUI-Spectrum-MiniMax-H3` is GPL-3.0-or-later. The grant covers only the original source in each applicable folder, not ComfyUI, model weights, OpenAI/Google services, or user input/output. Models are not included; obtain them under their own terms using `モデル一覧・取得先.md`. API keys, authentication files, model binaries, user images, and generated outputs are not distributed. / `ComfyUI-NanoBanana-H3` はこのワークフロー専用の独自統合ノードです。独自ソースは GPL-3.0-or-later、`ComfyUI-MiniMax-H3-Long-Video` は GPL-3.0-only、`ComfyUI-Spectrum-MiniMax-H3` は GPL-3.0-or-later です。各ライセンスは該当フォルダの独自ソースだけに適用し、ComfyUI本体、モデル重み、OpenAI／Googleサービス、利用者の入出力には及びません。モデルは同梱せず、`モデル一覧・取得先.md` と各条件を確認して取得してください。APIキー、認証ファイル、モデル本体、ユーザー画像、生成物は配布しません。
+Spectrum installs runtime hooks for sampler acceleration and, when its optional diagnostics are active, uses an isolated Python child process and writes bounded reports under the ComfyUI user cache. Long-Video audio tempo adjustment requires `ffmpeg`. / Spectrumはサンプラー高速化の実行時フックを導入し、任意診断が有効な場合は隔離Python子プロセスを使ってComfyUI user cache以下へ上限付きレポートを保存します。Long-Videoの音声速度調整には `ffmpeg` が必要です。
+
+`ComfyUI-NanoBanana-H3` is an original integration node made for this workflow. Its original source is MIT-licensed; `ComfyUI-MiniMax-H3-Long-Video` is GPL-3.0-only and `ComfyUI-Spectrum-MiniMax-H3` is GPL-3.0-or-later. The grant covers only the original source in each applicable folder, not ComfyUI, model weights, OpenAI/Google services, or user input/output. Models are not included; obtain them under their own terms using `モデル一覧・取得先.md`. API keys, authentication files, model binaries, user images, generated outputs, and personal pronunciation dictionaries are not distributed. / `ComfyUI-NanoBanana-H3` はこのワークフロー専用の独自統合ノードで、独自ソースは MIT、`ComfyUI-MiniMax-H3-Long-Video` は GPL-3.0-only、`ComfyUI-Spectrum-MiniMax-H3` は GPL-3.0-or-later です。各ライセンスは該当フォルダの独自ソースだけに適用し、ComfyUI本体、モデル重み、OpenAI／Googleサービス、利用者の入出力には及びません。モデルは同梱せず、`モデル一覧・取得先.md` と各条件を確認して取得してください。APIキー、認証ファイル、モデル本体、ユーザー画像、生成物、個人用発音辞書は配布しません。
 
 The dedicated H3 prompt extracts the exact title as `overlay_title` metadata and removes it before H3 conditioning. `DeterministicTitleWatermarkOverlay` composites it once after decoding at the upper left using black text with a white outline and no background bar; `DeterministicEndCreditOverlay` adds the fixed credit afterward. / 専用H3プロンプトはタイトルを `overlay_title` として抽出し、H3の条件入力から除外します。`DeterministicTitleWatermarkOverlay` が動画生成後に左上へ一度だけ、黒字＋白縁・背景バーなしで合成し、`DeterministicEndCreditOverlay` が固定クレジットを後段で合成します。
 
@@ -313,7 +315,7 @@ To address the extreme complexity of a 5,000+ line monolith, the frontend archit
 
 ## 🔍 Deep Analysis (技術詳解)
 
-### 🧭 Current v5.7.3 Processing Contract / 現行v5.7.3処理仕様
+### 🧭 Current v5.7.7 Processing Contract / 現行v5.7.7処理仕様
 
 | Stage | Input | Processing and validation | Output |
 |:--|:--|:--|:--|
@@ -853,6 +855,9 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 
 ## 📋 ChangeLog
 
+### v5.7.7 (2026-09-04)
+- **[Fix & UX]** MiniMax H3配布を自動可変尺・H3生成BGM安定最新版ワークフローと3カスタムノードの検証済みセットへ更新 / Updated the MiniMax H3 distribution to the verified stable auto-duration H3-generated-BGM workflow and three-custom-node bundle
+
 ### v5.7.6 (2026-09-03)
 - **[Fix & UX]** Hugging Face配布時にHF専用のLFS属性を保持し、既存の配布ZIPが通常Gitバイナリへ戻る不具合を修正 / Preserved Hugging Face-specific LFS attributes during deployment so existing distribution ZIPs cannot revert to regular Git binaries
 
@@ -895,155 +900,4 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 ### v5.6.3 (2026-08-26)
 - **[Fix & UX]** 配布ワークフローJSONの公開時バイト完全性を修正 / Preserve exact distributed workflow JSON bytes in published assets
 
-### v5.6.2 (2026-08-26)
-- **[Fix & UX]** 2026-08-26のカスタムノードZIPとHybrid b25ワークフローを別々のダウンロードボタンへ更新し、旧版差し替え、ワークフロー配置、両Providerの導入案内を同期 / Updated separate download buttons with the 2026-08-26 custom-node ZIP and Hybrid b25 workflow, plus replacement, workflow-location, and dual-provider setup guidance
-
-### v5.6.1 (2026-08-24)
-- **[Fix & UX]** MiniMax H3の配布ワークフローへ5件すべてのモデルURL・SHA256・保存先を登録し、日英併記のFURU 4コマ動画化説明と不足モデルDownload案内を追加 / Registered URLs, SHA256 values, and target folders for all five MiniMax H3 models and added bilingual FURU four-panel manga-to-video guidance with missing-model download instructions
-
-### v5.6.0 (2026-08-23)
-- **[Fix & UX]** MiniMax H3配布をTurbo v4 LoRA・8 steps版へ更新し、標準テンプレート用コピー文、共通カスタムノード、タイトル後段合成、API案内を同期 / Updated the MiniMax H3 distribution to Turbo v4 LoRA with 8 steps and synchronized the standard-template copy prompt, shared custom node, downstream title compositing, and API guidance
-
-### v5.5.9 (2026-08-23)
-- **[Fix & UX]** MiniMax H3の最初の説明と、手動・全部お任せの選択導線を追加 / Added an introductory MiniMax H3 explanation and clear manual versus all-in-one workflow choices
-
-### v5.5.8 (2026-08-23)
-- **[Fix & UX]** 更新済みの標準20ステップ版ワークフローJSONとComfyUI-NanoBanana-H3カスタムノードZIPを配布内容へ同期 / Synced the distributed standard 20-step workflow JSON and ComfyUI-NanoBanana-H3 custom-node ZIP with the updated supplied artifacts
-
-### v5.5.7 (2026-08-23)
-- **[Fix & Docs]** 配布ワークフローを26ノード・30リンクの添付標準版へ同期し、手動 `normal` と配布専用 `simple`・20ステップを分離。当時のAPIキー対応先と保存仕様、カスタムノード読込の追加原因を明記（その保存仕様はv5.7.3で廃止） / Synced the distributed workflow to the supplied 26-node, 30-link standard version; separated manual `normal` from dedicated-distribution `simple` / 20 steps; documented the provider and credential behavior that existed at the time plus additional custom-node loading causes (that persistence behavior was removed in v5.7.3)
-
-### v5.5.6 (2026-08-21)
-- **[Fix & UX]** 標準20ステップ版ワークフローJSON、必須ComfyUI-NanoBanana-H3 ZIP、導入順の直接ダウンロード案内を追加 / Added the standard 20-step workflow JSON, required ComfyUI-NanoBanana-H3 ZIP, and ordered direct-download setup guidance
-
-### v5.5.5 (2026-08-21)
-- **[Fix & UX]** 身体演技・カメラ多様化と一枚絵品質修正を追加 / Added body-acting and camera variety plus single-image quality-path repair
-
-### v5.5.4 (2026-08-20)
-- **[Fix & UX]** 公開Pages上のComfyUIワークフローJSONダウンロードを同一配布先へ修正 / Fixed the public Pages ComfyUI workflow JSON download to use the same distribution origin
-
-### v5.5.3 (2026-08-20)
-- **[Fix & UX]** ComfyUIワークフローJSONの配布と標準コピーボタンとの使い分けを追加 / Added ComfyUI workflow JSON distribution and separate guidance from the standard copy action
-
-### v5.5.2 (2026-08-19)
-- **[Fix & UX]** STEP4のMiniMax H3案内に、最初に選ぶべき `MiniMax H3 Reference-to-Video（R2V / Ref2VA）` ワークフローを独立した手順と設定項目として追加 / Added an explicit MiniMax H3 Reference-to-Video (R2V / Ref2VA) workflow-selection step and setting to the STEP4 guide
-
-### v5.5.1 (2026-08-19)
-- **[Fix & UX]** MiniMax H3の会話音声・話者口パク固定・字幕なし・BGMなしを維持しながら、全員の役割別演技、カットごとの人物反応、寄り引き・横移動・縦移動・回り込みを使い分けるカメラ軌道を復元 / Restored role-appropriate acting for every visible character and varied push-pull, lateral, vertical, and orbiting camera paths while retaining dialogue-first audio, speaker-bound lip sync, no subtitles, and no default BGM
-
-### v5.5.0 (2026-08-18)
-- **[Fix & UX]** MiniMax H3のコピー文を会話音声優先・字幕なし・BGMなし・話者口パク固定へ更新し、参照画像は `ref_image_0` のみ、`Resolution Selector (Size)`・`Float (Duration)`・`基本スケジューラー` の設定欄までSTEP4とREADMEで案内 / Updated the MiniMax H3 helper to prioritize voiced dialogue with no subtitles or default BGM, lock speaker mouth movement, and document the exact `ref_image_0`, resolution, duration, and scheduler settings in STEP4 and README
-
-### v5.4.9 (2026-08-18)
-- **[Fix & UX]** OpenAIとGeminiの旧二重状態を単一の実効エンジンへ収束させ、OpenAI信号が片方だけ残ってもSTEP1からSTEP4をOpenAIへ同期 / Consolidated legacy OpenAI and Gemini flags into one effective engine so an OpenAI signal from either state synchronizes STEP1 through STEP4 to OpenAI
-
-### v5.4.8 (2026-08-18)
-- **[Fix & UX]** STEP4のプロ向け補助操作を常時表示に復旧し、OpenAI画像生成状態を基準にSTEP4の表示・リンク・記録を統一 / Restored always-visible STEP4 pro helper actions and aligned STEP4 labels, links, and metadata with the effective OpenAI image-generation state
-
-### v5.4.7 (2026-08-18)
-- **[Fix & UX]** 同一行の複数話者台詞を話者別に分離し、引用外のト書きが吹き出しに入らないよう修正 / Split inline multi-speaker dialogue by speaker and prevent quoted-text-external stage directions from entering bubbles
-
-### v5.4.6 (2026-08-18)
-- **[Fix & UX]** MiniMax H3の単一ComfyUIコピー文で、背景人物・群衆を含む画面内の全キャラクターに、役割別で自然かつ物理的に一貫した動作を必須化 / Required role-appropriate, physically coherent motion for every visible character, including background and crowd performers, in the single MiniMax H3 ComfyUI copy prompt
-
-### v5.4.5 (2026-08-18)
-- **[Fix & UX]** MiniMax H3の単一ComfyUIコピー文へ、原文台詞を発話中だけ画面下中央へ表示する字幕、字幕用コントラスト、タイトル・終端表示との非重複領域を追加 / Added exact source-dialogue captions, caption contrast, and title-credit non-overlap rules to the single MiniMax H3 ComfyUI copy prompt
-
-### v5.4.4 (2026-08-17)
-- **[Fix & UX]** MiniMax H3の単一コピー文を、作品公開用タイトル・終端表記、吹き出し形状の完全除去、かなのみの日本語音声、各カットの明確なカメラ移動へ統合 / Unified the single MiniMax H3 copy prompt with publication title and ending credit, complete balloon-shape removal, kana-only Japanese speech, and clear camera movement in every shot
-
-### v5.4.3 (2026-08-17)
-- **[Fix & UX]** MiniMax H3作品公開用コピーを追加し、添付4コマからのタイトルOCR、枠外非素材化、冒頭タイトルと終端クレジット表示を指定 / Added a MiniMax H3 publication copy prompt with title OCR, panel-only story material, an opening title, and ending credit
-
-### v5.4.2 (2026-08-17)
-- **[Fix & UX]** MiniMax H3のコピー指示に漢字の読みガイドと条件付きアニメーション演出を追加 / Added kana reading guidance and conditional animation direction to the MiniMax H3 copied prompt
-
-### v5.4.1 (2026-08-17)
-- **[Fix & UX]** MiniMax H3のコピー指示へ秒単位のカメラ・カット設計と実際のカットまたぎ台詞規則を追加 / Added timed camera/cut planning and genuine cross-cut dialogue rules to the MiniMax H3 copy prompt
-
-### v5.4.0 (2026-08-17)
-- **[Fix & UX]** 複合音響・演出ラベルを視覚指示として処理し、引用された効果音や演出文が架空の話者・吹き出しにならないように修正 / Treat combined acoustic-direction labels as visual instructions so quoted sound cues and staging prose never become synthetic speakers or speech bubbles
-
-### v5.3.9 (2026-08-16)
-- **[Fix & UX]** MiniMax H3のコピープロンプトをBGM常時再生を必須化する契約へ差し替え / Replaced the MiniMax H3 copied prompt with a continuous mandatory BGM contract
-
-### v5.3.8 (2026-08-16)
-- **[Fix & UX]** MiniMax H3・ComfyUI用案内を4手順へ更新し、チャットへの漫画添付・送信、出力プロンプトのコピー、画角と秒数の確認を明記 / Updated the MiniMax H3 ComfyUI helper to four steps covering manga attachment, prompt copying, and framing and duration confirmation
-
-### v5.3.7 (2026-08-15)
-- **[Fix & UX]** MiniMax H3用のComfyUI動画化補助を追加し、4コマ漫画をReference Imageへ接続する手順をREADMEとSTEP4に明記 / Added a MiniMax H3 ComfyUI video-helper prompt and documented the four-panel Reference Image workflow in README and STEP4
-
-### v5.3.6 (2026-08-14)
-- **[Docs & Rights]** Added an explicit MIT license for original program source code and separated the policy for original non-code content, brand use, generated outputs, and direct third-party dependencies / 独自プログラム・ソースコードのMIT Licenseを明示し、独自非コード創作物・名称利用・生成物・直接依存関係の方針を分離
-- **[Scope]** Added `LICENSE-CONTENT.md`, `TRADEMARKS.md`, `OUTPUTS.md`, and `THIRD_PARTY_NOTICES.md`; this release does not change generation logic, API-key handling, provider selection, or image-generation behavior / 上記の権利関係文書を追加。本リリースは生成ロジック、APIキー、プロバイダー選択、画像生成動作を変更しません
-
-### v5.3.5 (2026-08-12)
-- **[Fix & UX]** API初回接続、全自動の遅延上書き、肩越しキャスト重複、複合語の誤置換を汎用修正 / Fixed first-submit API connection, stale full-auto overwrites, over-the-shoulder cast duplication, and compound-term rewrites
-
-### v5.3.4 (2026-08-11)
-- **[Fix & UX]** 公開済みリリース表記とHANDOFFの状態を実際のv5.3.3公開結果へ同期 / Synchronized published-release wording and HANDOFF status with the actual v5.3.3 release
-
-### v5.3.3 (2026-08-12)
-- **[Fix & UX]** 画像品質NG時に問題限定の修正版を1回だけ生成し、修正版も未合格・判定不能・取得失敗なら保存済み元画像へ戻して後続作業を継続 / Added one issue-limited image repair attempt after concrete QA failures; restores the saved original and continues when the repair remains NG, is unverified, or cannot be retrieved
-
-### v5.3.2 (2026-08-11)
-- **[Fix & UX]** 動作の受け手に合わせた画面・書類・ネームプレートの向きと、肩越し表示を追加。人物・手・吹き出し優先の可視品質ゲートを補強 / Added action-targeted orientation for screens, documents, and nameplates, including valid over-the-shoulder views; strengthened the visible person, hand, and bubble quality gate
-
-### v5.3.1 (2026-08-11)
-- **[Fix & UX]** 初回API接続の再試行と、人物・手・小道具・吹き出しを優先する可視品質ゲートを追加。背景は軽量な継続情報へ縮小 / Added first-entry API retry plus a visible person, hand, prop, and bubble quality gate; reduced background handling to lightweight continuity (latest 15 releases) / 変更履歴（最新15件）
-
-### v5.3.0 (2026-08-10)
-- **[Fix & UX]** 特定の物やポーズに依存しない手・小道具運動学契約を追加し、Actionを変更せず左右・接触・所有者・最終支持状態・指手首の連続性を保持 / Added a situation-agnostic hand and prop kinematics contract that preserves Action while locking side, contact, ownership, final support state, and finger/wrist continuity
-
-### v5.2.9 (2026-08-10)
-- **[Fix & UX]** READMEの現行実装バージョン表記をv5.2.9へ訂正し、公開済みの構図バリエーション機能と整合 / Corrected the README current-implementation version to v5.2.9 so it matches the latest release and published manga composition variety description
-
-### v5.2.8 (2026-08-10)
-- **[Fix & UX]** 通常の4コマ生成で被写体基準の斜めカメラ・身体軸・両手の前後差を自動指定し、OpenAI画像生成中の待機表示を通常2〜10分に統一 / Added default subject-relative camera, body-axis, and two-hand depth variety for normal manga generation, and aligned the OpenAI wait overlay to the normal 2-to-10-minute expectation
-
 > Full release history is available on [GitHub Releases](https://github.com/FURUYAN1234/nano-banana-pro/releases). / 全履歴は [GitHub Releases](https://github.com/FURUYAN1234/nano-banana-pro/releases) で確認できます。
-
-### v5.2.7 (2026-08-09)
-- **[Fix & UX]** 対象日付の季節と行事・環境に合わせて衣装を選択し、夏冬の明白な不一致を具体的理由付きで再生成。ブラウザの画像ストリーム失敗時は通常応答で一度だけ再試行し、既存依存の高重要度脆弱性を修正 / Selects outfits from the target-date season, events, and environment; retries clear summer/winter mismatches with a concrete reason. Retries once with a normal response after browser image-stream failure and fixes high-severity dependency findings
-
-### v5.2.6 (2026-08-08)
-- **[Fix & UX]** 吹き出し抽出が身体・表情・演出などの演出指示を台詞扱いしないようにし、OpenAI画像生成の衣装維持指示を安全判定に通る肯定表現へ修正 / Prevented visual direction labels from being parsed as dialogue bubbles and rewrote OpenAI wardrobe preservation guidance as safe positive instructions.
-
-### v5.2.5 (2026-08-08)
-- **[Fix & UX]** 漫画タイトル末尾の固定『!?』連結を廃止し、内容に応じた無印・!・?・!?を保持。成人向け安全正規化とOpenAI画像リクエストを改善し、通常のSTEP2→STEP4実API生成で新規4コマを確認 / Removed the forced !? manga-title suffix and preserve no punctuation, !, ?, or !? according to the generated content. Improved adult-safe normalization and the OpenAI image request, verified through a normal STEP2-to-STEP4 real API four-panel run
-
-### v5.2.4 (2026-08-07)
-- **[Fix & UX]** Markdown見出しの表情・身体・演出・背景を台詞と配置から除外し、視覚指示はActionへ保持。通常キャラクターシートの実API四コマで余計な吹き出しが出ないことを確認 / Exclude Markdown visual-section headings from dialogue and placement parsing while preserving visual directions in Action; verified with a normal character-sheet real API four-panel generation without extra bubbles
-
-### v5.2.3 (2026-08-07)
-- **[Fix & UX]** 4コマ全体でキャラクター衣装の色・柄を固定するクロスパネル衣装ロックと、元絵の顔・髪・服色・柄を保持する縦横比修正ロックを追加 / Added a cross-panel wardrobe color lock and an aspect-ratio correction lock that preserves the source faces, hair, garment colors, and patterns
-
-### v5.2.2 (2026-08-06)
-- **[Fix & UX]** 一枚絵と4コマで共通の品質契約を適用し、背景・照明・解剖・質感の基準を同期 / Applied one shared quality contract across single-image and four-panel prompts for setting, lighting, anatomy, and clean rendering
-
-### v5.2.1 (2026-08-05)
-- **[Fix & UX]** 演出・ギャグ構造ラベルを汎用的にActionへ振り分け、説明文の吹き出し化を防止 / Routed staging-gag structural labels to visual Action and prevented direction prose from becoming speech bubbles
-
-### v5.2.0 (2026-08-05)
-- **[Fix & UX]** STEP1キャラクター解析リセットを追加し、API接続を保持したままキャラクターシート・抽出設定・解析ログとSTEP2以降を消去できるように改善 / Added a STEP1 character-analysis reset that preserves the API connection while clearing character sheets, extracted settings, analysis logs, and STEP2-plus work
-
-### v5.1.9 (2026-08-05)
-- **[Fix & UX]** 漫画台本の構造ラベルを吹き出し化せず、同一話者の重複セリフのみを抑制 / Prevented structural labels from becoming speech bubbles and deduplicated only near-identical same-speaker dialogue
-
-### v5.1.8 (2026-08-04)
-- **[Fix & UX]** STEP2のシナリオ作成・演出強化API待機上限を3分に延長し、STEP1/STEP3/画像生成の既存上限を維持 / Extended the STEP2 scenario creation and enhancement API timeout to three minutes while preserving existing STEP1, STEP3, and image-generation limits
-
-### v5.1.7 (2026-08-04)
-- **[Fix & UX]** 表現衛生NGを共通の3試行品質評価へ統合し、上限到達後も最良候補を保持してSTEP3・画像生成へ継続。試行表示を2/3・3/3へ明確化 / Integrated scenario-content hygiene into the shared three-attempt quality loop, retaining the best candidate for STEP3 and image generation while showing explicit 2/3 and 3/3 attempt progress
-
-### v5.1.6 (2026-08-04)
-- **[Fix & UX]** 開発中の更新でAPI接続を空にしない保護を追加 / Protected active API connections during development refreshes
-
-### v5.1.5 (2026-08-04)
-- **[Fix & UX]** 強化品質の再試行で最良候補を保持し、品質警告でもSTEP3・STEP4を継続 / Retained the best enhancement candidate and continued through quality warnings
-
-### v5.1.4 (2026-08-04)
-- **[Fix & UX]** 品質再試行で最良候補を保持し、自由入力の禁止カテゴリを生成後にも検証 / Retained the best quality candidate and enforced manual exclusions after generation
-
-### v5.1.3 (2026-08-04)
-- **[Fix & UX]** シナリオ生成の隠れた自動再試行を停止し、背景検証の誤検出と検証エラーの通信エラー誤表示を修正。画像受信後の自動視覚QA・自動再生成を停止。 / Disabled hidden scenario retries, fixed false background validation and validation-error messaging, and removed post-image automatic vision QA/regeneration.
