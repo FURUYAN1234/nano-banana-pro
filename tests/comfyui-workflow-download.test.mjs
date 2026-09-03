@@ -8,11 +8,11 @@ const step4PanelSource = readFileSync(new URL('../src/components/Step4Panel.jsx'
 const readmeSource = readFileSync(new URL('../README.md', import.meta.url), 'utf8');
 const packageJson = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
 const workflowUrl = new URL(
-  '../public/workflows/Super-FURU-AI-4koma-H3-Hybrid-b25-Turbo-v4-LoRA-8step-v1.json',
+  '../public/workflows/Super-FURU-AI-4koma-H3-FusedTurbo-Spectrum-SLA-8step-v1.json',
   import.meta.url,
 );
 const customNodeZipUrl = new URL(
-  '../public/downloads/ComfyUI-NanoBanana-H3-Latest-2026-08-26.zip',
+  '../public/downloads/MiniMax-H3-4Koma-15s-FusedTurbo-Spectrum-SLA-Bundle-2026-09-03.zip',
   import.meta.url,
 );
 const publishedAttributesUrl = new URL('../public/.gitattributes', import.meta.url);
@@ -20,8 +20,7 @@ const publishedAttributesUrl = new URL('../public/.gitattributes', import.meta.u
 const hashText = (value) => createHash('sha256').update(value, 'utf8').digest('hex');
 const hashBytes = (value) => createHash('sha256').update(value).digest('hex');
 
-const readZipFiles = (url) => {
-  const archive = readFileSync(url);
+const readZipFilesFromBuffer = (archive) => {
   const endSignature = 0x06054b50;
   let endOffset = archive.length - 22;
   while (endOffset >= 0 && archive.readUInt32LE(endOffset) !== endSignature) endOffset -= 1;
@@ -60,14 +59,16 @@ const readZipFiles = (url) => {
   return files;
 };
 
-test('STEP4 exposes the shared custom node before the latest workflow JSON as separate direct downloads', () => {
-  assert.match(step4PanelSource, /MiniMax H3・ComfyUI用プロンプトをコピー[\s\S]*Nano Bananaカスタムノードをダウンロード[\s\S]*最新版・最強版ワークフローをダウンロード/);
+const readZipFiles = (url) => readZipFilesFromBuffer(readFileSync(url));
+
+test('STEP4 exposes the required four-node bundle before the latest workflow JSON as separate direct downloads', () => {
+  assert.match(step4PanelSource, /MiniMax H3・ComfyUI用プロンプトをコピー[\s\S]*必須カスタムノード4点・導入セットをダウンロード[\s\S]*最新版・最強版ワークフローをダウンロード/);
   assert.match(step4PanelSource, /COMFYUI_WORKFLOW_DOWNLOAD_URL/);
   assert.match(step4PanelSource, /const COMFYUI_WORKFLOW_DOWNLOAD_URL = `\$\{import\.meta\.env\.BASE_URL\}workflows\/\$\{COMFYUI_WORKFLOW_FILENAME\}`;/);
   assert.match(step4PanelSource, /const COMFYUI_CUSTOM_NODE_DOWNLOAD_URL = `\$\{import\.meta\.env\.BASE_URL\}downloads\/\$\{COMFYUI_CUSTOM_NODE_FILENAME\}`;/);
   assert.doesNotMatch(step4PanelSource, /raw\.githubusercontent\.com\/FURUYAN1234\/nano-banana-pro/);
   assert.match(step4PanelSource, /<a[\s\S]*href=\{COMFYUI_WORKFLOW_DOWNLOAD_URL\}[\s\S]*download=\{COMFYUI_WORKFLOW_FILENAME\}[\s\S]*role="button"[\s\S]*最新版・最強版ワークフローをダウンロード/);
-  assert.match(step4PanelSource, /<a[\s\S]*href=\{COMFYUI_CUSTOM_NODE_DOWNLOAD_URL\}[\s\S]*download=\{COMFYUI_CUSTOM_NODE_FILENAME\}[\s\S]*role="button"[\s\S]*Nano Bananaカスタムノードをダウンロード/);
+  assert.match(step4PanelSource, /<a[\s\S]*href=\{COMFYUI_CUSTOM_NODE_DOWNLOAD_URL\}[\s\S]*download=\{COMFYUI_CUSTOM_NODE_FILENAME\}[\s\S]*role="button"[\s\S]*必須カスタムノード4点・導入セットをダウンロード/);
   assert.doesNotMatch(step4PanelSource, /const downloadComfyUIWorkflow = \(\) =>/);
   assert.doesNotMatch(step4PanelSource, /anchor\.click\(\)/);
   assert.match(step4PanelSource, /ComfyUI標準テンプレートを自分で使う場合/);
@@ -92,24 +93,25 @@ test('STEP4 exposes the shared custom node before the latest workflow JSON as se
   assert.match(step4PanelSource, /ComfyUI\/user\/nanobanana_h3_credentials\.json/);
   assert.match(step4PanelSource, /暗号化されません/);
   assert.match(step4PanelSource, /多くの場合/);
-  assert.match(step4PanelSource, /Turbo v4 LoRA.*強度.*1\.0.*Euler.*Beta.*8 steps/s);
-  assert.match(step4PanelSource, /SpectrumApplyMiniMaxH3.*ComfyUI Manager.*ComfyUI-Spectrum-MiniMax-H3/s);
+  assert.match(step4PanelSource, /Fused Turbo.*Spectrum.*SLA.*RES Multistep.*Simple.*8 steps/s);
+  assert.match(step4PanelSource, /ComfyUI-NanoBanana-H3.*ComfyUI-Spectrum-MiniMax-H3.*ComfyUI-PlagueKind-Nodes.*ComfyUI-MiniMax-H3-MotionCache-FastVAE/s);
   assert.match(step4PanelSource, /minimax_h3_video_vae_int8_convrot\.safetensors/);
-  assert.match(step4PanelSource, /カスタムノードは標準版・Turbo LoRA版で共通/);
+  assert.match(step4PanelSource, /4つのカスタムノードZIP/);
   assert.match(step4PanelSource, /JSONだけでは実行できません/);
   assert.match(step4PanelSource, /ComfyUI\/custom_nodes\/ComfyUI-NanoBanana-H3\//);
   assert.match(step4PanelSource, /ComfyUIを完全に再起動/);
   assert.match(step4PanelSource, /🔐 APIキー未登録／登録/);
   assert.match(step4PanelSource, /APIキーはワークフローJSONや配布ZIPには保存されず/);
-  assert.match(step4PanelSource, /Turbo v4 LoRAの不足項目に <code>Download<\/code> が表示/);
+  assert.match(step4PanelSource, /Fused Turbo本体.*テキストエンコーダ.*映像VAE.*音声VAE.*4モデル/s);
+  assert.match(step4PanelSource, /独立したTurbo LoRA.*SLA LoRA.*不要/s);
   assert.match(step4PanelSource, /NanoBananaH3Transform[\s\S]*DeterministicTitleWatermarkOverlay[\s\S]*DeterministicEndCreditOverlay/);
-  assert.match(step4PanelSource, /実際のサンプリング設定は4 stepsではなく8 steps/);
+  assert.match(step4PanelSource, /実際のサンプリング設定は8 steps/);
   assert.match(step4PanelSource, /overlay_title.*動画生成後.*一度だけ/s);
   assert.match(step4PanelSource, /黒字＋白縁、背景バーなし/);
-  assert.match(step4PanelSource, /APIキー・認証情報・モデル・LoRA・漫画画像・生成動画は配布物に含まれません/);
+  assert.match(step4PanelSource, /APIキー・認証情報・モデル本体・漫画画像・生成動画は配布物に含まれません/);
   assert.match(step4PanelSource, /配布元のライセンスに同意して取得/);
-  assert.match(step4PanelSource, /ComfyUI-NanoBanana-H3-Latest-2026-08-26\.zip/);
-  assert.match(step4PanelSource, /Super-FURU-AI-4koma-H3-Hybrid-b25-Turbo-v4-LoRA-8step-v1\.json/);
+  assert.match(step4PanelSource, /MiniMax-H3-4Koma-15s-FusedTurbo-Spectrum-SLA-Bundle-2026-09-03\.zip/);
+  assert.match(step4PanelSource, /Super-FURU-AI-4koma-H3-FusedTurbo-Spectrum-SLA-8step-v1\.json/);
   assert.match(step4PanelSource, /同名の旧版がある場合.*フォルダ単位で差し替え/s);
   assert.match(step4PanelSource, /新旧.*混在させません/);
   assert.match(step4PanelSource, /user\/default\/workflows/);
@@ -131,14 +133,14 @@ test('H3 copy keeps the synchronous selection fallback inside the original click
   assert.match(step4PanelSource, /textarea\.setSelectionRange\(0, text\.length\)/);
 });
 
-test('distributed Turbo v4 LoRA workflow has the supplied Spectrum-accelerated 8-step sampling and compositing contract', () => {
+test('distributed Fused Turbo workflow has the supplied Spectrum and SLA 8-step sampling contract', () => {
   assert.equal(existsSync(workflowUrl), true, 'ComfyUI workflow JSON must be distributed from public/workflows');
   if (!existsSync(workflowUrl)) return;
 
   const bytes = readFileSync(workflowUrl);
   assert.equal(
     readFileSync(publishedAttributesUrl, 'utf8').includes(
-      'workflows/Super-FURU-AI-4koma-H3-Hybrid-b25-Turbo-v4-LoRA-8step-v1.json -text',
+      'workflows/Super-FURU-AI-4koma-H3-FusedTurbo-Spectrum-SLA-8step-v1.json -text',
     ),
     true,
     'the published Git attributes must preserve the supplier workflow bytes',
@@ -148,7 +150,7 @@ test('distributed Turbo v4 LoRA workflow has the supplied Spectrum-accelerated 8
     /gh-pages -d dist --dotfiles/,
     'the static deploy must include the published Git attributes file',
   );
-  assert.equal(hashBytes(bytes), '83dea9a22988f06bfc3d7b406d2eb3bc031db60621f15ea5a2dec617f6249cae');
+  assert.equal(hashBytes(bytes), 'f8973537727a0dd1b5daac8f2d73d28bc7ef08d259c4c9c03f88ab7278586f0c');
   const workflow = JSON.parse(bytes.toString('utf8'));
   const workflowText = bytes.toString('utf8');
   assert.equal(workflow.nodes.length, 28);
@@ -156,25 +158,20 @@ test('distributed Turbo v4 LoRA workflow has the supplied Spectrum-accelerated 8
   assert.ok(!workflow.nodes.some((node) => node.type === 'PreviewImage'));
   assert.deepEqual(
     workflow.nodes.find((node) => node.type === 'BasicScheduler')?.widgets_values,
-    ['beta', 8, 1],
+    ['simple', 8, 1],
   );
-  assert.deepEqual(workflow.nodes.find((node) => node.type === 'KSamplerSelect')?.widgets_values, ['euler']);
+  assert.deepEqual(workflow.nodes.find((node) => node.type === 'KSamplerSelect')?.widgets_values, ['res_multistep']);
   assert.deepEqual(
-    workflow.nodes.find((node) => node.type === 'LoraLoaderModelOnly')?.widgets_values,
-    ['minimax_h3_turbo_v4_step600_ema_pruned_comfyui.safetensors', 1],
+    workflow.nodes.find((node) => node.type === 'UNETLoader')?.widgets_values,
+    ['minimax_h3_fused_refdelta_r1024_turbo8_mystic07_int8_convrot.safetensors', 'default'],
   );
   assert.deepEqual(
     workflow.nodes.find((node) => node.type === 'SpectrumApplyMiniMaxH3')?.widgets_values,
     [true, 0.5, 1, 0.1, 2, 0.75, 1, 1, 8, false, 'system_ram', true, false, false, true, 0, 'system_ram', 'off', 0.65, false, false, 'coordinate_rls', 'hard_clip', 0.4, 'no_attenuation', 'balanced'],
   );
-  assert.equal(
-    workflow.nodes.find((node) => node.type === 'SpectrumApplyMiniMaxH3')?.properties?.cnr_id,
-    'comfyui-spectrum-minimax-h3',
-  );
-  assert.equal(
-    workflow.nodes.find((node) => node.type === 'SpectrumApplyMiniMaxH3')?.properties?.ver,
-    '0.2.23',
-  );
+  assert.deepEqual(workflow.nodes.find((node) => node.type === 'H3SLAAttention')?.widgets_values, [0.9, '64', 8192, 0, true, true]);
+  assert.deepEqual(workflow.nodes.find((node) => node.type === 'MiniMaxH3FastVAEDecode')?.widgets_values, [2]);
+  assert.equal(workflow.nodes.some((node) => node.type === 'LoraLoaderModelOnly'), false);
   assert.ok(workflow.nodes.some((node) => node.type === 'NanoBananaH3Transform'));
   assert.ok(workflow.nodes.some((node) => node.type === 'DeterministicTitleWatermarkOverlay'));
   assert.ok(workflow.nodes.some((node) => node.type === 'DeterministicEndCreditOverlay'));
@@ -182,9 +179,9 @@ test('distributed Turbo v4 LoRA workflow has the supplied Spectrum-accelerated 8
     workflow.nodes
       .filter((node) => node.type === 'MarkdownNote')
       .map((node) => node.title)
-      .filter((title) => ['配布前の必須環境・Download配置', '解像度早見表'].includes(title))
+      .filter((title) => ['【15秒・四コマ従来版】3本の違い・使い方', '配布前の必須環境・モデル配置', '解像度早見表'].includes(title))
       .sort(),
-    ['解像度早見表', '配布前の必須環境・Download配置'].sort(),
+    ['【15秒・四コマ従来版】3本の違い・使い方', '配布前の必須環境・モデル配置', '解像度早見表'].sort(),
   );
   assert.deepEqual(
     workflow.nodes.find((node) => node.id === 141)?.widgets_values?.[0],
@@ -202,20 +199,22 @@ test('distributed Turbo v4 LoRA workflow has the supplied Spectrum-accelerated 8
     && link[3] === idOf(toType)
     && link[4] === toSlot
   ));
-  assert.equal(hasLink('LoraLoaderModelOnly', 0, 'SpectrumApplyMiniMaxH3', 0), true);
-  assert.equal(hasLink('SpectrumApplyMiniMaxH3', 0, 'BasicScheduler', 0), true);
-  assert.equal(hasLink('SpectrumApplyMiniMaxH3', 0, 'BasicGuider', 0), true);
+  assert.equal(hasLink('UNETLoader', 0, 'SpectrumApplyMiniMaxH3', 0), true);
+  assert.equal(hasLink('SpectrumApplyMiniMaxH3', 0, 'H3SLAAttention', 0), true);
+  assert.equal(hasLink('H3SLAAttention', 0, 'BasicScheduler', 0), true);
+  assert.equal(hasLink('H3SLAAttention', 0, 'BasicGuider', 0), true);
   assert.equal(hasLink('NanoBananaH3Transform', 0, 'MiniMaxH3ReferenceToVideo', 3), true);
   assert.equal(hasLink('NanoBananaH3Transform', 1, 'MiniMaxH3ReferenceToVideo', 8), true);
   assert.equal(hasLink('NanoBananaH3Transform', 2, 'DeterministicTitleWatermarkOverlay', 2), true);
   assert.equal(hasLink('DeterministicTitleWatermarkOverlay', 0, 'DeterministicEndCreditOverlay', 0), true);
   assert.equal(hasLink('DeterministicEndCreditOverlay', 0, 'CreateVideo', 0), true);
-  assert.match(workflowText, /Turbo v4 LoRA.*`8` steps/s);
-  assert.doesNotMatch(workflowText, /4 steps —|6 steps —/);
+  assert.match(workflowText, /Fused Turbo INT8 ConvRot.*Spectrum.*H3 SLA Attention.*8 steps/s);
+  assert.equal(workflow.extra?.h3_turbo?.separate_turbo_lora_required, false);
+  assert.match(workflowText, /独立したTurbo LoRAは不要です/);
   assert.doesNotMatch(workflowText, /AIza[0-9A-Za-z_-]{20,}|sk-[0-9A-Za-z_-]{20,}|BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY/);
 });
 
-test('distributed H3 workflow embeds verified one-click metadata and bilingual FURU four-panel guidance', () => {
+test('distributed H3 workflow embeds the supplied four-model metadata and four-node setup guidance', () => {
   const workflow = JSON.parse(readFileSync(workflowUrl, 'utf8'));
   const modelEntries = workflow.nodes.flatMap((node) => node.properties?.models ?? []);
 
@@ -235,9 +234,9 @@ test('distributed H3 workflow embeds verified one-click metadata and bilingual F
       directory: 'vae',
     },
     {
-      name: 'minimax_h3_hybrid_fl2va_ref2va_b25-49-int8.safetensors',
-      url: 'https://huggingface.co/smhfacct/Minimax-H3-fl2va-ref2va-hybrid-models/resolve/main/minimax_h3_hybrid_fl2va_ref2va_b25-49-int8.safetensors?download=true',
-      hash: 'a629cfea8d89a071b140c6e1935dc9a23e72de6badc18975a2bb9e6d1423d76d',
+      name: 'minimax_h3_fused_refdelta_r1024_turbo8_mystic07_int8_convrot.safetensors',
+      url: 'https://huggingface.co/MATLOWAI/minimax-h3-fused-turbo-int8-convrot/resolve/main/diffusion_models/minimax_h3_fused_refdelta_r1024_turbo8_mystic07_int8_convrot.safetensors?download=true',
+      hash: '4262e4e9963c553fa00016bbe83961407a4fc0a888be95fd836c8d4f2304e48b',
       hash_type: 'SHA256',
       directory: 'diffusion_models',
     },
@@ -248,49 +247,61 @@ test('distributed H3 workflow embeds verified one-click metadata and bilingual F
       hash_type: 'SHA256',
       directory: 'text_encoders',
     },
-    {
-      name: 'minimax_h3_turbo_v4_step600_ema_pruned_comfyui.safetensors',
-      url: 'https://huggingface.co/drbaph/MiniMax-H3-Turbo-Lora-ComfyUI/resolve/main/minimax_h3_turbo_v4_step600_ema_pruned_comfyui.safetensors?download=true',
-      hash: '7098acf3ee75028fd9fcd948f50fcc8d995057fabb76f86bd3ca2c0ffc58e409',
-      hash_type: 'SHA256',
-      directory: 'loras',
-    },
   ]);
 
   const workflowText = readFileSync(workflowUrl, 'utf8');
-  assert.match(workflowText, /FURU four-panel manga to video/);
-  assert.match(workflowText, /FURUの4コマ漫画を動画化/);
-  assert.match(workflowText, /Open this workflow\. Missing H3 model cards show \*\*Download\*\*/);
-  assert.match(workflowText, /不足モデルのカードに出る \*\*Download\*\*/);
+  assert.match(workflowText, /MiniMax-H3 四コマ→15秒動画/);
+  assert.match(workflowText, /必須モデルは4点/);
+  assert.match(workflowText, /ComfyUI-PlagueKind-Nodes/);
+  assert.match(workflowText, /ComfyUI-MiniMax-H3-MotionCache-FastVAE/);
   assert.match(step4PanelSource, /FURU four-panel manga to video/);
   assert.match(step4PanelSource, /FURUの4コマ漫画を動画化/);
   assert.match(readmeSource, /FURU four-panel manga to video/);
   assert.match(readmeSource, /FURUの4コマ漫画を動画化/);
 });
 
-test('custom-node ZIP has the required root folder, exact source files, and no forbidden extras', () => {
-  assert.equal(existsSync(customNodeZipUrl), true, 'custom-node ZIP must be distributed from public/downloads');
+test('distribution bundle contains the four supplied custom-node packs without stale backup files', () => {
+  assert.equal(existsSync(customNodeZipUrl), true, 'custom-node bundle must be distributed from public/downloads');
   if (!existsSync(customNodeZipUrl)) return;
 
   const files = readZipFiles(customNodeZipUrl);
-  assert.deepEqual([...files.keys()].sort(), [
+  const root = 'MiniMax-H3_四コマ15秒_高速版_配布用_2026-09-03/';
+  const expectedNodeArchives = [
+    'ComfyUI-MiniMax-H3-MotionCache-FastVAE.zip',
+    'ComfyUI-NanoBanana-H3.zip',
+    'ComfyUI-PlagueKind-Nodes.zip',
+    'ComfyUI-Spectrum-MiniMax-H3.zip',
+  ];
+  for (const archiveName of expectedNodeArchives) {
+    assert.equal(files.has(`${root}02_カスタムノード/${archiveName}`), true, `${archiveName} must be present`);
+  }
+  assert.equal(files.has(`${root}README_必ずお読みください.md`), true);
+  assert.equal(files.has(`${root}03_モデル直リンク/モデル一覧とSHA256.txt`), true);
+  assert.equal(files.has(`${root}04_動作確認/検証結果.txt`), true);
+  assert.equal(
+    files.has(`${root}01_ワークフロー/【配布用・検証済】MiniMax-H3_四コマ15秒_FusedTurbo_Spectrum_SLA_8step.json`),
+    true,
+  );
+
+  const nanoArchive = readZipFilesFromBuffer(files.get(`${root}02_カスタムノード/ComfyUI-NanoBanana-H3.zip`));
+  assert.deepEqual([...nanoArchive.keys()].sort(), [
     'ComfyUI-NanoBanana-H3/__init__.py',
     'ComfyUI-NanoBanana-H3/h3_prompt_system.txt',
     'ComfyUI-NanoBanana-H3/web/nanobanana_h3.js',
   ]);
-  assert.equal(hashBytes(files.get('ComfyUI-NanoBanana-H3/__init__.py')), 'a370f1cfaafe22d9d34629c356f86f999aa02079d98431ff94f91c9e23dfec6c');
-  assert.equal(hashBytes(files.get('ComfyUI-NanoBanana-H3/h3_prompt_system.txt')), '8c44135df96071ef16c122cdc93f44845b744600367cdfbec46684aa5d992eaf');
-  assert.equal(hashBytes(files.get('ComfyUI-NanoBanana-H3/web/nanobanana_h3.js')), '4beabe1a66efb6cbd6c371ccf2a64ca461af3d6419220b59ae9f025e3f933669');
-  assert.doesNotMatch([...files.keys()].join('\n'), /(?:^|\/)(__pycache__|[^/]+\.(?:pyc|bak))(?:\/|$)/i);
+  assert.equal(hashBytes(nanoArchive.get('ComfyUI-NanoBanana-H3/__init__.py')), 'a370f1cfaafe22d9d34629c356f86f999aa02079d98431ff94f91c9e23dfec6c');
+  assert.equal(hashBytes(nanoArchive.get('ComfyUI-NanoBanana-H3/h3_prompt_system.txt')), '8c44135df96071ef16c122cdc93f44845b744600367cdfbec46684aa5d992eaf');
+  assert.equal(hashBytes(nanoArchive.get('ComfyUI-NanoBanana-H3/web/nanobanana_h3.js')), '4beabe1a66efb6cbd6c371ccf2a64ca461af3d6419220b59ae9f025e3f933669');
+  assert.doesNotMatch([...nanoArchive.keys()].join('\n'), /(?:^|\/)(__pycache__|[^/]+\.(?:pyc|bak)|[^/]+\.bak-[^/]+)(?:\/|$)/i);
 
-  const combinedText = Buffer.concat([...files.values()]).toString('utf8');
+  const combinedText = Buffer.concat([...files.values()].filter((value) => value.length < 200_000)).toString('utf8');
   assert.doesNotMatch(combinedText, /AIza[0-9A-Za-z_-]{20,}|sk-[0-9A-Za-z_-]{20,}|BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY/);
 });
 
 test('README keeps the custom-node-first installation contract in sync with STEP4', () => {
-  assert.match(readmeSource, /Turbo v4 LoRA.*8 steps/s);
+  assert.match(readmeSource, /Fused Turbo.*Spectrum.*SLA.*8 steps/s);
   assert.match(readmeSource, /SpectrumApplyMiniMaxH3/);
-  assert.match(readmeSource, /ComfyUI Manager.*ComfyUI-Spectrum-MiniMax-H3/s);
+  assert.match(readmeSource, /ComfyUI-NanoBanana-H3.*ComfyUI-Spectrum-MiniMax-H3.*ComfyUI-PlagueKind-Nodes.*ComfyUI-MiniMax-H3-MotionCache-FastVAE/s);
   assert.match(readmeSource, /minimax_h3_video_vae_int8_convrot\.safetensors/);
   assert.match(readmeSource, /ComfyUI\/custom_nodes\//);
   assert.match(readmeSource, /ComfyUI-NanoBanana-H3/);
@@ -300,15 +311,15 @@ test('README keeps the custom-node-first installation contract in sync with STEP
   assert.match(readmeSource, /DeterministicEndCreditOverlay/);
   assert.match(readmeSource, /黒字＋白縁・背景バーなし/);
   assert.match(readmeSource, /固定クレジット/);
-  assert.match(readmeSource, /Turbo v4 LoRA.*強度.*1\.0.*Euler.*Beta.*8 steps/s);
+  assert.match(readmeSource, /RES Multistep.*Simple.*8 steps/s);
   assert.match(readmeSource, /手動.*標準.*normal/s);
   assert.match(readmeSource, /(?:OpenAI API.*Google Gemini API|Google Gemini API.*OpenAI API)/s);
   assert.doesNotMatch(readmeSource, /ComfyUI API/);
   assert.match(readmeSource, /ComfyUI\/user\/nanobanana_h3_credentials\.json/);
   assert.match(readmeSource, /暗号化.*されません/);
   assert.match(readmeSource, /多くの場合/);
-  assert.match(readmeSource, /ComfyUI-NanoBanana-H3-Latest-2026-08-26\.zip/);
-  assert.match(readmeSource, /Super-FURU-AI-4koma-H3-Hybrid-b25-Turbo-v4-LoRA-8step-v1\.json/);
+  assert.match(readmeSource, /MiniMax-H3-4Koma-15s-FusedTurbo-Spectrum-SLA-Bundle-2026-09-03\.zip/);
+  assert.match(readmeSource, /Super-FURU-AI-4koma-H3-FusedTurbo-Spectrum-SLA-8step-v1\.json/);
   assert.match(readmeSource, /同名の旧版.*フォルダ単位で差し替え/s);
   assert.match(readmeSource, /新旧.*混在させません/);
   assert.match(readmeSource, /user\/default\/workflows/);
