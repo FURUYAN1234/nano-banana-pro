@@ -1,6 +1,6 @@
 # Super FURU AI 4-koma System
 
-> Latest release: **v5.7.1** / 最新リリース: **v5.7.1**
+> Latest release: **v5.7.2** / 最新リリース: **v5.7.2**
 
 > **"To what extent can humans step away from the creative process?"**
 > **「人間は、どこまで制作から降りられるのか？」**
@@ -22,7 +22,7 @@
 This project aims to intentionally exclude humans from the creative process, allowing AI to act as a director and complete everything from brainstorming to composition, direction, and rendering.
 本プロジェクトは、人間をクリエイティブな工程から意図的に排除し、AIがディレクターとして「ネタ出し・構成・演出・作画」のすべてを完結させることを目的としています。
 
-The current implementation and latest release are **v5.7.1**. The product name is **Super FURU AI 4-koma System**; **Nano Banana 2** and **gpt-image-2** identify the Gemini and OpenAI image-generation routes. / 現在の実装および最新公開版は **v5.7.1** です。製品名は **Super FURU AI 4-koma System** で、**Nano Banana 2** と **gpt-image-2** はGemini系・OpenAI系の画像生成経路の名称です。
+The current implementation and latest release are **v5.7.2**. The product name is **Super FURU AI 4-koma System**; **Nano Banana 2** and **gpt-image-2** identify the Gemini and OpenAI image-generation routes. / 現在の実装および最新公開版は **v5.7.2** です。製品名は **Super FURU AI 4-koma System** で、**Nano Banana 2** と **gpt-image-2** はGemini系・OpenAI系の画像生成経路の名称です。
 
 Current behavior at a glance / 現行仕様の要点:
 
@@ -319,7 +319,7 @@ To address the extreme complexity of a 5,000+ line monolith, the frontend archit
 
 ## 🔍 Deep Analysis (技術詳解)
 
-### 🧭 Current v5.7.1 Processing Contract / 現行v5.7.1処理仕様
+### 🧭 Current v5.7.2 Processing Contract / 現行v5.7.2処理仕様
 
 | Stage | Input | Processing and validation | Output |
 |:--|:--|:--|:--|
@@ -858,6 +858,9 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 ---
 
 ## 📋 ChangeLog
+
+### v5.7.2 (2026-09-03)
+- **[Fix & UX]** Hugging Face配布ZIPをLFS／Xetブリッジ経由で公開し、Pagesの直接配布バイトを維持 / Publish the Hugging Face distribution ZIP through the LFS/Xet bridge while preserving direct Pages bytes
 
 ### v5.7.1 (2026-09-03)
 - **[Fix & UX]** MiniMax H3配布をFused Turbo・Spectrum・SLA高速版ワークフローと必須カスタムノード4点の導入セットへ更新 / Updated MiniMax H3 distribution to the Fused Turbo, Spectrum, and SLA accelerated workflow with a four-package custom-node setup bundle

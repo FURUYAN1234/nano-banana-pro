@@ -87,7 +87,20 @@ Get-ChildItem $DistDir -Force | ForEach-Object {
     Write-Host "  Copied: $($_.Name)" -ForegroundColor DarkGray
 }
 
-# === Step 5: Verify vite base path in built index.html ===
+# === Step 5: Track HF binary downloads through the LFS/Xet bridge ===
+# This is intentionally applied only inside the HF checkout. Adding the rule to
+# public/.gitattributes would turn GitHub Pages downloads into pointer files.
+Write-Host "[LFS] Tracking the MiniMax H3 distribution ZIP..." -ForegroundColor Yellow
+Push-Location $HfRoot
+git lfs track "downloads/MiniMax-H3-4Koma-15s-FusedTurbo-Spectrum-SLA-Bundle-2026-09-03.zip"
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "[ERROR] git lfs track failed." -ForegroundColor Red
+    Pop-Location
+    exit 1
+}
+Pop-Location
+
+# === Step 6: Verify vite base path in built index.html ===
 $BuiltIndex = Join-Path $HfRoot "index.html"
 if (Test-Path $BuiltIndex) {
     $indexContent = Get-Content $BuiltIndex -Raw -Encoding UTF8
@@ -98,7 +111,7 @@ if (Test-Path $BuiltIndex) {
     }
 }
 
-# === Step 6: Git commit & push ===
+# === Step 7: Git commit & push ===
 Write-Host "[GIT] Committing and pushing..." -ForegroundColor Yellow
 Push-Location $HfRoot
 
