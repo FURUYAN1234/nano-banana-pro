@@ -1,3 +1,4 @@
 # Keep the supplied workflow bytes unchanged when the static site is published.
 workflows/Super-FURU-AI-4koma-H3-Hybrid-b25-Turbo-v4-LoRA-8step-v1.json -text
 workflows/Super-FURU-AI-4koma-H3-FusedTurbo-Spectrum-SLA-8step-v1.json -text
+workflows/Super-FURU-AI-4koma-H3-Hybrid-b25-VariableDuration-2026-09-03.json -text

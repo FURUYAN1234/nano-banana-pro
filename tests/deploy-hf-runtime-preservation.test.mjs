@@ -16,7 +16,7 @@ test('HF deploy tracks distribution ZIPs through the Hub LFS bridge without chan
   const pagesAttributes = await readFile(new URL('../public/.gitattributes', import.meta.url), 'utf8');
 
   const copyIndex = script.indexOf('# === Step 5: Track HF binary downloads through the LFS/Xet bridge ===');
-  const lfsTrackCommand = 'git lfs track "downloads/MiniMax-H3-4Koma-15s-FusedTurbo-Spectrum-SLA-Bundle-2026-09-03.zip"';
+  const lfsTrackCommand = 'git lfs track "downloads/MiniMax-H3-4Koma-VariableDuration-Hybrid-b25-Bundle-2026-09-03.zip"';
   const lfsTrackIndex = script.indexOf(lfsTrackCommand);
   const gitAddIndex = script.indexOf('git add .');
 

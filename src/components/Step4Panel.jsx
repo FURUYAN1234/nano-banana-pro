@@ -21,9 +21,9 @@ import { GEMINI_A4_RELAYOUT_PROMPT, GEMINI_2K_REFINEMENT_PROMPT } from '../lib/g
 import { getEffectiveEngine } from '../lib/engine-state';
 import { MINIMAX_H3_COMFYUI_PROMPT } from '../lib/minimax-h3-prompt';
 
-const COMFYUI_WORKFLOW_FILENAME = 'Super-FURU-AI-4koma-H3-FusedTurbo-Spectrum-SLA-8step-v1.json';
+const COMFYUI_WORKFLOW_FILENAME = 'Super-FURU-AI-4koma-H3-Hybrid-b25-VariableDuration-2026-09-03.json';
 const COMFYUI_WORKFLOW_DOWNLOAD_URL = `${import.meta.env.BASE_URL}workflows/${COMFYUI_WORKFLOW_FILENAME}`;
-const COMFYUI_CUSTOM_NODE_FILENAME = 'MiniMax-H3-4Koma-15s-FusedTurbo-Spectrum-SLA-Bundle-2026-09-03.zip';
+const COMFYUI_CUSTOM_NODE_FILENAME = 'MiniMax-H3-4Koma-VariableDuration-Hybrid-b25-Bundle-2026-09-03.zip';
 const COMFYUI_CUSTOM_NODE_DOWNLOAD_URL = `${import.meta.env.BASE_URL}downloads/${COMFYUI_CUSTOM_NODE_FILENAME}`;
 
 const H3_ACTION_BUTTON_STYLE = Object.freeze({
@@ -847,14 +847,14 @@ No explanations. No partial results.`;
 
                             <section aria-labelledby="comfyui-workflow-heading">
                               <div className="rounded-lg border border-slate-600/60 bg-slate-950/35 p-3">
-                                <h4 id="comfyui-workflow-heading" className="text-[12px] font-black text-white">最新版・最強版ワークフローを使う場合</h4>
+                                <h4 id="comfyui-workflow-heading" className="text-[12px] font-black text-white">自動可変尺・Hybrid b25 配布ワークフローを使う場合</h4>
                                 <p className="mt-1 text-[10px] leading-relaxed text-slate-300">
-                                  This route runs the FURU four-panel manga to video contract end-to-end: Nano Banana image conversion, H3 prompt creation, MiniMax H3 video generation, and deterministic title and end-credit compositing. / この経路はFURUの4コマ漫画を動画化する仕様を、Nano Banana画像変換、H3プロンプト作成、MiniMax H3動画生成、固定タイトルとエンドクレジットの合成まで一連のノードで実行します。下のボタンで最新版・最強版のComfyUIワークフローJSONを取得します。プロンプトのコピーボタンとは別の機能です。
+                                  This route runs the supplied variable-duration FURU four-panel manga-to-video workflow: Nano Banana image conversion, H3 prompt creation, MiniMax H3 video generation, Japanese dialogue review, and deterministic title/end-credit compositing. / この経路は、提供された自動可変尺版のFURU 4コマ動画化ワークフローです。Nano Banana画像変換、H3プロンプト作成、MiniMax H3動画生成、日本語台詞レビュー、固定タイトル・エンドクレジット合成を一連のノードで実行します。プロンプトのコピーボタンとは別の機能です。
                                 </p>
                                 <p className="mt-1 text-[10px] leading-relaxed text-slate-400">既存の設定ファイルとは別のJSONです。本体の「設定ファイルを保存（JSON）」は使用しません。</p>
                                 <div className="mt-3 rounded border border-amber-400/40 bg-amber-950/25 p-3 text-[10px] leading-relaxed text-slate-200">
                                   <p className="font-bold text-amber-200">
-                                    この高速版ワークフローには <code>ComfyUI-NanoBanana-H3</code>、<code>ComfyUI-Spectrum-MiniMax-H3</code>、<code>ComfyUI-PlagueKind-Nodes</code>、<code>ComfyUI-MiniMax-H3-MotionCache-FastVAE</code> の4パックが必要です。先に4つを導入してComfyUIを再起動してからJSONを読み込んでください。JSONだけでは実行できません。
+                                    この配布版には <code>ComfyUI-NanoBanana-H3</code>、<code>ComfyUI-MiniMax-H3-Long-Video</code>、<code>ComfyUI-Spectrum-MiniMax-H3</code> の3フォルダが同梱されています。先に3つを <code>ComfyUI/custom_nodes/</code> へ配置してComfyUIを完全に再起動してからJSONを読み込んでください。JSONだけでは実行できません。
                                   </p>
                                   <a
                                     href={COMFYUI_CUSTOM_NODE_DOWNLOAD_URL}
@@ -862,40 +862,40 @@ No explanations. No partial results.`;
                                     role="button"
                                     className="mt-2 bg-slate-700 hover:bg-slate-600 border-white/10 text-white px-3 py-1.5 rounded transition-all inline-flex items-center justify-center gap-1.5 border font-bold active:scale-95 no-underline"
                                     style={H3_ACTION_BUTTON_STYLE}
-                                    aria-label="必須カスタムノード4点・導入セットをダウンロード"
+                                    aria-label="必須カスタムノード3点・導入セットをダウンロード"
                                   >
-                                    <Download size={13} /> 必須カスタムノード4点・導入セットをダウンロード
+                                    <Download size={13} /> 必須カスタムノード3点・導入セットをダウンロード
                                   </a>
                                   <ol className="mt-3 space-y-1.5 list-decimal pl-4">
-                                    <li>「必須カスタムノード4点・導入セットをダウンロード」を押して <code>MiniMax-H3-4Koma-15s-FusedTurbo-Spectrum-SLA-Bundle-2026-09-03.zip</code> を保存します。</li>
-                                    <li>配布セットを展開し、<code>02_カスタムノード</code> 内の4つのカスタムノードZIPをそれぞれ展開します。各最上位フォルダを <code>ComfyUI/custom_nodes/</code> へ配置します。Nano Bananaノードは <code>ComfyUI/custom_nodes/ComfyUI-NanoBanana-H3/</code> になります。</li>
+                                    <li>「必須カスタムノード3点・導入セットをダウンロード」を押して <code>MiniMax-H3-4Koma-VariableDuration-Hybrid-b25-Bundle-2026-09-03.zip</code> を保存します。</li>
+                                    <li>配布セットを展開し、<code>02_カスタムノード</code> 内の3フォルダをそれぞれ <code>ComfyUI/custom_nodes/</code> へ配置します。Nano Bananaノードは <code>ComfyUI/custom_nodes/ComfyUI-NanoBanana-H3/</code> になります。</li>
                                     <li>同名の旧版がある場合はComfyUIを完全終了し、旧版をバックアップしてからフォルダ単位で差し替えます。新旧カスタムノードのファイルは混在させません。</li>
-                                    <li>下のボタンから <code>Super-FURU-AI-4koma-H3-FusedTurbo-Spectrum-SLA-8step-v1.json</code> を保存し、<code>ComfyUI/user/default/workflows/</code> 以下へ配置します。</li>
-                                    <li>4つのカスタムノードとJSONの配置後、ComfyUIを完全に再起動してからワークフローを開きます。</li>
+                                    <li>下のボタンから <code>Super-FURU-AI-4koma-H3-Hybrid-b25-VariableDuration-2026-09-03.json</code> を保存し、<code>ComfyUI/user/default/workflows/</code> 以下へ配置します。</li>
+                                    <li>3つのカスタムノードとJSONの配置後、ComfyUIを完全に再起動してからワークフローを開きます。</li>
                                     <li><code>4. API設定＋画像変換＋H3プロンプト生成（同一Provider）</code> ノードで <code>OpenAI API</code> または <code>Google Gemini API</code> を選びます。ワークフローを開いただけ、またはProviderを変更しただけでは入力ダイアログを表示しません。「実行する」を押した時、選択中のProviderが未登録なら、そのProviderの入力ダイアログを開いてキュー投入を保留します。利用者が直接入力して認証に成功すると保留中の同じ実行を1回だけ続け、ダイアログを閉じると今回の実行だけを中止します。ノードの「<strong>APIキー未登録／入力</strong>」ボタンから先に登録することもできます。キーはワークフローJSON、配布ZIP、設定ファイル、ブラウザ保存領域、ディスクには保存されず、接続中のComfyUIサーバーのプロセスメモリだけに保持されます。ワークフローのシート移動や別ワークフローへの切替では残り、ComfyUIアプリ／サーバーを終了または再起動すると消去されるため、次回実行時は再入力してください。1回の実行では、選択中の同一Providerが画像変換とH3プロンプト作成の両方に使われ、認証確認または実行時だけ、そのComfyUIサーバーから選択したAPIへ送信されます。</li>
                                     <li>Google Gemini APIでは画像変換に <code>gemini-3.1-flash-image</code>、H3プロンプト作成・画像QAに <code>gemini-2.5-flash</code> を使います。OpenAI APIでは画像変換に <code>gpt-image-2</code>、H3プロンプト作成・画像QAに <code>gpt-4.1-mini</code> を使います。</li>
-                                    <li>ワークフローを開くと、Fused Turbo本体、テキストエンコーダ、映像VAE <code>minimax_h3_video_vae_int8_convrot.safetensors</code>、音声VAEの4モデルに <code>Download</code> が表示されます。独立したTurbo LoRAとSLA LoRAは不要です。表示された項目を取得し、モデル候補が更新されない場合はComfyUIを再起動します。各ローダーには配布URL、SHA256、保存先、ファイル名を登録済みです。</li>
+                                    <li>モデル本体は配布セットに含まれません。<code>モデル一覧・取得先.md</code> の配布元と各ライセンスを確認し、利用者自身で取得してください。</li>
                                   </ol>
                                   <div className="mt-3 border-t border-amber-300/20 pt-2">
-                                    <p className="font-bold text-white">次の高速版ノードが読めない場合</p>
+                                    <p className="font-bold text-white">次の配布版ノードが読めない場合</p>
                                     <ul className="mt-1 list-disc space-y-0.5 pl-4 font-mono text-[9px] text-slate-300">
                                       <li>NanoBananaH3Transform</li>
                                       <li>DeterministicTitleWatermarkOverlay</li>
                                       <li>DeterministicEndCreditOverlay</li>
                                       <li>SpectrumApplyMiniMaxH3</li>
-                                      <li>H3SLAAttention</li>
-                                      <li>MiniMaxH3FastVAEDecode</li>
+                                      <li>MiniMaxH3LongReferenceSampler</li>
+                                      <li>TimestampedSaveVideo</li>
                                     </ul>
-                                    <p className="mt-1 text-slate-300">該当ノード名と上の4パックを照合します。多くの場合、カスタムノードの配置またはComfyUIの完全な再起動が未完了です。解決しない場合は二重展開、依存関係の導入、ComfyUIの読込エラー、GPU・CUDA・Tritonの互換性も確認してください。</p>
+                                    <p className="mt-1 text-slate-300">該当ノード名と上の3フォルダを照合します。多くの場合、カスタムノードの配置またはComfyUIの完全な再起動が未完了です。解決しない場合は二重展開、依存関係の導入、ComfyUIの読込エラー、GPU・CUDA・Tritonの互換性も確認してください。</p>
                                   </div>
                                 </div>
                                 <div className="mt-3 space-y-1 text-[10px] leading-relaxed text-slate-300">
-                                  <p><strong>既定の高速版設定</strong>：15秒・16:9・0.4MP・24fps・Fused Turbo INT8 ConvRot・Spectrum degree 1・SLA 0.90（block 64、audio protection有効）・RES Multistep sampler・Simple scheduler・8 steps。</p>
-                                  <p>独立したTurbo LoRAとSLA LoRAは不要です。実際のサンプリング設定は8 stepsです。</p>
+                                  <p><strong>既定の設定</strong>：4コマを物語の4幕として扱い、台詞量に合わせて5秒刻みで可変尺にします。最大は30秒です。Hybrid b25・高速LoRA・Spectrum・INT8 VAEを使う提供JSONの設定値は変更せずに配布します。</p>
+                                  <p>モデルURL・保存先・互換性は同梱の <code>モデル一覧・取得先.md</code> を参照してください。</p>
                                   <p>H3本体にはタイトル、字幕、URL、終了クレジットを生成させません。タイトルは <code>overlay_title</code> として抽出し、動画生成後に左上へ一度だけ、黒字＋白縁、背景バーなしで合成します。固定クレジットも後段ノードで合成します。</p>
                                   <p>人物集合と識別署名は各入力漫画の各コマから動的に導出し、特定の人数や外見、最終フレームの構成を固定しません。</p>
                                   <p>APIキー・認証情報・モデル本体・漫画画像・生成動画は配布物に含まれません。</p>
-                                  <p>必要な4モデルは、利用者自身が配布元のライセンスに同意して取得してください。</p>
+                                  <p><code>ComfyUI-NanoBanana-H3</code> はこのワークフロー専用の独自統合ノードです。フォルダ内の独自ソースは GPL-3.0-or-later、<code>ComfyUI-MiniMax-H3-Long-Video</code> は GPL-3.0-only、<code>ComfyUI-Spectrum-MiniMax-H3</code> は GPL-3.0-or-later です。ComfyUI本体、モデル、外部API、利用者の入出力はそれぞれの条件に従います。</p>
                                 </div>
                                 <a
                                   href={COMFYUI_WORKFLOW_DOWNLOAD_URL}
@@ -905,10 +905,10 @@ No explanations. No partial results.`;
                                   style={H3_ACTION_BUTTON_STYLE}
                                   aria-label="最新版・最強版ワークフローをダウンロード"
                                 >
-                                  <Download size={13} /> 最新版・最強版ワークフローをダウンロード
+                                  <Download size={13} /> 自動可変尺・Hybrid b25 ワークフローをダウンロード
                                 </a>
                                 <div className="mt-2 space-y-1 text-[10px] leading-relaxed text-slate-300">
-                                  <p>配布セットにはワークフロー、必須カスタムノード4点、モデルURL・SHA256一覧、導入README、提供元の動作確認記録を収録しています。</p>
+                                  <p>配布セットにはワークフロー、必須カスタムノード3フォルダ、モデル取得先、導入README、ライセンス・出典表記を収録しています。</p>
                                   <p>APIキー・認証情報・モデル本体・漫画画像・生成動画は配布物に含まれません。</p>
                                 </div>
                               </div>

@@ -75,15 +75,15 @@ test('MiniMax H3 UI explains the feature and separates the standard-template and
   const manualIndex = step4PanelSource.indexOf('<h4 id="minimax-h3-prompt-heading"');
   const allInOneIndex = step4PanelSource.indexOf('<h4 id="comfyui-workflow-heading"');
   const promptButtonIndex = step4PanelSource.indexOf('MiniMax H3・ComfyUI用プロンプトをコピー', manualIndex);
-  const customNodeButtonIndex = step4PanelSource.indexOf('必須カスタムノード4点・導入セットをダウンロード', allInOneIndex);
-  const workflowButtonIndex = step4PanelSource.indexOf('最新版・最強版ワークフローをダウンロード', allInOneIndex);
+  const customNodeButtonIndex = step4PanelSource.indexOf('必須カスタムノード3点・導入セットをダウンロード', allInOneIndex);
+  const workflowButtonIndex = step4PanelSource.indexOf('自動可変尺・Hybrid b25 ワークフローをダウンロード', allInOneIndex);
 
   assert.notEqual(introIndex, -1, 'the H3 helper needs a feature-level introduction');
   assert.ok(introIndex < manualIndex, 'the introduction must precede the manual route');
   assert.ok(manualIndex < allInOneIndex, 'the manual route must precede the all-in-one route');
   assert.match(step4PanelSource, /MiniMax H3は参照画像のキャラクター・構図・場面を引き継ぎながら動画を生成する/);
   assert.match(step4PanelSource, /ComfyUI標準のMiniMax H3ワークフローを自分で操作する/);
-  assert.match(step4PanelSource, /最新版・最強版ワークフロー/);
+  assert.match(step4PanelSource, /自動可変尺・Hybrid b25 配布ワークフロー/);
   assert.ok(manualIndex < promptButtonIndex && promptButtonIndex < allInOneIndex, 'the prompt copy action belongs directly under the manual route');
   assert.ok(allInOneIndex < customNodeButtonIndex && customNodeButtonIndex < workflowButtonIndex, 'install the custom node before offering the workflow JSON');
 });
@@ -95,6 +95,6 @@ test('README documents the current MiniMax H3 connection and starter settings', 
   assert.match(readmeSource, /基本スケジューラー/);
   assert.match(readmeSource, /字幕なし/);
   assert.match(readmeSource, /ComfyUI標準テンプレートを自分で使う場合/);
-  assert.match(readmeSource, /最新版・最強版ワークフローを使う場合/);
+  assert.match(readmeSource, /自動可変尺・Hybrid b25 配布ワークフローを使う場合/);
   assert.match(readmeSource, /2つは別の操作/);
 });
