@@ -23,7 +23,7 @@ import { MINIMAX_H3_COMFYUI_PROMPT } from '../lib/minimax-h3-prompt';
 
 const COMFYUI_WORKFLOW_FILENAME = 'Super-FURU-AI-4koma-H3-Hybrid-b25-Recommended-VariableDuration-H3BGM-2026-09-04.json';
 const COMFYUI_WORKFLOW_DOWNLOAD_URL = `${import.meta.env.BASE_URL}workflows/${COMFYUI_WORKFLOW_FILENAME}`;
-const COMFYUI_CUSTOM_NODE_FILENAME = 'MiniMax-H3-4Koma-Recommended-VariableDuration-H3BGM-Bundle-2026-09-04.zip';
+const COMFYUI_CUSTOM_NODE_FILENAME = 'MiniMax-H3-4Koma-Recommended-VariableDuration-H3BGM-Bundle-2026-09-04-140019.zip';
 const COMFYUI_CUSTOM_NODE_DOWNLOAD_URL = `${import.meta.env.BASE_URL}downloads/${COMFYUI_CUSTOM_NODE_FILENAME}`;
 
 const H3_ACTION_BUTTON_STYLE = Object.freeze({
@@ -867,7 +867,7 @@ No explanations. No partial results.`;
                                     <Download size={13} /> 必須カスタムノード3点・導入セットをダウンロード
                                   </a>
                                   <ol className="mt-3 space-y-1.5 list-decimal pl-4">
-                                    <li>「必須カスタムノード3点・導入セットをダウンロード」を押して <code>MiniMax-H3-4Koma-Recommended-VariableDuration-H3BGM-Bundle-2026-09-04.zip</code> を保存します。</li>
+                                    <li>「必須カスタムノード3点・導入セットをダウンロード」を押して <code>MiniMax-H3-4Koma-Recommended-VariableDuration-H3BGM-Bundle-2026-09-04-140019.zip</code> を保存します。</li>
                                     <li>配布セットを展開し、<code>02_カスタムノード</code> 内の3フォルダをそれぞれ <code>ComfyUI/custom_nodes/</code> へ配置します。Nano Bananaノードは <code>ComfyUI/custom_nodes/ComfyUI-NanoBanana-H3/</code> になります。</li>
                                     <li>同名の旧版がある場合はComfyUIを完全終了し、フォルダ単位で差し替えます。新旧カスタムノードのファイルは混在させません。</li>
                                     <li>下のボタンから <code>Super-FURU-AI-4koma-H3-Hybrid-b25-Recommended-VariableDuration-H3BGM-2026-09-04.json</code> を保存し、<code>ComfyUI/user/default/workflows/</code> 以下へ配置します。</li>

@@ -59,7 +59,7 @@ For this manually configured standard ComfyUI route, select `MiniMax H3 Referenc
 
 **Using the recommended fully variable-duration Hybrid b25 + H3 BGM workflow / 推奨版・完全可変尺 Hybrid b25 配布ワークフローを使う場合（H3生成BGM）**
 
-This route distributes `Super-FURU-AI-4koma-H3-Hybrid-b25-Recommended-VariableDuration-H3BGM-2026-09-04.json` and `MiniMax-H3-4Koma-Recommended-VariableDuration-H3BGM-Bundle-2026-09-04.zip` as separate direct downloads. The supplied JSON preserves its Hybrid b25, fast LoRA, Spectrum, and INT8 VAE settings. It turns the four panels into four story acts, assigns five seconds per retained dialogue turn with no upper duration cap, uses 30 seconds only when there is no dialogue, and asks MiniMax H3 itself to generate a quiet story-aware instrumental BGM while strongly ducking it under dialogue. / この経路では `Super-FURU-AI-4koma-H3-Hybrid-b25-Recommended-VariableDuration-H3BGM-2026-09-04.json` と `MiniMax-H3-4Koma-Recommended-VariableDuration-H3BGM-Bundle-2026-09-04.zip` を別々に配布します。提供JSONのHybrid b25・高速LoRA・Spectrum・INT8 VAE設定は変更しません。4コマを物語の4幕として扱い、保持した台詞1本につき5秒・上限なしの完全可変尺にします。台詞がない場合だけ既定30秒を使います。MiniMax H3自身が内容に合う低音量BGMを動画・台詞と同時生成し、台詞中は強く抑えます。
+This route distributes `Super-FURU-AI-4koma-H3-Hybrid-b25-Recommended-VariableDuration-H3BGM-2026-09-04.json` and `MiniMax-H3-4Koma-Recommended-VariableDuration-H3BGM-Bundle-2026-09-04-140019.zip` as separate direct downloads. The supplied JSON preserves its Hybrid b25, fast LoRA, Spectrum, and INT8 VAE settings. It turns the four panels into four story acts, assigns five seconds per retained dialogue turn with no upper duration cap, uses 30 seconds only when there is no dialogue, and asks MiniMax H3 itself to generate a quiet story-aware instrumental BGM while strongly ducking it under dialogue. The latest node bundle also identifies `<Subject N>` speakers before timing dialogue and lets the operator review the proposed Japanese dialogue text and reading before video generation. / この経路では `Super-FURU-AI-4koma-H3-Hybrid-b25-Recommended-VariableDuration-H3BGM-2026-09-04.json` と `MiniMax-H3-4Koma-Recommended-VariableDuration-H3BGM-Bundle-2026-09-04-140019.zip` を別々に配布します。提供JSONのHybrid b25・高速LoRA・Spectrum・INT8 VAE設定は変更しません。4コマを物語の4幕として扱い、保持した台詞1本につき5秒・上限なしの完全可変尺にします。台詞がない場合だけ既定30秒を使います。MiniMax H3自身が内容に合う低音量BGMを動画・台詞と同時生成し、台詞中は強く抑えます。最新版ノード束では、台詞の時間割り当て前に `<Subject N>` の話者を識別し、動画生成前に日本語台詞の本文提案と読みを確認・修正できます。
 
 **FURU four-panel manga to video / FURUの4コマ漫画を動画化**
 
@@ -854,6 +854,9 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 ---
 
 ## 📋 ChangeLog
+
+### v5.8.0 (2026-09-04)
+- **[Fix & UX]** 最新のH3カスタムノード束へ更新し、台詞の話者識別と本文・読み確認を改善 / Updated the H3 custom-node bundle with speaker identification and dialogue text-and-reading review
 
 ### v5.7.9 (2026-09-04)
 - **[Fix & UX]** 添付の推奨版・完全可変尺H3生成BGMワークフローと3カスタムノード配布セットへ差し替え、旧配布ファイルを整理 / Replaced the H3 BGM workflow and three-node bundle with the supplied recommended fully variable-duration distribution and removed superseded distribution files
