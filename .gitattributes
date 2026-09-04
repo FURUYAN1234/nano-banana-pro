@@ -1,6 +1,3 @@
 # Keep the supplied distribution bytes unchanged when the static site is published.
-downloads/MiniMax-H3-4Koma-VariableDuration-H3BGM-Stable-Bundle-2026-09-04.zip -text
-workflows/Super-FURU-AI-4koma-H3-Hybrid-b25-Turbo-v4-LoRA-8step-v1.json -text
-workflows/Super-FURU-AI-4koma-H3-FusedTurbo-Spectrum-SLA-8step-v1.json -text
-workflows/Super-FURU-AI-4koma-H3-Hybrid-b25-VariableDuration-2026-09-03.json -text
-workflows/Super-FURU-AI-4koma-H3-Hybrid-b25-VariableDuration-H3BGM-Stable-2026-09-04.json -text
+downloads/MiniMax-H3-4Koma-Recommended-VariableDuration-H3BGM-Bundle-2026-09-04.zip -text
+workflows/Super-FURU-AI-4koma-H3-Hybrid-b25-Recommended-VariableDuration-H3BGM-2026-09-04.json -text
