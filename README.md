@@ -1,6 +1,6 @@
 # Super FURU AI 4-koma System
 
-> Latest release: **v5.7.8** / 最新リリース: **v5.7.8**
+> Latest release: **v5.7.9** / 最新リリース: **v5.7.9**
 
 > **"To what extent can humans step away from the creative process?"**
 > **「人間は、どこまで制作から降りられるのか？」**
@@ -57,15 +57,15 @@ When you configure and use ComfyUI's standard MiniMax H3 Reference-to-Video (R2V
 
 For this manually configured standard ComfyUI route, select `MiniMax H3 Reference-to-Video (R2V / Ref2VA)`, connect the same four-panel manga only to `ref_image_0`, and leave `ref_image_1` onward disconnected. Start `Resolution Selector (Size)` at `Aspect ratio: 16:9 (Widescreen)` and `Megapixels: 0.4`, and `Basic Scheduler` at `Scheduler: normal`, with no subtitles or BGM. / 手動で設定するこのComfyUI標準経路では、`MiniMax H3 Reference-to-Video（R2V / Ref2VA）` を選び、同じ4コマ漫画を最初の参照入力 `ref_image_0` にだけ接続して、`ref_image_1` 以降は未接続にします。`Resolution Selector (Size)` は `アスペクト比: 16:9 (Widescreen)` と `メガピクセル: 0.4`、`基本スケジューラー` は `スケジューラー: normal` から開始し、字幕なし・BGMなしを既定にします。
 
-**Using the stable variable-duration Hybrid b25 + H3 BGM workflow / 自動可変尺・Hybrid b25 配布ワークフローを使う場合（H3生成BGM安定最新版）**
+**Using the recommended fully variable-duration Hybrid b25 + H3 BGM workflow / 推奨版・完全可変尺 Hybrid b25 配布ワークフローを使う場合（H3生成BGM）**
 
-This route distributes `Super-FURU-AI-4koma-H3-Hybrid-b25-VariableDuration-H3BGM-Stable-2026-09-04.json` and `MiniMax-H3-4Koma-VariableDuration-H3BGM-Stable-Bundle-2026-09-04.zip` as separate direct downloads. The supplied JSON preserves its Hybrid b25, fast LoRA, Spectrum, and INT8 VAE settings. It turns the four panels into four story acts, chooses a duration in five-second increments from retained dialogue up to 30 seconds, and asks MiniMax H3 itself to generate a quiet story-aware instrumental BGM while strongly ducking it under dialogue. / この経路では `Super-FURU-AI-4koma-H3-Hybrid-b25-VariableDuration-H3BGM-Stable-2026-09-04.json` と `MiniMax-H3-4Koma-VariableDuration-H3BGM-Stable-Bundle-2026-09-04.zip` を別々に配布します。提供JSONのHybrid b25・高速LoRA・Spectrum・INT8 VAE設定は変更しません。4コマを物語の4幕として扱い、保持した台詞量に合わせて5秒刻み・最大30秒の可変尺を選びます。MiniMax H3自身が内容に合う低音量BGMを動画・台詞と同時生成し、台詞中は強く抑えます。
+This route distributes `Super-FURU-AI-4koma-H3-Hybrid-b25-Recommended-VariableDuration-H3BGM-2026-09-04.json` and `MiniMax-H3-4Koma-Recommended-VariableDuration-H3BGM-Bundle-2026-09-04.zip` as separate direct downloads. The supplied JSON preserves its Hybrid b25, fast LoRA, Spectrum, and INT8 VAE settings. It turns the four panels into four story acts, assigns five seconds per retained dialogue turn with no upper duration cap, uses 30 seconds only when there is no dialogue, and asks MiniMax H3 itself to generate a quiet story-aware instrumental BGM while strongly ducking it under dialogue. / この経路では `Super-FURU-AI-4koma-H3-Hybrid-b25-Recommended-VariableDuration-H3BGM-2026-09-04.json` と `MiniMax-H3-4Koma-Recommended-VariableDuration-H3BGM-Bundle-2026-09-04.zip` を別々に配布します。提供JSONのHybrid b25・高速LoRA・Spectrum・INT8 VAE設定は変更しません。4コマを物語の4幕として扱い、保持した台詞1本につき5秒・上限なしの完全可変尺にします。台詞がない場合だけ既定30秒を使います。MiniMax H3自身が内容に合う低音量BGMを動画・台詞と同時生成し、台詞中は強く抑えます。
 
 **FURU four-panel manga to video / FURUの4コマ漫画を動画化**
 
 The dedicated workflow turns one completed Super FURU AI four-panel manga page into four contiguous MiniMax H3 shots. It retains panel order, panel-derived cast, speaker ownership, story action, setting, and punchline; it gives each visible character a role-appropriate movement, removes speech balloons, and adds the title and fixed end credit outside H3 after generation. / 専用ワークフローは、完成したSuper FURU AIの4コマ漫画1枚を連続する4つのMiniMax H3ショットに変換します。コマ順、各コマから導く登場人物、台詞の話者、物語上の動作、場所、オチを保ち、画面内の各人物へ役割に応じた動きを与え、吹き出しを除去します。タイトルと固定エンドクレジットは、H3生成後にワークフローが合成します。
 
-The bundle contains three raw custom-node folders: `ComfyUI-NanoBanana-H3`, `ComfyUI-MiniMax-H3-Long-Video`, and `ComfyUI-Spectrum-MiniMax-H3`. Extract the outer ZIP, copy those three folders to `ComfyUI/custom_nodes/`, and fully restart ComfyUI. If an older folder has the same name, close ComfyUI and replace the folder without mixing old and new files. The included `セットアップ.ps1` can back up same-named folders before installation; inspect it before running, or perform the same replacement manually. Save the workflow JSON under `ComfyUI/user/default/workflows/`. / 配布セットには `ComfyUI-NanoBanana-H3`、`ComfyUI-MiniMax-H3-Long-Video`、`ComfyUI-Spectrum-MiniMax-H3` の3フォルダを収録しています。外側ZIPを展開して3フォルダを `ComfyUI/custom_nodes/` へ配置し、ComfyUIを完全に再起動してください。同名の旧版がある場合はComfyUIを終了してフォルダごとに差し替え、新旧ファイルを混在させません。同梱の `セットアップ.ps1` は同名フォルダを退避してから導入できます。実行前に内容を確認するか、同じ差し替えを手動で行ってください。ワークフローJSONは `ComfyUI/user/default/workflows/` 以下へ保存します。
+The bundle contains three raw custom-node folders: `ComfyUI-NanoBanana-H3`, `ComfyUI-MiniMax-H3-Long-Video`, and `ComfyUI-Spectrum-MiniMax-H3`. Extract the outer ZIP, copy those three folders to `ComfyUI/custom_nodes/`, and fully restart ComfyUI. If an older folder has the same name, close ComfyUI and replace the folder without mixing old and new files. Save the workflow JSON under `ComfyUI/user/default/workflows/`. / 配布セットには `ComfyUI-NanoBanana-H3`、`ComfyUI-MiniMax-H3-Long-Video`、`ComfyUI-Spectrum-MiniMax-H3` の3フォルダを収録しています。外側ZIPを展開して3フォルダを `ComfyUI/custom_nodes/` へ配置し、ComfyUIを完全に再起動してください。同名の旧版がある場合はComfyUIを終了してフォルダごとに差し替え、新旧ファイルを混在させません。ワークフローJSONは `ComfyUI/user/default/workflows/` 以下へ保存します。
 
 Spectrum installs runtime hooks for sampler acceleration and, when its optional diagnostics are active, uses an isolated Python child process and writes bounded reports under the ComfyUI user cache. Long-Video audio tempo adjustment requires `ffmpeg`. / Spectrumはサンプラー高速化の実行時フックを導入し、任意診断が有効な場合は隔離Python子プロセスを使ってComfyUI user cache以下へ上限付きレポートを保存します。Long-Videoの音声速度調整には `ffmpeg` が必要です。
 
@@ -854,6 +854,9 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 ---
 
 ## 📋 ChangeLog
+
+### v5.7.9 (2026-09-04)
+- **[Fix & UX]** 添付の推奨版・完全可変尺H3生成BGMワークフローと3カスタムノード配布セットへ差し替え、旧配布ファイルを整理 / Replaced the H3 BGM workflow and three-node bundle with the supplied recommended fully variable-duration distribution and removed superseded distribution files
 
 ### v5.7.8 (2026-09-04)
 - **[Fix & UX]** Hugging Face配布時に新ワークフローJSONの改行変換を防ぎ、Pagesと同じバイトを保持 / Prevented line-ending normalization of the new workflow JSON on Hugging Face so it preserves the same bytes as Pages

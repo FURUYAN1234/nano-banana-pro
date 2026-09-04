@@ -83,7 +83,7 @@ test('MiniMax H3 UI explains the feature and separates the standard-template and
   assert.ok(manualIndex < allInOneIndex, 'the manual route must precede the all-in-one route');
   assert.match(step4PanelSource, /MiniMax H3は参照画像のキャラクター・構図・場面を引き継ぎながら動画を生成する/);
   assert.match(step4PanelSource, /ComfyUI標準のMiniMax H3ワークフローを自分で操作する/);
-  assert.match(step4PanelSource, /自動可変尺・Hybrid b25 配布ワークフロー/);
+  assert.match(step4PanelSource, /推奨版・完全可変尺 Hybrid b25 配布ワークフロー/);
   assert.ok(manualIndex < promptButtonIndex && promptButtonIndex < allInOneIndex, 'the prompt copy action belongs directly under the manual route');
   assert.ok(allInOneIndex < customNodeButtonIndex && customNodeButtonIndex < workflowButtonIndex, 'install the custom node before offering the workflow JSON');
 });
@@ -95,6 +95,6 @@ test('README documents the current MiniMax H3 connection and starter settings', 
   assert.match(readmeSource, /基本スケジューラー/);
   assert.match(readmeSource, /字幕なし/);
   assert.match(readmeSource, /ComfyUI標準テンプレートを自分で使う場合/);
-  assert.match(readmeSource, /自動可変尺・Hybrid b25 配布ワークフローを使う場合/);
+  assert.match(readmeSource, /推奨版・完全可変尺 Hybrid b25 配布ワークフローを使う場合/);
   assert.match(readmeSource, /2つは別の操作/);
 });

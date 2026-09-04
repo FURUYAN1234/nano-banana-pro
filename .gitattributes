@@ -1,6 +1,3 @@
 * text=auto eol=lf
-public/downloads/ComfyUI-NanoBanana-H3-Latest-2026-08-26.zip -text
-public/downloads/MiniMax-H3-4Koma-VariableDuration-H3BGM-Stable-Bundle-2026-09-04.zip -text
-public/workflows/Super-FURU-AI-4koma-H3-Hybrid-b25-Turbo-v4-LoRA-8step-v1.json -text
-public/workflows/Super-FURU-AI-4koma-H3-Hybrid-b25-VariableDuration-2026-09-03.json -text
-public/workflows/Super-FURU-AI-4koma-H3-Hybrid-b25-VariableDuration-H3BGM-Stable-2026-09-04.json -text
+public/downloads/MiniMax-H3-4Koma-Recommended-VariableDuration-H3BGM-Bundle-2026-09-04.zip -text
+public/workflows/Super-FURU-AI-4koma-H3-Hybrid-b25-Recommended-VariableDuration-H3BGM-2026-09-04.json -text
