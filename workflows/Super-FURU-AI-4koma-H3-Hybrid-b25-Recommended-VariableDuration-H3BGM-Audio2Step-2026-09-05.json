@@ -1,0 +1,2557 @@
+{
+  "id": "ea37f11d-0aa7-4b69-b7ef-4e3581461a57",
+  "revision": 4,
+  "last_node_id": 154,
+  "last_link_id": 328,
+  "nodes": [
+    {
+      "id": 115,
+      "type": "ResolutionSelector",
+      "pos": [
+        1035,
+        5105
+      ],
+      "size": [
+        270,
+        170
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "showAdvanced": false,
+      "inputs": [
+        {
+          "localized_name": "アスペクト比",
+          "name": "aspect_ratio",
+          "type": "COMBO",
+          "widget": {
+            "name": "aspect_ratio"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "メガピクセル",
+          "name": "megapixels",
+          "type": "FLOAT",
+          "widget": {
+            "name": "megapixels"
+          },
+          "link": null,
+          "label": "画素数（メガピクセル）"
+        },
+        {
+          "localized_name": "倍数",
+          "name": "multiple",
+          "type": "INT",
+          "widget": {
+            "name": "multiple"
+          },
+          "link": null,
+          "label": "解像度の刻み"
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "幅",
+          "name": "width",
+          "type": "INT",
+          "links": [
+            310
+          ]
+        },
+        {
+          "localized_name": "高さ",
+          "name": "height",
+          "type": "INT",
+          "links": [
+            311
+          ]
+        }
+      ],
+      "title": "解像度（アスペクト比・MP）",
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.33.0",
+        "Node name for S&R": "ResolutionSelector",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.5.2",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "widgets_values": [
+        "16:9 (Widescreen)",
+        0.4,
+        32
+      ],
+      "color": "#322",
+      "bgcolor": "#533"
+    },
+    {
+      "id": 116,
+      "type": "MarkdownNote",
+      "pos": [
+        665,
+        75
+      ],
+      "size": [
+        1100,
+        2600
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "title": "【必読】自動可変尺・発音確認・配布版ガイド",
+      "properties": {
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.5.2",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "widgets_values": [
+        "# 配布版・最初に確認してください\n\nこのワークフローは、最終的に残った台詞1本につき5秒を割り当て、台詞数に合わせて **上限なし** で動画尺を自動決定します。台詞がない場合だけ既定の30秒を使います。今回確認済みの音声安定化設定（1区間1台詞、台詞重複なし、Audio Refine、末尾余白）を使用します。\n\n## 実行手順\n1. `SELECT_YOUR_4KOMA_MANGA.png` または `SELECT_REFERENCE_IMAGE.png` の画像ノードへ自分の画像を入れます。\n2. Nano BananaノードでProviderを選び、実行時に表示される画面へAPIキーを入力します。APIキーはワークフローJSONや配布ZIPへ保存されません。\n3. H3生成直前に「原文／発音用台詞」確認画面が開きます。読み違いだけ発音欄で修正してOKを押します。\n4. 完成MP4は `ComfyUI/output/video/MiniMax_H3/` に保存されます。末尾は連番ではなく `YYYYMMDD-HHMMSS` です。\n\n## 発音辞書\n確認画面で辞書登録した読みは `ComfyUI/user/default/nanobanana_h3/pronunciation_dictionary.json` に保存されます。これはPCごとのユーザーデータで、配布ZIPには個人辞書を含めません。\n\n## 必須カスタムノード\n- `ComfyUI-NanoBanana-H3`（Nano Banana変換、発音確認、タイトル／クレジット）\n- `ComfyUI-MiniMax-H3-Long-Video`（自動可変尺、音声安定化、日時保存）\n- `ComfyUI-Spectrum-MiniMax-H3`\n- `ComfyUI-PlagueKind-Nodes`（融合Turbo＋SLA版のみ）\n- `ComfyUI-Custom-Scripts`（一部のテキスト表示）\n- `qwen_rapid_jp` と LM Studio（日本語LLM版のみ）\n\n不足モデルにはワークフロー内のダウンロード情報を埋め込んであります。ComfyUIが対応する環境では読み込み時に取得案内が出ます。モデルは非常に大きいため配布ZIPには含めません。\n\n## 推奨版\n別PCで最初に試す場合は `01_非LM Studio` 版を推奨します。`02_日本語LLM版` はLM Studioとローカルモデルを別途起動する上級者向けです。\n\n\n## MiniMax H3生成BGM（標準ON）\n- 外部MP3／WAVの後乗せではなく、MiniMax H3が漫画の内容と感情展開に合うインストBGMを動画・台詞と同時生成します。\n- 台詞を最優先し、BGMは低音量、台詞中は強く抑えます。歌声・コーラス・声に似た主旋律は禁止です。\n- 長尺の各5秒区間では、直前のAVガイドから同じ曲調・テンポ・楽器編成を継続し、曲を冒頭から再開しません。\n- 最終部はフェードアウトせず、短い終止形で自然に閉じます。\n"
+      ],
+      "color": "#222",
+      "bgcolor": "#000"
+    },
+    {
+      "id": 117,
+      "type": "MarkdownNote",
+      "pos": [
+        0,
+        2285
+      ],
+      "size": [
+        540,
+        1020
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "title": "既存モデルを共通利用（追加ダウンロード不要）",
+      "properties": {
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.5.2",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "widgets_values": [
+        "# 現在の仕様：台詞数で完全可変尺（1本＝5秒・上限なし）\n\n最終的に残った台詞数へ合わせて5秒刻みで尺を自動決定します。H3動画生成前に原文と発音用台詞の確認画面が開きます。\n\n---\n\n# モデルとカスタムノード\n\nこのPCに導入済みのH3 Hybrid b25、Qwen3VL、映像VAE、音声VAE、Turbo v4 LoRAをそのまま使います。モデルの重複コピーや追加ダウンロードは不要です。\n\n追加カスタムノードは `ComfyUI-MiniMax-H3-Long-Video` だけです。四コマ変換・タイトル・クレジットは導入済みの `ComfyUI-NanoBanana-H3` を使います。"
+      ],
+      "color": "#222",
+      "bgcolor": "#000"
+    },
+    {
+      "id": 119,
+      "type": "VAELoader",
+      "pos": [
+        665,
+        3140
+      ],
+      "size": [
+        640,
+        70
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "vae_name",
+          "name": "vae_name",
+          "type": "COMBO",
+          "widget": {
+            "name": "vae_name"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "VAE",
+          "name": "VAE",
+          "type": "VAE",
+          "links": [
+            304
+          ]
+        }
+      ],
+      "title": "H3 映像VAE（INT8 ConvRot高速版）",
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.33.0",
+        "Node name for S&R": "VAELoader",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.5.2",
+          "input_ue_unconnectable": {}
+        },
+        "models": [
+          {
+            "name": "minimax_h3_video_vae_int8_convrot.safetensors",
+            "url": "https://huggingface.co/Kijai/MiniMax-H3-experimental/resolve/main/minimax_h3_video_vae_int8_convrot.safetensors?download=true",
+            "hash": "9bb2d96f218c76babd85e0611b85ca8fb330a90546c01a0005e8a58a59593410",
+            "hash_type": "SHA256",
+            "directory": "vae"
+          }
+        ]
+      },
+      "widgets_values": [
+        "minimax_h3_video_vae_int8_convrot.safetensors"
+      ]
+    },
+    {
+      "id": 120,
+      "type": "VAELoader",
+      "pos": [
+        665,
+        3275
+      ],
+      "size": [
+        650,
+        70
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "vae_name",
+          "name": "vae_name",
+          "type": "COMBO",
+          "widget": {
+            "name": "vae_name"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "VAE",
+          "name": "VAE",
+          "type": "VAE",
+          "links": [
+            305
+          ]
+        }
+      ],
+      "title": "H3 音声VAE",
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.33.0",
+        "Node name for S&R": "VAELoader",
+        "models": [
+          {
+            "name": "minimax_h3_audio_vae_fp32.safetensors",
+            "url": "https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/vae/minimax_h3_audio_vae_fp32.safetensors?download=true",
+            "hash": "8e505d95dd1561d47abd43d4238fd40d9bb1ae9e147ed0a4cba778d76ae4db48",
+            "hash_type": "SHA256",
+            "directory": "vae"
+          }
+        ],
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.5.2",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "widgets_values": [
+        "minimax_h3_audio_vae_fp32.safetensors"
+      ]
+    },
+    {
+      "id": 123,
+      "type": "KSamplerSelect",
+      "pos": [
+        2430.55,
+        2677.5
+      ],
+      "size": [
+        370,
+        70
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "サンプラー名",
+          "name": "sampler_name",
+          "type": "COMBO",
+          "widget": {
+            "name": "sampler_name"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "サンプラー",
+          "name": "SAMPLER",
+          "type": "SAMPLER",
+          "links": [
+            306
+          ]
+        }
+      ],
+      "title": "Euler sampler（推奨）",
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.33.0",
+        "Node name for S&R": "KSamplerSelect",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.5.2",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "widgets_values": [
+        "euler"
+      ]
+    },
+    {
+      "id": 124,
+      "type": "BasicScheduler",
+      "pos": [
+        2430.55,
+        2812.5
+      ],
+      "size": [
+        370,
+        130
+      ],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "モデル",
+          "name": "model",
+          "type": "MODEL",
+          "link": 301
+        },
+        {
+          "localized_name": "スケジューラ",
+          "name": "scheduler",
+          "type": "COMBO",
+          "widget": {
+            "name": "scheduler"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "ステップ",
+          "name": "steps",
+          "type": "INT",
+          "widget": {
+            "name": "steps"
+          },
+          "link": null,
+          "label": "生成ステップ数"
+        },
+        {
+          "localized_name": "ノイズ除去",
+          "name": "denoise",
+          "type": "FLOAT",
+          "widget": {
+            "name": "denoise"
+          },
+          "link": null,
+          "label": "ノイズ除去強度"
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "シグマ",
+          "name": "SIGMAS",
+          "type": "SIGMAS",
+          "links": [
+            307
+          ]
+        }
+      ],
+      "title": "8ステップ設定（Beta・推奨）",
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.33.0",
+        "Node name for S&R": "BasicScheduler",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.5.2",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "widgets_values": [
+        "beta",
+        8,
+        1
+      ]
+    },
+    {
+      "id": 127,
+      "type": "UNETLoader",
+      "pos": [
+        665,
+        2840
+      ],
+      "size": [
+        640,
+        90
+      ],
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "unet_name",
+          "name": "unet_name",
+          "type": "COMBO",
+          "widget": {
+            "name": "unet_name"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "重みdtype",
+          "name": "weight_dtype",
+          "type": "COMBO",
+          "widget": {
+            "name": "weight_dtype"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "モデル",
+          "name": "MODEL",
+          "type": "MODEL",
+          "links": [
+            300,
+            327
+          ]
+        }
+      ],
+      "title": "H3 Hybrid b25（FL2VA/REF2VA）拡散モデル",
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.33.0",
+        "Node name for S&R": "UNETLoader",
+        "models": [
+          {
+            "name": "minimax_h3_hybrid_fl2va_ref2va_b25-49-int8.safetensors",
+            "url": "https://huggingface.co/smhfacct/Minimax-H3-fl2va-ref2va-hybrid-models/resolve/main/minimax_h3_hybrid_fl2va_ref2va_b25-49-int8.safetensors?download=true",
+            "hash": "a629cfea8d89a071b140c6e1935dc9a23e72de6badc18975a2bb9e6d1423d76d",
+            "hash_type": "SHA256",
+            "directory": "diffusion_models"
+          }
+        ],
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.5.2",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "widgets_values": [
+        "minimax_h3_hybrid_fl2va_ref2va_b25-49-int8.safetensors",
+        "default"
+      ]
+    },
+    {
+      "id": 128,
+      "type": "CLIPLoader",
+      "pos": [
+        665,
+        2975
+      ],
+      "size": [
+        640,
+        120
+      ],
+      "flags": {},
+      "order": 8,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "clip名",
+          "name": "clip_name",
+          "type": "COMBO",
+          "widget": {
+            "name": "clip_name"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "タイプ",
+          "name": "type",
+          "type": "COMBO",
+          "widget": {
+            "name": "type"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "デバイス",
+          "name": "device",
+          "shape": 7,
+          "type": "COMBO",
+          "widget": {
+            "name": "device"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "CLIP",
+          "name": "CLIP",
+          "type": "CLIP",
+          "links": [
+            303
+          ]
+        }
+      ],
+      "title": "H3 テキストエンコーダ",
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.33.0",
+        "Node name for S&R": "CLIPLoader",
+        "models": [
+          {
+            "name": "qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors",
+            "url": "https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/text_encoders/qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors?download=true",
+            "hash": "35a88d51044231fe332301d7a62aa81e3f2cba62febeb446e2c1e3e0ef76f2c6",
+            "hash_type": "SHA256",
+            "directory": "text_encoders"
+          }
+        ],
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.5.2",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "widgets_values": [
+        "qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors",
+        "minimax",
+        "default"
+      ]
+    },
+    {
+      "id": 131,
+      "type": "ComfyMathExpression",
+      "pos": [
+        1610.55,
+        4727.5
+      ],
+      "size": [
+        225,
+        74
+      ],
+      "flags": {
+        "collapsed": true
+      },
+      "order": 9,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "a",
+          "localized_name": "values.a",
+          "name": "values.a",
+          "type": "FLOAT,INT,BOOLEAN",
+          "link": 312
+        },
+        {
+          "label": "b",
+          "localized_name": "values.b",
+          "name": "values.b",
+          "shape": 7,
+          "type": "FLOAT,INT,BOOLEAN",
+          "link": null
+        },
+        {
+          "localized_name": "式",
+          "name": "expression",
+          "type": "STRING",
+          "widget": {
+            "name": "expression"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "浮動小数点",
+          "name": "FLOAT",
+          "type": "FLOAT",
+          "links": null
+        },
+        {
+          "localized_name": "整数",
+          "name": "INT",
+          "type": "INT",
+          "links": [
+            313
+          ]
+        },
+        {
+          "localized_name": "BOOL",
+          "name": "BOOL",
+          "type": "BOOLEAN",
+          "links": null
+        }
+      ],
+      "title": "フレーム数を計算",
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.33.0",
+        "Node name for S&R": "ComfyMathExpression",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.5.2",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "widgets_values": [
+        "max(5, round(a * 24)) + (5 - (max(5, round(a * 24)) % 17)) % 17"
+      ]
+    },
+    {
+      "id": 132,
+      "type": "PrimitiveFloat",
+      "pos": [
+        1035,
+        5320
+      ],
+      "size": [
+        270,
+        70
+      ],
+      "flags": {},
+      "order": 10,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "値",
+          "name": "value",
+          "type": "FLOAT",
+          "widget": {
+            "name": "value"
+          },
+          "link": null,
+          "label": "数値"
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "浮動小数点",
+          "name": "FLOAT",
+          "type": "FLOAT",
+          "links": [
+            312
+          ]
+        }
+      ],
+      "title": "台詞なし時の既定秒数（30秒／台詞ありは1本5秒で完全可変）",
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.33.0",
+        "Node name for S&R": "PrimitiveFloat",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.5.2",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "widgets_values": [
+        30.0
+      ],
+      "color": "#322",
+      "bgcolor": "#533"
+    },
+    {
+      "id": 140,
+      "type": "MarkdownNote",
+      "pos": [
+        665,
+        4277.5
+      ],
+      "size": [
+        300,
+        520
+      ],
+      "flags": {},
+      "order": 11,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "title": "解像度早見表",
+      "properties": {
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.5.2",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "widgets_values": [
+        "# 現在の仕様：台詞数で完全可変尺（1本＝5秒・上限なし）\n\n最終的に残った台詞数へ合わせて5秒刻みで尺を自動決定します。H3動画生成前に原文と発音用台詞の確認画面が開きます。\n\n---\n\n| megapixels | Aspect | Output (multiple=32) |\n|---|---|---|\n| 0.2 | 16:9 | 608 x 352 |\n| 0.3 | 16:9 | 736 x 416 |\n| 0.4 | 16:9 | 864 x 480 |\n| 0.5 | 16:9 | 960 x 544 |\n| 0.6 | 16:9 | 1056 x 608 |\n| 0.7 | 16:9 | 1152 x 640 |\n| 0.8 | 16:9 | 1216 x 672 |\n| 0.9 | 16:9 | 1280 x 736 |\n| 0.98 | 16:9 | 1344 x 768 |\n| 1.0 | 16:9 | 1376 x 768 |\n| 1.2 | 16:9 | 1504 x 832 |\n| 1.5 | 16:9 | 1664 x 928 |\n| 1.8 | 16:9 | 1824 x 1024 |\n| 2.0 | 16:9 | 1920 x 1088 |"
+      ],
+      "color": "#222",
+      "bgcolor": "#000"
+    },
+    {
+      "id": 143,
+      "type": "DeterministicEndCreditOverlay",
+      "pos": [
+        4380.55,
+        2695
+      ],
+      "size": [
+        370.909765625,
+        230
+      ],
+      "flags": {},
+      "order": 12,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "images",
+          "name": "images",
+          "type": "IMAGE",
+          "link": 322
+        },
+        {
+          "localized_name": "fps",
+          "name": "fps",
+          "type": "FLOAT",
+          "widget": {
+            "name": "fps"
+          },
+          "link": null,
+          "label": "フレームレート（fps）"
+        },
+        {
+          "localized_name": "credit_seconds",
+          "name": "credit_seconds",
+          "type": "FLOAT",
+          "widget": {
+            "name": "credit_seconds"
+          },
+          "link": null,
+          "label": "クレジット表示秒数"
+        },
+        {
+          "localized_name": "credit_line",
+          "name": "credit_line",
+          "type": "STRING",
+          "widget": {
+            "name": "credit_line"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "url",
+          "name": "url",
+          "type": "STRING",
+          "widget": {
+            "name": "url"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "position",
+          "name": "position",
+          "type": "COMBO",
+          "widget": {
+            "name": "position"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "credit_font_scale",
+          "name": "credit_font_scale",
+          "type": "FLOAT",
+          "widget": {
+            "name": "credit_font_scale"
+          },
+          "link": null,
+          "label": "クレジット文字サイズ"
+        },
+        {
+          "localized_name": "url_font_scale",
+          "name": "url_font_scale",
+          "type": "FLOAT",
+          "widget": {
+            "name": "url_font_scale"
+          },
+          "link": null,
+          "label": "URL文字サイズ"
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "images",
+          "name": "images",
+          "type": "IMAGE",
+          "links": [
+            323
+          ]
+        }
+      ],
+      "title": "8. 固定終了クレジットを合成",
+      "properties": {
+        "Node name for S&R": "DeterministicEndCreditOverlay",
+        "ue_properties": {
+          "widget_ue_connectable": {
+            "fps": true,
+            "credit_seconds": true,
+            "credit_line": true,
+            "url": true
+          },
+          "version": "7.5.2",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "widgets_values": [
+        24,
+        3,
+        "ネームから全自動の自律式統合AI漫画システム",
+        "https://note.com/happy_duck780",
+        "bottom_right",
+        0.018,
+        0.03
+      ],
+      "color": "#16405d",
+      "bgcolor": "#102432"
+    },
+    {
+      "id": 138,
+      "type": "PrimitiveStringMultiline",
+      "pos": [
+        1035,
+        3530
+      ],
+      "size": [
+        467.460546875,
+        720
+      ],
+      "flags": {},
+      "order": 13,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "値",
+          "name": "value",
+          "type": "STRING",
+          "widget": {
+            "name": "value"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "文字列",
+          "name": "STRING",
+          "type": "STRING",
+          "links": [
+            318
+          ]
+        }
+      ],
+      "title": "2. 長時間H3プロンプト生成指示（4コマ順を4幕へ拡張）",
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.33.0",
+        "Node name for S&R": "PrimitiveStringMultiline",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.5.2",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "widgets_values": [
+        "LONG-VIDEO OVERRIDE — This block has priority over any legacy duration or exactly-four-shots wording later in this instruction.\n- When tagged dialogue exists, duration is the final dialogue-turn count times 5 seconds with no fixed upper limit. Only when no tagged dialogue remains, use the 30-second fallback unless the user explicitly requests another fallback duration.\n- Preserve the four manga panels as four ordered story acts. Expand each act into multiple cinematic shots without changing the panel order, characters, dialogue meaning, location continuity, or punchline.\n- Write six to ten sequential [Shot N] blocks with explicit At 00:SS.mmm timestamps spanning the full requested duration. Use contiguous timing and never restart the story at a segment boundary.\n- Keep spoken dialogue in the act derived from its source panel. Use reaction, establishing, transition, and follow-through shots to add time; do not invent a different plot.\n- After all normal Ref2VA sections, append one [Global Instructions] block requiring unchanged character identity, clothing, voices, title policy, dialogue priority, visual style, and continuous audio across every generated segment.\n- Ignore any later sentence that says the default is 15 seconds or that exactly four shot blocks must be written; those are legacy short-form constraints.\n\nYou are a prompt writer for the ComfyUI MiniMax H3 Reference-to-Video (R2V / Ref2VA) workflow.\n\nConversation behavior:\n\n1. If no four-panel manga image is attached in the current request, do not generate an H3 prompt. Reply only in Japanese:\n「4コマ漫画を1枚添付してください。ComfyUIでは、その画像だけを最初の参照入力 ref_image_0 に接続してください。指定がなければ、台詞ありは台詞数×5秒（上限なし）、台詞なしは30秒・16:9・会話音声優先・字幕なし・内容に合うH3生成BGMあり・タイトルと終了クレジットあり、で作成します。」\n\n2. If the user asks how to use this system, do not generate an H3 prompt. Reply only in Japanese:\n「使い方：\n1. このチャットに4コマ漫画を1枚添付します。\n2. 必要なら、秒数・縦横比・演出などを指定します。\n3. このAIがMiniMax H3用の完成英語プロンプトを出力します。\n4. ComfyUIでは、この4コマ漫画だけを最初の参照入力 ref_image_0 に接続し、ref_image_1 以降は接続しません。\n5. 出力されたプロンプトをMiniMax H3 Reference-to-VideoワークフローのPrompt欄へ貼り付けて実行します。」\n\n3. When a readable four-panel manga image is attached, generate the final MiniMax H3 prompt immediately. Never ask a follow-up question solely because title OCR is uncertain. Instead, inspect the publication-title area again, use the single most likely exact transcription, and still emit the mandatory non-empty overlay_title line. Ask a concise question only when an essential dialogue line, its speaker, or its reading cannot be determined reliably from the image and story context.\n\nDefault settings unless the user explicitly overrides them:\n- duration: final tagged dialogue-turn count times 5 seconds with no fixed upper limit; use 30 seconds only when no tagged dialogue remains\n- aspect ratio: 16:9\n- the attached manga is the only active image reference and is <Picture 1>\n- spoken conversation has the highest priority\n- no dialogue subtitles or captions\n- MiniMax H3 generates one story-aware low-volume instrumental background score even when dialogue exists\n- quiet ambience and restrained physical sound effects only beneath dialogue\n- remove all original speech balloons from the animated footage\n- extract the manga title only as overlay_title metadata; never render a title in a generated image or video\n- do not generate an ending credit, URL, or any other readable end text; the workflow adds the exact fixed credit after generation\n- use exactly four shots, one shot per manga panel\n\nTask:\nConvert one supplied Japanese four-panel manga page into one ready-to-paste MiniMax H3 prompt. Treat the page as the single active reference image, <Picture 1>. Preserve the story, speaker ownership, emotional escalation, and conversational exchange while simplifying only what is necessary for natural, intelligible Japanese speech within the selected duration.\n\nReference-input contract:\n\n- The manga page is source material for the Nano Banana transformation stage only. H3 must receive the resulting single clean full-bleed scene as <Picture 1>, never the original panel grid or a multi-view character sheet.\n- If a manually adapted R2V graph uses person-specific references, use one clean close-up or bust portrait per person and bind each portrait to one stable <Subject N> (Sx). Never pass a multi-face or multi-angle character sheet directly as a person reference.\n- The attached manga is the only active image reference and must be called <Picture 1> in the generated H3 prompt.\n- Never describe, rely on, or invent <Picture 2>, <Video 1>, or <Audio 1> unless the user explicitly provides and requests that additional reference.\n- Do not treat a thumbnail, sample image, stale workflow image, or unrelated connected asset as part of the story.\n\nCore story rules:\n\n- Determine panel order from the actual layout. For a conventional Japanese four-panel page, preserve the real top-to-bottom panel order and the right-to-left dialogue and visual emphasis inside each panel.\n- Preserve recognizable character identities, apparent age, gender presentation, faces, hair, clothing, important props, setting, panel ownership of actions, emotional progression, and punchline.\n- Do not invent unrelated characters, dialogue, settings, props, or plot events.\n- Treat text outside the four panel images as publication material, not story-scene material, with no exception for the manga title.\n- Use all four panels. Do not crop and animate only one panel for the entire video.\n\nPanel-derived character identity and population rules:\n\n- Before writing the H3 sections, inspect each source panel separately and build panel_cast[1], panel_cast[2], panel_cast[3], and panel_cast[4]. Each panel_cast is the exact set of people visibly present in that panel; do not assume that a person appears in every panel or in the final panel.\n- Define every visually distinct person as a stable <Subject N>. Record an immutable identity signature for that subject using only panel-derived visual, vocal, and narrative attributes.\n- For each Shot N, the visible people must match panel_cast[N] exactly. Do not add a person absent from the corresponding panel, omit a person present in it, or substitute one person for another. Preserve the panel-derived count without inventing a global cast requirement.\n- State the desired cast positively before compact exclusions: write that the visible cast consists exactly of the listed <Subject N> identities in their intended positions. Also derive and state exact counts for story-critical repeated props such as bicycles, cups, bags, or tools whenever a wrong count would break the scene.\n- Preserve every subject's identity signature and the per-panel cardinality of all distinguishing attributes. Derive every subject and attribute count solely from the corresponding panel; never copy, split, merge, transfer, or invent an identity or attribute.\n- When the same <Subject N> reappears across non-adjacent or adjacent panels, retain the same immutable identity signature after a cut, camera movement, partial occlusion, or re-entry.\n- Unless the corresponding panel explicitly depicts intentional duplicates or look-alikes, generate no clones, extra people, merged people, split people, or identity swaps. A partially hidden subject remains that same subject; do not reconstruct the subject as a second person.\n- At the start of every Shot N, naturally state which <Subject N> labels are visible and their left-to-right positions. End that shot description with a concise continuity sentence confirming that the visible set remains equal to panel_cast[N], with no additions, omissions, substitutions, or duplicates.\n- Choose a camera path that keeps the panel-derived cast trackable. When a proposed camera move would obscure identity cues or force several hidden people to be reconstructed at once, simplify that move, reduce parallax, or keep a more stable composition. Character-set fidelity to the corresponding panel has priority over camera spectacle, but do not force characters who are absent from that panel into the shot.\n\nDialogue-first adaptation rules:\n\n- Every audible spoken line must be authored explicitly with a stable speaker ID and an exact <d>[Japanese] ...</d> block. Never ask H3 to invent speech from a vague phrase such as characters converse, light laughter, or generic Audio description.\n- On each speaker's first vocal appearance, place the visual reference or <Subject N> label, the stable (Sx) ID, voice description, and current action in the same clause. After each dialogue turn, explicitly require natural lip synchronization for that speaker while every non-speaker keeps a closed mouth.\n- A nominally silent shot still requires post-generation audio QA. Negative phrases such as no dialogue or no voices are not a guarantee; if unintended speech appears, regenerate or repair the audio after generation rather than expanding a list of prohibitions.\n- Preserve the original conversation structure. Do not impose a one-line-per-panel limit.\n- Preserve every essential speaker turn, speaker ownership, response order, disagreement, reaction, reveal, and punchline.\n- A panel containing a conversation must remain a conversation. Do not collapse different speakers into one narrator or monologue merely to simplify the prompt.\n- Before assigning timestamps, estimate whether every line can be spoken naturally in its available interval.\n- Target a clear Japanese speaking rate of approximately 6 to 8 mora per second. Never plan dialogue above 9 mora per second.\n- Leave a short audible gap between different speakers. Never overlap ordinary dialogue.\n- If a line does not fit, shorten or paraphrase only that line while preserving its essential meaning, speaker, intention, emotion, relationship to the preceding and following lines, and contribution to the punchline.\n- Remove fillers, repetition, indirect wording, and nonessential modifiers before removing an essential conversational turn.\n- Preserve at least two alternating speaker turns in a panel when the panel's meaning depends on an exchange and the shortened lines can fit naturally.\n- Do not accelerate, slur, mumble, chant, sing, merge, or distort speech merely to retain the original wording.\n- After a line is shortened, the shortened line becomes the only canonical spoken line. Do not include the discarded longer original wording anywhere in the H3 prompt.\n- If the essential conversation still cannot fit after meaning-preserving compression, reply in Japanese that the story must be split into multiple clips rather than producing an impossible prompt.\n\nJapanese dialogue notation rules:\n\n- Assign stable speaker IDs in order of first spoken line: (S1), (S2), and so on.\n- Infer each speaker's voice from the visible character and story context. Describe apparent age range, gender presentation when visually clear, pitch, timbre, personality, emotional state, and speaking style. Do not apply one universal gender, age, or voice type to every manga.\n- Keep each speaker's voice identity stable across all shots.\n- Do not assign an obviously masculine, feminine, childlike, elderly, robotic, foreign-accented, or off-screen voice when it contradicts the visible speaker and story context.\n- Use one active speaker at a time unless the source explicitly contains an essential simultaneous group line.\n- In each <d>[Japanese] ...</d> block, use normal Japanese orthography to preserve semantic and emotional cues: use kanji and kana naturally.\n- Do not convert an entire dialogue line to hiragana-only or katakana-only.\n- Convert only an individually ambiguous reading, acronym, proper name, number, or uncommon word into kana when necessary for pronunciation. Keep the rest of that dialogue line in normal Japanese orthography.\n- Immediately before every <d> block, identify the stable speaker ID, the speaker's visible screen position, a distinctive visual identifier, physical action, emotional delivery, and voice quality.\n- Inside <d>, include only the final shortened canonical dialogue. Do not repeat the same dialogue outside <d>.\n- Verify names, particles, long vowels, small kana, voiced sounds, compound-word readings, and punctuation pauses.\n- Do not add narration, extra words, chants, singing, vocalizations, or spoken publication text.\n\nSpeaker-binding and lip-sync rules:\n\n- For every dialogue block, the named speaker is the only character allowed to move lips, open her mouth, or produce voice.\n- Every visible non-speaking character keeps lips fully closed, remains silent, and may react only through eyes, brows, head movement, posture, hands, or body language.\n- Whenever possible, frame the active speaker as the only clear visible face during her dialogue. Keep other faces off-screen, occluded, turned away, or distant and non-speaking.\n- Never assign a line to a nearby reaction character, background character, or the speaker from the previous or next shot.\n- At a hard cut, finish the previous speaker's mouth movement before the cut. Begin the next dialogue only after the named new speaker is visibly established.\n- If one character has a brief reaction line after another's dialogue, isolate the reaction speaker before that line begins.\n- Every speaking character must visibly perform the line with plausible mouth movement, facial expression, gaze, and gesture. Prioritize correct speaker-to-mouth binding over frame-perfect lip synchronization, camera movement, or secondary animation.\n\nEmotion and performance rules:\n\n- Preserve the emotional escalation visible in the manga. State each line's specific performance intention, such as teasing curiosity, earnest hesitation, sharp anger, firm warning, joyful revelation, stunned disbelief, flustered apology, or cheerful invitation, only when supported by the panel.\n- Keep ambient sound low in volume, but do not make every speaker quiet, calm, restrained, soft, subdued, or monotone.\n- Do not apply one global acting intensity to all characters. Contrast the performances according to the panel and speaker.\n- Use clear energetic delivery for comedy, conflict, surprise, and punchlines when shown in the reference; use quiet delivery only for a genuinely quiet moment in the source.\n\nPositive composition, speech-balloon, and scene-text rules:\n\n- During the Nano Banana transformation stage, remove the source speech balloons and reconstruct their regions as specific coherent scene materials such as wall, sky, furniture, floor, foliage, or lighting that continue naturally through the missing areas.\n- In every H3 shot, describe what the background positively contains and where it appears. Prefer an empty rural location, open sky, ocean, plain wall, unmarked material, or another story-correct environment that leaves no reason for unintended people or text-bearing objects to appear.\n- When a location is prone to text artifacts, compose the shot so the text-bearing area is outside frame or use an 85mm-equivalent shallow-depth-of-field look with the intended faces and actions sharp and the distant environment softly blurred.\n- Keep any remaining exclusion compact and secondary. Do not strengthen text avoidance by repeatedly enumerating signs, posters, letters, numbers, boards, screens, or other unwanted concepts.\n- Preserve no source dialogue as visible writing after balloon removal. The workflow adds the sole title and ending credit after H3 generation, and the H3 prompt contains no subtitle or caption fields.\n\nAnimation and camera rules:\n\n- Use one shot per manga panel with one clear primary action beat plus individualized supporting reactions.\n- Frame speaking faces at medium distance or closer whenever practical. For a low-angle or dynamic full-body action, state enough head-to-feet space and environmental margin to prevent the subject from filling the canvas or losing limbs.\n- Every visible character must perform at least one role-appropriate, physically plausible movement in every shot where that character is visible, unless the reference manga or the user explicitly requires intentional stillness.\n- Speaking and story-critical characters must visibly perform dialogue, facial reaction, gesture, posture shift, or purposeful action. Background and crowd characters must perform individually varied, restrained secondary action such as blinking, gaze shifts, breathing, weight shifts, hair or clothing response, prop handling, or a context-appropriate reaction.\n- Camera movement alone never counts as animation. Do not output a still manga panel, static character, or static background that merely slides, pans, tilts, zooms, or rotates across the frame. In every shot, show at least two independently visible in-scene changes: the active character executes a readable action with head/torso/arms/hands/prop, and at least one other character, prop, hair/clothing, or environmental element changes naturally in response. Describe the action's start pose, mid-action, and settled end pose. Require the generated detailed_description to name one primary actor, one visible verb-object action, and one separate reactive change for every shot; vague words such as \"reacts\" or \"moves\" alone are insufficient. Keep supporting actions distinct and subordinate to the active speaker, decisive story action, and gag.\n- For each shot, select one to three compatible animation principles from anticipation, slow-in/slow-out, arcs, follow-through, secondary action, staging, clear pose-to-pose acting, or restrained exaggeration. Make the selected principles visibly affect the relevant body, face, hair, clothing, prop, or background.\n- Every shot that is not explicitly still uses one clearly visible, physically coherent primary camera route that supports the panel action. Do not default to a short zoom. Across the four shots, vary the route among lateral tracking, a gentle arc or orbit, a diagonal dolly with foreground parallax, and a low-to-high crane or reframe.\n- Dialogue clarity is the hard priority. For any shot containing dialogue, use only one smooth lateral track or a gentle 10-to-20-degree arc. Begin with a stable 0.4-second face-readable composition, travel smoothly while the speaker is established, and settle before the line finishes. Do not combine camera moves, add a focus pull, whip pan, rapid spin, shake, fast zoom, or occlusion during speech.\n- Make non-dialogue beats visibly more dynamic: at the start or end of a shot, after a line, or during a silent reaction, use a larger but controlled diagonal dolly, arc, or low crane that creates obvious foreground/background parallax. Keep the active speaker's mouth unobstructed whenever dialogue resumes.\n- For every route, specify start, midpoint, and end viewpoint, framing, subject placement, and visible parallax. At 0.4 MP, make the travel legible rather than imperceptible, while retaining a stable horizon, screen direction, character identity, limb count, and prop ownership.\n- Correct speaker-to-mouth binding, intelligible dialogue, and recognizable character performance remain mandatory. Camera movement and supporting animation are designed around those constraints; never trade clear Japanese speech for spectacle.\n- Preserve a stable horizon, character identity, limb count, prop ownership, and screen direction.\n- Use hard cuts between panels. Do not use morphing transitions between different panels.\n\nTimeline and publication-graphic rules:\n\n- Use exactly four contiguous shot ranges totaling the requested duration.\n- Write [Shot 1] with its full time range. Start every later shot with its exact boundary.\n- Give dialogue enough time for natural delivery and short gaps between speakers.\n- Use timing precision no finer than 0.1 seconds unless an essential physical action requires it.\n- Do not assign title or credit fade animations. Use hard shot boundaries to control where publication graphics exist.\n- Shot 1 contains story action for Panel 1 only. No generated title is allowed in any shot.\n- No shot contains generated publication graphics or readable text.\n- Shot 4 contains no generated ending credit, URL, or publication text. The workflow adds the fixed end credit after H3 generation.\n\nOverlay-title metadata rules:\n\n- Perform OCR only to identify the manga title shown outside the panel grid. Before finalizing, reread that publication-title area separately from dialogue balloons, author names, credits, URLs, and panel text.\n- The first non-empty line of the entire response is mandatory and must use exactly this ASCII syntax on one line: overlay_title: \"<exact Japanese manga title>\"\n- Use the literal key overlay_title, one ASCII colon followed by one space, and straight ASCII double quotation marks. Add no bullet, heading, code fence, commentary, confidence note, or trailing text to that line.\n- Never omit overlay_title and never return an empty value. If OCR is uncertain, choose the single highest-confidence title transcription from the publication-title area. If no title is legible after the second inspection, output overlay_title: \"無題\" instead of omitting the line.\n- When multiple outside-panel text candidates exist, select the work title by its title-like placement and typographic prominence; exclude author names, account names, credits, URLs, dates, and branding.\n- The metadata line is consumed by the workflow and is removed before the H3 model receives its prompt.\n- Never render, describe, request, animate, fade, duplicate, or place the title in the generated image or in any H3 shot.\n- The workflow alone adds the title once, as a compact fixed upper-left overlay with no background, after H3 decoding.\n\nEnding text rules:\n\n- Generate no ending production credit, URL, or other readable publication text.\n- The workflow composites the exact end credit after H3 generation.\n\nSound rules:\n\n- Spoken conversation is the dominant audio element.\n- When dialogue exists, generate no non-diegetic background music unless the user explicitly requests music.\n- Use only low-volume environmental ambience and restrained action-matched physical effects beneath dialogue.\n- Keep impacts, paper sounds, footsteps, crowd reactions, room tone, and other effects low enough that they never mask speech.\n- If the user explicitly requests BGM, use one simple low-volume instrumental cue and duck it strongly beneath every spoken line.\n\nUse exactly this output order:\n\noverlay_title: \"<the exact Japanese manga title copied from the supplied image, or 無題 only when no title is legible>\"\nsubject_definitions:\n\nThe overlay_title metadata line must be the first non-empty line and is not an H3 section. It is machine-read by the workflow and removed before H3 conditioning. The remaining H3 prompt must preserve the official Ref2VA section order: subject_definitions, summary, retention_analysis, detailed_description, overall_soundscape, non_diegetic_music.\n\nFor the actual H3 video prompt, explicitly require a clean live-action frame with no generated text: remove every comic speech bubble, thought bubble, caption, subtitle, signage text, and Japanese or English lettering from the source image. Do not recreate the page title in the generated video; the opening title is added separately by the workflow as a deterministic upper-left overlay. This rule applies to every input image and every shot.\nDefine <Picture 1> as the only active four-panel storyboard reference. Define every speaking character with a stable speaker ID, distinctive visual identifier, screen position, and inferred voice. Define important non-speaking characters, props, setting, and visual style as additional subjects.\n\nsummary:\nBegin with [reference generation]. State the duration, aspect ratio, one-reference contract, four-act panel order with multiple timestamped shots per panel, dialogue-first priority, absence of subtitles, speech-balloon removal, speaker-binding priority, external deterministic title overlay only, no generated title, no generated ending credit or URL, and whether BGM is absent or explicitly requested.\n\nretention_analysis:\nFor <Picture 1> and every defined subject, state where it appears and use one of: fully_preserved, partially_preserved, attribute_transfer, weak_reference.\n\ndetailed_description:\nMotion and cinematography requirements: Use one purposeful primary camera route in each shot; never use a static frame or a zoom-only default. Across the four shots, use at least three distinct controlled route types: lateral tracking, gentle curved arc/orbit, diagonal dolly with foreground parallax, or low-to-high crane/reframe. Describe the start, travel, and end composition. In dialogue shots, select only a smooth lateral track or gentle arc and protect a stable, face-readable frame at the beginning and end of each line. Reserve the larger diagonal dolly, arc, crane, and strongest parallax for silent setup, post-line reaction, or punchline beats. Camera movement alone never counts as animation. Do not output a still manga panel or static characters that only slide diagonally, pan, tilt, zoom, or rotate. In every shot, require at least two independent visible in-scene changes: the active character performs a readable head/torso/arms/hands/prop action from a start pose through a mid-action to a settled end pose, and at least one other character, prop, hair/clothing, or environmental element changes naturally in response. Every visible main character performs a distinct, story-motivated action or reaction: turn, step, lean, gesture, raise/lower props, shift posture, react through eyes/head/shoulders/hands, or interact with another character. Avoid posed stillness and synchronized group motion.\nAudio and lip-sync guardrail: dialogue clarity has priority over spectacle. During every spoken line, keep the active speaker's face unobstructed and large enough to read; use only smooth controlled travel, never whip pans, rapid spins, shake, fast zooms, focus loss, or multiple simultaneous camera moves. Only the active speaker's lips move. Non-speakers may gesture and react through body, eyes, head, hands, and posture, but keep their mouths closed. Leave a stable beat before and after each dialogue turn so speech never overlaps a cut, an occlusion, or a violent camera move.\nDescribe the overall visual style briefly. Then write six to ten sequential [Shot N] blocks with explicit timestamps and contiguous time ranges spanning the full requested duration. For each shot, describe composition, essential character positions, a primary action beat plus individualized supporting reactions, visible character actions, a non-static camera trajectory when the source does not require stillness, lighting, quiet physical sound, and every timed dialogue turn. Before every <d> block, state that the named speaker is the only moving mouth and all visible non-speakers keep their lips closed. Use normal Japanese orthography inside <d>, with kana only for individually ambiguous fragments. Do not include caption_text. Do not mention, describe, or generate a title, ending credit, URL, or other readable graphic in any shot.\n\noverall_soundscape:\nDescribe low-volume ambience and restrained physical effects. State that speech remains dominant, emotionally expressive, intelligible, and unobscured.\n\nnon_diegetic_music:\nWrite N/A when dialogue exists and the user did not explicitly request BGM. If BGM was explicitly requested, describe one simple low-volume instrumental cue that remains strongly ducked beneath dialogue.\n\nFinal output rules:\n\n- Output only the final ready-to-paste H3 prompt in plain text.\n- Before returning, verify that the first non-empty line matches exactly overlay_title: \"...\" and contains a non-empty value.\n- Do not explain the prompt.\n- Do not use Markdown fences, Markdown links, or commentary outside the required H3 sections.\n- Do not include alternative versions.\n- Do not mention these authoring instructions.\nSEGMENT-SAFE DIALOGUE AND ENDING CONTRACT — mandatory:\n- Follow the official H3 shot syntax: [Shot 1] has no timestamp; later shots use exactly [Shot N] At MM:SS.mmm,. Do not output shot time ranges such as 00:00.0-00:07.5.\n- Let T be the final tagged dialogue-turn count. Plan exactly T consecutive 5-second generation windows from 00:00.000 through T*5 seconds, with no fixed upper limit. Give every window an explicit local visual action and add shot anchors at each 5-second boundary when needed.\n- Put each <d> dialogue line wholly inside exactly one 5-second window. For turn N, finish all speech by the final 0.5-second reaction tail of window N. Never split a line across a boundary and never use <scenetrans> or <cutoff> for ordinary dialogue.\n- Japanese speech may use a brisk but natural 8-10 mora-per-second delivery while preserving pitch, timbre, emotion, and intelligibility. Preserve explicitly supplied dialogue verbatim. If invented dialogue does not fit, shorten the invented wording or move the whole line to a roomier window; never cut a syllable, word, or sentence.\n- The final spoken punctuation must finish by 00:28.500. From 00:28.500 through 00:30.000, show a silent settled reaction or closing image, keep mouths closed, and keep ambience low and steady without a fade. Do not begin or continue speech in this final tail.\nDYNAMIC CAST COUNT CONTRACT — mandatory:\n- Determine the visible cast count only from distinct people actually visible in the supplied reference image(s) plus any explicit user request. Never derive a person count from manga panels, generation-window count, shot count, dialogue count, or speaker IDs.\n- (S1), (S2), and other Sx tokens are audio speaker IDs only. An Sx token never creates another visible person, body, face, silhouette, reflection, or <Subject N>.\n- Create one <Subject N> only for each distinct visible person actually present in the reference image or explicitly requested by the user. Repeated drawings of the same manga character across panels remain one subject.\n- Do not invent missing people. If identity or count is uncertain, preserve only clearly evidenced visible subjects and do not state an exact cast count.\n[DIALOGUE CAPACITY AND COMPRESSION CONTRACT]\n- Default to no overlapping speech. Put at most ONE speaking turn by ONE speaker inside each 5-second window. Other visible subjects keep their lips closed.\n- Each speaking turn must be one complete utterance inside one window; never split, continue, or repeat it across a boundary. Keep it short enough to finish naturally within about 4 seconds (roughly 8-10 Japanese mora per second).\n- If the user explicitly requires exact/verbatim dialogue, preserve it; otherwise meaning-preserving compression is authorized.\n- Finish the final spoken syllable by 00:28.500. End on a stable silent reaction or closing image with steady low ambience. Do not request or create a visual or audio fade.\n[H3-GENERATED BGM AND DIALOGUE STABILITY OVERRIDE — HIGHEST PRIORITY]\n- This workflow explicitly requests background music generated by MiniMax H3 itself. Do not require, reference, or expect an external music file or post-generation music mix.\n- In non_diegetic_music, choose one simple instrumental cue that matches the manga's setting, genre, emotional progression, and punchline. Use no singing, spoken samples, chant, choir, or voice-like lead instrument.\n- Keep the score consistently very low, roughly 15-20 dB beneath the dry centered dialogue. Duck it strongly during every spoken syllable and allow only a restrained lift inside speech-free reaction buffers.\n- Maintain one continuous motif, tempo, instrumentation, acoustic space, and mix across every 5-second long-video segment. At continuation boundaries, continue the already-playing score from the supplied AV guide; never restart the intro, beat, phrase, or melody.\n- Dialogue remains the absolute priority. Put no more than one complete tagged speaking turn in a window. Never split or continue a line across a boundary, and never let music mask, distort, double, echo, chorus, phase-smear, or change the speaker's timbre.\n- Treat each 5-second output window as having 4.5 seconds available for speech followed by a mandatory 0.5-second speech-free reaction tail. Finish every spoken syllable by the relevant 4.5-second deadline.\n- The final 0.5 seconds contain closed mouths and no human speech. Resolve the instrumental cue with a brief deliberate cadence before the final frame, then hold quiet room tone; do not create a visual or audio fade and do not cut a musical note mid-attack.\n- The final non_diegetic_music field must contain the selected H3-generated instrumental cue and must not be N/A.[FULLY VARIABLE DIALOGUE DURATION OVERRIDE — FINAL AND ABSOLUTE HIGHEST PRIORITY]\n- Ignore every earlier fixed-30-second, exactly-six-window, T=1-through-6, maximum-six-turn, and compress-to-six instruction. This final block replaces all of those legacy limits.\n- Count every final tagged <d> dialogue turn. Do not merge, omit, shorten, or compress dialogue merely to satisfy a former duration or window cap.\n- Let T be the total number of final tagged dialogue turns. When T is greater than zero, the effective generated duration is exactly T times 5 seconds and the timeline contains exactly T consecutive 5-second windows starting at 00:00.000.\n- Put exactly one complete dialogue turn in each window, in the original speaker and story order. Turn N belongs in window (N-1)*5 through N*5 seconds and must finish by the final 0.5-second reaction tail of that window.\n- T has no fixed upper limit: four turns make 20 seconds, six turns make 30 seconds, seven turns make 35 seconds, eight turns make 40 seconds, and so on.\n- Retime all visual acts, [Shot N] timestamps, reactions, and the ending across the full T*5-second timeline. Preserve every dialogue turn, speaker assignment, causal meaning, and punchline.\n- If no tagged dialogue remains, use the workflow's fallback duration control."
+      ],
+      "color": "#322",
+      "bgcolor": "#533"
+    },
+    {
+      "id": 139,
+      "type": "PrimitiveStringMultiline",
+      "pos": [
+        1035,
+        4295
+      ],
+      "size": [
+        485.5484375,
+        390
+      ],
+      "flags": {},
+      "order": 14,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "値",
+          "name": "value",
+          "type": "STRING",
+          "widget": {
+            "name": "value"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "文字列",
+          "name": "STRING",
+          "type": "STRING",
+          "links": [
+            317
+          ]
+        }
+      ],
+      "title": "3. Nano Banana変換指示（単一フレーム化・文字/吹き出し完全除去）",
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.33.0",
+        "Node name for S&R": "PrimitiveStringMultiline",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.5.2",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "widgets_values": [
+        "Create exactly one clean 16:9 full-bleed cinematic animation keyframe from the supplied four-panel manga page.\n\nPreserve the story-critical characters, their identities, clothing, facial features, emotions, key props, setting, and the panel sequence's visual intent. Combine the source into one coherent live-action-style anime scene suitable as the single <Picture 1> reference for MiniMax H3. Resolve repeated drawings of the same person as one stable identity, render each intended visible person exactly once, and render each story-critical countable prop in the required count. The result is one continuous scene, never a multi-view character sheet or repeated-character montage.\n\nRemove every comic panel border, gutter, page margin, speech balloon, balloon tail, caption, dialogue, sound-effect lettering, title, logo, subtitle, credit, URL, sign text, price text, label, screen text, and all Japanese or English readable text. Reconstruct each removed area as natural coherent environment, lighting, furniture, sky, floor, crowd, or prop detail. Do not leave empty white bubbles, rectangular text boxes, or blurred text-like marks.\n\nNever create any title or publication graphic. The workflow will add the sole opening title later as a deterministic black-text, white-outline, upper-left overlay with no background.\n\nReturn only one text-free image, not a manga page, panel grid, storyboard, collage, split screen, contact sheet, or title card.\n[DIALOGUE-ONLY AUDIO STABILITY OVERRIDE — HIGHEST PRIORITY]\n- Ignore every earlier instruction that requests BGM, a score, or continuous music. Generate dialogue, restrained action sound, and quiet ambience only. The final non_diegetic_music field must be exactly: N/A. No music is audible.\n- Treat each 5-second output window as having 4.5 seconds available for speech followed by a mandatory 0.5-second speech-free tail. For turn N, finish every spoken syllable by the 4.5-second point of window N.\n- Put no more than one complete tagged speaking turn in a window. Never split or continue a line across a window boundary, and never let another speaker interrupt or overlap it.\n- Use exactly T consecutive 5-second windows for T retained dialogue turns. Put turn N in window N, beginning with 00:00-00:05, and retime the ending to the final Tth window.\n- The final 0.5 seconds of every window contain closed mouths and no human speech. The final image remains steady with no visual or audio fade.\n- Output only these constraints even when an earlier contract says non_diegetic_music must not be N/A. This final override wins.[FULLY VARIABLE DIALOGUE DURATION OVERRIDE — FINAL AND ABSOLUTE HIGHEST PRIORITY]\n- Ignore every earlier fixed-30-second, exactly-six-window, T=1-through-6, maximum-six-turn, and compress-to-six instruction. This final block replaces all of those legacy limits.\n- Count every final tagged <d> dialogue turn. Do not merge, omit, shorten, or compress dialogue merely to satisfy a former duration or window cap.\n- Let T be the total number of final tagged dialogue turns. When T is greater than zero, the effective generated duration is exactly T times 5 seconds and the timeline contains exactly T consecutive 5-second windows starting at 00:00.000.\n- Put exactly one complete dialogue turn in each window, in the original speaker and story order. Turn N belongs in window (N-1)*5 through N*5 seconds and must finish by the final 0.5-second reaction tail of that window.\n- T has no fixed upper limit: four turns make 20 seconds, six turns make 30 seconds, seven turns make 35 seconds, eight turns make 40 seconds, and so on.\n- Retime all visual acts, [Shot N] timestamps, reactions, and the ending across the full T*5-second timeline. Preserve every dialogue turn, speaker assignment, causal meaning, and punchline.\n- If no tagged dialogue remains, use the workflow's fallback duration control."
+      ],
+      "color": "#322",
+      "bgcolor": "#533"
+    },
+    {
+      "id": 144,
+      "type": "LoraLoaderModelOnly",
+      "pos": [
+        1405,
+        3057.5
+      ],
+      "size": [
+        330,
+        82
+      ],
+      "flags": {},
+      "order": 15,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "モデル",
+          "name": "model",
+          "type": "MODEL",
+          "link": 300
+        },
+        {
+          "localized_name": "lora_name",
+          "name": "lora_name",
+          "type": "COMBO",
+          "widget": {
+            "name": "lora_name"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "モデルの強度",
+          "name": "strength_model",
+          "type": "FLOAT",
+          "widget": {
+            "name": "strength_model"
+          },
+          "link": null,
+          "label": "モデル適用強度"
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "モデル",
+          "name": "MODEL",
+          "type": "MODEL",
+          "links": [
+            326
+          ]
+        }
+      ],
+      "title": "H3 Turbo v4 LoRA（8step・強度1.0）",
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.33.0",
+        "Node name for S&R": "LoraLoaderModelOnly",
+        "models": [
+          {
+            "name": "minimax_h3_turbo_v4_step600_ema_pruned_comfyui.safetensors",
+            "url": "https://huggingface.co/drbaph/MiniMax-H3-Turbo-Lora-ComfyUI/resolve/main/minimax_h3_turbo_v4_step600_ema_pruned_comfyui.safetensors?download=true",
+            "hash": "7098acf3ee75028fd9fcd948f50fcc8d995057fabb76f86bd3ca2c0ffc58e409",
+            "hash_type": "SHA256",
+            "directory": "loras"
+          }
+        ],
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.5.2",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "widgets_values": [
+        "minimax_h3_turbo_v4_step600_ema_pruned_comfyui.safetensors",
+        1
+      ]
+    },
+    {
+      "id": 145,
+      "type": "DeterministicTitleWatermarkOverlay",
+      "pos": [
+        3930.55,
+        2685
+      ],
+      "size": [
+        360,
+        250
+      ],
+      "flags": {},
+      "order": 16,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "images",
+          "name": "images",
+          "type": "IMAGE",
+          "link": 320
+        },
+        {
+          "localized_name": "fps",
+          "name": "fps",
+          "type": "FLOAT",
+          "widget": {
+            "name": "fps"
+          },
+          "link": null,
+          "label": "フレームレート（fps）"
+        },
+        {
+          "localized_name": "title",
+          "name": "title",
+          "type": "STRING",
+          "widget": {
+            "name": "title"
+          },
+          "link": 321
+        },
+        {
+          "localized_name": "title_seconds",
+          "name": "title_seconds",
+          "type": "FLOAT",
+          "widget": {
+            "name": "title_seconds"
+          },
+          "link": null,
+          "label": "タイトル表示秒数"
+        },
+        {
+          "localized_name": "footer_left",
+          "name": "footer_left",
+          "type": "STRING",
+          "widget": {
+            "name": "footer_left"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "footer_right",
+          "name": "footer_right",
+          "type": "STRING",
+          "widget": {
+            "name": "footer_right"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "images",
+          "name": "images",
+          "type": "IMAGE",
+          "links": [
+            322
+          ]
+        }
+      ],
+      "title": "7. 固定タイトルを合成",
+      "properties": {
+        "Node name for S&R": "DeterministicTitleWatermarkOverlay",
+        "ue_properties": {
+          "widget_ue_connectable": {
+            "fps": true,
+            "title": true,
+            "title_seconds": true,
+            "footer_left": true,
+            "footer_right": true
+          },
+          "version": "7.5.2",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "widgets_values": [
+        24,
+        "",
+        3.7,
+        "",
+        ""
+      ]
+    },
+    {
+      "id": 137,
+      "type": "LoadImage",
+      "pos": [
+        1035,
+        4730
+      ],
+      "size": [
+        290,
+        330
+      ],
+      "flags": {},
+      "order": 17,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "画像",
+          "name": "image",
+          "type": "COMBO",
+          "widget": {
+            "name": "image"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "アップロードするファイルを選択",
+          "name": "upload",
+          "type": "IMAGEUPLOAD",
+          "widget": {
+            "name": "upload"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "画像",
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            316
+          ]
+        },
+        {
+          "localized_name": "マスク",
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "title": "1. ④コマまんがを投入",
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.33.0",
+        "Node name for S&R": "LoadImage",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.5.2",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "widgets_values": [
+        "SELECT_YOUR_4KOMA_MANGA.png",
+        "image"
+      ]
+    },
+    {
+      "id": 92,
+      "type": "TimestampedSaveVideo",
+      "pos": [
+        5201.46,
+        2424.89
+      ],
+      "size": [
+        1210,
+        770.2222222222222
+      ],
+      "flags": {},
+      "order": 18,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "ビデオ",
+          "name": "video",
+          "type": "VIDEO",
+          "link": 325
+        },
+        {
+          "localized_name": "ファイル名プレフィックス",
+          "name": "filename_prefix",
+          "type": "STRING",
+          "widget": {
+            "name": "filename_prefix"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "フォーマット",
+          "name": "format",
+          "type": "COMBO",
+          "widget": {
+            "name": "format"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "コーデック",
+          "name": "codec",
+          "type": "COMBO",
+          "widget": {
+            "name": "codec"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "video",
+          "name": "video",
+          "type": "VIDEO",
+          "links": null
+        }
+      ],
+      "title": "年月日時分秒でMP4を保存（通し番号なし）",
+      "properties": {
+        "Node name for S&R": "TimestampedSaveVideo",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.5.2",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "widgets_values": [
+        "video/MiniMax_H3/四コマ漫画_自動可変尺_Hybrid-b25_TurboV4_Spectrum_INT8_8step",
+        "auto",
+        "auto"
+      ]
+    },
+    {
+      "id": 141,
+      "type": "NanoBananaH3Transform",
+      "pos": [
+        1610.55,
+        4122.5
+      ],
+      "size": [
+        620,
+        560
+      ],
+      "flags": {},
+      "order": 19,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "image",
+          "name": "image",
+          "type": "IMAGE",
+          "link": 316
+        },
+        {
+          "localized_name": "image_transform_prompt",
+          "name": "image_transform_prompt",
+          "shape": 7,
+          "type": "STRING",
+          "link": 317
+        },
+        {
+          "localized_name": "h3_prompt_instruction",
+          "name": "h3_prompt_instruction",
+          "shape": 7,
+          "type": "STRING",
+          "link": 318
+        },
+        {
+          "localized_name": "provider",
+          "name": "provider",
+          "type": "COMBO",
+          "widget": {
+            "name": "provider"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "temperature",
+          "name": "temperature",
+          "type": "FLOAT",
+          "widget": {
+            "name": "temperature"
+          },
+          "link": null,
+          "label": "表現の自由度"
+        },
+        {
+          "localized_name": "seed",
+          "name": "seed",
+          "type": "INT",
+          "widget": {
+            "name": "seed"
+          },
+          "link": null,
+          "label": "シード値"
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "画像",
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            308
+          ]
+        },
+        {
+          "localized_name": "H3_PROMPT",
+          "name": "H3_PROMPT",
+          "type": "STRING",
+          "links": [
+            309
+          ]
+        },
+        {
+          "localized_name": "OVERLAY_TITLE",
+          "name": "OVERLAY_TITLE",
+          "type": "STRING",
+          "links": [
+            321
+          ]
+        }
+      ],
+      "title": "4. API設定＋画像変換＋H3プロンプト生成（同一Provider）",
+      "properties": {
+        "Node name for S&R": "Nano Banana Image Transform (H3)",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.5.2",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "widgets_values": [
+        "Google Gemini API",
+        0.2,
+        881037514497957,
+        "randomize"
+      ],
+      "color": "#8a4b00",
+      "bgcolor": "#30200e"
+    },
+    {
+      "id": 146,
+      "type": "PrimitiveFloat",
+      "pos": [
+        1035,
+        5455
+      ],
+      "size": [
+        270,
+        70
+      ],
+      "flags": {},
+      "order": 20,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "値",
+          "name": "value",
+          "type": "FLOAT",
+          "widget": {
+            "name": "value"
+          },
+          "link": null,
+          "label": "数値"
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "浮動小数点",
+          "name": "FLOAT",
+          "type": "FLOAT",
+          "links": [
+            314
+          ]
+        }
+      ],
+      "title": "セグメント秒数（推奨5秒）",
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.33.0",
+        "Node name for S&R": "PrimitiveFloat",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.5.2",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "widgets_values": [
+        5
+      ],
+      "color": "#322",
+      "bgcolor": "#533"
+    },
+    {
+      "id": 147,
+      "type": "ComfyMathExpression",
+      "pos": [
+        1610.55,
+        4862.5
+      ],
+      "size": [
+        225,
+        74
+      ],
+      "flags": {
+        "collapsed": true
+      },
+      "order": 21,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "a",
+          "localized_name": "values.a",
+          "name": "values.a",
+          "type": "FLOAT,INT,BOOLEAN",
+          "link": 314
+        },
+        {
+          "label": "b",
+          "localized_name": "values.b",
+          "name": "values.b",
+          "shape": 7,
+          "type": "FLOAT,INT,BOOLEAN",
+          "link": null
+        },
+        {
+          "localized_name": "式",
+          "name": "expression",
+          "type": "STRING",
+          "widget": {
+            "name": "expression"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "浮動小数点",
+          "name": "FLOAT",
+          "type": "FLOAT",
+          "links": null
+        },
+        {
+          "localized_name": "整数",
+          "name": "INT",
+          "type": "INT",
+          "links": [
+            315
+          ]
+        },
+        {
+          "localized_name": "BOOL",
+          "name": "BOOL",
+          "type": "BOOLEAN",
+          "links": null
+        }
+      ],
+      "title": "セグメント用フレーム数を計算",
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.33.0",
+        "Node name for S&R": "ComfyMathExpression",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.5.2",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "widgets_values": [
+        "max(5, round(a * 24)) + (5 - (max(5, round(a * 24)) % 17)) % 17"
+      ]
+    },
+    {
+      "id": 150,
+      "type": "MiniMaxH3LongReferenceSampler",
+      "pos": [
+        2890.55,
+        2180
+      ],
+      "size": [
+        440,
+        1260
+      ],
+      "flags": {},
+      "order": 22,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "link": 302
+        },
+        {
+          "name": "clip",
+          "type": "CLIP",
+          "link": 303
+        },
+        {
+          "name": "vae",
+          "type": "VAE",
+          "link": 304
+        },
+        {
+          "name": "audio_vae",
+          "type": "VAE",
+          "link": 305
+        },
+        {
+          "name": "sampler",
+          "type": "SAMPLER",
+          "link": 306
+        },
+        {
+          "name": "sigmas",
+          "type": "SIGMAS",
+          "link": 307
+        },
+        {
+          "name": "initial_latent",
+          "shape": 7,
+          "type": "LATENT",
+          "link": null
+        },
+        {
+          "label": "ref_image_0",
+          "name": "ref_images.ref_image_0",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 308
+        },
+        {
+          "label": "ref_image_1",
+          "name": "ref_images.ref_image_1",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "label": "ref_video_0",
+          "name": "ref_videos.ref_video_0",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "label": "ref_video_audio_0",
+          "name": "ref_video_audios.ref_video_audio_0",
+          "shape": 7,
+          "type": "AUDIO",
+          "link": null
+        },
+        {
+          "label": "ref_audio_0",
+          "name": "ref_audios.ref_audio_0",
+          "shape": 7,
+          "type": "AUDIO",
+          "link": null
+        },
+        {
+          "localized_name": "音声再精錬用H3ベースモデル（任意）",
+          "name": "audio_refine_model",
+          "type": "MODEL",
+          "link": 327
+        },
+        {
+          "name": "prompt",
+          "type": "STRING",
+          "widget": {
+            "name": "prompt"
+          },
+          "link": 328
+        },
+        {
+          "name": "width",
+          "type": "INT",
+          "widget": {
+            "name": "width"
+          },
+          "link": 310
+        },
+        {
+          "name": "height",
+          "type": "INT",
+          "widget": {
+            "name": "height"
+          },
+          "link": 311
+        },
+        {
+          "name": "length",
+          "type": "INT",
+          "widget": {
+            "name": "length"
+          },
+          "link": 313
+        },
+        {
+          "name": "max_raw_frames",
+          "type": "INT",
+          "widget": {
+            "name": "max_raw_frames"
+          },
+          "link": 315
+        },
+        {
+          "name": "noise_seed",
+          "type": "INT",
+          "widget": {
+            "name": "noise_seed"
+          },
+          "link": null,
+          "label": "シード値"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "video",
+          "type": "VIDEO",
+          "links": [
+            319
+          ]
+        },
+        {
+          "name": "last_latent",
+          "type": "LATENT",
+          "links": null
+        },
+        {
+          "name": "master_path",
+          "type": "STRING",
+          "links": null
+        },
+        {
+          "name": "segment_count",
+          "type": "INT",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "MiniMaxH3LongReferenceSampler"
+      },
+      "widgets_values": [
+        "",
+        1344,
+        768,
+        736,
+        124,
+        "39",
+        1105247899806753,
+        "randomize",
+        "h3_long_video/四コマ自動可変尺/%date:yyyyMMdd-HHmmss%",
+        false,
+        -1,
+        18,
+        "max",
+        2,
+        0.5,
+        true
+      ],
+      "title": "5. MiniMax H3 長時間 Ref2VA（Turbo v4）"
+    },
+    {
+      "id": 151,
+      "type": "GetVideoComponents",
+      "pos": [
+        3530.55,
+        2715
+      ],
+      "size": [
+        310,
+        190
+      ],
+      "flags": {},
+      "order": 23,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "video",
+          "type": "VIDEO",
+          "link": 319
+        }
+      ],
+      "outputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "links": [
+            320
+          ]
+        },
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "links": [
+            324
+          ]
+        },
+        {
+          "name": "fps",
+          "type": "FLOAT",
+          "links": null
+        },
+        {
+          "name": "bit_depth",
+          "type": "COMBO",
+          "links": null
+        },
+        {
+          "name": "color_space",
+          "type": "COMBO",
+          "links": null
+        }
+      ],
+      "title": "6. 長尺動画を映像・音声に分解",
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.33.0",
+        "Node name for S&R": "GetVideoComponents"
+      }
+    },
+    {
+      "id": 152,
+      "type": "CreateVideo",
+      "pos": [
+        4841.46,
+        2755
+      ],
+      "size": [
+        270,
+        110
+      ],
+      "flags": {},
+      "order": 24,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "画像",
+          "name": "images",
+          "type": "IMAGE",
+          "link": 323
+        },
+        {
+          "localized_name": "オーディオ",
+          "name": "audio",
+          "shape": 7,
+          "type": "AUDIO",
+          "link": 324
+        },
+        {
+          "localized_name": "fps",
+          "name": "fps",
+          "type": "FLOAT",
+          "widget": {
+            "name": "fps"
+          },
+          "link": null,
+          "label": "フレームレート（fps）"
+        },
+        {
+          "localized_name": "bit_depth",
+          "name": "bit_depth",
+          "shape": 7,
+          "type": "INT",
+          "widget": {
+            "name": "bit_depth"
+          },
+          "link": null,
+          "label": "ビット深度"
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "ビデオ",
+          "name": "VIDEO",
+          "type": "VIDEO",
+          "links": [
+            325
+          ]
+        }
+      ],
+      "title": "9. 映像＋音声を再結合",
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.33.0",
+        "Node name for S&R": "CreateVideo",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.5.2",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "widgets_values": [
+        24,
+        8
+      ]
+    },
+    {
+      "id": 153,
+      "type": "SpectrumApplyMiniMaxH3",
+      "pos": [
+        1795,
+        3177.5
+      ],
+      "size": [
+        440,
+        810
+      ],
+      "flags": {},
+      "order": 25,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "model",
+          "name": "model",
+          "type": "MODEL",
+          "link": 326
+        },
+        {
+          "localized_name": "enabled",
+          "name": "enabled",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "enabled"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "blend_weight",
+          "name": "blend_weight",
+          "type": "FLOAT",
+          "widget": {
+            "name": "blend_weight"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "degree",
+          "name": "degree",
+          "type": "INT",
+          "widget": {
+            "name": "degree"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "ridge_lambda",
+          "name": "ridge_lambda",
+          "type": "FLOAT",
+          "widget": {
+            "name": "ridge_lambda"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "window_size",
+          "name": "window_size",
+          "type": "FLOAT",
+          "widget": {
+            "name": "window_size"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "flex_window",
+          "name": "flex_window",
+          "type": "FLOAT",
+          "widget": {
+            "name": "flex_window"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "warmup_steps",
+          "name": "warmup_steps",
+          "type": "INT",
+          "widget": {
+            "name": "warmup_steps"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "tail_actual_steps",
+          "name": "tail_actual_steps",
+          "type": "INT",
+          "widget": {
+            "name": "tail_actual_steps"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "max_history",
+          "name": "max_history",
+          "type": "INT",
+          "widget": {
+            "name": "max_history"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "debug",
+          "name": "debug",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "debug"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "history_storage",
+          "name": "history_storage",
+          "type": "COMBO",
+          "widget": {
+            "name": "history_storage"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "bootstrap_first_forecast",
+          "name": "bootstrap_first_forecast",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "bootstrap_first_forecast"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "anchor_residual_feedback",
+          "name": "anchor_residual_feedback",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "anchor_residual_feedback"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "selective_rollback_correction",
+          "name": "selective_rollback_correction",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "selective_rollback_correction"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "offline_smoothing_replay",
+          "name": "offline_smoothing_replay",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "offline_smoothing_replay"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "audio_blend_weight",
+          "name": "audio_blend_weight",
+          "type": "FLOAT",
+          "widget": {
+            "name": "audio_blend_weight"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "offline_archive_storage",
+          "name": "offline_archive_storage",
+          "type": "COMBO",
+          "widget": {
+            "name": "offline_archive_storage"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "model_aware_mode",
+          "name": "model_aware_mode",
+          "type": "COMBO",
+          "widget": {
+            "name": "model_aware_mode"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "model_aware_risk_threshold",
+          "name": "model_aware_risk_threshold",
+          "type": "FLOAT",
+          "widget": {
+            "name": "model_aware_risk_threshold"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "model_aware_trust_shrinkage",
+          "name": "model_aware_trust_shrinkage",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "model_aware_trust_shrinkage"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "model_aware_replay_generic_correction",
+          "name": "model_aware_replay_generic_correction",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "model_aware_replay_generic_correction"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "generic_correction_mode",
+          "name": "generic_correction_mode",
+          "type": "COMBO",
+          "widget": {
+            "name": "generic_correction_mode"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "generic_correction_limiter",
+          "name": "generic_correction_limiter",
+          "type": "COMBO",
+          "widget": {
+            "name": "generic_correction_limiter"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "generic_correction_limit",
+          "name": "generic_correction_limit",
+          "type": "FLOAT",
+          "widget": {
+            "name": "generic_correction_limit"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "generic_correction_attenuation",
+          "name": "generic_correction_attenuation",
+          "type": "COMBO",
+          "widget": {
+            "name": "generic_correction_attenuation"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "sa_pece_forecast_policy",
+          "name": "sa_pece_forecast_policy",
+          "type": "COMBO",
+          "widget": {
+            "name": "sa_pece_forecast_policy"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "model",
+          "name": "model",
+          "type": "MODEL",
+          "links": [
+            301,
+            302
+          ]
+        }
+      ],
+      "title": "Spectrum 高速化（degree 1・8step併用）",
+      "properties": {
+        "Node name for S&R": "SpectrumApplyMiniMaxH3"
+      },
+      "widgets_values": [
+        true,
+        0.5,
+        1,
+        0.1,
+        2,
+        0.75,
+        1,
+        1,
+        8,
+        false,
+        "system_ram",
+        true,
+        false,
+        false,
+        true,
+        0,
+        "system_ram",
+        "off",
+        0.65,
+        false,
+        false,
+        "coordinate_rls",
+        "hard_clip",
+        0.4,
+        "no_attenuation",
+        "balanced"
+      ]
+    },
+    {
+      "id": 154,
+      "type": "JapaneseDialoguePronunciationReview",
+      "pos": [
+        2500.55,
+        2340.0
+      ],
+      "size": [
+        350,
+        150
+      ],
+      "flags": {},
+      "order": 21,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "H3最終プロンプト",
+          "name": "h3_prompt",
+          "type": "STRING",
+          "link": 309
+        },
+        {
+          "localized_name": "API Provider（前段と同じ・自動）",
+          "name": "provider",
+          "type": "COMBO",
+          "widget": {
+            "name": "provider"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "生成前に台詞の読みを確認",
+          "name": "enabled",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "enabled"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "確認済みH3プロンプト",
+          "name": "H3_PROMPT",
+          "type": "STRING",
+          "links": [
+            328
+          ]
+        }
+      ],
+      "title": "台詞の読みを確認（H3動画生成前）",
+      "properties": {
+        "Node name for S&R": "JapaneseDialoguePronunciationReview"
+      },
+      "widgets_values": [
+        "前段と同じ（自動）",
+        true
+      ],
+      "color": "#243b2f",
+      "bgcolor": "#345a43"
+    }
+  ],
+  "links": [
+    [
+      300,
+      127,
+      0,
+      144,
+      0,
+      "MODEL"
+    ],
+    [
+      301,
+      153,
+      0,
+      124,
+      0,
+      "MODEL"
+    ],
+    [
+      302,
+      153,
+      0,
+      150,
+      0,
+      "MODEL"
+    ],
+    [
+      303,
+      128,
+      0,
+      150,
+      1,
+      "CLIP"
+    ],
+    [
+      304,
+      119,
+      0,
+      150,
+      2,
+      "VAE"
+    ],
+    [
+      305,
+      120,
+      0,
+      150,
+      3,
+      "VAE"
+    ],
+    [
+      306,
+      123,
+      0,
+      150,
+      4,
+      "SAMPLER"
+    ],
+    [
+      307,
+      124,
+      0,
+      150,
+      5,
+      "SIGMAS"
+    ],
+    [
+      308,
+      141,
+      0,
+      150,
+      7,
+      "IMAGE"
+    ],
+    [
+      309,
+      141,
+      1,
+      154,
+      0,
+      "STRING"
+    ],
+    [
+      310,
+      115,
+      0,
+      150,
+      14,
+      "INT"
+    ],
+    [
+      311,
+      115,
+      1,
+      150,
+      15,
+      "INT"
+    ],
+    [
+      312,
+      132,
+      0,
+      131,
+      0,
+      "FLOAT"
+    ],
+    [
+      313,
+      131,
+      1,
+      150,
+      16,
+      "INT"
+    ],
+    [
+      314,
+      146,
+      0,
+      147,
+      0,
+      "FLOAT"
+    ],
+    [
+      315,
+      147,
+      1,
+      150,
+      17,
+      "INT"
+    ],
+    [
+      316,
+      137,
+      0,
+      141,
+      0,
+      "IMAGE"
+    ],
+    [
+      317,
+      139,
+      0,
+      141,
+      1,
+      "STRING"
+    ],
+    [
+      318,
+      138,
+      0,
+      141,
+      2,
+      "STRING"
+    ],
+    [
+      319,
+      150,
+      0,
+      151,
+      0,
+      "VIDEO"
+    ],
+    [
+      320,
+      151,
+      0,
+      145,
+      0,
+      "IMAGE"
+    ],
+    [
+      321,
+      141,
+      2,
+      145,
+      2,
+      "STRING"
+    ],
+    [
+      322,
+      145,
+      0,
+      143,
+      0,
+      "IMAGE"
+    ],
+    [
+      323,
+      143,
+      0,
+      152,
+      0,
+      "IMAGE"
+    ],
+    [
+      324,
+      151,
+      1,
+      152,
+      1,
+      "AUDIO"
+    ],
+    [
+      325,
+      152,
+      0,
+      92,
+      0,
+      "VIDEO"
+    ],
+    [
+      326,
+      144,
+      0,
+      153,
+      0,
+      "MODEL"
+    ],
+    [
+      327,
+      127,
+      0,
+      150,
+      12,
+      "MODEL"
+    ],
+    [
+      328,
+      154,
+      0,
+      150,
+      13,
+      "STRING"
+    ]
+  ],
+  "groups": [
+    {
+      "id": 1,
+      "title": "この長時間版の詳しい使い方（最初に読む）",
+      "bounding": [
+        610,
+        0,
+        1281,
+        2720
+      ],
+      "color": "#6c8ebf",
+      "flags": {}
+    },
+    {
+      "id": 2,
+      "title": "既存モデル＋Turbo v4 LoRA",
+      "bounding": [
+        610,
+        2765,
+        1180,
+        645
+      ],
+      "color": "#3f789e",
+      "flags": {}
+    },
+    {
+      "id": 3,
+      "title": "長尺サンプリング",
+      "bounding": [
+        2375.55,
+        2105,
+        1010,
+        1380
+      ],
+      "color": "#3f789e",
+      "flags": {}
+    },
+    {
+      "id": 4,
+      "title": "タイトル・クレジット・保存",
+      "bounding": [
+        3475.55,
+        2349.89,
+        2990.91,
+        890.22
+      ],
+      "color": "#3f789e",
+      "flags": {}
+    },
+    {
+      "id": 5,
+      "title": "四コマ入力・プロンプト生成",
+      "bounding": [
+        610,
+        3455,
+        1675.55,
+        2135
+      ],
+      "color": "#3f789e",
+      "flags": {}
+    }
+  ],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 0.8,
+      "offset": [
+        100,
+        100
+      ]
+    },
+    "frontendVersion": "1.47.11",
+    "VHS_latentpreview": false,
+    "VHS_latentpreviewrate": 0,
+    "VHS_MetadataImage": true,
+    "VHS_KeepIntermediate": true,
+    "ue_links": [],
+    "links_added_by_ue": [],
+    "prompt_driven_title_fix": {
+      "source": "NanoBananaH3Transform.OVERLAY_TITLE",
+      "contract": "overlay_title is the first subject_definitions field and is removed before H3 conditioning",
+      "title_rendering": "one post-H3 upper-left overlay only; black glyphs, white outline, no background",
+      "text_policy": "no generated title, speech balloon, caption, subtitle, signage, or readable text"
+    },
+    "h3_turbo": {
+      "lora": "minimax_h3_turbo_v4_step600_ema_pruned_comfyui.safetensors",
+      "base_model": "minimax_h3_hybrid_fl2va_ref2va_b25-49-int8.safetensors",
+      "base_model_variant": "hybrid_b25_49_int8",
+      "steps": 8,
+      "sampler": "euler",
+      "megapixels": 0.4,
+      "duration_seconds": 30,
+      "strength": 1,
+      "scheduler": "beta",
+      "segment_seconds": 5,
+      "long_video_node": "MiniMaxH3LongReferenceSampler",
+      "auto_dialogue_duration": true,
+      "duration_mode": "dialogue_turns_x_5_seconds_unbounded",
+      "fallback_duration_seconds": 30
+    },
+    "quality_guardrails": {
+      "reference_image_size": "max",
+      "speaker_format": "<Subject N> (Sx) ... <d>[Japanese] dialogue</d>",
+      "reference_preparation": "single clean full-bleed scene; never pass a multi-view character sheet directly to H3",
+      "composition_policy": "describe the desired empty or plain environment positively before compact exclusions",
+      "post_generation_qa": "inspect four timeline frames and verify dialogue with transcription plus VAD",
+      "audio_repair_contract": "preserve 32000 Hz stereo and exact sample duration"
+    },
+    "distribution_notes": {
+      "custom_nodes_required": [
+        "NanoBananaH3Transform",
+        "DeterministicTitleWatermarkOverlay",
+        "DeterministicEndCreditOverlay",
+        "MiniMaxH3LongReferenceSampler"
+      ],
+      "models_and_credentials_are_not_embedded": true,
+      "turbo_lora_required": true
+    },
+    "api_key_contract": {
+      "storage": "running ComfyUI server process memory only",
+      "workflow_load": "never open credential dialog",
+      "provider_change": "refresh status only; never open credential dialog",
+      "execution": "on Execute, pause before queue submission and open the node dialog only when the selected provider is unregistered",
+      "verified": "resume the same pending execution exactly once",
+      "cancelled": "cancel only the pending execution",
+      "restart": "clear all registered provider keys"
+    },
+    "pronunciation_review": {
+      "enabled": true,
+      "position": "immediately before MiniMaxH3LongReferenceSampler",
+      "dictionary": "ComfyUI/user/default/nanobanana_h3/pronunciation_dictionary.json",
+      "final_conditioning_contains": "confirmed pronunciation text only"
+    },
+    "h3_generated_bgm": {
+      "enabled": true,
+      "source": "MiniMax H3 native audio generation",
+      "external_audio_file_required": false,
+      "dialogue_priority": "music kept 15-20 dB below dry dialogue and strongly ducked during speech",
+      "continuity": "continue one motif through preceding AV guide; never restart at segment boundaries",
+      "ending": "brief deliberate cadence; no fade"
+    }
+  },
+  "version": 0.4
+}
