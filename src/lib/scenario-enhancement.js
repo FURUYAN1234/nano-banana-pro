@@ -6,11 +6,12 @@ import {
   assertScenarioGestureVariety,
   SCENARIO_GESTURE_VARIETY_RULES
 } from './composition-variety.js';
+import { SCENARIO_FACIAL_ACTING_CONTRACT } from './facial-acting.js';
 
 const CATEGORY_DEFINITIONS = Object.freeze({
   expressions: {
     label: '表情',
-    instruction: '各コマのEMOTIONタグと表情・視線・顔の反応だけを、場面の温度に合う範囲で具体化する'
+    instruction: '各コマのEMOTIONタグと顔の反応だけを、場面の温度に合う物理的な顔演技として具体化する'
   },
   body: {
     label: '身体',
@@ -228,6 +229,9 @@ export const buildScenarioEnhancementPrompt = ({
   const backgroundRule = selected.includes('background')
     ? '- 背景は選択済み。Locationを変えず、背景情報だけを具体化する'
     : '- 背景は未選択なので、背景・壁・床・天井・照明・空間構造の記述を変更しない';
+  const facialActingRule = selected.includes('expressions')
+    ? `\n${SCENARIO_FACIAL_ACTING_CONTRACT}`
+    : '';
   const styleBlock = styleJson
     ? `\n【作風情報】\n選択カテゴリの編集範囲内だけで参照する。元のLogline、Punchline、静けさやテンポを上書きしない。\n- 作風名: ${styleJson.style_name || ''}\n- 詳細: ${styleJson.reproduction_prompt || ''}\n${styleJson.anti_patterns ? `- 禁止: ${styleJson.anti_patterns}` : ''}\n`
     : '';
@@ -246,6 +250,7 @@ export const buildScenarioEnhancementPrompt = ({
 - 元にない事件、設定、キャラクター、場所、建造物を追加しない
 ${dialogueRule}
 ${backgroundRule}
+${facialActingRule}
 ${FINAL_PANEL_ACTIVE_STAGING_SCENARIO_CONTRACT}
 ${SCENARIO_GESTURE_VARIETY_RULES}
 

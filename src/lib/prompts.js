@@ -6,6 +6,10 @@ import { buildManualTopicExclusionPrompt } from './manual-topic-exclusions';
 import { buildSeasonalOutfitInstruction, getSeasonContext } from './seasonal-outfit';
 import { SHARED_IMAGE_QUALITY_CONTRACT } from './shared-image-quality';
 import {
+  MANGA_FACIAL_ACTING_LOCK,
+  SCENARIO_FACIAL_ACTING_CONTRACT
+} from './facial-acting';
+import {
   SCENARIO_COMPOSITION_VARIETY_RULES,
   SCENARIO_GESTURE_VARIETY_RULES
 } from './composition-variety';
@@ -249,6 +253,8 @@ export const getScenarioPrompt = ({
          - セリフが1人だけでも、相手が同席して反応するコマでは、話者が誰へ話し、聞き手が誰を見返すかを設計する。無言のリアクション役も現在の話者を見る。
          - 読者、観客、配信カメラへ直接呼びかける演出が物語上明示されている場合だけ、該当する話者のカメラ目線を許可する。
          - 誰が誰を見るか、横顔・斜め後ろ・肩越し等の向きを、各コマの「状況」にキャラクター名付きで具体的に書く。カメラタグはこの対人視線を壊さないものを選ぶ。
+
+         ${SCENARIO_FACIAL_ACTING_CONTRACT}
 
          ${punchlineType === 'Surreal'
            ? '【4コマ目のシュールな静寂】: シュール指定では静かな間を使ってよいが、物語に必要な人物配置・視線・小道具を明記し、無関係な記念写真構図にはしないこと。'
@@ -753,6 +759,7 @@ ${scriptLock}
 ART / RENDERING QUALITY:
 ${SHARED_IMAGE_QUALITY_CONTRACT}
 - Clean finish: crisp foreground, softer background, lighting.
+${MANGA_FACIAL_ACTING_LOCK}
 - CLEAN SURFACE PROTOCOL: no grain/speckles/dithering/rough texture/pores/moire/dust/particles/sparkle unless a panel style exception allows it.
 - MANGA FINISH ASSIST: preserve script/cast/camera/layout; keep bubble space, cast/background light and color, coherent anatomy, and setting depth.
 ${RICH_PANEL_COMPOSITION_LOCK}
@@ -913,6 +920,7 @@ Tech Dict:
 GEMINI STABILITY / QUALITY LOCK:
 ${SHARED_IMAGE_QUALITY_CONTRACT}
 - Use a richer professional manga finish than a flat template: layered foreground/midground/background, meaningful setting props, varied lighting, crisp line weight variation, and panel-specific atmosphere. Do not leave plain empty walls or generic blank rooms unless the script explicitly asks for emptiness.
+${MANGA_FACIAL_ACTING_LOCK}
 ${RICH_PANEL_COMPOSITION_LOCK}
 - MANGA FINISH ASSIST: preserve script/cast/camera/layout; keep bubble space, cast/background light and color, coherent anatomy, and setting depth.
 - CLOTHING FOLD SHADOW ASSIST: for full-color clothing only, render overlapping, pinched, and intersecting fabric folds with a few crisp wedge-shaped triangular cel-shaded shadow planes. Make a distinct small dark triangular fill at each selected crease junction, not merely a soft fold gradient. Use them as form shadows, not printed patterns or random geometric marks; preserve the outfit, material, and scene lighting.

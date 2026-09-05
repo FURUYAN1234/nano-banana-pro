@@ -93,6 +93,7 @@ const sanitizeConversationCamera = (camera) => {
 };
 
 const CHATGPT_WEB_COPY_SOFT_BUDGET = 15000;
+const FACIAL_ACTING_LOCK_COMPACT = 'FACIAL ACTING LOCK: physical brow/eyelid/gaze target/mouth shape/head-torso cues; no tag soup. Do not force a close-up/camera gaze; preserve Camera/Action/eye-line/hands/props. Acting notes are not visible text; never print.';
 const CHATGPT_CINEMATIC_SLOTS = Object.freeze([
   'CAMERA: vary angles; preserve anatomy and the script lock.',
   'CAMERA: vary; preserve anatomy/script.'
@@ -130,6 +131,7 @@ const compactChatGPTConversationRules = (prompt) => {
     .replace(/EYE-LINE LOCK:[^\n]*/g, compactConversationEyeLine)
     .replace(/MANGA FINISH ASSIST:[^\n]*/g, 'FINISH: bubbles, anatomy.')
     .replace(/\[ SHARED IMAGE QUALITY CONTRACT[\s\S]*?(?=\n- Clean finish:)/g, `SHARED IMAGE QUALITY CONTRACT: preserve cast/action/setting/camera; rich setting/depth; coherent anatomy/prop ownership; localized fold shadows; no invented/duplicate cast; clean surfaces.\n${BODY_ACTING_BASELINE_COMPACT}\n${FUNCTIONAL_SURFACE_ORIENTATION_LOCK_COMPACT}`)
+    .replace(/FACIAL ACTING LOCK:[\s\S]*?(?=\n- CLEAN SURFACE PROTOCOL:)/g, FACIAL_ACTING_LOCK_COMPACT)
     .replace(/RICH PANEL COMPOSITION \/ CHARACTER CLARITY LOCK:[\s\S]*?(?=\n- CLOTHING FOLD SHADOW ASSIST:)/g, 'RICH PANEL COMPOSITION / CHARACTER CLARITY LOCK: 1 fixed anchor + 2 physical setting cues/panel; VFX overlay, never replace setting; face, eyes, silhouette, hands and action stay crisp; background rich but softer/lower contrast; no blank walls, flat gradients or black voids.')
     .replace(/CLEAN SURFACE PROTOCOL:[^\n]*/g, 'CLEAN: no noise except style exceptions.')
     .replace(/CLOTHING FOLD SHADOW ASSIST:[^\n]*/g, 'FOLD SHADOWS: crisp triangular overlap shadows; no geometric patterns.')
@@ -180,6 +182,7 @@ const compactChatGPTConversationRules = (prompt) => {
     ))
     .replace(/FUNCTIONAL SURFACE PANEL CHECK:[^\n]*/g, 'FUNCTIONAL SURFACE PANEL CHECK: Action target; solve target-to-front/back geometry before projection.')
     .replace(/SHARED IMAGE QUALITY CONTRACT:[^\n]*/g, 'SHARED QUALITY: preserve direction; rich setting; anatomy/props; folds; no duplicate cast; clean surfaces.')
+    .replace(/FACIAL ACTING LOCK:[^\n]*/g, 'FACIAL ACTING LOCK: brow/eyelid/gaze target/mouth shape/head-torso cues; no forced close-up/camera gaze; preserve Camera/Action/eye-line; not visible text.')
     .replace(
       /RICH PANEL COMPOSITION \/ CHARACTER CLARITY LOCK:[^\n]*/g,
       'RICH PANEL COMPOSITION / CHARACTER CLARITY LOCK: 1 fixed anchor + 2 physical setting cues/panel; VFX overlay, never replace physical setting; face, eyes, silhouette, hands and action stay crisp; background rich but softer/lower contrast; no blank walls, flat gradients or black voids.'
@@ -187,7 +190,8 @@ const compactChatGPTConversationRules = (prompt) => {
     .replace(/SAFE VISUAL:[^\n]*/g, 'SAFE VISUAL: no gore/blood/organs/flesh/organic horror; preserve script/cast/dialogue/camera/layout.')
     .replace(/FOLD PRIORITY:[^\n]*/g, 'FOLD PRIORITY: 2-4 dark triangular crease shadows.')
     .replace(/CROSS-PANEL WARDROBE COLOR LOCK:[^\n]*/g, "CROSS-PANEL WARDROBE COLOR LOCK: choose each named character's garment items, base colors, accent colors, material, and pattern once; reuse that exact wardrobe assignment in every later panel. PANEL STYLE LOCK changes background/environment palette, VFX, and rendering treatment only; keep every garment item and its colors unchanged. Lighting may change highlights and shadows, but the garment's canonical base and accent colors remain recognizable.")
-    .replace(/ART-STYLE DIFFERENCE QA LOCK:\n-[^\n]*/g, 'ART-STYLE DIFFERENCE QA LOCK:\n- Vary at least three of linework, environmental palette, shading, background/VFX, texture/surface treatment; reject the same clean anime style with only pose, expression, saturation, glow, or speed lines changed; wardrobe colors stay fixed; preserve script/identity/layout.')
+    .replace(/ART-STYLE DIFFERENCE QA LOCK:\n-[^\n]*/g, 'ART-STYLE DIFFERENCE QA LOCK: at least three of linework, environmental palette, shading, background/VFX, texture/surface treatment; pose, expression, saturation, glow, or speed lines alone are insufficient; reject the same clean anime style with only pose, expression, saturation, glow, or speed lines changed; wardrobe fixed; preserve script/identity/layout.')
+    .replace(/^PANEL STYLE LOCK: ([^;\n]+);[^\n]*/gm, 'PANEL STYLE LOCK: $1; visibly distinct linework, environmental palette, shading, background/VFX. Change at least three visual axes; preserve wardrobe.')
     .replace(/^Style: In THIS PANEL ONLY,[^\n]*/gm, 'Style: follow the named PANEL STYLE LOCK.')
     .replace(/^VFX: [^\n]*/gm, 'VFX: style overlay only; preserve readable action.')
     .replace(/CHARACTER QA:[^\n]*/g, 'CHARACTER QA: preserve identity and outfit.');
