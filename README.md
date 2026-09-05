@@ -1,6 +1,6 @@
 # Super FURU AI 4-koma System
 
-> Latest release: **v5.8.1** / 最新リリース: **v5.8.1**
+> Latest release: **v5.8.3** / 最新リリース: **v5.8.3**
 
 > **"To what extent can humans step away from the creative process?"**
 > **「人間は、どこまで制作から降りられるのか？」**
@@ -22,7 +22,7 @@
 This project aims to intentionally exclude humans from the creative process, allowing AI to act as a director and complete everything from brainstorming to composition, direction, and rendering.
 本プロジェクトは、人間をクリエイティブな工程から意図的に排除し、AIがディレクターとして「ネタ出し・構成・演出・作画」のすべてを完結させることを目的としています。
 
-The current implementation and latest release are **v5.8.1**. The product name is **Super FURU AI 4-koma System**; **Nano Banana 2** and **gpt-image-2** identify the Gemini and OpenAI image-generation routes. / 現在の実装および最新公開版は **v5.8.1** です。製品名は **Super FURU AI 4-koma System** で、**Nano Banana 2** と **gpt-image-2** はGemini系・OpenAI系の画像生成経路の名称です。
+The current implementation and latest release are **v5.8.3**. The product name is **Super FURU AI 4-koma System**; **Nano Banana 2** and **gpt-image-2** identify the Gemini and OpenAI image-generation routes. / 現在の実装および最新公開版は **v5.8.3** です。製品名は **Super FURU AI 4-koma System** で、**Nano Banana 2** と **gpt-image-2** はGemini系・OpenAI系の画像生成経路の名称です。
 
 Current behavior at a glance / 現行仕様の要点:
 
@@ -60,7 +60,7 @@ For this manually configured standard ComfyUI route, select `MiniMax H3 Referenc
 
 **Using the recommended fully variable-duration Hybrid b25 + H3 BGM workflow / 推奨版・完全可変尺 Hybrid b25 配布ワークフローを使う場合（H3生成BGM）**
 
-This route distributes `Super-FURU-AI-4koma-H3-Hybrid-b25-Recommended-VariableDuration-H3BGM-Audio2Step-2026-09-05.json` and `MiniMax-H3-4Koma-Recommended-VariableDuration-H3BGM-Audio2Step-Bundle-2026-09-05-081753.zip` as separate direct downloads. The supplied JSON preserves its Hybrid b25, fast LoRA, Spectrum, INT8 VAE, 8 video steps, and audio refinement at 2 steps with denoise 0.5. It turns the four panels into four story acts, assigns five seconds per retained dialogue turn with no upper duration cap, uses 30 seconds only when there is no dialogue, and asks MiniMax H3 itself to generate a quiet story-aware instrumental BGM while strongly ducking it under dialogue. The latest node bundle also identifies `<Subject N>` speakers before timing dialogue and lets the operator review the proposed Japanese dialogue text and reading before video generation. / この経路では `Super-FURU-AI-4koma-H3-Hybrid-b25-Recommended-VariableDuration-H3BGM-Audio2Step-2026-09-05.json` と `MiniMax-H3-4Koma-Recommended-VariableDuration-H3BGM-Audio2Step-Bundle-2026-09-05-081753.zip` を別々に配布します。提供JSONのHybrid b25・高速LoRA・Spectrum・INT8 VAE・映像8ステップ・音声再精錬2ステップ（denoise 0.5）設定は変更しません。4コマを物語の4幕として扱い、保持した台詞1本につき5秒・上限なしの完全可変尺にします。台詞がない場合だけ既定30秒を使います。MiniMax H3自身が内容に合う低音量BGMを動画・台詞と同時生成し、台詞中は強く抑えます。最新版ノード束では、台詞の時間割り当て前に `<Subject N>` の話者を識別し、動画生成前に日本語台詞の本文提案と読みを確認・修正できます。
+This route distributes `Super-FURU-AI-4koma-H3-Hybrid-b25-TargetMatchFix-2026-09-05-151249.json` and `MiniMax-H3-4Koma-TargetMatchFix-Bundle-2026-09-05-151249.zip` as separate direct downloads. The supplied JSON preserves its Hybrid b25, fast LoRA, Spectrum, INT8 VAE, 8 video steps, and audio refinement at 2 steps with denoise 0.5. It turns the four panels into four story acts, assigns five seconds per retained dialogue turn with no upper duration cap, uses 30 seconds only when there is no dialogue, and asks MiniMax H3 itself to generate a quiet story-aware instrumental BGM while strongly ducking it under dialogue. The target-match-corrected node bundle also identifies `<Subject N>` speakers before timing dialogue and lets the operator review the proposed Japanese dialogue text and reading before video generation. / この経路では `Super-FURU-AI-4koma-H3-Hybrid-b25-TargetMatchFix-2026-09-05-151249.json` と `MiniMax-H3-4Koma-TargetMatchFix-Bundle-2026-09-05-151249.zip` を別々に配布します。提供JSONのHybrid b25・高速LoRA・Spectrum・INT8 VAE・映像8ステップ・音声再精錬2ステップ（denoise 0.5）設定は変更しません。4コマを物語の4幕として扱い、保持した台詞1本につき5秒・上限なしの完全可変尺にします。台詞がない場合だけ既定30秒を使います。MiniMax H3自身が内容に合う低音量BGMを動画・台詞と同時生成し、台詞中は強く抑えます。対象一致修正版のノード束では、台詞の時間割り当て前に `<Subject N>` の話者を識別し、動画生成前に日本語台詞の本文提案と読みを確認・修正できます。
 
 **FURU four-panel manga to video / FURUの4コマ漫画を動画化**
 
@@ -855,6 +855,9 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 ---
 
 ## 📋 ChangeLog
+
+### v5.8.3 (2026-09-05)
+- **[Distribution]** 提供されたMiniMax H3対象一致修正版のワークフローJSONと3カスタムノード導入セットを、別URLのまま更新 / Updated the separate MiniMax H3 workflow JSON and three-node setup bundle to the supplied target-match-corrected distribution
 
 ### v5.8.2 (2026-09-05)
 - **[Fix & UX]** 眉・まぶた・視線・口元・姿勢を用いた境界付き顔演技を4コマ経路へ追加 / Added bounded four-panel facial acting using brows, eyelids, gaze, mouth shape, and posture
