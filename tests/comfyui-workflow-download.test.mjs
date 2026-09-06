@@ -7,9 +7,9 @@ import { inflateRawSync } from 'node:zlib';
 const step4PanelSource = readFileSync(new URL('../src/components/Step4Panel.jsx', import.meta.url), 'utf8');
 const readmeSource = readFileSync(new URL('../README.md', import.meta.url), 'utf8');
 const packageJson = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
-const workflowUrl = new URL('../public/workflows/Super-FURU-AI-4koma-H3-Hybrid-b25-Fused4Step-SLA-2026-09-06-r6.json', import.meta.url);
-const customNodeZipUrl = new URL('../public/downloads/MiniMax-H3-4Koma-Fused4Step-SLA-Bundle-2026-09-06-r6.zip', import.meta.url);
-const customNodeZipShaUrl = new URL('../public/downloads/MiniMax-H3-4Koma-Fused4Step-SLA-Bundle-2026-09-06-r6.zip.sha256.txt', import.meta.url);
+const workflowUrl = new URL('../public/workflows/Super-FURU-AI-4koma-H3-Hybrid-b25-Fused4Step-SLA-2026-09-06-r8.json', import.meta.url);
+const customNodeZipUrl = new URL('../public/downloads/MiniMax-H3-4Koma-Fused4Step-SLA-Bundle-2026-09-06-r8.zip', import.meta.url);
+const customNodeZipShaUrl = new URL('../public/downloads/MiniMax-H3-4Koma-Fused4Step-SLA-Bundle-2026-09-06-r8.zip.sha256.txt', import.meta.url);
 const sourceAttributesUrl = new URL('../.gitattributes', import.meta.url);
 const publishedAttributesUrl = new URL('../public/.gitattributes', import.meta.url);
 const publicWorkflowDirectoryUrl = new URL('../public/workflows/', import.meta.url);
@@ -48,8 +48,8 @@ test('STEP4 provides separate Fused4step SLA workflow and bundled-three-node dow
   assert.match(step4PanelSource, /MiniMax H3・ComfyUI用プロンプトをコピー[\s\S]*同梱カスタムノード3点・導入セットをダウンロード[\s\S]*Fused4step・SLA ワークフローをダウンロード/);
   assert.match(step4PanelSource, /COMFYUI_WORKFLOW_DOWNLOAD_URL/);
   assert.match(step4PanelSource, /COMFYUI_CUSTOM_NODE_DOWNLOAD_URL/);
-  assert.match(step4PanelSource, /Super-FURU-AI-4koma-H3-Hybrid-b25-Fused4Step-SLA-2026-09-06-r6\.json/);
-  assert.match(step4PanelSource, /MiniMax-H3-4Koma-Fused4Step-SLA-Bundle-2026-09-06-r6\.zip/);
+  assert.match(step4PanelSource, /Super-FURU-AI-4koma-H3-Hybrid-b25-Fused4Step-SLA-2026-09-06-r8\.json/);
+  assert.match(step4PanelSource, /MiniMax-H3-4Koma-Fused4Step-SLA-Bundle-2026-09-06-r8\.zip/);
   assert.match(step4PanelSource, /ComfyUI-NanoBanana-H3.*ComfyUI-MiniMax-H3-Long-Video.*ComfyUI-Spectrum-MiniMax-H3/s);
   assert.match(step4PanelSource, /台詞1本につき5秒.*上限なし.*台詞がない場合だけ既定30秒/s);
   assert.match(step4PanelSource, /Fused 4ステップ.*音声補正.*2ステップ.*H3生成BGMあり/s);
@@ -66,12 +66,12 @@ test('STEP4 provides separate Fused4step SLA workflow and bundled-three-node dow
 test('supplied Fused4step SLA workflow bytes and graph are preserved', () => {
   assert.equal(existsSync(workflowUrl), true, 'workflow JSON must be distributed from public/workflows');
   const bytes = readFileSync(workflowUrl);
-  assert.equal(hashBytes(bytes), '2497abf683cb2ed595fd089e5bef638d914e989831def0737392c3aa5387c7ff');
-  assert.match(readFileSync(sourceAttributesUrl, 'utf8'), /public\/downloads\/MiniMax-H3-4Koma-Fused4Step-SLA-Bundle-2026-09-06-r6\.zip -text/);
-  assert.match(readFileSync(sourceAttributesUrl, 'utf8'), /public\/downloads\/MiniMax-H3-4Koma-Fused4Step-SLA-Bundle-2026-09-06-r6\.zip\.sha256\.txt -text/);
-  assert.match(readFileSync(publishedAttributesUrl, 'utf8'), /Super-FURU-AI-4koma-H3-Hybrid-b25-Fused4Step-SLA-2026-09-06-r6\.json -text/);
-  assert.match(readFileSync(publishedAttributesUrl, 'utf8'), /downloads\/MiniMax-H3-4Koma-Fused4Step-SLA-Bundle-2026-09-06-r6\.zip -text/);
-  assert.match(readFileSync(publishedAttributesUrl, 'utf8'), /downloads\/MiniMax-H3-4Koma-Fused4Step-SLA-Bundle-2026-09-06-r6\.zip\.sha256\.txt -text/);
+  assert.equal(hashBytes(bytes), '2445668cbdf5e2169b5fb5b709b174a6e658ccbdae2b8bc6dc8bf20fbaa9b337');
+  assert.match(readFileSync(sourceAttributesUrl, 'utf8'), /public\/downloads\/MiniMax-H3-4Koma-Fused4Step-SLA-Bundle-2026-09-06-r8\.zip -text/);
+  assert.match(readFileSync(sourceAttributesUrl, 'utf8'), /public\/downloads\/MiniMax-H3-4Koma-Fused4Step-SLA-Bundle-2026-09-06-r8\.zip\.sha256\.txt -text/);
+  assert.match(readFileSync(publishedAttributesUrl, 'utf8'), /Super-FURU-AI-4koma-H3-Hybrid-b25-Fused4Step-SLA-2026-09-06-r8\.json -text/);
+  assert.match(readFileSync(publishedAttributesUrl, 'utf8'), /downloads\/MiniMax-H3-4Koma-Fused4Step-SLA-Bundle-2026-09-06-r8\.zip -text/);
+  assert.match(readFileSync(publishedAttributesUrl, 'utf8'), /downloads\/MiniMax-H3-4Koma-Fused4Step-SLA-Bundle-2026-09-06-r8\.zip\.sha256\.txt -text/);
   assert.match(packageJson.scripts.deploy, /gh-pages -d dist --dotfiles/);
   const workflow = JSON.parse(bytes.toString('utf8'));
   assert.equal(workflow.nodes.length, 26);
@@ -83,7 +83,7 @@ test('supplied Fused4step SLA workflow bytes and graph are preserved', () => {
   assert.match(text, /H3-GENERATED BGM AND DIALOGUE STABILITY OVERRIDE/);
   assert.match(text, /final non_diegetic_music field must contain the selected H3-generated instrumental cue and must not be N\/A/);
   assert.match(text, /区間.*生成.*検査.*原因別修正.*最大3回/s);
-  assert.equal(workflow.extra.distribution.version, '2026-09-06-r6');
+  assert.equal(workflow.extra.distribution.version, '2026-09-06-r8');
   assert.equal(workflow.extra.distribution.video_steps, 4);
   assert.equal(workflow.extra.distribution.audio_refine_steps, 2);
   const longVideoNode = workflow.nodes.find((node) => node.type === 'MiniMaxH3LongReferenceSampler');
@@ -100,15 +100,15 @@ test('bundle preserves its corrected BGM contract, manifest, licensing, and no c
   const advertisedHash = readFileSync(customNodeZipShaUrl, 'utf8').trim().split(/\s+/)[0];
   assert.equal(advertisedHash.toLowerCase(), hashBytes(bundleBytes));
   const files = readZipFilesFromBuffer(bundleBytes);
-  const root = 'Super-FURU-AI_四コマ_非LLM_Fused4step_SLA_配布用_20260906_r6/';
+  const root = 'Super-FURU-AI_四コマ_非LLM_Fused4step_SLA_配布用_20260906_r8/';
   const expected = [
     'README_最初にお読みください.md', 'VERSION.txt', 'MANIFEST_SHA256.txt', 'LICENSE_ワークフローと独自ノード.txt', 'カスタムノード・ライセンスと出典.md', 'モデル一覧・取得先.md', 'セットアップ.ps1', '検証記録.json', '配布設定を検査.py', '外部必須ノード.json', '必須ノードの確認.ps1', '必須ノード取得.html',
-    '01_ワークフロー/【最新版・2026-09-06-r6・非LLM・Fused4step＋SLA】四コマ_区間検査.json',
-    '02_カスタムノード/ComfyUI-NanoBanana-H3/LICENSE', '02_カスタムノード/ComfyUI-NanoBanana-H3/README.md', '02_カスタムノード/ComfyUI-NanoBanana-H3/README_API_SECURITY.md', '02_カスタムノード/ComfyUI-NanoBanana-H3/__init__.py', '02_カスタムノード/ComfyUI-NanoBanana-H3/audio_audit_policy.py', '02_カスタムノード/ComfyUI-NanoBanana-H3/h3_prompt_system.txt', '02_カスタムノード/ComfyUI-NanoBanana-H3/identity_contract.py', '02_カスタムノード/ComfyUI-NanoBanana-H3/resume_context.py', '02_カスタムノード/ComfyUI-NanoBanana-H3/web/nanobanana_h3.js', '02_カスタムノード/ComfyUI-NanoBanana-H3/web/timestamped_save_video_preview.js',
+    '01_ワークフロー/【最新版・2026-09-06-r8・非LLM・Fused4step＋SLA】四コマ_区間検査.json',
+    '02_カスタムノード/ComfyUI-NanoBanana-H3/LICENSE', '02_カスタムノード/ComfyUI-NanoBanana-H3/README.md', '02_カスタムノード/ComfyUI-NanoBanana-H3/README_API_SECURITY.md', '02_カスタムノード/ComfyUI-NanoBanana-H3/__init__.py', '02_カスタムノード/ComfyUI-NanoBanana-H3/prosody_policy.py', '02_カスタムノード/ComfyUI-NanoBanana-H3/h3_prompt_system.txt', '02_カスタムノード/ComfyUI-NanoBanana-H3/identity_contract.py', '02_カスタムノード/ComfyUI-NanoBanana-H3/resume_context.py', '02_カスタムノード/ComfyUI-NanoBanana-H3/visual_repair.py', '02_カスタムノード/ComfyUI-NanoBanana-H3/web/nanobanana_h3.js', '02_カスタムノード/ComfyUI-NanoBanana-H3/web/timestamped_save_video_preview.js',
     '02_カスタムノード/ComfyUI-MiniMax-H3-Long-Video/LICENSE', '02_カスタムノード/ComfyUI-Spectrum-MiniMax-H3/LICENSE', '02_カスタムノード/ComfyUI-Spectrum-MiniMax-H3/COPYRIGHT',
   ];
   for (const name of expected) assert.ok(files.has(`${root}${name}`), `${name} must be present`);
-  assert.equal(hashBytes(files.get(`${root}01_ワークフロー/【最新版・2026-09-06-r6・非LLM・Fused4step＋SLA】四コマ_区間検査.json`)), '2497abf683cb2ed595fd089e5bef638d914e989831def0737392c3aa5387c7ff');
+  assert.equal(hashBytes(files.get(`${root}01_ワークフロー/【最新版・2026-09-06-r8・非LLM・Fused4step＋SLA】四コマ_区間検査.json`)), '2445668cbdf5e2169b5fb5b709b174a6e658ccbdae2b8bc6dc8bf20fbaa9b337');
   const license = files.get(`${root}02_カスタムノード/ComfyUI-NanoBanana-H3/LICENSE`).toString('utf8');
   assert.match(license, /MIT License/);
   const bundleReadme = files.get(`${root}README_最初にお読みください.md`).toString('utf8');
@@ -119,11 +119,11 @@ test('bundle preserves its corrected BGM contract, manifest, licensing, and no c
   assert.match(bundleReadme, /ComfyUI-H3-AudioRefine/);
   assert.match(bundleReadme, /https:\/\/github\.com\/Adudeguyman\/ComfyUI-H3-AudioRefine/);
   assert.match(bundleReadme, /APIキー/);
-  assert.match(bundleReadme, /ワークフロー.*読み込/);
+  assert.match(bundleReadme, /01_ワークフロー.*JSONを開きます/);
   const manifest = files.get(`${root}MANIFEST_SHA256.txt`).toString('utf8');
   assert.ok(manifest.length > 0, 'the supplied manifest must be retained byte-for-byte');
   const manifestEntries = new Map([...manifest.matchAll(/^([a-f0-9]{64})  (.+)$/gm)].map(([, hash, name]) => [name, hash]));
-  assert.equal(manifestEntries.size, 85, 'the bundle manifest must cover every distributed payload');
+  assert.equal(manifestEntries.size, 86, 'the bundle manifest must cover every distributed payload');
   for (const [name, content] of files) {
     if (name === `${root}MANIFEST_SHA256.txt`) continue;
     assert.equal(manifestEntries.get(name.slice(root.length)), hashBytes(content), `${name} must match its supplied manifest hash`);
@@ -135,7 +135,7 @@ test('bundle preserves its corrected BGM contract, manifest, licensing, and no c
 });
 
 test('README matches the H3-BGM distribution and workflow does not describe credential persistence', () => {
-  assert.match(readmeSource, /Fused4Step-SLA-2026-09-06-r6/);
+  assert.match(readmeSource, /Fused4Step-SLA-2026-09-06-r8/);
   assert.match(readmeSource, /Fused 4ステップ.*音声補正2ステップ.*H3生成BGMあり/);
   assert.match(readmeSource, /不足モデル.*ダウンロード/);
   assert.match(readmeSource, /3フォルダ/);

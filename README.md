@@ -1,6 +1,6 @@
 # Super FURU AI 4-koma System
 
-> Latest release: **v5.8.6** / 最新リリース: **v5.8.6**
+> Latest release: **v5.8.7** / 最新リリース: **v5.8.7**
 
 > **"To what extent can humans step away from the creative process?"**
 > **「人間は、どこまで制作から降りられるのか？」**
@@ -22,7 +22,7 @@
 This project aims to intentionally exclude humans from the creative process, allowing AI to act as a director and complete everything from brainstorming to composition, direction, and rendering.
 本プロジェクトは、人間をクリエイティブな工程から意図的に排除し、AIがディレクターとして「ネタ出し・構成・演出・作画」のすべてを完結させることを目的としています。
 
-The current implementation and latest release are **v5.8.6**. The product name is **Super FURU AI 4-koma System**; **Nano Banana 2** and **gpt-image-2** identify the Gemini and OpenAI image-generation routes. / 現在の実装および最新公開版は **v5.8.6** です。製品名は **Super FURU AI 4-koma System** で、**Nano Banana 2** と **gpt-image-2** はGemini系・OpenAI系の画像生成経路の名称です。
+The current implementation and latest release are **v5.8.7**. The product name is **Super FURU AI 4-koma System**; **Nano Banana 2** and **gpt-image-2** identify the Gemini and OpenAI image-generation routes. / 現在の実装および最新公開版は **v5.8.7** です。製品名は **Super FURU AI 4-koma System** で、**Nano Banana 2** と **gpt-image-2** はGemini系・OpenAI系の画像生成経路の名称です。
 
 Current behavior at a glance / 現行仕様の要点:
 
@@ -60,7 +60,7 @@ For this manually configured standard ComfyUI route, select `MiniMax H3 Referenc
 
 **Using the Fused4step + SLA workflow / Fused4step・SLA 配布ワークフローを使う場合**
 
-This route distributes `Super-FURU-AI-4koma-H3-Hybrid-b25-Fused4Step-SLA-2026-09-06-r6.json` and `MiniMax-H3-4Koma-Fused4Step-SLA-Bundle-2026-09-06-r6.zip` as separate direct downloads. The supplied JSON preserves Fused 4 video steps and audio refinement at 2 steps with denoise 0.5. It turns the four panels into four story acts, assigns five seconds per retained dialogue turn with no upper duration cap, uses 30 seconds only when there is no dialogue, and uses H3-generated BGM at low volume beneath the dialogue. In r6, each segment is generated and inspected; only a segment with duplicated people, a clear hairstyle mismatch, broken dialogue, or doubled voice is retried by cause up to three times. The workflow's four standard model loaders contain download candidates for missing models. / この経路では `Super-FURU-AI-4koma-H3-Hybrid-b25-Fused4Step-SLA-2026-09-06-r6.json` と `MiniMax-H3-4Koma-Fused4Step-SLA-Bundle-2026-09-06-r6.zip` を別々に配布します。提供JSONのFused 4ステップ・音声補正2ステップ（denoise 0.5）設定は変更しません。4コマを物語の4幕として扱い、保持した台詞1本につき5秒・上限なしの完全可変尺にします。台詞がない場合だけ既定30秒を使います。既定はH3生成BGMありで、台詞中は低音量へ強く抑えます。r6では区間ごとに生成・検査し、分身、明らかな髪型違い、台詞破綻、二重発声が出た区間だけ原因別に最大3回試行します。不足モデルは4つの標準ローダーノードのダウンロード候補から取得できます。
+This route distributes `Super-FURU-AI-4koma-H3-Hybrid-b25-Fused4Step-SLA-2026-09-06-r8.json` and `MiniMax-H3-4Koma-Fused4Step-SLA-Bundle-2026-09-06-r8.zip` as separate direct downloads. The supplied JSON preserves Fused 4 video steps and audio refinement at 2 steps with denoise 0.5. It turns the four panels into four story acts, assigns five seconds per retained dialogue turn with no upper duration cap, uses 30 seconds only when there is no dialogue, and uses H3-generated BGM at low volume beneath the dialogue. In r8, each segment is generated and inspected; only a segment with duplicated people, a clear hairstyle mismatch, broken dialogue, or doubled voice is retried by cause up to three times, and the Japanese dialogue readings are reviewed before H3 generation. The workflow's four standard model loaders contain download candidates for missing models. / この経路では `Super-FURU-AI-4koma-H3-Hybrid-b25-Fused4Step-SLA-2026-09-06-r8.json` と `MiniMax-H3-4Koma-Fused4Step-SLA-Bundle-2026-09-06-r8.zip` を別々に配布します。提供JSONのFused 4ステップ・音声補正2ステップ（denoise 0.5）設定は変更しません。4コマを物語の4幕として扱い、保持した台詞1本につき5秒・上限なしの完全可変尺にします。台詞がない場合だけ既定30秒を使います。既定はH3生成BGMありで、台詞中は低音量へ強く抑えます。r8では区間ごとに生成・検査し、分身、明らかな髪型違い、台詞破綻、二重発声が出た区間だけ原因別に最大3回試行し、H3生成前に日本語台詞の読みを確認します。不足モデルは4つの標準ローダーノードのダウンロード候補から取得できます。
 
 **FURU four-panel manga to video / FURUの4コマ漫画を動画化**
 
@@ -853,6 +853,9 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 ---
 
 ## 📋 ChangeLog
+
+### v5.8.7 (2026-09-06)
+- **[Fix & UX]** MiniMax H3 Fused4step＋SLA r8配布物と日本語台詞読み確認を更新 / Update MiniMax H3 Fused4step + SLA r8 distribution and Japanese dialogue reading review
 
 ### v5.8.6 (2026-09-06)
 - **[Fix & UX]** MiniMax H3 Fused4step＋SLA r6配布物、外部必須ノードの直接案内、SHA-256検証を更新 / Update MiniMax H3 Fused4step + SLA r6 distribution, direct external-node guidance, and SHA-256 verification
