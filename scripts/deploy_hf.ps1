@@ -93,7 +93,7 @@ Get-ChildItem $DistDir -Force | ForEach-Object {
 # public/.gitattributes would turn GitHub Pages downloads into pointer files.
 Write-Host "[LFS] Tracking the MiniMax H3 distribution ZIP..." -ForegroundColor Yellow
 Push-Location $HfRoot
-git lfs track "downloads/MiniMax-H3-4Koma-Fused4Step-SLA-Bundle-2026-09-06-r5.zip"
+git lfs track "downloads/MiniMax-H3-4Koma-Fused4Step-SLA-Bundle-2026-09-06-r6.zip"
 if ($LASTEXITCODE -ne 0) {
     Write-Host "[ERROR] git lfs track failed." -ForegroundColor Red
     Pop-Location
@@ -101,8 +101,8 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 $HfBytePreservationRules = @(
-    "workflows/Super-FURU-AI-4koma-H3-Hybrid-b25-Fused4Step-SLA-2026-09-06-r5.json -text",
-    "downloads/MiniMax-H3-4Koma-Fused4Step-SLA-Bundle-2026-09-06-r5.zip.sha256.txt -text"
+    "workflows/Super-FURU-AI-4koma-H3-Hybrid-b25-Fused4Step-SLA-2026-09-06-r6.json -text",
+    "downloads/MiniMax-H3-4Koma-Fused4Step-SLA-Bundle-2026-09-06-r6.zip.sha256.txt -text"
 )
 $HfAttributeLines = @(Get-Content -LiteralPath (Join-Path $HfRoot ".gitattributes") -Encoding UTF8)
 foreach ($HfBytePreservationRule in $HfBytePreservationRules) {

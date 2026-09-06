@@ -1,6 +1,6 @@
 # Super FURU AI 4-koma System
 
-> Latest release: **v5.8.4** / 最新リリース: **v5.8.4**
+> Latest release: **v5.8.6** / 最新リリース: **v5.8.6**
 
 > **"To what extent can humans step away from the creative process?"**
 > **「人間は、どこまで制作から降りられるのか？」**
@@ -22,7 +22,7 @@
 This project aims to intentionally exclude humans from the creative process, allowing AI to act as a director and complete everything from brainstorming to composition, direction, and rendering.
 本プロジェクトは、人間をクリエイティブな工程から意図的に排除し、AIがディレクターとして「ネタ出し・構成・演出・作画」のすべてを完結させることを目的としています。
 
-The current implementation and latest release are **v5.8.3**. The product name is **Super FURU AI 4-koma System**; **Nano Banana 2** and **gpt-image-2** identify the Gemini and OpenAI image-generation routes. / 現在の実装および最新公開版は **v5.8.3** です。製品名は **Super FURU AI 4-koma System** で、**Nano Banana 2** と **gpt-image-2** はGemini系・OpenAI系の画像生成経路の名称です。
+The current implementation and latest release are **v5.8.6**. The product name is **Super FURU AI 4-koma System**; **Nano Banana 2** and **gpt-image-2** identify the Gemini and OpenAI image-generation routes. / 現在の実装および最新公開版は **v5.8.6** です。製品名は **Super FURU AI 4-koma System** で、**Nano Banana 2** と **gpt-image-2** はGemini系・OpenAI系の画像生成経路の名称です。
 
 Current behavior at a glance / 現行仕様の要点:
 
@@ -60,13 +60,13 @@ For this manually configured standard ComfyUI route, select `MiniMax H3 Referenc
 
 **Using the Fused4step + SLA workflow / Fused4step・SLA 配布ワークフローを使う場合**
 
-This route distributes `Super-FURU-AI-4koma-H3-Hybrid-b25-Fused4Step-SLA-2026-09-06-r5.json` and `MiniMax-H3-4Koma-Fused4Step-SLA-Bundle-2026-09-06-r5.zip` as separate direct downloads. The supplied JSON preserves Fused 4 video steps and audio refinement at 2 steps with denoise 0.5. It turns the four panels into four story acts, assigns five seconds per retained dialogue turn with no upper duration cap, uses 30 seconds only when there is no dialogue, and uses H3-generated BGM at low volume beneath the dialogue. In r5, each segment is generated and inspected; only a segment with duplicated people, a clear hairstyle mismatch, broken dialogue, or doubled voice is retried by cause up to three times. The workflow's four standard model loaders contain download candidates for missing models. / この経路では `Super-FURU-AI-4koma-H3-Hybrid-b25-Fused4Step-SLA-2026-09-06-r5.json` と `MiniMax-H3-4Koma-Fused4Step-SLA-Bundle-2026-09-06-r5.zip` を別々に配布します。提供JSONのFused 4ステップ・音声補正2ステップ（denoise 0.5）設定は変更しません。4コマを物語の4幕として扱い、保持した台詞1本につき5秒・上限なしの完全可変尺にします。台詞がない場合だけ既定30秒を使います。既定はH3生成BGMありで、台詞中は低音量へ強く抑えます。r5では区間ごとに生成・検査し、分身、明らかな髪型違い、台詞破綻、二重発声が出た区間だけ原因別に最大3回試行します。不足モデルは4つの標準ローダーノードのダウンロード候補から取得できます。
+This route distributes `Super-FURU-AI-4koma-H3-Hybrid-b25-Fused4Step-SLA-2026-09-06-r6.json` and `MiniMax-H3-4Koma-Fused4Step-SLA-Bundle-2026-09-06-r6.zip` as separate direct downloads. The supplied JSON preserves Fused 4 video steps and audio refinement at 2 steps with denoise 0.5. It turns the four panels into four story acts, assigns five seconds per retained dialogue turn with no upper duration cap, uses 30 seconds only when there is no dialogue, and uses H3-generated BGM at low volume beneath the dialogue. In r6, each segment is generated and inspected; only a segment with duplicated people, a clear hairstyle mismatch, broken dialogue, or doubled voice is retried by cause up to three times. The workflow's four standard model loaders contain download candidates for missing models. / この経路では `Super-FURU-AI-4koma-H3-Hybrid-b25-Fused4Step-SLA-2026-09-06-r6.json` と `MiniMax-H3-4Koma-Fused4Step-SLA-Bundle-2026-09-06-r6.zip` を別々に配布します。提供JSONのFused 4ステップ・音声補正2ステップ（denoise 0.5）設定は変更しません。4コマを物語の4幕として扱い、保持した台詞1本につき5秒・上限なしの完全可変尺にします。台詞がない場合だけ既定30秒を使います。既定はH3生成BGMありで、台詞中は低音量へ強く抑えます。r6では区間ごとに生成・検査し、分身、明らかな髪型違い、台詞破綻、二重発声が出た区間だけ原因別に最大3回試行します。不足モデルは4つの標準ローダーノードのダウンロード候補から取得できます。
 
 **FURU four-panel manga to video / FURUの4コマ漫画を動画化**
 
 The dedicated workflow turns one completed Super FURU AI four-panel manga page into four contiguous MiniMax H3 shots. It retains panel order, panel-derived cast, speaker ownership, story action, setting, and punchline; it gives each visible character a role-appropriate movement, removes speech balloons, and adds the title and fixed end credit outside H3 after generation. / 専用ワークフローは、完成したSuper FURU AIの4コマ漫画1枚を連続する4つのMiniMax H3ショットに変換します。コマ順、各コマから導く登場人物、台詞の話者、物語上の動作、場所、オチを保ち、画面内の各人物へ役割に応じた動きを与え、吹き出しを除去します。タイトルと固定エンドクレジットは、H3生成後にワークフローが合成します。
 
-The bundle contains three raw custom-node folders: `ComfyUI-NanoBanana-H3`, `ComfyUI-MiniMax-H3-Long-Video`, and `ComfyUI-Spectrum-MiniMax-H3`. Extract the outer ZIP, copy those three folders to `ComfyUI/custom_nodes/`, and fully restart ComfyUI. If an older folder has the same name, close ComfyUI and replace the folder without mixing old and new files. Save the workflow JSON under `ComfyUI/user/default/workflows/`. `H3 SLA Attention` also requires `ComfyUI-PlagueKind-Nodes` and a Triton-compatible environment. The two-step audio refinement also requires `ComfyUI-H3-AudioRefine`. Neither external dependency is included in the ZIP. / 配布セットには `ComfyUI-NanoBanana-H3`、`ComfyUI-MiniMax-H3-Long-Video`、`ComfyUI-Spectrum-MiniMax-H3` の3フォルダを収録しています。外側ZIPを展開して3フォルダを `ComfyUI/custom_nodes/` へ配置し、ComfyUIを完全に再起動してください。同名の旧版がある場合はComfyUIを終了してフォルダごとに差し替え、新旧ファイルを混在させません。ワークフローJSONは `ComfyUI/user/default/workflows/` 以下へ保存します。`H3 SLA Attention` には別途 `ComfyUI-PlagueKind-Nodes` とTriton対応環境が必要です。音声2ステップ補正には `ComfyUI-H3-AudioRefine` も必要です。どちらの外部依存もZIPには含まれません。
+The bundle contains three raw custom-node folders: `ComfyUI-NanoBanana-H3`, `ComfyUI-MiniMax-H3-Long-Video`, and `ComfyUI-Spectrum-MiniMax-H3`. Extract the outer ZIP, copy those three folders to `ComfyUI/custom_nodes/`, and fully restart ComfyUI. If an older folder has the same name, close ComfyUI and replace the folder without mixing old and new files. Save the workflow JSON under `ComfyUI/user/default/workflows/`. `H3 SLA Attention` also requires [ComfyUI-PlagueKind-Nodes](https://github.com/PlagueKind/ComfyUI-PlagueKind-Nodes) and a Triton-compatible environment. The two-step audio refinement also requires [ComfyUI-H3-AudioRefine](https://github.com/Adudeguyman/ComfyUI-H3-AudioRefine). Neither external dependency is included in the ZIP. / 配布セットには `ComfyUI-NanoBanana-H3`、`ComfyUI-MiniMax-H3-Long-Video`、`ComfyUI-Spectrum-MiniMax-H3` の3フォルダを収録しています。外側ZIPを展開して3フォルダを `ComfyUI/custom_nodes/` へ配置し、ComfyUIを完全に再起動してください。同名の旧版がある場合はComfyUIを終了してフォルダごとに差し替え、新旧ファイルを混在させません。ワークフローJSONは `ComfyUI/user/default/workflows/` 以下へ保存します。`H3 SLA Attention` には別途 [ComfyUI-PlagueKind-Nodes](https://github.com/PlagueKind/ComfyUI-PlagueKind-Nodes) とTriton対応環境が必要です。音声2ステップ補正には [ComfyUI-H3-AudioRefine](https://github.com/Adudeguyman/ComfyUI-H3-AudioRefine) も必要です。どちらの外部依存もZIPには含まれません。
 
 `ComfyUI-NanoBanana-H3` is MIT-licensed, `ComfyUI-MiniMax-H3-Long-Video` is GPL-3.0-only, and `ComfyUI-Spectrum-MiniMax-H3` is GPL-3.0-or-later. The grant covers only the original source in each applicable folder, not ComfyUI, model weights, OpenAI/Google services, or user input/output. Models are not included; download missing-model candidates from the workflow or obtain them under their own terms using `モデル一覧・取得先.md`. API keys, authentication files, model binaries, user images, generated outputs, and personal pronunciation dictionaries are not distributed. / `ComfyUI-NanoBanana-H3` は MIT、`ComfyUI-MiniMax-H3-Long-Video` は GPL-3.0-only、`ComfyUI-Spectrum-MiniMax-H3` は GPL-3.0-or-later です。各ライセンスは該当フォルダの独自ソースだけに適用し、ComfyUI本体、モデル重み、OpenAI／Googleサービス、利用者の入出力には及びません。モデルは同梱せず、不足モデルのダウンロード候補または `モデル一覧・取得先.md` から各条件を確認して取得してください。APIキー、認証ファイル、モデル本体、ユーザー画像、生成物、個人用発音辞書は配布しません。
 
@@ -853,6 +853,9 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 ---
 
 ## 📋 ChangeLog
+
+### v5.8.6 (2026-09-06)
+- **[Fix & UX]** MiniMax H3 Fused4step＋SLA r6配布物、外部必須ノードの直接案内、SHA-256検証を更新 / Update MiniMax H3 Fused4step + SLA r6 distribution, direct external-node guidance, and SHA-256 verification
 
 ### v5.8.5 (2026-09-06)
 - **[Fix & UX]** MiniMax H3 Fused4step＋SLAのr5配布物へ更新し、区間検査と外部音声補正ノードの案内を追加 / Updated the MiniMax H3 Fused4step + SLA r5 distribution with segment inspection and external audio-refinement-node guidance
