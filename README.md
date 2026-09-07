@@ -854,6 +854,9 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 
 ## 📋 ChangeLog
 
+### v5.9.0 (2026-09-07)
+- **[Fix & UX]** 小容量ワークフローZIPをHugging Faceで通常Git配信し、公開バイトを維持 / Deliver small workflow ZIPs through regular Git on Hugging Face while preserving public bytes
+
 ### v5.8.9 (2026-09-07)
 - **[Fix & UX]** Hugging Face配布のLFSとバイト保持属性を最新の配布ファイルから自動同期 / Synchronize Hugging Face LFS and byte-preservation attributes from the current distribution files
 

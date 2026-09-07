@@ -88,20 +88,38 @@ Get-ChildItem $DistDir -Force | ForEach-Object {
     Write-Host "  Copied: $($_.Name)" -ForegroundColor DarkGray
 }
 
-# === Step 5: Track HF binary downloads through the LFS/Xet bridge ===
+# === Step 5: Preserve distribution bytes and use LFS only when a ZIP needs it ===
 # This is intentionally applied only inside the HF checkout. Adding the rule to
 # public/.gitattributes would turn GitHub Pages downloads into pointer files.
-Write-Host "[LFS] Tracking current distribution ZIPs..." -ForegroundColor Yellow
+# Small supplied workflow bundles are ordinary Git blobs; routing them through LFS
+# would unnecessarily require a separate authenticated object upload.
+Write-Host "[DIST] Syncing current distribution attributes..." -ForegroundColor Yellow
 Push-Location $HfRoot
 $PublicDistributionAttributes = @(Get-Content -LiteralPath (Join-Path $ProjectRoot "public\.gitattributes") -Encoding UTF8)
-$HfLfsZipPaths = @($PublicDistributionAttributes |
+$HfDistributionZipPaths = @($PublicDistributionAttributes |
     Where-Object { $_ -match '^downloads/.+\.zip -text$' } |
     ForEach-Object { ($_ -split '\s+')[0] }
 )
-if ($HfLfsZipPaths.Count -eq 0) {
+if ($HfDistributionZipPaths.Count -eq 0) {
     Write-Host "[ERROR] No distribution ZIPs were declared in public/.gitattributes." -ForegroundColor Red
     Pop-Location
     exit 1
+}
+$HfLfsThresholdBytes = 10MB
+$HfLfsZipPaths = @($HfDistributionZipPaths | Where-Object {
+    $sourceZip = Join-Path $ProjectRoot (($_ -replace '/', '\\'))
+    (Get-Item -LiteralPath $sourceZip -ErrorAction Stop).Length -gt $HfLfsThresholdBytes
+})
+$HfPlainZipPaths = @($HfDistributionZipPaths | Where-Object { $_ -notin $HfLfsZipPaths })
+$HfAttributesPath = Join-Path $HfRoot ".gitattributes"
+$HfAttributeLines = @(Get-Content -LiteralPath $HfAttributesPath -Encoding UTF8)
+foreach ($HfPlainZipPath in $HfPlainZipPaths) {
+    $lfsRule = "$HfPlainZipPath filter=lfs diff=lfs merge=lfs -text"
+    if ($HfAttributeLines -ccontains $lfsRule) {
+        $HfAttributeLines = @($HfAttributeLines | Where-Object { $_ -cne $lfsRule })
+        Set-Content -LiteralPath $HfAttributesPath -Value $HfAttributeLines -Encoding UTF8
+        Write-Host "  Using regular Git for small ZIP: $HfPlainZipPath" -ForegroundColor DarkGray
+    }
 }
 foreach ($HfLfsZipPath in $HfLfsZipPaths) {
     git lfs track $HfLfsZipPath
@@ -113,12 +131,12 @@ foreach ($HfLfsZipPath in $HfLfsZipPaths) {
 }
 
 $HfBytePreservationRules = @($PublicDistributionAttributes |
-    Where-Object { $_ -match '^(?:workflows/.+\.json|downloads/.+\.zip\.sha256\.txt) -text$' }
+    Where-Object { $_ -match '^(?:workflows/.+\.json|downloads/.+\.zip(?:\.sha256\.txt)?) -text$' }
 )
-$HfAttributeLines = @(Get-Content -LiteralPath (Join-Path $HfRoot ".gitattributes") -Encoding UTF8)
+$HfAttributeLines = @(Get-Content -LiteralPath $HfAttributesPath -Encoding UTF8)
 foreach ($HfBytePreservationRule in $HfBytePreservationRules) {
     if ($HfAttributeLines -cnotcontains $HfBytePreservationRule) {
-        Add-Content -LiteralPath (Join-Path $HfRoot ".gitattributes") -Value $HfBytePreservationRule -Encoding UTF8 -ErrorAction Stop
+        Add-Content -LiteralPath $HfAttributesPath -Value $HfBytePreservationRule -Encoding UTF8 -ErrorAction Stop
         Write-Host "  Preserving exact bytes: $HfBytePreservationRule" -ForegroundColor DarkGray
     }
 }
