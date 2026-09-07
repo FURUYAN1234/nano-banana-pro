@@ -15,13 +15,18 @@ test('HF deploy preserves the Docker runtime and SPA routing configuration', asy
   assert.match(script, /if \(\$CopyProtectedItems -contains \$_\.Name\)/);
   assert.match(script, /RequiredHfRuntimeFiles/);
   assert.match(script, /missing required runtime file/);
+  assert.match(script, /git fetch origin main/);
+  assert.match(script, /\$HfLocalOnlyCommitCount/);
+  assert.match(script, /\$HfHasUnpushedLfsObject/);
+  assert.match(script, /recovery\/hf-unpublished-lfs/);
+  assert.match(script, /git reset --mixed origin\/main/);
 });
 
 test('HF deploy derives byte-preservation attributes from every Pages distribution asset and reserves LFS for large ZIPs', async () => {
   const script = await readFile(new URL('../scripts/deploy_hf.ps1', import.meta.url), 'utf8');
   const pagesAttributes = await readFile(new URL('../public/.gitattributes', import.meta.url), 'utf8');
 
-  const copyIndex = script.indexOf('# === Step 5: Preserve distribution bytes and use LFS only when a ZIP needs it ===');
+  const copyIndex = script.indexOf('# === Step 6: Preserve distribution bytes and use LFS only when a ZIP needs it ===');
   const attributesReadIndex = script.indexOf('$PublicDistributionAttributes = @(Get-Content -LiteralPath (Join-Path $ProjectRoot "public\\.gitattributes") -Encoding UTF8)');
   const zipPathsIndex = script.indexOf('$HfDistributionZipPaths = @($PublicDistributionAttributes |');
   const lfsLoopIndex = script.indexOf('foreach ($HfLfsZipPath in $HfLfsZipPaths)');

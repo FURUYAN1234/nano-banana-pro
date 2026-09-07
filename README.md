@@ -854,6 +854,9 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 
 ## 📋 ChangeLog
 
+### v5.9.1 (2026-09-07)
+- **[Fix & UX]** 失敗したHF LFS配布コミットをローカル復旧参照へ退避し、公開基点から再構成 / Preserve blocked local HF LFS commits in a recovery ref and rebuild from the published base
+
 ### v5.9.0 (2026-09-07)
 - **[Fix & UX]** 小容量ワークフローZIPをHugging Faceで通常Git配信し、公開バイトを維持 / Deliver small workflow ZIPs through regular Git on Hugging Face while preserving public bytes
 

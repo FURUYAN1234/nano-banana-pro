@@ -47,7 +47,38 @@ if (-not (Test-Path (Join-Path $HfRoot ".git"))) {
 }
 Write-Host "[OK] HF folder: $HfRoot" -ForegroundColor Green
 
-# === Step 3: Guard HF runtime files and clean generated assets ===
+# === Step 3: Recover only local commits blocked by an unpushed LFS object ===
+# A failed prior publish can leave local-only commits that require an unavailable
+# LFS upload. Preserve them under a local recovery ref, then rebuild the Space
+# from its current remote main before copying the requested distribution.
+Push-Location $HfRoot
+git fetch origin main
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "[ERROR] Could not refresh the Hugging Face remote main ref." -ForegroundColor Red
+    Pop-Location
+    exit 1
+}
+$HfLocalOnlyCommitCount = [int]((git rev-list --count origin/main..HEAD).Trim())
+$HfHasUnpushedLfsObject = [bool](@(git lfs status | Select-String -SimpleMatch "Objects to be pushed to origin/main").Count -gt 0)
+if ($HfLocalOnlyCommitCount -gt 0 -and $HfHasUnpushedLfsObject) {
+    $HfRecoveryRef = "recovery/hf-unpublished-lfs-$(Get-Date -Format 'yyyyMMdd-HHmmss')"
+    git branch $HfRecoveryRef HEAD
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "[ERROR] Could not preserve the blocked Hugging Face commits." -ForegroundColor Red
+        Pop-Location
+        exit 1
+    }
+    git reset --mixed origin/main
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "[ERROR] Could not return the Hugging Face checkout to remote main." -ForegroundColor Red
+        Pop-Location
+        exit 1
+    }
+    Write-Host "[RECOVERY] Preserved blocked local commits at $HfRecoveryRef and rebuilt from origin/main." -ForegroundColor Yellow
+}
+Pop-Location
+
+# === Step 4: Guard HF runtime files and clean generated assets ===
 $RequiredHfRuntimeFiles = @("Dockerfile", "nginx.conf")
 $MissingRuntimeFiles = @($RequiredHfRuntimeFiles | Where-Object {
     -not (Test-Path (Join-Path $HfRoot $_))
@@ -71,7 +102,7 @@ Get-ChildItem $HfRoot -Force | Where-Object {
     Write-Host "  Deleted: $($_.Name)" -ForegroundColor DarkGray
 }
 
-# === Step 4: Copy dist contents to HF folder (preserve HF-specific files) ===
+# === Step 5: Copy dist contents to HF folder (preserve HF-specific files) ===
 Write-Host "[COPY] dist/ -> HF folder..." -ForegroundColor Yellow
 $CopyProtectedItems = @(".gitattributes", "README.md")
 Get-ChildItem $DistDir -Force | ForEach-Object {
@@ -88,7 +119,7 @@ Get-ChildItem $DistDir -Force | ForEach-Object {
     Write-Host "  Copied: $($_.Name)" -ForegroundColor DarkGray
 }
 
-# === Step 5: Preserve distribution bytes and use LFS only when a ZIP needs it ===
+# === Step 6: Preserve distribution bytes and use LFS only when a ZIP needs it ===
 # This is intentionally applied only inside the HF checkout. Adding the rule to
 # public/.gitattributes would turn GitHub Pages downloads into pointer files.
 # Small supplied workflow bundles are ordinary Git blobs; routing them through LFS
@@ -142,7 +173,7 @@ foreach ($HfBytePreservationRule in $HfBytePreservationRules) {
 }
 Pop-Location
 
-# === Step 6: Verify vite base path in built index.html ===
+# === Step 7: Verify vite base path in built index.html ===
 $BuiltIndex = Join-Path $HfRoot "index.html"
 if (Test-Path $BuiltIndex) {
     $indexContent = Get-Content $BuiltIndex -Raw -Encoding UTF8
@@ -153,7 +184,7 @@ if (Test-Path $BuiltIndex) {
     }
 }
 
-# === Step 7: Git commit & push ===
+# === Step 8: Git commit & push ===
 Write-Host "[GIT] Committing and pushing..." -ForegroundColor Yellow
 Push-Location $HfRoot
 
