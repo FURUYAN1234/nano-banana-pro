@@ -37,6 +37,9 @@ test('HF deploy derives byte-preservation attributes from every Pages distributi
   assert.ok(attributesReadIndex < zipPathsIndex && zipPathsIndex < lfsLoopIndex, 'all current download ZIPs must be read before deciding whether LFS is necessary');
   assert.ok(lfsLoopIndex < byteRulesIndex && byteRulesIndex < gitAddIndex, 'workflow JSON and ZIP checksum byte rules must be written before git add');
   assert.match(script, /Where-Object \{ \$_ -match '\^downloads\/.+\\\.zip -text\$' \}/);
+  assert.match(script, /\$HfCurrentZipPaths/);
+  assert.match(script, /Join-Path \(Join-Path \$ProjectRoot "public"\)/);
+  assert.match(script, /Test-Path -LiteralPath \$sourceZip/);
   assert.match(script, /\$HfLfsThresholdBytes\s*=\s*10MB/);
   assert.match(script, /Get-Item -LiteralPath \$sourceZip -ErrorAction Stop\)\.Length -gt \$HfLfsThresholdBytes/);
   assert.match(script, /\$HfPlainZipPaths/);

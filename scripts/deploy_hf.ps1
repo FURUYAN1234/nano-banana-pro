@@ -131,17 +131,21 @@ $HfDistributionZipPaths = @($PublicDistributionAttributes |
     Where-Object { $_ -match '^downloads/.+\.zip -text$' } |
     ForEach-Object { ($_ -split '\s+')[0] }
 )
-if ($HfDistributionZipPaths.Count -eq 0) {
+$HfCurrentZipPaths = @($HfDistributionZipPaths | Where-Object {
+    $sourceZip = Join-Path (Join-Path $ProjectRoot "public") (($_ -replace '/', '\'))
+    Test-Path -LiteralPath $sourceZip
+})
+if ($HfCurrentZipPaths.Count -eq 0) {
     Write-Host "[ERROR] No distribution ZIPs were declared in public/.gitattributes." -ForegroundColor Red
     Pop-Location
     exit 1
 }
 $HfLfsThresholdBytes = 10MB
-$HfLfsZipPaths = @($HfDistributionZipPaths | Where-Object {
-    $sourceZip = Join-Path $ProjectRoot (($_ -replace '/', '\\'))
+$HfLfsZipPaths = @($HfCurrentZipPaths | Where-Object {
+    $sourceZip = Join-Path (Join-Path $ProjectRoot "public") (($_ -replace '/', '\'))
     (Get-Item -LiteralPath $sourceZip -ErrorAction Stop).Length -gt $HfLfsThresholdBytes
 })
-$HfPlainZipPaths = @($HfDistributionZipPaths | Where-Object { $_ -notin $HfLfsZipPaths })
+$HfPlainZipPaths = @($HfCurrentZipPaths | Where-Object { $_ -notin $HfLfsZipPaths })
 $HfAttributesPath = Join-Path $HfRoot ".gitattributes"
 $HfAttributeLines = @(Get-Content -LiteralPath $HfAttributesPath -Encoding UTF8)
 foreach ($HfPlainZipPath in $HfPlainZipPaths) {

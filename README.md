@@ -854,6 +854,9 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 
 ## 📋 ChangeLog
 
+### v5.9.2 (2026-09-07)
+- **[Fix & UX]** 現存するpublic配布ZIPだけをHFのサイズ判定対象にし、小容量ZIPを通常Git配信 / Classify only existing public distribution ZIPs for Hugging Face and deliver small ZIPs through regular Git
+
 ### v5.9.1 (2026-09-07)
 - **[Fix & UX]** 失敗したHF LFS配布コミットをローカル復旧参照へ退避し、公開基点から再構成 / Preserve blocked local HF LFS commits in a recovery ref and rebuild from the published base
 
