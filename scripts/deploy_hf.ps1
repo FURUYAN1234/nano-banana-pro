@@ -91,18 +91,29 @@ Get-ChildItem $DistDir -Force | ForEach-Object {
 # === Step 5: Track HF binary downloads through the LFS/Xet bridge ===
 # This is intentionally applied only inside the HF checkout. Adding the rule to
 # public/.gitattributes would turn GitHub Pages downloads into pointer files.
-Write-Host "[LFS] Tracking the MiniMax H3 distribution ZIP..." -ForegroundColor Yellow
+Write-Host "[LFS] Tracking current distribution ZIPs..." -ForegroundColor Yellow
 Push-Location $HfRoot
-git lfs track "downloads/MiniMax-H3-4Koma-Fused4Step-SLA-Bundle-2026-09-06-r8.zip"
-if ($LASTEXITCODE -ne 0) {
-    Write-Host "[ERROR] git lfs track failed." -ForegroundColor Red
+$PublicDistributionAttributes = @(Get-Content -LiteralPath (Join-Path $ProjectRoot "public\.gitattributes") -Encoding UTF8)
+$HfLfsZipPaths = @($PublicDistributionAttributes |
+    Where-Object { $_ -match '^downloads/.+\.zip -text$' } |
+    ForEach-Object { ($_ -split '\s+')[0] }
+)
+if ($HfLfsZipPaths.Count -eq 0) {
+    Write-Host "[ERROR] No distribution ZIPs were declared in public/.gitattributes." -ForegroundColor Red
     Pop-Location
     exit 1
 }
+foreach ($HfLfsZipPath in $HfLfsZipPaths) {
+    git lfs track $HfLfsZipPath
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "[ERROR] git lfs track failed." -ForegroundColor Red
+        Pop-Location
+        exit 1
+    }
+}
 
-$HfBytePreservationRules = @(
-    "workflows/Super-FURU-AI-4koma-H3-Hybrid-b25-Fused4Step-SLA-2026-09-06-r8.json -text",
-    "downloads/MiniMax-H3-4Koma-Fused4Step-SLA-Bundle-2026-09-06-r8.zip.sha256.txt -text"
+$HfBytePreservationRules = @($PublicDistributionAttributes |
+    Where-Object { $_ -match '^(?:workflows/.+\.json|downloads/.+\.zip\.sha256\.txt) -text$' }
 )
 $HfAttributeLines = @(Get-Content -LiteralPath (Join-Path $HfRoot ".gitattributes") -Encoding UTF8)
 foreach ($HfBytePreservationRule in $HfBytePreservationRules) {

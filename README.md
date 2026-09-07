@@ -854,6 +854,9 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 
 ## 📋 ChangeLog
 
+### v5.8.9 (2026-09-07)
+- **[Fix & UX]** Hugging Face配布のLFSとバイト保持属性を最新の配布ファイルから自動同期 / Synchronize Hugging Face LFS and byte-preservation attributes from the current distribution files
+
 ### v5.8.8 (2026-09-07)
 - **[Fix & UX]** MiniMax H3の提供された2026-09-07 Fused4＋SLA外部API配布セットと別URLのワークフローを更新 / Updated the supplied 2026-09-07 MiniMax H3 Fused4 plus SLA external-API distribution and separate workflow
 

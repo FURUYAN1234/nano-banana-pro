@@ -17,25 +17,26 @@ test('HF deploy preserves the Docker runtime and SPA routing configuration', asy
   assert.match(script, /missing required runtime file/);
 });
 
-test('HF deploy tracks distribution ZIPs through the Hub LFS bridge without changing Pages assets', async () => {
+test('HF deploy derives LFS and byte-preservation attributes from every Pages distribution asset', async () => {
   const script = await readFile(new URL('../scripts/deploy_hf.ps1', import.meta.url), 'utf8');
   const pagesAttributes = await readFile(new URL('../public/.gitattributes', import.meta.url), 'utf8');
 
   const copyIndex = script.indexOf('# === Step 5: Track HF binary downloads through the LFS/Xet bridge ===');
-  const lfsTrackCommand = 'git lfs track "downloads/MiniMax-H3-4Koma-Fused4Step-SLA-Bundle-2026-09-06-r8.zip"';
-  const lfsTrackIndex = script.indexOf(lfsTrackCommand);
-  const workflowByteRule = '"workflows/Super-FURU-AI-4koma-H3-Hybrid-b25-Fused4Step-SLA-2026-09-06-r8.json -text"';
-  const checksumByteRule = '"downloads/MiniMax-H3-4Koma-Fused4Step-SLA-Bundle-2026-09-06-r8.zip.sha256.txt -text"';
-  const workflowByteRuleIndex = script.indexOf(workflowByteRule);
-  const checksumByteRuleIndex = script.indexOf(checksumByteRule);
+  const attributesReadIndex = script.indexOf('$PublicDistributionAttributes = @(Get-Content -LiteralPath (Join-Path $ProjectRoot "public\\.gitattributes") -Encoding UTF8)');
+  const zipPathsIndex = script.indexOf('$HfLfsZipPaths = @($PublicDistributionAttributes |');
+  const lfsLoopIndex = script.indexOf('foreach ($HfLfsZipPath in $HfLfsZipPaths)');
+  const byteRulesIndex = script.indexOf('$HfBytePreservationRules = @($PublicDistributionAttributes |');
   const gitAddIndex = script.indexOf('git add .');
 
-  assert.ok(copyIndex !== -1 && copyIndex < lfsTrackIndex, 'HF-only tracking must happen after the dist copy');
-  assert.ok(lfsTrackIndex < gitAddIndex, 'ZIPs must be converted to pointers before git add');
-  assert.ok(lfsTrackIndex < workflowByteRuleIndex && workflowByteRuleIndex < gitAddIndex, 'the supplied workflow must be marked binary before git add');
-  assert.ok(lfsTrackIndex < checksumByteRuleIndex && checksumByteRuleIndex < gitAddIndex, 'the ZIP checksum must be preserved before git add');
+  assert.ok(copyIndex !== -1 && copyIndex < attributesReadIndex, 'HF-only attribute derivation must happen after the dist copy');
+  assert.ok(attributesReadIndex < zipPathsIndex && zipPathsIndex < lfsLoopIndex, 'all current download ZIPs must be read before LFS tracking');
+  assert.ok(lfsLoopIndex < byteRulesIndex && byteRulesIndex < gitAddIndex, 'workflow JSON and ZIP checksum byte rules must be written before git add');
+  assert.match(script, /Where-Object \{ \$_ -match '\^downloads\/.+\\\.zip -text\$' \}/);
+  assert.match(script, /Where-Object \{ \$_ -match '\^\(\?:workflows\/.+\\\.json\|downloads\/.+\\\.zip\\\.sha256\\\.txt\) -text\$' \}/);
+  assert.match(script, /git lfs track \$HfLfsZipPath/);
   assert.match(script, /Add-Content[^\n]*\.gitattributes[^\n]*HfBytePreservationRule/s);
   assert.match(script, /if \(\$LASTEXITCODE -ne 0\) \{\s*Write-Host "\[ERROR\] git lfs track failed\."/s);
+  assert.doesNotMatch(script, /MiniMax-H3-4Koma-Fused4Step-SLA-Bundle-2026-09-06-r8/);
   assert.doesNotMatch(script, /git lfs track "downloads\/\*\.zip"/);
   assert.doesNotMatch(pagesAttributes, /downloads\/\*\.zip\s+filter=lfs/);
 });
