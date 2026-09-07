@@ -60,7 +60,7 @@ For this manually configured standard ComfyUI route, select `MiniMax H3 Referenc
 
 **Using the Fused4step + SLA workflow / Fused4step・SLA 配布ワークフローを使う場合**
 
-This route distributes `Super-FURU-AI-4koma-H3-Hybrid-b25-Fused4Step-SLA-2026-09-06-r8.json` and `MiniMax-H3-4Koma-Fused4Step-SLA-Bundle-2026-09-06-r8.zip` as separate direct downloads. The supplied JSON preserves Fused 4 video steps and audio refinement at 2 steps with denoise 0.5. It turns the four panels into four story acts, assigns five seconds per retained dialogue turn with no upper duration cap, uses 30 seconds only when there is no dialogue, and uses H3-generated BGM at low volume beneath the dialogue. In r8, each segment is generated and inspected; only a segment with duplicated people, a clear hairstyle mismatch, broken dialogue, or doubled voice is retried by cause up to three times, and the Japanese dialogue readings are reviewed before H3 generation. The workflow's four standard model loaders contain download candidates for missing models. / この経路では `Super-FURU-AI-4koma-H3-Hybrid-b25-Fused4Step-SLA-2026-09-06-r8.json` と `MiniMax-H3-4Koma-Fused4Step-SLA-Bundle-2026-09-06-r8.zip` を別々に配布します。提供JSONのFused 4ステップ・音声補正2ステップ（denoise 0.5）設定は変更しません。4コマを物語の4幕として扱い、保持した台詞1本につき5秒・上限なしの完全可変尺にします。台詞がない場合だけ既定30秒を使います。既定はH3生成BGMありで、台詞中は低音量へ強く抑えます。r8では区間ごとに生成・検査し、分身、明らかな髪型違い、台詞破綻、二重発声が出た区間だけ原因別に最大3回試行し、H3生成前に日本語台詞の読みを確認します。不足モデルは4つの標準ローダーノードのダウンロード候補から取得できます。
+This route distributes `FourPanel_Fused4_SLA_API_20260907.json` and `FourPanel_Fused4_SLA_API_20260907.zip` as separate direct downloads. The supplied external-API package preserves Fused 4 video steps, audio refinement at 2 steps with denoise 0.5, SLA attention, and the three custom-node folders. It turns the four panels into four story acts, assigns five seconds per retained dialogue turn with no upper duration cap, uses 30 seconds only when there is no dialogue, and uses H3-generated BGM at low volume beneath the dialogue. Each segment is generated and inspected; only a segment with duplicated people, a clear hairstyle mismatch, broken dialogue, or doubled voice is retried by cause up to three times. Transcription failures continue to independent waveform inspection so small terminal-vowel and punctuation differences are less likely to cause false failures. / この経路では `FourPanel_Fused4_SLA_API_20260907.json` と `FourPanel_Fused4_SLA_API_20260907.zip` を別々に配布します。提供された外部API版は、Fused 4ステップ・音声補正2ステップ（denoise 0.5）・SLA Attention・3つのカスタムノードフォルダを保持します。4コマを物語の4幕として扱い、保持した台詞1本につき5秒・上限なしの完全可変尺にします。台詞がない場合だけ既定30秒を使います。既定はH3生成BGMありで、台詞中は低音量へ強く抑えます。区間ごとに生成・検査し、分身、明らかな髪型違い、台詞破綻、二重発声が出た区間だけ原因別に最大3回試行します。文字起こしが失敗判定でも独立波形検査へ進むため、終端の長音や句読点の軽微な差による誤判定を抑えます。
 
 **FURU four-panel manga to video / FURUの4コマ漫画を動画化**
 
@@ -853,6 +853,9 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 ---
 
 ## 📋 ChangeLog
+
+### v5.8.8 (2026-09-07)
+- **[Fix & UX]** MiniMax H3の提供された2026-09-07 Fused4＋SLA外部API配布セットと別URLのワークフローを更新 / Updated the supplied 2026-09-07 MiniMax H3 Fused4 plus SLA external-API distribution and separate workflow
 
 ### v5.8.7 (2026-09-06)
 - **[Fix & UX]** MiniMax H3 Fused4step＋SLA r8配布物と日本語台詞読み確認を更新 / Update MiniMax H3 Fused4step + SLA r8 distribution and Japanese dialogue reading review
