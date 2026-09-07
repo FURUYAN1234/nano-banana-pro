@@ -15,3 +15,6 @@ workflows/Super-FURU-AI-4koma-H3-Hybrid-b25-Fused4Step-SLA-2026-09-06-r6.json -t
 downloads/MiniMax-H3-4Koma-Fused4Step-SLA-Bundle-2026-09-06-r8.zip -text
 downloads/MiniMax-H3-4Koma-Fused4Step-SLA-Bundle-2026-09-06-r8.zip.sha256.txt -text
 workflows/Super-FURU-AI-4koma-H3-Hybrid-b25-Fused4Step-SLA-2026-09-06-r8.json -text
+downloads/FourPanel_Fused4_SLA_API_20260907.zip -text
+downloads/FourPanel_Fused4_SLA_API_20260907.zip.sha256.txt -text
+workflows/FourPanel_Fused4_SLA_API_20260907.json -text
