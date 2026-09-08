@@ -1,6 +1,6 @@
 # Super FURU AI 4-koma System
 
-> Latest release: **v5.8.7** / 最新リリース: **v5.8.7**
+> Latest release: **v5.9.3** / 最新リリース: **v5.9.3**
 
 > **"To what extent can humans step away from the creative process?"**
 > **「人間は、どこまで制作から降りられるのか？」**
@@ -22,7 +22,9 @@
 This project aims to intentionally exclude humans from the creative process, allowing AI to act as a director and complete everything from brainstorming to composition, direction, and rendering.
 本プロジェクトは、人間をクリエイティブな工程から意図的に排除し、AIがディレクターとして「ネタ出し・構成・演出・作画」のすべてを完結させることを目的としています。
 
-The current implementation and latest release are **v5.8.7**. The product name is **Super FURU AI 4-koma System**; **Nano Banana 2** and **gpt-image-2** identify the Gemini and OpenAI image-generation routes. / 現在の実装および最新公開版は **v5.8.7** です。製品名は **Super FURU AI 4-koma System** で、**Nano Banana 2** と **gpt-image-2** はGemini系・OpenAI系の画像生成経路の名称です。
+The current implementation and latest release are **v5.9.3**. The product name is **Super FURU AI 4-koma System**; **Nano Banana 2** and **gpt-image-2** identify the Gemini and OpenAI image-generation routes. / 現在の実装および最新公開版は **v5.9.3** です。製品名は **Super FURU AI 4-koma System** で、**Nano Banana 2** と **gpt-image-2** はGemini系・OpenAI系の画像生成経路の名称です。
+
+Distribution deployment / 配布ファイルの公開: Hugging Face uploads every current ZIP through Git LFS, including files below 10 MB. GitHub Pages continues to serve ordinary ZIP bytes. Workflow JSON and checksum files retain exact bytes on both hosts. / Hugging Faceでは10 MB未満も含め、現存する配布ZIPをすべてGit LFSで送信します。GitHub Pagesでは従来どおり通常のZIPを配信します。ワークフローJSONとチェックサムファイルは、どちらの公開先でも元のバイトを保持します。
 
 Current behavior at a glance / 現行仕様の要点:
 
@@ -853,6 +855,9 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 ---
 
 ## 📋 ChangeLog
+
+### v5.9.3 (2026-09-08)
+- Hugging Faceが小容量ZIPも通常Gitのバイナリとして拒否する問題を修正。全配布ZIPにLFSを適用し、未公開の失敗コミットをローカル退避してから公開履歴を基点に再構築します。アプリ機能と配布ZIPの内容は変更しません。 / Fixes Hugging Face rejection of small ZIP binaries by tracking all current ZIPs with LFS. Unpublished failed commits are preserved locally before rebuilding from remote history. App behavior and distribution ZIP contents are unchanged.
 
 ### v5.9.2 (2026-09-07)
 - **[Fix & UX]** 現存するpublic配布ZIPだけをHFのサイズ判定対象にし、小容量ZIPを通常Git配信 / Classify only existing public distribution ZIPs for Hugging Face and deliver small ZIPs through regular Git

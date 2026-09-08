@@ -17,16 +17,17 @@ test('HF deploy preserves the Docker runtime and SPA routing configuration', asy
   assert.match(script, /missing required runtime file/);
   assert.match(script, /git fetch origin main/);
   assert.match(script, /\$HfLocalOnlyCommitCount/);
-  assert.match(script, /\$HfHasUnpushedLfsObject/);
+  assert.doesNotMatch(script, /Select-String -SimpleMatch "Objects to be pushed/);
+  assert.match(script, /if \(\$HfLocalOnlyCommitCount -gt 0\)/);
   assert.match(script, /recovery\/hf-unpublished-lfs/);
   assert.match(script, /git reset --mixed origin\/main/);
 });
 
-test('HF deploy derives byte-preservation attributes from every Pages distribution asset and reserves LFS for large ZIPs', async () => {
+test('HF deploy tracks every current ZIP with LFS regardless of size and preserves Pages bytes', async () => {
   const script = await readFile(new URL('../scripts/deploy_hf.ps1', import.meta.url), 'utf8');
   const pagesAttributes = await readFile(new URL('../public/.gitattributes', import.meta.url), 'utf8');
 
-  const copyIndex = script.indexOf('# === Step 6: Preserve distribution bytes and use LFS only when a ZIP needs it ===');
+  const copyIndex = script.indexOf('# === Step 6: Preserve distribution bytes and track all current ZIPs with LFS ===');
   const attributesReadIndex = script.indexOf('$PublicDistributionAttributes = @(Get-Content -LiteralPath (Join-Path $ProjectRoot "public\\.gitattributes") -Encoding UTF8)');
   const zipPathsIndex = script.indexOf('$HfDistributionZipPaths = @($PublicDistributionAttributes |');
   const lfsLoopIndex = script.indexOf('foreach ($HfLfsZipPath in $HfLfsZipPaths)');
@@ -40,10 +41,8 @@ test('HF deploy derives byte-preservation attributes from every Pages distributi
   assert.match(script, /\$HfCurrentZipPaths/);
   assert.match(script, /Join-Path \(Join-Path \$ProjectRoot "public"\)/);
   assert.match(script, /Test-Path -LiteralPath \$sourceZip/);
-  assert.match(script, /\$HfLfsThresholdBytes\s*=\s*10MB/);
-  assert.match(script, /Get-Item -LiteralPath \$sourceZip -ErrorAction Stop\)\.Length -gt \$HfLfsThresholdBytes/);
-  assert.match(script, /\$HfPlainZipPaths/);
-  assert.match(script, /Using regular Git for small ZIP/);
+  assert.match(script, /\$HfLfsZipPaths = @\(\$HfCurrentZipPaths\)/);
+  assert.doesNotMatch(script, /HfLfsThresholdBytes|HfPlainZipPaths|Using regular Git for small ZIP/);
   assert.match(script, /Where-Object \{ \$_ -match '\^\(\?:workflows\/.+\\\.json\|downloads\/.+\\\.zip\(\?:\\\.sha256\\\.txt\)\?\) -text\$' \}/);
   assert.match(script, /git lfs track \$HfLfsZipPath/);
   assert.match(script, /Add-Content[^\n]*\$HfAttributesPath[^\n]*HfBytePreservationRule/s);

@@ -47,9 +47,9 @@ if (-not (Test-Path (Join-Path $HfRoot ".git"))) {
 }
 Write-Host "[OK] HF folder: $HfRoot" -ForegroundColor Green
 
-# === Step 3: Recover only local commits blocked by an unpushed LFS object ===
-# A failed prior publish can leave local-only commits that require an unavailable
-# LFS upload. Preserve them under a local recovery ref, then rebuild the Space
+# === Step 3: Preserve unpublished deployment commits before rebuilding ===
+# A failed prior publish can leave local-only commits containing rejected binary
+# blobs or unuploaded LFS objects. Preserve them under a local recovery ref, then rebuild the Space
 # from its current remote main before copying the requested distribution.
 Push-Location $HfRoot
 git fetch origin main
@@ -59,8 +59,7 @@ if ($LASTEXITCODE -ne 0) {
     exit 1
 }
 $HfLocalOnlyCommitCount = [int]((git rev-list --count origin/main..HEAD).Trim())
-$HfHasUnpushedLfsObject = [bool](@(git lfs status | Select-String -SimpleMatch "Objects to be pushed to origin/main").Count -gt 0)
-if ($HfLocalOnlyCommitCount -gt 0 -and $HfHasUnpushedLfsObject) {
+if ($HfLocalOnlyCommitCount -gt 0) {
     $HfRecoveryRef = "recovery/hf-unpublished-lfs-$(Get-Date -Format 'yyyyMMdd-HHmmss')"
     git branch $HfRecoveryRef HEAD
     if ($LASTEXITCODE -ne 0) {
@@ -119,11 +118,10 @@ Get-ChildItem $DistDir -Force | ForEach-Object {
     Write-Host "  Copied: $($_.Name)" -ForegroundColor DarkGray
 }
 
-# === Step 6: Preserve distribution bytes and use LFS only when a ZIP needs it ===
+# === Step 6: Preserve distribution bytes and track all current ZIPs with LFS ===
 # This is intentionally applied only inside the HF checkout. Adding the rule to
 # public/.gitattributes would turn GitHub Pages downloads into pointer files.
-# Small supplied workflow bundles are ordinary Git blobs; routing them through LFS
-# would unnecessarily require a separate authenticated object upload.
+# The Hub rejects these ZIP binaries even below 10 MB. Size is not an exemption.
 Write-Host "[DIST] Syncing current distribution attributes..." -ForegroundColor Yellow
 Push-Location $HfRoot
 $PublicDistributionAttributes = @(Get-Content -LiteralPath (Join-Path $ProjectRoot "public\.gitattributes") -Encoding UTF8)
@@ -140,22 +138,8 @@ if ($HfCurrentZipPaths.Count -eq 0) {
     Pop-Location
     exit 1
 }
-$HfLfsThresholdBytes = 10MB
-$HfLfsZipPaths = @($HfCurrentZipPaths | Where-Object {
-    $sourceZip = Join-Path (Join-Path $ProjectRoot "public") (($_ -replace '/', '\'))
-    (Get-Item -LiteralPath $sourceZip -ErrorAction Stop).Length -gt $HfLfsThresholdBytes
-})
-$HfPlainZipPaths = @($HfCurrentZipPaths | Where-Object { $_ -notin $HfLfsZipPaths })
+$HfLfsZipPaths = @($HfCurrentZipPaths)
 $HfAttributesPath = Join-Path $HfRoot ".gitattributes"
-$HfAttributeLines = @(Get-Content -LiteralPath $HfAttributesPath -Encoding UTF8)
-foreach ($HfPlainZipPath in $HfPlainZipPaths) {
-    $lfsRule = "$HfPlainZipPath filter=lfs diff=lfs merge=lfs -text"
-    if ($HfAttributeLines -ccontains $lfsRule) {
-        $HfAttributeLines = @($HfAttributeLines | Where-Object { $_ -cne $lfsRule })
-        Set-Content -LiteralPath $HfAttributesPath -Value $HfAttributeLines -Encoding UTF8
-        Write-Host "  Using regular Git for small ZIP: $HfPlainZipPath" -ForegroundColor DarkGray
-    }
-}
 foreach ($HfLfsZipPath in $HfLfsZipPaths) {
     git lfs track $HfLfsZipPath
     if ($LASTEXITCODE -ne 0) {
