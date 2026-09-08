@@ -8,6 +8,7 @@ let extractEmotionStyle;
 let extractActionOnly;
 let extractDialogueOnly;
 let extractPlacementRule;
+let extractCastLimitRule;
 
 before(async () => {
   server = await createServer({
@@ -21,10 +22,19 @@ before(async () => {
   extractActionOnly = panelUtils.extractActionOnly;
   extractDialogueOnly = panelUtils.extractDialogueOnly;
   extractPlacementRule = panelUtils.extractPlacementRule;
+  extractCastLimitRule = panelUtils.extractCastLimitRule;
 });
 
 after(async () => {
   await server?.close();
+});
+
+test('Action metadata retains silent actors in panel cast limits', () => {
+  const cast = '## 1. 太郎\n- black hair\n## 2. 花子\n- brown hair';
+  const rule = extractCastLimitRule('[2コマ目: 承]\nAction: 太郎が鞄を開き、花子が中をのぞく。\n太郎「ここだよ！」', cast, { compact: true });
+  assert.doesNotMatch(rule, /SOLO/);
+  assert.match(rule, /花子/);
+  assert.doesNotMatch(rule, /ABSENT[^\n]*花子/);
 });
 
 const CAST_LIST = `

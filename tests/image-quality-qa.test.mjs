@@ -6,7 +6,19 @@ import {
   buildImageQualityQaPrompt,
   formatImageQualityIssue,
   parseImageQualityQaResponse,
+  buildImageQualityComparisonPrompt,
+  parseImageQualityComparison,
 } from '../src/lib/image-quality-qa.js';
+
+test('direct comparison fixes image order and defaults uncertain judgments to original', () => {
+  const prompt = buildImageQualityComparisonPrompt({ scenario: '台詞原文', finalPrompt: 'approved prompt' });
+  assert.match(prompt, /Image 1 is the original; image 2 is the repair/);
+  assert.match(prompt, /台詞原文/);
+  assert.equal(parseImageQualityComparison('{"preferred":"repair","reason":"fixed hand"}').preferred, 'repair');
+  for (const response of ['bad JSON', '{"preferred":"tie"}', '{"preferred":"repair","reason":""}', '{"preferred":"original","reason":"better text"}']) {
+    assert.equal(parseImageQualityComparison(response).preferred, 'original');
+  }
+});
 
 const SINGLE_IMAGE_PROMPT = `[ ANTIGRAVITY EMOTIONAL CINEMA ENGINE v2.1 ]
 Create a SINGLE breathtaking illustration.`;

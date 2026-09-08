@@ -30,13 +30,23 @@ import { isImagePolicyError } from '../lib/image-policy-error';
 import {
   buildImageQualityQaImageParts,
   buildImageQualityQaPrompt,
+  buildImageQualityComparisonPrompt,
+  parseImageQualityComparison,
   formatImageQualityIssue,
   parseImageQualityQaResponse
 } from '../lib/image-quality-qa';
 import { inferImageQualityMode, runImageQualityFailsafe } from '../lib/image-quality-failsafe';
 import { getEffectiveEngine } from '../lib/engine-state';
+import { DEFAULT_OPENAI_IMAGE_QUALITY, normalizeOpenAIImageQuality, resolveOpenAIImageOption, isOpenAIImageVerificationError, OPENAI_IMAGE_VERIFICATION_MESSAGE } from '../lib/openai-image-settings.js';
 
 export default function useMangaWorkflow() {
+  const [openAIImageQuality, setOpenAIImageQualityState] = useState(DEFAULT_OPENAI_IMAGE_QUALITY);
+  const [openAIImageVerificationWarning, setOpenAIImageVerificationWarning] = useState('');
+  const [allowImageQualityRepair, setAllowImageQualityRepair] = useState(true);
+  const setOpenAIImageQuality = (value) => {
+    setOpenAIImageQualityState(normalizeOpenAIImageQuality(value));
+    setOpenAIImageVerificationWarning('');
+  };
   // Force Build 2026-02-06 07:07 // Build 2026-02-06-01
   const initialApiSession = getApiSessionSnapshot();
   const [apiKey, setApiKeyState] = useState(initialApiSession.credentialPresent);
@@ -1156,7 +1166,8 @@ export default function useMangaWorkflow() {
     await new Promise(r => setTimeout(r, 800));
 
     try {
-      showStatus(isOpenAIEngine ? "OpenAI (ChatGPT Images 2.0) に送信中..." : "Google AI (Gemini/Imagen) に送信中...");
+      setOpenAIImageVerificationWarning('');
+      showStatus(isOpenAIEngine ? `${resolveOpenAIImageOption(openAIImageQuality).label} に送信中...` : "Google AI (Gemini/Imagen) に送信中...");
       setGenLog(prev => [...prev, "[3/5] クラウドAPIへ接続中...", "[3/5] プロンプトデータをアップロード中..."]);
 
       await new Promise(r => setTimeout(r, 1000)); // More visibility
@@ -1176,9 +1187,9 @@ export default function useMangaWorkflow() {
         let response;
         if (isOpenAIEngine) {
           statCallback(repair
-            ? '[QUALITY QA] ⏳ gpt-image-2 で限定修正版を生成中です...'
-            : '[INFO] ⏳ gpt-image-2 の画像生成には通常2〜10分かかります。しばらくお待ちください...');
-          response = await generateImageWithOpenAI(prompt, statCallback);
+            ? `[QUALITY QA] ${resolveOpenAIImageOption(openAIImageQuality).label} で限定修正版を生成中です...`
+            : `[INFO] ${resolveOpenAIImageOption(openAIImageQuality).label} の最終画像を待機します...`);
+          response = await generateImageWithOpenAI(prompt, statCallback, { quality: openAIImageQuality });
         } else {
           if (geminiReferenceImages.length > 0) {
             statCallback(`[REF] Gemini画像編集用の参照画像 ${geminiReferenceImages.length}枚を添付`);
@@ -1239,14 +1250,29 @@ export default function useMangaWorkflow() {
       const finalImageStr = `data:${generatedMimeType};base64,${originalCandidate.base64Img}`;
       setGeneratedImage(finalImageStr);
       setGenerationHistory(prev => addGenerationHistoryItem(prev, { id: Date.now(), img: finalImageStr }));
-      statCallback('[QUALITY QA] キャラクターシート・人物・手・小物・吹き出しを検査中です。画像は先に保存し、具体的なNGだけ1回限定修正します。');
+      statCallback(allowImageQualityRepair
+        ? '[QUALITY QA] キャラクターシート・人物・手・小物・吹き出しを検査中です。画像は先に保存し、具体的なNGだけ1回限定修正します。'
+        : '[QUALITY QA] 自動修正OFF：元画像を保存して品質検査します。追加の画像生成は行いません。');
 
       const qualityOutcome = await runImageQualityFailsafe({
+        allowRepair: allowImageQualityRepair,
         originalCandidate,
         originalPrompt: currentPrompt,
         mode: qualityMode,
         reviewCandidate: reviewImageCandidate,
         generateRepairCandidate: (repairPrompt) => generateImageCandidate(repairPrompt, { repair: true }),
+        compareCandidates: async (original, repair, originalPrompt) => {
+          statCallback('[QUALITY QA] 元画像と修正版を直接比較し、台詞・人物・動作を優先して自動選択します。');
+          const comparisonParts = [
+            ...buildImageQualityQaImageParts({ candidate: original }),
+            ...buildImageQualityQaImageParts({ candidate: repair, referenceImages: images }),
+          ];
+          const comparison = await callAI(
+            buildImageQualityComparisonPrompt({ scenario, castList, finalPrompt: originalPrompt }),
+            comparisonParts, null, msg => statCallback(`[QUALITY QA] ${msg}`)
+          );
+          return parseImageQualityComparison(comparison.text);
+        },
         onProgress: (msg) => statCallback(`[QUALITY QA] ${msg}`),
       });
       const qualityResult = qualityOutcome.finalReview;
@@ -1333,7 +1359,11 @@ export default function useMangaWorkflow() {
       const errMsg = error.message || "";
       let guideLines = [];
 
-      if (errMsg.includes("OpenAI APIキーが設定されていません。")) {
+      if (isOpenAIEngine && isOpenAIImageVerificationError(errMsg, openAIImageQuality)) {
+        setOpenAIImageVerificationWarning(OPENAI_IMAGE_VERIFICATION_MESSAGE);
+        if (isFullAutoMode) fullAutoAbortRef.current = true;
+        guideLines = [`[ERROR GUIDE] ${OPENAI_IMAGE_VERIFICATION_MESSAGE}`];
+      } else if (errMsg.includes("OpenAI APIキーが設定されていません。")) {
         setShowModal(true);
         guideLines = [
           "[ERROR GUIDE] OpenAI APIキーをメモリから読み取れませんでした。作業内容を保持したまま再入力画面を開きます。"
@@ -1891,6 +1921,11 @@ export default function useMangaWorkflow() {
     processFiles,
     punchlineType,
     regenerateImage,
+    openAIImageQuality,
+    openAIImageVerificationWarning,
+    allowImageQualityRepair,
+    setAllowImageQualityRepair,
+    setOpenAIImageQuality,
     regenerateSafePrompt,
     revertScenario,
     scenario,

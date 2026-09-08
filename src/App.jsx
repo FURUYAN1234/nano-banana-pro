@@ -105,6 +105,11 @@ function App() {
     processFiles,
     punchlineType,
     regenerateImage,
+    openAIImageQuality,
+    openAIImageVerificationWarning,
+    allowImageQualityRepair,
+    setAllowImageQualityRepair,
+    setOpenAIImageQuality,
     regenerateSafePrompt,
     revertScenario,
     scenario,
@@ -379,6 +384,11 @@ function App() {
               SYSTEM_VERSION={SYSTEM_VERSION}
               isAssembling={isAssembling}
                regenerateImage={regenerateImage}
+              openAIImageQuality={openAIImageQuality}
+              openAIImageVerificationWarning={openAIImageVerificationWarning}
+              allowImageQualityRepair={allowImageQualityRepair}
+              setAllowImageQualityRepair={setAllowImageQualityRepair}
+              setOpenAIImageQuality={setOpenAIImageQuality}
               isGeneratingImage={isGeneratingImage}
               isFixPromptCopied={isFixPromptCopied}
               setIsFixPromptCopied={setIsFixPromptCopied}

@@ -259,6 +259,8 @@ Do not emit the ending credit as a literal URL in the authoring response, becaus
 /**
  * STEP 04: 4コマ漫画生成 ＆ 履歴パネル
  */
+import { OPENAI_IMAGE_OPTIONS, resolveOpenAIImageOption } from '../lib/openai-image-settings.js';
+
 export default function Step4Panel({
   outputRef,
   currentStep,
@@ -293,6 +295,11 @@ export default function Step4Panel({
   SYSTEM_VERSION,
   isAssembling,
   regenerateImage,
+  openAIImageQuality,
+  openAIImageVerificationWarning,
+  allowImageQualityRepair,
+  setAllowImageQualityRepair,
+  setOpenAIImageQuality,
   isGeneratingImage,
   isFixPromptCopied,
   setIsFixPromptCopied,
@@ -560,14 +567,47 @@ export default function Step4Panel({
                 この欄で直接編集できます。編集した内容が、プロンプトのコピーと画像生成の両方に使われます。
               </div>
 
+              {isOpenAIImageMode && (
+                <div className="mt-6 border-t border-white/20 pt-4">
+                  <label htmlFor="openai-image-quality" className="block text-xs text-slate-300 mb-2">API画像生成の品質</label>
+                  <select
+                    id="openai-image-quality"
+                    value={openAIImageQuality}
+                    onChange={(event) => setOpenAIImageQuality(event.target.value)}
+                    disabled={isGeneratingImage || isFixingPolicy}
+                    className="w-full rounded-lg border border-white/20 bg-slate-900 p-3 text-sm text-white disabled:opacity-50"
+                  >
+                    {OPENAI_IMAGE_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+                  </select>
+                  <p className="mt-2 text-xs text-slate-400">
+                    選択はリロードまで保持します。リロード後はSunburst / xhighに戻ります。
+                  </p>
+                  <p className="mt-2 text-xs leading-relaxed text-slate-300">
+                    まだ本人確認の手続きがお済みでない方・審査中の方は、上のプルダウンで「GPT Image 2.0 / high」を選んでから画像を生成してください。自動では切り替わりません。
+                  </p>
+                  <p className="mt-2 text-xs leading-relaxed text-slate-400">
+                    GPT Image 2.5の利用には、APIアカウントの組織認証（個人の場合は本人確認）が必要な場合があります。
+                    <a href="https://platform.openai.com/settings/organization/general" target="_blank" rel="noopener noreferrer" className="text-emerald-400 underline">組織設定</a>
+                    の「Verifications → Individual → Start」から、Personaの公式画面で対応する本人確認書類を提出し、承認をお待ちください。書類はこのアプリへ送らないでください。
+                  </p>
+                  <p className="mt-2 text-xs leading-relaxed text-slate-400">
+                    承認後に2.5へ切り替えられますが、APIへの反映に時間がかかる場合があります。2.0もアカウントの利用権限によっては使用できません。この認証案内はAPI生成用で、ChatGPTのWeb貼り付け操作には不要です。
+                  </p>
+                  {openAIImageVerificationWarning && <p role="alert" className="mt-2 rounded-lg border border-amber-500/40 bg-amber-950/30 p-3 text-sm text-amber-200">{openAIImageVerificationWarning}</p>}
+                </div>
+              )}
+              <label className="mt-3 flex items-start gap-2 text-xs text-slate-300">
+                <input type="checkbox" checked={allowImageQualityRepair} onChange={event => setAllowImageQualityRepair(event.target.checked)} disabled={isGeneratingImage || isFixingPolicy} />
+                API生成のみ：品質検査NG時に自動修正する（最大1回・追加課金あり／Web貼り付けには影響しません）
+              </label>
               <button
-                onClick={regenerateImage}
+                onClick={() => regenerateImage()}
                 disabled={!finalPrompt || isGeneratingImage || isFixingPolicy}
                 className={`w-full ${isOpenAIImageMode ? 'bg-emerald-600 hover:bg-emerald-500' : 'bg-orange-600 hover:bg-orange-500'} text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg border border-white/10 active:scale-95 disabled:bg-slate-700 disabled:opacity-50 disabled:cursor-wait mt-4`}
               >
                 {isGeneratingImage ? <Loader2 size={20} className="animate-spin" /> : <ImageIcon size={20} />}
                 <div className="flex flex-col items-center">
-                  <span>{isGeneratingImage ? "画像を生成中..." : `画像を生成する (STEP 4: ${isOpenAIImageMode ? 'ChatGPT Images 2.0' : 'Google AI'})`}</span>
+                  <span>{isGeneratingImage ? "画像を生成中..." : `画像を生成する (STEP 4: ${isOpenAIImageMode ? resolveOpenAIImageOption(openAIImageQuality).label : 'Google AI'})`}</span>
                 </div>
               </button>
               <p className="text-[10px] text-slate-500 text-center mt-2 leading-relaxed px-2">
@@ -1043,7 +1083,7 @@ No explanations. No partial results.`;
               >
                 <div className="opacity-50 mb-2 border-b border-white/10 pb-1 flex justify-between text-xs">
                   <span>🖥 画像生成ログ (STEP 4)</span>
-                  <span className={isOpenAIImageMode ? "text-emerald-500" : "text-blue-500"}>{isOpenAIImageMode ? 'v1.3.5 (ChatGPT Images 2.0)' : 'v1.3.5 (Gemini Native Image)'}</span>
+                  <span className={isOpenAIImageMode ? "text-emerald-500" : "text-blue-500"}>{isOpenAIImageMode ? resolveOpenAIImageOption(openAIImageQuality).label : 'v1.3.5 (Gemini Native Image)'}</span>
                 </div>
                 {genLog.length === 0 ? (
                   <div className="text-white/30">待機中... 「画像を生成する」ボタンを押すと開始します。</div>
@@ -1090,7 +1130,7 @@ No explanations. No partial results.`;
                 </p>
                 <p className="text-xs text-blue-200/90 mt-4 font-bold text-center leading-relaxed">
                   高品質な画像を生成しています。<br />
-                  <span className="text-orange-400">※通常2〜10分程度かかります。<br/>このままお待ちください。</span>
+                  <span className="text-orange-400">※生成時間はモデル・品質・混雑状況で変わります。<br/>このままお待ちください。</span>
                 </p>
               </div>
             </div>

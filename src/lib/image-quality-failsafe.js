@@ -57,6 +57,8 @@ export const runImageQualityFailsafe = async ({
   generateRepairCandidate,
   onProgress = () => {},
   mode,
+  allowRepair = true,
+  compareCandidates = async () => ({ preferred: 'original', reason: 'Direct comparison unavailable.' }),
 } = {}) => {
   let originalReview;
   try {
@@ -77,8 +79,10 @@ export const runImageQualityFailsafe = async ({
     };
   }
 
-  if (!hasConcreteIssues(originalReview)) {
-    onProgress('品質レビューを確認できないため、追加の画像API呼び出しは行わず元画像を保持します。');
+  if (!allowRepair || !hasConcreteIssues(originalReview)) {
+    onProgress(!allowRepair
+      ? '自動修正OFFのため、追加の画像API呼び出しは行わず元画像と品質警告を保持します。'
+      : '品質レビューを確認できないため、追加の画像API呼び出しは行わず元画像を保持します。');
     return {
       candidate: originalCandidate,
       finalReview: originalReview,
@@ -121,6 +125,20 @@ export const runImageQualityFailsafe = async ({
   }
 
   if (repairReview?.pass) {
+    let comparison;
+    try {
+      comparison = await compareCandidates(originalCandidate, repairCandidate, originalPrompt);
+    } catch {
+      comparison = { preferred: 'original', reason: '画像の比較判定を取得できませんでした。' };
+    }
+    if (comparison?.preferred !== 'repair') {
+      onProgress(`直接比較で修正版の優位を確認できないため、元画像を保持します。${comparison?.reason || ''}`);
+      return {
+        candidate: originalCandidate, finalReview: originalReview, originalReview, repairReview,
+        attempts: 2, validationWarning: true, fallbackToOriginal: true, repairError: null,
+      };
+    }
+    onProgress(`直接比較で修正版を採用します。${comparison.reason || ''}`);
     onProgress('修正版画像が品質ゲートを通過したため、元画像と置き換えて採用します。');
     return {
       candidate: repairCandidate,

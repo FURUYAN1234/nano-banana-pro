@@ -17,6 +17,20 @@ const fail = (type = 'anatomy') => ({
   issues: [{ type, panel: 2, subject: 'アカリ', reason: '腕が1本多い' }],
 });
 
+test('disabled automatic repair preserves a concrete QA failure without another image request', async () => {
+  let calls = 0;
+  const result = await runImageQualityFailsafe({
+    originalCandidate: candidate('original'), originalPrompt: 'BASE PROMPT',
+    allowRepair: false,
+    reviewCandidate: async () => fail(),
+    generateRepairCandidate: async () => { calls++; return candidate('repair'); },
+  });
+  assert.equal(calls, 0);
+  assert.equal(result.attempts, 1);
+  assert.equal(result.candidate.id, 'original');
+  assert.equal(result.validationWarning, true);
+});
+
 test('uses the original image without retry when visible QA passes', async () => {
   let repairCalls = 0;
   const result = await runImageQualityFailsafe({
@@ -40,6 +54,7 @@ test('adopts one repaired image when the bounded retry passes QA', async () => {
   const result = await runImageQualityFailsafe({
     originalCandidate: candidate('original'),
     originalPrompt: 'BASE PROMPT',
+    compareCandidates: async () => ({ preferred: 'repair', reason: 'Only repair fixes the visible defect without regression.' }),
     reviewCandidate: async (value) => {
       reviewed.push(value.id);
       return value.id === 'original' ? fail('prop_orientation') : pass;
@@ -55,6 +70,28 @@ test('adopts one repaired image when the bounded retry passes QA', async () => {
   assert.deepEqual(reviewed, ['original', 'repair']);
   assert.equal(result.attempts, 2);
   assert.equal(result.validationWarning, false);
+});
+
+test('keeps the original when direct comparison prefers it despite a passing repair', async () => {
+  const result = await runImageQualityFailsafe({
+    originalCandidate: candidate('original'), originalPrompt: 'BASE PROMPT',
+    reviewCandidate: async value => value.id === 'original' ? fail() : pass,
+    generateRepairCandidate: async () => candidate('repair'),
+    compareCandidates: async () => ({ preferred: 'original', reason: 'Original better preserves dialogue.' }),
+  });
+  assert.equal(result.candidate.id, 'original');
+  assert.equal(result.validationWarning, true);
+});
+
+test('comparison failure does not discard the original', async () => {
+  const result = await runImageQualityFailsafe({
+    originalCandidate: candidate('original'), originalPrompt: 'BASE PROMPT',
+    reviewCandidate: async value => value.id === 'original' ? fail() : pass,
+    generateRepairCandidate: async () => candidate('repair'),
+    compareCandidates: async () => { throw new Error('comparison unavailable'); },
+  });
+  assert.equal(result.candidate.id, 'original');
+  assert.equal(result.attempts, 2);
 });
 
 test('restores the saved original image when every repair candidate remains NG', async () => {

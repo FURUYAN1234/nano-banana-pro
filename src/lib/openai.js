@@ -1,17 +1,17 @@
 // ※ OpenAIの画像生成はフォールバック配列を持たず、最高品質の単一モデルを直接指定します。
 import { clearApiSession, getApiCredential, setApiSession } from './api-session.js';
 
-const OPENAI_IMAGE_MODEL = "gpt-image-2";
+import { resolveOpenAIImageOption } from './openai-image-settings.js';
 const OPENAI_IMAGE_TIMEOUT_MS = 600000;
 const OPENAI_IMAGE_TIMEOUT_SECONDS = OPENAI_IMAGE_TIMEOUT_MS / 1000;
 const OPENAI_IMAGE_PROMPT_MAX_CHARS = 32000;
 
-export const buildOpenAIImageRequestBody = (prompt, { stream = true } = {}) => ({
-  model: OPENAI_IMAGE_MODEL,
+export const buildOpenAIImageRequestBody = (prompt, { stream = true, quality } = {}) => ({
+  model: resolveOpenAIImageOption(quality).model,
   prompt,
   n: 1,
   size: "1024x1536",
-  quality: "high",
+  quality: resolveOpenAIImageOption(quality).quality,
   output_format: "png",
   moderation: "low",
   ...(stream ? { stream: true, partial_images: 1 } : {}),
@@ -105,8 +105,10 @@ export const readOpenAIImageStream = async (response, statCallback = () => {}) =
   return finalImage;
 };
 
-export const generateImageWithOpenAI = async (prompt, statCallback) => {
-  statCallback("[OpenAI] ChatGPT Images 2.0 にリクエストを送信中...");
+export const generateImageWithOpenAI = async (prompt, statCallback, options = {}) => {
+  const selectedOption = resolveOpenAIImageOption(options.quality);
+  const quality = selectedOption.value;
+  statCallback(`[OpenAI] ${selectedOption.label} にリクエストを送信中...`);
   
   const apiKey = getOpenAIApiKey();
   if (!apiKey) {
@@ -130,7 +132,7 @@ export const generateImageWithOpenAI = async (prompt, statCallback) => {
       "Content-Type": "application/json",
       "Authorization": `Bearer ${apiKey}`
     },
-    body: JSON.stringify(buildOpenAIImageRequestBody(prompt, { stream })),
+    body: JSON.stringify(buildOpenAIImageRequestBody(prompt, { stream, quality })),
     signal: controller.signal
   });
 
@@ -164,7 +166,7 @@ export const generateImageWithOpenAI = async (prompt, statCallback) => {
     return {
       base64Img,
       mimeType: "image/png",
-      usedModel: OPENAI_IMAGE_MODEL
+      usedModel: selectedOption.model
     };
   }
 
@@ -175,7 +177,7 @@ export const generateImageWithOpenAI = async (prompt, statCallback) => {
     return {
       base64Img: data.data[0].b64_json,
       mimeType: "image/png",
-      usedModel: OPENAI_IMAGE_MODEL
+      usedModel: selectedOption.model
     };
   } else {
     throw new Error("APIレスポンスに画像データが含まれていませんでした。");

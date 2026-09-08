@@ -10,7 +10,8 @@ import {
 test('gpt-image request uses the supported low moderation level', () => {
   const request = buildOpenAIImageRequestBody('full production manga prompt');
 
-  assert.equal(request.model, 'gpt-image-2');
+  assert.equal(request.model, 'gpt-image-2.5-sunburst');
+  assert.equal(request.quality, 'xhigh');
   assert.equal(request.prompt, 'full production manga prompt');
   assert.equal(request.moderation, 'low');
   assert.equal(request.stream, true);
@@ -20,7 +21,7 @@ test('gpt-image request uses the supported low moderation level', () => {
 test('non-streaming fallback omits streaming-only request fields', () => {
   const request = buildOpenAIImageRequestBody('fallback prompt', { stream: false });
 
-  assert.equal(request.model, 'gpt-image-2');
+  assert.equal(request.model, 'gpt-image-2.5-sunburst');
   assert.equal(request.prompt, 'fallback prompt');
   assert.equal('stream' in request, false);
   assert.equal('partial_images' in request, false);
@@ -40,7 +41,8 @@ test('retries once without streaming when the browser stream fetch fails', async
   };
 
   try {
-    const result = await generateImageWithOpenAI('fallback prompt', () => {});
+    const result = await generateImageWithOpenAI('fallback prompt', () => {}, { quality: 'high' });
+    assert.equal(requests.every(request => request.quality === 'high'), true);
     assert.equal(result.base64Img, 'fallback-image');
     assert.equal(requests.length, 2);
     assert.equal(requests[0].stream, true);

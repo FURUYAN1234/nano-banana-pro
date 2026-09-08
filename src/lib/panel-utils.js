@@ -1381,6 +1381,10 @@ export const extractCastLimitRule = (fullPanelText, castList, options = {}) => {
   const actionAndMetaLines = [];
   lines.forEach(line => {
     if (PANEL_HEADER_RE.test(line)) return;
+    if (/^\s*Action\s*[:：]/i.test(line)) {
+      actionAndMetaLines.push(line);
+      return;
+    }
     const match = line.match(/^(.*?)(?:[:：]|「)/);
     let isDialogue = false;
     if (match && match[1].trim()) {
