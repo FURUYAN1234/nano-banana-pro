@@ -80,6 +80,6 @@ test('preserves terminal title punctuation in Gemini prompt title', () => {
     systemVersion: 'v4.7.9'
   });
 
-  assert.match(prompt, /Top page: draw large bold black Japanese text title: "白黒ポテチ袋創作ブーム!\?"/);
+  assert.match(prompt, /Top page: draw large black Japanese text title: "白黒ポテチ袋創作ブーム!\?"/);
   assert.doesNotMatch(prompt, /NO quotes\/punctuation around title/);
 });

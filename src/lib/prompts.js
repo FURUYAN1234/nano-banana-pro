@@ -14,6 +14,18 @@ import {
   SCENARIO_GESTURE_VARIETY_RULES
 } from './composition-variety';
 
+const MANGA_PAGE_TYPOGRAPHY_LOCK = `PAGE TYPE HIERARCHY:
+- Page title: render the exact title once at the top in EXTRA-BOLD condensed Japanese Gothic sans-serif, solid black, horizontal, centered, and clearly separated from the panels.
+- Do not use the page-title typeface for dialogue, captions, or speech bubbles.
+
+SPEECH BUBBLE TYPE LOCK:
+- Render every Japanese dialogue bubble in vertical Japanese tategaki using regular-weight Japanese manga Mincho-style type: slender, even strokes, clear counters, tight but readable vertical spacing, and black text on a white bubble.
+- Keep this same regular Mincho-style dialogue treatment in every panel, regardless of emotion, panel style, or dialogue intensity.
+- NEVER use bold Gothic or bold sans-serif inside speech bubbles, including shouts or punchlines. Keep emphasis through bubble shape, composition, or punctuation instead of changing the dialogue font weight or family.`;
+
+const MANGA_PAGE_TYPOGRAPHY_LOCK_COMPACT = `PAGE TYPE HIERARCHY: Title: EXTRA-BOLD condensed Japanese Gothic; never use title type in dialogue.
+SPEECH BUBBLE TYPE LOCK: vertical Japanese tategaki, regular-weight Japanese manga Mincho-style, slender black strokes on white, same every panel. NEVER use bold Gothic or bold sans-serif inside speech bubbles; emphasize with bubble shape, composition, or punctuation.`;
+
 // --- プロンプトテンプレート (prompts.js) ---
 // App.jsx から抽出された大規模プロンプト文字列テンプレート群
 // 各STEP用のAIプロンプトをここに集約し、App.jsx の行数を削減する
@@ -750,7 +762,8 @@ ABSOLUTE TASK: new 4-panel manga, not a reference sheet. Use character refs only
 
 FORMAT:
 - A4 portrait 1:1.414; 4 equal horizontal panels, 95% width, thick white gutters, no large margins/space below panel 4.
-- Top title EXACTLY "${safeTopic}", large bold black, centered.
+- Top title EXACTLY "${safeTopic}", large black, centered.
+${MANGA_PAGE_TYPOGRAPHY_LOCK_COMPACT}
 - Bottom-right 4th-panel watermark EXACTLY "${watermarkEng}", tiny horizontal.
 - Bottom-left 4th-panel watermark EXACTLY "ネームから全自動の自律式統合AI漫画システム :https://note.com/happy_duck780", tiny horizontal. Copy "自律式" exactly.
 
@@ -863,8 +876,9 @@ MUST have tall portrait aspect ratio (A4 paper, 1:1.414).
 
 LAYOUT:
 Canvas completely filled by panels (95% width). NO large white margins.
-Top page: draw large bold black Japanese text title: "${safeTopic}"
+Top page: draw large black Japanese text title: "${safeTopic}"
 Do NOT add quote marks around the title or invent extra punctuation. Preserve the exact punctuation already present in the specified title.
+${MANGA_PAGE_TYPOGRAPHY_LOCK}
 Draw tiny English watermark ON bottom-right border of 4th panel: "${watermarkEng}" (clean sans-serif). VERBATIM COPY — do NOT paraphrase or alter any word.
 Draw tiny Japanese watermark ON bottom-left border of 4th panel: "ネームから全自動の自律式統合AI漫画システム :https://note.com/happy_duck780" (in an extremely small font size to prevent overlapping with the right watermark). ⚠️ CRITICAL: The word "自律式" must appear EXACTLY as written. Do NOT replace it with topic-related words. Copy character-by-character.
 Watermarks standard horizontal. The Japanese watermark on the left and the English watermark on the right must be small enough and spaced apart so they do not touch or overlap. NO extra white space below panel 4.
@@ -946,7 +960,7 @@ Important constraints:
 - Do NOT write situation/narration explanations as text on the screen. The Visual Action must only be illustrated, except explicit visual scene text requested by the action, such as handwriting, air-writing, signs, labels, printed text, screen text, or board text.
 - Only Dialogue entries may become white manga speech bubbles. Quoted ambience, SFX names, mood words, aura names, emotion labels, and narration terms in Visual Action are NOT visible text. Render quoted Action words as physical scene text ONLY when the action explicitly requests visible writing.
 - Speaker names and square-bracket tail targets are never visible text.
-- Write the Japanese spoken text clearly inside white manga speech bubbles in a bold sans-serif Japanese font.
+- Apply the SPEECH BUBBLE TYPE LOCK above to every Japanese spoken-text bubble.
 - DIALOGUE TEXT IS VERBATIM: The text inside each Speech Bubble MUST be copied EXACTLY as written in the Dialogue section — character by character. Do NOT paraphrase, rephrase, or substitute synonyms.
 - Do NOT normalize punctuation. If the Dialogue line has no punctuation, keep it that way; if it has punctuation, copy only that exact punctuation.
 - TYPOGRAPHY RULE: Write Japanese text tightly with ZERO spaces between words. Do NOT insert any gaps or spaces between characters. (no letter spacing:1.5), (tight kerning:1.5).
