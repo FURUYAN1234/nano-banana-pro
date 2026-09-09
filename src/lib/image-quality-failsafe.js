@@ -24,7 +24,7 @@ const formatRepairIssue = (issue = {}) => (
   `- panel ${issue.panel ?? 'unknown'} / ${issue.type || 'unverified'} / ${issue.subject || 'unspecified'}: ${issue.reason || 'visible issue'}`
 );
 
-export const buildImageQualityRepairPrompt = ({ originalPrompt = '', issues = [], mode } = {}) => {
+export const buildImageQualityRepairPrompt = ({ originalPrompt = '', issues = [], mode, sourceMode = 'regenerate' } = {}) => {
   const concreteIssues = issues
     .filter((issue) => issue?.type !== 'unverified')
     .slice(0, 8)
@@ -32,6 +32,27 @@ export const buildImageQualityRepairPrompt = ({ originalPrompt = '', issues = []
     .join('\n');
 
   const effectiveMode = mode || inferImageQualityMode(originalPrompt);
+  if (sourceMode === 'source-image') {
+    const sourceLayout = effectiveMode === 'single-image'
+      ? 'Edit the same single illustration. Do not introduce panels, a comic page, a collage, additional scenes, new characters, or a new setting.'
+      : 'Edit the same four-panel manga page. Preserve exactly four separate visible panels and the original page geometry. Do not merge, omit, duplicate, or reorder panels.';
+    return `${String(originalPrompt)}
+
+  IMAGE QUALITY CORRECTION ATTEMPT (bounded retry 2/${IMAGE_QUALITY_MAX_ATTEMPTS}):
+  SOURCE IMAGE TO EDIT: the first attached image is the actual completed original, not a character sheet.
+  ${sourceLayout}
+  CHANGE:
+  Correct only the concrete visible defects listed below, using the smallest coherent edit:
+  ${concreteIssues || '- No concrete issue was supplied; do not introduce any change.'}
+  PRESERVE:
+  Do not change the approved dialogue, cast, story action, identities, canonical clothing, reading order, camera, crop, typography, colors, or already-correct content outside the defects.
+  Keep the original as the visual baseline. Never redraw the page from scratch or copy the reference-sheet layout.
+  Allow only necessary local contact and shadow changes caused by fixing the listed defect; do not freeze the defective geometry itself.
+  VERIFY:
+  Check the corrected defect against the approved prompt and reference sheets. Check every dialogue line, its speaker, cast identity, hand and prop ownership, camera and unchanged regions for regressions.
+  Do not add speaker names, metadata, translations, annotations, extra text or new characters.`;
+  }
+
   const preservationLock = effectiveMode === 'single-image'
     ? `Create a corrected replacement for the same single illustration.
 Do not introduce panels, panel borders, a comic page, a collage, additional scenes, new characters, or a new setting.
@@ -58,6 +79,7 @@ export const runImageQualityFailsafe = async ({
   onProgress = () => {},
   mode,
   allowRepair = true,
+  repairSourceMode = 'regenerate',
   compareCandidates = async () => ({ preferred: 'original', reason: 'Direct comparison unavailable.' }),
 } = {}) => {
   let originalReview;
@@ -98,6 +120,7 @@ export const runImageQualityFailsafe = async ({
     originalPrompt,
     issues: originalReview.issues,
     mode,
+    sourceMode: repairSourceMode,
   });
   onProgress(`具体的な品質NGを限定修正する画像候補を再生成します（2/${IMAGE_QUALITY_MAX_ATTEMPTS}）。`);
 

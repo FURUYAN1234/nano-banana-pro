@@ -2,7 +2,7 @@
 
 STEP4の「品質検査NG時に自動修正する」は既定ONです。ONでは具体的な品質NGに対して最大1回の追加画像生成（追加課金）が行われます。OFFでは検査結果と元画像を保持し、品質修正の追加画像生成は行いません。モデル比較ではOFFにして同一プロンプトの最初の出力を比較してください。/ STEP4 automatic quality repair is enabled by default; disable it for first-output comparisons without an additional repair image charge. Automated QA is advisory and can miss dialogue omissions; inspect the actual image against the script.
 
-> Latest release: **v5.9.5** / 最新リリース: **v5.9.5**
+> Latest release: **v5.9.6** / 最新リリース: **v5.9.6**
 
 > **"To what extent can humans step away from the creative process?"**
 > **「人間は、どこまで制作から降りられるのか？」**
@@ -24,7 +24,7 @@ STEP4の「品質検査NG時に自動修正する」は既定ONです。ONでは
 This project aims to intentionally exclude humans from the creative process, allowing AI to act as a director and complete everything from brainstorming to composition, direction, and rendering.
 本プロジェクトは、人間をクリエイティブな工程から意図的に排除し、AIがディレクターとして「ネタ出し・構成・演出・作画」のすべてを完結させることを目的としています。
 
-The current implementation and latest release are **v5.9.5**. The product name is **Super FURU AI 4-koma System**. STEP4 offers Gemini and OpenAI image-generation routes, including GPT Image 2.5. / 現在の実装および最新公開版は **v5.9.5** です。製品名は **Super FURU AI 4-koma System** で、STEP4ではGPT Image 2.5を含むOpenAI系とGemini系の画像生成経路を利用できます。
+The current implementation and latest release are **v5.9.6**. The product name is **Super FURU AI 4-koma System**. STEP4 offers Gemini and OpenAI image-generation routes, including GPT Image 2.5. / 現在の実装および最新公開版は **v5.9.6** です。製品名は **Super FURU AI 4-koma System** で、STEP4ではGPT Image 2.5を含むOpenAI系とGemini系の画像生成経路を利用できます。
 
 Distribution deployment / 配布ファイルの公開: Hugging Face uploads every current ZIP through Git LFS, including files below 10 MB. GitHub Pages continues to serve ordinary ZIP bytes. Workflow JSON and checksum files retain exact bytes on both hosts. / Hugging Faceでは10 MB未満も含め、現存する配布ZIPをすべてGit LFSで送信します。GitHub Pagesでは従来どおり通常のZIPを配信します。ワークフローJSONとチェックサムファイルは、どちらの公開先でも元のバイトを保持します。
 
@@ -66,15 +66,15 @@ For this manually configured standard ComfyUI route, select `MiniMax H3 Referenc
 
 **Using the Fused4step + SLA workflow / Fused4step・SLA 配布ワークフローを使う場合**
 
-This route distributes `FourPanel_Fused4_SLA_API_20260907.json` and `FourPanel_Fused4_SLA_API_20260907.zip` as separate direct downloads. The supplied external-API package preserves Fused 4 video steps, audio refinement at 2 steps with denoise 0.5, SLA attention, and the three custom-node folders. It turns the four panels into four story acts, assigns five seconds per retained dialogue turn with no upper duration cap, uses 30 seconds only when there is no dialogue, and uses H3-generated BGM at low volume beneath the dialogue. Each segment is generated and inspected; only a segment with duplicated people, a clear hairstyle mismatch, broken dialogue, or doubled voice is retried by cause up to three times. Transcription failures continue to independent waveform inspection so small terminal-vowel and punctuation differences are less likely to cause false failures. / この経路では `FourPanel_Fused4_SLA_API_20260907.json` と `FourPanel_Fused4_SLA_API_20260907.zip` を別々に配布します。提供された外部API版は、Fused 4ステップ・音声補正2ステップ（denoise 0.5）・SLA Attention・3つのカスタムノードフォルダを保持します。4コマを物語の4幕として扱い、保持した台詞1本につき5秒・上限なしの完全可変尺にします。台詞がない場合だけ既定30秒を使います。既定はH3生成BGMありで、台詞中は低音量へ強く抑えます。区間ごとに生成・検査し、分身、明らかな髪型違い、台詞破綻、二重発声が出た区間だけ原因別に最大3回試行します。文字起こしが失敗判定でも独立波形検査へ進むため、終端の長音や句読点の軽微な差による誤判定を抑えます。
+This route distributes `FourPanel_NonLM_4step_20260910071735_v1.1.7.json` and `ComfyUI_H3_Workflows_20260910071735_v1.1.7.zip` as separate downloads. Five custom-node folders are bundled. Each segment compares at most five candidates including the initial attempt; an earlier pass proceeds immediately, and the best candidate is retained if all fail. / この経路では `FourPanel_NonLM_4step_20260910071735_v1.1.7.json` と `ComfyUI_H3_Workflows_20260910071735_v1.1.7.zip` を別々に配布します。Fused 4ステップ・音声補正2ステップ（denoise 0.5）・SLA Attentionを保持します。台詞1本につき5秒・上限なし、台詞がない場合だけ既定30秒です。H3生成BGMは台詞中に低音量へ抑えます。区間ごとに生成・検査し、初回込み最大5候補を比較します。途中で合格したら即座に次へ進み、全候補が不合格なら最良候補を保持して続行します。4・5回目の候補も途中再開できます。日本語の吹き出し位置に基づく読順を使い、台詞と話者を保持します。
 
 **FURU four-panel manga to video / FURUの4コマ漫画を動画化**
 
 The dedicated workflow turns one completed Super FURU AI four-panel manga page into four contiguous MiniMax H3 shots. It retains panel order, panel-derived cast, speaker ownership, story action, setting, and punchline; it gives each visible character a role-appropriate movement, removes speech balloons, and adds the title and fixed end credit outside H3 after generation. / 専用ワークフローは、完成したSuper FURU AIの4コマ漫画1枚を連続する4つのMiniMax H3ショットに変換します。コマ順、各コマから導く登場人物、台詞の話者、物語上の動作、場所、オチを保ち、画面内の各人物へ役割に応じた動きを与え、吹き出しを除去します。タイトルと固定エンドクレジットは、H3生成後にワークフローが合成します。
 
-The bundle contains three raw custom-node folders: `ComfyUI-NanoBanana-H3`, `ComfyUI-MiniMax-H3-Long-Video`, and `ComfyUI-Spectrum-MiniMax-H3`. Extract the outer ZIP, copy those three folders to `ComfyUI/custom_nodes/`, and fully restart ComfyUI. If an older folder has the same name, close ComfyUI and replace the folder without mixing old and new files. Save the workflow JSON under `ComfyUI/user/default/workflows/`. `H3 SLA Attention` also requires [ComfyUI-PlagueKind-Nodes](https://github.com/PlagueKind/ComfyUI-PlagueKind-Nodes) and a Triton-compatible environment. The two-step audio refinement also requires [ComfyUI-H3-AudioRefine](https://github.com/Adudeguyman/ComfyUI-H3-AudioRefine). Neither external dependency is included in the ZIP. / 配布セットには `ComfyUI-NanoBanana-H3`、`ComfyUI-MiniMax-H3-Long-Video`、`ComfyUI-Spectrum-MiniMax-H3` の3フォルダを収録しています。外側ZIPを展開して3フォルダを `ComfyUI/custom_nodes/` へ配置し、ComfyUIを完全に再起動してください。同名の旧版がある場合はComfyUIを終了してフォルダごとに差し替え、新旧ファイルを混在させません。ワークフローJSONは `ComfyUI/user/default/workflows/` 以下へ保存します。`H3 SLA Attention` には別途 [ComfyUI-PlagueKind-Nodes](https://github.com/PlagueKind/ComfyUI-PlagueKind-Nodes) とTriton対応環境が必要です。音声2ステップ補正には [ComfyUI-H3-AudioRefine](https://github.com/Adudeguyman/ComfyUI-H3-AudioRefine) も必要です。どちらの外部依存もZIPには含まれません。
+The bundle includes all five custom-node folders; separate downloads or compatibility patches for those folders are unnecessary. Models and a compatible Triton environment are separate requirements. / 配布セットには `ComfyUI-NanoBanana-H3`、`ComfyUI-MiniMax-H3-Long-Video`、`ComfyUI-Spectrum-MiniMax-H3`、`ComfyUI-H3-AudioRefine`、`ComfyUI-PlagueKind-Nodes` の5フォルダを同梱しています。ZIP内 `ComfyUI_H3_Workflows/custom_nodes/` の5フォルダを `ComfyUI/custom_nodes/` へ配置します。旧版は退避し、新旧ファイルを混在させずComfyUIを再起動してください。5フォルダの追加取得・互換パッチは不要です。`H3 SLA Attention` の [ComfyUI-PlagueKind-Nodes](https://github.com/PlagueKind/ComfyUI-PlagueKind-Nodes) は同梱済みですがTriton対応環境は別途必要です。[ComfyUI-H3-AudioRefine](https://github.com/Adudeguyman/ComfyUI-H3-AudioRefine) も同梱済みです。Spectrumは互換用同梱で、このFused4経路には接続しません。ワークフローJSONは `ComfyUI/user/default/workflows/` 以下へ配置します。導入は同梱 `README_JA.md` を参照してください。再発防止文書 `RELEASE_PREVENTION_JA.md` も収録しています。
 
-`ComfyUI-NanoBanana-H3` is MIT-licensed, `ComfyUI-MiniMax-H3-Long-Video` is GPL-3.0-only, and `ComfyUI-Spectrum-MiniMax-H3` is GPL-3.0-or-later. The grant covers only the original source in each applicable folder, not ComfyUI, model weights, OpenAI/Google services, or user input/output. Models are not included; download missing-model candidates from the workflow or obtain them under their own terms using `モデル一覧・取得先.md`. API keys, authentication files, model binaries, user images, generated outputs, and personal pronunciation dictionaries are not distributed. / `ComfyUI-NanoBanana-H3` は MIT、`ComfyUI-MiniMax-H3-Long-Video` は GPL-3.0-only、`ComfyUI-Spectrum-MiniMax-H3` は GPL-3.0-or-later です。各ライセンスは該当フォルダの独自ソースだけに適用し、ComfyUI本体、モデル重み、OpenAI／Googleサービス、利用者の入出力には及びません。モデルは同梱せず、不足モデルのダウンロード候補または `モデル一覧・取得先.md` から各条件を確認して取得してください。APIキー、認証ファイル、モデル本体、ユーザー画像、生成物、個人用発音辞書は配布しません。
+`ComfyUI-NanoBanana-H3` is MIT-licensed, `ComfyUI-MiniMax-H3-Long-Video` is GPL-3.0-only, and `ComfyUI-Spectrum-MiniMax-H3` is GPL-3.0-or-later. The grant covers only the original source in each applicable folder, not ComfyUI, model weights, OpenAI/Google services, or user input/output. Models are not included; download missing-model candidates from the workflow or obtain them under their own terms using `models.json`. API keys, authentication files, model binaries, user images, generated outputs, and personal pronunciation dictionaries are not distributed. / `ComfyUI-NanoBanana-H3` は MIT、`ComfyUI-MiniMax-H3-Long-Video` は GPL-3.0-only、`ComfyUI-Spectrum-MiniMax-H3` は GPL-3.0-or-later です。各ライセンスは該当フォルダの独自ソースだけに適用し、ComfyUI本体、モデル重み、OpenAI／Googleサービス、利用者の入出力には及びません。モデルは同梱せず、不足モデルのダウンロード候補または `models.json` から各条件を確認して取得してください。APIキー、認証ファイル、モデル本体、ユーザー画像、生成物、個人用発音辞書は配布しません。
 
 The dedicated H3 prompt extracts the exact title as `overlay_title` metadata and removes it before H3 conditioning. `DeterministicTitleWatermarkOverlay` composites it once after decoding at the upper left using black text with a white outline and no background bar; `DeterministicEndCreditOverlay` adds the fixed credit afterward. / 専用H3プロンプトはタイトルを `overlay_title` として抽出し、H3の条件入力から除外します。`DeterministicTitleWatermarkOverlay` が動画生成後に左上へ一度だけ、黒字＋白縁・背景バーなしで合成し、`DeterministicEndCreditOverlay` が固定クレジットを後段で合成します。
 
@@ -239,10 +239,26 @@ AIが生成するストーリーのノリが一パターンになるのを防ぐ
 - **SurrealQuiet (シュール静寂系)** : 狂った状況下でもキャラクターはあえて無表情・真顔を貫き、淡々とした温度感の低いリアクションや奇妙な「間」でシュールな笑いを演出します。
 - **IntellectualBlack (知性派ブラック系)** : 現代社会の風刺や痛烈な皮肉、ダブルミーニングを散りばめ、「よく考えると恐ろしい事実や狂気」が浮かび上がる知的な笑いを構築します。
 
-### 🤖 OpenAI Image Route (`gpt-image-2`) / OpenAI画像経路のノイズ抑制
+### 🤖 OpenAI Image Generation and References / OpenAI画像生成と参照画像
 
-When the OpenAI Engine is selected, the final prompt is formatted for the `gpt-image-2` route. It specifies an A4 portrait composition, Japanese text direction, reading flow, safe rendering terms, prohibited term combinations, and light-effect substitutions. These prompt-level controls reduce common layout and visual-noise failures, but the image model still determines the final pixels.
-OpenAI Engine選択時は、最終プロンプトを `gpt-image-2` 経路向けに整形します。A4縦長構図、日本語文字の方向、視線誘導、安全な描画語、禁止語の組み合わせ、光演出の代替表現を指定します。これらはレイアウト崩れや視覚ノイズを抑えるプロンプト段階の制御であり、最終的な描画結果は画像モデルの解釈に依存します。
+When the OpenAI Engine is selected, the final prompt specifies an A4 portrait composition, Japanese text direction, reading flow, safe rendering terms, prohibited term combinations, and light-effect substitutions. These prompt-level controls reduce common layout and visual-noise failures, but the image model still determines the final pixels.
+OpenAI Engine選択時は、A4縦長構図、日本語文字の方向、視線誘導、安全な描画語、禁止語の組み合わせ、光演出の代替表現を最終プロンプトに指定します。これらはレイアウト崩れや視覚ノイズを抑えるプロンプト段階の制御であり、最終的な描画結果は画像モデルの解釈に依存します。
+
+OpenAI image generation uses the model and quality selected in STEP4. Uploaded character sheets and an enabled 360° panorama are attached as visual references. With references, the app uses the image-edit endpoint to create a new image; without references, it uses the text-to-image generation endpoint. The editable prompt text is preserved, with an API-only description of reference roles appended at send time. Visual identity and dialogue accuracy still require review.
+
+OpenAI画像生成にはSTEP4で選択したモデルと品質を使います。読み込み済みのキャラクターシートと有効な360°パノラマは、用途を区別した参照画像として添付します。参照画像がある場合は画像編集APIで新しい画像を生成し、ない場合は文章からの画像生成APIを使います。編集欄の本文は維持し、送信時に参照画像の用途説明だけを追記します。人物の同一性や台詞の正確さは、生成後の確認が必要です。
+
+When automatic repair is enabled and QA identifies a concrete problem, the OpenAI route submits the completed original image plus the same reference images for one targeted edit. The app adopts the repair only if it passes QA and a direct comparison shows a clear improvement; otherwise, it keeps the original. A repair consumes an additional image API call. An unverified review does not trigger repair.
+
+自動修正がONで品質検査が具体的な問題を検出した場合、OpenAI経路では完成した元画像と同じ参照画像を渡して1回だけ限定修復します。修復画像は品質検査と元画像との直接比較で明確な改善を確認した場合だけ採用し、それ以外は元画像を保持します。修復には追加の画像API料金がかかります。品質検査が未確認の場合は修復しません。
+
+At most 16 input images can be sent, including the original during repair. The app does not silently drop references. If adding the original would exceed the limit, it keeps the original and reports that repair was not sent.
+
+画像入力は修復元画像を含めて最大16枚です。参照画像を黙って省略することはありません。元画像を追加すると上限を超える場合は、修復を送信せず元画像を保持して理由を表示します。
+
+If you subscribe to ChatGPT and want to save on image API charges, copy the prompt and generate in the official ChatGPT web app with your character sheets and optional background image attached. ChatGPT subscription usage limits apply. This manual path does not call Nano Banana's image API. API charges already incurred for character analysis, scenario generation, or other app operations remain separate; a ChatGPT subscription does not include OpenAI API usage.
+
+ChatGPTのサブスクに加入していてAPI画像生成料金を節約したい場合は、プロンプトをコピーし、キャラクターシートと必要な背景画像をChatGPT公式Web版へ添付して生成できます。ChatGPT側の利用枠・上限が適用され、この手動操作からNano Bananaの画像生成APIは呼ばれません。キャラ解析・シナリオ生成などアプリ内で発生したAPI料金は別途必要です。ChatGPTのサブスク料金にOpenAI API利用料金は含まれません。
 
 ### 🛡️ Content Policy Adjustment System / コンテンツポリシー調整とWeb版案内
 
@@ -270,6 +286,8 @@ When a provider returns a safety-policy block, the app presents recovery choices
 > **🔒 Security Architecture / セキュリティ設計**
 > Production is a **client-side static application** hosted on GitHub Pages. Gemini and OpenAI requests are sent from the browser to their respective providers, so the API key is held in memory and is sent only with that provider request; it is not persisted by the app. In local development, Gemini requests use the Vite `/gemini-api` proxy. URL extraction in Free Input uses the CodeTabs public proxy and does not send API keys to it.
 > 本番は GitHub Pages 上の **クライアントサイド静的アプリ** です。GeminiとOpenAIへのリクエストはブラウザから各プロバイダーへ送られるため、APIキーはメモリ内で保持され、そのプロバイダーへのリクエストにだけ送信されます。アプリはキーを永続保存しません。ローカル開発ではGeminiリクエストにViteの `/gemini-api` プロキシを使います。自由入力のURL本文取得にはCodeTabsの公開プロキシを使い、そこへAPIキーは送信しません。
+> STEP4 OpenAI generation also sends the uploaded character sheets and enabled panorama to OpenAI; repair includes the original generated image. Copying a prompt or opening the Web link does not send these inputs.
+> STEP4のOpenAI生成でもキャラシートと有効パノラマをOpenAIへ送信し、修復時には元の生成画像も含めます。プロンプトのコピーやWebリンクを開く操作だけでは、これらの画像を送信しません。
 
 ### 🎨 Context-Aware Auto-Selection / 文脈認識型おまかせ自動選定
 
@@ -320,15 +338,15 @@ To address the extreme complexity of a 5,000+ line monolith, the frontend archit
 
 ## 🔍 Deep Analysis (技術詳解)
 
-### 🧭 Current v5.7.7 Processing Contract / 現行v5.7.7処理仕様
+### 🧭 Current Processing Contract / 現行処理仕様
 
 | Stage | Input | Processing and validation | Output |
 |:--|:--|:--|:--|
 | STEP1 Character analysis / キャラクター解析 | Uploaded character-sheet images / アップロードしたキャラクターシート画像 | The selected text/vision provider extracts appearance, personality, speech, pose, and other identity cues. / 選択中のテキスト・画像認識APIが外見、性格、口調、ポーズなどの同一性情報を抽出します。 | Parsed character records used by all later stages / 後続全段階で使うキャラクター記録 |
 | STEP2 Scenario generation / シナリオ生成 | Character records, automatic topic or complete free input, outfit, punchline, tone / キャラクター記録、自動取得トピックまたは自由入力全文、服装、オチ、トーン | The complete four-panel scenario is checked for structure, standalone bubble dialogue, content hygiene, free-input exclusions, visual evidence, lightweight location/time/weather continuity, and active final-panel staging. Up to three total attempts are made. / 4コマ構造、独立した吹き出し用セリフ、表現衛生、自由入力の禁止条件、視覚証拠、軽量な場所・時刻・天候の継続、4コマ目の能動演出を検証し、全3試行まで実行します。 | First fully valid candidate; ordinary quality warnings retain the best usable candidate, while exhausted dialogue-contract failures require a new STEP2 run / 最初の完全合格候補。通常の品質警告は利用可能な最良候補を保持し、台詞契約が上限まで不成立の場合はSTEP2の再実行を求めます |
 | STEP2 Enhancement / 演出強化 | Saved scenario plus any of seven selected categories / 保存済みシナリオと選択した7カテゴリ | The initial rewrite is compared with the original. If needed, one correction is requested with exact issue codes. / 初回の書換を元シナリオと比較し、必要な場合だけ具体的なNG項目付きで1回修正します。 | Valid enhancement, best usable partial enhancement, or restored original / 合格した強化、利用可能な最良の部分合格候補、または復元した元シナリオ |
-| STEP3 Prompt assembly / プロンプト構築 | Accepted scenario, identity records, provider family, manual staging and optional 360° reference data / 採用シナリオ、同一性情報、プロバイダー系統、手動演出と任意の360度参照情報 | Compiles provider-specific layout, script, dialogue-tail, identity, key-prop, evidence, lightweight setting, eye-line, anatomy, hand/prop, functional-surface orientation, camera, and finish-assist locks. The resulting text is directly editable. / レイアウト、脚本、吹き出し尻尾、同一性、小道具、証拠、軽量な舞台、視線、人体、手・小物、機能面の向き、カメラ、仕上げ補助をプロバイダー別に構築し、完成文を直接編集できます。 | The exact editable prompt used by copy and API generation / コピーとAPI生成に使う編集可能な同一プロンプト |
-| STEP4 Image generation / 画像生成 | Current STEP3 prompt / STEP3の現在のプロンプト | Sends the initial image request, saves the result, and runs visible QA. Character-sheet and background images shape earlier analysis and prompt construction but are not attached to this in-app image request. A concrete NG can trigger one issue-limited repair image; unverified QA does not trigger another image call. OpenAI also retains the newest valid partial when available and retries once without streaming only after a browser-level stream `Failed to fetch`. / 最初の画像を生成・保存して可視QAを行います。キャラクターシートと背景画像は前段の解析・プロンプト構築に反映しますが、このアプリ内の画像生成リクエストへ直接添付はしません。具体的なNG時だけ問題限定の修正版画像を1回生成でき、QA判定不能時は追加生成しません。OpenAIは利用可能な最新途中画像も保持し、ブラウザレベルのストリーム `Failed to fetch` の場合だけ通常応答で1回再試行します。 | Passing repair image, or the saved original image with a concrete warning; downstream work continues / 合格した修正版、または具体的警告付きの保存済み元画像を採用し、後続作業を継続 |
+| STEP3 Prompt assembly / プロンプト構築 | Accepted scenario, identity records, provider family, manual staging and optional 360° reference data / 採用シナリオ、同一性情報、プロバイダー系統、手動演出と任意の360度参照情報 | Compiles provider-specific layout, script, dialogue-tail, identity, key-prop, evidence, lightweight setting, eye-line, anatomy, hand/prop, functional-surface orientation, camera, and finish-assist locks. The resulting text is directly editable. / レイアウト、脚本、吹き出し尻尾、同一性、小道具、証拠、軽量な舞台、視線、人体、手・小物、機能面の向き、カメラ、仕上げ補助をプロバイダー別に構築し、完成文を直接編集できます。 | Editable prompt; OpenAI appends API-only reference roles at send time / コピーとAPI生成に使う編集可能な本文。OpenAI送信時のみ参照画像の用途説明を追記 |
+| STEP4 Image generation / 画像生成 | Current prompt; character sheets and enabled panorama for OpenAI / 現在のプロンプト、OpenAIではキャラシートと有効パノラマ | OpenAI uses images/edits with references, or the existing text-only generation route without them. Edits require a completed image and never automatically resend. Gemini retains its existing explicit-reference or background-crop route. Saves the original and runs QA; a concrete NG may trigger one repair. OpenAI repair attaches the original first, then the same references. Only text-only OpenAI generation retains its legacy partial-image recovery and one non-streaming retry after browser-level Failed to fetch. / OpenAIは参照ありなら画像編集API、参照なしなら従来の文章生成経路を使います。画像編集は完成画像を必須とし、自動再送しません。Geminiの明示参照・背景crop経路は維持します。元画像を保存してQAを行い、具体的NG時だけ最大1回修復します。OpenAI修復には元画像を先頭に、同じ参照を続けて添付します。途中画像救済と通信失敗後の非ストリーム再試行は、参照なしOpenAI生成の既存経路だけに残ります。 | Repair only when QA passes and direct comparison confirms improvement; otherwise original / QA合格かつ直接比較で改善した修復画像。それ以外は元画像 |
 
 The system distinguishes a correctable quality shortfall from a failure that leaves no usable artifact. This boundary prevents quality validation from becoming a terminal trap while keeping actual dependency failures visible.
 
@@ -341,7 +359,7 @@ The system distinguishes a correctable quality shortfall from a failure that lea
 | Enhancement quality remains NG after two attempts / 演出強化が全2試行後もNG | Retain the best usable enhancement; if every rewrite breaks a hard edit contract, restore the original. Continue with a warning. / 利用可能な最良候補を保持し、全候補が必須編集契約を壊した場合は元シナリオを復元します。警告付きで継続します。 |
 | Explicit unsafe location or unusable scenario structure / 明示的に危険な場所、または利用不能なシナリオ構造 | Stop because a safe four-panel artifact cannot be constructed. / 安全な4コマ成果物を構築できないため停止します。 |
 | Authentication, HTTP, transport, parse, or missing-image failure / 認証、HTTP、通信、解析、画像欠落 | Show the actual dependency error and stop that run, except for the one browser-stream fallback described above; do not relabel failures as a timeout or quality warning. / 上記のブラウザストリーム時の1回フォールバックを除き、実際の依存関係エラーを表示してその実行を停止し、タイムアウトや品質警告へ誤変換しません。 |
-| Image received but visible QA is NG / 画像受信後の可視QAがNG | Keep the original image, generate at most one repair candidate for concrete issues, adopt it only if it passes, otherwise restore the original and continue with a warning. / 元画像を保持し、具体的な問題に限って修正版候補を最大1回生成します。合格時だけ採用し、未合格なら元画像へ戻して警告付きで継続します。 |
+| Image received but visible QA is NG / 画像受信後の可視QAがNG | Keep the original and generate at most one repair for concrete issues. Adopt it only after passing QA and a direct comparison confirming improvement; otherwise keep the original with a warning. / 元画像を保持し、具体的な問題に限って最大1回修復します。QA合格と直接比較による改善確認の両方を満たす場合だけ採用し、それ以外は元画像を警告付きで保持します。 |
 | Image QA is unverified / 画像QAが判定不能 | Keep the original image, show the concrete QA dependency error, make no additional image call, and continue with a warning. / 元画像を保持し、QA依存関係の具体的エラーを表示します。画像の追加生成は行わず、警告付きで継続します。 |
 
 Scenario candidate selection is not “take the last response.” A fully valid first response is accepted immediately. Scoring is used only when the scenario retry budget ends without a complete pass, and then the best usable scenario is retained even if an earlier attempt scored higher than the last one. The image failsafe is deliberately stricter: it adopts the one repair image only on PASS; otherwise it restores the saved original.
@@ -859,6 +877,11 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 ---
 
 ## 📋 ChangeLog
+
+### v5.9.6 (2026-09-10)
+
+- OpenAI画像APIにキャラクターシートと有効な背景参照を添付し、限定修正には元画像も渡します。Web貼り付けはサブスクの利用枠で画像API料金を節約する選択肢として案内します。 / Sends character sheets and enabled background references to the OpenAI image API, with the original image included for bounded repairs; clarifies subscription Web generation and separate API billing.
+- MiniMax H3配布をv1.1.7へ更新。5フォルダ同梱、初回を含む最大5候補、WindowsテストのUTF-8読取り、エラーの資格情報秘匿、導入説明と再発防止文書を同期します。 / Updates the H3 package to v1.1.7 with five bundled folders, at most five candidates including the initial attempt, portable UTF-8 tests, credential-safe errors and corrected installation guidance.
 
 ### v5.9.5 (2026-09-09)
 - **[Fix & UX]** 4コマの見出しを極太ゴシック、吹き出しを細めの縦組み明朝調として明示し、吹き出し内の太ゴシック化を抑制 / Defines extra-bold Gothic page titles and slender vertical Mincho-style speech bubbles for four-panel manga, reducing bold Gothic dialogue

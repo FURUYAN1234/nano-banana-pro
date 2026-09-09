@@ -45,7 +45,7 @@ test('a stale legacy provider flag self-heals to one OpenAI engine state before 
   );
   assert.match(
     source,
-    /if \(isOpenAIEngine\) \{\s*statCallback[\s\S]*?generateImageWithOpenAI/,
+    /if \(isOpenAIEngine\) \{\s*const referencePlan = buildOpenAIReferencePlan[\s\S]*?generateImageWithOpenAI\(apiPrompt,/,
     'STEP4 image execution must use that same effective OpenAI state'
   );
 });

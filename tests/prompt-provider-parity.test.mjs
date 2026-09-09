@@ -5,7 +5,7 @@ import test from 'node:test';
 const workflowSource = readFileSync(new URL('../src/hooks/useMangaWorkflow.js', import.meta.url), 'utf8');
 const assemblerSource = readFileSync(new URL('../src/lib/prompt-assembler.js', import.meta.url), 'utf8');
 
-test('web copy and API generation use the same final prompt for both provider families', () => {
+test('web copy and API generation preserve the same prompt body with API-only reference roles', () => {
   assert.match(
     workflowSource,
     /navigator\.clipboard\.writeText\(\s*finalPrompt\s*\)/,
@@ -23,8 +23,8 @@ test('web copy and API generation use the same final prompt for both provider fa
   );
   assert.match(
     workflowSource,
-    /generateImageWithOpenAI\(\s*prompt\s*,/,
-    'the shared candidate generator must forward its prompt to OpenAI unchanged'
+    /const apiPrompt = appendOpenAIReferencePrompt\(prompt, referencePlan\);[\s\S]*?generateImageWithOpenAI\(apiPrompt,/,
+    'OpenAI may append reference roles without rewriting the approved body'
   );
   assert.match(
     workflowSource,
@@ -71,7 +71,9 @@ test('prompt assembly only branches by Gemini-family vs ChatGPT-family, not Web 
   );
   assert.doesNotMatch(
     workflowSource,
-    /\b(?:webPrompt|apiPrompt|promptForWeb|promptForApi|chatGPTWeb|openAIAPI|geminiWeb|geminiAPI)\b/i,
-    'workflow must not introduce separate Web/API prompt variables'
+    /\b(?:setWebPrompt|setApiPrompt|setPromptForWeb|setPromptForApi)\b/i,
+    'workflow must not introduce separately editable Web/API prompt state'
   );
+  assert.match(workflowSource, /appendOpenAIReferencePrompt\(prompt, referencePlan\)/);
+  assert.doesNotMatch(workflowSource, /setFinalPrompt\(\s*apiPrompt\s*\)/);
 });

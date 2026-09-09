@@ -75,7 +75,7 @@ test('MiniMax H3 UI explains the feature and separates the standard-template and
   const manualIndex = step4PanelSource.indexOf('<h4 id="minimax-h3-prompt-heading"');
   const allInOneIndex = step4PanelSource.indexOf('<h4 id="comfyui-workflow-heading"');
   const promptButtonIndex = step4PanelSource.indexOf('MiniMax H3・ComfyUI用プロンプトをコピー', manualIndex);
-  const customNodeButtonIndex = step4PanelSource.indexOf('同梱カスタムノード3点・導入セットをダウンロード', allInOneIndex);
+  const customNodeButtonIndex = step4PanelSource.indexOf('同梱カスタムノード5点・導入セットをダウンロード', allInOneIndex);
   const workflowButtonIndex = step4PanelSource.indexOf('自動可変尺・Fused4step・SLA ワークフローをダウンロード', allInOneIndex);
 
   assert.notEqual(introIndex, -1, 'the H3 helper needs a feature-level introduction');
