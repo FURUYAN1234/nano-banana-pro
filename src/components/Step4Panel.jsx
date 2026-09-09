@@ -21,9 +21,9 @@ import { GEMINI_A4_RELAYOUT_PROMPT, GEMINI_2K_REFINEMENT_PROMPT } from '../lib/g
 import { getEffectiveEngine } from '../lib/engine-state';
 import { MINIMAX_H3_COMFYUI_PROMPT } from '../lib/minimax-h3-prompt';
 
-const COMFYUI_WORKFLOW_FILENAME = 'FourPanel_Fused4_SLA_API_20260907.json';
+const COMFYUI_WORKFLOW_FILENAME = 'FourPanel_NonLM_4step_20260910071735_v1.1.7.json';
 const COMFYUI_WORKFLOW_DOWNLOAD_URL = `${import.meta.env.BASE_URL}workflows/${COMFYUI_WORKFLOW_FILENAME}`;
-const COMFYUI_CUSTOM_NODE_FILENAME = 'FourPanel_Fused4_SLA_API_20260907.zip';
+const COMFYUI_CUSTOM_NODE_FILENAME = 'ComfyUI_H3_Workflows_20260910071735_v1.1.7.zip';
 const COMFYUI_CUSTOM_NODE_DOWNLOAD_URL = `${import.meta.env.BASE_URL}downloads/${COMFYUI_CUSTOM_NODE_FILENAME}`;
 const COMFYUI_H3_AUDIO_REFINE_REPOSITORY_URL = 'https://github.com/Adudeguyman/ComfyUI-H3-AudioRefine';
 const COMFYUI_PLAGUE_KIND_REPOSITORY_URL = 'https://github.com/PlagueKind/ComfyUI-PlagueKind-Nodes';
@@ -565,6 +565,11 @@ export default function Step4Panel({
               {/* Instruction Footer */}
               <div className="bg-slate-900 border-t border-white/10 p-2 text-[11px] text-slate-500 text-center font-mono">
                 この欄で直接編集できます。編集した内容が、プロンプトのコピーと画像生成の両方に使われます。
+                {isOpenAIImageMode && (
+                  <span className="block mt-1">
+                    API生成時は、添付する参照画像の用途を示す補足を本文の後ろに追加します。入力した本文やコピー内容は書き換えません。
+                  </span>
+                )}
               </div>
 
               {isOpenAIImageMode && (
@@ -611,8 +616,9 @@ export default function Step4Panel({
                 </div>
               </button>
               <p className="text-[10px] text-slate-500 text-center mt-2 leading-relaxed px-2">
-                ⚠️ このアプリ経由の自動生成では、キャラクター設定や背景の画像を直接添付できないため、<span className="text-amber-400/80">文章（テキスト）のみを元にした「おまかせ生成」</span>になります。
-                キャラクターの見た目や背景を正確に再現したい場合は、下の <span className="text-orange-300">💡 コツ（プロのやり方）</span> を参考に、ブラウザ版での手動生成をお試しください。
+                {isOpenAIImageMode
+                  ? 'API生成では、プロンプトに加えて、読み込み済みのキャラクターシートと有効な360°背景画像を参照画像として送信します。参照画像がない場合は文章のみで生成します。API利用料金が発生し、ChatGPTのサブスク料金とは別会計です。'
+                  : 'Gemini API生成にはAPI利用料金がかかります。参照画像の利用は選択中の生成経路によって異なります。公式Web版で手動生成したい場合は、下の案内をご利用ください。'}
               </p>
 
               {/* PRO TIPS FOR EXTERNAL GENERATION */}
@@ -622,11 +628,20 @@ export default function Step4Panel({
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
                   </div>
                   <div className="text-xs text-orange-200/80 leading-relaxed font-sans">
-                    <span className="font-bold text-orange-300">💡 コツ（プロのやり方）：完璧な4コマ漫画を作りたい時は？</span><br />
+                    <span className="font-bold text-orange-300">
+                      {isOpenAIImageMode
+                        ? '💡 サブスクの利用枠で生成し、API画像生成料金を節約したい方へ'
+                        : '💡 Gemini公式Web版で手動生成するには'}
+                    </span>
+                    <br />
                     {isOpenAIImageMode ? (
                       <>
-                        キャラクターの見た目が崩れたり、背景がイメージと異なる場合は、上の「コピー」ボタンでプロンプトをコピーし、公式の <a href="https://chatgpt.com/" target="_blank" rel="noreferrer" className="text-blue-400 hover:underline">ChatGPTウェブ版 🤖</a> に<strong>「元のキャラクター設定画像（および360°背景画像）」</strong>と一緒に直接貼り付けて送信してください。<br />
-                        画像そのものを参照して生成するため、キャラクターのクオリティや再現度が劇的に向上します！<br />
+                        ChatGPTのサブスクに加入していて、API画像生成料金を節約したい場合は、上の「コピー」ボタンでプロンプトをコピーし、
+                        <a href="https://chatgpt.com/" target="_blank" rel="noreferrer" className="text-blue-400 hover:underline">ChatGPT公式Web版</a>
+                        へキャラクターシート画像と一緒に貼り付けて生成してください。360°背景を使う場合は、その画像も添付します。
+                        <br />
+                        Web版での生成にはChatGPT側の利用枠・上限が適用されます。この方法ではNano Bananaから画像生成APIを呼びません。ただし、アプリ内で行ったキャラ解析・シナリオ生成などのAPI料金は別途発生する場合があります。
+                        <br />
                         <span className="inline-block mt-2 text-[12px] text-yellow-300 font-bold bg-yellow-900/50 px-2 py-1.5 rounded border border-yellow-500/30">
                           ⚠️ 注意：プロンプトを貼り付けた際、ファイルとして添付されてしまった場合は、必ず「テキストフィールドに表示」をクリックしてプロンプトの全文を展開してから、キャラクターシート等の画像を添付してください。
                         </span><br />
@@ -636,8 +651,9 @@ export default function Step4Panel({
                       </>
                     ) : (
                       <>
-                        キャラクターの見た目が崩れたり、背景がイメージと異なる場合は、上の「コピー」ボタンでプロンプトをコピーし、公式の <a href="https://gemini.google.com/" target="_blank" rel="noreferrer" className="text-blue-400 hover:underline">Geminiウェブ版 🤖</a> に<strong>「元のキャラクター設定画像（および360°背景画像）」</strong>と一緒に直接貼り付けて送信してください。<br />
-                        画像そのものを参照して生成するため、キャラクターのクオリティや再現度が劇的に向上します！
+                        コピーしたプロンプトを
+                        <a href="https://gemini.google.com/" target="_blank" rel="noreferrer" className="text-blue-400 hover:underline">Gemini公式Web版</a>
+                        へ、キャラクターシート画像と一緒に貼り付けて生成してください。360°背景を使う場合は、その画像も添付します。Web版で利用できる機能や上限は、Google側のプラン・提供状況に従います。
                       </>
                     )}
 
@@ -896,7 +912,7 @@ No explanations. No partial results.`;
                                 <p className="mt-1 text-[10px] leading-relaxed text-slate-400">既存の設定ファイルとは別のJSONです。本体の「設定ファイルを保存（JSON）」は使用しません。</p>
                                 <div className="mt-3 rounded border border-amber-400/40 bg-amber-950/25 p-3 text-[10px] leading-relaxed text-slate-200">
                                   <p className="font-bold text-amber-200">
-                                    この配布版には <code>ComfyUI-NanoBanana-H3</code>、<code>ComfyUI-MiniMax-H3-Long-Video</code>、<code>ComfyUI-Spectrum-MiniMax-H3</code> の3フォルダが同梱されています。先に3つを <code>ComfyUI/custom_nodes/</code> へ配置してComfyUIを完全に再起動してからJSONを読み込んでください。JSONだけでは実行できません。
+                                    この配布版には <code>ComfyUI-NanoBanana-H3</code>、<code>ComfyUI-MiniMax-H3-Long-Video</code>、<code>ComfyUI-Spectrum-MiniMax-H3</code>、<code>ComfyUI-H3-AudioRefine</code>、<code>ComfyUI-PlagueKind-Nodes</code> の5フォルダが同梱されています。先に5つを <code>ComfyUI/custom_nodes/</code> へ配置してComfyUIを完全に再起動してからJSONを読み込んでください。JSONだけでは実行できません。
                                   </p>
                                   <a
                                     href={COMFYUI_CUSTOM_NODE_DOWNLOAD_URL}
@@ -904,20 +920,20 @@ No explanations. No partial results.`;
                                     role="button"
                                     className="mt-2 bg-slate-700 hover:bg-slate-600 border-white/10 text-white px-3 py-1.5 rounded transition-all inline-flex items-center justify-center gap-1.5 border font-bold active:scale-95 no-underline"
                                     style={H3_ACTION_BUTTON_STYLE}
-                                    aria-label="同梱カスタムノード3点・導入セットをダウンロード"
+                                    aria-label="同梱カスタムノード5点・導入セットをダウンロード"
                                   >
-                                    <Download size={13} /> 同梱カスタムノード3点・導入セットをダウンロード
+                                    <Download size={13} /> 同梱カスタムノード5点・導入セットをダウンロード
                                   </a>
                                   <ol className="mt-3 space-y-1.5 list-decimal pl-4">
-                                    <li>「同梱カスタムノード3点・導入セットをダウンロード」を押して <code>FourPanel_Fused4_SLA_API_20260907.zip</code> を保存します。</li>
-                                    <li>配布セットを展開し、<code>custom_nodes</code> 内の3フォルダをそれぞれ <code>ComfyUI/custom_nodes/</code> へ配置します。Nano Bananaノードは <code>ComfyUI/custom_nodes/ComfyUI-NanoBanana-H3/</code> になります。</li>
+                                    <li>「同梱カスタムノード5点・導入セットをダウンロード」を押して <code>ComfyUI_H3_Workflows_20260910071735_v1.1.7.zip</code> を保存します。</li>
+                                    <li>配布セットを展開し、<code>custom_nodes</code> 内の5フォルダをそれぞれ <code>ComfyUI/custom_nodes/</code> へ配置します。Nano Bananaノードは <code>ComfyUI/custom_nodes/ComfyUI-NanoBanana-H3/</code> になります。</li>
                                     <li>同名の旧版がある場合はComfyUIを完全終了し、フォルダ単位で差し替えます。新旧カスタムノードのファイルは混在させません。</li>
-                                    <li>音声2ステップ補正には別途 <a href={COMFYUI_H3_AUDIO_REFINE_REPOSITORY_URL} target="_blank" rel="noreferrer" className="text-cyan-300 underline hover:text-cyan-200">ComfyUI-H3-AudioRefine <ExternalLink className="inline" size={11} /></a> が必要です。配布元を開いて <code>ComfyUI/custom_nodes/ComfyUI-H3-AudioRefine/</code> へ導入します。</li>
-                                    <li>下のボタンから <code>FourPanel_Fused4_SLA_API_20260907.json</code> を保存し、<code>ComfyUI/user/default/workflows/</code> 以下へ配置します。</li>
-                                    <li>同梱3フォルダ、<code>ComfyUI-H3-AudioRefine</code>、JSONの配置後、ComfyUIを完全に再起動してからワークフローを開きます。</li>
+                                    <li>音声2ステップ補正の <a href={COMFYUI_H3_AUDIO_REFINE_REPOSITORY_URL} target="_blank" rel="noreferrer" className="text-cyan-300 underline hover:text-cyan-200">ComfyUI-H3-AudioRefine <ExternalLink className="inline" size={11} /></a> は同梱済みです。5フォルダの追加取得や互換パッチの適用は不要です。</li>
+                                    <li>下のボタンから <code>FourPanel_NonLM_4step_20260910071735_v1.1.7.json</code> を保存し、<code>ComfyUI/user/default/workflows/</code> 以下へ配置します。</li>
+                                    <li>同梱5フォルダとJSONの配置後、ComfyUIを完全に再起動してからワークフローを開きます。</li>
                                     <li><code>4. API設定＋画像変換＋H3プロンプト生成（同一Provider）</code> ノードで <code>OpenAI API</code> または <code>Google Gemini API</code> を選びます。ワークフローを開いただけ、またはProviderを変更しただけでは入力ダイアログを表示しません。「実行する」を押した時、選択中のProviderが未登録なら、そのProviderの入力ダイアログを開いてキュー投入を保留します。利用者が直接入力して認証に成功すると保留中の同じ実行を1回だけ続け、ダイアログを閉じると今回の実行だけを中止します。ノードの「<strong>APIキー未登録／入力</strong>」ボタンから先に登録することもできます。キーはワークフローJSON、配布ZIP、設定ファイル、ブラウザ保存領域、ディスクには保存されず、接続中のComfyUIサーバーのプロセスメモリだけに保持されます。ワークフローのシート移動や別ワークフローへの切替では残り、ComfyUIアプリ／サーバーを終了または再起動すると消去されるため、次回実行時は再入力してください。1回の実行では、選択中の同一Providerが画像変換とH3プロンプト作成の両方に使われ、認証確認または実行時だけ、そのComfyUIサーバーから選択したAPIへ送信されます。</li>
-                                    <li>Google Gemini APIでは画像変換に <code>gemini-3.1-flash-image</code>、H3プロンプト作成・画像QAに <code>gemini-2.5-flash</code> を使います。OpenAI APIでは画像変換に <code>gpt-image-2</code>、H3プロンプト作成・画像QAに <code>gpt-4.1-mini</code> を使います。</li>
-                                    <li>モデル本体は配布セットに含まれません。<code>モデル一覧・取得先.md</code> の配布元と各ライセンスを確認し、利用者自身で取得してください。</li>
+                                    <li>Google Gemini APIでは画像変換に <code>gemini-3.1-flash-image</code>、H3プロンプト作成・画像QAに <code>gemini-2.5-flash</code> を使います。OpenAI APIでは画像変換に <code>gpt-image-2</code>、H3プロンプト作成に <code>gpt-4.1-mini</code>、人物・読順の検査等に <code>gpt-5.4</code> を使います。</li>
+                                    <li>モデル本体は配布セットに含まれません。<code>models.json</code> の配布元と各ライセンスを確認し、利用者自身で取得してください。</li>
                                   </ol>
                                   <div className="mt-3 border-t border-amber-300/20 pt-2">
                                     <p className="font-bold text-white">次の配布版ノードが読めない場合</p>
@@ -929,12 +945,12 @@ No explanations. No partial results.`;
                                       <li>MiniMaxH3LongReferenceSampler</li>
                                       <li>TimestampedSaveVideo</li>
                                     </ul>
-                                    <p className="mt-1 text-slate-300">該当ノード名と上の3フォルダを照合します。多くの場合、カスタムノードの配置またはComfyUIの完全な再起動が未完了です。解決しない場合は二重展開、依存関係の導入、ComfyUIの読込エラー、GPU・CUDA・Tritonの互換性も確認してください。</p>
+                                    <p className="mt-1 text-slate-300">該当ノード名と上の5フォルダを照合します。多くの場合、カスタムノードの配置またはComfyUIの完全な再起動が未完了です。解決しない場合は二重展開、依存関係の導入、ComfyUIの読込エラー、GPU・CUDA・Tritonの互換性も確認してください。</p>
                                   </div>
                                 </div>
                                 <div className="mt-3 space-y-1 text-[10px] leading-relaxed text-slate-300">
-                                  <p><strong>既定の設定</strong>：4コマを物語の4幕として扱い、台詞1本につき5秒で上限なしの完全可変尺にします。台詞がない場合だけ既定30秒です。映像はFused 4ステップ、音声補正は2ステップ（denoise 0.5）、既定はH3生成BGMありです。r8は区間ごとに生成・検査し、分身、明らかな髪型違い、台詞破綻、二重発声が出た区間だけ原因別に最大3回試行します。H3生成前には日本語台詞の読みも確認します。MiniMax H3が低音量の物語向けBGMを生成し、台詞中は強く抑えます。提供JSONの設定値は変更せずに配布します。</p>
-                                  <p>4つの不足モデルはComfyUIの不足モデル表示からダウンロード候補を開けます。<code>H3 SLA Attention</code> には別途 <a href={COMFYUI_PLAGUE_KIND_REPOSITORY_URL} target="_blank" rel="noreferrer" className="text-cyan-300 underline hover:text-cyan-200">ComfyUI-PlagueKind-Nodes <ExternalLink className="inline" size={11} /></a> とTriton対応環境が必要です。音声補正には <a href={COMFYUI_H3_AUDIO_REFINE_REPOSITORY_URL} target="_blank" rel="noreferrer" className="text-cyan-300 underline hover:text-cyan-200">ComfyUI-H3-AudioRefine <ExternalLink className="inline" size={11} /></a> も必要です。</p>
+                                  <p><strong>既定の設定</strong>：4コマを物語の4幕として扱い、台詞1本につき5秒で上限なしの完全可変尺にします。台詞がない場合だけ既定30秒です。映像はFused 4ステップ、音声補正は2ステップ（denoise 0.5）、既定はH3生成BGMありです。v1.1.7は区間ごとに生成・検査し、品質不合格なら初回込み最大5候補を比較します。途中で合格したら即座に次へ進み、全候補が不合格なら最良候補を保持して続行します。4・5回目の候補も途中再開できます。H3生成前には日本語台詞の読みも確認します。MiniMax H3が低音量の物語向けBGMを生成し、台詞中は強く抑えます。提供JSONの設定値は変更せずに配布します。</p>
+                                  <p>4つの不足モデルはComfyUIの不足モデル表示からダウンロード候補を開けます。<code>H3 SLA Attention</code> の <a href={COMFYUI_PLAGUE_KIND_REPOSITORY_URL} target="_blank" rel="noreferrer" className="text-cyan-300 underline hover:text-cyan-200">ComfyUI-PlagueKind-Nodes <ExternalLink className="inline" size={11} /></a> は同梱済みで、別途Triton対応環境が必要です。音声補正の <a href={COMFYUI_H3_AUDIO_REFINE_REPOSITORY_URL} target="_blank" rel="noreferrer" className="text-cyan-300 underline hover:text-cyan-200">ComfyUI-H3-AudioRefine <ExternalLink className="inline" size={11} /></a> も同梱済みです。</p>
                                   <p>H3本体にはタイトル、字幕、URL、終了クレジットを生成させません。タイトルは <code>overlay_title</code> として抽出し、動画生成後に左上へ一度だけ、黒字＋白縁、背景バーなしで合成します。固定クレジットも後段ノードで合成します。</p>
                                   <p>人物集合と識別署名は各入力漫画の各コマから動的に導出し、特定の人数や外見、最終フレームの構成を固定しません。</p>
                                   <p>APIキー・認証情報・モデル本体・漫画画像・生成動画は配布物に含まれません。</p>
@@ -952,7 +968,7 @@ No explanations. No partial results.`;
                                   <Download size={13} /> 自動可変尺・Fused4step・SLA ワークフローをダウンロード
                                 </a>
                                 <div className="mt-2 space-y-1 text-[10px] leading-relaxed text-slate-300">
-                                  <p>配布セットにはワークフロー、必須カスタムノード3フォルダ、モデル取得先、導入README、ライセンス・出典表記を収録しています。</p>
+                                  <p>配布セットにはワークフロー、必須カスタムノード5フォルダ、モデル取得先、導入README、ライセンス・出典表記、再発防止文書 <code>RELEASE_PREVENTION_JA.md</code> を収録しています。</p>
                                   <p>APIキー・認証情報・モデル本体・漫画画像・生成動画は配布物に含まれません。</p>
                                 </div>
                               </div>

@@ -30,3 +30,13 @@ test('quality failure uses one bounded repair candidate and falls back to the sa
   assert.match(workflowSource, /Image successfully generated \(quality warning\)/);
   assert.match(workflowSource, /画像品質レビューは未確認です。画像の具体的な問題は検出されていません。/);
 });
+
+test('OpenAI generation binds initial references and the actual repair source', () => {
+  assert.match(workflowSource, /buildOpenAIReferencePlan\(\{[\s\S]*?characterImages:\s*images/);
+  assert.match(workflowSource, /backgroundImage:\s*bg360Image/);
+  assert.match(workflowSource, /backgroundEnabled:\s*bg360Enabled/);
+  assert.match(workflowSource, /originalCandidate:\s*repairSource/);
+  assert.match(workflowSource, /appendOpenAIReferencePrompt\(prompt, referencePlan\)/);
+  assert.match(workflowSource, /imageInputs:\s*referencePlan\.imageInputs/);
+  assert.match(workflowSource, /repairSource:\s*isOpenAIEngine\s*\?\s*originalCandidate\s*:\s*null/);
+});

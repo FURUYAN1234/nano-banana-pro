@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { setApiKey } from '../lib/gemini';
 import { generateImageWithImagen } from '../lib/imagen';
 import { generateImageWithOpenAI, setOpenAIApiKey } from '../lib/openai';
+import {buildOpenAIReferencePlan, appendOpenAIReferencePrompt} from '../lib/openai-image-references.js';
 import { callAI, setActiveEngine } from '../lib/ai-provider';
 
 // --- Refactored Imports (Phase 1-2) ---
@@ -1183,30 +1184,34 @@ export default function useMangaWorkflow() {
           : []);
       const geminiImageOptions = generationOptions.imageOptions || {};
 
-      const generateImageCandidate = async (prompt, { repair = false } = {}) => {
+      const generateImageCandidate = async (prompt, {repair = false, repairSource = null} = {}) => {
         let response;
         if (isOpenAIEngine) {
+          const referencePlan = buildOpenAIReferencePlan({
+            characterImages: images,
+            backgroundImage: bg360Image,
+            backgroundEnabled: bg360Enabled,
+            originalCandidate: repairSource,
+          });
+          const apiPrompt = appendOpenAIReferencePrompt(prompt, referencePlan);
+          const {character, background, original} = referencePlan.counts;
+          statCallback(`[REF] OpenAI入力: キャラ${character}枚、背景${background}枚、修復元${original}枚`);
           statCallback(repair
-            ? `[QUALITY QA] ${resolveOpenAIImageOption(openAIImageQuality).label} で限定修正版を生成中です...`
+            ? `[QUALITY QA] ${resolveOpenAIImageOption(openAIImageQuality).label} で元画像の限定修正を実行中です...`
             : `[INFO] ${resolveOpenAIImageOption(openAIImageQuality).label} の最終画像を待機します...`);
-          response = await generateImageWithOpenAI(prompt, statCallback, { quality: openAIImageQuality });
+          response = await generateImageWithOpenAI(apiPrompt, statCallback, {
+            quality: openAIImageQuality,
+            imageInputs: referencePlan.imageInputs,
+          });
         } else {
           if (geminiReferenceImages.length > 0) {
             statCallback(`[REF] Gemini画像編集用の参照画像 ${geminiReferenceImages.length}枚を添付`);
           }
           response = await generateImageWithImagen(prompt, statCallback, geminiReferenceImages, geminiImageOptions);
         }
-
         const normalizedImage = String(response.base64Img || '').replace(/\s+/g, '');
-        if (!normalizedImage) {
-          throw new Error('Image response did not include usable image data.');
-        }
-
-        return {
-          base64Img: normalizedImage,
-          mimeType: response.mimeType || 'image/png',
-          modelId: response.usedModel,
-        };
+        if (!normalizedImage) throw new Error('Image response did not include usable image data.');
+        return {base64Img: normalizedImage, mimeType: response.mimeType || 'image/png', modelId: response.usedModel};
       };
 
       const reviewImageCandidate = async (candidate, candidatePrompt) => {
@@ -1260,7 +1265,11 @@ export default function useMangaWorkflow() {
         originalPrompt: currentPrompt,
         mode: qualityMode,
         reviewCandidate: reviewImageCandidate,
-        generateRepairCandidate: (repairPrompt) => generateImageCandidate(repairPrompt, { repair: true }),
+        generateRepairCandidate: (repairPrompt) => generateImageCandidate(repairPrompt, {
+          repair: true,
+          repairSource: isOpenAIEngine ? originalCandidate : null,
+        }),
+        repairSourceMode: isOpenAIEngine ? 'source-image' : 'regenerate',
         compareCandidates: async (original, repair, originalPrompt) => {
           statCallback('[QUALITY QA] 元画像と修正版を直接比較し、台詞・人物・動作を優先して自動選択します。');
           const comparisonParts = [

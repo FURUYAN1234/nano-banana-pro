@@ -175,3 +175,26 @@ test('single-image quality repair never turns the emotional illustration into a 
   assert.doesNotMatch(prompt, /same four-panel manga page/i);
   assert.doesNotMatch(prompt, /panel order/i);
 });
+
+test('source-image repair states change preserve and verify without changing the approved prefix', () => {
+  const prompt = buildImageQualityRepairPrompt({
+    originalPrompt: 'APPROVED SCRIPT',
+    sourceMode: 'source-image',
+    issues: [{type: 'prop_ownership', panel: 2, subject: '人物Aの手', reason: '小道具が別人物の手に接続している'}],
+  });
+  assert.ok(prompt.startsWith('APPROVED SCRIPT'));
+  for (const label of ['SOURCE IMAGE TO EDIT', 'CHANGE:', 'PRESERVE:', 'VERIFY:']) assert.ok(prompt.includes(label));
+  assert.match(prompt, /prop_ownership/);
+  assert.match(prompt, /exactly four separate visible panels/i);
+  assert.match(prompt, /necessary local contact and shadow changes/i);
+});
+
+test('source-image single illustration repair does not invent a comic layout', () => {
+  const prompt = buildImageQualityRepairPrompt({
+    originalPrompt: SINGLE_IMAGE_PROMPT,
+    sourceMode: 'source-image',
+    issues: [{type: 'anatomy', panel: null, subject: 'hand', reason: 'extra finger'}],
+  });
+  assert.match(prompt, /same single illustration/i);
+  assert.doesNotMatch(prompt, /exactly four separate visible panels/i);
+});
