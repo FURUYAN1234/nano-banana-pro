@@ -912,13 +912,17 @@ const buildExplicitStagingSides = (text, castNames) => {
 };
 
 const extractExplicitRearSubject = (text, castNames) => {
-  const cameraText = (String(text || '').match(CAMERA_INSTRUCTION_LINE_RE) || []).join(' ');
+  // 台詞内の比喩は除外し、Camera行とト書きの明示構図を読む。
+  const cameraText = [
+    ...(String(text || '').match(CAMERA_INSTRUCTION_LINE_RE) || []),
+    String(text || '').replace(/[「『"][^」』"\n]*[」』"]/g, '')
+  ].join(' ');
   if (!cameraText) return '';
 
   return castNames.find((name) => {
     const escapedName = escapeRegex(name);
-    const japaneseShoulder = new RegExp(`\\[?${escapedName}\\]?(?:の)?(?:肩|ショルダー)(?:越し|ごし)`, 'i');
-    const englishShoulder = new RegExp(`(?:over|from\\s+behind|behind)\\s+(?:the\\s+)?\\[?${escapedName}\\]?(?:['’]s)?\\s+shoulder`, 'i');
+    const japaneseShoulder = new RegExp(`\\[?${escapedName}\\]?(?:の)?(?:右|左)?(?:肩|ショルダー)(?:越し|ごし)`, 'i');
+    const englishShoulder = new RegExp(`(?:over|from\\s+behind|behind)\\s+(?:the\\s+)?\\[?${escapedName}\\]?(?:['’]s)?\\s+(?:(?:right|left)\\s+)?shoulder`, 'i');
     return japaneseShoulder.test(cameraText) || englishShoulder.test(cameraText);
   }) || '';
 };
@@ -997,7 +1001,7 @@ export const buildPanelEyeLineRule = (panelText, castList) => {
     return `EYE-LINE LOCK: ${roleStaging} never lens/front. EXPLICIT DETAIL CAMERA LOCK: preserve the scripted overhead, hand-detail, or close-up framing; do not invent a rear shoulder or force frontal portraits. Camera preserves scenario direction.`;
   }
 
-  return `EYE-LINE LOCK: ${roleStaging} never lens/front. ${buildRequiredDepthAssignment(speakers, listeners, speakers.length >= 2, explicitRearSubject, functionalActionMode)} Camera preserves scenario direction.`;
+  return `EYE-LINE LOCK: ${roleStaging} never lens/front. ${buildRequiredDepthAssignment(speakers, listeners, speakers.length >= 2 || Boolean(explicitRearSubject), explicitRearSubject, functionalActionMode)} Camera preserves scenario direction.`;
 };
 
 export const cleanseActionGagSymbols = (actionText) => {

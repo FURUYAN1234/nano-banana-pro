@@ -2,6 +2,8 @@
 
 ## Current Status
 
+- **v5.9.9 Gemini character references (2026-09-10)**: Root PLAN.md entry "Nano Banana Gemini character-reference parity" owns current evidence and delivery status. Two real reference-image runs completed; output defects remain. The user explicitly requested release, note update and full backup despite those limits. This release does not claim flawless rendering.
+
 - **v5.9.8 OpenAI initial image selection (2026-09-10)**: Root PLAN.md entry "Nano Banana v5.9.8 OpenAI initial image selection" owns the current implementation, real API verification, release, note and full-backup status. The verified models response determines Sunburst/xhigh or 2.0/high at key connection; image errors do not automatically switch models or retry.
 
 - **v5.9.7 four-panel distribution and HF recovery (2026-09-10)**: The live task record is the root `PLAN.md` entry "Four-panel NonLM v5.9.7 supplied-package audit and release". It owns package audit evidence, release status, the corrected note target `ndf063558c1f5`, and the explicitly requested visible full backup. Refer to that entry for current completion state; the older v5.9.6 backup exclusion below does not apply to this task.

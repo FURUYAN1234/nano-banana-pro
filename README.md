@@ -2,7 +2,7 @@
 
 STEP4の「品質検査NG時に自動修正する」は既定ONです。ONでは具体的な品質NGに対して最大1回の追加画像生成（追加課金）が行われます。OFFでは検査結果と元画像を保持し、品質修正の追加画像生成は行いません。モデル比較ではOFFにして同一プロンプトの最初の出力を比較してください。/ STEP4 automatic quality repair is enabled by default; disable it for first-output comparisons without an additional repair image charge. Automated QA is advisory and can miss dialogue omissions; inspect the actual image against the script.
 
-> Latest release: **v5.9.8** / 最新リリース: **v5.9.8**
+> Latest release: **v5.9.9** / 最新リリース: **v5.9.9**
 
 > **"To what extent can humans step away from the creative process?"**
 > **「人間は、どこまで制作から降りられるのか？」**
@@ -24,7 +24,7 @@ STEP4の「品質検査NG時に自動修正する」は既定ONです。ONでは
 This project aims to intentionally exclude humans from the creative process, allowing AI to act as a director and complete everything from brainstorming to composition, direction, and rendering.
 本プロジェクトは、人間をクリエイティブな工程から意図的に排除し、AIがディレクターとして「ネタ出し・構成・演出・作画」のすべてを完結させることを目的としています。
 
-The current implementation and latest release are **v5.9.8**. The product name is **Super FURU AI 4-koma System**. STEP4 offers Gemini and OpenAI image-generation routes, including GPT Image 2.5. / 現在の実装および最新公開版は **v5.9.8** です。製品名は **Super FURU AI 4-koma System** で、STEP4ではGPT Image 2.5を含むOpenAI系とGemini系の画像生成経路を利用できます。
+The current implementation and latest release are **v5.9.9**. The product name is **Super FURU AI 4-koma System**. STEP4 offers Gemini and OpenAI image-generation routes, including GPT Image 2.5. / 現在の実装および最新公開版は **v5.9.9** です。製品名は **Super FURU AI 4-koma System** で、STEP4ではGPT Image 2.5を含むOpenAI系とGemini系の画像生成経路を利用できます。
 
 Distribution deployment / 配布ファイルの公開: Hugging Face uploads every current ZIP through Git LFS, including files below 10 MB. GitHub Pages continues to serve ordinary ZIP bytes. Workflow JSON and checksum files retain exact bytes on both hosts. / Hugging Faceでは10 MB未満も含め、現存する配布ZIPをすべてGit LFSで送信します。GitHub Pagesでは従来どおり通常のZIPを配信します。ワークフローJSONとチェックサムファイルは、どちらの公開先でも元のバイトを保持します。
 
@@ -241,6 +241,14 @@ AIが生成するストーリーのノリが一パターンになるのを防ぐ
 - **SurrealQuiet (シュール静寂系)** : 狂った状況下でもキャラクターはあえて無表情・真顔を貫き、淡々とした温度感の低いリアクションや奇妙な「間」でシュールな笑いを演出します。
 - **IntellectualBlack (知性派ブラック系)** : 現代社会の風刺や痛烈な皮肉、ダブルミーニングを散りばめ、「よく考えると恐ろしい事実や狂気」が浮かび上がる知的な笑いを構築します。
 
+### Gemini Character References / Geminiのキャラクター参照
+
+Gemini's four-panel script lock separates printable dialogue from speaker metadata, matching the per-panel text format. Explicit shoulder viewpoints in camera directions or action descriptions retain the named person, including left/right shoulder wording. These instructions do not guarantee faithful rendering. / Gemini用4コマの脚本ロックでは、印字する台詞と話者情報をコマ別の指示と同じ形式で分離します。カメラ指定やト書きにある肩越しの人物指定は、右肩・左肩を含めて読み取ります。生成画像での再現を保証するものではありません。
+
+Gemini image generation sends all loaded character sheets as image inputs, alongside the existing four background crops when the 360° background is enabled and all four crops are ready. API-only role descriptions distinguish character identity from background cues without rewriting the editable prompt or copied text. / Gemini画像生成では、読み込み済みのキャラクターシートを画像入力として送信します。360°背景が有効で4コマ分の切り出し画像がそろっていれば、それらも添付します。送信時にキャラと背景の用途説明を追記し、編集欄の本文やコピー内容は変えません。
+
+References guide appearance; they do not guarantee exact identity or dialogue. The existing optional QA repair also receives the character sheets, but Gemini still regenerates from the repair prompt rather than editing the original candidate. API billing is separate from the Gemini Web subscription. / 参照画像を送っても、人物や台詞の完全な一致は保証されません。既存の任意の品質修正にもキャラシートを添付しますが、Gemini側は元画像の編集ではなく、修正指示からの再生成です。API料金はGemini Web版のサブスクとは別です。
+
 ### 🤖 OpenAI Image Generation and References / OpenAI画像生成と参照画像
 
 When the OpenAI Engine is selected, the final prompt specifies an A4 portrait composition, Japanese text direction, reading flow, safe rendering terms, prohibited term combinations, and light-effect substitutions. These prompt-level controls reduce common layout and visual-noise failures, but the image model still determines the final pixels.
@@ -347,8 +355,8 @@ To address the extreme complexity of a 5,000+ line monolith, the frontend archit
 | STEP1 Character analysis / キャラクター解析 | Uploaded character-sheet images / アップロードしたキャラクターシート画像 | The selected text/vision provider extracts appearance, personality, speech, pose, and other identity cues. / 選択中のテキスト・画像認識APIが外見、性格、口調、ポーズなどの同一性情報を抽出します。 | Parsed character records used by all later stages / 後続全段階で使うキャラクター記録 |
 | STEP2 Scenario generation / シナリオ生成 | Character records, automatic topic or complete free input, outfit, punchline, tone / キャラクター記録、自動取得トピックまたは自由入力全文、服装、オチ、トーン | The complete four-panel scenario is checked for structure, standalone bubble dialogue, content hygiene, free-input exclusions, visual evidence, lightweight location/time/weather continuity, and active final-panel staging. Up to three total attempts are made. / 4コマ構造、独立した吹き出し用セリフ、表現衛生、自由入力の禁止条件、視覚証拠、軽量な場所・時刻・天候の継続、4コマ目の能動演出を検証し、全3試行まで実行します。 | First fully valid candidate; ordinary quality warnings retain the best usable candidate, while exhausted dialogue-contract failures require a new STEP2 run / 最初の完全合格候補。通常の品質警告は利用可能な最良候補を保持し、台詞契約が上限まで不成立の場合はSTEP2の再実行を求めます |
 | STEP2 Enhancement / 演出強化 | Saved scenario plus any of seven selected categories / 保存済みシナリオと選択した7カテゴリ | The initial rewrite is compared with the original. If needed, one correction is requested with exact issue codes. / 初回の書換を元シナリオと比較し、必要な場合だけ具体的なNG項目付きで1回修正します。 | Valid enhancement, best usable partial enhancement, or restored original / 合格した強化、利用可能な最良の部分合格候補、または復元した元シナリオ |
-| STEP3 Prompt assembly / プロンプト構築 | Accepted scenario, identity records, provider family, manual staging and optional 360° reference data / 採用シナリオ、同一性情報、プロバイダー系統、手動演出と任意の360度参照情報 | Compiles provider-specific layout, script, dialogue-tail, identity, key-prop, evidence, lightweight setting, eye-line, anatomy, hand/prop, functional-surface orientation, camera, and finish-assist locks. The resulting text is directly editable. / レイアウト、脚本、吹き出し尻尾、同一性、小道具、証拠、軽量な舞台、視線、人体、手・小物、機能面の向き、カメラ、仕上げ補助をプロバイダー別に構築し、完成文を直接編集できます。 | Editable prompt; OpenAI appends API-only reference roles at send time / コピーとAPI生成に使う編集可能な本文。OpenAI送信時のみ参照画像の用途説明を追記 |
-| STEP4 Image generation / 画像生成 | Current prompt; character sheets and enabled panorama for OpenAI / 現在のプロンプト、OpenAIではキャラシートと有効パノラマ | OpenAI uses images/edits with references, or the existing text-only generation route without them. Edits require a completed image and never automatically resend. Gemini retains its existing explicit-reference or background-crop route. Saves the original and runs QA; a concrete NG may trigger one repair. OpenAI repair attaches the original first, then the same references. Only text-only OpenAI generation retains its legacy partial-image recovery and one non-streaming retry after browser-level Failed to fetch. / OpenAIは参照ありなら画像編集API、参照なしなら従来の文章生成経路を使います。画像編集は完成画像を必須とし、自動再送しません。Geminiの明示参照・背景crop経路は維持します。元画像を保存してQAを行い、具体的NG時だけ最大1回修復します。OpenAI修復には元画像を先頭に、同じ参照を続けて添付します。途中画像救済と通信失敗後の非ストリーム再試行は、参照なしOpenAI生成の既存経路だけに残ります。 | Repair only when QA passes and direct comparison confirms improvement; otherwise original / QA合格かつ直接比較で改善した修復画像。それ以外は元画像 |
+| STEP3 Prompt assembly / プロンプト構築 | Accepted scenario, identity records, provider family, manual staging and optional 360° reference data / 採用シナリオ、同一性情報、プロバイダー系統、手動演出と任意の360度参照情報 | Compiles provider-specific layout, script, dialogue-tail, identity, key-prop, evidence, lightweight setting, eye-line, anatomy, hand/prop, functional-surface orientation, camera, and finish-assist locks. The resulting text is directly editable. / レイアウト、脚本、吹き出し尻尾、同一性、小道具、証拠、軽量な舞台、視線、人体、手・小物、機能面の向き、カメラ、仕上げ補助をプロバイダー別に構築し、完成文を直接編集できます。 | Editable prompt; OpenAI and Gemini append API-only reference roles at send time / コピーとAPI生成に使う編集可能な本文。OpenAIとGeminiの送信時に参照画像の用途説明を追記 |
+| STEP4 Image generation / 画像生成 | Current prompt and character sheets; enabled panorama for OpenAI or four background crops for Gemini / 現在のプロンプトとキャラシート。OpenAIは有効パノラマ、Geminiは有効な4枚の背景切り出し画像も添付 | OpenAI uses images/edits with references, or the existing text-only generation route without them. Edits require a completed image and never automatically resend. Gemini adds character sheets before its existing explicit references or background crops. Saves the original and runs QA; a concrete NG may trigger one repair. OpenAI repair attaches the original first, then the same references. Only text-only OpenAI generation retains its legacy partial-image recovery and one non-streaming retry after browser-level Failed to fetch. / OpenAIは参照ありなら画像編集API、参照なしなら従来の文章生成経路を使います。画像編集は完成画像を必須とし、自動再送しません。Geminiは既存の明示参照・背景cropの前にキャラシートを添付します。元画像を保存してQAを行い、具体的NG時だけ最大1回修復します。OpenAI修復には元画像を先頭に、同じ参照を続けて添付します。途中画像救済と通信失敗後の非ストリーム再試行は、参照なしOpenAI生成の既存経路だけに残ります。 | Repair only when QA passes and direct comparison confirms improvement; otherwise original / QA合格かつ直接比較で改善した修復画像。それ以外は元画像 |
 
 The system distinguishes a correctable quality shortfall from a failure that leaves no usable artifact. This boundary prevents quality validation from becoming a terminal trap while keeping actual dependency failures visible.
 
@@ -879,6 +887,10 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 ---
 
 ## 📋 ChangeLog
+
+### v5.9.9 (2026-09-10)
+
+- Gemini APIにもキャラクターシートと任意の背景参照を添付。台詞本文と話者情報を分離し、ト書きの肩越し人物指定を反映します。実APIで参照送信と生成を確認しましたが、余分な台詞や人物重複などの描画不良は残るため、結果を確認してください。 / Adds Gemini character-reference inputs, separated text/speaker metadata and explicit shoulder-owner recognition. Real API reference transmission and generation were verified; extra dialogue and duplicate characters remain possible and require review.
 
 ### v5.9.8 (2026-09-10)
 - **[Fix & UX]** OpenAIキー接続時に、利用可能モデル一覧からGPT Image 2.5 Sunburst/xhighまたはGPT Image 2.0/highを初期選択し、生成エラー後の自動切替・自動再送信を行わないことを明記 / Selects GPT Image 2.5 Sunburst/xhigh or GPT Image 2.0/high from the verified OpenAI model list and documents that image errors do not trigger an automatic switch or retry

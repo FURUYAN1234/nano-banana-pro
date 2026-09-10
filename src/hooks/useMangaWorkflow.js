@@ -5,6 +5,7 @@ import { setApiKey } from '../lib/gemini';
 import { generateImageWithImagen } from '../lib/imagen';
 import { generateImageWithOpenAI, setOpenAIApiKey } from '../lib/openai';
 import {buildOpenAIReferencePlan, appendOpenAIReferencePrompt} from '../lib/openai-image-references.js';
+import {buildGeminiReferencePlan, appendGeminiReferencePrompt} from '../lib/gemini-image-references.js';
 import { callAI, setActiveEngine } from '../lib/ai-provider';
 
 // --- Refactored Imports (Phase 1-2) ---
@@ -1206,10 +1207,14 @@ export default function useMangaWorkflow() {
             imageInputs: referencePlan.imageInputs,
           });
         } else {
-          if (geminiReferenceImages.length > 0) {
-            statCallback(`[REF] Gemini画像編集用の参照画像 ${geminiReferenceImages.length}枚を添付`);
-          }
-          response = await generateImageWithImagen(prompt, statCallback, geminiReferenceImages, geminiImageOptions);
+          const referencePlan = buildGeminiReferencePlan({
+            characterImages: images,
+            referenceImages: geminiReferenceImages,
+            backgroundReferences: !Array.isArray(generationOptions.referenceImages),
+          });
+          const apiPrompt = appendGeminiReferencePrompt(prompt, referencePlan);
+          statCallback(`[REF] Gemini入力: キャラ${referencePlan.counts.character}枚、背景・追加参照${referencePlan.counts.other}枚`);
+          response = await generateImageWithImagen(apiPrompt, statCallback, referencePlan.referenceImages, geminiImageOptions);
         }
         const normalizedImage = String(response.base64Img || '').replace(/\s+/g, '');
         if (!normalizedImage) throw new Error('Image response did not include usable image data.');

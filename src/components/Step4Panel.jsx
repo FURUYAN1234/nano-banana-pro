@@ -565,11 +565,9 @@ export default function Step4Panel({
               {/* Instruction Footer */}
               <div className="bg-slate-900 border-t border-white/10 p-2 text-[11px] text-slate-500 text-center font-mono">
                 この欄で直接編集できます。編集した内容が、プロンプトのコピーと画像生成の両方に使われます。
-                {isOpenAIImageMode && (
-                  <span className="block mt-1">
-                    API生成時は、添付する参照画像の用途を示す補足を本文の後ろに追加します。入力した本文やコピー内容は書き換えません。
-                  </span>
-                )}
+                <span className="block mt-1">
+                  API生成時は、添付する参照画像の用途を示す補足を本文の後ろに追加します。入力した本文やコピー内容は書き換えません。
+                </span>
               </div>
 
               {isOpenAIImageMode && (
@@ -618,7 +616,7 @@ export default function Step4Panel({
               <p className="text-[10px] text-slate-500 text-center mt-2 leading-relaxed px-2">
                 {isOpenAIImageMode
                   ? 'API生成では、プロンプトに加えて、読み込み済みのキャラクターシートと有効な360°背景画像を参照画像として送信します。参照画像がない場合は文章のみで生成します。API利用料金が発生し、ChatGPTのサブスク料金とは別会計です。'
-                  : 'Gemini API生成にはAPI利用料金がかかります。参照画像の利用は選択中の生成経路によって異なります。公式Web版で手動生成したい場合は、下の案内をご利用ください。'}
+                  : 'Gemini API生成では、読み込み済みのキャラクターシートを参照画像として送信します。360°背景が有効で4コマ分の切り出し画像がそろっている場合は、それらも添付します。API利用料金がかかります。公式Web版で手動生成したい場合は、下の案内をご利用ください。'}
               </p>
 
               {/* PRO TIPS FOR EXTERNAL GENERATION */}

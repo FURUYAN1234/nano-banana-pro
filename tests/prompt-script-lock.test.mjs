@@ -11,7 +11,17 @@ before(async () => {
     logLevel: 'silent',
     server: { middlewareMode: true }
   });
-  ({ buildMangaPrompt } = await server.ssrLoadModule('/src/lib/prompt-assembler.js'));
+  const assembler = await server.ssrLoadModule('/src/lib/prompt-assembler.js');
+  // 既存の台詞内容・順序回帰は表示形式ではなく話者と本文の組で照合する。
+  // Geminiの生のTEXT/TAILS分離形式はgemini-script-routing.test.mjsで別途検査する。
+  buildMangaPrompt = (options) => assembler.buildMangaPrompt(options).replace(
+    /^(- Panel \d+ required dialogue: )TEXT \(PRINT VALUES ONLY\): (.*?)\. TAILS \(METADATA; NEVER PRINT NAMES\): (.*?)\.$/gm,
+    (_, prefix, text, tails) => {
+      const speakers = new Map([...tails.matchAll(/(B\d+)->\[([^\]]+)\]/g)].map(match => [match[1], match[2]]));
+      return prefix + [...text.matchAll(/(B\d+)="([^"]*)"/g)]
+        .map(match => `${speakers.get(match[1]) || ''}「${match[2]}」`).join(' / ');
+    }
+  );
 });
 
 after(async () => {

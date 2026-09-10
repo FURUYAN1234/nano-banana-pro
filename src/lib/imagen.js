@@ -1,4 +1,4 @@
-import { getApiKey } from "./gemini";
+import { getApiKey } from "./gemini.js";
 
 const isLocalGeminiHost = typeof window !== 'undefined'
     && ['localhost', '127.0.0.1', '::1'].includes(window.location.hostname);
@@ -177,7 +177,7 @@ export const generateImageWithImagen = async (prompt, onStatusUpdate, referenceI
 
     // Auto-Discovery Diagnostics integration
     try {
-        const { diagnoseConnection } = await import("./gemini");
+        const { diagnoseConnection } = await import("./gemini.js");
         const diagnosis = await diagnoseConnection();
         console.error("IMAGE GEN DIAGNOSIS RESULT:", diagnosis);
 
