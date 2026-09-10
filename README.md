@@ -2,7 +2,7 @@
 
 STEP4の「品質検査NG時に自動修正する」は既定ONです。ONでは具体的な品質NGに対して最大1回の追加画像生成（追加課金）が行われます。OFFでは検査結果と元画像を保持し、品質修正の追加画像生成は行いません。モデル比較ではOFFにして同一プロンプトの最初の出力を比較してください。/ STEP4 automatic quality repair is enabled by default; disable it for first-output comparisons without an additional repair image charge. Automated QA is advisory and can miss dialogue omissions; inspect the actual image against the script.
 
-> Latest release: **v5.9.6** / 最新リリース: **v5.9.6**
+> Latest release: **v5.9.7** / 最新リリース: **v5.9.7**
 
 > **"To what extent can humans step away from the creative process?"**
 > **「人間は、どこまで制作から降りられるのか？」**
@@ -24,7 +24,7 @@ STEP4の「品質検査NG時に自動修正する」は既定ONです。ONでは
 This project aims to intentionally exclude humans from the creative process, allowing AI to act as a director and complete everything from brainstorming to composition, direction, and rendering.
 本プロジェクトは、人間をクリエイティブな工程から意図的に排除し、AIがディレクターとして「ネタ出し・構成・演出・作画」のすべてを完結させることを目的としています。
 
-The current implementation and latest release are **v5.9.6**. The product name is **Super FURU AI 4-koma System**. STEP4 offers Gemini and OpenAI image-generation routes, including GPT Image 2.5. / 現在の実装および最新公開版は **v5.9.6** です。製品名は **Super FURU AI 4-koma System** で、STEP4ではGPT Image 2.5を含むOpenAI系とGemini系の画像生成経路を利用できます。
+The current implementation and latest release are **v5.9.7**. The product name is **Super FURU AI 4-koma System**. STEP4 offers Gemini and OpenAI image-generation routes, including GPT Image 2.5. / 現在の実装および最新公開版は **v5.9.7** です。製品名は **Super FURU AI 4-koma System** で、STEP4ではGPT Image 2.5を含むOpenAI系とGemini系の画像生成経路を利用できます。
 
 Distribution deployment / 配布ファイルの公開: Hugging Face uploads every current ZIP through Git LFS, including files below 10 MB. GitHub Pages continues to serve ordinary ZIP bytes. Workflow JSON and checksum files retain exact bytes on both hosts. / Hugging Faceでは10 MB未満も含め、現存する配布ZIPをすべてGit LFSで送信します。GitHub Pagesでは従来どおり通常のZIPを配信します。ワークフローJSONとチェックサムファイルは、どちらの公開先でも元のバイトを保持します。
 
@@ -66,9 +66,11 @@ For this manually configured standard ComfyUI route, select `MiniMax H3 Referenc
 
 **Using the Fused4step + SLA workflow / Fused4step・SLA 配布ワークフローを使う場合**
 
-This route distributes `FourPanel_NonLM_4step_20260910071735_v1.1.7.json` and `ComfyUI_H3_Workflows_20260910071735_v1.1.7.zip` as separate downloads. Five custom-node folders are bundled. Each segment compares at most five candidates including the initial attempt; an earlier pass proceeds immediately, and the best candidate is retained if all fail. / この経路では `FourPanel_NonLM_4step_20260910071735_v1.1.7.json` と `ComfyUI_H3_Workflows_20260910071735_v1.1.7.zip` を別々に配布します。Fused 4ステップ・音声補正2ステップ（denoise 0.5）・SLA Attentionを保持します。台詞1本につき5秒・上限なし、台詞がない場合だけ既定30秒です。H3生成BGMは台詞中に低音量へ抑えます。区間ごとに生成・検査し、初回込み最大5候補を比較します。途中で合格したら即座に次へ進み、全候補が不合格なら最良候補を保持して続行します。4・5回目の候補も途中再開できます。日本語の吹き出し位置に基づく読順を使い、台詞と話者を保持します。
+This route distributes `FourPanel_NonLM_4step_20260910101338_v5.9.7.json` and `ComfyUI_H3_FourPanel_NonLM_20260910101338_v5.9.7.zip` as separate downloads. Five custom-node folders are bundled. Each segment compares at most five candidates including the initial attempt; an earlier pass proceeds immediately, and the best candidate is retained if all fail. / この経路では `FourPanel_NonLM_4step_20260910101338_v5.9.7.json` と `ComfyUI_H3_FourPanel_NonLM_20260910101338_v5.9.7.zip` を別々に配布します。Fused 4ステップ・音声補正2ステップ（denoise 0.5）・SLA Attentionを保持します。台詞1本につき5秒・上限なし、台詞がない場合だけ既定30秒です。H3生成BGMは台詞中に低音量へ抑えます。区間ごとに生成・検査し、初回込み最大5候補を比較します。途中で合格したら即座に次へ進み、全候補が不合格なら最良候補を保持して続行します。4・5回目の候補も途中再開できます。日本語の吹き出し位置に基づく読順を使い、台詞と話者を保持します。
 
 **FURU four-panel manga to video / FURUの4コマ漫画を動画化**
+
+The four-panel package now follows Nano Banana v5.9.7; the separate general-purpose video product is unchanged. Subject/speaker bindings survive segment splitting, and six chronological frames are inspected for speaking-mouth evidence. If every candidate fails, an audio-passing, speaker-check-only failure may be retained; retention is not an all-checks pass. Review the final video's dialogue and speaker yourself. See the bundled `VERSION_CORRECTION_JA.md`, `RELEASE_PREVENTION_JA.md`, and `VALIDATION.md`. / 四コマ配布版はNano Bananaに合わせてv5.9.7へ訂正し、別サービスの汎用動画版は変更しません。区間分割後も人物IDと話者IDの対応を維持し、時系列の6フレームで話者の口の動きも検査します。全候補が不合格なら、音声が合格で話者検査だけが不合格の候補を採用する場合があります。採用済みでも全検査合格とは限らないため、完成動画の台詞と話者は利用者も確認してください。版番号訂正、再発防止策、検証範囲は同梱の3文書を参照してください。
 
 The dedicated workflow turns one completed Super FURU AI four-panel manga page into four contiguous MiniMax H3 shots. It retains panel order, panel-derived cast, speaker ownership, story action, setting, and punchline; it gives each visible character a role-appropriate movement, removes speech balloons, and adds the title and fixed end credit outside H3 after generation. / 専用ワークフローは、完成したSuper FURU AIの4コマ漫画1枚を連続する4つのMiniMax H3ショットに変換します。コマ順、各コマから導く登場人物、台詞の話者、物語上の動作、場所、オチを保ち、画面内の各人物へ役割に応じた動きを与え、吹き出しを除去します。タイトルと固定エンドクレジットは、H3生成後にワークフローが合成します。
 
@@ -877,6 +879,9 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 ---
 
 ## 📋 ChangeLog
+
+### v5.9.7 (2026-09-10)
+- **[Fix & UX]** 四コマComfyUI配布版の名称と版番号を訂正し、話者検査付きの導入ZIPと単独JSONを更新。採用候補の検証上の制限も説明。 / Corrected four-panel ComfyUI product/version naming; updated separate ZIP/JSON downloads with speaker checks and documented fallback limitations.
 
 ### v5.9.6 (2026-09-10)
 

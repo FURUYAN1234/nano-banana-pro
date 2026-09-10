@@ -1,4 +1,7 @@
 # Keep the supplied distribution bytes unchanged when the static site is published.
+downloads/ComfyUI_H3_FourPanel_NonLM_20260910101338_v5.9.7.zip -text
+downloads/ComfyUI_H3_FourPanel_NonLM_20260910101338_v5.9.7.zip.sha256.txt -text
+workflows/FourPanel_NonLM_4step_20260910101338_v5.9.7.json -text
 downloads/ComfyUI_H3_Workflows_20260910071735_v1.1.7.zip -text
 downloads/ComfyUI_H3_Workflows_20260910071735_v1.1.7.zip.sha256.txt -text
 workflows/FourPanel_NonLM_4step_20260910071735_v1.1.7.json -text

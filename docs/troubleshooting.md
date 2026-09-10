@@ -7,6 +7,12 @@
 
 # Hugging Face ZIP deployment recovery
 
+## NO_APP_FILE with Dockerfile present / Dockerfileが存在する場合のNO_APP_FILE
+
+On 2026-09-10, the authenticated runtime API reported `NO_APP_FILE` although the published repository had `sdk: docker`, a root `Dockerfile`, and nginx configured for port 7860. The build-log API returned HTTP 200 with an empty stream. After explicit user approval, one `HfApi.restart_space(..., factory_reboot=True)` changed the state to BUILDING and then RUNNING at the same v5.9.6 commit. The browser loaded the application. No application source, repository, hardware tier, or Space configuration was changed by this recovery. The underlying Hub cause remains unproven.
+
+2026年9月10日、Dockerfileとポート設定が正しく公開されている状態でも、HFは `NO_APP_FILE` と判定し、ビルドログは空でした。利用者の明示承認を得たFactory restartを1回実行すると、同じv5.9.6コミットのままRUNNINGへ復旧し、ブラウザーで表示できました。アプリのソースやSpaceの設定、ハードウェア契約は変更していません。HF内部で停滞した原因までは断定していません。今後もFactory restartを通常デプロイへ自動追加せず、公開ファイル・現在の実行状態・ログを確認してから、その復旧操作の承認を得てください。
+
 ## Binary rejection / バイナリ拒否
 
 On 2026-09-07, the Hub rejected the 421,717-byte distribution ZIP as a regular Git binary. A size below 10 MB does not make this ZIP acceptable as a regular blob. v5.9.3 tracks every existing ZIP declared by `public/.gitattributes` with Git LFS in the HF checkout only. Pages attributes remain unchanged.
