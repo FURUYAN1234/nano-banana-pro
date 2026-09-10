@@ -38,7 +38,7 @@ import {
 } from '../lib/image-quality-qa';
 import { inferImageQualityMode, runImageQualityFailsafe } from '../lib/image-quality-failsafe';
 import { getEffectiveEngine } from '../lib/engine-state';
-import { DEFAULT_OPENAI_IMAGE_QUALITY, normalizeOpenAIImageQuality, resolveOpenAIImageOption, isOpenAIImageVerificationError, OPENAI_IMAGE_VERIFICATION_MESSAGE } from '../lib/openai-image-settings.js';
+import { DEFAULT_OPENAI_IMAGE_QUALITY, normalizeOpenAIImageQuality, resolveOpenAIImageOption, selectInitialOpenAIImageQuality, isOpenAIImageVerificationError, OPENAI_IMAGE_VERIFICATION_MESSAGE } from '../lib/openai-image-settings.js';
 
 export default function useMangaWorkflow() {
   const [openAIImageQuality, setOpenAIImageQualityState] = useState(DEFAULT_OPENAI_IMAGE_QUALITY);
@@ -273,6 +273,8 @@ export default function useMangaWorkflow() {
     // [v3.59] Dual Engine: APIキーのプレフィックスでエンジンを自動判定
     if (cleanKey.startsWith("sk-")) {
       // OpenAI APIキー → ChatGPTエンジンに切り替え
+      setOpenAIImageQualityState(selectInitialOpenAIImageQuality(verification.availableModelIds));
+      setOpenAIImageVerificationWarning('');
       setOpenAIApiKey(cleanKey);
       setActiveEngine('openai');
       setSelectedEngine('openai');

@@ -154,6 +154,10 @@ const verifyOpenAIKey = async (key, fetchImpl, timeoutMs) => withTimeout(async (
       'transient',
     );
   }
+
+  return data.data
+    .map((model) => model?.id)
+    .filter((modelId) => typeof modelId === 'string');
 }, timeoutMs);
 
 export const verifyApiKeyConnection = async (key, options = {}) => {
@@ -179,8 +183,9 @@ export const verifyApiKeyConnection = async (key, options = {}) => {
 
   for (let attempt = 1; attempt <= maxTransientAttempts; attempt += 1) {
     try {
+      let availableModelIds;
       if (validation.provider === 'openai') {
-        await verifyOpenAIKey(validation.sanitizedKey, fetchImpl, options.timeoutMs);
+        availableModelIds = await verifyOpenAIKey(validation.sanitizedKey, fetchImpl, options.timeoutMs);
       } else {
         await verifyGeminiKey(validation.sanitizedKey, fetchImpl, options.timeoutMs);
       }
@@ -189,6 +194,7 @@ export const verifyApiKeyConnection = async (key, options = {}) => {
         ok: true,
         failureKind: null,
         message: '',
+        ...(validation.provider === 'openai' ? { availableModelIds } : {}),
       };
     } catch (error) {
       const failureKind = error?.failureKind || 'transient';

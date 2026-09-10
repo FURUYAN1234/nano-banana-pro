@@ -2,6 +2,8 @@
 
 ## Current Status
 
+- **v5.9.8 OpenAI initial image selection (2026-09-10)**: Root PLAN.md entry "Nano Banana v5.9.8 OpenAI initial image selection" owns the current implementation, real API verification, release, note and full-backup status. The verified models response determines Sunburst/xhigh or 2.0/high at key connection; image errors do not automatically switch models or retry.
+
 - **v5.9.7 four-panel distribution and HF recovery (2026-09-10)**: The live task record is the root `PLAN.md` entry "Four-panel NonLM v5.9.7 supplied-package audit and release". It owns package audit evidence, release status, the corrected note target `ndf063558c1f5`, and the explicitly requested visible full backup. Refer to that entry for current completion state; the older v5.9.6 backup exclusion below does not apply to this task.
 
 - **v5.9.6 reference-image and H3 distribution candidate (2026-09-10)**: OpenAI character/background references and source-image repair are implemented; the real two-character-sheet Sunburst/xhigh run completed with QA PASS (repair OFF). H3 v1.1.7 ZIP and separate JSON include five folders and corrected package instructions. Full suite: 310/310; warning-free lint passed. Release and note publication are authorized; full backup is excluded. Current detailed state and evidence limits: `docs/superpowers/plans/2026-09-10-openai-reference-image-editing-and-web-guidance.md`, section 12. Publication is not yet complete.

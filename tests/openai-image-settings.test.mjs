@@ -12,6 +12,19 @@ test('each Sunburst choice sends its model and quality separately', () => {
   }
 });
 
+test('chooses Sunburst xhigh only when the verified model list contains Sunburst', async () => {
+  const settings = await import(`../src/lib/openai-image-settings.js?initial-selection=${Date.now()}`);
+
+  assert.equal(
+    settings.selectInitialOpenAIImageQuality(['gpt-image-2.5-sunburst', 'gpt-image-2']),
+    'sunburst-xhigh',
+  );
+  assert.equal(
+    settings.selectInitialOpenAIImageQuality(['gpt-image-2.5-flare', 'gpt-image-2']),
+    'gpt-image-2-high',
+  );
+});
+
 test('selection starts at xhigh and never reads or writes browser storage', () => {
   const descriptor = Object.getOwnPropertyDescriptor(globalThis, 'localStorage');
   const values = new Map();

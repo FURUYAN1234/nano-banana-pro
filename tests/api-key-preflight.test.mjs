@@ -114,6 +114,18 @@ test('accepts an OpenAI key only after the models endpoint responds successfully
   assert.equal(result.sanitizedKey, openAiKey);
 });
 
+test('returns OpenAI model IDs from a verified models response', async () => {
+  const result = await verifyApiKeyConnection(openAiKey, {
+    fetchImpl: async () => ({
+      ok: true,
+      status: 200,
+      json: async () => ({ data: [{ id: 'gpt-image-2.5-sunburst' }, { id: 'gpt-image-2' }] }),
+    }),
+  });
+
+  assert.deepEqual(result.availableModelIds, ['gpt-image-2.5-sunburst', 'gpt-image-2']);
+});
+
 test('retries one transient first-read failure and accepts the same key without a reload', async () => {
   let attempts = 0;
   const result = await verifyApiKeyConnection(openAiKey, {

@@ -1,5 +1,6 @@
 export const OPENAI_IMAGE_MODEL = 'gpt-image-2.5-flare';
 export const DEFAULT_OPENAI_IMAGE_QUALITY = 'sunburst-xhigh';
+export const FALLBACK_OPENAI_IMAGE_QUALITY = 'gpt-image-2-high';
 export const OPENAI_IMAGE_OPTIONS = [
   { value: 'gpt-image-2-high', label: 'GPT Image 2.0 / high', model: 'gpt-image-2', quality: 'high' },
   { value: 'high', label: 'GPT Image 2.5 Flare / high', model: OPENAI_IMAGE_MODEL, quality: 'high' },
@@ -14,6 +15,12 @@ export function resolveOpenAIImageOption(value) {
 
 export function normalizeOpenAIImageQuality(value) {
   return resolveOpenAIImageOption(value).value;
+}
+
+export function selectInitialOpenAIImageQuality(availableModelIds) {
+  return Array.isArray(availableModelIds) && availableModelIds.includes('gpt-image-2.5-sunburst')
+    ? DEFAULT_OPENAI_IMAGE_QUALITY
+    : FALLBACK_OPENAI_IMAGE_QUALITY;
 }
 
 export const OPENAI_IMAGE_VERIFICATION_MESSAGE = 'GPT Image 2.5の組織認証（個人認証）が未承認、または承認がAPIに未反映です。組織設定を確認するか、プルダウンでGPT Image 2.0を選択してください。';

@@ -585,10 +585,10 @@ export default function Step4Panel({
                     {OPENAI_IMAGE_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
                   </select>
                   <p className="mt-2 text-xs text-slate-400">
-                    選択はリロードまで保持します。リロード後はSunburst / xhighに戻ります。
+                    OpenAI APIキーの接続確認時、GPT Image 2.5 Sunburstが利用可能ならSunburst / xhighを、利用できない場合はGPT Image 2.0 / highを初期選択します。選択はリロードまで保持します。
                   </p>
                   <p className="mt-2 text-xs leading-relaxed text-slate-300">
-                    まだ本人確認の手続きがお済みでない方・審査中の方は、上のプルダウンで「GPT Image 2.0 / high」を選んでから画像を生成してください。自動では切り替わりません。
+                    GPT Image 2.5 Sunburstが初期選択されなかった場合も、上のプルダウンからモデルを変更できます。生成時のエラーで自動切替・自動再送信はしません。
                   </p>
                   <p className="mt-2 text-xs leading-relaxed text-slate-400">
                     GPT Image 2.5の利用には、APIアカウントの組織認証（個人の場合は本人確認）が必要な場合があります。
@@ -596,7 +596,7 @@ export default function Step4Panel({
                     の「Verifications → Individual → Start」から、Personaの公式画面で対応する本人確認書類を提出し、承認をお待ちください。書類はこのアプリへ送らないでください。
                   </p>
                   <p className="mt-2 text-xs leading-relaxed text-slate-400">
-                    承認後に2.5へ切り替えられますが、APIへの反映に時間がかかる場合があります。2.0もアカウントの利用権限によっては使用できません。この認証案内はAPI生成用で、ChatGPTのWeb貼り付け操作には不要です。
+                    モデル一覧への表示は、そのモデル・品質での画像生成成功を保証するものではありません。承認後もAPIへの反映に時間がかかる場合があり、2.0もアカウントの利用権限によっては使用できません。この認証案内はAPI生成用で、ChatGPTのWeb貼り付け操作には不要です。
                   </p>
                   {openAIImageVerificationWarning && <p role="alert" className="mt-2 rounded-lg border border-amber-500/40 bg-amber-950/30 p-3 text-sm text-amber-200">{openAIImageVerificationWarning}</p>}
                 </div>
