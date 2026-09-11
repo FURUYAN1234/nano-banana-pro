@@ -106,6 +106,8 @@ function App() {
     punchlineType,
     regenerateImage,
     openAIImageQuality,
+    openAIImageSize,
+    setOpenAIImageSize,
     openAIImageVerificationWarning,
     allowImageQualityRepair,
     setAllowImageQualityRepair,
@@ -385,6 +387,8 @@ function App() {
               isAssembling={isAssembling}
                regenerateImage={regenerateImage}
               openAIImageQuality={openAIImageQuality}
+              openAIImageSize={openAIImageSize}
+              setOpenAIImageSize={setOpenAIImageSize}
               openAIImageVerificationWarning={openAIImageVerificationWarning}
               allowImageQualityRepair={allowImageQualityRepair}
               setAllowImageQualityRepair={setAllowImageQualityRepair}

@@ -2,6 +2,8 @@
 
 ## Current Status
 
+- **v6.0.0 comedy-aware prompt review (2026-09-11)**: Root PLAN.md entry "Nano Banana four-panel quality reference API evaluation" owns live delivery status. Optional AI review preserves surreal intent and adjusts auxiliary directions only; quality warnings retain outputs. Real text-API trials preserved the gag and removed conflicting auxiliary directions. Image accuracy remains imperfect. Release notes: docs/releases/v6.0.0.md.
+
 - **v5.9.9 Gemini character references (2026-09-10)**: Root PLAN.md entry "Nano Banana Gemini character-reference parity" owns current evidence and delivery status. Two real reference-image runs completed; output defects remain. The user explicitly requested release, note update and full backup despite those limits. This release does not claim flawless rendering.
 
 - **v5.9.8 OpenAI initial image selection (2026-09-10)**: Root PLAN.md entry "Nano Banana v5.9.8 OpenAI initial image selection" owns the current implementation, real API verification, release, note and full-backup status. The verified models response determines Sunburst/xhigh or 2.0/high at key connection; image errors do not automatically switch models or retry.

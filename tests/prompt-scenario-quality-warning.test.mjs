@@ -4,6 +4,7 @@ import { createServer } from 'vite';
 
 let server;
 let buildMangaPrompt;
+let extractCastLimitRule;
 
 before(async () => {
   server = await createServer({
@@ -12,10 +13,20 @@ before(async () => {
     server: { middlewareMode: true }
   });
   ({ buildMangaPrompt } = await server.ssrLoadModule('/src/lib/prompt-assembler.js'));
+  ({ extractCastLimitRule } = await server.ssrLoadModule('/src/lib/panel-utils.js'));
 });
 
 after(async () => {
   await server?.close();
+});
+
+test('an explicit no-extra-customers instruction cannot authorize background mobs', () => {
+  const cast = '## アカリ\n- adult woman\n## ヒカリ\n- adult woman';
+  for (const compact of [true, false]) {
+    const rule = extractCastLimitRule('状況: アカリとヒカリが話す。追加の客はいない。\nアカリ「どうぞ。」', cast, { compact });
+    assert.doesNotMatch(rule, /plus required adult mobs|Allow additional background characters/);
+    assert.match(rule, /NO OTHER HUMANS/);
+  }
 });
 
 const incompleteScenario = `## タイトル: 検証警告
@@ -51,6 +62,19 @@ const promptArgs = {
   systemVersion: 'test'
 };
 
+test('both providers compile explicitly silent panels without adding dialogue', () => {
+  const scenario = incompleteScenario.replace('[4コマ目: 結]', '[3コマ目: 転]\n状況: ミクが窓を見る。\nセリフなし\n\n[4コマ目: 結]');
+  for (const providerFamily of ['chatgpt', 'gemini']) {
+    const prompt = buildMangaPrompt({ ...promptArgs, scenario, providerFamily });
+    assert.match(prompt, /Panel 3/);
+    assert.match(prompt, /NO speech bubbles/);
+    for (const rule of ['SINGLE INSTANT:', 'REVEAL ORDER:', 'REACTION TARGET:', 'PROP STATE:', 'REFERENCE ROLE:']) {
+      assert.ok(prompt.includes(rule), `${providerFamily} must retain ${rule} after prompt compaction`);
+    }
+    assert.doesNotMatch(prompt, /never substitute; keep it identical/);
+  }
+});
+
 test('prompt assembly permits a quality warning only when the workflow explicitly opts in', () => {
   assert.throws(
     () => buildMangaPrompt(promptArgs),
@@ -66,18 +90,15 @@ test('prompt assembly permits a quality warning only when the workflow explicitl
   assert.match(prompt, /サエコ「これで終わり。/);
 });
 
-test('prompt assembly never opts into a missing speech-bubble contract', () => {
+test('prompt assembly continues on missing dialogue when the workflow opts into quality warnings', () => {
   const dialogueMissingScenario = incompleteScenario.replace(
     '[4コマ目: 結]',
     '[3コマ目: 転]\n状況: ミクが窓を見て「嫌な予感…！」とつぶやく。\n\n[4コマ目: 結]'
   );
 
-  assert.throws(
-    () => buildMangaPrompt({
-      ...promptArgs,
-      scenario: dialogueMissingScenario,
-      allowScenarioQualityWarning: true
-    }),
-    /Incomplete 4-koma scenario/
-  );
+  for (const providerFamily of ['chatgpt', 'gemini']) {
+    const prompt = buildMangaPrompt({ ...promptArgs, providerFamily, scenario: dialogueMissingScenario, allowScenarioQualityWarning: true });
+    assert.match(prompt, /Panel 3/);
+    assert.match(prompt, /始めよう/);
+  }
 });

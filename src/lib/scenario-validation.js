@@ -15,7 +15,7 @@ const PANEL_NUMBER_MAP = new Map([
   ['\u56DB', 4]
 ]);
 
-const NO_DIALOGUE_RE = /(?:\u7121\u8A00|\u53F0\u8A5E\s*(?:\u306A\u3057|\u7121\u3057)|\u30BB\u30EA\u30D5\s*(?:\u306A\u3057|\u7121\u3057)|\u305B\u308A\u3075\s*(?:\u306A\u3057|\u7121\u3057)|without\s+dialogue|no\s+dialogue|Characters interact without dialogue)/i;
+const NO_DIALOGUE_RE = /^\s*(?:[-*]\s*)?(?:無言|(?:台詞|セリフ|せりふ)\s*[:：]?\s*(?:なし|無し)|(?:Dialogue\s*:\s*)?(?:none|no\s+dialogue|without\s+dialogue))\s*[。.!]?\s*$/im;
 
 const stripThoughtBlocks = (text) => String(text || '').replace(/<thought>[\s\S]*?<\/thought>/gi, '');
 
@@ -60,14 +60,14 @@ export const validateMangaScenario = (scenarioText, castList = '') => {
   const panels = getScenarioPanelBlocks(scenarioText);
   const missingPanels = panels.filter((panel) => !panel.found).map((panel) => panel.num);
   const panelsMissingDialogue = panels
-    .filter((panel) => panel.found && !hasSpeechBubbleDialogue(panel.text, castList))
+    .filter((panel) => panel.found && !hasSpeechBubbleDialogue(panel.text, castList) && !NO_DIALOGUE_RE.test(panel.text))
     .map((panel) => panel.num);
   const silentPanels = panels
     .filter((panel) => panel.found && NO_DIALOGUE_RE.test(panel.text) && !hasSpeechBubbleDialogue(panel.text, castList))
     .map((panel) => panel.num);
 
   return {
-    ok: missingPanels.length === 0 && panelsMissingDialogue.length === 0 && silentPanels.length === 0,
+    ok: missingPanels.length === 0 && panelsMissingDialogue.length === 0,
     missingPanels,
     panelsMissingDialogue,
     silentPanels,
@@ -82,9 +82,6 @@ export const formatMangaScenarioValidationIssue = (validation) => {
   }
   if (validation.panelsMissingDialogue.length) {
     issues.push(`panel(s) without speech-bubble dialogue: ${validation.panelsMissingDialogue.join(', ')}`);
-  }
-  if (validation.silentPanels.length) {
-    issues.push(`panel(s) marked as no-dialogue: ${validation.silentPanels.join(', ')}`);
   }
   return issues.join('; ') || 'unknown scenario validation error';
 };

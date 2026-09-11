@@ -1,24 +1,24 @@
 // ※ OpenAIの画像生成はフォールバック配列を持たず、最高品質の単一モデルを直接指定します。
 import { clearApiSession, getApiCredential, setApiSession } from './api-session.js';
 
-import { resolveOpenAIImageOption } from './openai-image-settings.js';
+import { resolveOpenAIImageOption, normalizeOpenAIImageSize } from './openai-image-settings.js';
 import {OPENAI_IMAGE_INPUT_LIMIT, normalizeOpenAIImageDataUrl} from './openai-image-references.js';
 const OPENAI_IMAGE_TIMEOUT_MS = 600000;
 const OPENAI_IMAGE_TIMEOUT_SECONDS = OPENAI_IMAGE_TIMEOUT_MS / 1000;
 const OPENAI_IMAGE_PROMPT_MAX_CHARS = 32000;
 
-export const buildOpenAIImageRequestBody = (prompt, { stream = true, quality } = {}) => ({
+export const buildOpenAIImageRequestBody = (prompt, { stream = true, quality, size } = {}) => ({
   model: resolveOpenAIImageOption(quality).model,
   prompt,
   n: 1,
-  size: "1024x1536",
+  size: normalizeOpenAIImageSize(size),
   quality: resolveOpenAIImageOption(quality).quality,
   output_format: "png",
   moderation: "low",
   ...(stream ? { stream: true, partial_images: 1 } : {}),
 });
 
-export function buildOpenAIImageRequest(prompt, {quality, stream = true, imageInputs = []} = {}) {
+export function buildOpenAIImageRequest(prompt, {quality, size, stream = true, imageInputs = []} = {}) {
   if (typeof prompt !== 'string' || !prompt.trim()) throw new Error('画像生成プロンプトが空です。');
   if (prompt.length > OPENAI_IMAGE_PROMPT_MAX_CHARS) throw new Error('参照説明を含む画像生成プロンプトが32,000文字を超えています。本文を確認してください。');
   if (!Array.isArray(imageInputs)) throw new Error('OpenAI参照画像は配列で指定してください。');
@@ -29,7 +29,7 @@ export function buildOpenAIImageRequest(prompt, {quality, stream = true, imageIn
   const isEdit = images.length > 0;
   return {
     url: `https://api.openai.com/v1/images/${isEdit ? 'edits' : 'generations'}`,
-    body: {...buildOpenAIImageRequestBody(prompt, {quality, stream}), ...(isEdit ? {images} : {})},
+    body: {...buildOpenAIImageRequestBody(prompt, {quality, size, stream}), ...(isEdit ? {images} : {})},
     isEdit,
   };
 }
@@ -188,6 +188,7 @@ export const generateImageWithOpenAI = async (prompt, statCallback, options = {}
 
   const request = buildOpenAIImageRequest(prompt, {
     quality,
+    size: options.size,
     imageInputs: options.imageInputs ?? [],
   });
   if (request.isEdit) {
@@ -203,7 +204,7 @@ export const generateImageWithOpenAI = async (prompt, statCallback, options = {}
       "Content-Type": "application/json",
       "Authorization": `Bearer ${apiKey}`
     },
-    body: JSON.stringify(buildOpenAIImageRequestBody(prompt, { stream, quality })),
+    body: JSON.stringify(buildOpenAIImageRequestBody(prompt, { stream, quality, size: options.size })),
     signal: controller.signal
   });
 

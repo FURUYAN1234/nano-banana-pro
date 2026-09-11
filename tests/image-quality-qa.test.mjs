@@ -23,6 +23,26 @@ test('direct comparison fixes image order and defaults uncertain judgments to or
 const SINGLE_IMAGE_PROMPT = `[ ANTIGRAVITY EMOTIONAL CINEMA ENGINE v2.1 ]
 Create a SINGLE breathtaking illustration.`;
 
+test('an unsupported PASS stays unverified, while complete observations are retained', () => {
+  const missing = parseImageQualityQaResponse('{"pass":true,"issues":[]}');
+  assert.equal(missing.pass, false);
+  assert.equal(missing.issues[0].type, 'unverified');
+  const observations = { title: 'No title requested', dialogue: 'Panels 1-4 have no bubbles as requested', hands: 'No hand side requested', props: 'No props requested' };
+  const complete = parseImageQualityQaResponse(JSON.stringify({ pass: true, issues: [], observations }));
+  assert.equal(complete.pass, true);
+  assert.deepEqual(complete.observations, observations);
+});
+
+test('QA retains exact title and hand instructions from the submitted prompt', () => {
+  const prompt = buildImageQualityQaPrompt({ finalPrompt: 'Title: 星の皿\nUse anatomical LEFT hand for the cup.\nPanel 2: No dialogue.' });
+  assert.match(prompt, /Title: 星の皿/);
+  assert.match(prompt, /Use anatomical LEFT hand for the cup/);
+  assert.match(prompt, /title_text/);
+  assert.match(prompt, /anatomical.*screen-left/i);
+  const result = parseImageQualityQaResponse('{"pass":false,"issues":[{"type":"title_text","reason":"missing title"}]}');
+  assert.equal(result.issues[0].type, 'title_text');
+});
+
 test('quality prompt prioritizes anatomy, hand side, prop ownership, and bubble text over background', () => {
   const prompt = buildImageQualityQaPrompt({
     scenario: 'アカリ「行こう！」',
@@ -62,7 +82,7 @@ test('quality prompt prioritizes anatomy, hand side, prop ownership, and bubble 
   assert.match(prompt, /derive the target from the scripted action, not from the holder/i);
   assert.match(prompt, /submit.*present.*show.*recipient/i);
   assert.match(prompt, /tabletop.*face-up.*text baseline.*intended reader/i);
-  assert.doesNotMatch(prompt, /UNRELATED_RENDERING_NOISE/);
+  assert.match(prompt, /UNRELATED_RENDERING_NOISE/); // Keep the complete submitted contract, including manual edits.
 });
 
 test('quality review image parts keep the candidate first and append valid character sheets', () => {

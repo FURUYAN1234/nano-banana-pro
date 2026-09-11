@@ -20,6 +20,20 @@ after(async () => {
 
 const CAST_LIST = 'アカリ\nヒカリ\nミク\nサエコ';
 
+const fourPanels = (body) => [1, 2, 3, 4].map(n => `[${n}コマ目]\n${body}`).join('\n');
+
+test('accepts explicit silent beats but not accidentally missing dialogue', () => {
+  for (const marker of ['セリフなし', 'セリフ: なし', '無言', 'Dialogue: none', 'No dialogue']) {
+    const result = validateMangaScenario(fourPanels(`状況: 箱を渡す。\n${marker}`), CAST_LIST);
+    assert.equal(result.ok, true, marker);
+    assert.deepEqual(result.silentPanels, [1, 2, 3, 4]);
+    assert.deepEqual(result.panelsMissingDialogue, []);
+  }
+  for (const body of ['状況: 無言で箱を渡す。', '無言ではない', '状況: 箱を渡す。']) {
+    assert.equal(validateMangaScenario(fourPanels(body), CAST_LIST).ok, false, body);
+  }
+});
+
 test('rejects spoken quotes embedded in visual situation lines because the final bubble parser excludes them', () => {
   const scenario = `
 [1コマ目: 起]

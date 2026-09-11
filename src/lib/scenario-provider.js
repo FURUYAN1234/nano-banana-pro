@@ -54,9 +54,9 @@ const scenarioRetryLabels = {
 
 export const DIALOGUE_CONTRACT_RETRY_INSTRUCTION = `DIALOGUE CONTRACT RETRY:
 The previous scenario cannot be compiled into speech bubbles. Rewrite the complete scenario from scratch.
-Every panel must contain at least one standalone dialogue line in exactly this form after its visual situation:
+Each speaking panel must contain at least one standalone dialogue line in exactly this form after its visual situation:
 キャラ名「短いセリフ。」
-Do not embed spoken dialogue inside 状況, Action, 表情, 演出, 背景, or other visual-direction lines. Do not output a no-dialogue instruction. Preserve the requested topic, cast, four-panel sequence, and output format.`;
+Do not embed spoken dialogue inside 状況, Action, 表情, 演出, 背景, or other visual-direction lines. For an intentionally silent beat, write セリフなし on its own line instead. Preserve explicitly requested silence; never invent speech to satisfy validation. Preserve the requested topic, cast, four-panel sequence, and output format.`;
 
 export const assertMangaScenarioDialogueContract = (scenarioText, castList) => {
   const validation = validateMangaScenario(scenarioText, castList);
@@ -65,7 +65,6 @@ export const assertMangaScenarioDialogueContract = (scenarioText, castList) => {
   const error = new Error(formatMangaScenarioValidationIssue(validation));
   error.code = 'DIALOGUE_CONTRACT';
   error.qualityScore = 0;
-  error.blocking = true;
   throw error;
 };
 

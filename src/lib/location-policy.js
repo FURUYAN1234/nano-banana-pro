@@ -93,6 +93,17 @@ export const requestSafeScenario = async ({
   let lastSafetyError = null;
   let retryContext = null;
   let bestQualityCandidate = null;
+  const retainQualityCandidate = (attempts, laterError = null) => ({
+    response: bestQualityCandidate.response,
+    parsed: bestQualityCandidate.parsed,
+    attempts,
+    validationWarning: {
+      code: bestQualityCandidate.error?.code || 'SCENARIO_QUALITY',
+      message: [bestQualityCandidate.error?.message || 'シナリオ品質検証に通りませんでした。', laterError ? `後続の修正を取得できないため既存候補を保持: ${laterError.message}` : ''].filter(Boolean).join(' / '),
+      qualityScore: bestQualityCandidate.qualityScore
+    }
+  });
+
 
   for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
     const retryText = typeof retryInstruction === 'function'
@@ -103,8 +114,15 @@ export const requestSafeScenario = async ({
       : retryContext?.kind === 'safety'
         ? `${initialPrompt}\n\n${SAFE_LOCATION_RETRY_INSTRUCTION}${retryText ? `\n\n${retryText}` : ''}`
         : `${initialPrompt}\n\n${retryText || 'QUALITY RETRY: Rewrite the complete scenario and correct the failed quality requirement while preserving the topic, cast, dialogue intent, and four-panel structure.'}`;
-    const response = await requestScenario(prompt);
-    const parsed = parseScenario(response);
+    let response;
+    let parsed;
+    try {
+      response = await requestScenario(prompt);
+      parsed = parseScenario(response);
+    } catch (error) {
+      if (bestQualityCandidate) return retainQualityCandidate(attempt + 1, error);
+      throw error;
+    }
 
     try {
       assertSafeScenarioOutput(parsed);
@@ -145,20 +163,7 @@ export const requestSafeScenario = async ({
         };
       }
       if (attempt + 1 >= maxAttempts) {
-        const selectedCandidate = bestQualityCandidate;
-        if (selectedCandidate.error?.blocking) {
-          throw selectedCandidate.error;
-        }
-        return {
-          response: selectedCandidate.response,
-          parsed: selectedCandidate.parsed,
-          attempts: attempt + 1,
-          validationWarning: {
-            code: typeof selectedCandidate.error?.code === 'string' ? selectedCandidate.error.code : 'SCENARIO_QUALITY',
-            message: selectedCandidate.error?.message || 'シナリオ品質検証に通りませんでした。',
-            qualityScore: selectedCandidate.qualityScore
-          }
-        };
+        return retainQualityCandidate(attempt + 1);
       }
       lastSafetyError = error;
       retryContext = {
@@ -175,5 +180,6 @@ export const requestSafeScenario = async ({
     }
   }
 
+  if (bestQualityCandidate) return retainQualityCandidate(maxAttempts, lastSafetyError);
   throw lastSafetyError || new Error('AIのシナリオ出力が安全ポリシーに違反しました。');
 };

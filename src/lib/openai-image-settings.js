@@ -1,5 +1,13 @@
 export const OPENAI_IMAGE_MODEL = 'gpt-image-2.5-flare';
 export const DEFAULT_OPENAI_IMAGE_QUALITY = 'sunburst-xhigh';
+export const DEFAULT_OPENAI_IMAGE_SIZE = '1024x1536';
+export const OPENAI_IMAGE_SIZE_OPTIONS = [
+  { value: '1024x1536', label: '標準：1024×1536' },
+  { value: '1536x2304', label: '大きめ：1536×2304' },
+];
+export function normalizeOpenAIImageSize(value) {
+  return OPENAI_IMAGE_SIZE_OPTIONS.some(option => option.value === value) ? value : DEFAULT_OPENAI_IMAGE_SIZE;
+}
 export const FALLBACK_OPENAI_IMAGE_QUALITY = 'gpt-image-2-high';
 export const OPENAI_IMAGE_OPTIONS = [
   { value: 'gpt-image-2-high', label: 'GPT Image 2.0 / high', model: 'gpt-image-2', quality: 'high' },
@@ -7,6 +15,7 @@ export const OPENAI_IMAGE_OPTIONS = [
   { value: 'xhigh', label: 'GPT Image 2.5 Flare / xhigh', model: OPENAI_IMAGE_MODEL, quality: 'xhigh' },
   { value: 'sunburst-high', label: 'GPT Image 2.5 Sunburst / high', model: 'gpt-image-2.5-sunburst', quality: 'high' },
   { value: 'sunburst-xhigh', label: 'GPT Image 2.5 Sunburst / xhigh', model: 'gpt-image-2.5-sunburst', quality: 'xhigh' },
+  { value: 'sunburst-max', label: 'GPT Image 2.5 Sunburst / max', model: 'gpt-image-2.5-sunburst', quality: 'max' },
 ];
 export function resolveOpenAIImageOption(value) {
   return OPENAI_IMAGE_OPTIONS.find(option => option.value === value)

@@ -593,9 +593,9 @@ ${styleJson.anti_patterns ? `            - 絶対禁止事項:\n${styleJson.anti
 
           シナリオ本文の要件:
           - 登場人物: ** 提供された CastList の全員 ** を使用してください。
-          - 台詞必須: [1コマ目]〜[4コマ目]の全コマに、必ず最低1つの「キャラ名「セリフ。」」形式のセリフを入れること。
-          - 台詞なし禁止: 「無言」「セリフなし」「台詞なし」「Characters interact without dialogue」のような無台詞指定は禁止。全コマで吹き出し用セリフを作ること。
-          - 途中終了禁止: [4コマ目: 結]の状況とセリフまで完全に書き切ること。2コマ目や3コマ目で出力を終えてはならない。
+          - 台詞の形式: 発話があるコマは、最低1つのキャラ名「セリフ。」形式の独立した行を入れること。
+          - 意図した無言: 無言の間や動作だけで伝えるコマでは、独立した行に「セリフなし」と明記する。無言指定を埋めるための発話を追加しない。発話するコマは独立したキャラ名「セリフ」の行を使う。
+          - 途中終了禁止: [4コマ目: 結]の状況とセリフ（無言ならセリフなしの指定）まで完全に書き切ること。2コマ目や3コマ目で出力を終えてはならない。
           - (禁止事項): AIが勝ために架空のオリジナルキャラクターを独自に創作して出演させることは禁止する。指定されたCastListのキャラクターのみをメインキャストとして扱うこと。
           - (許可事項): ニュースの当事者（スポーツ選手、政治家、怪人、動物、虫など）や名もなきモブキャラは、物語を面白くするために必要であれば自由に登場・発言させて構わない。
           - (ハルシネーション防止): ゲストを登場させる場合でも、画像生成時のVisual Actionに「意味不明な文字」や「描画不可能な複雑すぎる行動」が混入しないよう、シンプルで視覚的にわかりやすい行動に留めること。
@@ -604,7 +604,7 @@ ${styleJson.anti_patterns ? `            - 絶対禁止事項:\n${styleJson.anti
           - 文体: 各コマの「状況」「セリフ」が明確にわかる文章。
 
           ⚠️【最終確認・絶対厳守】⚠️
-          [1コマ目] [2コマ目] [3コマ目] [4コマ目] がすべて存在し、各コマに最低1つの「」付きセリフがあるか出力前に確認せよ。
+          [1コマ目] [2コマ目] [3コマ目] [4コマ目] がすべて存在し、各コマに独立した「」付きセリフ、または明示した「セリフなし」の行があるか出力前に確認せよ。
           全てのセリフの末尾に必ず「。」や「！」等の終止記号がついているか出力前に確認せよ。
           「…」や「～」など、終止記号なしで終わるセリフはシステムエラーとなるため完全禁止とする。
 
@@ -794,7 +794,7 @@ ${CROSS_PANEL_WARDROBE_COLOR_LOCK}
 - GLASSES CHECK: every panel must match the Identity Matrix.
 
 KEY PROP / OBJECT CONSISTENCY:
-- Match key object EXACTLY to Action/Dialogue; never substitute; keep it identical.
+- Match key object EXACTLY to Action/Dialogue; never substitute its identity. Contents, condition and holder follow each panel's scripted state.
 
 TEXT RULES:
 - Only Dialogue becomes white bubbles: vertical Japanese tategaki, verbatim character-by-character; no paraphrase, synonyms, softening, added/omitted words, or horizontal text.

@@ -16,6 +16,7 @@ import {
   ExternalLink
 } from 'lucide-react';
 import ThinkingLog from './ThinkingLog';
+import WebPromptReview from './WebPromptReview';
 import Panorama360Viewer from './Panorama360Viewer';
 import { GEMINI_A4_RELAYOUT_PROMPT, GEMINI_2K_REFINEMENT_PROMPT } from '../lib/gemini-image-edit';
 import { getEffectiveEngine } from '../lib/engine-state';
@@ -259,7 +260,7 @@ Do not emit the ending credit as a literal URL in the authoring response, becaus
 /**
  * STEP 04: 4コマ漫画生成 ＆ 履歴パネル
  */
-import { OPENAI_IMAGE_OPTIONS, resolveOpenAIImageOption } from '../lib/openai-image-settings.js';
+import { OPENAI_IMAGE_OPTIONS, OPENAI_IMAGE_SIZE_OPTIONS, resolveOpenAIImageOption } from '../lib/openai-image-settings.js';
 
 export default function Step4Panel({
   outputRef,
@@ -296,6 +297,8 @@ export default function Step4Panel({
   isAssembling,
   regenerateImage,
   openAIImageQuality,
+  openAIImageSize,
+  setOpenAIImageSize,
   openAIImageVerificationWarning,
   allowImageQualityRepair,
   setAllowImageQualityRepair,
@@ -381,6 +384,7 @@ export default function Step4Panel({
               />
             </div>
 
+            <WebPromptReview prompt={finalPrompt} onChange={setFinalPrompt} scenario={scenario} castList={castList} busy={isAssembling || isGeneratingImage} />
             {/* Buttons Row */}
             <div className="flex flex-col gap-4 mt-2 relative z-50">
               {/* 360°背景モード時のリマインダーバナー */}
@@ -582,8 +586,22 @@ export default function Step4Panel({
                   >
                     {OPENAI_IMAGE_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
                   </select>
+                  <label htmlFor="openai-image-size" className="block text-xs text-slate-300 mt-4 mb-2">API画像サイズ</label>
+                  <select
+                    id="openai-image-size"
+                    value={openAIImageSize}
+                    onChange={(event) => setOpenAIImageSize(event.target.value)}
+                    disabled={isGeneratingImage || isFixingPolicy}
+                    className="w-full rounded-lg border border-white/20 bg-slate-900 p-3 text-sm text-white disabled:opacity-50"
+                  >
+                    {OPENAI_IMAGE_SIZE_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+                  </select>
                   <p className="mt-2 text-xs text-slate-400">
-                    OpenAI APIキーの接続確認時、GPT Image 2.5 Sunburstが利用可能ならSunburst / xhighを、利用できない場合はGPT Image 2.0 / highを初期選択します。選択はリロードまで保持します。
+                    サイズの既定は1024×1536です。品質とサイズの選択はリロードまで保持します。API生成のみの設定で、Webへコピーするプロンプトには影響しません。
+                    大きめは拡大・印刷向けです。手や台詞の正確さを保証する設定ではありません。
+                  </p>
+                  <p className="mt-2 text-xs text-slate-400">
+                    初回接続時、GPT Image 2.5 Sunburstが利用可能ならSunburst / xhighを、利用できない場合はGPT Image 2.0 / highを初期選択します。
                   </p>
                   <p className="mt-2 text-xs leading-relaxed text-slate-300">
                     GPT Image 2.5 Sunburstが初期選択されなかった場合も、上のプルダウンからモデルを変更できます。生成時のエラーで自動切替・自動再送信はしません。

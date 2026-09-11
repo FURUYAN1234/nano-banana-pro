@@ -1519,7 +1519,8 @@ export const extractCastLimitRule = (fullPanelText, castList, options = {}) => {
     }
 
     // [v4.2.1] モブキャラ検出ロジック：本文にモブが含まれる場合はABS制限を緩和する
-    const hasMob = /(モブ|スタッフ|観客|群衆|兵士|客|人々|クラスメイト|生徒たち|全員|みんな|ファンたち|ファン|通行人)/.test(fullPanelText);
+    const excludesExtraPeople = /(?:追加の|他の|ほかの|余分な)(?:客|人物|人|モブ)(?:は|が)?(?:いない|居ない|なし|描かない)|(?:no extra|no other) (?:people|customers|humans)/i.test(fullPanelText);
+    const hasMob = !excludesExtraPeople && /(モブ|スタッフ|観客|群衆|兵士|客|人々|クラスメイト|生徒たち|全員|みんな|ファンたち|ファン|通行人)/.test(fullPanelText);
 
     let spatialConstraint;
     if (hasMob) {

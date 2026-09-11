@@ -83,9 +83,9 @@ test('ChatGPT-family prompt strictly forbids replacing the scenario story or dia
 
   assert.ok(scriptLockIndex > -1, 'ChatGPT prompt must include a strict script lock');
   assert.ok(scriptLockIndex < panelIndex, 'script lock must appear before detailed panel descriptions');
-  assert.match(prompt, /different story is a failed output/i);
-  assert.match(prompt, /Do not replace, rewrite, paraphrase, omit, or add dialogue/i);
-  assert.match(prompt, /lower camera, layout, cast-placement, or style instruction conflicts with this script lock/i);
+  assert.match(prompt, /different story is a failed output|Scenario is source of truth/i);
+  assert.match(prompt, /Do not replace, rewrite, paraphrase, omit, or add dialogue|verbatim dialogue; no additions\/omissions/i);
+  assert.match(prompt, /lower camera, layout, cast-placement, or style instruction conflicts with this script lock|Script overrides conflicting camera\/layout\/cast-placement\/style/i);
   assert.match(prompt, /Title: 塩ポップコーン論争勃発!\?/);
   assert.match(prompt, /Panel 1 required dialogue: ミク「今日は絶対キャラメルっしょ！」/);
   assert.match(prompt, /Panel 2 required dialogue: リン「文明の後退だ…。」/);

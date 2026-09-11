@@ -160,6 +160,16 @@ const compactChatGPTConversationRules = (prompt) => {
   if (compacted.length <= CHATGPT_WEB_COPY_SOFT_BUDGET) return compacted;
 
   const maximallyCompacted = compacted
+    .replace(/- SINGLE INSTANT:[^\n]*/g, '- SINGLE INSTANT: one scripted moment.')
+    .replace(/- REVEAL ORDER:[^\n]*/g, '- REVEAL ORDER: current Action only; no later states/reactions.')
+    .replace(/- REACTION TARGET:[^\n]*/g, '- REACTION TARGET: scripted gaze/pose target; no new events.')
+    .replace(/- PROP STATE:[^\n]*/g, '- PROP STATE: identity fixed; state/holder follow script.')
+    .replace(/- REFERENCE ROLE:[^\n]*/g, '- REFERENCE ROLE: appearance; no sheet labels/layout/poses.')
+    .replace(/- Scenario is source truth\.[^\n]*/g, '- Scenario is source of truth.')
+    .replace(/- If any lower camera,[^\n]*/g, '- Script overrides conflicting camera/layout/cast-placement/style.')
+    .replace(/- Explicitly silent panels[^\n]*/g, '- Silent panels: NO speech bubbles or invented dialogue; never print silence placeholders.')
+    .replace(/- Match key object EXACTLY[^\n]*/g, '- Props: preserve identity; scripted state/holder changes only.')
+    .replace(/- Do not replace conflict,[^\n]*\n- Do not replace, rewrite,[^\n]*/g, '- Preserve conflict/setting/sequence/ending/punchline and verbatim dialogue; no additions/omissions.')
     .replace(/ABSOLUTE TASK:[^\n]*/g, 'ABSOLUTE TASK: new 4-panel manga page; refs only for identity.')
     .replace(/- A4 portrait 1:1\.414;[^\n]*/g, '- A4 portrait 1:1.414; four equal horizontal panels; tight page.')
     .replace(/- Top title EXACTLY ("[^"]+")[^\n]*/g, '- Top title EXACTLY $1.')
@@ -261,7 +271,14 @@ const buildStrictScriptLock = ({ safeTopic, panels, castList, activeOutfit, prov
 - Scenario is source truth. A different story is a failed output.
 - Do not replace conflict, setting, sequence, ending, or punchline.
 - Do not replace, rewrite, paraphrase, omit, or add dialogue.
+- Explicitly silent panels have NO speech bubbles and no invented dialogue. The no-dialogue placeholder is an instruction, never printable text.
 - If any lower camera, layout, cast-placement, or style instruction conflicts with this script lock, follow this script lock.
+- COMEDY INTENT: Preserve scripted surreal events, impossible changes, emotional mismatch and absent reactions. Do not normalize them, explain them or add a tsukkomi. Ambiguous intent stays unchanged; continuity rules must not erase a scripted gag.
+- SINGLE INSTANT: Draw one script-consistent instant per panel. For sequential actions, select the moment that supports that panel's dialogue or silent beat; never combine before/after poses or duplicate a character to show motion.
+- REVEAL ORDER: Show only information available in that panel's Action. Later outcomes and punchline states must not appear early, including background props or reaction faces. VisualEvidence is an inventory, not an instruction to show every state together.
+- REACTION TARGET: Preserve stated gaze and actions. Where acting is unspecified, use a readable eye-line, head angle and hand pose directed at the scripted person or object; do not invent a new action, reaction target or event. Keep the key action and its reaction readable within the assigned camera.
+- PROP STATE: Preserve object identity, but allow changes in contents, condition and holder exactly when the script requires them, including deliberate surreal changes. Unless explicitly scripted, do not restore consumed contents or combine pre-transfer and post-transfer ownership.
+- REFERENCE ROLE: Character sheets supply appearance and identity; approved outfit instructions take precedence for clothing. Do not reproduce sheet layouts, labels, sample poses or duplicate views as story content.
 ${panelLocks}`;
 };
 
@@ -308,9 +325,7 @@ export const buildMangaPrompt = ({
   cinematicTechniques = true
 }) => {
   const scenarioValidation = validateMangaScenario(scenario, castList);
-  const hasBlockingDialogueContractError =
-    scenarioValidation.panelsMissingDialogue.length > 0 || scenarioValidation.silentPanels.length > 0;
-  if (!scenarioValidation.ok && (!allowScenarioQualityWarning || hasBlockingDialogueContractError)) {
+  if (!scenarioValidation.ok && !allowScenarioQualityWarning) {
     throw new Error(`Incomplete 4-koma scenario: ${formatMangaScenarioValidationIssue(scenarioValidation)}`);
   }
   const effectiveProviderFamily = normalizePromptProviderFamily(providerFamily);

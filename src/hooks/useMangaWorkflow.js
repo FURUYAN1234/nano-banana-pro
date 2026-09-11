@@ -39,13 +39,17 @@ import {
 } from '../lib/image-quality-qa';
 import { inferImageQualityMode, runImageQualityFailsafe } from '../lib/image-quality-failsafe';
 import { getEffectiveEngine } from '../lib/engine-state';
-import { DEFAULT_OPENAI_IMAGE_QUALITY, normalizeOpenAIImageQuality, resolveOpenAIImageOption, selectInitialOpenAIImageQuality, isOpenAIImageVerificationError, OPENAI_IMAGE_VERIFICATION_MESSAGE } from '../lib/openai-image-settings.js';
+import { DEFAULT_OPENAI_IMAGE_QUALITY, DEFAULT_OPENAI_IMAGE_SIZE, normalizeOpenAIImageSize, normalizeOpenAIImageQuality, resolveOpenAIImageOption, selectInitialOpenAIImageQuality, isOpenAIImageVerificationError, OPENAI_IMAGE_VERIFICATION_MESSAGE } from '../lib/openai-image-settings.js';
 
 export default function useMangaWorkflow() {
   const [openAIImageQuality, setOpenAIImageQualityState] = useState(DEFAULT_OPENAI_IMAGE_QUALITY);
+  const [openAIImageSize, setOpenAIImageSizeState] = useState(DEFAULT_OPENAI_IMAGE_SIZE);
+  const openAIImageQualityChosen = useRef(false);
+  const setOpenAIImageSize = (value) => setOpenAIImageSizeState(normalizeOpenAIImageSize(value));
   const [openAIImageVerificationWarning, setOpenAIImageVerificationWarning] = useState('');
   const [allowImageQualityRepair, setAllowImageQualityRepair] = useState(true);
   const setOpenAIImageQuality = (value) => {
+    openAIImageQualityChosen.current = true;
     setOpenAIImageQualityState(normalizeOpenAIImageQuality(value));
     setOpenAIImageVerificationWarning('');
   };
@@ -274,7 +278,9 @@ export default function useMangaWorkflow() {
     // [v3.59] Dual Engine: APIキーのプレフィックスでエンジンを自動判定
     if (cleanKey.startsWith("sk-")) {
       // OpenAI APIキー → ChatGPTエンジンに切り替え
-      setOpenAIImageQualityState(selectInitialOpenAIImageQuality(verification.availableModelIds));
+      if (!openAIImageQualityChosen.current) {
+        setOpenAIImageQualityState(selectInitialOpenAIImageQuality(verification.availableModelIds));
+      }
       setOpenAIImageVerificationWarning('');
       setOpenAIApiKey(cleanKey);
       setActiveEngine('openai');
@@ -831,13 +837,6 @@ export default function useMangaWorkflow() {
     } catch (error) {
       if (scenarioRunEpoch !== scenarioRunEpochRef.current) return null;
       console.error(error);
-      if (error?.code === 'DIALOGUE_CONTRACT') {
-        const guidance = '吹き出し用セリフを抽出できませんでした。STEP2の「シナリオ生成」をもう一度実行してください。';
-        setScenarioThought(prev => `${prev}\n\n[DIALOGUE CONTRACT] ${guidance}\n> 自動再生成を3回試行しましたが、無台詞プロンプトはSTEP4へ渡していません。`);
-        showStatus(guidance);
-        setIs360CameraWorking(false);
-        return null;
-      }
       if (/API Key is not set|OpenAI APIキーが設定されていません/.test(String(error.message || ''))) {
         setShowOpenAIKeyModal(true);
       }
@@ -861,18 +860,10 @@ export default function useMangaWorkflow() {
     const currentScenario = overrideScenario || scenario;
     if (!skipGuard && (!castList || !currentScenario)) return showStatus("キャストとシナリオが必要です。");
     const scenarioValidation = validateMangaScenario(currentScenario, castList);
-    if (!scenarioValidation.ok) {
-      const validationIssue = formatMangaScenarioValidationIssue(scenarioValidation);
-      if (scenarioValidation.panelsMissingDialogue.length || scenarioValidation.silentPanels.length) {
-        const guidance = `吹き出し用セリフを抽出できませんでした。STEP2の「シナリオ生成」をもう一度実行してください。(${validationIssue})`;
-        setAssembleThought(prev => `${prev ? `${prev}\n` : ''}> [DIALOGUE CONTRACT] ${guidance}`);
-        showStatus(guidance);
-        return null;
-      }
-      const validationMessage = `シナリオが不完全です。${validationIssue}`;
-      setAssembleThought(prev => `${prev ? `${prev}\n` : ''}> [SCENARIO QUALITY WARNING] ${validationMessage}\n> 自動再生成はしません。品質警告のままSTEP4へ進めます。`);
-      showStatus(`${validationMessage} 品質警告のままSTEP4へ進めます。`);
-    }
+    const assemblyQualityWarning = !scenarioValidation.ok
+      ? `シナリオ品質警告: ${formatMangaScenarioValidationIssue(scenarioValidation)}。取得済みの内容を保持し、品質警告のままSTEP4へ進めます。`
+      : '';
+    if (assemblyQualityWarning) showStatus(assemblyQualityWarning);
     setIsAssembling(true);
     setFinalPrompt(""); // Clear previous prompt to indicate loading
     setGenLog([]); // [v3.01] Clear previous image generation logs
@@ -882,7 +873,7 @@ export default function useMangaWorkflow() {
     setIsPolicyPanelOpen(false);
     setShowPolicyChoice(false); // [v4.2.0] 選択UIリセット
     lastPolicyErrorRef.current = ""; // [v4.2.0] エラーメッセージrefリセット
-    setAssembleThought("スーパーフル・プロトコル v121.3 (Universal Master) を起動中... 全データの整合性をチェックしています...");
+    setAssembleThought(`${assemblyQualityWarning ? `[SCENARIO QUALITY WARNING] ${assemblyQualityWarning}\n` : ''}スーパーフル・プロトコル v121.3 (Universal Master) を起動中... 全データの整合性をチェックしています...`);
 
     const effectiveProviderFamily = normalizePromptProviderFamily(
       providerFamilyOverride || getCurrentPromptProviderFamily()
@@ -1204,6 +1195,7 @@ export default function useMangaWorkflow() {
             : `[INFO] ${resolveOpenAIImageOption(openAIImageQuality).label} の最終画像を待機します...`);
           response = await generateImageWithOpenAI(apiPrompt, statCallback, {
             quality: openAIImageQuality,
+            size: openAIImageSize,
             imageInputs: referencePlan.imageInputs,
           });
         } else {
@@ -1292,6 +1284,12 @@ export default function useMangaWorkflow() {
         onProgress: (msg) => statCallback(`[QUALITY QA] ${msg}`),
       });
       const qualityResult = qualityOutcome.finalReview;
+      if (qualityResult.observations) {
+        const labels = { title: 'タイトル', dialogue: 'セリフ・無言', hands: '左右の手', props: '小道具' };
+        Object.entries(qualityResult.observations).forEach(([key, value]) => {
+          if (value) setGenLog(prev => [...prev, `[品質検査 / ${labels[key] || key}] ${value}`]);
+        });
+      }
       const qualityReviewUnverified = Array.isArray(qualityOutcome.originalReview?.issues)
         && qualityOutcome.originalReview.issues.length > 0
         && qualityOutcome.originalReview.issues.every((issue) => issue?.type === 'unverified');
@@ -1938,6 +1936,8 @@ export default function useMangaWorkflow() {
     punchlineType,
     regenerateImage,
     openAIImageQuality,
+    openAIImageSize,
+    setOpenAIImageSize,
     openAIImageVerificationWarning,
     allowImageQualityRepair,
     setAllowImageQualityRepair,

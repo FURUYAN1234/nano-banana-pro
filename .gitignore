@@ -12,6 +12,7 @@ dist
 dist-ssr
 *.local
 scratch/
+docs/verification/
 HANDOFF_codex_*.md
 .playwright-cli/
 generated-result*.png

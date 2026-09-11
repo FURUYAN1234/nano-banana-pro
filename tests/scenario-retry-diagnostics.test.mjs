@@ -161,12 +161,11 @@ test('a quality retry returns the highest-scoring safe scenario rather than blin
   assert.equal(result.validationWarning.message, 'quality issue in response 2');
 });
 
-test('a blocking dialogue contract retries and never returns an unusable scenario after its retry budget is exhausted', async () => {
+test('dialogue-quality exhaustion retains the actual candidate with warnings even if marked blocking', async () => {
   let requests = 0;
   const retryEvents = [];
 
-  await assert.rejects(
-    requestSafeScenario({
+  const result = await requestSafeScenario({
       initialPrompt: 'BASE PROMPT',
       requestScenario: async () => ({ text: `response ${++requests}` }),
       parseScenario: (response) => ({ location: 'station', scenario: response.text }),
@@ -180,9 +179,9 @@ test('a blocking dialogue contract retries and never returns an unusable scenari
       retryInstruction: ({ code }) => `QUALITY RETRY: ${code}`,
       onRetry: (event) => retryEvents.push(event),
       maxAttempts: 3
-    }),
-    /speech-bubble dialogue/
-  );
+    });
+  assert.equal(result.parsed.scenario, 'response 3');
+  assert.equal(result.validationWarning.code, 'DIALOGUE_CONTRACT');
 
   assert.equal(requests, 3);
   assert.deepEqual(retryEvents.map(({ attempt, code, kind }) => ({ attempt, code, kind })), [
@@ -200,10 +199,26 @@ test('quality-gate warnings do not block STEP3 or STEP4', async () => {
   assert.doesNotMatch(source, /STEP2で4コマすべてに「」付きセリフを作り直してください/);
 });
 
-test('dialogue-contract exhaustion directs the user to regenerate the scenario instead of sending a no-dialogue prompt to STEP4', async () => {
+test('STEP3 quality warnings never return early or disappear during prompt assembly', async () => {
   const source = await readFile(new URL('../src/hooks/useMangaWorkflow.js', import.meta.url), 'utf8');
+  const check = source.slice(source.indexOf('const scenarioValidation = validateMangaScenario(currentScenario'), source.indexOf('setIsAssembling(true)', source.indexOf('const assemblePrompt')));
+  assert.doesNotMatch(check, /return null/);
+  assert.match(source, /allowScenarioQualityWarning: true/);
+  assert.doesNotMatch(source, /error\?\.code === 'DIALOGUE_CONTRACT'/);
+  assert.match(source, /assemblyQualityWarning/);
+});
 
-  assert.match(source, /error\?\.code === 'DIALOGUE_CONTRACT'/);
-  assert.match(source, /吹き出し用セリフを抽出できませんでした/);
-  assert.match(source, /STEP2の「シナリオ生成」をもう一度実行してください/);
+
+test('later repair request failure retains the already received scenario, while first-request failure still reports the dependency', async () => {
+  let requests = 0;
+  const result = await requestSafeScenario({
+    initialPrompt: 'BASE',
+    requestScenario: async () => { if (++requests > 1) throw new Error('repair timeout'); return { text: 'actual first response' }; },
+    parseScenario: response => ({ location: 'cafe', scenario: response.text }),
+    validateScenario: () => { throw new Error('dialogue warning'); },
+    maxAttempts: 3
+  });
+  assert.equal(result.parsed.scenario, 'actual first response');
+  assert.match(result.validationWarning.message, /repair timeout/);
+  await assert.rejects(requestSafeScenario({ initialPrompt: 'BASE', requestScenario: async () => { throw new Error('network unavailable'); }, parseScenario: x => x }), /network unavailable/);
 });
