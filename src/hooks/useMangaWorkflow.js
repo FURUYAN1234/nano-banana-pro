@@ -882,27 +882,17 @@ export default function useMangaWorkflow() {
       providerFamilyOverride || getCurrentPromptProviderFamily()
     );
 
-    // Fake Streaming Effect
+    // Track the real wait without appending invented processing stages.
+    const assemblyStartedAt = Date.now();
     const thinkTimer = setInterval(() => {
+      if (promptScenarioEpoch !== scenarioRunEpochRef.current || assemblyRun !== promptAssemblyRunRef.current) return;
       setAssembleThought(prev => {
-        if (prev.length > 800) return prev;
-        const messages = [
-          ".", ".", ".",
-          "\n> 物語ベクトルを最適化中...",
-          "\n> ジオメトリロックを調整中...",
-          "\n> キャラクタースタイルの重みを同期中...",
-          "\n> パネル枠線を適用中...",
-          "\n> 禁止コンテンツタグをチェック中...",
-          "\n> 風刺ロジックを注入中...",
-          "\n> 4コマ構造を最終化中..."
-        ];
-        // Don't add random messages if we are done (safety)
-        if (!isAssembling) return prev;
-
-        const msg = messages[Math.floor(Math.random() * messages.length)];
-        return prev + msg;
+        const elapsed = Math.floor((Date.now() - assemblyStartedAt) / 1000);
+        const timerLine = `\n> ⏳ AI応答を待機中... (${elapsed}秒経過)`;
+        const timerRegex = /\n> ⏳ AI応答を待機中\.\.\..*\(\d+秒経過\)/;
+        return timerRegex.test(prev) ? prev.replace(timerRegex, timerLine) : prev + timerLine;
       });
-    }, 600);
+    }, 1000);
 
     try {
       // [v3.82-alpha] リファクタリング: 外部モジュールでプロンプトを構築
@@ -929,7 +919,7 @@ export default function useMangaWorkflow() {
         setAssembleThought(prev => prev + "\n> [ドキュメンタリーモード] コンテンツセーフティ・サニタイザー適用済み (危険ワードを安全な言い換えに自動変換)");
       }
 
-      setAssembleThought(prev => prev + "\n> [v3.31] 事故防止プロトコル全モデル適用済み:\n>   ✅ 縦書きセリフ強制\n>   ✅ セリフ勝手追加禁止\n>   ✅ 参照画像キャラシート再現禁止\n>   ✅ カメラワーク平易化禁止\n>   ✅ プロンプト分岐 (ChatGPT/Gemini)\n>   ✅ 出力前チェックリスト追加");
+      setAssembleThought(prev => prev + "\n> [v3.31] 事故防止プロトコル全モデル適用済み:\n>   ✅ 縦書きセリフ強制\n>   ✅ セリフ勝手追加禁止\n>   ✅ キャラの外見は維持し、設定資料の配置・説明文はコピーしない\n>   ✅ カメラワーク平易化禁止\n>   ✅ プロンプト分岐 (ChatGPT/Gemini)\n>   ✅ 出力前チェックリスト追加");
 
       setFinalPrompt(reviewed.prompt);
       setAssembleThought(prev => prev + `\n> ${reviewed.warning || "AI精査完了"}`);

@@ -6,7 +6,7 @@ API品質・サイズと自動品質修正の設定は「API生成時の品質�
 
 動画化の説明・コピーボタン・配布リンクは「FURUの4コマ漫画を動画化（MiniMax H3 / ComfyUI）」を開くと表示されます。初期状態は折り畳みです。
 
-STEP3のプロンプト生成は、完成した本文を表示する前に自動でAI精査を通します。接続中の文章APIで脚本・人物設定と補助指示の矛盾を確認します（追加料金・待ち時間あり）。シュールな出来事、感情のずれ、無反応、意図が曖昧な破綻は保持し、明確に競合する構図・視線などの補助指示だけを調整します。脚本・台詞・オチ自体は書き換えません。追加の操作は不要です。精査後の本文をコピー・画像生成へ渡します。精査失敗時は原文で続行し、生成を中止しません。精査結果はWeb貼り付けとAPI生成の両方で使えます。誤解釈や見落とし、画像の誤描画を必ず防ぐものではありません。完成後の本文は従来どおり直接編集できます。
+STEP3のプロンプト生成は、完成した本文を表示する前に自動でAI精査を通します。待機中はSTEP4のプロンプト構築ログに「⏳ AI応答を待機中... (○秒経過)」を1行で更新し、処理終了時にカウントを停止します。接続中の文章APIで脚本・人物設定と補助指示の矛盾を確認します（追加料金・待ち時間あり）。シュールな出来事、感情のずれ、無反応、意図が曖昧な破綻は保持し、明確に競合する構図・視線などの補助指示だけを調整します。脚本・台詞・オチ自体は書き換えません。追加の操作は不要です。精査後の本文をコピー・画像生成へ渡します。精査失敗時は原文で続行し、生成を中止しません。精査結果はWeb貼り付けとAPI生成の両方で使えます。誤解釈や見落とし、画像の誤描画を必ず防ぐものではありません。完成後の本文は従来どおり直接編集できます。
 
 STEP3 automatically reviews the prompt through the connected text API before displaying or returning it, with additional cost and latency. It preserves surreal events and ambiguous intent, edits conflicting auxiliary directions and safely clarifies under-specified object geometry in existing staging lines, and requires no additional user action. Script, dialogue and ending remain unchanged; failure retains the original and never blocks copying or image generation. This is prompt assistance, not a guarantee of image accuracy.
 
@@ -29,7 +29,7 @@ STEP4は「API画像生成の品質」の直下に「API画像サイズ」を分
 
 
 
-> Latest release: **v6.0.1** / 最新リリース: **v6.0.1**
+> Latest release: **v6.0.2** / 最新リリース: **v6.0.2**
 
 > **"To what extent can humans step away from the creative process?"**
 > **「人間は、どこまで制作から降りられるのか？」**
@@ -51,7 +51,7 @@ STEP4は「API画像生成の品質」の直下に「API画像サイズ」を分
 This project aims to intentionally exclude humans from the creative process, allowing AI to act as a director and complete everything from brainstorming to composition, direction, and rendering.
 本プロジェクトは、人間をクリエイティブな工程から意図的に排除し、AIがディレクターとして「ネタ出し・構成・演出・作画」のすべてを完結させることを目的としています。
 
-The current implementation and latest release are **v6.0.1**. The product name is **Super FURU AI 4-koma System**. STEP4 offers Gemini and OpenAI image-generation routes, including GPT Image 2.5. / 現在の実装および最新公開版は **v6.0.1** です。製品名は **Super FURU AI 4-koma System** で、STEP4ではGPT Image 2.5を含むOpenAI系とGemini系の画像生成経路を利用できます。
+The current implementation and latest release are **v6.0.2**. The product name is **Super FURU AI 4-koma System**. STEP4 offers Gemini and OpenAI image-generation routes, including GPT Image 2.5. / 現在の実装および最新公開版は **v6.0.2** です。製品名は **Super FURU AI 4-koma System** で、STEP4ではGPT Image 2.5を含むOpenAI系とGemini系の画像生成経路を利用できます。
 
 Distribution deployment / 配布ファイルの公開: Hugging Face uploads every current ZIP through Git LFS, including files below 10 MB. GitHub Pages continues to serve ordinary ZIP bytes. Workflow JSON and checksum files retain exact bytes on both hosts. / Hugging Faceでは10 MB未満も含め、現存する配布ZIPをすべてGit LFSで送信します。GitHub Pagesでは従来どおり通常のZIPを配信します。ワークフローJSONとチェックサムファイルは、どちらの公開先でも元のバイトを保持します。
 
@@ -914,6 +914,9 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 ---
 
 ## 📋 ChangeLog
+
+### v6.0.2 (2026-09-12)
+- **[Fix & UX]** STEP4のプロンプト出力前AI精査に経過秒数を表示。キャラシートの配置・説明文をコピーしない旨のログ表現を明確化。 / Show elapsed seconds during pre-output AI review in STEP4 and clarify the character-sheet layout and annotation log.
 
 ### v6.0.1 (2026-09-11)
 - **[Fix & UX]** プロンプト精査を生成工程へ統合。物体・文字の向きと品質候補選択を補強し、STEP4の補助案内を折り畳みへ整理。実画像の誤りとQAの判定限界は残ります。 / Integrated automatic prompt review, strengthened object/print evidence and candidate selection, and grouped STEP4 helpers into collapsible sections. Image defects and QA limitations remain.

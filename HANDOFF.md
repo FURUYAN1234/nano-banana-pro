@@ -1,3 +1,7 @@
+## v6.0.2 release candidate — 2026-09-12
+
+- STEP4ログの「参照画像キャラシート再現禁止」を「キャラの外見は維持し、設定資料の配置・説明文はコピーしない」に修正。プロンプト出力前のAI精査待ちに、他STEPと同じ経過秒数の1行更新を追加。生成指示・モデルは変更なし。現在の検証・デプロイ・note・黒い窓フルバックアップの状況はroot PLAN.mdの「Nano Banana STEP4 wait counter and log wording」を参照。
+
 ## v6.0.1 release candidate — 2026-09-11
 
 Current live delivery status: see root PLAN.md, Nano Banana four-panel quality reference API evaluation. User authorized final API verification then release, FourPanel note update and full backup even if image-quality issues remain. Automatic STEP3 review, bounded API candidate comparison/print fallback and STEP4 collapsible UI are included. Final real Sunburst/xhigh 1024x1536 output completed; QA JSON could not be parsed, original retained with warning, spine-lettering issue remains. Do not claim complete geometry repair or live fallback success. Release notes: docs/releases/v6.0.1.md. Prior v6.0.0 delivery is complete; this is a new versioned transaction.
