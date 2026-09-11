@@ -16,7 +16,6 @@ import {
   ExternalLink
 } from 'lucide-react';
 import ThinkingLog from './ThinkingLog';
-import WebPromptReview from './WebPromptReview';
 import Panorama360Viewer from './Panorama360Viewer';
 import { GEMINI_A4_RELAYOUT_PROMPT, GEMINI_2K_REFINEMENT_PROMPT } from '../lib/gemini-image-edit';
 import { getEffectiveEngine } from '../lib/engine-state';
@@ -337,6 +336,9 @@ export default function Step4Panel({
   const generatedImageExtension = getGeneratedImageExtension(generatedImage);
   const [isUpscalePromptCopied, setIsUpscalePromptCopied] = React.useState(false);
   const [isMiniMaxPromptCopied, setIsMiniMaxPromptCopied] = React.useState(false);
+  const [isVideoGuideOpen, setIsVideoGuideOpen] = React.useState(false);
+  const [isImageHelpOpen, setIsImageHelpOpen] = React.useState(false);
+  const [isApiSettingsOpen, setIsApiSettingsOpen] = React.useState(false);
 
   return (
     <div
@@ -384,7 +386,6 @@ export default function Step4Panel({
               />
             </div>
 
-            <WebPromptReview prompt={finalPrompt} onChange={setFinalPrompt} scenario={scenario} castList={castList} busy={isAssembling || isGeneratingImage} />
             {/* Buttons Row */}
             <div className="flex flex-col gap-4 mt-2 relative z-50">
               {/* 360°背景モード時のリマインダーバナー */}
@@ -443,7 +444,7 @@ export default function Step4Panel({
                 className={`w-full ${isCopied ? 'bg-green-600' : 'bg-slate-800 hover:bg-slate-700'} text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all border border-white/10`}
               >
                 {isCopied ? <CheckCircle2 size={20} /> : <Copy size={20} />}
-                {isCopied ? "コピー完了！" : "📋 プロンプトをコピーする"}
+                {isCopied ? "コピー完了！" : "📋 プロンプトをコピーする（web貼り付け時）"}
               </button>
 
               {/* コピーボタン下の親切な補足ガイド */}
@@ -574,6 +575,31 @@ export default function Step4Panel({
                 </span>
               </div>
 
+              <button
+                style={{ display: 'flex', width: '100%', boxSizing: 'border-box', marginBottom: '16px' }}
+                onClick={() => regenerateImage()}
+                disabled={!finalPrompt || isGeneratingImage || isFixingPolicy}
+                className={`w-full ${isOpenAIImageMode ? 'bg-emerald-600 hover:bg-emerald-500' : 'bg-orange-600 hover:bg-orange-500'} text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg border border-white/10 active:scale-95 disabled:bg-slate-700 disabled:opacity-50 disabled:cursor-wait mt-4`}
+              >
+                {isGeneratingImage ? <Loader2 size={20} className="animate-spin" /> : <ImageIcon size={20} />}
+                <div className="flex flex-col items-center">
+                  <span>{isGeneratingImage ? "画像を生成中..." : `画像を生成する (STEP 4: ${isOpenAIImageMode ? resolveOpenAIImageOption(openAIImageQuality).label : 'Google AI'})`}</span>
+                </div>
+              </button>
+                          <div className="border border-yellow-500/30 rounded-lg overflow-hidden" style={{ margin: 0 }}>
+                            <button style={{ display: 'flex', width: '100%', boxSizing: 'border-box', margin: 0 }} type="button" aria-expanded={isApiSettingsOpen} aria-controls="api-settings-content"
+                              className="w-full flex items-center justify-between px-4 py-3 bg-yellow-900/25 hover:bg-yellow-900/50 transition-all duration-150 cursor-pointer disabled:cursor-not-allowed border-l-4 border-yellow-500 hover:border-yellow-400 group/policy-hdr"
+                              onClick={() => setIsApiSettingsOpen(!isApiSettingsOpen)}>
+                              <div className="flex items-center gap-2">
+                                <span className="text-base">⚙️</span>
+                                <span className="text-base font-black tracking-wide text-yellow-200 group-hover/policy-hdr:text-yellow-100 transition-colors">API生成時の品質・サイズ</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-[10px] font-black uppercase tracking-widest text-yellow-400 group-hover/policy-hdr:text-yellow-300 transition-colors">{isApiSettingsOpen ? 'クリックで閉じる' : 'クリックで開く'}</span>
+                                <ChevronDown size={18} className={`text-yellow-400 group-hover/policy-hdr:text-yellow-300 transition-all duration-300 ${isApiSettingsOpen ? 'rotate-180' : ''}`} />
+                              </div>
+                            </button>
+                            <div id="api-settings-content" hidden={!isApiSettingsOpen} className="p-3 bg-yellow-950/20 space-y-5">
               {isOpenAIImageMode && (
                 <div className="mt-6 border-t border-white/20 pt-4">
                   <label htmlFor="openai-image-quality" className="block text-xs text-slate-300 mb-2">API画像生成の品質</label>
@@ -619,18 +645,25 @@ export default function Step4Panel({
               )}
               <label className="mt-3 flex items-start gap-2 text-xs text-slate-300">
                 <input type="checkbox" checked={allowImageQualityRepair} onChange={event => setAllowImageQualityRepair(event.target.checked)} disabled={isGeneratingImage || isFixingPolicy} />
-                API生成のみ：品質検査NG時に自動修正する（最大1回・追加課金あり／Web貼り付けには影響しません）
+                API生成のみ：品質検査NG時に自動修正する（通常1回＋装飾文字が直らない場合のみ1回・追加課金あり／Web貼り付けには影響しません）
               </label>
-              <button
-                onClick={() => regenerateImage()}
-                disabled={!finalPrompt || isGeneratingImage || isFixingPolicy}
-                className={`w-full ${isOpenAIImageMode ? 'bg-emerald-600 hover:bg-emerald-500' : 'bg-orange-600 hover:bg-orange-500'} text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg border border-white/10 active:scale-95 disabled:bg-slate-700 disabled:opacity-50 disabled:cursor-wait mt-4`}
-              >
-                {isGeneratingImage ? <Loader2 size={20} className="animate-spin" /> : <ImageIcon size={20} />}
-                <div className="flex flex-col items-center">
-                  <span>{isGeneratingImage ? "画像を生成中..." : `画像を生成する (STEP 4: ${isOpenAIImageMode ? resolveOpenAIImageOption(openAIImageQuality).label : 'Google AI'})`}</span>
-                </div>
-              </button>
+                            </div>
+                          </div>
+
+                          <div className="border border-yellow-500/30 rounded-lg overflow-hidden" style={{ margin: 0 }}>
+                            <button style={{ display: 'flex', width: '100%', boxSizing: 'border-box', margin: 0 }} type="button" aria-expanded={isImageHelpOpen} aria-controls="image-help-content"
+                              className="w-full flex items-center justify-between px-4 py-3 bg-yellow-900/25 hover:bg-yellow-900/50 transition-all duration-150 cursor-pointer disabled:cursor-not-allowed border-l-4 border-yellow-500 hover:border-yellow-400 group/policy-hdr"
+                              onClick={() => setIsImageHelpOpen(!isImageHelpOpen)}>
+                              <div className="flex items-center gap-2">
+                                <span className="text-base">🖼️</span>
+                                <span className="text-base font-black tracking-wide text-yellow-200 group-hover/policy-hdr:text-yellow-100 transition-colors">画像比率修正・アップスケール（web貼り付け時）</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-[10px] font-black uppercase tracking-widest text-yellow-400 group-hover/policy-hdr:text-yellow-300 transition-colors">{isImageHelpOpen ? 'クリックで閉じる' : 'クリックで開く'}</span>
+                                <ChevronDown size={18} className={`text-yellow-400 group-hover/policy-hdr:text-yellow-300 transition-all duration-300 ${isImageHelpOpen ? 'rotate-180' : ''}`} />
+                              </div>
+                            </button>
+                            <div id="image-help-content" hidden={!isImageHelpOpen} className="p-3 bg-yellow-950/20 space-y-5">
               <p className="text-[10px] text-slate-500 text-center mt-2 leading-relaxed px-2">
                 {isOpenAIImageMode
                   ? 'API生成では、プロンプトに加えて、読み込み済みのキャラクターシートと有効な360°背景画像を参照画像として送信します。参照画像がない場合は文章のみで生成します。API利用料金が発生し、ChatGPTのサブスク料金とは別会計です。'
@@ -863,7 +896,28 @@ No explanations. No partial results.`;
                         </div>
                     </div>
                     )}
-                          <div className="mt-3 space-y-5 border-t border-slate-600/40 pt-3">
+
+                  </div>
+                </div>
+              </div>
+
+                            </div>
+                          </div>
+
+                          <div className="border border-yellow-500/30 rounded-lg overflow-hidden" style={{ margin: 0 }}>
+                            <button style={{ display: 'flex', width: '100%', boxSizing: 'border-box', margin: 0 }} type="button" aria-expanded={isVideoGuideOpen} aria-controls="video-guide-content"
+                              className="w-full flex items-center justify-between px-4 py-3 bg-yellow-900/25 hover:bg-yellow-900/50 transition-all duration-150 cursor-pointer disabled:cursor-not-allowed border-l-4 border-yellow-500 hover:border-yellow-400 group/policy-hdr"
+                              onClick={() => setIsVideoGuideOpen(!isVideoGuideOpen)}>
+                              <div className="flex items-center gap-2">
+                                <span className="text-base">🎬</span>
+                                <span className="text-base font-black tracking-wide text-yellow-200 group-hover/policy-hdr:text-yellow-100 transition-colors">FURUの4コマ漫画を動画化（MiniMax H3 / ComfyUI）</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-[10px] font-black uppercase tracking-widest text-yellow-400 group-hover/policy-hdr:text-yellow-300 transition-colors">{isVideoGuideOpen ? 'クリックで閉じる' : 'クリックで開く'}</span>
+                                <ChevronDown size={18} className={`text-yellow-400 group-hover/policy-hdr:text-yellow-300 transition-all duration-300 ${isVideoGuideOpen ? 'rotate-180' : ''}`} />
+                              </div>
+                            </button>
+                            <div id="video-guide-content" hidden={!isVideoGuideOpen} className="p-3 bg-yellow-950/20 space-y-5">
                             <section aria-labelledby="minimax-h3-intro-heading">
                               <div className="rounded-lg border border-cyan-500/30 bg-cyan-950/15 p-3">
                                 <h4 id="minimax-h3-intro-heading" className="text-[13px] font-black text-white">FURU four-panel manga to video / FURUの4コマ漫画を動画化（MiniMax H3 / ComfyUI）</h4>
@@ -990,10 +1044,8 @@ No explanations. No partial results.`;
                                 </div>
                               </div>
                             </section>
+                            </div>
                           </div>
-                  </div>
-                </div>
-              </div>
 
               {/* [v4.2.0] コンテンツポリシー選択メッセージボックス（パネルとは独立） */}
               {showPolicyChoice && (
@@ -1034,9 +1086,10 @@ No explanations. No partial results.`;
               )}
 
               {/* コンテンツポリシー手動救済パネル（折りたたみ式・任意で開ける） */}
-              <div className={`mt-4 border border-yellow-500/30 rounded-lg overflow-hidden ${!finalPrompt ? 'opacity-40 pointer-events-none' : ''}`}>
+              <div style={{ margin: 0 }} className={`border border-yellow-500/30 rounded-lg overflow-hidden ${!finalPrompt ? 'opacity-40 pointer-events-none' : ''}`}>
                 <button
                   className="w-full flex items-center justify-between px-4 py-3 bg-yellow-900/25 hover:bg-yellow-900/50 transition-all duration-150 cursor-pointer disabled:cursor-not-allowed border-l-4 border-yellow-500 hover:border-yellow-400 group/policy-hdr"
+                  style={{ display: 'flex', width: '100%', boxSizing: 'border-box', margin: 0 }}
                   onClick={() => setIsPolicyPanelOpen(!isPolicyPanelOpen)}
                   disabled={!finalPrompt}
                 >
@@ -1111,10 +1164,10 @@ No explanations. No partial results.`;
               {/* Generation Log Terminal */}
               <div
                 ref={genLogRef}
-                className="mt-4 p-3 bg-black/80 rounded-lg border border-white/10 font-mono text-xs text-green-400 custom-scrollbar"
-                style={{ height: '160px', overflowY: 'auto' }}
+                className="mt-4 p-3 bg-black/80 rounded-lg border border-white/10 font-mono text-[11px] text-green-400 custom-scrollbar"
+                style={{ height: '160px', overflowY: 'auto', marginTop: '16px', padding: '12px', border: '1px solid rgba(255,255,255,0.2)' }}
               >
-                <div className="opacity-50 mb-2 border-b border-white/10 pb-1 flex justify-between text-xs">
+                <div className="opacity-50 mb-2 border-b border-white/10 pb-1 flex justify-between text-[11px]" style={{ position: 'sticky', top: '-12px', opacity: 1, background: '#0d1117', padding: '2px 0', marginBottom: '4px', zIndex: 1 }}>
                   <span>🖥 画像生成ログ (STEP 4)</span>
                   <span className={isOpenAIImageMode ? "text-emerald-500" : "text-blue-500"}>{isOpenAIImageMode ? resolveOpenAIImageOption(openAIImageQuality).label : 'v1.3.5 (Gemini Native Image)'}</span>
                 </div>
@@ -1122,8 +1175,8 @@ No explanations. No partial results.`;
                   <div className="text-white/30">待機中... 「画像を生成する」ボタンを押すと開始します。</div>
                 ) : (
                   genLog.map((log, i) => (
-                    <div key={i} className="mb-1 leading-relaxed">
-                      {log}
+                    <div key={i} className="mb-1 leading-relaxed" style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', lineHeight: 1.35, marginBottom: 0 }}>
+                      {String(log).replace(/^(\[品質検査[^\]]*\])\s*/, '$1\n').replace(/\s+(?=Panel\s+\d+\s*:)/g, '\n')}
                     </div>
                   ))
                 )}
@@ -1200,7 +1253,7 @@ No explanations. No partial results.`;
                       <div className="bg-black/40 rounded p-3 text-left">
                         <p className="text-orange-300 font-bold mb-2">完璧な画質・正確なキャラクターで生成する手順：</p>
                         <ol className="list-decimal list-inside text-slate-300 space-y-1 text-xs">
-                          <li>画面左側の「<span className="text-white font-bold">プロンプトをコピーする</span>」ボタンを押します。</li>
+                          <li>画面左側の「<span className="text-white font-bold">プロンプトをコピーする（web貼り付け時）</span>」ボタンを押します。</li>
                           <li><a href={isOpenAIImageMode ? "https://chatgpt.com/" : "https://gemini.google.com/app"} target="_blank" rel="noreferrer" className="text-blue-400 hover:underline">{isOpenAIImageMode ? 'ChatGPTウェブ版' : 'Geminiウェブ版'}</a> を開きます。</li>
                           <li>コピーした文章を貼り付け、元のキャラクターシート画像を一緒に添付して送信してください。</li>
                         </ol>

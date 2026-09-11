@@ -7,6 +7,7 @@ import { generateImageWithOpenAI, setOpenAIApiKey } from '../lib/openai';
 import {buildOpenAIReferencePlan, appendOpenAIReferencePrompt} from '../lib/openai-image-references.js';
 import {buildGeminiReferencePlan, appendGeminiReferencePrompt} from '../lib/gemini-image-references.js';
 import { callAI, setActiveEngine } from '../lib/ai-provider';
+import { reviewComedyPrompt } from '../lib/comedy-review';
 
 // --- Refactored Imports (Phase 1-2) ---
 import { SYSTEM_VERSION, DEFAULT_CATEGORIES, EMOTION_STYLES, DYNAMIC_CAMERA_PROTOCOL, ANTI_CHARSHEET_PREFIX } from '../lib/constants';
@@ -85,6 +86,7 @@ export default function useMangaWorkflow() {
   const [scenario, setScenario] = useState("");
   const [mangaTitle, setMangaTitle] = useState("");
   const [finalPrompt, setFinalPrompt] = useState("");
+  const promptAssemblyRunRef = useRef(0);
 
   // [v1.7.0] Model Quality Indicator State
   const [usedModel, setUsedModel] = useState(null);
@@ -857,6 +859,7 @@ export default function useMangaWorkflow() {
   // [v2.79] 戻り値変更: フルオート連鎖用（文字列=成功, null=失敗）
   const assemblePrompt = async (skipGuard = false, overrideScenario = null, providerFamilyOverride = null) => {
     const promptScenarioEpoch = scenarioRunEpochRef.current;
+    const assemblyRun = ++promptAssemblyRunRef.current;
     const currentScenario = overrideScenario || scenario;
     if (!skipGuard && (!castList || !currentScenario)) return showStatus("キャストとシナリオが必要です。");
     const scenarioValidation = validateMangaScenario(currentScenario, castList);
@@ -917,10 +920,10 @@ export default function useMangaWorkflow() {
         allowScenarioQualityWarning: true
       });
 
-      // Wait a bit to simulate processing/syncing (Important for User Experience)
-      await new Promise(resolve => setTimeout(resolve, 800));
+      setAssembleThought(prev => prev + "\n> ギャグの意図を保ってAI精査中...");
+      const reviewed = await reviewComedyPrompt({ prompt: safePrompt, scenario: currentScenario, castList }, callAI);
 
-      if (promptScenarioEpoch !== scenarioRunEpochRef.current) return null;
+      if (promptScenarioEpoch !== scenarioRunEpochRef.current || assemblyRun !== promptAssemblyRunRef.current) return null;
 
       if (punchlineType === 'Documentary') {
         setAssembleThought(prev => prev + "\n> [ドキュメンタリーモード] コンテンツセーフティ・サニタイザー適用済み (危険ワードを安全な言い換えに自動変換)");
@@ -928,10 +931,11 @@ export default function useMangaWorkflow() {
 
       setAssembleThought(prev => prev + "\n> [v3.31] 事故防止プロトコル全モデル適用済み:\n>   ✅ 縦書きセリフ強制\n>   ✅ セリフ勝手追加禁止\n>   ✅ 参照画像キャラシート再現禁止\n>   ✅ カメラワーク平易化禁止\n>   ✅ プロンプト分岐 (ChatGPT/Gemini)\n>   ✅ 出力前チェックリスト追加");
 
-      setFinalPrompt(safePrompt);
+      setFinalPrompt(reviewed.prompt);
+      setAssembleThought(prev => prev + `\n> ${reviewed.warning || "AI精査完了"}`);
       setAssembleThought(prev => prev + "\n> セーフティ年齢フィルター: 適用済み\n> 最適化ベクトル: 計算完了\n> 構造ロック: 有効\n> 風刺ロジック: 強化済み\n> [完了] 最終プロンプトを構築しました。");
       showStatus("最終プロンプトの構築が完了しました。画像生成を開始します...");
-      return safePrompt; // [v2.79] フルオート連鎖用: 成功
+      return reviewed.prompt; // [v2.79] フルオート連鎖用: 成功
 
     } catch (error) {
       console.error(error);
@@ -941,7 +945,7 @@ export default function useMangaWorkflow() {
       return null; // [v2.79] フルオート連鎖用: 失敗
     } finally {
       clearInterval(thinkTimer);
-      setIsAssembling(false);
+      if (assemblyRun === promptAssemblyRunRef.current) setIsAssembling(false);
     }
   };
 
@@ -1232,7 +1236,7 @@ export default function useMangaWorkflow() {
             null,
             (msg) => statCallback(`[QUALITY QA] ${msg}`)
           );
-          return parseImageQualityQaResponse(qualityResponse.text);
+          return parseImageQualityQaResponse(qualityResponse.text, { mode: qualityMode });
         } catch (qualityError) {
           return {
             pass: false,
@@ -1255,7 +1259,7 @@ export default function useMangaWorkflow() {
       setGeneratedImage(finalImageStr);
       setGenerationHistory(prev => addGenerationHistoryItem(prev, { id: Date.now(), img: finalImageStr }));
       statCallback(allowImageQualityRepair
-        ? '[QUALITY QA] キャラクターシート・人物・手・小物・吹き出しを検査中です。画像は先に保存し、具体的なNGだけ1回限定修正します。'
+        ? '[QUALITY QA] キャラクターシート・人物・手・小物・吹き出しを検査中です。画像を保存して通常修正は1回、装飾文字の問題が残る場合のみ最終候補を1回生成します。'
         : '[QUALITY QA] 自動修正OFF：元画像を保存して品質検査します。追加の画像生成は行いません。');
 
       const qualityOutcome = await runImageQualityFailsafe({
@@ -1264,19 +1268,19 @@ export default function useMangaWorkflow() {
         originalPrompt: currentPrompt,
         mode: qualityMode,
         reviewCandidate: reviewImageCandidate,
-        generateRepairCandidate: (repairPrompt) => generateImageCandidate(repairPrompt, {
+        generateRepairCandidate: (repairPrompt, sourceCandidate = originalCandidate) => generateImageCandidate(repairPrompt, {
           repair: true,
-          repairSource: isOpenAIEngine ? originalCandidate : null,
+          repairSource: isOpenAIEngine ? sourceCandidate : null,
         }),
         repairSourceMode: isOpenAIEngine ? 'source-image' : 'regenerate',
-        compareCandidates: async (original, repair, originalPrompt) => {
+        compareCandidates: async (original, repair, originalPrompt, comparisonOptions = {}) => {
           statCallback('[QUALITY QA] 元画像と修正版を直接比較し、台詞・人物・動作を優先して自動選択します。');
           const comparisonParts = [
             ...buildImageQualityQaImageParts({ candidate: original }),
             ...buildImageQualityQaImageParts({ candidate: repair, referenceImages: images }),
           ];
           const comparison = await callAI(
-            buildImageQualityComparisonPrompt({ scenario, castList, finalPrompt: originalPrompt }),
+            buildImageQualityComparisonPrompt({ scenario, castList, finalPrompt: originalPrompt, ...comparisonOptions }),
             comparisonParts, null, msg => statCallback(`[QUALITY QA] ${msg}`)
           );
           return parseImageQualityComparison(comparison.text);
@@ -1314,6 +1318,10 @@ export default function useMangaWorkflow() {
           ...qualityOutcome.repairReview.issues.map((issue) => `[QUALITY QA] ${formatImageQualityIssue(issue)}`)
         ]);
       }
+      if (qualityOutcome.fallbackReview && !qualityOutcome.fallbackReview.pass) {
+        setGenLog(prev => [...prev, '[QUALITY QA] 印字を簡略化した最終候補にも確認事項が残りました。',
+          ...qualityOutcome.fallbackReview.issues.map(issue => `[QUALITY QA] ${formatImageQualityIssue(issue)}`)]);
+      }
 
       if (qualityOutcome.candidate !== originalCandidate) {
         generatedModelId = qualityOutcome.candidate.modelId;
@@ -1333,10 +1341,10 @@ export default function useMangaWorkflow() {
         ]);
         showStatus(qualityReviewUnverified
           ? '品質レビューは未確認ですが、画像生成は完了し保存済みの画像を採用します。'
-          : '品質ゲートは未合格ですが、保存済みの元画像を採用して後続作業を続行します。');
+          : '品質ゲートは未合格ですが、比較で保持した画像を採用して後続作業を続行します。');
       } else {
         statCallback(qualityOutcome.attempts > 1
-          ? '[QUALITY QA] ✅ PASS — 1回の限定修正後、人物・手・小物・吹き出し品質ゲートを通過しました。'
+          ? `[QUALITY QA] ✅ PASS — ${qualityOutcome.attempts - 1}回の限定修正後、人物・手・小物・吹き出し品質ゲートを通過しました。`
           : '[QUALITY QA] ✅ PASS — 人物・手・小物・吹き出しに明確な問題は検出されませんでした。');
       }
       

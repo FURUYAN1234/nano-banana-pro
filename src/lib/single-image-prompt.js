@@ -27,7 +27,7 @@ ${buildSingleImageCinematicRouter(LEGACY_SINGLE_IMAGE_CAMERA_SLOT.length)}
 - Render high-budget Japanese TV-anime illustration quality: clean cel shading, rich but controlled color depth, sharp ink contours, smooth gradients, and no photorealistic skin, cloth, or film texture.
 - Use a line-weight hierarchy: the focused cast has stronger clean ink contours while setting elements remain lighter and softer. No character-sheet layout, expression grid, or reference-sheet appearance.
 - Keep every visible hand anatomically correct. When a gesture names a right or left hand, connect it to the matching shoulder from the character's own body, never viewer-left/viewer-right. Do not mirror, reverse, or add hands.
-- If text or speech bubbles are requested, use vertical Japanese only. Never add random text, floating letters, labels, or sound effects. Treat mood words and SFX names as visual direction unless visible text is explicitly requested.
+- If Japanese speech bubbles are requested, use vertical Japanese only. Other requested printed text follows its physical surface and specified writing direction. Never add random text, floating letters, labels, or sound effects. Treat mood words and SFX names as visual direction unless visible text is explicitly requested.
 - Before returning the image, review hand anatomy, finger count, visible text, and character identity.
 
 ${SHARED_IMAGE_QUALITY_CONTRACT}`;

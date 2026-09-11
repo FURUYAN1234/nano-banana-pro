@@ -17,6 +17,7 @@ test('image generation displays the received image before running one visible co
   assert.match(workflowSource, /formatImageQualityIssue/);
   assert.match(workflowSource, /qualityResult\.pass/);
   assert.match(workflowSource, /const qualityMode = inferImageQualityMode\(currentPrompt\)/);
+  assert.match(workflowSource, /parseImageQualityQaResponse\(qualityResponse.text, \{ mode: qualityMode \}\)/);
   assert.match(workflowSource, /buildImageQualityQaPrompt\(\{[\s\S]*scenario,[\s\S]*castList,[\s\S]*finalPrompt:\s*candidatePrompt,[\s\S]*mode:\s*qualityMode,[\s\S]*referenceImageCount/);
   assert.match(workflowSource, /originalPrompt: currentPrompt,[\s\S]*mode: qualityMode,/);
 });
@@ -38,5 +39,7 @@ test('OpenAI generation binds initial references and the actual repair source', 
   assert.match(workflowSource, /originalCandidate:\s*repairSource/);
   assert.match(workflowSource, /appendOpenAIReferencePrompt\(prompt, referencePlan\)/);
   assert.match(workflowSource, /imageInputs:\s*referencePlan\.imageInputs/);
-  assert.match(workflowSource, /repairSource:\s*isOpenAIEngine\s*\?\s*originalCandidate\s*:\s*null/);
+  assert.match(workflowSource, /sourceCandidate = originalCandidate/);
+  assert.match(workflowSource, /repairSource:\s*isOpenAIEngine\s*\?\s*sourceCandidate\s*:\s*null/);
+  assert.match(workflowSource, /finalPrompt: originalPrompt, \.\.\.comparisonOptions/);
 });

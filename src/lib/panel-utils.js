@@ -519,7 +519,8 @@ export const getCameraForPanel = (panelText, shuffledCameras, cameraState) => {
   const cameraMatch = panelText.match(/\[Camera:\s*(.*?)\]/i);
   if (cameraMatch && cameraMatch[1]) {
      const specificCamera = cameraMatch[1].trim();
-     const literalCameraPrefix = EXPLICIT_DETAIL_CAMERA_RE.test(specificCamera) ? `${specificCamera}; ` : '';
+     // Lens presets must not discard the scripted shoulder owner, direction or viewpoint.
+     const literalCameraPrefix = `${specificCamera}; `;
 
      // [v4.5.6] シネマティック構図のチェック（歪みを加えず、美しさを強調）
      for (const [keyword, lensTag] of Object.entries(cinematicCompositionMap)) {

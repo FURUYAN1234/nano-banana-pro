@@ -4,6 +4,7 @@ import { createServer } from 'vite';
 
 let server;
 let buildMangaPrompt;
+let getCameraForPanel;
 
 before(async () => {
   server = await createServer({
@@ -12,6 +13,7 @@ before(async () => {
     server: { middlewareMode: true }
   });
   ({ buildMangaPrompt } = await server.ssrLoadModule('/src/lib/prompt-assembler.js'));
+  ({ getCameraForPanel } = await server.ssrLoadModule('/src/lib/panel-utils.js'));
 });
 
 after(async () => {
@@ -345,5 +347,17 @@ test('every panel receives a local functional-surface projection check', () => {
     const prompt = buildPrompt(providerFamily, NORMAL_CONVERSATION);
     assert.equal((prompt.match(/FUNCTIONAL SURFACE PANEL CHECK:/g) || []).length, 4);
     assert.match(prompt, /solve target-to-front\/back geometry before projection/i);
+  }
+});
+
+test('Gemini lens conversion preserves the literal shoulder owner and viewing direction', () => {
+  for (const camera of [
+    'Observerの背後、右肩越しに画面を見る',
+    'Over The Shoulder from behind the customer reading the form',
+    '俯瞰、操作者の背中側からキーボードと画面を見る',
+  ]) {
+    const result = getCameraForPanel(`[Camera: ${camera}]\nAction: read the existing display`, ['unused fallback'], { index: 0 });
+    assert.ok(result.startsWith(camera + '; '), result);
+    assert.match(result, /NEVER draw text of camera names/);
   }
 });

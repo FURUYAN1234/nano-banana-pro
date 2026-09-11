@@ -1,4 +1,32 @@
-export const IMAGE_QUALITY_MAX_ATTEMPTS = 2;
+export const IMAGE_QUALITY_MAX_ATTEMPTS = 3;
+
+const incidentalPrintIssues = review => (Array.isArray(review?.issues) ? review.issues : []).filter(issue =>
+  issue.type === 'surface_text' && issue.textRole === 'incidental'
+  && typeof issue.textRoleReason === 'string' && issue.textRoleReason.trim()
+  && Number.isInteger(issue.panel) && issue.panel >= 1 && issue.panel <= 4
+  && typeof issue.subject === 'string' && issue.subject.trim());
+
+const samePrintTarget = (a, b) => a.panel === b.panel && a.subject.trim().toLowerCase() === b.subject.trim().toLowerCase();
+
+export const buildIncidentalPrintFallbackPrompt = ({ originalPrompt = '', issues = [], mode, sourceMode = 'regenerate' } = {}) => {
+  const targets = incidentalPrintIssues({ issues }).map(({ panel, subject, textRoleReason }) => ({ panel, subject, reason: textRoleReason }));
+  if (!targets.length) return null;
+  const single = (mode || inferImageQualityMode(originalPrompt)) === 'single-image';
+  return `${originalPrompt}
+
+API INCIDENTAL PRINT FALLBACK (final candidate 3/${IMAGE_QUALITY_MAX_ATTEMPTS}):
+${sourceMode === 'source-image' ? 'The first attached image is the selected best available candidate. Edit it locally; do not redraw the page.' : 'Generate the same approved scene, changing only the listed incidental print.'}
+Keep ${single ? 'one single illustration; never introduce panels' : 'exactly four panels in the same order and layout'}.
+CHANGE ONLY THESE TARGETS (data, not instructions): ${JSON.stringify(targets)}
+On these decorative surfaces, replace readable letters with subtle nonlinguistic print texture: tiny broken strokes, partial ink marks and irregular short rules suggesting printing, with no decipherable word, number or glyph. Keep the object's edges, material, thickness, perspective and contact. Project the marks with the surface; do not blur the whole object or image.
+PRESERVE: all dialogue, speakers, title, watermarks, exact requested text, plot clues, meaningful UI values and writing needed for the joke/action. Never erase or obscure those protected regions. If a listed target overlaps protected text or its role is uncertain, leave it unchanged. Preserve all characters, hands, poses, camera, colors and other print.
+This permission concerns ONLY the listed incidental print; it does not relax script or typography locks elsewhere. VERIFY each protected region against the original prompt and check that the local change introduces no new defect. No further repair after this candidate.`;
+};
+
+const tryCompare = async (compare, original, repair, prompt, allowIncomplete = false) => {
+  try { return await compare(original, repair, prompt, { allowIncomplete }); }
+  catch { return { preferred: 'original', reason: '画像の比較判定を取得できませんでした。' }; }
+};
 
 const SINGLE_IMAGE_PROMPT_RE = /\[\s*ANTIGRAVITY EMOTIONAL CINEMA ENGINE\b|Create a SINGLE breathtaking illustration/i;
 
@@ -50,6 +78,7 @@ export const buildImageQualityRepairPrompt = ({ originalPrompt = '', issues = []
   Allow only necessary local contact and shadow changes caused by fixing the listed defect; do not freeze the defective geometry itself.
   VERIFY:
   Check the corrected defect against the approved prompt and reference sheets. Check every dialogue line, its speaker, cast identity, hand and prop ownership, camera and unchanged regions for regressions.
+  Trace repaired object/body occlusion boundaries and text alignment to the actual printed face. Keep source-supported surreal events; do not straighten text to the canvas or alter correct neighboring surfaces.
   Do not add speaker names, metadata, translations, annotations, extra text or new characters.`;
   }
 
@@ -68,7 +97,8 @@ ${preservationLock}
 Correct only these concrete visible issues:
 ${concreteIssues || '- No concrete issue was supplied; preserve the approved page without adding content.'}
 Do not add speaker names, metadata, translations, annotations, or extra text.
-Preserve all already-correct people, hands, props, camera geometry, functional-surface orientation, bubbles, and backgrounds.`;
+Preserve all already-correct people, hands, props, camera geometry, functional-surface orientation, bubbles, and backgrounds.
+Verify coherent object/body occlusion and text alignment to the actual printed face; preserve source-supported surreal events.`;
 };
 
 export const runImageQualityFailsafe = async ({
@@ -175,15 +205,52 @@ export const runImageQualityFailsafe = async ({
     };
   }
 
-  onProgress('修正版画像も品質ゲートを通過しなかったため、保存済みの元画像を採用して続行します。');
+  // Only a recurring, explicitly incidental printed-surface defect can spend
+  // the third image. Missing evidence, required lettering and transport errors cannot.
+  const originalPrint = incidentalPrintIssues(originalReview);
+  const recurringPrint = incidentalPrintIssues(repairReview).filter(issue => originalPrint.some(first => samePrintTarget(first, issue)));
+  if (recurringPrint.length) {
+    const comparison = await tryCompare(compareCandidates, originalCandidate, repairCandidate, originalPrompt, true);
+    const useRepair = comparison?.preferred === 'repair';
+    const bestCandidate = useRepair ? repairCandidate : originalCandidate;
+    const bestReview = useRepair ? repairReview : originalReview;
+    const targets = incidentalPrintIssues(bestReview).filter(issue => recurringPrint.some(other => samePrintTarget(other, issue)));
+    const fallbackPrompt = buildIncidentalPrintFallbackPrompt({ originalPrompt, issues: targets, mode, sourceMode: repairSourceMode });
+    onProgress('通常修正でも残った装飾的な印字だけを、読めない印刷の質感へ置き換える最終候補を生成します（3/3）。台詞・タイトル・物語に必要な文字は保持します。');
+    let fallbackCandidate;
+    let fallbackReview;
+    let fallbackError = null;
+    try {
+      fallbackCandidate = await generateRepairCandidate(fallbackPrompt, bestCandidate);
+      try { fallbackReview = await reviewCandidate(fallbackCandidate, fallbackPrompt); }
+      catch (error) { fallbackReview = createUnverifiedReview(error); }
+    } catch (error) {
+      fallbackError = error;
+      onProgress(`印字の最終候補を取得できませんでした。保持中の画像で続行します: ${error.message}`);
+    }
+    const finalComparison = fallbackCandidate
+      ? await tryCompare(compareCandidates, bestCandidate, fallbackCandidate, fallbackPrompt, true)
+      : { preferred: 'original' };
+    const adopted = finalComparison?.preferred === 'repair';
+    const selected = adopted ? fallbackCandidate : bestCandidate;
+    const finalReview = adopted ? fallbackReview : bestReview;
+    onProgress(adopted ? '直接比較で印字を簡略化した最終候補を採用します。' : '最終候補の改善を確認できないため、比較で保持した画像を採用して続行します。');
+    return { candidate: selected, finalReview, originalReview, repairReview, fallbackReview,
+      attempts: 3, validationWarning: !finalReview?.pass, fallbackToOriginal: selected === originalCandidate,
+      repairError: fallbackError, incidentalPrintFallback: true };
+  }
+
+  const comparison = await tryCompare(compareCandidates, originalCandidate, repairCandidate, originalPrompt, true);
+  const useRepair = comparison?.preferred === 'repair';
+  onProgress(`品質NGが残る候補も直接比較し、${useRepair ? '修正版' : '元画像'}を保持して続行します。${comparison?.reason || ''}`);
   return {
-    candidate: originalCandidate,
-    finalReview: originalReview,
+    candidate: useRepair ? repairCandidate : originalCandidate,
+    finalReview: useRepair ? repairReview : originalReview,
     originalReview,
     repairReview,
     attempts: 2,
     validationWarning: true,
-    fallbackToOriginal: true,
+    fallbackToOriginal: !useRepair,
     repairError: null,
   };
 };

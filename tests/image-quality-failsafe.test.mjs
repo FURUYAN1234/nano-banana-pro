@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { parseImageQualityQaResponse } from '../src/lib/image-quality-qa.js';
 
 import {
   buildImageQualityRepairPrompt,
@@ -15,6 +16,20 @@ const pass = { pass: true, issues: [] };
 const fail = (type = 'anatomy') => ({
   pass: false,
   issues: [{ type, panel: 2, subject: 'アカリ', reason: '腕が1本多い' }],
+});
+
+test('an ungrounded screen/back accusation keeps the image and continues without repair', async () => {
+  const review = parseImageQualityQaResponse(JSON.stringify({ pass: false, issues: [{
+    type: 'prop_orientation', panel: 2, subject: 'tablet', reason: 'The screen faces camera',
+  }] }));
+  let repairs = 0;
+  const result = await runImageQualityFailsafe({ originalCandidate: candidate('original'), originalPrompt: 'BASE',
+    reviewCandidate: async () => review,
+    generateRepairCandidate: async () => { repairs++; return candidate('repair'); },
+  });
+  assert.equal(repairs, 0);
+  assert.equal(result.candidate.id, 'original');
+  assert.equal(result.validationWarning, true);
 });
 
 test('disabled automatic repair preserves a concrete QA failure without another image request', async () => {
@@ -197,4 +212,38 @@ test('source-image single illustration repair does not invent a comic layout', (
   });
   assert.match(prompt, /same single illustration/i);
   assert.doesNotMatch(prompt, /exactly four separate visible panels/i);
+});
+
+test('missing geometric evidence retains the completed image with no paid repair or workflow rejection', async () => {
+  let repairs = 0;
+  const review = parseImageQualityQaResponse(JSON.stringify({ pass: true, issues: [], observations: { title: 'none', dialogue: 'none', hands: 'hidden', props: 'consistent' } }));
+  const result = await runImageQualityFailsafe({
+    originalCandidate: candidate('original'), originalPrompt: 'APPROVED',
+    reviewCandidate: async () => review,
+    generateRepairCandidate: async () => { repairs++; return candidate('repair'); },
+  });
+  assert.equal(repairs, 0);
+  assert.equal(result.candidate.id, 'original');
+  assert.equal(result.validationWarning, true);
+});
+
+test('new spatial defects use the same one-repair limit and retain the original if the repair is still defective', async () => {
+  for (const type of ['object_geometry', 'surface_text']) {
+    let repairs = 0;
+    const review = parseImageQualityQaResponse(JSON.stringify({ pass: false, issues: [{ type, panel: 2, subject: 'scene prop', reason: 'visible physical boundary or text-plane contradiction' }] }));
+    const result = await runImageQualityFailsafe({
+      originalCandidate: candidate('original'), originalPrompt: 'APPROVED SURREAL EVENT', repairSourceMode: 'source-image',
+      reviewCandidate: async () => review,
+      generateRepairCandidate: async prompt => {
+        repairs++;
+        assert.ok(prompt.startsWith('APPROVED SURREAL EVENT'));
+        assert.ok(prompt.includes(type));
+        assert.match(prompt, /Keep source-supported surreal events/);
+        return candidate('repair');
+      },
+    });
+    assert.equal(repairs, 1);
+    assert.equal(result.candidate.id, 'original');
+    assert.equal(result.validationWarning, true);
+  }
 });

@@ -75,6 +75,13 @@ const buildGeminiPrompt = () => buildMangaPrompt({
 
 test('both provider prompts require rich physical settings without obscuring the cast', () => {
   for (const prompt of [buildChatGptPrompt(), buildGeminiPrompt()]) {
+    assert.match(prompt, /OBJECT GEOMETRY LOCK/);
+    assert.match(prompt, /occlusion|rear contour/);
+    assert.match(prompt, /spine/);
+    assert.match(prompt, /perspective, not (?:(?:to )?the )?canvas/);
+    assert.match(prompt, /glyph.*(?:top|canvas-upright)/);
+    assert.match(prompt, /never re-typeset stacked books|Stacking or turning a book must not re-typeset/);
+    assert.match(prompt, /surreal gags/);
     assert.match(prompt, /RICH PANEL COMPOSITION \/ CHARACTER CLARITY LOCK/);
     assert.match(prompt, /one fixed environmental anchor plus at least two additional physical setting cues|1 fixed anchor \+ 2 physical setting cues/i);
     assert.match(prompt, /VFX[^\n]*(?:overlays|overlay)[^\n]*never replace[^\n]*(?:physical )?setting/i);

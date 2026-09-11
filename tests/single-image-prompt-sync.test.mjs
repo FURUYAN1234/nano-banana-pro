@@ -26,6 +26,13 @@ test('single-image copy prompt applies the current shared image-quality contract
 
   assert.match(prompt, /ANTIGRAVITY EMOTIONAL CINEMA ENGINE/);
   assert.match(prompt, /SHARED IMAGE QUALITY CONTRACT/);
+  assert.match(prompt, /OBJECT GEOMETRY LOCK/);
+  assert.match(prompt, /no (?:accidental )?penetration, fusion or edge tangency/);
+  assert.match(prompt, /every glyph's top direction/);
+  assert.match(prompt, /Stacking or turning a book must not re-typeset/);
+  assert.match(prompt, /Horizontal or vertical writing can both be valid/);
+  assert.match(prompt, /flat-page text appears upside-down or rotated/);
+  assert.match(prompt, /actual reader's rear head\/shoulder foreground/);
   assert.match(prompt, /preserve the user's requested cast, action, setting, and camera/i);
   assert.match(prompt, /rich physical setting/i);
   assert.match(prompt, /lighting and color coherent/i);
@@ -58,7 +65,7 @@ test('single-image copy prompt retains its established emotional and rendering s
   assert.match(prompt, /vertical Japanese only/i);
 });
 
-test('single-image copy prompt uses one fail-closed cinematic router without exceeding its baseline length', () => {
+test('single-image copy prompt keeps one cinematic router within an 8k budget including object geometry', () => {
   const prompt = buildSingleImageEmotionalPrompt();
 
   assert.match(prompt, /CINEMATIC DEPTH ROUTER/);
@@ -67,7 +74,9 @@ test('single-image copy prompt uses one fail-closed cinematic router without exc
   assert.match(prompt, /User camera, cast, action, anatomy, and text win/i);
   assert.doesNotMatch(prompt, /frame_within_frame|story_reflection|prism_refraction|CINEMATIC_TECHNIQUES/);
   assert.equal((prompt.match(/CINEMATIC DEPTH ROUTER/g) || []).length, 1);
-  assert.ok(prompt.length <= 6466, `expected no more than 6,466 chars, got ${prompt.length}`);
+  // The former 6,466-char baseline predates the requested shared object-geometry contract.
+  assert.ok(prompt.length <= 8000, `expected no more than 8,000 chars including object geometry, got ${prompt.length}`);
+  assert.match(prompt, /Other requested printed text follows its physical surface and specified writing direction/);
 });
 
 test('quality upgrades require real verification of both image-output paths', () => {
