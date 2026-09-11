@@ -160,6 +160,7 @@ const compactChatGPTConversationRules = (prompt) => {
   if (compacted.length <= CHATGPT_WEB_COPY_SOFT_BUDGET) return compacted;
 
   const maximallyCompacted = compacted
+    .replace(/- COMEDY INTENT:[^\n]*/g, '- COMEDY INTENT: preserve scripted surreal changes/emotional mismatch/silence; no explanations.')
     .replace(/- SINGLE INSTANT:[^\n]*/g, '- SINGLE INSTANT: one scripted moment.')
     .replace(/- REVEAL ORDER:[^\n]*/g, '- REVEAL ORDER: current Action only; no later states/reactions.')
     .replace(/- REACTION TARGET:[^\n]*/g, '- REACTION TARGET: scripted gaze/pose target; no new events.')
@@ -190,7 +191,7 @@ const compactChatGPTConversationRules = (prompt) => {
         ? line
         : 'EYE-LINE LOCK: counterpart gaze; mixed three-quarter/rear-OTS depth; never lens/front; preserve scenario direction.'
     ))
-    .replace(/FUNCTIONAL SURFACE PANEL CHECK:[^\n]*/g, 'FUNCTIONAL SURFACE PANEL CHECK: Action target; solve target-to-front/back geometry before projection.')
+    .replace(/FUNCTIONAL SURFACE PANEL CHECK:[^\n]*/g, 'FUNCTIONAL SURFACE PANEL CHECK: front/back follows Action target, then project.')
     .replace(/SHARED IMAGE QUALITY CONTRACT:[^\n]*/g, 'SHARED QUALITY: preserve direction; rich setting; anatomy/props; folds; no duplicate cast; clean surfaces.')
     .replace(/FACIAL ACTING LOCK:[^\n]*/g, 'FACIAL ACTING LOCK: brow/eyelid/gaze target/mouth shape/head-torso cues; no forced close-up/camera gaze; preserve Camera/Action/eye-line; not visible text.')
     .replace(
