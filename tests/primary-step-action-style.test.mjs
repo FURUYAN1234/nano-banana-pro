@@ -9,7 +9,11 @@ test('only the STEP 1 control face receives the blue treatment, not its drop are
 
   assert.match(
     source,
-    /<label className="flex-1 flex flex-col items-center/,
+    /\{\(images\.length > 0 \|\| isAnalyzing\) && \(\s*<label className="w-14 h-14/,
+  );
+  assert.match(
+    source,
+    /<label style=\{\{ minWidth: 0 \}\} className="flex-1 flex flex-col items-center justify-center text-slate-500 cursor-pointer/,
   );
   assert.doesNotMatch(
     source,
@@ -17,7 +21,16 @@ test('only the STEP 1 control face receives the blue treatment, not its drop are
   );
   assert.match(
     source,
-    /<span className="primary-step-action primary-step-action-accent-border[^\n]*">\s*キャラクター設定画像を選択 \(STEP 1\)/,
+    /<span className="primary-step-action primary-step-action-accent-border[^\n]*\bw-full\b[^\n]*">\s*キャラクター設定画像を選択 \(STEP 1\)/,
+  );
+});
+
+test('STEP 1 drop guidance names both selection paths and optional companion files', async () => {
+  const source = await readSource('src/components/Step1Panel.jsx');
+
+  assert.match(
+    source,
+    /<p className="text-xs font-bold text-slate-400">\s*上記STEP1のボタンを押して、キャラクター設定画像（キャラシート）を選択するか、ここにドロップしてください。（複数枚を同時に、または後から追加ドロップすることも可能です。必須ではありませんが、360°背景画像や、作風設定のJSONファイルも一緒に読み込むことが出来ます。）\s*<\/p>/,
   );
 });
 

@@ -1,3 +1,10 @@
+## v6.1.1 STEP1 full-width selector and drop guidance — 2026-09-12
+
+- STEP1のキャラクター設定画像選択面を`w-full`にし、STEP2・3・4の主ボタンと同じ横幅へ統一する。ドロップ領域の案内は、STEP1ボタンまたはドロップ、複数枚の同時・後からの追加、任意の360°背景画像と作風設定JSON読込を明記した指定文へ置換する。
+- 追加依頼として、STEP3内の「プロンプトをコピーする（web貼り付け時）」ボタンだけを白から薄い黄色へ変更する。固定ヘッダーの1枚絵用ボタン、コピー完了表示、処理は変更しない。
+- 変更対象は`src/components/Step1Panel.jsx`、`src/components/Step4Panel.jsx`、`src/index.css`、対応テスト、ユーザー向け版情報・READMEだけ。入力処理、画像解析、生成プロンプト、API、FourPanel v6.0.9配布物、H3 T2V/I2V/Ref2Vは変更しない。
+- Release notes: `docs/releases/v6.1.1.md`。公開、FourPanel note `ndf063558c1f5`、黒い窓フルバックアップの進行状態はroot `PLAN.md` を参照。
+
 ## v6.1.0 primary-step display correction — 2026-09-12
 
 - v6.0.9でSTEP1の広いドロップ領域とSTEP2・3の太い外枠まで青くした誤りを修正した。STEP1は小さな「キャラクター設定画像を選択 (STEP 1)」操作だけ薄青、STEP2・3はボタン面だけ薄青で太枠は従来の薄いグレー、STEP4は変更なし。

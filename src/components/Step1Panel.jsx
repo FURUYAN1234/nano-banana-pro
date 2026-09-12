@@ -100,30 +100,32 @@ export default function Step1Panel({
             </button>
           </div>
         )}
-        <label className="w-14 h-14 flex flex-col items-center justify-center cursor-pointer rounded-lg border border-dashed border-white/10 hover:border-blue-500 hover:bg-blue-500/10 transition-all text-slate-500 hover:text-blue-400 group/add">
-          {isAnalyzing ? (
-            <Loader2 size={16} className="animate-spin" />
-          ) : (
-            <Plus size={16} className="group-hover/add:scale-125 transition-transform" />
-          )}
-          <input
-            type="file"
-            multiple
-            accept="image/*"
-            className="hidden"
-            onChange={(e) => {
-              if (!apiKey) {
-                setShowModal(true);
-              } else {
-                processFiles(e.target.files);
-              }
-            }}
-            disabled={isAnalyzing}
-          />
-        </label>
+        {(images.length > 0 || isAnalyzing) && (
+          <label className="w-14 h-14 flex flex-col items-center justify-center cursor-pointer rounded-lg border border-dashed border-white/10 hover:border-blue-500 hover:bg-blue-500/10 transition-all text-slate-500 hover:text-blue-400 group/add">
+            {isAnalyzing ? (
+              <Loader2 size={16} className="animate-spin" />
+            ) : (
+              <Plus size={16} className="group-hover/add:scale-125 transition-transform" />
+            )}
+            <input
+              type="file"
+              multiple
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                if (!apiKey) {
+                  setShowModal(true);
+                } else {
+                  processFiles(e.target.files);
+                }
+              }}
+              disabled={isAnalyzing}
+            />
+          </label>
+        )}
 
         {images.length === 0 && !isAnalyzing && (
-          <label className="flex-1 flex flex-col items-center justify-center text-slate-500 ml-4 cursor-pointer hover:bg-white/5 rounded-xl transition-colors p-4 border border-transparent hover:border-white/10">
+          <label style={{ minWidth: 0 }} className="flex-1 flex flex-col items-center justify-center text-slate-500 cursor-pointer hover:bg-white/5 rounded-xl transition-colors p-4 border border-transparent hover:border-white/10">
             <input
               type="file"
               multiple
@@ -137,11 +139,11 @@ export default function Step1Panel({
                 }
               }}
             />
-            <span className="primary-step-action primary-step-action-accent-border inline-flex items-center justify-center rounded-lg border px-4 py-2 mb-3 text-xs font-bold shadow-lg active:translate-y-0.5">
+            <span className="primary-step-action primary-step-action-accent-border w-full inline-flex items-center justify-center rounded-lg border px-4 py-2 mb-3 text-xs font-bold shadow-lg active:translate-y-0.5">
               キャラクター設定画像を選択 (STEP 1)
             </span>
             <p className="text-xs font-bold text-slate-400">
-              キャラクター設定画像（キャラシート）をここにドロップしてください。 <span className="text-blue-400">（複数枚を同時に、または後から追加ドロップすることも可能です。360°背景画像や、作風設定のJSONファイルも一緒に読み込めます）</span>
+              上記STEP1のボタンを押して、キャラクター設定画像（キャラシート）を選択するか、ここにドロップしてください。（複数枚を同時に、または後から追加ドロップすることも可能です。必須ではありませんが、360°背景画像や、作風設定のJSONファイルも一緒に読み込むことが出来ます。）
             </p>
             <p className="text-[10px] opacity-60 mt-1">
               ※名前や性格、特徴が書かれた設定シートを推奨。

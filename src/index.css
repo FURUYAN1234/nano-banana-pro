@@ -2,6 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
+.web-prompt-copy-action {
+  background-color: #fef3c7;
+  color: #451a03;
+}
+
+.web-prompt-copy-action:hover {
+  background-color: #fde68a;
+}
+
 body {
   background-color: #050505;
   color: #e2e8f0;

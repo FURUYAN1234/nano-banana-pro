@@ -441,7 +441,7 @@ export default function Step4Panel({
               <button
                 onClick={copyPrompt}
                 disabled={!finalPrompt}
-                className={`w-full ${isCopied ? 'bg-green-600' : 'bg-slate-800 hover:bg-slate-700'} text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all border border-white/10`}
+                className={`w-full ${isCopied ? 'bg-green-600' : 'web-prompt-copy-action'} text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all border border-white/10`}
               >
                 {isCopied ? <CheckCircle2 size={20} /> : <Copy size={20} />}
                 {isCopied ? "コピー完了！" : "📋 プロンプトをコピーする（web貼り付け時）"}
