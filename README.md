@@ -2,6 +2,8 @@
 
 API品質・サイズと自動品質修正の設定は「API生成時の品質・サイズ」を開くと表示されます。折り畳み時も、現在選択中のモデル・品質・サイズ（例：GPT Image 2.5 Sunburst / xhigh・標準：1024×1536）をボタン内で確認でき、選択を変えると表示も更新されます。
 
+黒い生成実行ボタンは「画像を生成する（STEP 4）」だけを表示します。モデル・品質・サイズは、その下の白い設定ボタンで確認します。
+
 画像比率修正・アップスケールの案内とコピーボタンは同名の折り畳みボタンから開けます。
 
 動画化の説明・コピーボタン・配布リンクは「FURUの4コマ漫画を動画化（MiniMax H3 / ComfyUI）」を開くと表示されます。初期状態は折り畳みです。
@@ -35,7 +37,7 @@ STEP4は「API画像生成の品質」の直下に「API画像サイズ」を分
 
 
 
-> Latest release: **v6.0.5** / 最新リリース: **v6.0.5**
+> Latest release: **v6.0.6** / 最新リリース: **v6.0.6**
 
 > **"To what extent can humans step away from the creative process?"**
 > **「人間は、どこまで制作から降りられるのか？」**
@@ -920,6 +922,9 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 ---
 
 ## 📋 ChangeLog
+
+### v6.0.6 (2026-09-12)
+- **[Fix & UX]** STEP4の黒い画像生成ボタンを『画像を生成する（STEP 4）』だけの簡潔な表示にし、モデル・品質・サイズは白い設定ボタンだけに表示 / Simplified the black STEP4 generation button to ‘Generate image (STEP 4)’ and kept model, quality, and size details only on the white settings button
 
 ### v6.0.5 (2026-09-12)
 - **[Fix & UX]** STEP4の「API生成時の品質・サイズ」ボタンに現在選択中のモデル・品質・サイズを常時表示し、選択変更を即時反映。Google AI使用時は自動設定と表示 / Show the currently selected model, quality, and size directly on the STEP4 API settings button, update the summary immediately when selections change, and label Google AI as automatically configured

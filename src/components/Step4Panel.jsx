@@ -583,7 +583,7 @@ export default function Step4Panel({
               >
                 {isGeneratingImage ? <Loader2 size={20} className="animate-spin" /> : <ImageIcon size={20} />}
                 <div className="flex flex-col items-center">
-                  <span>{isGeneratingImage ? "画像を生成中..." : `画像を生成する (STEP 4: ${isOpenAIImageMode ? resolveOpenAIImageOption(openAIImageQuality).label : 'Google AI'})`}</span>
+                  <span>{isGeneratingImage ? "画像を生成中..." : "画像を生成する (STEP 4)"}</span>
                 </div>
               </button>
                           <div className="border border-yellow-500/30 rounded-lg overflow-hidden" style={{ margin: 0 }}>
