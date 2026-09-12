@@ -1,3 +1,9 @@
+## v6.0.3 release candidate — 2026-09-12
+
+- カメラの高さ・傾き・強い遠近感、全身の誇張、コマ間の演出差を積極的に許可する。人物、台詞、小道具、明示Action、静かな間は保持する。舞台に自然な背景人物は許容し、主役の明白な複製と区別する。
+- 実OpenAI画像生成では俯瞰、肩越し、低い煽り、静かな寄りの落差と身体の勢いを確認。足先を必ず画面内へ収める指定は2回の比較でも保証できなかったため、完全な全身収まりやモデル一般の改善は主張しない。
+- 現在のリリース、note、黒い窓フルバックアップの進行状態はroot `PLAN.md` の「Nano Banana expressive camera and acting restoration」を参照。Release notes: `docs/releases/v6.0.3.md`。
+
 ## v6.0.2 release candidate — 2026-09-12
 
 - STEP4ログの「参照画像キャラシート再現禁止」を「キャラの外見は維持し、設定資料の配置・説明文はコピーしない」に修正。プロンプト出力前のAI精査待ちに、他STEPと同じ経過秒数の1行更新を追加。生成指示・モデルは変更なし。現在の検証・デプロイ・note・黒い窓フルバックアップの状況はroot PLAN.mdの「Nano Banana STEP4 wait counter and log wording」を参照。
@@ -9,6 +15,8 @@ Current live delivery status: see root PLAN.md, Nano Banana four-panel quality r
 # HANDOFF.md
 
 ## Current Status
+
+- **v6.0.3 expressive camera and acting (2026-09-12)**: Camera height, tilt, foreshortening, full-body acting and panel-to-panel contrast are actively permitted while cast, dialogue, props, explicit actions and quiet beats stay protected. Natural background people are allowed; clear main-cast clones remain defects. Real Sunburst/xhigh four-panel trials showed stronger high/low/OTS/close contrast and acting energy. Exact head-to-feet containment remained unreliable, so the release does not guarantee it. Root `PLAN.md` owns the authorized release, FourPanel note `ndf063558c1f5`, and visible full-backup status. Release notes: `docs/releases/v6.0.3.md`.
 
 - **v6.0.0 comedy-aware prompt review (2026-09-11)**: Root PLAN.md entry "Nano Banana four-panel quality reference API evaluation" owns live delivery status. Optional AI review preserves surreal intent and adjusts auxiliary directions only; quality warnings retain outputs. Real text-API trials preserved the gag and removed conflicting auxiliary directions. Image accuracy remains imperfect. Release notes: docs/releases/v6.0.0.md.
 

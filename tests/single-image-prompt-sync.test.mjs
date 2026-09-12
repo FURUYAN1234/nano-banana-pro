@@ -38,7 +38,8 @@ test('single-image copy prompt applies the current shared image-quality contract
   assert.match(prompt, /lighting and color coherent/i);
   assert.match(prompt, /coherent anatomy/i);
   assert.match(prompt, /clothing-fold shadows/i);
-  assert.match(prompt, /Do not invent, duplicate, merge, or replace characters/i);
+  assert.match(prompt, /Do not duplicate, merge, or replace main characters/i);
+  assert.match(prompt, /Allow ordinary background people suited to the setting/i);
   assert.match(prompt, /FUNCTIONAL SURFACE ORIENTATION LOCK/);
   assert.match(prompt, /front face toward (?:the )?actual operator, customer, or intended reader/i);
   assert.match(prompt, /move the camera, never rotate the object toward the viewer/i);
@@ -51,8 +52,8 @@ test('single-image copy prompt applies the current shared image-quality contract
   assert.match(prompt, /BODY ACTING BASELINE/);
   assert.match(prompt, /Never default to a flat, eye-level, center-framed shot/i);
   assert.match(prompt, /reference-sheet pose is identity evidence, not a recurring action/i);
-  assert.match(prompt, /do not default to pointing.*thrusting.*striking a supporting surface/i);
-  assert.match(prompt, /action phase.*weight-bearing support.*contact target/i);
+  assert.match(prompt, /BODY ACTING BASELINE:.*allow.*pointing.*reaching.*impact/i);
+  assert.match(prompt, /action phase.*support or airborne trajectory.*contact target/i);
 });
 
 test('single-image copy prompt retains its established emotional and rendering safeguards', () => {
@@ -119,7 +120,7 @@ Hero「行こう。」`;
     assert.match(prompt, /explicitly says.*present.*camera or viewer/i);
     assert.match(prompt, /BODY ACTING BASELINE/);
     assert.match(prompt, /reference-sheet pose is identity evidence, not a recurring action/i);
-    assert.match(prompt, /do not default to pointing.*thrusting.*striking a supporting surface/i);
+    assert.match(prompt, /BODY ACTING BASELINE:.*allow.*pointing.*reaching.*impact/i);
   }
 
   const controlBar = readFileSync(new URL('../src/components/ControlBar.jsx', import.meta.url), 'utf8');

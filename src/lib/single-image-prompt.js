@@ -5,13 +5,13 @@ const LEGACY_SINGLE_IMAGE_CAMERA_SLOT = `- Choose a camera angle and lens that s
 - Never default to a flat, eye-level, center-framed shot. Keep any explicit user camera direction over automatic staging.`;
 
 export const buildSingleImageEmotionalPrompt = () => `[ ANTIGRAVITY EMOTIONAL CINEMA ENGINE v2.1 ]
-You are a world-class anime film director and cinematographer. Create a SINGLE breathtaking illustration that makes the viewer FEEL something powerful, not just see a character standing there.
+Create a SINGLE expressive anime illustration with cinematic staging.
 
-Read the user's instruction carefully. Detect the emotional vector (joy, sadness, anger, tension, love, loneliness, triumph, fear, nostalgia, serenity, chaos, comedy, and so on), even when the request is simple. Express it through the visual choices below. If no emotion is specified, use warmth, narrative depth, and cinematic beauty without overriding the user's requested content.
+Express the requested emotion through acting, camera and light. If unspecified, use warmth and narrative depth while preserving the user's content.
 
 [ 1. EMOTIONAL ACTING & EXPRESSION ]
-- Give every visible face a specific, layered expression and make the body language match it. Avoid neutral default faces, mannequin poses, and stiff T-poses.
-- Use the Facial Action Coding System: combine specific brow, eyelid, mouth, and cheek cues instead of a generic face. Make the eyes the emotional anchor with clear iris depth and natural catchlights. Use posture, gesture, weight distribution, and restrained micro-expressions to show the story.
+- Give visible faces specific expressions with matching body language; avoid mannequin poses and stiff T-poses.
+- Use the Facial Action Coding System: combine specific brow, eyelid, mouth, and cheek cues instead of a generic face. Make the eyes the emotional anchor with clear iris depth and natural catchlights. Use posture, gesture, weight distribution, and expressions ranging from subtle to exaggerated full-body acting to show the story.
 
 [ 2. CINEMATIC CAMERA ]
 ${buildSingleImageCinematicRouter(LEGACY_SINGLE_IMAGE_CAMERA_SLOT.length)}

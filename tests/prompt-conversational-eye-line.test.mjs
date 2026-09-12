@@ -138,7 +138,7 @@ Action: SpeakerA stamps a document while SpeakerB watches from across the counte
 SpeakerA「確認します。」
 SpeakerB「お願いします。」`;
 
-test('normal multi-speaker panels keep interlocutor eye-lines while requiring depth and varied views for both providers', () => {
+test('normal multi-speaker panels keep eye-lines without imposing a shoulder viewpoint', () => {
   for (const providerFamily of ['chatgpt', 'gemini']) {
     const prompt = buildPrompt(providerFamily, NORMAL_CONVERSATION);
     const panel = panelTwoSection(prompt);
@@ -149,24 +149,22 @@ test('normal multi-speaker panels keep interlocutor eye-lines while requiring de
     assert.match(panel, /Camera:/);
     assert.doesNotMatch(panel, /PURE 90° SIDE-ON/);
     assert.match(panel, /three-quarter/i);
-    assert.match(panel, /PRIMARY THREE-QUARTER/);
-    assert.match(panel, /BACK-THREE-QUARTER OR OVER-THE-SHOULDER PARTNER/);
-    assert.match(panel, /VISIBLE REAR DEPTH CHECK/);
-    assert.match(panel, /back of \[SpeakerB\]'s head or shoulder(?: in)? foreground/i);
-    assert.match(panel, /camera is physically behind \[SpeakerB\]'s shoulder/i);
+    assert.match(panel, /VIEWPOINT FREEDOM/);
+    assert.doesNotMatch(panel, /VISIBLE REAR DEPTH CHECK|DEPTH ASSIGNMENT \(REQUIRED\)/);
     assert.match(panel, /EYE-LINE LOCK/);
     assert.match(panel, /address.*counterpart/i);
-    assert.match(panel, /Camera preserves (?:the )?scenario direction/i);
+    assert.match(panel, /Camera preserves (?:the )?scenario direction|Script camera wins/i);
   }
 });
 
-test('Gemini conversation panels end with a mandatory rear-foreground depth lock without changing the ChatGPT prompt', () => {
-  const geminiPanel = panelTwoSection(buildPrompt('gemini', NORMAL_CONVERSATION));
+test('only explicit shoulder cameras receive Gemini rear-foreground depth locks', () => {
+  const geminiPanel = panelTwoSection(buildPrompt('gemini', EXPLICIT_SHOULDER_CAMERA));
+  assert.doesNotMatch(panelTwoSection(buildPrompt('gemini', NORMAL_CONVERSATION)), /GEMINI REAR-FOREGROUND LOCK/);
   const chatgptPanel = panelTwoSection(buildPrompt('chatgpt', NORMAL_CONVERSATION));
 
   assert.match(geminiPanel, /GEMINI REAR-FOREGROUND LOCK \(ABSOLUTE\)/);
   assert.match(geminiPanel, /MUST occupy the foreground/);
-  assert.match(geminiPanel, /Do NOT show \[SpeakerB\]'s face front-on/);
+  assert.match(geminiPanel, /Do NOT show \[SpeakerA\]'s face front-on/);
   assert.doesNotMatch(chatgptPanel, /GEMINI REAR-FOREGROUND LOCK \(ABSOLUTE\)/);
 });
 
@@ -346,7 +344,7 @@ test('every panel receives a local functional-surface projection check', () => {
   for (const providerFamily of ['chatgpt', 'gemini']) {
     const prompt = buildPrompt(providerFamily, NORMAL_CONVERSATION);
     assert.equal((prompt.match(/FUNCTIONAL SURFACE PANEL CHECK:/g) || []).length, 4);
-    assert.match(prompt, /solve target-to-front\/back geometry before projection/i);
+    assert.match(prompt, /solve target-to-front\/back geometry before projection|reader\/camera side\/front-back\/text axes/i);
   }
 });
 

@@ -105,7 +105,8 @@ test('enhancement prompt requires selected-only changes and protects the origina
   assert.match(prompt, /Logline.*最優先/s);
   assert.match(prompt, /セリフ.*最低1つ.*必ず変更/s);
   assert.match(prompt, /背景.*変更しない/s);
-  assert.match(prompt, /人体.*変形|人体変形/s);
+  assert.match(prompt, /全身の誇張や強い遠近法は許可/);
+  assert.match(prompt, /手足の接続・本数.*小道具の所有・向き/);
   assert.doesNotMatch(prompt, /限界突破|2\.5[〜～-]3\.0|MAX OVERDRIVE/);
 });
 

@@ -1,9 +1,4 @@
-import { getScenarioPanelBlocks } from './scenario-validation.js';
-
 const EXPLICIT_AZIMUTH_RE = /(?:左(?:側|斜め|前|後ろ)?|右(?:側|斜め|前|後ろ)?|斜め(?:前|後ろ)?|肩越し|背後|背越し|後方|横顔|側面|over[ -]the[ -]shoulder|\bOTS\b|three-quarter|3\/4|front-left|front-right|rear(?:ward)?|side(?:ways)?|profile)/i;
-const FORWARD_EXTENSION_GESTURE_RE = /(?:指(?:さ|差|し示)|point(?:s|ed|ing)?\b)|(?:(?:手|腕|拳|物|小道具).{0,18}(?:前方|手前|こちら|カメラ|レンズ|viewer|toward).{0,18}(?:突き出|伸ば|差し出|thrust|reach))|(?:(?:机|テーブル|卓|台|カウンター|床|壁|扉|ドア|演台|黒板|ボード|支持面).{0,18}(?:叩|打ち|殴|叩きつけ|slam|bang|strike))/iu;
-const INTENTIONAL_GESTURE_REPETITION_RE = /(?:各コマ|全コマ|毎コマ|繰り返|反復|天丼|反復ギャグ|running[ -]?gag|repeat(?:ed|ing)?|recurring).{0,36}(?:指|手|腕|拳|叩|打|thrust|point|slam|gesture)|(?:指|手|腕|拳|叩|打|thrust|point|slam|gesture).{0,36}(?:繰り返|反復|天丼|running[ -]?gag|repeat(?:ed|ing)?|recurring)/iu;
-
 const PANEL_AZIMUTH_SLOTS = [
   'LEFT-FRONT OBLIQUE: place the camera 35-55 degrees to the subject\'s left-front; turn shoulders and hips away from a square-on lens-facing pose.',
   'RIGHT-FRONT OBLIQUE: place the camera 35-55 degrees to the subject\'s right-front; put the nearer shoulder and hand visibly larger than the farther side.',
@@ -20,7 +15,9 @@ const COMPACT_PANEL_AZIMUTH_SLOTS = [
 
 export const SCENARIO_COMPOSITION_VARIETY_RULES = `
              - **【水平方位・ポーズ多様化（通常生成で常時必須）】**:
+               * カメラの高低差・傾き・強い遠近感と画角の大胆な変化を積極的に使う。会話場面でも机周りの中景や肩越しに固定しない。
                * 各[Camera:]タグには、ショット種類・高さ・傾きだけでなく、被写体に対する水平方位（左前斜め／右前斜め／背後寄り3/4／肩越し等）を物理的に明記せよ。
+               * 画角を目に見える構図へ翻訳する。俯瞰なら頭頂と机の天面と床の奥行き、床近くの煽りなら手前の大きな足・手・家具から上へ伸びる身体、傾きなら斜めに走る床・机・身体の軸を具体的にCameraへ書く。強度語だけで済ませない。
                * 4コマ中、真正面は最大1コマ。最低3種類の被写体基準の水平方位を使い、隣接コマで同じ左右方向を繰り返すな。ローアングル・俯瞰・ズームの違いだけを構図差として数えてはならない。
                * 明示指定がない通常生成ではアイレベルを原則禁止し、俯瞰、ローアングル、肩越し、斜め上下など物語に合う高さを選ぶ。ユーザーが明示したアイレベルや、正確な水平視点が物語上必要な場合は保持する。
                * 主役の肩・腰・顔を毎回カメラへ正対させるな。肩・腰・顔の向きに自然な差をつけ、身体を30〜60度ひねり、左右非対称で読みやすいシルエットを作れ。
@@ -28,13 +25,14 @@ export const SCENARIO_COMPOSITION_VARIETY_RULES = `
                * 明示されたユーザー構図や物語上必須の視線・Actionは上書きしない。構図多様化は同じ出来事を別の物理カメラ位置と身体軸で見せるために使う。`;
 
 export const SCENARIO_GESTURE_VARIETY_RULES = `
-             - **【身体演技・ジェスチャー反復抑制（通常生成で常時必須）】**:
+             - **【身体演技・ジェスチャー多様化（通常生成で常時必須）】**:
                * キャラクター参照画像に写るポーズは顔・髪・衣装・体格の同一性資料であり、性格を示す定番動作ではない。参照ポーズを各コマのActionや決めポーズとして反復するな。
                * 4コマ全体で最低3種類の身体演技を使う。物を扱う、移動・重心移動、相手との受け渡し、環境へ働きかける、抑制した反応、動作後の余韻などを、物語の因果に合わせて選ぶ。
-               * 指し示す、腕や手を正面へ大きく突き出す、支持面を叩く等を同じ「前方伸展ジェスチャー」系統として数え、この系統は4コマ中最大1コマにする。別キャラへ置き換えただけの反復も不可。
-               * 指し示す、物を手前へ突き出す、支持面を叩く動作は、その対象と接触が物語上必要な場合だけ使う。権威、怒り、説明、ツッコミを表す既定ポーズとして自動追加しない。
+               * 指し示し、突き出し、支持面への打撃を一つの系統として回数制限しない。対象・目的・身体の軸・動作の大きさを変えて、全身の誇張や強い短縮遠近法も積極的に使う。
+               * 静かな間と大きなリアクション、寄りと引き、通常絵と指定された劇画・ちびキャラ・集中線の落差でコマの緩急を作る。明示された無反応や静けさは保ち、全コマを大騒ぎにも静止画にも揃えない。
                * 各Actionでは動作の直前・最中・直後のどの瞬間か、支持脚または着座面、重心、左右の手の役割、接触対象を具体化する。顔、重要な手、小道具が重ならない読みやすいシルエットを作る。
-               * ユーザーが明示した動作は必ず保持する。反復抑制は、明示されていない定型ジェスチャーを発明しないために使う。`;
+               * 全コマの寄りが明示されていない限り、動きの頂点では少なくとも1コマ、主役の頭から足先までが入る画角を確保し、腰のひねり・膝・支持脚・踏み出しやのけぞりで演じる。机や吹き出しで毎回下半身を隠さない。別のコマの寄りや静かな間と画面内の人物の大きさ・重心の動きをはっきり変える。
+               * ユーザーが明示した動作は必ず保持する。人物の同一性、台詞、小道具の所有・向きと手足の接続・本数を保ち、同じ出来事を大胆に演じる。`;
 
 export const MANGA_COMPOSITION_VARIETY_LOCK = `MANGA CAMERA / POSE VARIETY LOCK:
 - Across the four panels, use at least three distinct subject-relative azimuths. Differences in elevation, zoom, lens, or crop alone do not count as different azimuths.
@@ -49,39 +47,31 @@ export const MANGA_COMPOSITION_VARIETY_LOCK_COMPACT = 'MANGA CAMERA / POSE VARIE
 
 export const MANGA_GESTURE_VARIETY_LOCK = `BODY ACTING / GESTURE VARIETY LOCK:
 - A reference-sheet pose is identity evidence, not a recurring action or personality signature. Reproduce identity and clothing, but derive acting from the current story beat.
-- Across the four panels, use at least three physically distinct acting families. Use the same forward-extension gesture family in no more than one panel, even when assigned to different characters: pointing, thrusting a hand or object toward the lens, and striking a supporting surface all belong to that family.
-- Preserve every explicitly scripted pointing, reaching, presenting, or surface impact action. Never replace it. When the script does not require one, do not invent a pointing pose, lens-facing hand thrust, symmetrical two-hand thrust, or surface strike as generic emphasis, anger, explanation, authority, or punchline acting.
+- Across the four panels, use story-motivated acting contrast: full-body exaggeration, recoil, leaps, reaching and impact may alternate with a deliberate quiet beat. Do not impose a numeric cap on pointing, thrusting or surface impact; vary purpose, body axis and amplitude.
+- Preserve every explicitly scripted pointing, reaching, presenting, or surface impact action. Enrich its silhouette and amplitude without changing the event, contact target or prop ownership. Do not default every scene to folded arms, chin-resting or seated explanations.
 - For each lead action, resolve the action phase, weight-bearing support, center of gravity, left/right hand roles, and contact target. Keep the face, important hands, and story prop readable in a clean asymmetrical silhouette.
 - Prefer story-specific alternatives when compatible with Action: handling or exchanging a prop, stepping or turning with weight shift, changing distance to a scene partner, interacting with the environment, a restrained reaction, or the follow-through after an action.`;
 
-export const MANGA_GESTURE_VARIETY_LOCK_COMPACT = 'BODY ACTING / GESTURE VARIETY LOCK: reference-sheet pose is identity evidence, not a recurring action; same forward-extension gesture family in no more than one panel; preserve explicitly scripted pointing/surface impact; action phase/support/contact.';
+export const MANGA_GESTURE_VARIETY_LOCK_COMPACT = 'BODY ACTING / GESTURE VARIETY LOCK: reference-sheet pose is identity evidence, not a recurring action; allow full-body exaggeration and varied pointing/reaching/impact; preserve explicitly scripted pointing/surface impact; action phase/support/contact.';
 
-export const GESTURE_VARIETY_RETRY_INSTRUCTION = `BODY ACTING VARIETY RETRY:
-The previous scenario repeated the same forward-extension gesture family across multiple panels. Preserve the topic, cast, dialogue, panel order, location, outfit, punchline type, and every user-explicit action. Keep a pointing, forward thrust, presentation, or surface impact only in the panel where the story physically requires it. Replace only the extra unscripted repetitions with story-specific acting from different families, such as prop handling or exchange, locomotion and weight shift, interpersonal distance change, environmental interaction, restrained reaction, or action follow-through. State the action phase, support, hand roles, and contact target without adding body distortion.`;
+export const SCENARIO_SHOT_DESIGN_RULES = `【画角と身体動作の一体設計】
+- 各コマのCameraとActionを一組として設計する。既存の出来事・セリフ・小道具の持ち主は固定し、同じ瞬間の見せ方と動作の振幅を具体化する。
+- 動きの頂点のコマでは、主役の頭から足先まで入る引き、手前へ迫る手足、腰・膝・支持脚を使う大きな重心移動を組み合わせる。大きな口だけで激しさを代用しない。全身動作が机や吹き出しに隠れる配置を避ける。
+- 全員の全身を同時に見せる必要はない。動きの主役1人の頭・腰・両膝・両足先をコマ内に収め、頭上と両靴の外側に余白を残す距離までカメラを引く。その主役とカメラの間に机を置かない。机の横の空いた床から撮るなど、下半身を家具が隠さない位置を選ぶ。他の人物は反応と小道具の役割を保って前後に配置する。
+- 対照となるコマには寄りまたは静かな引きを置き、隣接コマで人物の大きさ、カメラの高さ、身体の傾き、光と効果の密度を変える。全コマを同じ中景・机越し・大騒ぎにしない。
+- 明示された静かな間、無反応、着座、接触対象は保持する。背景の同僚は自然に配置できるが、主役の増殖は不可。
+- Cameraには撮影位置と画面に見える証拠を書く。俯瞰なら頭頂・机天面、床からの煽りなら大きな前景と上へ伸びる身体、傾きなら斜めの環境線、全身なら頭から足先と明記する。`;
 
-export const assertScenarioGestureVariety = ({
-  scenario = '',
-  punchlineType = '',
-  protectedText = ''
-} = {}) => {
-  if (/RunningGag|天丼/iu.test(String(punchlineType))) return true;
-  if (INTENTIONAL_GESTURE_REPETITION_RE.test(String(protectedText))) return true;
-
-  const repeatedPanels = getScenarioPanelBlocks(scenario)
-    .filter(({ found }) => found)
-    .filter(({ text }) => {
-      const visualDirectionOnly = String(text).replace(/「[^」]*」/gu, '');
-      return FORWARD_EXTENSION_GESTURE_RE.test(visualDirectionOnly);
-    })
-    .map(({ num }) => num);
-
-  if (repeatedPanels.length > 1) {
-    const error = new Error('repeated_forward_extension_gesture');
-    error.panels = repeatedPanels;
-    throw error;
-  }
-
-  return true;
+// Turn a shot label into observable framing cues; never replace explicit crop/angle.
+export const getPanelShotExecution = (camera = '') => {
+  const text = String(camera);
+  const cues = [];
+  const close = /close|アップ|寄り|接写/i.test(text);
+  if (!close && /full[ -]body|head.to.(?:toe|feet)|全身|頭から(?:足先|つま先|靴)|足元から上半身/i.test(text)) cues.push('head-to-feet inside panel with headroom and floor beyond BOTH shoes; hips/knees/feet unobscured');
+  if (/overhead|high[ -]angle|俯瞰|真上|斜め上|上から/i.test(text)) cues.push('look down: tops of heads/table, receding floor');
+  else if (/low[ -]angle|dominant low|floor.level|ground.level|ローアングル|煽り|下から|見上げ/i.test(text)) cues.push('look up from low camera; large near plane, rising body axes');
+  if (/dutch|tilt|傾き|傾斜/i.test(text)) cues.push('tilt scene axes, not only faces');
+  return cues.length ? `SHOT EXECUTION: ${cues.join('; ')}.` : '';
 };
 
 export const getPanelCompositionAssist = (panelText, panelNumber, { compact = false } = {}) => {

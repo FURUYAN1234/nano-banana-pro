@@ -882,6 +882,7 @@ const DIRECT_ADDRESS_ACTION_RE = /(?:話しかけ|呼びかけ|語りかけ|訴�
 const CAMERA_FACING_NEGATION_RE = /(?:(?:画面|カメラ|読者|観客|視聴者)[^\n。]{0,48}(?:厳禁|禁止|避け|しない|させない|向けない)|(?:never|do\s+not|don't|must\s+not|avoid)[^.\n]{0,48}(?:camera|reader|viewer|audience))/i;
 const CAMERA_INSTRUCTION_LINE_RE = /^\s*\[?\s*(?:Camera|カメラワーク|CameraWork|Camera\s*Work)\s*[:：][^\n]*$/gim;
 const EXPLICIT_DETAIL_CAMERA_RE = /(?:手元|真上|超接写|接写|クローズアップ|overhead|top[- ]?down|hand[- ]?detail|macro|close[- ]?up)/i;
+const EXPLICIT_REAR_CAMERA_RE = /(?:肩越し|肩ごし|背後(?:から|寄り)|背越し|over[ -]the[ -]shoulder|\bOTS\b|rear[ -]three[ -]quarter)/i;
 const FUNCTIONAL_PRESENTATION_ACTION_RE = /(?:\bsubmit(?:s|ted|ting)?\b|\bpresent(?:s|ed|ing)?\b|\bshow(?:s|ed|ing)?\b|提出|提示|見せ|差し出)/i;
 const FUNCTIONAL_SELF_USE_ACTION_RE = /(?:\bread(?:s|ing)?\b|\boperate(?:s|d|ing)?\b|読む|読ん|操作|確認|(?:画面|文面|書類|本|地図|カード|表示)[^。\n]{0,24}(?:見る|見て|見つめ|凝視))/i;
 const INTERPERSONAL_STAGING_RE = /(?:話しかけ|語りかけ|呼びかけ|問いかけ|会話|相談|議論|打ち合わせ|返事|答え|叫ぶ|反応|リアクション|向かい合|見つめ合|振り向|speak(?:s|ing)?\s+to|talk(?:s|ing)?\s+to|ask(?:s|ing)?|answer(?:s|ing)?|repl(?:y|ies|ying)|respond(?:s|ing)?|react(?:s|ing)?|conversation|discuss(?:es|ing)?|shout(?:s|ing)?)/i;
@@ -929,6 +930,9 @@ const extractExplicitRearSubject = (text, castNames) => {
 };
 
 const buildRequiredDepthAssignment = (speakers, listeners, requireVisibleRear = false, explicitRearSubject = '', functionalActionMode = '') => {
+  if (!requireVisibleRear) {
+    return 'VIEWPOINT FREEDOM: three-quarter/profile; bold height/tilt/foreshortening; no forced rear shoulder.';
+  }
   const participants = [...new Set([...speakers, ...listeners])];
   const partner = participants.includes(explicitRearSubject)
     ? explicitRearSubject
@@ -963,6 +967,7 @@ export const buildPanelEyeLineRule = (panelText, castList) => {
     .filter((name) => actionAndDialogueText.includes(name));
   const explicitRearSubject = extractExplicitRearSubject(text, [...new Set([...mentionedCastNames, ...speakers])]);
   const cameraText = (text.match(CAMERA_INSTRUCTION_LINE_RE) || []).join(' ');
+  const requestedRearCamera = Boolean(explicitRearSubject) || EXPLICIT_REAR_CAMERA_RE.test(cameraText);
   const explicitDetailCamera = !explicitRearSubject && EXPLICIT_DETAIL_CAMERA_RE.test(cameraText);
   const functionalActionMode = FUNCTIONAL_PRESENTATION_ACTION_RE.test(actionAndDialogueText)
     ? 'presentation'
@@ -982,7 +987,7 @@ export const buildPanelEyeLineRule = (panelText, castList) => {
   if (/\[USER STAGING LOCK - ABSOLUTE\]/i.test(actionAndDialogueText)) {
     const stagingSides = buildExplicitStagingSides(actionAndDialogueText, mentionedCastNames);
     const listeners = mentionedCastNames.filter((name) => !speakers.includes(name));
-    return `EYE-LINE LOCK: obey USER STAGING LOCK exactly for speakers and listeners; never lens/front unless explicit direct address. ${stagingSides} ${buildRequiredDepthAssignment(speakers, listeners, speakers.length >= 2, explicitRearSubject, functionalActionMode)} Camera preserves the scenario direction.`;
+    return `EYE-LINE LOCK: obey USER STAGING LOCK exactly for speakers and listeners; never lens/front unless explicit direct address. ${stagingSides} ${buildRequiredDepthAssignment(speakers, listeners, requestedRearCamera, explicitRearSubject, functionalActionMode)} Camera preserves the scenario direction.`;
   }
   if (speakers.length < 2 && !stagedSpeakerAndListener) {
     return explicitDetailCamera
@@ -1002,7 +1007,7 @@ export const buildPanelEyeLineRule = (panelText, castList) => {
     return `EYE-LINE LOCK: ${roleStaging} never lens/front. EXPLICIT DETAIL CAMERA LOCK: preserve the scripted overhead, hand-detail, or close-up framing; do not invent a rear shoulder or force frontal portraits. Camera preserves scenario direction.`;
   }
 
-  return `EYE-LINE LOCK: ${roleStaging} never lens/front. ${buildRequiredDepthAssignment(speakers, listeners, speakers.length >= 2 || Boolean(explicitRearSubject), explicitRearSubject, functionalActionMode)} Camera preserves scenario direction.`;
+  return `EYE-LINE LOCK: ${roleStaging} never lens/front. ${buildRequiredDepthAssignment(speakers, listeners, requestedRearCamera, explicitRearSubject, functionalActionMode)} Camera preserves scenario direction.`;
 };
 
 export const cleanseActionGagSymbols = (actionText) => {
@@ -1441,7 +1446,10 @@ export const extractCastLimitRule = (fullPanelText, castList, options = {}) => {
   const allPanelCharacters = [...speakers];
   const canonicalValidCharacters = [...new Set(Object.values(charLookup).map(obj => obj.name))];
   const explicitRearSubject = extractExplicitRearSubject(fullPanelText, canonicalValidCharacters);
-  const hasAllMainCastCue = /(?:他キャラ全員|キャラ全員|全キャラ|全メンバー|全員集合|メンバー全員|主要人物全員|all characters|the whole main cast)/i.test(actionAndMetaText);
+  // An unqualified group subject refers to the registered cast, not unnamed mobs.
+  // Keep qualified groups such as 社員全員 separate from the main cast.
+  const hasUnqualifiedCastGroup = /(?:^|[。！？\n:：／、])\s*(?:全員|一同|みんな|他のメンバー)(?:が|は|も|で|、)/u.test(actionAndMetaText);
+  const hasAllMainCastCue = hasUnqualifiedCastGroup || /(?:他キャラ全員|キャラ全員|全キャラ|全メンバー|全員集合|メンバー全員|主要人物全員|all characters|the whole main cast)/i.test(actionAndMetaText);
   if (hasAllMainCastCue) {
     canonicalValidCharacters.forEach((canonicalName) => {
       if (!allPanelCharacters.includes(canonicalName)) {
@@ -1521,7 +1529,10 @@ export const extractCastLimitRule = (fullPanelText, castList, options = {}) => {
 
     // [v4.2.1] モブキャラ検出ロジック：本文にモブが含まれる場合はABS制限を緩和する
     const excludesExtraPeople = /(?:追加の|他の|ほかの|余分な)(?:客|人物|人|モブ)(?:は|が)?(?:いない|居ない|なし|描かない)|(?:no extra|no other) (?:people|customers|humans)/i.test(fullPanelText);
-    const hasMob = !excludesExtraPeople && /(モブ|スタッフ|観客|群衆|兵士|客|人々|クラスメイト|生徒たち|全員|みんな|ファンたち|ファン|通行人)/.test(fullPanelText);
+    const hasMob = !excludesExtraPeople && (
+      /(モブ|スタッフ|観客|群衆|兵士|客|人々|クラスメイト|生徒たち|社員|ファンたち|ファン|通行人)/.test(actionAndMetaText)
+      || (!hasAllMainCastCue && /全員|みんな/.test(actionAndMetaText))
+    );
 
     let spatialConstraint;
     if (hasMob) {

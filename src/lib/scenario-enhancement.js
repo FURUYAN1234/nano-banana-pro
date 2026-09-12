@@ -3,8 +3,8 @@ import {
   FINAL_PANEL_ACTIVE_STAGING_SCENARIO_CONTRACT
 } from './final-panel-staging.js';
 import {
-  assertScenarioGestureVariety,
-  SCENARIO_GESTURE_VARIETY_RULES
+  SCENARIO_GESTURE_VARIETY_RULES,
+  SCENARIO_SHOT_DESIGN_RULES
 } from './composition-variety.js';
 import { SCENARIO_FACIAL_ACTING_CONTRACT } from './facial-acting.js';
 
@@ -15,11 +15,11 @@ const CATEGORY_DEFINITIONS = Object.freeze({
   },
   body: {
     label: '身体',
-    instruction: '姿勢、重心、手足の動き、間合いを自然な人体の範囲で具体化する'
+    instruction: '姿勢、重心、手足の動き、間合いを具体化し、全身の誇張、のけぞり、跳躍、大きな身振りを場面に応じて積極的に使う。人物と手足の接続・本数、小道具の所有関係は保つ'
   },
   effects: {
     label: '演出',
-    instruction: '光、影、効果音、空気感などの演出を追加する。場所そのものや人物の身体構造は変えない'
+    instruction: '光、影、集中線、効果音、空気感の強弱とコマ間の演出の落差を積極的に作る。明示した静かな間、場所、人物の身体構造は保つ'
   },
   background: {
     label: '背景',
@@ -27,7 +27,7 @@ const CATEGORY_DEFINITIONS = Object.freeze({
   },
   camera: {
     label: 'カメラ',
-    instruction: '各コマの[Camera:]だけを、読みやすさとオチへの視線誘導が良くなるよう具体化する'
+    instruction: '各コマの[Camera:]だけを、高低差、傾き、強い遠近感、画角と距離の大胆な変化で強化し、読みやすさとオチへの視線誘導を両立する'
   },
   dialogue: {
     label: 'セリフ',
@@ -60,7 +60,6 @@ const BACKGROUND_MUTATION_RE = /背景.{0,24}(?:変形|変化|歪|崩|爆発|追
 const HARD_ENHANCEMENT_ISSUE_CODES = new Set([
   'output_too_short',
   'passive_final_tableau',
-  'repeated_forward_extension_gesture',
   'metadata_changed',
   'panel_structure_changed',
   'speaker_sequence_changed',
@@ -245,7 +244,7 @@ export const buildScenarioEnhancementPrompt = ({
 - タイトル、Logline、Location、Outfit、Punchline、登場人物、話者順、4コマ構造をそのまま保つ
 - LoglineとPunchlineが示す笑いの温度、静けさ、テンポを最優先し、派手さを目的に反転させない
 - 選択されていないカテゴリは変更しない。未選択: ${lockedLabels || 'なし'}
-- 自然な人体の可動範囲を守り、人体変形、部位の増殖、身体崩壊、ボディホラーを新たに加えない
+- 全身の誇張や強い遠近法は許可する。手足の接続・本数と小道具の所有・向きを保ち、部位の増殖、身体崩壊、ボディホラーを新たに加えない
 - 「MAX」「限界」「極端に」など強度語の機械的な足し算ではなく、具体性と読みやすさを上げる
 - 元にない事件、設定、キャラクター、場所、建造物を追加しない
 ${dialogueRule}
@@ -253,6 +252,7 @@ ${backgroundRule}
 ${facialActingRule}
 ${FINAL_PANEL_ACTIVE_STAGING_SCENARIO_CONTRACT}
 ${SCENARIO_GESTURE_VARIETY_RULES}
+${selected.includes('camera') && selected.includes('body') ? SCENARIO_SHOT_DESIGN_RULES : ''}
 
 【選択されたカテゴリ — 変更必須】
 ${selectedInstructions || '- なし'}
@@ -298,42 +298,6 @@ export const validateScenarioEnhancement = ({
       );
     } else {
       throw error;
-    }
-  }
-
-  let originalAlreadyRepeatsForwardExtension = false;
-  try {
-    assertScenarioGestureVariety({
-      scenario: original.text,
-      punchlineType: original.metadata.punchline,
-      protectedText: original.text
-    });
-  } catch (error) {
-    if (error?.message === 'repeated_forward_extension_gesture') {
-      originalAlreadyRepeatsForwardExtension = true;
-    } else {
-      throw error;
-    }
-  }
-
-  if (!originalAlreadyRepeatsForwardExtension) {
-    try {
-      assertScenarioGestureVariety({
-        scenario: candidate.text,
-        punchlineType: candidate.metadata.punchline,
-        protectedText: original.text
-      });
-    } catch (error) {
-      if (error?.message === 'repeated_forward_extension_gesture') {
-        addIssue(
-          issues,
-          issueCodes,
-          'repeated_forward_extension_gesture',
-          '指さし、正面への手出し、支持面を叩く動作を複数コマへ反復せず、物語固有の身体演技へ分散してください'
-        );
-      } else {
-        throw error;
-      }
     }
   }
 

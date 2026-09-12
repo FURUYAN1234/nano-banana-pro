@@ -31,10 +31,6 @@ import {
   SEASONAL_OUTFIT_RETRY_INSTRUCTION
 } from './seasonal-outfit';
 import {
-  assertScenarioGestureVariety,
-  GESTURE_VARIETY_RETRY_INSTRUCTION
-} from './composition-variety';
-import {
   formatMangaScenarioValidationIssue,
   validateMangaScenario
 } from './scenario-validation';
@@ -47,7 +43,6 @@ const scenarioRetryLabels = {
   SEASONAL_OUTFIT: '対象日付と服装の季節整合性',
   MANUAL_TOPIC_EXCLUSION: '手動入力の禁止条件',
   VISUAL_STORY_EVIDENCE: '出来事を証明する視覚要素',
-  GESTURE_VARIETY: '身体演技とジェスチャーの多様性',
   FINAL_PANEL_STAGING: '4コマ目の能動アクション',
   DIALOGUE_CONTRACT: '各コマの吹き出しセリフ'
 };
@@ -96,11 +91,6 @@ const validateScenarioForRetry = ({
     })],
     ['MANUAL_TOPIC_EXCLUSION', () => assertManualTopicExclusions(scenario.scenario, manualTopic)],
     ['VISUAL_STORY_EVIDENCE', () => assertVisualStoryEvidence(scenario)],
-    ['GESTURE_VARIETY', () => assertScenarioGestureVariety({
-      scenario: scenario.scenario,
-      punchlineType,
-      protectedText: manualTopic
-    })],
     ['FINAL_PANEL_STAGING', () => assertActiveFinalPanelStaging({
       scenario: scenario.scenario,
       punchlineType
@@ -137,7 +127,6 @@ const scenarioQualityRetryInstructions = {
   SEASONAL_OUTFIT: SEASONAL_OUTFIT_RETRY_INSTRUCTION,
   MANUAL_TOPIC_EXCLUSION: MANUAL_TOPIC_EXCLUSION_RETRY_INSTRUCTION,
   VISUAL_STORY_EVIDENCE: VISUAL_STORY_EVIDENCE_RETRY_INSTRUCTION,
-  GESTURE_VARIETY: GESTURE_VARIETY_RETRY_INSTRUCTION,
   FINAL_PANEL_STAGING: FINAL_PANEL_ACTIVE_STAGING_RETRY_INSTRUCTION,
   DIALOGUE_CONTRACT: DIALOGUE_CONTRACT_RETRY_INSTRUCTION
 };

@@ -84,19 +84,25 @@ test('ChatGPT manga prompt stays within the empirical Web-copy soft budget witho
     `expected ChatGPT prompt to stay within the empirical Web-copy soft budget (${EMPIRICAL_CHATGPT_WEB_COPY_SOFT_BUDGET_CHARS.toLocaleString()} chars), got ${prompt.length}`
   );
   assert.equal((prompt.match(/## Panel \d/g) || []).length, 4);
+  assert.match(prompt, /EXPRESSIVE DIRECTION:/);
+  assert.match(prompt, /full-body/);
+  assert.match(prompt, /panel contrast/);
   assert.match(prompt, /OBJECT GEOMETRY LOCK/);
   assert.match(prompt, /Text follows actual cover\/spine\/page\/label face axes and perspective/);
   assert.match(prompt, /flat-page text inverted/);
-  assert.match(prompt, /reader\/camera side\/front-back\/text axes/);
-  const rearOwners = ['アカリ', 'ヒカリ', 'アカリ', 'リン'];
+  assert.match(prompt, /FUNCTIONAL SURFACE PANEL CHECK: (?:reader\/camera side\/front-back\/text axes|target\/side\/axes)/);
   const participants = [['ミク', 'アカリ', 'リン'], ['サエコ', 'ヒカリ', 'ミク'], ['リン', 'アカリ', 'ミク'], ['アカリ', 'リン', 'サエコ']];
   const eyeLines = prompt.match(/^EYE-LINE LOCK:[^\n]*/gm) || [];
   assert.equal(eyeLines.length, 4);
   eyeLines.forEach((line, index) => {
     for (const name of participants[index]) assert.ok(line.includes(`[${name}]`));
-    assert.ok(line.includes(`camera behind [${rearOwners[index]}]`));
-    assert.match(line, /rear head\/shoulder/);
-    assert.match(line, /no front-on face/);
+    if (index === 2) {
+      assert.match(line, /camera behind \[アカリ\]|camera is physically behind \[アカリ\]/);
+      assert.match(line, /rear head\/shoulder|back of \[アカリ\]'s head or shoulder/);
+    } else {
+      assert.match(line, /VIEWPOINT FREEDOM/);
+      assert.doesNotMatch(line, /camera behind|camera is physically behind/);
+    }
   });
   assert.match(prompt, /COMEDY INTENT:.*surreal.*silence/);
   assert.match(prompt, /35分長編映像に激辛評価!\?/);
