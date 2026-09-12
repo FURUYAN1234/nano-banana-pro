@@ -6,3 +6,18 @@ body {
   background-color: #050505;
   color: #e2e8f0;
 }
+
+.primary-step-action {
+  background-color: #dbeafe;
+  color: #0c4a6e;
+  border-color: #7dd3fc;
+}
+
+.primary-step-action:hover {
+  background-color: #bfdbfe;
+}
+
+.primary-step-action:disabled {
+  background-color: #334155;
+  color: #64748b;
+}

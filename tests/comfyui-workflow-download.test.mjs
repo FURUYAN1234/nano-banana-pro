@@ -7,8 +7,8 @@ import { inflateRawSync } from 'node:zlib';
 const step4PanelSource = readFileSync(new URL('../src/components/Step4Panel.jsx', import.meta.url), 'utf8');
 const readmeSource = readFileSync(new URL('../README.md', import.meta.url), 'utf8');
 const packageJson = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
-const workflowUrl = new URL('../public/workflows/FourPanel_NonLM_4step_20260912194934_v6.0.8.json', import.meta.url);
-const customNodeZipUrl = new URL('../.release-assets/ComfyUI_H3_FourPanel_NonLM_20260912194934_v6.0.8.zip', import.meta.url);
+const workflowUrl = new URL('../public/workflows/FourPanel_NonLM_4step_20260912203033_v6.0.9.json', import.meta.url);
+const customNodeZipUrl = new URL('../.release-assets/ComfyUI_H3_FourPanel_NonLM_20260912203033_v6.0.9.zip', import.meta.url);
 const sourceAttributesUrl = new URL('../.gitattributes', import.meta.url);
 const publishedAttributesUrl = new URL('../public/.gitattributes', import.meta.url);
 const publicWorkflowDirectoryUrl = new URL('../public/workflows/', import.meta.url);
@@ -50,9 +50,9 @@ test('STEP4 provides separate current Fused4 SLA workflow and bundled-five-node 
   assert.match(step4PanelSource, /href=\{COMFYUI_CUSTOM_NODE_DOWNLOAD_URL\}[\s\S]*?download=\{COMFYUI_CUSTOM_NODE_FILENAME\}/);
   assert.match(step4PanelSource, /href=\{COMFYUI_WORKFLOW_DOWNLOAD_URL\}[\s\S]*?download=\{COMFYUI_WORKFLOW_FILENAME\}/);
   assert.notEqual(workflowUrl.pathname, customNodeZipUrl.pathname, 'the two downloads must target different files');
-  assert.match(step4PanelSource, /FourPanel_NonLM_4step_20260912194934_v6\.0\.8\.json/);
-  assert.match(step4PanelSource, /ComfyUI_H3_FourPanel_NonLM_20260912194934_v6\.0\.8\.zip/);
-  assert.match(step4PanelSource, /github\.com\/FURUYAN1234\/nano-banana-pro\/releases\/download\/v6\.0\.8/);
+  assert.match(step4PanelSource, /FourPanel_NonLM_4step_20260912203033_v6\.0\.9\.json/);
+  assert.match(step4PanelSource, /ComfyUI_H3_FourPanel_NonLM_20260912203033_v6\.0\.9\.zip/);
+  assert.match(step4PanelSource, /github\.com\/FURUYAN1234\/nano-banana-pro\/releases\/download\/v6\.0\.9/);
   assert.match(step4PanelSource, /ComfyUI-NanoBanana-H3.*ComfyUI-MiniMax-H3-Long-Video.*ComfyUI-Spectrum-MiniMax-H3/s);
   assert.match(step4PanelSource, /軽く要約＋必要な台詞だけ延長.*基本5秒.*最大15秒.*台詞がない場合だけ既定30秒/s);
   assert.match(step4PanelSource, /Fused 4ステップ.*音声補正.*2ステップ.*H3生成BGMあり/s);
@@ -76,7 +76,7 @@ test('supplied current Fused4 SLA workflow bytes and graph are preserved', () =>
   const bytes = readFileSync(workflowUrl);
   assert.equal(hashBytes(bytes), '21cfa093250230db078caebb3a951c005dd79c24e97fd2c7ca91555227f18241');
   assert.doesNotMatch(readFileSync(sourceAttributesUrl, 'utf8'), /public\/downloads\/.*\.zip/);
-  assert.match(readFileSync(publishedAttributesUrl, 'utf8'), /workflows\/FourPanel_NonLM_4step_20260912194934_v6\.0\.8\.json -text/);
+  assert.match(readFileSync(publishedAttributesUrl, 'utf8'), /workflows\/FourPanel_NonLM_4step_20260912203033_v6\.0\.9\.json -text/);
   assert.doesNotMatch(readFileSync(publishedAttributesUrl, 'utf8'), /downloads\/.*\.zip/);
   assert.match(packageJson.scripts.deploy, /gh-pages -d dist --dotfiles/);
   const workflow = JSON.parse(bytes.toString('utf8'));
@@ -99,10 +99,10 @@ test('supplied current Fused4 SLA workflow bytes and graph are preserved', () =>
 test('release asset preserves the supplied API distribution manifest, licensing, and no credential artifact', () => {
   assert.equal(existsSync(customNodeZipUrl), true, 'custom-node bundle must be staged outside the Git source tree');
   const bundleBytes = readFileSync(customNodeZipUrl);
-  assert.equal(hashBytes(bundleBytes), '7ffe7566d865959447aef68601c5158af55ae54fcfdb429c7984270c6f2d62ac');
+  assert.equal(hashBytes(bundleBytes), 'b572826f85f9cb1dd60d2899a8ba6214c3590d71ec4becc68a14bb1872338f3a');
   const files = new Map([...readZipFilesFromBuffer(bundleBytes)].map(([name, content]) => [name.replace(/^ComfyUI_H3_FourPanel_NonLM\//, ''), content]));
   const expected = [
-    'CHANGELOG.md', 'models.json', 'README.md', 'SHA256SUMS.json', 'RELEASE_PREVENTION_JA.md', 'LICENSES_AND_NOTICES.md', 'licenses/Apache-2.0-LightX2V.txt', 'workflows/FourPanel_NonLM_4step_20260912194934_v6.0.8.json',
+    'CHANGELOG.md', 'models.json', 'README.md', 'SHA256SUMS.json', 'RELEASE_PREVENTION_JA.md', 'LICENSES_AND_NOTICES.md', 'licenses/Apache-2.0-LightX2V.txt', 'workflows/FourPanel_NonLM_4step_20260912203033_v6.0.9.json',
     'custom_nodes/ComfyUI-H3-AudioRefine/LICENSE', 'custom_nodes/ComfyUI-PlagueKind-Nodes/LICENSE',
     'custom_nodes/ComfyUI-NanoBanana-H3/LICENSE', 'custom_nodes/ComfyUI-NanoBanana-H3/__init__.py', 'custom_nodes/ComfyUI-NanoBanana-H3/web/nanobanana_h3.js',
     'custom_nodes/ComfyUI-MiniMax-H3-Long-Video/LICENSE', 'custom_nodes/ComfyUI-MiniMax-H3-Long-Video/minimax_h3_long_video/nodes.py',
@@ -113,7 +113,7 @@ test('release asset preserves the supplied API distribution manifest, licensing,
   assert.match(files.get('VERSION_CORRECTION_JA.md').toString('utf8'), /5\.9\.7/);
   assert.match(step4PanelSource, /採用済みでも全検査合格とは限りません/);
   assert.match(readmeSource, /採用済みでも全検査合格とは限りません/);
-  assert.equal(hashBytes(files.get('workflows/FourPanel_NonLM_4step_20260912194934_v6.0.8.json')), '21cfa093250230db078caebb3a951c005dd79c24e97fd2c7ca91555227f18241');
+  assert.equal(hashBytes(files.get('workflows/FourPanel_NonLM_4step_20260912203033_v6.0.9.json')), '21cfa093250230db078caebb3a951c005dd79c24e97fd2c7ca91555227f18241');
   const license = files.get('custom_nodes/ComfyUI-NanoBanana-H3/LICENSE').toString('utf8');
   assert.match(license, /MIT License/);
   assert.equal(files.has('README_JA.md'), false, 'bundle must use one inline bilingual README');
@@ -137,7 +137,7 @@ test('release asset preserves the supplied API distribution manifest, licensing,
 });
 
 test('README matches the current H3 API distribution and workflow does not describe credential persistence', () => {
-  assert.match(readmeSource, /FourPanel_NonLM_4step_20260912194934_v6\.0\.8/);
+  assert.match(readmeSource, /FourPanel_NonLM_4step_20260912203033_v6\.0\.9/);
   assert.match(readmeSource, /Fused 4ステップ.*音声補正2ステップ.*denoise 0\.5.*SLA Attention/);
   assert.match(readmeSource, /不足モデル.*ダウンロード/);
   assert.match(readmeSource, /5フォルダ/);

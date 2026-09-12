@@ -36,5 +36,5 @@ test('HF deploy removes stale ZIP attributes and preserves current workflow byte
   assert.doesNotMatch(script, /\$HfCurrentZipPaths|git lfs track \$HfLfsZipPath/);
   assert.match(script, /Add-Content[^\n]*\$HfAttributesPath[^\n]*HfBytePreservationRule/s);
   assert.doesNotMatch(pagesAttributes, /downloads\/.+\.zip/);
-  assert.match(pagesAttributes, /workflows\/FourPanel_NonLM_4step_20260912194934_v6\.0\.8\.json -text/);
+  assert.match(pagesAttributes, /workflows\/FourPanel_NonLM_4step_20260912203033_v6\.0\.9\.json -text/);
 });

@@ -123,7 +123,7 @@ export default function Step1Panel({
         </label>
 
         {images.length === 0 && !isAnalyzing && (
-          <label className="flex-1 flex flex-col items-center justify-center text-slate-500 ml-4 cursor-pointer hover:bg-white/5 rounded-xl transition-colors p-4 border border-transparent hover:border-white/10">
+          <label className="primary-step-action flex-1 flex flex-col items-center justify-center ml-4 cursor-pointer rounded-xl transition-colors p-4 border shadow-xl active:translate-y-0.5">
             <input
               type="file"
               multiple
@@ -137,15 +137,15 @@ export default function Step1Panel({
                 }
               }}
             />
-            <p className="text-xs font-bold text-slate-400">
-              キャラクター設定画像（キャラシート）をここにドロップしてください。 <span className="text-blue-400">（複数枚を同時に、または後から追加ドロップすることも可能です。360°背景画像や、作風設定のJSONファイルも一緒に読み込めます）</span>
+            <p className="text-xs font-bold text-sky-950">
+              キャラクター設定画像（キャラシート）をここにドロップしてください。 <span className="text-sky-800">（複数枚を同時に、または後から追加ドロップすることも可能です。360°背景画像や、作風設定のJSONファイルも一緒に読み込めます）</span>
             </p>
             <p className="text-[10px] opacity-60 mt-1">
               ※名前や性格、特徴が書かれた設定シートを推奨。
               <br />※Story Makerなどで出力した「作風json」ファイルを投げ込むと、漫画のタッチや作風が変化します。
             </p>
             <div className="mt-3 flex flex-col items-center gap-1 group/preview">
-              <span className="text-[9px] uppercase tracking-widest opacity-40 group-hover/preview:text-blue-400 transition-colors">推奨見本 (例)</span>
+              <span className="text-[9px] uppercase tracking-widest text-sky-800 transition-colors">推奨見本 (例)</span>
               <img
                 src={`${import.meta.env.BASE_URL}example_sheet.jpg`}
                 alt="Example"

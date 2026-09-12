@@ -310,7 +310,7 @@ export default function Step2Panel({
         <button
           onClick={generateScenarioFromNews}
           disabled={isSearching || currentStep < 1}
-          className="w-full relative bg-white hover:bg-slate-200 text-black py-6 rounded-xl font-black text-xl flex items-center justify-center gap-4 border-b-[6px] border-slate-300 active:border-b-0 active:translate-y-[6px] transition-all disabled:opacity-50 disabled:grayscale disabled:border-none disabled:bg-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed group/gen shadow-xl"
+          className="primary-step-action w-full relative py-6 rounded-xl font-black text-xl flex items-center justify-center gap-4 border-b-[6px] active:border-b-0 active:translate-y-[6px] transition-all disabled:opacity-50 disabled:grayscale disabled:border-none disabled:cursor-not-allowed group/gen shadow-xl"
         >
           {isSearching ? (
             <>

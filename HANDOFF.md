@@ -1,4 +1,10 @@
-## v6.0.8 release candidate — 2026-09-12
+## v6.0.9 primary-step button release candidate — 2026-09-12
+
+- STEP1の画像投入、STEP2のシナリオ生成、STEP3のプロンプト構築、STEP4の画像生成だけを共通の薄い青色へ変更。補助操作と実行ロジックは変更していない。
+- FourPanel配布の生成グラフはv6.0.8から変更せず、現行アプリと導線を揃えるためワークフローJSON・5ノードZIP・英日併記READMEをv6.0.9へ再梱包した。最終v6.0.9 ZIPからの新規GPU生成と別PC実行は未検証。
+- Release notes: `docs/releases/v6.0.9.md`。公開、note、黒い窓フルバックアップの進行状態はroot `PLAN.md` を参照。
+
+## v6.0.8 released — 2026-09-12
 
 - STEP4のFourPanel NonLM配布をv6.0.8へ更新。単独ワークフローJSONはPages/Hugging Face、カスタムノード5点ZIPはGitHub Release専用アセットとして分離し、アプリの2ボタンを維持した。現在のGitソースツリーから全配布ZIPと旧ワークフローを除去した。
 - 新機能は、基本5秒に収まらない台詞だけ最大15秒へ延長するモードと、複合AV不合格時の構造化ショット差し替え、同一区間2回の映像不合格後の話者中心再構図。確定台詞・時刻・人物・音・H3生成BGMを保持する。

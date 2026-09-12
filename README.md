@@ -1,6 +1,6 @@
 # Super FURU AI 4-koma System / Super FURU AI 4コマシステム
 
-> Latest release: **v6.0.8** / 最新リリース: **v6.0.8**
+> Latest release: **v6.0.9** / 最新リリース: **v6.0.9**
 
 An experimental web application in which AI handles topic research, story structure, direction, prompt construction, image generation, and quality review for a four-panel manga. / AIが話題調査、構成、演出、プロンプト構築、画像生成、品質確認まで担当する4コマ漫画制作Webアプリです。
 
@@ -19,7 +19,7 @@ The application provides one continuous four-step workflow. / アプリは次の
 
 STEP3 shows `⏳ AI応答を待機中... (○秒経過)` while the connected text API reviews the prompt, then stops the counter when processing ends. / STEP3は接続中の文章APIがプロンプトを精査している間、`⏳ AI応答を待機中... (○秒経過)`を表示し、処理完了時にカウントを停止します。
 
-The black execution button is labeled only `画像を生成する（STEP 4）`; the current model, quality, and size appear in the separate white `API生成時の品質・サイズ` control. / 黒い実行ボタンは`画像を生成する（STEP 4）`だけを表示し、現在のモデル・品質・サイズは別の白い`API生成時の品質・サイズ`欄に表示します。
+The four primary actions for STEP1 through STEP4 use the same light-blue treatment so the required path is easy to identify; secondary settings, copy, download, and reset controls keep their separate styles. / STEP1～STEP4の主操作だけを同じ薄い青色に統一し、最低限押す操作を見つけやすくしました。設定・コピー・ダウンロード・やり直し等の補助操作はそれぞれの表示を維持します。
 
 ## Quick start / すぐに使う
 
@@ -69,8 +69,8 @@ Connect the four-panel image only to `ref_image_0` and leave `ref_image_1`以降
 
 The app has separate buttons for the workflow JSON and the five-custom-node ZIP; `2つは別の操作` and each button downloads a different file. / アプリにはワークフローJSONとカスタムノード5点ZIPの別ボタンがあり、`2つは別の操作`として異なるファイルをダウンロードします。
 
-- [Download workflow JSON](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20260912194934_v6.0.8.json) / [ワークフローJSONをダウンロード](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20260912194934_v6.0.8.json)
-- [Download custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.0.8/ComfyUI_H3_FourPanel_NonLM_20260912194934_v6.0.8.zip) / [カスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.0.8/ComfyUI_H3_FourPanel_NonLM_20260912194934_v6.0.8.zip)
+- [Download workflow JSON](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20260912203033_v6.0.9.json) / [ワークフローJSONをダウンロード](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20260912203033_v6.0.9.json)
+- [Download custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.0.9/ComfyUI_H3_FourPanel_NonLM_20260912203033_v6.0.9.zip) / [カスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.0.9/ComfyUI_H3_FourPanel_NonLM_20260912203033_v6.0.9.zip)
 
 The current source tree intentionally contains no distribution ZIP. The custom-node ZIP is a named asset of the matching GitHub Release. / 現在のソースツリーには配布ZIPを意図的に登録せず、カスタムノードZIPは同じ版のGitHub Release専用アセットとして公開します。
 
@@ -86,7 +86,7 @@ Dialogue starts at five seconds and only lines that need more time extend up to 
 
 The workflow performs 区間 generation and 検査, comparing 初回込み最大5候補. It proceeds immediately on an earlier pass and retains the best inspected candidate if all fail; 採用済みでも全検査合格とは限りません. / ワークフローは区間ごとに生成・検査し、初回込み最大5候補を比較します。途中で合格すれば直ちに次へ進み、全候補が不合格なら検査上の最良候補を保持します。採用済みでも全検査合格とは限りません。
 
-The functionally identical supplied candidate completed a 39-second, seven-segment GPU/API run. A fresh GPU run from the final v6.0.8 ZIP and execution on another PC remain unverified. / 機能が同じ受領候補は39秒・7区間のGPU/API生成を完走しました。最終v6.0.8 ZIPからの新規GPU生成と別PC実行は未検証です。
+The functionally identical supplied candidate completed a 39-second, seven-segment GPU/API run. A fresh GPU run from the final v6.0.9 ZIP and execution on another PC remain unverified. / 機能が同じ受領候補は39秒・7区間のGPU/API生成を完走しました。最終v6.0.9 ZIPからの新規GPU生成と別PC実行は未検証です。
 
 ## Package licenses and privacy / 配布ライセンスと個人情報
 
@@ -122,11 +122,16 @@ The production application is published from the `main` branch through the repos
 
 **Why are there two ComfyUI download buttons? / ComfyUIのダウンロードボタンが2つあるのはなぜですか？**  The JSON defines the workflow, while the ZIP supplies its five required custom-node folders and documentation. / JSONはワークフロー定義、ZIPは必須カスタムノード5フォルダーと導入文書です。
 
-**Where are older packages? / 旧版はどこですか？**  Older source tags remain for audit history, but their bundled distributions are withdrawn. New installations must use the current v6.0.8 workflow button and v6.0.8 Release asset. / 旧タグは監査用履歴として残しますが、旧同梱配布物は取り下げ扱いです。新規導入は現在のv6.0.8ワークフローボタンとv6.0.8 Releaseアセットを使用してください。
+**Where are older packages? / 旧版はどこですか？**  Older source tags remain for audit history, but their bundled distributions are withdrawn. New installations must use the current v6.0.9 workflow button and v6.0.9 Release asset. / 旧タグは監査用履歴として残しますが、旧同梱配布物は取り下げ扱いです。新規導入は現在のv6.0.9ワークフローボタンとv6.0.9 Releaseアセットを使用してください。
 
 **Is this the T2V/I2V/Ref2V repository? / T2V・I2V・Ref2Vのリポジトリですか？**  No. Those workflows are maintained separately in [comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows). / いいえ。それらは別の[comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows)で管理します。
 
 ## 📋 ChangeLog
+
+### v6.0.9 (2026-09-12)
+
+- Changed only the four required STEP1–STEP4 actions to a shared light-blue style, making the minimum path clear while leaving secondary controls visually separate. / 必須のSTEP1～STEP4主操作だけを薄い青色へ統一し、補助操作と見分けやすくしました。
+- Repackaged the unchanged reviewed FourPanel workflow and five-custom-node bundle as v6.0.9 so the app, workflow button, ZIP button, repository documentation, and note guidance all use one current version. / 検証済みのFourPanel生成内容は変えず、アプリ・ワークフロー・ZIP・Git文書・note案内の現行版をv6.0.9へ統一しました。
 
 ### v6.0.8 (2026-09-12)
 
