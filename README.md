@@ -37,7 +37,7 @@ STEP4は「API画像生成の品質」の直下に「API画像サイズ」を分
 
 
 
-> Latest release: **v6.0.6** / 最新リリース: **v6.0.6**
+> Latest release: **v6.0.7** / 最新リリース: **v6.0.7**
 
 > **"To what extent can humans step away from the creative process?"**
 > **「人間は、どこまで制作から降りられるのか？」**
@@ -59,7 +59,7 @@ STEP4は「API画像生成の品質」の直下に「API画像サイズ」を分
 This project aims to intentionally exclude humans from the creative process, allowing AI to act as a director and complete everything from brainstorming to composition, direction, and rendering.
 本プロジェクトは、人間をクリエイティブな工程から意図的に排除し、AIがディレクターとして「ネタ出し・構成・演出・作画」のすべてを完結させることを目的としています。
 
-The current implementation and latest release are **v6.0.5**. The product name is **Super FURU AI 4-koma System**. STEP4 offers Gemini and OpenAI image-generation routes, including GPT Image 2.5. / 現在の実装および最新公開版は **v6.0.5** です。製品名は **Super FURU AI 4-koma System** で、STEP4ではGPT Image 2.5を含むOpenAI系とGemini系の画像生成経路を利用できます。
+The current implementation and latest release are **v6.0.7**. The product name is **Super FURU AI 4-koma System**. STEP4 offers Gemini and OpenAI image-generation routes, including GPT Image 2.5. / 現在の実装および最新公開版は **v6.0.7** です。製品名は **Super FURU AI 4-koma System** で、STEP4ではGPT Image 2.5を含むOpenAI系とGemini系の画像生成経路を利用できます。
 
 Distribution deployment / 配布ファイルの公開: Hugging Face uploads every current ZIP through Git LFS, including files below 10 MB. GitHub Pages continues to serve ordinary ZIP bytes. Workflow JSON and checksum files retain exact bytes on both hosts. / Hugging Faceでは10 MB未満も含め、現存する配布ZIPをすべてGit LFSで送信します。GitHub Pagesでは従来どおり通常のZIPを配信します。ワークフローJSONとチェックサムファイルは、どちらの公開先でも元のバイトを保持します。
 
@@ -101,11 +101,11 @@ For this manually configured standard ComfyUI route, select `MiniMax H3 Referenc
 
 **Using the Fused4step + SLA workflow / Fused4step・SLA 配布ワークフローを使う場合**
 
-This route distributes `FourPanel_NonLM_4step_20260910101338_v5.9.7.json` and `ComfyUI_H3_FourPanel_NonLM_20260910101338_v5.9.7.zip` as separate downloads. Five custom-node folders are bundled. Each segment compares at most five candidates including the initial attempt; an earlier pass proceeds immediately, and the best candidate is retained if all fail. / この経路では `FourPanel_NonLM_4step_20260910101338_v5.9.7.json` と `ComfyUI_H3_FourPanel_NonLM_20260910101338_v5.9.7.zip` を別々に配布します。Fused 4ステップ・音声補正2ステップ（denoise 0.5）・SLA Attentionを保持します。台詞1本につき5秒・上限なし、台詞がない場合だけ既定30秒です。H3生成BGMは台詞中に低音量へ抑えます。区間ごとに生成・検査し、初回込み最大5候補を比較します。途中で合格したら即座に次へ進み、全候補が不合格なら最良候補を保持して続行します。4・5回目の候補も途中再開できます。日本語の吹き出し位置に基づく読順を使い、台詞と話者を保持します。
+This route distributes `FourPanel_NonLM_4step_20260912170621_v6.0.7.json` and `ComfyUI_H3_FourPanel_NonLM_20260912170621_v6.0.7.zip` as separate downloads. Five custom-node folders are bundled. Dialogue starts with a five-second window and only lines that need more time are extended, up to 15 seconds. Each segment compares at most five candidates including the initial attempt; an earlier pass proceeds immediately, and the best candidate is retained if all fail. / この経路では `FourPanel_NonLM_4step_20260912170621_v6.0.7.json` と `ComfyUI_H3_FourPanel_NonLM_20260912170621_v6.0.7.zip` を別々に配布します。Fused 4ステップ・音声補正2ステップ（denoise 0.5）・SLA Attentionを保持します。「軽く要約＋必要な台詞だけ延長」では基本5秒に収まらない台詞だけ最大15秒まで延長し、台詞がない場合は既定30秒です。H3生成BGMは台詞中に低音量へ抑えます。区間ごとに生成・検査し、初回込み最大5候補を比較します。途中で合格したら即座に次へ進み、全候補が不合格なら最良候補を保持して続行します。4・5回目の候補も途中再開できます。日本語の吹き出し位置に基づく読順を使い、台詞と話者を保持します。
 
 **FURU four-panel manga to video / FURUの4コマ漫画を動画化**
 
-The four-panel package now follows Nano Banana v5.9.7; the separate general-purpose video product is unchanged. Subject/speaker bindings survive segment splitting, and six chronological frames are inspected for speaking-mouth evidence. If every candidate fails, an audio-passing, speaker-check-only failure may be retained; retention is not an all-checks pass. Review the final video's dialogue and speaker yourself. See the bundled `VERSION_CORRECTION_JA.md`, `RELEASE_PREVENTION_JA.md`, and `VALIDATION.md`. / 四コマ配布版はNano Bananaに合わせてv5.9.7へ訂正し、別サービスの汎用動画版は変更しません。区間分割後も人物IDと話者IDの対応を維持し、時系列の6フレームで話者の口の動きも検査します。全候補が不合格なら、音声が合格で話者検査だけが不合格の候補を採用する場合があります。採用済みでも全検査合格とは限らないため、完成動画の台詞と話者は利用者も確認してください。版番号訂正、再発防止策、検証範囲は同梱の3文書を参照してください。
+The four-panel package follows Nano Banana v6.0.7; the separate T2V/I2V/Ref2V product is unchanged. Subject/speaker bindings survive segment splitting, and six chronological frames are inspected for speaking-mouth evidence. Compound audio and visual failures now use structured shot replacement, and two visual failures in one segment trigger simpler speaker-readable framing without changing confirmed dialogue, timing, identities, sound or H3-generated music. If every candidate fails, the best inspected candidate may be retained; retention is not an all-checks pass. The functionally identical supplied v5.9.8 candidate completed a 39-second, seven-segment GPU/API run, but another-PC execution and a fresh run from the final v6.0.7 ZIP remain unverified. / 四コマ配布版はNano Bananaに合わせてv6.0.7へ訂正し、別サービスのT2V・I2V・Ref2V版は変更しません。区間分割後も人物IDと話者IDの対応を維持し、時系列の6フレームで話者の口の動きも検査します。音声と映像が同時に不合格でも構造化した映像ショット差し替えを行い、同一区間で映像不合格が2回続くと、確定済み台詞・時刻・人物・音・H3生成BGMを変えず話者中心の単純構図へ切り替えます。全候補が不合格なら検査結果上の最良候補を採用する場合があり、採用済みでも全検査合格とは限りません。機能が同じ受領v5.9.8候補では39秒・7区間のGPU/API生成記録がありますが、最終v6.0.7 ZIPからの新規GPU生成と別PC実行は未検証です。版番号訂正、再発防止策、検証範囲は同梱の3文書を参照してください。
 
 The dedicated workflow turns one completed Super FURU AI four-panel manga page into four contiguous MiniMax H3 shots. It retains panel order, panel-derived cast, speaker ownership, story action, setting, and punchline; it gives each visible character a role-appropriate movement, removes speech balloons, and adds the title and fixed end credit outside H3 after generation. / 専用ワークフローは、完成したSuper FURU AIの4コマ漫画1枚を連続する4つのMiniMax H3ショットに変換します。コマ順、各コマから導く登場人物、台詞の話者、物語上の動作、場所、オチを保ち、画面内の各人物へ役割に応じた動きを与え、吹き出しを除去します。タイトルと固定エンドクレジットは、H3生成後にワークフローが合成します。
 
@@ -922,6 +922,9 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 ---
 
 ## 📋 ChangeLog
+
+### v6.0.7 (2026-09-12)
+- **[Fix & UX]** 四コマComfyUI配布を更新。長い台詞だけ最大15秒まで延長し、映像不合格が続く場合の話者中心再構図を追加。配布版番号と公開用メタデータも訂正 / Updated the four-panel ComfyUI distribution with selective dialogue extension up to 15 seconds, speaker-focused visual retries, and corrected release metadata
 
 ### v6.0.6 (2026-09-12)
 - **[Fix & UX]** STEP4の黒い画像生成ボタンを『画像を生成する（STEP 4）』だけの簡潔な表示にし、モデル・品質・サイズは白い設定ボタンだけに表示 / Simplified the black STEP4 generation button to ‘Generate image (STEP 4)’ and kept model, quality, and size details only on the white settings button

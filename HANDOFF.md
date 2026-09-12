@@ -1,3 +1,11 @@
+## v6.0.7 release candidate — 2026-09-12
+
+- STEP4のFourPanel NonLM配布を、受領v5.9.8候補から公開用v6.0.7へ訂正して更新。ZIP、単独ワークフロー、SHA256 sidecar、導入文、README、テストを同期した。
+- 新機能は、基本5秒に収まらない台詞だけ最大15秒へ延長するモードと、複合AV不合格時の構造化ショット差し替え、同一区間2回の映像不合格後の話者中心再構図。確定台詞・時刻・人物・音・H3生成BGMを保持する。
+- 公開に不要な古い生成先URL、旧承認識別子、誤った最大候補数メタデータ、過去の「フルバックアップ不要」記述を訂正。T2V/I2V/Ref2Vは対象外。
+- 配布元ソースcommit `c3577ea6cfac28e4f366236fbb597a23476786ca`、tag `fourpanel-v6.0.7`。最終ZIP 689,780 bytes / SHA256 `ef7b79485453513298c0366a86da829eeb7fea011f9e59aa29ecdb10ab41a8f1`。クリーンタグ再構築とバイト一致、展開後145ファイル、package 15 / Nano 74 / Long-Video 107 tests、JavaScript構文が合格。
+- 受領候補の39秒GPU/API生成と音声確認は供給元証拠。最終v6.0.7 ZIPからの新規GPU生成と別PC実行は未検証。リリース、FourPanel note `ndf063558c1f5`、黒い窓フルバックアップの進行状態はroot `PLAN.md` を参照。Release notes: `docs/releases/v6.0.7.md`。
+
 ## v6.0.6 release candidate — 2026-09-12
 
 - 成人キャストの安全条件を、画像内へ印字しない内部制約として明示した。旧 `IMPORTANT AGE DECLARATION: All characters depicted in this image are adults aged 20 or older.` は出力しない。

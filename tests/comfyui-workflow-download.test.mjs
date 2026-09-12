@@ -7,9 +7,9 @@ import { inflateRawSync } from 'node:zlib';
 const step4PanelSource = readFileSync(new URL('../src/components/Step4Panel.jsx', import.meta.url), 'utf8');
 const readmeSource = readFileSync(new URL('../README.md', import.meta.url), 'utf8');
 const packageJson = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
-const workflowUrl = new URL('../public/workflows/FourPanel_NonLM_4step_20260910101338_v5.9.7.json', import.meta.url);
-const customNodeZipUrl = new URL('../public/downloads/ComfyUI_H3_FourPanel_NonLM_20260910101338_v5.9.7.zip', import.meta.url);
-const customNodeZipShaUrl = new URL('../public/downloads/ComfyUI_H3_FourPanel_NonLM_20260910101338_v5.9.7.zip.sha256.txt', import.meta.url);
+const workflowUrl = new URL('../public/workflows/FourPanel_NonLM_4step_20260912170621_v6.0.7.json', import.meta.url);
+const customNodeZipUrl = new URL('../public/downloads/ComfyUI_H3_FourPanel_NonLM_20260912170621_v6.0.7.zip', import.meta.url);
+const customNodeZipShaUrl = new URL('../public/downloads/ComfyUI_H3_FourPanel_NonLM_20260912170621_v6.0.7.zip.sha256.txt', import.meta.url);
 const sourceAttributesUrl = new URL('../.gitattributes', import.meta.url);
 const publishedAttributesUrl = new URL('../public/.gitattributes', import.meta.url);
 const publicWorkflowDirectoryUrl = new URL('../public/workflows/', import.meta.url);
@@ -51,10 +51,10 @@ test('STEP4 provides separate current Fused4 SLA workflow and bundled-five-node 
   assert.match(step4PanelSource, /href=\{COMFYUI_CUSTOM_NODE_DOWNLOAD_URL\}[\s\S]*?download=\{COMFYUI_CUSTOM_NODE_FILENAME\}/);
   assert.match(step4PanelSource, /href=\{COMFYUI_WORKFLOW_DOWNLOAD_URL\}[\s\S]*?download=\{COMFYUI_WORKFLOW_FILENAME\}/);
   assert.notEqual(workflowUrl.pathname, customNodeZipUrl.pathname, 'the two downloads must target different files');
-  assert.match(step4PanelSource, /FourPanel_NonLM_4step_20260910101338_v5\.9\.7\.json/);
-  assert.match(step4PanelSource, /ComfyUI_H3_FourPanel_NonLM_20260910101338_v5\.9\.7\.zip/);
+  assert.match(step4PanelSource, /FourPanel_NonLM_4step_20260912170621_v6\.0\.7\.json/);
+  assert.match(step4PanelSource, /ComfyUI_H3_FourPanel_NonLM_20260912170621_v6\.0\.7\.zip/);
   assert.match(step4PanelSource, /ComfyUI-NanoBanana-H3.*ComfyUI-MiniMax-H3-Long-Video.*ComfyUI-Spectrum-MiniMax-H3/s);
-  assert.match(step4PanelSource, /台詞1本につき5秒.*上限なし.*台詞がない場合だけ既定30秒/s);
+  assert.match(step4PanelSource, /軽く要約＋必要な台詞だけ延長.*基本5秒.*最大15秒.*台詞がない場合だけ既定30秒/s);
   assert.match(step4PanelSource, /Fused 4ステップ.*音声補正.*2ステップ.*H3生成BGMあり/s);
   assert.match(step4PanelSource, /H3 SLA Attention.*ComfyUI-PlagueKind-Nodes.*Triton.*ComfyUI-H3-AudioRefine/s);
   assert.match(step4PanelSource, /https:\/\/github\.com\/Adudeguyman\/ComfyUI-H3-AudioRefine/);
@@ -74,21 +74,23 @@ test('STEP4 provides separate current Fused4 SLA workflow and bundled-five-node 
 test('supplied current Fused4 SLA workflow bytes and graph are preserved', () => {
   assert.equal(existsSync(workflowUrl), true, 'workflow JSON must be distributed from public/workflows');
   const bytes = readFileSync(workflowUrl);
-  assert.equal(hashBytes(bytes), 'cb5a68b593ce5501c796568f795c4c6d3a91c202a408230481c890d61ed98f78');
-  assert.match(readFileSync(sourceAttributesUrl, 'utf8'), /public\/downloads\/ComfyUI_H3_FourPanel_NonLM_20260910101338_v5\.9\.7\.zip -text/);
-  assert.match(readFileSync(sourceAttributesUrl, 'utf8'), /public\/downloads\/ComfyUI_H3_FourPanel_NonLM_20260910101338_v5\.9\.7\.zip\.sha256\.txt -text/);
-  assert.match(readFileSync(publishedAttributesUrl, 'utf8'), /workflows\/FourPanel_NonLM_4step_20260910101338_v5\.9\.7\.json -text/);
-  assert.match(readFileSync(publishedAttributesUrl, 'utf8'), /downloads\/ComfyUI_H3_FourPanel_NonLM_20260910101338_v5\.9\.7\.zip -text/);
-  assert.match(readFileSync(publishedAttributesUrl, 'utf8'), /downloads\/ComfyUI_H3_FourPanel_NonLM_20260910101338_v5\.9\.7\.zip\.sha256\.txt -text/);
+  assert.equal(hashBytes(bytes), '21cfa093250230db078caebb3a951c005dd79c24e97fd2c7ca91555227f18241');
+  assert.match(readFileSync(sourceAttributesUrl, 'utf8'), /public\/downloads\/ComfyUI_H3_FourPanel_NonLM_20260912170621_v6\.0\.7\.zip -text/);
+  assert.match(readFileSync(sourceAttributesUrl, 'utf8'), /public\/downloads\/ComfyUI_H3_FourPanel_NonLM_20260912170621_v6\.0\.7\.zip\.sha256\.txt -text/);
+  assert.match(readFileSync(publishedAttributesUrl, 'utf8'), /workflows\/FourPanel_NonLM_4step_20260912170621_v6\.0\.7\.json -text/);
+  assert.match(readFileSync(publishedAttributesUrl, 'utf8'), /downloads\/ComfyUI_H3_FourPanel_NonLM_20260912170621_v6\.0\.7\.zip -text/);
+  assert.match(readFileSync(publishedAttributesUrl, 'utf8'), /downloads\/ComfyUI_H3_FourPanel_NonLM_20260912170621_v6\.0\.7\.zip\.sha256\.txt -text/);
   assert.match(packageJson.scripts.deploy, /gh-pages -d dist --dotfiles/);
   const workflow = JSON.parse(bytes.toString('utf8'));
   assert.equal(workflow.nodes.length, 26);
-  assert.equal(workflow.links.length, 28);
+  assert.equal(workflow.links.length, 29);
   for (const type of ['MiniMaxH3LongReferenceSampler', 'TimestampedSaveVideo', 'NanoBananaH3Transform', 'JapaneseDialoguePronunciationReview', 'DeterministicTitleWatermarkOverlay', 'DeterministicEndCreditOverlay', 'H3SLAAttention']) assert.ok(workflow.nodes.some((node) => node.type === type), `${type} must be present`);
   const text = bytes.toString('utf8');
   assert.match(text, /5秒/);
+  assert.match(text, /軽く要約＋必要な台詞だけ延長/);
   assert.match(text, /30秒/);
   assert.match(text, /H3生成BGM/);
+  assert.doesNotMatch(text, /latest_saved_video_url|production_approval|validated_prompt_id/);
   const longVideoNode = workflow.nodes.find((node) => node.type === 'MiniMaxH3LongReferenceSampler');
   assert.equal(longVideoNode.widgets_values[13], 2, 'the supplied audio-refine setting must use two steps');
   assert.equal(longVideoNode.widgets_values[14], 0.5, 'the supplied audio-refine denoise must remain 0.5');
@@ -102,10 +104,10 @@ test('bundle preserves the supplied API distribution manifest, licensing, and no
   assert.equal(existsSync(customNodeZipShaUrl), true, 'the downloadable bundle must include a SHA-256 sidecar');
   const advertisedHash = readFileSync(customNodeZipShaUrl, 'utf8').trim().split(/\s+/)[0];
   assert.equal(advertisedHash.toLowerCase(), hashBytes(bundleBytes));
-  assert.equal(hashBytes(bundleBytes), '65c6e17d02cfafe2afc052c000b71181e4e2b2973b8ded70da9d996c6c2c5882');
+  assert.equal(hashBytes(bundleBytes), 'ef7b79485453513298c0366a86da829eeb7fea011f9e59aa29ecdb10ab41a8f1');
   const files = new Map([...readZipFilesFromBuffer(bundleBytes)].map(([name, content]) => [name.replace(/^ComfyUI_H3_FourPanel_NonLM\//, ''), content]));
   const expected = [
-    'CHANGELOG.md', 'models.json', 'README.md', 'SHA256SUMS.json', 'RELEASE_PREVENTION_JA.md', 'workflows/FourPanel_NonLM_4step_20260910101338_v5.9.7.json',
+    'CHANGELOG.md', 'models.json', 'README.md', 'SHA256SUMS.json', 'RELEASE_PREVENTION_JA.md', 'workflows/FourPanel_NonLM_4step_20260912170621_v6.0.7.json',
     'custom_nodes/ComfyUI-H3-AudioRefine/LICENSE', 'custom_nodes/ComfyUI-PlagueKind-Nodes/LICENSE',
     'custom_nodes/ComfyUI-NanoBanana-H3/LICENSE', 'custom_nodes/ComfyUI-NanoBanana-H3/__init__.py', 'custom_nodes/ComfyUI-NanoBanana-H3/web/nanobanana_h3.js',
     'custom_nodes/ComfyUI-MiniMax-H3-Long-Video/LICENSE', 'custom_nodes/ComfyUI-MiniMax-H3-Long-Video/minimax_h3_long_video/nodes.py',
@@ -115,8 +117,8 @@ test('bundle preserves the supplied API distribution manifest, licensing, and no
   for (const name of ['VERSION_CORRECTION_JA.md', 'VALIDATION.md', 'custom_nodes/ComfyUI-NanoBanana-H3/speaker_audit.py']) assert.ok(files.has(name), `${name} must be present`);
   assert.match(files.get('VERSION_CORRECTION_JA.md').toString('utf8'), /5\.9\.7/);
   assert.match(step4PanelSource, /採用済みでも全検査合格とは限りません/);
-  assert.match(readmeSource, /採用済みでも全検査合格とは限らない/);
-  assert.equal(hashBytes(files.get('workflows/FourPanel_NonLM_4step_20260910101338_v5.9.7.json')), 'cb5a68b593ce5501c796568f795c4c6d3a91c202a408230481c890d61ed98f78');
+  assert.match(readmeSource, /採用済みでも全検査合格とは限りません/);
+  assert.equal(hashBytes(files.get('workflows/FourPanel_NonLM_4step_20260912170621_v6.0.7.json')), '21cfa093250230db078caebb3a951c005dd79c24e97fd2c7ca91555227f18241');
   const license = files.get('custom_nodes/ComfyUI-NanoBanana-H3/LICENSE').toString('utf8');
   assert.match(license, /MIT License/);
   const bundleReadme = files.get('README_JA.md').toString('utf8');
@@ -124,6 +126,7 @@ test('bundle preserves the supplied API distribution manifest, licensing, and no
   assert.match(bundleReadme, /同梱済み/);
   assert.match(files.get('RELEASE_PREVENTION_JA.md').toString('utf8'), /CP932[\s\S]*APIキー/);
   assert.match(files.get('custom_nodes/ComfyUI-MiniMax-H3-Long-Video/minimax_h3_long_video/nodes.py').toString('utf8'), /max_attempts=5/);
+  assert.match(files.get('custom_nodes/ComfyUI-MiniMax-H3-Long-Video/minimax_h3_long_video/nodes.py').toString('utf8'), /simplify_framing=visual_failures >= 2/);
   const manifestEntries = JSON.parse(files.get('SHA256SUMS.json').toString('utf8'));
   assert.equal(Object.keys(manifestEntries).length, files.size - 1, 'the supplied manifest must cover every distributed payload');
   for (const [name, content] of files) {
@@ -137,7 +140,7 @@ test('bundle preserves the supplied API distribution manifest, licensing, and no
 });
 
 test('README matches the current H3 API distribution and workflow does not describe credential persistence', () => {
-  assert.match(readmeSource, /FourPanel_NonLM_4step_20260910101338_v5\.9\.7/);
+  assert.match(readmeSource, /FourPanel_NonLM_4step_20260912170621_v6\.0\.7/);
   assert.match(readmeSource, /Fused 4ステップ.*音声補正2ステップ.*denoise 0\.5.*SLA Attention/);
   assert.match(readmeSource, /不足モデル.*ダウンロード/);
   assert.match(readmeSource, /5フォルダ/);
