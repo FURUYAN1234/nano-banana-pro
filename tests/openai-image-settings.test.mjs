@@ -59,6 +59,21 @@ test('larger output is explicit and does not change default image dimensions', (
   assert.equal(buildOpenAIImageRequestBody('same prompt', { quality: 'sunburst-max' }).size, '1024x1536');
 });
 
+test('formats the current quality and size for the collapsed STEP4 settings button', () => {
+  assert.equal(
+    settings.formatOpenAIImageSettingsSummary('sunburst-xhigh', '1024x1536'),
+    'GPT Image 2.5 Sunburst / xhigh・標準：1024×1536',
+  );
+  assert.equal(
+    settings.formatOpenAIImageSettingsSummary('gpt-image-2-high', '1536x2304'),
+    'GPT Image 2.0 / high・大きめ：1536×2304',
+  );
+  assert.equal(
+    settings.formatOpenAIImageSettingsSummary('invalid', 'invalid'),
+    'GPT Image 2.5 Sunburst / xhigh・標準：1024×1536',
+  );
+});
+
 test('only explicit organization verification failures on 2.5 show the verification warning', () => {
   assert.equal(typeof settings.isOpenAIImageVerificationError, 'function');
   const message = "OpenAI API Error: 403 Your organization must be verified to use the model 'gpt-image-2.5-flare'.";

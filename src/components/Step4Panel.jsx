@@ -259,7 +259,7 @@ Do not emit the ending credit as a literal URL in the authoring response, becaus
 /**
  * STEP 04: 4コマ漫画生成 ＆ 履歴パネル
  */
-import { OPENAI_IMAGE_OPTIONS, OPENAI_IMAGE_SIZE_OPTIONS, resolveOpenAIImageOption } from '../lib/openai-image-settings.js';
+import { OPENAI_IMAGE_OPTIONS, OPENAI_IMAGE_SIZE_OPTIONS, formatOpenAIImageSettingsSummary, resolveOpenAIImageOption } from '../lib/openai-image-settings.js';
 
 export default function Step4Panel({
   outputRef,
@@ -590,11 +590,18 @@ export default function Step4Panel({
                             <button style={{ display: 'flex', width: '100%', boxSizing: 'border-box', margin: 0 }} type="button" aria-expanded={isApiSettingsOpen} aria-controls="api-settings-content"
                               className="w-full flex items-center justify-between px-4 py-3 bg-yellow-900/25 hover:bg-yellow-900/50 transition-all duration-150 cursor-pointer disabled:cursor-not-allowed border-l-4 border-yellow-500 hover:border-yellow-400 group/policy-hdr"
                               onClick={() => setIsApiSettingsOpen(!isApiSettingsOpen)}>
-                              <div className="flex items-center gap-2">
-                                <span className="text-base">⚙️</span>
-                                <span className="text-base font-black tracking-wide text-yellow-200 group-hover/policy-hdr:text-yellow-100 transition-colors">API生成時の品質・サイズ</span>
+                              <div className="flex min-w-0 items-start gap-2 text-left">
+                                <span className="mt-0.5 shrink-0 text-base">⚙️</span>
+                                <span className="min-w-0">
+                                  <span className="block text-base font-black tracking-wide text-yellow-200 group-hover/policy-hdr:text-yellow-100 transition-colors">API生成時の品質・サイズ</span>
+                                  <span className="mt-0.5 block text-[11px] leading-snug text-yellow-100/80">
+                                    {isOpenAIImageMode
+                                      ? `${formatOpenAIImageSettingsSummary(openAIImageQuality, openAIImageSize)}｜任意で変更可能`
+                                      : 'Google AI：自動設定'}
+                                  </span>
+                                </span>
                               </div>
-                              <div className="flex items-center gap-2">
+                              <div className="ml-3 flex shrink-0 items-center gap-2">
                                 <span className="text-[10px] font-black uppercase tracking-widest text-yellow-400 group-hover/policy-hdr:text-yellow-300 transition-colors">{isApiSettingsOpen ? 'クリックで閉じる' : 'クリックで開く'}</span>
                                 <ChevronDown size={18} className={`text-yellow-400 group-hover/policy-hdr:text-yellow-300 transition-all duration-300 ${isApiSettingsOpen ? 'rotate-180' : ''}`} />
                               </div>

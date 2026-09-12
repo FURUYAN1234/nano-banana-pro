@@ -1,8 +1,9 @@
-## v6.0.4 release candidate — 2026-09-12
+## v6.0.5 release candidate — 2026-09-12
 
 - 成人キャストの安全条件を、画像内へ印字しない内部制約として明示した。旧 `IMPORTANT AGE DECLARATION: All characters depicted in this image are adults aged 20 or older.` は出力しない。
 - ユーザー提供の元プロンプトとキャラクター参照2枚を使い、OpenAI GPT Image 2.5 Sunburst / xhigh・1024×1536で1回実生成。問題の年齢英文は再発せず、指定タイトル、7本の台詞、2本の透かし、強い煽り・拳の遠近・肩越し・最終コマのデフォルメ演技を目視確認した。自動修正OFFで追加画像生成なし。
-- リリース、FourPanel note `ndf063558c1f5`、黒い窓フルバックアップの進行状態はroot `PLAN.md` の「Nano Banana adult-safety prompt leakage repair」を参照。Release notes: `docs/releases/v6.0.4.md`。
+- STEP4のAPI品質・サイズ折り畳みボタンへ、現在選択中のモデル・品質・サイズを常時表示し、選択変更を即時反映する。Google AI使用時は自動設定表示とする。
+- リリース、FourPanel note `ndf063558c1f5`、黒い窓フルバックアップの進行状態はroot `PLAN.md` の「Nano Banana STEP4 API setting summary v6.0.5」を参照。Release notes: `docs/releases/v6.0.5.md`。
 
 ## v6.0.3 release candidate — 2026-09-12
 

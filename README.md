@@ -1,6 +1,6 @@
 # Super FURU AI 4-koma System
 
-API品質・サイズと自動品質修正の設定は「API生成時の品質・サイズ」を開くと表示されます。
+API品質・サイズと自動品質修正の設定は「API生成時の品質・サイズ」を開くと表示されます。折り畳み時も、現在選択中のモデル・品質・サイズ（例：GPT Image 2.5 Sunburst / xhigh・標準：1024×1536）をボタン内で確認でき、選択を変えると表示も更新されます。
 
 画像比率修正・アップスケールの案内とコピーボタンは同名の折り畳みボタンから開けます。
 
@@ -35,7 +35,7 @@ STEP4は「API画像生成の品質」の直下に「API画像サイズ」を分
 
 
 
-> Latest release: **v6.0.4** / 最新リリース: **v6.0.4**
+> Latest release: **v6.0.5** / 最新リリース: **v6.0.5**
 
 > **"To what extent can humans step away from the creative process?"**
 > **「人間は、どこまで制作から降りられるのか？」**
@@ -57,7 +57,7 @@ STEP4は「API画像生成の品質」の直下に「API画像サイズ」を分
 This project aims to intentionally exclude humans from the creative process, allowing AI to act as a director and complete everything from brainstorming to composition, direction, and rendering.
 本プロジェクトは、人間をクリエイティブな工程から意図的に排除し、AIがディレクターとして「ネタ出し・構成・演出・作画」のすべてを完結させることを目的としています。
 
-The current implementation and latest release are **v6.0.4**. The product name is **Super FURU AI 4-koma System**. STEP4 offers Gemini and OpenAI image-generation routes, including GPT Image 2.5. / 現在の実装および最新公開版は **v6.0.4** です。製品名は **Super FURU AI 4-koma System** で、STEP4ではGPT Image 2.5を含むOpenAI系とGemini系の画像生成経路を利用できます。
+The current implementation and latest release are **v6.0.5**. The product name is **Super FURU AI 4-koma System**. STEP4 offers Gemini and OpenAI image-generation routes, including GPT Image 2.5. / 現在の実装および最新公開版は **v6.0.5** です。製品名は **Super FURU AI 4-koma System** で、STEP4ではGPT Image 2.5を含むOpenAI系とGemini系の画像生成経路を利用できます。
 
 Distribution deployment / 配布ファイルの公開: Hugging Face uploads every current ZIP through Git LFS, including files below 10 MB. GitHub Pages continues to serve ordinary ZIP bytes. Workflow JSON and checksum files retain exact bytes on both hosts. / Hugging Faceでは10 MB未満も含め、現存する配布ZIPをすべてGit LFSで送信します。GitHub Pagesでは従来どおり通常のZIPを配信します。ワークフローJSONとチェックサムファイルは、どちらの公開先でも元のバイトを保持します。
 
@@ -920,6 +920,9 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 ---
 
 ## 📋 ChangeLog
+
+### v6.0.5 (2026-09-12)
+- **[Fix & UX]** STEP4の「API生成時の品質・サイズ」ボタンに現在選択中のモデル・品質・サイズを常時表示し、選択変更を即時反映。Google AI使用時は自動設定と表示 / Show the currently selected model, quality, and size directly on the STEP4 API settings button, update the summary immediately when selections change, and label Google AI as automatically configured
 
 ### v6.0.4 (2026-09-12)
 - **[Fix & UX]** 成人キャストの内部安全条件を維持しつつ、年齢宣言が画像内の余分な英文として描画されないよう非表示制約を追加しました。 / Kept the adult-cast safety condition while marking it as non-visible so the age declaration is not rendered as extra English text in generated images.

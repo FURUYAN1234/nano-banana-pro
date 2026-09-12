@@ -22,6 +22,12 @@ export function resolveOpenAIImageOption(value) {
     || OPENAI_IMAGE_OPTIONS.find(option => option.value === DEFAULT_OPENAI_IMAGE_QUALITY);
 }
 
+export function formatOpenAIImageSettingsSummary(qualityValue, sizeValue) {
+  const quality = resolveOpenAIImageOption(qualityValue);
+  const size = OPENAI_IMAGE_SIZE_OPTIONS.find(option => option.value === normalizeOpenAIImageSize(sizeValue));
+  return `${quality.label}・${size.label}`;
+}
+
 export function normalizeOpenAIImageQuality(value) {
   return resolveOpenAIImageOption(value).value;
 }
