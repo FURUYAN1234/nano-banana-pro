@@ -30,7 +30,10 @@ test('applySafetyAgeUp removes plain-text school and minor-coded character trait
   assert.match(result, /stylized mature faces, clear adult proportions, and simplified limbs/i);
   assert.match(result, /mature facial structure and detailed fabric folds/i);
   assert.doesNotMatch(result, /2-3 head-to-body|tiny limbs|bone structure visible through skin tension/i);
-  assert.match(result, /All characters depicted in this image are adults aged 20 or older/i);
+  assert.match(result, /non-visible casting constraint/i);
+  assert.match(result, /every depicted person is an adult, age 20 or older/i);
+  assert.match(result, /never render any part of it as visible text/i);
+  assert.doesNotMatch(result, /All characters depicted in this image are adults aged 20 or older/i);
   assert.doesNotMatch(result, /\bminors?\b/i);
 });
 

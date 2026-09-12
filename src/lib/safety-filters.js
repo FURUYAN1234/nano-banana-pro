@@ -116,7 +116,7 @@ const applySafetyAgeUp = (promptText) => {
 
   // --- レベル7: 成人宣言ヘッダーの注入 ---
   // Gemini/ChatGPTそれぞれのキャラ見出し直前に「全員20歳以上の成人」を明示注入
-  const ageDeclaration = 'IMPORTANT AGE DECLARATION: All characters depicted in this image are adults aged 20 or older.';
+  const ageDeclaration = 'NON-VISIBLE CASTING CONSTRAINT: Every depicted person is an adult, age 20 or older. Mature adult features/proportions. Never render any part of it as visible text.';
   if (!result.includes(ageDeclaration)) {
     if (result.includes('Important Character Cast:')) {
       result = result.replace(

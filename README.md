@@ -35,7 +35,7 @@ STEP4は「API画像生成の品質」の直下に「API画像サイズ」を分
 
 
 
-> Latest release: **v6.0.3** / 最新リリース: **v6.0.3**
+> Latest release: **v6.0.4** / 最新リリース: **v6.0.4**
 
 > **"To what extent can humans step away from the creative process?"**
 > **「人間は、どこまで制作から降りられるのか？」**
@@ -57,7 +57,7 @@ STEP4は「API画像生成の品質」の直下に「API画像サイズ」を分
 This project aims to intentionally exclude humans from the creative process, allowing AI to act as a director and complete everything from brainstorming to composition, direction, and rendering.
 本プロジェクトは、人間をクリエイティブな工程から意図的に排除し、AIがディレクターとして「ネタ出し・構成・演出・作画」のすべてを完結させることを目的としています。
 
-The current implementation and latest release are **v6.0.3**. The product name is **Super FURU AI 4-koma System**. STEP4 offers Gemini and OpenAI image-generation routes, including GPT Image 2.5. / 現在の実装および最新公開版は **v6.0.3** です。製品名は **Super FURU AI 4-koma System** で、STEP4ではGPT Image 2.5を含むOpenAI系とGemini系の画像生成経路を利用できます。
+The current implementation and latest release are **v6.0.4**. The product name is **Super FURU AI 4-koma System**. STEP4 offers Gemini and OpenAI image-generation routes, including GPT Image 2.5. / 現在の実装および最新公開版は **v6.0.4** です。製品名は **Super FURU AI 4-koma System** で、STEP4ではGPT Image 2.5を含むOpenAI系とGemini系の画像生成経路を利用できます。
 
 Distribution deployment / 配布ファイルの公開: Hugging Face uploads every current ZIP through Git LFS, including files below 10 MB. GitHub Pages continues to serve ordinary ZIP bytes. Workflow JSON and checksum files retain exact bytes on both hosts. / Hugging Faceでは10 MB未満も含め、現存する配布ZIPをすべてGit LFSで送信します。GitHub Pagesでは従来どおり通常のZIPを配信します。ワークフローJSONとチェックサムファイルは、どちらの公開先でも元のバイトを保持します。
 
@@ -920,6 +920,9 @@ A trend-to-story planning tool that converts public Web/RSS signals into practic
 ---
 
 ## 📋 ChangeLog
+
+### v6.0.4 (2026-09-12)
+- **[Fix & UX]** 成人キャストの内部安全条件を維持しつつ、年齢宣言が画像内の余分な英文として描画されないよう非表示制約を追加しました。 / Kept the adult-cast safety condition while marking it as non-visible so the age declaration is not rendered as extra English text in generated images.
 
 ### v6.0.3 (2026-09-12)
 - **[Fix & UX]** 大胆なカメラ高低差・傾き・遠近感、全身演技、コマ間の演出差を許可し、人物・台詞・小道具の整合性を維持 / Allow bolder camera height, tilt, perspective, full-body acting and panel contrast while preserving cast, dialogue and prop consistency
