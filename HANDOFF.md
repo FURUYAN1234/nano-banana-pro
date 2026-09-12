@@ -1,10 +1,10 @@
-## v6.0.7 release candidate — 2026-09-12
+## v6.0.8 release candidate — 2026-09-12
 
-- STEP4のFourPanel NonLM配布を、受領v5.9.8候補から公開用v6.0.7へ訂正して更新。ZIP、単独ワークフロー、SHA256 sidecar、導入文、README、テストを同期した。
+- STEP4のFourPanel NonLM配布をv6.0.8へ更新。単独ワークフローJSONはPages/Hugging Face、カスタムノード5点ZIPはGitHub Release専用アセットとして分離し、アプリの2ボタンを維持した。現在のGitソースツリーから全配布ZIPと旧ワークフローを除去した。
 - 新機能は、基本5秒に収まらない台詞だけ最大15秒へ延長するモードと、複合AV不合格時の構造化ショット差し替え、同一区間2回の映像不合格後の話者中心再構図。確定台詞・時刻・人物・音・H3生成BGMを保持する。
-- 公開に不要な古い生成先URL、旧承認識別子、誤った最大候補数メタデータ、過去の「フルバックアップ不要」記述を訂正。T2V/I2V/Ref2Vは対象外。
-- 配布元ソースcommit `c3577ea6cfac28e4f366236fbb597a23476786ca`、tag `fourpanel-v6.0.7`。最終ZIP 689,780 bytes / SHA256 `ef7b79485453513298c0366a86da829eeb7fea011f9e59aa29ecdb10ab41a8f1`。クリーンタグ再構築とバイト一致、展開後145ファイル、package 15 / Nano 74 / Long-Video 107 tests、JavaScript構文が合格。
-- 受領候補の39秒GPU/API生成と音声確認は供給元証拠。最終v6.0.7 ZIPからの新規GPU生成と別PC実行は未検証。リリース、FourPanel note `ndf063558c1f5`、黒い窓フルバックアップの進行状態はroot `PLAN.md` を参照。Release notes: `docs/releases/v6.0.7.md`。
+- 同梱PlagueKind内のLightX2V由来部分へApache-2.0本文と出典表示を追加。Git READMEとZIPのREADMEを一文内の`English / 日本語`形式へ統一した。T2V/I2V/Ref2Vは対象外。
+- 配布元ソースcommit `5c9ae9f`、tag `fourpanel-v6.0.8`。最終ZIP 693,070 bytes / SHA256 `7ffe7566d865959447aef68601c5158af55ae54fcfdb429c7984270c6f2d62ac`。144 payload files、package 15 testsが合格し、APIキー・個人パス・モデル・利用者メディア・ネストしたアーカイブを含まない。
+- 受領候補の39秒GPU/API生成と音声確認は供給元証拠。最終v6.0.8 ZIPからの新規GPU生成と別PC実行は未検証。リリース、FourPanel note `ndf063558c1f5`、黒い窓フルバックアップの進行状態はroot `PLAN.md` を参照。Release notes: `docs/releases/v6.0.8.md`。
 
 ## v6.0.6 release candidate — 2026-09-12
 

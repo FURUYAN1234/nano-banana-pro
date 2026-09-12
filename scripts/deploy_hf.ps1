@@ -118,41 +118,20 @@ Get-ChildItem $DistDir -Force | ForEach-Object {
     Write-Host "  Copied: $($_.Name)" -ForegroundColor DarkGray
 }
 
-# === Step 6: Preserve distribution bytes and track all current ZIPs with LFS ===
-# This is intentionally applied only inside the HF checkout. Adding the rule to
-# public/.gitattributes would turn GitHub Pages downloads into pointer files.
-# The Hub rejects these ZIP binaries even below 10 MB. Size is not an exemption.
+# === Step 6: Preserve current workflow bytes ===
+# Custom-node ZIPs are GitHub Release assets and are intentionally absent from
+# both the Git source tree and the Hugging Face static-site checkout.
 Write-Host "[DIST] Syncing current distribution attributes..." -ForegroundColor Yellow
 Push-Location $HfRoot
 $PublicDistributionAttributes = @(Get-Content -LiteralPath (Join-Path $ProjectRoot "public\.gitattributes") -Encoding UTF8)
-$HfDistributionZipPaths = @($PublicDistributionAttributes |
-    Where-Object { $_ -match '^downloads/.+\.zip -text$' } |
-    ForEach-Object { ($_ -split '\s+')[0] }
-)
-$HfCurrentZipPaths = @($HfDistributionZipPaths | Where-Object {
-    $sourceZip = Join-Path (Join-Path $ProjectRoot "public") (($_ -replace '/', '\'))
-    Test-Path -LiteralPath $sourceZip
-})
-if ($HfCurrentZipPaths.Count -eq 0) {
-    Write-Host "[ERROR] No distribution ZIPs were declared in public/.gitattributes." -ForegroundColor Red
-    Pop-Location
-    exit 1
-}
-$HfLfsZipPaths = @($HfCurrentZipPaths)
 $HfAttributesPath = Join-Path $HfRoot ".gitattributes"
-foreach ($HfLfsZipPath in $HfLfsZipPaths) {
-    git lfs track $HfLfsZipPath
-    if ($LASTEXITCODE -ne 0) {
-        Write-Host "[ERROR] git lfs track failed." -ForegroundColor Red
-        Pop-Location
-        exit 1
-    }
-}
-
 $HfBytePreservationRules = @($PublicDistributionAttributes |
-    Where-Object { $_ -match '^(?:workflows/.+\.json|downloads/.+\.zip(?:\.sha256\.txt)?) -text$' }
+    Where-Object { $_ -match '^workflows/.+\.json -text$' }
 )
-$HfAttributeLines = @(Get-Content -LiteralPath $HfAttributesPath -Encoding UTF8)
+$HfAttributeLines = @(Get-Content -LiteralPath $HfAttributesPath -Encoding UTF8 |
+    Where-Object { $_ -notmatch '^(?:workflows/.+\.json|downloads/.+\.zip(?:\.sha256\.txt)?)(?:\s|$)' }
+)
+$HfAttributeLines | Set-Content -LiteralPath $HfAttributesPath -Encoding UTF8
 foreach ($HfBytePreservationRule in $HfBytePreservationRules) {
     if ($HfAttributeLines -cnotcontains $HfBytePreservationRule) {
         Add-Content -LiteralPath $HfAttributesPath -Value $HfBytePreservationRule -Encoding UTF8 -ErrorAction Stop

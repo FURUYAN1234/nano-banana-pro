@@ -23,31 +23,18 @@ test('HF deploy preserves the Docker runtime and SPA routing configuration', asy
   assert.match(script, /git reset --mixed origin\/main/);
 });
 
-test('HF deploy tracks every current ZIP with LFS regardless of size and preserves Pages bytes', async () => {
+test('HF deploy removes stale ZIP attributes and preserves current workflow bytes', async () => {
   const script = await readFile(new URL('../scripts/deploy_hf.ps1', import.meta.url), 'utf8');
   const pagesAttributes = await readFile(new URL('../public/.gitattributes', import.meta.url), 'utf8');
-
-  const copyIndex = script.indexOf('# === Step 6: Preserve distribution bytes and track all current ZIPs with LFS ===');
-  const attributesReadIndex = script.indexOf('$PublicDistributionAttributes = @(Get-Content -LiteralPath (Join-Path $ProjectRoot "public\\.gitattributes") -Encoding UTF8)');
-  const zipPathsIndex = script.indexOf('$HfDistributionZipPaths = @($PublicDistributionAttributes |');
-  const lfsLoopIndex = script.indexOf('foreach ($HfLfsZipPath in $HfLfsZipPaths)');
+  const copyIndex = script.indexOf('# === Step 6: Preserve current workflow bytes ===');
+  const attributesReadIndex = script.indexOf('$PublicDistributionAttributes = @(Get-Content');
   const byteRulesIndex = script.indexOf('$HfBytePreservationRules = @($PublicDistributionAttributes |');
   const gitAddIndex = script.indexOf('git add .');
-
-  assert.ok(copyIndex !== -1 && copyIndex < attributesReadIndex, 'HF-only attribute derivation must happen after the dist copy');
-  assert.ok(attributesReadIndex < zipPathsIndex && zipPathsIndex < lfsLoopIndex, 'all current download ZIPs must be read before deciding whether LFS is necessary');
-  assert.ok(lfsLoopIndex < byteRulesIndex && byteRulesIndex < gitAddIndex, 'workflow JSON and ZIP checksum byte rules must be written before git add');
-  assert.match(script, /Where-Object \{ \$_ -match '\^downloads\/.+\\\.zip -text\$' \}/);
-  assert.match(script, /\$HfCurrentZipPaths/);
-  assert.match(script, /Join-Path \(Join-Path \$ProjectRoot "public"\)/);
-  assert.match(script, /Test-Path -LiteralPath \$sourceZip/);
-  assert.match(script, /\$HfLfsZipPaths = @\(\$HfCurrentZipPaths\)/);
-  assert.doesNotMatch(script, /HfLfsThresholdBytes|HfPlainZipPaths|Using regular Git for small ZIP/);
-  assert.match(script, /Where-Object \{ \$_ -match '\^\(\?:workflows\/.+\\\.json\|downloads\/.+\\\.zip\(\?:\\\.sha256\\\.txt\)\?\) -text\$' \}/);
-  assert.match(script, /git lfs track \$HfLfsZipPath/);
+  assert.ok(copyIndex !== -1 && copyIndex < attributesReadIndex);
+  assert.ok(attributesReadIndex < byteRulesIndex && byteRulesIndex < gitAddIndex);
+  assert.match(script, /Where-Object \{ \$_ -notmatch/);
+  assert.doesNotMatch(script, /\$HfCurrentZipPaths|git lfs track \$HfLfsZipPath/);
   assert.match(script, /Add-Content[^\n]*\$HfAttributesPath[^\n]*HfBytePreservationRule/s);
-  assert.match(script, /if \(\$LASTEXITCODE -ne 0\) \{\s*Write-Host "\[ERROR\] git lfs track failed\."/s);
-  assert.doesNotMatch(script, /MiniMax-H3-4Koma-Fused4Step-SLA-Bundle-2026-09-06-r8/);
-  assert.doesNotMatch(script, /git lfs track "downloads\/\*\.zip"/);
-  assert.doesNotMatch(pagesAttributes, /downloads\/\*\.zip\s+filter=lfs/);
+  assert.doesNotMatch(pagesAttributes, /downloads\/.+\.zip/);
+  assert.match(pagesAttributes, /workflows\/FourPanel_NonLM_4step_20260912194934_v6\.0\.8\.json -text/);
 });
