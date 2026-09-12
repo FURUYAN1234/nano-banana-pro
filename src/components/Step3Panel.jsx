@@ -47,7 +47,7 @@ export default function Step3Panel({
       <button
         onClick={assemblePrompt}
         disabled={isAssembling || is360CameraWorking}
-        className={`primary-step-action w-full relative py-6 rounded-xl font-black text-xl flex items-center justify-center gap-4 border-b-[6px] active:border-b-0 active:translate-y-[6px] transition-all disabled:opacity-50 disabled:grayscale disabled:border-none disabled:cursor-not-allowed group/gen shadow-xl
+        className={`primary-step-action primary-step-action-neutral-edge w-full relative py-6 rounded-xl font-black text-xl flex items-center justify-center gap-4 border-b-[6px] active:border-b-0 active:translate-y-[6px] transition-all disabled:opacity-50 disabled:grayscale disabled:border-none disabled:cursor-not-allowed group/gen shadow-xl
           ${currentStep === 3 ? 'ring-4 ring-orange-500 ring-offset-4 ring-offset-[#0a0c10]' : ''}
         `}
       >

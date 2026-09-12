@@ -10,7 +10,18 @@ body {
 .primary-step-action {
   background-color: #dbeafe;
   color: #0c4a6e;
+}
+
+.primary-step-action-accent-border {
   border-color: #7dd3fc;
+}
+
+.primary-step-action-neutral-edge {
+  border-bottom-color: #cbd5e1;
+}
+
+.primary-step-action-neutral-edge:disabled {
+  border-bottom-color: transparent;
 }
 
 .primary-step-action:hover {

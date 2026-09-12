@@ -1,3 +1,9 @@
+## v6.1.0 primary-step display correction — 2026-09-12
+
+- v6.0.9でSTEP1の広いドロップ領域とSTEP2・3の太い外枠まで青くした誤りを修正した。STEP1は小さな「キャラクター設定画像を選択 (STEP 1)」操作だけ薄青、STEP2・3はボタン面だけ薄青で太枠は従来の薄いグレー、STEP4は変更なし。
+- ローカル画面でSTEP1操作面274×25px／ドロップ領域透明、STEP2・3の底辺6pxが`rgb(203, 213, 225)`であることを確認。FourPanelワークフローJSONとカスタムノードZIPは検証済みv6.0.9配布をそのまま使用する。
+- Release notes: `docs/releases/v6.1.0.md`。公開、note、訂正版バックアップの進行状態はroot `PLAN.md` を参照。
+
 ## v6.0.9 primary-step button release candidate — 2026-09-12
 
 - STEP1の画像投入、STEP2のシナリオ生成、STEP3のプロンプト構築、STEP4の画像生成だけを共通の薄い青色へ変更。補助操作と実行ロジックは変更していない。

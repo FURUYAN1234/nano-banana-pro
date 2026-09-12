@@ -579,7 +579,7 @@ export default function Step4Panel({
                 style={{ display: 'flex', width: '100%', boxSizing: 'border-box', marginBottom: '16px' }}
                 onClick={() => regenerateImage()}
                 disabled={!finalPrompt || isGeneratingImage || isFixingPolicy}
-                className="primary-step-action w-full font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg border active:scale-95 disabled:opacity-50 disabled:cursor-wait mt-4"
+                className="primary-step-action primary-step-action-accent-border w-full font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg border active:scale-95 disabled:opacity-50 disabled:cursor-wait mt-4"
               >
                 {isGeneratingImage ? <Loader2 size={20} className="animate-spin" /> : <ImageIcon size={20} />}
                 <div className="flex flex-col items-center">
