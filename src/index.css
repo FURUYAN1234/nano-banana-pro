@@ -42,6 +42,80 @@ body {
   color: #64748b;
 }
 
+.scenario-settings-grid {
+  margin-bottom: 12px;
+}
+
+.punchline-select-hint {
+  margin-left: auto;
+  padding: 2px 7px;
+  border: 1px solid #fbbf24;
+  border-radius: 999px;
+  background-color: #422006;
+  color: #fde68a;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.punchline-select-control {
+  position: relative;
+}
+
+.punchline-select-input {
+  min-height: 28px;
+  padding: 3px 36px 3px 8px;
+  border: 1px solid #fbbf24;
+  border-radius: 5px;
+  background-color: #fff7d6;
+  color: #111827;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  outline: none;
+}
+
+.punchline-select-input:hover {
+  background-color: #fef3c7;
+}
+
+.punchline-select-input:focus-visible {
+  border-color: #f59e0b;
+  box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.35);
+}
+
+.punchline-select-chevron {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  color: #92400e;
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+
+.step4-help-copy {
+  font-size: 11px;
+  line-height: 1.65;
+}
+
+.step4-help-copy-compact {
+  font-size: 10px;
+  line-height: 1.65;
+}
+
+.step4-setting-label {
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.step4-setting-select {
+  min-height: 26px;
+  padding: 3px 8px;
+  font-size: 11px;
+  line-height: 1.35;
+}
+
 .manga-color-mode {
   border: 0;
   padding: 0;

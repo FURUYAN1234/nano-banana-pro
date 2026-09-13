@@ -9,7 +9,7 @@ import {buildGeminiReferencePlan, appendGeminiReferencePrompt} from '../lib/gemi
 import { callAI, setActiveEngine } from '../lib/ai-provider';
 import { reviewComedyPrompt } from '../lib/comedy-review';
 import { normalizeMangaColorMode } from '../lib/manga-render-mode.js';
-import { getEndingModePolicy, isDocumentaryEnding } from '../lib/ending-mode-policy.js';
+import { assertPromptEndingModeConsistency, getEndingModePolicy, isDocumentaryEnding } from '../lib/ending-mode-policy.js';
 
 // --- Refactored Imports (Phase 1-2) ---
 import { SYSTEM_VERSION, DEFAULT_CATEGORIES, EMOTION_STYLES, DYNAMIC_CAMERA_PROTOCOL, ANTI_CHARSHEET_PREFIX } from '../lib/constants';
@@ -68,7 +68,7 @@ export default function useMangaWorkflow() {
   const [customOutfit, setCustomOutfit] = useState(''); // [v1.8.103] Custom Outfit Override
   const [lockedLocation, setLockedLocation] = useState(''); // STEP2実行時に確定した場所
   const [lockedOutfit, setLockedOutfit] = useState('');     // STEP2実行時に確定した服装
-  const [punchlineType, setPunchlineType] = useState('Auto'); // [v3.31] Punchline Director
+  const [punchlineType, setPunchlineTypeState] = useState('Auto'); // [v3.31] Punchline Director
 
   const [categories, setCategories] = useState(DEFAULT_CATEGORIES);
 
@@ -243,6 +243,30 @@ export default function useMangaWorkflow() {
     setScenario(nextScenario);
     setFinalPrompt("");
     setGeneratedImage(null);
+  };
+
+  const setPunchlineType = (value) => {
+    const nextPunchlineType = String(value || 'Auto');
+    if (nextPunchlineType === punchlineType) return;
+    scenarioRunEpochRef.current += 1;
+    promptAssemblyRunRef.current += 1;
+    fullAutoAbortRef.current = true;
+    isFullAutoModeRef.current = false;
+    setPunchlineTypeState(nextPunchlineType);
+    setIsFullAutoMode(false);
+    setFullAutoStep(0);
+    setIsAborting(false);
+    setIsSearching(false);
+    setIsAssembling(false);
+    setScenario("");
+    setFinalPrompt("");
+    setGeneratedImage(null);
+    setScenarioThought("");
+    setAssembleThought("");
+    setGenLog([]);
+    setOriginalScenario("");
+    setEnhanceLog("");
+    showStatus('結末モードを変更しました。STEP2からシナリオを作り直してください。');
   };
 
   const getCurrentPromptProviderFamily = () => (
@@ -604,6 +628,7 @@ export default function useMangaWorkflow() {
       const result = await enhanceScenarioText({
         scenario,
         selectedCategories,
+        punchlineType,
         castList,
         styleJson,
         onProgress: (msg) => setEnhanceLog(prev => prev + `\n> [API] ${msg}`)
@@ -958,6 +983,7 @@ export default function useMangaWorkflow() {
 
       setAssembleThought(prev => prev + "\n> [v3.31] 事故防止プロトコル全モデル適用済み:\n>   ✅ 縦書きセリフ強制\n>   ✅ セリフ勝手追加禁止\n>   ✅ キャラの外見は維持し、設定資料の配置・説明文はコピーしない\n>   ✅ カメラワーク平易化禁止\n>   ✅ プロンプト分岐 (ChatGPT/Gemini)\n>   ✅ 出力前チェックリスト追加");
 
+      assertPromptEndingModeConsistency({ prompt: reviewed.prompt, punchlineType });
       setFinalPrompt(reviewed.prompt);
       setAssembleThought(prev => prev + `\n> 出力モード: ${colorMode === 'monochrome' ? '白黒（純白・純黒・網点／ハッチング）' : 'カラー'}`);
       setAssembleThought(prev => prev + `\n> ${reviewed.warning || "AI精査完了"}`);
@@ -1142,6 +1168,12 @@ export default function useMangaWorkflow() {
 
   const copyPrompt = () => {
     if (!finalPrompt) return;
+    try {
+      assertPromptEndingModeConsistency({ prompt: finalPrompt, punchlineType });
+    } catch (error) {
+      showStatus(error.message);
+      return;
+    }
     navigator.clipboard.writeText(finalPrompt);
     setIsCopied(true);
     setTimeout(() => setIsCopied(false), 2000);
@@ -1162,6 +1194,13 @@ export default function useMangaWorkflow() {
     const currentPrompt = overridePrompt || finalPrompt;
     const qualityMode = inferImageQualityMode(currentPrompt);
     if (isGeneratingImage || (!skipGuard && !currentPrompt)) return false;
+    try {
+      assertPromptEndingModeConsistency({ prompt: currentPrompt, punchlineType });
+    } catch (error) {
+      showStatus(error.message);
+      setGenLog(prev => [...prev, `[PROMPT MODE ERROR] ${error.message}`]);
+      return false;
+    }
     setIsGeneratingImage(true);
     setIsGenerationError(false);
     
@@ -1621,6 +1660,12 @@ export default function useMangaWorkflow() {
 
     // プロンプトをクリップボードにコピー
     if (finalPrompt) {
+      try {
+        assertPromptEndingModeConsistency({ prompt: finalPrompt, punchlineType });
+      } catch (error) {
+        showStatus(error.message);
+        return;
+      }
       navigator.clipboard.writeText(finalPrompt);
     }
 

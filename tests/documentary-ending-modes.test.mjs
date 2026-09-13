@@ -7,6 +7,8 @@ let server;
 let getEndingModePolicy;
 let isDocumentaryEnding;
 let DOCUMENTARY_ENDING_OPTIONS;
+let validatePromptEndingModeConsistency;
+let assertPromptEndingModeConsistency;
 let getPunchlineLabel;
 let getScenarioPrompt;
 let buildMangaPrompt;
@@ -27,7 +29,13 @@ before(async () => {
     logLevel: 'silent',
     server: { middlewareMode: true }
   });
-  ({ getEndingModePolicy, isDocumentaryEnding, DOCUMENTARY_ENDING_OPTIONS } = await server.ssrLoadModule('/src/lib/ending-mode-policy.js'));
+  ({
+    getEndingModePolicy,
+    isDocumentaryEnding,
+    DOCUMENTARY_ENDING_OPTIONS,
+    validatePromptEndingModeConsistency,
+    assertPromptEndingModeConsistency
+  } = await server.ssrLoadModule('/src/lib/ending-mode-policy.js'));
   ({ getPunchlineLabel } = await server.ssrLoadModule('/src/lib/constants.js'));
   ({ getScenarioPrompt } = await server.ssrLoadModule('/src/lib/prompts.js'));
   ({ buildMangaPrompt } = await server.ssrLoadModule('/src/lib/prompt-assembler.js'));
@@ -287,6 +295,49 @@ for (const providerFamily of ['chatgpt', 'gemini']) {
     assert.doesNotMatch(prompt, /ART-STYLE DIFFERENCE QA LOCK|MONOCHROME STYLE DIFFERENCE QA/);
   });
 }
+
+test('serious documentary rejects stale or manually edited prompts that restore gag styles', () => {
+  const validPrompt = buildFinalPrompt({ punchlineType: 'SeriousDocumentary' });
+  assert.deepEqual(
+    validatePromptEndingModeConsistency({ prompt: validPrompt, punchlineType: 'SeriousDocumentary' }),
+    { ok: true, issues: [] }
+  );
+
+  const stalePrompt = `OUTPUT: Single image. Draw a new four-panel manga page.
+- COMEDY INTENT: preserve scripted gag reactions.
+
+## Panel 4
+PANEL STYLE LOCK: CHIBI_GAG
+PROPORTION OVERRIDE: Use 2-3 head proportions for this panel ONLY.`;
+  const result = validatePromptEndingModeConsistency({ prompt: stalePrompt, punchlineType: 'SeriousDocumentary' });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.issues.includes('missing-reference-style-lock'));
+  assert.ok(result.issues.includes('comedy-intent'));
+  assert.ok(result.issues.includes('chibi-style'));
+  assert.ok(result.issues.includes('proportion-override'));
+  assert.throws(
+    () => assertPromptEndingModeConsistency({ prompt: stalePrompt, punchlineType: 'SeriousDocumentary' }),
+    /STEP2.*STEP3.*再生成/
+  );
+});
+
+test('non-serious endings keep their existing prompt styles', () => {
+  const gagPrompt = buildFinalPrompt({ punchlineType: 'Documentary' });
+  assert.deepEqual(
+    validatePromptEndingModeConsistency({ prompt: gagPrompt, punchlineType: 'Documentary' }),
+    { ok: true, issues: [] }
+  );
+});
+
+test('workflow invalidates stale ending output and guards assembly, Web copy, and API generation', async () => {
+  const workflowSource = await readFile(workflowUrl, 'utf8');
+
+  assert.match(workflowSource, /const setPunchlineType = \(value\) => {[\s\S]*?setScenario\(""\);[\s\S]*?setFinalPrompt\(""\);[\s\S]*?setGeneratedImage\(null\);/);
+  assert.match(workflowSource, /assertPromptEndingModeConsistency\(\{ prompt: reviewed\.prompt, punchlineType \}\);[\s\S]*?setFinalPrompt\(reviewed\.prompt\)/);
+  assert.match(workflowSource, /const copyPrompt = \(\) => {[\s\S]*?assertPromptEndingModeConsistency\(\{ prompt: finalPrompt, punchlineType \}\);[\s\S]*?navigator\.clipboard\.writeText\(finalPrompt\)/);
+  assert.match(workflowSource, /const regenerateImage = async[\s\S]*?assertPromptEndingModeConsistency\(\{ prompt: currentPrompt, punchlineType \}\);[\s\S]*?setIsGeneratingImage\(true\)/);
+});
 
 test('serious monochrome changes only the color medium and preserves reference drawing style', () => {
   const prompt = buildFinalPrompt({ punchlineType: 'SeriousDocumentary', colorMode: 'monochrome' });

@@ -29,6 +29,41 @@ export const getEndingModePolicy = (type) => ENDING_MODE_POLICIES[type] || DEFAU
 
 export const isDocumentaryEnding = (type) => getEndingModePolicy(type).documentary;
 
+const SERIOUS_PROMPT_CHECKS = Object.freeze([
+  Object.freeze({ issue: 'comedy-intent', pattern: /^\s*-?\s*COMEDY INTENT:/im }),
+  Object.freeze({ issue: 'chibi-style', pattern: /^\s*(?:MONOCHROME )?PANEL STYLE LOCK:\s*CHIBI(?:\\?_)?GAG\b/im }),
+  Object.freeze({ issue: 'proportion-override', pattern: /^\s*PROPORTION OVERRIDE:/im }),
+  Object.freeze({ issue: 'panel-style-switch', pattern: /^\s*(?:MONOCHROME )?PANEL STYLE LOCK:/im }),
+  Object.freeze({ issue: 'gag-overlay', pattern: /^\s*GAG INTENT OVERLAY:/im }),
+  Object.freeze({ issue: 'style-difference-qa', pattern: /^\s*(?:MONOCHROME )?ART-STYLE DIFFERENCE QA LOCK:/im })
+]);
+
+export const validatePromptEndingModeConsistency = ({ prompt, punchlineType } = {}) => {
+  if (!getEndingModePolicy(punchlineType).preserveReferenceStyle) {
+    return { ok: true, issues: [] };
+  }
+
+  const text = String(prompt || '');
+  const issues = [];
+  if (!/REFERENCE-SHEET ART-STYLE LOCK \(ABSOLUTE[^\n]*ALL FOUR PANELS\)/i.test(text)) {
+    issues.push('missing-reference-style-lock');
+  }
+  for (const { issue, pattern } of SERIOUS_PROMPT_CHECKS) {
+    if (pattern.test(text)) issues.push(issue);
+  }
+  return { ok: issues.length === 0, issues };
+};
+
+export const assertPromptEndingModeConsistency = (options = {}) => {
+  const result = validatePromptEndingModeConsistency(options);
+  if (result.ok) return result;
+
+  const error = new Error(`シリアス・ドキュメンタリーの絵柄固定と最終プロンプトが一致しません（${result.issues.join(', ')}）。STEP2からシナリオを作り直し、STEP3で最終プロンプトを再生成してください。`);
+  error.code = 'SERIOUS_DOCUMENTARY_PROMPT_MODE_MISMATCH';
+  error.issues = result.issues;
+  throw error;
+};
+
 export const buildReferenceSheetArtStyleLock = ({ monochrome = false } = {}) => `REFERENCE-SHEET ART-STYLE LOCK (ABSOLUTE — ALL FOUR PANELS):
 - Use every attached character sheet as the authoritative art-style reference. Across all four panels preserve its linework, coloring method, shading design, facial construction, eye design, body proportions and degree of stylization.
 - Emotion tags describe expression and acting only. They MUST NOT trigger chibi, gekiga, watercolor, painterly, retro, pop-art, sketch, photorealistic or any other panel-specific art-style transformation.

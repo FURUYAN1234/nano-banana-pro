@@ -21,6 +21,7 @@ import { GEMINI_A4_RELAYOUT_PROMPT, GEMINI_2K_REFINEMENT_PROMPT } from '../lib/g
 import { getEffectiveEngine } from '../lib/engine-state';
 import { MINIMAX_H3_COMFYUI_PROMPT } from '../lib/minimax-h3-prompt';
 import { SYSTEM_VERSION } from '../lib/constants';
+import { getEndingModePolicy } from '../lib/ending-mode-policy';
 
 const COMFYUI_WORKFLOW_FILENAME = 'FourPanel_NonLM_4step_20260913115712_v5.9.9.json';
 const COMFYUI_WORKFLOW_DOWNLOAD_URL = `${import.meta.env.BASE_URL}workflows/${COMFYUI_WORKFLOW_FILENAME}`;
@@ -338,6 +339,7 @@ export default function Step4Panel({
   // session flags can disagree during a hot update, so never branch on either
   // raw flag directly.
   const isOpenAIImageMode = getEffectiveEngine(selectedEngine, enableOpenAIApi) === 'openai';
+  const isSeriousEnhancementMode = getEndingModePolicy(punchlineType).endingTone === 'serious';
   const generatedImageExtension = getGeneratedImageExtension(generatedImage);
   const [isUpscalePromptCopied, setIsUpscalePromptCopied] = React.useState(false);
   const [isMiniMaxPromptCopied, setIsMiniMaxPromptCopied] = React.useState(false);
@@ -537,7 +539,7 @@ export default function Step4Panel({
                         "背景強化": enhanceBackgrounds,
                         "カメラワーク強化": enhanceCameraWork,
                         "セリフ書換": enhanceDialogue,
-                        "ギャグ演出強化": enhanceGag
+                        [isSeriousEnhancementMode ? "シリアス演出強化" : "ギャグ演出強化"]: enhanceGag
                       },
                       "360度背景": {
                         "画像読込": !!bg360Image,
@@ -610,48 +612,48 @@ export default function Step4Panel({
                             <div id="api-settings-content" hidden={!isApiSettingsOpen} className="p-3 bg-yellow-950/20 space-y-5">
               {isOpenAIImageMode && (
                 <div className="mt-6 border-t border-white/20 pt-4">
-                  <label htmlFor="openai-image-quality" className="block text-xs text-slate-300 mb-2">API画像生成の品質</label>
+                  <label htmlFor="openai-image-quality" className="step4-setting-label block text-slate-300 mb-1">API画像生成の品質</label>
                   <select
                     id="openai-image-quality"
                     value={openAIImageQuality}
                     onChange={(event) => setOpenAIImageQuality(event.target.value)}
                     disabled={isGeneratingImage || isFixingPolicy}
-                    className="w-full rounded-lg border border-white/20 bg-slate-900 p-3 text-sm text-white disabled:opacity-50"
+                    className="step4-setting-select w-full rounded border border-white/20 bg-slate-900 text-white disabled:opacity-50"
                   >
                     {OPENAI_IMAGE_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
                   </select>
-                  <label htmlFor="openai-image-size" className="block text-xs text-slate-300 mt-4 mb-2">API画像サイズ</label>
+                  <label htmlFor="openai-image-size" className="step4-setting-label block text-slate-300 mt-3 mb-1">API画像サイズ</label>
                   <select
                     id="openai-image-size"
                     value={openAIImageSize}
                     onChange={(event) => setOpenAIImageSize(event.target.value)}
                     disabled={isGeneratingImage || isFixingPolicy}
-                    className="w-full rounded-lg border border-white/20 bg-slate-900 p-3 text-sm text-white disabled:opacity-50"
+                    className="step4-setting-select w-full rounded border border-white/20 bg-slate-900 text-white disabled:opacity-50"
                   >
                     {OPENAI_IMAGE_SIZE_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
                   </select>
-                  <p className="mt-2 text-xs text-slate-400">
+                  <p className="step4-help-copy mt-2 text-slate-400">
                     サイズの既定は1024×1536です。品質とサイズの選択はリロードまで保持します。API生成のみの設定で、Webへコピーするプロンプトには影響しません。
                     大きめは拡大・印刷向けです。手や台詞の正確さを保証する設定ではありません。
                   </p>
-                  <p className="mt-2 text-xs text-slate-400">
+                  <p className="step4-help-copy mt-2 text-slate-400">
                     初回接続時、GPT Image 2.5 Sunburstが利用可能ならSunburst / xhighを、利用できない場合はGPT Image 2.0 / highを初期選択します。
                   </p>
-                  <p className="mt-2 text-xs leading-relaxed text-slate-300">
+                  <p className="step4-help-copy mt-2 text-slate-300">
                     GPT Image 2.5 Sunburstが初期選択されなかった場合も、上のプルダウンからモデルを変更できます。生成時のエラーで自動切替・自動再送信はしません。
                   </p>
-                  <p className="mt-2 text-xs leading-relaxed text-slate-400">
+                  <p className="step4-help-copy mt-2 text-slate-400">
                     GPT Image 2.5の利用には、APIアカウントの組織認証（個人の場合は本人確認）が必要な場合があります。
                     <a href="https://platform.openai.com/settings/organization/general" target="_blank" rel="noopener noreferrer" className="text-emerald-400 underline">組織設定</a>
                     の「Verifications → Individual → Start」から、Personaの公式画面で対応する本人確認書類を提出し、承認をお待ちください。書類はこのアプリへ送らないでください。
                   </p>
-                  <p className="mt-2 text-xs leading-relaxed text-slate-400">
+                  <p className="step4-help-copy mt-2 text-slate-400">
                     モデル一覧への表示は、そのモデル・品質での画像生成成功を保証するものではありません。承認後もAPIへの反映に時間がかかる場合があり、2.0もアカウントの利用権限によっては使用できません。この認証案内はAPI生成用で、ChatGPTのWeb貼り付け操作には不要です。
                   </p>
                   {openAIImageVerificationWarning && <p role="alert" className="mt-2 rounded-lg border border-amber-500/40 bg-amber-950/30 p-3 text-sm text-amber-200">{openAIImageVerificationWarning}</p>}
                 </div>
               )}
-              <label className="mt-3 flex items-start gap-2 text-xs text-slate-300">
+              <label className="step4-help-copy mt-3 flex items-start gap-2 text-slate-300">
                 <input type="checkbox" checked={allowImageQualityRepair} onChange={event => setAllowImageQualityRepair(event.target.checked)} disabled={isGeneratingImage || isFixingPolicy} />
                 API生成のみ：品質検査NG時に自動修正する（通常1回＋装飾文字が直らない場合のみ1回・追加課金あり／Web貼り付けには影響しません）
               </label>
@@ -672,7 +674,7 @@ export default function Step4Panel({
                               </div>
                             </button>
                             <div id="image-help-content" hidden={!isImageHelpOpen} className="p-3 bg-yellow-950/20 space-y-5">
-              <p className="text-[10px] text-slate-500 text-center mt-2 leading-relaxed px-2">
+              <p className="step4-help-copy-compact text-slate-500 text-center mt-2 px-2">
                 {isOpenAIImageMode
                   ? 'API生成では、プロンプトに加えて、読み込み済みのキャラクターシートと有効な360°背景画像を参照画像として送信します。参照画像がない場合は文章のみで生成します。API利用料金が発生し、ChatGPTのサブスク料金とは別会計です。'
                   : 'Gemini API生成では、読み込み済みのキャラクターシートを参照画像として送信します。360°背景が有効で4コマ分の切り出し画像がそろっている場合は、それらも添付します。API利用料金がかかります。公式Web版で手動生成したい場合は、下の案内をご利用ください。'}
@@ -684,7 +686,7 @@ export default function Step4Panel({
                   <div className="mt-0.5 text-orange-400">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
                   </div>
-                  <div className="text-xs text-orange-200/80 leading-relaxed font-sans">
+                  <div className="step4-help-copy text-orange-200/80 font-sans">
                     <span className="font-bold text-orange-300">
                       {isOpenAIImageMode
                         ? '💡 サブスクの利用枠で生成し、API画像生成料金を節約したい方へ'
@@ -699,10 +701,10 @@ export default function Step4Panel({
                         <br />
                         Web版での生成にはChatGPT側の利用枠・上限が適用されます。この方法ではNano Bananaから画像生成APIを呼びません。ただし、アプリ内で行ったキャラ解析・シナリオ生成などのAPI料金は別途発生する場合があります。
                         <br />
-                        <span className="inline-block mt-2 text-[12px] text-yellow-300 font-bold bg-yellow-900/50 px-2 py-1.5 rounded border border-yellow-500/30">
+                        <span className="step4-help-copy-compact inline-block mt-2 text-yellow-300 font-bold bg-yellow-900/50 px-2 py-1.5 rounded border border-yellow-500/30">
                           ⚠️ 注意：プロンプトを貼り付けた際、ファイルとして添付されてしまった場合は、必ず「テキストフィールドに表示」をクリックしてプロンプトの全文を展開してから、キャラクターシート等の画像を添付してください。
                         </span><br />
-                        <span className="inline-block mt-2 text-[11px] text-cyan-300/80">
+                        <span className="step4-help-copy inline-block mt-2 text-cyan-300/80">
                           ⚠️ <strong>ChatGPTの仕様上、縦に細長すぎる画像になってしまう場合</strong>は、ChatGPT側の「アスペクト比」ボタンで手動修正するのではなく、以下の「画像比率修正プロンプト」をコピーしてChatGPTに貼り付けてみてください。綺麗な4コマの形に修正されます。
                         </span>
                       </>
@@ -716,7 +718,7 @@ export default function Step4Panel({
 
                     {!isOpenAIImageMode && (
                       <div className="mt-3 block w-full border-t border-blue-500/20 pt-3">
-                        <p className="text-[11px] text-cyan-200/90 leading-relaxed">
+                        <p className="step4-help-copy text-cyan-200/90">
                           ✨ <strong>Gemini Web用の修正プロンプト</strong>：生成結果の比率・人物・手足・コマ割りがおかしい場合は、下の文をコピーし、Geminiウェブ版に<strong>生成済み画像を添付</strong>して送信してください。
                         </p>
                         <button
@@ -743,7 +745,7 @@ export default function Step4Panel({
                           <span style={{ visibility: isUpscalePromptCopied ? 'hidden' : 'visible' }}>📋 Gemini用2K高解像度プロンプトをコピー</span>
                           {isUpscalePromptCopied && <span style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>✅ コピー完了</span>}
                         </button>
-                        <p className="mt-2 text-[10px] text-slate-400 leading-relaxed">
+                        <p className="step4-help-copy-compact mt-2 text-slate-400">
                           ※アプリ内のGemini APIでは再加工しません。コピーした文と画像をGeminiウェブ版へ貼り付ける手動修正用です。
                         </p>
                       </div>
@@ -886,7 +888,7 @@ No explanations. No partial results.`;
                           {isFixPromptCopied && <span style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>✅ コピー完了</span>}
                         </button>
                         <div className="mt-3 pt-3 border-t border-orange-500/20">
-                          <p className="text-[11px] text-cyan-300/80 leading-relaxed">
+                          <p className="step4-help-copy text-cyan-300/80">
                             ✨ ChatGPTの画像を2倍にアップスケールしたい場合は、生成済画像に対して、以下の「画像2倍アップスケールプロンプト」をコピーしてChatGPTに貼り付けてみてください。高精細な画像に補正されます。
                           </p>
                           <button

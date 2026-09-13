@@ -13,7 +13,7 @@ import {
 import ThinkingLog from './ThinkingLog';
 import Panorama360Viewer from './Panorama360Viewer';
 import { getSeasonContext } from '../lib/seasonal-outfit';
-import { DOCUMENTARY_ENDING_OPTIONS } from '../lib/ending-mode-policy';
+import { DOCUMENTARY_ENDING_OPTIONS, getEndingModePolicy } from '../lib/ending-mode-policy';
 
 /**
  * STEP 02: シナリオ構築設定パネル
@@ -72,6 +72,7 @@ export default function Step2Panel({
   showStatus,
   styleJson
 }) {
+  const isSeriousEnhancementMode = getEndingModePolicy(punchlineType).endingTone === 'serious';
   const allEnhancementCategoriesSelected = enhanceExpressions &&
     enhanceBodyLang &&
     enhanceEffects &&
@@ -204,7 +205,7 @@ export default function Step2Panel({
           </div>
         )}
 
-        <div className="flex flex-col md:flex-row gap-4 mb-4">
+        <div className="scenario-settings-grid flex flex-col md:flex-row gap-4">
           <div className={`flex-1 p-3 rounded-xl border ${(bg360Image && bg360Enabled) ? 'bg-[#050a14] border-cyan-500/30' : 'bg-[#050505] border-gray-700/50'}`}>
             <label className="text-xs font-bold mb-2 block flex items-center gap-1" style={{ color: (bg360Image && bg360Enabled) ? '#67e8f9' : '#ffffff' }}>
               <Globe size={14} />
@@ -282,30 +283,34 @@ export default function Step2Panel({
               placeholder="例: キャラシート通り / 全員水着 / ミリタリー装備... (空欄ならAIにおまかせ)"
             />
           </div>
-          <div className="flex-1 bg-[#050505] p-3 rounded-xl border border-yellow-500/20">
+          <div className="punchline-select-card flex-1 bg-[#050505] p-3 rounded-xl border border-yellow-500/20">
             <label className="text-xs font-bold text-yellow-400 mb-1 block flex items-center gap-1">
-              <span>🎬</span> ストーリーの結末（オチの方向性） <span className="text-[10px] text-gray-500 font-normal ml-auto">※ストーリー展開の指定</span>
+              <span>🎬</span> ストーリーの結末（オチの方向性）
+              <span className="punchline-select-hint">▼ 選択メニュー</span>
             </label>
-            <select
-              value={punchlineType}
-              onChange={(e) => setPunchlineType(e.target.value)}
-              style={{ color: '#ffffff', backgroundColor: '#111111' }}
-              className="w-full bg-[#111] text-white p-2 rounded border border-gray-700 focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500 outline-none text-sm font-mono cursor-pointer"
-            >
-              <option value="Auto">🤖 自動 (AIにおまかせ)</option>
-              <option value="Surreal">❄️ 静寂型 (シュール/無言)</option>
-              <option value="Explosion">🔥 爆発型 (カオス/叫び)</option>
-              <option value="FakeEmotion">😢 感動詐欺 (いい話風の狂気)</option>
-              <option value="Metafiction">📖 メタフィクション (枠を越える)</option>
-              <option value="Unreasonable">🔨 理不尽な制裁 (突然の暴力)</option>
-              <option value="RunningGag">🔁 天丼 (同じボケの最終形態)</option>
-              <option value="Dream">🛏️ 夢オチ (ループの恐怖)</option>
-              <option value="Misunderstanding">🤷 盛大な勘違い (すれ違いの頂点)</option>
-              <option value="CanceledEnding">🏃 打ち切りエンド (俺たちの戦いはこれからだ)</option>
-              {DOCUMENTARY_ENDING_OPTIONS.map(({ value, menuLabel }) => (
-                <option key={value} value={value}>📰 {menuLabel}</option>
-              ))}
-            </select>
+            <div className="punchline-select-control">
+              <select
+                value={punchlineType}
+                onChange={(e) => setPunchlineType(e.target.value)}
+                aria-label="ストーリーの結末を選択"
+                className="punchline-select-input w-full appearance-none font-mono"
+              >
+                <option value="Auto">🤖 自動 (AIにおまかせ)</option>
+                <option value="Surreal">❄️ 静寂型 (シュール/無言)</option>
+                <option value="Explosion">🔥 爆発型 (カオス/叫び)</option>
+                <option value="FakeEmotion">😢 感動詐欺 (いい話風の狂気)</option>
+                <option value="Metafiction">📖 メタフィクション (枠を越える)</option>
+                <option value="Unreasonable">🔨 理不尽な制裁 (突然の暴力)</option>
+                <option value="RunningGag">🔁 天丼 (同じボケの最終形態)</option>
+                <option value="Dream">🛏️ 夢オチ (ループの恐怖)</option>
+                <option value="Misunderstanding">🤷 盛大な勘違い (すれ違いの頂点)</option>
+                <option value="CanceledEnding">🏃 打ち切りエンド (俺たちの戦いはこれからだ)</option>
+                {DOCUMENTARY_ENDING_OPTIONS.map(({ value, menuLabel }) => (
+                  <option key={value} value={value}>📰 {menuLabel}</option>
+                ))}
+              </select>
+              <ChevronDown size={20} strokeWidth={3} className="punchline-select-chevron" aria-hidden="true" />
+            </div>
           </div>
         </div>
 
@@ -402,7 +407,7 @@ export default function Step2Panel({
             <div className="p-4 bg-orange-950/10 space-y-3">
               <p className="text-[11px] text-orange-200/70 leading-relaxed">
                 選択した項目だけを部分編集します。タイトル・Logline・場所・話者・未選択項目は保持され、変更漏れや他項目へのはみ出しは自動検証されます。<br/>
-                <span className="text-orange-300 font-bold">💡 「セリフ書換」は実際の発話を変更し、「ギャグ演出」はセリフを保ったまま間とリアクションを整えます。</span>
+                <span className="text-orange-300 font-bold">💡 「セリフ書換」は実際の発話を変更し、「{isSeriousEnhancementMode ? 'シリアス演出' : 'ギャグ演出'}」はセリフを保ったまま{isSeriousEnhancementMode ? '緊張・間・結末' : '間とリアクション'}を整えます。</span>
               </p>
 
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -513,8 +518,8 @@ export default function Step2Panel({
                   )}
                   <div className="text-center">
                     <div className={`text-2xl mb-1 ${enhanceGag ? 'scale-110' : 'opacity-70 grayscale'}`}>🎭</div>
-                    <div className="text-[11px] font-bold tracking-wider">ギャグ演出</div>
-                    <div className="text-[9px] opacity-70 mt-1">間・反応・オチ</div>
+                    <div className="text-[11px] font-bold tracking-wider">{isSeriousEnhancementMode ? 'シリアス演出' : 'ギャグ演出'}</div>
+                    <div className="text-[9px] opacity-70 mt-1">{isSeriousEnhancementMode ? '緊張・間・結末' : '間・反応・オチ'}</div>
                   </div>
                 </label>
 
@@ -550,7 +555,7 @@ export default function Step2Panel({
               </div>
 
               <div className="text-xs text-orange-200/80 text-center font-mono py-1.5 bg-black/20 border border-white/5 rounded-md">
-                強化対象: {[enhanceExpressions && "表情", enhanceBodyLang && "身体", enhanceEffects && "演出", enhanceBackgrounds && "背景", enhanceCameraWork && "カメラ", enhanceDialogue && "セリフ", enhanceGag && "ギャグ"].filter(Boolean).join(" / ") || "未選択"}
+                強化対象: {[enhanceExpressions && "表情", enhanceBodyLang && "身体", enhanceEffects && "演出", enhanceBackgrounds && "背景", enhanceCameraWork && "カメラ", enhanceDialogue && "セリフ", enhanceGag && (isSeriousEnhancementMode ? "シリアス" : "ギャグ")].filter(Boolean).join(" / ") || "未選択"}
               </div>
 
               <div className="flex gap-2">

@@ -7,6 +7,7 @@ import {
   SCENARIO_SHOT_DESIGN_RULES
 } from './composition-variety.js';
 import { SCENARIO_FACIAL_ACTING_CONTRACT } from './facial-acting.js';
+import { getEndingModePolicy } from './ending-mode-policy.js';
 
 const CATEGORY_DEFINITIONS = Object.freeze({
   expressions: {
@@ -39,6 +40,25 @@ const CATEGORY_DEFINITIONS = Object.freeze({
   }
 });
 
+const SERIOUS_DIRECTION_DEFINITION = Object.freeze({
+  label: 'シリアス演出',
+  instruction: '原文の緊張、沈黙、間、リアクション、結末の見せ方を強める。セリフはdialogueも選択された場合だけ変える。全4コマで既存の絵柄と通常頭身を維持し、ギャグ化、ちびキャラ化、コミカルなデフォルメを追加しない'
+});
+
+const SERIOUS_GESTURE_VARIETY_RULES = `
+             - **【シリアスな身体演技・ジェスチャー多様化】**:
+               * キャラクター参照画像に写るポーズは顔・髪・衣装・体格の同一性資料であり、定番動作ではない。参照ポーズを各コマのActionとして反復しない。
+               * 全4コマで参照画像と同じ絵柄・顔設計・通常頭身を維持する。緊張、抑制、視線、重心移動、環境への働きかけ、動作後の余韻で演出差を作り、ちびキャラ、コミカルな身体変形、絵柄変更を使わない。
+               * 各Actionでは動作の直前・最中・直後、支持脚または着座面、重心、左右の手の役割、接触対象を具体化する。顔、重要な手、小道具が重ならない非対称のシルエットを作る。
+               * 明示された動作、静かな間、人物の同一性、台詞、小道具の所有・向き、手足の接続・本数を保ち、原文の深刻さを別の出来事へ置き換えない。`;
+
+const getCategoryDefinitions = (punchlineType) => {
+  const serious = getEndingModePolicy(punchlineType).endingTone === 'serious';
+  return serious
+    ? Object.freeze({ ...CATEGORY_DEFINITIONS, gag: SERIOUS_DIRECTION_DEFINITION })
+    : CATEGORY_DEFINITIONS;
+};
+
 const METADATA_FIELDS = Object.freeze([
   { key: 'title', label: 'タイトル / Topic', prefixes: ['## タイトル:', 'Topic:'] },
   { key: 'logline', label: 'Logline', prefixes: ['Logline:'] },
@@ -68,7 +88,8 @@ const HARD_ENHANCEMENT_ISSUE_CODES = new Set([
   'emotion_changed_without_selection',
   'background_changed_without_selection',
   'tone_escalation',
-  'anatomy_escalation'
+  'anatomy_escalation',
+  'serious_style_switch'
 ]);
 
 const normalizeText = (value) =>
@@ -209,17 +230,20 @@ export const buildScenarioEnhancementPrompt = ({
   scenario,
   selectedCategories = [],
   styleJson = null,
-  validationIssues = []
+  validationIssues = [],
+  punchlineType = null
 }) => {
   const selected = normalizeEnhancementCategories(selectedCategories);
-  const locked = Object.keys(CATEGORY_DEFINITIONS).filter((category) => !selected.includes(category));
+  const categoryDefinitions = getCategoryDefinitions(punchlineType);
+  const serious = getEndingModePolicy(punchlineType).endingTone === 'serious';
+  const locked = Object.keys(categoryDefinitions).filter((category) => !selected.includes(category));
   const selectedInstructions = selected
     .map(
       (category) =>
-        `- ${CATEGORY_DEFINITIONS[category].label}: ${CATEGORY_DEFINITIONS[category].instruction}`
+        `- ${categoryDefinitions[category].label}: ${categoryDefinitions[category].instruction}`
     )
     .join('\n');
-  const lockedLabels = locked.map((category) => CATEGORY_DEFINITIONS[category].label).join('、');
+  const lockedLabels = locked.map((category) => categoryDefinitions[category].label).join('、');
   const dialogueRule = selected.includes('dialogue')
     ? `- セリフ強化を選択したため、「」内のセリフを最低1つは必ず変更する。話者の順序と人数は変えない
 - 変更が不要なセリフまで一律に言い換えない。短く口語的に保ち、セリフ全体を元の約1.5倍以内に収める
@@ -238,11 +262,17 @@ export const buildScenarioEnhancementPrompt = ({
     ? `\n【前回出力の検証エラー】\n${validationIssues.map((issue) => `- ${issue}`).join('\n')}\nこのエラーをすべて解消して再出力すること。\n`
     : '';
 
+  const narrativeModeRule = serious
+    ? '- シリアス・ドキュメンタリーとして原文の事実と深刻さを保つ。全4コマで既存の絵柄・顔設計・通常頭身を維持し、ギャグ化、ちびキャラ化、コミカルなデフォルメ、絵柄変更を追加しない'
+    : '- 元シナリオのギャグの種類と強さを保ち、別の笑いや事件へ置き換えない';
+  const gestureVarietyRules = serious ? SERIOUS_GESTURE_VARIETY_RULES : SCENARIO_GESTURE_VARIETY_RULES;
+
   return `あなたは4コマ漫画の編集者です。元シナリオを、選択されたカテゴリだけ部分編集してください。
 
 【最優先の編集契約】
 - タイトル、Logline、Location、Outfit、Punchline、登場人物、話者順、4コマ構造をそのまま保つ
-- LoglineとPunchlineが示す笑いの温度、静けさ、テンポを最優先し、派手さを目的に反転させない
+- LoglineとPunchlineが示す物語の温度、静けさ、テンポを最優先し、派手さを目的に反転させない
+${narrativeModeRule}
 - 選択されていないカテゴリは変更しない。未選択: ${lockedLabels || 'なし'}
 - 全身の誇張や強い遠近法は許可する。手足の接続・本数と小道具の所有・向きを保ち、部位の増殖、身体崩壊、ボディホラーを新たに加えない
 - 「MAX」「限界」「極端に」など強度語の機械的な足し算ではなく、具体性と読みやすさを上げる
@@ -251,7 +281,7 @@ ${dialogueRule}
 ${backgroundRule}
 ${facialActingRule}
 ${FINAL_PANEL_ACTIVE_STAGING_SCENARIO_CONTRACT}
-${SCENARIO_GESTURE_VARIETY_RULES}
+${gestureVarietyRules}
 ${selected.includes('camera') && selected.includes('body') ? SCENARIO_SHOT_DESIGN_RULES : ''}
 
 【選択されたカテゴリ — 変更必須】
@@ -268,9 +298,12 @@ ${scenario}`;
 export const validateScenarioEnhancement = ({
   originalScenario,
   candidateScenario,
-  selectedCategories = []
+  selectedCategories = [],
+  punchlineType = null
 }) => {
   const selected = normalizeEnhancementCategories(selectedCategories);
+  const categoryDefinitions = getCategoryDefinitions(punchlineType);
+  const serious = getEndingModePolicy(punchlineType).endingTone === 'serious';
   const original = inspectScenario(originalScenario);
   const candidate = inspectScenario(candidateScenario);
   const issues = [];
@@ -429,7 +462,7 @@ export const validateScenarioEnhancement = ({
         issues,
         issueCodes,
         `${category}_unchanged`,
-        `${CATEGORY_DEFINITIONS[category].label}を選択したのに対象箇所が変更されていません`
+        `${categoryDefinitions[category].label}を選択したのに対象箇所が変更されていません`
       );
     }
   }
@@ -464,6 +497,15 @@ export const validateScenarioEnhancement = ({
     );
   }
 
+  if (serious && candidate.emotions.some((emotion) => /CHIBI(?:_GAG)?|COMEDY/i.test(emotion))) {
+    addIssue(
+      issues,
+      issueCodes,
+      'serious_style_switch',
+      'シリアス・ドキュメンタリーではCHIBI・COMEDY系の絵柄変更タグを追加できません'
+    );
+  }
+
   return {
     ok: issueCodes.length === 0,
     issueCodes,
@@ -475,6 +517,7 @@ export const validateScenarioEnhancement = ({
 export const runValidatedScenarioEnhancement = async ({
   originalScenario,
   selectedCategories = [],
+  punchlineType = null,
   buildPrompt,
   requestEnhancement,
   maxAttempts = 2,
@@ -492,7 +535,8 @@ export const runValidatedScenarioEnhancement = async ({
     const validation = validateScenarioEnhancement({
       originalScenario,
       candidateScenario: text,
-      selectedCategories
+      selectedCategories,
+      punchlineType
     });
 
     if (validation.ok) {
@@ -535,7 +579,8 @@ export const runValidatedScenarioEnhancement = async ({
   const originalValidation = validateScenarioEnhancement({
     originalScenario,
     candidateScenario: originalText,
-    selectedCategories
+    selectedCategories,
+    punchlineType
   });
   onWarning?.(originalValidation, originalText, true);
   return {

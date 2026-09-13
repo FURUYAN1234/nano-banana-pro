@@ -510,6 +510,7 @@ ${parsedData.scenario}
 export async function enhanceScenarioText({
   scenario,
   selectedCategories,
+  punchlineType,
   castList,
   styleJson,
   onProgress
@@ -517,10 +518,12 @@ export async function enhanceScenarioText({
   return runValidatedScenarioEnhancement({
     originalScenario: scenario,
     selectedCategories,
+    punchlineType,
     buildPrompt: ({ validationIssues }) =>
       buildScenarioEnhancementPrompt({
         scenario,
         selectedCategories,
+        punchlineType,
         styleJson,
         validationIssues
       }),
