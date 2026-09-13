@@ -566,7 +566,7 @@ export default function Step4Panel({
               </button>
             </div>
 
-            <div className="relative mt-2">
+            <div className="relative" style={{ paddingTop: '12px' }}>
               {!isAssembling && !finalPrompt && (
                 <div style={{ position: 'absolute', inset: -2, zIndex: 200, backgroundColor: 'rgba(10,12,16,0.85)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)', pointerEvents: 'auto', borderRadius: '0.625rem' }} />
               )}
@@ -575,7 +575,7 @@ export default function Step4Panel({
                 style={{ display: 'flex', width: '100%', boxSizing: 'border-box', marginBottom: '16px' }}
                 onClick={() => regenerateImage()}
                 disabled={!finalPrompt || isGeneratingImage || isFixingPolicy}
-                className="primary-step-action primary-step-action-accent-border w-full font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg border active:scale-95 disabled:opacity-50 disabled:cursor-wait mt-4"
+                className="primary-step-action primary-step-action-accent-border w-full font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg border active:scale-95 disabled:opacity-50 disabled:cursor-wait"
               >
                 {isGeneratingImage ? <Loader2 size={20} className="animate-spin" /> : <ImageIcon size={20} />}
                 <div className="flex flex-col items-center">
