@@ -41,3 +41,73 @@ body {
   background-color: #334155;
   color: #64748b;
 }
+
+.manga-color-mode {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+
+.manga-color-mode legend {
+  color: #e2e8f0;
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.manga-color-mode-options {
+  display: flex;
+  gap: 8px;
+  max-width: 280px;
+}
+
+.manga-color-mode-option {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex: 1;
+  box-sizing: border-box;
+  height: 24px;
+  padding: 0 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #94a3b8;
+  color: #0f172a;
+  font-size: 12px;
+  line-height: 1;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.manga-color-mode-option.is-selected {
+  background: #fff;
+  border-color: #fb923c;
+  color: #0f172a;
+}
+
+.manga-color-mode-option:not(.is-selected):hover {
+  background: #cbd5e1;
+}
+
+.manga-color-mode-option input {
+  accent-color: #c2410c;
+}
+
+.manga-color-mode-option:focus-within {
+  outline: 2px solid #fb923c;
+  outline-offset: 3px;
+}
+
+.manga-color-mode:disabled .manga-color-mode-option {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.manga-color-mode p {
+  margin: 8px 0 0;
+  font-size: 12px;
+  line-height: 1.7;
+  color: #94a3b8;
+}

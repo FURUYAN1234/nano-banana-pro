@@ -356,7 +356,7 @@ export default function Step4Panel({
         <div className="relative bg-[#0d1117] p-8 rounded-xl border border-white/5 shadow-3xl h-full flex flex-col">
           <div className="flex items-center justify-between mb-4">
             <label htmlFor="final-prompt-editor" className="text-[11px] font-bold text-orange-300">
-              最終プロンプト（直接編集できます）
+              最終プロンプト
             </label>
             <div className="flex items-center gap-3">
               <button
@@ -372,6 +372,10 @@ export default function Step4Panel({
           </div>
 
           <ThinkingLog thought={assembleThought} placeholder="> ボタンを押すとプロンプト構築ログがここに表示されます..." />
+
+          <div className="mt-2 text-[11px] text-slate-500 text-center font-mono">
+            この欄で直接編集できます。編集した内容が、プロンプトのコピーと画像生成の両方に使われます。
+          </div>
 
           <div className="flex flex-col h-full mt-4 gap-4">
             <div className="relative flex-1">
@@ -567,14 +571,6 @@ export default function Step4Panel({
                 <div style={{ position: 'absolute', inset: -2, zIndex: 200, backgroundColor: 'rgba(10,12,16,0.85)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)', pointerEvents: 'auto', borderRadius: '0.625rem' }} />
               )}
 
-              {/* Instruction Footer */}
-              <div className="bg-slate-900 border-t border-white/10 p-2 text-[11px] text-slate-500 text-center font-mono">
-                この欄で直接編集できます。編集した内容が、プロンプトのコピーと画像生成の両方に使われます。
-                <span className="block mt-1">
-                  API生成時は、添付する参照画像の用途を示す補足を本文の後ろに追加します。入力した本文やコピー内容は書き換えません。
-                </span>
-              </div>
-
               <button
                 style={{ display: 'flex', width: '100%', boxSizing: 'border-box', marginBottom: '16px' }}
                 onClick={() => regenerateImage()}
@@ -583,7 +579,7 @@ export default function Step4Panel({
               >
                 {isGeneratingImage ? <Loader2 size={20} className="animate-spin" /> : <ImageIcon size={20} />}
                 <div className="flex flex-col items-center">
-                  <span>{isGeneratingImage ? "画像を生成中..." : "画像を生成する (STEP 4)"}</span>
+                  <span>{isGeneratingImage ? "画像を生成中..." : "APIで画像をアプリ内で生成する（STEP4）"}</span>
                 </div>
               </button>
                           <div className="border border-yellow-500/30 rounded-lg overflow-hidden" style={{ margin: 0 }}>

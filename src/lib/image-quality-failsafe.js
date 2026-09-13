@@ -1,3 +1,5 @@
+import { isMonochromePrompt } from './manga-render-mode.js';
+
 export const IMAGE_QUALITY_MAX_ATTEMPTS = 3;
 
 const incidentalPrintIssues = review => (Array.isArray(review?.issues) ? review.issues : []).filter(issue =>
@@ -73,7 +75,7 @@ export const buildImageQualityRepairPrompt = ({ originalPrompt = '', issues = []
   Correct only the concrete visible defects listed below, using the smallest coherent edit:
   ${concreteIssues || '- No concrete issue was supplied; do not introduce any change.'}
   PRESERVE:
-  Do not change the approved dialogue, cast, story action, identities, canonical clothing, reading order, camera, crop, typography, colors, or already-correct content outside the defects.
+  Do not change the approved dialogue, cast, story action, identities, canonical clothing, reading order, camera, crop, typography, ${isMonochromePrompt(originalPrompt) ? 'or already-correct ink/tone assignments. Preserve the monochrome medium; remove the reported forbidden color or grey wherever visible, including page-wide tint if reported, without altering correct shapes, text or acting' : 'colors, or already-correct content outside the defects'}.
   Keep the original as the visual baseline. Never redraw the page from scratch or copy the reference-sheet layout.
   Allow only necessary local contact and shadow changes caused by fixing the listed defect; do not freeze the defective geometry itself.
   VERIFY:

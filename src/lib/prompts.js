@@ -5,6 +5,7 @@ import { buildScenarioEnhancementPrompt } from './scenario-enhancement';
 import { buildManualTopicExclusionPrompt } from './manual-topic-exclusions';
 import { buildSeasonalOutfitInstruction, getSeasonContext } from './seasonal-outfit';
 import { SHARED_IMAGE_QUALITY_CONTRACT } from './shared-image-quality';
+import { MONOCHROME_IMAGE_QUALITY_CONTRACT, MONOCHROME_WARDROBE_LOCK, MONOCHROME_STYLE_QA, MONOCHROME_BACKGROUND_LOCK, MONOCHROME_FINAL_CHROMA_AUDIT } from './manga-render-mode.js';
 import {
   MANGA_FACIAL_ACTING_LOCK,
   SCENARIO_FACIAL_ACTING_CONTRACT
@@ -75,7 +76,7 @@ export const getCharacterAnalysisPrompt = () => {
              - **Bob**: 毛先が「顎〜首」で止まっている。完全に宙に浮いている。
              - **Medium**: 毛先が「肩」に触れている。
              - **Long**: 毛先が「鎖骨」より下。**黒髪の場合は特に注意して探せ。**
-           - **アカリの判定**: もし毛先が内側にカールの軌跡を描いているなら「Internal Round Bob」。外に跳ねているなら「Flicked Bob」。断定せよ。
+           - **ボブ形状の汎用判定**: どの人物でも、毛先が内側にカールの軌跡を描いているなら「Internal Round Bob」、外に跳ねているなら「Flicked Bob」とし、観察結果に基づいて断定せよ。
          - **シルエット (Volume)**:
            - 頭頂部のボリューム、サイドの膨らみを記述せよ。
          - 単なる「Short」は禁止。「Chin-length Bob」や「Shoulder-length Layered」など具体的に。
@@ -114,7 +115,7 @@ export const getCharacterAnalysisPrompt = () => {
         | カテゴリ | 特徴の詳細（日本語） | 画像生成AI用 重み付きタグ (Weighted Immutable Prompts) |
         | :--- | :--- | :--- |
         | **基本(Base)** | 性別: [性別]<br>年齢: [年齢] | **[WEIGHTS]: (female:1.6), (woman:1.4), (young adult:1.2)** |
-        | **髪(Hair)** | 色: [色]<br>長さ: [Short/Medium/Long]<br>構造: [Bob/Straight/Wavy/Spiky]<br>前髪: [形状] | **[WEIGHTS]: (chin-length bob:1.5), (orange hair:1.4), (messy:1.2)** |
+        | **髪(Hair)** | 色: [色]<br>長さ: [Short/Medium/Long]<br>構造: [Bob/Straight/Wavy/Spiky]<br>前髪: [形状] | **[WEIGHTS]: (chin-length bob:1.5), ([detected color] hair:1.4), (messy:1.2)** |
         | **顔(Face)** | 目: [色/形]<br>肌: [色]<br>髭: [有無]<br>眼鏡: [有無] | **[WEIGHTS]: (white beard:1.5), (tanned skin:1.5), (black sunglasses:1.6)** （※眼鏡無しなら **(no glasses:1.5)** を絶対付与） |
         | **服装(Outfit)** | [服の詳細: 制服/私服、上着の有無など] | [weighted tags]: (formal outfit:1.2), (hoodie:1.1) |
         | **性格(Mind)** | **[OCR抽出]**: [ここにテキスト全文] | **[WEIGHTS]: (cheerful:1.3), (energetic:1.2)** （※英語の性格タグを必須で記述） |
@@ -359,7 +360,7 @@ ${styleJson.anti_patterns ? `            - 絶対禁止事項:\n${styleJson.anti
                - 絵での表現が最優先。説明調のセリフは厳禁。読者の読む気を削ぐな。
                - **【サブテキスト（建前と本音のズレ）の強制】**: 状況をそのまま説明するセリフを完全禁止する。セリフを「建前」や「全く別の話題」にし、絵（ト書き・表情）と矛盾させる（例: 大汗をかいて震えながら「今日の夕飯、ハンバーグでいいかな？」と言う等）ことで、ギャグマンガ特有のシュールな笑いや「間」を演出せよ。
                - **【物理・身体変形アクションの強制】**: 感情のト書きは、具体的な物理アクションに変換せよ。「驚く」ではなく「髪の毛が逆立ち口から魂が抜ける」、「怒る」ではなく「顔から湯気を出して持っている物を手放す」等、画像生成AIが拾いやすい視覚的ダイナミズムを強制せよ。
-              - **【構図ルール】ト書き（状況の説明）では、主役の動作を中心に記述しつつ、同じコマにいる他キャラのリアクションや存在も簡潔に描写してよい。** 例: 「アカリがツッコむ。横でリンが呆れ、奥でサエコが爆笑している」のような群像描写は大歓迎。ただし1キャラあたりの描写は1文以内に留め、冗長にならないこと。同じ場面に居合わせている喋らないキャラがいる場合、ト書きの末尾に「（リアクション: キャラ名→表情や動作）」の形式で簡潔に添えよ。例: 「アカリがツッコむ（リアクション: リン→呆れ顔、サエコ→爆笑）」。4コマ中**最低2コマ**にはこのリアクション描写を含めること。
+              - **【構図ルール】ト書き（状況の説明）では、主役の動作を中心に記述しつつ、同じコマにいる他キャラのリアクションや存在も簡潔に描写してよい。** 例: 「キャラAがツッコむ。横でキャラBが呆れ、奥でキャラCが爆笑している」のような群像描写は大歓迎。ただし1キャラあたりの描写は1文以内に留め、冗長にならないこと。同じ場面に居合わせている喋らないキャラがいる場合、ト書きの末尾に「（リアクション: キャラ名→表情や動作）」の形式で簡潔に添えよ。例: 「キャラAがツッコむ（リアクション: キャラB→呆れ顔、キャラC→爆笑）」。4コマ中**最低2コマ**にはこのリアクション描写を含めること。
               - **【超重要】汗マークや怒りマークなどの「漫符」を描写する場合、文字ラベル（例: "POPPING VEIN", "LARGE SWEAT DROP"など）や設定資料に書かれるような矢印・注釈テキストを画面内に絶対に描画させないこと。純粋な視覚的シンボルのみを使用し、一切の英単語ラベルを排除せよ。**
   
            2. **テキストの量的制限 (Compact Text Quantity)**:
@@ -736,7 +737,7 @@ const CROSS_PANEL_WARDROBE_COLOR_LOCK = `CROSS-PANEL WARDROBE COLOR LOCK:
 
 export const buildChatGPTMangaPrompt = (p) => {
   const {
-    safeTopic, watermarkEng, styleCore, safeLocation,
+    safeTopic, watermarkEng, styleCore, safeLocation, isMonochrome = false,
     bg360Image, bg360Analysis, bg360Enabled,
     VAR_CAST_LIST_CHATGPT, identityMatrix, activeOutfit,
     scriptLock, panelSections // 事前にビルドされた4パネル分のセクション文字列
@@ -746,9 +747,9 @@ export const buildChatGPTMangaPrompt = (p) => {
     `
 BACKGROUND REFERENCE IMAGE:
 Among ALL attached images, identify the one with a panoramic 2:1 width-to-height aspect ratio (equirectangular format). That image is the 360° BACKGROUND REFERENCE — NOT a character sheet. All other attached images are CHARACTER REFERENCE sheets.
-⚠️ CRITICAL: This panoramic image is ONLY for background reference (colors, lighting, architecture). Do NOT imitate its 2:1 wide aspect ratio. Your OUTPUT must remain A4 PORTRAIT (1:1.414 tall) with 4 vertical panels. The panoramic image is NOT a layout template.
+⚠️ CRITICAL: This panoramic image is ONLY for background reference (${isMonochrome ? 'geometry, light direction, architecture; translate into black/white ink and screens' : 'colors, lighting, architecture'}). Do NOT imitate its 2:1 wide aspect ratio. Your OUTPUT must remain A4 PORTRAIT (1:1.414 tall) with 4 vertical panels. The panoramic image is NOT a layout template.
 ⚠️ CRITICAL: DO NOT copy any character clothing or outfits from the 360° background image. Characters MUST wear the specified outfits.
-Use the 360° background image's lighting direction (${bg360Analysis.lighting}), spatial layout, and environmental details as the consistent setting for all panels. Match shadow directions and ambient color temperature to the background reference. At least 3 of 4 panels must use this background environment.
+Use the 360° background image's lighting direction (${bg360Analysis.lighting}), spatial layout, and environmental details as the consistent setting for all panels. ${isMonochrome ? 'Match shadow directions using black ink, white highlights and regular halftone; simplify nonessential detail for readability.' : 'Match shadow directions and ambient color temperature to the background reference.'} At least 3 of 4 panels must use this background environment.
 `
   ) : '';
 
@@ -758,7 +759,7 @@ Use the 360° background image's lighting direction (${bg360Analysis.lighting}),
   const compactCastDetails = compactChatGPTCastDetails(VAR_CAST_LIST_CHATGPT);
   return `OUTPUT: Single image. Draw manga directly.
 
-ABSOLUTE TASK: new 4-panel manga, not a reference sheet. Use character refs only for face, hair, eyes, skin, glasses.
+ABSOLUTE TASK: new 4-panel manga, not a reference sheet. Use character refs only for ${isMonochrome ? 'face/eye shape, hair structure, glasses and design; all regions obey the black ink plate' : 'face, hair, eyes, skin, glasses'}.
 
 FORMAT:
 - A4 portrait 1:1.414; 4 equal horizontal panels, 95% width, thick white gutters, no large margins/space below panel 4.
@@ -770,13 +771,13 @@ ${MANGA_PAGE_TYPOGRAPHY_LOCK_COMPACT}
 ${scriptLock}
 
 ART / RENDERING QUALITY:
-${SHARED_IMAGE_QUALITY_CONTRACT}
-- Clean finish: crisp foreground, softer background, lighting.
+${isMonochrome ? MONOCHROME_IMAGE_QUALITY_CONTRACT : SHARED_IMAGE_QUALITY_CONTRACT}
+- Clean finish: ${isMonochrome ? 'crisp ink edges; simpler, thinner background lines; white separation, no blur.' : 'crisp foreground, softer background, lighting.'}
 ${MANGA_FACIAL_ACTING_LOCK}
-- CLEAN SURFACE PROTOCOL: no grain/speckles/dithering/rough texture/pores/moire/dust/particles/sparkle unless a panel style exception allows it.
-- MANGA FINISH ASSIST: preserve script/cast/camera/layout; keep bubble space, cast/background light and color, coherent anatomy, and setting depth.
-${RICH_PANEL_COMPOSITION_LOCK}
-- CLOTHING FOLD SHADOW ASSIST: for full-color clothing only, render overlapping, pinched, and intersecting fabric folds with a few crisp wedge-shaped triangular cel-shaded shadow planes. Make a distinct small dark triangular fill at each selected crease junction, not merely a soft fold gradient. Use them as form shadows, not printed patterns or random geometric marks; preserve the outfit, material, and scene lighting.
+- CLEAN SURFACE PROTOCOL: ${isMonochrome ? 'regular black-on-white dots and intentional hatching allowed; no random noise, moire or marks on lit skin.' : 'no grain/speckles/dithering/rough texture/pores/moire/dust/particles/sparkle unless a panel style exception allows it.'}
+- MANGA FINISH ASSIST: preserve script/cast/camera/layout; keep bubble space, ${isMonochrome ? 'readable ink shapes and screen density' : 'cast/background light and color'}, coherent anatomy, and setting depth.
+${isMonochrome ? MONOCHROME_BACKGROUND_LOCK : RICH_PANEL_COMPOSITION_LOCK}
+- CLOTHING FOLD SHADOW ASSIST: ${isMonochrome ? 'use a few localized solid-black or hatched wedge shadows where fabric overlaps; preserve white lit fabric and garment tone assignments. Do not scatter geometric patterns.' : 'for full-color clothing only, render overlapping, pinched, and intersecting fabric folds with a few crisp wedge-shaped triangular cel-shaded shadow planes. Make a distinct small dark triangular fill at each selected crease junction, not merely a soft fold gradient. Use them as form shadows, not printed patterns or random geometric marks; preserve the outfit, material, and scene lighting.'}
 ${SAFE_VISUAL_CONTENT_LOCK}
 - ${styleCore}
 - Setting: ${safeLocation}
@@ -785,10 +786,10 @@ ${bg360Block}
 CAMERA: vary angles; preserve anatomy and the script lock.
 
 CHARACTER IDENTITY:
-- Reproduce reference face, hair, eyes, skin, accessories. No feature swapping.
+- ${isMonochrome ? 'Reproduce reference geometry and design using black ink/white paper: face/eye shape, hairstyle, glasses and accessory shapes. No source hue or skin base tone.' : 'Reproduce reference face, hair, eyes, skin, accessories.'} No feature swapping.
 ${outfitRule}
-${CROSS_PANEL_WARDROBE_COLOR_LOCK}
-- Adults 20+. Same face/hair/glasses/skin/outfit across all panels.
+${isMonochrome ? MONOCHROME_WARDROBE_LOCK : CROSS_PANEL_WARDROBE_COLOR_LOCK}
+- Adults 20+. ${isMonochrome ? 'Same face/hair/glasses/outfit shapes and ink/tone assignments; lit skin always white.' : 'Same face/hair/glasses/skin/outfit across all panels.'}
 - Cast details: ${compactCastDetails}
 - Identity Anchor: ${identityMatrix}
 - GLASSES CHECK: every panel must match the Identity Matrix.
@@ -806,10 +807,10 @@ DIALOGUE / BUBBLE QA LOCK:
 - If one character, punctuation mark, added word, omitted word, or speaker differs from Dialogue, redraw. Each bubble tail tip must terminate at its assigned speaker's mouth/head silhouette, never at a neighbor or empty space. Trace every tail before final render; no extra bubbles, captions, narration, or printed speaker names.
 
 CHARACTER QA PASS:
-- Match hair color, hairstyle, eye color, glasses status, skin tone, outfit, and accessories; redraw swaps, merges, or wrong cast.
+- ${isMonochrome ? 'Match face/eye shape, hairstyle, glasses, outfit design and stable ink/tone assignments, with pure white lit skin' : 'Match hair color, hairstyle, eye color, glasses status, skin tone, outfit, and accessories'}; redraw swaps, merges, or wrong cast.
 
-ART-STYLE DIFFERENCE QA LOCK:
-- Adjacent PANEL STYLE LOCKs differ in at least three of linework, environmental palette, shading, background/VFX, texture/surface treatment. Environmental palette changes apply to background, lighting treatment, and VFX, never to canonical garment colors. Redraw the same clean anime style with only pose, expression, saturation, glow, or speed lines changed. Never override script/dialogue/identity/key prop/A4 layout.
+${isMonochrome ? MONOCHROME_STYLE_QA : `ART-STYLE DIFFERENCE QA LOCK:
+- Adjacent PANEL STYLE LOCKs differ in at least three of linework, environmental palette, shading, background/VFX, texture/surface treatment. Environmental palette changes apply to background, lighting treatment, and VFX, never to canonical garment colors. Redraw the same clean anime style with only pose, expression, saturation, glow, or speed lines changed. Never override script/dialogue/identity/key prop/A4 layout.`}
 
 THINGS TO AVOID:
 - No plastic skin, extra logos/watermarks, floating/ghost eyes/faces, duplicate humans, unrelated text.
@@ -820,6 +821,7 @@ PANEL-BY-PANEL CLOTHING FOLD PRIORITY: When a panel shows folded clothing, rende
 PANEL DESCRIPTIONS:
 
 ${panelSections}
+${isMonochrome ? `\n${MONOCHROME_FINAL_CHROMA_AUDIT}` : ''}
 `;
 };
 
@@ -829,7 +831,7 @@ ${panelSections}
  */
 export const buildGeminiMangaPrompt = (p) => {
   const {
-    safeTopic, watermarkEng, styleCore, safeLocation,
+    safeTopic, watermarkEng, styleCore, safeLocation, isMonochrome = false,
     bg360Image, bg360Analysis, bg360Enabled, bg360CroppedPanels,
     VAR_CAST_LIST, identityMatrix, activeOutfit,
     dynamicCamera, scriptLock, panelSections // 事前にビルドされた4パネル分のセクション文字列
@@ -846,17 +848,17 @@ BACKGROUND REFERENCE IMAGES (Per-Panel Cropped Views):
 - Image 4 → Background for Panel 4
 Each image is a perspective-cropped view from a 360° panorama showing the exact scenery for that panel.
 ⚠️ RULES:
-- Use each background image as the visual reference for its corresponding panel's scenery. Match colors, lighting (${bg360Analysis.lighting}), objects (${bg360Analysis.objects || 'various'}), and mood (${bg360Analysis.mood || 'contextual'}).
+- Use each background image as the visual reference for its corresponding panel's scenery. ${isMonochrome ? 'Translate into black/white ink and regular screens; preserve light direction' : 'Match colors, lighting'} (${bg360Analysis.lighting}), objects (${bg360Analysis.objects || 'various'}), and mood (${bg360Analysis.mood || 'contextual'}).
 - DO NOT copy any character clothing or outfits from the background images.
 - Draw characters IN FRONT of these backgrounds.
-- Match shadow directions and ambient color temperature to the references.
+- ${isMonochrome ? 'Preserve shadow directions; simplify nonessential detail with sparse screens, never colored light.' : 'Match shadow directions and ambient color temperature to the references.'}
 `
     : `
 BACKGROUND REFERENCE IMAGE:
 Among ALL attached images, identify the one with a panoramic 2:1 width-to-height aspect ratio (equirectangular format). That image is the 360° BACKGROUND REFERENCE — NOT a character sheet. All other attached images are CHARACTER REFERENCE sheets.
 ⚠️ CRITICAL: The panoramic image is ONLY for background reference. DO NOT copy any character clothing or outfits from the 360° background image.
 Use the 360° background's lighting direction (${bg360Analysis.lighting}), spatial layout, objects (${bg360Analysis.objects || 'various'}), and mood (${bg360Analysis.mood || 'contextual'}) as the consistent setting for all panels.
-Match shadow directions and ambient color temperature to the 360° background reference.
+${isMonochrome ? 'Preserve shadow directions using black ink and white highlights; simplify nonessential detail with sparse screens.' : 'Match shadow directions and ambient color temperature to the 360° background reference.'}
 At least 3 of 4 panels MUST use this background environment. 1 panel may deviate for flashback/imagination scenes.
 `
   ) : '';
@@ -895,7 +897,7 @@ ${bg360Block}
 
 VISUAL REPRODUCTION:
 Strictly reproduce reference image designs:
-- EXACT hairstyle/color, eye color/shape, skin tone.
+- ${isMonochrome ? 'EXACT hairstyle, face/eye shape and stable ink/tone assignments; pure white lit skin, never copy reference colors.' : 'EXACT hairstyle/color, eye color/shape, skin tone.'}
 - EXACT accessories (glasses, hats). NO add/remove.
 - NO feature swapping. Keep unique charm points in EVERY panel.
 ${outfitSection}
@@ -904,13 +906,13 @@ ${VAR_CAST_LIST}
 ${outfitOverride}
 【Identity Anchor】: Cross-panel consistency is MANDATORY. Redraw if hair/eyes/glasses/outfit mismatch.
 ${identityMatrix}
-${CROSS_PANEL_WARDROBE_COLOR_LOCK}
+${isMonochrome ? MONOCHROME_WARDROBE_LOCK : CROSS_PANEL_WARDROBE_COLOR_LOCK}
 OUTFIT CONSISTENCY: Every character MUST wear EXACT same outfit in ALL 4 panels. NO changes.
 GLASSES VERIFICATION (MANDATORY): Before finalizing EACH panel, count the number of characters wearing glasses. Compare against the Identity Matrix. If the count does not match, redraw. Characters without glasses must have fully visible bare eyes with NO frames.
 
 KEY PROP / OBJECT CONSISTENCY:
-- If the story centers on a specific product, item, food, or object, render it EXACTLY as the Action/Dialogue describes (category, container, shape, color, named label). Do NOT substitute a different object, dish, or packaging.
-- Keep that key object identical across every panel it appears (same form, color, label, scale). Treat it as a second identity anchor; redraw on mismatch.
+- If the story centers on a specific product, item, food, or object, render it EXACTLY as the Action/Dialogue describes (category, container, shape, ${isMonochrome ? 'ink/tone mapping' : 'color'}, named label). Do NOT substitute a different object, dish, or packaging.
+- Keep that key object identical across every panel it appears (same form, ${isMonochrome ? 'ink/tone mapping' : 'color'}, label, scale). Treat it as a second identity anchor; redraw on mismatch.
 - When a product type or container form is named, preserve that exact form factor; never reinterpret it as another dish, package, vessel, or generic prop.
 
 Camera & Comp:
@@ -919,11 +921,11 @@ ANTI-CLONING: NEVER draw the same character twice in a single panel.
 COMPOSITION: Strict 2:3 golden ratio inside each panel.
 
 Tech Dict:
-(clean anime illustration background: 2.5)
+${isMonochrome ? '(clean ink background with selectively simplified detail: 2.5)\n(crisp black penwork, white highlights, regular halftone and hatching: 2.5)' : `(clean anime illustration background: 2.5)
 (Meticulous clean line art, smooth cel shading: 2.5)
 (Soft diffused backlight, rim light: 2.4)
 (Cinematic depth of field, soft bokeh: 2.3)
-(chic cinematic color grading, elegant deep colors: 1.4)
+(chic cinematic color grading, elegant deep colors: 1.4)`}
 (NO unrelated or dominant random text/SFX outside speech bubbles: 2.8)
 (Action ambience words, SFX names, mood words, aura names, and emotion labels are NOT visible lettering: 2.8)
 (EXCEPT explicit visual scene text requested by Action, such as handwriting, air-writing, signs, labels, printed text, screen text, or board text: 2.8)
@@ -932,12 +934,12 @@ Tech Dict:
 (NO unrelated ENGLISH TEXT outside watermark or small context-appropriate prop/background decoration. NO 'G-pen'/'HA': 3.0)
 
 GEMINI STABILITY / QUALITY LOCK:
-${SHARED_IMAGE_QUALITY_CONTRACT}
-- Use a richer professional manga finish than a flat template: layered foreground/midground/background, meaningful setting props, varied lighting, crisp line weight variation, and panel-specific atmosphere. Do not leave plain empty walls or generic blank rooms unless the script explicitly asks for emptiness.
+${isMonochrome ? MONOCHROME_IMAGE_QUALITY_CONTRACT : SHARED_IMAGE_QUALITY_CONTRACT}
+- ${isMonochrome ? 'Keep spatial depth, meaningful setting props and expressive ink line weights; remove nonessential background clutter when needed for readability.' : 'Use a richer professional manga finish than a flat template: layered foreground/midground/background, meaningful setting props, varied lighting, crisp line weight variation, and panel-specific atmosphere. Do not leave plain empty walls or generic blank rooms unless the script explicitly asks for emptiness.'}
 ${MANGA_FACIAL_ACTING_LOCK}
-${RICH_PANEL_COMPOSITION_LOCK}
-- MANGA FINISH ASSIST: preserve script/cast/camera/layout; keep bubble space, cast/background light and color, coherent anatomy, and setting depth.
-- CLOTHING FOLD SHADOW ASSIST: for full-color clothing only, render overlapping, pinched, and intersecting fabric folds with a few crisp wedge-shaped triangular cel-shaded shadow planes. Make a distinct small dark triangular fill at each selected crease junction, not merely a soft fold gradient. Use them as form shadows, not printed patterns or random geometric marks; preserve the outfit, material, and scene lighting.
+${isMonochrome ? MONOCHROME_BACKGROUND_LOCK : RICH_PANEL_COMPOSITION_LOCK}
+- MANGA FINISH ASSIST: preserve script/cast/camera/layout; keep bubble space, ${isMonochrome ? 'readable ink shapes and screen density' : 'cast/background light and color'}, coherent anatomy, and setting depth.
+- CLOTHING FOLD SHADOW ASSIST: ${isMonochrome ? 'localized solid-black/hatched wedge shadows only where fabric overlaps; preserve white lit fabric and stable wardrobe tones, never random geometric patterns.' : 'for full-color clothing only, render overlapping, pinched, and intersecting fabric folds with a few crisp wedge-shaped triangular cel-shaded shadow planes. Make a distinct small dark triangular fill at each selected crease junction, not merely a soft fold gradient. Use them as form shadows, not printed patterns or random geometric marks; preserve the outfit, material, and scene lighting.'}
 ${SAFE_VISUAL_CONTENT_LOCK}
 - Existing named cast only. Do NOT invent a new dominant person, black silhouette, monster, ghost, mascot, presenter, antagonist, or narrator figure. Background extras may appear only as small non-speaking atmosphere when the setting naturally needs a crowd; they must never become central, shadowed, named, or connected to a speech bubble.
 - If a panel says a shadow falls on a character, draw lighting/shadow ON that existing named character. Do NOT interpret "shadow" or a dark style tag as permission to create a separate black silhouette person.
@@ -954,6 +956,7 @@ PANEL DESCRIPTIONS:
 ${panelSections}
 
 Important constraints:
+${isMonochrome ? MONOCHROME_STYLE_QA : ''}
 - Preserve the selected scenario style and each PANEL STYLE LOCK; do not collapse the page into generic classic anime or a flat template.
 - Do NOT merge panels. Keep 4 distinct panels with white gutters between them.
 - ABSOLUTELY NO TEXT OR SFX BETWEEN PANELS. The white gutters separating the panels MUST be completely clean and pure white. Do not draw any labels, narration, or sound effects crossing or sitting inside the panel boundaries.
@@ -969,5 +972,6 @@ Important constraints:
 - Flow is from top panel to bottom panel.
 - Ensure the watermark is positioned at the absolute bottom edge of the image, with no extra whitespace below it. The text must be oriented horizontally (left-to-right).
 - CRITICAL COMPOSITION BAN: Do NOT draw floating close-up eyes, partial face crops, or ghostly face overlays in the background of any panel. Every character must be drawn as a complete physical presence within the scene. No "dramatic eye insert" or "background eye close-up" compositions allowed.
+${isMonochrome ? `CHARACTER QA: shape/design, stable ink/tone and white lit skin; no source colors.\n${MONOCHROME_FINAL_CHROMA_AUDIT}` : ''}
       `;
 };

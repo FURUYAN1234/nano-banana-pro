@@ -1,4 +1,5 @@
 import { cameraLensMap, cinematicCompositionMap, EMOTION_STYLES } from './constants.js';
+import { MONOCHROME_EMOTION_STYLES } from './manga-render-mode.js';
 
 // --- Panel Utility Functions (App.jsx assemblePrompt -> externalized) ---
 // assemblePrompt 内で定義されていたパネル解析・プロンプト組立ユーティリティ群
@@ -71,7 +72,8 @@ const buildCastLookup = (castListText = '') => {
   return lookup;
 };
 
-export const buildIdentityMatrix = (castListText) => {
+export const buildIdentityMatrix = (castListText, options = {}) => {
+  const monochrome = Boolean(options.monochrome);
   const characters = [];
   let currentChar = null;
 
@@ -111,7 +113,7 @@ export const buildIdentityMatrix = (castListText) => {
       const colorMatch = tagsSource.match(/(red|orange|blonde|yellow|brown|black|silver|white|blue|pink|green|purple|ginger)\s+hair(?!\s*(?:tip|end|gradient|streak|highlight|accent))/i);
       if (colorMatch && !currentChar.hairColor) currentChar.hairColor = colorMatch[1];
       // [v2.31] 特徴的スタイル（twintails, hime cut等）を汎用長さ記述（long hair等）より優先
-      // これにより Identity Matrix で「リン: long hair」ではなく「リン: twintails」と出力される
+      // これにより Identity Matrix で汎用長さより特徴的な髪型を優先して出力できる
       const distinctiveMatch = tagsSource.match(/(internal\s*round\s*bob|chin-length\s*bob|straight\s*bob|twintails?|twin\s*tails?|ponytail|hime\s*cut|bun|braid|pixie|buzz)/i);
       const genericMatch = tagsSource.match(/(bob|very\s*long\s*hair|waist-length\s*hair|long[\s-]?hair|medium[\s-]?hair|short[\s-]?hair)/i);
       if (!currentChar.hairStyle) {
@@ -162,7 +164,7 @@ export const buildIdentityMatrix = (castListText) => {
 
   characters.forEach(c => {
     const traits = [];
-    if (c.hairColor) traits.push(`${c.hairColor} hair`);
+    if (!monochrome && c.hairColor) traits.push(`${c.hairColor} hair`);
     if (c.hairStyle) traits.push(c.hairStyle);
     if (c.glasses === 'YES' || c.glasses === 'LOCKED_YES') traits.push('MUST HAVE glasses (do NOT remove)');
     else if (c.glasses === 'NO' || c.glasses === 'LOCKED_NO') traits.push('MUST NOT have glasses (bare eyes, no frames)');
@@ -171,7 +173,9 @@ export const buildIdentityMatrix = (castListText) => {
     matrix += `- [${c.shortName}]: ${traits.join(', ') || 'see reference image'}\n`;
   });
 
-  matrix += `CROSS-CHECK: hair color and glasses status must match; redraw mismatch.\n`;
+  matrix += monochrome
+    ? `CROSS-CHECK: face/eye shape, hairstyle/length, glasses and stable ink/tone assignments must match; source hue must never appear. Redraw mismatch.\n`
+    : `CROSS-CHECK: hair color and glasses status must match; redraw mismatch.\n`;
   matrix += `Reading order: RIGHT-TO-LEFT. Speech bubbles flow right-to-left; each bubble tail points to its speaker.\n`;
 
   return matrix;
@@ -498,8 +502,8 @@ const isNearDuplicateSpeechForSpeaker = (speechBubbleEntries, speaker = '', dial
   });
 };
 
-export const getCharTraitsFromMatrix = (charName, castList) => {
-  const matrix = buildIdentityMatrix(castList);
+export const getCharTraitsFromMatrix = (charName, castList, options = {}) => {
+  const matrix = buildIdentityMatrix(castList, options);
   const line = matrix.split('\n').find(l => l.includes(`[${charName}]`));
   if (line) {
     const traits = line.split(':').slice(1).join(':').trim();
@@ -657,7 +661,7 @@ export const extractDialogueOnly = (fullPanelText, castList, options = {}) => {
       let tempSpeakerBase = tempSpeaker.replace(/[（(].*?[）)]/g, '').trim();
 
       // [v2.31] 話者名バリデーション強化: ト書き誤検出防止
-      // 「サエコが、売店のカウンターに」のような文章が話者名として誤検出されるのを防ぐ
+      // 「人物が、売店のカウンターに」のような文章が話者名として誤検出されるのを防ぐ
       // [v4.6.4] キャスト名完全一致バイパス: 助詞を含むキャスト名（例: と■のよ■ゆき子）を正しく認識
       // シナリオ内ではスペースが省略されることが多いため、スペース除去比較も行う
       const normalizedSpeaker = tempSpeakerBase.replace(/[\s・]/g, '');
@@ -669,7 +673,7 @@ export const extractDialogueOnly = (fullPanelText, castList, options = {}) => {
       const hasSentenceParticles = !isExactCastMatch && /(?:が|を|に|で|へ|は|も|と|から|まで|より)/.test(tempSpeakerBase) && tempSpeakerBase.length > 5;
       const endsWithParticle = !isExactCastMatch && /(?:が|を|に|で|へ|は|も|と|から|まで|より)$/.test(tempSpeakerBase);
       const isNarrationSubject = isNarrationSubjectSpeakerCandidate(tempSpeakerBase, validCharacters);
-      const isTooLong = tempSpeakerBase.length > 20; // 複数人「アカリ・ヒカリ・ミク・リン」を許容するため長めに変更
+      const isTooLong = tempSpeakerBase.length > 20; // 複数人を中黒で列挙する表記を許容するため長めに設定
       // [v4.6.3] 照明・SE・演出など舞台指示用語をメタタグとして除外
       // [v4.6.10] 「セリフ」「台詞」「Dialogue」をメタタグに追加（スピーカー誤認識防止）
       const isMetaTag = META_SPEAKER_LABEL_RE.test(tempSpeakerBase);
@@ -706,7 +710,7 @@ export const extractDialogueOnly = (fullPanelText, castList, options = {}) => {
     }
 
     // [v4.6.3] コロン形式ト書き判定: 「キャラ名：描写テキスト」で「」を含まない長文はト書き（演出指示）
-    // 例: 「ミク：両腕ダルんと投げ出し、口を大きく開けて超あくび」はセリフではなくポーズ描写
+    // 例: 「人物A：両腕を投げ出して大きくあくび」はセリフではなくポーズ描写
     if (isDialogue && match && (match[0].trim().endsWith(':') || match[0].trim().endsWith('：'))) {
       const restOfLine = line.substring(match.index + match[0].length);
       const hasNoQuotes = !/[「」]/.test(restOfLine);
@@ -1221,7 +1225,7 @@ export const extractActionOnly = (fullPanelText, castList, placementRule = "") =
   // [v2.02] Duplication Removal: If character is already forced in placement, gently remove them from the explicit action subject if possible to prevent cloning hallucination
   if (placementRule) {
     validCharacters.forEach(c => {
-      // Extract just the name part before any parenthesis if it exists (e.g. "アカリ (Akari)" -> "アカリ")
+      // Extract just the name part before any parenthesis if it exists (e.g. "人物A (Alias)" -> "人物A")
       const nameOnly = c.split('(')[0].trim();
       if (placementRule.includes(nameOnly)) {
         // Optional: We can replace exact matches of the name with pronouns or just strip it if it causes too much duplication, 
@@ -1246,6 +1250,7 @@ export const injectOutfitReminder = (actionText, activeOutfit) => {
 
 export const extractPlacementRule = (fullPanelText, castList, options = {}) => {
   const compact = Boolean(options.compact);
+  const monochrome = options.colorMode === 'monochrome';
   const lines = fullPanelText.split('\n');
   // [v2.28] EMOTIONタグ行・状況行をフィルタリングしてスピーカー抽出の汚染を防止
   const dialogLines = lines.filter(line => {
@@ -1303,9 +1308,9 @@ export const extractPlacementRule = (fullPanelText, castList, options = {}) => {
 
   if (speakers.length >= 3) {
     // [v2.33] 3-Zone Slotting: 3人以上の掛け合いパネル対応
-    const traits0 = getCharTraitsFromMatrix(speakers[0], castList);
-    const traits1 = getCharTraitsFromMatrix(speakers[1], castList);
-    const traits2 = getCharTraitsFromMatrix(speakers[2], castList);
+    const traits0 = getCharTraitsFromMatrix(speakers[0], castList, { monochrome });
+    const traits1 = getCharTraitsFromMatrix(speakers[1], castList, { monochrome });
+    const traits2 = getCharTraitsFromMatrix(speakers[2], castList, { monochrome });
     if (compact) {
       return `PLACEMENT/IDENTITY: RIGHT [${speakers[0]}] (${compactIdentityTraits(traits0)}), CENTER [${speakers[1]}] (${compactIdentityTraits(traits1)}), LEFT [${speakers[2]}] (${compactIdentityTraits(traits2)}). Keep slots exact; do NOT mirror/swap. Bubbles beside actual speakers with tails, right-to-left.`;
     }
@@ -1313,7 +1318,7 @@ export const extractPlacementRule = (fullPanelText, castList, options = {}) => {
 - RIGHT ZONE: [${speakers[0]}] (${traits0 || 'see reference'}) — First speaker
 - CENTER ZONE: [${speakers[1]}] (${traits1 || 'see reference'}) — Second speaker
 - LEFT ZONE: [${speakers[2]}] (${traits2 || 'see reference'}) — Third speaker / Reactor
-VERIFY: Confirm hair color + glasses status for ALL three characters match the Identity Matrix.
+VERIFY: Confirm ${monochrome ? 'face/eye shape, hairstyle/length, glasses and ink/tone assignments' : 'hair color + glasses status'} for ALL three characters match the Identity Matrix.
 CHARACTER BODY POSITION LOCK (3-ZONE - DO NOT MIRROR):
 - [${speakers[0]}] MUST be on the RIGHT third of the panel.
 - [${speakers[1]}] MUST be in the CENTER of the panel.
@@ -1324,8 +1329,8 @@ SPEECH BUBBLE FLOW (RIGHT-TO-LEFT):
 - If [${speakers[1]}] is in the CENTER, their bubble MUST also be centered — do NOT push it to an edge.
 - Each bubble's tail MUST point to its speaker. Flow: Right → Center → Left.`;
   } else if (speakers.length >= 2) {
-    const traits0 = getCharTraitsFromMatrix(speakers[0], castList);
-    const traits1 = getCharTraitsFromMatrix(speakers[1], castList);
+    const traits0 = getCharTraitsFromMatrix(speakers[0], castList, { monochrome });
+    const traits1 = getCharTraitsFromMatrix(speakers[1], castList, { monochrome });
     if (compact) {
       return `PLACEMENT/IDENTITY: RIGHT [${speakers[0]}] (${compactIdentityTraits(traits0)}), LEFT [${speakers[1]}] (${compactIdentityTraits(traits1)}). Keep slots exact; do NOT mirror/swap. Bubbles beside actual speakers with tails.`;
     }
@@ -1334,7 +1339,7 @@ SPEECH BUBBLE FLOW (RIGHT-TO-LEFT):
     return `CRITICAL PLACEMENT & IDENTITY:
 - RIGHT side: [${speakers[0]}] (${traits0 || 'see reference'})
 - LEFT side: [${speakers[1]}] (${traits1 || 'see reference'})
-VERIFY: Confirm hair color + glasses status for both characters match the Identity Matrix before finalizing.
+VERIFY: Confirm ${monochrome ? 'face/eye shape, hairstyle/length, glasses and ink/tone assignments' : 'hair color + glasses status'} for both characters match the Identity Matrix before finalizing.
 CHARACTER BODY POSITION LOCK (CRITICAL - DO NOT MIRROR):
 - The character with ${traits0 || speakers[0] + "'s features"} MUST be physically standing/sitting on the RIGHT half of the panel.
 - The character with ${traits1 || speakers[1] + "'s features"} MUST be physically standing/sitting on the LEFT half of the panel.
@@ -1344,7 +1349,7 @@ SPEECH BUBBLE POSITION RULE:
 - If a character is positioned in the center of the panel, their bubble MUST also be centered — do NOT push it to the left or right edge.
 - Each bubble's tail MUST point down to its speaker. Do NOT swap bubble positions.`;
   } else if (speakers.length === 1) {
-    const traits0 = getCharTraitsFromMatrix(speakers[0], castList);
+    const traits0 = getCharTraitsFromMatrix(speakers[0], castList, { monochrome });
     return `CRITICAL PLACEMENT & IDENTITY: [${speakers[0]}] (${traits0 || 'see reference'}) is the main focus of this panel.`;
   }
   return `CRITICAL PLACEMENT: Follow the natural dialogue flow.`;
@@ -1623,9 +1628,14 @@ const extractRawEmotionTag = (panelText) => {
 };
 
 // [v2.31] パネルの感情スタイル指示を構築（マルチキャラ対応）
-export const buildEmotionBlock = (panelText) => {
+export const buildEmotionBlock = (panelText, colorMode = 'color') => {
   const emo = extractEmotionStyle(panelText);
   if (emo === 'NORMAL') return '';
+  if (colorMode === 'monochrome') {
+    const gag = SERIOUS_STYLES_FOR_GAG_OVERLAY.has(emo) && rawTagHasComedyIntent(extractRawEmotionTag(panelText))
+      ? '\nGAG INTENT OVERLAY: retain dramatic ink/shadows while allowing exaggerated cartoon reactions and comedic timing; do not play the gag straight-serious.' : '';
+    return `\nMONOCHROME PANEL STYLE LOCK: ${emo}; ${MONOCHROME_EMOTION_STYLES[emo] || 'Expressive black pen lines, solid blacks and regular black-on-white halftone; white lit skin.'} Preserve script/Camera/Action, cast, glasses and wardrobe tone assignments.${gag}`;
+  }
   const s = EMOTION_STYLES[emo];
   const styleLock = `PANEL STYLE LOCK: ${emo}; visibly distinct linework, environmental palette, shading, background/VFX. Change at least three visual axes; pose, expression, saturation, glow, or speed lines alone are insufficient. Environmental palette means background, lighting treatment, and VFX only; preserve every character's canonical garment base and accent colors.`;
 

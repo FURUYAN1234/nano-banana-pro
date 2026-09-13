@@ -16,8 +16,13 @@ export default function Step3Panel({
   isEnhancing,
   is360CameraWorking,
   assemblePrompt,
-  isAssembling
+  isAssembling,
+  colorMode = 'color',
+  setColorMode,
+  isColorModeLocked = false
 }) {
+  const controlsDisabled = currentStep < 3 || isSearching || isAnalyzing || isEnhancing
+    || is360CameraWorking || isAssembling || isColorModeLocked;
   return (
     <section
       ref={step3Ref}
@@ -44,9 +49,26 @@ export default function Step3Panel({
         <Wand2 size={24} /> STEP 03: プロンプト生成（画像指示文の構築）
       </div>
 
+      <fieldset disabled={controlsDisabled} className="manga-color-mode" aria-describedby="manga-color-mode-help">
+        <legend>出力モード</legend>
+        <div className="manga-color-mode-options">
+          {[['color', 'カラー'], ['monochrome', '白黒']].map(([value, label]) => (
+            <label key={value} className={`manga-color-mode-option ${colorMode === value ? 'is-selected' : ''}`}>
+              <input type="radio" name="manga-color-mode" value={value} checked={colorMode === value}
+                onChange={() => setColorMode(value)} />
+              <span>{label}</span>
+            </label>
+          ))}
+        </div>
+        <p id="manga-color-mode-help">
+          {colorMode === 'monochrome' ? '白・黒・網点トーン。肌の明部は白、Gペン風の強い描線。' : '色彩とライティングを活かしたカラー漫画。'}
+          <br />選択後にSTEP3を押して反映します。全設定リセットまで選択を保持します。
+        </p>
+      </fieldset>
+
       <button
-        onClick={assemblePrompt}
-        disabled={isAssembling || is360CameraWorking}
+        onClick={() => assemblePrompt()}
+        disabled={controlsDisabled}
         className={`primary-step-action primary-step-action-neutral-edge w-full relative py-6 rounded-xl font-black text-xl flex items-center justify-center gap-4 border-b-[6px] active:border-b-0 active:translate-y-[6px] transition-all disabled:opacity-50 disabled:grayscale disabled:border-none disabled:cursor-not-allowed group/gen shadow-xl
           ${currentStep === 3 ? 'ring-4 ring-orange-500 ring-offset-4 ring-offset-[#0a0c10]' : ''}
         `}

@@ -39,6 +39,8 @@ function App() {
     castList,
     categories,
     colorMode,
+    setColorMode,
+    isColorModeLocked,
     copyPrompt,
     currentStep,
     customLocation,
@@ -341,6 +343,9 @@ function App() {
 
           {/* 03: プロンプト生成 - Tailwind p-8等がJITで無視されるためインラインスタイルで適用 */}
             <Step3Panel
+              colorMode={colorMode}
+              setColorMode={setColorMode}
+              isColorModeLocked={isColorModeLocked}
               step3Ref={step3Ref}
               currentStep={currentStep}
               isSearching={isSearching}

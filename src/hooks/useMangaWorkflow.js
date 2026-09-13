@@ -8,6 +8,7 @@ import {buildOpenAIReferencePlan, appendOpenAIReferencePrompt} from '../lib/open
 import {buildGeminiReferencePlan, appendGeminiReferencePrompt} from '../lib/gemini-image-references.js';
 import { callAI, setActiveEngine } from '../lib/ai-provider';
 import { reviewComedyPrompt } from '../lib/comedy-review';
+import { normalizeMangaColorMode } from '../lib/manga-render-mode.js';
 
 // --- Refactored Imports (Phase 1-2) ---
 import { SYSTEM_VERSION, DEFAULT_CATEGORIES, EMOTION_STYLES, DYNAMIC_CAMERA_PROTOCOL, ANTI_CHARSHEET_PREFIX } from '../lib/constants';
@@ -129,7 +130,7 @@ export default function useMangaWorkflow() {
   const [assembleThought, setAssembleThought] = useState("");
 
   const [status, setStatus] = useState("");
-  const [colorMode, setColorMode] = useState("auto");
+  const [colorMode, setColorModeState] = useState("color");
   const [isDragging, setIsDragging] = useState(false);
   const [genLog, setGenLog] = useState([]); // New Log State
 
@@ -855,6 +856,33 @@ export default function useMangaWorkflow() {
     }
   };
 
+  const isColorModeLocked = isAssembling || isGeneratingImage || isFullAutoMode
+    || isSearching || isAnalyzing || isEnhancing || is360CameraWorking
+    || isFixingPolicy || policyAutoRetrying;
+
+  // Selection invalidates dependent output but never initiates assembly/API work.
+  // STEP1/STEP2 resets preserve this preference; only full settings reset clears it.
+  const setColorMode = (value) => {
+    if (isColorModeLocked) return;
+    const nextMode = normalizeMangaColorMode(value);
+    if (nextMode === colorMode) return;
+    setColorModeState(nextMode);
+    promptAssemblyRunRef.current += 1;
+    setFinalPrompt("");
+    setGeneratedImage(null);
+    setAssembleThought("");
+    setIsCopied(false);
+    setIsMetaSaved(false);
+    setGenLog([]);
+    setIsGenerationError(false);
+    setPolicyErrorMsg("");
+    setPolicyFixLog("");
+    setIsPolicyPanelOpen(false);
+    setShowPolicyChoice(false);
+    lastPolicyErrorRef.current = "";
+    showStatus(`${nextMode === 'monochrome' ? '白黒' : 'カラー'}を選択しました。STEP3で指示文を再構築してください。`);
+  };
+
   // --- Step 3: Prompt Assembly (Super FURU v121.3) ---
   // [v2.79] 戻り値変更: フルオート連鎖用（文字列=成功, null=失敗）
   const assemblePrompt = async (skipGuard = false, overrideScenario = null, providerFamilyOverride = null) => {
@@ -922,12 +950,14 @@ export default function useMangaWorkflow() {
       setAssembleThought(prev => prev + "\n> [v3.31] 事故防止プロトコル全モデル適用済み:\n>   ✅ 縦書きセリフ強制\n>   ✅ セリフ勝手追加禁止\n>   ✅ キャラの外見は維持し、設定資料の配置・説明文はコピーしない\n>   ✅ カメラワーク平易化禁止\n>   ✅ プロンプト分岐 (ChatGPT/Gemini)\n>   ✅ 出力前チェックリスト追加");
 
       setFinalPrompt(reviewed.prompt);
+      setAssembleThought(prev => prev + `\n> 出力モード: ${colorMode === 'monochrome' ? '白黒（純白・純黒・網点／ハッチング）' : 'カラー'}`);
       setAssembleThought(prev => prev + `\n> ${reviewed.warning || "AI精査完了"}`);
       setAssembleThought(prev => prev + "\n> セーフティ年齢フィルター: 適用済み\n> 最適化ベクトル: 計算完了\n> 構造ロック: 有効\n> 風刺ロジック: 強化済み\n> [完了] 最終プロンプトを構築しました。");
-      showStatus("最終プロンプトの構築が完了しました。画像生成を開始します...");
+      showStatus("最終プロンプトの構築が完了しました。コピーまたはSTEP4の画像生成へ進めます。");
       return reviewed.prompt; // [v2.79] フルオート連鎖用: 成功
 
     } catch (error) {
+      if (promptScenarioEpoch !== scenarioRunEpochRef.current || assemblyRun !== promptAssemblyRunRef.current) return null;
       console.error(error);
       const translatedMsg = translateApiError(error.message);
       setAssembleThought(prev => prev + `\n\n[システムエラー]: ${error.message}\n--------------------------------------------------\n${translatedMsg}`);
@@ -949,6 +979,8 @@ export default function useMangaWorkflow() {
 
   // [v3.59] ソフトリセット: キャラクター解析(STEP1)を保持し、STEP2以降をリセット
   const partialReset = () => {
+    promptAssemblyRunRef.current += 1;
+    setIsAssembling(false);
     // castList は保持する（キャラクター解析結果）
     // images は保持する（ドロップしたキャラクターシート画像）
     // analyzeThought は保持する（STEP1のログ）
@@ -1022,6 +1054,9 @@ export default function useMangaWorkflow() {
 
   // [v3.59] ハードリセット: 全データ消去 + APIキー再入力モーダルを表示
   const hardReset = () => {
+    promptAssemblyRunRef.current += 1;
+    setIsAssembling(false);
+    setColorModeState("color");
     setCastList("");
     setScenario("");
     setFinalPrompt("");
@@ -1867,6 +1902,8 @@ export default function useMangaWorkflow() {
     castList,
     categories,
     colorMode,
+    setColorMode,
+    isColorModeLocked,
     copyPrompt,
     currentStep,
     customLocation,
