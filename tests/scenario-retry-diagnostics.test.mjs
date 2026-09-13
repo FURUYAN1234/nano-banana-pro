@@ -141,6 +141,29 @@ test('a quality retry keeps the final safe scenario when the quality budget is e
   ]);
 });
 
+test('configured fatal quality codes fail closed after the retry budget is exhausted', async () => {
+  let requests = 0;
+
+  await assert.rejects(requestSafeScenario({
+    initialPrompt: 'BASE PROMPT',
+    requestScenario: async () => ({ text: `response ${++requests}` }),
+    parseScenario: (response) => ({ location: 'library', scenario: response.text }),
+    validateScenario: () => {
+      const error = new Error('documentary source wording was altered');
+      error.code = 'DOCUMENTARY_SOURCE_FIDELITY';
+      throw error;
+    },
+    fatalValidationCodes: ['DOCUMENTARY_SOURCE_FIDELITY'],
+    maxAttempts: 3
+  }), (error) => {
+    assert.equal(error.code, 'DOCUMENTARY_SOURCE_FIDELITY');
+    assert.match(error.message, /documentary source wording was altered/);
+    return true;
+  });
+
+  assert.equal(requests, 3);
+});
+
 test('a quality retry returns the highest-scoring safe scenario rather than blindly using the last response', async () => {
   let requests = 0;
   const result = await requestSafeScenario({

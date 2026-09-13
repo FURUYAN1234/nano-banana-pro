@@ -20,7 +20,7 @@ test('OpenAI and Gemini each retain their own external-Web repair copy helpers',
   assert.match(step4PanelSource, /Gemini用画像比率修正プロンプトをコピー/);
   assert.match(step4PanelSource, /Gemini用2K高解像度プロンプトをコピー/);
   assert.match(step4PanelSource, /アプリ内のGemini APIでは再加工しません/);
-  assert.match(step4PanelSource, /MiniMax H3・ComfyUI用プロンプトをコピー/);
+  assert.match(step4PanelSource, /標準H3・汎用プロンプトをコピー/);
 });
 
 test('STEP4 uses the effective OpenAI image mode instead of a stale text-engine label', () => {

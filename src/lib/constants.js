@@ -1,10 +1,14 @@
+import { getEndingModePolicy } from './ending-mode-policy.js';
+
 // --- 定数・タグ定義 (constants.js) ---
 // App.jsx から抽出された共有定数
 
-export const SYSTEM_VERSION = "v6.1.3";
+export const SYSTEM_VERSION = "v6.1.4";
 
 // --- Punchline ラベル変換関数 ---
 export const getPunchlineLabel = (type) => {
+  const policyLabel = getEndingModePolicy(type).label;
+  if (policyLabel) return policyLabel;
   switch (type) {
     case "Surreal": return "静寂型 (シュール)";
     case "Explosion": return "爆発型 (カオス)";
@@ -16,7 +20,6 @@ export const getPunchlineLabel = (type) => {
     case "PsychoHorror": return "サイコホラー (狂気)";
     case "Misunderstanding": return "盛大な勘違い (すれ違い)";
     case "CanceledEnding": return "打ち切りエンド (俺たちの戦いはこれからだ)";
-    case "Documentary": return "ドキュメンタリー (原文忠実)";
     default: return "自動 (AIにおまかせ)";
   }
 };

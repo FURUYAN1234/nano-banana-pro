@@ -34,6 +34,14 @@ import {
   formatMangaScenarioValidationIssue,
   validateMangaScenario
 } from './scenario-validation';
+import { isDocumentaryEnding } from './ending-mode-policy';
+import {
+  assertDocumentarySourceFidelity,
+  attachDocumentarySourceFacts,
+  DOCUMENTARY_SOURCE_FIDELITY_RETRY_INSTRUCTION,
+  normalizeDocumentaryScenarioTimeline,
+  selectDocumentarySourceText
+} from './documentary-source-fidelity';
 
 const STEP2_TEXT_TIMEOUT_MS = 180_000;
 
@@ -42,6 +50,7 @@ const scenarioRetryLabels = {
   SCENARIO_CONTENT: 'シナリオ本文の表現衛生',
   SEASONAL_OUTFIT: '対象日付と服装の季節整合性',
   MANUAL_TOPIC_EXCLUSION: '手動入力の禁止条件',
+  DOCUMENTARY_SOURCE_FIDELITY: '原文の数値・時系列',
   VISUAL_STORY_EVIDENCE: '出来事を証明する視覚要素',
   FINAL_PANEL_STAGING: '4コマ目の能動アクション',
   DIALOGUE_CONTRACT: '各コマの吹き出しセリフ'
@@ -78,11 +87,19 @@ const validateScenarioForRetry = ({
   manualTopic,
   seasonContext,
   contextText,
+  documentarySourceText,
   customOutfit,
   castList
 }) => {
   const checks = [
     ['SCENARIO_CONTENT', () => assertSafeScenarioContent(scenario)],
+    ...(isDocumentaryEnding(punchlineType) ? [[
+      'DOCUMENTARY_SOURCE_FIDELITY',
+      () => assertDocumentarySourceFidelity({
+        sourceText: documentarySourceText,
+        scenarioText: scenario.scenario
+      })
+    ]] : []),
     ['SEASONAL_OUTFIT', () => assertSeasonalOutfit({
       outfit: scenario.outfit,
       seasonContext,
@@ -124,6 +141,7 @@ export const formatScenarioRetryProgress = ({ code, message, nextAttempt, maxAtt
 
 const scenarioQualityRetryInstructions = {
   SCENARIO_CONTENT: SAFE_CONTENT_RETRY_INSTRUCTION,
+  DOCUMENTARY_SOURCE_FIDELITY: DOCUMENTARY_SOURCE_FIDELITY_RETRY_INSTRUCTION,
   SEASONAL_OUTFIT: SEASONAL_OUTFIT_RETRY_INSTRUCTION,
   MANUAL_TOPIC_EXCLUSION: MANUAL_TOPIC_EXCLUSION_RETRY_INSTRUCTION,
   VISUAL_STORY_EVIDENCE: VISUAL_STORY_EVIDENCE_RETRY_INSTRUCTION,
@@ -229,6 +247,7 @@ export async function generateScenario({
 
   // 2. ニュースコンテキストまたは手動入力処理
   let newsContext = "";
+  let extractedArticleText = "";
   if (inputMode === 'manual') {
     newsContext = `
     【ユーザー提供トピック/URL】:
@@ -265,6 +284,7 @@ export async function generateScenario({
         }
 
         const cleanText = extractedText.replace(/\s+/g, ' ').substring(0, 3000);
+        extractedArticleText = cleanText;
         onProgress(`コンテンツ抽出完了 (${cleanText.length}文字)。注入中...`);
         newsContext = `
         【指定URLから独自のスクレイピングで抽出した内容】:
@@ -336,6 +356,11 @@ export async function generateScenario({
     comedyTone: activeComedyTone,
     styleJson
   });
+  const documentarySourceText = selectDocumentarySourceText({
+    inputMode,
+    manualTopic,
+    extractedArticleText
+  });
 
   const safeScenarioResult = await requestSafeScenario({
     initialPrompt: scenarioPrompt,
@@ -344,16 +369,30 @@ export async function generateScenario({
       requestScenario: (contentPrompt) => callAI(contentPrompt, [], castList, onProgress, { timeoutMs: STEP2_TEXT_TIMEOUT_MS }),
       maxAttempts: 1
     }).then(({ response }) => response),
-    parseScenario: (response) => parseScenarioResponse(response, {
-      randomCategory,
-      inputMode,
-      manualTopic,
-      searchTopic
-    }),
+    parseScenario: (response) => {
+      const parsedScenario = parseScenarioResponse(response, {
+        randomCategory,
+        inputMode,
+        manualTopic,
+        searchTopic
+      });
+      if (isDocumentaryEnding(activePunchlineType)) {
+        parsedScenario.scenario = normalizeDocumentaryScenarioTimeline(
+          parsedScenario.scenario,
+          documentarySourceText
+        );
+        parsedScenario.scenario = attachDocumentarySourceFacts(
+          parsedScenario.scenario,
+          documentarySourceText
+        );
+      }
+      return parsedScenario;
+    },
     validateScenario: (parsedScenario) => validateScenarioForRetry({
       scenario: parsedScenario,
       punchlineType: activePunchlineType,
       manualTopic: inputMode === 'manual' ? manualTopic : '',
+      documentarySourceText,
       seasonContext,
       customOutfit,
       castList,
@@ -365,8 +404,17 @@ export async function generateScenario({
         parsedScenario.scenario
       ].filter(Boolean).join('\n')
     }),
-    retryInstruction: ({ code }) => scenarioQualityRetryInstructions[code] || '',
+    retryInstruction: ({ code, message }) => [
+      scenarioQualityRetryInstructions[code] || '',
+      message ? `FAILED CHECK (correct every listed item): ${String(message).slice(0, 1400)}` : '',
+      code === 'DOCUMENTARY_SOURCE_FIDELITY' && documentarySourceText
+        ? `ORIGINAL SOURCE TO PRESERVE:\n${documentarySourceText}\n\nREPAIR METHOD: distribute the original source clauses across the Situation and dialogue lines of panels 1-3. Copy the listed missing factual terms exactly. Do not leave a source cause, action, measure, affected party, or outcome only in Topic, Logline, Location, VisualEvidence, Outfit, Punchline, or thought trace; it must occur inside Scenario.`
+        : ''
+    ].filter(Boolean).join('\n\n'),
     onRetry: (retry) => onProgress(formatScenarioRetryProgress(retry)),
+    fatalValidationCodes: isDocumentaryEnding(activePunchlineType)
+      ? ['DOCUMENTARY_SOURCE_FIDELITY']
+      : [],
     maxAttempts: 3
   });
   const result = safeScenarioResult.response;

@@ -1628,8 +1628,11 @@ const extractRawEmotionTag = (panelText) => {
 };
 
 // [v2.31] パネルの感情スタイル指示を構築（マルチキャラ対応）
-export const buildEmotionBlock = (panelText, colorMode = 'color') => {
+export const buildEmotionBlock = (panelText, colorMode = 'color', { preserveReferenceStyle = false } = {}) => {
   const emo = extractEmotionStyle(panelText);
+  if (preserveReferenceStyle) {
+    return `\nREFERENCE-SHEET PANEL ACTING ONLY: interpret [EMOTION: ${emo}] as expression, gaze, posture and timing only. Keep the same reference-sheet linework, rendering, facial construction and body proportions; no panel-specific art-style or proportion change.`;
+  }
   if (emo === 'NORMAL') return '';
   if (colorMode === 'monochrome') {
     const gag = SERIOUS_STYLES_FOR_GAG_OVERLAY.has(emo) && rawTagHasComedyIntent(extractRawEmotionTag(panelText))

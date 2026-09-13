@@ -11,3 +11,11 @@ test('reports a scenario-content validation failure instead of a network timeout
   assert.match(guide, /後続へ渡せるシナリオが残りませんでした/);
   assert.doesNotMatch(guide, /タイムアウト/);
 });
+
+test('documentary source fidelity errors are explained as local validation failures', () => {
+  const guide = translateApiError('documentary source facts missing: missing anchors: 10月');
+
+  assert.match(guide, /原文忠実性検証/);
+  assert.match(guide, /通信エラーではありません/);
+  assert.doesNotMatch(guide, /タイムアウト/);
+});

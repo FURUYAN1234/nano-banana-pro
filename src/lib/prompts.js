@@ -14,6 +14,7 @@ import {
   SCENARIO_COMPOSITION_VARIETY_RULES,
   SCENARIO_GESTURE_VARIETY_RULES
 } from './composition-variety';
+import { getEndingModePolicy } from './ending-mode-policy.js';
 
 const MANGA_PAGE_TYPOGRAPHY_LOCK = `PAGE TYPE HIERARCHY:
 - Page title: render the exact title once at the top in EXTRA-BOLD condensed Japanese Gothic sans-serif, solid black, horizontal, centered, and clearly separated from the panels.
@@ -215,6 +216,8 @@ export const getScenarioPrompt = ({
   styleJson
 }) => {
   const punchlineType = requestedPunchlineType === 'PsychoHorror' ? 'Surreal' : requestedPunchlineType;
+  const endingPolicy = getEndingModePolicy(punchlineType);
+  const isSeriousDocumentary = endingPolicy.documentary && endingPolicy.endingTone === 'serious';
   const effectiveLocationPlan = locationPlan || {
     mode: customLocation.trim() ? 'custom' : 'adaptive',
     anchorName: customLocation.trim(),
@@ -239,7 +242,7 @@ export const getScenarioPrompt = ({
          (Time Machine Lock): The target date is **${targetDate}**. You MUST search for news/events that happened AROUND this date.
          (Data Freshness Lock): Do not use generic evergreen tropes. Stick to the specific time period.
 
-          あなたはプロの風刺漫画脚本家です。
+          あなたは${isSeriousDocumentary ? '原文の事実関係を守り、深刻な余韻を構成するプロのドキュメンタリー漫画脚本家' : 'プロの風刺漫画脚本家'}です。
 
           【タイトルの多様性】
           - Topic は内容を端的に伝える、日本語の自然な見出しにすること。
@@ -275,10 +278,12 @@ export const getScenarioPrompt = ({
 
          【選定ルールの絶対厳守】
 
-         1. **「AI」「人工知能」「ロボット」「スマホ」「SNS」等のIT系ネタは禁止（頻出のため）。**
+         ${isSeriousDocumentary ? `1. 入力本文または取得済み本文の中で、社会的影響、当事者への影響、判断の重みが明確な出来事を中心に据えること。
+         2. 面白さやツッコミどころを理由に事実を選別・変形せず、本文で確認できる具体的な情報だけを使うこと。
+         3. 本文にない固有名詞、原因、結果、評価を補完しないこと。` : `1. **「AI」「人工知能」「ロボット」「スマホ」「SNS」等のIT系ネタは禁止（頻出のため）。**
          2. ** 具体的でマイナーな、しかし「ツッコミどころのある」ニュース ** を選んでください。
             （例: 「珍しい動物発見」「変な世界記録更新」「食べ物の論争」「スポーツの珍プレー」等）
-         3. 抽象的な「最近の流行」ではなく、「◯◯が××を発表」といった固有名詞を含むニュースを優先。
+         3. 抽象的な「最近の流行」ではなく、「◯◯が××を発表」といった固有名詞を含むニュースを優先。`}
          4. **【場所（Location）の選定義務】**:
             - ニュースの内容に**「最も適した具体的な舞台」**を選んでください。
             - **デフォルト回避**: 安易な「教室」「白い部屋」は避けるが、**ニュースの文脈（学生、学校関連）で必要ならば「教室」も許可する。**重要なのは「ニュースとの適合性」である。
@@ -330,7 +335,7 @@ export const getScenarioPrompt = ({
             
             ${ragReactions}
 
-${styleJson ? `         7. **【作風完全適用の義務 (Strict Style Adherence)】**:
+${styleJson && !isSeriousDocumentary ? `         7. **【作風完全適用の義務 (Strict Style Adherence)】**:
             以下の「作風プロンプト」を最優先事項としてシナリオ全体のトーン、セリフ、空気感に完全に適用せよ。
             - 作風名: ${styleJson.style_name}
             - 作風詳細指示:
@@ -356,12 +361,16 @@ ${styleJson.anti_patterns ? `            - 絶対禁止事項:\n${styleJson.anti
                  * **ただし「知らない＝登場禁止」ではない。** 知らないなりのリアクション（「えー、なにそれー？」「さっぱり分かんない！」等）で登場させ、全員登場義務と両立させよ。
                   * **目的**: キャラの「らしさ」を守り、AIが全キャラを同質化させるハルシネーションを防止する。
   
-           1. **「原則: 語るな、見せろ (Show, Don't Tell)」のギャグ特化**:
+           ${isSeriousDocumentary ? `1. **【原文忠実な視覚化】**:
+               - 原文の事実、人物、出来事、順序、因果関係を変えず、本文に書かれた内容をキャラクターの会話と行動へ置き換えること。
+               - 原文にない事件、原因、結果、断定、架空の小道具、無関係な舞台を追加しないこと。
+               - 深刻さは、本文から導ける反応、表情、視線、身体演技、カメラ、構図、照明、間で表現すること。画風変更や身体変形を深刻さの代用品にしないこと。
+               - 同席する無言の人物は、事実を受け止める具体的で自然な反応を示してよい。ただし新しい出来事や評価を作らないこと。` : `1. **「原則: 語るな、見せろ (Show, Don't Tell)」のギャグ特化**:
                - 絵での表現が最優先。説明調のセリフは厳禁。読者の読む気を削ぐな。
                - **【サブテキスト（建前と本音のズレ）の強制】**: 状況をそのまま説明するセリフを完全禁止する。セリフを「建前」や「全く別の話題」にし、絵（ト書き・表情）と矛盾させる（例: 大汗をかいて震えながら「今日の夕飯、ハンバーグでいいかな？」と言う等）ことで、ギャグマンガ特有のシュールな笑いや「間」を演出せよ。
                - **【物理・身体変形アクションの強制】**: 感情のト書きは、具体的な物理アクションに変換せよ。「驚く」ではなく「髪の毛が逆立ち口から魂が抜ける」、「怒る」ではなく「顔から湯気を出して持っている物を手放す」等、画像生成AIが拾いやすい視覚的ダイナミズムを強制せよ。
               - **【構図ルール】ト書き（状況の説明）では、主役の動作を中心に記述しつつ、同じコマにいる他キャラのリアクションや存在も簡潔に描写してよい。** 例: 「キャラAがツッコむ。横でキャラBが呆れ、奥でキャラCが爆笑している」のような群像描写は大歓迎。ただし1キャラあたりの描写は1文以内に留め、冗長にならないこと。同じ場面に居合わせている喋らないキャラがいる場合、ト書きの末尾に「（リアクション: キャラ名→表情や動作）」の形式で簡潔に添えよ。例: 「キャラAがツッコむ（リアクション: キャラB→呆れ顔、キャラC→爆笑）」。4コマ中**最低2コマ**にはこのリアクション描写を含めること。
-              - **【超重要】汗マークや怒りマークなどの「漫符」を描写する場合、文字ラベル（例: "POPPING VEIN", "LARGE SWEAT DROP"など）や設定資料に書かれるような矢印・注釈テキストを画面内に絶対に描画させないこと。純粋な視覚的シンボルのみを使用し、一切の英単語ラベルを排除せよ。**
+              - **【超重要】汗マークや怒りマークなどの「漫符」を描写する場合、文字ラベル（例: "POPPING VEIN", "LARGE SWEAT DROP"など）や設定資料に書かれるような矢印・注釈テキストを画面内に絶対に描画させないこと。純粋な視覚的シンボルのみを使用し、一切の英単語ラベルを排除せよ。**`}
   
            2. **テキストの量的制限 (Compact Text Quantity)**:
               - **厳守**: 1コマあたりのフキダシは**「最大3つまで」**。（3人の掛け合いも積極活用せよ）
@@ -375,7 +384,16 @@ ${styleJson.anti_patterns ? `            - 絶対禁止事項:\n${styleJson.anti
                  禁止: 終止記号なしで終わるセリフ。読点の乱用（1セリフに2つ以上は多すぎ）。
               - 画面の80%以上は「絵」でなければならない。文字で埋め尽くすな。
 
-          3. **オチと構図の多様化 (Variety Constraints)**:
+          ${isSeriousDocumentary ? `3. **【強制モード: シリアス・ドキュメンタリー（原文忠実＋オチだけシリアス漫画化・絵柄変更無し）】**:
+             - **【1〜3コマ目は原文に忠実】**: 入力本文にある導入、核心、詳細、影響を順に整理し、事実、人物、因果関係、結論を置換・誇張・捏造しないこと。
+             - **【数値・時系列の完全固定】**: 入力本文の日付、施行日、時刻、期間、数量、割合、価格、変更前後の値をすべて抽出してシナリオ内に保持すること。同値の時刻表記（例: 午後8時と20時）への正規化だけを許可し、省略、別の値への置換、「今日から」等の曖昧化、順序変更は禁止する。
+             - **【重要語句の保持】**: 原文にある固有名詞、主体、原因、主要な行為、発表内容、対策、結果を示す語句は、広い同義語へ丸めず、可能な限り原文と同じ語句のまま1〜3コマ目の「状況」またはセリフへ分配すること。特に原因と対策を省略してはならない。
+             - **【4コマ目だけシリアス漫画化】**: 4コマ目は、本文の事実に対する既存キャラクターの警告、決意、深刻な余韻、問題提起、静かな結論のうち内容に最も適した反応で締めること。新しい事実や事件をオチとして追加しないこと。
+             - **【全4コマでキャラクターシートと同じ絵柄を維持】**: 線質、塗り、陰影、顔の造形、目の設計、頭身、デフォルメ度を1〜4コマ目で変えないこと。
+             - シリアスさは表情・視線・身体演技・カメラ・構図・照明・間だけで表現すること。ちび化、劇画化、水彩化、厚塗り化、レトロ化、写実化などの画風変更は禁止する。
+             - 各コマの[EMOTION]は必ずNORMALとし、感情の差は「状況」に具体的な演技として書くこと。
+             - キャラクターシートのレイアウト、説明文、表情一覧、見本ポーズ、白背景を物語の画面として複製しないこと。
+             - 遠近感とカメラの変化は積極的に使ってよいが、人物の描画様式、顔、頭身、線、塗りは変えないこと。` : `3. **オチと構図の多様化 (Variety Constraints)**:
              - **必須**: 「手前に大きく顔があるキャラ」「奥で小さく驚くキャラ」など、**遠近感**を強調せよ。棒立ちは厳禁。
              - **オチ**: 「全員泣いて終わり」等のワンパターンを禁止。シュールな静寂、無言の圧力、社会的死など多様にせよ。
              - **【表現・SFXルール】**: 擬音（SFX）は「日本語のみ」を使用せよ。英語の注釈、翻訳、アルファベット併記は一切禁止する。
@@ -432,16 +450,18 @@ ${styleJson.anti_patterns ? `            - 絶対禁止事項:\n${styleJson.anti
                 punchlineType === 'Dream' ? `**【強制オチ指定: 夢オチ】**: 4コマ目のオチは必ず「夢オチ」にすること。1〜3コマ目の壮大な展開が全て夢だったと判明し、現実の落差で笑わせろ。目覚めた後の「え、今の全部…？」という虚無感と、夢の中の方がまだマシだったという絶望のダブルパンチを叩き込め。推奨EMOTION: SAD, SHADOW, CHIBI_GAG（ズッコケ）。⚠️BLANKは乱用を避け、目覚めた後のリアクションはNORMAL等も検討せよ。` :
                 punchlineType === 'Misunderstanding' ? `**【強制オチ指定: 盛大な勘違い】**: 4コマ目のオチは必ず「盛大な勘違い」にすること。1〜3コマ目の全ての行動や感動が、根本的な勘違いの上に成り立っていたと4コマ目で判明し、全てが台無しになる。「え、そもそもの前提が違ったの…？」という脱力と虚無で終わらせろ。推奨EMOTION: CHIBI_GAG, NORMAL。⚠️BLANKは乱用せず、呆れや真顔とバランスよく選択せよ。` :
                 punchlineType === 'CanceledEnding' ? `**【強制オチ指定: 打ち切りエンド】**: 4コマ目のオチは必ず「打ち切りエンド」にすること。話が盛り上がりきった3コマ目の直後、4コマ目で唐突に「俺たちの戦いはこれからだ！」「※この漫画は諸事情により打ち切りとなりました」的なメタ的な強制終了で幕を閉じろ。物語の途中感と投げっぱなし感を全力で演出せよ。推奨EMOTION: IMPACT, NORMAL。⚠️BLANKは乱用禁止。` :
-                punchlineType === 'Documentary' ? `**【強制モード: ドキュメンタリー（原文忠実モード） v1.0】**:
+                punchlineType === 'Documentary' ? `**【強制モード: ギャグ・ドキュメンタリー（原文忠実＋オチだけギャグ漫画化）】**:
                 このモードでは、入力された元ネタ（ニュース記事・URL記事・手動入力テキスト）の**事実・内容をそのまま忠実に**4コマ漫画のシナリオに変換する。
+                **【数値・時系列の完全固定】**: 入力本文の日付、施行日、時刻、期間、数量、割合、価格、変更前後の値をすべて抽出してシナリオ内に保持する。同値の時刻表記への正規化だけを許可し、省略、別の値への置換、曖昧化、順序変更は禁止する。
+                **【重要語句の保持】**: 原文にある固有名詞、主体、原因、主要な行為、発表内容、対策、結果を示す語句は、可能な限り原文と同じ語句のまま1〜3コマ目の「状況」またはセリフへ分配する。特に原因と対策を省略しない。
                 **【1〜3コマ目の厳格ルール】**:
                 - 元ネタの情報を「たとえ話」「置換（別の文脈への言い換え）」「誇張」「不条理な設定変更」に変換することを**完全に禁止**する。
                 - 元記事の事実・出来事・人物・状況を、登場キャラクターの掛け合い（会話・リアクション）としてそのまま再構成せよ。
                 - 1コマ目: 元ネタの導入・背景をキャラが説明または議論する
                 - 2コマ目: 元ネタの核心・衝撃ポイントをキャラが知って驚く・議論する
                 - 3コマ目: 元ネタの詳細・補足・影響をキャラが掘り下げる（リアクション強め）
-                **【4コマ目のみ漫画的オチを許可】**:
-                - 4コマ目だけは、元ネタに対するキャラクターたちの**漫画的リアクション・ツッコミ・感想**で締めてよい。
+                **【4コマ目だけギャグ漫画化】**:
+                - 4コマ目だけは、元ネタに対するキャラクターたちの**ギャグ漫画的リアクション・ツッコミ・感想**で締めてよい。
                 - ここでのみ、誇張されたリアクション、シュールな沈黙、感動詐欺的な締めなどの漫画的オチ技法の使用を許可する。
                 - ただし、元ネタの事実を捏造・改変してオチにすることは禁止。あくまで「事実に対するキャラの反応」でオチを作れ。
                 **【禁止事項】**: 舞台を元ネタと無関係な場所（宇宙、異世界、RPGなど）に移すこと。元ネタに登場しない架空の出来事を捏造すること。ニュースの内容を「たとえ話」にすり替えること。` : ''}
@@ -476,7 +496,7 @@ ${styleJson.anti_patterns ? `            - 絶対禁止事項:\n${styleJson.anti
                 * **まとめのナレーション禁止**: 「〜な一日だった」「〜と誰もが思った」「〜な出来事であった」等でオチを綺麗にまとめるのは絶対禁止。余韻はぶった斬れ。
                 * **弱いリアクション禁止**: 「やれやれ」「ふふっ」「まあいいか」「思わず笑ってしまった」等の緊張感のない言葉は禁止。より鋭く、キャラの個性が尖ったリアクションにせよ。
                 * **説明ゼリフ禁止**: 「〇〇が××してしまったぞ！」のように状況をそのまま口で説明するな。状況は絵（ト書き）で見せ、セリフは感情やツッコミに全振りせよ。
-                * **オチの表情パターンの多様化（白目オチの偏り防止）**: 4コマ目のオチとして「全員が白目をむいて唖然とする」「凍りつく」等の『白目・フリーズ反応（BLANK）』ばかりに偏るのを防ぐこと。白目オチ自体は極限の絶望や魂抜けとして適した場面でのみ効果的に使用し（使用を完全に禁止するものではない）、それ以外の場面では能動的にツッコむ、爆笑する、冷静に呆れる（NORMALの真顔など）、あるいはツッコミ役が怒り狂うなど、状況に合わせた多様な表情や能動的なリアクションでオチを作れ。
+                * **オチの表情パターンの多様化（白目オチの偏り防止）**: 4コマ目のオチとして「全員が白目をむいて唖然とする」「凍りつく」等の『白目・フリーズ反応（BLANK）』ばかりに偏るのを防ぐこと。白目オチ自体は極限の絶望や魂抜けとして適した場面でのみ効果的に使用し（使用を完全に禁止するものではない）、それ以外の場面では能動的にツッコむ、爆笑する、冷静に呆れる（NORMALの真顔など）、あるいはツッコミ役が怒り狂うなど、状況に合わせた多様な表情や能動的なリアクションでオチを作れ。`}
 
            3.9 **【Guard S: 五感バランスの強制（ト書き品質革命）】**:
               - ト書き（状況・アクション描写）が「視覚情報だけ」に偏ることを禁止する。
@@ -500,7 +520,10 @@ ${styleJson.anti_patterns ? `            - 絶対禁止事項:\n${styleJson.anti
               - **ドキュメンタリーモード時の優先順位**: ドキュメンタリーモード（原文忠実モード）が有効な場合、元ネタの事実再現が最優先。Guard Mの比喩制約よりも原文忠実性が上位にあるため、元記事の表現をそのまま再構成する場合は本ガードを緩和してよい。
                - **目的**: AI特有の定型比喩を排除し、世界観に根ざした独自の表現でシナリオの「血の通った感」を強化する。
 
-          4. **4コマ目の演出**:
+          ${isSeriousDocumentary ? `4. **【シリアス版の感情・絵柄タグ】**:
+             - 全コマの冒頭に[EMOTION: NORMAL]を1つだけ付けること。
+             - EMOTIONタグで画風を変えず、各コマの感情は眉、まぶた、視線、口、姿勢、手の位置、人物間の距離、照明、カメラで具体化すること。
+             - 4コマ目も同じ絵柄・線・塗り・陰影・顔・頭身を維持し、演技と構図だけを強めること。` : `4. **4コマ目の演出**:
              - 必ずしもデフォルメ（SD）にする必要はない。ネタがシリアスなら、**劇画調のリアルな絶望顔**で落としても良い。ネタに合わせてスタイルを適応させよ。
 
           5. **【感情絵柄タグ (Emotion Style Tag)】**:
@@ -526,7 +549,7 @@ ${styleJson.anti_patterns ? `            - 絶対禁止事項:\n${styleJson.anti
                 - SUMI_INK: 墨インクスプラッシュ。キャラの背後に黒い墨が弾け、筆のストロークが走る和風演出。白い余白と墨のコントラストが強烈。和風バトルパロディ、必殺技、侍・書道ネタ、威厳ある登場シーンに。UKIYOEが「静的な平面表現」であるのに対し、SUMI_INKは「動的な墨の飛沫」。
                 - MONOCHROME_ACCENT: モノクロ一点カラー。画面全体をグレースケールにし、重要な要素だけ1色だけ鮮やかに残す映画的演出。「ここだけがおかしい」「これが全ての元凶」等の視覚的皮肉や衝撃的発見の強調に。
                 - GOLDEN_HOUR: ゴールデンアワー。黄金の夕暮れ光で全てを包み、長い影が伸びる映画的情景。感動詐欺オチとの相性が最高。SHOUJOの「花びら・キラキラ」やFLASHBACKの「セピア・回想」とは異なり、リアルな夕暮れの温かい光による「美しすぎる締め」。
-             - オチのコマ（4コマ目）は特に、NORMAL以外のタグを優先的に選べ。
+             - オチのコマ（4コマ目）は特に、NORMAL以外のタグを優先的に選べ。`}
 
           6. **【カメラ演出タグ (Camera Direction Tag) — 極限物理描写 & シネマティック構図 v4.5】**:
              - 各コマの冒頭に [Camera: XXX] タグを**必ず1つ**付与せよ。
@@ -601,7 +624,7 @@ ${styleJson.anti_patterns ? `            - 絶対禁止事項:\n${styleJson.anti
           - (許可事項): ニュースの当事者（スポーツ選手、政治家、怪人、動物、虫など）や名もなきモブキャラは、物語を面白くするために必要であれば自由に登場・発言させて構わない。
           - (ハルシネーション防止): ゲストを登場させる場合でも、画像生成時のVisual Actionに「意味不明な文字」や「描画不可能な複雑すぎる行動」が混入しないよう、シンプルで視覚的にわかりやすい行動に留めること。
           - 構成: 起承転結（4段）。
-          - 内容: ニュースに対する辛辣な風刺や、キャラの個性を活かしたドタバタ劇。
+           - 内容: ${isSeriousDocumentary ? '原文の事実を変えない真摯な再構成。4コマ目だけ、事実に対するシリアスな反応または結論で締める。' : 'ニュースに対する辛辣な風刺や、キャラの個性を活かしたドタバタ劇。'}
           - 文体: 各コマの「状況」「セリフ」が明確にわかる文章。
 
           ⚠️【最終確認・絶対厳守】⚠️
@@ -615,7 +638,7 @@ ${styleJson.anti_patterns ? `            - 絶対禁止事項:\n${styleJson.anti
              - ニュースのトピック、および指定された場所や服装などの制約条件を列挙せよ。
              - 手動入力モードでは、思考トレースでは「ユーザー提供トピック」と明記する。ユーザー入力を未検証の外部ニュースや確定事実として書かない。
           2. [実行パスのトレース]
-             - 4コマの起承転結の各コマで、ズレ技法やコメディトーン、キャラクターたちのセリフや物理アクションをどのように構成するかシミュレーションせよ。
+             - ${isSeriousDocumentary ? '4コマの起承転結で原文の事実をどう配分し、最後だけシリアスな反応または結論へつなぐかを、絵柄を変えずにシミュレーションせよ。' : '4コマの起承転結の各コマで、ズレ技法やコメディトーン、キャラクターたちのセリフや物理アクションをどのように構成するかシミュレーションせよ。'}
           3. [確信度の自己判定]
              - 以下の各項目の確信度を 0-100 で評価せよ：
                - ${inputMode === 'manual' ? 'ユーザー提供トピックが反映されているか' : 'ニュースの事実またはトピックが面白く反映されているか'}: (確信度: XX)
@@ -735,12 +758,21 @@ const CROSS_PANEL_WARDROBE_COLOR_LOCK = `CROSS-PANEL WARDROBE COLOR LOCK:
 - Every PANEL STYLE LOCK changes background/environment palette, VFX, linework, shading, and rendering treatment only; keep every named character's garment item and its colors unchanged.
 - Local lighting may change highlights and shadows, but the garment's canonical base and accent colors remain recognizable. Monochrome panels preserve the same colors as tonal values.`;
 
+const REFERENCE_SHEET_WARDROBE_STYLE_LOCK = `REFERENCE-SHEET WARDROBE AND RENDERING LOCK:
+- Preserve each named character's garment items, colors or monochrome tone regions, materials, patterns, fold-line treatment, and shading method from the character sheet in all four panels.
+- Lighting may change the strength and direction of highlights or shadows for the serious scene, but it must not replace the reference sheet's drawing, coloring, inking, or fabric-rendering method.`;
+
+const REFERENCE_SHEET_OUTFIT_RENDERING_LOCK = `REFERENCE-SHEET OUTFIT RENDERING LOCK:
+- Garment items come from the active outfit override, not from the character sheet.
+- Apply the character sheet's linework, fold-line treatment, shading method, coloring or monochrome tone method, and degree of stylization to those overridden garments in all four panels.
+- Lighting may change highlight and shadow strength, but never change the selected garment items or the reference sheet's rendering method.`;
+
 export const buildChatGPTMangaPrompt = (p) => {
   const {
     safeTopic, watermarkEng, styleCore, safeLocation, isMonochrome = false,
     bg360Image, bg360Analysis, bg360Enabled,
     VAR_CAST_LIST_CHATGPT, identityMatrix, activeOutfit,
-    scriptLock, panelSections // 事前にビルドされた4パネル分のセクション文字列
+    scriptLock, panelSections, preserveReferenceStyle = false // 事前にビルドされた4パネル分のセクション文字列
   } = p;
 
   const bg360Block = (bg360Image && bg360Analysis && bg360Enabled) ? (
@@ -757,9 +789,17 @@ Use the 360° background image's lighting direction (${bg360Analysis.lighting}),
     ? `- IGNORE reference clothing. All characters MUST wear exactly: ${activeOutfit}.`
     : '- OUTFIT CONSISTENCY: Every character MUST wear EXACT same outfit in ALL 4 panels.';
   const compactCastDetails = compactChatGPTCastDetails(VAR_CAST_LIST_CHATGPT);
+  const clothingFoldRule = preserveReferenceStyle
+    ? 'Preserve the character-sheet treatment of fabric folds and shadows; do not impose a different cel-shading or painting method.'
+    : `${isMonochrome ? 'use a few localized solid-black or hatched wedge shadows where fabric overlaps; preserve white lit fabric and garment tone assignments. Do not scatter geometric patterns.' : 'for full-color clothing only, render overlapping, pinched, and intersecting fabric folds with a few crisp wedge-shaped triangular cel-shaded shadow planes. Make a distinct small dark triangular fill at each selected crease junction, not merely a soft fold gradient. Use them as form shadows, not printed patterns or random geometric marks; preserve the outfit, material, and scene lighting.'}`;
+  const artStyleQa = preserveReferenceStyle
+    ? 'REFERENCE-SHEET STYLE QA LOCK:\n- Compare all four panels to the attached character sheets. Redraw any panel that changes linework, coloring method, shading design, facial construction, eye design, body proportions or degree of stylization.'
+    : isMonochrome ? MONOCHROME_STYLE_QA : `ART-STYLE DIFFERENCE QA LOCK:
+- Adjacent PANEL STYLE LOCKs differ in at least three of linework, environmental palette, shading, background/VFX, texture/surface treatment. Environmental palette changes apply to background, lighting treatment, and VFX, never to canonical garment colors. Redraw the same clean anime style with only pose, expression, saturation, glow, or speed lines changed. Never override script/dialogue/identity/key prop/A4 layout.`;
+
   return `OUTPUT: Single image. Draw manga directly.
 
-ABSOLUTE TASK: new 4-panel manga, not a reference sheet. Use character refs only for ${isMonochrome ? 'face/eye shape, hair structure, glasses and design; all regions obey the black ink plate' : 'face, hair, eyes, skin, glasses'}.
+ABSOLUTE TASK: new 4-panel manga, not a reference sheet. Use character refs for ${preserveReferenceStyle ? 'identity and the same art style across all four panels' : isMonochrome ? 'face/eye shape, hair structure, glasses and design; all regions obey the black ink plate' : 'face, hair, eyes, skin, glasses'}.
 
 FORMAT:
 - A4 portrait 1:1.414; 4 equal horizontal panels, 95% width, thick white gutters, no large margins/space below panel 4.
@@ -777,7 +817,7 @@ ${MANGA_FACIAL_ACTING_LOCK}
 - CLEAN SURFACE PROTOCOL: ${isMonochrome ? 'regular black-on-white dots and intentional hatching allowed; no random noise, moire or marks on lit skin.' : 'no grain/speckles/dithering/rough texture/pores/moire/dust/particles/sparkle unless a panel style exception allows it.'}
 - MANGA FINISH ASSIST: preserve script/cast/camera/layout; keep bubble space, ${isMonochrome ? 'readable ink shapes and screen density' : 'cast/background light and color'}, coherent anatomy, and setting depth.
 ${isMonochrome ? MONOCHROME_BACKGROUND_LOCK : RICH_PANEL_COMPOSITION_LOCK}
-- CLOTHING FOLD SHADOW ASSIST: ${isMonochrome ? 'use a few localized solid-black or hatched wedge shadows where fabric overlaps; preserve white lit fabric and garment tone assignments. Do not scatter geometric patterns.' : 'for full-color clothing only, render overlapping, pinched, and intersecting fabric folds with a few crisp wedge-shaped triangular cel-shaded shadow planes. Make a distinct small dark triangular fill at each selected crease junction, not merely a soft fold gradient. Use them as form shadows, not printed patterns or random geometric marks; preserve the outfit, material, and scene lighting.'}
+- CLOTHING FOLD SHADOW ASSIST: ${clothingFoldRule}
 ${SAFE_VISUAL_CONTENT_LOCK}
 - ${styleCore}
 - Setting: ${safeLocation}
@@ -788,7 +828,9 @@ CAMERA: vary angles; preserve anatomy and the script lock.
 CHARACTER IDENTITY:
 - ${isMonochrome ? 'Reproduce reference geometry and design using black ink/white paper: face/eye shape, hairstyle, glasses and accessory shapes. No source hue or skin base tone.' : 'Reproduce reference face, hair, eyes, skin, accessories.'} No feature swapping.
 ${outfitRule}
-${isMonochrome ? MONOCHROME_WARDROBE_LOCK : CROSS_PANEL_WARDROBE_COLOR_LOCK}
+${preserveReferenceStyle
+  ? (activeOutfit ? REFERENCE_SHEET_OUTFIT_RENDERING_LOCK : REFERENCE_SHEET_WARDROBE_STYLE_LOCK)
+  : isMonochrome ? MONOCHROME_WARDROBE_LOCK : CROSS_PANEL_WARDROBE_COLOR_LOCK}
 - Adults 20+. ${isMonochrome ? 'Same face/hair/glasses/outfit shapes and ink/tone assignments; lit skin always white.' : 'Same face/hair/glasses/skin/outfit across all panels.'}
 - Cast details: ${compactCastDetails}
 - Identity Anchor: ${identityMatrix}
@@ -809,14 +851,13 @@ DIALOGUE / BUBBLE QA LOCK:
 CHARACTER QA PASS:
 - ${isMonochrome ? 'Match face/eye shape, hairstyle, glasses, outfit design and stable ink/tone assignments, with pure white lit skin' : 'Match hair color, hairstyle, eye color, glasses status, skin tone, outfit, and accessories'}; redraw swaps, merges, or wrong cast.
 
-${isMonochrome ? MONOCHROME_STYLE_QA : `ART-STYLE DIFFERENCE QA LOCK:
-- Adjacent PANEL STYLE LOCKs differ in at least three of linework, environmental palette, shading, background/VFX, texture/surface treatment. Environmental palette changes apply to background, lighting treatment, and VFX, never to canonical garment colors. Redraw the same clean anime style with only pose, expression, saturation, glow, or speed lines changed. Never override script/dialogue/identity/key prop/A4 layout.`}
+${artStyleQa}
 
 THINGS TO AVOID:
 - No plastic skin, extra logos/watermarks, floating/ghost eyes/faces, duplicate humans, unrelated text.
 - No sparkle/glow dust or grain except style locks. HAND ANATOMY: correct hands; no mirrored/extra/backward hands.
 
-PANEL-BY-PANEL CLOTHING FOLD PRIORITY: When a panel shows folded clothing, render 2-4 distinct small dark triangular shadow fills at visible crease junctions. Use hard cel-shaded edges, especially on light shirts, blouses, jackets, and sleeves. These are localized form shadows only: never scatter triangles across smooth fabric or turn them into a print/pattern.
+PANEL-BY-PANEL CLOTHING FOLD PRIORITY: ${preserveReferenceStyle ? 'Follow the character sheet\'s existing fold-line and shadow treatment in every panel; do not introduce a new rendering method.' : 'When a panel shows folded clothing, render 2-4 distinct small dark triangular shadow fills at visible crease junctions. Use hard cel-shaded edges, especially on light shirts, blouses, jackets, and sleeves. These are localized form shadows only: never scatter triangles across smooth fabric or turn them into a print/pattern.'}
 
 PANEL DESCRIPTIONS:
 
@@ -834,7 +875,7 @@ export const buildGeminiMangaPrompt = (p) => {
     safeTopic, watermarkEng, styleCore, safeLocation, isMonochrome = false,
     bg360Image, bg360Analysis, bg360Enabled, bg360CroppedPanels,
     VAR_CAST_LIST, identityMatrix, activeOutfit,
-    dynamicCamera, scriptLock, panelSections // 事前にビルドされた4パネル分のセクション文字列
+    dynamicCamera, scriptLock, panelSections, preserveReferenceStyle = false // 事前にビルドされた4パネル分のセクション文字列
   } = p;
 
   const bg360Block = (bg360Image && bg360Analysis && bg360Enabled) ? (
@@ -891,7 +932,7 @@ GUTTERS: THICK white gap (3% canvas height, 40-45px) between panels. Panels MUST
 ${scriptLock}
 
 Style: ${styleCore}.
-(Dramatic anime cinematic lighting, high-budget VFX, NO excessive speedlines).
+${preserveReferenceStyle ? '(Keep the reference-sheet drawing style unchanged; lighting and composition may intensify the serious mood without changing rendering style).' : '(Dramatic anime cinematic lighting, high-budget VFX, NO excessive speedlines).'}
 Setting: ${safeLocation}.
 ${bg360Block}
 
@@ -906,7 +947,7 @@ ${VAR_CAST_LIST}
 ${outfitOverride}
 【Identity Anchor】: Cross-panel consistency is MANDATORY. Redraw if hair/eyes/glasses/outfit mismatch.
 ${identityMatrix}
-${isMonochrome ? MONOCHROME_WARDROBE_LOCK : CROSS_PANEL_WARDROBE_COLOR_LOCK}
+${preserveReferenceStyle ? REFERENCE_SHEET_WARDROBE_STYLE_LOCK : isMonochrome ? MONOCHROME_WARDROBE_LOCK : CROSS_PANEL_WARDROBE_COLOR_LOCK}
 OUTFIT CONSISTENCY: Every character MUST wear EXACT same outfit in ALL 4 panels. NO changes.
 GLASSES VERIFICATION (MANDATORY): Before finalizing EACH panel, count the number of characters wearing glasses. Compare against the Identity Matrix. If the count does not match, redraw. Characters without glasses must have fully visible bare eyes with NO frames.
 
@@ -921,7 +962,11 @@ ANTI-CLONING: NEVER draw the same character twice in a single panel.
 COMPOSITION: Strict 2:3 golden ratio inside each panel.
 
 Tech Dict:
-${isMonochrome ? '(clean ink background with selectively simplified detail: 2.5)\n(crisp black penwork, white highlights, regular halftone and hatching: 2.5)' : `(clean anime illustration background: 2.5)
+${preserveReferenceStyle
+  ? (isMonochrome
+    ? '(reference-sheet linework and proportions translated only into pure white, solid black and regular halftone: 2.8)'
+    : '(exact reference-sheet linework, coloring method, shading design and proportions: 2.8)')
+  : isMonochrome ? '(clean ink background with selectively simplified detail: 2.5)\n(crisp black penwork, white highlights, regular halftone and hatching: 2.5)' : `(clean anime illustration background: 2.5)
 (Meticulous clean line art, smooth cel shading: 2.5)
 (Soft diffused backlight, rim light: 2.4)
 (Cinematic depth of field, soft bokeh: 2.3)
@@ -939,7 +984,7 @@ ${isMonochrome ? MONOCHROME_IMAGE_QUALITY_CONTRACT : SHARED_IMAGE_QUALITY_CONTRA
 ${MANGA_FACIAL_ACTING_LOCK}
 ${isMonochrome ? MONOCHROME_BACKGROUND_LOCK : RICH_PANEL_COMPOSITION_LOCK}
 - MANGA FINISH ASSIST: preserve script/cast/camera/layout; keep bubble space, ${isMonochrome ? 'readable ink shapes and screen density' : 'cast/background light and color'}, coherent anatomy, and setting depth.
-- CLOTHING FOLD SHADOW ASSIST: ${isMonochrome ? 'localized solid-black/hatched wedge shadows only where fabric overlaps; preserve white lit fabric and stable wardrobe tones, never random geometric patterns.' : 'for full-color clothing only, render overlapping, pinched, and intersecting fabric folds with a few crisp wedge-shaped triangular cel-shaded shadow planes. Make a distinct small dark triangular fill at each selected crease junction, not merely a soft fold gradient. Use them as form shadows, not printed patterns or random geometric marks; preserve the outfit, material, and scene lighting.'}
+- CLOTHING FOLD SHADOW ASSIST: ${preserveReferenceStyle ? 'follow the character sheet\'s existing fold-line and shadow treatment; do not impose a different cel-shading, ink or painting method.' : isMonochrome ? 'localized solid-black/hatched wedge shadows only where fabric overlaps; preserve white lit fabric and stable wardrobe tones, never random geometric patterns.' : 'for full-color clothing only, render overlapping, pinched, and intersecting fabric folds with a few crisp wedge-shaped triangular cel-shaded shadow planes. Make a distinct small dark triangular fill at each selected crease junction, not merely a soft fold gradient. Use them as form shadows, not printed patterns or random geometric marks; preserve the outfit, material, and scene lighting.'}
 ${SAFE_VISUAL_CONTENT_LOCK}
 - Existing named cast only. Do NOT invent a new dominant person, black silhouette, monster, ghost, mascot, presenter, antagonist, or narrator figure. Background extras may appear only as small non-speaking atmosphere when the setting naturally needs a crowd; they must never become central, shadowed, named, or connected to a speech bubble.
 - If a panel says a shadow falls on a character, draw lighting/shadow ON that existing named character. Do NOT interpret "shadow" or a dark style tag as permission to create a separate black silhouette person.
@@ -947,17 +992,18 @@ ${SAFE_VISUAL_CONTENT_LOCK}
 - Only quoted values after "TEXT (PRINT VALUES ONLY)" are visible lettering. Names after "TAILS (METADATA; NEVER PRINT NAMES)" are routing metadata only: NEVER print speaker names, brackets, bubble IDs, field labels, quotation marks, or metadata.
 - Each bubble tail tip must terminate at its assigned speaker's mouth/head silhouette, never at a neighbor or empty space. Trace every tail before final render.
 - Dialogue punctuation is part of the script lock. Copy the dialogue exactly as written; do NOT add periods, commas, ellipses, exclamation marks, emphasis marks, or spacing unless they already exist in the Dialogue line.
-- Panel style may be dramatic, dark, or comedic, but style must never change the story, add cast members, replace the key prop, or make the page look like a clean generic anime template.
+- ${preserveReferenceStyle ? 'Panel mood may become more serious through expression, acting, camera, composition and lighting, but the character-sheet art style must remain identical in all four panels.' : 'Panel style may be dramatic, dark, or comedic, but style must never change the story, add cast members, replace the key prop, or make the page look like a clean generic anime template.'}
 
-PANEL-BY-PANEL CLOTHING FOLD PRIORITY: When a panel shows folded clothing, render 2-4 distinct small dark triangular shadow fills at visible crease junctions. Use hard cel-shaded edges, especially on light shirts, blouses, jackets, and sleeves. These are localized form shadows only: never scatter triangles across smooth fabric or turn them into a print/pattern.
+PANEL-BY-PANEL CLOTHING FOLD PRIORITY: ${preserveReferenceStyle ? 'Follow the character sheet\'s existing fold-line and shadow treatment in every panel; do not introduce a new rendering method.' : 'When a panel shows folded clothing, render 2-4 distinct small dark triangular shadow fills at visible crease junctions. Use hard cel-shaded edges, especially on light shirts, blouses, jackets, and sleeves. These are localized form shadows only: never scatter triangles across smooth fabric or turn them into a print/pattern.'}
 
 PANEL DESCRIPTIONS:
 
 ${panelSections}
 
 Important constraints:
-${isMonochrome ? MONOCHROME_STYLE_QA : ''}
-- Preserve the selected scenario style and each PANEL STYLE LOCK; do not collapse the page into generic classic anime or a flat template.
+${preserveReferenceStyle ? `REFERENCE-SHEET STYLE QA LOCK:
+- Compare all four panels to the attached character sheets. Redraw any panel that changes linework, coloring method, shading design, facial construction, eye design, body proportions or degree of stylization.` : isMonochrome ? MONOCHROME_STYLE_QA : ''}
+- ${preserveReferenceStyle ? 'Preserve the reference-sheet art style in every panel; emotion tags are acting cues only.' : 'Preserve the selected scenario style and each PANEL STYLE LOCK; do not collapse the page into generic classic anime or a flat template.'}
 - Do NOT merge panels. Keep 4 distinct panels with white gutters between them.
 - ABSOLUTELY NO TEXT OR SFX BETWEEN PANELS. The white gutters separating the panels MUST be completely clean and pure white. Do not draw any labels, narration, or sound effects crossing or sitting inside the panel boundaries.
 - Do NOT write situation/narration explanations as text on the screen. The Visual Action must only be illustrated, except explicit visual scene text requested by the action, such as handwriting, air-writing, signs, labels, printed text, screen text, or board text.

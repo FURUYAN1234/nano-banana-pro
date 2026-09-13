@@ -9,6 +9,7 @@ import {buildGeminiReferencePlan, appendGeminiReferencePrompt} from '../lib/gemi
 import { callAI, setActiveEngine } from '../lib/ai-provider';
 import { reviewComedyPrompt } from '../lib/comedy-review';
 import { normalizeMangaColorMode } from '../lib/manga-render-mode.js';
+import { getEndingModePolicy, isDocumentaryEnding } from '../lib/ending-mode-policy.js';
 
 // --- Refactored Imports (Phase 1-2) ---
 import { SYSTEM_VERSION, DEFAULT_CATEGORIES, EMOTION_STYLES, DYNAMIC_CAMERA_PROTOCOL, ANTI_CHARSHEET_PREFIX } from '../lib/constants';
@@ -938,13 +939,21 @@ export default function useMangaWorkflow() {
         allowScenarioQualityWarning: true
       });
 
-      setAssembleThought(prev => prev + "\n> ギャグの意図を保ってAI精査中...");
-      const reviewed = await reviewComedyPrompt({ prompt: safePrompt, scenario: currentScenario, castList }, callAI);
+      const endingPolicy = getEndingModePolicy(punchlineType);
+      setAssembleThought(prev => prev + (endingPolicy.preserveReferenceStyle
+        ? "\n> 原文忠実性と全4コマの参照絵柄固定を保ってAI精査中..."
+        : "\n> ギャグの意図を保ってAI精査中..."));
+      const reviewed = await reviewComedyPrompt({
+        prompt: safePrompt,
+        scenario: currentScenario,
+        castList,
+        reviewTone: endingPolicy.endingTone
+      }, callAI);
 
       if (promptScenarioEpoch !== scenarioRunEpochRef.current || assemblyRun !== promptAssemblyRunRef.current) return null;
 
-      if (punchlineType === 'Documentary') {
-        setAssembleThought(prev => prev + "\n> [ドキュメンタリーモード] コンテンツセーフティ・サニタイザー適用済み (危険ワードを安全な言い換えに自動変換)");
+      if (isDocumentaryEnding(punchlineType)) {
+        setAssembleThought(prev => prev + `\n> [${endingPolicy.preserveReferenceStyle ? 'シリアス' : 'ギャグ'}・ドキュメンタリー] コンテンツセーフティ・サニタイザー適用済み (危険ワードを安全な言い換えに自動変換)`);
       }
 
       setAssembleThought(prev => prev + "\n> [v3.31] 事故防止プロトコル全モデル適用済み:\n>   ✅ 縦書きセリフ強制\n>   ✅ セリフ勝手追加禁止\n>   ✅ キャラの外見は維持し、設定資料の配置・説明文はコピーしない\n>   ✅ カメラワーク平易化禁止\n>   ✅ プロンプト分岐 (ChatGPT/Gemini)\n>   ✅ 出力前チェックリスト追加");

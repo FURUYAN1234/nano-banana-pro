@@ -88,21 +88,28 @@ export const requestSafeScenario = async ({
   validateScenario = null,
   retryInstruction = '',
   onRetry = () => {},
+  fatalValidationCodes = [],
   maxAttempts = 2
 }) => {
   let lastSafetyError = null;
   let retryContext = null;
   let bestQualityCandidate = null;
-  const retainQualityCandidate = (attempts, laterError = null) => ({
-    response: bestQualityCandidate.response,
-    parsed: bestQualityCandidate.parsed,
-    attempts,
-    validationWarning: {
-      code: bestQualityCandidate.error?.code || 'SCENARIO_QUALITY',
-      message: [bestQualityCandidate.error?.message || 'シナリオ品質検証に通りませんでした。', laterError ? `後続の修正を取得できないため既存候補を保持: ${laterError.message}` : ''].filter(Boolean).join(' / '),
-      qualityScore: bestQualityCandidate.qualityScore
+  const fatalValidationCodeSet = new Set(fatalValidationCodes);
+  const retainQualityCandidate = (attempts, laterError = null) => {
+    if (fatalValidationCodeSet.has(bestQualityCandidate.error?.code)) {
+      throw bestQualityCandidate.error;
     }
-  });
+    return {
+      response: bestQualityCandidate.response,
+      parsed: bestQualityCandidate.parsed,
+      attempts,
+      validationWarning: {
+        code: bestQualityCandidate.error?.code || 'SCENARIO_QUALITY',
+        message: [bestQualityCandidate.error?.message || 'シナリオ品質検証に通りませんでした。', laterError ? `後続の修正を取得できないため既存候補を保持: ${laterError.message}` : ''].filter(Boolean).join(' / '),
+        qualityScore: bestQualityCandidate.qualityScore
+      }
+    };
+  };
 
 
   for (let attempt = 0; attempt < maxAttempts; attempt += 1) {

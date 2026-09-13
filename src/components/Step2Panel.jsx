@@ -13,6 +13,7 @@ import {
 import ThinkingLog from './ThinkingLog';
 import Panorama360Viewer from './Panorama360Viewer';
 import { getSeasonContext } from '../lib/seasonal-outfit';
+import { DOCUMENTARY_ENDING_OPTIONS } from '../lib/ending-mode-policy';
 
 /**
  * STEP 02: シナリオ構築設定パネル
@@ -301,7 +302,9 @@ export default function Step2Panel({
               <option value="Dream">🛏️ 夢オチ (ループの恐怖)</option>
               <option value="Misunderstanding">🤷 盛大な勘違い (すれ違いの頂点)</option>
               <option value="CanceledEnding">🏃 打ち切りエンド (俺たちの戦いはこれからだ)</option>
-              <option value="Documentary">📰 ドキュメンタリー (原文忠実＋オチだけ漫画化)</option>
+              {DOCUMENTARY_ENDING_OPTIONS.map(({ value, menuLabel }) => (
+                <option key={value} value={value}>📰 {menuLabel}</option>
+              ))}
             </select>
           </div>
         </div>
