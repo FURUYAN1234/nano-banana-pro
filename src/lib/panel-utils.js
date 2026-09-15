@@ -1625,7 +1625,10 @@ export const buildEmotionBlock = (panelText, colorMode = 'color', { preserveRefe
   if (colorMode === 'monochrome') {
     const gag = SERIOUS_STYLES_FOR_GAG_OVERLAY.has(emo) && rawTagHasComedyIntent(extractRawEmotionTag(panelText))
       ? '\nGAG INTENT OVERLAY: retain dramatic ink/shadows while allowing exaggerated cartoon reactions and comedic timing; do not play the gag straight-serious.' : '';
-    return `\nMONOCHROME PANEL STYLE LOCK: ${emo}; ${MONOCHROME_EMOTION_STYLES[emo] || 'Expressive black pen lines, solid blacks and regular black-on-white halftone; white lit skin.'} Preserve script/Camera/Action, cast, glasses and wardrobe tone assignments.${gag}`;
+    // 色に依存しない頭身指定は両モードで共有。複数人物のIMPACTは既存の全員可視レシピを優先。
+    const proportions = EMOTION_STYLES[emo]?.proportionsMulti === undefined ? EMOTION_STYLES[emo]?.proportions : '';
+    const proportionLock = proportions ? `\nPROPORTION OVERRIDE: ${proportions}` : '';
+    return `\nMONOCHROME PANEL STYLE LOCK: ${emo}; ${MONOCHROME_EMOTION_STYLES[emo] || 'Expressive black pen lines, solid blacks and regular black-on-white halftone; white lit skin.'} Preserve script/Camera/Action, cast, glasses and wardrobe tone assignments.${proportionLock}${gag}`;
   }
   const s = EMOTION_STYLES[emo];
   const styleLock = `PANEL STYLE LOCK: ${emo}; visibly distinct linework, environmental palette, shading, background/VFX. Change at least three visual axes; pose, expression, saturation, glow, or speed lines alone are insufficient. Environmental palette means background, lighting treatment, and VFX only; preserve every character's canonical garment base and accent colors.`;

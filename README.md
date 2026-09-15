@@ -1,6 +1,6 @@
 # Super FURU AI 4-koma System / Super FURU AI 4コマシステム
 
-> Latest release: **v6.1.7** / 最新リリース: **v6.1.7**
+> Latest release: **v6.1.9** / 最新リリース: **v6.1.9**
 
 An experimental web application in which AI handles topic research, story structure, direction, prompt construction, image generation, and quality review for a four-panel manga. / AIが話題調査、構成、演出、プロンプト構築、画像生成、品質確認まで担当する4コマ漫画制作Webアプリです。
 
@@ -35,7 +35,7 @@ Choose **Color** (default) or **Monochrome**, then press STEP3 to rebuild the sa
 
 Both API generation and Web copy carry the same monochrome medium contract: pure white lit skin, black ink and solid fills, regular black-on-white halftone/hatching, expressive pressure-varied G-pen lines and dynamic staging. Source colors in arbitrary character sheets and cast metadata are treated only as identity labels, removed from downstream reproduction commands, and mapped consistently to ink tones. A final whole-page chroma audit rejects tint even in hair ends, eyes, reflections, effects, or edge pixels. Simplify crowded nonessential background detail while retaining location and story evidence; required dialogue stays verbatim. / API生成・Web貼付の共通指示で、肌の明部は純白、線とベタは純黒、中間調は白黒の網点・ハッチングを指定します。任意のキャラクターシートや人物設定に含まれる色は同一性判定用の情報としてだけ扱い、後段の色再現命令から除外して固定トーンへ変換します。毛先・瞳・反射・効果・輪郭の縁まで含む最終色相監査で、わずかな色残りも不合格にします。Gペン風の強弱ある描線とダイナミックな構図を活かし、混み合う背景の不要な細部は整理しつつ、場所や話に必要な情報とセリフは残します。
 
-The reference, script-priority and ink-only checks survive Web prompt compaction: reference color boundaries and accents become fixed black/white/screen regions. After this update, rebuild with STEP3 and copy the newly displayed prompt; an older prompt plus a follow-up is not the current app output. / Web用の長文短縮後も、参照の解釈・シナリオとの優先順位・各コマの白黒指示を保持します。参照画像の色分けや差し色は、固定した白・黒・網点の領域として描き起こすよう指示します。更新後はSTEP3で再構築して新しい指示文をコピーしてください。古い指示文への追記は現行アプリの出力とは異なります。
+The reference, script-priority and ink-only checks survive Web prompt compaction: reference color boundaries and accents become fixed black/white/screen regions. Monochrome also preserves camera perspective, full-body acting and dramatic lighting through directional black shadows, white rim highlights and contrasting screen masses. Background simplification retains perspective and contact shadows; color-independent style proportions remain active, except when Serious Documentary locks reference proportions. After this update, rebuild with STEP3 and copy the newly displayed prompt. / Web用の長文短縮後も、参照の解釈・シナリオとの優先順位・各コマの白黒指示を保持します。白黒でもカメラの遠近感と全身演技を保ち、強い照明は方向のあるベタ影・白い輪郭光・網点の明暗差へ変換します。背景整理でも遠近と接地影を残し、細密コマと抽象コマに強弱を付けます。色に依存しない画風別の頭身指定も保持しますが、シリアス・ドキュメンタリーでは参照の頭身を優先します。更新後はSTEP3で再構築して新しい指示文をコピーしてください。実画像の迫力がカラーと同等になることを保証するものではありません。
 
 This is a generation instruction, not a pixel-conversion or print-preflight tool. There is no finishing-image import. Exact two-value pixels, resolution and publisher submission requirements must be checked on the actual output; prompt wording alone does not guarantee them. / 画像の後処理や入稿検査ではなく、生成時の指示です。「仕上げ用画像読込」はありません。実画像の厳密な二値、解像度、投稿先の原稿規定への適合は別途確認が必要で、プロンプトだけでの保証はできません。
 
@@ -152,6 +152,9 @@ The production application is published from the `main` branch through the repos
 **Is this the T2V/I2V/Ref2V repository? / T2V・I2V・Ref2Vのリポジトリですか？**  No. Those workflows are maintained separately in [comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows). / いいえ。それらは別の[comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows)で管理します。
 
 ## 📋 ChangeLog
+
+### v6.1.9 (2026-09-15)
+- **[Fix & UX]** 白黒でも光・遠近・全身演技を保持し、色非依存の頭身指定をカラーと共通化 / Retained dramatic monochrome lighting, depth and full-body acting, with shared color-independent proportions
 
 ### v6.1.8 (2026-09-15)
 - **[Fix & UX]** GPT-6 AstraをSTEP2のシナリオ作成・強化だけの先行経路にし、失敗時はGPT-5.6 Solと既存GPT-4.1系へ段階フォールバック。二面小道具の裏面操作をQAで誤検知せず、圧縮後も最終コマの能動的な配置と顔演技を保持 / Routed only STEP2 scenario creation and enhancement through GPT-6 Astra with GPT-5.6 Sol and established GPT-4.1 fallbacks, added context-aware two-sided-prop QA, and retained active final-panel staging and facial acting under prompt compaction.

@@ -73,6 +73,32 @@ test('every monochrome emotion uses ink-specific direction, not its color recipe
   }
 });
 
+test('monochrome retains color-independent proportion overrides and serious-mode protection', () => {
+  for (const style of ['CHIBI_GAG', 'GEKIGA', 'UKIYOE']) {
+    const panel = `[EMOTION: ${style}]\n葵「はい。」\n凛「うん。」`;
+    const color = buildEmotionBlock(panel, 'color');
+    const mono = buildEmotionBlock(panel, 'monochrome');
+    assert.equal(mono.match(/PROPORTION OVERRIDE:[^\n]*/)?.[0], color.match(/PROPORTION OVERRIDE:[^\n]*/)?.[0]);
+    assert.doesNotMatch(buildEmotionBlock(panel, 'monochrome', { preserveReferenceStyle: true }), /PROPORTION OVERRIDE:/);
+  }
+});
+
+test('ink lighting and physical depth survive long Web compaction without changing actions', () => {
+  for (const family of ['chatgpt', 'gemini']) {
+    const input = { scenario: scenario(['GLITTER', 'CHIBI_GAG', 'GEKIGA', 'IMPACT']).replace('Outfit: red jacket and blue shirt', 'Outfit: jacket and shirt') };
+    const color = build(family, 'color', input);
+    const mono = build(family, 'monochrome', input);
+    assert.match(mono, /INK LIGHT \/ ACTING:.*full-body action amplitude/);
+    assert.match(mono, /directional solid-black cast shadows, white rim cutouts/);
+    assert.match(mono, /background simplification preserves perspective, contact shadows and depth/i);
+    assert.doesNotMatch(mono, /overrides ALL color\/paint\/lighting/);
+    assert.deepEqual(mono.match(/^Camera:.*$/gm), color.match(/^Camera:.*$/gm));
+    assert.deepEqual(mono.match(/^Action \(visual only\):.*$/gm), color.match(/^Action \(visual only\):.*$/gm));
+    assert.match(mono, /PROPORTION OVERRIDE: Use 7-8 head proportions/);
+    if (family === 'chatgpt') assert.ok(mono.length <= 15000, `Web budget: ${mono.length}`);
+  }
+});
+
 test('monochrome lock and style recipes survive Web prompt compaction', () => {
   const prompt = build('chatgpt', 'monochrome', { scenario: scenario(['WATERCOLOR', 'NEON', 'RETRO', 'CHIBI_GAG']) });
   assert.ok(prompt.length <= 15000, `Web budget: ${prompt.length}`);
