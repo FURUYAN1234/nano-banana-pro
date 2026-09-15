@@ -143,6 +143,59 @@ test('both final prompts carry reading rhythm through color, monochrome and seri
   }
 });
 
+test('scenario creation avoids interchangeable expanding props across topics and ending modes', () => {
+  for (const manualTopic of ['ハンズで工具を選ぶ', 'EVの充電設備を増やす', '長寿祝いの統計展示']) {
+    for (const punchlineType of ['Auto', 'RunningGag', 'Explosion', 'Surreal', 'Documentary', 'SeriousDocumentary']) {
+      const prompt = getScenarioPrompt({ randomCategory: '日常', targetDate: '2026-09-15', inputMode: 'manual', manualTopic, newsContext: '', searchTopicKeywords: '', customLocation: '', customOutfit: '', ragReactions: '', punchlineType, comedyTone: 'HighTension', styleJson: null });
+      assert.match(prompt, /題材と小道具の因果/);
+      assert.match(prompt, /数値.*(?:紙|図表).*既定/);
+      assert.match(prompt, /長さ.*枚数.*だけ/);
+      assert.match(prompt, /形.*機能.*材質/);
+      assert.match(prompt, /異なる.*因果.*候補/);
+      assert.match(prompt, /題材.*差し替えても成立/);
+      assert.match(prompt, /VisualEvidence/);
+      assert.ok(prompt.includes(manualTopic));
+      assert.doesNotMatch(prompt, /限界突破が黄金パターン|背景に脈絡のない巨大オブジェクト/);
+      if (punchlineType === 'RunningGag') assert.match(prompt, /強制オチ指定: 天丼/);
+      if (punchlineType === 'Explosion') assert.match(prompt, /強制オチ指定: 爆発/);
+      if (punchlineType === 'SeriousDocumentary') assert.match(prompt, /事実|原文/);
+    }
+  }
+});
+
+test('selected enhancement prevents unrequested prop expansion without replacing the existing story', () => {
+  for (const selectedCategories of [['body', 'effects', 'background', 'gag'], ['background'], ['dialogue'], ['camera'], ['gag']]) {
+    for (const punchlineType of ['Auto', 'SeriousDocumentary']) {
+      const prompt = buildScenarioEnhancementPrompt({ scenario, selectedCategories, punchlineType });
+      assert.match(prompt, /題材と小道具の因果/);
+      assert.match(prompt, /巻物.*蛇腹.*連続用紙/);
+      assert.match(prompt, /明示.*(?:形|材質|小道具).*保持/);
+      assert.match(prompt, /選択されていないカテゴリは変更しない/);
+      assert.match(prompt, /新たな.*(?:小道具|仕掛け).*追加しない/);
+      assert.match(prompt, /既存.*(?:事件|展開).*置き換えない/);
+      assert.doesNotMatch(prompt, /異なる.*因果.*候補/);
+      assert.equal(prompt.split('【元のシナリオ】\n')[1], scenario);
+    }
+  }
+});
+
+test('explicit paper mechanisms and exact acting survive both image providers and media', () => {
+  for (const prop of ['巻物', '蛇腹の地図', '連続用紙']) {
+    const directed = scenario.replaceAll('本', prop);
+    for (const providerFamily of ['chatgpt', 'gemini']) {
+      for (const colorMode of ['color', 'monochrome']) {
+        const prompt = buildMangaPrompt({ scenario: directed, castList, providerFamily, colorMode, systemVersion: 'test' });
+        assert.ok(prompt.includes(`AがBに${prop}を差し出す。`));
+        assert.ok(prompt.includes(`Bが${prop}を掲げて大きくのけぞる。`));
+        assert.ok(prompt.includes('超ローアングル、強い短縮遠近法、全身'));
+        assert.equal((prompt.match(/## Panel \d/g) || []).length, 4);
+        for (const line of ['こちらです', 'ありがとう', '少し待って', 'これだった！', 'またどうぞ']) assert.ok(prompt.includes(line));
+        assert.doesNotMatch(prompt, /題材と小道具の因果/); // Story invention belongs to STEP2, not image rendering.
+      }
+    }
+  }
+});
+
 test('normal scenario generation specifies focal targets, reading order and relative density', () => {
   const prompt = getScenarioPrompt({
     randomCategory: '日常', targetDate: '2026-09-15', inputMode: 'manual', manualTopic: '本を返す',

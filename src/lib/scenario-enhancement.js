@@ -4,6 +4,7 @@ import {
 } from './final-panel-staging.js';
 import {
   SCENARIO_GESTURE_VARIETY_RULES,
+  SCENARIO_PROP_CAUSALITY_RULES,
   SCENARIO_SHOT_DESIGN_RULES
 } from './composition-variety.js';
 import { SCENARIO_FACIAL_ACTING_CONTRACT } from './facial-acting.js';
@@ -279,6 +280,7 @@ ${narrativeModeRule}
 - 元にない事件、設定、キャラクター、場所、建造物を追加しない
 ${dialogueRule}
 ${backgroundRule}
+${SCENARIO_PROP_CAUSALITY_RULES}
 ${facialActingRule}
 ${FINAL_PANEL_ACTIVE_STAGING_SCENARIO_CONTRACT}
 ${gestureVarietyRules}
