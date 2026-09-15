@@ -19,6 +19,55 @@ before(async () => {
 });
 after(async () => { await server?.close(); });
 
+test('abstract overhead panels retain camera projection and independent scripted gaze', () => {
+  const directed = scenario
+    .replace('[Camera: アイレベル、水平、静かな固定ショット]', '[Camera: 右上から60度の俯瞰]')
+    .replace('状況: Bが本を受け取り、静かに表紙を見る。', '状況: Bは本に視線を向ける。Aは棚を見つめる。背景は意図的な白地へ省略する。')
+    .replace('B「少し待って」', 'B「少し待って」\nA「そちらです」');
+  for (const providerFamily of ['chatgpt', 'gemini']) {
+    for (const colorMode of ['color', 'monochrome']) {
+      const prompt = buildMangaPrompt({ scenario: directed, castList, providerFamily, colorMode, systemVersion: 'test' });
+      const panel = prompt.split('## Panel 2')[1].split('## Panel 3')[0];
+      assert.match(panel, /EXPLICIT DETAIL CAMERA LOCK/);
+      assert.match(panel, /projection even with omitted BG/);
+      assert.match(panel, /scripted gaze target/);
+      assert.doesNotMatch(panel, /address (?:their )?counterparts|mutual gaze; reactors watch/);
+      assert.ok(panel.includes('Bは本に視線を向ける。Aは棚を見つめる。'));
+    }
+  }
+});
+
+test('Windows line endings preserve location and outfit in both provider and medium paths', () => {
+  const source = scenario.replace('Outfit: default', 'Outfit: 私服（casual wear）');
+  for (const providerFamily of ['chatgpt', 'gemini']) {
+    for (const colorMode of ['color', 'monochrome']) {
+      const options = { castList, providerFamily, colorMode, systemVersion: 'test', cinematicTechniques: false };
+      const expected = buildMangaPrompt({ ...options, scenario: source });
+      const actual = buildMangaPrompt({ ...options, scenario: source.replaceAll('\n', '\r\n') });
+      assert.ok(actual.includes('私服（casual wear）'), 'CRLF must not drop the outfit override');
+      assert.ok(actual.includes('図書室'), 'CRLF must not drop location');
+      assert.equal(actual, expected, 'line-ending transport must not change the image prompt');
+    }
+  }
+});
+
+test('explicit abstract beats preserve performance and survive both provider and medium paths', () => {
+  const directed = scenario.replace('Bが本を掲げて大きくのけぞる。', 'Bが本を掲げて大きくのけぞる。背景: このコマだけ意図的な白地へ省略し、Bの手と本は残す。');
+  for (const providerFamily of ['chatgpt', 'gemini']) {
+    for (const colorMode of ['color', 'monochrome']) {
+      const prompt = buildMangaPrompt({ scenario: directed, castList, providerFamily, colorMode, systemVersion: 'test' });
+      assert.match(prompt, /ABSTRACT BEAT:.*scripted.*(?:omit|omission)/i);
+      assert.match(prompt, /INTERACTION:.*(?:reaction|reactors).*readable/i);
+      assert.match(prompt, /ACTING:.*(?:gaze|hands)/i);
+      assert.ok(prompt.includes('このコマだけ意図的な白地へ省略し、Bの手と本は残す。'));
+      assert.ok(prompt.includes('超ローアングル、強い短縮遠近法、全身'));
+      assert.doesNotMatch(prompt, /VFX stay overlays behind or around the cast and never replace the physical setting|Effects never replace setting or story evidence/);
+      for (const line of ['こちらです', 'ありがとう', '少し待って', 'これだった！', 'またどうぞ']) assert.ok(prompt.includes(line));
+      assert.equal((prompt.match(/## Panel \d/g) || []).length, 4);
+    }
+  }
+});
+
 const castList = '- Character [A]: short dark hair, no glasses\n- Character [B]: long hair, glasses\n- Character [C]: curly hair, no glasses';
 const scenario = `## タイトル: 返却の間
 Location: 図書室

@@ -866,7 +866,7 @@ const DIRECT_ADDRESS_SUBJECT_RE = /(?:読者|観客|視聴者|カメラ|配信|�
 const DIRECT_ADDRESS_ACTION_RE = /(?:話しかけ|呼びかけ|語りかけ|訴えかけ|目線を向け|正面を向|見つめ|address(?:es|ing)?|speak(?:s|ing)?\s+to|talk(?:s|ing)?\s+to|look(?:s|ing)?\s+(?:at|into)|face(?:s|ing)?|stare(?:s|ing)?|gaze(?:s|ing)?)/i;
 const CAMERA_FACING_NEGATION_RE = /(?:(?:画面|カメラ|読者|観客|視聴者)[^\n。]{0,48}(?:厳禁|禁止|避け|しない|させない|向けない)|(?:never|do\s+not|don't|must\s+not|avoid)[^.\n]{0,48}(?:camera|reader|viewer|audience))/i;
 const CAMERA_INSTRUCTION_LINE_RE = /^\s*\[?\s*(?:Camera|カメラワーク|CameraWork|Camera\s*Work)\s*[:：][^\n]*$/gim;
-const EXPLICIT_DETAIL_CAMERA_RE = /(?:手元|真上|超接写|接写|クローズアップ|overhead|top[- ]?down|hand[- ]?detail|macro|close[- ]?up)/i;
+const EXPLICIT_DETAIL_CAMERA_RE = /(?:手元|真上|俯瞰|上から|超接写|接写|クローズアップ|overhead|high[- ]angle|top[- ]?down|hand[- ]?detail|macro|close[- ]?up)/i;
 const EXPLICIT_REAR_CAMERA_RE = /(?:肩越し|肩ごし|背後(?:から|寄り)|背越し|over[ -]the[ -]shoulder|\bOTS\b|rear[ -]three[ -]quarter)/i;
 const FUNCTIONAL_PRESENTATION_ACTION_RE = /(?:\bsubmit(?:s|ted|ting)?\b|\bpresent(?:s|ed|ing)?\b|\bshow(?:s|ed|ing)?\b|提出|提示|見せ|差し出)/i;
 const FUNCTIONAL_SELF_USE_ACTION_RE = /(?:\bread(?:s|ing)?\b|\boperate(?:s|d|ing)?\b|読む|読ん|操作|確認|(?:画面|文面|書類|本|地図|カード|表示)[^。\n]{0,24}(?:見る|見て|見つめ|凝視))/i;
@@ -967,7 +967,7 @@ export const buildPanelEyeLineRule = (panelText, castList) => {
     && (mentionedCastNames.length >= 2 || LISTENER_OR_REACTOR_CUE_RE.test(actionAndDialogueText));
 
   if (explicitDirectAddress) {
-    return 'DIRECT-ADDRESS EXCEPTION: camera-facing is allowed only for the explicit in-story address; all others react toward that speaker or the described camera.';
+    return 'DIRECT-ADDRESS EXCEPTION: camera-facing is allowed only for the explicit in-story address; all others retain their scripted gaze targets.';
   }
   if (/\[USER STAGING LOCK - ABSOLUTE\]/i.test(actionAndDialogueText)) {
     const stagingSides = buildExplicitStagingSides(actionAndDialogueText, mentionedCastNames);
@@ -982,6 +982,10 @@ export const buildPanelEyeLineRule = (panelText, castList) => {
 
   const participants = mentionedCastNames.length > 0 ? mentionedCastNames : speakers;
   const listeners = participants.filter((name) => !speakers.includes(name));
+  const scriptedGaze = /視線|目線|見つめ|見上げ|見下ろ|睨|\b(?:gaze|looks? at|watches?)\b/i.test(extractActionOnly(text));
+  if (scriptedGaze && !requestedRearCamera) {
+    return `EYE-LINE LOCK: keep each actor's scripted gaze target; no forced mutual/lens gaze. ${explicitDetailCamera ? 'EXPLICIT DETAIL CAMERA LOCK: preserve overhead/detail framing and depth.' : 'Preserve scripted camera and depth.'}`;
+  }
   const roleStaging = speakers.length === 1
     ? (listeners.length > 0
       ? `[${speakers[0]}] addresses ${listeners.map((name) => `[${name}]`).join(', ')}; listeners look back.`

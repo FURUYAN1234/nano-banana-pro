@@ -88,9 +88,12 @@ test('ChatGPT manga prompt stays within the empirical Web-copy soft budget witho
   assert.match(prompt, /full-body/);
   assert.match(prompt, /panel contrast/);
   assert.match(prompt, /PAGE READING RHYTHM: one primary focal target\/panel/);
-  assert.match(prompt, /story peak vs quiet beat/);
+  assert.match(prompt, /(?:story peak vs|peak\/)quiet beat|story peak vs quiet beat/);
   assert.match(prompt, /negative space\/density/);
-  assert.match(prompt, /right-to-left dialogue order, tails to speakers/);
+  assert.match(prompt, /right-to-left.*(?:speaker tails|tails to speakers)/);
+  assert.match(prompt, /ABSTRACT BEAT: scripted BG omission/);
+  assert.match(prompt, /INTERACTION: reaction readable/);
+  assert.match(prompt, /ACTING: gaze\/weight\/hands vary/);
   assert.match(prompt, /depth.of.field/i);
   assert.match(prompt, /retain setting\/depth/);
   assert.doesNotMatch(prompt, /broad blank\/flat areas|not just blur/);

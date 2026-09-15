@@ -83,15 +83,15 @@ export const MONOCHROME_WARDROBE_LOCK = `CROSS-PANEL WARDROBE TONE LOCK:
 
 export const MONOCHROME_STYLE_QA = 'MONOCHROME STYLE DIFFERENCE QA: adjacent styles differ through at least three of line weight, black shape design, hatching, tone density and background/VFX marks. Preserve script, identity, wardrobe tone assignments and layout; expressive camera and acting remain active.';
 
-export const MONOCHROME_BACKGROUND_LOCK = 'MONOCHROME BACKGROUND CLARITY LOCK: prioritize focal faces, hands, key props, action silhouettes and lettering. Simplify nonessential textures and reduce background contrast while retaining recognizable environmental shapes, perspective/depth and every story-required object or clue. Depth-of-field blur may soften distant backgrounds in black-on-white halftone; equal-depth objects share focus. Keep setting light/dark masses, not a blank void. Avoid overlapping screens and dense tone behind focal faces; preserve explicitly scripted abstraction.';
-export const MONOCHROME_BACKGROUND_LOCK_COMPACT = 'MONOCHROME BACKGROUND CLARITY LOCK: omit optional textures, not setting shapes. Keep location/depth/all story evidence; less BG contrast; no default blank backdrop.';
+export const MONOCHROME_BACKGROUND_LOCK = 'MONOCHROME BACKGROUND CLARITY LOCK: prioritize focal faces, hands, key props, action silhouettes and lettering. Explicitly scripted abstract beats may omit scenery, never story evidence or contacts. In physical-setting shots simplify nonessential textures and reduce background contrast while retaining recognizable environmental shapes, perspective/depth and every story-required object or clue. Depth-of-field blur may soften distant backgrounds in black-on-white halftone; equal-depth objects share focus. Physical shots keep setting light/dark masses. Avoid overlapping screens and dense tone behind focal faces; preserve explicitly scripted abstraction.';
+export const MONOCHROME_BACKGROUND_LOCK_COMPACT = 'MONOCHROME BACKGROUND CLARITY LOCK: omit optional textures; scripted abstraction allowed; keep every story-required object or clue.';
 
 // Adapt only our authored quality text, never replace words in user dialogue,
 // Actions, cast descriptions or other source data.
 export const MONOCHROME_IMAGE_QUALITY_CONTRACT = SHARED_IMAGE_QUALITY_CONTRACT
-  .replace(/- Render a rich physical setting[^\n]*/, '- Preserve recognizable physical setting anchors and spatial depth; simplify nonessential background detail when it competes with faces, hands or story props.')
+  .replace(/- Render a rich physical setting[^\n]*/, '- Physical shots retain recognizable setting anchors and depth; scripted abstract beats may omit scenery, never story evidence. Simplify nonessential detail; keep focal actions and required reactions readable.')
   .replace(/- Keep lighting and color coherent[^\n]*/, '- Keep light direction coherent through ink shadows and white highlights; depth-of-field blur may soften distant backgrounds in black-on-white halftone while keeping environmental shapes and focal subjects readable.')
-  .replace(/- Keep surfaces clean:[^\n]*/, '- Keep surfaces clean: intentional regular black-on-white screentone and hatching are allowed, never random noise, moire or floating dust. Keep lit skin, bubbles and gutters pure white. Effects never replace setting or story evidence.');
+  .replace(/- Keep surfaces clean:[^\n]*/, '- Keep surfaces clean: intentional regular black-on-white screentone and hatching are allowed, never random noise, moire or floating dust. Keep lit skin, bubbles and gutters pure white. Scripted abstract beats may omit scenery, never story evidence.');
 
 // Medium-specific interpretations retain the selected expressive register;
 // colored recipes are not included and then contradicted by a later warning.

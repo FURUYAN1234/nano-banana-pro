@@ -137,7 +137,7 @@ test('explicit non-cast groups do not pull all registered characters into the sh
 });
 
 test('shot execution makes height and full-body framing visible while respecting close-ups', () => {
-  assert.match(getPanelShotExecution('overhead wide shot'), /tops of heads.*table/);
+  assert.match(getPanelShotExecution('overhead wide shot'), /head\/shoulder tops.*upper prop faces/);
   assert.match(getPanelShotExecution('floor-level low angle, full body'), /head-to-feet/);
   assert.match(getPanelShotExecution('floor-level low angle, full body'), /headroom and floor beyond BOTH shoes/);
   assert.match(getPanelShotExecution('floor-level low angle, full body'), /look up/);
@@ -147,7 +147,7 @@ test('shot execution makes height and full-body framing visible while respecting
   for (const provider of ['chatgpt', 'gemini']) {
     const prompt = build(provider);
     assert.match(prompt, /SHOT EXECUTION:/);
-    assert.match(prompt, /tops of heads/);
+    assert.match(prompt, /head\/shoulder tops/);
     assert.match(prompt, /look up/);
   }
 });

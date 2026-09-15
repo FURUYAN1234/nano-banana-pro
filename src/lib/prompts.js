@@ -750,19 +750,19 @@ const compactChatGPTCastDetails = (castText = '') => String(castText)
 
 const RICH_PANEL_COMPOSITION_LOCK = `RICH PANEL COMPOSITION / CHARACTER CLARITY LOCK:
 - Keep story-required physical setting cues and interaction props; vary background detail with the page's reading rhythm instead of imposing the same object count on every panel.
-- Panel VFX stay overlays behind or around the cast and never replace the physical setting or story evidence.
+- Panel VFX follow scripted staging. Explicit abstract beats may omit background scenery; never remove story evidence, interaction props or action contacts.
 - Keep face, eye direction, silhouette, hands, and key action crisp, unobstructed, and separated from busy details.
-- Retain recognizable environmental shapes, light masses and perspective at lower contrast than the focal target. Depth-of-field blur is allowed away from the focal plane; keep focal faces, hands and key props sharp, with consistent focus at equal distances.
+- In physical-setting shots retain recognizable environmental shapes, light masses and perspective at lower contrast than the focal target. Depth-of-field blur is allowed away from the focal plane; keep focal faces, hands and key props sharp, with consistent focus at equal distances.
 - Use negative space and selective detail for quiet beats while keeping the physical setting and spatial continuity. Do not replace a setting with a blank backdrop merely because the beat is quiet; preserve explicit scripted abstraction.`;
 
-export const RICH_PANEL_COMPOSITION_LOCK_COMPACT = 'RICH PANEL COMPOSITION / CHARACTER CLARITY LOCK: story-required setting cues/depth; necessary cues lower contrast. Focal face/hands/action crisp. VFX never replace story evidence.';
+export const RICH_PANEL_COMPOSITION_LOCK_COMPACT = 'RICH PANEL COMPOSITION / CHARACTER CLARITY LOCK: setting or scripted abstraction; story evidence/actions/reactions clear.';
 
 const SCENE_LETTERING_LOCK = 'SCENE LETTERING: only explicit object text; no incidental slogans/menu entries/book titles/pseudo-lettering. Other surfaces unlettered. Keep exact title/dialogue/required text/watermarks.';
 
 // 4コマの焦点・密度差を調整し、1枚絵の基準は変更しない。
 const MANGA_IMAGE_QUALITY_CONTRACT = SHARED_IMAGE_QUALITY_CONTRACT.replace(
   /^- Render a rich physical setting[^\n]*/m,
-  '- Preserve recognizable setting shapes, light masses and spatial depth. Quiet beats lower background contrast/detail; depth-of-field may soften distant backgrounds while focal subjects remain crisp. Do not default to blank backdrops.'
+  '- Physical-setting shots preserve recognizable shapes and spatial depth; explicitly scripted abstract beats may omit scenery while preserving story evidence. Quiet beats lower nonessential detail; keep focal action and necessary reactions crisp.'
 );
 
 const CROSS_PANEL_WARDROBE_COLOR_LOCK = `CROSS-PANEL WARDROBE COLOR LOCK:
@@ -992,7 +992,7 @@ ${SCENE_LETTERING_LOCK}
 
 GEMINI STABILITY / QUALITY LOCK:
 ${isMonochrome ? MONOCHROME_IMAGE_QUALITY_CONTRACT : MANGA_IMAGE_QUALITY_CONTRACT}
-- Keep spatial depth, recognizable environmental shapes and meaningful setting props. Quiet beats reduce detail/contrast; depth-of-field may soften distant backgrounds without replacing the setting with a blank backdrop.
+- Physical-setting shots keep spatial depth and recognizable setting props; explicitly scripted abstract beats may omit scenery. Quiet beats reduce detail/contrast; depth-of-field may soften distant backgrounds while focal actions and required reactions stay readable.
 ${MANGA_FACIAL_ACTING_LOCK}
 ${isMonochrome ? MONOCHROME_BACKGROUND_LOCK : RICH_PANEL_COMPOSITION_LOCK}
 - MANGA FINISH ASSIST: preserve script/cast/camera/layout; keep bubble space, ${isMonochrome ? 'readable ink shapes and screen density' : 'cast/background light and color'}, coherent anatomy, and setting depth.

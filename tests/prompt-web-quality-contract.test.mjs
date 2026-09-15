@@ -83,13 +83,14 @@ test('both provider prompts preserve physical settings while allowing density co
     assert.match(prompt, /never re-typeset stacked books|Stacking or turning a book must not re-typeset/);
     assert.match(prompt, /surreal gags/);
     assert.match(prompt, /RICH PANEL COMPOSITION \/ CHARACTER CLARITY LOCK/);
-    assert.match(prompt, /story-required (?:physical )?setting cues/i);
+    assert.match(prompt, /story-required (?:physical )?setting cues|retain setting\/depth/i);
     assert.match(prompt, /negative space/i);
     assert.doesNotMatch(prompt, /one fixed environmental anchor plus at least two|1 fixed anchor \+ 2 physical setting cues/i);
-    assert.match(prompt, /VFX[^\n]*never replace[^\n]*(?:physical setting|story evidence)/i);
-    assert.match(prompt, /face, eye direction, silhouette, hands, and key action|Focal face\/hands\/action crisp/i);
-    assert.match(prompt, /environmental shapes[^\n]*lower contrast than the focal target|necessary cues lower contrast/i);
-    assert.match(prompt, /quiet beats[^\n]*(?:reduce|lower)|Quiet:[^\n]*contrast\/detail|necessary cues lower contrast/i);
+    assert.match(prompt, /ABSTRACT BEAT:.*scripted.*(?:omission|omit)/i);
+    assert.match(prompt, /never remove story evidence|props stay/i);
+    assert.match(prompt, /face, eye direction, silhouette, hands, and key action|story evidence\/actions\/reactions clear/i);
+    assert.match(prompt, /environmental shapes[^\n]*lower contrast than the focal target|real shots retain setting\/depth; far blur/i);
+    assert.match(prompt, /quiet beats[^\n]*(?:reduce|lower)|peak\/quiet beat, negative space\/density/i);
   }
 });
 
@@ -127,9 +128,9 @@ test('ChatGPT Web prompt has generic quality locks for dialogue, bubbles, charac
   assert.match(prompt, /PANEL STYLE LOCK: GEKIGA/i);
   assert.match(prompt, /preserve script\/cast\/(?:dialogue\/)?camera\/layout/i);
   assert.match(prompt, /keep bubble space|FINISH: bubbles, anatomy/i);
-  assert.match(prompt, /cast\/background light and color|story-required (?:physical )?setting cues/i);
+  assert.match(prompt, /cast\/background light and color|setting or scripted abstraction/i);
   assert.match(prompt, /\banatomy\b/i);
-  assert.match(prompt, /setting depth|story-required (?:physical )?setting cues/i);
+  assert.match(prompt, /setting depth|retain setting\/depth/i);
   assert.match(prompt, /CLOTHING FOLD SHADOW ASSIST|FOLD SHADOWS:/);
   assert.match(prompt, /overlapping, pinched, and intersecting fabric folds|FOLD SHADOWS: crisp triangular overlap shadows/i);
   assert.match(prompt, /wedge-shaped triangular cel-shaded shadow planes|FOLD SHADOWS: crisp triangular overlap shadows/i);
