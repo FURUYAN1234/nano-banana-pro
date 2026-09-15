@@ -6,9 +6,50 @@
  *   モデルの順番変更・統廃合・新規追加が「確定」した時点でのみ追記する。
  */
 
+import {
+  OPENAI_TEXT_MODEL_IDS,
+  OPENAI_SCENARIO_TEXT_MODEL_IDS,
+  OPENAI_VISION_MODEL_IDS,
+} from './openai-model-routes.js';
+import {
+  DEFAULT_OPENAI_IMAGE_QUALITY,
+  FALLBACK_OPENAI_IMAGE_QUALITY,
+  OPENAI_IMAGE_MODEL,
+  resolveOpenAIImageOption,
+} from './openai-image-settings.js';
+
+const OPENAI_MODEL_NOTES = {
+  'gpt-6-astra': 'STEP2専用・物語構成と演出推論',
+  'gpt-5.6-sol': 'STEP2専用・現行テキスト経路',
+  'gpt-4.1': '高品質・1Mコンテキスト',
+  'gpt-4.1-mini': 'コスト効率・高速',
+  'gpt-4.1-nano': '最軽量・最速',
+  'gpt-4o': '安定実績',
+};
+
+const describeOpenAITextRoute = (modelIds) => modelIds.map((id, index) => ({
+  id,
+  role: index === 0 ? 'Primary' : index === modelIds.length - 1 ? 'Fallback' : 'Backup',
+  note: OPENAI_MODEL_NOTES[id] || '実行時のOpenAIルート',
+}));
+
+const defaultOpenAIImageOption = resolveOpenAIImageOption(DEFAULT_OPENAI_IMAGE_QUALITY);
+const fallbackOpenAIImageOption = resolveOpenAIImageOption(FALLBACK_OPENAI_IMAGE_QUALITY);
+const describeOpenAIImageRoute = () => [
+  { id: defaultOpenAIImageOption.model, role: 'Default', note: `認証済み時の初期選択・${defaultOpenAIImageOption.quality}` },
+  { id: OPENAI_IMAGE_MODEL, role: 'Selectable', note: '品質設定から明示選択' },
+  { id: fallbackOpenAIImageOption.model, role: 'Fallback', note: `2.5が利用不可のときの初期選択・${fallbackOpenAIImageOption.quality}` },
+].filter((entry, index, entries) => entries.findIndex(({ id }) => id === entry.id) === index);
+
+// OpenAI実行ルートを更新すれば、表示用Model Chainも同じ定義から組み立てられる。
+export const FALLBACK_CHAIN_SOURCE_IDS = {
+  'step1-openai': OPENAI_VISION_MODEL_IDS,
+  'step2-openai': OPENAI_SCENARIO_TEXT_MODEL_IDS,
+  'step3-openai': OPENAI_TEXT_MODEL_IDS,
+  'step4-openai': describeOpenAIImageRoute().map(({ id }) => id),
+};
+
 // 現在のフォールバックチェーン構成（各STEPごとに分離して定義）
-// ※ 実際のフォールバックロジックは各ファイル (gemini.js, openai-text.js, imagen.js, openai.js) にある。
-//    ここは「表示用のスナップショット」であり、実行時の動作には影響しない。
 export const FALLBACK_CHAINS = [
   {
     id: 'step1-gemini',
@@ -32,11 +73,7 @@ export const FALLBACK_CHAINS = [
     description: 'キャラクターシート画像をAIが読み取り、髪色・髪型・メガネの有無・性格などをテキストデータとして抽出する。※注記: 現在のアプリのAPIは、最新APIの対応状況や安定稼働を考慮し、あえて古い世代のモデルをPrimaryに設定している場合があります。',
     provider: 'OpenAI',
     sourceFile: 'src/lib/openai-text.js',
-    models: [
-      { id: 'gpt-4.1', role: 'Primary', note: '高品質・1Mコンテキスト' },
-      { id: 'gpt-4o', role: 'Backup', note: 'Vision安定実績' },
-      { id: 'gpt-4.1-mini', role: 'Fallback', note: 'コスト効率' },
-    ]
+    models: describeOpenAITextRoute(FALLBACK_CHAIN_SOURCE_IDS['step1-openai'])
   },
   {
     id: 'step2-gemini',
@@ -60,14 +97,7 @@ export const FALLBACK_CHAINS = [
     description: 'ユーザーが入力したテーマやキーワードから、4コマ漫画のシナリオ（起承転結・セリフ・感情タグ・カメラワーク）を自動生成する。※注記: 現在のアプリのAPIは、最新APIの対応状況や安定稼働を考慮し、あえて古い世代のモデルをPrimaryに設定している場合があります。',
     provider: 'OpenAI',
     sourceFile: 'src/lib/openai-text.js',
-    models: [
-      { id: 'gpt-6-astra', role: 'Primary', note: 'STEP2専用・物語構成と演出推論' },
-      { id: 'gpt-5.6-sol', role: 'Backup', note: 'STEP2専用・現行テキスト経路' },
-      { id: 'gpt-4.1', role: 'Backup', note: '高品質・1Mコンテキスト' },
-      { id: 'gpt-4.1-mini', role: 'Backup', note: 'コスト効率・高速' },
-      { id: 'gpt-4.1-nano', role: 'Backup', note: '最軽量・最速' },
-      { id: 'gpt-4o', role: 'Fallback', note: '安定実績' },
-    ]
+    models: describeOpenAITextRoute(FALLBACK_CHAIN_SOURCE_IDS['step2-openai'])
   },
   {
     id: 'step3-gemini',
@@ -91,12 +121,7 @@ export const FALLBACK_CHAINS = [
     description: 'シナリオのセリフ・感情・カメラアングルを解析し、画像生成AIに渡す超詳細なプロンプト（英語の指示文）を自動構築する。キャラクターの配置ルールやクローン防止ロジックもここで適用。※注記: 現在のアプリのAPIは、最新APIの対応状況や安定稼働を考慮し、あえて古い世代のモデルをPrimaryに設定している場合があります。',
     provider: 'OpenAI',
     sourceFile: 'src/lib/openai-text.js',
-    models: [
-      { id: 'gpt-4.1', role: 'Primary', note: '高品質・1Mコンテキスト' },
-      { id: 'gpt-4.1-mini', role: 'Backup', note: 'コスト効率・高速' },
-      { id: 'gpt-4.1-nano', role: 'Backup', note: '最軽量・最速' },
-      { id: 'gpt-4o', role: 'Fallback', note: '安定実績' },
-    ]
+    models: describeOpenAITextRoute(FALLBACK_CHAIN_SOURCE_IDS['step3-openai'])
   },
   {
     id: 'step4-gemini',
@@ -116,11 +141,7 @@ export const FALLBACK_CHAINS = [
     description: '組み立てたプロンプトをChatGPTに渡し、4コマ漫画の画像を1枚生成する。フキダシ・背景・カメラワーク・感情演出を含む完成画像が出力される。※注記: 現在のアプリのAPIは、最新APIの対応状況や安定稼働を考慮し、あえて古い世代のモデルをPrimaryに設定している場合があります。',
     provider: 'OpenAI',
     sourceFile: 'src/lib/openai-image-settings.js',
-    models: [
-      { id: 'gpt-image-2.5-sunburst', role: 'Default', note: '認証済み時の初期選択・xhigh' },
-      { id: 'gpt-image-2.5-flare', role: 'Selectable', note: '品質設定から明示選択' },
-      { id: 'gpt-image-2', role: 'Fallback', note: '2.5が利用不可のときの初期選択・high' },
-    ]
+    models: describeOpenAIImageRoute()
   }
 ];
 
@@ -130,6 +151,16 @@ export const FALLBACK_CHAINS = [
 //   date は必ず 'YYYY-MM-DD HH:MM JST' 形式で日時を記録すること。
 export const FALLBACK_CHAIN_HISTORY = [
   // ↑ 新しいエントリはここに追加する（降順）
+  {
+    version: 'v6.2.4',
+    date: '2026-09-16 06:50 JST',
+    note: 'OpenAI実行経路を唯一の定義にし、Model Chain表示とpre-deploy検査を連動化。',
+    changes: [
+      { step: 'STEP 1-3 (OpenAI)', action: '同期', detail: '通常・シナリオ・Visionの実行配列から画面表示を組み立てる' },
+      { step: 'STEP 4 (OpenAI)', action: '同期', detail: '画像設定の初期選択・明示選択・代替選択から画面表示を組み立てる' },
+      { step: 'pre-deploy', action: '検証', detail: '実行経路と表示の同期契約に失敗するとリリースを停止' },
+    ]
+  },
   {
     version: 'v6.2.3',
     date: '2026-09-16 00:00 JST',

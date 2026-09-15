@@ -1,6 +1,6 @@
 # Super FURU AI 4-koma System / Super FURU AI 4コマシステム
 
-> Latest release: **v6.2.3** / 最新リリース: **v6.2.3**
+> Latest release: **v6.2.4** / 最新リリース: **v6.2.4**
 
 An experimental web application in which AI handles topic research, story structure, direction, prompt construction, image generation, and quality review for a four-panel manga. / AIが話題調査、構成、演出、プロンプト構築、画像生成、品質確認まで担当する4コマ漫画制作Webアプリです。
 
@@ -164,6 +164,10 @@ The production application is published from the `main` branch through the repos
 **Is this the T2V/I2V/Ref2V repository? / T2V・I2V・Ref2Vのリポジトリですか？**  No. Those workflows are maintained separately in [comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows). / いいえ。それらは別の[comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows)で管理します。
 
 ## 📋 ChangeLog
+
+### v6.2.4 (2026-09-16)
+
+- **[Fix]** Made OpenAI text-route lists the single source of truth for the visible Model Chain. Updating a text route now updates its STEP1–3 OpenAI display automatically; STEP4 derives its default, selectable, and fallback entries from the image-setting source. The pre-deploy check blocks a release if this synchronization contract fails. / **[修正]** OpenAI文章経路の一覧を、画面のModel Chainの唯一の定義にしました。今後は文章経路を更新するとSTEP1〜3のOpenAI表示も自動で追随し、STEP4も画像設定の初期選択・明示選択・代替選択から導出します。同期契約の検査に失敗したリリースはpre-deployチェックで停止します。
 
 ### v6.2.3 (2026-09-16)
 

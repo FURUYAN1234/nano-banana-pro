@@ -209,91 +209,17 @@ try {
     console.log("✅ [Security] Source code is clean from API keys and forbidden nouns.");
 
     // ============================================================
-    // 11. FALLBACK CHAIN MODEL DIFF CHECK
-    // モデルリストの変更を自動検出し、変更があれば警告を表示する。
-    // ※ 更新履歴への追加はユーザーの明示的な指示がある場合のみ。
+    // 11. FALLBACK CHAIN ROUTE CHECK
+    // OpenAIの表示用Model Chainが実行時ルートから組み立てられることを検証する。
     // ============================================================
-    console.log("🔗 [Fallback Chain] Checking for model list changes...");
+    console.log("🔗 [Fallback Chain] Checking runtime-route synchronization...");
 
     try {
-        // ソースコードから現在のモデルリストを正規表現で抽出
-        const extractModels = (filePath, pattern) => {
-            if (!fs.existsSync(filePath)) return [];
-            const content = fs.readFileSync(filePath, 'utf-8');
-            const match = content.match(pattern);
-            if (!match) return [];
-            // 配列内の文字列リテラルを抽出
-            const models = [];
-            const strRegex = /["']([^"']+)["']/g;
-            let m;
-            while ((m = strRegex.exec(match[0])) !== null) {
-                // コメント行やプロパティ名は除外
-                if (!m[1].includes('//') && !m[1].includes(':') && m[1].length > 3) {
-                    models.push(m[1]);
-                }
-            }
-            return models;
-        };
-
-        const geminiTextModels = extractModels('src/lib/gemini.js', /const TEXT_MODEL_IDS\s*=\s*\[([\s\S]*?)\]/);
-        const geminiVisionModels = extractModels('src/lib/gemini.js', /const IMAGE_MODEL_IDS\s*=\s*\[([\s\S]*?)\]/);
-        const openaiTextModels = [
-            ...extractModels('src/lib/openai-text.js', /const TEXT_MODEL_IDS\s*=\s*\[([\s\S]*?)\]/),
-            ...extractModels('src/lib/openai-text.js', /const SCENARIO_TEXT_MODEL_IDS\s*=\s*\[([\s\S]*?)\]/),
-            ...extractModels('src/lib/openai-text.js', /const IMAGE_MODEL_IDS\s*=\s*\[([\s\S]*?)\]/),
-        ];
-        const geminiImageModels = extractModels('src/lib/imagen.js', /const MODELS_TO_TRY\s*=\s*\[([\s\S]*?)\]/);
-        const openaiImageSettings = fs.readFileSync('src/lib/openai-image-settings.js', 'utf-8');
-        const openaiImageModels = [
-            ...Array.from(openaiImageSettings.matchAll(/model:\s*'([^']+)'/g), (match) => match[1]),
-            ...Array.from(openaiImageSettings.matchAll(/OPENAI_IMAGE_MODEL\s*=\s*'([^']+)'/g), (match) => match[1]),
-        ];
-
-        // fallback-chain-history.js のスナップショットと比較
-        const historyPath = 'src/lib/fallback-chain-history.js';
-        if (fs.existsSync(historyPath)) {
-            const historyContent = fs.readFileSync(historyPath, 'utf-8');
-            const currentChainMatch = historyContent.match(/export const FALLBACK_CHAINS\s*=\s*\[([\s\S]*?)\];/);
-            const currentChainContent = currentChainMatch ? currentChainMatch[0] : historyContent;
-            
-            // 現在構成のスナップショットからモデルIDだけを抽出
-            const snapshotModels = [];
-            const idRegex = /id:\s*'([^']+)'/g;
-            let idMatch;
-            while ((idMatch = idRegex.exec(currentChainContent)) !== null) {
-                if (!idMatch[1].startsWith('step')) {
-                    snapshotModels.push(idMatch[1]);
-                }
-            }
-
-            // 現在のソースコードのモデルを統合
-            const currentModels = [...new Set([
-                ...geminiTextModels,
-                ...geminiVisionModels,
-                ...openaiTextModels,
-                ...geminiImageModels,
-                ...openaiImageModels,
-            ])].sort();
-            const snapshotSorted = [...new Set(snapshotModels)].sort();
-
-            // 差分検出
-            const added = currentModels.filter(m => !snapshotSorted.includes(m));
-            const removed = snapshotSorted.filter(m => !currentModels.includes(m));
-
-            if (added.length > 0 || removed.length > 0) {
-                console.warn("⚠️ [Fallback Chain] Model list has CHANGED since last snapshot:");
-                if (added.length > 0) console.warn(`   + Added: ${added.join(', ')}`);
-                if (removed.length > 0) console.warn(`   - Removed: ${removed.join(', ')}`);
-                console.warn("   Update fallback-chain-history.js if user instructs to record this change.");
-                // WARNING only, NOT blocking - user decides when to update history
-            } else {
-                console.log("✅ [Fallback Chain] Model list matches snapshot. No changes detected.");
-            }
-        } else {
-            console.warn("⚠️ [Fallback Chain] fallback-chain-history.js not found. Skipping diff check.");
-        }
+        execSync('node --test tests/fallback-chain-history.test.mjs', { stdio: 'inherit' });
+        console.log("✅ [Fallback Chain] Model Chain is derived from the active OpenAI routes.");
     } catch (chainErr) {
-        console.warn("⚠️ [Fallback Chain] Diff check failed (non-blocking):", chainErr.message);
+        console.error("❌ [Fallback Chain] Runtime-route synchronization check failed:", chainErr.message);
+        process.exit(1);
     }
 
     console.log("🎉 [Pre-Deploy] All strict deployment and security checks passed!");

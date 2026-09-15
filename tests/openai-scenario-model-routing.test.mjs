@@ -17,11 +17,14 @@ test('only STEP2 generation and enhancement request the dedicated scenario route
 });
 
 test('the OpenAI text client tries GPT-6 before stable text fallbacks only for the scenario route', async () => {
-  const source = await readFile(new URL('../src/lib/openai-text.js', import.meta.url), 'utf8');
+  const [source, routeSource] = await Promise.all([
+    readFile(new URL('../src/lib/openai-text.js', import.meta.url), 'utf8'),
+    readFile(new URL('../src/lib/openai-model-routes.js', import.meta.url), 'utf8'),
+  ]);
 
-  assert.match(source, /const SCENARIO_TEXT_MODEL_IDS = \[[\s\S]*?"gpt-6-astra"[\s\S]*?"gpt-5\.6-sol"[\s\S]*?"gpt-4\.1"/);
-  assert.match(source, /options\.modelRoute === 'scenario'\s*\? SCENARIO_TEXT_MODEL_IDS/);
-  assert.doesNotMatch(source, /const IMAGE_MODEL_IDS = \[\s*"gpt-(?:5\.6|6-astra)"/);
+  assert.match(routeSource, /export const OPENAI_SCENARIO_TEXT_MODEL_IDS = \[[\s\S]*?'gpt-6-astra'[\s\S]*?'gpt-5\.6-sol'[\s\S]*?'gpt-4\.1'/);
+  assert.match(source, /options\.modelRoute === 'scenario'\s*\? OPENAI_SCENARIO_TEXT_MODEL_IDS/);
+  assert.doesNotMatch(routeSource, /OPENAI_VISION_MODEL_IDS = \[\s*'gpt-(?:5\.6|6-astra)'/);
 });
 
 test('GPT-6 Astra and GPT-5.6 Sol use current Chat Completions parameters', async () => {

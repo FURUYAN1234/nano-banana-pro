@@ -10,34 +10,13 @@
  */
 
 import { getOpenAIApiKey } from './openai';
+import {
+    OPENAI_TEXT_MODEL_IDS,
+    OPENAI_SCENARIO_TEXT_MODEL_IDS,
+    OPENAI_VISION_MODEL_IDS,
+} from './openai-model-routes.js';
 
 const OPENAI_TEXT_TIMEOUT_MS = 120000;
-
-// テキストのみリクエスト用モデルリスト（Zenith Protocol相当のフォールバック）
-const TEXT_MODEL_IDS = [
-    "gpt-4.1",          // Primary: 高品質・1Mコンテキスト
-    "gpt-4.1-mini",     // Backup 1: コスト効率・高速
-    "gpt-4.1-nano",     // Backup 2: 最軽量・最速
-    "gpt-4o",           // Fallback: 安定実績
-];
-
-// STEP2のネーム作成とシナリオ強化だけは、物語構成の推論を優先する。
-// GPT-6 Astra が未提供の組織でも、既存の安定チェーンへ段階的に戻す。
-const SCENARIO_TEXT_MODEL_IDS = [
-    "gpt-6-astra",    // Primary: 複雑な因果・演技・4コマの反転
-    "gpt-5.6-sol",    // Backup 1: 公式モデルID
-    "gpt-4.1",        // Backup 2: 高品質・1Mコンテキスト
-    "gpt-4.1-mini",   // Backup 3: コスト効率・高速
-    "gpt-4.1-nano",   // Backup 4: 最軽量・最速
-    "gpt-4o",         // Fallback: 安定実績
-];
-
-// 画像付きリクエスト用モデルリスト（Vision対応モデル優先）
-const IMAGE_MODEL_IDS = [
-    "gpt-4.1",          // Primary: Vision対応・高品質
-    "gpt-4o",           // Backup 1: Vision安定実績
-    "gpt-4.1-mini",     // Backup 2: コスト効率
-];
 
 /**
  * OpenAI Chat Completions APIを呼び出す
@@ -51,10 +30,10 @@ export const callOpenAIText = async (prompt, images = null, systemInstruction = 
 
     // Vision、STEP2専用のシナリオ、その他テキストを明確に分離する。
     const MODEL_IDS = (images && images.length > 0)
-        ? IMAGE_MODEL_IDS
+        ? OPENAI_VISION_MODEL_IDS
         : options.modelRoute === 'scenario'
-            ? SCENARIO_TEXT_MODEL_IDS
-            : TEXT_MODEL_IDS;
+            ? OPENAI_SCENARIO_TEXT_MODEL_IDS
+            : OPENAI_TEXT_MODEL_IDS;
 
     let attemptIndex = 0;
     for (const modelId of MODEL_IDS) {

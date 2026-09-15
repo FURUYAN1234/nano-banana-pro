@@ -1,7 +1,18 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { FALLBACK_CHAINS } from '../src/lib/fallback-chain-history.js';
+import { FALLBACK_CHAINS, FALLBACK_CHAIN_SOURCE_IDS } from '../src/lib/fallback-chain-history.js';
+import {
+  OPENAI_TEXT_MODEL_IDS,
+  OPENAI_SCENARIO_TEXT_MODEL_IDS,
+  OPENAI_VISION_MODEL_IDS,
+} from '../src/lib/openai-model-routes.js';
+import {
+  DEFAULT_OPENAI_IMAGE_QUALITY,
+  FALLBACK_OPENAI_IMAGE_QUALITY,
+  OPENAI_IMAGE_MODEL,
+  resolveOpenAIImageOption,
+} from '../src/lib/openai-image-settings.js';
 
 const chainModels = (id) => {
   const chain = FALLBACK_CHAINS.find((candidate) => candidate.id === id);
@@ -10,24 +21,26 @@ const chainModels = (id) => {
 };
 
 test('the STEP2 OpenAI snapshot starts with the active scenario route', () => {
-  assert.deepEqual(chainModels('step2-openai'), [
-    'gpt-6-astra',
-    'gpt-5.6-sol',
-    'gpt-4.1',
-    'gpt-4.1-mini',
-    'gpt-4.1-nano',
-    'gpt-4o',
-  ]);
+  assert.strictEqual(FALLBACK_CHAIN_SOURCE_IDS['step2-openai'], OPENAI_SCENARIO_TEXT_MODEL_IDS);
+  assert.deepEqual(chainModels('step2-openai'), OPENAI_SCENARIO_TEXT_MODEL_IDS);
+});
+
+test('the STEP1 and STEP3 OpenAI chains use their active routes', () => {
+  assert.strictEqual(FALLBACK_CHAIN_SOURCE_IDS['step1-openai'], OPENAI_VISION_MODEL_IDS);
+  assert.strictEqual(FALLBACK_CHAIN_SOURCE_IDS['step3-openai'], OPENAI_TEXT_MODEL_IDS);
+  assert.deepEqual(chainModels('step1-openai'), OPENAI_VISION_MODEL_IDS);
+  assert.deepEqual(chainModels('step3-openai'), OPENAI_TEXT_MODEL_IDS);
 });
 
 test('the STEP4 OpenAI snapshot distinguishes its default model from selectable alternatives', () => {
   const chain = FALLBACK_CHAINS.find((candidate) => candidate.id === 'step4-openai');
   assert.deepEqual(chain.models.map(({ id }) => id), [
-    'gpt-image-2.5-sunburst',
-    'gpt-image-2.5-flare',
-    'gpt-image-2',
+    resolveOpenAIImageOption(DEFAULT_OPENAI_IMAGE_QUALITY).model,
+    OPENAI_IMAGE_MODEL,
+    resolveOpenAIImageOption(FALLBACK_OPENAI_IMAGE_QUALITY).model,
   ]);
   assert.equal(chain.models[0].role, 'Default');
   assert.equal(chain.models[1].role, 'Selectable');
   assert.equal(chain.models[2].role, 'Fallback');
+  assert.deepEqual(FALLBACK_CHAIN_SOURCE_IDS['step4-openai'], chain.models.map(({ id }) => id));
 });

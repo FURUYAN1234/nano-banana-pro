@@ -1,3 +1,8 @@
+## Model Chainの実行経路連動 — v6.2.4、2026-09-16
+
+- ユーザーの恒久要件: APIモデル経路を更新した場合、画面のModel Chainも同じ定義から自動で追随させる。OpenAI文章の通常・STEP2シナリオ・Visionの配列は `src/lib/openai-model-routes.js` に集約し、実行側 `openai-text.js` と表示側 `fallback-chain-history.js` が参照する。STEP4は `openai-image-settings.js` の初期選択・明示選択・代替選択から表示を組み立てる。
+- `tests/fallback-chain-history.test.mjs` は表示が各実行経路を参照していることを確認し、`pre_deploy_check.js` はこのテストを必須実行する。OpenAI経路を増減・並べ替えた場合、表示を別途複写して更新する必要はない。履歴の追記は、ユーザーが公開履歴に残すよう明示した場合だけ行う。
+
 ## Model Chain同期 — v6.2.3、2026-09-16
 
 - 表示用のModel Chainを実行時のSTEP2 OpenAI経路へ同期し、GPT-6 Astra、GPT-5.6 Sol、GPT-4.1系の順番を明示した。STEP4はSunburstを認証済み時の初期選択、Flareを明示選択、GPT Image 2.0を2.5利用不可時の初期選択として区別する。
