@@ -272,6 +272,7 @@ export const buildScenarioEnhancementPrompt = ({
 
 【最優先の編集契約】
 - タイトル、Logline、Location、Outfit、Punchline、登場人物、話者順、4コマ構造をそのまま保つ
+- ト書きの服装も確定済みOutfitに合わせ、キャラシートの参考衣装を復活させない。参考衣装に合わせるために舞台や役割を変更しない
 - LoglineとPunchlineが示す物語の温度、静けさ、テンポを最優先し、派手さを目的に反転させない
 ${narrativeModeRule}
 - 選択されていないカテゴリは変更しない。未選択: ${lockedLabels || 'なし'}

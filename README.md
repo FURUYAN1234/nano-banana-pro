@@ -1,6 +1,6 @@
 # Super FURU AI 4-koma System / Super FURU AI 4コマシステム
 
-> Latest release: **v6.2.0** / 最新リリース: **v6.2.0**
+> Latest release: **v6.2.1** / 最新リリース: **v6.2.1**
 
 An experimental web application in which AI handles topic research, story structure, direction, prompt construction, image generation, and quality review for a four-panel manga. / AIが話題調査、構成、演出、プロンプト構築、画像生成、品質確認まで担当する4コマ漫画制作Webアプリです。
 
@@ -20,6 +20,10 @@ The application provides one continuous four-step workflow. / アプリは次の
 STEP3 shows `⏳ AI応答を待機中... (○秒経過)` while the connected text API reviews the prompt, then stops the counter when processing ends. / STEP3は接続中の文章APIがプロンプトを精査している間、`⏳ AI応答を待機中... (○秒経過)`を表示し、処理完了時にカウントを停止します。
 
 STEP2's local scenario update discourages interchangeable “keep extending the same prop” plots: select objects and consequences from the topic's actual activities, while preserving explicit props, facts, bold cameras and acting. Direction enhancement does not replace an existing plot or invent expandable props. Generate anew from STEP2 to change the premise; STEP3 preserves already scripted scrolls or accordion paper. One fresh scenario rendered through the real API in color and monochrome showed no scroll/accordion mechanism while retaining strong perspective; this is not a recurrence-rate study or a guarantee against repetition. / STEP2のローカル修正では、題材が違っても同じ物を延ばし続ける展開への偏りを抑える指示を追加しています。題材固有の行為と結果から小道具を選び、明示指定・事実・大胆なカメラと演技は保持します。演出強化で既存の筋を置き換えたり、伸縮・継ぎ足しの仕掛けを新設したりしません。構想を変える場合はSTEP2から再生成してください。STEP3だけでは台本中の巻物や蛇腹を消しません。新規1台本を実APIでカラー・白黒に生成し、強い遠近を残したまま巻物状の仕掛けがないことを確認しました。ただし、題材ごとの再発率は未計測で、反復の解消を保証しません。
+
+### Clothing selection / 衣装選定
+
+Local wardrobe fix: STEP2 excludes labelled reference-clothing fields from scenario creation and enhancement while retaining identity, personality and relationships. Automatic outfits follow the subject and setting; user-entered outfits take priority. School attire without source/user grounding triggers the existing bounded retry and warning mechanism. Both color and monochrome prompt paths exclude reference-clothing fields when an Outfit override exists. To change a previously selected uniform, regenerate from STEP2 or edit its Outfit and matching action descriptions; STEP3 alone preserves the saved outfit. / ローカルの衣装修正では、STEP2の生成・演出強化へ渡すキャラ情報から参考衣装欄を除外し、外見・性格・人物間の関係性は維持します。自動衣装は題材と場面から選び、手入力を最優先します。原文・指定に根拠のない学校制服は既存の上限付き再試行・警告の対象です。カラー・白黒ともOutfit指定時は参考衣装欄をプロンプトへ戻しません。既に制服が選ばれた台本はSTEP2から再生成するか、Outfitと対応するト書きを編集してください。STEP3だけでは保存済み衣装は変わりません。
 
 ### Documentary endings / ドキュメンタリーの結末
 
@@ -154,6 +158,9 @@ The production application is published from the `main` branch through the repos
 **Is this the T2V/I2V/Ref2V repository? / T2V・I2V・Ref2Vのリポジトリですか？**  No. Those workflows are maintained separately in [comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows). / いいえ。それらは別の[comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows)で管理します。
 
 ## 📋 ChangeLog
+
+### v6.2.1 (2026-09-15)
+- **[Fix & UX]** キャラシートの参考衣装をSTEP2の新規シナリオ・演出強化とOutfit指定時の画像キャスト情報から分離し、外見・性格・関係性を保持したまま題材と場面に基づいて自動選定。根拠のない学校制服や後付けの学生役を再試行対象にし、明示した衣装・学校行事・職業制服は保持 / Isolated reference clothing from STEP2 scenario/enhancement and overridden image-cast context while retaining identity, personality and relationships; automatic wardrobe now follows the subject and setting, retries unsupported school attire or invented student roles, and preserves explicit outfits, school contexts and professional uniforms
 
 ### v6.2.0 (2026-09-15)
 - **[Fix & UX]** 題材と因果に沿って小道具を選び、同じ物の連続拡張を避けつつ、明示された小道具・カメラ・演技を保持 / Selected props from topic-specific causality, avoiding repeated extensions while preserving explicit props, camera work and acting

@@ -51,6 +51,19 @@ test('Windows line endings preserve location and outfit in both provider and med
   }
 });
 
+test('outfit overrides exclude reference clothing even in the unweighted cast fallback', () => {
+  const source = scenario.replace('Outfit: default', 'Outfit: 動きやすい私服');
+  const reference = 'Character [A]: short dark hair\n服装: school uniform\nCharacter [B]: long hair, glasses\n衣装: sailor uniform';
+  for (const providerFamily of ['chatgpt', 'gemini']) {
+    for (const colorMode of ['color', 'monochrome']) {
+      const prompt = buildMangaPrompt({ scenario: source, castList: reference, providerFamily, colorMode, systemVersion: 'test' });
+      assert.ok(prompt.includes('動きやすい私服'));
+      assert.match(prompt, /long hair/);
+      assert.doesNotMatch(prompt, /school uniform|sailor uniform/);
+    }
+  }
+});
+
 test('explicit abstract beats preserve performance and survive both provider and medium paths', () => {
   const directed = scenario.replace('Bが本を掲げて大きくのけぞる。', 'Bが本を掲げて大きくのけぞる。背景: このコマだけ意図的な白地へ省略し、Bの手と本は残す。');
   for (const providerFamily of ['chatgpt', 'gemini']) {

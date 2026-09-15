@@ -1,5 +1,6 @@
 import { EMOTION_STYLES } from './constants.js';
 import { MONOCHROME_EMOTION_STYLES } from './manga-render-mode.js';
+import { stripReferenceWardrobe } from './seasonal-outfit.js';
 
 // --- Panel Utility Functions (App.jsx assemblePrompt -> externalized) ---
 // assemblePrompt 内で定義されていたパネル解析・プロンプト組立ユーティリティ群
@@ -1677,8 +1678,8 @@ export const buildEmotionBlock = (panelText, colorMode = 'color', { preserveRefe
 export const cleanCastList = (castList, activeOutfit) => {
   let cleanCastData = "";
   let currentCharacter = "";
-  let isParsingOutfit = false;
-  const castLines = castList.split('\n');
+  const sourceCast = activeOutfit ? stripReferenceWardrobe(castList) : castList;
+  const castLines = sourceCast.split('\n');
   for (let i = 0; i < castLines.length; i++) {
     const line = castLines[i].replace(/\*\*/g, '').trim();
     const headingMatch = line.match(CAST_HEADING_RE);
@@ -1686,25 +1687,14 @@ export const cleanCastList = (castList, activeOutfit) => {
       currentCharacter = normalizeCastDisplayName(headingMatch[1]);
       if (!isValidCastHeadingName(currentCharacter)) {
         currentCharacter = "";
-        isParsingOutfit = false;
         continue;
       }
       cleanCastData += `\n- Character [${currentCharacter}]: `;
-      isParsingOutfit = false;
     }
     if (!headingMatch && /^#{2,}/.test(line)) {
-      currentCharacter = "";
-      isParsingOutfit = false;
       continue;
     }
     if (!currentCharacter) continue;
-    
-    const isCategoryHeader = line.includes('**基本') || line.includes('**髪') || line.includes('**顔') || line.includes('**服装') || line.includes('**性格');
-    if (isCategoryHeader) {
-      isParsingOutfit = line.includes('服装') || line.includes('Outfit');
-    }
-
-    if (activeOutfit && (isParsingOutfit || line.includes('服装') || line.includes('Outfit'))) continue;
     
     const weightsMatch = line.match(/\[WEIGHTS?\]:\s*(.*)/i);
     if (weightsMatch) {
@@ -1720,7 +1710,7 @@ export const cleanCastList = (castList, activeOutfit) => {
     }
   }
   if (!cleanCastData.trim()) {
-    cleanCastData = castList.trim(); // fallback
+    cleanCastData = sourceCast.trim(); // fallback must not restore reference clothing
   }
   return cleanCastData.trim();
 };

@@ -27,6 +27,7 @@ import {
 } from './manual-topic-exclusions';
 import {
   assertSeasonalOutfit,
+  buildScenarioCastContext,
   getSeasonContext,
   SEASONAL_OUTFIT_RETRY_INSTRUCTION
 } from './seasonal-outfit';
@@ -48,7 +49,7 @@ const STEP2_TEXT_TIMEOUT_MS = 180_000;
 const scenarioRetryLabels = {
   SAFE_LOCATION: '安全な舞台設定',
   SCENARIO_CONTENT: 'シナリオ本文の表現衛生',
-  SEASONAL_OUTFIT: '対象日付と服装の季節整合性',
+  SEASONAL_OUTFIT: '題材に基づく服装選定と季節整合性',
   MANUAL_TOPIC_EXCLUSION: '手動入力の禁止条件',
   DOCUMENTARY_SOURCE_FIDELITY: '原文の数値・時系列',
   VISUAL_STORY_EVIDENCE: '出来事を証明する視覚要素',
@@ -87,6 +88,7 @@ const validateScenarioForRetry = ({
   manualTopic,
   seasonContext,
   contextText,
+  wardrobeSourceText,
   documentarySourceText,
   customOutfit,
   castList
@@ -104,6 +106,7 @@ const validateScenarioForRetry = ({
       outfit: scenario.outfit,
       seasonContext,
       contextText,
+      wardrobeSourceText,
       customOutfit
     })],
     ['MANUAL_TOPIC_EXCLUSION', () => assertManualTopicExclusions(scenario.scenario, manualTopic)],
@@ -184,6 +187,9 @@ const parseScenarioResponse = (result, {
         parsedData.topic = json.topic || randomCategory;
         parsedData.location = json.location || 'Generic Background';
         parsedData.visualEvidence = json.visualEvidence || '';
+        parsedData.outfit = json.outfit || '';
+        parsedData.logline = json.logline || '';
+        parsedData.punchline = json.punchline || '';
         parsedData.scenario = json.scenario || result.text;
       } else {
         if (result.text.length < 20) throw new Error('AI returned empty or invalid response.');
@@ -338,6 +344,12 @@ export async function generateScenario({
 
   // 4. シナリオプロンプトの構築とAPI呼び出し
   const seasonContext = getSeasonContext({ targetDate, inputMode });
+  const scenarioCastContext = buildScenarioCastContext(castList);
+  // Generated roles/location cannot serve as evidence for their own wardrobe.
+  const wardrobeSourceText = [
+    inputMode === 'manual' ? manualTopic : randomCategory,
+    extractedArticleText, customLocation, backgroundLocation
+  ].filter(Boolean).join('\n');
   const scenarioPrompt = getScenarioPrompt({
     randomCategory,
     targetDate,
@@ -366,7 +378,7 @@ export async function generateScenario({
     initialPrompt: scenarioPrompt,
     requestScenario: (prompt) => requestSafeScenarioContent({
       initialPrompt: prompt,
-      requestScenario: (contentPrompt) => callAI(contentPrompt, [], castList, onProgress, { timeoutMs: STEP2_TEXT_TIMEOUT_MS, modelRoute: 'scenario' }),
+      requestScenario: (contentPrompt) => callAI(contentPrompt, [], scenarioCastContext, onProgress, { timeoutMs: STEP2_TEXT_TIMEOUT_MS, modelRoute: 'scenario' }),
       maxAttempts: 1
     }).then(({ response }) => response),
     parseScenario: (response) => {
@@ -395,6 +407,7 @@ export async function generateScenario({
       documentarySourceText,
       seasonContext,
       customOutfit,
+      wardrobeSourceText,
       castList,
       contextText: [
         manualTopic,
@@ -528,7 +541,7 @@ export async function enhanceScenarioText({
         validationIssues
       }),
     requestEnhancement: async (prompt) => {
-      const result = await callAI(prompt, [], castList, onProgress, { timeoutMs: STEP2_TEXT_TIMEOUT_MS, modelRoute: 'scenario' });
+      const result = await callAI(prompt, [], buildScenarioCastContext(castList), onProgress, { timeoutMs: STEP2_TEXT_TIMEOUT_MS, modelRoute: 'scenario' });
       return {
         text: result.text,
         usedModel: result.model,

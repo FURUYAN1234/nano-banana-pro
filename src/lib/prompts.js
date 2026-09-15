@@ -3,7 +3,7 @@ import { SAFE_VISUAL_CONTENT_LOCK } from './location-policy';
 import { FINAL_PANEL_ACTIVE_STAGING_SCENARIO_CONTRACT } from './final-panel-staging';
 import { buildScenarioEnhancementPrompt } from './scenario-enhancement';
 import { buildManualTopicExclusionPrompt } from './manual-topic-exclusions';
-import { buildSeasonalOutfitInstruction, getSeasonContext } from './seasonal-outfit';
+import { buildSeasonalOutfitInstruction, getSeasonContext, SCENARIO_WARDROBE_CONTRACT } from './seasonal-outfit';
 import { SHARED_IMAGE_QUALITY_CONTRACT } from './shared-image-quality';
 import { MONOCHROME_IMAGE_QUALITY_CONTRACT, MONOCHROME_WARDROBE_LOCK, MONOCHROME_STYLE_QA, MONOCHROME_BACKGROUND_LOCK, MONOCHROME_FINAL_CHROMA_AUDIT } from './manga-render-mode.js';
 import {
@@ -327,6 +327,7 @@ export const getScenarioPrompt = ({
            - 画像生成プロンプトでもこの指定タグが反映される前提で、シナリオ内のト書き(Action)テキストにも具体的な服装指定を含めること。
            ` : `
         5. **【服装の自動選定 (Outfit Auto-Select)】**:
+           ${SCENARIO_WARDROBE_CONTRACT}
            - ニュースの内容と場所(Location)に**「最も適した服装カテゴリー」**を選定し、Outfit行に出力せよ。
            - ${seasonalOutfitInstruction}
            - **「キャラシート準拠」「デフォルト」等の曖昧な回答は禁止。** 必ず状況に適した服装の「属性」を出力すること。
@@ -594,7 +595,7 @@ ${styleJson.anti_patterns ? `            - 絶対禁止事項:\n${styleJson.anti
           Logline: [誰が、何を求めて、どうなるかという1〜2行の強力なログライン（軸）。この軸から4コマ目まで絶対にブレないこと]
           Location: [${adaptiveLocationMode ? 'ニュース本文・出来事・4コマの行動に最も適した、安全で具体的な非生体ロケーションを1つ記入せよ' : `必ず『${effectiveLocationPlan.anchorName}』にせよ`}]
           VisualEvidence: [元トピックを絵だけで証明する具体的な名詞を3〜5個、「、」区切りで記入せよ]
-          Outfit: [${customOutfit.trim() ? "必ず『" + customOutfit.trim() + "』にせよ" : "イベント、職業、安全、場所、天候、屋内環境、季節の条件に最も適した具体的な服装カテゴリーを記入せよ。※「キャラシート準拠」「制服」「デフォルト」は禁止"}]
+          Outfit: [${customOutfit.trim() ? "必ず『" + customOutfit.trim() + "』にせよ" : "今回の題材に基づくイベント、職業、安全、場所、天候、屋内環境、季節に適した具体的な服装カテゴリーを記入せよ。※「キャラシート準拠」「デフォルト」および原文・指定に根拠のない学校制服は禁止"}]
           Punchline: [${punchlineType !== 'Auto' ? "必ず『" + getPunchlineLabel(punchlineType) + "』と記載せよ" : "適用したオチの方向性（例: 爆発型、天丼爆発型、シュール、感動詐欺など）"}]
           Scenario:
           [1コマ目: 起]

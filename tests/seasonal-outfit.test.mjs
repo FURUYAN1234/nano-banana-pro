@@ -5,8 +5,49 @@ import { createServer } from 'vite';
 import {
   assertSeasonalOutfit,
   buildSeasonalOutfitInstruction,
-  getSeasonContext
+  getSeasonContext,
+  stripReferenceWardrobe,
+  buildScenarioCastContext
 } from '../src/lib/seasonal-outfit.js';
+
+const referenceCast = `## 1. テスト人物
+| **髪(Hair)** | 黒髪 | [WEIGHTS]: (black hair:1.4) |
+| **服装(Outfit)** | ブレザー制服と書類 | [WEIGHTS]: (school uniform:1.3) |
+| **性格(Mind)** | 冷静。幼馴染を気遣う。 | [WEIGHTS]: (calm:1.2) |`;
+
+test('scenario cast retains identity and relationships but excludes reference wardrobe', () => {
+  const result = stripReferenceWardrobe(referenceCast);
+  for (const text of ['テスト人物', '黒髪', '冷静。幼馴染を気遣う。']) assert.ok(result.includes(text));
+  assert.doesNotMatch(result, /school uniform|ブレザー|書類/);
+  assert.match(referenceCast, /school uniform/, 'the saved character analysis is not mutated');
+  assert.match(buildScenarioCastContext(referenceCast), /CHARACTER IDENTITY, NOT STORY SETTING/);
+});
+
+test('wardrobe removal handles multiline sections and labelled fallback without eating adjacent traits', () => {
+  for (const source of [
+    '## A\n### 服装 (Outfit)\nブレザー制服\n[WEIGHTS]: (school uniform:1.3)\n### 性格\n友人思い\n## B\n髪: 茶髪',
+    'Character [A]: 黒髪\n**服装**: 制服\n[WEIGHTS]: (school uniform:1.3)\n性格: 友人思い\nCharacter [B]: 茶髪'
+  ]) {
+    const result = stripReferenceWardrobe(source);
+    assert.doesNotMatch(result, /school uniform|制服/);
+    assert.match(result, /友人思い/);
+    assert.match(result, /茶髪/);
+  }
+  assert.equal(stripReferenceWardrobe('性格: 衣装作りが好き。友人は制服店で働く。'), '性格: 衣装作りが好き。友人は制服店で働く。');
+});
+
+test('school attire needs source context, not a school-role excuse invented in the scenario', () => {
+  assert.throws(() => assertSeasonalOutfit({
+    outfit: 'ブレザー・リボン付きブラウスの学生ボランティア姿',
+    contextText: '高校生が地域会館でボランティアをする',
+    wardrobeSourceText: '地域会館の長寿祝い受付'
+  }), /学校制服/);
+  for (const outfit of ['私服（casual wear）', '受付スタッフのビジネススーツ', '病院の看護師用ユニフォーム', '警察官の制服姿']) {
+    assert.equal(assertSeasonalOutfit({ outfit, wardrobeSourceText: '地域の催し' }), true);
+  }
+  assert.equal(assertSeasonalOutfit({ outfit: '学校制服', wardrobeSourceText: '高校の卒業式' }), true);
+  assert.equal(assertSeasonalOutfit({ outfit: '学校制服', customOutfit: '学校制服', wardrobeSourceText: '休日の買い物' }), true);
+});
 
 test('maps Japanese calendar boundary months without timezone drift', () => {
   assert.equal(getSeasonContext({ targetDate: '2026-03-01', inputMode: 'news' }).label, '春');
@@ -58,17 +99,104 @@ test('rejects empty and ambiguous automatic outfit values', () => {
 
 let server;
 let getScenarioPrompt;
+let generateScenario;
+let enhanceScenarioText;
+let setFixtureResponse;
+let cleanCastList;
 
 before(async () => {
   server = await createServer({
     appType: 'custom',
     logLevel: 'silent',
+    plugins: [{
+      name: 'wardrobe-fixture-api',
+      enforce: 'pre',
+      resolveId(id, importer) {
+        if (id === 'virtual:wardrobe-fixture-api' || (id === './ai-provider' && importer?.endsWith('/scenario-provider.js'))) return '\0wardrobe-fixture-api';
+      },
+      load(id) {
+        if (id === '\0wardrobe-fixture-api') return 'let respond; export const setFixtureResponse = fn => { respond = fn; }; export const callAI = (...args) => respond(...args);';
+      }
+    }],
     server: { middlewareMode: true }
   });
   ({ getScenarioPrompt } = await server.ssrLoadModule('/src/lib/prompts.js'));
+  ({ generateScenario, enhanceScenarioText } = await server.ssrLoadModule('/src/lib/scenario-provider.js'));
+  ({ setFixtureResponse } = await server.ssrLoadModule('virtual:wardrobe-fixture-api'));
+  ({ cleanCastList } = await server.ssrLoadModule('/src/lib/panel-utils.js'));
 });
 
 after(async () => server?.close());
+
+test('image cast projection retains tagged identity across table and subsection formats', () => {
+  for (const cast of [referenceCast, '## A\n### 髪\n[WEIGHTS]: (black hair:1.4)\n### 服装\n[WEIGHTS]: (school uniform:1.3)\n### 性格\n[WEIGHTS]: (calm:1.2)']) {
+    const result = cleanCastList(cast, '私服');
+    assert.match(result, /black hair/);
+    assert.match(result, /calm/);
+    assert.doesNotMatch(result, /school uniform/);
+  }
+  assert.match(cleanCastList(referenceCast, ''), /school uniform/, 'an intentionally absent override retains the original wardrobe');
+});
+
+// Synthetic transport fixture only: this exercises the real orchestration,
+// parser, validation/retry and enhancement paths without a paid model call.
+const fixtureBody = `[1コマ目: 起]
+状況: テスト人物が会館で受付机に案内板を置く。
+テスト人物「準備できた」
+[2コマ目: 承]
+状況: テスト人物が受付机の筆記具を手に取る。
+テスト人物「書こう」
+[3コマ目: 転]
+状況: テスト人物が案内板を振り返る。
+テスト人物「逆だ」
+[4コマ目: 結]
+状況: テスト人物が案内板を回して入口を指す。
+テスト人物「こちらです」`;
+
+test('actual scenario and enhancement call paths exclude sheet wardrobe and retry ungrounded uniforms', async () => {
+  const calls = [];
+  setFixtureResponse(async (prompt, images, system, progress, options) => {
+    calls.push({ prompt, images, system, options });
+    return { text: `Topic: 会館の受付\nLocation: 地域会館\nVisualEvidence: 受付机、案内板、筆記具\nOutfit: ${calls.length === 1 ? '学生ボランティアの学校制服' : '動きやすい私服'}\nScenario:\n${fixtureBody}`, model: 'test-fixture' };
+  });
+  const result = await generateScenario({
+    castList: referenceCast, categories: [], inputMode: 'manual', manualTopic: '地域会館の受付',
+    targetDate: '2026-09-15', customLocation: '', customOutfit: '', punchlineType: 'Surreal',
+    onProgress: () => {}
+  });
+  assert.equal(calls.length, 2);
+  assert.equal(result.outfit, '動きやすい私服');
+  assert.equal(result.validationWarning, null);
+  assert.match(calls[1].prompt, /学校制服の根拠/);
+  const original = `Outfit: 動きやすい私服\n${fixtureBody}`;
+  setFixtureResponse(async (prompt, images, system, progress, options) => {
+    calls.push({ prompt, images, system, options });
+    return { text: original, model: 'test-fixture' };
+  });
+  await enhanceScenarioText({ scenario: original, selectedCategories: ['background'], punchlineType: 'Surreal', castList: referenceCast, onProgress: () => {} });
+  assert.ok(calls.length >= 3, 'enhancement must also cross the provider boundary');
+  for (const call of calls) {
+    assert.doesNotMatch(call.system, /school uniform|ブレザー制服/);
+    assert.match(call.system, /冷静。幼馴染を気遣う。/);
+    assert.match(call.system, /CHARACTER IDENTITY, NOT STORY SETTING/);
+    assert.equal(call.options.modelRoute, 'scenario');
+  }
+});
+
+test('JSON scenario response preserves wardrobe metadata instead of dropping the override', async () => {
+  setFixtureResponse(async () => ({ text: JSON.stringify({
+    topic: '受付', location: '会館', visualEvidence: '受付机、案内板、筆記具',
+    outfit: '受付用スーツ', logline: '案内の向きを直す', punchline: '静寂型', scenario: fixtureBody
+  }), model: 'test-fixture' }));
+  const result = await generateScenario({
+    castList: referenceCast, categories: [], inputMode: 'manual', manualTopic: '会館の受付',
+    targetDate: '2026-09-15', customLocation: '', customOutfit: '', punchlineType: 'Surreal', onProgress: () => {}
+  });
+  assert.equal(result.outfit, '受付用スーツ');
+  assert.equal(result.logline, '案内の向きを直す');
+  assert.equal(result.punchline, '静寂型');
+  assert.equal(result.validationWarning, null);
+});
 
 const promptArgs = {
   randomCategory: '地域ニュース',

@@ -22,6 +22,38 @@ const SEASONS = Object.freeze({
 });
 
 const AMBIGUOUS_OUTFIT_RE = /^(?:なし|未指定|デフォルト|キャラシート準拠|おまかせ|none|default)$/i;
+const WARDROBE_LABEL_RE = /^(?:服装|衣装|衣服|outfit|clothing|clothes|wardrobe|costume|attire)(?:\s*[（(][^）)]*[）)])?(?:\s*[:：]|\s*$)/i;
+const SCHOOL_OUTFIT_RE = /学校制服|学生服|学ラン|セーラー服|ブレザー制服|学生ボランティア|通学用|school\s+uniform|sailor\s+uniform/i;
+const SCHOOL_SOURCE_RE = /学校|学園|高校|中学|小学校|通学|登校|下校|文化祭|学園祭|卒業式|入学式|学生服|学校制服|セーラー服|school|campus/i;
+
+// Project the structured analysis; never mutate the saved character sheet or
+// discard personality/relationships by reducing the scenario cast to image tags.
+export const stripReferenceWardrobe = (castList = '') => {
+  let skipWardrobe = false;
+  return String(castList).split(/\r?\n/).filter((raw) => {
+    const line = raw.replace(/\*\*/g, '').trim();
+    const label = line.replace(/^#{1,6}\s+|^[-*]\s+/, '').replace(/^\|\s*/, '').split('|')[0].trim();
+    if (WARDROBE_LABEL_RE.test(label)) {
+      skipWardrobe = true;
+      return false;
+    }
+    // The next field/section ends a multiline wardrobe field. WEIGHTS belongs
+    // to the current field and must not accidentally revive its clothing tags.
+    if (/^(?:#{1,6}\s|\||(?:-\s*)?Character\s*\[|---\s*$)/i.test(line)
+      || (!/^\[(?:WEIGHTS?|weighted tags)\]/i.test(line) && /^(?:[-*]\s+)?[^:：]+[:：]/.test(line))) {
+      skipWardrobe = false;
+    }
+    return !skipWardrobe;
+  }).join('\n').trim();
+};
+
+export const SCENARIO_WARDROBE_CONTRACT = `CHARACTER IDENTITY, NOT STORY SETTING:
+キャラ情報から名前・顔・髪・体格・性格・口調・人物間の関係性を保つ。参考衣装は今回の衣装・舞台・職業・出来事を決める根拠にしない。性格欄の学校・職業上の役割も、今回の場面をその活動へ変える理由にしない。
+今回の題材・原文・ユーザー指定から出来事と役割を先に決め、その行為、場所、季節に合う衣装を選ぶ。衣装を使う口実として学校行事や学生ボランティア等を後付けしない。明示衣装指定を最優先し、学校制服は題材・原文・ユーザー指定に学校活動または制服指定の根拠がある場合だけ選ぶ。職業服・安全装備・行事衣装や私服は場面に応じて選べる。
+演出強化では確定済みOutfitを維持し、ト書きの衣装もそれに合わせる。参考衣装へ戻さない。この内部ルールは漫画のセリフや画面文字にしない。`;
+
+export const buildScenarioCastContext = (castList = '') =>
+  `${SCENARIO_WARDROBE_CONTRACT}\n\n${stripReferenceWardrobe(castList)}`;
 const SUMMER_CONFLICT_RE = /(?:ダウン(?:ジャケット)?|厚手(?:の)?コート|マフラー|防寒着|heavy\s+coat|winter\s+clothes)/i;
 const WINTER_CONFLICT_RE = /(?:水着|薄手(?:の)?半袖|ノースリーブ|タンクトップ|swimwear|swimsuit)/i;
 const COLD_EXCEPTION_RE = /(?:雪山|雪上|降雪|吹雪|スキー|スケート|冷凍|冷蔵|氷点下|寒冷|屋内氷|南半球|winter|snow|freezer|ice\s+rink)/i;
@@ -78,6 +110,7 @@ export const assertSeasonalOutfit = ({
   outfit = '',
   seasonContext = null,
   contextText = '',
+  wardrobeSourceText = '',
   customOutfit = ''
 } = {}) => {
   if (String(customOutfit).trim()) return true;
@@ -88,6 +121,10 @@ export const assertSeasonalOutfit = ({
   }
   if (AMBIGUOUS_OUTFIT_RE.test(normalizedOutfit)) {
     throw new Error('Outfitに具体的な衣装カテゴリーがありません。');
+  }
+  if ((normalizedOutfit === '制服' || SCHOOL_OUTFIT_RE.test(normalizedOutfit))
+    && !SCHOOL_SOURCE_RE.test(String(wardrobeSourceText))) {
+    throw new Error('学校制服の根拠が元の題材・原文・ユーザー指定にありません。生成した学校行事や学生の役割を口実にせず、今回の行為に合う衣装を選び直してください。');
   }
 
   const context = `${contextText}\n${normalizedOutfit}`;
@@ -110,4 +147,4 @@ export const assertSeasonalOutfit = ({
 };
 
 export const SEASONAL_OUTFIT_RETRY_INSTRUCTION = `SEASONAL OUTFIT RETRY:
-Rewrite the complete scenario and correct the Outfit field. Respect this priority: explicit user outfit; event-specific clothing; profession/safety/location/weather/indoor environment; target-date season; ordinary auto-selection. Output one concrete broad outfit category and do not use default, character-sheet-compliant, or unspecified wording.`;
+Rewrite the complete scenario and correct the Outfit field AND action descriptions. Respect this priority: explicit user outfit; source-grounded event-specific clothing; profession/safety/location/weather/indoor environment; target-date season; ordinary auto-selection. Do not justify reference clothing by inventing school activities or student volunteer roles. Output one concrete broad outfit category and do not use default, character-sheet-compliant, or unspecified wording.`;
