@@ -1,0 +1,169 @@
+import assert from 'node:assert/strict';
+import test, { after, before } from 'node:test';
+import { createServer } from 'vite';
+
+let server;
+let buildMangaPrompt;
+let getScenarioPrompt;
+let buildScenarioEnhancementPrompt;
+let getCameraForPanel;
+let getCameraForChatGPT;
+let extractPlacementRule;
+
+before(async () => {
+  server = await createServer({ appType: 'custom', logLevel: 'silent', server: { middlewareMode: true } });
+  ({ buildMangaPrompt } = await server.ssrLoadModule('/src/lib/prompt-assembler.js'));
+  ({ getScenarioPrompt } = await server.ssrLoadModule('/src/lib/prompts.js'));
+  ({ buildScenarioEnhancementPrompt } = await server.ssrLoadModule('/src/lib/scenario-enhancement.js'));
+  ({ getCameraForPanel, getCameraForChatGPT, extractPlacementRule } = await server.ssrLoadModule('/src/lib/panel-utils.js'));
+});
+after(async () => { await server?.close(); });
+
+const castList = '- Character [A]: short dark hair, no glasses\n- Character [B]: long hair, glasses\n- Character [C]: curly hair, no glasses';
+const scenario = `## タイトル: 返却の間
+Location: 図書室
+Outfit: default
+[1コマ目: 起]
+[EMOTION: NORMAL]
+[Camera: 左前からの引き]
+状況: AがBに本を差し出す。
+A「こちらです」
+B「ありがとう」
+[2コマ目: 承]
+[EMOTION: NORMAL]
+[Camera: アイレベル、水平、静かな固定ショット]
+状況: Bが本を受け取り、静かに表紙を見る。
+B「少し待って」
+[3コマ目: 転]
+[EMOTION: NORMAL]
+[Camera: 超ローアングル、強い短縮遠近法、全身]
+状況: Bが本を掲げて大きくのけぞる。
+B「これだった！」
+[4コマ目: 結]
+[EMOTION: NORMAL]
+[Camera: 右後方からの引き]
+状況: Aが棚に本を戻す。Bは静かにうなずく。
+A「またどうぞ」`;
+
+test('scripted calm and bold cameras retain their own amplitude without added distortion', () => {
+  for (const camera of ['アイレベル、水平、静かな固定ショット', '穏やかな俯瞰、傾きなし', '超ローアングル、強い短縮遠近法、全身']) {
+    const result = getCameraForPanel(`[Camera: ${camera}]`, ['unused'], { index: 0 });
+    assert.ok(result.startsWith(camera + '; '));
+    assert.doesNotMatch(result.slice(camera.length), /EXTREME|SEVERE|ultra extreme|10 meters|flat on the ground/i);
+    assert.match(result, /NEVER draw text of camera names/);
+  }
+});
+
+test('missing ChatGPT camera advances across panels instead of repeating the first fallback', () => {
+  const state = { index: 0 };
+  const cameras = Array.from({ length: 4 }, () => getCameraForChatGPT('状況: Aが本を置く。', state));
+  assert.equal(new Set(cameras).size, 4);
+  assert.equal(state.index, 4);
+  getCameraForChatGPT('[Camera: 水平の固定ショット]', state);
+  assert.equal(state.index, 4);
+});
+
+test('bubbles can use nearby negative space without centering every balloon on a head', () => {
+  for (const dialogue of ['A「一番」\nB「二番」', 'A「一番」\nB「二番」\nC「三番」']) {
+    const result = extractPlacementRule(dialogue, castList);
+    assert.doesNotMatch(result, /MUST also be centered|directly above THAT|tail MUST point down/i);
+    assert.match(result, /right.*left/i);
+    assert.match(result, /tail.*speaker/i);
+    assert.match(result, /stagger|negative space/i);
+    assert.match(result, /DO NOT MIRROR/i);
+  }
+});
+
+test('both final prompts carry reading rhythm through color, monochrome and serious modes', () => {
+  for (const providerFamily of ['chatgpt', 'gemini']) {
+    for (const colorMode of ['color', 'monochrome']) {
+      for (const punchlineType of ['Auto', 'SeriousDocumentary']) {
+        const prompt = buildMangaPrompt({ scenario, castList, providerFamily, colorMode, punchlineType, systemVersion: 'test' });
+        assert.match(prompt, /PAGE READING RHYTHM/);
+        assert.match(prompt, /one primary focal target/i);
+        assert.match(prompt, /quiet beat/i);
+        assert.match(prompt, /negative space/i);
+        assert.doesNotMatch(prompt, /one fixed environmental anchor plus at least two|1 fixed anchor \+ 2 physical setting cues|Negative space is only for bubbles/i);
+        assert.doesNotMatch(prompt, /ABOVE CAMERA DISTORTION MAX|BODY DEFORM: Near body parts 50%/);
+        assert.equal((prompt.match(/## Panel \d/g) || []).length, 4);
+        assert.ok(prompt.includes('アイレベル、水平、静かな固定ショット'));
+        assert.ok(prompt.includes('超ローアングル、強い短縮遠近法、全身'));
+        for (const line of ['こちらです', 'ありがとう', '少し待って', 'これだった！', 'またどうぞ']) assert.ok(prompt.includes(line));
+      }
+    }
+  }
+});
+
+test('normal scenario generation specifies focal targets, reading order and relative density', () => {
+  const prompt = getScenarioPrompt({
+    randomCategory: '日常', targetDate: '2026-09-15', inputMode: 'manual', manualTopic: '本を返す',
+    newsContext: '', searchTopicKeywords: '', customLocation: '', customOutfit: '', ragReactions: '',
+    punchlineType: 'Auto', comedyTone: 'standard', styleJson: null
+  });
+  assert.match(prompt, /視線誘導と密度の緩急/);
+  assert.match(prompt, /注視対象/);
+  assert.match(prompt, /吹き出し.*右.*左/);
+  assert.match(prompt, /余白/);
+});
+
+test('scenario direction separates attendance from equal prominence and removes forced visual noise', () => {
+  const prompt = getScenarioPrompt({ randomCategory: '日常', targetDate: '2026-09-15', inputMode: 'manual', manualTopic: '本を返す', newsContext: '', searchTopicKeywords: '', customLocation: '', customOutfit: '', ragReactions: '', punchlineType: 'Auto', comedyTone: 'standard', styleJson: null });
+  assert.doesNotMatch(prompt, /全員に役割を与え、画面を賑やかに|物理描写の書き方（全コマ必須）/);
+  assert.match(prompt, /在場.*画面内の主張/);
+  assert.match(prompt, /省く.*具体/);
+});
+
+test('final prompts retain setting depth, exact hand performance and explicit-only scene text', () => {
+  const withPrint = scenario.replace('AがBに本を差し出す。', 'AがBに本を差し出す。表紙に「返却用」と印字されている。');
+  for (const providerFamily of ['chatgpt', 'gemini']) {
+    for (const colorMode of ['color', 'monochrome']) {
+      const prompt = buildMangaPrompt({ scenario: withPrint, castList, providerFamily, colorMode, systemVersion: 'test' });
+      assert.match(prompt, /depth.of.field/i);
+      assert.match(prompt, /retain setting\/depth/i);
+      assert.match(prompt, /no default blank backdrop/i);
+      assert.doesNotMatch(prompt, /broad blank\/flat areas|not just blur|no blur|never blur|instead of blur|not blurred pixels/i);
+      assert.match(prompt, /supporting (?:cast|figures).*smaller\/lower contrast/i);
+      assert.match(prompt, /exact hand pose\/contact\/gaze/i);
+      assert.match(prompt, /no stock-pose substitution/i);
+      assert.match(prompt, /SCENE LETTERING:.*only.*explicit/i);
+      assert.match(prompt, /no incidental slogans.*pseudo-lettering/i);
+      assert.ok(prompt.includes('返却用'));
+      assert.doesNotMatch(prompt, /Small incidental text.*may appear|Small readable text.*is allowed|background rich but|Do not leave plain empty walls|do not default to empty walls|rich setting/i);
+    }
+  }
+});
+
+test('selected visual enhancement improves rhythm without permitting unselected edits', () => {
+  const prompt = buildScenarioEnhancementPrompt({ scenario, selectedCategories: ['effects'], punchlineType: 'Auto' });
+  assert.match(prompt, /密度|余白/);
+  assert.match(prompt, /セリフ.*(?:変更しない|変えない|保持)/);
+  assert.match(prompt, /背景は未選択/);
+});
+
+test('background-only enhancement may subtract decoration without inventing lettering or hand actions', () => {
+  const prompt = buildScenarioEnhancementPrompt({ scenario, selectedCategories: ['background'], punchlineType: 'Auto' });
+  assert.match(prompt, /被写界深度.*ぼか/);
+  assert.match(prompt, /場所.*奥行き.*保/);
+  assert.doesNotMatch(prompt, /ぼかすだけでなく|広い白地や平坦な色面/);
+  assert.match(prompt, /看板.*文字.*追加しない/);
+  assert.match(prompt, /身体.*未選択|未選択:.*身体/);
+});
+
+test('scenario generation preserves spatial background instead of making quiet beats blank', () => {
+  const prompt = getScenarioPrompt({ randomCategory: '日常', targetDate: '2026-09-15', inputMode: 'manual', manualTopic: '本を返す', newsContext: '', searchTopicKeywords: '', customLocation: '', customOutfit: '', ragReactions: '', punchlineType: 'Auto', comedyTone: 'standard', styleJson: null });
+  assert.match(prompt, /被写界深度.*ぼか/);
+  assert.match(prompt, /場所.*奥行き.*保/);
+  assert.match(prompt, /白抜き.*既定/);
+  assert.doesNotMatch(prompt, /ぼかすだけでなく|どこを広い白地/);
+});
+
+test('monochrome permits depth-of-field in ink without relaxing skin or palette locks', () => {
+  for (const providerFamily of ['chatgpt', 'gemini']) {
+    const prompt = buildMangaPrompt({ scenario, castList, providerFamily, colorMode: 'monochrome', systemVersion: 'test' });
+    assert.match(prompt, /depth.of.field[^\n]*black-on-white halftone/i);
+    assert.match(prompt, /(?:lit areas of faces and skin|lit skin)[^\n]*(?:white|unprinted)/i);
+    assert.match(prompt, /#000000/);
+    assert.match(prompt, /#FFFFFF/);
+    assert.doesNotMatch(prompt, /no blur|never blur|instead of blur|not blurred pixels/i);
+  }
+});

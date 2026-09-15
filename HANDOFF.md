@@ -1,9 +1,33 @@
-## v6.1.5 serious-mode and compact-UI release candidate — 2026-09-13
+## 4コマの視線誘導と密度の強弱 — ローカル実装・検証済み、2026-09-15
+
+- 最新の背景・カメラ再検証は実施済み（v4、2026-09-15）。場所・奥行き・明暗を残す被写界深度へ通常4コマの共通指示／短縮処理を修正し、肩越しの手前人物と奥の話者を同じ前景へ置く競合も一般処理で修正。全444テスト、strict lint、build、diff check成功。台本はCamera／背景／演出だけを具体化し、他の全行を保持した。
+- 承認されたカラー・白黒各1枚を同じSunburst/xhigh、参照2枚、1024×1536で実API生成。追加修正0回、両方QAまでCOMPLETE。`output/reading-rhythm-20260915-v4/` に原PNG2枚、実行プロンプト、詳細review、X原稿を保存し寸法・ハッシュ・プロンプト文字数を確認。保存サービス正常終了。タブ1に白黒結果を保持。背景白抜きは解消し、2コマ目の俯瞰と3コマ目の肩越しは改善。一方、1コマ目の引き不足、4コマ目の正面寄り構図、白黒の背景トーン・本の開閉・厳密二値条件などは未達。生成と保存の完了を画質全条件の達成と混同しない。
+- v3の背景白抜きを改善とした講評は撤回し、旧review／X原稿の先頭へ不採用訂正を追記。v1〜v3原PNGと実行プロンプトは不変。今回の画像呼び出し2回は消化済みで、さらに有料再生成する承認はない。今後の具体的な採否・追加修正はv4 reviewの未達項目を基準にする。1枚絵、H3、commit/push、公開、backupは実施していない。
+- v6.1.6の公開候補: ユーザーはdeploy、FourPanel note更新、公式の黒い窓フルバックアップを明示承認。`output/` は原PNG・プロンプト・講評のローカル保存先として.gitignoreへ追加し、公開ソースには混在させない。リリースnotesは`docs/releases/v6.1.6.md`。公開トランザクションとnote読戻し、バックアップの独立検証が終了するまでは配布完了にしない。
+- 最新依頼「再検証して。その上で最終講評を」は完了（2026-09-15）: 同じ参照2枚・Sunburst/xhighでカラー1枚＋白黒1枚、追加画像修正0回、両方COMPLETE。`output/reading-rhythm-20260915-v3/` に原PNG2枚・最終プロンプト・比較 `review.md`・X用 `x-post.md` を保存しハッシュ／寸法確認。保存サービスは正常終了。前回より3・4コマ目の余白が増え、白黒の人数超過は今回はなし。ただしカラーの両掌・POP文言、カメラ、白黒の白地肌・厳密二値などは未達。X投稿、公開、backup、製品コード追加はなし。
+- v3の証拠上の制限: 既存シナリオ強化は成功表示でも全4本の状況行を落としたため不採用。元の状況・台詞を復元し、Codexが台本のCamera／背景／演出を具体化した。補助人数は「5人を」では欠落するため入力を「5人が」に直して再構築。誤人数から画像生成していない。最終人数5/5/6/5を確認。完全自動成功やモデル更新比較ではなく、各1枚の演出修正込み比較。最初の批評対象の元作品は未提供。追加有料生成は未承認。タブ1（127.0.0.1:5173）に白黒結果を保持。
+- 再改善の現状（最新依頼「課題が残るなら解消して」）: 古い全コマ高密度・歪み必須指示を修正し、静かな背景省略・脇役の主張抑制・指定手動作優先・未指定文字禁止をシナリオ／強化／両プロバイダの最終指示と短縮処理へ反映。442テスト、strict lint、build、diff check成功。原画像は保持。公開・backup・1枚絵・H3は対象外。
+- 承認済みの再検証2回は実施済み: カラー1枚＋白黒1枚、GPT Image 2.5 Sunburst/xhigh、1024×1536、同じ参照2枚・台本。全Action/Camera/Dialogueは前回と一致。追加修正生成0回、両方COMPLETE。`output/reading-rhythm-20260915-v2/` にPNG2枚とプロンプト2本、詳細 `review.md` を保存しハッシュ確認。一時保存サービスは正常終了。カラーQAは応答解析失敗、白黒QAはsurface_text未確認を保持。
+- v2時点の未解消事項（その後の再検証結果は上記v3を参照）: カラー2コマ目の両手を広げる演技は改善したが、背景密度・未指定文字・最終コマの頬杖は残った。白黒3コマ目は手前の頭部が6人分見え、指定5人を超えた。厳密二値でもなかった。これを受けてユーザーが台本整理後のv3各1枚を承認し、実施済み。
+
+- 対象・依頼: 通常4コマの吹き出し、構図、情報密度が均されるという指摘への改良。元画像は未提供のため、個別作品の評価ではなく現行生成経路の矛盾を修正する。
+- 範囲: シナリオ・選択カテゴリの演出強化・両プロバイダ/API/Webの4コマプロンプト、回帰テスト、README。4コマ等分レイアウト、台詞・人物・小物・明示演出を保つ。1枚絵、H3、公開、バックアップは対象外。
+- 確認済み: 全コマの背景要素数と余白制限、Geminiカメラの一律な歪み追加、吹き出しの中央/頭上固定、カメラ未指定時のChatGPTフォールバック位置未更新。
+- 受入条件: 見せ場と静かなコマ、主な注視対象、台詞順と尾の所有関係、密度差を最終プロンプトまで維持。指定カメラと静かな間を上書きせず、文字数圧縮でも契約を保持。ローカル回帰・lint・buildを確認し、実画像の効果は未検証として区別する。
+- 結果: 見せ場・静かな間・注視対象・密度差の共通4コマ指示を追加。背景量の一律指定を修正し、吹き出しの高さと余白を許可。Geminiの指定外カメラ効果追加を解消し、ChatGPTカメラ未指定時のフォールバック位置を更新。選択カテゴリの演出強化とREADMEも同期。
+- 証拠: 新規6回帰が修正前にRED、修正後GREEN。全Nodeテスト437/437、`npm.cmd run lint -- --max-warnings 0`、`npm.cmd run build`、`git diff --check` 成功。両プロバイダ×カラー/白黒×Auto/SeriousDocumentaryと15,000文字Webコピーの保持条件を確認。buildにはBrowserslistデータ経過、動的/静的import混在、chunkサイズの警告あり。
+- API検証の追加依頼（2026-09-15）: 同じ台本・キャラクターでカラーとモノクロを各1枚実API生成し、改善内容と結果の講評を提示する。自動修正はOFF。公開・バックアップは対象外。現在の版番号は6.1.5のまま、変更は未コミット。元からあった下記v6.1.5完了記録の未コミット差分を保持。
+- 追加修正: 実APIで作った台本の「5人が／5人は」を補助人数指示が認識せず、非話者をABSENT扱いする矛盾を発見。登録キャスト人数と一致する無修飾の人数主語を読み取り、台詞内の数字・別集団・人数不一致は除外する一般処理へ修正。2回帰を追加しRED→GREEN、全Nodeテスト439件、strict lint、build、diff check成功。
+- 実API完了: キャラシート2枚と同じgpt-4.1台本「無料おかわりの静かな罠」を使用。修正後STEP3の人数指示5/5/6（店員含む）/5、ABSENT・MONOLOGUE矛盾なし。OpenAI GPT Image 2.5 Sunburst / xhigh、1024×1536でカラー1枚・白黒1枚、追加修正生成0回。両方とも画像とQAのCOMPLETEを確認。キー値の読出しなし。
+- 保存・評価: `output/reading-rhythm-20260915/` にPNG原本2枚、使用プロンプト2本、詳細な `review.md` を保存。カラー2,695,537 bytes / SHA256 b417b3cdbcc0c67a1d188cd4c830f5946dd295c7e5eed09ad1ff2db96df204e4、白黒3,328,884 bytes / SHA256 37411d99b629db6578460cb1fcce2eec731aeba23d37c716c7d3fb7a21a17d6a。通常ダウンロードを確認できず、一時ループバック保存フォームで元PNGバイト列を受け渡し、保存サービスは正常終了。画像加工なし。
+- 講評: 2コマ目の賑やかさと4コマ目の冷めた表情・寄りに差があり、白黒はデフォルメ／背面の差が明確。一方、静かなコマも人物5人と背景で高密度。カラーのミクの両手動作等は台本と不一致、背景に未指定英字もある。モノクロQAの眼鏡欠落2件は実画像に眼鏡が見えるため誤検出。白黒は目視で色漏れなしだが、RGB不一致62.44%・差>5が0.79%・最大差21で厳密二値ではない。旧版対照なしなので改善幅の断定不可。今回の依頼は完了、追加生成・公開・バックアップなし。
+
+## v6.1.5 serious-mode and compact-UI release — 2026-09-13
 
 - Scope: generic stale-ending invalidation and Serious Documentary final-prompt guards; serious/gag enhancement-mode routing; compact 28px STEP2 ending selector with explicit menu cue and 12px execution gap; compact STEP4 help plus 11px labels/text and 26px quality/size selects.
 - Live proof: the in-app browser completed STEP2, displayed `シリアス演出`, rebuilt the Serious Documentary STEP3 prompt, and generated one 1024×1536 OpenAI GPT Image 2.5 Sunburst / xhigh image with both character sheets. Visual review found normal proportions and one consistent reference-sheet style in all four panels, including the ending; no chibi conversion. Internal QA retained surface orientation as unverified and performed no repair generation.
 - Local proof: full Node suite 431/431, zero-warning lint, production build, diff check and browser console warning/error check pass. Computed browser values are 28px/12px for the ending select, 12px separation before STEP2, and 11px labels/text with 26px selects for API quality/size.
-- Delivery: the user explicitly authorized the official v6.1.5 release/deploy, public FourPanel note update without another pause, and the established visible black-window full backup. Root `PLAN.md` owns the live transaction status.
+- Delivery: official receipt `backups/release_receipts/nano-banana-pro-v6.1.5-2026-09-13_152323.json` completed for source commit `2c2a2145d4761636308abd2fb1bb15f868df1c32`, GitHub Release/tag `v6.1.5`, Pages commit `0944df36c398ad3aaac9c79923b89640e0422af2`, Hugging Face commit `43b17de573cb168e687bcd4f9173ed1f5c1df593`, and the C-drive release copy. FourPanel note `ndf063558c1f5` is publicly updated and verified with the v6.1.5 title/body, serious/gag routing guidance, compact bold date/version history, 47 figures, and retained H3 links. The established visible black-window full backup completed and closed; independent verification returned `FULL_BACKUP_VERIFIED apps=7` for `backups/antigravity_full_backup_2026-09-13_153843.manifest.json`, with matching local/Drive SHA-256 `DB05553B404943CA022FA93DE83220DC65A911F620E390901A682F7A037B5DFB`.
 
 ## v6.1.4 documentary endings and FourPanel v5.9.9 — released; local stale-mode guard verified, 2026-09-13
 

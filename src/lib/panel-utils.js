@@ -1,4 +1,4 @@
-import { cameraLensMap, cinematicCompositionMap, EMOTION_STYLES } from './constants.js';
+import { EMOTION_STYLES } from './constants.js';
 import { MONOCHROME_EMOTION_STYLES } from './manga-render-mode.js';
 
 // --- Panel Utility Functions (App.jsx assemblePrompt -> externalized) ---
@@ -523,30 +523,9 @@ export const getCameraForPanel = (panelText, shuffledCameras, cameraState) => {
   const cameraMatch = panelText.match(/\[Camera:\s*(.*?)\]/i);
   if (cameraMatch && cameraMatch[1]) {
      const specificCamera = cameraMatch[1].trim();
-     // Lens presets must not discard the scripted shoulder owner, direction or viewpoint.
-     const literalCameraPrefix = `${specificCamera}; `;
-
-     // [v4.5.6] シネマティック構図のチェック（歪みを加えず、美しさを強調）
-     for (const [keyword, lensTag] of Object.entries(cinematicCompositionMap)) {
-       if (specificCamera.toLowerCase().includes(keyword.toLowerCase())) {
-         return `${literalCameraPrefix}${lensTag}, (masterpiece, best quality, highly detailed, professional photography:1.2), (ABSOLUTELY NO flat normal photos:2.9), (NEVER draw text of camera names:3.0)`;
-       }
-     }
-
-     // [v2.60] AIのカメラ名をマッピング辞書で具体的なレンズ歪みタグに変換
-     let matchedLens = '';
-     for (const [keyword, lensTag] of Object.entries(cameraLensMap)) {
-       if (specificCamera.includes(keyword)) {
-         matchedLens = lensTag;
-         break;
-       }
-     }
-     // マッピングが見つかった場合はレンズ歪みタグ + 汎用歪みを結合
-     if (matchedLens) {
-       return `${literalCameraPrefix}${matchedLens}, (EXTREME hyper-dynamic composition:2.6), (ABSOLUTELY NO flat normal photos:2.9), (NEVER draw text of camera names:3.0)`;
-     }
-     // マッピングなし → 汎用歪みプロンプトのみ
-     return `${literalCameraPrefix}(Extreme intense dynamic camera angle: 2.8), (EXTREME hyper-dynamic composition:2.6), (SEVERE dutch angle or extreme perspective distortion:2.7), (MASSIVE spherical or telephoto depth separation:2.5), (ABSOLUTELY NO flat normal photos:2.9), (NEVER draw text of camera names:3.0)`;
+     // 指定の距離・角度・強度を保持する。名前だけで極端なレンズや別の演技を足さない。
+     // 画面上の実行指示は共通の getPanelShotExecution で補う。
+     return `${specificCamera}; (NEVER draw text of camera names:3.0)`;
   }
   // AIがカメラタグを出力しなかった場合のフォールバック（重複なしランダム）
   const fallbackCamera = shuffledCameras[cameraState.index % shuffledCameras.length];
@@ -577,7 +556,9 @@ export const getCameraForChatGPT = (panelText, cameraState) => {
     'Telephoto close-up with background compression',
     'Wide-angle shot with exaggerated perspective'
   ];
-  return fallbackCameras[cameraState.index % fallbackCameras.length];
+  const fallbackCamera = fallbackCameras[cameraState.index % fallbackCameras.length];
+  cameraState.index++;
+  return fallbackCamera;
 };
 
 export const extractDialogueOnly = (fullPanelText, castList, options = {}) => {
@@ -1312,7 +1293,7 @@ export const extractPlacementRule = (fullPanelText, castList, options = {}) => {
     const traits1 = getCharTraitsFromMatrix(speakers[1], castList, { monochrome });
     const traits2 = getCharTraitsFromMatrix(speakers[2], castList, { monochrome });
     if (compact) {
-      return `PLACEMENT/IDENTITY: RIGHT [${speakers[0]}] (${compactIdentityTraits(traits0)}), CENTER [${speakers[1]}] (${compactIdentityTraits(traits1)}), LEFT [${speakers[2]}] (${compactIdentityTraits(traits2)}). Keep slots exact; do NOT mirror/swap. Bubbles beside actual speakers with tails, right-to-left.`;
+      return `PLACEMENT/IDENTITY: RIGHT [${speakers[0]}] (${compactIdentityTraits(traits0)}), CENTER [${speakers[1]}] (${compactIdentityTraits(traits1)}), LEFT [${speakers[2]}] (${compactIdentityTraits(traits2)}). Slots fixed; no mirror/swap.`;
     }
     return `CRITICAL PLACEMENT & IDENTITY (3-ZONE SLOTTING):
 - RIGHT ZONE: [${speakers[0]}] (${traits0 || 'see reference'}) — First speaker
@@ -1325,14 +1306,14 @@ CHARACTER BODY POSITION LOCK (3-ZONE - DO NOT MIRROR):
 - [${speakers[2]}] MUST be on the LEFT third of the panel.
 - Maintain breathing room between zones to prevent overcrowding and attribute fusion.
 SPEECH BUBBLE FLOW (RIGHT-TO-LEFT):
-- Each character's speech bubble MUST be placed directly above THAT character's head, matching their actual position in the panel.
-- If [${speakers[1]}] is in the CENTER, their bubble MUST also be centered — do NOT push it to an edge.
-- Each bubble's tail MUST point to its speaker. Flow: Right → Center → Left.`;
+- Place bubbles in nearby negative space in the exact dialogue order, upper-right to lower-left; stagger heights instead of repeating a row above the heads.
+- Size bubbles to their text with readable padding; keep faces, important hands and story props clear, including the CENTER character.
+- Each bubble's tail MUST point to its assigned speaker without crossing another tail. Keep speaker identity and body zones fixed.`;
   } else if (speakers.length >= 2) {
     const traits0 = getCharTraitsFromMatrix(speakers[0], castList, { monochrome });
     const traits1 = getCharTraitsFromMatrix(speakers[1], castList, { monochrome });
     if (compact) {
-      return `PLACEMENT/IDENTITY: RIGHT [${speakers[0]}] (${compactIdentityTraits(traits0)}), LEFT [${speakers[1]}] (${compactIdentityTraits(traits1)}). Keep slots exact; do NOT mirror/swap. Bubbles beside actual speakers with tails.`;
+      return `PLACEMENT/IDENTITY: RIGHT [${speakers[0]}] (${compactIdentityTraits(traits0)}), LEFT [${speakers[1]}] (${compactIdentityTraits(traits1)}). Slots fixed; no mirror/swap.`;
     }
     // [v2.27] 人物+吹き出し位置固定ルール（左右入れ替わり全パターン対策）
     // 髪色等の視覚的特徴で位置をアンカリングし、AIの左右鏡像化を防ぐ
@@ -1345,9 +1326,9 @@ CHARACTER BODY POSITION LOCK (CRITICAL - DO NOT MIRROR):
 - The character with ${traits1 || speakers[1] + "'s features"} MUST be physically standing/sitting on the LEFT half of the panel.
 - Do NOT swap, mirror, or reverse their positions under any circumstances.
 SPEECH BUBBLE POSITION RULE:
-- Each character's speech bubble MUST be placed directly above or beside THAT character's head, matching the character's actual position in the panel.
-- If a character is positioned in the center of the panel, their bubble MUST also be centered — do NOT push it to the left or right edge.
-- Each bubble's tail MUST point down to its speaker. Do NOT swap bubble positions.`;
+- Place bubbles in nearby negative space in the exact dialogue order, upper-right to lower-left; stagger heights instead of repeating a row above the heads.
+- Size bubbles to their text with readable padding; keep faces, important hands and story props clear.
+- Each bubble's tail MUST point to its assigned speaker without crossing another tail. Do NOT swap speaker ownership or body positions.`;
   } else if (speakers.length === 1) {
     const traits0 = getCharTraitsFromMatrix(speakers[0], castList, { monochrome });
     return `CRITICAL PLACEMENT & IDENTITY: [${speakers[0]}] (${traits0 || 'see reference'}) is the main focus of this panel.`;
@@ -1454,7 +1435,12 @@ export const extractCastLimitRule = (fullPanelText, castList, options = {}) => {
   // An unqualified group subject refers to the registered cast, not unnamed mobs.
   // Keep qualified groups such as 社員全員 separate from the main cast.
   const hasUnqualifiedCastGroup = /(?:^|[。！？\n:：／、])\s*(?:全員|一同|みんな|他のメンバー)(?:が|は|も|で|、)/u.test(actionAndMetaText);
-  const hasAllMainCastCue = hasUnqualifiedCastGroup || /(?:他キャラ全員|キャラ全員|全キャラ|全メンバー|全員集合|メンバー全員|主要人物全員|all characters|the whole main cast)/i.test(actionAndMetaText);
+  // 無修飾の「N人が/は」は、登録人数と一致するときだけキャスト一同として扱う。
+  // 「客N人」などの別集団、台詞内の人数、人数不一致からは全員登場を推測しない。
+  const castCount = canonicalValidCharacters.length;
+  const countLabels = [String(castCount), ...('一二三四五六七八九十'[castCount - 1] ? ['一二三四五六七八九十'[castCount - 1]] : [])];
+  const hasCountedCastGroup = castCount > 0 && new RegExp(`(?:^|[。！？\\n:：／、（(])\\s*(?:この|その)?(?:${countLabels.join('|')})人(?:が|は|も|で|、)`, 'u').test(actionAndMetaText.normalize('NFKC'));
+  const hasAllMainCastCue = hasUnqualifiedCastGroup || hasCountedCastGroup || /(?:他キャラ全員|キャラ全員|全キャラ|全メンバー|全員集合|メンバー全員|主要人物全員|all characters|the whole main cast)/i.test(actionAndMetaText);
   if (hasAllMainCastCue) {
     canonicalValidCharacters.forEach((canonicalName) => {
       if (!allPanelCharacters.includes(canonicalName)) {
@@ -1486,10 +1472,8 @@ export const extractCastLimitRule = (fullPanelText, castList, options = {}) => {
   // スピーカー最大3名をメインアクターとして登録
   const panelActors = speakers.slice(0, 3).map(s => `[${s}]`);
   const explicitRearActor = explicitRearSubject ? `[${explicitRearSubject}]` : '';
-  const foregroundActors = [...new Set([
-    ...panelActors,
-    ...(explicitRearActor ? [explicitRearActor] : [])
-  ])];
+  // 肩越しの手前人物と、奥で注目される話者を混同しない。
+  const foregroundActors = explicitRearActor ? [explicitRearActor] : panelActors;
 
   // [v2.69] 背景キャスト統合ロジックを完全廃止 (No-Show 除外指示への置換)
   // このコマに一切登場しないキャラ（No-Show）を特定
@@ -1555,7 +1539,7 @@ export const extractCastLimitRule = (fullPanelText, castList, options = {}) => {
       : `CRITICAL CAST PLACEMENT: Ensure ${mainFocus} are the main focus.\n${cloneWarning}${spatialConstraint}`;
   } else {
     // 登場キャラクターが検出されなかった場合でも、キャスト全体から除外指示を出すことは可能
-    if (hasBroadGroupCue) {
+    if (hasBroadGroupCue || hasCountedCastGroup) {
       return compact
         ? `CRITICAL CAST PLACEMENT: broad group cue is required by the action; draw the relevant visible group, one generic adult for any non-cast speaker, and never duplicate the same character.`
         : `CRITICAL CAST PLACEMENT: The action uses a broad group cue such as "all characters", "everyone", "全員", "みんな", or "一同". Treat that group as explicitly required by the panel action. Draw the relevant visible group described by the action, and if a speech bubble names a speaker outside the reference cast, draw exactly one generic adult speaker for that bubble. Do NOT exclude registered main characters solely because they are not dialogue speakers in this panel. NEVER draw the exact same character twice.`;

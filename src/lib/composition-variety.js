@@ -24,6 +24,17 @@ export const SCENARIO_COMPOSITION_VARIETY_RULES = `
                * 両手を使う動作では、Actionの内容と手の本数を保ったまま、左右の手に前後差・高さ差・役割差をつける。両手を同じ高さでレンズ側へ広げる左右対称ポーズを既定値にするな。
                * 明示されたユーザー構図や物語上必須の視線・Actionは上書きしない。構図多様化は同じ出来事を別の物理カメラ位置と身体軸で見せるために使う。`;
 
+export const SCENARIO_READING_RHYTHM_RULES = `【視線誘導と密度の緩急】
+- 4コマ全体を読んで、物語上の見せ場と、それを引き立てる静かな間を選ぶ。何コマ目を最大にするか固定せず、全コマを最大音量にも同じ密度にも揃えない。明示された静けさ・反復構図・演出は優先する。
+- 各コマの注視対象を、既存の表情・手の動き・重要な小道具などから1つ定め、「状況」に具体化する。在場と画面内の主張を分け、必要な脇役は小さく／低コントラスト／背面など、指定動作・視線・人物の同一性を保てる見せ方にする。全員を同じ大きさの顔で並べない。見せ場は小さな発見や沈黙でもよい。
+- 吹き出しは右上から左下へ元の発言順に読めるよう、主な注視対象と干渉しない余白へ配置する。文字量に応じた大きさと高さの差を作り、全コマで同じ頭上の横一列に揃えない。話者と尾の対応、台詞の全文・数・順を保持する。
+- 隣接コマの人物の大きさ、余白、背景の描き込み、光と効果の密度に意味のある落差を作る。静かなコマでも場所と奥行き、環境の形・明暗のまとまりを保つ。被写界深度に応じて焦点から離れた背景はぼかしてよい。主役・手元・重要な小道具は明瞭にし、同じ距離の物には整合するピントを与える。背景の白抜きを既定にせず、残す空間と省く細部、ピントの位置をCamera・状況へ具体化する。妄想や小物で全ての隙間を埋めず、密度調整のために台詞を削らない。
+- 強弱の理由は既存のCameraや状況へ反映し、画像に設計ラベルや説明文を追加しない。4コマの等分枠、人物、出来事、指定Camera/Action、画風の指定を守る。`;
+
+// 4コマ専用。API/Web双方で同じ短い契約を保持し、圧縮による欠落を防ぐ。
+export const MANGA_READING_RHYTHM_LOCK = 'PAGE READING RHYTHM (direction only; never print): choose one primary focal target per panel from the scripted face/action/prop. Build a story-motivated peak and a contrasting quiet beat; no fixed peak panel, no uniform density. Vary subject scale, negative space and background/VFX density; silence can be the peak. DEPTH OF FIELD: retain setting/depth and recognizable environmental shapes/light masses. Distant backgrounds may blur according to focal distance; focal faces/hands/story props stay sharp, equal-depth objects share focus. Quiet beats reduce background contrast/detail, not spatial context; no default blank backdrop unless explicitly scripted. Keep required cast once; supporting cast smaller/lower contrast when Camera/Action permits, not equal portraits. Preserve required gaze, gestures, contacts and identifiable features. Do not fill every gap with invented props or fantasies. Route bubbles upper-right to lower-left in exact dialogue order, stagger heights and size to text, tails to assigned speakers; clear faces/hands/props, no crossing tails. Preserve all dialogue, cast, actions, explicit camera/quiet/repeated framing, style and equal four-panel layout. Rhythm never overrides explicit direction.';
+export const MANGA_READING_RHYTHM_LOCK_COMPACT = 'PAGE READING RHYTHM: one primary focal target/panel; story peak vs quiet beat. Vary scale/negative space/density. DEPTH OF FIELD: retain setting/depth; far BG may blur; focal subjects sharp; no default blank backdrop. Cast stays; supporting cast smaller/lower contrast. Bubbles fit text; right-to-left dialogue order, tails to speakers. Script/style/layout win; never print.';
+
 export const SCENARIO_GESTURE_VARIETY_RULES = `
              - **【身体演技・ジェスチャー多様化（通常生成で常時必須）】**:
                * キャラクター参照画像に写るポーズは顔・髪・衣装・体格の同一性資料であり、性格を示す定番動作ではない。参照ポーズを各コマのActionや決めポーズとして反復するな。
@@ -49,10 +60,11 @@ export const MANGA_GESTURE_VARIETY_LOCK = `BODY ACTING / GESTURE VARIETY LOCK:
 - A reference-sheet pose is identity evidence, not a recurring action or personality signature. Reproduce identity and clothing, but derive acting from the current story beat.
 - Across the four panels, use story-motivated acting contrast: full-body exaggeration, recoil, leaps, reaching and impact may alternate with a deliberate quiet beat. Do not impose a numeric cap on pointing, thrusting or surface impact; vary purpose, body axis and amplitude.
 - Preserve every explicitly scripted pointing, reaching, presenting, or surface impact action. Enrich its silhouette and amplitude without changing the event, contact target or prop ownership. Do not default every scene to folded arms, chin-resting or seated explanations.
+- Preserve exact hand pose/contact/gaze from Action; no stock-pose substitution. Style, camera aids and default conversational eye-lines never override the scripted performance.
 - For each lead action, resolve the action phase, weight-bearing support, center of gravity, left/right hand roles, and contact target. Keep the face, important hands, and story prop readable in a clean asymmetrical silhouette.
 - Prefer story-specific alternatives when compatible with Action: handling or exchanging a prop, stepping or turning with weight shift, changing distance to a scene partner, interacting with the environment, a restrained reaction, or the follow-through after an action.`;
 
-export const MANGA_GESTURE_VARIETY_LOCK_COMPACT = 'BODY ACTING / GESTURE VARIETY LOCK: reference-sheet pose is identity evidence, not a recurring action; allow full-body exaggeration and varied pointing/reaching/impact; preserve explicitly scripted pointing/surface impact; action phase/support/contact.';
+export const MANGA_GESTURE_VARIETY_LOCK_COMPACT = 'BODY ACTING / GESTURE VARIETY LOCK: reference-sheet pose is identity evidence, not a recurring action; full-body exaggeration; preserve explicitly scripted pointing/surface impact and exact hand pose/contact/gaze; no stock-pose substitution; action phase/support/contact.';
 
 export const SCENARIO_SHOT_DESIGN_RULES = `【画角と身体動作の一体設計】
 - 各コマのCameraとActionを一組として設計する。既存の出来事・セリフ・小道具の持ち主は固定し、同じ瞬間の見せ方と動作の振幅を具体化する。

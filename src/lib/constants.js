@@ -3,7 +3,7 @@ import { getEndingModePolicy } from './ending-mode-policy.js';
 // --- 定数・タグ定義 (constants.js) ---
 // App.jsx から抽出された共有定数
 
-export const SYSTEM_VERSION = "v6.1.5";
+export const SYSTEM_VERSION = "v6.1.6";
 
 // --- Punchline ラベル変換関数 ---
 export const getPunchlineLabel = (type) => {
@@ -319,11 +319,11 @@ export const cinematicCompositionMap = {
 // --- [v4.0] Dynamic Camera Protocol (App.jsx -> externalized) ---
 export const DYNAMIC_CAMERA_PROTOCOL = `
 ANTIGRAVITY CAMERA PROTOCOL:
-- DISTORTION: (extreme perspective distortion:2.8), (NO eye-level shot:2.9), (NO flat symmetrical composition:2.9), (severe camera angle:2.7), (exaggerated depth of field:2.5)
-- BODY DEFORM: Near body parts 50%+ larger than far parts.
+- CAMERA INTENSITY: follow each scripted camera's distance, height, tilt and perspective. Preserve strong foreshortening when requested; do not add extreme distortion to every panel. Quiet or fixed shots provide contrast.
+- BODY PERSPECTIVE: near/far scale follows the chosen lens and distance; preserve anatomy and the scripted action, with no mandatory enlargement ratio.
 - ANTI-CLONE: Each character appears ONLY ONCE per panel.
 - EYE-LINE BASE: during dialogue, visible gaze/face/torso aim at another character, never lens/front unless the story explicitly has an in-world direct address. Build depth with three-quarter faces, back-three-quarter or over-the-shoulder partner views, and foreground/midground/background layers; vary these arrangements across panels instead of flattening every conversation into side profiles.
-- VFX MUST follow the panel's perspective distortion.
+- VFX MUST follow the panel's perspective and reading rhythm, leaving the focal target clear.
 `;
 
 // --- [v3.50] Anti-CharSheet Prefix (App.jsx -> externalized) ---

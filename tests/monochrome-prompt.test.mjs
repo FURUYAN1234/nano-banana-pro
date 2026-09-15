@@ -46,8 +46,8 @@ for (const family of ['chatgpt', 'gemini']) {
     assert.match(prompt, /G-PEN INK DIRECTION/);
     assert.match(prompt, /pressure.*taper|taper.*pressure/i);
     assert.match(prompt, /MONOCHROME BACKGROUND CLARITY LOCK/);
-    assert.match(prompt, /simplify nonessential textures/i);
-    assert.match(prompt, /story-required object or clue/i);
+    assert.match(prompt, /simplify nonessential textures|omit optional textures/i);
+    assert.match(prompt, /story-required object or clue|Keep location\/depth\/all story evidence/i);
     if (family === 'chatgpt') assert.ok(prompt.length <= 15000, `Web budget: ${prompt.length}`);
   });
   test(`${family}: default/color ignores monochrome words in cast metadata`, () => {

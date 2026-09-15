@@ -16,6 +16,7 @@ docs/verification/
 HANDOFF_codex_*.md
 .playwright-cli/
 generated-result*.png
+output/
 
 # Editor directories and files
 .vscode/*

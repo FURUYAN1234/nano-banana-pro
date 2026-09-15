@@ -37,6 +37,29 @@ test('Action metadata retains silent actors in panel cast limits', () => {
   assert.doesNotMatch(rule, /ABSENT[^\n]*花子/);
 });
 
+test('an unqualified counted group matching the cast retains silent cast members', () => {
+  for (const [count, label] of [[3, '3'], [5, '５'], [5, '五']]) {
+    const names = Array.from({ length: count }, (_, i) => `Person${i + 1}`);
+    const cast = names.map(name => `## ${name}\n- dark hair`).join('\n');
+    for (const action of [
+      `[Camera: 引き。${label}人がテーブルを囲む。]\n状況: Person1が札を指す。`,
+      `状況: ${label}人は店員を見上げる。`,
+    ]) {
+      const rule = extractCastLimitRule(`${action}\n店員「こちらです」`, cast, { compact: true });
+      for (const name of names) assert.match(rule, new RegExp(`\\[${name}\\]`));
+      assert.doesNotMatch(rule, /ABSENT:|SOLO:|MONOLOGUE:/);
+    }
+  }
+});
+
+test('counted strangers, partial groups and spoken counts do not summon the entire cast', () => {
+  const cast = '## Person1\n- dark hair\n## Person2\n- light hair\n## Person3\n- glasses';
+  for (const action of ['状況: 客3人が窓際に座る。', '状況: 2人が窓際に座る。', '状況: Person1が本を置く。']) {
+    const rule = extractCastLimitRule(`${action}\nPerson1「3人が来たよ」`, cast, { compact: true });
+    assert.match(rule, /ABSENT:[^\n]*Person2[^\n]*Person3/);
+  }
+});
+
 const CAST_LIST = `
 ## ミク
 - blonde hair

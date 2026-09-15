@@ -12,7 +12,8 @@ import {
 } from './facial-acting';
 import {
   SCENARIO_COMPOSITION_VARIETY_RULES,
-  SCENARIO_GESTURE_VARIETY_RULES
+  SCENARIO_GESTURE_VARIETY_RULES,
+  SCENARIO_READING_RHYTHM_RULES
 } from './composition-variety';
 import { getEndingModePolicy } from './ending-mode-policy.js';
 
@@ -346,7 +347,7 @@ ${styleJson.anti_patterns ? `            - 絶対禁止事項:\n${styleJson.anti
           【シナリオ構成・演出の絶対厳守 (v2.99 Alpha)】
             0. **全員登場義務 (Mandatory All-Cast)**:
                - CastListに含まれている **全てのキャラクターを必ず1回以上登場させること。**
-               - 「メイン2人だけで4コマ全部回す」のような手抜きは禁止。全員に役割を与え、画面を賑やかにすること。
+               - 全員に物語上の役割を与えるが、全コマの画面を賑やかに埋める義務はない。必要な人物を場面ごとに選び、静かな間では注視対象以外の主張を抑える。ユーザーが明示した登場人物は省かない。
                - **【人数バラエティの義務】**: 4コマで「話者数」を以下のルールで割り振れ:
                 ・話者1人のコマ（独白・リアクションショット）を**最低1つ**含めること
                 ・話者2人のコマ（掛け合い会話）を**最低1つ**含めること
@@ -557,7 +558,7 @@ ${styleJson.anti_patterns ? `            - 絶対禁止事項:\n${styleJson.anti
              
              **【A. アクション向け極限カメラ（歪み重視）】**: 激しい動き、狂気、ギャグの爆発シーンに使用。
              - 選択肢: 俯瞰/バードアイ、ローアングル/アオリ、ダッチアングル、超広角/フィッシュアイ、望遠圧縮、ワームズアイ、ドローン俯瞰、パンニング/追跡ショット
-             - 物理描写の書き方（全コマ必須）: 「カメラがどこにあり」「何が巨大に見え」「何が歪み」「光がどう当たるか」を具体的に書け。
+             - 物理描写の書き方（この極限カメラを選んだコマのみ）: 「カメラがどこにあり」「どの遠近・光で動作を強調するか」を具体的に書け。静かなコマに巨大化や歪みを追加するな。
                 * 例（ローアングル）: 「膝の高さから見上げ、キャラの全身がそびえ立つ巨人のように見え、背後の天井や空が大きく広がる。逆光が後ろから吹き荒れる」
              
              **【B. シネマティック構図10選（美しさ・感情重視）】**: 歪ませず、プロの写真のような美しい構図で感情や空気を表現するシーンに使用。
@@ -578,6 +579,7 @@ ${styleJson.anti_patterns ? `            - 絶対禁止事項:\n${styleJson.anti
              - 【制約】4コマの中で**同じカメラを2回以上使うのは禁止**。必ず4種類の異なるカメラを選べ。⚠️ マクロ特写（目だけの超接写等）は使用禁止。
             ${SCENARIO_COMPOSITION_VARIETY_RULES}
             ${SCENARIO_GESTURE_VARIETY_RULES}
+            ${SCENARIO_READING_RHYTHM_RULES}
 
 
           【出力フォーマット（絶対厳守・会話禁止）】
@@ -747,11 +749,21 @@ const compactChatGPTCastDetails = (castText = '') => String(castText)
   .join('\n');
 
 const RICH_PANEL_COMPOSITION_LOCK = `RICH PANEL COMPOSITION / CHARACTER CLARITY LOCK:
-- Every panel shows one fixed environmental anchor plus at least two additional physical setting cues from declared layers or interaction props.
+- Keep story-required physical setting cues and interaction props; vary background detail with the page's reading rhythm instead of imposing the same object count on every panel.
 - Panel VFX stay overlays behind or around the cast and never replace the physical setting or story evidence.
 - Keep face, eye direction, silhouette, hands, and key action crisp, unobstructed, and separated from busy details.
-- Render rich background detail at lower contrast and with softer edges than the cast.
-- Negative space is only for bubbles and figure separation; no broad blank walls, flat gradients, black voids, or empty fields unless the script requires physical emptiness.`;
+- Retain recognizable environmental shapes, light masses and perspective at lower contrast than the focal target. Depth-of-field blur is allowed away from the focal plane; keep focal faces, hands and key props sharp, with consistent focus at equal distances.
+- Use negative space and selective detail for quiet beats while keeping the physical setting and spatial continuity. Do not replace a setting with a blank backdrop merely because the beat is quiet; preserve explicit scripted abstraction.`;
+
+export const RICH_PANEL_COMPOSITION_LOCK_COMPACT = 'RICH PANEL COMPOSITION / CHARACTER CLARITY LOCK: story-required setting cues/depth; necessary cues lower contrast. Focal face/hands/action crisp. VFX never replace story evidence.';
+
+const SCENE_LETTERING_LOCK = 'SCENE LETTERING: only explicit object text; no incidental slogans/menu entries/book titles/pseudo-lettering. Other surfaces unlettered. Keep exact title/dialogue/required text/watermarks.';
+
+// 4コマの焦点・密度差を調整し、1枚絵の基準は変更しない。
+const MANGA_IMAGE_QUALITY_CONTRACT = SHARED_IMAGE_QUALITY_CONTRACT.replace(
+  /^- Render a rich physical setting[^\n]*/m,
+  '- Preserve recognizable setting shapes, light masses and spatial depth. Quiet beats lower background contrast/detail; depth-of-field may soften distant backgrounds while focal subjects remain crisp. Do not default to blank backdrops.'
+);
 
 const CROSS_PANEL_WARDROBE_COLOR_LOCK = `CROSS-PANEL WARDROBE COLOR LOCK:
 - Before drawing, choose each named character's concrete garment items, base colors, accent colors, material, and pattern once; reuse that exact wardrobe assignment in every later panel. If only a broad category is given, individualize without cloning.
@@ -811,8 +823,8 @@ ${MANGA_PAGE_TYPOGRAPHY_LOCK_COMPACT}
 ${scriptLock}
 
 ART / RENDERING QUALITY:
-${isMonochrome ? MONOCHROME_IMAGE_QUALITY_CONTRACT : SHARED_IMAGE_QUALITY_CONTRACT}
-- Clean finish: ${isMonochrome ? 'crisp ink edges; simpler, thinner background lines; white separation, no blur.' : 'crisp foreground, softer background, lighting.'}
+${isMonochrome ? MONOCHROME_IMAGE_QUALITY_CONTRACT : MANGA_IMAGE_QUALITY_CONTRACT}
+- Clean finish: ${isMonochrome ? 'crisp focal ink; distant depth-of-field in black-on-white halftone; retain setting shapes and white lit skin.' : 'crisp foreground, softer background, lighting.'}
 ${MANGA_FACIAL_ACTING_LOCK}
 - CLEAN SURFACE PROTOCOL: ${isMonochrome ? 'regular black-on-white dots and intentional hatching allowed; no random noise, moire or marks on lit skin.' : 'no grain/speckles/dithering/rough texture/pores/moire/dust/particles/sparkle unless a panel style exception allows it.'}
 - MANGA FINISH ASSIST: preserve script/cast/camera/layout; keep bubble space, ${isMonochrome ? 'readable ink shapes and screen density' : 'cast/background light and color'}, coherent anatomy, and setting depth.
@@ -843,7 +855,8 @@ TEXT RULES:
 - Only Dialogue becomes white bubbles: vertical Japanese tategaki, verbatim character-by-character; no paraphrase, synonyms, softening, added/omitted words, or horizontal text.
 - In each Dialogue block, ONLY quoted values after "TEXT (PRINT VALUES ONLY)" are printed. Names in square brackets after "TAILS (METADATA; NEVER PRINT NAMES)" are routing metadata only: NEVER print speaker names, brackets, bubble IDs, field labels, quotation marks, or metadata.
 - Tails point to actual speakers; right-to-left manga order.
-- Action is visual only: no ambience/SFX/mood/aura/emotion/narration/state/prompt labels as text. Lettering only when Action requests handwriting/signage/label/print/screen/board text; otherwise unreadable marks.
+- Action is visual only: no ambience/SFX/mood/aura/emotion/narration/state/prompt labels as text. Lettering only when Action requests handwriting/signage/label/print/screen/board text; otherwise unlettered surfaces.
+${SCENE_LETTERING_LOCK}
 
 DIALOGUE / BUBBLE QA LOCK:
 - If one character, punctuation mark, added word, omitted word, or speaker differs from Dialogue, redraw. Each bubble tail tip must terminate at its assigned speaker's mouth/head silhouette, never at a neighbor or empty space. Trace every tail before final render; no extra bubbles, captions, narration, or printed speaker names.
@@ -974,13 +987,12 @@ ${preserveReferenceStyle
 (NO unrelated or dominant random text/SFX outside speech bubbles: 2.8)
 (Action ambience words, SFX names, mood words, aura names, and emotion labels are NOT visible lettering: 2.8)
 (EXCEPT explicit visual scene text requested by Action, such as handwriting, air-writing, signs, labels, printed text, screen text, or board text: 2.8)
-(Small incidental text on props/background items may appear only as short, context-appropriate decoration and must never replace or upstage dialogue, title, watermarks, punchline, or explicit scene text: 2.2)
-(If prop text is not explicitly requested, prefer blank surfaces, abstract marks, or unreadable graphic shapes over large/dominant invented lettering: 2.0)
-(NO unrelated ENGLISH TEXT outside watermark or small context-appropriate prop/background decoration. NO 'G-pen'/'HA': 3.0)
+${SCENE_LETTERING_LOCK}
+(NO unrelated ENGLISH TEXT. NO 'G-pen'/'HA': 3.0)
 
 GEMINI STABILITY / QUALITY LOCK:
-${isMonochrome ? MONOCHROME_IMAGE_QUALITY_CONTRACT : SHARED_IMAGE_QUALITY_CONTRACT}
-- ${isMonochrome ? 'Keep spatial depth, meaningful setting props and expressive ink line weights; remove nonessential background clutter when needed for readability.' : 'Use a richer professional manga finish than a flat template: layered foreground/midground/background, meaningful setting props, varied lighting, crisp line weight variation, and panel-specific atmosphere. Do not leave plain empty walls or generic blank rooms unless the script explicitly asks for emptiness.'}
+${isMonochrome ? MONOCHROME_IMAGE_QUALITY_CONTRACT : MANGA_IMAGE_QUALITY_CONTRACT}
+- Keep spatial depth, recognizable environmental shapes and meaningful setting props. Quiet beats reduce detail/contrast; depth-of-field may soften distant backgrounds without replacing the setting with a blank backdrop.
 ${MANGA_FACIAL_ACTING_LOCK}
 ${isMonochrome ? MONOCHROME_BACKGROUND_LOCK : RICH_PANEL_COMPOSITION_LOCK}
 - MANGA FINISH ASSIST: preserve script/cast/camera/layout; keep bubble space, ${isMonochrome ? 'readable ink shapes and screen density' : 'cast/background light and color'}, coherent anatomy, and setting depth.
@@ -1013,7 +1025,7 @@ ${preserveReferenceStyle ? `REFERENCE-SHEET STYLE QA LOCK:
 - DIALOGUE TEXT IS VERBATIM: The text inside each Speech Bubble MUST be copied EXACTLY as written in the Dialogue section — character by character. Do NOT paraphrase, rephrase, or substitute synonyms.
 - Do NOT normalize punctuation. If the Dialogue line has no punctuation, keep it that way; if it has punctuation, copy only that exact punctuation.
 - TYPOGRAPHY RULE: Write Japanese text tightly with ZERO spaces between words. Do NOT insert any gaps or spaces between characters. (no letter spacing:1.5), (tight kerning:1.5).
-- Do NOT add unrelated random English/Japanese text. Small readable text on props or background items (books, packages, posters, signs, screens, labels, clothing) is allowed only as short, context-appropriate decoration; it must never replace, contradict, or upstage dialogue, title, watermarks, punchline, or explicit scene text. If unsure, render blank surfaces, abstract marks, or unreadable graphic shapes.
+- Do NOT add unrequested English/Japanese decoration or pseudo-lettering on props, signs, clothing or backgrounds. Follow SCENE LETTERING above; keep required scene text verbatim.
 - Maintain character consistency across all 4 panels.
 - Flow is from top panel to bottom panel.
 - Ensure the watermark is positioned at the absolute bottom edge of the image, with no extra whitespace below it. The text must be oriented horizontally (left-to-right).

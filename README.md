@@ -67,6 +67,8 @@ Automatic repair is enabled by default. It makes one ordinary repair and only wh
 
 The prompt preserves explicit cast, dialogue, props, action, camera direction, and quiet beats while allowing variation in camera height, tilt, depth, and body acting. / 明示した登場人物、台詞、小物、動作、カメラ方向、静かな間を保持しながら、カメラの高低・傾き・奥行き・身体演技に変化を付けます。
 
+Four-panel direction asks for one focal target per panel and story-motivated contrast in subject scale, negative space, background detail and effects. Quiet beats retain setting shapes and depth at lower contrast; distant backgrounds may defocus while focal faces, hands and story props stay sharp. Monochrome expresses defocus in black-on-white halftone, not by erasing the setting. Required supporting cast can be smaller and lower contrast. Bubble size and height follow dialogue and reading order. Explicit hand actions and gaze take priority over stock poses, and unspecified surfaces stay unlettered. These instructions survive long-prompt compaction while preserving the equal four-panel layout, dialogue and speaker ownership. They do not guarantee visual pacing, camera adherence, exact actions or lettering; inspect each generated image. / 4コマでは各コマの注視対象を決め、人物の大きさや背景の密度に強弱を付けるよう指示します。静かなコマでも場所の形と奥行きを残し、遠景は被写界深度に応じてぼかせます。焦点の合う人物・手元・重要な小道具は明瞭にし、白黒は網点によるぼけ表現を使います。背景の白抜きを静かな演出の既定にはしません。吹き出しは台詞量と読み順に合わせ、指定の手動作・視線を定型ポーズより優先し、未指定の看板・本・服などには文字を追加しないよう指示します。長文の短縮時もこれらの条件と4コマ等分枠、台詞、話者の対応を保持します。ただし、実画像での読みやすさ・画角・動作・文字の正確さを保証するものではなく、生成ごとの確認が必要です。
+
 Facial acting is described through eyebrows, eyelids, gaze, and mouth shape, with intensity chosen for the scene. This is prompt guidance and does not guarantee the model's rendered facial expression. / 顔演技・表情設計は眉、まぶた、視線、口の形を場面に応じて指定します。これはプロンプト上の指示であり、モデルが描く表情を保証しません。
 
 Character sheets define identity rather than a reusable page layout. STEP4 asks the model to keep appearance while avoiding the reference sheet's labels, poses, boxes, and text. / キャラクターシートは人物の同一性資料として扱い、レイアウトの見本にはしません。STEP4は外見を保持しつつ、参照シートのラベル、ポーズ、枠、文字を持ち込まないよう指示します。
@@ -145,6 +147,9 @@ The production application is published from the `main` branch through the repos
 **Is this the T2V/I2V/Ref2V repository? / T2V・I2V・Ref2Vのリポジトリですか？**  No. Those workflows are maintained separately in [comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows). / いいえ。それらは別の[comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows)で管理します。
 
 ## 📋 ChangeLog
+
+### v6.1.6 (2026-09-15)
+- **[Fix & UX]** 4コマで背景の奥行きと被写界深度を保ち、明示カメラと肩越し人物配置を修正 / Preserved four-panel setting depth and depth of field, and corrected explicit cameras and shoulder-over placement
 
 ### v6.1.5 (2026-09-13)
 

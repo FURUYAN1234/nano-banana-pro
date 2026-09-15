@@ -305,8 +305,8 @@ MemberA「The loudest voice wins.」`;
     const panel = prompt.match(/## Panel 1[\s\S]*?(?=## Panel 2)/)?.[0] || '';
 
     assert.match(panel, /(?:CAST LIMIT: main focus \[Focus\]\.|CRITICAL CAST PLACEMENT: Ensure \[Focus\] are the main focus\.)/);
-    assert.match(panel, /(?:FG only|FOREGROUND MUST CONTAIN ONLY): \[Focus\] and \[Observer\]\./);
-    assert.match(panel, /(?:BG only|BACKGROUND MUST CONTAIN ONLY): \[MemberA\], \[MemberB\], \[MemberC\]\./);
+    assert.match(panel, /(?:FG only|FOREGROUND MUST CONTAIN ONLY): \[Observer\]\./);
+    assert.match(panel, /(?:BG only|BACKGROUND MUST CONTAIN ONLY): \[Focus\], \[MemberA\], \[MemberB\], \[MemberC\]\./);
     assert.match(panel, /OTS CAST INSTANCE LOCK:.*\[Observer\].*(?:sole instance|one and only instance)/i);
     assert.doesNotMatch(panel, /(?:BG only|BACKGROUND MUST CONTAIN ONLY):[^\n]*\[Observer\]/);
     assert.match(panel, /(?:NO OTHER HUMANS: exactly 5 people|Total EXACTLY 5 distinct individuals)\./);

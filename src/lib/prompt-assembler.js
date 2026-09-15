@@ -1,6 +1,7 @@
 import { 
   buildChatGPTMangaPrompt, 
-  buildGeminiMangaPrompt 
+  buildGeminiMangaPrompt,
+  RICH_PANEL_COMPOSITION_LOCK_COMPACT
 } from './prompts';
 import { 
   cleanCastList, 
@@ -37,7 +38,9 @@ import {
   MANGA_COMPOSITION_VARIETY_LOCK,
   MANGA_COMPOSITION_VARIETY_LOCK_COMPACT,
   MANGA_GESTURE_VARIETY_LOCK,
-  MANGA_GESTURE_VARIETY_LOCK_COMPACT
+  MANGA_GESTURE_VARIETY_LOCK_COMPACT,
+  MANGA_READING_RHYTHM_LOCK,
+  MANGA_READING_RHYTHM_LOCK_COMPACT
 } from './composition-variety';
 import {
   HAND_PROP_KINEMATICS_LOCK,
@@ -169,12 +172,13 @@ const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt
     ? "REFERENCE-SHEET WARDROBE AND RENDERING LOCK: preserve garment items, colors or tone regions, materials, patterns, fold lines, shading and rendering method across all four panels; serious lighting may vary without changing the drawing method."
     : "CROSS-PANEL WARDROBE COLOR LOCK: choose each named character's garment items, base colors, accent colors, material, and pattern once; reuse that exact wardrobe assignment in every later panel. PANEL STYLE LOCK changes background/environment palette, VFX, and rendering treatment only; keep every garment item and its colors unchanged. Lighting may change highlights and shadows, but the garment's canonical base and accent colors remain recognizable.";
   const compacted = prompt
+    .replace(MANGA_READING_RHYTHM_LOCK, MANGA_READING_RHYTHM_LOCK_COMPACT)
     .replace(/CONVERSATIONAL DEPTH BASE:[^\n]*/g, 'CONVERSATIONAL DEPTH BASE: counterpart gaze; varied three-quarter and OTS depth.')
     .replace(/EYE-LINE LOCK:[^\n]*/g, compactConversationEyeLine)
     .replace(/MANGA FINISH ASSIST:[^\n]*/g, 'FINISH: bubbles, anatomy.')
-    .replace(/\[ SHARED IMAGE QUALITY CONTRACT[\s\S]*?(?=\n- Clean finish:)/g, `SHARED IMAGE QUALITY CONTRACT: preserve cast/action/setting/camera; rich setting/depth; coherent anatomy/prop ownership; localized fold shadows; no invented/duplicate cast; clean surfaces.\n${BODY_ACTING_BASELINE_COMPACT}\n${EXPRESSIVE_DIRECTION}\n${FUNCTIONAL_SURFACE_ORIENTATION_LOCK_COMPACT}\n${OBJECT_GEOMETRY_LOCK_COMPACT}`)
+    .replace(/\[ SHARED IMAGE QUALITY CONTRACT[\s\S]*?(?=\n- Clean finish:)/g, `SHARED IMAGE QUALITY CONTRACT: preserve cast/action/setting/camera; necessary setting cues/depth; quiet negative space; coherent anatomy/prop ownership; localized fold shadows; no invented/duplicate cast; clean surfaces.\n${BODY_ACTING_BASELINE_COMPACT}\n${EXPRESSIVE_DIRECTION}\n${FUNCTIONAL_SURFACE_ORIENTATION_LOCK_COMPACT}\n${OBJECT_GEOMETRY_LOCK_COMPACT}`)
     .replace(/FACIAL ACTING LOCK:[\s\S]*?(?=\n- CLEAN SURFACE PROTOCOL:)/g, FACIAL_ACTING_LOCK_COMPACT)
-    .replace(/RICH PANEL COMPOSITION \/ CHARACTER CLARITY LOCK:[\s\S]*?(?=\n- CLOTHING FOLD SHADOW ASSIST:)/g, 'RICH PANEL COMPOSITION / CHARACTER CLARITY LOCK: 1 fixed anchor + 2 physical setting cues/panel; VFX overlay, never replace setting; face, eyes, silhouette, hands and action stay crisp; background rich but softer/lower contrast; no blank walls, flat gradients or black voids.')
+    .replace(/RICH PANEL COMPOSITION \/ CHARACTER CLARITY LOCK:[\s\S]*?(?=\n- CLOTHING FOLD SHADOW ASSIST:)/g, RICH_PANEL_COMPOSITION_LOCK_COMPACT)
     .replace(/CLEAN SURFACE PROTOCOL:[^\n]*/g, 'CLEAN: no noise except style exceptions.')
     .replace(/CLOTHING FOLD SHADOW ASSIST:[^\n]*/g, 'FOLD SHADOWS: crisp triangular overlap shadows; no geometric patterns.')
     .replace(/SAFE VISUAL CONTENT LOCK:[^\n]*/g, 'SAFE VISUAL: no gore/blood/organs/flesh/organic horror; ordinary architecture; preserve script/cast/dialogue/camera/layout.')
@@ -225,7 +229,7 @@ const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt
     .replace(/- Top title EXACTLY ("[^"]+")[^\n]*/g, '- Top title EXACTLY $1.')
     .replace(/- Bottom-right 4th-panel watermark EXACTLY ("[^"]+")[^\n]*/g, '- Bottom-right watermark EXACTLY $1.')
     .replace(/- Bottom-left 4th-panel watermark EXACTLY ("[^"]+")[^\n]*/g, '- Bottom-left watermark EXACTLY $1.')
-    .replace(/- Clean finish:[^\n]*/g, monochrome ? '- CLEAN FINISH: crisp ink; sparse thin BG lines; white lit skin.' : '- CLEAN FINISH: crisp FG, soft BG, coherent light.')
+    .replace(/- Clean finish:[^\n]*/g, monochrome ? '- CLEAN FINISH: crisp focal ink; distant BG halftone defocus; white lit skin.' : '- CLEAN FINISH: crisp FG, soft BG, coherent light.')
     .replace(/HAND \/ PROP KINEMATICS LOCK:[^\n]*/g, HAND_PROP_KINEMATICS_LOCK_COMPACT)
     .replace(
       /VISUAL STORY EVIDENCE LOCK: visibly preserve the event-specific evidence from the approved scenario: ([^\n]*?)\. Show at least two distinct evidence items[^\n]*/g,
@@ -236,11 +240,11 @@ const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt
     .replace(/FINAL-PANEL ACTIVE STAGING LOCK:[^\n]*/g, 'FINAL-PANEL ACTIVE STAGING LOCK: varied actions/depth; faces and hands readable.')
     // Retain named gaze targets and rear-shoulder owners even under budget pressure.
     .replace(/FUNCTIONAL SURFACE PANEL CHECK:[^\n]*/g, 'FUNCTIONAL SURFACE PANEL CHECK: reader/camera side/front-back/text axes.')
-    .replace(/SHARED IMAGE QUALITY CONTRACT:[^\n]*/g, 'SHARED QUALITY: preserve direction; rich setting; anatomy/props; folds; no duplicate cast; clean surfaces.')
+    .replace(/SHARED IMAGE QUALITY CONTRACT:[^\n]*/g, 'SHARED QUALITY: preserve direction; setting cues/quiet space; anatomy/props; folds; no duplicate cast; clean surfaces.')
     .replace(/FACIAL ACTING LOCK:[^\n]*/g, 'FACIAL ACTING LOCK: bold/subtle brow/eyelid/gaze target/mouth shape/head-torso cues; do not force close-up/camera gaze; preserve Camera/Action/eye-line; not visible text.')
     .replace(
       /RICH PANEL COMPOSITION \/ CHARACTER CLARITY LOCK:[^\n]*/g,
-      'RICH PANEL COMPOSITION / CHARACTER CLARITY LOCK: 1 fixed anchor + 2 physical setting cues/panel; VFX overlay, never replace physical setting; face, eyes, silhouette, hands and action stay crisp; background rich but softer/lower contrast; no blank walls, flat gradients or black voids.'
+      RICH_PANEL_COMPOSITION_LOCK_COMPACT
     )
     .replace(/SAFE VISUAL:[^\n]*/g, 'SAFE VISUAL: no gore/blood/organs/flesh/organic horror; preserve script/cast/dialogue/camera/layout.')
     .replace(/FOLD PRIORITY:[^\n]*/g, 'FOLD PRIORITY: 2-4 dark triangular crease shadows.')
@@ -278,12 +282,15 @@ const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt
     .replace(/^- REFERENCE ROLE: shape\/design only; no source color or sheet labels\/layout\/poses\.$/gm, '- REFERENCE ROLE: shape/design; no hue, sheet labels/layout/poses.')
     .replace(/^FUNCTIONAL SURFACE PANEL CHECK:[^\n]*/gm, 'FUNCTIONAL SURFACE PANEL CHECK: target/side/axes.')
     .replace(/^COMPOSITION STAGING: PRESERVE EXPLICIT AZIMUTH[^\n]*/gmi, 'COMPOSITION STAGING: PRESERVE EXPLICIT AZIMUTH.')
-    .replace(/^BODY ACTING \/ GESTURE VARIETY LOCK:[^\n]*/gm, 'BODY ACTING / GESTURE VARIETY LOCK: reference-sheet pose is identity evidence, not a recurring action; full-body exaggeration; preserve explicitly scripted pointing/surface impact; action phase/support/contact.')
+    .replace(/^BODY ACTING \/ GESTURE VARIETY LOCK:[^\n]*/gm, MANGA_GESTURE_VARIETY_LOCK_COMPACT)
+    .replace(/^- Draw in a high-budget, chic and cinematic full-color TV anime style\.[^\n]*/gm, '- Chic cinematic full-color TV anime: delicate detailed faces/eyes, dramatic light, deep color grading, sharp clean ink; polished Japanese animation finish.')
+    .replace(/; pose, expression, saturation, glow, or speed lines alone are insufficient; reject/g, '; reject')
+    .replace(/RICH PANEL COMPOSITION \/ CHARACTER CLARITY LOCK:[^\n]*/g, RICH_PANEL_COMPOSITION_LOCK_COMPACT)
+    // Story beats already remain verbatim in each Action; retain a short exact reference.
+    .replace(/^- Panel (\d+) required story beat: EXACT Panel \1 Action below$/gm, '- Panel $1: exact Action below.')
     .replace(/^EYE-LINE LOCK:[^\n]*VIEWPOINT FREEDOM:[^\n]*/gm, line => line.replace('Camera preserves scenario direction.', 'Script camera wins.'))
     .replace(/^EYE-LINE LOCK:[^\n]*/gm, compactBudgetEyeLine)
-    .replace(/^PLACEMENT\/IDENTITY:[^\n]*/gm, line => line
-      .replace(/ \(bare eyes, no frames\)/g, '')
-      .replace(/Keep slots exact; do NOT mirror\/swap\. Bubbles beside actual speakers with tails, right-to-left\./, 'Keep slots; no mirror/swap; tails to speakers, right-to-left.'));
+    .replace(/^PLACEMENT\/IDENTITY:[^\n]*/gm, line => line.replace(/ \(bare eyes, no frames\)/g, ''));
 };
 
 const buildVisualStoryEvidenceLock = (scenario) => {
@@ -480,7 +487,7 @@ export const buildMangaPrompt = ({
   let rawPrompt = "";
   const scriptLock = buildStrictScriptLock({ safeTopic, panels, castList, activeOutfit: promptActiveOutfit, providerFamily, isMonochrome, preserveReferenceStyle });
   const finalPanelStagingLock = punchlineType === 'Surreal' ? '' : FINAL_PANEL_ACTIVE_STAGING_IMAGE_LOCK;
-  const sceneLocks = [scriptLock, documentarySourceFactLock, compositionVarietyLock, gestureVarietyLock, HAND_PROP_KINEMATICS_LOCK, visualStoryEvidenceLock, settingContinuityLock, finalPanelStagingLock]
+  const sceneLocks = [scriptLock, documentarySourceFactLock, compositionVarietyLock, gestureVarietyLock, HAND_PROP_KINEMATICS_LOCK, visualStoryEvidenceLock, settingContinuityLock, finalPanelStagingLock, MANGA_READING_RHYTHM_LOCK]
     .filter(Boolean)
     .join('\n');
   const panelEyeLineRules = panels.map((panel) => buildPanelEyeLineRule(panel, castList));
@@ -529,7 +536,7 @@ Dialogue (verbatim bubbles): ${extractDialogueOnly(pt, castList, { forImagePromp
       const camera = isConversation ? sanitizeConversationCamera(rawCamera) : rawCamera;
       const lensRule = isConversation
         ? '[LENS]: preserve the scenario camera direction, dramatic height, tilt and strong perspective; build foreground/midground/background depth without forcing an over-the-shoulder view. Gaze follows the named counterpart, not the lens.'
-        : '[LENS]: (ABOVE CAMERA DISTORTION MAX:2.9), (NEVER normal photograph:3.0), (extreme severe perspective warp:2.7), (violently tilted horizon:2.6). Break normal camera angle.';
+        : '[LENS]: execute the scripted camera distance, height, tilt and perspective at its specified intensity. Keep bold shots bold and quiet shots quiet; do not add lens distortion or tilt absent from Camera.';
       const geminiRearForegroundLock = isConversation
         ? (() => {
           const speakers = eyeLineRule.match(/DEPTH ASSIGNMENT \(REQUIRED\): \[([^\]]+)\] PRIMARY THREE-QUARTER toward \[([^\]]+)\]/);
