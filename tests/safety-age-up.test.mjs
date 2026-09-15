@@ -3,6 +3,20 @@ import assert from 'node:assert/strict';
 
 import { applySafetyAgeUp } from '../src/lib/safety-filters.js';
 
+test('age-up preserves occupational uniforms and their role assignments', () => {
+  const clothing = '警察官は制服、消防士は防火服、看護師は看護制服、駅員は鉄道会社の制服、来訪者は私服。';
+  const result = applySafetyAgeUp(`Important Character Cast:\n${clothing}`);
+  assert.ok(result.includes(clothing));
+  assert.match(result, /Every depicted person is an adult, age 20 or older/);
+  assert.doesNotMatch(result, /フォーマルな服装/);
+});
+
+test('age-up still handles explicitly school-coded Japanese clothing', () => {
+  const result = applySafetyAgeUp('学校制服、学校の制服、学園制服、ブレザー制服、学生服、セーラー服');
+  assert.doesNotMatch(result, /学校(?:の)?制服|学園制服|ブレザー制服|学生服|セーラー服/);
+  assert.match(result, /フォーマルな服装/);
+});
+
 test('applySafetyAgeUp removes plain-text school and minor-coded character traits', () => {
   const prompt = [
     'Important Character Cast:',

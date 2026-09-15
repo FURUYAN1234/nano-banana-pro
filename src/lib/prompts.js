@@ -328,11 +328,11 @@ export const getScenarioPrompt = ({
            ` : `
         5. **【服装の自動選定 (Outfit Auto-Select)】**:
            ${SCENARIO_WARDROBE_CONTRACT}
-           - ニュースの内容と場所(Location)に**「最も適した服装カテゴリー」**を選定し、Outfit行に出力せよ。
+           - 題材での各人物の役割・行為と場所(Location)に最も適した服装カテゴリーを選定し、Outfit行に出力せよ。
            - ${seasonalOutfitInstruction}
            - **「キャラシート準拠」「デフォルト」等の曖昧な回答は禁止。** 必ず状況に適した服装の「属性」を出力すること。
-           - 例: 海辺→「水着（swimwear）」、法廷→「ビジネススーツ（business suit）」、道の駅→「私服（casual wear）」、雪山→「防寒着（winter clothes）」、宇宙→「宇宙服（spacesuit）」
-           - **⚠️【重要: クローン化防止】⚠️** 「白のビキニ」「デニムショートパンツ」のように細かく指定しすぎないこと。細かく指定すると全キャラクターが全く同じ服を着てしまうため、必ず**大分類のカテゴリー（ナース服、私服、パジャマなど）**に留め、個々の着こなしは画像AIに委ねよ。
+           - 同じ場所でも勤務者・来訪者・休暇中の人物では衣装が異なる。職務に必要な制服や装備を先に確定し、季節や屋内外の条件をその範囲で反映する。
+           - 服装カテゴリーは人物名または役割ごとに割り当てる。同じ職務の制服は共通デザインを保ち、個人差は顔・体格・着こなしで出す。クローン回避のために制服を私服化したり、別職種の人物まで同じ服にしたりしない。
            - 画像生成プロンプトでも選定した服装タグが反映される前提で、シナリオ内のト書き(Action)テキストにもその服装に基づく自然な描写を含めること。
            `}
 
@@ -675,7 +675,7 @@ ${finalPrompt}
 
 【検出すべき問題カテゴリ】:
 1. 学校・未成年連想: classroom, 教室, 実習室, 校則, school, academy, sailor uniform, serafuku, student council, school rules, 授業 → オフィス・社会人設定に置換
-2. 制服・学生服: sailor-style, pleated skirt（学校文脈で使用時）, school blazer, 制服 → ビジネスウェア/カジュアルオフィスに置換
+2. 学校由来の衣装: sailor-style, pleated skirt（学校文脈で使用時）, school blazer, 学校制服 → 成人向け衣装に置換。職業制服・作業服・安全装備は保持し、「制服」という語だけで一般服へ置換しない
 3. 暴力表現: explosion, blast, 爆風, 叩きつけ, striking, slamming, 衝撃波, 激しく叩く → 劇的だが非暴力的な演出に置換
 4. 年齢・体型リスク: short height, loli, petite（未成年を連想させる文脈） → 成人の体型表現に置換
 5. 過激カメラ: worm's eye view（制服キャラとの組み合わせ時のみ） → より安全なアングルに置換
@@ -776,12 +776,12 @@ const CROSS_PANEL_WARDROBE_COLOR_LOCK = `CROSS-PANEL WARDROBE COLOR LOCK:
 - Local lighting may change highlights and shadows, but the garment's canonical base and accent colors remain recognizable. Monochrome panels preserve the same colors as tonal values.`;
 
 const REFERENCE_SHEET_WARDROBE_STYLE_LOCK = `REFERENCE-SHEET WARDROBE AND RENDERING LOCK:
-- Preserve each named character's garment items, colors or monochrome tone regions, materials, patterns, fold-line treatment, and shading method from the character sheet in all four panels.
+- Preserve each named character's garment items, colors or monochrome tone regions, materials, patterns, fold-line treatment, and shading method from the character sheet in all four panels. In monochrome, the white-paper/ink/tone contract takes priority over reference fills and shading methods.
 - Lighting may change the strength and direction of highlights or shadows for the serious scene, but it must not replace the reference sheet's drawing, coloring, inking, or fabric-rendering method.`;
 
 const REFERENCE_SHEET_OUTFIT_RENDERING_LOCK = `REFERENCE-SHEET OUTFIT RENDERING LOCK:
 - Garment items come from the active outfit override, not from the character sheet.
-- Apply the character sheet's linework, fold-line treatment, shading method, coloring or monochrome tone method, and degree of stylization to those overridden garments in all four panels.
+- Apply the character sheet's linework, fold-line treatment, shading method, coloring or monochrome tone method, and degree of stylization to those overridden garments in all four panels. In monochrome, the white-paper/ink/tone contract takes priority over reference fills and shading methods.
 - Lighting may change highlight and shadow strength, but never change the selected garment items or the reference sheet's rendering method.`;
 
 export const buildChatGPTMangaPrompt = (p) => {
@@ -803,8 +803,8 @@ Use the 360° background image's lighting direction (${bg360Analysis.lighting}),
   ) : '';
 
   const outfitRule = activeOutfit
-    ? `- IGNORE reference clothing. All characters MUST wear exactly: ${activeOutfit}.`
-    : '- OUTFIT CONSISTENCY: Every character MUST wear EXACT same outfit in ALL 4 panels.';
+    ? `- IGNORE reference clothing. Follow role-specific outfit assignments: ${activeOutfit}; unscoped categories apply to all.`
+    : '- OUTFIT CONSISTENCY: Each character keeps their own outfit across ALL 4 panels.';
   const compactCastDetails = compactChatGPTCastDetails(VAR_CAST_LIST_CHATGPT);
   const clothingFoldRule = preserveReferenceStyle
     ? 'Preserve the character-sheet treatment of fabric folds and shadows; do not impose a different cel-shading or painting method.'
@@ -828,7 +828,7 @@ ${scriptLock}
 
 ART / RENDERING QUALITY:
 ${isMonochrome ? MONOCHROME_IMAGE_QUALITY_CONTRACT : MANGA_IMAGE_QUALITY_CONTRACT}
-- Clean finish: ${isMonochrome ? 'crisp focal ink; distant depth-of-field in black-on-white halftone; retain setting shapes and white lit skin.' : 'crisp foreground, softer background, lighting.'}
+- Clean finish: ${isMonochrome ? 'crisp focal ink; simplify distant lines while keeping setting shapes and white light planes.' : 'crisp foreground, softer background, lighting.'}
 ${MANGA_FACIAL_ACTING_LOCK}
 - CLEAN SURFACE PROTOCOL: ${isMonochrome ? 'regular black-on-white dots and intentional hatching allowed; no random noise, moire or marks on lit skin.' : 'no grain/speckles/dithering/rough texture/pores/moire/dust/particles/sparkle unless a panel style exception allows it.'}
 - MANGA FINISH ASSIST: preserve script/cast/camera/layout; keep bubble space, ${isMonochrome ? 'readable ink shapes and screen density' : 'cast/background light and color'}, coherent anatomy, and setting depth.
@@ -927,7 +927,7 @@ CLOTHING:
 - IGNORE reference clothing. Use ONLY the OUTFIT OVERRIDE below.` : '';
 
   const outfitOverride = activeOutfit
-    ? `OUTFIT OVERRIDE: All characters MUST wear exactly: ${activeOutfit}. Apply tags directly.`
+    ? `OUTFIT OVERRIDE: Follow role-specific outfit assignments: ${activeOutfit}; unscoped categories apply to all.`
     : '';
 
   return `[FORMAT: A4 PORTRAIT 1024x1448px 🚨 NO square/landscape/tall]
@@ -964,8 +964,8 @@ ${VAR_CAST_LIST}
 ${outfitOverride}
 【Identity Anchor】: Cross-panel consistency is MANDATORY. Redraw if hair/eyes/glasses/outfit mismatch.
 ${identityMatrix}
-${preserveReferenceStyle ? REFERENCE_SHEET_WARDROBE_STYLE_LOCK : isMonochrome ? MONOCHROME_WARDROBE_LOCK : CROSS_PANEL_WARDROBE_COLOR_LOCK}
-OUTFIT CONSISTENCY: Every character MUST wear EXACT same outfit in ALL 4 panels. NO changes.
+${preserveReferenceStyle ? (activeOutfit ? REFERENCE_SHEET_OUTFIT_RENDERING_LOCK : REFERENCE_SHEET_WARDROBE_STYLE_LOCK) : isMonochrome ? MONOCHROME_WARDROBE_LOCK : CROSS_PANEL_WARDROBE_COLOR_LOCK}
+OUTFIT CONSISTENCY: Each character keeps their own assigned outfit across ALL 4 panels. NO changes.
 GLASSES VERIFICATION (MANDATORY): Before finalizing EACH panel, count the number of characters wearing glasses. Compare against the Identity Matrix. If the count does not match, redraw. Characters without glasses must have fully visible bare eyes with NO frames.
 
 KEY PROP / OBJECT CONSISTENCY:

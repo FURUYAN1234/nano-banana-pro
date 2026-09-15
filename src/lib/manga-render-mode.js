@@ -46,23 +46,30 @@ export const sanitizeMonochromeSourceDescription = (value = '') => String(value)
 // This contract travels in the final prompt itself: API and manual Web paste
 // must not depend on an API-only suffix or an image post-processing step.
 // 短縮版にも同じ参照解釈を残す。色の境界は形状情報として網点へ置き換える。
-export const MONOCHROME_REFERENCE_SEPARATION = `BLACK INK PLATE: redraw, never reuse painted pixels. Colored references: identity, not palette.
-SOURCE COLOR BOUNDARIES: all regions/accents/gradients/tips/streaks become fixed black/white/screens.
-SCENE COLOR PRIORITY: story and verbatim text stay; source hues yield to ink/white skin.`;
+export const MONOCHROME_REFERENCE_SEPARATION = `BLACK INK PLATE: redraw. Colored references: identity, not palette.
+SOURCE COLOR BOUNDARIES: fix regions/accents/gradients/tips/streaks as black/white/screens.
+SCENE COLOR PRIORITY: keep story and verbatim text; source hues yield to ink/white skin.`;
 
 export const MONOCHROME_PANEL_INK_CHECK = 'PANEL INK CHECK: no hue, even in accents/edges.';
 
+// 全体・Web短縮の両方で、白地と網点を置ける領域を同じ条件で固定する。
+const MONOCHROME_TONE_ALLOCATION = `THREE TONE MASSES: white paper, solid black, bounded screentone.
+WHITE PAPER RESERVE: lit areas of faces and skin, light walls, ceilings and light fabric stay pure white; no base tone/dots/hatching. Tone only in material midtones/bounded shadows. Never screen the whole face or background. Overrides reference shading/style.`;
+const MONOCHROME_DEFOCUS = 'DEPTH OF FIELD / DEFOCUS: fewer distant lines, wider white gaps; black-on-white halftone only in assigned regions.';
+
 // 色の制限と演出の強度を分離し、Web短縮版にも同一の変換指示を残す。
-export const MONOCHROME_DRAMATIC_LIGHTING = 'INK LIGHT / ACTING: full-body action amplitude; directional solid-black cast shadows, white rim cutouts, contrasting screens. Background simplification preserves perspective, contact shadows and depth. Detailed/abstract beats; scripted peak contrast.';
+export const MONOCHROME_DRAMATIC_LIGHTING = 'INK LIGHT / ACTING: full-body action amplitude; directional solid-black cast shadows, white rim cutouts. Background simplification preserves perspective, contact shadows and depth. Scripted peak/quiet contrast.';
 
 export const MONOCHROME_RENDERING_LOCK = `[ MONOCHROME TWO-VALUE RENDERING LOCK ]
 REQUIRED OUTPUT MEDIUM: binary black-and-white manga, only pure black #000000 and pure white #FFFFFF throughout the ENTIRE page, including all panels, characters, backgrounds, lettering and effects. Not a desaturated color illustration.
 ${MONOCHROME_REFERENCE_SEPARATION}
+${MONOCHROME_TONE_ALLOCATION}
 G-PEN INK DIRECTION: strongly emphasize the pressure-sensitive G-pen nib character: decisive thick-to-thin strokes, sharp tapered entry/exit, springy curved contours and forceful black accents. Use a clear hierarchy: bold near-side silhouettes and contact/overlap accents, medium structural contours, fine face/eye/finger details and lighter distant lines. Solid blacks and crisp white cutouts anchor the composition. Never uniformly thicken every line, merge fingers/features into black blobs, or replace clean ink with scratchy noise. Lit skin remains unprinted even in the most forceful panel.
 INK-DRIVEN COMPOSITION: actively exploit foreshortened foreground forms, diagonal staging, strong camera height/tilt, layered depth and asymmetrical black/white mass balance. Direct the eye to the acting face, important hand and story prop; let tapered action lines follow physical movement without obscuring them. Vary scale and viewpoint across panels; reserve the strongest black mass and stroke accents for the story's emphatic beat. Preserve explicit Camera/Action, quiet beats and readable silhouettes: do not force every panel into an impact frame, close-up, fisheye or speed-line burst. Keep the four-panel grid intact.
 SKIN WHITE LOCK: lit areas of faces and skin MUST be pure white, unprinted paper. No skin base tone, tanning fill, grey veil, blush tint, texture, dots or hatching on lit skin. Describe cheeks/blushing with a few black expression lines on white. Confine ink or sparse hatching to clearly bounded actual cast shadows; never cover the whole face with tone. Keep eyes and expressions readable.
 TONES: middle values exist ONLY as regular black dots on pure white paper or deliberate black hatching with white gaps. Tone density, not grey ink, creates apparent shading. Use clean separable dots, consistent screen spacing and angle; no stacked screens, moire or random dithering. Whites remain white and solid blacks remain solid.
-FORBIDDEN: No flat grey fills, grayscale gradients, soft airbrush, translucent washes, colored pixels, sepia, selective-color accents, colored light, bloom or tinted paper. Edges of ink and dots stay black/white without grey antialias fringes. DEPTH OF FIELD: distant background blur is allowed, represented in black-on-white halftone with recognizable environmental shapes and depth; keep focal faces, hands, lettering and story props sharp. Do not erase the background to simulate defocus.
+FORBIDDEN: No flat grey fills, grayscale gradients, soft airbrush, translucent washes, colored pixels, sepia, selective-color accents, colored light, bloom or tinted paper. Edges of ink and dots stay black/white without grey antialias fringes.
+${MONOCHROME_DEFOCUS}
 REFERENCE / PRIORITY: preserve hairstyle, face/eye shape, glasses, clothing design, patterns, props and anatomy. This medium replaces source hues and paint materials; preserve lighting direction, contrast and dramatic intensity through ink shapes, white highlights and tone density. Never restore reference colors.
 ${MONOCHROME_DRAMATIC_LIGHTING}
 Keep exact dialogue/title/required lettering, script events, cast, camera, poses and acting. Color words inside required text remain verbatim; they do not authorize colored pixels. Do not print this contract or its labels. Inspect the entire page before delivering; remove any tint/grey wash and leave lit skin pure white.`;
@@ -72,29 +79,29 @@ Keep exact dialogue/title/required lettering, script events, cast, camera, poses
 export const MONOCHROME_RENDERING_LOCK_COMPACT = `[ MONOCHROME TWO-VALUE RENDERING LOCK ]
 OUTPUT: ONLY pure black #000000 and pure white #FFFFFF everywhere; binary manga.
 ${MONOCHROME_REFERENCE_SEPARATION}
-SKIN: lit areas of faces and skin pure white; no base tone/dots/hatching. Black blush lines; hatch bounded shadows only; readable eyes.
-TONES: only regular black dots/hatching with white gaps. No flat grey/gradients/airbrush/wash/color/sepia/bloom/grey fringes/stacked screens/moire/random dithering.
-DEPTH OF FIELD: far BG black-on-white halftone blur; setting shapes; sharp subjects.
+${MONOCHROME_TONE_ALLOCATION}
+TONES: regular black dots/hatching, white gaps. No flat grey/gradients/airbrush/wash/color/sepia/bloom/grey fringes/stacking/moire/noise.
+${MONOCHROME_DEFOCUS}
 G-PEN INK DIRECTION: pressure-sensitive tapered thick/thin; bold near/contact, medium structure, fine face/eyes/fingers/distance.
 ${MONOCHROME_DRAMATIC_LIGHTING}
-Keep text/story/cast/Camera/Action/acting verbatim. Text color words permit no hue. Never print rules.`;
+Keep text/story/cast/Camera/Action/acting verbatim. Never print rules.`;
 
 export const MONOCHROME_FINAL_CHROMA_AUDIT = 'MONOCHROME FINAL CHROMA AUDIT (MANDATORY): source colors are identity metadata, never output color. Inspect every panel, including hair roots/ends/highlights, irises, lips, cheeks, skin shadows, clothing, props, reflections, VFX, backgrounds, antialiased edges and tiny details. ANY hue, tint, sepia, colored fringe or continuous grey fill fails the whole render: redraw with pure black, pure white and regular black-on-white dots/hatching. Do not deliver until it passes.';
-export const MONOCHROME_FINAL_CHROMA_AUDIT_COMPACT = 'MONOCHROME FINAL CHROMA AUDIT (MANDATORY): scan every region and edge. ANY hue, tint, sepia, colored fringe or continuous grey fails the whole render; redraw only pure black/white plus regular black-on-white dots/hatching before delivery.';
+export const MONOCHROME_FINAL_CHROMA_AUDIT_COMPACT = 'MONOCHROME FINAL CHROMA AUDIT: all regions/edges; hue/tint/continuous grey fails. Redraw black/white, bounded dots/hatching; restore white reserves.';
 
 export const MONOCHROME_WARDROBE_LOCK = `CROSS-PANEL WARDROBE TONE LOCK:
 - Assign each character's garment items, patterns and white/solid-black/halftone regions once; keep the same assignment in all panels. Style changes affect ink treatment, not identity, wardrobe or which garment region uses which tone.`;
 
 export const MONOCHROME_STYLE_QA = 'MONOCHROME STYLE DIFFERENCE QA: make selected styles recognizable through characteristic ink lines, black shapes and screens; no numeric change quota. Preserve script/identity/wardrobe/layout/camera/acting and fixed tone assignments.';
 
-export const MONOCHROME_BACKGROUND_LOCK = 'MONOCHROME BACKGROUND CLARITY LOCK: prioritize focal faces, hands, key props, action silhouettes and lettering. Explicitly scripted abstract beats may omit scenery, never story evidence or contacts. In physical-setting shots simplify nonessential textures and reduce background contrast while retaining recognizable environmental shapes, perspective/depth and every story-required object or clue. Depth-of-field blur may soften distant backgrounds in black-on-white halftone; equal-depth objects share focus. Physical shots keep setting light/dark masses. Avoid overlapping screens and dense tone behind focal faces; preserve explicitly scripted abstraction.';
-export const MONOCHROME_BACKGROUND_LOCK_COMPACT = 'MONOCHROME BACKGROUND CLARITY LOCK: omit optional textures where crowded; retain setting light/dark masses and every story-required object or clue.';
+export const MONOCHROME_BACKGROUND_LOCK = 'MONOCHROME BACKGROUND CLARITY LOCK: prioritize focal faces, hands, key props, action silhouettes and lettering. Explicitly scripted abstract beats may omit scenery, never story evidence or contacts. In physical-setting shots simplify nonessential textures and reduce background contrast while retaining recognizable environmental shapes, perspective/depth and every story-required object or clue. Reduce line density in distant planes; preserve white light planes and bounded tone regions. Equal-depth objects share focus. Keep setting light/dark masses; no background-wide screen veil.';
+export const MONOCHROME_BACKGROUND_LOCK_COMPACT = 'MONOCHROME BACKGROUND CLARITY LOCK: omit optional textures. Keep location/depth/all story evidence, white light planes and bounded tones.';
 
 // Adapt only our authored quality text, never replace words in user dialogue,
 // Actions, cast descriptions or other source data.
 export const MONOCHROME_IMAGE_QUALITY_CONTRACT = SHARED_IMAGE_QUALITY_CONTRACT
   .replace(/- Render a rich physical setting[^\n]*/, '- Physical shots retain recognizable setting anchors and depth; scripted abstract beats may omit scenery, never story evidence. Simplify nonessential detail; keep focal actions and required reactions readable.')
-  .replace(/- Keep lighting and color coherent[^\n]*/, '- Keep light direction coherent through ink shadows and white highlights; depth-of-field blur may soften distant backgrounds in black-on-white halftone while keeping environmental shapes and focal subjects readable.')
+  .replace(/- Keep lighting and color coherent[^\n]*/, '- Keep light direction coherent through bounded ink shadows and white light planes; simplify distant line density while keeping environmental shapes and focal subjects readable.')
   .replace(/- Keep surfaces clean:[^\n]*/, '- Keep surfaces clean: intentional regular black-on-white screentone and hatching are allowed, never random noise, moire or floating dust. Keep lit skin, bubbles and gutters pure white. Scripted abstract beats may omit scenery, never story evidence.');
 
 // Medium-specific interpretations retain the selected expressive register;
@@ -127,4 +134,4 @@ export const MONOCHROME_EMOTION_STYLES = Object.freeze({
   GOLDEN_HOUR: 'Low-angle sunset translated into long solid-black cast shadows and sharp white rim highlights; nostalgic atmosphere via sparse regular screen dots and delicate ink lines.',
 });
 
-export const MONOCHROME_QA_RULE = 'MONOCHROME REVIEW: the approved output uses only black/white ink and regular black-on-white halftone/hatching. Do not restore reference colors or reject intentional tone mapping as character_reference. Compare identity by face/eye shape, hairstyle, glasses, design and stable tone assignments. Report monochrome_rendering for visible color, flat grey washes/gradients, or screened/grey lit facial skin. Separate actual bounded shadows from lit skin. This is visual review, not a pixel-level two-value or file bit-depth verification; use unverified for ambiguous marks.';
+export const MONOCHROME_QA_RULE = 'MONOCHROME REVIEW: the approved output uses white paper, solid black and bounded black-on-white halftone/hatching. Do not restore reference colors or reject intentional tone mapping as character_reference. Compare identity by face/eye shape, hairstyle, glasses, design and stable tone assignments. Report monochrome_rendering for visible color, flat grey washes/gradients, or screened/grey lit skin, light walls, ceilings or light fabric; also report a background-wide screen veil. Separate bounded shadows and assigned material midtones from reserved white light planes. This is visual review, not a pixel-level two-value or file bit-depth verification; use unverified for ambiguous marks.';

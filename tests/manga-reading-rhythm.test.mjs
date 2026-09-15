@@ -64,6 +64,26 @@ test('outfit overrides exclude reference clothing even in the unweighted cast fa
   }
 });
 
+test('occupational uniforms and visitor clothes survive final assembly in both media and ending modes', () => {
+  const assignment = 'Aは勤務中の警察官の制服、Bは来訪者の私服';
+  const source = scenario.replace('Outfit: default', `Outfit: ${assignment}`);
+  for (const providerFamily of ['chatgpt', 'gemini']) {
+    for (const colorMode of ['color', 'monochrome']) {
+      for (const punchlineType of ['Auto', 'SeriousDocumentary']) {
+        const prompt = buildMangaPrompt({ scenario: source, castList, providerFamily, colorMode, punchlineType, systemVersion: 'test' });
+        assert.ok(prompt.includes(assignment));
+        assert.doesNotMatch(prompt, /警察官のフォーマルな服装/);
+        assert.match(prompt, /role-specific outfit assignments/);
+        assert.doesNotMatch(prompt, /All characters (?:are wearing|MUST wear exactly)/);
+        if (providerFamily === 'gemini' && punchlineType === 'SeriousDocumentary') {
+          assert.match(prompt, /Garment items come from the active outfit override/);
+          assert.doesNotMatch(prompt, /Preserve each named character's garment items[^\n]*from the character sheet/);
+        }
+      }
+    }
+  }
+});
+
 test('explicit abstract beats preserve performance and survive both provider and medium paths', () => {
   const directed = scenario.replace('Bが本を掲げて大きくのけぞる。', 'Bが本を掲げて大きくのけぞる。背景: このコマだけ意図的な白地へ省略し、Bの手と本は残す。');
   for (const providerFamily of ['chatgpt', 'gemini']) {

@@ -28,6 +28,24 @@ const build = (providerFamily, colorMode, overrides = {}) => buildMangaPrompt({
   scenario: scenario(), castList, colorMode, providerFamily, systemVersion: 'test', punchlineType: 'Auto', ...overrides,
 });
 
+test('white light planes and restricted tone regions survive provider, style and Web compaction paths', () => {
+  for (const providerFamily of ['chatgpt', 'gemini']) {
+    for (const punchlineType of ['Auto', 'SeriousDocumentary']) {
+      const prompt = build(providerFamily, 'monochrome', { punchlineType });
+      assert.match(prompt, /WHITE PAPER RESERVE:.*lit areas of faces and skin.*light walls.*ceilings.*pure white/);
+      assert.match(prompt, /THREE TONE MASSES:.*white.*solid black.*bounded screentone/);
+      assert.match(prompt, /Never screen the whole face or background/);
+      assert.match(prompt, /DEF[Oo]CUS:.*fewer.*lines.*white gaps/);
+      assert.doesNotMatch(prompt, /halftone (?:blur|defocus)|blur[^\n.;]*in black-on-white halftone|distant depth-of-field in black-on-white halftone/);
+      // Serious mode already exceeds the soft budget in HEAD (15,815 chars).
+      // Its medium guarantees must survive too; don't replace its style/script to force this cap.
+      if (providerFamily === 'chatgpt' && punchlineType === 'Auto') assert.ok(prompt.length <= 15000, `Web budget: ${prompt.length}`);
+      const review = buildImageQualityQaPrompt({ finalPrompt: prompt, referenceImageCount: 2 });
+      assert.match(review, /screened.*lit.*(?:walls|background)/);
+    }
+  }
+});
+
 for (const family of ['chatgpt', 'gemini']) {
   test(`${family}: shared output demands binary ink, white skin and halftone-only midtones`, () => {
     const prompt = build(family, 'monochrome');

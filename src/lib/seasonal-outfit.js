@@ -49,7 +49,8 @@ export const stripReferenceWardrobe = (castList = '') => {
 
 export const SCENARIO_WARDROBE_CONTRACT = `CHARACTER IDENTITY, NOT STORY SETTING:
 キャラ情報から名前・顔・髪・体格・性格・口調・人物間の関係性を保つ。参考衣装は今回の衣装・舞台・職業・出来事を決める根拠にしない。性格欄の学校・職業上の役割も、今回の場面をその活動へ変える理由にしない。
-今回の題材・原文・ユーザー指定から出来事と役割を先に決め、その行為、場所、季節に合う衣装を選ぶ。衣装を使う口実として学校行事や学生ボランティア等を後付けしない。明示衣装指定を最優先し、学校制服は題材・原文・ユーザー指定に学校活動または制服指定の根拠がある場合だけ選ぶ。職業服・安全装備・行事衣装や私服は場面に応じて選べる。
+今回の題材・原文・ユーザー指定から出来事と役割を先に決め、その行為、場所、季節に合う衣装を選ぶ。衣装を使う口実として学校行事や学生ボランティア等を後付けしない。明示衣装指定を最優先し、学校制服は題材・原文・ユーザー指定に学校活動または制服指定の根拠がある場合だけ選ぶ。
+勤務中で職務上の服装が必要な人物には、職業制服・作業服・安全装備を必須とし、私服や一般的なフォーマル服へ一律に置き換えない。来訪者・客・通行人と勤務者を区別し、場所だけを理由に全員を同じ職業服にしない。役割が異なる場合は人物名または役割ごとに衣装をOutfitへ記載する。職務・行事上の指定がない場合は場面に合う私服等を選ぶ。
 演出強化では確定済みOutfitを維持し、ト書きの衣装もそれに合わせる。参考衣装へ戻さない。この内部ルールは漫画のセリフや画面文字にしない。`;
 
 export const buildScenarioCastContext = (castList = '') =>
@@ -122,7 +123,7 @@ export const assertSeasonalOutfit = ({
   if (AMBIGUOUS_OUTFIT_RE.test(normalizedOutfit)) {
     throw new Error('Outfitに具体的な衣装カテゴリーがありません。');
   }
-  if ((normalizedOutfit === '制服' || SCHOOL_OUTFIT_RE.test(normalizedOutfit))
+  if (SCHOOL_OUTFIT_RE.test(normalizedOutfit)
     && !SCHOOL_SOURCE_RE.test(String(wardrobeSourceText))) {
     throw new Error('学校制服の根拠が元の題材・原文・ユーザー指定にありません。生成した学校行事や学生の役割を口実にせず、今回の行為に合う衣装を選び直してください。');
   }
@@ -147,4 +148,4 @@ export const assertSeasonalOutfit = ({
 };
 
 export const SEASONAL_OUTFIT_RETRY_INSTRUCTION = `SEASONAL OUTFIT RETRY:
-Rewrite the complete scenario and correct the Outfit field AND action descriptions. Respect this priority: explicit user outfit; source-grounded event-specific clothing; profession/safety/location/weather/indoor environment; target-date season; ordinary auto-selection. Do not justify reference clothing by inventing school activities or student volunteer roles. Output one concrete broad outfit category and do not use default, character-sheet-compliant, or unspecified wording.`;
+Rewrite the complete scenario and correct the Outfit field AND action descriptions. Respect this priority: explicit user outfit; source-grounded event-specific clothing; profession/safety/location/weather/indoor environment; target-date season; ordinary auto-selection. Preserve required work uniforms and protective equipment for on-duty roles; distinguish visitors and off-duty people. Do not justify reference clothing by inventing school activities or student volunteer roles. Output concrete outfit categories by character/role where assignments differ; do not use default, character-sheet-compliant, or unspecified wording.`;

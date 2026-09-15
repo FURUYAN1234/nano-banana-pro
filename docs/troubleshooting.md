@@ -1,5 +1,10 @@
 # STEP4 image generation / 画像生成
 
+## 職業制服の消失・白黒の明部が灰色になる場合
+
+- 職業制服が一般服になる場合は、保存済みの `Outfit` と最終プロンプトを照合する。旧安全変換は日本語の「制服」を一律で一般服へ置換していた。現在は学校由来と明示された衣装だけを変換し、職業制服と人物・役割別の割当を保持する。Geminiのシリアスモードでも、衣装の指定がある場合はキャラシートの衣装へ戻さない。保存済みOutfitが私服ならSTEP2再生成またはOutfit・ト書きの編集後、STEP3を再構築する。
+- 白黒の背景・顔が中間灰色に沈む場合、旧「遠景を網点でぼかす」指示と、白地の予約範囲の不足が原因候補になる。現在は白地・黒ベタ・範囲を限定したトーンを指定し、肌の明部と明るい壁・天井・布地を白く残す。遠景は線密度と白い隙間で整理する。API／Web短縮／QAへ同条件を渡すが、プロンプト検査は生成画像や実ピクセルの検証を代替しない。
+
 - An explicit `organization must be verified` response for GPT Image 2.5 is an organization-verification gate, not proof of an invalid API key. Check organization settings, complete individual verification in the official UI, and allow approval to propagate. The STEP4 selector offers manual GPT Image 2.0 selection without automatic resubmission.
 - `Action:` lines can contain silent actors. Classifying them as dialogue omitted these actors from generated cast constraints. `extractCastLimitRule` now collects explicit Action lines before dialogue classification; a two-character, one-speaker regression test protects this behavior.
 - STEP4 now exposes an automatic-quality-repair checkbox, enabled by default to preserve existing behavior. Disable it for a one-image-per-setting comparison: QA still runs but retains the original image and warning without a paid repair attempt. A regression test asserts zero repair calls even for concrete QA failures. Automated QA can return PASS despite missing dialogue; it does not establish exact script compliance.

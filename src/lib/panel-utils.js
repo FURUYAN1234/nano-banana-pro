@@ -1231,7 +1231,7 @@ export const extractActionOnly = (fullPanelText, castList, placementRule = "") =
 
 export const injectOutfitReminder = (actionText, activeOutfit) => {
   if (!activeOutfit) return actionText;
-  return `(All characters are wearing ${activeOutfit}) ${actionText}`;
+  return `(Outfit assignment: ${activeOutfit}) ${actionText}`;
 };
 
 export const extractPlacementRule = (fullPanelText, castList, options = {}) => {

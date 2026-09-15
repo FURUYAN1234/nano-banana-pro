@@ -57,6 +57,11 @@ test('maps Japanese calendar boundary months without timezone drift', () => {
   assert.equal(getSeasonContext({ targetDate: '2026-02-28', inputMode: 'news' }).label, '冬');
 });
 
+test('an unqualified uniform is not automatically classified as school attire', () => {
+  assert.equal(assertSeasonalOutfit({ outfit: '制服', wardrobeSourceText: '警察官が交番で勤務する' }), true);
+  assert.throws(() => assertSeasonalOutfit({ outfit: '学校制服', wardrobeSourceText: '警察官が交番で勤務する' }), /学校制服/);
+});
+
 test('returns no date season for invalid dates or manual mode', () => {
   assert.equal(getSeasonContext({ targetDate: '', inputMode: 'news' }), null);
   assert.equal(getSeasonContext({ targetDate: '2026-02-30', inputMode: 'news' }), null);
@@ -99,6 +104,7 @@ test('rejects empty and ambiguous automatic outfit values', () => {
 
 let server;
 let getScenarioPrompt;
+let getPolicyAnalysisPrompt;
 let generateScenario;
 let enhanceScenarioText;
 let setFixtureResponse;
@@ -120,7 +126,7 @@ before(async () => {
     }],
     server: { middlewareMode: true }
   });
-  ({ getScenarioPrompt } = await server.ssrLoadModule('/src/lib/prompts.js'));
+  ({ getScenarioPrompt, getPolicyAnalysisPrompt } = await server.ssrLoadModule('/src/lib/prompts.js'));
   ({ generateScenario, enhanceScenarioText } = await server.ssrLoadModule('/src/lib/scenario-provider.js'));
   ({ setFixtureResponse } = await server.ssrLoadModule('virtual:wardrobe-fixture-api'));
   ({ cleanCastList } = await server.ssrLoadModule('/src/lib/panel-utils.js'));
@@ -226,6 +232,23 @@ test('news prompt uses the target-date season with contextual exceptions', () =>
   assert.match(prompt, /対象日付 2026-08-09/);
   assert.match(prompt, /季節目安は「夏」/);
   assert.match(prompt, /イベント固有衣装、職業・安全装備、場所、実際の天候、屋内環境/);
+});
+
+test('automatic wardrobe selects work uniforms by role without dressing visitors as staff', () => {
+  for (const inputMode of ['news', 'manual']) {
+    const prompt = getScenarioPrompt({ ...promptArgs, inputMode, manualTopic: '救急外来で勤務する看護師と付き添い人' });
+    assert.match(prompt, /勤務中.*職業制服・作業服・安全装備.*必須/);
+    assert.match(prompt, /来訪者.*勤務者.*区別/);
+    assert.match(prompt, /人物名または役割ごと/);
+    assert.match(prompt, /私服.*一律.*置き換えない/);
+    assert.doesNotMatch(prompt, /道の駅→「私服/);
+  }
+});
+
+test('policy repair guidance preserves occupational uniforms after a provider rejection', () => {
+  const prompt = getPolicyAnalysisPrompt('fixture rejection', '警察官の制服姿');
+  assert.match(prompt, /職業制服・作業服・安全装備は保持/);
+  assert.doesNotMatch(prompt, /school blazer, 制服 →/);
 });
 
 test('manual prompt ignores target-date season and protects explicit seasonal event cues', () => {
