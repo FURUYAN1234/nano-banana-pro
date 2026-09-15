@@ -3,7 +3,7 @@ import { getEndingModePolicy } from './ending-mode-policy.js';
 // --- 定数・タグ定義 (constants.js) ---
 // App.jsx から抽出された共有定数
 
-export const SYSTEM_VERSION = "v6.2.1";
+export const SYSTEM_VERSION = "v6.2.2";
 
 // --- Punchline ラベル変換関数 ---
 export const getPunchlineLabel = (type) => {

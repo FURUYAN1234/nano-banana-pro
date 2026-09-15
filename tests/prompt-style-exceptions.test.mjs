@@ -70,11 +70,12 @@ test('selected texture-driven styles add compact panel exceptions to the final C
   assert.match(prompt, /STYLE EXCEPTION: intentional watercolor wash and paper grain only/i);
   assert.match(prompt, /STYLE EXCEPTION: intentional pencil grain, rough hatching, and construction lines only/i);
   assert.equal((prompt.match(/PANEL STYLE LOCK:/g) || []).length, 4);
-  assert.match(prompt, /PANEL STYLE LOCK: RETRO; visibly distinct linework, environmental palette, shading, background\/VFX.*Change at least three visual axes/i);
-  assert.match(prompt, /PANEL STYLE LOCK: POP_ART; visibly distinct linework, environmental palette, shading, background\/VFX.*Change at least three visual axes/i);
-  assert.match(prompt, /PANEL STYLE LOCK: WATERCOLOR; visibly distinct linework, environmental palette, shading, background\/VFX.*Change at least three visual axes/i);
-  assert.match(prompt, /PANEL STYLE LOCK: SKETCH; visibly distinct linework, environmental palette, shading, background\/VFX.*Change at least three visual axes/i);
-  assert.match(prompt, /pose, expression, saturation, glow, or speed lines alone are insufficient/i);
+  for (const style of ['RETRO', 'POP_ART', 'WATERCOLOR', 'SKETCH']) {
+    assert.ok(prompt.includes(`PANEL STYLE LOCK: ${style};`));
+  }
+  assert.match(prompt, /ART-STYLE DIFFERENCE QA LOCK:.*linework/i);
+  assert.match(prompt, /no numeric (?:change )?quota/i);
+  assert.doesNotMatch(prompt, /Change at least three visual axes/i);
   assert.ok(
     prompt.length <= EMPIRICAL_CHATGPT_WEB_COPY_SOFT_BUDGET_CHARS,
     `expected prompt to stay within the empirical Web-copy soft budget (${EMPIRICAL_CHATGPT_WEB_COPY_SOFT_BUDGET_CHARS.toLocaleString()} chars), got ${prompt.length}`
@@ -95,10 +96,10 @@ test('selected light and motion styles keep their intended effects without globa
   assert.match(prompt, /STYLE EXCEPTION: controlled neon glow, bloom, lens flare, and wet reflections only/i);
   assert.match(prompt, /STYLE EXCEPTION: intentional directional speed lines and motion streaks only/i);
   assert.match(prompt, /STYLE EXCEPTION: intentional sumi ink splashes, brush strokes, and ink wash only/i);
-  assert.match(prompt, /PANEL STYLE LOCK: GLITTER; visibly distinct linework, environmental palette, shading, background\/VFX.*Change at least three visual axes/i);
-  assert.match(prompt, /PANEL STYLE LOCK: NEON; visibly distinct linework, environmental palette, shading, background\/VFX.*Change at least three visual axes/i);
-  assert.match(prompt, /PANEL STYLE LOCK: SPEED; visibly distinct linework, environmental palette, shading, background\/VFX.*Change at least three visual axes/i);
-  assert.match(prompt, /PANEL STYLE LOCK: SUMI_INK; visibly distinct linework, environmental palette, shading, background\/VFX.*Change at least three visual axes/i);
+  for (const style of ['GLITTER', 'NEON', 'SPEED', 'SUMI_INK']) {
+    assert.ok(prompt.includes(`PANEL STYLE LOCK: ${style}; use the selected style recipe below; preserve identity and canonical wardrobe.`));
+  }
+  assert.doesNotMatch(prompt, /Change at least three visual axes/i);
   assert.doesNotMatch(prompt, /STYLE EXCEPTION:[^\n]{220,}/);
 });
 

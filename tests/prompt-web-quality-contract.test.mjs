@@ -108,7 +108,7 @@ test('both provider prompts lock each named character wardrobe colors across pan
     );
     assert.match(prompt, /lighting may change highlights and shadows, but the garment's canonical base and accent colors remain recognizable/i);
     assert.doesNotMatch(prompt, /PANEL STYLE LOCK:[^\n]*linework, palette, shading/i);
-    assert.match(prompt, /PANEL STYLE LOCK:[^\n]*linework, environmental palette, shading/i);
+    assert.match(prompt, /PANEL STYLE LOCK:[^\n]*(?:preserve identity and canonical wardrobe|apply global style QA)/i);
   }
 });
 
@@ -144,8 +144,9 @@ test('ChatGPT Web prompt has generic quality locks for dialogue, bubbles, charac
   assert.match(prompt, /one character, punctuation mark, added word, omitted word, or speaker|BUBBLE QA: copy TEXT exactly/i);
   assert.match(prompt, /bubble tail tip must terminate at its assigned speaker's mouth\/head silhouette|tails? touch (?:mapped )?speaker mouth\/head/i);
   assert.match(prompt, /hair color, hairstyle, eye color, glasses status, skin tone, outfit|CHARACTER QA: preserve identity/i);
-  assert.match(prompt, /at least three of linework, environmental palette, shading, background\/VFX, texture\/surface treatment/i);
-  assert.match(prompt, /same clean anime style with only pose, expression, saturation, glow, or speed lines changed/i);
+  assert.match(prompt, /ART-STYLE DIFFERENCE QA LOCK:.*linework/i);
+  assert.match(prompt, /no numeric (?:change )?quota/i);
+  assert.match(prompt, /pose, expression, saturation, glow, or speed lines alone are insufficient|not only expression\/VFX/i);
   assert.doesNotMatch(prompt, /canned pudding|bottled drink/i);
 });
 

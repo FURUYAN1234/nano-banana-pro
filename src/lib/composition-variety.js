@@ -1,4 +1,4 @@
-const EXPLICIT_AZIMUTH_RE = /(?:左(?:側|斜め|前|後ろ)?|右(?:側|斜め|前|後ろ)?|斜め(?:前|後ろ)?|肩越し|背後|背越し|後方|横顔|側面|over[ -]the[ -]shoulder|\bOTS\b|three-quarter|3\/4|front-left|front-right|rear(?:ward)?|side(?:ways)?|profile)/i;
+const EXPLICIT_AZIMUTH_RE = /(?:左(?:側|斜め|前|後ろ)?|右(?:側|斜め|前|後ろ)?|斜め(?:前|後ろ)?|肩越し|背後|背越し|後方|横顔|側面|正面|over[ -]the[ -]shoulder|\bOTS\b|three-quarter|3\/4|front-left|front-right|front[ -]on|frontal|rear(?:ward)?|side(?:ways)?|profile)/i;
 const PANEL_AZIMUTH_SLOTS = [
   'LEFT-FRONT OBLIQUE: place the camera 35-55 degrees to the subject\'s left-front; turn shoulders and hips away from a square-on lens-facing pose.',
   'RIGHT-FRONT OBLIQUE: place the camera 35-55 degrees to the subject\'s right-front; put the nearer shoulder and hand visibly larger than the farther side.',
@@ -14,13 +14,12 @@ const COMPACT_PANEL_AZIMUTH_SLOTS = [
 ];
 
 export const SCENARIO_COMPOSITION_VARIETY_RULES = `
-             - **【水平方位・ポーズ多様化（通常生成で常時必須）】**:
+             - **【物語に合わせた水平方位・ポーズの設計】**:
                * カメラの高低差・傾き・強い遠近感と画角の大胆な変化を積極的に使う。会話場面でも机周りの中景や肩越しに固定しない。
                * 各[Camera:]タグには、ショット種類・高さ・傾きだけでなく、被写体に対する水平方位（左前斜め／右前斜め／背後寄り3/4／肩越し等）を物理的に明記せよ。
                * 画角を目に見える構図へ翻訳する。俯瞰なら頭頂と机の天面と床の奥行き、床近くの煽りなら手前の大きな足・手・家具から上へ伸びる身体、傾きなら斜めに走る床・机・身体の軸を具体的にCameraへ書く。強度語だけで済ませない。
-               * 4コマ中、真正面は最大1コマ。最低3種類の被写体基準の水平方位を使い、隣接コマで同じ左右方向を繰り返すな。ローアングル・俯瞰・ズームの違いだけを構図差として数えてはならない。
-               * 明示指定がない通常生成ではアイレベルを原則禁止し、俯瞰、ローアングル、肩越し、斜め上下など物語に合う高さを選ぶ。ユーザーが明示したアイレベルや、正確な水平視点が物語上必要な場合は保持する。
-               * 主役の肩・腰・顔を毎回カメラへ正対させるな。肩・腰・顔の向きに自然な差をつけ、身体を30〜60度ひねり、左右非対称で読みやすいシルエットを作れ。
+               * 水平方位やショットの種類数にノルマを設けず、見せ場と静かな間に合う位置を選ぶ。未指定部分には左右・前後・高低・寄り引きの変化を使い、指定された正面・アイレベル・反復構図は保持する。
+               * 主役の肩・腰・顔の向きは視線と動作に合わせる。動きの見せ場には自然なひねりと前後差を使い、静止や左右対称が指定された場面へ角度やひねりを追加しない。
                * 両手を使う動作では、Actionの内容と手の本数を保ったまま、左右の手に前後差・高さ差・役割差をつける。両手を同じ高さでレンズ側へ広げる左右対称ポーズを既定値にするな。
                * 明示されたユーザー構図や物語上必須の視線・Actionは上書きしない。構図多様化は同じ出来事を別の物理カメラ位置と身体軸で見せるために使う。`;
 
@@ -46,9 +45,9 @@ export const MANGA_READING_RHYTHM_LOCK = 'PAGE READING RHYTHM (direction only; n
 export const MANGA_READING_RHYTHM_LOCK_COMPACT = 'PAGE READING RHYTHM: one primary focal target/panel; peak/quiet beat, negative space/density. ABSTRACT BEAT: scripted BG omission; props stay. INTERACTION: reaction readable; supporting cast smaller/lower contrast if unneeded. ACTING: gaze/weight/hands vary. DEPTH OF FIELD: real shots retain setting/depth; far blur; no default blank backdrop. Bubbles: text-fit, right-to-left, speaker tails. Script/style/layout win; never print.';
 
 export const SCENARIO_GESTURE_VARIETY_RULES = `
-             - **【身体演技・ジェスチャー多様化（通常生成で常時必須）】**:
+             - **【物語に合わせた身体演技・ジェスチャー】**:
                * キャラクター参照画像に写るポーズは顔・髪・衣装・体格の同一性資料であり、性格を示す定番動作ではない。参照ポーズを各コマのActionや決めポーズとして反復するな。
-               * 4コマ全体で最低3種類の身体演技を使う。物を扱う、移動・重心移動、相手との受け渡し、環境へ働きかける、抑制した反応、動作後の余韻などを、物語の因果に合わせて選ぶ。
+               * 身体演技の種類数にノルマを設けない。物を扱う、移動・重心移動、相手との受け渡し、環境へ働きかける、抑制した反応、動作後の余韻などを、物語の因果に合わせて選ぶ。
                * 指し示し、突き出し、支持面への打撃を一つの系統として回数制限しない。対象・目的・身体の軸・動作の大きさを変えて、全身の誇張や強い短縮遠近法も積極的に使う。
                * 静かな間と大きなリアクション、寄りと引き、通常絵と指定された劇画・ちびキャラ・集中線の落差でコマの緩急を作る。明示された無反応や静けさは保ち、全コマを大騒ぎにも静止画にも揃えない。
                * 各Actionでは動作の直前・最中・直後のどの瞬間か、支持脚または着座面、重心、左右の手の役割、接触対象を具体化する。顔、重要な手、小道具が重ならない読みやすいシルエットを作る。
@@ -56,15 +55,15 @@ export const SCENARIO_GESTURE_VARIETY_RULES = `
                * ユーザーが明示した動作は必ず保持する。人物の同一性、台詞、小道具の所有・向きと手足の接続・本数を保ち、同じ出来事を大胆に演じる。`;
 
 export const MANGA_COMPOSITION_VARIETY_LOCK = `MANGA CAMERA / POSE VARIETY LOCK:
-- Across the four panels, use at least three distinct subject-relative azimuths. Differences in elevation, zoom, lens, or crop alone do not count as different azimuths.
-- NO default eye-level shot. Unless an eye-level view is explicitly scripted or physically required by the story, use a motivated high, low, overhead, ground-level, or vertically oblique camera position.
-- Use no more than one flat front-on panel. Unless direct address is explicitly scripted, do not square the main subject's face, shoulders, hips, and both hands toward the lens at the same time.
-- Preserve every scripted Camera shot type, elevation, tilt, Action, prop, limb count, and eye-line. When the Camera lacks a horizontal azimuth, add the panel's COMPOSITION STAGING direction instead of replacing the scripted shot.
-- Build asymmetrical silhouettes with a 30-60 degree torso turn, unequal shoulder depth, and clear near/mid/far layers. Alternate left-front, right-front, rear three-quarter, and over-the-shoulder depth across the page.
-- For any two-handed action, keep exactly the scripted two hands but stagger the hands in depth and/or height. Give the two hands distinct physical roles when the Action permits; never default to both palms spread equally toward the viewer.
-- Radial speed lines, centered impact VFX, or a screen-filling expression must follow the chosen oblique perspective and must not force bilateral front-facing symmetry.`;
+- Preserve scripted Camera/Action, props, limbs and eye-lines, including quiet and repeated shots, frontal views and symmetry. There is no numeric variety quota.
+- Where direction is unspecified, use story-motivated changes in azimuth, height, tilt, scale and depth; retain bold perspective and readable body acting at the story's peak.
+- COMPOSITION STAGING fills an unspecified azimuth only. Turn the torso and stagger hands in depth/height when the Action permits; preserve exact hand roles, support and contacts.
+- VFX follows the chosen camera and never forces a different pose or framing.`;
 
-export const MANGA_COMPOSITION_VARIETY_LOCK_COMPACT = 'MANGA CAMERA / POSE VARIETY LOCK: >=3 azimuths; NO default eye-level shot unless explicitly scripted or story-required; max 1 flat front-on panel; preserve camera/action/props/limbs; turn torso; stagger hands in depth/height; VFX follows angle.';
+export const MANGA_COMPOSITION_VARIETY_LOCK_COMPACT = 'MANGA CAMERA / POSE VARIETY LOCK: keep scripted/quiet/repeated/frontal shots; no numeric variety quota; vary unspecified angles; stagger hands in depth if Action permits.';
+
+// 4コマの追加演出だけを従属させ、台本・人物・媒体の制約は短縮時も保持する。
+export const MANGA_PROMPT_PRIORITY = 'PROMPT PRIORITY: protect cast/count/identity/glasses, wardrobe, exact script, layout/style/medium. Simplify only unspecified background texture and decorative VFX. Never print.';
 
 export const MANGA_GESTURE_VARIETY_LOCK = `BODY ACTING / GESTURE VARIETY LOCK:
 - A reference-sheet pose is identity evidence, not a recurring action or personality signature. Reproduce identity and clothing, but derive acting from the current story beat.
@@ -99,8 +98,8 @@ export const getPanelShotExecution = (camera = '') => {
 export const getPanelCompositionAssist = (panelText, panelNumber, { compact = false } = {}) => {
   if (EXPLICIT_AZIMUTH_RE.test(String(panelText || ''))) {
     return compact
-      ? 'PRESERVE EXPLICIT AZIMUTH; keep a diagonal asymmetric body.'
-      : 'PRESERVE EXPLICIT AZIMUTH: keep the scenario\'s named horizontal direction; retain a diagonal body axis and avoid flat bilateral symmetry unless direct address is explicitly scripted.';
+      ? 'PRESERVE EXPLICIT AZIMUTH; keep scripted body orientation and symmetry.'
+      : 'PRESERVE EXPLICIT AZIMUTH: keep the scenario\'s named horizontal direction, body orientation and symmetry; do not add a conflicting turn.';
   }
 
   const index = Math.max(0, (Number(panelNumber) || 1) - 1) % PANEL_AZIMUTH_SLOTS.length;

@@ -40,7 +40,8 @@ import {
   MANGA_GESTURE_VARIETY_LOCK,
   MANGA_GESTURE_VARIETY_LOCK_COMPACT,
   MANGA_READING_RHYTHM_LOCK,
-  MANGA_READING_RHYTHM_LOCK_COMPACT
+  MANGA_READING_RHYTHM_LOCK_COMPACT,
+  MANGA_PROMPT_PRIORITY
 } from './composition-variety';
 import {
   HAND_PROP_KINEMATICS_LOCK,
@@ -186,9 +187,9 @@ const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt
     .replace(/FINAL-PANEL ACTIVE STAGING LOCK:[^\n]*/g, 'FINAL-PANEL ACTIVE STAGING LOCK: no straight-line lineup; distinct physical action; faces, silhouettes, and hands readable.')
     .replace(
       /MANGA CAMERA \/ POSE VARIETY LOCK:[\s\S]*?(?=\n+(?:BODY ACTING \/ GESTURE VARIETY LOCK|HAND \/ PROP KINEMATICS LOCK|VISUAL STORY EVIDENCE LOCK|SETTING CONTINUITY \(LOW PRIORITY\)|FINAL-PANEL ACTIVE STAGING LOCK|ART \/ RENDERING QUALITY:))/g,
-      'MANGA CAMERA / POSE VARIETY LOCK: >=3 azimuths; NO default eye-level shot; max 1 front-on; preserve script/camera/action/limbs; turn torso; stagger hands in depth; VFX follows angle.'
+      MANGA_COMPOSITION_VARIETY_LOCK_COMPACT
     )
-    .replace(/COMPOSITION STAGING: PRESERVE EXPLICIT AZIMUTH:[^\n]*/g, 'COMPOSITION STAGING: preserve explicit azimuth; diagonal asymmetric body.')
+    .replace(/COMPOSITION STAGING: PRESERVE EXPLICIT AZIMUTH:[^\n]*/g, 'COMPOSITION STAGING: PRESERVE EXPLICIT AZIMUTH; keep scripted body orientation and symmetry.')
     .replace(/COMPOSITION STAGING: LEFT-FRONT OBLIQUE:[^\n]*/g, 'COMPOSITION STAGING: LEFT-FRONT OBLIQUE 35-55 degrees; unequal shoulder depth.')
     .replace(/COMPOSITION STAGING: RIGHT-FRONT OBLIQUE:[^\n]*/g, 'COMPOSITION STAGING: RIGHT-FRONT OBLIQUE 35-55 degrees; near hand larger.')
     .replace(/COMPOSITION STAGING: REAR THREE-QUARTER:[^\n]*/g, 'COMPOSITION STAGING: REAR THREE-QUARTER 30-50 degrees; layered depth.')
@@ -220,7 +221,6 @@ const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt
       ? '- REFERENCE ROLE: identity and art style across all four panels; no sheet labels/layout/poses.'
       : monochrome ? '- REFERENCE ROLE: shape/design only; no source color or sheet labels/layout/poses.' : '- REFERENCE ROLE: appearance; no sheet labels/layout/poses.')
     .replace(/- Scenario is source truth\.[^\n]*/g, monochrome ? '- Scenario locks story/text; source hues yield to the ink medium.' : '- Scenario is source of truth.')
-    .replace(/- If any lower camera,[^\n]*/g, '- Script overrides conflicting camera/layout/cast-placement/style.')
     .replace(/- Explicitly silent panels[^\n]*/g, '- Silent panels: NO speech bubbles or invented dialogue; never print silence placeholders.')
     .replace(/- Match key object EXACTLY[^\n]*/g, '- Props: preserve identity; scripted state/holder changes only.')
     .replace(/- Do not replace conflict,[^\n]*\n- Do not replace, rewrite,[^\n]*/g, '- Preserve conflict/setting/sequence/ending/punchline and verbatim dialogue; no additions/omissions.')
@@ -236,7 +236,7 @@ const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt
       'VISUAL STORY EVIDENCE LOCK: show $1; >=2 distinct items across >=2 panels where Actions place them; physical scene elements, not extra captions.'
     )
     .replace(/\n?SETTING CONTINUITY \(LOW PRIORITY\):[^\n]*/g, '')
-    .replace(/MANGA CAMERA \/ POSE VARIETY LOCK:[^\n]*/g, 'MANGA CAMERA / POSE VARIETY LOCK: >=3 azimuths; NO default eye-level shot; max 1 front-on; preserve Action/limbs; stagger hands in depth.')
+    .replace(/MANGA CAMERA \/ POSE VARIETY LOCK:[^\n]*/g, MANGA_COMPOSITION_VARIETY_LOCK_COMPACT)
     .replace(/FINAL-PANEL ACTIVE STAGING LOCK:[^\n]*/g, 'FINAL-PANEL ACTIVE STAGING LOCK: no straight-line lineup; distinct physical action; faces, silhouettes, and hands readable.')
     // Retain named gaze targets and rear-shoulder owners even under budget pressure.
     .replace(/FUNCTIONAL SURFACE PANEL CHECK:[^\n]*/g, 'FUNCTIONAL SURFACE PANEL CHECK: reader/camera side/front-back/text axes.')
@@ -249,8 +249,8 @@ const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt
     .replace(/SAFE VISUAL:[^\n]*/g, 'SAFE VISUAL: no gore/blood/organs/flesh/organic horror; preserve script/cast/dialogue/camera/layout.')
     .replace(/FOLD PRIORITY:[^\n]*/g, 'FOLD PRIORITY: 2-4 dark triangular crease shadows.')
     .replace(/CROSS-PANEL WARDROBE COLOR LOCK:[^\n]*/g, compactWardrobeLock)
-    .replace(/ART-STYLE DIFFERENCE QA LOCK:\n-[^\n]*/g, 'ART-STYLE DIFFERENCE QA LOCK: at least three of linework, environmental palette, shading, background/VFX, texture/surface treatment; pose, expression, saturation, glow, or speed lines alone are insufficient; reject the same clean anime style with only pose, expression, saturation, glow, or speed lines changed; wardrobe fixed; preserve script/identity/layout.')
-    .replace(/^PANEL STYLE LOCK: ([^;\n]+);[^\n]*/gm, 'PANEL STYLE LOCK: $1; visibly distinct linework, environmental palette, shading, background/VFX. Change at least three visual axes; preserve wardrobe.')
+    .replace(/^ART-STYLE DIFFERENCE QA LOCK:[^\n]*/gm, 'ART-STYLE DIFFERENCE QA LOCK: selected style visible in linework/shading/palette/texture, not only expression/VFX; no numeric quota. Preserve script/identity/wardrobe/props/layout.')
+    .replace(/^PANEL STYLE LOCK: ([^;\n]+);[^\n]*/gm, 'PANEL STYLE LOCK: $1; apply global style QA.')
     .replace(/^Style: In THIS PANEL ONLY,[^\n]*/gm, 'Style: follow the named PANEL STYLE LOCK.')
     .replace(/^VFX: [^\n]*/gm, 'VFX: style overlay only; preserve readable action.')
     .replace(/CHARACTER QA:[^\n]*/g, monochrome ? 'CHARACTER QA: shape/design, stable ink/tone, white lit skin; no color.' : 'CHARACTER QA: preserve identity and outfit.');
@@ -264,18 +264,16 @@ const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt
       : 'CROSS-PANEL WARDROBE COLOR LOCK: fix garment items/colors once; reuse in all panels; style and lighting never change canonical wardrobe.'
   )
     .replace(/^EXPRESSIVE DIRECTION:[^\n]*/gm, 'EXPRESSIVE DIRECTION: height/tilt/foreshortening; full-body acting; panel contrast: scale/light/VFX. Keep quiet beats, Camera/Action, identity, verbatim dialogue, limbs, prop ownership/facing.')
-    .replace(/^BODY ACTING BASELINE:[^\n]*/gm, 'BODY ACTING BASELINE: expressive silhouette/amplitude; action phase/support/contact.')
+    // 身体演技の契約は BODY ACTING / GESTURE VARIETY LOCK に保持済み。
+    .replace(/^BODY ACTING BASELINE:[^\n]*\n?/gm, '')
     .replace(/^CONVERSATIONAL DEPTH BASE:[^\n]*/gm, 'CONVERSATIONAL DEPTH BASE: Action gaze first; free camera.')
     .replace(/^EYE-LINE LOCK: (.+?) address (?:their )?counterparts;[^\n]*VIEWPOINT FREEDOM:[^\n]*/gm, 'EYE-LINE LOCK: $1 address counterparts; reactors watch speaker; never lens/front. VIEWPOINT FREEDOM: three-quarter; height/tilt/perspective. Camera preserves scenario direction.')
-    // The complete art-style axes remain in the global QA lock; avoid repeating them four times.
-    .replace(/^PANEL STYLE LOCK: ([^;\n]+); visibly distinct linework[^\n]*/gm, 'PANEL STYLE LOCK: $1; apply ART-STYLE DIFFERENCE QA LOCK.')
-    .replace(/; apply ART-STYLE DIFFERENCE QA LOCK\./g, '; apply global style QA.')
     .replace(/^Style: follow the named PANEL STYLE LOCK\.\n?/gm, '')
     // 白黒の各コマにも、上位ロックと同じ保持条件が重複している。
     // 画風固有の描線指示は残し、同一の末尾だけを省く。
     .replace(/^(MONOCHROME PANEL STYLE LOCK:[^\n]*) Preserve script\/Camera\/Action, cast, glasses and wardrobe tone assignments\.$/gm, '$1')
     .replace(/CROSS-PANEL WARDROBE TONE LOCK:\n- Assign[^\n]*/g, 'CROSS-PANEL WARDROBE TONE LOCK: fix garment items/patterns and white/black/halftone regions once across panels; styles change ink treatment only.')
-    .replace(/MONOCHROME STYLE DIFFERENCE QA:[^\n]*/g, 'MONOCHROME STYLE DIFFERENCE QA: >=3 differences in line weight, black shapes, hatching, tone density, BG/VFX; script/identity/wardrobe/layout/camera/acting stay locked.')
+    .replace(/^MONOCHROME STYLE DIFFERENCE QA:[^\n]*/gm, 'MONOCHROME STYLE DIFFERENCE QA: selected ink style; no numeric quota; keep script/identity/wardrobe/layout/camera/acting/fixed tones.')
     // Geometry/azimuth contracts are already global; reserve space for visible shot cues.
     .replace(/^- Reproduce reference geometry and design using black ink\/white paper:[^\n]*/gm, '- Reference geometry/design only; no feature swapping.')
     .replace(/^- Adults 20\+\. Same face\/hair\/glasses\/outfit shapes and ink\/tone assignments; lit skin always white\.$/gm, '- Adults 20+. Same shapes/ink tones; lit skin white.')
@@ -351,7 +349,7 @@ const buildStrictScriptLock = ({ safeTopic, panels, castList, activeOutfit, prov
 - Do not replace conflict, setting, sequence, ending, or punchline.
 - Do not replace, rewrite, paraphrase, omit, or add dialogue.
 - Explicitly silent panels have NO speech bubbles and no invented dialogue. The no-dialogue placeholder is an instruction, never printable text.
-- If any lower camera, layout, cast-placement, or style instruction conflicts with this script lock, follow this script lock.
+${MANGA_PROMPT_PRIORITY}
 ${preserveReferenceStyle
   ? '- SERIOUS DOCUMENTARY INTENT: Preserve source facts, chronology and the serious final reaction. Do not convert any panel into a gag or invent an event for dramatic effect.'
   : '- COMEDY INTENT: Preserve scripted surreal events, impossible changes, emotional mismatch and absent reactions. Do not normalize them, explain them or add a tsukkomi. Ambiguous intent stays unchanged; continuity rules must not erase a scripted gag.'}

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test, { after, before } from 'node:test';
 import { createServer } from 'vite';
-import { HAND_PROP_KINEMATICS_LOCK } from '../src/lib/hand-prop-kinematics.js';
+import { HAND_PROP_KINEMATICS_LOCK, HAND_PROP_KINEMATICS_LOCK_COMPACT } from '../src/lib/hand-prop-kinematics.js';
 
 let server;
 let buildMangaPrompt;
@@ -97,7 +97,7 @@ test('two-sided props distinguish an operated rear from a presented readable fro
   assert.match(HAND_PROP_KINEMATICS_LOCK, /presents\/displays the prop, expose its front to the recipient/i);
 });
 
-test('unrelated hand and prop actions receive the exact same situation-agnostic contract', () => {
+test('unrelated hand and prop actions use only the shared full or compact situation-agnostic contract', () => {
   const actions = [
     'ミクは片手で箱を支え、もう片手で鍵を回す。',
     'リンは両手で布を絞る。',
@@ -109,8 +109,12 @@ test('unrelated hand and prop actions receive the exact same situation-agnostic 
     const contracts = actions.map((action) => handKinematicsLine(buildPrompt(providerFamily, action)));
 
     assert.ok(contracts.every(Boolean));
-    assert.equal(new Set(contracts).size, 1);
-    assert.doesNotMatch(contracts[0], /箱|鍵|布|皿|封筒|スマホ|新聞/);
+    for (const contract of contracts) {
+      // Prompt length may select either existing representation, never a
+      // situation-specific hand rule or a partially truncated contract.
+      assert.ok([HAND_PROP_KINEMATICS_LOCK, HAND_PROP_KINEMATICS_LOCK_COMPACT].includes(contract));
+      assert.doesNotMatch(contract, /箱|鍵|布|皿|封筒|スマホ|新聞/);
+    }
   }
 });
 

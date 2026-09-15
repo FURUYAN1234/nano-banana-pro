@@ -69,6 +69,44 @@ Punchline: ドキュメンタリー
 サエコ「AI作品は無条件で却下よね！」
 `;
 
+test('dense four-panel prompts preserve core requirements ahead of optional embellishment in both media and providers', () => {
+  for (const providerFamily of ['chatgpt', 'gemini']) {
+    for (const colorMode of ['color', 'monochrome']) {
+      const prompt = buildMangaPrompt({
+        scenario: LONG_FOUR_KOMA_SCENARIO,
+        castList: FULL_CAST_LIST,
+        colorMode,
+        providerFamily,
+        punchlineType: 'Auto',
+        cinematicTechniques: false,
+        systemVersion: 'test'
+      });
+      assert.equal((prompt.match(/PROMPT PRIORITY:/g) || []).length, 1);
+      assert.match(prompt, /Simplify only unspecified background texture and decorative VFX/i);
+      assert.doesNotMatch(prompt, /at least three visual axes|at least three of linework|>=3 differences|>=3 azimuths|NO default eye-level shot|Strict 2:3 golden ratio/i);
+      assert.match(prompt, /CAST COUNT:|ANTI-CLONE REMINDER:/);
+      assert.match(prompt, /each (?:appears )?EXACTLY ONCE/);
+      assert.match(prompt, /MUST HAVE glasses/);
+      assert.match(prompt, /MUST NOT have glasses/);
+      assert.match(prompt, /アニメの案出家の服装/);
+      assert.match(prompt, /御意！/);
+      assert.match(prompt, /超ローアングル/);
+      assert.match(prompt, /HAND \/ PROP KINEMATICS LOCK/);
+      assert.match(prompt, /OBJECT GEOMETRY LOCK/);
+      assert.match(prompt, /PANEL STYLE LOCK: (?:GLITTER|IMPACT|GEKIGA)/);
+      assert.equal((prompt.match(/## Panel \d/g) || []).length, 4);
+      if (colorMode === 'monochrome') {
+        assert.match(prompt, /#000000.*#FFFFFF/);
+        assert.match(prompt, /CROSS-PANEL WARDROBE TONE LOCK/);
+        assert.match(prompt, /MONOCHROME FINAL CHROMA AUDIT/);
+      }
+      // This long script already exceeded the soft budget in monochrome before
+      // the change. Preserve its content; bounded copy fixtures are tested below.
+      assert.ok(prompt.includes('我々の仕事が奪われないうちにこの才能を潰そう！'));
+    }
+  }
+});
+
 test('ChatGPT manga prompt stays within the empirical Web-copy soft budget without dropping critical content', () => {
   const prompt = buildMangaPrompt({
     scenario: LONG_FOUR_KOMA_SCENARIO,

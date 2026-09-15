@@ -116,23 +116,23 @@ test('panel composition helper preserves explicit azimuth and fills missing hori
   );
 });
 
-test('normal STEP2 generation requires horizontal camera and pose variety by default', () => {
+test('normal STEP2 generation keeps expressive direction without numeric variety quotas', () => {
   const prompt = buildNormalScenarioPrompt();
 
-  assert.match(prompt, /真正面は最大1コマ/);
-  assert.match(prompt, /アイレベル.*原則禁止/);
+  assert.doesNotMatch(prompt, /真正面は最大1コマ|アイレベル.*原則禁止|最低3種類/);
+  assert.match(prompt, /種類数.*ノルマ/);
   assert.match(prompt, /被写体に対する水平方位/);
   assert.match(prompt, /肩・腰・顔/);
   assert.match(prompt, /両手.*前後差/);
   assert.match(prompt, /参照画像.*ポーズ.*同一性資料/);
-  assert.match(prompt, /最低3種類.*身体演技/);
+  assert.match(prompt, /物語の因果/);
   assert.match(prompt, /回数制限しない/);
   assert.match(prompt, /全身の誇張/);
 });
 
 test('both final-prompt families retain the page lock and four panel staging assists', () => {
-  assert.match(MANGA_COMPOSITION_VARIETY_LOCK, /no more than one flat front-on panel/i);
-  assert.match(MANGA_COMPOSITION_VARIETY_LOCK, /at least three distinct subject-relative azimuths/i);
+  assert.match(MANGA_COMPOSITION_VARIETY_LOCK, /no numeric variety quota/i);
+  assert.match(MANGA_COMPOSITION_VARIETY_LOCK, /quiet.*repeated/i);
 
   for (const providerFamily of ['chatgpt', 'gemini']) {
     const prompt = buildFinalPrompt(providerFamily);
@@ -141,10 +141,36 @@ test('both final-prompt families retain the page lock and four panel staging ass
     assert.match(prompt, /RIGHT-FRONT OBLIQUE/);
     assert.match(prompt, /stagger.*hands.*depth/i);
     assert.match(prompt, /BODY ACTING \/ GESTURE VARIETY LOCK/);
-    assert.match(prompt, /NO default eye-level shot/i);
+    assert.doesNotMatch(prompt, /NO default eye-level shot|>=3 azimuths|max 1.*front-on/i);
     assert.match(prompt, /reference-sheet pose is identity evidence, not a recurring action/i);
     assert.match(prompt, /full-body exaggeration/);
     assert.match(prompt, /preserve.*explicitly scripted.*pointing.*surface impact/i);
     assert.match(prompt, /action phase.*support.*contact/i);
+  }
+});
+
+test('explicit frontal composition is not replaced by a diagonal default', () => {
+  for (const camera of ['正面の固定ショット', 'front-on fixed shot', 'frontal view']) {
+    for (const compact of [false, true]) {
+      const assist = getPanelCompositionAssist(`[Camera: ${camera}]`, 1, { compact });
+      assert.match(assist, /PRESERVE EXPLICIT AZIMUTH/);
+      assert.doesNotMatch(assist, /diagonal|asymmetric|35-55|30-60/i);
+    }
+  }
+});
+
+test('repeated frontal shots keep their staging through both provider and medium paths', () => {
+  const scenario = FOUR_PANEL_SCENARIO.replace(/\[Camera:[^\]]+\]/g, '[Camera: 正面の固定ショット]');
+  for (const providerFamily of ['chatgpt', 'gemini']) {
+    for (const colorMode of ['color', 'monochrome']) {
+      const prompt = buildMangaPrompt({ scenario, castList: CAST_LIST, providerFamily, colorMode, cinematicTechniques: false });
+      const staging = prompt.match(/^COMPOSITION STAGING:.*$/gm) || [];
+      assert.equal(staging.length, 4);
+      for (const line of staging) {
+        assert.match(line, /PRESERVE EXPLICIT AZIMUTH/);
+        assert.doesNotMatch(line, /diagonal|asymmetric|35-55|30-60/i);
+      }
+      assert.equal((prompt.match(/^Camera: 正面の固定ショット/gm) || []).length, 4);
+    }
   }
 });

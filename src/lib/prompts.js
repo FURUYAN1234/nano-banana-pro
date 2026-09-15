@@ -811,8 +811,7 @@ Use the 360° background image's lighting direction (${bg360Analysis.lighting}),
     : `${isMonochrome ? 'use a few localized solid-black or hatched wedge shadows where fabric overlaps; preserve white lit fabric and garment tone assignments. Do not scatter geometric patterns.' : 'for full-color clothing only, render overlapping, pinched, and intersecting fabric folds with a few crisp wedge-shaped triangular cel-shaded shadow planes. Make a distinct small dark triangular fill at each selected crease junction, not merely a soft fold gradient. Use them as form shadows, not printed patterns or random geometric marks; preserve the outfit, material, and scene lighting.'}`;
   const artStyleQa = preserveReferenceStyle
     ? 'REFERENCE-SHEET STYLE QA LOCK:\n- Compare all four panels to the attached character sheets. Redraw any panel that changes linework, coloring method, shading design, facial construction, eye design, body proportions or degree of stylization.'
-    : isMonochrome ? MONOCHROME_STYLE_QA : `ART-STYLE DIFFERENCE QA LOCK:
-- Adjacent PANEL STYLE LOCKs differ in at least three of linework, environmental palette, shading, background/VFX, texture/surface treatment. Environmental palette changes apply to background, lighting treatment, and VFX, never to canonical garment colors. Redraw the same clean anime style with only pose, expression, saturation, glow, or speed lines changed. Never override script/dialogue/identity/key prop/A4 layout.`;
+    : isMonochrome ? MONOCHROME_STYLE_QA : `ART-STYLE DIFFERENCE QA LOCK: make each selected style recognizable through its characteristic linework, shading, environmental palette and texture; no numeric change quota. Pose, expression, saturation, glow, or speed lines alone are insufficient. Preserve script/dialogue/identity/wardrobe/key props/layout; environmental palette changes never recolor garments.`;
 
   return `OUTPUT: Single image. Draw manga directly.
 
@@ -977,7 +976,7 @@ KEY PROP / OBJECT CONSISTENCY:
 Camera & Comp:
 ${dynamicCamera}
 ANTI-CLONING: NEVER draw the same character twice in a single panel.
-COMPOSITION: Strict 2:3 golden ratio inside each panel.
+COMPOSITION: follow the scripted framing within each panel; keep required cast, text and action readable.
 
 Tech Dict:
 ${preserveReferenceStyle
