@@ -1,4 +1,5 @@
 import { clearApiSession, getApiCredential, setApiSession } from './api-session.js';
+import { GEMINI_TEXT_MODEL_IDS, GEMINI_VISION_MODEL_IDS } from './gemini-model-routes.js';
 
 /**
  * Gemini API Client for Nano Banana Pro (Thinking Mode Edition)
@@ -14,24 +15,6 @@ const GEMINI_BASE_URL = isLocalGeminiHost
     ? '/gemini-api'
     : 'https://generativelanguage.googleapis.com';
 const GEMINI_TEXT_TIMEOUT_MS = 120000;
-
-// テキストのみリクエスト用 (シナリオ生成等): Next-Gen優先・無料枠優先
-const TEXT_MODEL_IDS = [
-    "gemini-3.5-flash",
-    "gemini-2.5-flash",
-    "gemini-2.5-pro",
-    "gemini-flash-latest",
-    "gemini-pro-latest"
-];
-
-// 画像付きリクエスト用 (キャラクターシート認識等): フィルター寛容モデル優先
-const IMAGE_MODEL_IDS = [
-    "gemini-3.5-flash",
-    "gemini-2.5-flash",
-    "gemini-2.5-pro",
-    "gemini-flash-latest",
-    "gemini-pro-latest"
-];
 
 export const setApiKey = (key) => {
     if (key) setApiSession('gemini', key);
@@ -126,7 +109,7 @@ export const callThinkingGemini = async (prompt, images = null, systemInstructio
     const timeoutMs = options.timeoutMs ?? GEMINI_TEXT_TIMEOUT_MS;
 
     // 画像の有無に応じてモデルリストを動的に選択
-    const MODEL_IDS = (images && images.length > 0) ? IMAGE_MODEL_IDS : TEXT_MODEL_IDS;
+    const MODEL_IDS = (images && images.length > 0) ? GEMINI_VISION_MODEL_IDS : GEMINI_TEXT_MODEL_IDS;
 
     let attemptIndex = 0;
     for (const modelId of MODEL_IDS) {

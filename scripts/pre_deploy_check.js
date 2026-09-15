@@ -210,13 +210,13 @@ try {
 
     // ============================================================
     // 11. FALLBACK CHAIN ROUTE CHECK
-    // OpenAIの表示用Model Chainが実行時ルートから組み立てられることを検証する。
+    // OpenAI/Geminiの表示用Model Chainが実行時ルートから組み立てられることを検証する。
     // ============================================================
     console.log("🔗 [Fallback Chain] Checking runtime-route synchronization...");
 
     try {
         execSync('node --test tests/fallback-chain-history.test.mjs', { stdio: 'inherit' });
-        console.log("✅ [Fallback Chain] Model Chain is derived from the active OpenAI routes.");
+        console.log("✅ [Fallback Chain] Model Chain is derived from the active provider routes.");
     } catch (chainErr) {
         console.error("❌ [Fallback Chain] Runtime-route synchronization check failed:", chainErr.message);
         process.exit(1);

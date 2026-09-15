@@ -1,6 +1,6 @@
 # Super FURU AI 4-koma System / Super FURU AI 4コマシステム
 
-> Latest release: **v6.2.4** / 最新リリース: **v6.2.4**
+> Latest release: **v6.2.5** / 最新リリース: **v6.2.5**
 
 An experimental web application in which AI handles topic research, story structure, direction, prompt construction, image generation, and quality review for a four-panel manga. / AIが話題調査、構成、演出、プロンプト構築、画像生成、品質確認まで担当する4コマ漫画制作Webアプリです。
 
@@ -164,6 +164,10 @@ The production application is published from the `main` branch through the repos
 **Is this the T2V/I2V/Ref2V repository? / T2V・I2V・Ref2Vのリポジトリですか？**  No. Those workflows are maintained separately in [comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows). / いいえ。それらは別の[comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows)で管理します。
 
 ## 📋 ChangeLog
+
+### v6.2.5 (2026-09-16)
+
+- **[Fix]** Extended Model Chain derivation to every active Gemini route: text, vision, and image generation. A provider-route update now changes the matching viewer entry without a duplicated snapshot edit, and the required pre-deploy test covers both OpenAI and Gemini routes. / **[修正]** Model Chainの導出対象を、Geminiの通常文章・Vision・画像生成の全実行経路へ拡張しました。プロバイダー経路を更新すると、対応する表示も複写作業なしで追随し、必須のpre-deployテストはOpenAIとGeminiの両方を確認します。
 
 ### v6.2.4 (2026-09-16)
 

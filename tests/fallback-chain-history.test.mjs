@@ -8,6 +8,11 @@ import {
   OPENAI_VISION_MODEL_IDS,
 } from '../src/lib/openai-model-routes.js';
 import {
+  GEMINI_TEXT_MODEL_IDS,
+  GEMINI_VISION_MODEL_IDS,
+  GEMINI_IMAGE_MODEL_IDS,
+} from '../src/lib/gemini-model-routes.js';
+import {
   DEFAULT_OPENAI_IMAGE_QUALITY,
   FALLBACK_OPENAI_IMAGE_QUALITY,
   OPENAI_IMAGE_MODEL,
@@ -30,6 +35,17 @@ test('the STEP1 and STEP3 OpenAI chains use their active routes', () => {
   assert.strictEqual(FALLBACK_CHAIN_SOURCE_IDS['step3-openai'], OPENAI_TEXT_MODEL_IDS);
   assert.deepEqual(chainModels('step1-openai'), OPENAI_VISION_MODEL_IDS);
   assert.deepEqual(chainModels('step3-openai'), OPENAI_TEXT_MODEL_IDS);
+});
+
+test('the Gemini Model Chain entries use their active routes', () => {
+  assert.strictEqual(FALLBACK_CHAIN_SOURCE_IDS['step1-gemini'], GEMINI_VISION_MODEL_IDS);
+  assert.strictEqual(FALLBACK_CHAIN_SOURCE_IDS['step2-gemini'], GEMINI_TEXT_MODEL_IDS);
+  assert.strictEqual(FALLBACK_CHAIN_SOURCE_IDS['step3-gemini'], GEMINI_TEXT_MODEL_IDS);
+  assert.strictEqual(FALLBACK_CHAIN_SOURCE_IDS['step4-gemini'], GEMINI_IMAGE_MODEL_IDS);
+  assert.deepEqual(chainModels('step1-gemini'), GEMINI_VISION_MODEL_IDS);
+  assert.deepEqual(chainModels('step2-gemini'), GEMINI_TEXT_MODEL_IDS);
+  assert.deepEqual(chainModels('step3-gemini'), GEMINI_TEXT_MODEL_IDS);
+  assert.deepEqual(chainModels('step4-gemini'), GEMINI_IMAGE_MODEL_IDS);
 });
 
 test('the STEP4 OpenAI snapshot distinguishes its default model from selectable alternatives', () => {

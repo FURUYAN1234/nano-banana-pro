@@ -1,4 +1,5 @@
 import { getApiKey } from "./gemini.js";
+import { GEMINI_IMAGE_MODEL_IDS } from './gemini-model-routes.js';
 
 const isLocalGeminiHost = typeof window !== 'undefined'
     && ['localhost', '127.0.0.1', '::1'].includes(window.location.hostname);
@@ -10,10 +11,6 @@ const GEMINI_BASE_URL = isLocalGeminiHost
 // ※ Imagen全系列は完全廃止予定のため、Geminiネイティブのみを指定。
 // ※ 4コマ漫画生成は Nano Banana 2 API に固定する。
 //    Nano Banana Pro は高品質単枚絵寄りで、漫画レイアウトの再現性が落ちるため使わない。
-const MODELS_TO_TRY = [
-    "gemini-3.1-flash-image"    // Nano Banana 2: 4コマ漫画生成用
-];
-
 export const buildGeminiImageGenerationConfig = ({ aspectRatio = "3:4", imageSize } = {}) => {
     return {
         // Gemini 3 image models use the Interactions API.  Its REST payload
@@ -43,7 +40,7 @@ export const generateImageWithImagen = async (prompt, onStatusUpdate, referenceI
     let lastError = null;
     let attemptedModels = [];
 
-    for (const modelId of MODELS_TO_TRY) {
+    for (const modelId of GEMINI_IMAGE_MODEL_IDS) {
         let timeoutId = null;
         try {
             console.log(`[ImageGen] Attempting generation with model: ${modelId}`);

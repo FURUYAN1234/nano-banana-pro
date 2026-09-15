@@ -12,6 +12,11 @@ import {
   OPENAI_VISION_MODEL_IDS,
 } from './openai-model-routes.js';
 import {
+  GEMINI_TEXT_MODEL_IDS,
+  GEMINI_VISION_MODEL_IDS,
+  GEMINI_IMAGE_MODEL_IDS,
+} from './gemini-model-routes.js';
+import {
   DEFAULT_OPENAI_IMAGE_QUALITY,
   FALLBACK_OPENAI_IMAGE_QUALITY,
   OPENAI_IMAGE_MODEL,
@@ -33,6 +38,21 @@ const describeOpenAITextRoute = (modelIds) => modelIds.map((id, index) => ({
   note: OPENAI_MODEL_NOTES[id] || '実行時のOpenAIルート',
 }));
 
+const GEMINI_MODEL_NOTES = {
+  'gemini-3.5-flash': 'Next-Gen 最高品質',
+  'gemini-2.5-flash': '安定・高速',
+  'gemini-2.5-pro': '高品質',
+  'gemini-flash-latest': '最新安定版',
+  'gemini-pro-latest': '最新Pro版',
+  'gemini-3.1-flash-image': 'Nano Banana 2 4コマ漫画生成用',
+};
+
+const describeGeminiRoute = (modelIds) => modelIds.map((id, index) => ({
+  id,
+  role: index === 0 ? 'Primary' : index >= modelIds.length - 2 ? 'Fallback' : 'Backup',
+  note: GEMINI_MODEL_NOTES[id] || '実行時のGeminiルート',
+}));
+
 const defaultOpenAIImageOption = resolveOpenAIImageOption(DEFAULT_OPENAI_IMAGE_QUALITY);
 const fallbackOpenAIImageOption = resolveOpenAIImageOption(FALLBACK_OPENAI_IMAGE_QUALITY);
 const describeOpenAIImageRoute = () => [
@@ -43,9 +63,13 @@ const describeOpenAIImageRoute = () => [
 
 // OpenAI実行ルートを更新すれば、表示用Model Chainも同じ定義から組み立てられる。
 export const FALLBACK_CHAIN_SOURCE_IDS = {
+  'step1-gemini': GEMINI_VISION_MODEL_IDS,
   'step1-openai': OPENAI_VISION_MODEL_IDS,
+  'step2-gemini': GEMINI_TEXT_MODEL_IDS,
   'step2-openai': OPENAI_SCENARIO_TEXT_MODEL_IDS,
+  'step3-gemini': GEMINI_TEXT_MODEL_IDS,
   'step3-openai': OPENAI_TEXT_MODEL_IDS,
+  'step4-gemini': GEMINI_IMAGE_MODEL_IDS,
   'step4-openai': describeOpenAIImageRoute().map(({ id }) => id),
 };
 
@@ -58,13 +82,7 @@ export const FALLBACK_CHAINS = [
     description: 'キャラクターシート画像をAIが読み取り、髪色・髪型・メガネの有無・性格などをテキストデータとして抽出する。※注記: 現在のアプリのAPIは、最新APIの対応状況や安定稼働を考慮し、あえて古い世代のモデルをPrimaryに設定している場合があります。',
     provider: 'Gemini',
     sourceFile: 'src/lib/gemini.js',
-    models: [
-      { id: 'gemini-3.5-flash', role: 'Primary', note: 'Next-Gen 最高品質' },
-      { id: 'gemini-2.5-flash', role: 'Backup', note: '安定・高速' },
-      { id: 'gemini-2.5-pro', role: 'Backup', note: '高品質' },
-      { id: 'gemini-flash-latest', role: 'Fallback', note: '最新安定版' },
-      { id: 'gemini-pro-latest', role: 'Fallback', note: '最新Pro版' },
-    ]
+    models: describeGeminiRoute(FALLBACK_CHAIN_SOURCE_IDS['step1-gemini'])
   },
   {
     id: 'step1-openai',
@@ -82,13 +100,7 @@ export const FALLBACK_CHAINS = [
     description: 'ユーザーが入力したテーマやキーワードから、4コマ漫画のシナリオ（起承転結・セリフ・感情タグ・カメラワーク）を自動生成する。Web検索によるリアルタイムニュース取得にも対応。※注記: 現在のアプリのAPIは、最新APIの対応状況や安定稼働を考慮し、あえて古い世代のモデルをPrimaryに設定している場合があります。',
     provider: 'Gemini',
     sourceFile: 'src/lib/gemini.js',
-    models: [
-      { id: 'gemini-3.5-flash', role: 'Primary', note: 'Next-Gen 最高品質' },
-      { id: 'gemini-2.5-flash', role: 'Backup', note: '安定・高速' },
-      { id: 'gemini-2.5-pro', role: 'Backup', note: '高品質' },
-      { id: 'gemini-flash-latest', role: 'Fallback', note: '最新安定版' },
-      { id: 'gemini-pro-latest', role: 'Fallback', note: '最新Pro版' },
-    ]
+    models: describeGeminiRoute(FALLBACK_CHAIN_SOURCE_IDS['step2-gemini'])
   },
   {
     id: 'step2-openai',
@@ -106,13 +118,7 @@ export const FALLBACK_CHAINS = [
     description: 'シナリオのセリフ・感情・カメラアングルを解析し、画像生成AIに渡す超詳細なプロンプト（英語の指示文）を自動構築する。キャラクターの配置ルールやクローン防止ロジックもここで適用。※注記: 現在のアプリのAPIは、最新APIの対応状況や安定稼働を考慮し、あえて古い世代のモデルをPrimaryに設定している場合があります。',
     provider: 'Gemini',
     sourceFile: 'src/lib/gemini.js',
-    models: [
-      { id: 'gemini-3.5-flash', role: 'Primary', note: 'Next-Gen 最高品質' },
-      { id: 'gemini-2.5-flash', role: 'Backup', note: '安定・高速' },
-      { id: 'gemini-2.5-pro', role: 'Backup', note: '高品質' },
-      { id: 'gemini-flash-latest', role: 'Fallback', note: '最新安定版' },
-      { id: 'gemini-pro-latest', role: 'Fallback', note: '最新Pro版' },
-    ]
+    models: describeGeminiRoute(FALLBACK_CHAIN_SOURCE_IDS['step3-gemini'])
   },
   {
     id: 'step3-openai',
@@ -130,9 +136,7 @@ export const FALLBACK_CHAINS = [
     description: '組み立てたプロンプトとキャラクターシート参照画像をAIに渡し、4コマ漫画の画像を1枚生成する。フキダシ・背景・カメラワーク・感情演出を含む完成画像が出力される。※注記: 現在のアプリのAPIは、最新APIの対応状況や安定稼働を考慮し、あえて古い世代のモデルをPrimaryに設定している場合があります。',
     provider: 'Gemini',
     sourceFile: 'src/lib/imagen.js',
-    models: [
-      { id: 'gemini-3.1-flash-image', role: 'Primary', note: 'Nano Banana 2 4コマ漫画生成用' },
-    ]
+    models: describeGeminiRoute(FALLBACK_CHAIN_SOURCE_IDS['step4-gemini'])
   },
   {
     id: 'step4-openai',
@@ -151,6 +155,15 @@ export const FALLBACK_CHAINS = [
 //   date は必ず 'YYYY-MM-DD HH:MM JST' 形式で日時を記録すること。
 export const FALLBACK_CHAIN_HISTORY = [
   // ↑ 新しいエントリはここに追加する（降順）
+  {
+    version: 'v6.2.5',
+    date: '2026-09-16 07:08 JST',
+    note: 'Geminiを含む全API実行経路とModel Chain表示を連動化。',
+    changes: [
+      { step: 'STEP 1-4 (Gemini)', action: '同期', detail: '通常・Vision・画像生成の実行配列から画面表示を組み立てる' },
+      { step: 'pre-deploy', action: '検証', detail: 'OpenAIとGeminiの実行経路と表示の同期契約に失敗するとリリースを停止' },
+    ]
+  },
   {
     version: 'v6.2.4',
     date: '2026-09-16 06:50 JST',
