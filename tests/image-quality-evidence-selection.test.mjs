@@ -37,3 +37,29 @@ test('structured print observations produce a role-preserving defect even if nar
   const unknown = parse({ ...surface, basis: 'unknown' });
   assert.equal(unknown.issues[0].type, 'unverified');
 });
+
+test('an actively operated rear face passes when the camera shares the operator side', () => {
+  const review = parseImageQualityQaResponse(JSON.stringify({
+    pass: true,
+    observations: { title: 'not requested', dialogue: 'not requested', hands: 'operator hand reaches the rear latch', props: 'the framed object is opened from its rear support' },
+    issues: [],
+    spatial_checks: [{
+      panel: 1,
+      object_geometry: { status: 'ok', evidence: 'The rear stand is attached to the frame edge without intersecting the operator hand.' },
+      surface_text: { status: 'not_applicable', evidence: 'No printed face is visible while the rear support is opened.' },
+      prop_orientation: {
+        status: 'ok',
+        evidence: 'The operator and camera both view the rear stand while it is being opened.',
+        surfaces: [{
+          subject: 'framed object', visible_face: 'back', cues: ['rear_mount'], camera_side: 'same_half_space',
+          active_face: 'back', active_face_evidence: 'The operator is opening the rear stand.',
+          visual_evidence: 'The hinge and fold-out stand are visible on the rear.',
+          target_evidence: 'The operator and camera are on the rear side during the adjustment.',
+        }],
+      },
+    }],
+  }), { mode: 'single-image' });
+
+  assert.equal(review.pass, true);
+  assert.equal(review.issues.length, 0);
+});

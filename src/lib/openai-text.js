@@ -5,7 +5,7 @@
  * callThinkingGemini と同一のインターフェースを提供し、
  * ai-provider.js 経由で透過的に切り替え可能にする。
  *
- * 対応モデル: GPT-4.1 / GPT-4o
+ * 対応モデル: GPT-6 Astra（STEP2のみ）/ GPT-5.6 Sol（STEP2フォールバック）/ GPT-4.1 / GPT-4o
  * 機能: テキスト生成、Vision（画像認識）
  */
 
@@ -19,6 +19,17 @@ const TEXT_MODEL_IDS = [
     "gpt-4.1-mini",     // Backup 1: コスト効率・高速
     "gpt-4.1-nano",     // Backup 2: 最軽量・最速
     "gpt-4o",           // Fallback: 安定実績
+];
+
+// STEP2のネーム作成とシナリオ強化だけは、物語構成の推論を優先する。
+// GPT-6 Astra が未提供の組織でも、既存の安定チェーンへ段階的に戻す。
+const SCENARIO_TEXT_MODEL_IDS = [
+    "gpt-6-astra",    // Primary: 複雑な因果・演技・4コマの反転
+    "gpt-5.6-sol",    // Backup 1: 公式モデルID
+    "gpt-4.1",        // Backup 2: 高品質・1Mコンテキスト
+    "gpt-4.1-mini",   // Backup 3: コスト効率・高速
+    "gpt-4.1-nano",   // Backup 4: 最軽量・最速
+    "gpt-4o",         // Fallback: 安定実績
 ];
 
 // 画像付きリクエスト用モデルリスト（Vision対応モデル優先）
@@ -38,13 +49,18 @@ export const callOpenAIText = async (prompt, images = null, systemInstruction = 
     if (!apiKey) throw new Error("OpenAI APIキーが設定されていません。");
     const timeoutMs = options.timeoutMs ?? OPENAI_TEXT_TIMEOUT_MS;
 
-    // 画像の有無に応じてモデルリストを動的に選択
-    const MODEL_IDS = (images && images.length > 0) ? IMAGE_MODEL_IDS : TEXT_MODEL_IDS;
+    // Vision、STEP2専用のシナリオ、その他テキストを明確に分離する。
+    const MODEL_IDS = (images && images.length > 0)
+        ? IMAGE_MODEL_IDS
+        : options.modelRoute === 'scenario'
+            ? SCENARIO_TEXT_MODEL_IDS
+            : TEXT_MODEL_IDS;
 
     let attemptIndex = 0;
     for (const modelId of MODEL_IDS) {
         attemptIndex++;
         try {
+            const usesModernChatParameters = modelId === "gpt-6-astra" || modelId === "gpt-5.6-sol";
             console.log(`[OpenAI] Attempting connection with ${modelId}...`);
             if (onThinkingUpdate) {
                 if (attemptIndex === 1) {
@@ -60,7 +76,7 @@ export const callOpenAIText = async (prompt, images = null, systemInstruction = 
             // システムインストラクション
             if (systemInstruction) {
                 messages.push({
-                    role: "system",
+                    role: usesModernChatParameters ? "developer" : "system",
                     content: systemInstruction + "\n\n【システムレベルの絶対遵守フォーマット（System Formatting Constraints）】\n全ての「セリフ」の末尾には、必ず終止記号（。、！、？、！？、♪、♡など）をつけてください。「…」や「～」のみで終わるセリフはシステムエラーを引き起こすため、いかなる場合も絶対に禁止します（正しい例: 「……。」「～！」）。"
                 });
             }
@@ -110,7 +126,6 @@ export const callOpenAIText = async (prompt, images = null, systemInstruction = 
             // 呼び出し元ごとのテキストAPI待機上限
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-
             let response;
             try {
                 response = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -122,8 +137,9 @@ export const callOpenAIText = async (prompt, images = null, systemInstruction = 
                     body: JSON.stringify({
                         model: modelId,
                         messages: messages,
-                        temperature: 0.7,
-                        max_tokens: 8192,
+                        ...(usesModernChatParameters
+                            ? { max_completion_tokens: 8192 }
+                            : { temperature: 0.7, max_tokens: 8192 }),
                     }),
                     signal: controller.signal
                 });

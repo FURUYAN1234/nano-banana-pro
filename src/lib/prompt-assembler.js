@@ -237,11 +237,11 @@ const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt
     )
     .replace(/\n?SETTING CONTINUITY \(LOW PRIORITY\):[^\n]*/g, '')
     .replace(/MANGA CAMERA \/ POSE VARIETY LOCK:[^\n]*/g, 'MANGA CAMERA / POSE VARIETY LOCK: >=3 azimuths; NO default eye-level shot; max 1 front-on; preserve Action/limbs; stagger hands in depth.')
-    .replace(/FINAL-PANEL ACTIVE STAGING LOCK:[^\n]*/g, 'FINAL-PANEL ACTIVE STAGING LOCK: varied actions/depth; faces and hands readable.')
+    .replace(/FINAL-PANEL ACTIVE STAGING LOCK:[^\n]*/g, 'FINAL-PANEL ACTIVE STAGING LOCK: no straight-line lineup; distinct physical action; faces, silhouettes, and hands readable.')
     // Retain named gaze targets and rear-shoulder owners even under budget pressure.
     .replace(/FUNCTIONAL SURFACE PANEL CHECK:[^\n]*/g, 'FUNCTIONAL SURFACE PANEL CHECK: reader/camera side/front-back/text axes.')
-    .replace(/SHARED IMAGE QUALITY CONTRACT:[^\n]*/g, 'SHARED QUALITY: preserve direction; setting cues/quiet space; anatomy/props; folds; no duplicate cast; clean surfaces.')
-    .replace(/FACIAL ACTING LOCK:[^\n]*/g, 'FACIAL ACTING LOCK: bold/subtle brow/eyelid/gaze target/mouth shape/head-torso cues; do not force close-up/camera gaze; preserve Camera/Action/eye-line; not visible text.')
+    .replace(/SHARED IMAGE QUALITY CONTRACT:[^\n]*/g, 'SHARED QUALITY: direction; setting; anatomy/props; no duplicate cast.')
+    .replace(/FACIAL ACTING LOCK:[^\n]*/g, 'FACIAL ACTING LOCK: brow/eyelid/gaze target/mouth shape/head-torso; do not force close-up; preserve Camera/Action/eye-line; not visible text.')
     .replace(
       /RICH PANEL COMPOSITION \/ CHARACTER CLARITY LOCK:[^\n]*/g,
       RICH_PANEL_COMPOSITION_LOCK_COMPACT

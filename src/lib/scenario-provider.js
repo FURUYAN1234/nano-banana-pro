@@ -366,7 +366,7 @@ export async function generateScenario({
     initialPrompt: scenarioPrompt,
     requestScenario: (prompt) => requestSafeScenarioContent({
       initialPrompt: prompt,
-      requestScenario: (contentPrompt) => callAI(contentPrompt, [], castList, onProgress, { timeoutMs: STEP2_TEXT_TIMEOUT_MS }),
+      requestScenario: (contentPrompt) => callAI(contentPrompt, [], castList, onProgress, { timeoutMs: STEP2_TEXT_TIMEOUT_MS, modelRoute: 'scenario' }),
       maxAttempts: 1
     }).then(({ response }) => response),
     parseScenario: (response) => {
@@ -528,7 +528,7 @@ export async function enhanceScenarioText({
         validationIssues
       }),
     requestEnhancement: async (prompt) => {
-      const result = await callAI(prompt, [], castList, onProgress, { timeoutMs: STEP2_TEXT_TIMEOUT_MS });
+      const result = await callAI(prompt, [], castList, onProgress, { timeoutMs: STEP2_TEXT_TIMEOUT_MS, modelRoute: 'scenario' });
       return {
         text: result.text,
         usedModel: result.model,

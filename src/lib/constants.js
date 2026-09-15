@@ -3,7 +3,7 @@ import { getEndingModePolicy } from './ending-mode-policy.js';
 // --- 定数・タグ定義 (constants.js) ---
 // App.jsx から抽出された共有定数
 
-export const SYSTEM_VERSION = "v6.1.7";
+export const SYSTEM_VERSION = "v6.1.8";
 
 // --- Punchline ラベル変換関数 ---
 export const getPunchlineLabel = (type) => {
@@ -87,7 +87,7 @@ export const getModelBadgeInfo = (modelId) => {
     };
   }
   // [v3.59] OpenAI GPT系モデル
-  if (modelId.includes("gpt-4") || modelId.includes("gpt-3")) {
+  if (modelId.includes("gpt-6") || modelId.includes("gpt-5") || modelId.includes("gpt-4") || modelId.includes("gpt-3")) {
     return {
       label: "ChatGPT",
       tier: "Active",

@@ -61,6 +61,8 @@ The app can also produce a prompt for manual use on the Gemini or ChatGPT websit
 
 The default OpenAI image setting is Sunburst / xhigh at 1024×1536 when the model is available. Larger sizes and higher quality increase cost and latency and do not guarantee correct dialogue, hands, or composition. / OpenAI画像の既定値は利用可能な場合Sunburst / xhigh・1024×1536です。大きなサイズや高品質設定は料金と待ち時間が増え、台詞・手・構図の正確さを保証しません。
 
+For OpenAI text, only STEP2 scenario creation and its optional enhancement start with GPT-6 Astra, then use GPT-5.6 Sol and the established GPT-4.1 chain if needed. Character analysis, prompt review and image generation keep their existing routes. Model availability and a successful API response do not by themselves guarantee story quality; review the generated scenario before STEP3. / OpenAI文章処理では、STEP2のシナリオ作成と任意のシナリオ強化だけをGPT-6 Astraから開始し、必要時はGPT-5.6 Sol、既存のGPT-4.1系チェーンへ順に切り替えます。キャラクター解析、プロンプト確認、画像生成の経路は従来どおりです。モデルが利用可能でAPI応答が成功しても物語の質までは保証しないため、STEP3の前に生成シナリオを確認してください。
+
 Automatic repair is enabled by default. It makes one ordinary repair and only when grounded incidental-print defects persist may make one additional fallback, for at most two extra paid image requests. / 自動修正は既定ONです。通常修正を1回行い、根拠のある装飾印字の問題が残る場合だけ追加候補を1回作るため、追加の有料画像生成は最大2回です。
 
 ## Prompt and image safeguards / プロンプトと画像の確認
@@ -150,6 +152,9 @@ The production application is published from the `main` branch through the repos
 **Is this the T2V/I2V/Ref2V repository? / T2V・I2V・Ref2Vのリポジトリですか？**  No. Those workflows are maintained separately in [comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows). / いいえ。それらは別の[comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows)で管理します。
 
 ## 📋 ChangeLog
+
+### v6.1.8 (2026-09-15)
+- **[Fix & UX]** GPT-6 AstraをSTEP2のシナリオ作成・強化だけの先行経路にし、失敗時はGPT-5.6 Solと既存GPT-4.1系へ段階フォールバック。二面小道具の裏面操作をQAで誤検知せず、圧縮後も最終コマの能動的な配置と顔演技を保持 / Routed only STEP2 scenario creation and enhancement through GPT-6 Astra with GPT-5.6 Sol and established GPT-4.1 fallbacks, added context-aware two-sided-prop QA, and retained active final-panel staging and facial acting under prompt compaction.
 
 ### v6.1.7 (2026-09-15)
 - **[Fix & UX]** 背景を省略する抽象コマでも俯瞰の身体・小道具投影を残し、明示された個別視線を会話用の補助指示より優先。指定がない通常会話では相互視線を維持 / Preserved overhead body and prop projection in abstract beats and prioritized explicit individual gaze over conversational fallback rules; ordinary unspecified conversations retain mutual eye contact

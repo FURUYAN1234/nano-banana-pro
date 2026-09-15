@@ -91,7 +91,7 @@ test('single-image coverage requires one scene and accepts justified absence wit
 test('QA distinguishes physical boundary and printed-plane defects from valid overlap and gag intent', () => {
   for (const mode of ['single-image', 'four-panel']) {
     const prompt = buildImageQualityQaPrompt({ mode });
-    for (const criterion of [/object_geometry:/, /surface_text:/, /Horizontal and vertical writing can both be valid/, /ordinary overlap with a coherent rear contour/, /headwear and source-supported surreal events/, /Do not normalize them/, /background.*intersection|intersection.*background/s, /printed plane/, /spatial_checks/, /not_applicable only with a concrete absence reason/]) {
+    for (const criterion of [/object_geometry:/, /surface_text:/, /Horizontal and vertical writing can both be valid/, /ordinary overlap with a coherent rear contour/, /headwear and source-supported surreal events/, /Do not normalize them/, /background.*intersection|intersection.*background/s, /printed plane/, /spatial_checks/, /not_applicable only with a concrete absence reason/, /actively operating a rear mechanism/i, /active_face/i]) {
       assert.match(prompt, criterion);
     }
   }

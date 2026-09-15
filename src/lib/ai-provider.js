@@ -13,6 +13,7 @@
 
 import { callThinkingGemini } from './gemini';
 import { callOpenAIText } from './openai-text';
+import { getApiSessionSnapshot } from './api-session';
 
 // --- エンジン状態管理 ---
 // 'gemini' | 'openai'
@@ -34,13 +35,16 @@ export const setActiveEngine = (engine) => {
 /**
  * 現在のアクティブエンジンを取得する
  */
-export const getActiveEngine = () => activeEngine;
+export const getActiveEngine = () => {
+    const session = getApiSessionSnapshot();
+    return session.credentialPresent ? session.provider : activeEngine;
+};
 
 /**
  * エンジン名を日本語で返す（UI表示用）
  */
 export const getEngineDisplayName = () => {
-    return activeEngine === 'openai' ? 'ChatGPT' : 'Gemini';
+    return getActiveEngine() === 'openai' ? 'ChatGPT' : 'Gemini';
 };
 
 /**
@@ -53,7 +57,8 @@ export const getEngineDisplayName = () => {
  */
 export const callAI = async (prompt, images = null, systemInstruction = null, onThinkingUpdate, options = {}) => {
     let result;
-    if (activeEngine === 'openai') {
+    const effectiveEngine = getActiveEngine();
+    if (effectiveEngine === 'openai') {
         result = await callOpenAIText(prompt, images, systemInstruction, onThinkingUpdate, options);
     } else {
         result = await callThinkingGemini(prompt, images, systemInstruction, onThinkingUpdate, options);

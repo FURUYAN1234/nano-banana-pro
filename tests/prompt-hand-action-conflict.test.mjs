@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test, { after, before } from 'node:test';
 import { createServer } from 'vite';
+import { HAND_PROP_KINEMATICS_LOCK } from '../src/lib/hand-prop-kinematics.js';
 
 let server;
 let buildMangaPrompt;
@@ -88,6 +89,12 @@ test('all hand and prop situations use one shared kinematics contract without re
     assert.doesNotMatch(prompt, /PROP-HAND OWNERSHIP LOCK:/);
     assert.doesNotMatch(prompt, /ARM-CROSS PROP RELEASE LOCK:/);
   }
+});
+
+test('two-sided props distinguish an operated rear from a presented readable front', () => {
+  assert.match(HAND_PROP_KINEMATICS_LOCK, /display\/readable front and a separate working rear/i);
+  assert.match(HAND_PROP_KINEMATICS_LOCK, /opening\/adjusting\/deploying a rear mechanism/i);
+  assert.match(HAND_PROP_KINEMATICS_LOCK, /presents\/displays the prop, expose its front to the recipient/i);
 });
 
 test('unrelated hand and prop actions receive the exact same situation-agnostic contract', () => {
