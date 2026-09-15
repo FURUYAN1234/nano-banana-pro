@@ -1,3 +1,9 @@
+## Model Chain同期 — v6.2.3、2026-09-16
+
+- 表示用のModel Chainを実行時のSTEP2 OpenAI経路へ同期し、GPT-6 Astra、GPT-5.6 Sol、GPT-4.1系の順番を明示した。STEP4はSunburstを認証済み時の初期選択、Flareを明示選択、GPT Image 2.0を2.5利用不可時の初期選択として区別する。
+- `pre_deploy_check.js` は通常テキスト、STEP2シナリオ、Vision、Gemini画像、OpenAI画像設定をまとめてスナップショットと比較する。`tests/fallback-chain-history.test.mjs` がSTEP2とSTEP4表示の回帰を検出する。
+- ユーザーは公式リリース、既存FourPanel note更新、黒い窓の公式フルバックアップを明示承認済み。公開・バックアップの現在証拠は完了後に追記する。
+
 ## 4コマプロンプトの優先順位整理 — v6.2.2、2026-09-16
 
 - 依頼: 人物の複製・衣装逸脱・眼鏡欠落の診断を受け、過密なプロンプトの改良を行う。

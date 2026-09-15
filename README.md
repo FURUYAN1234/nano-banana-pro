@@ -1,6 +1,6 @@
 # Super FURU AI 4-koma System / Super FURU AI 4コマシステム
 
-> Latest release: **v6.2.2** / 最新リリース: **v6.2.2**
+> Latest release: **v6.2.3** / 最新リリース: **v6.2.3**
 
 An experimental web application in which AI handles topic research, story structure, direction, prompt construction, image generation, and quality review for a four-panel manga. / AIが話題調査、構成、演出、プロンプト構築、画像生成、品質確認まで担当する4コマ漫画制作Webアプリです。
 
@@ -164,6 +164,10 @@ The production application is published from the `main` branch through the repos
 **Is this the T2V/I2V/Ref2V repository? / T2V・I2V・Ref2Vのリポジトリですか？**  No. Those workflows are maintained separately in [comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows). / いいえ。それらは別の[comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows)で管理します。
 
 ## 📋 ChangeLog
+
+### v6.2.3 (2026-09-16)
+
+- **[Fix]** Updated the visible Model Chain to match the active STEP2 OpenAI sequence: GPT-6 Astra, GPT-5.6 Sol, then the established GPT-4.1 chain. STEP4 now identifies Sunburst as the verified-model default, Flare as an explicit option, and GPT Image 2.0 as the fallback selection when 2.5 is unavailable. The pre-deploy check now covers these route-specific lists too. / **[修正]** 画面のModel Chainを、STEP2の実行経路であるGPT-6 Astra、GPT-5.6 Sol、既存のGPT-4.1系へ同期しました。STEP4は、認証済み時の初期選択をSunburst、明示選択をFlare、2.5が利用できない場合の初期選択をGPT Image 2.0として表示します。pre-deployチェックも経路別の一覧を確認します。
 
 ### v6.2.2 (2026-09-16)
 - **[Fix]** 人数、人物の同一性、眼鏡、衣装、台詞を優先し、任意の背景装飾だけを整理。構図や画風の数値ノルマを外し、指定した正面・静かなコマ・繰り返す構図を保持 / Prioritized cast count, identity, glasses, wardrobe and exact script over optional decoration; removed numeric composition/style quotas and preserved scripted frontal, quiet and repeated shots

@@ -236,9 +236,18 @@ try {
         };
 
         const geminiTextModels = extractModels('src/lib/gemini.js', /const TEXT_MODEL_IDS\s*=\s*\[([\s\S]*?)\]/);
-        const openaiTextModels = extractModels('src/lib/openai-text.js', /const TEXT_MODEL_IDS\s*=\s*\[([\s\S]*?)\]/);
+        const geminiVisionModels = extractModels('src/lib/gemini.js', /const IMAGE_MODEL_IDS\s*=\s*\[([\s\S]*?)\]/);
+        const openaiTextModels = [
+            ...extractModels('src/lib/openai-text.js', /const TEXT_MODEL_IDS\s*=\s*\[([\s\S]*?)\]/),
+            ...extractModels('src/lib/openai-text.js', /const SCENARIO_TEXT_MODEL_IDS\s*=\s*\[([\s\S]*?)\]/),
+            ...extractModels('src/lib/openai-text.js', /const IMAGE_MODEL_IDS\s*=\s*\[([\s\S]*?)\]/),
+        ];
         const geminiImageModels = extractModels('src/lib/imagen.js', /const MODELS_TO_TRY\s*=\s*\[([\s\S]*?)\]/);
-        const openaiImageModel = extractModels('src/lib/openai.js', /const OPENAI_IMAGE_MODEL\s*=\s*"([^"]+)"/);
+        const openaiImageSettings = fs.readFileSync('src/lib/openai-image-settings.js', 'utf-8');
+        const openaiImageModels = [
+            ...Array.from(openaiImageSettings.matchAll(/model:\s*'([^']+)'/g), (match) => match[1]),
+            ...Array.from(openaiImageSettings.matchAll(/OPENAI_IMAGE_MODEL\s*=\s*'([^']+)'/g), (match) => match[1]),
+        ];
 
         // fallback-chain-history.js のスナップショットと比較
         const historyPath = 'src/lib/fallback-chain-history.js';
@@ -258,7 +267,13 @@ try {
             }
 
             // 現在のソースコードのモデルを統合
-            const currentModels = [...geminiTextModels, ...openaiTextModels, ...geminiImageModels, ...openaiImageModel].sort();
+            const currentModels = [...new Set([
+                ...geminiTextModels,
+                ...geminiVisionModels,
+                ...openaiTextModels,
+                ...geminiImageModels,
+                ...openaiImageModels,
+            ])].sort();
             const snapshotSorted = [...new Set(snapshotModels)].sort();
 
             // 差分検出

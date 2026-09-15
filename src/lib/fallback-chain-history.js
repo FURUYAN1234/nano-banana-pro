@@ -61,7 +61,9 @@ export const FALLBACK_CHAINS = [
     provider: 'OpenAI',
     sourceFile: 'src/lib/openai-text.js',
     models: [
-      { id: 'gpt-4.1', role: 'Primary', note: '高品質・1Mコンテキスト' },
+      { id: 'gpt-6-astra', role: 'Primary', note: 'STEP2専用・物語構成と演出推論' },
+      { id: 'gpt-5.6-sol', role: 'Backup', note: 'STEP2専用・現行テキスト経路' },
+      { id: 'gpt-4.1', role: 'Backup', note: '高品質・1Mコンテキスト' },
       { id: 'gpt-4.1-mini', role: 'Backup', note: 'コスト効率・高速' },
       { id: 'gpt-4.1-nano', role: 'Backup', note: '最軽量・最速' },
       { id: 'gpt-4o', role: 'Fallback', note: '安定実績' },
@@ -113,9 +115,11 @@ export const FALLBACK_CHAINS = [
     label: '4コマ漫画画像生成',
     description: '組み立てたプロンプトをChatGPTに渡し、4コマ漫画の画像を1枚生成する。フキダシ・背景・カメラワーク・感情演出を含む完成画像が出力される。※注記: 現在のアプリのAPIは、最新APIの対応状況や安定稼働を考慮し、あえて古い世代のモデルをPrimaryに設定している場合があります。',
     provider: 'OpenAI',
-    sourceFile: 'src/lib/openai.js',
+    sourceFile: 'src/lib/openai-image-settings.js',
     models: [
-      { id: 'gpt-image-2', role: 'Primary', note: '単一モデル（フォールバックなし）' },
+      { id: 'gpt-image-2.5-sunburst', role: 'Default', note: '認証済み時の初期選択・xhigh' },
+      { id: 'gpt-image-2.5-flare', role: 'Selectable', note: '品質設定から明示選択' },
+      { id: 'gpt-image-2', role: 'Fallback', note: '2.5が利用不可のときの初期選択・high' },
     ]
   }
 ];
@@ -126,6 +130,15 @@ export const FALLBACK_CHAINS = [
 //   date は必ず 'YYYY-MM-DD HH:MM JST' 形式で日時を記録すること。
 export const FALLBACK_CHAIN_HISTORY = [
   // ↑ 新しいエントリはここに追加する（降順）
+  {
+    version: 'v6.2.3',
+    date: '2026-09-16 00:00 JST',
+    note: '実行時ルートに合わせて、表示用スナップショットと事前点検の対象を同期。',
+    changes: [
+      { step: 'STEP 2 (OpenAI)', action: '構成', detail: 'gpt-6-astra → gpt-5.6-sol → gpt-4.1 → gpt-4.1-mini → gpt-4.1-nano → gpt-4o' },
+      { step: 'STEP 4 (OpenAI)', action: '構成', detail: 'Sunburstを認証済み時の初期選択、Flareを明示選択、gpt-image-2を2.5利用不可時の初期選択として表示' },
+    ]
+  },
   {
     version: 'v4.7.1',
     date: '2026-06-19 17:26 JST',
