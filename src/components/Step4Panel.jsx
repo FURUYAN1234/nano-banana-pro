@@ -22,6 +22,7 @@ import { getEffectiveEngine } from '../lib/engine-state';
 import { MINIMAX_H3_COMFYUI_PROMPT } from '../lib/minimax-h3-prompt';
 import { SYSTEM_VERSION } from '../lib/constants';
 import { getEndingModePolicy } from '../lib/ending-mode-policy';
+import { buildGeneratedImageFilename, downloadImageDataUrl } from '../lib/generation-history';
 
 const COMFYUI_WORKFLOW_FILENAME = 'FourPanel_NonLM_4step_20260913115712_v5.9.9.json';
 const COMFYUI_WORKFLOW_DOWNLOAD_URL = `${import.meta.env.BASE_URL}workflows/${COMFYUI_WORKFLOW_FILENAME}`;
@@ -330,6 +331,8 @@ export default function Step4Panel({
   isFallbackUsed,
   usedModel,
   enableOpenAIApi,
+  autoSaveGeneratedImage,
+  setAutoSaveGeneratedImage,
   showPolicyChoice,
   policyAutoRetrying,
   handlePolicyAutoFix,
@@ -341,6 +344,18 @@ export default function Step4Panel({
   const isOpenAIImageMode = getEffectiveEngine(selectedEngine, enableOpenAIApi) === 'openai';
   const isSeriousEnhancementMode = getEndingModePolicy(punchlineType).endingTone === 'serious';
   const generatedImageExtension = getGeneratedImageExtension(generatedImage);
+  const getGeneratedImageFilename = () => {
+    let rawTitle = mangaTitle;
+    if (!rawTitle && scenario) {
+      const titleMatch = scenario.match(/##\s*タイトル[:：]\s*(.+?)(?:\s*!|\s*$)/m);
+      if (titleMatch) rawTitle = titleMatch[1].trim();
+    }
+    return buildGeneratedImageFilename({
+      apiName: isOpenAIImageMode ? 'ChatGPT' : 'Gemini',
+      title: rawTitle,
+      extension: generatedImageExtension
+    });
+  };
   const [isUpscalePromptCopied, setIsUpscalePromptCopied] = React.useState(false);
   const [isMiniMaxPromptCopied, setIsMiniMaxPromptCopied] = React.useState(false);
   const [isVideoGuideOpen, setIsVideoGuideOpen] = React.useState(false);
@@ -589,6 +604,18 @@ export default function Step4Panel({
                   <span>{isGeneratingImage ? "画像を生成中..." : "APIで画像をアプリ内で生成する（STEP4）"}</span>
                 </div>
               </button>
+              <label className="step4-help-copy mb-4 flex items-start gap-2 text-slate-300">
+                <input
+                  type="checkbox"
+                  checked={autoSaveGeneratedImage}
+                  onChange={event => setAutoSaveGeneratedImage(event.target.checked)}
+                  disabled={isGeneratingImage || isFixingPolicy}
+                />
+                <span>
+                  完成画像を自動保存（API生成のみ）
+                  <span className="block text-[10px] text-slate-400">初回だけ保存先を選択。Downloads直下は選べないため専用サブフォルダーを指定。以後は最終採用画像だけを自動保存（再読み込みまたは設定クリアまで維持）</span>
+                </span>
+              </label>
                           <div className="border border-yellow-500/30 rounded-lg overflow-hidden" style={{ margin: 0 }}>
                             <button style={{ display: 'flex', width: '100%', boxSizing: 'border-box', margin: 0 }} type="button" aria-expanded={isApiSettingsOpen} aria-controls="api-settings-content"
                               className="w-full flex items-center justify-between px-4 py-3 bg-yellow-900/25 hover:bg-yellow-900/50 transition-all duration-150 cursor-pointer disabled:cursor-not-allowed border-l-4 border-yellow-500 hover:border-yellow-400 group/policy-hdr"
@@ -1280,25 +1307,7 @@ No explanations. No partial results.`;
               <div className="w-full px-8 mt-2">
                 <button
                   onClick={() => {
-                    const a = document.createElement('a');
-                    a.href = generatedImage;
-                    // API別ファイル名: AI_4koma_comic_{API名}_{タイトル}_{年月日時分秒14桁}.png
-                    const now = new Date();
-                    const apiName = isOpenAIImageMode ? 'ChatGPT' : 'Gemini';
-                    // タイトル取得: mangaTitle state → scenarioからの抽出 → フォールバック
-                    let rawTitle = mangaTitle;
-                    if (!rawTitle && scenario) {
-                      const m = scenario.match(/##\s*タイトル[:：]\s*(.+?)(?:\s*!|\s*$)/m);
-                      if (m) rawTitle = m[1].trim();
-                    }
-                    const titleSlug = rawTitle
-                      ? rawTitle.substring(0, 30).replace(/[\\/:*?"<>|\s]/g, '_')
-                      : 'untitled';
-                    const ts = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}${String(now.getSeconds()).padStart(2,'0')}`;
-                    a.download = `AI_4koma_comic_${apiName}_${titleSlug}_${ts}.${generatedImageExtension}`;
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
+                    downloadImageDataUrl(generatedImage, getGeneratedImageFilename());
                   }}
                   className="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg border border-white/20 active:scale-95"
                 >

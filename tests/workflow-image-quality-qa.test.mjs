@@ -22,11 +22,11 @@ test('image generation displays the received image before running one visible co
   assert.match(workflowSource, /originalPrompt: currentPrompt,[\s\S]*mode: qualityMode,/);
 });
 
-test('quality failure uses one bounded repair candidate and falls back to the saved original without stopping', () => {
+test('quality failure uses one bounded repair candidate and falls back to the retained original without stopping', () => {
   assert.doesNotMatch(workflowSource, /buildImageAnatomyRetryPrompt|VISUAL_QA_MAX_RETRIES|visualQaAttempt/);
   assert.match(workflowSource, /runImageQualityFailsafe/);
   assert.match(workflowSource, /fallbackToOriginal/);
-  assert.match(workflowSource, /保存済みの元画像/);
+  assert.match(workflowSource, /保持した元画像/);
   assert.doesNotMatch(workflowSource, /品質ゲート.*自動処理を停止/);
   assert.match(workflowSource, /Image successfully generated \(quality warning\)/);
   assert.match(workflowSource, /画像品質レビューは未確認です。画像の具体的な問題は検出されていません。/);
