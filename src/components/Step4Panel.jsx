@@ -331,8 +331,6 @@ export default function Step4Panel({
   isFallbackUsed,
   usedModel,
   enableOpenAIApi,
-  autoSaveGeneratedImage,
-  setAutoSaveGeneratedImage,
   showPolicyChoice,
   policyAutoRetrying,
   handlePolicyAutoFix,
@@ -604,18 +602,6 @@ export default function Step4Panel({
                   <span>{isGeneratingImage ? "画像を生成中..." : "APIで画像をアプリ内で生成する（STEP4）"}</span>
                 </div>
               </button>
-              <label className="step4-help-copy mb-4 flex items-start gap-2 text-slate-300">
-                <input
-                  type="checkbox"
-                  checked={autoSaveGeneratedImage}
-                  onChange={event => setAutoSaveGeneratedImage(event.target.checked)}
-                  disabled={isGeneratingImage || isFixingPolicy}
-                />
-                <span>
-                  完成画像を自動保存（API生成のみ）
-                  <span className="block text-[10px] text-slate-400">初回だけ保存先を選択。Downloads直下は選べないため専用サブフォルダーを指定。以後は最終採用画像だけを自動保存（再読み込みまたは設定クリアまで維持）</span>
-                </span>
-              </label>
                           <div className="border border-yellow-500/30 rounded-lg overflow-hidden" style={{ margin: 0 }}>
                             <button style={{ display: 'flex', width: '100%', boxSizing: 'border-box', margin: 0 }} type="button" aria-expanded={isApiSettingsOpen} aria-controls="api-settings-content"
                               className="w-full flex items-center justify-between px-4 py-3 bg-yellow-900/25 hover:bg-yellow-900/50 transition-all duration-150 cursor-pointer disabled:cursor-not-allowed border-l-4 border-yellow-500 hover:border-yellow-400 group/policy-hdr"

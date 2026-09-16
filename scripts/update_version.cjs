@@ -53,8 +53,7 @@ const targetFiles = {
   packageLock: path.join(__dirname, '../package-lock.json'),
   constantsJs: path.join(__dirname, '../src/lib/constants.js'),
   indexHtml: path.join(__dirname, '../index.html'),
-  readmeMd: path.join(__dirname, '../README.md'),
-  hfReadmeMd: path.join(process.env.USERPROFILE || '', 'Antigravity', 'hf-nano-banana-pro', 'README.md')
+  readmeMd: path.join(__dirname, '../README.md')
 };
 
 function parseVersion(version) {
@@ -98,7 +97,7 @@ if (newVersion !== expectedVersion) {
 
 try {
   // 1. package.json の更新
-  console.log(`[1/5] Updating package.json and package-lock.json...`);
+  console.log(`[1/4] Updating package.json and package-lock.json...`);
   const pkgContent = fs.readFileSync(targetFiles.packageJson, 'utf8');
   const updatedPkg = pkgContent.replace(/"version":\s*"[^"]+"/, `"version": "${newVersion}"`);
   fs.writeFileSync(targetFiles.packageJson, updatedPkg, 'utf8');
@@ -110,7 +109,7 @@ try {
   console.log(`      -> version: "${newVersion}"`);
 
   // 2. src/lib/constants.js の更新
-  console.log(`[2/5] Updating constants.js...`);
+  console.log(`[2/4] Updating constants.js...`);
   const constContent = fs.readFileSync(targetFiles.constantsJs, 'utf8');
   const updatedConst = constContent.replace(
     /export const SYSTEM_VERSION = "[^"]+";/,
@@ -120,7 +119,7 @@ try {
   console.log(`      -> SYSTEM_VERSION = "v${newVersion}"`);
 
   // 3. index.html の更新
-  console.log(`[3/5] Updating index.html...`);
+  console.log(`[3/4] Updating index.html...`);
   const htmlContent = fs.readFileSync(targetFiles.indexHtml, 'utf8');
   const updatedHtml = htmlContent.replace(
     /<title>Nano Banana Pro v[^<]+<\/title>/,
@@ -130,7 +129,7 @@ try {
   console.log(`      -> <title>Nano Banana Pro v${newVersion}</title>`);
 
   // 4. README.md の更新
-  console.log(`[4/5] Updating README.md...`);
+  console.log(`[4/4] Updating README.md...`);
   let readmeContent = fs.readFileSync(targetFiles.readmeMd, 'utf8');
   
   // 冒頭のタイトルバージョン表記の置換
@@ -152,30 +151,6 @@ try {
   readmeContent = readmeContent.slice(0, insertIndex) + newChangelogEntry + readmeContent.slice(insertIndex);
   fs.writeFileSync(targetFiles.readmeMd, readmeContent, 'utf8');
   console.log(`      -> Added changelog entry for v${newVersion}`);
-
-  // 5. Hugging Face README.md の更新
-  console.log(`[5/5] Updating Hugging Face README.md...`);
-  let hfReadmeContent = fs.readFileSync(targetFiles.hfReadmeMd, 'utf8');
-
-  // 冒頭のタイトルバージョン表記の置換
-  hfReadmeContent = hfReadmeContent.replace(
-    /# Nano Banana Pro 🍌✨ \(v[^)]+\)/,
-    `# Nano Banana Pro 🍌✨ (v${newVersion})`
-  );
-
-  // Latest Updatesへのエントリ挿入
-  const hfHeader = '## 🚀 Latest Updates';
-  const hfInsertPos = hfReadmeContent.indexOf(hfHeader);
-  if (hfInsertPos === -1) {
-    throw new Error('Could not find "## 🚀 Latest Updates" in hf README.md');
-  }
-
-  const hfInsertIndex = hfInsertPos + hfHeader.length;
-  const newHfEntry = `\n\n### v${newVersion} (${today})\n${entryEn}`;
-
-  hfReadmeContent = hfReadmeContent.slice(0, hfInsertIndex) + newHfEntry + hfReadmeContent.slice(hfInsertIndex);
-  fs.writeFileSync(targetFiles.hfReadmeMd, hfReadmeContent, 'utf8');
-  console.log(`      -> Added latest updates entry to HF README.md`);
 
   console.log(`\n✅ Success: All files successfully synchronized and updated!`);
 

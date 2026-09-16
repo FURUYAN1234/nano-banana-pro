@@ -64,7 +64,6 @@ function App() {
     generateScenarioFromNews,
     generatedImage,
     generationHistory,
-    autoSaveGeneratedImage,
     handleFullAutoToggle,
     handleSetKey,
     hardReset,
@@ -134,7 +133,6 @@ function App() {
     setEnhanceExpressions,
     setGeneratedImage,
     setGenerationHistory,
-    setAutoSaveGeneratedImage,
     setImages,
     setInputMode,
     setIsCastListCopied,
@@ -425,8 +423,6 @@ function App() {
               setGeneratedImage={setGeneratedImage}
               generationHistory={generationHistory}
               setGenerationHistory={setGenerationHistory}
-              autoSaveGeneratedImage={autoSaveGeneratedImage}
-              setAutoSaveGeneratedImage={setAutoSaveGeneratedImage}
               showPolicyChoice={showPolicyChoice}
               policyAutoRetrying={policyAutoRetrying}
               handlePolicyAutoFix={handlePolicyAutoFix}

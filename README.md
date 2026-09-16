@@ -1,6 +1,6 @@
 # Super FURU AI 4-koma System / Super FURU AI 4コマシステム
 
-> Latest release: **v6.2.9** / 最新リリース: **v6.2.9**
+> Latest release: **v6.3.0** / 最新リリース: **v6.3.0**
 
 An experimental web application in which AI handles topic research, story structure, direction, prompt construction, image generation, and quality review for a four-panel manga. / AIが話題調査、構成、演出、プロンプト構築、画像生成、品質確認まで担当する4コマ漫画制作Webアプリです。
 
@@ -21,7 +21,7 @@ STEP3 shows `⏳ AI応答を待機中... (○秒経過)` while the connected tex
 
 ### Image history and downloads / 生成履歴と保存
 
-The current session keeps the latest ten quality-selected API images in the history strip. Select any entry to return it to the preview, then use the normal download button to save that selected image. The switch directly under the STEP4 API generation button starts on. On the first manual generation or full-auto start, choose a destination folder once; only each quality-selected final API image is then actually written there. The destination and switch stay through full-auto, loops and STEP1/STEP2 resets; full settings reset clears the destination and returns the switch to on. Unsupported browsers and cancelled selection never claim a save and keep manual download available. Automatic and manual saves use `AI_4koma_comic_{API}_{title}_{YYYYMMDDHHMMSS}.{extension}`. This history is current-session memory only and does not survive a page reload. / 現在のセッションでは、品質確認後に採用されたAPI画像を直近10件まで生成履歴へ残します。任意の履歴を選択するとプレビューへ戻り、その選択画像を通常のダウンロードボタンで手動保存できます。STEP4のAPI生成ボタン直下のスイッチは初期ONです。初回の手動生成またはフルオート開始時に保存先フォルダーを一度選ぶと、品質確認後の最終採用API画像だけを実際に書き込みます。保存先とスイッチはフルオート・連続ループ・STEP1/STEP2リセット中も維持し、全設定クリアで保存先は未設定／スイッチはONへ戻ります。未対応ブラウザーや選択キャンセル時は保存済みと表示せず、手動保存を利用できます。自動・手動とも `AI_4koma_comic_{API}_{title}_{YYYYMMDDHHMMSS}.{extension}` の形式です。履歴は現在のブラウザー内メモリのみで、ページ再読み込み後には残りません。
+The current session keeps the latest ten quality-selected API images in the history strip. Select any entry to return it to the preview, then use the normal download button to save that selected image. Files use `AI_4koma_comic_{API}_{title}_{YYYYMMDDHHMMSS}.{extension}`. History is current-session memory only and does not survive a page reload; the app does not request a destination folder or automatically write image files. / 現在のセッションでは、品質確認後に採用されたAPI画像を直近10件まで生成履歴へ残します。任意の履歴を選択するとプレビューへ戻り、その選択画像を通常のダウンロードボタンで手動保存できます。ファイル名は `AI_4koma_comic_{API}_{title}_{YYYYMMDDHHMMSS}.{extension}` の形式です。履歴は現在のブラウザー内メモリのみで、ページ再読み込み後には残りません。保存先フォルダーの選択や画像ファイルの自動保存は行いません。
 
 STEP2's local scenario update discourages interchangeable “keep extending the same prop” plots: select objects and consequences from the topic's actual activities, while preserving explicit props, facts, bold cameras and acting. Direction enhancement does not replace an existing plot or invent expandable props. Generate anew from STEP2 to change the premise; STEP3 preserves already scripted scrolls or accordion paper. One fresh scenario rendered through the real API in color and monochrome showed no scroll/accordion mechanism while retaining strong perspective; this is not a recurrence-rate study or a guarantee against repetition. / STEP2のローカル修正では、題材が違っても同じ物を延ばし続ける展開への偏りを抑える指示を追加しています。題材固有の行為と結果から小道具を選び、明示指定・事実・大胆なカメラと演技は保持します。演出強化で既存の筋を置き換えたり、伸縮・継ぎ足しの仕掛けを新設したりしません。構想を変える場合はSTEP2から再生成してください。STEP3だけでは台本中の巻物や蛇腹を消しません。新規1台本を実APIでカラー・白黒に生成し、強い遠近を残したまま巻物状の仕掛けがないことを確認しました。ただし、題材ごとの再発率は未計測で、反復の解消を保証しません。
 
@@ -170,6 +170,9 @@ The production application is published from the `main` branch through the repos
 **Is this the T2V/I2V/Ref2V repository? / T2V・I2V・Ref2Vのリポジトリですか？**  No. Those workflows are maintained separately in [comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows). / いいえ。それらは別の[comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows)で管理します。
 
 ## 📋 ChangeLog
+
+### v6.3.0 (2026-09-16)
+- **[Fix & UX]** フォルダー自動保存を撤去し、生成履歴10件と手動ダウンロードのみを維持。強パースは物語上の焦点へ分散し、足前出しを既定にしない / Removed folder auto-save while retaining ten history items and manual download. Strong perspective now uses a story-relevant focal form instead of defaulting to a forward foot.
 
 ### v6.2.9 (2026-09-16)
 - **[Fix & UX]** 生成履歴を直近10件へ復元し、最終採用API画像を選択済み保存先へ実書き込みする自動保存と年月日時分秒ファイル名を追加 / Restored ten recent image-history entries and added automatic writing of quality-selected API images to a chosen destination with date-time filenames

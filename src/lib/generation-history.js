@@ -22,21 +22,3 @@ export const downloadImageDataUrl = (imageDataUrl, filename, documentObject = do
   anchor.click();
   documentObject.body.removeChild(anchor);
 };
-
-export const writeImageDataUrlToDirectory = async ({
-  imageDataUrl,
-  filename,
-  directoryHandle,
-  fetchFn = fetch
-}) => {
-  if (!directoryHandle) return { ok: false, reason: 'destination-unavailable' };
-
-  const response = await fetchFn(imageDataUrl);
-  const blob = await response.blob();
-  const fileHandle = await directoryHandle.getFileHandle(filename, { create: true });
-  const writable = await fileHandle.createWritable();
-  await writable.write(blob);
-  await writable.close();
-
-  return { ok: true, filename };
-};

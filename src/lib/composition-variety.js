@@ -17,7 +17,7 @@ export const SCENARIO_COMPOSITION_VARIETY_RULES = `
              - **【物語に合わせた水平方位・ポーズの設計】**:
                * カメラの高低差・傾き・強い遠近感と画角の大胆な変化を積極的に使う。会話場面でも机周りの中景や肩越しに固定しない。
                * 各[Camera:]タグには、ショット種類・高さ・傾きだけでなく、被写体に対する水平方位（左前斜め／右前斜め／背後寄り3/4／肩越し等）を物理的に明記せよ。
-               * 画角を目に見える構図へ翻訳する。俯瞰なら頭頂と机の天面と床の奥行き、床近くの煽りなら手前の大きな足・手・家具から上へ伸びる身体、傾きなら斜めに走る床・机・身体の軸を具体的にCameraへ書く。強度語だけで済ませない。
+               * 画角を目に見える構図へ翻訳する。俯瞰なら頭頂と机の天面と床の奥行き、床近くの煽りなら物語上の見せ場に合う手・顔・重要な小道具・環境の奥行きから上へ伸びる身体、傾きなら斜めに走る床・机・身体の軸を具体的にCameraへ書く。足だけを手前へ大きく突き出す構図を既定にしない。走る・踏み込む・蹴るなど脚の動き自体が見せ場のときだけ、支持脚と重心が読める足の短縮遠近法を使う。強度語だけで済ませない。
                * 水平方位やショットの種類数にノルマを設けず、見せ場と静かな間に合う位置を選ぶ。未指定部分には左右・前後・高低・寄り引きの変化を使い、指定された正面・アイレベル・反復構図は保持する。
                * 主役の肩・腰・顔の向きは視線と動作に合わせる。動きの見せ場には自然なひねりと前後差を使い、静止や左右対称が指定された場面へ角度やひねりを追加しない。
                * 両手を使う動作では、Actionの内容と手の本数を保ったまま、左右の手に前後差・高さ差・役割差をつける。両手を同じ高さでレンズ側へ広げる左右対称ポーズを既定値にするな。
@@ -56,11 +56,11 @@ export const SCENARIO_GESTURE_VARIETY_RULES = `
 
 export const MANGA_COMPOSITION_VARIETY_LOCK = `MANGA CAMERA / POSE VARIETY LOCK:
 - Preserve scripted Camera/Action, props, limbs and eye-lines, including quiet and repeated shots, frontal views and symmetry. There is no numeric variety quota.
-- Where direction is unspecified, use story-motivated changes in azimuth, height, tilt, scale and depth; retain bold perspective and readable body acting at the story's peak.
+- Where direction is unspecified, use story-motivated changes in azimuth, height, tilt, scale and depth; retain bold perspective and readable body acting at the story's peak. When strong perspective serves that beat, choose one story-relevant focal form (hand, face, key prop, or environmental depth); do not default to a foot thrust. Use a foreshortened foot only when the scripted action makes the leg itself the story-relevant focal form.
 - COMPOSITION STAGING fills an unspecified azimuth only. Turn the torso and stagger hands in depth/height when the Action permits; preserve exact hand roles, support and contacts.
 - VFX follows the chosen camera and never forces a different pose or framing.`;
 
-export const MANGA_COMPOSITION_VARIETY_LOCK_COMPACT = 'MANGA CAMERA / POSE VARIETY LOCK: keep scripted/quiet/repeated/frontal shots; no numeric variety quota; vary unspecified angles; stagger hands in depth if Action permits.';
+export const MANGA_COMPOSITION_VARIETY_LOCK_COMPACT = 'MANGA CAMERA / POSE VARIETY LOCK: Camera wins. Strong perspective: story-relevant focal form: hand/face/prop/depth; not foot thrust; foot only for leg beat. Stagger hands in depth.';
 
 // 4コマの追加演出だけを従属させ、台本・人物・媒体の制約は短縮時も保持する。
 export const MANGA_PROMPT_PRIORITY = 'PROMPT PRIORITY: protect cast/count/identity/glasses, wardrobe, exact script, layout/style/medium. Simplify only unspecified background texture and decorative VFX. Never print.';

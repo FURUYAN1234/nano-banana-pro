@@ -21,7 +21,7 @@ import {
   PROMPT_PROVIDER_FAMILIES,
   normalizePromptProviderFamily
 } from '../lib/prompt-assembler';
-import { addGenerationHistoryItem, buildGeneratedImageFilename, writeImageDataUrlToDirectory } from '../lib/generation-history';
+import { addGenerationHistoryItem } from '../lib/generation-history';
 import { generateScenario, enhanceScenarioText } from '../lib/scenario-provider';
 import { fixPolicyViolation } from '../lib/policy-fixer';
 import { verifyApiKeyConnection } from '../lib/api-key-preflight';
@@ -230,23 +230,6 @@ export default function useMangaWorkflow() {
   // Image Generation
   const [generatedImage, setGeneratedImage] = useState("");
   const [generationHistory, setGenerationHistory] = useState([]); // [v2.86] Generated Image History
-  const [autoSaveGeneratedImage, setAutoSaveGeneratedImage] = useState(true);
-  const autoSaveDirectoryRef = useRef(null);
-
-  const prepareAutoSaveDirectory = async () => {
-    if (!autoSaveGeneratedImage || autoSaveDirectoryRef.current) return '';
-    if (typeof window === 'undefined' || typeof window.showDirectoryPicker !== 'function') {
-      return '[SAVE] このブラウザーでは自動保存先を選択できません。完成後は手動保存を利用してください。';
-    }
-
-    try {
-      const directoryHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
-      autoSaveDirectoryRef.current = directoryHandle;
-      return '[SAVE] 保存先を設定しました。最終採用画像だけをここへ自動保存します。';
-    } catch {
-      return '[SAVE] 保存先の選択を取り消したため、今回は自動保存しません。';
-    }
-  };
 
   const setScenarioFromUser = (nextScenario) => {
     scenarioRunEpochRef.current += 1;
@@ -1130,8 +1113,6 @@ export default function useMangaWorkflow() {
     setIs360CameraWorking(false);
     setUsedModel(null);
     setGenerationHistory([]);
-    setAutoSaveGeneratedImage(true);
-    autoSaveDirectoryRef.current = null;
     setGenLog([]);
 
     // [v3.91-alpha] カテゴリ選択やシナリオ関連設定を完全に初期化
@@ -1214,7 +1195,6 @@ export default function useMangaWorkflow() {
     const currentPrompt = overridePrompt || finalPrompt;
     const qualityMode = inferImageQualityMode(currentPrompt);
     if (isGeneratingImage || (!skipGuard && !currentPrompt)) return false;
-    const autoSavePreparationMessage = skipGuard ? '' : await prepareAutoSaveDirectory();
     try {
       assertPromptEndingModeConsistency({ prompt: currentPrompt, punchlineType });
     } catch (error) {
@@ -1237,7 +1217,6 @@ export default function useMangaWorkflow() {
     } else {
       initialLogs.push("[2.5/5] ✅ Gemini Engine: Gemini-family prompt structure locked.");
     }
-    if (autoSavePreparationMessage) initialLogs.push(autoSavePreparationMessage);
     setGenLog(initialLogs);
 
     // [v2.44] 進捗ステップ表示＋経過時間カウンター
@@ -1424,32 +1403,6 @@ export default function useMangaWorkflow() {
       const acceptedImageStr = `data:${generatedMimeType};base64,${qualityOutcome.candidate.base64Img}`;
       setGeneratedImage(acceptedImageStr);
       setGenerationHistory(prev => addGenerationHistoryItem(prev, { id: Date.now(), img: acceptedImageStr }));
-      if (autoSaveGeneratedImage) {
-        let acceptedTitle = mangaTitle;
-        if (!acceptedTitle && scenario) {
-          const titleMatch = scenario.match(/##\s*タイトル[:：]\s*(.+?)(?:\s*!|\s*$)/m);
-          if (titleMatch) acceptedTitle = titleMatch[1].trim();
-        }
-        const acceptedFilename = buildGeneratedImageFilename({
-          apiName: isOpenAIEngine ? 'ChatGPT' : 'Gemini',
-          title: acceptedTitle,
-          extension: generatedMimeType.split('/')[1] || 'png'
-        });
-        if (!autoSaveDirectoryRef.current) {
-          statCallback('[SAVE] 保存先が未設定のため、今回の画像は自動保存しませんでした。');
-        } else {
-          try {
-            const saveResult = await writeImageDataUrlToDirectory({
-              imageDataUrl: acceptedImageStr,
-              filename: acceptedFilename,
-              directoryHandle: autoSaveDirectoryRef.current
-            });
-            if (saveResult.ok) statCallback(`[SAVE] 完成画像を自動保存しました: ${saveResult.filename}`);
-          } catch (error) {
-            statCallback(`[SAVE] 自動保存に失敗しました。手動保存を利用してください: ${error.message}`);
-          }
-        }
-      }
 
       if (qualityOutcome.validationWarning) {
         setIsGenerationError(false);
@@ -1949,8 +1902,6 @@ export default function useMangaWorkflow() {
       return;
       }
 
-      const autoSavePreparationMessage = await prepareAutoSaveDirectory();
-      if (autoSavePreparationMessage) showStatus(autoSavePreparationMessage.replace('[SAVE] ', ''));
       fullAutoAbortRef.current = false;
     setIsAborting(false);
     setIsFullAutoMode(true);
@@ -2029,7 +1980,6 @@ export default function useMangaWorkflow() {
     generateScenarioFromNews,
     generatedImage,
     generationHistory,
-    autoSaveGeneratedImage,
     handleFullAutoToggle,
     handleSetKey,
     hardReset,
@@ -2099,7 +2049,6 @@ export default function useMangaWorkflow() {
     setEnhanceExpressions,
     setGeneratedImage,
     setGenerationHistory,
-    setAutoSaveGeneratedImage,
     setImages,
     setInputMode,
     setIsCastListCopied,

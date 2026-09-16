@@ -14,6 +14,7 @@ test('release tooling carries patch 9 and rejects two-digit minor or patch versi
   assert.match(updater, /nextMinor > 9 \|\| nextPatch > 9/);
   assert.match(updater, /packageLock: path\.join\(__dirname, '\.\.\/package-lock\.json'\)/);
   assert.match(updater, /must advance from v\$\{currentVersion\} to v\$\{expectedVersion\}/);
+  assert.doesNotMatch(updater, /hfReadmeMd|Hugging Face README/, 'version updates must stay within the released app checkout');
 
   assert.match(preDeploy, /minor > 9 \|\| patch > 9/);
 });

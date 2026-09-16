@@ -5,7 +5,6 @@ import {
   addGenerationHistoryItem,
   buildGeneratedImageFilename,
   downloadImageDataUrl,
-  writeImageDataUrlToDirectory,
   MAX_GENERATION_HISTORY_ITEMS
 } from '../src/lib/generation-history.js';
 
@@ -27,7 +26,7 @@ test('generated image history retains only the newest ten images in memory', () 
   assert.deepEqual(addGenerationHistoryItem(oldHistory, latest), [latest, ...oldHistory.slice(0, 9)]);
 });
 
-test('manual and automatic saves share the existing API-title-date-time filename convention', () => {
+test('manual save keeps the existing API-title-date-time filename convention', () => {
   const filename = buildGeneratedImageFilename({
     apiName: 'ChatGPT',
     title: 'タイトル / 使用禁止:文字',
@@ -50,35 +49,4 @@ test('download helper saves the selected data URL through the browser download s
   assert.equal(clicked[2][0], 'remove');
   assert.equal(clicked[0][1].href, 'data:image/png;base64,saved-image');
   assert.equal(clicked[0][1].download, 'AI_4koma_comic_ChatGPT_title_20260916070509.png');
-});
-
-test('automatic saving reports success only after the selected directory file writer closes', async () => {
-  const writes = [];
-  const directoryHandle = {
-    async getFileHandle(filename, options) {
-      writes.push(['file', filename, options]);
-      return {
-        async createWritable() {
-          writes.push(['writer']);
-          return {
-            async write(blob) { writes.push(['write', blob]); },
-            async close() { writes.push(['close']); }
-          };
-        }
-      };
-    }
-  };
-  const blob = { size: 42, type: 'image/png' };
-
-  const result = await writeImageDataUrlToDirectory({
-    imageDataUrl: 'data:image/png;base64,saved-image',
-    filename: 'AI_4koma_comic_ChatGPT_title_20260916070509.png',
-    directoryHandle,
-    fetchFn: async () => ({ blob: async () => blob })
-  });
-
-  assert.deepEqual(result, { ok: true, filename: 'AI_4koma_comic_ChatGPT_title_20260916070509.png' });
-  assert.deepEqual(writes.map(([kind]) => kind), ['file', 'writer', 'write', 'close']);
-  assert.equal(writes[0][2].create, true);
-  assert.equal(writes[2][1], blob);
 });

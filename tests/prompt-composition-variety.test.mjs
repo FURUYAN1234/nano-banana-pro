@@ -130,6 +130,21 @@ test('normal STEP2 generation keeps expressive direction without numeric variety
   assert.match(prompt, /全身の誇張/);
 });
 
+test('strong perspective is reserved for a story beat and does not default to a foot thrust', () => {
+  const scenarioPrompt = buildNormalScenarioPrompt();
+
+  assert.match(scenarioPrompt, /足だけを手前へ大きく突き出す構図を既定にしない/);
+  assert.match(scenarioPrompt, /手・顔・重要な小道具・環境の奥行き/);
+  assert.match(MANGA_COMPOSITION_VARIETY_LOCK, /foot thrust/i);
+  assert.match(MANGA_COMPOSITION_VARIETY_LOCK, /story-relevant focal form/i);
+
+  for (const providerFamily of ['chatgpt', 'gemini']) {
+    const prompt = buildFinalPrompt(providerFamily);
+    assert.match(prompt, /story-relevant focal form/i);
+    assert.match(prompt, /foot thrust/i);
+  }
+});
+
 test('both final-prompt families retain the page lock and four panel staging assists', () => {
   assert.match(MANGA_COMPOSITION_VARIETY_LOCK, /no numeric variety quota/i);
   assert.match(MANGA_COMPOSITION_VARIETY_LOCK, /quiet.*repeated/i);
