@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test, { after, before } from 'node:test';
 import { createServer } from 'vite';
+import { readFileSync } from 'node:fs';
 
 let server;
 let buildMangaPrompt;
@@ -25,7 +26,100 @@ before(async () => {
 });
 after(async () => { await server?.close(); });
 
+test('camera is a protected projection, not movable for face or screen legibility', () => {
+  for (const provider of ['chatgpt', 'gemini']) {
+    const prompt = build(provider);
+    assert.match(prompt, /PROMPT PRIORITY:.*Camera geometry/);
+    assert.match(prompt, /CAMERA FIRST:.*never relocate.*legibility/);
+    assert.match(prompt, /Only when Camera leaves position unspecified/);
+    for (const panel of prompt.split(/## Panel \d/).slice(1)) {
+      assert.match(panel, /^\s*Camera:/);
+    }
+  }
+  const low = getPanelShotExecution('floor-level low angle, full body');
+  assert.match(low, /horizon below.*face/);
+  assert.match(low, /upward convergence/);
+  assert.match(getPanelShotExecution('telephoto close-up'), /overlapping depth planes.*similar scale/);
+});
+
+test('a distant rear camera preserves back planes without turning the wide shot into OTS', () => {
+  for (const camera of ['Observerの左後方から広角の全身ショット', 'wide rear view']) {
+    const cue = getPanelShotExecution(camera);
+    assert.match(cue, /back planes.*scripted subject/);
+    assert.doesNotMatch(cue, /shoulder foreground|tight crop/);
+  }
+  assert.doesNotMatch(getPanelShotExecution('ローアングル、背後に稲妻エフェクト'), /back planes/);
+});
+
+test('natural Japanese camera height produces projection cues, not just enlarged foreground', () => {
+  for (const camera of [
+    'Hyper Perspective／空いた床から右奥へ向けた低い斜めの引き。頭から両足先まで入れる',
+    '床すれすれの撮影位置から人物を捉える',
+    '地面近くの低い位置から撮る'
+  ]) {
+    const cue = getPanelShotExecution(camera);
+    assert.match(cue, /below.*face|look up/);
+    assert.match(cue, /underside|lower surfaces/);
+    assert.match(cue, /eye.level/);
+  }
+  assert.match(getPanelShotExecution('天板を浅く見下ろす近めの対面ショット'), /look down.*head\/shoulder tops/);
+  assert.match(getPanelShotExecution('床から低い斜めの引き。頭から両足先まで入れる'), /head-to-feet/);
+  assert.doesNotMatch(getPanelShotExecution('アイレベルの肩越し、背景ボケ'), /look up|look down/);
+  assert.doesNotMatch(getPanelShotExecution('Bokeh Depth'), /look up|look down|eye.level/);
+});
+
+test('floor camera height and viewing pitch remain separate', () => {
+  const horizontal = getPanelShotExecution('床すれすれから水平に撮る。ちびキャラを全身で捉える');
+  assert.match(horizontal, /floor.level|below.*face/);
+  assert.doesNotMatch(horizontal, /look up/);
+  const down = getPanelShotExecution('床近くから小物を見下ろす');
+  assert.match(down, /look down/);
+  assert.doesNotMatch(down, /look up|underside/);
+});
+
+test('supplied four-panel scenario retains observable height cues after prompt compaction', () => {
+  const input = readFileSync(new URL('./fixtures/camera-lettering-conflict-scenario.txt', import.meta.url), 'utf8');
+  for (const providerFamily of ['chatgpt', 'gemini']) {
+    for (const colorMode of ['color', 'monochrome']) {
+      const prompt = buildMangaPrompt({ scenario: input, castList, providerFamily, colorMode, cinematicTechniques: false });
+      const panel2 = prompt.match(/## Panel 2[\s\S]*?(?=## Panel 3)/)[0];
+      const panel3 = prompt.match(/## Panel 3[\s\S]*?(?=## Panel 4)/)[0];
+      assert.match(panel2, /SHOT EXECUTION:.*look down/);
+      assert.match(panel3, /SHOT EXECUTION:.*head-to-feet.*(?:below.*face|look up)/);
+      assert.match(panel3, /underside|lower surfaces/);
+      assert.match(prompt, /eye-line is gaze, not camera height/i);
+    }
+  }
+});
+
+test('scenario direction distinguishes shot labels from physical height and QA checks the pixels', () => {
+  const enhanced = buildScenarioEnhancementPrompt({ scenario, selectedCategories: ['camera'] });
+  assert.match(enhanced, /俯瞰.*アオリ|アオリ.*俯瞰/);
+  assert.match(enhanced, /アイレベル/);
+  const qa = quality.buildImageQualityQaPrompt({ scenario, finalPrompt: build('chatgpt') });
+  assert.match(qa, /camera_geometry:.*(?:elevation|pitch)/);
+  assert.match(qa, /large.*(?:shoe|foreground).*not.*(?:elevation|low.angle)/i);
+  assert.match(qa, /eye.level.*(?:crouch|chibi)/i);
+});
+
 const castList = '- Character [SpeakerA]: adult, short black hair, no glasses\n- Character [SpeakerB]: adult, blonde hair, glasses';
+test('zoom framing and telephoto compression are distinct observable requirements', () => {
+  for (const camera of ['ズームインで顔に寄る', 'Deep Emotion Close', 'close-up']) {
+    const cue = getPanelShotExecution(camera);
+    assert.match(cue, /tight crop/);
+    assert.doesNotMatch(cue, /compressed depth/);
+  }
+  for (const camera of ['ズームアウトの引き', 'Epic Wide']) {
+    assert.match(getPanelShotExecution(camera), /smaller.*(?:subject|figure)|subject.*smaller/);
+  }
+  for (const camera of ['望遠圧縮', 'telephoto close-up', 'long-lens shot']) {
+    assert.match(getPanelShotExecution(camera), /distant camera.*compressed depth/);
+    assert.match(getPanelShotExecution(camera), /background.*larger.*closer/);
+  }
+  assert.match(getPanelShotExecution('広角レンズ'), /near.*far.*scale/);
+  assert.match(getPanelShotExecution('Innocent High'), /look down/);
+  assert.match(getPanelShotExecution('Dominant Low'), /look up/);
+});
 const scenario = `[1コマ目: 起]
 [Camera: extreme low angle, 25 degree Dutch tilt]
 状況: SpeakerAが予定表を指さす。SpeakerBが答える。
@@ -104,6 +198,30 @@ test('normal scenario generation explicitly allows camera and body exaggeration 
   assert.match(prompt, /全身.*誇張/);
   assert.match(prompt, /静かな間/);
   assert.doesNotMatch(prompt, /この系統は4コマ中最大1コマ/);
+  assert.match(prompt, /静かな会話でも.*アオリ.*望遠/);
+  assert.match(prompt, /文字を読むコマ.*身体演技/);
+  assert.doesNotMatch(prompt, /この極限カメラを選んだコマのみ|激しい動き、狂気、ギャグの爆発シーンに使用/);
+});
+
+test('lettering is planned per beat and never promoted into an all-panel reading requirement', () => {
+  const planning = getScenarioPrompt({ inputMode: 'manual', manualTopic: '二人が掲示を読んで荷物を運ぶ', targetDate: '2026-09-17', punchlineType: 'Auto', comedyTone: 'standard', customLocation: '', customOutfit: '', newsContext: '', ragReactions: '' });
+  assert.match(planning, /証拠物の再登場.*全文を再読/);
+  assert.match(planning, /読ませる文字列.*コマ.*状況/);
+  assert.match(planning, /吹き出し.*カメラ/);
+
+  const input = `VisualEvidence: 掲示板、台車\n${scenario}`
+    .replace('SpeakerAが予定表を指さす。', 'SpeakerAが掲示板の「搬入口」を指さす。')
+    .replace('SpeakerAが椅子を引く。', 'SpeakerAが台車を引く。背景に同じ掲示板の側面が見える。');
+  for (const provider of ['chatgpt', 'gemini']) {
+    const prompt = build(provider, input);
+    assert.match(prompt, /SCENE LETTERING:.*per-panel.*no cross-panel legibility requirement/);
+    const panel1 = prompt.match(/## Panel 1[\s\S]*?(?=## Panel 2)/)[0];
+    const panel2 = prompt.match(/## Panel 2[\s\S]*?(?=## Panel 3)/)[0];
+    assert.match(panel1, /搬入口/);
+    assert.match(panel1, /extreme low angle/);
+    assert.match(panel2, /掲示板の側面/);
+    assert.doesNotMatch(panel2, /搬入口/);
+  }
 });
 
 test('single-image copy text shares expressive permission without a four-panel requirement', () => {

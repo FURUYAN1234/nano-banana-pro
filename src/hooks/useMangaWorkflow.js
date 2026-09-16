@@ -1367,6 +1367,14 @@ export default function useMangaWorkflow() {
           if (value) setGenLog(prev => [...prev, `[品質検査 / ${labels[key] || key}] ${value}`]);
         });
       }
+      for (const entry of qualityResult.spatialChecks || []) {
+        if (!entry.camera_geometry) continue;
+        const axes = { elevation: '高低・上下角', azimuth: '左右・前後', framing: '寄り引き', lens: 'レンズ遠近' };
+        for (const [axis, label] of Object.entries(axes)) {
+          const dimension = entry.camera_geometry.dimensions?.[axis];
+          if (dimension) statCallback(`[カメラ検査 / ${entry.panel}コマ / ${label} / ${dimension.status}] 指定: ${dimension.requested} / 観察: ${dimension.observed}`);
+        }
+      }
       const qualityReviewUnverified = Array.isArray(qualityOutcome.originalReview?.issues)
         && qualityOutcome.originalReview.issues.length > 0
         && qualityOutcome.originalReview.issues.every((issue) => issue?.type === 'unverified');

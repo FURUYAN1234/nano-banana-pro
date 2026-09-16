@@ -26,6 +26,12 @@ Create a SINGLE breathtaking illustration.`;
 // Synthetic reviewer responses test schema/continuation, not vision accuracy.
 const spatialChecks = (count = 4) => Array.from({ length: count }, (_, index) => ({
   panel: index + 1,
+  camera_geometry: { status: 'ok', evidence: 'Head tops/table top, rear-left overlap, full figure; no lens specified.', dimensions: {
+    elevation: { requested: 'overhead', observed: 'head tops and broad table top', status: 'ok' },
+    azimuth: { requested: 'rear-left', observed: 'left rear shoulder overlaps partner', status: 'ok' },
+    framing: { requested: 'full body', observed: 'head and both shoes inside panel', status: 'ok' },
+    lens: { requested: 'unspecified', observed: 'ordinary depth, no required lens effect', status: 'not_applicable' },
+  } },
   object_geometry: { status: 'ok', evidence: 'The page is in front of the hand; the rear finger contour is hidden at its edge.' },
   surface_text: { status: 'ok', evidence: 'The heading follows the visible page corners and tilt; the thin page edges are separate.', printed_surfaces: [{ subject: 'page', face: 'page', object_axes: 'top edge tilts right', glyph_axes: 'glyph tops tilt with page top', expected_axes: 'same tilt as page top', basis: 'explicit_contract', status: 'ok' }] },
   prop_orientation: { status: 'ok', evidence: 'The reader and overhead camera are on the printed side of the page; text points toward the reader.', surfaces: [{
@@ -34,6 +40,35 @@ const spatialChecks = (count = 4) => Array.from({ length: count }, (_, index) =>
   }] },
 }));
 const observations = { title: 'No title requested', dialogue: 'Panels 1-4 have no bubbles as requested', hands: 'No hand side requested', props: 'Paper held at its lower edge' };
+
+test('camera PASS needs separate grounded dimensions and cannot mask a failed lens or side', () => {
+  const checks = spatialChecks();
+  checks[0].camera_geometry = { status: 'ok', evidence: 'All camera work is correct.' };
+  const missing = parseImageQualityQaResponse(JSON.stringify({ pass: true, issues: [], observations, spatial_checks: checks }));
+  assert.equal(missing.pass, false);
+  assert.ok(missing.issues.some(issue => issue.subject === 'camera_geometry'));
+  const dimensions = Object.fromEntries(['elevation', 'azimuth', 'framing', 'lens'].map(axis => [axis, { requested: 'explicit source direction', observed: 'specific visible geometry', status: 'ok' }]));
+  for (const axis of ['azimuth', 'lens']) {
+    const variant = spatialChecks();
+    variant[1].camera_geometry = { status: 'ok', evidence: 'Looks good overall', dimensions: { ...dimensions, [axis]: { requested: 'specific camera effect', observed: 'visible contradiction', status: 'defect' } } };
+    const review = parseImageQualityQaResponse(JSON.stringify({ pass: true, issues: [], observations, spatial_checks: variant }));
+    assert.equal(review.pass, false);
+    assert.ok(review.issues.some(issue => issue.type === 'camera_geometry' && issue.panel === 2 && issue.reason.includes(axis)));
+  }
+});
+
+test('four-panel PASS cannot omit camera evidence or hide a failed camera projection', () => {
+  const missing = spatialChecks();
+  delete missing[2].camera_geometry;
+  const review = parseImageQualityQaResponse(JSON.stringify({ pass: true, issues: [], observations, spatial_checks: missing }));
+  assert.equal(review.pass, false);
+  assert.ok(review.issues.some(issue => issue.type === 'unverified'));
+  const mismatch = spatialChecks();
+  mismatch[2].camera_geometry = { status: 'defect', evidence: 'Requested floor-level upward view; observed horizontal view at the crouched face with visible table top and no upward projection.' };
+  const failure = parseImageQualityQaResponse(JSON.stringify({ pass: true, issues: [], observations, spatial_checks: mismatch }));
+  assert.equal(failure.pass, false);
+  assert.ok(failure.issues.some(issue => issue.type === 'camera_geometry' && issue.panel === 3));
+});
 
 test('an unsupported PASS stays unverified, while complete observations are retained', () => {
   const missing = parseImageQualityQaResponse('{"pass":true,"issues":[]}');

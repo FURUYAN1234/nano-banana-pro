@@ -282,7 +282,9 @@ const STRUCTURAL_LINE_PREFIX_PATTERN = String.raw`(?:[-*+>・●▪◦]\s*)?[【
 const STAGING_GAG_LABEL_PATTERN = String.raw`(?:演出(?:\s*[・･／/]?\s*ギャグ)?|ギャグ(?:\s*[・･／/]?\s*演出))`;
 const VISUAL_DIRECTION_LABEL_TOKEN_PATTERN = String.raw`(?:表情|身体|演出|動作|ポーズ|姿勢|目線|視線|間合い|SFX|SE|効果音|音響効果|音響|音声|BGM)`;
 const VISUAL_DIRECTION_LABEL_PATTERN = String.raw`(?:${VISUAL_DIRECTION_LABEL_TOKEN_PATTERN}(?:\s*[・･／/]\s*${VISUAL_DIRECTION_LABEL_TOKEN_PATTERN})*)`;
-const META_SPEAKER_LABEL_PATTERN = String.raw`(?:Camera|Location|Outfit|EMOTION|状況(?:演出)?|Action|リアクション|Reaction|設定|物理描写|${VISUAL_DIRECTION_LABEL_PATTERN}|SFX|SE|効果音|音響効果|音響|音声|BGM|ナレーション|テロップ|聴覚|触覚|嗅覚|体内感覚|視覚|照明|光|${STAGING_GAG_LABEL_PATTERN}|空間|構図|背景|Background|カメラワーク|CameraWork|Camera\s*Work|セリフ|台詞|Dialogue|Punchline)`;
+const SCENE_LETTERING_LABEL_PATTERN = String.raw`(?:画面(?:内)?文字|字幕|テロップ|キャプション|Screen\s*text|On[- ]screen\s*text|Caption|Subtitle)`;
+const SCENE_LETTERING_LINE_RE = new RegExp(`^\\s*${STRUCTURAL_LINE_PREFIX_PATTERN}${SCENE_LETTERING_LABEL_PATTERN}\\s*[:：]`, 'i');
+const META_SPEAKER_LABEL_PATTERN = String.raw`(?:Camera|Location|Outfit|EMOTION|状況(?:演出)?|Action|リアクション|Reaction|設定|物理描写|${VISUAL_DIRECTION_LABEL_PATTERN}|${SCENE_LETTERING_LABEL_PATTERN}|SFX|SE|効果音|音響効果|音響|音声|BGM|ナレーション|聴覚|触覚|嗅覚|体内感覚|視覚|照明|光|${STAGING_GAG_LABEL_PATTERN}|空間|構図|背景|Background|カメラワーク|CameraWork|Camera\s*Work|セリフ|台詞|Dialogue|Punchline)`;
 const STAGING_GAG_LINE_RE = new RegExp(`^\\s*${STRUCTURAL_LINE_PREFIX_PATTERN}${STAGING_GAG_LABEL_PATTERN}\\s*[:：]`);
 const META_SPEAKER_LABEL_RE = new RegExp(`^\\s*${STRUCTURAL_LINE_PREFIX_PATTERN}${META_SPEAKER_LABEL_PATTERN}\\s*[】\\]）)]?\\s*$`, 'i');
 const ACTION_VISUAL_LABEL_PATTERN = String.raw`(?:状況(?:演出)?|${STAGING_GAG_LABEL_PATTERN}|${VISUAL_DIRECTION_LABEL_PATTERN}|Situation)`;
@@ -330,6 +332,7 @@ const normalizeDialogueSpeakerPrefix = (value = '') =>
 const isGenericShortSpeakerPrefix = (value = '') => {
   const clean = normalizeDialogueSpeakerPrefix(value);
   if (!clean || clean.length > 18) return false;
+  if (META_SPEAKER_LABEL_RE.test(clean)) return false;
   if (!/[\u3040-\u30FF\u4E00-\u9FFFA-Za-zＡ-Ｚａ-ｚ]/u.test(clean)) return false;
   if (/^(?:Camera|Location|Outfit|EMOTION|Action|Reaction|Background|Punchline)$/i.test(clean)) return false;
   if (isNarrationSubjectSpeakerCandidate(clean)) return false;
@@ -901,18 +904,31 @@ const buildExplicitStagingSides = (text, castNames) => {
 
 const extractExplicitRearSubject = (text, castNames) => {
   // 台詞内の比喩は除外し、Camera行とト書きの明示構図を読む。
-  const cameraText = [
-    ...(String(text || '').match(CAMERA_INSTRUCTION_LINE_RE) || []),
-    String(text || '').replace(/[「『"][^」』"\n]*[」』"]/g, '')
-  ].join(' ');
-  if (!cameraText) return '';
+  const cameraText = (String(text || '').match(CAMERA_INSTRUCTION_LINE_RE) || []).join(' ');
+  const shoulderCamera = /肩|ショルダー|shoulder|\bOTS\b/i.test(cameraText);
+  const actionText = String(text || '').replace(CAMERA_INSTRUCTION_LINE_RE, '').replace(/[「『"][^」』"\n]*[」』"]/g, '');
+  // Cameraの撮影位置を優先し、Action内の人物の立ち位置を撮影位置と取り違えない。
+  for (const [source, isCamera] of [[cameraText, true], [actionText, false]]) {
+    const subject = castNames.find((name) => {
+      const escapedName = escapeRegex(name);
+      const japaneseShoulder = new RegExp(`\\[?${escapedName}\\]?(?:の)?(?:右|左)?(?:肩|ショルダー)(?:越し|ごし)`, 'i');
+      const englishShoulder = new RegExp(`(?:over|from\\s+behind|behind)\\s+(?:the\\s+)?\\[?${escapedName}\\]?(?:['’]s)?\\s+(?:(?:right|left)\\s+)?shoulder`, 'i');
+      const japaneseRear = new RegExp(`\\[?${escapedName}\\]?の(?:右|左)?(?:後方|後ろ|背後|背中側)`, 'i');
+      const englishRear = new RegExp(`(?:from\\s+)?behind\\s+(?:the\\s+)?\\[?${escapedName}\\]?(?![\\p{L}\\p{N}_])`, 'iu');
+      return japaneseShoulder.test(source) || englishShoulder.test(source)
+        || (isCamera && shoulderCamera && (japaneseRear.test(source) || englishRear.test(source)));
+    });
+    if (subject) return subject;
+  }
+  return '';
+};
 
-  return castNames.find((name) => {
-    const escapedName = escapeRegex(name);
-    const japaneseShoulder = new RegExp(`\\[?${escapedName}\\]?(?:の)?(?:右|左)?(?:肩|ショルダー)(?:越し|ごし)`, 'i');
-    const englishShoulder = new RegExp(`(?:over|from\\s+behind|behind)\\s+(?:the\\s+)?\\[?${escapedName}\\]?(?:['’]s)?\\s+(?:(?:right|left)\\s+)?shoulder`, 'i');
-    return japaneseShoulder.test(cameraText) || englishShoulder.test(cameraText);
-  }) || '';
+// 明示された左右・前後関係を、台詞順から作る既定スロットで上書きしない。
+const hasScriptedSpatialStaging = (text = '') => {
+  const camera = (String(text).match(CAMERA_INSTRUCTION_LINE_RE) || []).join(' ');
+  const action = String(text).replace(/[「『"][^」』"\n]*[」』"]/g, '');
+  return /左|右|手前|奥|前景|中景|後景|背後|後方|肩越し|foreground|midground|background|behind|over[ -]the[ -]shoulder|front[- ](?:left|right)|rear/i.test(camera)
+    || /(?:画面|コマ)(?:の)?(?:右|左)|(?:左|右)(?:手前|奥|前景|端)|(?:前景|中景|後景)|screen[- ](?:left|right)|foreground|midground|background/i.test(action);
 };
 
 const buildRequiredDepthAssignment = (speakers, listeners, requireVisibleRear = false, explicitRearSubject = '', functionalActionMode = '') => {
@@ -1178,7 +1194,7 @@ export const extractActionOnly = (fullPanelText, castList, placementRule = "") =
 
   const visualDirectionQuotes = [];
   let actionStr = actionLines.map((line) => {
-    if (!STAGING_GAG_LINE_RE.test(line) && !ACOUSTIC_VISUAL_LINE_RE.test(line)) return line;
+    if (!STAGING_GAG_LINE_RE.test(line) && !ACOUSTIC_VISUAL_LINE_RE.test(line) && !SCENE_LETTERING_LINE_RE.test(line)) return line;
     const protectedLine = line.replace(ACTION_QUOTED_TEXT_RE, (match) => {
       const token = `\uE100${visualDirectionQuotes.length}\uE101`;
       visualDirectionQuotes.push(match);
@@ -1292,6 +1308,11 @@ export const extractPlacementRule = (fullPanelText, castList, options = {}) => {
     }
   });
 
+  if (speakers.length > 0 && hasScriptedSpatialStaging(fullPanelText)) {
+    const identities = speakers.map(name => `[${name}] (${compactIdentityTraits(getCharTraitsFromMatrix(name, castList, { monochrome }))})`).join('; ');
+    if (compact) return `PLACEMENT/IDENTITY: ${identities}. Camera/Action positions; no dialogue-order slots.`;
+    return `PLACEMENT/IDENTITY: ${identities}. Preserve Camera/Action screen positions and depth; do not derive body positions from dialogue order. Bubbles flow right-to-left in dialogue order with tails to their actual speakers.`;
+  }
   if (speakers.length >= 3) {
     // [v2.33] 3-Zone Slotting: 3人以上の掛け合いパネル対応
     const traits0 = getCharTraitsFromMatrix(speakers[0], castList, { monochrome });
@@ -1529,7 +1550,12 @@ export const extractCastLimitRule = (fullPanelText, castList, options = {}) => {
     );
 
     let spatialConstraint;
-    if (hasMob) {
+    if (!explicitRearActor && hasScriptedSpatialStaging(fullPanelText)) {
+      const depthRule = compact
+        ? 'CAST DEPTH: Camera/Action layers win; no speaker-based FG slots or duplicates.'
+        : 'CAST DEPTH: preserve Camera/Action foreground, midground and background assignments; speaking does not force a foreground position. Each named actor occupies one depth position only; never duplicate across layers.';
+      spatialConstraint = `\n${depthRule}${negativeConstraint}\n${hasMob ? 'Allow only the background people required by Action.' : `NO OTHER HUMANS: exactly ${allPanelCharacters.length} people.`}`;
+    } else if (hasMob) {
       spatialConstraint = compact
         ? `\nFG only: ${foreground}. BG only: ${background} plus required adult mobs.${negativeConstraint}${otsInstanceConstraint}\nNo repeated FG characters in BG.`
         : `\nFOREGROUND MUST CONTAIN ONLY: ${foreground}.\nBACKGROUND MUST CONTAIN ONLY: ${background} and background characters (mob).\n${negativeConstraint}${otsInstanceConstraint}\nAllow additional background characters (mobs) as required by the action. Do not draw any main character in the background if they are already in the foreground.`;

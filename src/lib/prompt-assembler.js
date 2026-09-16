@@ -275,18 +275,20 @@ const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt
     .replace(/CROSS-PANEL WARDROBE TONE LOCK:\n- Assign[^\n]*/g, 'CROSS-PANEL WARDROBE TONE LOCK: fix garment items/patterns and white/black/halftone regions once across panels; styles change ink treatment only.')
     .replace(/^MONOCHROME STYLE DIFFERENCE QA:[^\n]*/gm, 'MONOCHROME STYLE DIFFERENCE QA: selected ink style; no numeric quota; keep script/identity/wardrobe/layout/camera/acting/fixed tones.')
     // Geometry/azimuth contracts are already global; reserve space for visible shot cues.
+    .replace(/^VFX: style overlay only; preserve readable action\.\n/gm, '')
     .replace(/^- Reproduce reference geometry and design using black ink\/white paper:[^\n]*/gm, '- Reference geometry/design only; no feature swapping.')
     .replace(/^- Adults 20\+\. Same face\/hair\/glasses\/outfit shapes and ink\/tone assignments; lit skin always white\.$/gm, '- Adults 20+. Same shapes/ink tones; lit skin white.')
     .replace(/^- REFERENCE ROLE: shape\/design only; no source color or sheet labels\/layout\/poses\.$/gm, '- REFERENCE ROLE: shape/design; no hue, sheet labels/layout/poses.')
     .replace(/^FUNCTIONAL SURFACE PANEL CHECK:[^\n]*/gm, 'FUNCTIONAL SURFACE PANEL CHECK: target/side/axes.')
     .replace(/^COMPOSITION STAGING: PRESERVE EXPLICIT AZIMUTH[^\n]*/gmi, 'COMPOSITION STAGING: PRESERVE EXPLICIT AZIMUTH.')
+    .replace(/^COMPOSITION STAGING: (LEFT-FRONT OBLIQUE|RIGHT-FRONT OBLIQUE|REAR THREE-QUARTER|DIAGONAL LEFT-FRONT)[^\n]*/gm, 'COMPOSITION STAGING: $1.')
     .replace(/^BODY ACTING \/ GESTURE VARIETY LOCK:[^\n]*/gm, MANGA_GESTURE_VARIETY_LOCK_COMPACT)
     .replace(/^- Draw in a high-budget, chic and cinematic full-color TV anime style\.[^\n]*/gm, '- Chic cinematic full-color TV anime: delicate detailed faces/eyes, dramatic light, deep color grading, sharp clean ink; polished Japanese animation finish.')
     .replace(/; pose, expression, saturation, glow, or speed lines alone are insufficient; reject/g, '; reject')
     .replace(/RICH PANEL COMPOSITION \/ CHARACTER CLARITY LOCK:[^\n]*/g, RICH_PANEL_COMPOSITION_LOCK_COMPACT)
     // Story beats already remain verbatim in each Action; retain a short exact reference.
     .replace(/^- Panel (\d+) required story beat: EXACT Panel \1 Action below$/gm, '- Panel $1: exact Action below.')
-    .replace(/^EYE-LINE LOCK:[^\n]*VIEWPOINT FREEDOM:[^\n]*/gm, line => line.replace('Camera preserves scenario direction.', 'Script camera wins.'))
+    .replace(/^EYE-LINE LOCK:[^\n]*VIEWPOINT FREEDOM:[^\n]*/gm, line => line.replace(/VIEWPOINT FREEDOM:.*$/, 'VIEWPOINT FREEDOM: exact Camera projection.'))
     .replace(/^EYE-LINE LOCK:[^\n]*/gm, compactBudgetEyeLine)
     .replace(/^PLACEMENT\/IDENTITY:[^\n]*/gm, line => line.replace(/ \(bare eyes, no frames\)/g, ''));
 };
@@ -505,12 +507,12 @@ export const buildMangaPrompt = ({
       const rawCamera = getCameraForChatGPT(pt, cameraState);
       const camera = isConversation ? sanitizeConversationCamera(rawCamera) : rawCamera;
       return `## Panel ${num}
+Camera: ${camera}
+${getPanelShotExecution(camera)}
 ${isMonochrome ? MONOCHROME_PANEL_INK_CHECK : ''}
 ${buildEmotionBlock(pt, colorMode, { preserveReferenceStyle })}
 ${extractPlacementRule(pt, castList, { compact: true, colorMode }).replace(/\\\\[/g, '').replace(/\\\\]/g, '')}
 ${extractCastLimitRule(pt, castList, { compact: true }).replace(/\\\\[/g, '').replace(/\\\\]/g, '')}
-Camera: ${camera}
-${getPanelShotExecution(camera)}
 COMPOSITION STAGING: ${getPanelCompositionAssist(pt, num, { compact: true })}
 ${FUNCTIONAL_SURFACE_PANEL_CHECK}
 ${eyeLineRule}
@@ -546,12 +548,12 @@ Dialogue (verbatim bubbles): ${extractDialogueOnly(pt, castList, { forImagePromp
         })()
         : '';
       return `## Panel ${num}
+Camera: ${camera}.
+${getPanelShotExecution(camera)}
 ${isMonochrome ? MONOCHROME_PANEL_INK_CHECK : ''}
 ${buildEmotionBlock(pt, colorMode, { preserveReferenceStyle })}
 ${extractPlacementRule(pt, castList, { colorMode })}
 ${extractCastLimitRule(pt, castList)}
-Camera: ${camera}.
-${getPanelShotExecution(camera)}
 COMPOSITION STAGING: ${getPanelCompositionAssist(pt, num)}
 ${FUNCTIONAL_SURFACE_PANEL_CHECK}
 ${lensRule}

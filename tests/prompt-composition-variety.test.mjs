@@ -116,6 +116,11 @@ test('panel composition helper preserves explicit azimuth and fills missing hori
   );
 });
 
+test('actor hand directions are not mistaken for a specified camera azimuth', () => {
+  assert.match(getPanelCompositionAssist('[Camera: 俯瞰]\n状況: SpeakerAが右手を上げる。', 2), /RIGHT-FRONT OBLIQUE/);
+  assert.match(getPanelCompositionAssist('[Camera: 左前斜めから撮る]\n状況: SpeakerAが右手を上げる。', 2), /PRESERVE EXPLICIT AZIMUTH/);
+});
+
 test('normal STEP2 generation keeps expressive direction without numeric variety quotas', () => {
   const prompt = buildNormalScenarioPrompt();
 

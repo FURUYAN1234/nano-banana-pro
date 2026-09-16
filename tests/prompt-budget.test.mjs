@@ -139,6 +139,7 @@ test('ChatGPT manga prompt stays within the empirical Web-copy soft budget witho
   assert.match(prompt, /exact hand pose\/contact\/gaze/);
   assert.match(prompt, /no stock-pose substitution/);
   assert.match(prompt, /SCENE LETTERING:.*explicit/);
+  assert.match(prompt, /per-panel object text.*no cross-panel legibility requirement unless scripted/);
   assert.match(prompt, /no incidental slogans.*pseudo-lettering/);
   assert.match(prompt, /OBJECT GEOMETRY LOCK/);
   assert.match(prompt, /Text follows actual cover\/spine\/page\/label face axes and perspective/);

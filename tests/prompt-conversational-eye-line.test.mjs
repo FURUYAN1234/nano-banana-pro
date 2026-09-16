@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test, { after, before } from 'node:test';
 import { createServer } from 'vite';
+import { readFile } from 'node:fs/promises';
 
 let server;
 let buildMangaPrompt;
@@ -69,6 +70,87 @@ const NORMAL_CONVERSATION = `
 Action: SpeakerA and SpeakerB sit opposite one another and discuss the draft.
 SpeakerA「What do you think of this scene?」
 SpeakerB「The emotion should be clearer.」`;
+
+test('named rear camera and screen positions override dialogue-order staging', () => {
+  for (const rear of ['SpeakerAの左後方', 'SpeakerAの右後ろ', 'from behind SpeakerA']) {
+    const scene = `[Camera: Over The Shoulder／${rear}、肩の高さからの中景。SpeakerAの横顔を左手前、SpeakerBの顔を右奥に置く]
+Action: SpeakerA operates the screen and turns toward SpeakerB. SpeakerB replies.
+SpeakerA「確認しよう。」
+SpeakerB「そうだね。」`;
+    for (const provider of ['chatgpt', 'gemini']) {
+      const panel = panelTwoSection(buildPrompt(provider, scene));
+      assert.match(panel, /camera is physically behind \[SpeakerA\]'s shoulder/i);
+      assert.doesNotMatch(panel, /camera is physically behind \[SpeakerB\]'s shoulder/i);
+      assert.doesNotMatch(panel, /RIGHT \[SpeakerA\]|RIGHT side: \[SpeakerA\]|RIGHT ZONE: \[SpeakerA\]/);
+      assert.match(panel, /左手前/);
+      assert.match(panel, /\[SpeakerA\].*(?:sole instance|one and only instance)/);
+    }
+  }
+});
+
+test('a distant rear camera does not invent an over-the-shoulder foreground', () => {
+  const scene = `[Camera: SpeakerAの後方から全身を小さく入れる遠景]
+Action: SpeakerA speaks to SpeakerB across an empty courtyard.
+SpeakerA「遠くまで来たね。」
+SpeakerB「戻ろうか。」`;
+  for (const provider of ['chatgpt', 'gemini']) {
+    const panel = panelTwoSection(buildPrompt(provider, scene));
+    assert.doesNotMatch(panel, /VISIBLE REAR DEPTH CHECK|OTS CAST INSTANCE LOCK|GEMINI REAR-FOREGROUND LOCK/);
+  }
+});
+
+test('the supplied four-panel scenario preserves camera geometry and closing lettering through assembly', async () => {
+  const scenario = await readFile(new URL('./fixtures/camera-lettering-conflict-scenario.txt', import.meta.url), 'utf8');
+  const castList = '## ミク\n- blonde hair, no glasses\n## リン\n- brown twin tails, glasses\n## サエコ\n- black hair, no glasses\n## アカリ\n- orange bob, no glasses\n## ヒカリ\n- blonde bob, glasses';
+  for (const providerFamily of ['chatgpt', 'gemini']) {
+    const prompt = buildMangaPrompt({ scenario, castList, colorMode: 'color', providerFamily, punchlineType: 'Auto', systemVersion: 'v6.3.0-test' });
+    const first = prompt.match(/## Panel 1[\s\S]*?(?=## Panel 2)/)[0];
+    const third = prompt.match(/## Panel 3[\s\S]*?(?=## Panel 4)/)[0];
+    const last = prompt.split('## Panel 4')[1];
+    assert.match(first, /camera is physically behind \[ミク\]'s shoulder/);
+    assert.doesNotMatch(first, /RIGHT \[ミク\]|RIGHT side: \[ミク\]|physically behind \[ヒカリ\]/);
+    assert.match(third, /頭から両足先まで/);
+    assert.doesNotMatch(third, /(?:FG only|FOREGROUND MUST CONTAIN ONLY): \[ミク\] and \[ヒカリ\]/);
+    assert.doesNotMatch(prompt, /\[画面文字\]/);
+    assert.match(last, /Action[^\n]*本作は公開範囲の調整中に打ち切りとなりました。/);
+    assert.doesNotMatch(last.split('Dialogue (')[1], /本作は公開範囲/);
+    assert.match(last.split('Dialogue (')[1], /続きは非公開で。/);
+    for (const camera of scenario.matchAll(/\[Camera: ([^\]]+)\]/g)) assert.ok(prompt.includes(camera[1]));
+  }
+});
+
+test('explicit foreground and background depths do not become a row of speakers', () => {
+  const scene = `[Camera: Hyper Perspective／床からの低い引き。手前のSpeakerAを大きく、奥のSpeakerBを小さく見せる]
+Action: SpeakerA crouches and speaks to SpeakerB, who reacts from the far side.
+SpeakerA「ここへ隠れよう。」
+SpeakerB「見えているよ。」`;
+  for (const provider of ['chatgpt', 'gemini']) {
+    const panel = panelTwoSection(buildPrompt(provider, scene));
+    assert.doesNotMatch(panel, /(?:FG only|FOREGROUND MUST CONTAIN ONLY): \[SpeakerA\] and \[SpeakerB\]/);
+    assert.match(panel, /each EXACTLY ONCE|each appears EXACTLY ONCE/);
+    assert.match(panel, /exactly 2 people|EXACTLY 2 distinct individuals/);
+    assert.doesNotMatch(panel, /Slots fixed|BODY POSITION LOCK/);
+  }
+});
+
+test('scene lettering stays in Action and never becomes a speaker, eye-line target or bubble', () => {
+  for (const label of ['画面文字', '画面内文字', '字幕', 'テロップ', 'Screen text', 'Caption']) {
+    const scene = `[Camera: Bokeh Depth／腰の高さからの引き]
+Action: SpeakerA closes a curtain and turns toward SpeakerB, who silently reacts. Place the caption on the curtain.
+${label}: 「公開の準備中です。」
+SpeakerA「また明日。」`;
+    for (const provider of ['chatgpt', 'gemini']) {
+      const panel = panelTwoSection(buildPrompt(provider, scene));
+      const dialogue = panel.split('Dialogue (')[1] || '';
+      const eyeLine = panel.match(/EYE-LINE LOCK:[^\n]*/)?.[0] || '';
+      assert.doesNotMatch(dialogue, /公開の準備中です。/);
+      assert.ok(!eyeLine.includes(`[${label}]`), eyeLine);
+      assert.ok(!panel.includes(`[${label}]`), label);
+      assert.match(panel, /Action[^\n]*公開の準備中です。/);
+      assert.match(dialogue, /また明日。/);
+    }
+  }
+});
 
 const DIRECT_ADDRESS = `
 [Camera: Eye-level medium shot]

@@ -315,6 +315,7 @@ export const getScenarioPrompt = ({
         4.8 **【出来事を証明する視覚証拠 (Visual Story Evidence)】**:
            - 元のニュース本文またはユーザー入力から、その出来事であることを絵だけで証明できる、短く具体的で描画可能な名詞を3〜5個抽出せよ。
            - 抽出語は VisualEvidence 行に「、」区切りで記載し、その完全に同じ語を最低2コマの「状況」に分散してコピーせよ。4コマ全体で最低2種類の証拠を実際に使うこと。
+           - 証拠物の再登場は、同じ面や全文を再読させる指定ではない。文字は情報の提示・変化・オチに必要なコマへ割り当て、読ませる文字列と対象コマをそのコマの状況に明記する。既に伝えた情報を再読する必要のないコマでは、物の同一性・状態・位置を保ち、側面・背面・画角外・遠景としてよい。ユーザーが明示した文字や反復指定は保持する。
            - 単なる場所名、天気、時刻、感情、抽象語ではなく、出来事固有の設備・主要物体・関係者・行為を優先すること。
            - すべてのコマへ同じ物を不自然に置かず、出来事の導入・展開・結果が分かるコマへ自然に配置すること。
         ${SCENARIO_PROP_CAUSALITY_RULES}
@@ -559,14 +560,14 @@ ${styleJson.anti_patterns ? `            - 絶対禁止事項:\n${styleJson.anti
 
           6. **【カメラ演出タグ (Camera Direction Tag) — 極限物理描写 & シネマティック構図 v4.5】**:
              - 各コマの冒頭に [Camera: XXX] タグを**必ず1つ**付与せよ。
-             - シーンの文脈（アクションか、エモーショナルか）に応じて、**【A. アクション向け極限カメラ】** または **【B. シネマティック構図10選】** のいずれかから最適なものを1つ選べ。
+             - 物語の注視対象と実際の身体・小道具の配置から撮影位置を決め、以下のA/Bを併用して最適なCameraを記述する。静かな会話でも俯瞰・アオリ・望遠・広角・寄り引きを使える。高低や焦点距離を感情の激しさや特定の性格に結びつけない。
              
-             **【A. アクション向け極限カメラ（歪み重視）】**: 激しい動き、狂気、ギャグの爆発シーンに使用。
+             **【A. 撮影位置とレンズ】**: 会話・静止・アクションのいずれでも、出来事を伝える視点を選ぶ。強度は物語に合わせる。
              - 選択肢: 俯瞰/バードアイ、ローアングル/アオリ、ダッチアングル、超広角/フィッシュアイ、望遠圧縮、ワームズアイ、ドローン俯瞰、パンニング/追跡ショット
-             - 物理描写の書き方（この極限カメラを選んだコマのみ）: 「カメラがどこにあり」「どの遠近・光で動作を強調するか」を具体的に書け。静かなコマに巨大化や歪みを追加するな。
+             - 全てのCameraで「カメラがどこにあり」「どの面が見えるか」「人物と背景の大きさがどう違うか」を具体化する。静かなコマでも明確な高低差や距離の圧縮を使い、不要な身体の変形や騒がしい効果は足さない。
                 * 例（ローアングル）: 「膝の高さから見上げ、キャラの全身がそびえ立つ巨人のように見え、背後の天井や空が大きく広がる。逆光が後ろから吹き荒れる」
              
-             **【B. シネマティック構図10選（美しさ・感情重視）】**: 歪ませず、プロの写真のような美しい構図で感情や空気を表現するシーンに使用。
+             **【B. 構図の呼び名】**: Aの撮影位置・レンズと組み合わせる。名称は高さや演技を決定しない。
              - 選択肢（この通りに英語名で書くこと）: 
                 1. Epic Wide（壮大な背景・スケール感）
                 2. Dominant Low（強者感・見下し・ヒロイック）
@@ -581,7 +582,7 @@ ${styleJson.anti_patterns ? `            - 絶対禁止事項:\n${styleJson.anti
              - 物理描写の書き方: 「どういう構図で」「光とボケがどう美しく演出しているか」を具体的に書け。
                 * 例（Aesthetic Thirds）: 「画面の三分の一にキャラクターを配置し、豊かな余白が美しい空気感を生む。プロの写真のような計算された構図」
              
-             - 【制約】4コマの中で**同じカメラを2回以上使うのは禁止**。必ず4種類の異なるカメラを選べ。⚠️ マクロ特写（目だけの超接写等）は使用禁止。
+             - カメラ名の種類数ではなく、実際の高さ・向き・写る範囲・遠近感でコマの変化を作る。明示された反復構図は保持する。⚠️ マクロ特写（目だけの超接写等）は使用禁止。
             ${SCENARIO_COMPOSITION_VARIETY_RULES}
             ${SCENARIO_GESTURE_VARIETY_RULES}
             ${SCENARIO_READING_RHYTHM_RULES}
@@ -762,7 +763,7 @@ const RICH_PANEL_COMPOSITION_LOCK = `RICH PANEL COMPOSITION / CHARACTER CLARITY 
 
 export const RICH_PANEL_COMPOSITION_LOCK_COMPACT = 'RICH PANEL COMPOSITION / CHARACTER CLARITY LOCK: setting or scripted abstraction; story evidence/actions/reactions clear.';
 
-const SCENE_LETTERING_LOCK = 'SCENE LETTERING: only explicit object text; no incidental slogans/menu entries/book titles/pseudo-lettering. Other surfaces unlettered. Keep exact title/dialogue/required text/watermarks.';
+const SCENE_LETTERING_LOCK = 'SCENE LETTERING: only explicit per-panel object text; prop continuity adds no cross-panel legibility requirement unless scripted. Keep Camera projection, exact title/dialogue/required text/watermarks; no incidental slogans/menu entries/book titles/pseudo-lettering. Other surfaces unlettered.';
 
 // 4コマの焦点・密度差を調整し、1枚絵の基準は変更しない。
 const MANGA_IMAGE_QUALITY_CONTRACT = SHARED_IMAGE_QUALITY_CONTRACT.replace(

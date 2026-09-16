@@ -17,7 +17,10 @@ export const SCENARIO_COMPOSITION_VARIETY_RULES = `
              - **【物語に合わせた水平方位・ポーズの設計】**:
                * カメラの高低差・傾き・強い遠近感と画角の大胆な変化を積極的に使う。会話場面でも机周りの中景や肩越しに固定しない。
                * 各[Camera:]タグには、ショット種類・高さ・傾きだけでなく、被写体に対する水平方位（左前斜め／右前斜め／背後寄り3/4／肩越し等）を物理的に明記せよ。
+               * カメラ名の変更だけを変化として数えない。肩越し・三分割・ボケは高さを指定しない。アオリ／俯瞰、上下左右の撮影位置、寄り引き、レンズの遠近感を別々に設計し、会話や静かな場面をアイレベルへ一律に揃えない。ズームインは被写体が占める範囲、ズームアウトは人物の小ささと周囲の広がり、望遠効果は遠い撮影位置と長い焦点距離による背景の相対的な大きさ・距離の圧縮で示す。ボケだけを望遠効果としない。
                * 画角を目に見える構図へ翻訳する。俯瞰なら頭頂と机の天面と床の奥行き、床近くの煽りなら物語上の見せ場に合う手・顔・重要な小道具・環境の奥行きから上へ伸びる身体、傾きなら斜めに走る床・机・身体の軸を具体的にCameraへ書く。足だけを手前へ大きく突き出す構図を既定にしない。走る・踏み込む・蹴るなど脚の動き自体が見せ場のときだけ、支持脚と重心が読める足の短縮遠近法を使う。強度語だけで済ませない。
+               * 新規構成では文字を読むコマと身体演技を見せるコマの役割を考え、毎コマで画面の全文・全員の顔・全身を同時に見せる必要を作らない。アオリは対象の顔より低い撮影位置と見える下面、望遠は異なる距離の既存の人物・環境の比較を確保する。ちびキャラや低い姿勢でも投影をアイレベルへ戻さない。既存台本では台詞・出来事・明示された可読文字や動作を削除せず、その条件で成立する見せ方を選ぶ。
+               * 物に印字された文字と吹き出し・字幕を区別する。印字は物の面と同じ透視投影に従い、吹き出し・字幕の可読性はカメラの高さや向きを拘束しない。文字を読むコマでも正面・アイレベルを既定にせず、指定文言と物の使用方向を保てる斜め・俯瞰などの位置を選ぶ。
                * 水平方位やショットの種類数にノルマを設けず、見せ場と静かな間に合う位置を選ぶ。未指定部分には左右・前後・高低・寄り引きの変化を使い、指定された正面・アイレベル・反復構図は保持する。
                * 主役の肩・腰・顔の向きは視線と動作に合わせる。動きの見せ場には自然なひねりと前後差を使い、静止や左右対称が指定された場面へ角度やひねりを追加しない。
                * 両手を使う動作では、Actionの内容と手の本数を保ったまま、左右の手に前後差・高さ差・役割差をつける。両手を同じ高さでレンズ側へ広げる左右対称ポーズを既定値にするな。
@@ -56,14 +59,15 @@ export const SCENARIO_GESTURE_VARIETY_RULES = `
 
 export const MANGA_COMPOSITION_VARIETY_LOCK = `MANGA CAMERA / POSE VARIETY LOCK:
 - Preserve scripted Camera/Action, props, limbs and eye-lines, including quiet and repeated shots, frontal views and symmetry. There is no numeric variety quota.
+- Eye-line is gaze, not camera height. Execute elevation, azimuth, crop and lens depth separately; chibi, large foreground, OTS or bokeh alone do not establish a different camera angle.
 - Where direction is unspecified, use story-motivated changes in azimuth, height, tilt, scale and depth; retain bold perspective and readable body acting at the story's peak. When strong perspective serves that beat, choose one story-relevant focal form (hand, face, key prop, or environmental depth); do not default to a foot thrust. Use a foreshortened foot only when the scripted action makes the leg itself the story-relevant focal form.
 - COMPOSITION STAGING fills an unspecified azimuth only. Turn the torso and stagger hands in depth/height when the Action permits; preserve exact hand roles, support and contacts.
 - VFX follows the chosen camera and never forces a different pose or framing.`;
 
-export const MANGA_COMPOSITION_VARIETY_LOCK_COMPACT = 'MANGA CAMERA / POSE VARIETY LOCK: Camera wins. Strong perspective: story-relevant focal form: hand/face/prop/depth; not foot thrust; foot only for leg beat. Stagger hands in depth.';
+export const MANGA_COMPOSITION_VARIETY_LOCK_COMPACT = 'MANGA CAMERA / POSE VARIETY LOCK: Camera wins. Eye-line is gaze, not camera height. Use story-relevant focal form; not default foot thrust. Stagger hands in depth.';
 
 // 4コマの追加演出だけを従属させ、台本・人物・媒体の制約は短縮時も保持する。
-export const MANGA_PROMPT_PRIORITY = 'PROMPT PRIORITY: protect cast/count/identity/glasses, wardrobe, exact script, layout/style/medium. Simplify only unspecified background texture and decorative VFX. Never print.';
+export const MANGA_PROMPT_PRIORITY = 'PROMPT PRIORITY: protect cast/count/identity/glasses, wardrobe, exact script, Camera geometry, layout/style/medium. CAMERA FIRST: project actors/props from fixed Camera; never relocate for legibility or chibi. No screen-left/right mirroring. Simplify only unspecified background texture and decorative VFX. Never print.';
 
 export const MANGA_GESTURE_VARIETY_LOCK = `BODY ACTING / GESTURE VARIETY LOCK:
 - A reference-sheet pose is identity evidence, not a recurring action or personality signature. Reproduce identity and clothing, but derive acting from the current story beat.
@@ -87,16 +91,26 @@ export const SCENARIO_SHOT_DESIGN_RULES = `【画角と身体動作の一体設�
 export const getPanelShotExecution = (camera = '') => {
   const text = String(camera);
   const cues = [];
-  const close = /close|アップ|寄り|接写/i.test(text);
-  if (!close && /full[ -]body|head.to.(?:toe|feet)|全身|頭から(?:足先|つま先|靴)|足元から上半身/i.test(text)) cues.push('head-to-feet inside panel with headroom and floor beyond BOTH shoes; hips/knees/feet unobscured');
-  if (/overhead|high[ -]angle|俯瞰|真上|斜め上|上から/i.test(text)) cues.push('look down: head/shoulder tops, shortened torsos, upper prop faces; keep projection even with omitted BG');
-  else if (/low[ -]angle|dominant low|floor.level|ground.level|ローアングル|煽り|下から|見上げ/i.test(text)) cues.push('look up from low camera; large near plane, rising body axes');
-  if (/dutch|tilt|傾き|傾斜/i.test(text)) cues.push('tilt scene axes, not only faces');
+  const close = /close[ -]?up|deep emotion close|zoom[ -]?in|ズームイン|アップ|寄りの|寄る|接写/i.test(text);
+  const full = /full[ -]body|graceful full shot|head.to.(?:toe|feet)|全身|頭から(?:両)?(?:足先|つま先|靴)|足元から上半身/i.test(text);
+  const floor = /(?:floor|ground)[ -]level|(?:床|地面)(?:すれすれ|近く|付近|から)|低い(?:撮影)?位置/i.test(text);
+  const horizontal = /水平(?:に|の|を保)|horizontal|level aim/i.test(text);
+  if (close) cues.push('tight crop on focal subject');
+  else if (full) cues.push('head-to-feet inside panel with headroom and floor beyond BOTH shoes; hips/knees/feet unobscured');
+  else if (/zoom[ -]?out|ズームアウト|引き|全景|遠景|epic wide|wide shot|long shot/i.test(text)) cues.push('smaller subject; more setting');
+  if (/overhead|high[ -]angle|innocent high|俯瞰|真上|斜め上|上から|見下ろ[すし]/i.test(text)) cues.push('look down: head/shoulder tops, shortened torsos, upper prop faces; keep projection even with omitted BG');
+  else if (!horizontal && /low[ -]angle|dominant low|ローアングル|アオリ|煽[りる]|下から|見上げ/i.test(text)) cues.push('look up: lower face/prop undersides, horizon below face, upward convergence; chibi too; not eye-level');
+  else if (floor) cues.push(`floor-level camera below faces even when crouched/chibi; ${horizontal ? 'keep horizontal aim and a low horizon' : 'project nearby prop undersides from below'}; do not reset to subject eye-level`);
+  if (/の(?:左|右)?(?:後方|後ろ|背中側)|rear[ -]view|from (?:the )?(?:(?:left|right)[ -])?rear/i.test(text)) cues.push('show back planes of the scripted subject; preserve crop/distance, no forced close OTS');
+  if (/telephoto|long[ -]lens|望遠/i.test(text)) cues.push('distant camera + long focal length: compressed depth, background relatively larger/closer; overlapping depth planes at similar scale, weak convergence of receding edges; not blur alone');
+  else if (/wide[ -]angle|fisheye|広角|魚眼|hyper perspective/i.test(text)) cues.push('near/far scale contrast; keep focal subject');
+  if (/dutch|tilt|cinematic slant|傾き|傾斜/i.test(text)) cues.push('tilt scene axes, not only faces');
   return cues.length ? `SHOT EXECUTION: ${cues.join('; ')}.` : '';
 };
 
 export const getPanelCompositionAssist = (panelText, panelNumber, { compact = false } = {}) => {
-  if (EXPLICIT_AZIMUTH_RE.test(String(panelText || ''))) {
+  const camera = String(panelText || '').match(/\[Camera:\s*([^\]]+)\]/i)?.[1] || '';
+  if (EXPLICIT_AZIMUTH_RE.test(camera)) {
     return compact
       ? 'PRESERVE EXPLICIT AZIMUTH; keep scripted body orientation and symmetry.'
       : 'PRESERVE EXPLICIT AZIMUTH: keep the scenario\'s named horizontal direction, body orientation and symmetry; do not add a conflicting turn.';
