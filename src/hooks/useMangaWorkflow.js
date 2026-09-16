@@ -719,7 +719,8 @@ export default function useMangaWorkflow() {
         randomCategory = activeCats.map(c => c.keywords).join(' ');
         showStatus(`カテゴリ「${activeCats.map(c => c.label).join('・')}」で最新ニュースを検索中... (${targetDate})`);
         setScenario("");
-        setScenarioThought(`> コンテキスト強制リブート: 開始\n > 対象カテゴリ: ${activeCats.map(c => c.label).join('、')} (キーワード: ${randomCategory}) \n > 対象日付: ${targetDate} \n > Google Grounding で検索中...`);
+        const searchProvider = isOpenAIEngine ? 'OpenAI Web Search' : 'Google Grounding';
+        setScenarioThought(`> コンテキスト強制リブート: 開始\n > 対象カテゴリ: ${activeCats.map(c => c.label).join('、')} (キーワード: ${randomCategory}) \n > 対象日付: ${targetDate} \n > ${searchProvider} で検索中...`);
       } else {
         randomCategory = "最新ニュース";
       }

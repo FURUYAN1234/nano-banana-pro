@@ -467,3 +467,8 @@ Current live delivery status: see root PLAN.md, Nano Banana four-panel quality r
 - Treat scenario/title/dialogue mismatch as a hard failure, not a tolerable style variation. The model must not replace the story with a different conflict, setting, sequence, ending, or punchline.
 - Do not reintroduce the removed STEP2 emotion-diversity/spec-down rule unless the user explicitly asks for it. The next visual check should focus on whether the ChatGPT Web copy prompt preserves scenario/dialogue/style/identity in a fresh Web generation.
 - Run a full backup only when the user explicitly requests backup.
+## OpenAIカテゴリニュース検索のプロバイダー固定 — v6.2.6、2026-09-16
+
+- 要件: 接続時にGemini APIを選んだ場合はSTEP1〜4をGeminiだけで、OpenAI APIを選んだ場合はSTEP1〜4をOpenAIだけで実行する。カテゴリのニュースシナリオも同じ選択を維持し、別プロバイダーへ混在・フォールバックしない。
+- 原因と修正: OpenAIのSTEP2はChat Completionsだけを使い、最新ニュース検索を実行していなかった。ニュースカテゴリ時だけ、選択済みOpenAIルートからResponses APIのWeb Searchを使うようにし、Gemini SDK・Google Groundingへは送らない。Geminiルートは従来どおりGoogle Groundingだけを使う。
+- 検証: 実ルーターを通すモック通信でOpenAIニュース生成が`/v1/responses`、`web_search`、選択済みのOpenAIシナリオモデルだけを使うことを確認。関連テスト、警告0 lint、production build、内蔵ブラウザーのカテゴリ選択を確認。さらに、OpenAI接続で政治・経済カテゴリを実行し、画面ログの`OpenAI gpt-6-astra Web Search`と実ニュースを根拠にしたシナリオ生成を確認した。Geminiへの切替・フォールバックは発生していない。APIキー値は読み取っていない。

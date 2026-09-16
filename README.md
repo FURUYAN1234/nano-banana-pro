@@ -66,12 +66,14 @@ The app can also produce a prompt for manual use on the Gemini or ChatGPT websit
 | Route / 経路 | Main use / 主な用途 | Notes / 注意 |
 |---|---|---|
 | Google Gemini API / Google Gemini API | Text analysis and Gemini image generation. / 文章解析とGemini画像生成。 | Availability and model names depend on the connected account. / 利用可否とモデル名は接続アカウントに依存します。 |
-| OpenAI API / OpenAI API | Text analysis and GPT Image generation. / 文章解析とGPT Image生成。 | The current selector supports GPT Image 2.5 Sunburst and available fallbacks. / 現在の選択欄はGPT Image 2.5 Sunburstと利用可能な代替モデルに対応します。 |
+| OpenAI API / OpenAI API | Text analysis, category-news search, and GPT Image generation. / 文章解析、カテゴリニュース検索、GPT Image生成。 | Category-news scenarios use OpenAI Responses Web Search; no Gemini key is required. / カテゴリニュースのシナリオはOpenAI Responses Web Searchを使い、Geminiキーは不要です。 |
 | Web copy / Web貼り付け | Manual use in Gemini or ChatGPT. / GeminiまたはChatGPTでの手動利用。 | The finished Web image does not return automatically for app-side post-generation QA. / Webで完成した画像はアプリ側の生成後検査へ自動では戻りません。 |
 
 The default OpenAI image setting is Sunburst / xhigh at 1024×1536 when the model is available. Larger sizes and higher quality increase cost and latency and do not guarantee correct dialogue, hands, or composition. / OpenAI画像の既定値は利用可能な場合Sunburst / xhigh・1024×1536です。大きなサイズや高品質設定は料金と待ち時間が増え、台詞・手・構図の正確さを保証しません。
 
 For OpenAI text, only STEP2 scenario creation and its optional enhancement start with GPT-6 Astra, then use GPT-5.6 Sol and the established GPT-4.1 chain if needed. Character analysis, prompt review and image generation keep their existing routes. Model availability and a successful API response do not by themselves guarantee story quality; review the generated scenario before STEP3. / OpenAI文章処理では、STEP2のシナリオ作成と任意のシナリオ強化だけをGPT-6 Astraから開始し、必要時はGPT-5.6 Sol、既存のGPT-4.1系チェーンへ順に切り替えます。キャラクター解析、プロンプト確認、画像生成の経路は従来どおりです。モデルが利用可能でAPI応答が成功しても物語の質までは保証しないため、STEP3の前に生成シナリオを確認してください。
+
+The API key chosen at connection time fixes one provider for every application step: a Gemini key keeps STEP1–4 on Gemini, while an OpenAI key keeps STEP1–4 on OpenAI. In news mode, selected categories use Google Grounding only on the Gemini route and OpenAI Responses Web Search only on the OpenAI route. / 接続時に入力したAPIキーで、アプリの全工程のプロバイダーを固定します。GeminiキーではSTEP1〜4をGemini、OpenAIキーではSTEP1〜4をOpenAIで実行します。ニュースモードのカテゴリ検索は、Gemini経路ではGoogle Groundingだけ、OpenAI経路ではOpenAI Responses Web Searchだけを使用します。
 
 Automatic repair is enabled by default. It makes one ordinary repair and only when grounded incidental-print defects persist may make one additional fallback, for at most two extra paid image requests. / 自動修正は既定ONです。通常修正を1回行い、根拠のある装飾印字の問題が残る場合だけ追加候補を1回作るため、追加の有料画像生成は最大2回です。
 
@@ -164,6 +166,9 @@ The production application is published from the `main` branch through the repos
 **Is this the T2V/I2V/Ref2V repository? / T2V・I2V・Ref2Vのリポジトリですか？**  No. Those workflows are maintained separately in [comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows). / いいえ。それらは別の[comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows)で管理します。
 
 ## 📋 ChangeLog
+
+### v6.2.6 (2026-09-16)
+- **[Fix & UX]** OpenAI接続時のカテゴリニュースシナリオをResponses Web Searchで生成し、STEP1〜4を選択APIだけへ固定 / Generate OpenAI category-news scenarios with Responses Web Search and keep STEP1-4 on the selected API only
 
 ### v6.2.5 (2026-09-16)
 

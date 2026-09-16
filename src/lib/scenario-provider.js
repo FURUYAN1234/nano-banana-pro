@@ -378,7 +378,11 @@ export async function generateScenario({
     initialPrompt: scenarioPrompt,
     requestScenario: (prompt) => requestSafeScenarioContent({
       initialPrompt: prompt,
-      requestScenario: (contentPrompt) => callAI(contentPrompt, [], scenarioCastContext, onProgress, { timeoutMs: STEP2_TEXT_TIMEOUT_MS, modelRoute: 'scenario' }),
+      requestScenario: (contentPrompt) => callAI(contentPrompt, [], scenarioCastContext, onProgress, {
+        timeoutMs: STEP2_TEXT_TIMEOUT_MS,
+        modelRoute: 'scenario',
+        useWebSearch: inputMode === 'news'
+      }),
       maxAttempts: 1
     }).then(({ response }) => response),
     parseScenario: (response) => {

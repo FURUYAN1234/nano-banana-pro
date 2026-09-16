@@ -7,13 +7,21 @@ test('only STEP2 generation and enhancement request the dedicated scenario route
 
   assert.match(
     source,
-    /callAI\(contentPrompt, \[\], scenarioCastContext, onProgress, \{ timeoutMs: STEP2_TEXT_TIMEOUT_MS, modelRoute: 'scenario' \}\)/
+    /callAI\(contentPrompt, \[\], scenarioCastContext, onProgress, \{[\s\S]*?timeoutMs: STEP2_TEXT_TIMEOUT_MS,[\s\S]*?modelRoute: 'scenario',\s*useWebSearch: inputMode === 'news'[\s\S]*?\}\)/
   );
   assert.match(
     source,
     /callAI\(prompt, \[\], buildScenarioCastContext\(castList\), onProgress, \{ timeoutMs: STEP2_TEXT_TIMEOUT_MS, modelRoute: 'scenario' \}\)/
   );
   assert.doesNotMatch(source, /callAI\(cameraWorkPrompt, \[bg360ImageParts\], null, onCameraProgress, \{[^}]*modelRoute: 'scenario'/);
+});
+
+test('news-category scenarios request web search only through the active OpenAI provider route', async () => {
+  const source = await readFile(new URL('../src/lib/scenario-provider.js', import.meta.url), 'utf8');
+
+  assert.match(source, /useWebSearch: inputMode === 'news'/);
+  assert.doesNotMatch(source, /callThinkingGemini\(/);
+  assert.doesNotMatch(source, /googleSearch/);
 });
 
 test('the OpenAI text client tries GPT-6 before stable text fallbacks only for the scenario route', async () => {

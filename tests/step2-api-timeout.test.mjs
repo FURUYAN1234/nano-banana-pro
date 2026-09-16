@@ -8,7 +8,7 @@ test('STEP2 scenario creation and enhancement request a three-minute text API ti
   assert.match(source, /const STEP2_TEXT_TIMEOUT_MS = 180_000;/);
   assert.match(
     source,
-    /callAI\(contentPrompt, \[\], scenarioCastContext, onProgress, \{ timeoutMs: STEP2_TEXT_TIMEOUT_MS, modelRoute: 'scenario' \}\)/
+    /callAI\(contentPrompt, \[\], scenarioCastContext, onProgress, \{[\s\S]*?timeoutMs: STEP2_TEXT_TIMEOUT_MS,[\s\S]*?modelRoute: 'scenario',[\s\S]*?useWebSearch: inputMode === 'news'[\s\S]*?\}\)/
   );
   assert.match(
     source,

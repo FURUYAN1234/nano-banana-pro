@@ -18,6 +18,60 @@ import {
 
 const OPENAI_TEXT_TIMEOUT_MS = 120000;
 
+const extractResponsesOutputText = (response) => (
+    (response.output || [])
+        .filter((item) => item.type === 'message')
+        .flatMap((item) => item.content || [])
+        .filter((part) => part.type === 'output_text' && typeof part.text === 'string')
+        .map((part) => part.text)
+        .join('')
+        .trim()
+);
+
+const requestOpenAIWebSearch = async ({ modelId, prompt, systemInstruction, timeoutMs, apiKey }) => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+        const input = [];
+        if (systemInstruction) {
+            input.push({ role: 'developer', content: systemInstruction });
+        }
+        input.push({ role: 'user', content: prompt });
+
+        const response = await fetch('https://api.openai.com/v1/responses', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${apiKey}`
+            },
+            body: JSON.stringify({
+                model: modelId,
+                input,
+                tools: [{ type: 'web_search' }],
+                max_output_tokens: 8192
+            }),
+            signal: controller.signal
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+            throw new Error(data.error?.message || response.statusText || `HTTP ${response.status}`);
+        }
+
+        const text = data.output_text || extractResponsesOutputText(data);
+        if (!text) {
+            throw new Error('OpenAI Web Search returned no text output.');
+        }
+        return text;
+    } catch (error) {
+        if (error.name === 'AbortError') {
+            throw new Error(`Timeout awaiting web search from ${modelId} (${timeoutMs / 1000}s limit)`);
+        }
+        throw error;
+    } finally {
+        clearTimeout(timeoutId);
+    }
+};
+
 /**
  * OpenAI Chat Completions APIを呼び出す
  * callThinkingGemini と同一のシグネチャ:
@@ -34,6 +88,7 @@ export const callOpenAIText = async (prompt, images = null, systemInstruction = 
         : options.modelRoute === 'scenario'
             ? OPENAI_SCENARIO_TEXT_MODEL_IDS
             : OPENAI_TEXT_MODEL_IDS;
+    const useWebSearch = options.useWebSearch === true && (!images || images.length === 0);
 
     let attemptIndex = 0;
     for (const modelId of MODEL_IDS) {
@@ -43,10 +98,26 @@ export const callOpenAIText = async (prompt, images = null, systemInstruction = 
             console.log(`[OpenAI] Attempting connection with ${modelId}...`);
             if (onThinkingUpdate) {
                 if (attemptIndex === 1) {
-                    onThinkingUpdate(`> [API] OpenAI ${modelId} と交信を開始しました...`);
+                    onThinkingUpdate(`> [API] OpenAI ${modelId}${useWebSearch ? ' Web Search' : ''} と交信を開始しました...`);
                 } else {
                     onThinkingUpdate(`> [API] 代替モデル ${modelId} で再解析を開始します... (${attemptIndex}/${MODEL_IDS.length})`);
                 }
+            }
+
+            if (useWebSearch) {
+                const finalOutput = await requestOpenAIWebSearch({
+                    modelId,
+                    prompt,
+                    systemInstruction,
+                    timeoutMs,
+                    apiKey
+                });
+                if (onThinkingUpdate) onThinkingUpdate('> [API] OpenAI Web Searchでニュースを確認し、シナリオを生成しました。');
+                return {
+                    text: finalOutput,
+                    thought: `OpenAI ${modelId} Web Search による処理が完了しました。`,
+                    model: modelId
+                };
             }
 
             // メッセージ構築
@@ -190,5 +261,7 @@ export const callOpenAIText = async (prompt, images = null, systemInstruction = 
 
     // 全モデル失敗
     if (onThinkingUpdate) onThinkingUpdate("> [API] 全モデルとの通信に失敗しました。");
-    throw new Error("OpenAI: 全モデル接続失敗。APIキーの有効性・残高・レート制限を確認してください。");
+    throw new Error(useWebSearch
+        ? "OpenAI Web Search: 全モデル接続失敗。APIキーの有効性・残高・Web Search利用可否を確認してください。"
+        : "OpenAI: 全モデル接続失敗。APIキーの有効性・残高・レート制限を確認してください。");
 };

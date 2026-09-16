@@ -1,5 +1,11 @@
 # STEP4 image generation / 画像生成
 
+## STEP2 category-news scenarios do not run with an OpenAI key / OpenAIキーでカテゴリニュースのシナリオが動かない場合
+
+An OpenAI connection must not call Gemini. Category-news scenarios therefore use OpenAI Responses Web Search only when the active provider is OpenAI; Gemini connections continue to use Google Grounding only. Reconnect with the intended provider if the header says otherwise. / OpenAI接続時にGeminiを呼び出してはいけません。そのためカテゴリニュースのシナリオは、アクティブプロバイダーがOpenAIのときだけOpenAI Responses Web Searchを使い、Gemini接続時だけGoogle Groundingを使います。ヘッダーの接続先が意図したプロバイダーと違う場合は、目的のキーで再接続してください。
+
+If the STEP2 log reports that every OpenAI Web Search model failed, the request remained on OpenAI and did not fall back to Gemini. Check the OpenAI API key, account balance, and Web Search availability for that account, then retry. / STEP2のログでOpenAI Web Searchの全モデル失敗と表示された場合も、Geminiへのフォールバックは行いません。OpenAI APIキー、残高、そのアカウントでのWeb Search利用可否を確認してから再試行してください。
+
 ## 職業制服の消失・白黒の明部が灰色になる場合
 
 - 職業制服が一般服になる場合は、保存済みの `Outfit` と最終プロンプトを照合する。旧安全変換は日本語の「制服」を一律で一般服へ置換していた。現在は学校由来と明示された衣装だけを変換し、職業制服と人物・役割別の割当を保持する。Geminiのシリアスモードでも、衣装の指定がある場合はキャラシートの衣装へ戻さない。保存済みOutfitが私服ならSTEP2再生成またはOutfit・ト書きの編集後、STEP3を再構築する。
