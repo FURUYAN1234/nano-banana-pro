@@ -167,6 +167,9 @@ The production application is published from the `main` branch through the repos
 
 ## 📋 ChangeLog
 
+### v6.2.7 (2026-09-16)
+- **[Fix & UX]** STEP1〜4のAPI待機上限を10分へ統一し、GPT-6系の応答・再試行を待てるように改善 / Unified STEP1-4 API timeouts at ten minutes so GPT-6 responses and retries can complete
+
 ### v6.2.6 (2026-09-16)
 - **[Fix & UX]** OpenAI接続時のカテゴリニュースシナリオをResponses Web Searchで生成し、STEP1〜4を選択APIだけへ固定 / Generate OpenAI category-news scenarios with Responses Web Search and keep STEP1-4 on the selected API only
 

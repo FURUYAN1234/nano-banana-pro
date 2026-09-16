@@ -467,6 +467,12 @@ Current live delivery status: see root PLAN.md, Nano Banana four-panel quality r
 - Treat scenario/title/dialogue mismatch as a hard failure, not a tolerable style variation. The model must not replace the story with a different conflict, setting, sequence, ending, or punchline.
 - Do not reintroduce the removed STEP2 emotion-diversity/spec-down rule unless the user explicitly asks for it. The next visual check should focus on whether the ChatGPT Web copy prompt preserves scenario/dialogue/style/identity in a fresh Web generation.
 - Run a full backup only when the user explicitly requests backup.
+## STEP API待機時間の10分統一 — v6.2.7、2026-09-16
+
+- 要件: GPT-6系の応答やプロバイダー内の再試行を待てるよう、STEP1〜4で実行するAPIの各試行の待機上限を10分に統一する。
+- 実装: Gemini／OpenAIのテキストAPI既定値、STEP2のシナリオ生成・演出強化の明示値、STEP4のGemini画像生成を600,000msに設定した。STEP4のOpenAI画像生成は従来から600,000msであり維持した。接続設定時のAPIキー事前確認はSTEP実行ではないため45秒のままにした。
+- 検証: 新しい10分契約テストは旧値（STEP2 3分、共通テキスト2分、Gemini画像3分）に対してREDを確認後GREEN。全Nodeテスト481件、警告0 lint、production build、`git diff --check`を確認した。APIキー値は読み取っていない。
+
 ## OpenAIカテゴリニュース検索のプロバイダー固定 — v6.2.6、2026-09-16
 
 - 要件: 接続時にGemini APIを選んだ場合はSTEP1〜4をGeminiだけで、OpenAI APIを選んだ場合はSTEP1〜4をOpenAIだけで実行する。カテゴリのニュースシナリオも同じ選択を維持し、別プロバイダーへ混在・フォールバックしない。

@@ -6,6 +6,7 @@ const isLocalGeminiHost = typeof window !== 'undefined'
 const GEMINI_BASE_URL = isLocalGeminiHost
     ? '/gemini-api'
     : 'https://generativelanguage.googleapis.com';
+const GEMINI_IMAGE_TIMEOUT_MS = 600_000;
 
 // 画像生成モデル優先順位 (Geminiネイティブ優先)
 // ※ Imagen全系列は完全廃止予定のため、Geminiネイティブのみを指定。
@@ -47,7 +48,7 @@ export const generateImageWithImagen = async (prompt, onStatusUpdate, referenceI
             attemptedModels.push(modelId);
 
             const controller = new AbortController();
-            timeoutId = setTimeout(() => controller.abort(), 180000); // 180s max timeout for heavy processing (Gemini models might take longer)
+            timeoutId = setTimeout(() => controller.abort(), GEMINI_IMAGE_TIMEOUT_MS);
 
             let response;
             let data;

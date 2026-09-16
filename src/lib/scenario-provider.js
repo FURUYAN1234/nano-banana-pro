@@ -44,7 +44,7 @@ import {
   selectDocumentarySourceText
 } from './documentary-source-fidelity';
 
-const STEP2_TEXT_TIMEOUT_MS = 180_000;
+const STEP2_TEXT_TIMEOUT_MS = 600_000;
 
 const scenarioRetryLabels = {
   SAFE_LOCATION: '安全な舞台設定',

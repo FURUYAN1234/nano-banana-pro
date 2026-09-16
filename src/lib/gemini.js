@@ -14,7 +14,7 @@ const isLocalGeminiHost = typeof window !== 'undefined'
 const GEMINI_BASE_URL = isLocalGeminiHost
     ? '/gemini-api'
     : 'https://generativelanguage.googleapis.com';
-const GEMINI_TEXT_TIMEOUT_MS = 120000;
+const GEMINI_TEXT_TIMEOUT_MS = 600_000;
 
 export const setApiKey = (key) => {
     if (key) setApiSession('gemini', key);

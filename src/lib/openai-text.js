@@ -16,7 +16,7 @@ import {
     OPENAI_VISION_MODEL_IDS,
 } from './openai-model-routes.js';
 
-const OPENAI_TEXT_TIMEOUT_MS = 120000;
+const OPENAI_TEXT_TIMEOUT_MS = 600_000;
 
 const extractResponsesOutputText = (response) => (
     (response.output || [])
