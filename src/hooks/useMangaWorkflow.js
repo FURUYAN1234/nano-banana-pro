@@ -1727,9 +1727,8 @@ export default function useMangaWorkflow() {
     const overrideCategories = categories.map(c => ({ ...c, checked: selectedIds.includes(c.id) }));
     // UIにも反映
     setCategories(overrideCategories);
-    // 場所・服装はAIまかせ（クリア）
-    setCustomLocation("");
-    setCustomOutfit("");
+    // 手入力済みの場所・服装は、フルオートと連続生成の各周回でも保持する。
+    // 空欄の場合だけ、従来どおりAIが題材に合わせて選ぶ。
     setInputMode("news"); // ニュース検索モード固定
 
     // 自動スクロール: STEP2へ (ステート更新に伴う再レンダリング完了を待ってからスクロールを実行)

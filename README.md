@@ -167,6 +167,9 @@ The production application is published from the `main` branch through the repos
 
 ## 📋 ChangeLog
 
+### v6.2.8 (2026-09-16)
+- **[Fix & UX]** フルオートと連続ループで手入力の場所・衣装を保持し、STEP2実APIで反映を確認 / Full-auto and continuous loops retain manual location and outfit overrides, verified with a live STEP2 API run.
+
 ### v6.2.7 (2026-09-16)
 - **[Fix & UX]** STEP1〜4のAPI待機上限を10分へ統一し、GPT-6系の応答・再試行を待てるように改善 / Unified STEP1-4 API timeouts at ten minutes so GPT-6 responses and retries can complete
 

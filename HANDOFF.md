@@ -467,6 +467,13 @@ Current live delivery status: see root PLAN.md, Nano Banana four-panel quality r
 - Treat scenario/title/dialogue mismatch as a hard failure, not a tolerable style variation. The model must not replace the story with a different conflict, setting, sequence, ending, or punchline.
 - Do not reintroduce the removed STEP2 emotion-diversity/spec-down rule unless the user explicitly asks for it. The next visual check should focus on whether the ChatGPT Web copy prompt preserves scenario/dialogue/style/identity in a fresh Web generation.
 - Run a full backup only when the user explicitly requests backup.
+## フルオート／連続ループの手入力保持 — v6.2.8、2026-09-16
+
+- 要件: フルオートまたは連続ループで、STEP2の指定場所・指定服装に手入力がある場合はクリアせず、各周回で維持する。カラー／白黒、OpenAI画像品質・サイズの現在の保持挙動も確認する。
+- 原因と修正: `runFullAuto` が新しい周回のカテゴリ選択後に場所・服装を無条件で空文字へ戻していた。空欄ならAIおまかせという既存仕様を保ちつつ、この2つの無条件クリアだけを削除した。連続ループも同じ`runFullAuto`を再起動するため、各周回で同じ手入力値を保持する。
+- 検証: 新しい回帰は旧実装の無条件クリアに対してREDを確認後GREEN。関連15件、全Nodeテスト483件、警告0 lint、production build、`git diff --check`を確認した。実OpenAI `gpt-6-astra Web Search` STEP2は91秒で完了し、生成シナリオのLocation／Outfitに手入力値が反映された。STEP4画像生成は実行していない。
+- 設定境界: カラー／白黒はフルオート、連続ループ、STEP1/STEP2リセットでは維持し、全設定クリアだけカラーへ戻す。OpenAI品質・サイズはフルオート・連続ループ・リセットを通じて再読み込みまで維持する。
+
 ## STEP API待機時間の10分統一 — v6.2.7、2026-09-16
 
 - 要件: GPT-6系の応答やプロバイダー内の再試行を待てるよう、STEP1〜4で実行するAPIの各試行の待機上限を10分に統一する。
