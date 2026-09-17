@@ -1,4 +1,5 @@
 import { clearApiSession, getApiCredential, setApiSession } from './api-session.js';
+import { geminiSources } from './sns-explanation.js';
 import { GEMINI_TEXT_MODEL_IDS, GEMINI_VISION_MODEL_IDS } from './gemini-model-routes.js';
 
 /**
@@ -202,6 +203,7 @@ export const callThinkingGemini = async (prompt, images = null, systemInstructio
 
             return {
                 text: finalOutput,
+                sources: geminiSources(candidate),
                 thought: thought || "通常処理が完了しました。",
                 model: modelId // [v1.7.0] Return the successful model ID for UI display
             };

@@ -94,6 +94,8 @@ export default function useMangaWorkflow() {
   const [targetDate, setTargetDate] = useState(getJSTDate());
   const [castList, setCastList] = useState("");
   const [scenario, setScenario] = useState("");
+  const [explanation, setExplanation] = useState("");
+  const [explanationNotice, setExplanationNotice] = useState("");
   const [mangaTitle, setMangaTitle] = useState("");
   const [finalPrompt, setFinalPrompt] = useState("");
   const promptAssemblyRunRef = useRef(0);
@@ -269,6 +271,8 @@ export default function useMangaWorkflow() {
     setIsSearching(false);
     setIsAssembling(false);
     setScenario("");
+    setExplanation("");
+    setExplanationNotice("");
     setFinalPrompt("");
     setGeneratedImage(null);
     setScenarioThought("");
@@ -710,6 +714,8 @@ export default function useMangaWorkflow() {
     }
 
     setIsSearching(true);
+    setExplanation("");
+    setExplanationNotice("");
     setScenarioThought("");
     setFinalPrompt("");
     setGeneratedImage(null);
@@ -791,6 +797,8 @@ export default function useMangaWorkflow() {
       }
 
       updateResolvedPunchlineType(result.resolvedEndingType || punchlineType);
+      setExplanation(result.explanation?.text || "");
+      setExplanationNotice(result.explanation?.notice || "解説を取得できませんでした。手入力できます。");
       setUsedModel(result.usedModel);
       setLockedLocation(customLocation.trim() || result.location || "Unspecified");
       setLockedOutfit(customOutfit.trim() || result.outfit || "");
@@ -1037,6 +1045,8 @@ export default function useMangaWorkflow() {
     // images は保持する（ドロップしたキャラクターシート画像）
     // analyzeThought は保持する（STEP1のログ）
     setScenario("");
+    setExplanation("");
+    setExplanationNotice("");
     setFinalPrompt("");
     setGeneratedImage(null);
     setScenarioThought("");
@@ -1111,6 +1121,8 @@ export default function useMangaWorkflow() {
     setColorModeState("color");
     setCastList("");
     setScenario("");
+    setExplanation("");
+    setExplanationNotice("");
     setFinalPrompt("");
     setImages([]);
     setGeneratedImage(null);
@@ -1730,6 +1742,8 @@ export default function useMangaWorkflow() {
     // [v4.2.7] 新しい周回の開始時に、前回の生成データ（シナリオ、プロンプト、画像等）を即時リセット
     // これにより currentStep が 2 に下がり、画面レイアウトの再レンダリングが先行して完了します
     setScenario("");
+    setExplanation("");
+    setExplanationNotice("");
     setFinalPrompt("");
     setGeneratedImage(null);
     setScenarioThought("");
@@ -2058,6 +2072,9 @@ export default function useMangaWorkflow() {
     regenerateSafePrompt,
     revertScenario,
     scenario,
+    explanation,
+    setExplanation,
+    explanationNotice,
     scenarioThought,
     selectedEngine,
     setBg360Enabled,

@@ -1,4 +1,5 @@
 import { callAI } from './ai-provider';
+import { splitSnsExplanation, buildSnsExplanation, cleanScenarioTopic } from './sns-explanation.js';
 import { getReactionGuidelines } from './knowledge';
 import { getScenarioPrompt } from './prompts';
 import { cropEquirectangular } from './panorama360';
@@ -162,6 +163,7 @@ const parseScenarioResponse = (result, {
   searchTopic
 }) => {
   let parsedData = { topic: randomCategory, scenario: '' };
+  result = { ...result, text: splitSnsExplanation(result.text).text };
 
   try {
     const titleMatch = result.text.match(/Topic:\s*(.+)/i);
@@ -212,6 +214,7 @@ const parseScenarioResponse = (result, {
     parsedData.scenario = applyManualStagingLocks(parsedData.scenario, manualTopic);
   }
 
+  parsedData.topic = cleanScenarioTopic(parsedData.topic);
   return parsedData;
 };
 
@@ -518,6 +521,7 @@ ${parsedData.scenario}
     cameraWork,
     croppedPanels,
     usedModel: result.model,
+    explanation: buildSnsExplanation({ text: result.text, sources: result.sources, inputMode, manualTopic }),
     thought: result.thought,
     validationWarning: safeScenarioResult.validationWarning || null
   };

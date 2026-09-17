@@ -18,6 +18,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 import Step1Panel from './components/Step1Panel';
 import Step2Panel from './components/Step2Panel';
 import Step3Panel from './components/Step3Panel';
+import ExplanationPanel from './components/ExplanationPanel';
 import Step4Panel from './components/Step4Panel';
 import ControlBar from './components/ControlBar';
 import SystemHeader from './components/SystemHeader';
@@ -118,6 +119,9 @@ function App() {
     regenerateSafePrompt,
     revertScenario,
     scenario,
+    explanation,
+    setExplanation,
+    explanationNotice,
     scenarioThought,
     selectedEngine,
     setBg360Enabled,
@@ -343,12 +347,14 @@ function App() {
             getPunchlineLabel={getPunchlineLabel}
           />
 
+          <div ref={step3Ref} className="flex flex-col gap-4">
+          {currentStep >= 3 && <ExplanationPanel value={explanation} onChange={setExplanation} notice={explanationNotice} busy={isSearching} />}
+
           {/* 03: プロンプト生成 - Tailwind p-8等がJITで無視されるためインラインスタイルで適用 */}
             <Step3Panel
               colorMode={colorMode}
               setColorMode={setColorMode}
               isColorModeLocked={isColorModeLocked}
-              step3Ref={step3Ref}
               currentStep={currentStep}
               isSearching={isSearching}
               isAnalyzing={isAnalyzing}
@@ -357,6 +363,7 @@ function App() {
               assemblePrompt={assemblePrompt}
               isAssembling={isAssembling}
             />
+          </div>
 
           {/* 出力結果 */}
           <Step4Panel

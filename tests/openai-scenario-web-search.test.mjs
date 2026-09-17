@@ -34,7 +34,7 @@ setOpenAIApiKey('sk-proj-test-key-for-web-search-routing-1234567890');
 globalThis.fetch = async (url, init) => {
   requests.push({ url, body: JSON.parse(init.body) });
   return new Response(JSON.stringify({
-    output: [{ type: 'message', content: [{ type: 'output_text', text: 'Topic: 最新ニュース\\nScenario: 4コマ本文' }] }]
+    output: [{ type: 'message', content: [{ type: 'output_text', text: 'Topic: 最新ニュース\\nScenario: 4コマ本文', annotations: [{type: 'url_citation', url: 'https://example.com/source', title: '検索の出典'}] }] }]
   }), { status: 200, headers: { 'content-type': 'application/json' } });
 };
 const result = await callAI(
@@ -58,6 +58,7 @@ console.log(JSON.stringify({ result, requests }));
     const { result, requests } = JSON.parse(output.trim().split(/\r?\n/).at(-1));
 
     assert.equal(result.text, 'Topic: 最新ニュース\nScenario: 4コマ本文');
+    assert.deepEqual(result.sources, [{ url: 'https://example.com/source', title: '検索の出典' }]);
     assert.equal(requests.length, 1);
     assert.equal(requests[0].url, 'https://api.openai.com/v1/responses');
     assert.equal(requests[0].body.model, 'gpt-6-astra');

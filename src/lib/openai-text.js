@@ -10,6 +10,7 @@
  */
 
 import { getOpenAIApiKey } from './openai';
+import { openAISources } from './sns-explanation.js';
 import {
     OPENAI_TEXT_MODEL_IDS,
     OPENAI_SCENARIO_TEXT_MODEL_IDS,
@@ -61,7 +62,7 @@ const requestOpenAIWebSearch = async ({ modelId, prompt, systemInstruction, time
         if (!text) {
             throw new Error('OpenAI Web Search returned no text output.');
         }
-        return text;
+        return { text, sources: openAISources(data) };
     } catch (error) {
         if (error.name === 'AbortError') {
             throw new Error(`Timeout awaiting web search from ${modelId} (${timeoutMs / 1000}s limit)`);
@@ -114,7 +115,8 @@ export const callOpenAIText = async (prompt, images = null, systemInstruction = 
                 });
                 if (onThinkingUpdate) onThinkingUpdate('> [API] OpenAI Web Searchでニュースを確認し、シナリオを生成しました。');
                 return {
-                    text: finalOutput,
+                    text: finalOutput.text,
+                    sources: finalOutput.sources,
                     thought: `OpenAI ${modelId} Web Search による処理が完了しました。`,
                     model: modelId
                 };

@@ -2,6 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
+.sns-explanation { border: 1px solid #334155; background: #0f1115; }
+.sns-explanation h2 { font-size: 18px; }
+.sns-explanation h2 span { font-size: 13px; font-weight: normal; color: #94a3b8; }
+.sns-explanation p { font-size: 12px; line-height: 1.5; color: #94a3b8; }
+.sns-explanation textarea { box-sizing: border-box; width: 100%; padding: 10px; border: 1px solid #475569; border-radius: 4px; background: #080c14; color: #e2e8f0; font: inherit; font-size: 14px; line-height: 1.6; }
+.sns-explanation button { padding: 6px 12px; border: 1px solid #155e75; border-radius: 4px; background: #102632; color: #cffafe; cursor: pointer; }
+.sns-explanation button:disabled { opacity: .4; cursor: default; }
+.sns-explanation button:focus-visible, .sns-explanation textarea:focus-visible { outline: 2px solid #22d3ee; outline-offset: 2px; }
+
 .web-prompt-copy-action {
   background-color: #fef3c7;
   color: #451a03;
