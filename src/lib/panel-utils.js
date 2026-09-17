@@ -857,6 +857,13 @@ export const extractDialogueOnly = (fullPanelText, castList, options = {}) => {
       .map((entry, index) => entry.speaker ? `B${index + 1}->[${entry.speaker}]` : '')
       .filter(Boolean)
       .join('; ');
+    const mappedSpeakers = orderedEntries.filter((entry) => entry.speaker);
+    if (mappedSpeakers.length >= 2) {
+      const endpointTargets = mappedSpeakers
+        .map((entry, index) => `B${index + 1}=>[${entry.speaker}] mouth/head`)
+        .join('; ');
+      return `TEXT (PRINT VALUES ONLY): ${visibleText}. TAIL TIP LOCK (NEVER PRINT; proximity never reassigns): ${endpointTargets}.`;
+    }
     return `TEXT (PRINT VALUES ONLY): ${visibleText}. TAILS (METADATA; NEVER PRINT NAMES): ${tailTargets || 'match the visually speaking character'}.`;
   }
 
@@ -1314,7 +1321,7 @@ export const extractPlacementRule = (fullPanelText, castList, options = {}) => {
 
   if (speakers.length > 0 && hasScriptedSpatialStaging(fullPanelText)) {
     const identities = speakers.map(name => `[${name}] (${compactIdentityTraits(getCharTraitsFromMatrix(name, castList, { monochrome }))})`).join('; ');
-    if (compact) return `PLACEMENT/IDENTITY: ${identities}. Camera/Action positions; no dialogue-order slots.`;
+    if (compact) return `PLACEMENT/IDENTITY: ${identities}. Bodies fixed; bubbles independent: B1 rightmost; B2/B3+ left/down; never reverse.`;
     return `PLACEMENT/IDENTITY: ${identities}. Preserve Camera/Action screen positions and depth; do not derive body positions from dialogue order. Bubbles flow right-to-left in dialogue order with tails to their actual speakers.`;
   }
   if (speakers.length >= 3) {

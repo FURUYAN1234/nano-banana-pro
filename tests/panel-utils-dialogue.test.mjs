@@ -509,10 +509,49 @@ test('separates visible bubble lettering from speaker-name tail metadata for ima
   assert.match(dialogue, /TEXT \(PRINT VALUES ONLY\):/);
   assert.match(dialogue, /B1="小さすぎるよ！"/);
   assert.match(dialogue, /B2="これだけなの！？"/);
-  assert.match(dialogue, /TAILS \(METADATA; NEVER PRINT NAMES\):/);
-  assert.match(dialogue, /B1->\[リン\]/);
-  assert.match(dialogue, /B2->\[アカリ\]/);
+  assert.match(dialogue, /TAIL TIP LOCK/);
+  assert.match(dialogue, /B1=>\[リン\] mouth\/head/);
+  assert.match(dialogue, /B2=>\[アカリ\] mouth\/head/);
   assert.doesNotMatch(dialogue, /Speech Bubble \d+ \[[^\]]+\]:/);
+});
+
+test('locks each bubble tail endpoint to its mapped speaker instead of the nearest body', () => {
+  const panelText = `
+[4コマ目: 結]
+状況: 右側のミクが先に問い、左側のリンが最後に答える。
+ミク「これで決まるわけじゃないんだね？」
+リン「ああ、まずは署名の審査だ。」`;
+
+  const dialogue = extractDialogueOnly(panelText, `
+- Character [ミク]: adult, blonde hair, no glasses
+- Character [リン]: adult, brown twintails, round glasses
+`, { forImagePrompt: true });
+
+  assert.match(dialogue, /TAIL TIP LOCK/i);
+  assert.match(dialogue, /B1=>\[ミク\].*mouth\/head/i);
+  assert.match(dialogue, /B2=>\[リン\].*mouth\/head/i);
+  assert.match(dialogue, /proximity.*never.*reassign/i);
+});
+
+test('keeps bubble reading slots independent from scripted character positions', () => {
+  const panelText = `
+[2コマ目: 承]
+[Camera: 右後方からの俯瞰／Over The Shoulder。右手前にレイ、左奥にミライを置く]
+状況: レイは右手前で資料を持ち、ミライは左奥から問いかける。
+ミライ「一度は否決されたんだよね？」
+レイ「ああ、六月にな。」`;
+
+  const placement = extractPlacementRule(panelText, `
+- Character [ミライ]: adult, green hair, no glasses
+- Character [レイ]: adult, silver hair, mask
+`, { compact: true });
+
+  assert.match(placement, /bodies fixed|body positions|Camera\/Action positions/i);
+  assert.match(placement, /bubbles? independent/i);
+  assert.match(placement, /B1.*rightmost|rightmost.*B1/i);
+  assert.match(placement, /B2.*left|left.*B2/i);
+  assert.match(placement, /never reverse/i);
+  assert.doesNotMatch(placement, /no dialogue-order slots/i);
 });
 
 test('splits inline multi-speaker dialogue from stage directions without printing prose', () => {
@@ -529,10 +568,10 @@ test('splits inline multi-speaker dialogue from stage directions without printin
   assert.match(dialogue, /B3="最高すぎ！"/);
   assert.match(dialogue, /B4="踊るしかないね！"/);
   assert.match(dialogue, /B5="無理無理無理…！"/);
-  assert.match(dialogue, /B2->\[サエコ\]/);
-  assert.match(dialogue, /B3->\[ミク\]/);
-  assert.match(dialogue, /B4->\[リン\]/);
-  assert.match(dialogue, /B5->\[ヒカリ\]/);
+  assert.match(dialogue, /B2=>\[サエコ\] mouth\/head/);
+  assert.match(dialogue, /B3=>\[ミク\] mouth\/head/);
+  assert.match(dialogue, /B4=>\[リン\] mouth\/head/);
+  assert.match(dialogue, /B5=>\[ヒカリ\] mouth\/head/);
   assert.doesNotMatch(dialogue, /と笑う|と叫ぶ|→|、ミク|、リン|、ヒカリ/);
 });
 

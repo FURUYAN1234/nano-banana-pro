@@ -30,7 +30,7 @@ test('unsupported identity claims cannot become paid repair targets', () => {
 
 test('structured print observations produce a role-preserving defect even if narrative omits it', () => {
   const surface = { subject: 'stacked book', face: 'spine', object_axes: 'book top points left', glyph_axes: 'glyph tops point up', expected_axes: 'glyph tops point left per source', basis: 'explicit_contract', status: 'defect', text_role: 'incidental', text_role_reason: 'no story or exact wording requirement' };
-  const parse = item => parseImageQualityQaResponse(JSON.stringify({ pass: true, observations: { title: 'none', dialogue: 'none', hands: 'clear', props: 'clear' }, issues: [], spatial_checks: [{ panel: 1, object_geometry: { status: 'not_applicable', evidence: 'no overlaps' }, prop_orientation: { status: 'not_applicable', evidence: 'no reader', surfaces: [] }, surface_text: { status: 'ok', evidence: 'legible', printed_surfaces: [item] } }] }), { mode: 'single-image' });
+  const parse = item => parseImageQualityQaResponse(JSON.stringify({ pass: true, observations: { title: 'none', dialogue: 'none', hands: 'clear', props: 'clear' }, issues: [], spatial_checks: [{ panel: 1, bubble_speaker: { status: 'not_applicable', evidence: 'No speech bubble is visible.', bubbles: [] }, object_geometry: { status: 'not_applicable', evidence: 'no overlaps' }, prop_orientation: { status: 'not_applicable', evidence: 'no reader', surfaces: [] }, surface_text: { status: 'ok', evidence: 'legible', printed_surfaces: [item] } }] }), { mode: 'single-image' });
   const result = parse(surface);
   assert.equal(result.pass, false);
   assert.equal(result.issues[0].type, 'surface_text'); assert.equal(result.issues[0].textRole, 'incidental'); assert.equal(result.issues[0].subject, 'stacked book');
@@ -45,6 +45,7 @@ test('an actively operated rear face passes when the camera shares the operator 
     issues: [],
     spatial_checks: [{
       panel: 1,
+      bubble_speaker: { status: 'not_applicable', evidence: 'No speech bubble is visible.', bubbles: [] },
       object_geometry: { status: 'ok', evidence: 'The rear stand is attached to the frame edge without intersecting the operator hand.' },
       surface_text: { status: 'not_applicable', evidence: 'No printed face is visible while the rear support is opened.' },
       prop_orientation: {

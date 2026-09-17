@@ -15,9 +15,9 @@ before(async () => {
   // 既存の台詞内容・順序回帰は表示形式ではなく話者と本文の組で照合する。
   // Geminiの生のTEXT/TAILS分離形式はgemini-script-routing.test.mjsで別途検査する。
   buildMangaPrompt = (options) => assembler.buildMangaPrompt(options).replace(
-    /^(- Panel \d+ required dialogue: )TEXT \(PRINT VALUES ONLY\): (.*?)\. TAILS \(METADATA; NEVER PRINT NAMES\): (.*?)\.$/gm,
+    /^(- Panel \d+ required dialogue: )TEXT \(PRINT VALUES ONLY\): (.*?)\. (?:TAILS \(METADATA; NEVER PRINT NAMES\)|TAIL TIP LOCK(?: \(NEVER PRINT; proximity never reassigns\))?): (.*?)\.$/gm,
     (_, prefix, text, tails) => {
-      const speakers = new Map([...tails.matchAll(/(B\d+)->\[([^\]]+)\]/g)].map(match => [match[1], match[2]]));
+      const speakers = new Map([...tails.matchAll(/(B\d+)(?:->|=>)\[([^\]]+)\]/g)].map(match => [match[1], match[2]]));
       return prefix + [...text.matchAll(/(B\d+)="([^"]*)"/g)]
         .map(match => `${speakers.get(match[1]) || ''}「${match[2]}」`).join(' / ');
     }

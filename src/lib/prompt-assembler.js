@@ -208,6 +208,11 @@ const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt
       compactWardrobeLock
     )
     .replace(/- In each Dialogue block,[^\n]*/g, '- TEXT MAP: print quoted TEXT only; no TAILS metadata.')
+    // Preserve the B-number-to-speaker map while removing endpoint wording
+    // already enforced by the global bubble QA lock.
+    .replace(/TAIL TIP LOCK \(NEVER PRINT; proximity never reassigns\): ([^\n]+)/g, (_, targets) =>
+      `TAIL TIP LOCK: ${targets.replace(/ mouth\/head/g, '')}`
+    )
     .replace(/- If one character, punctuation mark,[^\n]*/g, '- BUBBLE QA: copy TEXT exactly; tails touch speaker mouth/head; no extra bubbles/names.')
     .replace(/- Action is visual only:[^\n]*/g, '- ACTION: visual only; no labels/narration/SFX if unscripted.')
     .replace(/CHARACTER QA PASS:\n-[^\n]*/g, monochrome ? 'CHARACTER QA: shape/design and stable ink/tone only; white lit skin; no reference color.' : 'CHARACTER QA: preserve identity and outfit; redraw swaps or merged cast.')
@@ -251,7 +256,7 @@ const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt
     .replace(/FINAL-PANEL ACTIVE STAGING LOCK:[^\n]*/g, 'FINAL-PANEL ACTIVE STAGING LOCK: no straight-line lineup; distinct physical action; faces, silhouettes, and hands readable.')
     // Retain named gaze targets and rear-shoulder owners even under budget pressure.
     .replace(/FUNCTIONAL SURFACE PANEL CHECK:[^\n]*/g, 'FUNCTIONAL SURFACE PANEL CHECK: reader/camera side/front-back/text axes.')
-    .replace(/SHARED IMAGE QUALITY CONTRACT:[^\n]*/g, 'SHARED QUALITY: direction; setting; anatomy/props; no duplicate cast.')
+    .replace(/SHARED IMAGE QUALITY CONTRACT:[^\n]*/g, 'SHARED IMAGE QUALITY CONTRACT: direction; setting; anatomy/props; no duplicate cast.')
     .replace(/FACIAL ACTING LOCK:[^\n]*/g, 'FACIAL ACTING LOCK: brow/eyelid/gaze target/mouth shape/head-torso; do not force close-up; preserve Camera/Action/eye-line; not visible text.')
     .replace(
       /RICH PANEL COMPOSITION \/ CHARACTER CLARITY LOCK:[^\n]*/g,
@@ -301,6 +306,9 @@ const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt
     .replace(/^- Panel (\d+) required story beat: EXACT Panel \1 Action below$/gm, '- Panel $1: exact Action below.')
     .replace(/^EYE-LINE LOCK:[^\n]*VIEWPOINT FREEDOM:[^\n]*/gm, line => line.replace(/VIEWPOINT FREEDOM:.*$/, 'VIEWPOINT FREEDOM: exact Camera projection.'))
     .replace(/^EYE-LINE LOCK:[^\n]*/gm, compactBudgetEyeLine)
+    // The stronger PAGE READING RHYTHM bubble lock already preserves this contract.
+    .replace(/^Reading order: RIGHT-TO-LEFT\.[^\n]*\n?/gm, '')
+    .replace(/^- Tails point to actual speakers; right-to-left manga order\.\n?/gm, '')
     .replace(/^PLACEMENT\/IDENTITY:[^\n]*/gm, line => line.replace(/ \(bare eyes, no frames\)/g, ''));
 };
 

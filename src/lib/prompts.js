@@ -900,7 +900,7 @@ KEY PROP / OBJECT CONSISTENCY:
 
 TEXT RULES:
 - Only Dialogue becomes white bubbles: vertical Japanese tategaki, verbatim character-by-character; no paraphrase, synonyms, softening, added/omitted words, or horizontal text.
-- In each Dialogue block, ONLY quoted values after "TEXT (PRINT VALUES ONLY)" are printed. Names in square brackets after "TAILS (METADATA; NEVER PRINT NAMES)" are routing metadata only: NEVER print speaker names, brackets, bubble IDs, field labels, quotation marks, or metadata.
+- In each Dialogue block, ONLY quoted values after "TEXT (PRINT VALUES ONLY)" are printed. Names in square brackets after "TAILS (METADATA; NEVER PRINT NAMES)" or "TAIL TIP LOCK (NEVER PRINT)" are routing metadata only: NEVER print speaker names, brackets, bubble IDs, field labels, quotation marks, or metadata.
 - Tails point to actual speakers; right-to-left manga order.
 - Action is visual only: no ambience/SFX/mood/aura/emotion/narration/state/prompt labels as text. Lettering only when Action requests handwriting/signage/label/print/screen/board text; otherwise unlettered surfaces.
 ${SCENE_LETTERING_LOCK}
@@ -1048,7 +1048,7 @@ ${SAFE_VISUAL_CONTENT_LOCK}
 - Existing named cast only. Do NOT invent a new dominant person, black silhouette, monster, ghost, mascot, presenter, antagonist, or narrator figure. Background extras may appear only as small non-speaking atmosphere when the setting naturally needs a crowd; they must never become central, shadowed, named, or connected to a speech bubble.
 - If a panel says a shadow falls on a character, draw lighting/shadow ON that existing named character. Do NOT interpret "shadow" or a dark style tag as permission to create a separate black silhouette person.
 - Every Dialogue line must appear exactly once, in one bubble, attached to the named speaker. Do NOT duplicate a line, split one line into repeated bubbles, add new warning phrases, or create extra bubbles.
-- Only quoted values after "TEXT (PRINT VALUES ONLY)" are visible lettering. Names after "TAILS (METADATA; NEVER PRINT NAMES)" are routing metadata only: NEVER print speaker names, brackets, bubble IDs, field labels, quotation marks, or metadata.
+- Only quoted values after "TEXT (PRINT VALUES ONLY)" are visible lettering. Names after "TAILS (METADATA; NEVER PRINT NAMES)" or "TAIL TIP LOCK (NEVER PRINT)" are routing metadata only: NEVER print speaker names, brackets, bubble IDs, field labels, quotation marks, or metadata.
 - Each bubble tail tip must terminate at its assigned speaker's mouth/head silhouette, never at a neighbor or empty space. Trace every tail before final render.
 - Dialogue punctuation is part of the script lock. Copy the dialogue exactly as written; do NOT add periods, commas, ellipses, exclamation marks, emphasis marks, or spacing unless they already exist in the Dialogue line.
 - ${preserveReferenceStyle ? 'Panel mood may become more serious through expression, acting, camera, composition and lighting, but the character-sheet art style must remain identical in all four panels.' : seriousTone ? 'Panel style may be dramatic or restrained and may vary with the selected serious emotion cues, but must never become comedic, chibi, or a gag release. Keep the story consequences, cast, key prop and bold camera readable.' : 'Panel style may be dramatic, dark, or comedic, but style must never change the story, add cast members, replace the key prop, or make the page look like a clean generic anime template.'}

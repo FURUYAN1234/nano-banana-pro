@@ -26,6 +26,7 @@ Create a SINGLE breathtaking illustration.`;
 // Synthetic reviewer responses test schema/continuation, not vision accuracy.
 const spatialChecks = (count = 4) => Array.from({ length: count }, (_, index) => ({
   panel: index + 1,
+  bubble_speaker: { status: 'not_applicable', evidence: 'No speech bubble is visible in this panel.', bubbles: [] },
   camera_geometry: { status: 'ok', evidence: 'Head tops/table top, rear-left overlap, full figure; no lens specified.', dimensions: {
     elevation: { requested: 'overhead', observed: 'head tops and broad table top', status: 'ok' },
     azimuth: { requested: 'rear-left', observed: 'left rear shoulder overlaps partner', status: 'ok' },
@@ -168,7 +169,7 @@ test('quality prompt prioritizes anatomy, hand side, prop ownership, and bubble 
     referenceImageCount: 2,
   });
 
-  for (const type of ['panel_layout', 'character_reference', 'anatomy', 'hand_side', 'prop_ownership', 'prop_orientation', 'camera_geometry', 'bubble_text', 'speaker_name', 'extra_text', 'unverified']) {
+  for (const type of ['panel_layout', 'character_reference', 'anatomy', 'hand_side', 'prop_ownership', 'prop_orientation', 'camera_geometry', 'bubble_text', 'bubble_speaker', 'speaker_name', 'extra_text', 'unverified']) {
     assert.match(prompt, new RegExp(type));
   }
   assert.match(prompt, /first supplied image is the generated candidate/i);
@@ -181,6 +182,9 @@ test('quality prompt prioritizes anatomy, hand side, prop ownership, and bubble 
   assert.match(prompt, /Do not fail the image for background detail or background continuity/);
   assert.match(prompt, /speaker name prefix/i);
   assert.match(prompt, /exactly once/i);
+  assert.match(prompt, /tail_endpoint_evidence/i);
+  assert.match(prompt, /expected_speaker/i);
+  assert.match(prompt, /observed_tail_target/i);
   assert.match(prompt, /actual operator, customer, or intended reader/i);
   assert.match(prompt, /functional prop geometry/i);
   assert.match(prompt, /document, form, printed page, card, book, or map/i);
@@ -200,6 +204,21 @@ test('quality prompt prioritizes anatomy, hand side, prop ownership, and bubble 
   assert.match(prompt, /submit.*present.*show.*recipient/i);
   assert.match(prompt, /tabletop.*face-up.*text baseline.*intended reader/i);
   assert.match(prompt, /UNRELATED_RENDERING_NOISE/); // Keep the complete submitted contract, including manual edits.
+});
+
+test('speaker-tail endpoint mismatch overrides a contradictory PASS', () => {
+  const checks = spatialChecks();
+  checks[3].bubble_speaker = {
+    status: 'ok',
+    evidence: 'Both tails were traced.',
+    bubbles: [
+      { bubble: 'B1', text: 'これで決まるわけじゃないんだね？', expected_speaker: 'ミク', observed_tail_target: 'ミク', tail_endpoint_evidence: 'Tail tip touches the blonde speaker on the right.' },
+      { bubble: 'B2', text: 'ああ、まずは署名の審査だ。', expected_speaker: 'リン', observed_tail_target: 'ミク', tail_endpoint_evidence: 'Tail tip touches the blonde speaker on the right, not the glasses speaker on the left.' },
+    ],
+  };
+  const review = parseImageQualityQaResponse(JSON.stringify({ pass: true, issues: [], observations, spatial_checks: checks }));
+  assert.equal(review.pass, false);
+  assert.ok(review.issues.some(issue => issue.type === 'bubble_speaker' && issue.panel === 4 && /B2/.test(issue.reason)));
 });
 
 test('quality review image parts keep the candidate first and append valid character sheets', () => {
