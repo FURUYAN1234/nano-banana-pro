@@ -36,6 +36,18 @@ test('Gemini strict script uses the same text/tail separation as panel dialogue'
   assert.match(lock, /TAILS \(METADATA; NEVER PRINT NAMES\): B1->\[SpeakerA\]/);
 });
 
+test('both image providers exclude article references without changing the manga script', () => {
+  const random = Math.random;
+  Math.random = () => 0.5;
+  try {
+    for (const provider of ['chatgpt', 'gemini']) {
+      const clean = build(provider);
+      const withSource = build(provider, `${scenario}\n出典「An article headline」\n参考リンク: https://example.com/article`);
+      assert.equal(withSource, clean);
+    }
+  } finally { Math.random = random; }
+});
+
 test('explicit shoulder owner in action is not reversed by conversation assistance', () => {
   for (const providerFamily of ['gemini', 'chatgpt']) {
     for (const direction of ['右肩越し', '左肩越し', '肩越し']) {

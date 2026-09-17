@@ -1,4 +1,17 @@
 // Keep posting copy outside the manga script and take URLs only from source metadata.
+export function stripSourceMetadata(text = '') {
+  let sourceSection = false;
+  return String(text).replace(/\r\n?/g, '\n').split('\n').filter(line => {
+    const clean = line.replace(/\*\*/g, '').trim();
+    const label = clean.match(/^(?:[-*+>]\s*|#{1,6}\s*)?[【\[]?\s*(?:出典(?:情報|一覧|元)?|参考(?:リンク|文献|資料|URL)|引用元|Sources?|References?|Citations?)\s*[】\]]?\s*(?=[:：「『"“]|$)(.*)$/i);
+    if (label) {
+      sourceSection = !label[1].replace(/[:：]/g, '').trim();
+      return false;
+    }
+    if (sourceSection && (/^\[\s*\d+\s*コマ目/.test(clean) || /^(?:#{1,6}\s*|\[?(?:Camera|EMOTION)|状況[:：]|Action[:：])/.test(clean) || /^[^「」:：]+「/.test(clean))) sourceSection = false;
+    return !sourceSection;
+  }).join('\n');
+}
 export function cleanScenarioTopic(topic = '') {
   return topic.replace(/\s*\(\[[^\]]*\]\(https?:\/\/[^\s)]+\)\)/g, '')
     .replace(/\s*\[[^\]]*\]\(https?:\/\/[^\s)]+\)/g, '')
@@ -16,7 +29,7 @@ export function splitSnsExplanation(text = '') {
     .trim();
   return {
     explanation,
-    text: text.replace(/\[SNS_EXPLANATION\][\s\S]*?(?:\[\/SNS_EXPLANATION\]|$)/gi, '').trim()
+    text: stripSourceMetadata(text.replace(/\[SNS_EXPLANATION\][\s\S]*?(?:\[\/SNS_EXPLANATION\]|$)/gi, '')).trim()
   };
 }
 

@@ -1,3 +1,4 @@
+import { stripSourceMetadata } from './sns-explanation.js';
 import { 
   buildChatGPTMangaPrompt, 
   buildGeminiMangaPrompt,
@@ -418,7 +419,7 @@ export const buildMangaPrompt = ({
   cinematicTechniques = true
 }) => {
   // Native forms and Windows text files use CRLF; metadata and panels share LF parsing.
-  scenario = scenario.replace(/\r\n?/g, '\n');
+  scenario = stripSourceMetadata(scenario);
   const scenarioValidation = validateMangaScenario(scenario, castList);
   if (!scenarioValidation.ok && !allowScenarioQualityWarning) {
     throw new Error(`Incomplete 4-koma scenario: ${formatMangaScenarioValidationIssue(scenarioValidation)}`);

@@ -185,6 +185,9 @@ The production application is published from the `main` branch through the repos
 
 ## 📋 ChangeLog
 
+### v6.3.4 (2026-09-17)
+- **[Fix & UX]** 出典・参考リンクのメタデータが漫画の台詞や登場人物へ混入する問題を共通処理で修正 / Fixed source and reference metadata leaking into manga dialogue and cast extraction with shared filtering
+
 ### v6.3.3 (2026-09-17)
 - **[Fix & UX]** SNS投稿用の解説と出典リンクを追加 / Added SNS posting explanations and source links
 
@@ -310,5 +313,7 @@ The production application is published from the `main` branch through the repos
 The web application source is licensed under the repository [LICENSE](LICENSE). Bundled ComfyUI packages retain the separate licenses listed above. / Webアプリのソースはリポジトリの[LICENSE](LICENSE)に従い、同梱ComfyUIパッケージには上記の個別ライセンスが適用されます。
 
 ### SNS posting explanation / SNS投稿用の解説
+
+Source/reference metadata is excluded before dialogue, cast, staging and image-prompt extraction; actual character dialogue and explicitly scripted prop lettering remain intact. / 出典・参考リンクのメタデータは台詞・人物・構図・画像プロンプトの抽出前に除外します。人物の実際の台詞や、明示された小道具の文字は保持します。
 
 STEP2 now requests a short topic explanation alongside the scenario for both category search and free input. Above STEP3, edit the explanation and copy it together with reference links. Links come from search-provider citations or user-entered URLs; missing sources are indicated, and input URLs are not treated as verified. The explanation is excluded from the manga prompt. A new scenario or reset clears the previous copy; copy edited text before regenerating or reloading. Existing scenarios need a fresh STEP2 run for automatic copy. / カテゴリ検索・自由入力とも、STEP2でシナリオと一緒に題材の解説を作成します。STEP3の上で編集し、参考リンクごとコピーできます。リンクは検索APIの出典または入力URLから取得し、取得できなかった場合は表示します。入力URLの内容確認を保証するものではありません。解説は漫画の画像用プロンプトに入りません。新規生成・リセットで前の文章は消えるため、再生成・再読み込み前に必要な文章をコピーしてください。既存のシナリオへの自動追加にはSTEP2の再生成が必要です。

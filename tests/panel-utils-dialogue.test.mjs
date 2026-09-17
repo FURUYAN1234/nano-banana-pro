@@ -29,6 +29,17 @@ after(async () => {
   await server?.close();
 });
 
+test('source metadata never becomes dialogue, placement or action', () => {
+  const cast = '## 太郎\n- black hair';
+  for (const source of ['出典「An article headline」', '参考リンク: [An article headline](https://example.com/news)', 'Source: "An article headline"']) {
+    const panel = `状況: 太郎が紙を持つ。\n太郎「出典を確認したよ」\n${source}`;
+    assert.doesNotMatch(extractDialogueOnly(panel, cast), /An article|example\.com/);
+    assert.doesNotMatch(extractActionOnly(panel, cast), /An article|example\.com/);
+    assert.doesNotMatch(extractPlacementRule(panel, cast), /\[出典\]|\[Source\]|An article/);
+    assert.match(extractDialogueOnly(panel, cast), /出典を確認したよ/);
+  }
+});
+
 test('Action metadata retains silent actors in panel cast limits', () => {
   const cast = '## 1. 太郎\n- black hair\n## 2. 花子\n- brown hair';
   const rule = extractCastLimitRule('[2コマ目: 承]\nAction: 太郎が鞄を開き、花子が中をのぞく。\n太郎「ここだよ！」', cast, { compact: true });

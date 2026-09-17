@@ -1,6 +1,7 @@
 import { EMOTION_STYLES } from './constants.js';
 import { MONOCHROME_EMOTION_STYLES } from './manga-render-mode.js';
 import { stripReferenceWardrobe } from './seasonal-outfit.js';
+import { stripSourceMetadata } from './sns-explanation.js';
 
 // --- Panel Utility Functions (App.jsx assemblePrompt -> externalized) ---
 // assemblePrompt 内で定義されていたパネル解析・プロンプト組立ユーティリティ群
@@ -566,6 +567,7 @@ export const getCameraForChatGPT = (panelText, cameraState) => {
 };
 
 export const extractDialogueOnly = (fullPanelText, castList, options = {}) => {
+  fullPanelText = stripSourceMetadata(fullPanelText);
   const lines = fullPanelText.split('\n');
 
   // Markdown scenario blocks such as **表情:** and **演出:** may contain
@@ -1112,6 +1114,7 @@ const protectNonDialogueTextHints = (actionText) => {
 };
 
 export const extractActionOnly = (fullPanelText, castList, placementRule = "") => {
+  fullPanelText = stripSourceMetadata(fullPanelText);
   const lines = fullPanelText.split('\n');
 
   const validCharacters = collectCastNames(castList);
@@ -1251,6 +1254,7 @@ export const injectOutfitReminder = (actionText, activeOutfit) => {
 };
 
 export const extractPlacementRule = (fullPanelText, castList, options = {}) => {
+  fullPanelText = stripSourceMetadata(fullPanelText);
   const compact = Boolean(options.compact);
   const monochrome = options.colorMode === 'monochrome';
   const lines = fullPanelText.split('\n');
@@ -1363,6 +1367,7 @@ SPEECH BUBBLE POSITION RULE:
 };
 
 export const extractCastLimitRule = (fullPanelText, castList, options = {}) => {
+  fullPanelText = stripSourceMetadata(fullPanelText);
   const compact = Boolean(options.compact);
   const lines = fullPanelText.split('\n');
 

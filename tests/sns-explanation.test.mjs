@@ -1,8 +1,15 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { splitSnsExplanation, buildSnsExplanation, normalizeSources, openAISources, geminiSources, cleanScenarioTopic } from '../src/lib/sns-explanation.js';
+import { stripSourceMetadata, splitSnsExplanation, buildSnsExplanation, normalizeSources, openAISources, geminiSources, cleanScenarioTopic } from '../src/lib/sns-explanation.js';
 
 const text = '[SNS_EXPLANATION]\n題材の解説\n確認された内容。\n[/SNS_EXPLANATION]\nTopic: 題名\nScenario: 台本';
+
+test('source sections stay outside script but actual dialogue and visible prop lettering survive', () => {
+  const scene = '状況: 看板に「参考資料」と書かれている。\n太郎「Source: この本です」';
+  assert.equal(stripSourceMetadata(`${scene}\n## Sources\n- [News](https://example.com/)`), scene);
+  assert.equal(stripSourceMetadata(`出典:\nhttps://example.com/\n[4コマ目: 結]\n${scene}`), `[4コマ目: 結]\n${scene}`);
+  assert.equal(stripSourceMetadata(scene), scene);
+});
 
 test('search citations cannot become visible manga title text', () => {
   assert.equal(cleanScenarioTopic('題名 ([source](https://example.com/news/))'), '題名');
