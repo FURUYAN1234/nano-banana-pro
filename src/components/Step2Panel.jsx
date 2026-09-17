@@ -13,7 +13,12 @@ import {
 import ThinkingLog from './ThinkingLog';
 import Panorama360Viewer from './Panorama360Viewer';
 import { getSeasonContext } from '../lib/seasonal-outfit';
-import { DOCUMENTARY_ENDING_OPTIONS, getEndingModePolicy } from '../lib/ending-mode-policy';
+import {
+  DOCUMENTARY_ENDING_OPTIONS,
+  GAG_ENDING_OPTIONS,
+  SERIOUS_ENDING_OPTIONS,
+  getEndingModePolicy
+} from '../lib/ending-mode-policy';
 
 /**
  * STEP 02: シナリオ構築設定パネル
@@ -40,6 +45,7 @@ export default function Step2Panel({
   customOutfit,
   setCustomOutfit,
   punchlineType,
+  effectivePunchlineType = punchlineType,
   setPunchlineType,
   isSearching,
   generateScenarioFromNews,
@@ -72,7 +78,7 @@ export default function Step2Panel({
   showStatus,
   styleJson
 }) {
-  const isSeriousEnhancementMode = getEndingModePolicy(punchlineType).endingTone === 'serious';
+  const isSeriousEnhancementMode = getEndingModePolicy(effectivePunchlineType).endingTone === 'serious';
   const allEnhancementCategoriesSelected = enhanceExpressions &&
     enhanceBodyLang &&
     enhanceEffects &&
@@ -295,19 +301,26 @@ export default function Step2Panel({
                 aria-label="ストーリーの結末を選択"
                 className="punchline-select-input w-full appearance-none font-mono"
               >
-                <option value="Auto">🤖 自動 (AIにおまかせ)</option>
-                <option value="Surreal">❄️ 静寂型 (シュール/無言)</option>
-                <option value="Explosion">🔥 爆発型 (カオス/叫び)</option>
-                <option value="FakeEmotion">😢 感動詐欺 (いい話風の狂気)</option>
-                <option value="Metafiction">📖 メタフィクション (枠を越える)</option>
-                <option value="Unreasonable">🔨 理不尽な制裁 (突然の暴力)</option>
-                <option value="RunningGag">🔁 天丼 (同じボケの最終形態)</option>
-                <option value="Dream">🛏️ 夢オチ (ループの恐怖)</option>
-                <option value="Misunderstanding">🤷 盛大な勘違い (すれ違いの頂点)</option>
-                <option value="CanceledEnding">🏃 打ち切りエンド (俺たちの戦いはこれからだ)</option>
-                {DOCUMENTARY_ENDING_OPTIONS.map(({ value, menuLabel }) => (
-                  <option key={value} value={value}>📰 {menuLabel}</option>
-                ))}
+                <optgroup label="おまかせ">
+                  <option value="Auto">🤖 自動 (題材に合わせてギャグ／シリアス)</option>
+                </optgroup>
+                <optgroup label="シリアス">
+                  {SERIOUS_ENDING_OPTIONS.map(({ value, icon, menuLabel }) => (
+                    <option key={value} value={value}>{icon} {menuLabel}</option>
+                  ))}
+                  {DOCUMENTARY_ENDING_OPTIONS.filter(({ value }) => value === 'SeriousDocumentary').map(({ value, menuLabel }) => (
+                    <option key={value} value={value}>📰 {menuLabel}</option>
+                  ))}
+                </optgroup>
+                <optgroup label="ギャグ">
+                  <option value="GagAuto">🤖 ギャグ内でおまかせ（ギャグの結末から自動選択）</option>
+                  {GAG_ENDING_OPTIONS.map(({ value, icon, menuLabel }) => (
+                    <option key={value} value={value}>{icon} {menuLabel}</option>
+                  ))}
+                  {DOCUMENTARY_ENDING_OPTIONS.filter(({ value }) => value === 'Documentary').map(({ value, menuLabel }) => (
+                    <option key={value} value={value}>📰 {menuLabel}</option>
+                  ))}
+                </optgroup>
               </select>
               <ChevronDown size={20} strokeWidth={3} className="punchline-select-chevron" aria-hidden="true" />
             </div>

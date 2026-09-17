@@ -106,6 +106,7 @@ function App() {
     policyFixLog,
     processFiles,
     punchlineType,
+    effectivePunchlineType,
     regenerateImage,
     openAIImageQuality,
     openAIImageSize,
@@ -296,6 +297,7 @@ function App() {
               customOutfit={customOutfit}
               setCustomOutfit={setCustomOutfit}
               punchlineType={punchlineType}
+              effectivePunchlineType={effectivePunchlineType}
               setPunchlineType={setPunchlineType}
               isSearching={isSearching}
               generateScenarioFromNews={generateScenarioFromNews}
@@ -379,7 +381,7 @@ function App() {
               setIsMetaSaved={setIsMetaSaved}
               castList={castList}
               scenario={scenario}
-              punchlineType={punchlineType}
+              punchlineType={effectivePunchlineType}
               colorMode={colorMode}
               enhanceExpressions={enhanceExpressions}
               enhanceBodyLang={enhanceBodyLang}

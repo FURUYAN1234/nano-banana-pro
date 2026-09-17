@@ -143,7 +143,7 @@ test('defines two documentary endings while preserving the existing saved value'
   assert.deepEqual(DOCUMENTARY_ENDING_OPTIONS.map(({ value }) => value), ['SeriousDocumentary', 'Documentary']);
 
   const step2Source = await readFile(step2Url, 'utf8');
-  assert.match(step2Source, /DOCUMENTARY_ENDING_OPTIONS\.map/);
+  assert.match(step2Source, /DOCUMENTARY_ENDING_OPTIONS\.filter/);
   assert.doesNotMatch(step2Source, /<option value="Documentary">/);
 });
 
@@ -334,9 +334,9 @@ test('workflow invalidates stale ending output and guards assembly, Web copy, an
   const workflowSource = await readFile(workflowUrl, 'utf8');
 
   assert.match(workflowSource, /const setPunchlineType = \(value\) => {[\s\S]*?setScenario\(""\);[\s\S]*?setFinalPrompt\(""\);[\s\S]*?setGeneratedImage\(null\);/);
-  assert.match(workflowSource, /assertPromptEndingModeConsistency\(\{ prompt: reviewed\.prompt, punchlineType \}\);[\s\S]*?setFinalPrompt\(reviewed\.prompt\)/);
-  assert.match(workflowSource, /const copyPrompt = \(\) => {[\s\S]*?assertPromptEndingModeConsistency\(\{ prompt: finalPrompt, punchlineType \}\);[\s\S]*?navigator\.clipboard\.writeText\(finalPrompt\)/);
-  assert.match(workflowSource, /const regenerateImage = async[\s\S]*?assertPromptEndingModeConsistency\(\{ prompt: currentPrompt, punchlineType \}\);[\s\S]*?setIsGeneratingImage\(true\)/);
+  assert.match(workflowSource, /assertPromptEndingModeConsistency\(\{ prompt: reviewed\.prompt, punchlineType: activePunchlineType \}\);[\s\S]*?setFinalPrompt\(reviewed\.prompt\)/);
+  assert.match(workflowSource, /const copyPrompt = \(\) => {[\s\S]*?assertPromptEndingModeConsistency\(\{ prompt: finalPrompt, punchlineType: resolvedPunchlineTypeRef\.current \|\| punchlineType \}\);[\s\S]*?navigator\.clipboard\.writeText\(finalPrompt\)/);
+  assert.match(workflowSource, /const regenerateImage = async[\s\S]*?assertPromptEndingModeConsistency\(\{ prompt: currentPrompt, punchlineType: resolvedPunchlineTypeRef\.current \|\| punchlineType \}\);[\s\S]*?setIsGeneratingImage\(true\)/);
 });
 
 test('serious monochrome changes only the color medium and preserves reference drawing style', () => {
@@ -373,6 +373,6 @@ test('bounded prompt review uses serious wording without widening patchable line
   assert.doesNotMatch(request, /goal is readable comedy/i);
 
   const workflowSource = await readFile(workflowUrl, 'utf8');
-  assert.match(workflowSource, /getEndingModePolicy\(punchlineType\)/);
-  assert.match(workflowSource, /isDocumentaryEnding\(punchlineType\)/);
+  assert.match(workflowSource, /getEndingModePolicy\(activePunchlineType\)/);
+  assert.match(workflowSource, /isDocumentaryEnding\(activePunchlineType\)/);
 });

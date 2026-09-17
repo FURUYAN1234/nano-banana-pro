@@ -69,6 +69,14 @@ export default function useMangaWorkflow() {
   const [lockedLocation, setLockedLocation] = useState(''); // STEP2実行時に確定した場所
   const [lockedOutfit, setLockedOutfit] = useState('');     // STEP2実行時に確定した服装
   const [punchlineType, setPunchlineTypeState] = useState('Auto'); // [v3.31] Punchline Director
+  const [resolvedPunchlineType, setResolvedPunchlineType] = useState('');
+  const resolvedPunchlineTypeRef = useRef('');
+  const updateResolvedPunchlineType = (value = '') => {
+    const nextValue = String(value || '');
+    resolvedPunchlineTypeRef.current = nextValue;
+    setResolvedPunchlineType(nextValue);
+  };
+  const effectivePunchlineType = resolvedPunchlineType || punchlineType;
 
   const [categories, setCategories] = useState(DEFAULT_CATEGORIES);
 
@@ -240,6 +248,7 @@ export default function useMangaWorkflow() {
     setIsAborting(false);
     setIsSearching(false);
     setIsAssembling(false);
+    updateResolvedPunchlineType('');
     setScenario(nextScenario);
     setFinalPrompt("");
     setGeneratedImage(null);
@@ -247,12 +256,13 @@ export default function useMangaWorkflow() {
 
   const setPunchlineType = (value) => {
     const nextPunchlineType = String(value || 'Auto');
-    if (nextPunchlineType === punchlineType) return;
+    if (nextPunchlineType === punchlineType && !resolvedPunchlineTypeRef.current) return;
     scenarioRunEpochRef.current += 1;
     promptAssemblyRunRef.current += 1;
     fullAutoAbortRef.current = true;
     isFullAutoModeRef.current = false;
     setPunchlineTypeState(nextPunchlineType);
+    updateResolvedPunchlineType('');
     setIsFullAutoMode(false);
     setFullAutoStep(0);
     setIsAborting(false);
@@ -628,7 +638,7 @@ export default function useMangaWorkflow() {
       const result = await enhanceScenarioText({
         scenario,
         selectedCategories,
-        punchlineType,
+        punchlineType: resolvedPunchlineTypeRef.current || punchlineType,
         castList,
         styleJson,
         onProgress: (msg) => setEnhanceLog(prev => prev + `\n> [API] ${msg}`)
@@ -707,6 +717,7 @@ export default function useMangaWorkflow() {
     setGenLog([]);
     setOriginalScenario("");
     setEnhanceLog("");
+    updateResolvedPunchlineType('');
 
     let randomCategory = "";
     if (effectiveInputMode === 'manual') {
@@ -779,6 +790,7 @@ export default function useMangaWorkflow() {
         return null;
       }
 
+      updateResolvedPunchlineType(result.resolvedEndingType || punchlineType);
       setUsedModel(result.usedModel);
       setLockedLocation(customLocation.trim() || result.location || "Unspecified");
       setLockedOutfit(customOutfit.trim() || result.outfit || "");
@@ -950,6 +962,7 @@ export default function useMangaWorkflow() {
     }, 1000);
 
     try {
+      const activePunchlineType = resolvedPunchlineTypeRef.current || punchlineType;
       // [v3.82-alpha] リファクタリング: 外部モジュールでプロンプトを構築
       const safePrompt = buildMangaPrompt({
         scenario: currentScenario,
@@ -960,31 +973,34 @@ export default function useMangaWorkflow() {
         bg360Analysis,
         bg360Enabled,
         bg360CroppedPanels,
-        punchlineType,
+        punchlineType: activePunchlineType,
         systemVersion: SYSTEM_VERSION,
         allowScenarioQualityWarning: true
       });
 
-      const endingPolicy = getEndingModePolicy(punchlineType);
+      const endingPolicy = getEndingModePolicy(activePunchlineType);
       setAssembleThought(prev => prev + (endingPolicy.preserveReferenceStyle
         ? "\n> 原文忠実性と全4コマの参照絵柄固定を保ってAI精査中..."
-        : "\n> ギャグの意図を保ってAI精査中..."));
+        : endingPolicy.endingTone === 'serious'
+          ? "\n> シリアス結末の因果と余韻を保ってAI精査中..."
+          : "\n> ギャグの意図を保ってAI精査中..."));
       const reviewed = await reviewComedyPrompt({
         prompt: safePrompt,
         scenario: currentScenario,
         castList,
-        reviewTone: endingPolicy.endingTone
+        reviewTone: endingPolicy.endingTone,
+        preserveReferenceStyle: endingPolicy.preserveReferenceStyle
       }, callAI);
 
       if (promptScenarioEpoch !== scenarioRunEpochRef.current || assemblyRun !== promptAssemblyRunRef.current) return null;
 
-      if (isDocumentaryEnding(punchlineType)) {
+      if (isDocumentaryEnding(activePunchlineType)) {
         setAssembleThought(prev => prev + `\n> [${endingPolicy.preserveReferenceStyle ? 'シリアス' : 'ギャグ'}・ドキュメンタリー] コンテンツセーフティ・サニタイザー適用済み (危険ワードを安全な言い換えに自動変換)`);
       }
 
       setAssembleThought(prev => prev + "\n> [v3.31] 事故防止プロトコル全モデル適用済み:\n>   ✅ 縦書きセリフ強制\n>   ✅ セリフ勝手追加禁止\n>   ✅ キャラの外見は維持し、設定資料の配置・説明文はコピーしない\n>   ✅ カメラワーク平易化禁止\n>   ✅ プロンプト分岐 (ChatGPT/Gemini)\n>   ✅ 出力前チェックリスト追加");
 
-      assertPromptEndingModeConsistency({ prompt: reviewed.prompt, punchlineType });
+      assertPromptEndingModeConsistency({ prompt: reviewed.prompt, punchlineType: activePunchlineType });
       setFinalPrompt(reviewed.prompt);
       setAssembleThought(prev => prev + `\n> 出力モード: ${colorMode === 'monochrome' ? '白黒（純白・純黒・網点／ハッチング）' : 'カラー'}`);
       setAssembleThought(prev => prev + `\n> ${reviewed.warning || "AI精査完了"}`);
@@ -1170,7 +1186,7 @@ export default function useMangaWorkflow() {
   const copyPrompt = () => {
     if (!finalPrompt) return;
     try {
-      assertPromptEndingModeConsistency({ prompt: finalPrompt, punchlineType });
+      assertPromptEndingModeConsistency({ prompt: finalPrompt, punchlineType: resolvedPunchlineTypeRef.current || punchlineType });
     } catch (error) {
       showStatus(error.message);
       return;
@@ -1196,7 +1212,7 @@ export default function useMangaWorkflow() {
     const qualityMode = inferImageQualityMode(currentPrompt);
     if (isGeneratingImage || (!skipGuard && !currentPrompt)) return false;
     try {
-      assertPromptEndingModeConsistency({ prompt: currentPrompt, punchlineType });
+      assertPromptEndingModeConsistency({ prompt: currentPrompt, punchlineType: resolvedPunchlineTypeRef.current || punchlineType });
     } catch (error) {
       showStatus(error.message);
       setGenLog(prev => [...prev, `[PROMPT MODE ERROR] ${error.message}`]);
@@ -1669,7 +1685,7 @@ export default function useMangaWorkflow() {
     // プロンプトをクリップボードにコピー
     if (finalPrompt) {
       try {
-        assertPromptEndingModeConsistency({ prompt: finalPrompt, punchlineType });
+        assertPromptEndingModeConsistency({ prompt: finalPrompt, punchlineType: resolvedPunchlineTypeRef.current || punchlineType });
       } catch (error) {
         showStatus(error.message);
         return;
@@ -2030,6 +2046,7 @@ export default function useMangaWorkflow() {
     policyFixLog,
     processFiles,
     punchlineType,
+    effectivePunchlineType,
     regenerateImage,
     openAIImageQuality,
     openAIImageSize,

@@ -18,6 +18,40 @@ import {
 } from './composition-variety';
 import { getEndingModePolicy } from './ending-mode-policy.js';
 
+const GENERAL_SERIOUS_STORY_PRINCIPLES = `1. **【シリアスな物語として見せる】**:
+               - 出来事と人物の感情を因果でつなぎ、説明だけで済ませず、選択、ためらい、対立、受容を目に見える行動として描くこと。
+               - 深刻さは表情・視線・身体演技・カメラ・構図・照明・間で表現する。ボケ、ツッコミ、理不尽な制裁、夢オチ、メタ打ち切り、笑わせるための身体変形を入れない。
+               - 人物が何を失い、守り、決めるのかを4コマの軸にする。静かな場面でも手、姿勢、距離、背景の奥行きと光を具体的に描き、棒立ちの会話にしない。
+               - 同席する人物は、話者を見て受け止める自然な反応を示す。全員を同じ泣き顔や同じ無表情にそろえず、それぞれの立場を演技で分ける。`;
+
+const GENERAL_SERIOUS_EMOTION_RULES = `4. **【シリアス版の感情・演出タグ】**:
+             - 各コマの冒頭に[EMOTION: XXX]を1つ付け、NORMAL、GEKIGA、SHOUJO、WATERCOLOR、SHADOW、THICK_PAINT、THIN_LINE、GOLDEN_HOURから内容に合うものを選ぶこと。
+             - タグは感情、光、線、空気感の補助として使い、ちび化、ギャグ化、白目オチ、頭身変更を行わない。
+             - 4コマで少なくとも2種類の画角と、寄り・引き、高低、前景・中景・後景の変化を作る。静かな話でもカメラと演技を弱めない。`;
+
+const SERIOUS_ENDING_INSTRUCTIONS = Object.freeze({
+  QuietAftermath: '4コマ目を「静かな余韻」で締める。言い切らない視線、残された物、人物間の距離、環境音の止まり方など、出来事の後に残る感情を具体的な画面で示す。',
+  Resolve: '4コマ目を「決意・再出発」で締める。人物が次に取る一歩を、立ち上がる、手を取る、扉を開くなど題材に固有の行動で示す。',
+  Warning: '4コマ目を「警告」で締める。恐怖を煽るだけでなく、何を見過ごしてはいけないかを人物の反応と具体的な視覚証拠で示す。',
+  OpenQuestion: '4コマ目を「問題提起」で締める。安易な答えを作らず、対立する価値や未解決の影響が読者に残る構図と短い言葉を選ぶ。',
+  EmotionalClosure: '4コマ目を「感動・救い」で締める。都合のよい奇跡ではなく、1〜3コマ目で積み上げた行動や関係から小さな救いを成立させる。',
+  TragicClosure: '4コマ目を「悲劇・喪失」で締める。被害や喪失を笑いにせず、残された人物、空いた場所、戻らない物など題材に即した結果を静かに示す。'
+});
+
+const buildGeneralSeriousEndingContract = (punchlineType) => {
+  const common = `3. **【シリアス結末設計】**:
+             - 1コマ目で人物の通常状態と望み、2コマ目で変化または問題、3コマ目で選択または決定的な事実、4コマ目で結果と余韻を描く。
+             - 笑わせるためのオチを作らない。台詞で感情を説明し切らず、行動、視線、間、小道具、空間の変化で読ませる。
+             - 人物の身体演技、カメラの高低・向き・距離、前景・中景・後景、照明を4コマで変化させ、静かな話を単調なアイレベル会話にしない。`;
+  if (punchlineType === 'SeriousAuto') {
+    return `${common}
+             - **【シリアス内でおまかせ】**: 題材の感情と因果に最も合うものを、静かな余韻、決意・再出発、警告、問題提起、感動・救い、悲劇・喪失から1つだけ選ぶ。選んだ方向性をPunchline行に記す。`;
+  }
+  const instruction = SERIOUS_ENDING_INSTRUCTIONS[punchlineType] || SERIOUS_ENDING_INSTRUCTIONS.QuietAftermath;
+  return `${common}
+             - **【強制シリアス結末: ${getPunchlineLabel(punchlineType)}】**: ${instruction}`;
+};
+
 const MANGA_PAGE_TYPOGRAPHY_LOCK = `PAGE TYPE HIERARCHY:
 - Page title: render the exact title once at the top in EXTRA-BOLD condensed Japanese Gothic sans-serif, solid black, horizontal, centered, and clearly separated from the panels.
 - Do not use the page-title typeface for dialogue, captions, or speech bubbles.
@@ -220,6 +254,7 @@ export const getScenarioPrompt = ({
   const punchlineType = requestedPunchlineType === 'PsychoHorror' ? 'Surreal' : requestedPunchlineType;
   const endingPolicy = getEndingModePolicy(punchlineType);
   const isSeriousDocumentary = endingPolicy.documentary && endingPolicy.endingTone === 'serious';
+  const isGeneralSerious = !endingPolicy.documentary && endingPolicy.endingTone === 'serious';
   const effectiveLocationPlan = locationPlan || {
     mode: customLocation.trim() ? 'custom' : 'adaptive',
     anchorName: customLocation.trim(),
@@ -244,7 +279,7 @@ export const getScenarioPrompt = ({
          (Time Machine Lock): The target date is **${targetDate}**. You MUST search for news/events that happened AROUND this date.
          (Data Freshness Lock): Do not use generic evergreen tropes. Stick to the specific time period.
 
-          あなたは${isSeriousDocumentary ? '原文の事実関係を守り、深刻な余韻を構成するプロのドキュメンタリー漫画脚本家' : 'プロの風刺漫画脚本家'}です。
+          あなたは${isSeriousDocumentary ? '原文の事実関係を守り、深刻な余韻を構成するプロのドキュメンタリー漫画脚本家' : isGeneralSerious ? '人物の感情と出来事の因果を、力強い画面で構成するプロのシリアス漫画脚本家' : 'プロの風刺漫画脚本家'}です。
 
           【タイトルの多様性】
           - Topic は内容を端的に伝える、日本語の自然な見出しにすること。
@@ -282,7 +317,9 @@ export const getScenarioPrompt = ({
 
          ${isSeriousDocumentary ? `1. 入力本文または取得済み本文の中で、社会的影響、当事者への影響、判断の重みが明確な出来事を中心に据えること。
          2. 面白さやツッコミどころを理由に事実を選別・変形せず、本文で確認できる具体的な情報だけを使うこと。
-         3. 本文にない固有名詞、原因、結果、評価を補完しないこと。` : `1. **「AI」「人工知能」「ロボット」「スマホ」「SNS」等のIT系ネタは禁止（頻出のため）。**
+         3. 本文にない固有名詞、原因、結果、評価を補完しないこと。` : isGeneralSerious ? `1. 入力本文または取得済み本文から、人物が向き合う問題、失うもの、守るもの、選ぶ行動が明確な出来事を中心に据えること。
+         2. 被害、喪失、悲しみ、社会問題を笑いや見世物へ変換せず、当事者の尊厳と題材の重さを保つこと。
+         3. 抽象的な悲しさだけで終わらせず、題材に固有の場所、小道具、行動、結果を画面に置くこと。` : `1. **「AI」「人工知能」「ロボット」「スマホ」「SNS」等のIT系ネタは禁止（頻出のため）。**
          2. ** 具体的でマイナーな、しかし「ツッコミどころのある」ニュース ** を選んでください。
             （例: 「珍しい動物発見」「変な世界記録更新」「食べ物の論争」「スポーツの珍プレー」等）
          3. 抽象的な「最近の流行」ではなく、「◯◯が××を発表」といった固有名詞を含むニュースを優先。`}
@@ -372,7 +409,7 @@ ${styleJson.anti_patterns ? `            - 絶対禁止事項:\n${styleJson.anti
                - 原文の事実、人物、出来事、順序、因果関係を変えず、本文に書かれた内容をキャラクターの会話と行動へ置き換えること。
                - 原文にない事件、原因、結果、断定、架空の小道具、無関係な舞台を追加しないこと。
                - 深刻さは、本文から導ける反応、表情、視線、身体演技、カメラ、構図、照明、間で表現すること。画風変更や身体変形を深刻さの代用品にしないこと。
-               - 同席する無言の人物は、事実を受け止める具体的で自然な反応を示してよい。ただし新しい出来事や評価を作らないこと。` : `1. **「原則: 語るな、見せろ (Show, Don't Tell)」のギャグ特化**:
+               - 同席する無言の人物は、事実を受け止める具体的で自然な反応を示してよい。ただし新しい出来事や評価を作らないこと。` : isGeneralSerious ? GENERAL_SERIOUS_STORY_PRINCIPLES : `1. **「原則: 語るな、見せろ (Show, Don't Tell)」のギャグ特化**:
                - 絵での表現が最優先。説明調のセリフは厳禁。読者の読む気を削ぐな。
                - **【サブテキスト（建前と本音のズレ）の強制】**: 状況をそのまま説明するセリフを完全禁止する。セリフを「建前」や「全く別の話題」にし、絵（ト書き・表情）と矛盾させる（例: 大汗をかいて震えながら「今日の夕飯、ハンバーグでいいかな？」と言う等）ことで、ギャグマンガ特有のシュールな笑いや「間」を演出せよ。
                - **【物理・身体変形アクションの強制】**: 感情のト書きは、具体的な物理アクションに変換せよ。「驚く」ではなく「髪の毛が逆立ち口から魂が抜ける」、「怒る」ではなく「顔から湯気を出して持っている物を手放す」等、画像生成AIが拾いやすい視覚的ダイナミズムを強制せよ。
@@ -400,7 +437,7 @@ ${styleJson.anti_patterns ? `            - 絶対禁止事項:\n${styleJson.anti
              - シリアスさは表情・視線・身体演技・カメラ・構図・照明・間だけで表現すること。ちび化、劇画化、水彩化、厚塗り化、レトロ化、写実化などの画風変更は禁止する。
              - 各コマの[EMOTION]は必ずNORMALとし、感情の差は「状況」に具体的な演技として書くこと。
              - キャラクターシートのレイアウト、説明文、表情一覧、見本ポーズ、白背景を物語の画面として複製しないこと。
-             - 遠近感とカメラの変化は積極的に使ってよいが、人物の描画様式、顔、頭身、線、塗りは変えないこと。` : `3. **オチと構図の多様化 (Variety Constraints)**:
+             - 遠近感とカメラの変化は積極的に使ってよいが、人物の描画様式、顔、頭身、線、塗りは変えないこと。` : isGeneralSerious ? buildGeneralSeriousEndingContract(punchlineType) : `3. **オチと構図の多様化 (Variety Constraints)**:
              - **必須**: 「手前に大きく顔があるキャラ」「奥で小さく驚くキャラ」など、**遠近感**を強調せよ。棒立ちは厳禁。
              - **オチ**: 「全員泣いて終わり」等のワンパターンを禁止。シュールな静寂、無言の圧力、社会的死など多様にせよ。
              - **【表現・SFXルール】**: 擬音（SFX）は「日本語のみ」を使用せよ。英語の注釈、翻訳、アルファベット併記は一切禁止する。
@@ -530,7 +567,7 @@ ${styleJson.anti_patterns ? `            - 絶対禁止事項:\n${styleJson.anti
           ${isSeriousDocumentary ? `4. **【シリアス版の感情・絵柄タグ】**:
              - 全コマの冒頭に[EMOTION: NORMAL]を1つだけ付けること。
              - EMOTIONタグで画風を変えず、各コマの感情は眉、まぶた、視線、口、姿勢、手の位置、人物間の距離、照明、カメラで具体化すること。
-             - 4コマ目も同じ絵柄・線・塗り・陰影・顔・頭身を維持し、演技と構図だけを強めること。` : `4. **4コマ目の演出**:
+             - 4コマ目も同じ絵柄・線・塗り・陰影・顔・頭身を維持し、演技と構図だけを強めること。` : isGeneralSerious ? GENERAL_SERIOUS_EMOTION_RULES : `4. **4コマ目の演出**:
              - 必ずしもデフォルメ（SD）にする必要はない。ネタがシリアスなら、**劇画調のリアルな絶望顔**で落としても良い。ネタに合わせてスタイルを適応させよ。
 
           5. **【感情絵柄タグ (Emotion Style Tag)】**:
@@ -597,7 +634,7 @@ ${styleJson.anti_patterns ? `            - 絶対禁止事項:\n${styleJson.anti
           Location: [${adaptiveLocationMode ? 'ニュース本文・出来事・4コマの行動に最も適した、安全で具体的な非生体ロケーションを1つ記入せよ' : `必ず『${effectiveLocationPlan.anchorName}』にせよ`}]
           VisualEvidence: [元トピックを絵だけで証明する具体的な名詞を3〜5個、「、」区切りで記入せよ]
           Outfit: [${customOutfit.trim() ? "必ず『" + customOutfit.trim() + "』にせよ" : "今回の題材に基づくイベント、職業、安全、場所、天候、屋内環境、季節に適した具体的な服装カテゴリーを記入せよ。※「キャラシート準拠」「デフォルト」および原文・指定に根拠のない学校制服は禁止"}]
-          Punchline: [${punchlineType !== 'Auto' ? "必ず『" + getPunchlineLabel(punchlineType) + "』と記載せよ" : "適用したオチの方向性（例: 爆発型、天丼爆発型、シュール、感動詐欺など）"}]
+          Punchline: [${punchlineType === 'SeriousAuto' ? '選択したシリアス結末の方向性を、静かな余韻、決意・再出発、警告、問題提起、感動・救い、悲劇・喪失のいずれかで記載せよ' : punchlineType !== 'Auto' ? "必ず『" + getPunchlineLabel(punchlineType) + "』と記載せよ" : "適用したオチの方向性（例: 爆発型、天丼爆発型、シュール、感動詐欺など）"}]
           Scenario:
           [1コマ目: 起]
           [EMOTION: XXX]
@@ -632,7 +669,7 @@ ${styleJson.anti_patterns ? `            - 絶対禁止事項:\n${styleJson.anti
           - (許可事項): ニュースの当事者（スポーツ選手、政治家、怪人、動物、虫など）や名もなきモブキャラは、物語を面白くするために必要であれば自由に登場・発言させて構わない。
           - (ハルシネーション防止): ゲストを登場させる場合でも、画像生成時のVisual Actionに「意味不明な文字」や「描画不可能な複雑すぎる行動」が混入しないよう、シンプルで視覚的にわかりやすい行動に留めること。
           - 構成: 起承転結（4段）。
-           - 内容: ${isSeriousDocumentary ? '原文の事実を変えない真摯な再構成。4コマ目だけ、事実に対するシリアスな反応または結論で締める。' : 'ニュースに対する辛辣な風刺や、キャラの個性を活かしたドタバタ劇。'}
+           - 内容: ${isSeriousDocumentary ? '原文の事実を変えない真摯な再構成。4コマ目だけ、事実に対するシリアスな反応または結論で締める。' : isGeneralSerious ? '人物の感情と出来事の因果を保つシリアスな構成。4コマ目は選択した余韻、決意、警告、問題提起、救い、または喪失で締める。' : 'ニュースに対する辛辣な風刺や、キャラの個性を活かしたドタバタ劇。'}
           - 文体: 各コマの「状況」「セリフ」が明確にわかる文章。
 
           ⚠️【最終確認・絶対厳守】⚠️
@@ -646,7 +683,7 @@ ${styleJson.anti_patterns ? `            - 絶対禁止事項:\n${styleJson.anti
              - ニュースのトピック、および指定された場所や服装などの制約条件を列挙せよ。
              - 手動入力モードでは、思考トレースでは「ユーザー提供トピック」と明記する。ユーザー入力を未検証の外部ニュースや確定事実として書かない。
           2. [実行パスのトレース]
-             - ${isSeriousDocumentary ? '4コマの起承転結で原文の事実をどう配分し、最後だけシリアスな反応または結論へつなぐかを、絵柄を変えずにシミュレーションせよ。' : '4コマの起承転結の各コマで、ズレ技法やコメディトーン、キャラクターたちのセリフや物理アクションをどのように構成するかシミュレーションせよ。'}
+             - ${isSeriousDocumentary ? '4コマの起承転結で原文の事実をどう配分し、最後だけシリアスな反応または結論へつなぐかを、絵柄を変えずにシミュレーションせよ。' : isGeneralSerious ? '4コマの起承転結で人物の望み、問題、選択、結果をどう配分し、演技、カメラ、奥行き、光でシリアスな結末へつなぐかをシミュレーションせよ。' : '4コマの起承転結の各コマで、ズレ技法やコメディトーン、キャラクターたちのセリフや物理アクションをどのように構成するかシミュレーションせよ。'}
           3. [確信度の自己判定]
              - 以下の各項目の確信度を 0-100 で評価せよ：
                - ${inputMode === 'manual' ? 'ユーザー提供トピックが反映されているか' : 'ニュースの事実またはトピックが面白く反映されているか'}: (確信度: XX)
@@ -893,7 +930,7 @@ export const buildGeminiMangaPrompt = (p) => {
     safeTopic, watermarkEng, styleCore, safeLocation, isMonochrome = false,
     bg360Image, bg360Analysis, bg360Enabled, bg360CroppedPanels,
     VAR_CAST_LIST, identityMatrix, activeOutfit,
-    dynamicCamera, scriptLock, panelSections, preserveReferenceStyle = false // 事前にビルドされた4パネル分のセクション文字列
+    dynamicCamera, scriptLock, panelSections, preserveReferenceStyle = false, seriousTone = false // 事前にビルドされた4パネル分のセクション文字列
   } = p;
 
   const bg360Block = (bg360Image && bg360Analysis && bg360Enabled) ? (
@@ -950,7 +987,7 @@ GUTTERS: THICK white gap (3% canvas height, 40-45px) between panels. Panels MUST
 ${scriptLock}
 
 Style: ${styleCore}.
-${preserveReferenceStyle ? '(Keep the reference-sheet drawing style unchanged; lighting and composition may intensify the serious mood without changing rendering style).' : '(Dramatic anime cinematic lighting, high-budget VFX, NO excessive speedlines).'}
+${preserveReferenceStyle ? '(Keep the reference-sheet drawing style unchanged; lighting and composition may intensify the serious mood without changing rendering style).' : seriousTone ? '(Use cinematic lighting, controlled contrast and depth to support the serious mood; no comic release, chibi deformation or gag VFX.)' : '(Dramatic anime cinematic lighting, high-budget VFX, NO excessive speedlines).'}
 Setting: ${safeLocation}.
 ${bg360Block}
 
@@ -1009,7 +1046,7 @@ ${SAFE_VISUAL_CONTENT_LOCK}
 - Only quoted values after "TEXT (PRINT VALUES ONLY)" are visible lettering. Names after "TAILS (METADATA; NEVER PRINT NAMES)" are routing metadata only: NEVER print speaker names, brackets, bubble IDs, field labels, quotation marks, or metadata.
 - Each bubble tail tip must terminate at its assigned speaker's mouth/head silhouette, never at a neighbor or empty space. Trace every tail before final render.
 - Dialogue punctuation is part of the script lock. Copy the dialogue exactly as written; do NOT add periods, commas, ellipses, exclamation marks, emphasis marks, or spacing unless they already exist in the Dialogue line.
-- ${preserveReferenceStyle ? 'Panel mood may become more serious through expression, acting, camera, composition and lighting, but the character-sheet art style must remain identical in all four panels.' : 'Panel style may be dramatic, dark, or comedic, but style must never change the story, add cast members, replace the key prop, or make the page look like a clean generic anime template.'}
+- ${preserveReferenceStyle ? 'Panel mood may become more serious through expression, acting, camera, composition and lighting, but the character-sheet art style must remain identical in all four panels.' : seriousTone ? 'Panel style may be dramatic or restrained and may vary with the selected serious emotion cues, but must never become comedic, chibi, or a gag release. Keep the story consequences, cast, key prop and bold camera readable.' : 'Panel style may be dramatic, dark, or comedic, but style must never change the story, add cast members, replace the key prop, or make the page look like a clean generic anime template.'}
 
 PANEL-BY-PANEL CLOTHING FOLD PRIORITY: ${preserveReferenceStyle ? 'Follow the character sheet\'s existing fold-line and shadow treatment in every panel; do not introduce a new rendering method.' : 'When a panel shows folded clothing, render 2-4 distinct small dark triangular shadow fills at visible crease junctions. Use hard cel-shaded edges, especially on light shirts, blouses, jackets, and sleeves. These are localized form shadows only: never scatter triangles across smooth fabric or turn them into a print/pattern.'}
 

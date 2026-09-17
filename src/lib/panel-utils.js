@@ -1643,14 +1643,18 @@ const extractRawEmotionTag = (panelText) => {
 };
 
 // [v2.31] パネルの感情スタイル指示を構築（マルチキャラ対応）
-export const buildEmotionBlock = (panelText, colorMode = 'color', { preserveReferenceStyle = false } = {}) => {
+export const buildEmotionBlock = (panelText, colorMode = 'color', { preserveReferenceStyle = false, seriousTone = false } = {}) => {
   const emo = extractEmotionStyle(panelText);
   if (preserveReferenceStyle) {
     return `\nREFERENCE-SHEET PANEL ACTING ONLY: interpret [EMOTION: ${emo}] as expression, gaze, posture and timing only. Keep the same reference-sheet linework, rendering, facial construction and body proportions; no panel-specific art-style or proportion change.`;
   }
+  const rawEmotionTag = extractRawEmotionTag(panelText);
+  if (seriousTone && /CHIBI(?:_GAG)?|COMEDY/i.test(rawEmotionTag)) {
+    return '\nSERIOUS PANEL ACTING ONLY: interpret the emotion cue through expression, gaze, posture, timing, camera and lighting. Keep normal anatomy and the selected serious visual style; no chibi form, comic deformation, gag overlay or proportion change.';
+  }
   if (emo === 'NORMAL') return '';
   if (colorMode === 'monochrome') {
-    const gag = SERIOUS_STYLES_FOR_GAG_OVERLAY.has(emo) && rawTagHasComedyIntent(extractRawEmotionTag(panelText))
+    const gag = !seriousTone && SERIOUS_STYLES_FOR_GAG_OVERLAY.has(emo) && rawTagHasComedyIntent(rawEmotionTag)
       ? '\nGAG INTENT OVERLAY: retain dramatic ink/shadows while allowing exaggerated cartoon reactions and comedic timing; do not play the gag straight-serious.' : '';
     // 色に依存しない頭身指定は両モードで共有。複数人物のIMPACTは既存の全員可視レシピを優先。
     const proportions = EMOTION_STYLES[emo]?.proportionsMulti === undefined ? EMOTION_STYLES[emo]?.proportions : '';
@@ -1662,9 +1666,9 @@ export const buildEmotionBlock = (panelText, colorMode = 'color', { preserveRefe
 
   // [GAG-OVERLAY] 元タグがコメディ意図を持ち、かつシリアス系の暗い画風に写像された場合のみ、
   //   画風は維持したまま「コミカルな崩し許可」を加点する（例: [EMOTION: PANIC_GAG] → HORROR）。
-  const rawTag = extractRawEmotionTag(panelText);
+  const rawTag = rawEmotionTag;
   const gagOverlay = (SERIOUS_STYLES_FOR_GAG_OVERLAY.has(emo) && rawTagHasComedyIntent(rawTag))
-    ? GAG_INTENT_OVERLAY
+    ? (seriousTone ? '' : GAG_INTENT_OVERLAY)
     : '';
 
   // [v2.31] IMPACT等のソロ演出スタイルがマルチキャラパネルで使われた場合、

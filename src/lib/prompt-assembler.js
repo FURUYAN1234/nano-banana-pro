@@ -127,6 +127,14 @@ const CHATGPT_CINEMATIC_SLOTS = Object.freeze([
 ]);
 const GEMINI_CINEMATIC_SLOT = '(Dramatic anime cinematic lighting, high-budget VFX, NO excessive speedlines).';
 
+const getEndingSafePanelShotExecution = (camera, seriousTone) => {
+  const execution = getPanelShotExecution(camera);
+  if (!seriousTone) return execution;
+  return execution
+    .replace(/;\s*chibi too;/gi, '; keep normal adult proportions;')
+    .replace(/Preserve scripted surreal gags, not unrelated defects\./g, 'Preserve scripted serious events and consequences, not unrelated defects.');
+};
+
 const applyCinematicTechniqueSlot = (baselinePrompt, assignments, providerFamily) => {
   const availableSlots = providerFamily === PROMPT_PROVIDER_FAMILIES.CHATGPT
     ? CHATGPT_CINEMATIC_SLOTS
@@ -167,7 +175,7 @@ const compactBudgetEyeLine = (line) => {
   return `EYE-LINE LOCK: ${participants} mutual gaze; reactors watch speaker; never lens/front. ${primary} 3/4; camera behind ${rear}; ${rear} rear head/shoulder FG, no front-on face. Script camera wins.`;
 };
 
-const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt(prompt), preserveReferenceStyle = false) => {
+const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt(prompt), preserveReferenceStyle = false, seriousTone = false) => {
   if (prompt.length <= CHATGPT_WEB_COPY_SOFT_BUDGET) return prompt;
   const compactWardrobeLock = preserveReferenceStyle
     ? "REFERENCE-SHEET WARDROBE AND RENDERING LOCK: preserve garment items, colors or tone regions, materials, patterns, fold lines, shading and rendering method across all four panels; serious lighting may vary without changing the drawing method."
@@ -210,8 +218,10 @@ const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt
     .replace(/\[ MONOCHROME TWO-VALUE RENDERING LOCK \][\s\S]*?(?=\n\nOUTPUT: Single image)/, MONOCHROME_RENDERING_LOCK_COMPACT)
     .replace(MONOCHROME_BACKGROUND_LOCK, MONOCHROME_BACKGROUND_LOCK_COMPACT)
     .replace(MONOCHROME_FINAL_CHROMA_AUDIT, MONOCHROME_FINAL_CHROMA_AUDIT_COMPACT)
-    .replace(/- (?:COMEDY INTENT|SERIOUS DOCUMENTARY INTENT):[^\n]*/g, preserveReferenceStyle
+    .replace(/- (?:COMEDY INTENT|SERIOUS DOCUMENTARY INTENT|SERIOUS INTENT):[^\n]*/g, preserveReferenceStyle
       ? '- SERIOUS DOCUMENTARY INTENT: preserve source facts and serious ending; no gag conversion or invented event.'
+      : seriousTone
+        ? '- SERIOUS INTENT: preserve scripted emotional causality, restraint and consequences; no gag, chibi transformation or comic release.'
       : '- COMEDY INTENT: preserve scripted surreal changes/emotional mismatch/silence; no explanations.')
     .replace(/- SINGLE INSTANT:[^\n]*/g, '- SINGLE INSTANT: one scripted moment.')
     .replace(/- REVEAL ORDER:[^\n]*/g, '- REVEAL ORDER: current Action only; no later states/reactions.')
@@ -329,7 +339,7 @@ const formatScriptLockDialogue = (dialogueText) => {
   return entries.length ? entries.join(' / ') : raw;
 };
 
-const buildStrictScriptLock = ({ safeTopic, panels, castList, activeOutfit, providerFamily, isMonochrome = false, preserveReferenceStyle = false }) => {
+const buildStrictScriptLock = ({ safeTopic, panels, castList, activeOutfit, providerFamily, isMonochrome = false, preserveReferenceStyle = false, seriousTone = false }) => {
   const panelLocks = panels.map((panelText, index) => {
     const panelNumber = index + 1;
     const storyBeat = compactScriptLockOrReference(
@@ -354,6 +364,8 @@ const buildStrictScriptLock = ({ safeTopic, panels, castList, activeOutfit, prov
 ${MANGA_PROMPT_PRIORITY}
 ${preserveReferenceStyle
   ? '- SERIOUS DOCUMENTARY INTENT: Preserve source facts, chronology and the serious final reaction. Do not convert any panel into a gag or invent an event for dramatic effect.'
+  : seriousTone
+    ? '- SERIOUS INTENT: Preserve the scripted emotional causality, restraint, consequences and selected serious ending. Build intensity through camera, composition, lighting, gaze and body acting. Do not add a gag, chibi transformation, absurd event, punchline reversal or comic release.'
   : '- COMEDY INTENT: Preserve scripted surreal events, impossible changes, emotional mismatch and absent reactions. Do not normalize them, explain them or add a tsukkomi. Ambiguous intent stays unchanged; continuity rules must not erase a scripted gag.'}
 - SINGLE INSTANT: Draw one script-consistent instant per panel. For sequential actions, select the moment that supports that panel's dialogue or silent beat; never combine before/after poses or duplicate a character to show motion.
 - REVEAL ORDER: Show only information available in that panel's Action. Later outcomes and punchline states must not appear early, including background props or reaction faces. VisualEvidence is an inventory, not an instruction to show every state together.
@@ -415,6 +427,7 @@ export const buildMangaPrompt = ({
   const isChatGPTFamily = effectiveProviderFamily === PROMPT_PROVIDER_FAMILIES.CHATGPT;
   const endingPolicy = getEndingModePolicy(punchlineType);
   const preserveReferenceStyle = endingPolicy.preserveReferenceStyle;
+  const seriousTone = endingPolicy.endingTone === 'serious';
 
   // Only explicit selection changes the medium; legacy/unknown values default to color.
   const isMonochrome = normalizeMangaColorMode(colorMode) === 'monochrome';
@@ -487,7 +500,7 @@ export const buildMangaPrompt = ({
     : `Generated by Gemini with Super FURU AI 4-koma ${systemVersion}`;
 
   let rawPrompt = "";
-  const scriptLock = buildStrictScriptLock({ safeTopic, panels, castList, activeOutfit: promptActiveOutfit, providerFamily, isMonochrome, preserveReferenceStyle });
+  const scriptLock = buildStrictScriptLock({ safeTopic, panels, castList, activeOutfit: promptActiveOutfit, providerFamily, isMonochrome, preserveReferenceStyle, seriousTone });
   const finalPanelStagingLock = punchlineType === 'Surreal' ? '' : FINAL_PANEL_ACTIVE_STAGING_IMAGE_LOCK;
   const sceneLocks = [scriptLock, documentarySourceFactLock, compositionVarietyLock, gestureVarietyLock, HAND_PROP_KINEMATICS_LOCK, visualStoryEvidenceLock, settingContinuityLock, finalPanelStagingLock, MANGA_READING_RHYTHM_LOCK]
     .filter(Boolean)
@@ -508,9 +521,9 @@ export const buildMangaPrompt = ({
       const camera = isConversation ? sanitizeConversationCamera(rawCamera) : rawCamera;
       return `## Panel ${num}
 Camera: ${camera}
-${getPanelShotExecution(camera)}
+${getEndingSafePanelShotExecution(camera, seriousTone)}
 ${isMonochrome ? MONOCHROME_PANEL_INK_CHECK : ''}
-${buildEmotionBlock(pt, colorMode, { preserveReferenceStyle })}
+${buildEmotionBlock(pt, colorMode, { preserveReferenceStyle, seriousTone })}
 ${extractPlacementRule(pt, castList, { compact: true, colorMode }).replace(/\\\\[/g, '').replace(/\\\\]/g, '')}
 ${extractCastLimitRule(pt, castList, { compact: true }).replace(/\\\\[/g, '').replace(/\\\\]/g, '')}
 COMPOSITION STAGING: ${getPanelCompositionAssist(pt, num, { compact: true })}
@@ -525,9 +538,9 @@ Dialogue (verbatim bubbles): ${extractDialogueOnly(pt, castList, { forImagePromp
       safeTopic, watermarkEng, styleCore, safeLocation, isMonochrome,
       bg360Image, bg360Analysis, bg360Enabled, bg360CroppedPanels,
       VAR_CAST_LIST_CHATGPT, identityMatrix: buildIdentityMatrix(castList, { monochrome: isMonochrome }), activeOutfit: promptActiveOutfit,
-      scriptLock: sceneLocks, panelSections, preserveReferenceStyle
+      scriptLock: sceneLocks, panelSections, preserveReferenceStyle, seriousTone
     });
-    rawPrompt = compactChatGPTConversationRules(rawPrompt, isMonochrome, preserveReferenceStyle);
+    rawPrompt = compactChatGPTConversationRules(rawPrompt, isMonochrome, preserveReferenceStyle, seriousTone);
   } else {
     // Gemini (Imagen 3/4) 向けプロンプトの構築
     panelSections = panels.map((pt, i) => {
@@ -549,9 +562,9 @@ Dialogue (verbatim bubbles): ${extractDialogueOnly(pt, castList, { forImagePromp
         : '';
       return `## Panel ${num}
 Camera: ${camera}.
-${getPanelShotExecution(camera)}
+${getEndingSafePanelShotExecution(camera, seriousTone)}
 ${isMonochrome ? MONOCHROME_PANEL_INK_CHECK : ''}
-${buildEmotionBlock(pt, colorMode, { preserveReferenceStyle })}
+${buildEmotionBlock(pt, colorMode, { preserveReferenceStyle, seriousTone })}
 ${extractPlacementRule(pt, castList, { colorMode })}
 ${extractCastLimitRule(pt, castList)}
 COMPOSITION STAGING: ${getPanelCompositionAssist(pt, num)}
@@ -569,8 +582,15 @@ ${geminiRearForegroundLock}`;
       safeTopic, watermarkEng, styleCore, safeLocation, isMonochrome,
       bg360Image, bg360Analysis, bg360Enabled, bg360CroppedPanels,
       VAR_CAST_LIST: promptCastList, identityMatrix: buildIdentityMatrix(castList, { monochrome: isMonochrome }), activeOutfit: promptActiveOutfit,
-      dynamicCamera, scriptLock: sceneLocks, panelSections, preserveReferenceStyle
+      dynamicCamera, scriptLock: sceneLocks, panelSections, preserveReferenceStyle, seriousTone
     });
+  }
+
+  if (seriousTone) {
+    rawPrompt = rawPrompt
+      .replace(/Preserve scripted surreal gags, not unrelated defects\./g, 'Preserve scripted serious events and consequences, not unrelated defects.')
+      .replace(/Preserve source-supported surreal gags and transformations/gi, 'Preserve source-supported serious events and consequences')
+      .replace(/Comedy does not excuse unrelated drawing defects\./g, 'Drama does not excuse unrelated drawing defects.');
   }
 
   // 年齢セーフティフィルターの適用
@@ -582,7 +602,7 @@ ${geminiRearForegroundLock}`;
     safePrompt = sanitizeForDocumentary(safePrompt);
   }
 
-  const baselinePrompt = isChatGPTFamily ? compactChatGPTConversationRules(safePrompt, isMonochrome, preserveReferenceStyle) : safePrompt;
+  const baselinePrompt = isChatGPTFamily ? compactChatGPTConversationRules(safePrompt, isMonochrome, preserveReferenceStyle, seriousTone) : safePrompt;
   if (cinematicAssignments.length === 0) return baselinePrompt;
 
   const candidatePrompt = applyCinematicTechniqueSlot(

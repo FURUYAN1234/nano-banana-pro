@@ -264,7 +264,7 @@ export const buildScenarioEnhancementPrompt = ({
     : '';
 
   const narrativeModeRule = serious
-    ? '- シリアス・ドキュメンタリーとして原文の事実と深刻さを保つ。全4コマで既存の絵柄・顔設計・通常頭身を維持し、ギャグ化、ちびキャラ化、コミカルなデフォルメ、絵柄変更を追加しない'
+    ? '- シリアス結末モードとして原文の因果、深刻さ、余韻を保つ。表情・視線・身体演技・カメラ・構図・照明は強化してよいが、ギャグ化、ちびキャラ化、コミカルなデフォルメを追加しない'
     : '- 元シナリオのギャグの種類と強さを保ち、別の笑いや事件へ置き換えない';
   const gestureVarietyRules = serious ? SERIOUS_GESTURE_VARIETY_RULES : SCENARIO_GESTURE_VARIETY_RULES;
 
@@ -505,7 +505,7 @@ export const validateScenarioEnhancement = ({
       issues,
       issueCodes,
       'serious_style_switch',
-      'シリアス・ドキュメンタリーではCHIBI・COMEDY系の絵柄変更タグを追加できません'
+      'シリアス結末モードではCHIBI・COMEDY系の絵柄変更タグを追加できません'
     );
   }
 

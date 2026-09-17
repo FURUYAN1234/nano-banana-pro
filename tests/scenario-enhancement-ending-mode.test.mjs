@@ -90,10 +90,10 @@ test('STEP2 and STEP4 label the same enhancement category from the selected endi
     readFile(new URL('../src/lib/scenario-provider.js', import.meta.url), 'utf8'),
   ]);
 
-  assert.match(step2, /const isSeriousEnhancementMode = getEndingModePolicy\(punchlineType\)\.endingTone === 'serious';/);
+  assert.match(step2, /const isSeriousEnhancementMode = getEndingModePolicy\(effectivePunchlineType\)\.endingTone === 'serious';/);
   assert.match(step2, /isSeriousEnhancementMode \? 'シリアス演出' : 'ギャグ演出'/);
   assert.match(step2, /isSeriousEnhancementMode \? '緊張・間・結末' : '間・反応・オチ'/);
   assert.match(step4, /isSeriousEnhancementMode \? "シリアス演出強化" : "ギャグ演出強化"/);
-  assert.match(hook, /enhanceScenarioText\(\{[\s\S]*?punchlineType,[\s\S]*?\}\)/);
+  assert.match(hook, /enhanceScenarioText\(\{[\s\S]*?punchlineType: resolvedPunchlineTypeRef\.current \|\| punchlineType,[\s\S]*?\}\)/);
   assert.match(provider, /buildScenarioEnhancementPrompt\(\{[\s\S]*?punchlineType,[\s\S]*?\}\)/);
 });

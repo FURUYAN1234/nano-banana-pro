@@ -36,6 +36,7 @@ import {
   validateMangaScenario
 } from './scenario-validation';
 import { isDocumentaryEnding } from './ending-mode-policy';
+import { classifyTopicTreatment, resolveAutoEndingType } from './serious-topic-policy';
 import {
   assertDocumentarySourceFidelity,
   attachDocumentarySourceFacts,
@@ -319,21 +320,21 @@ export async function generateScenario({
   onProgress('舞台を決定中...\n> Locationを定め、背景詳細より人物の手・腕・小道具と吹き出しの正確さを優先します。');
   const ragReactions = getReactionGuidelines();
 
-  // オチタイプの決定論的ランダム化 (Auto時の偏り防止)
+  // Autoは題材の扱いを先に決め、深刻な題材をギャグ候補へ送らない。
   let activePunchlineType = punchlineType === 'PsychoHorror' ? 'Surreal' : punchlineType;
+  if (punchlineType === 'GagAuto') {
+    activePunchlineType = resolveAutoEndingType('');
+  }
   if (!punchlineType || punchlineType === 'Auto') {
-    const punchlineOptions = [
-      'Explosion',       // 爆発型
-      'Surreal',         // 静寂型（シュール）
-      'FakeEmotion',     // 感動詐欺
-      'Metafiction',     // メタ崩壊型
-      'Unreasonable',    // 理不尽な制裁型
-      'RunningGag',      // 天丼爆発型
-      'Dream',           // 夢オチ型
-      'Misunderstanding', // 盛大な勘違い型
-      'CanceledEnding'   // 打ち切りエンド型
-    ];
-    activePunchlineType = punchlineOptions[Math.floor(Math.random() * punchlineOptions.length)];
+    const autoEndingSource = [
+      inputMode === 'manual' ? manualTopic : randomCategory,
+      extractedArticleText,
+      newsContext,
+      searchTopic
+    ].filter(Boolean).join('\n');
+    const treatment = classifyTopicTreatment(autoEndingSource);
+    activePunchlineType = resolveAutoEndingType(autoEndingSource);
+    onProgress(`題材判定: ${treatment.level} → ${treatment.tone === 'serious' ? 'シリアス' : 'ギャグ'}系で構成します。`);
   }
 
   onProgress(`📝 演出設計: [オチ] ${activePunchlineType} / [トーン] ${activeComedyTone}`);
@@ -512,6 +513,7 @@ ${parsedData.scenario}
     visualEvidence: parsedData.visualEvidence,
     outfit: parsedData.outfit,
     punchline: parsedData.punchline,
+    resolvedEndingType: activePunchlineType,
     scenario: parsedData.scenario,
     cameraWork,
     croppedPanels,
