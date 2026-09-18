@@ -95,6 +95,8 @@ test('dense four-panel prompts preserve core requirements ahead of optional embe
       assert.match(prompt, /OBJECT GEOMETRY LOCK/);
       assert.match(prompt, /PANEL STYLE LOCK: (?:GLITTER|IMPACT|GEKIGA)/);
       assert.equal((prompt.match(/## Panel \d/g) || []).length, 4);
+      assert.equal((prompt.slice(prompt.indexOf('## Panel 1')).match(/B1="[^"]+" \[RIGHTMOST\]/g) || []).length, 4);
+      assert.equal((prompt.slice(prompt.indexOf('## Panel 1')).match(/B2="[^"]+" \[LEFT OF B1\]; B3="[^"]+" \[LEFTMOST\]/g) || []).length, 4);
       if (colorMode === 'monochrome') {
         assert.match(prompt, /#000000.*#FFFFFF/);
         assert.match(prompt, /CROSS-PANEL WARDROBE TONE LOCK/);
@@ -175,7 +177,9 @@ test('ChatGPT manga prompt stays within the empirical Web-copy soft budget witho
   assert.match(prompt, /B\d="AI作品は無条件で却下よね！"/);
   assert.match(prompt, /TAIL TIP LOCK: B1=>\[ミク\]/);
   assert.match(prompt, /B1.*rightmost|rightmost.*B1/i);
-  assert.match(prompt, /later bubble.*right of an earlier bubble/i);
+  assert.match(prompt, /later bubbles strictly left/i);
+  assert.match(prompt, /x=0 left,100 right/);
+  assert.match(prompt, /B1 rightmost regardless of speaker/);
   assert.match(prompt, /move (?:the )?bubbles? only|bubble slots independent/i);
   assert.doesNotMatch(prompt, /B1="\[ミク\]/);
   assert.match(prompt, /Dialogue \(verbatim bubbles\):/);

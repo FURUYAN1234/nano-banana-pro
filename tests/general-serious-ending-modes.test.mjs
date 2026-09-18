@@ -76,6 +76,15 @@ Action: ミクが椅子から立ち、窓の外の雨雲を見上げる。
 Action: 二人が並んで記録を箱に収め、会議室の灯りを一つ残す。
 ヒカリ「明日、続きをしよう。」`;
 
+test('edited scenario ending overrides stale gag metadata in both copy providers', () => {
+  for (const providerFamily of ['chatgpt', 'gemini']) {
+    const prompt = buildMangaPrompt({ scenario: SERIOUS_SCENARIO, castList: CAST_LIST,
+      colorMode: 'color', providerFamily, punchlineType: 'Explosion', systemVersion: 'test' });
+    assert.match(prompt, /SERIOUS INTENT/);
+    assert.doesNotMatch(prompt, /COMEDY INTENT/);
+  }
+});
+
 const buildScenarioRequest = (punchlineType, manualTopic = '友人たちが新しい喫茶店のメニューを相談する') => getScenarioPrompt({
   randomCategory: '手動入力',
   targetDate: '2026-09-17',

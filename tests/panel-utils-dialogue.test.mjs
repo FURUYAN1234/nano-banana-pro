@@ -9,6 +9,8 @@ let extractActionOnly;
 let extractDialogueOnly;
 let extractPlacementRule;
 let extractCastLimitRule;
+let cleanCastList;
+let buildIdentityMatrix;
 
 before(async () => {
   server = await createServer({
@@ -23,6 +25,27 @@ before(async () => {
   extractDialogueOnly = panelUtils.extractDialogueOnly;
   extractPlacementRule = panelUtils.extractPlacementRule;
   extractCastLimitRule = panelUtils.extractCastLimitRule;
+  cleanCastList = panelUtils.cleanCastList;
+  buildIdentityMatrix = panelUtils.buildIdentityMatrix;
+});
+
+test('background remaining cast and shortened names cannot be forbidden by generated counts', () => {
+  const cast = '## エムバ・ババトゥンデ\n## 氷堂レイジ\n## ガルナ\n## ユウ\n## ミライ';
+  const first = extractCastLimitRule('状況: ミライとエムバが話す。奥では他の三人が清掃袋を準備している。\nミライ「ここで食べたい。」\nエムバ・ババトゥンデ「きれいにしよう。」', cast, { compact: true });
+  assert.match(first, /exactly 5 people/);
+  assert.doesNotMatch(first, /ABSENT:/);
+  const second = extractCastLimitRule('状況: ガルナが包みを拾い、後方のレイジがカップを拾う。\nガルナ「止めて！」', cast, { compact: true });
+  assert.match(second, /CAST COUNT:.*\[氷堂レイジ\]/);
+  assert.match(second, /exactly 2 people/);
+  assert.doesNotMatch(second, /SOLO:/);
+});
+
+test('plain cast paragraphs preserve identity details and sunglasses', () => {
+  const cast = '## エムバ・ババトゥンデ\nelderly adult, long gray hair in ponytail, white beard, black sunglasses.';
+  assert.match(cleanCastList(cast, ''), /white beard, black sunglasses/);
+  const matrix = buildIdentityMatrix(cast);
+  assert.match(matrix, /gray hair/);
+  assert.match(matrix, /MUST HAVE glasses/);
 });
 
 after(async () => {
@@ -552,6 +575,23 @@ test('keeps bubble reading slots independent from scripted character positions',
   assert.match(placement, /B2.*left|left.*B2/i);
   assert.match(placement, /never reverse/i);
   assert.doesNotMatch(placement, /no dialogue-order slots/i);
+});
+
+test('binds balloon positions to dialogue entries even for repeated speakers and opposite body positions', () => {
+  const cast = '- Character [甲]: adult\n- Character [乙]: adult';
+  for (const camera of ['左前斜めからの俯瞰', '甲の右後方からの肩越し']) {
+    const panel = `[Camera: ${camera}]\n状況: 甲は左、乙は右。\n甲「準備はいい？」\n乙「いいよ。」\n甲「始めよう。」`;
+    const result = extractDialogueOnly(panel, cast, { forImagePrompt: true });
+    assert.match(result, /B1="準備はいい？" \[RIGHTMOST\]; B2="いいよ。" \[LEFT OF B1\]; B3="始めよう。" \[LEFTMOST\]/);
+    assert.match(result, /BUBBLE SLOTS.*B1 x=75%; B2 x=50%; B3 x=25%/);
+    assert.match(result, /B1=>\[甲\].*B2=>\[乙\].*B3=>\[甲\]/);
+    assert.match(result, /TAIL TIP LOCK/);
+  }
+  const pair = extractDialogueOnly('甲「準備はいい？」\n乙「いいよ。」', cast, { forImagePrompt: true });
+  assert.match(pair, /B1 x=67%; B2 x=33%/);
+  for (const panel of ['甲「いいよ。」', '状況: 二人が黙って待つ。']) {
+    assert.doesNotMatch(extractDialogueOnly(panel, cast, { forImagePrompt: true }), /BUBBLE SLOTS/);
+  }
 });
 
 test('splits inline multi-speaker dialogue from stage directions without printing prose', () => {

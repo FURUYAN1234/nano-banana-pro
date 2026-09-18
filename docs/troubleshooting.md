@@ -1,5 +1,13 @@
 # STEP4 image generation / 画像生成
 
+## 吹き出しが左から右へ逆転する場合
+
+台詞の抽出順が正しくても、話者位置を優先した画像生成や、修正AIが返す逆の配置指示で読順が壊れる場合があります。共通プロンプトは各台詞の直後に `RIGHTMOST` / `LEFT OF Bn` / `LEFTMOST` を付け、同じB番号の話者・尻尾対応を保持します。ChatGPT/GeminiとWeb短縮でこの対応を残します。古いコピー済みプロンプトはSTEP3で作り直す必要があります。
+
+API検査は台本・参照画像を見せない候補画像だけの文字転記を追加し、実文字の位置と台詞順を照合します。修正AIの自由文による配置指示は採用せず、読順修正の配置を台本から決定します。比較AIの好みで、確認済みの正しい台詞・読順が逆戻りする候補を採用しません。モデルによる画像認識の誤読はあり得るため、プロンプト検査・内部QA・実画像の採否は別に扱います。
+
+ト書きの短縮名や背景の残り人数を抽出できないと、Actionに登場する人物へABSENT/SOLOを付ける矛盾が起きます。登録名から解決できる短縮名と、残りの登録人数に一致する背景集団を人数制約へ反映します。手動編集したPunchlineの既知の結末名は古い解決済みモードより優先し、自由記述の人物特徴やサングラスも欠落させません。
+
 ## STEP2 category-news scenarios do not run with an OpenAI key / OpenAIキーでカテゴリニュースのシナリオが動かない場合
 
 An OpenAI connection must not call Gemini. Category-news scenarios therefore use OpenAI Responses Web Search only when the active provider is OpenAI; Gemini connections continue to use Google Grounding only. Reconnect with the intended provider if the header says otherwise. / OpenAI接続時にGeminiを呼び出してはいけません。そのためカテゴリニュースのシナリオは、アクティブプロバイダーがOpenAIのときだけOpenAI Responses Web Searchを使い、Gemini接続時だけGoogle Groundingを使います。ヘッダーの接続先が意図したプロバイダーと違う場合は、目的のキーで再接続してください。

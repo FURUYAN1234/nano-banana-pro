@@ -168,7 +168,12 @@ test('both providers retain ink-only reference and script priority through compa
     assert.match(prompt, /CHARACTER QA(?: PASS)?:[^\n]*\n?-?\s*[^\n]*ink\/tone/);
     assert.equal((prompt.match(/PANEL INK CHECK:/g) || []).length, 4);
     assert.ok(prompt.includes('赤と青はそのまま書いてね。'));
-    if (family === 'chatgpt') assert.ok(prompt.length <= 15000, `Web budget: ${prompt.length}`);
+    // Plain cast paragraphs used to be silently dropped. Preserve those required
+    // identities even when this expanded five-person fixture exceeds the soft
+    // Web target; the dedicated compact-fixture budget tests still enforce 15k.
+    assert.match(prompt, /long wavy hair/);
+    assert.match(prompt, /short braided hair/);
+    if (family === 'chatgpt') assert.ok(prompt.length < 32000, `API hard budget: ${prompt.length}`);
   }
   const color = build('chatgpt', 'color', { castList: referenceCast });
   assert.doesNotMatch(color, /BLACK INK PLATE:|PANEL INK CHECK:/);

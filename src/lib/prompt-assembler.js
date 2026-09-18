@@ -61,7 +61,7 @@ import {
   selectPageCinematicTechniques
 } from './cinematic-techniques';
 import { normalizeMangaColorMode, isMonochromePrompt, sanitizeMonochromeSourceDescription, MONOCHROME_RENDERING_LOCK, MONOCHROME_RENDERING_LOCK_COMPACT, MONOCHROME_BACKGROUND_LOCK, MONOCHROME_BACKGROUND_LOCK_COMPACT, MONOCHROME_FINAL_CHROMA_AUDIT, MONOCHROME_FINAL_CHROMA_AUDIT_COMPACT, MONOCHROME_PANEL_INK_CHECK } from './manga-render-mode.js';
-import { buildReferenceSheetArtStyleLock, getEndingModePolicy, isDocumentaryEnding } from './ending-mode-policy.js';
+import { buildReferenceSheetArtStyleLock, getEndingModePolicy, isDocumentaryEnding, resolveScenarioEndingType } from './ending-mode-policy.js';
 
 /**
  * Fisher-Yates アルゴリズムによる配列のシャッフル
@@ -208,6 +208,9 @@ const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt
       compactWardrobeLock
     )
     .replace(/- In each Dialogue block,[^\n]*/g, '- TEXT MAP: print quoted TEXT only; no TAILS metadata.')
+    // Keep the per-dialogue spatial map; shared rhythm already carries routing.
+    .replace(/BUBBLE SLOTS \(NEVER PRINT; x=0 left,100 right\): ([^.]+)\. B1 RIGHTMOST, last LEFTMOST regardless of speaker positions; reserve before art\. Never mirror Camera\/actors; route tails across panel if needed\./g,
+      'BUBBLE SLOTS: $1.')
     // Preserve the B-number-to-speaker map while removing endpoint wording
     // already enforced by the global bubble QA lock.
     .replace(/TAIL TIP LOCK \(NEVER PRINT; proximity never reassigns\): ([^\n]+)/g, (_, targets) =>
@@ -279,6 +282,12 @@ const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt
       ? 'REFERENCE-SHEET WARDROBE AND RENDERING LOCK: preserve garment and rendering method across all panels.'
       : 'CROSS-PANEL WARDROBE COLOR LOCK: fix garment items/colors once; reuse in all panels; style and lighting never change canonical wardrobe.'
   )
+    // The per-dialogue slot map and shared rhythm retain the full bubble contract.
+    .replace(/Bodies fixed; bubbles independent: B1 rightmost; B2\/B3\+ strictly leftward; never reverse\./g, 'Bodies fixed; use inline balloon positions.')
+    // 台詞に直結したRIGHTMOST/LEFTMOSTと話者対応を残し、重複する座標表だけ省く。
+    .replace(/ BUBBLE SLOTS: B\d+ x=\d+%(?:; B\d+ x=\d+%)*\./g, '')
+    .replace(/^CAST DEPTH(?: \(all panels\))?: Camera\/Action layers win; no speaker-based FG slots or duplicates\.\n/gm, '')
+    .replace('PANEL DESCRIPTIONS:', 'PANEL DESCRIPTIONS:\nCAST DEPTH (all panels): Camera/Action layers win; no speaker-based FG slots or duplicates.')
     .replace(/^EXPRESSIVE DIRECTION:[^\n]*/gm, 'EXPRESSIVE DIRECTION: height/tilt/foreshortening; full-body acting; panel contrast: scale/light/VFX. Keep quiet beats, Camera/Action, identity, verbatim dialogue, limbs, prop ownership/facing.')
     // 身体演技の契約は BODY ACTING / GESTURE VARIETY LOCK に保持済み。
     .replace(/^BODY ACTING BASELINE:[^\n]*\n?/gm, '')
@@ -428,6 +437,7 @@ export const buildMangaPrompt = ({
 }) => {
   // Native forms and Windows text files use CRLF; metadata and panels share LF parsing.
   scenario = stripSourceMetadata(scenario);
+  punchlineType = resolveScenarioEndingType(scenario, punchlineType);
   const scenarioValidation = validateMangaScenario(scenario, castList);
   if (!scenarioValidation.ok && !allowScenarioQualityWarning) {
     throw new Error(`Incomplete 4-koma scenario: ${formatMangaScenarioValidationIssue(scenarioValidation)}`);

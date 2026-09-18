@@ -4,9 +4,19 @@ import { parseImageQualityQaResponse } from '../src/lib/image-quality-qa.js';
 
 import {
   buildImageQualityRepairPrompt,
+  IMAGE_REPAIR_PROMPT_MAX_CHARS,
   inferImageQualityMode,
-  runImageQualityFailsafe,
+  runImageQualityFailsafe as executeQualityGate,
+  parseImageFailureAnalysis,
+  buildImageFailureAnalysisPrompt,
 } from '../src/lib/image-quality-failsafe.js';
+
+const analysis = ({ issues, history }) => JSON.stringify({ corrections: issues.map((issue, issueIndex) => ({
+  issueIndex, observed: issue.reason, expected: 'approved geometry', cause: 'possible wrong overlap',
+  previousFailure: history.length ? 'Prior contact correction failed' : 'First attempt',
+  nextStrategy: `Rebuild contact at revision ${history.length + 1}`, verification: 'Trace separate contours and count limbs',
+})) });
+const runImageQualityFailsafe = options => executeQualityGate({ analyzeFailure: async context => analysis(context), ...options });
 
 const SINGLE_IMAGE_PROMPT = `[ ANTIGRAVITY EMOTIONAL CINEMA ENGINE v2.1 ]
 Create a SINGLE breathtaking illustration.`;
@@ -16,6 +26,145 @@ const pass = { pass: true, issues: [] };
 const fail = (type = 'anatomy') => ({
   pass: false,
   issues: [{ type, panel: 2, subject: 'アカリ', reason: '腕が1本多い' }],
+});
+
+test('analysis carries failed strategies and outcomes forward and stops as soon as a repair passes', async () => {
+  const contexts = [];
+  let images = 0;
+  const result = await runImageQualityFailsafe({ originalCandidate: candidate('original'), originalPrompt: 'APPROVED',
+    analyzeFailure: async context => { contexts.push(structuredClone(context)); return analysis(context); },
+    reviewCandidate: async image => image.id === 'repair2' ? pass : fail('bubble_order'),
+    generateRepairCandidate: async (prompt, source) => {
+      images++;
+      assert.match(prompt, /FAILURE ANALYSIS AND REPAIR PLAN/);
+      assert.match(prompt, /Rebuild contact/);
+      if (images === 2) { assert.match(prompt, /"outcome"/); assert.equal(source.id, 'repair1'); }
+      return candidate(`repair${images}`);
+    },
+    compareCandidates: async () => ({ preferred: 'repair', reason: 'Improved without regressions' }),
+  });
+  assert.equal(images, 2);
+  assert.equal(contexts[1].history[0].outcome.pass, false);
+  assert.equal(contexts[1].history[0].analysis[0].nextStrategy, 'Rebuild contact at revision 1');
+  assert.equal(result.validationWarning, false);
+});
+
+test('a repeated identical strategy is rejected before spending another image', async () => {
+  let images = 0;
+  const result = await runImageQualityFailsafe({ originalCandidate: candidate('original'), originalPrompt: 'APPROVED',
+    analyzeFailure: async ({ issues }) => analysis({ issues, history: [] }),
+    reviewCandidate: async () => fail('bubble_order'),
+    generateRepairCandidate: async () => { images++; return candidate('repair'); },
+  });
+  assert.equal(images, 1);
+  assert.equal(result.stopReason, 'analysis_failed');
+  assert.match(result.repairError.message, /同一/);
+});
+
+test('an incomplete analysis never triggers image generation and the prompt demands prior failure analysis', async () => {
+  const issues = fail().issues;
+  assert.throws(() => parseImageFailureAnalysis('{"corrections":[]}', { issues }), /揃って/);
+  assert.match(buildImageFailureAnalysisPrompt({ originalPrompt: 'APPROVED', issues, history: [] }), /different operational change/);
+  const result = await runImageQualityFailsafe({ originalCandidate: candidate('original'), originalPrompt: 'APPROVED',
+    reviewCandidate: async () => fail(), analyzeFailure: async () => 'not JSON',
+    generateRepairCandidate: async () => { assert.fail('must not generate without analysis'); },
+  });
+  assert.equal(result.stopReason, 'analysis_failed');
+});
+
+test('unverified QA rechecks the same image once and can recover without any new image', async () => {
+  let checks = 0;
+  const result = await runImageQualityFailsafe({ originalCandidate: candidate('original'), originalPrompt: 'APPROVED',
+    reviewCandidate: async image => { assert.equal(image.id, 'original'); return ++checks === 1 ? fail('unverified') : pass; },
+    generateRepairCandidate: async () => { assert.fail('no image call'); },
+  });
+  assert.equal(checks, 2);
+  assert.equal(result.validationWarning, false);
+});
+
+test('unverified bubble-order evidence enters bounded repair instead of bypassing QA', async () => {
+  let repairs = 0;
+  const result = await runImageQualityFailsafe({
+    originalCandidate: candidate('original'), originalPrompt: 'APPROVED',
+    reviewCandidate: async () => ({ pass: false, issues: [{
+      type: 'unverified', panel: 3, subject: 'bubble_order', reason: 'left-to-right inventory missing',
+    }] }),
+    generateRepairCandidate: async () => candidate(`repair${++repairs}`),
+    compareCandidates: async () => ({ preferred: 'original', reason: 'Order remains unverified.' }),
+  });
+  assert.equal(repairs, 3);
+  assert.equal(result.stopReason, 'retry_limit');
+  assert.equal(result.validationWarning, true);
+  assert.equal(result.canContinue, true);
+});
+
+test('duplicate panel dimensions are collapsed before AI repair analysis', async () => {
+  let analyzedIssues;
+  const result = await runImageQualityFailsafe({
+    originalCandidate: candidate('original'), originalPrompt: 'APPROVED',
+    reviewCandidate: async () => ({ pass: false, issues: [
+      { type: 'camera_geometry', panel: 2, subject: 'camera_geometry', reason: 'elevation mismatch' },
+      { type: 'camera_geometry', panel: 2, subject: 'camera_geometry', reason: 'azimuth mismatch' },
+      { type: 'unverified', panel: 1, subject: 'bubble_order', reason: 'inventory missing' },
+    ] }),
+    analyzeFailure: async context => { analyzedIssues = context.issues; return analysis(context); },
+    generateRepairCandidate: async () => candidate('repair'),
+    compareCandidates: async () => ({ preferred: 'original', reason: 'retain baseline' }),
+  });
+  assert.equal(analyzedIssues.length, 2);
+  assert.deepEqual(analyzedIssues.map(issue => issue.type), ['camera_geometry', 'bubble_order']);
+  assert.equal(result.stopReason, 'retry_limit');
+});
+
+test('cancellation after analysis prevents another image request', async () => {
+  let cancelled = false;
+  const result = await runImageQualityFailsafe({ originalCandidate: candidate('original'), originalPrompt: 'APPROVED',
+    shouldStop: () => cancelled, reviewCandidate: async () => fail(),
+    analyzeFailure: async context => { cancelled = true; return analysis(context); },
+    generateRepairCandidate: async () => { assert.fail('no image after stop'); },
+  });
+  assert.equal(result.stopReason, 'cancelled');
+  assert.equal(result.validationWarning, true);
+  assert.equal(result.canContinue, false);
+});
+
+test('all four candidates may fail but the best earlier image continues with residual defects and full history', async () => {
+  let images = 0;
+  const compared = [];
+  const result = await runImageQualityFailsafe({ originalCandidate: candidate('original'), originalPrompt: 'APPROVED',
+    reviewCandidate: async () => fail('bubble_order'),
+    generateRepairCandidate: async () => candidate(`repair${++images}`),
+    compareCandidates: async (best, next) => {
+      compared.push([best.id, next.id]);
+      return { preferred: next.id === 'repair1' ? 'repair' : 'original', reason: 'First repair preserves more correct details' };
+    },
+  });
+  assert.equal(images, 3);
+  assert.deepEqual(compared, [['original', 'repair1'], ['repair1', 'repair2'], ['repair1', 'repair3']]);
+  assert.equal(result.candidate.id, 'repair1');
+  assert.equal(result.candidates.length, 4);
+  assert.equal(result.history.length, 3);
+  assert.equal(result.finalReview.pass, false);
+  assert.equal(result.validationWarning, true);
+  assert.equal(result.canContinue, true);
+  assert.equal(result.stopReason, 'retry_limit');
+});
+
+test('invalid analysis receives feedback and can recover without wasting an image', async () => {
+  let calls = 0;
+  const result = await runImageQualityFailsafe({ originalCandidate: candidate('original'), originalPrompt: 'APPROVED',
+    reviewCandidate: async image => image.id === 'repair' ? pass : fail(),
+    analyzeFailure: async context => {
+      if (++calls === 1) return 'not JSON';
+      assert.match(context.feedback, /読み取れません/);
+      return analysis(context);
+    },
+    generateRepairCandidate: async () => candidate('repair'),
+    compareCandidates: async () => ({ preferred: 'repair', reason: 'Fixed' }),
+  });
+  assert.equal(calls, 2);
+  assert.equal(result.attempts, 2);
+  assert.equal(result.validationWarning, false);
 });
 
 test('an ungrounded screen/back accusation keeps the image and continues without repair', async () => {
@@ -106,10 +255,10 @@ test('comparison failure does not discard the original', async () => {
     compareCandidates: async () => { throw new Error('comparison unavailable'); },
   });
   assert.equal(result.candidate.id, 'original');
-  assert.equal(result.attempts, 2);
+  assert.equal(result.attempts, 4);
 });
 
-test('restores the saved original image when every repair candidate remains NG', async () => {
+test('retains the saved original and stops after three unsuccessful repairs', async () => {
   const result = await runImageQualityFailsafe({
     originalCandidate: candidate('original'),
     originalPrompt: 'BASE PROMPT',
@@ -118,7 +267,7 @@ test('restores the saved original image when every repair candidate remains NG',
   });
 
   assert.equal(result.candidate.id, 'original');
-  assert.equal(result.attempts, 2);
+  assert.equal(result.attempts, 4);
   assert.equal(result.validationWarning, true);
   assert.equal(result.fallbackToOriginal, true);
   assert.equal(result.finalReview.issues[0].type, 'anatomy');
@@ -171,6 +320,56 @@ test('repair prompt preserves the approved prompt and limits edits to concrete v
   assert.match(prompt, /original page geometry/i);
 });
 
+test('repair prompt keeps bubble order hard and bounds internal retry history', async () => {
+  const prompt = buildImageQualityRepairPrompt({
+    originalPrompt: 'APPROVED SCRIPT AND LAYOUT',
+    issues: [{ type: 'bubble_order', panel: 3, subject: 'bubble_order', reason: 'first line is left of second' }],
+  });
+  assert.match(prompt, /BUBBLE ORDER REPAIR \(HARD CONSTRAINT\)/);
+
+  const longOriginal = 'A'.repeat(15000);
+  const result = await executeQualityGate({
+    originalCandidate: candidate('original'), originalPrompt: longOriginal,
+    reviewCandidate: async () => fail('bubble_order'),
+    analyzeFailure: async ({ issues, history }) => JSON.stringify({ corrections: issues.map((issue, issueIndex) => ({
+      issueIndex, observed: 'x'.repeat(4000), expected: 'y'.repeat(4000), cause: 'z'.repeat(4000),
+      previousFailure: 'p'.repeat(4000), nextStrategy: `new ${history.length} ${issueIndex}`, verification: 'v'.repeat(4000),
+    })) }),
+    generateRepairCandidate: async repairPrompt => {
+      assert.ok(repairPrompt.startsWith(longOriginal));
+      assert.ok(repairPrompt.length <= IMAGE_REPAIR_PROMPT_MAX_CHARS);
+      return candidate('repair');
+    },
+  });
+  assert.equal(result.attempts, 4);
+});
+
+test('oversized approved script is preserved without issuing a truncated repair', async () => {
+  const result = await runImageQualityFailsafe({ originalCandidate: candidate('original'),
+    originalPrompt: 'A'.repeat(32000) + 'FINAL REQUIRED DIALOGUE',
+    reviewCandidate: async () => fail('bubble_order'),
+    generateRepairCandidate: async () => assert.fail('must not truncate the contract'),
+  });
+  assert.equal(result.stopReason, 'prompt_limit');
+  assert.equal(result.attempts, 1);
+  assert.equal(result.canContinue, true);
+});
+
+test('confirmed physical order is repaired before unrelated broad QA defects', async () => {
+  let seen;
+  const result = await runImageQualityFailsafe({ originalCandidate: candidate('original'), originalPrompt: 'APPROVED',
+    reviewCandidate: async image => image.id === 'repair' ? pass : { ...fail('bubble_order'),
+      issues: [...fail('bubble_order').issues, ...fail('panel_layout').issues],
+      bubbleInventory: [{ panel: 2, status: 'defect' }] },
+    analyzeFailure: async context => { seen = context.issues; return analysis(context); },
+    generateRepairCandidate: async () => candidate('repair'),
+    compareCandidates: async () => ({ preferred: 'repair' }),
+  });
+  assert.equal(seen.length, 1);
+  assert.equal(seen[0].type, 'bubble_order');
+  assert.equal(result.attempts, 2);
+});
+
 test('single-image quality repair never turns the emotional illustration into a four-panel manga page', () => {
   const originalPrompt = SINGLE_IMAGE_PROMPT;
   const prompt = buildImageQualityRepairPrompt({
@@ -214,7 +413,7 @@ test('source-image single illustration repair does not invent a comic layout', (
   assert.doesNotMatch(prompt, /exactly four separate visible panels/i);
 });
 
-test('missing geometric evidence retains the completed image with no paid repair or workflow rejection', async () => {
+test('missing geometric evidence retains the completed image without image regeneration and remains unverified', async () => {
   let repairs = 0;
   const review = parseImageQualityQaResponse(JSON.stringify({ pass: true, issues: [], observations: { title: 'none', dialogue: 'none', hands: 'hidden', props: 'consistent' } }));
   const result = await runImageQualityFailsafe({
@@ -227,7 +426,7 @@ test('missing geometric evidence retains the completed image with no paid repair
   assert.equal(result.validationWarning, true);
 });
 
-test('new spatial defects use the same one-repair limit and retain the original if the repair is still defective', async () => {
+test('spatial defects use the three-repair limit and retain the original when still defective', async () => {
   for (const type of ['object_geometry', 'surface_text']) {
     let repairs = 0;
     const review = parseImageQualityQaResponse(JSON.stringify({ pass: false, issues: [{ type, panel: 2, subject: 'scene prop', reason: 'visible physical boundary or text-plane contradiction' }] }));
@@ -242,7 +441,7 @@ test('new spatial defects use the same one-repair limit and retain the original 
         return candidate('repair');
       },
     });
-    assert.equal(repairs, 1);
+    assert.equal(repairs, 3);
     assert.equal(result.candidate.id, 'original');
     assert.equal(result.validationWarning, true);
   }

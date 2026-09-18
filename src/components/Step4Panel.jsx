@@ -307,6 +307,7 @@ export default function Step4Panel({
   setOpenAIImageSize,
   openAIImageVerificationWarning,
   allowImageQualityRepair,
+  stopQualityRetries,
   setAllowImageQualityRepair,
   setOpenAIImageQuality,
   isGeneratingImage,
@@ -602,6 +603,12 @@ export default function Step4Panel({
                   <span>{isGeneratingImage ? "画像を生成中..." : "APIで画像をアプリ内で生成する（STEP4）"}</span>
                 </div>
               </button>
+              {generatedImage && <button type="button"
+                disabled={!finalPrompt || isGeneratingImage || isFixingPolicy}
+                onClick={() => regenerateImage(false, null, { reviewExisting: true })}
+                title="表示中の画像を現在の最終プロンプトと照合します。自動修正ONの場合、不合格時に追加の画像APIを使用します。">
+                表示中の画像を再検査・修正
+              </button>}
                           <div className="border border-yellow-500/30 rounded-lg overflow-hidden" style={{ margin: 0 }}>
                             <button style={{ display: 'flex', width: '100%', boxSizing: 'border-box', margin: 0 }} type="button" aria-expanded={isApiSettingsOpen} aria-controls="api-settings-content"
                               className="w-full flex items-center justify-between px-4 py-3 bg-yellow-900/25 hover:bg-yellow-900/50 transition-all duration-150 cursor-pointer disabled:cursor-not-allowed border-l-4 border-yellow-500 hover:border-yellow-400 group/policy-hdr"
@@ -668,8 +675,13 @@ export default function Step4Panel({
               )}
               <label className="step4-help-copy mt-3 flex items-start gap-2 text-slate-300">
                 <input type="checkbox" checked={allowImageQualityRepair} onChange={event => setAllowImageQualityRepair(event.target.checked)} disabled={isGeneratingImage || isFixingPolicy} />
-                API生成のみ：品質検査NG時に自動修正する（通常1回＋装飾文字が直らない場合のみ1回・追加課金あり／Web貼り付けには影響しません）
+                API生成のみ：不合格の原因と失敗履歴を解析して最大3回修正する（初回込み最大4枚・解析と再検査も追加課金あり／全候補NGなら比較で最良候補を採用して続行）
               </label>
+              {isGeneratingImage && (
+                <button type="button" onClick={stopQualityRetries} className="mt-2 text-sm text-amber-300 underline">
+                  修正リトライを停止（実行中のAPI応答後に停止）
+                </button>
+              )}
                             </div>
                           </div>
 

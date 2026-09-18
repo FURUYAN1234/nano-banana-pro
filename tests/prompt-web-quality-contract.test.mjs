@@ -97,16 +97,20 @@ test('both provider prompts preserve physical settings while allowing density co
 test('both provider prompts lock each named character wardrobe colors across panel styles', () => {
   for (const prompt of [buildChatGptPrompt(), buildGeminiPrompt()]) {
     assert.match(prompt, /CROSS-PANEL WARDROBE COLOR LOCK/);
-    assert.match(prompt, /choose each named character's (?:concrete )?garment items, base colors, accent colors, material, and pattern once/i);
-    assert.match(prompt, /reuse that exact wardrobe assignment in every later panel/i);
-    assert.match(prompt, /PANEL STYLE LOCK.*(?:background|environment).*VFX.*rendering treatment/i);
-    assert.match(prompt, /keep every (?:named character's )?garment item and (?:its|their) colors unchanged/i);
+    if (prompt.includes('CROSS-PANEL WARDROBE COLOR LOCK: fix garment items/colors once;')) {
+      assert.match(prompt, /fix garment items\/colors once; reuse in all panels; style and lighting never change canonical wardrobe/);
+    } else {
+      assert.match(prompt, /choose each named character's (?:concrete )?garment items, base colors, accent colors, material, and pattern once/i);
+      assert.match(prompt, /reuse that exact wardrobe assignment in every later panel/i);
+      assert.match(prompt, /PANEL STYLE LOCK.*(?:background|environment).*VFX.*rendering treatment/i);
+      assert.match(prompt, /keep every (?:named character's )?garment item and (?:its|their) colors unchanged/i);
+      assert.match(prompt, /lighting may change highlights and shadows, but the garment's canonical base and accent colors remain recognizable/i);
+    }
     assert.doesNotMatch(
       prompt,
       /remove (?:that character's )?garments/i,
       'wardrobe continuity must use positive keep-language so image safety does not misread a negated undressing instruction'
     );
-    assert.match(prompt, /lighting may change highlights and shadows, but the garment's canonical base and accent colors remain recognizable/i);
     assert.doesNotMatch(prompt, /PANEL STYLE LOCK:[^\n]*linework, palette, shading/i);
     assert.match(prompt, /PANEL STYLE LOCK:[^\n]*(?:preserve identity and canonical wardrobe|apply global style QA)/i);
   }
@@ -138,8 +142,8 @@ test('ChatGPT Web prompt has generic quality locks for dialogue, bubbles, charac
   assert.match(prompt, /not printed patterns or random geometric marks|no geometric patterns/i);
   assert.match(prompt, /PANEL-BY-PANEL CLOTHING FOLD PRIORITY|FOLD PRIORITY:/);
   assert.match(prompt, /2-4 distinct small dark triangular shadow fills|2-4 dark triangular crease shadows/i);
-  assert.match(prompt, /Draw in a high-budget, chic and cinematic full-color TV anime style/);
-  assert.match(prompt, /official Japanese animation illustration/);
+  assert.match(prompt, /Draw in a high-budget, chic and cinematic full-color TV anime style|Chic cinematic full-color TV anime/);
+  assert.match(prompt, /official Japanese animation illustration|polished Japanese animation finish/);
   assert.doesNotMatch(prompt, /Base style: full-color TV anime/);
   assert.match(prompt, /one character, punctuation mark, added word, omitted word, or speaker|BUBBLE QA: copy TEXT exactly/i);
   assert.match(prompt, /bubble tail tip must terminate at its assigned speaker's mouth\/head silhouette|tails? touch (?:mapped )?speaker mouth\/head/i);

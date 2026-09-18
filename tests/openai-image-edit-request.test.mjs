@@ -4,6 +4,11 @@ import {buildOpenAIImageRequest, generateImageWithOpenAI, setOpenAIApiKey} from 
 import {buildOpenAIReferencePlan, appendOpenAIReferencePrompt} from '../src/lib/openai-image-references.js';
 import {runImageQualityFailsafe} from '../src/lib/image-quality-failsafe.js';
 
+const analyzeFailure = async ({ issues }) => JSON.stringify({ corrections: issues.map((issue, issueIndex) => ({
+  issueIndex, observed: issue.reason, expected: 'correct anatomy', cause: 'possibly confused contact',
+  previousFailure: 'First attempt', nextStrategy: 'Separate the finger contours locally', verification: 'Count fingers and check dialogue',
+})) });
+
 const ref = {image_url: 'data:image/png;base64,YQ=='};
 
 test('provider error echoes do not expose credentials or image inputs', async () => {
@@ -47,7 +52,7 @@ test('initial and bounded repair compose the same references with the completed 
     };
     const original = await generate(approved);
     const result = await runImageQualityFailsafe({
-      originalCandidate: original, originalPrompt: approved, repairSourceMode: 'source-image',
+      analyzeFailure, originalCandidate: original, originalPrompt: approved, repairSourceMode: 'source-image',
       reviewCandidate: async candidate => candidate === original
         ? {pass: false, issues: [{type: 'anatomy', reason: 'extra finger'}]} : {pass: true},
       generateRepairCandidate: prompt => generate(prompt, original),
@@ -62,7 +67,7 @@ test('initial and bounded repair compose the same references with the completed 
 
     const sixteenSheets = Array.from({length: 16}, (_, i) => 'data:image/png;base64,' + Buffer.from('sheet' + i).toString('base64'));
     const limited = await runImageQualityFailsafe({
-      originalCandidate: original, originalPrompt: approved, repairSourceMode: 'source-image',
+      analyzeFailure, originalCandidate: original, originalPrompt: approved, repairSourceMode: 'source-image',
       reviewCandidate: async () => ({pass: false, issues: [{type: 'anatomy', reason: 'extra finger'}]}),
       generateRepairCandidate: prompt => generate(prompt, original, sixteenSheets),
     });

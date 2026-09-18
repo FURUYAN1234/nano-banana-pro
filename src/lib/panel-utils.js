@@ -47,6 +47,9 @@ const collectCastNameEntries = (castListText = '') => {
     pushUnique(aliases, nameOnly);
 
     nameOnly.split(/[\s・]/).forEach(part => pushUnique(aliases, part));
+    // 漢字姓＋カタカナ名は、ト書きの名だけの呼称も同一人物として解決する。
+    const givenName = nameOnly.match(/^[\p{Script=Han}]+([\p{Script=Katakana}ー]{2,})$/u)?.[1];
+    if (givenName) pushUnique(aliases, givenName);
 
     const romajiMatch = displayName.match(/[\(（]\s*(.*?)\s*[\)）]/);
     if (romajiMatch) pushUnique(aliases, romajiMatch[1].trim());
@@ -112,7 +115,9 @@ export const buildIdentityMatrix = (castListText, options = {}) => {
     if (cleanLine.includes('髪') || cleanLine.toLowerCase().includes('hair')) {
       const weightsMatch = cleanLine.match(/\[WEIGHTS?\]:\s*(.*)/i);
       const tagsSource = weightsMatch ? weightsMatch[1].replace(/\|/g, '') : cleanLine;
-      const colorMatch = tagsSource.match(/(red|orange|blonde|yellow|brown|black|silver|white|blue|pink|green|purple|ginger)\s+hair(?!\s*(?:tip|end|gradient|streak|highlight|accent))/i);
+      // Allow stable descriptors between color and noun (e.g. "silver messy hair")
+      // while excluding suffixes such as pink hair tips from the base color.
+      const colorMatch = tagsSource.match(/(red|orange|blonde|yellow|brown|black|silver|gray|grey|white|blue|pink|green|purple|ginger)(?:\s+[a-z-]+){0,2}\s+hair(?!\s*(?:tip|end|gradient|streak|highlight|accent))/i);
       if (colorMatch && !currentChar.hairColor) currentChar.hairColor = colorMatch[1];
       // [v2.31] 特徴的スタイル（twintails, hime cut等）を汎用長さ記述（long hair等）より優先
       // これにより Identity Matrix で汎用長さより特徴的な髪型を優先して出力できる
@@ -130,7 +135,7 @@ export const buildIdentityMatrix = (castListText, options = {}) => {
     // [v2.30] 眼鏡情報の抽出 - 全面改修
     const lowerLine = cleanLine.toLowerCase();
     const hasPlainNoGlasses = /\bno[\s_-]*glasses\b/.test(lowerLine);
-    const hasPlainGlasses = /\bglasses\b/.test(lowerLine) && !hasPlainNoGlasses;
+    const hasPlainGlasses = /\b(?:sun)?glasses\b/.test(lowerLine) && !hasPlainNoGlasses;
     const hasWeightedNoGlasses = /\(no[\s_-]*glasses/i.test(lowerLine);
     const hasWeightedGlasses = /\([^)]*glasses[\s:]/i.test(lowerLine) && !hasWeightedNoGlasses;
     const glassesLocked = currentChar.glasses === 'LOCKED_NO' || currentChar.glasses === 'LOCKED_YES';
@@ -850,8 +855,13 @@ export const extractDialogueOnly = (fullPanelText, castList, options = {}) => {
     .sort((a, b) => a.order - b.order || a.sequence - b.sequence);
 
   if (options.forImagePrompt) {
+    // Bind spatial slots to the same ordered entries as text and speaker tails.
+    // Reserve balloon bodies before drawing actors, even when B1's speaker is left.
+    const readingSlots = orderedEntries.length > 1
+      ? ` BUBBLE SLOTS: ${orderedEntries.map((_, index) => `B${index + 1} x=${Math.round(100 * (orderedEntries.length - index) / (orderedEntries.length + 1))}%`).join('; ')}.`
+      : '';
     const visibleText = orderedEntries
-      .map((entry, index) => `B${index + 1}="${entry.text}"`)
+      .map((entry, index) => `B${index + 1}="${entry.text}"${orderedEntries.length > 1 ? ` [${index === 0 ? 'RIGHTMOST' : index === orderedEntries.length - 1 ? 'LEFTMOST' : `LEFT OF B${index}`}]` : ''}`)
       .join('; ');
     const tailTargets = orderedEntries
       .map((entry, index) => entry.speaker ? `B${index + 1}->[${entry.speaker}]` : '')
@@ -862,9 +872,9 @@ export const extractDialogueOnly = (fullPanelText, castList, options = {}) => {
       const endpointTargets = mappedSpeakers
         .map((entry, index) => `B${index + 1}=>[${entry.speaker}] mouth/head`)
         .join('; ');
-      return `TEXT (PRINT VALUES ONLY): ${visibleText}. TAIL TIP LOCK (NEVER PRINT; proximity never reassigns): ${endpointTargets}.`;
+      return `TEXT (PRINT VALUES ONLY): ${visibleText}.${readingSlots} TAIL TIP LOCK (NEVER PRINT; proximity never reassigns): ${endpointTargets}.`;
     }
-    return `TEXT (PRINT VALUES ONLY): ${visibleText}. TAILS (METADATA; NEVER PRINT NAMES): ${tailTargets || 'match the visually speaking character'}.`;
+    return `TEXT (PRINT VALUES ONLY): ${visibleText}.${readingSlots} TAILS (METADATA; NEVER PRINT NAMES): ${tailTargets || 'match the visually speaking character'}.`;
   }
 
   return orderedEntries
@@ -1321,7 +1331,7 @@ export const extractPlacementRule = (fullPanelText, castList, options = {}) => {
 
   if (speakers.length > 0 && hasScriptedSpatialStaging(fullPanelText)) {
     const identities = speakers.map(name => `[${name}] (${compactIdentityTraits(getCharTraitsFromMatrix(name, castList, { monochrome }))})`).join('; ');
-    if (compact) return `PLACEMENT/IDENTITY: ${identities}. Bodies fixed; bubbles independent: B1 rightmost; B2/B3+ left/down; never reverse.`;
+    if (compact) return `PLACEMENT/IDENTITY: ${identities}. Bodies fixed; bubbles independent: B1 rightmost; B2/B3+ strictly leftward; never reverse.`;
     return `PLACEMENT/IDENTITY: ${identities}. Preserve Camera/Action screen positions and depth; do not derive body positions from dialogue order. Bubbles flow right-to-left in dialogue order with tails to their actual speakers.`;
   }
   if (speakers.length >= 3) {
@@ -1478,7 +1488,11 @@ export const extractCastLimitRule = (fullPanelText, castList, options = {}) => {
   const castCount = canonicalValidCharacters.length;
   const countLabels = [String(castCount), ...('一二三四五六七八九十'[castCount - 1] ? ['一二三四五六七八九十'[castCount - 1]] : [])];
   const hasCountedCastGroup = castCount > 0 && new RegExp(`(?:^|[。！？\\n:：／、（(])\\s*(?:この|その)?(?:${countLabels.join('|')})人(?:が|は|も|で|、)`, 'u').test(actionAndMetaText.normalize('NFKC'));
-  const hasAllMainCastCue = hasUnqualifiedCastGroup || hasCountedCastGroup || /(?:他キャラ全員|キャラ全員|全キャラ|全メンバー|全員集合|メンバー全員|主要人物全員|all characters|the whole main cast)/i.test(actionAndMetaText);
+  const remainingCount = castCount - speakers.length;
+  const remainingLabels = [String(remainingCount), '一二三四五六七八九十'[remainingCount - 1]].filter(Boolean);
+  const hasRemainingCastGroup = speakers.length > 0 && remainingCount > 0
+    && new RegExp(`(?:奥|後方|背景|背後)[^。！？\\n]*他の(?:${remainingLabels.join('|')})人(?:が|は|も|で)`, 'u').test(actionAndMetaText);
+  const hasAllMainCastCue = hasUnqualifiedCastGroup || hasCountedCastGroup || hasRemainingCastGroup || /(?:他キャラ全員|キャラ全員|全キャラ|全メンバー|全員集合|メンバー全員|主要人物全員|all characters|the whole main cast)/i.test(actionAndMetaText);
   if (hasAllMainCastCue) {
     canonicalValidCharacters.forEach((canonicalName) => {
       if (!allPanelCharacters.includes(canonicalName)) {
@@ -1749,6 +1763,8 @@ export const cleanCastList = (castList, activeOutfit) => {
     const weightedTags = line.match(/\([a-zA-Z\s_-]+:\d+\.?\d*\)/g);
     if (weightedTags && weightedTags.length >= 2) {
       cleanCastData += weightedTags.join(', ') + ", ";
+    } else if (!headingMatch && line && !/^[|#]/.test(line)) {
+      cleanCastData += line + ", ";
     }
   }
   if (!cleanCastData.trim()) {

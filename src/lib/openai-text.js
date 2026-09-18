@@ -241,7 +241,7 @@ export const callOpenAIText = async (prompt, images = null, systemInstruction = 
                 continue;
             }
 
-            if (onThinkingUpdate) onThinkingUpdate(`> [API] 生成完了：高品質な成果物を構築しました。`);
+            if (onThinkingUpdate) onThinkingUpdate(`> [API] 応答の受信が完了しました。`);
 
             return {
                 text: finalOutput,

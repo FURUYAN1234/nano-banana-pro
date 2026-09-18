@@ -107,6 +107,11 @@ export const DOCUMENTARY_ENDING_OPTIONS = Object.freeze([
 
 export const getEndingModePolicy = (type) => ENDING_MODE_POLICIES[type] || DEFAULT_ENDING_POLICY;
 
+export const resolveScenarioEndingType = (scenario, fallback) => {
+  const label = String(scenario || '').match(/^Punchline:\s*([^\r\n]+)/mi)?.[1]?.trim();
+  return Object.entries(ENDING_MODE_POLICIES).find(([key, policy]) => key === label || policy.label === label)?.[0] || fallback;
+};
+
 export const isDocumentaryEnding = (type) => getEndingModePolicy(type).documentary;
 
 export const isSeriousEnding = (type) => getEndingModePolicy(type).endingTone === 'serious';

@@ -42,6 +42,48 @@ const spatialChecks = (count = 4) => Array.from({ length: count }, (_, index) =>
 }));
 const observations = { title: 'No title requested', dialogue: 'Panels 1-4 have no bubbles as requested', hands: 'No hand side requested', props: 'Paper held at its lower edge' };
 
+test('reading order rejects reversed balloon bodies even when text and speaker tails pass', () => {
+  const review = (positions, mode) => {
+    const checks = spatialChecks(mode === 'single-image' ? 1 : 4);
+    checks[0].bubble_speaker = { status: 'ok', evidence: 'Tails reach the correct speakers.', bubbles: positions.map((x, i) => ({
+      bubble: `B${i + 1}`, text: `line ${i + 1}`, expected_speaker: `actor ${i}`, observed_tail_target: `actor ${i}`,
+      tail_endpoint_evidence: 'Tail meets the visible head.', center_x: x, position_evidence: `Balloon body at horizontal fraction ${x}`,
+    })).reverse() };
+    return parseImageQualityQaResponse(JSON.stringify({ pass: true, issues: [], observations, spatial_checks: checks }), { mode });
+  };
+  assert.equal(review([0.8, 0.5, 0.2]).pass, true);
+  for (const positions of [[0.2, 0.8], [0.8, 0.2, 0.5]]) {
+    const result = review(positions);
+    assert.equal(result.pass, false);
+    assert.ok(result.issues.some(issue => issue.type === 'bubble_order' && issue.panel === 1));
+  }
+  for (const positions of [[undefined, 0.2], [0.5, 0.5], [1.2, 0.2]]) {
+    const result = review(positions);
+    assert.equal(result.pass, false);
+    assert.ok(result.issues.some(issue => issue.type === 'unverified' && issue.subject === 'bubble_order'));
+    assert.ok(!result.issues.some(issue => issue.type === 'bubble_order'));
+  }
+  assert.equal(review([0.2]).pass, true);
+  assert.equal(review([0.2, 0.8], 'single-image').pass, true);
+});
+
+test('physical text order overrides reviewer PASS and invented correct B coordinates', () => {
+  const finalPrompt = '## Panel 1\nDialogue (verbatim bubbles): TEXT (PRINT VALUES ONLY): B1="先に話す。"; B2="返事する。".\n## Panel 2\nDialogue: silent';
+  const review = texts => {
+    const checks = spatialChecks();
+    checks[0].bubble_speaker = { status: 'ok', evidence: 'Reviewer claims correct order.', left_to_right_texts: texts,
+      bubbles: ['先に話す。', '返事する。'].map((text, i) => ({ bubble: `B${i + 1}`, text, expected_speaker: 'A', observed_tail_target: 'A', tail_endpoint_evidence: 'Tail reaches A.', center_x: i ? 0.3 : 0.7, position_evidence: 'Reviewer copied slots.' })) };
+    return parseImageQualityQaResponse(JSON.stringify({ pass: true, issues: [], observations, spatial_checks: checks }), { finalPrompt });
+  };
+  assert.equal(review(['返事する。', '先に話す。']).pass, true);
+  const reversed = review(['先に話す。', '返事する。']);
+  assert.equal(reversed.pass, false);
+  assert.ok(reversed.issues.some(issue => issue.type === 'bubble_order'));
+  for (const texts of [undefined, [], ['先に話す。'], ['違う。', '先に話す。']]) {
+    assert.ok(review(texts).issues.some(issue => issue.type === 'unverified' && issue.subject === 'bubble_order'));
+  }
+});
+
 test('camera PASS needs separate grounded dimensions and cannot mask a failed lens or side', () => {
   const checks = spatialChecks();
   checks[0].camera_geometry = { status: 'ok', evidence: 'All camera work is correct.' };

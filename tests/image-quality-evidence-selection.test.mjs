@@ -3,10 +3,15 @@ import assert from 'node:assert/strict';
 import { runImageQualityFailsafe } from '../src/lib/image-quality-failsafe.js';
 import { parseImageQualityQaResponse } from '../src/lib/image-quality-qa.js';
 
+const analyzeFailure = async ({ issues }) => JSON.stringify({ corrections: issues.map((issue, issueIndex) => ({
+  issueIndex, observed: issue.reason, expected: 'correct anatomy', cause: 'possibly confused contact',
+  previousFailure: 'First attempt', nextStrategy: 'Separate the finger contours locally', verification: 'Count fingers and check dialogue',
+})) });
+
 // Synthetic contracts test state transitions, not actual vision accuracy.
 test('an improved repair with unresolved QA is compared and retained without another generation', async () => {
   let generations = 0;
-  const result = await runImageQualityFailsafe({ originalCandidate: 'original', originalPrompt: 'script',
+  const result = await runImageQualityFailsafe({ analyzeFailure, originalCandidate: 'original', originalPrompt: 'script',
     reviewCandidate: async image => ({ pass: false, issues: [{ type: image === 'original' ? 'anatomy' : 'unverified', reason: 'remaining issue' }] }),
     generateRepairCandidate: async () => { generations++; return 'repair'; },
     compareCandidates: async (first, second, prompt, options) => {

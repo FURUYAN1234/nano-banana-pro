@@ -9,7 +9,7 @@ import {buildGeminiReferencePlan, appendGeminiReferencePrompt} from '../lib/gemi
 import { callAI, setActiveEngine } from '../lib/ai-provider';
 import { reviewComedyPrompt } from '../lib/comedy-review';
 import { normalizeMangaColorMode } from '../lib/manga-render-mode.js';
-import { assertPromptEndingModeConsistency, getEndingModePolicy, isDocumentaryEnding } from '../lib/ending-mode-policy.js';
+import { assertPromptEndingModeConsistency, getEndingModePolicy, isDocumentaryEnding, resolveScenarioEndingType } from '../lib/ending-mode-policy.js';
 
 // --- Refactored Imports (Phase 1-2) ---
 import { SYSTEM_VERSION, DEFAULT_CATEGORIES, EMOTION_STYLES, DYNAMIC_CAMERA_PROTOCOL, ANTI_CHARSHEET_PREFIX } from '../lib/constants';
@@ -34,13 +34,15 @@ import { formatGeneratedMangaTitle } from '../lib/manga-title';
 import { isImagePolicyError } from '../lib/image-policy-error';
 import {
   buildImageQualityQaImageParts,
+  buildBubbleInventoryPrompt,
+  applyBubbleInventory,
   buildImageQualityQaPrompt,
   buildImageQualityComparisonPrompt,
   parseImageQualityComparison,
   formatImageQualityIssue,
   parseImageQualityQaResponse
 } from '../lib/image-quality-qa';
-import { inferImageQualityMode, runImageQualityFailsafe } from '../lib/image-quality-failsafe';
+import { buildImageFailureAnalysisPrompt, inferImageQualityMode, runImageQualityFailsafe } from '../lib/image-quality-failsafe';
 import { getEffectiveEngine } from '../lib/engine-state';
 import { DEFAULT_OPENAI_IMAGE_QUALITY, DEFAULT_OPENAI_IMAGE_SIZE, normalizeOpenAIImageSize, normalizeOpenAIImageQuality, resolveOpenAIImageOption, selectInitialOpenAIImageQuality, isOpenAIImageVerificationError, OPENAI_IMAGE_VERIFICATION_MESSAGE } from '../lib/openai-image-settings.js';
 
@@ -51,6 +53,8 @@ export default function useMangaWorkflow() {
   const setOpenAIImageSize = (value) => setOpenAIImageSizeState(normalizeOpenAIImageSize(value));
   const [openAIImageVerificationWarning, setOpenAIImageVerificationWarning] = useState('');
   const [allowImageQualityRepair, setAllowImageQualityRepair] = useState(true);
+  const qualityRetryAbortRef = useRef(false);
+  const stopQualityRetries = () => { qualityRetryAbortRef.current = true; };
   const setOpenAIImageQuality = (value) => {
     openAIImageQualityChosen.current = true;
     setOpenAIImageQualityState(normalizeOpenAIImageQuality(value));
@@ -970,7 +974,8 @@ export default function useMangaWorkflow() {
     }, 1000);
 
     try {
-      const activePunchlineType = resolvedPunchlineTypeRef.current || punchlineType;
+      const activePunchlineType = resolveScenarioEndingType(currentScenario, resolvedPunchlineTypeRef.current || punchlineType);
+      updateResolvedPunchlineType(activePunchlineType);
       // [v3.82-alpha] リファクタリング: 外部モジュールでプロンプトを構築
       const safePrompt = buildMangaPrompt({
         scenario: currentScenario,
@@ -1230,6 +1235,8 @@ export default function useMangaWorkflow() {
       setGenLog(prev => [...prev, `[PROMPT MODE ERROR] ${error.message}`]);
       return false;
     }
+    qualityRetryAbortRef.current = false;
+    const qualityRunEpoch = scenarioRunEpochRef.current;
     setIsGeneratingImage(true);
     setIsGenerationError(false);
     
@@ -1338,10 +1345,23 @@ export default function useMangaWorkflow() {
             null,
             (msg) => statCallback(`[QUALITY QA] ${msg}`)
           );
-          return parseImageQualityQaResponse(qualityResponse.text, { mode: qualityMode });
+          const review = parseImageQualityQaResponse(qualityResponse.text, { mode: qualityMode, finalPrompt: candidatePrompt });
+          if (qualityMode === 'single-image') return review;
+          // 正解を見せた総合QAとは別に、候補画像1枚だけから文字と位置を読む。
+          let inventoryText = '';
+          try {
+            const inventory = await callAI(buildBubbleInventoryPrompt(),
+              buildImageQualityQaImageParts({ candidate }), null,
+              msg => statCallback(`[読順転記] ${msg}`));
+            inventoryText = inventory.text;
+          } catch (error) {
+            statCallback(`[読順転記] 未確認: ${error.message}`);
+          }
+          return applyBubbleInventory(review, inventoryText, candidatePrompt);
         } catch (qualityError) {
           return {
             pass: false,
+            requestFailed: true,
             issues: [{
               type: 'unverified',
               panel: null,
@@ -1352,7 +1372,13 @@ export default function useMangaWorkflow() {
         }
       };
 
-      const originalCandidate = await generateImageCandidate(currentPrompt);
+      const retainedImage = generationOptions.reviewExisting
+        ? String(generatedImage || '').match(/^data:(image\/[^;]+);base64,([\s\S]+)$/) : null;
+      if (generationOptions.reviewExisting && !retainedImage) throw new Error('再検査する画像がありません。');
+      const originalCandidate = retainedImage
+        ? { mimeType: retainedImage[1], base64Img: retainedImage[2], modelId: null }
+        : await generateImageCandidate(currentPrompt);
+      if (retainedImage) statCallback('[QUALITY QA] 表示中の画像を再検査します。初回の画像生成は行いません。');
       let generatedModelId = originalCandidate.modelId;
       let generatedMimeType = originalCandidate.mimeType;
       setGenLog(prev => [...prev, `[4/5] データストリーム受信完了 (Model: ${generatedModelId})`, "[5/5] Base64画像データをデコード・レンダリング中..."]);
@@ -1360,11 +1386,21 @@ export default function useMangaWorkflow() {
       const finalImageStr = `data:${generatedMimeType};base64,${originalCandidate.base64Img}`;
       setGeneratedImage(finalImageStr);
       statCallback(allowImageQualityRepair
-        ? '[QUALITY QA] キャラクターシート・人物・手・小物・吹き出しを検査中です。元画像を表示し、通常修正は1回、装飾文字の問題が残る場合のみ最終候補を1回生成します。'
+        ? '[QUALITY QA] キャラクターシート・人物・手・小物・吹き出しを検査中です。不合格を解析し、失敗履歴を引き継いで最大3回修正します。未確認は同じ画像を1回再検査します。'
         : '[QUALITY QA] 自動修正OFF：元画像を表示して品質検査します。追加の画像生成は行いません。');
 
       const qualityOutcome = await runImageQualityFailsafe({
         allowRepair: allowImageQualityRepair,
+        shouldStop: () => qualityRetryAbortRef.current || scenarioRunEpochRef.current !== qualityRunEpoch
+          || (isFullAutoMode && fullAutoAbortRef.current),
+        analyzeFailure: async ({ candidate, originalPrompt, issues, history, feedback }) => {
+          const response = await callAI(
+            buildImageFailureAnalysisPrompt({ originalPrompt, issues, history, feedback }),
+            buildImageQualityQaImageParts({ candidate, referenceImages: images }),
+            null, msg => statCallback(`[修正解析] ${msg}`)
+          );
+          return response.text;
+        },
         originalCandidate,
         originalPrompt: currentPrompt,
         mode: qualityMode,
@@ -1438,23 +1474,32 @@ export default function useMangaWorkflow() {
       }
       const acceptedImageStr = `data:${generatedMimeType};base64,${qualityOutcome.candidate.base64Img}`;
       setGeneratedImage(acceptedImageStr);
-      setGenerationHistory(prev => addGenerationHistoryItem(prev, { id: Date.now(), img: acceptedImageStr }));
+      setGenerationHistory(prev => {
+        const timestamp = Date.now();
+        return qualityOutcome.candidates.reduce((items, entry, index) => addGenerationHistoryItem(items, {
+          id: timestamp + index,
+          img: `data:${entry.candidate.mimeType || 'image/png'};base64,${entry.candidate.base64Img}`,
+          qualityPass: entry.review?.pass === true,
+          selected: entry.candidate === qualityOutcome.candidate,
+        }), prev);
+      });
 
+      if (!qualityOutcome.canContinue) {
+        setIsGenerationError(true);
+        fullAutoAbortRef.current = true;
+        showStatus('修正リトライを停止しました。生成済み画像は履歴に保持しています。');
+        return false;
+      }
+      setIsGenerationError(false);
       if (qualityOutcome.validationWarning) {
-        setIsGenerationError(false);
-        setGenLog(prev => [
-          ...prev,
-          qualityOutcome.fallbackToOriginal
-            ? '[QUALITY QA] ⚠️ 保持した元画像を採用し、警告付きで後続作業を続行します。'
-            : '[QUALITY QA] ⚠️ 利用可能な画像を保持し、警告付きで後続作業を続行します。'
+        setGenLog(prev => [...prev,
+          `[QUALITY QA] 最良候補を採用・警告あり（${qualityOutcome.stopReason}）。後続作業を続行します。`,
+          ...qualityResult.issues.map(issue => `[残る確認事項] ${formatImageQualityIssue(issue)}`),
         ]);
-        showStatus(qualityReviewUnverified
-          ? '品質レビューは未確認ですが、画像生成は完了し保存済みの画像を採用します。'
-          : '品質ゲートは未合格ですが、比較で保持した画像を採用して後続作業を続行します。');
       } else {
         statCallback(qualityOutcome.attempts > 1
-          ? `[QUALITY QA] ✅ PASS — ${qualityOutcome.attempts - 1}回の限定修正後、人物・手・小物・吹き出し品質ゲートを通過しました。`
-          : '[QUALITY QA] ✅ PASS — 人物・手・小物・吹き出しに明確な問題は検出されませんでした。');
+          ? `[QUALITY QA] ✅ PASS — ${qualityOutcome.attempts - 1}回の修正後、品質ゲートを通過しました。`
+          : '[QUALITY QA] ✅ PASS — 品質ゲートを通過しました。');
       }
 
       // [v3.56] OpenAIモデル (gpt-image-2等) は正規モデルとして扱い、フォールバック警告を出さない
@@ -1473,14 +1518,13 @@ export default function useMangaWorkflow() {
           `[GUIDE] 4. 貼り付けて${isOpenAIEngine ? '送信する' : '「思考モード」で送信する'}`,
           "[COMPLETE] Image successfully generated (with warnings)."
         ]);
-      } else if (!qualityResult.pass) {
-        setIsFallbackUsed(false);
-        setGenLog(prev => [...prev, "[COMPLETE] Image successfully generated (quality warning)."]);
       } else {
         setIsFallbackUsed(false);
-        setGenLog(prev => [...prev, "[COMPLETE] Image successfully generated."]);
+        setGenLog(prev => [...prev, qualityOutcome.validationWarning
+          ? '[COMPLETE] Best available image selected (quality warning).'
+          : '[COMPLETE] Image successfully generated.']);
       }
-      showStatus(qualityResult.pass ? "画像生成完了！" : "画像生成完了（品質警告あり・画像は保持）");
+      showStatus(qualityOutcome.validationWarning ? "最良候補を採用しました（品質警告あり）" : "画像生成完了！");
       return true; // [v2.78] フルオート連鎖用: 成功
     } catch (error) {
       console.error(error);
@@ -2068,6 +2112,7 @@ export default function useMangaWorkflow() {
     openAIImageVerificationWarning,
     allowImageQualityRepair,
     setAllowImageQualityRepair,
+    stopQualityRetries,
     setOpenAIImageQuality,
     regenerateSafePrompt,
     revertScenario,

@@ -115,6 +115,7 @@ function App() {
     openAIImageVerificationWarning,
     allowImageQualityRepair,
     setAllowImageQualityRepair,
+    stopQualityRetries,
     setOpenAIImageQuality,
     regenerateSafePrompt,
     revertScenario,
@@ -404,6 +405,7 @@ function App() {
               openAIImageSize={openAIImageSize}
               setOpenAIImageSize={setOpenAIImageSize}
               openAIImageVerificationWarning={openAIImageVerificationWarning}
+              stopQualityRetries={stopQualityRetries}
               allowImageQualityRepair={allowImageQualityRepair}
               setAllowImageQualityRepair={setAllowImageQualityRepair}
               setOpenAIImageQuality={setOpenAIImageQuality}
