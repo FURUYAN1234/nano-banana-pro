@@ -244,6 +244,9 @@ The production application is published from the `main` branch through the repos
 
 ## 📋 ChangeLog
 
+### v6.4.1 (2026-09-19)
+- **[Fix & UX]** 画像APIのポリシー拒否時に、表現を修正して最大5回まで再生成し、成功画像とプロンプト履歴を保持 / On image-API policy rejection, repairs wording and retries up to five times while retaining the successful image and prompt history
+
 ### v6.4.0 (2026-09-19)
 - **[Fix & UX]** STEP1解析中は経過表示窓へ移動し、STEP2からSTEP4の次に操作できる主ボタンは画面下端に表示する導線を追加。 / Focused STEP1 analysis on its progress window and placed the next actionable STEP2-4 button at the lower edge of the view.
 - **[Fix & API]** 画像APIのポリシー拒否は、内部で安全な表現へ修正して最大5回まで再生成。成功画像、履歴、元・修正プロンプトを残し、各再試行が文章APIと画像APIを使うことを表示。 / On an image-API policy rejection, repair the wording internally and retry up to five times while retaining the successful image, history, and original and repaired prompts; disclose that each retry uses text and image APIs.
