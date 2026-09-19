@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
   Wand2,
   Loader2,
   ArrowRight
 } from 'lucide-react';
+import ThinkingLog from './ThinkingLog';
 
 /**
  * STEP 03: プロンプト生成パネル
@@ -16,13 +17,22 @@ export default function Step3Panel({
   isEnhancing,
   is360CameraWorking,
   assemblePrompt,
+  assembleThought,
   isAssembling,
   colorMode = 'color',
   setColorMode,
   isColorModeLocked = false
 }) {
+  const progressLogRef = useRef(null);
   const controlsDisabled = currentStep < 3 || isSearching || isAnalyzing || isEnhancing
     || is360CameraWorking || isAssembling || isColorModeLocked;
+
+  useEffect(() => {
+    if (isAssembling) {
+      progressLogRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [isAssembling]);
+
   return (
     <section
       ref={step3Ref}
@@ -88,6 +98,12 @@ export default function Step3Panel({
           </>
         )}
       </button>
+
+      {(isAssembling || assembleThought) && (
+        <div ref={progressLogRef} aria-live="polite">
+          <ThinkingLog thought={assembleThought} placeholder="> プロンプト構築を開始しています..." />
+        </div>
+      )}
     </section>
   );
 }

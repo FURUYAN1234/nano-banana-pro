@@ -15,7 +15,6 @@ import {
   RefreshCw,
   ExternalLink
 } from 'lucide-react';
-import ThinkingLog from './ThinkingLog';
 import Panorama360Viewer from './Panorama360Viewer';
 import { GEMINI_A4_RELAYOUT_PROMPT, GEMINI_2K_REFINEMENT_PROMPT } from '../lib/gemini-image-edit';
 import { getEffectiveEngine } from '../lib/engine-state';
@@ -277,7 +276,6 @@ export default function Step4Panel({
   finalPrompt,
   setFinalPrompt,
   copyPrompt,
-  assembleThought,
   enableChatGPTMode,
   selectedEngine,
   bg360Image,
@@ -392,8 +390,6 @@ export default function Step4Panel({
               <span className="text-[9px] font-mono text-slate-600">DYNAMIC ENGINE V1.2.3</span>
             </div>
           </div>
-
-          <ThinkingLog thought={assembleThought} placeholder="> ボタンを押すとプロンプト構築ログがここに表示されます..." />
 
           <div className="mt-2 text-[11px] text-slate-500 text-center font-mono">
             この欄で直接編集できます。編集した内容が、プロンプトのコピーと画像生成の両方に使われます。

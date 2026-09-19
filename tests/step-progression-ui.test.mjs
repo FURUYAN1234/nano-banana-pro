@@ -8,6 +8,18 @@ test('STEP4 output stays hidden until a final prompt exists', async () => {
   assert.match(app, /Boolean\(finalPrompt\?\.trim\(\)\)\s*&&\s*\(\s*<Step4Panel/);
 });
 
+test('STEP3 exposes its live progress and advances to STEP4 only after the prompt is ready', async () => {
+  const [app, step3] = await Promise.all([
+    readFile(new URL('../src/App.jsx', import.meta.url), 'utf8'),
+    readFile(new URL('../src/components/Step3Panel.jsx', import.meta.url), 'utf8'),
+  ]);
+
+  assert.match(step3, /<ThinkingLog thought=\{assembleThought\}/);
+  assert.match(step3, /isAssembling[\s\S]*?scrollIntoView\(\{ behavior: 'smooth', block: 'center' \}\)/);
+  assert.match(app, /wasAssemblingRef\.current = true/);
+  assert.match(app, /!wasAssemblingRef\.current \|\| !finalPrompt\?\.trim\(\)[\s\S]*?outputRef\.current\?\.scrollIntoView\(\{ behavior: 'smooth', block: 'start' \}\)/);
+});
+
 test('the next actionable STEP button pulses after each completed step', async () => {
   const [step2, step3, step4, css] = await Promise.all([
     readFile(new URL('../src/components/Step2Panel.jsx', import.meta.url), 'utf8'),

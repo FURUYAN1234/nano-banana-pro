@@ -1,6 +1,6 @@
 # Super FURU AI 4-koma System / Super FURU AI 4コマシステム
 
-> Current source version: **v6.3.7** / 現在のソース版: **v6.3.7**
+> Current source version: **v6.3.9** / 現在のソース版: **v6.3.9**
 
 An experimental web application in which AI handles topic research, story structure, direction, prompt construction, image generation, and quality review for a four-panel manga. / AIが話題調査、構成、演出、プロンプト構築、画像生成、品質確認まで担当する4コマ漫画制作Webアプリです。
 
@@ -34,7 +34,7 @@ The application provides one continuous four-step workflow. / アプリは次の
 | Full-auto controls / フルオート | The workflow can advance through STEP2–4, show the current stage and countdown, and be stopped without clearing the already completed work. / STEP2～4を自動で進め、現在段階とカウントダウンを表示し、完了済みの内容を消さずに停止できます。 |
 | Video handoff / 動画化 | Copy the generic MiniMax H3 prompt, or download the separate FourPanel ComfyUI workflow JSON and matching custom-node package. / 汎用MiniMax H3プロンプトをコピーするか、別配布のFourPanel ComfyUIワークフローJSONと対応カスタムノードを取得できます。 |
 
-STEP4, its copy controls, image settings and history stay hidden until STEP3 has produced a non-empty final prompt. After each step, the next available main STEP button slowly alternates between darker and brighter states; reduced-motion browser settings disable this animation. / STEP3が空でない最終プロンプトを作るまで、STEP4、コピーボタン、画像設定、履歴は表示しません。各STEP完了後は次に押せる主ボタンがゆっくり明暗変化し、ブラウザーの視差効果軽減設定ではアニメーションを止めます。
+STEP4, its copy controls, image settings and history stay hidden until STEP3 has produced a non-empty final prompt. When STEP3 starts, the view moves to its live progress log; only after a final prompt is ready does it move to STEP4. Editing an already completed prompt does not move the view. After each step, the next available main STEP button slowly alternates between darker and brighter states; reduced-motion browser settings disable this animation. / STEP3が空でない最終プロンプトを作るまで、STEP4、コピーボタン、画像設定、履歴は表示しません。STEP3開始時は実際の進捗ログへ移動し、最終プロンプトが完成した時だけSTEP4へ移動します。完成済みプロンプトの手動編集では画面を移動しません。各STEP完了後は次に押せる主ボタンがゆっくり明暗変化し、ブラウザーの視差効果軽減設定ではアニメーションを止めます。
 
 ### Story construction algorithm / 物語アルゴリズム
 
@@ -69,7 +69,7 @@ These are generation and review constraints, not guarantees. Provider image mode
 
 `gpt-6-astra` is the OpenAI model identifier used by this application. It is unrelated to Google's Project Astra product name. The app sends the scenario prompt through its provider route; it does not inherit the Codex desktop task's High or Extra High reasoning setting. OpenAI's Astra-first route is appropriate for multi-constraint four-panel construction, while the fallback chain prevents one unavailable model from blocking the workflow. Model presence in a list is not proof of image quality; the rendered manga still requires visual review. / `gpt-6-astra`は本アプリが使うOpenAIモデルIDで、GoogleのProject Astraという製品名とは別物です。アプリは選択プロバイダーの経路へシナリオ指示を送信し、Codexデスクトップ作業の「高い」「極高」推論設定を引き継ぎません。多制約の4コマ構成にはAstra先行経路が適しており、利用不可時は後続モデルで処理停止を避けます。モデル一覧への表示は画像品質の証明ではなく、生成画像の目視確認が必要です。
 
-STEP3 shows `⏳ AI応答を待機中... (○秒経過)` while the connected text API reviews the prompt, then stops the counter when processing ends. / STEP3は接続中の文章APIがプロンプトを精査している間、`⏳ AI応答を待機中... (○秒経過)`を表示し、処理完了時にカウントを停止します。
+STEP3 shows `⏳ AI応答を待機中... (○秒経過)` directly below its build button while the connected text API reviews the prompt, then stops the counter when processing ends. / STEP3は接続中の文章APIがプロンプトを精査している間、構築ボタン直下に`⏳ AI応答を待機中... (○秒経過)`を表示し、処理完了時にカウントを停止します。
 
 ### Image history and downloads / 生成履歴と保存
 
@@ -241,6 +241,9 @@ The production application is published from the `main` branch through the repos
 **Is this the T2V/I2V/Ref2V repository? / T2V・I2V・Ref2Vのリポジトリですか？**  No. Those workflows are maintained separately in [comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows). / いいえ。それらは別の[comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows)で管理します。
 
 ## 📋 ChangeLog
+
+### v6.3.9 (2026-09-19)
+- **[Fix & UX]** STEP3開始時に進捗ログへ移動し、最終プロンプト完成時だけSTEP4へ移動する導線を追加。手動編集では画面位置を変えません。 / Added STEP3 progress-log focus and STEP4 transition after prompt completion without moving the view during manual edits.
 
 ### v6.3.8 (2026-09-19)
 - **[Fix & UX]** STEP2の実行中は実際の進捗・エラーログだけを表示し、古い結果、プレビュー、STEP3を隠す段階表示を追加。完了後はSTEP3を案内し、READMEの画像QA説明を英日対応に修正 / Added progressive disclosure during STEP2: show only the real progress or error log while hiding stale results, preview and STEP3; reveal and guide STEP3 after completion, and align the README image-QA guidance in English and Japanese

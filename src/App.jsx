@@ -174,6 +174,7 @@ function App() {
 
   const [controlBarHeight, setControlBarHeight] = useState(70);
   const controlBarRef = useRef(null);
+  const wasAssemblingRef = useRef(false);
 
   useEffect(() => {
     if (!controlBarRef.current) return;
@@ -193,6 +194,19 @@ function App() {
       resizeObserver.disconnect();
     };
   }, [apiKey, selectedEngine, enableOpenAIApi, currentStep]);
+
+  useEffect(() => {
+    if (isAssembling) {
+      wasAssemblingRef.current = true;
+      return;
+    }
+    if (!wasAssemblingRef.current || !finalPrompt?.trim()) return;
+
+    wasAssemblingRef.current = false;
+    requestAnimationFrame(() => {
+      outputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }, [finalPrompt, isAssembling, outputRef]);
 
   const isApiModalOpen = showModal || showOpenAIKeyModal;
   const isMainLocked = !apiKey || isApiModalOpen;
@@ -365,6 +379,7 @@ function App() {
                   isEnhancing={isEnhancing}
                   is360CameraWorking={is360CameraWorking}
                   assemblePrompt={assemblePrompt}
+                  assembleThought={assembleThought}
                   isAssembling={isAssembling}
                 />
               </div>
@@ -381,7 +396,6 @@ function App() {
               finalPrompt={finalPrompt}
               setFinalPrompt={setFinalPrompt}
               copyPrompt={copyPrompt}
-              assembleThought={assembleThought}
               enableChatGPTMode={enableChatGPTMode}
               selectedEngine={selectedEngine}
               bg360Image={bg360Image}
