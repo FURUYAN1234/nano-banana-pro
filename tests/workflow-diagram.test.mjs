@@ -34,5 +34,5 @@ test('generates an A4 portrait workflow diagram covering the full manga pipeline
 
 test('README embeds the generated diagram instead of a copied diagram', () => {
   const readme = readFileSync(new URL('../README.md', import.meta.url), 'utf8');
-  assert.match(readme, /nano-banana-pro-workflow-a4\.svg/);
+  assert.match(readme, /nano-banana-pro-workflow-a4\.png/);
 });

@@ -10,7 +10,7 @@ An experimental web application in which AI handles topic research, story struct
 
 ## A4 workflow map / A4縦フローチャート
 
-![A4 portrait flowchart covering API connection, STEP1–STEP4, image generation, QA, policy repair, history, and saving.](public/diagrams/nano-banana-pro-workflow-a4.svg)
+![Full workflow flowchart covering API connection, STEP1–STEP4, image generation, QA, policy repair, history, and saving.](public/diagrams/nano-banana-pro-workflow-a4.png)
 
 This diagram covers the full path from source analysis through scenario thinking, prompt assembly, API image generation, quality review, policy-repair retries, history, and saving. It is generated from `scripts/generate_workflow_diagram.mjs`; `npm run build` regenerates it, and the generator checks the orchestration points it documents. Embed the deployed copy in note with `https://furuyan1234.github.io/nano-banana-pro/diagrams/nano-banana-pro-workflow-a4.svg`.
 
