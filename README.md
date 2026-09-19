@@ -120,8 +120,9 @@ The four primary actions for STEP1 through STEP4 use the same full-width light-b
 1. Open the [published application](https://furuyan1234.github.io/nano-banana-pro/). / [公開アプリ](https://furuyan1234.github.io/nano-banana-pro/)を開きます。
 2. Choose Gemini API or OpenAI API and enter that provider's API key in the application. / Gemini APIまたはOpenAI APIを選び、対応するAPIキーをアプリへ入力します。
 3. Select character-sheet images with the STEP1 button or drop them into its drop zone; multiple images can be added together or later. Optional 360-degree background images and style-setting JSON files can be loaded there too. / STEP1ボタンでキャラクター設定画像（キャラシート）を選ぶか、ドロップ領域へ読み込みます。複数枚は同時または後から追加でき、任意で360°背景画像や作風設定JSONも読み込めます。
-4. Review the editable scenario and prompt, then run STEP4. / 編集可能なシナリオとプロンプトを確認し、STEP4を実行します。
-5. Inspect the actual image, especially dialogue, hands, props, character identity, and panel order. / 実画像の台詞、手、小物、人物の同一性、コマ順を確認します。
+4. Run STEP2. While the scenario request is active, the app keeps its real progress or error log directly below the STEP2 button and hides the stale result, preview and STEP3. A completed scenario reveals those controls and highlights STEP3. / STEP2を実行します。シナリオ処理中はSTEP2ボタン直下の実際の進捗・エラーログだけを表示し、古い結果・プレビュー・STEP3を隠します。シナリオ完成後に各欄を表示し、次のSTEP3を案内します。
+5. Review the editable scenario and prompt, then run STEP4. / 編集可能なシナリオとプロンプトを確認し、STEP4を実行します。
+6. Inspect the actual image, especially dialogue, hands, props, character identity, and panel order. / 実画像の台詞、手、小物、人物の同一性、コマ順を確認します。
 
 The app can also produce a prompt for manual use on the Gemini or ChatGPT website; a ChatGPT subscription does not include OpenAI API usage, and API billing is separate. / GeminiまたはChatGPTのWeb画面へ手動で貼り付けるプロンプトも作成できます。ChatGPTのサブスクリプションにOpenAI API利用料は含まれず、API課金は別です。
 
@@ -143,7 +144,7 @@ Automatic repair is enabled by default, with at most three repairs (four images 
 
 Web貼り付けとAPIで共通の元プロンプトに、各台詞の `RIGHTMOST` / `LEFT OF Bn` / `LEFTMOST` とB番号に対応する話者を保持します。Web短縮でも台詞と位置の対応は削りません。古いプロンプトはSTEP3で再構築してください。ト書きの短縮名・背景集団からの人数制約と、編集済みの結末・自由記述の人物特徴も反映します。
 
-APIでは、台本・参照画像を渡さない別の画像転記で文字と左右位置を取得し、台詞の順序と照合します。確認できた逆順を優先して局所修正し、読順の配置指示は修正AIの自由文に任せず台本から決定します。候補比較でも既に確認できた読順の退行を採用しません。画像認識の誤読は残り得るため、実画像の確認が必要です。STEP4の「APIで新しい画像を生成する」は最終プロンプトから毎回新規画像を作ります。画像下の「表示中の画像をQA再検査（必要時のみ修正生成）」は、自動修正ONで現在画像に明確な不合格がある場合だけ、元画像ダウンロードの直下へ表示します。これは現在画像を再検査し、不合格時だけ上限内の修正画像を追加生成する救済操作です。解析失敗やAPI上限で早期終了する場合は理由を表示し、未合格の候補を合格と偽らず警告付きで保持します。
+On the API path, a separate image-transcription pass that receives neither the script nor the reference images extracts visible text and its left/right positions, then checks them against the dialogue order. Confirmed reversed ordering is prioritized for targeted repair, and reading-order placement is derived from the script instead of being left to the repair AI's free-form instructions. Candidate comparison also rejects any regression from a previously confirmed reading order. Image recognition can still misread the artwork, so inspect the rendered image. In STEP4, “Generate a new image with the API” (「APIで新しい画像を生成する」) always creates a new image from the final prompt. The “Re-run QA on the displayed image (generate a repair only when needed)” control (「表示中の画像をQA再検査（必要時のみ修正生成）」) appears directly below the original-image download only when automatic repair is ON and the current image has a clear failure. This rescue action rechecks the current image and adds a repaired image within the configured limit only if the image fails. If an analysis failure or API limit ends the process early, the app shows the reason and retains the failing candidate with a warning instead of falsely marking it as passed. / APIでは、台本・参照画像を渡さない別の画像転記で文字と左右位置を取得し、台詞の順序と照合します。確認できた逆順を優先して局所修正し、読順の配置指示は修正AIの自由文に任せず台本から決定します。候補比較でも既に確認できた読順の退行を採用しません。画像認識の誤読は残り得るため、実画像の確認が必要です。STEP4の「APIで新しい画像を生成する」は最終プロンプトから毎回新規画像を作ります。画像下の「表示中の画像をQA再検査（必要時のみ修正生成）」は、自動修正ONで現在画像に明確な不合格がある場合だけ、元画像ダウンロードの直下へ表示します。これは現在画像を再検査し、不合格時だけ上限内の修正画像を追加生成する救済操作です。解析失敗やAPI上限で早期終了する場合は理由を表示し、未合格の候補を合格と偽らず警告付きで保持します。
 
 ## Prompt and image safeguards / プロンプトと画像の確認
 
@@ -240,6 +241,9 @@ The production application is published from the `main` branch through the repos
 **Is this the T2V/I2V/Ref2V repository? / T2V・I2V・Ref2Vのリポジトリですか？**  No. Those workflows are maintained separately in [comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows). / いいえ。それらは別の[comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows)で管理します。
 
 ## 📋 ChangeLog
+
+### v6.3.8 (2026-09-19)
+- **[Fix & UX]** STEP2の実行中は実際の進捗・エラーログだけを表示し、古い結果、プレビュー、STEP3を隠す段階表示を追加。完了後はSTEP3を案内し、READMEの画像QA説明を英日対応に修正 / Added progressive disclosure during STEP2: show only the real progress or error log while hiding stale results, preview and STEP3; reveal and guide STEP3 after completion, and align the README image-QA guidance in English and Japanese
 
 ### v6.3.7 (2026-09-19)
 - **[Fix & UX]** 漫画プロンプトと画像QAを強化。ギャグ／シリアス演出、演技個性、衣装優先、Gペン・解剖・焦点、可読文字、カラー／白黒、最良候補継続、次STEP案内と不合格時だけの再検査を統合 / Strengthened manga prompts and rendered-image QA across gag and serious direction, acting identity, outfit priority, G-pen anatomy and focus, readable text, color and monochrome, best-candidate continuation, next-step guidance, and failure-only image review

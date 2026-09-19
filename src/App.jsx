@@ -338,34 +338,38 @@ function App() {
             />
           </div>
 
-          <GenerationPreview
-            scenario={scenario}
-            bg360Image={bg360Image}
-            bg360Analysis={bg360Analysis}
-            bg360Enabled={bg360Enabled}
-            customLocation={customLocation}
-            customOutfit={customOutfit}
-            punchlineType={punchlineType}
-            getPunchlineLabel={getPunchlineLabel}
-          />
+          {currentStep >= 3 && (
+            <>
+              <GenerationPreview
+                scenario={scenario}
+                bg360Image={bg360Image}
+                bg360Analysis={bg360Analysis}
+                bg360Enabled={bg360Enabled}
+                customLocation={customLocation}
+                customOutfit={customOutfit}
+                punchlineType={punchlineType}
+                getPunchlineLabel={getPunchlineLabel}
+              />
 
-          <div ref={step3Ref} className="flex flex-col gap-4">
-          {currentStep >= 3 && <ExplanationPanel value={explanation} onChange={setExplanation} notice={explanationNotice} busy={isSearching} />}
+              <div ref={step3Ref} className="flex flex-col gap-4">
+                <ExplanationPanel value={explanation} onChange={setExplanation} notice={explanationNotice} busy={isSearching} />
 
-          {/* 03: プロンプト生成 - Tailwind p-8等がJITで無視されるためインラインスタイルで適用 */}
-            <Step3Panel
-              colorMode={colorMode}
-              setColorMode={setColorMode}
-              isColorModeLocked={isColorModeLocked}
-              currentStep={currentStep}
-              isSearching={isSearching}
-              isAnalyzing={isAnalyzing}
-              isEnhancing={isEnhancing}
-              is360CameraWorking={is360CameraWorking}
-              assemblePrompt={assemblePrompt}
-              isAssembling={isAssembling}
-            />
-          </div>
+                {/* 03: プロンプト生成 - Tailwind p-8等がJITで無視されるためインラインスタイルで適用 */}
+                <Step3Panel
+                  colorMode={colorMode}
+                  setColorMode={setColorMode}
+                  isColorModeLocked={isColorModeLocked}
+                  currentStep={currentStep}
+                  isSearching={isSearching}
+                  isAnalyzing={isAnalyzing}
+                  isEnhancing={isEnhancing}
+                  is360CameraWorking={is360CameraWorking}
+                  assemblePrompt={assemblePrompt}
+                  isAssembling={isAssembling}
+                />
+              </div>
+            </>
+          )}
 
           {/* 出力結果 */}
           {Boolean(finalPrompt?.trim()) && (<Step4Panel

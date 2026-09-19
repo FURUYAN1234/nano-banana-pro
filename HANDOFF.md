@@ -1,3 +1,10 @@
+## v6.3.8 STEP2進行表示・README英日対応 — 2026-09-19
+
+- 状態: リリース候補を準備中。STEP2の実行中はSTEP2ボタン直下の実進捗・エラーログだけを残し、古いシナリオ結果、Generation Preview、STEP3を隠す。完了後に結果・プレビュー・STEP3を戻し、既存の控えめな明暗案内でSTEP3を示す。
+- 実証: OpenAI GPT-6 AstraでSTEP2を一回実行し、実行中の非表示状態と完了後の表示復帰を内蔵ブラウザで確認した。昭和の商店街という背景指定と、異世界の騎士服・魔法使い服という明示衣装は、生成台本で別々に保持された。最終画像の衣装再現はこのシナリオ検証だけでは保証しない。
+- 変更: `src/App.jsx`、`src/components/Step2Panel.jsx`、`tests/step2-progressive-disclosure.test.mjs`、README。READMEは既存の画像QA・読順・救済操作説明へ対応する英語も追加する。
+- 公開境界: ユーザーは公式release/deployと既存FourPanel note `ndf063558c1f5`更新を明示承認。フルバックアップは今回見送りのため、`-RunFullBackup`およびバックアップ起動を行わない。
+
 ## v6.3.7 漫画品質・再試行・操作案内・README改善 — 2026-09-19
 
 - 状態: v6.3.7候補のローカル実装、README完全同期、依頼された実API検証まで完了。ユーザーは公式release/deploy、FourPanel note更新、黒い窓の公式フルバックアップを承認済み。公開・note・backupの完了証拠はroot `PLAN.md`へ記録する。キー値は確認していない。

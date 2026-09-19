@@ -366,8 +366,9 @@ export default function Step2Panel({
           </div>
         )}
 
-        {/* RESULT TEXTAREA */}
-        <div className="flex flex-col gap-2">
+        {!isSearching && (
+          <>
+            <div className="flex flex-col gap-2">
           <div className="flex items-center gap-3">
             <span className="px-2 bg-[#0f1115] text-xs font-bold text-slate-400 w-fit rounded">
               ▼ 生成されたシナリオ (自由に編集・書き換えができます)
@@ -609,7 +610,9 @@ export default function Step2Panel({
               <ThinkingLog thought={enhanceLog || "> 待機中...強化したいカテゴリを選んで「シナリオ強化実行」ボタンを押してください。"} />
             </div>
           )}
-        </div>
+            </div>
+          </>
+        )}
       </div>
     </section>
   );
