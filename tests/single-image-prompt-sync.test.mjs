@@ -54,6 +54,14 @@ test('single-image copy prompt applies the current shared image-quality contract
   assert.match(prompt, /reference-sheet pose is identity evidence, not a recurring action/i);
   assert.match(prompt, /BODY ACTING BASELINE:.*allow.*pointing.*reaching.*impact/i);
   assert.match(prompt, /action phase.*support or airborne trajectory.*contact target/i);
+  assert.match(prompt, /one primary focal subject/i);
+  assert.match(prompt, /strongest G-pen-like contour/i);
+  assert.match(prompt, /background.*lighter.*lower-contrast/i);
+  assert.match(prompt, /back of the head.*do not invent eyes, nose, or mouth/i);
+  assert.match(prompt, /shoulder, elbow, wrist, hip, knee, and ankle/i);
+  assert.match(prompt, /explicit outfit overrides setting era\/culture/i);
+  assert.match(prompt, /preserve intentional mismatch/i);
+  assert.match(prompt, /no outfit: infer from setting/i);
 });
 
 test('single-image copy prompt retains its established emotional and rendering safeguards', () => {
@@ -121,6 +129,9 @@ Hero「行こう。」`;
     assert.match(prompt, /BODY ACTING BASELINE/);
     assert.match(prompt, /reference-sheet pose is identity evidence, not a recurring action/i);
     assert.match(prompt, /BODY ACTING BASELINE:.*allow.*pointing.*reaching.*impact/i);
+    assert.match(prompt, /one primary focal subject/i);
+    assert.match(prompt, /strongest G-pen-like contour/i);
+    assert.match(prompt, /back of the head.*do not invent eyes, nose, or mouth/i);
   }
 
   const controlBar = readFileSync(new URL('../src/components/ControlBar.jsx', import.meta.url), 'utf8');

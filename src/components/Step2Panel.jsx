@@ -78,7 +78,15 @@ export default function Step2Panel({
   showStatus,
   styleJson
 }) {
-  const isSeriousEnhancementMode = getEndingModePolicy(effectivePunchlineType).endingTone === 'serious';
+  const enhancementEndingPolicy = getEndingModePolicy(effectivePunchlineType);
+  const isSeriousEnhancementMode = enhancementEndingPolicy.endingTone === 'serious';
+  const isDocumentaryEnhancementMode = enhancementEndingPolicy.documentary;
+  const enhancementDirectionLabel = isDocumentaryEnhancementMode
+    ? (isSeriousEnhancementMode ? 'シリアス・ドキュメンタリー' : 'ギャグ・ドキュメンタリー')
+    : (isSeriousEnhancementMode ? 'シリアス演出' : 'ギャグ演出');
+  const enhancementDirectionDescription = isDocumentaryEnhancementMode
+    ? (isSeriousEnhancementMode ? '事実保持・深刻な余韻' : '事実保持・4コマ目の反応')
+    : (isSeriousEnhancementMode ? '緊張・間・結末' : '仕込み・増幅・回収');
   const allEnhancementCategoriesSelected = enhanceExpressions &&
     enhanceBodyLang &&
     enhanceEffects &&
@@ -331,7 +339,8 @@ export default function Step2Panel({
         <button
           onClick={generateScenarioFromNews}
           disabled={isSearching || currentStep < 1}
-          className="primary-step-action primary-step-action-neutral-edge w-full relative py-6 rounded-xl font-black text-xl flex items-center justify-center gap-4 border-b-[6px] active:border-b-0 active:translate-y-[6px] transition-all disabled:opacity-50 disabled:grayscale disabled:border-none disabled:cursor-not-allowed group/gen shadow-xl"
+          aria-current={currentStep === 2 ? 'step' : undefined}
+          className={`primary-step-action primary-step-action-neutral-edge w-full relative py-6 rounded-xl font-black text-xl flex items-center justify-center gap-4 border-b-[6px] active:border-b-0 active:translate-y-[6px] transition-all disabled:opacity-50 disabled:grayscale disabled:border-none disabled:cursor-not-allowed group/gen shadow-xl ${currentStep === 2 && !isSearching ? 'next-step-gentle-pulse' : ''}`}
         >
           {isSearching ? (
             <>
@@ -531,8 +540,8 @@ export default function Step2Panel({
                   )}
                   <div className="text-center">
                     <div className={`text-2xl mb-1 ${enhanceGag ? 'scale-110' : 'opacity-70 grayscale'}`}>🎭</div>
-                    <div className="text-[11px] font-bold tracking-wider">{isSeriousEnhancementMode ? 'シリアス演出' : 'ギャグ演出'}</div>
-                    <div className="text-[9px] opacity-70 mt-1">{isSeriousEnhancementMode ? '緊張・間・結末' : '間・反応・オチ'}</div>
+                    <div className="text-[11px] font-bold tracking-wider">{enhancementDirectionLabel}</div>
+                    <div className="text-[9px] opacity-70 mt-1">{enhancementDirectionDescription}</div>
                   </div>
                 </label>
 
@@ -568,7 +577,7 @@ export default function Step2Panel({
               </div>
 
               <div className="text-xs text-orange-200/80 text-center font-mono py-1.5 bg-black/20 border border-white/5 rounded-md">
-                強化対象: {[enhanceExpressions && "表情", enhanceBodyLang && "身体", enhanceEffects && "演出", enhanceBackgrounds && "背景", enhanceCameraWork && "カメラ", enhanceDialogue && "セリフ", enhanceGag && (isSeriousEnhancementMode ? "シリアス" : "ギャグ")].filter(Boolean).join(" / ") || "未選択"}
+                強化対象: {[enhanceExpressions && "表情", enhanceBodyLang && "身体", enhanceEffects && "演出", enhanceBackgrounds && "背景", enhanceCameraWork && "カメラ", enhanceDialogue && "セリフ", enhanceGag && enhancementDirectionLabel].filter(Boolean).join(" / ") || "未選択"}
               </div>
 
               <div className="flex gap-2">

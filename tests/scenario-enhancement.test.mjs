@@ -249,6 +249,42 @@ test('quality retries retain the strongest safe partial enhancement instead of s
   assert.equal(result.attempts, 2);
 });
 
+test('a later API failure retains the strongest safe candidate from enhancement history', async () => {
+  const bodyOnlyCandidate = originalScenario.replace(
+    '状況: 全員の体型やパーツ配置が明らかに狂っている。空調の微かな音だけがする。',
+    '状況: 全員が互いの姿勢を見比べながら、片手で互いを指し示す。空調の微かな音だけがする。'
+  );
+  let calls = 0;
+
+  const result = await enhancementModule.runValidatedScenarioEnhancement({
+    originalScenario,
+    selectedCategories: ['expressions', 'body'],
+    buildPrompt: () => 'prompt',
+    requestEnhancement: async () => {
+      calls += 1;
+      if (calls === 1) return { text: bodyOnlyCandidate, model: 'test-model' };
+      throw new Error('temporary provider failure');
+    }
+  });
+
+  assert.equal(result.text, bodyOnlyCandidate);
+  assert.equal(result.validationWarning, true);
+  assert.match(result.warningMessage, /temporary provider failure/);
+  assert.equal(result.attempts, 2);
+});
+
+test('a provider failure before any usable candidate remains an explicit error', async () => {
+  await assert.rejects(
+    enhancementModule.runValidatedScenarioEnhancement({
+      originalScenario,
+      selectedCategories: ['dialogue'],
+      buildPrompt: () => 'prompt',
+      requestEnhancement: async () => { throw new Error('authentication failed'); }
+    }),
+    /authentication failed/
+  );
+});
+
 test('quality retries fall back to the original only when every candidate breaks an editing contract', async () => {
   assert.equal(typeof enhancementModule.runValidatedScenarioEnhancement, 'function');
   const unsafeCandidate = originalScenario.replace(

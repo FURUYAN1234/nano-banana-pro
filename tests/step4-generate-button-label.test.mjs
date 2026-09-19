@@ -7,7 +7,7 @@ const step4PanelSource = readFileSync(new URL('../src/components/Step4Panel.jsx'
 test('STEP4 generation button keeps model and quality details in the settings button only', () => {
   assert.match(
     step4PanelSource,
-    /isGeneratingImage \? "画像を生成中\.\.\." : "APIで画像をアプリ内で生成する（STEP4）"/,
+    /isGeneratingImage \? "画像を生成中\.\.\." : "APIで新しい画像を生成する（STEP4）"/,
   );
   assert.doesNotMatch(step4PanelSource, /画像を生成する \(STEP 4[:）]/);
 });
@@ -15,7 +15,7 @@ test('STEP4 generation button keeps model and quality details in the settings bu
 test('STEP4 generation button is visibly separated from the settings-file save button', () => {
   assert.match(
     step4PanelSource,
-    /<div className="relative" style=\{\{ paddingTop: '12px' \}\}>[\s\S]*?APIで画像をアプリ内で生成する（STEP4）/,
+    /<div className="relative" style=\{\{ paddingTop: '12px' \}\}>[\s\S]*?APIで新しい画像を生成する（STEP4）/,
   );
 });
 

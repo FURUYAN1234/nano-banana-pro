@@ -3,6 +3,7 @@ const INTERPERSONAL_VIEW_CUE_RE = /(?:^|[。！？!?]\s*)[^\s、。！？!?]{1,2
 const PANEL_REF_RE = /([1-4一二三四])\s*コマ目/gu;
 const PANEL_NUMBER = { '1': 1, '2': 2, '3': 3, '4': 4, 一: 1, 二: 2, 三: 3, 四: 4 };
 const LOCK_MARKER = '[USER STAGING LOCK - ABSOLUTE]';
+const ONE_SHOT_BEAT_RE = /(?:上映(?:前|中|後)|その後|直後|最後(?:に|の)|やがて|翌日|初めて|瞬間|とき|時点)/u;
 
 const splitDirectiveSentences = (manualTopic) => String(manualTopic || '')
   .split(/(?<=[。！？!?])\s*|\r?\n+/u)
@@ -20,6 +21,10 @@ const collectManualStagingDirectives = (manualTopic) => {
       .filter(Boolean);
 
     if (panelNumbers.length === 0) {
+      // A timed story beat belongs in the generated panel action selected by the
+      // scenario model. Treating it as a page-wide camera/eye-line rule leaks a
+      // reveal or ending into every panel.
+      if (ONE_SHOT_BEAT_RE.test(sentence)) return;
       global.push(sentence);
       return;
     }

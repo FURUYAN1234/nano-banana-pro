@@ -307,6 +307,7 @@ export default function Step4Panel({
   setOpenAIImageSize,
   openAIImageVerificationWarning,
   allowImageQualityRepair,
+  imageQualityNeedsRepair,
   stopQualityRetries,
   setAllowImageQualityRepair,
   setOpenAIImageQuality,
@@ -596,19 +597,15 @@ export default function Step4Panel({
                 style={{ display: 'flex', width: '100%', boxSizing: 'border-box', marginBottom: '16px' }}
                 onClick={() => regenerateImage()}
                 disabled={!finalPrompt || isGeneratingImage || isFixingPolicy}
-                className="primary-step-action primary-step-action-accent-border w-full font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg border active:scale-95 disabled:opacity-50 disabled:cursor-wait"
+                aria-current={currentStep === 4 ? 'step' : undefined}
+                className={`primary-step-action primary-step-action-accent-border w-full font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg border active:scale-95 disabled:opacity-50 disabled:cursor-wait ${currentStep === 4 && !isGeneratingImage ? 'next-step-gentle-pulse' : ''}`}
               >
                 {isGeneratingImage ? <Loader2 size={20} className="animate-spin" /> : <ImageIcon size={20} />}
                 <div className="flex flex-col items-center">
-                  <span>{isGeneratingImage ? "画像を生成中..." : "APIで画像をアプリ内で生成する（STEP4）"}</span>
+                  <span>{isGeneratingImage ? "画像を生成中..." : "APIで新しい画像を生成する（STEP4）"}</span>
+                  {!isGeneratingImage && <span className="text-[10px] font-normal opacity-75">最終プロンプトから毎回、新規画像を生成します</span>}
                 </div>
               </button>
-              {generatedImage && <button type="button"
-                disabled={!finalPrompt || isGeneratingImage || isFixingPolicy}
-                onClick={() => regenerateImage(false, null, { reviewExisting: true })}
-                title="表示中の画像を現在の最終プロンプトと照合します。自動修正ONの場合、不合格時に追加の画像APIを使用します。">
-                表示中の画像を再検査・修正
-              </button>}
                           <div className="border border-yellow-500/30 rounded-lg overflow-hidden" style={{ margin: 0 }}>
                             <button style={{ display: 'flex', width: '100%', boxSizing: 'border-box', margin: 0 }} type="button" aria-expanded={isApiSettingsOpen} aria-controls="api-settings-content"
                               className="w-full flex items-center justify-between px-4 py-3 bg-yellow-900/25 hover:bg-yellow-900/50 transition-all duration-150 cursor-pointer disabled:cursor-not-allowed border-l-4 border-yellow-500 hover:border-yellow-400 group/policy-hdr"
@@ -1311,6 +1308,17 @@ No explanations. No partial results.`;
                 >
                   <Download size={20} /> 元画像をダウンロード (.{generatedImageExtension})
                 </button>
+
+                {allowImageQualityRepair && imageQualityNeedsRepair && <button
+                  type="button"
+                  disabled={!finalPrompt || isGeneratingImage || isFixingPolicy}
+                  onClick={() => regenerateImage(false, null, { reviewExisting: true })}
+                  title="表示中の画像を現在の最終プロンプトと照合します。自動修正ONの場合、不合格時に追加の画像APIを使用します。"
+                  className="w-full mt-3 bg-amber-900/55 hover:bg-amber-800/70 disabled:opacity-50 disabled:cursor-wait text-amber-100 font-bold py-3 rounded-xl flex flex-col items-center justify-center gap-1 transition-all shadow-lg border border-amber-500/40 active:scale-[0.99]"
+                >
+                  <span>表示中の画像をQA再検査（必要時のみ修正生成）</span>
+                  <span className="text-[10px] font-normal text-amber-200/80">自動修正ONでQA不合格の画像です。再検査し、必要なら追加の画像APIを使用します</span>
+                </button>}
 
                 <button
                   onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}

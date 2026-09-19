@@ -16,12 +16,18 @@ export const OBJECT_GEOMETRY_LOCK_COMPACT = 'OBJECT GEOMETRY LOCK: solid volume/
 
 export const EXPRESSIVE_DIRECTION = 'EXPRESSIVE DIRECTION: actively use bold camera height/tilt/foreshortening and full-body exaggeration; panel contrast through scale, silhouette, lighting and VFX. Preserve explicit quiet beats, Camera/Action, identity, verbatim dialogue, limb count and prop ownership/facing; exaggeration is not a drawing defect.';
 
+export const WARDROBE_ENVIRONMENT_CONTRAST_LOCK = `WARDROBE / ENVIRONMENT CONTRAST LOCK: When the user explicitly specifies clothing, that explicit outfit overrides the setting's era, culture, and genre for the character wardrobe. Preserve a deliberate mismatch as intentional contrast; the setting era must not restyle the explicit outfit, and do not replace it with period-appropriate clothing. Apply the setting's era and culture to the environment, incidental background people, and unspecified wardrobes. When no outfit is specified, infer period-appropriate clothing naturally from the setting.`;
+
+export const WARDROBE_ENVIRONMENT_CONTRAST_LOCK_COMPACT = 'WARDROBE/ENVIRONMENT CONTRAST: explicit outfit overrides setting era/culture; preserve intentional mismatch; never period-substitute. No outfit: infer from setting.';
+
 export const SHARED_IMAGE_QUALITY_CONTRACT = `
 [ SHARED IMAGE QUALITY CONTRACT — CURRENT NANO BANANA QUALITY BASELINE ]
 - Preserve the user's requested cast, action, setting, and camera. Quality enrichment must support those directions, never replace them.
 - Render a rich physical setting with meaningful environmental anchors and layered foreground, midground, and background; do not default to empty walls, flat gradients, or generic blank rooms unless physical emptiness is explicitly requested.
+- Establish one primary focal subject or action per image/panel and at most one supporting focal cue. Make the primary subject the first read through scale, placement, light, contrast and the strongest G-pen-like contour; render secondary figures and background detail with lighter, thinner, lower-contrast lines or controlled depth-of-field. Omit nonessential micro-detail instead of making every object equally sharp.
 - Keep lighting and color coherent between cast and setting: use a motivated key light, fill, and rim or equivalent emotional lighting, with the cast clear against a softer, lower-contrast background.
-- Keep coherent anatomy, especially hands, arms, and prop connections. Use exactly the limbs implied by each visible character and preserve natural ownership of held objects.
+- Keep coherent anatomy and joint direction at the neck, shoulder, elbow, wrist, hip, knee, and ankle. Use exactly the limbs implied by each visible character; preserve natural prop ownership, grip, contact, support, and left/right orientation.
+- When showing the back of the head, render skull, hair and only the naturally visible ear/cheek edge. Unless the camera is genuinely rear three-quarter and the face naturally turns into view, do not invent eyes, nose, or mouth beside it or twist the neck beyond anatomical range.
 - ${BODY_ACTING_BASELINE}
 - ${EXPRESSIVE_DIRECTION}
 - ${FUNCTIONAL_SURFACE_ORIENTATION_LOCK}

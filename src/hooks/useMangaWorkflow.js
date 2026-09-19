@@ -53,6 +53,7 @@ export default function useMangaWorkflow() {
   const setOpenAIImageSize = (value) => setOpenAIImageSizeState(normalizeOpenAIImageSize(value));
   const [openAIImageVerificationWarning, setOpenAIImageVerificationWarning] = useState('');
   const [allowImageQualityRepair, setAllowImageQualityRepair] = useState(true);
+  const [imageQualityNeedsRepair, setImageQualityNeedsRepair] = useState(false);
   const qualityRetryAbortRef = useRef(false);
   const stopQualityRetries = () => { qualityRetryAbortRef.current = true; };
   const setOpenAIImageQuality = (value) => {
@@ -1225,6 +1226,7 @@ export default function useMangaWorkflow() {
   // --- Step 4: Image Generation ---
   // [v2.79] 戻り値変更: フルオート連鎖用（true=成功, false=失敗）
   const regenerateImage = async (skipGuard = false, overridePrompt = null, generationOptions = {}) => {
+    setImageQualityNeedsRepair(false);
     const currentPrompt = overridePrompt || finalPrompt;
     const qualityMode = inferImageQualityMode(currentPrompt);
     if (isGeneratingImage || (!skipGuard && !currentPrompt)) return false;
@@ -1425,6 +1427,10 @@ export default function useMangaWorkflow() {
         onProgress: (msg) => statCallback(`[QUALITY QA] ${msg}`),
       });
       const qualityResult = qualityOutcome.finalReview;
+      const hasDefiniteFinalFailure = qualityResult?.pass !== true
+        && Array.isArray(qualityResult?.issues)
+        && qualityResult.issues.some((issue) => issue?.type && issue.type !== 'unverified');
+      setImageQualityNeedsRepair(Boolean(allowImageQualityRepair && hasDefiniteFinalFailure));
       if (qualityResult.observations) {
         const labels = { title: 'タイトル', dialogue: 'セリフ・無言', hands: '左右の手', props: '小道具' };
         Object.entries(qualityResult.observations).forEach(([key, value]) => {
@@ -2111,6 +2117,7 @@ export default function useMangaWorkflow() {
     setOpenAIImageSize,
     openAIImageVerificationWarning,
     allowImageQualityRepair,
+    imageQualityNeedsRepair,
     setAllowImageQualityRepair,
     stopQualityRetries,
     setOpenAIImageQuality,

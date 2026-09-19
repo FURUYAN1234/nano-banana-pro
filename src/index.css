@@ -51,6 +51,29 @@ body {
   color: #64748b;
 }
 
+@keyframes next-step-gentle-pulse {
+  0%, 100% {
+    filter: brightness(0.84);
+    box-shadow: 0 6px 18px rgba(56, 189, 248, 0.12);
+  }
+  50% {
+    filter: brightness(1.18);
+    box-shadow: 0 8px 24px rgba(56, 189, 248, 0.42);
+  }
+}
+
+.next-step-gentle-pulse {
+  animation: next-step-gentle-pulse 1.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .next-step-gentle-pulse {
+    animation: none;
+    filter: brightness(1.06);
+    box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.38), 0 8px 22px rgba(56, 189, 248, 0.22);
+  }
+}
+
 .scenario-settings-grid {
   margin-bottom: 12px;
 }

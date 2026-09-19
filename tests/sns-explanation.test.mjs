@@ -11,6 +11,27 @@ test('source sections stay outside script but actual dialogue and visible prop l
   assert.equal(stripSourceMetadata(scene), scene);
 });
 
+test('compound source headings and quoted article titles never become manga dialogue', () => {
+  const scenario = `## タイトル: 大会の一幕
+[4コマ目: 結]
+状況: 記者のカメラを背に、主人公が杯を掲げる。
+主人公「名誉だけで十分だ！」
+
+出典・参考:
+・BBC配信「Trophy disappears during black pudding contest」（2026年9月15日）。
+・地域紙「Black pudding throwing: Ramsbottom, Sunday 13 September」（2026年9月5日）。
+https://example.com/article`;
+
+  const cleaned = stripSourceMetadata(scenario);
+  assert.match(cleaned, /主人公「名誉だけで十分だ！」/);
+  assert.doesNotMatch(cleaned, /出典・参考|Trophy disappears|Ramsbottom|example\.com/);
+});
+
+test('inline compound source tails are removed without deleting the preceding fact', () => {
+  const cleaned = stripSourceMetadata('景品はトイレットペーパー。 出典・参考: - 『昭和商店街聞き取り調査』 - 『福引景品記録』');
+  assert.equal(cleaned, '景品はトイレットペーパー。');
+});
+
 test('search citations cannot become visible manga title text', () => {
   assert.equal(cleanScenarioTopic('題名 ([source](https://example.com/news/))'), '題名');
   assert.equal(cleanScenarioTopic('題名 [source](https://example.com/news/)'), '題名');

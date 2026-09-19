@@ -242,6 +242,17 @@ test('documentary source facts are deterministically assigned to panels 1-3 and 
   assert.doesNotMatch(prompt, /Dialogue \(verbatim bubbles\):[^\n]*SOURCE FACT/i);
 });
 
+test('documentary prompt locks omit inline bibliography labels and titles', () => {
+  const scenario = SCENARIO.replace(
+    '[3コマ目: 転]',
+    '[3コマ目: 転]\n[SOURCE FACT - INTERNAL, DO NOT PRINT]: 景品はトイレットペーパー。 出典・参考: - 『昭和商店街聞き取り調査』 - 『福引景品記録』'
+  );
+  const prompt = buildFinalPrompt({ punchlineType: 'Documentary', scenario });
+
+  assert.match(prompt, /Panel 3 source fact: 景品はトイレットペーパー。/);
+  assert.doesNotMatch(prompt, /出典・参考|昭和商店街聞き取り調査|福引景品記録/);
+});
+
 test('documentary timeline normalization replaces an unsupported relative effective date with the sole source date', () => {
   const source = '市の施設は4月から受付時間を午後8時から午後6時へ変更する。';
   assert.equal(

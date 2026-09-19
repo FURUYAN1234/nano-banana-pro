@@ -54,6 +54,14 @@ test('topical prose mentioning viewers and looking at characters is not treated 
   assert.doesNotMatch(result, /USER STAGING LOCK/);
 });
 
+test('one-shot narrative beats without panel numbers are not copied into every panel', () => {
+  const manual = '上映後、ミクは大きく身体を開いて平気なふりをするが、リンは震える指で古い半券を差し出す。ミクが初めて言葉を失い、二人で暗い客席に残る光を見つめる。';
+  const result = applyManualStagingLocks(SCENARIO, manual);
+
+  assert.equal(result, SCENARIO);
+  assert.doesNotMatch(result, /USER STAGING LOCK/);
+});
+
 test('staging lock application is idempotent', () => {
   const once = applyManualStagingLocks(SCENARIO, 'BはAへ話しかけ、カメラを見ない。');
   assert.equal(applyManualStagingLocks(once, 'BはAへ話しかけ、カメラを見ない。'), once);

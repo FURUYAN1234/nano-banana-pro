@@ -145,8 +145,8 @@ test('ChatGPT Web prompt has generic quality locks for dialogue, bubbles, charac
   assert.match(prompt, /Draw in a high-budget, chic and cinematic full-color TV anime style|Chic cinematic full-color TV anime/);
   assert.match(prompt, /official Japanese animation illustration|polished Japanese animation finish/);
   assert.doesNotMatch(prompt, /Base style: full-color TV anime/);
-  assert.match(prompt, /one character, punctuation mark, added word, omitted word, or speaker|BUBBLE QA: copy TEXT exactly/i);
-  assert.match(prompt, /bubble tail tip must terminate at its assigned speaker's mouth\/head silhouette|tails? touch (?:mapped )?speaker mouth\/head/i);
+  assert.match(prompt, /immutable typeset layer.*compare every glyph|BUBBLE QA: immutable TEXT.*compare every glyph/i);
+  assert.match(prompt, /bubble tail tip must terminate at its assigned speaker's mouth\/head silhouette|mapped tails/i);
   assert.match(prompt, /hair color, hairstyle, eye color, glasses status, skin tone, outfit|CHARACTER QA: preserve identity/i);
   assert.match(prompt, /ART-STYLE DIFFERENCE QA LOCK:.*linework/i);
   assert.match(prompt, /no numeric (?:change )?quota/i);

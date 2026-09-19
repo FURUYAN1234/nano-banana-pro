@@ -15,6 +15,7 @@ import {
   injectOutfitReminder, 
   extractActionOnly, 
   extractDialogueOnly, 
+  extractActingIdentityNotes,
   buildPanelEyeLineRule,
   stripWeightTags 
 } from './panel-utils';
@@ -93,7 +94,7 @@ const extractPanel = (text, header, nextHeader) => {
 const DOCUMENTARY_SOURCE_FACT_RE = /^\[SOURCE FACT - INTERNAL, DO NOT PRINT\]:\s*(.+)$/gim;
 
 const extractDocumentarySourceFacts = (panelText = '') => [...String(panelText).matchAll(DOCUMENTARY_SOURCE_FACT_RE)]
-  .map((match) => match[1].trim())
+  .map((match) => stripSourceMetadata(match[1]).trim())
   .filter(Boolean);
 
 const stripDocumentarySourceFacts = (panelText = '') => String(panelText)
@@ -122,6 +123,8 @@ const sanitizeConversationCamera = (camera) => {
 
 const CHATGPT_WEB_COPY_SOFT_BUDGET = 15000;
 const FACIAL_ACTING_LOCK_COMPACT = 'FACIAL ACTING LOCK: bold or subtle brow/eyelid/gaze target/mouth shape/head-torso cues as scripted. Do not force a close-up/camera gaze; preserve Camera/Action/eye-line/hands/props. Acting notes are not visible text; never print.';
+const HAND_PROP_KINEMATICS_LOCK_MINIMAL = 'HAND / PROP KINEMATICS LOCK: anatomical LEFT and RIGHT are subject-relative. One role/contact per hand; one prop owner. Final state supported; palm/wrist fit contact/camera. Two connected arms/hands only; no extra, merged, mirrored or malformed limbs.';
+const FACIAL_ACTING_LOCK_MINIMAL = 'FACIAL ACTING LOCK: brow/eyelid/gaze/mouth/head-torso; preserve Camera/Action/eye-line; never visible text.';
 const CHATGPT_CINEMATIC_SLOTS = Object.freeze([
   'CAMERA: vary angles; preserve anatomy and the script lock.',
   'CAMERA: vary; preserve anatomy/script.'
@@ -179,21 +182,21 @@ const compactBudgetEyeLine = (line) => {
 const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt(prompt), preserveReferenceStyle = false, seriousTone = false) => {
   if (prompt.length <= CHATGPT_WEB_COPY_SOFT_BUDGET) return prompt;
   const compactWardrobeLock = preserveReferenceStyle
-    ? "REFERENCE-SHEET WARDROBE AND RENDERING LOCK: preserve garment items, colors or tone regions, materials, patterns, fold lines, shading and rendering method across all four panels; serious lighting may vary without changing the drawing method."
-    : "CROSS-PANEL WARDROBE COLOR LOCK: choose each named character's garment items, base colors, accent colors, material, and pattern once; reuse that exact wardrobe assignment in every later panel. PANEL STYLE LOCK changes background/environment palette, VFX, and rendering treatment only; keep every garment item and its colors unchanged. Lighting may change highlights and shadows, but the garment's canonical base and accent colors remain recognizable.";
+    ? "REFERENCE-SHEET WARDROBE AND RENDERING LOCK: explicit outfit overrides setting era/culture; preserve mismatch. Keep garment items and rendering method across panels."
+    : 'CROSS-PANEL WARDROBE COLOR LOCK: fix garment items/colors once; reuse in all panels; style and lighting never change canonical wardrobe. Explicit outfit overrides setting era/culture; preserve mismatch, no period substitution. No outfit: infer from setting.';
   const compacted = prompt
     .replace(MANGA_READING_RHYTHM_LOCK, MANGA_READING_RHYTHM_LOCK_COMPACT)
     .replace(/CONVERSATIONAL DEPTH BASE:[^\n]*/g, 'CONVERSATIONAL DEPTH BASE: Action gaze first; varied depth.')
     .replace(/EYE-LINE LOCK:[^\n]*/g, compactConversationEyeLine)
     .replace(/MANGA FINISH ASSIST:[^\n]*/g, 'FINISH: bubbles, anatomy.')
-    .replace(/\[ SHARED IMAGE QUALITY CONTRACT[\s\S]*?(?=\n- Clean finish:)/g, `SHARED IMAGE QUALITY CONTRACT: preserve cast/action/setting/camera; necessary setting cues/depth; quiet negative space; coherent anatomy/prop ownership; localized fold shadows; no invented/duplicate cast; clean surfaces.\n${BODY_ACTING_BASELINE_COMPACT}\n${EXPRESSIVE_DIRECTION}\n${FUNCTIONAL_SURFACE_ORIENTATION_LOCK_COMPACT}\n${OBJECT_GEOMETRY_LOCK_COMPACT}`)
+    .replace(/\[ SHARED IMAGE QUALITY CONTRACT[\s\S]*?(?=\n- Clean finish:)/g, `SHARED IMAGE QUALITY CONTRACT: one primary focal subject; strongest G-pen-like contour; background lighter/lower-contrast. Coherent anatomy/prop ownership. Back of the head: do not invent eyes, nose, or mouth except natural rear 3/4. Preserve cast/action/setting/camera/depth.\n${BODY_ACTING_BASELINE_COMPACT}\n${EXPRESSIVE_DIRECTION}\n${FUNCTIONAL_SURFACE_ORIENTATION_LOCK_COMPACT}\n${OBJECT_GEOMETRY_LOCK_COMPACT}`)
     .replace(/FACIAL ACTING LOCK:[\s\S]*?(?=\n- CLEAN SURFACE PROTOCOL:)/g, FACIAL_ACTING_LOCK_COMPACT)
     .replace(/RICH PANEL COMPOSITION \/ CHARACTER CLARITY LOCK:[\s\S]*?(?=\n- CLOTHING FOLD SHADOW ASSIST:)/g, RICH_PANEL_COMPOSITION_LOCK_COMPACT)
     .replace(/CLEAN SURFACE PROTOCOL:[^\n]*/g, 'CLEAN: no noise except style exceptions.')
     .replace(/CLOTHING FOLD SHADOW ASSIST:[^\n]*/g, 'FOLD SHADOWS: crisp triangular overlap shadows; no geometric patterns.')
     .replace(/SAFE VISUAL CONTENT LOCK:[^\n]*/g, 'SAFE VISUAL: no gore/blood/organs/flesh/organic horror; ordinary architecture; preserve script/cast/dialogue/camera/layout.')
     .replace(/PANEL-BY-PANEL CLOTHING FOLD PRIORITY:[^\n]*/g, 'FOLD PRIORITY: 2-4 dark triangular crease shadows.')
-    .replace(/FINAL-PANEL ACTIVE STAGING LOCK:[^\n]*/g, 'FINAL-PANEL ACTIVE STAGING LOCK: no straight-line lineup; distinct physical action; faces, silhouettes, and hands readable.')
+    .replace(/FINAL-PANEL ACTIVE STAGING LOCK:[^\n]*/g, 'FINAL-PANEL ACTIVE STAGING LOCK: no lineup; distinct actions; readable faces, silhouettes, hands.')
     .replace(
       /MANGA CAMERA \/ POSE VARIETY LOCK:[\s\S]*?(?=\n+(?:BODY ACTING \/ GESTURE VARIETY LOCK|HAND \/ PROP KINEMATICS LOCK|VISUAL STORY EVIDENCE LOCK|SETTING CONTINUITY \(LOW PRIORITY\)|FINAL-PANEL ACTIVE STAGING LOCK|ART \/ RENDERING QUALITY:))/g,
       MANGA_COMPOSITION_VARIETY_LOCK_COMPACT
@@ -216,7 +219,7 @@ const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt
     .replace(/TAIL TIP LOCK \(NEVER PRINT; proximity never reassigns\): ([^\n]+)/g, (_, targets) =>
       `TAIL TIP LOCK: ${targets.replace(/ mouth\/head/g, '')}`
     )
-    .replace(/- If one character, punctuation mark,[^\n]*/g, '- BUBBLE QA: copy TEXT exactly; tails touch speaker mouth/head; no extra bubbles/names.')
+    .replace(/- Treat every quoted TEXT value[^\n]*/g, '- BUBBLE QA: immutable TEXT; compare every glyph; redraw mismatch; mapped tails; no extras.')
     .replace(/- Action is visual only:[^\n]*/g, '- ACTION: visual only; no labels/narration/SFX if unscripted.')
     .replace(/CHARACTER QA PASS:\n-[^\n]*/g, monochrome ? 'CHARACTER QA: shape/design and stable ink/tone only; white lit skin; no reference color.' : 'CHARACTER QA: preserve identity and outfit; redraw swaps or merged cast.')
     .replace(/\n{3,}/g, '\n\n');
@@ -259,8 +262,8 @@ const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt
     .replace(/FINAL-PANEL ACTIVE STAGING LOCK:[^\n]*/g, 'FINAL-PANEL ACTIVE STAGING LOCK: no straight-line lineup; distinct physical action; faces, silhouettes, and hands readable.')
     // Retain named gaze targets and rear-shoulder owners even under budget pressure.
     .replace(/FUNCTIONAL SURFACE PANEL CHECK:[^\n]*/g, 'FUNCTIONAL SURFACE PANEL CHECK: reader/camera side/front-back/text axes.')
-    .replace(/SHARED IMAGE QUALITY CONTRACT:[^\n]*/g, 'SHARED IMAGE QUALITY CONTRACT: direction; setting; anatomy/props; no duplicate cast.')
-    .replace(/FACIAL ACTING LOCK:[^\n]*/g, 'FACIAL ACTING LOCK: brow/eyelid/gaze target/mouth shape/head-torso; do not force close-up; preserve Camera/Action/eye-line; not visible text.')
+    .replace(/SHARED IMAGE QUALITY CONTRACT:[^\n]*/g, 'SHARED IMAGE QUALITY CONTRACT: one primary focal subject; strongest G-pen-like contour; lower-contrast background. Joint/prop ownership. Back of the head: do not invent eyes, nose, or mouth except natural rear 3/4. Keep direction/setting/cast.')
+    .replace(/FACIAL ACTING LOCK:[^\n]*/g, 'FACIAL ACTING LOCK: brow, eyelid, gaze target, mouth shape, head/torso; do not force close-up; preserve Camera/Action/eye-line; not visible text.')
     .replace(
       /RICH PANEL COMPOSITION \/ CHARACTER CLARITY LOCK:[^\n]*/g,
       RICH_PANEL_COMPOSITION_LOCK_COMPACT
@@ -276,12 +279,13 @@ const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt
 
   if (maximallyCompacted.length <= CHATGPT_WEB_COPY_SOFT_BUDGET) return maximallyCompacted;
 
-  return maximallyCompacted.replace(
+  const finallyCompacted = maximallyCompacted.replace(
     /CROSS-PANEL WARDROBE COLOR LOCK:[^\n]*/g,
     preserveReferenceStyle
       ? 'REFERENCE-SHEET WARDROBE AND RENDERING LOCK: preserve garment and rendering method across all panels.'
-      : 'CROSS-PANEL WARDROBE COLOR LOCK: fix garment items/colors once; reuse in all panels; style and lighting never change canonical wardrobe.'
+      : 'CROSS-PANEL WARDROBE COLOR LOCK: fix garment items/colors once; reuse in all panels; style and lighting never change canonical wardrobe. Explicit outfit overrides setting era/culture; preserve mismatch, no period substitution. No outfit: infer from setting.'
   )
+    .replace(/^WARDROBE \/ ENVIRONMENT CONTRAST LOCK:[^\n]*\n?/gm, '')
     // The per-dialogue slot map and shared rhythm retain the full bubble contract.
     .replace(/Bodies fixed; bubbles independent: B1 rightmost; B2\/B3\+ strictly leftward; never reverse\./g, 'Bodies fixed; use inline balloon positions.')
     // 台詞に直結したRIGHTMOST/LEFTMOSTと話者対応を残し、重複する座標表だけ省く。
@@ -297,7 +301,7 @@ const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt
     // 白黒の各コマにも、上位ロックと同じ保持条件が重複している。
     // 画風固有の描線指示は残し、同一の末尾だけを省く。
     .replace(/^(MONOCHROME PANEL STYLE LOCK:[^\n]*) Preserve script\/Camera\/Action, cast, glasses and wardrobe tone assignments\.$/gm, '$1')
-    .replace(/CROSS-PANEL WARDROBE TONE LOCK:\n- Assign[^\n]*/g, 'CROSS-PANEL WARDROBE TONE LOCK: fix garment items/patterns and white/black/halftone regions once across panels; styles change ink treatment only.')
+    .replace(/CROSS-PANEL WARDROBE TONE LOCK:\n- Assign[^\n]*/g, 'CROSS-PANEL WARDROBE TONE LOCK: explicit outfit overrides setting era/culture; preserve mismatch, no period substitution. No outfit: infer from setting. Fix items/tones across panels.')
     .replace(/^MONOCHROME STYLE DIFFERENCE QA:[^\n]*/gm, 'MONOCHROME STYLE DIFFERENCE QA: selected ink style; no numeric quota; keep script/identity/wardrobe/layout/camera/acting/fixed tones.')
     // Geometry/azimuth contracts are already global; reserve space for visible shot cues.
     .replace(/^VFX: style overlay only; preserve readable action\.\n/gm, '')
@@ -319,6 +323,12 @@ const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt
     .replace(/^Reading order: RIGHT-TO-LEFT\.[^\n]*\n?/gm, '')
     .replace(/^- Tails point to actual speakers; right-to-left manga order\.\n?/gm, '')
     .replace(/^PLACEMENT\/IDENTITY:[^\n]*/gm, line => line.replace(/ \(bare eyes, no frames\)/g, ''));
+
+  if (finallyCompacted.length <= CHATGPT_WEB_COPY_SOFT_BUDGET) return finallyCompacted;
+
+  return finallyCompacted
+    .replace(/HAND \/ PROP KINEMATICS LOCK:[^\n]*/g, HAND_PROP_KINEMATICS_LOCK_MINIMAL)
+    .replace(/FACIAL ACTING LOCK:[^\n]*/g, FACIAL_ACTING_LOCK_MINIMAL);
 };
 
 const buildVisualStoryEvidenceLock = (scenario) => {
@@ -335,7 +345,11 @@ const buildVisualStoryEvidenceLock = (scenario) => {
 
 const buildPanelActionText = (panelText, castList, activeOutfit, colorMode = 'color') => {
   const placementRule = extractPlacementRule(panelText, castList, { colorMode });
-  return injectOutfitReminder(extractActionOnly(panelText, castList, placementRule), activeOutfit);
+  const action = injectOutfitReminder(extractActionOnly(panelText, castList, placementRule), activeOutfit);
+  if (colorMode !== 'monochrome') return action;
+  return action
+    .replace(/全編(?:フル)?カラー/gu, '全編白黒（純白・純黒・網点）')
+    .replace(/(?:フルカラー|full[- ]?color)漫画/giu, '白黒漫画');
 };
 
 const compactScriptLockOrReference = (text, maxLength, referenceText) => {
@@ -512,6 +526,7 @@ export const buildMangaPrompt = ({
   const gestureVarietyLock = isChatGPTFamily
     ? MANGA_GESTURE_VARIETY_LOCK_COMPACT
     : MANGA_GESTURE_VARIETY_LOCK;
+  const actingIdentityNotes = extractActingIdentityNotes(castList);
   
   // ウォーターマークテキストの作成
   const watermarkEng = isChatGPTFamily
@@ -521,7 +536,7 @@ export const buildMangaPrompt = ({
   let rawPrompt = "";
   const scriptLock = buildStrictScriptLock({ safeTopic, panels, castList, activeOutfit: promptActiveOutfit, providerFamily, isMonochrome, preserveReferenceStyle, seriousTone });
   const finalPanelStagingLock = punchlineType === 'Surreal' ? '' : FINAL_PANEL_ACTIVE_STAGING_IMAGE_LOCK;
-  const sceneLocks = [scriptLock, documentarySourceFactLock, compositionVarietyLock, gestureVarietyLock, HAND_PROP_KINEMATICS_LOCK, visualStoryEvidenceLock, settingContinuityLock, finalPanelStagingLock, MANGA_READING_RHYTHM_LOCK]
+  const sceneLocks = [scriptLock, documentarySourceFactLock, compositionVarietyLock, gestureVarietyLock, actingIdentityNotes, HAND_PROP_KINEMATICS_LOCK, visualStoryEvidenceLock, settingContinuityLock, finalPanelStagingLock, MANGA_READING_RHYTHM_LOCK]
     .filter(Boolean)
     .join('\n');
   const panelEyeLineRules = panels.map((panel) => buildPanelEyeLineRule(panel, castList));

@@ -50,6 +50,7 @@ export const MANGA_READING_RHYTHM_LOCK_COMPACT = 'PAGE READING RHYTHM: one prima
 export const SCENARIO_GESTURE_VARIETY_RULES = `
              - **【物語に合わせた身体演技・ジェスチャー】**:
                * キャラクター参照画像に写るポーズは顔・髪・衣装・体格の同一性資料であり、性格を示す定番動作ではない。参照ポーズを各コマのActionや決めポーズとして反復するな。
+               * **ACTING IDENTITY**: キャラクター情報に明示された前傾・姿勢の保ち方・身振りの振幅や頻度・視線の使い方・物を確認する癖などの演技傾向は、各人物を見分ける一貫した偏りとして反映する。ただし同じポーズを全コマで反復しない。物語のAction、動作段階、相手、接触対象に応じて同じ傾向を別の動きとして表す。参照画像のポーズだけから演技傾向を推測しない。
                * 身体演技の種類数にノルマを設けない。物を扱う、移動・重心移動、相手との受け渡し、環境へ働きかける、抑制した反応、動作後の余韻などを、物語の因果に合わせて選ぶ。
                * 指し示し、突き出し、支持面への打撃を一つの系統として回数制限しない。対象・目的・身体の軸・動作の大きさを変えて、全身の誇張や強い短縮遠近法も積極的に使う。
                * 静かな間と大きなリアクション、寄りと引き、通常絵と指定された劇画・ちびキャラ・集中線の落差でコマの緩急を作る。明示された無反応や静けさは保ち、全コマを大騒ぎにも静止画にも揃えない。
@@ -71,13 +72,14 @@ export const MANGA_PROMPT_PRIORITY = 'PROMPT PRIORITY: protect cast/count/identi
 
 export const MANGA_GESTURE_VARIETY_LOCK = `BODY ACTING / GESTURE VARIETY LOCK:
 - A reference-sheet pose is identity evidence, not a recurring action or personality signature. Reproduce identity and clothing, but derive acting from the current story beat.
+- ACTING IDENTITY LOCK: Preserve explicit cast-profile acting tendencies as character-specific biases in lean, posture, gesture amplitude/frequency, gaze behavior and prop-check habits. Express each bias through the scripted action and action phase; never freeze it into the same repeated pose, infer it from a reference-sheet pose, or override camera, anatomy, contact or story action.
 - Across the four panels, use story-motivated acting contrast: full-body exaggeration, recoil, leaps, reaching and impact may alternate with a deliberate quiet beat. Do not impose a numeric cap on pointing, thrusting or surface impact; vary purpose, body axis and amplitude.
 - Preserve every explicitly scripted pointing, reaching, presenting, or surface impact action. Enrich its silhouette and amplitude without changing the event, contact target or prop ownership. Do not default every scene to folded arms, chin-resting or seated explanations.
 - Preserve exact hand pose/contact/gaze from Action; no stock-pose substitution. Style, camera aids and default conversational eye-lines never override the scripted performance.
 - For each lead action, resolve the action phase, weight-bearing support, center of gravity, left/right hand roles, and contact target. Keep the face, important hands, and story prop readable in a clean asymmetrical silhouette.
 - Prefer story-specific alternatives when compatible with Action: handling or exchanging a prop, stepping or turning with weight shift, changing distance to a scene partner, interacting with the environment, a restrained reaction, or the follow-through after an action.`;
 
-export const MANGA_GESTURE_VARIETY_LOCK_COMPACT = 'BODY ACTING / GESTURE VARIETY LOCK: reference-sheet pose is identity evidence, not a recurring action; full-body exaggeration; preserve explicitly scripted pointing/surface impact and exact hand pose/contact/gaze; no stock-pose substitution; action phase/support/contact.';
+export const MANGA_GESTURE_VARIETY_LOCK_COMPACT = 'BODY ACTING / GESTURE VARIETY LOCK: reference-sheet pose is identity evidence, not a recurring action. ACTING IDENTITY: vary explicit lean/posture/gesture/gaze/prop-check by Action. Preserve explicitly scripted pointing/surface impact, exact hand pose/contact/gaze, no stock-pose substitution; action phase/support/contact.';
 
 export const SCENARIO_SHOT_DESIGN_RULES = `【画角と身体動作の一体設計】
 - 各コマのCameraとActionを一組として設計する。既存の出来事・セリフ・小道具の持ち主は固定し、同じ瞬間の見せ方と動作の振幅を具体化する。

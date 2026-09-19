@@ -114,6 +114,7 @@ function App() {
     setOpenAIImageSize,
     openAIImageVerificationWarning,
     allowImageQualityRepair,
+    imageQualityNeedsRepair,
     setAllowImageQualityRepair,
     stopQualityRetries,
     setOpenAIImageQuality,
@@ -367,7 +368,7 @@ function App() {
           </div>
 
           {/* 出力結果 */}
-          <Step4Panel
+          {Boolean(finalPrompt?.trim()) && (<Step4Panel
               outputRef={outputRef}
               currentStep={currentStep}
               isSearching={isSearching}
@@ -407,6 +408,7 @@ function App() {
               openAIImageVerificationWarning={openAIImageVerificationWarning}
               stopQualityRetries={stopQualityRetries}
               allowImageQualityRepair={allowImageQualityRepair}
+              imageQualityNeedsRepair={imageQualityNeedsRepair}
               setAllowImageQualityRepair={setAllowImageQualityRepair}
               setOpenAIImageQuality={setOpenAIImageQuality}
               isGeneratingImage={isGeneratingImage}
@@ -439,9 +441,9 @@ function App() {
               handlePolicyAutoFix={handlePolicyAutoFix}
               handlePolicySwitchToWeb={handlePolicySwitchToWeb}
               MAX_POLICY_RETRIES={MAX_POLICY_RETRIES}
-            />
+            />)}
 
-            <GenerationHistory
+            {Boolean(finalPrompt?.trim()) && (<GenerationHistory
               generationHistory={generationHistory}
               setGenerationHistory={setGenerationHistory}
               generatedImage={generatedImage}
@@ -452,7 +454,7 @@ function App() {
               isEnhancing={isEnhancing}
               isFullAutoMode={isFullAutoMode}
               fullAutoStep={fullAutoStep}
-            />
+            />)}
           
           </main >
 

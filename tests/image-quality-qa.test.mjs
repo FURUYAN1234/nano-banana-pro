@@ -34,7 +34,12 @@ const spatialChecks = (count = 4) => Array.from({ length: count }, (_, index) =>
     lens: { requested: 'unspecified', observed: 'ordinary depth, no required lens effect', status: 'not_applicable' },
   } },
   object_geometry: { status: 'ok', evidence: 'The page is in front of the hand; the rear finger contour is hidden at its edge.' },
-  surface_text: { status: 'ok', evidence: 'The heading follows the visible page corners and tilt; the thin page edges are separate.', printed_surfaces: [{ subject: 'page', face: 'page', object_axes: 'top edge tilts right', glyph_axes: 'glyph tops tilt with page top', expected_axes: 'same tilt as page top', basis: 'explicit_contract', status: 'ok' }] },
+  surface_text: {
+    status: 'ok',
+    evidence: 'The heading follows the visible page corners and tilt; the thin page edges are separate.',
+    printed_surfaces: [{ subject: 'page', face: 'page', object_axes: 'top edge tilts right', glyph_axes: 'glyph tops tilt with page top', expected_axes: 'same tilt as page top', basis: 'explicit_contract', status: 'ok' }],
+    visible_texts: [{ subject: 'page', text: 'approved heading', text_role: 'story_required', text_role_reason: 'explicit requested heading' }],
+  },
   prop_orientation: { status: 'ok', evidence: 'The reader and overhead camera are on the printed side of the page; text points toward the reader.', surfaces: [{
     subject: 'page', visible_face: 'front', cues: ['printed_content'], camera_side: 'same_half_space',
     visual_evidence: 'Printing appears within the page edges.', target_evidence: 'Reader and camera are both above the page.',
@@ -141,7 +146,11 @@ test('PASS requires all geometric checks for every distinct scene', () => {
 test('spatial defects override a contradictory PASS even when omitted from issues', () => {
   const checks = spatialChecks();
   checks[2].object_geometry = { status: 'defect', evidence: 'A sheet corner enters the hair contour without a coherent front/back boundary.' };
-  checks[3].surface_text = { status: 'defect', evidence: 'The heading spans the cover and disconnected page-block edge.' };
+  checks[3].surface_text = {
+    status: 'defect',
+    evidence: 'The heading spans the cover and disconnected page-block edge.',
+    visible_texts: [{ subject: 'book heading', text: 'approved heading', text_role: 'story_required', text_role_reason: 'explicit requested heading' }],
+  };
   const review = parseImageQualityQaResponse(JSON.stringify({ pass: true, issues: [], observations, spatial_checks: checks }));
   assert.equal(review.pass, false);
   assert.deepEqual(review.issues.map(({ type, panel }) => ({ type, panel })), [
@@ -160,7 +169,7 @@ test('unresolved object planes remain unverified instead of becoming a concrete 
 
 test('single-image coverage requires one scene and accepts justified absence without inventing a grid', () => {
   const checks = spatialChecks(1);
-  checks[0].surface_text = { status: 'not_applicable', evidence: 'There are no printed or display surfaces in the scene.' };
+  checks[0].surface_text = { status: 'not_applicable', evidence: 'There are no printed or display surfaces in the scene.', printed_surfaces: [], visible_texts: [] };
   const raw = JSON.stringify({ pass: true, issues: [], observations, spatial_checks: checks });
   assert.equal(parseImageQualityQaResponse(raw, { mode: 'single-image' }).pass, true);
   assert.equal(parseImageQualityQaResponse(raw).pass, false);
@@ -246,6 +255,26 @@ test('quality prompt prioritizes anatomy, hand side, prop ownership, and bubble 
   assert.match(prompt, /submit.*present.*show.*recipient/i);
   assert.match(prompt, /tabletop.*face-up.*text baseline.*intended reader/i);
   assert.match(prompt, /UNRELATED_RENDERING_NOISE/); // Keep the complete submitted contract, including manual edits.
+});
+
+test('single-image QA cannot silently ignore readable incidental text on props or backgrounds', () => {
+  const prompt = buildImageQualityQaPrompt({ mode: 'single-image', finalPrompt: 'Add no random text.' });
+  assert.match(prompt, /READABLE TEXT INVENTORY/);
+  assert.match(prompt, /chalkboards.*packaging.*book spines.*phone screens/is);
+  assert.match(prompt, /visible_texts/);
+
+  const checks = spatialChecks(1);
+  checks[0].surface_text.visible_texts = [
+    { subject: 'chalkboard', text: '放課後は', text_role: 'incidental', text_role_reason: 'No chalkboard wording is requested.' },
+  ];
+  const result = parseImageQualityQaResponse(JSON.stringify({ pass: true, issues: [], observations, spatial_checks: checks }), { mode: 'single-image' });
+  assert.equal(result.pass, false);
+  assert.ok(result.issues.some(issue => issue.type === 'extra_text' && issue.subject === 'chalkboard'));
+
+  const missing = spatialChecks(1);
+  delete missing[0].surface_text.visible_texts;
+  const unverified = parseImageQualityQaResponse(JSON.stringify({ pass: true, issues: [], observations, spatial_checks: missing }), { mode: 'single-image' });
+  assert.ok(unverified.issues.some(issue => issue.type === 'unverified' && issue.subject === 'surface_text'));
 });
 
 test('speaker-tail endpoint mismatch overrides a contradictory PASS', () => {

@@ -8,7 +8,7 @@ import { stripSourceMetadata } from './sns-explanation.js';
 
 const CAST_HEADING_RE = /^##(?!#)\s*(?:\d+\.\s*)?(.*)/;
 const CHARACTER_LINE_RE = /^-?\s*Character\s*\[(.*?)\]/i;
-const NON_CHARACTER_SECTION_RE = /^(?:#\s*)?(?:備考|補足|注記|メモ|参考|注意|タイトル|作品名|シリーズ名|年号|比較ラベル|ラベル|ロゴ|看板|背景|Notes?|Remarks?|References?|Appendix)(?:\s*[:：].*)?$/i;
+const NON_CHARACTER_SECTION_RE = /^(?:#\s*)?(?:備考|補足|注記|メモ|参考|注意|タイトル|作品名|シリーズ名|年号|比較ラベル|ラベル|ロゴ|看板|背景|演技癖|演技特性|演技傾向|Acting\s+Identity(?:\s+Lock)?|Notes?|Remarks?|References?|Appendix)(?:\s*[:：].*)?$/i;
 const PANEL_HEADER_RE = /^\s*\[\s*\d+\s*コマ目(?:\s*[:：\]])/i;
 
 const normalizeCastDisplayName = (value = '') =>
@@ -67,6 +67,32 @@ const collectCastNames = (castListText = '') => {
   return names;
 };
 
+export const extractActingIdentityNotes = (castListText = '') => {
+  const notes = [];
+  let inActingSection = false;
+
+  for (const rawLine of String(castListText).split('\n')) {
+    const cleanLine = rawLine.replace(/\*\*/g, '').trim();
+    const headingMatch = cleanLine.match(CAST_HEADING_RE);
+    if (headingMatch) {
+      const heading = normalizeCastDisplayName(headingMatch[1]);
+      inActingSection = /^(?:演技癖|演技特性|演技傾向|Acting\s+Identity(?:\s+Lock)?)$/i.test(heading);
+      continue;
+    }
+    if (/^#{2,}/.test(cleanLine)) {
+      inActingSection = false;
+      continue;
+    }
+    if (!inActingSection || !cleanLine || /^(?:---|\|)/.test(cleanLine)) continue;
+
+    const note = cleanLine.replace(/^[-*・]\s*/, '').trim();
+    if (note && !notes.includes(note)) notes.push(note);
+  }
+
+  if (!notes.length) return '';
+  return `ACTING IDENTITY NOTES (NON-CHARACTER RULES; NEVER DRAW OR PRINT THIS LABEL):\n${notes.map((note) => `- ${note}`).join('\n')}`;
+};
+
 const buildCastLookup = (castListText = '') => {
   const lookup = {};
   collectCastNameEntries(castListText).forEach(entry => {
@@ -98,8 +124,11 @@ export const buildIdentityMatrix = (castListText, options = {}) => {
         name,
         shortName: name.split(/[（(]/)[0].trim(),
         hairColor: '',
+        hairLength: '',
         hairStyle: '',
+        hairAccessory: '',
         glasses: 'unknown',
+        glassesShape: '',
         features: []
       };
     }
@@ -123,6 +152,18 @@ export const buildIdentityMatrix = (castListText, options = {}) => {
       // これにより Identity Matrix で汎用長さより特徴的な髪型を優先して出力できる
       const distinctiveMatch = tagsSource.match(/(internal\s*round\s*bob|chin-length\s*bob|straight\s*bob|twintails?|twin\s*tails?|ponytail|hime\s*cut|bun|braid|pixie|buzz)/i);
       const genericMatch = tagsSource.match(/(bob|very\s*long\s*hair|waist-length\s*hair|long[\s-]?hair|medium[\s-]?hair|short[\s-]?hair)/i);
+      const japaneseLength = /腰(?:まで|に届く)/.test(cleanLine)
+        ? 'waist-length'
+        : /肩(?:まで|にかかる)/.test(cleanLine)
+          ? 'shoulder-length'
+          : /顎下|チンレングス/.test(cleanLine)
+            ? 'chin-length'
+            : '';
+      const englishLength = tagsSource.match(/\b(waist-length|hip-length|very\s+long|shoulder-length|chin-length|long|medium|short)(?=\s+(?:[a-z-]+\s+){0,2}(?:hair|twintails?|twin\s+tails?|ponytail|braids?|bob))/i)?.[1] || '';
+      if (!currentChar.hairLength) currentChar.hairLength = japaneseLength || englishLength;
+      if (!currentChar.hairAccessory && (/リボン/.test(cleanLine) || /\bribbons?\b/i.test(tagsSource))) {
+        currentChar.hairAccessory = 'ribbon hair ties';
+      }
       if (!currentChar.hairStyle) {
         if (distinctiveMatch) {
           currentChar.hairStyle = distinctiveMatch[1];
@@ -154,6 +195,19 @@ export const buildIdentityMatrix = (castListText, options = {}) => {
         currentChar.glasses = 'YES';
       }
     }
+    if (!currentChar.glassesShape && (cleanLine.includes('眼鏡') || cleanLine.includes('メガネ') || /\bglasses\b/i.test(lowerLine))) {
+      const size = /大きめ|\b(?:large|oversized)\b/i.test(cleanLine) ? 'large ' : '';
+      const shape = /丸眼鏡/.test(cleanLine) && /オーバル/.test(cleanLine)
+        ? 'round/oval'
+        : /丸眼鏡|\bround\b/i.test(cleanLine)
+          ? 'round'
+          : /オーバル|\boval\b/i.test(cleanLine)
+            ? 'oval'
+            : /\bsquare\b/i.test(cleanLine)
+              ? 'square'
+              : /\b(?:under-rim|rimless|half-rim)\b/i.exec(cleanLine)?.[0] || '';
+      if (shape) currentChar.glassesShape = `${size}${shape}`.trim();
+    }
 
   });
   if (currentChar) characters.push(currentChar);
@@ -172,8 +226,15 @@ export const buildIdentityMatrix = (castListText, options = {}) => {
   characters.forEach(c => {
     const traits = [];
     if (!monochrome && c.hairColor) traits.push(`${c.hairColor} hair`);
-    if (c.hairStyle) traits.push(c.hairStyle);
-    if (c.glasses === 'YES' || c.glasses === 'LOCKED_YES') traits.push('MUST HAVE glasses (do NOT remove)');
+    if (c.hairStyle) {
+      const needsLength = monochrome && c.hairLength && !c.hairStyle.toLowerCase().includes(c.hairLength.toLowerCase())
+        && !/^(?:very\s+long|long|medium|short|waist-length|shoulder-length|chin-length)/i.test(c.hairStyle);
+      traits.push(`${needsLength ? `${c.hairLength} ` : ''}${c.hairStyle}`);
+    } else if (monochrome && c.hairLength) traits.push(`${c.hairLength} hair`);
+    if (monochrome && c.hairAccessory) traits.push(c.hairAccessory);
+    if (c.glasses === 'YES' || c.glasses === 'LOCKED_YES') {
+      traits.push(`MUST HAVE glasses (${monochrome && c.glassesShape ? `${c.glassesShape}; ` : ''}do NOT remove)`);
+    }
     else if (c.glasses === 'NO' || c.glasses === 'LOCKED_NO') traits.push('MUST NOT have glasses (bare eyes, no frames)');
     else traits.push('check reference image for glasses status');
 
@@ -181,14 +242,14 @@ export const buildIdentityMatrix = (castListText, options = {}) => {
   });
 
   matrix += monochrome
-    ? `CROSS-CHECK: face/eye shape, hairstyle/length, glasses and stable ink/tone assignments must match; source hue must never appear. Redraw mismatch.\n`
-    : `CROSS-CHECK: hair color and glasses status must match; redraw mismatch.\n`;
+    ? `CROSS-CHECK: match face/eyes, hair length/style, eyewear shape, defining accessories and ink/tone; never source hue. Redraw.\n`
+    : `CROSS-CHECK: match hair color/style and eyewear/accessories; redraw.\n`;
   matrix += `Reading order: RIGHT-TO-LEFT. Speech bubbles flow right-to-left; each bubble tail points to its speaker.\n`;
 
   return matrix;
 };
 
-const GENERIC_ROLE_WORD_PATTERN = '男性|女性|男子|女子|男|女|青年|若者|成人|大人|中年|老人|老婦人|おじさん|おばさん|お兄さん|お姉さん|おじいさん|おばあさん|高校生|高生|学生|生徒|先生|教師|作家|漫画家|編集者|記者|店員|会社員|社員|医師|看護師|警官|兵士|ギャル|モブ|客|観客|観察者|参加者|司会者|司会|発表者|登壇者|案内役|ナレーター|アナウンサー|スタッフ|社長|主催者|委員長|選手|声|人|キャラ';
+const GENERIC_ROLE_WORD_PATTERN = '男性|女性|男子|女子|男|女|青年|若者|成人|大人|中年|老人|老婦人|おじさん|おばさん|お兄さん|お姉さん|おじいさん|おばあさん|高校生|高生|学生|生徒|先生|教師|作家|漫画家|編集者|記者|商店主|店主|店長|店員|受付係|会社員|社員|医師|看護師|警官|兵士|ギャル|モブ|客|観客|観察者|参加者|司会者|司会|発表者|登壇者|案内役|ナレーター|アナウンサー|スタッフ|社長|主催者|委員長|選手|声|人|キャラ';
 const GENERIC_ROLE_SPEAKER_RE = new RegExp(`(?:${GENERIC_ROLE_WORD_PATTERN})(?:[A-ZＡ-Ｚ0-9０-９\\s]*)$`);
 
 const PERSON_DESCRIPTOR_TOKEN_RE = new RegExp(`(?:黒髪|金髪|茶髪|銀髪|白髪|赤髪|青髪|緑髪|紫髪|ピンク髪|ブロンド|スーツ|制服|眼鏡|メガネ|グラス|ギャル|オタク|${GENERIC_ROLE_WORD_PATTERN})`, 'g');
@@ -1524,20 +1585,31 @@ export const extractCastLimitRule = (fullPanelText, castList, options = {}) => {
   // スピーカー最大3名をメインアクターとして登録
   const panelActors = speakers.slice(0, 3).map(s => `[${s}]`);
   const explicitRearActor = explicitRearSubject ? `[${explicitRearSubject}]` : '';
+  const allCharBrackets = allPanelCharacters.map(c => `[${c}]`);
   // 肩越しの手前人物と、奥で注目される話者を混同しない。
-  const foregroundActors = explicitRearActor ? [explicitRearActor] : panelActors;
+  // 無言コマでもActionに明記された登場人物をキャスト制約へ残す。
+  // 話者がいないことを「登場人物がいない」と誤解して全員をABSENTにしない。
+  const foregroundActors = explicitRearActor
+    ? [explicitRearActor]
+    : (panelActors.length > 0 ? panelActors : allCharBrackets);
 
   // [v2.69] 背景キャスト統合ロジックを完全廃止 (No-Show 除外指示への置換)
   // このコマに一切登場しないキャラ（No-Show）を特定
   const noShowCharacters = canonicalValidCharacters.filter(c => !allPanelCharacters.includes(c));
 
-  const allCharBrackets = allPanelCharacters.map(c => `[${c}]`);
+  const storyGuests = allPanelCharacters.filter(c => !canonicalValidCharacters.includes(c));
 
   if (foregroundActors.length > 0) {
     const mainFocus = panelActors.length > 0 ? panelActors.join(' and ') : foregroundActors.join(' and ');
     let cloneWarning = compact
       ? `CAST COUNT: ${allCharBrackets.join(', ')} each EXACTLY ONCE; no named-character duplicates.`
       : `ANTI-CLONE REMINDER: ${allCharBrackets.join(', ')} — each appears EXACTLY ONCE. If a character is mentioned in both the placement rule AND the visual action, they are the SAME person — do NOT draw a second copy.`;
+    if (storyGuests.length > 0) {
+      const guestNames = storyGuests.map(c => `[${c}]`).join(', ');
+      cloneWarning += compact
+        ? `\nGUEST CONTINUITY: ${guestNames} are story-required stable people; preserve identity, age, clothing, props and action/spatial continuity when recurring.`
+        : `\nSTORY-REQUIRED GUEST CONTINUITY: ${guestNames} are legitimate characters without reference sheets. Draw each exactly once where required; if recurring, preserve the same identity, age, clothing, prop ownership and action/spatial continuity. Never clone, substitute or omit them while their scripted action remains.`;
+    }
     
     if (allPanelCharacters.length === 1 && dialogueLineCount <= 1) {
       cloneWarning += compact

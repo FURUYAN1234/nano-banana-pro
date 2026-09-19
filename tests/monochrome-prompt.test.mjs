@@ -136,6 +136,15 @@ test('monochrome Web prompt remains copyable with a five-character cast', () => 
   assert.match(prompt, /lit areas of faces and skin.*pure white/i);
 });
 
+test('monochrome mode replaces scenario-wide color output commands without changing dialogue', () => {
+  const source = scenario().replace('Action: 葵が凛に本を渡す。', 'Action: 全編カラー。葵が凛に本を渡す。');
+  const prompt = build('chatgpt', 'monochrome', { scenario: source });
+
+  assert.doesNotMatch(prompt, /Action \(visual only\):[^\n]*全編カラー/);
+  assert.match(prompt, /Action \(visual only\):[^\n]*全編白黒（純白・純黒・網点）/);
+  assert.ok(prompt.includes('赤と青はそのまま書いてね。'));
+});
+
 test('monochrome cast identity removes arbitrary source chroma while preserving structural traits', () => {
   const chromaticCast = `## Character Alpha
 - [WEIGHTS]: (female:1.6), (waist-length braided cyan hair:1.5), (magenta eyes:1.3), (round glasses:1.4), (emerald trench coat:1.2)

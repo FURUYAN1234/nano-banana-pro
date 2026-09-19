@@ -1,14 +1,24 @@
 // Keep posting copy outside the manga script and take URLs only from source metadata.
 export function stripSourceMetadata(text = '') {
   let sourceSection = false;
-  return String(text).replace(/\r\n?/g, '\n').split('\n').filter(line => {
+  const japaneseSourceLabel = '(?:出典(?:情報|一覧|元)?|参考(?:リンク|文献|資料|URL)?)';
+  const compoundJapaneseSourceLabel = `${japaneseSourceLabel}(?:\\s*[・/&＋+]\\s*${japaneseSourceLabel})*`;
+  const normalized = String(text).replace(/\r\n?/g, '\n').replace(new RegExp(
+    `[ \\t]+(?:${compoundJapaneseSourceLabel}|引用元|Sources?|References?|Citations?)[ \\t]*[:：].*$`,
+    'gim'
+  ), '');
+  return normalized.split('\n').filter(line => {
     const clean = line.replace(/\*\*/g, '').trim();
-    const label = clean.match(/^(?:[-*+>]\s*|#{1,6}\s*)?[【\[]?\s*(?:出典(?:情報|一覧|元)?|参考(?:リンク|文献|資料|URL)|引用元|Sources?|References?|Citations?)\s*[】\]]?\s*(?=[:：「『"“]|$)(.*)$/i);
+    const label = clean.match(new RegExp(
+      `^(?:[-*+>]\\s*|#{1,6}\\s*)?[【\\[]?\\s*(?:${compoundJapaneseSourceLabel}|引用元|Sources?|References?|Citations?)\\s*[】\\]]?\\s*(?=[:：「『"“]|$)(.*)$`,
+      'i'
+    ));
     if (label) {
       sourceSection = !label[1].replace(/[:：]/g, '').trim();
       return false;
     }
-    if (sourceSection && (/^\[\s*\d+\s*コマ目/.test(clean) || /^(?:#{1,6}\s*|\[?(?:Camera|EMOTION)|状況[:：]|Action[:：])/.test(clean) || /^[^「」:：]+「/.test(clean))) sourceSection = false;
+    const dialogueLine = !/^[-*+・>]/.test(clean) && /^[^「」:：]+「[^」]*」\s*$/.test(clean);
+    if (sourceSection && (/^\[\s*\d+\s*コマ目/.test(clean) || /^(?:#{1,6}\s*|\[?(?:Camera|EMOTION)|状況[:：]|Action[:：])/.test(clean) || dialogueLine)) sourceSection = false;
     return !sourceSection;
   }).join('\n');
 }

@@ -37,13 +37,23 @@ const CATEGORY_DEFINITIONS = Object.freeze({
   },
   gag: {
     label: 'ギャグ演出',
-    instruction: 'フリ、間、リアクション、オチの見せ方を整える。セリフはdialogueも選択された場合だけ変える'
+    instruction: '人物の欲望または矛盾を1コマ目で仕込み、2〜3コマ目で因果が読めるエスカレーションを作り、4コマ目で視覚的な反転または回収へ結ぶ。説明だけの無難なオチや全員が同じ反応をする平均化を避ける。セリフはdialogueも選択された場合だけ変える'
   }
 });
 
 const SERIOUS_DIRECTION_DEFINITION = Object.freeze({
   label: 'シリアス演出',
-  instruction: '原文の緊張、沈黙、間、リアクション、結末の見せ方を強める。セリフはdialogueも選択された場合だけ変える。全4コマで既存の絵柄と通常頭身を維持し、ギャグ化、ちびキャラ化、コミカルなデフォルメを追加しない'
+  instruction: '原文にある具体的な損失、代償、選択、行動、余韻の因果を4コマで強める。説教や抽象的な感情語だけで深刻さを作らず、沈黙、視線、ためらい、決断、その後に残る変化を画面で見せる。セリフはdialogueも選択された場合だけ変える。全4コマで既存の絵柄と通常頭身を維持し、ギャグ化、ちびキャラ化、コミカルなデフォルメを追加しない'
+});
+
+const GAG_DOCUMENTARY_DIRECTION_DEFINITION = Object.freeze({
+  label: 'ギャグ・ドキュメンタリー演出',
+  instruction: '事実、数値、時系列、因果関係を変えず、1〜3コマ目は取材対象の事実と行動を具体的に積み上げ、4コマ目で登場人物の反応または事実から自然に生じる回収を作る。新しい事件、発言、受賞、失敗を捏造しない。説明だけの無難なオチを避け、事実そのものの矛盾、落差、意外性を画面で見せる。セリフはdialogueも選択された場合だけ変える'
+});
+
+const SERIOUS_DOCUMENTARY_DIRECTION_DEFINITION = Object.freeze({
+  label: 'シリアス・ドキュメンタリー演出',
+  instruction: '事実、数値、時系列、因果関係を変えず、原文にある具体的な損失、代償、選択、行動、余韻を4コマで強める。新しい事件や発言を捏造せず、説教や抽象的な感情語だけに頼らない。セリフはdialogueも選択された場合だけ変える。全4コマで既存の絵柄と通常頭身を維持し、ギャグ化、ちびキャラ化、コミカルなデフォルメを追加しない'
 });
 
 const SERIOUS_GESTURE_VARIETY_RULES = `
@@ -54,7 +64,16 @@ const SERIOUS_GESTURE_VARIETY_RULES = `
                * 明示された動作、静かな間、人物の同一性、台詞、小道具の所有・向き、手足の接続・本数を保ち、原文の深刻さを別の出来事へ置き換えない。`;
 
 const getCategoryDefinitions = (punchlineType) => {
-  const serious = getEndingModePolicy(punchlineType).endingTone === 'serious';
+  const policy = getEndingModePolicy(punchlineType);
+  const serious = policy.endingTone === 'serious';
+  if (policy.documentary) {
+    return Object.freeze({
+      ...CATEGORY_DEFINITIONS,
+      gag: serious
+        ? SERIOUS_DOCUMENTARY_DIRECTION_DEFINITION
+        : GAG_DOCUMENTARY_DIRECTION_DEFINITION
+    });
+  }
   return serious
     ? Object.freeze({ ...CATEGORY_DEFINITIONS, gag: SERIOUS_DIRECTION_DEFINITION })
     : CATEGORY_DEFINITIONS;
@@ -530,10 +549,18 @@ export const runValidatedScenarioEnhancement = async ({
   let validationIssues = [];
   let lastResult = null;
   let bestSafeCandidate = null;
+  let laterRequestError = null;
 
   for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
     const prompt = buildPrompt({ attempt, validationIssues });
-    const result = await requestEnhancement(prompt, attempt);
+    let result;
+    try {
+      result = await requestEnhancement(prompt, attempt);
+    } catch (error) {
+      if (!bestSafeCandidate) throw error;
+      laterRequestError = error;
+      break;
+    }
     const text = normalizeText(result?.text);
     const validation = validateScenarioEnhancement({
       originalScenario,
@@ -572,7 +599,10 @@ export const runValidatedScenarioEnhancement = async ({
       attempts: maxAttempts,
       validation: bestSafeCandidate.validation,
       validationWarning: true,
-      fallbackToOriginal: retainedOriginal
+      fallbackToOriginal: retainedOriginal,
+      warningMessage: laterRequestError
+        ? `後続の改善候補を取得できないため、履歴内の最良候補を保持しました: ${laterRequestError.message}`
+        : '品質検証を全項目通過した候補がないため、履歴内の最良候補を保持しました。'
     };
   }
 

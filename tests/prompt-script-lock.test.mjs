@@ -85,6 +85,7 @@ test('ChatGPT-family prompt strictly forbids replacing the scenario story or dia
   assert.ok(scriptLockIndex < panelIndex, 'script lock must appear before detailed panel descriptions');
   assert.match(prompt, /different story is a failed output|Scenario is source of truth/i);
   assert.match(prompt, /Do not replace, rewrite, paraphrase, omit, or add dialogue|verbatim dialogue; no additions\/omissions/i);
+  assert.match(prompt, /BUBBLE QA.*immutable TEXT.*compare every glyph.*redraw mismatch/i);
   assert.match(prompt, /PROMPT PRIORITY:.*protect.*exact script.*Simplify only unspecified/i);
   assert.match(prompt, /Title: 塩ポップコーン論争勃発!\?/);
   assert.match(prompt, /Panel 1 required dialogue: ミク「今日は絶対キャラメルっしょ！」/);
@@ -587,5 +588,23 @@ test('keeps long dialogue verbatim inside the highest-priority script lock for b
 
     assert.match(scriptLock, new RegExp(`Panel 4 required dialogue: ミク「${LONG_DIALOGUE.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}」`));
     assert.doesNotMatch(scriptLock, /EXACT Panel 4 Dialogue below/);
+  }
+});
+
+test('source bibliography after the scenario never becomes a speaker or printable text', () => {
+  const scenario = `${SCENARIO}\n\n出典・参考:\n・BBC配信「Trophy disappears during black pudding contest」（2026年9月15日）。\nhttps://example.com/article`;
+
+  for (const providerFamily of ['chatgpt', 'gemini']) {
+    const prompt = buildMangaPrompt({
+      scenario,
+      castList: CAST_LIST,
+      colorMode: 'color',
+      providerFamily,
+      punchlineType: 'Documentary',
+      systemVersion: 'v6.3.6-test'
+    });
+
+    assert.match(prompt, /ミク「今日は絶対キャラメルっしょ！」/);
+    assert.doesNotMatch(prompt, /Trophy disappears|BBC配信|example\.com/);
   }
 });

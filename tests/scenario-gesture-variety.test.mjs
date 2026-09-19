@@ -83,3 +83,21 @@ test('enhancement requests contrast while preserving explicitly quiet beats', ()
   assert.match(prompt, /静かな間/);
   assert.doesNotMatch(prompt, /この系統は4コマ中最大1コマ/);
 });
+
+test('acting identity uses explicit cast habits without freezing a repeated pose', async () => {
+  const [compositionSource, assemblerSource] = await Promise.all([
+    readFile(new URL('../src/lib/composition-variety.js', import.meta.url), 'utf8'),
+    readFile(new URL('../src/lib/prompt-assembler.js', import.meta.url), 'utf8'),
+  ]);
+  const prompt = buildScenarioEnhancementPrompt({
+    scenario: VARIED_ACTING_SCENARIO,
+    selectedCategories: ['body'],
+  });
+
+  assert.match(prompt, /ACTING IDENTITY/);
+  assert.match(prompt, /明示された.*演技傾向/);
+  assert.match(prompt, /同じポーズ.*反復しない/);
+  assert.match(compositionSource, /ACTING IDENTITY LOCK/);
+  assert.match(compositionSource, /lean.*posture.*gesture.*gaze.*prop-check/s);
+  assert.match(assemblerSource, /MANGA_GESTURE_VARIETY_LOCK/);
+});

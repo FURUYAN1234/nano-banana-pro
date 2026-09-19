@@ -48,10 +48,11 @@ test('narrative timing enhancement follows Serious Documentary without gag or ch
     punchlineType: 'SeriousDocumentary',
   });
 
-  assert.match(prompt, /- シリアス演出:/);
-  assert.match(prompt, /緊張、沈黙、間、リアクション、結末/);
+  assert.match(prompt, /- シリアス・ドキュメンタリー演出:/);
   assert.match(prompt, /全4コマで既存の絵柄と通常頭身を維持/);
   assert.match(prompt, /ギャグ化、ちびキャラ化、コミカルなデフォルメを追加しない/);
+  assert.match(prompt, /事実、数値、時系列、因果関係/);
+  assert.match(prompt, /具体的な損失、代償、選択、行動、余韻/);
   assert.doesNotMatch(prompt, /- ギャグ演出:/);
 });
 
@@ -59,11 +60,32 @@ test('narrative timing enhancement remains gag-oriented outside Serious Document
   const prompt = buildScenarioEnhancementPrompt({
     scenario,
     selectedCategories: ['gag'],
-    punchlineType: 'GagDocumentary',
+    punchlineType: 'Documentary',
   });
 
-  assert.match(prompt, /- ギャグ演出:/);
+  assert.match(prompt, /- ギャグ・ドキュメンタリー演出:/);
+  assert.match(prompt, /事実、数値、時系列、因果関係/);
+  assert.match(prompt, /4コマ目.*反応.*回収/);
+  assert.match(prompt, /新しい事件.*捏造しない/);
   assert.doesNotMatch(prompt, /- シリアス演出:/);
+});
+
+test('general gag and serious enhancement use stronger causal story beats', () => {
+  const gagPrompt = buildScenarioEnhancementPrompt({
+    scenario,
+    selectedCategories: ['gag'],
+    punchlineType: 'GagAuto',
+  });
+  const seriousPrompt = buildScenarioEnhancementPrompt({
+    scenario,
+    selectedCategories: ['gag'],
+    punchlineType: 'SeriousAuto',
+  });
+
+  assert.match(gagPrompt, /欲望または矛盾.*仕込み.*エスカレーション.*反転または回収/s);
+  assert.match(gagPrompt, /説明だけの無難なオチ/);
+  assert.match(seriousPrompt, /具体的な損失、代償、選択、行動、余韻/);
+  assert.match(seriousPrompt, /説教や抽象的な感情語だけ/);
 });
 
 test('Serious Documentary validation rejects a chibi emotion tag introduced by enhancement', () => {
@@ -90,9 +112,10 @@ test('STEP2 and STEP4 label the same enhancement category from the selected endi
     readFile(new URL('../src/lib/scenario-provider.js', import.meta.url), 'utf8'),
   ]);
 
-  assert.match(step2, /const isSeriousEnhancementMode = getEndingModePolicy\(effectivePunchlineType\)\.endingTone === 'serious';/);
-  assert.match(step2, /isSeriousEnhancementMode \? 'シリアス演出' : 'ギャグ演出'/);
-  assert.match(step2, /isSeriousEnhancementMode \? '緊張・間・結末' : '間・反応・オチ'/);
+  assert.match(step2, /const isDocumentaryEnhancementMode = enhancementEndingPolicy\.documentary;/);
+  assert.match(step2, /ギャグ・ドキュメンタリー/);
+  assert.match(step2, /シリアス・ドキュメンタリー/);
+  assert.match(step2, /事実保持・4コマ目の反応/);
   assert.match(step4, /isSeriousEnhancementMode \? "シリアス演出強化" : "ギャグ演出強化"/);
   assert.match(hook, /enhanceScenarioText\(\{[\s\S]*?punchlineType: resolvedPunchlineTypeRef\.current \|\| punchlineType,[\s\S]*?\}\)/);
   assert.match(provider, /buildScenarioEnhancementPrompt\(\{[\s\S]*?punchlineType,[\s\S]*?\}\)/);

@@ -4,7 +4,7 @@ import { FINAL_PANEL_ACTIVE_STAGING_SCENARIO_CONTRACT } from './final-panel-stag
 import { buildScenarioEnhancementPrompt } from './scenario-enhancement';
 import { buildManualTopicExclusionPrompt } from './manual-topic-exclusions';
 import { buildSeasonalOutfitInstruction, getSeasonContext, SCENARIO_WARDROBE_CONTRACT } from './seasonal-outfit';
-import { SHARED_IMAGE_QUALITY_CONTRACT } from './shared-image-quality';
+import { SHARED_IMAGE_QUALITY_CONTRACT, WARDROBE_ENVIRONMENT_CONTRAST_LOCK } from './shared-image-quality';
 import { MONOCHROME_IMAGE_QUALITY_CONTRACT, MONOCHROME_WARDROBE_LOCK, MONOCHROME_STYLE_QA, MONOCHROME_BACKGROUND_LOCK, MONOCHROME_FINAL_CHROMA_AUDIT } from './manga-render-mode.js';
 import {
   MANGA_FACIAL_ACTING_LOCK,
@@ -714,15 +714,13 @@ ${policyErrorMsg.trim()}
 ${finalPrompt}
 
 【あなたのタスク】:
-上記プロンプトの中から、コンテンツポリシーに抵触している「単語・フレーズ」を全て特定し、それぞれに対して安全な代替表現を提案してください。
+拒否理由で根拠を確認できる箇所だけを特定し、プロバイダーの安全基準に適合するための最小限の変更を提案してください。安全基準を回避する偽装、隠語、綴り崩し、文字分割、難読化、意味を隠した言い換えは行わないでください。
 
-【検出すべき問題カテゴリ】:
-1. 学校・未成年連想: classroom, 教室, 実習室, 校則, school, academy, sailor uniform, serafuku, student council, school rules, 授業 → オフィス・社会人設定に置換
-2. 学校由来の衣装: sailor-style, pleated skirt（学校文脈で使用時）, school blazer, 学校制服 → 成人向け衣装に置換。職業制服・作業服・安全装備は保持し、「制服」という語だけで一般服へ置換しない
-3. 暴力表現: explosion, blast, 爆風, 叩きつけ, striking, slamming, 衝撃波, 激しく叩く → 劇的だが非暴力的な演出に置換
-4. 年齢・体型リスク: short height, loli, petite（未成年を連想させる文脈） → 成人の体型表現に置換
-5. 過激カメラ: worm's eye view（制服キャラとの組み合わせ時のみ） → より安全なアングルに置換
-6. 威嚇・ハラスメント: 怒りの炎, intense fury, 仁王立ち + 攻撃動作 → 威厳ある態度に変換
+【保護する承認済み契約】:
+- 台詞全文、話者と話者順、登場人物と人数、人物同一性、物語上の出来事、場所、Camera、4コマ構造、画風、カラー／白黒、明示された衣装を保持する。職業制服・作業服・安全装備は保持し、単語だけを理由に一般服へ置換しない。
+- 単語だけで危険と決めつけず、拒否理由と周辺文脈を確認する。合法で安全な学校・職業・災害報道等を別の題材へ機械的に置換しない。
+- 問題が強度表現に限られる場合は、同じ出来事と視覚的役割を保った安全な強度へ下げる。年齢や人物設定を推測で変更しない。
+- 承認済み契約を保ったまま適合できない要素だけ、安全な代替行動・小道具・演出へ置換する。物語全体や全段落を書き直さない。
 
 【出力フォーマット - 厳守】:
 以下のJSON配列形式**のみ**を出力してください。説明文や前置き、マークダウンコードフェンスは一切不要です。
@@ -737,7 +735,7 @@ JSON配列の最初の文字は [ 、最後の文字は ] であること。
 - "from"の値は、プロンプト内に**実在する正確な部分文字列**でなければならない。存在しない文字列を捏造しないこと。
 - 1つの"from"は可能な限り短い単位（単語〜1文程度）にすること。段落丸ごとの置換は禁止。
 - 問題のない箇所は絶対に含めないこと。修正が必要な箇所のみ列挙すること。
-- 最低3個、最大20個の置換ペアを出力すること。
+- 必要な置換だけを最大20個出力すること。1個で足りる場合は1個、該当箇所を特定できない場合は空配列 [] を返すこと。
 - "to"の表現は元と同程度の長さ・ディテールを維持すること。短縮・省略禁止。`;
 };
 
@@ -747,19 +745,14 @@ JSON配列の最初の文字は [ 、最後の文字は ] であること。
 export const getPolicyFallbackPrompt = (policyErrorMsg, finalPrompt) => {
   return `あなたは画像生成プロンプトのコンテンツポリシー修正の専門家です。
 
-以下のプロンプトがAIの安全基準で拒否されました。以下の置換ルールを厳密に適用して、修正後のプロンプト全文を出力してください。
+以下のプロンプトがAIの安全基準で拒否されました。同じ4コマの物語を安全基準に適合させ、修正後のプロンプト全文を出力してください。
 
-【必須置換ルール（これらを全て適用）】:
-- 学校設定 → オフィス/IT企業/会議室に変更: 教室,実習室,classroom → モダンなIT企業のオフィス
-- 校則 → 業務規定/社内規定
-- セーラー服/sailor-style → ビジネスブラウス/professional business blouse
-- プリーツスカート/pleated skirt → テーラードスラックス/tailored slacks（学校文脈の場合のみ）
-- 爆風/explosion/blast → 颯爽と/劇的に/dramatic entrance
-- 叩きつけ/striking/slamming → 威風堂々と置く/firmly placing
-- 衝撃波 → 気迫/aura of authority
-- 怒りの炎/intense fury/rage → 強い決意/fierce determination
-- 校則を守りなさい → 業務規定を守りなさい
-- short height → petite build
+【修正契約】:
+- 拒否理由で根拠を確認できる箇所だけを最小限に変更する。
+- 台詞全文、話者順、登場人物と人数、人物同一性、場所、Camera、枠構成、画風、カラー／白黒、明示された衣装と職業装備を保持する。
+- 物語の出来事を安全に保てる場合は、その視覚的役割と因果を維持したまま表現強度だけを下げる。
+- その要素自体を保持できない場合だけ、同じ目的を果たす安全な行動・小道具・演出へ置換する。学校を一律に会社へ変える等の固定置換をしない。
+- ポリシー回避のための隠語、綴り崩し、文字分割、伏字、意味の偽装を行わない。
 
 【拒否理由・エラー情報】:
 ${policyErrorMsg.trim()}
@@ -768,7 +761,7 @@ ${policyErrorMsg.trim()}
 ${finalPrompt}
 
 【出力ルール】:
-- 上記の置換ルールに該当する箇所だけを修正し、それ以外は1文字も変更しないでください。
+- 上記の修正契約に該当する箇所だけを修正し、それ以外は1文字も変更しないでください。
 - 修正後のプロンプト全文のみを出力してください。説明や前置きは不要です。`;
 };
 
@@ -890,6 +883,7 @@ ${outfitRule}
 ${preserveReferenceStyle
   ? (activeOutfit ? REFERENCE_SHEET_OUTFIT_RENDERING_LOCK : REFERENCE_SHEET_WARDROBE_STYLE_LOCK)
   : isMonochrome ? MONOCHROME_WARDROBE_LOCK : CROSS_PANEL_WARDROBE_COLOR_LOCK}
+${WARDROBE_ENVIRONMENT_CONTRAST_LOCK}
 - Adults 20+. ${isMonochrome ? 'Same face/hair/glasses/outfit shapes and ink/tone assignments; lit skin always white.' : 'Same face/hair/glasses/skin/outfit across all panels.'}
 - Cast details: ${compactCastDetails}
 - Identity Anchor: ${identityMatrix}
@@ -906,7 +900,7 @@ TEXT RULES:
 ${SCENE_LETTERING_LOCK}
 
 DIALOGUE / BUBBLE QA LOCK:
-- If one character, punctuation mark, added word, omitted word, or speaker differs from Dialogue, redraw. Each bubble tail tip must terminate at its assigned speaker's mouth/head silhouette, never at a neighbor or empty space. Trace every tail before final render; no extra bubbles, captions, narration, or printed speaker names.
+- Treat every quoted TEXT value as one immutable typeset layer. Before final render, visually compare every glyph and punctuation mark with TEXT; redraw the lettering on any mismatch. Each bubble tail tip must terminate at its assigned speaker's mouth/head silhouette, never at a neighbor or empty space. Trace every tail; no extra bubbles, captions, narration, or printed speaker names.
 
 CHARACTER QA PASS:
 - ${isMonochrome ? 'Match face/eye shape, hairstyle, glasses, outfit design and stable ink/tone assignments, with pure white lit skin' : 'Match hair color, hairstyle, eye color, glasses status, skin tone, outfit, and accessories'}; redraw swaps, merges, or wrong cast.
@@ -1008,6 +1002,7 @@ ${outfitOverride}
 【Identity Anchor】: Cross-panel consistency is MANDATORY. Redraw if hair/eyes/glasses/outfit mismatch.
 ${identityMatrix}
 ${preserveReferenceStyle ? (activeOutfit ? REFERENCE_SHEET_OUTFIT_RENDERING_LOCK : REFERENCE_SHEET_WARDROBE_STYLE_LOCK) : isMonochrome ? MONOCHROME_WARDROBE_LOCK : CROSS_PANEL_WARDROBE_COLOR_LOCK}
+${WARDROBE_ENVIRONMENT_CONTRAST_LOCK}
 OUTFIT CONSISTENCY: Each character keeps their own assigned outfit across ALL 4 panels. NO changes.
 GLASSES VERIFICATION (MANDATORY): Before finalizing EACH panel, count the number of characters wearing glasses. Compare against the Identity Matrix. If the count does not match, redraw. Characters without glasses must have fully visible bare eyes with NO frames.
 

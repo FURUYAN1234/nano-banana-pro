@@ -11,6 +11,7 @@ let extractPlacementRule;
 let extractCastLimitRule;
 let cleanCastList;
 let buildIdentityMatrix;
+let extractActingIdentityNotes;
 
 before(async () => {
   server = await createServer({
@@ -27,6 +28,7 @@ before(async () => {
   extractCastLimitRule = panelUtils.extractCastLimitRule;
   cleanCastList = panelUtils.cleanCastList;
   buildIdentityMatrix = panelUtils.buildIdentityMatrix;
+  extractActingIdentityNotes = panelUtils.extractActingIdentityNotes;
 });
 
 test('background remaining cast and shortened names cannot be forbidden by generated counts', () => {
@@ -46,6 +48,18 @@ test('plain cast paragraphs preserve identity details and sunglasses', () => {
   const matrix = buildIdentityMatrix(cast);
   assert.match(matrix, /gray hair/);
   assert.match(matrix, /MUST HAVE glasses/);
+});
+
+test('monochrome identity matrix preserves silhouette length, hair ties, and eyewear shape without source hue', () => {
+  const cast = `## リン
+- 髪: ライトブラウン、腰に届くロングツインテール、ピンクのリボン [WEIGHTS]: (long twintails:1.5), (light brown hair:1.4), (pink ribbons:1.1)
+- 眼鏡: 大きめの丸眼鏡（オーバル型） [WEIGHTS]: (glasses:1.2), (round glasses:1.1)`;
+  const matrix = buildIdentityMatrix(cast, { monochrome: true });
+
+  assert.match(matrix, /waist-length twintails/i);
+  assert.match(matrix, /ribbon hair ties/i);
+  assert.match(matrix, /MUST HAVE glasses \(large round\/oval; do NOT remove\)/i);
+  assert.doesNotMatch(matrix, /pink|brown/i);
 });
 
 after(async () => {
@@ -69,6 +83,41 @@ test('Action metadata retains silent actors in panel cast limits', () => {
   assert.doesNotMatch(rule, /SOLO/);
   assert.match(rule, /花子/);
   assert.doesNotMatch(rule, /ABSENT[^\n]*花子/);
+});
+
+test('a fully silent panel keeps named Action actors instead of marking the whole cast absent', () => {
+  const cast = '## ミク\n- blonde hair\n## リン\n- brown twintails, glasses\n## サエコ\n- black hair';
+  const rule = extractCastLimitRule('状況: ミクはリンの隣へ座り直し、リンは古い半券をミクの掌へ重ねる。\nセリフなし', cast, { compact: true });
+
+  assert.match(rule, /CAST COUNT:.*\[ミク\].*\[リン\]/);
+  assert.match(rule, /NO OTHER HUMANS: exactly 2 people/);
+  assert.doesNotMatch(rule, /ABSENT unless explicitly required/);
+  assert.doesNotMatch(rule, /ABSENT:[^\n]*ミク|ABSENT:[^\n]*リン/);
+});
+
+test('acting identity headings remain behavior rules and never become cast members', () => {
+  const cast = `## ミク\n- blonde hair\n## リン\n- brown hair\n## 演技癖\n- ミク: 大きく身体を開く。\n- リン: 前傾し、細かく指を動かす。`;
+  const matrix = buildIdentityMatrix(cast);
+  const rule = extractCastLimitRule('状況: ミクとリンが半券を見る。\nセリフなし', cast, { compact: true });
+  const acting = extractActingIdentityNotes(cast);
+
+  assert.doesNotMatch(matrix, /\[演技癖\]/);
+  assert.doesNotMatch(rule, /\[演技癖\]/);
+  assert.match(acting, /ACTING IDENTITY NOTES/);
+  assert.match(acting, /ミク: 大きく身体を開く/);
+  assert.match(acting, /リン: 前傾し、細かく指を動かす/);
+});
+
+test('a scripted non-cast role counts as a visible person instead of contradicting the panel action', () => {
+  const cast = '## ミク\n- blonde hair\n## リン\n- brown twintails, glasses';
+  const panel = `状況: 商店主は福引台の向こうからミクへ巻物を渡す。ミクは受け取り、リンは肩越しに見守る。
+商店主「こちら、伝説の巻物でございます。」`;
+  const rule = extractCastLimitRule(panel, cast, { compact: true });
+
+  assert.match(rule, /CAST COUNT:.*\[商店主\].*\[ミク\].*\[リン\]/);
+  assert.match(rule, /exactly 3 people/);
+  assert.doesNotMatch(rule, /exactly 2 people/);
+  assert.match(rule, /GUEST CONTINUITY:.*\[商店主\].*preserve identity, age, clothing, props and action\/spatial continuity/i);
 });
 
 test('an unqualified counted group matching the cast retains silent cast members', () => {

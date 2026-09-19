@@ -64,6 +64,24 @@ test('outfit overrides exclude reference clothing even in the unweighted cast fa
   }
 });
 
+test('explicit outfit overrides stay intentionally separate from the setting era', () => {
+  const explicitOutfit = 'AとBは精密な異世界騎士装束';
+  const source = scenario
+    .replace('Location: 図書室', 'Location: 昭和40年代の商店街')
+    .replace('Outfit: default', `Outfit: ${explicitOutfit}`);
+
+  for (const providerFamily of ['chatgpt', 'gemini']) {
+    const prompt = buildMangaPrompt({ scenario: source, castList, providerFamily, colorMode: 'color', systemVersion: 'test' });
+    assert.ok(prompt.includes(explicitOutfit));
+    assert.match(prompt, /explicit outfit.*overrides.*setting.*era|setting.*era.*must not restyle.*explicit outfit/i);
+    assert.match(prompt, /intentional contrast|mismatch/i);
+    assert.match(prompt, /do not replace.*period-appropriate clothing|never period-substitute|no period substitution/i);
+  }
+
+  const inferred = buildMangaPrompt({ scenario, castList, providerFamily: 'chatgpt', colorMode: 'color', systemVersion: 'test' });
+  assert.match(inferred, /when no outfit is specified.*infer.*setting|no outfit: infer from setting/i);
+});
+
 test('occupational uniforms and visitor clothes survive final assembly in both media and ending modes', () => {
   const assignment = 'Aは勤務中の警察官の制服、Bは来訪者の私服';
   const source = scenario.replace('Outfit: default', `Outfit: ${assignment}`);
