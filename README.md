@@ -8,6 +8,24 @@ An experimental web application in which AI handles topic research, story struct
 
 [Read the detailed note article](https://note.com/happy_duck780/n/ndf063558c1f5) / [詳しいnote記事を読む](https://note.com/happy_duck780/n/ndf063558c1f5)
 
+## AI Manga Creative Suite / AIまんが制作エコシステム
+
+[![AI Manga Creative Suite introduction video](https://github.com/user-attachments/assets/d850ac7f-aa1c-40cc-a378-b8c6673c726c)](https://youtu.be/pqYVxUUg0Cs?si=27g1I3tO2EuZkOuxJ)
+
+This application is the four-panel manga production system in AI Manga Creative Suite. It turns character references and a topic into a reviewed four-panel manga, then keeps the completed image available for the suite's video, translation, background, story, and character-design workflows. / 本アプリはAI Manga Creative Suiteの4コマ漫画制作システムです。キャラクター資料と題材から、検査済みの4コマ漫画を作成し、完成画像を動画化、翻訳、背景、物語、キャラクター設計の各ワークフローへ渡せます。
+
+### AI Voice Comic Maker integration / AI Voice Comic Makerとの連携
+
+Load a completed four-panel manga into [AI Voice Comic Maker](https://github.com/FURUYAN1234/ai-voice-comic-maker) to analyze the page and render a vertical short video with camera movement, BGM, and a selected local voice engine. This makes the completed manga usable as a TikTok or YouTube Shorts video source. / 完成した4コマ漫画を[AI Voice Comic Maker](https://github.com/FURUYAN1234/ai-voice-comic-maker)へ読み込むと、ページを解析し、カメラワーク、BGM、選択したローカル音声エンジンを使った縦型ショート動画をレンダリングできます。完成漫画をTikTokやYouTube Shorts向け動画の素材として使えます。
+
+### Related systems / 関連システム
+
+- [Story Maker](https://github.com/FURUYAN1234/story-maker): Create stories and plots for a manga topic. / 漫画の題材になる物語やプロットを作成します。
+- [AI Character Sheet Maker](https://github.com/FURUYAN1234/character-sheet-maker): Create structured character reference sheets for this workflow. / このワークフローに渡す構造化キャラクターシートを作成します。
+- [AI Comic Translation Tool](https://github.com/FURUYAN1234/comic-translation): Translate completed manga pages. / 完成した漫画ページを翻訳します。
+- [360° AI Panorama Generator](https://github.com/FURUYAN1234/panoforge): Create spatial background material for manga and video. / 漫画と動画向けの空間背景素材を作成します。
+- [AI Voice Comic Maker](https://github.com/FURUYAN1234/ai-voice-comic-maker): Convert a completed manga page into a voiced vertical video. / 完成した漫画ページを音声付き縦型動画に変換します。
+
 ## A4 workflow map / A4縦フローチャート
 
 ![Full workflow flowchart covering API connection, STEP1–STEP4, image generation, QA, policy repair, history, and saving.](public/diagrams/nano-banana-pro-workflow-a4.png)
