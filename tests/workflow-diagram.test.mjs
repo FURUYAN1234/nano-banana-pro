@@ -17,7 +17,9 @@ test('generates an A4 portrait workflow diagram covering the full manga pipeline
   assert.match(svg, /width="210mm"/);
   assert.match(svg, /height="297mm"/);
   for (const label of [
+    'Workflow Map',
     'API接続',
+    'API Connection',
     'STEP1',
     'STEP2',
     'STEP3',
@@ -27,6 +29,7 @@ test('generates an A4 portrait workflow diagram covering the full manga pipeline
     '最大5回',
     '生成履歴',
     '保存',
+    'Save &amp; Export',
   ]) {
     assert.match(svg, new RegExp(label));
   }
