@@ -5,6 +5,8 @@
   "homepage": "https://FURUYAN1234.github.io/nano-banana-pro",
   "type": "module",
   "scripts": {
+    "docs:workflow-diagram": "node scripts/generate_workflow_diagram.mjs",
+    "prebuild": "npm run docs:workflow-diagram",
     "dev": "vite",
     "build": "vite build",
     "release:preflight": "powershell -ExecutionPolicy Bypass -File ..\\scripts\\release_app_preflight.ps1 -App nano-banana-pro",

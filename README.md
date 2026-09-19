@@ -8,6 +8,14 @@ An experimental web application in which AI handles topic research, story struct
 
 [Read the detailed note article](https://note.com/happy_duck780/n/ndf063558c1f5) / [詳しいnote記事を読む](https://note.com/happy_duck780/n/ndf063558c1f5)
 
+## A4 workflow map / A4縦フローチャート
+
+![A4 portrait flowchart covering API connection, STEP1–STEP4, image generation, QA, policy repair, history, and saving.](public/diagrams/nano-banana-pro-workflow-a4.svg)
+
+This diagram covers the full path from source analysis through scenario thinking, prompt assembly, API image generation, quality review, policy-repair retries, history, and saving. It is generated from `scripts/generate_workflow_diagram.mjs`; `npm run build` regenerates it, and the generator checks the orchestration points it documents. Embed the deployed copy in note with `https://furuyan1234.github.io/nano-banana-pro/diagrams/nano-banana-pro-workflow-a4.svg`.
+
+この図は、素材解析から台本の思考ルーチン、プロンプト組み立て、API画像生成、品質検査、ポリシー修正の再試行、履歴、保存までを一枚にまとめています。正本は `scripts/generate_workflow_diagram.mjs` です。`npm run build` 時に再生成され、図が参照する処理の制御点も検査します。フローを大きく変える際は、この図も更新し、公開リリース時にREADMEとnoteの画像を同じ内容へ差し替えます。
+
 ## What this project does / このプロジェクトでできること
 
 The application provides one continuous four-step workflow. / アプリは次の4ステップを一続きで実行します。
