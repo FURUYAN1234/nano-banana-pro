@@ -322,6 +322,7 @@ export default function Step4Panel({
   regenerateSafePrompt,
   isFixingPolicy,
   policyFixLog,
+  policyPromptHistory,
   genLogRef,
   genLog,
   imageResultRef,
@@ -1089,7 +1090,7 @@ No explanations. No partial results.`;
                     <span>⚠️ 画像生成が制限されました（ポリシー制限）</span>
                   </div>
                   <p className="text-yellow-200/80 leading-relaxed" style={{ fontSize: '12px' }}>
-                    表現の一部がAIの安全基準（ポリシー）に触れたため、画像の生成がスキップされました。以下の方法で解決できます：
+                    内部で最大5回まで安全な表現への修正と画像再生成を試しましたが、ポリシー拒否が続きました。最後に成功した画像と生成履歴は保持しています。
                   </p>
                   <div className="flex flex-col sm:flex-row gap-2">
                     <button
@@ -1101,7 +1102,7 @@ No explanations. No partial results.`;
                       {policyAutoRetrying ? (
                         <><Loader2 size={16} className="animate-spin" /> 自動修正中...</>
                       ) : (
-                        <><RefreshCw size={16} /> 自動修正して再生成する</>
+                        <><RefreshCw size={16} /> もう一度自動修正して再生成する</>
                       )}
                     </button>
                     <button
@@ -1114,7 +1115,8 @@ No explanations. No partial results.`;
                     </button>
                   </div>
                   <p className="text-slate-400" style={{ fontSize: '10px' }}>
-                    💡 「自動修正して再生成する」を選ぶと、AIが安全な表現に言葉を書き換えて再度作り直します。
+                    💡 最大5回・画像APIを再利用します。成功した時点で停止し、元プロンプトと各修正版をこの作業中の履歴に保持します。
+                    {policyPromptHistory?.length > 0 && ` 現在のプロンプト履歴: ${policyPromptHistory.length}件。`}
                   </p>
                 </div>
               )}

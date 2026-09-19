@@ -32,6 +32,7 @@ import {
 } from '../lib/scenario-validation';
 import { formatGeneratedMangaTitle } from '../lib/manga-title';
 import { isImagePolicyError } from '../lib/image-policy-error';
+import { MAX_IMAGE_POLICY_RETRIES, retryImagePolicyGeneration } from '../lib/image-policy-retry.js';
 import {
   buildImageQualityQaImageParts,
   buildBubbleInventoryPrompt,
@@ -159,7 +160,8 @@ export default function useMangaWorkflow() {
   // [v4.2.0] コンテンツポリシー自動修正＆リトライ選択UI
   const [showPolicyChoice, setShowPolicyChoice] = useState(false); // 選択UIの表示制御
   const [policyAutoRetrying, setPolicyAutoRetrying] = useState(false); // 自動リトライ中フラグ
-  const MAX_POLICY_RETRIES = 3; // 最大リトライ回数
+  const [policyPromptHistory, setPolicyPromptHistory] = useState([]);
+  const MAX_POLICY_RETRIES = MAX_IMAGE_POLICY_RETRIES;
   const lastPolicyErrorRef = useRef(""); // 直近のポリシーエラーメッセージ（state更新待ち不要）
 
   // [v2.41] シナリオ強化パネル
@@ -1225,7 +1227,7 @@ export default function useMangaWorkflow() {
   };
   // --- Step 4: Image Generation ---
   // [v2.79] 戻り値変更: フルオート連鎖用（true=成功, false=失敗）
-  const regenerateImage = async (skipGuard = false, overridePrompt = null, generationOptions = {}) => {
+  const generateImageOnce = async (skipGuard = false, overridePrompt = null, generationOptions = {}) => {
     setImageQualityNeedsRepair(false);
     const currentPrompt = overridePrompt || finalPrompt;
     const qualityMode = inferImageQualityMode(currentPrompt);
@@ -1248,7 +1250,9 @@ export default function useMangaWorkflow() {
     setShowPolicyChoice(false);
     
     // [v3.04i] 進捗窓(genLog)にChatGPTモードのバッチ/警告を明示
-    const initialLogs = ["[1/5] プロンプトパラメータをロック中...", "[2/5] セーフティフィルターを検証中..."];
+    const initialLogs = generationOptions.policyAttempt
+      ? [`[POLICY AUTO-FIX] 画像再生成 ${generationOptions.policyAttempt}/${MAX_POLICY_RETRIES}`, "[1/5] プロンプトパラメータをロック中...", "[2/5] セーフティフィルターを検証中..."]
+      : ["[1/5] プロンプトパラメータをロック中...", "[2/5] セーフティフィルターを検証中..."];
     if (getCurrentPromptProviderFamily() === PROMPT_PROVIDER_FAMILIES.CHATGPT) {
       initialLogs.push("[2.5/5] ✅ ChatGPT Engine: ChatGPT-family prompt structure locked.");
     } else {
@@ -1535,7 +1539,6 @@ export default function useMangaWorkflow() {
     } catch (error) {
       console.error(error);
       setIsGenerationError(true);
-      setGeneratedImage(null);
 
       const errMsg = error.message || "";
       let guideLines = [];
@@ -1557,13 +1560,13 @@ export default function useMangaWorkflow() {
           "[ERROR GUIDE] 【対処法】アプリ側の送信形式を修正する必要があります。通信障害として再試行しても解決しません。"
         ];
       } else if (isImagePolicyError(errMsg)) {
-        // [v4.2.0] コンテンツポリシーエラー → メッセージボックス表示（パネルは開かない）
+        // 自動修正中は選択UIを抑制し、上限到達後だけ表示する。
         setPolicyErrorMsg(errMsg);
         lastPolicyErrorRef.current = errMsg; // ref経由で即時参照可能にする
-        setShowPolicyChoice(true); // メッセージボックスを表示
+        setShowPolicyChoice(!generationOptions.suppressPolicyChoice);
         guideLines = [
           "[ERROR GUIDE] 🚨 表現の一部がAIの安全基準（ポリシー）に触れたため、生成がスキップされました。",
-          "[ERROR GUIDE] 【自動修正】「自動修正して再生成する」を押すと、安全な言葉に書き換えて自動で作り直します。",
+          `[ERROR GUIDE] 【自動修正】安全な表現への修正と画像再生成を最大${MAX_POLICY_RETRIES}回まで内部で試します。`,
           "[ERROR GUIDE] 【手動生成】プロンプトをコピーし、公式のウェブ版チャット等に貼り付けて直接お試しください。"
         ];
       } else if (errMsg.includes("not found") || errMsg.includes("not supported") || errMsg.includes("404") || errMsg.includes("403") || errMsg.includes("401")) {
@@ -1602,6 +1605,110 @@ export default function useMangaWorkflow() {
       clearInterval(genTimer);
       setIsGeneratingImage(false);
     }
+  };
+
+  const runPolicyAutoRetries = async ({ initialPrompt, initialPolicyError, generationOptions = {} }) => {
+    if (!initialPrompt || !initialPolicyError) return false;
+
+    setShowPolicyChoice(false);
+    setPolicyAutoRetrying(true);
+    setIsFixingPolicy(true);
+    setPolicyPromptHistory([initialPrompt]);
+    setPolicyFixLog(`> [AUTO-FIX 0/${MAX_POLICY_RETRIES}] コンテンツポリシー自動修正を開始します。`);
+
+    try {
+      const result = await retryImagePolicyGeneration({
+        initialPrompt,
+        initialPolicyError,
+        repairPrompt: async ({ prompt, policyError, attempt, maxRetries }) => {
+          setIsFixingPolicy(true);
+          setPolicyFixLog(prev => `${prev}\n> [AUTO-FIX ${attempt}/${maxRetries}] 拒否原因を解析し、安全な表現へ修正中...`);
+          setGenLog(prev => [
+            ...prev,
+            `[POLICY AUTO-FIX] 🔄 自動修正 ${attempt}/${maxRetries}（この後、画像APIを再利用します）...`
+          ]);
+          return fixPolicyViolation({
+            finalPrompt: prompt,
+            policyErrorMsg: policyError,
+            selectedEngine,
+            onProgress: (msg) => setPolicyFixLog(prev => `${prev}\n> ${msg}`),
+          });
+        },
+        generateImage: async ({ prompt, attempt, maxRetries }) => {
+          setFinalPrompt(prompt);
+          setPolicyPromptHistory(prev => prev[prev.length - 1] === prompt ? prev : [...prev, prompt]);
+          setPolicyErrorMsg("");
+          lastPolicyErrorRef.current = "";
+          setIsFixingPolicy(false);
+          setGenLog(prev => [
+            ...prev,
+            `[POLICY AUTO-FIX] 画像再生成 ${attempt}/${maxRetries} を開始します。`
+          ]);
+          const success = await generateImageOnce(true, prompt, {
+            ...generationOptions,
+            suppressPolicyChoice: true,
+            policyAttempt: attempt,
+          });
+          return {
+            success,
+            policyError: lastPolicyErrorRef.current,
+          };
+        },
+      });
+
+      setPolicyPromptHistory(result.promptHistory);
+      setFinalPrompt(result.prompt);
+
+      if (result.success) {
+        setPolicyErrorMsg("");
+        lastPolicyErrorRef.current = "";
+        setShowPolicyChoice(false);
+        setGenLog(prev => [
+          ...prev,
+          `[POLICY AUTO-FIX] ✅ ${result.attempts}/${MAX_POLICY_RETRIES}回目で画像生成に成功しました。`
+        ]);
+        return true;
+      }
+
+      if (result.policyError) {
+        setPolicyErrorMsg(result.policyError);
+        lastPolicyErrorRef.current = result.policyError;
+      }
+      const exhausted = result.reason === 'policy_retry_exhausted';
+      setGenLog(prev => [
+        ...prev,
+        exhausted
+          ? `[POLICY AUTO-FIX] ⚠️ 最大${MAX_POLICY_RETRIES}回の自動修正後もポリシー拒否が続きました。`
+          : `[POLICY AUTO-FIX] ⚠️ 自動修正を停止しました（${result.reason}）。`
+      ]);
+      setShowPolicyChoice(!isEndlessModeRef.current && result.reason !== 'generation_failed');
+      return false;
+    } catch (error) {
+      console.error("[POLICY AUTO-FIX] Error:", error);
+      setPolicyFixLog(prev => `${prev}\n> [ERROR] ${error.message}`);
+      setGenLog(prev => [...prev, `[POLICY AUTO-FIX] ❌ 自動修正に失敗: ${error.message}`]);
+      setShowPolicyChoice(!isEndlessModeRef.current);
+      return false;
+    } finally {
+      setIsFixingPolicy(false);
+      setPolicyAutoRetrying(false);
+    }
+  };
+
+  const regenerateImage = async (skipGuard = false, overridePrompt = null, generationOptions = {}) => {
+    const currentPrompt = overridePrompt || finalPrompt;
+    setPolicyPromptHistory([]);
+    const success = await generateImageOnce(skipGuard, overridePrompt, {
+      ...generationOptions,
+      suppressPolicyChoice: true,
+    });
+    if (success || !lastPolicyErrorRef.current) return success;
+
+    return runPolicyAutoRetries({
+      initialPrompt: currentPrompt,
+      initialPolicyError: lastPolicyErrorRef.current,
+      generationOptions,
+    });
   };
 
   // --- [v2.44] コンテンツポリシー救済: 2段階置換方式 + 進捗表示 ---
@@ -1654,83 +1761,14 @@ export default function useMangaWorkflow() {
     }
   };
 
-  // --- [v4.2.0] コンテンツポリシー自動修正＆リトライ（手動モード用） ---
-  // 「自動修正して再生成」ボタン押下時: fixPolicyViolation → 修正プロンプトで再生成
-  // 再度弾かれたらregenerateImageのcatchが再びメッセージボックスを表示するので、
-  // ユーザーが毎回「もう一度試す」か「Web版に切り替える」かを判断できる（回数制限なし）
+  // 上限到達後に利用者がもう一度試す場合も、同じ最大5回の内部ループを使う。
   const handlePolicyAutoFix = async () => {
     const errorMsg = lastPolicyErrorRef.current || policyErrorMsg;
     if (!finalPrompt || !errorMsg.trim()) return;
-
-    setShowPolicyChoice(false); // メッセージボックスを閉じる
-    setPolicyAutoRetrying(true);
-
-    setGenLog(prev => [
-      ...prev,
-      "[POLICY AUTO-FIX] 🔄 自動修正を開始します..."
-    ]);
-    setPolicyFixLog("> [AUTO-FIX] コンテンツポリシーアドバイザーを起動中...");
-    setIsFixingPolicy(true);
-
-    let policyTickCount = 0;
-    const policyTimer = setInterval(() => {
-      policyTickCount++;
-      setPolicyFixLog(prev => {
-        const elapsed = Math.floor(policyTickCount * 1.0);
-        const timerLine = `\n> ⏳ AI分析中... (${elapsed}秒経過)`;
-        const timerRegex = /\n> ⏳ AI分析中\.\.\..*\(\d+秒経過\)/;
-        if (timerRegex.test(prev)) {
-          return prev.replace(timerRegex, timerLine);
-        }
-        return prev + timerLine;
-      });
-    }, 1000);
-
-    try {
-      // Phase 1: プロンプト修正
-      const result = await fixPolicyViolation({
-        finalPrompt,
-        policyErrorMsg: errorMsg,
-        selectedEngine,
-        onProgress: (msg) => setPolicyFixLog(prev => prev + `\n> ${msg}`)
-      });
-
-      clearInterval(policyTimer);
-
-      if (result.success && result.modifiedPrompt) {
-        setFinalPrompt(result.modifiedPrompt);
-        const methodLabel = result.method === "replacement"
-          ? `✅ ${result.appliedCount}箇所を修正（${result.failedCount}箇所スキップ）`
-          : "✅ フォールバック方式で配慮版プロンプトを生成";
-        setPolicyFixLog(prev => prev + `\n> ${methodLabel}`);
-        setGenLog(prev => [...prev, `[POLICY AUTO-FIX] ${methodLabel}。修正プロンプトで再生成します...`]);
-        setPolicyErrorMsg("");
-        lastPolicyErrorRef.current = "";
-        setIsFixingPolicy(false);
-
-        // Phase 2: 修正プロンプトで自動再生成
-        // regenerateImageが内部でエラーをキャッチし、再度ポリシーエラーならメッセージボックスが再表示される
-        const genSuccess = await regenerateImage(true, result.modifiedPrompt);
-
-        if (genSuccess) {
-          setGenLog(prev => [...prev, "[POLICY AUTO-FIX] ✅ 自動修正＆再生成が成功しました！"]);
-        }
-        // genSuccessがfalseの場合、regenerateImage内のcatchでメッセージボックスが再表示済み
-      } else {
-        throw new Error("AIがプロンプトを修正できませんでした。");
-      }
-    } catch (error) {
-      clearInterval(policyTimer);
-      console.error("[POLICY AUTO-FIX] Error:", error);
-      setPolicyFixLog(prev => prev + `\n> [ERROR] ${error.message}`);
-      setGenLog(prev => [...prev, `[POLICY AUTO-FIX] ❌ 自動修正に失敗: ${error.message}`]);
-
-      // 修正自体が失敗 → メッセージボックスを再表示してユーザーに判断を委ねる
-      setShowPolicyChoice(true);
-    } finally {
-      setIsFixingPolicy(false);
-      setPolicyAutoRetrying(false);
-    }
+    return runPolicyAutoRetries({
+      initialPrompt: finalPrompt,
+      initialPolicyError: errorMsg,
+    });
   };
 
   // [v4.2.0] 「Web版に切り替える」ボタン押下時のハンドラ
@@ -1853,63 +1891,8 @@ export default function useMangaWorkflow() {
     window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
     await new Promise(r => setTimeout(r, 300));
 
-    // [v4.2.0] フルオート用ポリシーリトライループ
-    let step4ok = false;
-    let fullAutoPolicyRetries = 0;
-    let currentGenPrompt = generatedPrompt;
-
-    while (!step4ok && fullAutoPolicyRetries <= MAX_POLICY_RETRIES) {
-      if (fullAutoAbortRef.current) break;
-
-      step4ok = await regenerateImage(true, currentGenPrompt);
-
-      if (!step4ok && lastPolicyErrorRef.current && fullAutoPolicyRetries < MAX_POLICY_RETRIES) {
-        // コンテンツポリシーエラー → 選択UIを抑制し、自動修正を実行
-        fullAutoPolicyRetries++;
-        setShowPolicyChoice(false); // フルオート中は選択UIを出さない
-        setIsFixingPolicy(true);
-
-        setGenLog(prev => [
-          ...prev,
-          `[FULL-AUTO POLICY-FIX] 🔄 コンテンツポリシー自動修正 (${fullAutoPolicyRetries}/${MAX_POLICY_RETRIES})...`
-        ]);
-        setPolicyFixLog(`> [FULL-AUTO ${fullAutoPolicyRetries}/${MAX_POLICY_RETRIES}] コンテンツポリシーアドバイザーを起動中...`);
-
-        try {
-          const fixResult = await fixPolicyViolation({
-            finalPrompt: currentGenPrompt,
-            policyErrorMsg: lastPolicyErrorRef.current,
-            selectedEngine,
-            onProgress: (msg) => setPolicyFixLog(prev => prev + `\n> ${msg}`)
-          });
-
-          if (fixResult.success && fixResult.modifiedPrompt) {
-            currentGenPrompt = fixResult.modifiedPrompt;
-            setFinalPrompt(fixResult.modifiedPrompt);
-            setPolicyErrorMsg("");
-            lastPolicyErrorRef.current = "";
-            setIsFixingPolicy(false);
-
-            const methodLabel = fixResult.method === "replacement"
-              ? `✅ ${fixResult.appliedCount}箇所を修正`
-              : "✅ フォールバック方式で修正";
-            setGenLog(prev => [...prev, `[FULL-AUTO POLICY-FIX] ${methodLabel}。修正プロンプトで再生成します...`]);
-          } else {
-            setIsFixingPolicy(false);
-            setGenLog(prev => [...prev, "[FULL-AUTO POLICY-FIX] ❌ AIがプロンプトを修正できませんでした。"]);
-            break; // 修正失敗 → ループ脱出
-          }
-        } catch (fixError) {
-          setIsFixingPolicy(false);
-          console.error("[FULL-AUTO POLICY-FIX] Error:", fixError);
-          setGenLog(prev => [...prev, `[FULL-AUTO POLICY-FIX] ❌ 自動修正エラー: ${fixError.message}`]);
-          break; // エラー → ループ脱出
-        }
-      } else if (!step4ok) {
-        // ポリシーエラー以外の失敗、またはリトライ上限到達
-        break;
-      }
-    }
+    // 手動生成と同じ共通ループで、ポリシー拒否時は最大5回まで内部修正する。
+    const step4ok = await regenerateImage(true, generatedPrompt);
 
     // ポリシー関連のステートをクリーンアップ
     setIsFixingPolicy(false);
@@ -1919,7 +1902,7 @@ export default function useMangaWorkflow() {
     if (!step4ok && hasPolicyError) {
       setGenLog(prev => [
         ...prev,
-        `[FULL-AUTO POLICY-FIX] ⚠️ ポリシーエラーのため自動生成を停止しました（リトライ: ${fullAutoPolicyRetries}/${MAX_POLICY_RETRIES}回）。`,
+        `[FULL-AUTO POLICY-FIX] ⚠️ ポリシーエラーのため自動生成を停止しました（最大${MAX_POLICY_RETRIES}回試行済み）。`,
         isEndlessModeRef.current
           ? "[FULL-AUTO] 次の作品に進みます..."
           : "[FULL-AUTO] ユーザーに判断を委ねます。メッセージボックスを表示します。"
@@ -2108,6 +2091,7 @@ export default function useMangaWorkflow() {
     partialReset,
     policyErrorMsg,
     policyFixLog,
+    policyPromptHistory,
     processFiles,
     punchlineType,
     effectivePunchlineType,

@@ -105,6 +105,7 @@ function App() {
     partialReset,
     policyErrorMsg,
     policyFixLog,
+    policyPromptHistory,
     processFiles,
     punchlineType,
     effectivePunchlineType,
@@ -480,6 +481,7 @@ function App() {
               regenerateSafePrompt={regenerateSafePrompt}
               isFixingPolicy={isFixingPolicy}
               policyFixLog={policyFixLog}
+              policyPromptHistory={policyPromptHistory}
               genLogRef={genLogRef}
               genLog={genLog}
               imageResultRef={imageResultRef}
