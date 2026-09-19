@@ -175,6 +175,11 @@ function App() {
   const [controlBarHeight, setControlBarHeight] = useState(70);
   const controlBarRef = useRef(null);
   const wasAssemblingRef = useRef(false);
+  const step2ActionRef = useRef(null);
+  const step3ActionRef = useRef(null);
+  const step4ActionRef = useRef(null);
+  const step1ProgressRef = useRef(null);
+  const step2ProgressRef = useRef(null);
 
   useEffect(() => {
     if (!controlBarRef.current) return;
@@ -207,6 +212,35 @@ function App() {
       outputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
   }, [finalPrompt, isAssembling, outputRef]);
+
+  useEffect(() => {
+    if (isAnalyzing) {
+      requestAnimationFrame(() => {
+        step1ProgressRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      });
+      return;
+    }
+    if (isSearching) {
+      requestAnimationFrame(() => {
+        step2ProgressRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      });
+    }
+  }, [isAnalyzing, isSearching]);
+
+  useEffect(() => {
+    if (currentStep < 2 || isAnalyzing || isSearching || isAssembling || isEnhancing || is360CameraWorking || isGeneratingImage) return;
+    const activeActionRef = currentStep === 2
+      ? step2ActionRef
+      : currentStep === 3
+        ? step3ActionRef
+        : currentStep === 4
+          ? step4ActionRef
+          : null;
+
+    requestAnimationFrame(() => {
+      activeActionRef?.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    });
+  }, [currentStep, isAnalyzing, isSearching, isAssembling, isEnhancing, is360CameraWorking, isGeneratingImage]);
 
   const isApiModalOpen = showModal || showOpenAIKeyModal;
   const isMainLocked = !apiKey || isApiModalOpen;
@@ -281,6 +315,7 @@ function App() {
               processFiles={processFiles}
               currentStep={currentStep}
               isAnalyzing={isAnalyzing}
+              analysisProgressRef={step1ProgressRef}
               images={images}
               setImages={setImages}
               bg360Image={bg360Image}
@@ -320,6 +355,8 @@ function App() {
               effectivePunchlineType={effectivePunchlineType}
               setPunchlineType={setPunchlineType}
               isSearching={isSearching}
+              scenarioActionRef={step2ActionRef}
+              scenarioProgressRef={step2ProgressRef}
               generateScenarioFromNews={generateScenarioFromNews}
               scenarioThought={scenarioThought}
               scenario={scenario}
@@ -381,6 +418,7 @@ function App() {
                   assemblePrompt={assemblePrompt}
                   assembleThought={assembleThought}
                   isAssembling={isAssembling}
+                  promptActionRef={step3ActionRef}
                 />
               </div>
             </>
@@ -430,6 +468,7 @@ function App() {
               setAllowImageQualityRepair={setAllowImageQualityRepair}
               setOpenAIImageQuality={setOpenAIImageQuality}
               isGeneratingImage={isGeneratingImage}
+              imageActionRef={step4ActionRef}
               isFixPromptCopied={isFixPromptCopied}
               setIsFixPromptCopied={setIsFixPromptCopied}
               isPolicyPanelOpen={isPolicyPanelOpen}

@@ -20,6 +20,28 @@ test('STEP3 exposes its live progress and advances to STEP4 only after the promp
   assert.match(app, /!wasAssemblingRef\.current \|\| !finalPrompt\?\.trim\(\)[\s\S]*?outputRef\.current\?\.scrollIntoView\(\{ behavior: 'smooth', block: 'start' \}\)/);
 });
 
+test('each newly actionable STEP button is placed at the lower edge and live work centers its progress window', async () => {
+  const [app, step1, step2, step3, step4] = await Promise.all([
+    readFile(new URL('../src/App.jsx', import.meta.url), 'utf8'),
+    readFile(new URL('../src/components/Step1Panel.jsx', import.meta.url), 'utf8'),
+    readFile(new URL('../src/components/Step2Panel.jsx', import.meta.url), 'utf8'),
+    readFile(new URL('../src/components/Step3Panel.jsx', import.meta.url), 'utf8'),
+    readFile(new URL('../src/components/Step4Panel.jsx', import.meta.url), 'utf8'),
+  ]);
+
+  assert.match(app, /activeActionRef\?\.current\?\.scrollIntoView\(\{ behavior: 'smooth', block: 'end' \}\)/);
+  assert.match(app, /const step2ActionRef = useRef\(null\)/);
+  assert.match(app, /const step3ActionRef = useRef\(null\)/);
+  assert.match(app, /const step4ActionRef = useRef\(null\)/);
+  assert.doesNotMatch(app, /stepActionRefs\.current/);
+  assert.match(app, /isAnalyzing[\s\S]*?step1ProgressRef\.current\?\.scrollIntoView\(\{ behavior: 'smooth', block: 'center' \}\)/);
+  assert.match(app, /isSearching[\s\S]*?step2ProgressRef\.current\?\.scrollIntoView\(\{ behavior: 'smooth', block: 'center' \}\)/);
+  assert.match(step1, /ref=\{analysisProgressRef\}/);
+  assert.match(step2, /ref=\{scenarioActionRef\}[\s\S]*?ref=\{scenarioProgressRef\}/);
+  assert.match(step3, /ref=\{promptActionRef\}/);
+  assert.match(step4, /ref=\{imageActionRef\}/);
+});
+
 test('the next actionable STEP button pulses after each completed step', async () => {
   const [step2, step3, step4, css] = await Promise.all([
     readFile(new URL('../src/components/Step2Panel.jsx', import.meta.url), 'utf8'),

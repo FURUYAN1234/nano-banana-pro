@@ -23,6 +23,7 @@ export default function Step1Panel({
   bg360Image,
   bg360Enabled,
   isAnalyzing,
+  analysisProgressRef,
   analyzeThought,
   castList,
   setCastList,
@@ -173,7 +174,7 @@ export default function Step1Panel({
         )}
       </div>
 
-      <div className="mb-4">
+      <div ref={analysisProgressRef} className="mb-4">
         <ThinkingLog thought={analyzeThought} />
       </div>
 

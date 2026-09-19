@@ -310,6 +310,7 @@ export default function Step4Panel({
   setAllowImageQualityRepair,
   setOpenAIImageQuality,
   isGeneratingImage,
+  imageActionRef,
   isFixPromptCopied,
   setIsFixPromptCopied,
   isPolicyPanelOpen,
@@ -590,6 +591,7 @@ export default function Step4Panel({
               )}
 
               <button
+                ref={imageActionRef}
                 style={{ display: 'flex', width: '100%', boxSizing: 'border-box', marginBottom: '16px' }}
                 onClick={() => regenerateImage()}
                 disabled={!finalPrompt || isGeneratingImage || isFixingPolicy}

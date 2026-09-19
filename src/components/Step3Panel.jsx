@@ -19,6 +19,7 @@ export default function Step3Panel({
   assemblePrompt,
   assembleThought,
   isAssembling,
+  promptActionRef,
   colorMode = 'color',
   setColorMode,
   isColorModeLocked = false
@@ -77,6 +78,7 @@ export default function Step3Panel({
       </fieldset>
 
       <button
+        ref={promptActionRef}
         onClick={() => assemblePrompt()}
         disabled={controlsDisabled}
         aria-current={currentStep === 3 ? 'step' : undefined}

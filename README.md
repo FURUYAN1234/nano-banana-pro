@@ -1,6 +1,6 @@
 # Super FURU AI 4-koma System / Super FURU AI 4コマシステム
 
-> Current source version: **v6.3.9** / 現在のソース版: **v6.3.9**
+> Current source version: **v6.4.0** / 現在のソース版: **v6.4.0**
 
 An experimental web application in which AI handles topic research, story structure, direction, prompt construction, image generation, and quality review for a four-panel manga. / AIが話題調査、構成、演出、プロンプト構築、画像生成、品質確認まで担当する4コマ漫画制作Webアプリです。
 
@@ -34,7 +34,7 @@ The application provides one continuous four-step workflow. / アプリは次の
 | Full-auto controls / フルオート | The workflow can advance through STEP2–4, show the current stage and countdown, and be stopped without clearing the already completed work. / STEP2～4を自動で進め、現在段階とカウントダウンを表示し、完了済みの内容を消さずに停止できます。 |
 | Video handoff / 動画化 | Copy the generic MiniMax H3 prompt, or download the separate FourPanel ComfyUI workflow JSON and matching custom-node package. / 汎用MiniMax H3プロンプトをコピーするか、別配布のFourPanel ComfyUIワークフローJSONと対応カスタムノードを取得できます。 |
 
-STEP4, its copy controls, image settings and history stay hidden until STEP3 has produced a non-empty final prompt. When STEP3 starts, the view moves to its live progress log; only after a final prompt is ready does it move to STEP4. Editing an already completed prompt does not move the view. After each step, the next available main STEP button slowly alternates between darker and brighter states; reduced-motion browser settings disable this animation. / STEP3が空でない最終プロンプトを作るまで、STEP4、コピーボタン、画像設定、履歴は表示しません。STEP3開始時は実際の進捗ログへ移動し、最終プロンプトが完成した時だけSTEP4へ移動します。完成済みプロンプトの手動編集では画面を移動しません。各STEP完了後は次に押せる主ボタンがゆっくり明暗変化し、ブラウザーの視差効果軽減設定ではアニメーションを止めます。
+STEP1 moves to its live analysis log while character sheets are being read. STEP2 through STEP4 place the newly actionable main button near the lower edge after the preceding step completes. STEP4, its copy controls, image settings and history stay hidden until STEP3 has produced a non-empty final prompt. When STEP3 starts, the view moves to its live progress log; only after a final prompt is ready does it move to STEP4. Editing an already completed prompt does not move the view. After each step, the next available main STEP button slowly alternates between darker and brighter states; reduced-motion browser settings disable this animation. / STEP1はキャラクターシート解析中に実際の進捗ログへ移動します。STEP2〜STEP4は前のSTEPが完了した時点で、次に操作できる主ボタンを画面下端寄りに表示します。STEP3が空でない最終プロンプトを作るまで、STEP4、コピーボタン、画像設定、履歴は表示しません。STEP3開始時は実際の進捗ログへ移動し、最終プロンプトが完成した時だけSTEP4へ移動します。完成済みプロンプトの手動編集では画面を移動しません。各STEP完了後は次に押せる主ボタンがゆっくり明暗変化し、ブラウザーの視差効果軽減設定ではアニメーションを止めます。
 
 ### Story construction algorithm / 物語アルゴリズム
 
@@ -241,6 +241,9 @@ The production application is published from the `main` branch through the repos
 **Is this the T2V/I2V/Ref2V repository? / T2V・I2V・Ref2Vのリポジトリですか？**  No. Those workflows are maintained separately in [comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows). / いいえ。それらは別の[comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows)で管理します。
 
 ## 📋 ChangeLog
+
+### v6.4.0 (2026-09-19)
+- **[Fix & UX]** STEP1解析中は経過表示窓へ移動し、STEP2からSTEP4の次に操作できる主ボタンは画面下端に表示する導線を追加。 / Focused STEP1 analysis on its progress window and placed the next actionable STEP2-4 button at the lower edge of the view.
 
 ### v6.3.9 (2026-09-19)
 - **[Fix & UX]** STEP3開始時に進捗ログへ移動し、最終プロンプト完成時だけSTEP4へ移動する導線を追加。手動編集では画面位置を変えません。 / Added STEP3 progress-log focus and STEP4 transition after prompt completion without moving the view during manual edits.

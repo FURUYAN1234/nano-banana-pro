@@ -48,6 +48,8 @@ export default function Step2Panel({
   effectivePunchlineType = punchlineType,
   setPunchlineType,
   isSearching,
+  scenarioActionRef,
+  scenarioProgressRef,
   generateScenarioFromNews,
   scenarioThought,
   scenario,
@@ -337,6 +339,7 @@ export default function Step2Panel({
 
         {/* EXECUTE BUTTON */}
         <button
+          ref={scenarioActionRef}
           onClick={generateScenarioFromNews}
           disabled={isSearching || currentStep < 1}
           aria-current={currentStep === 2 ? 'step' : undefined}
@@ -360,11 +363,11 @@ export default function Step2Panel({
       {/* RESULT & LOG AREA */}
       <div className="space-y-4 mt-6">
         {/* Log */}
-        {scenarioThought && (
-          <div className="mt-4">
+        <div ref={scenarioProgressRef} className={scenarioThought ? 'mt-4' : undefined}>
+          {scenarioThought && (
             <ThinkingLog thought={scenarioThought} />
-          </div>
-        )}
+          )}
+        </div>
 
         {!isSearching && (
           <>
