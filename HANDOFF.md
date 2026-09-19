@@ -565,3 +565,9 @@ Current live delivery status: see root PLAN.md, Nano Banana four-panel quality r
 - 実API: 洪水・犠牲者・追悼・復興を扱う手動題材をAutoで実行し、serious-requiredからSeriousAuto、Punchline「決意・再出発」へ解決した。GPT Image 2.5 Sunburst/xhigh、1024x1536、参照1枚、自動修正OFFで1枚だけ生成し、追加生成は行っていない。
 - 実画像の採否: シリアス調・非ちび化、俯瞰／肩越し／ローアングル／緩い俯瞰の変化、抑えた演技、窓光と室内の層、前景・中景・背景の分離はsatisfied。3コマ目の足先までの全身構図と、画像内の大見出し表示はunmet。細かな印字面の向きと、このシナリオで指定していない望遠・ズームはunverified。内部QAの「全カメラ・タイトルOK」は実画素の採否に置き換えた。
 - 公開境界: ユーザーがデプロイ・note更新・フルバックアップを明示承認。メニュー修正を含むv6.3.2を公式リリース手順で公開する。追加の画像生成はしない。進行状態はルートPLAN.mdを参照。
+## v6.3.9 STEP3進捗フォーカスとSTEP4遷移 — 2026-09-19
+
+- 状態: リリース候補。STEP3の実行開始時は主ボタン直下の実進捗ログへ移動し、最終プロンプトが完成した時だけSTEP4の先頭へ移動する。完成済みプロンプトの手動編集では画面位置を動かさない。
+- 変更: `src/App.jsx`、`src/components/Step3Panel.jsx`、`src/components/Step4Panel.jsx`、`tests/step-progression-ui.test.mjs`、README。進捗ログをSTEP4からSTEP3へ移し、待機秒数を開始操作の近くで確認できるようにした。
+- 検証: STEP進行の重点Nodeテスト6件、strict lint、`git diff --check`が成功。実API生成は今回のUI導線変更では行っていない。
+- 公開境界: ユーザーは公式release/deployと既存FourPanel note `ndf063558c1f5`更新を明示承認。フルバックアップは今回見送りのため、`-RunFullBackup`およびバックアップ起動を行わない。
