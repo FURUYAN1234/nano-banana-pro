@@ -5,11 +5,12 @@ import { fileURLToPath } from 'node:url';
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const appRoot = resolve(scriptDir, '..');
 const outputPath = resolve(appRoot, 'public/diagrams/nano-banana-pro-workflow-a4.svg');
+const reasoningOutputPath = resolve(appRoot, 'public/diagrams/nano-banana-pro-reasoning-a4.svg');
 const appVersion = JSON.parse(readFileSync(resolve(appRoot, 'package.json'), 'utf8')).version;
 
-// These anchors keep the diagram tied to the orchestration points it describes.
-// When the workflow materially changes, update this visual and replace the
-// matching image in README and the public note during the release.
+// These anchors keep both diagrams tied to the orchestration points they describe.
+// When workflow or reasoning logic materially changes, regenerate both visuals and
+// replace the matching images in README and the public note during the release.
 const sourceAnchors = [
   ['src/hooks/useMangaWorkflow.js', 'const processFiles = async'],
   ['src/hooks/useMangaWorkflow.js', 'const generateScenarioFromNews = async'],
@@ -19,6 +20,11 @@ const sourceAnchors = [
   ['src/hooks/useMangaWorkflow.js', 'const runFullAuto = async'],
   ['src/lib/image-quality-failsafe.js', 'export const runImageQualityFailsafe'],
   ['src/lib/image-policy-retry.js', 'MAX_IMAGE_POLICY_RETRIES'],
+  ['src/lib/prompts.js', 'Semi-Formal Reasoning & Verbalized Confidence'],
+  ['src/lib/prompts.js', 'getCharacterAnalysisPrompt'],
+  ['src/lib/scenario-provider.js', 'validateScenarioForRetry'],
+  ['src/lib/composition-variety.js', 'MANGA_GESTURE_VARIETY_LOCK'],
+  ['src/lib/composition-variety.js', 'MANGA_READING_RHYTHM_LOCK'],
 ];
 
 for (const [relativePath, anchor] of sourceAnchors) {
@@ -35,6 +41,8 @@ const arrow = (x1, y1, x2, y2, color = '#52617a') => `<path d="M ${x1} ${y1} L $
 const card = ({ x, y, w, h, color, number, title, detail = [] }) => {
   return `<g filter="url(#shadow)"><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="18" fill="#ffffff" stroke="${color}" stroke-width="2.5"/><rect x="${x}" y="${y}" width="56" height="${h}" rx="18" fill="${color}"/><rect x="${x + 38}" y="${y}" width="18" height="${h}" fill="${color}"/></g><circle cx="${x + 28}" cy="${y + 28}" r="17" fill="#ffffff" fill-opacity=".96"/>${text(x + 28, y + 34, number, { size: 15, weight: 800, fill: color, anchor: 'middle' })}${text(x + 74, y + 29, title, { size: 17, weight: 800 })}${lines(x + 74, y + 53, detail, { size: 12.5, fill: '#42506a', leading: 18 })}`;
 };
+
+const decision = ({ x, y, w, h, color, title, detail = [] }) => `<g filter="url(#shadow)"><path d="M ${x + w / 2} ${y} L ${x + w} ${y + h / 2} L ${x + w / 2} ${y + h} L ${x} ${y + h / 2} Z" fill="#ffffff" stroke="${color}" stroke-width="2.5"/></g>${text(x + w / 2, y + h / 2 - 7, title, { size: 12, weight: 800, fill: color, anchor: 'middle' })}${lines(x + w / 2, y + h / 2 + 10, detail, { size: 9, fill: '#42506a', anchor: 'middle', leading: 14 })}`;
 
 const svg = `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="210mm" height="297mm" viewBox="0 0 794 1123" role="img" aria-labelledby="title description">
@@ -57,4 +65,26 @@ ${arrow(397, 780, 397, 929, '#219679')}${card({ x: 70, y: 930, w: 654, h: 78, co
 
 mkdirSync(dirname(outputPath), { recursive: true });
 writeFileSync(outputPath, `${svg}\n`, 'utf8');
-console.log(`Generated ${outputPath}`);
+
+const reasoningSvg = `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="210mm" height="297mm" viewBox="0 0 794 1123" role="img" aria-labelledby="title description">
+<title id="title">Super FURU AI 4-koma System Reasoning Routine / 思考ルーチン</title><desc id="description">A4 portrait bilingual logic map for source grounding, story planning, constraints, validation, prompt assembly, image QA, and bounded policy retries. / 入力根拠、物語設計、制約、検証、プロンプト構築、画像QA、上限付きポリシー再試行を示すA4縦の英日併記思考ルーチン図。</desc>
+<defs><linearGradient id="header" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#173c63"/><stop offset="1" stop-color="#7652a4"/></linearGradient><filter id="shadow" x="-10%" y="-10%" width="120%" height="130%"><feDropShadow dx="0" dy="5" stdDeviation="5" flood-color="#16223d" flood-opacity=".14"/></filter><marker id="arrow-navy" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#52617a"/></marker><marker id="arrow-red" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#bf4c5c"/></marker><style>text { font-family: Inter, &quot;Noto Sans JP&quot;, &quot;Yu Gothic UI&quot;, sans-serif; }</style></defs>
+<rect width="794" height="1123" fill="#f8fafc"/><rect x="28" y="24" width="738" height="92" rx="22" fill="url(#header)"/>
+${text(58, 62, 'SUPER FURU AI 4-KOMA SYSTEM', { size: 13, weight: 800, fill: '#c8dcff' })}${text(58, 87, 'Reasoning Routine / 思考ルーチン', { size: 22, weight: 800, fill: '#ffffff' })}${text(738, 63, `v${appVersion}`, { size: 13, weight: 700, fill: '#e6d9ff', anchor: 'end' })}${text(397, 105, 'Input → Character logic → Story → Constraints → Render → Review / 入力 → キャラ論理 → 台本 → 制約 → 描画 → 検査', { size: 9, fill: '#ffffff', anchor: 'middle' })}
+${card({ x: 70, y: 135, w: 654, h: 83, color: '#2475b9', number: '1', title: 'Analyze & Merge Inputs / 入力を解析・統合', detail: ['Sheets → identity, personality, relations, speech/acting tendencies', 'Manual edits, Style JSON, 360° scene / 手動修正・作風JSON・360°背景を統合'] })}${arrow(397, 219, 397, 236)}
+${card({ x: 70, y: 237, w: 654, h: 83, color: '#2475b9', number: '2', title: 'Ground the Topic & Story Intent / 題材と物語意図を根拠付け', detail: ['News: sources → facts; free input: user-provided, not news', 'ニュース: 出典→事実。自由入力: ユーザー提供。結末方針・舞台・衣装も選定'] })}${arrow(397, 321, 397, 338)}
+${card({ x: 70, y: 339, w: 654, h: 83, color: '#2475b9', number: '3', title: 'Turn Character Logic into Four Beats / キャラ論理を4コマへ反映', detail: ['Traits, relations and speech shape roles, reactions, dialogue and emotional cause/effect', '性格・関係・話し方が役割・リアクション・台詞・感情の因果を決める'] })}${arrow(397, 423, 397, 440)}
+${card({ x: 70, y: 441, w: 654, h: 83, color: '#2475b9', number: '4', title: 'Stage Character-Specific Acting / キャラ固有の演技を演出', detail: ['Action decides gaze, phase, weight, hand roles and prop contact; pose is not personality', '動作から視線・段階・重心・手・小道具接触を決定。参照ポーズを性格と誤認しない'] })}${arrow(397, 525, 397, 542)}
+${decision({ x: 257, y: 543, w: 280, h: 102, color: '#bf4c5c', title: 'Scenario Contract Pass?', detail: ['事実・4コマ・安全・台詞・キャラ契約を満たすか？'] })}
+${text(248, 588, 'No: repair explicitly / 不合格: 指定修正', { size: 8.5, weight: 800, fill: '#a73949', anchor: 'end' })}${text(248, 601, 'Re-validate, up to 3 / 再検証、最大3回', { size: 8.5, fill: '#a73949', anchor: 'end' })}${text(546, 594, 'Yes / 合格', { size: 10, weight: 800, fill: '#1f7b67' })}${arrow(397, 646, 397, 663, '#219679')}
+${card({ x: 70, y: 664, w: 654, h: 83, color: '#8653b8', number: '5', title: 'Build the Rendering Contract / 描画契約を組み立てる', detail: ['Script + cast + style/colour + camera; bubbles read right → left independently', '台本・キャスト・画風/色・画角を統合。吹き出しは話者位置と独立して右→左へ配置'] })}${arrow(397, 748, 397, 765)}
+${card({ x: 70, y: 766, w: 654, h: 75, color: '#8653b8', number: '6', title: 'Generate with References / 参照付きで生成', detail: ['Selected provider/model + character/background/360° references', '選択プロバイダー・モデル + 人物/背景/360°参照で生成'] })}${arrow(397, 842, 397, 859)}
+${decision({ x: 257, y: 860, w: 280, h: 102, color: '#bf4c5c', title: 'API Policy Error?', detail: ['コンテンツポリシー拒否か？'] })}
+${text(248, 905, 'Yes: adjust expression → regenerate / はい: 表現調整 → 再生成', { size: 8.25, weight: 800, fill: '#a73949', anchor: 'end' })}${text(248, 918, 'Maximum 5; retain successes / 最大5回、成功画像は保持', { size: 8.25, fill: '#a73949', anchor: 'end' })}${text(546, 911, 'No / いいえ', { size: 10, weight: 800, fill: '#1f7b67' })}${arrow(397, 963, 397, 980, '#219679')}
+${card({ x: 70, y: 981, w: 654, h: 75, color: '#219679', number: '7', title: 'Review, Compare, Keep / 検査・比較・保持', detail: ['Check identity, anatomy, props, text, order, gaze, camera, light and depth', '同一性・人体・小物・文字・読順・視線・画角・照明・奥行きを検査し最良結果を保持'] })}
+${text(397, 1087, 'A warning does not erase an existing result. / 警告が出ても既存の成功画像や履歴を消さない。', { size: 11, weight: 800, fill: '#245d50', anchor: 'middle' })}${text(397, 1110, 'Source: scripts/generate_workflow_diagram.mjs | npm run docs:workflow-diagram / 図の正本', { size: 9, fill: '#66738a', anchor: 'middle' })}
+</svg>`;
+
+writeFileSync(reasoningOutputPath, `${reasoningSvg}\n`, 'utf8');
+console.log(`Generated ${outputPath}\nGenerated ${reasoningOutputPath}`);
