@@ -145,6 +145,35 @@ B「これだった！」
 状況: Aが棚に本を戻す。Bは静かにうなずく。
 A「またどうぞ」`;
 
+test('Web prompts retain limb ownership and occlusion checks under every compaction budget', () => {
+  for (const providerFamily of ['chatgpt', 'gemini']) {
+    for (const colorMode of ['color', 'monochrome']) {
+      for (const size of [0, 6000, 18000]) {
+        const input = scenario.replace('AがBに本を差し出す。', `AがBに本を差し出す。${'静かな室内。'.repeat(size / 6)}`);
+        const prompt = buildMangaPrompt({ scenario: input, castList, providerFamily, colorMode, systemVersion: 'test' });
+        const compact = prompt.includes('hands-wrists-elbows-shoulders');
+        if (compact) {
+          assert.match(prompt, /feet-ankles-knees-hips connected/);
+          assert.match(prompt, /L\/R limbs visible\/occluded\/cropped plausibly/);
+          assert.match(prompt, /No stray\/extra\/missing\/merged\/detached\/mirrored\/malformed limbs, even by furniture/);
+          assert.match(prompt, /Keep Action\/crop\/foreshortening; never expose hidden limbs/);
+        } else {
+          assert.equal((prompt.match(/LIMB OWNERSHIP CHECK/g) || []).length, 1);
+          assert.match(prompt, /left\/right arms, hands, legs and feet as visible, naturally occluded or outside the frame/);
+          assert.match(prompt, /wrist\/elbow to its own shoulder/);
+          assert.match(prompt, /ankle\/knee to its own hip/);
+          assert.match(prompt, /No ownerless, extra, fused, detached or inexplicably missing limbs/);
+          assert.match(prompt, /do not expose naturally hidden limbs or force full-body framing/);
+          assert.match(prompt, /without changing the action or composition/);
+        }
+        assert.equal((prompt.match(/## Panel \d/g) || []).length, 4);
+        for (const line of ['こちらです', 'ありがとう', '少し待って', 'これだった！', 'またどうぞ']) assert.ok(prompt.includes(line));
+        if (size === 18000 && providerFamily === 'chatgpt') assert.ok(compact);
+      }
+    }
+  }
+});
+
 test('scripted calm and bold cameras retain their own amplitude without added distortion', () => {
   for (const camera of ['アイレベル、水平、静かな固定ショット', '穏やかな俯瞰、傾きなし', '超ローアングル、強い短縮遠近法、全身']) {
     const result = getCameraForPanel(`[Camera: ${camera}]`, ['unused'], { index: 0 });

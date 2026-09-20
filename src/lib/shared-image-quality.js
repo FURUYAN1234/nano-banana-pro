@@ -20,6 +20,10 @@ export const WARDROBE_ENVIRONMENT_CONTRAST_LOCK = `WARDROBE / ENVIRONMENT CONTRA
 
 export const WARDROBE_ENVIRONMENT_CONTRAST_LOCK_COMPACT = 'WARDROBE/ENVIRONMENT CONTRAST: explicit outfit overrides setting era/culture; preserve intentional mismatch; never period-substitute. No outfit: infer from setting.';
 
+export const LIMB_OWNERSHIP_CHECK = 'LIMB OWNERSHIP CHECK (internal; never print): For each person in every panel, account for left/right arms, hands, legs and feet as visible, naturally occluded or outside the frame. Trace each visible hand via wrist/elbow to its own shoulder, and each foot via ankle/knee to its own hip; hidden segments must connect plausibly. No ownerless, extra, fused, detached or inexplicably missing limbs; no stray hand/foot emerging from furniture or another body. Preserve scripted anatomy, pose, contact, Camera/crop and foreshortening; do not expose naturally hidden limbs or force full-body framing. Before finishing, correct unclear ownership/connections without changing the action or composition.';
+
+export const LIMB_OWNERSHIP_CHECK_COMPACT = 'LIMB OWNERSHIP CHECK: Each person: hands-wrists-elbows-shoulders, feet-ankles-knees-hips connected; L/R limbs visible/occluded/cropped plausibly. No stray/extra/missing/merged/detached/mirrored/malformed limbs, even by furniture. Keep Action/crop/foreshortening; never expose hidden limbs. Never print.';
+
 export const SHARED_IMAGE_QUALITY_CONTRACT = `
 [ SHARED IMAGE QUALITY CONTRACT — CURRENT NANO BANANA QUALITY BASELINE ]
 - Preserve the user's requested cast, action, setting, and camera. Quality enrichment must support those directions, never replace them.

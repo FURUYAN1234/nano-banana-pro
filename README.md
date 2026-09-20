@@ -1,6 +1,6 @@
 # Super FURU AI 4-koma System / Super FURU AI 4コマシステム
 
-> Current source version: **v6.4.1** / 現在のソース版: **v6.4.1**
+> Current source version: **v6.4.2** / 現在のソース版: **v6.4.2**
 
 An experimental web application in which AI handles topic research, story structure, direction, prompt construction, image generation, and quality review for a four-panel manga. / AIが話題調査、構成、演出、プロンプト構築、画像生成、品質確認まで担当する4コマ漫画制作Webアプリです。
 
@@ -166,6 +166,8 @@ The app can also produce a prompt for manual use on the Gemini or ChatGPT websit
 | OpenAI API / OpenAI API | Text analysis, category-news search, and GPT Image generation. / 文章解析、カテゴリニュース検索、GPT Image生成。 | Category-news scenarios use OpenAI Responses Web Search; no Gemini key is required. / カテゴリニュースのシナリオはOpenAI Responses Web Searchを使い、Geminiキーは不要です。 |
 | Web copy / Web貼り付け | Manual use in Gemini or ChatGPT. / GeminiまたはChatGPTでの手動利用。 | The finished Web image does not return automatically for app-side post-generation QA. / Webで完成した画像はアプリ側の生成後検査へ自動では戻りません。 |
 
+Generation prompts retain a per-person limb ownership check even after Web-copy compaction: trace hands to shoulders and feet to hips, distinguish natural occlusion or cropping from missing limbs, and reject ownerless limbs near furniture or other bodies while preserving the scripted pose and camera. This is a drawing instruction, not an independent inspection of the finished Web image. / 生成指示には、Web貼り付け用の短縮後も人物ごとの手足確認を残します。手から肩、足から骨盤への接続を確認し、自然な遮蔽・画角外と欠損を区別し、指定した演技・構図を保ちながら家具や他人の身体の付近に出る所属不明の手足を防ぐよう指示します。これは作画指示であり、Web完成画像を独立して検査する機能ではありません。
+
 The default OpenAI image setting is Sunburst / xhigh at 1024×1536 when the model is available. Larger sizes and higher quality increase cost and latency and do not guarantee correct dialogue, hands, or composition. / OpenAI画像の既定値は利用可能な場合Sunburst / xhigh・1024×1536です。大きなサイズや高品質設定は料金と待ち時間が増え、台詞・手・構図の正確さを保証しません。
 
 For OpenAI text, only STEP2 scenario creation and its optional enhancement start with GPT-6 Astra, then use GPT-5.6 Sol and the established GPT-4.1 chain if needed. Character analysis, prompt review and image generation keep their existing routes. Model availability and a successful API response do not by themselves guarantee story quality; review the generated scenario before STEP3. / OpenAI文章処理では、STEP2のシナリオ作成と任意のシナリオ強化だけをGPT-6 Astraから開始し、必要時はGPT-5.6 Sol、既存のGPT-4.1系チェーンへ順に切り替えます。キャラクター解析、プロンプト確認、画像生成の経路は従来どおりです。モデルが利用可能でAPI応答が成功しても物語の質までは保証しないため、STEP3の前に生成シナリオを確認してください。
@@ -275,6 +277,9 @@ The production application is published from the `main` branch through the repos
 **Is this the T2V/I2V/Ref2V repository? / T2V・I2V・Ref2Vのリポジトリですか？**  No. Those workflows are maintained separately in [comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows). / いいえ。それらは別の[comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows)で管理します。
 
 ## 📋 ChangeLog
+
+### v6.4.2 (2026-09-20)
+- **[Fix & UX]** Web貼り付け用プロンプトの短縮後も、人物ごとの手足の接続・自然な遮蔽・画角外を確認する指示を保持し、構図と演技を損なわないようにしました / Web-copy prompt compaction now retains per-character limb connections and natural occlusion/cropping guidance without flattening the scripted composition or acting
 
 ### v6.4.1 (2026-09-19)
 - **[Fix & UX]** 画像APIのポリシー拒否時に、表現を修正して最大5回まで再生成し、成功画像とプロンプト履歴を保持 / On image-API policy rejection, repairs wording and retries up to five times while retaining the successful image and prompt history

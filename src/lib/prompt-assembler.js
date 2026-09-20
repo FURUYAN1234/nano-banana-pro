@@ -51,6 +51,8 @@ import {
 } from './hand-prop-kinematics';
 import {
   BODY_ACTING_BASELINE_COMPACT,
+  LIMB_OWNERSHIP_CHECK,
+  LIMB_OWNERSHIP_CHECK_COMPACT,
   EXPRESSIVE_DIRECTION,
   OBJECT_GEOMETRY_LOCK_COMPACT,
   FUNCTIONAL_SURFACE_ORIENTATION_LOCK_COMPACT,
@@ -185,6 +187,7 @@ const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt
     ? "REFERENCE-SHEET WARDROBE AND RENDERING LOCK: explicit outfit overrides setting era/culture; preserve mismatch. Keep garment items and rendering method across panels."
     : 'CROSS-PANEL WARDROBE COLOR LOCK: fix garment items/colors once; reuse in all panels; style and lighting never change canonical wardrobe. Explicit outfit overrides setting era/culture; preserve mismatch, no period substitution. No outfit: infer from setting.';
   const compacted = prompt
+    .replace(/LIMB OWNERSHIP CHECK[^\n]*/g, LIMB_OWNERSHIP_CHECK_COMPACT)
     .replace(MANGA_READING_RHYTHM_LOCK, MANGA_READING_RHYTHM_LOCK_COMPACT)
     .replace(/CONVERSATIONAL DEPTH BASE:[^\n]*/g, 'CONVERSATIONAL DEPTH BASE: Action gaze first; varied depth.')
     .replace(/EYE-LINE LOCK:[^\n]*/g, compactConversationEyeLine)
@@ -312,7 +315,7 @@ const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt
     .replace(/^COMPOSITION STAGING: PRESERVE EXPLICIT AZIMUTH[^\n]*/gmi, 'COMPOSITION STAGING: PRESERVE EXPLICIT AZIMUTH.')
     .replace(/^COMPOSITION STAGING: (LEFT-FRONT OBLIQUE|RIGHT-FRONT OBLIQUE|REAR THREE-QUARTER|DIAGONAL LEFT-FRONT)[^\n]*/gm, 'COMPOSITION STAGING: $1.')
     .replace(/^BODY ACTING \/ GESTURE VARIETY LOCK:[^\n]*/gm, MANGA_GESTURE_VARIETY_LOCK_COMPACT)
-    .replace(/^- Draw in a high-budget, chic and cinematic full-color TV anime style\.[^\n]*/gm, '- Chic cinematic full-color TV anime: delicate detailed faces/eyes, dramatic light, deep color grading, sharp clean ink; polished Japanese animation finish.')
+    .replace(/^- Draw in a high-budget, chic and cinematic full-color TV anime style\.[^\n]*/gm, '- Chic cinematic full-color TV anime style: delicate detailed faces/eyes, dramatic light, deep color grading, sharp clean ink; polished Japanese animation finish.')
     .replace(/; pose, expression, saturation, glow, or speed lines alone are insufficient; reject/g, '; reject')
     .replace(/RICH PANEL COMPOSITION \/ CHARACTER CLARITY LOCK:[^\n]*/g, RICH_PANEL_COMPOSITION_LOCK_COMPACT)
     // Story beats already remain verbatim in each Action; retain a short exact reference.
@@ -328,7 +331,12 @@ const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt
 
   return finallyCompacted
     .replace(/HAND \/ PROP KINEMATICS LOCK:[^\n]*/g, HAND_PROP_KINEMATICS_LOCK_MINIMAL)
-    .replace(/FACIAL ACTING LOCK:[^\n]*/g, FACIAL_ACTING_LOCK_MINIMAL);
+    .replace(/FACIAL ACTING LOCK:[^\n]*/g, FACIAL_ACTING_LOCK_MINIMAL)
+    // Identity Matrix, adult casting and global surface geometry already cover these reminders.
+    .replace(/^.*GLASSES CHECK:[^\n]*\n?/gm, '')
+    .replace(/^CROSS-CHECK:[^\n]*\n?/gm, '')
+    .replace(/^- Adults 20\+\.[^\n]*\n?/gm, '')
+    .replace(/FUNCTIONAL SURFACE PANEL CHECK: target\/side\/axes\./g, (line, offset, text) => text.indexOf(line) === offset ? line : '');
 };
 
 const buildVisualStoryEvidenceLock = (scenario) => {
@@ -536,7 +544,7 @@ export const buildMangaPrompt = ({
   let rawPrompt = "";
   const scriptLock = buildStrictScriptLock({ safeTopic, panels, castList, activeOutfit: promptActiveOutfit, providerFamily, isMonochrome, preserveReferenceStyle, seriousTone });
   const finalPanelStagingLock = punchlineType === 'Surreal' ? '' : FINAL_PANEL_ACTIVE_STAGING_IMAGE_LOCK;
-  const sceneLocks = [scriptLock, documentarySourceFactLock, compositionVarietyLock, gestureVarietyLock, actingIdentityNotes, HAND_PROP_KINEMATICS_LOCK, visualStoryEvidenceLock, settingContinuityLock, finalPanelStagingLock, MANGA_READING_RHYTHM_LOCK]
+  const sceneLocks = [scriptLock, documentarySourceFactLock, compositionVarietyLock, gestureVarietyLock, actingIdentityNotes, `${HAND_PROP_KINEMATICS_LOCK}\n${LIMB_OWNERSHIP_CHECK}`, visualStoryEvidenceLock, settingContinuityLock, finalPanelStagingLock, MANGA_READING_RHYTHM_LOCK]
     .filter(Boolean)
     .join('\n');
   const panelEyeLineRules = panels.map((panel) => buildPanelEyeLineRule(panel, castList));
