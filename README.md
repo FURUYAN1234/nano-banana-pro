@@ -30,7 +30,7 @@ Load a completed four-panel manga into [AI Voice Comic Maker](https://github.com
 
 ![Full workflow flowchart covering API connection, STEP1–STEP4, image generation, QA, policy repair, history, and saving.](public/diagrams/nano-banana-pro-workflow-a4.png)
 
-This diagram covers the full path from source analysis through scenario thinking, prompt assembly, API image generation, quality review, policy-repair retries, history, and saving. It is generated from `scripts/generate_workflow_diagram.mjs`; `npm run build` regenerates it, and the generator checks the orchestration points it documents. When the workflow changes materially, replace both this README PNG and the matching uploaded PNG in the note article.
+This diagram covers the full path from source analysis through scenario thinking, prompt assembly, API image generation, quality review, policy-repair retries, history, and saving. It is generated from `scripts/generate_workflow_diagram.mjs`; `npm run build` regenerates it, and the generator checks the orchestration points it documents. When the workflow changes materially, replace both this README PNG and the matching uploaded PNG in the note article. / この図は、素材解析から台本の思考ルーチン、プロンプト組み立て、API画像生成、品質検査、ポリシー修正の再試行、履歴、保存までを一枚にまとめています。正本は `scripts/generate_workflow_diagram.mjs` です。`npm run build` 時に再生成され、図が参照する処理の制御点も検査します。フローを大きく変える際は、この図も更新し、公開リリース時にREADMEとnoteの画像を同じ内容へ差し替えます。
 
 ### Reasoning routine / 思考ルーチン
 
@@ -39,8 +39,6 @@ This diagram covers the full path from source analysis through scenario thinking
 This companion map shows how the system classifies a source, builds and validates the four-panel plan, locks required details, builds the rendering prompt, and handles quality or policy branches without discarding an existing successful result. / この補助図は、入力根拠の分類、4コマ設計と検証、保持条件の固定、描写指示の構築、品質・ポリシー分岐時にも既存の成功結果を残す流れを示します。
 
 When a workflow or reasoning rule changes materially, run `npm run docs:workflow-diagram` and replace this README image and its matching note image in the same release. / ワークフローまたは思考ルールを大きく変更した際は、同一リリースで `npm run docs:workflow-diagram` を実行し、このREADME画像とnoteの対応画像を差し替えます。
-
-この図は、素材解析から台本の思考ルーチン、プロンプト組み立て、API画像生成、品質検査、ポリシー修正の再試行、履歴、保存までを一枚にまとめています。正本は `scripts/generate_workflow_diagram.mjs` です。`npm run build` 時に再生成され、図が参照する処理の制御点も検査します。フローを大きく変える際は、この図も更新し、公開リリース時にREADMEとnoteの画像を同じ内容へ差し替えます。
 
 ## What this project does / このプロジェクトでできること
 
