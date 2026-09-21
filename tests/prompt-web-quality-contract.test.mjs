@@ -154,6 +154,16 @@ test('ChatGPT Web prompt has generic quality locks for dialogue, bubbles, charac
   assert.doesNotMatch(prompt, /canned pudding|bottled drink/i);
 });
 
+test('API and Web final prompt locks single-bubble tails to the mapped speaker endpoint', () => {
+  const prompt = buildChatGptPrompt();
+
+  assert.match(prompt, /B1=>\[Hero\] mouth\/head/);
+  assert.match(prompt, /B1=>\[Friend\] mouth\/head/);
+  assert.match(prompt, /proximity never reassigns/);
+  assert.match(prompt, /SINGLE BUBBLE:[^\n]*(?:speaker side|speaker-side)[^\n]*(?:shortest|short)[^\n]*tail/i);
+  assert.match(prompt, /MULTIPLE BUBBLES:[^\n]*B1 rightmost[^\n]*later bubbles strictly left/i);
+});
+
 test('Gemini prompt has stability locks for dialogue duplication, invented cast, and dark-style shadow interpretation', () => {
   const prompt = buildGeminiPrompt();
 

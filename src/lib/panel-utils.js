@@ -929,7 +929,7 @@ export const extractDialogueOnly = (fullPanelText, castList, options = {}) => {
       .filter(Boolean)
       .join('; ');
     const mappedSpeakers = orderedEntries.filter((entry) => entry.speaker);
-    if (mappedSpeakers.length >= 2) {
+    if (mappedSpeakers.length >= 1) {
       const endpointTargets = mappedSpeakers
         .map((entry, index) => `B${index + 1}=>[${entry.speaker}] mouth/head`)
         .join('; ');

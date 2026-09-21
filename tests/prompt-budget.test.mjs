@@ -137,7 +137,7 @@ test('ChatGPT manga prompt stays within the empirical Web-copy soft budget witho
   assert.match(prompt, /(?:story peak vs|peak\/)quiet beat|story peak vs quiet beat/);
   assert.match(prompt, /negative space\/density/);
   assert.match(prompt, /right-to-left.*(?:speaker tails|tails to speakers)/);
-  assert.match(prompt, /TAIL TIP LOCK: B1=>\[サエコ\]; B2=>\[ヒカリ\]; B3=>\[ミク\]/);
+  assert.match(prompt, /TAIL TIP LOCK: B1=>\[サエコ\] mouth\/head; B2=>\[ヒカリ\] mouth\/head; B3=>\[ミク\] mouth\/head/);
   assert.match(prompt, /ABSTRACT BEAT: scripted BG omission/);
   assert.match(prompt, /INTERACTION: reaction readable/);
   assert.match(prompt, /ACTING: gaze\/weight\/hands vary/);
@@ -181,7 +181,7 @@ test('ChatGPT manga prompt stays within the empirical Web-copy soft budget witho
   assert.match(prompt, /B\d="我々の仕事が奪われないうちにこの才能を潰そう！"/);
   assert.match(prompt, /B\d="御意！"/);
   assert.match(prompt, /B\d="AI作品は無条件で却下よね！"/);
-  assert.match(prompt, /TAIL TIP LOCK: B1=>\[ミク\]/);
+  assert.match(prompt, /TAIL TIP LOCK: B1=>\[ミク\] mouth\/head/);
   assert.match(prompt, /B1.*rightmost|rightmost.*B1/i);
   assert.match(prompt, /later bubbles strictly left/i);
   assert.match(prompt, /x=0 left,100 right/);

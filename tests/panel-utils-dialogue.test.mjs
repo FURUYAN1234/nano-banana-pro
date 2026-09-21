@@ -587,6 +587,23 @@ test('separates visible bubble lettering from speaker-name tail metadata for ima
   assert.doesNotMatch(dialogue, /Speech Bubble \d+ \[[^\]]+\]:/);
 });
 
+test('locks a single bubble tail endpoint to its mapped speaker mouth or head', () => {
+  const panelText = `
+[3コマ目: 転]
+状況: 黒髪の相談員が手前からカードを差し出し、奥の相談者が受け取る。
+相談員「ひとりで抱え込まないでください。」`;
+
+  const dialogue = extractDialogueOnly(panelText, `
+- Character [相談員]: adult, long black hair, no glasses
+- Character [相談者]: adult, short orange hair, no glasses
+`, { forImagePrompt: true });
+
+  assert.match(dialogue, /TAIL TIP LOCK/i);
+  assert.match(dialogue, /B1=>\[相談員\] mouth\/head/i);
+  assert.match(dialogue, /proximity.*never.*reassign/i);
+  assert.doesNotMatch(dialogue, /TAILS \(METADATA/);
+});
+
 test('locks each bubble tail endpoint to its mapped speaker instead of the nearest body', () => {
   const panelText = `
 [4コマ目: 結]

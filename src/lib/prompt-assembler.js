@@ -220,11 +220,14 @@ const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt
     // Keep the per-dialogue spatial map; shared rhythm already carries routing.
     .replace(/BUBBLE SLOTS \(NEVER PRINT; x=0 left,100 right\): ([^.]+)\. B1 RIGHTMOST, last LEFTMOST regardless of speaker positions; reserve before art\. Never mirror Camera\/actors; route tails across panel if needed\./g,
       'BUBBLE SLOTS: $1.')
-    // Preserve the B-number-to-speaker map while removing endpoint wording
-    // already enforced by the global bubble QA lock.
-    .replace(/TAIL TIP LOCK \(NEVER PRINT; proximity never reassigns\): ([^\n]+)/g, (_, targets) =>
-      `TAIL TIP LOCK: ${targets.replace(/ mouth\/head/g, '')}`
-    )
+    // Preserve per-bubble endpoint ownership even after Web/API compaction.
+    // A global rule alone is too easy for image models to detach from a
+    // single-bubble panel, especially when the speaker is rear/OTS.
+    .replace(/TAIL TIP LOCK \(NEVER PRINT; proximity never reassigns\): ([^\n]+)/g, (_, targets) => {
+      const endpointTargets = targets.replace(/\.$/, '');
+      const isSingleBubble = !/;\s*B\d+=>/.test(endpointTargets);
+      return `TAIL TIP LOCK: ${endpointTargets}${isSingleBubble ? '; proximity never reassigns.' : '.'}`;
+    })
     .replace(/- Treat every quoted TEXT value[^\n]*/g, '- BUBBLE QA: immutable TEXT; compare every glyph; redraw mismatch; mapped tails; no extras.')
     .replace(/- Action is visual only:[^\n]*/g, '- ACTION: visual only; no labels/narration/SFX if unscripted.')
     .replace(/CHARACTER QA PASS:\n-[^\n]*/g, monochrome ? 'CHARACTER QA: shape/design and stable ink/tone only; white lit skin; no reference color.' : 'CHARACTER QA: preserve identity and outfit; redraw swaps or merged cast.')
@@ -343,6 +346,16 @@ const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt
     .replace(/^- Adults 20\+\.[^\n]*\n?/gm, '')
     .replace(/FUNCTIONAL SURFACE PANEL CHECK: target\/side\/axes\./g, (line, offset, text) => text.indexOf(line) === offset ? line : '');
 };
+
+const clarifyBubbleCountPlacement = (prompt) => String(prompt)
+  .replace(
+    'For Japanese right-to-left reading, the first scripted line must be physically nearest the panel right border even when its speaker stands on the left; the second line must be physically left of it. For two bubbles B1 is far right (about 67%) and B2 far left (about 33%). B1 is rightmost, B2 is strictly left of B1, and every later body is strictly left of its predecessor. Freeze balloon bodies at those slots before drawing characters; never move a body toward its speaker. Only afterward route each mapped tail across the panel to its speaker, even when the tail must be long.',
+    'MULTIPLE BUBBLES: for Japanese right-to-left reading, B1 is rightmost regardless of speaker and every later body is strictly left; freeze those slots before actors, then route each mapped tail even when long. SINGLE BUBBLE: no rightmost constraint; place its body in clear negative space on the assigned speaker side for the shortest unobstructed tail, without covering faces, hands, props, or action.'
+  )
+  .replace(
+    'B1 rightmost regardless of speaker; later bubbles strictly left.',
+    'MULTIPLE BUBBLES: B1 rightmost regardless of speaker; later bubbles strictly left. SINGLE BUBBLE: speaker-side space; shortest tail; not forced right.'
+  );
 
 const buildVisualStoryEvidenceLock = (scenario) => {
   const rawEvidence = String(scenario || '').match(/VisualEvidence:\s*(.*?)(?:\n|$)/i)?.[1] || '';
@@ -652,7 +665,9 @@ ${geminiRearForegroundLock}`;
     safePrompt = sanitizeForDocumentary(safePrompt);
   }
 
-  const baselinePrompt = isChatGPTFamily ? compactChatGPTConversationRules(safePrompt, isMonochrome, preserveReferenceStyle, seriousTone) : safePrompt;
+  const baselinePrompt = clarifyBubbleCountPlacement(isChatGPTFamily
+    ? compactChatGPTConversationRules(safePrompt, isMonochrome, preserveReferenceStyle, seriousTone)
+    : safePrompt);
   if (cinematicAssignments.length === 0) return baselinePrompt;
 
   const candidatePrompt = applyCinematicTechniqueSlot(
