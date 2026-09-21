@@ -57,7 +57,7 @@ test('outer page whitespace is excluded without splitting the variable-height pa
   const plan = buildPageDrawPlan(bands);
   assert.ok(plan);
   assert.equal(plan.length, 3);
-  assert.deepEqual([plan.layout.width, plan.layout.height], [1536, 2304]);
+  assert.deepEqual([plan.layout.width, plan.layout.height], [1629, 2304]);
   assert.deepEqual(plan[1].source, bands.panels);
   assert.ok(plan[1].destination.x >= plan.layout.inset);
   assert.ok(plan[1].destination.x + plan[1].destination.width <= plan.layout.width - plan.layout.inset);
@@ -77,35 +77,37 @@ test('ambiguous frame counts and missing footer are rejected without guessing cr
   assert.equal(detectPageBands(missing), null);
 });
 
-test('draw plan fixes page and band geometry, never divides panels, and preserves aspect', () => {
+test('draw plan fixes an A4 manuscript page, never divides panels, and preserves aspect', () => {
   const bands = { title: { x: 100, y: 5, width: 800, height: 70 }, panels: { x: 0, y: 80, width: 1024, height: 1419 }, footer: { x: 12, y: 1506, width: 1000, height: 20 } };
   const plan = buildPageDrawPlan(bands);
-  assert.deepEqual([PAGE_LAYOUT.width, PAGE_LAYOUT.height], [1024, 1536]);
+  assert.deepEqual([PAGE_LAYOUT.width, PAGE_LAYOUT.height], [1120, 1584]);
+  assert.equal(PAGE_LAYOUT.width / PAGE_LAYOUT.height, 70 / 99);
   assert.equal(plan.length, 3);
-  assert.equal(plan[1].destination.y, 100);
-  assert.equal(plan[1].destination.height, 1402);
+  assert.equal(plan[1].destination.y, 103);
+  assert.equal(plan[1].destination.height, 1446);
   for (const { source, destination } of plan) {
     assert.ok(Math.abs(source.width / source.height - destination.width / destination.height) < 1e-9);
-    assert.ok(destination.x >= 6 && destination.x + destination.width <= 1018);
+    assert.ok(destination.x >= 7 && destination.x + destination.width <= 1113);
   }
-  assert.ok(plan[2].destination.y >= 1508);
-  assert.ok(plan[2].destination.y + plan[2].destination.height <= 1530);
+  assert.ok(plan[2].destination.y >= 1556);
+  assert.ok(plan[2].destination.y + plan[2].destination.height <= 1577);
 });
 
-test('large API output keeps full resolution and scales every fixed band proportionally', () => {
-  assert.deepEqual(scalePageLayout(1536), {
-    width: 1536, height: 2304, titleHeight: 150, panelHeight: 2103,
-    footerHeight: 51, inset: 9, titleInkHeight: 126,
+test('large API output keeps the exact A4 ratio and scales every fixed band proportionally', () => {
+  assert.deepEqual(scalePageLayout(3168), {
+    width: 2240, height: 3168, titleHeight: 206, panelHeight: 2892,
+    footerHeight: 70, inset: 14, titleInkHeight: 174,
   });
   const plan = buildPageDrawPlan({
-    title: { x: 210, y: 6, width: 1110, height: 111 },
-    panels: { x: 0, y: 117, width: 1536, height: 2135 },
-    footer: { x: 24, y: 2259, width: 1484, height: 27 },
+    canvas: { width: 2240, height: 3168 },
+    title: { x: 300, y: 8, width: 1620, height: 150 },
+    panels: { x: 0, y: 160, width: 2240, height: 2930 },
+    footer: { x: 35, y: 3100, width: 2170, height: 38 },
   });
-  assert.deepEqual([plan.layout.width, plan.layout.height], [1536, 2304]);
-  assert.equal(plan[1].destination.height, 2103);
-  assert.ok(plan[1].destination.x >= 9);
-  assert.ok(plan[1].destination.x + plan[1].destination.width <= 1527);
+  assert.deepEqual([plan.layout.width, plan.layout.height], [2240, 3168]);
+  assert.equal(plan[1].destination.height, 2892);
+  assert.ok(plan[1].destination.x >= 14);
+  assert.ok(plan[1].destination.x + plan[1].destination.width <= 2226);
 });
 
 test('cannot fill panel height without clipping: reject instead of stretching or slicing', () => {

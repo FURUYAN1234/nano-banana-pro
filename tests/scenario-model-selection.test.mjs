@@ -103,10 +103,23 @@ test('the scenario model dropdown has explicit readable closed and option colors
   assert.match(cssSource, /\.scenario-model-select-input option\s*\{[\s\S]*background-color:\s*#0f172a;[\s\S]*color:\s*#f8fafc;/);
 });
 
-test('the selected STEP2 model persists until a full reset and defaults to Astra', () => {
+test('the three scenario-model help lines are compact without blank paragraph gaps', () => {
+  assert.match(step2PanelSource, /scenario-model-copy mt-1 flex flex-col gap-0 text-\[10px\] leading-tight/);
+  assert.match(cssSource, /\.scenario-model-copy p\s*\{[\s\S]*margin:\s*0;[\s\S]*line-height:\s*1\.2;/);
+  const helpBlock = step2PanelSource.slice(
+    step2PanelSource.indexOf('scenario-model-copy'),
+    step2PanelSource.indexOf('</div>', step2PanelSource.indexOf('scenario-model-copy')),
+  );
+  assert.doesNotMatch(helpBlock, /<p className="mt-/);
+  assert.equal((helpBlock.match(/<p className="m-0 /g) || []).length, 3);
+});
+
+test('STEP2 always opens on Astra and keeps lower-cost validation choices in memory only', () => {
   assert.match(workflowSource, /DEFAULT_SCENARIO_MODEL_ID = 'gpt-6-astra'/);
-  assert.match(workflowSource, /nano-banana-pro:scenario-model-id/);
-  assert.match(workflowSource, /localStorage\.setItem/);
+  assert.match(workflowSource, /useState\(DEFAULT_SCENARIO_MODEL_ID\)/);
+  assert.doesNotMatch(workflowSource, /nano-banana-pro:scenario-model-id/);
+  assert.doesNotMatch(workflowSource, /localStorage\.(?:getItem|setItem)/);
   assert.match(workflowSource, /scenarioModelId/);
   assert.match(workflowSource, /const hardReset = \(\) => \{[\s\S]*?resetScenarioModelId\(\);/);
+  assert.match(step2PanelSource, /再読込時はGPT-6 Astraから開始します/);
 });

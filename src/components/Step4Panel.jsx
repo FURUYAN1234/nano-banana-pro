@@ -23,6 +23,12 @@ import { SYSTEM_VERSION } from '../lib/constants';
 import { getEndingModePolicy } from '../lib/ending-mode-policy';
 import { inferImageQualityMode } from '../lib/image-quality-failsafe';
 import { buildGeneratedImageFilename, downloadImageDataUrl } from '../lib/generation-history';
+import {
+  MANGA_MANUSCRIPT_ASPECT_LABEL,
+  MANGA_MANUSCRIPT_LARGE,
+  MANGA_MANUSCRIPT_RATIO_LABEL,
+  MANGA_MANUSCRIPT_STANDARD,
+} from '../lib/manga-manuscript-format';
 
 const COMFYUI_WORKFLOW_FILENAME = 'FourPanel_NonLM_4step_20260913115712_v5.9.9.json';
 const COMFYUI_WORKFLOW_DOWNLOAD_URL = `${import.meta.env.BASE_URL}workflows/${COMFYUI_WORKFLOW_FILENAME}`;
@@ -266,7 +272,7 @@ Do not emit the ending credit as a literal URL in the authoring response, becaus
 /**
  * STEP 04: 4コマ漫画生成 ＆ 履歴パネル
  */
-import { OPENAI_IMAGE_OPTIONS, OPENAI_IMAGE_SIZE_OPTIONS, formatOpenAIImageSettingsSummary, resolveOpenAIImageOption } from '../lib/openai-image-settings.js';
+import { OPENAI_IMAGE_OPTIONS, OPENAI_IMAGE_PRICE_SNAPSHOT_DATE, OPENAI_IMAGE_SIZE_OPTIONS, formatOpenAIImagePricingSummary, formatOpenAIImageSettingsSummary, resolveOpenAIImageOption } from '../lib/openai-image-settings.js';
 
 export default function Step4Panel({
   outputRef,
@@ -608,7 +614,12 @@ export default function Step4Panel({
                 {isGeneratingImage ? <Loader2 size={20} className="animate-spin" /> : <ImageIcon size={20} />}
                 <div className="flex flex-col items-center">
                   <span>{isGeneratingImage ? "画像を生成中..." : "APIで新しい画像を生成する（STEP4）"}</span>
-                  {!isGeneratingImage && <span className="text-[10px] font-normal opacity-75">最終プロンプトから毎回、新規画像を生成します</span>}
+                  {!isGeneratingImage && isOpenAIImageMode && (
+                    <>
+                      <span className="text-[10px] font-normal opacity-85">{formatOpenAIImagePricingSummary(openAIImageQuality)}</span>
+                      <span className="text-[9px] font-normal opacity-70">OpenAI公式料金 {OPENAI_IMAGE_PRICE_SNAPSHOT_DATE}時点</span>
+                    </>
+                  )}
                 </div>
               </button>
                           <div className="border border-yellow-500/30 rounded-lg overflow-hidden" style={{ margin: 0 }}>
@@ -655,7 +666,7 @@ export default function Step4Panel({
                     {OPENAI_IMAGE_SIZE_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
                   </select>
                   <p className="step4-help-copy mt-2 text-slate-400">
-                    サイズの既定は1024×1536です。品質とサイズの選択はリロードまで保持します。API生成のみの設定で、Webへコピーするプロンプトには影響しません。
+                    サイズの既定はA4比率の{MANGA_MANUSCRIPT_STANDARD.label.replace('A4標準：', '')}です。大サイズも同じA4比率です。品質とサイズの選択はリロードまで保持します。API生成のみの設定で、Webへコピーするプロンプトには影響しません。
                     大きめは拡大・印刷向けです。手や台詞の正確さを保証する設定ではありません。
                   </p>
                   <p className="step4-help-copy mt-2 text-slate-400">
@@ -826,9 +837,9 @@ THIS IS A STRUCTURAL CORRECTION TASK. Rebuild page geometry only; source-image f
 ━━━━━━━━━━━━━━━━━━
 ■ CANVAS — HARD LOCK
 ━━━━━━━━━━━━━━━━━━
-- Aspect ratio MUST be EXACTLY 2:3 portrait
-- Keep the source resolution tier: 1024×1536 or 1536×2304. NEVER downscale the large tier.
-- Any square, landscape, 3:4, or long-strip image is a FAILURE
+- Aspect ratio MUST be EXACTLY A4 portrait at ${MANGA_MANUSCRIPT_RATIO_LABEL} (width:height, approximately ${MANGA_MANUSCRIPT_ASPECT_LABEL})
+- Keep the source resolution tier: ${MANGA_MANUSCRIPT_STANDARD.label.replace('A4標準：', '')} or ${MANGA_MANUSCRIPT_LARGE.label.replace('A4大：', '')}. NEVER downscale the large tier.
+- Any non-A4, square, landscape, or long-strip image is a FAILURE
 
 ━━━━━━━━━━━━━━━━━━
 ■ PANEL SYSTEM — HARD LOCK
@@ -876,10 +887,10 @@ ${titleReapplyBlock}
 ■ STRICT FAILURE CONDITIONS
 ━━━━━━━━━━━━━━━━━━
 If ANY of the following occurs, REGENERATE AGAIN automatically:
-- Canvas ratio is not exactly 2:3 → FAIL
-- Image is taller than A4 → FAIL
+- Canvas ratio is not exactly A4 ${MANGA_MANUSCRIPT_RATIO_LABEL} → FAIL
+- Image is taller or narrower than the A4 manuscript ratio → FAIL
 - Panels are uneven → FAIL
-- Margins exist → FAIL
+- Unexpected large outer margins exist → FAIL
 - Panels look cropped or stretched → FAIL
 - Top title is missing, cropped, moved into a panel, or rewritten → FAIL
 - Layout resembles previous image → FAIL

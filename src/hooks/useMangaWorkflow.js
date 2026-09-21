@@ -49,32 +49,15 @@ import { getEffectiveEngine } from '../lib/engine-state';
 import { DEFAULT_OPENAI_IMAGE_QUALITY, DEFAULT_OPENAI_IMAGE_SIZE, normalizeOpenAIImageSize, normalizeOpenAIImageQuality, resolveOpenAIImageOption, selectInitialOpenAIImageQuality, isOpenAIImageVerificationError, OPENAI_IMAGE_VERIFICATION_MESSAGE } from '../lib/openai-image-settings.js';
 import { OPENAI_SCENARIO_MODEL_OPTIONS, OPENAI_SCENARIO_TEXT_MODEL_IDS } from '../lib/openai-model-routes.js';
 
-const SCENARIO_MODEL_PREFERENCE_KEY = 'nano-banana-pro:scenario-model-id';
 const DEFAULT_SCENARIO_MODEL_ID = 'gpt-6-astra';
 
-const getSavedScenarioModelId = () => {
-  try {
-    const savedModelId = window.localStorage.getItem(SCENARIO_MODEL_PREFERENCE_KEY);
-    return OPENAI_SCENARIO_TEXT_MODEL_IDS.includes(savedModelId)
-      ? savedModelId
-      : DEFAULT_SCENARIO_MODEL_ID;
-  } catch {
-    return DEFAULT_SCENARIO_MODEL_ID;
-  }
-};
-
 export default function useMangaWorkflow() {
-  const [scenarioModelId, setScenarioModelIdState] = useState(getSavedScenarioModelId);
+  const [scenarioModelId, setScenarioModelIdState] = useState(DEFAULT_SCENARIO_MODEL_ID);
   const setScenarioModelId = (modelId) => {
     const nextModelId = OPENAI_SCENARIO_TEXT_MODEL_IDS.includes(modelId)
       ? modelId
       : DEFAULT_SCENARIO_MODEL_ID;
     setScenarioModelIdState(nextModelId);
-    try {
-      window.localStorage.setItem(SCENARIO_MODEL_PREFERENCE_KEY, nextModelId);
-    } catch {
-      // Private browsing or disabled storage: keep the selection for this session.
-    }
   };
   const resetScenarioModelId = () => setScenarioModelId(DEFAULT_SCENARIO_MODEL_ID);
   const [openAIImageQuality, setOpenAIImageQualityState] = useState(DEFAULT_OPENAI_IMAGE_QUALITY);

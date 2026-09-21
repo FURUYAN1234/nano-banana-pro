@@ -17,6 +17,12 @@ import {
   SCENARIO_READING_RHYTHM_RULES
 } from './composition-variety';
 import { getEndingModePolicy } from './ending-mode-policy.js';
+import {
+  MANGA_MANUSCRIPT_ASPECT_LABEL,
+  MANGA_MANUSCRIPT_LARGE,
+  MANGA_MANUSCRIPT_RATIO_LABEL,
+  MANGA_MANUSCRIPT_STANDARD,
+} from './manga-manuscript-format.js';
 
 const GENERAL_SERIOUS_STORY_PRINCIPLES = `1. **【シリアスな物語として見せる】**:
                - 出来事と人物の感情を因果でつなぎ、説明だけで済ませず、選択、ためらい、対立、受容を目に見える行動として描くこと。
@@ -64,7 +70,7 @@ SPEECH BUBBLE TYPE LOCK:
 
 const MANGA_PAGE_TYPOGRAPHY_LOCK_COMPACT = `TYPE: title EXTRA-BOLD condensed Japanese Gothic. TITLE BAND: plain white, unframed; no box/frame/border/rule/banner. BUBBLES: vertical tategaki in regular manga Mincho, slender black on white, same every panel; never bold Gothic/sans. Emphasis: bubble shape/composition/punctuation.`;
 
-const MANGA_PAGE_ENVELOPE = 'PAGE:2:3; title6.5%/font5.5%; panels+gutters91.3%, variable heights; footer2.2%, inset0.6%, no clipping.';
+const MANGA_PAGE_ENVELOPE = `PAGE:A4 ${MANGA_MANUSCRIPT_RATIO_LABEL} (${MANGA_MANUSCRIPT_ASPECT_LABEL}); title6.5%/font5.5%; panels+gutters91.3%, variable heights; footer2.2%, inset0.6%, no clipping.`;
 const MANGA_FOOTER_EXCLUSIVITY = 'FOOTER ONLY: both exact watermarks once outside panels; no watermark/credit inside panels or on in-scene paper.';
 
 // --- プロンプトテンプレート (prompts.js) ---
@@ -835,7 +841,7 @@ export const buildChatGPTMangaPrompt = (p) => {
     `
 BACKGROUND REFERENCE IMAGE:
 Among ALL attached images, identify the one with a panoramic 2:1 width-to-height aspect ratio (equirectangular format). That image is the 360° BACKGROUND REFERENCE — NOT a character sheet. All other attached images are CHARACTER REFERENCE sheets.
-⚠️ CRITICAL: This panoramic image is ONLY for background reference (${isMonochrome ? 'geometry, light direction, architecture; translate into black/white ink and screens' : 'colors, lighting, architecture'}). Do NOT imitate its 2:1 wide aspect ratio. Your OUTPUT must remain 2:3 PORTRAIT with 4 vertical panels. The panoramic image is NOT a layout template.
+⚠️ CRITICAL: This panoramic image is ONLY for background reference (${isMonochrome ? 'geometry, light direction, architecture; translate into black/white ink and screens' : 'colors, lighting, architecture'}). Do NOT imitate its 2:1 wide aspect ratio. Your OUTPUT must remain A4 PORTRAIT at ${MANGA_MANUSCRIPT_RATIO_LABEL} with 4 stacked panels. The panoramic image is NOT a layout template.
 ⚠️ CRITICAL: DO NOT copy any character clothing or outfits from the 360° background image. Characters MUST wear the specified outfits.
 Use the 360° background image's lighting direction (${bg360Analysis.lighting}), spatial layout, and environmental details as the consistent setting for all panels. ${isMonochrome ? 'Match shadow directions using black ink, white highlights and regular halftone; simplify nonessential detail for readability.' : 'Match shadow directions and ambient color temperature to the background reference.'} At least 3 of 4 panels must use this background environment.
 `
@@ -971,9 +977,9 @@ CLOTHING:
     ? `OUTFIT OVERRIDE: Follow role-specific outfit assignments: ${activeOutfit}; unscoped categories apply to all.`
     : '';
 
-  return `[FORMAT: 2:3 PORTRAIT; keep selected source tier 1024x1536 or 1536x2304 🚨 NO square/landscape/long-strip]
+  return `[FORMAT: A4 PORTRAIT ${MANGA_MANUSCRIPT_RATIO_LABEL}; keep selected source tier ${MANGA_MANUSCRIPT_STANDARD.value} or ${MANGA_MANUSCRIPT_LARGE.value} 🚨 NO square/landscape/long-strip]
 Generate highly detailed, professional 4-koma (4-panel vertical) manga.
-MUST have exact 2:3 portrait aspect ratio.
+MUST have the exact A4 portrait aspect ratio ${MANGA_MANUSCRIPT_RATIO_LABEL} (width:height, approximately ${MANGA_MANUSCRIPT_ASPECT_LABEL}).
 
 LAYOUT:
 Canvas completely filled by panels (95% width). NO large white margins.

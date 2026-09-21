@@ -154,6 +154,11 @@ body {
   color: #f8fafc;
 }
 
+.scenario-model-copy p {
+  margin: 0;
+  line-height: 1.2;
+}
+
 .step4-help-copy {
   font-size: 11px;
   line-height: 1.65;

@@ -359,11 +359,13 @@ export default function Step2Panel({
                 <option key={id} value={id}>{label}（{description}｜入力 ${inputPriceUsdPerM} / 出力 ${outputPriceUsdPerM} USD/MTok）</option>
               ))}
             </select>
-            <p className="mt-2 text-[10px] text-cyan-100">参考単価（{OPENAI_SCENARIO_PRICE_SNAPSHOT_DATE}時点）: 入力 ${selectedScenarioModel.inputPriceUsdPerM} / 出力 ${selectedScenarioModel.outputPriceUsdPerM} USD / 100万トークン</p>
-            {selectedScenarioModel.comparisonNote && (
-              <p className="mt-1 text-[10px] text-slate-300">選び方: {selectedScenarioModel.comparisonNote}</p>
-            )}
-            <p className="mt-1 text-[10px] text-slate-400">選択はこのブラウザに保存され、アプリ全体のリセットまで維持します。Web Search等のツール料金・キャッシュ割引・税は含まない参考値です。</p>
+            <div className="scenario-model-copy mt-1 flex flex-col gap-0 text-[10px] leading-tight">
+              <p className="m-0 text-cyan-100">参考単価（{OPENAI_SCENARIO_PRICE_SNAPSHOT_DATE}時点）: 入力 ${selectedScenarioModel.inputPriceUsdPerM} / 出力 ${selectedScenarioModel.outputPriceUsdPerM} USD / 100万トークン</p>
+              {selectedScenarioModel.comparisonNote && (
+                <p className="m-0 text-slate-300">選び方: {selectedScenarioModel.comparisonNote}</p>
+              )}
+              <p className="m-0 text-slate-400">選択はこの画面を開いている間だけ有効です。再読込時はGPT-6 Astraから開始します。Web Search等のツール料金・キャッシュ割引・税は含まない参考値です。</p>
+            </div>
           </div>
         </div>
 

@@ -1,10 +1,36 @@
+import {
+  MANGA_MANUSCRIPT_SIZE_OPTIONS,
+  MANGA_MANUSCRIPT_STANDARD,
+} from './manga-manuscript-format.js';
+
 export const OPENAI_IMAGE_MODEL = 'gpt-image-2.5-flare';
 export const DEFAULT_OPENAI_IMAGE_QUALITY = 'sunburst-xhigh';
-export const DEFAULT_OPENAI_IMAGE_SIZE = '1024x1536';
-export const OPENAI_IMAGE_SIZE_OPTIONS = [
-  { value: '1024x1536', label: '標準：1024×1536' },
-  { value: '1536x2304', label: '大きめ：1536×2304' },
-];
+export const DEFAULT_OPENAI_IMAGE_SIZE = MANGA_MANUSCRIPT_STANDARD.value;
+export const OPENAI_IMAGE_PRICE_SNAPSHOT_DATE = '2026-09-22';
+const OPENAI_IMAGE_PRICING_USD_PER_M = Object.freeze({
+  'gpt-image-2.5-sunburst': Object.freeze({
+    imageInput: 8,
+    cachedImageInput: 2,
+    imageOutput: 30,
+    textInput: 5,
+    cachedTextInput: 1.25,
+  }),
+  'gpt-image-2.5-flare': Object.freeze({
+    imageInput: 8,
+    cachedImageInput: 2,
+    imageOutput: 30,
+    textInput: 5,
+    cachedTextInput: 1.25,
+  }),
+  'gpt-image-2': Object.freeze({
+    imageInput: 4,
+    cachedImageInput: 1,
+    imageOutput: 15,
+    textInput: 2.5,
+    cachedTextInput: 0.625,
+  }),
+});
+export const OPENAI_IMAGE_SIZE_OPTIONS = MANGA_MANUSCRIPT_SIZE_OPTIONS;
 export function normalizeOpenAIImageSize(value) {
   return OPENAI_IMAGE_SIZE_OPTIONS.some(option => option.value === value) ? value : DEFAULT_OPENAI_IMAGE_SIZE;
 }
@@ -26,6 +52,13 @@ export function formatOpenAIImageSettingsSummary(qualityValue, sizeValue) {
   const quality = resolveOpenAIImageOption(qualityValue);
   const size = OPENAI_IMAGE_SIZE_OPTIONS.find(option => option.value === normalizeOpenAIImageSize(sizeValue));
   return `${quality.label}・${size.label}`;
+}
+
+export function formatOpenAIImagePricingSummary(qualityValue) {
+  const option = resolveOpenAIImageOption(qualityValue);
+  const price = OPENAI_IMAGE_PRICING_USD_PER_M[option.model];
+  const modelLabel = option.label.replace(/\s*\/\s*(?:high|xhigh|max)$/, '');
+  return `${modelLabel}｜画像 入力 $${price.imageInput}（キャッシュ $${price.cachedImageInput}）/ 出力 $${price.imageOutput}・テキスト 入力 $${price.textInput}（キャッシュ $${price.cachedTextInput}） USD / 100万トークン`;
 }
 
 export function normalizeOpenAIImageQuality(value) {

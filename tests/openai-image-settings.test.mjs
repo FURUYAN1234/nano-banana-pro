@@ -51,26 +51,48 @@ test('2.0 is an explicit high-quality option, not an automatic fallback', () => 
   assert.equal(settings.OPENAI_IMAGE_OPTIONS.length, 6);
 });
 
-test('larger output is explicit and does not change default image dimensions', () => {
-  const larger = buildOpenAIImageRequestBody('same prompt', { quality: 'sunburst-xhigh', size: '1536x2304' });
+test('A4 manga output is requested directly and larger output keeps the same manuscript ratio', () => {
+  const larger = buildOpenAIImageRequestBody('same prompt', { quality: 'sunburst-xhigh', size: '2240x3168' });
   assert.equal(larger.quality, 'xhigh');
-  assert.equal(larger.size, '1536x2304');
-  assert.equal(buildOpenAIImageRequestBody('same prompt').size, '1024x1536');
-  assert.equal(buildOpenAIImageRequestBody('same prompt', { quality: 'sunburst-max' }).size, '1024x1536');
+  assert.equal(larger.size, '2240x3168');
+  assert.equal(buildOpenAIImageRequestBody('same prompt').size, '1120x1584');
+  assert.equal(buildOpenAIImageRequestBody('same prompt', { quality: 'sunburst-max' }).size, '1120x1584');
+  for (const size of ['1120x1584', '2240x3168']) {
+    const [width, height] = size.split('x').map(Number);
+    assert.equal(width / height, 70 / 99);
+    assert.equal(width % 16, 0);
+    assert.equal(height % 16, 0);
+  }
 });
 
 test('formats the current quality and size for the collapsed STEP4 settings button', () => {
   assert.equal(
-    settings.formatOpenAIImageSettingsSummary('sunburst-xhigh', '1024x1536'),
-    'GPT Image 2.5 Sunburst / xhigh・標準：1024×1536',
+    settings.formatOpenAIImageSettingsSummary('sunburst-xhigh', '1120x1584'),
+    'GPT Image 2.5 Sunburst / xhigh・A4標準：1120×1584',
   );
   assert.equal(
-    settings.formatOpenAIImageSettingsSummary('gpt-image-2-high', '1536x2304'),
-    'GPT Image 2.0 / high・大きめ：1536×2304',
+    settings.formatOpenAIImageSettingsSummary('gpt-image-2-high', '2240x3168'),
+    'GPT Image 2.0 / high・A4大：2240×3168',
   );
   assert.equal(
     settings.formatOpenAIImageSettingsSummary('invalid', 'invalid'),
-    'GPT Image 2.5 Sunburst / xhigh・標準：1024×1536',
+    'GPT Image 2.5 Sunburst / xhigh・A4標準：1120×1584',
+  );
+});
+
+test('formats the official image API token prices for the selected STEP4 model', () => {
+  assert.equal(settings.OPENAI_IMAGE_PRICE_SNAPSHOT_DATE, '2026-09-22');
+  assert.equal(
+    settings.formatOpenAIImagePricingSummary('sunburst-xhigh'),
+    'GPT Image 2.5 Sunburst｜画像 入力 $8（キャッシュ $2）/ 出力 $30・テキスト 入力 $5（キャッシュ $1.25） USD / 100万トークン',
+  );
+  assert.equal(
+    settings.formatOpenAIImagePricingSummary('gpt-image-2-high'),
+    'GPT Image 2.0｜画像 入力 $4（キャッシュ $1）/ 出力 $15・テキスト 入力 $2.5（キャッシュ $0.625） USD / 100万トークン',
+  );
+  assert.equal(
+    settings.formatOpenAIImagePricingSummary('invalid'),
+    settings.formatOpenAIImagePricingSummary('sunburst-xhigh'),
   );
 });
 
@@ -87,7 +109,7 @@ test('only explicit organization verification failures on 2.5 show the verificat
 test('quality and size remain independent and never change the prompt for either API route', async () => {
   const {buildOpenAIImageRequest} = await import('../src/lib/openai.js');
   for (const quality of ['sunburst-xhigh', 'sunburst-max', 'gpt-image-2-high']) {
-    for (const size of ['1024x1536', '1536x2304']) {
+    for (const size of ['1120x1584', '2240x3168']) {
       for (const imageInputs of [[], [{image_url: 'data:image/png;base64,YQ=='}]]) {
         const request = buildOpenAIImageRequest('unchanged Web prompt', {quality, size, imageInputs});
         assert.equal(request.body.size, size);
@@ -96,5 +118,5 @@ test('quality and size remain independent and never change the prompt for either
       }
     }
   }
-  assert.equal(settings.normalizeOpenAIImageSize('invalid'), '1024x1536');
+  assert.equal(settings.normalizeOpenAIImageSize('invalid'), '1120x1584');
 });

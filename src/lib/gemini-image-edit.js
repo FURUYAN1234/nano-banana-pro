@@ -1,10 +1,12 @@
+import { MANGA_MANUSCRIPT_ASPECT_LABEL, MANGA_MANUSCRIPT_RATIO_LABEL } from './manga-manuscript-format.js';
+
 const SOURCE_LOCK = `Use the attached four-panel manga page as the only visual source.
 Preserve every named character, face, hair, glasses, skin tone, costume, prop, setting, story beat, dialogue, speech-bubble speaker, title, panel order, and existing watermark exactly as shown.
 Do not add, remove, merge, duplicate, rename, crop away, or replace any character or story element.`;
 
 export const GEMINI_A4_RELAYOUT_PROMPT = `${SOURCE_LOCK}
 
-Rebuild the whole page as exactly four horizontal manga panels stacked vertically in a clean 3:4 portrait canvas. Preserve the existing relative panel heights, complete artwork, dialogue and title lettering. Keep uniform white gutters and no extra outer margins. Do not make the page extremely tall, square, landscape, or a single illustration. This is a layout correction, not a new story or redesign.
+Rebuild the whole page as exactly four horizontal manga panels stacked vertically in an exact A4 portrait canvas at ${MANGA_MANUSCRIPT_RATIO_LABEL} (width:height, approximately ${MANGA_MANUSCRIPT_ASPECT_LABEL}). Preserve the existing relative panel heights, complete artwork, dialogue and title lettering. Keep uniform white gutters and no extra outer margins. Do not make the page extremely tall, square, landscape, or a single illustration. This is a layout correction, not a new story or redesign.
 
 Before returning the image, verify that all four panels are present, keep their relative heights, are fully visible, and retain the original Japanese dialogue and speaker-to-bubble assignment. Keep both watermarks fully inside a separate footer with visible safe margins; never clip any glyph.`;
 

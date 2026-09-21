@@ -1,12 +1,16 @@
+import { MANGA_MANUSCRIPT_STANDARD } from './manga-manuscript-format.js';
+
 // Normalize three page regions. The four-panel artwork is ONE region: never
 // infer equal-height panels, redraw lettering, or discard the source image.
 export const PAGE_LAYOUT = Object.freeze({
-  width: 1024, height: 1536, titleHeight: 100, panelHeight: 1402,
-  footerHeight: 34, inset: 6, titleInkHeight: 84,
+  // 1120:1584 reduces to 70:99, the exact 210:297 A4 paper ratio.
+  width: MANGA_MANUSCRIPT_STANDARD.width, height: MANGA_MANUSCRIPT_STANDARD.height,
+  titleHeight: 103, panelHeight: 1446,
+  footerHeight: 35, inset: 7, titleInkHeight: 87,
 });
 
-export const scalePageLayout = (sourceWidth = PAGE_LAYOUT.width) => {
-  const scale = sourceWidth / PAGE_LAYOUT.width;
+export const scalePageLayout = (sourceHeight = PAGE_LAYOUT.height) => {
+  const scale = sourceHeight / PAGE_LAYOUT.height;
   if (!Number.isFinite(scale) || scale <= 0) return null;
   return Object.freeze(Object.fromEntries(Object.entries(PAGE_LAYOUT)
     .map(([key, value]) => [key, Math.round(value * scale)])));
@@ -100,7 +104,7 @@ export const detectPageBands = (pixels) => {
 
 export const buildPageDrawPlan = (bands) => {
   if (!bands) return null;
-  const layout = scalePageLayout(bands.canvas?.width ?? bands.panels.width);
+  const layout = scalePageLayout(bands.canvas?.height ?? PAGE_LAYOUT.height);
   if (!layout) return null;
   const { width, titleHeight, panelHeight, footerHeight, inset, titleInkHeight } = layout;
   const safeWidth = width - 2 * inset;
@@ -132,17 +136,26 @@ export const normalizeMangaPage = async (dataUrl) => {
   sourceContext.drawImage(image, 0, 0);
   const bands = detectPageBands(sourceContext.getImageData(0, 0, source.width, source.height));
   const plan = buildPageDrawPlan(bands);
-  if (!plan) return { applied: false, reason: bands ? '固定領域に縦横比を保ったまま収まりません。' : 'タイトル・4コマ全体・フッターの境界を確定できません。' };
+  const layout = plan?.layout || scalePageLayout(source.height);
   const canvas = document.createElement('canvas');
-  canvas.width = plan.layout.width; canvas.height = plan.layout.height;
+  canvas.width = layout.width; canvas.height = layout.height;
   const context = canvas.getContext('2d');
   if (!context) throw new Error('ページ配置用Canvasを初期化できません。');
   context.fillStyle = '#fff'; context.fillRect(0, 0, canvas.width, canvas.height);
   context.imageSmoothingEnabled = true; context.imageSmoothingQuality = 'high';
-  for (const { source: from, destination: to } of plan) {
-    context.drawImage(image, from.x, from.y, from.width, from.height, to.x, to.y, to.width, to.height);
+  if (plan) {
+    for (const { source: from, destination: to } of plan) {
+      context.drawImage(image, from.x, from.y, from.width, from.height, to.x, to.y, to.width, to.height);
+    }
+  } else {
+    // Detection can fail on unusual model artwork. The completed page must
+    // still leave the app as an A4 manuscript without cropping or distortion.
+    const scale = Math.min(canvas.width / source.width, canvas.height / source.height);
+    const width = source.width * scale, height = source.height * scale;
+    context.drawImage(image, (canvas.width - width) / 2, (canvas.height - height) / 2, width, height);
   }
-  return { applied: true, dataUrl: canvas.toDataURL('image/png'), bands, plan, layout: plan.layout };
+  return { applied: true, dataUrl: canvas.toDataURL('image/png'), bands, plan, layout,
+    mode: plan ? 'band-layout' : 'contained-source' };
 };
 
 export const extractMangaPanelCrops = async (dataUrl) => {

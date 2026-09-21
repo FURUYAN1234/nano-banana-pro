@@ -21,7 +21,8 @@ test('generated image actions expose only the original download label and no deb
   assert.doesNotMatch(imageArea, /表示中の画像をQA再検査/);
   assert.match(imageArea.slice(downloadIndex, backIndex), /isFourPanelPage && !hasFixedPageLayout && normalizeDisplayedPage/);
   assert.match(source, /inferImageQualityMode\(finalPrompt\) === 'four-panel'/);
-  assert.match(source, /APIで新しい画像を生成する（STEP4）[\s\S]*最終プロンプトから毎回、新規画像を生成します/);
+  assert.match(source, /APIで新しい画像を生成する（STEP4）/);
+  assert.doesNotMatch(source, /最終プロンプトから毎回、新規画像を生成します/);
   assert.match(workflow, /setImageQualityNeedsRepair\(false\)[\s\S]*const hasDefiniteFinalFailure/);
   assert.match(workflow, /issue\.type !== 'unverified'/);
   assert.match(workflow, /setImageQualityNeedsRepair\(Boolean\(allowImageQualityRepair && hasDefiniteFinalFailure\)\)/);

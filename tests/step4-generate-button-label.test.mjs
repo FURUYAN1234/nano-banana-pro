@@ -4,11 +4,15 @@ import { readFileSync } from 'node:fs';
 
 const step4PanelSource = readFileSync(new URL('../src/components/Step4Panel.jsx', import.meta.url), 'utf8');
 
-test('STEP4 generation button keeps model and quality details in the settings button only', () => {
+test('STEP4 generation button shows the selected model official API prices inside the button', () => {
   assert.match(
     step4PanelSource,
     /isGeneratingImage \? "画像を生成中\.\.\." : "APIで新しい画像を生成する（STEP4）"/,
   );
+  assert.match(step4PanelSource, /formatOpenAIImagePricingSummary\(openAIImageQuality\)/);
+  assert.match(step4PanelSource, /OPENAI_IMAGE_PRICE_SNAPSHOT_DATE/);
+  assert.match(step4PanelSource, /OpenAI公式料金/);
+  assert.doesNotMatch(step4PanelSource, /最終プロンプトから毎回、新規画像を生成します/);
   assert.doesNotMatch(step4PanelSource, /画像を生成する \(STEP 4[:）]/);
 });
 

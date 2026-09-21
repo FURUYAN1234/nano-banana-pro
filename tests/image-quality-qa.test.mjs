@@ -246,6 +246,8 @@ test('QA retains exact title and hand instructions from the submitted prompt', (
   assert.match(prompt, /closed rectangular outline.*panel_layout/i);
   assert.match(prompt, /one thumb.*four fingers/i);
   assert.match(prompt, /large.*foreground.*foreshortened.*hand/i);
+  assert.match(prompt, /every visible hand.*named character/i);
+  assert.match(prompt, /more than two.*anatomy defect/i);
   assert.match(prompt, /anatomical.*screen-left/i);
   const result = parseImageQualityQaResponse('{"pass":false,"issues":[{"type":"title_text","reason":"missing title"}]}');
   assert.equal(result.issues[0].type, 'title_text');

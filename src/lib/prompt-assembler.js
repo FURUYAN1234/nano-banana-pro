@@ -46,6 +46,7 @@ import {
   MANGA_PROMPT_PRIORITY
 } from './composition-variety';
 import {
+  getPanelHandRoleResolution,
   HAND_PROP_KINEMATICS_LOCK,
   HAND_PROP_KINEMATICS_LOCK_COMPACT
 } from './hand-prop-kinematics';
@@ -65,6 +66,7 @@ import {
 } from './cinematic-techniques';
 import { normalizeMangaColorMode, isMonochromePrompt, sanitizeMonochromeSourceDescription, MONOCHROME_RENDERING_LOCK, MONOCHROME_RENDERING_LOCK_COMPACT, MONOCHROME_BACKGROUND_LOCK, MONOCHROME_BACKGROUND_LOCK_COMPACT, MONOCHROME_FINAL_CHROMA_AUDIT, MONOCHROME_FINAL_CHROMA_AUDIT_COMPACT, MONOCHROME_PANEL_INK_CHECK } from './manga-render-mode.js';
 import { buildReferenceSheetArtStyleLock, getEndingModePolicy, isDocumentaryEnding, resolveScenarioEndingType } from './ending-mode-policy.js';
+import { MANGA_MANUSCRIPT_ASPECT_LABEL, MANGA_MANUSCRIPT_RATIO_LABEL } from './manga-manuscript-format.js';
 
 /**
  * Fisher-Yates アルゴリズムによる配列のシャッフル
@@ -256,7 +258,7 @@ const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt
     .replace(/- Match key object EXACTLY[^\n]*/g, '- Props: preserve identity; scripted state/holder changes only.')
     .replace(/- Do not replace conflict,[^\n]*\n- Do not replace, rewrite,[^\n]*/g, '- Preserve conflict/setting/sequence/ending/punchline and verbatim dialogue; no additions/omissions.')
     .replace(/ABSOLUTE TASK:[^\n]*/g, 'ABSOLUTE TASK: new 4-panel manga page; refs only for identity.')
-    .replace(/- (?:A4 portrait 1:1\.414|2:3 portrait);[^\n]*/gi, '- 2:3 portrait; four horizontal panels; white gutters; tight page.')
+    .replace(/- (?:A4 portrait (?:210:297 \(1:1\.414\)|1:1\.414)|2:3 portrait);[^\n]*/gi, `- A4 ${MANGA_MANUSCRIPT_RATIO_LABEL}; four horizontal panels; white gutters; tight page.`)
     .replace(/- Top title EXACTLY ("[^"]+")[^\n]*/g, '- Top title EXACTLY $1.')
     .replace(/- Bottom-right 4th-panel watermark EXACTLY ("[^"]+")[^\n]*/g, '- Bottom-right watermark EXACTLY $1.')
     .replace(/- Bottom-left 4th-panel watermark EXACTLY ("[^"]+")[^\n]*/g, '- Bottom-left watermark EXACTLY $1.')
@@ -335,6 +337,8 @@ const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt
   if (finallyCompacted.length <= CHATGPT_WEB_COPY_SOFT_BUDGET) return finallyCompacted;
 
   return finallyCompacted
+    .replace(`PAGE:A4 ${MANGA_MANUSCRIPT_RATIO_LABEL} (${MANGA_MANUSCRIPT_ASPECT_LABEL});`, `PAGE:A4 ${MANGA_MANUSCRIPT_RATIO_LABEL};`)
+    .replace('ABSOLUTE TASK: new 4-panel manga page; refs only for identity.', 'TASK: new 4-panel manga; refs identify cast.')
     .replace(/HAND \/ PROP KINEMATICS LOCK:[^\n]*/g, HAND_PROP_KINEMATICS_LOCK_MINIMAL)
     .replace(/FACIAL ACTING LOCK:[^\n]*/g, FACIAL_ACTING_LOCK_MINIMAL)
     .replace(/SHARED IMAGE QUALITY CONTRACT:[^\n]*/g, 'SHARED IMAGE QUALITY CONTRACT: focal contour; owned joints/props; rear head no face; setting/cast.')
@@ -353,7 +357,8 @@ const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt
     .replace(/^.*GLASSES CHECK:[^\n]*\n?/gm, '')
     .replace(/^CROSS-CHECK:[^\n]*\n?/gm, '')
     .replace(/^- Adults 20\+\.[^\n]*\n?/gm, '')
-    .replace(/FUNCTIONAL SURFACE PANEL CHECK: target\/side\/axes\./g, (line, offset, text) => text.indexOf(line) === offset ? line : '');
+    .replace(/FUNCTIONAL SURFACE PANEL CHECK: target\/side\/axes\./g, (line, offset, text) => text.indexOf(line) === offset ? line : '')
+    .replace(/\n{2,}/g, '\n');
 };
 
 const clarifyBubbleCountPlacement = (prompt) => String(prompt)
@@ -601,6 +606,7 @@ ${extractCastLimitRule(pt, castList, { compact: true }).replace(/\\\\[/g, '').re
 COMPOSITION STAGING: ${getPanelCompositionAssist(pt, num, { compact: true })}
 ${FUNCTIONAL_SURFACE_PANEL_CHECK}
 ${eyeLineRule}
+${getPanelHandRoleResolution(pt)}
 Action (visual only): ${buildPanelActionText(pt, castList, promptActiveOutfit, colorMode)}
 Dialogue (verbatim bubbles): ${extractDialogueOnly(pt, castList, { forImagePrompt: true })}`;
     }).join('\n\n');
@@ -643,6 +649,7 @@ COMPOSITION STAGING: ${getPanelCompositionAssist(pt, num)}
 ${FUNCTIONAL_SURFACE_PANEL_CHECK}
 ${lensRule}
 ${eyeLineRule}
+${getPanelHandRoleResolution(pt)}
 Action (Visual ONLY, non-dialogue; do NOT render quoted words as visible text unless this action explicitly says handwriting, signage, board text, label text, or screen text): ${buildPanelActionText(pt, castList, promptActiveOutfit, colorMode)}.
 Dialogue (ONLY inside bubbles): ${extractDialogueOnly(pt, castList, { forImagePrompt: true })}.
 ${geminiRearForegroundLock}`;
@@ -674,9 +681,12 @@ ${geminiRearForegroundLock}`;
     safePrompt = sanitizeForDocumentary(safePrompt);
   }
 
-  const baselinePrompt = clarifyBubbleCountPlacement(isChatGPTFamily
+  const clarifiedPrompt = clarifyBubbleCountPlacement(isChatGPTFamily
     ? compactChatGPTConversationRules(safePrompt, isMonochrome, preserveReferenceStyle, seriousTone)
     : safePrompt);
+  const baselinePrompt = isChatGPTFamily && clarifiedPrompt.length > CHATGPT_WEB_COPY_SOFT_BUDGET
+    ? compactChatGPTConversationRules(clarifiedPrompt, isMonochrome, preserveReferenceStyle, seriousTone)
+    : clarifiedPrompt;
   if (cinematicAssignments.length === 0) return baselinePrompt;
 
   const candidatePrompt = applyCinematicTechniqueSlot(
