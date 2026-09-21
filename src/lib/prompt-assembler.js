@@ -126,7 +126,7 @@ const sanitizeConversationCamera = (camera) => {
 const CHATGPT_WEB_COPY_SOFT_BUDGET = 15000;
 const FACIAL_ACTING_LOCK_COMPACT = 'FACIAL ACTING LOCK: bold or subtle brow/eyelid/gaze target/mouth shape/head-torso cues as scripted. Do not force a close-up/camera gaze; preserve Camera/Action/eye-line/hands/props. Acting notes are not visible text; never print.';
 const HAND_PROP_KINEMATICS_LOCK_MINIMAL = 'HAND / PROP KINEMATICS LOCK: anatomical LEFT and RIGHT are subject-relative. One role/contact per hand; one prop owner. Final state supported; palm/wrist fit contact/camera. Two connected arms/hands only; no extra, merged, mirrored or malformed limbs.';
-const FACIAL_ACTING_LOCK_MINIMAL = 'FACIAL ACTING LOCK: brow/eyelid/gaze/mouth/head-torso; preserve Camera/Action/eye-line; never visible text.';
+const FACIAL_ACTING_LOCK_MINIMAL = 'FACIAL ACTING LOCK: brow/eyelid/gaze/mouth/head-torso; Camera/Action/eye-line; never text.';
 const CHATGPT_CINEMATIC_SLOTS = Object.freeze([
   'CAMERA: vary angles; preserve anatomy and the script lock.',
   'CAMERA: vary; preserve anatomy/script.'
@@ -337,9 +337,18 @@ const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt
   return finallyCompacted
     .replace(/HAND \/ PROP KINEMATICS LOCK:[^\n]*/g, HAND_PROP_KINEMATICS_LOCK_MINIMAL)
     .replace(/FACIAL ACTING LOCK:[^\n]*/g, FACIAL_ACTING_LOCK_MINIMAL)
-    .replace(/SHARED IMAGE QUALITY CONTRACT:[^\n]*/g, 'SHARED IMAGE QUALITY CONTRACT: focal contour; low-contrast BG; joint/prop ownership; no invented face on a rear head. Keep direction/setting/cast.')
-    .replace(/EXPRESSIVE DIRECTION:[^\n]*/g, 'EXPRESSIVE DIRECTION: height/tilt/foreshortening; full-body acting; panel contrast: scale/light/VFX. Keep quiet beats, Camera/Action, identity, dialogue, limbs and props.')
-    .replace(/CROSS-PANEL WARDROBE COLOR LOCK:[^\n]*/g, 'CROSS-PANEL WARDROBE COLOR LOCK: fix garment items/colors once; reuse in all panels; style and lighting never change canonical wardrobe. Explicit outfit wins; none=infer.')
+    .replace(/SHARED IMAGE QUALITY CONTRACT:[^\n]*/g, 'SHARED IMAGE QUALITY CONTRACT: focal contour; owned joints/props; rear head no face; setting/cast.')
+    .replace(/EXPRESSIVE DIRECTION:[^\n]*/g, 'EXPRESSIVE DIRECTION: height/tilt/foreshortening; full-body acting; panel contrast: scale/light/VFX; quiet beats; keep Camera/Action, identity/dialogue/limbs/props.')
+    .replace(/CROSS-PANEL WARDROBE COLOR LOCK:[^\n]*/g, 'CROSS-PANEL WARDROBE COLOR LOCK: fixed items/colors; explicit wins.')
+    .replace(/^BLACK INK PLATE:[^\n]*/gm, 'BLACK INK PLATE: redraw; colored references give identity, not palette.')
+    .replace(/^SOURCE COLOR BOUNDARIES:[^\n]*/gm, 'SOURCE COLOR BOUNDARIES: map regions/accents to black/white/screens.')
+    .replace(/^SCENE COLOR PRIORITY:[^\n]*/gm, 'SCENE COLOR PRIORITY: story and verbatim text; source hues yield to ink/white skin.')
+    .replace(/^WHITE PAPER RESERVE:[^\n]*/gm, 'WHITE PAPER RESERVE: lit areas of faces and skin, light walls and ceilings stay pure white; tone only in bounded shadows/material midtones. Never screen the whole face or background.')
+    .replace(/^DEPTH OF FIELD \/ DEFOCUS:[^\n]*/gm, 'DEPTH OF FIELD / DEFOCUS: fewer distant lines, white gaps; halftone only in assigned regions.')
+    .replace(/^G-PEN INK DIRECTION:[^\n]*/gm, 'G-PEN INK DIRECTION: pressure-tapered thick/thin; bold near/contact, fine face/hands/distance.')
+    .replace(/^INK LIGHT \/ ACTING:[^\n]*/gm, 'INK LIGHT / ACTING: full-body action amplitude; directional solid-black cast shadows, white rim cutouts; background simplification preserves perspective, contact shadows and depth; peak/quiet contrast.')
+    .replace(/^MONOCHROME BACKGROUND CLARITY LOCK:[^\n]*/gm, 'MONOCHROME BACKGROUND CLARITY LOCK: omit optional textures. Keep location/depth/all story evidence, white light, bounded tones.')
+    .replace(/^MONOCHROME FINAL CHROMA AUDIT:[^\n]*/gm, 'MONOCHROME FINAL CHROMA AUDIT: hue/tint/grey fails; redraw black/white and bounded dots/hatching; restore white reserves.')
     // Identity Matrix, adult casting and global surface geometry already cover these reminders.
     .replace(/^.*GLASSES CHECK:[^\n]*\n?/gm, '')
     .replace(/^CROSS-CHECK:[^\n]*\n?/gm, '')

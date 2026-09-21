@@ -94,6 +94,15 @@ test('both provider prompts preserve physical settings while allowing density co
   }
 });
 
+test('both provider prompts preserve poster and sign artwork without inventing readable incidental copy', () => {
+  for (const prompt of [buildChatGptPrompt(), buildGeminiPrompt()]) {
+    assert.match(prompt, /posters?, signs?, packages?, menus? and book covers? keep natural artwork, pictograms, color blocks, borders, surface material and layout/i);
+    assert.match(prompt, /never blank, grey out, blur, pixelate, mosaic or censor the whole surface/i);
+    assert.match(prompt, /never invent a clearly readable word, number or URL/i);
+    assert.doesNotMatch(prompt, /Other surfaces unlettered|otherwise unlettered surfaces/i);
+  }
+});
+
 test('both provider prompts lock each named character wardrobe colors across panel styles', () => {
   for (const prompt of [buildChatGptPrompt(), buildGeminiPrompt()]) {
     assert.match(prompt, /CROSS-PANEL WARDROBE COLOR LOCK/);

@@ -801,7 +801,7 @@ const RICH_PANEL_COMPOSITION_LOCK = `RICH PANEL COMPOSITION / CHARACTER CLARITY 
 
 export const RICH_PANEL_COMPOSITION_LOCK_COMPACT = 'RICH PANEL COMPOSITION / CHARACTER CLARITY LOCK: setting or scripted abstraction; story evidence/actions/reactions clear.';
 
-const SCENE_LETTERING_LOCK = 'SCENE LETTERING: only explicit per-panel object text; prop continuity adds no cross-panel legibility requirement unless scripted. Keep Camera projection, exact title/dialogue/required text/watermarks; no incidental slogans/menu entries/book titles/pseudo-lettering. Other surfaces unlettered.';
+const SCENE_LETTERING_LOCK = 'SCENE LETTERING: only explicit per-panel object text is exact/readable; no cross-panel legibility requirement unless scripted. Unspecified posters, signs, packages, menus and book covers keep natural artwork, pictograms, color blocks, borders, surface material and layout. no incidental slogans/pseudo-lettering; small type may be unreadable marks; never invent a clearly readable word, number or URL. Never blank, grey out, blur, pixelate, mosaic or censor the whole surface.';
 
 // 4コマの焦点・密度差を調整し、1枚絵の基準は変更しない。
 const MANGA_IMAGE_QUALITY_CONTRACT = SHARED_IMAGE_QUALITY_CONTRACT.replace(
@@ -900,7 +900,7 @@ TEXT RULES:
 - Only Dialogue becomes white bubbles: vertical Japanese tategaki, verbatim character-by-character; no paraphrase, synonyms, softening, added/omitted words, or horizontal text.
 - In each Dialogue block, ONLY quoted values after "TEXT (PRINT VALUES ONLY)" are printed. Names in square brackets after "TAILS (METADATA; NEVER PRINT NAMES)" or "TAIL TIP LOCK (NEVER PRINT)" are routing metadata only: NEVER print speaker names, brackets, bubble IDs, field labels, quotation marks, or metadata.
 - Tails point to actual speakers; right-to-left manga order.
-- Action is visual only: no ambience/SFX/mood/aura/emotion/narration/state/prompt labels as text. Lettering only when Action requests handwriting/signage/label/print/screen/board text; otherwise unlettered surfaces.
+- Action text: only scripted handwriting/signage/label/print/screen/board; never ambience/SFX/mood/aura/emotion/narration/state/prompt labels.
 ${SCENE_LETTERING_LOCK}
 
 DIALOGUE / BUBBLE QA LOCK:
@@ -1073,7 +1073,7 @@ ${preserveReferenceStyle ? `REFERENCE-SHEET STYLE QA LOCK:
 - DIALOGUE TEXT IS VERBATIM: The text inside each Speech Bubble MUST be copied EXACTLY as written in the Dialogue section — character by character. Do NOT paraphrase, rephrase, or substitute synonyms.
 - Do NOT normalize punctuation. If the Dialogue line has no punctuation, keep it that way; if it has punctuation, copy only that exact punctuation.
 - TYPOGRAPHY RULE: Write Japanese text tightly with ZERO spaces between words. Do NOT insert any gaps or spaces between characters. (no letter spacing:1.5), (tight kerning:1.5).
-- Do NOT add unrequested English/Japanese decoration or pseudo-lettering on props, signs, clothing or backgrounds. Follow SCENE LETTERING above; keep required scene text verbatim.
+- no incidental slogans or pseudo-lettering. Follow SCENE LETTERING; keep scripted scene text exact.
 - Maintain character consistency across all 4 panels.
 - Flow is from top panel to bottom panel.
 - Keep every watermark glyph fully inside the footer, inset from the image edges. The text must be oriented horizontally (left-to-right).
