@@ -101,7 +101,7 @@ export const getPanelShotExecution = (camera = '') => {
   else if (full) cues.push('head-to-feet inside panel with headroom and floor beyond BOTH shoes; hips/knees/feet unobscured');
   else if (/zoom[ -]?out|ズームアウト|引き|全景|遠景|epic wide|wide shot|long shot/i.test(text)) cues.push('smaller subject; more setting');
   if (/overhead|high[ -]angle|innocent high|俯瞰|真上|斜め上|上から|見下ろ[すし]/i.test(text)) cues.push('look down: head/shoulder tops, shortened torsos, upper prop faces; keep projection even with omitted BG');
-  else if (!horizontal && /low[ -]angle|dominant low|ローアングル|アオリ|煽[りる]|下から|見上げ/i.test(text)) cues.push('look up: lower face/prop undersides, horizon below face, upward convergence; chibi too; not eye-level');
+  else if (!horizontal && /low[ -]angle|dominant low|ローアングル|アオリ|煽[りる]|下から|見上げ/i.test(text)) cues.push('look up: lower face/prop undersides, horizon below face, upward convergence; preserve the scripted proportions; not eye-level');
   else if (floor) cues.push(`floor-level camera below faces even when crouched/chibi; ${horizontal ? 'keep horizontal aim and a low horizon' : 'project nearby prop undersides from below'}; do not reset to subject eye-level`);
   if (/の(?:左|右)?(?:後方|後ろ|背中側)|rear[ -]view|from (?:the )?(?:(?:left|right)[ -])?rear/i.test(text)) cues.push('show back planes of the scripted subject; preserve crop/distance, no forced close OTS');
   if (/telephoto|long[ -]lens|望遠/i.test(text)) cues.push('distant camera + long focal length: compressed depth, background relatively larger/closer; overlapping depth planes at similar scale, weak convergence of receding edges; not blur alone');

@@ -13,8 +13,9 @@ import { getOpenAIApiKey } from './openai';
 import { openAISources } from './sns-explanation.js';
 import {
     OPENAI_TEXT_MODEL_IDS,
-    OPENAI_SCENARIO_TEXT_MODEL_IDS,
     OPENAI_VISION_MODEL_IDS,
+    getOpenAIScenarioCostEstimate,
+    getOpenAIScenarioModelRoute,
 } from './openai-model-routes.js';
 
 const OPENAI_TEXT_TIMEOUT_MS = 600_000;
@@ -62,7 +63,7 @@ const requestOpenAIWebSearch = async ({ modelId, prompt, systemInstruction, time
         if (!text) {
             throw new Error('OpenAI Web Search returned no text output.');
         }
-        return { text, sources: openAISources(data) };
+        return { text, sources: openAISources(data), usage: data.usage };
     } catch (error) {
         if (error.name === 'AbortError') {
             throw new Error(`Timeout awaiting web search from ${modelId} (${timeoutMs / 1000}s limit)`);
@@ -87,15 +88,29 @@ export const callOpenAIText = async (prompt, images = null, systemInstruction = 
     const MODEL_IDS = (images && images.length > 0)
         ? OPENAI_VISION_MODEL_IDS
         : options.modelRoute === 'scenario'
-            ? OPENAI_SCENARIO_TEXT_MODEL_IDS
+            ? getOpenAIScenarioModelRoute(options.scenarioModelId)
             : OPENAI_TEXT_MODEL_IDS;
     const useWebSearch = options.useWebSearch === true && (!images || images.length === 0);
+    const isFixedScenarioRoute = options.modelRoute === 'scenario'
+        && MODEL_IDS[0] === options.scenarioModelId;
+    const reportScenarioUsage = (modelId, usage) => {
+        if (options.modelRoute !== 'scenario') return null;
+        const costEstimate = getOpenAIScenarioCostEstimate(modelId, usage);
+        if (costEstimate && onThinkingUpdate) {
+            onThinkingUpdate(`> [COST] 実績: 入力 ${costEstimate.inputTokens.toLocaleString()} / 出力 ${costEstimate.outputTokens.toLocaleString()} tokens、参考 ${costEstimate.estimatedUsd.toFixed(6)} USD`);
+        }
+        return costEstimate;
+    };
+
+    if (isFixedScenarioRoute && onThinkingUpdate) {
+        onThinkingUpdate(`> [MODEL] 固定開始モデル: ${MODEL_IDS[0]}（失敗時は下位モデルへフォールバック）`);
+    }
 
     let attemptIndex = 0;
     for (const modelId of MODEL_IDS) {
         attemptIndex++;
         try {
-            const usesModernChatParameters = modelId === "gpt-6-astra" || modelId === "gpt-5.6-sol";
+            const usesModernChatParameters = modelId === "gpt-6-astra" || modelId.startsWith("gpt-5.6-");
             console.log(`[OpenAI] Attempting connection with ${modelId}...`);
             if (onThinkingUpdate) {
                 if (attemptIndex === 1) {
@@ -114,11 +129,15 @@ export const callOpenAIText = async (prompt, images = null, systemInstruction = 
                     apiKey
                 });
                 if (onThinkingUpdate) onThinkingUpdate('> [API] OpenAI Web Searchでニュースを確認し、シナリオを生成しました。');
+                if (onThinkingUpdate) onThinkingUpdate(`> [MODEL] 最終採用モデル: ${modelId}`);
+                const costEstimate = reportScenarioUsage(modelId, finalOutput.usage);
                 return {
                     text: finalOutput.text,
                     sources: finalOutput.sources,
                     thought: `OpenAI ${modelId} Web Search による処理が完了しました。`,
-                    model: modelId
+                    model: modelId,
+                    usage: finalOutput.usage,
+                    costEstimate
                 };
             }
 
@@ -242,11 +261,15 @@ export const callOpenAIText = async (prompt, images = null, systemInstruction = 
             }
 
             if (onThinkingUpdate) onThinkingUpdate(`> [API] 応答の受信が完了しました。`);
+            if (onThinkingUpdate) onThinkingUpdate(`> [MODEL] 最終採用モデル: ${modelId}`);
+            const costEstimate = reportScenarioUsage(modelId, data.usage);
 
             return {
                 text: finalOutput,
                 thought: `OpenAI ${modelId} による処理が完了しました。`,
-                model: modelId
+                model: modelId,
+                usage: data.usage,
+                costEstimate
             };
 
         } catch (err) {

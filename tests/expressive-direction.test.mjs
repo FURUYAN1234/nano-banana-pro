@@ -31,7 +31,7 @@ test('camera is a protected projection, not movable for face or screen legibilit
     const prompt = build(provider);
     assert.match(prompt, /PROMPT PRIORITY:.*Camera geometry/);
     assert.match(prompt, /CAMERA FIRST:.*never relocate.*legibility/);
-    assert.match(prompt, /Only when Camera leaves position unspecified/);
+    assert.match(prompt, /(?:Only when Camera leaves position unspecified|If unspecified, move camera)/);
     for (const panel of prompt.split(/## Panel \d/).slice(1)) {
       assert.match(panel, /^\s*Camera:/);
     }
@@ -39,6 +39,8 @@ test('camera is a protected projection, not movable for face or screen legibilit
   const low = getPanelShotExecution('floor-level low angle, full body');
   assert.match(low, /horizon below.*face/);
   assert.match(low, /upward convergence/);
+  assert.match(low, /preserve the scripted proportions/);
+  assert.doesNotMatch(low, /chibi too/);
   assert.match(getPanelShotExecution('telephoto close-up'), /overlapping depth planes.*similar scale/);
 });
 
@@ -155,11 +157,27 @@ test('dialogue preserves the low tilted shot without inventing a rear-shoulder o
 
 test('explicit named shoulder and protected words survive freer direction', () => {
   for (const provider of ['chatgpt', 'gemini']) {
-    const prompt = build(provider, scenario.replace('extreme low angle, 25 degree Dutch tilt', 'SpeakerAの肩越し、SpeakerBを見る'));
+    const prompt = build(provider, scenario.replace('extreme low angle, 25 degree Dutch tilt', 'SpeakerAの反射帯付き安全ベストの肩越し、SpeakerBを見る'));
+    const panel = prompt.match(/## Panel 1[\s\S]*?(?=## Panel 2)/)[0];
     assert.match(prompt, /EXPLICIT REAR CAMERA/);
     assert.match(prompt, /camera is physically behind \[SpeakerA\]/);
+    assert.doesNotMatch(panel, /camera behind \[SpeakerB\]/);
     for (const dialogue of ['ここです。', '確認します。', '待って。', '決まりです。']) assert.ok(prompt.includes(dialogue));
     assert.match(prompt, /NO speech bubbles|NO DIALOGUE|no speech bubbles/i);
+  }
+});
+
+test('named shoulder ownership does not span across another cast member', () => {
+  for (const camera of [
+    'SpeakerAの顔を見る、SpeakerBの安全ベストの肩越し',
+    'SpeakerAの隣に立つSpeakerBの安全ベストの肩越し'
+  ]) {
+    for (const provider of ['chatgpt', 'gemini']) {
+      const prompt = build(provider, scenario.replace('extreme low angle, 25 degree Dutch tilt', camera));
+      const panel = prompt.match(/## Panel 1[\s\S]*?(?=## Panel 2)/)[0];
+      assert.match(panel, /camera is physically behind \[SpeakerB\]/);
+      assert.doesNotMatch(panel, /camera is physically behind \[SpeakerA\]/);
+    }
   }
 });
 
@@ -201,6 +219,45 @@ test('normal scenario generation explicitly allows camera and body exaggeration 
   assert.match(prompt, /静かな会話でも.*アオリ.*望遠/);
   assert.match(prompt, /文字を読むコマ.*身体演技/);
   assert.doesNotMatch(prompt, /この極限カメラを選んだコマのみ|激しい動き、狂気、ギャグの爆発シーンに使用/);
+});
+
+test('a rear-facing holder may occlude a chest-held document instead of showing it through their torso', () => {
+  const rearDocumentScenario = scenario.replace(
+    'extreme low angle, 25 degree Dutch tilt',
+    'SpeakerAの反射帯付き安全ベストの肩越し、SpeakerBを見る'
+  ).replace(
+    'SpeakerAが予定表を指さす。SpeakerBが答える。',
+    'SpeakerAが胸元に記録票を抱え、SpeakerBが答える。'
+  );
+  for (const provider of ['chatgpt', 'gemini']) {
+    const prompt = build(provider, rearDocumentScenario);
+    if (provider === 'chatgpt') {
+      assert.match(prompt, /Rear holder \+ chest object: occlude\/show side\/back\/edge/);
+      assert.match(prompt, /never project front\/hands through torso/);
+    } else {
+      assert.match(prompt, /A rear-facing holder keeping a document or device to their chest may naturally hide it behind their torso/);
+      assert.match(prompt, /never project its front or hands through the back/);
+    }
+  }
+});
+
+test('single-speaker modified shoulder camera keeps the named foreground owner', () => {
+  const modifiedShoulderScenario = scenario.replace(
+    'extreme low angle, 25 degree Dutch tilt',
+    'SpeakerAの反射帯付き安全ベストの肩越し、SpeakerBを見る。カメラはSpeakerBの背後へ回り込まない'
+  ).replace(
+    'SpeakerAが予定表を指さす。SpeakerBが答える。',
+    'SpeakerBが背中を向けて胸元に記録票を抱える。'
+  ).replace('SpeakerA「ここです。」', '');
+
+  for (const provider of ['chatgpt', 'gemini']) {
+    const prompt = build(provider, modifiedShoulderScenario);
+    const panel = prompt.match(/## Panel 1[\s\S]*?(?=## Panel 2)/)[0];
+    assert.match(panel, /EXPLICIT REAR CAMERA/);
+    assert.match(panel, /camera is physically behind \[SpeakerA\]'s shoulder/);
+    assert.match(panel, /OTS CAST INSTANCE LOCK:[^\n]*\[SpeakerA\]/);
+    assert.doesNotMatch(panel, /camera is physically behind \[SpeakerB\]'s shoulder/);
+  }
 });
 
 test('lettering is planned per beat and never promoted into an all-panel reading requirement', () => {

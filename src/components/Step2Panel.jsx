@@ -19,6 +19,10 @@ import {
   SERIOUS_ENDING_OPTIONS,
   getEndingModePolicy
 } from '../lib/ending-mode-policy';
+import {
+  OPENAI_SCENARIO_MODEL_OPTIONS,
+  OPENAI_SCENARIO_PRICE_SNAPSHOT_DATE,
+} from '../lib/openai-model-routes';
 
 /**
  * STEP 02: シナリオ構築設定パネル
@@ -47,6 +51,8 @@ export default function Step2Panel({
   punchlineType,
   effectivePunchlineType = punchlineType,
   setPunchlineType,
+  scenarioModelId,
+  setScenarioModelId,
   isSearching,
   scenarioActionRef,
   scenarioProgressRef,
@@ -97,6 +103,8 @@ export default function Step2Panel({
     enhanceDialogue &&
     enhanceGag;
   const seasonContext = getSeasonContext({ targetDate, inputMode });
+  const selectedScenarioModel = OPENAI_SCENARIO_MODEL_OPTIONS.find(({ id }) => id === scenarioModelId)
+    || OPENAI_SCENARIO_MODEL_OPTIONS[0];
 
   return (
     <section
@@ -334,6 +342,28 @@ export default function Step2Panel({
               </select>
               <ChevronDown size={20} strokeWidth={3} className="punchline-select-chevron" aria-hidden="true" />
             </div>
+          </div>
+          <div className="scenario-model-select-card flex-1 bg-[#050505] p-3 rounded-xl border border-cyan-500/20">
+            <label className="text-xs font-bold text-cyan-300 mb-1 block flex items-center gap-1" htmlFor="scenario-model-select">
+              <span>🧠</span> OpenAIシナリオモデル
+              <span className="text-[10px] text-gray-500 font-normal ml-auto">固定・失敗時のみ下位へ</span>
+            </label>
+            <select
+              id="scenario-model-select"
+              value={scenarioModelId}
+              onChange={(e) => setScenarioModelId(e.target.value)}
+              aria-label="OpenAIシナリオモデルを選択"
+              className="scenario-model-select-input w-full appearance-none font-mono"
+            >
+              {OPENAI_SCENARIO_MODEL_OPTIONS.map(({ id, label, description, inputPriceUsdPerM, outputPriceUsdPerM }) => (
+                <option key={id} value={id}>{label}（{description}｜入力 ${inputPriceUsdPerM} / 出力 ${outputPriceUsdPerM} USD/MTok）</option>
+              ))}
+            </select>
+            <p className="mt-2 text-[10px] text-cyan-100">参考単価（{OPENAI_SCENARIO_PRICE_SNAPSHOT_DATE}時点）: 入力 ${selectedScenarioModel.inputPriceUsdPerM} / 出力 ${selectedScenarioModel.outputPriceUsdPerM} USD / 100万トークン</p>
+            {selectedScenarioModel.comparisonNote && (
+              <p className="mt-1 text-[10px] text-slate-300">選び方: {selectedScenarioModel.comparisonNote}</p>
+            )}
+            <p className="mt-1 text-[10px] text-slate-400">選択はこのブラウザに保存され、アプリ全体のリセットまで維持します。Web Search等のツール料金・キャッシュ割引・税は含まない参考値です。</p>
           </div>
         </div>
 

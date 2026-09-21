@@ -46,8 +46,36 @@ import {
 import { buildImageFailureAnalysisPrompt, inferImageQualityMode, runImageQualityFailsafe } from '../lib/image-quality-failsafe';
 import { getEffectiveEngine } from '../lib/engine-state';
 import { DEFAULT_OPENAI_IMAGE_QUALITY, DEFAULT_OPENAI_IMAGE_SIZE, normalizeOpenAIImageSize, normalizeOpenAIImageQuality, resolveOpenAIImageOption, selectInitialOpenAIImageQuality, isOpenAIImageVerificationError, OPENAI_IMAGE_VERIFICATION_MESSAGE } from '../lib/openai-image-settings.js';
+import { OPENAI_SCENARIO_MODEL_OPTIONS, OPENAI_SCENARIO_TEXT_MODEL_IDS } from '../lib/openai-model-routes.js';
+
+const SCENARIO_MODEL_PREFERENCE_KEY = 'nano-banana-pro:scenario-model-id';
+const DEFAULT_SCENARIO_MODEL_ID = 'gpt-6-astra';
+
+const getSavedScenarioModelId = () => {
+  try {
+    const savedModelId = window.localStorage.getItem(SCENARIO_MODEL_PREFERENCE_KEY);
+    return OPENAI_SCENARIO_TEXT_MODEL_IDS.includes(savedModelId)
+      ? savedModelId
+      : DEFAULT_SCENARIO_MODEL_ID;
+  } catch {
+    return DEFAULT_SCENARIO_MODEL_ID;
+  }
+};
 
 export default function useMangaWorkflow() {
+  const [scenarioModelId, setScenarioModelIdState] = useState(getSavedScenarioModelId);
+  const setScenarioModelId = (modelId) => {
+    const nextModelId = OPENAI_SCENARIO_TEXT_MODEL_IDS.includes(modelId)
+      ? modelId
+      : DEFAULT_SCENARIO_MODEL_ID;
+    setScenarioModelIdState(nextModelId);
+    try {
+      window.localStorage.setItem(SCENARIO_MODEL_PREFERENCE_KEY, nextModelId);
+    } catch {
+      // Private browsing or disabled storage: keep the selection for this session.
+    }
+  };
+  const resetScenarioModelId = () => setScenarioModelId(DEFAULT_SCENARIO_MODEL_ID);
   const [openAIImageQuality, setOpenAIImageQualityState] = useState(DEFAULT_OPENAI_IMAGE_QUALITY);
   const [openAIImageSize, setOpenAIImageSizeState] = useState(DEFAULT_OPENAI_IMAGE_SIZE);
   const openAIImageQualityChosen = useRef(false);
@@ -652,6 +680,7 @@ export default function useMangaWorkflow() {
         punchlineType: resolvedPunchlineTypeRef.current || punchlineType,
         castList,
         styleJson,
+        scenarioModelId,
         onProgress: (msg) => setEnhanceLog(prev => prev + `\n> [API] ${msg}`)
       });
 
@@ -780,6 +809,7 @@ export default function useMangaWorkflow() {
         bg360Enabled,
         bg360ImageParts,
         styleJson,
+        scenarioModelId,
         onProgress: (msg) => {
           if (scenarioRunEpoch !== scenarioRunEpochRef.current) return;
           setScenarioThought(prev => prev + `\n > [API] ${msg} `);
@@ -807,6 +837,7 @@ export default function useMangaWorkflow() {
       setExplanation(result.explanation?.text || "");
       setExplanationNotice(result.explanation?.notice || "解説を取得できませんでした。手入力できます。");
       setUsedModel(result.usedModel);
+      setScenarioThought(prev => prev + `\n > [MODEL] 最終採用モデル: ${result.usedModel}`);
       setLockedLocation(customLocation.trim() || result.location || "Unspecified");
       setLockedOutfit(customOutfit.trim() || result.outfit || "");
 
@@ -991,6 +1022,7 @@ export default function useMangaWorkflow() {
         bg360CroppedPanels,
         punchlineType: activePunchlineType,
         systemVersion: SYSTEM_VERSION,
+        scenarioModelLabel: OPENAI_SCENARIO_MODEL_OPTIONS.find(({ id }) => id === usedModel)?.label,
         allowScenarioQualityWarning: true
       });
 
@@ -1127,6 +1159,7 @@ export default function useMangaWorkflow() {
     promptAssemblyRunRef.current += 1;
     setIsAssembling(false);
     setColorModeState("color");
+    resetScenarioModelId();
     setCastList("");
     setScenario("");
     setExplanation("");
@@ -1351,7 +1384,11 @@ export default function useMangaWorkflow() {
             null,
             (msg) => statCallback(`[QUALITY QA] ${msg}`)
           );
-          const review = parseImageQualityQaResponse(qualityResponse.text, { mode: qualityMode, finalPrompt: candidatePrompt });
+          const review = parseImageQualityQaResponse(qualityResponse.text, {
+            mode: qualityMode,
+            finalPrompt: candidatePrompt,
+            referenceImageCount: qualityImageParts.length - 1,
+          });
           if (qualityMode === 'single-image') return review;
           // 正解を見せた総合QAとは別に、候補画像1枚だけから文字と位置を読む。
           let inventoryText = '';
@@ -2112,6 +2149,7 @@ export default function useMangaWorkflow() {
     setExplanation,
     explanationNotice,
     scenarioThought,
+    scenarioModelId,
     selectedEngine,
     setBg360Enabled,
     setCastList,
@@ -2142,6 +2180,7 @@ export default function useMangaWorkflow() {
     setPolicyErrorMsg,
     setPunchlineType,
     setScenario: setScenarioFromUser,
+    setScenarioModelId,
     setShowModal,
     setShowOpenAIKeyModal,
     setStyleJson,

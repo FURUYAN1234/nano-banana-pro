@@ -1,3 +1,12 @@
+## v6.4.3 STEP2 model selection, shoulder-camera fix, and QA refinement — 2026-09-21
+
+- Root cause: `extractExplicitRearSubject` mixed explicit shoulder matches with a generic rear-position fallback. With cast order `リン, サエコ`, the negated camera phrase `リンの背後へ回り込まず` could therefore steal the foreground role from the explicit `サエコの反射帯付き安全ベストの肩越し`. A single-speaker panel also returned before emitting the rear-camera eye-line/depth lock.
+- Fix: resolve an explicitly named shoulder owner before any generic rear fallback, inspect the complete canonical cast for Camera-only participants, include that owner in depth assignment, and preserve the rear-camera lock for a single-speaker panel. The change only constrains ownership and physical occlusion; expressive height, tilt, foreshortening, full-body acting, lighting, depth, and panel contrast remain active.
+- Live API: the in-app browser ran STEP2 with `gpt-5.6-terra` and STEP4 with `GPT Image 2.5 Sunburst / xhigh`. The final prompt correctly assigned foreground/OTS ownership to サエコ and background to リン. In the selected rendered image, panel 3 shows サエコ's reflective-vest shoulder in the foreground and rear-facing リン beyond it; the chest-held record and hands do not appear through リン's torso, and normal proportions remain. Visual inspection also confirmed varied shot height/distance/tilt, expressive faces and body acting, motivated light, layered depth, and a distinct quiet panel-3 beat followed by a wide tilted punchline.
+- Remaining image warning: built-in QA exhausted its three automatic limited repairs and retained the best candidate. Panels 2 and 4 still contain the unscripted readable background sign `整備用具庫`; this does not invalidate the shoulder-camera fix. No additional paid generation was started.
+- Verification before the QA refinement: focused prompt tests 31/31, full Node tests 592/592, ESLint, production build, and `git diff --check` passed. After the environmental-text and eyewear changes, focused QA tests 64/64 and the full Node suite 593/593 passed. Existing build warnings for Browserslist age, mixed static/dynamic import, and bundle size remain.
+- Release scope: the user subsequently authorized the v6.4.3 official release/deploy. The release includes the persisted STEP2 model picker and descending fallback/cost display, the shoulder-camera fix, harmless environmental-text tolerance, and per-panel eyewear evidence. Note publication and full backup remain outside this authorization.
+
 ## Web貼り付け・人体接続指示の保持 — 2026-09-20
 
 - 対象: 四コマ生成指示。左右の手足を人物ごとに追跡し、自然な遮蔽・画角外と不自然な欠損を区別する指示を、Web用の最終短縮後も保持する。所属不明の手足、家具付近の浮いた手、接続不良を対象とし、Action・カメラ・クロップ・短縮遠近法を維持する。全身を無理に見せたり演技を平坦化したりしない。
@@ -598,3 +607,70 @@ Current live delivery status: see root PLAN.md, Nano Banana four-panel quality r
 - 実API: OpenAIで、箱・ワゴン・床テープを扱う学園祭片付けの4コマをSTEP2〜4で実行。STEP3の最終プロンプトにコンパクトな `LIMB OWNERSHIP CHECK` が残ることを確認。GPT Image 2.5 Sunburst/xhigh、1024×1536、参照2枚。読順の限定修正2回を含む計3候補から最良候補を選択した。
 - 目視: 各コマで見える手は腕と人物に自然につながり、余分・分離・融合した手足は見当たらない。箱・ワゴン・テープの受け渡しも明瞭。俯瞰、床に近いローアングル、肩越し、斜めの低い画角、踏み込み・しゃがみ・箱の支持による奥行きと身体演技を維持しており、単調な全身整列にはなっていない。
 - 注意: 内部QAは台詞順・手・小道具・カメラを合格とした一方、文字を載せない段ボール等について表面文字／向きの証拠不足を `unverified` として警告付き採用した。追加生成は行わない。
+## Astra token-efficiency / STEP2 model selection — restart handoff, 2026-09-21
+
+### Status
+
+- Local implementation is in progress. Do **not** commit, push, deploy, release, publish, or back up. Existing unrelated dirty file `public/diagrams/workflow-preview.png` must be preserved.
+- User is about to restart the PC and wants Astra to reason over this handoff. The local Vite server was running at `http://127.0.0.1:5173/`; it will naturally stop during the restart. Start it again only if browser verification resumes.
+- API keys were never read or recorded. The user entered a key in the app UI and explicitly allowed the already-completed paid STEP3 review and one STEP4 image run. Do not spend a further paid image run after restart without a fresh instruction.
+
+### Completed model-routing work
+
+- Added persisted STEP2 scenario-model selection (default `gpt-6-astra`) with a lower-only fallback route:
+  `gpt-6-astra -> gpt-5.6-sol -> gpt-5.6-terra -> gpt-5.6-luna -> gpt-4.1 -> gpt-4.1-mini -> gpt-4.1-nano -> gpt-4o`.
+- The picker explains quality/cost intent, uses a bundled official-price snapshot dated `2026-09-21`, persists until app-wide reset, and logs fixed-start/adopted model plus any fallback. The native select has explicit readable closed and option colors. The obsolete “Astraに戻す” button was removed.
+- Added actual adopted scenario-model attribution to the OpenAI watermark: `ChatGPT / GPT-5.6 Terra / FURU AI 4-koma v6.4.2`; Gemini keeps its provider-specific watermark. The former `Scenario` word was intentionally omitted to avoid collision with the left watermark.
+- Actual STEP2 evidence: the user selected `gpt-5.6-terra`; OpenAI Web Search scenario generation completed in 69 seconds, with fixed/adopted model both `gpt-5.6-terra` and no fallback.
+- Prior focused model/watermark suite passed: 39 tests, lint, and production build. Build warnings about stale Browserslist, dynamic/static `gemini.js` import, and chunk size are pre-existing/non-blocking.
+
+### Real STEP3/STEP4 evidence and visual QA
+
+- User rebuilt STEP3 once and generated one image at `C:\Users\sx717\Downloads\AI_4koma_comic_ChatGPT_芝ローラーの珍交代_20260921133025.png`.
+- Good: Japanese left watermark and exact right model watermark are both readable and non-overlapping; title, four panels, main cast, roller continuity, dialogue bubbles, and major hands/limbs are visually coherent.
+- Failed Panel 3 conditions in that image are evidence of the **old** assembled prompt, not a model-only failure:
+  - Camera was erroneously rewritten as `camera behind [リン]` instead of the source `サエコの反射帯付き安全ベストの肩越し`.
+  - The rear-facing リン appears to show a chest-held document through her back. This is anatomically impossible. A chest-held document under a rear camera may be fully occluded, or show only its physical side/back/edge; it never needs to be made readable.
+  - Panel 3's GEKIGA 7–8-head proportion did remain intact; unwanted chibi contamination was absent.
+
+### Implemented generic fixes
+
+- `src/lib/composition-variety.js`: low-angle cue no longer includes `chibi too`; it now says `preserve the scripted proportions`.
+- `src/lib/prompt-assembler.js`: ChatGPT prompt compaction preserves an `EXPLICIT REAR CAMERA` eye-line rule rather than inferring a new OTS owner from speaker order.
+- `src/lib/panel-utils.js`: named OTS extraction now recognizes modifiers between the character name and shoulder (for example, `サエコの反射帯付き安全ベストの肩越し`).
+- `src/lib/shared-image-quality.js`: full and compact functional-surface rules now state that a rear-facing holder with a chest-held document/device may occlude it and must never project the document front or hands through the torso.
+
+### Restart completion evidence
+
+- The full and compact rear-facing/chest-held-object rules now retain the same physical contract while the compact wording stays within the 15,000-character Web-copy budget.
+- Focused verification passed 49/49 tests, including prompt budgets, monochrome prompts, single-image synchronization, expressive direction, and STEP2 timeout coverage.
+- Fresh full verification passed 591/591 Node tests, zero-error ESLint, production build, and `git diff --check`. The existing Browserslist, mixed Gemini import, and chunk-size build warnings remain non-blocking.
+- The local Vite server was restored after the restart and returned HTTP 200 at `http://127.0.0.1:5173/`.
+- No additional paid API image was generated. A second STEP4 image remains outside the current authorization.
+
+### Required Astra efficiency decision after restart
+
+- First, inspect the remaining work and explicitly choose the lowest model that can safely execute it. For the known deterministic work (repairing one test expectation, focused tests, lint/build, and diff review), hand the implementation to Sol or Terra if the restarted Codex model selector allows it.
+- Keep Astra for unresolved root-cause analysis, cross-module routing contradictions, or interpretation of a new real prompt/image failure. Do not lower the model merely to save tokens if the failure is no longer deterministic.
+- State the chosen model and rationale before implementation. If the user changes the task or local evidence exposes a new interaction, reassess rather than following this recommendation mechanically.
+
+### Files changed in this task
+
+- `README.md`
+- `src/App.jsx`
+- `src/components/Step2Panel.jsx`
+- `src/config/openai-scenario-models.json` (new)
+- `src/hooks/useMangaWorkflow.js`
+- `src/index.css`
+- `src/lib/composition-variety.js`
+- `src/lib/fallback-chain-history.js`
+- `src/lib/openai-model-routes.js`
+- `src/lib/openai-text.js`
+- `src/lib/panel-utils.js`
+- `src/lib/prompt-assembler.js`
+- `src/lib/scenario-provider.js`
+- `src/lib/shared-image-quality.js`
+- `tests/expressive-direction.test.mjs`
+- `tests/openai-scenario-model-routing.test.mjs`
+- `tests/scenario-model-selection.test.mjs` (new)
+- `tests/watermark-model-attribution.test.mjs` (new)

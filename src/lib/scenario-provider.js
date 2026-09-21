@@ -236,6 +236,7 @@ export async function generateScenario({
   bg360Enabled,
   bg360ImageParts,
   styleJson,
+  scenarioModelId,
   onProgress,
   onCameraProgress
 }) {
@@ -385,6 +386,7 @@ export async function generateScenario({
       requestScenario: (contentPrompt) => callAI(contentPrompt, [], scenarioCastContext, onProgress, {
         timeoutMs: STEP2_TEXT_TIMEOUT_MS,
         modelRoute: 'scenario',
+        scenarioModelId,
         useWebSearch: inputMode === 'news'
       }),
       maxAttempts: 1
@@ -536,6 +538,7 @@ export async function enhanceScenarioText({
   punchlineType,
   castList,
   styleJson,
+  scenarioModelId,
   onProgress
 }) {
   return runValidatedScenarioEnhancement({
@@ -551,7 +554,11 @@ export async function enhanceScenarioText({
         validationIssues
       }),
     requestEnhancement: async (prompt) => {
-      const result = await callAI(prompt, [], buildScenarioCastContext(castList), onProgress, { timeoutMs: STEP2_TEXT_TIMEOUT_MS, modelRoute: 'scenario' });
+      const result = await callAI(prompt, [], buildScenarioCastContext(castList), onProgress, {
+        timeoutMs: STEP2_TEXT_TIMEOUT_MS,
+        modelRoute: 'scenario',
+        scenarioModelId
+      });
       return {
         text: result.text,
         usedModel: result.model,

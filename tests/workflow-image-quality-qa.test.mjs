@@ -17,7 +17,7 @@ test('image generation displays the received image before running one visible co
   assert.match(workflowSource, /formatImageQualityIssue/);
   assert.match(workflowSource, /qualityOutcome\.validationWarning/);
   assert.match(workflowSource, /const qualityMode = inferImageQualityMode\(currentPrompt\)/);
-  assert.match(workflowSource, /parseImageQualityQaResponse\(qualityResponse.text, \{ mode: qualityMode, finalPrompt: candidatePrompt \}\)/);
+  assert.match(workflowSource, /parseImageQualityQaResponse\(qualityResponse.text, \{[\s\S]*mode: qualityMode,[\s\S]*finalPrompt: candidatePrompt,[\s\S]*referenceImageCount: qualityImageParts\.length - 1/);
   assert.match(workflowSource, /buildImageQualityQaPrompt\(\{[\s\S]*scenario,[\s\S]*castList,[\s\S]*finalPrompt:\s*candidatePrompt,[\s\S]*mode:\s*qualityMode,[\s\S]*referenceImageCount/);
   assert.match(workflowSource, /originalPrompt: currentPrompt,[\s\S]*mode: qualityMode,/);
 });

@@ -211,10 +211,11 @@ ${referenceInspection}
 ${isMonochromePrompt(finalPrompt) ? MONOCHROME_QA_RULE : ''}
 
 IDENTITY LOCALIZATION: Before reporting character_reference, locate that person in THIS panel using at least two identity features independent of the feature being tested. Do not assign a neighboring person's glasses to the named person, and do not copy an observation to other panels. Each character_reference issue MUST include identity_evidence: {"location":"candidate panel position","matched_features":["first independent identity cue","second independent identity cue"],"reference_evidence":"reference sheet location and expected feature","observed_feature":"specific visible candidate feature","expected_feature":"specific approved feature"}. Occluded or ambiguous identity is unverified, not a repair target. For eyewear inspect rims, bridge and temples on that exact face; eyebrows, hair and another face's frames are not glasses.
+${referenceCount > 0 ? 'IDENTITY INVENTORY: In every spatial_checks entry return identity_checks for every visible named cast member: {"name":"cast name","location":"panel position","matched_features":["two identity cues other than eyewear"],"reference_eyewear":"glasses|no_glasses|unknown","observed_eyewear":"glasses|no_glasses|unknown","status":"ok|defect|uncertain","evidence":"visible rims, bridge and temples or their clearly visible absence"}. Inspect each face independently in each panel, including small or chibi figures. A small face is uncertain, never an automatic PASS. If known reference and observed eyewear differ, status is defect and report character_reference.' : ''}
 
 PRINT INVENTORY: In each surface_text check return printed_surfaces for every visible printed prop, including background stacks: {"subject":"stable object identifier","face":"spine/cover/page/label/display","object_axes":"visible binding, corners and object top","glyph_axes":"observed glyph top and baseline relative to that face","expected_axes":"source-grounded expected rotation","basis":"reference|same_object|explicit_contract|unknown","status":"ok|defect|uncertain","text_role":"incidental|story_required|unknown","text_role_reason":"script-grounded role"}. Do not omit print because spelling or ownership is correct. Compare glyph tops, not merely line direction. With no established print design, use uncertain; horizontal spine lettering alone is not physically impossible. For an explicit object-fixed print contract, test that contract separately from general physical plausibility. Use an empty inventory only when no printed prop is visible. Never infer a defect just to trigger a repair.
 
-READABLE TEXT INVENTORY: In each surface_text check also return visible_texts for EVERY readable or partly readable glyph sequence in the candidate, independently transcribed from pixels: {"subject":"stable region or object identifier","text":"visible glyphs, including partial text","text_role":"incidental|story_required|unknown","text_role_reason":"specific script-grounded reason"}. Inspect speech bubbles, titles, signs, chalkboards, packaging, labels, book spines/covers, pages, screens, phone screens, UI and background lettering. Use visible_texts:[] only when the scene contains zero visible glyph sequences. Incidental readable text is extra_text even when attractive or plausible for the setting. If the role cannot be established from the submitted contract, use unknown and leave it unverified. Never silently omit random readable decoration.
+READABLE TEXT INVENTORY: In each surface_text check also return visible_texts for EVERY readable or partly readable glyph sequence in the candidate, independently transcribed from pixels: {"subject":"stable region or object identifier","text":"visible glyphs, including partial text","text_role":"incidental|story_required|unknown","text_role_reason":"specific script-grounded reason","story_impact":"harmless|major_mismatch|unknown","story_impact_reason":"specific effect on setting, identity, fact, clue, action or joke"}. Inspect speech bubbles, titles, signs, chalkboards, packaging, labels, book spines/covers, pages, screens, phone screens, UI and background lettering. Use visible_texts:[] only when the scene contains zero visible glyph sequences. Plausible AI-completed incidental text is allowed when it fits the depicted setting and does not materially contradict or replace the approved story. Use major_mismatch only for a clear, consequential error such as the wrong place, organization or person identity; a false fact or value; a reversed clue; an incompatible action label; or text that changes the joke or story meaning. Minor wording, generic location labels and harmless environmental flavor are harmless. Prompt fragments, metadata, annotations and translations are always major_mismatch. If role or impact cannot be established, use unknown and leave it unverified. Never silently omit random readable decoration.
 
 OBSERVATION BEFORE EXPECTATION: record visible surface cues from the candidate pixels before comparing with the requested geometry. A desired screen is not evidence that a screen was drawn. Distinguish visible display content/controls/printing from a rear shell, rear mount, camera module or an edge. A lens alone does not prove front or back. Never relabel an observed back as a front because Action mentions a screen.
 SOURCE PRECEDENCE: explicit scenario Action/Camera and intentional gag outrank generated auxiliary EYE-LINE, COMPOSITION STAGING and FUNCTIONAL SURFACE PANEL CHECK suggestions. If these suggestions conflict with the source or projection geometry, do not use them as proof of an image defect. Keep the full submitted prompt available for exact text and manual instructions; unresolved source conflicts are unverified, not a repair instruction. Observe the actual camera view separately from the requested camera view; compare them only afterward.
@@ -235,7 +236,7 @@ ${layoutIssueRule}
 - bubble_order: in a four-panel manga, a later dialogue balloon is right of an earlier one. Identify B numbers by matching visible text to the submitted TEXT map, never by position. Correct text and correct speaker tails do not excuse reversed order.
 - title_text: an explicitly requested title is missing, duplicated, paraphrased, or illegible. Do not invent a title requirement when none is requested.
 - speaker_name: a speaker name prefix such as "キャラA:" or "キャラA「" is visibly printed inside a bubble instead of dialogue alone.
-- extra_text: a bubble or ${unitLabel} contains metadata, Action/Camera/EMOTION/TAILS labels, prompt fragments, annotations, translations, or other unscripted readable text, including incidental chalkboard, packaging, label, book or screen writing.
+- extra_text: a bubble or ${unitLabel} contains metadata, Action/Camera/EMOTION/TAILS labels, prompt fragments, annotations, translations, or unscripted readable text whose content clearly causes a major story mismatch. Plausible harmless environmental lettering is allowed.
 - unverified: ${unitLabel} anatomy or text is too cropped, obscured, or illegible to verify.
 
 Ordinary background people appropriate to the setting, such as office colleagues, are not main-cast duplicates. Flag a clone only with clear matching main-cast identity cues; preserve explicit empty-scene requirements.
@@ -274,7 +275,7 @@ ${String(finalPrompt)}
 `.trim();
 };
 
-export const parseImageQualityQaResponse = (responseText, { mode = 'four-panel', finalPrompt = '' } = {}) => {
+export const parseImageQualityQaResponse = (responseText, { mode = 'four-panel', finalPrompt = '', referenceImageCount = 0 } = {}) => {
   const parsed = extractJsonObject(responseText);
   if (!parsed || typeof parsed.pass !== 'boolean' || !Array.isArray(parsed.issues)) {
     return { pass: false, issues: [unverifiedIssue('Could not parse the visual QA response.')] };
@@ -329,6 +330,31 @@ export const parseImageQualityQaResponse = (responseText, { mode = 'four-panel',
       continue;
     }
     seenPanels.add(entry.panel);
+    if (referenceImageCount > 0) {
+      if (!Array.isArray(entry.identity_checks) || entry.identity_checks.length === 0) {
+        issues.push({ type: 'unverified', panel: entry.panel, subject: 'character_reference', reason: 'Visible cast identity and eyewear inventory is missing for this panel.' });
+      } else {
+        for (const identity of entry.identity_checks) {
+          const cues = Array.isArray(identity?.matched_features)
+            ? identity.matched_features.filter(value => typeof value === 'string' && value.trim())
+            : [];
+          const eyewearValues = ['glasses', 'no_glasses', 'unknown'];
+          const grounded = typeof identity?.name === 'string' && identity.name.trim()
+            && typeof identity?.location === 'string' && identity.location.trim()
+            && typeof identity?.evidence === 'string' && identity.evidence.trim()
+            && cues.length >= 2
+            && eyewearValues.includes(identity?.reference_eyewear)
+            && eyewearValues.includes(identity?.observed_eyewear)
+            && ['ok', 'defect', 'uncertain'].includes(identity?.status);
+          if (!grounded || identity.reference_eyewear === 'unknown' || identity.observed_eyewear === 'unknown' || identity.status === 'uncertain') {
+            issues.push({ type: 'unverified', panel: entry.panel, subject: identity?.name || 'character_reference', reason: 'A visible cast member lacks conclusive per-panel eyewear evidence.' });
+          } else if (identity.reference_eyewear !== identity.observed_eyewear || identity.status === 'defect') {
+            issues.push({ type: 'character_reference', panel: entry.panel, subject: identity.name,
+              reason: `Eyewear mismatch at ${identity.location}: reference ${identity.reference_eyewear}, observed ${identity.observed_eyewear}. ${identity.evidence}` });
+          }
+        }
+      }
+    }
     for (const type of spatialTypes) {
       const check = entry[type];
       const evidence = typeof check?.evidence === 'string' ? check.evidence.trim() : '';
@@ -380,11 +406,14 @@ export const parseImageQualityQaResponse = (responseText, { mode = 'four-panel',
         } else {
           for (const item of visibleTexts) {
             const grounded = ['subject', 'text', 'text_role', 'text_role_reason'].every(key => typeof item?.[key] === 'string' && item[key].trim());
+            const impactGrounded = ['story_impact', 'story_impact_reason'].every(key => typeof item?.[key] === 'string' && item[key].trim());
             if (!grounded || !['incidental', 'story_required', 'unknown'].includes(item?.text_role)) {
-              issues.push({ type: 'unverified', panel: entry.panel, subject: item?.subject || type, reason: 'A readable text region lacks a transcription or a script-grounded role.' });
-            } else if (item.text_role === 'incidental') {
+              issues.push({ type: 'unverified', panel: entry.panel, subject: item?.subject || type, reason: 'A readable text region lacks a transcription, role, or story-impact classification.' });
+            } else if (item.text_role !== 'story_required' && (!impactGrounded || !['harmless', 'major_mismatch', 'unknown'].includes(item.story_impact))) {
+              issues.push({ type: 'unverified', panel: entry.panel, subject: item.subject, reason: 'Readable text has no valid story-impact classification.' });
+            } else if (item.text_role === 'incidental' && item.story_impact === 'major_mismatch') {
               issues.push({ type: 'extra_text', panel: entry.panel, subject: item.subject, reason: `Unscripted readable text "${item.text}" is visible. ${item.text_role_reason}` });
-            } else if (item.text_role === 'unknown') {
+            } else if (item.text_role === 'unknown' || item.story_impact === 'unknown') {
               issues.push({ type: 'unverified', panel: entry.panel, subject: item.subject, reason: `Readable text "${item.text}" has no verified role in the submitted contract. ${item.text_role_reason}` });
             }
           }

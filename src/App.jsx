@@ -126,6 +126,7 @@ function App() {
     setExplanation,
     explanationNotice,
     scenarioThought,
+    scenarioModelId,
     selectedEngine,
     setBg360Enabled,
     setCastList,
@@ -156,6 +157,7 @@ function App() {
     setPolicyErrorMsg,
     setPunchlineType,
     setScenario,
+    setScenarioModelId,
     setShowModal,
     setShowOpenAIKeyModal,
     setTargetDate,
@@ -355,6 +357,8 @@ function App() {
               punchlineType={punchlineType}
               effectivePunchlineType={effectivePunchlineType}
               setPunchlineType={setPunchlineType}
+              scenarioModelId={scenarioModelId}
+              setScenarioModelId={setScenarioModelId}
               isSearching={isSearching}
               scenarioActionRef={step2ActionRef}
               scenarioProgressRef={step2ProgressRef}

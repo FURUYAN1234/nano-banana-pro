@@ -257,7 +257,7 @@ test('quality prompt prioritizes anatomy, hand side, prop ownership, and bubble 
   assert.match(prompt, /UNRELATED_RENDERING_NOISE/); // Keep the complete submitted contract, including manual edits.
 });
 
-test('single-image QA cannot silently ignore readable incidental text on props or backgrounds', () => {
+test('single-image QA allows harmless AI-completed setting text but rejects major story mismatches', () => {
   const prompt = buildImageQualityQaPrompt({ mode: 'single-image', finalPrompt: 'Add no random text.' });
   assert.match(prompt, /READABLE TEXT INVENTORY/);
   assert.match(prompt, /chalkboards.*packaging.*book spines.*phone screens/is);
@@ -265,16 +265,44 @@ test('single-image QA cannot silently ignore readable incidental text on props o
 
   const checks = spatialChecks(1);
   checks[0].surface_text.visible_texts = [
-    { subject: 'chalkboard', text: '放課後は', text_role: 'incidental', text_role_reason: 'No chalkboard wording is requested.' },
+    { subject: 'shed sign', text: '整備用具庫', text_role: 'incidental', text_role_reason: 'Generic label fitting the school maintenance setting.', story_impact: 'harmless', story_impact_reason: 'It changes no setting, identity, fact, clue, action, or joke.' },
   ];
-  const result = parseImageQualityQaResponse(JSON.stringify({ pass: true, issues: [], observations, spatial_checks: checks }), { mode: 'single-image' });
-  assert.equal(result.pass, false);
-  assert.ok(result.issues.some(issue => issue.type === 'extra_text' && issue.subject === 'chalkboard'));
+  const harmless = parseImageQualityQaResponse(JSON.stringify({ pass: true, issues: [], observations, spatial_checks: checks }), { mode: 'single-image' });
+  assert.equal(harmless.pass, true);
+
+  checks[0].surface_text.visible_texts[0] = {
+    subject: 'shed sign', text: '病院隔離棟', text_role: 'incidental', text_role_reason: 'Unscripted location label.',
+    story_impact: 'major_mismatch', story_impact_reason: 'It changes the school maintenance setting into a hospital isolation ward.',
+  };
+  const mismatch = parseImageQualityQaResponse(JSON.stringify({ pass: true, issues: [], observations, spatial_checks: checks }), { mode: 'single-image' });
+  assert.equal(mismatch.pass, false);
+  assert.ok(mismatch.issues.some(issue => issue.type === 'extra_text' && issue.subject === 'shed sign'));
 
   const missing = spatialChecks(1);
   delete missing[0].surface_text.visible_texts;
   const unverified = parseImageQualityQaResponse(JSON.stringify({ pass: true, issues: [], observations, spatial_checks: missing }), { mode: 'single-image' });
   assert.ok(unverified.issues.some(issue => issue.type === 'unverified' && issue.subject === 'surface_text'));
+});
+
+test('reference QA requires per-panel eyewear evidence and catches missing glasses on a small figure', () => {
+  const checks = spatialChecks();
+  checks.forEach(check => {
+    check.identity_checks = [{
+      name: 'リン', location: 'right background', matched_features: ['brown twin tails', 'work clothes'],
+      reference_eyewear: 'glasses', observed_eyewear: 'glasses', status: 'ok', evidence: 'Rims, bridge and temples are visible on this face.',
+    }];
+  });
+  checks[3].identity_checks[0] = {
+    name: 'リン', location: 'rightmost small chibi figure', matched_features: ['brown twin tails', 'work clothes'],
+    reference_eyewear: 'glasses', observed_eyewear: 'no_glasses', status: 'defect', evidence: 'Both eyes and nose bridge are clear but no rims, bridge or temples are drawn.',
+  };
+  const result = parseImageQualityQaResponse(JSON.stringify({ pass: true, issues: [], observations, spatial_checks: checks }), { referenceImageCount: 2 });
+  assert.equal(result.pass, false);
+  assert.ok(result.issues.some(issue => issue.type === 'character_reference' && issue.panel === 4 && issue.subject === 'リン'));
+
+  delete checks[3].identity_checks;
+  const missing = parseImageQualityQaResponse(JSON.stringify({ pass: true, issues: [], observations, spatial_checks: checks }), { referenceImageCount: 2 });
+  assert.ok(missing.issues.some(issue => issue.type === 'unverified' && issue.panel === 4 && issue.subject === 'character_reference'));
 });
 
 test('speaker-tail endpoint mismatch overrides a contradictory PASS', () => {

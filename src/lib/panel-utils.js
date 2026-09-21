@@ -987,18 +987,27 @@ const extractExplicitRearSubject = (text, castNames) => {
   const cameraText = (String(text || '').match(CAMERA_INSTRUCTION_LINE_RE) || []).join(' ');
   const shoulderCamera = /肩|ショルダー|shoulder|\bOTS\b/i.test(cameraText);
   const actionText = String(text || '').replace(CAMERA_INSTRUCTION_LINE_RE, '').replace(/[「『"][^」』"\n]*[」』"]/g, '');
+  const castNamePattern = castNames.map(escapeRegex).join('|');
   // Cameraの撮影位置を優先し、Action内の人物の立ち位置を撮影位置と取り違えない。
   for (const [source, isCamera] of [[cameraText, true], [actionText, false]]) {
-    const subject = castNames.find((name) => {
+    const explicitShoulderSubject = castNames.find((name) => {
       const escapedName = escapeRegex(name);
-      const japaneseShoulder = new RegExp(`\\[?${escapedName}\\]?(?:の)?(?:右|左)?(?:肩|ショルダー)(?:越し|ごし)`, 'i');
+      // 衣装・役割の修飾語は許可するが、文の区切りや別人物まで跨いで
+      // 肩越しの撮影対象を取り違えない。
+      const japaneseShoulder = new RegExp(`\\[?${escapedName}\\]?(?:の(?:(?!${castNamePattern})[^\\n、，,。.!?！？;；]){0,48}?)?(?:右|左)?(?:肩|ショルダー)(?:越し|ごし)`, 'i');
       const englishShoulder = new RegExp(`(?:over|from\\s+behind|behind)\\s+(?:the\\s+)?\\[?${escapedName}\\]?(?:['’]s)?\\s+(?:(?:right|left)\\s+)?shoulder`, 'i');
-      const japaneseRear = new RegExp(`\\[?${escapedName}\\]?の(?:右|左)?(?:後方|後ろ|背後|背中側)`, 'i');
-      const englishRear = new RegExp(`(?:from\\s+)?behind\\s+(?:the\\s+)?\\[?${escapedName}\\]?(?![\\p{L}\\p{N}_])`, 'iu');
-      return japaneseShoulder.test(source) || englishShoulder.test(source)
-        || (isCamera && shoulderCamera && (japaneseRear.test(source) || englishRear.test(source)));
+      return japaneseShoulder.test(source) || englishShoulder.test(source);
     });
-    if (subject) return subject;
+    if (explicitShoulderSubject) return explicitShoulderSubject;
+    if (isCamera && shoulderCamera) {
+      const rearSubject = castNames.find((name) => {
+        const escapedName = escapeRegex(name);
+        const japaneseRear = new RegExp(`\\[?${escapedName}\\]?の(?:右|左)?(?:後方|後ろ|背後|背中側)`, 'i');
+        const englishRear = new RegExp(`(?:from\\s+)?behind\\s+(?:the\\s+)?\\[?${escapedName}\\]?(?![\\p{L}\\p{N}_])`, 'iu');
+        return japaneseRear.test(source) || englishRear.test(source);
+      });
+      if (rearSubject) return rearSubject;
+    }
   }
   return '';
 };
@@ -1015,7 +1024,11 @@ const buildRequiredDepthAssignment = (speakers, listeners, requireVisibleRear = 
   if (!requireVisibleRear) {
     return 'VIEWPOINT FREEDOM: three-quarter/profile; bold height/tilt/foreshortening; no forced rear shoulder.';
   }
-  const participants = [...new Set([...speakers, ...listeners])];
+  const participants = [...new Set([
+    ...speakers,
+    ...listeners,
+    ...(explicitRearSubject ? [explicitRearSubject] : [])
+  ])];
   const partner = participants.includes(explicitRearSubject)
     ? explicitRearSubject
     : (speakers[1] || listeners[0] || 'described listener group');
@@ -1043,11 +1056,12 @@ export const buildPanelEyeLineRule = (panelText, castList) => {
     .map((match) => match[1].trim())
     .filter((name, index, names) => name && names.indexOf(name) === index);
   const actionAndDialogueText = text.replace(CAMERA_INSTRUCTION_LINE_RE, '');
-  const mentionedCastNames = [...new Set(collectCastNames(castList)
+  const canonicalCastNames = [...new Set(collectCastNames(castList)
     .map((name) => name.split('(')[0].trim())
-    .filter(Boolean))]
+    .filter(Boolean))];
+  const mentionedCastNames = canonicalCastNames
     .filter((name) => actionAndDialogueText.includes(name));
-  const explicitRearSubject = extractExplicitRearSubject(text, [...new Set([...mentionedCastNames, ...speakers])]);
+  const explicitRearSubject = extractExplicitRearSubject(text, canonicalCastNames);
   const cameraText = (text.match(CAMERA_INSTRUCTION_LINE_RE) || []).join(' ');
   const requestedRearCamera = Boolean(explicitRearSubject) || EXPLICIT_REAR_CAMERA_RE.test(cameraText);
   const explicitDetailCamera = !explicitRearSubject && EXPLICIT_DETAIL_CAMERA_RE.test(cameraText);
@@ -1072,6 +1086,10 @@ export const buildPanelEyeLineRule = (panelText, castList) => {
     return `EYE-LINE LOCK: obey USER STAGING LOCK exactly for speakers and listeners; never lens/front unless explicit direct address. ${stagingSides} ${buildRequiredDepthAssignment(speakers, listeners, requestedRearCamera, explicitRearSubject, functionalActionMode)} Camera preserves the scenario direction.`;
   }
   if (speakers.length < 2 && !stagedSpeakerAndListener) {
+    if (requestedRearCamera) {
+      const listeners = mentionedCastNames.filter((name) => !speakers.includes(name));
+      return `EYE-LINE LOCK: preserve each scripted gaze target; never lens/front. ${buildRequiredDepthAssignment(speakers, listeners, true, explicitRearSubject, functionalActionMode)} Camera preserves the scenario direction.`;
+    }
     return explicitDetailCamera
       ? 'EXPLICIT DETAIL CAMERA LOCK: preserve the scripted overhead, hand-detail, or close-up framing; do not invent a rear shoulder or force frontal portraits.'
       : '';

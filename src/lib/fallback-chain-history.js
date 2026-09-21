@@ -25,7 +25,9 @@ import {
 
 const OPENAI_MODEL_NOTES = {
   'gpt-6-astra': 'STEP2専用・物語構成と演出推論',
-  'gpt-5.6-sol': 'STEP2専用・現行テキスト経路',
+  'gpt-5.6-sol': 'STEP2専用・高い構成力を保ちつつ節約',
+  'gpt-5.6-terra': 'STEP2専用・品質と料金のバランス',
+  'gpt-5.6-luna': 'STEP2専用・簡潔な題材を低コストで構成',
   'gpt-4.1': '高品質・1Mコンテキスト',
   'gpt-4.1-mini': 'コスト効率・高速',
   'gpt-4.1-nano': '最軽量・最速',

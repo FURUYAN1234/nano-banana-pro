@@ -126,6 +126,34 @@ body {
   transform: translateY(-50%);
 }
 
+.scenario-model-select-input {
+  min-height: 32px;
+  padding: 4px 8px;
+  border: 1px solid #38bdf8;
+  border-radius: 5px;
+  background-color: #e0f2fe;
+  color: #0f172a;
+  color-scheme: light;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  outline: none;
+}
+
+.scenario-model-select-input:hover {
+  background-color: #bae6fd;
+}
+
+.scenario-model-select-input:focus-visible {
+  border-color: #0284c7;
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.35);
+}
+
+.scenario-model-select-input option {
+  background-color: #0f172a;
+  color: #f8fafc;
+}
+
 .step4-help-copy {
   font-size: 11px;
   line-height: 1.65;
