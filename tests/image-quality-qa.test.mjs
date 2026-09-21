@@ -34,6 +34,11 @@ const spatialChecks = (count = 4) => Array.from({ length: count }, (_, index) =>
     lens: { requested: 'unspecified', observed: 'ordinary depth, no required lens effect', status: 'not_applicable' },
   } },
   object_geometry: { status: 'ok', evidence: 'The page is in front of the hand; the rear finger contour is hidden at its edge.' },
+  hand_geometry: { status: 'ok', evidence: 'The prominent open hand resolves as one thumb and four fingers.', hands: [{
+    subject: 'actor open hand', location: 'panel foreground', pose: 'open toward camera', visible_digits: 5, occluded_digits: 0,
+    observed_endpoint: 'hand', wrist_palm_connection: 'clear', palm_evidence: 'A palm plane is visibly joined to the wrist and five digits.',
+    status: 'ok', evidence: 'One thumb and four separate finger contours are visible and connect to the palm.',
+  }] },
   surface_text: {
     status: 'ok',
     evidence: 'The heading follows the visible page corners and tilt; the thin page edges are separate.',
@@ -46,6 +51,25 @@ const spatialChecks = (count = 4) => Array.from({ length: count }, (_, index) =>
   }] },
 }));
 const observations = { title: 'No title requested', dialogue: 'Panels 1-4 have no bubbles as requested', hands: 'No hand side requested', props: 'Paper held at its lower edge' };
+
+test('silent scene does not require a per-bubble tail inventory', () => {
+  const checks = spatialChecks(1);
+  checks[0].bubble_speaker = {
+    status: 'ok',
+    evidence: 'No speech bubble is visible in this silent scene.',
+    bubbles: [],
+    left_to_right_texts: [],
+  };
+  const review = parseImageQualityQaResponse(JSON.stringify({
+    pass: true,
+    issues: [],
+    observations,
+    spatial_checks: checks,
+  }), { mode: 'single-image' });
+
+  assert.equal(review.pass, true);
+  assert.ok(!review.issues.some(issue => issue.type === 'bubble_speaker'));
+});
 
 test('reading order rejects reversed balloon bodies even when text and speaker tails pass', () => {
   const review = (positions, mode) => {
@@ -77,13 +101,24 @@ test('physical text order overrides reviewer PASS and invented correct B coordin
   const review = texts => {
     const checks = spatialChecks();
     checks[0].bubble_speaker = { status: 'ok', evidence: 'Reviewer claims correct order.', left_to_right_texts: texts,
-      bubbles: ['先に話す。', '返事する。'].map((text, i) => ({ bubble: `B${i + 1}`, text, expected_speaker: 'A', observed_tail_target: 'A', tail_endpoint_evidence: 'Tail reaches A.', center_x: i ? 0.3 : 0.7, position_evidence: 'Reviewer copied slots.' })) };
+      bubbles: ['先に話す。', '返事する。'].map((text, i) => ({
+        bubble: `B${i + 1}`, text, expected_speaker: 'A', observed_tail_target: 'A', tail_endpoint_evidence: 'Tail reaches A.',
+        endpoint_relation: 'touches_speaker', tail_tip: { x: 0.5, y: 0.5 }, speaker_anchor: { x: 0.51, y: 0.51, part: 'head' },
+        root_relation: 'lower_speaker_facing', path_relation: 'clear', tail_path_evidence: 'Root starts below center and the path stays in empty space.',
+        center_x: i ? 0.3 : 0.7, position_evidence: 'Reviewer copied slots.',
+      })) };
     return parseImageQualityQaResponse(JSON.stringify({ pass: true, issues: [], observations, spatial_checks: checks }), { finalPrompt });
   };
   assert.equal(review(['返事する。', '先に話す。']).pass, true);
   const reversed = review(['先に話す。', '返事する。']);
   assert.equal(reversed.pass, false);
   assert.ok(reversed.issues.some(issue => issue.type === 'bubble_order'));
+  const punctuationDrift = review(['先に話す。', '返事するー！']);
+  assert.equal(punctuationDrift.pass, false);
+  assert.ok(
+    punctuationDrift.issues.some(issue => issue.type === 'bubble_order'),
+    'benign OCR punctuation drift must not downgrade a visible reversed order to unverified'
+  );
   for (const texts of [undefined, [], ['先に話す。'], ['違う。', '先に話す。']]) {
     assert.ok(review(texts).issues.some(issue => issue.type === 'unverified' && issue.subject === 'bubble_order'));
   }
@@ -207,9 +242,45 @@ test('QA retains exact title and hand instructions from the submitted prompt', (
   assert.match(prompt, /Title: 星の皿/);
   assert.match(prompt, /Use anatomical LEFT hand for the cup/);
   assert.match(prompt, /title_text/);
+  assert.match(prompt, /TITLE BAND CHECK/);
+  assert.match(prompt, /closed rectangular outline.*panel_layout/i);
+  assert.match(prompt, /one thumb.*four fingers/i);
+  assert.match(prompt, /large.*foreground.*foreshortened.*hand/i);
   assert.match(prompt, /anatomical.*screen-left/i);
   const result = parseImageQualityQaResponse('{"pass":false,"issues":[{"type":"title_text","reason":"missing title"}]}');
   assert.equal(result.issues[0].type, 'title_text');
+});
+
+test('QA requires grounded digit evidence and rejects a four-digit foreground hand', () => {
+  const checks = spatialChecks();
+  checks[3].hand_geometry = { status: 'defect', evidence: 'The large foreground hand has only four total digits.', hands: [{
+    subject: 'Hikari foreground hand', location: 'panel 4 bottom center', pose: 'open toward camera', visible_digits: 4, occluded_digits: 0,
+    observed_endpoint: 'hand', wrist_palm_connection: 'clear', palm_evidence: 'A palm plane is visibly joined to the wrist.',
+    status: 'defect', evidence: 'Four digit contours connect to the palm; no fifth digit is visible or plausibly occluded.',
+  }] };
+  const rejected = parseImageQualityQaResponse(JSON.stringify({ pass: true, issues: [], observations, spatial_checks: checks }));
+  assert.equal(rejected.pass, false);
+  assert.ok(rejected.issues.some(issue => issue.type === 'anatomy' && issue.panel === 4 && /four|4/i.test(issue.reason)));
+
+  delete checks[3].hand_geometry;
+  const missing = parseImageQualityQaResponse(JSON.stringify({ pass: true, issues: [], observations, spatial_checks: checks }));
+  assert.ok(missing.issues.some(issue => issue.type === 'unverified' && issue.panel === 4 && issue.subject === 'hand_geometry'));
+});
+
+test('QA rejects an arm endpoint rendered as footwear even when digit counts look plausible', () => {
+  const checks = spatialChecks();
+  checks[3].hand_geometry = { status: 'ok', evidence: 'The reviewer counted five protrusions and incorrectly accepted the endpoint.', hands: [{
+    subject: 'foreground actor left arm endpoint', location: 'lower-left of panel', pose: 'resting', visible_digits: 5, occluded_digits: 0,
+    observed_endpoint: 'shoe', wrist_palm_connection: 'missing', palm_evidence: 'The endpoint has a sole, toe box and shoe opening instead of a wrist and palm.',
+    status: 'ok', evidence: 'The reviewer mislabeled five silhouette protrusions as fingers.',
+  }] };
+  const rejected = parseImageQualityQaResponse(JSON.stringify({ pass: true, issues: [], observations, spatial_checks: checks }));
+  assert.equal(rejected.pass, false);
+  assert.ok(rejected.issues.some(issue => issue.type === 'anatomy' && issue.panel === 4 && /shoe|footwear/i.test(issue.reason)));
+  const prompt = buildImageQualityQaPrompt();
+  assert.match(prompt, /observed_endpoint/);
+  assert.match(prompt, /wrist_palm_connection/);
+  assert.match(prompt, /shoe.*arm|arm.*shoe/i);
 });
 
 test('quality prompt prioritizes anatomy, hand side, prop ownership, and bubble text over background', () => {
@@ -218,12 +289,14 @@ test('quality prompt prioritizes anatomy, hand side, prop ownership, and bubble 
     castList: 'アカリ: 主人公',
     finalPrompt: "## Panel 3\nCamera: ヒカリの肩越し\nFUNCTIONAL SURFACE PANEL CHECK: solve geometry\nVISIBLE REAR DEPTH CHECK: camera is physically behind [ヒカリ]'s shoulder\nAction (visual only): ヒカリがスマホを読む。\nUNRELATED_RENDERING_NOISE: should be removed",
     referenceImageCount: 2,
+    panelCropCount: 4,
   });
 
   for (const type of ['panel_layout', 'character_reference', 'anatomy', 'hand_side', 'prop_ownership', 'prop_orientation', 'camera_geometry', 'bubble_text', 'bubble_speaker', 'speaker_name', 'extra_text', 'unverified']) {
     assert.match(prompt, new RegExp(type));
   }
   assert.match(prompt, /first supplied image is the generated candidate/i);
+  assert.match(prompt, /next 4 images are enlarged panel crops.*panel 1 through panel 4/i);
   assert.match(prompt, /following 2 images are the approved character reference sheets/i);
   assert.match(prompt, /outfit, hairstyle, hair color, eye color, eyewear, or defining accessories/i);
   assert.match(prompt, /scenario or final prompt explicitly overrides/i);
@@ -255,6 +328,14 @@ test('quality prompt prioritizes anatomy, hand side, prop ownership, and bubble 
   assert.match(prompt, /submit.*present.*show.*recipient/i);
   assert.match(prompt, /tabletop.*face-up.*text baseline.*intended reader/i);
   assert.match(prompt, /UNRELATED_RENDERING_NOISE/); // Keep the complete submitted contract, including manual edits.
+});
+
+test('four-panel QA inspects both watermark edges while single-image QA does not invent a footer', () => {
+  const fourPanel = buildImageQualityQaPrompt({ mode: 'four-panel' });
+  assert.match(fourPanel, /WATERMARK EDGE CHECK/);
+  assert.match(fourPanel, /complete left and right footer text/);
+  assert.match(fourPanel, /cropped or missing required watermark text as panel_layout/);
+  assert.doesNotMatch(buildImageQualityQaPrompt({ mode: 'single-image' }), /WATERMARK EDGE CHECK/);
 });
 
 test('single-image QA allows harmless AI-completed setting text but rejects major story mismatches', () => {
@@ -320,9 +401,68 @@ test('speaker-tail endpoint mismatch overrides a contradictory PASS', () => {
   assert.ok(review.issues.some(issue => issue.type === 'bubble_speaker' && issue.panel === 4 && /B2/.test(issue.reason)));
 });
 
-test('quality review image parts keep the candidate first and append valid character sheets', () => {
+test('speaker-tail verification uses the submitted speaker map and measured endpoint geometry', () => {
+  const finalPrompt = `## Panel 1
+Dialogue: silent
+## Panel 2
+Dialogue: silent
+## Panel 3
+Dialogue (verbatim bubbles): TEXT (PRINT VALUES ONLY): B1="菓子をしまいなさい。"; B2="香りで交渉する流れ？". TAIL TIP LOCK: B1=>[サエコ]; B2=>[ミク].
+## Panel 4
+Dialogue: silent`;
+  const makeReview = bubbles => {
+    const checks = spatialChecks();
+    checks[2].bubble_speaker = {
+      status: 'ok', evidence: 'Each tail was traced from balloon outline to its visible endpoint.',
+      left_to_right_texts: ['香りで交渉する流れ？', '菓子をしまいなさい。'], bubbles,
+    };
+    return parseImageQualityQaResponse(JSON.stringify({ pass: true, issues: [], observations, spatial_checks: checks }), { finalPrompt });
+  };
+  const validB2 = {
+    bubble: 'B2', text: '香りで交渉する流れ？', expected_speaker: 'ミク', observed_tail_target: 'ミク',
+    tail_endpoint_evidence: 'Tip touches Miku head outline.', endpoint_relation: 'touches_speaker',
+    tail_tip: { x: 0.44, y: 0.38 }, speaker_anchor: { x: 0.46, y: 0.40, part: 'head' },
+    root_relation: 'lower_speaker_facing', path_relation: 'clear', tail_path_evidence: 'Root starts on the lower speaker-facing outline and the path is clear.',
+    center_x: 0.3, position_evidence: 'Balloon body at left.',
+  };
+  const baseB1 = {
+    bubble: 'B1', text: '菓子をしまいなさい。', expected_speaker: 'サエコ', observed_tail_target: 'サエコ',
+    tail_endpoint_evidence: 'Tip is claimed to touch Saeko.', endpoint_relation: 'touches_speaker',
+    tail_tip: { x: 0.82, y: 0.25 }, speaker_anchor: { x: 0.40, y: 0.65, part: 'head' },
+    root_relation: 'lower_speaker_facing', path_relation: 'clear', tail_path_evidence: 'Root starts on the lower speaker-facing outline and the path is clear.',
+    center_x: 0.7, position_evidence: 'Balloon body at right.',
+  };
+
+  const separated = makeReview([baseB1, validB2]);
+  assert.equal(separated.pass, false);
+  assert.ok(separated.issues.some(issue => issue.type === 'bubble_speaker' && issue.subject === 'B1'));
+
+  const falsifiedExpectedSpeaker = makeReview([{ ...baseB1, expected_speaker: 'ミク', observed_tail_target: 'ミク',
+    tail_tip: { x: 0.44, y: 0.38 }, speaker_anchor: { x: 0.46, y: 0.40, part: 'head' } }, validB2]);
+  assert.equal(falsifiedExpectedSpeaker.pass, false);
+  assert.ok(falsifiedExpectedSpeaker.issues.some(issue => issue.type === 'bubble_speaker' && issue.subject === 'B1' && /サエコ/.test(issue.reason)));
+
+  const ambiguous = makeReview([{ ...baseB1, endpoint_relation: 'ambiguous', tail_endpoint_evidence: 'The tail disappears between two heads.' }, validB2]);
+  assert.equal(ambiguous.pass, false);
+  assert.ok(ambiguous.issues.some(issue => issue.type === 'unverified' && issue.subject === 'B1'));
+
+  const correct = makeReview([{ ...baseB1, tail_tip: { x: 0.39, y: 0.63 } }, validB2]);
+  assert.equal(correct.pass, true);
+
+  const crossesHead = makeReview([{ ...baseB1, tail_tip: { x: 0.39, y: 0.63 },
+    path_relation: 'crosses_head', tail_path_evidence: 'The tail passes across Saeko\'s crown before reaching her mouth.' }, validB2]);
+  assert.equal(crossesHead.pass, false);
+  assert.ok(crossesHead.issues.some(issue => issue.type === 'bubble_speaker' && issue.subject === 'B1' && /crosses_head/.test(issue.reason)));
+});
+
+test('quality review image parts keep the candidate first, then every panel crop, then character sheets', () => {
   const parts = buildImageQualityQaImageParts({
     candidate: { mimeType: 'image/png', base64Img: 'candidate-data' },
+    panelImages: [
+      'data:image/png;base64,panel-one',
+      'invalid-panel',
+      'data:image/jpeg;base64,panel-two',
+    ],
     referenceImages: [
       'data:image/jpeg;base64,reference-one',
       'not-an-image',
@@ -332,6 +472,8 @@ test('quality review image parts keep the candidate first and append valid chara
 
   assert.deepEqual(parts, [
     { inlineData: { mimeType: 'image/png', data: 'candidate-data' } },
+    { inlineData: { mimeType: 'image/png', data: 'panel-one' } },
+    { inlineData: { mimeType: 'image/jpeg', data: 'panel-two' } },
     { inlineData: { mimeType: 'image/jpeg', data: 'reference-one' } },
     { inlineData: { mimeType: 'image/png', data: 'reference-two' } },
   ]);

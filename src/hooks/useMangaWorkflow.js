@@ -22,6 +22,7 @@ import {
   normalizePromptProviderFamily
 } from '../lib/prompt-assembler';
 import { addGenerationHistoryItem } from '../lib/generation-history';
+import { extractMangaPanelCrops, normalizePageCandidate } from '../lib/manga-page-layout.js';
 import { generateScenario, enhanceScenarioText } from '../lib/scenario-provider';
 import { fixPolicyViolation } from '../lib/policy-fixer';
 import { verifyApiKeyConnection } from '../lib/api-key-preflight';
@@ -1258,6 +1259,26 @@ export default function useMangaWorkflow() {
       showStatus("クリップボードにコピーしました！");
     }
   };
+  // Local-only placement also makes existing successful API images reviewable
+  // without paying for another generation. Always retain the original pixels.
+  const normalizeDisplayedPage = async () => {
+    if (!generatedImage || isGeneratingImage || inferImageQualityMode(finalPrompt) !== 'four-panel') return;
+    const previous = generationHistory.find(item => item.img === generatedImage);
+    const sourceImage = previous?.originalImage || generatedImage;
+    const match = sourceImage.match(/^data:(image\/[^;]+);base64,([\s\S]+)$/);
+    if (!match) return showStatus('配置する画像を読み取れません。');
+    const candidate = await normalizePageCandidate({ mimeType: match[1], base64Img: match[2] });
+    if (!candidate.pageLayout.applied) return showStatus(`ページ配置は未適用です。${candidate.pageLayout.reason} 元画像を保持しました。`);
+    const img = `data:${candidate.mimeType};base64,${candidate.base64Img}`;
+    setGeneratedImage(img);
+    setImageQualityNeedsRepair(false);
+    setGenerationHistory(items => addGenerationHistoryItem(items, {
+      id: Date.now(), img, originalImage: sourceImage, pageLayout: candidate.pageLayout,
+      qualityPass: false, selected: true,
+    }));
+    showStatus('ページ比率を揃えました。元画像も保持しています。追加API課金なし／配置後の画像QAは未実行です。');
+  };
+
   // --- Step 4: Image Generation ---
   // [v2.79] 戻り値変更: フルオート連鎖用（true=成功, false=失敗）
   const generateImageOnce = async (skipGuard = false, overridePrompt = null, generationOptions = {}) => {
@@ -1362,13 +1383,26 @@ export default function useMangaWorkflow() {
         }
         const normalizedImage = String(response.base64Img || '').replace(/\s+/g, '');
         if (!normalizedImage) throw new Error('Image response did not include usable image data.');
-        return {base64Img: normalizedImage, mimeType: response.mimeType || 'image/png', modelId: response.usedModel};
+        const candidate = {base64Img: normalizedImage, mimeType: response.mimeType || 'image/png', modelId: response.usedModel};
+        if (qualityMode !== 'four-panel') return candidate;
+        const normalized = await normalizePageCandidate(candidate);
+        if (normalized.pageLayout.applied) {
+          const layout = normalized.pageLayout.layout;
+          statCallback(`[ページ配置] ${layout.width}×${layout.height}／タイトル${layout.titleHeight}px・コマ全体${layout.panelHeight}px・透かし${layout.footerHeight}px。各コマの相対高と書体を保持し、元画像も保存しました。`);
+        } else {
+          statCallback(`[ページ配置] 未適用：${normalized.pageLayout.reason} 元画像を保持します。`);
+        }
+        return normalized;
       };
 
       const reviewImageCandidate = async (candidate, candidatePrompt) => {
         try {
+          const panelImages = qualityMode === 'four-panel'
+            ? await extractMangaPanelCrops(`data:${candidate.mimeType || 'image/png'};base64,${candidate.base64Img}`)
+            : [];
           const qualityImageParts = buildImageQualityQaImageParts({
             candidate,
+            panelImages,
             referenceImages: images,
           });
           const qualityPrompt = buildImageQualityQaPrompt({
@@ -1376,7 +1410,8 @@ export default function useMangaWorkflow() {
             castList,
             finalPrompt: candidatePrompt,
             mode: qualityMode,
-            referenceImageCount: qualityImageParts.length - 1,
+            referenceImageCount: images.length,
+            panelCropCount: panelImages.length,
           });
           const qualityResponse = await callAI(
             qualityPrompt,
@@ -1387,8 +1422,12 @@ export default function useMangaWorkflow() {
           const review = parseImageQualityQaResponse(qualityResponse.text, {
             mode: qualityMode,
             finalPrompt: candidatePrompt,
-            referenceImageCount: qualityImageParts.length - 1,
+            referenceImageCount: images.length,
           });
+          if (candidate.pageLayout?.applied === false) {
+            review.pass = false;
+            review.issues.push({ type: 'unverified', panel: null, subject: 'page_layout', reason: candidate.pageLayout.reason });
+          }
           if (qualityMode === 'single-image') return review;
           // 正解を見せた総合QAとは別に、候補画像1枚だけから文字と位置を読む。
           let inventoryText = '';
@@ -1418,8 +1457,14 @@ export default function useMangaWorkflow() {
       const retainedImage = generationOptions.reviewExisting
         ? String(generatedImage || '').match(/^data:(image\/[^;]+);base64,([\s\S]+)$/) : null;
       if (generationOptions.reviewExisting && !retainedImage) throw new Error('再検査する画像がありません。');
+      const retainedHistory = retainedImage
+        ? generationHistory.find(item => item.img === generatedImage) : null;
       const originalCandidate = retainedImage
-        ? { mimeType: retainedImage[1], base64Img: retainedImage[2], modelId: null }
+        ? {
+          mimeType: retainedImage[1], base64Img: retainedImage[2], modelId: null,
+          originalImage: retainedHistory?.originalImage,
+          pageLayout: retainedHistory?.pageLayout,
+        }
         : await generateImageCandidate(currentPrompt);
       if (retainedImage) statCallback('[QUALITY QA] 表示中の画像を再検査します。初回の画像生成は行いません。');
       let generatedModelId = originalCandidate.modelId;
@@ -1428,6 +1473,17 @@ export default function useMangaWorkflow() {
 
       const finalImageStr = `data:${generatedMimeType};base64,${originalCandidate.base64Img}`;
       setGeneratedImage(finalImageStr);
+      // The image is intentionally displayed before QA finishes. Publish its
+      // layout metadata at the same time so the download UI never briefly
+      // mislabels an already-normalized page as the raw source.
+      if (originalCandidate.pageLayout) {
+        setGenerationHistory(items => addGenerationHistoryItem(items, {
+          id: Date.now(), img: finalImageStr,
+          originalImage: originalCandidate.originalImage,
+          pageLayout: originalCandidate.pageLayout,
+          qualityPass: false, selected: true,
+        }));
+      }
       statCallback(allowImageQualityRepair
         ? '[QUALITY QA] キャラクターシート・人物・手・小物・吹き出しを検査中です。不合格を解析し、失敗履歴を引き継いで最大3回修正します。未確認は同じ画像を1回再検査します。'
         : '[QUALITY QA] 自動修正OFF：元画像を表示して品質検査します。追加の画像生成は行いません。');
@@ -1523,12 +1579,17 @@ export default function useMangaWorkflow() {
       setGeneratedImage(acceptedImageStr);
       setGenerationHistory(prev => {
         const timestamp = Date.now();
+        const candidateImages = new Set(qualityOutcome.candidates.map(entry =>
+          `data:${entry.candidate.mimeType || 'image/png'};base64,${entry.candidate.base64Img}`));
+        const retainedItems = prev.filter(item => !candidateImages.has(item.img));
         return qualityOutcome.candidates.reduce((items, entry, index) => addGenerationHistoryItem(items, {
           id: timestamp + index,
           img: `data:${entry.candidate.mimeType || 'image/png'};base64,${entry.candidate.base64Img}`,
+          originalImage: entry.candidate.originalImage,
+          pageLayout: entry.candidate.pageLayout,
           qualityPass: entry.review?.pass === true,
           selected: entry.candidate === qualityOutcome.candidate,
-        }), prev);
+        }), retainedItems);
       });
 
       if (!qualityOutcome.canContinue) {
@@ -2164,6 +2225,7 @@ export default function useMangaWorkflow() {
     setEnhanceEffects,
     setEnhanceExpressions,
     setGeneratedImage,
+    normalizeDisplayedPage,
     setGenerationHistory,
     setImages,
     setInputMode,

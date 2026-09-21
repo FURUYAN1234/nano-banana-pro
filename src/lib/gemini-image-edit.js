@@ -4,9 +4,9 @@ Do not add, remove, merge, duplicate, rename, crop away, or replace any characte
 
 export const GEMINI_A4_RELAYOUT_PROMPT = `${SOURCE_LOCK}
 
-Rebuild the whole page as exactly four equal horizontal manga panels stacked vertically in a clean 3:4 portrait canvas. Keep uniform white gutters and no extra outer margins. Do not make the page extremely tall, square, landscape, or a single illustration. This is a layout correction, not a new story or redesign.
+Rebuild the whole page as exactly four horizontal manga panels stacked vertically in a clean 3:4 portrait canvas. Preserve the existing relative panel heights, complete artwork, dialogue and title lettering. Keep uniform white gutters and no extra outer margins. Do not make the page extremely tall, square, landscape, or a single illustration. This is a layout correction, not a new story or redesign.
 
-Before returning the image, verify that all four panels are present, equal in size, fully visible, and retain the original Japanese dialogue and speaker-to-bubble assignment.`;
+Before returning the image, verify that all four panels are present, keep their relative heights, are fully visible, and retain the original Japanese dialogue and speaker-to-bubble assignment. Keep both watermarks fully inside a separate footer with visible safe margins; never clip any glyph.`;
 
 export const GEMINI_2K_REFINEMENT_PROMPT = `${SOURCE_LOCK}
 

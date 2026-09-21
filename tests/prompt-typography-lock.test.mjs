@@ -45,11 +45,11 @@ test('both provider prompts keep a bold Gothic title separate from slender Minch
       systemVersion: 'v5.9.4-test'
     });
 
-    assert.match(prompt, /PAGE TYPE HIERARCHY/);
+    assert.match(prompt, /(?:PAGE TYPE HIERARCHY|TYPE: title)/);
     assert.match(prompt, /title.*EXTRA-BOLD.*Japanese Gothic/i);
-    assert.match(prompt, /SPEECH BUBBLE TYPE LOCK/);
-    assert.match(prompt, /regular-weight.*Japanese manga Mincho-style/i);
-    assert.match(prompt, /NEVER use bold Gothic or bold sans-serif inside speech bubbles/i);
-    assert.match(prompt, /vertical Japanese tategaki/i);
+    assert.match(prompt, /(?:SPEECH BUBBLE TYPE LOCK|BUBBLES:)/);
+    assert.match(prompt, /regular(?:-weight)?(?: Japanese)? manga Mincho(?:-style)?/i);
+    assert.match(prompt, /never (?:use )?bold Gothic(?: or bold sans-serif|\/sans)/i);
+    assert.match(prompt, /vertical(?: Japanese)? tategaki/i);
   }
 });

@@ -253,7 +253,7 @@ const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt
     .replace(/- Match key object EXACTLY[^\n]*/g, '- Props: preserve identity; scripted state/holder changes only.')
     .replace(/- Do not replace conflict,[^\n]*\n- Do not replace, rewrite,[^\n]*/g, '- Preserve conflict/setting/sequence/ending/punchline and verbatim dialogue; no additions/omissions.')
     .replace(/ABSOLUTE TASK:[^\n]*/g, 'ABSOLUTE TASK: new 4-panel manga page; refs only for identity.')
-    .replace(/- A4 portrait 1:1\.414;[^\n]*/g, '- A4 portrait 1:1.414; four equal horizontal panels; tight page.')
+    .replace(/- (?:A4 portrait 1:1\.414|2:3 portrait);[^\n]*/gi, '- 2:3 portrait; four horizontal panels; white gutters; tight page.')
     .replace(/- Top title EXACTLY ("[^"]+")[^\n]*/g, '- Top title EXACTLY $1.')
     .replace(/- Bottom-right 4th-panel watermark EXACTLY ("[^"]+")[^\n]*/g, '- Bottom-right watermark EXACTLY $1.')
     .replace(/- Bottom-left 4th-panel watermark EXACTLY ("[^"]+")[^\n]*/g, '- Bottom-left watermark EXACTLY $1.')
@@ -292,12 +292,11 @@ const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt
       : 'CROSS-PANEL WARDROBE COLOR LOCK: fix garment items/colors once; reuse in all panels; style and lighting never change canonical wardrobe. Explicit outfit overrides setting era/culture; preserve mismatch, no period substitution. No outfit: infer from setting.'
   )
     .replace(/^WARDROBE \/ ENVIRONMENT CONTRAST LOCK:[^\n]*\n?/gm, '')
-    // The per-dialogue slot map and shared rhythm retain the full bubble contract.
-    .replace(/Bodies fixed; bubbles independent: B1 rightmost; B2\/B3\+ strictly leftward; never reverse\./g, 'Bodies fixed; use inline balloon positions.')
-    // 台詞に直結したRIGHTMOST/LEFTMOSTと話者対応を残し、重複する座標表だけ省く。
-    .replace(/ BUBBLE SLOTS: B\d+ x=\d+%(?:; B\d+ x=\d+%)*\./g, '')
-    .replace(/^CAST DEPTH(?: \(all panels\))?: Camera\/Action layers win; no speaker-based FG slots or duplicates\.\n/gm, '')
-    .replace('PANEL DESCRIPTIONS:', 'PANEL DESCRIPTIONS:\nCAST DEPTH (all panels): Camera/Action layers win; no speaker-based FG slots or duplicates.')
+    // Keep the per-dialogue numeric slot map through the final compaction.
+    // RIGHTMOST/LEFTMOST labels alone were still overridden by speaker proximity
+    // in real API output; the coordinates are the executable body-layout contract.
+    .replace(/Bodies fixed; bubbles independent: B1 rightmost; B2\/B3\+ strictly leftward; never reverse\./g, 'Bodies fixed.')
+    .replace(/ \[(?:RIGHTMOST|LEFTMOST|LEFT OF B\d+)\]/g, '')
     .replace(/^EXPRESSIVE DIRECTION:[^\n]*/gm, 'EXPRESSIVE DIRECTION: height/tilt/foreshortening; full-body acting; panel contrast: scale/light/VFX. Keep quiet beats, Camera/Action, identity, verbatim dialogue, limbs, prop ownership/facing.')
     // 身体演技の契約は BODY ACTING / GESTURE VARIETY LOCK に保持済み。
     .replace(/^BODY ACTING BASELINE:[^\n]*\n?/gm, '')
@@ -335,6 +334,9 @@ const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt
   return finallyCompacted
     .replace(/HAND \/ PROP KINEMATICS LOCK:[^\n]*/g, HAND_PROP_KINEMATICS_LOCK_MINIMAL)
     .replace(/FACIAL ACTING LOCK:[^\n]*/g, FACIAL_ACTING_LOCK_MINIMAL)
+    .replace(/SHARED IMAGE QUALITY CONTRACT:[^\n]*/g, 'SHARED IMAGE QUALITY CONTRACT: focal contour; low-contrast BG; joint/prop ownership; no invented face on a rear head. Keep direction/setting/cast.')
+    .replace(/EXPRESSIVE DIRECTION:[^\n]*/g, 'EXPRESSIVE DIRECTION: height/tilt/foreshortening; full-body acting; panel contrast: scale/light/VFX. Keep quiet beats, Camera/Action, identity, dialogue, limbs and props.')
+    .replace(/CROSS-PANEL WARDROBE COLOR LOCK:[^\n]*/g, 'CROSS-PANEL WARDROBE COLOR LOCK: fix garment items/colors once; reuse in all panels; style and lighting never change canonical wardrobe. Explicit outfit wins; none=infer.')
     // Identity Matrix, adult casting and global surface geometry already cover these reminders.
     .replace(/^.*GLASSES CHECK:[^\n]*\n?/gm, '')
     .replace(/^CROSS-CHECK:[^\n]*\n?/gm, '')

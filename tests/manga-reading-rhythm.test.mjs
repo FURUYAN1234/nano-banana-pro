@@ -212,6 +212,9 @@ test('both final prompts carry reading rhythm through color, monochrome and seri
         assert.match(prompt, /one primary focal target/i);
         assert.match(prompt, /quiet beat/i);
         assert.match(prompt, /negative space/i);
+        assert.match(prompt, /TAIL GEOMETRY:.*lower.*speaker-facing/i);
+        assert.match(prompt, /never.*(?:cross|overlap|pass over).*(?:head|face|hair)/i);
+        assert.match(prompt, /shortest unobstructed/i);
         assert.doesNotMatch(prompt, /one fixed environmental anchor plus at least two|1 fixed anchor \+ 2 physical setting cues|Negative space is only for bubbles/i);
         assert.doesNotMatch(prompt, /ABOVE CAMERA DISTORTION MAX|BODY DEFORM: Near body parts 50%/);
         assert.equal((prompt.match(/## Panel \d/g) || []).length, 4);

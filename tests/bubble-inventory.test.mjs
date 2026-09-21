@@ -27,6 +27,20 @@ test('missing, ambiguous or unmatched physical evidence cannot pass', () => {
   }
 });
 
+test('printed text on an in-scene object is not counted as a speech balloon', () => {
+  const oneLinePrompt = '## Panel 2\nDialogue (verbatim bubbles): TEXT (PRINT VALUES ONLY): B1="放送を見よう。". TAIL TIP LOCK: B1=>[話者].';
+  const response = JSON.stringify({ panels: [{ panel: 2, text_regions: [
+    { text: '放送を見よう。', center_x: 0.72, region_kind: 'speech_balloon', container_evidence: 'White organic balloon body with a visible tail.' },
+    { text: null, region_kind: 'printed_object', container_evidence: 'Printed on a rectangular booklet page with no balloon body or tail.' },
+  ] }] });
+
+  const result = applyBubbleInventory(review, response, oneLinePrompt);
+  assert.equal(result.pass, true);
+  assert.equal(result.bubbleInventory[0].balloons.length, 1);
+  assert.match(buildBubbleInventoryPrompt(), /printed_object/);
+  assert.match(buildBubbleInventoryPrompt(), /rectangular.*paper|paper.*rectangular/is);
+});
+
 test('independent read does not clear other failures', () => {
   const result = applyBubbleInventory({ ...review, pass: false, issues: [{ type: 'anatomy', panel: 2 }] }, inventory(false), prompt);
   assert.equal(result.pass, false);

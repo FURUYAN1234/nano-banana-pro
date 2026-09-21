@@ -64,6 +64,7 @@ function App() {
     genLogRef,
     generateScenarioFromNews,
     generatedImage,
+    normalizeDisplayedPage,
     generationHistory,
     handleFullAutoToggle,
     handleSetKey,
@@ -115,7 +116,6 @@ function App() {
     setOpenAIImageSize,
     openAIImageVerificationWarning,
     allowImageQualityRepair,
-    imageQualityNeedsRepair,
     setAllowImageQualityRepair,
     stopQualityRetries,
     setOpenAIImageQuality,
@@ -469,7 +469,6 @@ function App() {
               openAIImageVerificationWarning={openAIImageVerificationWarning}
               stopQualityRetries={stopQualityRetries}
               allowImageQualityRepair={allowImageQualityRepair}
-              imageQualityNeedsRepair={imageQualityNeedsRepair}
               setAllowImageQualityRepair={setAllowImageQualityRepair}
               setOpenAIImageQuality={setOpenAIImageQuality}
               isGeneratingImage={isGeneratingImage}
@@ -490,6 +489,7 @@ function App() {
               genLog={genLog}
               imageResultRef={imageResultRef}
               generatedImage={generatedImage}
+              normalizeDisplayedPage={normalizeDisplayedPage}
               isFullAutoMode={isFullAutoMode}
               fullAutoStep={fullAutoStep}
               mangaTitle={mangaTitle}

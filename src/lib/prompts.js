@@ -54,6 +54,7 @@ const buildGeneralSeriousEndingContract = (punchlineType) => {
 
 const MANGA_PAGE_TYPOGRAPHY_LOCK = `PAGE TYPE HIERARCHY:
 - Page title: render the exact title once at the top in EXTRA-BOLD condensed Japanese Gothic sans-serif, solid black, horizontal, centered, and clearly separated from the panels.
+- TITLE BAND: plain open white field with title glyphs only. Never enclose the title in a box, frame, border, rule, underline, banner, plaque, label, or background badge.
 - Do not use the page-title typeface for dialogue, captions, or speech bubbles.
 
 SPEECH BUBBLE TYPE LOCK:
@@ -61,8 +62,10 @@ SPEECH BUBBLE TYPE LOCK:
 - Keep this same regular Mincho-style dialogue treatment in every panel, regardless of emotion, panel style, or dialogue intensity.
 - NEVER use bold Gothic or bold sans-serif inside speech bubbles, including shouts or punchlines. Keep emphasis through bubble shape, composition, or punctuation instead of changing the dialogue font weight or family.`;
 
-const MANGA_PAGE_TYPOGRAPHY_LOCK_COMPACT = `PAGE TYPE HIERARCHY: Title: EXTRA-BOLD condensed Japanese Gothic; never use title type in dialogue.
-SPEECH BUBBLE TYPE LOCK: vertical Japanese tategaki, regular-weight Japanese manga Mincho-style, slender black strokes on white, same every panel. NEVER use bold Gothic or bold sans-serif inside speech bubbles; emphasize with bubble shape, composition, or punctuation.`;
+const MANGA_PAGE_TYPOGRAPHY_LOCK_COMPACT = `TYPE: title EXTRA-BOLD condensed Japanese Gothic. TITLE BAND: plain white, unframed; no box/frame/border/rule/banner. BUBBLES: vertical tategaki in regular manga Mincho, slender black on white, same every panel; never bold Gothic/sans. Emphasis: bubble shape/composition/punctuation.`;
+
+const MANGA_PAGE_ENVELOPE = 'PAGE:2:3; title6.5%/font5.5%; panels+gutters91.3%, variable heights; footer2.2%, inset0.6%, no clipping.';
+const MANGA_FOOTER_EXCLUSIVITY = 'FOOTER ONLY: both exact watermarks once outside panels; no watermark/credit inside panels or on in-scene paper.';
 
 // --- プロンプトテンプレート (prompts.js) ---
 // App.jsx から抽出された大規模プロンプト文字列テンプレート群
@@ -832,7 +835,7 @@ export const buildChatGPTMangaPrompt = (p) => {
     `
 BACKGROUND REFERENCE IMAGE:
 Among ALL attached images, identify the one with a panoramic 2:1 width-to-height aspect ratio (equirectangular format). That image is the 360° BACKGROUND REFERENCE — NOT a character sheet. All other attached images are CHARACTER REFERENCE sheets.
-⚠️ CRITICAL: This panoramic image is ONLY for background reference (${isMonochrome ? 'geometry, light direction, architecture; translate into black/white ink and screens' : 'colors, lighting, architecture'}). Do NOT imitate its 2:1 wide aspect ratio. Your OUTPUT must remain A4 PORTRAIT (1:1.414 tall) with 4 vertical panels. The panoramic image is NOT a layout template.
+⚠️ CRITICAL: This panoramic image is ONLY for background reference (${isMonochrome ? 'geometry, light direction, architecture; translate into black/white ink and screens' : 'colors, lighting, architecture'}). Do NOT imitate its 2:1 wide aspect ratio. Your OUTPUT must remain 2:3 PORTRAIT with 4 vertical panels. The panoramic image is NOT a layout template.
 ⚠️ CRITICAL: DO NOT copy any character clothing or outfits from the 360° background image. Characters MUST wear the specified outfits.
 Use the 360° background image's lighting direction (${bg360Analysis.lighting}), spatial layout, and environmental details as the consistent setting for all panels. ${isMonochrome ? 'Match shadow directions using black ink, white highlights and regular halftone; simplify nonessential detail for readability.' : 'Match shadow directions and ambient color temperature to the background reference.'} At least 3 of 4 panels must use this background environment.
 `
@@ -854,11 +857,12 @@ Use the 360° background image's lighting direction (${bg360Analysis.lighting}),
 ABSOLUTE TASK: new 4-panel manga, not a reference sheet. Use character refs for ${preserveReferenceStyle ? 'identity and the same art style across all four panels' : isMonochrome ? 'face/eye shape, hair structure, glasses and design; all regions obey the black ink plate' : 'face, hair, eyes, skin, glasses'}.
 
 FORMAT:
-- A4 portrait 1:1.414; 4 equal horizontal panels, 95% width, thick white gutters, no large margins/space below panel 4.
+${MANGA_PAGE_ENVELOPE}
 - Top title EXACTLY "${safeTopic}", large black, centered.
 ${MANGA_PAGE_TYPOGRAPHY_LOCK_COMPACT}
 - Bottom-right 4th-panel watermark EXACTLY "${watermarkEng}", tiny horizontal.
 - Bottom-left 4th-panel watermark EXACTLY "ネームから全自動の自律式統合AI漫画システム :https://note.com/happy_duck780", tiny horizontal. Copy "自律式" exactly.
+${MANGA_FOOTER_EXCLUSIVITY}
 
 ${scriptLock}
 
@@ -909,7 +913,7 @@ ${artStyleQa}
 
 THINGS TO AVOID:
 - No plastic skin, extra logos/watermarks, floating/ghost eyes/faces, duplicate humans, unrelated text.
-- No sparkle/glow dust or grain except style locks. HAND ANATOMY: correct hands; no mirrored/extra/backward hands.
+- No sparkle/glow dust or grain except style locks. HAND ANATOMY: correct hands; five digits (one thumb + four fingers), including every foreground hand and foreshortened hand; no four-digit/mirrored/extra/backward hands.
 
 PANEL-BY-PANEL CLOTHING FOLD PRIORITY: ${preserveReferenceStyle ? 'Follow the character sheet\'s existing fold-line and shadow treatment in every panel; do not introduce a new rendering method.' : 'When a panel shows folded clothing, render 2-4 distinct small dark triangular shadow fills at visible crease junctions. Use hard cel-shaded edges, especially on light shirts, blouses, jackets, and sleeves. These are localized form shadows only: never scatter triangles across smooth fabric or turn them into a print/pattern.'}
 
@@ -967,20 +971,22 @@ CLOTHING:
     ? `OUTFIT OVERRIDE: Follow role-specific outfit assignments: ${activeOutfit}; unscoped categories apply to all.`
     : '';
 
-  return `[FORMAT: A4 PORTRAIT 1024x1448px 🚨 NO square/landscape/tall]
+  return `[FORMAT: 2:3 PORTRAIT; keep selected source tier 1024x1536 or 1536x2304 🚨 NO square/landscape/long-strip]
 Generate highly detailed, professional 4-koma (4-panel vertical) manga.
-MUST have tall portrait aspect ratio (A4 paper, 1:1.414).
+MUST have exact 2:3 portrait aspect ratio.
 
 LAYOUT:
 Canvas completely filled by panels (95% width). NO large white margins.
+${MANGA_PAGE_ENVELOPE}
 Top page: draw large black Japanese text title: "${safeTopic}"
 Do NOT add quote marks around the title or invent extra punctuation. Preserve the exact punctuation already present in the specified title.
 ${MANGA_PAGE_TYPOGRAPHY_LOCK}
-Draw tiny English watermark ON bottom-right border of 4th panel: "${watermarkEng}" (clean sans-serif). VERBATIM COPY — do NOT paraphrase or alter any word.
-Draw tiny Japanese watermark ON bottom-left border of 4th panel: "ネームから全自動の自律式統合AI漫画システム :https://note.com/happy_duck780" (in an extremely small font size to prevent overlapping with the right watermark). ⚠️ CRITICAL: The word "自律式" must appear EXACTLY as written. Do NOT replace it with topic-related words. Copy character-by-character.
-Watermarks standard horizontal. The Japanese watermark on the left and the English watermark on the right must be small enough and spaced apart so they do not touch or overlap. NO extra white space below panel 4.
+Draw tiny English watermark in the footer below panel 4, on the right: "${watermarkEng}" (clean sans-serif). VERBATIM COPY — do NOT paraphrase or alter any word.
+Draw tiny Japanese watermark in the footer below panel 4, on the left: "ネームから全自動の自律式統合AI漫画システム :https://note.com/happy_duck780" (in an extremely small font size to prevent overlapping with the right watermark). ⚠️ CRITICAL: The word "自律式" must appear EXACTLY as written. Do NOT replace it with topic-related words. Copy character-by-character.
+Watermarks standard horizontal, fully inside the footer with visible safe margins. Keep left/right text separate; never touch, overlap or clip against the image edges.
+${MANGA_FOOTER_EXCLUSIVITY}
 
-PANELS: Exactly 4 EQUAL horizontal panels, stacked vertically. EXACT SAME height/width.
+PANELS: Exactly 4 horizontal panels, stacked vertically, same width. Allocate height to dialogue, action and camera needs.
 GUTTERS: THICK white gap (3% canvas height, 40-45px) between panels. Panels MUST NOT touch.
 
 ${scriptLock}
@@ -1070,7 +1076,7 @@ ${preserveReferenceStyle ? `REFERENCE-SHEET STYLE QA LOCK:
 - Do NOT add unrequested English/Japanese decoration or pseudo-lettering on props, signs, clothing or backgrounds. Follow SCENE LETTERING above; keep required scene text verbatim.
 - Maintain character consistency across all 4 panels.
 - Flow is from top panel to bottom panel.
-- Ensure the watermark is positioned at the absolute bottom edge of the image, with no extra whitespace below it. The text must be oriented horizontally (left-to-right).
+- Keep every watermark glyph fully inside the footer, inset from the image edges. The text must be oriented horizontally (left-to-right).
 - CRITICAL COMPOSITION BAN: Do NOT draw floating close-up eyes, partial face crops, or ghostly face overlays in the background of any panel. Every character must be drawn as a complete physical presence within the scene. No "dramatic eye insert" or "background eye close-up" compositions allowed.
 ${isMonochrome ? `CHARACTER QA: shape/design, stable ink/tone and white lit skin; no source colors.\n${MONOCHROME_FINAL_CHROMA_AUDIT}` : ''}
       `;

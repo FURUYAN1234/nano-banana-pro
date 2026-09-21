@@ -523,7 +523,13 @@ ${parsedData.scenario}
     cameraWork,
     croppedPanels,
     usedModel: result.model,
-    explanation: buildSnsExplanation({ text: result.text, sources: result.sources, inputMode, manualTopic }),
+    explanation: buildSnsExplanation({
+      text: result.text,
+      sources: result.sources,
+      inputMode,
+      manualTopic,
+      title: parsedData.topic
+    }),
     thought: result.thought,
     validationWarning: safeScenarioResult.validationWarning || null
   };

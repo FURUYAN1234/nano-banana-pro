@@ -626,6 +626,45 @@ test('keeps bubble reading slots independent from scripted character positions',
   assert.doesNotMatch(placement, /no dialogue-order slots/i);
 });
 
+test('uses dialogue-order horizontal speaker zones when Camera specifies depth but not speaker left-right positions', () => {
+  const panelText = `
+[3コマ目: 転]
+[Camera: 背後寄り3/4のワームズアイ。警備ロープを前景に、踊る一団を奥に配置する。]
+状況: 甲はロープを引き、乙は後ずさりし、丙は冊子を抱える。
+甲「最初の台詞」
+乙「二番目の台詞」
+丙「三番目の台詞」`;
+
+  const placement = extractPlacementRule(panelText, `
+- Character [甲]: adult, black hair
+- Character [乙]: adult, blonde hair
+- Character [丙]: adult, brown hair
+`, { compact: true });
+
+  assert.match(placement, /RIGHT \[甲\]/);
+  assert.match(placement, /CENTER \[乙\]/);
+  assert.match(placement, /LEFT \[丙\]/);
+  assert.match(placement, /preserve Camera\/Action depth/i);
+  assert.doesNotMatch(placement, /Bodies fixed/);
+});
+
+test('keeps explicit named left-right staging instead of replacing it with dialogue-order body zones', () => {
+  const panelText = `
+[2コマ目: 承]
+[Camera: 右手前に乙、左奥に甲を置く。]
+甲「最初の台詞」
+乙「二番目の台詞」`;
+
+  const placement = extractPlacementRule(panelText, `
+- Character [甲]: adult, black hair
+- Character [乙]: adult, blonde hair
+`, { compact: true });
+
+  assert.match(placement, /Bodies fixed/);
+  assert.match(placement, /bubbles independent/i);
+  assert.doesNotMatch(placement, /RIGHT \[甲\].*LEFT \[乙\]/);
+});
+
 test('binds balloon positions to dialogue entries even for repeated speakers and opposite body positions', () => {
   const cast = '- Character [甲]: adult\n- Character [乙]: adult';
   for (const camera of ['左前斜めからの俯瞰', '甲の右後方からの肩越し']) {

@@ -1020,6 +1020,22 @@ const hasScriptedSpatialStaging = (text = '') => {
     || /(?:画面|コマ)(?:の)?(?:右|左)|(?:左|右)(?:手前|奥|前景|端)|(?:前景|中景|後景)|screen[- ](?:left|right)|foreground|midground|background/i.test(action);
 };
 
+// Camera depth alone must not disable the stable right-to-left speaker layout.
+// Preserve authored horizontal staging only when a named speaker is actually
+// tied to a left/right screen location. This avoids treating generic foreground
+// or background wording as a character-position override.
+const hasScriptedHorizontalSpeakerStaging = (text = '', speakers = []) => {
+  if (!speakers.length) return false;
+  const stagingText = String(text)
+    .replace(/[「『"][^」』"\n]*[」』"]/g, '')
+    .replace(/\r/g, '');
+  const horizontalPosition = '(?:(?:画面|コマ)(?:の)?(?:右|左)(?:側|端)?|(?:手前|奥)(?:の)?(?:右|左)|(?:右|左)(?:側|端|手前|奥|前景|後景)|screen[- ](?:left|right)|(?:front|rear)[- ](?:left|right)|(?:left|right)[- ]?(?:side|edge))';
+  return speakers.some((speaker) => {
+    const name = escapeRegex(speaker);
+    return new RegExp(`(?:${horizontalPosition})[^。！？!?;；\n]{0,36}(?:\\[?${name}\\]?)|(?:\\[?${name}\\]?)[^。！？!?;；\n]{0,36}(?:${horizontalPosition})`, 'iu').test(stagingText);
+  });
+};
+
 const buildRequiredDepthAssignment = (speakers, listeners, requireVisibleRear = false, explicitRearSubject = '', functionalActionMode = '') => {
   if (!requireVisibleRear) {
     return 'VIEWPOINT FREEDOM: three-quarter/profile; bold height/tilt/foreshortening; no forced rear shoulder.';
@@ -1408,10 +1424,17 @@ export const extractPlacementRule = (fullPanelText, castList, options = {}) => {
     }
   });
 
-  if (speakers.length > 0 && hasScriptedSpatialStaging(fullPanelText)) {
+  if (speakers.length > 0 && hasScriptedHorizontalSpeakerStaging(fullPanelText, speakers)) {
     const identities = speakers.map(name => `[${name}] (${compactIdentityTraits(getCharTraitsFromMatrix(name, castList, { monochrome }))})`).join('; ');
     if (compact) return `PLACEMENT/IDENTITY: ${identities}. Bodies fixed; bubbles independent: B1 rightmost; B2/B3+ strictly leftward; never reverse.`;
     return `PLACEMENT/IDENTITY: ${identities}. Preserve Camera/Action screen positions and depth; do not derive body positions from dialogue order. Bubbles flow right-to-left in dialogue order with tails to their actual speakers.`;
+  }
+  if (speakers.length >= 2 && hasScriptedSpatialStaging(fullPanelText)) {
+    const horizontalOrder = speakers.length >= 3
+      ? `RIGHT [${speakers[0]}]; CENTER [${speakers[1]}]; LEFT [${speakers[2]}]`
+      : `RIGHT [${speakers[0]}]; LEFT [${speakers[1]}]`;
+    if (compact) return `SPEAKER X: ${horizontalOrder}. Preserve Camera/Action depth/framing/contacts.`;
+    return `DIALOGUE SPEAKER HORIZONTAL ORDER (DEPTH PRESERVED; NOT A ROW): ${horizontalOrder}. Preserve every scripted foreground/background layer, scale, framing and contact; change only unconstrained horizontal placement.`;
   }
   if (speakers.length >= 3) {
     // [v2.33] 3-Zone Slotting: 3人以上の掛け合いパネル対応
@@ -1419,7 +1442,7 @@ export const extractPlacementRule = (fullPanelText, castList, options = {}) => {
     const traits1 = getCharTraitsFromMatrix(speakers[1], castList, { monochrome });
     const traits2 = getCharTraitsFromMatrix(speakers[2], castList, { monochrome });
     if (compact) {
-      return `PLACEMENT/IDENTITY: RIGHT [${speakers[0]}] (${compactIdentityTraits(traits0)}), CENTER [${speakers[1]}] (${compactIdentityTraits(traits1)}), LEFT [${speakers[2]}] (${compactIdentityTraits(traits2)}). Slots fixed; no mirror/swap.`;
+      return `SPEAKER X: RIGHT [${speakers[0]}]; CENTER [${speakers[1]}]; LEFT [${speakers[2]}]. No mirror/swap.`;
     }
     return `CRITICAL PLACEMENT & IDENTITY (3-ZONE SLOTTING):
 - RIGHT ZONE: [${speakers[0]}] (${traits0 || 'see reference'}) — First speaker
@@ -1430,6 +1453,7 @@ CHARACTER BODY POSITION LOCK (3-ZONE - DO NOT MIRROR):
 - [${speakers[0]}] MUST be on the RIGHT third of the panel.
 - [${speakers[1]}] MUST be in the CENTER of the panel.
 - [${speakers[2]}] MUST be on the LEFT third of the panel.
+- Preserve Camera/Action depth, framing and contacts; these zones set horizontal order only.
 - Maintain breathing room between zones to prevent overcrowding and attribute fusion.
 SPEECH BUBBLE FLOW (RIGHT-TO-LEFT):
 - Place bubbles in nearby negative space in the exact dialogue order, upper-right to lower-left; stagger heights instead of repeating a row above the heads.
@@ -1439,7 +1463,7 @@ SPEECH BUBBLE FLOW (RIGHT-TO-LEFT):
     const traits0 = getCharTraitsFromMatrix(speakers[0], castList, { monochrome });
     const traits1 = getCharTraitsFromMatrix(speakers[1], castList, { monochrome });
     if (compact) {
-      return `PLACEMENT/IDENTITY: RIGHT [${speakers[0]}] (${compactIdentityTraits(traits0)}), LEFT [${speakers[1]}] (${compactIdentityTraits(traits1)}). Slots fixed; no mirror/swap.`;
+      return `SPEAKER X: RIGHT [${speakers[0]}]; LEFT [${speakers[1]}]. No mirror/swap.`;
     }
     // [v2.27] 人物+吹き出し位置固定ルール（左右入れ替わり全パターン対策）
     // 髪色等の視覚的特徴で位置をアンカリングし、AIの左右鏡像化を防ぐ
@@ -1450,6 +1474,7 @@ VERIFY: Confirm ${monochrome ? 'face/eye shape, hairstyle/length, glasses and in
 CHARACTER BODY POSITION LOCK (CRITICAL - DO NOT MIRROR):
 - The character with ${traits0 || speakers[0] + "'s features"} MUST be physically standing/sitting on the RIGHT half of the panel.
 - The character with ${traits1 || speakers[1] + "'s features"} MUST be physically standing/sitting on the LEFT half of the panel.
+- Preserve Camera/Action depth, framing and contacts; these zones set horizontal order only.
 - Do NOT swap, mirror, or reverse their positions under any circumstances.
 SPEECH BUBBLE POSITION RULE:
 - Place bubbles in nearby negative space in the exact dialogue order, upper-right to lower-left; stagger heights instead of repeating a row above the heads.

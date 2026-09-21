@@ -57,6 +57,18 @@ test('only provider citations become news reference links, deduplicated and safe
   assert.deepEqual(normalizeSources([{ url: 'javascript:alert(1)' }, { url: 'https://user:pass@example.com/' }]), []);
 });
 
+test('posting copy always starts with the confirmed scenario title as a heading', () => {
+  const output = buildSnsExplanation({ text, inputMode: 'news', title: '迷子ピューマ' });
+  assert.match(output.text, /^【迷子ピューマ】\n\n題材の解説/);
+});
+
+test('an existing matching heading is normalized without being duplicated', () => {
+  const withHeading = text.replace('題材の解説\n', '【題名】\n\n題材の解説\n');
+  const output = buildSnsExplanation({ text: withHeading, inputMode: 'news', title: '題名' });
+  assert.equal(output.text.match(/【題名】/g)?.length, 1);
+  assert.match(output.text, /^【題名】\n\n題材の解説/);
+});
+
 test('Gemini grounding sources and absent sources are handled explicitly', () => {
   assert.deepEqual(geminiSources({ groundingMetadata: { groundingChunks: [{ web: { uri: 'https://example.com/', title: '資料' } }, {}] } }), [{ url: 'https://example.com/', title: '資料' }]);
   assert.match(buildSnsExplanation({ text, inputMode: 'news' }).notice, /取得されていません/);

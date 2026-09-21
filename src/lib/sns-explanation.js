@@ -66,8 +66,24 @@ export function geminiSources(candidate) {
     .filter(chunk => chunk.web).map(chunk => ({ url: chunk.web.uri, title: chunk.web.title })));
 }
 
-export function buildSnsExplanation({ text, sources, inputMode, manualTopic = '' }) {
+export function buildSnsExplanation({ text, sources, inputMode, manualTopic = '', title = '' }) {
   const { explanation } = splitSnsExplanation(text);
+  const heading = cleanScenarioTopic(String(title))
+    .replace(/^#{1,6}\s*/, '')
+    .replace(/^【|】$/g, '')
+    .trim();
+  const explanationLines = explanation.split('\n');
+  const firstLineTitle = (explanationLines[0] || '')
+    .replace(/^#{1,6}\s*/, '')
+    .replace(/^【|】$/g, '')
+    .replace(/^見出し\s*[:：]\s*/, '')
+    .trim();
+  const explanationBody = heading && firstLineTitle === heading
+    ? explanationLines.slice(1).join('\n').trim()
+    : explanation;
+  const postingText = [heading ? `【${heading}】` : '', explanationBody]
+    .filter(Boolean)
+    .join('\n\n');
   const references = inputMode === 'manual'
     ? normalizeSources((manualTopic.match(/https?:\/\/[^\s<>「」]+/g) || [])
       .map(url => ({ url: url.replace(/[。）、,.)]+$/, '') })))
@@ -77,7 +93,7 @@ export function buildSnsExplanation({ text, sources, inputMode, manualTopic = ''
     ? `\n\n${label}\n${references.map(s => `${s.title ? `${s.title}\n` : ''}${s.url}`).join('\n')}`
     : '';
   return {
-    text: explanation ? explanation + referenceText : referenceText.trim(),
+    text: postingText ? postingText + referenceText : referenceText.trim(),
     notice: !explanation ? '解説を取得できませんでした。手入力できます。'
       : inputMode === 'manual' && !references.length ? '投稿前に内容をご確認ください。新しいシナリオを生成すると置き換わります。'
       : references.length ? '投稿前に内容と参考リンクをご確認ください。'

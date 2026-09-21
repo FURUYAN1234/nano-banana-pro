@@ -93,10 +93,16 @@ test('dense four-panel prompts preserve core requirements ahead of optional embe
       assert.match(prompt, /超ローアングル/);
       assert.match(prompt, /HAND \/ PROP KINEMATICS LOCK/);
       assert.match(prompt, /OBJECT GEOMETRY LOCK/);
+      assert.match(prompt, /title6\.5%\/font5\.5%; panels\+gutters91\.3%/);
+      assert.match(prompt, /footer2\.2%, inset0\.6%, no clipping/);
+      assert.match(prompt, /variable heights/i);
+      assert.match(prompt, /FOOTER ONLY: both exact watermarks once outside panels/i);
+      assert.match(prompt, /no watermark\/credit inside panels or on in-scene paper/i);
+      assert.match(prompt, /EXTRA-BOLD condensed Japanese Gothic/);
+      assert.doesNotMatch(prompt, /4 equal|four equal|4 EQUAL|EXACT SAME height|equal four-panel|y120\/460\/800\/1140/i);
       assert.match(prompt, /PANEL STYLE LOCK: (?:GLITTER|IMPACT|GEKIGA)/);
       assert.equal((prompt.match(/## Panel \d/g) || []).length, 4);
-      assert.equal((prompt.slice(prompt.indexOf('## Panel 1')).match(/B1="[^"]+" \[RIGHTMOST\]/g) || []).length, 4);
-      assert.equal((prompt.slice(prompt.indexOf('## Panel 1')).match(/B2="[^"]+" \[LEFT OF B1\]; B3="[^"]+" \[LEFTMOST\]/g) || []).length, 4);
+      assert.ok((prompt.match(/BUBBLE SLOTS: B1 x=75%; B2 x=50%; B3 x=25%\./g) || []).length >= 4);
       if (colorMode === 'monochrome') {
         assert.match(prompt, /#000000.*#FFFFFF/);
         assert.match(prompt, /CROSS-PANEL WARDROBE TONE LOCK/);
@@ -180,7 +186,14 @@ test('ChatGPT manga prompt stays within the empirical Web-copy soft budget witho
   assert.match(prompt, /later bubbles strictly left/i);
   assert.match(prompt, /x=0 left,100 right/);
   assert.match(prompt, /B1 rightmost regardless of speaker/);
-  assert.match(prompt, /move (?:the )?bubbles? only|bubble slots independent/i);
+  assert.match(prompt, /draw (?:balloon )?bodies before (?:actors|art)/i);
+  assert.match(prompt, /freeze (?:balloon )?bodies/i);
+  assert.match(prompt, /route .*tails.*speaker/i);
+  assert.equal(
+    (prompt.match(/BUBBLE SLOTS: B1 x=75%; B2 x=50%; B3 x=25%\./g) || []).length,
+    4,
+    'every dense three-dialogue panel must retain its numeric balloon-body slots after final compaction'
+  );
   assert.doesNotMatch(prompt, /B1="\[ミク\]/);
   assert.match(prompt, /Dialogue \(verbatim bubbles\):/);
   assert.match(prompt, /vertical Japanese tategaki/i);
@@ -194,6 +207,9 @@ test('ChatGPT manga prompt stays within the empirical Web-copy soft budget witho
   assert.match(prompt, /floating\/ghost eyes\/faces/);
   assert.match(prompt, /No sparkle\/glow dust/);
   assert.match(prompt, /HAND ANATOMY: correct hands/);
+  assert.match(prompt, /one thumb.*four fingers/i);
+  assert.match(prompt, /foreground hand/i);
+  assert.match(prompt, /TITLE BAND:.*no.*(?:box|frame|border)/i);
   assert.match(prompt, /HAND \/ PROP KINEMATICS LOCK:.*anatomical LEFT and RIGHT/);
   assert.match(prompt, /FOLD SHADOWS: crisp triangular overlap shadows; no geometric patterns\./);
   assert.doesNotMatch(prompt, /NO quotes\/punctuation around title/);
