@@ -32,6 +32,12 @@ import {
   formatMangaScenarioValidationIssue,
   validateMangaScenario
 } from './scenario-validation';
+import {
+  MANGA_MANUSCRIPT_ASPECT_LABEL,
+  MANGA_MANUSCRIPT_LARGE,
+  MANGA_MANUSCRIPT_RATIO_LABEL,
+  MANGA_MANUSCRIPT_STANDARD,
+} from './manga-manuscript-format.js';
 import { buildSettingContinuityLock } from './setting-continuity';
 import { FINAL_PANEL_ACTIVE_STAGING_IMAGE_LOCK } from './final-panel-staging';
 import {
@@ -66,7 +72,6 @@ import {
 } from './cinematic-techniques';
 import { normalizeMangaColorMode, isMonochromePrompt, sanitizeMonochromeSourceDescription, MONOCHROME_RENDERING_LOCK, MONOCHROME_RENDERING_LOCK_COMPACT, MONOCHROME_BACKGROUND_LOCK, MONOCHROME_BACKGROUND_LOCK_COMPACT, MONOCHROME_FINAL_CHROMA_AUDIT, MONOCHROME_FINAL_CHROMA_AUDIT_COMPACT, MONOCHROME_PANEL_INK_CHECK } from './manga-render-mode.js';
 import { buildReferenceSheetArtStyleLock, getEndingModePolicy, isDocumentaryEnding, resolveScenarioEndingType } from './ending-mode-policy.js';
-import { MANGA_MANUSCRIPT_ASPECT_LABEL, MANGA_MANUSCRIPT_RATIO_LABEL } from './manga-manuscript-format.js';
 
 /**
  * Fisher-Yates アルゴリズムによる配列のシャッフル
@@ -337,13 +342,23 @@ const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt
   if (finallyCompacted.length <= CHATGPT_WEB_COPY_SOFT_BUDGET) return finallyCompacted;
 
   return finallyCompacted
-    .replace(`PAGE:A4 ${MANGA_MANUSCRIPT_RATIO_LABEL} (${MANGA_MANUSCRIPT_ASPECT_LABEL});`, `PAGE:A4 ${MANGA_MANUSCRIPT_RATIO_LABEL};`)
-    .replace('ABSOLUTE TASK: new 4-panel manga page; refs only for identity.', 'TASK: new 4-panel manga; refs identify cast.')
+    .replace(
+      `PAGE:A4 ${MANGA_MANUSCRIPT_RATIO_LABEL} (${MANGA_MANUSCRIPT_ASPECT_LABEL}); canvas ${MANGA_MANUSCRIPT_STANDARD.value} or ${MANGA_MANUSCRIPT_LARGE.value};`,
+      `PAGE:A4 ${MANGA_MANUSCRIPT_RATIO_LABEL}; ${MANGA_MANUSCRIPT_STANDARD.value} or ${MANGA_MANUSCRIPT_LARGE.value};`
+    )
+    .replace('ABSOLUTE TASK: new 4-panel manga page; refs only for identity.', 'TASK: 4-panel manga; refs=cast identity.')
     .replace(/HAND \/ PROP KINEMATICS LOCK:[^\n]*/g, HAND_PROP_KINEMATICS_LOCK_MINIMAL)
     .replace(/FACIAL ACTING LOCK:[^\n]*/g, FACIAL_ACTING_LOCK_MINIMAL)
-    .replace(/SHARED IMAGE QUALITY CONTRACT:[^\n]*/g, 'SHARED IMAGE QUALITY CONTRACT: focal contour; owned joints/props; rear head no face; setting/cast.')
+    .replace(/SHARED IMAGE QUALITY CONTRACT:[^\n]*/g, 'SHARED IMAGE QUALITY CONTRACT: focal contour; joints/props owned; rear head faceless; keep setting/cast.')
     .replace(/EXPRESSIVE DIRECTION:[^\n]*/g, 'EXPRESSIVE DIRECTION: height/tilt/foreshortening; full-body acting; panel contrast: scale/light/VFX; quiet beats; keep Camera/Action, identity/dialogue/limbs/props.')
-    .replace(/CROSS-PANEL WARDROBE COLOR LOCK:[^\n]*/g, 'CROSS-PANEL WARDROBE COLOR LOCK: fixed items/colors; explicit wins.')
+    .replace(/CROSS-PANEL WARDROBE COLOR LOCK:[^\n]*/g, 'CROSS-PANEL WARDROBE COLOR LOCK: fix garment items/colors once; reuse in all panels; style and lighting never change canonical wardrobe.')
+    .replace(/CAST COUNT: ([^\n]+?) each EXACTLY ONCE; no named-character duplicates\./g, 'CAST COUNT: $1 each EXACTLY ONCE.')
+    .replace(/^CAST LIMIT: main focus /gm, 'CAST LIMIT: focus ')
+    .replace(/^CAST INSTANCE LOCK:[^\n]*/gm, 'CAST INSTANCE LOCK: actor=one body/face/depth; no duplicate.')
+    .replace(/CAST DEPTH: Camera\/Action layers win; no speaker-based FG slots or duplicates\./g, 'CAST DEPTH: obey Camera/Action; no duplicate.')
+    .replace(/NO OTHER HUMANS: exactly (\d+) people\./g, 'TOTAL $1 people; no others.')
+    .replace(/^FG only:/gm, 'FG:')
+    .replace(/ BG only:/g, ' BG:')
     .replace(/^BLACK INK PLATE:[^\n]*/gm, 'BLACK INK PLATE: redraw; colored references give identity, not palette.')
     .replace(/^SOURCE COLOR BOUNDARIES:[^\n]*/gm, 'SOURCE COLOR BOUNDARIES: map regions/accents to black/white/screens.')
     .replace(/^SCENE COLOR PRIORITY:[^\n]*/gm, 'SCENE COLOR PRIORITY: story and verbatim text; source hues yield to ink/white skin.')

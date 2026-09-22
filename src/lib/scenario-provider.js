@@ -45,6 +45,7 @@ import {
   normalizeDocumentaryScenarioTimeline,
   selectDocumentarySourceText
 } from './documentary-source-fidelity';
+import { runScenarioPayoffGate } from './scenario-payoff-quality.js';
 
 const STEP2_TEXT_TIMEOUT_MS = 600_000;
 
@@ -440,8 +441,60 @@ export async function generateScenario({
       : [],
     maxAttempts: 3
   });
-  const result = safeScenarioResult.response;
-  const parsedData = safeScenarioResult.parsed;
+  let result = safeScenarioResult.response;
+  let parsedData = safeScenarioResult.parsed;
+  const payoffGate = await runScenarioPayoffGate({
+    scenario: parsedData.scenario,
+    punchlineType: activePunchlineType,
+    requestReview: (prompt) => callAI(prompt, [], scenarioCastContext, onProgress, {
+      timeoutMs: STEP2_TEXT_TIMEOUT_MS,
+      modelRoute: 'scenario',
+      scenarioModelId,
+      useWebSearch: false
+    }),
+    requestRepair: (prompt) => callAI(prompt, [], scenarioCastContext, onProgress, {
+      timeoutMs: STEP2_TEXT_TIMEOUT_MS,
+      modelRoute: 'scenario',
+      scenarioModelId,
+      useWebSearch: false
+    }),
+    validateRepair: (candidate) => {
+      let normalizedCandidate = candidate;
+      if (isDocumentaryEnding(activePunchlineType)) {
+        normalizedCandidate = normalizeDocumentaryScenarioTimeline(
+          normalizedCandidate,
+          documentarySourceText
+        );
+        normalizedCandidate = attachDocumentarySourceFacts(
+          normalizedCandidate,
+          documentarySourceText
+        );
+      }
+      validateScenarioForRetry({
+        scenario: { ...parsedData, scenario: normalizedCandidate },
+        punchlineType: activePunchlineType,
+        manualTopic: inputMode === 'manual' ? manualTopic : '',
+        documentarySourceText,
+        seasonContext,
+        customOutfit,
+        wardrobeSourceText,
+        castList,
+        contextText: [
+          manualTopic,
+          newsContext,
+          parsedData.topic,
+          parsedData.location,
+          normalizedCandidate
+        ].filter(Boolean).join('\n')
+      });
+      return normalizedCandidate;
+    },
+    onProgress
+  });
+  parsedData = { ...parsedData, scenario: payoffGate.scenario };
+  const payoffValidationWarning = payoffGate.warning
+    ? { code: 'NARRATIVE_PAYOFF', message: payoffGate.warning }
+    : null;
 
   // 6. 360°カメラワーク自律設計
   let cameraWork = null;
@@ -531,7 +584,7 @@ ${parsedData.scenario}
       title: parsedData.topic
     }),
     thought: result.thought,
-    validationWarning: safeScenarioResult.validationWarning || null
+    validationWarning: safeScenarioResult.validationWarning || payoffValidationWarning
   };
 }
 

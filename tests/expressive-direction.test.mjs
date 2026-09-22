@@ -271,7 +271,7 @@ test('lettering is planned per beat and never promoted into an all-panel reading
     .replace('SpeakerAが椅子を引く。', 'SpeakerAが台車を引く。背景に同じ掲示板の側面が見える。');
   for (const provider of ['chatgpt', 'gemini']) {
     const prompt = build(provider, input);
-    assert.match(prompt, /SCENE LETTERING:.*per-panel.*no cross-panel legibility requirement/);
+    assert.match(prompt, /SCENE LETTERING:.*explicit per-panel.*freely render context-appropriate lettering.*any amount\/density/i);
     const panel1 = prompt.match(/## Panel 1[\s\S]*?(?=## Panel 2)/)[0];
     const panel2 = prompt.match(/## Panel 2[\s\S]*?(?=## Panel 3)/)[0];
     assert.match(panel1, /搬入口/);

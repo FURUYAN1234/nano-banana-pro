@@ -70,7 +70,7 @@ SPEECH BUBBLE TYPE LOCK:
 
 const MANGA_PAGE_TYPOGRAPHY_LOCK_COMPACT = `TYPE: title EXTRA-BOLD condensed Japanese Gothic. TITLE BAND: plain white, unframed; no box/frame/border/rule/banner. BUBBLES: vertical tategaki in regular manga Mincho, slender black on white, same every panel; never bold Gothic/sans. Emphasis: bubble shape/composition/punctuation.`;
 
-const MANGA_PAGE_ENVELOPE = `PAGE:A4 ${MANGA_MANUSCRIPT_RATIO_LABEL} (${MANGA_MANUSCRIPT_ASPECT_LABEL}); title6.5%/font5.5%; panels+gutters91.3%, variable heights; footer2.2%, inset0.6%, no clipping.`;
+const MANGA_PAGE_ENVELOPE = `PAGE:A4 ${MANGA_MANUSCRIPT_RATIO_LABEL} (${MANGA_MANUSCRIPT_ASPECT_LABEL}); canvas ${MANGA_MANUSCRIPT_STANDARD.value} or ${MANGA_MANUSCRIPT_LARGE.value}; title6.5%/font5.5%; panels+gutters91.3%, variable heights; footer2.2%, inset0.6%, no clipping.`;
 const MANGA_FOOTER_EXCLUSIVITY = 'FOOTER ONLY: both exact watermarks once outside panels; no watermark/credit inside panels or on in-scene paper.';
 
 // --- プロンプトテンプレート (prompts.js) ---
@@ -807,7 +807,7 @@ const RICH_PANEL_COMPOSITION_LOCK = `RICH PANEL COMPOSITION / CHARACTER CLARITY 
 
 export const RICH_PANEL_COMPOSITION_LOCK_COMPACT = 'RICH PANEL COMPOSITION / CHARACTER CLARITY LOCK: setting or scripted abstraction; story evidence/actions/reactions clear.';
 
-const SCENE_LETTERING_LOCK = 'SCENE LETTERING: only explicit per-panel object text is exact/readable; no cross-panel legibility requirement unless scripted. Unspecified posters, signs, packages, menus and book covers keep natural artwork, pictograms, color blocks, borders, surface material and layout. no incidental slogans/pseudo-lettering; small type may be unreadable marks; never invent a clearly readable word, number or URL. Never blank, grey out, blur, pixelate, mosaic or censor the whole surface.';
+const SCENE_LETTERING_LOCK = 'SCENE LETTERING: explicit per-panel object text exact/readable; repeat only if scripted. Unspecified posters, signs, packages, menus/book covers keep natural artwork/pictograms/colors/borders/material/layout. Freely render context-appropriate lettering—readable/decorative, short/long, any amount/density. Never suppress, simplify, blank, grey, blur, pixelate, mosaic or censor a surface merely because text is unscripted.';
 
 // 4コマの焦点・密度差を調整し、1枚絵の基準は変更しない。
 const MANGA_IMAGE_QUALITY_CONTRACT = SHARED_IMAGE_QUALITY_CONTRACT.replace(
@@ -906,7 +906,7 @@ TEXT RULES:
 - Only Dialogue becomes white bubbles: vertical Japanese tategaki, verbatim character-by-character; no paraphrase, synonyms, softening, added/omitted words, or horizontal text.
 - In each Dialogue block, ONLY quoted values after "TEXT (PRINT VALUES ONLY)" are printed. Names in square brackets after "TAILS (METADATA; NEVER PRINT NAMES)" or "TAIL TIP LOCK (NEVER PRINT)" are routing metadata only: NEVER print speaker names, brackets, bubble IDs, field labels, quotation marks, or metadata.
 - Tails point to actual speakers; right-to-left manga order.
-- Action text: only scripted handwriting/signage/label/print/screen/board; never ambience/SFX/mood/aura/emotion/narration/state/prompt labels.
+- Explicit scripted handwriting/signage/label/print/screen/board stays exact. Unscripted in-scene lettering is freely allowed on physical surfaces, but it never becomes a speech bubble, narration, prompt label or metadata.
 ${SCENE_LETTERING_LOCK}
 
 DIALOGUE / BUBBLE QA LOCK:
@@ -918,7 +918,7 @@ CHARACTER QA PASS:
 ${artStyleQa}
 
 THINGS TO AVOID:
-- No plastic skin, extra logos/watermarks, floating/ghost eyes/faces, duplicate humans, unrelated text.
+- No plastic skin, extra credits/watermarks, floating/ghost eyes/faces or duplicate humans.
 - No sparkle/glow dust or grain except style locks. HAND ANATOMY: correct hands; five digits (one thumb + four fingers), including every foreground hand and foreshortened hand; no four-digit/mirrored/extra/backward hands.
 
 PANEL-BY-PANEL CLOTHING FOLD PRIORITY: ${preserveReferenceStyle ? 'Follow the character sheet\'s existing fold-line and shadow treatment in every panel; do not introduce a new rendering method.' : 'When a panel shows folded clothing, render 2-4 distinct small dark triangular shadow fills at visible crease junctions. Use hard cel-shaded edges, especially on light shirts, blouses, jackets, and sleeves. These are localized form shadows only: never scatter triangles across smooth fabric or turn them into a print/pattern.'}
@@ -1079,7 +1079,7 @@ ${preserveReferenceStyle ? `REFERENCE-SHEET STYLE QA LOCK:
 - DIALOGUE TEXT IS VERBATIM: The text inside each Speech Bubble MUST be copied EXACTLY as written in the Dialogue section — character by character. Do NOT paraphrase, rephrase, or substitute synonyms.
 - Do NOT normalize punctuation. If the Dialogue line has no punctuation, keep it that way; if it has punctuation, copy only that exact punctuation.
 - TYPOGRAPHY RULE: Write Japanese text tightly with ZERO spaces between words. Do NOT insert any gaps or spaces between characters. (no letter spacing:1.5), (tight kerning:1.5).
-- no incidental slogans or pseudo-lettering. Follow SCENE LETTERING; keep scripted scene text exact.
+- Follow SCENE LETTERING: keep scripted scene text exact; other physical surfaces may freely contain natural context-appropriate lettering with no amount, density or readability cap.
 - Maintain character consistency across all 4 panels.
 - Flow is from top panel to bottom panel.
 - Keep every watermark glyph fully inside the footer, inset from the image edges. The text must be oriented horizontally (left-to-right).

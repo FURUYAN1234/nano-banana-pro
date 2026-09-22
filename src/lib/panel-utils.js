@@ -1647,6 +1647,7 @@ export const extractCastLimitRule = (fullPanelText, castList, options = {}) => {
     let cloneWarning = compact
       ? `CAST COUNT: ${allCharBrackets.join(', ')} each EXACTLY ONCE; no named-character duplicates.`
       : `ANTI-CLONE REMINDER: ${allCharBrackets.join(', ')} — each appears EXACTLY ONCE. If a character is mentioned in both the placement rule AND the visual action, they are the SAME person — do NOT draw a second copy.`;
+    cloneWarning += '\nCAST INSTANCE LOCK: allocate each named actor one body silhouette, in one depth position, one time in this panel; a second matching face/body is forbidden even across foreground/background or panel-edge occlusion.';
     if (storyGuests.length > 0) {
       const guestNames = storyGuests.map(c => `[${c}]`).join(', ');
       cloneWarning += compact

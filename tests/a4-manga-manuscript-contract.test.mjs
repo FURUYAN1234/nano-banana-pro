@@ -19,6 +19,9 @@ test('all manga output contracts use one A4 manuscript ratio without 2:3 or 3:4 
   assert.deepEqual([MANGA_MANUSCRIPT_STANDARD.value, MANGA_MANUSCRIPT_LARGE.value], ['1120x1584', '2240x3168']);
   assert.match(prompts, /A4 PORTRAIT \$\{MANGA_MANUSCRIPT_RATIO_LABEL\}/);
   assert.match(prompts, /exact A4 portrait aspect ratio \$\{MANGA_MANUSCRIPT_RATIO_LABEL\}/i);
+  assert.match(prompts, /MANGA_MANUSCRIPT_STANDARD\.value/);
+  assert.match(prompts, /MANGA_MANUSCRIPT_LARGE\.value/);
+  assert.match(assembler, /PAGE:A4 \$\{MANGA_MANUSCRIPT_RATIO_LABEL\}.*MANGA_MANUSCRIPT_STANDARD\.value.*MANGA_MANUSCRIPT_LARGE\.value/s);
   assert.match(step4, /MANGA_MANUSCRIPT_RATIO_LABEL/);
   assert.doesNotMatch(combined, /exact(?:ly)? 2:3|\[FORMAT: 2:3|PAGE:2:3|clean 3:4 portrait canvas/i);
 });

@@ -147,9 +147,10 @@ test('ChatGPT manga prompt stays within the empirical Web-copy soft budget witho
   assert.match(prompt, /supporting cast smaller\/lower contrast/);
   assert.match(prompt, /exact hand pose\/contact\/gaze/);
   assert.match(prompt, /no stock-pose substitution/);
-  assert.match(prompt, /SCENE LETTERING:.*explicit/);
-  assert.match(prompt, /per-panel object text.*no cross-panel legibility requirement unless scripted/);
-  assert.match(prompt, /no incidental slogans.*pseudo-lettering/);
+  assert.match(prompt, /SCENE LETTERING:.*explicit.*exact/);
+  assert.match(prompt, /per-panel object text.*repeat only if scripted/);
+  assert.match(prompt, /freely render context-appropriate lettering.*readable\/decorative.*short\/long.*any amount\/density/i);
+  assert.doesNotMatch(prompt, /Action text: only scripted|include sparse|no gibberish|pseudo-lettering|unrelated text/i);
   assert.match(prompt, /OBJECT GEOMETRY LOCK/);
   assert.match(prompt, /Text follows actual cover\/spine\/page\/label face axes and perspective/);
   assert.match(prompt, /flat-page text inverted/);
@@ -203,7 +204,7 @@ test('ChatGPT manga prompt stays within the empirical Web-copy soft budget witho
   assert.match(prompt, /MUST NOT have glasses/);
   assert.match(prompt, /THINGS TO AVOID:/);
   assert.match(prompt, /No plastic skin/);
-  assert.match(prompt, /extra logos\/watermarks/);
+  assert.match(prompt, /extra credits\/watermarks/);
   assert.match(prompt, /floating\/ghost eyes\/faces/);
   assert.match(prompt, /No sparkle\/glow dust/);
   assert.match(prompt, /HAND ANATOMY: correct hands/);

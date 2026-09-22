@@ -94,11 +94,12 @@ test('both provider prompts preserve physical settings while allowing density co
   }
 });
 
-test('both provider prompts preserve poster and sign artwork without inventing readable incidental copy', () => {
+test('both provider prompts preserve artwork and freely allow natural incidental lettering', () => {
   for (const prompt of [buildChatGptPrompt(), buildGeminiPrompt()]) {
-    assert.match(prompt, /posters?, signs?, packages?, menus? and book covers? keep natural artwork, pictograms, color blocks, borders, surface material and layout/i);
-    assert.match(prompt, /never blank, grey out, blur, pixelate, mosaic or censor the whole surface/i);
-    assert.match(prompt, /never invent a clearly readable word, number or URL/i);
+    assert.match(prompt, /posters?, signs?, packages?, menus?\/book covers? keep natural artwork\/pictograms\/colors\/borders\/material\/layout/i);
+    assert.match(prompt, /never suppress, simplify, blank, grey, blur, pixelate, mosaic or censor a surface/i);
+    assert.match(prompt, /freely render context-appropriate lettering.*readable\/decorative.*short\/long.*any amount\/density/i);
+    assert.doesNotMatch(prompt, /Action text: only scripted|include sparse|no gibberish|pseudo-lettering|unrelated text/i);
     assert.doesNotMatch(prompt, /Other surfaces unlettered|otherwise unlettered surfaces/i);
   }
 });

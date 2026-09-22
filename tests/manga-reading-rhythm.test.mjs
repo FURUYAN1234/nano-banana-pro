@@ -310,10 +310,11 @@ test('final prompts retain setting depth, exact hand performance and explicit-on
       assert.match(prompt, /supporting (?:cast|figures).*smaller\/lower contrast/i);
       assert.match(prompt, /exact hand pose\/contact\/gaze/i);
       assert.match(prompt, /no stock-pose substitution/i);
-      assert.match(prompt, /SCENE LETTERING:.*only.*explicit/i);
-      assert.match(prompt, /no incidental slogans.*pseudo-lettering/i);
+      assert.match(prompt, /SCENE LETTERING:.*explicit.*exact/i);
+      assert.match(prompt, /freely render context-appropriate lettering.*readable\/decorative.*short\/long.*any amount\/density/i);
+      assert.doesNotMatch(prompt, /Action text: only scripted|include sparse|no gibberish|pseudo-lettering|unrelated text/i);
       assert.ok(prompt.includes('返却用'));
-      assert.doesNotMatch(prompt, /Small incidental text.*may appear|Small readable text.*is allowed|background rich but|Do not leave plain empty walls|do not default to empty walls|rich setting/i);
+      assert.doesNotMatch(prompt, /background rich but|Do not leave plain empty walls|do not default to empty walls|rich setting/i);
     }
   }
 });
@@ -325,12 +326,14 @@ test('selected visual enhancement improves rhythm without permitting unselected 
   assert.match(prompt, /背景は未選択/);
 });
 
-test('background-only enhancement may subtract decoration without inventing lettering or hand actions', () => {
+test('background-only enhancement allows natural lettering without a quantity cap or hand invention', () => {
   const prompt = buildScenarioEnhancementPrompt({ scenario, selectedCategories: ['background'], punchlineType: 'Auto' });
   assert.match(prompt, /被写界深度.*ぼか/);
   assert.match(prompt, /場所.*奥行き.*保/);
   assert.doesNotMatch(prompt, /ぼかすだけでなく|広い白地や平坦な色面/);
   assert.match(prompt, /看板.*文字.*追加しない/);
+  assert.match(prompt, /場所に自然な文字.*量を制限せず.*描/);
+  assert.doesNotMatch(prompt, /少量|文字化け|疑似文字|架空URL/);
   assert.match(prompt, /身体.*未選択|未選択:.*身体/);
 });
 

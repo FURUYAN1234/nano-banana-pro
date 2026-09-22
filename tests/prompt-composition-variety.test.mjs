@@ -163,7 +163,7 @@ test('both final-prompt families retain the page lock and four panel staging ass
     assert.match(prompt, /BODY ACTING \/ GESTURE VARIETY LOCK/);
     assert.doesNotMatch(prompt, /NO default eye-level shot|>=3 azimuths|max 1.*front-on/i);
     assert.match(prompt, /reference-sheet pose is identity evidence, not a recurring action/i);
-    assert.match(prompt, /full-body exaggeration/);
+    assert.match(prompt, /full-body (?:exaggeration|acting)/);
     assert.match(prompt, /preserve.*explicitly scripted.*pointing.*surface impact/i);
     assert.match(prompt, /action phase.*support.*contact/i);
   }

@@ -388,6 +388,36 @@ test('reference QA requires per-panel eyewear evidence and catches missing glass
   assert.ok(missing.issues.some(issue => issue.type === 'unverified' && issue.panel === 4 && issue.subject === 'character_reference'));
 });
 
+test('reference QA rejects a duplicated named cast instance even when each copy matches the reference', () => {
+  const checks = spatialChecks();
+  checks.forEach((check, index) => {
+    check.identity_checks = [{
+      name: 'ヒカリ', location: 'right background', matched_features: ['blonde bob', 'round glasses'],
+      reference_eyewear: 'glasses', observed_eyewear: 'glasses', status: 'ok', evidence: 'Rims, bridge and temples are visible.',
+    }];
+    check.cast_instances = [{
+      name: 'ヒカリ', observed_count: 1, status: 'ok',
+      instances: [{ location: `panel ${index + 1} right`, matched_features: ['blonde bob', 'round glasses'] }],
+    }];
+  });
+  checks[3].cast_instances[0] = {
+    name: 'ヒカリ', observed_count: 2, status: 'defect',
+    instances: [
+      { location: 'left of the display', matched_features: ['blonde bob', 'round glasses'] },
+      { location: 'right of the display', matched_features: ['blonde bob', 'round glasses'] },
+    ],
+  };
+  const finalPrompt = [1, 2, 3, 4]
+    .map(panel => `## Panel ${panel}\nCAST COUNT: [ヒカリ] each EXACTLY ONCE; no named-character duplicates.\nDialogue: silent`)
+    .join('\n');
+  const result = parseImageQualityQaResponse(JSON.stringify({ pass: true, issues: [], observations, spatial_checks: checks }), {
+    finalPrompt,
+    referenceImageCount: 2,
+  });
+  assert.equal(result.pass, false);
+  assert.ok(result.issues.some(issue => issue.type === 'cast_count' && issue.panel === 4 && issue.subject === 'ヒカリ'));
+});
+
 test('speaker-tail endpoint mismatch overrides a contradictory PASS', () => {
   const checks = spatialChecks();
   checks[3].bubble_speaker = {

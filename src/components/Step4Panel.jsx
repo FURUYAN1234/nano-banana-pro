@@ -30,9 +30,9 @@ import {
   MANGA_MANUSCRIPT_STANDARD,
 } from '../lib/manga-manuscript-format';
 
-const COMFYUI_WORKFLOW_FILENAME = 'FourPanel_NonLM_4step_20260913115712_v5.9.9.json';
+const COMFYUI_WORKFLOW_FILENAME = 'FourPanel_NonLM_4step_20260922104144.json';
 const COMFYUI_WORKFLOW_DOWNLOAD_URL = `${import.meta.env.BASE_URL}workflows/${COMFYUI_WORKFLOW_FILENAME}`;
-const COMFYUI_CUSTOM_NODE_FILENAME = 'ComfyUI_H3_FourPanel_NonLM_20260913115712_v5.9.9.zip';
+const COMFYUI_CUSTOM_NODE_FILENAME = 'ComfyUI_H3_FourPanel_NonLM_20260922104144.zip';
 const COMFYUI_CUSTOM_NODE_DOWNLOAD_URL = `https://github.com/FURUYAN1234/nano-banana-pro/releases/download/${SYSTEM_VERSION}/${COMFYUI_CUSTOM_NODE_FILENAME}`;
 const COMFYUI_H3_AUDIO_REFINE_REPOSITORY_URL = 'https://github.com/Adudeguyman/ComfyUI-H3-AudioRefine';
 const COMFYUI_PLAGUE_KIND_REPOSITORY_URL = 'https://github.com/PlagueKind/ComfyUI-PlagueKind-Nodes';
@@ -666,7 +666,7 @@ export default function Step4Panel({
                     {OPENAI_IMAGE_SIZE_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
                   </select>
                   <p className="step4-help-copy mt-2 text-slate-400">
-                    サイズの既定はA4比率の{MANGA_MANUSCRIPT_STANDARD.label.replace('A4標準：', '')}です。大サイズも同じA4比率です。品質とサイズの選択はリロードまで保持します。API生成のみの設定で、Webへコピーするプロンプトには影響しません。
+                    サイズの既定はA4漫画原稿比率の{MANGA_MANUSCRIPT_STANDARD.label.replace('A4標準：', '')}です。大サイズも同じ比率です。品質とサイズの選択はリロードまで保持します。API生成は選択サイズへ正規化し、Webへコピーするプロンプトには標準・大の両方の正確な寸法を記載します。
                     大きめは拡大・印刷向けです。手や台詞の正確さを保証する設定ではありません。
                   </p>
                   <p className="step4-help-copy mt-2 text-slate-400">
@@ -1047,11 +1047,11 @@ No explanations. No partial results.`;
                                     <Download size={13} /> 同梱カスタムノード3点・導入セットをダウンロード
                                   </a>
                                   <ol className="mt-3 space-y-1.5 list-decimal pl-4">
-                                    <li>「同梱カスタムノード3点・導入セットをダウンロード」を押して <code>ComfyUI_H3_FourPanel_NonLM_20260913115712_v5.9.9.zip</code> を保存します。</li>
+                                    <li>「同梱カスタムノード3点・導入セットをダウンロード」を押して <code>ComfyUI_H3_FourPanel_NonLM_20260922104144.zip</code> を保存します。</li>
                                     <li>配布セットを展開し、<code>custom_nodes</code> 内の3フォルダをそれぞれ <code>ComfyUI/custom_nodes/</code> へ配置します。Nano Bananaノードは <code>ComfyUI/custom_nodes/ComfyUI-NanoBanana-H3/</code> になります。</li>
                                     <li>同名の旧版がある場合はComfyUIを完全終了し、フォルダ単位で差し替えます。新旧カスタムノードのファイルは混在させません。</li>
-                                    <li><a href={COMFYUI_PLAGUE_KIND_REPOSITORY_URL} target="_blank" rel="noreferrer" className="text-cyan-300 underline hover:text-cyan-200">ComfyUI-PlagueKind-Nodes <ExternalLink className="inline" size={11} /></a>、音声2ステップ補正の <a href={COMFYUI_H3_AUDIO_REFINE_REPOSITORY_URL} target="_blank" rel="noreferrer" className="text-cyan-300 underline hover:text-cyan-200">ComfyUI-H3-AudioRefine <ExternalLink className="inline" size={11} /></a>、OS・PyTorch・CUDAに対応するTritonを別途導入します。</li>
-                                    <li>下のボタンから <code>FourPanel_NonLM_4step_20260913115712_v5.9.9.json</code> を保存し、<code>ComfyUI/user/default/workflows/</code> 以下へ配置します。</li>
+                                    <li><a href={COMFYUI_PLAGUE_KIND_REPOSITORY_URL} target="_blank" rel="noreferrer" className="text-cyan-300 underline hover:text-cyan-200">ComfyUI-PlagueKind-Nodes <ExternalLink className="inline" size={11} /></a>、音声4ステップ・denoise 1.0補正の <a href={COMFYUI_H3_AUDIO_REFINE_REPOSITORY_URL} target="_blank" rel="noreferrer" className="text-cyan-300 underline hover:text-cyan-200">ComfyUI-H3-AudioRefine <ExternalLink className="inline" size={11} /></a>、OS・PyTorch・CUDAに対応するTritonを別途導入します。</li>
+                                    <li>下のボタンから <code>FourPanel_NonLM_4step_20260922104144.json</code> を保存し、<code>ComfyUI/user/default/workflows/</code> 以下へ配置します。</li>
                                     <li>同梱3フォルダ、別途必須3項目、JSONの配置後、ComfyUIを完全に再起動してからワークフローを開きます。</li>
                                     <li><code>4. API設定＋画像変換＋H3プロンプト生成（同一Provider）</code> ノードで <code>OpenAI API</code> または <code>Google Gemini API</code> を選びます。ワークフローを開いただけ、またはProviderを変更しただけでは入力ダイアログを表示しません。「実行する」を押した時、選択中のProviderが未登録なら、そのProviderの入力ダイアログを開いてキュー投入を保留します。利用者が直接入力して認証に成功すると保留中の同じ実行を1回だけ続け、ダイアログを閉じると今回の実行だけを中止します。ノードの「<strong>APIキー未登録／入力</strong>」ボタンから先に登録することもできます。キーはワークフローJSON、配布ZIP、設定ファイル、ブラウザ保存領域、ディスクには保存されず、接続中のComfyUIサーバーのプロセスメモリだけに保持されます。ワークフローのシート移動や別ワークフローへの切替では残り、ComfyUIアプリ／サーバーを終了または再起動すると消去されるため、次回実行時は再入力してください。1回の実行では、選択中の同一Providerが画像変換とH3プロンプト作成の両方に使われ、認証確認または実行時だけ、そのComfyUIサーバーから選択したAPIへ送信されます。</li>
                                     <li>Google Gemini APIでは画像変換に <code>gemini-3.1-flash-image</code>、H3プロンプト作成・画像QAに <code>gemini-2.5-flash</code> を使います。OpenAI APIでは画像変換に <code>gpt-image-2</code>、H3プロンプト作成に <code>gpt-4.1-mini</code>、人物・読順の検査等に <code>gpt-5.4</code> を使います。</li>
@@ -1071,11 +1071,11 @@ No explanations. No partial results.`;
                                   </div>
                                 </div>
                                 <div className="mt-3 space-y-1 text-[10px] leading-relaxed text-slate-300">
-                                  <p><strong>既定の設定</strong>：4コマを物語の4幕として扱います。「軽く要約＋必要な台詞だけ延長」では、意味と語尾を保てる範囲で台詞を整え、基本5秒に収まらない台詞だけ最大15秒まで延長します。台詞がない場合だけ既定30秒です。映像はFused 4ステップ、音声補正は2ステップ（denoise 0.5）、既定はH3生成BGMありです。v5.9.9は区間ごとに生成・検査し、品質不合格なら初回込み最大5候補を比較します。途中で合格したら即座に次へ進み、全候補が不合格なら最良候補を保持して続行します。4・5回目の候補も途中再開できます。H3生成前には日本語台詞の読みも確認します。MiniMax H3が低音量の物語向けBGMを生成し、台詞中は強く抑えます。</p>
+                                  <p><strong>既定の設定</strong>：4コマを物語の4幕として扱います。「軽く要約＋必要な台詞だけ延長」では、意味と語尾を保てる範囲で台詞を整え、基本5秒に収まらない台詞だけ最大15秒まで延長します。台詞がない場合だけ既定30秒です。映像はFused 4ステップ、音声再精錬は4ステップ（denoise 1.0）、既定は全区間を通したH3生成BGMありです。区間ごとに生成・検査し、品質不合格なら初回込み最大5候補を比較します。途中で合格したら即座に次へ進み、全候補が不合格なら最良候補を保持して続行します。4・5回目の候補も途中再開できます。H3生成前には日本語台詞の読みも確認します。</p>
                                   <p>4つの不足モデルはComfyUIの不足モデル表示からダウンロード候補を開けます。<code>H3 SLA Attention</code> の <a href={COMFYUI_PLAGUE_KIND_REPOSITORY_URL} target="_blank" rel="noreferrer" className="text-cyan-300 underline hover:text-cyan-200">ComfyUI-PlagueKind-Nodes <ExternalLink className="inline" size={11} /></a> と音声補正の <a href={COMFYUI_H3_AUDIO_REFINE_REPOSITORY_URL} target="_blank" rel="noreferrer" className="text-cyan-300 underline hover:text-cyan-200">ComfyUI-H3-AudioRefine <ExternalLink className="inline" size={11} /></a> はZIPに含まれないため、対応Triton環境とともに別途導入してください。</p>
                                   <p>H3本体にはタイトル、字幕、URL、終了クレジットを生成させません。タイトルは <code>overlay_title</code> として抽出し、動画生成後に左上へ一度だけ、黒字＋白縁、背景バーなしで合成します。固定クレジットも後段ノードで合成します。</p>
                                   <p>人物集合と識別署名は各入力漫画の各コマから動的に導出し、特定の人数や外見、最終フレームの構成を固定しません。人物IDと話者IDの対応を区間分割後も維持し、時系列の6フレームで話者の口の動きも検査します。音声と映像が同時に不合格でも、人物重複・外見・話者口形の問題を構造化して映像ショットを差し替えます。同一区間で映像不合格が2回続くと、台詞・時刻・人物・音・BGMを変えず、話者を読み取りやすい単純な構図へ切り替えます。全候補が不合格の場合は検査結果上の最良候補を採用するため、採用済みでも全検査合格とは限りません。完成動画の台詞・話者・映像は利用者も確認してください。</p>
-                                  <p>添付された現行配布版はv5.9.9です。28秒・864×480・24fpsのGPU/API生成で、重複発声の除去と末尾発声完了が再生確認されています。ただし、このZIPを展開した新規GPU生成と別PC実行は未検証です。別製品のT2V・I2V・Ref2V版は更新しません。同梱の <code>README_JA.md</code>、<code>RELEASE_PREVENTION_JA.md</code>、<code>VALIDATION.md</code> に導入条件、再発防止策、検証範囲を記載しています。</p>
+                                  <p>現行配布版は識別子 <code>20260922104144</code> です。通常の保存済みワークフロー経路で6区間・36秒・864×480・24fpsのMP4まで完走し、manifestの <code>complete</code>、<code>quality_status: pass</code>、カスタムノード回帰184件を確認しています。修正対象の第4区間では二重発声と無関係な余剰発話を棄却し、正しい1回の発話だけを採用しました。ただし別PC実行は未検証です。別製品のT2V・I2V・Ref2V版は更新しません。同梱の <code>README.md</code>、<code>REPRODUCE.md</code>、<code>VALIDATION.md</code> に導入条件、再現手順、検証範囲を記載しています。</p>
                                   <p>APIキー・認証情報・モデル本体・漫画画像・生成動画は配布物に含まれません。</p>
                                   <p><code>ComfyUI-NanoBanana-H3</code> はこのワークフロー専用の独自統合ノードです。フォルダ内の独自ソースは MIT、<code>ComfyUI-MiniMax-H3-Long-Video</code> は GPL-3.0-only、<code>ComfyUI-Spectrum-MiniMax-H3</code> は GPL-3.0-or-later です。別途導入するComfyUI本体、PlagueKind、AudioRefine、Triton、モデル、外部API、利用者の入出力はそれぞれの条件に従います。</p>
                                 </div>
@@ -1091,7 +1091,7 @@ No explanations. No partial results.`;
                                   <Download size={13} /> 自動可変尺・Fused4step・SLA ワークフローをダウンロード
                                 </a>
                                 <div className="mt-2 space-y-1 text-[10px] leading-relaxed text-slate-300">
-                                  <p>配布セットにはワークフロー、同梱カスタムノード3フォルダ、標準H3用追加プロンプト、モデル取得先、導入README、ライセンス・出典表記、再発防止文書 <code>RELEASE_PREVENTION_JA.md</code> を収録しています。PlagueKind、AudioRefine、Tritonは別途必要です。</p>
+                                  <p>配布セットにはワークフロー、同梱カスタムノード3フォルダ、モデル取得先、導入README、再現手順、検証記録、ライセンス・出典表記、全ファイルハッシュと検証スクリプトを収録しています。PlagueKind、AudioRefine、Tritonは別途必要です。</p>
                                   <p>APIキー・認証情報・モデル本体・漫画画像・生成動画は配布物に含まれません。</p>
                                 </div>
                               </div>

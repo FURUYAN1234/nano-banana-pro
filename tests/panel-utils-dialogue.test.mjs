@@ -90,6 +90,7 @@ test('a fully silent panel keeps named Action actors instead of marking the whol
   const rule = extractCastLimitRule('状況: ミクはリンの隣へ座り直し、リンは古い半券をミクの掌へ重ねる。\nセリフなし', cast, { compact: true });
 
   assert.match(rule, /CAST COUNT:.*\[ミク\].*\[リン\]/);
+  assert.match(rule, /CAST INSTANCE LOCK:.*one body silhouette.*one depth position.*one time/is);
   assert.match(rule, /NO OTHER HUMANS: exactly 2 people/);
   assert.doesNotMatch(rule, /ABSENT unless explicitly required/);
   assert.doesNotMatch(rule, /ABSENT:[^\n]*ミク|ABSENT:[^\n]*リン/);

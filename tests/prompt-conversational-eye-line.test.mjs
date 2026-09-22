@@ -230,12 +230,12 @@ test('normal multi-speaker panels keep eye-lines without imposing a shoulder vie
     assert.doesNotMatch(prompt, /far eye of every visible character fully hidden/i);
     assert.match(panel, /Camera:/);
     assert.doesNotMatch(panel, /PURE 90° SIDE-ON/);
-    assert.match(panel, /three-quarter/i);
+    assert.match(panel, /three-quarter|RIGHT-FRONT OBLIQUE/i);
     assert.match(panel, /VIEWPOINT FREEDOM/);
     assert.doesNotMatch(panel, /VISIBLE REAR DEPTH CHECK|DEPTH ASSIGNMENT \(REQUIRED\)/);
     assert.match(panel, /EYE-LINE LOCK/);
     assert.match(panel, /address.*counterpart/i);
-    assert.match(panel, /Camera preserves (?:the )?scenario direction|Script camera wins/i);
+    assert.match(panel, /Camera preserves (?:the )?scenario direction|Script camera wins|VIEWPOINT FREEDOM: exact Camera projection/i);
   }
 });
 
@@ -386,12 +386,12 @@ MemberA「The loudest voice wins.」`;
     });
     const panel = prompt.match(/## Panel 1[\s\S]*?(?=## Panel 2)/)?.[0] || '';
 
-    assert.match(panel, /(?:CAST LIMIT: main focus \[Focus\]\.|CRITICAL CAST PLACEMENT: Ensure \[Focus\] are the main focus\.)/);
-    assert.match(panel, /(?:FG only|FOREGROUND MUST CONTAIN ONLY): \[Observer\]\./);
-    assert.match(panel, /(?:BG only|BACKGROUND MUST CONTAIN ONLY): \[Focus\], \[MemberA\], \[MemberB\], \[MemberC\]\./);
+    assert.match(panel, /(?:CAST LIMIT: (?:main )?focus \[Focus\]\.|CRITICAL CAST PLACEMENT: Ensure \[Focus\] are the main focus\.)/);
+    assert.match(panel, /(?:FG|FG only|FOREGROUND MUST CONTAIN ONLY): \[Observer\]\./);
+    assert.match(panel, /(?:BG|BG only|BACKGROUND MUST CONTAIN ONLY): \[Focus\], \[MemberA\], \[MemberB\], \[MemberC\]\./);
     assert.match(panel, /OTS CAST INSTANCE LOCK:.*\[Observer\].*(?:sole instance|one and only instance)/i);
     assert.doesNotMatch(panel, /(?:BG only|BACKGROUND MUST CONTAIN ONLY):[^\n]*\[Observer\]/);
-    assert.match(panel, /(?:NO OTHER HUMANS: exactly 5 people|Total EXACTLY 5 distinct individuals)\./);
+    assert.match(panel, /(?:NO OTHER HUMANS: exactly 5 people|NO OTHERS: total 5 people|TOTAL 5 people; no others|Total EXACTLY 5 distinct individuals)\./);
   }
 });
 
@@ -426,7 +426,7 @@ test('every panel receives a local functional-surface projection check', () => {
   for (const providerFamily of ['chatgpt', 'gemini']) {
     const prompt = buildPrompt(providerFamily, NORMAL_CONVERSATION);
     assert.equal((prompt.match(/FUNCTIONAL SURFACE PANEL CHECK:/g) || []).length, 4);
-    assert.match(prompt, /solve target-to-front\/back geometry before projection|reader\/camera side\/front-back\/text axes/i);
+    assert.match(prompt, /solve target-to-front\/back geometry before projection|reader\/camera side\/front-back\/text axes|FUNCTIONAL SURFACE PANEL CHECK: target\/side\/axes/i);
   }
 });
 

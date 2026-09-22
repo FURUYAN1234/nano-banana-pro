@@ -159,10 +159,25 @@ const fixtureBody = `[1コマ目: 起]
 状況: テスト人物が案内板を回して入口を指す。
 テスト人物「こちらです」`;
 
+const payoffReviewResponse = JSON.stringify({
+  pass: true,
+  setup_seed: '受付机に案内板を置く。',
+  panel3_prediction: '案内板の向きが誤っていると分かる。',
+  panel4_outcome: '案内板を回して正しい入口を示す。',
+  shift_kind: 'payoff',
+  visual_payoff: true,
+  slogan_only: false,
+  unseeded_fact: false,
+  reason_codes: [],
+});
+
 test('actual scenario and enhancement call paths exclude sheet wardrobe and retry ungrounded uniforms', async () => {
   const calls = [];
   setFixtureResponse(async (prompt, images, system, progress, options) => {
     calls.push({ prompt, images, system, options });
+    if (prompt.includes('panel3_prediction') && prompt.includes('構成監査')) {
+      return { text: payoffReviewResponse, model: 'test-fixture' };
+    }
     return { text: `Topic: 会館の受付\nLocation: 地域会館\nVisualEvidence: 受付机、案内板、筆記具\nOutfit: ${calls.length === 1 ? '学生ボランティアの学校制服' : '動きやすい私服'}\nScenario:\n${fixtureBody}`, model: 'test-fixture' };
   });
   const result = await generateScenario({
@@ -170,7 +185,7 @@ test('actual scenario and enhancement call paths exclude sheet wardrobe and retr
     targetDate: '2026-09-15', customLocation: '', customOutfit: '', punchlineType: 'Surreal',
     onProgress: () => {}
   });
-  assert.equal(calls.length, 2);
+  assert.equal(calls.length, 3);
   assert.equal(result.outfit, '動きやすい私服');
   assert.equal(result.validationWarning, null);
   assert.match(calls[1].prompt, /学校制服の根拠/);
@@ -190,10 +205,12 @@ test('actual scenario and enhancement call paths exclude sheet wardrobe and retr
 });
 
 test('JSON scenario response preserves wardrobe metadata instead of dropping the override', async () => {
-  setFixtureResponse(async () => ({ text: JSON.stringify({
-    topic: '受付', location: '会館', visualEvidence: '受付机、案内板、筆記具',
-    outfit: '受付用スーツ', logline: '案内の向きを直す', punchline: '静寂型', scenario: fixtureBody
-  }), model: 'test-fixture' }));
+  setFixtureResponse(async (prompt) => ({ text: prompt.includes('panel3_prediction') && prompt.includes('構成監査')
+    ? payoffReviewResponse
+    : JSON.stringify({
+      topic: '受付', location: '会館', visualEvidence: '受付机、案内板、筆記具',
+      outfit: '受付用スーツ', logline: '案内の向きを直す', punchline: '静寂型', scenario: fixtureBody
+    }), model: 'test-fixture' }));
   const result = await generateScenario({
     castList: referenceCast, categories: [], inputMode: 'manual', manualTopic: '会館の受付',
     targetDate: '2026-09-15', customLocation: '', customOutfit: '', punchlineType: 'Surreal', onProgress: () => {}
