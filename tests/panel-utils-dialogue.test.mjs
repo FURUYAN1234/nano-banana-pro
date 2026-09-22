@@ -198,6 +198,31 @@ test('does not turn explicit handwriting quotes into speech bubbles', () => {
   assert.match(dialogue, /Speech Bubble 1 \[アカリ\]: "私、カロリーゼロのポテチ描いた！"/);
 });
 
+test('keeps enumerated display text on its surface and maps only explicit dialogue to speakers', () => {
+  const cast = `
+## 読子
+- round glasses
+## 管理者
+- black hair
+`;
+  const panelText = `
+[2コマ目: 承]
+状況: 読子は案内板の「商品A」「商品B」と「配送に関するお知らせ」の文字を読み、眉を寄せたまま管理者へ顔を向ける。管理者は案内板を見つめる。
+読子「配送の状況を確認しています。」
+管理者「必要な物が、ここまで届かないのか。」
+`;
+
+  const dialogue = extractDialogueOnly(panelText, cast, { forImagePrompt: true });
+  const action = extractActionOnly(panelText, cast);
+
+  assert.doesNotMatch(dialogue, /商品A|商品B|配送に関するお知らせ/);
+  assert.match(dialogue, /B1="配送の状況を確認しています。"/);
+  assert.match(dialogue, /B2="必要な物が、ここまで届かないのか。"/);
+  assert.match(dialogue, /B1=>\[読子\] mouth\/head/);
+  assert.match(dialogue, /B2=>\[管理者\] mouth\/head/);
+  assert.match(action, /案内板の「商品A」「商品B」と「配送に関するお知らせ」の文字を読み/);
+});
+
 test('does not promote quoted ambient sounds into speech bubbles', () => {
   const panelText = `
 [2コマ目: 承]

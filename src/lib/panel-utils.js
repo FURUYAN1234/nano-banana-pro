@@ -364,6 +364,13 @@ const ACOUSTIC_VISUAL_LINE_RE = new RegExp(
 const hasAcousticQuotePostContext = (postText = '') => ACOUSTIC_QUOTE_POST_RE.test(postText.trim());
 const hasSpokenQuotePostContext = (postText = '') => {
   const cleanPostText = postText.trim();
+  // Surface copy such as `boardの「A」「B」の文字を読み` describes visible
+  // lettering, not oral speech.  Keep plain reading of a named text field out
+  // of the speech-bubble fallback while preserving explicit oral cues such as
+  // 読み上げる／叫ぶ／告げる.
+  if (/^(?:の)?(?:文字|文言|表示|案内|内容|項目|メニュー|ラベル)(?:を|に)?(?:読み|読ん|読む|確認|見)/.test(cleanPostText)) {
+    return false;
+  }
   return !hasAcousticQuotePostContext(cleanPostText) && SPOKEN_QUOTE_POST_RE.test(cleanPostText);
 };
 

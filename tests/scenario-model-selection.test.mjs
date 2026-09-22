@@ -32,7 +32,7 @@ test('the STEP2 selectable route includes every supported scenario fallback mode
     OPENAI_SCENARIO_TEXT_MODEL_IDS,
   );
   assert.ok(OPENAI_SCENARIO_MODEL_OPTIONS.every(({ label, description }) => label && description));
-  assert.equal(OPENAI_SCENARIO_PRICE_SNAPSHOT_DATE, '2026-09-21');
+  assert.equal(OPENAI_SCENARIO_PRICE_SNAPSHOT_DATE, '2026-09-22');
   assert.ok(OPENAI_SCENARIO_MODEL_OPTIONS.every(({ inputPriceUsdPerM, outputPriceUsdPerM }) => (
     Number.isFinite(inputPriceUsdPerM) && Number.isFinite(outputPriceUsdPerM)
   )));

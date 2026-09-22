@@ -149,6 +149,53 @@ Outfit: カジュアルな私服
   }
 });
 
+test('keeps enumerated board copy out of bubbles and preserves speaker-tail ownership for both providers', () => {
+  const castList = `
+## 読子
+- round glasses
+## 管理者
+- black hair
+`;
+  const scenario = `
+## タイトル: 表示確認
+Location: 店内の案内板前
+
+[1コマ目: 起]
+状況: 読子と管理者が案内板へ歩く。
+読子「表示を見よう。」
+
+[2コマ目: 承]
+状況: 読子は案内板の「商品A」「商品B」と「配送に関するお知らせ」の文字を読み、眉を寄せたまま管理者へ顔を向ける。管理者は案内板を見つめる。
+読子「配送の状況を確認しています。」
+管理者「必要な物が、ここまで届かないのか。」
+
+[3コマ目: 転]
+状況: 二人が出口へ向かう。
+管理者「今日は戻ろう。」
+
+[4コマ目: 結]
+状況: 読子が扉を開ける。
+読子「また確認しよう。」
+`;
+
+  for (const providerFamily of ['chatgpt', 'gemini']) {
+    const prompt = buildMangaPrompt({
+      scenario,
+      castList,
+      colorMode: 'color',
+      providerFamily,
+      punchlineType: 'Auto',
+      systemVersion: 'v-test'
+    });
+
+    assert.match(prompt, /Panel 2 required dialogue: 読子「配送の状況を確認しています。」 \/ 管理者「必要な物が、ここまで届かないのか。」/);
+    assert.doesNotMatch(prompt, /Panel 2 required dialogue:[^\n]*配送に関するお知らせ/);
+    assert.match(prompt, /Action \(visual only[^)]*\):[^\n]*案内板の「商品A」「商品B」と「配送に関するお知らせ」の文字を読み/i);
+    assert.match(prompt, /B1="配送の状況を確認しています。"[^\n]*B2="必要な物が、ここまで届かないのか。"/);
+    assert.match(prompt, /B1=>\[読子\] mouth\/head; B2=>\[管理者\] mouth\/head/);
+  }
+});
+
 test('routes staging-and-gag descriptions to visual action instead of speaker bubbles for both providers', () => {
   const stagingScenario = `
 ## タイトル: 生成AI観の対立デモ !?
