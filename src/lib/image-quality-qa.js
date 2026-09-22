@@ -81,9 +81,24 @@ export const extractPanelCastContracts = (prompt) => [...String(prompt).matchAll
   .map(([, number, body]) => {
     const castLine = body.match(/^CAST COUNT:\s*([^\n]*?)\s+each EXACTLY ONCE;/m)?.[1] || '';
     const names = [...castLine.matchAll(/\[([^\]]+)\]/g)].map(([, name]) => name.trim()).filter(Boolean);
-    return { panel: Number(number), names };
+    const replicaLine = body.match(/^DIEGETIC REPLICA LAYER:\s*([^\n]*)/m)?.[1] || '';
+    const replicaNames = [...replicaLine.matchAll(/\[([^\]]+)\]/g)].map(([, name]) => name.trim()).filter(Boolean);
+    return { panel: Number(number), names, replicaNames };
   })
   .filter(contract => contract.names.length > 0);
+
+const inspectCastInventoryRecord = (inventory, name) => {
+  const records = Array.isArray(inventory) ? inventory.filter(item => item?.name === name) : [];
+  const record = records.length === 1 ? records[0] : null;
+  const instances = Array.isArray(record?.instances) ? record.instances : [];
+  const grounded = record && Number.isInteger(record.observed_count) && record.observed_count >= 0
+    && instances.length === record.observed_count
+    && instances.every(instance => typeof instance?.location === 'string' && instance.location.trim()
+      && Array.isArray(instance.matched_features)
+      && instance.matched_features.filter(value => typeof value === 'string' && value.trim()).length >= 2)
+    && ['ok', 'defect', 'uncertain'].includes(record.status);
+  return { record, instances, grounded };
+};
 
 // Bubble order is a spatial check, so harmless OCR punctuation drift must not
 // erase an otherwise unambiguous text-to-bubble match. Exact dialogue remains
@@ -255,7 +270,7 @@ ${isSingleImage ? '' : 'TITLE BAND CHECK: the title must sit on a plain open bac
 
 IDENTITY LOCALIZATION: Before reporting character_reference, locate that person in THIS panel using at least two identity features independent of the feature being tested. Do not assign a neighboring person's glasses to the named person, and do not copy an observation to other panels. Each character_reference issue MUST include identity_evidence: {"location":"candidate panel position","matched_features":["first independent identity cue","second independent identity cue"],"reference_evidence":"reference sheet location and expected feature","observed_feature":"specific visible candidate feature","expected_feature":"specific approved feature"}. Occluded or ambiguous identity is unverified, not a repair target. For eyewear inspect rims, bridge and temples on that exact face; eyebrows, hair and another face's frames are not glasses.
 ${referenceCount > 0 ? 'IDENTITY INVENTORY: In every spatial_checks entry return identity_checks for every visible named cast member: {"name":"cast name","location":"panel position","matched_features":["two identity cues other than eyewear"],"reference_eyewear":"glasses|no_glasses|unknown","observed_eyewear":"glasses|no_glasses|unknown","status":"ok|defect|uncertain","evidence":"visible rims, bridge and temples or their clearly visible absence"}. Inspect each face independently in each panel, including small or chibi figures. A small face is uncertain, never an automatic PASS. If known reference and observed eyewear differ, status is defect and report character_reference.' : ''}
-${referenceCount > 0 && !isSingleImage ? 'CAST INSTANCE INVENTORY: For every spatial_checks entry, read that panel\'s CAST COUNT contract and return cast_instances for every required named actor: {"name":"cast name","observed_count":1,"status":"ok|defect|uncertain","instances":[{"location":"distinct visible body location","matched_features":["first identity cue","second identity cue"]}]}. Count separate bodies, not mentions. Two bodies with the same hair, face, eyewear or defining outfit are two instances even when one is small, partly hidden, or at the opposite depth. observed_count and instances length must agree. A clear count other than exactly one is cast_count; ambiguity is unverified.' : ''}
+${referenceCount > 0 && !isSingleImage ? 'CAST INSTANCE INVENTORY: For every spatial_checks entry, read that panel\'s CAST COUNT contract and return cast_instances for every required named actor: {"name":"cast name","observed_count":1,"status":"ok|defect|uncertain","instances":[{"location":"distinct visible body location","matched_features":["first identity cue","second identity cue"]}]}. Count full-size physical actors separately from scripted diegetic replicas. Repeated Camera, Action, dialogue, and reaction mentions refer to the same physical actor, not another body. If no DIEGETIC REPLICA LAYER exists, every matching body counts as a physical instance even when small, partly hidden, or at the opposite depth. If that layer exists, exclude only the explicitly allowed tiny contained representations from cast_instances and return them separately as cast_replicas with the same schema. A replica outside its scripted container/surface or rendered at human scale counts as an extra physical actor. observed_count and instances length must agree. A clear count other than exactly one is cast_count; ambiguity is unverified.' : ''}
 
 PRINT INVENTORY: In each surface_text check return printed_surfaces for every visible printed prop, including background stacks: {"subject":"stable object identifier","face":"spine/cover/page/label/display","object_axes":"visible binding, corners and object top","glyph_axes":"observed glyph top and baseline relative to that face","expected_axes":"source-grounded expected rotation","basis":"reference|same_object|explicit_contract|unknown","status":"ok|defect|uncertain","text_role":"incidental|story_required|unknown","text_role_reason":"script-grounded role"}. Do not omit print because spelling or ownership is correct. Compare glyph tops, not merely line direction. With no established print design, use uncertain; horizontal spine lettering alone is not physically impossible. For an explicit object-fixed print contract, test that contract separately from general physical plausibility. Use an empty inventory only when no printed prop is visible. Never infer a defect just to trigger a repair.
 
@@ -382,20 +397,28 @@ export const parseImageQualityQaResponse = (responseText, { mode = 'four-panel',
           issues.push({ type: 'unverified', panel: entry.panel, subject: 'cast_count', reason: 'Named-cast instance inventory is missing for this panel.' });
         } else {
           for (const name of castContract.names) {
-            const records = inventory.filter(item => item?.name === name);
-            const record = records.length === 1 ? records[0] : null;
-            const instances = Array.isArray(record?.instances) ? record.instances : [];
-            const grounded = record && Number.isInteger(record.observed_count) && record.observed_count >= 0
-              && instances.length === record.observed_count
-              && instances.every(instance => typeof instance?.location === 'string' && instance.location.trim()
-                && Array.isArray(instance.matched_features)
-                && instance.matched_features.filter(value => typeof value === 'string' && value.trim()).length >= 2)
-              && ['ok', 'defect', 'uncertain'].includes(record.status);
+            const { record, instances, grounded } = inspectCastInventoryRecord(inventory, name);
             if (!grounded || record.status === 'uncertain') {
               issues.push({ type: 'unverified', panel: entry.panel, subject: name, reason: 'Named-cast count lacks distinct body locations and two identity cues per instance.' });
             } else if (record.observed_count !== 1 || record.status === 'defect') {
               const locations = instances.map(instance => instance.location).join(' / ') || 'none visible';
               issues.push({ type: 'cast_count', panel: entry.panel, subject: name, reason: `Expected exactly one instance; observed ${record.observed_count} at ${locations}.` });
+            }
+          }
+          if (castContract.replicaNames.length > 0) {
+            const replicaInventory = Array.isArray(entry.cast_replicas) ? entry.cast_replicas : null;
+            if (!replicaInventory) {
+              issues.push({ type: 'unverified', panel: entry.panel, subject: 'cast_replicas', reason: 'Scripted diegetic-replica inventory is missing for this panel.' });
+            } else {
+              for (const name of castContract.replicaNames) {
+                const { record, instances, grounded } = inspectCastInventoryRecord(replicaInventory, name);
+                if (!grounded || record.status === 'uncertain') {
+                  issues.push({ type: 'unverified', panel: entry.panel, subject: `${name} replica`, reason: 'Diegetic replica count lacks a contained location and two identity cues.' });
+                } else if (record.observed_count !== 1 || record.status === 'defect') {
+                  const locations = instances.map(instance => instance.location).join(' / ') || 'none visible';
+                  issues.push({ type: 'cast_count', panel: entry.panel, subject: `${name} replica`, reason: `Expected exactly one contained tiny replica; observed ${record.observed_count} at ${locations}.` });
+                }
+              }
             }
           }
         }

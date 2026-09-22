@@ -1,6 +1,6 @@
 # Super FURU AI 4-koma System / Super FURU AI 4コマシステム
 
-> Current source version: **v6.4.9** / 現在のソース版: **v6.4.9**
+> Current source version: **v6.5.0** / 現在のソース版: **v6.5.0**
 
 An experimental web application in which AI handles topic research, story structure, direction, prompt construction, image generation, and quality review for a four-panel manga. / AIが話題調査、構成、演出、プロンプト構築、画像生成、品質確認まで担当する4コマ漫画制作Webアプリです。
 
@@ -184,7 +184,7 @@ After the existing STEP2 safety and format checks, a mode-aware payoff review ve
 
 Usage and estimated cost are logged only when the API returns valid input and output token counts; missing usage is not treated as zero cost. / 使用量と参考費用は、APIが有効な入力・出力トークン数を返した場合だけ表示します。使用量が不明な応答を費用ゼロとは表示しません。
 
-For OpenAI image prompts, the bottom-right English watermark includes the model actually adopted for STEP2, for example `ChatGPT / GPT-6 Astra / FURU AI 4-koma v6.4.9`; the bottom-left Japanese watermark is unchanged. / OpenAI画像用の最終プロンプトでは、右下の英語透かしにSTEP2で実際に採用されたモデル名を入れます（例: `ChatGPT / GPT-6 Astra / FURU AI 4-koma v6.4.9`）。左下の日本語透かしは変更しません。
+For OpenAI image prompts, the bottom-right English watermark includes the model actually adopted for STEP2, for example `ChatGPT / GPT-6 Astra / FURU AI 4-koma v6.5.0`; the bottom-left Japanese watermark is unchanged. / OpenAI画像用の最終プロンプトでは、右下の英語透かしにSTEP2で実際に採用されたモデル名を入れます（例: `ChatGPT / GPT-6 Astra / FURU AI 4-koma v6.5.0`）。左下の日本語透かしは変更しません。
 
 The API key chosen at connection time fixes one provider for every application step: a Gemini key keeps STEP1–4 on Gemini, while an OpenAI key keeps STEP1–4 on OpenAI. In news mode, selected categories use Google Grounding only on the Gemini route and OpenAI Responses Web Search only on the OpenAI route. / 接続時に入力したAPIキーで、アプリの全工程のプロバイダーを固定します。GeminiキーではSTEP1〜4をGemini、OpenAIキーではSTEP1〜4をOpenAIで実行します。ニュースモードのカテゴリ検索は、Gemini経路ではGoogle Groundingだけ、OpenAI経路ではOpenAI Responses Web Searchだけを使用します。
 
@@ -221,7 +221,7 @@ Character sheets define identity rather than a reusable page layout. STEP4 asks 
 
 Functional surfaces such as phones, documents, books, and monitors are oriented toward the person using or reading them. Printed glyphs rotate and project with the physical surface instead of being forced upright to the viewer. / スマホ、書類、本、モニター等の機能面は使用者・読み手へ向けます。印字は読者へ無理に正立させず、実物の面と一緒に回転・透視投影するよう指定します。
 
-Image QA checks panel structure, character identity, body and hand integrity, prop ownership, dialogue-only bubbles, text leakage, and observable surface orientation. Each panel carries an exact-once cast contract: every named actor gets one body silhouette in one depth position, and QA inventories observed instances against that contract so a repeated face or body is reported even across foreground/background or panel-edge occlusion. For every large, foreground, foreshortened, open, or action-critical hand, QA inventories visible and naturally occluded digits and requires their total to be five. A four-digit hand is an anatomy defect; uncertain or missing evidence remains unverified. Missing evidence triggers one review of the same image, then remains unverified without image regeneration if unresolved. / 画像QAはコマ構造、人物同一性、身体・手、小物の持ち主、吹き出しが台詞だけか、余分な文字、確認可能な面の向きを検査します。各コマは登場人物ごとに身体シルエット1体・奥行き位置1か所というexact-once契約を持ち、QAが実際の出現数と突合するため、前景／背景やコマ端の見切れをまたぐ同一人物の顔・身体の重複も報告します。大きい手、前景の手、短縮遠近の手、開いた手、動作上重要な手ごとに、見える指と自然に隠れた指を数え、合計5本であることを必須にします。4本指は人体不具合とし、判別不能・根拠不足は未確認に残します。根拠不足は同じ画像を1回再検査し、解消しなければ未確認のまま採用します。それだけを理由に画像を再生成しません。
+Image QA checks panel structure, character identity, body and hand integrity, prop ownership, dialogue-only bubbles, text leakage, and observable surface orientation. Each panel carries an exact-once physical-cast contract: every named actor gets one full-size body silhouette in one depth position, and every Camera, Action, dialogue, or reaction mention must reuse that body. Explicitly scripted miniatures, reflections, photos, or screen images are inventoried separately as contained diegetic replicas; they never authorize another full-size actor. QA validates both inventories so a repeated face or body is reported even across foreground/background or panel-edge occlusion. For every large, foreground, foreshortened, open, or action-critical hand, QA inventories visible and naturally occluded digits and requires their total to be five. A four-digit hand is an anatomy defect; uncertain or missing evidence remains unverified. Missing evidence triggers one review of the same image, then remains unverified without image regeneration if unresolved. / 画像QAはコマ構造、人物同一性、身体・手、小物の持ち主、吹き出しが台詞だけか、余分な文字、確認可能な面の向きを検査します。各コマは登場人物ごとに実体の等身大シルエット1体・奥行き位置1か所というexact-once契約を持ち、Camera、Action、台詞、リアクションに同じ人物が繰り返し現れても同じ身体を再利用します。台本に明示されたミニチュア、鏡像、写真、画面内人物は、容器や面の中に限る劇中複製として実体とは別に棚卸しし、等身大の追加人物を許可しません。QAは両方の内訳を突合するため、前景／背景やコマ端の見切れをまたぐ同一人物の顔・身体の重複も報告します。大きい手、前景の手、短縮遠近の手、開いた手、動作上重要な手ごとに、見える指と自然に隠れた指を数え、合計5本であることを必須にします。4本指は人体不具合とし、判別不能・根拠不足は未確認に残します。根拠不足は同じ画像を1回再検査し、解消しなければ未確認のまま採用します。それだけを理由に画像を再生成しません。
 
 ## MiniMax H3 and ComfyUI / MiniMax H3・ComfyUI動画化
 
@@ -240,7 +240,7 @@ The generic prompt transfers the packaged workflow's four-panel order, per-panel
 The app has separate buttons for the workflow JSON and the three-custom-node ZIP; `2つは別の操作` and each button downloads a different file. / アプリにはワークフローJSONとカスタムノード3点ZIPの別ボタンがあり、`2つは別の操作`として異なるファイルをダウンロードします。
 
 - [Download workflow JSON](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20260922104144.json) / [ワークフローJSONをダウンロード](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20260922104144.json)
-- [Download custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.4.9/ComfyUI_H3_FourPanel_NonLM_20260922104144.zip) / [カスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.4.9/ComfyUI_H3_FourPanel_NonLM_20260922104144.zip)
+- [Download custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.5.0/ComfyUI_H3_FourPanel_NonLM_20260922104144.zip) / [カスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.5.0/ComfyUI_H3_FourPanel_NonLM_20260922104144.zip)
 
 The current source tree intentionally contains no distribution ZIP. The custom-node ZIP is a named asset of the matching GitHub Release. / 現在のソースツリーには配布ZIPを意図的に登録せず、カスタムノードZIPは同じ版のGitHub Release専用アセットとして公開します。
 
@@ -288,11 +288,16 @@ The production application is published from the `main` branch through the repos
 
 **Why are there two ComfyUI download buttons? / ComfyUIのダウンロードボタンが2つあるのはなぜですか？**  The JSON defines the workflow, while the ZIP supplies three custom-node folders and documentation; three additional runtime dependencies are installed separately. / JSONはワークフロー定義、ZIPはカスタムノード3フォルダーと導入文書です。さらに実行依存3項目を別途導入します。
 
-**Where are older packages? / 旧版はどこですか？**  Older source tags remain for audit history, but their bundled distributions are withdrawn. New installations must use the current `20260922104144` workflow button and matching v6.4.9 FourPanel Release asset. / 旧タグは監査用履歴として残しますが、旧同梱配布物は取り下げ扱いです。新規導入は現在の`20260922104144`ワークフローボタンとv6.4.9 FourPanel Releaseアセットを使用してください。
+**Where are older packages? / 旧版はどこですか？**  Older source tags remain for audit history, but their bundled distributions are withdrawn. New installations must use the current `20260922104144` workflow button and matching v6.5.0 FourPanel Release asset. / 旧タグは監査用履歴として残しますが、旧同梱配布物は取り下げ扱いです。新規導入は現在の`20260922104144`ワークフローボタンとv6.5.0 FourPanel Releaseアセットを使用してください。
 
 **Is this the T2V/I2V/Ref2V repository? / T2V・I2V・Ref2Vのリポジトリですか？**  No. Those workflows are maintained separately in [comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows). / いいえ。それらは別の[comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows)で管理します。
 
 ## 📋 ChangeLog
+
+### v6.5.0 (2026-09-22)
+- **[Physical Cast Lock]** Camera、Action、台詞、リアクションで同じ人物が複数回言及されても、コマ内では同じ等身大の身体1体を再利用。前景・背景・見切れをまたぐ二重描画を禁止 / Reuse one full-size physical body when the same actor is mentioned across Camera, Action, dialogue, or reactions, preventing duplicates across foreground, background, and panel-edge crops
+- **[Diegetic Replicas]** 明示されたミニチュア、鏡像、写真、画面内人物を実体キャストと別に棚卸しし、指定された容器・面の内側の小型表現だけを許可 / Inventory scripted miniatures, reflections, photos, and screen figures separately from the physical cast, allowing them only as small representations inside their specified container or surface
+- **[Fail-Closed QA]** 実体人物と劇中複製の両方について観測数・位置・識別根拠を要求し、内訳欠落や等身大化を合格にしない / Require observed count, position, and identity evidence for both physical actors and diegetic replicas; missing inventories or full-size replicas cannot pass QA
 
 ### v6.4.9 (2026-09-22)
 - **[Surface Text Parser]** 案内板・画面・メニュー等の列挙文字に続く「文字を読む」を発話扱いせず、作中面の文字として保持。明示台詞だけを吹き出し化し、Web/API両経路でB番号・話者・尻尾対応を維持 / Keep enumerated board, screen and menu copy on its in-scene surface when a character reads it; only explicit dialogue becomes a bubble, preserving B-number, speaker and tail ownership across Web and API prompts

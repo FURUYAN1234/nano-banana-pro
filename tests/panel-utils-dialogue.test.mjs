@@ -96,6 +96,32 @@ test('a fully silent panel keeps named Action actors instead of marking the whol
   assert.doesNotMatch(rule, /ABSENT:[^\n]*ミク|ABSENT:[^\n]*リン/);
 });
 
+test('reaction mentions reuse one physical body while scripted miniature replicas stay in their own layer', () => {
+  const cast = '## Person1\n- blonde hair\n## Person2\n- brown hair\n## Person3\n- black hair\n## Person4\n- orange hair\n## Person5\n- glasses';
+  const reactionPanel = `Camera: Person4を前景に置き、奥でPerson1、Person2、Person3、Person5が身を反らす。
+状況: Person4がキーボードを打つ。（リアクション: Person1→肩を上げる、Person2→前のめり、Person3→腕を伸ばす、Person5→両手を握る）
+Person4「動いた！」`;
+  const reactionRule = extractCastLimitRule(reactionPanel, cast, { compact: true });
+
+  assert.match(reactionRule, /CAST INSTANCE LOCK:.*Camera\/Action\/dialogue\/reaction.*same physical body/is);
+  assert.match(reactionRule, /NO OTHER HUMANS: exactly 5 people/);
+  assert.doesNotMatch(reactionRule, /DIEGETIC REPLICA LAYER/);
+
+  const replicaPanel = `状況: 五人が展示ケースをのぞく。箱の中には今の場面を再現した極小の展示室があり、ミニチュアの五人は全員、紙を見上げる。現実のPerson1、Person2、Person3、Person4、Person5は箱の外で立ち止まる。
+セリフなし`;
+  const replicaRule = extractCastLimitRule(replicaPanel, cast, { compact: true });
+
+  assert.match(replicaRule, /DIEGETIC REPLICA LAYER:.*\[Person1\].*\[Person2\].*\[Person3\].*\[Person4\].*\[Person5\]/is);
+  assert.match(replicaRule, /one tiny replica each.*inside the explicitly scripted container\/surface/is);
+  assert.match(replicaRule, /PHYSICAL TOTAL 5 full-size people; no other full-size humans/i);
+  assert.doesNotMatch(replicaRule, /NO OTHER HUMANS: exactly 5 people/);
+
+  const ordinaryModelPanel = '状況: 五人が鉄道模型を囲み、Person1が模型の列車を指し、Person2、Person3、Person4、Person5が実物の展示台を見る。';
+  const ordinaryModelRule = extractCastLimitRule(ordinaryModelPanel, cast, { compact: true });
+  assert.doesNotMatch(ordinaryModelRule, /DIEGETIC REPLICA LAYER/);
+  assert.match(ordinaryModelRule, /NO OTHER HUMANS: exactly 5 people/);
+});
+
 test('acting identity headings remain behavior rules and never become cast members', () => {
   const cast = `## ミク\n- blonde hair\n## リン\n- brown hair\n## 演技癖\n- ミク: 大きく身体を開く。\n- リン: 前傾し、細かく指を動かす。`;
   const matrix = buildIdentityMatrix(cast);

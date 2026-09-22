@@ -8,6 +8,7 @@ import {
   parseImageQualityQaResponse,
   buildImageQualityComparisonPrompt,
   parseImageQualityComparison,
+  extractPanelCastContracts,
 } from '../src/lib/image-quality-qa.js';
 
 test('direct comparison fixes image order and defaults uncertain judgments to original', () => {
@@ -416,6 +417,48 @@ test('reference QA rejects a duplicated named cast instance even when each copy 
   });
   assert.equal(result.pass, false);
   assert.ok(result.issues.some(issue => issue.type === 'cast_count' && issue.panel === 4 && issue.subject === 'ヒカリ'));
+});
+
+test('diegetic replica contracts separate physical actors from contained miniature representations', () => {
+  const finalPrompt = [1, 2, 3, 4].map(panel => panel === 4
+    ? `## Panel 4\nCAST COUNT: [PersonA] each EXACTLY ONCE; no named-character duplicates.\nDIEGETIC REPLICA LAYER: [PersonA] may appear as one tiny replica each, fully inside the explicitly scripted container/surface; never full-size or outside it.\nDialogue: silent`
+    : `## Panel ${panel}\nCAST COUNT: [PersonA] each EXACTLY ONCE; no named-character duplicates.\nDialogue: silent`).join('\n');
+  const contracts = extractPanelCastContracts(finalPrompt);
+  assert.deepEqual(contracts[3], { panel: 4, names: ['PersonA'], replicaNames: ['PersonA'] });
+
+  const qaPrompt = buildImageQualityQaPrompt({ finalPrompt, referenceImageCount: 1 });
+  assert.match(qaPrompt, /count full-size physical actors separately from scripted diegetic replicas/i);
+  assert.match(qaPrompt, /cast_replicas/);
+
+  const checks = spatialChecks();
+  checks.forEach((check, index) => {
+    check.identity_checks = [{
+      name: 'PersonA', location: `panel ${index + 1} center`, matched_features: ['short hair', 'round glasses'],
+      reference_eyewear: 'glasses', observed_eyewear: 'glasses', status: 'ok', evidence: 'Rims, bridge and temples are visible.',
+    }];
+    check.cast_instances = [{
+      name: 'PersonA', observed_count: 1, status: 'ok',
+      instances: [{ location: `panel ${index + 1} physical actor`, matched_features: ['short hair', 'round glasses'] }],
+    }];
+  });
+  checks[3].cast_replicas = [{
+    name: 'PersonA', observed_count: 1, status: 'ok',
+    instances: [{ location: 'inside the miniature display box', matched_features: ['short hair', 'round glasses'] }],
+  }];
+
+  const accepted = parseImageQualityQaResponse(JSON.stringify({ pass: true, issues: [], observations, spatial_checks: checks }), {
+    finalPrompt,
+    referenceImageCount: 1,
+  });
+  assert.equal(accepted.pass, true);
+
+  delete checks[3].cast_replicas;
+  const missingReplicaInventory = parseImageQualityQaResponse(JSON.stringify({ pass: true, issues: [], observations, spatial_checks: checks }), {
+    finalPrompt,
+    referenceImageCount: 1,
+  });
+  assert.equal(missingReplicaInventory.pass, false);
+  assert.ok(missingReplicaInventory.issues.some(issue => issue.type === 'unverified' && issue.panel === 4 && issue.subject === 'cast_replicas'));
 });
 
 test('speaker-tail endpoint mismatch overrides a contradictory PASS', () => {

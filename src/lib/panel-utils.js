@@ -1494,6 +1494,33 @@ SPEECH BUBBLE POSITION RULE:
   return `CRITICAL PLACEMENT: Follow the natural dialogue flow.`;
 };
 
+const DIEGETIC_REPLICA_NOUN_PATTERN = '(?:ミニチュア|極小(?:の)?(?:人物|人|キャラ)?|縮小(?:版|模型|像)|ジオラマ|人形|フィギュア|鏡像|反射像|鏡の中|写真(?:の中|内)|画面(?:の中|内)|映像(?:の中|内)|絵(?:の中|内)|ポスター(?:の中|内)|miniature|diorama|replica|reflection|inside (?:a |the )?(?:screen|photo|picture|painting))';
+const DIEGETIC_REPLICA_CUE_RE = new RegExp(DIEGETIC_REPLICA_NOUN_PATTERN, 'iu');
+
+const extractDiegeticReplicaNames = (text, allPanelCharacters) => {
+  if (!DIEGETIC_REPLICA_CUE_RE.test(text)) return [];
+  const contexts = String(text).split(/[。！？\n]/u).filter(part => DIEGETIC_REPLICA_CUE_RE.test(part));
+  if (contexts.length === 0) return [];
+  const count = allPanelCharacters.length;
+  const countLabels = [String(count), '一二三四五六七八九十'[count - 1]].filter(Boolean);
+  const groupPattern = `(?:全員|一同|みんな|全キャラ|全メンバー|everyone|all characters|${countLabels.map(label => `${label}人`).join('|')})`;
+  const wholeCast = contexts.some(part => new RegExp(
+    `(?:${DIEGETIC_REPLICA_NOUN_PATTERN}.{0,18}${groupPattern}|${groupPattern}.{0,18}${DIEGETIC_REPLICA_NOUN_PATTERN})`,
+    'iu',
+  ).test(part.normalize('NFKC')));
+  const explicit = allPanelCharacters.filter(name => {
+    const escapedName = escapeRegex(name.normalize('NFKC'));
+    return contexts.some(part => {
+      const normalized = part.normalize('NFKC');
+      return new RegExp(
+        `(?:${DIEGETIC_REPLICA_NOUN_PATTERN}(?:\\s*の\\s*|\\s+of\\s+|.{0,8}を写した|.{0,8}を模した)?${escapedName}|${escapedName}(?:\\s*の\\s*|.{0,8}としての|.{0,8}を写した)?${DIEGETIC_REPLICA_NOUN_PATTERN})`,
+        'iu',
+      ).test(normalized);
+    });
+  });
+  return wholeCast ? [...allPanelCharacters] : explicit;
+};
+
 export const extractCastLimitRule = (fullPanelText, castList, options = {}) => {
   fullPanelText = stripSourceMetadata(fullPanelText);
   const compact = Boolean(options.compact);
@@ -1636,6 +1663,8 @@ export const extractCastLimitRule = (fullPanelText, castList, options = {}) => {
   const panelActors = speakers.slice(0, 3).map(s => `[${s}]`);
   const explicitRearActor = explicitRearSubject ? `[${explicitRearSubject}]` : '';
   const allCharBrackets = allPanelCharacters.map(c => `[${c}]`);
+  const replicaNames = extractDiegeticReplicaNames(actionAndMetaText, allPanelCharacters);
+  const replicaBrackets = replicaNames.map(c => `[${c}]`);
   // 肩越しの手前人物と、奥で注目される話者を混同しない。
   // 無言コマでもActionに明記された登場人物をキャスト制約へ残す。
   // 話者がいないことを「登場人物がいない」と誤解して全員をABSENTにしない。
@@ -1654,7 +1683,10 @@ export const extractCastLimitRule = (fullPanelText, castList, options = {}) => {
     let cloneWarning = compact
       ? `CAST COUNT: ${allCharBrackets.join(', ')} each EXACTLY ONCE; no named-character duplicates.`
       : `ANTI-CLONE REMINDER: ${allCharBrackets.join(', ')} — each appears EXACTLY ONCE. If a character is mentioned in both the placement rule AND the visual action, they are the SAME person — do NOT draw a second copy.`;
-    cloneWarning += '\nCAST INSTANCE LOCK: allocate each named actor one body silhouette, in one depth position, one time in this panel; a second matching face/body is forbidden even across foreground/background or panel-edge occlusion.';
+    cloneWarning += '\nCAST INSTANCE LOCK: allocate each named actor one body silhouette (a full-size physical actor), in one depth position, one time in this panel. Every Camera/Action/dialogue/reaction mention updates that same physical body; never create another full-size body from a repeated mention, even across foreground/background or panel-edge occlusion.';
+    if (replicaBrackets.length > 0) {
+      cloneWarning += `\nDIEGETIC REPLICA LAYER: ${replicaBrackets.join(', ')} may appear as one tiny replica each, fully inside the explicitly scripted container/surface. Replicas are representations, not additional physical actors; never render them full-size or outside that container/surface.`;
+    }
     if (storyGuests.length > 0) {
       const guestNames = storyGuests.map(c => `[${c}]`).join(', ');
       cloneWarning += compact
@@ -1703,15 +1735,15 @@ export const extractCastLimitRule = (fullPanelText, castList, options = {}) => {
       const depthRule = compact
         ? 'CAST DEPTH: Camera/Action layers win; no speaker-based FG slots or duplicates.'
         : 'CAST DEPTH: preserve Camera/Action foreground, midground and background assignments; speaking does not force a foreground position. Each named actor occupies one depth position only; never duplicate across layers.';
-      spatialConstraint = `\n${depthRule}${negativeConstraint}\n${hasMob ? 'Allow only the background people required by Action.' : `NO OTHER HUMANS: exactly ${allPanelCharacters.length} people.`}`;
+      spatialConstraint = `\n${depthRule}${negativeConstraint}\n${hasMob ? 'Allow only the background people required by Action.' : (replicaBrackets.length > 0 ? `PHYSICAL TOTAL ${allPanelCharacters.length} full-size people; no other full-size humans.` : `NO OTHER HUMANS: exactly ${allPanelCharacters.length} people.`)}`;
     } else if (hasMob) {
       spatialConstraint = compact
         ? `\nFG only: ${foreground}. BG only: ${background} plus required adult mobs.${negativeConstraint}${otsInstanceConstraint}\nNo repeated FG characters in BG.`
         : `\nFOREGROUND MUST CONTAIN ONLY: ${foreground}.\nBACKGROUND MUST CONTAIN ONLY: ${background} and background characters (mob).\n${negativeConstraint}${otsInstanceConstraint}\nAllow additional background characters (mobs) as required by the action. Do not draw any main character in the background if they are already in the foreground.`;
     } else {
       spatialConstraint = compact
-        ? `\nFG only: ${foreground}. BG only: ${background}.${negativeConstraint}${otsInstanceConstraint}\nNO OTHER HUMANS: exactly ${allPanelCharacters.length} people.`
-        : `\nFOREGROUND MUST CONTAIN ONLY: ${foreground}.\nBACKGROUND MUST CONTAIN ONLY: ${background}.${negativeConstraint}${otsInstanceConstraint}\nABSOLUTELY NO OTHER HUMANS ALLOWED. Do not draw any character in the background if they are already in the foreground. Total EXACTLY ${allPanelCharacters.length} distinct individuals.`;
+        ? `\nFG only: ${foreground}. BG only: ${background}.${negativeConstraint}${otsInstanceConstraint}\n${replicaBrackets.length > 0 ? `PHYSICAL TOTAL ${allPanelCharacters.length} full-size people; no other full-size humans.` : `NO OTHER HUMANS: exactly ${allPanelCharacters.length} people.`}`
+        : `\nFOREGROUND MUST CONTAIN ONLY: ${foreground}.\nBACKGROUND MUST CONTAIN ONLY: ${background}.${negativeConstraint}${otsInstanceConstraint}\n${replicaBrackets.length > 0 ? `PHYSICAL TOTAL ${allPanelCharacters.length} full-size people; no other full-size humans.` : `ABSOLUTELY NO OTHER HUMANS ALLOWED. Do not draw any character in the background if they are already in the foreground. Total EXACTLY ${allPanelCharacters.length} distinct individuals.`}`;
     }
 
     return compact
