@@ -1,4 +1,21 @@
 // Keep posting copy outside the manga script and take URLs only from source metadata.
+const INPUT_METHOD_METADATA_RE = /(?:手動入力|手入力|自由入力(?:モード)?|入力モード(?:UI)?ラベル|ユーザー提供(?:の)?(?:創作題材|題材|トピック|文|テキスト|内容)?|最新ニュース|ニュース検索|Custom Scenario|Generated Scenario|Generic Background|Unspecified|\bmanual input\b|\buser-provided topic\b|\binput-method metadata\b|\binterface labels?\b)/iu;
+const INPUT_METHOD_METADATA_GLOBAL_RE = new RegExp(INPUT_METHOD_METADATA_RE.source, 'giu');
+
+export function hasInputMethodMetadata(text = '') {
+  return INPUT_METHOD_METADATA_RE.test(String(text).normalize('NFKC'));
+}
+
+export function stripInputMethodMetadata(text = '') {
+  return String(text).replace(INPUT_METHOD_METADATA_GLOBAL_RE, '').trim();
+}
+
+export function sanitizeInputMethodMetadata(text = '') {
+  return String(text).replace(INPUT_METHOD_METADATA_GLOBAL_RE, match => (
+    /^ユーザー提供/u.test(match) && /創作題材/u.test(match) ? 'この創作題材' : '題材'
+  )).replace(/題材で指定された内容/gu, '指定された内容');
+}
+
 export function stripSourceMetadata(text = '') {
   let sourceSection = false;
   const japaneseSourceLabel = '(?:出典(?:情報|一覧|元)?|参考(?:リンク|文献|資料|URL)?)';
@@ -68,11 +85,15 @@ export function geminiSources(candidate) {
 
 export function buildSnsExplanation({ text, sources, inputMode, manualTopic = '', title = '' }) {
   const { explanation } = splitSnsExplanation(text);
+  const cleanExplanation = inputMode === 'manual'
+    && !hasInputMethodMetadata(manualTopic)
+    ? sanitizeInputMethodMetadata(explanation)
+    : explanation;
   const heading = cleanScenarioTopic(String(title))
     .replace(/^#{1,6}\s*/, '')
     .replace(/^【|】$/g, '')
     .trim();
-  const explanationLines = explanation.split('\n');
+  const explanationLines = cleanExplanation.split('\n');
   const firstLineTitle = (explanationLines[0] || '')
     .replace(/^#{1,6}\s*/, '')
     .replace(/^【|】$/g, '')
@@ -80,7 +101,7 @@ export function buildSnsExplanation({ text, sources, inputMode, manualTopic = ''
     .trim();
   const explanationBody = heading && firstLineTitle === heading
     ? explanationLines.slice(1).join('\n').trim()
-    : explanation;
+    : cleanExplanation;
   const postingText = [heading ? `【${heading}】` : '', explanationBody]
     .filter(Boolean)
     .join('\n\n');

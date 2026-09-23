@@ -83,6 +83,23 @@ test('manual input retains only supplied URLs and identifies them as needing con
   assert.doesNotMatch(buildSnsExplanation({ text, inputMode: 'manual', manualTopic: '創作テーマ' }).text, /https?:/);
 });
 
+test('manual posting copy does not expose input-method metadata absent from the supplied topic', () => {
+  const generated = `[SNS_EXPLANATION]
+ユーザー提供の創作題材をもとに、巨大プリンが庁舎を押し潰します。手動入力で指定された内容です。
+[/SNS_EXPLANATION]
+Topic: 庁舎が潰れても押印
+Scenario: 台本`;
+  const output = buildSnsExplanation({
+    text: generated,
+    inputMode: 'manual',
+    manualTopic: '巨大プリンが庁舎を押し潰す',
+    title: '庁舎が潰れても押印'
+  });
+
+  assert.doesNotMatch(output.text, /ユーザー提供|手動入力|手入力|自由入力/);
+  assert.match(output.text, /巨大プリンが庁舎を押し潰します/);
+});
+
 test('fiction disclaimer uses parentheses without double wrapping', () => {
   for (const disclaimer of ['実在のニュースではありません。', '実在のニュースや事件の紹介ではありません。']) {
     const result = splitSnsExplanation(`[SNS_EXPLANATION]紹介文。${disclaimer}[/SNS_EXPLANATION]`);

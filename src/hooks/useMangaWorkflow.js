@@ -745,21 +745,17 @@ export default function useMangaWorkflow() {
     setEnhanceLog("");
     updateResolvedPunchlineType('');
 
-    let randomCategory = "";
     if (effectiveInputMode === 'manual') {
-      randomCategory = "手動入力";
       setScenario("");
       setScenarioThought(`> コンテキスト強制リブート: 開始\n > モード: 手動入力 \n > 対象: ${manualTopic.substring(0, 30)}...`);
     } else {
       const activeCats = effectiveCategories.filter(c => c.checked);
       if (activeCats.length > 0) {
-        randomCategory = activeCats.map(c => c.keywords).join(' ');
+        const categoryKeywords = activeCats.map(c => c.keywords).join(' ');
         showStatus(`カテゴリ「${activeCats.map(c => c.label).join('・')}」で最新ニュースを検索中... (${targetDate})`);
         setScenario("");
         const searchProvider = isOpenAIEngine ? 'OpenAI Web Search' : 'Google Grounding';
-        setScenarioThought(`> コンテキスト強制リブート: 開始\n > 対象カテゴリ: ${activeCats.map(c => c.label).join('、')} (キーワード: ${randomCategory}) \n > 対象日付: ${targetDate} \n > ${searchProvider} で検索中...`);
-      } else {
-        randomCategory = "最新ニュース";
+        setScenarioThought(`> コンテキスト強制リブート: 開始\n > 対象カテゴリ: ${activeCats.map(c => c.label).join('、')} (キーワード: ${categoryKeywords}) \n > 対象日付: ${targetDate} \n > ${searchProvider} で検索中...`);
       }
     }
 
@@ -822,7 +818,8 @@ export default function useMangaWorkflow() {
       setExplanationNotice(result.explanation?.notice || "解説を取得できませんでした。手入力できます。");
       setUsedModel(result.usedModel);
       setScenarioThought(prev => prev + `\n > [MODEL] 最終採用モデル: ${result.usedModel}`);
-      setLockedLocation(customLocation.trim() || result.location || "Unspecified");
+      const resolvedLocation = customLocation.trim() || String(result.location || '').trim();
+      setLockedLocation(resolvedLocation);
       setLockedOutfit(customOutfit.trim() || result.outfit || "");
 
       if (result.cameraWork) {
@@ -877,7 +874,8 @@ export default function useMangaWorkflow() {
       }
 
       const generatedTitle = formatGeneratedMangaTitle(result.topic);
-      const finalScenarioText = `## タイトル: ${generatedTitle}${loglineLine}\nLocation: ${result.location || "Unspecified"}${visualEvidenceLine}${outfitLine}${punchlineLine}${bg360HeaderLine}${cameraWorkHeaderLine}\n\n${result.scenario} `;
+      const locationLine = resolvedLocation ? `\nLocation: ${resolvedLocation}` : '';
+      const finalScenarioText = `## タイトル: ${generatedTitle}${loglineLine}${locationLine}${visualEvidenceLine}${outfitLine}${punchlineLine}${bg360HeaderLine}${cameraWorkHeaderLine}\n\n${result.scenario} `;
       setScenario(finalScenarioText);
       setMangaTitle(generatedTitle); // タイトルをstateに保存（画像ダウンロード時のファイル名に使用）
       const scenarioValidation = validateMangaScenario(finalScenarioText, castList);
@@ -992,7 +990,7 @@ export default function useMangaWorkflow() {
     }, 1000);
 
     try {
-      const activePunchlineType = resolveScenarioEndingType(currentScenario, resolvedPunchlineTypeRef.current || punchlineType);
+      const activePunchlineType = resolvedPunchlineTypeRef.current || resolveScenarioEndingType(currentScenario, punchlineType);
       updateResolvedPunchlineType(activePunchlineType);
       // [v3.82-alpha] リファクタリング: 外部モジュールでプロンプトを構築
       const safePrompt = buildMangaPrompt({

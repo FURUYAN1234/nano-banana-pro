@@ -18,7 +18,10 @@ const extractText = (value) => String(value?.text ?? value ?? '').trim();
 
 export const buildScenarioPayoffReviewPrompt = ({ scenario, punchlineType } = {}) => {
   const policy = getEndingModePolicy(punchlineType);
-  const toneRule = policy.endingTone === 'serious'
+  const surrealMode = punchlineType === 'Surreal';
+  const toneRule = surrealMode
+    ? '静寂型（シュール）では、通常の因果関係や辻褄を要求しない。物・設備・舞台の大破壊、因果の飛躍、支離滅裂、不条理、突然の無意味な変化を、真顔・沈黙・奇妙な間で視覚的な笑いにできていれば有効とする。後付け説明で合理化しない。'
+    : policy.endingTone === 'serious'
     ? 'シリアスでは笑いの反転を強制せず、積み上げた選択の consequence / reframe / payoff を有効とする。'
     : 'ギャグでは、1〜2コマ目の種と3コマ目の読者予測を、4コマ目の reversal / payoff / reframe / consequence で一段ずらす。予測と同じ出来事でも、規模・意味・対象・行為者が意外に増幅され、画面で分かるなら有効な payoff / consequence とする。反転だけを要求しない。';
   const factRule = policy.documentary
@@ -40,6 +43,7 @@ ${factRule}
 - slogan_only: 4コマ目がまとめ、教訓、標語、解説だけで終わるなら true。
 - unseeded_fact: 4コマ目だけに新しい事実を持ち込み成立させているなら true。
 - pass: 上記を総合し、最後まで読ませる4コマとして成立するときだけ true。
+- 静寂型（シュール）では setup_seed と panel3_prediction は空でもよく、shift_kind=none と unseeded_fact=true だけで失格にしない。目で分かる不条理な出来事または大破壊と、その狂気を殺さない真顔・沈黙・間があれば pass=true にできる。
 - 3コマ目から因果的に続くこと自体を失格理由にしない。予測の単なる反復ではなく、規模・意味・対象・行為者のどれかが一段ずれていれば合格可能。
 - pass=true のとき reason_codes は必ず空配列にする。問題が1つでも残るときだけ pass=false として具体的なコードを入れる。
 
@@ -93,29 +97,36 @@ export const parseScenarioPayoffReview = (text) => {
 
 export const evaluateScenarioPayoffReview = (review, { punchlineType } = {}) => {
   const policy = getEndingModePolicy(punchlineType);
-  const reasons = new Set((review?.reason_codes || []).filter(Boolean).map(String));
+  const surrealMode = punchlineType === 'Surreal';
+  const reasons = surrealMode
+    ? new Set()
+    : new Set((review?.reason_codes || []).filter(Boolean).map(String));
 
-  if (!String(review?.setup_seed || '').trim()) reasons.add('no_setup_seed');
-  if (!String(review?.panel3_prediction || '').trim()) reasons.add('no_panel3_prediction');
+  if (!surrealMode && !String(review?.setup_seed || '').trim()) reasons.add('no_setup_seed');
+  if (!surrealMode && !String(review?.panel3_prediction || '').trim()) reasons.add('no_panel3_prediction');
   if (!String(review?.panel4_outcome || '').trim()) reasons.add('no_panel4_outcome');
   if (!review?.visual_payoff) reasons.add('no_visual_payoff');
   if (review?.slogan_only) reasons.add('slogan_only');
-  if (!ALLOWED_SHIFTS.has(review?.shift_kind)) reasons.add('no_payoff_shift');
-  if (review?.unseeded_fact) reasons.add('unseeded_fact');
+  if (!surrealMode && !ALLOWED_SHIFTS.has(review?.shift_kind)) reasons.add('no_payoff_shift');
+  if (!surrealMode && review?.unseeded_fact) reasons.add('unseeded_fact');
   if (policy.documentary && review?.unseeded_fact) reasons.add('documentary_fact_invention');
-  if (!review?.pass && reasons.size === 0) reasons.add('reviewer_rejected');
+  if (!surrealMode && !review?.pass && reasons.size === 0) reasons.add('reviewer_rejected');
 
-  return { ok: review?.pass === true && reasons.size === 0, reasonCodes: [...reasons] };
+  return { ok: (surrealMode || review?.pass === true) && reasons.size === 0, reasonCodes: [...reasons] };
 };
 
-export const buildScenarioPayoffRepairPrompt = ({ scenario, punchlineType, review } = {}) => `あなたは4コマ漫画の構成編集者です。監査結果を踏まえ、4コマ目だけを差し替えるのではなく、1〜4コマ目全体を一度だけ書き直してください。
+export const buildScenarioPayoffRepairPrompt = ({ scenario, punchlineType, review } = {}) => {
+  const surrealMode = punchlineType === 'Surreal';
+  return `あなたは4コマ漫画の構成編集者です。監査結果を踏まえ、4コマ目だけを差し替えるのではなく、1〜4コマ目全体を一度だけ書き直してください。
 
 ENDING MODE: ${punchlineType || 'Auto'}
 監査結果: ${JSON.stringify(review || {}, null, 2)}
 
 必須条件:
-- 1〜2コマ目に具体的な種を置き、3コマ目までに読者の予測を形成し、4コマ目ではその予測を一段ずらす帰結を人物の行動・表情・小道具・空間変化で見せる。
-- 3コマ目で宣言・準備した行動を4コマ目でそのまま実行するだけにしない。1〜2コマ目に置いた別の種を再利用し、規模・意味・対象・行為者の少なくとも1つを意外に変える。
+${surrealMode
+    ? '- 静寂型（シュール）では論理的な種、自然な予測、因果の回収を追加しない。物・設備・舞台の大破壊、因果の飛躍、支離滅裂、不条理を、真顔・沈黙・奇妙な間で目に見える笑いへ強める。辻褄合わせや後付け説明で合理化しない。'
+    : `- 1〜2コマ目に具体的な種を置き、3コマ目までに読者の予測を形成し、4コマ目ではその予測を一段ずらす帰結を人物の行動・表情・小道具・空間変化で見せる。
+- 3コマ目で宣言・準備した行動を4コマ目でそのまま実行するだけにしない。1〜2コマ目に置いた別の種を再利用し、規模・意味・対象・行為者の少なくとも1つを意外に変える。`}
 - 選択された ENDING MODE を守る。シリアスでは安いギャグ反転を強制せず、選択の結果・再解釈・余韻を成立させる。
 - 元シナリオの題材、人物、場所、事実、数値、時系列、明示された衣装とセリフ書式を保存する。ドキュメンタリーでは事実を発明しない。
 - 4コマ目を標語、教訓、解説だけで終わらせない。
@@ -123,6 +134,7 @@ ENDING MODE: ${punchlineType || 'Auto'}
 
 ORIGINAL SCENARIO:
 ${String(scenario || '').trim()}`;
+};
 
 const retained = (scenario, warning, review = null) => ({
   scenario,

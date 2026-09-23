@@ -1,5 +1,12 @@
 import { callAI } from './ai-provider';
-import { splitSnsExplanation, buildSnsExplanation, cleanScenarioTopic } from './sns-explanation.js';
+import {
+  splitSnsExplanation,
+  buildSnsExplanation,
+  cleanScenarioTopic,
+  hasInputMethodMetadata,
+  stripInputMethodMetadata,
+  sanitizeInputMethodMetadata
+} from './sns-explanation.js';
 import { getReactionGuidelines } from './knowledge';
 import { getScenarioPrompt } from './prompts';
 import { cropEquirectangular } from './panorama360';
@@ -36,7 +43,7 @@ import {
   formatMangaScenarioValidationIssue,
   validateMangaScenario
 } from './scenario-validation';
-import { isDocumentaryEnding } from './ending-mode-policy';
+import { isDocumentaryEnding, resolveGeneratedEnding } from './ending-mode-policy';
 import { classifyTopicTreatment, resolveAutoEndingType } from './serious-topic-policy';
 import {
   assertDocumentarySourceFidelity,
@@ -52,12 +59,69 @@ const STEP2_TEXT_TIMEOUT_MS = 600_000;
 const scenarioRetryLabels = {
   SAFE_LOCATION: '安全な舞台設定',
   SCENARIO_CONTENT: 'シナリオ本文の表現衛生',
+  INPUT_MODE_LABEL_LEAK: '入力モードUIラベルの隔離',
   SEASONAL_OUTFIT: '題材に基づく服装選定と季節整合性',
   MANUAL_TOPIC_EXCLUSION: '手動入力の禁止条件',
   DOCUMENTARY_SOURCE_FIDELITY: '原文の数値・時系列',
   VISUAL_STORY_EVIDENCE: '出来事を証明する視覚要素',
   FINAL_PANEL_STAGING: '4コマ目の能動アクション',
   DIALOGUE_CONTRACT: '各コマの吹き出しセリフ'
+};
+
+const getManualTopicAnchor = (manualTopic = '') => {
+  const sourceLines = String(manualTopic || '')
+    .replace(/https?:\/\/\S+/giu, ' ')
+    .split(/\r?\n/u)
+    .map((line) => cleanScenarioTopic(line).replace(/^\s*(?:[#>*-]+|トピック\s*[:：])\s*/u, '').trim())
+    .filter(Boolean);
+  return (sourceLines[0] || '指定された題材').slice(0, 80);
+};
+
+export const sanitizeInputModeLabelLeak = ({ scenario = {}, manualTopic = '' } = {}) => {
+  const sourceText = String(manualTopic || '').normalize('NFKC');
+  if (!sourceText || hasInputMethodMetadata(sourceText)) return { ...scenario };
+
+  const sanitizeField = (value) => {
+    const original = String(value || '');
+    if (!hasInputMethodMetadata(original)) return original;
+    return stripInputMethodMetadata(original)
+      ? sanitizeInputMethodMetadata(original).trim()
+      : '';
+  };
+
+  return {
+    ...scenario,
+    topic: hasInputMethodMetadata(String(scenario.topic || ''))
+      ? getManualTopicAnchor(manualTopic)
+      : String(scenario.topic || ''),
+    logline: sanitizeField(scenario.logline),
+    location: sanitizeField(scenario.location),
+    visualEvidence: sanitizeField(scenario.visualEvidence),
+    outfit: sanitizeField(scenario.outfit),
+    punchline: sanitizeField(scenario.punchline),
+    scenario: sanitizeField(scenario.scenario)
+  };
+};
+
+export const assertNoInputModeLabelLeak = ({ scenario = {}, manualTopic = '' } = {}) => {
+  const sourceText = String(manualTopic || '').normalize('NFKC');
+  if (!sourceText || hasInputMethodMetadata(sourceText)) return true;
+
+  const generatedText = [
+    scenario.topic,
+    scenario.logline,
+    scenario.location,
+    scenario.visualEvidence,
+    scenario.outfit,
+    scenario.punchline,
+    scenario.scenario
+  ].filter(Boolean).join('\n').normalize('NFKC');
+  if (!hasInputMethodMetadata(generatedText)) return true;
+
+  const error = new Error('ユーザーの題材にない入力モードUIラベルがシナリオへ混入しました。');
+  error.code = 'INPUT_MODE_LABEL_LEAK';
+  error.qualityScore = 0;
+  throw error;
 };
 
 export const DIALOGUE_CONTRACT_RETRY_INSTRUCTION = `DIALOGUE CONTRACT RETRY:
@@ -98,6 +162,10 @@ const validateScenarioForRetry = ({
 }) => {
   const checks = [
     ['SCENARIO_CONTENT', () => assertSafeScenarioContent(scenario)],
+    ...(manualTopic ? [[
+      'INPUT_MODE_LABEL_LEAK',
+      () => assertNoInputModeLabelLeak({ scenario, manualTopic })
+    ]] : []),
     ...(isDocumentaryEnding(punchlineType) ? [[
       'DOCUMENTARY_SOURCE_FIDELITY',
       () => assertDocumentarySourceFidelity({
@@ -147,6 +215,7 @@ export const formatScenarioRetryProgress = ({ code, message, nextAttempt, maxAtt
 
 const scenarioQualityRetryInstructions = {
   SCENARIO_CONTENT: SAFE_CONTENT_RETRY_INSTRUCTION,
+  INPUT_MODE_LABEL_LEAK: 'INPUT MODE LABEL RETRY: Rewrite the complete scenario using only the user-provided subject matter. Do not copy interface labels, input-method metadata, placeholder names, or prior-session topics into any output field.',
   DOCUMENTARY_SOURCE_FIDELITY: DOCUMENTARY_SOURCE_FIDELITY_RETRY_INSTRUCTION,
   SEASONAL_OUTFIT: SEASONAL_OUTFIT_RETRY_INSTRUCTION,
   MANUAL_TOPIC_EXCLUSION: MANUAL_TOPIC_EXCLUSION_RETRY_INSTRUCTION,
@@ -157,13 +226,16 @@ const scenarioQualityRetryInstructions = {
 
 // [v3.85-alpha] シナリオ生成と強化ロジックの外部モジュール化
 
-const parseScenarioResponse = (result, {
+export const parseScenarioResponse = (result, {
   randomCategory,
   inputMode,
   manualTopic,
   searchTopic
 }) => {
-  let parsedData = { topic: randomCategory, scenario: '' };
+  const fallbackTopic = inputMode === 'manual'
+    ? (String(manualTopic || '').trim() || '指定された題材')
+    : (String(randomCategory || searchTopic || '').trim() || '題材');
+  let parsedData = { topic: fallbackTopic, scenario: '' };
   result = { ...result, text: splitSnsExplanation(result.text).text };
 
   try {
@@ -176,10 +248,10 @@ const parseScenarioResponse = (result, {
     const scenarioMatch = result.text.match(/Scenario:\s*([\s\S]+)/i);
 
     if (scenarioMatch) {
-      parsedData.topic = titleMatch ? titleMatch[1].trim() : randomCategory;
+      parsedData.topic = titleMatch ? titleMatch[1].trim() : fallbackTopic;
       parsedData.topic = parsedData.topic.replace(/^Topic:\s*/i, '').trim();
       parsedData.logline = loglineMatch ? loglineMatch[1].trim() : '';
-      parsedData.location = locationMatch ? locationMatch[1].trim() : 'Generic Background';
+      parsedData.location = locationMatch ? locationMatch[1].trim() : '';
       parsedData.visualEvidence = visualEvidenceMatch ? visualEvidenceMatch[1].trim() : '';
       parsedData.outfit = outfitMatch ? outfitMatch[1].trim() : '';
       parsedData.punchline = punchlineMatch ? punchlineMatch[1].trim() : '';
@@ -188,8 +260,8 @@ const parseScenarioResponse = (result, {
       const jsonMatch = result.text.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         const json = JSON.parse(jsonMatch[0]);
-        parsedData.topic = json.topic || randomCategory;
-        parsedData.location = json.location || 'Generic Background';
+        parsedData.topic = json.topic || fallbackTopic;
+        parsedData.location = json.location || '';
         parsedData.visualEvidence = json.visualEvidence || '';
         parsedData.outfit = json.outfit || '';
         parsedData.logline = json.logline || '';
@@ -197,18 +269,16 @@ const parseScenarioResponse = (result, {
         parsedData.scenario = json.scenario || result.text;
       } else {
         if (result.text.length < 20) throw new Error('AI returned empty or invalid response.');
-        parsedData.topic = inputMode === 'manual'
-          ? (manualTopic || 'Custom Scenario')
-          : (searchTopic || 'Generated Scenario');
-        parsedData.location = 'Generic Background';
+        parsedData.topic = fallbackTopic;
+        parsedData.location = '';
         parsedData.scenario = result.text;
       }
     }
   } catch (error) {
     console.warn('Parse warning:', error);
-    parsedData.location = 'Generic Background';
+    parsedData.location = '';
     parsedData.scenario = result.text;
-    parsedData.topic = 'Generated Scenario';
+    parsedData.topic = fallbackTopic;
   }
 
   if (inputMode === 'manual') {
@@ -244,7 +314,7 @@ export async function generateScenario({
   // 1. カテゴリの決定
   let randomCategory = "";
   if (inputMode === 'manual') {
-    randomCategory = "手動入力";
+    randomCategory = String(manualTopic || '').trim();
   } else {
     const activeCats = categories.filter(c => c.checked);
     if (activeCats.length > 0) {
@@ -443,9 +513,29 @@ export async function generateScenario({
   });
   let result = safeScenarioResult.response;
   let parsedData = safeScenarioResult.parsed;
+  let repairedInputModeLabelLeak = false;
+  if (inputMode === 'manual') {
+    try {
+      assertNoInputModeLabelLeak({ scenario: parsedData, manualTopic });
+    } catch (error) {
+      if (error?.code !== 'INPUT_MODE_LABEL_LEAK') throw error;
+      repairedInputModeLabelLeak = true;
+    }
+    parsedData = sanitizeInputModeLabelLeak({ scenario: parsedData, manualTopic });
+    assertNoInputModeLabelLeak({ scenario: parsedData, manualTopic });
+    if (repairedInputModeLabelLeak) {
+      onProgress('改善候補のうち最良のシナリオを保持し、残っていた入力モードUIラベルだけを除去して再検査しました。');
+    }
+  }
+  const generatedEnding = resolveGeneratedEnding({
+    activeType: activePunchlineType,
+    generatedPunchline: parsedData.punchline
+  });
+  const resolvedEndingType = generatedEnding.type;
+  parsedData = { ...parsedData, punchline: generatedEnding.label };
   const payoffGate = await runScenarioPayoffGate({
     scenario: parsedData.scenario,
-    punchlineType: activePunchlineType,
+    punchlineType: resolvedEndingType,
     requestReview: (prompt) => callAI(prompt, [], scenarioCastContext, onProgress, {
       timeoutMs: STEP2_TEXT_TIMEOUT_MS,
       modelRoute: 'scenario',
@@ -460,7 +550,7 @@ export async function generateScenario({
     }),
     validateRepair: (candidate) => {
       let normalizedCandidate = candidate;
-      if (isDocumentaryEnding(activePunchlineType)) {
+      if (isDocumentaryEnding(resolvedEndingType)) {
         normalizedCandidate = normalizeDocumentaryScenarioTimeline(
           normalizedCandidate,
           documentarySourceText
@@ -472,7 +562,7 @@ export async function generateScenario({
       }
       validateScenarioForRetry({
         scenario: { ...parsedData, scenario: normalizedCandidate },
-        punchlineType: activePunchlineType,
+        punchlineType: resolvedEndingType,
         manualTopic: inputMode === 'manual' ? manualTopic : '',
         documentarySourceText,
         seasonContext,
@@ -571,7 +661,7 @@ ${parsedData.scenario}
     visualEvidence: parsedData.visualEvidence,
     outfit: parsedData.outfit,
     punchline: parsedData.punchline,
-    resolvedEndingType: activePunchlineType,
+    resolvedEndingType,
     scenario: parsedData.scenario,
     cameraWork,
     croppedPanels,
@@ -584,7 +674,11 @@ ${parsedData.scenario}
       title: parsedData.topic
     }),
     thought: result.thought,
-    validationWarning: safeScenarioResult.validationWarning || payoffValidationWarning
+    validationWarning: (
+      repairedInputModeLabelLeak && safeScenarioResult.validationWarning?.code === 'INPUT_MODE_LABEL_LEAK'
+        ? null
+        : safeScenarioResult.validationWarning
+    ) || payoffValidationWarning
   };
 }
 

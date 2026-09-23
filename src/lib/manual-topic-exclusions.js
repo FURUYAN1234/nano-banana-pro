@@ -33,7 +33,7 @@ export const buildManualTopicExclusionPrompt = (manualTopic = '') => {
   const rules = getManualTopicExclusionRules(manualTopic);
   if (rules.length === 0) return '';
 
-  return `【手動入力の禁止コメディ条件（最優先）】\n${rules.map((rule) => `- 「${rule.label}」は禁止。ギャグ、オチ、セリフ、状況に ${rule.markers.join('／')} を使わない。`).join('\n')}\n- 消費税や税率差など、入力本文に含まれる事実説明は保持し、禁止カテゴリをオチやギャグとして復活させない。`;
+  return `【ユーザー指定の禁止コメディ条件（最優先）】\n${rules.map((rule) => `- 「${rule.label}」は禁止。ギャグ、オチ、セリフ、状況に ${rule.markers.join('／')} を使わない。`).join('\n')}\n- 消費税や税率差など、入力本文に含まれる事実説明は保持し、禁止カテゴリをオチやギャグとして復活させない。`;
 };
 
 export const assertManualTopicExclusions = (scenarioText = '', manualTopic = '') => {

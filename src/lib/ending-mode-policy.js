@@ -105,11 +105,52 @@ export const DOCUMENTARY_ENDING_OPTIONS = Object.freeze([
   Object.freeze({ value: 'Documentary', menuLabel: ENDING_MODE_POLICIES.Documentary.label })
 ]);
 
+const SERIOUS_AUTO_RESULT_TYPES = new Set(
+  SERIOUS_ENDING_OPTIONS
+    .map(({ value }) => value)
+    .filter((value) => value !== 'SeriousAuto')
+);
+const GAG_AUTO_RESULT_TYPES = new Set(GAG_ENDING_OPTIONS.map(({ value }) => value));
+
 export const getEndingModePolicy = (type) => ENDING_MODE_POLICIES[type] || DEFAULT_ENDING_POLICY;
+
+const normalizeEndingLabel = (value) => String(value || '')
+  .normalize('NFKC')
+  .replace(/\s*[（(][^）)]*[）)]\s*$/u, '')
+  .trim();
 
 export const resolveScenarioEndingType = (scenario, fallback) => {
   const label = String(scenario || '').match(/^Punchline:\s*([^\r\n]+)/mi)?.[1]?.trim();
-  return Object.entries(ENDING_MODE_POLICIES).find(([key, policy]) => key === label || policy.label === label)?.[0] || fallback;
+  const normalizedLabel = normalizeEndingLabel(label);
+  return Object.entries(ENDING_MODE_POLICIES).find(([key, policy]) => (
+    key === label
+    || policy.label === label
+    || (normalizedLabel && normalizeEndingLabel(policy.label) === normalizedLabel)
+  ))?.[0] || fallback;
+};
+
+export const resolveGeneratedEnding = ({ activeType, generatedPunchline } = {}) => {
+  const selectedType = String(activeType || 'Auto');
+  const generatedType = resolveScenarioEndingType(`Punchline: ${String(generatedPunchline || '').trim()}`, '');
+
+  if (selectedType === 'SeriousAuto' && SERIOUS_AUTO_RESULT_TYPES.has(generatedType)) {
+    return { type: generatedType, label: ENDING_MODE_POLICIES[generatedType].label };
+  }
+  if (selectedType === 'GagAuto' && GAG_AUTO_RESULT_TYPES.has(generatedType)) {
+    return { type: generatedType, label: ENDING_MODE_POLICIES[generatedType].label };
+  }
+  if (generatedType === selectedType) {
+    return {
+      type: selectedType,
+      label: String(generatedPunchline || '').trim() || ENDING_MODE_POLICIES[selectedType].label
+    };
+  }
+
+  const selectedPolicy = getEndingModePolicy(selectedType);
+  return {
+    type: selectedType,
+    label: selectedPolicy.label || String(generatedPunchline || '').trim()
+  };
 };
 
 export const isDocumentaryEnding = (type) => getEndingModePolicy(type).documentary;

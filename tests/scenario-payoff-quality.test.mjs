@@ -73,6 +73,40 @@ test('gag accepts a seeded prediction and visible reversal', () => {
   );
 });
 
+test('surreal gag accepts visible absurdity without forcing causal setup or a rational explanation', () => {
+  const review = {
+    pass: false,
+    setup_seed: '',
+    panel3_prediction: '',
+    panel4_outcome: '作業台が突然折り紙の海になり、全員が真顔で泳ぎ始める。',
+    shift_kind: 'none',
+    visual_payoff: true,
+    slogan_only: false,
+    unseeded_fact: true,
+    reason_codes: ['no_setup_seed', 'no_panel3_prediction', 'no_payoff_shift', 'unseeded_fact'],
+  };
+
+  assert.deepEqual(
+    evaluateScenarioPayoffReview(review, { punchlineType: 'Surreal' }),
+    { ok: true, reasonCodes: [] },
+  );
+
+  const prompt = buildScenarioPayoffReviewPrompt({ scenario: 'ABSURD', punchlineType: 'Surreal' });
+  assert.match(prompt, /因果関係|辻褄.*要求しない/);
+  assert.match(prompt, /大破壊|支離滅裂|不条理/);
+});
+
+test('surreal gag still rejects an explanation-only ending with no visible absurd event', () => {
+  const result = evaluateScenarioPayoffReview({
+    ...WEAK_SLOGAN_REVIEW,
+    pass: true,
+    reason_codes: [],
+  }, { punchlineType: 'Surreal' });
+  assert.equal(result.ok, false);
+  assert.ok(result.reasonCodes.includes('slogan_only'));
+  assert.ok(result.reasonCodes.includes('no_visual_payoff'));
+});
+
 test('serious ending accepts a seeded consequence without forcing a comic reversal', () => {
   const result = evaluateScenarioPayoffReview({
     ...STRONG_GAG_REVIEW,
