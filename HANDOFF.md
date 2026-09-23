@@ -1,3 +1,10 @@
+## v6.5.2 STEP2 GPT-6 Sol/Luna routing and price display — 2026-09-23
+
+- 最新依頼: STEP2で利用可能なGPT-6 Sol／GPT-6 Lunaをフォールバック候補へ組み込み、料金・括弧書き表示を整えたうえで、Nano Banana Proを公式deploy、既存FourPanel note `ndf063558c1f5`更新、公式の可視黒い窓フルバックアップまで完遂する。
+- 実装: 既定のGPT-6 Astraは維持し、フォールバックは選択位置より後ろだけへ進む。順序は`gpt-6-astra → gpt-6-sol → gpt-5.6-sol → gpt-5.6-terra → gpt-6-luna → gpt-5.6-luna → GPT-4.1系 → GPT-4o`。GPT-6／GPT-5.6系は現行Chat Completionsパラメータを使用する。選択肢の括弧書き、参考単価、除外条件（ツール、キャッシュ、税、長文コンテキスト、処理モード差額）を2026-09-23の公式短文コンテキスト・標準処理価格に同期した。
+- 実API: OpenAIでGPT-6 Lunaを明示選択し、STEP2の開始・最終採用とも`gpt-6-luna`で完走。最初のシナリオ生成は入力19,790／出力5,482トークン、ペイオフ監査は入力4,086／出力1,080トークンで、当該検証ではGPT-6 Astraを使用していない。
+- 候補検証: 関連19/19、全Node 648/648、ESLint警告0、production build、`git diff --check`、strict pre-deployが成功。buildには既知のBrowserslist期限、mixed import、bundle-size警告だけが残る。v6.5.2のコミットは`7ff5fca`。公式transactionは初回にこの記録の版未更新で検証停止したため、この追記を同コミットへamendしてから、同じ公式手順を再実行する。
+
 ## 自由入力の内部ラベル隔離・結末固定 — 2026-09-23
 
 - 最新依頼: どの自由入力テーマでも題名・台詞へ「手入力」が混ざる問題を根本修正し、同じ種類の設定漏れが残っていないか監査する。ローカル実装・実API／実画像確認を完了後、ユーザーがv6.5.1の公式release/deploy、既存FourPanel note `ndf063558c1f5`更新、公式の可視黒い窓フルバックアップまで明示承認した。追加の有料生成は行わない。

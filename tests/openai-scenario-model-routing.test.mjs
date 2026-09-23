@@ -43,10 +43,10 @@ test('the text client starts a fixed STEP2 selection and only uses its lower fal
   assert.match(source, /options\.modelRoute === 'scenario'\s*\? getOpenAIScenarioModelRoute\(options\.scenarioModelId\)/);
 });
 
-test('GPT-6 Astra and every GPT-5.6 scenario model use current Chat Completions parameters', async () => {
+test('GPT-6 and GPT-5.6 scenario models use current Chat Completions parameters', async () => {
   const source = await readFile(new URL('../src/lib/openai-text.js', import.meta.url), 'utf8');
 
-  assert.match(source, /const usesModernChatParameters = modelId === "gpt-6-astra" \|\| modelId\.startsWith\("gpt-5\.6-"\);/);
+  assert.match(source, /const usesModernChatParameters = modelId\.startsWith\("gpt-6-"\) \|\| modelId\.startsWith\("gpt-5\.6-"\);/);
   assert.match(source, /role: usesModernChatParameters \? "developer" : "system"/);
   assert.match(source, /\.\.\.\(usesModernChatParameters\s*\? \{ max_completion_tokens: 8192 \}\s*:\s*\{ temperature: 0\.7, max_tokens: 8192 \}\)/);
 });

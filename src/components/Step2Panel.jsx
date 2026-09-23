@@ -364,7 +364,7 @@ export default function Step2Panel({
               {selectedScenarioModel.comparisonNote && (
                 <p className="m-0 text-slate-300">選び方: {selectedScenarioModel.comparisonNote}</p>
               )}
-              <p className="m-0 text-slate-400">選択はこの画面を開いている間だけ有効です。再読込時はGPT-6 Astraから開始します。Web Search等のツール料金・キャッシュ割引・税は含まない参考値です。</p>
+              <p className="m-0 text-slate-400">選択はこの画面を開いている間だけ有効です。再読込時はGPT-6 Astraから開始します。ツール料金・キャッシュ割引・税・長文コンテキスト加算・処理モード差額は含まない参考値です。</p>
             </div>
           </div>
         </div>

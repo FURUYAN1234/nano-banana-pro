@@ -1,5 +1,5 @@
 {
-  "priceSnapshotDate": "2026-09-22",
+  "priceSnapshotDate": "2026-09-23",
   "priceSnapshotSource": "OpenAI official model pricing",
   "models": [
     {
@@ -10,6 +10,15 @@
       "inputPriceUsdPerM": 10,
       "outputPriceUsdPerM": 50,
       "comparisonNote": "最も難しい題材や複数の制約を優先。通常の4コマには過剰になり得ます。"
+    },
+    {
+      "id": "gpt-6-sol",
+      "label": "GPT-6 Sol",
+      "group": "GPT-6",
+      "description": "複雑な構成と料金のバランスを重視",
+      "inputPriceUsdPerM": 2,
+      "outputPriceUsdPerM": 10,
+      "comparisonNote": "Astraより入力・出力単価を抑えられます。実際のシナリオ品質は題材ごとに確認してください。"
     },
     {
       "id": "gpt-5.6-sol",
@@ -28,6 +37,15 @@
       "inputPriceUsdPerM": 2,
       "outputPriceUsdPerM": 12,
       "comparisonNote": "GPT-4.1と入力単価は同じ。出力は高めですが、題材解釈・構成を推論で補強します。"
+    },
+    {
+      "id": "gpt-6-luna",
+      "label": "GPT-6 Luna",
+      "group": "GPT-6",
+      "description": "料金を優先した軽量なシナリオ構成",
+      "inputPriceUsdPerM": 0.1,
+      "outputPriceUsdPerM": 0.5,
+      "comparisonNote": "GPT-5.6 Lunaより入力・出力単価が低め。複雑な制約では生成結果を確認してください。"
     },
     {
       "id": "gpt-5.6-luna",

@@ -19,8 +19,10 @@ const cssSource = await import('node:fs/promises')
 test('the STEP2 selectable route includes every supported scenario fallback model', () => {
   assert.deepEqual(OPENAI_SCENARIO_TEXT_MODEL_IDS, [
     'gpt-6-astra',
+    'gpt-6-sol',
     'gpt-5.6-sol',
     'gpt-5.6-terra',
+    'gpt-6-luna',
     'gpt-5.6-luna',
     'gpt-4.1',
     'gpt-4.1-mini',
@@ -32,7 +34,7 @@ test('the STEP2 selectable route includes every supported scenario fallback mode
     OPENAI_SCENARIO_TEXT_MODEL_IDS,
   );
   assert.ok(OPENAI_SCENARIO_MODEL_OPTIONS.every(({ label, description }) => label && description));
-  assert.equal(OPENAI_SCENARIO_PRICE_SNAPSHOT_DATE, '2026-09-22');
+  assert.equal(OPENAI_SCENARIO_PRICE_SNAPSHOT_DATE, '2026-09-23');
   assert.ok(OPENAI_SCENARIO_MODEL_OPTIONS.every(({ inputPriceUsdPerM, outputPriceUsdPerM }) => (
     Number.isFinite(inputPriceUsdPerM) && Number.isFinite(outputPriceUsdPerM)
   )));
@@ -44,9 +46,20 @@ test('the STEP2 selectable route includes every supported scenario fallback mode
     OPENAI_SCENARIO_MODEL_OPTIONS.find(({ id }) => id === 'gpt-5.6-terra').description,
     /バランス/,
   );
+  assert.deepEqual(
+    OPENAI_SCENARIO_MODEL_OPTIONS.filter(({ id }) => id.startsWith('gpt-6-'))
+      .map(({ id, inputPriceUsdPerM, outputPriceUsdPerM }) => [id, inputPriceUsdPerM, outputPriceUsdPerM]),
+    [['gpt-6-astra', 10, 50], ['gpt-6-sol', 2, 10], ['gpt-6-luna', 0.1, 0.5]],
+  );
 });
 
 test('a fixed scenario model falls back only to later models', () => {
+  assert.deepEqual(getOpenAIScenarioModelRoute('gpt-6-sol').slice(0, 3), [
+    'gpt-6-sol', 'gpt-5.6-sol', 'gpt-5.6-terra',
+  ]);
+  assert.deepEqual(getOpenAIScenarioModelRoute('gpt-6-luna').slice(0, 2), [
+    'gpt-6-luna', 'gpt-5.6-luna',
+  ]);
   assert.deepEqual(getOpenAIScenarioModelRoute('gpt-5.6-luna'), [
     'gpt-5.6-luna',
     'gpt-4.1',
@@ -96,6 +109,8 @@ test('STEP2 exposes descriptive model choices before OpenAI is connected', () =>
   assert.match(step2PanelSource, /参考単価/);
   assert.match(step2PanelSource, /inputPriceUsdPerM/);
   assert.match(step2PanelSource, /comparisonNote/);
+  assert.match(step2PanelSource, /\{label\}（\{description\}｜入力 \$\{inputPriceUsdPerM\} \/ 出力 \$\{outputPriceUsdPerM\} USD\/MTok）/);
+  assert.match(step2PanelSource, /長文コンテキスト加算/);
 });
 
 test('the scenario model dropdown has explicit readable closed and option colors', () => {

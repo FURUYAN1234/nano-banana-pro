@@ -5,7 +5,7 @@
  * callThinkingGemini と同一のインターフェースを提供し、
  * ai-provider.js 経由で透過的に切り替え可能にする。
  *
- * 対応モデル: GPT-6 Astra（STEP2のみ）/ GPT-5.6 Sol（STEP2フォールバック）/ GPT-4.1 / GPT-4o
+ * 対応モデル: STEP2専用のGPT-6・GPT-5.6系 / GPT-4.1 / GPT-4o
  * 機能: テキスト生成、Vision（画像認識）
  */
 
@@ -110,7 +110,7 @@ export const callOpenAIText = async (prompt, images = null, systemInstruction = 
     for (const modelId of MODEL_IDS) {
         attemptIndex++;
         try {
-            const usesModernChatParameters = modelId === "gpt-6-astra" || modelId.startsWith("gpt-5.6-");
+            const usesModernChatParameters = modelId.startsWith("gpt-6-") || modelId.startsWith("gpt-5.6-");
             console.log(`[OpenAI] Attempting connection with ${modelId}...`);
             if (onThinkingUpdate) {
                 if (attemptIndex === 1) {
