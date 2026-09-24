@@ -34,6 +34,15 @@ test('accepts explicit silent beats but not accidentally missing dialogue', () =
   }
 });
 
+test('does not mistake accepted non-ASCII panel headers for dialogue', () => {
+  for (const numbers of [['１', '２', '３', '４'], ['一', '二', '三', '四']]) {
+    const scenario = numbers.map(num => `[ ${num} こま目: 起]\n状況: 人物が箱を運ぶ。`).join('\n');
+    const result = validateMangaScenario(scenario, CAST_LIST);
+    assert.equal(result.ok, false);
+    assert.deepEqual(result.panelsMissingDialogue, [1, 2, 3, 4]);
+  }
+});
+
 test('rejects spoken quotes embedded in visual situation lines because the final bubble parser excludes them', () => {
   const scenario = `
 [1コマ目: 起]

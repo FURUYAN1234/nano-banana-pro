@@ -71,6 +71,18 @@ Action: SpeakerA and SpeakerB sit opposite one another and discuss the draft.
 SpeakerA「What do you think of this scene?」
 SpeakerB「The emotion should be clearer.」`;
 
+test('keeps an explicit Japanese gaze target instead of forcing all speakers to face one another', () => {
+  const scene = `[Camera: 左奥からの超広角。手前のSpeakerAと奥のSpeakerBを捉える。]
+状況: SpeakerAは札を掲げてSpeakerBを見る。SpeakerBは机の資料を見る。
+SpeakerA「確認してください。」
+SpeakerB「読んでいます。」`;
+  for (const provider of ['chatgpt', 'gemini']) {
+    const panel = panelTwoSection(buildPrompt(provider, scene));
+    assert.match(panel, /keep each actor's scripted gaze target/);
+    assert.doesNotMatch(panel, /\[SpeakerA\] ↔ \[SpeakerB\]|reactors watch the active speaker/);
+  }
+});
+
 test('named rear camera and screen positions override dialogue-order staging', () => {
   for (const rear of ['SpeakerAの左後方', 'SpeakerAの右後ろ', 'from behind SpeakerA']) {
     const scene = `[Camera: Over The Shoulder／${rear}、肩の高さからの中景。SpeakerAの横顔を左手前、SpeakerBの顔を右奥に置く]

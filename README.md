@@ -1,6 +1,6 @@
 # Super FURU AI 4-koma System / Super FURU AI 4コマシステム
 
-> Current source version: **v6.5.2** / 現在のソース版: **v6.5.2**
+> Current source version: **v6.5.3** / 現在のソース版: **v6.5.3**
 
 An experimental web application in which AI handles topic research, story structure, direction, prompt construction, image generation, and quality review for a four-panel manga. / AIが話題調査、構成、演出、プロンプト構築、画像生成、品質確認まで担当する4コマ漫画制作Webアプリです。
 
@@ -184,7 +184,7 @@ After the existing STEP2 safety and format checks, a mode-aware payoff review ve
 
 Usage and estimated cost are logged only when the API returns valid input and output token counts; missing usage is not treated as zero cost. / 使用量と参考費用は、APIが有効な入力・出力トークン数を返した場合だけ表示します。使用量が不明な応答を費用ゼロとは表示しません。
 
-For OpenAI image prompts, the bottom-right English watermark includes the model actually adopted for STEP2, for example `ChatGPT / GPT-6 Astra / FURU AI 4-koma v6.5.2`; the bottom-left Japanese watermark is unchanged. / OpenAI画像用の最終プロンプトでは、右下の英語透かしにSTEP2で実際に採用されたモデル名を入れます（例: `ChatGPT / GPT-6 Astra / FURU AI 4-koma v6.5.2`）。左下の日本語透かしは変更しません。
+For OpenAI image prompts, the bottom-right English watermark includes the model actually adopted for STEP2, for example `ChatGPT / GPT-6 Sol / FURU AI 4-koma v6.5.3`; the bottom-left Japanese watermark is unchanged. / OpenAI画像用の最終プロンプトでは、右下の英語透かしにSTEP2で実際に採用されたモデル名を入れます（例: `ChatGPT / GPT-6 Sol / FURU AI 4-koma v6.5.3`）。左下の日本語透かしは変更しません。
 
 The API key chosen at connection time fixes one provider for every application step: a Gemini key keeps STEP1–4 on Gemini, while an OpenAI key keeps STEP1–4 on OpenAI. In news mode, selected categories use Google Grounding only on the Gemini route and OpenAI Responses Web Search only on the OpenAI route. / 接続時に入力したAPIキーで、アプリの全工程のプロバイダーを固定します。GeminiキーではSTEP1〜4をGemini、OpenAIキーではSTEP1〜4をOpenAIで実行します。ニュースモードのカテゴリ検索は、Gemini経路ではGoogle Groundingだけ、OpenAI経路ではOpenAI Responses Web Searchだけを使用します。
 
@@ -202,7 +202,9 @@ If the image API rejects a prompt under its content policy, STEP4 internally ana
 
 The prompt preserves explicit cast, dialogue, props, action, camera direction, and quiet beats while allowing variation in camera height, tilt, depth, and body acting. / 明示した登場人物、台詞、小物、動作、カメラ方向、静かな間を保持しながら、カメラの高低・傾き・奥行き・身体演技に変化を付けます。
 
-Explicit camera positions and depth take priority over default speaker placement. Named shoulder views retain the specified foreground character; screen text, subtitles and captions remain scene lettering, never people or speech-bubble speakers. Rebuild STEP3 to apply this correction to a saved scenario. / 明示された撮影位置と人物の左右・前後関係を、台詞順から作る既定配置で上書きしません。肩越し構図では指定された手前の人物を保持し、画面文字・字幕・キャプションを登場人物や吹き出しの話者として扱いません。保存済みシナリオにもSTEP3で再構築すると反映されます。
+Explicit camera positions, depth and gaze targets take priority over default speaker placement. Named shoulder views retain the specified foreground character; screen text, subtitles and captions remain scene lettering, never people or speech-bubble speakers. Rebuild STEP3 to apply this correction to a saved scenario. / 明示された撮影位置・人物の左右と前後・視線先を、台詞順から作る既定配置で上書きしません。肩越し構図では指定された手前の人物を保持し、画面文字・字幕・キャプションを登場人物や吹き出しの話者として扱いません。保存済みシナリオにもSTEP3で再構築すると反映されます。
+
+Quoted print stays on its physical surface even when later actions mention speaking or returning objects. Explicit dialogue retains repeated lines, parentheses and nested quotations; same-line speakers and trailing speaker annotations retain their own bubble targets. / 印字・表示を説明する引用は、後続の動作に発話や返却を含んでも小道具の面に保持します。明示台詞の繰り返し・括弧内の本文・入れ子の引用を保持し、同一行の複数話者や台詞末尾の話者指定も個別に吹き出しへ対応付けます。
 
 Four-panel camera checks distinguish elevation, left/right viewpoint, shot size and lens depth. Natural Japanese low/high-angle directions and zoom/telephoto cues are translated into visible framing instructions; a large foreground, chibi proportions or blur alone does not prove the requested effect. Camera geometry is fixed before projecting people and objects; readability never relocates an explicitly placed camera. QA records requested and observed elevation, azimuth, framing and lens depth separately in the log; missing or uncertain evidence prevents PASS. Quiet dialogue can also use low/high angles and telephoto effects; camera selection is not restricted by action intensity. New scenarios distinguish lettering beats from body-action beats, while saved scripts retain their explicit text and actions. Rendering improvement still requires inspection of actual API images. / 4コマのカメラ確認では、アオリ・俯瞰、左右の撮影位置、寄り引き、レンズの遠近感を分けます。日本語の高低指定とズーム・望遠を具体的な見え方へ補い、前景の大きさ・ちびキャラ化・ボケだけでは効果を再現したと判定しません。指定Cameraを固定して人物・物を投影し、顔や文字の見やすさを理由に撮影位置を移動しません。QAは高低・左右・寄り引き・レンズ遠近ごとの指定と観察をログに記録し、根拠不足や不確実な項目があればPASSにしません。静かな会話でも高低差や望遠効果を選べるようにし、新規シナリオでは文字を読む場面と身体演技を見せる場面を考えて設計します。保存済み台本の明示文字・動作は削除しません。実際の描画改善はAPI画像での確認が必要です。
 
@@ -240,7 +242,7 @@ The generic prompt transfers the packaged workflow's four-panel order, per-panel
 The app has separate buttons for the workflow JSON and the three-custom-node ZIP; `2つは別の操作` and each button downloads a different file. / アプリにはワークフローJSONとカスタムノード3点ZIPの別ボタンがあり、`2つは別の操作`として異なるファイルをダウンロードします。
 
 - [Download workflow JSON](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20260922104144.json) / [ワークフローJSONをダウンロード](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20260922104144.json)
-- [Download custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.5.2/ComfyUI_H3_FourPanel_NonLM_20260922104144.zip) / [カスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.5.2/ComfyUI_H3_FourPanel_NonLM_20260922104144.zip)
+- [Download custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.5.3/ComfyUI_H3_FourPanel_NonLM_20260922104144.zip) / [カスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.5.3/ComfyUI_H3_FourPanel_NonLM_20260922104144.zip)
 
 The current source tree intentionally contains no distribution ZIP. The custom-node ZIP is a named asset of the matching GitHub Release. / 現在のソースツリーには配布ZIPを意図的に登録せず、カスタムノードZIPは同じ版のGitHub Release専用アセットとして公開します。
 
@@ -288,11 +290,14 @@ The production application is published from the `main` branch through the repos
 
 **Why are there two ComfyUI download buttons? / ComfyUIのダウンロードボタンが2つあるのはなぜですか？**  The JSON defines the workflow, while the ZIP supplies three custom-node folders and documentation; three additional runtime dependencies are installed separately. / JSONはワークフロー定義、ZIPはカスタムノード3フォルダーと導入文書です。さらに実行依存3項目を別途導入します。
 
-**Where are older packages? / 旧版はどこですか？**  Older source tags remain for audit history, but their bundled distributions are withdrawn. New installations must use the current `20260922104144` workflow button and matching v6.5.2 FourPanel Release asset. / 旧タグは監査用履歴として残しますが、旧同梱配布物は取り下げ扱いです。新規導入は現在の`20260922104144`ワークフローボタンとv6.5.2 FourPanel Releaseアセットを使用してください。
+**Where are older packages? / 旧版はどこですか？**  Older source tags remain for audit history, but their bundled distributions are withdrawn. New installations must use the current `20260922104144` workflow button and matching v6.5.3 FourPanel Release asset. / 旧タグは監査用履歴として残しますが、旧同梱配布物は取り下げ扱いです。新規導入は現在の`20260922104144`ワークフローボタンとv6.5.3 FourPanel Releaseアセットを使用してください。
 
 **Is this the T2V/I2V/Ref2V repository? / T2V・I2V・Ref2Vのリポジトリですか？**  No. Those workflows are maintained separately in [comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows). / いいえ。それらは別の[comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows)で管理します。
 
 ## 📋 ChangeLog
+
+### v6.5.3 (2026-09-24)
+- **[Fix & UX]** 印字と発話の誤判定、話者・台詞・コマ見出し・視線指定の処理を修正 / Fixed printed-text versus speech parsing, speaker and dialogue handling, panel headings, and explicit gaze
 
 ### v6.5.2 (2026-09-23)
 - **[Fix & UX]** STEP2のOpenAIシナリオモデルにGPT-6 Sol／GPT-6 Lunaを追加し、料金表示と選択後フォールバックを更新 / Added GPT-6 Sol/Luna to STEP2, refreshed price labels, and updated selected-model fallback

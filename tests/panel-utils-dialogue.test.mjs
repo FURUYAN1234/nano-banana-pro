@@ -249,6 +249,76 @@ test('keeps enumerated display text on its surface and maps only explicit dialog
   assert.match(action, /案内板の「商品A」「商品B」と「配送に関するお知らせ」の文字を読み/);
 });
 
+test('keeps printed surface quotes out of bubbles despite nearby speech-like nouns and verbs', () => {
+  const cast = '## 甲\n## 乙';
+  for (const description of [
+    '甲は左手で「区分A」と印字された配置表を掲げ、右手で崩れかけた返却本の束を押さえる。',
+    '甲は「受付中」と記された札を持ち、呼出番号を確認する。',
+    '甲は「調整中」と表示された画面の横で発表資料を揃える。',
+    '甲は「運休」と記された札を見て、乙に問いかける。',
+    '甲は「足元注意！」という文字を掲示し、乙へ話しかける。',
+    '甲は掲示板の「休業」「再開未定」の文字を黙って読み、乙へ顔を向ける。'
+  ]) {
+    const panel = `状況: ${description}\n甲「詳しく確認します。」`;
+    assert.equal(extractDialogueOnly(panel, cast), '(Speech Bubble 1 [甲]: "詳しく確認します。")', description);
+    for (const quote of description.match(/「[^」]+」/g)) {
+      assert.ok(extractActionOnly(panel, cast).includes(quote), `${description}: ${quote} must stay on its surface`);
+    }
+  }
+});
+
+test('attributes embedded speech to each clause subject rather than an earlier speaker or the listener', () => {
+  const cast = '## 甲\n## 乙';
+  assert.equal(
+    extractDialogueOnly('状況: 甲は「最初だ！」と叫び、乙は「次だ！」と答える。', cast),
+    '(Speech Bubble 1 [甲]: "最初だ！"), (Speech Bubble 2 [乙]: "次だ！")'
+  );
+  assert.equal(
+    extractDialogueOnly('状況: 甲が乙へ「急いで！」と叫ぶ。', cast),
+    '(Speech Bubble 1 [甲]: "急いで！")'
+  );
+});
+
+test('preserves separate same-line speakers, including identical explicit replies', () => {
+  const cast = '## 甲\n## 乙';
+  for (const separator of [' ', '']) {
+    assert.equal(extractDialogueOnly(`甲「はい！」${separator}乙「はい！」`, cast),
+      '(Speech Bubble 1 [甲]: "はい！"), (Speech Bubble 2 [乙]: "はい！")');
+  }
+});
+
+test('preserves repeated explicit bubbles by the same speaker in script order', () => {
+  assert.equal(extractDialogueOnly('甲「本当に？」\n甲「本当に？」', '## 甲'),
+    '(Speech Bubble 1 [甲]: "本当に？"), (Speech Bubble 2 [甲]: "本当に？")');
+});
+
+test('keeps tail indexes aligned when an unattributed bubble precedes a named speaker', () => {
+  const dialogue = extractDialogueOnly('「先に行って！」\n乙「わかった！」', '## 乙', { forImagePrompt: true });
+  assert.match(dialogue, /B1="先に行って！"/);
+  assert.match(dialogue, /B2="わかった！"/);
+  assert.match(dialogue, /B2=>\[乙\] mouth\/head/);
+  assert.doesNotMatch(dialogue, /B1=>\[乙\]/);
+});
+
+test('preserves parentheses and nested quotes inside verbatim dialogue', () => {
+  const text = '料金は千円（税込）です。「割引」は明日から！';
+  assert.equal(extractDialogueOnly(`甲（驚いて）「${text}」`, '## 甲'),
+    `(Speech Bubble 1 [甲]: "${text}")`);
+});
+
+test('maps a trailing speaker annotation without rendering it as dialogue', () => {
+  assert.match(extractDialogueOnly('「こちらですよ！」（乙）', '## 乙', { forImagePrompt: true }),
+    /B1=>\[乙\] mouth\/head/);
+});
+
+test('does not leak no-dialogue placeholders into visual action or erase another speaker', () => {
+  for (const marker of ['セリフなし', 'セリフ: なし', '無言', 'Dialogue: none', 'No dialogue']) {
+    const panel = `状況: 乙は甲へ手を振る。\n甲「こちらですよ！」\n${marker}`;
+    assert.equal(extractActionOnly(panel, '## 甲\n## 乙'), '乙は甲へ手を振る。');
+    assert.equal(extractDialogueOnly(panel, '## 甲\n## 乙'), '(Speech Bubble 1 [甲]: "こちらですよ！")');
+  }
+});
+
 test('does not promote quoted ambient sounds into speech bubbles', () => {
   const panelText = `
 [2コマ目: 承]
@@ -455,7 +525,7 @@ test('promotes only attributable spoken quotes inside situation notes and exclud
   const dialogue = extractDialogueOnly(panelText, CAST_LIST);
 
   assert.match(dialogue, /Speech Bubble 1 \[アカリ\]: "綿あめ…！"/);
-  assert.match(dialogue, /Speech Bubble 2 \[アカリ\]: "うぅ…"/);
+  assert.match(dialogue, /Speech Bubble 2 \[ヒカリ\]: "うぅ…"/);
   assert.match(dialogue, /Speech Bubble 3 \[サエコ\]: "職務質問！"/);
   assert.match(dialogue, /Speech Bubble 4 \[リン\]: "昭和の幽霊が出そうだね。"/);
   assert.match(dialogue, /Speech Bubble 5 \[アカリ\]: "屋台の綿あめどこ？"/);

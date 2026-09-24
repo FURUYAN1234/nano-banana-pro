@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import test, { after, before } from 'node:test';
 import { createServer } from 'vite';
 
@@ -74,6 +75,40 @@ const buildPrompt = (providerFamily) => buildMangaPrompt({
   providerFamily,
   punchlineType: 'Auto',
   systemVersion: 'v4.8.2-test'
+});
+
+test('keeps the original library scenario surface text out of all provider bubble contracts', () => {
+  const scenario = readFileSync(new URL('./fixtures/library-surface-text-scenario.txt', import.meta.url), 'utf8');
+  const expected = [
+    ['資料費が細って、新着図書台まで空っぽです！', '図書館の棚が息切れしてるじゃん！'],
+    ['七割なら、棚を七段にすれば解決ですか！'],
+    ['人が続けられない配置は、もう限界です！', '専任職員も減っています！', '本を全部抱えれば、助かるの！？'],
+    ['本の身分証、貼り終わったよ！', 'それは職員の話です！', '貼る札じゃなく、予算と人員を戻してよ！']
+  ];
+  for (const providerFamily of ['chatgpt', 'gemini']) {
+    const prompt = buildMangaPrompt({ scenario, castList: CAST_LIST, colorMode: 'color', providerFamily, punchlineType: 'Auto', systemVersion: 'test' });
+    expected.forEach((lines, index) => {
+      const contract = prompt.match(new RegExp(`^- Panel ${index + 1} required dialogue: (.*)$`, 'm'))?.[1];
+      assert.ok(contract, `${providerFamily}: panel ${index + 1}`);
+      assert.deepEqual([...contract.matchAll(/「([^」]+)」/g)].map(match => match[1]), lines);
+    });
+    assert.match(prompt, /左手で「非正規職員」と印字された配置表を掲げ/);
+    assert.doesNotMatch(prompt, /B\d+="非正規職員"/);
+    assert.match(prompt, /B1=>\[ヒカリ\] mouth\/head; B2=>\[サエコ\] mouth\/head; B3=>\[アカリ\] mouth\/head/);
+  }
+});
+
+test('uses the same accepted panel-header formats for validation and prompt assembly', () => {
+  for (const numbers of [['１', '２', '３', '４'], ['一', '二', '三', '四']]) {
+    const scenario = SCENARIO.replace(/\[(\d)コマ目/g, (_, num) => `[ ${numbers[Number(num) - 1]} こま目`);
+    for (const providerFamily of ['chatgpt', 'gemini']) {
+      const prompt = buildMangaPrompt({ scenario, castList: CAST_LIST, colorMode: 'color', providerFamily, punchlineType: 'Auto' });
+      assert.match(prompt, /Panel 2 required dialogue: リン「文明の後退だ…。」/);
+      assert.match(prompt, /Panel 3 required dialogue: サエコ「文句は一切却下します。」/);
+      assert.match(prompt, /Panel 4 required dialogue: ヒカリ「次はバター禁止ですか…？」/);
+      assert.doesNotMatch(prompt.match(/^- Panel 1 required dialogue:.*$/m)?.[0] || '', /文明の後退|文句は/);
+    }
+  }
 });
 
 test('ChatGPT-family prompt strictly forbids replacing the scenario story or dialogue', () => {
