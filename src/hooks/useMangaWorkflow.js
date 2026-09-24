@@ -1255,6 +1255,9 @@ export default function useMangaWorkflow() {
     setImageQualityNeedsRepair(false);
     setGenerationHistory(items => addGenerationHistoryItem(items, {
       id: Date.now(), img, originalImage: sourceImage, pageLayout: candidate.pageLayout,
+      modelId: previous?.modelId,
+      mimeType: candidate.mimeType,
+      generatedAt: previous?.generatedAt,
       qualityPass: false, selected: true,
     }));
     showStatus('ページ比率を揃えました。元画像も保持しています。追加API課金なし／配置後の画像QAは未実行です。');
@@ -1442,7 +1445,7 @@ export default function useMangaWorkflow() {
         ? generationHistory.find(item => item.img === generatedImage) : null;
       const originalCandidate = retainedImage
         ? {
-          mimeType: retainedImage[1], base64Img: retainedImage[2], modelId: null,
+          mimeType: retainedImage[1], base64Img: retainedImage[2], modelId: retainedHistory?.modelId || null,
           originalImage: retainedHistory?.originalImage,
           pageLayout: retainedHistory?.pageLayout,
         }
@@ -1566,6 +1569,9 @@ export default function useMangaWorkflow() {
         return qualityOutcome.candidates.reduce((items, entry, index) => addGenerationHistoryItem(items, {
           id: timestamp + index,
           img: `data:${entry.candidate.mimeType || 'image/png'};base64,${entry.candidate.base64Img}`,
+          modelId: entry.candidate.modelId,
+          mimeType: entry.candidate.mimeType || 'image/png',
+          generatedAt: new Date(timestamp + index).toISOString(),
           originalImage: entry.candidate.originalImage,
           pageLayout: entry.candidate.pageLayout,
           qualityPass: entry.review?.pass === true,

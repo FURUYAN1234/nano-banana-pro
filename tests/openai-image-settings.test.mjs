@@ -81,7 +81,7 @@ test('formats the current quality and size for the collapsed STEP4 settings butt
 });
 
 test('formats the official image API token prices for the selected STEP4 model', () => {
-  assert.equal(settings.OPENAI_IMAGE_PRICE_SNAPSHOT_DATE, '2026-09-22');
+  assert.equal(settings.OPENAI_IMAGE_PRICE_SNAPSHOT_DATE, '2026-09-24');
   assert.equal(
     settings.formatOpenAIImagePricingSummary('sunburst-xhigh'),
     'GPT Image 2.5 Sunburst｜画像 入力 $8（キャッシュ $2）/ 出力 $30・テキスト 入力 $5（キャッシュ $1.25） USD / 100万トークン',

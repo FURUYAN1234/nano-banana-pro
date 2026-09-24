@@ -489,12 +489,12 @@ function App() {
               genLog={genLog}
               imageResultRef={imageResultRef}
               generatedImage={generatedImage}
+              images={images}
               normalizeDisplayedPage={normalizeDisplayedPage}
               isFullAutoMode={isFullAutoMode}
               fullAutoStep={fullAutoStep}
               mangaTitle={mangaTitle}
               isFallbackUsed={isFallbackUsed}
-              usedModel={usedModel}
               enableOpenAIApi={enableOpenAIApi}
               setGeneratedImage={setGeneratedImage}
               generationHistory={generationHistory}

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
-test('generated image actions expose only the original download label and no debug controls', async () => {
+test('generated image actions expose only the PNG download label and no debug controls', async () => {
   const [source, workflow] = await Promise.all([
     readFile(new URL('../src/components/Step4Panel.jsx', import.meta.url), 'utf8'),
     readFile(new URL('../src/hooks/useMangaWorkflow.js', import.meta.url), 'utf8'),
@@ -11,7 +11,7 @@ test('generated image actions expose only the original download label and no deb
   // QA and downloads must receive the actual generated artwork, including its
   // variable panel heights and designed title. Never split/rasterize it first.
   assert.doesNotMatch(workflow, /typesetFourPanelCandidate|four-panel-typesetter/);
-  const downloadIndex = imageArea.indexOf('元画像をダウンロード');
+  const downloadIndex = imageArea.indexOf('PNGをダウンロード（制作情報入り）');
   const backIndex = imageArea.indexOf('最初（STEP 1）に戻る');
 
   assert.ok(downloadIndex >= 0);

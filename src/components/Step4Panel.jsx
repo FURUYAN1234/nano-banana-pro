@@ -24,6 +24,11 @@ import { getEndingModePolicy } from '../lib/ending-mode-policy';
 import { inferImageQualityMode } from '../lib/image-quality-failsafe';
 import { buildGeneratedImageFilename, downloadImageDataUrl } from '../lib/generation-history';
 import {
+  buildGeneratedImageMetadata,
+  embedGeneratedImageMetadata,
+  serializeGeneratedImageMetadata,
+} from '../lib/generated-image-metadata';
+import {
   MANGA_MANUSCRIPT_ASPECT_LABEL,
   MANGA_MANUSCRIPT_LARGE,
   MANGA_MANUSCRIPT_RATIO_LABEL,
@@ -86,15 +91,22 @@ const copyTextToClipboard = async (text) => {
   throw new Error('Clipboard copy failed');
 };
 
-const getGeneratedImageExtension = (dataUrl) => {
-  const mimeMatch = typeof dataUrl === 'string' ? dataUrl.match(/^data:([^;,]+)/) : null;
-  const mimeType = (mimeMatch?.[1] || 'image/png').toLowerCase();
-  return {
-    'image/jpeg': 'jpg',
-    'image/jpg': 'jpg',
-    'image/png': 'png',
-    'image/webp': 'webp'
-  }[mimeType] || 'png';
+const convertImageDataUrlToPng = (dataUrl) => {
+  if (/^data:image\/png;base64,/i.test(dataUrl || '')) return Promise.resolve(dataUrl);
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = image.naturalWidth;
+      canvas.height = image.naturalHeight;
+      const context = canvas.getContext('2d');
+      if (!context) return reject(new Error('PNG保存用の画像処理を開始できませんでした。'));
+      context.drawImage(image, 0, 0);
+      resolve(canvas.toDataURL('image/png'));
+    };
+    image.onerror = () => reject(new Error('PNG保存用の画像を読み取れませんでした。'));
+    image.src = dataUrl;
+  });
 };
 
 const CHATGPT_2X_UPSCALE_PROMPT = `SELF-TRAINED 2X IMAGE UPSCALE TASK
@@ -333,13 +345,13 @@ export default function Step4Panel({
   genLog,
   imageResultRef,
   generatedImage,
+  images = [],
   generationHistory = [],
   normalizeDisplayedPage,
   isFullAutoMode,
   fullAutoStep,
   mangaTitle,
   isFallbackUsed,
-  usedModel,
   enableOpenAIApi,
   showPolicyChoice,
   policyAutoRetrying,
@@ -351,7 +363,6 @@ export default function Step4Panel({
   // raw flag directly.
   const isOpenAIImageMode = getEffectiveEngine(selectedEngine, enableOpenAIApi) === 'openai';
   const isSeriousEnhancementMode = getEndingModePolicy(punchlineType).endingTone === 'serious';
-  const generatedImageExtension = getGeneratedImageExtension(generatedImage);
   const displayedHistory = generationHistory.find(item => item.img === generatedImage);
   const hasFixedPageLayout = displayedHistory?.pageLayout?.applied === true;
   const fixedPageLayout = displayedHistory?.pageLayout?.layout;
@@ -365,7 +376,7 @@ export default function Step4Panel({
     return buildGeneratedImageFilename({
       apiName: isOpenAIImageMode ? 'ChatGPT' : 'Gemini',
       title: rawTitle,
-      extension: generatedImageExtension
+      extension: 'png'
     });
   };
   const [isUpscalePromptCopied, setIsUpscalePromptCopied] = React.useState(false);
@@ -373,6 +384,51 @@ export default function Step4Panel({
   const [isVideoGuideOpen, setIsVideoGuideOpen] = React.useState(false);
   const [isImageHelpOpen, setIsImageHelpOpen] = React.useState(false);
   const [isApiSettingsOpen, setIsApiSettingsOpen] = React.useState(false);
+  const [metadataError, setMetadataError] = React.useState('');
+  const generatedAtByImageRef = React.useRef(new Map());
+
+  const buildCurrentGeneratedImageMetadata = async (outputImage) => {
+    if (!generatedImage) throw new Error('画像生成後に制作情報を保存できます。');
+    if (!generatedAtByImageRef.current.has(generatedImage)) {
+      const historyTime = displayedHistory?.generatedAt
+        || (Number.isFinite(displayedHistory?.id) ? new Date(displayedHistory.id).toISOString() : new Date().toISOString());
+      generatedAtByImageRef.current.set(generatedImage, historyTime);
+    }
+    const modelId = displayedHistory?.modelId
+      || (isOpenAIImageMode ? resolveOpenAIImageOption(openAIImageQuality).model : 'gemini-3.1-flash-image');
+    const inputImages = images.map(dataUrl => ({ role: 'character_reference', dataUrl }));
+    if (bg360Enabled && bg360Image) inputImages.push({ role: 'background_reference', dataUrl: bg360Image });
+
+    return buildGeneratedImageMetadata({
+      appVersion: SYSTEM_VERSION,
+      generatedAt: generatedAtByImageRef.current.get(generatedImage),
+      provider: isOpenAIImageMode ? 'openai' : 'gemini',
+      modelId,
+      workflowMode: 'api_image_generation',
+      humanOversightLevel: 'prompt_guided',
+      scenario,
+      finalPrompt,
+      fallbackOccurred: isFallbackUsed,
+      inputImages,
+      outputImage,
+      settings: {
+        punchline_type: punchlineType,
+        color_mode: colorMode,
+        expression_enhancement: Boolean(enhanceExpressions),
+        body_language_enhancement: Boolean(enhanceBodyLang),
+        effects_enhancement: Boolean(enhanceEffects),
+        background_enhancement: Boolean(enhanceBackgrounds),
+        camera_enhancement: Boolean(enhanceCameraWork),
+        dialogue_rewrite: Boolean(enhanceDialogue),
+        ending_direction_enhancement: Boolean(enhanceGag),
+        enhancement_label: isSeriousEnhancementMode ? "シリアス演出強化" : "ギャグ演出強化",
+        ending_tone: isSeriousEnhancementMode ? 'serious' : 'gag',
+        character_analysis_used: Boolean(castList),
+        background_analysis_used: Boolean(bg360Enabled && bg360Analysis),
+        background_reference_used: Boolean(bg360Enabled && bg360Image),
+      },
+    });
+  };
 
   return (
     <div
@@ -506,96 +562,39 @@ export default function Step4Panel({
                 </div>
               )}
 
-              {/* メタデータ保存ボタン */}
+              {/* API画像と同一内容の制作情報JSON */}
               <button
                 onClick={async () => {
-                  const now = new Date();
-                  const isoTime = now.toISOString();
-                  const promptMode = isOpenAIImageMode ? 'ChatGPT Engine (自動)' : (enableChatGPTMode ? 'ChatGPT専用プロンプト' : 'Gemini用プロンプト');
-                  
-                  // ハッシュ計算 (Proof of Generation)
-                  const dataToHash = `${scenario || ""}|${finalPrompt || ""}|${isoTime}|${SYSTEM_VERSION}`;
-                  const encoder = new TextEncoder();
-                  const data = encoder.encode(dataToHash);
-                  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-                  const hashArray = Array.from(new Uint8Array(hashBuffer));
-                  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-
-                  const metadata = {
-                    "ファイル情報": {
-                      "フォーマットバージョン": 2,
-                      "生成ツール": "Super FURU AI 4-koma System",
-                      "アプリバージョン": SYSTEM_VERSION,
-                      "リポジトリ": "https://github.com/FURUYAN1234/nano-banana-pro",
-                      "保存日時": now.toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }),
-                      "ISO日時": isoTime
-                    },
-                    "来歴と証跡 (Provenance & Audit)": {
-                      "使用モデル (Model Accountability)": usedModel || (isOpenAIImageMode ? "gpt-image-2" : "gemini-3.1-flash-image"),
-                      "フォールバック発生 (Fallback Occurred)": !!isFallbackUsed,
-                      "生成証明ハッシュ (Proof of Generation)": hashHex,
-                      "ハッシュアルゴリズム": "SHA-256",
-                      "ハッシュ対象データ構成": "シナリオ本文 + 最終プロンプト + ISOタイムスタンプ + アプリバージョン",
-                      "コンテンツフットプリント (Content Footprint)": {
-                        "プロンプト文字数": finalPrompt ? finalPrompt.length : 0,
-                        "シナリオ文字数": scenario ? scenario.length : 0
-                      }
-                    },
-                    "プロンプト判別": {
-                      "モード": promptMode,
-                      "AIエンジン": isOpenAIImageMode ? 'ChatGPT' : 'Gemini',
-                      "ChatGPTモード": enableChatGPTMode,
-                      "説明": isOpenAIImageMode
-                        ? "ChatGPT Engine で全ルーチンを実行。ChatGPT Images 2.0 専用プロンプトが自動生成されます。"
-                        : enableChatGPTMode
-                          ? "ChatGPT Images 2.0 専用に最適化されたプロンプトです。Geminiには非対応です。"
-                          : "Gemini用プロンプトです。ChatGPTに貼り付けるとレイアウトが崩れる可能性があります。"
-                    },
-                    "キャラクターシート解析結果": castList || "(未解析)",
-                    "シナリオ": scenario || "(未生成)",
-                    "最終プロンプト": finalPrompt || "(未生成)",
-                    "生成設定": {
-                      "パンチラインタイプ": punchlineType,
-                      "カラーモード": colorMode,
-                      "強化オプション": {
-                        "表情強化": enhanceExpressions,
-                        "ボディランゲージ強化": enhanceBodyLang,
-                        "照明・演出強化": enhanceEffects,
-                        "背景強化": enhanceBackgrounds,
-                        "カメラワーク強化": enhanceCameraWork,
-                        "セリフ書換": enhanceDialogue,
-                        [isSeriousEnhancementMode ? "シリアス演出強化" : "ギャグ演出強化"]: enhanceGag
-                      },
-                      "360度背景": {
-                        "画像読込": !!bg360Image,
-                        "有効": bg360Enabled,
-                        "場所": bg360Analysis?.location || "(未解析)",
-                        "空間タイプ": bg360Analysis?.spatialType || "(未解析)",
-                        "光源": bg360Analysis?.lighting || "(未解析)"
-                      }
-                    }
-                  };
-                  const jsonStr = JSON.stringify(metadata, null, 2);
-                  const blob = new Blob([jsonStr], { type: 'application/json;charset=utf-8' });
-                  const url = URL.createObjectURL(blob);
-                  const a = document.createElement('a');
-                  a.href = url;
-                  const titleMatch = scenario?.match(/タイトル[:：]\s*(.+)/);
-                  const titleSlug = titleMatch ? titleMatch[1].trim().substring(0, 20).replace(/[\\/:*?"<>|]/g, '_') : 'untitled';
-                  const ts = `${String(now.getFullYear()).slice(-2)}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}${String(now.getSeconds()).padStart(2,'0')}`;
-                  a.download = `AI_4-koma_metadata_${titleSlug}_${ts}.json`;
-                  document.body.appendChild(a);
-                  a.click();
-                  document.body.removeChild(a);
-                  URL.revokeObjectURL(url);
-                  setIsMetaSaved(true);
-                  setTimeout(() => setIsMetaSaved(false), 2500);
+                  try {
+                    setMetadataError('');
+                    const pngImage = await convertImageDataUrlToPng(generatedImage);
+                    const metadata = await buildCurrentGeneratedImageMetadata(pngImage);
+                    const blob = new Blob([serializeGeneratedImageMetadata(metadata)], { type: 'application/json;charset=utf-8' });
+                    const url = URL.createObjectURL(blob);
+                    const anchor = document.createElement('a');
+                    anchor.href = url;
+                    const titleMatch = scenario?.match(/タイトル[:：]\s*(.+)/);
+                    const titleSlug = titleMatch ? titleMatch[1].trim().substring(0, 20).replace(/[\\/:*?"<>|]/g, '_') : 'untitled';
+                    anchor.download = `AI_manga_metadata_${titleSlug}_${metadata.generated_at.replace(/\D/g, '').slice(2, 14)}.json`;
+                    document.body.appendChild(anchor);
+                    anchor.click();
+                    document.body.removeChild(anchor);
+                    URL.revokeObjectURL(url);
+                    setIsMetaSaved(true);
+                    setTimeout(() => setIsMetaSaved(false), 2500);
+                  } catch (error) {
+                    setMetadataError(error instanceof Error ? error.message : '制作情報JSONを保存できませんでした。');
+                  }
                 }}
-                disabled={!finalPrompt}
+                disabled={!finalPrompt || !generatedImage}
                 className={`w-full ${isMetaSaved ? 'bg-green-600' : 'bg-amber-900/50 hover:bg-amber-800/60'} ${isMetaSaved ? 'text-white' : 'text-amber-400'} font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-all border ${isMetaSaved ? 'border-green-500/50' : 'border-amber-700/30'} disabled:opacity-30 disabled:cursor-not-allowed text-sm`}
               >
-                {isMetaSaved ? '保存完了！' : '📂 設定ファイルを保存 (JSON)'}
+                {isMetaSaved ? '保存完了！' : '📂 制作情報を保存 (JSON)'}
               </button>
+              <p className="mt-2 text-[10px] leading-relaxed text-slate-400">
+                API生成画像には、安全化した同じ制作情報JSONを画像内にも保存します。APIキー、参照画像本体、人物・場所の解析全文は保存しません。
+              </p>
+              {metadataError && <p className="mt-1 text-[10px] text-red-400">{metadataError}</p>}
             </div>
 
             <div className="relative" style={{ paddingTop: '12px' }}>
@@ -1319,13 +1318,22 @@ No explanations. No partial results.`;
               <div className="w-full px-8 mt-2">
                 {hasFixedPageLayout && fixedPageLayout && <p className="text-xs text-slate-300 mb-2">{fixedPageLayout.width}×{fixedPageLayout.height}｜タイトル{fixedPageLayout.titleHeight}px・4コマ全体{fixedPageLayout.panelHeight}px・透かし{fixedPageLayout.footerHeight}px。各コマの高さ配分と書体を保持。</p>}
                 <button
-                  onClick={() => {
-                    downloadImageDataUrl(generatedImage, getGeneratedImageFilename());
+                  onClick={async () => {
+                    try {
+                      setMetadataError('');
+                      const pngImage = await convertImageDataUrlToPng(generatedImage);
+                      const metadata = await buildCurrentGeneratedImageMetadata(pngImage);
+                      const imageWithMetadata = embedGeneratedImageMetadata(pngImage, metadata);
+                      downloadImageDataUrl(imageWithMetadata, getGeneratedImageFilename());
+                    } catch (error) {
+                      setMetadataError(error instanceof Error ? error.message : '制作情報を画像へ保存できませんでした。');
+                    }
                   }}
                   className="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg border border-white/20 active:scale-95"
                 >
-                  <Download size={20} /> 元画像をダウンロード (.{generatedImageExtension})
+                  <Download size={20} /> PNGをダウンロード（制作情報入り）
                 </button>
+                {metadataError && <p className="mt-1 text-[10px] text-red-400">{metadataError}</p>}
 
                 {isFourPanelPage && !hasFixedPageLayout && normalizeDisplayedPage && <button type="button" disabled={isGeneratingImage} className="w-full mt-2 text-slate-300 underline disabled:opacity-50" onClick={normalizeDisplayedPage}>ページ比率を揃える（追加課金なし）</button>}
 
