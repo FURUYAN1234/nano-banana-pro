@@ -1565,18 +1565,17 @@ export default function useMangaWorkflow() {
         const timestamp = Date.now();
         const candidateImages = new Set(qualityOutcome.candidates.map(entry =>
           `data:${entry.candidate.mimeType || 'image/png'};base64,${entry.candidate.base64Img}`));
-        const retainedItems = prev.filter(item => !candidateImages.has(item.img));
-        return qualityOutcome.candidates.reduce((items, entry, index) => addGenerationHistoryItem(items, {
-          id: timestamp + index,
-          img: `data:${entry.candidate.mimeType || 'image/png'};base64,${entry.candidate.base64Img}`,
-          modelId: entry.candidate.modelId,
-          mimeType: entry.candidate.mimeType || 'image/png',
-          generatedAt: new Date(timestamp + index).toISOString(),
-          originalImage: entry.candidate.originalImage,
-          pageLayout: entry.candidate.pageLayout,
-          qualityPass: entry.review?.pass === true,
-          selected: entry.candidate === qualityOutcome.candidate,
-        }), retainedItems);
+        return addGenerationHistoryItem(prev, {
+          id: timestamp,
+          img: acceptedImageStr,
+          modelId: qualityOutcome.candidate.modelId,
+          mimeType: qualityOutcome.candidate.mimeType || 'image/png',
+          generatedAt: new Date(timestamp).toISOString(),
+          originalImage: qualityOutcome.candidate.originalImage,
+          pageLayout: qualityOutcome.candidate.pageLayout,
+          qualityPass: qualityResult?.pass === true,
+          selected: true,
+        }, { removeImages: candidateImages });
       });
 
       if (!qualityOutcome.canContinue) {

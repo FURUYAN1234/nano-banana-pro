@@ -1,6 +1,6 @@
 # Super FURU AI 4-koma System / Super FURU AI 4コマシステム
 
-> Current source version: **v6.5.4** / 現在のソース版: **v6.5.4**
+> Current source version: **v6.5.5** / 現在のソース版: **v6.5.5**
 
 An experimental web application in which AI handles topic research, story structure, direction, prompt construction, image generation, and quality review for a four-panel manga. / AIが話題調査、構成、演出、プロンプト構築、画像生成、品質確認まで担当する4コマ漫画制作Webアプリです。
 
@@ -62,7 +62,7 @@ The application provides one continuous four-step workflow. / アプリは次の
 | Scenario enhancement / シナリオ強化 | Independently select expression, body, effects, background, camera, dialogue and story-direction enhancement. Revert to the pre-enhancement scenario at any time. Documentary direction has a fact-preserving variant for both gag and serious modes. / 表情、身体、演出、背景、カメラ、セリフ、物語演出を個別選択でき、強化前へ戻せます。ドキュメンタリーではギャグ・シリアスの両方に事実保持型の演出を使います。 |
 | STEP3 prompt / プロンプト | Choose color or monochrome, build the provider-specific prompt, run a text-model consistency review, edit the final prompt, and copy it for Web use. After API image generation, the same privacy-safe production record can be saved as JSON. / カラー／白黒を選び、プロバイダー別プロンプトを構築し、文章モデルの整合性確認後に編集・Web用コピーができます。API画像生成後は、画像内と同じ安全化済み制作情報をJSON保存できます。 |
 | STEP4 image / 画像 | Generate in the app, choose available quality and size settings, stop remaining quality retries, or use the copied prompt manually on the provider's Web UI. PNG downloads automatically carry the same machine-readable production record as the sidecar JSON. / アプリ内で生成し、利用可能な品質・サイズを選択し、残りの品質再試行を停止できます。コピーしたプロンプトを公式Web画面で手動利用する経路もあります。ダウンロードするPNG画像には、別添JSONと同じ機械可読な制作情報を自動保存します。 |
-| Review and history / 検査・履歴 | Review panel count, dialogue, balloon order and speaker tails, per-panel character identity and eyewear, anatomy, camera, prop ownership, surface orientation, unwanted text and medium compliance. QA independently inventories every readable or partly readable glyph sequence on bubbles, signs, packaging, labels, books and screens. Plausible AI-completed environmental text is allowed unless it materially contradicts the setting, identity, facts, clues, action or joke; omitted or unclassified text stays unverified. Keep the latest ten candidates in session memory and download the selected one. / コマ数、台詞、吹き出し順・尻尾、各コマの人物同一性と眼鏡、人体、カメラ、小道具所有、面の向き、不要文字、カラー／白黒条件を検査します。吹き出し、看板、包装、ラベル、本、画面に見える全文字と部分文字を画像から独立転記します。AIが情景に沿って補完した環境文字は、場所・人物・事実・手掛かり・動作・オチを大きく誤らせない限り許容し、一覧漏れや分類不能は未確認として残します。直近10候補をセッション内履歴に保持し、選択候補を保存できます。 |
+| Review and history / 検査・履歴 | Review panel count, dialogue, balloon order and speaker tails, per-panel character identity and eyewear, anatomy, camera, prop ownership, surface orientation, unwanted text and medium compliance. QA independently inventories every readable or partly readable glyph sequence on bubbles, signs, packaging, labels, books and screens. Plausible AI-completed environmental text is allowed unless it materially contradicts the setting, identity, facts, clues, action or joke; omitted or unclassified text stays unverified. Keep only the final accepted image from each generation in the latest-ten session history; repair candidates remain internal. / コマ数、台詞、吹き出し順・尻尾、各コマの人物同一性と眼鏡、人体、カメラ、小道具所有、面の向き、不要文字、カラー／白黒条件を検査します。吹き出し、看板、包装、ラベル、本、画面に見える全文字と部分文字を画像から独立転記します。AIが情景に沿って補完した環境文字は、場所・人物・事実・手掛かり・動作・オチを大きく誤らせない限り許容し、一覧漏れや分類不能は未確認として残します。セッション内履歴には各生成の最終採用画像だけを直近10件まで保持し、修正途中の候補は内部比較だけに使います。 |
 | Full-auto controls / フルオート | The workflow can advance through STEP2–4, show the current stage and countdown, and be stopped without clearing the already completed work. / STEP2～4を自動で進め、現在段階とカウントダウンを表示し、完了済みの内容を消さずに停止できます。 |
 | Video handoff / 動画化 | Copy the generic MiniMax H3 prompt, or download the separate FourPanel ComfyUI workflow JSON and matching custom-node package. / 汎用MiniMax H3プロンプトをコピーするか、別配布のFourPanel ComfyUIワークフローJSONと対応カスタムノードを取得できます。 |
 
@@ -105,7 +105,7 @@ STEP3 shows `⏳ AI応答を待機中... (○秒経過)` directly below its buil
 
 ### Image history and downloads / 生成履歴と保存
 
-The current session keeps the latest ten API candidates, including repair attempts in the history strip. Select any entry to return it to the preview, then use the normal download button to save that selected image. Files use `AI_4koma_comic_{API}_{title}_{YYYYMMDDHHMMSS}.{extension}`. History is current-session memory only and does not survive a page reload; the app does not request a destination folder or automatically write image files. / 現在のセッションでは、修正途中の候補を含めたAPI画像を直近10件まで生成履歴へ残します。任意の履歴を選択するとプレビューへ戻り、その選択画像を通常のダウンロードボタンで手動保存できます。ファイル名は `AI_4koma_comic_{API}_{title}_{YYYYMMDDHHMMSS}.{extension}` の形式です。履歴は現在のブラウザー内メモリのみで、ページ再読み込み後には残りません。保存先フォルダーの選択や画像ファイルの自動保存は行いません。
+The current session keeps only the final accepted image from each API generation in the latest-ten history strip. Repair candidates are used only for internal comparison and are not shown in user history. Select any entry to return it to the preview, then use the normal download button to save that selected image. Files use `AI_4koma_comic_{API}_{title}_{YYYYMMDDHHMMSS}.{extension}`. History is current-session memory only and does not survive a page reload; the app does not request a destination folder or automatically write image files. / 現在のセッションでは、各API生成の最終採用画像だけを直近10件まで生成履歴へ残します。修正途中の候補は内部比較だけに使い、ユーザーの履歴には表示しません。任意の履歴を選択するとプレビューへ戻り、その選択画像を通常のダウンロードボタンで手動保存できます。ファイル名は `AI_4koma_comic_{API}_{title}_{YYYYMMDDHHMMSS}.{extension}` の形式です。履歴は現在のブラウザー内メモリのみで、ページ再読み込み後には残りません。保存先フォルダーの選択や画像ファイルの自動保存は行いません。
 
 ### Machine-readable AI production metadata / 機械可読なAI制作情報
 
@@ -190,7 +190,7 @@ After the existing STEP2 safety and format checks, a mode-aware payoff review ve
 
 Usage and estimated cost are logged only when the API returns valid input and output token counts; missing usage is not treated as zero cost. / 使用量と参考費用は、APIが有効な入力・出力トークン数を返した場合だけ表示します。使用量が不明な応答を費用ゼロとは表示しません。
 
-For OpenAI image prompts, the bottom-right English watermark includes the model actually adopted for STEP2, for example `ChatGPT / GPT-6 Sol / FURU AI 4-koma v6.5.4`; the bottom-left Japanese watermark is unchanged. / OpenAI画像用の最終プロンプトでは、右下の英語透かしにSTEP2で実際に採用されたモデル名を入れます（例: `ChatGPT / GPT-6 Sol / FURU AI 4-koma v6.5.4`）。左下の日本語透かしは変更しません。
+For OpenAI image prompts, the bottom-right English watermark includes the model actually adopted for STEP2, for example `ChatGPT / GPT-6 Sol / FURU AI 4-koma v6.5.5`; the bottom-left Japanese watermark is unchanged. / OpenAI画像用の最終プロンプトでは、右下の英語透かしにSTEP2で実際に採用されたモデル名を入れます（例: `ChatGPT / GPT-6 Sol / FURU AI 4-koma v6.5.5`）。左下の日本語透かしは変更しません。
 
 The API key chosen at connection time fixes one provider for every application step: a Gemini key keeps STEP1–4 on Gemini, while an OpenAI key keeps STEP1–4 on OpenAI. In news mode, selected categories use Google Grounding only on the Gemini route and OpenAI Responses Web Search only on the OpenAI route. / 接続時に入力したAPIキーで、アプリの全工程のプロバイダーを固定します。GeminiキーではSTEP1〜4をGemini、OpenAIキーではSTEP1〜4をOpenAIで実行します。ニュースモードのカテゴリ検索は、Gemini経路ではGoogle Groundingだけ、OpenAI経路ではOpenAI Responses Web Searchだけを使用します。
 
@@ -248,7 +248,7 @@ The generic prompt transfers the packaged workflow's four-panel order, per-panel
 The app has separate buttons for the workflow JSON and the three-custom-node ZIP; `2つは別の操作` and each button downloads a different file. / アプリにはワークフローJSONとカスタムノード3点ZIPの別ボタンがあり、`2つは別の操作`として異なるファイルをダウンロードします。
 
 - [Download workflow JSON](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20260922104144.json) / [ワークフローJSONをダウンロード](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20260922104144.json)
-- [Download custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.5.4/ComfyUI_H3_FourPanel_NonLM_20260922104144.zip) / [カスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.5.4/ComfyUI_H3_FourPanel_NonLM_20260922104144.zip)
+- [Download custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.5.5/ComfyUI_H3_FourPanel_NonLM_20260922104144.zip) / [カスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.5.5/ComfyUI_H3_FourPanel_NonLM_20260922104144.zip)
 
 The current source tree intentionally contains no distribution ZIP. The custom-node ZIP is a named asset of the matching GitHub Release. / 現在のソースツリーには配布ZIPを意図的に登録せず、カスタムノードZIPは同じ版のGitHub Release専用アセットとして公開します。
 
@@ -296,11 +296,14 @@ The production application is published from the `main` branch through the repos
 
 **Why are there two ComfyUI download buttons? / ComfyUIのダウンロードボタンが2つあるのはなぜですか？**  The JSON defines the workflow, while the ZIP supplies three custom-node folders and documentation; three additional runtime dependencies are installed separately. / JSONはワークフロー定義、ZIPはカスタムノード3フォルダーと導入文書です。さらに実行依存3項目を別途導入します。
 
-**Where are older packages? / 旧版はどこですか？**  Older source tags remain for audit history, but their bundled distributions are withdrawn. New installations must use the current `20260922104144` workflow button and matching v6.5.4 FourPanel Release asset. / 旧タグは監査用履歴として残しますが、旧同梱配布物は取り下げ扱いです。新規導入は現在の`20260922104144`ワークフローボタンとv6.5.4 FourPanel Releaseアセットを使用してください。
+**Where are older packages? / 旧版はどこですか？**  Older source tags remain for audit history, but their bundled distributions are withdrawn. New installations must use the current `20260922104144` workflow button and matching v6.5.5 FourPanel Release asset. / 旧タグは監査用履歴として残しますが、旧同梱配布物は取り下げ扱いです。新規導入は現在の`20260922104144`ワークフローボタンとv6.5.5 FourPanel Releaseアセットを使用してください。
 
 **Is this the T2V/I2V/Ref2V repository? / T2V・I2V・Ref2Vのリポジトリですか？**  No. Those workflows are maintained separately in [comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows). / いいえ。それらは別の[comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows)で管理します。
 
 ## 📋 ChangeLog
+
+### v6.5.5 (2026-09-24)
+- **[Fix & UX]** API画像の自動修正候補を内部比較だけに使い、生成履歴には各生成の最終採用画像1件だけを保持するよう修正しました。 / Kept automatic image-repair candidates internal and retained only the final accepted image from each generation in user history.
 
 ### v6.5.4 (2026-09-24)
 - **[Fix & UX]** API生成PNGへ、ダウンロードJSONと同じ安全化済み制作情報を埋め込み、機密情報と人物・場所の解析全文を自動除外 / Embed the same privacy-safe production record as the sidecar JSON in API-generated PNG files while excluding secrets and raw character/location analysis

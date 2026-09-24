@@ -26,6 +26,21 @@ test('generated image history retains only the newest ten images in memory', () 
   assert.deepEqual(addGenerationHistoryItem(oldHistory, latest), [latest, ...oldHistory.slice(0, 9)]);
 });
 
+test('quality repair history keeps only the final accepted image from the current generation', () => {
+  const previousAccepted = { id: 1, img: 'data:image/png;base64,previous' };
+  const originalCandidate = { id: 2, img: 'data:image/png;base64,original' };
+  const repairCandidate = { id: 3, img: 'data:image/png;base64,repair' };
+  const accepted = { ...repairCandidate, id: 4, selected: true };
+
+  const result = addGenerationHistoryItem(
+    [originalCandidate, previousAccepted],
+    accepted,
+    { removeImages: new Set([originalCandidate.img, repairCandidate.img]) }
+  );
+
+  assert.deepEqual(result, [accepted, previousAccepted]);
+});
+
 test('manual save keeps the existing API-title-date-time filename convention', () => {
   const filename = buildGeneratedImageFilename({
     apiName: 'ChatGPT',

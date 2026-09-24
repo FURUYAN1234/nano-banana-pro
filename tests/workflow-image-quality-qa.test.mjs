@@ -27,7 +27,8 @@ test('image generation displays the received image before running one visible co
 test('best available fallback continues with a warning while explicit cancellation stops', () => {
   assert.match(workflowSource, /if \(!qualityOutcome.canContinue\) \{[\s\S]*?fullAutoAbortRef.current = true;[\s\S]*?return false;/);
   assert.match(workflowSource, /Best available image selected \(quality warning\)/);
-  assert.match(workflowSource, /qualityOutcome.candidates.reduce/);
+  assert.doesNotMatch(workflowSource, /qualityOutcome.candidates.reduce/);
+  assert.match(workflowSource, /addGenerationHistoryItem\(prev,[\s\S]*removeImages:\s*candidateImages/);
   assert.match(workflowSource, /analyzeFailure: async[\s\S]*buildImageFailureAnalysisPrompt/);
   assert.match(workflowSource, /shouldStop:.*qualityRetryAbortRef.current/);
 });

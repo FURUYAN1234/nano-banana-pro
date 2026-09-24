@@ -1,7 +1,9 @@
 export const MAX_GENERATION_HISTORY_ITEMS = 10;
 
-export const addGenerationHistoryItem = (history, item) => {
-  return [item, ...(Array.isArray(history) ? history : [])]
+export const addGenerationHistoryItem = (history, item, { removeImages = new Set() } = {}) => {
+  const retainedHistory = (Array.isArray(history) ? history : [])
+    .filter(entry => !removeImages.has(entry.img));
+  return [item, ...retainedHistory]
     .slice(0, MAX_GENERATION_HISTORY_ITEMS);
 };
 
