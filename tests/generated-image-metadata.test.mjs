@@ -97,10 +97,17 @@ test('re-embedding replaces prior app metadata instead of accumulating stale cop
   assert.equal(binary.split(GENERATED_IMAGE_METADATA_KEYWORD).length - 1, 2);
 });
 
-test('STEP4 explains automatic safe metadata embedding without adding a privacy checkbox', async () => {
+test('STEP4 places concise metadata privacy guidance directly in the API generation flow', async () => {
   const source = await readFile(new URL('../src/components/Step4Panel.jsx', import.meta.url), 'utf8');
 
-  assert.match(source, /API生成画像には、安全化した同じ制作情報JSONを画像内にも保存します。/);
+  const apiActionIndex = source.indexOf('APIで新しい画像を生成する（STEP4）');
+  const privacyCopyIndex = source.indexOf('生成画像には、安全化した制作情報を保存します。');
+  const apiSettingsIndex = source.indexOf('API生成時の品質・サイズ');
+
+  assert.ok(apiActionIndex >= 0, 'API generation action should exist');
+  assert.ok(privacyCopyIndex > apiActionIndex, 'privacy guidance should follow the API generation action');
+  assert.ok(apiSettingsIndex > privacyCopyIndex, 'privacy guidance should precede the API settings');
+  assert.doesNotMatch(source, /安全化した同じ制作情報JSON/);
   assert.match(source, /buildGeneratedImageMetadata/);
   assert.match(source, /embedGeneratedImageMetadata/);
   assert.doesNotMatch(source, /キャラクターシート解析結果/);

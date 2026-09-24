@@ -591,9 +591,6 @@ export default function Step4Panel({
               >
                 {isMetaSaved ? '保存完了！' : '📂 制作情報を保存 (JSON)'}
               </button>
-              <p className="mt-2 text-[10px] leading-relaxed text-slate-400">
-                API生成画像には、安全化した同じ制作情報JSONを画像内にも保存します。APIキー、参照画像本体、人物・場所の解析全文は保存しません。
-              </p>
               {metadataError && <p className="mt-1 text-[10px] text-red-400">{metadataError}</p>}
             </div>
 
@@ -604,7 +601,7 @@ export default function Step4Panel({
 
               <button
                 ref={imageActionRef}
-                style={{ display: 'flex', width: '100%', boxSizing: 'border-box', marginBottom: '16px' }}
+                style={{ display: 'flex', width: '100%', boxSizing: 'border-box', marginBottom: 0 }}
                 onClick={() => regenerateImage()}
                 disabled={!finalPrompt || isGeneratingImage || isFixingPolicy}
                 aria-current={currentStep === 4 ? 'step' : undefined}
@@ -621,6 +618,9 @@ export default function Step4Panel({
                   )}
                 </div>
               </button>
+              <p className="mt-1.5 mb-3 px-1 text-[10px] leading-snug text-slate-400">
+                生成画像には、安全化した制作情報を保存します。APIキー、参照画像本体、人物・場所の解析全文は保存しません。
+              </p>
                           <div className="border border-yellow-500/30 rounded-lg overflow-hidden" style={{ margin: 0 }}>
                             <button style={{ display: 'flex', width: '100%', boxSizing: 'border-box', margin: 0 }} type="button" aria-expanded={isApiSettingsOpen} aria-controls="api-settings-content"
                               className="w-full flex items-center justify-between px-4 py-3 bg-yellow-900/25 hover:bg-yellow-900/50 transition-all duration-150 cursor-pointer disabled:cursor-not-allowed border-l-4 border-yellow-500 hover:border-yellow-400 group/policy-hdr"
