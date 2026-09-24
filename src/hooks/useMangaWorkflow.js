@@ -39,6 +39,8 @@ import {
   buildBubbleInventoryPrompt,
   applyBubbleInventory,
   buildImageQualityQaPrompt,
+  buildCriticalCameraQaPrompt,
+  parseCriticalCameraQaResponse,
   buildImageQualityComparisonPrompt,
   parseImageQualityComparison,
   formatImageQualityIssue,
@@ -47,19 +49,17 @@ import {
 import { buildImageFailureAnalysisPrompt, inferImageQualityMode, runImageQualityFailsafe } from '../lib/image-quality-failsafe';
 import { getEffectiveEngine } from '../lib/engine-state';
 import { DEFAULT_OPENAI_IMAGE_QUALITY, DEFAULT_OPENAI_IMAGE_SIZE, normalizeOpenAIImageSize, normalizeOpenAIImageQuality, resolveOpenAIImageOption, selectInitialOpenAIImageQuality, isOpenAIImageVerificationError, OPENAI_IMAGE_VERIFICATION_MESSAGE } from '../lib/openai-image-settings.js';
-import { OPENAI_SCENARIO_MODEL_OPTIONS, OPENAI_SCENARIO_TEXT_MODEL_IDS } from '../lib/openai-model-routes.js';
-
-const DEFAULT_SCENARIO_MODEL_ID = 'gpt-6-astra';
+import { DEFAULT_OPENAI_SCENARIO_MODEL_ID, OPENAI_SCENARIO_MODEL_OPTIONS, OPENAI_SCENARIO_TEXT_MODEL_IDS } from '../lib/openai-model-routes.js';
 
 export default function useMangaWorkflow() {
-  const [scenarioModelId, setScenarioModelIdState] = useState(DEFAULT_SCENARIO_MODEL_ID);
+  const [scenarioModelId, setScenarioModelIdState] = useState(DEFAULT_OPENAI_SCENARIO_MODEL_ID);
   const setScenarioModelId = (modelId) => {
     const nextModelId = OPENAI_SCENARIO_TEXT_MODEL_IDS.includes(modelId)
       ? modelId
-      : DEFAULT_SCENARIO_MODEL_ID;
+      : DEFAULT_OPENAI_SCENARIO_MODEL_ID;
     setScenarioModelIdState(nextModelId);
   };
-  const resetScenarioModelId = () => setScenarioModelId(DEFAULT_SCENARIO_MODEL_ID);
+  const resetScenarioModelId = () => setScenarioModelId(DEFAULT_OPENAI_SCENARIO_MODEL_ID);
   const [openAIImageQuality, setOpenAIImageQualityState] = useState(DEFAULT_OPENAI_IMAGE_QUALITY);
   const [openAIImageSize, setOpenAIImageSizeState] = useState(DEFAULT_OPENAI_IMAGE_SIZE);
   const openAIImageQualityChosen = useRef(false);
@@ -1372,7 +1372,7 @@ export default function useMangaWorkflow() {
         const normalized = await normalizePageCandidate(candidate);
         if (normalized.pageLayout.applied) {
           const layout = normalized.pageLayout.layout;
-          statCallback(`[ページ配置] ${layout.width}×${layout.height}／タイトル${layout.titleHeight}px・コマ全体${layout.panelHeight}px・透かし${layout.footerHeight}px。各コマの相対高と書体を保持し、元画像も保存しました。`);
+          statCallback(`[ページ配置] ${layout.width}×${layout.height}／タイトル${layout.titleHeight}px・コマ全体${layout.panelHeight}px・フッター${layout.footerHeight}px。各コマの相対高と書体を保持し、元画像も保存しました。`);
         } else {
           statCallback(`[ページ配置] 未適用：${normalized.pageLayout.reason} 元画像を保持します。`);
         }
@@ -1438,6 +1438,24 @@ export default function useMangaWorkflow() {
         }
       };
 
+      const reviewCriticalCameraCandidate = async (candidate, candidatePrompt) => {
+        const cameraPrompt = buildCriticalCameraQaPrompt({
+          finalPrompt: candidatePrompt,
+          panelCropCount: qualityMode === 'four-panel' ? 4 : 0,
+        });
+        if (!cameraPrompt) return { pass: true, issues: [] };
+        const panelImages = qualityMode === 'four-panel'
+          ? await extractMangaPanelCrops(`data:${candidate.mimeType || 'image/png'};base64,${candidate.base64Img}`)
+          : [];
+        const response = await callAI(
+          cameraPrompt,
+          buildImageQualityQaImageParts({ candidate, panelImages }),
+          null,
+          msg => statCallback(`[カメラ独立監査] ${msg}`),
+        );
+        return parseCriticalCameraQaResponse(response.text, { finalPrompt: candidatePrompt });
+      };
+
       const retainedImage = generationOptions.reviewExisting
         ? String(generatedImage || '').match(/^data:(image\/[^;]+);base64,([\s\S]+)$/) : null;
       if (generationOptions.reviewExisting && !retainedImage) throw new Error('再検査する画像がありません。');
@@ -1488,6 +1506,7 @@ export default function useMangaWorkflow() {
         originalPrompt: currentPrompt,
         mode: qualityMode,
         reviewCandidate: reviewImageCandidate,
+        reviewCriticalCamera: reviewCriticalCameraCandidate,
         generateRepairCandidate: (repairPrompt, sourceCandidate = originalCandidate) => generateImageCandidate(repairPrompt, {
           repair: true,
           repairSource: isOpenAIEngine ? sourceCandidate : null,

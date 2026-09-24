@@ -1018,6 +1018,13 @@ const extractExplicitRearSubject = (text, castNames) => {
     });
     if (explicitShoulderSubject) return explicitShoulderSubject;
     if (isCamera && shoulderCamera) {
+      const foregroundSubject = castNames.find((name) => {
+        const escapedName = escapeRegex(name);
+        const japaneseForeground = new RegExp(`(?:手前|前景)(?:の)?(?:右|左)?\\s*\\[?${escapedName}\\]?|\\[?${escapedName}\\]?[^\\n、，,。.!?！？;；]{0,36}(?:を|が|は)?(?:手前|前景)(?:に|で)?`, 'i');
+        const englishForeground = new RegExp(`(?:foreground|camera[- ]side)[^\\n,.!?;]{0,36}\\[?${escapedName}\\]?|\\[?${escapedName}\\]?[^\\n,.!?;]{0,36}(?:in|at|as)\\s+(?:the\\s+)?(?:foreground|camera[- ]side)`, 'i');
+        return japaneseForeground.test(source) || englishForeground.test(source);
+      });
+      if (foregroundSubject) return foregroundSubject;
       const rearSubject = castNames.find((name) => {
         const escapedName = escapeRegex(name);
         const japaneseRear = new RegExp(`\\[?${escapedName}\\]?の(?:右|左)?(?:後方|後ろ|背後|背中側)`, 'i');

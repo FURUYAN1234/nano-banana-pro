@@ -1,5 +1,5 @@
 import { isMonochromePrompt } from './manga-render-mode.js';
-import { extractBubbleContracts } from './image-quality-qa.js';
+import { extractBubbleContracts, hasCriticalRearCameraContract } from './image-quality-qa.js';
 
 export const IMAGE_QUALITY_MAX_ATTEMPTS = 4;
 export const IMAGE_REPAIR_PROMPT_MAX_CHARS = 31000;
@@ -67,7 +67,8 @@ const getRepairableIssues = (review) => (Array.isArray(review?.issues) ? review.
   // dimension. Keep one actionable record per defect so the analysis model
   // can return a complete plan instead of failing on a long duplicate list.
   .filter((issue, index, issues) => issues.findIndex(candidate =>
-    candidate?.type === issue?.type && candidate?.panel === issue?.panel && candidate?.subject === issue?.subject
+    candidate?.type === issue?.type && candidate?.panel === issue?.panel
+      && (issue?.type === 'camera_geometry' || candidate?.subject === issue?.subject)
   ) === index);
 
 const formatRepairIssue = (issue = {}) => (
@@ -97,6 +98,25 @@ export const enforceBubbleComparison = (comparison, originalReview, repairReview
     return { preferred: 'repair', reason: '独立した文字転記で台詞・読順の改善を確認し、新たな具体的不合格がない修正版を採用します。' };
   }
   return comparison;
+};
+
+export const enforceCriticalCameraComparison = (comparison, originalReview, repairReview) => {
+  const beforeIssues = Array.isArray(originalReview?.issues) ? originalReview.issues : [];
+  const afterIssues = Array.isArray(repairReview?.issues) ? repairReview.issues : [];
+  const cameraPanels = new Set(beforeIssues
+    .filter(issue => issue?.type === 'camera_geometry' && Number.isInteger(issue?.panel))
+    .map(issue => issue.panel));
+  if (!cameraPanels.size || repairReview?.criticalCameraAudit?.pass !== true) return comparison;
+  if (afterIssues.some(issue => issue?.type === 'camera_geometry' && cameraPanels.has(issue.panel))) return comparison;
+
+  const bubbleRegressed = (originalReview?.bubbleInventory || []).some(check => check.status === 'ok'
+    && repairReview?.bubbleInventory?.find(next => next.panel === check.panel)?.status !== 'ok');
+  if (bubbleRegressed) return comparison;
+
+  const newConcrete = afterIssues.filter(issue => issue?.type !== 'unverified').some(issue =>
+    !beforeIssues.some(old => old?.type === issue?.type && old?.panel === issue?.panel && old?.subject === issue?.subject));
+  if (newConcrete) return comparison;
+  return { preferred: 'repair', reason: '独立カメラ監査で重大な肩越し不具合の解消を確認し、台詞・読順・他の具体的不具合に退行がない修正版を採用します。' };
 };
 
 const buildBoundedRepairPrompt = ({ basePrompt, analysis, history }) => {
@@ -231,7 +251,7 @@ Verify coherent object/body occlusion and text alignment to the actual printed f
 };
 
 export const runImageQualityFailsafe = async ({
-  originalCandidate, originalPrompt, reviewCandidate, generateRepairCandidate, analyzeFailure,
+  originalCandidate, originalPrompt, reviewCandidate, reviewCriticalCamera, generateRepairCandidate, analyzeFailure,
   onProgress = () => {}, shouldStop = () => false, mode, allowRepair = true,
   repairSourceMode = 'regenerate',
   compareCandidates = async () => ({ preferred: 'original', reason: 'Direct comparison unavailable.' }),
@@ -250,11 +270,30 @@ export const runImageQualityFailsafe = async ({
     try { return await reviewCandidate(image, prompt); }
     catch (error) { return { ...createUnverifiedReview(error), requestFailed: true }; }
   };
+  const mergeCriticalCameraAudit = (result, audit) => {
+    const cameraIssues = (Array.isArray(audit?.issues) ? audit.issues : [])
+      .filter(issue => issue?.type === 'camera_geometry');
+    if (!cameraIssues.length) return { ...result, criticalCameraAudit: audit };
+    const issues = [...(Array.isArray(result?.issues) ? result.issues : [])];
+    for (const issue of cameraIssues) {
+      if (!issues.some(existing => existing?.type === issue.type && existing?.panel === issue.panel)) issues.push(issue);
+    }
+    return { ...result, pass: false, issues, criticalCameraAudit: audit };
+  };
   const inspect = async (image, prompt) => {
     let result = await review(image, prompt);
+    if (reviewCriticalCamera && hasCriticalRearCameraContract(prompt) && !result?.requestFailed && !shouldStop()) {
+      onProgress('明示された肩越し構図を、吹き出し判定と独立して再検査します。画像は再生成しません。');
+      try { result = mergeCriticalCameraAudit(result, await reviewCriticalCamera(image, prompt)); }
+      catch { /* A failed narrow audit must not invent a paid repair target. */ }
+    }
     if (!result?.pass && !hasConcreteIssues(result) && !result?.requestFailed && !shouldStop()) {
       onProgress('品質が未確認のため、同じ画像を1回再検査します。画像は再生成しません。');
       result = await review(image, prompt);
+      if (reviewCriticalCamera && hasCriticalRearCameraContract(prompt) && !result?.requestFailed && !shouldStop()) {
+        try { result = mergeCriticalCameraAudit(result, await reviewCriticalCamera(image, prompt)); }
+        catch { /* Preserve the general review when the narrow audit is unavailable. */ }
+      }
     }
     return result || createUnverifiedReview('Empty quality response');
   };
@@ -267,7 +306,17 @@ export const runImageQualityFailsafe = async ({
     // 実文字で確認済みの読順違反を先に局所修正し、他の判定で埋もれさせない。
     const confirmedOrder = repairable.filter(issue => issue.type === 'bubble_order'
       && finalReview.bubbleInventory?.some(check => check.panel === issue.panel && check.status === 'defect'));
-    const issues = confirmedOrder.length ? confirmedOrder : repairable;
+    // A concrete visible defect takes priority over a fail-closed bubble-order
+    // uncertainty. Otherwise punctuation/OCR uncertainty can make the analysis
+    // model plan unrelated repairs together and abort before fixing the proven
+    // camera or anatomy defect. The uncertain order remains for a later pass if
+    // it is still unresolved after the concrete defect is repaired.
+    const concrete = repairable.filter(issue => !(issue.type === 'bubble_order'
+      && finalReview.issues?.some(source => source?.type === 'unverified'
+        && source?.subject === 'bubble_order' && source?.panel === issue.panel)));
+    const criticalCamera = concrete.filter(issue => issue.type === 'camera_geometry');
+    const issues = criticalCamera.length ? criticalCamera
+      : (confirmedOrder.length ? confirmedOrder : (concrete.length ? concrete : repairable));
     if (!issues.length) { stopReason = 'unverified'; break; }
     let analysis;
     let feedback = '';
@@ -313,8 +362,8 @@ export const runImageQualityFailsafe = async ({
     record.review = repairReview;
     entry.outcome = { pass: repairReview.pass, issues: repairReview.issues };
     if (shouldStop()) { stopReason = 'cancelled'; break; }
-    const comparison = enforceBubbleComparison(
-      await tryCompare(compareCandidates, candidate, repairCandidate, reviewPrompt, !repairReview.pass), finalReview, repairReview);
+    const comparison = enforceCriticalCameraComparison(enforceBubbleComparison(
+      await tryCompare(compareCandidates, candidate, repairCandidate, reviewPrompt, !repairReview.pass), finalReview, repairReview), finalReview, repairReview);
     entry.comparison = comparison;
     onProgress(`候補比較: ${comparison?.preferred === 'repair' ? '今回の修正版を保持' : 'これまでの最良候補を保持'}。${comparison?.reason || '比較根拠は未確認です。'}`);
     if (comparison?.preferred === 'repair') {

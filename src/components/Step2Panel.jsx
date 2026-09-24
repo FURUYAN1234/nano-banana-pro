@@ -20,9 +20,13 @@ import {
   getEndingModePolicy
 } from '../lib/ending-mode-policy';
 import {
+  DEFAULT_OPENAI_SCENARIO_MODEL_ID,
   OPENAI_SCENARIO_MODEL_OPTIONS,
   OPENAI_SCENARIO_PRICE_SNAPSHOT_DATE,
 } from '../lib/openai-model-routes';
+
+const DEFAULT_OPENAI_SCENARIO_MODEL_LABEL = OPENAI_SCENARIO_MODEL_OPTIONS
+  .find(({ id }) => id === DEFAULT_OPENAI_SCENARIO_MODEL_ID)?.label || 'GPT-6 Astra';
 
 /**
  * STEP 02: シナリオ構築設定パネル
@@ -364,7 +368,7 @@ export default function Step2Panel({
               {selectedScenarioModel.comparisonNote && (
                 <p className="m-0 text-slate-300">選び方: {selectedScenarioModel.comparisonNote}</p>
               )}
-              <p className="m-0 text-slate-400">選択はこの画面を開いている間だけ有効です。再読込時はGPT-6 Astraから開始します。ツール料金・キャッシュ割引・税・長文コンテキスト加算・処理モード差額は含まない参考値です。</p>
+              <p className="m-0 text-slate-400">選択はこの画面を開いている間だけ有効です。再読込時は{DEFAULT_OPENAI_SCENARIO_MODEL_LABEL}から開始します。ツール料金・キャッシュ割引・税・長文コンテキスト加算・処理モード差額は含まない参考値です。</p>
             </div>
           </div>
         </div>

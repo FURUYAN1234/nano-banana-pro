@@ -5,9 +5,15 @@ import {
   OPENAI_SCENARIO_MODEL_OPTIONS,
   OPENAI_SCENARIO_PRICE_SNAPSHOT_DATE,
   OPENAI_SCENARIO_TEXT_MODEL_IDS,
+  resolveDefaultOpenAIScenarioModelId,
   getOpenAIScenarioCostEstimate,
   getOpenAIScenarioModelRoute,
 } from '../src/lib/openai-model-routes.js';
+
+test('local validation starts on Luna while production keeps Astra', () => {
+  assert.equal(resolveDefaultOpenAIScenarioModelId(true), 'gpt-6-luna');
+  assert.equal(resolveDefaultOpenAIScenarioModelId(false), 'gpt-6-astra');
+});
 
 const step2PanelSource = await import('node:fs/promises')
   .then(({ readFile }) => readFile(new URL('../src/components/Step2Panel.jsx', import.meta.url), 'utf8'));
@@ -129,12 +135,11 @@ test('the three scenario-model help lines are compact without blank paragraph ga
   assert.equal((helpBlock.match(/<p className="m-0 /g) || []).length, 3);
 });
 
-test('STEP2 always opens on Astra and keeps lower-cost validation choices in memory only', () => {
-  assert.match(workflowSource, /DEFAULT_SCENARIO_MODEL_ID = 'gpt-6-astra'/);
-  assert.match(workflowSource, /useState\(DEFAULT_SCENARIO_MODEL_ID\)/);
+test('STEP2 uses the environment default and keeps validation choices in memory only', () => {
+  assert.match(workflowSource, /useState\(DEFAULT_OPENAI_SCENARIO_MODEL_ID\)/);
   assert.doesNotMatch(workflowSource, /nano-banana-pro:scenario-model-id/);
   assert.doesNotMatch(workflowSource, /localStorage\.(?:getItem|setItem)/);
   assert.match(workflowSource, /scenarioModelId/);
   assert.match(workflowSource, /const hardReset = \(\) => \{[\s\S]*?resetScenarioModelId\(\);/);
-  assert.match(step2PanelSource, /再読込時はGPT-6 Astraから開始します/);
+  assert.match(step2PanelSource, /再読込時は\{DEFAULT_OPENAI_SCENARIO_MODEL_LABEL\}から開始します/);
 });

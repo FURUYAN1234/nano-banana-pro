@@ -214,6 +214,12 @@ Action: SpeakerA reads and operates a smartphone while SpeakerB leans in and ans
 SpeakerA「いま確認している。」
 SpeakerB「確認しました。」`;
 
+const EXPLICIT_FOREGROUND_SHOULDER_CAMERA = `
+[Camera: 左後方の肩越し。手前のSpeakerAの肩と横顔を大きく、奥の画面を見せる]
+Action: SpeakerA points at the screen and turns toward SpeakerB. SpeakerB answers from across the aisle.
+SpeakerA「この数字を見て。」
+SpeakerB「確認した。」`;
+
 const EXPLICIT_SHOULDER_PRESENTATION = `
 [Camera: SpeakerAの肩越し、SpeakerBを見る中景]
 Action: SpeakerA presents the smartphone screen to SpeakerB for inspection.
@@ -348,6 +354,15 @@ test('an explicit over-the-shoulder subject controls the rear foreground instead
     assert.match(panel, /read\/operate=self/i);
     assert.match(panel, /submit\/present\/show=recipient/i);
     assert.match(panel, /SpeakerA.*reads\/operates.*front\+UI camera-visible/i);
+  }
+});
+
+test('a named foreground shoulder in Camera controls the rear foreground instead of dialogue order', () => {
+  for (const providerFamily of ['chatgpt', 'gemini']) {
+    const panel = panelTwoSection(buildPrompt(providerFamily, EXPLICIT_FOREGROUND_SHOULDER_CAMERA));
+    assert.match(panel, /camera is physically behind \[SpeakerA\]'s shoulder/i);
+    assert.match(panel, /back of \[SpeakerA\]'s head or shoulder(?: in)? foreground/i);
+    assert.doesNotMatch(panel, /camera (?:is physically )?behind \[SpeakerB\](?:'s shoulder)?/i);
   }
 });
 

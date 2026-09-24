@@ -1316,7 +1316,7 @@ No explanations. No partial results.`;
               )}
 
               <div className="w-full px-8 mt-2">
-                {hasFixedPageLayout && fixedPageLayout && <p className="text-xs text-slate-300 mb-2">{fixedPageLayout.width}×{fixedPageLayout.height}｜タイトル{fixedPageLayout.titleHeight}px・4コマ全体{fixedPageLayout.panelHeight}px・透かし{fixedPageLayout.footerHeight}px。各コマの高さ配分と書体を保持。</p>}
+                    {hasFixedPageLayout && fixedPageLayout && <p className="text-xs text-slate-300 mb-2">{fixedPageLayout.width}×{fixedPageLayout.height}｜タイトル{fixedPageLayout.titleHeight}px・4コマ全体{fixedPageLayout.panelHeight}px・フッター{fixedPageLayout.footerHeight}px。各コマの高さ配分と書体を保持。</p>}
                 <button
                   onClick={async () => {
                     try {

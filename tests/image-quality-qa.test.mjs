@@ -4,12 +4,60 @@ import assert from 'node:assert/strict';
 import {
   buildImageQualityQaImageParts,
   buildImageQualityQaPrompt,
+  buildCriticalCameraQaPrompt,
+  parseCriticalCameraQaResponse,
+  hasCriticalRearCameraContract,
   formatImageQualityIssue,
   parseImageQualityQaResponse,
   buildImageQualityComparisonPrompt,
   parseImageQualityComparison,
   extractPanelCastContracts,
 } from '../src/lib/image-quality-qa.js';
+
+const EXPLICIT_REAR_PROMPT = `## Panel 2
+Camera: Over The Shoulder
+EXPLICIT REAR CAMERA: VISIBLE REAR DEPTH CHECK: camera is physically behind [ヒカリ]'s shoulder; show the back of [ヒカリ]'s head or shoulder foreground. Do NOT show [ヒカリ]'s face front-on.
+Action (visual only): [アカリ] faces [ヒカリ].`;
+
+test('critical camera audit is scoped only to an explicit rear-camera contract', () => {
+  assert.equal(hasCriticalRearCameraContract(EXPLICIT_REAR_PROMPT), true);
+  assert.equal(hasCriticalRearCameraContract('## Panel 2\nCamera: eye-level two-shot'), false);
+  const prompt = buildCriticalCameraQaPrompt({ finalPrompt: EXPLICIT_REAR_PROMPT, panelCropCount: 4 });
+  assert.match(prompt, /Panel 2/);
+  assert.match(prompt, /physically behind \[ヒカリ\]'s shoulder/);
+  assert.match(prompt, /rear_head_or_shoulder_foreground/);
+  assert.match(prompt, /front_on/);
+  assert.match(prompt, /second attached image is the enlarged crop for panel 1/i);
+});
+
+test('critical camera audit converts a front-on OTS subject into a concrete camera defect', () => {
+  const review = parseCriticalCameraQaResponse(JSON.stringify({ checks: [{
+    panel: 2,
+    rear_subject: 'ヒカリ',
+    rear_head_or_shoulder_foreground: 'absent',
+    face_orientation: 'front_on',
+    camera_side: 'in_front_of_subject',
+    evidence: 'Both eyes and the full face of Hikari are visible next to Akari; no rear head or shoulder overlaps the foreground.',
+  }] }), { finalPrompt: EXPLICIT_REAR_PROMPT });
+  assert.equal(review.pass, false);
+  assert.equal(review.issues.length, 1);
+  assert.equal(review.issues[0].type, 'camera_geometry');
+  assert.equal(review.issues[0].panel, 2);
+  assert.match(review.issues[0].reason, /front_on/);
+});
+
+test('critical camera audit keeps ambiguous pixels unverified instead of inventing a defect', () => {
+  const review = parseCriticalCameraQaResponse(JSON.stringify({ checks: [{
+    panel: 2,
+    rear_subject: 'ヒカリ',
+    rear_head_or_shoulder_foreground: 'uncertain',
+    face_orientation: 'uncertain',
+    camera_side: 'uncertain',
+    evidence: 'The crop is too small to distinguish the shoulder plane.',
+  }] }), { finalPrompt: EXPLICIT_REAR_PROMPT });
+  assert.equal(review.pass, false);
+  assert.equal(review.issues[0].type, 'unverified');
+});
 
 test('direct comparison fixes image order and defaults uncertain judgments to original', () => {
   const prompt = buildImageQualityComparisonPrompt({ scenario: '台詞原文', finalPrompt: 'approved prompt' });

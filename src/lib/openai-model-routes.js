@@ -12,6 +12,14 @@ export const OPENAI_SCENARIO_MODEL_OPTIONS = scenarioModelConfig.models;
 export const OPENAI_SCENARIO_TEXT_MODEL_IDS = OPENAI_SCENARIO_MODEL_OPTIONS.map(({ id }) => id);
 export const OPENAI_SCENARIO_PRICE_SNAPSHOT_DATE = scenarioModelConfig.priceSnapshotDate;
 
+const IS_DEVELOPMENT_BUILD = typeof import.meta.env === 'object' && import.meta.env.DEV === true;
+
+export const resolveDefaultOpenAIScenarioModelId = (isDevelopment = IS_DEVELOPMENT_BUILD) => (
+  isDevelopment ? 'gpt-6-luna' : 'gpt-6-astra'
+);
+
+export const DEFAULT_OPENAI_SCENARIO_MODEL_ID = resolveDefaultOpenAIScenarioModelId();
+
 export const getOpenAIScenarioCostEstimate = (modelId, usage = {}) => {
   const option = OPENAI_SCENARIO_MODEL_OPTIONS.find(({ id }) => id === modelId);
   if (!option) return null;

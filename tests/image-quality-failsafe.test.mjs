@@ -111,9 +111,82 @@ test('duplicate panel dimensions are collapsed before AI repair analysis', async
     generateRepairCandidate: async () => candidate('repair'),
     compareCandidates: async () => ({ preferred: 'original', reason: 'retain baseline' }),
   });
-  assert.equal(analyzedIssues.length, 2);
-  assert.deepEqual(analyzedIssues.map(issue => issue.type), ['camera_geometry', 'bubble_order']);
+  assert.equal(analyzedIssues.length, 1);
+  assert.deepEqual(analyzedIssues.map(issue => issue.type), ['camera_geometry']);
   assert.equal(result.stopReason, 'retry_limit');
+});
+
+test('a concrete camera defect is repaired before fail-closed unverified bubble order', async () => {
+  let analyzedIssues;
+  let repairs = 0;
+  const result = await runImageQualityFailsafe({
+    originalCandidate: candidate('original'), originalPrompt: 'APPROVED',
+    reviewCandidate: async image => image.id === 'repair' ? pass : ({ pass: false, issues: [
+      { type: 'camera_geometry', panel: 2, subject: 'Panel 2 rear OTS', reason: 'camera is in front of the named shoulder owner' },
+      { type: 'camera_geometry', panel: 2, subject: 'camera_geometry', reason: 'requested rear OTS, observed frontal face' },
+      { type: 'unverified', panel: 2, subject: 'bubble_order', reason: 'punctuation transcription differs' },
+    ] }),
+    analyzeFailure: async context => { analyzedIssues = context.issues; return analysis(context); },
+    generateRepairCandidate: async () => { repairs += 1; return candidate('repair'); },
+    compareCandidates: async () => ({ preferred: 'repair', reason: 'rear OTS is now visible' }),
+  });
+  assert.equal(repairs, 1);
+  assert.equal(analyzedIssues.length, 1);
+  assert.equal(analyzedIssues[0].type, 'camera_geometry');
+  assert.equal(result.validationWarning, false);
+});
+
+test('explicit rear-camera audit exposes a missed camera defect before a bubble repair', async () => {
+  let analyzedIssues;
+  let repairs = 0;
+  let cameraAudits = 0;
+  const originalPrompt = `## Panel 2
+EXPLICIT REAR CAMERA: camera is physically behind [ヒカリ]'s shoulder; back of [ヒカリ]'s head or shoulder foreground. Do NOT show [ヒカリ]'s face front-on.`;
+  const result = await runImageQualityFailsafe({
+    originalCandidate: candidate('original'), originalPrompt,
+    reviewCandidate: async image => image.id === 'repair' ? pass : ({ pass: false, issues: [
+      { type: 'bubble_speaker', panel: 2, subject: 'B1', reason: 'tail endpoint is ambiguous' },
+    ] }),
+    reviewCriticalCamera: async image => {
+      cameraAudits += 1;
+      return image.id === 'repair' ? pass : ({ pass: false, issues: [
+        { type: 'camera_geometry', panel: 2, subject: 'ヒカリ', reason: 'front-on face; rear foreground shoulder is absent' },
+      ] });
+    },
+    analyzeFailure: async context => { analyzedIssues = context.issues; return analysis(context); },
+    generateRepairCandidate: async () => { repairs += 1; return candidate('repair'); },
+    compareCandidates: async () => ({ preferred: 'original', reason: 'general comparator noticed only unchanged bubble order' }),
+  });
+  assert.equal(cameraAudits, 2);
+  assert.equal(repairs, 1);
+  assert.deepEqual(analyzedIssues.map(issue => issue.type), ['camera_geometry']);
+  assert.equal(result.candidate.id, 'repair');
+  assert.equal(result.validationWarning, false);
+});
+
+test('failed or unverified critical camera audit preserves the general review', async () => {
+  const originalPrompt = `## Panel 2
+EXPLICIT REAR CAMERA: camera is physically behind [ヒカリ]'s shoulder; back of [ヒカリ]'s head or shoulder foreground.`;
+  let repairs = 0;
+  const result = await runImageQualityFailsafe({
+    originalCandidate: candidate('original'), originalPrompt,
+    reviewCandidate: async () => pass,
+    reviewCriticalCamera: async () => { throw new Error('camera audit unavailable'); },
+    generateRepairCandidate: async () => { repairs += 1; return candidate('repair'); },
+  });
+  assert.equal(repairs, 0);
+  assert.equal(result.finalReview.pass, true);
+  assert.deepEqual(result.finalReview.issues, []);
+});
+
+test('ordinary prompts do not spend a critical camera audit', async () => {
+  const result = await runImageQualityFailsafe({
+    originalCandidate: candidate('original'), originalPrompt: '## Panel 2\nCamera: ordinary eye-level two-shot',
+    reviewCandidate: async () => pass,
+    reviewCriticalCamera: async () => { assert.fail('no critical camera API call'); },
+    generateRepairCandidate: async () => { assert.fail('no image call'); },
+  });
+  assert.equal(result.validationWarning, false);
 });
 
 test('cancellation after analysis prevents another image request', async () => {
