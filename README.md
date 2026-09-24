@@ -20,6 +20,7 @@ Load a completed four-panel manga into [AI Voice Comic Maker](https://github.com
 
 ### Related systems / 関連システム
 
+- [Monogatari Buzz Maker / 物語バズメーカー](https://github.com/FURUYAN1234/viral-radar): Turn evidence-backed Web/RSS trends into planning material for manga, short videos, explainer videos, and novels. / 公開Web・RSSから取得した根拠付きトレンドを、漫画・ショート動画・解説動画・小説の制作案へ整理します。
 - [Story Maker](https://github.com/FURUYAN1234/story-maker): Create stories and plots for a manga topic. / 漫画の題材になる物語やプロットを作成します。
 - [AI Character Sheet Maker](https://github.com/FURUYAN1234/character-sheet-maker): Create structured character reference sheets for this workflow. / このワークフローに渡す構造化キャラクターシートを作成します。
 - [AI Comic Translation Tool](https://github.com/FURUYAN1234/comic-translation): Translate completed manga pages. / 完成した漫画ページを翻訳します。
@@ -96,10 +97,10 @@ These are generation and review constraints, not guarantees. Provider image mode
 
 | Selected provider / 選択API | STEP2 scenario and enhancement route / STEP2のシナリオ・強化経路 |
 |---|---|
-| OpenAI | `gpt-6-astra` → `gpt-5.6-sol` → `gpt-4.1` → `gpt-4.1-mini` → `gpt-4.1-nano` → `gpt-4o` |
+| OpenAI | `gpt-6-astra` → `gpt-6-sol` → `gpt-5.6-sol` → `gpt-5.6-terra` → `gpt-6-luna` → `gpt-5.6-luna` → `gpt-4.1` → `gpt-4.1-mini` → `gpt-4.1-nano` → `gpt-4o` |
 | Google Gemini | `gemini-3.5-flash` → `gemini-2.5-flash` → `gemini-2.5-pro` → `gemini-flash-latest` → `gemini-pro-latest` |
 
-`gpt-6-astra` is the OpenAI model identifier used by this application. It is unrelated to Google's Project Astra product name. The app sends the scenario prompt through its provider route; it does not inherit the Codex desktop task's High or Extra High reasoning setting. OpenAI's Astra-first route is appropriate for multi-constraint four-panel construction, while the fallback chain prevents one unavailable model from blocking the workflow. Model presence in a list is not proof of image quality; the rendered manga still requires visual review. / `gpt-6-astra`は本アプリが使うOpenAIモデルIDで、GoogleのProject Astraという製品名とは別物です。アプリは選択プロバイダーの経路へシナリオ指示を送信し、Codexデスクトップ作業の「高い」「極高」推論設定を引き継ぎません。多制約の4コマ構成にはAstra先行経路が適しており、利用不可時は後続モデルで処理停止を避けます。モデル一覧への表示は画像品質の証明ではなく、生成画像の目視確認が必要です。
+`gpt-6-astra` is the public default for OpenAI scenario work, while local development starts from `gpt-6-luna` for lower-cost validation. The dropdown can explicitly start from any listed GPT-6, GPT-5.6, GPT-4.1, or GPT-4o option; on failure, the app tries only the models below that selection in the displayed order. `gpt-6-astra` is unrelated to Google's Project Astra product name. The app sends the scenario prompt through its provider route and does not inherit the Codex desktop task's High or Extra High reasoning setting. Model presence in a list is not proof of image quality; the rendered manga still requires visual review. / OpenAIのシナリオ作成では、公開版は`gpt-6-astra`、ローカル開発版は低コスト検証用の`gpt-6-luna`から開始します。プルダウンでは一覧にあるGPT-6、GPT-5.6、GPT-4.1、GPT-4oの各モデルを開始位置として明示選択でき、失敗時は選択位置より下のモデルだけを表示順に試します。`gpt-6-astra`はGoogleのProject Astraという製品名とは別物です。アプリは選択プロバイダーの経路へシナリオ指示を送信し、Codexデスクトップ作業の「高い」「極高」推論設定を引き継ぎません。モデル一覧への表示は画像品質の証明ではなく、生成画像の目視確認が必要です。
 
 STEP3 shows `⏳ AI応答を待機中... (○秒経過)` directly below its build button while the connected text API reviews the prompt, then stops the counter when processing ends. / STEP3は接続中の文章APIがプロンプトを精査している間、構築ボタン直下に`⏳ AI応答を待機中... (○秒経過)`を表示し、処理完了時にカウントを停止します。
 
