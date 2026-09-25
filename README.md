@@ -4,6 +4,12 @@
 
 An experimental web application in which AI handles topic research, story structure, direction, prompt construction, image generation, and quality review for a four-panel manga. / AIが話題調査、構成、演出、プロンプト構築、画像生成、品質確認まで担当する4コマ漫画制作Webアプリです。
 
+Dialogue and page-layout safeguards / 台詞とコマ割り: Printable dialogue is kept separate from speaker routing metadata, with malformed quotes rejected before copying or API submission. Both provider prompts retain four full-width horizontal panels in one vertical column, including after long-prompt compaction. / 台詞本文と話者メタデータを分離し、括弧が壊れた本文はコピー・API送信前に拒否します。両provider・長文圧縮後も、横長4コマを縦1列に積む指定を保持します。保存済みの旧プロンプトはSTEP3から再構築してください。生成AIの描画と画像QAには誤りが残り得るため、実画像の目視確認は必要です。
+
+Explicit camera fields / 明示カメラ指定: Both `[Camera: ...]` tags and standalone `Camera:` lines take precedence over fallback shots for either provider. / 角括弧タグと独立したカメラ指定行のどちらも、既定の画角より優先します。
+
+Wardrobe continuity / 衣装の連続性: 4コマでは人物ごとに服と付属品の有無・数・形・取り付け位置を一度決め、コマ間で共有します。台本にある着脱等は保持し、遮蔽や画面外を欠落とは扱いません。API検査は、同じ人物・部位が明瞭に見える2コマの根拠がある場合だけ衣装変化を修正対象にします。生成結果の完全一致を保証する機能ではありません。
+
 [Open the application](https://furuyan1234.github.io/nano-banana-pro/) / [アプリを開く](https://furuyan1234.github.io/nano-banana-pro/)
 
 [Read the detailed note article](https://note.com/happy_duck780/n/ndf063558c1f5) / [詳しいnote記事を読む](https://note.com/happy_duck780/n/ndf063558c1f5)
@@ -311,6 +317,10 @@ The production application is published from the `main` branch through the repos
 
 ## 📋 ChangeLog
 
+### v6.6.0 (2026-09-25)
+- **[台詞・コマ割り]** 発話本文と話者メタデータを分離し、引用・長文圧縮・両AIの経路で日本語台詞の本文と縦書き条件を保護。Web貼付の4コマを横長・縦1列で明示 / Separated dialogue text from speaker metadata and preserved exact Japanese speech and vertical-setting instructions through quoting, long-prompt compaction and both providers. Clarified four full-width horizontal panels in one vertical column for Web-pasted output.
+- **[衣装連続性]** 特定人物・衣服に依存しない共通ルールで、衣装と付属品の有無・数・形・取付位置をコマ間で保護。台本上の着脱や遮蔽は別状態として扱い、衣装比較の根拠が足りない場合は未確認にする / Added a generic cross-panel rule for garment and accessory presence, count, shape and attachment. Scripted changes and occlusion remain distinct; insufficient comparison evidence is reported as unverified.
+
 ### v6.5.9 (2026-09-25)
 - **[Fix & UX]** A4大を既定化し、頭髪の枠際連続性、背景からの主役分離、プロ漫画の視線誘導を強化。1枚絵のWebコピー上限を10,000字へ更新。Geminiのモデル・サイズ・単価表示、自然文画像搬送、長文修正、ローマ字話者照合を追加 / Made A4 large the default, strengthened clean head/hair panel-edge continuity, focal separation from backgrounds, and professional manga visual flow; raised the single-image Web-copy soft budget to 10,000 characters; added Gemini model/size/pricing UI, natural-language image transport, long repair support, and romanized speaker matching
 - **[Model Chain]** デプロイ前照合でGemini文章・Visionを3.8→3.7→3.6→3.5→3.5 Lite→3.1 Liteへ更新し、3.8の導入価格と非推奨samplingパラメータ除去を同期 / Updated Gemini text and vision routes to 3.8→3.7→3.6→3.5→3.5 Lite→3.1 Lite, synchronized 3.8 introductory pricing, and removed deprecated sampling parameters
@@ -365,15 +375,6 @@ The production application is published from the `main` branch through the repos
 
 ### v6.4.6 (2026-09-21)
 - **[Fix & UX]** 背景のポスターや看板の図柄・配色・枠・アイコンを残し、文字回避のために面全体を空白・ぼかし・モザイク化しないよう修正 / Preserve poster and sign artwork, colors, borders and icons, and prevent whole surfaces from being blanked, blurred or mosaicked to avoid incidental text
-
-### v6.4.5 (2026-09-21)
-- **[Fix & UX]** 単独の吹き出しを話者側へ置き、しっぽを指定した話者へ短く接続。複数の吹き出しだけ右から左へ並べます / Place a single bubble on its mapped speaker's side with a short tail to that speaker, while retaining right-to-left ordering only for multiple bubbles
-
-### v6.4.4 (2026-09-21)
-- **[Page Layout]** 2:3出力のタイトル帯、可変高4コマ全体、フッター、左右余白を出力サイズ別に固定し、各コマの相対高と生成済みタイトル文字を保持。タイトル矩形罫線を除去し、透かしを外側フッターだけへ限定 / Fixed the title band, undivided variable-height panel block, footer and side insets per 2:3 output tier while preserving relative panel heights and rendered title lettering; removed aligned title rules and restricted watermarks to the outer footer
-- **[Bubble & Anatomy QA]** 台詞順と人物の左右位置を分離し、吹き出し尻尾の根元・経路・先端を検査。前景の手は手首から掌と5本指を確認し、靴などへの置換を不合格化 / Separated dialogue order from character staging, verified bubble-tail root, path and endpoint, and added wrist/palm/five-digit checks that reject footwear or other objects replacing a hand
-- **[Text Classification]** 作中の紙・冊子・看板・画面などの印刷文字を吹き出し読順から除外し、SNS用解説へ確定タイトル見出しを必ず付加 / Excluded printed in-scene text on papers, booklets, signs and screens from speech-balloon order checks, and guaranteed the confirmed title heading in SNS explanation text
-- **[UX]** 結果画面は従来の画像ダウンロードだけに戻し、固定比率・加工前画像・QA再検査の追加ボタンを撤去 / Restored the single existing image-download action and removed extra fixed-ratio, raw-image and QA-recheck controls
 
 Older release history is available in [GitHub Releases](https://github.com/FURUYAN1234/nano-banana-pro/releases). / 以前の更新履歴は [GitHub Releases](https://github.com/FURUYAN1234/nano-banana-pro/releases) で確認できます。
 

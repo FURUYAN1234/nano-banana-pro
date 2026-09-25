@@ -73,6 +73,31 @@ const buildGeminiPrompt = () => buildMangaPrompt({
   systemVersion: 'v4.8.2-test'
 });
 
+test('generic wardrobe component continuity survives both providers, media, styles and long compaction', () => {
+  for (const providerFamily of ['chatgpt', 'gemini']) for (const colorMode of ['color', 'monochrome']) {
+    for (const punchlineType of ['Auto', 'SeriousDocumentary']) for (const extra of ['', ' identity detail'.repeat(1100)]) {
+      const prompt = buildMangaPrompt({ scenario: SCENARIO, castList: CAST_LIST + extra, colorMode, providerFamily, punchlineType, systemVersion: 'test' });
+      assert.match(prompt, /WARDROBE COMPONENT LOCK:/);
+      assert.match(prompt, /有無\/数\/形\/取付位置/);
+      assert.match(prompt, /変更は台本の着脱等のみ/);
+      assert.doesNotMatch(prompt, /OUTFIT CONSISTENCY:[^\n]*NO changes\./);
+      assert.match(prompt, /遮蔽\/画面外\/短縮/);
+      assert.doesNotMatch(prompt, /サスペンダー|suspenders|アカリ/);
+    }
+  }
+});
+
+test('long wardrobe compaction retains the canonical outfit and explicit per-panel changes', () => {
+  const outfit = 'Heroは青いシャツ（長袖）、Friendは白い上着、Analystは緑の服';
+  const scenario = SCENARIO.replace('Outfit: casual clothes', `Outfit: ${outfit}`)
+    .replace('Action: Friend presents', 'Action: Friend takes off the outer jacket and presents');
+  const prompt = buildMangaPrompt({ scenario, castList: CAST_LIST + ' identity detail'.repeat(1100),
+    colorMode: 'color', providerFamily: 'chatgpt', punchlineType: 'Auto', systemVersion: 'test' });
+  assert.ok(prompt.includes(`Follow role-specific outfit assignments: ${outfit};`));
+  assert.ok(prompt.includes('Friend takes off the outer jacket'));
+  assert.doesNotMatch(prompt, /Action \(visual only\): \(Outfit assignment:/);
+});
+
 test('both provider prompts preserve physical settings while allowing density contrast', () => {
   for (const prompt of [buildChatGptPrompt(), buildGeminiPrompt()]) {
     assert.match(prompt, /OBJECT GEOMETRY LOCK/);
@@ -83,22 +108,22 @@ test('both provider prompts preserve physical settings while allowing density co
     assert.match(prompt, /never re-typeset stacked books|Stacking or turning a book must not re-typeset/);
     assert.match(prompt, /surreal gags/);
     assert.match(prompt, /RICH PANEL COMPOSITION \/ CHARACTER CLARITY LOCK/);
-    assert.match(prompt, /story-required (?:physical )?setting cues|retain setting\/depth/i);
+    assert.match(prompt, /story-required (?:physical )?setting cues|retain setting\/depth|keep setting\/depth/i);
     assert.match(prompt, /negative space/i);
     assert.doesNotMatch(prompt, /one fixed environmental anchor plus at least two|1 fixed anchor \+ 2 physical setting cues/i);
-    assert.match(prompt, /ABSTRACT BEAT:.*scripted.*(?:omission|omit)/i);
+    assert.match(prompt, /ABSTRACT BEAT:.*scripted.*(?:omission|omit)|setting or scripted abstraction/i);
     assert.match(prompt, /never remove story evidence|props stay/i);
     assert.match(prompt, /face, eye direction, silhouette, hands, and key action|story evidence\/actions\/reactions clear/i);
-    assert.match(prompt, /environmental shapes[^\n]*lower contrast than the focal target|real shots retain setting\/depth; far blur/i);
-    assert.match(prompt, /quiet beats[^\n]*(?:reduce|lower)|peak\/quiet beat, negative space\/density/i);
+    assert.match(prompt, /environmental shapes[^\n]*lower contrast than the focal target|real shots (?:retain setting\/depth;|keep setting\/depth,) far blur/i);
+    assert.match(prompt, /quiet beats[^\n]*(?:reduce|lower)|peak\/quiet beat, negative space\/density|negative space; clear story\/joke, peak\/quiet, density/i);
   }
 });
 
 test('both provider prompts preserve artwork and freely allow natural incidental lettering', () => {
   for (const prompt of [buildChatGptPrompt(), buildGeminiPrompt()]) {
-    assert.match(prompt, /posters?, signs?, packages?, menus?\/book covers? keep natural artwork\/pictograms\/colors\/borders\/material\/layout/i);
-    assert.match(prompt, /never suppress, simplify, blank, grey, blur, pixelate, mosaic or censor a surface/i);
-    assert.match(prompt, /freely render context-appropriate lettering.*readable\/decorative.*short\/long.*any amount\/density/i);
+    assert.match(prompt, /(?:posters?, signs?, packages?, menus?\/book covers? keep|Other surfaces:) natural artwork\/pictograms\/colors\/borders\/material\/layout/i);
+    assert.match(prompt, /never suppress, simplify, blank, grey, blur, pixelate, mosaic or censor a surface|Never suppress\/simplify\/blank\/grey\/blur\/pixelate\/mosaic\/censor surfaces/i);
+    assert.match(prompt, /freely render context-appropriate lettering.*readable\/decorative.*short\/long.*any amount\/density|context-appropriate readable\/decorative lettering, short\/long, any amount\/density/i);
     assert.doesNotMatch(prompt, /Action text: only scripted|include sparse|no gibberish|pseudo-lettering|unrelated text/i);
     assert.doesNotMatch(prompt, /Other surfaces unlettered|otherwise unlettered surfaces/i);
   }
@@ -144,7 +169,7 @@ test('ChatGPT Web prompt has generic quality locks for dialogue, bubbles, charac
   assert.match(prompt, /keep bubble space|FINISH: bubbles, anatomy/i);
   assert.match(prompt, /cast\/background light and color|setting or scripted abstraction/i);
   assert.match(prompt, /\banatomy\b/i);
-  assert.match(prompt, /setting depth|retain setting\/depth/i);
+  assert.match(prompt, /setting depth|retain setting\/depth|keep setting\/depth/i);
   assert.match(prompt, /CLOTHING FOLD SHADOW ASSIST|FOLD SHADOWS:/);
   assert.match(prompt, /overlapping, pinched, and intersecting fabric folds|FOLD SHADOWS: crisp triangular overlap shadows/i);
   assert.match(prompt, /wedge-shaped triangular cel-shaded shadow planes|FOLD SHADOWS: crisp triangular overlap shadows/i);
@@ -170,9 +195,9 @@ test('API and Web final prompt locks single-bubble tails to the mapped speaker e
   assert.match(prompt, /B1=>\[Hero\] mouth\/head/);
   assert.match(prompt, /B1=>\[Friend\] mouth\/head/);
   assert.match(prompt, /proximity never reassigns/);
-  assert.match(prompt, /SINGLE BUBBLE:[^\n]*(?:speaker side|speaker-side)[^\n]*(?:shortest|short)[^\n]*tail/i);
-  assert.match(prompt, /MULTIPLE BUBBLES:[^\n]*B1 rightmost[^\n]*later bubbles strictly left/i);
-  assert.match(prompt, /DRAW BALLOON BODIES BEFORE ACTORS:[^\n]*x=0 left,100 right[^\n]*freeze balloon bodies at numeric slots/i);
+  assert.match(prompt, /SINGLE BUBBLE:[^\n]*(?:speaker side|speaker-side)[^\n]*(?:(?:shortest|short)[^\n]*tail|TAIL GEOMETRY:[^\n]*shortest unobstructed route to mapped mouth\/head)/i);
+  assert.match(prompt, /MULTIPLE BUBBLES:[^\n]*B1 rightmost[^\n]*later (?:bubbles )?strictly left/i);
+  assert.match(prompt, /DRAW BALLOON BODIES BEFORE ACTORS:[^\n]*x=0 left,100 right[^\n]*freeze (?:balloon bodies at )?numeric slots/i);
   assert.equal((prompt.match(/DRAW BALLOON BODIES BEFORE ACTORS:/g) || []).length, 1);
   assert.doesNotMatch(prompt, /DRAW BODIES BEFORE ART/i);
 });

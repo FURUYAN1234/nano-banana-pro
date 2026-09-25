@@ -133,23 +133,23 @@ test('ChatGPT manga prompt stays within the empirical Web-copy soft budget witho
   assert.match(prompt, /EXPRESSIVE DIRECTION:/);
   assert.match(prompt, /full-body/);
   assert.match(prompt, /panel contrast/);
-  assert.match(prompt, /PAGE READING RHYTHM: one primary focal target\/panel/);
-  assert.match(prompt, /(?:story peak vs|peak\/)quiet beat|story peak vs quiet beat/);
-  assert.match(prompt, /negative space\/density/);
-  assert.match(prompt, /right-to-left.*(?:speaker tails|tails to speakers)/);
+  assert.match(prompt, /PAGE READING RHYTHM: one (?:primary )?focal target\/panel/);
+  assert.match(prompt, /(?:story peak vs|peak\/)quiet(?: beat)?/);
+  assert.match(prompt, /negative space(?:\/density|;[^\n]*density)/);
+  assert.match(prompt, /right-to-left.*(?:speaker tails|tails to speakers|route to mapped mouth\/head)/);
   assert.match(prompt, /TAIL TIP LOCK: B1=>\[サエコ\] mouth\/head; B2=>\[ヒカリ\] mouth\/head; B3=>\[ミク\] mouth\/head/);
-  assert.match(prompt, /ABSTRACT BEAT: scripted BG omission/);
-  assert.match(prompt, /INTERACTION: reaction readable/);
-  assert.match(prompt, /ACTING: gaze\/weight\/hands vary/);
+  assert.match(prompt, /ABSTRACT BEAT: scripted BG omission|Scripted abstract BG: props stay/);
+  assert.match(prompt, /INTERACTION: reactions? readable/);
+  assert.match(prompt, /ACTING: gaze\/weight\/hands vary|ACTING: vary gaze\/weight\/hands/);
   assert.match(prompt, /depth.of.field/i);
-  assert.match(prompt, /retain setting\/depth/);
+  assert.match(prompt, /retain setting\/depth|keep setting\/depth/);
   assert.doesNotMatch(prompt, /broad blank\/flat areas|not just blur/);
-  assert.match(prompt, /supporting cast smaller\/lower contrast/);
+  assert.match(prompt, /supporting cast smaller\/lower contrast|support smaller\/lower-contrast/);
   assert.match(prompt, /exact hand pose\/contact\/gaze/);
   assert.match(prompt, /no stock-pose substitution/);
-  assert.match(prompt, /SCENE LETTERING:.*explicit.*exact/);
-  assert.match(prompt, /per-panel object text.*repeat only if scripted/);
-  assert.match(prompt, /freely render context-appropriate lettering.*readable\/decorative.*short\/long.*any amount\/density/i);
+  assert.match(prompt, /SCENE LETTERING:.*(?:explicit|scripted).*exact/);
+  assert.match(prompt, /(?:per-panel|scripted) object text.*repeat(?:ed)? only if scripted/);
+  assert.match(prompt, /freely render context-appropriate lettering.*readable\/decorative.*short\/long.*any amount\/density|context-appropriate readable\/decorative lettering, short\/long, any amount\/density/i);
   assert.doesNotMatch(prompt, /Action text: only scripted|include sparse|no gibberish|pseudo-lettering|unrelated text/i);
   assert.match(prompt, /OBJECT GEOMETRY LOCK/);
   assert.match(prompt, /Text follows actual cover\/spine\/page\/label face axes and perspective/);
@@ -184,12 +184,12 @@ test('ChatGPT manga prompt stays within the empirical Web-copy soft budget witho
   assert.match(prompt, /B\d="AI作品は無条件で却下よね！"/);
   assert.match(prompt, /TAIL TIP LOCK: B1=>\[ミク\] mouth\/head/);
   assert.match(prompt, /B1.*rightmost|rightmost.*B1/i);
-  assert.match(prompt, /later bubbles strictly left/i);
+  assert.match(prompt, /later (?:bubbles )?strictly left/i);
   assert.match(prompt, /x=0 left,100 right/);
   assert.match(prompt, /B1 rightmost regardless of speaker/);
   assert.match(prompt, /draw (?:balloon )?bodies before (?:actors|art)/i);
-  assert.match(prompt, /freeze (?:balloon )?bodies/i);
-  assert.match(prompt, /route .*tails.*speaker/i);
+  assert.match(prompt, /freeze (?:balloon )?bodies|DRAW BALLOON BODIES BEFORE ACTORS[^\n]*freeze numeric slots/i);
+  assert.match(prompt, /route .*tails.*speaker|TAIL GEOMETRY: lower speaker-facing root; shortest unobstructed route to mapped mouth\/head/i);
   assert.equal(
     (prompt.match(/BUBBLE SLOTS: B1 x=75%; B2 x=50%; B3 x=25%\./g) || []).length,
     4,

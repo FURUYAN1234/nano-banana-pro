@@ -2,6 +2,7 @@ import { EMOTION_STYLES } from './constants.js';
 import { MONOCHROME_EMOTION_STYLES } from './manga-render-mode.js';
 import { stripReferenceWardrobe } from './seasonal-outfit.js';
 import { stripSourceMetadata } from './sns-explanation.js';
+import { assertDialogueQuoteBalance } from './bubble-text.js';
 
 // --- Panel Utility Functions (App.jsx assemblePrompt -> externalized) ---
 // assemblePrompt 内で定義されていたパネル解析・プロンプト組立ユーティリティ群
@@ -621,11 +622,17 @@ const compactIdentityTraits = (traits = '') =>
     .replace(/\s+/g, ' ')
     .trim();
 
+const getScriptedCamera = (panelText) => {
+  const text = String(panelText || '');
+  // 角括弧タグと独立したCamera行を同じ指定として扱う。台詞中のCamera:は読まない。
+  const value = text.match(/\[\s*(?:Camera|カメラワーク|CameraWork|Camera\s*Work)\s*[:：]\s*([^\]\r\n]+)\]/i)?.[1]
+    || text.match(/^[\t ]*(?:Camera|カメラワーク|CameraWork|Camera\s*Work)\s*[:：][\t ]*([^\r\n]+)/im)?.[1];
+  return value?.trim() || '';
+};
+
 export const getCameraForPanel = (panelText, shuffledCameras, cameraState) => {
-  // [Camera: XXX] の抽出を試みる
-  const cameraMatch = panelText.match(/\[Camera:\s*(.*?)\]/i);
-  if (cameraMatch && cameraMatch[1]) {
-     const specificCamera = cameraMatch[1].trim();
+  const specificCamera = getScriptedCamera(panelText);
+  if (specificCamera) {
      // 指定の距離・角度・強度を保持する。名前だけで極端なレンズや別の演技を足さない。
      // 画面上の実行指示は共通の getPanelShotExecution で補う。
      return `${specificCamera}; (NEVER draw text of camera names:3.0)`;
@@ -646,10 +653,10 @@ export const stripWeightTags = (text) => {
 };
 
 export const getCameraForChatGPT = (panelText, cameraState) => {
-  const cameraMatch = panelText.match(/\[Camera:\s*(.*?)\]/i);
-  if (cameraMatch && cameraMatch[1]) {
+  const specificCamera = getScriptedCamera(panelText);
+  if (specificCamera) {
     // シナリオのカメラ説明（日本語の具体的な演出指示）をそのまま使う
-    return cameraMatch[1].trim();
+    return specificCamera;
   }
   // フォールバック: ランダムカメラの自然言語版
   const fallbackCameras = [
@@ -806,6 +813,8 @@ export const extractDialogueOnly = (fullPanelText, castList, options = {}) => {
     }
 
     if (isDialogue) {
+      // 閉じ括弧欠落をコロン形式へフォールバックさせると、話者名ごと印字本文へ漏れる。
+      assertDialogueQuoteBalance(line, detectedSpeaker);
       // [v4.5.13] 「セリフ」（キャラ）の形式の場合、前処理で正確に中身だけを抽出
       const firstQuote = collectDialogueQuotes(clean)[0];
       if (firstQuote && clean.trim().startsWith('「')) {
@@ -952,13 +961,18 @@ export const extractDialogueOnly = (fullPanelText, castList, options = {}) => {
     .sort((a, b) => a.order - b.order || a.sequence - b.sequence);
 
   if (options.forImagePrompt) {
+    // 上位台本には本文だけを再掲し、話者名は各コマの尻尾メタデータに一元化する。
+    if (options.forScriptLock) {
+      const values = orderedEntries.map((entry, index) => `B${index + 1}=${JSON.stringify(entry.text)}`).join('; ');
+      return `TEXT (PRINT VALUES ONLY): ${values}.`;
+    }
     // Bind spatial slots to the same ordered entries as text and speaker tails.
     // Reserve balloon bodies before drawing actors, even when B1's speaker is left.
     const readingSlots = orderedEntries.length > 1
       ? ` BUBBLE SLOTS: ${orderedEntries.map((_, index) => `B${index + 1} x=${Math.round(100 * (orderedEntries.length - index) / (orderedEntries.length + 1))}%`).join('; ')}.`
       : '';
     const visibleText = orderedEntries
-      .map((entry, index) => `B${index + 1}="${entry.text}"${orderedEntries.length > 1 ? ` [${index === 0 ? 'RIGHTMOST' : index === orderedEntries.length - 1 ? 'LEFTMOST' : `LEFT OF B${index}`}]` : ''}`)
+      .map((entry, index) => `B${index + 1}=${JSON.stringify(entry.text)}${orderedEntries.length > 1 ? ` [${index === 0 ? 'RIGHTMOST' : index === orderedEntries.length - 1 ? 'LEFTMOST' : `LEFT OF B${index}`}]` : ''}`)
       .join('; ');
     const tailTargets = orderedEntries
       .map((entry, index) => entry.speaker ? `B${index + 1}->[${entry.speaker}]` : '')
@@ -977,7 +991,7 @@ export const extractDialogueOnly = (fullPanelText, castList, options = {}) => {
   return orderedEntries
     .map((entry, index) => {
       const speakerTag = entry.speaker ? ` [${entry.speaker}]` : '';
-      return `(Speech Bubble ${index + 1}${speakerTag}: "${entry.text}")`;
+      return `(Speech Bubble ${index + 1}${speakerTag}: ${JSON.stringify(entry.text)})`;
     })
     .join(', ');
 };

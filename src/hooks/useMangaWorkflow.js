@@ -10,6 +10,7 @@ import { callAI, setActiveEngine } from '../lib/ai-provider';
 import { reviewComedyPrompt } from '../lib/comedy-review';
 import { normalizeMangaColorMode } from '../lib/manga-render-mode.js';
 import { assertPromptEndingModeConsistency, getEndingModePolicy, isDocumentaryEnding, resolveScenarioEndingType } from '../lib/ending-mode-policy.js';
+import { assertPrintableDialogue } from '../lib/bubble-text.js';
 
 // --- Refactored Imports (Phase 1-2) ---
 import { SYSTEM_VERSION, DEFAULT_CATEGORIES, EMOTION_STYLES, DYNAMIC_CAMERA_PROTOCOL, ANTI_CHARSHEET_PREFIX } from '../lib/constants';
@@ -1037,6 +1038,7 @@ export default function useMangaWorkflow() {
       setAssembleThought(prev => prev + "\n> [v3.31] 事故防止プロトコル全モデル適用済み:\n>   ✅ 縦書きセリフ強制\n>   ✅ セリフ勝手追加禁止\n>   ✅ キャラの外見は維持し、設定資料の配置・説明文はコピーしない\n>   ✅ カメラワーク平易化禁止\n>   ✅ プロンプト分岐 (ChatGPT/Gemini)\n>   ✅ 出力前チェックリスト追加");
 
       assertPromptEndingModeConsistency({ prompt: reviewed.prompt, punchlineType: activePunchlineType });
+      assertPrintableDialogue(reviewed.prompt);
       setFinalPrompt(reviewed.prompt);
       setAssembleThought(prev => prev + `\n> 出力モード: ${colorMode === 'monochrome' ? '漫画原稿三階調（白地・黒ベタ・単一スクリーントーン）' : 'カラー'}`);
       setAssembleThought(prev => prev + `\n> ${reviewed.warning || "AI精査完了"}`);
@@ -1230,6 +1232,7 @@ export default function useMangaWorkflow() {
     if (!finalPrompt) return;
     try {
       assertPromptEndingModeConsistency({ prompt: finalPrompt, punchlineType: resolvedPunchlineTypeRef.current || punchlineType });
+      assertPrintableDialogue(finalPrompt);
     } catch (error) {
       showStatus(error.message);
       return;
@@ -1280,9 +1283,10 @@ export default function useMangaWorkflow() {
     if (isGeneratingImage || (!skipGuard && !currentPrompt)) return false;
     try {
       assertPromptEndingModeConsistency({ prompt: currentPrompt, punchlineType: resolvedPunchlineTypeRef.current || punchlineType });
+      assertPrintableDialogue(currentPrompt);
     } catch (error) {
       showStatus(error.message);
-      setGenLog(prev => [...prev, `[PROMPT MODE ERROR] ${error.message}`]);
+      setGenLog(prev => [...prev, `[PROMPT VALIDATION ERROR] ${error.message}`]);
       return false;
     }
     qualityRetryAbortRef.current = false;
@@ -1421,11 +1425,11 @@ export default function useMangaWorkflow() {
             review.issues.push({ type: 'unverified', panel: null, subject: 'page_layout', reason: candidate.pageLayout.reason });
           }
           if (qualityMode === 'single-image') return review;
-          // 正解を見せた総合QAとは別に、候補画像1枚だけから文字と位置を読む。
+          // 正解は渡さず候補ページと同一ページの拡大コマから文字・実字の位置を読む。
           let inventoryText = '';
           try {
-            const inventory = await callAI(buildBubbleInventoryPrompt(),
-              buildImageQualityQaImageParts({ candidate }), null,
+            const inventory = await callAI(buildBubbleInventoryPrompt({ panelCropCount: panelImages.length }),
+              buildImageQualityQaImageParts({ candidate, panelImages }), null,
               msg => statCallback(`[読順転記] ${msg}`));
             inventoryText = inventory.text;
           } catch (error) {
@@ -1898,6 +1902,7 @@ export default function useMangaWorkflow() {
     if (finalPrompt) {
       try {
         assertPromptEndingModeConsistency({ prompt: finalPrompt, punchlineType: resolvedPunchlineTypeRef.current || punchlineType });
+        assertPrintableDialogue(finalPrompt);
       } catch (error) {
         showStatus(error.message);
         return;

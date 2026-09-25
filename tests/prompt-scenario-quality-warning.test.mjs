@@ -86,8 +86,8 @@ test('prompt assembly permits a quality warning only when the workflow explicitl
     allowScenarioQualityWarning: true
   });
 
-  assert.match(prompt, /アカリ「始めよう。/);
-  assert.match(prompt, /サエコ「これで終わり。/);
+  assert.match(prompt, /B1="始めよう。"[^\n]*B1=>\[アカリ\]/);
+  assert.match(prompt, /B1="これで終わり。"[^\n]*B1=>\[サエコ\]/);
 });
 
 test('prompt assembly continues on missing dialogue when the workflow opts into quality warnings', () => {

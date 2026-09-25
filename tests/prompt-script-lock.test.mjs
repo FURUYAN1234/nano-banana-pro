@@ -13,16 +13,20 @@ before(async () => {
     server: { middlewareMode: true }
   });
   const assembler = await server.ssrLoadModule('/src/lib/prompt-assembler.js');
+  const { extractBubbleContracts } = await server.ssrLoadModule('/src/lib/image-quality-qa.js');
+  const { readBubbleTextValues } = await server.ssrLoadModule('/src/lib/bubble-text.js');
   // 既存の台詞内容・順序回帰は表示形式ではなく話者と本文の組で照合する。
   // Geminiの生のTEXT/TAILS分離形式はgemini-script-routing.test.mjsで別途検査する。
-  buildMangaPrompt = (options) => assembler.buildMangaPrompt(options).replace(
-    /^(- Panel \d+ required dialogue: )TEXT \(PRINT VALUES ONLY\): (.*?)\. (?:TAILS \(METADATA; NEVER PRINT NAMES\)|TAIL TIP LOCK(?: \(NEVER PRINT; proximity never reassigns\))?): (.*?)\.$/gm,
-    (_, prefix, text, tails) => {
-      const speakers = new Map([...tails.matchAll(/(B\d+)(?:->|=>)\[([^\]]+)\]/g)].map(match => [match[1], match[2]]));
-      return prefix + [...text.matchAll(/(B\d+)="([^"]*)"/g)]
-        .map(match => `${speakers.get(match[1]) || ''}「${match[2]}」`).join(' / ');
-    }
-  );
+  buildMangaPrompt = (options) => {
+    const prompt = assembler.buildMangaPrompt(options);
+    const panels = extractBubbleContracts(prompt);
+    return prompt.replace(/^(- Panel (\d+) required dialogue: )TEXT \(PRINT VALUES ONLY\): (.*)$/gm,
+      (_, prefix, number, text) => {
+        const speakers = new Map(panels.find(panel => panel.panel === Number(number))?.bubbles.map(bubble => [bubble.bubble, bubble.speaker]));
+        return prefix + readBubbleTextValues(text, { strict: true })
+          .map(entry => `${speakers.get(entry.bubble) || ''}「${entry.text}」`).join(' / ');
+      });
+  };
 });
 
 after(async () => {

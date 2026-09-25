@@ -33,7 +33,8 @@ test('Gemini strict script uses the same text/tail separation as panel dialogue'
   const lock = prompt.split('STRICT SCRIPT LOCK:')[1].split('MANGA CAMERA')[0];
   assert.doesNotMatch(lock, /SpeakerA「|SpeakerB「/);
   assert.match(lock, /Panel 2 required dialogue: TEXT \(PRINT VALUES ONLY\): B1="本物はどこ？"/);
-  assert.match(lock, /TAIL TIP LOCK \(NEVER PRINT; proximity never reassigns\): B1=>\[SpeakerA\] mouth\/head/);
+  assert.doesNotMatch(lock, /TAIL TIP LOCK:/);
+  assert.match(prompt.split('## Panel 2')[1], /TAIL TIP LOCK \(NEVER PRINT; proximity never reassigns\): B1=>\[SpeakerA\] mouth\/head/);
 });
 
 test('both image providers exclude article references without changing the manga script', () => {

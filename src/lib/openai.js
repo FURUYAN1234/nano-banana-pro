@@ -1,5 +1,6 @@
 // ※ OpenAIの画像生成はフォールバック配列を持たず、最高品質の単一モデルを直接指定します。
 import { clearApiSession, getApiCredential, setApiSession } from './api-session.js';
+import { assertPrintableDialogue } from './bubble-text.js';
 
 import { resolveOpenAIImageOption, normalizeOpenAIImageSize } from './openai-image-settings.js';
 import {OPENAI_IMAGE_INPUT_LIMIT, normalizeOpenAIImageDataUrl} from './openai-image-references.js';
@@ -9,7 +10,7 @@ const OPENAI_IMAGE_PROMPT_MAX_CHARS = 32000;
 
 export const buildOpenAIImageRequestBody = (prompt, { stream = true, quality, size } = {}) => ({
   model: resolveOpenAIImageOption(quality).model,
-  prompt,
+  prompt: assertPrintableDialogue(prompt),
   n: 1,
   size: normalizeOpenAIImageSize(size),
   quality: resolveOpenAIImageOption(quality).quality,

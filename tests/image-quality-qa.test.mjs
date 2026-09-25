@@ -73,6 +73,45 @@ test('direct comparison fixes image order and defaults uncertain judgments to or
 const SINGLE_IMAGE_PROMPT = `[ ANTIGRAVITY EMOTIONAL CINEMA ENGINE v2.1 ]
 Create a SINGLE breathtaking illustration.`;
 
+test('wardrobe drift has a reference-independent review contract with visibility and scripted-change exceptions', () => {
+  const prompt = buildImageQualityQaPrompt({ finalPrompt: 'WARDROBE COMPONENT LOCK:', referenceImageCount: 0 });
+  assert.match(prompt, /wardrobe_continuity/);
+  assert.match(prompt, /wardrobe_evidence/);
+  assert.match(prompt, /first_visibility/);
+  assert.match(prompt, /scripted_change/);
+  const example = JSON.parse(prompt.match(/^\{"pass":true,"observations":.*$/m)[0]);
+  assert.equal(typeof example.observations.wardrobe, 'string');
+  const singlePrompt = buildImageQualityQaPrompt({ mode: 'single-image' });
+  const singleExample = JSON.parse(singlePrompt.match(/^\{"pass":true,"observations":.*$/m)[0]);
+  assert.equal(Object.hasOwn(singleExample.observations, 'wardrobe'), false);
+  assert.doesNotMatch(buildImageQualityQaPrompt({ mode: 'single-image' }), /WARDROBE CONTINUITY CHECK/);
+});
+
+const wardrobeIssue = (component = 'waist fastening') => ({
+  type: 'wardrobe_continuity', panel: 4, subject: 'Actor A', reason: 'The same exposed clothing region has changed.',
+  wardrobe_evidence: { component, first_panel: 1, first_location: 'left torso', later_location: 'right torso',
+    first_state: 'two attached pieces', later_state: 'no attached pieces', first_visibility: 'clear', later_visibility: 'clear',
+    matched_features: ['short curled hair', 'oval eyewear'], scripted_change: 'none' },
+});
+
+test('visible wardrobe-component drift is repairable even without reference sheets', () => {
+  for (const component of ['shoulder fastener', 'sleeve ornament']) {
+    const result = parseImageQualityQaResponse(JSON.stringify({ pass: false, issues: [wardrobeIssue(component)] }));
+    assert.ok(result.issues.some(issue => issue.type === 'wardrobe_continuity' && issue.panel === 4));
+  }
+});
+
+test('unseen parts, identity ambiguity and scripted wardrobe changes cannot become automatic repair targets', () => {
+  for (const patch of [{ first_visibility: 'occluded' }, { later_visibility: 'cropped' }, { scripted_change: 'present' },
+    { scripted_change: 'uncertain' }, { matched_features: ['one cue'] }, { first_panel: 4 }, { first_state: 'no attached pieces' }]) {
+    const issue = wardrobeIssue();
+    Object.assign(issue.wardrobe_evidence, patch);
+    const result = parseImageQualityQaResponse(JSON.stringify({ pass: false, issues: [issue] }));
+    assert.equal(result.issues.some(item => item.type === 'wardrobe_continuity'), false);
+    assert.ok(result.issues.some(item => item.type === 'unverified'));
+  }
+});
+
 // Synthetic reviewer responses test schema/continuation, not vision accuracy.
 const spatialChecks = (count = 4) => Array.from({ length: count }, (_, index) => ({
   panel: index + 1,
@@ -102,6 +141,14 @@ const spatialChecks = (count = 4) => Array.from({ length: count }, (_, index) =>
   }] },
 }));
 const observations = { title: 'No title requested', dialogue: 'Panels 1-4 have no bubbles as requested', hands: 'No hand side requested', props: 'Paper held at its lower edge' };
+
+test('omitting cross-panel wardrobe inspection cannot silently pass the wardrobe contract', () => {
+  const finalPrompt = 'WARDROBE COMPONENT LOCK:\n' + [1, 2, 3, 4].map(n => `## Panel ${n}\nDialogue: silent`).join('\n');
+  const payload = { pass: true, issues: [], observations, spatial_checks: spatialChecks() };
+  assert.equal(parseImageQualityQaResponse(JSON.stringify(payload), { finalPrompt }).pass, false);
+  const checked = { ...payload, observations: { ...observations, wardrobe: 'The same visible coat construction recurs in panels 1-4.' } };
+  assert.equal(parseImageQualityQaResponse(JSON.stringify(checked), { finalPrompt }).pass, true);
+});
 
 test('silent scene does not require a per-bubble tail inventory', () => {
   const checks = spatialChecks(1);

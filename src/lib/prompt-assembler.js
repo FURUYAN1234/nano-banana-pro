@@ -1,4 +1,5 @@
 import { stripSourceMetadata } from './sns-explanation.js';
+import { assertPrintableDialogue, VERTICAL_DIALOGUE_GEOMETRY } from './bubble-text.js';
 import { 
   buildChatGPTMangaPrompt, 
   buildGeminiMangaPrompt,
@@ -182,10 +183,19 @@ const compactBudgetEyeLine = (line) => {
 
 const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt(prompt), preserveReferenceStyle = false, seriousTone = false) => {
   if (prompt.length <= CHATGPT_WEB_COPY_SOFT_BUDGET) return prompt;
+  // 圧縮対象は指示だけ。台詞内の制御語・引用符を置換しない。
+  let tokenPrefix = '__DIALOGUE_LITERAL_';
+  while (prompt.includes(tokenPrefix)) tokenPrefix += '_';
+  const literals = [];
+  const protectedPrompt = prompt.replace(/(\bB\d+\s*=\s*)("(?:\\.|[^"\\])*")/g, (_, label, value) => {
+    const index = literals.push(value) - 1;
+    return `${label}"${tokenPrefix}${index}__"`;
+  });
+  const restore = value => value.replace(new RegExp(`"${tokenPrefix}(\\d+)__"`, 'g'), (_, index) => literals[Number(index)]);
   const compactWardrobeLock = preserveReferenceStyle
     ? "REFERENCE-SHEET WARDROBE AND RENDERING LOCK: explicit outfit overrides setting era/culture; preserve mismatch. Keep garment items and rendering method across panels."
     : 'CROSS-PANEL WARDROBE COLOR LOCK: fix garment items/colors once; reuse in all panels; style and lighting never change canonical wardrobe. Explicit outfit overrides setting era/culture; preserve mismatch, no period substitution. No outfit: infer from setting.';
-  const compacted = prompt
+  const compacted = protectedPrompt
     .replace(/LIMB OWNERSHIP CHECK[^\n]*/g, LIMB_OWNERSHIP_CHECK_COMPACT)
     .replace(MANGA_READING_RHYTHM_LOCK, MANGA_READING_RHYTHM_LOCK_COMPACT)
     .replace(/CONVERSATIONAL DEPTH BASE:[^\n]*/g, 'CONVERSATIONAL DEPTH BASE: Action gaze first; varied depth.')
@@ -229,7 +239,7 @@ const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt
     .replace(/CHARACTER QA PASS:\n-[^\n]*/g, monochrome ? 'CHARACTER QA: shape/design and stable ink/tone only; white lit skin; no reference color.' : 'CHARACTER QA: preserve identity and outfit; redraw swaps or merged cast.')
     .replace(/\n{3,}/g, '\n\n');
 
-  if (compacted.length <= CHATGPT_WEB_COPY_SOFT_BUDGET) return compacted;
+  if (restore(compacted).length <= CHATGPT_WEB_COPY_SOFT_BUDGET) return restore(compacted);
 
   const maximallyCompacted = compacted
     .replace(/\[ MONOCHROME (?:THREE-TONE MANUSCRIPT|TWO-VALUE RENDERING) LOCK \][\s\S]*?(?=\n\nOUTPUT: Single image)/, MONOCHROME_RENDERING_LOCK_COMPACT)
@@ -282,7 +292,7 @@ const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt
     .replace(/^VFX: [^\n]*/gm, 'VFX: style overlay only; preserve readable action.')
     .replace(/CHARACTER QA:[^\n]*/g, monochrome ? 'CHARACTER QA: shape/design, stable ink/tone, white lit skin; no color.' : 'CHARACTER QA: preserve identity and outfit.');
 
-  if (maximallyCompacted.length <= CHATGPT_WEB_COPY_SOFT_BUDGET) return maximallyCompacted;
+  if (restore(maximallyCompacted).length <= CHATGPT_WEB_COPY_SOFT_BUDGET) return restore(maximallyCompacted);
 
   const finallyCompacted = maximallyCompacted.replace(
     /CROSS-PANEL WARDROBE COLOR LOCK:[^\n]*/g,
@@ -326,9 +336,18 @@ const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt
     .replace(/^- Tails point to actual speakers; right-to-left manga order\.\n?/gm, '')
     .replace(/^PLACEMENT\/IDENTITY:[^\n]*/gm, line => line.replace(/ \(bare eyes, no frames\)/g, ''));
 
-  if (finallyCompacted.length <= CHATGPT_WEB_COPY_SOFT_BUDGET) return finallyCompacted;
+  if (restore(finallyCompacted).length <= CHATGPT_WEB_COPY_SOFT_BUDGET) return restore(finallyCompacted);
 
-  return finallyCompacted
+  // 全コマ共有の衣装原文は上位に残し、機械注入した同一文だけを各Actionから除く。
+  // 台本固有の着脱・状態変化・本文は触らない。各コマで衣装を再設計させない。
+  const sharedOutfit = finallyCompacted.match(/^- IGNORE reference clothing\. Follow role-specific outfit assignments: (.*); unscoped categories apply to all\.$/m)?.[1];
+  return restore(finallyCompacted
+    .replace(/^Action \(visual only\):[^\n]*/gm, line => sharedOutfit
+      ? line.replace(`Action (visual only): (Outfit assignment: ${sharedOutfit}) `, 'Action (visual only): ')
+      : line)
+    // Web長文でもコマ割り自体は省略しない。同じ契約を短い日本語で保持する。
+    .replace(/^PANELS: 4 full-width horizontal strips stacked vertically in ONE column; no 2x2\/side-by-side\.$/gm,
+      'PANELS:横長4コマ全幅・縦1列・上→下。2×2/横並び禁止。')
     .replace(
       `PAGE:A4 ${MANGA_MANUSCRIPT_RATIO_LABEL} (${MANGA_MANUSCRIPT_ASPECT_LABEL}); canvas ${MANGA_MANUSCRIPT_STANDARD.value} or ${MANGA_MANUSCRIPT_LARGE.value};`,
       `PAGE:A4 ${MANGA_MANUSCRIPT_RATIO_LABEL}; ${MANGA_MANUSCRIPT_STANDARD.value} or ${MANGA_MANUSCRIPT_LARGE.value};`
@@ -339,25 +358,25 @@ const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt
     .replace(/LIMB OWNERSHIP CHECK:[^\n]*/g, LIMB_OWNERSHIP_CHECK_MINIMAL)
     .replace(/SHARED IMAGE QUALITY CONTRACT:[^\n]*/g, 'SHARED IMAGE QUALITY CONTRACT: one primary focal subject; face/hand/prop gets strongest G-pen-like contour and heavier pressure-taper; support/BG thinner/lighter. If blur still merges it, pale/desaturate BG and strengthen focal G-pen. Keep anatomy/props; rear head has no invented face.')
     .replace(/EXPRESSIVE DIRECTION:[^\n]*/g, 'EXPRESSIVE DIRECTION: height/tilt/foreshortening; full-body acting; panel contrast; quiet beats; keep Camera/Action/identity/dialogue/limbs/props.')
-    .replace(/CROSS-PANEL WARDROBE COLOR LOCK:[^\n]*/g, 'CROSS-PANEL WARDROBE COLOR LOCK: fix garment items/colors once; reuse in all panels; style and lighting never change canonical wardrobe.')
+    .replace(/CROSS-PANEL WARDROBE COLOR LOCK:[^\n]*/g, compactWardrobeLock)
     .replace(/^- CLEAN FINISH:[^\n]*\n?/gm, '')
     .replace(/CAST COUNT: ([^\n]+?) each EXACTLY ONCE; no named-character duplicates\./g, 'CAST COUNT: $1 each EXACTLY ONCE.')
     .replace(/^- Panel (\d+) required story beat:[^\n]*$/gm, '- Panel $1: exact Action below.')
     .replace(/^- Panel \d+: exact Action below\.\n?/gm, '')
     .replace(/^CRITICAL PLACEMENT & IDENTITY:[^\n]*\n?/gm, '')
     .replace(/^CAST LIMIT: main focus /gm, 'CAST LIMIT: focus ')
-    .replace(/^CAST INSTANCE LOCK:[^\n]*/gm, 'CAST INSTANCE LOCK: all mentions reuse it.')
+    .replace(/^CAST INSTANCE LOCK:[^\n]*/gm, 'CAST INSTANCE LOCK: reuse same.')
     .replace(/^DIEGETIC REPLICA LAYER:\s*([^\n]*?)(?: may appear as one tiny replica each, fully inside the explicitly scripted container\/surface\.[^\n]*)$/gm, 'DIEGETIC REPLICA LAYER: $1 one tiny copy each inside scripted container only; never full-size/outside.')
-    .replace(/CAST DEPTH: Camera\/Action layers win; no speaker-based FG slots or duplicates\./g, 'CAST DEPTH: obey Camera/Action; no duplicate.')
+    .replace(/CAST DEPTH: Camera\/Action layers win; no speaker-based FG slots or duplicates\./g, 'CAST DEPTH: Camera/Action; no duplicate.')
     .replace(/NO OTHER HUMANS: exactly (\d+) people\./g, 'TOTAL $1 people; no others.')
     .replace(/^NON-VISIBLE CASTING CONSTRAINT:[^\n]*/gm, 'NON-VISIBLE CASTING: adults 20+; no print.')
-    .replace(/^TYPE: title[^\n]*/gm, 'TYPE: title EXTRA-BOLD condensed Japanese Gothic. TITLE BAND: white; no box/border. BUBBLES: tategaki Mincho.')
+    .replace(/^TYPE: title[^\n]*/gm, `TYPE: title EXTRA-BOLD condensed Japanese Gothic. TITLE BAND: white; no box/border. BUBBLES: vertical tategaki, regular manga Mincho; never bold Gothic/sans. ${VERTICAL_DIALOGUE_GEOMETRY}`)
     .replace(/^FG only:/gm, 'FG:')
     .replace(/ BG only:/g, ' BG:')
     .replace(/^BLACK INK PLATE:[^\n]*/gm, 'BLACK INK PLATE: redraw; refs=identity, not palette.')
     .replace(/^SOURCE COLOR BOUNDARIES:[^\n]*/gm, 'SOURCE COLOR BOUNDARIES: black/white/screen.')
     .replace(/^SCENE COLOR PRIORITY:[^\n]*/gm, 'SCENE COLOR PRIORITY: story and verbatim text over source hues.')
-    .replace(/^WHITE PAPER RESERVE:[^\n]*/gm, 'WHITE RESERVE: large unprinted/panel; light skin/wall/sky=white. Focal face: one bounded shadow; never whole-face/panel/BG screen.')
+    .replace(/^WHITE PAPER RESERVE:[^\n]*/gm, 'WHITE RESERVE: large unprinted/panel; light skin/wall/sky=white. Focal face: one bounded shadow plane; never whole-face/panel/BG screen.')
     .replace(/^DEPTH OF FIELD \/ DEFOCUS:[^\n]*/gm, 'DEPTH-OF-FIELD DEFOCUS: fewer far lines/wider white gaps; assigned screen.')
     .replace(/^G-PEN INK DIRECTION:[^\n]*/gm, 'G-PEN INK DIRECTION: pressure-taper; bold focal. BLACK-HAIR INK LOCK: darkest reference hair=solid black; white shine only, no screen.')
     .replace(/^BLACK-HAIR INK LOCK:[^\n]*\n?/gm, '')
@@ -373,11 +392,16 @@ const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt
     .replace(/^(?:ART \/ RENDERING QUALITY:|CHARACTER IDENTITY:|TEXT RULES:)\n/gm, '')
     .replace(/^- Only Dialogue becomes white bubbles:[^\n]*/gm, '- Only Dialogue becomes white bubbles: vertical Japanese tategaki, verbatim; no paraphrase/synonyms/softening/addition/omission/horizontal text.')
     .replace(/^- Explicit scripted handwriting[^\n]*/gm, '- Scripted surface text exact; unscripted never becomes bubble/narration/metadata.')
-    .replace(/^SCENE LETTERING:[^\n]*/gm, 'SCENE LETTERING: explicit per-panel object text exact/readable; repeat only if scripted. Posters, signs, packages, menus/book covers keep natural artwork/pictograms/colors/borders/material/layout. Freely render context-appropriate lettering—readable/decorative, short/long, any amount/density. Never suppress, simplify, blank, grey, blur, pixelate, mosaic or censor a surface.')
+    .replace(/^SCENE LETTERING:[^\n]*/gm, 'SCENE LETTERING: scripted object text exact, repeated only if scripted. Other surfaces: natural artwork/pictograms/colors/borders/material/layout; context-appropriate readable/decorative lettering, short/long, any amount/density. Never suppress/simplify/blank/grey/blur/pixelate/mosaic/censor surfaces.')
     .replace(/^ART-STYLE DIFFERENCE QA LOCK:[^\n]*/gm, 'ART-STYLE DIFFERENCE QA LOCK: selected style visible in linework, not only expression/VFX; no numeric quota; keep script/identity/wardrobe/props/layout.')
     .replace(/\. Keep faces\/skin clean; do not add unrelated noise\./g, '. Faces/skin clean; no unrelated noise.')
-    .replace(/^FUNCTIONAL SURFACE ORIENTATION LOCK:[^\n]*/gm, 'FUNCTIONAL SURFACE ORIENTATION LOCK: fronts face reader/operator/recipient; opposite=back, flat-page text inverted. Rear holder + chest object: occlude/show side/back/edge; never project front/hands through torso. Explicit Camera fixed; else move camera, not object. Present to camera/viewer only if scripted.')
-    .replace(/\n{2,}/g, '\n');
+    .replace(/^FUNCTIONAL SURFACE ORIENTATION LOCK:[^\n]*/gm, 'FUNCTIONAL SURFACE ORIENTATION LOCK: fronts face reader/operator/recipient; opposite=back, flat-page text inverted. Rear holder + chest object: occlude/show side/back/edge; never project front/hands through torso. Explicit Camera fixed. If unspecified, move camera, not object. Present to camera/viewer only if scripted.')
+    // 同じ台本・人体保護はPROMPT PRIORITYに残す。読順・尻尾・演技条件は省略しない。
+    .replace(/^PAGE READING RHYTHM:[^\n]*/gm, 'PAGE READING RHYTHM: one focal target/panel. PROFESSIONAL VISUAL FLOW PRIORITY: panel entry -> primary focal -> reaction/prop -> next bubble -> next panel; top-right, right-to-left. Guide gaze/head/torso/hands/diagonals/light/contrast/negative space; clear story/joke, peak/quiet, density. Scripted abstract BG: props stay. INTERACTION: reactions readable; support smaller/lower-contrast. ACTING: vary gaze/weight/hands. DEPTH OF FIELD: real shots keep setting/depth, far blur; no default blank. MULTIPLE BUBBLES: B1 rightmost regardless of speaker; later strictly left. DRAW BALLOON BODIES BEFORE ACTORS: x=0 left,100 right; freeze numeric slots. SINGLE BUBBLE: speaker-side space. TAIL GEOMETRY: lower speaker-facing root; shortest unobstructed route to mapped mouth/head; never cross head/face/hair/text.')
+    .replace(/^PROMPT PRIORITY:[^\n]*/gm, 'PROMPT PRIORITY: protect cast/count/identity/glasses, wardrobe, exact script, Camera geometry, layout/style/medium. CAMERA FIRST: fixed projection; never relocate for legibility/chibi or mirror screen-left/right. Simplify only unspecified background texture and decorative VFX. Never print.')
+    .replace(/^[\t ]+|[\t ]+$/gm, '')
+    .replace(/[\t ]{2,}/g, ' ')
+    .replace(/\n{2,}/g, '\n'));
 };
 
 const buildMonochromePanelInkLock = (panelText = '', identityMatrix = '') => {
@@ -443,20 +467,7 @@ const compactScriptLockOrReference = (text, maxLength, referenceText) => {
   return compact.length <= maxLength ? compact : referenceText;
 };
 
-const formatScriptLockDialogue = (dialogueText) => {
-  const raw = String(dialogueText || '').trim();
-  if (!raw) return '';
-
-  const entries = [];
-  const speechBubbleRe = /\[([^\]]+)\]\s*:\s*"([^"]*)"/g;
-  let match;
-  while ((match = speechBubbleRe.exec(raw)) !== null) {
-    entries.push(`${match[1].trim()}「${match[2].trim()}」`);
-  }
-  return entries.length ? entries.join(' / ') : raw;
-};
-
-const buildStrictScriptLock = ({ safeTopic, panels, castList, activeOutfit, providerFamily, isMonochrome = false, preserveReferenceStyle = false, seriousTone = false }) => {
+const buildStrictScriptLock = ({ safeTopic, panels, castList, activeOutfit, isMonochrome = false, preserveReferenceStyle = false, seriousTone = false }) => {
   const panelLocks = panels.map((panelText, index) => {
     const panelNumber = index + 1;
     const storyBeat = compactScriptLockOrReference(
@@ -464,9 +475,7 @@ const buildStrictScriptLock = ({ safeTopic, panels, castList, activeOutfit, prov
       80,
       `EXACT Panel ${panelNumber} Action below`
     );
-    const dialogue = (providerFamily === 'gemini'
-      ? extractDialogueOnly(panelText, castList, {forImagePrompt: true})
-      : formatScriptLockDialogue(extractDialogueOnly(panelText, castList)))
+    const dialogue = extractDialogueOnly(panelText, castList, {forImagePrompt: true, forScriptLock: true})
       || `EXACT Panel ${panelNumber} Dialogue below`;
     return `- Panel ${panelNumber} required story beat: ${storyBeat}
 - Panel ${panelNumber} required dialogue: ${dialogue}`;
@@ -539,6 +548,9 @@ export const buildMangaPrompt = ({
   scenario = stripSourceMetadata(scenario);
   punchlineType = resolveScenarioEndingType(scenario, punchlineType);
   const scenarioValidation = validateMangaScenario(scenario, castList);
+  if (scenarioValidation.invalidDialogue.length) {
+    throw new Error(formatMangaScenarioValidationIssue(scenarioValidation));
+  }
   if (!scenarioValidation.ok && !allowScenarioQualityWarning) {
     throw new Error(`Incomplete 4-koma scenario: ${formatMangaScenarioValidationIssue(scenarioValidation)}`);
   }
@@ -730,12 +742,12 @@ ${geminiRearForegroundLock}`;
   const baselinePrompt = isChatGPTFamily && clarifiedPrompt.length > CHATGPT_WEB_COPY_SOFT_BUDGET
     ? compactChatGPTConversationRules(clarifiedPrompt, isMonochrome, preserveReferenceStyle, seriousTone)
     : clarifiedPrompt;
-  if (cinematicAssignments.length === 0) return baselinePrompt;
+  if (cinematicAssignments.length === 0) return assertPrintableDialogue(baselinePrompt);
 
   const candidatePrompt = applyCinematicTechniqueSlot(
     baselinePrompt,
     cinematicAssignments,
     effectiveProviderFamily
   );
-  return candidatePrompt.length <= baselinePrompt.length ? candidatePrompt : baselinePrompt;
+  return assertPrintableDialogue(candidatePrompt.length <= baselinePrompt.length ? candidatePrompt : baselinePrompt);
 };

@@ -1,3 +1,5 @@
+import { assertPrintableDialogue, readBubbleTextValues } from './bubble-text.js';
+
 // キャラは人物の同一性、背景は舞台の参照として区別する。
 export function buildGeminiReferencePlan({characterImages = [], referenceImages = [], backgroundReferences = false} = {}) {
   if (!Array.isArray(characterImages) || !Array.isArray(referenceImages)) {
@@ -35,7 +37,7 @@ export function appendGeminiReferencePrompt(prompt, plan) {
 const ordinalWords = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth'];
 
 const describeBalloonPosition = (index, count) => {
-  if (count === 1) return 'on the right side of the panel';
+  if (count === 1) return 'in clear space on its assigned speaker side, with the shortest unobstructed tail';
   if (index === 0) return 'near the right edge of the panel';
   if (index === count - 1) return 'near the left edge of the panel, strictly left of every earlier balloon';
   return `strictly left of the ${ordinalWords[index - 1] || 'previous'} balloon`;
@@ -43,8 +45,8 @@ const describeBalloonPosition = (index, count) => {
 
 const rewriteGeminiDialogueLine = (line) => {
   if (!line.includes('TEXT (PRINT VALUES ONLY)')) return line;
-  const entries = [...line.matchAll(/B(\d+)="([^"]*)"/g)]
-    .map(([, number, text]) => ({number, text}));
+  const entries = readBubbleTextValues(line, { strict: true })
+    .map(({ bubble, text }) => ({ number: bubble.slice(1), text }));
   if (!entries.length) return line;
   const speakers = new Map([...line.matchAll(/B(\d+)=>(?:\[([^\]]+)\]|([^;.]+?))\s+mouth\/head/g)]
     .map(([, number, bracketed, plain]) => [number, String(bracketed || plain || '').trim()]));
@@ -54,18 +56,21 @@ const rewriteGeminiDialogueLine = (line) => {
     const speaker = speakers.get(entry.number);
     const tail = speaker
       ? `Its tail tip touches ${speaker}'s mouth or head silhouette.`
-      : 'Its tail tip touches the visually speaking character.';
-    return `Place the ${ordinal} white speech balloon ${describeBalloonPosition(index, entries.length)}. Inside it, print exactly "${entry.text}" vertically in Japanese. ${tail}`;
+      : 'Use the tail assignment in the matching panel Dialogue block.';
+    return `Place the ${ordinal} white speech balloon ${describeBalloonPosition(index, entries.length)}. Inside it, print exactly ${JSON.stringify(entry.text)} vertically in Japanese. ${tail}`;
   }).join(' ');
-  return `${panel ? `For Panel ${panel}, ` : ''}${directions} Show no other words, field labels, bubble numbers, coordinates, annotations, speaker names or translations.`;
+  return `${panel ? `For Panel ${panel}, ` : ''}${directions} Show no added words, field labels, bubble numbers, coordinates, annotations, routing speaker labels or translations; preserve names and quotes inside the literal dialogue.`;
 };
 
 const rewriteGeminiBubbleRouting = (prompt) => {
   const source = String(prompt);
   if (!source.includes('TEXT (PRINT VALUES ONLY)')) return source;
-  return source.split(/\r?\n/)
-  .map(rewriteGeminiDialogueLine)
-  .join('\n')
+  return source.split(/\r?\n/).map(line => {
+    // 台詞は構造化フィールドだけを変換し、以下の制御語置換へ通さない。
+    if (line.includes('TEXT (PRINT VALUES ONLY)') && /\bB\d+\s*=/.test(line)) return rewriteGeminiDialogueLine(line);
+    // 物語中の面文字・タイトル・演技に偶然現れるB番号も保護する。
+    if (!/^(?:PAGE READING RHYTHM|MULTIPLE BUBBLES|For two bubbles|B1 is|Draw balloon|TEXT RULES|- In each Dialogue|- Only quoted values)/.test(line)) return line;
+    return line
   .replace(/For two bubbles B1 is far right \(about 67%\) and B2 far left \(about 33%\)\./g,
     'For two balloons, place the first near the right edge and the second near the left edge.')
   .replace(/B1 is rightmost, B2 is strictly left of B1, and every later body is strictly left of its predecessor\./g,
@@ -83,6 +88,7 @@ const rewriteGeminiBubbleRouting = (prompt) => {
   .replace(/TAILS \(METADATA; NEVER PRINT NAMES\)/g, 'speech-balloon tail assignment')
   .replace(/\bRIGHTMOST\b/g, 'rightmost')
   .replace(/\bLEFTMOST\b/g, 'leftmost');
+  }).join('\n');
 };
 
 // Gemini image models may render nearby routing syntax literally even when it
@@ -90,5 +96,6 @@ const rewriteGeminiBubbleRouting = (prompt) => {
 // the API transport copy into ordinary placement prose before adding images.
 export function buildGeminiImageApiPrompt(prompt, plan) {
   if (typeof prompt !== 'string') throw new Error('画像生成プロンプトは文字列で指定してください。');
+  assertPrintableDialogue(prompt);
   return appendGeminiReferencePrompt(rewriteGeminiBubbleRouting(prompt), plan);
 }

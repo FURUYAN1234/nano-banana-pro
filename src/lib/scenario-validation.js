@@ -58,16 +58,27 @@ export const getScenarioPanelBlocks = (scenarioText) => {
 
 export const validateMangaScenario = (scenarioText, castList = '') => {
   const panels = getScenarioPanelBlocks(scenarioText);
+  const invalidDialogue = [];
+  const hasDialogue = new Map(panels.filter(panel => panel.found).map(panel => {
+    try {
+      return [panel.num, hasSpeechBubbleDialogue(panel.text, castList)];
+    } catch (error) {
+      if (error.code !== 'DIALOGUE_SYNTAX') throw error;
+      invalidDialogue.push({ panel: panel.num, message: error.message });
+      return [panel.num, false];
+    }
+  }));
   const missingPanels = panels.filter((panel) => !panel.found).map((panel) => panel.num);
   const panelsMissingDialogue = panels
-    .filter((panel) => panel.found && !hasSpeechBubbleDialogue(panel.text, castList) && !NO_DIALOGUE_RE.test(panel.text))
+    .filter((panel) => panel.found && !hasDialogue.get(panel.num) && !NO_DIALOGUE_RE.test(panel.text))
     .map((panel) => panel.num);
   const silentPanels = panels
-    .filter((panel) => panel.found && NO_DIALOGUE_RE.test(panel.text) && !hasSpeechBubbleDialogue(panel.text, castList))
+    .filter((panel) => panel.found && NO_DIALOGUE_RE.test(panel.text) && !hasDialogue.get(panel.num))
     .map((panel) => panel.num);
 
   return {
-    ok: missingPanels.length === 0 && panelsMissingDialogue.length === 0,
+    ok: missingPanels.length === 0 && panelsMissingDialogue.length === 0 && invalidDialogue.length === 0,
+    invalidDialogue,
     missingPanels,
     panelsMissingDialogue,
     silentPanels,
@@ -77,6 +88,9 @@ export const validateMangaScenario = (scenarioText, castList = '') => {
 
 export const formatMangaScenarioValidationIssue = (validation) => {
   const issues = [];
+  for (const issue of validation.invalidDialogue || []) {
+    issues.push(`${issue.panel}コマ目: ${issue.message}`);
+  }
   if (validation.missingPanels.length) {
     issues.push(`missing panel(s): ${validation.missingPanels.join(', ')}`);
   }

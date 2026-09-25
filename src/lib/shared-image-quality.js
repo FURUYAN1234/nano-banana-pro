@@ -26,6 +26,9 @@ export const WARDROBE_ENVIRONMENT_CONTRAST_LOCK = `WARDROBE / ENVIRONMENT CONTRA
 
 export const WARDROBE_ENVIRONMENT_CONTRAST_LOCK_COMPACT = 'WARDROBE/ENVIRONMENT CONTRAST: explicit outfit overrides setting era/culture; preserve intentional mismatch; never period-substitute. No outfit: infer from setting.';
 
+// コマ間の衣装構成。特定の人物・衣服に依存せず、単一場面には適用しない。
+export const WARDROBE_COMPONENT_LOCK = 'WARDROBE COMPONENT LOCK: 服・付属品の有無/数/形/取付位置を人物ごとに一度確定し全コマ共有。未指定細部も同一設計。変更は台本の着脱等のみ。遮蔽/画面外/短縮は欠落でなく再露出時は同じ構成。画風/光/デフォルメで追加・省略・他人へ移動しない。';
+
 export const LIMB_OWNERSHIP_CHECK = 'LIMB OWNERSHIP CHECK (internal; never print): For each person in every panel, account for left/right arms, hands, legs and feet as visible, naturally occluded or outside the frame. Trace each visible hand via wrist/elbow to its own shoulder, and each foot via ankle/knee to its own hip; hidden segments must connect plausibly. No ownerless, extra, fused, detached or inexplicably missing limbs; no stray hand/foot emerging from furniture or another body. Preserve scripted anatomy, pose, contact, Camera/crop and foreshortening; do not expose naturally hidden limbs or force full-body framing. Before finishing, correct unclear ownership/connections without changing the action or composition.';
 
 export const LIMB_OWNERSHIP_CHECK_COMPACT = 'LIMB OWNERSHIP CHECK: Each person: hands-wrists-elbows-shoulders, feet-ankles-knees-hips connected; L/R limbs visible/occluded/cropped plausibly. No stray/extra/missing/merged/detached/mirrored/malformed limbs, even by furniture. Keep Action/crop/foreshortening; never expose hidden limbs. Never print.';

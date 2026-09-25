@@ -107,7 +107,7 @@ test('explicit abstract beats preserve performance and survive both provider and
   for (const providerFamily of ['chatgpt', 'gemini']) {
     for (const colorMode of ['color', 'monochrome']) {
       const prompt = buildMangaPrompt({ scenario: directed, castList, providerFamily, colorMode, systemVersion: 'test' });
-      assert.match(prompt, /ABSTRACT BEAT:.*scripted.*(?:omit|omission)/i);
+      assert.match(prompt, /ABSTRACT BEAT:.*scripted.*(?:omit|omission)|Scripted abstract BG: props stay/i);
       assert.match(prompt, /INTERACTION:.*(?:reaction|reactors).*readable/i);
       assert.match(prompt, /ACTING:.*(?:gaze|hands)/i);
       assert.ok(prompt.includes('このコマだけ意図的な白地へ省略し、Bの手と本は残す。'));
@@ -197,6 +197,29 @@ test('missing ChatGPT camera advances across panels instead of repeating the fir
   assert.equal(state.index, 4);
 });
 
+test('explicit camera fields never receive an unrelated fallback in either provider', () => {
+  const camera = 'ワームズアイ・右後方の超広角で床すれすれから見上げる';
+  for (const field of [`[Camera: ${camera}]`, `Camera: ${camera}`, `  カメラワーク：${camera}`, `Camera Work: ${camera}`]) {
+    const state = { index: 3 };
+    const panel = `${field}\n状況: Aが本を持ち上げる。\nA「見て！」`;
+    assert.equal(getCameraForChatGPT(panel, state), camera);
+    assert.ok(getCameraForPanel(panel, ['unused fallback'], state).startsWith(camera + '; '));
+    assert.equal(state.index, 3);
+  }
+  const state = { index: 0 };
+  assert.equal(getCameraForChatGPT('A「Camera: 望遠にして！」', state), "Extreme bird's-eye view from directly above");
+  assert.equal(state.index, 1, 'a spoken camera instruction is not a camera field');
+  for (const providerFamily of ['chatgpt', 'gemini']) {
+    for (const colorMode of ['color', 'monochrome']) {
+      const directed = scenario.replace('[Camera: 右後方からの引き]', `Camera: ${camera}`);
+      const prompt = buildMangaPrompt({ scenario: directed, castList, providerFamily, colorMode, systemVersion: 'test' });
+      const lastPanel = prompt.split('## Panel 4')[1];
+      assert.ok(lastPanel.includes(`Camera: ${camera}`));
+      assert.doesNotMatch(lastPanel, /Telephoto close-up|distant camera \+ long focal length/);
+    }
+  }
+});
+
 test('bubbles can use nearby negative space without centering every balloon on a head', () => {
   for (const dialogue of ['A「一番」\nB「二番」', 'A「一番」\nB「二番」\nC「三番」']) {
     const result = extractPlacementRule(dialogue, castList);
@@ -218,9 +241,9 @@ test('both final prompts carry reading rhythm through color, monochrome and seri
         assert.match(prompt, /panel entry.*primary focal.*reaction.*prop.*next bubble.*next panel/is);
         assert.match(prompt, /top-right.*right-to-left/is);
         assert.match(prompt, /gaze.*head.*torso.*hands.*diagonals.*light.*contrast.*negative space/is);
-        assert.match(prompt, /story beat.*joke.*clarity/is);
-        assert.match(prompt, /one primary focal target/i);
-        assert.match(prompt, /quiet beat/i);
+        assert.match(prompt, /story beat.*joke.*clarity|clear story\/joke/is);
+        assert.match(prompt, /one (?:primary )?focal target/i);
+        assert.match(prompt, /quiet beat|peak\/quiet/i);
         assert.match(prompt, /negative space/i);
         assert.match(prompt, /TAIL GEOMETRY:.*lower.*speaker-facing/i);
         assert.match(prompt, /never.*(?:cross|overlap|pass over).*(?:head|face|hair)/i);
@@ -317,14 +340,14 @@ test('final prompts retain setting depth, exact hand performance and explicit-on
     for (const colorMode of ['color', 'monochrome']) {
       const prompt = buildMangaPrompt({ scenario: withPrint, castList, providerFamily, colorMode, systemVersion: 'test' });
       assert.match(prompt, /depth.of.field/i);
-      assert.match(prompt, /retain setting\/depth/i);
-      assert.match(prompt, /no default blank backdrop/i);
+      assert.match(prompt, /(?:retain|keep) setting\/depth/i);
+      assert.match(prompt, /no default blank(?: backdrop)?/i);
       assert.doesNotMatch(prompt, /broad blank\/flat areas|not just blur|no blur|never blur|instead of blur|not blurred pixels/i);
-      assert.match(prompt, /supporting (?:cast|figures).*smaller\/lower contrast/i);
+      assert.match(prompt, /supporting (?:cast|figures).*smaller\/lower contrast|support smaller\/lower-contrast/i);
       assert.match(prompt, /exact hand pose\/contact\/gaze/i);
       assert.match(prompt, /no stock-pose substitution/i);
-      assert.match(prompt, /SCENE LETTERING:.*explicit.*exact/i);
-      assert.match(prompt, /freely render context-appropriate lettering.*readable\/decorative.*short\/long.*any amount\/density/i);
+      assert.match(prompt, /SCENE LETTERING:.*(?:explicit|scripted).*exact/i);
+      assert.match(prompt, /freely render context-appropriate lettering.*readable\/decorative.*short\/long.*any amount\/density|context-appropriate readable\/decorative lettering, short\/long, any amount\/density/i);
       assert.doesNotMatch(prompt, /Action text: only scripted|include sparse|no gibberish|pseudo-lettering|unrelated text/i);
       assert.ok(prompt.includes('返却用'));
       assert.doesNotMatch(prompt, /background rich but|Do not leave plain empty walls|do not default to empty walls|rich setting/i);

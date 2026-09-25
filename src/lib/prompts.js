@@ -4,7 +4,7 @@ import { FINAL_PANEL_ACTIVE_STAGING_SCENARIO_CONTRACT } from './final-panel-stag
 import { buildScenarioEnhancementPrompt } from './scenario-enhancement';
 import { buildManualTopicExclusionPrompt } from './manual-topic-exclusions';
 import { buildSeasonalOutfitInstruction, getSeasonContext, SCENARIO_WARDROBE_CONTRACT } from './seasonal-outfit';
-import { PANEL_EDGE_CONTINUITY_LOCK, SHARED_IMAGE_QUALITY_CONTRACT, WARDROBE_ENVIRONMENT_CONTRAST_LOCK } from './shared-image-quality';
+import { PANEL_EDGE_CONTINUITY_LOCK, SHARED_IMAGE_QUALITY_CONTRACT, WARDROBE_ENVIRONMENT_CONTRAST_LOCK, WARDROBE_COMPONENT_LOCK } from './shared-image-quality';
 import { MONOCHROME_IMAGE_QUALITY_CONTRACT, MONOCHROME_WARDROBE_LOCK, MONOCHROME_STYLE_QA, MONOCHROME_BACKGROUND_LOCK, MONOCHROME_FINAL_CHROMA_AUDIT } from './manga-render-mode.js';
 import {
   MANGA_FACIAL_ACTING_LOCK,
@@ -58,6 +58,8 @@ const buildGeneralSeriousEndingContract = (punchlineType) => {
              - **【強制シリアス結末: ${getPunchlineLabel(punchlineType)}】**: ${instruction}`;
 };
 
+import { VERTICAL_DIALOGUE_GEOMETRY } from './bubble-text.js';
+
 const MANGA_PAGE_TYPOGRAPHY_LOCK = `PAGE TYPE HIERARCHY:
 - Page title: render the exact title once at the top in EXTRA-BOLD condensed Japanese Gothic sans-serif, solid black, horizontal, centered, and clearly separated from the panels.
 - TITLE BAND: plain open white field with title glyphs only. Never enclose the title in a box, frame, border, rule, underline, banner, plaque, label, or background badge.
@@ -65,12 +67,14 @@ const MANGA_PAGE_TYPOGRAPHY_LOCK = `PAGE TYPE HIERARCHY:
 
 SPEECH BUBBLE TYPE LOCK:
 - Render every Japanese dialogue bubble in vertical Japanese tategaki using regular-weight Japanese manga Mincho-style type: slender, even strokes, clear counters, tight but readable vertical spacing, and black text on a white bubble.
+- ${VERTICAL_DIALOGUE_GEOMETRY}
 - Keep this same regular Mincho-style dialogue treatment in every panel, regardless of emotion, panel style, or dialogue intensity.
 - NEVER use bold Gothic or bold sans-serif inside speech bubbles, including shouts or punchlines. Keep emphasis through bubble shape, composition, or punctuation instead of changing the dialogue font weight or family.`;
 
-const MANGA_PAGE_TYPOGRAPHY_LOCK_COMPACT = `TYPE: title EXTRA-BOLD condensed Japanese Gothic. TITLE BAND: plain white, unframed; no box/frame/border/rule/banner. BUBBLES: vertical tategaki in regular manga Mincho, slender black on white, same every panel; never bold Gothic/sans. Emphasis: bubble shape/composition/punctuation.`;
+const MANGA_PAGE_TYPOGRAPHY_LOCK_COMPACT = `TYPE: title EXTRA-BOLD condensed Japanese Gothic. TITLE BAND: plain white, unframed; no box/frame/border/rule/banner. BUBBLES: vertical tategaki in regular manga Mincho, slender black on white, same every panel; never bold Gothic/sans. ${VERTICAL_DIALOGUE_GEOMETRY} Emphasis: bubble shape/composition/punctuation.`;
 
-const MANGA_PAGE_ENVELOPE = `PAGE:A4 ${MANGA_MANUSCRIPT_RATIO_LABEL} (${MANGA_MANUSCRIPT_ASPECT_LABEL}); canvas ${MANGA_MANUSCRIPT_STANDARD.value} or ${MANGA_MANUSCRIPT_LARGE.value}; title6.5%/font5.5%; panels+gutters91.3%, variable heights; footer2.2%, inset0.6%, no clipping.`;
+const MANGA_PAGE_ENVELOPE = `PAGE:A4 ${MANGA_MANUSCRIPT_RATIO_LABEL} (${MANGA_MANUSCRIPT_ASPECT_LABEL}); canvas ${MANGA_MANUSCRIPT_STANDARD.value} or ${MANGA_MANUSCRIPT_LARGE.value}; title6.5%/font5.5%; panels+gutters91.3%, variable heights; footer2.2%, inset0.6%, no clipping.
+PANELS: 4 full-width horizontal strips stacked vertically in ONE column; no 2x2/side-by-side.`;
 const MANGA_FOOTER_EXCLUSIVITY = 'FOOTER ONLY: both exact watermarks once outside panels; no watermark/credit inside panels or on in-scene paper.';
 
 // --- プロンプトテンプレート (prompts.js) ---
@@ -909,6 +913,7 @@ ${preserveReferenceStyle
   : isMonochrome ? MONOCHROME_WARDROBE_LOCK : CROSS_PANEL_WARDROBE_COLOR_LOCK}
 ${WARDROBE_ENVIRONMENT_CONTRAST_LOCK}
 - Adults 20+. ${isMonochrome ? 'Same face/hair/glasses/outfit shapes and ink/tone assignments; lit skin always white.' : 'Same face/hair/glasses/skin/outfit across all panels.'}
+${WARDROBE_COMPONENT_LOCK}
 - Cast details: ${compactCastDetails}
 - Identity Anchor: ${identityMatrix}
 - GLASSES CHECK: every panel must match the Identity Matrix.
@@ -918,13 +923,13 @@ KEY PROP / OBJECT CONSISTENCY:
 
 TEXT RULES:
 - Only Dialogue becomes white bubbles: vertical Japanese tategaki, verbatim character-by-character; no paraphrase, synonyms, softening, added/omitted words, or horizontal text.
-- In each Dialogue block, ONLY quoted values after "TEXT (PRINT VALUES ONLY)" are printed. Names in square brackets after "TAILS (METADATA; NEVER PRINT NAMES)" or "TAIL TIP LOCK (NEVER PRINT)" are routing metadata only: NEVER print speaker names, brackets, bubble IDs, field labels, quotation marks, or metadata.
+- In each Dialogue block, ONLY decoded quoted values after "TEXT (PRINT VALUES ONLY)" are printed. Names after TAILS or TAIL TIP LOCK are routing metadata: NEVER print them, field labels, bubble IDs or wrapper quotation marks. Preserve literal names or quotation marks that are part of the TEXT value itself.
 - Tails point to actual speakers; right-to-left manga order.
 - Explicit scripted handwriting/signage/label/print/screen/board stays exact. Unscripted in-scene lettering is freely allowed on physical surfaces, but it never becomes a speech bubble, narration, prompt label or metadata.
 ${SCENE_LETTERING_LOCK}
 
 DIALOGUE / BUBBLE QA LOCK:
-- Treat every quoted TEXT value as one immutable typeset layer. Before final render, visually compare every glyph and punctuation mark with TEXT; redraw the lettering on any mismatch. Each bubble tail tip must terminate at its assigned speaker's mouth/head silhouette, never at a neighbor or empty space. Trace every tail; no extra bubbles, captions, narration, or printed speaker names.
+- Treat every quoted TEXT value as one immutable typeset layer. Before final render, visually compare every glyph and punctuation mark with TEXT; redraw the lettering on any mismatch. Each bubble tail tip must terminate at its assigned speaker's mouth/head silhouette, never at a neighbor or empty space. Trace every tail; no extra bubbles, captions, narration, or printed routing speaker labels.
 
 CHARACTER QA PASS:
 - ${isMonochrome ? 'Match face/eye shape, hairstyle, glasses, outfit design and stable ink/tone assignments, with pure white lit skin' : 'Match hair color, hairstyle, eye color, glasses status, skin tone, outfit, and accessories'}; redraw swaps, merges, or wrong cast.
@@ -1006,7 +1011,6 @@ Draw tiny Japanese watermark in the footer below panel 4, on the left: "ネー�
 Watermarks standard horizontal, fully inside the footer with visible safe margins. Keep left/right text separate; never touch, overlap or clip against the image edges.
 ${MANGA_FOOTER_EXCLUSIVITY}
 
-PANELS: Exactly 4 horizontal panels, stacked vertically, same width. Allocate height to dialogue, action and camera needs.
 GUTTERS: THICK white gap (3% canvas height, 40-45px) between panels. Panels MUST NOT touch.
 
 ${scriptLock}
@@ -1029,7 +1033,8 @@ ${outfitOverride}
 ${identityMatrix}
 ${preserveReferenceStyle ? (activeOutfit ? REFERENCE_SHEET_OUTFIT_RENDERING_LOCK : REFERENCE_SHEET_WARDROBE_STYLE_LOCK) : isMonochrome ? MONOCHROME_WARDROBE_LOCK : CROSS_PANEL_WARDROBE_COLOR_LOCK}
 ${WARDROBE_ENVIRONMENT_CONTRAST_LOCK}
-OUTFIT CONSISTENCY: Each character keeps their own assigned outfit across ALL 4 panels. NO changes.
+OUTFIT CONSISTENCY: Each character keeps their own assigned outfit across ALL 4 panels unless the script explicitly changes its state.
+${WARDROBE_COMPONENT_LOCK}
 GLASSES VERIFICATION (MANDATORY): Before finalizing EACH panel, count the number of characters wearing glasses. Compare against the Identity Matrix. If the count does not match, redraw. Characters without glasses must have fully visible bare eyes with NO frames.
 
 KEY PROP / OBJECT CONSISTENCY:
@@ -1069,7 +1074,7 @@ ${SAFE_VISUAL_CONTENT_LOCK}
 - Existing named cast only. Do NOT invent a new dominant person, black silhouette, monster, ghost, mascot, presenter, antagonist, or narrator figure. Background extras may appear only as small non-speaking atmosphere when the setting naturally needs a crowd; they must never become central, shadowed, named, or connected to a speech bubble.
 - If a panel says a shadow falls on a character, draw lighting/shadow ON that existing named character. Do NOT interpret "shadow" or a dark style tag as permission to create a separate black silhouette person.
 - Every Dialogue line must appear exactly once, in one bubble, attached to the named speaker. Do NOT duplicate a line, split one line into repeated bubbles, add new warning phrases, or create extra bubbles.
-- Only quoted values after "TEXT (PRINT VALUES ONLY)" are visible lettering. Names after "TAILS (METADATA; NEVER PRINT NAMES)" or "TAIL TIP LOCK (NEVER PRINT)" are routing metadata only: NEVER print speaker names, brackets, bubble IDs, field labels, quotation marks, or metadata.
+- Only decoded quoted values after "TEXT (PRINT VALUES ONLY)" are visible lettering. Names after TAILS or TAIL TIP LOCK are routing metadata: NEVER print them, field labels, bubble IDs or wrapper quotation marks. Preserve literal names or quotation marks that are part of the TEXT value itself.
 - Each bubble tail tip must terminate at its assigned speaker's mouth/head silhouette, never at a neighbor or empty space. Trace every tail before final render.
 - Dialogue punctuation is part of the script lock. Copy the dialogue exactly as written; do NOT add periods, commas, ellipses, exclamation marks, emphasis marks, or spacing unless they already exist in the Dialogue line.
 - ${preserveReferenceStyle ? 'Panel mood may become more serious through expression, acting, camera, composition and lighting, but the character-sheet art style must remain identical in all four panels.' : seriousTone ? 'Panel style may be dramatic or restrained and may vary with the selected serious emotion cues, but must never become comedic, chibi, or a gag release. Keep the story consequences, cast, key prop and bold camera readable.' : 'Panel style may be dramatic, dark, or comedic, but style must never change the story, add cast members, replace the key prop, or make the page look like a clean generic anime template.'}
