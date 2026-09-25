@@ -51,12 +51,12 @@ test('2.0 is an explicit high-quality option, not an automatic fallback', () => 
   assert.equal(settings.OPENAI_IMAGE_OPTIONS.length, 6);
 });
 
-test('A4 manga output is requested directly and larger output keeps the same manuscript ratio', () => {
+test('A4 manga output defaults to the large manuscript tier and keeps the same ratio', () => {
   const larger = buildOpenAIImageRequestBody('same prompt', { quality: 'sunburst-xhigh', size: '2240x3168' });
   assert.equal(larger.quality, 'xhigh');
   assert.equal(larger.size, '2240x3168');
-  assert.equal(buildOpenAIImageRequestBody('same prompt').size, '1120x1584');
-  assert.equal(buildOpenAIImageRequestBody('same prompt', { quality: 'sunburst-max' }).size, '1120x1584');
+  assert.equal(buildOpenAIImageRequestBody('same prompt').size, '2240x3168');
+  assert.equal(buildOpenAIImageRequestBody('same prompt', { quality: 'sunburst-max' }).size, '2240x3168');
   for (const size of ['1120x1584', '2240x3168']) {
     const [width, height] = size.split('x').map(Number);
     assert.equal(width / height, 70 / 99);
@@ -76,12 +76,12 @@ test('formats the current quality and size for the collapsed STEP4 settings butt
   );
   assert.equal(
     settings.formatOpenAIImageSettingsSummary('invalid', 'invalid'),
-    'GPT Image 2.5 Sunburst / xhigh・A4標準：1120×1584',
+    'GPT Image 2.5 Sunburst / xhigh・A4大：2240×3168',
   );
 });
 
 test('formats the official image API token prices for the selected STEP4 model', () => {
-  assert.equal(settings.OPENAI_IMAGE_PRICE_SNAPSHOT_DATE, '2026-09-24');
+  assert.equal(settings.OPENAI_IMAGE_PRICE_SNAPSHOT_DATE, '2026-09-25');
   assert.equal(
     settings.formatOpenAIImagePricingSummary('sunburst-xhigh'),
     'GPT Image 2.5 Sunburst｜画像 入力 $8（キャッシュ $2）/ 出力 $30・テキスト 入力 $5（キャッシュ $1.25） USD / 100万トークン',
@@ -118,5 +118,5 @@ test('quality and size remain independent and never change the prompt for either
       }
     }
   }
-  assert.equal(settings.normalizeOpenAIImageSize('invalid'), '1120x1584');
+  assert.equal(settings.normalizeOpenAIImageSize('invalid'), '2240x3168');
 });

@@ -151,8 +151,13 @@ test('Web prompts retain limb ownership and occlusion checks under every compact
       for (const size of [0, 6000, 18000]) {
         const input = scenario.replace('AがBに本を差し出す。', `AがBに本を差し出す。${'静かな室内。'.repeat(size / 6)}`);
         const prompt = buildMangaPrompt({ scenario: input, castList, providerFamily, colorMode, systemVersion: 'test' });
+        const minimal = prompt.includes('connect each L/R hand-arm-shoulder');
         const compact = prompt.includes('hands-wrists-elbows-shoulders');
-        if (compact) {
+        if (minimal) {
+          assert.match(prompt, /foot-leg-hip.*natural occlusion\/crop/);
+          assert.match(prompt, /no stray\/extra\/missing\/merged\/detached\/mirrored\/malformed limbs, even near furniture/);
+          assert.match(prompt, /keep Action\/foreshortening/);
+        } else if (compact) {
           assert.match(prompt, /feet-ankles-knees-hips connected/);
           assert.match(prompt, /L\/R limbs visible\/occluded\/cropped plausibly/);
           assert.match(prompt, /No stray\/extra\/missing\/merged\/detached\/mirrored\/malformed limbs, even by furniture/);
@@ -168,7 +173,7 @@ test('Web prompts retain limb ownership and occlusion checks under every compact
         }
         assert.equal((prompt.match(/## Panel \d/g) || []).length, 4);
         for (const line of ['こちらです', 'ありがとう', '少し待って', 'これだった！', 'またどうぞ']) assert.ok(prompt.includes(line));
-        if (size === 18000 && providerFamily === 'chatgpt') assert.ok(compact);
+        if (size === 18000 && providerFamily === 'chatgpt') assert.ok(compact || minimal);
       }
     }
   }
@@ -209,6 +214,11 @@ test('both final prompts carry reading rhythm through color, monochrome and seri
       for (const punchlineType of ['Auto', 'SeriousDocumentary']) {
         const prompt = buildMangaPrompt({ scenario, castList, providerFamily, colorMode, punchlineType, systemVersion: 'test' });
         assert.match(prompt, /PAGE READING RHYTHM/);
+        assert.match(prompt, /PROFESSIONAL VISUAL FLOW PRIORITY/);
+        assert.match(prompt, /panel entry.*primary focal.*reaction.*prop.*next bubble.*next panel/is);
+        assert.match(prompt, /top-right.*right-to-left/is);
+        assert.match(prompt, /gaze.*head.*torso.*hands.*diagonals.*light.*contrast.*negative space/is);
+        assert.match(prompt, /story beat.*joke.*clarity/is);
         assert.match(prompt, /one primary focal target/i);
         assert.match(prompt, /quiet beat/i);
         assert.match(prompt, /negative space/i);
@@ -286,6 +296,9 @@ test('normal scenario generation specifies focal targets, reading order and rela
     punchlineType: 'Auto', comedyTone: 'standard', styleJson: null
   });
   assert.match(prompt, /視線誘導と密度の緩急/);
+  assert.match(prompt, /最優先.*視線誘導/);
+  assert.match(prompt, /入口.*注視対象.*反応.*小道具.*出口/s);
+  assert.match(prompt, /話の面白さ/);
   assert.match(prompt, /注視対象/);
   assert.match(prompt, /吹き出し.*右.*左/);
   assert.match(prompt, /余白/);
@@ -348,8 +361,8 @@ test('scenario generation preserves spatial background instead of making quiet b
 test('monochrome permits depth-of-field in ink without relaxing skin or palette locks', () => {
   for (const providerFamily of ['chatgpt', 'gemini']) {
     const prompt = buildMangaPrompt({ scenario, castList, providerFamily, colorMode: 'monochrome', systemVersion: 'test' });
-    assert.match(prompt, /depth.of.field[^\n]*black-on-white halftone/i);
-    assert.match(prompt, /(?:lit areas of faces and skin|lit skin)[^\n]*(?:white|unprinted)/i);
+    assert.match(prompt, /depth.of.field[^\n]*assigned[^\n]*screentone/i);
+    assert.match(prompt, /(?:lit areas of faces and skin|lit skin|light skin)[^\n]*(?:white|unprinted)/i);
     assert.match(prompt, /#000000/);
     assert.match(prompt, /#FFFFFF/);
     assert.doesNotMatch(prompt, /no blur|never blur|instead of blur|not blurred pixels/i);

@@ -43,11 +43,12 @@ const describeOpenAITextRoute = (modelIds) => modelIds.map((id, index) => ({
 }));
 
 const GEMINI_MODEL_NOTES = {
-  'gemini-3.5-flash': 'Next-Gen 最高品質',
-  'gemini-2.5-flash': '安定・高速',
-  'gemini-2.5-pro': '高品質',
-  'gemini-flash-latest': '最新安定版',
-  'gemini-pro-latest': '最新Pro版',
+  'gemini-3.8-flash': '最新GA・最も高性能なFlash',
+  'gemini-3.7-flash': '前世代GA・高性能Flash',
+  'gemini-3.6-flash': '前世代GA・効率重視',
+  'gemini-3.5-flash': '安定GA',
+  'gemini-3.5-flash-lite': '低遅延・低コスト',
+  'gemini-3.1-flash-lite': '互換フォールバック',
   'gemini-3.1-flash-image': 'Nano Banana 2 4コマ漫画生成用',
 };
 
@@ -159,6 +160,16 @@ export const FALLBACK_CHAINS = [
 //   date は必ず 'YYYY-MM-DD HH:MM JST' 形式で日時を記録すること。
 export const FALLBACK_CHAIN_HISTORY = [
   // ↑ 新しいエントリはここに追加する（降順）
+  {
+    version: 'v6.5.9',
+    date: '2026-09-25 14:51 JST',
+    note: 'デプロイ前の公式情報照合に合わせ、Gemini文章・Visionの実行経路とModel Chain表示を更新。',
+    changes: [
+      { step: 'STEP 1-3 (Gemini)', action: '更新', detail: 'gemini-3.8-flash → 3.7-flash → 3.6-flash → 3.5-flash → 3.5-flash-lite → 3.1-flash-lite' },
+      { step: 'STEP 2 (Gemini)', action: '料金', detail: '2026-09-25時点のGemini 3.8 Flash導入価格 $0.75 / $3.75 USD/MTokを表示' },
+      { step: 'API互換', action: '更新', detail: 'Gemini 3.8で非推奨のtemperature送信を除去し、maxOutputTokensだけを送信' },
+    ]
+  },
   {
     version: 'v6.2.5',
     date: '2026-09-16 07:08 JST',

@@ -72,7 +72,7 @@ export default function Step3Panel({
           ))}
         </div>
         <p id="manga-color-mode-help">
-          {colorMode === 'monochrome' ? '白・黒・網点トーン。肌の明部は白、Gペン風の強い描線。' : '色彩とライティングを活かしたカラー漫画。'}
+          {colorMode === 'monochrome' ? '漫画原稿三階調：白地・黒ベタ・単一スクリーントーン。肌の明部は真白、グレースケール不使用。人物・焦点はGペンの強弱で強調。' : '色彩とライティングを活かしたカラー漫画。'}
           <br />選択後にSTEP3を押して反映します。全設定リセットまで選択を保持します。
         </p>
       </fieldset>

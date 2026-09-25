@@ -128,6 +128,7 @@ export const buildIdentityMatrix = (castListText, options = {}) => {
         hairLength: '',
         hairStyle: '',
         hairAccessory: '',
+        skinTone: '',
         glasses: 'unknown',
         glassesShape: '',
         features: []
@@ -140,6 +141,12 @@ export const buildIdentityMatrix = (castListText, options = {}) => {
     }
 
     if (!currentChar) return;
+
+    if (/\b(?:tanned|dark)[\s_-]*skin\b/i.test(cleanLine) || /肌[^|\n]*(?:小麦色|褐色|日焼け)/.test(cleanLine)) {
+      currentChar.skinTone = 'screened';
+    } else if (!currentChar.skinTone && (/\b(?:pale|light|fair)[\s_-]*skin\b/i.test(cleanLine) || /肌\s*:\s*(?:明るい|色白|白い)/.test(cleanLine))) {
+      currentChar.skinTone = 'light';
+    }
 
     // [v2.31] 髪情報の抽出 - 特徴的スタイル優先ロジック
     if (cleanLine.includes('髪') || cleanLine.toLowerCase().includes('hair')) {
@@ -241,6 +248,17 @@ export const buildIdentityMatrix = (castListText, options = {}) => {
 
     matrix += `- [${c.shortName}]: ${traits.join(', ') || 'see reference image'}\n`;
   });
+
+  if (monochrome) {
+    const lightSkinNames = characters.filter(c => c.skinTone === 'light').map(c => c.shortName);
+    const screenedSkinNames = characters.filter(c => c.skinTone === 'screened').map(c => c.shortName);
+    if (lightSkinNames.length) {
+      matrix += `LIGHT-SKIN [${lightSkinNames.join(', ')}]: face/neck/limbs=white paper; screen only bounded cast shadow, never whole face.\n`;
+    }
+    if (screenedSkinNames.length) {
+      matrix += `SCREENED-SKIN [${screenedSkinNames.join(', ')}]: uniform screen face/neck/limbs/palms; white rim only; no patches/light palms.\n`;
+    }
+  }
 
   matrix += monochrome
     ? `CROSS-CHECK: match face/eyes, hair length/style, eyewear shape, defining accessories and ink/tone; never source hue. Redraw.\n`
@@ -1859,7 +1877,7 @@ export const buildEmotionBlock = (panelText, colorMode = 'color', { preserveRefe
     // 色に依存しない頭身指定は両モードで共有。複数人物のIMPACTは既存の全員可視レシピを優先。
     const proportions = EMOTION_STYLES[emo]?.proportionsMulti === undefined ? EMOTION_STYLES[emo]?.proportions : '';
     const proportionLock = proportions ? `\nPROPORTION OVERRIDE: ${proportions}` : '';
-    return `\nMONOCHROME PANEL STYLE LOCK: ${emo}; ${MONOCHROME_EMOTION_STYLES[emo] || 'Expressive black pen lines, solid blacks and regular black-on-white halftone; white lit skin.'} Preserve script/Camera/Action, cast, glasses and wardrobe tone assignments.${proportionLock}${gag}`;
+    return `\nMONOCHROME PANEL STYLE LOCK: ${emo}; ${MONOCHROME_EMOTION_STYLES[emo] || 'Expressive black pen lines, solid blacks and the same assigned Japanese screentone; white lit skin.'} Preserve script/Camera/Action, cast, glasses and wardrobe tone assignments.${proportionLock}${gag}`;
   }
   const s = EMOTION_STYLES[emo];
   const styleLock = `PANEL STYLE LOCK: ${emo}; use the selected style recipe below; preserve identity and canonical wardrobe.`;

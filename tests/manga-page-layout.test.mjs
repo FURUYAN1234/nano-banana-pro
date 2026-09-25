@@ -110,7 +110,27 @@ test('large API output keeps the exact A4 ratio and scales every fixed band prop
   assert.ok(plan[1].destination.x + plan[1].destination.width <= 2226);
 });
 
-test('cannot fill panel height without clipping: reject instead of stretching or slicing', () => {
+test('width-bound four-panel art fills the page by scaling intact panels and assigning slack only to gutters', () => {
+  const frames = [180, 170, 165, 180].map((height, index) => ({ x: 0, y: index * 190, width: 604, height }));
+  const plan = buildPageDrawPlan({
+    canvas: { width: 848, height: 1200 },
+    title: { x: 20, y: 10, width: 560, height: 55 },
+    panels: { x: 0, y: 80, width: 604, height: 753 },
+    panelFrames: frames,
+    footer: { x: 5, y: 1160, width: 594, height: 18 },
+  });
+  assert.ok(plan);
+  assert.equal(plan.length, 6);
+  const panelPlans = plan.slice(1, 5);
+  assert.ok(panelPlans.every(entry => Math.abs(entry.source.width / entry.source.height - entry.destination.width / entry.destination.height) < 1e-9));
+  assert.ok(panelPlans.every(entry => entry.destination.x === plan.layout.inset));
+  assert.ok(panelPlans.every(entry => entry.destination.width === plan.layout.width - 2 * plan.layout.inset));
+  assert.equal(panelPlans[0].destination.y, plan.layout.titleHeight);
+  assert.ok(panelPlans.at(-1).destination.y + panelPlans.at(-1).destination.height <= plan.layout.titleHeight + plan.layout.panelHeight);
+  assert.ok(panelPlans.slice(1).every((entry, index) => entry.destination.y > panelPlans[index].destination.y + panelPlans[index].destination.height));
+});
+
+test('cannot fill width-bound panel art without four intact frames: reject instead of stretching or slicing', () => {
   assert.equal(buildPageDrawPlan({ title: { width: 400, height: 60 }, panels: { width: 1500, height: 1000 }, footer: { width: 800, height: 20 } }), null);
 });
 

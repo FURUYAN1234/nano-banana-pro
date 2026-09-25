@@ -5,7 +5,7 @@ import { setApiKey } from '../lib/gemini';
 import { generateImageWithImagen } from '../lib/imagen';
 import { generateImageWithOpenAI, setOpenAIApiKey } from '../lib/openai';
 import {buildOpenAIReferencePlan, appendOpenAIReferencePrompt} from '../lib/openai-image-references.js';
-import {buildGeminiReferencePlan, appendGeminiReferencePrompt} from '../lib/gemini-image-references.js';
+import {buildGeminiReferencePlan, buildGeminiImageApiPrompt} from '../lib/gemini-image-references.js';
 import { callAI, setActiveEngine } from '../lib/ai-provider';
 import { reviewComedyPrompt } from '../lib/comedy-review';
 import { normalizeMangaColorMode } from '../lib/manga-render-mode.js';
@@ -46,7 +46,7 @@ import {
   formatImageQualityIssue,
   parseImageQualityQaResponse
 } from '../lib/image-quality-qa';
-import { buildImageFailureAnalysisPrompt, inferImageQualityMode, runImageQualityFailsafe } from '../lib/image-quality-failsafe';
+import { buildImageFailureAnalysisPrompt, GEMINI_IMAGE_REPAIR_PROMPT_MAX_CHARS, inferImageQualityMode, runImageQualityFailsafe } from '../lib/image-quality-failsafe';
 import { getEffectiveEngine } from '../lib/engine-state';
 import { DEFAULT_OPENAI_IMAGE_QUALITY, DEFAULT_OPENAI_IMAGE_SIZE, normalizeOpenAIImageSize, normalizeOpenAIImageQuality, resolveOpenAIImageOption, selectInitialOpenAIImageQuality, isOpenAIImageVerificationError, OPENAI_IMAGE_VERIFICATION_MESSAGE } from '../lib/openai-image-settings.js';
 import { DEFAULT_OPENAI_SCENARIO_MODEL_ID, OPENAI_SCENARIO_MODEL_OPTIONS, OPENAI_SCENARIO_TEXT_MODEL_IDS } from '../lib/openai-model-routes.js';
@@ -120,6 +120,10 @@ export default function useMangaWorkflow() {
 
   // [v1.7.0] Model Quality Indicator State
   const [usedModel, setUsedModel] = useState(null);
+  // STEP 1 and STEP 2 both update the general UI badge. Keep the scenario
+  // provenance synchronous and separate so full-auto STEP 2 -> STEP 3 cannot
+  // stamp the previous character-analysis model into the manga footer.
+  const scenarioUsedModelRef = useRef(null);
   const [isFallbackUsed, setIsFallbackUsed] = useState(false);
 
   // Initialize System
@@ -744,6 +748,7 @@ export default function useMangaWorkflow() {
     setOriginalScenario("");
     setEnhanceLog("");
     updateResolvedPunchlineType('');
+    scenarioUsedModelRef.current = null;
 
     if (effectiveInputMode === 'manual') {
       setScenario("");
@@ -816,6 +821,7 @@ export default function useMangaWorkflow() {
       updateResolvedPunchlineType(result.resolvedEndingType || punchlineType);
       setExplanation(result.explanation?.text || "");
       setExplanationNotice(result.explanation?.notice || "解説を取得できませんでした。手入力できます。");
+      scenarioUsedModelRef.current = result.usedModel;
       setUsedModel(result.usedModel);
       setScenarioThought(prev => prev + `\n > [MODEL] 最終採用モデル: ${result.usedModel}`);
       const resolvedLocation = customLocation.trim() || String(result.location || '').trim();
@@ -1004,7 +1010,7 @@ export default function useMangaWorkflow() {
         bg360CroppedPanels,
         punchlineType: activePunchlineType,
         systemVersion: SYSTEM_VERSION,
-        scenarioModelLabel: OPENAI_SCENARIO_MODEL_OPTIONS.find(({ id }) => id === usedModel)?.label,
+        scenarioModelLabel: OPENAI_SCENARIO_MODEL_OPTIONS.find(({ id }) => id === scenarioUsedModelRef.current)?.label,
         allowScenarioQualityWarning: true
       });
 
@@ -1032,7 +1038,7 @@ export default function useMangaWorkflow() {
 
       assertPromptEndingModeConsistency({ prompt: reviewed.prompt, punchlineType: activePunchlineType });
       setFinalPrompt(reviewed.prompt);
-      setAssembleThought(prev => prev + `\n> 出力モード: ${colorMode === 'monochrome' ? '白黒（純白・純黒・網点／ハッチング）' : 'カラー'}`);
+      setAssembleThought(prev => prev + `\n> 出力モード: ${colorMode === 'monochrome' ? '漫画原稿三階調（白地・黒ベタ・単一スクリーントーン）' : 'カラー'}`);
       setAssembleThought(prev => prev + `\n> ${reviewed.warning || "AI精査完了"}`);
       setAssembleThought(prev => prev + "\n> セーフティ年齢フィルター: 適用済み\n> 最適化ベクトル: 計算完了\n> 構造ロック: 有効\n> 風刺ロジック: 強化済み\n> [完了] 最終プロンプトを構築しました。");
       showStatus("最終プロンプトの構築が完了しました。コピーまたはSTEP4の画像生成へ進めます。");
@@ -1062,6 +1068,7 @@ export default function useMangaWorkflow() {
   // [v3.59] ソフトリセット: キャラクター解析(STEP1)を保持し、STEP2以降をリセット
   const partialReset = () => {
     promptAssemblyRunRef.current += 1;
+    scenarioUsedModelRef.current = null;
     setIsAssembling(false);
     // castList は保持する（キャラクター解析結果）
     // images は保持する（ドロップしたキャラクターシート画像）
@@ -1139,6 +1146,7 @@ export default function useMangaWorkflow() {
   // [v3.59] ハードリセット: 全データ消去 + APIキー再入力モーダルを表示
   const hardReset = () => {
     promptAssemblyRunRef.current += 1;
+    scenarioUsedModelRef.current = null;
     setIsAssembling(false);
     setColorModeState("color");
     resetScenarioModelId();
@@ -1361,7 +1369,7 @@ export default function useMangaWorkflow() {
             referenceImages: geminiReferenceImages,
             backgroundReferences: !Array.isArray(generationOptions.referenceImages),
           });
-          const apiPrompt = appendGeminiReferencePrompt(prompt, referencePlan);
+          const apiPrompt = buildGeminiImageApiPrompt(prompt, referencePlan);
           statCallback(`[REF] Gemini入力: キャラ${referencePlan.counts.character}枚、背景・追加参照${referencePlan.counts.other}枚`);
           response = await generateImageWithImagen(apiPrompt, statCallback, referencePlan.referenceImages, geminiImageOptions);
         }
@@ -1512,6 +1520,7 @@ export default function useMangaWorkflow() {
           repairSource: isOpenAIEngine ? sourceCandidate : null,
         }),
         repairSourceMode: isOpenAIEngine ? 'source-image' : 'regenerate',
+        repairPromptMaxChars: isOpenAIEngine ? undefined : GEMINI_IMAGE_REPAIR_PROMPT_MAX_CHARS,
         compareCandidates: async (original, repair, originalPrompt, comparisonOptions = {}) => {
           statCallback('[QUALITY QA] 元画像と修正版を直接比較し、台詞・人物・動作を優先して自動選択します。');
           const comparisonParts = [

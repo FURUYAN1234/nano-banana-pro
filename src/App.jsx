@@ -337,6 +337,8 @@ function App() {
               step2Ref={step2Ref}
               currentStep={currentStep}
               isAnalyzing={isAnalyzing}
+              selectedEngine={selectedEngine}
+              enableOpenAIApi={enableOpenAIApi}
               inputMode={inputMode}
               setInputMode={setInputMode}
               targetDate={targetDate}

@@ -10,8 +10,11 @@ import {
 const imagenSource = readFileSync(new URL('../src/lib/imagen.js', import.meta.url), 'utf8');
 
 test('Gemini image generation uses its native portrait aspect-ratio API control', () => {
-  assert.match(imagenSource, /export const buildGeminiImageGenerationConfig = \(\{ aspectRatio = "3:4", imageSize \} = \{\}\) =>/);
+  assert.match(imagenSource, /import \{ DEFAULT_GEMINI_IMAGE_OPTIONS \} from '\.\/gemini-image-settings\.js';/);
+  assert.match(imagenSource, /aspectRatio = DEFAULT_GEMINI_IMAGE_OPTIONS\.aspectRatio/);
+  assert.match(imagenSource, /imageSize = DEFAULT_GEMINI_IMAGE_OPTIONS\.imageSize/);
   assert.match(imagenSource, /aspect_ratio:\s*aspectRatio/);
+  assert.match(imagenSource, /image_size:\s*imageSize/);
   assert.match(imagenSource, /mime_type:\s*"image\/jpeg"/);
   assert.match(imagenSource, /\/v1beta\/interactions/);
   assert.match(imagenSource, /response_format:\s*buildGeminiImageGenerationConfig\(imageOptions\)/);

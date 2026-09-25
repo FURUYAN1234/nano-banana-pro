@@ -355,9 +355,9 @@ test('serious monochrome changes only the color medium and preserves reference d
   const prompt = buildFinalPrompt({ punchlineType: 'SeriousDocumentary', colorMode: 'monochrome' });
 
   assert.match(prompt, /REFERENCE-SHEET ART-STYLE LOCK/);
-  assert.match(prompt, /change only the color medium.*pure white.*solid black.*halftone/i);
+  assert.match(prompt, /change only the color medium.*three-tone manga manuscript.*white paper.*solid black.*screentone/i);
   assert.match(prompt, /retain the reference.*linework.*facial construction.*body proportions.*shading design/i);
-  assert.match(prompt, /MONOCHROME TWO-VALUE RENDERING LOCK/);
+  assert.match(prompt, /MONOCHROME THREE-TONE MANUSCRIPT LOCK/);
   assert.doesNotMatch(prompt, /MONOCHROME PANEL STYLE LOCK:/);
 });
 

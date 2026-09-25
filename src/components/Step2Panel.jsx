@@ -13,6 +13,7 @@ import {
 import ThinkingLog from './ThinkingLog';
 import Panorama360Viewer from './Panorama360Viewer';
 import { getSeasonContext } from '../lib/seasonal-outfit';
+import { getEffectiveEngine } from '../lib/engine-state';
 import {
   DOCUMENTARY_ENDING_OPTIONS,
   GAG_ENDING_OPTIONS,
@@ -24,6 +25,10 @@ import {
   OPENAI_SCENARIO_MODEL_OPTIONS,
   OPENAI_SCENARIO_PRICE_SNAPSHOT_DATE,
 } from '../lib/openai-model-routes';
+import {
+  GEMINI_SCENARIO_MODEL_INFO,
+  GEMINI_SCENARIO_PRICE_SNAPSHOT_DATE,
+} from '../lib/gemini-model-routes';
 
 const DEFAULT_OPENAI_SCENARIO_MODEL_LABEL = OPENAI_SCENARIO_MODEL_OPTIONS
   .find(({ id }) => id === DEFAULT_OPENAI_SCENARIO_MODEL_ID)?.label || 'GPT-6 Astra';
@@ -35,6 +40,8 @@ export default function Step2Panel({
   step2Ref,
   currentStep,
   isAnalyzing,
+  selectedEngine,
+  enableOpenAIApi,
   inputMode,
   setInputMode,
   targetDate,
@@ -107,6 +114,7 @@ export default function Step2Panel({
     enhanceDialogue &&
     enhanceGag;
   const seasonContext = getSeasonContext({ targetDate, inputMode });
+  const isOpenAIEngine = getEffectiveEngine(selectedEngine, enableOpenAIApi) === 'openai';
   const selectedScenarioModel = OPENAI_SCENARIO_MODEL_OPTIONS.find(({ id }) => id === scenarioModelId)
     || OPENAI_SCENARIO_MODEL_OPTIONS[0];
 
@@ -347,6 +355,7 @@ export default function Step2Panel({
               <ChevronDown size={20} strokeWidth={3} className="punchline-select-chevron" aria-hidden="true" />
             </div>
           </div>
+          {isOpenAIEngine && (
           <div className="scenario-model-select-card flex-1 bg-[#050505] p-3 rounded-xl border border-cyan-500/20">
             <label className="text-xs font-bold text-cyan-300 mb-1 block flex items-center gap-1" htmlFor="scenario-model-select">
               <span>🧠</span> OpenAIシナリオモデル
@@ -371,7 +380,16 @@ export default function Step2Panel({
               <p className="m-0 text-slate-400">選択はこの画面を開いている間だけ有効です。再読込時は{DEFAULT_OPENAI_SCENARIO_MODEL_LABEL}から開始します。ツール料金・キャッシュ割引・税・長文コンテキスト加算・処理モード差額は含まない参考値です。</p>
             </div>
           </div>
+          )}
         </div>
+
+        {!isOpenAIEngine && (
+          <div className="gemini-scenario-model-card -mt-3 flex min-w-0 items-center gap-2 overflow-hidden rounded border border-cyan-500/20 bg-[#050505] px-3 py-1 text-[10px] leading-tight text-slate-300">
+            <span className="shrink-0 font-bold text-cyan-300">🧠 {GEMINI_SCENARIO_MODEL_INFO.label}</span>
+            <span className="truncate">{GEMINI_SCENARIO_MODEL_INFO.description}</span>
+            <span className="ml-auto shrink-0 text-cyan-100">Google公式参考単価（{GEMINI_SCENARIO_PRICE_SNAPSHOT_DATE}時点）：入力 ${GEMINI_SCENARIO_MODEL_INFO.inputPriceUsdPerM.toFixed(2)} / 出力 ${GEMINI_SCENARIO_MODEL_INFO.outputPriceUsdPerM.toFixed(2)} USD / 100万トークン</span>
+          </div>
+        )}
 
         {/* EXECUTE BUTTON */}
         <button

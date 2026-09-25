@@ -151,7 +151,7 @@ export const callThinkingGemini = async (prompt, images = null, systemInstructio
                 result = await postGeminiGenerateContent(modelId, {
                     contents: [{ role: "user", parts: finalPromptParts }],
                     ...(finalTools.length > 0 ? { tools: finalTools } : {}),
-                    generationConfig: { temperature: 0.7, maxOutputTokens: 8192 }
+                    generationConfig: { maxOutputTokens: 8192 }
                 }, timeoutMs);
             } catch (err) {
                 // [v2.20] Failover: If Grounding fails for ANY reason, retry WITHOUT tools
@@ -162,7 +162,7 @@ export const callThinkingGemini = async (prompt, images = null, systemInstructio
                     if (onThinkingUpdate) onThinkingUpdate(`> [API] Grounding失敗。ツールなしで同一モデルを再試行します...`);
                     result = await postGeminiGenerateContent(modelId, {
                         contents: [{ role: "user", parts: finalPromptParts }],
-                        generationConfig: { temperature: 0.7, maxOutputTokens: 8192 }
+                        generationConfig: { maxOutputTokens: 8192 }
                     }, timeoutMs);
                 } else {
                     throw err;

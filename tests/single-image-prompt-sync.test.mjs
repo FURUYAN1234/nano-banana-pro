@@ -57,7 +57,8 @@ test('single-image copy prompt applies the current shared image-quality contract
   assert.match(prompt, /one primary focal subject/i);
   assert.match(prompt, /strongest G-pen-like contour/i);
   assert.match(prompt, /background.*lighter.*lower-contrast/i);
-  assert.match(prompt, /back of the head.*do not invent eyes, nose, or mouth/i);
+  assert.match(prompt, /depth-of-field blur.*merged.*lighten.*desaturate.*background.*strengthen.*G-pen/i);
+  assert.match(prompt, /back of the head.*do not invent eyes, nose, or mouth|rear head.*no invented face/i);
   assert.match(prompt, /shoulder, elbow, wrist, hip, knee, and ankle/i);
   assert.match(prompt, /explicit outfit overrides setting era\/culture/i);
   assert.match(prompt, /preserve intentional mismatch/i);
@@ -74,7 +75,7 @@ test('single-image copy prompt retains its established emotional and rendering s
   assert.match(prompt, /vertical Japanese only/i);
 });
 
-test('single-image copy prompt keeps one cinematic router within an 8k budget including object geometry', () => {
+test('single-image copy prompt keeps one cinematic router within a 10k Web-copy soft budget', () => {
   const prompt = buildSingleImageEmotionalPrompt();
 
   assert.match(prompt, /CINEMATIC DEPTH ROUTER/);
@@ -83,8 +84,9 @@ test('single-image copy prompt keeps one cinematic router within an 8k budget in
   assert.match(prompt, /User camera, cast, action, anatomy, and text win/i);
   assert.doesNotMatch(prompt, /frame_within_frame|story_reflection|prism_refraction|CINEMATIC_TECHNIQUES/);
   assert.equal((prompt.match(/CINEMATIC DEPTH ROUTER/g) || []).length, 1);
-  // The former 6,466-char baseline predates the requested shared object-geometry contract.
-  assert.ok(prompt.length <= 8000, `expected no more than 8,000 chars including object geometry, got ${prompt.length}`);
+  // Empirical ChatGPT Web-copy budget: larger pastes may become attachments.
+  // This is not the OpenAI Image API limit; that transport guard is 32,000 chars.
+  assert.ok(prompt.length <= 10000, `expected no more than 10,000 chars for Web copy, got ${prompt.length}`);
   assert.match(prompt, /Other requested printed text follows its physical surface and specified writing direction/);
 });
 
@@ -131,7 +133,7 @@ Hero「行こう。」`;
     assert.match(prompt, /BODY ACTING BASELINE:.*allow.*pointing.*reaching.*impact/i);
     assert.match(prompt, /one primary focal subject/i);
     assert.match(prompt, /strongest G-pen-like contour/i);
-    assert.match(prompt, /back of the head.*do not invent eyes, nose, or mouth/i);
+    assert.match(prompt, /back of the head.*do not invent eyes, nose, or mouth|rear head.*no invented face/i);
   }
 
   const controlBar = readFileSync(new URL('../src/components/ControlBar.jsx', import.meta.url), 'utf8');

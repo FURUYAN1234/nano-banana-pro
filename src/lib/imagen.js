@@ -1,5 +1,6 @@
 import { getApiKey } from "./gemini.js";
 import { GEMINI_IMAGE_MODEL_IDS } from './gemini-model-routes.js';
+import { DEFAULT_GEMINI_IMAGE_OPTIONS } from './gemini-image-settings.js';
 
 const isLocalGeminiHost = typeof window !== 'undefined'
     && ['localhost', '127.0.0.1', '::1'].includes(window.location.hostname);
@@ -12,7 +13,10 @@ const GEMINI_IMAGE_TIMEOUT_MS = 600_000;
 // ※ Imagen全系列は完全廃止予定のため、Geminiネイティブのみを指定。
 // ※ 4コマ漫画生成は Nano Banana 2 API に固定する。
 //    Nano Banana Pro は高品質単枚絵寄りで、漫画レイアウトの再現性が落ちるため使わない。
-export const buildGeminiImageGenerationConfig = ({ aspectRatio = "3:4", imageSize } = {}) => {
+export const buildGeminiImageGenerationConfig = ({
+    aspectRatio = DEFAULT_GEMINI_IMAGE_OPTIONS.aspectRatio,
+    imageSize = DEFAULT_GEMINI_IMAGE_OPTIONS.imageSize,
+} = {}) => {
     return {
         // Gemini 3 image models use the Interactions API.  Its REST payload
         // deliberately uses snake_case; the former generateContent shape

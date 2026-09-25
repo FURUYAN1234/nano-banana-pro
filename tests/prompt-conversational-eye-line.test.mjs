@@ -140,7 +140,7 @@ SpeakerB「見えているよ。」`;
     const panel = panelTwoSection(buildPrompt(provider, scene));
     assert.doesNotMatch(panel, /(?:FG only|FOREGROUND MUST CONTAIN ONLY): \[SpeakerA\] and \[SpeakerB\]/);
     assert.match(panel, /each EXACTLY ONCE|each appears EXACTLY ONCE/);
-    assert.match(panel, /exactly 2 people|EXACTLY 2 distinct individuals/);
+    assert.match(panel, /exactly 2 people|EXACTLY 2 distinct individuals|TOTAL 2 people; no others/i);
     assert.doesNotMatch(panel, /Slots fixed|BODY POSITION LOCK/);
   }
 });

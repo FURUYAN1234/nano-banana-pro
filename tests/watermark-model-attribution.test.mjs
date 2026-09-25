@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import test, { after, before } from 'node:test';
 import { createServer } from 'vite';
 
@@ -31,6 +32,15 @@ A「本当？」
 [4コマ目: 結]
 状況: Aが笑う。
 A「できた！」`;
+
+const workflowSource = readFileSync(new URL('../src/hooks/useMangaWorkflow.js', import.meta.url), 'utf8');
+
+test('full-auto keeps STEP 2 model provenance separate from the shared UI model state', () => {
+  assert.match(workflowSource, /const scenarioUsedModelRef = useRef\(null\)/);
+  assert.match(workflowSource, /scenarioUsedModelRef\.current = result\.usedModel;[\s\S]{0,120}setUsedModel\(result\.usedModel\)/);
+  assert.match(workflowSource, /scenarioModelLabel: OPENAI_SCENARIO_MODEL_OPTIONS\.find\(\(\{ id \}\) => id === scenarioUsedModelRef\.current\)\?\.label/);
+  assert.doesNotMatch(workflowSource, /scenarioModelLabel: OPENAI_SCENARIO_MODEL_OPTIONS\.find\(\(\{ id \}\) => id === usedModel\)/);
+});
 
 test('OpenAI image watermark names the model actually used for the scenario', () => {
   const prompt = buildMangaPrompt({

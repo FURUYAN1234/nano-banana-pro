@@ -30,6 +30,8 @@ test('STEP4 API quality and size controls use a compact label and select scale',
   assert.match(apiHelp, /id="openai-image-quality"[\s\S]*?className="step4-setting-select/);
   assert.match(apiHelp, /htmlFor="openai-image-size" className="step4-setting-label/);
   assert.match(apiHelp, /id="openai-image-size"[\s\S]*?className="step4-setting-select/);
+  assert.match(apiHelp, /サイズの既定はA4漫画原稿比率の\{MANGA_MANUSCRIPT_LARGE\.label\.replace\('A4大：', ''\)\}/);
+  assert.doesNotMatch(apiHelp, /サイズの既定はA4漫画原稿比率の\{MANGA_MANUSCRIPT_STANDARD\.label/);
   assert.match(css, /\.step4-setting-label\s*\{[\s\S]*?font-size:\s*11px;[\s\S]*?line-height:\s*1\.4;/);
   assert.match(css, /\.step4-setting-select\s*\{[\s\S]*?min-height:\s*26px;[\s\S]*?padding:\s*3px 8px;[\s\S]*?font-size:\s*11px;[\s\S]*?line-height:\s*1\.35;/);
 });

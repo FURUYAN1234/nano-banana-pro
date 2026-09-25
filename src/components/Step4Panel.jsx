@@ -35,6 +35,11 @@ import {
   MANGA_MANUSCRIPT_RATIO_LABEL,
   MANGA_MANUSCRIPT_STANDARD,
 } from '../lib/manga-manuscript-format';
+import {
+  GEMINI_IMAGE_PRICE_SNAPSHOT_DATE,
+  formatGeminiImagePricingSummary,
+  formatGeminiImageSettingsSummary,
+} from '../lib/gemini-image-settings';
 
 const COMFYUI_WORKFLOW_FILENAME = 'FourPanel_NonLM_4step_20260922104144.json';
 const COMFYUI_WORKFLOW_DOWNLOAD_URL = `${import.meta.env.BASE_URL}workflows/${COMFYUI_WORKFLOW_FILENAME}`;
@@ -626,10 +631,14 @@ export default function Step4Panel({
                 {isGeneratingImage ? <Loader2 size={20} className="animate-spin" /> : <ImageIcon size={20} />}
                 <div className="flex flex-col items-center">
                   <span>{isGeneratingImage ? "画像を生成中..." : "APIで新しい画像を生成する（STEP4）"}</span>
-                  {!isGeneratingImage && isOpenAIImageMode && (
+                  {!isGeneratingImage && (
                     <>
-                      <span className="text-[10px] font-normal opacity-85">{formatOpenAIImagePricingSummary(openAIImageQuality)}</span>
-                      <span className="text-[9px] font-normal opacity-70">OpenAI公式料金 {OPENAI_IMAGE_PRICE_SNAPSHOT_DATE}時点</span>
+                      <span className="text-[10px] font-normal opacity-85">
+                        {isOpenAIImageMode ? formatOpenAIImagePricingSummary(openAIImageQuality) : formatGeminiImagePricingSummary()}
+                      </span>
+                      <span className="text-[9px] font-normal opacity-70">
+                        {isOpenAIImageMode ? `OpenAI公式料金 ${OPENAI_IMAGE_PRICE_SNAPSHOT_DATE}時点` : `Google公式料金 ${GEMINI_IMAGE_PRICE_SNAPSHOT_DATE}時点`}
+                      </span>
                     </>
                   )}
                 </div>
@@ -648,7 +657,7 @@ export default function Step4Panel({
                                   <span className="mt-0.5 block text-[11px] leading-snug text-yellow-100/80">
                                     {isOpenAIImageMode
                                       ? `${formatOpenAIImageSettingsSummary(openAIImageQuality, openAIImageSize)}｜任意で変更可能`
-                                      : 'Google AI：自動設定'}
+                                      : `Google AI：自動設定｜${formatGeminiImageSettingsSummary()}`}
                                   </span>
                                 </span>
                               </div>
@@ -681,8 +690,8 @@ export default function Step4Panel({
                     {OPENAI_IMAGE_SIZE_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
                   </select>
                   <p className="step4-help-copy mt-2 text-slate-400">
-                    サイズの既定はA4漫画原稿比率の{MANGA_MANUSCRIPT_STANDARD.label.replace('A4標準：', '')}です。大サイズも同じ比率です。品質とサイズの選択はリロードまで保持します。API生成は選択サイズへ正規化し、Webへコピーするプロンプトには標準・大の両方の正確な寸法を記載します。
-                    大きめは拡大・印刷向けです。手や台詞の正確さを保証する設定ではありません。
+                    サイズの既定はA4漫画原稿比率の{MANGA_MANUSCRIPT_LARGE.label.replace('A4大：', '')}です。標準サイズも同じ比率です。品質とサイズの選択はリロードまで保持します。API生成は選択サイズへ正規化し、Webへコピーするプロンプトには標準・大の両方の正確な寸法を記載します。
+                    大サイズは拡大・印刷向けです。手や台詞の正確さを保証する設定ではありません。
                   </p>
                   <p className="step4-help-copy mt-2 text-slate-400">
                     初回接続時、GPT Image 2.5 Sunburstが利用可能ならSunburst / xhighを、利用できない場合はGPT Image 2.0 / highを初期選択します。
@@ -705,10 +714,21 @@ export default function Step4Panel({
                 <input type="checkbox" checked={allowImageQualityRepair} onChange={event => setAllowImageQualityRepair(event.target.checked)} disabled={isGeneratingImage || isFixingPolicy} />
                 API生成のみ：不合格の原因と失敗履歴を解析して最大3回修正する（初回込み最大4枚・解析と再検査も追加課金あり／全候補NGなら比較で最良候補を採用して続行）
               </label>
-              {isGeneratingImage && (
-                <button type="button" onClick={stopQualityRetries} className="mt-2 text-sm text-amber-300 underline">
-                  修正リトライを停止（実行中のAPI応答後に停止）
+              {isGeneratingImage && allowImageQualityRepair && (
+                <button
+                  type="button"
+                  onClick={stopQualityRetries}
+                  className="mt-3 mb-1 inline-flex min-h-10 items-center rounded-lg border border-amber-400/50 bg-amber-950/40 px-4 py-2 text-xs font-black text-amber-100 shadow-sm transition-colors hover:bg-amber-900/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 active:bg-amber-900/70"
+                >
+                  自動修正を停止（現在の応答後）
                 </button>
+              )}
+              {!isOpenAIImageMode && (
+                <div className="mt-1 rounded-lg border border-cyan-500/20 bg-cyan-950/20 p-3 text-[11px] leading-relaxed text-slate-300">
+                  <p className="m-0 font-bold text-cyan-200">{formatGeminiImageSettingsSummary()}</p>
+                  <p className="mt-1 mb-0">APIへ1K・3:4を明示送信し、生成後に人物や文字を伸縮せずA4比率へ配置します。Google側に品質の選択項目はありません。</p>
+                  <p className="mt-1 mb-0">{formatGeminiImagePricingSummary()}。文字・思考出力は $3.00 / 100万トークンです。自動修正・品質解析は実行回数分の追加料金が発生します。</p>
+                </div>
               )}
                             </div>
                           </div>

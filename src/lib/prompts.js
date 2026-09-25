@@ -4,7 +4,7 @@ import { FINAL_PANEL_ACTIVE_STAGING_SCENARIO_CONTRACT } from './final-panel-stag
 import { buildScenarioEnhancementPrompt } from './scenario-enhancement';
 import { buildManualTopicExclusionPrompt } from './manual-topic-exclusions';
 import { buildSeasonalOutfitInstruction, getSeasonContext, SCENARIO_WARDROBE_CONTRACT } from './seasonal-outfit';
-import { SHARED_IMAGE_QUALITY_CONTRACT, WARDROBE_ENVIRONMENT_CONTRAST_LOCK } from './shared-image-quality';
+import { PANEL_EDGE_CONTINUITY_LOCK, SHARED_IMAGE_QUALITY_CONTRACT, WARDROBE_ENVIRONMENT_CONTRAST_LOCK } from './shared-image-quality';
 import { MONOCHROME_IMAGE_QUALITY_CONTRACT, MONOCHROME_WARDROBE_LOCK, MONOCHROME_STYLE_QA, MONOCHROME_BACKGROUND_LOCK, MONOCHROME_FINAL_CHROMA_AUDIT } from './manga-render-mode.js';
 import {
   MANGA_FACIAL_ACTING_LOCK,
@@ -458,7 +458,7 @@ ${styleJson.anti_patterns ? `            - 絶対禁止事項:\n${styleJson.anti
              - 各コマの[EMOTION]は必ずNORMALとし、感情の差は「状況」に具体的な演技として書くこと。
              - キャラクターシートのレイアウト、説明文、表情一覧、見本ポーズ、白背景を物語の画面として複製しないこと。
              - 遠近感とカメラの変化は積極的に使ってよいが、人物の描画様式、顔、頭身、線、塗りは変えないこと。` : isGeneralSerious ? buildGeneralSeriousEndingContract(punchlineType) : `3. **オチと構図の多様化 (Variety Constraints)**:
-             - **必須**: 「手前に大きく顔があるキャラ」「奥で小さく驚くキャラ」など、**遠近感**を強調せよ。棒立ちは厳禁。
+             - **必須**: 見せ場では、人物の体軸と重心、実際の接触対象、受け手の反応、重要な小道具、環境の収束線から内容に合う奥行き源を選び、**遠近感**を具体化せよ。棒立ちは厳禁。正面顔・中央配置・レンズへ突き出す手をオチの定型にしない。
              - **オチ**: 「全員泣いて終わり」等のワンパターンを禁止。シュールな静寂、無言の圧力、社会的死など多様にせよ。
              - **【表現・SFXルール】**: 擬音（SFX）は「日本語のみ」を使用せよ。英語の注釈、翻訳、アルファベット併記は一切禁止する。
              - 演出において、パロディや時事ネタの文脈での固有名詞登場は「表現の結果」として許容する。
@@ -824,6 +824,9 @@ const SCENE_LETTERING_LOCK = 'SCENE LETTERING: explicit per-panel object text ex
 const MANGA_IMAGE_QUALITY_CONTRACT = SHARED_IMAGE_QUALITY_CONTRACT.replace(
   /^- Render a rich physical setting[^\n]*/m,
   '- Physical-setting shots preserve recognizable shapes and spatial depth; explicitly scripted abstract beats may omit scenery while preserving story evidence. Quiet beats lower nonessential detail; keep focal action and necessary reactions crisp.'
+).replace(
+  /^- EXPRESSIVE DIRECTION:[^\n]*/m,
+  match => `${match}\n- ${PANEL_EDGE_CONTINUITY_LOCK}`
 );
 
 const CROSS_PANEL_WARDROBE_COLOR_LOCK = `CROSS-PANEL WARDROBE COLOR LOCK:
@@ -854,7 +857,7 @@ BACKGROUND REFERENCE IMAGE:
 Among ALL attached images, identify the one with a panoramic 2:1 width-to-height aspect ratio (equirectangular format). That image is the 360° BACKGROUND REFERENCE — NOT a character sheet. All other attached images are CHARACTER REFERENCE sheets.
 ⚠️ CRITICAL: This panoramic image is ONLY for background reference (${isMonochrome ? 'geometry, light direction, architecture; translate into black/white ink and screens' : 'colors, lighting, architecture'}). Do NOT imitate its 2:1 wide aspect ratio. Your OUTPUT must remain A4 PORTRAIT at ${MANGA_MANUSCRIPT_RATIO_LABEL} with 4 stacked panels. The panoramic image is NOT a layout template.
 ⚠️ CRITICAL: DO NOT copy any character clothing or outfits from the 360° background image. Characters MUST wear the specified outfits.
-Use the 360° background image's lighting direction (${bg360Analysis.lighting}), spatial layout, and environmental details as the consistent setting for all panels. ${isMonochrome ? 'Match shadow directions using black ink, white highlights and regular halftone; simplify nonessential detail for readability.' : 'Match shadow directions and ambient color temperature to the background reference.'} At least 3 of 4 panels must use this background environment.
+Use the 360° background image's lighting direction (${bg360Analysis.lighting}), spatial layout, and environmental details as the consistent setting for all panels. ${isMonochrome ? 'Match shadow directions using black ink, white highlights and the single assigned screentone; simplify nonessential detail for readability.' : 'Match shadow directions and ambient color temperature to the background reference.'} At least 3 of 4 panels must use this background environment.
 `
   ) : '';
 
@@ -930,7 +933,7 @@ ${artStyleQa}
 
 THINGS TO AVOID:
 - No plastic skin, extra credits/watermarks, floating/ghost eyes/faces or duplicate humans.
-- No sparkle/glow dust or grain except style locks. HAND ANATOMY: correct hands; five digits (one thumb + four fingers), including every foreground hand and foreshortened hand; no four-digit/mirrored/extra/backward hands.
+- No sparkle/glow dust unless scripted. HAND ANATOMY: correct hands; five digits (one thumb + four fingers); every foreground hand/foreshortened hand; no four-digit/mirrored/extra/backward hands.
 
 PANEL-BY-PANEL CLOTHING FOLD PRIORITY: ${preserveReferenceStyle ? 'Follow the character sheet\'s existing fold-line and shadow treatment in every panel; do not introduce a new rendering method.' : 'When a panel shows folded clothing, render 2-4 distinct small dark triangular shadow fills at visible crease junctions. Use hard cel-shaded edges, especially on light shirts, blouses, jackets, and sleeves. These are localized form shadows only: never scatter triangles across smooth fabric or turn them into a print/pattern.'}
 
@@ -1042,9 +1045,9 @@ COMPOSITION: follow the scripted framing within each panel; keep required cast, 
 Tech Dict:
 ${preserveReferenceStyle
   ? (isMonochrome
-    ? '(reference-sheet linework and proportions translated only into pure white, solid black and regular halftone: 2.8)'
+    ? '(reference-sheet linework and proportions translated only into white paper, solid black and one bounded Japanese screentone: 2.8)'
     : '(exact reference-sheet linework, coloring method, shading design and proportions: 2.8)')
-  : isMonochrome ? '(clean ink background with selectively simplified detail: 2.5)\n(crisp black penwork, white highlights, regular halftone and hatching: 2.5)' : `(clean anime illustration background: 2.5)
+  : isMonochrome ? '(clean ink background with selectively simplified detail: 2.5)\n(crisp black penwork, white highlights, one bounded screentone and deliberate line hatching: 2.5)' : `(clean anime illustration background: 2.5)
 (Meticulous clean line art, smooth cel shading: 2.5)
 (Soft diffused backlight, rim light: 2.4)
 (Cinematic depth of field, soft bokeh: 2.3)

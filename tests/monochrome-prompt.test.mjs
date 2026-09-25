@@ -32,10 +32,13 @@ test('white light planes and restricted tone regions survive provider, style and
   for (const providerFamily of ['chatgpt', 'gemini']) {
     for (const punchlineType of ['Auto', 'SeriousDocumentary']) {
       const prompt = build(providerFamily, 'monochrome', { punchlineType });
-      assert.match(prompt, /WHITE PAPER RESERVE:.*lit areas of faces and skin.*light walls.*ceilings.*pure white/);
-      assert.match(prompt, /THREE TONE MASSES:.*white.*solid black.*bounded screentone/);
-      assert.match(prompt, /Never screen the whole face or background/);
-      assert.match(prompt, /DEF[Oo]CUS:.*fewer.*lines.*white gaps/);
+      assert.match(prompt, /WHITE (?:PAPER )?RESERVE:.*(?:large.*unprinted|lit.*light skin.*wall.*ceiling.*pure white)/);
+      assert.match(prompt, /MONOCHROME THREE-TONE MANUSCRIPT:/);
+      assert.match(prompt, /white/);
+      assert.match(prompt, /(?:solid )?black/);
+      assert.match(prompt, /bounded.*(?:screen|screentone)/);
+      assert.match(prompt, /(?:never|no ).*(?:panel|face).*(?:BG|background)/i);
+      assert.match(prompt, /DEF[Oo]CUS:.*(?:fewer.*lines|reduce.*line density).*white gaps/);
       assert.doesNotMatch(prompt, /halftone (?:blur|defocus)|blur[^\n.;]*in black-on-white halftone|distant depth-of-field in black-on-white halftone/);
       // Serious mode already exceeds the soft budget in HEAD (15,815 chars).
       // Its medium guarantees must survive too; don't replace its style/script to force this cap.
@@ -47,25 +50,43 @@ test('white light planes and restricted tone regions survive provider, style and
 });
 
 for (const family of ['chatgpt', 'gemini']) {
-  test(`${family}: shared output demands binary ink, white skin and halftone-only midtones`, () => {
+  test(`${family}: shared output demands three-tone manga ink with screentone-only midtones`, () => {
     const prompt = build(family, 'monochrome');
-    assert.match(prompt, /\[ MONOCHROME TWO-VALUE RENDERING LOCK \]/);
-    assert.match(prompt, /#000000.*#FFFFFF/);
-    assert.match(prompt, /lit areas of faces and skin.*pure white/i);
-    assert.match(prompt, /regular black dots.*white|black-on-white.*halftone/i);
-    assert.match(prompt, /No flat gr[ae]y.*gradients/i);
-    assert.match(prompt, /colored references.*identity.*not.*palette/i);
+    assert.match(prompt, /\[ MONOCHROME THREE-TONE MANUSCRIPT LOCK \]/);
+    assert.match(prompt, /#000000/);
+    assert.match(prompt, /#FFFFFF/);
+    assert.match(prompt, /(?:lit.*light skin.*pure white|LIGHT-SKIN \[[^\]]+\]:[^\n]*white paper)/i);
+    assert.match(prompt, /CHEEK (?:SCREENTONE EXCEPTION|SCREEN):.*explicit.*(?:blush|flush).*(?:emotional )?peak/i);
+    assert.match(prompt, /(?:SKIN TONE MAP:|SCREENED-SKIN \[)/i);
+    assert.match(prompt, /(?:light skin uses white|light skin\/wall\/sky=white|LIGHT-SKIN \[[^\]]+\]:[^\n]*white paper)/i);
+    assert.match(prompt, /(?:tanned or dark skin uses the one uniform screentone|SCREENED-SKIN[^\n]*uniform screen)/i);
+    assert.match(prompt, /(?:hands, palms|hands\/palms|limbs\/palms)/i);
+    assert.match(prompt, /(?:very thin continuous rim-light line|thin (?:continuous )?outer rim|white rim only)/i);
+    assert.match(prompt, /(?:never cut an interior or broad white area|no interior white\/patches|never interior patches|no patches)/i);
+    assert.match(prompt, /(?:Do not invent lighter palms\/soles|lighter palms\/soles as defects|(?:invented )?light palms\/soles|no patches\/light palms)/i);
+    assert.match(prompt, /SCREENED-SKIN \[葵\]:/i);
+    assert.match(prompt, /LIGHT-SKIN \[凛\]:[^\n]*white paper/i);
+    assert.match(prompt, /PANEL INK:[^\n]*white\/black/i);
+    assert.equal((prompt.match(/CHEEKS: none/g) || []).length, 4);
+    assert.match(prompt, /White\+solid black dominate|White and solid black must dominate/i);
+    assert.match(prompt, /focal face[^\n]*bounded[^\n]*shadow plane|bounded light-driven shadow plane/i);
+    assert.match(prompt, /never whole-face|never cover the whole face|never veil or screen the whole face/i);
+    assert.match(prompt, /(?:sole|only) middle(?: tone)?|one consistent bounded middle tone|one fixed screen/i);
+    assert.match(prompt, /not (?:grayscale|halftone rendering)/i);
+    assert.match(prompt, /No [^\n]*gr[ae]y(?:\/|.*)gradients?/i);
+    assert.match(prompt, /(?:colored references.*identity|refs=identity).*not.*palette/i);
     assert.match(prompt, /CROSS-PANEL WARDROBE TONE LOCK/);
+    assert.match(prompt, /(?:BLACK-HAIR INK LOCK|dark(?:est)? hair)[^\n]*(?:solid black|black mass)[^\n]*(?:white highlight|white shine)/i);
     assert.doesNotMatch(prompt, /FULL COLOR \(not black and white\)|rich deep color grading|chic cinematic color grading|characters remain clean and fully colored|single vivid color element|Match shadow directions and ambient color temperature/i);
     assert.equal((prompt.match(/## Panel \d/g) || []).length, 4);
     assert.ok(prompt.includes('赤と青はそのまま書いてね。'));
     assert.ok(prompt.includes('ローアングル') || prompt.includes('LOW ANGLE'));
     assert.match(prompt, /BODY ACTING|EXPRESSIVE DIRECTION/);
-    assert.match(prompt, /G-PEN INK DIRECTION/);
+    assert.match(prompt, /G-PEN(?: INK DIRECTION)?:/);
     assert.match(prompt, /pressure.*taper|taper.*pressure/i);
     assert.match(prompt, /MONOCHROME BACKGROUND CLARITY LOCK/);
-    assert.match(prompt, /simplify nonessential textures|omit optional textures/i);
-    assert.match(prompt, /story-required object or clue|Keep location\/depth\/all story evidence/i);
+    assert.match(prompt, /simplify nonessential textures|omit (?:optional )?textures/i);
+    assert.match(prompt, /story-required object or clue|Keep location\/depth\/all story evidence|keep setting\/depth\/story evidence/i);
     if (family === 'chatgpt') assert.ok(prompt.length <= 15000, `Web budget: ${prompt.length}`);
   });
   test(`${family}: default/color ignores monochrome words in cast metadata`, () => {
@@ -81,6 +102,33 @@ for (const family of ['chatgpt', 'gemini']) {
     assert.doesNotMatch(prompt, /Match colors, lighting|Match shadow directions and ambient color temperature|reference \(colors, lighting, architecture\)/);
   });
 }
+
+test('cheek screen is localized only to the explicitly blushing character and panel', () => {
+  const withOneBlush = scenario().replace(
+    'Action: 葵が凛に本を渡す。凛は本を受け取り、驚いてのけぞる。背景に本棚と机がある。',
+    'Action: 葵が凛に本を渡す。凛は頬を赤くして本を受け取り、驚いてのけぞる。背景に本棚と机がある。'
+  );
+  const prompt = build('chatgpt', 'monochrome', { scenario: withOneBlush });
+  assert.match(prompt, /CHEEK: \[凛\] small screen only/);
+  assert.equal((prompt.match(/CHEEKS: none/g) || []).length, 3);
+});
+
+test('cheek screen follows the nearest named subject in a compound action', () => {
+  const withCompoundAction = scenario().replace(
+    'Action: 葵が凛に本を渡す。凛は本を受け取り、驚いてのけぞる。背景に本棚と机がある。',
+    'Action: 葵は目尻を潤ませて凛へ本を差し出し、凛は頬を赤くして受け取る。背景に本棚と机がある。'
+  );
+  const prompt = build('chatgpt', 'monochrome', { scenario: withCompoundAction });
+  assert.match(prompt, /CHEEK: \[凛\] small screen only/);
+  assert.doesNotMatch(prompt, /CHEEK: \[葵\] small screen only/);
+});
+
+test('every panel rejects an all-over screen and repeats character-specific skin values', () => {
+  const prompt = build('chatgpt', 'monochrome');
+  assert.equal((prompt.match(/no veil/g) || []).length, 4);
+  assert.equal((prompt.match(/WHITE-SKIN\[凛\]/g) || []).length, 4);
+  assert.equal((prompt.match(/SCREEN-SKIN\[葵\]:palms same; no patches/g) || []).length, 4);
+});
 
 test('every monochrome emotion uses ink-specific direction, not its color recipe', () => {
   for (const style of Object.keys(EMOTION_STYLES).filter(s => s !== 'NORMAL')) {
@@ -108,7 +156,7 @@ test('ink lighting and physical depth survive long Web compaction without changi
     const mono = build(family, 'monochrome', input);
     assert.match(mono, /INK LIGHT \/ ACTING:.*full-body action amplitude/);
     assert.match(mono, /directional solid-black cast shadows, white rim cutouts/);
-    assert.match(mono, /background simplification preserves perspective, contact shadows and depth/i);
+    assert.match(mono, /background simplification preserves perspective, contact shadows and depth|keep depth\/beats|keep perspective\/contact\/depth/i);
     assert.doesNotMatch(mono, /overrides ALL color\/paint\/lighting/);
     assert.deepEqual(mono.match(/^Camera:.*$/gm), color.match(/^Camera:.*$/gm));
     assert.deepEqual(mono.match(/^Action \(visual only\):.*$/gm), color.match(/^Action \(visual only\):.*$/gm));
@@ -120,7 +168,7 @@ test('ink lighting and physical depth survive long Web compaction without changi
 test('monochrome lock and style recipes survive Web prompt compaction', () => {
   const prompt = build('chatgpt', 'monochrome', { scenario: scenario(['WATERCOLOR', 'NEON', 'RETRO', 'CHIBI_GAG']) });
   assert.ok(prompt.length <= 15000, `Web budget: ${prompt.length}`);
-  assert.match(prompt, /\[ MONOCHROME TWO-VALUE RENDERING LOCK \]/);
+    assert.match(prompt, /\[ MONOCHROME THREE-TONE MANUSCRIPT LOCK \]/);
   assert.equal((prompt.match(/MONOCHROME PANEL STYLE LOCK:/g) || []).length, 4);
   assert.match(prompt, /G-PEN INK DIRECTION/);
   assert.match(prompt, /MONOCHROME BACKGROUND CLARITY LOCK/);
@@ -132,8 +180,9 @@ test('monochrome Web prompt remains copyable with a five-character cast', () => 
   const prompt = build('chatgpt', 'monochrome', { castList: fiveCharacterCast });
   assert.ok(prompt.length <= 15000, `five-character Web budget: ${prompt.length}`);
   assert.match(prompt, /G-PEN INK DIRECTION/);
+  assert.match(prompt, /BLACK-HAIR INK LOCK:[^\n]*(?:solid black|black mass)[^\n]*(?:white highlight|white shine)/i);
   assert.match(prompt, /MONOCHROME BACKGROUND CLARITY LOCK/);
-  assert.match(prompt, /lit areas of faces and skin.*pure white/i);
+  assert.match(prompt, /LIGHT-SKIN \[凛\]:[^\n]*white paper/i);
 });
 
 test('monochrome mode replaces scenario-wide color output commands without changing dialogue', () => {
@@ -175,7 +224,7 @@ test('both providers retain ink-only reference and script priority through compa
     assert.doesNotMatch(prompt, /REFERENCE ROLE: appearance;/);
     assert.doesNotMatch(prompt, /CLEAN FINISH: crisp FG, soft BG/);
     assert.match(prompt, /CHARACTER QA(?: PASS)?:[^\n]*\n?-?\s*[^\n]*ink\/tone/);
-    assert.equal((prompt.match(/PANEL INK CHECK:/g) || []).length, 4);
+    assert.equal((prompt.match(/PANEL INK:/g) || []).length, 4);
     assert.ok(prompt.includes('赤と青はそのまま書いてね。'));
     // Plain cast paragraphs used to be silently dropped. Preserve those required
     // identities even when this expanded five-person fixture exceeds the soft

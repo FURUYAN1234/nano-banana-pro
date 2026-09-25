@@ -120,6 +120,10 @@ test('all hand and prop situations use one shared kinematics contract with a two
     assert.match(contract, /(?:never add a|never) third hand/i);
     assert.match(contract, /subject-relative.*not viewer-left\/viewer-right/i);
     assert.match(contract, /palm.*thumb.*finger.*wrist/i);
+    assert.match(contract, /shoulder.*elbow.*wrist.*hand/i);
+    assert.match(contract, /palm\/dorsum.*actual contact target.*never reversed\/mirrored/i);
+    assert.match(contract, /foreshortening.*enlarge.*near hand.*compress.*never lengthen.*(?:upper|forearm)/i);
+    assert.match(contract, /shoulder-elbow-wrist proportions plausible/i);
     assert.match(contract, /one owning actor per prop/i);
     assert.match(contract, /final described state/i);
     assert.doesNotMatch(prompt, /HAND ALLOCATION LOCK:/);
@@ -129,6 +133,7 @@ test('all hand and prop situations use one shared kinematics contract with a two
   }
   assert.match(HAND_PROP_KINEMATICS_LOCK, /explicit LEFT\/RIGHT and latest final-state roles win/i);
   assert.match(HAND_PROP_KINEMATICS_LOCK_COMPACT, /final explicit sides only/i);
+  assert.match(HAND_PROP_KINEMATICS_LOCK_COMPACT, /shoulder>elbow>wrist>hand/i);
 });
 
 test('panel-specific guard resolves the reported glasses, handkerchief, and pointing overbooking in panel 4', () => {

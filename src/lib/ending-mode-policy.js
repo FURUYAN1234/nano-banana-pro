@@ -208,5 +208,5 @@ export const buildReferenceSheetArtStyleLock = ({ monochrome = false } = {}) => 
 - Keep serious intensity through expression, gaze, body acting, camera, composition and lighting while the drawing style remains unchanged.
 - Do not reproduce character-sheet layouts, labels, explanatory text, expression grids, sample poses, duplicate views or white reference backgrounds as story content.
 - ${monochrome
-  ? 'For monochrome output, change only the color medium to pure white paper, solid black ink and regular black-on-white halftone. Retain the reference linework, facial construction, body proportions and shading design as bounded ink shapes; the white-paper reserves override source fills and gradients.'
+  ? 'For monochrome output, change only the color medium to a three-tone manga manuscript: white paper, solid black ink and one bounded Japanese screentone. This is not grayscale or halftone rendering. Retain the reference linework, facial construction, body proportions and shading design as bounded ink shapes; the white-paper reserves override source fills and gradients.'
   : 'For color output, retain the reference sheet\'s color-rendering method and character palette; scene lighting may change illumination, not the underlying art style.'}`;

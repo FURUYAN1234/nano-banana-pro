@@ -167,6 +167,16 @@ test('explicit named shoulder and protected words survive freer direction', () =
   }
 });
 
+test('wide high-angle shots allow only clean intentional head breakouts or complete headroom', () => {
+  const wideHigh = getPanelShotExecution('右奥の天井近くから見下ろす俯瞰ワイド');
+  assert.match(wideHigh, /headroom.*breakout/i);
+  assert.match(wideHigh, /border behind.*hair.*intact/i);
+
+  const explicitClose = getPanelShotExecution('俯瞰の顔アップ');
+  assert.match(explicitClose, /tight crop/i);
+  assert.doesNotMatch(explicitClose, /headroom.*border breakout/i);
+});
+
 test('named shoulder ownership does not span across another cast member', () => {
   for (const camera of [
     'SpeakerAの顔を見る、SpeakerBの安全ベストの肩越し',
@@ -196,6 +206,13 @@ test('both providers retain expressive permission and geometry protections after
     assert.match(prompt, /EXPRESSIVE DIRECTION:/);
     assert.match(prompt, /foreshortening/);
     assert.match(prompt, /full-body/);
+    assert.match(prompt, /PANEL EDGE(?: CONTINUITY LOCK)?|EDGE breakout/i);
+    assert.match(prompt, /(?:border )?(?:breakout|breakthrough)/i);
+    assert.match(prompt, /border(?: line)?(?: stays| stops)? behind|line behind/i);
+    assert.match(prompt, /continuous.*(?:silhouette|hair)|uncut/i);
+    assert.match(prompt, /no (?:clip|cut)|uncut|never run a border.*through.*(?:face|hair)/i);
+    assert.match(prompt, /if.*blur.*(?:still )?(?:merges|merged|buried).*?(?:pale|lighten).*desaturate.*(?:BG|background)|if.*depth-of-field.*(?:still )?(?:merges|merged|buried).*lighten.*desaturate.*background/i);
+    assert.match(prompt, /strengthen.*G-pen/i);
     assert.match(prompt, /panel contrast/i);
     assert.match(prompt, /OBJECT GEOMETRY LOCK/);
     assert.match(prompt, /FUNCTIONAL SURFACE/);

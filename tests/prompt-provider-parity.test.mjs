@@ -28,7 +28,7 @@ test('web copy and API generation preserve the same prompt body with API-only re
   );
   assert.match(
     workflowSource,
-    /const apiPrompt = appendGeminiReferencePrompt\(prompt, referencePlan\);[\s\S]*?generateImageWithImagen\(apiPrompt,/,
+    /const apiPrompt = buildGeminiImageApiPrompt\(prompt, referencePlan\);[\s\S]*?generateImageWithImagen\(apiPrompt,/,
     'Gemini may append reference roles without rewriting the approved body'
   );
 });

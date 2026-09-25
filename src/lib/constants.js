@@ -3,7 +3,7 @@ import { getEndingModePolicy } from './ending-mode-policy.js';
 // --- 定数・タグ定義 (constants.js) ---
 // App.jsx から抽出された共有定数
 
-export const SYSTEM_VERSION = "v6.5.8";
+export const SYSTEM_VERSION = "v6.5.9";
 
 // --- Punchline ラベル変換関数 ---
 export const getPunchlineLabel = (type) => {
@@ -307,7 +307,7 @@ export const cinematicCompositionMap = {
   'Epic Wide': '(dynamic wide-angle lens:1.5), (cinematic composition:1.4), (extreme depth of field:1.3), (environmental shot:1.2), (expansive background:1.2), (structural scale:1.3)',
   'Dominant Low': '(low-angle shot:1.5), (looking down at viewer:1.4), (heroic posture:1.3), (powerful stance:1.3), (dramatic framing:1.4), (background convergence:1.2)',
   'Innocent High': '(high-angle shot:1.5), (looking up at viewer:1.4), (cute expression:1.3), (emotional gaze:1.4), (upper body emphasis:1.3), (soft lighting:1.4), (vulnerable aesthetic:1.3)',
-  'Hyper Perspective': '(extreme foreshortening:1.6), (action pose:1.5), (reaching towards viewer:1.4), (dynamic hand gesture:1.3), (motion blur effect:1.2), (exaggerated scale:1.4), (intense perspective:1.5)',
+  'Hyper Perspective': '(extreme foreshortening:1.6), (story-action depth axis:1.5), (asymmetrical body axis:1.4), (environment convergence:1.3), (intense perspective:1.5)',
   'Aesthetic Thirds': '(rule of thirds composition:1.6), (off-center subject:1.5), (professional photography framing:1.4), (balanced negative space:1.5), (artistic breathing room:1.4), (aesthetic positioning:1.3)',
   'Over The Shoulder': '(looking back:1.5), (over-the-shoulder shot:1.4), (turning head:1.4), (twisting waist:1.3), (dynamic hair flow:1.2), (enticing gaze:1.3), (side profile highlight:1.4)',
   'Deep Emotion Close': '(closeup shot:1.5), (portrait composition:1.4), (large pupil:1.2), (detailed eyes:1.4), (shallow depth of field:1.5), (blurred background:1.6), (crisp focus on facial features:1.5)',

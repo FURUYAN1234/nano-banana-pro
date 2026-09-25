@@ -5,6 +5,7 @@ import { parseImageQualityQaResponse } from '../src/lib/image-quality-qa.js';
 import {
   buildImageQualityRepairPrompt,
   IMAGE_REPAIR_PROMPT_MAX_CHARS,
+  GEMINI_IMAGE_REPAIR_PROMPT_MAX_CHARS,
   inferImageQualityMode,
   runImageQualityFailsafe as executeQualityGate,
   parseImageFailureAnalysis,
@@ -426,6 +427,25 @@ test('oversized approved script is preserved without issuing a truncated repair'
   assert.equal(result.stopReason, 'prompt_limit');
   assert.equal(result.attempts, 1);
   assert.equal(result.canContinue, true);
+});
+
+test('Gemini repair budget accepts the same long contract that its initial image route already accepts', async () => {
+  const originalPrompt = 'A'.repeat(52000) + 'FINAL REQUIRED DIALOGUE';
+  let repairCalls = 0;
+  const result = await runImageQualityFailsafe({
+    originalCandidate: candidate('original'), originalPrompt,
+    repairPromptMaxChars: GEMINI_IMAGE_REPAIR_PROMPT_MAX_CHARS,
+    reviewCandidate: async image => image.id === 'repair' ? pass : fail('panel_layout'),
+    generateRepairCandidate: async repairPrompt => {
+      repairCalls++;
+      assert.ok(repairPrompt.startsWith(originalPrompt));
+      assert.ok(repairPrompt.length <= GEMINI_IMAGE_REPAIR_PROMPT_MAX_CHARS);
+      return candidate('repair');
+    },
+    compareCandidates: async () => ({ preferred: 'repair', reason: 'fixed title and margins' }),
+  });
+  assert.equal(repairCalls, 1);
+  assert.equal(result.validationWarning, false);
 });
 
 test('confirmed physical order is repaired before unrelated broad QA defects', async () => {

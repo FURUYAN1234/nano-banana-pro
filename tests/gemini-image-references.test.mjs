@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {buildGeminiReferencePlan, appendGeminiReferencePrompt} from '../src/lib/gemini-image-references.js';
+import {buildGeminiReferencePlan, buildGeminiImageApiPrompt} from '../src/lib/gemini-image-references.js';
 import {generateImageWithImagen} from '../src/lib/imagen.js';
 import {setApiKey} from '../src/lib/gemini.js';
 
@@ -44,9 +44,20 @@ test('explicit references including an empty override do not replace character s
 
 test('manual prompt stays unchanged as prefix and an empty plan adds nothing', () => {
   const prompt = '  手動台詞「そのまま。」\r\nCamera: overhead\n';
-  assert.equal(appendGeminiReferencePrompt(prompt, buildGeminiReferencePlan()), prompt);
+  assert.equal(buildGeminiImageApiPrompt(prompt, buildGeminiReferencePlan()), prompt);
   const plan = buildGeminiReferencePlan({characterImages: [image('sheet')]});
-  assert.ok(appendGeminiReferencePrompt(prompt, plan).startsWith(prompt));
+  assert.ok(buildGeminiImageApiPrompt(prompt, plan).startsWith(prompt));
+});
+
+test('Gemini API prompt rewrites printable bubble routing tokens into natural placement directions', () => {
+  const prompt = `## Panel 2
+Dialogue (verbatim bubbles): TEXT (PRINT VALUES ONLY): B1="現物配当で一冊！" [RIGHTMOST]; B2="持ってくの!?" [LEFTMOST]. BUBBLE SLOTS: B1 x=67%; B2 x=33%. TAIL TIP LOCK: B1=>[ミク] mouth/head; B2=>[リン] mouth/head.
+Action: ミクが本を取る。`;
+  const result = buildGeminiImageApiPrompt(prompt, buildGeminiReferencePlan());
+  assert.match(result, /right (?:side|edge)[^\n]*"現物配当で一冊！"[^\n]*ミク/i);
+  assert.match(result, /left (?:side|edge)[^\n]*"持ってくの!\?"[^\n]*リン/i);
+  assert.match(result, /Action: ミクが本を取る。/);
+  assert.doesNotMatch(result, /\bB\d+\b|x=\d+%|RIGHTMOST|LEFTMOST|BUBBLE SLOTS|TAIL TIP LOCK|PRINT VALUES ONLY/);
 });
 
 test('invalid references fail explicitly without dropping images', () => {
@@ -67,7 +78,7 @@ test('real Gemini request builder sends character and background bytes in manife
     return new Response(JSON.stringify({steps: [{content: [{type: 'image', data: 'b3V0', mime_type: 'image/jpeg'}]}]}));
   };
   try {
-    const result = await generateImageWithImagen(appendGeminiReferencePrompt('approved', plan), () => {}, plan.referenceImages);
+    const result = await generateImageWithImagen(buildGeminiImageApiPrompt('approved', plan), () => {}, plan.referenceImages);
     assert.equal(calls.length, 1);
     assert.ok(calls[0].url.endsWith('/v1beta/interactions'));
     assert.equal(calls[0].body.model, 'gemini-3.1-flash-image');

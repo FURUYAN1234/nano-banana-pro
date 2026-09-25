@@ -12,6 +12,7 @@ import {
   buildImageQualityComparisonPrompt,
   parseImageQualityComparison,
   extractPanelCastContracts,
+  applyBubbleInventory,
 } from '../src/lib/image-quality-qa.js';
 
 const EXPLICIT_REAR_PROMPT = `## Panel 2
@@ -81,6 +82,7 @@ const spatialChecks = (count = 4) => Array.from({ length: count }, (_, index) =>
     azimuth: { requested: 'rear-left', observed: 'left rear shoulder overlaps partner', status: 'ok' },
     framing: { requested: 'full body', observed: 'head and both shoes inside panel', status: 'ok' },
     lens: { requested: 'unspecified', observed: 'ordinary depth, no required lens effect', status: 'not_applicable' },
+    boundary: { requested: 'clean panel containment or intentional breakout', observed: 'head silhouette is continuous and the panel rule stays behind it', status: 'ok' },
   } },
   object_geometry: { status: 'ok', evidence: 'The page is in front of the hand; the rear finger contour is hidden at its edge.' },
   hand_geometry: { status: 'ok', evidence: 'The prominent open hand resolves as one thumb and four fingers.', hands: [{
@@ -115,6 +117,49 @@ test('silent scene does not require a per-bubble tail inventory', () => {
     observations,
     spatial_checks: checks,
   }), { mode: 'single-image' });
+
+  assert.equal(review.pass, true);
+  assert.ok(!review.issues.some(issue => issue.type === 'bubble_speaker'));
+});
+
+test('Gemini reviewer romanization of an established cast name does not trigger a repair', () => {
+  const finalPrompt = `Cast:
+- Character [リン (Rin)]: brown twintails
+## Panel 1
+Dialogue (ONLY inside bubbles): TEXT (PRINT VALUES ONLY): B1="この本の山、私の資産です。". TAIL TIP LOCK: B1=>[リン] mouth/head.
+## Panel 2
+Dialogue: silent
+## Panel 3
+Dialogue: silent
+## Panel 4
+Dialogue: silent`;
+  const checks = spatialChecks();
+  checks[0].bubble_speaker = {
+    status: 'ok',
+    evidence: 'The visible tail reaches Rin.',
+    left_to_right_texts: ['この本の山、私の資産です。'],
+    bubbles: [{
+      bubble: 'B1',
+      text: 'この本の山、私の資産です。',
+      expected_speaker: 'Rin',
+      observed_tail_target: 'Rin',
+      tail_endpoint_evidence: 'The tip touches Rin\'s head silhouette.',
+      endpoint_relation: 'touches_speaker',
+      tail_tip: {x: 0.5, y: 0.3},
+      speaker_anchor: {x: 0.51, y: 0.31, part: 'head'},
+      root_relation: 'lower_speaker_facing',
+      path_relation: 'clear',
+      tail_path_evidence: 'The tail starts below center and crosses no face, hair, or text.',
+      center_x: 0.7,
+      position_evidence: 'The balloon center is in the right side negative space.',
+    }],
+  };
+  const review = parseImageQualityQaResponse(JSON.stringify({
+    pass: true,
+    issues: [],
+    observations,
+    spatial_checks: checks,
+  }), {finalPrompt});
 
   assert.equal(review.pass, true);
   assert.ok(!review.issues.some(issue => issue.type === 'bubble_speaker'));
@@ -302,6 +347,27 @@ test('QA retains exact title and hand instructions from the submitted prompt', (
   assert.equal(result.issues[0].type, 'title_text');
 });
 
+test('panel-border head clipping cannot hide behind an overall camera PASS', () => {
+  const checks = spatialChecks();
+  checks[0].camera_geometry.dimensions.boundary = {
+    requested: 'clean containment or a deliberate continuous breakout',
+    observed: 'the top panel rule slices through the hair and the outer segment is horizontally offset',
+    status: 'defect',
+  };
+  const review = parseImageQualityQaResponse(JSON.stringify({ pass: true, issues: [], observations, spatial_checks: checks }));
+  assert.equal(review.pass, false);
+  assert.ok(review.issues.some(issue => issue.type === 'panel_layout' && issue.panel === 1 && issue.reason.includes('boundary')));
+});
+
+test('visual QA explicitly audits clean panel-border breakthroughs', () => {
+  const prompt = buildImageQualityQaPrompt({ mode: 'four-panel', panelCropCount: 4 });
+  assert.match(prompt, /PANEL EDGE CONTINUITY CHECK/i);
+  assert.match(prompt, /continuous head\/hair silhouette/i);
+  assert.match(prompt, /border line.*stops behind/i);
+  assert.match(prompt, /slicing through face\/hair.*panel_layout defect/i);
+  assert.match(prompt, /"boundary"/);
+});
+
 test('QA requires grounded digit evidence and rejects a four-digit foreground hand', () => {
   const checks = spatialChecks();
   checks[3].hand_geometry = { status: 'defect', evidence: 'The large foreground hand has only four total digits.', hands: [{
@@ -387,6 +453,28 @@ test('four-panel QA inspects both watermark edges while single-image QA does not
   assert.match(fourPanel, /complete left and right footer text/);
   assert.match(fourPanel, /cropped or missing required watermark text as panel_layout/);
   assert.doesNotMatch(buildImageQualityQaPrompt({ mode: 'single-image' }), /WATERMARK EDGE CHECK/);
+});
+
+test('visible Gemini bubble-routing metadata is a definite extra-text defect', () => {
+  const finalPrompt = `## Panel 1
+Dialogue (verbatim bubbles): TEXT (PRINT VALUES ONLY): B1="この本の山、私の資産です。". TAIL TIP LOCK: B1=>[リン] mouth/head.
+## Panel 2
+Dialogue (verbatim bubbles): TEXT (PRINT VALUES ONLY): B1="現物配当で一冊！" [RIGHTMOST]; B2="持ってくの!?" [LEFTMOST]. BUBBLE SLOTS: B1 x=67%; B2 x=33%. TAIL TIP LOCK: B1=>[ミク] mouth/head; B2=>[リン] mouth/head.`;
+  const review = { pass: true, issues: [], observations: {} };
+  const inventory = JSON.stringify({ panels: [
+    { panel: 1, text_regions: [
+      { text: 'この本の山、私の資産です。', region_kind: 'speech_balloon', container_evidence: 'white balloon', center_x: 0.76 },
+      { text: 'B1 x=9 RIGHT-SIDE', region_kind: 'speech_balloon', container_evidence: 'narrow white balloon', center_x: 0.94 },
+    ] },
+    { panel: 2, text_regions: [
+      { text: '持ってくの!? B2 x=33%', region_kind: 'speech_balloon', container_evidence: 'left balloon', center_x: 0.25 },
+      { text: '現物配当で一冊！ B1 x=67%', region_kind: 'speech_balloon', container_evidence: 'right balloon', center_x: 0.75 },
+    ] },
+  ] });
+  const result = applyBubbleInventory(review, inventory, finalPrompt);
+  assert.equal(result.pass, false);
+  assert.ok(result.issues.some(issue => issue.type === 'extra_text' && issue.panel === 1));
+  assert.ok(result.issues.some(issue => issue.type === 'extra_text' && issue.panel === 2));
 });
 
 test('single-image QA allows harmless AI-completed setting text but rejects major story mismatches', () => {

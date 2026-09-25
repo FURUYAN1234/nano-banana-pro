@@ -108,17 +108,37 @@ export const buildPageDrawPlan = (bands) => {
   if (!layout) return null;
   const { width, titleHeight, panelHeight, footerHeight, inset, titleInkHeight } = layout;
   const safeWidth = width - 2 * inset;
-  const panelScale = panelHeight / bands.panels.height;
-  // Fitting both fixed height and safe width must not distort or crop artwork.
-  if (!Number.isFinite(panelScale) || bands.panels.width * panelScale > safeWidth) return null;
   const contain = (source, y, bandHeight, maxHeight = bandHeight - 2 * inset, maxWidth = safeWidth) => {
     const scale = Math.min(maxWidth / source.width, maxHeight / source.height);
     const drawnWidth = source.width * scale, drawnHeight = source.height * scale;
     return { source, destination: { x: (width - drawnWidth) / 2, y: y + (bandHeight - drawnHeight) / 2, width: drawnWidth, height: drawnHeight } };
   };
+  const panelScale = panelHeight / bands.panels.height;
+  if (!Number.isFinite(panelScale)) return null;
+  let panelPlans;
+  if (bands.panels.width * panelScale <= safeWidth) {
+    panelPlans = [{ source: bands.panels, destination: { x: (width - bands.panels.width * panelScale) / 2, y: titleHeight, width: bands.panels.width * panelScale, height: panelHeight } }];
+  } else {
+    // A slightly wide model page used to fall back to containing the whole
+    // source, preserving huge outer margins and even an unwanted title box.
+    // Scale each detected panel uniformly to the safe width and put the small
+    // remaining vertical slack only into the three white gutters.
+    if (!Array.isArray(bands.panelFrames) || bands.panelFrames.length !== 4) return null;
+    const widthScale = safeWidth / bands.panels.width;
+    const heights = bands.panelFrames.map(frame => frame.height * widthScale);
+    const remaining = panelHeight - heights.reduce((sum, value) => sum + value, 0);
+    if (!Number.isFinite(widthScale) || widthScale <= 0 || remaining < 0) return null;
+    const gutter = remaining / 3;
+    let y = titleHeight;
+    panelPlans = bands.panelFrames.map((frame, index) => {
+      const destination = { x: (width - frame.width * widthScale) / 2, y, width: frame.width * widthScale, height: frame.height * widthScale };
+      y += destination.height + (index < 3 ? gutter : 0);
+      return { source: frame, destination };
+    });
+  }
   const plan = [
     contain(bands.title, 0, titleHeight, titleInkHeight, width * 0.9),
-    { source: bands.panels, destination: { x: (width - bands.panels.width * panelScale) / 2, y: titleHeight, width: bands.panels.width * panelScale, height: panelHeight } },
+    ...panelPlans,
     contain(bands.footer, titleHeight + panelHeight, footerHeight),
   ];
   plan.layout = layout;

@@ -3,6 +3,10 @@ import { extractBubbleContracts, hasCriticalRearCameraContract } from './image-q
 
 export const IMAGE_QUALITY_MAX_ATTEMPTS = 4;
 export const IMAGE_REPAIR_PROMPT_MAX_CHARS = 31000;
+// Gemini Interactions accepted the same approved 52k-character contract on
+// initial generation. Its repair path needs room for a compact correction
+// plan without weakening the stricter OpenAI image-prompt budget.
+export const GEMINI_IMAGE_REPAIR_PROMPT_MAX_CHARS = 65000;
 
 const incidentalPrintIssues = review => (Array.isArray(review?.issues) ? review.issues : []).filter(issue =>
   issue.type === 'surface_text' && issue.textRole === 'incidental'
@@ -119,9 +123,9 @@ export const enforceCriticalCameraComparison = (comparison, originalReview, repa
   return { preferred: 'repair', reason: '独立カメラ監査で重大な肩越し不具合の解消を確認し、台詞・読順・他の具体的不具合に退行がない修正版を採用します。' };
 };
 
-const buildBoundedRepairPrompt = ({ basePrompt, analysis, history }) => {
+const buildBoundedRepairPrompt = ({ basePrompt, analysis, history, maxChars = IMAGE_REPAIR_PROMPT_MAX_CHARS }) => {
   const full = `${basePrompt}\n\nFAILURE ANALYSIS AND REPAIR PLAN (internal; NEVER PRINT):\n${JSON.stringify(analysis)}\nPRIOR ATTEMPTS (internal; preserve resolved fixes and change failed strategies):\n${JSON.stringify(history)}\nApply the concrete operations above only within the approved contract. Verify every listed acceptance test and all previously correct text, identities, camera and actions.`;
-  if (full.length <= IMAGE_REPAIR_PROMPT_MAX_CHARS) return full;
+  if (full.length <= maxChars) return full;
 
   // Keep the approved script intact and compact only internal diagnostics. A
   // long failure history must never turn a bounded retry into a provider
@@ -129,13 +133,13 @@ const buildBoundedRepairPrompt = ({ basePrompt, analysis, history }) => {
   const compactAnalysis = compactRepairData(analysis, 9500);
   const compactHistory = compactRepairData(history, 3500);
   const compact = `${basePrompt}\n\nFAILURE ANALYSIS AND REPAIR PLAN (internal; NEVER PRINT):\n${compactAnalysis}\nPRIOR ATTEMPTS (internal; preserve resolved fixes and change failed strategies):\n${compactHistory}\nApply the concrete operations above only within the approved contract. Verify every listed acceptance test and all previously correct text, identities, camera and actions.`;
-  if (compact.length <= IMAGE_REPAIR_PROMPT_MAX_CHARS) return compact;
+  if (compact.length <= maxChars) return compact;
 
   // The issue list and approved prompt remain authoritative; omit stale
   // history before ever sending an over-limit request to the image provider.
   const minimal = `${basePrompt}\n\nFAILURE ANALYSIS AND REPAIR PLAN (internal; NEVER PRINT):\n${compactRepairData(analysis, 5000)}\nApply the concrete operations above only within the approved contract. Verify every listed acceptance test and all previously correct text, identities, camera and actions.`;
-  if (minimal.length <= IMAGE_REPAIR_PROMPT_MAX_CHARS) return minimal;
-  if (basePrompt.length <= IMAGE_REPAIR_PROMPT_MAX_CHARS) return basePrompt;
+  if (minimal.length <= maxChars) return minimal;
+  if (basePrompt.length <= maxChars) return basePrompt;
   throw new Error('修正指示が画像APIの上限を超えます。台本を切り捨てず元画像を保持します。');
 };
 
@@ -254,6 +258,7 @@ export const runImageQualityFailsafe = async ({
   originalCandidate, originalPrompt, reviewCandidate, reviewCriticalCamera, generateRepairCandidate, analyzeFailure,
   onProgress = () => {}, shouldStop = () => false, mode, allowRepair = true,
   repairSourceMode = 'regenerate',
+  repairPromptMaxChars = IMAGE_REPAIR_PROMPT_MAX_CHARS,
   compareCandidates = async () => ({ preferred: 'original', reason: 'Direct comparison unavailable.' }),
 } = {}) => {
   let candidate = originalCandidate;
@@ -340,7 +345,7 @@ export const runImageQualityFailsafe = async ({
     const buildPrompt = usePrintFallback ? buildIncidentalPrintFallbackPrompt : buildImageQualityRepairPrompt;
     const repairBasePrompt = buildPrompt({ originalPrompt, issues, mode, sourceMode: repairSourceMode, attempt: attempts + 1 });
     let repairPrompt;
-    try { repairPrompt = buildBoundedRepairPrompt({ basePrompt: repairBasePrompt, analysis, history }); }
+    try { repairPrompt = buildBoundedRepairPrompt({ basePrompt: repairBasePrompt, analysis, history, maxChars: repairPromptMaxChars }); }
     catch (error) { repairError = error; stopReason = 'prompt_limit'; break; }
     const entry = { attempt: attempts + 1, issues, analysis };
     history.push(entry);

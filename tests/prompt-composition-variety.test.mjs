@@ -7,6 +7,9 @@ let buildMangaPrompt;
 let getScenarioPrompt;
 let getPanelCompositionAssist;
 let MANGA_COMPOSITION_VARIETY_LOCK;
+let MANGA_COMPOSITION_VARIETY_LOCK_COMPACT;
+let MANGA_GESTURE_VARIETY_LOCK;
+let cinematicCompositionMap;
 
 before(async () => {
   server = await createServer({
@@ -18,8 +21,11 @@ before(async () => {
   ({ getScenarioPrompt } = await server.ssrLoadModule('/src/lib/prompts.js'));
   ({
     getPanelCompositionAssist,
-    MANGA_COMPOSITION_VARIETY_LOCK
+    MANGA_COMPOSITION_VARIETY_LOCK,
+    MANGA_COMPOSITION_VARIETY_LOCK_COMPACT,
+    MANGA_GESTURE_VARIETY_LOCK,
   } = await server.ssrLoadModule('/src/lib/composition-variety.js'));
+  ({ cinematicCompositionMap } = await server.ssrLoadModule('/src/lib/constants.js'));
 });
 
 after(async () => {
@@ -147,6 +153,57 @@ test('strong perspective is reserved for a story beat and does not default to a 
     const prompt = buildFinalPrompt(providerFamily);
     assert.match(prompt, /story-relevant focal form/i);
     assert.match(prompt, /foot thrust/i);
+  }
+});
+
+test('hyper perspective does not encode the stock lens-facing hand pose', () => {
+  const hyper = cinematicCompositionMap['Hyper Perspective'];
+
+  assert.doesNotMatch(hyper, /reaching towards viewer|dynamic hand gesture/i);
+  assert.match(hyper, /story-action depth axis/i);
+  assert.match(hyper, /asymmetrical body axis/i);
+});
+
+test('scenario and final prompts vary the full camera signature and bind hands to story targets', () => {
+  const scenarioPrompt = buildNormalScenarioPrompt();
+
+  assert.doesNotMatch(scenarioPrompt, /手前に大きく顔があるキャラ.*奥で小さく驚くキャラ/);
+  assert.match(scenarioPrompt, /撮影位置・水平方位・距離・レンズ感・被写体配置・奥行きの作り方/);
+  assert.match(scenarioPrompt, /手のひら.*レンズ|レンズ.*手のひら/);
+  assert.match(scenarioPrompt, /実際の接触対象/);
+
+  for (const lock of [MANGA_COMPOSITION_VARIETY_LOCK, MANGA_COMPOSITION_VARIETY_LOCK_COMPACT]) {
+    assert.match(lock, /CAMERA SIGNATURE/i);
+    assert.match(lock, /elevation.*azimuth.*framing.*lens.*blocking.*depth/i);
+    assert.match(lock, /explicit repeated/i);
+  }
+  assert.match(MANGA_GESTURE_VARIETY_LOCK, /LENS-FACING HAND/i);
+  assert.match(MANGA_GESTURE_VARIETY_LOCK, /actual person, prop or surface/i);
+
+  for (const providerFamily of ['chatgpt', 'gemini']) {
+    const prompt = buildFinalPrompt(providerFamily);
+    assert.match(prompt, /CAMERA SIGNATURE/i);
+    assert.match(prompt, /LENS-FACING HAND/i);
+    assert.match(prompt, /actual person, prop or surface/i);
+  }
+});
+
+test('an explicitly scripted lens-facing gesture remains verbatim', () => {
+  const scenario = FOUR_PANEL_SCENARIO.replace(
+    'Action: SpeakerB stands and presses a document onto the table with both hands.',
+    'Action: SpeakerB turns to an in-story camera and opens her right palm directly toward its lens.',
+  );
+
+  for (const providerFamily of ['chatgpt', 'gemini']) {
+    const prompt = buildMangaPrompt({
+      scenario,
+      castList: CAST_LIST,
+      colorMode: 'color',
+      providerFamily,
+      punchlineType: 'Auto',
+      systemVersion: 'v5.2.7-test',
+    });
+    assert.match(prompt, /opens her right palm directly toward its lens/i);
   }
 });
 
