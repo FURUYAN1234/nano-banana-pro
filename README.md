@@ -1,6 +1,6 @@
 # Super FURU AI 4-koma System / Super FURU AI 4コマシステム
 
-> Current source version: **v6.5.7** / 現在のソース版: **v6.5.7**
+> Current source version: **v6.5.8** / 現在のソース版: **v6.5.8**
 
 An experimental web application in which AI handles topic research, story structure, direction, prompt construction, image generation, and quality review for a four-panel manga. / AIが話題調査、構成、演出、プロンプト構築、画像生成、品質確認まで担当する4コマ漫画制作Webアプリです。
 
@@ -61,8 +61,8 @@ The application provides one continuous four-step workflow. / アプリは次の
 | Story-required guests / 物語上必要な新キャラ | A role character required by the script, such as a merchant or receptionist, is included in the per-panel cast count even without a reference sheet. If that person recurs, identity, adult age, clothing, props, position and action continuity stay fixed; the system must not clone, replace or silently omit the role. / 商店主や受付係など台本上必要な役職人物は、参照画像がなくても各コマの登場人数へ含めます。再登場時は同一人物として、成人年齢、服装、小道具、位置、動作の連続性を保ち、複製・別人化・理由のない省略を防ぎます。 |
 | Ending selection / 結末 | Automatic, Gag automatic, individual gag endings, Serious automatic, individual serious endings, Gag Documentary and Serious Documentary. Automatic choice is resolved once and carried into STEP3–4; an incompatible label returned by the text model cannot replace the resolved selection. / 全体おまかせ、ギャグ内おまかせ、個別ギャグ、シリアス内おまかせ、個別シリアス、ギャグ・ドキュメンタリー、シリアス・ドキュメンタリーを選べます。自動選択の結果はSTEP3～4へ固定して渡し、文章モデルが返した非互換のオチ名で上書きしません。 |
 | Scenario enhancement / シナリオ強化 | Independently select expression, body, effects, background, camera, dialogue and story-direction enhancement. Revert to the pre-enhancement scenario at any time. Documentary direction has a fact-preserving variant for both gag and serious modes. / 表情、身体、演出、背景、カメラ、セリフ、物語演出を個別選択でき、強化前へ戻せます。ドキュメンタリーではギャグ・シリアスの両方に事実保持型の演出を使います。 |
-| STEP3 prompt / プロンプト | Choose color or monochrome, build the provider-specific prompt, run a text-model consistency review, edit the final prompt, and copy it for Web use. After API image generation, the same privacy-safe production record can be saved as JSON. / カラー／白黒を選び、プロバイダー別プロンプトを構築し、文章モデルの整合性確認後に編集・Web用コピーができます。API画像生成後は、画像内と同じ安全化済み制作情報をJSON保存できます。 |
-| STEP4 image / 画像 | Generate in the app, choose available quality and size settings, stop remaining quality retries, or use the copied prompt manually on the provider's Web UI. PNG downloads automatically carry the same machine-readable production record as the sidecar JSON. / アプリ内で生成し、利用可能な品質・サイズを選択し、残りの品質再試行を停止できます。コピーしたプロンプトを公式Web画面で手動利用する経路もあります。ダウンロードするPNG画像には、別添JSONと同じ機械可読な制作情報を自動保存します。 |
+| STEP3 prompt / プロンプト | Choose color or monochrome, build the provider-specific prompt, run a text-model consistency review, edit the final prompt, and copy it for Web use. As soon as the prompt is ready, save a privacy-safe companion JSON for manual Web generation; it does not wait for an API image. / カラー／白黒を選び、プロバイダー別プロンプトを構築し、文章モデルの整合性確認後に編集・Web用コピーができます。最終プロンプト完成時点で、API画像を待たずにWeb手動生成用の安全化済み別添JSONを保存できます。 |
+| STEP4 image / 画像 | Generate in the app, choose available quality and size settings, stop remaining quality retries, or use the copied prompt manually on the provider's Web UI. API-generated PNG downloads automatically embed a separate API-image production record with the actual model and output hash. / アプリ内で生成し、利用可能な品質・サイズを選択し、残りの品質再試行を停止できます。コピーしたプロンプトを公式Web画面で手動利用する経路もあります。API生成PNGには、実際のモデルと出力画像ハッシュを含むAPI画像専用の制作情報を自動保存します。 |
 | Review and history / 検査・履歴 | Review panel count, dialogue, balloon order and speaker tails, per-panel character identity and eyewear, anatomy, camera, prop ownership, surface orientation, unwanted text and medium compliance. Explicit rear and over-the-shoulder shots receive an independent camera audit; a repair that fixes the named rear foreground without regressing bubble order or adding another concrete defect is preferred. QA independently inventories every readable or partly readable glyph sequence on bubbles, signs, packaging, labels, books and screens. Plausible AI-completed environmental text is allowed unless it materially contradicts the setting, identity, facts, clues, action or joke; omitted or unclassified text stays unverified. Keep only the final accepted image from each generation in the latest-ten session history; repair candidates remain internal. / コマ数、台詞、吹き出し順・尻尾、各コマの人物同一性と眼鏡、人体、カメラ、小道具所有、面の向き、不要文字、カラー／白黒条件を検査します。明示された背面・肩越し構図は独立したカメラ監査も行い、指定された前景背面を直しつつ吹き出し順を退行させず、別の具体的不具合を増やさない修正版を優先します。吹き出し、看板、包装、ラベル、本、画面に見える全文字と部分文字を画像から独立転記します。AIが情景に沿って補完した環境文字は、場所・人物・事実・手掛かり・動作・オチを大きく誤らせない限り許容し、一覧漏れや分類不能は未確認として残します。セッション内履歴には各生成の最終採用画像だけを直近10件まで保持し、修正途中の候補は内部比較だけに使います。 |
 | Full-auto controls / フルオート | The workflow can advance through STEP2–4, show the current stage and countdown, and be stopped without clearing the already completed work. / STEP2～4を自動で進め、現在段階とカウントダウンを表示し、完了済みの内容を消さずに停止できます。 |
 | Video handoff / 動画化 | Copy the generic MiniMax H3 prompt, or download the separate FourPanel ComfyUI workflow JSON and matching custom-node package. / 汎用MiniMax H3プロンプトをコピーするか、別配布のFourPanel ComfyUIワークフローJSONと対応カスタムノードを取得できます。 |
@@ -110,7 +110,9 @@ The current session keeps only the final accepted image from each API generation
 
 ### Machine-readable AI production metadata / 機械可読なAI制作情報
 
-API-generated image downloads are saved as PNG and embed one canonical UTF-8 JSON production record; the sidecar JSON button saves that exact canonical record. It includes the provider/model, generation time, final sent prompt, scenario, selected generation settings, fallback state, the SHA-256 of the PNG before the self-referential metadata chunk is inserted, and SHA-256 fingerprints (not the image bodies) of reference images. High-confidence API-key strings and local user paths are redacted automatically. Raw character-analysis text, raw place/background-analysis fields, API keys and reference-image bodies are never included. An application iTXt chunk retains long Japanese prompts, and re-embedding replaces this app's older record rather than accumulating stale copies. / API生成画像はPNGでダウンロードし、UTF-8の正本JSONを画像内へ埋め込みます。別添JSONボタンもまったく同じ正本を保存します。プロバイダー／モデル、生成日時、実送信した最終プロンプト、シナリオ、生成設定、フォールバック有無、自己参照になるメタデータチャンクを挿入する前の出力PNGのSHA-256、参照画像本体ではなく各参照画像のSHA-256指紋を記録します。APIキーらしい文字列とローカルのユーザーパスは自動マスキングし、キャラクター解析全文、場所・背景解析の生データ、APIキー、参照画像本体は保存しません。アプリ専用iTXtで長い日本語プロンプトも保持し、再保存時は古い同アプリ情報を置換して重複蓄積しません。
+The two production-record paths are deliberately separate. The Web companion JSON becomes available when the final prompt is ready and records the intended Web provider, preparation time, final prompt, scenario, selected settings, and SHA-256 fingerprints of reference images. Because Nano Banana does not receive the image produced on the provider's Web UI, this record does not invent a model ID, API fallback state, generation time, generation ID, output object, or output-image hash. / 制作情報は2経路を意図的に分離しています。Web版用の別添JSONは最終プロンプト完成時点で保存でき、貼り付け先のWebプロバイダー、準備日時、最終プロンプト、シナリオ、生成設定、参照画像のSHA-256指紋を記録します。Nano Bananaは公式Web画面で生成された画像を受け取らないため、モデルID、APIフォールバック状態、画像生成日時、生成ID、出力オブジェクト、出力画像ハッシュを推測・捏造しません。
+
+API-generated image downloads are saved as PNG and embed a separate canonical UTF-8 JSON API-image record. It includes the actual API provider/model, generation time, final sent prompt, scenario, selected settings, fallback state, the SHA-256 of the PNG before the self-referential metadata chunk is inserted, and reference-image fingerprints. Both paths automatically redact high-confidence API-key strings and local user paths. Raw character-analysis text, raw place/background-analysis fields, API keys and reference-image bodies are never included. An application iTXt chunk retains long Japanese prompts, and re-embedding replaces this app's older record rather than accumulating stale copies. / API生成画像はPNGでダウンロードし、別系統のUTF-8正本JSONを画像内へ埋め込みます。実際のAPIプロバイダー／モデル、生成日時、実送信した最終プロンプト、シナリオ、生成設定、フォールバック有無、自己参照になるメタデータチャンク挿入前の出力PNGのSHA-256、参照画像の指紋を記録します。両経路ともAPIキーらしい文字列とローカルのユーザーパスを自動マスキングし、キャラクター解析全文、場所・背景解析の生データ、APIキー、参照画像本体は保存しません。アプリ専用iTXtで長い日本語プロンプトも保持し、再保存時は古い同アプリ情報を置換して重複蓄積しません。
 
 The schema maps its AI-system, prompt, digital-source and human-oversight fields to [IPTC Photo Metadata 2025.1](https://www.iptc.org/std/photometadata/specification/IPTC-PhotoMetadata-2025.1.html) and the [C2PA 2.4 `c2pa.ai-disclosure` model](https://spec.c2pa.org/specifications/specifications/2.4/specs/C2PA_Specification.html#_ai_disclosure). It is designed to support the machine-readable transparency direction of [EU AI Act Article 50](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX%3A02024R1689-20260727). This is an application audit record, not a cryptographically signed C2PA Content Credential, legal certification or proof that every downstream service will preserve the metadata. / AIシステム、プロンプト、デジタル生成種別、人の関与度は、[IPTC Photo Metadata 2025.1](https://www.iptc.org/std/photometadata/specification/IPTC-PhotoMetadata-2025.1.html)と[C2PA 2.4の`c2pa.ai-disclosure`](https://spec.c2pa.org/specifications/specifications/2.4/specs/C2PA_Specification.html#_ai_disclosure)へ対応付け、[EU AI Act第50条](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX%3A02024R1689-20260727)が示す機械可読な透明性の方向を意識しています。これはアプリの監査用記録であり、暗号署名済みC2PA Content Credential、法的認証、または投稿先サービスがメタデータを保持する保証ではありません。
 
@@ -191,7 +193,7 @@ After the existing STEP2 safety and format checks, a mode-aware payoff review ve
 
 Usage and estimated cost are logged only when the API returns valid input and output token counts; missing usage is not treated as zero cost. / 使用量と参考費用は、APIが有効な入力・出力トークン数を返した場合だけ表示します。使用量が不明な応答を費用ゼロとは表示しません。
 
-For OpenAI image prompts, the bottom-right footer credit includes the model actually adopted for STEP2, for example `ChatGPT / GPT-6 Sol / FURU AI 4-koma v6.5.7`; the bottom-left Japanese footer credit is unchanged. / OpenAI画像用の最終プロンプトでは、右下のフッタークレジットにSTEP2で実際に採用されたモデル名を入れます（例: `ChatGPT / GPT-6 Sol / FURU AI 4-koma v6.5.7`）。左下の日本語フッタークレジットは変更しません。
+For OpenAI image prompts, the bottom-right footer credit includes the model actually adopted for STEP2, for example `ChatGPT / GPT-6 Sol / FURU AI 4-koma v6.5.8`; the bottom-left Japanese footer credit is unchanged. / OpenAI画像用の最終プロンプトでは、右下のフッタークレジットにSTEP2で実際に採用されたモデル名を入れます（例: `ChatGPT / GPT-6 Sol / FURU AI 4-koma v6.5.8`）。左下の日本語フッタークレジットは変更しません。
 
 The API key chosen at connection time fixes one provider for every application step: a Gemini key keeps STEP1–4 on Gemini, while an OpenAI key keeps STEP1–4 on OpenAI. In news mode, selected categories use Google Grounding only on the Gemini route and OpenAI Responses Web Search only on the OpenAI route. / 接続時に入力したAPIキーで、アプリの全工程のプロバイダーを固定します。GeminiキーではSTEP1〜4をGemini、OpenAIキーではSTEP1〜4をOpenAIで実行します。ニュースモードのカテゴリ検索は、Gemini経路ではGoogle Groundingだけ、OpenAI経路ではOpenAI Responses Web Searchだけを使用します。
 
@@ -249,7 +251,7 @@ The generic prompt transfers the packaged workflow's four-panel order, per-panel
 The app has separate buttons for the workflow JSON and the three-custom-node ZIP; `2つは別の操作` and each button downloads a different file. / アプリにはワークフローJSONとカスタムノード3点ZIPの別ボタンがあり、`2つは別の操作`として異なるファイルをダウンロードします。
 
 - [Download workflow JSON](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20260922104144.json) / [ワークフローJSONをダウンロード](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20260922104144.json)
-- [Download custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.5.7/ComfyUI_H3_FourPanel_NonLM_20260922104144.zip) / [カスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.5.7/ComfyUI_H3_FourPanel_NonLM_20260922104144.zip)
+- [Download custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.5.8/ComfyUI_H3_FourPanel_NonLM_20260922104144.zip) / [カスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.5.8/ComfyUI_H3_FourPanel_NonLM_20260922104144.zip)
 
 The current source tree intentionally contains no distribution ZIP. The custom-node ZIP is a named asset of the matching GitHub Release. / 現在のソースツリーには配布ZIPを意図的に登録せず、カスタムノードZIPは同じ版のGitHub Release専用アセットとして公開します。
 
@@ -297,11 +299,14 @@ The production application is published from the `main` branch through the repos
 
 **Why are there two ComfyUI download buttons? / ComfyUIのダウンロードボタンが2つあるのはなぜですか？**  The JSON defines the workflow, while the ZIP supplies three custom-node folders and documentation; three additional runtime dependencies are installed separately. / JSONはワークフロー定義、ZIPはカスタムノード3フォルダーと導入文書です。さらに実行依存3項目を別途導入します。
 
-**Where are older packages? / 旧版はどこですか？**  Older source tags remain for audit history, but their bundled distributions are withdrawn. New installations must use the current `20260922104144` workflow button and matching v6.5.7 FourPanel Release asset. / 旧タグは監査用履歴として残しますが、旧同梱配布物は取り下げ扱いです。新規導入は現在の`20260922104144`ワークフローボタンとv6.5.7 FourPanel Releaseアセットを使用してください。
+**Where are older packages? / 旧版はどこですか？**  Older source tags remain for audit history, but their bundled distributions are withdrawn. New installations must use the current `20260922104144` workflow button and matching v6.5.8 FourPanel Release asset. / 旧タグは監査用履歴として残しますが、旧同梱配布物は取り下げ扱いです。新規導入は現在の`20260922104144`ワークフローボタンとv6.5.8 FourPanel Releaseアセットを使用してください。
 
 **Is this the T2V/I2V/Ref2V repository? / T2V・I2V・Ref2Vのリポジトリですか？**  No. Those workflows are maintained separately in [comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows). / いいえ。それらは別の[comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows)で管理します。
 
 ## 📋 ChangeLog
+
+### v6.5.8 (2026-09-25)
+- **[Fix & UX]** Web版生成用の制作情報JSONとAPI生成PNGの制作情報を別経路に分離し、画像生成前でもWeb版JSONを保存できる状態へ戻しました。API専用項目の混入を拒否する境界と正負の回帰テストを追加しました。 / Separated the Web companion JSON from API-generated PNG metadata so the Web record can be saved before image generation. Added a hard boundary and positive/negative regression tests that reject API-only fields in the Web path.
 
 ### v6.5.7 (2026-09-25)
 - **[STEP4 UI]** 制作情報の保存案内を手動JSON保存欄からAPI生成ボタン直下へ移し、API生成に関係する説明だと分かる配置にしました。 / Moved the production-record notice from the manual JSON area to directly below the API generation button so its scope is clear.
@@ -359,158 +364,7 @@ The production application is published from the `main` branch through the repos
 - **[Text Classification]** 作中の紙・冊子・看板・画面などの印刷文字を吹き出し読順から除外し、SNS用解説へ確定タイトル見出しを必ず付加 / Excluded printed in-scene text on papers, booklets, signs and screens from speech-balloon order checks, and guaranteed the confirmed title heading in SNS explanation text
 - **[UX]** 結果画面は従来の画像ダウンロードだけに戻し、固定比率・加工前画像・QA再検査の追加ボタンを撤去 / Restored the single existing image-download action and removed extra fixed-ratio, raw-image and QA-recheck controls
 
-### v6.4.3 (2026-09-21)
-- **[Models & Cost]** STEP2でAstra、Sol、Terra、Luna、GPT-4.1系から開始モデルを選択し、選択位置より下位だけへフォールバック。選択・試行・採用モデル、実績トークン数、参考費用を表示 / Added a persisted STEP2 starting-model selector across Astra, Sol, Terra, Luna and GPT-4.1 models, descending-only fallback, and selected/attempted/adopted model plus token/cost reporting
-- **[Camera Fix]** 衣装修飾付きの肩越し指定でも前景人物を正しく固定し、単独話者コマでも背面カメラ、自然な遮蔽、指定頭身を維持 / Corrected foreground ownership for clothing-modified shoulder shots and retained rear-camera, natural occlusion and scripted proportions in single-speaker panels
-- **[QA]** 情景に合うAI補完の環境文字は物語を大きく誤らせない限り許容し、参照画像がある場合は各コマの各人物について眼鏡を独立確認 / Allowed harmless AI-completed environmental lettering while rejecting major story mismatches, and added per-panel per-character eyewear evidence when references are supplied
-
-### v6.4.2 (2026-09-20)
-- **[Fix & UX]** Web貼り付け用プロンプトの短縮後も、人物ごとの手足の接続・自然な遮蔽・画角外を確認する指示を保持し、構図と演技を損なわないようにしました / Web-copy prompt compaction now retains per-character limb connections and natural occlusion/cropping guidance without flattening the scripted composition or acting
-
-### v6.4.1 (2026-09-19)
-- **[Fix & UX]** 画像APIのポリシー拒否時に、表現を修正して最大5回まで再生成し、成功画像とプロンプト履歴を保持 / On image-API policy rejection, repairs wording and retries up to five times while retaining the successful image and prompt history
-
-### v6.4.0 (2026-09-19)
-- **[Fix & UX]** STEP1解析中は経過表示窓へ移動し、STEP2からSTEP4の次に操作できる主ボタンは画面下端に表示する導線を追加。 / Focused STEP1 analysis on its progress window and placed the next actionable STEP2-4 button at the lower edge of the view.
-- **[Fix & API]** 画像APIのポリシー拒否は、内部で安全な表現へ修正して最大5回まで再生成。成功画像、履歴、元・修正プロンプトを残し、各再試行が文章APIと画像APIを使うことを表示。 / On an image-API policy rejection, repair the wording internally and retry up to five times while retaining the successful image, history, and original and repaired prompts; disclose that each retry uses text and image APIs.
-
-### v6.3.9 (2026-09-19)
-- **[Fix & UX]** STEP3開始時に進捗ログへ移動し、最終プロンプト完成時だけSTEP4へ移動する導線を追加。手動編集では画面位置を変えません。 / Added STEP3 progress-log focus and STEP4 transition after prompt completion without moving the view during manual edits.
-
-### v6.3.8 (2026-09-19)
-- **[Fix & UX]** STEP2の実行中は実際の進捗・エラーログだけを表示し、古い結果、プレビュー、STEP3を隠す段階表示を追加。完了後はSTEP3を案内し、READMEの画像QA説明を英日対応に修正 / Added progressive disclosure during STEP2: show only the real progress or error log while hiding stale results, preview and STEP3; reveal and guide STEP3 after completion, and align the README image-QA guidance in English and Japanese
-
-### v6.3.7 (2026-09-19)
-- **[Fix & UX]** 漫画プロンプトと画像QAを強化。ギャグ／シリアス演出、演技個性、衣装優先、Gペン・解剖・焦点、可読文字、カラー／白黒、最良候補継続、次STEP案内と不合格時だけの再検査を統合 / Strengthened manga prompts and rendered-image QA across gag and serious direction, acting identity, outfit priority, G-pen anatomy and focus, readable text, color and monochrome, best-candidate continuation, next-step guidance, and failure-only image review
-
-### v6.3.6 (2026-09-17)
-- **[Fix & UX]** 不合格画像の原因と失敗履歴をAI解析し、同じ方針を避けて最大3回修正。全候補が不合格でも比較した最良候補を警告付きで採用して続行し、吹き出しの右から左の読順を各コマで固定 / Added AI failure analysis with up to three bounded repairs that avoid repeated strategies, preserve the best candidate with a warning when all repairs fail, and enforce right-to-left speech-bubble ordering in every panel
-
-### v6.3.5 (2026-09-17)
-- **[Fix & UX]** 台詞の右から左の順序と吹き出し尻尾の話者対応を共通ルールとQAで固定しました / Locked right-to-left dialogue order and speaker-matched speech-bubble tails in shared rules and QA
-
-### v6.3.4 (2026-09-17)
-- **[Fix & UX]** 出典・参考リンクのメタデータが漫画の台詞や登場人物へ混入する問題を共通処理で修正 / Fixed source and reference metadata leaking into manga dialogue and cast extraction with shared filtering
-
-### v6.3.3 (2026-09-17)
-- **[Fix & UX]** SNS投稿用の解説と出典リンクを追加 / Added SNS posting explanations and source links
-
-### v6.3.2 (2026-09-17)
-- **[Fix & UX]** 一般シリアス結末と題材別の自動選択を追加。ギャグ・シリアス双方のおまかせ、ドキュメンタリー配置、説明を統一。 / Added general serious endings and topic-aware automatic selection; aligned category-specific automatic choices, documentary placement, and descriptions.
-
-### v6.3.1 (2026-09-16)
-- **[Fix & UX]** 画面文字を毎コマで読ませる構図の衝突を抑え、文字を読むコマと演技を見せるコマを分ける汎用ルールを追加。カメラ効果の未達は次回課題として記録。 / Added a generic lettering-per-beat rule so recurring screen text does not force every panel into a readable eye-level composition; remaining camera gaps are documented as follow-up work.
-
-### v6.3.0 (2026-09-16)
-- **[Fix & UX]** フォルダー自動保存を撤去し、生成履歴10件と手動ダウンロードのみを維持。強パースは物語上の焦点へ分散し、足前出しを既定にしない / Removed folder auto-save while retaining ten history items and manual download. Strong perspective now uses a story-relevant focal form instead of defaulting to a forward foot.
-
-### v6.2.9 (2026-09-16)
-- **[Fix & UX]** 生成履歴を直近10件へ復元し、最終採用API画像を選択済み保存先へ実書き込みする自動保存と年月日時分秒ファイル名を追加 / Restored ten recent image-history entries and added automatic writing of quality-selected API images to a chosen destination with date-time filenames
-
-### v6.2.8 (2026-09-16)
-- **[Fix & UX]** フルオートと連続ループで手入力の場所・衣装を保持し、STEP2実APIで反映を確認 / Full-auto and continuous loops retain manual location and outfit overrides, verified with a live STEP2 API run.
-
-### v6.2.7 (2026-09-16)
-- **[Fix & UX]** STEP1〜4のAPI待機上限を10分へ統一し、GPT-6系の応答・再試行を待てるように改善 / Unified STEP1-4 API timeouts at ten minutes so GPT-6 responses and retries can complete
-
-### v6.2.6 (2026-09-16)
-- **[Fix & UX]** OpenAI接続時のカテゴリニュースシナリオをResponses Web Searchで生成し、STEP1〜4を選択APIだけへ固定 / Generate OpenAI category-news scenarios with Responses Web Search and keep STEP1-4 on the selected API only
-
-### v6.2.5 (2026-09-16)
-
-- **[Fix]** Extended Model Chain derivation to every active Gemini route: text, vision, and image generation. A provider-route update now changes the matching viewer entry without a duplicated snapshot edit, and the required pre-deploy test covers both OpenAI and Gemini routes. / **[修正]** Model Chainの導出対象を、Geminiの通常文章・Vision・画像生成の全実行経路へ拡張しました。プロバイダー経路を更新すると、対応する表示も複写作業なしで追随し、必須のpre-deployテストはOpenAIとGeminiの両方を確認します。
-- **[Fix & Quality]** Preserved role-specific occupational uniforms, workwear, and safety gear while keeping visitors and off-duty characters in their assigned clothes. Monochrome output now reserves pure white for lit skin, light walls, ceilings, and light fabric, with screentone limited to bounded midtones and shadows. Real Sunburst/xhigh color and monochrome API pages verified both conditions with automatic repair disabled. / **[修正・品質]** 職業制服・作業服・安全装備を人物の役割ごとに保持し、来訪者・非勤務者の服装と分離しました。白黒は肌の明部、明るい壁・天井・布地を純白に残し、網点を範囲限定の中間調と影へ限定しました。Sunburst/xhighのカラー・白黒実API画像を自動修正OFFで検証しています。
-
-### v6.2.4 (2026-09-16)
-
-- **[Fix]** Made OpenAI text-route lists the single source of truth for the visible Model Chain. Updating a text route now updates its STEP1–3 OpenAI display automatically; STEP4 derives its default, selectable, and fallback entries from the image-setting source. The pre-deploy check blocks a release if this synchronization contract fails. / **[修正]** OpenAI文章経路の一覧を、画面のModel Chainの唯一の定義にしました。今後は文章経路を更新するとSTEP1〜3のOpenAI表示も自動で追随し、STEP4も画像設定の初期選択・明示選択・代替選択から導出します。同期契約の検査に失敗したリリースはpre-deployチェックで停止します。
-
-### v6.2.3 (2026-09-16)
-
-- **[Fix]** Updated the visible Model Chain to match the active STEP2 OpenAI sequence: GPT-6 Astra, GPT-5.6 Sol, then the established GPT-4.1 chain. STEP4 now identifies Sunburst as the verified-model default, Flare as an explicit option, and GPT Image 2.0 as the fallback selection when 2.5 is unavailable. The pre-deploy check now covers these route-specific lists too. / **[修正]** 画面のModel Chainを、STEP2の実行経路であるGPT-6 Astra、GPT-5.6 Sol、既存のGPT-4.1系へ同期しました。STEP4は、認証済み時の初期選択をSunburst、明示選択をFlare、2.5が利用できない場合の初期選択をGPT Image 2.0として表示します。pre-deployチェックも経路別の一覧を確認します。
-
-### v6.2.2 (2026-09-16)
-- **[Fix]** 人数、人物の同一性、眼鏡、衣装、台詞を優先し、任意の背景装飾だけを整理。構図や画風の数値ノルマを外し、指定した正面・静かなコマ・繰り返す構図を保持 / Prioritized cast count, identity, glasses, wardrobe and exact script over optional decoration; removed numeric composition/style quotas and preserved scripted frontal, quiet and repeated shots
-
-### v6.2.1 (2026-09-15)
-- **[Fix & UX]** キャラシートの参考衣装をSTEP2の新規シナリオ・演出強化とOutfit指定時の画像キャスト情報から分離し、外見・性格・関係性を保持したまま題材と場面に基づいて自動選定。根拠のない学校制服や後付けの学生役を再試行対象にし、明示した衣装・学校行事・職業制服は保持 / Isolated reference clothing from STEP2 scenario/enhancement and overridden image-cast context while retaining identity, personality and relationships; automatic wardrobe now follows the subject and setting, retries unsupported school attire or invented student roles, and preserves explicit outfits, school contexts and professional uniforms
-
-### v6.2.0 (2026-09-15)
-- **[Fix & UX]** 題材と因果に沿って小道具を選び、同じ物の連続拡張を避けつつ、明示された小道具・カメラ・演技を保持 / Selected props from topic-specific causality, avoiding repeated extensions while preserving explicit props, camera work and acting
-
-### v6.1.9 (2026-09-15)
-- **[Fix & UX]** 白黒でも光・遠近・全身演技を保持し、色非依存の頭身指定をカラーと共通化 / Retained dramatic monochrome lighting, depth and full-body acting, with shared color-independent proportions
-
-### v6.1.8 (2026-09-15)
-- **[Fix & UX]** GPT-6 AstraをSTEP2のシナリオ作成・強化だけの先行経路にし、失敗時はGPT-5.6 Solと既存GPT-4.1系へ段階フォールバック。二面小道具の裏面操作をQAで誤検知せず、圧縮後も最終コマの能動的な配置と顔演技を保持 / Routed only STEP2 scenario creation and enhancement through GPT-6 Astra with GPT-5.6 Sol and established GPT-4.1 fallbacks, added context-aware two-sided-prop QA, and retained active final-panel staging and facial acting under prompt compaction.
-
-### v6.1.7 (2026-09-15)
-- **[Fix & UX]** 背景を省略する抽象コマでも俯瞰の身体・小道具投影を残し、明示された個別視線を会話用の補助指示より優先。指定がない通常会話では相互視線を維持 / Preserved overhead body and prop projection in abstract beats and prioritized explicit individual gaze over conversational fallback rules; ordinary unspecified conversations retain mutual eye contact
-
-### v6.1.6 (2026-09-15)
-- **[Fix & UX]** 4コマで背景の奥行きと被写界深度を保ち、明示カメラと肩越し人物配置を修正 / Preserved four-panel setting depth and depth of field, and corrected explicit cameras and shoulder-over placement
-
-### v6.1.5 (2026-09-13)
-
-- Added generic stale-mode invalidation and final-prompt consistency guards for Serious Documentary. / シリアス・ドキュメンタリーへ、汎用の旧モード無効化と最終プロンプト整合検査を追加しました。
-- Made the STEP2 ending selector visually distinct but compact with a 28px-high light face, explicit menu cue and fixed chevron, and added a measured 12px gap before the STEP2 execution button. / STEP2の結末選択欄を高さ28pxのコンパクトな明るい面、明示的なメニュー表示、固定矢印で識別しやすくし、STEP2実行ボタンとの間へ実測可能な12pxの余白を追加しました。
-- Made the seventh scenario-enhancement category follow the ending mode: Serious Documentary shows and sends Serious Direction while every other ending keeps Gag Direction. Serious enhancement preserves the existing art style and normal proportions and rejects newly introduced CHIBI/COMEDY emotion tags. / 7番目のシナリオ強化カテゴリを結末モード連動にし、シリアス・ドキュメンタリーでは「シリアス演出」、それ以外では「ギャグ演出」を表示・送信します。シリアス強化は既存絵柄と通常頭身を維持し、新規CHIBI／COMEDY感情タグを拒否します。
-- Normalized the explanatory copy in the STEP4 API quality/size and Web image-correction/upscale sections to the same 10–11px scale used by the video and safety guides. The API quality/size labels are 11px and their selects are compact 26px-high controls with 11px text; generation settings are unchanged. / STEP4のAPI品質・サイズとWeb画像比率修正・アップスケールの説明文を、動画化・安全ポリシーと同じ10〜11px基準へ統一しました。API品質・サイズの見出しは11px、選択欄は高さ26px・文字11pxへ縮小し、生成設定自体は変更していません。
-- A fresh OpenAI GPT Image 2.5 Sunburst / xhigh run with both character sheets kept normal proportions and one reference-sheet art style across all four panels, including the final panel. All 431 tests, strict lint, production build and browser error checks passed. / キャラクターシート2枚を使ったOpenAI GPT Image 2.5 Sunburst / xhigh実生成では、最終コマを含む全4コマで通常頭身と同一の参照絵柄を維持しました。全431テスト、厳格lint、本番ビルド、ブラウザエラー検査に合格しています。
-
-### v6.1.4 (2026-09-13)
-
-- Split the former documentary ending into Serious Documentary and Gag Documentary. Both preserve arbitrary source facts; Serious Documentary also keeps the attached character-sheet art style across all four panels and changes only the ending into a serious conclusion. / 従来のドキュメンタリーをシリアス・ドキュメンタリーとギャグ・ドキュメンタリーへ分割しました。どちらも任意の原文事実を保持し、シリアス版は全4コマで添付キャラクターシートの絵柄を維持して、結末だけをシリアスにします。
-- Added a generic internal source-fact ledger, source-anchor validation and timeline normalization. These rules contain no sample character names or fixed story facts, and internal fact labels are never printed in the image. / 汎用の内部事実台帳、原文アンカー検査、時系列正規化を追加しました。見本の人物名や固定の物語事実は含めず、内部用の事実ラベルは画像へ表示しません。
-- Replaced the FourPanel download targets with the supplied v5.9.9 workflow JSON and three-custom-node distribution ZIP. Added a generic standard MiniMax H3 clipboard prompt and documented which automated variable-duration, candidate comparison and audit features still require the packaged workflow. / FourPanelのダウンロード先を添付v5.9.9ワークフローJSONとカスタムノード3点ZIPへ更新しました。標準MiniMax H3用の汎用コピープロンプトを追加し、自動可変尺、候補比較、監査など配布ワークフローでのみ自動化される機能も明記しました。
-- A live OpenAI API run with two character sheets produced a 1024×1536 serious documentary page. All 419 tests, strict lint, production build and whitespace checks passed. / キャラクターシート2枚を添付したOpenAI API実生成で、1024×1536のシリアス・ドキュメンタリー4コマを確認しました。全419テスト、厳格lint、production build、空白差分検査に合格しています。
-
-### v6.1.3 (2026-09-13)
-
-- Added a fixed 12px visual gap between the STEP3 settings-file save button and the STEP4 API generation button. Button height, width, wording, color and behavior are unchanged. / STEP3の設定ファイル保存ボタンとSTEP4のAPI生成ボタンの間へ、表示環境に依存しない12pxの余白を追加しました。ボタンの高さ・幅・文言・色・処理は変更していません。
-- The Color/Monochrome prompt behavior and separately distributed FourPanel v6.0.9 workflow JSON/custom-node ZIP remain unchanged from v6.1.2. / カラー／白黒のプロンプト動作と、別配布のFourPanel v6.0.9ワークフローJSON・カスタムノードZIPはv6.1.2から変更していません。
-
-### v6.1.2 (2026-09-13)
-
-- Added a persistent Color/Monochrome selector to STEP3. Monochrome rebuilds the same scenario with shared API/Web instructions for white paper, black ink, black-on-white tones, strong G-pen lines, dynamic staging, and simplified nonessential background detail. / STEP3に保持式のカラー／白黒切替を追加しました。白黒では同じシナリオから、白い紙面、黒インク、白地の網点、強いGペン線、動きのある構図、不要な背景細部の整理をAPI／Web共通で指示します。
-- Source colors from arbitrary character sheets are treated as identity metadata and converted to stable ink or tone regions. Actual API and Web-paste runs with two character sheets removed visible pink and other source hues, but the returned PNGs were not mathematically exact two-value images. / 任意のキャラクターシートの色は同一性情報として扱い、固定した黒・白・網点領域へ変換します。キャラシート2枚を使ったAPIとWeb貼付の実生成では目視できるピンク等の色残りは消えましたが、PNGの画素値は厳密な二値ではありませんでした。
-- Tightened STEP3/STEP4 wording: the prompt heading is now `最終プロンプト`, the edit guidance sits below the status log, the API-only implementation note is removed, and the generation button reads `APIで画像をアプリ内で生成する（STEP4）`. / STEP3・STEP4の表示を整理し、見出しを`最終プロンプト`、編集案内を状況確認窓の下へ配置し、API専用の実装説明を削除、生成ボタンを`APIで画像をアプリ内で生成する（STEP4）`へ変更しました。
-
-### v6.1.1 (2026-09-12)
-- **[Fix & UX]** STEP1の選択ボタンをSTEP2〜4と同じ横幅へ統一し、画像選択・追加ドロップ・任意の360°背景／作風JSONを説明する案内文へ更新。STEP3内の「プロンプトをコピーする（web貼り付け時）」ボタンを白から薄い黄色へ変更 / Matched the STEP1 selector width to STEP2–4, clarified image selection and optional companion inputs, and changed the STEP3 web-prompt copy button from white to pale yellow
-
-### v6.1.0 (2026-09-12)
-
-- Corrected the light-blue STEP guide so the STEP1 upload area stays dark and only its compact selection control is blue. STEP2 and STEP3 keep their original neutral raised edge, while STEP4 remains unchanged. / STEP案内の薄青表示を修正し、STEP1は広い読込領域を黒へ戻して小さな選択操作だけを薄青にしました。STEP2・3は従来の薄いグレーの立体枠へ戻し、STEP4は変更していません。
-- The FourPanel workflow and custom-node downloads remain the separately verified v6.0.9 JSON and ZIP; this patch changes only the app guidance display. / FourPanelのワークフローとカスタムノードは、検証済みのv6.0.9 JSONとZIPを別々に配布するままです。今回の修正はアプリの案内表示だけです。
-
-### v6.0.9 (2026-09-12)
-
-- Changed only the four required STEP1–STEP4 actions to a shared light-blue style, making the minimum path clear while leaving secondary controls visually separate. / 必須のSTEP1～STEP4主操作だけを薄い青色へ統一し、補助操作と見分けやすくしました。
-- Repackaged the unchanged reviewed FourPanel workflow and five-custom-node bundle as v6.0.9 so the app, workflow button, ZIP button, repository documentation, and note guidance all use one current version. / 検証済みのFourPanel生成内容は変えず、アプリ・ワークフロー・ZIP・Git文書・note案内の現行版をv6.0.9へ統一しました。
-
-### v6.0.8 (2026-09-12)
-
-- Moved the FourPanel custom-node ZIP from Git-tracked static files to a version-matched GitHub Release asset while retaining separate app buttons for JSON and ZIP. / FourPanelカスタムノードZIPをGit追跡の静的ファイルから同版GitHub Releaseアセットへ移し、アプリのJSON・ZIP別ボタンを維持しました。
-- Removed obsolete workflow and ZIP downloads from the current Pages and Hugging Face trees. / 現在のPages・Hugging Faceツリーから旧ワークフローと旧ZIPを除去しました。
-- Added the Apache-2.0 text and LightX2V origin notice required by the bundled PlagueKind-derived files. / 同梱PlagueKind由来ファイルに必要なApache-2.0本文とLightX2V出典表示を追加しました。
-- Rewrote both the repository README and bundled README in inline `English / 日本語` format. / Git READMEと同梱READMEを一文内の`English / 日本語`形式へ統一しました。
-
-### v6.0.7 (2026-09-12)
-
-- Added adaptive dialogue timing, structured combined audio/visual repair, and up to five inspected candidates per segment. / 台詞の必要時間延長、音声・映像同時不合格時の構造化修正、区間ごとの最大5候補比較を追加しました。
-
-### v6.0.6 (2026-09-12)
-
-- Displayed the selected API model, quality, and size in the white settings control while keeping the black STEP4 button concise. / 白い設定欄に選択中のAPIモデル・品質・サイズを表示し、黒いSTEP4ボタンを簡潔にしました。
-
-### v6.0.5 (2026-09-12)
-
-- Added elapsed-time display while the pre-output STEP3 AI review is running. / STEP3の出力前AI精査中に経過秒数を表示しました。
-
-### v6.0.1 (2026-09-11)
-
-- Added GPT Image 2.5 Sunburst quality and size controls with bounded QA behavior. / GPT Image 2.5 Sunburstの品質・サイズ設定と回数を制限したQA動作を追加しました。
+Older release history is available in [GitHub Releases](https://github.com/FURUYAN1234/nano-banana-pro/releases). / 以前の更新履歴は [GitHub Releases](https://github.com/FURUYAN1234/nano-banana-pro/releases) で確認できます。
 
 ## License / ライセンス
 

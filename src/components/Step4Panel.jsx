@@ -25,6 +25,7 @@ import { inferImageQualityMode } from '../lib/image-quality-failsafe';
 import { buildGeneratedImageFilename, downloadImageDataUrl } from '../lib/generation-history';
 import {
   buildGeneratedImageMetadata,
+  buildWebGenerationMetadata,
   embedGeneratedImageMetadata,
   serializeGeneratedImageMetadata,
 } from '../lib/generated-image-metadata';
@@ -384,8 +385,42 @@ export default function Step4Panel({
   const [isVideoGuideOpen, setIsVideoGuideOpen] = React.useState(false);
   const [isImageHelpOpen, setIsImageHelpOpen] = React.useState(false);
   const [isApiSettingsOpen, setIsApiSettingsOpen] = React.useState(false);
-  const [metadataError, setMetadataError] = React.useState('');
+  const [webMetadataError, setWebMetadataError] = React.useState('');
+  const [imageMetadataError, setImageMetadataError] = React.useState('');
   const generatedAtByImageRef = React.useRef(new Map());
+
+  const getCurrentMetadataInputImages = () => {
+    const inputImages = images.map(dataUrl => ({ role: 'character_reference', dataUrl }));
+    if (bg360Enabled && bg360Image) inputImages.push({ role: 'background_reference', dataUrl: bg360Image });
+    return inputImages;
+  };
+
+  const getCurrentMetadataSettings = () => ({
+    punchline_type: punchlineType,
+    color_mode: colorMode,
+    expression_enhancement: Boolean(enhanceExpressions),
+    body_language_enhancement: Boolean(enhanceBodyLang),
+    effects_enhancement: Boolean(enhanceEffects),
+    background_enhancement: Boolean(enhanceBackgrounds),
+    camera_enhancement: Boolean(enhanceCameraWork),
+    dialogue_rewrite: Boolean(enhanceDialogue),
+    ending_direction_enhancement: Boolean(enhanceGag),
+    enhancement_label: isSeriousEnhancementMode ? "シリアス演出強化" : "ギャグ演出強化",
+    ending_tone: isSeriousEnhancementMode ? 'serious' : 'gag',
+    character_analysis_used: Boolean(castList),
+    background_analysis_used: Boolean(bg360Enabled && bg360Analysis),
+    background_reference_used: Boolean(bg360Enabled && bg360Image),
+  });
+
+  const buildCurrentWebGenerationMetadata = (preparedAt) => buildWebGenerationMetadata({
+    appVersion: SYSTEM_VERSION,
+    preparedAt,
+    provider: (isOpenAIImageMode || enableChatGPTMode) ? 'openai' : 'gemini',
+    scenario,
+    finalPrompt,
+    inputImages: getCurrentMetadataInputImages(),
+    settings: getCurrentMetadataSettings(),
+  });
 
   const buildCurrentGeneratedImageMetadata = async (outputImage) => {
     if (!generatedImage) throw new Error('画像生成後に制作情報を保存できます。');
@@ -396,9 +431,6 @@ export default function Step4Panel({
     }
     const modelId = displayedHistory?.modelId
       || (isOpenAIImageMode ? resolveOpenAIImageOption(openAIImageQuality).model : 'gemini-3.1-flash-image');
-    const inputImages = images.map(dataUrl => ({ role: 'character_reference', dataUrl }));
-    if (bg360Enabled && bg360Image) inputImages.push({ role: 'background_reference', dataUrl: bg360Image });
-
     return buildGeneratedImageMetadata({
       appVersion: SYSTEM_VERSION,
       generatedAt: generatedAtByImageRef.current.get(generatedImage),
@@ -409,24 +441,9 @@ export default function Step4Panel({
       scenario,
       finalPrompt,
       fallbackOccurred: isFallbackUsed,
-      inputImages,
+      inputImages: getCurrentMetadataInputImages(),
       outputImage,
-      settings: {
-        punchline_type: punchlineType,
-        color_mode: colorMode,
-        expression_enhancement: Boolean(enhanceExpressions),
-        body_language_enhancement: Boolean(enhanceBodyLang),
-        effects_enhancement: Boolean(enhanceEffects),
-        background_enhancement: Boolean(enhanceBackgrounds),
-        camera_enhancement: Boolean(enhanceCameraWork),
-        dialogue_rewrite: Boolean(enhanceDialogue),
-        ending_direction_enhancement: Boolean(enhanceGag),
-        enhancement_label: isSeriousEnhancementMode ? "シリアス演出強化" : "ギャグ演出強化",
-        ending_tone: isSeriousEnhancementMode ? 'serious' : 'gag',
-        character_analysis_used: Boolean(castList),
-        background_analysis_used: Boolean(bg360Enabled && bg360Analysis),
-        background_reference_used: Boolean(bg360Enabled && bg360Image),
-      },
+      settings: getCurrentMetadataSettings(),
     });
   };
 
@@ -562,20 +579,19 @@ export default function Step4Panel({
                 </div>
               )}
 
-              {/* API画像と同一内容の制作情報JSON */}
+              {/* Web版へ貼り付けて生成する場合の独立した制作情報JSON */}
               <button
                 onClick={async () => {
                   try {
-                    setMetadataError('');
-                    const pngImage = await convertImageDataUrlToPng(generatedImage);
-                    const metadata = await buildCurrentGeneratedImageMetadata(pngImage);
+                    setWebMetadataError('');
+                    const metadata = await buildCurrentWebGenerationMetadata(new Date().toISOString());
                     const blob = new Blob([serializeGeneratedImageMetadata(metadata)], { type: 'application/json;charset=utf-8' });
                     const url = URL.createObjectURL(blob);
                     const anchor = document.createElement('a');
                     anchor.href = url;
                     const titleMatch = scenario?.match(/タイトル[:：]\s*(.+)/);
                     const titleSlug = titleMatch ? titleMatch[1].trim().substring(0, 20).replace(/[\\/:*?"<>|]/g, '_') : 'untitled';
-                    anchor.download = `AI_manga_metadata_${titleSlug}_${metadata.generated_at.replace(/\D/g, '').slice(2, 14)}.json`;
+                    anchor.download = `AI_manga_web_metadata_${titleSlug}_${metadata.prepared_at.replace(/\D/g, '').slice(2, 14)}.json`;
                     document.body.appendChild(anchor);
                     anchor.click();
                     document.body.removeChild(anchor);
@@ -583,15 +599,15 @@ export default function Step4Panel({
                     setIsMetaSaved(true);
                     setTimeout(() => setIsMetaSaved(false), 2500);
                   } catch (error) {
-                    setMetadataError(error instanceof Error ? error.message : '制作情報JSONを保存できませんでした。');
+                    setWebMetadataError(error instanceof Error ? error.message : 'Web版生成用の制作情報JSONを保存できませんでした。');
                   }
                 }}
-                disabled={!finalPrompt || !generatedImage}
+                disabled={!finalPrompt}
                 className={`w-full ${isMetaSaved ? 'bg-green-600' : 'bg-amber-900/50 hover:bg-amber-800/60'} ${isMetaSaved ? 'text-white' : 'text-amber-400'} font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-all border ${isMetaSaved ? 'border-green-500/50' : 'border-amber-700/30'} disabled:opacity-30 disabled:cursor-not-allowed text-sm`}
               >
-                {isMetaSaved ? '保存完了！' : '📂 制作情報を保存 (JSON)'}
+                {isMetaSaved ? '保存完了！' : '📂 Web版生成用 制作情報JSONを保存'}
               </button>
-              {metadataError && <p className="mt-1 text-[10px] text-red-400">{metadataError}</p>}
+              {webMetadataError && <p className="mt-1 text-[10px] text-red-400">{webMetadataError}</p>}
             </div>
 
             <div className="relative" style={{ paddingTop: '12px' }}>
@@ -1320,20 +1336,20 @@ No explanations. No partial results.`;
                 <button
                   onClick={async () => {
                     try {
-                      setMetadataError('');
+                      setImageMetadataError('');
                       const pngImage = await convertImageDataUrlToPng(generatedImage);
                       const metadata = await buildCurrentGeneratedImageMetadata(pngImage);
                       const imageWithMetadata = embedGeneratedImageMetadata(pngImage, metadata);
                       downloadImageDataUrl(imageWithMetadata, getGeneratedImageFilename());
                     } catch (error) {
-                      setMetadataError(error instanceof Error ? error.message : '制作情報を画像へ保存できませんでした。');
+                      setImageMetadataError(error instanceof Error ? error.message : '制作情報を画像へ保存できませんでした。');
                     }
                   }}
                   className="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg border border-white/20 active:scale-95"
                 >
                   <Download size={20} /> PNGをダウンロード（制作情報入り）
                 </button>
-                {metadataError && <p className="mt-1 text-[10px] text-red-400">{metadataError}</p>}
+                {imageMetadataError && <p className="mt-1 text-[10px] text-red-400">{imageMetadataError}</p>}
 
                 {isFourPanelPage && !hasFixedPageLayout && normalizeDisplayedPage && <button type="button" disabled={isGeneratingImage} className="w-full mt-2 text-slate-300 underline disabled:opacity-50" onClick={normalizeDisplayedPage}>ページ比率を揃える（追加課金なし）</button>}
 

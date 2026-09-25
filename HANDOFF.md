@@ -1,3 +1,13 @@
+## v6.5.8 Web用制作情報JSONとAPI画像メタデータの経路分離・公開作業 — 2026-09-25
+
+- 最新依頼: v6.5.4でWeb貼付用JSONがAPI画像用メタデータ経路へ誤統合され、画像生成前は無効な空白帯に見える回帰を修正する。文章ルールだけに依存せず、全設計でルール違反と手抜き設計をコード境界・正負テスト・証拠ゲートにより止める。
+- 根本原因: Web用の事前準備レコードと、実際のAPI画像・モデル・出力ハッシュを持つAPI画像来歴を「制作情報」という名称だけで同一視した。v6.5.4の変更でWeb側も`generatedImage`、API用ビルダー、`api_image_generation`を要求し、最終プロンプト完成時点で保存できた従来契約を壊した。画面用途と履歴を照合する回帰テストがなかった。
+- 修正: Web用`buildWebGenerationMetadata`とAPI用`buildGeneratedImageMetadata`を分離。Web用は出力画像・APIモデル・フォールバック・生成ID・出力ハッシュを受け取らず、`record_type: web_generation_companion`／`workflow_mode: manual_web_generation`を記録する。API用は`record_type: api_image_generation`と実画像ハッシュを保持する。Web用ボタンは`finalPrompt`だけで有効になり、ラベルとエラー状態もAPI画像保存から分離した。
+- 機械的防止: `tests/generated-image-metadata.test.mjs`へ、出力画像なしのWebレコード生成、API専用項目の不在、Webボタンの有効条件、WebハンドラからAPIビルダー・画像変換・`generatedImage`依存を排除する正負テストを追加。グローバル`C:\Users\sx717\.codex\AGENTS.md`へ、全Codex設計でルールをコード境界・正負テスト・監査証拠に変換し、未強制の絶対ルールを完了扱いしない規則を追加した。
+- 検証: 回帰は旧実装で欠落export、API用`record_type`欠落、禁止API項目の受理をそれぞれRED確認後GREEN化。焦点13/13、全Node 679/679、ESLint警告0、production build、`git diff --check`が成功。内蔵ブラウザでOpenAI `gpt-6-luna`のSTEP2とSTEP3を実行し、画像0件の状態でWeb用JSONボタンが`disabled=false`・`opacity=1`、APIボタンまで12pxであることを確認。ボタン操作後に`保存完了！`へ変化し、以前の薄い空白帯は解消した。API画像生成は本修正の受入条件ではないため実行していない。
+- 公開境界: ユーザーはv6.5.8の公式release/deploy、既存FourPanel note `ndf063558c1f5`更新、公式フルバックアップを明示承認済み。公開・note・バックアップはそれぞれ独立した証拠で完了判定する。
+
+
 ## v6.5.7 STEP4制作情報案内の配置修正・公開作業 — 2026-09-25
 
 - 最新依頼: 手動JSON保存欄とAPI生成欄の間にあった制作情報の説明と空きを整理し、内蔵ブラウザで実API生成を確認後、公式release/deploy、既存FourPanel note `ndf063558c1f5`更新、公式フルバックアップまで完遂する。

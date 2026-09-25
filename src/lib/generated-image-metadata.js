@@ -70,6 +70,107 @@ const providerName = (provider) => {
   return sanitizeText(provider || 'Unknown');
 };
 
+const buildInputImageRecords = (inputImages) => Promise.all(inputImages
+  .filter(({ dataUrl }) => Boolean(dataUrl))
+  .map(async ({ role, dataUrl }, index) => {
+    const parsed = parseImageDataUrl(dataUrl);
+    return {
+      role: sanitizeText(role || 'reference'),
+      index,
+      mime_type: parsed.mimeType,
+      byte_length: parsed.bytes.byteLength,
+      sha256: await sha256Hex(parsed.bytes),
+    };
+  }));
+
+const WEB_METADATA_FORBIDDEN_FIELDS = Object.freeze([
+  'outputImage',
+  'modelId',
+  'fallbackOccurred',
+  'generatedAt',
+  'workflowMode',
+]);
+
+export const buildWebGenerationMetadata = async (options = {}) => {
+  if (WEB_METADATA_FORBIDDEN_FIELDS.some(field => Object.hasOwn(options, field))) {
+    throw new Error('Web版用制作情報にAPI画像専用項目は指定できません。');
+  }
+  const {
+    appVersion,
+    preparedAt,
+    provider,
+    scenario,
+    finalPrompt,
+    inputImages = [],
+    settings = {},
+  } = options;
+  const safeProvider = sanitizeText(provider);
+  const safeScenario = sanitizeText(scenario);
+  const safePrompt = sanitizeText(finalPrompt);
+  const safePreparedAt = sanitizeText(preparedAt);
+  const recordHash = await sha256Hex(new TextEncoder().encode(JSON.stringify({
+    app_version: sanitizeText(appVersion),
+    prepared_at: safePreparedAt,
+    provider: safeProvider,
+    scenario: safeScenario,
+    final_prompt: safePrompt,
+  })));
+
+  return {
+    schema: GENERATED_IMAGE_METADATA_KEYWORD,
+    schema_version: SCHEMA_VERSION,
+    record_type: 'web_generation_companion',
+    record_id: `urn:sha256:${recordHash}`,
+    prepared_at: safePreparedAt,
+    provenance: {
+      digital_source_type: DIGITAL_SOURCE_TYPE,
+      human_oversight_level: 'prompt_guided',
+    },
+    software: {
+      name: 'Nano Banana Pro',
+      version: sanitizeText(appVersion),
+      repository: REPOSITORY_URL,
+    },
+    ai: {
+      provider: safeProvider,
+      model_id: null,
+      fallback_occurred: null,
+    },
+    prompt: {
+      workflow_mode: 'manual_web_generation',
+      authorship: 'human_app_assisted',
+      scenario: safeScenario,
+      final_sent_prompt: safePrompt,
+    },
+    settings: sanitizeValue(settings),
+    inputs: await buildInputImageRecords(inputImages),
+    standards: {
+      iptc: {
+        digital_source_type: DIGITAL_SOURCE_TYPE,
+        ai_system_used: `${providerName(safeProvider)} Web`,
+        ai_system_version_used: null,
+        ai_prompt_information: safePrompt,
+        ai_prompt_writer_name: null,
+      },
+      c2pa: {
+        ai_disclosure: {
+          model_type: 'c2pa.types.model',
+          model_name: null,
+          model_identifier: null,
+          human_oversight_level: 'prompt_guided',
+        },
+        cryptographically_signed: false,
+      },
+    },
+    privacy: {
+      policy: 'automatic_high_confidence_redaction',
+      omitted_fields: [...OMITTED_FIELDS],
+      api_key_included: false,
+      raw_reference_images_included: false,
+    },
+  };
+};
+
 export const buildGeneratedImageMetadata = async ({
   appVersion,
   generatedAt,
@@ -88,22 +189,12 @@ export const buildGeneratedImageMetadata = async ({
   const outputHash = await sha256Hex(parsedOutput.bytes);
   const safeModelId = sanitizeText(modelId || 'unknown');
   const safePrompt = sanitizeText(finalPrompt);
-  const inputs = await Promise.all(inputImages
-    .filter(({ dataUrl }) => Boolean(dataUrl))
-    .map(async ({ role, dataUrl }, index) => {
-      const parsed = parseImageDataUrl(dataUrl);
-      return {
-        role: sanitizeText(role || 'reference'),
-        index,
-        mime_type: parsed.mimeType,
-        byte_length: parsed.bytes.byteLength,
-        sha256: await sha256Hex(parsed.bytes),
-      };
-    }));
+  const inputs = await buildInputImageRecords(inputImages);
 
   return {
     schema: GENERATED_IMAGE_METADATA_KEYWORD,
     schema_version: SCHEMA_VERSION,
+    record_type: 'api_image_generation',
     generation_id: `urn:sha256:${outputHash}`,
     generated_at: generatedAt,
     provenance: {
