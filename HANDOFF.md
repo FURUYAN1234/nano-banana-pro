@@ -4,7 +4,7 @@
 - [既存note](https://note.com/happy_duck780/n/ndf063558c1f5) はv6.6.2のタイトル・本文・太字履歴・導入ZIPへ更新し、公開ページを読み戻した。記事内の図版51点、画像18点、埋め込み20件、リンク104件を保持。
 - 公式フルバックアップ `antigravity_full_backup_2026-09-26_170701.zip` は `FULL_BACKUP_VERIFIED apps=7`。manifest: `C:\Users\sx717\Antigravity\backups\antigravity_full_backup_2026-09-26_170701.manifest.json`。ローカルとGoogle DriveのSHA-256は `0A12D5BFCB1C96BFF20E8D1638A781096E717EAE18049A9D076DB8F8C33D1A1E` で一致。
 - ユーザーの追加依頼で、[X告知](https://x.com/FURUYAN123456/status/2103763061962359058) を `@FURUYAN123456` から投稿し、公開本文・アプリ/noteリンク・3ハッシュタグを読み戻した。Xのnoteカードには旧版のキャッシュが出たためカードプレビューだけ外し、本文内のnoteリンクは残した。
-- 今後はNano Banana Proに限らず、このPCで更新・デプロイしているアプリ全般について、実質的な更新をnoteで案内する時はX告知も同じ納品範囲に含める。ごく小さな文言・見た目修正は省略可。別の告知に向く節目があれば提案する。別PCでの対象アプリ別リンク確認、アカウント確認、改行、機密除外、投稿・公開確認は [全アプリ共通のX投稿引き継ぎ](docs/x-release-posting-handoff.md) に従う。ログイン資格情報を引き継ぎ書やGitへ保存しない。
+- 今後はNano Banana Proに限らず、このPCで更新・デプロイしているアプリ全般について、実質的な更新をnoteで案内する時はXとFacebookに同じ文面・改行で告知する。ごく小さな文言・見た目修正は省略可。別の告知に向く節目があれば提案する。Facebookはユーザー指定の個人プロフィール、公開範囲「友達（一部除外）」でv6.6.2告知を投稿・読戻し済み。別PCでの対象アプリ別リンク確認、アカウント・公開範囲確認、改行、機密除外、投稿確認は [全アプリ共通のX・Facebook投稿引き継ぎ](docs/x-release-posting-handoff.md) に従う。個人プロフィールの固有URLやログイン資格情報を公開Gitへ保存しない。
 
 ## Note本文・図版・履歴の再照合と修正完了 — 2026-09-25
 
