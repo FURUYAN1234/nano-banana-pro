@@ -1,6 +1,6 @@
 # Super FURU AI 4-koma System / Super FURU AI 4コマシステム
 
-> Current source version: **v6.6.1** / 現在のソース版: **v6.6.1**
+> Current source version: **v6.6.2** / 現在のソース版: **v6.6.2**
 
 An experimental web application in which AI handles topic research, story structure, direction, prompt construction, image generation, and quality review for a four-panel manga. / AIが話題調査、構成、演出、プロンプト構築、画像生成、品質確認まで担当する4コマ漫画制作Webアプリです。
 
@@ -240,7 +240,7 @@ If depth-of-field blur still leaves the focal person blended into the background
 
 プロンプトの設計目標は文字数ではなく完成画像の品質です。短くても効く指示を優先し、台詞・構図・人物識別・画風などの必要な条件を守るためにだけ長くします。32,000文字は使い切る目標ではなく上限であり、長文化による画質向上は保証されません。 / The design target is image quality, not prompt length. Prefer concise effective instructions and use extra length only to preserve necessary visual and story constraints; the 32,000-character ceiling is not a target.
 
-ChatGPT WebではSTEP4に表示される分割コピーボタンを1から順に使い、**同じ入力欄へすべて貼ってから一度だけ送信**してください。1回の貼り付けは9,500文字以下にし、原文と参照画像の説明は削りません。2026-09-26の実測では、一度に10,000文字を貼るとTXT添付になり、分割して合計32,000文字を貼ると入力欄内に保持されました。同じ題材の32,000字詳細版では、Web分割貼付とAPIの両方で4コマ・台詞・雨具・枠なしタイトルを維持して生成できました（各1回）。ただし詳細版のSHADOW指定が強く出ており、昨日の画風との完全一致や一般的な品質保証を意味しません。全文一括コピーと.txt保存も残しています。全文をWebへ一度に貼るとTXT化し、指示の反映や生成結果が変わる場合があるため、通常は分割を使ってください。TXTを使う場合はキャラクター参照画像、必要なら背景画像を一緒に添付し、入力欄で添付の指示文を読むよう依頼してください。「テキストフィールドに表示」への変換は不要です。同日のChatGPT Work（GPT-6 Sol）では、32,000字.txtとキャラクターシート2枚から検証画像を生成し、先頭・中央・末尾の条件を目視確認しました。この結果は将来の仕様、不特定の全プロンプトの遵守、内部画像モデルへの全文の無変換転送や品質向上を保証しません。 / In ChatGPT Web, paste numbered chunks into the same composer and send once. Each chunk is at most 9,500 characters, and concatenation preserves the full prompt. A 32,000-character detailed manga prompt produced a four-panel page through both split Web paste and the API in one trial each, preserving dialogue, rainwear and an unboxed title. Its expanded SHADOW recipe changed the rendering; this does not establish identical quality or a general guarantee. A single full paste may become a TXT attachment and may affect instruction adherence or output, so use the split buttons normally. Full-copy and TXT export remain available. A 32,000-character TXT with two reference sheets passed a live Work generation check on September 26, 2026; this is not a guarantee of internal prompt forwarding or image quality.
+ChatGPT WebではSTEP4に表示される分割コピーボタンを1から順に使い、**同じ入力欄へすべて貼ってから一度だけ送信**してください。1回の貼り付けは9,500文字以下にし、原文と参照画像の説明は削りません。2026-09-26の実測では、一度に10,000文字を貼るとTXT添付になり、分割して合計32,000文字を貼ると入力欄内に保持されました。同じ題材の32,000字詳細版では、Web分割貼付とAPIの両方で4コマ・台詞・雨具・枠なしタイトルを維持して生成できました（各1回）。ただし詳細版のSHADOW指定が強く出ており、昨日の画風との完全一致や一般的な品質保証を意味しません。分割ボタン同士は12px、全文一括コピーの上下は約20px空け、全文コピーを暖色にしています。全文一括コピーと.txt保存も残しています。全文をWebへ一度に貼るとTXT化し、指示の反映や生成結果が変わる場合があるため、通常は分割を使ってください。TXTを使う場合はキャラクター参照画像、必要なら背景画像を一緒に添付し、入力欄で添付の指示文を読むよう依頼してください。「テキストフィールドに表示」への変換は不要です。同日のChatGPT Work（GPT-6 Sol）では、32,000字.txtとキャラクターシート2枚から検証画像を生成し、先頭・中央・末尾の条件を目視確認しました。この結果は将来の仕様、不特定の全プロンプトの遵守、内部画像モデルへの全文の無変換転送や品質向上を保証しません。 / In ChatGPT Web, paste numbered chunks into the same composer and send once. Each chunk is at most 9,500 characters, and concatenation preserves the full prompt. A 32,000-character detailed manga prompt produced a four-panel page through both split Web paste and the API in one trial each, preserving dialogue, rainwear and an unboxed title. Its expanded SHADOW recipe changed the rendering; this does not establish identical quality or a general guarantee. A single full paste may become a TXT attachment and may affect instruction adherence or output, so use the split buttons normally. The split buttons are 12px apart; the amber full-copy button has about 20px of space above and below. Full-copy and TXT export remain available. A 32,000-character TXT with two reference sheets passed a live Work generation check on September 26, 2026; this is not a guarantee of internal prompt forwarding or image quality.
 
 Recurring props do not require their lettering to be readable in every panel. New scenarios assign necessary text to the relevant story beats; other views can show the same object's side, back or distant silhouette. Explicit text and repetition remain protected. Rebuilding STEP3 does not rewrite a saved scenario. / 同じ小道具が再登場しても、その文字を毎コマ読ませる必要はありません。新規シナリオでは必要な文字を読ませるコマへ割り当て、他のコマでは同じ物の側面・背面・遠景を使えるよう指示します。明示された文字・反復は保持します。STEP3の再構築だけでは保存済みシナリオを書き換えません。
 
@@ -317,11 +317,14 @@ The production application is published from the `main` branch through the repos
 
 **Why are there two ComfyUI download buttons? / ComfyUIのダウンロードボタンが2つあるのはなぜですか？**  The JSON defines the workflow, while the ZIP supplies three custom-node folders and documentation; three additional runtime dependencies are installed separately. / JSONはワークフロー定義、ZIPはカスタムノード3フォルダーと導入文書です。さらに実行依存3項目を別途導入します。
 
-**Where are older packages? / 旧版はどこですか？**  Older source tags remain for audit history, but their bundled distributions are withdrawn. New installations must use the current `20260922104144` workflow button and matching v6.5.8 FourPanel Release asset. / 旧タグは監査用履歴として残しますが、旧同梱配布物は取り下げ扱いです。新規導入は現在の`20260922104144`ワークフローボタンとv6.5.8 FourPanel Releaseアセットを使用してください。
+**Where are older packages? / 旧版はどこですか？**  Older source tags remain for audit history, but their bundled distributions are withdrawn. New installations must use the current `20260922104144` workflow button and matching v6.6.2 FourPanel Release asset. / 旧タグは監査用履歴として残しますが、旧同梱配布物は取り下げ扱いです。新規導入は現在の`20260922104144`ワークフローボタンとv6.6.2 FourPanel Releaseアセットを使用してください。
 
 **Is this the T2V/I2V/Ref2V repository? / T2V・I2V・Ref2Vのリポジトリですか？**  No. Those workflows are maintained separately in [comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows). / いいえ。それらは別の[comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows)で管理します。
 
 ## 📋 ChangeLog
+
+### v6.6.2 (2026-09-26)
+- **[Fix & UX]** 分割コピーのボタン間に12px、全文コピーの上下に20pxの余白を確保。全文コピーを黄色に分け、細いボタンを維持。コピー・TXT保存の成功時は元の色を保ち、押したボタンに約2秒チェック印と完了文言を表示 / Added spacing and an amber full-copy action while retaining compact button height. Successful copy and TXT save retain their base colors and show a check mark and confirmation for about two seconds.
 
 ### v6.6.1 (2026-09-26)
 - **[Fix & UX]** 長文プロンプトの分割コピーを追加。番号順に明るくなる細いボタンと全文コピーを用意し、TXT化の注意を表示。描写を守り、参照説明込み32,000文字の共通上限で管理。 / Added numbered split-copy buttons with progressively lighter backgrounds, a full-copy option and TXT conversion guidance. Preserve rendering instructions within the shared 32,000-character budget including reference roles.

@@ -947,6 +947,9 @@ export default function useMangaWorkflow() {
     setGeneratedImage(null);
     setAssembleThought("");
     setIsCopied(false);
+    setCopiedPartIndex(null);
+    setIsTextSaved(false);
+    clearTimeout(copyFeedbackTimerRef.current);
     setIsMetaSaved(false);
     setGenLog([]);
     setIsGenerationError(false);
@@ -1233,6 +1236,10 @@ export default function useMangaWorkflow() {
   };
 
   const [isCopied, setIsCopied] = useState(false);
+  const [copiedPartIndex, setCopiedPartIndex] = useState(null);
+  const [isTextSaved, setIsTextSaved] = useState(false);
+  const copyFeedbackTimerRef = useRef(null);
+  useEffect(() => () => clearTimeout(copyFeedbackTimerRef.current), []);
   const [isFixPromptCopied, setIsFixPromptCopied] = useState(false);
   const [isPolicyCopied, setIsPolicyCopied] = useState(false);
 
@@ -1265,12 +1272,22 @@ export default function useMangaWorkflow() {
       return;
     }
     if (asTextFile === true) {
-      const url = URL.createObjectURL(new Blob([copiedPrompt], { type: 'text/plain;charset=utf-8' }));
-      const anchor = document.createElement('a');
-      anchor.href = url;
-      anchor.download = 'manga-image-prompt.txt';
-      anchor.click();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      try {
+        const url = URL.createObjectURL(new Blob([copiedPrompt], { type: 'text/plain;charset=utf-8' }));
+        const anchor = document.createElement('a');
+        anchor.href = url;
+        anchor.download = 'manga-image-prompt.txt';
+        anchor.click();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      } catch {
+        showStatus('指示文の.txt保存を開始できませんでした。');
+        return;
+      }
+      clearTimeout(copyFeedbackTimerRef.current);
+      setCopiedPartIndex(null);
+      setIsCopied(false);
+      setIsTextSaved(true);
+      copyFeedbackTimerRef.current = setTimeout(() => setIsTextSaved(false), 2000);
       showStatus('画像生成の指示文を.txtで保存しました。参照画像と一緒に添付してください。');
       return;
     }
@@ -1289,10 +1306,15 @@ export default function useMangaWorkflow() {
       showStatus('クリップボードにコピーできませんでした。ブラウザの権限を確認してください。');
       return;
     }
-    if (partIndex === null) {
-      setIsCopied(true);
-      setTimeout(() => setIsCopied(false), 2000);
-    }
+    clearTimeout(copyFeedbackTimerRef.current);
+    setCopiedPartIndex(partIndex);
+    setIsCopied(partIndex === null);
+    setIsTextSaved(false);
+    copyFeedbackTimerRef.current = setTimeout(() => {
+      setCopiedPartIndex(null);
+      setIsCopied(false);
+      setIsTextSaved(false);
+    }, 2000);
 
     // [v4.2.1] ポリシーエラーが出ている状態でコピーした場合
     // → Web版に貼り付ける意思表示とみなし、救済パネルを展開＆メッセージボックスを閉じる
@@ -2204,6 +2226,8 @@ export default function useMangaWorkflow() {
     isColorModeLocked,
     copyPrompt,
     webCopyPartLengths,
+    copiedPartIndex,
+    isTextSaved,
     currentStep,
     customLocation,
     customOutfit,

@@ -302,6 +302,8 @@ export default function Step4Panel({
   setFinalPrompt,
   copyPrompt,
   webCopyPartLengths,
+  copiedPartIndex,
+  isTextSaved,
   enableChatGPTMode,
   selectedEngine,
   bg360Image,
@@ -556,27 +558,35 @@ export default function Step4Panel({
               )}
               
               {isOpenAIImageMode && webCopyPartLengths.length > 1 ? (
-                <div className="space-y-2">
+                <div className="web-prompt-copy-layout">
                   <p className="text-[11px] text-cyan-200 leading-relaxed">
                     ChatGPT Webでは以下を1から順に同じ入力欄へ貼り付け、参照画像を添えて最後に一度だけ送信してください。途中では送信しません。
                   </p>
-                  {webCopyPartLengths.map((length, index) => (
-                    <button
-                      key={index}
-                      type="button"
-                      onClick={() => copyPrompt(false, index)}
-                      className="w-full web-prompt-copy-part font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-all"
-                      style={{ '--copy-part-lightness': `${58 + (index / (webCopyPartLengths.length - 1)) * 30}%` }}
-                    >
-                      <Copy size={18} /> {index + 1}/{webCopyPartLengths.length} をコピー（{length.toLocaleString()}文字）
-                    </button>
-                  ))}
+                  <div className="web-prompt-copy-parts">
+                    {webCopyPartLengths.map((length, index) => (
+                      <button
+                        key={index}
+                        type="button"
+                        onClick={() => copyPrompt(false, index)}
+                        className={`w-full web-prompt-copy-part ${copiedPartIndex === index ? 'is-copied' : ''} font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-all`}
+                        style={{ '--copy-part-lightness': `${58 + (index / (webCopyPartLengths.length - 1)) * 30}%` }}
+                        aria-live="polite"
+                      >
+                        {copiedPartIndex === index ? <CheckCircle2 size={18} /> : <Copy size={18} />}
+                        {copiedPartIndex === index
+                          ? ` ${index + 1}/${webCopyPartLengths.length} コピー完了`
+                          : ` ${index + 1}/${webCopyPartLengths.length} をコピー（${length.toLocaleString()}文字）`}
+                      </button>
+                    ))}
+                  </div>
                   <button
                     type="button"
                     onClick={() => copyPrompt()}
-                    className="w-full bg-slate-800 hover:bg-slate-700 text-white py-2 rounded-xl flex items-center justify-center gap-2 border border-white/10"
+                    className={`w-full web-prompt-copy-all ${isCopied ? 'is-copied' : ''} py-2 rounded-xl flex items-center justify-center gap-2`}
+                    aria-live="polite"
                   >
-                    <Copy size={16} /> 全文を一括コピー（Webへ一度に貼るとTXT化・生成結果が変わる場合あり）
+                    {isCopied ? <CheckCircle2 size={16} /> : <Copy size={16} />}
+                    {isCopied ? ' 全文コピー完了' : ' 全文を一括コピー（Webへ一度に貼るとTXT化・生成結果が変わる場合あり）'}
                   </button>
                 </div>
               ) : (
@@ -593,9 +603,11 @@ export default function Step4Panel({
               <button
                 onClick={() => copyPrompt(true)}
                 disabled={!finalPrompt}
-                className="w-full bg-slate-800 hover:bg-slate-700 text-white py-2 rounded-xl flex items-center justify-center gap-2 border border-white/10"
+                className={`w-full web-prompt-save-text ${isTextSaved ? 'is-saved' : ''} text-white py-2 rounded-xl flex items-center justify-center gap-2`}
+                aria-live="polite"
               >
-                <Download size={16} /> 同じプロンプトを.txtで保存する
+                {isTextSaved ? <CheckCircle2 size={16} /> : <Download size={16} />}
+                {isTextSaved ? ' 保存完了！' : ' 同じプロンプトを.txtで保存する'}
               </button>
 
               {(isOpenAIImageMode || enableChatGPTMode) && finalPrompt && (
