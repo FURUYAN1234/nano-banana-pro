@@ -55,6 +55,7 @@ test('actual selection handler clears stale output without assembly, preserving 
     isColorModeLocked: false, colorMode: 'color',
     normalizeMangaColorMode: v => v === 'monochrome' ? v : 'color',
     promptAssemblyRunRef: { current: 1 }, lastPolicyErrorRef: { current: 'previous error' },
+    copyFeedbackTimerRef: { current: null }, clearTimeout() {},
     showStatus: text => calls.push(['status', text]),
   };
   // Only React state setters are substituted; execute the real event handler.

@@ -27,6 +27,13 @@
   padding-bottom: 20px;
 }
 
+.web-prompt-copy-heading {
+  margin: 0 0 4px;
+  color: #cffafe;
+  font-size: 14px;
+  font-weight: 700;
+}
+
 .web-prompt-copy-parts {
   display: flex;
   flex-direction: column;
@@ -70,14 +77,15 @@
 }
 
 .web-prompt-save-text {
-  background-color: #1e293b;
-  color: #f8fafc;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: #e2e8f0;
+  color: #0f172a;
+  border: 1px solid #94a3b8;
+  margin-bottom: 16px;
   transition: background-color 120ms ease, box-shadow 120ms ease;
 }
 
 .web-prompt-save-text:hover {
-  background-color: #334155;
+  background-color: #cbd5e1;
 }
 
 .web-prompt-copy-part.is-copied,

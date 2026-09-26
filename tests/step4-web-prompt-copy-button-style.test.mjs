@@ -70,8 +70,28 @@ test('TXT save uses the same visible success feedback after starting the downloa
     readFile(new URL('../src/index.css', import.meta.url), 'utf8'),
   ]);
   assert.match(panel, /isTextSaved \? 'is-saved' : ''/);
-  assert.match(panel, /isTextSaved \? ' 保存完了！' : ' 同じプロンプトを\.txtで保存する'/);
+  assert.match(panel, /isTextSaved \? ' 保存完了！' : ' 全文プロンプトを\.txtで保存する'/);
   assert.match(hook, /anchor\.click\(\);[\s\S]*?setIsTextSaved\(true\);[\s\S]*?setTimeout\(\(\) => setIsTextSaved\(false\), 2000\)/);
-  assert.match(css, /\.web-prompt-save-text\s*\{[^}]*background-color: #1e293b;\s*color: #f8fafc;/);
+  assert.match(css, /\.web-prompt-save-text\s*\{[^}]*background-color: #e2e8f0;\s*color: #0f172a;/);
+  assert.match(css, /\.web-prompt-save-text\s*\{[^}]*margin-bottom: 16px;/);
   assert.doesNotMatch(css, /\.web-prompt-save-text:active/);
+});
+
+test('Web copy guidance is consolidated above the chunks, with TXT immediately after full copy', async () => {
+  const [source, css] = await Promise.all([
+    readFile(new URL('../src/components/Step4Panel.jsx', import.meta.url), 'utf8'),
+    readFile(new URL('../src/index.css', import.meta.url), 'utf8'),
+  ]);
+  const heading = source.indexOf('ChatGPT Webへの貼り付け手順');
+  const guidance = source.indexOf('ChatGPT / Work用とAPI用は同じ指示文');
+  const chunks = source.indexOf('<div className="web-prompt-copy-parts">');
+  const full = source.indexOf('全文を一括コピー（${webCopyPartLengths.reduce');
+  const json = source.indexOf("isMetaSaved ? '保存完了！' : '📂 Web版生成用 制作情報JSONを保存'");
+  const txt = source.indexOf("isTextSaved ? ' 保存完了！' : ' 全文プロンプトを.txtで保存する'");
+  assert.ok(heading >= 0 && heading < guidance && guidance < chunks && chunks < full && full < txt && txt < json);
+  assert.match(css, /\.web-prompt-copy-heading\s*\{[^}]*font-size: 14px;[^}]*font-weight: 700;/);
+  assert.match(source, /全文を一括コピー（\$\{webCopyPartLengths\.reduce\([\s\S]*?toLocaleString\(\)\}文字・Web一括はTXT化に注意）/);
+  assert.equal(source.split('ChatGPT / Work用とAPI用は同じ指示文').length - 1, 1);
+  assert.match(source, /制作情報JSONは後で制作条件を確認・引き継ぐための別ファイル/);
+  assert.match(source, /finalPrompt && !isOpenAIImageMode/);
 });

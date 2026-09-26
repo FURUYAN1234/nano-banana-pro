@@ -557,11 +557,21 @@ export default function Step4Panel({
                 </div>
               )}
               
+              {(isOpenAIImageMode || enableChatGPTMode) && finalPrompt && (
+                <div>
+                  <h3 className="web-prompt-copy-heading">ChatGPT Webへの貼り付け手順</h3>
+                  <p className="text-[11px] text-cyan-200 leading-relaxed">
+                  ChatGPT / Work用とAPI用は同じ指示文で、参照画像の説明を含め共通上限32,000文字です。
+                  {webCopyPartLengths.length > 1 && ' ChatGPT Webでは下の分割ボタンを1から順に使い、同じ入力欄へすべて貼り付けてください。'}
+                  {' キャラ画像と、背景画像がある場合はその順に添付し、最後に一度だけ送信してください。途中では送信しません。'}
+                  {' 一度に10,000文字を貼るとTXT化する例を確認しました。一括貼付では指示の反映や生成結果が変わる可能性があるため、長文は分割コピーを推奨します。'}
+                  {' 分割しても原文は削られず、API生成の指示文も変わりません。TXTを使う場合はテキストフィールドへ戻す必要はありません。'}
+                  </p>
+                </div>
+              )}
+
               {isOpenAIImageMode && webCopyPartLengths.length > 1 ? (
                 <div className="web-prompt-copy-layout">
-                  <p className="text-[11px] text-cyan-200 leading-relaxed">
-                    ChatGPT Webでは以下を1から順に同じ入力欄へ貼り付け、参照画像を添えて最後に一度だけ送信してください。途中では送信しません。
-                  </p>
                   <div className="web-prompt-copy-parts">
                     {webCopyPartLengths.map((length, index) => (
                       <button
@@ -586,7 +596,7 @@ export default function Step4Panel({
                     aria-live="polite"
                   >
                     {isCopied ? <CheckCircle2 size={16} /> : <Copy size={16} />}
-                    {isCopied ? ' 全文コピー完了' : ' 全文を一括コピー（Webへ一度に貼るとTXT化・生成結果が変わる場合あり）'}
+                    {isCopied ? ' 全文コピー完了' : ` 全文を一括コピー（${webCopyPartLengths.reduce((sum, length) => sum + length, 0).toLocaleString()}文字・Web一括はTXT化に注意）`}
                   </button>
                 </div>
               ) : (
@@ -603,46 +613,14 @@ export default function Step4Panel({
               <button
                 onClick={() => copyPrompt(true)}
                 disabled={!finalPrompt}
-                className={`w-full web-prompt-save-text ${isTextSaved ? 'is-saved' : ''} text-white py-2 rounded-xl flex items-center justify-center gap-2`}
+                className={`w-full web-prompt-save-text ${isTextSaved ? 'is-saved' : ''} py-2 rounded-xl flex items-center justify-center gap-2`}
                 aria-live="polite"
               >
                 {isTextSaved ? <CheckCircle2 size={16} /> : <Download size={16} />}
-                {isTextSaved ? ' 保存完了！' : ' 同じプロンプトを.txtで保存する'}
+                {isTextSaved ? ' 保存完了！' : ' 全文プロンプトを.txtで保存する'}
               </button>
 
-              {(isOpenAIImageMode || enableChatGPTMode) && finalPrompt && (
-                <p className="text-[11px] text-slate-400 leading-relaxed">
-                  ChatGPT / Work用とAPI用は同じ指示文で、参照画像の説明を含め共通上限32,000文字です。
-                  ChatGPT Webでは一度に10,000文字を貼るとTXT化する例を確認しました。一括貼付では指示の反映や生成結果が変わる可能性があるため、長文は上の分割コピーを推奨します。
-                  分割しても原文は削られず、API生成の指示文も変わりません。TXTを使う場合はテキストフィールドへ戻す必要はありません。
-                  コピーする全文は現在{webCopyPartLengths.reduce((sum, length) => sum + length, 0).toLocaleString()}文字です。参照画像はキャラ画像、背景画像の順に添付してください。
-                </p>
-              )}
-
-              {/* コピーボタン下の親切な補足ガイド */}
-              {finalPrompt && (
-                <div className="text-[11px] text-slate-400 mt-1 leading-relaxed bg-slate-900/60 p-2.5 rounded-lg border border-white/5">
-                  {isOpenAIImageMode ? (
-                    (bg360Image && bg360Enabled) ? (
-                      <span>💡 <strong>【手動生成用】</strong> コピーしたプロンプトを <strong>ChatGPT公式Web版</strong> に貼り付け、<strong>キャラクターシート画像</strong> と <strong>360°背景画像</strong> を一緒に添付して送信してください。</span>
-                    ) : (
-                      <span>💡 <strong>【手動生成用】</strong> コピーしたプロンプトを <strong>ChatGPT公式Web版</strong> に貼り付け、<strong>キャラクターシート画像</strong> を一緒に添付して送信してください。</span>
-                    )
-                  ) : (
-                    enableChatGPTMode ? (
-                      <span>💡 <strong>【手動生成用（ChatGPT専用）】</strong> コピーしたプロンプトを <strong>ChatGPT公式Web版</strong> に貼り付け、<strong>キャラクターシート画像</strong>（および360°背景画像）を一緒に添付して送信してください。（※毎回新しいチャットで生成することを推奨）</span>
-                    ) : (
-                      (bg360Image && bg360Enabled) ? (
-                        <span>💡 <strong>【手動生成用】</strong> コピーしたプロンプトを外部の <strong>Gemini公式Web版</strong> などに貼り付け、<strong>キャラクターシート画像</strong> と <strong>360°背景画像</strong> を一緒に添付して送信してください。</span>
-                      ) : (
-                        <span>💡 <strong>【手動生成用】</strong> コピーしたプロンプトを外部の <strong>Gemini公式Web版</strong> などに貼り付け、<strong>キャラクターシート画像</strong> を一緒に添付して送信してください。</span>
-                      )
-                    )
-                  )}
-                </div>
-              )}
-
-              {/* Web版へ貼り付けて生成する場合の独立した制作情報JSON */}
+              {/* Web版の制作条件を後で引き継ぐための別添記録。画像生成の指示文ではない。 */}
               <button
                 onClick={async () => {
                   try {
@@ -670,7 +648,25 @@ export default function Step4Panel({
               >
                 {isMetaSaved ? '保存完了！' : '📂 Web版生成用 制作情報JSONを保存'}
               </button>
+              <p className="text-[11px] text-slate-400 leading-relaxed">
+                制作情報JSONは後で制作条件を確認・引き継ぐための別ファイルです。画像生成の指示文ではないため、ChatGPTへ貼り付ける必要はありません。
+              </p>
               {webMetadataError && <p className="mt-1 text-[10px] text-red-400">{webMetadataError}</p>}
+
+              {/* コピーボタン下の親切な補足ガイド */}
+              {finalPrompt && !isOpenAIImageMode && (
+                <div className="text-[11px] text-slate-400 mt-1 leading-relaxed bg-slate-900/60 p-2.5 rounded-lg border border-white/5">
+                  {enableChatGPTMode ? (
+                      <span>💡 <strong>【手動生成用（ChatGPT専用）】</strong> コピーしたプロンプトを <strong>ChatGPT公式Web版</strong> に貼り付け、<strong>キャラクターシート画像</strong>（および360°背景画像）を一緒に添付して送信してください。（※毎回新しいチャットで生成することを推奨）</span>
+                    ) : (
+                      (bg360Image && bg360Enabled) ? (
+                        <span>💡 <strong>【手動生成用】</strong> コピーしたプロンプトを外部の <strong>Gemini公式Web版</strong> などに貼り付け、<strong>キャラクターシート画像</strong> と <strong>360°背景画像</strong> を一緒に添付して送信してください。</span>
+                      ) : (
+                        <span>💡 <strong>【手動生成用】</strong> コピーしたプロンプトを外部の <strong>Gemini公式Web版</strong> などに貼り付け、<strong>キャラクターシート画像</strong> を一緒に添付して送信してください。</span>
+                      )
+                    )}
+                </div>
+              )}
             </div>
 
             <div className="relative" style={{ paddingTop: '12px' }}>

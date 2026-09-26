@@ -325,6 +325,8 @@ The production application is published from the `main` branch through the repos
 
 ### v6.6.2 (2026-09-26)
 - **[Fix & UX]** 分割コピーのボタン間に12px、全文コピーの上下に20pxの余白を確保。全文コピーを黄色に分け、細いボタンを維持。コピー・TXT保存の成功時は元の色を保ち、押したボタンに約2秒チェック印と完了文言を表示 / Added spacing and an amber full-copy action while retaining compact button height. Successful copy and TXT save retain their base colors and show a check mark and confirmation for about two seconds.
+- **[Web guidance]** 貼付手順と文字数の説明を分割ボタンの上へ統合し、重複ガイドを削除。全文コピー直下のTXT保存を明るい無彩色に変更し、その下の別添制作情報JSONとの用途の違いを明記 / Consolidated guidance above the numbered actions, removed a duplicate hint, placed a readable TXT action directly below full copy, and explained the separate production-record JSON below it.
+- **[Copy layout]** 「ChatGPT Webへの貼り付け手順」見出しを追加。全文コピーには合計文字数を表示し、「全文プロンプトを.txtで保存する」と制作情報JSON保存の間に16pxの余白を確保 / Added a Web-paste heading, a total-character count on full copy, a clearer TXT label, and 16px between TXT and JSON actions.
 
 ### v6.6.1 (2026-09-26)
 - **[Fix & UX]** 長文プロンプトの分割コピーを追加。番号順に明るくなる細いボタンと全文コピーを用意し、TXT化の注意を表示。描写を守り、参照説明込み32,000文字の共通上限で管理。 / Added numbered split-copy buttons with progressively lighter backgrounds, a full-copy option and TXT conversion guidance. Preserve rendering instructions within the shared 32,000-character budget including reference roles.
