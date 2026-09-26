@@ -1,3 +1,11 @@
+## v6.6.2 公開完了と今後のX告知 — 2026-09-26
+
+- 公式リリースは `RELEASE_TRANSACTION_COMPLETE`。ソースcommit `6fe86ef6658f309711e5e8290a8cbca4a6c60e7b`、[GitHub Release](https://github.com/FURUYAN1234/nano-banana-pro/releases/tag/v6.6.2)、[Pages](https://furuyan1234.github.io/nano-banana-pro/)、Cドライブ公開コピーを検証。receipt: `C:\Users\sx717\Antigravity\backups\release_receipts\nano-banana-pro-v6.6.2-2026-09-26_165810.json`。全Node 745/745、strict lint、production build成功。
+- [既存note](https://note.com/happy_duck780/n/ndf063558c1f5) はv6.6.2のタイトル・本文・太字履歴・導入ZIPへ更新し、公開ページを読み戻した。記事内の図版51点、画像18点、埋め込み20件、リンク104件を保持。
+- 公式フルバックアップ `antigravity_full_backup_2026-09-26_170701.zip` は `FULL_BACKUP_VERIFIED apps=7`。manifest: `C:\Users\sx717\Antigravity\backups\antigravity_full_backup_2026-09-26_170701.manifest.json`。ローカルとGoogle DriveのSHA-256は `0A12D5BFCB1C96BFF20E8D1638A781096E717EAE18049A9D076DB8F8C33D1A1E` で一致。
+- ユーザーの追加依頼で、[X告知](https://x.com/FURUYAN123456/status/2103763061962359058) を `@FURUYAN123456` から投稿し、公開本文・アプリ/noteリンク・3ハッシュタグを読み戻した。Xのnoteカードには旧版のキャッシュが出たためカードプレビューだけ外し、本文内のnoteリンクは残した。
+- 今後は実質的な機能更新で既存noteを更新する時、X告知も同じ納品範囲に含める。ごく小さな文言・見た目修正は省略可。別の告知に向く節目があれば提案する。別PCでのアカウント確認、下書き、改行、機密除外、投稿・公開確認は [X投稿引き継ぎ](docs/x-release-posting-handoff.md) に従う。ログイン資格情報を引き継ぎ書やGitへ保存しない。
+
 ## Note本文・図版・履歴の再照合と修正完了 — 2026-09-25
 
 - 対象は既存Note `https://note.com/happy_duck780/n/ndf063558c1f5`。ユーザー承認済みの訂正を更新ボタンで公開し、公開ページを読み戻した。今回アプリの再デプロイ・新規バックアップは実施していない。
@@ -949,4 +957,4 @@ Current live delivery status: see root PLAN.md, Nano Banana four-panel quality r
 - 実画面: 4分割の番号を押すと、その番号のみ「1/4 コピー完了」へ切り替わり、青グラデーションは完全に同じ値を保持。全文は黄rgb(252,211,77)、TXTは濃いグレーrgb(30,41,59)を完了時も保持し、文字と控えめな内側の影だけが変わる。TXT文字色rgb(248,250,252)、成功時「保存完了！」。いずれも約2秒後に通常表示へ戻る。画像生成はこのUI修正の検証に含めない。
 - 続く配置修正: 貼付順と32,000字上限・TXT化例・全文実測を分割ボタン上の1段落へ統合し、OpenAI Web時の重複する手動生成ガイドを削除。全文コピーの直下にTXT保存を置き、濃色では読みにくいとの指摘から淡い無彩色へ変更。別添制作情報JSONはその下に置き、生成指示ではなく後で制作条件を確認・引き継ぐ記録と明記。既存のAPI画像内メタデータ経路は変更しない。最終実画面の配置確認と全テスト後に公開する。
 - 最終表示: 見出し「ChatGPT Webへの貼り付け手順」は14px、本文11px。全文コピーのボタンに合計文字数（画面例30,959字）を表示。TXTラベルは「全文プロンプトを.txtで保存する」、淡い無彩色rgb(226,232,240)。TXTとJSONの間は実測16px。重複ガイドなし、JSONは1個。重点18/18、全Node745/745、lint、production build、diff check成功。公式releaseは続く工程。
-- 公式release transaction、note公開読戻し、独立フルバックアップ検証はこの記録の後に実施する。APIキー値は取得・記録しない。
+- 公式release transaction、note公開読戻し、独立フルバックアップ検証は上記のとおり完了。APIキー値は取得・記録していない。
