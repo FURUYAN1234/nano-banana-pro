@@ -4,13 +4,14 @@ import { useState, useRef, useEffect } from 'react';
 import { setApiKey } from '../lib/gemini';
 import { generateImageWithImagen } from '../lib/imagen';
 import { generateImageWithOpenAI, setOpenAIApiKey } from '../lib/openai';
-import {buildOpenAIReferencePlan, appendOpenAIReferencePrompt} from '../lib/openai-image-references.js';
+import {buildOpenAIReferencePlan, appendOpenAIReferencePrompt, getOpenAIPromptBodyBudget} from '../lib/openai-image-references.js';
 import {buildGeminiReferencePlan, buildGeminiImageApiPrompt} from '../lib/gemini-image-references.js';
 import { callAI, setActiveEngine } from '../lib/ai-provider';
 import { reviewComedyPrompt } from '../lib/comedy-review';
 import { normalizeMangaColorMode } from '../lib/manga-render-mode.js';
 import { assertPromptEndingModeConsistency, getEndingModePolicy, isDocumentaryEnding, resolveScenarioEndingType } from '../lib/ending-mode-policy.js';
 import { assertPrintableDialogue } from '../lib/bubble-text.js';
+import { splitWebPromptForPaste } from '../lib/web-prompt-chunks.js';
 
 // --- Refactored Imports (Phase 1-2) ---
 import { SYSTEM_VERSION, DEFAULT_CATEGORIES, EMOTION_STYLES, DYNAMIC_CAMERA_PROTOCOL, ANTI_CHARSHEET_PREFIX } from '../lib/constants';
@@ -999,6 +1000,11 @@ export default function useMangaWorkflow() {
     try {
       const activePunchlineType = resolvedPunchlineTypeRef.current || resolveScenarioEndingType(currentScenario, punchlineType);
       updateResolvedPunchlineType(activePunchlineType);
+      const promptMaxChars = effectiveProviderFamily === PROMPT_PROVIDER_FAMILIES.CHATGPT
+        ? getOpenAIPromptBodyBudget(buildOpenAIReferencePlan({
+          characterImages: images, backgroundImage: bg360Image, backgroundEnabled: bg360Enabled,
+        }))
+        : undefined;
       // [v3.82-alpha] リファクタリング: 外部モジュールでプロンプトを構築
       const safePrompt = buildMangaPrompt({
         scenario: currentScenario,
@@ -1012,7 +1018,8 @@ export default function useMangaWorkflow() {
         punchlineType: activePunchlineType,
         systemVersion: SYSTEM_VERSION,
         scenarioModelLabel: OPENAI_SCENARIO_MODEL_OPTIONS.find(({ id }) => id === scenarioUsedModelRef.current)?.label,
-        allowScenarioQualityWarning: true
+        allowScenarioQualityWarning: true,
+        promptMaxChars
       });
 
       const endingPolicy = getEndingModePolicy(activePunchlineType);
@@ -1023,6 +1030,7 @@ export default function useMangaWorkflow() {
           : "\n> ギャグの意図を保ってAI精査中..."));
       const reviewed = await reviewComedyPrompt({
         prompt: safePrompt,
+        promptMaxChars,
         scenario: currentScenario,
         castList,
         reviewTone: endingPolicy.endingTone,
@@ -1228,18 +1236,63 @@ export default function useMangaWorkflow() {
   const [isFixPromptCopied, setIsFixPromptCopied] = useState(false);
   const [isPolicyCopied, setIsPolicyCopied] = useState(false);
 
-  const copyPrompt = () => {
+  // Use the same complete text as the initial API request, including image roles.
+  // Validate again at copy time because the user may edit the text or references.
+  const prepareWebCopyPrompt = (prompt) => getCurrentPromptProviderFamily() === PROMPT_PROVIDER_FAMILIES.CHATGPT
+    ? appendOpenAIReferencePrompt(prompt, buildOpenAIReferencePlan({
+      characterImages: images, backgroundImage: bg360Image, backgroundEnabled: bg360Enabled,
+    }))
+    : prompt;
+
+  let webCopyPartLengths = [];
+  if (finalPrompt) {
+    try {
+      webCopyPartLengths = splitWebPromptForPaste(prepareWebCopyPrompt(finalPrompt)).map(part => part.length);
+    } catch {
+      // The existing copy-time validation reports the actionable error.
+    }
+  }
+
+  const copyPrompt = async (asTextFile = false, partIndex = null) => {
     if (!finalPrompt) return;
+    let copiedPrompt;
     try {
       assertPromptEndingModeConsistency({ prompt: finalPrompt, punchlineType: resolvedPunchlineTypeRef.current || punchlineType });
       assertPrintableDialogue(finalPrompt);
+      copiedPrompt = prepareWebCopyPrompt(finalPrompt);
     } catch (error) {
       showStatus(error.message);
       return;
     }
-    navigator.clipboard.writeText(finalPrompt);
-    setIsCopied(true);
-    setTimeout(() => setIsCopied(false), 2000);
+    if (asTextFile === true) {
+      const url = URL.createObjectURL(new Blob([copiedPrompt], { type: 'text/plain;charset=utf-8' }));
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = 'manga-image-prompt.txt';
+      anchor.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      showStatus('画像生成の指示文を.txtで保存しました。参照画像と一緒に添付してください。');
+      return;
+    }
+    let textToCopy = copiedPrompt;
+    if (partIndex !== null) {
+      const parts = splitWebPromptForPaste(copiedPrompt);
+      if (!Number.isInteger(partIndex) || partIndex < 0 || partIndex >= parts.length) {
+        showStatus('分割したプロンプトの番号が無効です。');
+        return;
+      }
+      textToCopy = parts[partIndex];
+    }
+    try {
+      await navigator.clipboard.writeText(textToCopy);
+    } catch {
+      showStatus('クリップボードにコピーできませんでした。ブラウザの権限を確認してください。');
+      return;
+    }
+    if (partIndex === null) {
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
+    }
 
     // [v4.2.1] ポリシーエラーが出ている状態でコピーした場合
     // → Web版に貼り付ける意思表示とみなし、救済パネルを展開＆メッセージボックスを閉じる
@@ -1248,7 +1301,9 @@ export default function useMangaWorkflow() {
       setShowPolicyChoice(false);
       showStatus("📋 コピーしました → Web版に貼り付けて、下の🛡️救済パネルで手動対応できます");
     } else {
-      showStatus("クリップボードにコピーしました！");
+      showStatus(partIndex === null
+        ? "クリップボードにコピーしました！"
+        : `${partIndex + 1}/${webCopyPartLengths.length} をコピーしました。同じChatGPT入力欄に貼り、最後まで送信しないでください。`);
     }
   };
   // Local-only placement also makes existing successful API images reviewable
@@ -1900,14 +1955,16 @@ export default function useMangaWorkflow() {
 
     // プロンプトをクリップボードにコピー
     if (finalPrompt) {
+      let copiedPrompt;
       try {
         assertPromptEndingModeConsistency({ prompt: finalPrompt, punchlineType: resolvedPunchlineTypeRef.current || punchlineType });
         assertPrintableDialogue(finalPrompt);
+        copiedPrompt = prepareWebCopyPrompt(finalPrompt);
       } catch (error) {
         showStatus(error.message);
         return;
       }
-      navigator.clipboard.writeText(finalPrompt);
+      navigator.clipboard.writeText(copiedPrompt);
     }
 
     const webUrl = isOpenAIEngine ? 'https://chatgpt.com/' : 'https://gemini.google.com/app';
@@ -2146,6 +2203,7 @@ export default function useMangaWorkflow() {
     setColorMode,
     isColorModeLocked,
     copyPrompt,
+    webCopyPartLengths,
     currentStep,
     customLocation,
     customOutfit,

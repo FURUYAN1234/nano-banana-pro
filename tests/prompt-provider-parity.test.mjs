@@ -5,11 +5,11 @@ import test from 'node:test';
 const workflowSource = readFileSync(new URL('../src/hooks/useMangaWorkflow.js', import.meta.url), 'utf8');
 const assemblerSource = readFileSync(new URL('../src/lib/prompt-assembler.js', import.meta.url), 'utf8');
 
-test('web copy and API generation preserve the same prompt body with API-only reference roles', () => {
+test('web copy and API generation preserve the same prompt body and OpenAI reference roles', () => {
   assert.match(
     workflowSource,
-    /navigator\.clipboard\.writeText\(\s*finalPrompt\s*\)/,
-    'manual Web copy must copy finalPrompt directly'
+    /copiedPrompt = prepareWebCopyPrompt\(finalPrompt\);[\s\S]*?navigator\.clipboard\.writeText\(copiedPrompt\)/,
+    'manual Web copy must use the same reference preparation as the API'
   );
   assert.match(
     workflowSource,

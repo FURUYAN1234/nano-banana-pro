@@ -5,8 +5,7 @@ import { createServer } from 'vite';
 let server;
 let buildMangaPrompt;
 
-// Empirical soft budget for manual ChatGPT Web paste.
-// This is not an official OpenAI API limit; the API-side hard guard lives in src/lib/openai.js.
+// Legacy constrained-caller fixture only; the default shared budget is 32,000.
 const EMPIRICAL_CHATGPT_WEB_COPY_SOFT_BUDGET_CHARS = 15000;
 
 before(async () => {
@@ -115,9 +114,28 @@ test('dense four-panel prompts preserve core requirements ahead of optional embe
   }
 });
 
-test('ChatGPT manga prompt stays within the empirical Web-copy soft budget without dropping critical content', () => {
+test('ChatGPT default retains quality instructions beyond the former 15,000-character budget', () => {
+  const prompt = buildMangaPrompt({
+    scenario: LONG_FOUR_KOMA_SCENARIO, castList: FULL_CAST_LIST,
+    colorMode: 'color', providerFamily: 'chatgpt', punchlineType: 'Documentary',
+    systemVersion: 'test',
+  });
+  assert.ok(prompt.length > 15000, `quality instructions should not be compressed to 15,000: ${prompt.length}`);
+  assert.ok(prompt.length <= 32000);
+  assert.match(prompt, /Action \(visual only\): \(Outfit assignment:/, 'the larger default preserves per-panel wardrobe reminders');
+});
+
+test('irreducible oversized ChatGPT input fails before returning a truncated prompt', () => {
+  assert.throws(() => buildMangaPrompt({
+    scenario: LONG_FOUR_KOMA_SCENARIO, castList: FULL_CAST_LIST + ' identity detail'.repeat(3000),
+    providerFamily: 'chatgpt', colorMode: 'color', punchlineType: 'Documentary', systemVersion: 'test',
+  }), /上限を超えています.*切り捨てません/s);
+});
+
+test('explicit small-budget compaction retains critical content for constrained callers', () => {
   const prompt = buildMangaPrompt({
     scenario: LONG_FOUR_KOMA_SCENARIO,
+    promptMaxChars: EMPIRICAL_CHATGPT_WEB_COPY_SOFT_BUDGET_CHARS,
     castList: FULL_CAST_LIST,
     colorMode: 'color',
     providerFamily: 'chatgpt',

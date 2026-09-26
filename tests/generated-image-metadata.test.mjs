@@ -142,7 +142,7 @@ test('Web companion metadata rejects API-only image provenance fields at its bou
 test('STEP4 keeps Web companion JSON independent from API image metadata', async () => {
   const source = await readFile(new URL('../src/components/Step4Panel.jsx', import.meta.url), 'utf8');
   const webSection = source.slice(
-    source.indexOf('プロンプトをコピーする（web貼り付け時）'),
+    source.indexOf('プロンプトをコピーする（Web / Work用）'),
     source.indexOf('APIで新しい画像を生成する（STEP4）'),
   );
 

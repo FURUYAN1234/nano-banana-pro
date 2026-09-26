@@ -20,6 +20,24 @@
   background-color: #fde68a;
 }
 
+.web-prompt-copy-part {
+  background: linear-gradient(110deg,
+    hsl(200 85% var(--copy-part-lightness)),
+    hsl(200 85% calc(var(--copy-part-lightness) + 6%)));
+  color: #082f49;
+  border: 1px solid #0c4a6e;
+  cursor: pointer;
+}
+
+.web-prompt-copy-part:hover {
+  box-shadow: inset 0 0 0 2px #0c4a6e;
+}
+
+.web-prompt-copy-part:focus-visible {
+  outline: 3px solid #fbbf24;
+  outline-offset: 2px;
+}
+
 body {
   background-color: #050505;
   color: #e2e8f0;

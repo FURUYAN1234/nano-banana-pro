@@ -1,3 +1,5 @@
+import { OPENAI_IMAGE_PROMPT_MAX_CHARS, assertImagePromptBudget } from './image-prompt-budget.js';
+
 export const OPENAI_IMAGE_INPUT_LIMIT = 16;
 export const OPENAI_IMAGE_DATA_URL_MAX_CHARS = 20971520;
 
@@ -60,5 +62,9 @@ export function buildOpenAIReferencePlan({
 
 export function appendOpenAIReferencePrompt(prompt, plan) {
   if (typeof prompt !== 'string') throw new Error('画像生成プロンプトは文字列で指定してください。');
-  return plan.rolePrompt ? `${prompt}\n\n${plan.rolePrompt}` : prompt;
+  return assertImagePromptBudget(plan.rolePrompt ? `${prompt}\n\n${plan.rolePrompt}` : prompt);
+}
+
+export function getOpenAIPromptBodyBudget(plan) {
+  return OPENAI_IMAGE_PROMPT_MAX_CHARS - (plan.rolePrompt ? plan.rolePrompt.length + 2 : 0);
 }

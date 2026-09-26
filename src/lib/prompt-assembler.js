@@ -1,4 +1,5 @@
 import { stripSourceMetadata } from './sns-explanation.js';
+import { OPENAI_IMAGE_PROMPT_MAX_CHARS, assertImagePromptBudget } from './image-prompt-budget.js';
 import { assertPrintableDialogue, VERTICAL_DIALOGUE_GEOMETRY } from './bubble-text.js';
 import { 
   buildChatGPTMangaPrompt, 
@@ -120,7 +121,8 @@ const sanitizeConversationCamera = (camera) => {
   return withoutEnglishLensTarget || 'Dynamic three-quarter conversation shot with layered foreground and background';
 };
 
-const CHATGPT_WEB_COPY_SOFT_BUDGET = 15000;
+// Web attachments and API requests share the API ceiling; no 15,000-char paste cap.
+// The caller reserves space for the reference-image manifest before assembly.
 const FACIAL_ACTING_LOCK_COMPACT = 'FACIAL ACTING LOCK: bold or subtle brow/eyelid/gaze target/mouth shape/head-torso cues as scripted. Do not force a close-up/camera gaze; preserve Camera/Action/eye-line/hands/props. Acting notes are not visible text; never print.';
 const FACIAL_ACTING_LOCK_MINIMAL = 'FACIAL ACTING LOCK: brow, eyelid, gaze target, mouth shape, head/torso; do not force close-up; preserve Camera/Action/eye-line; not visible text.';
 const LIMB_OWNERSHIP_CHECK_MINIMAL = 'LIMB OWNERSHIP CHECK: connect each L/R hand-arm-shoulder and foot-leg-hip, or natural occlusion/crop; no stray/extra/missing/merged/detached/mirrored/malformed limbs, even near furniture; keep Action/foreshortening.';
@@ -181,8 +183,8 @@ const compactBudgetEyeLine = (line) => {
   return `EYE-LINE LOCK: ${participants} mutual gaze; reactors watch speaker; never lens/front. ${primary} 3/4; camera behind ${rear}; ${rear} rear head/shoulder FG, no front-on face. Script camera wins.`;
 };
 
-const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt(prompt), preserveReferenceStyle = false, seriousTone = false) => {
-  if (prompt.length <= CHATGPT_WEB_COPY_SOFT_BUDGET) return prompt;
+const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt(prompt), preserveReferenceStyle = false, seriousTone = false, maxChars = OPENAI_IMAGE_PROMPT_MAX_CHARS) => {
+  if (prompt.length <= maxChars) return prompt;
   // 圧縮対象は指示だけ。台詞内の制御語・引用符を置換しない。
   let tokenPrefix = '__DIALOGUE_LITERAL_';
   while (prompt.includes(tokenPrefix)) tokenPrefix += '_';
@@ -201,7 +203,7 @@ const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt
     .replace(/CONVERSATIONAL DEPTH BASE:[^\n]*/g, 'CONVERSATIONAL DEPTH BASE: Action gaze first; varied depth.')
     .replace(/EYE-LINE LOCK:[^\n]*/g, compactConversationEyeLine)
     .replace(/MANGA FINISH ASSIST:[^\n]*/g, 'FINISH: bubbles, anatomy.')
-    .replace(/\[ SHARED IMAGE QUALITY CONTRACT[\s\S]*?(?=\n- Clean finish:)/g, `SHARED IMAGE QUALITY CONTRACT: one primary focal path. Face/hand/prop gets strongest G-pen-like contour: visibly heavier pressure-taper and bold contact accents; support/BG thinner/lighter. If merged, pale BG. Keep light/setting/mono/anatomy/props; rear head has no invented face.\n${BODY_ACTING_BASELINE_COMPACT}\n${EXPRESSIVE_DIRECTION}\n${PANEL_EDGE_CONTINUITY_LOCK_COMPACT}\n${FUNCTIONAL_SURFACE_ORIENTATION_LOCK_COMPACT}\n${OBJECT_GEOMETRY_LOCK_COMPACT}`)
+    .replace(/\[ SHARED IMAGE QUALITY CONTRACT[\s\S]*?(?=\n- Clean finish:)/g, `SHARED IMAGE QUALITY CONTRACT: one primary focal path. Face/hand/prop gets strongest G-pen-like contour: visibly heavier pressure-taper and bold contact accents; support/BG thinner/lighter. If depth-of-field blur still merges the focal subject, lighten/desaturate BG and strengthen focal G-pen. Keep light/setting/mono/anatomy/props; rear head has no invented face.\n${BODY_ACTING_BASELINE_COMPACT}\n${EXPRESSIVE_DIRECTION}\n${PANEL_EDGE_CONTINUITY_LOCK_COMPACT}\n${FUNCTIONAL_SURFACE_ORIENTATION_LOCK_COMPACT}\n${OBJECT_GEOMETRY_LOCK_COMPACT}`)
     .replace(/FACIAL ACTING LOCK:[\s\S]*?(?=\n- CLEAN SURFACE PROTOCOL:)/g, FACIAL_ACTING_LOCK_COMPACT)
     .replace(/RICH PANEL COMPOSITION \/ CHARACTER CLARITY LOCK:[\s\S]*?(?=\n- CLOTHING FOLD SHADOW ASSIST:)/g, RICH_PANEL_COMPOSITION_LOCK_COMPACT)
     .replace(/CLEAN SURFACE PROTOCOL:[^\n]*/g, 'CLEAN: no noise except style exceptions.')
@@ -239,7 +241,7 @@ const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt
     .replace(/CHARACTER QA PASS:\n-[^\n]*/g, monochrome ? 'CHARACTER QA: shape/design and stable ink/tone only; white lit skin; no reference color.' : 'CHARACTER QA: preserve identity and outfit; redraw swaps or merged cast.')
     .replace(/\n{3,}/g, '\n\n');
 
-  if (restore(compacted).length <= CHATGPT_WEB_COPY_SOFT_BUDGET) return restore(compacted);
+  if (restore(compacted).length <= maxChars) return restore(compacted);
 
   const maximallyCompacted = compacted
     .replace(/\[ MONOCHROME (?:THREE-TONE MANUSCRIPT|TWO-VALUE RENDERING) LOCK \][\s\S]*?(?=\n\nOUTPUT: Single image)/, MONOCHROME_RENDERING_LOCK_COMPACT)
@@ -292,7 +294,7 @@ const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt
     .replace(/^VFX: [^\n]*/gm, 'VFX: style overlay only; preserve readable action.')
     .replace(/CHARACTER QA:[^\n]*/g, monochrome ? 'CHARACTER QA: shape/design, stable ink/tone, white lit skin; no color.' : 'CHARACTER QA: preserve identity and outfit.');
 
-  if (restore(maximallyCompacted).length <= CHATGPT_WEB_COPY_SOFT_BUDGET) return restore(maximallyCompacted);
+  if (restore(maximallyCompacted).length <= maxChars) return restore(maximallyCompacted);
 
   const finallyCompacted = maximallyCompacted.replace(
     /CROSS-PANEL WARDROBE COLOR LOCK:[^\n]*/g,
@@ -336,7 +338,7 @@ const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt
     .replace(/^- Tails point to actual speakers; right-to-left manga order\.\n?/gm, '')
     .replace(/^PLACEMENT\/IDENTITY:[^\n]*/gm, line => line.replace(/ \(bare eyes, no frames\)/g, ''));
 
-  if (restore(finallyCompacted).length <= CHATGPT_WEB_COPY_SOFT_BUDGET) return restore(finallyCompacted);
+  if (restore(finallyCompacted).length <= maxChars) return restore(finallyCompacted);
 
   // 全コマ共有の衣装原文は上位に残し、機械注入した同一文だけを各Actionから除く。
   // 台本固有の着脱・状態変化・本文は触らない。各コマで衣装を再設計させない。
@@ -542,7 +544,8 @@ export const buildMangaPrompt = ({
   systemVersion,
   scenarioModelLabel,
   allowScenarioQualityWarning = false,
-  cinematicTechniques = true
+  cinematicTechniques = true,
+  promptMaxChars = OPENAI_IMAGE_PROMPT_MAX_CHARS
 }) => {
   // Native forms and Windows text files use CRLF; metadata and panels share LF parsing.
   scenario = stripSourceMetadata(scenario);
@@ -673,7 +676,7 @@ Dialogue (verbatim bubbles): ${extractDialogueOnly(pt, castList, { forImagePromp
       VAR_CAST_LIST_CHATGPT, identityMatrix, activeOutfit: promptActiveOutfit,
       scriptLock: sceneLocks, panelSections, preserveReferenceStyle, seriousTone
     });
-    rawPrompt = compactChatGPTConversationRules(rawPrompt, isMonochrome, preserveReferenceStyle, seriousTone);
+    rawPrompt = compactChatGPTConversationRules(rawPrompt, isMonochrome, preserveReferenceStyle, seriousTone, promptMaxChars);
   } else {
     // Gemini (Imagen 3/4) 向けプロンプトの構築
     panelSections = panels.map((pt, i) => {
@@ -737,11 +740,12 @@ ${geminiRearForegroundLock}`;
   }
 
   const clarifiedPrompt = clarifyBubbleCountPlacement(isChatGPTFamily
-    ? compactChatGPTConversationRules(safePrompt, isMonochrome, preserveReferenceStyle, seriousTone)
+    ? compactChatGPTConversationRules(safePrompt, isMonochrome, preserveReferenceStyle, seriousTone, promptMaxChars)
     : safePrompt);
-  const baselinePrompt = isChatGPTFamily && clarifiedPrompt.length > CHATGPT_WEB_COPY_SOFT_BUDGET
-    ? compactChatGPTConversationRules(clarifiedPrompt, isMonochrome, preserveReferenceStyle, seriousTone)
+  const baselinePrompt = isChatGPTFamily && clarifiedPrompt.length > promptMaxChars
+    ? compactChatGPTConversationRules(clarifiedPrompt, isMonochrome, preserveReferenceStyle, seriousTone, promptMaxChars)
     : clarifiedPrompt;
+  if (isChatGPTFamily) assertImagePromptBudget(baselinePrompt, promptMaxChars);
   if (cinematicAssignments.length === 0) return assertPrintableDialogue(baselinePrompt);
 
   const candidatePrompt = applyCinematicTechniqueSlot(

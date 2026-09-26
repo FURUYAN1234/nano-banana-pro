@@ -65,3 +65,12 @@ test('README embeds the generated diagram instead of a copied diagram', () => {
   assert.match(readme, /nano-banana-pro-reasoning-a4\.svg/);
   assert.match(readme, /ワークフローまたは思考ルールを大きく変更した際/);
 });
+
+test('diagrams describe current dialogue, wardrobe and warning-retention contracts', () => {
+  const workflow = readFileSync(diagramPath, 'utf8');
+  const reasoning = readFileSync(reasoningDiagramPath, 'utf8');
+  for (const text of ['横長4コマ縦1列', '台詞本文', '衣装', '最大3回', '警告付き']) {
+    assert.ok((workflow + reasoning).includes(text), `Missing current contract: ${text}`);
+  }
+  assert.doesNotMatch(workflow, /QA-passed images|QA通過画像/);
+});

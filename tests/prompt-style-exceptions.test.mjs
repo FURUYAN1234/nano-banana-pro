@@ -5,9 +5,8 @@ import { createServer } from 'vite';
 let server;
 let buildMangaPrompt;
 
-// Empirical soft budget for manual ChatGPT Web paste.
-// This is not an official OpenAI API limit; keep it separate from API transport caps.
-const EMPIRICAL_CHATGPT_WEB_COPY_SOFT_BUDGET_CHARS = 15000;
+// The shared output ceiling follows GPT Image API, not the browser paste threshold.
+const EMPIRICAL_CHATGPT_WEB_COPY_SOFT_BUDGET_CHARS = 32000;
 
 before(async () => {
   server = await createServer({

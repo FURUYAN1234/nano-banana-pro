@@ -43,6 +43,7 @@ function App() {
     setColorMode,
     isColorModeLocked,
     copyPrompt,
+    webCopyPartLengths,
     currentStep,
     customLocation,
     customOutfit,
@@ -441,6 +442,7 @@ function App() {
               finalPrompt={finalPrompt}
               setFinalPrompt={setFinalPrompt}
               copyPrompt={copyPrompt}
+              webCopyPartLengths={webCopyPartLengths}
               enableChatGPTMode={enableChatGPTMode}
               selectedEngine={selectedEngine}
               bg360Image={bg360Image}

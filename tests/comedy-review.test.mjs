@@ -89,15 +89,15 @@ test('surface specialization requires exact same-panel Action evidence without i
   }
 });
 
-test('review preserves the Web-copy budget while retaining a useful shorter patch', () => {
+test('review preserves the shared 32,000-character budget while retaining a useful shorter patch', () => {
   const before = 'FUNCTIONAL SURFACE PANEL CHECK: solve geometry';
   const base = 'Action: Reader holds a page.\n' + before + '\nEYE-LINE LOCK: face viewer\n';
-  const input = base + 'x'.repeat(15000 - base.length);
+  const input = base + 'x'.repeat(32000 - base.length);
   const result = applyComedyReview(input, JSON.stringify({ observations: [], patches: [
     { line: 1, before, confidence: 'high', reason: 'clarify', surface: { subject: 'page', reader: 'Reader', source: { line: 0, text: base.split('\n')[0] } } },
     { line: 2, before: 'EYE-LINE LOCK: face viewer', after: 'EYE-LINE LOCK: Action', confidence: 'high', reason: 'restore target' },
   ] }));
-  assert.ok(result.prompt.length <= 15000);
+  assert.ok(result.prompt.length <= 32000);
   assert.equal(result.prompt.split('\n')[1], before);
   assert.equal(result.prompt.split('\n')[2], 'EYE-LINE LOCK: Action');
 });

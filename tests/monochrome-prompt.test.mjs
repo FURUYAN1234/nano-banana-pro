@@ -42,7 +42,7 @@ test('white light planes and restricted tone regions survive provider, style and
       assert.doesNotMatch(prompt, /halftone (?:blur|defocus)|blur[^\n.;]*in black-on-white halftone|distant depth-of-field in black-on-white halftone/);
       // Serious mode already exceeds the soft budget in HEAD (15,815 chars).
       // Its medium guarantees must survive too; don't replace its style/script to force this cap.
-      if (providerFamily === 'chatgpt' && punchlineType === 'Auto') assert.ok(prompt.length <= 15000, `Web budget: ${prompt.length}`);
+      if (providerFamily === 'chatgpt' && punchlineType === 'Auto') assert.ok(prompt.length <= 32000, `shared Web/API budget: ${prompt.length}`);
       const review = buildImageQualityQaPrompt({ finalPrompt: prompt, referenceImageCount: 2 });
       assert.match(review, /screened.*lit.*(?:walls|background)/);
     }
@@ -87,7 +87,7 @@ for (const family of ['chatgpt', 'gemini']) {
     assert.match(prompt, /MONOCHROME BACKGROUND CLARITY LOCK/);
     assert.match(prompt, /simplify nonessential textures|omit (?:optional )?textures/i);
     assert.match(prompt, /story-required object or clue|Keep location\/depth\/all story evidence|keep setting\/depth\/story evidence/i);
-    if (family === 'chatgpt') assert.ok(prompt.length <= 15000, `Web budget: ${prompt.length}`);
+    if (family === 'chatgpt') assert.ok(prompt.length <= 32000, `shared Web/API budget: ${prompt.length}`);
   });
   test(`${family}: default/color ignores monochrome words in cast metadata`, () => {
     for (const mode of [undefined, 'color', 'auto']) {
@@ -161,13 +161,13 @@ test('ink lighting and physical depth survive long Web compaction without changi
     assert.deepEqual(mono.match(/^Camera:.*$/gm), color.match(/^Camera:.*$/gm));
     assert.deepEqual(mono.match(/^Action \(visual only\):.*$/gm), color.match(/^Action \(visual only\):.*$/gm));
     assert.match(mono, /PROPORTION OVERRIDE: Use 7-8 head proportions/);
-    if (family === 'chatgpt') assert.ok(mono.length <= 15000, `Web budget: ${mono.length}`);
+    if (family === 'chatgpt') assert.ok(mono.length <= 32000, `shared Web/API budget: ${mono.length}`);
   }
 });
 
 test('monochrome lock and style recipes survive Web prompt compaction', () => {
   const prompt = build('chatgpt', 'monochrome', { scenario: scenario(['WATERCOLOR', 'NEON', 'RETRO', 'CHIBI_GAG']) });
-  assert.ok(prompt.length <= 15000, `Web budget: ${prompt.length}`);
+  assert.ok(prompt.length <= 32000, `shared Web/API budget: ${prompt.length}`);
     assert.match(prompt, /\[ MONOCHROME THREE-TONE MANUSCRIPT LOCK \]/);
   assert.equal((prompt.match(/MONOCHROME PANEL STYLE LOCK:/g) || []).length, 4);
   assert.match(prompt, /G-PEN INK DIRECTION/);
@@ -178,7 +178,7 @@ test('monochrome lock and style recipes survive Web prompt compaction', () => {
 test('monochrome Web prompt remains copyable with a five-character cast', () => {
   const fiveCharacterCast = `${castList}\n## 澪\n- orange bob hair, no glasses, white blouse\n## 空\n- blonde hair, blue eyes, round glasses, black vest\n## 雪\n- silver long hair, no glasses, patterned coat`;
   const prompt = build('chatgpt', 'monochrome', { castList: fiveCharacterCast });
-  assert.ok(prompt.length <= 15000, `five-character Web budget: ${prompt.length}`);
+  assert.ok(prompt.length <= 32000, `five-character shared Web/API budget: ${prompt.length}`);
   assert.match(prompt, /G-PEN INK DIRECTION/);
   assert.match(prompt, /BLACK-HAIR INK LOCK:[^\n]*(?:solid black|black mass)[^\n]*(?:white highlight|white shine)/i);
   assert.match(prompt, /MONOCHROME BACKGROUND CLARITY LOCK/);

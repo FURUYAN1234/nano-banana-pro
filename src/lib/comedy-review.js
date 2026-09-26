@@ -1,4 +1,5 @@
 import { OBJECT_GEOMETRY_LOCK, FUNCTIONAL_SURFACE_ORIENTATION_LOCK_COMPACT } from './shared-image-quality.js';
+import { OPENAI_IMAGE_PROMPT_MAX_CHARS } from './image-prompt-budget.js';
 
 const AUXILIARY = /^(?:FG only:|BG only:|EYE-LINE LOCK:|COMPOSITION STAGING:|FUNCTIONAL SURFACE PANEL CHECK:|BEAT REVIEW:|DEPTH:)/;
 const ACTION_SOURCE = /^Action(?: \([^\n)]*\))?:/i;
@@ -46,7 +47,7 @@ ELIGIBLE LINES:
 ${JSON.stringify(lines.flatMap((text, line) => AUXILIARY.test(text) ? [{ line, text }] : []))}`;
 }
 
-export function applyComedyReview(original, raw) {
+export function applyComedyReview(original, raw, maxChars = OPENAI_IMAGE_PROMPT_MAX_CHARS) {
   try {
     const result = JSON.parse(String(raw).replace(/^\s*```(?:json)?\s*/i, '').replace(/\s*```\s*$/, ''));
     if (!Array.isArray(result.patches) || result.patches.length > 8 || !Array.isArray(result.observations)) throw new Error('schema');
@@ -60,10 +61,10 @@ export function applyComedyReview(original, raw) {
       if (!Number.isInteger(patch?.line) || seen.has(patch.line) || lines[patch.line] !== patch.before || !AUXILIARY.test(patch.before)
         || typeof after !== 'string' || !AUXILIARY.test(after) || patch.before.split(':')[0] !== after.split(':')[0] || /[\r\n]/.test(after) || after.length > 700
         || patch.confidence !== 'high' || typeof patch.reason !== 'string') { rejected++; continue; }
-      // A review must not undo the existing Web-copy size budget. Long manual
+      // A review must not undo the shared Web/API size budget. Long manual
       // prompts remain intact, but generated review patches cannot lengthen them.
       const nextLength = length - patch.before.length + after.length;
-      if (nextLength > Math.max(original.length, 15000)) { rejected++; continue; }
+      if (nextLength > Math.max(original.length, maxChars)) { rejected++; continue; }
       length = nextLength;
       seen.add(patch.line);
       accepted.push({ ...patch, after });
@@ -79,7 +80,7 @@ export function applyComedyReview(original, raw) {
 export async function reviewComedyPrompt(input, request) {
   try {
     const response = await request(buildComedyReviewRequest(input), null, null, () => {});
-    return { ...applyComedyReview(input.prompt, response.text), original: input.prompt };
+    return { ...applyComedyReview(input.prompt, response.text, input.promptMaxChars), original: input.prompt };
   } catch {
     return { prompt: input.prompt, original: input.prompt, changes: [], observations: [], warning: 'AI精査を取得できなかったため、元の指示文で続行しました。' };
   }

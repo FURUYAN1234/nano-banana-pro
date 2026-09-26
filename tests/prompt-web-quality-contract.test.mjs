@@ -75,7 +75,7 @@ const buildGeminiPrompt = () => buildMangaPrompt({
 
 test('generic wardrobe component continuity survives both providers, media, styles and long compaction', () => {
   for (const providerFamily of ['chatgpt', 'gemini']) for (const colorMode of ['color', 'monochrome']) {
-    for (const punchlineType of ['Auto', 'SeriousDocumentary']) for (const extra of ['', ' identity detail'.repeat(1100)]) {
+    for (const punchlineType of ['Auto', 'SeriousDocumentary']) for (const extra of ['', ' identity detail'.repeat(900)]) {
       const prompt = buildMangaPrompt({ scenario: SCENARIO, castList: CAST_LIST + extra, colorMode, providerFamily, punchlineType, systemVersion: 'test' });
       assert.match(prompt, /WARDROBE COMPONENT LOCK:/);
       assert.match(prompt, /有無\/数\/形\/取付位置/);

@@ -301,6 +301,7 @@ export default function Step4Panel({
   finalPrompt,
   setFinalPrompt,
   copyPrompt,
+  webCopyPartLengths,
   enableChatGPTMode,
   selectedEngine,
   bg360Image,
@@ -471,14 +472,16 @@ export default function Step4Panel({
               最終プロンプト
             </label>
             <div className="flex items-center gap-3">
-              <button
-                onClick={copyPrompt}
-                disabled={!finalPrompt}
-                className="bg-[#1c2128] hover:bg-white hover:text-black text-slate-400 p-2 rounded-lg transition-all border border-white/10"
-                title="プロンプトをコピー"
-              >
-                <Copy size={14} />
-              </button>
+              {!(isOpenAIImageMode && webCopyPartLengths.length > 1) && (
+                <button
+                  onClick={copyPrompt}
+                  disabled={!finalPrompt}
+                  className="bg-[#1c2128] hover:bg-white hover:text-black text-slate-400 p-2 rounded-lg transition-all border border-white/10"
+                  title="プロンプトをコピー"
+                >
+                  <Copy size={14} />
+                </button>
+              )}
               <span className="text-[9px] font-mono text-slate-600">DYNAMIC ENGINE V1.2.3</span>
             </div>
           </div>
@@ -552,14 +555,57 @@ export default function Step4Panel({
                 </div>
               )}
               
+              {isOpenAIImageMode && webCopyPartLengths.length > 1 ? (
+                <div className="space-y-2">
+                  <p className="text-[11px] text-cyan-200 leading-relaxed">
+                    ChatGPT Webでは以下を1から順に同じ入力欄へ貼り付け、参照画像を添えて最後に一度だけ送信してください。途中では送信しません。
+                  </p>
+                  {webCopyPartLengths.map((length, index) => (
+                    <button
+                      key={index}
+                      type="button"
+                      onClick={() => copyPrompt(false, index)}
+                      className="w-full web-prompt-copy-part font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-all"
+                      style={{ '--copy-part-lightness': `${58 + (index / (webCopyPartLengths.length - 1)) * 30}%` }}
+                    >
+                      <Copy size={18} /> {index + 1}/{webCopyPartLengths.length} をコピー（{length.toLocaleString()}文字）
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => copyPrompt()}
+                    className="w-full bg-slate-800 hover:bg-slate-700 text-white py-2 rounded-xl flex items-center justify-center gap-2 border border-white/10"
+                  >
+                    <Copy size={16} /> 全文を一括コピー（Webへ一度に貼るとTXT化・生成結果が変わる場合あり）
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={copyPrompt}
+                  disabled={!finalPrompt}
+                  className={`w-full ${isCopied ? 'bg-green-600' : 'web-prompt-copy-action'} text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all border border-white/10`}
+                >
+                  {isCopied ? <CheckCircle2 size={20} /> : <Copy size={20} />}
+                  {isCopied ? "コピー完了！" : "📋 プロンプトをコピーする（Web / Work用）"}
+                </button>
+              )}
+
               <button
-                onClick={copyPrompt}
+                onClick={() => copyPrompt(true)}
                 disabled={!finalPrompt}
-                className={`w-full ${isCopied ? 'bg-green-600' : 'web-prompt-copy-action'} text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all border border-white/10`}
+                className="w-full bg-slate-800 hover:bg-slate-700 text-white py-2 rounded-xl flex items-center justify-center gap-2 border border-white/10"
               >
-                {isCopied ? <CheckCircle2 size={20} /> : <Copy size={20} />}
-                {isCopied ? "コピー完了！" : "📋 プロンプトをコピーする（web貼り付け時）"}
+                <Download size={16} /> 同じプロンプトを.txtで保存する
               </button>
+
+              {(isOpenAIImageMode || enableChatGPTMode) && finalPrompt && (
+                <p className="text-[11px] text-slate-400 leading-relaxed">
+                  ChatGPT / Work用とAPI用は同じ指示文で、参照画像の説明を含め共通上限32,000文字です。
+                  ChatGPT Webでは一度に10,000文字を貼るとTXT化する例を確認しました。一括貼付では指示の反映や生成結果が変わる可能性があるため、長文は上の分割コピーを推奨します。
+                  分割しても原文は削られず、API生成の指示文も変わりません。TXTを使う場合はテキストフィールドへ戻す必要はありません。
+                  コピーする全文は現在{webCopyPartLengths.reduce((sum, length) => sum + length, 0).toLocaleString()}文字です。参照画像はキャラ画像、背景画像の順に添付してください。
+                </p>
+              )}
 
               {/* コピーボタン下の親切な補足ガイド */}
               {finalPrompt && (
@@ -775,7 +821,7 @@ export default function Step4Panel({
                         Web版での生成にはChatGPT側の利用枠・上限が適用されます。この方法ではNano Bananaから画像生成APIを呼びません。ただし、アプリ内で行ったキャラ解析・シナリオ生成などのAPI料金は別途発生する場合があります。
                         <br />
                         <span className="step4-help-copy-compact inline-block mt-2 text-yellow-300 font-bold bg-yellow-900/50 px-2 py-1.5 rounded border border-yellow-500/30">
-                          ⚠️ 注意：プロンプトを貼り付けた際、ファイルとして添付されてしまった場合は、必ず「テキストフィールドに表示」をクリックしてプロンプトの全文を展開してから、キャラクターシート等の画像を添付してください。
+                          長文は分割コピーボタンを1から順に使い、同じ入力欄へ貼ってから一度だけ送信してください。TXT保存も使えます。その場合は「添付テキスト全文を画像生成指示として読み、添付画像を人物参照にして生成」と指定し、キャラクターシートと有効な背景を順に添付します。
                         </span><br />
                         <span className="step4-help-copy inline-block mt-2 text-cyan-300/80">
                           ⚠️ <strong>ChatGPTの仕様上、縦に細長すぎる画像になってしまう場合</strong>は、ChatGPT側の「アスペクト比」ボタンで手動修正するのではなく、以下の「画像比率修正プロンプト」をコピーしてChatGPTに貼り付けてみてください。綺麗な4コマの形に修正されます。
@@ -1341,9 +1387,9 @@ No explanations. No partial results.`;
                       <div className="bg-black/40 rounded p-3 text-left">
                         <p className="text-orange-300 font-bold mb-2">完璧な画質・正確なキャラクターで生成する手順：</p>
                         <ol className="list-decimal list-inside text-slate-300 space-y-1 text-xs">
-                          <li>画面左側の「<span className="text-white font-bold">プロンプトをコピーする（web貼り付け時）</span>」ボタンを押します。</li>
+                          <li>画面左側の分割コピーボタンを番号順に使います。短文なら「<span className="text-white font-bold">プロンプトをコピーする（Web / Work用）</span>」を押します。</li>
                           <li><a href={isOpenAIImageMode ? "https://chatgpt.com/" : "https://gemini.google.com/app"} target="_blank" rel="noreferrer" className="text-blue-400 hover:underline">{isOpenAIImageMode ? 'ChatGPTウェブ版' : 'Geminiウェブ版'}</a> を開きます。</li>
-                          <li>コピーした文章を貼り付け、元のキャラクターシート画像を一緒に添付して送信してください。</li>
+                          <li>同じ入力欄に全部貼り付け、元のキャラクターシート画像を添付して一度だけ送信してください。</li>
                         </ol>
                       </div>
                     </div>
