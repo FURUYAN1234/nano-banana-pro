@@ -1,7 +1,4 @@
-import {
-  assertActiveFinalPanelStaging,
-  FINAL_PANEL_ACTIVE_STAGING_SCENARIO_CONTRACT
-} from './final-panel-staging.js';
+import { FINAL_PANEL_ACTIVE_STAGING_SCENARIO_CONTRACT } from './final-panel-staging.js';
 import {
   SCENARIO_GESTURE_VARIETY_RULES,
   SCENARIO_PROP_CAUSALITY_RULES,
@@ -101,7 +98,6 @@ const BACKGROUND_MUTATION_RE = /背景.{0,24}(?:変形|変化|歪|崩|爆発|追
 // otherwise safe candidate and block the image-generation workflow.
 const HARD_ENHANCEMENT_ISSUE_CODES = new Set([
   'output_too_short',
-  'passive_final_tableau',
   'metadata_changed',
   'panel_structure_changed',
   'speaker_sequence_changed',
@@ -341,24 +337,6 @@ export const validateScenarioEnhancement = ({
   }
   if (candidate.text === original.text) {
     addIssue(issues, issueCodes, 'scenario_unchanged', 'シナリオ全体が変更されていません');
-  }
-
-  try {
-    assertActiveFinalPanelStaging({
-      scenario: candidate.text,
-      punchlineType: candidate.metadata.punchline
-    });
-  } catch (error) {
-    if (error?.message === 'passive_final_tableau') {
-      addIssue(
-        issues,
-        issueCodes,
-        'passive_final_tableau',
-        '4コマ目で脇役を横一列・棒立ち・無言の観客にせず、別々の物理アクションを割り当ててください'
-      );
-    } else {
-      throw error;
-    }
   }
 
   for (const field of METADATA_FIELDS) {

@@ -32,6 +32,40 @@ const CAST_LIST = `
 - blonde bob, round glasses
 `;
 
+const DEPTH_CONTACT_CONFLICT_SCENARIO = `
+## タイトル: 掲示板の議論
+Location: 会議室
+Outfit: 私服
+
+[1コマ目: 起]
+状況: リンが質問カードを読む。
+リン「質問を見よう。」
+[2コマ目: 承]
+[Camera: 高い位置から、手前にリンと掲示板、奥にサエコを置くワイドショット。]
+状況: リンは掲示板の質問カードを押さえ、サエコは隣の古いカードを外す。
+サエコ「こちらは外そう。」
+[3コマ目: 転]
+状況: ヒカリが資料を読む。
+ヒカリ「次はこちら。」
+[4コマ目: 結]
+状況: リンとサエコが掲示板を見直す。
+リン「整理できたね。」`;
+
+test('a foreground prop contact takes precedence over a conflicting background actor placement', () => {
+  for (const providerFamily of ['chatgpt', 'gemini']) {
+    const prompt = buildMangaPrompt({
+      scenario: DEPTH_CONTACT_CONFLICT_SCENARIO,
+      castList: CAST_LIST,
+      colorMode: 'color', providerFamily, punchlineType: 'Auto', systemVersion: 'test'
+    });
+    assert.match(prompt, /Action contact wins if Camera depth conflicts/i);
+    assert.match(prompt, /move that actor's sole body within reach/i);
+    assert.match(prompt, /never borrow another actor's hand/i);
+    assert.match(prompt, /CAMERA FIRST:[^\n]*Action contact[^\n]*within reach/i);
+    assert.match(prompt.match(/## Panel 2[\s\S]*?(?=## Panel 3)/)?.[0] || '', /SHOT EXECUTION:.*look down.*upper prop faces/i);
+  }
+});
+
 const REPORTED_SHINAGAWA_SCENARIO = `
 ## タイトル: 品川駅の乗車列
 Location: 雨天の品川駅港南口タクシー乗り場

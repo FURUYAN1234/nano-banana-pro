@@ -1,8 +1,30 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 
 const chunksModule = await import('../src/lib/web-prompt-chunks.js').catch(() => ({}));
 const splitWebPromptForPaste = chunksModule.splitWebPromptForPaste;
+const ensureWebPromptTrailingNewline = chunksModule.ensureWebPromptTrailingNewline;
+
+test('copied Web prompt ends at the next line without adding an empty line', () => {
+  assert.equal(typeof ensureWebPromptTrailingNewline, 'function');
+  assert.equal(ensureWebPromptTrailingNewline('last instruction'), 'last instruction\n');
+  assert.equal(ensureWebPromptTrailingNewline('last instruction\n'), 'last instruction\n');
+  assert.equal(ensureWebPromptTrailingNewline('last instruction\n\n'), 'last instruction\n');
+  assert.equal(ensureWebPromptTrailingNewline('last instruction\r\n'), 'last instruction\n');
+  const prompt = ensureWebPromptTrailingNewline(`${'A'.repeat(6000)}\n${'B'.repeat(6000)}\n${'C'.repeat(6000)}`);
+  const chunks = splitWebPromptForPaste(prompt);
+  assert.ok(chunks.every(chunk => chunk.endsWith('\n')));
+  assert.equal(chunks.join(''), prompt);
+  assert.equal(prompt.at(-2), 'C');
+});
+
+test('the STEP4 full, split and TXT copy paths share the trailing-newline preparation', () => {
+  const source = readFileSync(new URL('../src/hooks/useMangaWorkflow.js', import.meta.url), 'utf8');
+  assert.match(source, /const prepareWebCopyPrompt = \(prompt\) => ensureWebPromptTrailingNewline\(/);
+  assert.match(source, /webCopyPartLengths = splitWebPromptForPaste\(prepareWebCopyPrompt\(finalPrompt\)\)/);
+  assert.match(source, /copiedPrompt = prepareWebCopyPrompt\(finalPrompt\)/);
+});
 
 test('Web paste chunks keep the complete prompt inline-sized and in order', () => {
   assert.equal(typeof splitWebPromptForPaste, 'function');

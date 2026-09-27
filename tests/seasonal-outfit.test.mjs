@@ -169,6 +169,7 @@ const payoffReviewResponse = JSON.stringify({
   visual_payoff: true,
   slogan_only: false,
   unseeded_fact: false,
+  visual_feasibility: [1, 2, 3, 4].map(panel => ({ panel, feasible: true, evidence: `Panel ${panel}: the actor and focal prop are readable in the strip.`, correction: '' })),
   reason_codes: [],
 });
 

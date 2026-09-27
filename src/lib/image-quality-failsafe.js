@@ -53,20 +53,23 @@ const createUnverifiedReview = (reason) => ({
   }],
 });
 
-const hasConcreteIssues = (review) => (
-  Array.isArray(review?.issues) && review.issues.some((issue) => issue?.type !== 'unverified')
+// Regeneration is for visible failures that materially break the manga. A
+// reviewer's uncertainty, decorative variation or action-phase nuance is
+// reported, but cannot by itself spend another image request.
+const MATERIAL_IMAGE_ISSUES = new Set([
+  'panel_layout', 'cast_count', 'character_reference', 'wardrobe_continuity', 'anatomy', 'object_geometry',
+  'prop_ownership', 'camera_geometry', 'bubble_text', 'bubble_speaker',
+  'bubble_order', 'title_text', 'speaker_name', 'extra_text',
+  'monochrome_rendering', 'story_integrity',
+]);
+
+export const isMaterialImageQualityIssue = (issue) => (
+  MATERIAL_IMAGE_ISSUES.has(issue?.type)
+  || (issue?.type === 'surface_text' && issue?.textRole === 'story_required')
 );
 
-// Bubble-order evidence is intentionally fail-closed: when the vision reviewer
-// cannot return the physical left-to-right text inventory, the result remains
-// `unverified` for reporting, but it is still repairable. Otherwise a model can
-// omit the inventory, draw the bubbles in reverse, and bypass the bounded retry
-// path entirely.
 const getRepairableIssues = (review) => (Array.isArray(review?.issues) ? review.issues : [])
-  .map(issue => (issue?.type === 'unverified' && issue?.subject === 'bubble_order'
-    ? { ...issue, type: 'bubble_order', reason: `物理的な吹き出し文字の左右在庫を確認できませんでした。読順を再検証してください。${issue.reason ? ` ${issue.reason}` : ''}` }
-    : issue))
-  .filter(issue => issue?.type !== 'unverified')
+  .filter(isMaterialImageQualityIssue)
   // Vision reviewers often repeat the same panel/camera defect once per
   // dimension. Keep one actionable record per defect so the analysis model
   // can return a complete plan instead of failing on a long duplicate list.
@@ -303,14 +306,6 @@ export const runImageQualityFailsafe = async ({
       try { result = mergeCriticalCameraAudit(result, shouldStop() ? null : await reviewCriticalCamera(image, prompt)); }
       catch { result = mergeCriticalCameraAudit(result, null); }
     }
-    if (!result?.pass && !hasConcreteIssues(result) && !result?.requestFailed && !shouldStop()) {
-      onProgress('品質が未確認のため、同じ画像を1回再検査します。画像は再生成しません。');
-      result = await review(image, prompt);
-      if (reviewCriticalCamera && hasCriticalRearCameraContract(prompt) && !result?.requestFailed) {
-        try { result = mergeCriticalCameraAudit(result, shouldStop() ? null : await reviewCriticalCamera(image, prompt)); }
-        catch { result = mergeCriticalCameraAudit(result, null); }
-      }
-    }
     return result || createUnverifiedReview('Empty quality response');
   };
   finalReview = originalReview = await inspect(candidate, originalPrompt);
@@ -322,18 +317,14 @@ export const runImageQualityFailsafe = async ({
     // 実文字で確認済みの読順違反を先に局所修正し、他の判定で埋もれさせない。
     const confirmedOrder = repairable.filter(issue => issue.type === 'bubble_order'
       && finalReview.bubbleInventory?.some(check => check.panel === issue.panel && check.status === 'defect'));
-    // A concrete visible defect takes priority over a fail-closed bubble-order
-    // uncertainty. Otherwise punctuation/OCR uncertainty can make the analysis
-    // model plan unrelated repairs together and abort before fixing the proven
-    // camera or anatomy defect. The uncertain order remains for a later pass if
-    // it is still unresolved after the concrete defect is repaired.
-    const concrete = repairable.filter(issue => !(issue.type === 'bubble_order'
-      && finalReview.issues?.some(source => source?.type === 'unverified'
-        && source?.subject === 'bubble_order' && source?.panel === issue.panel)));
+    const concrete = repairable;
     const criticalCamera = concrete.filter(issue => issue.type === 'camera_geometry');
     const issues = criticalCamera.length ? criticalCamera
       : (confirmedOrder.length ? confirmedOrder : (concrete.length ? concrete : repairable));
-    if (!issues.length) { stopReason = 'unverified'; break; }
+    if (!issues.length) {
+      stopReason = finalReview.issues?.every(issue => issue?.type === 'unverified') ? 'unverified' : 'non_material';
+      break;
+    }
     let analysis;
     let feedback = '';
     for (let analysisAttempt = 0; analysisAttempt < 2 && !analysis && !shouldStop(); analysisAttempt++) {

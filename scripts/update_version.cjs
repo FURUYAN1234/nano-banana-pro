@@ -137,6 +137,15 @@ try {
     /# Nano Banana Pro 🍌✨ \(v[^)]+\)/,
     `# Nano Banana Pro 🍌✨ (v${newVersion})`
   );
+  const currentSourceVersion = /^> Current source version: \*\*v[^*]+\*\* \/ 現在のソース版: \*\*v[^*]+\*\*$/m;
+  if (!currentSourceVersion.test(readmeContent)) {
+    throw new Error('Could not find the current source version in README.md');
+  }
+  readmeContent = readmeContent.replace(currentSourceVersion,
+    `> Current source version: **v${newVersion}** / 現在のソース版: **v${newVersion}**`);
+  readmeContent = readmeContent
+    .replace(/matching v\d+\.\d+\.\d+ FourPanel Release asset/, `matching v${newVersion} FourPanel Release asset`)
+    .replace(/v\d+\.\d+\.\d+ FourPanel Releaseアセット/, `v${newVersion} FourPanel Releaseアセット`);
 
   // ChangeLogへのエントリ挿入
   const changelogHeader = '## 📋 ChangeLog';

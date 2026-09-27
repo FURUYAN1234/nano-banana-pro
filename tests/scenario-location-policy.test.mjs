@@ -83,8 +83,7 @@ test('adaptive location prompt requires a concrete story-fit setting without lea
   assert.doesNotMatch(prompt, /強制舞台指定/);
   assert.doesNotMatch(prompt, /コインランドリー|大型乾燥機|折りたたみ台/);
   assert.match(prompt, /VisualEvidence:/);
-  assert.match(prompt, /3.{0,12}5個/);
-  assert.match(prompt, /最低2コマ/);
+  assert.match(prompt, /数合わせや同じ語の機械的な反復はしない/);
 });
 
 test('legacy PsychoHorror input is normalized to a safe surreal ending', () => {
@@ -105,8 +104,7 @@ test('scenario provider keeps safe location and visual evidence checks while the
   assert.match(providerSource, /背景詳細より人物の手・腕・小道具と吹き出しの正確さを優先/);
   assert.match(providerSource, /requestSafeScenario/);
   assert.match(providerSource, /requestSafeScenarioContent/);
-  assert.match(providerSource, /assertVisualStoryEvidence/);
-  assert.match(providerSource, /VISUAL_STORY_EVIDENCE_RETRY_INSTRUCTION/);
+  assert.doesNotMatch(providerSource, /assertVisualStoryEvidence|VISUAL_STORY_EVIDENCE_RETRY_INSTRUCTION/);
   assert.match(providerSource, /punchlineType === 'PsychoHorror' \? 'Surreal'/);
   assert.doesNotMatch(automaticOptions, /PsychoHorror/);
   assert.doesNotMatch(step2Source, /value="PsychoHorror"/);

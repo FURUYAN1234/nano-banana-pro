@@ -15,7 +15,7 @@ const analyzeFailure = async ({ issues, history }) => JSON.stringify({ correctio
   verification: 'Compare glyph axes with surface edges and preserve required dialogue',
 })) });
 
-test('recurring incidental print uses the best source within the four-image limit', async () => {
+test('incidental print alone keeps the original without paid image retries', async () => {
   const calls = [];
   const result = await runImageQualityFailsafe({ originalCandidate: candidate('original'), originalPrompt: approved,
     repairSourceMode: 'source-image', analyzeFailure,
@@ -27,13 +27,10 @@ test('recurring incidental print uses the best source within the four-image limi
     compareCandidates: async () => ({ preferred: 'repair', reason: 'Fewer defects, no regressions' }),
   });
   assert.equal(IMAGE_QUALITY_MAX_ATTEMPTS, 4);
-  assert.equal(calls.length, 2);
-  assert.equal(calls[1].source.id, 'repair');
-  assert.match(calls[1].prompt, /subtle nonlinguistic print texture/);
-  assert.match(calls[1].prompt, /all dialogue, speakers, title, watermarks/);
-  assert.equal(result.candidate.id, 'fallback');
-  assert.equal(result.attempts, 3);
-  assert.equal(result.validationWarning, false);
+  assert.equal(calls.length, 0);
+  assert.equal(result.candidate.id, 'original');
+  assert.equal(result.attempts, 1);
+  assert.equal(result.stopReason, 'non_material');
 });
 
 test('protected or ungrounded lettering never gets incidental simplification during retries', async () => {
@@ -43,8 +40,9 @@ test('protected or ungrounded lettering never gets incidental simplification dur
       reviewCandidate: async () => review(issue),
       generateRepairCandidate: async prompt => { requests++; assert.doesNotMatch(prompt, /API INCIDENTAL PRINT FALLBACK/); return candidate('repair'); },
     });
-    assert.equal(requests, 3);
-    assert.equal(result.attempts, 4);
+    const material = issue.type === 'bubble_text' || issue.textRole === 'story_required';
+    assert.equal(requests, material ? 3 : 0);
+    assert.equal(result.attempts, material ? 4 : 1);
     assert.equal(result.validationWarning, true);
   }
 });

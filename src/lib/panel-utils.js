@@ -1769,8 +1769,8 @@ export const extractCastLimitRule = (fullPanelText, castList, options = {}) => {
     let spatialConstraint;
     if (!explicitRearActor && hasScriptedSpatialStaging(fullPanelText)) {
       const depthRule = compact
-        ? 'CAST DEPTH: Camera/Action layers win; no speaker-based FG slots or duplicates.'
-        : 'CAST DEPTH: preserve Camera/Action foreground, midground and background assignments; speaking does not force a foreground position. Each named actor occupies one depth position only; never duplicate across layers.';
+        ? "CAST DEPTH: Action contact wins if Camera depth conflicts; move that actor's sole body within reach of the prop, never borrow another actor's hand. Keep the shot and other layers; no speaker-based FG slots or duplicates."
+        : "CAST DEPTH: preserve Camera/Action foreground, midground and background assignments unless Action requires physical contact with a prop outside an actor's reach. Action contact wins if Camera depth conflicts: move that actor's sole body within reach of the prop while keeping the camera angle and other actors' layers. Never borrow another actor's hand, draw a detached arm, or duplicate the actor. Speaking alone does not change depth.";
       spatialConstraint = `\n${depthRule}${negativeConstraint}\n${hasMob ? 'Allow only the background people required by Action.' : (replicaBrackets.length > 0 ? `PHYSICAL TOTAL ${allPanelCharacters.length} full-size people; no other full-size humans.` : `NO OTHER HUMANS: exactly ${allPanelCharacters.length} people.`)}`;
     } else if (hasMob) {
       spatialConstraint = compact

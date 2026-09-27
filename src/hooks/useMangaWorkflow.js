@@ -11,7 +11,7 @@ import { reviewComedyPrompt } from '../lib/comedy-review';
 import { normalizeMangaColorMode } from '../lib/manga-render-mode.js';
 import { assertPromptEndingModeConsistency, getEndingModePolicy, isDocumentaryEnding, resolveScenarioEndingType } from '../lib/ending-mode-policy.js';
 import { assertPrintableDialogue } from '../lib/bubble-text.js';
-import { splitWebPromptForPaste } from '../lib/web-prompt-chunks.js';
+import { ensureWebPromptTrailingNewline, splitWebPromptForPaste } from '../lib/web-prompt-chunks.js';
 
 // --- Refactored Imports (Phase 1-2) ---
 import { SYSTEM_VERSION, DEFAULT_CATEGORIES, EMOTION_STYLES, DYNAMIC_CAMERA_PROTOCOL, ANTI_CHARSHEET_PREFIX } from '../lib/constants';
@@ -49,7 +49,7 @@ import {
   formatImageQualityIssue,
   parseImageQualityQaResponse
 } from '../lib/image-quality-qa';
-import { buildImageFailureAnalysisPrompt, GEMINI_IMAGE_REPAIR_PROMPT_MAX_CHARS, inferImageQualityMode, runImageQualityFailsafe } from '../lib/image-quality-failsafe';
+import { buildImageFailureAnalysisPrompt, GEMINI_IMAGE_REPAIR_PROMPT_MAX_CHARS, inferImageQualityMode, isMaterialImageQualityIssue, runImageQualityFailsafe } from '../lib/image-quality-failsafe';
 import { getEffectiveEngine } from '../lib/engine-state';
 import { DEFAULT_OPENAI_IMAGE_QUALITY, DEFAULT_OPENAI_IMAGE_SIZE, normalizeOpenAIImageSize, normalizeOpenAIImageQuality, resolveOpenAIImageOption, selectInitialOpenAIImageQuality, isOpenAIImageVerificationError, OPENAI_IMAGE_VERIFICATION_MESSAGE } from '../lib/openai-image-settings.js';
 import { DEFAULT_OPENAI_SCENARIO_MODEL_ID, OPENAI_SCENARIO_MODEL_OPTIONS, OPENAI_SCENARIO_TEXT_MODEL_IDS } from '../lib/openai-model-routes.js';
@@ -909,8 +909,9 @@ export default function useMangaWorkflow() {
       }
       if (qualityWarnings.length > 0) {
         const warningMessage = `シナリオ品質警告: ${qualityWarnings.join(' / ')}`;
-        setScenarioThought(prev => prev + `\n\n[SCENARIO QUALITY WARNING] ${warningMessage}\n> 自動再生成はしません。品質警告のままSTEP3・STEP4へ進めます。`);
-        showStatus(`${warningMessage} STEP3・STEP4は継続できます。`);
+        const nextAction = '最良候補を保持し、品質警告のままSTEP3・STEP4へ進めます。画像品質も自動修正・比較します。';
+        setScenarioThought(prev => prev + `\n\n[SCENARIO QUALITY WARNING] ${warningMessage}\n> ${nextAction}`);
+        showStatus(`${warningMessage} ${nextAction}`);
       } else {
         showStatus("シナリオの生成が完了しました！");
       }
@@ -1269,11 +1270,11 @@ export default function useMangaWorkflow() {
 
   // Use the same complete text as the initial API request, including image roles.
   // Validate again at copy time because the user may edit the text or references.
-  const prepareWebCopyPrompt = (prompt) => getCurrentPromptProviderFamily() === PROMPT_PROVIDER_FAMILIES.CHATGPT
+  const prepareWebCopyPrompt = (prompt) => ensureWebPromptTrailingNewline(getCurrentPromptProviderFamily() === PROMPT_PROVIDER_FAMILIES.CHATGPT
     ? appendOpenAIReferencePrompt(prompt, buildOpenAIReferencePlan({
       characterImages: images, backgroundImage: bg360Image, backgroundEnabled: bg360Enabled,
     }))
-    : prompt;
+    : prompt);
 
   let webCopyPartLengths = [];
   if (finalPrompt) {
@@ -1646,7 +1647,7 @@ export default function useMangaWorkflow() {
         }));
       }
       statCallback(allowImageQualityRepair
-        ? '[QUALITY QA] キャラクターシート・人物・手・小物・吹き出しを検査中です。不合格を解析し、失敗履歴を引き継いで最大3回修正します。未確認は同じ画像を1回再検査します。'
+        ? '[QUALITY QA] キャラクターシート・人物・手・小物・吹き出しを検査中です。明確な重大欠陥だけ最大3回修正します。未確認だけなら最良画像を保持します。'
         : '[QUALITY QA] 自動修正OFF：元画像を表示して品質検査します。追加の画像生成は行いません。');
 
       const qualityOutcome = await runImageQualityFailsafe({
@@ -1690,7 +1691,7 @@ export default function useMangaWorkflow() {
       const qualityResult = qualityOutcome.finalReview;
       const hasDefiniteFinalFailure = qualityResult?.pass !== true
         && Array.isArray(qualityResult?.issues)
-        && qualityResult.issues.some((issue) => issue?.type && issue.type !== 'unverified');
+        && qualityResult.issues.some(isMaterialImageQualityIssue);
       setImageQualityNeedsRepair(Boolean(allowImageQualityRepair && hasDefiniteFinalFailure));
       if (qualityResult.observations) {
         const labels = { title: 'タイトル', dialogue: 'セリフ・無言', hands: '左右の手', props: '小道具' };

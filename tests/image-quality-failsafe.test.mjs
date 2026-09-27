@@ -73,17 +73,18 @@ test('an incomplete analysis never triggers image generation and the prompt dema
   assert.equal(result.stopReason, 'analysis_failed');
 });
 
-test('unverified QA rechecks the same image once and can recover without any new image', async () => {
+test('unverified QA keeps the original without a redundant second review or image request', async () => {
   let checks = 0;
   const result = await runImageQualityFailsafe({ originalCandidate: candidate('original'), originalPrompt: 'APPROVED',
     reviewCandidate: async image => { assert.equal(image.id, 'original'); return ++checks === 1 ? fail('unverified') : pass; },
     generateRepairCandidate: async () => { assert.fail('no image call'); },
   });
-  assert.equal(checks, 2);
-  assert.equal(result.validationWarning, false);
+  assert.equal(checks, 1);
+  assert.equal(result.validationWarning, true);
+  assert.equal(result.stopReason, 'unverified');
 });
 
-test('unverified bubble-order evidence enters bounded repair instead of bypassing QA', async () => {
+test('unverified bubble order cannot spend paid image retries', async () => {
   let repairs = 0;
   const result = await runImageQualityFailsafe({
     originalCandidate: candidate('original'), originalPrompt: 'APPROVED',
@@ -93,10 +94,45 @@ test('unverified bubble-order evidence enters bounded repair instead of bypassin
     generateRepairCandidate: async () => candidate(`repair${++repairs}`),
     compareCandidates: async () => ({ preferred: 'original', reason: 'Order remains unverified.' }),
   });
-  assert.equal(repairs, 3);
-  assert.equal(result.stopReason, 'retry_limit');
+  assert.equal(repairs, 0);
+  assert.equal(result.stopReason, 'unverified');
   assert.equal(result.validationWarning, true);
   assert.equal(result.canContinue, true);
+});
+
+test('a coherent image with only gesture or incidental-print differences is kept without regeneration', async () => {
+  let repairs = 0;
+  const result = await runImageQualityFailsafe({
+    originalCandidate: candidate('original'), originalPrompt: 'APPROVED',
+    reviewCandidate: async () => ({ pass: false, issues: [
+      { type: 'action_fidelity', panel: 1, subject: 'actor', reason: 'A prop is held instead of being placed, while the story remains clear.' },
+      { type: 'surface_text', textRole: 'incidental', panel: 2, subject: 'poster', reason: 'Decorative print differs.' },
+    ] }),
+    generateRepairCandidate: async () => { repairs++; return candidate('repair'); },
+  });
+  assert.equal(repairs, 0);
+  assert.equal(result.candidate.id, 'original');
+  assert.equal(result.stopReason, 'non_material');
+  assert.equal(result.validationWarning, true);
+  assert.equal(result.canContinue, true);
+});
+
+test('a clear extra limb still triggers repair while minor issues are excluded from the repair plan', async () => {
+  let plannedIssues;
+  let repairs = 0;
+  const result = await runImageQualityFailsafe({
+    originalCandidate: candidate('original'), originalPrompt: 'APPROVED',
+    reviewCandidate: async image => image.id === 'repair' ? pass : ({ pass: false, issues: [
+      { type: 'anatomy', panel: 4, subject: 'actor', reason: 'A third shoulder-connected arm is visible.' },
+      { type: 'action_fidelity', panel: 1, subject: 'actor', reason: 'A card is held rather than placed.' },
+    ] }),
+    analyzeFailure: async context => { plannedIssues = context.issues; return analysis(context); },
+    generateRepairCandidate: async () => { repairs++; return candidate('repair'); },
+    compareCandidates: async () => ({ preferred: 'repair', reason: 'The extra arm is gone.' }),
+  });
+  assert.equal(repairs, 1);
+  assert.deepEqual(plannedIssues.map(issue => issue.type), ['anatomy']);
+  assert.equal(result.candidate.id, 'repair');
 });
 
 test('duplicate panel dimensions are collapsed before AI repair analysis', async () => {
@@ -296,11 +332,11 @@ test('adopts one repaired image when the bounded retry passes QA', async () => {
     compareCandidates: async () => ({ preferred: 'repair', reason: 'Only repair fixes the visible defect without regression.' }),
     reviewCandidate: async (value) => {
       reviewed.push(value.id);
-      return value.id === 'original' ? fail('prop_orientation') : pass;
+      return value.id === 'original' ? fail('object_geometry') : pass;
     },
     generateRepairCandidate: async (prompt) => {
       assert.match(prompt, /IMAGE QUALITY CORRECTION ATTEMPT/);
-      assert.match(prompt, /prop_orientation/);
+      assert.match(prompt, /object_geometry/);
       return candidate('repair');
     },
   });
@@ -370,7 +406,7 @@ test('keeps the original when the repair image request fails', async () => {
   const result = await runImageQualityFailsafe({
     originalCandidate: candidate('original'),
     originalPrompt: 'BASE PROMPT',
-    reviewCandidate: async () => fail('hand_side'),
+    reviewCandidate: async () => fail('anatomy'),
     generateRepairCandidate: async () => {
       throw new Error('repair transport failed');
     },
@@ -523,7 +559,7 @@ test('missing geometric evidence retains the completed image without image regen
 test('spatial defects use the three-repair limit and retain the original when still defective', async () => {
   for (const type of ['object_geometry', 'surface_text']) {
     let repairs = 0;
-    const review = parseImageQualityQaResponse(JSON.stringify({ pass: false, issues: [{ type, panel: 2, subject: 'scene prop', reason: 'visible physical boundary or text-plane contradiction' }] }));
+    const review = parseImageQualityQaResponse(JSON.stringify({ pass: false, issues: [{ type, panel: 2, subject: 'scene prop', reason: 'visible physical boundary or text-plane contradiction', ...(type === 'surface_text' ? { text_role: 'story_required' } : {}) }] }));
     const result = await runImageQualityFailsafe({
       originalCandidate: candidate('original'), originalPrompt: 'APPROVED SURREAL EVENT', repairSourceMode: 'source-image',
       reviewCandidate: async () => review,

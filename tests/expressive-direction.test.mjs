@@ -65,6 +65,9 @@ test('natural Japanese camera height produces projection cues, not just enlarged
     assert.match(cue, /eye.level/);
   }
   assert.match(getPanelShotExecution('天板を浅く見下ろす近めの対面ショット'), /look down.*head\/shoulder tops/);
+  const highPosition = getPanelShotExecution('高い位置から会議室右奥へ引いたワイドショット');
+  assert.match(highPosition, /look down.*head\/shoulder tops/);
+  assert.match(highPosition, /physically above.*not eye-level/i);
   assert.match(getPanelShotExecution('床から低い斜めの引き。頭から両足先まで入れる'), /head-to-feet/);
   assert.doesNotMatch(getPanelShotExecution('アイレベルの肩越し、背景ボケ'), /look up|look down/);
   assert.doesNotMatch(getPanelShotExecution('Bokeh Depth'), /look up|look down|eye.level/);
@@ -165,6 +168,14 @@ test('explicit named shoulder and protected words survive freer direction', () =
     for (const dialogue of ['ここです。', '確認します。', '待って。', '決まりです。']) assert.ok(prompt.includes(dialogue));
     assert.match(prompt, /NO speech bubbles|NO DIALOGUE|no speech bubbles/i);
   }
+});
+
+test('an upward background diagonal does not override a scripted low camera', () => {
+  const camera = '掲示板の右下から見上げるローアングルの全身ショット。掲示板の枠と会議室の壁が斜め上へ伸びるHyper Perspective。';
+  const cue = getPanelShotExecution(camera);
+  assert.match(cue, /look up/);
+  assert.doesNotMatch(cue, /look down/);
+  assert.match(getPanelShotExecution('斜め上から掲示板を見下ろす'), /look down/);
 });
 
 test('wide high-angle shots allow only clean intentional head breakouts or complete headroom', () => {
@@ -296,6 +307,19 @@ test('lettering is planned per beat and never promoted into an all-panel reading
     assert.match(panel2, /掲示板の側面/);
     assert.doesNotMatch(panel2, /搬入口/);
   }
+});
+
+test('visual evidence follows scripted panels without a numeric quota and style changes keep identity', () => {
+  const input = `VisualEvidence: 掲示板、台車\n${scenario}`;
+  for (const provider of ['chatgpt', 'gemini']) {
+    const prompt = build(provider, input);
+    assert.match(prompt, /VISUAL STORY EVIDENCE LOCK:/);
+    assert.doesNotMatch(prompt, /at least two distinct evidence items|>=2 distinct items|across at least two panels|across >=2 panels/i);
+    assert.match(prompt, /hairstyle.*wardrobe.*recognizable|recognizable.*hairstyle.*wardrobe/i);
+    assert.match(prompt, /facial expression.*drawing style.*may vary|drawing style.*facial expression.*may vary/i);
+  }
+  const singleEvidence = build('chatgpt', `VisualEvidence: 掲示板\n${scenario}`);
+  assert.match(singleEvidence, /VISUAL STORY EVIDENCE LOCK:/);
 });
 
 test('single-image copy text shares expressive permission without a four-panel requirement', () => {

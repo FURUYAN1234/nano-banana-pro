@@ -19,6 +19,7 @@ const STRONG_GAG_REVIEW = {
   visual_payoff: true,
   slogan_only: false,
   unseeded_fact: false,
+  visual_feasibility: [1, 2, 3, 4].map(panel => ({ panel, feasible: true, evidence: `Panel ${panel} stages its focal action at readable scale.`, correction: '' })),
   reason_codes: [],
 };
 
@@ -31,6 +32,7 @@ const WEAK_SLOGAN_REVIEW = {
   visual_payoff: false,
   slogan_only: true,
   unseeded_fact: false,
+  visual_feasibility: [1, 2, 3, 4].map(panel => ({ panel, feasible: true, evidence: `Panel ${panel} stages its focal action at readable scale.`, correction: '' })),
   reason_codes: [],
 };
 
@@ -71,6 +73,19 @@ test('gag accepts a seeded prediction and visible reversal', () => {
     evaluateScenarioPayoffReview(STRONG_GAG_REVIEW, { punchlineType: 'GagAuto' }),
     { ok: true, reasonCodes: [] },
   );
+});
+
+test('scenario review rejects a visually overloaded panel even when the ending is strong', () => {
+  const overloaded = {
+    ...STRONG_GAG_REVIEW,
+    visual_feasibility: STRONG_GAG_REVIEW.visual_feasibility.map(item => item.panel === 4
+      ? { panel: 4, feasible: false, evidence: 'Five distant actors and two distinct card contacts are too small to read in one wide strip.', correction: 'Keep the wide gag, but move one card contact to panel 3.' }
+      : item),
+  };
+  assert.ok(evaluateScenarioPayoffReview(overloaded).reasonCodes.includes('unrenderable_panel_4'));
+  assert.throws(() => parseScenarioPayoffReview(JSON.stringify({ ...STRONG_GAG_REVIEW, visual_feasibility: [] })), /incomplete_payoff_review/);
+  assert.match(buildScenarioPayoffReviewPrompt({ scenario: 'SCENARIO' }), /visual_feasibility/);
+  assert.match(buildScenarioPayoffRepairPrompt({ scenario: 'SCENARIO', review: overloaded }), /手元|接触/);
 });
 
 test('surreal gag accepts visible absurdity without forcing causal setup or a rational explanation', () => {
@@ -131,12 +146,14 @@ test('repair prompt rewrites all four panels while preserving facts and the sele
     scenario: '[1コマ目: 起]\n状況: 説明する。\n[4コマ目: 結]\n状況: 標語を言う。',
     punchlineType: 'Misunderstanding',
     review: WEAK_SLOGAN_REVIEW,
+    userTopic: '4コマ目は天井近くからの俯瞰を保つ。',
   });
   assert.match(prompt, /1〜4コマ目全体/);
   assert.match(prompt, /Misunderstanding/);
   assert.match(prompt, /事実.*数値.*時系列/);
   assert.match(prompt, /4コマ目だけを差し替え/);
   assert.match(prompt, /そのまま実行するだけにしない/);
+  assert.match(prompt, /4コマ目は天井近くからの俯瞰を保つ。/);
 });
 
 test('gate passes through a strong first candidate without requesting a repair', async () => {
@@ -151,6 +168,19 @@ test('gate passes through a strong first candidate without requesting a repair',
   assert.equal(result.scenario, 'ORIGINAL');
   assert.equal(result.status, 'passed');
   assert.equal(repairs, 0);
+});
+
+test('a subjective minor payoff concern does not regenerate an otherwise drawable scenario', async () => {
+  let repairs = 0;
+  const result = await runScenarioPayoffGate({
+    scenario: 'ORIGINAL', punchlineType: 'GagAuto',
+    requestReview: async () => JSON.stringify({ ...STRONG_GAG_REVIEW, pass: false, shift_kind: 'none', reason_codes: ['no_payoff_shift'] }),
+    requestRepair: async () => { repairs++; return 'REPAIRED'; },
+  });
+  assert.equal(repairs, 0);
+  assert.equal(result.scenario, 'ORIGINAL');
+  assert.equal(result.status, 'retained');
+  assert.ok(result.warning);
 });
 
 test('gate performs one full repair and adopts it only after a passing second review', async () => {
@@ -169,6 +199,68 @@ test('gate performs one full repair and adopts it only after a passing second re
   assert.equal(repairs, 1);
 });
 
+test('gate repairs a spatially unreadable panel even when payoff passes', async () => {
+  const overloaded = {
+    ...STRONG_GAG_REVIEW,
+    visual_feasibility: STRONG_GAG_REVIEW.visual_feasibility.map(item => item.panel === 4
+      ? { panel: 4, feasible: false, evidence: 'Two separate hand-card contacts are unreadable from the high wide camera.', correction: 'Keep the broad gag and stage only the focal card contact in panel 4.' }
+      : item),
+  };
+  let reviews = 0;
+  const result = await runScenarioPayoffGate({
+    scenario: 'ORIGINAL',
+    punchlineType: 'GagAuto',
+    requestReview: async () => JSON.stringify(++reviews === 1 ? overloaded : STRONG_GAG_REVIEW),
+    requestRepair: async () => 'REPAIRED',
+    validateRepair: () => true,
+  });
+  assert.equal(result.status, 'repaired');
+  assert.equal(result.scenario, 'REPAIRED');
+  assert.equal(reviews, 2);
+});
+
+test('gate gives subjective spatial staging one repair and keeps the best candidate for image generation', async () => {
+  const overloaded = {
+    ...STRONG_GAG_REVIEW,
+    visual_feasibility: STRONG_GAG_REVIEW.visual_feasibility.map(item => item.panel >= 3
+      ? { panel: item.panel, feasible: false, evidence: 'The board contacts cannot be read in this wide strip.', correction: 'Move the staging and keep a focal contact.' }
+      : item),
+  };
+  let reviews = 0;
+  let repairs = 0;
+  const result = await runScenarioPayoffGate({
+    scenario: 'ORIGINAL',
+    punchlineType: 'GagAuto',
+    requestReview: async () => JSON.stringify(++reviews === 1 ? overloaded : {
+      ...overloaded,
+      visual_feasibility: overloaded.visual_feasibility.map(item => item.panel === 3
+        ? { ...item, feasible: true, evidence: 'The board contact is now legible.', correction: '' }
+        : item),
+    }),
+    requestRepair: async () => `REPAIR ${++repairs}`,
+    validateRepair: () => true,
+  });
+  assert.equal(result.status, 'best_effort');
+  assert.equal(result.scenario, 'REPAIR 1');
+  assert.equal(result.renderabilityWarning, true);
+  assert.equal(repairs, 1);
+  assert.equal(reviews, 2);
+  assert.ok(result.warning);
+});
+
+test('gate accepts a later staging repair after an earlier candidate fails review', async () => {
+  let reviews = 0;
+  const result = await runScenarioPayoffGate({
+    scenario: 'ORIGINAL', punchlineType: 'GagAuto',
+    requestReview: async () => JSON.stringify(++reviews < 3 ? WEAK_SLOGAN_REVIEW : STRONG_GAG_REVIEW),
+    requestRepair: async () => `REPAIR ${reviews}`,
+    validateRepair: () => true,
+  });
+  assert.equal(result.status, 'repaired');
+  assert.equal(result.scenario, 'REPAIR 2');
+  assert.equal(reviews, 3);
+});
+
 test('gate retains the original when the repaired candidate fails review', async () => {
   let repairs = 0;
   const result = await runScenarioPayoffGate({
@@ -181,7 +273,7 @@ test('gate retains the original when the repaired candidate fails review', async
   assert.equal(result.scenario, 'ORIGINAL');
   assert.equal(result.status, 'retained');
   assert.match(result.warning, /再監査/);
-  assert.equal(repairs, 1);
+  assert.equal(repairs, 3);
 });
 
 test('gate retains the original when review, repair, or validation fails', async () => {
@@ -189,6 +281,7 @@ test('gate retains the original when review, repair, or validation fails', async
     { requestReview: async () => { throw new Error('review offline'); }, requestRepair: async () => 'REPAIRED', validateRepair: () => true },
     { requestReview: async () => JSON.stringify(WEAK_SLOGAN_REVIEW), requestRepair: async () => { throw new Error('repair offline'); }, validateRepair: () => true },
     { requestReview: async () => JSON.stringify(WEAK_SLOGAN_REVIEW), requestRepair: async () => 'REPAIRED', validateRepair: () => { throw new Error('unsafe repair'); } },
+    { requestReview: async () => JSON.stringify(WEAK_SLOGAN_REVIEW), requestRepair: async () => 'REPAIRED', validateRepair: () => false },
   ]) {
     const result = await runScenarioPayoffGate({ scenario: 'ORIGINAL', punchlineType: 'GagAuto', ...options });
     assert.equal(result.scenario, 'ORIGINAL');
@@ -202,4 +295,16 @@ test('STEP2 uses the selected scenario model for payoff review and never enables
   assert.match(source, /runScenarioPayoffGate\(\{[\s\S]*?requestReview:[\s\S]*?modelRoute: 'scenario',[\s\S]*?scenarioModelId,[\s\S]*?useWebSearch: false/);
   assert.match(source, /requestRepair:[\s\S]*?modelRoute: 'scenario',[\s\S]*?scenarioModelId,[\s\S]*?useWebSearch: false/);
   assert.match(source, /validateRepair:[\s\S]*?validateScenarioForRetry/);
+  assert.match(source, /runScenarioPayoffGate\(\{[\s\S]*?userTopic: inputMode === 'manual' \? manualTopic : ''/);
+});
+
+test('an unrepaired visual feasibility warning preserves full-auto image repair', async () => {
+  const [provider, workflow] = await Promise.all([
+    readFile(new URL('../src/lib/scenario-provider.js', import.meta.url), 'utf8'),
+    readFile(new URL('../src/hooks/useMangaWorkflow.js', import.meta.url), 'utf8'),
+  ]);
+  assert.match(provider, /payoffGate\.renderabilityWarning\s*\?\s*'VISUAL_FEASIBILITY'/);
+  assert.doesNotMatch(workflow, /visualFeasibilityBlocked\s*\?\s*null\s*:\s*finalScenarioText/);
+  assert.match(workflow, /return finalScenarioText;/);
+  assert.match(workflow, /const step4ok = await regenerateImage\(true, generatedPrompt\)/);
 });

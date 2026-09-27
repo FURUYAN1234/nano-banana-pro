@@ -2,6 +2,11 @@
 // into a TXT attachment. Leave room below that observed UI boundary.
 export const WEB_PASTE_CHUNK_CHARS = 9500;
 
+export function ensureWebPromptTrailingNewline(prompt) {
+  if (typeof prompt !== 'string') throw new TypeError('Prompt must be a string.');
+  return prompt ? `${prompt.replace(/(?:\r?\n)+$/u, '')}\n` : prompt;
+}
+
 export function splitWebPromptForPaste(prompt, maxChars = WEB_PASTE_CHUNK_CHARS) {
   if (!Number.isInteger(maxChars) || maxChars < 2) {
     throw new RangeError('Paste size must be a positive integer of at least 2.');

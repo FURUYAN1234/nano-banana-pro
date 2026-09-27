@@ -16,24 +16,7 @@ try {
     // 2. Check Branch Status
     const status = execSync('git status --porcelain').toString();
     if (status.length > 0) {
-        console.warn("⚠️ [WARNING] You have uncommitted changes. These will be added automatically.");
-    }
-
-    // 3. Force Sync with Remote
-    console.log("🔄 [Sync] Checking remote status...");
-    execSync('git fetch origin main');
-
-    // Check if behind
-    const behind = execSync('git rev-list --count HEAD..origin/main').toString().trim();
-    if (parseInt(behind) > 0) {
-        console.warn(`⚠️ [WARNING] Your branch is behind by ${behind} commits. Trying to pull...`);
-        try {
-            execSync('git pull origin main --rebase');
-            console.log("✅ [Sync] Successfully rebased with remote.");
-        } catch {
-            console.error("❌ [ERROR] Pull failed. Please resolve conflicts manually.");
-            process.exit(1);
-        }
+        throw new Error('Uncommitted changes exist. Commit the candidate before validation.');
     }
 
     console.log("✅ [Security Check] Environment is Safe.");

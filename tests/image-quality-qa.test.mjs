@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { isMaterialImageQualityIssue } from '../src/lib/image-quality-failsafe.js';
 
 import {
   buildImageQualityQaImageParts,
@@ -108,7 +109,7 @@ const wardrobeIssue = (component = 'waist fastening') => ({
 test('visible wardrobe-component drift is repairable even without reference sheets', () => {
   for (const component of ['shoulder fastener', 'sleeve ornament']) {
     const result = parseImageQualityQaResponse(JSON.stringify({ pass: false, issues: [wardrobeIssue(component)] }));
-    assert.ok(result.issues.some(issue => issue.type === 'wardrobe_continuity' && issue.panel === 4));
+    assert.ok(result.issues.some(issue => issue.type === 'wardrobe_continuity' && issue.panel === 4 && isMaterialImageQualityIssue(issue)));
   }
 });
 
@@ -120,6 +121,7 @@ test('unseen parts, identity ambiguity and scripted wardrobe changes cannot beco
     const result = parseImageQualityQaResponse(JSON.stringify({ pass: false, issues: [issue] }));
     assert.equal(result.issues.some(item => item.type === 'wardrobe_continuity'), false);
     assert.ok(result.issues.some(item => item.type === 'unverified'));
+    assert.equal(result.issues.some(isMaterialImageQualityIssue), false);
   }
 });
 
@@ -152,6 +154,29 @@ const spatialChecks = (count = 4) => Array.from({ length: count }, (_, index) =>
   }] },
 }));
 const observations = { title: 'No title requested', dialogue: 'Panels 1-4 have no bubbles as requested', hands: 'No hand side requested', props: 'Paper held at its lower edge' };
+
+test('a scripted hand-to-prop action needs actor-specific visual evidence before PASS', () => {
+  const finalPrompt = [
+    '## Panel 1\nDialogue: silent',
+    '## Panel 2\nDialogue: silent',
+    '## Panel 3\nDialogue: silent',
+    '## Panel 4\nCAST COUNT: [リン], [アカリ] each EXACTLY ONCE; no duplicates.\nAction (visual only): アカリは掲示板のカードに触れ、リンは別のカードを留める。\nDialogue: silent',
+  ].join('\n');
+  const checks = spatialChecks();
+  const review = () => parseImageQualityQaResponse(JSON.stringify({ pass: true, issues: [], observations, spatial_checks: checks }), { finalPrompt });
+  assert.match(buildImageQualityQaPrompt({ finalPrompt }), /panel 4: リン, アカリ|panel 4: アカリ, リン/);
+  assert.ok(review().issues.some(issue => issue.type === 'unverified' && issue.panel === 4 && issue.subject === 'action_fidelity'));
+
+  checks[3].action_fidelity = { status: 'ok', evidence: 'The board and both actors are visible.', contacts: [
+    { actor: 'アカリ', target: 'card on board', observed: 'Finger touches the card', status: 'ok', evidence: 'The finger and card edge meet at the board.' },
+  ] };
+  assert.ok(review().issues.some(issue => issue.type === 'unverified' && issue.panel === 4 && issue.subject === 'リン'));
+
+  checks[3].action_fidelity.contacts.push({ actor: 'リン', target: 'second card on board', observed: 'Hands stay at chest', status: 'defect', evidence: 'Both hands are visibly away from the board and card.' });
+  assert.ok(review().issues.some(issue => issue.type === 'action_fidelity' && issue.panel === 4 && issue.subject === 'リン'));
+  checks[3].action_fidelity.contacts[1] = { actor: 'リン', target: 'second card on board', observed: 'Right hand pins the card', status: 'ok', evidence: 'The right wrist, hand, and card edge meet at the board.' };
+  assert.equal(review().pass, true);
+});
 
 test('omitting cross-panel wardrobe inspection cannot silently pass the wardrobe contract', () => {
   const finalPrompt = 'WARDROBE COMPONENT LOCK:\n' + [1, 2, 3, 4].map(n => `## Panel ${n}\nDialogue: silent`).join('\n');
@@ -405,6 +430,18 @@ test('QA retains exact title and hand instructions from the submitted prompt', (
   assert.equal(result.issues[0].type, 'title_text');
 });
 
+test('camera review cannot pass by repeating the generated shot instruction as observation', () => {
+  const checks = spatialChecks();
+  checks[3].camera_geometry.dimensions.elevation = {
+    requested: '高い位置から俯瞰',
+    observed: 'Looking down on head/shoulder tops, shortened torsos, upper prop faces.',
+    status: 'ok',
+  };
+  const review = parseImageQualityQaResponse(JSON.stringify({ pass: true, issues: [], observations, spatial_checks: checks }));
+  assert.equal(review.pass, false);
+  assert.ok(review.issues.some(issue => issue.panel === 4 && issue.subject === 'camera_geometry' && issue.type === 'unverified'));
+});
+
 test('panel-border head clipping cannot hide behind an overall camera PASS', () => {
   const checks = spatialChecks();
   checks[0].camera_geometry.dimensions.boundary = {
@@ -474,6 +511,7 @@ test('quality prompt prioritizes anatomy, hand side, prop ownership, and bubble 
   assert.match(prompt, /next 4 images are enlarged panel crops.*panel 1 through panel 4/i);
   assert.match(prompt, /following 2 images are the approved character reference sheets/i);
   assert.match(prompt, /outfit, hairstyle, hair color, eye color, eyewear, or defining accessories/i);
+  assert.match(prompt, /change in face drawing, expression, proportions or manga style alone is not an identity failure/i);
   assert.match(prompt, /scenario or final prompt explicitly overrides/i);
   assert.match(prompt, /exactly four separate visible panels/i);
   assert.match(prompt, /fewer or more than four panels/i);
@@ -760,6 +798,18 @@ test('preserves character-sheet mismatches as a stable issue type', () => {
   assert.equal(result.issues[0].type, 'character_reference');
 });
 
+test('a recognizable character with only a face-style variation is not a paid repair target', () => {
+  const result = parseImageQualityQaResponse(JSON.stringify({
+    pass: false,
+    issues: [{ type: 'character_reference', panel: 1, subject: 'アカリ', reason: 'face is drawn in chibi style',
+      identity_evidence: { location: 'left foreground', matched_features: ['orange bob', 'sailor collar'],
+        reference_evidence: 'same character on reference sheet', observed_feature: 'chibi face',
+        expected_feature: 'normal face', difference_kind: 'style_only' } }],
+  }));
+  assert.equal(result.issues[0].type, 'unverified');
+  assert.equal(isMaterialImageQualityIssue(result.issues[0]), false);
+});
+
 test('preserves explicit over-the-shoulder camera failures as a stable issue type', () => {
   const result = parseImageQualityQaResponse(JSON.stringify({
     pass: false,
@@ -870,8 +920,8 @@ test('fails closed as unverified when the reviewer response cannot be parsed', (
 
 test('single-image QA inspects one scene without imposing a four-panel layout', () => {
   const prompt = buildImageQualityQaPrompt({
-    scenario: '',
-    castList: '',
+    scenario: 'OLD FOUR PANEL SCENARIO SENTINEL',
+    castList: 'OLD FOUR PANEL CAST SENTINEL',
     finalPrompt: SINGLE_IMAGE_PROMPT,
     mode: 'single-image',
     referenceImageCount: 0,
@@ -885,4 +935,6 @@ test('single-image QA inspects one scene without imposing a four-panel layout', 
   assert.doesNotMatch(prompt, /exactly four separate visible panels/i);
   assert.doesNotMatch(prompt, /panel_layout/);
   assert.doesNotMatch(prompt, /following \d+ images are the approved character reference sheets/i);
+  assert.doesNotMatch(prompt, /OLD FOUR PANEL SCENARIO SENTINEL|OLD FOUR PANEL CAST SENTINEL/);
+  assert.match(prompt, /reference sheets.*do not require every reference character/i);
 });

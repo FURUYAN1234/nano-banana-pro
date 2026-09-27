@@ -18,14 +18,6 @@ import {
   SAFE_CONTENT_RETRY_INSTRUCTION
 } from './scenario-content-policy';
 import {
-  assertVisualStoryEvidence,
-  VISUAL_STORY_EVIDENCE_RETRY_INSTRUCTION
-} from './visual-story-evidence';
-import {
-  assertActiveFinalPanelStaging,
-  FINAL_PANEL_ACTIVE_STAGING_RETRY_INSTRUCTION
-} from './final-panel-staging';
-import {
   buildScenarioEnhancementPrompt,
   runValidatedScenarioEnhancement
 } from './scenario-enhancement';
@@ -63,8 +55,6 @@ const scenarioRetryLabels = {
   SEASONAL_OUTFIT: '題材に基づく服装選定と季節整合性',
   MANUAL_TOPIC_EXCLUSION: '手動入力の禁止条件',
   DOCUMENTARY_SOURCE_FIDELITY: '原文の数値・時系列',
-  VISUAL_STORY_EVIDENCE: '出来事を証明する視覚要素',
-  FINAL_PANEL_STAGING: '4コマ目の能動アクション',
   DIALOGUE_CONTRACT: '各コマの吹き出しセリフ'
 };
 
@@ -182,11 +172,6 @@ const validateScenarioForRetry = ({
       customOutfit
     })],
     ['MANUAL_TOPIC_EXCLUSION', () => assertManualTopicExclusions(scenario.scenario, manualTopic)],
-    ['VISUAL_STORY_EVIDENCE', () => assertVisualStoryEvidence(scenario)],
-    ['FINAL_PANEL_STAGING', () => assertActiveFinalPanelStaging({
-      scenario: scenario.scenario,
-      punchlineType
-    })],
     ['DIALOGUE_CONTRACT', () => assertMangaScenarioDialogueContract(scenario.scenario, castList)]
   ];
   const failures = [];
@@ -220,8 +205,6 @@ const scenarioQualityRetryInstructions = {
   DOCUMENTARY_SOURCE_FIDELITY: DOCUMENTARY_SOURCE_FIDELITY_RETRY_INSTRUCTION,
   SEASONAL_OUTFIT: SEASONAL_OUTFIT_RETRY_INSTRUCTION,
   MANUAL_TOPIC_EXCLUSION: MANUAL_TOPIC_EXCLUSION_RETRY_INSTRUCTION,
-  VISUAL_STORY_EVIDENCE: VISUAL_STORY_EVIDENCE_RETRY_INSTRUCTION,
-  FINAL_PANEL_STAGING: FINAL_PANEL_ACTIVE_STAGING_RETRY_INSTRUCTION,
   DIALOGUE_CONTRACT: DIALOGUE_CONTRACT_RETRY_INSTRUCTION
 };
 
@@ -537,6 +520,7 @@ export async function generateScenario({
   const payoffGate = await runScenarioPayoffGate({
     scenario: parsedData.scenario,
     punchlineType: resolvedEndingType,
+    userTopic: inputMode === 'manual' ? manualTopic : '',
     requestReview: (prompt) => callAI(prompt, [], scenarioCastContext, onProgress, {
       timeoutMs: STEP2_TEXT_TIMEOUT_MS,
       modelRoute: 'scenario',
@@ -584,7 +568,7 @@ export async function generateScenario({
   });
   parsedData = { ...parsedData, scenario: payoffGate.scenario };
   const payoffValidationWarning = payoffGate.warning
-    ? { code: 'NARRATIVE_PAYOFF', message: payoffGate.warning }
+    ? { code: payoffGate.renderabilityWarning ? 'VISUAL_FEASIBILITY' : 'NARRATIVE_PAYOFF', message: payoffGate.warning }
     : null;
 
   // 6. 360°カメラワーク自律設計
@@ -675,11 +659,11 @@ ${parsedData.scenario}
       title: parsedData.topic
     }),
     thought: result.thought,
-    validationWarning: (
-      repairedInputModeLabelLeak && safeScenarioResult.validationWarning?.code === 'INPUT_MODE_LABEL_LEAK'
+    validationWarning: payoffGate.renderabilityWarning
+      ? payoffValidationWarning
+      : (repairedInputModeLabelLeak && safeScenarioResult.validationWarning?.code === 'INPUT_MODE_LABEL_LEAK'
         ? null
-        : safeScenarioResult.validationWarning
-    ) || payoffValidationWarning
+        : safeScenarioResult.validationWarning) || payoffValidationWarning
   };
 }
 

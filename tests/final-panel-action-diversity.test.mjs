@@ -3,11 +3,9 @@ import test, { after, before } from 'node:test';
 import { createServer } from 'vite';
 
 let server;
-let assertActiveFinalPanelStaging;
 let buildMangaPrompt;
 let getScenarioPrompt;
 let buildScenarioEnhancementPrompt;
-let validateScenarioEnhancement;
 
 before(async () => {
   server = await createServer({
@@ -15,10 +13,9 @@ before(async () => {
     logLevel: 'silent',
     server: { middlewareMode: true }
   });
-  ({ assertActiveFinalPanelStaging } = await server.ssrLoadModule('/src/lib/final-panel-staging.js'));
   ({ buildMangaPrompt } = await server.ssrLoadModule('/src/lib/prompt-assembler.js'));
   ({ getScenarioPrompt } = await server.ssrLoadModule('/src/lib/prompts.js'));
-  ({ buildScenarioEnhancementPrompt, validateScenarioEnhancement } = await server.ssrLoadModule('/src/lib/scenario-enhancement.js'));
+  ({ buildScenarioEnhancementPrompt } = await server.ssrLoadModule('/src/lib/scenario-enhancement.js'));
 });
 
 after(async () => {
@@ -62,28 +59,7 @@ const ACTIVE_ENSEMBLE_SCENARIO = PASSIVE_TABLEAU_SCENARIO.replace(
   'アカリが募金箱へ封筒を入れる。同時にミクは掲示の端を貼り直し、リンは募金に来た人へ入口を示す。サエコとヒカリは別々の奥行きで募金用紙を配る。'
 );
 
-test('rejects a multi-character final-panel lineup even when the lead makes a small pose', () => {
-  assert.throws(
-    () => assertActiveFinalPanelStaging({ scenario: PASSIVE_TABLEAU_SCENARIO, punchlineType: 'Documentary' }),
-    /passive_final_tableau/
-  );
-});
-
-test('accepts a final panel where supporting cast perform distinct story actions across depth', () => {
-  assert.equal(
-    assertActiveFinalPanelStaging({ scenario: ACTIVE_ENSEMBLE_SCENARIO, punchlineType: 'Documentary' }),
-    true
-  );
-});
-
-test('allows an explicitly selected surreal silent ending', () => {
-  assert.equal(
-    assertActiveFinalPanelStaging({ scenario: PASSIVE_TABLEAU_SCENARIO, punchlineType: 'Surreal' }),
-    true
-  );
-});
-
-test('scenario generation contract requires active final-panel blocking instead of a passive audience', () => {
+test('scenario generation preserves meaningful silence and avoids an action quota', () => {
   const prompt = getScenarioPrompt({
     randomCategory: '企業ニュース',
     targetDate: '2026-08-04',
@@ -102,12 +78,12 @@ test('scenario generation contract requires active final-panel blocking instead 
     styleJson: null
   });
 
-  assert.match(prompt, /4コマ目の静止集合オチ抑制/);
-  assert.match(prompt, /横一列|棒立ち/);
-  assert.match(prompt, /別々の物理アクション/);
+  assert.match(prompt, /人物の行動・反応・間・構図/);
+  assert.match(prompt, /静止や沈黙がオチ、余韻、緊張に効く場合は保つ/);
+  assert.doesNotMatch(prompt, /別々の物理アクション|最低2コマ/);
 });
 
-test('both image providers receive the same final-panel active-staging lock', () => {
+test('both image providers preserve scripted action without adding hands', () => {
   for (const providerFamily of ['chatgpt', 'gemini']) {
     const prompt = buildMangaPrompt({
       scenario: ACTIVE_ENSEMBLE_SCENARIO,
@@ -118,30 +94,19 @@ test('both image providers receive the same final-panel active-staging lock', ()
       systemVersion: 'v5.1.0-test'
     });
 
-    assert.match(prompt, /FINAL-PANEL ACTIVE STAGING LOCK/);
-    assert.match(prompt, /straight-line lineup/i);
-    assert.match(prompt, /distinct physical action/i);
-    assert.match(prompt, /faces, silhouettes, and hands readable/i);
+    assert.match(prompt, /FINAL-PANEL STORY STAGING/);
+    assert.match(prompt, /Keep intentional stillness and silence/);
+    assert.match(prompt, /Do not invent extra hand actions/);
+    assert.doesNotMatch(prompt, /distinct physical action/i);
   }
 });
 
-test('scenario enhancement cannot introduce a passive final-panel lineup', () => {
-  const validation = validateScenarioEnhancement({
-    originalScenario: ACTIVE_ENSEMBLE_SCENARIO,
-    candidateScenario: PASSIVE_TABLEAU_SCENARIO,
-    selectedCategories: ['body', 'gag']
-  });
-
-  assert.equal(validation.ok, false);
-  assert.ok(validation.issueCodes.includes('passive_final_tableau'));
-});
-
-test('scenario enhancement prompt keeps active final blocking during strengthening', () => {
+test('scenario enhancement prompt allows story-led final blocking', () => {
   const prompt = buildScenarioEnhancementPrompt({
     scenario: ACTIVE_ENSEMBLE_SCENARIO,
     selectedCategories: ['body', 'gag']
   });
 
-  assert.match(prompt, /4コマ目の静止集合オチ抑制/);
-  assert.match(prompt, /横一列|棒立ち/);
+  assert.match(prompt, /人物の行動・反応・間・構図/);
+  assert.match(prompt, /静止や沈黙がオチ、余韻、緊張に効く場合は保つ/);
 });

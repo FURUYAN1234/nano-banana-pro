@@ -134,10 +134,9 @@ test('irreducible oversized ChatGPT input fails before returning a truncated pro
   }), /上限を超えています.*切り捨てません/s);
 });
 
-test('explicit small-budget compaction retains critical content for constrained callers', () => {
+test('soft Web target may be exceeded to retain critical content', () => {
   const prompt = buildMangaPrompt({
     scenario: LONG_FOUR_KOMA_SCENARIO,
-    promptMaxChars: EMPIRICAL_CHATGPT_WEB_COPY_SOFT_BUDGET_CHARS,
     castList: FULL_CAST_LIST,
     colorMode: 'color',
     providerFamily: 'chatgpt',
@@ -146,8 +145,8 @@ test('explicit small-budget compaction retains critical content for constrained 
   });
 
   assert.ok(
-    prompt.length <= EMPIRICAL_CHATGPT_WEB_COPY_SOFT_BUDGET_CHARS,
-    `expected ChatGPT prompt to stay within the empirical Web-copy soft budget (${EMPIRICAL_CHATGPT_WEB_COPY_SOFT_BUDGET_CHARS.toLocaleString()} chars), got ${prompt.length}`
+    prompt.length <= 32000,
+    `expected ChatGPT prompt to stay within the API hard limit, got ${prompt.length}`
   );
   assert.equal((prompt.match(/## Panel \d/g) || []).length, 4);
   assert.match(prompt, /EXPRESSIVE DIRECTION:/);

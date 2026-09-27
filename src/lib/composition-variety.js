@@ -74,7 +74,7 @@ export const MANGA_COMPOSITION_VARIETY_LOCK = `MANGA CAMERA / POSE VARIETY LOCK:
 export const MANGA_COMPOSITION_VARIETY_LOCK_COMPACT = 'MANGA CAMERA / POSE VARIETY LOCK: Eye-line is gaze, not camera height. CAMERA SIGNATURE: unspecified elevation/azimuth/framing/lens/blocking/depth vary; explicit repeated shots stay. story-relevant focal form; no frontal/lens-hand/foot thrust; stagger hands in depth.';
 
 // 4コマの追加演出だけを従属させ、台本・人物・媒体の制約は短縮時も保持する。
-export const MANGA_PROMPT_PRIORITY = 'PROMPT PRIORITY: protect cast/count/identity/glasses, wardrobe, exact script, Camera geometry, layout/style/medium. CAMERA FIRST: project actors/props from fixed Camera; never relocate for legibility or chibi. No screen-left/right mirroring. Simplify only unspecified background texture and decorative VFX. Never print.';
+export const MANGA_PROMPT_PRIORITY = 'PROMPT PRIORITY: protect cast/count/identity/glasses, wardrobe, exact script, Camera geometry, layout/style/medium. CAMERA FIRST: project actors/props from fixed Camera; Action contact takes precedence over conflicting actor depth, so move that actor\'s sole body within reach of the prop; never relocate for legibility or chibi. No screen-left/right mirroring. Simplify only unspecified background texture and decorative VFX. Never print.';
 
 export const MANGA_GESTURE_VARIETY_LOCK = `BODY ACTING / GESTURE VARIETY LOCK:
 - A reference-sheet pose is identity evidence, not a recurring action or personality signature. Reproduce identity and clothing, but derive acting from the current story beat.
@@ -108,7 +108,7 @@ export const getPanelShotExecution = (camera = '') => {
   if (close) cues.push('tight crop on focal subject');
   else if (full) cues.push('head-to-feet inside panel with headroom and floor beyond BOTH shoes; hips/knees/feet unobscured');
   else if (/zoom[ -]?out|ズームアウト|引き|全景|遠景|epic wide|wide shot|long shot/i.test(text)) cues.push('smaller subject; more setting');
-  if (/overhead|high[ -]angle|innocent high|俯瞰|真上|斜め上|上から|見下ろ[すし]/i.test(text)) cues.push(`look down: head/shoulder tops, shortened torsos, upper prop faces; ${close ? '' : 'headroom/breakout; border behind hair; intact; '}keep projection even with omitted BG`);
+  if (/overhead|high[ -]angle|innocent high|俯瞰|真上|斜め上(?:から|より|の(?:視点|位置|カメラ))|上から|高い(?:撮影)?位置(?:から|より|に)|高所から|上方から|見下ろ[すし]/i.test(text)) cues.push(`look down from camera physically above visible heads, not eye-level: head/shoulder tops, shortened torsos, upper prop faces and floor/table planes; ${close ? '' : 'headroom/breakout; border behind hair; intact; '}keep projection even with omitted BG`);
   else if (!horizontal && /low[ -]angle|dominant low|ローアングル|アオリ|煽[りる]|下から|見上げ/i.test(text)) cues.push('look up: lower face/prop undersides, horizon below face, upward convergence; preserve the scripted proportions; not eye-level');
   else if (floor) cues.push(`floor-level camera below faces even when crouched/chibi; ${horizontal ? 'keep horizontal aim and a low horizon' : 'project nearby prop undersides from below'}; do not reset to subject eye-level`);
   if (/の(?:左|右)?(?:後方|後ろ|背中側)|rear[ -]view|from (?:the )?(?:(?:left|right)[ -])?rear/i.test(text)) cues.push('show back planes of the scripted subject; preserve crop/distance, no forced close OTS');
