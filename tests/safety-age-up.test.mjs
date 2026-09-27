@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { applySafetyAgeUp } from '../src/lib/safety-filters.js';
+import { applySafetyAgeUp, sanitizeForDocumentary } from '../src/lib/safety-filters.js';
 
 test('age-up preserves occupational uniforms and their role assignments', () => {
   const clothing = '警察官は制服、消防士は防火服、看護師は看護制服、駅員は鉄道会社の制服、来訪者は私服。';
@@ -15,6 +15,16 @@ test('age-up still handles explicitly school-coded Japanese clothing', () => {
   const result = applySafetyAgeUp('学校制服、学校の制服、学園制服、ブレザー制服、学生服、セーラー服');
   assert.doesNotMatch(result, /学校(?:の)?制服|学園制服|ブレザー制服|学生服|セーラー服/);
   assert.match(result, /フォーマルな服装/);
+});
+
+test('age-up preserves negated school attire so casual clothing is not contradicted', () => {
+  const prompt = 'Outfit: ミクは私服。学校制服ではない。リンは私服で、セーラー服は着ない。 No school uniform. [人物A]: 学校制服。';
+  const result = applySafetyAgeUp(prompt);
+  assert.match(result, /学校制服ではない/);
+  assert.match(result, /No school uniform/);
+  assert.match(result, /セーラー服は着ない/);
+  assert.doesNotMatch(result, /フォーマルな服装ではない/);
+  assert.match(result, /\[人物A\]: フォーマルな服装/);
 });
 
 test('applySafetyAgeUp removes plain-text school and minor-coded character traits', () => {
@@ -63,4 +73,22 @@ test('applySafetyAgeUp preserves compound words in verbatim dialogue while still
   assert.match(result, /\[人物A\]: 男性, short hair/);
   assert.match(result, /青少年保護/);
   assert.doesNotMatch(result, /青男性保護/);
+});
+
+test('safety filters preserve exact printable titles and dialogue while adjusting visual traits', () => {
+  const prompt = [
+    '- Title: 高校生のころ',
+    '- Top title EXACTLY "高校生のころ", large black, centered.',
+    '- [人物A]: 高校生, セーラー服',
+    'Dialogue (verbatim bubbles): B1="小学生の時、grapeを食べた。"',
+  ].join('\n');
+  const aged = applySafetyAgeUp(prompt);
+  assert.match(aged, /Title: 高校生のころ/);
+  assert.match(aged, /title EXACTLY "高校生のころ"/);
+  assert.match(aged, /B1="小学生の時、grapeを食べた。"/);
+  assert.doesNotMatch(aged, /\[人物A\]: 高校生, セーラー服/);
+
+  const documentary = sanitizeForDocumentary(`${prompt}\nAction: grape and parson stand near a school.`);
+  assert.match(documentary, /B1="小学生の時、grapeを食べた。"/);
+  assert.match(documentary, /Action: grape and parson stand near a school\./);
 });

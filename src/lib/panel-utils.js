@@ -477,7 +477,7 @@ const getImmediateInlineSpeakerName = (value = '', validCharacters = []) => {
 };
 
 // 入れ子の引用は台詞本文として保持し、同じ行の次の話者の引用とは分離する。
-const collectDialogueQuotes = (source = '') => {
+export const collectDialogueQuotes = (source = '') => {
   const quotes = [];
   let depth = 0;
   let start = 0;
@@ -622,10 +622,10 @@ const compactIdentityTraits = (traits = '') =>
     .replace(/\s+/g, ' ')
     .trim();
 
-const getScriptedCamera = (panelText) => {
+export const getScriptedCamera = (panelText) => {
   const text = String(panelText || '');
   // 角括弧タグと独立したCamera行を同じ指定として扱う。台詞中のCamera:は読まない。
-  const value = text.match(/\[\s*(?:Camera|カメラワーク|CameraWork|Camera\s*Work)\s*[:：]\s*([^\]\r\n]+)\]/i)?.[1]
+  const value = text.match(/^[\t ]*\[\s*(?:Camera|カメラワーク|CameraWork|Camera\s*Work)\s*[:：]\s*([^\]\r\n]+)\]/im)?.[1]
     || text.match(/^[\t ]*(?:Camera|カメラワーク|CameraWork|Camera\s*Work)\s*[:：][\t ]*([^\r\n]+)/im)?.[1];
   return value?.trim() || '';
 };
@@ -1257,7 +1257,7 @@ const protectNonDialogueTextHints = (actionText) => {
     }
 
     if (SOUND_CONTEXT_RE.test(context)) {
-      return '';
+      return removedSoundQuoteMarker;
     }
 
     if (MOOD_CONTEXT_RE.test(context)) {
@@ -1277,6 +1277,7 @@ const protectNonDialogueTextHints = (actionText) => {
 
   return protectedText
     .replace(/\uE001\s*(?:という|っていう)\s*(?=音|爆音|銃声|足音)/g, '')
+    .replace(/\uE001\s*(?:と|って)\s*(?=鳴|響|聞こ|する)/g, '')
     .replace(/\uE001/g, '')
     .replace(/\uE000\s*(?:と|って)?\s*/g, '')
     .replace(/\uE000/g, '');
@@ -1585,30 +1586,14 @@ export const extractCastLimitRule = (fullPanelText, castList, options = {}) => {
     Object.entries(flatCharLookup).map(([alias, name]) => [alias, { name, full: name }])
   );
 
-  // Extract speakers from dialogue lines
-  const speakers = [];
-  lines.forEach(line => {
-    if (PANEL_HEADER_RE.test(line)) return;
-    const match = line.match(/^(.*?)(?:[:：]|「)/);
-    if (match && match[1].trim()) {
-      let speaker = match[1].replace(/^(SFX|効果音|BGM|Action|状況(?:演出)?|[\(（].*?[\)）])/gi, '').replace(/^[【\[（(]/, '').replace(/[】\]）)]$/, '').trim();
-      if (speaker) {
-        if (isNarrationSubjectSpeakerCandidate(speaker, validCharacters)) return;
-        if (speaker === "全員" || speaker === "Speaker") return;
-        const matchedChar = findSpeakerCastMatch(speaker, validCharacters);
-        if (matchedChar) {
-          const canonicalName = charLookup[matchedChar].name;
-          if (!speakers.includes(canonicalName)) {
-            speakers.push(canonicalName);
-          }
-        } else if (isLikelyPerson(speaker, validCharacters)) {
-          if (!speakers.includes(speaker)) {
-            speakers.push(speaker);
-          }
-        }
-      }
-    }
-  });
+  // The bubble parser is the source of truth for speakers, including multiple
+  // utterances on one line and speakers written after the quote.
+  const dialogue = extractDialogueOnly(fullPanelText, castList, {forImagePrompt: true});
+  const speakers = [...new Set([...dialogue.matchAll(/B\d+=>\[([^\]]+)\] mouth\/head/g)]
+    .map((match) => {
+      const alias = findSpeakerCastMatch(match[1], validCharacters);
+      return alias ? charLookup[alias].name : match[1];
+    }))];
 
   // [v3.95] セリフ行以外のテキストを抽出して登場人物を検出する (セリフ内言及によるキャラ誤認バグの完全排除)
   const actionAndMetaLines = [];
@@ -1729,6 +1714,12 @@ export const extractCastLimitRule = (fullPanelText, castList, options = {}) => {
 
   const storyGuests = allPanelCharacters.filter(c => !canonicalValidCharacters.includes(c));
 
+  const excludesExtraPeople = /(?:追加の|他の|ほかの|余分な)(?:客|人物|人|モブ)(?:は|が)?(?:いない|居ない|なし|描かない)|(?:no extra|no other) (?:people|customers|humans)/i.test(fullPanelText);
+  const hasMob = !excludesExtraPeople && (
+    /(モブ|スタッフ|観客|群衆|兵士|客|人々|クラスメイト|生徒たち|社員|ファンたち|ファン|通行人)/.test(actionAndMetaText)
+    || (!hasAllMainCastCue && /全員|みんな/.test(actionAndMetaText))
+  );
+
   if (foregroundActors.length > 0) {
     const mainFocus = panelActors.length > 0 ? panelActors.join(' and ') : foregroundActors.join(' and ');
     let cloneWarning = compact
@@ -1745,11 +1736,11 @@ export const extractCastLimitRule = (fullPanelText, castList, options = {}) => {
         : `\nSTORY-REQUIRED GUEST CONTINUITY: ${guestNames} are legitimate characters without reference sheets. Draw each exactly once where required; if recurring, preserve the same identity, age, clothing, prop ownership and action/spatial continuity. Never clone, substitute or omit them while their scripted action remains.`;
     }
     
-    if (allPanelCharacters.length === 1 && dialogueLineCount <= 1) {
+    if (!hasMob && allPanelCharacters.length === 1 && dialogueLineCount <= 1) {
       cloneWarning += compact
         ? `\nSOLO: only ${allCharBrackets[0]}; no other people or second copy.`
         : `\nSOLO SHOT (SINGLE CHARACTER SCENE): Since only ${allCharBrackets[0]} is listed, THIS IS A SOLO SHOT. Do NOT draw ANY other person. Do NOT draw a second copy of ${allCharBrackets[0]}. Leave the surrounding space empty rather than adding people.`;
-    } else if (allPanelCharacters.length === 1 && dialogueLineCount >= 2) {
+    } else if (!hasMob && allPanelCharacters.length === 1 && dialogueLineCount >= 2) {
       cloneWarning += compact
         ? `\nMONOLOGUE: all bubbles belong to ${allCharBrackets[0]}; no extra person.`
         : `\nNOTE: Multiple speech bubbles in this panel are ALL spoken by ${allCharBrackets[0]} (monologue/soliloquy). Draw only ${allCharBrackets[0]} — do NOT add a second character just because there are multiple bubbles.`;
@@ -1775,12 +1766,6 @@ export const extractCastLimitRule = (fullPanelText, castList, options = {}) => {
     }
 
     // [v4.2.1] モブキャラ検出ロジック：本文にモブが含まれる場合はABS制限を緩和する
-    const excludesExtraPeople = /(?:追加の|他の|ほかの|余分な)(?:客|人物|人|モブ)(?:は|が)?(?:いない|居ない|なし|描かない)|(?:no extra|no other) (?:people|customers|humans)/i.test(fullPanelText);
-    const hasMob = !excludesExtraPeople && (
-      /(モブ|スタッフ|観客|群衆|兵士|客|人々|クラスメイト|生徒たち|社員|ファンたち|ファン|通行人)/.test(actionAndMetaText)
-      || (!hasAllMainCastCue && /全員|みんな/.test(actionAndMetaText))
-    );
-
     let spatialConstraint;
     if (!explicitRearActor && hasScriptedSpatialStaging(fullPanelText)) {
       const depthRule = compact

@@ -149,6 +149,32 @@ test('a selected dialogue-only rewrite is accepted when protected fields stay un
   assert.equal(validation.ok, true, validation.issues?.join('; '));
 });
 
+test('camera-only enhancement rejects unrelated situation and effect edits', () => {
+  const candidate = originalScenario
+    .replace('[Camera: ローアングル/アオリ]', '[Camera: 横からのローアングル]')
+    .replace('5人がリング状に並び', '5人が机を壊し')
+    .replace('サエコ「始めるわよ。」', 'SFX: ドカン\nサエコ「始めるわよ。」');
+  const result = enhancementModule.validateScenarioEnhancement({originalScenario, candidateScenario:candidate, selectedCategories:['camera']});
+  assert.equal(result.ok, false);
+  assert.ok(result.issueCodes.includes('situation_changed_without_selection'));
+  assert.ok(result.issueCodes.includes('effects_changed_without_selection'));
+});
+
+test('nested quoted dialogue and its panel assignment remain locked without dialogue selection', () => {
+  const nested = originalScenario.replace('サエコ「始めるわよ。」', 'サエコ「その「本」を取って。」');
+  const changed = nested.replace('サエコ「その「本」を取って。」', 'サエコ「その「本」を捨てて。」')
+    .replace('5人がリング状に並び', '5人が横一列に並び');
+  const changedResult = enhancementModule.validateScenarioEnhancement({originalScenario:nested, candidateScenario:changed, selectedCategories:['body']});
+  assert.ok(changedResult.issueCodes.includes('dialogue_changed_without_selection'));
+
+  const moved = originalScenario
+    .replace('サエコ「始めるわよ。」', 'アカリ「なんか丸い？」')
+    .replace('アカリ「なんか丸い？」\n（リアクション: ミク→肩をすくめる）', 'サエコ「始めるわよ。」\n（リアクション: ミク→肩をすくめる）')
+    .replace('5人がリング状に並び', '5人が横一列に並び');
+  const movedResult = enhancementModule.validateScenarioEnhancement({originalScenario, candidateScenario:moved, selectedCategories:['body']});
+  assert.ok(movedResult.issueCodes.includes('speaker_sequence_changed') || movedResult.issueCodes.includes('dialogue_changed_without_selection'));
+});
+
 test('Topic format and omitted optional metadata remain valid', () => {
   assert.equal(typeof enhancementModule.validateScenarioEnhancement, 'function');
   const validation = enhancementModule.validateScenarioEnhancement({

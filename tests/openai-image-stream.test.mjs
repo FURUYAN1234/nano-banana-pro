@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { readOpenAIImageStream } from '../src/lib/openai.js';
+import { readOpenAIImageStream, generateImageWithOpenAI, setOpenAIApiKey } from '../src/lib/openai.js';
 
 const streamResponse = (...events) => new Response(
   events.map((event) => `data: ${JSON.stringify(event)}\n\n`).join(''),
@@ -45,7 +45,7 @@ test('surfaces provider errors from the image stream', async () => {
   );
 });
 
-test('keeps the latest decodable partial image when the stream drops before completion', async () => {
+test('does not report a partial image as a completed generation when the stream drops', async () => {
   const encoder = new TextEncoder();
   const response = {
     body: new ReadableStream({
@@ -55,12 +55,7 @@ test('keeps the latest decodable partial image when the stream drops before comp
       },
     }),
   };
-  const statuses = [];
-
-  const image = await readOpenAIImageStream(response, (status) => statuses.push(status));
-
-  assert.equal(image, 'usable-partial');
-  assert.equal(statuses.some((status) => status.includes('途中画像を採用')), true);
+  await assert.rejects(readOpenAIImageStream(response, () => {}), /network error/);
 });
 
 const editOptions = {eventPrefix: 'image_edit', requireFinal: true};
@@ -80,9 +75,39 @@ test('edits require the completed event rather than a partial or DONE marker', a
   await assert.rejects(readOpenAIImageStream(streamResponse({type: 'unknown', b64_json: 'not-final'}), () => {}, editOptions), /最終画像/);
 });
 
-test('edits salvage only a completed image after a transport interruption', async () => {
+test('edits reject transport interruption even after a completed event', async () => {
   await assert.rejects(readOpenAIImageStream(droppingResponse(editEvent('partial_image', 'partial')), () => {}, editOptions), /network interrupted/);
-  assert.equal(await readOpenAIImageStream(droppingResponse(editEvent('completed', 'final')), () => {}, editOptions), 'final');
+  await assert.rejects(readOpenAIImageStream(droppingResponse(editEvent('completed', 'final')), () => {}, editOptions), /network interrupted/);
+});
+
+test('generation rejects a provider error or malformed event after a partial image', async () => {
+  const partial = `data: ${JSON.stringify({type:'image_generation.partial_image',b64_json:'partial'})}\n\n`;
+  await assert.rejects(readOpenAIImageStream(new Response(partial + 'data: {bad-json}\n\n')), /応答形式/);
+  await assert.rejects(readOpenAIImageStream(new Response(partial + 'data: {"type":"error","message":"rejected"}\n\n')), /rejected/);
+});
+
+test('image generation timeout remains active while the response body is stalled', async () => {
+  const originalFetch = globalThis.fetch;
+  let bodyController;
+  setOpenAIApiKey('test-only-key');
+  globalThis.fetch = async (_url, options) => {
+    const body = new ReadableStream({start(controller) {
+      bodyController = controller;
+      options.signal.addEventListener('abort', () => controller.error(new DOMException('aborted', 'AbortError')));
+    }});
+    return new Response(body, {headers: {'content-type':'text/event-stream'}});
+  };
+  try {
+    const result = await Promise.race([
+      generateImageWithOpenAI('test prompt', () => {}, {timeoutMs: 20}).then(() => 'unexpected success', error => error.message),
+      new Promise(resolve => setTimeout(() => resolve('still waiting after headers'), 120)),
+    ]);
+    assert.match(result, /Time out/, result);
+  } finally {
+    bodyController?.error(new Error('test cleanup'));
+    globalThis.fetch = originalFetch;
+    setOpenAIApiKey('');
+  }
 });
 
 test('explicit provider errors and malformed JSON remain errors after completion', async () => {

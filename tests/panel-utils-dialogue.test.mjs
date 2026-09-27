@@ -12,6 +12,7 @@ let extractCastLimitRule;
 let cleanCastList;
 let buildIdentityMatrix;
 let extractActingIdentityNotes;
+let getCameraForPanel;
 
 before(async () => {
   server = await createServer({
@@ -29,6 +30,26 @@ before(async () => {
   cleanCastList = panelUtils.cleanCastList;
   buildIdentityMatrix = panelUtils.buildIdentityMatrix;
   extractActingIdentityNotes = panelUtils.extractActingIdentityNotes;
+  getCameraForPanel = panelUtils.getCameraForPanel;
+});
+
+test('cast inventory includes every actual bubble speaker on one line', () => {
+  const cast = '- Character [甲]: adult\n- Character [乙]: adult';
+  const rule = extractCastLimitRule('甲「準備した。」 乙「確認した。」', cast, {compact: true});
+  assert.match(rule, /CAST COUNT:.*\[甲\].*\[乙\]/);
+  assert.doesNotMatch(rule, /ABSENT:.*\[乙\]/);
+  assert.doesNotMatch(rule, /SOLO:/);
+});
+
+test('explicit background crowd is compatible with a single named speaker', () => {
+  const rule = extractCastLimitRule('状況: 甲の背後を群衆が歩く。\n甲「混んでるね。」', '- Character [甲]: adult', {compact: true});
+  assert.match(rule, /mobs|background people/i);
+  assert.doesNotMatch(rule, /SOLO:|no other people|MONOLOGUE:/i);
+});
+
+test('camera tags quoted in dialogue do not override the panel camera', () => {
+  const camera = getCameraForPanel('甲「[Camera: low-angle]って何？」', ['fallback shot'], {index: 0});
+  assert.equal(camera, 'fallback shot');
 });
 
 test('background remaining cast and shortened names cannot be forbidden by generated counts', () => {
@@ -707,6 +728,14 @@ test('separates visible bubble lettering from speaker-name tail metadata for ima
   assert.match(dialogue, /B1=>\[リン\] mouth\/head/);
   assert.match(dialogue, /B2=>\[アカリ\] mouth\/head/);
   assert.doesNotMatch(dialogue, /Speech Bubble \d+ \[[^\]]+\]:/);
+});
+
+test('removing a nonvisual quoted sound leaves a grammatical action', () => {
+  const panel = '[4コマ目: 結]\n状況: 枠が「ギシッ」と鳴る。\nミク「支えて！」';
+  const action = extractActionOnly(panel, CAST_LIST);
+  assert.match(action, /枠が鳴る。/);
+  assert.doesNotMatch(action, /枠がと鳴る|ギシッ/);
+  assert.match(extractDialogueOnly(panel, CAST_LIST, {forImagePrompt: true}), /支えて！/);
 });
 
 test('locks a single bubble tail endpoint to its mapped speaker mouth or head', () => {

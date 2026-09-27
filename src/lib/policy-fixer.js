@@ -1,6 +1,42 @@
 import { callAI } from './ai-provider';
 import { getPolicyAnalysisPrompt, getPolicyFallbackPrompt } from './prompts';
 
+const promptLiterals = (prompt, pattern) => String(prompt).match(pattern) || [];
+
+export function assertPolicyRepairPreservesPrompt(original, candidate) {
+  if (typeof candidate !== 'string' || !candidate.trim()) throw new Error('修正文が空です。');
+  const bubbles = /\bB\d+\s*=\s*"(?:\\.|[^"\\])*"/g;
+  const title = /(?:Top title EXACTLY\s*"[^"]*"|^- Title:\s*[^\n]+|Top page:[^\n]*title:\s*"[^"]*")/gm;
+  if (JSON.stringify(promptLiterals(original, bubbles)) !== JSON.stringify(promptLiterals(candidate, bubbles))) {
+    throw new Error('修正文で確定台詞が変更されました。');
+  }
+  if (JSON.stringify(promptLiterals(original, title)) !== JSON.stringify(promptLiterals(candidate, title))) {
+    throw new Error('修正文でタイトルが変更されました。');
+  }
+  if (JSON.stringify(promptLiterals(original, /^## Panel \d+/gm)) !== JSON.stringify(promptLiterals(candidate, /^## Panel \d+/gm))) {
+    throw new Error('修正文でコマ構造が変更されました。');
+  }
+  return candidate;
+}
+
+export function applyPolicyReplacements(finalPrompt, replacements, onProgress = () => {}) {
+  let modifiedPrompt = finalPrompt;
+  let appliedCount = 0;
+  let failedCount = 0;
+  for (const rep of replacements) {
+    if (typeof rep?.from !== 'string' || !rep.from || typeof rep?.to !== 'string' || !rep.to) continue;
+    if (modifiedPrompt.includes(rep.from)) {
+      modifiedPrompt = modifiedPrompt.replace(rep.from, () => rep.to);
+      appliedCount++;
+      onProgress(`✅ "${rep.from.substring(0, 40)}..." → "${rep.to.substring(0, 40)}..." (${rep.reason || ''})`);
+    } else {
+      failedCount++;
+      onProgress(`⚠️ 未発見（スキップ）: "${rep.from.substring(0, 50)}..."`);
+    }
+  }
+  return {modifiedPrompt, appliedCount, failedCount};
+}
+
 // [v3.85-alpha] コンテンツポリシー自動修正ロジックの外部モジュール化
 
 /**
@@ -49,23 +85,10 @@ export async function fixPolicyViolation({
   }
 
   if (isJsonSuccess) {
-    let modifiedPrompt = finalPrompt;
-    let appliedCount = 0;
-    let failedCount = 0;
-
-    for (const rep of replacements) {
-      if (!rep.from || !rep.to) continue;
-      if (modifiedPrompt.includes(rep.from)) {
-        modifiedPrompt = modifiedPrompt.replace(rep.from, rep.to);
-        appliedCount++;
-        onProgress(`✅ "${rep.from.substring(0, 40)}..." → "${rep.to.substring(0, 40)}..." (${rep.reason || ''})`);
-      } else {
-        failedCount++;
-        onProgress(`⚠️ 未発見（スキップ）: "${rep.from.substring(0, 50)}..."`);
-      }
-    }
+    const {modifiedPrompt, appliedCount, failedCount} = applyPolicyReplacements(finalPrompt, replacements, onProgress);
 
     if (appliedCount > 0) {
+      assertPolicyRepairPreservesPrompt(finalPrompt, modifiedPrompt);
       return {
         success: true,
         method: "replacement",
@@ -83,10 +106,11 @@ export async function fixPolicyViolation({
   const fallbackResult = await callAI(fallbackPrompt, [], null, onProgress);
 
   if (fallbackResult.text && fallbackResult.text.length > 100) {
+    const modifiedPrompt = assertPolicyRepairPreservesPrompt(finalPrompt, fallbackResult.text.trim());
     return {
       success: true,
       method: "regeneration",
-      modifiedPrompt: fallbackResult.text.trim()
+      modifiedPrompt
     };
   } else {
     throw new Error("フォールバックでも適切な応答が得られませんでした。");

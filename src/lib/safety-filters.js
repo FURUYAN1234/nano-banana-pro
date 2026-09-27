@@ -22,6 +22,25 @@ const translateApiError = (errorMsg) => {
 };
 
 // --- [v2.27] セーフティ年齢引き上げ変換 (Safety Age-Up Filter) ---
+const protectPrintableText = (promptText) => {
+  let prefix = '__PRINT_LITERAL_';
+  while (promptText.includes(prefix)) prefix += '_';
+  const literals = [];
+  const protect = (value) => `${prefix}${literals.push(value) - 1}__`;
+  const protectedText = promptText
+    .replace(/(\bB\d+\s*=\s*)("(?:\\.|[^"\\])*")/g, (_, label, value) => label + protect(value))
+    .replace(/^(\s*-\s*Title:\s*)([^\n]+)/gim, (_, label, value) => label + protect(value))
+    .replace(/^(\s*-\s*Top title EXACTLY\s*)("(?:\\.|[^"\\])*")/gim, (_, label, value) => label + protect(value))
+    .replace(/^(\s*Top page:.*?title:\s*)("(?:\\.|[^"\\])*")/gim, (_, label, value) => label + protect(value))
+    // A negated garment is an exclusion, not a school outfit assignment.
+    .replace(/(?:(?:学校(?:の)?|学園(?:の)?|ブレザー)?制服|学生服|セーラー服)(?:ではない|でない|じゃない|は着ない)/g, protect)
+    .replace(/\b(?:no|without)\s+(?:a\s+)?(?:school|academy|sailor)\s+uniform\b/gi, protect);
+  return {
+    text: protectedText,
+    restore: (value) => value.replace(new RegExp(`${prefix}(\\d+)__`, 'g'), (_, index) => literals[Number(index)])
+  };
+};
+
 // Geminiのセンシティブ判定（未成年+制服の組み合わせ）を回避するため、
 // プロンプト内の該当タグを安全な表現に自動変換する。
 // v2.27c: Gemini自身のフィードバックに基づき、以下の追加トリガーにも対応:
@@ -30,6 +49,7 @@ const translateApiError = (errorMsg) => {
 //   - ローアングル → ミディアムアングル（アップスカート防止）
 //   - 低身長 → 削除（幼く見える要素の排除）
 const applySafetyAgeUp = (promptText) => {
+  const printable = protectPrintableText(promptText);
   const SAFETY_REPLACEMENTS = [
     // --- レベル1: 年齢タグ of 変換 ---
     [/\(girl(:\d\.?\d?)\)/gi, '(woman$1)'],
@@ -109,7 +129,7 @@ const applySafetyAgeUp = (promptText) => {
     [/(?:学校(?:の)?|学園(?:の)?|ブレザー)制服/g, 'フォーマルな服装'],
   ];
 
-  let result = promptText;
+  let result = printable.text;
   let appliedCount = 0;
   SAFETY_REPLACEMENTS.forEach(([pattern, replacement]) => {
     const before = result;
@@ -157,7 +177,7 @@ const applySafetyAgeUp = (promptText) => {
   if (appliedCount > 0) {
     console.log(`[Safety Age-Up v2.27c] ${appliedCount}種類のセーフティ変換を適用しました`);
   }
-  return result;
+  return printable.restore(result);
 };
 
 // [v3.47] ドキュメンタリーモード専用: コンテンツセーフティ・サニタイザー
@@ -165,6 +185,7 @@ const applySafetyAgeUp = (promptText) => {
 // 画像生成プロンプトに渡す「出口」で危険ワードを安全な言い換えに自動変換する。
 // シナリオ自体（ユーザーが読むテキスト）は原文のまま保持される。
 const sanitizeForDocumentary = (promptText) => {
+  const printable = protectPrintableText(promptText);
   // センシティブワード → 安全な言い換え辞書
   // ルール: 元の意味を可能な限り保ちつつ、画像生成AIの検閲を回避する
   const CONTENT_SAFETY_DICT = [
@@ -402,18 +423,23 @@ const sanitizeForDocumentary = (promptText) => {
     [/death toll/gi, 'number of victims'],
   ];
 
-  let result = promptText;
+  let result = printable.text;
   let appliedCount = 0;
   CONTENT_SAFETY_DICT.forEach(([pattern, replacement]) => {
     const before = result;
-    result = result.replace(pattern, replacement);
+    // English terms are words or phrases, never substrings of benign words
+    // such as grape or parson.
+    const wholeTerm = /^[a-z][a-z -]*$/i.test(pattern.source)
+      ? new RegExp(`\\b${pattern.source}\\b`, pattern.flags)
+      : pattern;
+    result = result.replace(wholeTerm, replacement);
     if (before !== result) appliedCount++;
   });
 
   if (appliedCount > 0) {
     console.log(`[ドキュメンタリーサニタイザー v3.0] ${appliedCount}種類のコンテンツセーフティ変換を適用しました`);
   }
-  return result;
+  return printable.restore(result);
 };
 
 export { translateApiError, applySafetyAgeUp, sanitizeForDocumentary };

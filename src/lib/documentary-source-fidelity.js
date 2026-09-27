@@ -140,11 +140,14 @@ export const extractDocumentaryFactualAnchors = (text) => {
 };
 
 export const validateDocumentarySourceFidelity = ({ sourceText = '', scenarioText = '' } = {}) => {
-  const scenario = normalizeJapaneseClockTimes(scenarioText);
+  // Internal reminders quote the source for prompt assembly; they are not
+  // evidence that the generated scene itself contains those facts.
+  const sceneText = String(scenarioText).replace(/^\s*\[SOURCE FACT - INTERNAL, DO NOT PRINT\]:[^\r\n]*(?:\r?\n)?/gim, '');
+  const scenario = normalizeJapaneseClockTimes(sceneText);
   const sourceAnchors = extractDocumentaryFactualAnchors(sourceText);
   const missingAnchors = sourceAnchors.filter((anchor) => !scenario.includes(anchor));
-  const lexical = getTrigramCoverage(sourceText, scenarioText);
-  const sourceTerms = getSourceTermCoverage(sourceText, scenarioText);
+  const lexical = getTrigramCoverage(sourceText, sceneText);
+  const sourceTerms = getSourceTermCoverage(sourceText, sceneText);
   const lexicalOk = !lexical.enforced || lexical.coverage >= lexical.requiredCoverage;
   const sourceTermsOk = !sourceTerms.enforced || sourceTerms.coverage >= sourceTerms.requiredCoverage;
   const requiredSourceTermsOk = sourceTerms.missingRequiredSourceTerms.length === 0;
@@ -161,7 +164,7 @@ export const validateDocumentarySourceFidelity = ({ sourceText = '', scenarioTex
     requiredSourceTermCoverage: sourceTerms.requiredCoverage,
     lexicalCoverage: lexical.coverage,
     requiredLexicalCoverage: lexical.requiredCoverage,
-    scenarioText
+    scenarioText: sceneText
   };
 };
 

@@ -48,7 +48,8 @@ test('GPT-6 and GPT-5.6 scenario models use current Chat Completions parameters'
 
   assert.match(source, /const usesModernChatParameters = modelId\.startsWith\("gpt-6-"\) \|\| modelId\.startsWith\("gpt-5\.6-"\);/);
   assert.match(source, /role: usesModernChatParameters \? "developer" : "system"/);
-  assert.match(source, /\.\.\.\(usesModernChatParameters\s*\? \{ max_completion_tokens: 8192 \}\s*:\s*\{ temperature: 0\.7, max_tokens: 8192 \}\)/);
+  assert.match(source, /requestOpenAIChatCompletion\(\{modelId, messages, apiKey, timeoutMs\}\)/);
+  assert.match(source, /\.\.\.\(usesModernChatParameters\s*\? \{max_completion_tokens: 8192\}\s*:\s*\{temperature: 0\.7, max_tokens: 8192\}\)/);
 });
 
 test('the text router follows the connected API session after a Vite update', async () => {

@@ -242,6 +242,14 @@ test('documentary source facts are deterministically assigned to panels 1-3 and 
   assert.doesNotMatch(prompt, /Dialogue \(verbatim bubbles\):[^\n]*SOURCE FACT/i);
 });
 
+test('internal source-fact reminders cannot make an unfaithful scenario pass source validation', () => {
+  const source = '市の施設は4月に受付時間を変更した。利用者には事前通知を行った。代替窓口も増設した。';
+  const scenario = [1, 2, 3, 4].map(n => `[${n}コマ目]\n状況: 人物が話す。\n人物「了解。」`).join('\n');
+  const withInternalFacts = attachDocumentarySourceFacts(scenario, source);
+  assert.match(withInternalFacts, /SOURCE FACT/);
+  assert.equal(validateDocumentarySourceFidelity({sourceText: source, scenarioText: withInternalFacts}).ok, false);
+});
+
 test('documentary prompt locks omit inline bibliography labels and titles', () => {
   const scenario = SCENARIO.replace(
     '[3コマ目: 転]',

@@ -22,7 +22,7 @@ import { MINIMAX_H3_COMFYUI_PROMPT } from '../lib/minimax-h3-prompt';
 import { SYSTEM_VERSION } from '../lib/constants';
 import { getEndingModePolicy } from '../lib/ending-mode-policy';
 import { inferImageQualityMode } from '../lib/image-quality-failsafe';
-import { buildGeneratedImageFilename, downloadImageDataUrl } from '../lib/generation-history';
+import { buildGeneratedImageFilename, downloadImageDataUrl, selectGenerationMetadataContext } from '../lib/generation-history';
 import {
   buildGeneratedImageMetadata,
   buildWebGenerationMetadata,
@@ -432,6 +432,7 @@ export default function Step4Panel({
 
   const buildCurrentGeneratedImageMetadata = async (outputImage) => {
     if (!generatedImage) throw new Error('画像生成後に制作情報を保存できます。');
+    const generationContext = selectGenerationMetadataContext(displayedHistory);
     if (!generatedAtByImageRef.current.has(generatedImage)) {
       const historyTime = displayedHistory?.generatedAt
         || (Number.isFinite(displayedHistory?.id) ? new Date(displayedHistory.id).toISOString() : new Date().toISOString());
@@ -442,16 +443,16 @@ export default function Step4Panel({
     return buildGeneratedImageMetadata({
       appVersion: SYSTEM_VERSION,
       generatedAt: generatedAtByImageRef.current.get(generatedImage),
-      provider: isOpenAIImageMode ? 'openai' : 'gemini',
+      provider: generationContext.provider,
       modelId,
       workflowMode: 'api_image_generation',
       humanOversightLevel: 'prompt_guided',
-      scenario,
-      finalPrompt,
-      fallbackOccurred: isFallbackUsed,
-      inputImages: getCurrentMetadataInputImages(),
+      scenario: generationContext.scenario,
+      finalPrompt: generationContext.finalPrompt,
+      fallbackOccurred: displayedHistory?.fallbackOccurred === true,
+      inputImages: generationContext.inputImages,
       outputImage,
-      settings: getCurrentMetadataSettings(),
+      settings: generationContext.settings,
     });
   };
 

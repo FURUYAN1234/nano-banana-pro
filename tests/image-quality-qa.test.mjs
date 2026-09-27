@@ -15,6 +15,17 @@ import {
   applyBubbleInventory,
 } from '../src/lib/image-quality-qa.js';
 
+test('comparison includes prompt requirements after the former 24,000-character cutoff', () => {
+  const marker = 'REQUIRED_FINAL_PANEL_CONTRACT';
+  const comparison = buildImageQualityComparisonPrompt({finalPrompt: `${'x'.repeat(24001)}${marker}`});
+  assert.match(comparison, /REQUIRED_FINAL_PANEL_CONTRACT/);
+});
+
+test('camera QA requests every dimension required by its parser', () => {
+  const prompt = buildImageQualityQaPrompt({finalPrompt:'## Panel 1\nCamera: low angle'});
+  assert.match(prompt, /exactly elevation, azimuth, framing, lens, boundary/i);
+});
+
 const EXPLICIT_REAR_PROMPT = `## Panel 2
 Camera: Over The Shoulder
 EXPLICIT REAR CAMERA: VISIBLE REAR DEPTH CHECK: camera is physically behind [ヒカリ]'s shoulder; show the back of [ヒカリ]'s head or shoulder foreground. Do NOT show [ヒカリ]'s face front-on.

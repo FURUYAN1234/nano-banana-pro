@@ -128,20 +128,20 @@ export const get360AnalysisPrompt = () => {
  * @returns {{location: string, lighting: string, spatialType: string, objects: string, mood: string}}
  */
 export const parse360Analysis = (responseText) => {
+  let analysis;
   try {
-    const jsonStr = responseText.match(/\{[\s\S]*\}/)?.[0];
-    if (jsonStr) {
-      return JSON.parse(jsonStr);
-    }
-  } catch (parseErr) {
-    console.warn('[360° BG] Analysis JSON parse failed:', parseErr);
+    const jsonStr = String(responseText || '').match(/\{[\s\S]*\}/)?.[0];
+    analysis = JSON.parse(jsonStr || '');
+  } catch {
+    throw new Error('360°空間解析のJSONを読み取れませんでした。');
   }
-  // フォールバック: パース失敗時のデフォルト値
-  return {
-    location: '360°パノラマ画像',
-    lighting: '自動解析',
-    spatialType: 'unknown',
-    objects: '',
-    mood: ''
-  };
+  if (!analysis || Array.isArray(analysis)
+    || typeof analysis.location !== 'string' || !analysis.location.trim()
+    || typeof analysis.lighting !== 'string' || !analysis.lighting.trim()
+    || !['indoor', 'outdoor', 'mixed'].includes(analysis.spatialType)
+    || !(typeof analysis.objects === 'string' || Array.isArray(analysis.objects))
+    || typeof analysis.mood !== 'string') {
+    throw new Error('360°空間解析の必須項目が不足または不正です。');
+  }
+  return {...analysis, objects: Array.isArray(analysis.objects) ? analysis.objects.join('、') : analysis.objects};
 };

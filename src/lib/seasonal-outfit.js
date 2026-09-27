@@ -24,7 +24,7 @@ const SEASONS = Object.freeze({
 const AMBIGUOUS_OUTFIT_RE = /^(?:なし|未指定|デフォルト|キャラシート準拠|おまかせ|none|default)$/i;
 const WARDROBE_LABEL_RE = /^(?:服装|衣装|衣服|outfit|clothing|clothes|wardrobe|costume|attire)(?:\s*[（(][^）)]*[）)])?(?:\s*[:：]|\s*$)/i;
 const SCHOOL_OUTFIT_RE = /学校制服|学生服|学ラン|セーラー服|ブレザー制服|学生ボランティア|通学用|school\s+uniform|sailor\s+uniform/i;
-const SCHOOL_SOURCE_RE = /学校|学園|高校|中学|小学校|通学|登校|下校|文化祭|学園祭|卒業式|入学式|学生服|学校制服|セーラー服|school|campus/i;
+const SCHOOL_SOURCE_RE = /学校|学園|高校|中学|小学校|放課後|通学|登校|下校|文化祭|学園祭|卒業式|入学式|学生服|学校制服|セーラー服|school|campus/i;
 
 // Project the structured analysis; never mutate the saved character sheet or
 // discard personality/relationships by reducing the scenario cast to image tags.

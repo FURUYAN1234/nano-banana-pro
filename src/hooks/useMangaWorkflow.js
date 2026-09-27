@@ -17,6 +17,7 @@ import { splitWebPromptForPaste } from '../lib/web-prompt-chunks.js';
 import { SYSTEM_VERSION, DEFAULT_CATEGORIES, EMOTION_STYLES, DYNAMIC_CAMERA_PROTOCOL, ANTI_CHARSHEET_PREFIX } from '../lib/constants';
 import { translateApiError } from '../lib/safety-filters';
 import { get360AnalysisPrompt, parse360Analysis } from '../lib/panorama360';
+import { isEquirectangularFile, readFileAsDataURL } from '../lib/input-files.js';
 import { getCharacterAnalysisPrompt } from '../lib/prompts';
 import {
   buildMangaPrompt,
@@ -112,7 +113,12 @@ export default function useMangaWorkflow() {
     return d.toISOString().split('T')[0];
   };
   const [targetDate, setTargetDate] = useState(getJSTDate());
-  const [castList, setCastList] = useState("");
+  const [castList, setCastListState] = useState("");
+  const castRevisionRef = useRef(0);
+  const setCastList = (value) => {
+    castRevisionRef.current += 1;
+    setCastListState(value);
+  };
   const [scenario, setScenario] = useState("");
   const [explanation, setExplanation] = useState("");
   const [explanationNotice, setExplanationNotice] = useState("");
@@ -154,6 +160,7 @@ export default function useMangaWorkflow() {
 
   // States for Steps
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const isAnalyzingRef = useRef(false);
   const [isSearching, setIsSearching] = useState(false);
   const [isAssembling, setIsAssembling] = useState(false);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false); // [v2.44] STEP4専用state（isAssemblingとの混同を防止）
@@ -266,8 +273,20 @@ export default function useMangaWorkflow() {
   const [generatedImage, setGeneratedImage] = useState("");
   const [generationHistory, setGenerationHistory] = useState([]); // [v2.86] Generated Image History
 
+  const invalidateScenarioOutput = () => {
+    scenarioRunEpochRef.current += 1;
+    promptAssemblyRunRef.current += 1;
+    qualityRetryAbortRef.current = true;
+    setFinalPrompt("");
+    setGeneratedImage(null);
+    setIsGeneratingImage(false);
+    setIsFixingPolicy(false);
+    setPolicyAutoRetrying(false);
+  };
+
   const setScenarioFromUser = (nextScenario) => {
     scenarioRunEpochRef.current += 1;
+    qualityRetryAbortRef.current = true;
     fullAutoAbortRef.current = true;
     isFullAutoModeRef.current = false;
     setIsFullAutoMode(false);
@@ -275,6 +294,9 @@ export default function useMangaWorkflow() {
     setIsAborting(false);
     setIsSearching(false);
     setIsAssembling(false);
+    setIsGeneratingImage(false);
+    setIsFixingPolicy(false);
+    setPolicyAutoRetrying(false);
     updateResolvedPunchlineType('');
     setScenario(nextScenario);
     setFinalPrompt("");
@@ -285,6 +307,7 @@ export default function useMangaWorkflow() {
     const nextPunchlineType = String(value || 'Auto');
     if (nextPunchlineType === punchlineType && !resolvedPunchlineTypeRef.current) return;
     scenarioRunEpochRef.current += 1;
+    qualityRetryAbortRef.current = true;
     promptAssemblyRunRef.current += 1;
     fullAutoAbortRef.current = true;
     isFullAutoModeRef.current = false;
@@ -295,6 +318,9 @@ export default function useMangaWorkflow() {
     setIsAborting(false);
     setIsSearching(false);
     setIsAssembling(false);
+    setIsGeneratingImage(false);
+    setIsFixingPolicy(false);
+    setPolicyAutoRetrying(false);
     setScenario("");
     setExplanation("");
     setExplanationNotice("");
@@ -389,6 +415,13 @@ export default function useMangaWorkflow() {
       return;
     }
     if (files.length === 0) return;
+    if (isAnalyzingRef.current) {
+      showStatus('キャラクター解析が終わってから追加してください。');
+      return;
+    }
+    isAnalyzingRef.current = true;
+    const inputEpoch = scenarioRunEpochRef.current;
+    const castRevisionAtStart = castRevisionRef.current;
 
     // 非同期処理に入る前に、現在のキャストリストの値を保持しておく（累積・マージ用）
     const currentCastList = castList;
@@ -431,6 +464,7 @@ export default function useMangaWorkflow() {
     let detected360File = null; // [v3.48] 360度画像自動検出用
     let detectedStyleJson = null; // [v3.90] 作風JSON
 
+    try {
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
 
@@ -438,6 +472,7 @@ export default function useMangaWorkflow() {
       if (file.name.endsWith('.json') || file.type === 'application/json') {
         try {
           const text = await file.text();
+          if (inputEpoch !== scenarioRunEpochRef.current) return;
           const json = JSON.parse(text);
           if (json.style_name && json.reproduction_prompt) {
             detectedStyleJson = json;
@@ -455,58 +490,16 @@ export default function useMangaWorkflow() {
       }
 
       // [v3.48] アスペクト比2:1チェック ＆ XMPメタデータ判定（360度 equirectangular判定）
-      const is360 = await new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          const buffer = e.target.result;
-          const view = new Uint8Array(buffer);
-          let metadataFound = false;
-          // XMP等に含まれる文字列 "equirectangular" を探す (ASCII判定)
-          const searchString = "equirectangular";
-          let matchIndex = 0;
-          for (let j = 0; j < Math.min(view.length, 65536); j++) {
-            if (view[j] === searchString.charCodeAt(matchIndex)) {
-              matchIndex++;
-              if (matchIndex === searchString.length) {
-                metadataFound = true;
-                break;
-              }
-            } else {
-              matchIndex = 0;
-            }
-          }
-
-          const img = new Image();
-          img.onload = () => {
-            const ratio = img.naturalWidth / img.naturalHeight;
-            const isRatioValid = Math.abs(ratio - 2.0) < 0.15; // 誤差15%許容
-            // 比率2:1かつメタデータが存在する場合のみ360度画像として扱う
-            resolve(isRatioValid && metadataFound); 
-          };
-          img.onerror = () => resolve(false);
-          img.src = URL.createObjectURL(file);
-        };
-        // 最初の64KBだけ読み込んでメタデータ判定
-        const slice = file.slice(0, 65536);
-        reader.readAsArrayBuffer(slice);
-      });
-
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      await new Promise(resolve => {
-        reader.onload = () => {
-          if (is360 && !detected360File) {
-            // 360度画像として分離（キャラシート配列には入れない）
-            detected360File = { base64: reader.result, mimeType: file.type };
-            setAnalyzeThought(prev => prev + `\n> 🌐 360°背景画像を検出 (アスペクト比 2:1)。キャラシートとは分離して処理します...`);
-          } else {
-            // 通常のキャラクターシートとして処理
-            imageArray.push(reader.result);
-            setImages(prev => [...prev, reader.result]);
-          }
-          resolve();
-        };
-      });
+      const is360 = await isEquirectangularFile(file);
+      const dataUrl = await readFileAsDataURL(file);
+      if (inputEpoch !== scenarioRunEpochRef.current) return;
+      if (is360 && !detected360File) {
+        detected360File = { base64: dataUrl, mimeType: file.type };
+        setAnalyzeThought(prev => prev + `\n> 🌐 360°背景画像を検出 (アスペクト比 2:1)。キャラシートとは分離して処理します...`);
+      } else {
+        imageArray.push(dataUrl);
+        setImages(prev => [...prev, dataUrl]);
+      }
     }
 
     // [v3.50] 360度画像が検出された場合、バックグラウンドで空間解析を実行
@@ -525,17 +518,21 @@ export default function useMangaWorkflow() {
         setIs360Analyzing(true);
         setAnalyzeThought(prev => prev + `\n> 🌐 360°空間解析を実行中... (API通信保護のため順次処理)`);
         const analysisResult = await callAI(get360AnalysisPrompt(), [imagePart], null, () => {});
+        if (inputEpoch !== scenarioRunEpochRef.current) return;
         const analysis = parse360Analysis(analysisResult.text);
         setBg360Analysis(analysis);
         setCustomLocation(analysis.location);
         showStatus(`🌐 360°背景を検出: ${analysis.location}`);
         setAnalyzeThought(prev => prev + `\n> 🌐 空間解析完了: ${analysis.location}`);
       } catch (err) {
+        if (inputEpoch !== scenarioRunEpochRef.current) return;
         console.warn('[360° BG] Analysis failed:', err);
-        setBg360Analysis({ location: '360°パノラマ画像', lighting: '不明', spatialType: 'unknown', objects: '', mood: '' });
-        setCustomLocation('360°パノラマ画像（解析失敗）');
+        setBg360Analysis(null);
+        setBg360Enabled(false);
+        setCustomLocation('');
+        showStatus('360°背景の空間解析に失敗しました。画像を確認して再試行してください。');
       } finally {
-        setIs360Analyzing(false);
+        if (inputEpoch === scenarioRunEpochRef.current) setIs360Analyzing(false);
       }
     }
 
@@ -558,7 +555,6 @@ export default function useMangaWorkflow() {
 
     showStatus(`思考モード: ${imageArray.length}枚のキャラクター設定画を同時解析中...${detected360File ? '（+ 360°背景1枚検出済み）' : ''}`);
 
-    try {
       // Map all images to Gemini API parts
       const imageParts = imageArray.map(img => {
         const base64Data = img.split(',')[1];
@@ -575,8 +571,13 @@ export default function useMangaWorkflow() {
       }
 
       const result = await callAI(prompt, imageParts, null, (msg) => {
-        setAnalyzeThought(prev => prev + `\n> ${msg}`);
+        if (inputEpoch === scenarioRunEpochRef.current) setAnalyzeThought(prev => prev + `\n> ${msg}`);
       });
+      if (inputEpoch !== scenarioRunEpochRef.current) return;
+      if (castRevisionAtStart !== castRevisionRef.current) {
+        showStatus('解析中にキャストが編集されたため、解析結果の上書きを中止しました。必要なら画像を再解析してください。');
+        return;
+      }
       setCastList(result.text);
       setUsedModel(result.model); // [v1.7.0] Track Model
       // [v2.42] 蓄積ログを保持し、完了メッセージとThinking Traceを追記（上書きしない）
@@ -601,6 +602,7 @@ export default function useMangaWorkflow() {
         }
       }
     } catch (error) {
+      if (inputEpoch !== scenarioRunEpochRef.current) return;
       console.error(error);
       if (/API Key is not set|OpenAI APIキーが設定されていません/.test(String(error.message || ''))) {
         setShowOpenAIKeyModal(true);
@@ -616,6 +618,7 @@ export default function useMangaWorkflow() {
     } finally {
       clearInterval(thinkTimer);
       setIsAnalyzing(false);
+      isAnalyzingRef.current = false;
     }
   };
 
@@ -626,6 +629,8 @@ export default function useMangaWorkflow() {
     const anySelected = enhanceExpressions || enhanceBodyLang || enhanceEffects || enhanceBackgrounds || enhanceCameraWork || enhanceDialogue || enhanceGag;
     if (!anySelected) return showStatus("少なくとも1つの強化カテゴリをONにしてください。");
     if (isEnhancing) return;
+    const enhanceEpoch = scenarioRunEpochRef.current;
+    let applied = false;
 
     setIsEnhancing(true);
     setEnhanceLog("> [START] シナリオ強化を開始します...");
@@ -671,10 +676,15 @@ export default function useMangaWorkflow() {
         castList,
         styleJson,
         scenarioModelId,
-        onProgress: (msg) => setEnhanceLog(prev => prev + `\n> [API] ${msg}`)
+        onProgress: (msg) => {
+          if (enhanceEpoch === scenarioRunEpochRef.current) setEnhanceLog(prev => prev + `\n> [API] ${msg}`);
+        }
       });
+      if (enhanceEpoch !== scenarioRunEpochRef.current) return;
 
       if (result && result.text && (result.validation?.ok || result.validationWarning)) {
+        invalidateScenarioOutput();
+        applied = true;
         setScenario(result.text);
         setEnhanceLog(prev => {
           const retryInfo = result.attempts > 1 ? ` / 自動修正 ${result.attempts - 1}回` : '';
@@ -702,17 +712,19 @@ export default function useMangaWorkflow() {
         showStatus("強化失敗: AIの応答が不十分です");
       }
     } catch (error) {
+      if (enhanceEpoch !== scenarioRunEpochRef.current) return;
       setEnhanceLog(prev => prev + `\n> [ERROR] ${error.message}`);
       showStatus("強化エラー: " + error.message);
     } finally {
       clearInterval(enhanceTimer);
-      setIsEnhancing(false);
+      if (applied || enhanceEpoch === scenarioRunEpochRef.current) setIsEnhancing(false);
     }
   };
 
   // シナリオを強化前の原文に復元する
   const revertScenario = () => {
     if (originalScenario) {
+      invalidateScenarioOutput();
       setScenario(originalScenario);
       setOriginalScenario("");
       setEnhanceLog(prev => prev + "\n> [REVERT] 元のシナリオに復元しました。");
@@ -1080,9 +1092,15 @@ export default function useMangaWorkflow() {
 
   // [v3.59] ソフトリセット: キャラクター解析(STEP1)を保持し、STEP2以降をリセット
   const partialReset = () => {
+    scenarioRunEpochRef.current += 1;
+    qualityRetryAbortRef.current = true;
+    fullAutoAbortRef.current = true;
     promptAssemblyRunRef.current += 1;
     scenarioUsedModelRef.current = null;
     setIsAssembling(false);
+    setIsSearching(false);
+    setIsGeneratingImage(false);
+    setPolicyAutoRetrying(false);
     // castList は保持する（キャラクター解析結果）
     // images は保持する（ドロップしたキャラクターシート画像）
     // analyzeThought は保持する（STEP1のログ）
@@ -1158,9 +1176,15 @@ export default function useMangaWorkflow() {
 
   // [v3.59] ハードリセット: 全データ消去 + APIキー再入力モーダルを表示
   const hardReset = () => {
+    scenarioRunEpochRef.current += 1;
+    qualityRetryAbortRef.current = true;
+    fullAutoAbortRef.current = true;
     promptAssemblyRunRef.current += 1;
     scenarioUsedModelRef.current = null;
     setIsAssembling(false);
+    setIsSearching(false);
+    setIsGeneratingImage(false);
+    setPolicyAutoRetrying(false);
     setColorModeState("color");
     resetScenarioModelId();
     setCastList("");
@@ -1346,6 +1370,8 @@ export default function useMangaWorkflow() {
       modelId: previous?.modelId,
       mimeType: candidate.mimeType,
       generatedAt: previous?.generatedAt,
+      metadataContext: previous?.metadataContext,
+      fallbackOccurred: previous?.fallbackOccurred,
       qualityPass: false, selected: true,
     }));
     showStatus('ページ比率を揃えました。元画像も保持しています。追加API課金なし／配置後の画像QAは未実行です。');
@@ -1357,6 +1383,22 @@ export default function useMangaWorkflow() {
     setImageQualityNeedsRepair(false);
     const currentPrompt = overridePrompt || finalPrompt;
     const qualityMode = inferImageQualityMode(currentPrompt);
+    const metadataSettings = {
+      punchline_type: punchlineType,
+      color_mode: colorMode,
+      expression_enhancement: Boolean(enhanceExpressions),
+      body_language_enhancement: Boolean(enhanceBodyLang),
+      effects_enhancement: Boolean(enhanceEffects),
+      background_enhancement: Boolean(enhanceBackgrounds),
+      camera_enhancement: Boolean(enhanceCameraWork),
+      dialogue_rewrite: Boolean(enhanceDialogue),
+      ending_direction_enhancement: Boolean(enhanceGag),
+      enhancement_label: getEndingModePolicy(punchlineType).endingTone === 'serious' ? 'シリアス演出強化' : 'ギャグ演出強化',
+      ending_tone: getEndingModePolicy(punchlineType).endingTone === 'serious' ? 'serious' : 'gag',
+      character_analysis_used: Boolean(castList),
+      background_analysis_used: Boolean(bg360Enabled && bg360Analysis),
+      background_reference_used: Boolean(bg360Enabled && bg360Image),
+    };
     if (isGeneratingImage || (!skipGuard && !currentPrompt)) return false;
     try {
       assertPromptEndingModeConsistency({ prompt: currentPrompt, punchlineType: resolvedPunchlineTypeRef.current || punchlineType });
@@ -1407,11 +1449,13 @@ export default function useMangaWorkflow() {
     await new Promise(r => setTimeout(r, 800));
 
     try {
+      if (qualityRunEpoch !== scenarioRunEpochRef.current) return false;
       setOpenAIImageVerificationWarning('');
       showStatus(isOpenAIEngine ? `${resolveOpenAIImageOption(openAIImageQuality).label} に送信中...` : "Google AI (Gemini/Imagen) に送信中...");
       setGenLog(prev => [...prev, "[3/5] クラウドAPIへ接続中...", "[3/5] プロンプトデータをアップロード中..."]);
 
       await new Promise(r => setTimeout(r, 1000)); // More visibility
+      if (qualityRunEpoch !== scenarioRunEpochRef.current) return false;
 
       const statCallback = (msg) => {
         setGenLog(prev => [...prev, msg]);
@@ -1426,6 +1470,8 @@ export default function useMangaWorkflow() {
 
       const generateImageCandidate = async (prompt, {repair = false, repairSource = null} = {}) => {
         let response;
+        let metadataPrompt;
+        let metadataInputImages;
         if (isOpenAIEngine) {
           const referencePlan = buildOpenAIReferencePlan({
             characterImages: images,
@@ -1434,6 +1480,15 @@ export default function useMangaWorkflow() {
             originalCandidate: repairSource,
           });
           const apiPrompt = appendOpenAIReferencePrompt(prompt, referencePlan);
+          metadataPrompt = apiPrompt;
+          const roles = [
+            ...Array(referencePlan.counts.original).fill('repair_source'),
+            ...Array(referencePlan.counts.character).fill('character_reference'),
+            ...Array(referencePlan.counts.background).fill('background_reference'),
+          ];
+          metadataInputImages = referencePlan.imageInputs.map((item, index) => ({
+            role: roles[index] || 'reference', dataUrl: item.image_url,
+          }));
           const {character, background, original} = referencePlan.counts;
           statCallback(`[REF] OpenAI入力: キャラ${character}枚、背景${background}枚、修復元${original}枚`);
           statCallback(repair
@@ -1451,12 +1506,24 @@ export default function useMangaWorkflow() {
             backgroundReferences: !Array.isArray(generationOptions.referenceImages),
           });
           const apiPrompt = buildGeminiImageApiPrompt(prompt, referencePlan);
+          metadataPrompt = apiPrompt;
+          metadataInputImages = referencePlan.referenceImages.map((dataUrl, index) => ({
+            role: index < images.length ? 'character_reference'
+              : Array.isArray(generationOptions.referenceImages) ? 'additional_reference' : 'background_reference',
+            dataUrl,
+          }));
           statCallback(`[REF] Gemini入力: キャラ${referencePlan.counts.character}枚、背景・追加参照${referencePlan.counts.other}枚`);
           response = await generateImageWithImagen(apiPrompt, statCallback, referencePlan.referenceImages, geminiImageOptions);
         }
         const normalizedImage = String(response.base64Img || '').replace(/\s+/g, '');
         if (!normalizedImage) throw new Error('Image response did not include usable image data.');
-        const candidate = {base64Img: normalizedImage, mimeType: response.mimeType || 'image/png', modelId: response.usedModel};
+        const candidate = {
+          base64Img: normalizedImage, mimeType: response.mimeType || 'image/png', modelId: response.usedModel,
+          metadataContext: {
+            provider: isOpenAIEngine ? 'openai' : 'gemini', scenario,
+            finalPrompt: metadataPrompt, inputImages: metadataInputImages, settings: metadataSettings,
+          },
+        };
         if (qualityMode !== 'four-panel') return candidate;
         const normalized = await normalizePageCandidate(candidate);
         if (normalized.pageLayout.applied) {
@@ -1555,8 +1622,10 @@ export default function useMangaWorkflow() {
           mimeType: retainedImage[1], base64Img: retainedImage[2], modelId: retainedHistory?.modelId || null,
           originalImage: retainedHistory?.originalImage,
           pageLayout: retainedHistory?.pageLayout,
+          metadataContext: retainedHistory?.metadataContext,
         }
         : await generateImageCandidate(currentPrompt);
+      if (qualityRunEpoch !== scenarioRunEpochRef.current) return false;
       if (retainedImage) statCallback('[QUALITY QA] 表示中の画像を再検査します。初回の画像生成は行いません。');
       let generatedModelId = originalCandidate.modelId;
       let generatedMimeType = originalCandidate.mimeType;
@@ -1572,6 +1641,7 @@ export default function useMangaWorkflow() {
           id: Date.now(), img: finalImageStr,
           originalImage: originalCandidate.originalImage,
           pageLayout: originalCandidate.pageLayout,
+          metadataContext: originalCandidate.metadataContext,
           qualityPass: false, selected: true,
         }));
       }
@@ -1616,6 +1686,7 @@ export default function useMangaWorkflow() {
         },
         onProgress: (msg) => statCallback(`[QUALITY QA] ${msg}`),
       });
+      if (qualityRunEpoch !== scenarioRunEpochRef.current) return false;
       const qualityResult = qualityOutcome.finalReview;
       const hasDefiniteFinalFailure = qualityResult?.pass !== true
         && Array.isArray(qualityResult?.issues)
@@ -1682,6 +1753,10 @@ export default function useMangaWorkflow() {
           generatedAt: new Date(timestamp).toISOString(),
           originalImage: qualityOutcome.candidate.originalImage,
           pageLayout: qualityOutcome.candidate.pageLayout,
+          metadataContext: qualityOutcome.candidate.metadataContext,
+          fallbackOccurred: Boolean(qualityOutcome.candidate.modelId
+            && !qualityOutcome.candidate.modelId.startsWith('gemini-3')
+            && !qualityOutcome.candidate.modelId.startsWith('gpt-')),
           qualityPass: qualityResult?.pass === true,
           selected: true,
         }, { removeImages: candidateImages });
@@ -1730,6 +1805,7 @@ export default function useMangaWorkflow() {
       showStatus(qualityOutcome.validationWarning ? "最良候補を採用しました（品質警告あり）" : "画像生成完了！");
       return true; // [v2.78] フルオート連鎖用: 成功
     } catch (error) {
+      if (qualityRunEpoch !== scenarioRunEpochRef.current) return false;
       console.error(error);
       setIsGenerationError(true);
 
@@ -1796,12 +1872,13 @@ export default function useMangaWorkflow() {
       // alert(`画像生成に失敗しました。\nエラー: ${ error.message } `); // Disable alert to show UI guide instead
     } finally {
       clearInterval(genTimer);
-      setIsGeneratingImage(false);
+      if (qualityRunEpoch === scenarioRunEpochRef.current) setIsGeneratingImage(false);
     }
   };
 
   const runPolicyAutoRetries = async ({ initialPrompt, initialPolicyError, generationOptions = {} }) => {
     if (!initialPrompt || !initialPolicyError) return false;
+    const policyEpoch = scenarioRunEpochRef.current;
 
     setShowPolicyChoice(false);
     setPolicyAutoRetrying(true);
@@ -1813,6 +1890,7 @@ export default function useMangaWorkflow() {
       const result = await retryImagePolicyGeneration({
         initialPrompt,
         initialPolicyError,
+        shouldStop: () => policyEpoch !== scenarioRunEpochRef.current || (isFullAutoMode && fullAutoAbortRef.current),
         repairPrompt: async ({ prompt, policyError, attempt, maxRetries }) => {
           setIsFixingPolicy(true);
           setPolicyFixLog(prev => `${prev}\n> [AUTO-FIX ${attempt}/${maxRetries}] 拒否原因を解析し、安全な表現へ修正中...`);
@@ -1848,6 +1926,7 @@ export default function useMangaWorkflow() {
           };
         },
       });
+      if (policyEpoch !== scenarioRunEpochRef.current || result.reason === 'cancelled') return false;
 
       setPolicyPromptHistory(result.promptHistory);
       setFinalPrompt(result.prompt);
@@ -1877,14 +1956,17 @@ export default function useMangaWorkflow() {
       setShowPolicyChoice(!isEndlessModeRef.current && result.reason !== 'generation_failed');
       return false;
     } catch (error) {
+      if (policyEpoch !== scenarioRunEpochRef.current) return false;
       console.error("[POLICY AUTO-FIX] Error:", error);
       setPolicyFixLog(prev => `${prev}\n> [ERROR] ${error.message}`);
       setGenLog(prev => [...prev, `[POLICY AUTO-FIX] ❌ 自動修正に失敗: ${error.message}`]);
       setShowPolicyChoice(!isEndlessModeRef.current);
       return false;
     } finally {
-      setIsFixingPolicy(false);
-      setPolicyAutoRetrying(false);
+      if (policyEpoch === scenarioRunEpochRef.current) {
+        setIsFixingPolicy(false);
+        setPolicyAutoRetrying(false);
+      }
     }
   };
 
@@ -2019,6 +2101,9 @@ export default function useMangaWorkflow() {
     }
 
     // フルオート開始
+    scenarioRunEpochRef.current += 1;
+    qualityRetryAbortRef.current = true;
+    setPolicyAutoRetrying(false);
     fullAutoAbortRef.current = false;
     setIsFullAutoMode(true);
     setEnableChatGPTMode(isOpenAIEngine);

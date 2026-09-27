@@ -9,30 +9,16 @@ export function splitWebPromptForPaste(prompt, maxChars = WEB_PASTE_CHUNK_CHARS)
   if (typeof prompt !== 'string') throw new TypeError('Prompt must be a string.');
   if (!prompt) return [];
 
-  const count = Math.ceil(prompt.length / maxChars);
   const chunks = [];
   let start = 0;
 
-  for (let remaining = count; remaining > 1; remaining--) {
-    const minimum = Math.max(start + 1, prompt.length - (remaining - 1) * maxChars);
-    const maximum = Math.min(start + maxChars, prompt.length - (remaining - 1));
-    const target = Math.max(minimum, Math.min(maximum, start + Math.round((prompt.length - start) / remaining)));
-    let cut = target;
-    let bestScore = Infinity;
-
-    // Prefer a nearby paragraph or line boundary without changing the text.
-    for (let candidate = Math.max(minimum, target - 512); candidate <= Math.min(maximum, target + 512); candidate++) {
-      if (prompt[candidate - 1] !== '\n') continue;
-      const score = Math.abs(candidate - target) - (prompt[candidate - 2] === '\n' ? 100 : 0);
-      if (score < bestScore) {
-        bestScore = score;
-        cut = candidate;
-      }
-    }
-
-    // JavaScript lengths use UTF-16 code units; never break an emoji in half.
-    if (/[\uD800-\uDBFF]/.test(prompt[cut - 1] || '') && /[\uDC00-\uDFFF]/.test(prompt[cut] || '')) {
-      cut = cut < maximum ? cut + 1 : cut - 1;
+  while (prompt.length - start > maxChars) {
+    const end = start + maxChars;
+    const newline = prompt.lastIndexOf('\n', end - 1);
+    let cut = newline >= start ? newline + 1 : end;
+    // A single line over the limit must be split; keep UTF-16 pairs intact.
+    if (cut === end && /[\uD800-\uDBFF]/.test(prompt[cut - 1] || '') && /[\uDC00-\uDFFF]/.test(prompt[cut] || '')) {
+      cut--;
     }
     chunks.push(prompt.slice(start, cut));
     start = cut;

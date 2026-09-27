@@ -9,6 +9,8 @@ import {
 } from './composition-variety.js';
 import { SCENARIO_FACIAL_ACTING_CONTRACT } from './facial-acting.js';
 import { getEndingModePolicy } from './ending-mode-policy.js';
+import { collectDialogueQuotes, getScriptedCamera } from './panel-utils.js';
+import { getScenarioPanelBlocks } from './scenario-validation.js';
 
 const CATEGORY_DEFINITIONS = Object.freeze({
   expressions: {
@@ -107,6 +109,8 @@ const HARD_ENHANCEMENT_ISSUE_CODES = new Set([
   'camera_changed_without_selection',
   'emotion_changed_without_selection',
   'background_changed_without_selection',
+  'situation_changed_without_selection',
+  'effects_changed_without_selection',
   'tone_escalation',
   'anatomy_escalation',
   'serious_style_switch'
@@ -147,20 +151,21 @@ const extractPanelHeaders = (scenario) =>
 const extractTagValues = (scenario, tag) =>
   extractMatches(scenario, new RegExp(`^\\s*\\[${tag}:\\s*[^\\]]*\\]\\s*$`, 'gmi'));
 
-const extractDialogue = (scenario) => {
-  const records = [];
-  const regex = /^\s*([^「」\n]{1,24})「([^」]+)」\s*$/gmu;
-  const text = normalizeText(scenario);
-  let match;
-  while ((match = regex.exec(text)) !== null) {
-    records.push({
-      speaker: match[1].trim(),
-      text: match[2].trim(),
-      full: match[0].trim()
-    });
-  }
-  return records;
-};
+const extractDialogue = (scenario) => getScenarioPanelBlocks(scenario)
+  .filter((panel) => panel.found)
+  .flatMap((panel) => panel.text.split('\n').flatMap((line) => collectDialogueQuotes(line).map((quote) => {
+    const before = line.slice(0, quote.start);
+    const after = line.slice(quote.end);
+    const prefixSpeaker = before.match(/(?:^|[」）),、（(\s])([^\s「」:：、。]{1,24})\s*(?:→)?$/u)?.[1] || '';
+    const suffixSpeaker = after.match(/^\s*[（(]([^）)]+)[）)]/u)?.[1]?.trim() || '';
+    const speaker = prefixSpeaker || suffixSpeaker;
+    return {
+      panel: panel.num,
+      speaker,
+      text: quote.text.trim(),
+      full: `${panel.num}:${speaker}:${quote.text.trim()}`
+    };
+  })));
 
 const extractSituationLines = (scenario) =>
   extractMatches(scenario, /^\s*状況(?:演出)?:\s*.*$/gmu);
@@ -232,7 +237,7 @@ const inspectScenario = (scenario) => ({
   metadata: extractMetadata(scenario),
   panelHeaders: extractPanelHeaders(scenario),
   emotions: extractTagValues(scenario, 'EMOTION'),
-  cameras: extractTagValues(scenario, 'Camera'),
+  cameras: getScenarioPanelBlocks(scenario).map((panel) => panel.found ? getScriptedCamera(panel.text) : ''),
   dialogue: extractDialogue(scenario),
   situations: extractSituationLines(scenario),
   reactions: extractReactionLines(scenario),
@@ -371,8 +376,8 @@ export const validateScenarioEnhancement = ({
     addIssue(issues, issueCodes, 'panel_structure_changed', '4コマの見出し構造が変わっています');
   }
 
-  const originalSpeakers = original.dialogue.map((entry) => entry.speaker);
-  const candidateSpeakers = candidate.dialogue.map((entry) => entry.speaker);
+  const originalSpeakers = original.dialogue.map((entry) => `${entry.panel}:${entry.speaker}`);
+  const candidateSpeakers = candidate.dialogue.map((entry) => `${entry.panel}:${entry.speaker}`);
   if (!arraysEqual(originalSpeakers, candidateSpeakers)) {
     addIssue(issues, issueCodes, 'speaker_sequence_changed', '話者またはセリフ数が変わっています');
   }
@@ -454,6 +459,15 @@ export const validateScenarioEnhancement = ({
       'camera_changed_without_selection',
       'カメラ未選択なのにCameraタグが変更されています'
     );
+  }
+
+  const situationMayChange = ['expressions', 'body', 'effects', 'background', 'gag']
+    .some((category) => selected.includes(category));
+  if (!situationMayChange && !arraysEqual(original.situations, candidate.situations)) {
+    addIssue(issues, issueCodes, 'situation_changed_without_selection', '状況未選択なのに場面の動作や背景が変更されています');
+  }
+  if (!selected.includes('effects') && !selected.includes('gag') && !arraysEqual(original.effects, candidate.effects)) {
+    addIssue(issues, issueCodes, 'effects_changed_without_selection', '演出未選択なのに効果音や音響が変更されています');
   }
 
   const emotionMayChange = selected.includes('expressions') || selected.includes('gag');

@@ -19,9 +19,17 @@ const NO_DIALOGUE_RE = /^\s*(?:[-*]\s*)?(?:無言|(?:台詞|セリフ|せりふ)
 
 const stripThoughtBlocks = (text) => String(text || '').replace(/<thought>[\s\S]*?<\/thought>/gi, '');
 
-const createPanelHeaderRegex = () => /\[\s*([1-4\uFF11-\uFF14\u4E00\u4E8C\u4E09\u56DB])\s*(?:\u30B3\u30DE\u76EE|\u3053\u307E\u76EE)[^\]]*\]/gu;
+const createPanelHeaderRegex = () => /\[\s*([0-9\uFF10-\uFF19\u4E00\u4E8C\u4E09\u56DB\u4E94\u516D\u4E03\u516B\u4E5D\u5341]+)\s*(?:\u30B3\u30DE\u76EE|\u3053\u307E\u76EE)[^\]]*\]/gu;
 
 const normalizePanelNumber = (value) => PANEL_NUMBER_MAP.get(value) || null;
+
+const findPanelHeaders = (text) => [...text.matchAll(createPanelHeaderRegex())]
+  .map((match) => ({
+    num: normalizePanelNumber(match[1]),
+    numberText: match[1],
+    index: match.index,
+    header: match[0]
+  }));
 
 const NO_DIALOGUE_PLACEHOLDER = '(Characters interact without dialogue in this panel)';
 
@@ -30,14 +38,7 @@ const hasSpeechBubbleDialogue = (panelText, castList) =>
 
 export const getScenarioPanelBlocks = (scenarioText) => {
   const text = stripThoughtBlocks(scenarioText);
-  const matches = [...text.matchAll(createPanelHeaderRegex())]
-    .map((match) => ({
-      num: normalizePanelNumber(match[1]),
-      index: match.index,
-      header: match[0]
-    }))
-    .filter((match) => match.num >= 1 && match.num <= 4)
-    .sort((a, b) => a.index - b.index);
+  const matches = findPanelHeaders(text);
 
   return [1, 2, 3, 4].map((num) => {
     const matchIndex = matches.findIndex((match) => match.num === num);
@@ -45,7 +46,7 @@ export const getScenarioPanelBlocks = (scenarioText) => {
       return { num, found: false, header: '', text: '' };
     }
     const match = matches[matchIndex];
-    const next = matches.find((candidate) => candidate.index > match.index && candidate.num !== num);
+    const next = matches.find((candidate) => candidate.index > match.index);
     const end = next ? next.index : text.length;
     return {
       num,
@@ -57,6 +58,10 @@ export const getScenarioPanelBlocks = (scenarioText) => {
 };
 
 export const validateMangaScenario = (scenarioText, castList = '') => {
+  const headers = findPanelHeaders(stripThoughtBlocks(scenarioText));
+  const invalidPanelSequence = headers.map((header) => header.num).join(',') === '1,2,3,4'
+    ? []
+    : headers.map((header) => header.numberText);
   const panels = getScenarioPanelBlocks(scenarioText);
   const invalidDialogue = [];
   const hasDialogue = new Map(panels.filter(panel => panel.found).map(panel => {
@@ -77,7 +82,8 @@ export const validateMangaScenario = (scenarioText, castList = '') => {
     .map((panel) => panel.num);
 
   return {
-    ok: missingPanels.length === 0 && panelsMissingDialogue.length === 0 && invalidDialogue.length === 0,
+    ok: invalidPanelSequence.length === 0 && missingPanels.length === 0 && panelsMissingDialogue.length === 0 && invalidDialogue.length === 0,
+    invalidPanelSequence,
     invalidDialogue,
     missingPanels,
     panelsMissingDialogue,
@@ -88,6 +94,9 @@ export const validateMangaScenario = (scenarioText, castList = '') => {
 
 export const formatMangaScenarioValidationIssue = (validation) => {
   const issues = [];
+  if (validation.invalidPanelSequence?.length) {
+    issues.push(`panel headers must appear exactly once in order 1, 2, 3, 4; found: ${validation.invalidPanelSequence.join(', ')}`);
+  }
   for (const issue of validation.invalidDialogue || []) {
     issues.push(`${issue.panel}コマ目: ${issue.message}`);
   }

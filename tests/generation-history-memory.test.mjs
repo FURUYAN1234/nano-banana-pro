@@ -3,6 +3,7 @@ import test from 'node:test';
 
 import {
   addGenerationHistoryItem,
+  selectGenerationMetadataContext,
   buildGeneratedImageFilename,
   downloadImageDataUrl,
   MAX_GENERATION_HISTORY_ITEMS
@@ -39,6 +40,17 @@ test('quality repair history keeps only the final accepted image from the curren
   );
 
   assert.deepEqual(result, [accepted, previousAccepted]);
+});
+
+test('a selected history image uses its generation snapshot, never current controls', () => {
+  const saved = {scenario:'old', finalPrompt:'sent prompt', provider:'openai', inputImages:[{role:'character',dataUrl:'data:image/png;base64,AA=='}], settings:{color_mode:'color'}};
+  const history = {img:'old-image', metadataContext:saved};
+  assert.equal(selectGenerationMetadataContext(history), saved);
+  const legacy = selectGenerationMetadataContext({img:'legacy-image', modelId:'gpt-image-2.5-sunburst'});
+  assert.equal(legacy.provider, 'openai');
+  assert.equal(legacy.finalPrompt, '');
+  assert.equal(legacy.inputImages.length, 0);
+  assert.equal(legacy.settings.generation_context_evidence, 'unavailable');
 });
 
 test('manual save keeps the existing API-title-date-time filename convention', () => {

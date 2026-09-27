@@ -30,6 +30,13 @@ test('chunk boundaries do not split Unicode surrogate pairs', () => {
   assert.ok(chunks.every(chunk => !/[\uD800-\uDBFF]$/.test(chunk) && !/^[\uDC00-\uDFFF]/.test(chunk)));
 });
 
+test('prefer a whole-line boundary even when it is far from the balanced target', () => {
+  const prompt = `${'A'.repeat(6000)}\n${'B'.repeat(6000)}\n${'C'.repeat(6000)}`;
+  const chunks = splitWebPromptForPaste(prompt);
+  assert.deepEqual(chunks, [`${'A'.repeat(6000)}\n`, `${'B'.repeat(6000)}\n`, 'C'.repeat(6000)]);
+  assert.equal(chunks.join(''), prompt);
+});
+
 test('invalid paste size is rejected', () => {
   assert.throws(() => splitWebPromptForPaste('text', 0), /positive integer/i);
 });

@@ -46,6 +46,7 @@ test('school attire needs source context, not a school-role excuse invented in t
     assert.equal(assertSeasonalOutfit({ outfit, wardrobeSourceText: '地域の催し' }), true);
   }
   assert.equal(assertSeasonalOutfit({ outfit: '学校制服', wardrobeSourceText: '高校の卒業式' }), true);
+  assert.equal(assertSeasonalOutfit({ outfit: 'ブレザー制服', wardrobeSourceText: '放課後の教室で募金箱を見つけた' }), true);
   assert.equal(assertSeasonalOutfit({ outfit: '学校制服', customOutfit: '学校制服', wardrobeSourceText: '休日の買い物' }), true);
 });
 

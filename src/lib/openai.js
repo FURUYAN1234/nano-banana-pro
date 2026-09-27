@@ -96,7 +96,7 @@ export const getOpenAIApiKey = () => {
 export const readOpenAIImageStream = async (
   response,
   statCallback = () => {},
-  {eventPrefix = 'image_generation', requireFinal = false} = {},
+  {eventPrefix = 'image_generation'} = {},
 ) => {
   if (!response.body || typeof response.body.getReader !== 'function') {
     throw new Error('OpenAI画像ストリームを読み取れませんでした。');
@@ -105,8 +105,6 @@ export const readOpenAIImageStream = async (
   const decoder = new TextDecoder();
   let buffer = '';
   let finalImage = '';
-  let latestPartialImage = '';
-  let readFailed = false;
 
   const processEvent = rawEvent => {
     const data = rawEvent.split(/\r?\n/)
@@ -121,29 +119,21 @@ export const readOpenAIImageStream = async (
     }
     if (event?.type === 'error' || event?.error) {
       const message = String(event.error?.message || event.message || 'OpenAI画像生成ストリームでエラーが発生しました。');
-      throw new Error(requireFinal ? message.replace(/data:image\/[^\s"']+/g, '[image data omitted]') : message);
+      throw new Error(message.replace(/data:image\/[^\s"']+/g, '[image data omitted]'));
     }
     if (event?.type === `${eventPrefix}.partial_image`) {
-      if (event.b64_json) latestPartialImage = event.b64_json;
       statCallback(`[OpenAI] 途中画像を受信しました (${Number(event.partial_image_index || 0) + 1})。最終画像を待機中...`);
     }
     if (event?.type === `${eventPrefix}.completed` && event.b64_json) {
-      if (requireFinal && (typeof event.b64_json !== 'string' || !event.b64_json.trim())) {
+      if (typeof event.b64_json !== 'string' || !event.b64_json.trim()) {
         throw new Error('OpenAI画像編集の完成画像データが不正です。');
       }
       finalImage = event.b64_json;
     }
   };
 
-  try {
-    while (true) {
-      let chunk;
-      try {
-        chunk = await reader.read();
-      } catch (error) {
-        readFailed = true;
-        throw error;
-      }
+  while (true) {
+      const chunk = await reader.read();
       buffer += decoder.decode(chunk.value || new Uint8Array(), {stream: !chunk.done});
       let boundary = buffer.match(/\r?\n\r?\n/);
       while (boundary) {
@@ -152,17 +142,6 @@ export const readOpenAIImageStream = async (
         boundary = buffer.match(/\r?\n\r?\n/);
       }
       if (chunk.done) break;
-    }
-  } catch (error) {
-    if (requireFinal) {
-      if (readFailed && finalImage) return finalImage;
-      throw error;
-    }
-    if (latestPartialImage) {
-      statCallback('[OpenAI] 最終イベントの受信前に接続が切れたため、受信済みの途中画像を採用します。');
-      return latestPartialImage;
-    }
-    throw error;
   }
   if (buffer.trim()) processEvent(buffer);
   if (!finalImage) throw new Error('OpenAI画像ストリームに最終画像データが含まれていませんでした。');
@@ -197,7 +176,8 @@ export const generateImageWithOpenAI = async (prompt, statCallback, options = {}
   }
 
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), OPENAI_IMAGE_TIMEOUT_MS); // gpt-image-2 high quality can exceed 6 minutes when congested.
+  const timeoutMs = options.timeoutMs ?? OPENAI_IMAGE_TIMEOUT_MS;
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs); // Covers headers and the complete body.
 
   const fetchImage = (stream) => fetch("https://api.openai.com/v1/images/generations", {
     method: "POST",
@@ -209,50 +189,45 @@ export const generateImageWithOpenAI = async (prompt, statCallback, options = {}
     signal: controller.signal
   });
 
-  let response;
   try {
+    let response;
     try {
       response = await fetchImage(true);
     } catch (error) {
+      if (controller.signal.aborted) throw error;
       if (!isBrowserStreamFetchFailure(error)) throw error;
       statCallback('[WARN] 画像ストリーム接続に失敗したため、通常応答で1回再試行します...');
       response = await fetchImage(false);
     }
-  } catch (e) {
-    if (e.name === 'AbortError' || e.message.includes('aborted')) {
-      throw new Error(`API Time out (${OPENAI_IMAGE_TIMEOUT_SECONDS}秒経過による強制切断)。サーバーが混雑しているか、応答がありません。`);
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      const message = String(errorData.error?.message || response.statusText)
+        .split(apiKey).join('[credential omitted]')
+        .replace(/data:image\/[^\s"'<>]+/gi, '[image data omitted]');
+      throw new Error(`OpenAI API Error: ${response.status} ${message}`);
     }
-    throw e;
+
+    const contentType = response.headers?.get?.('content-type') || '';
+    if (contentType.includes('text/event-stream')) {
+      const base64Img = await readOpenAIImageStream(response, statCallback);
+      statCallback("[OpenAI] 画像の生成に成功しました。");
+      return {base64Img, mimeType: 'image/png', usedModel: selectedOption.model};
+    }
+
+    const data = await response.json();
+    const base64Img = data.data?.[0]?.b64_json;
+    if (typeof base64Img !== 'string' || !base64Img.trim()) {
+      throw new Error('APIレスポンスに画像データが含まれていませんでした。');
+    }
+    statCallback("[OpenAI] 画像の生成に成功しました。");
+    return {base64Img, mimeType: 'image/png', usedModel: selectedOption.model};
+  } catch (error) {
+    if (controller.signal.aborted || error?.name === 'AbortError') {
+      throw new Error(`API Time out (${Math.ceil(timeoutMs / 1000)}秒経過による強制切断)。画像生成の完了を確認できませんでした。`);
+    }
+    throw error;
   } finally {
     clearTimeout(timeoutId);
-  }
-
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(`OpenAI API Error: ${response.status} ${errorData.error?.message || response.statusText}`);
-  }
-
-  const contentType = response.headers?.get?.('content-type') || '';
-  if (contentType.includes('text/event-stream')) {
-    const base64Img = await readOpenAIImageStream(response, statCallback);
-    statCallback("[OpenAI] 画像の生成に成功しました。");
-    return {
-      base64Img,
-      mimeType: "image/png",
-      usedModel: selectedOption.model
-    };
-  }
-
-  const data = await response.json();
-  statCallback("[OpenAI] 画像の生成に成功しました。");
-  
-  if (data.data && data.data.length > 0) {
-    return {
-      base64Img: data.data[0].b64_json,
-      mimeType: "image/png",
-      usedModel: selectedOption.model
-    };
-  } else {
-    throw new Error("APIレスポンスに画像データが含まれていませんでした。");
   }
 };

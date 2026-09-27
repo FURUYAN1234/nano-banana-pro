@@ -59,3 +59,12 @@ test('rejects spoken quotes embedded in visual situation lines because the final
   assert.equal(validation.ok, false);
   assert.deepEqual(validation.panelsMissingDialogue, [1, 2, 3, 4]);
 });
+
+test('rejects duplicate, extra, and out-of-order panel headers instead of silently rearranging or dropping panels', () => {
+  const panel = n => `[${n}コマ目]\nアカリ「了解。」`;
+  for (const numbers of [[1, 3, 2, 4], [1, 2, 3, 4, 1], [1, 2, 3, 4, 5]]) {
+    const result = validateMangaScenario(numbers.map(panel).join('\n'), CAST_LIST);
+    assert.equal(result.ok, false, numbers.join(','));
+    assert.ok(result.invalidPanelSequence?.length, numbers.join(','));
+  }
+});

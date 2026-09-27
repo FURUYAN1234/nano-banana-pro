@@ -74,6 +74,34 @@ const requestOpenAIWebSearch = async ({ modelId, prompt, systemInstruction, time
     }
 };
 
+export const requestOpenAIChatCompletion = async ({modelId, messages, apiKey, timeoutMs}) => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+        const usesModernChatParameters = modelId.startsWith('gpt-6-') || modelId.startsWith('gpt-5.6-');
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}`},
+            body: JSON.stringify({
+                model: modelId,
+                messages,
+                ...(usesModernChatParameters
+                    ? {max_completion_tokens: 8192}
+                    : {temperature: 0.7, max_tokens: 8192}),
+            }),
+            signal: controller.signal,
+        });
+        return {response, data: await response.json()};
+    } catch (error) {
+        if (controller.signal.aborted || error?.name === 'AbortError') {
+            throw new Error(`Timeout awaiting response from ${modelId} (${timeoutMs / 1000}s limit)`);
+        }
+        throw error;
+    } finally {
+        clearTimeout(timeoutId);
+    }
+};
+
 /**
  * OpenAI Chat Completions APIを呼び出す
  * callThinkingGemini と同一のシグネチャ:
@@ -194,38 +222,10 @@ export const callOpenAIText = async (prompt, images = null, systemInstruction = 
                 content: userContent.length === 1 ? prompt : userContent
             });
 
-            // 呼び出し元ごとのテキストAPI待機上限
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-            let response;
-            try {
-                response = await fetch("https://api.openai.com/v1/chat/completions", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": `Bearer ${apiKey}`
-                    },
-                    body: JSON.stringify({
-                        model: modelId,
-                        messages: messages,
-                        ...(usesModernChatParameters
-                            ? { max_completion_tokens: 8192 }
-                            : { temperature: 0.7, max_tokens: 8192 }),
-                    }),
-                    signal: controller.signal
-                });
-            } catch (e) {
-                if (e.name === 'AbortError') {
-                    throw new Error(`Timeout awaiting response from ${modelId} (${timeoutMs / 1000}s limit)`);
-                }
-                throw e;
-            } finally {
-                clearTimeout(timeoutId);
-            }
+            const {response, data} = await requestOpenAIChatCompletion({modelId, messages, apiKey, timeoutMs});
 
             if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                const errorMsg = errorData.error?.message || response.statusText;
+                const errorMsg = data.error?.message || response.statusText;
                 console.warn(`[OpenAI] ${modelId} failed: ${response.status} ${errorMsg}`);
 
                 // レート制限 or モデル未対応の場合は次のモデルへ
@@ -242,7 +242,6 @@ export const callOpenAIText = async (prompt, images = null, systemInstruction = 
                 continue;
             }
 
-            const data = await response.json();
             const choice = data.choices?.[0];
 
             if (!choice || !choice.message?.content) {

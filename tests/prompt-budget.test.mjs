@@ -5,7 +5,7 @@ import { createServer } from 'vite';
 let server;
 let buildMangaPrompt;
 
-// Legacy constrained-caller fixture only; the default shared budget is 32,000.
+// Empirical Web paste target; the API limit remains a separate hard ceiling.
 const EMPIRICAL_CHATGPT_WEB_COPY_SOFT_BUDGET_CHARS = 15000;
 
 before(async () => {
@@ -114,15 +114,17 @@ test('dense four-panel prompts preserve core requirements ahead of optional embe
   }
 });
 
-test('ChatGPT default retains quality instructions beyond the former 15,000-character budget', () => {
+test('ChatGPT default removes repeated instructions without treating the Web paste target as a hard cap', () => {
   const prompt = buildMangaPrompt({
     scenario: LONG_FOUR_KOMA_SCENARIO, castList: FULL_CAST_LIST,
     colorMode: 'color', providerFamily: 'chatgpt', punchlineType: 'Documentary',
     systemVersion: 'test',
   });
-  assert.ok(prompt.length > 15000, `quality instructions should not be compressed to 15,000: ${prompt.length}`);
+  assert.ok(prompt.length < 22000, `unexpected prompt expansion: ${prompt.length}`);
   assert.ok(prompt.length <= 32000);
-  assert.match(prompt, /Action \(visual only\): \(Outfit assignment:/, 'the larger default preserves per-panel wardrobe reminders');
+  assert.match(prompt, /Outfit assignment:|role-specific outfit assignments:/);
+  assert.match(prompt, /HAND \/ PROP KINEMATICS LOCK/);
+  assert.match(prompt, /BUBBLE SLOTS: B1 x=75%; B2 x=50%; B3 x=25%/);
 });
 
 test('irreducible oversized ChatGPT input fails before returning a truncated prompt', () => {

@@ -108,6 +108,10 @@ export const diagnoseConnection = async () => {
 export const callThinkingGemini = async (prompt, images = null, systemInstruction = null, onThinkingUpdate, options = {}) => {
     if (!getApiKey()) throw new Error("API Key is not set.");
     const timeoutMs = options.timeoutMs ?? GEMINI_TEXT_TIMEOUT_MS;
+    const searchRequired = options.useWebSearch === true;
+    if (searchRequired && images?.length) {
+        throw new Error('Web Search が必要な処理では画像入力を同時に送信できません。');
+    }
 
     // 画像の有無に応じてモデルリストを動的に選択
     const MODEL_IDS = (images && images.length > 0) ? GEMINI_VISION_MODEL_IDS : GEMINI_TEXT_MODEL_IDS;
@@ -143,31 +147,11 @@ export const callThinkingGemini = async (prompt, images = null, systemInstructio
 
             finalPromptParts.push({ text: prompt });
 
-            // [Fix] Enforce search tools ONLY if NO images are present. Grounding + Multimodal often throws 400 errors.
-            const finalTools = (images && images.length > 0) ? [] : [{ googleSearch: {} }];
-
-            let result;
-            try {
-                result = await postGeminiGenerateContent(modelId, {
-                    contents: [{ role: "user", parts: finalPromptParts }],
-                    ...(finalTools.length > 0 ? { tools: finalTools } : {}),
-                    generationConfig: { maxOutputTokens: 8192 }
-                }, timeoutMs);
-            } catch (err) {
-                // [v2.20] Failover: If Grounding fails for ANY reason, retry WITHOUT tools
-                // ローカル環境ではCORS/リファラ制限等でgrounding固有のエラーが発生するため、
-                // エラー内容に関わらずツールなしで再試行する
-                if (finalTools.length > 0) {
-                    console.warn(`[API] Grounding failed for ${modelId} (${err.message}), retrying without tools...`);
-                    if (onThinkingUpdate) onThinkingUpdate(`> [API] Grounding失敗。ツールなしで同一モデルを再試行します...`);
-                    result = await postGeminiGenerateContent(modelId, {
-                        contents: [{ role: "user", parts: finalPromptParts }],
-                        generationConfig: { maxOutputTokens: 8192 }
-                    }, timeoutMs);
-                } else {
-                    throw err;
-                }
-            }
+            const result = await postGeminiGenerateContent(modelId, {
+                contents: [{ role: "user", parts: finalPromptParts }],
+                ...(searchRequired ? { tools: [{ googleSearch: {} }] } : {}),
+                generationConfig: { maxOutputTokens: 8192 }
+            }, timeoutMs);
 
             const response = result;
             const candidates = response.candidates || [];
@@ -186,6 +170,10 @@ export const callThinkingGemini = async (prompt, images = null, systemInstructio
             }
 
             const candidate = candidates[0];
+            const sources = geminiSources(candidate);
+            if (searchRequired && sources.length === 0) {
+                throw new Error('Grounding の出典を確認できませんでした。');
+            }
             const responseParts = candidate.content?.parts || [];
             const finalOutput = extractTextParts(responseParts, false);
             const thought = extractTextParts(responseParts, true);
@@ -203,7 +191,7 @@ export const callThinkingGemini = async (prompt, images = null, systemInstructio
 
             return {
                 text: finalOutput,
-                sources: geminiSources(candidate),
+                sources,
                 thought: thought || "通常処理が完了しました。",
                 model: modelId // [v1.7.0] Return the successful model ID for UI display
             };

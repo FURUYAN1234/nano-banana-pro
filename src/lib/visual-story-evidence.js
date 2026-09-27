@@ -5,9 +5,9 @@ const normalizeEvidence = (value) => String(value || '')
   .map((item) => item.trim().replace(/^[-・\d.\s]+/, ''))
   .filter((item) => item.length >= 2);
 
-const extractPanels = (scenario) => (
-  String(scenario || '').match(/\[\d+コマ目[^\]]*\][\s\S]*?(?=\[\d+コマ目[^\]]*\]|$)/g) || []
-);
+const extractPanels = (scenario) => getScenarioPanelBlocks(scenario)
+  .filter((panel) => panel.found)
+  .map((panel) => panel.text);
 
 export const VISUAL_STORY_EVIDENCE_RETRY_INSTRUCTION = `VISUAL STORY EVIDENCE RETRY:
 The previous scenario did not visually prove its central event.
@@ -42,3 +42,4 @@ export const assertVisualStoryEvidence = (parsedScenario) => {
   }
   return true;
 };
+import { getScenarioPanelBlocks } from './scenario-validation.js';

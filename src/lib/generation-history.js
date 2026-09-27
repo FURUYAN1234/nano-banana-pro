@@ -7,6 +7,16 @@ export const addGenerationHistoryItem = (history, item, { removeImages = new Set
     .slice(0, MAX_GENERATION_HISTORY_ITEMS);
 };
 
+export const selectGenerationMetadataContext = (historyItem) => {
+  if (historyItem?.metadataContext) return historyItem.metadataContext;
+  const model = String(historyItem?.modelId || '');
+  return {
+    provider: model.startsWith('gpt-') ? 'openai' : model.startsWith('gemini-') ? 'gemini' : 'unknown',
+    scenario: '', finalPrompt: '', inputImages: [],
+    settings: { generation_context_evidence: 'unavailable' },
+  };
+};
+
 export const buildGeneratedImageFilename = ({ apiName, title, extension, now = new Date() }) => {
   const titleSlug = title
     ? String(title).trim().substring(0, 30).replace(/[\\/:*?"<>|\s]/g, '_')

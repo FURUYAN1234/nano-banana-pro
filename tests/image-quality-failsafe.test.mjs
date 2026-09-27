@@ -165,7 +165,7 @@ EXPLICIT REAR CAMERA: camera is physically behind [ヒカリ]'s shoulder; back o
   assert.equal(result.validationWarning, false);
 });
 
-test('failed or unverified critical camera audit preserves the general review', async () => {
+test('failed critical camera audit leaves the image quality unverified', async () => {
   const originalPrompt = `## Panel 2
 EXPLICIT REAR CAMERA: camera is physically behind [ヒカリ]'s shoulder; back of [ヒカリ]'s head or shoulder foreground.`;
   let repairs = 0;
@@ -176,8 +176,9 @@ EXPLICIT REAR CAMERA: camera is physically behind [ヒカリ]'s shoulder; back o
     generateRepairCandidate: async () => { repairs += 1; return candidate('repair'); },
   });
   assert.equal(repairs, 0);
-  assert.equal(result.finalReview.pass, true);
-  assert.deepEqual(result.finalReview.issues, []);
+  assert.equal(result.finalReview.pass, false);
+  assert.equal(result.validationWarning, true);
+  assert.ok(result.finalReview.issues.some(issue => issue.type === 'unverified'));
 });
 
 test('ordinary prompts do not spend a critical camera audit', async () => {

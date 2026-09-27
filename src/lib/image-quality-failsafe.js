@@ -278,7 +278,18 @@ export const runImageQualityFailsafe = async ({
   const mergeCriticalCameraAudit = (result, audit) => {
     const cameraIssues = (Array.isArray(audit?.issues) ? audit.issues : [])
       .filter(issue => issue?.type === 'camera_geometry');
-    if (!cameraIssues.length) return { ...result, criticalCameraAudit: audit };
+    if (!cameraIssues.length) {
+      if (audit?.pass === true) return { ...result, criticalCameraAudit: audit };
+      return {
+        ...result,
+        pass: false,
+        issues: [...(Array.isArray(result?.issues) ? result.issues : []), {
+          type: 'unverified', panel: null, subject: 'critical camera audit',
+          reason: '明示された肩越し構図の独立検査を確認できませんでした。'
+        }],
+        criticalCameraAudit: audit
+      };
+    }
     const issues = [...(Array.isArray(result?.issues) ? result.issues : [])];
     for (const issue of cameraIssues) {
       if (!issues.some(existing => existing?.type === issue.type && existing?.panel === issue.panel)) issues.push(issue);
@@ -287,17 +298,17 @@ export const runImageQualityFailsafe = async ({
   };
   const inspect = async (image, prompt) => {
     let result = await review(image, prompt);
-    if (reviewCriticalCamera && hasCriticalRearCameraContract(prompt) && !result?.requestFailed && !shouldStop()) {
+    if (reviewCriticalCamera && hasCriticalRearCameraContract(prompt) && !result?.requestFailed) {
       onProgress('明示された肩越し構図を、吹き出し判定と独立して再検査します。画像は再生成しません。');
-      try { result = mergeCriticalCameraAudit(result, await reviewCriticalCamera(image, prompt)); }
-      catch { /* A failed narrow audit must not invent a paid repair target. */ }
+      try { result = mergeCriticalCameraAudit(result, shouldStop() ? null : await reviewCriticalCamera(image, prompt)); }
+      catch { result = mergeCriticalCameraAudit(result, null); }
     }
     if (!result?.pass && !hasConcreteIssues(result) && !result?.requestFailed && !shouldStop()) {
       onProgress('品質が未確認のため、同じ画像を1回再検査します。画像は再生成しません。');
       result = await review(image, prompt);
-      if (reviewCriticalCamera && hasCriticalRearCameraContract(prompt) && !result?.requestFailed && !shouldStop()) {
-        try { result = mergeCriticalCameraAudit(result, await reviewCriticalCamera(image, prompt)); }
-        catch { /* Preserve the general review when the narrow audit is unavailable. */ }
+      if (reviewCriticalCamera && hasCriticalRearCameraContract(prompt) && !result?.requestFailed) {
+        try { result = mergeCriticalCameraAudit(result, shouldStop() ? null : await reviewCriticalCamera(image, prompt)); }
+        catch { result = mergeCriticalCameraAudit(result, null); }
       }
     }
     return result || createUnverifiedReview('Empty quality response');

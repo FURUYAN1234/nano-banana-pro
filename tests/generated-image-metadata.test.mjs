@@ -170,3 +170,14 @@ test('STEP4 places concise metadata privacy guidance directly in the API generat
   assert.doesNotMatch(source, /"場所": bg360Analysis/);
   assert.doesNotMatch(source, /type="checkbox"[^>]*(?:metadata|privacy)|(?:metadata|privacy)[^>]*type="checkbox"/i);
 });
+
+test('API image history snapshots the actual request and export reads that snapshot', async () => {
+  const workflow = await readFile(new URL('../src/hooks/useMangaWorkflow.js', import.meta.url), 'utf8');
+  const step4 = await readFile(new URL('../src/components/Step4Panel.jsx', import.meta.url), 'utf8');
+  assert.match(workflow, /metadataPrompt = apiPrompt/);
+  assert.match(workflow, /metadataContext: \{[\s\S]*finalPrompt: metadataPrompt, inputImages: metadataInputImages/);
+  assert.match(workflow, /metadataContext: qualityOutcome\.candidate\.metadataContext/);
+  assert.match(step4, /const generationContext = selectGenerationMetadataContext\(displayedHistory\)/);
+  assert.match(step4, /finalPrompt: generationContext\.finalPrompt/);
+  assert.match(step4, /inputImages: generationContext\.inputImages/);
+});
