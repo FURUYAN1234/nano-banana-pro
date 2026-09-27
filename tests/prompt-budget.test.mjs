@@ -120,7 +120,9 @@ test('ChatGPT default removes repeated instructions without treating the Web pas
     colorMode: 'color', providerFamily: 'chatgpt', punchlineType: 'Documentary',
     systemVersion: 'test',
   });
-  assert.ok(prompt.length < 22000, `unexpected prompt expansion: ${prompt.length}`);
+  // Allow the added focal-ink and panel-boundary contract, not duplicate copies.
+  assert.ok(prompt.length < 22500, `unexpected prompt expansion: ${prompt.length}`);
+  assert.equal((prompt.match(/FOCAL READABILITY:/g) || []).length, 1);
   assert.ok(prompt.length <= 32000);
   assert.match(prompt, /Outfit assignment:|role-specific outfit assignments:/);
   assert.match(prompt, /HAND \/ PROP KINEMATICS LOCK/);

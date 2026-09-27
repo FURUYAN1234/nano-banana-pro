@@ -1,6 +1,6 @@
 # Super FURU AI 4-koma System / Super FURU AI 4コマシステム
 
-> Current source version: **v6.6.4** / 現在のソース版: **v6.6.4**
+> Current source version: **v6.6.5** / 現在のソース版: **v6.6.5**
 
 An experimental web application in which AI handles topic research, story structure, direction, prompt construction, image generation, and quality review for a four-panel manga. / AIが話題調査、構成、演出、プロンプト構築、画像生成、品質確認まで担当する4コマ漫画制作Webアプリです。
 
@@ -131,6 +131,10 @@ STEP2 excludes labelled reference-clothing fields while retaining identity, pers
 ### Four-panel prompt priorities / 4コマプロンプトの優先順位
 
 Four-panel prompts protect cast count, identity markers such as glasses, wardrobe, exact script, selected medium and page layout before optional decoration. When the scene leaves direction open, the app may vary camera angle or staging; it does not impose a numeric quota or override a scripted frontal, quiet or repeated shot. Rebuild STEP3 after changing the scenario so the current prompt reflects this rule. / 4コマの指示では、人数、眼鏡などの識別要素、衣装、台詞を含む台本、選択した媒体、ページ構成を、任意の背景装飾より先に守ります。台本が演出を指定していない部分だけ、カメラ角度や見せ方を変えます。数値ノルマで、正面・静かなコマ・繰り返す構図を上書きしません。台本を変えた後はSTEP3を再構築して、現在の指示文へ反映してください。
+
+### Expressive readability / 漫画としての表現と読みやすさ
+
+人物の焦点には強弱のあるGペン線を使います。外輪郭・髪の束・顎・肩・重なりは太く、目・口・指先は細く鮮明に描き、一律の太線や黒つぶれを避けます。背景や重要度の低い人物・小物は線密度、明暗、色の濃さ、奥行きに応じたぼかしで整理します。話の理解に必要な反応・小道具・文字は鮮明に残します。漫画らしい大きな身体演技とカメラの高低・傾き・遠近で視線を誘導し、動線だけで動きの代用をしません。明示された静止・真顔・沈黙や画風は保持します。画面や紙の表は作中の操作者・読み手へ向け、読者に見せる都合で裏表を反転させません。4コマの両プロバイダ、圧縮後、1枚絵コピーに共通の画質指示を使います。演出の目標は再生成の合否条件ではなく、軽微な差だけでAPI再生成は増やしません。小道具・画面表示・文字は所属コマに収め、明示した演出以外では隣の場面へはみ出させません。変更はSTEP3を再構築して反映し、既存の台本の演出を変える場合はSTEP2または選択式シナリオ強化を使います。実画像への反映には生成ごとの差があり、改善を保証するものではありません。
 
 ### Story endings / ストーリーの結末
 
@@ -317,11 +321,14 @@ The production application is published from the `main` branch through the repos
 
 **Why are there two ComfyUI download buttons? / ComfyUIのダウンロードボタンが2つあるのはなぜですか？**  The JSON defines the workflow, while the ZIP supplies three custom-node folders and documentation; three additional runtime dependencies are installed separately. / JSONはワークフロー定義、ZIPはカスタムノード3フォルダーと導入文書です。さらに実行依存3項目を別途導入します。
 
-**Where are older packages? / 旧版はどこですか？**  Older source tags remain for audit history, but their bundled distributions are withdrawn. New installations must use the current `20260922104144` workflow button and matching v6.6.4 FourPanel Release asset. / 旧タグは監査用履歴として残しますが、旧同梱配布物は取り下げ扱いです。新規導入は現在の`20260922104144`ワークフローボタンとv6.6.4 FourPanel Releaseアセットを使用してください。
+**Where are older packages? / 旧版はどこですか？**  Older source tags remain for audit history, but their bundled distributions are withdrawn. New installations must use the current `20260922104144` workflow button and matching v6.6.5 FourPanel Release asset. / 旧タグは監査用履歴として残しますが、旧同梱配布物は取り下げ扱いです。新規導入は現在の`20260922104144`ワークフローボタンとv6.6.5 FourPanel Releaseアセットを使用してください。
 
 **Is this the T2V/I2V/Ref2V repository? / T2V・I2V・Ref2Vのリポジトリですか？**  No. Those workflows are maintained separately in [comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows). / いいえ。それらは別の[comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows)で管理します。
 
 ## 📋 ChangeLog
+
+### v6.6.5 (2026-09-27)
+- **[Fix & UX]** 人物のGペンの強弱と焦点・背景の濃淡、漫画の身体演技を調整。題材本文の演出指示への誤昇格と、小道具が隣のコマへ漏れる指示不足を修正 / Refined focal G-pen line weight, background separation and expressive acting; fixed topic-to-staging misclassification and panel containment guidance
 
 ### v6.6.4 (2026-09-27)
 - **[Fix & UX]** 分割・全文コピー末尾の改行と、掲示板へ触れる人物の身体位置、俯瞰指定の解釈、画像QAの指示文反復判定を修正 / Fixed trailing newlines for Web copy, actor placement at contacted props, high-position camera cues, and camera QA instruction echoes

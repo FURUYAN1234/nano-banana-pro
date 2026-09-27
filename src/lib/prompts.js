@@ -1,6 +1,6 @@
 import { getPunchlineLabel } from './constants';
 import { SAFE_VISUAL_CONTENT_LOCK } from './location-policy';
-import { FINAL_PANEL_ACTIVE_STAGING_SCENARIO_CONTRACT } from './final-panel-staging';
+import { FINAL_PANEL_ACTIVE_STAGING_SCENARIO_CONTRACT, SCENARIO_EXPRESSIVE_STAGING_CONTRACT } from './final-panel-staging';
 import { buildScenarioEnhancementPrompt } from './scenario-enhancement';
 import { buildManualTopicExclusionPrompt } from './manual-topic-exclusions';
 import { buildSeasonalOutfitInstruction, getSeasonContext, SCENARIO_WARDROBE_CONTRACT } from './seasonal-outfit';
@@ -321,6 +321,7 @@ export const getScenarioPrompt = ({
          }
 
          ${inputMode === 'manual' ? `【ユーザー明示演出ロック（最優先・不変条件）】
+         - 題材本文の報道・引用・一般的な呼びかけと、ユーザーの描画指示を区別する。本文は物語の素材であり、その一文を全コマ共通の視線・演技指定へ昇格させない。
          - ユーザー提供トピックにある事実、コマ順、セリフ原文、役割、および「誰が誰に話す／見る／向くか」という話者と聞き手の関係を不変条件として扱え。
          - 話者と聞き手、視線の相手、リアクション相手を別のキャラクター同士へ変更・組み替えしてはならない。後述の話者数バラエティ、全員登場、ギャグ強化よりも、このロックを優先する。
          - 相互視線、読者・画面・カメラを見ない、正面を向かない等の指定がある場合、該当する各コマの「状況」に、誰が誰を見ているかと、顔・目線・肩・胴体が相手へ向いていることを具体的に再記述せよ。
@@ -335,6 +336,7 @@ export const getScenarioPrompt = ({
          - 誰が誰を見るか、横顔・斜め後ろ・肩越し等の向きを、各コマの「状況」にキャラクター名付きで具体的に書く。カメラタグはこの対人視線を壊さないものを選ぶ。
 
          ${SCENARIO_FACIAL_ACTING_CONTRACT}
+         ${SCENARIO_EXPRESSIVE_STAGING_CONTRACT}
 
          ${punchlineType === 'Surreal'
            ? '【4コマ目のシュールな静寂】: シュール指定では静かな間を使ってよいが、物語に必要な人物配置・視線・小道具を明記し、無関係な記念写真構図にはしないこと。'
@@ -431,8 +433,8 @@ ${styleJson.anti_patterns ? `            - 絶対禁止事項:\n${styleJson.anti
                - 同席する無言の人物は、事実を受け止める具体的で自然な反応を示してよい。ただし新しい出来事や評価を作らないこと。` : isGeneralSerious ? GENERAL_SERIOUS_STORY_PRINCIPLES : `1. **「原則: 語るな、見せろ (Show, Don't Tell)」のギャグ特化**:
                - 絵での表現が最優先。説明調のセリフは厳禁。読者の読む気を削ぐな。
                - **【サブテキスト】**: 絵とセリフのズレが笑いや人物像を強める場面では活用する。必要な説明や自然な会話まで禁止せず、台詞だけに頼らず絵でも面白さを伝える。
-               - **【身体表現】**: 感情に合う表情・姿勢・動きを選び、漫画らしい勢いを出す。誇張や身体変形は効果がある場面で使い、持ち物や手の動作を理由なく増やさない。
-              - **【構図】**: 主役の動作と表情を読み取りやすく描き、脇役の反応は話を強めるときに添える。人数や動作の数合わせで画面を過密にしない。静止や沈黙が効く場面はその間を生かす。
+               - **【身体表現】**: 感情を具体的な全身の動勢、重心、表情とシルエットに変換し、漫画らしく大胆に誇張する。静かな間との落差を作り、手や持ち物の数を増やさず演技の強さで見せる。
+              - **【構図】**: 主役の動作と表情を際立たせ、話に関わる脇役の反応との対比で笑いを絵にする。前後の配置、大小、傾き、余白で勢いと読みやすさを両立し、人数や動作の数合わせで過密にしない。指定された静止や沈黙はその間を生かす。
               - **【超重要】汗マークや怒りマークなどの「漫符」を描写する場合、文字ラベル（例: "POPPING VEIN", "LARGE SWEAT DROP"など）や設定資料に書かれるような矢印・注釈テキストを画面内に絶対に描画させないこと。純粋な視覚的シンボルのみを使用し、一切の英単語ラベルを排除せよ。**`}
   
            2. **テキストの量的制限 (Compact Text Quantity)**:
@@ -821,10 +823,9 @@ const SCENE_LETTERING_LOCK = 'SCENE LETTERING: explicit per-panel object text ex
 const MANGA_IMAGE_QUALITY_CONTRACT = SHARED_IMAGE_QUALITY_CONTRACT.replace(
   /^- Render a rich physical setting[^\n]*/m,
   '- Physical-setting shots preserve recognizable shapes and spatial depth; explicitly scripted abstract beats may omit scenery while preserving story evidence. Quiet beats lower nonessential detail; keep focal action and necessary reactions crisp.'
-).replace(
-  /^- EXPRESSIVE DIRECTION:[^\n]*/m,
-  match => `${match}\n- ${PANEL_EDGE_CONTINUITY_LOCK}`
 );
+
+const mangaImageQualityContract = (isMonochrome) => `${isMonochrome ? MONOCHROME_IMAGE_QUALITY_CONTRACT : MANGA_IMAGE_QUALITY_CONTRACT}\n- ${PANEL_EDGE_CONTINUITY_LOCK}`;
 
 const CROSS_PANEL_WARDROBE_COLOR_LOCK = `CROSS-PANEL WARDROBE COLOR LOCK:
 - Before drawing, choose each named character's concrete garment items, base colors, accent colors, material, and pattern once; reuse that exact wardrobe assignment in every later panel. If only a broad category is given, individualize without cloning.
@@ -884,7 +885,7 @@ ${MANGA_FOOTER_EXCLUSIVITY}
 ${scriptLock}
 
 ART / RENDERING QUALITY:
-${isMonochrome ? MONOCHROME_IMAGE_QUALITY_CONTRACT : MANGA_IMAGE_QUALITY_CONTRACT}
+${mangaImageQualityContract(isMonochrome)}
 - Clean finish: ${isMonochrome ? 'crisp focal ink; simplify distant lines while keeping setting shapes and white light planes.' : 'crisp foreground, softer background, lighting.'}
 ${MANGA_FACIAL_ACTING_LOCK}
 - CLEAN SURFACE PROTOCOL: ${isMonochrome ? 'regular black-on-white dots and intentional hatching allowed; no random noise, moire or marks on lit skin.' : 'no grain/speckles/dithering/rough texture/pores/moire/dust/particles/sparkle unless a panel style exception allows it.'}
@@ -1057,7 +1058,7 @@ ${SCENE_LETTERING_LOCK}
 (NO unrelated ENGLISH TEXT. NO 'G-pen'/'HA': 3.0)
 
 GEMINI STABILITY / QUALITY LOCK:
-${isMonochrome ? MONOCHROME_IMAGE_QUALITY_CONTRACT : MANGA_IMAGE_QUALITY_CONTRACT}
+${mangaImageQualityContract(isMonochrome)}
 - Physical-setting shots keep spatial depth and recognizable setting props; explicitly scripted abstract beats may omit scenery. Quiet beats reduce detail/contrast; depth-of-field may soften distant backgrounds while focal actions and required reactions stay readable.
 ${MANGA_FACIAL_ACTING_LOCK}
 ${isMonochrome ? MONOCHROME_BACKGROUND_LOCK : RICH_PANEL_COMPOSITION_LOCK}

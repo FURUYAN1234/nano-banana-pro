@@ -26,6 +26,65 @@ before(async () => {
 });
 after(async () => { await server?.close(); });
 
+test('focal ink, sharp story cues and actual exaggerated acting survive every output route', () => {
+  const outputs = [singleImagePrompt.buildSingleImageEmotionalPrompt()];
+  for (const providerFamily of ['chatgpt', 'gemini']) {
+    for (const colorMode of ['color', 'monochrome']) {
+      outputs.push(buildMangaPrompt({ providerFamily, colorMode, scenario, castList,
+        analysis: castList + '\n' + 'Consistent identity detail. '.repeat(200),
+        currentTitle: '演出検証', activeLocation: '作業室', activeOutfit: '作業服', punchlineType: 'Auto' }));
+    }
+  }
+  for (const prompt of outputs) {
+    assert.match(prompt, /FOCAL READABILITY:/);
+    assert.match(prompt, /G-pen.*pressure|pressure.*G-pen/i);
+    assert.match(prompt, /thick-to-hairline strokes/);
+    assert.match(prompt, /bold outer silhouette.*overlap accents, fine eyes\/mouth\/fingers/);
+    assert.match(prompt, /Never uniform thick outlines or black-clogged features/);
+    assert.match(prompt, /story-critical reactions.*(?:sharp|crisp)/i);
+    assert.match(prompt, /(?:pale|lighten).*desaturat/i);
+    assert.match(prompt, /speed lines.*(?:substitute|replace)|(?:substitute|replace).*speed lines/i);
+    assert.match(prompt, /actual.*(?:projection|pose)|(?:projection|pose).*actual/i);
+    assert.match(prompt, /explicit quiet/);
+    assert.match(prompt, /reader|reading|flow/i);
+  }
+});
+
+test('scenario direction seeks expressive readable manga without performance quotas', () => {
+  const prompt = getScenarioPrompt({ inputMode: 'manual', manualTopic: '資料を調べる二人', targetDate: '2026-09-27', punchlineType: 'Auto', comedyTone: 'standard', customLocation: '', customOutfit: '', newsContext: '', ragReactions: '' });
+  assert.match(prompt, /【漫画の表現優先】/);
+  assert.match(prompt, /重心.*シルエット/);
+  assert.match(prompt, /視線誘導/);
+  assert.match(prompt, /生成時の演出目標.*再生成/);
+  assert.doesNotMatch(prompt, /最低2つ選択|少なくとも2人が.*物理アクション/);
+});
+
+test('compressed monitor geometry, gaze and reading flow retain the in-scene recipient', () => {
+  for (const provider of ['chatgpt', 'gemini']) {
+    const input = scenario.replace('椅子を引く', 'モニタを操作し、SpeakerBへ顔を向ける');
+    const prompt = build(provider, input, castList + '\n' + 'Consistent appearance. '.repeat(400));
+    assert.match(prompt, /in-scene person, not page reader/);
+    assert.match(prompt, /Monitor rear shows casing\/stand, never screen content through it/);
+    assert.match(prompt, /Explicit Camera fixed/);
+    assert.match(prompt, /Eye-line is gaze, not camera height/);
+    assert.match(prompt, /right-to-left|RIGHT-TO-LEFT/);
+    assert.match(prompt, /No default eye-level tableau/);
+    assert.match(prompt, /extreme low angle, 25 degree Dutch tilt/);
+  }
+});
+
+test('panel props and lettering cannot spill into another scene, while explicit breakout stays allowed', () => {
+  for (const providerFamily of ['chatgpt', 'gemini']) {
+    for (const colorMode of ['color', 'monochrome']) {
+      const prompt = buildMangaPrompt({ scenario, castList, colorMode, providerFamily, punchlineType: 'Auto', systemVersion: 'test' });
+      assert.match(prompt, /Props\/screens\/lettering stay in their own panel/);
+      assert.match(prompt, /no spill into the next scene unless explicitly scripted/);
+      assert.match(prompt, /breakout|breakthrough/);
+      assert.match(prompt, /uncut|continuous/);
+    }
+  }
+});
+
 test('camera is a protected projection, not movable for face or screen legibility', () => {
   for (const provider of ['chatgpt', 'gemini']) {
     const prompt = build(provider);

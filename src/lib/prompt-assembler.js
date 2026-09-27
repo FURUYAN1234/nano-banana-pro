@@ -64,6 +64,8 @@ import {
   LIMB_OWNERSHIP_CHECK,
   LIMB_OWNERSHIP_CHECK_COMPACT,
   EXPRESSIVE_DIRECTION,
+  FOCAL_READABILITY,
+  SHARED_IMAGE_QUALITY_CONTRACT_COMPACT,
   PANEL_EDGE_CONTINUITY_LOCK_COMPACT,
   OBJECT_GEOMETRY_LOCK_COMPACT,
   FUNCTIONAL_SURFACE_ORIENTATION_LOCK_COMPACT,
@@ -204,7 +206,8 @@ const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt
     .replace(/CONVERSATIONAL DEPTH BASE:[^\n]*/g, 'CONVERSATIONAL DEPTH BASE: Action gaze first; varied depth.')
     .replace(/EYE-LINE LOCK:[^\n]*/g, compactConversationEyeLine)
     .replace(/MANGA FINISH ASSIST:[^\n]*/g, 'FINISH: bubbles, anatomy.')
-    .replace(/\[ SHARED IMAGE QUALITY CONTRACT[\s\S]*?(?=\n- Clean finish:)/g, `SHARED IMAGE QUALITY CONTRACT: one primary focal path. Face/hand/prop gets strongest G-pen-like contour: visibly heavier pressure-taper and bold contact accents; support/BG thinner/lighter. If depth-of-field blur still merges the focal subject, lighten/desaturate BG and strengthen focal G-pen. Keep light/setting/mono/anatomy/props; rear head has no invented face.\n${BODY_ACTING_BASELINE_COMPACT}\n${EXPRESSIVE_DIRECTION}\n${PANEL_EDGE_CONTINUITY_LOCK_COMPACT}\n${FUNCTIONAL_SURFACE_ORIENTATION_LOCK_COMPACT}\n${OBJECT_GEOMETRY_LOCK_COMPACT}`)
+    .replace(/\[ SHARED IMAGE QUALITY CONTRACT[\s\S]*?(?=\n- Clean finish:)/g, `${SHARED_IMAGE_QUALITY_CONTRACT_COMPACT}\n${FOCAL_READABILITY}\n${BODY_ACTING_BASELINE_COMPACT}\n${EXPRESSIVE_DIRECTION}\n${PANEL_EDGE_CONTINUITY_LOCK_COMPACT}\n${FUNCTIONAL_SURFACE_ORIENTATION_LOCK_COMPACT}\n${OBJECT_GEOMETRY_LOCK_COMPACT}`)
+    .replace(/PANEL EDGE CONTINUITY LOCK:[^\n]*/g, PANEL_EDGE_CONTINUITY_LOCK_COMPACT)
     .replace(/FACIAL ACTING LOCK:[\s\S]*?(?=\n- CLEAN SURFACE PROTOCOL:)/g, FACIAL_ACTING_LOCK_COMPACT)
     .replace(/RICH PANEL COMPOSITION \/ CHARACTER CLARITY LOCK:[\s\S]*?(?=\n- CLOTHING FOLD SHADOW ASSIST:)/g, RICH_PANEL_COMPOSITION_LOCK_COMPACT)
     .replace(/CLEAN SURFACE PROTOCOL:[^\n]*/g, 'CLEAN: no noise except style exceptions.')
@@ -280,7 +283,7 @@ const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt
     .replace(/FINAL-PANEL ACTIVE STAGING LOCK:[^\n]*/g, 'FINAL-PANEL ACTIVE STAGING LOCK: no straight-line lineup; distinct physical action; faces, silhouettes, and hands readable.')
     // Retain named gaze targets and rear-shoulder owners even under budget pressure.
     .replace(/FUNCTIONAL SURFACE PANEL CHECK:[^\n]*/g, 'FUNCTIONAL SURFACE PANEL CHECK: reader/camera side/front-back/text axes.')
-    .replace(/SHARED IMAGE QUALITY CONTRACT:[^\n]*/g, 'SHARED IMAGE QUALITY CONTRACT: one primary focal subject; face/hand/prop gets strongest G-pen-like contour and heavier pressure-taper; support/BG thinner/lighter. If blur still merges it, pale/desaturate BG and strengthen focal G-pen. Keep anatomy/props; rear head has no invented face.')
+    .replace(/SHARED IMAGE QUALITY CONTRACT:[^\n]*/g, SHARED_IMAGE_QUALITY_CONTRACT_COMPACT)
     .replace(/FACIAL ACTING LOCK:[^\n]*/g, FACIAL_ACTING_LOCK_MINIMAL)
     .replace(
       /RICH PANEL COMPOSITION \/ CHARACTER CLARITY LOCK:[^\n]*/g,
@@ -310,7 +313,7 @@ const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt
     // in real API output; the coordinates are the executable body-layout contract.
     .replace(/Bodies fixed; bubbles independent: B1 rightmost; B2\/B3\+ strictly leftward; never reverse\./g, 'Bodies fixed.')
     .replace(/ \[(?:RIGHTMOST|LEFTMOST|LEFT OF B\d+)\]/g, '')
-    .replace(/^EXPRESSIVE DIRECTION:[^\n]*/gm, 'EXPRESSIVE DIRECTION: height/tilt/foreshortening; full-body acting; panel contrast: scale/light/VFX. Keep quiet beats, Camera/Action, identity, verbatim dialogue, limbs, prop ownership/facing.')
+    .replace(/^EXPRESSIVE DIRECTION:[^\n]*/gm, EXPRESSIVE_DIRECTION)
     .replace(/^CONVERSATIONAL DEPTH BASE:[^\n]*/gm, 'CONVERSATIONAL DEPTH BASE: Action gaze first; free camera.')
     .replace(/^EYE-LINE LOCK: (.+?) address (?:their )?counterparts;[^\n]*VIEWPOINT FREEDOM:[^\n]*/gm, 'EYE-LINE LOCK: $1 address counterparts; reactors watch speaker; never lens/front. VIEWPOINT FREEDOM: three-quarter; height/tilt/perspective. Camera preserves scenario direction.')
     .replace(/^Style: follow the named PANEL STYLE LOCK\.\n?/gm, '')
@@ -360,8 +363,12 @@ const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt
     .replace(/HAND \/ PROP KINEMATICS LOCK:[^\n]*/g, HAND_PROP_KINEMATICS_LOCK_COMPACT)
     .replace(/FACIAL ACTING LOCK:[^\n]*/g, FACIAL_ACTING_LOCK_MINIMAL)
     .replace(/LIMB OWNERSHIP CHECK:[^\n]*/g, LIMB_OWNERSHIP_CHECK_MINIMAL)
-    .replace(/SHARED IMAGE QUALITY CONTRACT:[^\n]*/g, 'SHARED IMAGE QUALITY CONTRACT: focal face/hand/prop gets strongest G-pen-like contour and pressure-taper; support/BG thinner/paler. If blurred focal merges, lighten BG and strengthen contour. Keep anatomy/props; rear head has no invented face.')
-    .replace(/EXPRESSIVE DIRECTION:[^\n]*/g, 'EXPRESSIVE DIRECTION: height/tilt/foreshortening; full-body acting; panel contrast; quiet beats; keep Camera/Action/identity/dialogue/limbs/props.')
+    .replace(/SHARED IMAGE QUALITY CONTRACT:[^\n]*/g, SHARED_IMAGE_QUALITY_CONTRACT_COMPACT)
+    .replace(/EXPRESSIVE DIRECTION:[^\n]*/g, EXPRESSIVE_DIRECTION)
+    // The global gesture and expressive contracts already retain motion,
+    // support/contact and exact Camera/Action. Avoid repeating them at the cap.
+    .replace(/^BODY ACTING BASELINE:[^\n]*\n?/gm, '')
+    .replace(/^FINAL-PANEL STORY STAGING:[^\n]*/gm, 'FINAL-PANEL STORY STAGING: vivid scripted payoff; individual reactions and depth/silhouette/scale contrast. Keep intentional stillness and silence, including deadpan, amid active surroundings. Do not invent extra hand actions or crowding for every actor.')
     .replace(/CROSS-PANEL WARDROBE COLOR LOCK:[^\n]*/g, compactWardrobeLock)
     .replace(/^- CLEAN FINISH:[^\n]*\n?/gm, '')
     .replace(/CAST COUNT: ([^\n]+?) each EXACTLY ONCE; no named-character duplicates\./g, 'CAST COUNT: $1 each EXACTLY ONCE.')
@@ -404,7 +411,7 @@ const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt
     .replace(/^FOLD PRIORITY:[^\n]*\n?/gm, '')
     .replace(/^CHARACTER QA:[^\n]*\n?/gm, '')
     .replace(/\. Keep faces\/skin clean; do not add unrelated noise\./g, '. Faces/skin clean; no unrelated noise.')
-    .replace(/^FUNCTIONAL SURFACE ORIENTATION LOCK:[^\n]*/gm, "FUNCTIONAL SURFACE ORIENTATION LOCK: front faces reader/operator/recipient; back opposite; flat-page text inverted. Rear holder's chest object: occlude or show edge/back, never front/hands through torso. Fixed Camera. If unspecified, move camera, not object. Camera-facing only if scripted.")
+    .replace(/^FUNCTIONAL SURFACE ORIENTATION LOCK:[^\n]*/gm, FUNCTIONAL_SURFACE_ORIENTATION_LOCK_COMPACT)
     // 同じ台本・人体保護はPROMPT PRIORITYに残す。読順・尻尾・演技条件は省略しない。
     .replace(/^PAGE READING RHYTHM:[^\n]*/gm, 'PAGE READING RHYTHM: one focal target/panel. FLOW: panel entry -> focal -> reaction/prop -> next bubble -> next panel; top-right, right-to-left; route tails to speakers. Guide gaze/torso/hands/light/contrast/negative space/density; clear story peak/quiet. Scripted abstract BG: props stay. INTERACTION: reactions readable; support smaller/lower-contrast. ACTING: vary gaze/weight/hands. DEPTH OF FIELD: keep setting/depth; far blur, no default blank. MULTIPLE BUBBLES: B1 rightmost regardless of speaker; later strictly left. DRAW BALLOON BODIES BEFORE ACTORS: x=0 left,100 right; freeze numeric slots. SINGLE BUBBLE: speaker-side space, shortest tail. TAIL GEOMETRY: lower speaker-facing root; shortest unobstructed route to mapped mouth/head; avoid face/hair/text.')
     .replace(/^PROMPT PRIORITY:[^\n]*/gm, "PROMPT PRIORITY: protect cast/count/identity/glasses, wardrobe, exact script, Camera geometry, layout/style/medium. CAMERA FIRST: fixed view; Action contact overrides conflicting depth: move actor's sole body within prop reach; never relocate for legibility/chibi or mirror screen-left/right. Simplify only unspecified background texture and decorative VFX. Never print.")

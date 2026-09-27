@@ -66,3 +66,18 @@ test('staging lock application is idempotent', () => {
   const once = applyManualStagingLocks(SCENARIO, 'BはAへ話しかけ、カメラを見ない。');
   assert.equal(applyManualStagingLocks(once, 'BはAへ話しかけ、カメラを見ない。'), once);
 });
+
+test('reported appeals and English topic words never become page-wide acting locks', () => {
+  for (const topic of [
+    '利用者らはモデル選びや出力確認の重要性を共有し、人間による事実検証を呼びかけています。',
+    '市長は市民に節水を呼びかけている。',
+    'The interface looks different. Researchers address uncertainty.',
+    '研究者は将来を見つめ、新しい社会に向き合う。'
+  ]) assert.equal(applyManualStagingLocks(SCENARIO, topic), SCENARIO, topic);
+});
+
+test('concrete cast directions and explicit camera directions remain enforceable', () => {
+  for (const directive of ['AはBへ呼びかける。', 'BはAを見つめる。', 'カメラを見ない。', 'A looks at B.', '3コマ目は読者に語りかける。']) {
+    assert.match(applyManualStagingLocks(SCENARIO, directive), /USER STAGING LOCK/, directive);
+  }
+});

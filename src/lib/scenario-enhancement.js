@@ -1,4 +1,4 @@
-import { FINAL_PANEL_ACTIVE_STAGING_SCENARIO_CONTRACT } from './final-panel-staging.js';
+import { FINAL_PANEL_ACTIVE_STAGING_SCENARIO_CONTRACT, SCENARIO_EXPRESSIVE_STAGING_CONTRACT } from './final-panel-staging.js';
 import {
   SCENARIO_GESTURE_VARIETY_RULES,
   SCENARIO_PROP_CAUSALITY_RULES,
@@ -303,6 +303,7 @@ ${dialogueRule}
 ${backgroundRule}
 ${SCENARIO_PROP_CAUSALITY_RULES}
 ${facialActingRule}
+${SCENARIO_EXPRESSIVE_STAGING_CONTRACT}
 ${FINAL_PANEL_ACTIVE_STAGING_SCENARIO_CONTRACT}
 ${gestureVarietyRules}
 ${selected.includes('camera') && selected.includes('body') ? SCENARIO_SHOT_DESIGN_RULES : ''}

@@ -10,9 +10,15 @@ const splitDirectiveSentences = (manualTopic) => String(manualTopic || '')
   .map((sentence) => sentence.trim())
   .filter(Boolean);
 
-const collectManualStagingDirectives = (manualTopic) => {
+const CAMERA_DIRECTIVE_RE = /(?:カメラ|画面|読者|観客)(?:正面|目線)?(?:を|へ|に|は)?(?:見ない|見るな|向かない|向く|向ける|禁止)|(?:カメラ|画面)正面.{0,8}(?:禁止|避け)|\b(?:look|face|gaze)\b.{0,20}\b(?:camera|viewer|audience)\b/i;
+const PAGE_SCOPE_RE = /全コマ|各コマ|ページ全体|全編|\b(?:every|all) panels?\b|throughout the page/i;
+
+const collectManualStagingDirectives = (manualTopic, scenario) => {
   const global = [];
   const byPanel = new Map();
+  const speakers = [...String(scenario).matchAll(/^\s*([^\s「\[\]:：]+)\s*「/gm)].map(match => match[1]);
+  const names = speakers.map(name => name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+  const castMention = names.length ? new RegExp(`(?<![A-Za-z0-9_])(?:${names.join('|')})(?![A-Za-z0-9_])`, 'u') : null;
 
   splitDirectiveSentences(manualTopic).forEach((sentence) => {
     if (!STAGING_CUE_RE.test(sentence) && !INTERPERSONAL_VIEW_CUE_RE.test(sentence)) return;
@@ -21,6 +27,10 @@ const collectManualStagingDirectives = (manualTopic) => {
       .filter(Boolean);
 
     if (panelNumbers.length === 0) {
+      // Topic prose is still passed to the scenario model as content. Only
+      // explicit page/camera scope or a known actor can become a page-wide lock.
+      // A topical verb such as "appeal" or "look" is not staging authority.
+      if (!PAGE_SCOPE_RE.test(sentence) && !CAMERA_DIRECTIVE_RE.test(sentence) && !castMention?.test(sentence)) return;
       // A timed story beat belongs in the generated panel action selected by the
       // scenario model. Treating it as a page-wide camera/eye-line rule leaks a
       // reveal or ending into every panel.
@@ -43,7 +53,7 @@ export const applyManualStagingLocks = (scenario, manualTopic) => {
   const text = String(scenario || '');
   if (!text || text.includes(LOCK_MARKER)) return text;
 
-  const directives = collectManualStagingDirectives(manualTopic);
+  const directives = collectManualStagingDirectives(manualTopic, text);
   if (directives.global.length === 0 && directives.byPanel.size === 0) return text;
 
   let currentPanel = null;
