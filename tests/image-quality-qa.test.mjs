@@ -756,6 +756,14 @@ Dialogue: silent`;
   const correct = makeReview([{ ...baseB1, tail_tip: { x: 0.39, y: 0.63 } }, validB2]);
   assert.equal(correct.pass, true);
 
+  // The first balloon may move toward its speaker while remaining right of B2.
+  const nearby = makeReview([{ ...baseB1, center_x: 0.49, tail_tip: { x: 0.39, y: 0.63 } }, validB2]);
+  assert.equal(nearby.pass, true);
+  const screenTarget = makeReview([{ ...baseB1, observed_tail_target: '画面内の人物',
+    endpoint_relation: 'wrong_character', tail_endpoint_evidence: 'Tip ends on the screen character, away from the mapped speaker.' }, validB2]);
+  assert.equal(screenTarget.pass, false);
+  assert.ok(screenTarget.issues.some(issue => issue.type === 'bubble_speaker' && issue.subject === 'B1'));
+
   const crossesHead = makeReview([{ ...baseB1, tail_tip: { x: 0.39, y: 0.63 },
     path_relation: 'crosses_head', tail_path_evidence: 'The tail passes across Saeko\'s crown before reaching her mouth.' }, validB2]);
   assert.equal(crossesHead.pass, false);

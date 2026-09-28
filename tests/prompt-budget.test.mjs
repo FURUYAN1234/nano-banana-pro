@@ -101,7 +101,7 @@ test('dense four-panel prompts preserve core requirements ahead of optional embe
       assert.doesNotMatch(prompt, /4 equal|four equal|4 EQUAL|EXACT SAME height|equal four-panel|y120\/460\/800\/1140/i);
       assert.match(prompt, /PANEL STYLE LOCK: (?:GLITTER|IMPACT|GEKIGA)/);
       assert.equal((prompt.match(/## Panel \d/g) || []).length, 4);
-      assert.ok((prompt.match(/BUBBLE SLOTS: B1 x=75%; B2 x=50%; B3 x=25%\./g) || []).length >= 4);
+      assert.ok((prompt.match(/TAIL TIP LOCK[^:\n]*: B1=>[^\n]*B2=>[^\n]*B3=>/g) || []).length >= 4);
       if (colorMode === 'monochrome') {
         assert.match(prompt, /#000000.*#FFFFFF/);
         assert.match(prompt, /CROSS-PANEL WARDROBE TONE LOCK/);
@@ -126,7 +126,7 @@ test('ChatGPT default removes repeated instructions without treating the Web pas
   assert.ok(prompt.length <= 32000);
   assert.match(prompt, /Outfit assignment:|role-specific outfit assignments:/);
   assert.match(prompt, /HAND \/ PROP KINEMATICS LOCK/);
-  assert.match(prompt, /BUBBLE SLOTS: B1 x=75%; B2 x=50%; B3 x=25%/);
+  assert.match(prompt, /BALLOON OWNERSHIP:.*preserving/);
 });
 
 test('irreducible oversized ChatGPT input fails before returning a truncated prompt', () => {
@@ -157,8 +157,8 @@ test('soft Web target may be exceeded to retain critical content', () => {
   assert.match(prompt, /PAGE READING RHYTHM: one (?:primary )?focal target\/panel/);
   assert.match(prompt, /(?:story peak vs|peak\/)quiet(?: beat)?/);
   assert.match(prompt, /negative space(?:\/density|;[^\n]*density)/);
-  assert.match(prompt, /right-to-left.*(?:speaker tails|tails to speakers|route to mapped mouth\/head)/);
-  assert.match(prompt, /TAIL TIP LOCK: B1=>\[サエコ\] mouth\/head; B2=>\[ヒカリ\] mouth\/head; B3=>\[ミク\] mouth\/head/);
+  assert.match(prompt, /right-to-left.*(?:speaker tails|tails to speakers|route to mapped mouth\/head|tip touches mapped mouth\/head)/);
+  assert.match(prompt, /TAIL TIP LOCK[^:\n]*: B1=>\[サエコ\] mouth\/head; B2=>\[ヒカリ\] mouth\/head; B3=>\[ミク\] mouth\/head/);
   assert.match(prompt, /ABSTRACT BEAT: scripted BG omission|Scripted abstract BG: props stay/);
   assert.match(prompt, /INTERACTION: reactions? readable/);
   assert.match(prompt, /ACTING: gaze\/weight\/hands vary|ACTING: vary gaze\/weight\/hands/);
@@ -203,18 +203,18 @@ test('soft Web target may be exceeded to retain critical content', () => {
   assert.match(prompt, /B\d="我々の仕事が奪われないうちにこの才能を潰そう！"/);
   assert.match(prompt, /B\d="御意！"/);
   assert.match(prompt, /B\d="AI作品は無条件で却下よね！"/);
-  assert.match(prompt, /TAIL TIP LOCK: B1=>\[ミク\] mouth\/head/);
+  assert.match(prompt, /TAIL TIP LOCK[^:\n]*: B1=>\[ミク\] mouth\/head/);
   assert.match(prompt, /B1.*rightmost|rightmost.*B1/i);
   assert.match(prompt, /later (?:bubbles )?strictly left/i);
-  assert.match(prompt, /x=0 left,100 right/);
+  assert.doesNotMatch(prompt, /BUBBLE SLOTS:/);
   assert.match(prompt, /B1 rightmost regardless of speaker/);
-  assert.match(prompt, /draw (?:balloon )?bodies before (?:actors|art)/i);
-  assert.match(prompt, /freeze (?:balloon )?bodies|DRAW BALLOON BODIES BEFORE ACTORS[^\n]*freeze numeric slots/i);
-  assert.match(prompt, /route .*tails.*speaker|TAIL GEOMETRY: lower speaker-facing root; shortest unobstructed route to mapped mouth\/head/i);
+  assert.match(prompt, /BALLOON OWNERSHIP:.*move.*bodies.*speaker/i);
+  assert.doesNotMatch(prompt, /freeze (?:balloon )?bodies|freeze numeric slots/i);
+  assert.match(prompt, /TAIL GEOMETRY:.*shortest unobstructed.*(?:mapped mouth\/head|tip touches mapped mouth\/head)/i);
   assert.equal(
-    (prompt.match(/BUBBLE SLOTS: B1 x=75%; B2 x=50%; B3 x=25%\./g) || []).length,
+    (prompt.match(/TAIL TIP LOCK[^:\n]*: B1=>[^\n]*B2=>[^\n]*B3=>/g) || []).length,
     4,
-    'every dense three-dialogue panel must retain its numeric balloon-body slots after final compaction'
+    'every dense three-dialogue panel must retain its ordered speaker ownership after final compaction'
   );
   assert.doesNotMatch(prompt, /B1="\[ミク\]/);
   assert.match(prompt, /Dialogue \(verbatim bubbles\):/);

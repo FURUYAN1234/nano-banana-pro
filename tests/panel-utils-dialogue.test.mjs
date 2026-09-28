@@ -839,12 +839,12 @@ test('binds balloon positions to dialogue entries even for repeated speakers and
     const panel = `[Camera: ${camera}]\n状況: 甲は左、乙は右。\n甲「準備はいい？」\n乙「いいよ。」\n甲「始めよう。」`;
     const result = extractDialogueOnly(panel, cast, { forImagePrompt: true });
     assert.match(result, /B1="準備はいい？" \[RIGHTMOST\]; B2="いいよ。" \[LEFT OF B1\]; B3="始めよう。" \[LEFTMOST\]/);
-    assert.match(result, /BUBBLE SLOTS.*B1 x=75%; B2 x=50%; B3 x=25%/);
+    assert.doesNotMatch(result, /BUBBLE SLOTS|x=\d+%/);
     assert.match(result, /B1=>\[甲\].*B2=>\[乙\].*B3=>\[甲\]/);
     assert.match(result, /TAIL TIP LOCK/);
   }
   const pair = extractDialogueOnly('甲「準備はいい？」\n乙「いいよ。」', cast, { forImagePrompt: true });
-  assert.match(pair, /B1 x=67%; B2 x=33%/);
+  assert.match(pair, /B1="準備はいい？" \[RIGHTMOST\]; B2="いいよ。" \[LEFTMOST\]/);
   for (const panel of ['甲「いいよ。」', '状況: 二人が黙って待つ。']) {
     assert.doesNotMatch(extractDialogueOnly(panel, cast, { forImagePrompt: true }), /BUBBLE SLOTS/);
   }

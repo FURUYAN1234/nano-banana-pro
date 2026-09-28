@@ -229,9 +229,6 @@ const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt
       compactWardrobeLock
     )
     .replace(/- In each Dialogue block,[^\n]*/g, '- TEXT MAP: print quoted TEXT only; no TAILS metadata.')
-    // Keep the per-dialogue spatial map; shared rhythm already carries routing.
-    .replace(/BUBBLE SLOTS \(NEVER PRINT; x=0 left,100 right\): ([^.]+)\. B1 RIGHTMOST, last LEFTMOST regardless of speaker positions; reserve before art\. Never mirror Camera\/actors; route tails across panel if needed\./g,
-      'BUBBLE SLOTS: $1.')
     // Preserve per-bubble endpoint ownership even after Web/API compaction.
     // A global rule alone is too easy for image models to detach from a
     // single-bubble panel, especially when the speaker is rear/OTS.
@@ -413,7 +410,7 @@ const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt
     .replace(/\. Keep faces\/skin clean; do not add unrelated noise\./g, '. Faces/skin clean; no unrelated noise.')
     .replace(/^FUNCTIONAL SURFACE ORIENTATION LOCK:[^\n]*/gm, FUNCTIONAL_SURFACE_ORIENTATION_LOCK_COMPACT)
     // 同じ台本・人体保護はPROMPT PRIORITYに残す。読順・尻尾・演技条件は省略しない。
-    .replace(/^PAGE READING RHYTHM:[^\n]*/gm, 'PAGE READING RHYTHM: one focal target/panel. FLOW: panel entry -> focal -> reaction/prop -> next bubble -> next panel; top-right, right-to-left; route tails to speakers. Guide gaze/torso/hands/light/contrast/negative space/density; clear story peak/quiet. Scripted abstract BG: props stay. INTERACTION: reactions readable; support smaller/lower-contrast. ACTING: vary gaze/weight/hands. DEPTH OF FIELD: keep setting/depth; far blur, no default blank. MULTIPLE BUBBLES: B1 rightmost regardless of speaker; later strictly left. DRAW BALLOON BODIES BEFORE ACTORS: x=0 left,100 right; freeze numeric slots. SINGLE BUBBLE: speaker-side space, shortest tail. TAIL GEOMETRY: lower speaker-facing root; shortest unobstructed route to mapped mouth/head; avoid face/hair/text.')
+    .replace(/^PAGE READING RHYTHM:[^\n]*/gm, 'PAGE READING RHYTHM: one focal target/panel. FLOW: panel entry -> focal -> reaction/prop -> next bubble -> next panel; top-right, right-to-left; route tails to speakers. Guide gaze/torso/hands/light/contrast/negative space/density; clear story peak/quiet. Scripted abstract BG: props stay. INTERACTION: reactions readable; support smaller/lower-contrast. ACTING: vary gaze/weight/hands. DEPTH OF FIELD: keep setting/depth; far blur, no default blank. MULTIPLE BUBBLES: B1 rightmost regardless of speaker; later strictly left. BALLOON OWNERSHIP: move/reflow bodies near mapped speakers preserving order/Camera/Action; never end at non-speakers in any scene layer. SINGLE BUBBLE: speaker-side space, shortest tail. TAIL GEOMETRY: lower speaker-facing root; shortest unobstructed route to mapped mouth/head; avoid face/hair/text.')
     .replace(/^PROMPT PRIORITY:[^\n]*/gm, "PROMPT PRIORITY: protect cast/count/identity/glasses, wardrobe, exact script, Camera geometry, layout/style/medium. CAMERA FIRST: fixed view; Action contact overrides conflicting depth: move actor's sole body within prop reach; never relocate for legibility/chibi or mirror screen-left/right. Simplify only unspecified background texture and decorative VFX. Never print.")
     .replace(/^[\t ]+|[\t ]+$/gm, '')
     .replace(/[\t ]{2,}/g, ' ')
@@ -449,12 +446,6 @@ const buildMonochromePanelInkLock = (panelText = '', identityMatrix = '') => {
   ].filter(Boolean).join(' ');
   return `PANEL INK:white/black;no veil. ${skinRules} ${cheekRule}`.replace(/\s+/g, ' ').trim();
 };
-
-const clarifyBubbleCountPlacement = (prompt) => String(prompt)
-  .replace(
-    'For Japanese right-to-left reading, the first scripted line must be physically nearest the panel right border even when its speaker stands on the left; the second line must be physically left of it. For two bubbles B1 is far right (about 67%) and B2 far left (about 33%). B1 is rightmost, B2 is strictly left of B1, and every later body is strictly left of its predecessor. Freeze balloon bodies at those slots before drawing characters; never move a body toward its speaker. Only afterward route each mapped tail across the panel to its speaker, even when the tail must be long.',
-    'MULTIPLE BUBBLES: for Japanese right-to-left reading, B1 is rightmost regardless of speaker and every later body is strictly left; freeze those slots before actors, then route each mapped tail even when long. SINGLE BUBBLE: no rightmost constraint; place its body in clear negative space on the assigned speaker side for the shortest unobstructed tail, without covering faces, hands, props, or action.'
-  );
 
 const buildVisualStoryEvidenceLock = (scenario) => {
   const rawEvidence = String(scenario || '').match(/VisualEvidence:\s*(.*?)(?:\n|$)/i)?.[1] || '';
@@ -761,9 +752,9 @@ ${geminiRearForegroundLock}`;
     safePrompt = sanitizeForDocumentary(safePrompt);
   }
 
-  const clarifiedPrompt = clarifyBubbleCountPlacement(isChatGPTFamily
+  const clarifiedPrompt = isChatGPTFamily
     ? compactForSoftTarget(safePrompt)
-    : safePrompt);
+    : safePrompt;
   const baselinePrompt = isChatGPTFamily && clarifiedPrompt.length > promptTargetChars
     ? compactForSoftTarget(clarifiedPrompt)
     : clarifiedPrompt;

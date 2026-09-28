@@ -197,8 +197,8 @@ test('API and Web final prompt locks single-bubble tails to the mapped speaker e
   assert.match(prompt, /proximity never reassigns/);
   assert.match(prompt, /SINGLE BUBBLE:[^\n]*(?:speaker side|speaker-side)[^\n]*(?:(?:shortest|short)[^\n]*tail|TAIL GEOMETRY:[^\n]*shortest unobstructed route to mapped mouth\/head)/i);
   assert.match(prompt, /MULTIPLE BUBBLES:[^\n]*B1 rightmost[^\n]*later (?:bubbles )?strictly left/i);
-  assert.match(prompt, /DRAW BALLOON BODIES BEFORE ACTORS:[^\n]*x=0 left,100 right[^\n]*freeze (?:balloon bodies at )?numeric slots/i);
-  assert.equal((prompt.match(/DRAW BALLOON BODIES BEFORE ACTORS:/g) || []).length, 1);
+  assert.match(prompt, /BALLOON OWNERSHIP:.*move.*bodies.*speaker.*preserving/i);
+  assert.equal((prompt.match(/BALLOON OWNERSHIP:/g) || []).length, 1);
   assert.doesNotMatch(prompt, /DRAW BODIES BEFORE ART/i);
 });
 

@@ -966,11 +966,7 @@ export const extractDialogueOnly = (fullPanelText, castList, options = {}) => {
       const values = orderedEntries.map((entry, index) => `B${index + 1}=${JSON.stringify(entry.text)}`).join('; ');
       return `TEXT (PRINT VALUES ONLY): ${values}.`;
     }
-    // Bind spatial slots to the same ordered entries as text and speaker tails.
-    // Reserve balloon bodies before drawing actors, even when B1's speaker is left.
-    const readingSlots = orderedEntries.length > 1
-      ? ` BUBBLE SLOTS: ${orderedEntries.map((_, index) => `B${index + 1} x=${Math.round(100 * (orderedEntries.length - index) / (orderedEntries.length + 1))}%`).join('; ')}.`
-      : '';
+    // Order and ownership share entries; body coordinates remain composition-dependent.
     const visibleText = orderedEntries
       .map((entry, index) => `B${index + 1}=${JSON.stringify(entry.text)}${orderedEntries.length > 1 ? ` [${index === 0 ? 'RIGHTMOST' : index === orderedEntries.length - 1 ? 'LEFTMOST' : `LEFT OF B${index}`}]` : ''}`)
       .join('; ');
@@ -983,9 +979,9 @@ export const extractDialogueOnly = (fullPanelText, castList, options = {}) => {
       const endpointTargets = orderedEntries
         .map((entry, index) => entry.speaker ? `B${index + 1}=>[${entry.speaker}] mouth/head` : `B${index + 1}=>match the visually speaking character`)
         .join('; ');
-      return `TEXT (PRINT VALUES ONLY): ${visibleText}.${readingSlots} TAIL TIP LOCK (NEVER PRINT; proximity never reassigns): ${endpointTargets}.`;
+      return `TEXT (PRINT VALUES ONLY): ${visibleText}. TAIL TIP LOCK (NEVER PRINT; proximity never reassigns): ${endpointTargets}.`;
     }
-    return `TEXT (PRINT VALUES ONLY): ${visibleText}.${readingSlots} TAILS (METADATA; NEVER PRINT NAMES): ${tailTargets || 'match the visually speaking character'}.`;
+    return `TEXT (PRINT VALUES ONLY): ${visibleText}. TAILS (METADATA; NEVER PRINT NAMES): ${tailTargets || 'match the visually speaking character'}.`;
   }
 
   return orderedEntries
