@@ -1,6 +1,7 @@
 import { execSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
+import { collectReadmeBodyEvidence, validateReadmeBodyAudit } from './readme_body_audit.mjs';
 
 console.log("🛡️ [Security Check] Validating Git Environment...");
 
@@ -90,6 +91,16 @@ try {
         process.exit(1);
     }
     console.log(`✅ [ChangeLog] Found entry for ${pkgVersion} in README.md`);
+
+    // A content review cannot be inferred from the version or ChangeLog check.
+    // Bind the recorded whole-body review to the exact README and release inputs.
+    console.log('📝 [README Body] Checking reviewed sections and source evidence...');
+    const readmeAudit = JSON.parse(fs.readFileSync('docs/readme-body-audit.json', 'utf-8'));
+    const readmeAuditErrors = validateReadmeBodyAudit(readmeAudit, collectReadmeBodyEvidence(process.cwd()));
+    if (readmeAuditErrors.length > 0) {
+        throw new Error(`README body audit missing or stale: ${readmeAuditErrors.join('; ')}`);
+    }
+    console.log(`✅ [README Body] ${readmeAudit.reviewedSections.length} sections reviewed against this candidate`);
 
     // ============================================================
     // 6. README ENCODING CHECK (§2 文字コード規約)

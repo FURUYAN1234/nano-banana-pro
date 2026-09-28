@@ -215,7 +215,7 @@ After the existing STEP2 safety and format checks, a mode-aware payoff review ve
 
 Usage and estimated cost are logged only when the API returns valid input and output token counts; missing usage is not treated as zero cost. / 使用量と参考費用は、APIが有効な入力・出力トークン数を返した場合だけ表示します。使用量が不明な応答を費用ゼロとは表示しません。
 
-For OpenAI image prompts, the bottom-right footer credit includes the model actually adopted for STEP2, for example `ChatGPT / GPT-6 Sol / FURU AI 4-koma v6.5.8`; the bottom-left Japanese footer credit is unchanged. / OpenAI画像用の最終プロンプトでは、右下のフッタークレジットにSTEP2で実際に採用されたモデル名を入れます（例: `ChatGPT / GPT-6 Sol / FURU AI 4-koma v6.5.8`）。左下の日本語フッタークレジットは変更しません。
+For OpenAI image prompts, the bottom-right footer credit includes the model actually adopted for STEP2 and the current app version; the bottom-left Japanese footer credit is unchanged. / OpenAI画像用の最終プロンプトでは、右下のフッタークレジットにSTEP2で実際に採用されたモデル名と現行アプリ版を入れます。左下の日本語フッタークレジットは変更しません。
 
 The API key chosen at connection time fixes one provider for every application step: a Gemini key keeps STEP1–4 on Gemini, while an OpenAI key keeps STEP1–4 on OpenAI. In news mode, selected categories use Google Grounding only on the Gemini route and OpenAI Responses Web Search only on the OpenAI route. / 接続時に入力したAPIキーで、アプリの全工程のプロバイダーを固定します。GeminiキーではSTEP1〜4をGemini、OpenAIキーではSTEP1〜4をOpenAIで実行します。ニュースモードのカテゴリ検索は、Gemini経路ではGoogle Groundingだけ、OpenAI経路ではOpenAI Responses Web Searchだけを使用します。
 
@@ -282,30 +282,24 @@ The expanded `FURUの4コマ漫画を動画化（MiniMax H3 / ComfyUI）` sectio
 
 Copy the generic MiniMax H3 authoring prompt and configure ComfyUI's standard Reference-to-Video workflow yourself. It derives panel cast, identities, speakers, dialogue windows, acting, camera, and sound from each attached manga rather than embedding a sample cast. / 汎用MiniMax H3作成プロンプトをコピーし、ComfyUI標準のReference-to-Videoワークフローを自分で設定します。特定の見本キャストを埋め込まず、添付漫画ごとに各コマの人物、同一性、話者、台詞窓、演技、カメラ、音を導出します。
 
-Connect the four-panel image only to `ref_image_0` and leave `ref_image_1`以降 disconnected. Start `Resolution Selector (Size)` at 16:9 and 0.4 megapixels, and set the `基本スケジューラー` to `normal`, with `字幕なし` as the default. / 4コマ画像は`ref_image_0`だけへ接続し、`ref_image_1`以降は未接続にします。`Resolution Selector (Size)`は16:9・0.4メガピクセル、`基本スケジューラー`は`normal`、既定は`字幕なし`です。
-
-The generic prompt transfers the packaged workflow's four-panel order, per-panel cast lock, one-speaker-per-dialogue-window rule, silent speech buffers, readable acting/camera staging, and low-volume instrumental BGM intent. A prompt alone cannot automate image preprocessing, API dialogue extraction and reading review, per-line variable-duration generation, candidate comparison, audio/video audits, waveform-tail repair, or the packaged ACE-Step BGM path. With the standard graph, set the image, dialogue, fixed total duration, and output frames manually. / 汎用プロンプトには、配布版の四コマ順序、各コマ人物固定、一人一台詞窓、発声前後の無音余白、読み取りやすい演技・カメラ、低音量のインストBGMという意図を取り込みます。ただしプロンプトだけでは、画像前処理、APIによる台詞抽出・読み確認、行ごとの自動可変尺、候補比較、音声・映像監査、終端波形修復、配布版のACE-Step BGM経路は自動化できません。標準グラフでは画像、台詞、固定の合計秒数、生成フレーム数を手動で合わせます。
+The copied prompt guides panel order, cast, speaker assignment, acting, camera, and sound. It does not automate image preprocessing, dialogue review, variable duration, quality checks, or final compositing. With the standard workflow, set the image, dialogue, total duration, and output frames manually. / コピーしたプロンプトはコマ順、登場人物、話者、演技、カメラ、音の指示を作ります。画像前処理、台詞の読み確認、可変尺、品質検査、最後の合成は自動化しません。標準ワークフローでは画像、台詞、合計秒数、生成フレーム数を手動で合わせます。
 
 ### Use the Fused4step + SLA distribution / Fused4step・SLA 配布ワークフローを使う場合
 
-The app has separate buttons for the workflow JSON and the three-custom-node ZIP; `2つは別の操作` and each button downloads a different file. / アプリにはワークフローJSONとカスタムノード3点ZIPの別ボタンがあり、`2つは別の操作`として異なるファイルをダウンロードします。
+The app provides separate download buttons for the workflow JSON and the custom-node ZIP. Both files are needed for this route. / アプリにはワークフローJSONとカスタムノードZIPのダウンロードボタンが別々にあります。この経路では両方のファイルが必要です。
 
 - [Download workflow JSON](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20260928-173220.json) / [ワークフローJSONをダウンロード](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20260928-173220.json)
-- [Download custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/latest/download/ComfyUI_H3_FourPanel_NonLM_20260928-173220.zip) / [カスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/latest/download/ComfyUI_H3_FourPanel_NonLM_20260928-173220.zip)
+- [Download custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.6.8/ComfyUI_H3_FourPanel_NonLM_20260928-173220.zip) / [カスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.6.8/ComfyUI_H3_FourPanel_NonLM_20260928-173220.zip)
 
-The current source tree intentionally contains no distribution ZIP. The custom-node ZIP is a named asset of the matching GitHub Release. / 現在のソースツリーには配布ZIPを意図的に登録せず、カスタムノードZIPは同じ版のGitHub Release専用アセットとして公開します。
-
-Install all `3フォルダ` from the ZIP under `ComfyUI/custom_nodes/`, install PlagueKind-Nodes, H3-AudioRefine, and a compatible Triton separately, then place the JSON under `ComfyUI/user/default/workflows/` and restart ComfyUI. / ZIP内の`3フォルダ`をすべて`ComfyUI/custom_nodes/`へ配置し、PlagueKind-Nodes、H3-AudioRefine、対応Tritonを別途導入してから、JSONを`ComfyUI/user/default/workflows/`以下へ置いてComfyUIを再起動します。
+Place the ZIP's `3フォルダ` under `ComfyUI/custom_nodes/` and the workflow JSON under `ComfyUI/user/default/workflows/`. Install the separate dependencies below, then restart ComfyUI. / ZIP内の`3フォルダ`を`ComfyUI/custom_nodes/`へ、ワークフローJSONを`ComfyUI/user/default/workflows/`以下へ配置します。下記の別途必要な依存関係を導入してからComfyUIを再起動します。
 
 Five required model weights (four H3 and one ACE-Step) are not bundled. Use `models.json` and the workflow's `不足モデル` display to open the `ダウンロード` sources under each model's own terms. / 必須モデル5点（H3用4点・ACE-Step用1点）は同梱しません。`models.json`およびワークフローの`不足モデル`表示から各モデルの`ダウンロード`元を開き、個別条件を確認して取得します。
-
-The current graph uses Fused 4ステップ, 音声再精錬4ステップ at denoise 1.0, and SLA Attention at 0.90. / 現行グラフはFused 4ステップ、音声再精錬4ステップ・denoise 1.0、SLA Attention 0.90を使用します。
 
 H3 SLA Attention requires separately installed [ComfyUI-PlagueKind-Nodes](https://github.com/PlagueKind/ComfyUI-PlagueKind-Nodes) and a compatible Triton environment; audio refinement requires separately installed [ComfyUI-H3-AudioRefine](https://github.com/Adudeguyman/ComfyUI-H3-AudioRefine). / H3 SLA Attentionには別途導入する[ComfyUI-PlagueKind-Nodes](https://github.com/PlagueKind/ComfyUI-PlagueKind-Nodes)と対応Triton環境が必要で、音声補正には別途導入する[ComfyUI-H3-AudioRefine](https://github.com/Adudeguyman/ComfyUI-H3-AudioRefine)を使用します。
 
 Dialogue starts at five seconds and only lines that need more time extend up to 15 seconds; no-dialogue input uses 30 seconds. / 台詞は基本5秒とし、必要な台詞だけ最大15秒まで延長し、台詞なしの場合は30秒です。
 
-The workflow performs 区間 generation and 検査, comparing 初回込み最大5候補. It proceeds immediately on an earlier pass and retains the best inspected candidate if all fail; 採用済みでも全検査合格とは限りません. / ワークフローは区間ごとに生成・検査し、初回込み最大5候補を比較します。途中で合格すれば直ちに次へ進み、全候補が不合格なら検査上の最良候補を保持します。採用済みでも全検査合格とは限りません。
+The workflow generates and checks each segment, comparing up to five candidates including the first. It moves on as soon as one passes; if none passes, it retains the best inspected candidate for review. A retained candidate is not necessarily a full QA pass. / ワークフローは区間ごとに生成・検査し、初回込み最大5候補を比較します。途中で合格すれば直ちに次へ進み、全候補が不合格なら検査上の最良候補を確認用に保持します。採用済みでも全検査合格とは限りません。
 
 The supplied `20260928-173220` ZIP is an interim distribution. A 36-second, 864x480 video generation and a separate ACE-Step BGM pass were verified, but the combined graph has not run end-to-end. The sample reports `quality_status: needs_review` because its last two dialogue segments were not independently confirmed. Another-PC execution is also unverified. / 添付識別子`20260928-173220`のZIPは中間配布です。36秒・864×480の動画生成と別実行のACE-Step BGM処理は確認済みですが、統合グラフ全体の実走は未検証です。サンプルは終盤2区間の台詞確認が未了のため`quality_status: needs_review`です。別PC実行も未検証です。
 
@@ -317,9 +311,9 @@ The supplied `20260928-173220` ZIP is an interim distribution. A 36-second, 864x
 | `ComfyUI-MiniMax-H3-Long-Video` | GPL-3.0-only |
 | `ComfyUI-Spectrum-MiniMax-H3` | GPL-3.0-or-later |
 
-The ZIP contains source code and setup documents only. It contains no API keys, authentication files, user paths, model weights, input images, generated video, or personal pronunciation dictionary. / ZIPはソースコードと導入文書だけを収録し、APIキー、認証ファイル、利用者パス、モデル本体、入力画像、生成動画、個人用発音辞書を含みません。
+The ZIP contains custom-node source, a workflow JSON, setup documents, and manifests. It contains no API keys, authentication files, user paths, model weights, input images, generated video, or personal pronunciation dictionary. / ZIPにはカスタムノードのソース、ワークフローJSON、導入文書、マニフェストを収録しています。APIキー、認証ファイル、利用者パス、モデル本体、入力画像、生成動画、個人用発音辞書は含みません。
 
-API calls send the selected text or image data to the chosen provider and may incur charges. Keys are handled according to the active application or ComfyUI process and must never be embedded in a workflow or distribution archive. / API呼び出しは選択した文章・画像を指定プロバイダーへ送信し、料金が発生する場合があります。キーは実行中のアプリまたはComfyUIプロセスで扱い、ワークフローや配布ZIPへ埋め込まないでください。
+API calls send selected text or image data to the chosen provider and may incur charges. In the packaged ComfyUI workflow, the selected provider's key is held only in the running ComfyUI server's memory, never in a workflow, ZIP, or other file. Opening a workflow or changing provider does not request a key. Pressing Run prompts for an unregistered provider's key and pauses that run; successful authentication resumes it once, while closing the dialog cancels it. The key survives switching workflows but is cleared when ComfyUI stops or restarts. ComfyUI sends it to the selected provider only for authentication or execution. / API呼び出しは選択した文章・画像を指定プロバイダーへ送信し、料金が発生する場合があります。配布版ComfyUIワークフローのキーは動作中のComfyUIサーバーのプロセスメモリにだけ保持し、ワークフロー、ZIP、その他のファイルには保存しません。ワークフローを開くかProviderを変えただけでは入力を求めず、「実行する」を押した時に未登録なら入力待ちで実行を保留します。認証成功後は同じ実行を1回だけ再開し、ダイアログを閉じればその実行を中止します。ワークフローを切り替えても保持し、ComfyUIの終了・再起動で消去します。選択したProviderへの送信は認証確認または実行時だけです。
 
 ## Development / 開発
 
@@ -347,9 +341,6 @@ The production application is published from the `main` branch through the repos
 
 ### v6.6.8 (2026-09-28)
 - **[Fix & UX]** 記事内の引用を台詞にしないよう修正し、単独フキダシを話者の近くへ配置。長いヒゲは未確認として扱います。 / Keep reported article quotations out of speech bubbles, place a sole balloon near its speaker, and flag distant tail claims for visual review.
-
-### Unreleased / 未公開（2026-09-28）
-- **[Fix]** 記事などの出典に属する引用を近くの人物の発話と誤認する問題を修正。明示された発話・音読は保持 / Keep quoted source wording out of speech bubbles while preserving explicitly spoken or read-aloud lines
 
 ### v6.6.7 (2026-09-28)
 - **[Fix & UX]** 再検査の矛盾・軽微な人物差分による過剰な画像修正を抑制し、4コマH3中間配布ZIPと対応JSONを更新 / Prevent paid image repairs from conflicting or minor QA findings and update the matching interim four-panel H3 ZIP and workflow JSON

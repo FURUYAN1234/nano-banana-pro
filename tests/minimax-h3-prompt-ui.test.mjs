@@ -98,13 +98,11 @@ test('MiniMax H3 UI explains the feature and separates the standard-template and
   assert.ok(allInOneIndex < customNodeButtonIndex && customNodeButtonIndex < workflowButtonIndex, 'install the custom node before offering the workflow JSON');
 });
 
-test('README documents the current MiniMax H3 connection and starter settings', () => {
-  assert.match(readmeSource, /ref_image_0/);
-  assert.match(readmeSource, /ref_image_1.*以降/);
-  assert.match(readmeSource, /Resolution Selector \(Size\)/);
-  assert.match(readmeSource, /基本スケジューラー/);
-  assert.match(readmeSource, /字幕なし/);
-  assert.match(readmeSource, /ComfyUI標準テンプレートを自分で使う場合/);
-  assert.match(readmeSource, /Fused4step・SLA 配布ワークフローを使う場合/);
-  assert.match(readmeSource, /2つは別の操作/);
+test('README explains the two H3 routes without duplicating standard-template node settings', () => {
+  const h3Section = readmeSource.split('## MiniMax H3 and ComfyUI / ')[1]?.split('## Package licenses and privacy / ')[0];
+  assert.ok(h3Section, 'README must contain the H3 routes');
+  assert.match(h3Section, /ComfyUI標準テンプレートを自分で使う場合/);
+  assert.match(h3Section, /Fused4step・SLA 配布ワークフローを使う場合/);
+  assert.match(h3Section, /画像、台詞、合計秒数、生成フレーム数を手動/);
+  assert.doesNotMatch(h3Section, /ref_image_[01]|Resolution Selector \(Size\)|基本スケジューラー|0\.4メガピクセル/);
 });

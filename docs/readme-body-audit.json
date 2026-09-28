@@ -1,0 +1,22 @@
+{
+  "readmeSha256": "efeb2d393e9dfa8e5a93eb48ce0aabd076fdf44e0b50cccb9bbc45e637f7f3d3",
+  "sourceTree": "75819869a96b85fa60e91e09d152533887053ea5",
+  "publicTree": "bf3737dc1aae117d27123b00597c0c23c00e4506",
+  "packageSha256": "a0884afc994e81d96c3f4ebd38a4146b64f9b829ac2d9e797371a63ec18ad98d",
+  "releaseAssetSha256": "046b655cb0536defaffb48055f0dede324b6d818e2916510bd4acea577295b5f",
+  "reviewedSections": [
+    "AI Manga Creative Suite / AIまんが制作エコシステム",
+    "A4 workflow map / A4縦フローチャート",
+    "What this project does / このプロジェクトでできること",
+    "Quick start / すぐに使う",
+    "API routes and settings / API経路と設定",
+    "Prompt and image safeguards / プロンプトと画像の確認",
+    "MiniMax H3 and ComfyUI / MiniMax H3・ComfyUI動画化",
+    "Package licenses and privacy / 配布ライセンスと個人情報",
+    "Development / 開発",
+    "FAQ / よくある質問",
+    "📋 ChangeLog",
+    "License / ライセンス"
+  ],
+  "findings": "README本文12節を現行アプリ、モデル経路、配布JSON・ZIP、ローカルリンクと照合。H3の重複設定と内部管理説明、公開済みv6.6.8と重複する未公開項目を削除。ZIP内容とAPIキー保持条件を訂正し、配布リンクを該当Releaseへ固定。旧版番号を含むフッター例も除去。残る外部API価格や画像品質の実測は今回再実行していない。"
+}

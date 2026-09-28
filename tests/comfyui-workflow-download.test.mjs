@@ -177,13 +177,17 @@ test('release asset preserves the supplied timestamped distribution manifest, li
 
 test('README matches the current H3 API distribution and workflow does not describe credential persistence', () => {
   assert.match(readmeSource, /FourPanel_NonLM_4step_20260928-173220/);
-  assert.match(readmeSource, /Fused 4ステップ.*SLA Attention/);
+  assert.match(readmeSource, /Fused4step・SLA 配布ワークフロー/);
   assert.match(readmeSource, /不足モデル.*ダウンロード/);
   assert.match(readmeSource, /3フォルダ/);
   assert.match(readmeSource, /H3 SLA Attention.*ComfyUI-PlagueKind-Nodes.*Triton.*ComfyUI-H3-AudioRefine/s);
   assert.match(readmeSource, /https:\/\/github\.com\/Adudeguyman\/ComfyUI-H3-AudioRefine/);
   assert.match(readmeSource, /区間.*生成.*検査.*最大5候補/s);
   assert.match(readmeSource, /ComfyUI-NanoBanana-H3.*MIT.*ComfyUI-MiniMax-H3-Long-Video.*GPL-3\.0-only.*ComfyUI-Spectrum-MiniMax-H3.*GPL-3\.0-or-later/s);
+  assert.match(readmeSource, /releases\/download\/v6\.6\.8\/ComfyUI_H3_FourPanel_NonLM_20260928-173220\.zip/);
+  assert.match(readmeSource, /ComfyUIサーバーのプロセスメモリ/);
+  assert.match(readmeSource, /再起動.*消去/);
+  assert.doesNotMatch(readmeSource, /### Unreleased \/ 未公開（2026-09-28）/);
   for (const entry of readdirSync(publicWorkflowDirectoryUrl, { withFileTypes: true }).filter((item) => item.isFile() && item.name.endsWith('.json'))) {
     assert.doesNotMatch(readFileSync(new URL(entry.name, publicWorkflowDirectoryUrl), 'utf8'), /nanobanana_h3_credentials\.json|暗号化なしで保存/);
   }

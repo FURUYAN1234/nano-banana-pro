@@ -8,6 +8,7 @@
 
 - Nano Banana Proの正式リリースはGitHub Pagesの公開・公開バージョン検証、GitHub Release、Cドライブ公開版コピーで完結する。Hugging Face Spaceへのデプロイ・待機・公開検証は行わない。
 - `validationCommands` の `pre_deploy_check.js`、全Node tests、警告0のlintを全て通す。
+- 毎回、READMEのChangeLogだけでなく本文の全見出しを現行UI・ソース・配布JSON/ZIP・リンクと照合し、過剰な説明、欠落、誤記を直す。結果を `docs/readme-body-audit.json` の `findings` と `reviewedSections` に記録する。`pre_deploy_check.js` はREADME、`src`、`public`、版情報、配布ZIPとの一致を毎回検証し、古い監査記録では停止する。`findings` は自動生成せず、実際の本文確認の結果を書く。
 - Git tagまたはGitHub Releaseの同一versionが既に別candidateを指す場合は、tag強制更新や過去Release改変を行わない。パッチversionを上げた新しいcandidateでfail forwardし、新しいレシートを開始する。
 - API key、token、認証情報をGitHub Pages、GitHub Release、レシート、ログへ含めない。
 - GitHub source ZIPを検証して `C:\nano-banana-pro-main` へ配置し、既存コピーは削除せず時刻付きで退避する。
