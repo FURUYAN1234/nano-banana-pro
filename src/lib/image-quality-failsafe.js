@@ -1,5 +1,5 @@
 import { isMonochromePrompt } from './manga-render-mode.js';
-import { extractBubbleContracts, hasCriticalRearCameraContract } from './image-quality-qa.js';
+import { extractBubbleContracts, extractCriticalRearCameraContracts, hasCriticalRearCameraContract } from './image-quality-qa.js';
 
 export const IMAGE_QUALITY_MAX_ATTEMPTS = 4;
 export const IMAGE_REPAIR_PROMPT_MAX_CHARS = 31000;
@@ -14,7 +14,7 @@ const incidentalPrintIssues = review => (Array.isArray(review?.issues) ? review.
   && Number.isInteger(issue.panel) && issue.panel >= 1 && issue.panel <= 4
   && typeof issue.subject === 'string' && issue.subject.trim());
 
-const issueKey = issue => `${issue.type}:${issue.panel ?? 'unknown'}`;
+const issueKey = issue => `${issue.type}:${issue.panel ?? 'unknown'}${issue.type === 'camera_geometry' ? '' : `:${String(issue.subject || 'unspecified').trim().toLowerCase()}`}`;
 const samePrintTarget = (a, b) => a.panel === b.panel && a.subject.trim().toLowerCase() === b.subject.trim().toLowerCase();
 
 export const buildIncidentalPrintFallbackPrompt = ({ originalPrompt = '', issues = [], mode, sourceMode = 'regenerate', attempt = 2 } = {}) => {
@@ -57,16 +57,21 @@ const createUnverifiedReview = (reason) => ({
 // reviewer's uncertainty, decorative variation or action-phase nuance is
 // reported, but cannot by itself spend another image request.
 const MATERIAL_IMAGE_ISSUES = new Set([
-  'panel_layout', 'cast_count', 'character_reference', 'wardrobe_continuity', 'anatomy', 'object_geometry',
+  'panel_layout', 'cast_count', 'wardrobe_continuity', 'anatomy', 'object_geometry',
   'prop_ownership', 'camera_geometry', 'bubble_text', 'bubble_speaker',
   'bubble_order', 'title_text', 'speaker_name', 'extra_text',
   'monochrome_rendering', 'story_integrity',
 ]);
 
-export const isMaterialImageQualityIssue = (issue) => (
-  MATERIAL_IMAGE_ISSUES.has(issue?.type)
-  || (issue?.type === 'surface_text' && issue?.textRole === 'story_required')
-);
+export const isMaterialImageQualityIssue = (issue) => {
+  if (issue?.type === 'character_reference') {
+    const features = new Set(Array.isArray(issue.materialFeatures) ? issue.materialFeatures : []);
+    return features.has('eyewear') || features.has('defining_accessory')
+      || ['hair', 'face', 'outfit'].filter(feature => features.has(feature)).length >= 2;
+  }
+  return MATERIAL_IMAGE_ISSUES.has(issue?.type)
+    || (issue?.type === 'surface_text' && issue?.textRole === 'story_required');
+};
 
 const getRepairableIssues = (review) => (Array.isArray(review?.issues) ? review.issues : [])
   .filter(isMaterialImageQualityIssue)
@@ -81,6 +86,25 @@ const getRepairableIssues = (review) => (Array.isArray(review?.issues) ? review.
 const formatRepairIssue = (issue = {}) => (
   `- panel ${issue.panel ?? 'unknown'} / ${issue.type || 'unverified'} / ${issue.subject || 'unspecified'}: ${issue.reason || 'visible issue'}`
 );
+
+const formatReviewProgress = (label, review) => {
+  if (review?.pass === true) return `${label}: 合格。明確な修正対象はありません。`;
+  const issues = Array.isArray(review?.issues) ? review.issues : [];
+  if (!issues.length) return `${label}: 判定を確認できませんでした。画像はこの理由だけで再生成しません。`;
+  const prioritized = [...getRepairableIssues(review), ...issues.filter(issue => !isMaterialImageQualityIssue(issue))];
+  const details = prioritized.slice(0, 5).map(issue =>
+    `${issue?.panel ? `${issue.panel}コマ / ` : ''}${issue?.subject ? `${issue.subject} / ` : ''}${issue?.reason || issue?.type || '根拠未取得'}`);
+  const remainder = prioritized.length > 5 ? ` / ほか${prioritized.length - 5}件` : '';
+  const status = issues.every(issue => issue?.type === 'unverified') ? '未確認'
+    : getRepairableIssues(review).length ? '要修正' : '参考指摘';
+  return `${label}: ${status}。${details.join(' / ')}${remainder}`;
+};
+
+export const formatImageQualityStopReason = (reason) => ({
+  unverified: '根拠不足のみ', non_material: '軽微な指摘のみ', repair_disabled: '自動修正OFF',
+  analysis_failed: '修正方針を確定できない', prompt_limit: '修正指示の長さ上限',
+  generation_failed: '修正版の生成失敗', retry_limit: '修正回数の上限', cancelled: '利用者が停止',
+})[reason] || '検査未完了';
 
 const compactRepairData = (value, maxChars = 9000) => {
   for (const limit of [2000, 1000, 500, 200, 80]) {
@@ -127,20 +151,29 @@ export const enforceCriticalCameraComparison = (comparison, originalReview, repa
 };
 
 const buildBoundedRepairPrompt = ({ basePrompt, analysis, history, maxChars = IMAGE_REPAIR_PROMPT_MAX_CHARS }) => {
-  const full = `${basePrompt}\n\nFAILURE ANALYSIS AND REPAIR PLAN (internal; NEVER PRINT):\n${JSON.stringify(analysis)}\nPRIOR ATTEMPTS (internal; preserve resolved fixes and change failed strategies):\n${JSON.stringify(history)}\nApply the concrete operations above only within the approved contract. Verify every listed acceptance test and all previously correct text, identities, camera and actions.`;
+  // The base prompt already describes each visible defect. Send the operation
+  // and acceptance test once, while retaining history needed to avoid repeats.
+  const currentPlan = analysis.map(({ key, previousFailure, nextStrategy, verification }) => ({ key, previousFailure, nextStrategy, verification }));
+  const priorAttempts = history.map(({ attempt, analysis: plans, outcome, comparison }) => ({
+    attempt,
+    plans: plans?.map(({ key, nextStrategy }) => ({ key, nextStrategy })),
+    outcome: outcome && { pass: outcome.pass, issues: outcome.issues?.filter(isMaterialImageQualityIssue).map(({ type, panel, subject }) => ({ type, panel, subject })) },
+    comparison,
+  }));
+  const full = `${basePrompt}\n\nFAILURE ANALYSIS AND REPAIR PLAN (internal; NEVER PRINT):\n${JSON.stringify(currentPlan)}\nPRIOR ATTEMPTS (internal; preserve resolved fixes and change failed strategies):\n${JSON.stringify(priorAttempts)}\nApply the concrete operations above only within the approved contract. Verify every listed acceptance test and all previously correct text, identities, camera and actions.`;
   if (full.length <= maxChars) return full;
 
   // Keep the approved script intact and compact only internal diagnostics. A
   // long failure history must never turn a bounded retry into a provider
   // prompt-length failure.
-  const compactAnalysis = compactRepairData(analysis, 9500);
-  const compactHistory = compactRepairData(history, 3500);
+  const compactAnalysis = compactRepairData(currentPlan, 9500);
+  const compactHistory = compactRepairData(priorAttempts, 3500);
   const compact = `${basePrompt}\n\nFAILURE ANALYSIS AND REPAIR PLAN (internal; NEVER PRINT):\n${compactAnalysis}\nPRIOR ATTEMPTS (internal; preserve resolved fixes and change failed strategies):\n${compactHistory}\nApply the concrete operations above only within the approved contract. Verify every listed acceptance test and all previously correct text, identities, camera and actions.`;
   if (compact.length <= maxChars) return compact;
 
   // The issue list and approved prompt remain authoritative; omit stale
   // history before ever sending an over-limit request to the image provider.
-  const minimal = `${basePrompt}\n\nFAILURE ANALYSIS AND REPAIR PLAN (internal; NEVER PRINT):\n${compactRepairData(analysis, 5000)}\nApply the concrete operations above only within the approved contract. Verify every listed acceptance test and all previously correct text, identities, camera and actions.`;
+  const minimal = `${basePrompt}\n\nFAILURE ANALYSIS AND REPAIR PLAN (internal; NEVER PRINT):\n${compactRepairData(currentPlan, 5000)}\nApply the concrete operations above only within the approved contract. Verify every listed acceptance test and all previously correct text, identities, camera and actions.`;
   if (minimal.length <= maxChars) return minimal;
   if (basePrompt.length <= maxChars) return basePrompt;
   throw new Error('修正指示が画像APIの上限を超えます。台本を切り捨てず元画像を保持します。');
@@ -278,11 +311,26 @@ export const runImageQualityFailsafe = async ({
     try { return await reviewCandidate(image, prompt); }
     catch (error) { return { ...createUnverifiedReview(error), requestFailed: true }; }
   };
-  const mergeCriticalCameraAudit = (result, audit) => {
+  const mergeCriticalCameraAudit = (result, audit, prompt) => {
     const cameraIssues = (Array.isArray(audit?.issues) ? audit.issues : [])
       .filter(issue => issue?.type === 'camera_geometry');
     if (!cameraIssues.length) {
-      if (audit?.pass === true) return { ...result, criticalCameraAudit: audit };
+      if (audit?.pass === true) {
+        const auditedPanels = new Set(extractCriticalRearCameraContracts(prompt).map(contract => contract.panel));
+        const disputed = (Array.isArray(result?.issues) ? result.issues : [])
+          .filter(issue => issue?.type === 'camera_geometry' && auditedPanels.has(issue.panel));
+        if (!disputed.length) return { ...result, criticalCameraAudit: audit };
+        onProgress('肩越し構図の判定に矛盾があります。独立監査が合格したコマは未確認として保持し、この矛盾だけで画像を再生成しません。');
+        return {
+          ...result,
+          pass: false,
+          issues: (result.issues || []).filter(issue => !disputed.includes(issue)).concat(disputed.map(issue => ({
+            ...issue, type: 'unverified',
+            reason: `総合検査と独立した肩越し構図監査の判定が矛盾しています。総合検査: ${issue.reason || '根拠なし'}`,
+          }))),
+          criticalCameraAudit: audit,
+        };
+      }
       return {
         ...result,
         pass: false,
@@ -301,18 +349,46 @@ export const runImageQualityFailsafe = async ({
   };
   const inspect = async (image, prompt) => {
     let result = await review(image, prompt);
+    const identityIssues = (Array.isArray(result?.issues) ? result.issues : [])
+      .filter(issue => issue?.type === 'character_reference');
+    if (identityIssues.length && !result?.requestFailed && !shouldStop()) {
+      onProgress('人物差分の独立再検査を行います。髪型・色味など単発の判定だけでは画像を再生成しません。');
+      const confirmation = await review(image, prompt);
+      const confirmed = Array.isArray(confirmation?.issues) ? confirmation.issues : [];
+      const disputed = identityIssues.filter(issue => !confirmed.some(next =>
+        next?.type === 'character_reference' && next.panel === issue.panel && next.subject === issue.subject));
+      if (disputed.length) {
+        result = {
+          ...result,
+          pass: false,
+          issues: (result.issues || []).filter(issue => !disputed.includes(issue)).concat(disputed.map(issue => ({
+            ...issue, type: 'unverified',
+            reason: `人物差分の再検査で同じ欠陥を確認できませんでした。初回: ${issue.reason || '根拠なし'}`,
+          }))),
+        };
+        onProgress(`人物差分の再検査結果: ${disputed.length}件は未確認として保持します。`);
+      } else {
+        onProgress('人物差分の再検査結果: 同じ人物・コマの欠陥を再確認しました。');
+      }
+    }
     if (reviewCriticalCamera && hasCriticalRearCameraContract(prompt) && !result?.requestFailed) {
       onProgress('明示された肩越し構図を、吹き出し判定と独立して再検査します。画像は再生成しません。');
-      try { result = mergeCriticalCameraAudit(result, shouldStop() ? null : await reviewCriticalCamera(image, prompt)); }
-      catch { result = mergeCriticalCameraAudit(result, null); }
+      try {
+        const audit = shouldStop() ? null : await reviewCriticalCamera(image, prompt);
+        onProgress(formatReviewProgress('肩越し構図の再検査結果', audit));
+        result = mergeCriticalCameraAudit(result, audit, prompt);
+      } catch {
+        onProgress('肩越し構図の再検査結果: 取得できませんでした。構図は未確認として保持します。');
+        result = mergeCriticalCameraAudit(result, null, prompt);
+      }
     }
     return result || createUnverifiedReview('Empty quality response');
   };
   finalReview = originalReview = await inspect(candidate, originalPrompt);
+  onProgress(formatReviewProgress('初回検査結果', originalReview));
   candidates[0].review = originalReview;
   while (!finalReview.pass && attempts < IMAGE_QUALITY_MAX_ATTEMPTS) {
     if (shouldStop()) { stopReason = 'cancelled'; break; }
-    if (!allowRepair) { stopReason = 'repair_disabled'; break; }
     const repairable = getRepairableIssues(finalReview);
     // 実文字で確認済みの読順違反を先に局所修正し、他の判定で埋もれさせない。
     const confirmedOrder = repairable.filter(issue => issue.type === 'bubble_order'
@@ -323,6 +399,14 @@ export const runImageQualityFailsafe = async ({
       : (confirmedOrder.length ? confirmedOrder : (concrete.length ? concrete : repairable));
     if (!issues.length) {
       stopReason = finalReview.issues?.every(issue => issue?.type === 'unverified') ? 'unverified' : 'non_material';
+      onProgress(stopReason === 'unverified'
+        ? '未確認のみで明確な欠陥がないため、画像は再生成しません。'
+        : '重大な修正対象がないため、画像は再生成しません。');
+      break;
+    }
+    if (!allowRepair) {
+      stopReason = 'repair_disabled';
+      onProgress('明確な修正対象はありますが、自動修正OFFのため画像は再生成しません。');
       break;
     }
     let analysis;
@@ -366,6 +450,7 @@ export const runImageQualityFailsafe = async ({
     const reviewPrompt = usePrintFallback
       ? buildIncidentalPrintFallbackPrompt({ originalPrompt, issues, mode, attempt: attempts }) : originalPrompt;
     repairReview = await inspect(repairCandidate, reviewPrompt);
+    onProgress(formatReviewProgress(`修正版${attempts - 1}回目の再検査結果`, repairReview));
     record.review = repairReview;
     entry.outcome = { pass: repairReview.pass, issues: repairReview.issues };
     if (shouldStop()) { stopReason = 'cancelled'; break; }
@@ -385,7 +470,7 @@ export const runImageQualityFailsafe = async ({
   const validationWarning = !finalReview.pass || Boolean(stopReason);
   const canContinue = stopReason !== 'cancelled' && Boolean(candidate?.base64Img);
   onProgress(validationWarning
-    ? `${canContinue ? '比較で保持した最良候補を警告付きで採用します' : '画像を保持して停止します'}（${stopReason}）。${repairError?.message || ''}`
+    ? `${canContinue ? history.some(entry => entry.comparison) ? '比較で保持した最良候補を警告付きで採用します' : '元画像を警告付きで保持します' : '画像を保持して停止します'}（${formatImageQualityStopReason(stopReason)}）。${repairError?.message || ''}`
     : '修正と品質検査を通過した画像を採用します。');
   return { candidate, finalReview, originalReview, repairReview, attempts, validationWarning,
     fallbackToOriginal: candidate === originalCandidate, repairError, history, candidates, canContinue, stopReason, incidentalPrintFallback };

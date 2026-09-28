@@ -8,6 +8,7 @@ import {
   GEMINI_IMAGE_REPAIR_PROMPT_MAX_CHARS,
   inferImageQualityMode,
   runImageQualityFailsafe as executeQualityGate,
+  formatImageQualityStopReason,
   parseImageFailureAnalysis,
   buildImageFailureAnalysisPrompt,
 } from '../src/lib/image-quality-failsafe.js';
@@ -27,6 +28,108 @@ const pass = { pass: true, issues: [] };
 const fail = (type = 'anatomy') => ({
   pass: false,
   issues: [{ type, panel: 2, subject: 'アカリ', reason: '腕が1本多い' }],
+});
+
+test('progress explains the defect that warrants repair and the result of each recheck', async () => {
+  const progress = [];
+  await runImageQualityFailsafe({ originalCandidate: candidate('original'), originalPrompt: 'APPROVED',
+    reviewCandidate: async image => image.id === 'original' ? fail() : pass,
+    generateRepairCandidate: async () => candidate('repair'),
+    compareCandidates: async () => ({ preferred: 'repair', reason: '腕の本数が正しい' }),
+    onProgress: message => progress.push(message),
+  });
+  assert.ok(progress.some(message => /初回検査.*アカリ.*腕が1本多い/.test(message)));
+  assert.ok(progress.some(message => /再検査.*合格/.test(message)));
+  assert.ok(progress.some(message => /候補比較.*腕の本数が正しい/.test(message)));
+});
+
+test('progress shows a concrete repair reason even after many uncertain observations', async () => {
+  const progress = [];
+  const uncertain = Array.from({ length: 6 }, (_, index) => ({
+    type: 'unverified', panel: 1, subject: `uncertain-${index}`, reason: `見えない箇所${index}`,
+  }));
+  const result = await runImageQualityFailsafe({
+    originalCandidate: candidate('original'), originalPrompt: 'APPROVED', allowRepair: false,
+    reviewCandidate: async () => ({ pass: false, issues: [...uncertain, ...fail().issues] }),
+    generateRepairCandidate: async () => assert.fail('repair was disabled'),
+    onProgress: message => progress.push(message),
+  });
+  assert.equal(result.stopReason, 'repair_disabled');
+  assert.ok(progress.some(message => /初回検査結果: 要修正.*アカリ.*腕が1本多い/.test(message)));
+});
+
+test('first repair prompt does not repeat the current plan as prior failed history', async () => {
+  let sentPrompt = '';
+  await runImageQualityFailsafe({
+    originalCandidate: candidate('original'), originalPrompt: 'APPROVED',
+    reviewCandidate: async image => image.id === 'original' ? fail() : pass,
+    generateRepairCandidate: async prompt => { sentPrompt = prompt; return candidate('repair'); },
+    compareCandidates: async () => ({ preferred: 'repair', reason: '修正済み' }),
+  });
+  assert.match(sentPrompt, /FAILURE ANALYSIS AND REPAIR PLAN/);
+  assert.match(sentPrompt, /PRIOR ATTEMPTS[^\n]*:\n\[\]/);
+});
+
+test('repair prompt avoids duplicating diagnostic prose before reaching the limit', async () => {
+  const defect = { type: 'character_reference', panel: 2, subject: 'ヒカリ', materialFeatures: ['eyewear'], reason: '眼鏡がない。' + '観察'.repeat(250) };
+  let sentPrompt = '';
+  await runImageQualityFailsafe({
+    originalCandidate: candidate('original'), originalPrompt: 'APPROVED',
+    reviewCandidate: async image => image.id === 'original' ? { pass: false, issues: [defect] } : pass,
+    analyzeFailure: async () => JSON.stringify({ corrections: [{ issueIndex: 0,
+      observed: defect.reason, expected: '眼鏡をかける', cause: '形状の省略', previousFailure: 'First attempt',
+      nextStrategy: '顔の眼鏡を局所修正', verification: '眼鏡の輪郭を確認',
+    }] }),
+    generateRepairCandidate: async prompt => { sentPrompt = prompt; return candidate('repair'); },
+    compareCandidates: async () => ({ preferred: 'repair', reason: '眼鏡を確認' }),
+  });
+  assert.equal(sentPrompt.split(defect.reason).length - 1, 1);
+  assert.match(sentPrompt, /顔の眼鏡を局所修正/);
+  assert.match(sentPrompt, /眼鏡の輪郭を確認/);
+});
+
+test('failed repair generation retains original without claiming a comparison', async () => {
+  const progress = [];
+  const result = await runImageQualityFailsafe({
+    originalCandidate: candidate('original'), originalPrompt: 'APPROVED',
+    reviewCandidate: async () => fail(),
+    generateRepairCandidate: async () => { throw new Error('API Time out'); },
+    onProgress: message => progress.push(message),
+  });
+  assert.equal(result.stopReason, 'generation_failed');
+  assert.equal(result.candidates.length, 1);
+  assert.ok(progress.some(message => /元画像を警告付きで保持.*修正版の生成失敗/.test(message)));
+  assert.ok(progress.every(message => !/比較で保持した最良候補/.test(message)));
+});
+
+test('uncertain review reports why repair is skipped without spending an image request', async () => {
+  const progress = [];
+  await runImageQualityFailsafe({ originalCandidate: candidate('original'), originalPrompt: 'APPROVED',
+    reviewCandidate: async () => ({ pass: false, issues: [{ type: 'unverified', reason: '指が隠れていて数えられない' }] }),
+    generateRepairCandidate: async () => assert.fail('uncertainty is not a repair trigger'),
+    onProgress: message => progress.push(message),
+  });
+  assert.ok(progress.some(message => /未確認.*指が隠れていて数えられない/.test(message)));
+  assert.ok(progress.some(message => /再生成しません/.test(message)));
+});
+
+test('disabled repair still identifies uncertainty separately from a confirmed defect', async () => {
+  for (const [review, expectedReason, expectedLog] of [
+    [{ pass: false, issues: [{ type: 'unverified', reason: '手が隠れている' }] }, 'unverified', /未確認のみ.*再生成しません/],
+    [fail(), 'repair_disabled', /明確な修正対象.*自動修正OFF/],
+  ]) {
+    const progress = [];
+    const result = await runImageQualityFailsafe({ originalCandidate: candidate('original'), originalPrompt: 'APPROVED',
+      reviewCandidate: async () => review, allowRepair: false,
+      generateRepairCandidate: async () => assert.fail('repair was disabled'),
+      onProgress: message => progress.push(message),
+    });
+    assert.equal(result.stopReason, expectedReason);
+    assert.ok(progress.some(message => expectedLog.test(message)));
+    assert.ok(progress.some(message => /元画像を警告付きで保持/.test(message)));
+    assert.ok(progress.every(message => !/（(?:unverified|repair_disabled)）/.test(message)));
+  }
+  assert.equal(formatImageQualityStopReason('unverified'), '根拠不足のみ');
 });
 
 test('analysis carries failed strategies and outcomes forward and stops as soon as a repair passes', async () => {
@@ -60,6 +163,17 @@ test('a repeated identical strategy is rejected before spending another image', 
   assert.equal(images, 1);
   assert.equal(result.stopReason, 'analysis_failed');
   assert.match(result.repairError.message, /同一/);
+});
+
+test('repair history does not conflate different people in the same panel', () => {
+  const first = { type: 'character_reference', panel: 2, subject: 'ヒカリ', reason: '眼鏡がない' };
+  const second = { type: 'character_reference', panel: 2, subject: 'リン', reason: '眼鏡がない' };
+  const firstPlan = parseImageFailureAnalysis(analysis({ issues: [first], history: [] }),
+    { issues: [first], history: [], originalPrompt: 'APPROVED' });
+  const history = [{ analysis: firstPlan }];
+  const secondPlan = parseImageFailureAnalysis(analysis({ issues: [second], history: [] }),
+    { issues: [second], history, originalPrompt: 'APPROVED' });
+  assert.notEqual(firstPlan[0].key, secondPlan[0].key);
 });
 
 test('an incomplete analysis never triggers image generation and the prompt demands prior failure analysis', async () => {
@@ -199,6 +313,81 @@ EXPLICIT REAR CAMERA: camera is physically behind [ヒカリ]'s shoulder; back o
   assert.deepEqual(analyzedIssues.map(issue => issue.type), ['camera_geometry']);
   assert.equal(result.candidate.id, 'repair');
   assert.equal(result.validationWarning, false);
+});
+
+test('conflicting rear-camera reviews do not spend an image repair or claim a pass', async () => {
+  const originalPrompt = `## Panel 3
+EXPLICIT REAR CAMERA: camera is physically behind [リン]'s shoulder; back of [リン]'s head or shoulder foreground.`;
+  const progress = [];
+  const result = await runImageQualityFailsafe({
+    originalCandidate: candidate('original'), originalPrompt,
+    reviewCandidate: async () => ({ pass: false, issues: [
+      { type: 'camera_geometry', panel: 3, subject: 'リン', reason: 'The required rear shoulder is absent.' },
+      { type: 'unverified', panel: 1, subject: 'hands', reason: 'Digits are occluded.' },
+    ] }),
+    reviewCriticalCamera: async () => ({ pass: true, issues: [], criticalCameraChecks: [{ panel: 3 }] }),
+    generateRepairCandidate: async () => { assert.fail('conflicting reviews cannot authorize paid repair'); },
+    onProgress: message => progress.push(message),
+  });
+  assert.equal(result.candidate.id, 'original');
+  assert.equal(result.validationWarning, true);
+  assert.equal(result.finalReview.pass, false);
+  assert.equal(result.finalReview.issues.some(issue => issue.type === 'camera_geometry'), false);
+  assert.ok(result.finalReview.issues.some(issue => issue.type === 'unverified' && /conflict|矛盾/i.test(issue.reason)));
+  assert.ok(progress.some(message => /矛盾/.test(message)));
+});
+
+test('rear-camera audit does not suppress an unrelated camera defect', async () => {
+  const originalPrompt = `## Panel 3
+EXPLICIT REAR CAMERA: camera is physically behind [リン]'s shoulder; back of [リン]'s head or shoulder foreground.`;
+  let repaired = 0;
+  await runImageQualityFailsafe({
+    originalCandidate: candidate('original'), originalPrompt,
+    reviewCandidate: async image => image.id === 'repair' ? pass : ({ pass: false, issues: [
+      { type: 'camera_geometry', panel: 2, subject: 'camera', reason: 'The scripted low angle is clearly reversed.' },
+    ] }),
+    reviewCriticalCamera: async () => ({ pass: true, issues: [], criticalCameraChecks: [{ panel: 3 }] }),
+    generateRepairCandidate: async () => { repaired += 1; return candidate('repair'); },
+    compareCandidates: async () => ({ preferred: 'repair', reason: 'Panel 2 camera restored.' }),
+  });
+  assert.equal(repaired, 1);
+});
+
+test('one uncorroborated cast-style judgment cannot spend an image repair', async () => {
+  const progress = [];
+  let reviews = 0;
+  const result = await runImageQualityFailsafe({
+    originalCandidate: candidate('original'), originalPrompt: 'APPROVED',
+    reviewCandidate: async () => ++reviews === 1 ? ({ pass: false, issues: [
+      { type: 'character_reference', panel: 2, subject: 'actor', reason: 'hair curl and shade seem different' },
+    ] }) : pass,
+    generateRepairCandidate: async () => { assert.fail('unconfirmed identity issue cannot spend an image request'); },
+    onProgress: message => progress.push(message),
+  });
+  assert.equal(reviews, 2);
+  assert.equal(result.candidate.id, 'original');
+  assert.equal(result.validationWarning, true);
+  assert.ok(result.finalReview.issues.some(issue => issue.type === 'unverified' && /再検査/.test(issue.reason)));
+  assert.ok(progress.some(message => /人物差分の独立再検査/.test(message)));
+});
+
+test('repeated concrete cast mismatch remains eligible for repair', async () => {
+  let reviews = 0;
+  let repairs = 0;
+  const mismatch = { pass: false, issues: [
+    { type: 'character_reference', panel: 2, subject: 'actor', materialFeatures: ['eyewear'], reason: 'required glasses are visibly absent' },
+  ] };
+  await runImageQualityFailsafe({
+    originalCandidate: candidate('original'), originalPrompt: 'APPROVED',
+    reviewCandidate: async image => {
+      reviews += 1;
+      return image.id === 'original' ? mismatch : pass;
+    },
+    generateRepairCandidate: async () => { repairs += 1; return candidate('repair'); },
+    compareCandidates: async () => ({ preferred: 'repair', reason: 'required glasses restored' }),
+  });
+  assert.equal(reviews, 3);
+  assert.equal(repairs, 1);
 });
 
 test('failed critical camera audit leaves the image quality unverified', async () => {

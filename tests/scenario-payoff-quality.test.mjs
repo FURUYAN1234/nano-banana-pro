@@ -36,6 +36,30 @@ const WEAK_SLOGAN_REVIEW = {
   reason_codes: [],
 };
 
+test('STEP2 progress identifies a material recheck reason and its resolved outcome', async () => {
+  const progress = [];
+  const reviews = [WEAK_SLOGAN_REVIEW, STRONG_GAG_REVIEW];
+  const result = await runScenarioPayoffGate({ scenario: '元の4コマ', punchlineType: 'GagAuto',
+    requestReview: async () => ({ text: JSON.stringify(reviews.shift()) }),
+    requestRepair: async () => ({ text: '改善した4コマ' }),
+    onProgress: message => progress.push(message),
+  });
+  assert.equal(result.status, 'repaired');
+  assert.ok(progress.some(message => /再検査理由.*標語.*絵で伝わるオチ/.test(message) || /再検査理由.*絵で伝わるオチ.*標語/.test(message)));
+  assert.ok(progress.some(message => /再検査結果.*合格/.test(message)));
+});
+
+test('STEP2 harmless review feedback reports why no regeneration runs', async () => {
+  const progress = [];
+  const result = await runScenarioPayoffGate({ scenario: '元の4コマ', punchlineType: 'GagAuto',
+    requestReview: async () => ({ text: JSON.stringify({ ...STRONG_GAG_REVIEW, pass: false, reason_codes: ['no_setup_seed'], setup_seed: '' }) }),
+    requestRepair: async () => assert.fail('minor issue is not a repair trigger'),
+    onProgress: message => progress.push(message),
+  });
+  assert.equal(result.status, 'retained');
+  assert.ok(progress.some(message => /オチの種.*重大欠陥ではないため再生成せず/.test(message)));
+});
+
 test('review prompt asks for prediction, outcome, visual payoff, and mode-aware documentary safety', () => {
   const prompt = buildScenarioPayoffReviewPrompt({
     scenario: '[1コマ目: 起]\n状況: 作業を始める。\n[4コマ目: 結]\n状況: 結論を述べる。',

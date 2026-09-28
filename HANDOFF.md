@@ -1,3 +1,18 @@
+## v6.6.7 候補・FourPanel H3中間配布 — 2026-09-28（未公開）
+
+- STEP再検査理由・結果の表示、矛盾するカメラ判定や軽微な人物差分による過剰な有料修正の抑止、修正指示の重複削減を候補に含む。画像の実API検証では最終修正版を警告付きで採用したが、版更新時のローカル画面再読込で生成画像の表示状態が消失し、保存済み実画像の再確認は未完了。
+- FourPanel H3配布を`20260928-173220`のJSONとZIPへ更新。ZIPは中間配布であり統合グラフ全体の実走は未確認。公開時は同版ReleaseアセットとPages配布JSONの実URL・ハッシュ照合が必要。
+
+## v6.6.6 公開・3媒体告知・フルバックアップ — 2026-09-28（完了）
+
+- 利用者の明示承認により初回API結果を採用、追加画像生成なし。正式トランザクション完了、全required stages verified。candidate `3eec7263e040aba4bac47731fddad189e7c9bbe3`、Pages `5c3d20ae428d0647b84c6c839ca767147a254214`、Release v6.6.6、C:\nano-banana-pro-main。receipt: ../backups/release_receipts/nano-banana-pro-v6.6.6-2026-09-28_111248.json。
+- noteの既存記事を公開読戻し。タイトル・本文の話者配置説明・料金確認日・ZIPリンク・更新履歴を同期。画像18、figure51を保持し、編集前後のmedia/見出し要素一致、リンク46件、空行増加0、日付＋版番号の太字を確認。
+- X: https://x.com/FURUYAN123456/status/2104395170695598184 。Facebookは指定個人プロフィール／友達（一部除外）で同じ本文・改行・2リンク・3タグ。送信前X残り12,359文字。両投稿の固有ページ読戻し済み。個人URLは非公開receiptだけへ保存。../backups/social_receipts/nano-banana-pro-v6.6.6.jsonに対しSOCIAL_COMPLETION_VERIFIED。
+- 全コマ合格とはせず、3コマ目改善と4コマ目のヒゲの曖昧さをRelease、note、SNSへ記載。公式full backupと独立検証まで完了。公開画像の保証を拡大しない。
+
+- Backup: ../backups/antigravity_full_backup_2026-09-28_112055.zip（139,540,863 bytes）と同名manifest。公式backup_full.ps1 -NoGuiが終了0、Drive複製・非公開ledger同期完了。verify_full_backup.ps1 -ExpectedVersion 6.6.6 -ManifestPath <同名manifest> が終了0、FULL_BACKUP_VERIFIED apps=7。local/Drive SHA-256はともに A94837AC8A6C0DE3252883E9AE47459881517B1004E932842469975F46E24F35。ZIP必須復元内容・7アプリ・lock解除を独立確認。この完了追記はZIP封印後の記録。
+- ブラウザは作業用note/X/Facebookタブを閉じ、元の127.0.0.1:5173タブのみ保持。ローカルdev serverと生成結果は保持。
+
 ## 吹き出し話者接続修正 — 2026-09-28（API初回検証済み・全コマ合格は未達）
 
 - 依頼: 3コマ目のサエコの台詞が画面内評論家へ接続する不具合を汎用修正し、提示された「ラーメン経営ゲーム始動」で実API検証。初期境界はローカル修正＋API検証。2026-09-28に利用者が初回結果を採用し、デプロイ・note・X・Facebook更新・フルバックアップを明示承認。

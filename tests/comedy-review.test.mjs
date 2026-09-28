@@ -138,6 +138,36 @@ test('automatic review awaits a result and retains usable original on failure or
   assert.equal(result.prompt.split('\n')[0], source.split('\n')[0]);
 });
 
+test('STEP3 review progress states the inspection target and the accepted result', async () => {
+  const progress = [];
+  const result = await reviewComedyPrompt({ prompt: source, scenario: source, castList: '' },
+    async () => ({ text: JSON.stringify({ observations: [], patches: [{ line: 2, before: 'EYE-LINE LOCK: face viewer', after: 'EYE-LINE LOCK: follow Action', confidence: 'high', reason: '視線と動作の矛盾' }] }) }),
+    message => progress.push(message));
+  assert.match(result.prompt, /EYE-LINE LOCK: follow Action/);
+  assert.ok(progress.some(message => /再検査.*視線.*動作/.test(message)));
+  assert.ok(progress.some(message => /適用.*視線と動作の矛盾/.test(message)));
+});
+
+test('STEP3 harmless proposal keeps the prompt and explains the rejection', async () => {
+  const progress = [];
+  const result = await reviewComedyPrompt({ prompt: source, scenario: source, castList: '' },
+    async () => ({ text: 'invalid' }), message => progress.push(message));
+  assert.equal(result.prompt, source);
+  assert.ok(progress.some(message => /元の指示文を保持/.test(message)));
+});
+
+test('STEP3 reports rejected proposal reasons without claiming any patch was applied', async () => {
+  const progress = [];
+  const result = await reviewComedyPrompt({ prompt: source, scenario: source, castList: '' },
+    async () => ({ text: JSON.stringify({ observations: [], patches: [{
+      line: 2, before: 'EYE-LINE LOCK: stale source', after: 'EYE-LINE LOCK: follow Action',
+      confidence: 'high', reason: '視線の修正提案',
+    }] }) }), message => progress.push(message));
+  assert.equal(result.prompt, source);
+  assert.ok(progress.some(message => /再検査結果:.*提案1件.*対象行.*元の指示/.test(message)));
+  assert.ok(progress.every(message => !/適用可能な提案で続行/.test(message)));
+});
+
 test('STEP3 publishes and returns the reviewed candidate with no extra review UI', async () => {
   const { readFile } = await import('node:fs/promises');
   const workflow = await readFile(new URL('../src/hooks/useMangaWorkflow.js', import.meta.url), 'utf8');

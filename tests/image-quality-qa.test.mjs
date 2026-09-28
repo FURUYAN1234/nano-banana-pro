@@ -756,6 +756,12 @@ Dialogue: silent`;
   const correct = makeReview([{ ...baseB1, tail_tip: { x: 0.39, y: 0.63 } }, validB2]);
   assert.equal(correct.pass, true);
 
+  const reviewerMislabelsSpeaker = makeReview([{ ...baseB1, expected_speaker: 'ミク',
+    tail_tip: { x: 0.39, y: 0.63 } }, validB2]);
+  assert.equal(reviewerMislabelsSpeaker.pass, false);
+  assert.ok(reviewerMislabelsSpeaker.issues.some(issue => issue.type === 'unverified' && issue.subject === 'B1'));
+  assert.ok(reviewerMislabelsSpeaker.issues.every(issue => issue.type !== 'bubble_speaker'));
+
   // The first balloon may move toward its speaker while remaining right of B2.
   const nearby = makeReview([{ ...baseB1, center_x: 0.49, tail_tip: { x: 0.39, y: 0.63 } }, validB2]);
   assert.equal(nearby.pass, true);
@@ -816,6 +822,20 @@ test('a recognizable character with only a face-style variation is not a paid re
   }));
   assert.equal(result.issues[0].type, 'unverified');
   assert.equal(isMaterialImageQualityIssue(result.issues[0]), false);
+});
+
+test('a single hair variation is reported but cannot authorize paid repair', () => {
+  const result = parseImageQualityQaResponse(JSON.stringify({ pass: false, issues: [{
+    type: 'character_reference', panel: 2, subject: 'actor', reason: 'the bob curls outward',
+    identity_evidence: { location: 'panel left', matched_features: ['shirt', 'eyewear'],
+      reference_evidence: 'reference sheet bob', observed_feature: 'outward bob', expected_feature: 'inward bob',
+      difference_kind: 'identity_feature', material_features: ['hair'] },
+  }] }));
+  const issue = result.issues.find(entry => entry.type === 'character_reference');
+  assert.ok(issue);
+  assert.equal(isMaterialImageQualityIssue(issue), false);
+  assert.equal(isMaterialImageQualityIssue({ ...issue, materialFeatures: ['hair', 'outfit'] }), true);
+  assert.equal(isMaterialImageQualityIssue({ ...issue, materialFeatures: ['eyewear'] }), true);
 });
 
 test('preserves explicit over-the-shoulder camera failures as a stable issue type', () => {

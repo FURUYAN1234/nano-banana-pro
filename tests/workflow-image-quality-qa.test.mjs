@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
 const workflowSource = await readFile(new URL('../src/hooks/useMangaWorkflow.js', import.meta.url), 'utf8');
+const step4Source = await readFile(new URL('../src/components/Step4Panel.jsx', import.meta.url), 'utf8');
 
 test('image generation displays the received image before running one visible combined quality gate', () => {
   const renderIndex = workflowSource.indexOf('setGeneratedImage(finalImageStr)');
@@ -31,6 +32,14 @@ test('best available fallback continues with a warning while explicit cancellati
   assert.match(workflowSource, /addGenerationHistoryItem\(prev,[\s\S]*removeImages:\s*candidateImages/);
   assert.match(workflowSource, /analyzeFailure: async[\s\S]*buildImageFailureAnalysisPrompt/);
   assert.match(workflowSource, /shouldStop:.*qualityRetryAbortRef.current/);
+  assert.match(workflowSource, /qualityOutcome\.history\?\.some\(entry => entry\.comparison\)/);
+  assert.doesNotMatch(workflowSource, /qualityOutcome\.attempts > 1 \? '最良候補を採用'/);
+});
+
+test('retained-image retry is available without generating a fresh original image', () => {
+  assert.match(workflowSource, /generationOptions\.reviewExisting[\s\S]*?generatedImage/);
+  assert.match(workflowSource, /: await generateImageCandidate\(currentPrompt\)/);
+  assert.match(step4Source, /generatedImage\s*&&\s*allowImageQualityRepair[\s\S]*?regenerateImage\(false, null, \{ reviewExisting: true \}\)/);
 });
 
 test('OpenAI generation binds initial references and the actual repair source', () => {

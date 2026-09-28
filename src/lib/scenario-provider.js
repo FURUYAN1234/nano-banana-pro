@@ -495,6 +495,9 @@ export async function generateScenario({
       : [],
     maxAttempts: 3
   });
+  onProgress(safeScenarioResult.validationWarning
+    ? `シナリオ再検査結果: ${safeScenarioResult.attempts}回の試行後も「${scenarioRetryLabels[safeScenarioResult.validationWarning.code] || 'シナリオ品質'}」に確認事項が残りました。理由: ${safeScenarioResult.validationWarning.message}。最良候補を保持します。`
+    : `シナリオ検査結果: ${safeScenarioResult.attempts}回目の候補が品質条件を通過しました${safeScenarioResult.attempts > 1 ? '。再生成で指摘が解消しました。' : '。再生成は不要です。'}`);
   let result = safeScenarioResult.response;
   let parsedData = safeScenarioResult.parsed;
   let repairedInputModeLabelLeak = false;
@@ -508,7 +511,7 @@ export async function generateScenario({
     parsedData = sanitizeInputModeLabelLeak({ scenario: parsedData, manualTopic });
     assertNoInputModeLabelLeak({ scenario: parsedData, manualTopic });
     if (repairedInputModeLabelLeak) {
-      onProgress('改善候補のうち最良のシナリオを保持し、残っていた入力モードUIラベルだけを除去して再検査しました。');
+      onProgress('入力モードUIラベルの再検査理由: 物語に内部ラベルが残っていたため、そのラベルだけを除去しました。再検査結果: 内部ラベルは消え、最良のシナリオを保持しました。');
     }
   }
   const generatedEnding = resolveGeneratedEnding({
@@ -679,7 +682,7 @@ export async function enhanceScenarioText({
   scenarioModelId,
   onProgress
 }) {
-  return runValidatedScenarioEnhancement({
+  const result = await runValidatedScenarioEnhancement({
     originalScenario: scenario,
     selectedCategories,
     punchlineType,
@@ -703,12 +706,14 @@ export async function enhanceScenarioText({
         thought: result.thought
       };
     },
-    onRetry: (validation) => {
-      onProgress?.(`出力検証NGのため自動修正します: ${validation.issueCodes.join(', ')}`);
+    onRetry: (validation, attempt) => {
+      onProgress?.(`強化再検査 ${attempt}回目: 選択項目以外の変更などを検出。理由: ${validation.issues.join(' / ')}。対象だけを修正して再試行します。`);
     },
     onWarning: (validation, _text, fallbackToOriginal) => {
       const retained = fallbackToOriginal ? '元のシナリオ' : '最良の安全候補';
-      onProgress?.(`強化品質の再試行上限に達したため、${retained}を保持して続行します: ${validation.issueCodes.join(', ')}`);
+      onProgress?.(`強化再検査結果: ${validation.issues.join(' / ')}。再試行上限に達したため、${retained}を保持して続行します。`);
     }
   });
+  if (result.validation?.ok) onProgress?.(`強化再検査結果: ${result.attempts}回目の候補が選択項目の変更範囲を通過しました。`);
+  return result;
 }

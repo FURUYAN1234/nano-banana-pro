@@ -54,34 +54,44 @@ export function applyComedyReview(original, raw, maxChars = OPENAI_IMAGE_PROMPT_
     const lines = original.split('\n');
     const seen = new Set();
     const accepted = [];
-    let rejected = 0;
+    const rejected = { target: 0, constraint: 0, budget: 0 };
     let length = original.length;
     for (const patch of result.patches) {
       const after = /^FUNCTIONAL SURFACE PANEL CHECK:/.test(patch?.before) ? compileSurfacePatch(patch, lines) : patch?.after;
-      if (!Number.isInteger(patch?.line) || seen.has(patch.line) || lines[patch.line] !== patch.before || !AUXILIARY.test(patch.before)
-        || typeof after !== 'string' || !AUXILIARY.test(after) || patch.before.split(':')[0] !== after.split(':')[0] || /[\r\n]/.test(after) || after.length > 700
-        || patch.confidence !== 'high' || typeof patch.reason !== 'string') { rejected++; continue; }
+      if (!Number.isInteger(patch?.line) || seen.has(patch.line) || lines[patch.line] !== patch.before || !AUXILIARY.test(patch.before)) {
+        rejected.target++; continue;
+      }
+      if (typeof after !== 'string' || !AUXILIARY.test(after) || patch.before.split(':')[0] !== after.split(':')[0] || /[\r\n]/.test(after) || after.length > 700
+        || patch.confidence !== 'high' || typeof patch.reason !== 'string') { rejected.constraint++; continue; }
       // A review must not undo the shared Web/API size budget. Long manual
       // prompts remain intact, but generated review patches cannot lengthen them.
       const nextLength = length - patch.before.length + after.length;
-      if (nextLength > Math.max(original.length, maxChars)) { rejected++; continue; }
+      if (nextLength > Math.max(original.length, maxChars)) { rejected.budget++; continue; }
       length = nextLength;
       seen.add(patch.line);
       accepted.push({ ...patch, after });
     }
     for (const patch of accepted) lines[patch.line] = patch.after;
-    return { prompt: lines.join('\n'), changes: accepted.map(p => p.reason), patches: accepted.map(({ before, after }) => ({ before, after })), observations: result.observations.slice(0, 16).map(o => ({ panel: o.panel, kind: String(o.kind), reason: String(o.reason) })), warning: rejected ? '確認できない精査提案は元の指示を保ち、適用可能な提案で続行しました。' : '' };
+    const rejectedCount = rejected.target + rejected.constraint + rejected.budget;
+    const reasons = [rejected.target && '対象行が元の指示と一致しない', rejected.constraint && '変更内容が適用条件を満たさない', rejected.budget && '文字数上限を超える'].filter(Boolean);
+    return { prompt: lines.join('\n'), changes: accepted.map(p => p.reason), patches: accepted.map(({ before, after }) => ({ before, after })), observations: result.observations.slice(0, 16).map(o => ({ panel: o.panel, kind: String(o.kind), reason: String(o.reason) })), warning: rejectedCount ? `提案${rejectedCount}件を見送り（${reasons.join('・')}）。${accepted.length ? '採用分のみ適用しました。' : '元の指示文を保持しました。'}` : '' };
   } catch {
     return { prompt: original, changes: [], observations: [], warning: '精査回答を安全に適用できないため、元の指示文を保持しました。コピー・生成は続けられます。' };
   }
 }
 
 // STEP3 calls this before publishing or returning the completed prompt.
-export async function reviewComedyPrompt(input, request) {
+export async function reviewComedyPrompt(input, request, onProgress = () => {}) {
+  onProgress('再検査: 台本・カメラ指定を保ち、視線と動作、小道具の向き、補助的な構図指示の矛盾を確認します。');
   try {
     const response = await request(buildComedyReviewRequest(input), null, null, () => {});
-    return { ...applyComedyReview(input.prompt, response.text, input.promptMaxChars), original: input.prompt };
+    const reviewed = applyComedyReview(input.prompt, response.text, input.promptMaxChars);
+    onProgress(reviewed.changes.length
+      ? `再検査結果: ${reviewed.changes.length}件を適用。理由: ${reviewed.changes.join(' / ')}${reviewed.warning ? ` / ${reviewed.warning}` : ''}`
+      : `再検査結果: ${reviewed.warning || '修正が必要な明確な矛盾はなく、元の指示文を保持しました。'}`);
+    return { ...reviewed, original: input.prompt };
   } catch {
+    onProgress('再検査結果: AI精査を取得できなかったため、元の指示文を保持しました。');
     return { prompt: input.prompt, original: input.prompt, changes: [], observations: [], warning: 'AI精査を取得できなかったため、元の指示文で続行しました。' };
   }
 }

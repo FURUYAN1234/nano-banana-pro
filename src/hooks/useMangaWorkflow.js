@@ -49,7 +49,7 @@ import {
   formatImageQualityIssue,
   parseImageQualityQaResponse
 } from '../lib/image-quality-qa';
-import { buildImageFailureAnalysisPrompt, GEMINI_IMAGE_REPAIR_PROMPT_MAX_CHARS, inferImageQualityMode, isMaterialImageQualityIssue, runImageQualityFailsafe } from '../lib/image-quality-failsafe';
+import { buildImageFailureAnalysisPrompt, formatImageQualityStopReason, GEMINI_IMAGE_REPAIR_PROMPT_MAX_CHARS, inferImageQualityMode, isMaterialImageQualityIssue, runImageQualityFailsafe } from '../lib/image-quality-failsafe';
 import { getEffectiveEngine } from '../lib/engine-state';
 import { DEFAULT_OPENAI_IMAGE_QUALITY, DEFAULT_OPENAI_IMAGE_SIZE, normalizeOpenAIImageSize, normalizeOpenAIImageQuality, resolveOpenAIImageOption, selectInitialOpenAIImageQuality, isOpenAIImageVerificationError, OPENAI_IMAGE_VERIFICATION_MESSAGE } from '../lib/openai-image-settings.js';
 import { DEFAULT_OPENAI_SCENARIO_MODEL_ID, OPENAI_SCENARIO_MODEL_OPTIONS, OPENAI_SCENARIO_TEXT_MODEL_IDS } from '../lib/openai-model-routes.js';
@@ -1051,7 +1051,11 @@ export default function useMangaWorkflow() {
         castList,
         reviewTone: endingPolicy.endingTone,
         preserveReferenceStyle: endingPolicy.preserveReferenceStyle
-      }, callAI);
+      }, callAI, message => {
+        if (promptScenarioEpoch === scenarioRunEpochRef.current && assemblyRun === promptAssemblyRunRef.current) {
+          setAssembleThought(prev => prev + `\n> ${message}`);
+        }
+      });
 
       if (promptScenarioEpoch !== scenarioRunEpochRef.current || assemblyRun !== promptAssemblyRunRef.current) return null;
 
@@ -1771,8 +1775,9 @@ export default function useMangaWorkflow() {
       }
       setIsGenerationError(false);
       if (qualityOutcome.validationWarning) {
+        const comparedCandidate = qualityOutcome.history?.some(entry => entry.comparison);
         setGenLog(prev => [...prev,
-          `[QUALITY QA] 最良候補を採用・警告あり（${qualityOutcome.stopReason}）。後続作業を続行します。`,
+          `[QUALITY QA] ${comparedCandidate ? '比較で保持した最良候補を採用' : '元画像を保持'}・警告あり（${formatImageQualityStopReason(qualityOutcome.stopReason)}）。後続作業を続行します。`,
           ...qualityResult.issues.map(issue => `[残る確認事項] ${formatImageQualityIssue(issue)}`),
         ]);
       } else {
@@ -1803,7 +1808,11 @@ export default function useMangaWorkflow() {
           ? '[COMPLETE] Best available image selected (quality warning).'
           : '[COMPLETE] Image successfully generated.']);
       }
-      showStatus(qualityOutcome.validationWarning ? "最良候補を採用しました（品質警告あり）" : "画像生成完了！");
+      showStatus(qualityOutcome.validationWarning
+        ? qualityOutcome.history?.some(entry => entry.comparison)
+          ? "比較で保持した候補を採用しました（品質警告あり）"
+          : "元画像を保持しました（品質警告あり）"
+        : "画像生成完了！");
       return true; // [v2.78] フルオート連鎖用: 成功
     } catch (error) {
       if (qualityRunEpoch !== scenarioRunEpochRef.current) return false;

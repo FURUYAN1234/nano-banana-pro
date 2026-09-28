@@ -21,6 +21,24 @@ const MATERIAL_PAYOFF_REASONS = new Set([
 const materialPayoffReasons = (reasonCodes) => reasonCodes.filter(code =>
   MATERIAL_PAYOFF_REASONS.has(code) || code.startsWith('unrenderable_panel_'));
 
+const PAYOFF_REASON_LABELS = {
+  no_setup_seed: '1〜2コマ目にオチの種がない',
+  no_panel3_prediction: '3コマ目までに読者の予測が作れない',
+  no_panel4_outcome: '4コマ目の帰結が見えない',
+  no_visual_payoff: '絵で伝わるオチがない',
+  slogan_only: '4コマ目が標語・説明だけになっている',
+  no_payoff_shift: '予測から帰結への変化がない',
+  documentary_fact_invention: '原文にない事実が追加された',
+};
+
+export const formatPayoffReviewReasons = (evaluation, review) =>
+  (evaluation?.reasonCodes || []).map(code => {
+    const panel = /^unrenderable_panel_(\d+)$/.exec(code);
+    if (!panel) return PAYOFF_REASON_LABELS[code] || code;
+    const evidence = review?.visual_feasibility?.find(item => item.panel === Number(panel[1]))?.evidence;
+    return `${panel[1]}コマ目の配置・判読が難しい${evidence ? `（${evidence}）` : ''}`;
+  }).join(' / ');
+
 const extractText = (value) => String(value?.text ?? value ?? '').trim();
 
 export const buildScenarioPayoffReviewPrompt = ({ scenario, punchlineType } = {}) => {
@@ -186,6 +204,7 @@ export const runScenarioPayoffGate = async ({
     })));
     firstEvaluation = evaluateScenarioPayoffReview(firstReview, { punchlineType });
   } catch (error) {
+    onProgress(`構成・画像化の検査結果: 判定できませんでした。理由: ${error.message}。元シナリオを保持します。`);
     return retained(original, `構成・画像化監査を完了できなかったため、元シナリオを保持しました（${error.message}）。`, null, true);
   }
 
@@ -195,8 +214,10 @@ export const runScenarioPayoffGate = async ({
   }
   const firstMaterialReasons = materialPayoffReasons(firstEvaluation.reasonCodes);
   if (!firstMaterialReasons.length) {
+    onProgress(`構成・画像化の検査結果: ${formatPayoffReviewReasons(firstEvaluation, firstReview)}。重大欠陥ではないため再生成せず保持します。`);
     return retained(original, `構成上の軽微または未確認の指摘（${firstEvaluation.reasonCodes.join(', ')}）は再生成せず、元シナリオを保持しました。`, firstReview);
   }
+  onProgress(`構成・画像化の再検査理由: ${formatPayoffReviewReasons(firstEvaluation, firstReview)}。重大な指摘だけを修正します。`);
   const maxRepairs = firstMaterialReasons.every(code => code.startsWith('unrenderable_panel_')) ? 1 : 3;
   let best = { scenario: original, review: firstReview, evaluation: firstEvaluation };
   let current = best;
@@ -221,6 +242,9 @@ export const runScenarioPayoffGate = async ({
         punchlineType,
       })));
       const evaluation = evaluateScenarioPayoffReview(review, { punchlineType });
+      onProgress(evaluation.ok
+        ? `改善案の再検査結果 ${attempt}/${maxRepairs}: 合格。構成と画像化可能な配置を確認しました。`
+        : `改善案の再検査結果 ${attempt}/${maxRepairs}: ${formatPayoffReviewReasons(evaluation, review)}。`);
       current = { scenario: repaired, review, evaluation };
       if (evaluation.ok) {
         onProgress('改善案の構成と画像化可能な配置を確認しました。');
@@ -237,7 +261,7 @@ export const runScenarioPayoffGate = async ({
     } catch (error) {
       lastError = error.message;
       current = best;
-      onProgress(`改善案は採用せず、最良候補から再試行します（${attempt}/${maxRepairs}）。`);
+      onProgress(`改善案は採用せず、最良候補から再試行します（${attempt}/${maxRepairs}）。理由: ${error.message}`);
     }
   }
   const renderabilityWarning = best.evaluation.reasonCodes.some(code => code.startsWith('unrenderable_panel_'));

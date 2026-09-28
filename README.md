@@ -1,6 +1,6 @@
 # Super FURU AI 4-koma System / Super FURU AI 4コマシステム
 
-> Current source version: **v6.6.6** / 現在のソース版: **v6.6.6**
+> Current source version: **v6.6.7** / 現在のソース版: **v6.6.7**
 
 An experimental web application in which AI handles topic research, story structure, direction, prompt construction, image generation, and quality review for a four-panel manga. / AIが話題調査、構成、演出、プロンプト構築、画像生成、品質確認まで担当する4コマ漫画制作Webアプリです。
 
@@ -178,6 +178,12 @@ The four primary actions for STEP1 through STEP4 use the same full-width light-b
 2. Choose Gemini API or OpenAI API and enter that provider's API key in the application. / Gemini APIまたはOpenAI APIを選び、対応するAPIキーをアプリへ入力します。
 3. Select character-sheet images with the STEP1 button or drop them into its drop zone; multiple images can be added together or later. Optional 360-degree background images and style-setting JSON files can be loaded there too. / STEP1ボタンでキャラクター設定画像（キャラシート）を選ぶか、ドロップ領域へ読み込みます。複数枚は同時または後から追加でき、任意で360°背景画像や作風設定JSONも読み込めます。
 4. Run STEP2. While the scenario request is active, the app keeps its real progress or error log directly below the STEP2 button and hides the stale result, preview and STEP3. A completed scenario reveals those controls and highlights STEP3. / STEP2を実行します。シナリオ処理中はSTEP2ボタン直下の実際の進捗・エラーログだけを表示し、古い結果・プレビュー・STEP3を隠します。シナリオ完成後に各欄を表示し、次のSTEP3を案内します。
+
+When an automatic check or retry runs, the relevant STEP progress log reports the failed condition, why another inspection or correction is warranted, and the result. STEP2 shows scenario, composition and optional enhancement outcomes; STEP3 shows whether prompt-review suggestions were applied or the original was retained; STEP4 shows each image and critical-camera QA result, the reason for any repair, and candidate selection. STEP1 character analysis has no automatic reinspection loop. Unverified or minor findings alone do not trigger image regeneration. / 自動検査・再試行が動く場合、該当STEPの進捗窓に不合格条件、再検査・修正の理由、その結果を表示します。STEP2は台本・構成・任意の強化、STEP3は指示文の精査案の採否、STEP4は画像と重要なカメラ構図の各検査結果、修正理由、候補の採否を表示します。STEP1のキャラクター解析には自動再検査ループがありません。未確認や軽微な指摘だけで画像を再生成しません。
+
+STEP3 now names why a proposed edit was rejected and states clearly when none was applied. STEP4 lists concrete repair reasons before uncertain observations. A timed-out repair with no returned image is reported as retaining the original, without claiming a comparison. Repair prompts keep the approved script and each correction strategy/check, while omitting repeated diagnostic prose from the outset; the length guard remains a fallback. / STEP3は精査案を見送った理由を示し、適用0件も明示します。STEP4は未確認事項より先に具体的な修正理由を表示します。修正画像のAPIがタイムアウトして画像を受信していない場合は、比較済みとせず元画像の保持を表示します。修正指示は台本と修正方法・確認方法を残し、診断文の重複を最初から省きます。文字数の上限保護も残します。
+
+When an image remains on screen after an interrupted repair, use the STEP4 retained-image recheck button to run QA and repair from that image without paying for another initial image. A reviewer's mistaken copy of a scripted speaker is treated as unverified; only a grounded visible tail mismatch can trigger repair. / 修正が中断して画像が画面に残った場合は、STEP4の「表示中の画像を再検査」ボタンで初回画像を生成し直さずに品質検査と必要な修正を実行できます。検査AIが台本の話者名を写し間違えただけなら未確認として扱い、画像上でヒゲの接続先が違う根拠がある場合だけ修正します。
 5. Review the editable scenario and prompt, then run STEP4. / 編集可能なシナリオとプロンプトを確認し、STEP4を実行します。
 6. Inspect the actual image, especially dialogue, hands, props, character identity, and panel order. / 実画像の台詞、手、小物、人物の同一性、コマ順を確認します。
 
@@ -268,20 +274,20 @@ Copy the generic MiniMax H3 authoring prompt and configure ComfyUI's standard Re
 
 Connect the four-panel image only to `ref_image_0` and leave `ref_image_1`以降 disconnected. Start `Resolution Selector (Size)` at 16:9 and 0.4 megapixels, and set the `基本スケジューラー` to `normal`, with `字幕なし` as the default. / 4コマ画像は`ref_image_0`だけへ接続し、`ref_image_1`以降は未接続にします。`Resolution Selector (Size)`は16:9・0.4メガピクセル、`基本スケジューラー`は`normal`、既定は`字幕なし`です。
 
-The generic prompt transfers the packaged workflow's four-panel order, per-panel cast lock, one-speaker-per-dialogue-window rule, silent speech buffers, readable acting/camera staging, and low-volume H3 BGM. A prompt alone cannot automate image preprocessing, API dialogue extraction and reading review, per-line variable-duration generation, candidate comparison, audio/video audits, or waveform-tail repair. With the standard graph, set the image, dialogue, fixed total duration, and output frames manually. / 汎用プロンプトには、配布版の四コマ順序、各コマ人物固定、一人一台詞窓、発声前後の無音余白、読み取りやすい演技・カメラ、低音量H3 BGMのノウハウを取り込みます。ただしプロンプトだけでは、画像前処理、APIによる台詞抽出・読み確認、行ごとの自動可変尺、候補比較、音声・映像監査、終端波形修復は自動化できません。標準グラフでは画像、台詞、固定の合計秒数、生成フレーム数を手動で合わせます。
+The generic prompt transfers the packaged workflow's four-panel order, per-panel cast lock, one-speaker-per-dialogue-window rule, silent speech buffers, readable acting/camera staging, and low-volume instrumental BGM intent. A prompt alone cannot automate image preprocessing, API dialogue extraction and reading review, per-line variable-duration generation, candidate comparison, audio/video audits, waveform-tail repair, or the packaged ACE-Step BGM path. With the standard graph, set the image, dialogue, fixed total duration, and output frames manually. / 汎用プロンプトには、配布版の四コマ順序、各コマ人物固定、一人一台詞窓、発声前後の無音余白、読み取りやすい演技・カメラ、低音量のインストBGMという意図を取り込みます。ただしプロンプトだけでは、画像前処理、APIによる台詞抽出・読み確認、行ごとの自動可変尺、候補比較、音声・映像監査、終端波形修復、配布版のACE-Step BGM経路は自動化できません。標準グラフでは画像、台詞、固定の合計秒数、生成フレーム数を手動で合わせます。
 
 ### Use the Fused4step + SLA distribution / Fused4step・SLA 配布ワークフローを使う場合
 
 The app has separate buttons for the workflow JSON and the three-custom-node ZIP; `2つは別の操作` and each button downloads a different file. / アプリにはワークフローJSONとカスタムノード3点ZIPの別ボタンがあり、`2つは別の操作`として異なるファイルをダウンロードします。
 
-- [Download workflow JSON](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20260922104144.json) / [ワークフローJSONをダウンロード](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20260922104144.json)
-- [Download custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.5.8/ComfyUI_H3_FourPanel_NonLM_20260922104144.zip) / [カスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.5.8/ComfyUI_H3_FourPanel_NonLM_20260922104144.zip)
+- [Download workflow JSON](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20260928-173220.json) / [ワークフローJSONをダウンロード](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20260928-173220.json)
+- [Download custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/latest/download/ComfyUI_H3_FourPanel_NonLM_20260928-173220.zip) / [カスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/latest/download/ComfyUI_H3_FourPanel_NonLM_20260928-173220.zip)
 
 The current source tree intentionally contains no distribution ZIP. The custom-node ZIP is a named asset of the matching GitHub Release. / 現在のソースツリーには配布ZIPを意図的に登録せず、カスタムノードZIPは同じ版のGitHub Release専用アセットとして公開します。
 
 Install all `3フォルダ` from the ZIP under `ComfyUI/custom_nodes/`, install PlagueKind-Nodes, H3-AudioRefine, and a compatible Triton separately, then place the JSON under `ComfyUI/user/default/workflows/` and restart ComfyUI. / ZIP内の`3フォルダ`をすべて`ComfyUI/custom_nodes/`へ配置し、PlagueKind-Nodes、H3-AudioRefine、対応Tritonを別途導入してから、JSONを`ComfyUI/user/default/workflows/`以下へ置いてComfyUIを再起動します。
 
-Four required model weights are not bundled. Use `models.json` and the workflow's `不足モデル` display to open the `ダウンロード` sources under each model's own terms. / 必須モデル4点は同梱しません。`models.json`およびワークフローの`不足モデル`表示から各モデルの`ダウンロード`元を開き、個別条件を確認して取得します。
+Five required model weights (four H3 and one ACE-Step) are not bundled. Use `models.json` and the workflow's `不足モデル` display to open the `ダウンロード` sources under each model's own terms. / 必須モデル5点（H3用4点・ACE-Step用1点）は同梱しません。`models.json`およびワークフローの`不足モデル`表示から各モデルの`ダウンロード`元を開き、個別条件を確認して取得します。
 
 The current graph uses Fused 4ステップ, 音声再精錬4ステップ at denoise 1.0, and SLA Attention at 0.90. / 現行グラフはFused 4ステップ、音声再精錬4ステップ・denoise 1.0、SLA Attention 0.90を使用します。
 
@@ -291,7 +297,7 @@ Dialogue starts at five seconds and only lines that need more time extend up to 
 
 The workflow performs 区間 generation and 検査, comparing 初回込み最大5候補. It proceeds immediately on an earlier pass and retains the best inspected candidate if all fail; 採用済みでも全検査合格とは限りません. / ワークフローは区間ごとに生成・検査し、初回込み最大5候補を比較します。途中で合格すれば直ちに次へ進み、全候補が不合格なら検査上の最良候補を保持します。採用済みでも全検査合格とは限りません。
 
-The supplied `20260922104144` distribution completed the normal saved-workflow path with six segments and a 36-second, 864x480, 24 fps MP4. Its manifest reported `complete` and `quality_status: pass`, 184 custom-node regression tests passed, and the repaired fourth segment rejected repeated and unrelated speech before accepting one correct utterance. Execution on another PC remains unverified. / 添付識別子`20260922104144`配布版は通常の保存済みワークフロー経路で6区間・36秒・864x480・24fpsのMP4まで完走しました。manifestは`complete`・`quality_status: pass`、カスタムノード回帰184件は合格し、修正対象の第4区間では二重発声と無関係な余剰発話を棄却して正しい1回の発話を採用しました。別PC実行は未検証です。
+The supplied `20260928-173220` ZIP is an interim distribution. A 36-second, 864x480 video generation and a separate ACE-Step BGM pass were verified, but the combined graph has not run end-to-end. The sample reports `quality_status: needs_review` because its last two dialogue segments were not independently confirmed. Another-PC execution is also unverified. / 添付識別子`20260928-173220`のZIPは中間配布です。36秒・864×480の動画生成と別実行のACE-Step BGM処理は確認済みですが、統合グラフ全体の実走は未検証です。サンプルは終盤2区間の台詞確認が未了のため`quality_status: needs_review`です。別PC実行も未検証です。
 
 ## Package licenses and privacy / 配布ライセンスと個人情報
 
@@ -323,11 +329,14 @@ The production application is published from the `main` branch through the repos
 
 **Why are there two ComfyUI download buttons? / ComfyUIのダウンロードボタンが2つあるのはなぜですか？**  The JSON defines the workflow, while the ZIP supplies three custom-node folders and documentation; three additional runtime dependencies are installed separately. / JSONはワークフロー定義、ZIPはカスタムノード3フォルダーと導入文書です。さらに実行依存3項目を別途導入します。
 
-**Where are older packages? / 旧版はどこですか？**  Older source tags remain for audit history, but their bundled distributions are withdrawn. New installations must use the current `20260922104144` workflow button and matching v6.6.6 FourPanel Release asset. / 旧タグは監査用履歴として残しますが、旧同梱配布物は取り下げ扱いです。新規導入は現在の`20260922104144`ワークフローボタンとv6.6.6 FourPanel Releaseアセットを使用してください。
+**Where are older packages? / 旧版はどこですか？**  Older source tags remain for audit history. Use the current `20260928-173220` JSON button and matching v6.6.7 FourPanel Release asset. This pair is labeled interim until the combined graph passes an end-to-end run. / 旧タグは監査用履歴として残します。新規導入は現行の`20260928-173220`ワークフローボタンと対応するv6.6.7 FourPanel Releaseアセットを使用してください。統合グラフの全経路実走までは中間配布です。
 
 **Is this the T2V/I2V/Ref2V repository? / T2V・I2V・Ref2Vのリポジトリですか？**  No. Those workflows are maintained separately in [comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows). / いいえ。それらは別の[comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows)で管理します。
 
 ## 📋 ChangeLog
+
+### v6.6.7 (2026-09-28)
+- **[Fix & UX]** 再検査の矛盾・軽微な人物差分による過剰な画像修正を抑制し、4コマH3中間配布ZIPと対応JSONを更新 / Prevent paid image repairs from conflicting or minor QA findings and update the matching interim four-panel H3 ZIP and workflow JSON
 
 ### v6.6.6 (2026-09-28)
 - **[Fix & UX]** 吹き出し本体の固定座標を廃止し、読順と話者を保ちながら人物に合わせて配置する共通指示へ修正 / Removed fixed balloon body slots while preserving reading order and speaker ownership

@@ -2,14 +2,16 @@ import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import test from 'node:test';
+import { runInNewContext } from 'node:vm';
 import { inflateRawSync } from 'node:zlib';
 
 const step4PanelSource = readFileSync(new URL('../src/components/Step4Panel.jsx', import.meta.url), 'utf8');
 const standardH3PromptSource = readFileSync(new URL('../src/lib/minimax-h3-prompt.js', import.meta.url), 'utf8');
 const readmeSource = readFileSync(new URL('../README.md', import.meta.url), 'utf8');
 const packageJson = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
-const workflowUrl = new URL('../public/workflows/FourPanel_NonLM_4step_20260922104144.json', import.meta.url);
-const customNodeZipUrl = new URL('../.release-assets/ComfyUI_H3_FourPanel_NonLM_20260922104144.zip', import.meta.url);
+const releaseContract = JSON.parse(readFileSync(new URL('../../scripts/release-apps.json', import.meta.url), 'utf8'));
+const workflowUrl = new URL('../public/workflows/FourPanel_NonLM_4step_20260928-173220.json', import.meta.url);
+const customNodeZipUrl = new URL('../.release-assets/ComfyUI_H3_FourPanel_NonLM_20260928-173220.zip', import.meta.url);
 const sourceAttributesUrl = new URL('../.gitattributes', import.meta.url);
 const publishedAttributesUrl = new URL('../public/.gitattributes', import.meta.url);
 const publicWorkflowDirectoryUrl = new URL('../public/workflows/', import.meta.url);
@@ -51,12 +53,13 @@ test('STEP4 provides the generic standard-H3 prompt and separate current Fused4 
   assert.match(step4PanelSource, /href=\{COMFYUI_CUSTOM_NODE_DOWNLOAD_URL\}[\s\S]*?download=\{COMFYUI_CUSTOM_NODE_FILENAME\}/);
   assert.match(step4PanelSource, /href=\{COMFYUI_WORKFLOW_DOWNLOAD_URL\}[\s\S]*?download=\{COMFYUI_WORKFLOW_FILENAME\}/);
   assert.notEqual(workflowUrl.pathname, customNodeZipUrl.pathname, 'the two downloads must target different files');
-  assert.match(step4PanelSource, /FourPanel_NonLM_4step_20260922104144\.json/);
-  assert.match(step4PanelSource, /ComfyUI_H3_FourPanel_NonLM_20260922104144\.zip/);
+  assert.match(step4PanelSource, /FourPanel_NonLM_4step_20260928-173220\.json/);
+  assert.match(step4PanelSource, /ComfyUI_H3_FourPanel_NonLM_20260928-173220\.zip/);
   assert.match(step4PanelSource, /github\.com\/FURUYAN1234\/nano-banana-pro\/releases\/download\/\$\{SYSTEM_VERSION\}/);
   assert.match(step4PanelSource, /ComfyUI-NanoBanana-H3.*ComfyUI-MiniMax-H3-Long-Video.*ComfyUI-Spectrum-MiniMax-H3/s);
   assert.match(step4PanelSource, /軽く要約＋必要な台詞だけ延長.*基本5秒.*最大15秒.*台詞がない場合だけ既定30秒/s);
-  assert.match(step4PanelSource, /Fused 4ステップ.*音声再精錬.*4ステップ.*denoise 1\.0.*H3生成BGMあり/s);
+  assert.match(step4PanelSource, /Fused 4ステップ.*音声再精錬.*4ステップ.*denoise 1\.0.*ACE-Step.*全尺/s);
+  assert.match(step4PanelSource, /中間配布.*統合グラフ全体は未実走.*quality_status: needs_review/s);
   assert.match(step4PanelSource, /H3 SLA Attention.*ComfyUI-PlagueKind-Nodes/s);
   assert.match(step4PanelSource, /ComfyUI-H3-AudioRefine.*Triton|Triton.*ComfyUI-H3-AudioRefine/s);
   assert.match(step4PanelSource, /https:\/\/github\.com\/Adudeguyman\/ComfyUI-H3-AudioRefine/);
@@ -72,7 +75,7 @@ test('STEP4 provides the generic standard-H3 prompt and separate current Fused4 
   assert.match(step4PanelSource, /ComfyUI-PlagueKind-Nodes.*ComfyUI-H3-AudioRefine.*Triton.*別途/s);
   assert.match(step4PanelSource, /画像前処理.*APIによる台詞抽出・読み確認.*行ごとの自動可変尺.*候補比較.*音声・映像監査.*終端波形修復/s);
   assert.match(step4PanelSource, /標準版.*画像.*台詞.*秒数.*フレーム数.*手動/s);
-  assert.match(step4PanelSource, /README\.md.*REPRODUCE\.md.*VALIDATION\.md/s);
+  assert.match(step4PanelSource, /README\.md.*VALIDATION\.md/s);
   assert.equal([...step4PanelSource.matchAll(/style=\{H3_ACTION_BUTTON_STYLE\}/g)].length, 3);
 });
 
@@ -97,22 +100,22 @@ test('standard H3 clipboard prompt is generic and carries transferable four-pane
 test('supplied current Fused4 SLA workflow bytes and graph are preserved', () => {
   assert.equal(existsSync(workflowUrl), true, 'workflow JSON must be distributed from public/workflows');
   const bytes = readFileSync(workflowUrl);
-  assert.equal(hashBytes(bytes), '6ae722c158e940cb4c69d8675e60b01edd2ecd5044ff68040bd8fbec19b7dc27');
+  assert.equal(hashBytes(bytes), '167983b8026da29262e11b4ef61f36e4dbec97b3a6e643fabec1ea43db005452');
   assert.doesNotMatch(readFileSync(sourceAttributesUrl, 'utf8'), /public\/downloads\/.*\.zip/);
-  assert.match(readFileSync(publishedAttributesUrl, 'utf8'), /workflows\/FourPanel_NonLM_4step_20260922104144\.json -text/);
+  assert.match(readFileSync(publishedAttributesUrl, 'utf8'), /workflows\/FourPanel_NonLM_4step_20260928-173220\.json -text/);
   assert.doesNotMatch(readFileSync(publishedAttributesUrl, 'utf8'), /downloads\/.*\.zip/);
   assert.match(packageJson.scripts.deploy, /gh-pages -d dist --dotfiles/);
   const workflow = JSON.parse(bytes.toString('utf8'));
   assert.equal(workflow.nodes.length, 27);
-  assert.equal(workflow.links.length, 33);
-  for (const type of ['MiniMaxH3CloudPrompt', 'MiniMaxH3LongReferenceSampler', 'TimestampedSaveVideo', 'NanoBananaH3Transform', 'JapaneseDialoguePronunciationReview', 'DeterministicTitleWatermarkOverlay', 'DeterministicEndCreditOverlay', 'H3SLAAttention']) assert.ok(workflow.nodes.some((node) => node.type === type), `${type} must be present`);
+  assert.equal(workflow.links.length, 36);
+  for (const type of ['MiniMaxH3CloudPrompt', 'MiniMaxH3LongReferenceSampler', 'TimestampedSaveVideo', 'NanoBananaH3Transform', 'JapaneseDialoguePronunciationReview', 'DeterministicTitleWatermarkOverlay', 'DeterministicEndCreditOverlay', 'H3SLAAttention', 'H3SeparateMusicPlan', 'H3ContinuousBGM']) assert.ok(workflow.nodes.some((node) => node.type === type), `${type} must be present`);
   const text = bytes.toString('utf8');
   assert.match(text, /5秒/);
   assert.match(text, /軽く要約＋必要な台詞だけ延長/);
   assert.match(text, /30秒/);
-  assert.match(text, /通しのインストBGM/);
+  assert.match(text, /全尺のインストBGM/);
   assert.match(text, /latest_saved_video_url/);
-  assert.match(text, /production_approval/);
+  assert.match(text, /ACE-Step/);
   const longVideoNode = workflow.nodes.find((node) => node.type === 'MiniMaxH3LongReferenceSampler');
   assert.equal(longVideoNode.widgets_values[13], 4, 'the supplied sampler must preserve four generation steps');
   assert.equal(longVideoNode.widgets_values[14], 1, 'the supplied sampler must preserve full denoise');
@@ -123,11 +126,14 @@ test('supplied current Fused4 SLA workflow bytes and graph are preserved', () =>
 test('release asset preserves the supplied timestamped distribution manifest, licensing, verifier, and no credential artifact', () => {
   assert.equal(existsSync(customNodeZipUrl), true, 'custom-node bundle must be staged outside the Git source tree');
   const bundleBytes = readFileSync(customNodeZipUrl);
-  assert.equal(hashBytes(bundleBytes), '4bf332f4a42349ddb569ec825ec578668ccb5e2e3d427fd5aa65aeac7bf36566');
-  const files = new Map([...readZipFilesFromBuffer(bundleBytes)].map(([name, content]) => [name.replace(/^ComfyUI_H3_FourPanel_NonLM_20260922104144\//, ''), content]));
+  assert.equal(hashBytes(bundleBytes), '046b655cb0536defaffb48055f0dede324b6d818e2916510bd4acea577295b5f');
+  const releaseAsset = releaseContract.apps.find(app => app.id === 'nano-banana-pro')?.releaseAssets?.[0];
+  assert.equal(releaseAsset?.path, '.release-assets/ComfyUI_H3_FourPanel_NonLM_20260928-173220.zip');
+  assert.equal(releaseAsset?.name, 'ComfyUI_H3_FourPanel_NonLM_20260928-173220.zip');
+  const files = new Map([...readZipFilesFromBuffer(bundleBytes)].map(([name, content]) => [name.replace(/^ComfyUI_H3_FourPanel_NonLM_20260928-173220\//, ''), content]));
   const expected = [
-    'VERSION.json', 'models.json', 'README.md', 'REPRODUCE.md', 'VALIDATION.md', 'verify_package.py', 'SHA256SUMS.json', 'LICENSES_AND_NOTICES.md', 'workflows/FourPanel_NonLM_4step_20260922104144.json',
-    'custom_nodes/ComfyUI-NanoBanana-H3/LICENSE', 'custom_nodes/ComfyUI-NanoBanana-H3/__init__.py', 'custom_nodes/ComfyUI-NanoBanana-H3/web/nanobanana_h3.js',
+    'VERSION.json', 'models.json', 'README.md', 'VALIDATION.md', 'verify_package.py', 'SHA256SUMS.json', 'LICENSES_AND_NOTICES.md', 'workflows/FourPanel_NonLM_4step_20260928-173220.json',
+    'custom_nodes/ComfyUI-NanoBanana-H3/LICENSE', 'custom_nodes/ComfyUI-NanoBanana-H3/__init__.py', 'custom_nodes/ComfyUI-NanoBanana-H3/web/nanobanana_h3_dialogue_contract_v1.js',
     'custom_nodes/ComfyUI-MiniMax-H3-Long-Video/LICENSE', 'custom_nodes/ComfyUI-MiniMax-H3-Long-Video/minimax_h3_long_video/nodes.py',
     'custom_nodes/ComfyUI-Spectrum-MiniMax-H3/LICENSE', 'custom_nodes/ComfyUI-Spectrum-MiniMax-H3/comfyui_spectrum_h3/nodes.py',
   ];
@@ -135,14 +141,26 @@ test('release asset preserves the supplied timestamped distribution manifest, li
   for (const name of ['custom_nodes/ComfyUI-NanoBanana-H3/speaker_audit.py', 'licenses/MINIMAX_H3_LICENSE.txt', 'licenses/NOTICE.txt']) assert.ok(files.has(name), `${name} must be present`);
   assert.match(step4PanelSource, /採用済みでも全検査合格とは限りません/);
   assert.match(readmeSource, /採用済みでも全検査合格とは限りません/);
-  assert.equal(hashBytes(files.get('workflows/FourPanel_NonLM_4step_20260922104144.json')), '6ae722c158e940cb4c69d8675e60b01edd2ecd5044ff68040bd8fbec19b7dc27');
+  assert.equal(hashBytes(files.get('workflows/FourPanel_NonLM_4step_20260928-173220.json')), '167983b8026da29262e11b4ef61f36e4dbec97b3a6e643fabec1ea43db005452');
   const license = files.get('custom_nodes/ComfyUI-NanoBanana-H3/LICENSE').toString('utf8');
   assert.match(license, /MIT License/);
   assert.equal(files.has('custom_nodes/ComfyUI-H3-AudioRefine/LICENSE'), false, 'AudioRefine is a separately required dependency');
   assert.equal(files.has('custom_nodes/ComfyUI-PlagueKind-Nodes/LICENSE'), false, 'PlagueKind is a separately required dependency');
   const bundleReadme = files.get('README.md').toString('utf8');
-  assert.match(bundleReadme, /three locally maintained custom-node packages/);
-  assert.match(bundleReadme, /running server memory only[\s\S]*not stored in the workflow/);
+  assert.match(bundleReadme, /three custom-node packages|カスタムノード3種/);
+  assert.match(bundleReadme, /not stored in this ZIP|キーはZIPに含みません/);
+  assert.match(files.get('VERSION.json').toString('utf8'), /"status": "interim"/);
+  assert.match(files.get('VALIDATION.md').toString('utf8'), /end-to-end GUI run pending/);
+  assert.equal(JSON.parse(files.get('models.json').toString('utf8')).length, 5);
+  const serverCode = files.get('custom_nodes/ComfyUI-NanoBanana-H3/__init__.py').toString('utf8');
+  const browserCode = files.get('custom_nodes/ComfyUI-NanoBanana-H3/web/nanobanana_h3_dialogue_contract_v1.js').toString('utf8');
+  assert.match(serverCode, /_SESSION_CREDENTIALS:\s*dict\[str, dict\[str, str\]\] = \{\}/);
+  assert.match(serverCode, /_validate_credential, provider, api_key[\s\S]*_set_session_credential\(provider, slot, api_key\)/);
+  assert.match(serverCode, /credential_status[\s\S]*"configured": configured[\s\S]*"storage": "process_memory"/);
+  assert.match(browserCode, /if \(!\(await ensureWorkflowCredentialsForRun\(\)\)\) return null;[\s\S]*originalQueuePrompt\.apply\(this, arguments\)/);
+  assert.match(browserCode, /if \(!configured\) return false;/);
+  assert.match(browserCode, /sessionStorage\.setItem\(draftKey, JSON\.stringify\(dialogueFields/);
+  assert.doesNotMatch(browserCode, /(?:localStorage|sessionStorage)\.setItem\([^\n]*(?:apiKey|api_key|credential)/i);
   assert.match(files.get('custom_nodes/ComfyUI-MiniMax-H3-Long-Video/minimax_h3_long_video/nodes.py').toString('utf8'), /max_attempts=5/);
   assert.match(files.get('custom_nodes/ComfyUI-MiniMax-H3-Long-Video/minimax_h3_long_video/nodes.py').toString('utf8'), /simplify_framing=visual_failures >= 2/);
   const manifestEntries = JSON.parse(files.get('SHA256SUMS.json').toString('utf8'));
@@ -158,7 +176,7 @@ test('release asset preserves the supplied timestamped distribution manifest, li
 });
 
 test('README matches the current H3 API distribution and workflow does not describe credential persistence', () => {
-  assert.match(readmeSource, /FourPanel_NonLM_4step_20260922104144/);
+  assert.match(readmeSource, /FourPanel_NonLM_4step_20260928-173220/);
   assert.match(readmeSource, /Fused 4ステップ.*SLA Attention/);
   assert.match(readmeSource, /不足モデル.*ダウンロード/);
   assert.match(readmeSource, /3フォルダ/);
@@ -169,4 +187,76 @@ test('README matches the current H3 API distribution and workflow does not descr
   for (const entry of readdirSync(publicWorkflowDirectoryUrl, { withFileTypes: true }).filter((item) => item.isFile() && item.name.endsWith('.json'))) {
     assert.doesNotMatch(readFileSync(new URL(entry.name, publicWorkflowDirectoryUrl), 'utf8'), /nanobanana_h3_credentials\.json|暗号化なしで保存/);
   }
+});
+
+test('distributed credential gate defers execution, cancels without queuing, and resumes once after registration', async () => {
+  const archive = readZipFilesFromBuffer(readFileSync(customNodeZipUrl));
+  const source = [...archive].find(([name]) => name.endsWith('/web/nanobanana_h3_dialogue_contract_v1.js'))?.[1].toString('utf8');
+  assert.ok(source, 'distributed browser extension must be present');
+  let extension;
+  let queued = 0;
+  let configured = false;
+  let overlay;
+  let credentialPosts = 0;
+  const node = { type: 'NanoBananaH3Transform', widgets: [{ name: 'provider', value: 'OpenAI API' }], __nanoBananaCredentialButton: { name: '' }, setDirtyCanvas() {} };
+  const app = {
+    graph: { _nodes: [node] },
+    registerExtension(value) { extension = value; },
+    async queuePrompt() { queued += 1; return 'queued'; },
+  };
+  const makeElement = () => {
+    const fields = new Map();
+    return {
+      dataset: {}, style: {}, innerHTML: '', value: '',
+      appendChild(child) { this.child = child; },
+      remove() { if (overlay === this) overlay = null; },
+      focus() {},
+      querySelector(selector) {
+        if (!fields.has(selector)) fields.set(selector, makeElement());
+        return fields.get(selector);
+      },
+    };
+  };
+  const document = {
+    body: { appendChild(value) { overlay = value; } },
+    createElement: makeElement,
+    querySelector() { return overlay || null; },
+  };
+  const fetch = async (url) => {
+    if (url.startsWith('/nanobanana_h3/credential_status?')) return { ok: true, json: async () => ({ configured }) };
+    if (url === '/nanobanana_h3/credential') {
+      credentialPosts += 1;
+      configured = true;
+      return { ok: true, json: async () => ({ configured: true }) };
+    }
+    if (url === '/nanobanana_h3/dialogue_review/pending') return { ok: true, json: async () => ({ pending: [] }) };
+    throw new Error(`Unexpected fetch: ${url}`);
+  };
+  const storage = { setItem() { throw new Error('Credentials must not be persisted'); } };
+  runInNewContext(source.replace(/^import .*;\s*$/gm, ''), {
+    app, api: { addEventListener() {} }, document, fetch, alert() {},
+    URLSearchParams, queueMicrotask, setInterval() {}, sessionStorage: storage, localStorage: storage,
+  });
+  extension.setup();
+  assert.equal(overlay, undefined, 'loading the workflow must not open a credential dialog');
+
+  const cancelled = app.queuePrompt('cancelled');
+  await new Promise(resolve => setImmediate(resolve));
+  assert.ok(overlay, 'an unregistered provider must pause execution and open the dialog');
+  overlay.child.querySelector('[data-close]').onclick();
+  assert.equal(await cancelled, null);
+  assert.equal(queued, 0, 'cancel must not queue the workflow');
+
+  const resumed = app.queuePrompt('resumed');
+  await new Promise(resolve => setImmediate(resolve));
+  assert.ok(overlay);
+  overlay.child.querySelector('[data-key]').value = 'test-only-placeholder';
+  await overlay.child.querySelector('[data-save]').onclick();
+  assert.equal(await resumed, 'queued');
+  assert.equal(credentialPosts, 1);
+  assert.equal(queued, 1, 'successful registration must resume the pending execution exactly once');
+
+  assert.equal(await app.queuePrompt('already-configured'), 'queued');
+  assert.equal(queued, 2);
+  assert.equal(overlay, null, 'an already configured provider must not reopen the dialog');
 });
