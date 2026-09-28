@@ -270,6 +270,10 @@ Image QA checks panel structure, character identity, body and hand integrity, pr
 
 ## MiniMax H3 and ComfyUI / MiniMax H3・ComfyUI動画化
 
+<img width="1055" height="1491" alt="ChatGPT 画像 2026年9月26日 19_51_54" src="https://github.com/user-attachments/assets/2b7a7cd2-54d0-4ac2-9bf6-a99092a912e8" />
+
+↓
+
 https://github.com/user-attachments/assets/868b2db5-b159-45b7-9c3d-d45e261f2ecc
 
 The expanded `FURUの4コマ漫画を動画化（MiniMax H3 / ComfyUI）` section offers a manual standard-template route and a dedicated Fused4step + SLA distribution. / `FURUの4コマ漫画を動画化（MiniMax H3 / ComfyUI）`を開くと、手動の標準テンプレート経路と専用Fused4step・SLA配布経路を選べます。
