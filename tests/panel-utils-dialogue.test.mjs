@@ -300,6 +300,25 @@ test('attributes embedded speech to each clause subject rather than an earlier s
   );
 });
 
+test('an article quotation noticed by a character is not that character speaking', () => {
+  const cast = '## サエコ\n## リン';
+  const panel = `状況: リンは訃報の記事を開く。サエコは記事の中の「早過ぎだよ甲野」という事務所の言葉で目を止める。
+サエコ「47歳で急逝されたと、書かれてる。」`;
+  const dialogue = extractDialogueOnly(panel, cast, { forImagePrompt: true });
+  assert.match(dialogue, /B1="47歳で急逝されたと、書かれてる。"/);
+  assert.doesNotMatch(dialogue, /早過ぎだよ甲野|B2=/);
+  assert.match(extractActionOnly(panel, cast), /「早過ぎだよ甲野」という事務所の言葉/);
+
+  const attributed = extractDialogueOnly('状況: サエコは「信じられない」という関係者の言葉を読み、黙る。\nサエコ「記事を閉じよう。」', cast, { forImagePrompt: true });
+  assert.match(attributed, /B1="記事を閉じよう。"/);
+  assert.doesNotMatch(attributed, /信じられない|B2=/);
+
+  const spoken = extractDialogueOnly('状況: サエコは「確認します」と言い、記事を閉じる。', cast, { forImagePrompt: true });
+  assert.match(spoken, /B1="確認します"/);
+  const readAloud = extractDialogueOnly('状況: サエコは記事の中の「ご冥福を祈ります」と読み上げる。', cast, { forImagePrompt: true });
+  assert.match(readAloud, /B1="ご冥福を祈ります"/);
+});
+
 test('preserves separate same-line speakers, including identical explicit replies', () => {
   const cast = '## 甲\n## 乙';
   for (const separator of [' ', '']) {
@@ -753,6 +772,26 @@ test('locks a single bubble tail endpoint to its mapped speaker mouth or head', 
   assert.match(dialogue, /B1=>\[相談員\] mouth\/head/i);
   assert.match(dialogue, /proximity.*never.*reassign/i);
   assert.doesNotMatch(dialogue, /TAILS \(METADATA/);
+});
+
+test('places a sole balloon near its speaker without moving a scripted off-center cast', () => {
+  const cast = '- Character [甲]: adult, black hair\n- Character [乙]: adult, blonde hair';
+  for (const camera of ['甲を左手前、乙を右奥に置く。', '乙を左手前、甲を右奥に置く。']) {
+    const panel = `[Camera: ${camera}]\n状況: 乙も見守る。\n甲「確認した。」`;
+    for (const compact of [true, false]) {
+      const placement = extractPlacementRule(panel, cast, { compact });
+      assert.match(placement, /balloon body.*near.*\[甲\]/i);
+      assert.match(placement, /tail.*\[甲\].*mouth\/head/i);
+      assert.match(placement, /preserve Camera\/Action.*positions/i);
+      assert.doesNotMatch(placement, /RIGHT \[甲\]|LEFT \[乙\]/);
+    }
+  }
+});
+
+test('two balloons from one speaker retain reading order without moving the cast', () => {
+  const panel = '[Camera: 甲を左手前、乙を右奥に置く。]\n甲「待って。」\n甲「もう一度。」';
+  const placement = extractPlacementRule(panel, '- Character [甲]: black hair\n- Character [乙]: blonde hair', { compact: true });
+  assert.match(placement, /Bodies fixed.*B1 rightmost.*B2\/B3\+ strictly leftward/i);
 });
 
 test('locks each bubble tail endpoint to its mapped speaker instead of the nearest body', () => {

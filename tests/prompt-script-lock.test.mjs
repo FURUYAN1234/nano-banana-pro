@@ -102,6 +102,33 @@ test('keeps the original library scenario surface text out of all provider bubbl
   }
 });
 
+test('a quoted source statement does not become an extra memorial-scene bubble', () => {
+  const scenario = `## タイトル: 声を偲ぶ
+Location: リビング
+Outfit: 私服
+[1コマ目: 起]
+状況: リンが記事を開き、みんなに見せる。
+リン「記事が出てる。」
+[2コマ目: 承]
+状況: 記事には訃報が記されている。サエコは記事の中の「早過ぎだよ甲野」という事務所の言葉で目を止める。
+サエコ「47歳で急逝されたと、書かれてる。」
+[3コマ目: 転]
+状況: アカリは目を伏せる。
+アカリ「声が大好きだった。」
+[4コマ目: 結]
+状況: サエコは顔を上げる。
+サエコ「早過ぎるよ、甲野さん。」`;
+  for (const providerFamily of ['chatgpt', 'gemini']) {
+    const prompt = buildMangaPrompt({ scenario, castList: CAST_LIST, colorMode: 'color', providerFamily, punchlineType: '悲劇・喪失', systemVersion: 'test' });
+    const panel2 = prompt.split('## Panel 2')[1]?.split('## Panel 3')[0] || '';
+    assert.match(prompt, /Panel 2 required dialogue: サエコ「47歳で急逝されたと、書かれてる。」/);
+    assert.match(panel2, /B1="47歳で急逝されたと、書かれてる。"/);
+    assert.doesNotMatch(panel2, /B2=|B1="早過ぎだよ甲野"/);
+    assert.match(panel2, /「早過ぎだよ甲野」という事務所の言葉/);
+    assert.match(prompt, /Panel 4 required dialogue: サエコ「早過ぎるよ、甲野さん。」/);
+  }
+});
+
 test('uses the same accepted panel-header formats for validation and prompt assembly', () => {
   for (const numbers of [['１', '２', '３', '４'], ['一', '二', '三', '四']]) {
     const scenario = SCENARIO.replace(/\[(\d)コマ目/g, (_, num) => `[ ${numbers[Number(num) - 1]} こま目`);

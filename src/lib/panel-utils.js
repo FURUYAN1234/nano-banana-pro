@@ -367,6 +367,7 @@ const ACOUSTIC_QUOTE_POST_RE = /^\s*(?:という[^\n「」]{0,12}音|ってい�
 const SPOKEN_QUOTE_POST_RE = /^\s*(?:と|って)\s*(?:[^「」。！？!?\n]{0,32})?(?:言[いうっわえお]|いう|叫[びぶんべぼ]|呼[びぶんべぼ]|呟[きくいけこ]|つぶや[きくいけこ]|囁[きくいけこ]|ささや[きくいけこ]|読み(?:上げ|あげ)|発表(?:し|する)|告げ|答[えう]|返[しすせそ]|話[しすせそ]|語[りるっれろ]|宣言(?:し|する)|絶叫|嘆[きくいけこ]|漏ら[しす]|口に(?:し|する|出)|述べ|怒鳴[りるっれろ]|呻[きくいけこ]|うめ[きくいけこ]|唸[りるっれろ]|ツッコ[みむん]|つっこ[みむん]|突っ込[みむん]|問[いうえお]|尋ね)/;
 // 引用直後が印字・表示の説明なら、後続の動作や発話動詞へ探索を延ばさない。
 const SURFACE_QUOTE_POST_RE = /^\s*(?:(?:と|って)(?:だけ)?[^「」。！？!?\n、]{0,12}?(?:書[かきくいけ]|記[さしす載]|印字|印刷|刻[まみむ印]|表示|掲示|貼[らりるっ]|刺繍)|(?:という|っていう|の)?(?:文字|文言|表示|案内|内容|項目|メニュー|ラベル|札|名札|看板)(?:を|に|が|は|の|と|で|、|。|$))/;
+const REPORTED_SOURCE_QUOTE_POST_RE = /^\s*(?:という|っていう|との)[^「」。！？!?\n]{1,24}の(?:言葉|発言|コメント|声明|引用|記述)(?=で|を|に|が|は|、|。|$)/u;
 const STRUCTURAL_LINE_PREFIX_PATTERN = String.raw`(?:[-*+>・●▪◦]\s*)?[【\[（(]?\s*`;
 const STAGING_GAG_LABEL_PATTERN = String.raw`(?:演出(?:\s*[・･／/]?\s*ギャグ)?|ギャグ(?:\s*[・･／/]?\s*演出))`;
 const VISUAL_DIRECTION_LABEL_TOKEN_PATTERN = String.raw`(?:表情|身体|演出|動作|ポーズ|姿勢|目線|視線|間合い|SFX|SE|効果音|音響効果|音響|音声|BGM)`;
@@ -386,11 +387,16 @@ const ACOUSTIC_VISUAL_LINE_RE = new RegExp(
 const hasAcousticQuotePostContext = (postText = '') => ACOUSTIC_QUOTE_POST_RE.test(postText.trim());
 const hasSpokenQuotePostContext = (postText = '') => {
   const cleanPostText = postText.trim();
-  if (SURFACE_QUOTE_POST_RE.test(cleanPostText)) {
+  if (SURFACE_QUOTE_POST_RE.test(cleanPostText) || REPORTED_SOURCE_QUOTE_POST_RE.test(cleanPostText)) {
     return false;
   }
   return !hasAcousticQuotePostContext(cleanPostText) && SPOKEN_QUOTE_POST_RE.test(cleanPostText);
 };
+
+// A quotation introduced as part of a document or display belongs to that
+// source, even when a nearby cast member is looking at it. Explicitly spoken
+// quotes still use the normal speaker inference below.
+const REPORTED_SOURCE_QUOTE_PRE_RE = /(?:記事|新聞|ニュース|発表文|声明|資料|手紙|メール|投稿|報告書|議事録|記録|文面|見出し|画面)(?:の中|中|内|の文面|の一節|の引用|に書かれた|に記された|に載った|に表示された)?の?\s*$/u;
 
 const INSTRUCTION_LINE_RE = new RegExp(`^\\s*${STRUCTURAL_LINE_PREFIX_PATTERN}${META_SPEAKER_LABEL_PATTERN}\\s*[:：]`, 'i');
 
@@ -865,6 +871,8 @@ export const extractDialogueOnly = (fullPanelText, castList, options = {}) => {
       const sameLinePostText = fullPanelText.slice(quote.end, quoteLineEnd);
       const postText = fullPanelText.substring(quote.end, quote.end + 40);
       const isSpokenQuoteByPostText = hasSpokenQuotePostContext(sameLinePostText || postText);
+      if (REPORTED_SOURCE_QUOTE_POST_RE.test(sameLinePostText)
+        || (REPORTED_SOURCE_QUOTE_PRE_RE.test(sameLinePrevText) && !isSpokenQuoteByPostText)) continue;
       const immediateInlineSpeaker = getImmediateInlineSpeakerName(sameLinePrevText, validCharacters);
 
       // Same-line speaker labels are reliable. Speech verbs inside situation/reaction
@@ -1244,6 +1252,11 @@ const protectNonDialogueTextHints = (actionText) => {
       return removedSoundQuoteMarker;
     }
 
+    if (REPORTED_SOURCE_QUOTE_POST_RE.test(rightContext)
+      || (REPORTED_SOURCE_QUOTE_PRE_RE.test(leftContext) && !hasSpokenQuotePostContext(rightContext))) {
+      return match;
+    }
+
     if (hasSpokenQuotePostContext(rightContext)) {
       return removedSpokenQuoteMarker;
     }
@@ -1479,7 +1492,8 @@ export const extractPlacementRule = (fullPanelText, castList, options = {}) => {
     }
   });
 
-  if (speakers.length > 0 && hasScriptedHorizontalSpeakerStaging(fullPanelText, speakers)) {
+  const hasMultipleBubbles = /\bB2=/.test(extractDialogueOnly(fullPanelText, castList, { forImagePrompt: true }));
+  if (speakers.length > 0 && hasMultipleBubbles && hasScriptedHorizontalSpeakerStaging(fullPanelText, speakers)) {
     const identities = speakers.map(name => `[${name}] (${compactIdentityTraits(getCharTraitsFromMatrix(name, castList, { monochrome }))})`).join('; ');
     if (compact) return `PLACEMENT/IDENTITY: ${identities}. Bodies fixed; bubbles independent: B1 rightmost; B2/B3+ strictly leftward; never reverse.`;
     return `PLACEMENT/IDENTITY: ${identities}. Preserve Camera/Action screen positions and depth; do not derive body positions from dialogue order. Bubbles flow right-to-left in dialogue order with tails to their actual speakers.`;
@@ -1537,7 +1551,8 @@ SPEECH BUBBLE POSITION RULE:
 - Each bubble's tail MUST point to its assigned speaker without crossing another tail. Do NOT swap speaker ownership or body positions.`;
   } else if (speakers.length === 1) {
     const traits0 = getCharTraitsFromMatrix(speakers[0], castList, { monochrome });
-    return `CRITICAL PLACEMENT & IDENTITY: [${speakers[0]}] (${traits0 || 'see reference'}) is the main focus of this panel.`;
+    if (hasMultipleBubbles) return `CRITICAL PLACEMENT & IDENTITY: [${speakers[0]}] (${traits0 || 'see reference'}) is the speaking focus. Preserve Camera/Action body positions; keep the ordered balloons in nearby empty space with tails reaching [${speakers[0]}] mouth/head.`;
+    return `CRITICAL PLACEMENT & IDENTITY: [${speakers[0]}] (${traits0 || 'see reference'}) is the speaking focus. Preserve Camera/Action body positions. Place the sole balloon body in empty space near [${speakers[0]}], not beside a different character; its speaker-facing tail must reach [${speakers[0]}] mouth/head.`;
   }
   return `CRITICAL PLACEMENT: Follow the natural dialogue flow.`;
 };

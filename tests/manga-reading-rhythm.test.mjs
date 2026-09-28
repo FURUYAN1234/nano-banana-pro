@@ -239,7 +239,8 @@ test('balloon ownership survives every provider, medium and compaction without f
         const prompt = buildMangaPrompt({ scenario: input, castList, providerFamily, colorMode, systemVersion: 'test' });
         assert.doesNotMatch(prompt, /freeze (?:balloon )?bodies|freeze numeric slots|never move a body toward its speaker|BUBBLE SLOTS:/i);
         assert.match(prompt, /B1 rightmost regardless of speaker/);
-        assert.match(prompt, /BALLOON OWNERSHIP:.*move.*bodies.*speaker.*preserv.*order/i);
+        assert.match(prompt, /BALLOON OWNERSHIP:.*move(?:\/reflow)? balloon bodies near.*speaker.*preserv.*order/i);
+        assert.doesNotMatch(prompt, /BALLOON OWNERSHIP:.*move(?:\/reflow)? bodies near/i);
         assert.match(prompt, /never terminate.*non-speaker|never end.*non-speaker/i);
         assert.match(prompt, /B1=>\[A\] mouth\/head; B2=>\[B\] mouth\/head/);
         assert.match(prompt, /B1="こちらです"(?: \[RIGHTMOST\])?; B2="ありがとう"/);

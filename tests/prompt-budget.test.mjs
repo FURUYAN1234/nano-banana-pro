@@ -208,7 +208,7 @@ test('soft Web target may be exceeded to retain critical content', () => {
   assert.match(prompt, /later (?:bubbles )?strictly left/i);
   assert.doesNotMatch(prompt, /BUBBLE SLOTS:/);
   assert.match(prompt, /B1 rightmost regardless of speaker/);
-  assert.match(prompt, /BALLOON OWNERSHIP:.*move.*bodies.*speaker/i);
+  assert.match(prompt, /BALLOON OWNERSHIP:.*move(?:\/reflow)? balloon bodies near.*speaker/i);
   assert.doesNotMatch(prompt, /freeze (?:balloon )?bodies|freeze numeric slots/i);
   assert.match(prompt, /TAIL GEOMETRY:.*shortest unobstructed.*(?:mapped mouth\/head|tip touches mapped mouth\/head)/i);
   assert.equal(

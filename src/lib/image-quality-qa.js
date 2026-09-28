@@ -751,6 +751,11 @@ export const parseImageQualityQaResponse = (responseText, { mode = 'four-panel',
                   issues.push({ type: 'bubble_speaker', panel: entry.panel, subject: bubble.bubble,
                     reason: `${bubble.bubble} claims contact, but tail tip (${bubble.tail_tip.x},${bubble.tail_tip.y}) is separated from ${submittedSpeaker}'s ${bubble.speaker_anchor.part} anchor (${bubble.speaker_anchor.x},${bubble.speaker_anchor.y}).` });
                 }
+                if (expectedBubbles.length === 1 && Number.isFinite(bubble.center_x)
+                  && Math.abs(bubble.center_x - bubble.speaker_anchor.x) > 0.35) {
+                  issues.push({ type: 'unverified', panel: entry.panel, subject: bubble.bubble,
+                    reason: `${bubble.bubble} body is far from [${submittedSpeaker}] despite claimed tail contact; inspect the visible tail and speaker identity before accepting this panel.` });
+                }
               }
               if (!['lower_speaker_facing', 'other', 'ambiguous'].includes(rootRelation)
                 || !['clear', 'crosses_head', 'crosses_face', 'crosses_hair', 'crosses_text', 'ambiguous'].includes(pathRelation)

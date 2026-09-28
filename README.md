@@ -1,10 +1,14 @@
 # Super FURU AI 4-koma System / Super FURU AI 4コマシステム
 
-> Current source version: **v6.6.7** / 現在のソース版: **v6.6.7**
+> Current source version: **v6.6.8** / 現在のソース版: **v6.6.8**
 
 An experimental web application in which AI handles topic research, story structure, direction, prompt construction, image generation, and quality review for a four-panel manga. / AIが話題調査、構成、演出、プロンプト構築、画像生成、品質確認まで担当する4コマ漫画制作Webアプリです。
 
 Dialogue and page-layout safeguards / 台詞とコマ割り: Printable dialogue is kept separate from speaker routing metadata, with malformed quotes rejected before copying or API submission. Both provider prompts retain four full-width horizontal panels in one vertical column, including after long-prompt compaction. / 台詞本文と話者メタデータを分離し、括弧が壊れた本文はコピー・API送信前に拒否します。両provider・長文圧縮後も、横長4コマを縦1列に積む指定を保持します。保存済みの旧プロンプトはSTEP3から再構築してください。生成AIの描画と画像QAには誤りが残り得るため、実画像の目視確認は必要です。
+
+Quoted source text / 出典の引用: A quotation identified as wording from an article, document or other source remains part of the scene and is not assigned to a nearby character's speech bubble. A character explicitly speaking or reading aloud still gets a bubble. Rebuild STEP3 to apply this local fix to an existing scenario. / 記事・文書などの言葉として示された引用は状況描写に残し、近くの人物の吹き出しへ入れません。人物が実際に発話・音読する引用は台詞として保持します。既存のシナリオへの反映にはSTEP3を作り直してください。
+
+Single-speaker balloon / 発話が一つのコマ: A lone balloon stays near its mapped speaker while the cast retains the scripted camera positions. A distant body with only a claimed tail connection remains unverified for visual inspection; it does not trigger image regeneration by itself. Rebuild STEP3 for an existing scenario, then inspect the rendered page before publishing. / 発話が一つならフキダシ本体を話者の近くに置き、人物のカメラ指定位置は保持します。本体が話者から大きく離れ、ヒゲ接続の申告だけがある場合は目視確認待ちとし、それだけで再生成しません。既存シナリオはSTEP3から作り直し、公開前に実画像を確認してください。
 
 Explicit camera fields / 明示カメラ指定: Both `[Camera: ...]` tags and standalone `Camera:` lines take precedence over fallback shots for either provider. / 角括弧タグと独立したカメラ指定行のどちらも、既定の画角より優先します。
 
@@ -329,11 +333,17 @@ The production application is published from the `main` branch through the repos
 
 **Why are there two ComfyUI download buttons? / ComfyUIのダウンロードボタンが2つあるのはなぜですか？**  The JSON defines the workflow, while the ZIP supplies three custom-node folders and documentation; three additional runtime dependencies are installed separately. / JSONはワークフロー定義、ZIPはカスタムノード3フォルダーと導入文書です。さらに実行依存3項目を別途導入します。
 
-**Where are older packages? / 旧版はどこですか？**  Older source tags remain for audit history. Use the current `20260928-173220` JSON button and matching v6.6.7 FourPanel Release asset. This pair is labeled interim until the combined graph passes an end-to-end run. / 旧タグは監査用履歴として残します。新規導入は現行の`20260928-173220`ワークフローボタンと対応するv6.6.7 FourPanel Releaseアセットを使用してください。統合グラフの全経路実走までは中間配布です。
+**Where are older packages? / 旧版はどこですか？**  Older source tags remain for audit history. Use the current `20260928-173220` JSON button and matching v6.6.8 FourPanel Release asset. This pair is labeled interim until the combined graph passes an end-to-end run. / 旧タグは監査用履歴として残します。新規導入は現行の`20260928-173220`ワークフローボタンと対応するv6.6.8 FourPanel Releaseアセットを使用してください。統合グラフの全経路実走までは中間配布です。
 
 **Is this the T2V/I2V/Ref2V repository? / T2V・I2V・Ref2Vのリポジトリですか？**  No. Those workflows are maintained separately in [comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows). / いいえ。それらは別の[comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows)で管理します。
 
 ## 📋 ChangeLog
+
+### v6.6.8 (2026-09-28)
+- **[Fix & UX]** 記事内の引用を台詞にしないよう修正し、単独フキダシを話者の近くへ配置。長いヒゲは未確認として扱います。 / Keep reported article quotations out of speech bubbles, place a sole balloon near its speaker, and flag distant tail claims for visual review.
+
+### Unreleased / 未公開（2026-09-28）
+- **[Fix]** 記事などの出典に属する引用を近くの人物の発話と誤認する問題を修正。明示された発話・音読は保持 / Keep quoted source wording out of speech bubbles while preserving explicitly spoken or read-aloud lines
 
 ### v6.6.7 (2026-09-28)
 - **[Fix & UX]** 再検査の矛盾・軽微な人物差分による過剰な画像修正を抑制し、4コマH3中間配布ZIPと対応JSONを更新 / Prevent paid image repairs from conflicting or minor QA findings and update the matching interim four-panel H3 ZIP and workflow JSON

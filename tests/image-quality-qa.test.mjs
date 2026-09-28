@@ -776,6 +776,40 @@ Dialogue: silent`;
   assert.ok(crossesHead.issues.some(issue => issue.type === 'bubble_speaker' && issue.subject === 'B1' && /crosses_head/.test(issue.reason)));
 });
 
+test('a distant sole balloon cannot pass on an uncorroborated speaker-contact claim', () => {
+  const finalPrompt = `## Panel 1
+Dialogue (verbatim bubbles): TEXT (PRINT VALUES ONLY): B1="確認した。". TAIL TIP LOCK: B1=>[甲] mouth/head.
+## Panel 2
+Dialogue: silent
+## Panel 3
+Dialogue: silent
+## Panel 4
+Dialogue: silent`;
+  const checks = spatialChecks();
+  checks[0].bubble_speaker = {
+    status: 'ok', evidence: 'Tail appears to touch the speaker.', left_to_right_texts: ['確認した。'],
+    bubbles: [{
+      bubble: 'B1', text: '確認した。', expected_speaker: '甲', observed_tail_target: '甲',
+      tail_endpoint_evidence: 'Tip appears to touch the speaker head.', endpoint_relation: 'touches_speaker',
+      tail_tip: { x: 0.27, y: 0.42 }, speaker_anchor: { x: 0.28, y: 0.43, part: 'head' },
+      root_relation: 'lower_speaker_facing', path_relation: 'clear', tail_path_evidence: 'Tail is claimed to cross empty space.',
+      center_x: 0.75, position_evidence: 'Balloon body at far right.',
+    }],
+  };
+  const review = () => parseImageQualityQaResponse(JSON.stringify({
+    pass: true, issues: [], observations, spatial_checks: checks,
+  }), { finalPrompt });
+
+  const distant = review();
+  assert.equal(distant.pass, false);
+  assert.ok(distant.issues.some(issue => issue.type === 'unverified' && issue.panel === 1 && issue.subject === 'B1'));
+  assert.ok(distant.issues.every(issue => issue.type !== 'bubble_speaker'));
+
+  checks[0].bubble_speaker.bubbles[0].center_x = 0.48;
+  const nearby = review();
+  assert.equal(nearby.pass, true);
+});
+
 test('quality review image parts keep the candidate first, then every panel crop, then character sheets', () => {
   const parts = buildImageQualityQaImageParts({
     candidate: { mimeType: 'image/png', base64Img: 'candidate-data' },
