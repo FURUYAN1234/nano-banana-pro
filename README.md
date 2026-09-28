@@ -272,7 +272,7 @@ Image QA checks panel structure, character identity, body and hand integrity, pr
 
 <img width="1055" height="1491" alt="ChatGPT 画像 2026年9月26日 19_51_54" src="https://github.com/user-attachments/assets/2b7a7cd2-54d0-4ac2-9bf6-a99092a912e8" />
 
-↓
+Example: The four-panel manga above is the source artwork. The video below shows it animated with MiniMax H3 and ComfyUI. / 実例：上の4コマ漫画を元絵にし、MiniMax H3とComfyUIで動画化したものが下の動画です。
 
 https://github.com/user-attachments/assets/868b2db5-b159-45b7-9c3d-d45e261f2ecc
 
