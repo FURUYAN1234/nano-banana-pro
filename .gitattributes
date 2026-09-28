@@ -1,2 +1,3 @@
 # Preserve the current workflow bytes on GitHub Pages and Hugging Face.
 workflows/FourPanel_NonLM_4step_20260922104144.json -text
+workflows/FourPanel_NonLM_4step_20260928-173220.json -text
