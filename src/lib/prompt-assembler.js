@@ -81,7 +81,7 @@ import {
   replaceCinematicSlotWithinBudget,
   selectPageCinematicTechniques
 } from './cinematic-techniques';
-import { normalizeMangaColorMode, isMonochromePrompt, sanitizeMonochromeSourceDescription, MONOCHROME_RENDERING_LOCK, MONOCHROME_RENDERING_LOCK_COMPACT, MONOCHROME_BACKGROUND_LOCK, MONOCHROME_BACKGROUND_LOCK_COMPACT, MONOCHROME_FINAL_CHROMA_AUDIT, MONOCHROME_FINAL_CHROMA_AUDIT_COMPACT } from './manga-render-mode.js';
+import { MONOCHROME_FOCAL_READABILITY, MONOCHROME_SKIN_LIGHTING, normalizeMangaColorMode, isMonochromePrompt, sanitizeMonochromeSourceDescription, MONOCHROME_RENDERING_LOCK, MONOCHROME_RENDERING_LOCK_COMPACT, MONOCHROME_BACKGROUND_LOCK, MONOCHROME_BACKGROUND_LOCK_COMPACT, MONOCHROME_FINAL_CHROMA_AUDIT, MONOCHROME_FINAL_CHROMA_AUDIT_COMPACT } from './manga-render-mode.js';
 import { buildReferenceSheetArtStyleLock, getEndingModePolicy, isDocumentaryEnding, resolveScenarioEndingType } from './ending-mode-policy.js';
 
 /**
@@ -214,7 +214,7 @@ const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt
     .replace(/CONVERSATIONAL DEPTH BASE:[^\n]*/g, 'CONVERSATIONAL DEPTH BASE: Action gaze first; varied depth.')
     .replace(/EYE-LINE LOCK:[^\n]*/g, compactConversationEyeLine)
     .replace(/MANGA FINISH ASSIST:[^\n]*/g, 'FINISH: bubbles, anatomy.')
-    .replace(/\[ SHARED IMAGE QUALITY CONTRACT[\s\S]*?(?=\n- Clean finish:)/g, `${SHARED_IMAGE_QUALITY_CONTRACT_COMPACT}\n${FOCAL_READABILITY}\n${SKIN_LIGHTING}\n${BODY_ACTING_BASELINE_COMPACT}\n${EXPRESSIVE_DIRECTION}\n${PANEL_EDGE_CONTINUITY_LOCK_COMPACT}\n${FUNCTIONAL_SURFACE_ORIENTATION_LOCK_COMPACT}\n${OBJECT_GEOMETRY_LOCK_COMPACT}`)
+    .replace(/\[ SHARED IMAGE QUALITY CONTRACT[\s\S]*?(?=\n- Clean finish:)/g, `${SHARED_IMAGE_QUALITY_CONTRACT_COMPACT}\n${monochrome ? MONOCHROME_FOCAL_READABILITY : FOCAL_READABILITY}\n${monochrome ? MONOCHROME_SKIN_LIGHTING : SKIN_LIGHTING}\n${BODY_ACTING_BASELINE_COMPACT}\n${EXPRESSIVE_DIRECTION}\n${PANEL_EDGE_CONTINUITY_LOCK_COMPACT}\n${FUNCTIONAL_SURFACE_ORIENTATION_LOCK_COMPACT}\n${OBJECT_GEOMETRY_LOCK_COMPACT}`)
     .replace(/PANEL EDGE CONTINUITY LOCK:[^\n]*/g, PANEL_EDGE_CONTINUITY_LOCK_COMPACT)
     .replace(/FACIAL ACTING LOCK:[\s\S]*?(?=\n- CLEAN SURFACE PROTOCOL:)/g, FACIAL_ACTING_LOCK_COMPACT)
     .replace(/RICH PANEL COMPOSITION \/ CHARACTER CLARITY LOCK:[\s\S]*?(?=\n- CLOTHING FOLD SHADOW ASSIST:)/g, RICH_PANEL_COMPOSITION_LOCK_COMPACT)
@@ -375,7 +375,7 @@ const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt
     .replace(/SHARED IMAGE QUALITY CONTRACT:[^\n]*/g, SHARED_IMAGE_QUALITY_CONTRACT_COMPACT)
     .replace(/MANGA CAMERA \/ POSE VARIETY LOCK:[^\n]*/g, 'MANGA CAMERA / POSE VARIETY LOCK: preserve scripted front/back/left/right, elevation, crop and lens; vary unspecified shots only. Overhead shows upper planes; low shows undersides/convergence; rear/side shows body planes. Telephoto compresses depth; wide expands near/far; fisheye edge distortion if requested. One projection for cast/setting; story-relevant focal form, no stock foot thrust. Eye-line is gaze, not camera height. Preserve Action/contact and scripted frontal/repeats.')
     .replace(/RICH PANEL COMPOSITION \/ CHARACTER CLARITY LOCK:[^\n]*/g, 'RICH PANEL COMPOSITION / CHARACTER CLARITY LOCK: layered foreground/midground/background, selective material detail and motivated key, fill and rim light with shadow/color depth; background lower contrast without making it blank or washed out. Keep setting or scripted abstraction; story evidence, acting faces, hands and props stay clear.')
-    .replace(/FOCAL READABILITY:[^\n]*/g, FOCAL_READABILITY)
+    .replace(/FOCAL READABILITY:[^\n]*/g, monochrome ? MONOCHROME_FOCAL_READABILITY : FOCAL_READABILITY)
     .replace(/EXPRESSIVE DIRECTION:[^\n]*/g, EXPRESSIVE_DIRECTION)
     // The global gesture and expressive contracts already retain motion,
     // support/contact and exact Camera/Action. Avoid repeating them at the cap.
@@ -401,13 +401,13 @@ const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt
     .replace(/^BLACK INK PLATE:[^\n]*/gm, 'BLACK INK PLATE: redraw; refs=identity, not palette.')
     .replace(/^SOURCE COLOR BOUNDARIES:[^\n]*/gm, 'SOURCE COLOR BOUNDARIES: black/white/screen.')
     .replace(/^SCENE COLOR PRIORITY:[^\n]*/gm, 'SCENE COLOR PRIORITY: story and verbatim text over source hues.')
-    .replace(/^WHITE PAPER RESERVE:[^\n]*/gm, 'WHITE RESERVE: large unprinted/panel; light skin/wall/sky=white. Focal face: one bounded shadow plane; never whole-face/panel/BG screen.')
-    .replace(/^DEPTH OF FIELD \/ DEFOCUS:[^\n]*/gm, 'DEPTH-OF-FIELD DEFOCUS: fewer far lines/wider white gaps; assigned screen.')
+    .replace(/^WHITE PAPER RESERVE:[^\n]*/gm, 'WHITE RESERVE: large unprinted/panel; lit light skin/wall/sky=white; never whole-face/panel/BG screen.')
+    .replace(/^DEPTH OF FIELD \/ DEFOCUS:[^\n]*/gm, 'DEPTH-OF-FIELD DEFOCUS: fewer far lines/wider white gaps; never add screentone for distance or blur.')
     .replace(/^G-PEN INK DIRECTION:[^\n]*/gm, 'G-PEN INK DIRECTION: pressure-taper; bold focal. BLACK-HAIR INK LOCK: darkest reference hair=solid black; white shine only, no screen.')
     .replace(/^BLACK-HAIR INK LOCK:[^\n]*\n?/gm, '')
     .replace(/^INK LIGHT \/ ACTING:[^\n]*/gm, 'INK LIGHT / ACTING: full-body action amplitude; directional solid-black cast shadows, white rim cutouts; keep depth/beats.')
     .replace(/^MONOCHROME BACKGROUND CLARITY LOCK:[^\n]*/gm, 'MONOCHROME BACKGROUND CLARITY LOCK: omit textures; keep setting/depth/story evidence/white.')
-    .replace(/^MONOCHROME FINAL CHROMA AUDIT:[^\n]*/gm, 'MONOCHROME FINAL CHROMA AUDIT: white/black/screen only; no hue/grey.')
+    .replace(/^MONOCHROME FINAL CHROMA AUDIT:[^\n]*/gm, MONOCHROME_FINAL_CHROMA_AUDIT_COMPACT)
     // Identity Matrix and adult casting already cover these reminders. Keep the
     // functional-surface check local to every panel so projection is not lost.
     .replace(/^.*GLASSES CHECK:[^\n]*\n?/gm, '')
@@ -464,10 +464,10 @@ const buildMonochromePanelInkLock = (panelText = '', identityMatrix = '') => {
   const screenedSkinNames = namesFor('SCREENED-SKIN');
   const skinRules = [
     lightSkinNames.length
-      ? `WHITE-SKIN[${lightSkinNames.join(',')}].`
+      ? `WHITE-SKIN[${lightSkinNames.join(',')}]:lit=unprinted; shade=screen/black.`
       : '',
     screenedSkinNames.length
-      ? `SCREEN-SKIN[${screenedSkinNames.join(',')}]:palms same; no patches.`
+      ? `SCREEN-SKIN[${screenedSkinNames.join(',')}]:base stays in light; no broad patches.`
       : ''
   ].filter(Boolean).join(' ');
   return `PANEL INK:white/black;no veil. ${skinRules} ${cheekRule}`.replace(/\s+/g, ' ').trim();
@@ -516,7 +516,7 @@ const buildStrictScriptLock = ({ safeTopic, panels, castList, activeOutfit, isMo
 
   return `STRICT SCRIPT LOCK:
 - Title: ${safeTopic}
-- Scenario is source truth. A different story is a failed output.${isMonochrome ? ' This locks story and verbatim text, not source colors: render all source color/paint descriptions using the MONOCHROME TWO-VALUE RENDERING LOCK.' : ''}
+- Scenario is source truth. A different story is a failed output.${isMonochrome ? ' This locks story and verbatim text, not source colors: render all source color/paint descriptions using the MONOCHROME THREE-TONE MANUSCRIPT LOCK.' : ''}
 - Do not replace conflict, setting, sequence, ending, or punchline.
 - Do not replace, rewrite, paraphrase, omit, or add dialogue.
 - Explicitly silent panels have NO speech bubbles and no invented dialogue. The no-dialogue placeholder is an instruction, never printable text.

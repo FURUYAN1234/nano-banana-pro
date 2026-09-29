@@ -337,3 +337,35 @@ body {
   line-height: 1.7;
   color: #94a3b8;
 }
+
+/* Stable date/weekday display; the native input supplies the calendar picker. */
+.target-date-and-season { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; }
+.target-date-control { position: relative; flex: 0 0 auto; }
+.target-date-native {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  pointer-events: none;
+  color: white;
+  background: #0f1115;
+  border: 1px solid #60a5fa;
+  box-sizing: border-box;
+}
+.target-date-display {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 8px;
+  color: white;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid #ffffff33;
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  cursor: pointer;
+  position: relative;
+}
+.target-date-display:focus-visible { outline: 2px solid #60a5fa; outline-offset: 2px; }

@@ -61,16 +61,16 @@ for (const family of ['chatgpt', 'gemini']) {
     assert.match(prompt, /(?:light skin uses white|light skin\/wall\/sky=white|LIGHT-SKIN \[[^\]]+\]:[^\n]*white paper)/i);
     assert.match(prompt, /(?:tanned or dark skin uses the one uniform screentone|SCREENED-SKIN[^\n]*uniform screen)/i);
     assert.match(prompt, /(?:hands, palms|hands\/palms|limbs\/palms)/i);
-    assert.match(prompt, /(?:very thin continuous rim-light line|thin (?:continuous )?outer rim|white rim only)/i);
-    assert.match(prompt, /(?:never cut an interior or broad white area|no interior white\/patches|never interior patches|no patches)/i);
-    assert.match(prompt, /(?:Do not invent lighter palms\/soles|lighter palms\/soles as defects|(?:invented )?light palms\/soles|no patches\/light palms)/i);
+    assert.match(prompt, /Small light-driven highlights allowed/i);
+    assert.match(prompt, /no broad white islands\/cross-panel base changes/i);
+    assert.match(prompt, /(?:Do not invent lighter palms\/soles|lighter palms\/soles as defects|(?:invented )?light palms\/soles|no patches\/light palms|no broad patches or invented light palms)/i);
     assert.match(prompt, /SCREENED-SKIN \[葵\]:/i);
     assert.match(prompt, /LIGHT-SKIN \[凛\]:[^\n]*white paper/i);
     assert.match(prompt, /PANEL INK:[^\n]*white\/black/i);
     assert.equal((prompt.match(/CHEEKS: none/g) || []).length, 4);
     assert.match(prompt, /White\+solid black dominate|White and solid black must dominate/i);
-    assert.match(prompt, /focal face[^\n]*bounded[^\n]*shadow plane|bounded light-driven shadow plane/i);
-    assert.match(prompt, /never whole-face|never cover the whole face|never veil or screen the whole face/i);
+    assert.match(prompt, /Form and cast shadows use bounded screen\/black shapes/i);
+    assert.match(prompt, /never whole-face|never cover the whole face|never veil or screen the whole face|never screen a whole light-skin face/i);
     assert.match(prompt, /(?:sole|only) middle(?: tone)?|one consistent bounded middle tone|one fixed screen/i);
     assert.match(prompt, /not (?:grayscale|halftone rendering)/i);
     assert.match(prompt, /No [^\n]*gr[ae]y(?:\/|.*)gradients?/i);
@@ -113,6 +113,68 @@ test('cheek screen is localized only to the explicitly blushing character and pa
   assert.equal((prompt.match(/CHEEKS: none/g) || []).length, 3);
 });
 
+test('light-skin paper base is explicit without forcing facial shading in full and compact prompts', () => {
+  for (const providerFamily of ['chatgpt', 'gemini']) {
+    for (const promptMaxChars of [32000, 19000]) {
+      const prompt = build(providerFamily, 'monochrome', { promptMaxChars });
+      assert.match(prompt, /SKIN PAPER BASE:.*#FFFFFF.*balloon interiors/);
+      assert.match(prompt, /No base wash\/texture/);
+      assert.doesNotMatch(prompt, /To avoid a flat blank face|Focal face: one bounded/);
+      assert.match(prompt, /Form and cast shadows use bounded screen\/black shapes/);
+      assert.match(prompt, /FACE INK:.*eyes\/nose\/mouth.*white gaps/);
+      assert.match(prompt, /no feature merging or disappearing hairlines/);
+      // Bounded cast shadows and canonical darker skin remain valid.
+      assert.match(prompt, /bounded.*shadow/i);
+      assert.match(prompt, /SCREENED-SKIN \[葵\]:.*uniform screen/);
+      const review = buildImageQualityQaPrompt({ finalPrompt: prompt, referenceImageCount: 2 });
+      assert.match(review, /Compare lit light-skin interiors with nearby white balloon interiors/);
+      assert.match(review, /broad light-grey base is a defect even without visible dots/);
+      assert.match(review, /Do not reject light-driven screen or solid-black shadows for having area/);
+      assert.match(review, /merged eyes\/nose\/mouth or lost facial strokes/);
+    }
+  }
+});
+
+test('white skin reserves lit planes while preserving anatomical form and cast shadows', () => {
+  for (const providerFamily of ['chatgpt', 'gemini']) {
+    for (const promptMaxChars of [32000, 19000]) {
+      const prompt = build(providerFamily, 'monochrome', { promptMaxChars });
+      assert.match(prompt, /LIGHT-SKIN \[凛\]: lit face\/neck\/limbs=white paper; form\/cast shade=screen or black/);
+      assert.equal((prompt.match(/WHITE-SKIN\[凛\]:lit=unprinted; shade=screen\/black/g) || []).length, 4);
+      assert.match(prompt, /BODY VOLUME:.*form shadows.*cast shadows/);
+      assert.match(prompt, /Follow light direction; no fixed shadow quota/);
+      assert.doesNotMatch(prompt, /screen only bounded cast shadow/);
+      const review = buildImageQualityQaPrompt({ finalPrompt: prompt, referenceImageCount: 2 });
+      assert.match(review, /form and cast shadows.*flat bodies/);
+      assert.match(review, /Diffuse light or intentional flat stylization alone is not a defect/);
+    }
+  }
+});
+
+test('ink-only quality and selective screen masks survive full and compressed provider prompts', () => {
+  for (const family of ['gemini', 'chatgpt']) {
+    for (const [promptMaxChars, extra] of [[32000, ''], [19000, ''], [32000, '人物は本棚の前から机の方へ歩きながら、相手の返事を待っている。'.repeat(20)]]) {
+      const options = { promptMaxChars, cinematicTechniques: false, scenario: scenario(undefined, extra) };
+      const prompt = build(family, 'monochrome', options);
+      assert.doesNotMatch(prompt, /warm\/cool color planes|lighten\/desaturate BG|desaturate background colors|colored facial skin keeps/);
+      assert.match(prompt, /SCREEN MASK:.*unassigned.*white.*never.*brightness.*dots/i);
+      assert.match(prompt, /INK LIGHT SOURCE:.*white cutouts.*no glow.*veil/i);
+      assert.match(prompt, /NEUTRAL INK:.*R=G=B.*tint/i);
+      assert.match(prompt, /WHITE-SKIN\[凛\]:lit=unprinted; shade=screen\/black/);
+      // Legitimate material/skin tone and shadow regions must remain possible.
+      assert.match(prompt, /SCREENED-SKIN \[葵\]:.*uniform screen/);
+      assert.match(prompt, /bounded.*shadow/i);
+      assert.ok(prompt.includes('赤と青はそのまま書いてね。'));
+      assert.match(prompt, /ローアングル|LOW ANGLE/);
+      if (extra) assert.ok(prompt.includes(extra), 'long Action must remain intact');
+      if (family === 'chatgpt') assert.ok(prompt.length <= promptMaxChars);
+      const color = build(family, 'color', options);
+      assert.match(color, /warm\/cool color planes/);
+      assert.doesNotMatch(color, /SCREEN MASK:|NEUTRAL INK:/);
+    }
+  }
+});
+
 test('cheek screen follows the nearest named subject in a compound action', () => {
   const withCompoundAction = scenario().replace(
     'Action: 葵が凛に本を渡す。凛は本を受け取り、驚いてのけぞる。背景に本棚と机がある。',
@@ -127,7 +189,18 @@ test('every panel rejects an all-over screen and repeats character-specific skin
   const prompt = build('chatgpt', 'monochrome');
   assert.equal((prompt.match(/no veil/g) || []).length, 4);
   assert.equal((prompt.match(/WHITE-SKIN\[凛\]/g) || []).length, 4);
-  assert.equal((prompt.match(/SCREEN-SKIN\[葵\]:palms same; no patches/g) || []).length, 4);
+  assert.equal((prompt.match(/SCREEN-SKIN\[葵\]:base stays in light; no broad patches/g) || []).length, 4);
+});
+
+test('qualified light-skin fields keep white reserves without borrowing adjacent traits or whitening dark skin', () => {
+  const variedSkinCast = '## 葵\n| 顔 | 肌: 小麦色<br>目: 明るい茶色 | tanned skin |\n## 凛\n| 顔 | 肌：普通～やや明るい<br>目: 黒 | no glasses |\n## 澪\n| 顔 | 肌: 未指定<br>目: 明るい茶色 | no glasses |';
+  for (const family of ['gemini', 'chatgpt']) {
+    const prompt = build(family, 'monochrome', { castList: variedSkinCast });
+    assert.match(prompt, /LIGHT-SKIN \[凛\]:.*white paper/);
+    assert.match(prompt, /WHITE-SKIN\[凛\]:lit=unprinted; shade=screen\/black/);
+    assert.match(prompt, /SCREENED-SKIN \[葵\]:.*uniform screen/);
+    assert.doesNotMatch(prompt, /LIGHT-SKIN \[[^\]]*(?:葵|澪)/);
+  }
 });
 
 test('every monochrome emotion uses ink-specific direction, not its color recipe', () => {
@@ -184,6 +257,28 @@ test('monochrome Web prompt remains copyable with a five-character cast', () => 
   assert.match(prompt, /BLACK-HAIR INK LOCK:[^\n]*(?:solid black|black mass)[^\n]*(?:white highlight|white shine)/i);
   assert.match(prompt, /MONOCHROME BACKGROUND CLARITY LOCK/);
   assert.match(prompt, /LIGHT-SKIN \[凛\]:[^\n]*white paper/i);
+});
+
+test('screened skin keeps its base under light while small motivated highlights remain allowed', () => {
+  for (const providerFamily of ['gemini', 'chatgpt']) {
+    for (const promptMaxChars of [32000, 19000]) {
+      const prompt = build(providerFamily, 'monochrome', { promptMaxChars });
+      assert.match(prompt, /SCREENED SKIN BASE:.*before lighting.*Overrides style lighting/);
+      assert.match(prompt, /light keeps base; shade=black\/hatching/);
+      assert.match(prompt, /Small light-driven highlights allowed/);
+      assert.doesNotMatch(prompt, /white rim only|Any interior or broad white skin area|Lit skin remains unprinted|leave lit skin pure white/);
+      assert.match(prompt, /SCREENED-SKIN \[葵\]:.*keep base in light/);
+      assert.equal((prompt.match(/SCREEN-SKIN\[葵\]:base stays in light/g) || []).length, 4);
+      const review = buildImageQualityQaPrompt({ finalPrompt: prompt, referenceImageCount: 2 });
+      assert.match(review, /Small light-driven highlights.*are allowed/);
+      assert.match(review, /broad white islands.*cross-panel base changes/);
+      assert.match(review, /Do not regenerate for a tiny highlight or ambiguous screen marks/);
+    }
+  }
+  for (const style of Object.keys(EMOTION_STYLES).filter(s => s !== 'NORMAL')) {
+    const block = buildEmotionBlock(`[EMOTION: ${style}]\n葵「はい。」`, 'monochrome');
+    assert.doesNotMatch(block, /any lit skin stays white|white lit skin|lit faces remain entirely white|lit faces unprinted|white facial areas|clean white lit face|pose and white lit planes/);
+  }
 });
 
 test('monochrome mode replaces scenario-wide color output commands without changing dialogue', () => {

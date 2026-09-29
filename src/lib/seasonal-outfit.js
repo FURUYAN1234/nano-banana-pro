@@ -67,6 +67,23 @@ const getSeasonKey = (month) => {
   return 'winter';
 };
 
+export const getJapaneseWeekdayLabel = (targetDate = '') => {
+  const match = String(targetDate).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return null;
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const parsed = new Date(Date.UTC(year, month - 1, day));
+  if (
+    parsed.getUTCFullYear() !== year
+    || parsed.getUTCMonth() + 1 !== month
+    || parsed.getUTCDate() !== day
+  ) return null;
+
+  return new Intl.DateTimeFormat('ja-JP', { weekday: 'long', timeZone: 'UTC' }).format(parsed);
+};
+
 export const getSeasonContext = ({ targetDate = '', inputMode = 'news' } = {}) => {
   if (inputMode !== 'news') return null;
 

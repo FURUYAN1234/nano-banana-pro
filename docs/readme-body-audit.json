@@ -1,8 +1,8 @@
 {
-  "readmeSha256": "e835bad75abbdbe01268b7938e8d9920ea398c27e19fa00b499ff8d203ed8855",
-  "sourceTree": "b7a3f53c396d9c11bcdf0ceadd6b1069b4251bcc",
-  "publicTree": "21f37acc8b52595cad7c452db10cd49af30e3b62",
-  "packageSha256": "77b9f5a7ddc2eaa902b0a57ee71bba2b34f7debce6468fcdbcb6cdfb33933b39",
+  "readmeSha256": "af902f244c0da1bd370a8833b9ec9539623e631e739bf53ee13ecddadc2999aa",
+  "sourceTree": "d40062ae41cdb2da145ba381c5879a8e07cad96a",
+  "publicTree": "7bfd9338c187e83fb8d326542e8eb71cc45af3eb",
+  "packageSha256": "6e155b0f677e86de5256096cfc4c036bd74939ed2ca47ba8c7c1210489c5ed0a",
   "releaseAssetSha256": "046b655cb0536defaffb48055f0dede324b6d818e2916510bd4acea577295b5f",
   "reviewedSections": [
     "AI Manga Creative Suite / AIまんが制作エコシステム",
@@ -18,5 +18,5 @@
     "📋 ChangeLog",
     "License / ライセンス"
   ],
-  "findings": "README本文の全12節を現行実装・公開導線に照合。長文Web貼付の説明から単発検証の記録とボタン間隔のピクセル値を除き、分割貼付・TXT添付・共通上限の利用手順は保持。ComfyUIの個別ノード設定文は本文に残っていない。カメラ・演技、衣装／小物／頭部の連続性、話者と吹き出し、進捗と再検査の説明を現行コードと照合し、画像品質を保証しない制約も保持。OpenAI公式資料で価格と32,000文字上限を確認。正本とH3配布のv6.6.9表示を同期し、変更履歴は実際のリリース版として記載。余分な「未公開」履歴は追加していない。 Release build regenerated both workflow diagrams with the current v6.6.9 label; their audited public-tree hashes now match the candidate."
+  "findings": "README本文の全12節をv6.7.0候補のコード、実画面、配布契約、リンクへ照合。STEP2の日付表示は括弧内の曜日と右側の季節表示に一致。白黒説明は白地・黒ベタ・限定トーンと人体の形影を記載し、品質保証とは書いていない。Quick startと検査、API経路、カメラ・演技、衣装、話者、プロンプト圧縮の記述を現行ソース・テストと突合。H3配布リンクは現行JSONと同じ識別子で、ZIPが中間配布である制約も保持。ライセンス、秘密情報の境界、開発手順、FAQ、公開URLを確認。単発API生成の逸話と細かなボタン間隔を本文から除去し、古い変更履歴をGitHub Releasesへの案内に委ねて最新15件へ整理。v6.7.0のZIPリンクと履歴を反映。"
 }

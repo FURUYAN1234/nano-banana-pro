@@ -8,11 +8,12 @@ import {
   Zap,
   ArrowRight,
   Copy,
-  ChevronDown
+  ChevronDown,
+  CalendarDays
 } from 'lucide-react';
 import ThinkingLog from './ThinkingLog';
 import Panorama360Viewer from './Panorama360Viewer';
-import { getSeasonContext } from '../lib/seasonal-outfit';
+import { getJapaneseWeekdayLabel, getSeasonContext } from '../lib/seasonal-outfit';
 import { getEffectiveEngine } from '../lib/engine-state';
 import {
   DOCUMENTARY_ENDING_OPTIONS,
@@ -114,6 +115,11 @@ export default function Step2Panel({
     enhanceDialogue &&
     enhanceGag;
   const seasonContext = getSeasonContext({ targetDate, inputMode });
+  const targetWeekdayLabel = getJapaneseWeekdayLabel(targetDate);
+  const targetDateInputRef = React.useRef(null);
+  const targetDateLabel = targetWeekdayLabel
+    ? `${targetDate.replaceAll('-', '/')}（${targetWeekdayLabel.slice(0, 1)}）`
+    : '日付を選択';
   const isOpenAIEngine = getEffectiveEngine(selectedEngine, enableOpenAIApi) === 'openai';
   const selectedScenarioModel = OPENAI_SCENARIO_MODEL_OPTIONS.find(({ id }) => id === scenarioModelId)
     || OPENAI_SCENARIO_MODEL_OPTIONS[0];
@@ -167,14 +173,28 @@ export default function Step2Panel({
             {/* Calendar */}
             <div className="flex flex-wrap items-center gap-4 bg-slate-900/80 p-4 rounded-xl border border-white/5">
               <span className="text-xs font-bold text-slate-400">📅 対象日付 (Target Date):</span>
-              <div className="flex flex-col items-start gap-1">
-                <input
-                  type="date"
-                  value={targetDate}
-                  onChange={(e) => setTargetDate(e.target.value)}
-                  style={{ colorScheme: 'dark' }}
-                  className="bg-transparent text-white font-mono font-bold outline-none border-b border-white/20 focus:border-blue-500 py-1 px-2"
-                />
+              <div className="target-date-and-season">
+                <div className="target-date-control">
+                  <input
+                    ref={targetDateInputRef}
+                    type="date"
+                    aria-label="対象日付"
+                    tabIndex={-1}
+                    value={targetDate}
+                    onChange={(e) => setTargetDate(e.target.value)}
+                    style={{ colorScheme: 'dark' }}
+                    className="target-date-native"
+                  />
+                  <button
+                    type="button"
+                    className="target-date-display"
+                    aria-label={`対象日付を選択: ${targetDateLabel}`}
+                    onClick={() => targetDateInputRef.current.showPicker()}
+                  >
+                    <span>{targetDateLabel}</span>
+                    <CalendarDays size={18} aria-hidden="true" />
+                  </button>
+                </div>
                 {seasonContext && (
                   <span className="text-[10px] font-mono text-cyan-300 whitespace-nowrap">
                     季節目安: {seasonContext.label}（対象日付から自動）

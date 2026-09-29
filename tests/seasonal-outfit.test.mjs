@@ -1,3 +1,5 @@
+import React from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test, { after, before } from 'node:test';
@@ -5,6 +7,7 @@ import { createServer } from 'vite';
 import {
   assertSeasonalOutfit,
   buildSeasonalOutfitInstruction,
+  getJapaneseWeekdayLabel,
   getSeasonContext,
   stripReferenceWardrobe,
   buildScenarioCastContext
@@ -56,6 +59,18 @@ test('maps Japanese calendar boundary months without timezone drift', () => {
   assert.equal(getSeasonContext({ targetDate: '2026-09-01', inputMode: 'news' }).label, '秋');
   assert.equal(getSeasonContext({ targetDate: '2026-12-01', inputMode: 'news' }).label, '冬');
   assert.equal(getSeasonContext({ targetDate: '2026-02-28', inputMode: 'news' }).label, '冬');
+});
+
+test('shows an explicit Japanese weekday for a valid target date', () => {
+  assert.equal(getJapaneseWeekdayLabel('2026-09-29'), '火曜日');
+  assert.equal(getJapaneseWeekdayLabel('2026-09-28'), '月曜日');
+  assert.equal(getJapaneseWeekdayLabel('2026-10-04'), '日曜日');
+});
+
+test('does not show a weekday for an empty or invalid target date', () => {
+  assert.equal(getJapaneseWeekdayLabel(''), null);
+  assert.equal(getJapaneseWeekdayLabel('2026-02-30'), null);
+  assert.equal(getJapaneseWeekdayLabel('2026/09/29'), null);
 });
 
 test('an unqualified uniform is not automatically classified as school attire', () => {
@@ -302,4 +317,22 @@ test('STEP2 shows a read-only news season hint without adding a season control',
   assert.match(source, /季節目安:/);
   assert.match(source, /対象日付から自動/);
   assert.doesNotMatch(source, /setSeason|name=["']season["']|<select[^>]*season/i);
+});
+
+
+test('target date shows weekday inside its date parentheses, not a separate label', async () => {
+  const { default: Step2Panel } = await server.ssrLoadModule('/src/components/Step2Panel.jsx');
+  const render = targetDate => renderToStaticMarkup(React.createElement(Step2Panel, {
+    currentStep: 2, inputMode: 'news', targetDate, categories: [], scenario: '',
+  }));
+  const tuesday = render('2026-09-29');
+  assert.match(tuesday, /2026\/09\/29（火）/);
+  assert.doesNotMatch(tuesday, /曜日:|曜日：|2026\/09\/29\(\)/);
+  assert.match(tuesday, /type="date"/);
+  assert.match(tuesday, /class="target-date-and-season"/);
+  const css = await readFile(new URL('../src/index.css', import.meta.url), 'utf8');
+  assert.doesNotMatch(css, /target-date-native:focus/);
+  assert.match(css, /target-date-and-season[^}]*display: flex[^}]*flex-wrap: wrap/);
+  assert.match(render('2026-10-04'), /2026\/10\/04（日）/);
+  assert.doesNotMatch(render(''), /undefined|null|（[月火水木金土日]）/);
 });
