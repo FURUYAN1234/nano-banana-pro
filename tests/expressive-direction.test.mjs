@@ -57,23 +57,29 @@ test('both image paths and single-image copy keep visibility subordinate to the 
 });
 
 test('focal ink, sharp story cues and actual exaggerated acting survive every output route', () => {
-  const outputs = [singleImagePrompt.buildSingleImageEmotionalPrompt()];
+  const outputs = [{ prompt: singleImagePrompt.buildSingleImageEmotionalPrompt(), colorMode: 'color' }];
   for (const providerFamily of ['chatgpt', 'gemini']) {
     for (const colorMode of ['color', 'monochrome']) {
-      outputs.push(buildMangaPrompt({ providerFamily, colorMode, scenario, castList,
+      outputs.push({ prompt: buildMangaPrompt({ providerFamily, colorMode, scenario, castList,
         analysis: castList + '\n' + 'Consistent identity detail. '.repeat(200),
-        currentTitle: '演出検証', activeLocation: '作業室', activeOutfit: '作業服', punchlineType: 'Auto' }));
+        currentTitle: '演出検証', activeLocation: '作業室', activeOutfit: '作業服', punchlineType: 'Auto' }), colorMode });
     }
   }
-  for (const prompt of outputs) {
+  for (const { prompt, colorMode } of outputs) {
     assert.match(prompt, /FOCAL READABILITY:/);
     assert.match(prompt, /G-pen.*pressure|pressure.*G-pen/i);
     assert.match(prompt, /thick-to-hairline strokes/);
     assert.match(prompt, /bold outer silhouette.*overlap accents, fine eyes\/mouth\/fingers/);
     assert.match(prompt, /Never uniform thick outlines or black-clogged features/);
     assert.match(prompt, /story-critical reactions.*(?:sharp|crisp)/i);
-    assert.match(prompt, /(?:pale|lighten).*desaturat/i);
-    assert.match(prompt, /local light\/dark value and warm\/cool color planes/);
+    if (colorMode === 'monochrome') {
+      assert.match(prompt, /white\/solid-black planes/);
+      assert.match(prompt, /If focal still merges, reduce BG line density or place bounded solid black behind light silhouettes/);
+      assert.doesNotMatch(prompt, /lighten\/desaturate BG|warm\/cool color planes/);
+    } else {
+      assert.match(prompt, /(?:pale|lighten).*desaturat/i);
+      assert.match(prompt, /local light\/dark value and warm\/cool color planes/);
+    }
     assert.match(prompt, /clear gaps at faces\/hands/);
     assert.match(prompt, /speed lines.*(?:substitute|replace)|(?:substitute|replace).*speed lines/i);
     assert.match(prompt, /actual.*(?:projection|pose)|(?:projection|pose).*actual/i);

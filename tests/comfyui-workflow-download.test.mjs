@@ -184,7 +184,7 @@ test('README matches the current H3 API distribution and workflow does not descr
   assert.match(readmeSource, /https:\/\/github\.com\/Adudeguyman\/ComfyUI-H3-AudioRefine/);
   assert.match(readmeSource, /区間.*生成.*検査.*最大5候補/s);
   assert.match(readmeSource, /ComfyUI-NanoBanana-H3.*MIT.*ComfyUI-MiniMax-H3-Long-Video.*GPL-3\.0-only.*ComfyUI-Spectrum-MiniMax-H3.*GPL-3\.0-or-later/s);
-  assert.match(readmeSource, /releases\/download\/v6\.6\.8\/ComfyUI_H3_FourPanel_NonLM_20260928-173220\.zip/);
+  assert.ok(readmeSource.includes(`/releases/download/v${packageJson.version}/ComfyUI_H3_FourPanel_NonLM_20260928-173220.zip`));
   assert.match(readmeSource, /ComfyUIサーバーのプロセスメモリ/);
   assert.match(readmeSource, /再起動.*消去/);
   assert.doesNotMatch(readmeSource, /### Unreleased \/ 未公開（2026-09-28）/);
