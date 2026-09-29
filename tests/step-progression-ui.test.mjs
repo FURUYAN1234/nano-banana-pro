@@ -58,3 +58,34 @@ test('the next actionable STEP button pulses after each completed step', async (
   assert.match(css, /animation:\s*next-step-gentle-pulse 1\.6s ease-in-out infinite/);
   assert.match(css, /@media \(prefers-reduced-motion: reduce\)[\s\S]*\.next-step-gentle-pulse[\s\S]*animation:\s*none/);
 });
+
+test('image generation scrolls to the page bottom once on start and respects reduced motion', async () => {
+  const app = await readFile(new URL('../src/App.jsx', import.meta.url), 'utf8');
+  assert.match(app, /if \(!isGeneratingImage\) return;[\s\S]*?requestAnimationFrame\([\s\S]*?window\.scrollTo\(\{\s*top: document\.documentElement\.scrollHeight/);
+  assert.match(app, /matchMedia\('\(prefers-reduced-motion: reduce\)'\)\.matches \? 'instant' : 'smooth'/);
+  assert.match(app, /cancelAnimationFrame\(frame\);\s*\}, \[isGeneratingImage\]\)/);
+});
+
+test('the completed result fades once without animating behind the progress overlay', async () => {
+  const [step4, css] = await Promise.all([
+    readFile(new URL('../src/components/Step4Panel.jsx', import.meta.url), 'utf8'),
+    readFile(new URL('../src/index.css', import.meta.url), 'utf8'),
+  ]);
+  assert.match(step4, /isGeneratingImage \? '' : ' generated-image-reveal'/);
+  assert.match(css, /@keyframes generated-image-reveal\s*\{\s*from \{ opacity: 0; \}\s*to \{ opacity: 1; \}/);
+  assert.match(css, /animation: generated-image-reveal 450ms ease-out both/);
+  assert.match(css, /@media \(prefers-reduced-motion: reduce\)\s*\{\s*\.generated-image-reveal\s*\{\s*animation: none/);
+});
+
+test('STEP4 keeps its wall-clock timer visible in the sticky header through generation and QA', async () => {
+  const [step4, workflow] = await Promise.all([
+    readFile(new URL('../src/components/Step4Panel.jsx', import.meta.url), 'utf8'),
+    readFile(new URL('../src/hooks/useMangaWorkflow.js', import.meta.url), 'utf8'),
+  ]);
+  assert.match(step4, /position: 'sticky'[\s\S]*?isGeneratingImage && generationWaitLog/);
+  assert.match(workflow, /Date\.now\(\) - generationStartedAt/);
+  assert.match(workflow, /progressPhase = '品質検査'/);
+  assert.match(workflow, /progressPhase = repair \? '修正画像生成' : '画像生成'/);
+  assert.match(workflow, /finally \{\s*clearInterval\(genTimer\)/);
+  assert.doesNotMatch(workflow, /genTickCount/);
+});

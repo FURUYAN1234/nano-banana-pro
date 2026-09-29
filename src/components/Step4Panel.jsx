@@ -376,6 +376,7 @@ export default function Step4Panel({
   const hasFixedPageLayout = displayedHistory?.pageLayout?.applied === true;
   const fixedPageLayout = displayedHistory?.pageLayout?.layout;
   const isFourPanelPage = inferImageQualityMode(finalPrompt) === 'four-panel';
+  const generationWaitLog = genLog.find(log => String(log).startsWith('[WAIT]'));
   const getGeneratedImageFilename = () => {
     let rawTitle = mangaTitle;
     if (!rawTitle && scenario) {
@@ -698,14 +699,16 @@ export default function Step4Panel({
                   )}
                 </div>
               </button>
-              {generatedImage && allowImageQualityRepair && (
+              {generatedImage && (
                 <button
                   type="button"
-                  onClick={() => regenerateImage(false, null, { reviewExisting: true })}
+                  onClick={() => regenerateImage(false, null, { reviewExisting: true, reviewOnly: !allowImageQualityRepair })}
                   disabled={isGeneratingImage || isFixingPolicy}
                   className="w-full mt-2 px-4 py-2 rounded-lg border border-blue-400/40 bg-blue-900/20 text-blue-100 text-sm font-bold disabled:opacity-50 disabled:cursor-wait"
                 >
-                  表示中の画像を再検査し、必要な箇所だけ修正する（追加API課金あり）
+                  {allowImageQualityRepair
+                    ? '表示中の画像を再検査し、必要な箇所だけ修正する（追加API課金あり）'
+                    : '表示中の画像を品質再検査する（画像再生成なし・解析API課金あり）'}
                 </button>
               )}
               <p className="mt-1.5 mb-3 px-1 text-[10px] leading-snug text-slate-400">
@@ -1320,14 +1323,15 @@ No explanations. No partial results.`;
                 className="mt-4 p-3 bg-black/80 rounded-lg border border-white/10 font-mono text-[11px] text-green-400 custom-scrollbar"
                 style={{ height: '160px', overflowY: 'auto', marginTop: '16px', padding: '12px', border: '1px solid rgba(255,255,255,0.2)' }}
               >
-                <div className="opacity-50 mb-2 border-b border-white/10 pb-1 flex justify-between text-[11px]" style={{ position: 'sticky', top: '-12px', opacity: 1, background: '#0d1117', padding: '2px 0', marginBottom: '4px', zIndex: 1 }}>
+                <div className="opacity-50 mb-2 border-b border-white/10 pb-1 flex flex-wrap justify-between gap-x-2 text-[11px]" style={{ position: 'sticky', top: '-12px', opacity: 1, background: '#0d1117', padding: '2px 0', marginBottom: '4px', zIndex: 1 }}>
                   <span>🖥 画像生成ログ (STEP 4)</span>
                   <span className={isOpenAIImageMode ? "text-emerald-500" : "text-blue-500"}>{isOpenAIImageMode ? resolveOpenAIImageOption(openAIImageQuality).label : 'v1.3.5 (Gemini Native Image)'}</span>
+                  {isGeneratingImage && generationWaitLog && <span className="w-full text-green-300">{generationWaitLog.replace(/^\[WAIT\]\s*/, '')}</span>}
                 </div>
                 {genLog.length === 0 ? (
                   <div className="text-white/30">待機中... 「画像を生成する」ボタンを押すと開始します。</div>
                 ) : (
-                  genLog.map((log, i) => (
+                  genLog.filter(log => !isGeneratingImage || !String(log).startsWith('[WAIT]')).map((log, i) => (
                     <div key={i} className="mb-1 leading-relaxed" style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', lineHeight: 1.35, marginBottom: 0 }}>
                       {String(log).replace(/^(\[品質検査[^\]]*\])\s*/, '$1\n').replace(/\s+(?=Panel\s+\d+\s*:)/g, '\n')}
                     </div>
@@ -1390,7 +1394,7 @@ No explanations. No partial results.`;
         <div className="flex-1 flex flex-col items-center justify-center relative p-4 bg-[url('https://www.transparenttextures.com/patterns/dark-matter.png')]">
           {generatedImage ? (
             <div className="w-full h-full flex flex-col items-center justify-center gap-4">
-              <img src={generatedImage} className="max-w-full max-h-[70vh] object-contain shadow-2xl" alt="Generated Result" />
+              <img src={generatedImage} className={`max-w-full max-h-[70vh] object-contain shadow-2xl${isGeneratingImage ? '' : ' generated-image-reveal'}`} alt="Generated Result" />
               
               {/* 妥協版警告の復活 */}
               {isFallbackUsed && (

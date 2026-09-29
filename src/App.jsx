@@ -234,6 +234,17 @@ function App() {
   }, [isAnalyzing, isSearching]);
 
   useEffect(() => {
+    if (!isGeneratingImage) return;
+    const frame = requestAnimationFrame(() => {
+      window.scrollTo({
+        top: document.documentElement.scrollHeight,
+        behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth',
+      });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [isGeneratingImage]);
+
+  useEffect(() => {
     if (currentStep < 2 || isAnalyzing || isSearching || isAssembling || isEnhancing || is360CameraWorking || isGeneratingImage) return;
     const activeActionRef = currentStep === 2
       ? step2ActionRef

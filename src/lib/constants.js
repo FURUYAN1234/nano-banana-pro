@@ -3,7 +3,7 @@ import { getEndingModePolicy } from './ending-mode-policy.js';
 // --- 定数・タグ定義 (constants.js) ---
 // App.jsx から抽出された共有定数
 
-export const SYSTEM_VERSION = "v6.6.8";
+export const SYSTEM_VERSION = "v6.6.9";
 
 // --- Punchline ラベル変換関数 ---
 export const getPunchlineLabel = (type) => {
@@ -121,13 +121,13 @@ export const EMOTION_STYLES = {
     vfx: '',
   },
   CHIBI_GAG: {
-    style: 'In THIS PANEL ONLY, draw ALL characters in a super-deformed chibi style with 2-3 head-to-body proportions. Use simplified round faces, dot-like eyes, and exaggerated tiny limbs. The art style shifts to a cute comedic register. CRITICAL GLASSES RULE: If a character wears glasses according to the Identity Matrix, their glasses MUST remain clearly visible even in chibi form. Draw oversized cute round glasses on their chibi face. Do NOT simplify away glasses — they are a core identity trait, not an optional accessory.',
-    proportions: 'OVERRIDE: Use 2-3 head proportions for this panel ONLY. The 6-7 head lock is SUSPENDED.',
+    style: 'In THIS PANEL ONLY, use expressive chibi caricature. Preserve Camera/Action, jointed body acting, individual gaze and facial reactions, recognizable hair and glasses. Reduce deformation when tiny bodies or enlarged heads would hide acting or flatten perspective; never zoom in to show cuteness.',
+    proportions: 'Explicit user proportions win. Otherwise choose the degree of chibi deformation around camera, body acting and expression; no compulsory all-cast head ratio.',
     vfx: '(Exaggerated sweat drops:1.3), (popping veins:1.2), (comedic steam from head), (glasses preserved on chibi face if character wears them:1.5)',
   },
   GEKIGA: {
-    style: 'In THIS PANEL ONLY, shift to a mature realistic illustration style with heavy ink shadows, sharp angular facial features, detailed muscle/bone structure visible through skin tension, and dramatic chiaroscuro lighting. Characters look older and more intense. IMPORTANT: Keep the image in FULL COLOR (not black and white). Use deep vivid colors with high contrast shadows, not monochrome.',
-    proportions: 'Use 7-8 head proportions. Characters appear taller and more imposing.',
+    style: 'In THIS PANEL ONLY, draw forceful realistic gekiga: carved facial planes at brow, nose, cheek and jaw; tense eyelids and mouth, bold pressure-varied contours, sculpted solid-black facial shadows and directional crosshatching. Redraw facial construction, not just darker anime shading. Keep recognizable identity, age, pose and FULL COLOR.',
+    proportions: '',
     vfx: '(Heavy crosshatching shadows:1.4), (dramatic rim lighting:1.5), (high contrast deep shadows with stark chiaroscuro lighting), (intense speed lines in background)',
     surfaceException: 'intentional crosshatching and deep ink shadows only',
   },
@@ -148,13 +148,13 @@ export const EMOTION_STYLES = {
     vfx: '(Blank white circular eyes with no pupils:1.5), (desaturated pale skin:1.3), (dark depression aura emanating:1.3), (frozen stiff mannequin-like pose), (glasses preserved if character wears them:1.5)',
   },
   IMPACT: {
-    style: 'In THIS PANEL ONLY, use an explosive impact-frame composition. The main character\'s expression fills 60-80% of the panel. Dramatic radial speed lines burst from the center. The panel glows with intense energy aura radiating outward.',
-    proportions: 'OVERRIDE: Use 2-4 head proportions. Extreme close-up with foreshortening allowed.',
-    vfx: '(Explosive radial speed lines from center:1.5), (screen-filling extreme close-up face:1.4), (intense glowing energy aura:1.2), (intense dramatic backlight)',
+    style: 'In THIS PANEL ONLY, use a sharp graphic impact frame: forceful brush contours, hard shadow masses, explosive directional strokes and decisive action silhouettes. Preserve the scripted Camera/Action, crop and cast; facial intensity must not force a close-up or change body proportions.',
+    proportions: '',
+    vfx: '(Explosive radial speed lines from action:1.5), (intense dramatic backlight), (clear action silhouette:1.4)',
     surfaceException: 'intentional radial speed lines and controlled impact aura only',
     // [v2.31] マルチキャラパネル用フォールバック
     // [v2.57] ひび割れ演出を削除し、エネルギー放射型演出に差し替え
-    styleMulti: 'In THIS PANEL ONLY, use a dramatic impact-frame composition with intense energy. Dramatic radial speed lines burst from the center of the panel. The panel glows with intense energy aura radiating outward. IMPORTANT: Show ALL characters listed in the panel at full body or waist-up — do NOT zoom into a single face. Do NOT create a close-up of one character\'s face that fills most of the panel. Do NOT draw cracks, fractures, or shattering effects on the panel borders.',
+    styleMulti: 'In THIS PANEL ONLY, use a sharp graphic impact frame: forceful brush contours, hard shadow masses and explosive directional strokes around distinct cast action silhouettes. Preserve scripted Camera/Action and crop; never trade the group action for a single face or shatter panel borders.',
     proportionsMulti: '',
     vfxMulti: '(Explosive radial speed lines from center:1.5), (intense glowing energy aura:1.2), (intense dramatic backlight), (dynamic action poses:1.3)',
   },
@@ -271,6 +271,35 @@ EMOTION_STYLES.GOLDEN_HOUR = {
   vfx: '(warm golden hour sunlight:1.5), (long dramatic shadows:1.4), (rich amber orange rim lighting:1.4), (low sun angle backlight:1.3), (warm color temperature shift:1.3), (cinematic emotional atmosphere:1.3), (soft lens diffusion:1.2)',
   surfaceException: 'controlled golden rim light and soft lens diffusion only',
 };
+
+// Budget-safe drawing recipes. Keep the visual operation, not a bare style name.
+export const COMPACT_EMOTION_STYLES = Object.freeze({
+  CHIBI_GAG: 'Expressive chibi; keep Camera/Action, body acting, gaze and faces. Reduce deformation if it hides acting/perspective; no zoom for cuteness.',
+  GEKIGA: 'Carved facial planes: brow/nose/cheek/jaw; tense eyelids/mouth, bold tapered ink, solid-black face shadows, directional hatching. Same identity/age; full color.',
+  SHOUJO: 'Delicate thin linework, fine eyelashes, luminous layered irises, airy soft shading, petals and bokeh behind clear acting faces.',
+  HORROR: 'Deep ink masses, sharp lit facial planes and eerie rim/underlighting; keep scripted framing and cast.',
+  BLANK: 'Affected face: blank pupil-less eyes behind retained glasses, pale face, rigid acting and dark emotional aura.',
+  IMPACT: 'Forceful brush contours, hard shadow masses and explosive strokes; crisp action silhouettes in the scripted crop.',
+  WATERCOLOR: 'Transparent color washes, soft pigment edges and paper grain; controlled crisp facial/hand accents.',
+  RETRO: 'Bold period-manga contours, graphic screentone shadows and classic expressive marks; keep canonical character colors.',
+  GLITTER: 'Golden backlight, brilliant controlled sparkles and hair rim highlights; preserve scripted expressions.',
+  SHADOW: 'Existing actor in deep cast-shadow silhouette with readable eye highlights and facial contour; no new figure.',
+  SPEED: 'Directional strokes and panning streaks following actual movement; sharp focal face and limbs.',
+  FLASHBACK: 'Delicate faded-memory rendering, soft vignette and subdued environmental palette; identity and costume remain.',
+  UKIYOE: 'Carved woodblock contours, flat pigment planes, patterned textures and rhythmic curves applied to the existing scene.',
+  POP_ART: 'Bold graphic contours, flat vivid planes and controlled Ben-Day dots; preserve faces and lettering.',
+  SKETCH: 'Visible energetic pencil strokes, deliberate hatching and paper grain; readable facial features and action.',
+  NEON: 'Colored neon rims and sharp reflected light on dark surfaces, controlled glow behind crisp faces.',
+  THICK_PAINT: 'Sculpted opaque color masses, visible layered brush strokes and impasto-like edge accents.',
+  PASTEL: 'Soft pastel pigment, gentle diffused light and airy low-contrast shading; clear focal edges.',
+  CEL: 'Decisive animation ink, flat color fills and hard-edged cel-shadow planes; no painterly gradients.',
+  DARK_ANIME: 'Deep low-key shadow planes, restrained environmental color and narrow motivated rim light.',
+  THIN_LINE: 'Ultra-fine precise contours, delicate hair/fabric detail and sparse fine hatching; clean color.',
+  HIGH_SATURATION: 'Vivid saturated environmental color planes and strong complementary contrast; recognizable skin and wardrobe hues.',
+  SUMI_INK: 'Bold calligraphic black brush strokes and controlled ink wash behind clean colored actors; white negative space.',
+  MONOCHROME_ACCENT: 'Grayscale scene with one isolated vivid focal-color accent; crisp black/white contrast.',
+  GOLDEN_HOUR: 'Amber sunset key light, long cast shadows and warm rim highlights; cinematic color depth.'
+});
 
 // [v2.53.3] HYPER-DYNAMIC Camera Angle Generator — 数値ウェイト付きタグ強化版
 export const cameraAngles = [

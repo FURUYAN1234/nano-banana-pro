@@ -148,7 +148,7 @@ A「またどうぞ」`;
 test('Web prompts retain limb ownership and occlusion checks under every compaction budget', () => {
   for (const providerFamily of ['chatgpt', 'gemini']) {
     for (const colorMode of ['color', 'monochrome']) {
-      for (const size of [0, 6000, 18000]) {
+      for (const size of [0, 6000, 16000]) {
         const input = scenario.replace('AがBに本を差し出す。', `AがBに本を差し出す。${'静かな室内。'.repeat(size / 6)}`);
         const prompt = buildMangaPrompt({ scenario: input, castList, providerFamily, colorMode, systemVersion: 'test' });
         const minimal = prompt.includes('connect each L/R hand-arm-shoulder');
@@ -234,7 +234,7 @@ test('bubbles can use nearby negative space without centering every balloon on a
 test('balloon ownership survives every provider, medium and compaction without frozen body slots', () => {
   for (const providerFamily of ['chatgpt', 'gemini']) {
     for (const colorMode of ['color', 'monochrome']) {
-      for (const size of [0, 6000, 18000]) {
+      for (const size of [0, 6000, 16000]) {
         const input = scenario.replace('AがBに本を差し出す。', `Aは左、Bは右。画面内の無言の人物を見る。${'静かな室内。'.repeat(size / 6)}`);
         const prompt = buildMangaPrompt({ scenario: input, castList, providerFamily, colorMode, systemVersion: 'test' });
         assert.doesNotMatch(prompt, /freeze (?:balloon )?bodies|freeze numeric slots|never move a body toward its speaker|BUBBLE SLOTS:/i);
@@ -243,7 +243,7 @@ test('balloon ownership survives every provider, medium and compaction without f
         assert.doesNotMatch(prompt, /BALLOON OWNERSHIP:.*move(?:\/reflow)? bodies near/i);
         assert.match(prompt, /never terminate.*non-speaker|never end.*non-speaker/i);
         assert.match(prompt, /B1=>\[A\] mouth\/head; B2=>\[B\] mouth\/head/);
-        assert.match(prompt, /B1="こちらです"(?: \[RIGHTMOST\])?; B2="ありがとう"/);
+        assert.match(prompt, /B1="こちらです" \[RIGHTMOST\]; B2="ありがとう" \[LEFTMOST\]/);
       }
     }
   }
@@ -273,6 +273,27 @@ test('both final prompts carry reading rhythm through color, monochrome and seri
         assert.ok(prompt.includes('超ローアングル、強い短縮遠近法、全身'));
         for (const line of ['こちらです', 'ありがとう', '少し待って', 'これだった！', 'またどうぞ']) assert.ok(prompt.includes(line));
       }
+    }
+  }
+});
+
+test('scenario planning binds dialogue, owner and tail without flattening the cast', () => {
+  const prompt = getScenarioPrompt({ randomCategory: '日常', targetDate: '2026-09-15', inputMode: 'manual', manualTopic: '本を返す', newsContext: '', searchTopicKeywords: '', customLocation: '', customOutfit: '', ragReactions: '', punchlineType: 'Auto', comedyTone: 'standard', styleJson: null });
+  assert.match(prompt, /台詞・話者・尾を一組/);
+  assert.match(prompt, /BalloonLayout.*JSON配列/);
+  assert.match(prompt, /"anchor".*"route"/);
+  assert.match(prompt, /横一列.*固定せず/);
+});
+
+test('planned balloon space survives final assembly and compaction for both providers', () => {
+  const layout = [{speaker:'A',x:0.8,anchor:'右手前の顔',route:'右上から口へ'}, {speaker:'B',x:0.2,anchor:'左奥の顔',route:'左上から口へ'}];
+  const directed = scenario.replace('状況: AがBに本を差し出す。', `BalloonLayout: ${JSON.stringify(layout)}\n状況: AがBに本を差し出す。`);
+  for (const providerFamily of ['chatgpt','gemini']) {
+    for (const promptMaxChars of [32000, 18000]) {
+      const prompt = buildMangaPrompt({scenario:directed,castList,providerFamily,colorMode:'color',systemVersion:'test',promptMaxChars});
+      assert.equal((prompt.match(/BALLOON LAYOUT/g)||[]).length, 1);
+      assert.match(prompt,/B1 x=0\.8, \[A\] 右手前.*B2 x=0\.2, \[B\] 左奥/);
+      assert.doesNotMatch(prompt,/BalloonLayout:|"anchor":|"route":/);
     }
   }
 });

@@ -67,7 +67,7 @@ test('first repair prompt does not repeat the current plan as prior failed histo
     compareCandidates: async () => ({ preferred: 'repair', reason: '修正済み' }),
   });
   assert.match(sentPrompt, /FAILURE ANALYSIS AND REPAIR PLAN/);
-  assert.match(sentPrompt, /PRIOR ATTEMPTS[^\n]*:\n\[\]/);
+  assert.doesNotMatch(sentPrompt, /PRIOR ATTEMPTS/);
 });
 
 test('repair prompt avoids duplicating diagnostic prose before reaching the limit', async () => {
@@ -620,6 +620,16 @@ test('repair prompt preserves the approved prompt and limits edits to concrete v
   assert.match(prompt, /original page geometry/i);
 });
 
+test('wardrobe repair preserves acting, expression and camera in both repair routes', () => {
+  const issues = [{ type: 'wardrobe_continuity', panel: 4, subject: 'Actor A', reason: 'visible inner garment changed' }];
+  for (const sourceMode of ['source-image', 'regenerate']) {
+    const prompt = buildImageQualityRepairPrompt({ originalPrompt: 'APPROVED SCRIPT AND LAYOUT', issues, sourceMode });
+    assert.match(prompt, /wardrobe_continuity/);
+    assert.match(prompt, /acting, expressions, camera/);
+    assert.match(prompt, /costume/);
+  }
+});
+
 test('repair prompt keeps bubble order hard and bounds internal retry history', async () => {
   const prompt = buildImageQualityRepairPrompt({
     originalPrompt: 'APPROVED SCRIPT AND LAYOUT',
@@ -633,15 +643,30 @@ test('repair prompt keeps bubble order hard and bounds internal retry history', 
     reviewCandidate: async () => fail('bubble_order'),
     analyzeFailure: async ({ issues, history }) => JSON.stringify({ corrections: issues.map((issue, issueIndex) => ({
       issueIndex, observed: 'x'.repeat(4000), expected: 'y'.repeat(4000), cause: 'z'.repeat(4000),
-      previousFailure: 'p'.repeat(4000), nextStrategy: `new ${history.length} ${issueIndex}`, verification: 'v'.repeat(4000),
+      previousFailure: 'p'.repeat(4000), nextStrategy: `new ${history.length} ${issueIndex}`, verification: 'Transcribe both bubbles and compare horizontal order.',
     })) }),
     generateRepairCandidate: async repairPrompt => {
       assert.ok(repairPrompt.startsWith(longOriginal));
       assert.ok(repairPrompt.length <= IMAGE_REPAIR_PROMPT_MAX_CHARS);
+      assert.ok(repairPrompt.length < longOriginal.length + 5000, 'diagnostics stay short even with unused API capacity');
       return candidate('repair');
     },
   });
   assert.equal(result.attempts, 4);
+});
+
+test('oversized repair operations are held without truncating their meaning or paying for another image', async () => {
+  const result = await executeQualityGate({
+    originalCandidate: candidate('original'), originalPrompt: 'APPROVED',
+    reviewCandidate: async () => fail('anatomy'),
+    analyzeFailure: async ({ issues }) => JSON.stringify({ corrections: issues.map((issue, issueIndex) => ({
+      issueIndex, observed: 'Extra hand', expected: 'Two connected hands', cause: 'Duplicated gesture',
+      previousFailure: 'First attempt', nextStrategy: 'repair instruction '.repeat(300), verification: 'Check shoulder connections',
+    })) }),
+    generateRepairCandidate: async () => assert.fail('must preserve the original instead of truncating the operation'),
+  });
+  assert.equal(result.attempts, 1);
+  assert.equal(result.stopReason, 'prompt_limit');
 });
 
 test('oversized approved script is preserved without issuing a truncated repair', async () => {

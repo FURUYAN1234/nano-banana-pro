@@ -1,24 +1,31 @@
-const EXPLICIT_AZIMUTH_RE = /(?:左(?:側|斜め|前|後ろ)?|右(?:側|斜め|前|後ろ)?|斜め(?:前|後ろ)?|肩越し|背後|背越し|後方|横顔|側面|正面|over[ -]the[ -]shoulder|\bOTS\b|three-quarter|3\/4|front-left|front-right|front[ -]on|frontal|rear(?:ward)?|side(?:ways)?|profile)/i;
+const EXPLICIT_AZIMUTH_RE = /(?:左(?:側|斜め|前|後ろ)?|右(?:側|斜め|前|後ろ)?|斜め(?:前|後ろ)|肩越し|背後|背越し|後方|横顔|側面|正面|over[ -]the[ -]shoulder|\bOTS\b|three-quarter|3\/4|front-left|front-right|front[ -]on|frontal|rear(?:ward)?|side(?:ways)?|profile)/i;
 const PANEL_AZIMUTH_SLOTS = [
   'LEFT-FRONT OBLIQUE: place the camera 35-55 degrees to the subject\'s left-front; turn shoulders and hips away from a square-on lens-facing pose.',
-  'RIGHT-FRONT OBLIQUE: place the camera 35-55 degrees to the subject\'s right-front; put the nearer shoulder and hand visibly larger than the farther side.',
-  'REAR THREE-QUARTER: place the camera behind one shoulder or 30-50 degrees toward the subject\'s rear; keep the face readable through a natural turn toward the scene partner or key action.',
+  'RIGHT-FRONT OBLIQUE: place the camera 35-55 degrees to the subject\'s right-front; show near/far shoulder and torso planes with receding setting edges; scale hands only as scripted contact requires.',
+  'REAR THREE-QUARTER: place the camera behind one shoulder or 30-50 degrees toward the subject\'s rear; preserve the scripted head turn and rear silhouette; emotion can read through head pitch, shoulder tension and weight.',
   'DIAGONAL LEFT-FRONT: place the camera 30-50 degrees to the subject\'s left-front and combine it with the scripted tilt/elevation; keep the body axis diagonal rather than bilaterally centered.'
 ];
 
 const COMPACT_PANEL_AZIMUTH_SLOTS = [
   'LEFT-FRONT OBLIQUE 35-55 degrees; unequal shoulder depth.',
-  'RIGHT-FRONT OBLIQUE 35-55 degrees; near hand larger.',
-  'REAR THREE-QUARTER 30-50 degrees; readable turned face and layered depth.',
+  'RIGHT-FRONT OBLIQUE 35-55 degrees; near/far shoulder and torso planes, receding setting edges; preserve scripted hand contact.',
+  'REAR THREE-QUARTER 30-50 degrees; scripted head turn, rear silhouette and layered depth.',
   'DIAGONAL LEFT-FRONT 30-50 degrees; combine the scripted tilt/elevation with an asymmetric body axis.'
 ];
+
+export const SCENARIO_CAMERA_SEQUENCE_RULES = `【カメラのページ設計】
+- 4コマ全体を比較してからCameraを確定する。各コマの役割（発見・疑念・関係の変化・帰結など）に最も効く撮影位置・水平方位・距離・レンズ感・被写体配置・奥行きの作り方を選び、Cameraへ役割と見える投影を書く。名前だけ違う同じ視点を、離れたコマも含めて重複させない。アオリを反復して見せ場の落差を消さず、動作・受け手・小道具・環境から内容に合う奥行き源を選ぶ。明示された同型ショットや意味のある静かな反復は保持する。
+- 上下左右前後の撮影位置、高低と仰俯角、寄り引き／ズーム、広角の前後差・望遠の圧縮・魚眼の周辺曲線、ダッチアングルのロールを別々に選ぶ。肩越しだけでは高さ、ダッチだけではアオリを意味しない。魚眼は通常の広角と区別する。全種類を使う順番表にせず、人物の位置・視線・受け渡しと読順が自然につながる範囲で、各コマの目的に合う見た目の変化を作る。
+- 寄り・中景・引きの役割も比較する。原則少なくとも1コマは、身体演技と周囲の空間・人物間距離が読める引きを内容に合わせて設計する。Cameraに身体が入る範囲（腰・膝・全身など）と前景／奥の人物の大小差を書く。全員を一律に小さくしたり、占有率を固定しない。手前の人物が大きい広角の引きも使える。身体の重心・姿勢・相手への働きかけを見せるコマには高さを割き、全コマ同じ高さへ収めるために顔だけへ寄らない。重要な細部は別の寄りへ配分し、既存の台詞・出来事・明示指定は削らない。コマ番号や全員の足先は必須にしない。明示された画角・占有率・寄りだけの構成・意図のある反復は保持する。
+- 新規のアオリは「低い位置」だけで終えず、立位・着座・デフォルメ後の人物に対する撮影高度と仰角を決め、顔・身体・背景が同じ投影になる見え方を書く。大胆な引きとアオリを組み合わせる見せ場では、腰や膝を含む身体軸、下から見える顎・小道具や環境の下面、上へ収束する縦線と前後の大小差を使う。天井だけ、傾いた背景だけで代用しない。緩い見上げ・水平・俯瞰の明示指定は強いアオリへ変えない。
+- 物の題名・数値などは初めて読むコマで判読できる大きさを確保する。同じ情報を再掲するコマでは、物の同一性と人物の反応が分かればよく、全文を毎回読める大きさへ戻す指示を追加しない。ユーザーが明示した再掲可読指定や、そのコマで必要な新情報は保持する。`;
 
 export const SCENARIO_COMPOSITION_VARIETY_RULES = `
              - **【物語に合わせた水平方位・ポーズの設計】**:
                * カメラの高低差・傾き・強い遠近感と画角の大胆な変化を積極的に使う。会話場面でも机周りの中景や肩越しに固定しない。
                * 各[Camera:]タグには、ショット種類・高さ・傾きだけでなく、被写体に対する水平方位（左前斜め／右前斜め／背後寄り3/4／肩越し等）を物理的に明記せよ。
                * カメラ名の変更だけを変化として数えない。肩越し・三分割・ボケは高さを指定しない。アオリ／俯瞰、上下左右の撮影位置、寄り引き、レンズの遠近感を別々に設計し、会話や静かな場面をアイレベルへ一律に揃えない。ズームインは被写体が占める範囲、ズームアウトは人物の小ささと周囲の広がり、望遠効果は遠い撮影位置と長い焦点距離による背景の相対的な大きさ・距離の圧縮で示す。ボケだけを望遠効果としない。
-               * 各コマのカメラ署名を、撮影位置・水平方位・距離・レンズ感・被写体配置・奥行きの作り方の組として設計する。名称だけを変えて隣接コマで同じ署名を反復せず、物語上の動作・受け手・小道具・環境のどれを奥行き源にするかを変える。明示された同型ショットや静かな反復はそのまま保持する。
+${SCENARIO_CAMERA_SEQUENCE_RULES}
                * 画角を目に見える構図へ翻訳する。俯瞰なら頭頂と机の天面と床の奥行き、床近くの煽りなら物語上の見せ場に合う手・顔・重要な小道具・環境の奥行きから上へ伸びる身体、傾きなら斜めに走る床・机・身体の軸を具体的にCameraへ書く。足だけを手前へ大きく突き出す構図を既定にしない。走る・踏み込む・蹴るなど脚の動き自体が見せ場のときだけ、支持脚と重心が読める足の短縮遠近法を使う。強度語だけで済ませない。
                * IMPACTやHyper Perspectiveを、正面顔・中央配置・レンズへ突き出す手へ固定変換しない。手のひらをレンズへ向けるのは、人物が物語内のカメラ／観客へ明示的に働きかけるActionだけ。物・人物・支持面への接触では、手指と手のひらを実際の接触対象へ向け、体軸・重心移動・受け手の反応・小道具または環境の前後差で迫力を作る。
                * 新規構成では文字を読むコマと身体演技を見せるコマの役割を考え、毎コマで画面の全文・全員の顔・全身を同時に見せる必要を作らない。アオリは対象の顔より低い撮影位置と見える下面、望遠は異なる距離の既存の人物・環境の比較を確保する。ちびキャラや低い姿勢でも投影をアイレベルへ戻さない。既存台本では台詞・出来事・明示された可読文字や動作を削除せず、その条件で成立する見せ方を選ぶ。
@@ -42,7 +49,7 @@ export const SCENARIO_READING_RHYTHM_RULES = `【視線誘導と密度の緩急�
 - 各コマの注視対象を、既存の表情・手の動き・重要な小道具などから1つ定め、「状況」に具体化する。在場と画面内の主張を分け、必要な脇役は小さく／低コントラスト／背面など、指定動作・視線・人物の同一性を保てる見せ方にする。全員を同じ大きさの顔で並べない。見せ場は小さな発見や沈黙でもよい。
 - 描き込むコマ・選択的に省くコマ・背景を大胆に省略する抽象コマを、物語に合わせてCamera／状況へ明記する。抽象コマでは既に伝えた場所の描き直しより感情と動作を優先し、白地や平坦な面を使ってよい。物語に必要な小道具・接触・位置関係は残す。デフォルメは許可された画風とコマだけで顔・身体のシルエットを大胆に変え、参照画風固定や明示された通常頭身を守る。
 - 注視対象には人物同士の働きかけと受け止めも含む。相手の視線・顔・手の反応が必要なら、脇役という理由で小さくぼかさない。人物ごとに視線の対象、重心、左右の手、反応の段階を描き分け、明示された一斉動作は保つ。カメラの高低差だけでなく引きと寄り、身体軸と前後差を大胆に使う。
-- 吹き出しは右上から左下へ元の発言順に読めるよう、主な注視対象と干渉しない余白へ配置する。文字量に応じた大きさと高さの差を作り、全コマで同じ頭上の横一列に揃えない。話者と尾の対応、台詞の全文・数・順を保持する。
+- 台詞・話者・尾を一組として、人物配置と吹き出しを同時に設計する。状況に話者・受け手の画面上の左右／前後、働きかけと反応を書く。各コマに1行の BalloonLayout: JSON配列を出力する。台詞順に {"speaker":"台詞と同じ話者名","x":0.7,"anchor":"話者の画面位置・奥行き・見える頭の輪郭","route":"どの余白からその話者へ尾を通すか"} を1発話1件、無言なら[]。xはコマ内の吹き出し中心（左0・右1）、0<x<1で発話順に厳密に減少。値はそのコマのCamera・演技・文字量から設計し、例の数値を固定使用しない。尾は同じ話者の見える口元か頭の輪郭へ結び、背面の口を見せるために振り向かせない。人物や非話者を尾が横切る案を避け、手・表情・小道具を隠さない余白を状況と一致させる。台詞・話者・順とカメラを保ち、全員を横一列や同じ距離へ固定せず、奥行きと高さの差で演技を保つ。
 - 隣接コマの人物の大きさ、余白、背景の描き込み、光と効果の密度に意味のある落差を作る。静かなコマでも場所と奥行き、環境の形・明暗のまとまりを保つ。被写界深度に応じて焦点から離れた背景はぼかしてよい。主役・手元・重要な小道具は明瞭にし、同じ距離の物には整合するピントを与える。背景の白抜きを既定にせず、残す空間と省く細部、ピントの位置をCamera・状況へ具体化する。妄想や小物で全ての隙間を埋めず、密度調整のために台詞を削らない。
 - 強弱の理由は既存のCameraや状況へ反映し、画像に設計ラベルや説明文を追加しない。内容に応じた高さの4コマ枠、人物、出来事、指定Camera/Action、画風の指定を守る。`;
 
@@ -71,7 +78,7 @@ export const MANGA_COMPOSITION_VARIETY_LOCK = `MANGA CAMERA / POSE VARIETY LOCK:
 - COMPOSITION STAGING fills an unspecified azimuth only. Turn the torso and stagger hands in depth/height when the Action permits; preserve exact hand roles, support and contacts.
 - VFX follows the chosen camera and never forces a different pose or framing.`;
 
-export const MANGA_COMPOSITION_VARIETY_LOCK_COMPACT = 'MANGA CAMERA / POSE VARIETY LOCK: Eye-line is gaze, not camera height. CAMERA SIGNATURE: unspecified elevation/azimuth/framing/lens/blocking/depth vary; explicit repeated shots stay. story-relevant focal form; no frontal/lens-hand/foot thrust; stagger hands in depth.';
+export const MANGA_COMPOSITION_VARIETY_LOCK_COMPACT = 'MANGA CAMERA / POSE VARIETY LOCK: Eye-line is gaze, not camera height. Honor scripted front/back/left/right camera side, crop and lens; vary unspecified shots only when story-motivated and keep explicit frontal or repeated shots. Show overhead through head tops and upper planes, low angles through undersides and upward convergence, rear/side views through visible body planes. Telephoto compresses near/far scale; wide angle expands it; fisheye adds curved edge distortion only when requested. Project actors and setting from the same viewpoint; camera labels, blur or VFX alone do not create an angle. Use a story-relevant focal form, never default to a foot thrust; preserve hand contact; stagger body axes and hands only when Action permits.';
 
 // 4コマの追加演出だけを従属させ、台本・人物・媒体の制約は短縮時も保持する。
 export const MANGA_PROMPT_PRIORITY = 'PROMPT PRIORITY: protect cast/count/identity/glasses, wardrobe, exact script, Camera geometry, layout/style/medium. CAMERA FIRST: project actors/props from fixed Camera; Action contact takes precedence over conflicting actor depth, so move that actor\'s sole body within reach of the prop; never relocate for legibility or chibi. No screen-left/right mirroring. Simplify only unspecified background texture and decorative VFX. Never print.';
@@ -83,7 +90,7 @@ export const MANGA_GESTURE_VARIETY_LOCK = `BODY ACTING / GESTURE VARIETY LOCK:
 - Preserve every explicitly scripted pointing, reaching, presenting, or surface impact action. Enrich its silhouette and amplitude without changing the event, contact target or prop ownership. Do not default every scene to folded arms, chin-resting or seated explanations.
 - LENS-FACING HAND: use an open palm or thrust toward the lens only when Action explicitly addresses an in-story camera or audience. Otherwise aim the hand and palm plane at the actual person, prop or surface; a foreground hand may be large when contact geometry requires it, but never replace that contact with a reader-facing stop pose. Do not square face, shoulders and hips to the lens merely because the beat is IMPACT or Hyper Perspective.
 - Preserve exact hand pose/contact/gaze from Action; no stock-pose substitution. Style, camera aids and default conversational eye-lines never override the scripted performance.
-- For each lead action, resolve the action phase, weight-bearing support, center of gravity, left/right hand roles, and contact target. Keep the face, important hands, and story prop readable in a clean asymmetrical silhouette.
+- For each lead action, resolve the action phase, weight-bearing support, center of gravity, left/right hand roles, and contact target. Keep visible acting and story cues readable within the scripted view.
 - Prefer story-specific alternatives when compatible with Action: handling or exchanging a prop, stepping or turning with weight shift, changing distance to a scene partner, interacting with the environment, a restrained reaction, or the follow-through after an action.`;
 
 export const MANGA_GESTURE_VARIETY_LOCK_COMPACT = 'BODY ACTING / GESTURE VARIETY LOCK: reference-sheet pose is identity evidence, not a recurring action. LENS-FACING HAND: explicit camera/audience only; else actual person, prop or surface. Full-body exaggeration; preserve explicitly scripted pointing/surface impact; exact hand pose/contact/gaze; no stock-pose substitution; action phase/support/contact.';
@@ -92,29 +99,39 @@ export const SCENARIO_SHOT_DESIGN_RULES = `【画角と身体動作の一体設�
 - 各コマのCameraとActionを一組として設計する。既存の出来事・セリフ・小道具の持ち主は固定し、同じ瞬間の見せ方と動作の振幅を具体化する。
 - 動きの頂点では、主役の頭から足先まで入る引き、体軸と重心移動、実際の接触対象、小道具、受け手の反応、環境線の収束から内容に合う奥行き源を選ぶ。手足をレンズへ迫らせることを既定にせず、大きな口だけでも激しさを代用しない。全身動作が机や吹き出しに隠れる配置を避ける。
 - IMPACTやHyper Perspectiveでも正面・中央・急接近を定型にしない。撮影位置・水平方位・距離・レンズ感・被写体配置・奥行き源の組を隣接コマと変え、明示された反復は保持する。手のひらは物語内のカメラ／観客がActionの相手のときだけレンズへ向け、それ以外は実際の接触対象へ向ける。
-- 全員の全身を同時に見せる必要はない。動きの主役1人の頭・腰・両膝・両足先をコマ内に収め、頭上と両靴の外側に余白を残す距離までカメラを引く。その主役とカメラの間に机を置かない。机の横の空いた床から撮るなど、下半身を家具が隠さない位置を選ぶ。他の人物は反応と小道具の役割を保って前後に配置する。
+- 主役の全身・足先まで見せるのは、明示された全身指定や足運び自体が物語に必要な場合。常に足先まで引かず、働きかけと受け手が最もよく読める距離を選ぶ。全身が必要なときは頭・腰・両膝・両足先と支持面を収め、重要な動作を家具で隠さない。他の人物は反応と小道具の役割を保って前後に配置する。
 - 対照となるコマには寄りまたは静かな引きを置き、隣接コマで人物の大きさ、カメラの高さ、身体の傾き、光と効果の密度を変える。全コマを同じ中景・机越し・大騒ぎにしない。
 - 明示された静かな間、無反応、着座、接触対象は保持する。背景の同僚は自然に配置できるが、主役の増殖は不可。
 - Cameraには撮影位置と画面に見える証拠を書く。俯瞰なら頭頂・机天面、床からの煽りなら大きな前景と上へ伸びる身体、傾きなら斜めの環境線、全身なら頭から足先と明記する。`;
+
+const FULL_BODY_SHOT_RE = /full[ -]body|graceful full shot|head.to.(?:toe|feet)|全身|頭から(?:両)?(?:足先|つま先|靴)|足元から上半身/i;
+const CLOSE_SHOT_RE = /close[ -]?up|deep emotion close|zoom[ -]?in|ズームイン|アップ|寄りの|寄る|接写/i;
+
+// A wide lens does not set framing; explicit close crops still win.
+export const isPullbackShot = (camera = '') => /zoom[ -]?out|ズームアウト|引き|引いた|引いて|全景|遠景|epic wide|wide shot|long shot|ワイドショット/i.test(camera)
+  && (FULL_BODY_SHOT_RE.test(camera) || !CLOSE_SHOT_RE.test(camera));
 
 // Turn a shot label into observable framing cues; never replace explicit crop/angle.
 export const getPanelShotExecution = (camera = '') => {
   const text = String(camera);
   const cues = [];
-  const close = /close[ -]?up|deep emotion close|zoom[ -]?in|ズームイン|アップ|寄りの|寄る|接写/i.test(text);
-  const full = /full[ -]body|graceful full shot|head.to.(?:toe|feet)|全身|頭から(?:両)?(?:足先|つま先|靴)|足元から上半身/i.test(text);
-  const floor = /(?:floor|ground)[ -]level|(?:床|地面)(?:すれすれ|近く|付近|から)|低い(?:撮影)?位置/i.test(text);
+  const full = FULL_BODY_SHOT_RE.test(text);
+  // 「全身寄り」等の距離表現で、明示された全身の画角を接写へ変えない。
+  const close = !full && CLOSE_SHOT_RE.test(text);
+  const floor = /(?:floor|ground)[ -]level|(?:床|地面)(?:すれすれ|近く|付近|から)/i.test(text);
+  const low = floor || /低(?:い|めの)(?:撮影)?位置|低所(?:から|の|に|より)?/i.test(text);
   const horizontal = /水平(?:に|の|を保)|horizontal|level aim/i.test(text);
   if (close) cues.push('tight crop on focal subject');
   else if (full) cues.push('head-to-feet inside panel with headroom and floor beyond BOTH shoes; hips/knees/feet unobscured');
-  else if (/zoom[ -]?out|ズームアウト|引き|全景|遠景|epic wide|wide shot|long shot/i.test(text)) cues.push('smaller subject; more setting');
-  if (/overhead|high[ -]angle|innocent high|俯瞰|真上|斜め上(?:から|より|の(?:視点|位置|カメラ))|上から|高い(?:撮影)?位置(?:から|より|に)|高所から|上方から|見下ろ[すし]/i.test(text)) cues.push(`look down from camera physically above visible heads, not eye-level: head/shoulder tops, shortened torsos, upper prop faces and floor/table planes; ${close ? '' : 'headroom/breakout; border behind hair; intact; '}keep projection even with omitted BG`);
-  else if (!horizontal && /low[ -]angle|dominant low|ローアングル|アオリ|煽[りる]|下から|見上げ/i.test(text)) cues.push('look up: lower face/prop undersides, horizon below face, upward convergence; preserve the scripted proportions; not eye-level');
-  else if (floor) cues.push(`floor-level camera below faces even when crouched/chibi; ${horizontal ? 'keep horizontal aim and a low horizon' : 'project nearby prop undersides from below'}; do not reset to subject eye-level`);
+  if (isPullbackShot(text)) cues.push('wide framing: body extent and continuous setting reveal actor distances; foreground may stay large, receding actors smaller; not a bust portrait. Explicit scale/crop wins; no uniform shrinking to a fixed ratio');
+  if (/overhead|high[ -]angle|innocent high|俯瞰|真上|斜め上(?:から|より|の(?:視点|位置|カメラ))|上から|高(?:い|めの)(?:撮影)?位置(?:から|より|に)|高所から|上方から|見下ろ[すし]/i.test(text)) cues.push(`look down from physically above heads, not eye-level: head/shoulder tops, short torsos, upper prop faces, floor/table planes; actors and setting share downward projection; ${close ? '' : 'headroom/breakout; border behind hair; intact; '}keep projection even with omitted BG`);
+  else if (low || /low[ -]angle|dominant low|ローアングル|アオリ|煽[りる]|下から|見上げ/i.test(text)) cues.push(`${floor ? 'floor-level' : 'low'} camera below faces including crouched/chibi; ${horizontal ? 'keep horizontal aim and a low horizon' : 'look up: chin/jaw undersides, prop undersides from below; forehead recedes, horizon below faces, upward convergence; facial planes, body and setting share projection, not frontal faces on a tilted background'}; preserve scripted height/pitch/proportions`);
+  if (/(?:斜め(?:に(?:見上げ|見下ろ)|から|上|下|前|後ろ)|(?:左|右)(?:前|後)?斜め|diagonal (?:view|camera)|oblique|three-quarter|3\/4)/i.test(text) && !/(?:正面|真正面|front[ -]on|frontal)/i.test(text)) cues.push('oblique view: near/far body planes, receding setting edges/floor planes; staggered depth, not a flat frontal lineup; keep named camera side');
   if (/の(?:左|右)?(?:後方|後ろ|背中側)|rear[ -]view|from (?:the )?(?:(?:left|right)[ -])?rear/i.test(text)) cues.push('show back planes of the scripted subject; preserve crop/distance, no forced close OTS');
   if (/telephoto|long[ -]lens|望遠/i.test(text)) cues.push('distant camera + long focal length: compressed depth, background relatively larger/closer; overlapping depth planes at similar scale, weak convergence of receding edges; not blur alone');
   else if (/wide[ -]angle|fisheye|広角|魚眼|hyper perspective/i.test(text)) cues.push('near/far scale contrast; keep focal subject');
-  if (/dutch|tilt|cinematic slant|傾き|傾斜/i.test(text)) cues.push('tilt scene axes, not only faces');
+  if (/fish[ -]?eye|魚眼/i.test(text)) cues.push('fisheye: curved outer edges, radial warp');
+  if (/dutch|tilt|cinematic slant|ダッチ|傾き|傾斜/i.test(text)) cues.push('tilt scene axes, not only faces');
   return cues.length ? `SHOT EXECUTION: ${cues.join('; ')}.` : '';
 };
 

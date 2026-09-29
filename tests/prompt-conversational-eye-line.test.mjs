@@ -71,6 +71,22 @@ Action: SpeakerA and SpeakerB sit opposite one another and discuss the draft.
 SpeakerA「What do you think of this scene?」
 SpeakerB「The emotion should be clearer.」`;
 
+test('dialogue order never assigns actors to horizontal slots, including depth-only and unspecified staging', () => {
+  for (const camera of ['SpeakerAの肩越し。SpeakerBとSpeakerCは奥で別々の資料を見る', 'Aesthetic Thirds']) {
+    const scene = `[Camera: ${camera}]\nAction: SpeakerA shows a draft; SpeakerB checks it; SpeakerC listens.\nSpeakerA「確認して。」\nSpeakerB「ここだね。」\nSpeakerC「分かった。」`;
+    for (const providerFamily of ['chatgpt', 'gemini']) {
+      const prompt = buildMangaPrompt({scenario: makeScenario(scene), castList: CAST_LIST + '\n## SpeakerC\n- short red hair, no glasses', providerFamily, colorMode: 'color'});
+      const panel = panelTwoSection(prompt);
+      assert.doesNotMatch(panel, /SPEAKER X:|SPEAKER HORIZONTAL ORDER|3-ZONE|BODY POSITION LOCK|RIGHT ZONE:/);
+      // Shared staging policy may be deduplicated into PROMPT PRIORITY.
+      assert.match(prompt, /(?:never|not) (?:derive|assign).*body positions.*dialogue order/i);
+      assert.match(panel, /B1.*RIGHTMOST|B1 rightmost/);
+      assert.match(panel, /B2.*LEFT OF B1|B2\/B3\+ strictly leftward/);
+      assert.match(panel, /TAIL TIP LOCK[^\n]*\[SpeakerA\].*\[SpeakerB\].*\[SpeakerC\]/);
+    }
+  }
+});
+
 test('keeps an explicit Japanese gaze target instead of forcing all speakers to face one another', () => {
   const scene = `[Camera: 左奥からの超広角。手前のSpeakerAと奥のSpeakerBを捉える。]
 状況: SpeakerAは札を掲げてSpeakerBを見る。SpeakerBは机の資料を見る。
@@ -96,6 +112,22 @@ SpeakerB「そうだね。」`;
       assert.doesNotMatch(panel, /RIGHT \[SpeakerA\]|RIGHT side: \[SpeakerA\]|RIGHT ZONE: \[SpeakerA\]/);
       assert.match(panel, /左手前/);
       assert.match(panel, /\[SpeakerA\].*(?:sole instance|one and only instance)/);
+    }
+  }
+});
+
+test('OTS preserves independent scripted gaze and rear ownership without forcing mutual acting', () => {
+  for (const camera of ['SpeakerAの肩越し、奥の資料を捉える', 'Over The Shoulder']) {
+    const scene = `[Camera: ${camera}]
+状況: SpeakerAは手前で資料を見る。SpeakerBは奥から時計を見上げる。
+SpeakerA「読み終わるまで待って。」
+SpeakerB「もう時間だよ。」`;
+    for (const provider of ['chatgpt', 'gemini']) {
+      const panel = panelTwoSection(buildPrompt(provider, scene));
+      assert.match(panel, /keep each actor's scripted gaze target/);
+      assert.match(panel, /camera is physically behind/);
+      assert.doesNotMatch(panel, /address counterparts|address their counterparts|reactors watch|PRIMARY THREE-QUARTER toward|PARTNER toward/);
+      if (camera.startsWith('SpeakerA')) assert.match(panel, /behind \[SpeakerA\]'s shoulder/);
     }
   }
 });
@@ -295,6 +327,20 @@ test('camera-facing prohibition text is not mistaken for a direct-address except
   }
 });
 
+test('a negated camera target beside a separate actor gaze never grants direct address', () => {
+  for (const action of [
+    'SpeakerBは資料を見つめる。SpeakerAは時計を見る。誰も読者やカメラを見ない。',
+    'SpeakerB gazes at the document. SpeakerA looks at the clock. No one looks into the camera.',
+  ]) {
+    for (const provider of ['chatgpt', 'gemini']) {
+      const panel = panelTwoSection(buildPrompt(provider, `[Camera: SpeakerAの肩越し]\nAction: ${action}\nSpeakerA「時間だよ。」\nSpeakerB「待って。」`));
+      assert.doesNotMatch(panel, /DIRECT-ADDRESS EXCEPTION/);
+      assert.match(panel, /keep each actor's scripted gaze target/);
+      assert.match(panel, /camera is physically behind \[SpeakerA\]/);
+    }
+  }
+});
+
 test('single-speaker non-direct-address panels do not invent an interlocutor', () => {
   for (const providerFamily of ['chatgpt', 'gemini']) {
     const panel = panelTwoSection(buildPrompt(providerFamily, SINGLE_SPEAKER));
@@ -449,11 +495,13 @@ test('an explicit overhead hand-detail camera is not replaced with an invented r
   }
 });
 
-test('every panel receives a local functional-surface projection check', () => {
+test('all panels share the full functional-surface contract after redundant reminders are removed', () => {
   for (const providerFamily of ['chatgpt', 'gemini']) {
     const prompt = buildPrompt(providerFamily, NORMAL_CONVERSATION);
-    assert.equal((prompt.match(/FUNCTIONAL SURFACE PANEL CHECK:/g) || []).length, 4);
-    assert.match(prompt, /solve target-to-front\/back geometry before projection|reader\/camera side\/front-back\/text axes|FUNCTIONAL SURFACE PANEL CHECK: target\/side\/axes/i);
+    assert.ok([0, 4].includes((prompt.match(/FUNCTIONAL SURFACE PANEL CHECK:/g) || []).length));
+    assert.match(prompt, /FUNCTIONAL SURFACE ORIENTATION LOCK:/);
+    assert.match(prompt, /FUNCTIONAL SURFACE ORIENTATION LOCK:/);
+    assert.match(prompt, /Front=target; opposite=back|Front faces actual operator\/customer\/reader/i);
   }
 });
 

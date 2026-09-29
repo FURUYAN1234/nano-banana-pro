@@ -28,6 +28,12 @@ test('preserves punctuation that the scenario generator intentionally chose', ()
   assert.equal(formatGeneratedMangaTitle('締切突破！'), '締切突破！');
 });
 
+test('removes only a leading title-field label from generated topics', () => {
+  assert.equal(formatGeneratedMangaTitle('タイトル：書店の勘違い'), '書店の勘違い');
+  assert.equal(formatGeneratedMangaTitle('Title: 書店の勘違い'), '書店の勘違い');
+  assert.equal(formatGeneratedMangaTitle('タイトルを奪え！'), 'タイトルを奪え！');
+});
+
 test('tells the scenario generator not to default every title to !?', () => {
   const prompt = getScenarioPrompt({
     randomCategory: 'テクノロジー',

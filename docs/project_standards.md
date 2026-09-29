@@ -104,16 +104,16 @@ Nano Banana Pro のコード内（`App.jsx` 等）で、メインの「ChatGPT I
 - **1枚絵 ChatGPT用プロンプト（β）をコピー** ボタン内のクリップボードにセットされるテキスト変数
 この同期を忘れると、コピペでWeb版を使用するユーザーに古い劣化したプロンプトが渡されるため、プロンプトの改修を行う際は常に「Web版コピペ用ボタンのテキストも修正したか？」をセルフチェックすること。
 
-### 8.1 Shared Quality And Dual API Verification Gate
+### 8.1 Shared Quality And Route-Specific Verification Gate
 
 汎用的な画像品質を強化する場合は、4コマだけに閉じず、1枚絵にも適用可否を判断する。両方に有効な品質要件は `src/lib/shared-image-quality.js` を唯一のソースとして更新し、4コマの両プロバイダ用プロンプトと1枚絵コピー用プロンプトが必ず同じ契約を参照すること。
 
-品質改善を完了と報告する前に、必ず次の両方を実行して生成結果を確認する。ローカルテスト、ビルド、プロンプト文字列の確認だけで代替してはならない。
+品質改善を完了と報告する前に、次の両方を確認する。4コマの実画像確認を、ローカルテスト・ビルド・文字列検査だけで代替してはならない。
 
 1. A real four-panel API image generation using the updated four-panel prompt.
-2. A real single-image copy-prompt generation using the exact text produced by the copy button through an API-capable image route.
+2. For the single-image Web paste route, inspect the exact text produced by the copy button and verify the shared quality contract and single-image instructions. API image generation is not required for this route (user decision, 2026-09-29).
 
-片方だけのAPI検証、過去の生成画像、別のプロンプト、またはコード上の推測で品質改善を完了扱いにしてはならない。資格情報はユーザーがUIに手入力し、値自体を読み出したり記録したりしない。
+4コマは実APIの生成結果、1枚絵は実際のコピー文を証拠とし、別のプロンプトやコード上の推測で代替しない。1枚絵の画像品質を実画像なしで保証したとは扱わない。資格情報はユーザーがUIに手入力し、値自体を読み出したり記録したりしない。
 
 ### 8.2 API画像の「ヌルさ」独立確認
 

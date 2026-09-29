@@ -12,6 +12,15 @@ const enhancementModule = existsSync(modulePath)
   ? await import(pathToFileURL(modulePath).href)
   : {};
 
+test('camera enhancement compares the page using the shared sequence rule only when selected', () => {
+  const selected = enhancementModule.buildScenarioEnhancementPrompt({ scenario: originalScenario, selectedCategories: ['camera'] });
+  const unselected = enhancementModule.buildScenarioEnhancementPrompt({ scenario: originalScenario, selectedCategories: ['expressions'] });
+  assert.match(selected, /4コマ全体.*比較/);
+  assert.match(selected, /魚眼.*曲線/);
+  assert.match(selected, /ダッチ.*ロール/);
+  assert.doesNotMatch(unselected, /カメラのページ設計/);
+});
+
 const originalScenario = `## タイトル: AI苦手分野4連発 !?
 Logline: 5人が「AI作画が苦手な表現」に次々と挑戦するが、誰一人ツッコミもせず淡々とカオスを受け入れる異様な静寂ギャグ。
 Location: 精神と時の部屋
@@ -50,6 +59,15 @@ const dialogueOnlyCandidate = originalScenario.replace(
   'ミク「これ、流行るかな。」',
   'ミク「次の流行、これで決まり？」'
 );
+
+test('inline visible acting changes are counted without treating direction quotes as dialogue', () => {
+  const original = originalScenario.replace('状況: 真っ白な床で、5人がリング状に並び、静かに構える。', '状況: 甲は「驚き」の反応で目を丸くする。');
+  const candidate = original.replace('甲は「驚き」の反応で目を丸くする。', '甲は後頭部を小さく傾け、肩の緊張で戸惑いを示す。');
+  const validate = candidateScenario => enhancementModule.validateScenarioEnhancement({ originalScenario: original, candidateScenario, selectedCategories: ['expressions', 'body'] });
+  assert.equal(validate(candidate).ok, true);
+  assert.ok(validate(candidate.replace('サエコ「始めるわよ。」', 'サエコ「終わるわよ。」')).issueCodes.includes('dialogue_changed_without_selection'));
+  assert.ok(validate(candidate.replace('サエコ「始めるわよ。」', 'アカリ「始めるわよ。」')).issueCodes.includes('speaker_sequence_changed'));
+});
 
 const weakenedPunchlineCandidate = originalScenario.replace(
   'ミク「これ、流行るかな。」',

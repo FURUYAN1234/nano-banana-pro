@@ -39,7 +39,16 @@ test('best available fallback continues with a warning while explicit cancellati
 test('retained-image retry is available without generating a fresh original image', () => {
   assert.match(workflowSource, /generationOptions\.reviewExisting[\s\S]*?generatedImage/);
   assert.match(workflowSource, /: await generateImageCandidate\(currentPrompt\)/);
-  assert.match(step4Source, /generatedImage\s*&&\s*allowImageQualityRepair[\s\S]*?regenerateImage\(false, null, \{ reviewExisting: true \}\)/);
+  assert.match(step4Source, /generatedImage\s*&&[\s\S]*?regenerateImage\(false, null, \{ reviewExisting: true, reviewOnly: !allowImageQualityRepair \}\)/);
+  assert.match(workflowSource, /const repairEnabled = allowImageQualityRepair && !generationOptions\.reviewOnly/);
+  assert.match(workflowSource, /allowRepair: repairEnabled/);
+});
+
+test('missing per-actor hand evidence triggers per-panel crop-only audits without generating another image', () => {
+  assert.match(workflowSource, /missingHandPanels\.size[\s\S]*?buildActorHandAuditPrompt\(\[contract\]\)[\s\S]*?parseActorHandAuditResponse\(audit\.text, \[contract\]\)/);
+  assert.match(workflowSource, /const cropParts = buildImageQualityQaImageParts\(\{ candidate, panelImages \}\)\.slice\(1\)/);
+  assert.match(workflowSource, /\[cropParts\[contract\.panel - 1\]\]/);
+  assert.match(workflowSource, /\[手の独立監査 \/ \$\{contract\.panel\}コマ\]/);
 });
 
 test('OpenAI generation binds initial references and the actual repair source', () => {

@@ -1,18 +1,19 @@
 import { FINAL_PANEL_ACTIVE_STAGING_SCENARIO_CONTRACT, SCENARIO_EXPRESSIVE_STAGING_CONTRACT } from './final-panel-staging.js';
 import {
+  SCENARIO_CAMERA_SEQUENCE_RULES,
   SCENARIO_GESTURE_VARIETY_RULES,
   SCENARIO_PROP_CAUSALITY_RULES,
   SCENARIO_SHOT_DESIGN_RULES
 } from './composition-variety.js';
 import { SCENARIO_FACIAL_ACTING_CONTRACT } from './facial-acting.js';
 import { getEndingModePolicy } from './ending-mode-policy.js';
-import { collectDialogueQuotes, getScriptedCamera } from './panel-utils.js';
+import { extractDialogueOnly, getScriptedCamera } from './panel-utils.js';
 import { getScenarioPanelBlocks } from './scenario-validation.js';
 
 const CATEGORY_DEFINITIONS = Object.freeze({
   expressions: {
     label: '表情',
-    instruction: '各コマのEMOTIONタグと顔の反応だけを、場面の温度に合う物理的な顔演技として具体化する'
+    instruction: '場面の温度に合う反応を、指定Cameraから見える顔・頭・肩で具体化する。EMOTIONタグは必要な場合だけ変える'
   },
   body: {
     label: '身体',
@@ -149,25 +150,22 @@ const extractTagValues = (scenario, tag) =>
 
 const extractDialogue = (scenario) => getScenarioPanelBlocks(scenario)
   .filter((panel) => panel.found)
-  .flatMap((panel) => panel.text.split('\n').flatMap((line) => collectDialogueQuotes(line).map((quote) => {
-    const before = line.slice(0, quote.start);
-    const after = line.slice(quote.end);
-    const prefixSpeaker = before.match(/(?:^|[」）),、（(\s])([^\s「」:：、。]{1,24})\s*(?:→)?$/u)?.[1] || '';
-    const suffixSpeaker = after.match(/^\s*[（(]([^）)]+)[）)]/u)?.[1]?.trim() || '';
-    const speaker = prefixSpeaker || suffixSpeaker;
-    return {
+  .flatMap((panel) => extractDialogueOnly(panel.text, '', { asEntries: true }).map(({ speaker, text }) => ({
       panel: panel.num,
       speaker,
-      text: quote.text.trim(),
-      full: `${panel.num}:${speaker}:${quote.text.trim()}`
-    };
+      text,
+      full: `${panel.num}:${speaker}:${text}`
   })));
 
 const extractSituationLines = (scenario) =>
   extractMatches(scenario, /^\s*状況(?:演出)?:\s*.*$/gmu);
 
 const extractReactionLines = (scenario) =>
-  extractMatches(scenario, /^\s*（リアクション:\s*.*）\s*$/gmu);
+  [
+    ...extractMatches(scenario, /^\s*（リアクション:\s*.*）\s*$/gmu),
+    ...extractSituationLines(scenario).flatMap(line => line.split(/[。！？]/u)
+      .filter(clause => /眉|まぶた|瞼|目(?:を|が|は|の)|口(?:元|を|が|は)|表情|笑|涙|泣|後頭部|視線|肩の緊張/u.test(clause)))
+  ];
 
 const extractEffectLines = (scenario) =>
   extractMatches(scenario, /^\s*(?:SFX|SE|効果音|音響|BGM)\s*[:：]\s*.*$/gmi);
@@ -269,7 +267,7 @@ export const buildScenarioEnhancementPrompt = ({
     ? `- セリフ強化を選択したため、「」内のセリフを最低1つは必ず変更する。話者の順序と人数は変えない
 - 変更が不要なセリフまで一律に言い換えない。短く口語的に保ち、セリフ全体を元の約1.5倍以内に収める
 - 4コマ目のオチは元より冗長にせず、「もしかしたら」「かもしれない」「気がする」など弱い婉曲表現を新たに足さない`
-    : '- セリフは未選択なので、「」内の全文を一字一句変更しない';
+    : '- セリフは未選択なので、明示された発話・音読の本文と話者を一字一句変更しない。ト書き内の引用や比喩は発話として数えない';
   const backgroundRule = selected.includes('background')
     ? '- 背景は選択済み。Locationを変えず、背景情報だけを具体化する'
     : '- 背景は未選択なので、背景・壁・床・天井・照明・空間構造の記述を変更しない';
@@ -306,6 +304,7 @@ ${facialActingRule}
 ${SCENARIO_EXPRESSIVE_STAGING_CONTRACT}
 ${FINAL_PANEL_ACTIVE_STAGING_SCENARIO_CONTRACT}
 ${gestureVarietyRules}
+${selected.includes('camera') ? SCENARIO_CAMERA_SEQUENCE_RULES : ''}
 ${selected.includes('camera') && selected.includes('body') ? SCENARIO_SHOT_DESIGN_RULES : ''}
 
 【選択されたカテゴリ — 変更必須】

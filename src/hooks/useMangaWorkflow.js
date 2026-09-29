@@ -42,6 +42,9 @@ import {
   buildBubbleInventoryPrompt,
   applyBubbleInventory,
   buildImageQualityQaPrompt,
+  buildActorHandAuditPrompt,
+  parseActorHandAuditResponse,
+  extractPanelCastContracts,
   buildCriticalCameraQaPrompt,
   parseCriticalCameraQaResponse,
   buildImageQualityComparisonPrompt,
@@ -1435,20 +1438,21 @@ export default function useMangaWorkflow() {
     setGenLog(initialLogs);
 
     // [v2.44] 進捗ステップ表示＋経過時間カウンター
-    let genTickCount = 0;
+    const generationStartedAt = Date.now();
+    let progressPhase = generationOptions.reviewOnly ? '品質再検査' : '画像生成';
     const genTimer = setInterval(() => {
-      genTickCount++;
-      const elapsed = Math.floor(genTickCount * 1.5);
+      const elapsed = Math.floor((Date.now() - generationStartedAt) / 1000);
+      const waitLine = `[WAIT] ⏳ ${progressPhase}中… 合計${elapsed}秒経過`;
       setGenLog(prev => {
         const waitIndex = prev.findIndex(entry => entry.startsWith("[WAIT]"));
         if (waitIndex !== -1) {
           const newLog = [...prev];
-          newLog[waitIndex] = `[WAIT] ⏳ 画像生成API応答を待機中... (${elapsed}秒経過)`;
+          newLog[waitIndex] = waitLine;
           return newLog;
         }
-        return [...prev, `[WAIT] ⏳ 画像生成API応答を待機中... (${elapsed}秒経過)`];
+        return [...prev, waitLine];
       });
-    }, 1500);
+    }, 1000);
 
     // Artificial delay to ensure user sees the process starting
     await new Promise(r => setTimeout(r, 800));
@@ -1474,6 +1478,7 @@ export default function useMangaWorkflow() {
       const geminiImageOptions = generationOptions.imageOptions || {};
 
       const generateImageCandidate = async (prompt, {repair = false, repairSource = null} = {}) => {
+        progressPhase = repair ? '修正画像生成' : '画像生成';
         let response;
         let metadataPrompt;
         let metadataInputImages;
@@ -1541,6 +1546,7 @@ export default function useMangaWorkflow() {
       };
 
       const reviewImageCandidate = async (candidate, candidatePrompt) => {
+        progressPhase = '品質検査';
         try {
           const panelImages = qualityMode === 'four-panel'
             ? await extractMangaPanelCrops(`data:${candidate.mimeType || 'image/png'};base64,${candidate.base64Img}`)
@@ -1568,7 +1574,41 @@ export default function useMangaWorkflow() {
             mode: qualityMode,
             finalPrompt: candidatePrompt,
             referenceImageCount: images.length,
+            completionTokens: qualityResponse.usage?.completion_tokens ?? qualityResponse.usage?.output_tokens,
+            finishReason: qualityResponse.finishReason,
           });
+          const reviewTokens = qualityResponse.usage?.completion_tokens ?? qualityResponse.usage?.output_tokens;
+          statCallback(`[QUALITY QA] 応答サイズ: ${String(qualityResponse.text ?? '').length.toLocaleString()}文字${Number.isFinite(reviewTokens) ? `・出力 ${reviewTokens.toLocaleString()} tokens` : ''}。`);
+          const missingHandPanels = new Set(review.issues
+            .filter(issue => issue.type === 'unverified' && issue.reason?.startsWith('Missing or incomplete per-actor visible-hand inventory'))
+            .map(issue => issue.panel));
+          if (qualityMode === 'four-panel' && panelImages.length === 4 && missingHandPanels.size) {
+            const contracts = extractPanelCastContracts(candidatePrompt).filter(({ panel }) => missingHandPanels.has(panel));
+            if (contracts.length) {
+              statCallback(`[QUALITY QA] 人物別の手の記録が欠けた${contracts.map(({ panel }) => `${panel}コマ`).join('・')}を各コマの拡大画像で補足検査します。画像は再生成しません。`);
+              const cropParts = buildImageQualityQaImageParts({ candidate, panelImages }).slice(1);
+              for (const contract of contracts) {
+                try {
+                  const audit = await callAI(buildActorHandAuditPrompt([contract]), [cropParts[contract.panel - 1]], null,
+                    msg => statCallback(`[手の独立監査 / ${contract.panel}コマ] ${msg}`));
+                  const auditIssues = parseActorHandAuditResponse(audit.text, [contract]);
+                  const stillMissing = new Set(auditIssues
+                    .filter(issue => issue.reason?.startsWith('Missing or incomplete per-actor visible-hand inventory'))
+                    .map(issue => `${issue.panel}:${issue.subject}`));
+                  review.issues = review.issues.filter(issue => !(
+                    issue.panel === contract.panel && issue.reason?.startsWith('Missing or incomplete per-actor visible-hand inventory')
+                    && !stillMissing.has(`${issue.panel}:${issue.subject}`)
+                  ));
+                  review.issues.push(...auditIssues.filter(issue => !issue.reason?.startsWith('Missing or incomplete per-actor visible-hand inventory')));
+                  const material = auditIssues.filter(issue => issue.type === 'anatomy');
+                  statCallback(`[手の独立監査 / ${contract.panel}コマ] ${material.length ? `重大な手の破綻 ${material.map(issue => issue.subject).join('・')}` : auditIssues.length ? '判定に未確認あり' : '可視の手の数に異常なし'}。`);
+                } catch (error) {
+                  statCallback(`[手の独立監査 / ${contract.panel}コマ] 未確認: ${error.message}`);
+                }
+              }
+              review.pass = review.issues.length === 0;
+            }
+          }
           if (candidate.pageLayout?.applied === false) {
             review.pass = false;
             review.issues.push({ type: 'unverified', panel: null, subject: 'page_layout', reason: candidate.pageLayout.reason });
@@ -1600,6 +1640,7 @@ export default function useMangaWorkflow() {
       };
 
       const reviewCriticalCameraCandidate = async (candidate, candidatePrompt) => {
+        progressPhase = 'カメラ検査';
         const cameraPrompt = buildCriticalCameraQaPrompt({
           finalPrompt: candidatePrompt,
           panelCropCount: qualityMode === 'four-panel' ? 4 : 0,
@@ -1650,15 +1691,17 @@ export default function useMangaWorkflow() {
           qualityPass: false, selected: true,
         }));
       }
-      statCallback(allowImageQualityRepair
+      const repairEnabled = allowImageQualityRepair && !generationOptions.reviewOnly;
+      statCallback(repairEnabled
         ? '[QUALITY QA] キャラクターシート・人物・手・小物・吹き出しを検査中です。明確な重大欠陥だけ最大3回修正します。未確認だけなら最良画像を保持します。'
         : '[QUALITY QA] 自動修正OFF：元画像を表示して品質検査します。追加の画像生成は行いません。');
 
       const qualityOutcome = await runImageQualityFailsafe({
-        allowRepair: allowImageQualityRepair,
+        allowRepair: repairEnabled,
         shouldStop: () => qualityRetryAbortRef.current || scenarioRunEpochRef.current !== qualityRunEpoch
           || (isFullAutoMode && fullAutoAbortRef.current),
         analyzeFailure: async ({ candidate, originalPrompt, issues, history, feedback }) => {
+          progressPhase = '修正方針の解析';
           const response = await callAI(
             buildImageFailureAnalysisPrompt({ originalPrompt, issues, history, feedback }),
             buildImageQualityQaImageParts({ candidate, referenceImages: images }),
@@ -1678,6 +1721,7 @@ export default function useMangaWorkflow() {
         repairSourceMode: isOpenAIEngine ? 'source-image' : 'regenerate',
         repairPromptMaxChars: isOpenAIEngine ? undefined : GEMINI_IMAGE_REPAIR_PROMPT_MAX_CHARS,
         compareCandidates: async (original, repair, originalPrompt, comparisonOptions = {}) => {
+          progressPhase = '画像候補の比較';
           statCallback('[QUALITY QA] 元画像と修正版を直接比較し、台詞・人物・動作を優先して自動選択します。');
           const comparisonParts = [
             ...buildImageQualityQaImageParts({ candidate: original }),
@@ -1696,7 +1740,7 @@ export default function useMangaWorkflow() {
       const hasDefiniteFinalFailure = qualityResult?.pass !== true
         && Array.isArray(qualityResult?.issues)
         && qualityResult.issues.some(isMaterialImageQualityIssue);
-      setImageQualityNeedsRepair(Boolean(allowImageQualityRepair && hasDefiniteFinalFailure));
+      setImageQualityNeedsRepair(Boolean(repairEnabled && hasDefiniteFinalFailure));
       if (qualityResult.observations) {
         const labels = { title: 'タイトル', dialogue: 'セリフ・無言', hands: '左右の手', props: '小道具' };
         Object.entries(qualityResult.observations).forEach(([key, value]) => {
@@ -1882,7 +1926,11 @@ export default function useMangaWorkflow() {
       // alert(`画像生成に失敗しました。\nエラー: ${ error.message } `); // Disable alert to show UI guide instead
     } finally {
       clearInterval(genTimer);
-      if (qualityRunEpoch === scenarioRunEpochRef.current) setIsGeneratingImage(false);
+      if (qualityRunEpoch === scenarioRunEpochRef.current) {
+        setGenLog(prev => prev.map(log => log.startsWith('[WAIT]')
+          ? `[WAIT] STEP4終了（合計${Math.floor((Date.now() - generationStartedAt) / 1000)}秒）` : log));
+        setIsGeneratingImage(false);
+      }
     }
   };
 

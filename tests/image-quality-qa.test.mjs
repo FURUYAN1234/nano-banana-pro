@@ -5,6 +5,8 @@ import { isMaterialImageQualityIssue } from '../src/lib/image-quality-failsafe.j
 import {
   buildImageQualityQaImageParts,
   buildImageQualityQaPrompt,
+  buildActorHandAuditPrompt,
+  parseActorHandAuditResponse,
   buildCriticalCameraQaPrompt,
   parseCriticalCameraQaResponse,
   hasCriticalRearCameraContract,
@@ -16,15 +18,68 @@ import {
   applyBubbleInventory,
 } from '../src/lib/image-quality-qa.js';
 
+test('malformed QA reports only value-safe response shape and size without accepting an incomplete review', () => {
+  const response = '{"private_text":"do not echo this"';
+  const result = parseImageQualityQaResponse(response, { completionTokens: 8192 });
+  assert.equal(result.pass, false);
+  assert.ok(result.issues.every(issue => !isMaterialImageQualityIssue(issue)));
+  assert.match(result.issues[0].reason, /JSON=invalid.*output_tokens=8192/);
+  assert.doesNotMatch(result.issues[0].reason, /private_text|do not echo/);
+  assert.match(parseImageQualityQaResponse('{"pass":"true","issues":[]}').issues[0].reason, /pass=string; issues=array/);
+  const prompt = buildImageQualityQaPrompt({ finalPrompt: '## Panel 1\nCamera: low angle' });
+  assert.match(prompt, /under 4500 output tokens/);
+  assert.match(prompt, /Keep exact visible dialogue.*all required inventories, coordinates and dimensions/);
+});
+
 test('comparison includes prompt requirements after the former 24,000-character cutoff', () => {
   const marker = 'REQUIRED_FINAL_PANEL_CONTRACT';
   const comparison = buildImageQualityComparisonPrompt({finalPrompt: `${'x'.repeat(24001)}${marker}`});
   assert.match(comparison, /REQUIRED_FINAL_PANEL_CONTRACT/);
 });
 
+test('output-limit termination is unverified even if a complete JSON prefix was returned', () => {
+  const reply = JSON.stringify({ pass: true, issues: [], observations, spatial_checks: spatialChecks() });
+  assert.equal(parseImageQualityQaResponse(reply, { finishReason: 'stop' }).pass, true);
+  for (const finishReason of ['length', 'max_output_tokens']) {
+    const result = parseImageQualityQaResponse(reply, { finishReason });
+    assert.equal(result.pass, false);
+    assert.match(result.issues[0].reason, /出力上限/);
+    assert.equal(result.issues.some(isMaterialImageQualityIssue), false);
+  }
+});
+
 test('camera QA requests every dimension required by its parser', () => {
   const prompt = buildImageQualityQaPrompt({finalPrompt:'## Panel 1\nCamera: low angle'});
   assert.match(prompt, /exactly elevation, azimuth, framing, lens, boundary/i);
+  assert.match(prompt, /visible_extent/);
+  assert.match(prompt, /actor_visibility/);
+  assert.match(prompt, /cropped foot alone is a factual deviation, not a material defect/i);
+});
+
+test('long-shot PASS needs measured subject scale and setting evidence, not a group-count label', () => {
+  const finalPrompt = '## Panel 1\nCamera: high-angle long shot\nCAST COUNT: [A] each EXACTLY ONCE.';
+  const review = () => ({ pass: true, issues: [], observations, spatial_checks: spatialChecks() });
+  const labelOnly = review();
+  labelOnly.spatial_checks[0].camera_geometry.dimensions.framing.observed = 'full group, long shot, continuous setting';
+  const ungrounded = parseImageQualityQaResponse(JSON.stringify(labelOnly), { finalPrompt });
+  assert.equal(ungrounded.pass, false);
+  assert.ok(ungrounded.issues.some(issue => /shot scale/i.test(issue.reason)));
+  assert.equal(ungrounded.issues.some(isMaterialImageQualityIssue), false);
+
+  const grounded = review();
+  const framing = grounded.spatial_checks[0].camera_geometry.dimensions.framing;
+  framing.scale_evidence = { subject: 'A', top: 0.25, bottom: 0.77, extent: 'whole', setting: 'Connected floor across lower third and a walkway between actors on the right.' };
+  assert.equal(parseImageQualityQaResponse(JSON.stringify(grounded), { finalPrompt }).pass, true);
+  framing.scale_evidence = { subject: 'A', top: 0.02, bottom: 1, extent: 'waist_crop', setting: 'A strip of shelves behind the heads.' };
+  const cropped = parseImageQualityQaResponse(JSON.stringify(grounded), { finalPrompt });
+  assert.equal(cropped.pass, false);
+  assert.ok(cropped.issues.some(issue => /shot scale/i.test(issue.reason)));
+  assert.equal(cropped.issues.some(isMaterialImageQualityIssue), false);
+  assert.equal(cropped.spatialChecks[0].camera_geometry.dimensions.framing.status, 'uncertain');
+
+  delete framing.scale_evidence;
+  assert.equal(parseImageQualityQaResponse(JSON.stringify(grounded), { finalPrompt: '## Panel 1\nCamera: wide-angle close-up' }).pass, true);
+  assert.match(buildImageQualityQaPrompt({ finalPrompt }), /scale_evidence/);
 });
 
 const EXPLICIT_REAR_PROMPT = `## Panel 2
@@ -72,6 +127,31 @@ test('critical camera audit keeps ambiguous pixels unverified instead of inventi
   assert.equal(review.issues[0].type, 'unverified');
 });
 
+test('rear-camera PASS also needs a coherent head and never accepts same-side duplicate ears', () => {
+  const check = {
+    panel: 2, rear_subject: 'ヒカリ', rear_head_or_shoulder_foreground: 'present',
+    face_orientation: 'back_three_quarter', camera_side: 'behind_subject',
+    evidence: 'Rear skull and shoulder overlap the foreground; a partial cheek is visible.',
+    head_geometry: { status: 'ok', evidence: 'One cranium, connected jaw and neck; near ear beside cheek.',
+      ears: [{ side: 'left', location: 'beside cheek' }] }
+  };
+  const parse = () => parseCriticalCameraQaResponse(JSON.stringify({ checks: [check] }), { finalPrompt: EXPLICIT_REAR_PROMPT });
+  assert.equal(parse().pass, true);
+  check.head_geometry.ears.push({ side: 'left', location: 'behind the first ear on the same side' });
+  assert.ok(parse().issues.some(issue => issue.type === 'anatomy' && isMaterialImageQualityIssue(issue)));
+  check.head_geometry.ears[1].side = 'uncertain';
+  assert.equal(parse().pass, false);
+  assert.equal(parse().issues.some(isMaterialImageQualityIssue), false);
+  check.head_geometry.ears[1].side = 'right';
+  assert.equal(parse().pass, true, 'two ears on opposite sides are not automatically a defect');
+  check.head_geometry = { status: 'defect', evidence: 'The face and rear cranium have separate incompatible jaw connections.', ears: [] };
+  assert.ok(parse().issues.some(issue => issue.type === 'anatomy'));
+  delete check.head_geometry;
+  assert.equal(parse().pass, false);
+  assert.equal(parse().issues.some(isMaterialImageQualityIssue), false);
+  assert.match(buildCriticalCameraQaPrompt({ finalPrompt: EXPLICIT_REAR_PROMPT }), /headwear.*not anatomical ears/i);
+});
+
 test('direct comparison fixes image order and defaults uncertain judgments to original', () => {
   const prompt = buildImageQualityComparisonPrompt({ scenario: '台詞原文', finalPrompt: 'approved prompt' });
   assert.match(prompt, /Image 1 is the original; image 2 is the repair/);
@@ -91,6 +171,9 @@ test('wardrobe drift has a reference-independent review contract with visibility
   assert.match(prompt, /wardrobe_evidence/);
   assert.match(prompt, /first_visibility/);
   assert.match(prompt, /scripted_change/);
+  assert.match(prompt, /anatomical_left\|anatomical_right/);
+  assert.match(prompt, /inner garment/);
+  assert.match(prompt, /screen-left\/right/);
   const example = JSON.parse(prompt.match(/^\{"pass":true,"observations":.*$/m)[0]);
   assert.equal(typeof example.observations.wardrobe, 'string');
   const singlePrompt = buildImageQualityQaPrompt({ mode: 'single-image' });
@@ -103,13 +186,47 @@ const wardrobeIssue = (component = 'waist fastening') => ({
   type: 'wardrobe_continuity', panel: 4, subject: 'Actor A', reason: 'The same exposed clothing region has changed.',
   wardrobe_evidence: { component, first_panel: 1, first_location: 'left torso', later_location: 'right torso',
     first_state: 'two attached pieces', later_state: 'no attached pieces', first_visibility: 'clear', later_visibility: 'clear',
-    matched_features: ['short curled hair', 'oval eyewear'], scripted_change: 'none' },
+    matched_features: ['short curled hair', 'oval eyewear'], scripted_change: 'none', difference_kind: 'component_state' },
 });
 
 test('visible wardrobe-component drift is repairable even without reference sheets', () => {
   for (const component of ['shoulder fastener', 'sleeve ornament']) {
     const result = parseImageQualityQaResponse(JSON.stringify({ pass: false, issues: [wardrobeIssue(component)] }));
     assert.ok(result.issues.some(issue => issue.type === 'wardrobe_continuity' && issue.panel === 4 && isMaterialImageQualityIssue(issue)));
+  }
+});
+
+test('visible anatomical attachment swap and inner-layer substitution are material across changed camera views', () => {
+  const sideSwap = wardrobeIssue('shoulder-worn accessory');
+  Object.assign(sideSwap.wardrobe_evidence, { difference_kind: 'anatomical_side',
+    first_state: 'strap on wearer left shoulder', later_state: 'strap on wearer right shoulder',
+    first_body_side: 'anatomical_left', later_body_side: 'anatomical_right' });
+  const layerSwap = wardrobeIssue('inner garment');
+  Object.assign(layerSwap.wardrobe_evidence, { difference_kind: 'layering', layer_relation: 'visible beneath the same outer coat',
+    first_state: 'dark high-neck top', later_state: 'light collared shirt' });
+  for (const issue of [sideSwap, layerSwap]) {
+    const result = parseImageQualityQaResponse(JSON.stringify({ pass: false, issues: [issue] }));
+    assert.ok(result.issues.some(item => item.type === 'wardrobe_continuity' && isMaterialImageQualityIssue(item)));
+  }
+});
+
+test('screen-side reversal, hidden layers, ambiguous attachment and scripted changes never authorize repair', () => {
+  const patches = [
+    { difference_kind: 'anatomical_side', first_body_side: 'anatomical_left', later_body_side: 'anatomical_left',
+      first_state: 'strap appears screen-left', later_state: 'strap appears screen-right' },
+    { difference_kind: 'anatomical_side', first_body_side: 'screen_left', later_body_side: 'screen_right' },
+    { difference_kind: 'anatomical_side', first_body_side: 'anatomical_left', later_body_side: 'uncertain' },
+    { difference_kind: 'layering', layer_relation: '' },
+    { difference_kind: 'layering', layer_relation: 'beneath coat', later_visibility: 'occluded' },
+    { difference_kind: 'anatomical_side', first_body_side: 'anatomical_left', later_body_side: 'anatomical_right', scripted_change: 'present' },
+    { difference_kind: 'style_only' },
+  ];
+  for (const patch of patches) {
+    const issue = wardrobeIssue('worn component');
+    Object.assign(issue.wardrobe_evidence, patch);
+    const result = parseImageQualityQaResponse(JSON.stringify({ pass: false, issues: [issue] }));
+    assert.equal(result.issues.some(item => item.type === 'wardrobe_continuity'), false);
+    assert.ok(result.issues.some(item => item.type === 'unverified'));
   }
 });
 
@@ -154,6 +271,92 @@ const spatialChecks = (count = 4) => Array.from({ length: count }, (_, index) =>
   }] },
 }));
 const observations = { title: 'No title requested', dialogue: 'Panels 1-4 have no bubbles as requested', hands: 'No hand side requested', props: 'Paper held at its lower edge' };
+const withHandInventory = (check, actors) => {
+  check.hand_geometry.actor_limb_inventory = actors.map((actor, index) => ({
+    actor, visible_hands: [{ anatomical_side: 'right', x: 0.2 + index * 0.2, y: 0.65, shoulder_connection: 'clear' }],
+    evidence: `${actor}'s right hand is distinct at the lower side of the panel and connected to the arm.`,
+  }));
+};
+
+test('full-body framing records visible crop without making a harmless missing foot a paid repair', () => {
+  const finalPrompt = '## Panel 1\nCamera: full body from above\nSHOT EXECUTION: head-to-feet inside panel with floor beyond BOTH shoes;\nCAST COUNT: [A], [B], [C] each EXACTLY ONCE;';
+  const checks = spatialChecks();
+  checks[0].camera_geometry.dimensions.framing = {
+    requested: 'head-to-feet inside panel', observed: 'faces and torsos visible; lower legs leave the bottom edge',
+    status: 'defect', visible_extent: 'partial_body', material_impact: 'none',
+  };
+  const result = parseImageQualityQaResponse(JSON.stringify({ pass: true, issues: [], observations, spatial_checks: checks }), { finalPrompt });
+  assert.equal(result.pass, false);
+  assert.ok(result.issues.some(issue => issue.type === 'unverified' && /framing/i.test(issue.reason)));
+  assert.equal(result.issues.some(isMaterialImageQualityIssue), false);
+  const contradictory = spatialChecks();
+  contradictory[0].camera_geometry.dimensions.framing = {
+    requested: 'head-to-feet inside panel', observed: 'both shoes inside panel',
+    status: 'ok', visible_extent: 'partial_body', material_impact: 'none',
+  };
+  const mismatch = parseImageQualityQaResponse(JSON.stringify({ pass: true, issues: [], observations, spatial_checks: contradictory }), { finalPrompt });
+  assert.ok(mismatch.issues.some(issue => issue.type === 'unverified' && /framing/i.test(issue.reason)));
+  const full = spatialChecks();
+  full[0].camera_geometry.dimensions.framing.visible_extent = 'head_to_toe';
+  full[0].camera_geometry.dimensions.framing.material_impact = 'none';
+  full[0].camera_geometry.dimensions.framing.actor_visibility = ['A', 'B', 'C'].map((subject, index) => ({
+    subject, lowest_visible_part: 'feet', edge_relation: 'inside', foot_location: { x: 0.2 + index * 0.3, y: 0.8 },
+  }));
+  withHandInventory(full[0], ['A', 'B', 'C']);
+  assert.equal(parseImageQualityQaResponse(JSON.stringify({ pass: true, issues: [], observations, spatial_checks: full }), { finalPrompt }).pass, true);
+  const unsupported = spatialChecks();
+  unsupported[0].camera_geometry.dimensions.framing.visible_extent = 'head_to_toe';
+  unsupported[0].camera_geometry.dimensions.framing.material_impact = 'none';
+  assert.ok(parseImageQualityQaResponse(JSON.stringify({ pass: true, issues: [], observations, spatial_checks: unsupported }), { finalPrompt }).issues
+    .some(issue => issue.type === 'unverified' && /framing/i.test(issue.reason)));
+  const focusPrompt = '## Panel 1\nCamera: Aの全身を大きく、BとCを奥に置く\nSHOT EXECUTION: head-to-feet inside panel;\nCAST COUNT: [A], [B], [C] each EXACTLY ONCE;';
+  const focus = spatialChecks();
+  withHandInventory(focus[0], ['A', 'B', 'C']);
+  focus[0].camera_geometry.dimensions.framing = {
+    ...full[0].camera_geometry.dimensions.framing,
+    actor_visibility: [full[0].camera_geometry.dimensions.framing.actor_visibility[0]],
+  };
+  assert.equal(parseImageQualityQaResponse(JSON.stringify({ pass: true, issues: [], observations, spatial_checks: focus }), { finalPrompt: focusPrompt }).pass, true);
+  const material = spatialChecks();
+  material[0].camera_geometry.dimensions.framing = {
+    requested: 'head-to-feet inside panel', observed: 'the scripted floor contact is outside the frame',
+    status: 'defect', visible_extent: 'partial_body', material_impact: 'material',
+  };
+  const blocked = parseImageQualityQaResponse(JSON.stringify({ pass: true, issues: [], observations, spatial_checks: material }), { finalPrompt });
+  assert.ok(blocked.issues.some(issue => issue.type === 'camera_geometry' && isMaterialImageQualityIssue(issue)));
+});
+
+test('actor-level hand count rejects a clear third hand but does not punish uncertain overlap', () => {
+  const finalPrompt = '## Panel 1\nCamera: medium\nCAST COUNT: [A] each EXACTLY ONCE;';
+  assert.match(buildImageQualityQaPrompt({ finalPrompt }), /actor_limb_inventory.*visible_hands/i);
+  const checks = spatialChecks(1);
+  const review = () => parseImageQualityQaResponse(JSON.stringify({ pass: true, issues: [], observations, spatial_checks: checks }), { finalPrompt });
+  assert.ok(review().issues.some(issue => issue.type === 'unverified' && /per-actor visible-hand inventory/.test(issue.reason)));
+  const hand = (side, x) => ({ anatomical_side: side, x, y: 0.65, shoulder_connection: 'clear' });
+  checks[0].hand_geometry.actor_limb_inventory = [{ actor: 'A', visible_hands: [hand('left', 0.3), hand('right', 0.7)], evidence: 'Two distinct hand endpoints at opposite sides of A.' }];
+  assert.equal(review().issues.some(issue => /per-actor visible-hand inventory/.test(issue.reason)), false);
+  checks[0].hand_geometry.actor_limb_inventory[0].visible_hands.push(hand('uncertain', 0.5));
+  assert.ok(review().issues.some(issue => issue.type === 'anatomy' && issue.panel === 1));
+  assert.ok(review().issues.some(isMaterialImageQualityIssue));
+  checks[0].hand_geometry.actor_limb_inventory[0].visible_hands = [hand('left', 0.3), hand('uncertain', 0.5)];
+  assert.ok(review().issues.some(issue => issue.type === 'unverified' && /per-actor visible-hand inventory/.test(issue.reason)));
+  assert.equal(review().issues.some(issue => issue.type === 'anatomy'), false);
+});
+
+test('focused hand audit can turn omitted general-review inventory into a material defect', () => {
+  const contracts = [{ panel: 4, names: ['A'] }];
+  assert.match(buildActorHandAuditPrompt(contracts), /three distinct visible hands/i);
+  const hand = (side, x) => ({ anatomical_side: side, x, y: 0.6, shoulder_connection: 'clear' });
+  const response = hands => JSON.stringify({ panels: [{ panel: 4, actor_limb_inventory: [{
+    actor: 'A', visible_hands: hands, evidence: 'Fist at upper left, book grip at center, palm below the book.',
+  }] }] });
+  const clear = parseActorHandAuditResponse(response([hand('left', 0.2), hand('right', 0.5), hand('uncertain', 0.7)]), contracts);
+  assert.ok(clear.some(issue => issue.type === 'anatomy' && isMaterialImageQualityIssue(issue)));
+  assert.deepEqual(parseActorHandAuditResponse(response([hand('left', 0.2), hand('right', 0.5)]), contracts), []);
+  assert.ok(parseActorHandAuditResponse(response([hand('left', 0.2), { ...hand('uncertain', 0.5), shoulder_connection: 'uncertain' }]), contracts)
+    .some(issue => issue.type === 'unverified'));
+  assert.ok(parseActorHandAuditResponse('{}', contracts).some(issue => issue.type === 'unverified'));
+});
 
 test('a scripted hand-to-prop action needs actor-specific visual evidence before PASS', () => {
   const finalPrompt = [
@@ -165,6 +368,7 @@ test('a scripted hand-to-prop action needs actor-specific visual evidence before
   const checks = spatialChecks();
   const review = () => parseImageQualityQaResponse(JSON.stringify({ pass: true, issues: [], observations, spatial_checks: checks }), { finalPrompt });
   assert.match(buildImageQualityQaPrompt({ finalPrompt }), /panel 4: リン, アカリ|panel 4: アカリ, リン/);
+  withHandInventory(checks[3], ['リン', 'アカリ']);
   assert.ok(review().issues.some(issue => issue.type === 'unverified' && issue.panel === 4 && issue.subject === 'action_fidelity'));
 
   checks[3].action_fidelity = { status: 'ok', evidence: 'The board and both actors are visible.', contacts: [
@@ -299,6 +503,30 @@ test('physical text order overrides reviewer PASS and invented correct B coordin
   for (const texts of [undefined, [], ['先に話す。'], ['違う。', '先に話す。']]) {
     assert.ok(review(texts).issues.some(issue => issue.type === 'unverified' && issue.subject === 'bubble_order'));
   }
+});
+
+test('upward camera PASS needs localized surface evidence, without regenerating from uncertainty', () => {
+  let finalPrompt = '## Panel 1\nCamera: 床近くから見上げるワイドショット';
+  const checks = spatialChecks();
+  const parse = () => parseImageQualityQaResponse(JSON.stringify({pass:true,issues:[],observations,spatial_checks:checks}), {finalPrompt});
+  checks[0].camera_geometry.dimensions.elevation = {requested:'floor-level',observed:'upward view, chin/underside, shelf horizon low',status:'ok'};
+  const unsupported = parse();
+  assert.ok(unsupported.issues.some(i => i.panel === 1 && i.subject === 'camera_geometry' && /projection cues/.test(i.reason)));
+  assert.equal(unsupported.issues.some(isMaterialImageQualityIssue), false);
+  finalPrompt = '## Panel 1\nCamera: 胸より低い位置から見上げる中景';
+  checks[0].camera_geometry.dimensions.elevation.status = 'ok';
+  assert.ok(parse().issues.some(i => /projection cues/.test(i.reason)), 'ordinary low-angle labels need evidence too');
+  checks[0].camera_geometry.dimensions.elevation.projection_cues = [
+    {subject:'foreground face',surface:'underside',x:0.6,y:0.3},
+    {subject:'shelf board',surface:'underside',x:0.2,y:0.5},
+  ];
+  assert.equal(parse().issues.some(i => /projection cues/.test(i.reason)), false);
+  checks[0].camera_geometry.dimensions.elevation.projection_cues[1].surface = 'unclear';
+  assert.ok(parse().issues.some(i => /projection cues/.test(i.reason)));
+  const ordinary = parseImageQualityQaResponse(JSON.stringify({pass:true,issues:[],observations,spatial_checks:checks}), {finalPrompt:'## Panel 1\nCamera: 正面アイレベル'});
+  assert.equal(ordinary.issues.some(i => /projection cues/.test(i.reason)), false);
+  const horizontal = parseImageQualityQaResponse(JSON.stringify({pass:true,issues:[],observations,spatial_checks:checks}), {finalPrompt:'## Panel 1\nCamera: 低い位置から水平に撮る'});
+  assert.equal(horizontal.issues.some(i => /projection cues/.test(i.reason)), false);
 });
 
 test('camera PASS needs separate grounded dimensions and cannot mask a failed lens or side', () => {
@@ -664,6 +892,7 @@ test('diegetic replica contracts separate physical actors from contained miniatu
 
   const checks = spatialChecks();
   checks.forEach((check, index) => {
+    withHandInventory(check, ['PersonA']);
     check.identity_checks = [{
       name: 'PersonA', location: `panel ${index + 1} center`, matched_features: ['short hair', 'round glasses'],
       reference_eyewear: 'glasses', observed_eyewear: 'glasses', status: 'ok', evidence: 'Rims, bridge and temples are visible.',
@@ -717,13 +946,14 @@ Dialogue: silent
 Dialogue (verbatim bubbles): TEXT (PRINT VALUES ONLY): B1="菓子をしまいなさい。"; B2="香りで交渉する流れ？". TAIL TIP LOCK: B1=>[サエコ]; B2=>[ミク].
 ## Panel 4
 Dialogue: silent`;
-  const makeReview = bubbles => {
+  const makeReview = (bubbles, reportedDefect = false) => {
     const checks = spatialChecks();
     checks[2].bubble_speaker = {
-      status: 'ok', evidence: 'Each tail was traced from balloon outline to its visible endpoint.',
+      status: reportedDefect ? 'defect' : 'ok', evidence: 'Each tail was traced from balloon outline to its visible endpoint.',
       left_to_right_texts: ['香りで交渉する流れ？', '菓子をしまいなさい。'], bubbles,
     };
-    return parseImageQualityQaResponse(JSON.stringify({ pass: true, issues: [], observations, spatial_checks: checks }), { finalPrompt });
+    const issues = reportedDefect ? ['bubble_speaker', 'bubble_order'].map(type => ({ type, panel: 3, subject: 'B1', reason: 'Reviewer claims the B-number identifies a wrong speaker/order.' })) : [];
+    return parseImageQualityQaResponse(JSON.stringify({ pass: !reportedDefect, issues, observations, spatial_checks: checks }), { finalPrompt });
   };
   const validB2 = {
     bubble: 'B2', text: '香りで交渉する流れ？', expected_speaker: 'ミク', observed_tail_target: 'ミク',
@@ -742,7 +972,18 @@ Dialogue: silent`;
 
   const separated = makeReview([baseB1, validB2]);
   assert.equal(separated.pass, false);
-  assert.ok(separated.issues.some(issue => issue.type === 'bubble_speaker' && issue.subject === 'B1'));
+  assert.ok(separated.issues.some(issue => issue.type === 'unverified' && issue.subject === 'B1'));
+  assert.ok(separated.issues.every(issue => !isMaterialImageQualityIssue(issue)), 'an unsupported contact claim is not proof of a wrong speaker');
+  const ordinaryGap = makeReview([{ ...baseB1,
+    endpoint_relation: 'points_to_speaker', tail_endpoint_evidence: 'Tail points unambiguously toward the assigned speaker with a normal air gap.',
+    tail_tip: { x: 0.4, y: 0.51 }, speaker_anchor: { x: 0.4, y: 0.65, part: 'mouth' },
+  }, validB2]);
+  assert.ok(ordinaryGap.issues.every(issue => !isMaterialImageQualityIssue(issue)));
+  const shortPointer = makeReview([{ ...baseB1, endpoint_relation: 'points_to_speaker',
+    tail_endpoint_evidence: 'The short tail points to the correct head without touching it.',
+    tail_tip: { x: 0.4, y: 0.60 },
+  }, validB2]);
+  assert.equal(shortPointer.pass, true);
 
   const falsifiedExpectedSpeaker = makeReview([{ ...baseB1, expected_speaker: 'ミク', observed_tail_target: 'ミク',
     tail_tip: { x: 0.44, y: 0.38 }, speaker_anchor: { x: 0.46, y: 0.40, part: 'head' } }, validB2]);
@@ -755,6 +996,20 @@ Dialogue: silent`;
 
   const correct = makeReview([{ ...baseB1, tail_tip: { x: 0.39, y: 0.63 } }, validB2]);
   assert.equal(correct.pass, true);
+
+  // Reviewer ID errors cannot reassign a correctly drawn line to another speaker.
+  for (const bubbles of [
+    [{ ...baseB1, bubble: 'B2', tail_tip: { x: 0.39, y: 0.63 } }, { ...validB2, bubble: 'B1' }],
+    [{ ...baseB1, text: '別の台詞', observed_tail_target: 'ミク' }, validB2],
+    [{ ...baseB1, bubble: 'B9', observed_tail_target: 'ミク' }, validB2],
+  ]) {
+    for (const reportedDefect of [false, true]) {
+      const result = makeReview(bubbles, reportedDefect);
+      assert.equal(result.pass, false);
+      assert.ok(result.issues.some(issue => issue.type === 'unverified'));
+      assert.ok(result.issues.every(issue => !['bubble_speaker', 'bubble_order'].includes(issue.type)));
+    }
+  }
 
   const reviewerMislabelsSpeaker = makeReview([{ ...baseB1, expected_speaker: 'ミク',
     tail_tip: { x: 0.39, y: 0.63 } }, validB2]);

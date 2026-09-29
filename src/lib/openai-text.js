@@ -268,6 +268,7 @@ export const callOpenAIText = async (prompt, images = null, systemInstruction = 
                 thought: `OpenAI ${modelId} による処理が完了しました。`,
                 model: modelId,
                 usage: data.usage,
+                finishReason: choice.finish_reason,
                 costEstimate
             };
 

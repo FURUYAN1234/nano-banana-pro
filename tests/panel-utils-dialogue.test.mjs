@@ -14,6 +14,44 @@ let buildIdentityMatrix;
 let extractActingIdentityNotes;
 let getCameraForPanel;
 
+test('rear speakers keep their own tail endpoint without exposing an invisible mouth', () => {
+  const cast = '- Character [甲]: adult\n- Character [乙]: adult';
+  const action = '状況: 甲が資料へ身を寄せ、乙は向かいで答える。\n甲「これかな？」\n乙「表紙を見て。」';
+  const rear = extractDialogueOnly('[Camera: 甲の肩越し、後頭部を手前に置く]\n' + action, cast, { forImagePrompt: true });
+  assert.match(rear, /B1=>\[甲\] visible rear-head contour/);
+  assert.match(rear, /B2=>\[乙\] mouth\/head/);
+  assert.doesNotMatch(rear, /B1=>\[甲\] mouth\/head/);
+  const profile = extractDialogueOnly('[Camera: 二人の横顔]\n' + action, cast, { forImagePrompt: true });
+  assert.match(profile, /B1=>\[甲\] mouth\/head/);
+  assert.doesNotMatch(profile, /visible rear-head contour/);
+
+  const plan = [{speaker:'甲',x:0.75,anchor:'右手前の甲の口元',route:'右上の余白から甲の口へ、入口は避ける'}, {speaker:'乙',x:0.25,anchor:'左奥の乙の口元',route:'左上から乙の口元へ'}];
+  const withLayout = `[Camera: 甲の肩越し、後頭部を手前に置く]\nBalloonLayout: ${JSON.stringify(plan)}\n${action}`;
+  const rendered = extractDialogueOnly(withLayout, cast, { forImagePrompt: true });
+  assert.match(rendered, /B1 x=0\.75, \[甲\] 右手前の甲の頭の見える輪郭, tail=右上の余白から甲の頭の見える輪郭へ、入口は避ける/);
+  assert.match(rendered, /B2 x=0\.25, \[乙\] 左奥の乙の口元, tail=左上から乙の口元へ/);
+  assert.doesNotMatch(rendered, /甲の口/);
+  const facing = extractDialogueOnly(withLayout.replace('甲の肩越し、後頭部を手前に置く', '二人の横顔'), cast, { forImagePrompt: true });
+  assert.match(facing, /右手前の甲の口元/);
+});
+
+test('balloon layout binds planned space to dialogue ownership without becoming printed text', () => {
+  const cast = '- Character [甲]: adult\n- Character [乙]: adult';
+  const plan = [{speaker:'甲',x:0.78,anchor:'右手前、顔の上',route:'右上の余白から口へ'}, {speaker:'乙',x:0.23,anchor:'左奥、肩越しの顔',route:'左の余白から口へ'}];
+  const source = `状況: 甲が手前で身を乗り出し、乙は奥で振り返る。\nBalloonLayout: ${JSON.stringify(plan)}\n甲「準備した。」\n乙「確認した。」`;
+  const output = extractDialogueOnly(source, cast, {forImagePrompt:true});
+  assert.match(output, /BALLOON LAYOUT.*B1.*0\.78.*右手前.*B2.*0\.23.*左奥/);
+  assert.match(output, /B1=>\[甲\].*B2=>\[乙\]/);
+  assert.doesNotMatch(extractDialogueOnly(source, cast, {forImagePrompt:true,forScriptLock:true}), /anchor|route|右上の余白/);
+  assert.doesNotMatch(extractActionOnly(source, cast), /BalloonLayout|speaker|右上の余白/);
+  for (const invalid of [plan.slice(0,1), [...plan].reverse(), [{...plan[0],x:0.1},plan[1]], [{...plan[0],x:1.1},plan[1]], [{...plan[0],route:''},plan[1]]]) {
+    assert.throws(() => extractDialogueOnly(source.replace(JSON.stringify(plan), JSON.stringify(invalid)), cast, {forImagePrompt:true}), /BalloonLayout/);
+  }
+  assert.throws(() => extractDialogueOnly('BalloonLayout: broken\n甲「準備した。」',cast,{forImagePrompt:true}), /BalloonLayout/);
+  assert.doesNotThrow(() => extractDialogueOnly('甲「準備した。」',cast,{forImagePrompt:true}));
+  assert.doesNotThrow(() => extractDialogueOnly('BalloonLayout: []\nセリフなし',cast,{forImagePrompt:true}));
+});
+
 before(async () => {
   server = await createServer({
     appType: 'custom',
@@ -791,7 +829,7 @@ test('places a sole balloon near its speaker without moving a scripted off-cente
 test('two balloons from one speaker retain reading order without moving the cast', () => {
   const panel = '[Camera: 甲を左手前、乙を右奥に置く。]\n甲「待って。」\n甲「もう一度。」';
   const placement = extractPlacementRule(panel, '- Character [甲]: black hair\n- Character [乙]: blonde hair', { compact: true });
-  assert.match(placement, /Bodies fixed.*B1 rightmost.*B2\/B3\+ strictly leftward/i);
+  assert.match(placement, /Preserve Camera\/Action body positions.*B1 rightmost.*B2\/B3\+ strictly leftward/i);
 });
 
 test('locks each bubble tail endpoint to its mapped speaker instead of the nearest body', () => {
@@ -833,7 +871,7 @@ test('keeps bubble reading slots independent from scripted character positions',
   assert.doesNotMatch(placement, /no dialogue-order slots/i);
 });
 
-test('uses dialogue-order horizontal speaker zones when Camera specifies depth but not speaker left-right positions', () => {
+test('keeps depth-only staging free of dialogue-order horizontal speaker zones', () => {
   const panelText = `
 [3コマ目: 転]
 [Camera: 背後寄り3/4のワームズアイ。警備ロープを前景に、踊る一団を奥に配置する。]
@@ -848,11 +886,10 @@ test('uses dialogue-order horizontal speaker zones when Camera specifies depth b
 - Character [丙]: adult, brown hair
 `, { compact: true });
 
-  assert.match(placement, /RIGHT \[甲\]/);
-  assert.match(placement, /CENTER \[乙\]/);
-  assert.match(placement, /LEFT \[丙\]/);
-  assert.match(placement, /preserve Camera\/Action depth/i);
-  assert.doesNotMatch(placement, /Bodies fixed/);
+  assert.doesNotMatch(placement, /RIGHT \[甲\]|CENTER \[乙\]|LEFT \[丙\]/);
+  assert.match(placement, /preserve Camera\/Action body positions, depth/i);
+  assert.match(placement, /never derive body positions from dialogue order/i);
+  assert.match(placement, /B1 rightmost; B2\/B3\+ strictly leftward/);
 });
 
 test('keeps explicit named left-right staging instead of replacing it with dialogue-order body zones', () => {
@@ -867,7 +904,7 @@ test('keeps explicit named left-right staging instead of replacing it with dialo
 - Character [乙]: adult, blonde hair
 `, { compact: true });
 
-  assert.match(placement, /Bodies fixed/);
+  assert.match(placement, /Preserve Camera\/Action body positions/);
   assert.match(placement, /bubbles independent/i);
   assert.doesNotMatch(placement, /RIGHT \[甲\].*LEFT \[乙\]/);
 });

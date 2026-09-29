@@ -140,7 +140,20 @@ body {
   animation: next-step-gentle-pulse 1.6s ease-in-out infinite;
 }
 
+@keyframes generated-image-reveal {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.generated-image-reveal {
+  animation: generated-image-reveal 450ms ease-out both;
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .generated-image-reveal {
+    animation: none;
+  }
+
   .next-step-gentle-pulse {
     animation: none;
     filter: brightness(1.06);

@@ -5,6 +5,7 @@ import { createServer } from 'vite';
 
 let server;
 let getEndingModePolicy;
+let resolveScenarioComedyTone;
 let isDocumentaryEnding;
 let DOCUMENTARY_ENDING_OPTIONS;
 let validatePromptEndingModeConsistency;
@@ -23,6 +24,19 @@ const step2Url = new URL('../src/components/Step2Panel.jsx', import.meta.url);
 const workflowUrl = new URL('../src/hooks/useMangaWorkflow.js', import.meta.url);
 const scenarioProviderUrl = new URL('../src/lib/scenario-provider.js', import.meta.url);
 
+test('scenario tone follows explicit ending selection instead of a random restraint or intensity override', async () => {
+  assert.equal(resolveScenarioComedyTone('Surreal'), 'SurrealQuiet');
+  assert.equal(resolveScenarioComedyTone('Explosion'), 'HighTension');
+  for (const ending of ['Misunderstanding', 'RunningGag', 'Metafiction', 'Documentary', 'Auto']) {
+    assert.equal(resolveScenarioComedyTone(ending), 'Auto');
+    const prompt = buildScenarioRequest(ending);
+    assert.doesNotMatch(prompt, /今回は「シュール静寂系」のトーンを徹底せよ/);
+  }
+  const provider = await readFile(scenarioProviderUrl, 'utf8');
+  assert.match(provider, /resolveScenarioComedyTone\(activePunchlineType\)/);
+  assert.doesNotMatch(provider, /comedyToneOptions|Math\.random\(\).*comedyTone/);
+});
+
 before(async () => {
   server = await createServer({
     appType: 'custom',
@@ -31,6 +45,7 @@ before(async () => {
   });
   ({
     getEndingModePolicy,
+    resolveScenarioComedyTone,
     isDocumentaryEnding,
     DOCUMENTARY_ENDING_OPTIONS,
     validatePromptEndingModeConsistency,

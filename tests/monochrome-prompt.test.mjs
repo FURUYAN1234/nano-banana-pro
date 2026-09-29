@@ -160,7 +160,8 @@ test('ink lighting and physical depth survive long Web compaction without changi
     assert.doesNotMatch(mono, /overrides ALL color\/paint\/lighting/);
     assert.deepEqual(mono.match(/^Camera:.*$/gm), color.match(/^Camera:.*$/gm));
     assert.deepEqual(mono.match(/^Action \(visual only\):.*$/gm), color.match(/^Action \(visual only\):.*$/gm));
-    assert.match(mono, /PROPORTION OVERRIDE: Use 7-8 head proportions/);
+    assert.match(mono, /carved facial planes|carved brow\/nose\/cheek\/jaw planes/i);
+    assert.doesNotMatch(mono, /PROPORTION OVERRIDE: Use 7-8 head proportions/);
     if (family === 'chatgpt') assert.ok(mono.length <= 32000, `shared Web/API budget: ${mono.length}`);
   }
 });

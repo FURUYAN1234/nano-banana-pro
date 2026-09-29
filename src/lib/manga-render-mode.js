@@ -116,8 +116,8 @@ export const MONOCHROME_IMAGE_QUALITY_CONTRACT = SHARED_IMAGE_QUALITY_CONTRACT
 // Medium-specific interpretations retain the selected expressive register;
 // colored recipes are not included and then contradicted by a later warning.
 export const MONOCHROME_EMOTION_STYLES = Object.freeze({
-  CHIBI_GAG: 'Super-deformed 2-3 head chibi figures, round faces, dot eyes and exaggerated tiny limbs; retain glasses and individual silhouettes. Black sweat/vein marks and comedic steam outlines on white.',
-  GEKIGA: 'Mature dramatic gekiga, angular faces and imposing figures; heavy black chiaroscuro shapes, sharp pen lines and crosshatching confined to actual shadows. Keep lit faces white.',
+  CHIBI_GAG: 'Expressive chibi caricature; preserve Camera/Action, jointed body acting, individual gaze and facial reactions, hair and glasses. Reduce deformation if it hides acting or flattens perspective; no zoom for cuteness. Black comedic accents on white.',
+  GEKIGA: 'Forceful realistic gekiga: carved facial planes at brow, nose, cheek and jaw; tense eyelids and mouth, bold pressure-varied contours, sculpted solid-black facial shadows and directional crosshatching. Redraw facial construction, not just darker anime shading. Keep identity, age, pose and white lit planes.',
   SHOUJO: 'Romantic delicate black penwork, outlined flowers and airy white highlights; sparse regular screen dots behind the cast and star-shaped eye highlights. Keep faces, glasses and dialogue readable.',
   HORROR: 'Tense horror-manga penwork, jagged contours and strong black shadow masses with sparse hatching; preserve the existing cast, readable faces and scripted comedic exaggeration.',
   BLANK: 'Frozen deadpan expression, blank white eyes and stiff posture; clean sparse ink contours and white facial areas. Preserve glasses around the blank eyes.',

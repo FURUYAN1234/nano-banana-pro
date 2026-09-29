@@ -10,6 +10,12 @@ import {
   runScenarioPayoffGate,
 } from '../src/lib/scenario-payoff-quality.js';
 
+const CAMERA_RHYTHM = {
+  shots: ['high / left-front / wide / room layout', 'eye-level / profile / close / doubt', 'rear / medium / telephoto / discovery', 'low / right-front / wide / payoff'].map((signature, index) => ({ panel: index + 1, signature, purpose: ['場所と関係を示す', '疑いの表情を読む', '発見を共有する', '行動の帰結を見せる'][index] })),
+  repeated_panels: [], material_repeat: false, intentional_repeat: false,
+  evidence: 'Each shot changes the visible projection and serves its story beat.', correction: '',
+};
+
 const STRONG_GAG_REVIEW = {
   pass: true,
   setup_seed: '主人公が最短経路だけを信じて急ぐ。',
@@ -19,7 +25,9 @@ const STRONG_GAG_REVIEW = {
   visual_payoff: true,
   slogan_only: false,
   unseeded_fact: false,
+  camera_rhythm: CAMERA_RHYTHM,
   visual_feasibility: [1, 2, 3, 4].map(panel => ({ panel, feasible: true, evidence: `Panel ${panel} stages its focal action at readable scale.`, correction: '' })),
+  ensemble_continuity: [1, 2, 3, 4].map(panel => ({ panel, material_break: false, evidence: `Panel ${panel} continues its actors and reactions.`, correction: '' })),
   reason_codes: [],
 };
 
@@ -32,9 +40,176 @@ const WEAK_SLOGAN_REVIEW = {
   visual_payoff: false,
   slogan_only: true,
   unseeded_fact: false,
+  camera_rhythm: CAMERA_RHYTHM,
   visual_feasibility: [1, 2, 3, 4].map(panel => ({ panel, feasible: true, evidence: `Panel ${panel} stages its focal action at readable scale.`, correction: '' })),
+  ensemble_continuity: [1, 2, 3, 4].map(panel => ({ panel, material_break: false, evidence: `Panel ${panel} continues its actors and reactions.`, correction: '' })),
   reason_codes: [],
 };
+
+test('page camera review catches renamed low-angle repetition, repairs once and preserves dialogue', async () => {
+  const repeated = { ...STRONG_GAG_REVIEW, camera_rhythm: {
+    ...CAMERA_RHYTHM, repeated_panels: [2, 3, 4], material_repeat: true,
+    evidence: 'P2 Hyper Perspective, P3 OTS and P4 Slant all look up at medium distance; escalation and discovery read as the same view.',
+    correction: 'Keep the climax low; stage discovery from a high rear view and doubt in a profile close-up, preserving dialogue and contacts.',
+  } };
+  assert.deepEqual(evaluateScenarioPayoffReview(repeated).reasonCodes, ['repetitive_camera_sequence']);
+  const prompt = buildScenarioPayoffRepairPrompt({ scenario: 'ORIGINAL', review: repeated });
+  assert.match(prompt, /演技・配置・カメラだけ/);
+  assert.doesNotMatch(prompt, /全体を書き直/);
+  let repairs = 0;
+  const progress = [];
+  const result = await runScenarioPayoffGate({ scenario: 'ORIGINAL',
+    requestReview: async () => JSON.stringify(repeated),
+    requestRepair: async () => { repairs += 1; return 'REVISED'; },
+    onProgress: message => progress.push(message),
+  });
+  assert.equal(repairs, 1, 'camera rhythm must not start three paid scenario retries');
+  assert.equal(result.status, 'retained');
+  assert.ok(progress.some(message => /2・3・4コマ.*カメラ.*同じ視点|2・3・4コマ.*カメラ.*same view/.test(message)));
+});
+
+test('camera review preserves intentional repeats and harmless shared axes without paid repairs', async () => {
+  for (const camera_rhythm of [
+    { ...CAMERA_RHYTHM, repeated_panels: [1, 3], material_repeat: true, intentional_repeat: true, evidence: 'User requests identical framing for a visual refrain.', correction: '' },
+    { ...CAMERA_RHYTHM, repeated_panels: [2, 4], evidence: 'Shared elevation but a detail insert and distant full shot serve different actions.' },
+    { ...CAMERA_RHYTHM, repeated_panels: [1, 2, 3, 4], material_repeat: true, intentional_repeat: true, evidence: 'A deliberate page of close reactions preserves intimacy; no establishing view is needed.', correction: '' },
+  ]) {
+    const review = { ...STRONG_GAG_REVIEW, camera_rhythm };
+    assert.equal(evaluateScenarioPayoffReview(review).ok, true);
+    const result = await runScenarioPayoffGate({ scenario: 'ORIGINAL', requestReview: async () => JSON.stringify(review),
+      requestRepair: async () => assert.fail('no paid repair for harmless or requested framing'),
+    });
+    assert.equal(result.status, 'passed');
+  }
+});
+
+test('shot-scale review connects a material missing establishing view to the existing bounded gate', () => {
+  const prompt = buildScenarioPayoffReviewPrompt({ scenario: 'ALL CLOSE', punchlineType: 'Auto' });
+  assert.match(prompt, /寄り・中景・引き/);
+  assert.match(prompt, /広角レンズ.*引き/);
+  const review = { ...STRONG_GAG_REVIEW, camera_rhythm: { ...CAMERA_RHYTHM,
+    repeated_panels: [1, 2, 3, 4], material_repeat: true,
+    evidence: 'All four crops show faces only; the separation across the room that motivates the failed handoff is invisible.',
+    correction: 'Pull back the handoff beat to reveal both actors and the room between them, preserving dialogue and acting.',
+  } };
+  assert.deepEqual(evaluateScenarioPayoffReview(review).reasonCodes, ['repetitive_camera_sequence']);
+});
+
+test('camera evidence covers all four panels and unsupported rejection cannot trigger repair', async () => {
+  const missing = { ...STRONG_GAG_REVIEW };
+  delete missing.camera_rhythm;
+  assert.throws(() => parseScenarioPayoffReview(JSON.stringify(missing)), /incomplete_payoff_review/);
+  for (const changes of [
+    { shots: CAMERA_RHYTHM.shots.slice(0, 3) },
+    { repeated_panels: [2, 2], material_repeat: true, correction: 'Change framing.' },
+    { repeated_panels: [2, 4], material_repeat: true, correction: '' },
+    { evidence: '' },
+  ]) assert.throws(() => parseScenarioPayoffReview(JSON.stringify({ ...STRONG_GAG_REVIEW, camera_rhythm: { ...CAMERA_RHYTHM, ...changes } })), /incomplete_payoff_review/);
+  const result = await runScenarioPayoffGate({ scenario: 'ORIGINAL',
+    requestReview: async () => JSON.stringify({ ...STRONG_GAG_REVIEW, pass: false, reason_codes: ['repetitive_camera_sequence'] }),
+    requestRepair: async () => assert.fail('unsupported camera complaint'),
+  });
+  assert.equal(result.status, 'retained');
+});
+
+test('camera-only repair can change views but rejects a changed line before further review', async () => {
+  const original = [1, 2, 3, 4].map(panel => `[${panel}コマ目: 起]\n[Camera: アオリの中景]\n状況: Aは資料を見る。\nA「確認するよ。」`).join('\n');
+  const repeated = { ...STRONG_GAG_REVIEW, camera_rhythm: { ...CAMERA_RHYTHM,
+    material_repeat: true, repeated_panels: [1, 2, 3, 4], evidence: 'Same low medium shot masks the change from discovery to doubt.', correction: 'Keep dialogue and vary the views according to each beat.',
+  } };
+  for (const changeDialogue of [false, true]) {
+    let reviews = 0;
+    const candidate = changeDialogue ? original.replace('確認するよ。', '話を変えるよ。') : original.replace('[Camera: アオリの中景]', '[Camera: 俯瞰の全景]');
+    const result = await runScenarioPayoffGate({ scenario: original,
+      requestReview: async () => JSON.stringify(++reviews === 1 ? repeated : STRONG_GAG_REVIEW),
+      requestRepair: async () => candidate,
+    });
+    assert.equal(result.status, changeDialogue ? 'retained' : 'repaired');
+    assert.equal(result.scenario, changeDialogue ? original : candidate);
+    assert.equal(reviews, changeDialogue ? 1 : 2);
+  }
+});
+
+test('STEP2 review treats a material same-depth lineup with copied reactions as a single repair target', async () => {
+  const flat = {
+    ...STRONG_GAG_REVIEW,
+    ensemble_continuity: STRONG_GAG_REVIEW.ensemble_continuity.map(item => item.panel === 2
+      ? { panel: 2, material_break: true, evidence: 'Five cast members face front in one row and repeat the same surprise; no response changes another action.', correction: 'Keep the event and dialogue; stage the discoverer near the prop, receiver behind and a third actor reacting to that receiver.' }
+      : item),
+  };
+  const evaluation = evaluateScenarioPayoffReview(flat);
+  assert.ok(evaluation.reasonCodes.includes('flat_ensemble_panel_2'));
+  assert.match(buildScenarioPayoffReviewPrompt({ scenario: 'SCENARIO' }), /ensemble_continuity/);
+  assert.match(buildScenarioPayoffRepairPrompt({ scenario: 'SCENARIO', review: flat }), /前後関係|連続した動作/u);
+
+  const progress = [];
+  const reviews = [flat, STRONG_GAG_REVIEW];
+  const result = await runScenarioPayoffGate({
+    scenario: '元の4コマ', punchlineType: 'GagAuto',
+    requestReview: async () => ({ text: JSON.stringify(reviews.shift()) }),
+    requestRepair: async () => ({ text: '立体的な人物演技を持つ4コマ' }),
+    onProgress: message => progress.push(message),
+  });
+  assert.equal(result.status, 'repaired');
+  assert.ok(progress.some(message => /再検査理由.*2コマ目.*横並び|再検査理由.*2コマ目.*演技/u.test(message)));
+});
+
+test('STEP2 accepts intentional shared gaze or stillness without forcing different positions or a retry', async () => {
+  const quiet = {
+    ...STRONG_GAG_REVIEW,
+    ensemble_continuity: STRONG_GAG_REVIEW.ensemble_continuity.map(item => item.panel === 3
+      ? { panel: 3, material_break: false, evidence: 'The scripted silent beat keeps two actors watching the same document; their established positions continue.', correction: '' }
+      : item),
+  };
+  assert.deepEqual(evaluateScenarioPayoffReview(quiet, { punchlineType: 'GagAuto' }), { ok: true, reasonCodes: [] });
+  const result = await runScenarioPayoffGate({
+    scenario: '静かな4コマ', punchlineType: 'GagAuto',
+    requestReview: async () => ({ text: JSON.stringify(quiet) }),
+    requestRepair: async () => assert.fail('intentional stillness is not a repair trigger'),
+  });
+  assert.equal(result.status, 'passed');
+});
+
+test('ensemble review checks copied acting even after positions are varied, without imposing mouth quotas', () => {
+  const prompt = buildScenarioPayoffReviewPrompt({ scenario: 'SCENARIO' });
+  assert.match(prompt, /配置が分散していても/);
+  assert.match(prompt, /口の開閉だけ|開口人数/);
+  assert.match(prompt, /軽微|好み/);
+});
+
+test('unsupported ensemble reason codes cannot trigger a paid repair', async () => {
+  let repairs = 0;
+  const result = await runScenarioPayoffGate({
+    scenario: '静かな4コマ', punchlineType: 'GagAuto',
+    requestReview: async () => JSON.stringify({ ...STRONG_GAG_REVIEW, pass: false, reason_codes: ['flat_ensemble_panel_2', 'flat_ensemble_panel_99'] }),
+    requestRepair: async () => { repairs += 1; return 'unexpected'; },
+  });
+  assert.equal(result.status, 'retained');
+  assert.equal(repairs, 0);
+});
+
+test('staging repair rejects changed dialogue before paying for another review', async () => {
+  const original = [1, 2, 3, 4].map(panel => `[${panel}コマ目: 起]\n状況: Aは資料を見る。\nA「確認するよ。」`).join('\n');
+  const review = { ...STRONG_GAG_REVIEW, ensemble_continuity: STRONG_GAG_REVIEW.ensemble_continuity.map(item => item.panel === 2
+    ? { ...item, material_break: true, correction: 'Clarify the response.' } : item) };
+  let reviews = 0;
+  const result = await runScenarioPayoffGate({ scenario: original, punchlineType: 'GagAuto',
+    requestReview: async () => { reviews += 1; return JSON.stringify(review); },
+    requestRepair: async () => original.replace('確認するよ。', '別のオチに変更。'),
+  });
+  assert.equal(result.scenario, original);
+  assert.equal(reviews, 1);
+  assert.match(result.warning, /staging_only_scope_violation/);
+});
+
+test('staging-only repair preserves the story and does not demand a new payoff', () => {
+  const review = { ...STRONG_GAG_REVIEW, ensemble_continuity: STRONG_GAG_REVIEW.ensemble_continuity.map(item => item.panel === 2
+    ? { ...item, material_break: true, correction: 'Clarify the response with depth and gaze.' } : item) };
+  const prompt = buildScenarioPayoffRepairPrompt({ scenario: 'ORIGINAL', review });
+  assert.match(prompt, /演技・配置・カメラだけ/);
+  assert.match(prompt, /台詞の話者・文言・順序/);
+  assert.doesNotMatch(prompt, /全体を書き直|別の種を再利用/);
+});
 
 test('STEP2 progress identifies a material recheck reason and its resolved outcome', async () => {
   const progress = [];
@@ -47,6 +222,21 @@ test('STEP2 progress identifies a material recheck reason and its resolved outco
   assert.equal(result.status, 'repaired');
   assert.ok(progress.some(message => /再検査理由.*標語.*絵で伝わるオチ/.test(message) || /再検査理由.*絵で伝わるオチ.*標語/.test(message)));
   assert.ok(progress.some(message => /再検査結果.*合格/.test(message)));
+});
+
+test('both initial and repaired scenario reviews receive user constraints', async () => {
+  const prompts = [];
+  const reviews = [WEAK_SLOGAN_REVIEW, STRONG_GAG_REVIEW];
+  await runScenarioPayoffGate({ scenario: 'ORIGINAL', punchlineType: 'GagAuto', userTopic: '指定の結末を保存する',
+    requestReview: async prompt => { prompts.push(prompt); return JSON.stringify(reviews.shift()); },
+    requestRepair: async () => 'REPAIRED',
+  });
+  assert.equal(prompts.length, 2);
+  for (const prompt of prompts) {
+    assert.match(prompt, /USER REQUIREMENTS/);
+    assert.match(prompt, /指定の結末を保存する/);
+    assert.match(prompt, /指定された終幕の語句/);
+  }
 });
 
 test('STEP2 harmless review feedback reports why no regeneration runs', async () => {
@@ -103,7 +293,7 @@ test('scenario review rejects a visually overloaded panel even when the ending i
   const overloaded = {
     ...STRONG_GAG_REVIEW,
     visual_feasibility: STRONG_GAG_REVIEW.visual_feasibility.map(item => item.panel === 4
-      ? { panel: 4, feasible: false, evidence: 'Five distant actors and two distinct card contacts are too small to read in one wide strip.', correction: 'Keep the wide gag, but move one card contact to panel 3.' }
+      ? { panel: 4, feasible: false, material_loss: true, evidence: 'Five distant actors and two distinct card contacts are too small to read in one wide strip.', correction: 'Keep the wide gag, but move one card contact to panel 3.' }
       : item),
   };
   assert.ok(evaluateScenarioPayoffReview(overloaded).reasonCodes.includes('unrenderable_panel_4'));
@@ -194,6 +384,23 @@ test('gate passes through a strong first candidate without requesting a repair',
   assert.equal(repairs, 0);
 });
 
+test('redundant surface detail cannot trigger a camera-flattening repair even with a model reason code', async () => {
+  const review = { ...STRONG_GAG_REVIEW, pass: false, reason_codes: ['unrenderable_panel_4'],
+    visual_feasibility: STRONG_GAG_REVIEW.visual_feasibility.map(item => item.panel === 4
+      ? { ...item, feasible: false, material_loss: false, evidence: 'The label was read in panel 3; panel 4 still shows the same object and reaction.', correction: 'Zoom to the face and label.' } : item) };
+  let repairs = 0;
+  const result = await runScenarioPayoffGate({ scenario: 'BOLD WIDE LOW SHOT', punchlineType: 'GagAuto',
+    requestReview: async () => JSON.stringify(review), requestRepair: async () => { repairs++; return 'CLOSE PORTRAITS'; } });
+  assert.equal(repairs, 0);
+  assert.equal(result.scenario, 'BOLD WIDE LOW SHOT');
+  assert.equal(result.status, 'retained');
+  assert.ok(result.warning);
+  assert.doesNotMatch(buildScenarioPayoffRepairPrompt({ scenario: 'ORIGINAL', review }), /Zoom to the face and label/);
+  const missing = structuredClone(review);
+  delete missing.visual_feasibility[3].material_loss;
+  assert.throws(() => parseScenarioPayoffReview(JSON.stringify(missing)), /incomplete_payoff_review/);
+});
+
 test('a subjective minor payoff concern does not regenerate an otherwise drawable scenario', async () => {
   let repairs = 0;
   const result = await runScenarioPayoffGate({
@@ -227,7 +434,7 @@ test('gate repairs a spatially unreadable panel even when payoff passes', async 
   const overloaded = {
     ...STRONG_GAG_REVIEW,
     visual_feasibility: STRONG_GAG_REVIEW.visual_feasibility.map(item => item.panel === 4
-      ? { panel: 4, feasible: false, evidence: 'Two separate hand-card contacts are unreadable from the high wide camera.', correction: 'Keep the broad gag and stage only the focal card contact in panel 4.' }
+      ? { panel: 4, feasible: false, material_loss: true, evidence: 'Two separate hand-card contacts are unreadable from the high wide camera.', correction: 'Keep the broad gag and stage only the focal card contact in panel 4.' }
       : item),
   };
   let reviews = 0;
@@ -247,7 +454,7 @@ test('gate gives subjective spatial staging one repair and keeps the best candid
   const overloaded = {
     ...STRONG_GAG_REVIEW,
     visual_feasibility: STRONG_GAG_REVIEW.visual_feasibility.map(item => item.panel >= 3
-      ? { panel: item.panel, feasible: false, evidence: 'The board contacts cannot be read in this wide strip.', correction: 'Move the staging and keep a focal contact.' }
+      ? { panel: item.panel, feasible: false, material_loss: true, evidence: 'The board contacts cannot be read in this wide strip.', correction: 'Move the staging and keep a focal contact.' }
       : item),
   };
   let reviews = 0;

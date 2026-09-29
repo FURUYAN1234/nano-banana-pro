@@ -57,12 +57,15 @@ test('literal quotes, backslashes and routing-like words survive prompt, QA and 
   }
 });
 
-test('both providers keep speaker metadata out of the redundant strict script text', () => {
+test('both providers keep speaker metadata out of printable dialogue with or without global duplication', () => {
   for (const providerFamily of ['chatgpt', 'gemini']) {
     const prompt = build('甲「明日は晴れる！」', providerFamily);
     const lock = prompt.split('STRICT SCRIPT LOCK:')[1].split('MANGA CAMERA')[0];
     assert.doesNotMatch(lock, /甲「|乙「/);
-    assert.match(lock, /Panel 4 required dialogue: TEXT \(PRINT VALUES ONLY\): B1="明日は晴れる！"/);
+    const panel = extractBubbleContracts(prompt).find(entry => entry.panel === 4);
+    assert.equal(panel.bubbles.length, 1);
+    assert.equal(panel.bubbles[0].text, '明日は晴れる！');
+    assert.equal(panel.bubbles[0].speaker, '甲');
   }
 });
 

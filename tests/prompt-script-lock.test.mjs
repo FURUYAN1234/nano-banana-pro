@@ -20,12 +20,17 @@ before(async () => {
   buildMangaPrompt = (options) => {
     const prompt = assembler.buildMangaPrompt(options);
     const panels = extractBubbleContracts(prompt);
-    return prompt.replace(/^(- Panel (\d+) required dialogue: )TEXT \(PRINT VALUES ONLY\): (.*)$/gm,
+    const normalized = prompt.replace(/^(- Panel (\d+) required dialogue: )TEXT \(PRINT VALUES ONLY\): (.*)$/gm,
       (_, prefix, number, text) => {
         const speakers = new Map(panels.find(panel => panel.panel === Number(number))?.bubbles.map(bubble => [bubble.bubble, bubble.speaker]));
         return prefix + readBubbleTextValues(text, { strict: true })
           .map(entry => `${speakers.get(entry.bubble) || ''}「${entry.text}」`).join(' / ');
       });
+    // Deep compaction keeps the executable per-panel dialogue as the single
+    // source. The semantic assertions below must inspect that source too.
+    const panelDialogue = panels.filter(panel => !normalized.includes(`- Panel ${panel.panel} required dialogue:`))
+      .map(panel => `\n- Panel ${panel.panel} required dialogue: ${panel.bubbles.map(b => `${b.speaker}「${b.text}」`).join(' / ')}`).join('');
+    return normalized.replace('STRICT SCRIPT LOCK:', `STRICT SCRIPT LOCK:${panelDialogue}`);
   };
 });
 
@@ -98,7 +103,7 @@ test('keeps the original library scenario surface text out of all provider bubbl
     });
     assert.match(prompt, /左手で「非正規職員」と印字された配置表を掲げ/);
     assert.doesNotMatch(prompt, /B\d+="非正規職員"/);
-    assert.match(prompt, /B1=>\[ヒカリ\] mouth\/head; B2=>\[サエコ\] mouth\/head; B3=>\[アカリ\] mouth\/head/);
+    assert.match(prompt, /B1=>\[ヒカリ\] (?:mouth\/head|visible rear-head contour[^;]*); B2=>\[サエコ\] mouth\/head; B3=>\[アカリ\] mouth\/head/);
   }
 });
 

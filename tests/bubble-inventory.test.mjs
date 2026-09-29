@@ -27,6 +27,30 @@ test('missing, ambiguous or unmatched physical evidence cannot pass', () => {
   }
 });
 
+test('an unmatched OCR fragment cannot hide a uniquely text-matched order inversion', () => {
+  for (const reversed of [true, false]) {
+    const response = JSON.parse(inventory(reversed));
+    response.panels[0].balloons.push({ text: '受け止め', center_x: 0.6 });
+    const result = applyBubbleInventory(review, JSON.stringify(response), prompt);
+    assert.equal(result.pass, false);
+    assert.ok(result.issues.some(issue => issue.type === 'unverified' && issue.subject === 'bubble_order'));
+    assert.equal(result.issues.some(issue => issue.type === 'bubble_order'), reversed);
+  }
+});
+
+test('duplicate or missing text matches do not establish a partial-inventory inversion', () => {
+  const duplicate = JSON.parse(inventory(true));
+  duplicate.panels[0].balloons.push({ text: '袋はここで開く？', center_x: 0.9 });
+  const missing = JSON.parse(inventory(true));
+  missing.panels[0].balloons[0].text = '袋はここ';
+  for (const response of [duplicate, missing]) {
+    const result = applyBubbleInventory(review, JSON.stringify(response), prompt);
+    assert.equal(result.pass, false);
+    assert.ok(result.issues.some(issue => issue.type === 'unverified'));
+    assert.ok(result.issues.every(issue => issue.type !== 'bubble_order'));
+  }
+});
+
 test('printed text on an in-scene object is not counted as a speech balloon', () => {
   const oneLinePrompt = '## Panel 2\nDialogue (verbatim bubbles): TEXT (PRINT VALUES ONLY): B1="放送を見よう。". TAIL TIP LOCK: B1=>[話者].';
   const response = JSON.stringify({ panels: [{ panel: 2, text_regions: [

@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test, { after, before } from 'node:test';
 import { createServer } from 'vite';
+import { EMOTION_STYLES, COMPACT_EMOTION_STYLES } from '../src/lib/constants.js';
 
 let server;
 let buildMangaPrompt;
@@ -19,6 +20,40 @@ before(async () => {
 
 after(async () => {
   await server?.close();
+});
+
+test('every selectable non-default color style has a concrete budget-safe recipe', () => {
+  for (const style of Object.keys(EMOTION_STYLES).filter(style => style !== 'NORMAL')) {
+    assert.ok(COMPACT_EMOTION_STYLES[style]?.length > 50, `missing drawing recipe for ${style}`);
+  }
+});
+
+test('budget compression preserves executable style recipes, not just style names', () => {
+  for (const providerFamily of ['chatgpt', 'gemini']) {
+    const prompt = buildMangaPrompt({
+      scenario: buildScenarioWithEmotions(['GEKIGA', 'SHOUJO', 'WATERCOLOR', 'CHIBI_GAG']),
+      castList: CAST_LIST + ' stable identity detail'.repeat(400),
+      colorMode: 'color', providerFamily, punchlineType: 'Auto', systemVersion: 'test'
+    });
+    assert.match(prompt, /Style:.*carved facial planes.*brow.*cheek.*jaw/i);
+    assert.match(prompt, /Style:.*delicate thin linework/i);
+    assert.match(prompt, /Style:.*transparent color washes/i);
+    assert.match(prompt, /Style:.*chibi.*Camera\/Action.*gaze/i);
+    assert.match(prompt, /selected recipe overrides default rendering/i);
+    assert.doesNotMatch(prompt, /ALL characters.*2-3|dot-like eyes|Characters look older/i);
+    if (providerFamily === 'chatgpt') assert.ok(prompt.length <= 32000);
+  }
+});
+
+test('monochrome preserves strong facial drawing and camera-first chibi interpretation', () => {
+  const prompt = buildMangaPrompt({
+    scenario: buildScenarioWithEmotions(['GEKIGA', 'SHOUJO', 'WATERCOLOR', 'CHIBI_GAG']),
+    castList: CAST_LIST, colorMode: 'monochrome', providerFamily: 'chatgpt', punchlineType: 'Auto'
+  });
+  assert.match(prompt, /GEKIGA;.*carved facial planes.*brow.*cheek.*jaw/i);
+  assert.match(prompt, /CHIBI_GAG;.*Camera\/Action.*gaze/i);
+  assert.match(prompt, /Explicit user proportions win/i);
+  assert.doesNotMatch(prompt, /dot eyes|exaggerated tiny limbs|Use 7-8 head proportions/i);
 });
 
 const CAST_LIST = `

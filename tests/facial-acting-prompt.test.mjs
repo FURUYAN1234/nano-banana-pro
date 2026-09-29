@@ -140,3 +140,31 @@ test('README explains the bounded facial-acting behavior and its model-output li
   assert.match(readme, /口/);
   assert.match(readme, /保証しません|依存します/);
 });
+
+test('scenario acting differentiates response phases without banning synchronized or open-mouth reactions', () => {
+  const prompt = buildBaseScenarioPrompt();
+  assert.match(prompt, /反応の段階/);
+  assert.match(prompt, /無言の人物.*開口/);
+  assert.match(prompt, /閉じた口/);
+  assert.match(prompt, /発話.*絶叫.*一斉反応/);
+  assert.match(prompt, /動作の途中/);
+  assert.doesNotMatch(prompt, /場面に応じて大きく見開く目、強い口形/);
+  const enhancement = buildScenarioEnhancementPrompt({ scenario, selectedCategories: ['body', 'camera'] });
+  assert.match(enhancement, /全身・足先まで見せるのは、明示された全身指定や足運び自体が物語に必要な場合/);
+  assert.doesNotMatch(enhancement, /動きの主役1人の頭・腰・両膝・両足先をコマ内に収め/);
+});
+
+test('provider and compact prompts retain individual acting instead of a shared round-mouth default', () => {
+  for (const providerFamily of ['chatgpt', 'gemini']) {
+    for (const analysis of ['', 'Identity detail. '.repeat(700)]) {
+      const prompt = buildMangaPrompt({ scenario, providerFamily, analysis,
+        castList: '- Character [ミク]: adult, black hair\n- Character [リン]: adult, brown hair',
+        colorMode: 'color', punchlineType: 'Auto' });
+      assert.match(prompt, /individual response phase/);
+      assert.match(prompt, /Non-speakers need not open mouths/);
+      assert.match(prompt, /closed-mouth/);
+      assert.match(prompt, /Keep speech\/screams\/synchrony\/stillness/);
+      assert.match(prompt, /full-body amplitude/);
+    }
+  }
+});

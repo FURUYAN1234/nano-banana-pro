@@ -677,7 +677,30 @@ export const getCameraForChatGPT = (panelText, cameraState) => {
   return fallbackCamera;
 };
 
+const BALLOON_LAYOUT_LINE_RE = /^\s*BalloonLayout\s*[:：]\s*(.*)$/gim;
+
+const renderBalloonLayout = (source, entries, rearSubject = '') => {
+  const lines = [...String(source).matchAll(BALLOON_LAYOUT_LINE_RE)];
+  if (!lines.length) return ''; // Existing/manual scenarios keep their supported format.
+  const fail = () => { throw new Error('BalloonLayout: 台詞順・話者・左右の余白・尾の経路が一致しません。配置設計を確認してください。'); };
+  let plan;
+  try { plan = JSON.parse(lines[0][1]); } catch { return fail(); }
+  if (lines.length !== 1 || !Array.isArray(plan) || plan.length !== entries.length) return fail();
+  if (!plan.every((item, i) => item && typeof item.speaker === 'string'
+    && item.speaker.trim() === entries[i].speaker
+    && Number.isFinite(item.x) && item.x > 0 && item.x < 1
+    && (i === 0 || plan[i - 1].x > item.x)
+    && ['anchor', 'route'].every(key => typeof item[key] === 'string' && item[key].trim()))) return fail();
+  if (!plan.length) return '';
+  const visibleAnchor = (value, speaker) => speaker !== rearSubject ? value : value
+    .replace(/口元|口もと|\bmouth\b/gi, '頭の見える輪郭')
+    .replace(/(^|の|から|\s)口(?=へ|に|の|$)/g, '$1頭の見える輪郭');
+  return ` BALLOON LAYOUT (NEVER PRINT; x=0 left/1 right; preserve Camera/Action): ${plan.map((item, i) => `B${i + 1} x=${item.x}, [${item.speaker}] ${visibleAnchor(item.anchor, item.speaker)}, tail=${visibleAnchor(item.route, item.speaker)}`).join('; ')}.`;
+};
+
 export const extractDialogueOnly = (fullPanelText, castList, options = {}) => {
+  const layoutSource = fullPanelText;
+  fullPanelText = String(fullPanelText).replace(BALLOON_LAYOUT_LINE_RE, '');
   fullPanelText = stripSourceMetadata(fullPanelText);
   const lines = fullPanelText.split('\n');
 
@@ -963,12 +986,17 @@ export const extractDialogueOnly = (fullPanelText, castList, options = {}) => {
 
   // [v2.22] 「吹き出し描くな」指示を廃止。セリフが無い場合でも描画を阻害しない
   if (speechBubbleEntries.length === 0) {
+    if (options.asEntries) return [];
+    if (options.forImagePrompt) renderBalloonLayout(layoutSource, []);
     return "(Characters interact without dialogue in this panel)";
   }
   const orderedEntries = speechBubbleEntries
     .sort((a, b) => a.order - b.order || a.sequence - b.sequence);
+  if (options.asEntries) return orderedEntries.map(({ speaker, text }) => ({ speaker, text }));
 
   if (options.forImagePrompt) {
+    const rearSubject = extractExplicitRearSubject(fullPanelText, collectCastNames(castList));
+    const layout = renderBalloonLayout(layoutSource, orderedEntries, rearSubject);
     // 上位台本には本文だけを再掲し、話者名は各コマの尻尾メタデータに一元化する。
     if (options.forScriptLock) {
       const values = orderedEntries.map((entry, index) => `B${index + 1}=${JSON.stringify(entry.text)}`).join('; ');
@@ -985,9 +1013,11 @@ export const extractDialogueOnly = (fullPanelText, castList, options = {}) => {
     const mappedSpeakers = orderedEntries.filter((entry) => entry.speaker);
     if (mappedSpeakers.length >= 1) {
       const endpointTargets = orderedEntries
-        .map((entry, index) => entry.speaker ? `B${index + 1}=>[${entry.speaker}] mouth/head` : `B${index + 1}=>match the visually speaking character`)
+        .map((entry, index) => entry.speaker
+          ? `B${index + 1}=>[${entry.speaker}] ${entry.speaker === rearSubject ? 'visible rear-head contour (never expose mouth)' : 'mouth/head'}`
+          : `B${index + 1}=>match the visually speaking character`)
         .join('; ');
-      return `TEXT (PRINT VALUES ONLY): ${visibleText}. TAIL TIP LOCK (NEVER PRINT; proximity never reassigns): ${endpointTargets}.`;
+      return `TEXT (PRINT VALUES ONLY): ${visibleText}. TAIL TIP LOCK (NEVER PRINT; proximity never reassigns): ${endpointTargets}.${layout}`;
     }
     return `TEXT (PRINT VALUES ONLY): ${visibleText}. TAILS (METADATA; NEVER PRINT NAMES): ${tailTargets || 'match the visually speaking character'}.`;
   }
@@ -1002,7 +1032,7 @@ export const extractDialogueOnly = (fullPanelText, castList, options = {}) => {
 
 const DIRECT_ADDRESS_SUBJECT_RE = /(?:読者|観客|視聴者|カメラ|配信|撮影|レンズ|第四の壁|メタフィクション|reader|viewer|audience|camera|livestream|broadcast|filming|fourth\s+wall|metafiction)/i;
 const DIRECT_ADDRESS_ACTION_RE = /(?:話しかけ|呼びかけ|語りかけ|訴えかけ|目線を向け|正面を向|見つめ|address(?:es|ing)?|speak(?:s|ing)?\s+to|talk(?:s|ing)?\s+to|look(?:s|ing)?\s+(?:at|into)|face(?:s|ing)?|stare(?:s|ing)?|gaze(?:s|ing)?)/i;
-const CAMERA_FACING_NEGATION_RE = /(?:(?:画面|カメラ|読者|観客|視聴者)[^\n。]{0,48}(?:厳禁|禁止|避け|しない|させない|向けない)|(?:never|do\s+not|don't|must\s+not|avoid)[^.\n]{0,48}(?:camera|reader|viewer|audience))/i;
+const CAMERA_FACING_NEGATION_RE = /(?:(?:画面|カメラ|読者|観客|視聴者)[^\n。]{0,48}(?:厳禁|禁止|避け|しない|させない|向けない|見ない|見ていない|向かない|向いていない)|(?:never|do\s+not|don't|must\s+not|avoid|no\s+one|nobody)[^.\n]{0,48}(?:camera|reader|viewer|audience))/i;
 const CAMERA_INSTRUCTION_LINE_RE = /^\s*\[?\s*(?:Camera|カメラワーク|CameraWork|Camera\s*Work)\s*[:：][^\n]*$/gim;
 const EXPLICIT_DETAIL_CAMERA_RE = /(?:手元|真上|俯瞰|上から|超接写|接写|クローズアップ|overhead|high[- ]angle|top[- ]?down|hand[- ]?detail|macro|close[- ]?up)/i;
 const EXPLICIT_REAR_CAMERA_RE = /(?:肩越し|肩ごし|背後(?:から|寄り)|背越し|over[ -]the[ -]shoulder|\bOTS\b|rear[ -]three[ -]quarter)/i;
@@ -1081,23 +1111,7 @@ const hasScriptedSpatialStaging = (text = '') => {
     || /(?:画面|コマ)(?:の)?(?:右|左)|(?:左|右)(?:手前|奥|前景|端)|(?:前景|中景|後景)|screen[- ](?:left|right)|foreground|midground|background/i.test(action);
 };
 
-// Camera depth alone must not disable the stable right-to-left speaker layout.
-// Preserve authored horizontal staging only when a named speaker is actually
-// tied to a left/right screen location. This avoids treating generic foreground
-// or background wording as a character-position override.
-const hasScriptedHorizontalSpeakerStaging = (text = '', speakers = []) => {
-  if (!speakers.length) return false;
-  const stagingText = String(text)
-    .replace(/[「『"][^」』"\n]*[」』"]/g, '')
-    .replace(/\r/g, '');
-  const horizontalPosition = '(?:(?:画面|コマ)(?:の)?(?:右|左)(?:側|端)?|(?:手前|奥)(?:の)?(?:右|左)|(?:右|左)(?:側|端|手前|奥|前景|後景)|screen[- ](?:left|right)|(?:front|rear)[- ](?:left|right)|(?:left|right)[- ]?(?:side|edge))';
-  return speakers.some((speaker) => {
-    const name = escapeRegex(speaker);
-    return new RegExp(`(?:${horizontalPosition})[^。！？!?;；\n]{0,36}(?:\\[?${name}\\]?)|(?:\\[?${name}\\]?)[^。！？!?;；\n]{0,36}(?:${horizontalPosition})`, 'iu').test(stagingText);
-  });
-};
-
-const buildRequiredDepthAssignment = (speakers, listeners, requireVisibleRear = false, explicitRearSubject = '', functionalActionMode = '') => {
+const buildRequiredDepthAssignment = (speakers, listeners, requireVisibleRear = false, explicitRearSubject = '', functionalActionMode = '', preserveScriptedGaze = false) => {
   if (!requireVisibleRear) {
     return 'VIEWPOINT FREEDOM: three-quarter/profile; bold height/tilt/foreshortening; no forced rear shoulder.';
   }
@@ -1120,6 +1134,9 @@ const buildRequiredDepthAssignment = (speakers, listeners, requireVisibleRear = 
     : functionalActionMode === 'self-use'
       ? `OTS FUNCTIONAL FACE CONSEQUENCE: derive target from Action, never holder—read/operate=self; submit/present/show=recipient. ${partnerLabel} reads/operates: front+UI camera-visible to user+camera; ${primaryLabel} is across the object, so show its back/edge from camera unless Action targets ${primaryLabel}.`
       : 'OTS FUNCTIONAL FACE CONSEQUENCE: Action target—read/operate=self; submit/present/show=recipient; visibility follows target side.';
+  if (preserveScriptedGaze) {
+    return `EXPLICIT REAR CAMERA: camera is physically behind ${partnerLabel}'s shoulder; rear head/shoulder foreground. No profile/front for readability/style; only scripted head turns expose faces. Keep orientation/gaze; unseen facial acting stays off-camera, conveyed by head pitch/shoulders/weight. ${functionalConsequence}`;
+  }
   const visibleRearCheck = requireVisibleRear
     ? `${explicitRearSubject ? ' EXPLICIT REAR CAMERA:' : ''} VISIBLE REAR DEPTH CHECK: camera is physically behind ${partnerLabel}'s shoulder; show the back of ${partnerLabel}'s head or shoulder foreground, facing ${primaryLabel}, not as backdrop. Do NOT show ${partnerLabel}'s face front-on. ${functionalConsequence}`
     : '';
@@ -1147,9 +1164,12 @@ export const buildPanelEyeLineRule = (panelText, castList) => {
     : FUNCTIONAL_SELF_USE_ACTION_RE.test(actionAndDialogueText)
       ? 'self-use'
       : '';
-  const explicitDirectAddress = !CAMERA_FACING_NEGATION_RE.test(actionAndDialogueText)
-    && DIRECT_ADDRESS_SUBJECT_RE.test(actionAndDialogueText)
-    && DIRECT_ADDRESS_ACTION_RE.test(actionAndDialogueText);
+  // Direct address must be one positive action clause, not a camera mention
+  // combined with an unrelated actor's gaze elsewhere in the panel.
+  const explicitDirectAddress = extractActionOnly(text).split(/[。！？!?;\n]|\.(?:\s|$)/u).some(clause =>
+    !CAMERA_FACING_NEGATION_RE.test(clause)
+    && DIRECT_ADDRESS_SUBJECT_RE.test(clause)
+    && DIRECT_ADDRESS_ACTION_RE.test(clause));
   const stagedSpeakerAndListener = speakers.length === 1
     && INTERPERSONAL_STAGING_RE.test(actionAndDialogueText)
     && (mentionedCastNames.length >= 2 || LISTENER_OR_REACTOR_CUE_RE.test(actionAndDialogueText));
@@ -1157,10 +1177,18 @@ export const buildPanelEyeLineRule = (panelText, castList) => {
   if (explicitDirectAddress) {
     return 'DIRECT-ADDRESS EXCEPTION: camera-facing is allowed only for the explicit in-story address; all others retain their scripted gaze targets.';
   }
+  const scriptedGaze = /視線|目線|見つめ|見上げ|見下ろ|睨|を見る|を見返|へ振り向|へ顔を向け|\b(?:gaze|looks? at|watches?)\b/i.test(extractActionOnly(text));
   if (/\[USER STAGING LOCK - ABSOLUTE\]/i.test(actionAndDialogueText)) {
     const stagingSides = buildExplicitStagingSides(actionAndDialogueText, mentionedCastNames);
     const listeners = mentionedCastNames.filter((name) => !speakers.includes(name));
-    return `EYE-LINE LOCK: obey USER STAGING LOCK exactly for speakers and listeners; never lens/front unless explicit direct address. ${stagingSides} ${buildRequiredDepthAssignment(speakers, listeners, requestedRearCamera, explicitRearSubject, functionalActionMode)} Camera preserves the scenario direction.`;
+    return `EYE-LINE LOCK: obey USER STAGING LOCK exactly for speakers and listeners; never lens/front unless explicit direct address. ${stagingSides} ${buildRequiredDepthAssignment(speakers, listeners, requestedRearCamera, explicitRearSubject, functionalActionMode, true)} Camera preserves the scenario direction.`;
+  }
+  if (scriptedGaze) {
+    const listeners = mentionedCastNames.filter(name => !speakers.includes(name));
+    const cameraLock = requestedRearCamera
+      ? buildRequiredDepthAssignment(speakers, listeners, true, explicitRearSubject, functionalActionMode, true)
+      : explicitDetailCamera ? 'EXPLICIT DETAIL CAMERA LOCK: preserve overhead/detail framing and depth.' : 'Preserve scripted camera and depth.';
+    return `EYE-LINE LOCK: keep each actor's scripted gaze target; no forced mutual/lens gaze. ${cameraLock}`;
   }
   if (speakers.length < 2 && !stagedSpeakerAndListener) {
     if (requestedRearCamera) {
@@ -1174,10 +1202,6 @@ export const buildPanelEyeLineRule = (panelText, castList) => {
 
   const participants = mentionedCastNames.length > 0 ? mentionedCastNames : speakers;
   const listeners = participants.filter((name) => !speakers.includes(name));
-  const scriptedGaze = /視線|目線|見つめ|見上げ|見下ろ|睨|を見る|を見返|へ振り向|へ顔を向け|\b(?:gaze|looks? at|watches?)\b/i.test(extractActionOnly(text));
-  if (scriptedGaze && !requestedRearCamera) {
-    return `EYE-LINE LOCK: keep each actor's scripted gaze target; no forced mutual/lens gaze. ${explicitDetailCamera ? 'EXPLICIT DETAIL CAMERA LOCK: preserve overhead/detail framing and depth.' : 'Preserve scripted camera and depth.'}`;
-  }
   const roleStaging = speakers.length === 1
     ? (listeners.length > 0
       ? `[${speakers[0]}] addresses ${listeners.map((name) => `[${name}]`).join(', ')}; listeners look back.`
@@ -1293,6 +1317,7 @@ const protectNonDialogueTextHints = (actionText) => {
 };
 
 export const extractActionOnly = (fullPanelText, castList, placementRule = "") => {
+  fullPanelText = String(fullPanelText).replace(BALLOON_LAYOUT_LINE_RE, '');
   fullPanelText = stripSourceMetadata(fullPanelText);
   const lines = fullPanelText.split('\n');
 
@@ -1493,65 +1518,13 @@ export const extractPlacementRule = (fullPanelText, castList, options = {}) => {
   });
 
   const hasMultipleBubbles = /\bB2=/.test(extractDialogueOnly(fullPanelText, castList, { forImagePrompt: true }));
-  if (speakers.length > 0 && hasMultipleBubbles && hasScriptedHorizontalSpeakerStaging(fullPanelText, speakers)) {
+  if (speakers.length >= 2) {
     const identities = speakers.map(name => `[${name}] (${compactIdentityTraits(getCharTraitsFromMatrix(name, castList, { monochrome }))})`).join('; ');
-    if (compact) return `PLACEMENT/IDENTITY: ${identities}. Bodies fixed; bubbles independent: B1 rightmost; B2/B3+ strictly leftward; never reverse.`;
-    return `PLACEMENT/IDENTITY: ${identities}. Preserve Camera/Action screen positions and depth; do not derive body positions from dialogue order. Bubbles flow right-to-left in dialogue order with tails to their actual speakers.`;
-  }
-  if (speakers.length >= 2 && hasScriptedSpatialStaging(fullPanelText)) {
-    const horizontalOrder = speakers.length >= 3
-      ? `RIGHT [${speakers[0]}]; CENTER [${speakers[1]}]; LEFT [${speakers[2]}]`
-      : `RIGHT [${speakers[0]}]; LEFT [${speakers[1]}]`;
-    if (compact) return `SPEAKER X: ${horizontalOrder}. Preserve Camera/Action depth/framing/contacts.`;
-    return `DIALOGUE SPEAKER HORIZONTAL ORDER (DEPTH PRESERVED; NOT A ROW): ${horizontalOrder}. Preserve every scripted foreground/background layer, scale, framing and contact; change only unconstrained horizontal placement.`;
-  }
-  if (speakers.length >= 3) {
-    // [v2.33] 3-Zone Slotting: 3人以上の掛け合いパネル対応
-    const traits0 = getCharTraitsFromMatrix(speakers[0], castList, { monochrome });
-    const traits1 = getCharTraitsFromMatrix(speakers[1], castList, { monochrome });
-    const traits2 = getCharTraitsFromMatrix(speakers[2], castList, { monochrome });
-    if (compact) {
-      return `SPEAKER X: RIGHT [${speakers[0]}]; CENTER [${speakers[1]}]; LEFT [${speakers[2]}]. No mirror/swap.`;
-    }
-    return `CRITICAL PLACEMENT & IDENTITY (3-ZONE SLOTTING):
-- RIGHT ZONE: [${speakers[0]}] (${traits0 || 'see reference'}) — First speaker
-- CENTER ZONE: [${speakers[1]}] (${traits1 || 'see reference'}) — Second speaker
-- LEFT ZONE: [${speakers[2]}] (${traits2 || 'see reference'}) — Third speaker / Reactor
-VERIFY: Confirm ${monochrome ? 'face/eye shape, hairstyle/length, glasses and ink/tone assignments' : 'hair color + glasses status'} for ALL three characters match the Identity Matrix.
-CHARACTER BODY POSITION LOCK (3-ZONE - DO NOT MIRROR):
-- [${speakers[0]}] MUST be on the RIGHT third of the panel.
-- [${speakers[1]}] MUST be in the CENTER of the panel.
-- [${speakers[2]}] MUST be on the LEFT third of the panel.
-- Preserve Camera/Action depth, framing and contacts; these zones set horizontal order only.
-- Maintain breathing room between zones to prevent overcrowding and attribute fusion.
-SPEECH BUBBLE FLOW (RIGHT-TO-LEFT):
-- Place bubbles in nearby negative space in the exact dialogue order, upper-right to lower-left; stagger heights instead of repeating a row above the heads.
-- Size bubbles to their text with readable padding; keep faces, important hands and story props clear, including the CENTER character.
-- Each bubble's tail MUST point to its assigned speaker without crossing another tail. Keep speaker identity and body zones fixed.`;
-  } else if (speakers.length >= 2) {
-    const traits0 = getCharTraitsFromMatrix(speakers[0], castList, { monochrome });
-    const traits1 = getCharTraitsFromMatrix(speakers[1], castList, { monochrome });
-    if (compact) {
-      return `SPEAKER X: RIGHT [${speakers[0]}]; LEFT [${speakers[1]}]. No mirror/swap.`;
-    }
-    // [v2.27] 人物+吹き出し位置固定ルール（左右入れ替わり全パターン対策）
-    // 髪色等の視覚的特徴で位置をアンカリングし、AIの左右鏡像化を防ぐ
-    return `CRITICAL PLACEMENT & IDENTITY:
-- RIGHT side: [${speakers[0]}] (${traits0 || 'see reference'})
-- LEFT side: [${speakers[1]}] (${traits1 || 'see reference'})
-VERIFY: Confirm ${monochrome ? 'face/eye shape, hairstyle/length, glasses and ink/tone assignments' : 'hair color + glasses status'} for both characters match the Identity Matrix before finalizing.
-CHARACTER BODY POSITION LOCK (CRITICAL - DO NOT MIRROR):
-- The character with ${traits0 || speakers[0] + "'s features"} MUST be physically standing/sitting on the RIGHT half of the panel.
-- The character with ${traits1 || speakers[1] + "'s features"} MUST be physically standing/sitting on the LEFT half of the panel.
-- Preserve Camera/Action depth, framing and contacts; these zones set horizontal order only.
-- Do NOT swap, mirror, or reverse their positions under any circumstances.
-SPEECH BUBBLE POSITION RULE:
-- Place bubbles in nearby negative space in the exact dialogue order, upper-right to lower-left; stagger heights instead of repeating a row above the heads.
-- Size bubbles to their text with readable padding; keep faces, important hands and story props clear.
-- Each bubble's tail MUST point to its assigned speaker without crossing another tail. Do NOT swap speaker ownership or body positions.`;
+    if (compact) return `PLACEMENT/IDENTITY: ${identities}. Preserve Camera/Action body positions, depth and contacts; never derive body positions from dialogue order. Bubbles independent: B1 rightmost; B2/B3+ strictly leftward; never reverse; tails to actual speakers.`;
+    return `PLACEMENT/IDENTITY: ${identities}. Preserve Camera/Action body positions, depth, framing and contacts; never derive body positions from dialogue order. Unspecified positions follow scene interaction, not fixed horizontal slots. Place bubbles in nearby negative space, right-to-left in dialogue order, with clear tails to actual speakers; reflow balloons without moving actors or obscuring faces, important hands and props. DO NOT MIRROR scripted staging.`;
   } else if (speakers.length === 1) {
     const traits0 = getCharTraitsFromMatrix(speakers[0], castList, { monochrome });
-    if (hasMultipleBubbles) return `CRITICAL PLACEMENT & IDENTITY: [${speakers[0]}] (${traits0 || 'see reference'}) is the speaking focus. Preserve Camera/Action body positions; keep the ordered balloons in nearby empty space with tails reaching [${speakers[0]}] mouth/head.`;
+    if (hasMultipleBubbles) return `CRITICAL PLACEMENT & IDENTITY: [${speakers[0]}] (${traits0 || 'see reference'}) is the speaking focus. Preserve Camera/Action body positions; bubbles independent: B1 rightmost; B2/B3+ strictly leftward in nearby empty space; tails reach [${speakers[0]}] mouth/head.`;
     return `CRITICAL PLACEMENT & IDENTITY: [${speakers[0]}] (${traits0 || 'see reference'}) is the speaking focus. Preserve Camera/Action body positions. Place the sole balloon body in empty space near [${speakers[0]}], not beside a different character; its speaker-facing tail must reach [${speakers[0]}] mouth/head.`;
   }
   return `CRITICAL PLACEMENT: Follow the natural dialogue flow.`;
@@ -1920,14 +1893,14 @@ export const buildEmotionBlock = (panelText, colorMode = 'color', { preserveRefe
     let block = `\n${styleLock}\nStyle: ${s.styleMulti}`;
     if (s.proportionsMulti) block += `\nPROPORTION OVERRIDE: ${s.proportionsMulti}`;
     if (s.vfxMulti) block += `\nVFX: ${s.vfxMulti}`;
-    if (s.surfaceException) block += `\nSTYLE EXCEPTION: ${s.surfaceException}. Keep faces/skin clean; do not add unrelated noise.`;
+    if (s.surfaceException) block += `\nSTYLE EXCEPTION: ${s.surfaceException}. Intentional style marks may model faces and skin; no unrelated noise.`;
     return block + gagOverlay;
   }
 
   let block = `\n${styleLock}\nStyle: ${s.style}`;
   if (s.proportions) block += `\nPROPORTION OVERRIDE: ${s.proportions}`;
   if (s.vfx) block += `\nVFX: ${s.vfx}`;
-  if (s.surfaceException) block += `\nSTYLE EXCEPTION: ${s.surfaceException}. Keep faces/skin clean; do not add unrelated noise.`;
+  if (s.surfaceException) block += `\nSTYLE EXCEPTION: ${s.surfaceException}. Intentional style marks may model faces and skin; no unrelated noise.`;
   return block + gagOverlay;
 };
 

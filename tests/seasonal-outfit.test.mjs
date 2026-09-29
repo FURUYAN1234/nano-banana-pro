@@ -170,6 +170,8 @@ const payoffReviewResponse = JSON.stringify({
   slogan_only: false,
   unseeded_fact: false,
   visual_feasibility: [1, 2, 3, 4].map(panel => ({ panel, feasible: true, evidence: `Panel ${panel}: the actor and focal prop are readable in the strip.`, correction: '' })),
+  ensemble_continuity: [1, 2, 3, 4].map(panel => ({ panel, material_break: false, evidence: `Panel ${panel}: the single actor carries the prop action forward.`, correction: '' })),
+  camera_rhythm: { shots: [1, 2, 3, 4].map(panel => ({ panel, signature: `Panel ${panel}: distinct scripted projection.`, purpose: 'Follow the seasonal prop action.' })), repeated_panels: [], material_repeat: false, intentional_repeat: false, evidence: 'Different views keep each beat readable.', correction: '' },
   reason_codes: [],
 });
 

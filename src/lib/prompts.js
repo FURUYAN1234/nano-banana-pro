@@ -74,7 +74,7 @@ SPEECH BUBBLE TYPE LOCK:
 const MANGA_PAGE_TYPOGRAPHY_LOCK_COMPACT = `TYPE: title EXTRA-BOLD condensed Japanese Gothic. TITLE BAND: plain white, unframed; no box/frame/border/rule/banner. BUBBLES: vertical tategaki in regular manga Mincho, slender black on white, same every panel; never bold Gothic/sans. ${VERTICAL_DIALOGUE_GEOMETRY} Emphasis: bubble shape/composition/punctuation.`;
 
 const MANGA_PAGE_ENVELOPE = `PAGE:A4 ${MANGA_MANUSCRIPT_RATIO_LABEL} (${MANGA_MANUSCRIPT_ASPECT_LABEL}); canvas ${MANGA_MANUSCRIPT_STANDARD.value} or ${MANGA_MANUSCRIPT_LARGE.value}; title6.5%/font5.5%; panels+gutters91.3%, variable heights; footer2.2%, inset0.6%, no clipping.
-PANELS: 4 full-width horizontal strips stacked vertically in ONE column; no 2x2/side-by-side.`;
+PANELS: 4 full-width horizontal strips stacked vertically in ONE column; no 2x2/side-by-side. Give body action/perspective enough panel height; never zoom to portraits to fit equal bands.`;
 const MANGA_FOOTER_EXCLUSIVITY = 'FOOTER ONLY: both exact watermarks once outside panels; no watermark/credit inside panels or on in-scene paper.';
 
 // --- プロンプトテンプレート (prompts.js) ---
@@ -330,10 +330,16 @@ export const getScenarioPrompt = ({
          ${buildManualTopicExclusionPrompt(manualTopic)}` : ''}
 
          【自動会話演出・視線設計（全入力モード必須）】
-         - 各コマで話者・聞き手・リアクション役を決め、会話中は顔・目線・肩・胴体を会話相手へ向ける。全員が読者・画面・カメラ正面を向く記念写真構図は禁止する。
-         - セリフが1人だけでも、相手が同席して反応するコマでは、話者が誰へ話し、聞き手が誰を見返すかを設計する。無言のリアクション役も現在の話者を見る。
+         - 各コマで話者・聞き手・リアクション役を決め、誰が誰へ働きかけ、その受け手が何を見てどう反応し、別の人物の次の動作へどう影響するかを「状況」に書く。全員が読者・画面・カメラ正面を向く記念写真構図は禁止する。
+         - セリフが1人だけでも、無言の人物の視線は現在の話者へ一律に集めない。話者、相手の手元、物語の対象、先に動いた人物など、その瞬間に意識している対象を人物ごとに選ぶ。明示された相互視線・一斉注視・無反応はそのまま守る。
          - 読者、観客、配信カメラへ直接呼びかける演出が物語上明示されている場合だけ、該当する話者のカメラ目線を許可する。
-         - 誰が誰を見るか、横顔・斜め後ろ・肩越し等の向きを、各コマの「状況」にキャラクター名付きで具体的に書く。カメラタグはこの対人視線を壊さないものを選ぶ。
+         - 各人物の顔・目線・肩・胴体の向きと、誰が誰や何を見るかを、各コマの「状況」にキャラクター名付きで具体的に書く。横顔・斜め後ろ・肩越しでも、カメラタグはこの対人視線を壊さないものを選ぶ。
+
+         【連続した時間と群像の演技】
+         - 前のコマの人物の位置、姿勢、手と小道具の状態を次のコマへ引き継ぎ、動作の直前・最中・直後を因果でつなぐ。時間や場所の跳躍、意図的な断絶は台本に明記する。全員を各コマで初期位置へ戻さない。
+         - 複数人が見えるコマでは、出来事に必要な人物を前景・中景・後景と左右の位置関係へ置き、主役と受け手の距離、重なり、身体の向きをCameraから見える形にする。奥行きのためだけに人を移動させず、明示された位置・接触・静止・整列を守る。
+         - 人物ごとに異なる視線と反応の段階、表情、重心、行動の役割を物語の関係から選び、同じ驚き顔・同じ手・同じ身体軸を複製しない。自然な同時反応や意図的な一斉動作は残す。全員に新しい動作を書き足すノルマはなく、画面外や背面の人物に見えない表情を要求しない。
+         - Cameraと「状況」は一体で設計し、人物の働きかけ→受け手の反応→次の人物の判断が読める視線と動線を作る。単なるカメラ名、横並びの顔、抽象的な感情語だけで演技を済ませない。
 
          ${SCENARIO_FACIAL_ACTING_CONTRACT}
          ${SCENARIO_EXPRESSIVE_STAGING_CONTRACT}
@@ -592,8 +598,8 @@ ${styleJson.anti_patterns ? `            - 絶対禁止事項:\n${styleJson.anti
              - 各コマの冒頭に、そのコマの演出に最適な[EMOTION: XXX]タグを**必ず1つ**付与せよ。
              - 選択肢（この中から選べ）:
                - NORMAL: 通常の美麗アニメ作画。日常会話、穏やかなシーン。
-               - CHIBI_GAG: ちびキャラ化。ツッコミ、呆れ、軽いギャグ、恥ずかしさ。等身が2-3頭身に縮む。
-               - GEKIGA: 劇画調リアル。本気の怒り、覚悟、緊張、シリアスな決意。影が濃くなり顔が鋭くなる。
+               - CHIBI_GAG: ちびキャラ化。ツッコミ、呆れ、軽いギャグ、恥ずかしさ。頭身の変形よりカメラ・身体演技・表情を優先。全員一律の縮小にしない。
+               - GEKIGA: 劇画調リアル。本気の怒り、覚悟、緊張、決意。眉・鼻・頬・顎を骨格的な面と力強い描線で描き、顔にも深い墨影と斜線を付ける。年齢や別人化で代用しない。
                - SHOUJO: 少女漫画風キラキラ。感動、喜び、恋愛的ときめき。花びらや星が舞う。
                - BLANK: 白目・魂抜け。物理的な絶望や、頭から魂が抜けるレベルの衝撃に限定。安易な静寂・オチ・沈黙シーンでの乱用は避け、無言の静寂や呆れは NORMAL の「真顔・点目」や CHIBI_GAG でも表現して表情のバリエーションを確保すること。
                - IMPACT: インパクトフレーム。大爆笑、大激怒、驚天動地。集中線で画面が爆発。
@@ -663,25 +669,29 @@ ${styleJson.anti_patterns ? `            - 絶対禁止事項:\n${styleJson.anti
           [1コマ目: 起]
           [EMOTION: XXX]
           [Camera: XXX]
-          状況: (視覚的な状況...)
+          BalloonLayout: (上記の形式のJSON配列、台詞順)
+          状況: (画面上の左右・前後と反応を含む視覚的な状況...)
           キャラ名「短いセリフ。」
 
           [2コマ目: 承]
           [EMOTION: XXX]
           [Camera: XXX]
-          状況: (視覚的な状況...)
+          BalloonLayout: (上記の形式のJSON配列、台詞順)
+          状況: (画面上の左右・前後と反応を含む視覚的な状況...)
           キャラ名「短いセリフ。」
 
           [3コマ目: 転]
           [EMOTION: XXX]
           [Camera: XXX]
-          状況: (視覚的な状況...)
+          BalloonLayout: (上記の形式のJSON配列、台詞順)
+          状況: (画面上の左右・前後と反応を含む視覚的な状況...)
           キャラ名「短いセリフ。」
 
           [4コマ目: 結]
           [EMOTION: XXX]
           [Camera: XXX]
-          状況: (視覚的な状況...)
+          BalloonLayout: (上記の形式のJSON配列、台詞順)
+          状況: (画面上の左右・前後と反応を含む視覚的な状況...)
           キャラ名「短いセリフ。」
 
           シナリオ本文の要件:
@@ -815,7 +825,9 @@ const RICH_PANEL_COMPOSITION_LOCK = `RICH PANEL COMPOSITION / CHARACTER CLARITY 
 - In physical-setting shots retain recognizable environmental shapes, light masses and perspective at lower contrast than the focal target. Depth-of-field blur is allowed away from the focal plane; keep focal faces, hands and key props sharp, with consistent focus at equal distances.
 - Use negative space and selective detail for quiet beats while keeping the physical setting and spatial continuity. Do not replace a setting with a blank backdrop merely because the beat is quiet; preserve explicit scripted abstraction.`;
 
-export const RICH_PANEL_COMPOSITION_LOCK_COMPACT = 'RICH PANEL COMPOSITION / CHARACTER CLARITY LOCK: setting or scripted abstraction; story evidence/actions/reactions clear.';
+export const RICH_PANEL_COMPOSITION_LOCK_COMPACT = 'RICH PANEL COMPOSITION / CHARACTER CLARITY LOCK: physical shots keep perspective and layered foreground, midground, background with selective material detail; lower background contrast without making it blank or washed out. Use motivated key, fill and rim light with visible shadow planes and color depth suited to the beat. Scripted abstract shots may omit scenery; story evidence, acting faces, hands and props stay clear.';
+
+export const ART_STYLE_DIFFERENCE_QA_LOCK = 'ART-STYLE DIFFERENCE QA LOCK: selected recipe overrides default rendering/clean finish: visible planes, linework, shading/material, not only expression/VFX; no numeric quota. Keep Camera/Action/identity/age/wardrobe; never expose a hidden face to show style.';
 
 const SCENE_LETTERING_LOCK = 'SCENE LETTERING: explicit per-panel object text exact/readable; repeat only if scripted. Unspecified posters, signs, packages, menus/book covers keep natural artwork/pictograms/colors/borders/material/layout. Freely render context-appropriate lettering—readable/decorative, short/long, any amount/density. Never suppress, simplify, blank, grey, blur, pixelate, mosaic or censor a surface merely because text is unscripted.';
 
@@ -868,7 +880,7 @@ Use the 360° background image's lighting direction (${bg360Analysis.lighting}),
     : `${isMonochrome ? 'use a few localized solid-black or hatched wedge shadows where fabric overlaps; preserve white lit fabric and garment tone assignments. Do not scatter geometric patterns.' : 'for full-color clothing only, render overlapping, pinched, and intersecting fabric folds with a few crisp wedge-shaped triangular cel-shaded shadow planes. Make a distinct small dark triangular fill at each selected crease junction, not merely a soft fold gradient. Use them as form shadows, not printed patterns or random geometric marks; preserve the outfit, material, and scene lighting.'}`;
   const artStyleQa = preserveReferenceStyle
     ? 'REFERENCE-SHEET STYLE QA LOCK:\n- Compare all four panels to the attached character sheets. Redraw any panel that changes linework, coloring method, shading design, facial construction, eye design, body proportions or degree of stylization.'
-    : isMonochrome ? MONOCHROME_STYLE_QA : `ART-STYLE DIFFERENCE QA LOCK: make each selected style recognizable through its characteristic linework, shading, environmental palette and texture; no numeric change quota. Pose, expression, saturation, glow, or speed lines alone are insufficient. Preserve script/dialogue/identity/wardrobe/key props/layout; environmental palette changes never recolor garments.`;
+    : isMonochrome ? MONOCHROME_STYLE_QA : ART_STYLE_DIFFERENCE_QA_LOCK;
 
   return `OUTPUT: Single image. Draw manga directly.
 
@@ -1082,7 +1094,7 @@ ${panelSections}
 Important constraints:
 ${preserveReferenceStyle ? `REFERENCE-SHEET STYLE QA LOCK:
 - Compare all four panels to the attached character sheets. Redraw any panel that changes linework, coloring method, shading design, facial construction, eye design, body proportions or degree of stylization.` : isMonochrome ? MONOCHROME_STYLE_QA : ''}
-- ${preserveReferenceStyle ? 'Preserve the reference-sheet art style in every panel; emotion tags are acting cues only.' : 'Preserve the selected scenario style and each PANEL STYLE LOCK; do not collapse the page into generic classic anime or a flat template.'}
+- ${preserveReferenceStyle ? 'Preserve the reference-sheet art style in every panel; emotion tags are acting cues only.' : `Preserve the selected scenario style and each PANEL STYLE LOCK; do not collapse the page into generic classic anime or a flat template. ${isMonochrome ? '' : ART_STYLE_DIFFERENCE_QA_LOCK}`}
 - Do NOT merge panels. Keep 4 distinct panels with white gutters between them.
 - ABSOLUTELY NO TEXT OR SFX BETWEEN PANELS. The white gutters separating the panels MUST be completely clean and pure white. Do not draw any labels, narration, or sound effects crossing or sitting inside the panel boundaries.
 - Do NOT write situation/narration explanations as text on the screen. The Visual Action must only be illustrated, except explicit visual scene text requested by the action, such as handwriting, air-writing, signs, labels, printed text, screen text, or board text.

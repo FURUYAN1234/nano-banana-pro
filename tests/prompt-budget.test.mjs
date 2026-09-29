@@ -120,13 +120,17 @@ test('ChatGPT default removes repeated instructions without treating the Web pas
     colorMode: 'color', providerFamily: 'chatgpt', punchlineType: 'Documentary',
     systemVersion: 'test',
   });
-  // Allow the added focal-ink and panel-boundary contract, not duplicate copies.
-  assert.ok(prompt.length < 22500, `unexpected prompt expansion: ${prompt.length}`);
+  // Keep the concrete camera, acting and light cues once without approaching the API ceiling.
+  assert.ok(prompt.length < 18000, `unexpected prompt expansion: ${prompt.length}`);
   assert.equal((prompt.match(/FOCAL READABILITY:/g) || []).length, 1);
   assert.ok(prompt.length <= 32000);
   assert.match(prompt, /Outfit assignment:|role-specific outfit assignments:/);
   assert.match(prompt, /HAND \/ PROP KINEMATICS LOCK/);
   assert.match(prompt, /BALLOON OWNERSHIP:.*preserving/);
+  assert.equal((prompt.match(/SKIN LIGHT:/g) || []).length, 1);
+  assert.match(prompt, /small, soft, modest highlights/);
+  assert.match(prompt, /Explicit wet\/glossy or stylized lighting wins/);
+  assert.match(prompt, /monochrome keeps white-paper rules/);
 });
 
 test('irreducible oversized ChatGPT input fails before returning a truncated prompt', () => {
@@ -175,7 +179,8 @@ test('soft Web target may be exceeded to retain critical content', () => {
   assert.match(prompt, /OBJECT GEOMETRY LOCK/);
   assert.match(prompt, /Text follows actual cover\/spine\/page\/label face axes and perspective/);
   assert.match(prompt, /flat-page text inverted/);
-  assert.match(prompt, /FUNCTIONAL SURFACE PANEL CHECK: (?:reader\/camera side\/front-back\/text axes|target\/side\/axes)/);
+  assert.match(prompt, /FUNCTIONAL SURFACE ORIENTATION LOCK:/);
+  assert.match(prompt, /Front=target; opposite=back/);
   const participants = [['ミク', 'アカリ', 'リン'], ['サエコ', 'ヒカリ', 'ミク'], ['リン', 'アカリ', 'ミク'], ['アカリ', 'リン', 'サエコ']];
   const eyeLines = prompt.match(/^EYE-LINE LOCK:[^\n]*/gm) || [];
   assert.equal(eyeLines.length, 4);

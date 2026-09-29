@@ -157,6 +157,11 @@ export const isDocumentaryEnding = (type) => getEndingModePolicy(type).documenta
 
 export const isSeriousEnding = (type) => getEndingModePolicy(type).endingTone === 'serious';
 
+// Only a selected ending mandates a tone; other stories choose from their content.
+export const resolveScenarioComedyTone = (type) =>
+  type === 'Surreal' || type === 'PsychoHorror' ? 'SurrealQuiet'
+    : type === 'Explosion' ? 'HighTension' : 'Auto';
+
 const GENERAL_SERIOUS_PROMPT_CHECKS = Object.freeze([
   Object.freeze({ issue: 'comedy-intent', pattern: /^\s*-?\s*COMEDY INTENT:/im }),
   Object.freeze({ issue: 'chibi-style', pattern: /^\s*(?:MONOCHROME )?PANEL STYLE LOCK:\s*CHIBI(?:\\?_)?GAG\b/im }),

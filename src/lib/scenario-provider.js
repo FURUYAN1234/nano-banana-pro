@@ -35,7 +35,7 @@ import {
   formatMangaScenarioValidationIssue,
   validateMangaScenario
 } from './scenario-validation';
-import { isDocumentaryEnding, resolveGeneratedEnding } from './ending-mode-policy';
+import { isDocumentaryEnding, resolveGeneratedEnding, resolveScenarioComedyTone } from './ending-mode-policy';
 import { classifyTopicTreatment, resolveAutoEndingType } from './serious-topic-policy';
 import {
   assertDocumentarySourceFidelity,
@@ -369,8 +369,6 @@ export async function generateScenario({
   const backgroundLocation = bg360Image && bg360Analysis && bg360Enabled
     ? bg360Analysis.location
     : '';
-  const comedyToneOptions = ['HighTension', 'SurrealQuiet', 'IntellectualBlack'];
-  const activeComedyTone = comedyToneOptions[Math.floor(Math.random() * comedyToneOptions.length)];
   const locationPlan = createDynamicLocationPlan({
     customLocation,
     backgroundLocation,
@@ -396,7 +394,8 @@ export async function generateScenario({
     onProgress(`題材判定: ${treatment.level} → ${treatment.tone === 'serious' ? 'シリアス' : 'ギャグ'}系で構成します。`);
   }
 
-  onProgress(`📝 演出設計: [オチ] ${activePunchlineType} / [トーン] ${activeComedyTone}`);
+  const activeComedyTone = resolveScenarioComedyTone(activePunchlineType);
+  onProgress(`📝 演出設計: [オチ] ${activePunchlineType} / [トーン] ${activeComedyTone === 'Auto' ? '題材・明示演出に合わせて設計' : activeComedyTone}`);
 
   if (styleJson) {
     onProgress(`📝 [作風適用] 外部JSONの作風『${styleJson.style_name}』をシナリオ構成に注入します...`);

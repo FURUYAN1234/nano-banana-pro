@@ -73,12 +73,54 @@ const buildGeminiPrompt = () => buildMangaPrompt({
   systemVersion: 'v4.8.2-test'
 });
 
+test('head volume stays connected through rear views and compression without suppressing natural turns', () => {
+  for (const providerFamily of ['chatgpt', 'gemini']) for (const extra of ['', ' identity detail'.repeat(800)]) {
+    const prompt = buildMangaPrompt({ scenario: SCENARIO, castList: CAST_LIST + extra,
+      colorMode: 'color', providerFamily, punchlineType: 'Auto', systemVersion: 'test' });
+    assert.match(prompt, /skull, face edge, ear and eyewear share one head volume/);
+    assert.match(prompt, /keep scripted head turn and occlusion/);
+    assert.match(prompt, /one anatomical ear per side/i);
+    assert.match(prompt, /occlude far ear/i);
+    assert.doesNotMatch(prompt, /always hide the face|never show a profile/i);
+  }
+});
+
+test('compressed four-panel prompts retain concrete camera, acting, expression and lighting cues', () => {
+  const cameraScenario = SCENARIO
+    .replace('[1コマ目: 起]', '[1コマ目: 起]\n[Camera: high overhead wide view]')
+    .replace('[2コマ目: 承]', '[2コマ目: 承]\n[Camera: low upward fisheye view]')
+    .replace('[3コマ目: 転]', '[3コマ目: 転]\n[Camera: rear three-quarter telephoto view]');
+  for (const providerFamily of ['chatgpt']) {
+    const prompt = buildMangaPrompt({
+      scenario: cameraScenario,
+      castList: CAST_LIST + ' identity detail'.repeat(700),
+      colorMode: 'color', providerFamily, punchlineType: 'Auto', systemVersion: 'test'
+    });
+    assert.match(prompt, /overhead[^\n]*upper planes|upper planes[^\n]*overhead/i);
+    assert.match(prompt, /low[^\n]*undersides|undersides[^\n]*low/i);
+    assert.match(prompt, /telephoto[^\n]*compress|compress[^\n]*telephoto/i);
+    assert.match(prompt, /fisheye[^\n]*edge distortion|edge distortion[^\n]*fisheye/i);
+    assert.match(prompt, /body axis[^\n]*expression|expression[^\n]*body axis/i);
+    assert.match(prompt, /motivated key[^\n]*fill[^\n]*rim/i);
+    assert.match(prompt, /foreground[^\n]*midground[^\n]*background/i);
+    assert.match(prompt, /without making it blank or washed out/i);
+    assert.match(prompt, /high overhead wide view/);
+    assert.match(prompt, /low upward fisheye view/);
+    assert.match(prompt, /rear three-quarter telephoto view/);
+    if (providerFamily === 'chatgpt') assert.ok(prompt.length <= 32000);
+  }
+});
+
 test('generic wardrobe component continuity survives both providers, media, styles and long compaction', () => {
   for (const providerFamily of ['chatgpt', 'gemini']) for (const colorMode of ['color', 'monochrome']) {
-    for (const punchlineType of ['Auto', 'SeriousDocumentary']) for (const extra of ['', ' identity detail'.repeat(900)]) {
-      const prompt = buildMangaPrompt({ scenario: SCENARIO, castList: CAST_LIST + extra, colorMode, providerFamily, punchlineType, systemVersion: 'test' });
+    for (const punchlineType of ['Auto', 'SeriousDocumentary']) for (const extra of ['', ' identity detail'.repeat(800)]) {
+      const scenario = SCENARIO.replace(/(\[EMOTION:[^\]]+\])/g, '$1\n[Camera: eye-level medium shot]');
+      const prompt = buildMangaPrompt({ scenario, castList: CAST_LIST + extra, colorMode, providerFamily, punchlineType, systemVersion: 'test' });
       assert.match(prompt, /WARDROBE COMPONENT LOCK:/);
       assert.match(prompt, /有無\/数\/形\/取付位置/);
+      assert.match(prompt, /内側の服/);
+      assert.match(prompt, /身体基準の左右/);
+      assert.match(prompt, /カメラ\/ポーズ/);
       assert.match(prompt, /変更は台本の着脱等のみ/);
       assert.doesNotMatch(prompt, /OUTFIT CONSISTENCY:[^\n]*NO changes\./);
       assert.match(prompt, /遮蔽\/画面外\/短縮/);
@@ -90,8 +132,10 @@ test('generic wardrobe component continuity survives both providers, media, styl
 test('long wardrobe compaction retains the canonical outfit and explicit per-panel changes', () => {
   const outfit = 'Heroは青いシャツ（長袖）、Friendは白い上着、Analystは緑の服';
   const scenario = SCENARIO.replace('Outfit: casual clothes', `Outfit: ${outfit}`)
+    // Isolate wardrobe compaction from randomized fallback camera selection.
+    .replace(/\[EMOTION: [^\]]+\]/g, '$&\n[Camera: eye-level medium shot]')
     .replace('Action: Friend presents', 'Action: Friend takes off the outer jacket and presents');
-  const prompt = buildMangaPrompt({ scenario, castList: CAST_LIST + ' identity detail'.repeat(1100),
+  const prompt = buildMangaPrompt({ scenario, castList: CAST_LIST + ' identity detail'.repeat(1000),
     colorMode: 'color', providerFamily: 'chatgpt', punchlineType: 'Auto', systemVersion: 'test' });
   assert.ok(prompt.includes(`Follow role-specific outfit assignments: ${outfit};`));
   assert.ok(prompt.includes('Friend takes off the outer jacket'));
@@ -113,7 +157,7 @@ test('both provider prompts preserve physical settings while allowing density co
     assert.doesNotMatch(prompt, /one fixed environmental anchor plus at least two|1 fixed anchor \+ 2 physical setting cues/i);
     assert.match(prompt, /ABSTRACT BEAT:.*scripted.*(?:omission|omit)|setting or scripted abstraction/i);
     assert.match(prompt, /never remove story evidence|props stay/i);
-    assert.match(prompt, /face, eye direction, silhouette, hands, and key action|story evidence\/actions\/reactions clear/i);
+    assert.match(prompt, /face, eye direction, silhouette, hands, and key action|story evidence, acting faces, hands and props stay clear/i);
     assert.match(prompt, /environmental shapes[^\n]*lower contrast than the focal target|real shots (?:retain setting\/depth;|keep setting\/depth,) far blur/i);
     assert.match(prompt, /quiet beats[^\n]*(?:reduce|lower)|peak\/quiet beat, negative space\/density|negative space; clear story\/joke, peak\/quiet, density/i);
   }
@@ -147,7 +191,7 @@ test('both provider prompts lock each named character wardrobe colors across pan
       'wardrobe continuity must use positive keep-language so image safety does not misread a negated undressing instruction'
     );
     assert.doesNotMatch(prompt, /PANEL STYLE LOCK:[^\n]*linework, palette, shading/i);
-    assert.match(prompt, /PANEL STYLE LOCK:[^\n]*(?:preserve identity and canonical wardrobe|apply global style QA)/i);
+    assert.match(prompt, /PANEL STYLE LOCK:[^\n]*(?:preserve identity and canonical wardrobe|apply global style QA|;\nStyle:)/i);
   }
 });
 
@@ -167,7 +211,7 @@ test('ChatGPT Web prompt has generic quality locks for dialogue, bubbles, charac
   assert.match(prompt, /PANEL STYLE LOCK: GEKIGA/i);
   assert.match(prompt, /preserve script\/cast\/(?:dialogue\/)?camera\/layout/i);
   assert.match(prompt, /keep bubble space|FINISH: bubbles, anatomy/i);
-  assert.match(prompt, /cast\/background light and color|setting or scripted abstraction/i);
+  assert.match(prompt, /cast\/background light and color|motivated key, fill and rim light/i);
   assert.match(prompt, /\banatomy\b/i);
   assert.match(prompt, /setting depth|retain setting\/depth|keep setting\/depth/i);
   assert.match(prompt, /CLOTHING FOLD SHADOW ASSIST|FOLD SHADOWS:/);

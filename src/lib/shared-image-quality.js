@@ -6,7 +6,7 @@ export const FUNCTIONAL_SURFACE_PANEL_CHECK = 'FUNCTIONAL SURFACE PANEL CHECK: s
 
 export const FUNCTIONAL_SURFACE_PROJECTION_RULE = 'VIEWPOINT: Opposite the reader, show the upright device/page back; flat-page text appears upside-down or rotated, never canvas-upright for legibility. Only when Camera leaves position unspecified, use the actual reader\'s rear head/shoulder foreground to show the front; not the holder\'s shoulder if someone else reads. Preserve explicit camera and dynamic height/tilt/foreshortening. Solve front/back and text projection from that view; do not flatten the shot into a standard shoulder view.';
 
-export const BODY_ACTING_BASELINE = `BODY ACTING BASELINE: A reference-sheet pose is identity evidence, not a recurring action or personality signature. Preserve every explicitly requested action. Allow story-motivated pointing, reaching, surface impact, full-body recoil, leaps and strong foreshortening. Vary their purpose, silhouette and amplitude instead of banning a gesture family. Resolve action phase, support or airborne trajectory, center of gravity, left/right hand roles, and contact target. Keep the face, important hands, and story prop readable in a clean asymmetrical silhouette.`;
+export const BODY_ACTING_BASELINE = `BODY ACTING BASELINE: A reference-sheet pose is identity evidence, not a recurring action or personality signature. Preserve every explicitly requested action. Allow story-motivated pointing, reaching, surface impact, full-body recoil, leaps and strong foreshortening. Vary their purpose, silhouette and amplitude instead of banning a gesture family. Resolve action phase, support or airborne trajectory, center of gravity, left/right hand roles, and contact target. Keep visible acting and story cues readable within the scripted view.`;
 
 export const BODY_ACTING_BASELINE_COMPACT = 'BODY ACTING BASELINE: allow pointing/reaching/impact/full-body exaggeration; vary silhouette; action phase/support/contact.';
 
@@ -18,9 +18,13 @@ export const EXPRESSIVE_DIRECTION = 'EXPRESSIVE DIRECTION: beautiful, clear, liv
 
 // Keep the same short contract at every compression tier and in single images.
 // These are generation goals, not additional paid-regeneration predicates.
-export const FOCAL_READABILITY = 'FOCAL READABILITY: strongest G-pen-like contour with heavier pressure-taper; decisive thick-to-hairline strokes, bold outer silhouette/hair clumps/jaw/shoulder and overlap accents, fine eyes/mouth/fingers. Focal face/hands and story-critical reactions, props and lettering stay sharp. Never uniform thick outlines or black-clogged features. Support/BG thinner, lower contrast; if blur still merges focal, lighten/desaturate BG and strengthen focal G-pen. Depth-correct defocus, no glow over ink. Preserve identity/light/setting/mono; guide reader flow with gaze, silhouettes, diagonals and negative space.';
+export const FOCAL_READABILITY = 'FOCAL READABILITY: readability never changes shot scale or elevation, camera side or head turn; visible features only. Rear acting: head pitch, shoulder tension, weight; keep scripted profiles/turns. Focal G-pen: strongest pressure-tapered thick-to-hairline strokes, bold outer silhouette/hair/jaw/shoulder and overlap accents, fine eyes/mouth/fingers. Never uniform thick outlines or black-clogged features. Story-critical reactions/visible props/lettering stay sharp. Support/BG thinner, lower contrast; local light/dark value and warm/cool color planes, motivated edge light and clear gaps at faces/hands. If depth-of-field blur still merges focal, lighten/desaturate BG or deepen behind light silhouettes; strengthen focal G-pen. Keep setting texture/shadow depth, no glow over ink; identity/light/mono and gaze/diagonal/negative-space flow.';
 
-export const SHARED_IMAGE_QUALITY_CONTRACT_COMPACT = 'SHARED IMAGE QUALITY CONTRACT: one primary focal subject; keep anatomy/props; rear head has no invented face.';
+export const HEAD_VOLUME_LOCK = 'skull, face edge, ear and eyewear share one head volume; keep scripted head turn and occlusion. One anatomical ear per side; occlude far ear. No stretched/stacked skulls; jaw/neck align. Rear head has no invented face; allow profiles/stylization/foreshortening. Rigid headwear shares skull rotation: view-correct front/back/edge; explicit two-sided designs allowed.';
+
+export const SHARED_IMAGE_QUALITY_CONTRACT_COMPACT = `SHARED IMAGE QUALITY CONTRACT: one primary focal subject; keep anatomy/props; ${HEAD_VOLUME_LOCK}`;
+
+export const SKIN_LIGHTING = 'SKIN LIGHT: colored facial skin keeps its base hue with small, soft, modest highlights; no chalk-white nose/cheek blobs. Preserve key/fill/rim, shadow depth and eye/hair glints. Explicit wet/glossy or stylized lighting wins; monochrome keeps white-paper rules.';
 
 export const FOCAL_SUBJECT_SEPARATION_FALLBACK = 'FOCAL SUBJECT SEPARATION FALLBACK: If depth-of-field blur still leaves a focal person merged into the background, further lighten and desaturate background colors and strengthen that person\'s G-pen contour. Preserve requested lighting, setting evidence, and monochrome tone rules.';
 
@@ -33,7 +37,7 @@ export const WARDROBE_ENVIRONMENT_CONTRAST_LOCK = `WARDROBE / ENVIRONMENT CONTRA
 export const WARDROBE_ENVIRONMENT_CONTRAST_LOCK_COMPACT = 'WARDROBE/ENVIRONMENT CONTRAST: explicit outfit overrides setting era/culture; preserve intentional mismatch; never period-substitute. No outfit: infer from setting.';
 
 // コマ間の衣装構成。特定の人物・衣服に依存せず、単一場面には適用しない。
-export const WARDROBE_COMPONENT_LOCK = 'WARDROBE COMPONENT LOCK: 服・付属品の有無/数/形/取付位置を人物ごとに一度確定し全コマ共有。未指定細部も同一設計。変更は台本の着脱等のみ。遮蔽/画面外/短縮は欠落でなく再露出時は同じ構成。画風/光/デフォルメで追加・省略・他人へ移動しない。';
+export const WARDROBE_COMPONENT_LOCK = 'WARDROBE COMPONENT LOCK: 服・付属品の有無/数/形/取付位置、上着と内側の服、肩掛けの身体基準の左右を人物別に固定。未指定も同じ。カメラ/ポーズ・画風/光で身体側や服を変えない。変更は台本の着脱等のみ。遮蔽/画面外/短縮後の再露出も同じ構成。他人に移さない。演技・表情・構図は自由。';
 
 export const LIMB_OWNERSHIP_CHECK = 'LIMB OWNERSHIP CHECK (internal; never print): For each person in every panel, account for left/right arms, hands, legs and feet as visible, naturally occluded or outside the frame. Trace each visible hand via wrist/elbow to its own shoulder, and each foot via ankle/knee to its own hip; hidden segments must connect plausibly. No ownerless, extra, fused, detached or inexplicably missing limbs; no stray hand/foot emerging from furniture or another body. Preserve scripted anatomy, pose, contact, Camera/crop and foreshortening; do not expose naturally hidden limbs or force full-body framing. Before finishing, correct unclear ownership/connections without changing the action or composition.';
 
@@ -47,8 +51,9 @@ export const SHARED_IMAGE_QUALITY_CONTRACT = `
 - ${FOCAL_SUBJECT_SEPARATION_FALLBACK}
 - ${FOCAL_READABILITY}
 - Keep lighting and color coherent between cast and setting: use a motivated key light, fill, and rim or equivalent emotional lighting, with the cast clear against a softer, lower-contrast background.
+- ${SKIN_LIGHTING}
 - Keep coherent anatomy and joint direction at the neck, shoulder, elbow, wrist, hip, knee, and ankle. Use exactly the limbs implied by each visible character; preserve natural prop ownership, grip, contact, support, and left/right orientation.
-- When showing the back of the head, render skull, hair and only the naturally visible ear/cheek edge. Unless the camera is genuinely rear three-quarter and the face naturally turns into view, do not invent eyes, nose, or mouth beside it or twist the neck beyond anatomical range.
+- ${HEAD_VOLUME_LOCK}
 - ${BODY_ACTING_BASELINE}
 - ${EXPRESSIVE_DIRECTION}
 - ${FUNCTIONAL_SURFACE_ORIENTATION_LOCK}

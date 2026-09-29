@@ -70,6 +70,18 @@ test('preserves terminal title punctuation in ChatGPT prompt title', () => {
   );
 });
 
+test('plain or Markdown scenario title labels are metadata, never printed in the manga title', () => {
+  for (const heading of ['タイトル: 書店の勘違い', 'タイトル：書店の勘違い', '## タイトル: 書店の勘違い', 'Title: 書店の勘違い']) {
+    const prompt = buildMangaPrompt({
+      scenario: `${heading}\nLocation: 書店\n[1コマ目: 起]\nアカリ「見つけた！」\n[2コマ目: 承]\nヒカリ「何を？」\n[3コマ目: 転]\nサエコ「本よ。」\n[4コマ目: 結]\nアカリ「やった！」`,
+      castList: CAST_LIST, colorMode: 'color', providerFamily: 'chatgpt', systemVersion: 'v6.6.8',
+    });
+    assert.match(prompt, /Top title EXACTLY "書店の勘違い"/);
+    assert.doesNotMatch(prompt, /Top title EXACTLY "(?:タイトル|Title)[:：]/);
+    assert.match(prompt, /- Title: 書店の勘違い/);
+  }
+});
+
 test('preserves terminal title punctuation in Gemini prompt title', () => {
   const prompt = buildMangaPrompt({
     scenario: SCENARIO_WITH_PUNCTUATED_TITLE,

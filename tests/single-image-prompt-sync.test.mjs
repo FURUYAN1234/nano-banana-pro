@@ -55,10 +55,12 @@ test('single-image copy prompt applies the current shared image-quality contract
   assert.match(prompt, /BODY ACTING BASELINE:.*allow.*pointing.*reaching.*impact/i);
   assert.match(prompt, /action phase.*support or airborne trajectory.*contact target/i);
   assert.match(prompt, /one primary focal subject/i);
-  assert.match(prompt, /strongest G-pen-like contour/i);
+  assert.match(prompt, /strongest G-pen-like contour|Focal G-pen: strongest pressure-tapered/i);
   assert.match(prompt, /background.*lighter.*lower-contrast/i);
   assert.match(prompt, /depth-of-field blur.*merged.*lighten.*desaturate.*background.*strengthen.*G-pen/i);
   assert.match(prompt, /back of the head.*do not invent eyes, nose, or mouth|rear head.*no invented face/i);
+  assert.match(prompt, /skull, face edge, ear and eyewear share one head volume/);
+  assert.match(prompt, /keep scripted head turn and occlusion/);
   assert.match(prompt, /shoulder, elbow, wrist, hip, knee, and ankle/i);
   assert.match(prompt, /explicit outfit overrides setting era\/culture/i);
   assert.match(prompt, /preserve intentional mismatch/i);
@@ -90,11 +92,12 @@ test('single-image copy prompt keeps one cinematic router within a 10k Web-copy 
   assert.match(prompt, /Other requested printed text follows its physical surface and specified writing direction/);
 });
 
-test('quality upgrades require real verification of both image-output paths', () => {
+test('quality upgrades require route-specific evidence without an unwanted single-image API run', () => {
   const standards = readFileSync(new URL('../docs/project_standards.md', import.meta.url), 'utf8');
 
   assert.match(standards, /four-panel API image generation/i);
-  assert.match(standards, /single-image copy-prompt generation/i);
+  assert.match(standards, /single-image Web paste route, inspect the exact text produced by the copy button/i);
+  assert.match(standards, /API image generation is not required for this route/i);
   assert.match(standards, /品質改善を完了と報告する前/);
 });
 
@@ -132,7 +135,7 @@ Hero「行こう。」`;
     assert.match(prompt, /reference-sheet pose is identity evidence, not a recurring action/i);
     assert.match(prompt, /BODY ACTING BASELINE:.*allow.*pointing.*reaching.*impact/i);
     assert.match(prompt, /one primary focal subject/i);
-    assert.match(prompt, /strongest G-pen-like contour/i);
+    assert.match(prompt, /strongest G-pen-like contour|Focal G-pen: strongest pressure-tapered/i);
     assert.match(prompt, /back of the head.*do not invent eyes, nose, or mouth|rear head.*no invented face/i);
   }
 

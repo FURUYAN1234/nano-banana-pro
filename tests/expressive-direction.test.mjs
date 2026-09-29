@@ -26,6 +26,36 @@ before(async () => {
 });
 after(async () => { await server?.close(); });
 
+test('scenario planning and enhancement prioritize camera and acting over automatic chibi', () => {
+  const planning = getScenarioPrompt({ inputMode: 'manual', manualTopic: '二人の相談', targetDate: '2026-09-29', punchlineType: 'Auto', comedyTone: 'standard', customLocation: '', customOutfit: '', newsContext: '', ragReactions: '' });
+  const enhancement = buildScenarioEnhancementPrompt({ scenario, selectedCategories: ['camera', 'body', 'effects'] });
+  for (const prompt of [planning, enhancement]) {
+    assert.match(prompt, /自動のちび化はカメラ・身体演技・表情より下位/);
+    assert.match(prompt, /ユーザーの明示的な頭身・画風指定は保持/);
+  }
+});
+
+test('planning and enhancement keep back-view acting without inventing a visible face', () => {
+  const planning = getScenarioPrompt({ inputMode: 'manual', manualTopic: '二人の相談', targetDate: '2026-09-29', punchlineType: 'Auto', comedyTone: 'standard', customLocation: '', customOutfit: '', newsContext: '', ragReactions: '' });
+  for (const prompt of [planning, buildScenarioEnhancementPrompt({ scenario, selectedCategories: ['camera', 'body'] })]) {
+    assert.match(prompt, /後頭部.*肩.*重心/);
+    assert.match(prompt, /横顔.*振り向き.*追加しない/);
+    assert.match(prompt, /明示された振り向き.*保持/);
+  }
+});
+
+test('both image paths and single-image copy keep visibility subordinate to the scripted view', () => {
+  for (const prompt of [build('chatgpt'), build('gemini'), singleImagePrompt.buildSingleImageEmotionalPrompt()]) {
+    assert.match(prompt, /readability never changes shot scale or elevation, camera side or head turn/);
+    assert.match(prompt, /visible features only/);
+    assert.match(prompt, /rear acting.*head.*shoulder.*weight/i);
+    assert.match(prompt, /keep scripted profiles\/turns/);
+    assert.match(prompt, /Rigid headwear shares skull rotation/);
+    assert.match(prompt, /view-correct front\/back\/edge/);
+    assert.match(prompt, /explicit two-sided designs allowed/);
+  }
+});
+
 test('focal ink, sharp story cues and actual exaggerated acting survive every output route', () => {
   const outputs = [singleImagePrompt.buildSingleImageEmotionalPrompt()];
   for (const providerFamily of ['chatgpt', 'gemini']) {
@@ -43,6 +73,8 @@ test('focal ink, sharp story cues and actual exaggerated acting survive every ou
     assert.match(prompt, /Never uniform thick outlines or black-clogged features/);
     assert.match(prompt, /story-critical reactions.*(?:sharp|crisp)/i);
     assert.match(prompt, /(?:pale|lighten).*desaturat/i);
+    assert.match(prompt, /local light\/dark value and warm\/cool color planes/);
+    assert.match(prompt, /clear gaps at faces\/hands/);
     assert.match(prompt, /speed lines.*(?:substitute|replace)|(?:substitute|replace).*speed lines/i);
     assert.match(prompt, /actual.*(?:projection|pose)|(?:projection|pose).*actual/i);
     assert.match(prompt, /explicit quiet/);
@@ -98,7 +130,7 @@ test('camera is a protected projection, not movable for face or screen legibilit
   const low = getPanelShotExecution('floor-level low angle, full body');
   assert.match(low, /horizon below.*face/);
   assert.match(low, /upward convergence/);
-  assert.match(low, /preserve the scripted proportions/);
+  assert.match(low, /preserve (?:the scripted proportions|scripted height\/pitch\/proportions)/);
   assert.doesNotMatch(low, /chibi too/);
   assert.match(getPanelShotExecution('telephoto close-up'), /overlapping depth planes.*similar scale/);
 });
@@ -121,7 +153,7 @@ test('natural Japanese camera height produces projection cues, not just enlarged
     const cue = getPanelShotExecution(camera);
     assert.match(cue, /below.*face|look up/);
     assert.match(cue, /underside|lower surfaces/);
-    assert.match(cue, /eye.level/);
+    assert.match(cue, /not eye.level|not frontal faces on a tilted background/);
   }
   assert.match(getPanelShotExecution('天板を浅く見下ろす近めの対面ショット'), /look down.*head\/shoulder tops/);
   const highPosition = getPanelShotExecution('高い位置から会議室右奥へ引いたワイドショット');
@@ -174,7 +206,10 @@ test('zoom framing and telephoto compression are distinct observable requirement
     assert.doesNotMatch(cue, /compressed depth/);
   }
   for (const camera of ['ズームアウトの引き', 'Epic Wide']) {
-    assert.match(getPanelShotExecution(camera), /smaller.*(?:subject|figure)|subject.*smaller/);
+    const cue = getPanelShotExecution(camera);
+    assert.match(cue, /wide framing: body extent and continuous setting/);
+    assert.match(cue, /foreground may stay large, receding actors smaller/);
+    assert.match(cue, /Explicit scale\/crop wins; no uniform shrinking/);
   }
   for (const camera of ['望遠圧縮', 'telephoto close-up', 'long-lens shot']) {
     assert.match(getPanelShotExecution(camera), /distant camera.*compressed depth/);
