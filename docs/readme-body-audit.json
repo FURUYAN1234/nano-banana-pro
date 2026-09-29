@@ -1,7 +1,7 @@
 {
   "readmeSha256": "e835bad75abbdbe01268b7938e8d9920ea398c27e19fa00b499ff8d203ed8855",
   "sourceTree": "b7a3f53c396d9c11bcdf0ceadd6b1069b4251bcc",
-  "publicTree": "bf3737dc1aae117d27123b00597c0c23c00e4506",
+  "publicTree": "21f37acc8b52595cad7c452db10cd49af30e3b62",
   "packageSha256": "77b9f5a7ddc2eaa902b0a57ee71bba2b34f7debce6468fcdbcb6cdfb33933b39",
   "releaseAssetSha256": "046b655cb0536defaffb48055f0dede324b6d818e2916510bd4acea577295b5f",
   "reviewedSections": [
@@ -18,5 +18,5 @@
     "📋 ChangeLog",
     "License / ライセンス"
   ],
-  "findings": "README本文の全12節を現行実装・公開導線に照合。長文Web貼付の説明から単発検証の記録とボタン間隔のピクセル値を除き、分割貼付・TXT添付・共通上限の利用手順は保持。ComfyUIの個別ノード設定文は本文に残っていない。カメラ・演技、衣装／小物／頭部の連続性、話者と吹き出し、進捗と再検査の説明を現行コードと照合し、画像品質を保証しない制約も保持。OpenAI公式資料で価格と32,000文字上限を確認。正本とH3配布のv6.6.9表示を同期し、変更履歴は実際のリリース版として記載。余分な「未公開」履歴は追加していない。"
+  "findings": "README本文の全12節を現行実装・公開導線に照合。長文Web貼付の説明から単発検証の記録とボタン間隔のピクセル値を除き、分割貼付・TXT添付・共通上限の利用手順は保持。ComfyUIの個別ノード設定文は本文に残っていない。カメラ・演技、衣装／小物／頭部の連続性、話者と吹き出し、進捗と再検査の説明を現行コードと照合し、画像品質を保証しない制約も保持。OpenAI公式資料で価格と32,000文字上限を確認。正本とH3配布のv6.6.9表示を同期し、変更履歴は実際のリリース版として記載。余分な「未公開」履歴は追加していない。 Release build regenerated both workflow diagrams with the current v6.6.9 label; their audited public-tree hashes now match the candidate."
 }
