@@ -1,8 +1,8 @@
 {
-  "readmeSha256": "35020bd821912685b0f2607fbafe6ea99043ac0915978a1703bef0ddd40e46e4",
-  "sourceTree": "5cf9459eba91cb128379de17ec2599d2af78721c",
+  "readmeSha256": "74ad1ded47cbef2d51c80124959e9753efa7806f004fbae44d9b5d2a86f9d9f2",
+  "sourceTree": "6c8eceaf446fb6d3acdc1d14158890e035b1b712",
   "publicTree": "5e2e54bdf02811427439689f7870ae54b1291e0d",
-  "packageSha256": "a49dc84d8f208db34e4c47f1f72362193b4156b23380932506f4c4d48a559788",
+  "packageSha256": "76bfc51d0a5b6835260277f42d97f96c52439641c4be9d3b8730aca84c913c74",
   "releaseAssetSha256": "046b655cb0536defaffb48055f0dede324b6d818e2916510bd4acea577295b5f",
   "reviewedSections": [
     "AI Manga Creative Suite / AIまんが制作エコシステム",
@@ -18,5 +18,5 @@
     "📋 ChangeLog",
     "License / ライセンス"
   ],
-  "findings": "README本文の全12節をv6.7.1候補の実装、現行UI、package、配布契約、FourPanel資産と公開リンクへ照合。STEP2の32,768/8,192上限分離と未完了判定、原因別エラー、OpenAI/Gemini共通の追加画像修正、直近10件履歴、31,389文字入力上限、A4比率の表示前判定・正比率通過・ずれだけ自動補正をソースと回帰へ同期した。H3 JSON/ZIP識別子、中間配布制約、ライセンス、秘密情報境界、開発手順、FAQ、v6.7.1資産URL、最新15件の履歴を確認。実API検証はOpenAI Web Search、Gemini Grounding、両プロバイダー画像修正を区別し、Gemini生成画像の台詞・構図品質は全面合格と記載していない。"
+  "findings": "v6.7.2の本文12節を確認。エコシステム、フロー図、機能、Quick start、API経路、保護策、H3配布、ライセンス・秘密情報、開発、FAQ、履歴、Licenseの各説明を確認し、変更のないソース・public・配布ZIPについてはv6.7.1の検証を差分とハッシュで照合して再利用した。今回変更した新規生成・追加修正共通の配置結果表示と原因別エラーは実装・回帰テスト・現在の両API表示で確認。OpenAI 2240×3168の再処理なし表示とGemini 848×1200への補正を確認し、本文のA4説明と一致する。吹き出し等の品質警告は残り、FAQの結果保証なし・目視確認必要を維持。旧版を指していたZIPリンク2箇所をv6.7.2へ同期し、FAQと同じアセットを案内。モデル経路・単価の既存日付・STEP1安全判定の限界を全経路成功と誇張しない。公開URLのv6.7.2反映は正式トランザクション後の別検証とする。"
 }
