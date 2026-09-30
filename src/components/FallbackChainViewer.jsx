@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { FALLBACK_CHAINS, FALLBACK_CHAIN_HISTORY } from '../lib/fallback-chain-history';
+import { getFallbackChains, FALLBACK_CHAIN_HISTORY } from '../lib/fallback-chain-history';
 
-export default function FallbackChainViewer({ isOpen, onClose }) {
+export default function FallbackChainViewer({ isOpen, onClose, scenarioModelId }) {
   const [copied, setCopied] = useState(false);
   const contentRef = useRef(null);
 
@@ -24,7 +24,7 @@ export default function FallbackChainViewer({ isOpen, onClose }) {
   const steps = ['STEP 1', 'STEP 2', 'STEP 3', 'STEP 4'];
   const groupedByStep = {};
   for (const step of steps) {
-    groupedByStep[step] = FALLBACK_CHAINS.filter(c => c.step === step);
+    groupedByStep[step] = getFallbackChains(scenarioModelId).filter(c => c.step === step);
   }
 
   // 全内容を1つのテキストにまとめる（現在の構成 + 更新履歴）
@@ -41,9 +41,9 @@ export default function FallbackChainViewer({ isOpen, onClose }) {
       if (chains.length === 0) continue;
       const first = chains[0];
       text += `\n--- ${step}: ${first.label} ---\n`;
-      text += `${first.description}\n`;
       for (const chain of chains) {
         text += `\n  [${chain.provider}] (${chain.sourceFile})\n`;
+        text += `  ${chain.description}\n`;
         chain.models.forEach((m, i) => {
           text += `    ${i + 1}. ${m.id} [${m.role}] - ${m.note}\n`;
         });

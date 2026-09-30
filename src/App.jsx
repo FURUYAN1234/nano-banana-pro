@@ -312,6 +312,7 @@ function App() {
       >
         {/* === ヘッダー領域 === */}
         <SystemHeader
+          scenarioModelId={scenarioModelId}
           SYSTEM_VERSION={SYSTEM_VERSION}
           apiKey={apiKeyForUnlockedUi}
           selectedEngine={selectedEngine}

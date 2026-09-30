@@ -5,6 +5,7 @@ import { getEffectiveEngine } from '../lib/engine-state';
 
 export default function SystemHeader({
   SYSTEM_VERSION,
+  scenarioModelId,
   apiKey,
   selectedEngine,
   enableOpenAIApi,
@@ -103,6 +104,7 @@ export default function SystemHeader({
         </div>
       </div>
       <FallbackChainViewer
+        scenarioModelId={scenarioModelId}
         isOpen={showFallbackChain}
         onClose={() => setShowFallbackChain(false)}
       />

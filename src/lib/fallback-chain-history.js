@@ -7,6 +7,8 @@
  */
 
 import {
+  DEFAULT_OPENAI_SCENARIO_MODEL_ID,
+  getOpenAIScenarioModelRoute,
   OPENAI_TEXT_MODEL_IDS,
   OPENAI_SCENARIO_TEXT_MODEL_IDS,
   OPENAI_VISION_MODEL_IDS,
@@ -24,6 +26,7 @@ import {
 } from './openai-image-settings.js';
 
 const OPENAI_MODEL_NOTES = {
+  'gpt-6.1-sol': 'STEP2専用・公開版の初期モデル・入力$2/出力$10 USD/MTok',
   'gpt-6-astra': 'STEP2専用・物語構成と演出推論',
   'gpt-6-sol': 'STEP2専用・複雑な構成と料金のバランス',
   'gpt-5.6-sol': 'STEP2専用・高い構成力を保ちつつ節約',
@@ -158,8 +161,29 @@ export const FALLBACK_CHAINS = [
 // ※ ユーザーの明示的な指示があった場合のみ、ここにエントリを追加する。
 //   通常のバグフィックスでは追加しない。
 //   date は必ず 'YYYY-MM-DD HH:MM JST' 形式で日時を記録すること。
+export const getFallbackChains = (scenarioModelId = DEFAULT_OPENAI_SCENARIO_MODEL_ID) => {
+  const route = getOpenAIScenarioModelRoute(scenarioModelId);
+  const alternatives = OPENAI_SCENARIO_TEXT_MODEL_IDS.filter(id => !route.includes(id));
+  return FALLBACK_CHAINS.map(chain => chain.id === 'step2-openai' ? {
+    ...chain,
+    description: 'STEP2とシナリオ強化はPrimaryから表示順に自動切替。Selectableは自動切替の対象外で、STEP2で手動選択できます。公開版の初期モデルはGPT-6.1 Sol。',
+    models: [
+      ...describeOpenAITextRoute(route),
+      ...alternatives.map(id => ({ id, role: 'Selectable', note: `${OPENAI_MODEL_NOTES[id]}・STEP2で手動選択可能（自動切替対象外）` })),
+    ],
+  } : chain);
+};
+
 export const FALLBACK_CHAIN_HISTORY = [
   // ↑ 新しいエントリはここに追加する（降順）
+  {
+    version: 'v6.7.4', date: '2026-09-30 22:06 JST',
+    note: 'GPT-6.1 Solを追加。表示・コピー内容をSTEP2の選択中モデルの実行経路へ連動。',
+    changes: [
+      { step: 'STEP 2 (OpenAI)', action: '初期モデル', detail: '公開版はgpt-6.1-sol。Astraは明示選択可能。ローカル開発版はLunaを維持。' },
+      { step: 'STEP 2 (OpenAI)', action: '互換性', detail: '6.1系を推論モデルとして判定し、現行の送信パラメーターと32,768トークン枠を使用。' },
+    ],
+  },
   {
     version: 'v6.5.9',
     date: '2026-09-25 14:51 JST',

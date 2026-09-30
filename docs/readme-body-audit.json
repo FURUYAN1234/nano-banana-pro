@@ -1,8 +1,8 @@
 {
-  "readmeSha256": "5979ab439f151a9b4e292db72944662899b2a564478041c74599292aaa9a473e",
-  "sourceTree": "0c46e6490a3e7420947d08368910c39b0f17163a",
-  "publicTree": "23ab538490efbffebb7820fa88a277078dea533c",
-  "packageSha256": "30d1d25c998b1861db198a76fce1a22577a26cfd2b9d952b02aeadbc71b62c31",
+  "readmeSha256": "4c8c529a7bc3b46522c00786ad04507d737d26bfc381202042a1ad817e629409",
+  "sourceTree": "da22d85385cbe8823c5eba975dc03680abaa6c06",
+  "publicTree": "29b2293f5b8d7ba6889e1d95bbead6bf36fa5558",
+  "packageSha256": "3b9698e86752e0019022f2b76f2326dfc91c1082c102c533c03ca3622a3fea4a",
   "releaseAssetSha256": "046b655cb0536defaffb48055f0dede324b6d818e2916510bd4acea577295b5f",
   "reviewedSections": [
     "AI Manga Creative Suite / AIまんが制作エコシステム",
@@ -18,5 +18,5 @@
     "📋 ChangeLog",
     "License / ライセンス"
   ],
-  "findings": "v6.7.3: reviewed all current README section headings against the preceding v6.7.2 review and this release diff. Unchanged ecosystem, workflow map, models/pricing dated snapshots, H3 package/privacy, development and license sections reuse unchanged evidence. Checked new render options against state defaults, invalidation, scenario review, both prompt templates and QA/repair; corrected the footer description to apply only when enabled. Quick start matches the bright API acquisition links and bundled manual in both dialogs; PDF bytes match source, HTTP response and dist, while IAB preview remains unavailable. API error description and release notes distinguish missing image output from parameter failure. Current source, FAQ and Release-asset links use v6.7.3. Real OpenAI option evidence is preserved; Gemini full-body masking was user-accepted for release, with subject/dialogue defects and final no-image response explicitly recorded rather than claimed as full visual success. Prior unchanged README review and distribution evidence are retained in Git history. No claim of completed deployment before the official receipt. Build-generated A4 diagram changes were inspected: only v6.7.2 to v6.7.3 labels changed; both generated SVGs are included in the candidate."
+  "findings": "v6.7.4: reviewed every current README heading against the verified v6.7.3 body audit and current diff. The model table, production default, selection lifetime, downward fallback and Model Chain manual Astra explanation now match config, route and UI. STEP1/3/4 paths remain unchanged. Normal Sol 6.1 pricing is $2/$10 per MTok as officially verified 2026-09-30, distinct from older dated price snapshots. Current version and Release download links are6.7.4; history stays historical. Existing ecosystem, A4 map, quick start, mosaic/footer, API manual, prompt/privacy, H3 archive/license, development and FAQ behavior reuses unchanged v6.7.3 evidence. Both diagram diffs change version labels only. Real Sol 6.1 scenario and one image validated the route and options; feet crop/screen-angle/internal QA uncertainty is explicitly retained, not converted into an all-quality pass or Astra equivalence. No personal sample content or keys added to production. Release publication remains pending the official receipt."
 }

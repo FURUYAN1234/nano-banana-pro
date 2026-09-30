@@ -403,7 +403,7 @@ export default function Step2Panel({
               ))}
             </select>
             <div className="scenario-model-copy mt-1 flex flex-col gap-0 text-[10px] leading-tight">
-              <p className="m-0 text-cyan-100">参考単価（{OPENAI_SCENARIO_PRICE_SNAPSHOT_DATE}時点）: 入力 ${selectedScenarioModel.inputPriceUsdPerM} / 出力 ${selectedScenarioModel.outputPriceUsdPerM} USD / 100万トークン</p>
+              <p className="m-0 text-cyan-100">参考単価（{selectedScenarioModel.priceSnapshotDate || OPENAI_SCENARIO_PRICE_SNAPSHOT_DATE}時点）: 入力 ${selectedScenarioModel.inputPriceUsdPerM} / 出力 ${selectedScenarioModel.outputPriceUsdPerM} USD / 100万トークン</p>
               {selectedScenarioModel.comparisonNote && (
                 <p className="m-0 text-slate-300">選び方: {selectedScenarioModel.comparisonNote}</p>
               )}

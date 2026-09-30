@@ -20,7 +20,7 @@ import {
 } from './openai-model-routes.js';
 
 const OPENAI_TEXT_TIMEOUT_MS = 600_000;
-const usesReasoningModel = modelId => modelId.startsWith('gpt-6-') || modelId.startsWith('gpt-5.6-');
+const usesReasoningModel = modelId => /^gpt-(?:6(?:\.\d+)?|5\.6)-/.test(modelId);
 // 推論と本文は同じ上限を消費する。旧モデルの本文用8K枠を推論モデルへ流用しない。
 // https://developers.openai.com/api/docs/guides/reasoning#allocating-space-for-reasoning
 const getTextOutputTokenLimit = modelId => usesReasoningModel(modelId) ? 32768 : 8192;

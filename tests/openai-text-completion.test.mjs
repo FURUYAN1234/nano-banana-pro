@@ -79,3 +79,41 @@ test('Responses: other incomplete statuses never become successful text', async 
   globalThis.fetch = async () => Response.json({ ...payload(true, { text: 'partial fixture' }), status: 'in_progress' });
   await assert.rejects(run(true), error => error.failures.every(item => item.code === 'INCOMPLETE_RESPONSE'));
 });
+
+for (const model of ['gpt-6.1-sol', 'gpt-6-astra', 'gpt-5.6-sol', 'gpt-4.1']) {
+  test(`${model}: Chat uses the matching parameter family`, async () => {
+    let body;
+    globalThis.fetch = async (_url, init) => { body = JSON.parse(init.body); return Response.json(payload(false, { text: 'complete fixture' })); };
+    await client.requestOpenAIChatCompletion({ modelId: model, messages: [{role:'user',content:'fixture'}], apiKey:'test-only-credential', timeoutMs:1000 });
+    const modern = model !== 'gpt-4.1';
+    assert.equal(body.max_completion_tokens, modern ? 32768 : undefined);
+    assert.equal(body.max_tokens, modern ? undefined : 8192);
+    assert.equal(body.temperature, modern ? undefined : 0.7);
+  });
+}
+for (const web of [false, true]) {
+  test(`Sol 6.1 ${web ? 'search' : 'manual'}: selected model reports success and terminal safety refusal does not fall back`, async () => {
+    let calls=0, body;
+    globalThis.fetch = async (_url, init) => { calls++; body=JSON.parse(init.body); return Response.json(payload(web, {text:'complete fixture'})); };
+    const options={modelRoute:'scenario',scenarioModelId:'gpt-6.1-sol',useWebSearch:web};
+    const result=await client.callOpenAIText('fixture',null,null,undefined,options);
+    assert.equal(result.model,'gpt-6.1-sol');
+    assert.equal(web ? body.max_output_tokens : body.max_completion_tokens,32768);
+    assert.equal(calls,1);
+    globalThis.fetch = async () => { calls++; return Response.json(payload(web,{refusal:true})); };
+    await assert.rejects(client.callOpenAIText('fixture',null,null,undefined,options), error=>error.code==='content_policy_violation');
+    assert.equal(calls,2);
+  });
+}
+
+test('Sol 6.1 unavailability falls back to Sol and reports the adopted model', async () => {
+  const models=[], logs=[];
+  globalThis.fetch=async (_url,init)=> {
+    models.push(JSON.parse(init.body).model);
+    return models.length===1 ? Response.json({error:{message:'model unavailable',code:'model_not_found'}},{status:404}) : Response.json(payload(false,{text:'complete fixture'}));
+  };
+  const result=await client.callOpenAIText('fixture',null,null,line=>logs.push(line),{modelRoute:'scenario',scenarioModelId:'gpt-6.1-sol'});
+  assert.deepEqual(models,['gpt-6.1-sol','gpt-6-sol']);
+  assert.equal(result.model,'gpt-6-sol');
+  assert.ok(logs.some(line=>line.includes('最終採用モデル: gpt-6-sol')));
+});

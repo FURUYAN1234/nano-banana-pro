@@ -12,6 +12,16 @@
       "comparisonNote": "最も難しい題材や複数の制約を優先。通常の4コマには過剰になり得ます。"
     },
     {
+      "id": "gpt-6.1-sol",
+      "label": "GPT-6.1 Sol",
+      "group": "GPT-6.1",
+      "priceSnapshotDate": "2026-09-30",
+      "description": "新しいSol・構成品質と料金のバランス",
+      "inputPriceUsdPerM": 2,
+      "outputPriceUsdPerM": 10,
+      "comparisonNote": "公開版の初期モデル。通常の入力・出力単価はAstraの5分の1。題材ごとの生成結果を確認してください。"
+    },
+    {
       "id": "gpt-6-sol",
       "label": "GPT-6 Sol",
       "group": "GPT-6",
