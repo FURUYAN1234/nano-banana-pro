@@ -144,3 +144,48 @@ test('candidate retains original bytes and reports skipped normalization honestl
   assert.equal(normalized.originalImage, 'data:image/jpeg;base64,raw');
   assert.equal(normalized.modelId, 'test');
 });
+
+test('candidate already at the A4 page ratio bypasses canvas re-encoding', async () => {
+  const candidate = { base64Img: 'raw', mimeType: 'image/jpeg', modelId: 'test' };
+  let normalizeCalls = 0;
+  const preserved = await normalizePageCandidate(
+    candidate,
+    async () => {
+      normalizeCalls += 1;
+      return { applied: true, dataUrl: 'data:image/png;base64,reencoded' };
+    },
+    async () => ({ width: 848, height: 1200 }),
+  );
+  assert.equal(normalizeCalls, 0);
+  assert.equal(preserved.base64Img, 'raw');
+  assert.equal(preserved.mimeType, 'image/jpeg');
+  assert.equal(preserved.pageLayout.applied, true);
+  assert.equal(preserved.pageLayout.mode, 'already-a4');
+  assert.deepEqual(
+    { width: preserved.pageLayout.width, height: preserved.pageLayout.height },
+    { width: 848, height: 1200 },
+  );
+  assert.equal(preserved.pageLayout.layout, undefined, 'ratio-only evidence must not invent verified title/panel bands');
+});
+
+test('off-ratio candidate is normalized before it can be displayed', async () => {
+  const candidate = { base64Img: 'raw', mimeType: 'image/jpeg', modelId: 'test' };
+  let normalizeCalls = 0;
+  const normalized = await normalizePageCandidate(
+    candidate,
+    async () => {
+      normalizeCalls += 1;
+      return {
+        applied: true,
+        dataUrl: 'data:image/png;base64,fixed',
+        layout: scalePageLayout(1200),
+      };
+    },
+    async () => ({ width: 896, height: 1200 }),
+  );
+  assert.equal(normalizeCalls, 1);
+  assert.equal(normalized.base64Img, 'fixed');
+  assert.equal(normalized.mimeType, 'image/png');
+  assert.equal(normalized.originalImage, 'data:image/jpeg;base64,raw');
+  assert.equal(normalized.pageLayout.applied, true);
+});

@@ -2,6 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
+.image-edit-submit { background-color: #ddd6fe; color: #4c1d95; }
+.image-edit-submit:hover:not(:disabled) { background-color: #c4b5fd; }
+.image-edit-submit:focus-visible { outline: 2px solid #c4b5fd; outline-offset: 3px; }
+
 .sns-explanation { border: 1px solid #334155; background: #0f1115; }
 .sns-explanation h2 { font-size: 18px; }
 .sns-explanation h2 span { font-size: 13px; font-weight: normal; color: #94a3b8; }

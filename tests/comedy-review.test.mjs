@@ -2,6 +2,34 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { buildComedyReviewRequest, applyComedyReview, reviewComedyPrompt } from '../src/lib/comedy-review.js';
 const source = 'Action: 食べた菓子が復活する。誰も驚かない。\nDialogue: また増えた。\nEYE-LINE LOCK: face viewer';
+test('review forwards actual model progress and retains the concrete failure reason', async () => {
+  const progress = [];
+  const result = await reviewComedyPrompt({prompt: source, scenario: source, castList:''}, async (_prompt, _images, _system, update) => {
+    update('[API] model-a HTTP 429');
+    throw Object.assign(new Error('rate limit'), {status:429, provider:'openai', model:'model-a'});
+  }, message => progress.push(message));
+  assert.equal(result.prompt, source);
+  assert.match(progress.join('\n'), /model-a HTTP 429/);
+  assert.match(result.warning, /レート制限/);
+  assert.match(result.warning, /model-a/);
+  assert.match(result.warning, /未完了/);
+});
+
+test('cancelled review propagates cancellation instead of publishing a successful prompt', async () => {
+  const controller = new AbortController();
+  controller.abort();
+  await assert.rejects(reviewComedyPrompt({prompt:source, scenario:source, castList:'', signal:controller.signal}, async () => {
+    throw new DOMException('cancelled', 'AbortError');
+  }), /cancelled|中断|aborted/i);
+});
+
+test('malformed review JSON is explicitly unverified, not a transport problem', async () => {
+  const result = await reviewComedyPrompt({prompt:source, scenario:source, castList:''}, async () => ({text:'invalid JSON'}));
+  assert.equal(result.prompt, source);
+  assert.match(result.warning, /未完了/);
+  assert.match(result.warning, /応答形式/);
+  assert.doesNotMatch(result.warning, /混雑|タイムアウト/);
+});
 test('preserves surreal script and accepts only exact auxiliary patches', () => {
   const raw = JSON.stringify({ observations: [{ panel: 1, kind: 'keep_gag', reason: '復活はギャグとして保持' }], patches: [{ line: 2, before: 'EYE-LINE LOCK: face viewer', after: 'EYE-LINE LOCK: follow Action', confidence: 'high', reason: '補助指示を調整' }] });
   const r = applyComedyReview(source, raw);

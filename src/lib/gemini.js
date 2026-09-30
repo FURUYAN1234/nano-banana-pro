@@ -1,6 +1,7 @@
 import { clearApiSession, getApiCredential, setApiSession } from './api-session.js';
 import { geminiSources } from './sns-explanation.js';
 import { GEMINI_TEXT_MODEL_IDS, GEMINI_VISION_MODEL_IDS } from './gemini-model-routes.js';
+import {createApiError, readApiJson, aggregateApiErrors, formatApiErrorDetails, shouldStopApiFallback} from './api-errors.js';
 
 /**
  * Gemini API Client for Nano Banana Pro (Thinking Mode Edition)
@@ -33,7 +34,7 @@ const GEMINI_SAFETY_SETTINGS = [
     { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" },
 ];
 
-const postGeminiGenerateContent = async (modelId, requestBody, timeoutMs = GEMINI_TEXT_TIMEOUT_MS) => {
+const postGeminiGenerateContent = async (modelId, requestBody, timeoutMs = GEMINI_TEXT_TIMEOUT_MS, signal) => {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
     try {
@@ -47,17 +48,13 @@ const postGeminiGenerateContent = async (modelId, requestBody, timeoutMs = GEMIN
                 ...requestBody,
                 safetySettings: GEMINI_SAFETY_SETTINGS
             }),
-            signal: controller.signal
+            signal: signal ? AbortSignal.any([signal, controller.signal]) : controller.signal
         });
-        const data = await response.json().catch(() => ({}));
-        if (!response.ok || data.error) {
-            const error = data.error || {};
-            throw new Error(`${error.message || response.statusText} (Code: ${error.code || response.status})`);
-        }
-        return data;
+        return await readApiJson(response, {provider:'gemini', model:modelId});
     } catch (e) {
-        if (e.name === 'AbortError' || e.message.includes('aborted')) {
-            throw new Error(`Timeout awaiting response from ${modelId} (${timeoutMs / 1000}s limit)`);
+        if (signal?.aborted) throw createApiError('処理を中断しました。', {provider:'gemini', model:modelId, code:'CANCELLED'});
+        if (controller.signal.aborted || e.name === 'AbortError') {
+            throw createApiError(`Timeout awaiting response from ${modelId} (${timeoutMs / 1000}s limit)`, {provider:'gemini', model:modelId, code:'TIMEOUT'});
         }
         throw e;
     } finally {
@@ -106,7 +103,7 @@ export const diagnoseConnection = async () => {
  * Robustly calls the Gemini API with Auto-Discovery on failure.
  */
 export const callThinkingGemini = async (prompt, images = null, systemInstruction = null, onThinkingUpdate, options = {}) => {
-    if (!getApiKey()) throw new Error("API Key is not set.");
+    if (!getApiKey()) throw createApiError("API Key is not set.", {provider:'gemini', code:'KEY_NOT_CONFIGURED'});
     const timeoutMs = options.timeoutMs ?? GEMINI_TEXT_TIMEOUT_MS;
     const searchRequired = options.useWebSearch === true;
     if (searchRequired && images?.length) {
@@ -116,8 +113,10 @@ export const callThinkingGemini = async (prompt, images = null, systemInstructio
     // 画像の有無に応じてモデルリストを動的に選択
     const MODEL_IDS = (images && images.length > 0) ? GEMINI_VISION_MODEL_IDS : GEMINI_TEXT_MODEL_IDS;
 
+    const failures = [];
     let attemptIndex = 0;
     for (const modelId of MODEL_IDS) {
+        if (options.signal?.aborted) throw createApiError('処理を中断しました。', {provider:'gemini', model:modelId, code:'CANCELLED'});
         attemptIndex++;
         try {
             console.log(`[Gemini] Attempting connection with ${modelId} (v1beta)...`);
@@ -130,6 +129,7 @@ export const callThinkingGemini = async (prompt, images = null, systemInstructio
                         onThinkingUpdate(`> [API] ${images.length}枚の画像データを再送信中...`);
                     }
                 }
+                onThinkingUpdate(`> [API] このモデルの応答待ち上限: ${timeoutMs / 1000}秒`);
             }
 
             // [v1.6.0 Fix] "One Big Prompt" Strategy
@@ -151,7 +151,7 @@ export const callThinkingGemini = async (prompt, images = null, systemInstructio
                 contents: [{ role: "user", parts: finalPromptParts }],
                 ...(searchRequired ? { tools: [{ googleSearch: {} }] } : {}),
                 generationConfig: { maxOutputTokens: 8192 }
-            }, timeoutMs);
+            }, timeoutMs, options.signal);
 
             const response = result;
             const candidates = response.candidates || [];
@@ -159,14 +159,11 @@ export const callThinkingGemini = async (prompt, images = null, systemInstructio
             if (!candidates.length) {
                 // [v1.6.1 Debug] Check for Prompt Feedback (Safety Block at Request Level)
                 if (response.promptFeedback) {
-                    console.warn("Prompt Feedback:", response.promptFeedback);
                     if (response.promptFeedback.blockReason) {
-                        if (onThinkingUpdate) onThinkingUpdate(`> [API] フィルター検知。基準を調整し、別モデルで生成を続行します。`);
-                        throw new Error(`Blocked by Safety Filter: ${response.promptFeedback.blockReason}`);
+                        throw createApiError(`Blocked by Safety Filter: ${response.promptFeedback.blockReason}`, {code:'content_policy_violation'});
                     }
                 }
-                if (onThinkingUpdate) onThinkingUpdate(`> [API] モデル応答なし。最新モデルへバイパスします。`);
-                throw new Error("No response candidates (Unknown Model Refusal)");
+                throw createApiError('No response candidates.', {code:'EMPTY_RESPONSE'});
             }
 
             const candidate = candidates[0];
@@ -179,12 +176,8 @@ export const callThinkingGemini = async (prompt, images = null, systemInstructio
             const thought = extractTextParts(responseParts, true);
 
             if (!finalOutput) {
-                // [v1.7.1 Fix] If text is empty, it means the model refused or filtered the content.
-                // We MUST throw an error here to trigger the fallback loop (try next model).
                 const reason = candidate.finishReason || "UNKNOWN";
-                console.warn(`[Gemini] Empty Response. FinishReason: ${reason}`);
-                if (onThinkingUpdate) onThinkingUpdate(`> [API] フィルター検知。基準を調整し、別モデルで生成を続行します。(${reason})`);
-                throw new Error(`Empty response (FinishReason: ${reason}). Suggested: Check Safety/Prompt.`);
+                throw createApiError(`Empty response (FinishReason: ${reason}).`, {code:/SAFETY|PROHIBITED|BLOCKLIST/.test(reason) ? 'content_policy_violation' : 'EMPTY_RESPONSE'});
             }
 
             if (onThinkingUpdate) onThinkingUpdate(`> [API] 生成完了：高品質な日本語成果物を構築しました。`);
@@ -197,30 +190,15 @@ export const callThinkingGemini = async (prompt, images = null, systemInstructio
             };
 
         } catch (err) {
-            console.warn(`Model ${modelId} failed:`, err.message);
-            if (err.message.includes("429") || err.message.includes("Quota")) {
-                if (onThinkingUpdate) onThinkingUpdate(`> [API] 回数制限。自動待機し、リトライします。`);
-            } else if (!err.message.includes("フィルター検知") && !err.message.includes("モデル応答なし")) {
-                // 既に細かく指定したエラー以外の汎用エラー（バイパス用）
-                if (onThinkingUpdate) onThinkingUpdate(`> [API] モデル応答なし。最新モデルへバイパスします。(${err.message})`);
-            }
+            const failure = createApiError(err.message, {provider:'gemini', model:modelId, status:err.status, code:err.code, name:err.name});
+            failures.push(failure);
+            console.warn(formatApiErrorDetails(failure));
+            if (onThinkingUpdate) onThinkingUpdate(`> [API] 試行失敗: ${formatApiErrorDetails(failure)}`);
+            if (shouldStopApiFallback(failure)) throw failure;
         }
     }
 
-    // --- ALL MODELS FAILED: RUN DIAGNOSIS ---
-    if (onThinkingUpdate) onThinkingUpdate("> [API] 全モデルとの通信に失敗。アカウント状態を診断します...");
-    const diagnosis = await diagnoseConnection();
-    console.error("DIAGNOSIS RESULT:", diagnosis);
-
-    // [v1.7.6 Fix] Construct a user-friendly error message based on the diagnosis
-    let errorMsg = `全モデル接続失敗: ${diagnosis}`;
-    if (diagnosis.includes("Quota exceeded") || diagnosis.includes("429")) {
-        errorMsg = "【API制限】割り当てられた使用回数の上限に達しました。(429 Quota Exceeded)\nしばらく時間を置いてから再試行するか、課金プランを確認してください。";
-    } else if (diagnosis.includes("SAFETY") || diagnosis.includes("PROHIBITED")) {
-        errorMsg = "【コンテンツ制限】安全フィルターによりブロックされました。言い回しを変更してください。";
-    } else if (diagnosis.includes("404")) {
-        errorMsg = "【モデル未検出】使用可能なモデルが見つかりませんでした。診断ログを確認してください。";
-    }
-
-    throw new Error(errorMsg);
+    // A model-list response cannot diagnose a failed generation request.
+    // Preserve the actual failures instead of replacing them with that response.
+    throw aggregateApiErrors('gemini', failures);
 };

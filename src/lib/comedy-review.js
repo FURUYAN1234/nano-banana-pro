@@ -1,5 +1,6 @@
 import { OBJECT_GEOMETRY_LOCK, FUNCTIONAL_SURFACE_ORIENTATION_LOCK_COMPACT } from './shared-image-quality.js';
 import { OPENAI_IMAGE_PROMPT_MAX_CHARS } from './image-prompt-budget.js';
+import { translateApiError } from './safety-filters.js';
 
 const AUXILIARY = /^(?:FG only:|BG only:|EYE-LINE LOCK:|COMPOSITION STAGING:|FUNCTIONAL SURFACE PANEL CHECK:|BEAT REVIEW:|DEPTH:)/;
 const ACTION_SOURCE = /^Action(?: \([^\n)]*\))?:/i;
@@ -76,7 +77,7 @@ export function applyComedyReview(original, raw, maxChars = OPENAI_IMAGE_PROMPT_
     const reasons = [rejected.target && '対象行が元の指示と一致しない', rejected.constraint && '変更内容が適用条件を満たさない', rejected.budget && '文字数上限を超える'].filter(Boolean);
     return { prompt: lines.join('\n'), changes: accepted.map(p => p.reason), patches: accepted.map(({ before, after }) => ({ before, after })), observations: result.observations.slice(0, 16).map(o => ({ panel: o.panel, kind: String(o.kind), reason: String(o.reason) })), warning: rejectedCount ? `提案${rejectedCount}件を見送り（${reasons.join('・')}）。${accepted.length ? '採用分のみ適用しました。' : '元の指示文を保持しました。'}` : '' };
   } catch {
-    return { prompt: original, changes: [], observations: [], warning: '精査回答を安全に適用できないため、元の指示文を保持しました。コピー・生成は続けられます。' };
+    return { prompt: original, changes: [], observations: [], warning: 'AI精査は未完了です（応答形式エラー: JSONまたは必須項目が不正）。元の指示文を保持しました。コピー・生成は続けられます。' };
   }
 }
 
@@ -84,14 +85,17 @@ export function applyComedyReview(original, raw, maxChars = OPENAI_IMAGE_PROMPT_
 export async function reviewComedyPrompt(input, request, onProgress = () => {}) {
   onProgress('再検査: 台本・カメラ指定を保ち、視線と動作、小道具の向き、補助的な構図指示の矛盾を確認します。');
   try {
-    const response = await request(buildComedyReviewRequest(input), null, null, () => {});
+    const response = await request(buildComedyReviewRequest(input), null, null, onProgress, {signal: input.signal});
+    input.signal?.throwIfAborted();
     const reviewed = applyComedyReview(input.prompt, response.text, input.promptMaxChars);
     onProgress(reviewed.changes.length
       ? `再検査結果: ${reviewed.changes.length}件を適用。理由: ${reviewed.changes.join(' / ')}${reviewed.warning ? ` / ${reviewed.warning}` : ''}`
       : `再検査結果: ${reviewed.warning || '修正が必要な明確な矛盾はなく、元の指示文を保持しました。'}`);
     return { ...reviewed, original: input.prompt };
-  } catch {
-    onProgress('再検査結果: AI精査を取得できなかったため、元の指示文を保持しました。');
-    return { prompt: input.prompt, original: input.prompt, changes: [], observations: [], warning: 'AI精査を取得できなかったため、元の指示文で続行しました。' };
+  } catch (error) {
+    if (input.signal?.aborted || error?.name === 'AbortError' || error?.code === 'CANCELLED') throw error;
+    const warning = `AI精査は未完了です。元の指示文を保持しました。\n${translateApiError(error)}`;
+    onProgress(`再検査結果: ${warning}`);
+    return { prompt: input.prompt, original: input.prompt, changes: [], observations: [], warning };
   }
 }

@@ -16,6 +16,7 @@ import {
   ExternalLink
 } from 'lucide-react';
 import Panorama360Viewer from './Panorama360Viewer';
+import ImageEditForm from './ImageEditForm';
 import { GEMINI_A4_RELAYOUT_PROMPT, GEMINI_2K_REFINEMENT_PROMPT } from '../lib/gemini-image-edit';
 import { getEffectiveEngine } from '../lib/engine-state';
 import { MINIMAX_H3_COMFYUI_PROMPT } from '../lib/minimax-h3-prompt';
@@ -292,6 +293,14 @@ Do not emit the ending credit as a literal URL in the authoring response, becaus
  */
 import { OPENAI_IMAGE_OPTIONS, OPENAI_IMAGE_PRICE_SNAPSHOT_DATE, OPENAI_IMAGE_SIZE_OPTIONS, formatOpenAIImagePricingSummary, formatOpenAIImageSettingsSummary, resolveOpenAIImageOption } from '../lib/openai-image-settings.js';
 
+const getDisplayedImageInfo = (size, pageLayout) => {
+  if (!size?.width || !size?.height) return '画像サイズを確認中…';
+  const dimensions = `${size.width}×${size.height}`;
+  const layout = pageLayout?.layout;
+  if (!pageLayout?.applied || layout?.width !== size.width || layout?.height !== size.height) return dimensions;
+  return `${dimensions}｜タイトル${layout.titleHeight}px・4コマ全体${layout.panelHeight}px・フッター${layout.footerHeight}px。各コマの高さ配分と書体を保持。`;
+};
+
 export default function Step4Panel({
   outputRef,
   currentStep,
@@ -357,6 +366,7 @@ export default function Step4Panel({
   images = [],
   generationHistory = [],
   normalizeDisplayedPage,
+  editGeneratedImage,
   isFullAutoMode,
   fullAutoStep,
   mangaTitle,
@@ -374,7 +384,6 @@ export default function Step4Panel({
   const isSeriousEnhancementMode = getEndingModePolicy(punchlineType).endingTone === 'serious';
   const displayedHistory = generationHistory.find(item => item.img === generatedImage);
   const hasFixedPageLayout = displayedHistory?.pageLayout?.applied === true;
-  const fixedPageLayout = displayedHistory?.pageLayout?.layout;
   const isFourPanelPage = inferImageQualityMode(finalPrompt) === 'four-panel';
   const generationWaitLog = genLog.find(log => String(log).startsWith('[WAIT]'));
   const getGeneratedImageFilename = () => {
@@ -396,6 +405,7 @@ export default function Step4Panel({
   const [isApiSettingsOpen, setIsApiSettingsOpen] = React.useState(false);
   const [webMetadataError, setWebMetadataError] = React.useState('');
   const [imageMetadataError, setImageMetadataError] = React.useState('');
+  const [displayedImageSize, setDisplayedImageSize] = React.useState(null);
   const generatedAtByImageRef = React.useRef(new Map());
 
   const getCurrentMetadataInputImages = () => {
@@ -1394,7 +1404,13 @@ No explanations. No partial results.`;
         <div className="flex-1 flex flex-col items-center justify-center relative p-4 bg-[url('https://www.transparenttextures.com/patterns/dark-matter.png')]">
           {generatedImage ? (
             <div className="w-full h-full flex flex-col items-center justify-center gap-4">
-              <img src={generatedImage} className={`max-w-full max-h-[70vh] object-contain shadow-2xl${isGeneratingImage ? '' : ' generated-image-reveal'}`} alt="Generated Result" />
+              <img src={generatedImage} className={`max-w-full max-h-[70vh] object-contain shadow-2xl${isGeneratingImage ? '' : ' generated-image-reveal'}`} alt="Generated Result"
+                onLoad={event => setDisplayedImageSize({ image: generatedImage, width: event.currentTarget.naturalWidth, height: event.currentTarget.naturalHeight })} />
+              <p style={{ fontSize: '11px', lineHeight: 1.6 }} className="text-slate-400">{getDisplayedImageInfo(displayedImageSize?.image === generatedImage ? displayedImageSize : null, displayedHistory?.pageLayout)}</p>
+              <ImageEditForm key={generatedImage} image={generatedImage}
+                busy={isGeneratingImage || isSearching || isAssembling || isEnhancing || isFixingPolicy || isFullAutoMode}
+                providerLabel={isOpenAIImageMode ? 'OpenAI' : 'Gemini'}
+                onSubmit={editGeneratedImage} />
               
               {/* 妥協版警告の復活 */}
               {isFallbackUsed && (
@@ -1420,8 +1436,7 @@ No explanations. No partial results.`;
                 </div>
               )}
 
-              <div className="w-full px-8 mt-2">
-                    {hasFixedPageLayout && fixedPageLayout && <p className="text-xs text-slate-300 mb-2">{fixedPageLayout.width}×{fixedPageLayout.height}｜タイトル{fixedPageLayout.titleHeight}px・4コマ全体{fixedPageLayout.panelHeight}px・フッター{fixedPageLayout.footerHeight}px。各コマの高さ配分と書体を保持。</p>}
+              <div className="w-full px-8" style={{ marginTop: '24px' }}>
                 <button
                   onClick={async () => {
                     try {
@@ -1444,7 +1459,8 @@ No explanations. No partial results.`;
 
                 <button
                   onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-                  className="w-full mt-4 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg border border-slate-600/50 active:scale-95"
+                  style={{ marginTop: '24px' }}
+                  className="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg border border-slate-600/50 active:scale-95"
                 >
                   最初（STEP 1）に戻る
                 </button>

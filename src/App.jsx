@@ -68,6 +68,7 @@ function App() {
     generateScenarioFromNews,
     generatedImage,
     normalizeDisplayedPage,
+    editGeneratedImage,
     generationHistory,
     handleFullAutoToggle,
     handleSetKey,
@@ -510,6 +511,7 @@ function App() {
               generatedImage={generatedImage}
               images={images}
               normalizeDisplayedPage={normalizeDisplayedPage}
+              editGeneratedImage={editGeneratedImage}
               isFullAutoMode={isFullAutoMode}
               fullAutoStep={fullAutoStep}
               mangaTitle={mangaTitle}

@@ -49,20 +49,23 @@ test('selected color choice is white while the inactive choice is a distinct gra
 
 test('actual selection handler clears stale output without assembly, preserving scenario/history', () => {
   const handler = source.match(/const setColorMode = \(value\) => \{([\s\S]*?)\n  \};/);
+  const invalidator = source.match(/const invalidatePromptAssembly = \(\) => \{([\s\S]*?)\n  \};/);
   assert.ok(handler);
+  assert.ok(invalidator);
   const calls = [];
   const context = {
     isColorModeLocked: false, colorMode: 'color',
     normalizeMangaColorMode: v => v === 'monochrome' ? v : 'color',
     promptAssemblyRunRef: { current: 1 }, lastPolicyErrorRef: { current: 'previous error' },
+    promptAssemblyAbortRef: { current: null },
     copyFeedbackTimerRef: { current: null }, clearTimeout() {},
     showStatus: text => calls.push(['status', text]),
   };
   // Only React state setters are substituted; execute the real event handler.
-  for (const setter of new Set(handler[1].match(/\bset\w+(?=\()/g))) {
+  for (const setter of new Set((handler[1] + invalidator[1]).match(/\bset\w+(?=\()/g))) {
     context[setter] = value => calls.push([setter, value]);
   }
-  vm.runInNewContext(`const setColorMode = (value) => {${handler[1]}\n}; setColorMode('monochrome');`, context);
+  vm.runInNewContext(`const invalidatePromptAssembly = () => {${invalidator[1]}\n}; const setColorMode = (value) => {${handler[1]}\n}; setColorMode('monochrome');`, context);
   assert.ok(calls.some(([name, value]) => name === 'setColorModeState' && value === 'monochrome'));
   assert.ok(calls.some(([name, value]) => name === 'setFinalPrompt' && value === ''));
   assert.ok(calls.some(([name, value]) => name === 'setGeneratedImage' && value === null));
@@ -87,6 +90,6 @@ test('only the full settings reset returns mode to color; resets invalidate pend
   }
   const hard = source.match(/const hardReset = \(\) => \{([\s\S]*?)\n  \};/)?.[1];
   assert.match(hard, /setColorModeState\("color"\)/);
-  assert.match(hard, /promptAssemblyRunRef\.current \+= 1/);
+  assert.match(hard, /invalidatePromptAssembly\(\)/);
   assert.doesNotMatch(source, /\},\s*\[[^\]]*\bcolorMode\b[^\]]*\]\)/, 'selection must not trigger a rebuilding effect');
 });

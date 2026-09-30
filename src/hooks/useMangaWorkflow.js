@@ -3,6 +3,7 @@ import { useState, useRef, useEffect } from 'react';
 // --- Imports (paths adjusted from ./lib/ to ../lib/) ---
 import { setApiKey } from '../lib/gemini';
 import { generateImageWithImagen } from '../lib/imagen';
+import { buildImageEditRequest } from '../lib/image-edit.js';
 import { generateImageWithOpenAI, setOpenAIApiKey } from '../lib/openai';
 import {buildOpenAIReferencePlan, appendOpenAIReferencePrompt, getOpenAIPromptBodyBudget} from '../lib/openai-image-references.js';
 import {buildGeminiReferencePlan, buildGeminiImageApiPrompt} from '../lib/gemini-image-references.js';
@@ -128,6 +129,8 @@ export default function useMangaWorkflow() {
   const [mangaTitle, setMangaTitle] = useState("");
   const [finalPrompt, setFinalPrompt] = useState("");
   const promptAssemblyRunRef = useRef(0);
+  const promptAssemblyAbortRef = useRef(null);
+  useEffect(() => () => promptAssemblyAbortRef.current?.abort(), []);
 
   // [v1.7.0] Model Quality Indicator State
   const [usedModel, setUsedModel] = useState(null);
@@ -274,11 +277,19 @@ export default function useMangaWorkflow() {
 
   // Image Generation
   const [generatedImage, setGeneratedImage] = useState("");
+  const imageEditRunRef = useRef(null);
   const [generationHistory, setGenerationHistory] = useState([]); // [v2.86] Generated Image History
+
+  const invalidatePromptAssembly = () => {
+    promptAssemblyRunRef.current += 1;
+    promptAssemblyAbortRef.current?.abort();
+    promptAssemblyAbortRef.current = null;
+    setIsAssembling(false);
+  };
 
   const invalidateScenarioOutput = () => {
     scenarioRunEpochRef.current += 1;
-    promptAssemblyRunRef.current += 1;
+    invalidatePromptAssembly();
     qualityRetryAbortRef.current = true;
     setFinalPrompt("");
     setGeneratedImage(null);
@@ -289,6 +300,7 @@ export default function useMangaWorkflow() {
 
   const setScenarioFromUser = (nextScenario) => {
     scenarioRunEpochRef.current += 1;
+    invalidatePromptAssembly();
     qualityRetryAbortRef.current = true;
     fullAutoAbortRef.current = true;
     isFullAutoModeRef.current = false;
@@ -311,7 +323,7 @@ export default function useMangaWorkflow() {
     if (nextPunchlineType === punchlineType && !resolvedPunchlineTypeRef.current) return;
     scenarioRunEpochRef.current += 1;
     qualityRetryAbortRef.current = true;
-    promptAssemblyRunRef.current += 1;
+    invalidatePromptAssembly();
     fullAutoAbortRef.current = true;
     isFullAutoModeRef.current = false;
     setPunchlineTypeState(nextPunchlineType);
@@ -610,7 +622,7 @@ export default function useMangaWorkflow() {
       if (/API Key is not set|OpenAI APIキーが設定されていません/.test(String(error.message || ''))) {
         setShowOpenAIKeyModal(true);
       }
-      const translatedMsg = translateApiError(error.message);
+      const translatedMsg = translateApiError(error);
       setAnalyzeThought(prev => prev + `\n\n[システムエラー]: ${error.message}\n--------------------------------------------------\n${translatedMsg}`);
       showStatus("解析エラー: " + error.message);
       if (isFullAutoModeRef.current) {
@@ -754,6 +766,7 @@ export default function useMangaWorkflow() {
       return;
     }
 
+    invalidatePromptAssembly();
     setIsSearching(true);
     setExplanation("");
     setExplanationNotice("");
@@ -934,7 +947,7 @@ export default function useMangaWorkflow() {
       if (/API Key is not set|OpenAI APIキーが設定されていません/.test(String(error.message || ''))) {
         setShowOpenAIKeyModal(true);
       }
-      const translatedMsg = translateApiError(error.message);
+      const translatedMsg = translateApiError(error);
       setScenarioThought(prev => prev + `\n\n[システムエラー]: ${error.message}\n--------------------------------------------------\n${translatedMsg}`);
       showStatus("シナリオ生成エラー");
       setIs360CameraWorking(false);
@@ -958,7 +971,7 @@ export default function useMangaWorkflow() {
     const nextMode = normalizeMangaColorMode(value);
     if (nextMode === colorMode) return;
     setColorModeState(nextMode);
-    promptAssemblyRunRef.current += 1;
+    invalidatePromptAssembly();
     setFinalPrompt("");
     setGeneratedImage(null);
     setAssembleThought("");
@@ -981,9 +994,12 @@ export default function useMangaWorkflow() {
   // [v2.79] 戻り値変更: フルオート連鎖用（文字列=成功, null=失敗）
   const assemblePrompt = async (skipGuard = false, overrideScenario = null, providerFamilyOverride = null) => {
     const promptScenarioEpoch = scenarioRunEpochRef.current;
-    const assemblyRun = ++promptAssemblyRunRef.current;
     const currentScenario = overrideScenario || scenario;
     if (!skipGuard && (!castList || !currentScenario)) return showStatus("キャストとシナリオが必要です。");
+    invalidatePromptAssembly();
+    const assemblyRun = promptAssemblyRunRef.current;
+    const controller = new AbortController();
+    promptAssemblyAbortRef.current = controller;
     const scenarioValidation = validateMangaScenario(currentScenario, castList);
     const assemblyQualityWarning = !scenarioValidation.ok
       ? `シナリオ品質警告: ${formatMangaScenarioValidationIssue(scenarioValidation)}。取得済みの内容を保持し、品質警告のままSTEP4へ進めます。`
@@ -1053,7 +1069,8 @@ export default function useMangaWorkflow() {
         scenario: currentScenario,
         castList,
         reviewTone: endingPolicy.endingTone,
-        preserveReferenceStyle: endingPolicy.preserveReferenceStyle
+        preserveReferenceStyle: endingPolicy.preserveReferenceStyle,
+        signal: controller.signal
       }, callAI, message => {
         if (promptScenarioEpoch === scenarioRunEpochRef.current && assemblyRun === promptAssemblyRunRef.current) {
           setAssembleThought(prev => prev + `\n> ${message}`);
@@ -1074,19 +1091,24 @@ export default function useMangaWorkflow() {
       setAssembleThought(prev => prev + `\n> 出力モード: ${colorMode === 'monochrome' ? '漫画原稿三階調（白地・黒ベタ・単一スクリーントーン）' : 'カラー'}`);
       setAssembleThought(prev => prev + `\n> ${reviewed.warning || "AI精査完了"}`);
       setAssembleThought(prev => prev + "\n> セーフティ年齢フィルター: 適用済み\n> 最適化ベクトル: 計算完了\n> 構造ロック: 有効\n> 風刺ロジック: 強化済み\n> [完了] 最終プロンプトを構築しました。");
-      showStatus("最終プロンプトの構築が完了しました。コピーまたはSTEP4の画像生成へ進めます。");
+      showStatus(reviewed.warning
+        ? "指示文を構築しましたが、AI精査に警告があります。STEP3の理由を確認してください。"
+        : "最終プロンプトの構築が完了しました。コピーまたはSTEP4の画像生成へ進めます。");
       return reviewed.prompt; // [v2.79] フルオート連鎖用: 成功
 
     } catch (error) {
       if (promptScenarioEpoch !== scenarioRunEpochRef.current || assemblyRun !== promptAssemblyRunRef.current) return null;
-      console.error(error);
-      const translatedMsg = translateApiError(error.message);
-      setAssembleThought(prev => prev + `\n\n[システムエラー]: ${error.message}\n--------------------------------------------------\n${translatedMsg}`);
-      showStatus("生成エラー: " + error.message);
+      const translatedMsg = translateApiError(error);
+      console.error(translatedMsg);
+      setAssembleThought(prev => prev + `\n\n${translatedMsg}`);
+      showStatus("指示文を構築できませんでした。STEP3のエラー理由を確認してください。");
       return null; // [v2.79] フルオート連鎖用: 失敗
     } finally {
       clearInterval(thinkTimer);
-      if (assemblyRun === promptAssemblyRunRef.current) setIsAssembling(false);
+      if (assemblyRun === promptAssemblyRunRef.current) {
+        promptAssemblyAbortRef.current = null;
+        setIsAssembling(false);
+      }
     }
   };
 
@@ -1103,7 +1125,7 @@ export default function useMangaWorkflow() {
     scenarioRunEpochRef.current += 1;
     qualityRetryAbortRef.current = true;
     fullAutoAbortRef.current = true;
-    promptAssemblyRunRef.current += 1;
+    invalidatePromptAssembly();
     scenarioUsedModelRef.current = null;
     setIsAssembling(false);
     setIsSearching(false);
@@ -1187,7 +1209,7 @@ export default function useMangaWorkflow() {
     scenarioRunEpochRef.current += 1;
     qualityRetryAbortRef.current = true;
     fullAutoAbortRef.current = true;
-    promptAssemblyRunRef.current += 1;
+    invalidatePromptAssembly();
     scenarioUsedModelRef.current = null;
     setIsAssembling(false);
     setIsSearching(false);
@@ -1385,6 +1407,91 @@ export default function useMangaWorkflow() {
     showStatus('ページ比率を揃えました。元画像も保持しています。追加API課金なし／配置後の画像QAは未実行です。');
   };
 
+  const editGeneratedImage = async (instruction) => {
+    const epoch = scenarioRunEpochRef.current;
+    if (!generatedImage || isGeneratingImage || isSearching || isAssembling || isEnhancing
+      || isAnalyzing || is360CameraWorking || isFixingPolicy || isFullAutoMode
+      || imageEditRunRef.current?.epoch === epoch) return false;
+    let request;
+    try { request = buildImageEditRequest(generatedImage, instruction); }
+    catch (error) { showStatus(translateApiError(error)); return false; }
+    const run = { epoch };
+    imageEditRunRef.current = run;
+    const sourceImage = generatedImage;
+    const sourceHistory = generationHistory.find(item => item.img === sourceImage);
+    const isCurrent = () => scenarioRunEpochRef.current === epoch && imageEditRunRef.current === run;
+    const log = message => { if (isCurrent()) setGenLog(items => [...items, message]); };
+    setIsGeneratingImage(true);
+    setIsGenerationError(false);
+    setOpenAIImageVerificationWarning('');
+    setGenLog(['[画像修正] 表示中の画像と追加指示を送信します。元画像は保持します。']);
+    const startedAt = Date.now();
+    const timer = setInterval(() => {
+      if (isCurrent()) setGenLog(items => [...items.filter(item => !item.startsWith('[WAIT]')),
+        `[WAIT] 画像修正中… ${Math.floor((Date.now() - startedAt) / 1000)}秒経過`]);
+    }, 1000);
+    try {
+      const response = isOpenAIEngine
+        ? await generateImageWithOpenAI(request.prompt, log, {
+          quality: openAIImageQuality, size: openAIImageSize, imageInputs: request.imageInputs,
+        })
+        : await generateImageWithImagen(request.prompt, log, request.referenceImages);
+      if (!isCurrent()) return false;
+      const base64 = String(response.base64Img || '').replace(/\s+/g, '');
+      if (!base64) throw new Error('Image response did not include usable image data.');
+      const rawMimeType = response.mimeType || 'image/png';
+      const candidate = await normalizePageCandidate({
+        base64Img: base64, mimeType: rawMimeType, modelId: response.usedModel,
+      });
+      if (!isCurrent()) return false;
+      if (!candidate.pageLayout?.applied) {
+        throw new Error(`修正画像のページ比率を自動補正できませんでした。${candidate.pageLayout?.reason || ''}`.trim());
+      }
+      const mimeType = candidate.mimeType || rawMimeType;
+      const img = `data:${mimeType};base64,${candidate.base64Img}`;
+      const timestamp = Date.now();
+      setGenerationHistory(items => {
+        const retained = items.some(item => item.img === sourceImage) ? items
+          : addGenerationHistoryItem(items, { ...sourceHistory, id: timestamp - 1, img: sourceImage });
+        return addGenerationHistoryItem(retained, {
+          id: timestamp, img, mimeType, modelId: response.usedModel,
+          originalImage: candidate.originalImage,
+          pageLayout: candidate.pageLayout,
+          generatedAt: new Date(timestamp).toISOString(), sourceImage,
+          qualityPass: false, selected: true, editInstruction: instruction.trim(),
+          metadataContext: {
+            provider: isOpenAIEngine ? 'openai' : 'gemini', scenario: '', finalPrompt: request.prompt,
+            inputImages: [{ role: 'edit_source', dataUrl: sourceImage }],
+            settings: { manual_image_edit: true, quality_review: 'not_run' },
+          },
+        });
+      });
+      setGeneratedImage(img);
+      setIsFallbackUsed(false);
+      setImageQualityNeedsRepair(false);
+      if (candidate.pageLayout.mode === 'already-a4') {
+        log(`[ページ配置] ${candidate.pageLayout.width}×${candidate.pageLayout.height}はA4比率のため、再処理せずそのまま表示します。`);
+      } else {
+        const layout = candidate.pageLayout.layout;
+        log(`[ページ配置] ${layout.width}×${layout.height}へ自動補正してから表示します。元のAPI画像も保持しました。`);
+      }
+      log('[画像修正] 完了。修正前の画像は履歴から選べます。自動品質検査は未実行です。');
+      showStatus('修正版を表示しました。変更箇所を確認してください。元画像は履歴に残っています。');
+      return true;
+    } catch (error) {
+      if (!isCurrent()) return false;
+      const message = translateApiError(error);
+      log(`[画像修正エラー] ${message}`);
+      showStatus(`修正できませんでした。元画像を保持しました。${message}`);
+      setIsGenerationError(true);
+      return false;
+    } finally {
+      clearInterval(timer);
+      if (isCurrent()) setIsGeneratingImage(false);
+      if (imageEditRunRef.current === run) imageEditRunRef.current = null;
+    }
+  };
+
   // --- Step 4: Image Generation ---
   // [v2.79] 戻り値変更: フルオート連鎖用（true=成功, false=失敗）
   const generateImageOnce = async (skipGuard = false, overridePrompt = null, generationOptions = {}) => {
@@ -1407,7 +1514,7 @@ export default function useMangaWorkflow() {
       background_analysis_used: Boolean(bg360Enabled && bg360Analysis),
       background_reference_used: Boolean(bg360Enabled && bg360Image),
     };
-    if (isGeneratingImage || (!skipGuard && !currentPrompt)) return false;
+    if (isGeneratingImage || imageEditRunRef.current?.epoch === scenarioRunEpochRef.current || (!skipGuard && !currentPrompt)) return false;
     try {
       assertPromptEndingModeConsistency({ prompt: currentPrompt, punchlineType: resolvedPunchlineTypeRef.current || punchlineType });
       assertPrintableDialogue(currentPrompt);
@@ -2297,6 +2404,7 @@ export default function useMangaWorkflow() {
       // 実行中 or 武装中 → 中断/解除
       fullAutoAbortRef.current = true;
       scenarioRunEpochRef.current += 1;
+      invalidatePromptAssembly();
       
       // [v4.2.7] 中断時にAPI通信の完了を待たず、即座にUIのローディング表示を消去して操作可能に戻す
       setIsSearching(false);
@@ -2330,6 +2438,7 @@ export default function useMangaWorkflow() {
   const abortFullAuto = () => {
     fullAutoAbortRef.current = true;
     scenarioRunEpochRef.current += 1;
+    invalidatePromptAssembly();
     
     // [v4.2.7] 中断時に即座にUIのローディング状態を解除
     setIsSearching(false);
@@ -2470,6 +2579,7 @@ export default function useMangaWorkflow() {
     setEnhanceExpressions,
     setGeneratedImage,
     normalizeDisplayedPage,
+    editGeneratedImage,
     setGenerationHistory,
     setImages,
     setInputMode,

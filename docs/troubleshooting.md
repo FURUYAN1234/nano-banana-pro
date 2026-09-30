@@ -1,3 +1,21 @@
+# STEP2 scenario generation / シナリオ生成
+
+## 空応答・途中の本文からモデル切替や品質リトライが続く
+
+- 原因となる実装: GPT-6/GPT-5.6の導入時、旧モデルの `max_tokens: 8192` を推論モデルの `max_completion_tokens: 8192` に置き換えただけで、推論の消費分を確保していなかった。ニュース検索も `max_output_tokens: 8192` 固定だった。推論と本文が同じ出力枠を使うため、本文が出る前に上限へ達する場合がある。
+- 応答判定も `message.content` の有無だけで、Chatの `finish_reason: length`、Responsesの `status: incomplete` / `incomplete_details.reason` を見ていなかった。空なら全モデルへの切替、部分本文があれば成功扱いとなり、未完成のシナリオが品質検査へ流れていた。過去の空応答の個別原因は、当時捨てていた終了理由なしに断定しない。
+- 修正: 推論モデルは32,768、旧モデルは8,192の上限に分離。推論設定・選択モデル・入力内容・品質ゲートは維持する。ChatとResponses共通で終了状態を検査し、上限終了は `OUTPUT_TOKEN_LIMIT` としてモデル切替を止め、未完成本文を採用しない。拒否、未完了、完了した空応答は別分類にする。
+- 確認: `[RESPONSE]` に `finish`、検索時の `reason`、`output_tokens`、`reasoning_tokens`、`limit` が出る。使用量がない場合は0ではなく `unknown`。キー、リクエスト本文、非公開の推論内容は記録しない。回帰: `tests/openai-text-completion.test.mjs` と `tests/text-api-errors.test.mjs`。
+- 公式仕様: https://developers.openai.com/api/docs/guides/reasoning#allocating-space-for-reasoning
+
+# STEP3 prompt generation / 指示文構築
+
+## 「混雑」と表示される／待っても構築中が解除されない
+
+- 未分類エラーを通信障害へ一括変換していたため、文字数・台詞構文・内部例外でも待機案内が出ていた。現在は入力検証、認証、権限、モデル、利用枠・残高、レート制限、時間切れ、ネットワーク、HTTPサーバー障害、空応答、応答形式、内部・未分類を区別し、API失敗のprovider/model/HTTP/codeを保持する。未知のエラーを混雑と断定しない。
+- AI精査は実際のモデル試行と1モデルごとの待機上限を表示する。失敗・不正なJSONは精査未完了として元の指示文を保持する。Geminiの全モデル失敗後に別のモデル一覧APIの結果で原因を置き換えない。認証失敗・明確な利用枠不足・拒否・キャンセルは後続モデルで繰り返さない。
+- シナリオ強化／復元がSTEP3を無効化しても構築中フラグを解除しない経路があった。共通の無効化処理で旧通信を中断してロックを解除し、旧処理の完了で新処理を上書きしない。回帰: `tests/prompt-wait-counter.test.mjs`、`tests/text-api-errors.test.mjs`、`tests/comedy-review.test.mjs`、`tests/safety-filters-error-guide.test.mjs`。利用者が以前遭遇した個別の原因は当時のログなしでは確定できない。
+
 # STEP4 image generation / 画像生成
 
 ## 題材の説明が全コマの演技指定になる／演出が平板になる

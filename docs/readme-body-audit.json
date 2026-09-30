@@ -1,8 +1,8 @@
 {
-  "readmeSha256": "af902f244c0da1bd370a8833b9ec9539623e631e739bf53ee13ecddadc2999aa",
-  "sourceTree": "d40062ae41cdb2da145ba381c5879a8e07cad96a",
-  "publicTree": "7bfd9338c187e83fb8d326542e8eb71cc45af3eb",
-  "packageSha256": "6e155b0f677e86de5256096cfc4c036bd74939ed2ca47ba8c7c1210489c5ed0a",
+  "readmeSha256": "35020bd821912685b0f2607fbafe6ea99043ac0915978a1703bef0ddd40e46e4",
+  "sourceTree": "5cf9459eba91cb128379de17ec2599d2af78721c",
+  "publicTree": "5e2e54bdf02811427439689f7870ae54b1291e0d",
+  "packageSha256": "a49dc84d8f208db34e4c47f1f72362193b4156b23380932506f4c4d48a559788",
   "releaseAssetSha256": "046b655cb0536defaffb48055f0dede324b6d818e2916510bd4acea577295b5f",
   "reviewedSections": [
     "AI Manga Creative Suite / AIまんが制作エコシステム",
@@ -18,5 +18,5 @@
     "📋 ChangeLog",
     "License / ライセンス"
   ],
-  "findings": "README本文の全12節をv6.7.0候補のコード、実画面、配布契約、リンクへ照合。STEP2の日付表示は括弧内の曜日と右側の季節表示に一致。白黒説明は白地・黒ベタ・限定トーンと人体の形影を記載し、品質保証とは書いていない。Quick startと検査、API経路、カメラ・演技、衣装、話者、プロンプト圧縮の記述を現行ソース・テストと突合。H3配布リンクは現行JSONと同じ識別子で、ZIPが中間配布である制約も保持。ライセンス、秘密情報の境界、開発手順、FAQ、公開URLを確認。単発API生成の逸話と細かなボタン間隔を本文から除去し、古い変更履歴をGitHub Releasesへの案内に委ねて最新15件へ整理。v6.7.0のZIPリンクと履歴を反映。"
+  "findings": "README本文の全12節をv6.7.1候補の実装、現行UI、package、配布契約、FourPanel資産と公開リンクへ照合。STEP2の32,768/8,192上限分離と未完了判定、原因別エラー、OpenAI/Gemini共通の追加画像修正、直近10件履歴、31,389文字入力上限、A4比率の表示前判定・正比率通過・ずれだけ自動補正をソースと回帰へ同期した。H3 JSON/ZIP識別子、中間配布制約、ライセンス、秘密情報境界、開発手順、FAQ、v6.7.1資産URL、最新15件の履歴を確認。実API検証はOpenAI Web Search、Gemini Grounding、両プロバイダー画像修正を区別し、Gemini生成画像の台詞・構図品質は全面合格と記載していない。"
 }

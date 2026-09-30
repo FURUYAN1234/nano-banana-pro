@@ -1,23 +1,19 @@
+import { formatApiErrorGuide, sanitizeErrorMessage } from './api-errors.js';
+
 // --- Safety Filters & Content Sanitizers ---
 // App.jsx から抽出されたセーフティフィルタユーティリティ群
 
 // --- Error Translation Utility ---
-const translateApiError = (errorMsg) => {
-  const msg = errorMsg || "";
+const translateApiError = (error) => {
+  const msg = sanitizeErrorMessage(error?.message ?? error);
   const lowerMsg = msg.toLowerCase();
   
   if (lowerMsg.includes("documentary source facts missing")) {
     return "[ERROR GUIDE] 📚 ドキュメンタリーの原文忠実性検証に失敗しました。通信エラーではありません。数値・時系列・重要語句を守れない候補はSTEP3へ通していません。\n[対処法] 入力本文を確認し、STEP 2を再実行してください。";
   } else if (msg.includes("シナリオ本文の表現衛生ポリシー")) {
     return "[ERROR GUIDE] 🧩 シナリオ本文の表現衛生検証に失敗しました。通信エラーではありません。通常は全3試行から利用可能な候補を警告付きで保持しますが、このエラーでは後続へ渡せるシナリオが残りませんでした。\n[対処法] 表現を見直してからSTEP 2を再実行してください。";
-  } else if (lowerMsg.includes("api key not valid") || lowerMsg.includes("api_key_invalid") || lowerMsg.includes("invalid api key") || lowerMsg.includes("api key is invalid")) {
-    return "[ERROR GUIDE] 🔑 APIキーが無効であるか、正しく設定されていません。\n[対処法] 接続設定パネル（画面右上のAPIキー入力欄など）から、入力された Gemini API キーが正しいか確認してください。";
-  } else if (lowerMsg.includes("sensitive") || lowerMsg.includes("responsible ai") || lowerMsg.includes("safety") || lowerMsg.includes("blocked")) {
-    return "[ERROR GUIDE] 🚨 送信内容がAIの安全基準（NSFW等の検閲）に引っかかり、処理がブロックされました。\n[対処法] 送信内容（画像・テキスト）に過激・不適切な表現がないか確認し、修正して再試行してください。";
-  } else if (lowerMsg.includes("not found") || lowerMsg.includes("not supported") || lowerMsg.includes("404") || lowerMsg.includes("403") || lowerMsg.includes("permission")) {
-    return "[ERROR GUIDE] 🔑 現在のAPIキーではこの機能へのアクセス権限がないか、モデルがサポートされていません。\n[対処法] APIキーの制限設定（権限）や、選択したモデルが有効か確認してください。";
   } else {
-    return "[ERROR GUIDE] ⏲️ タイムアウト、または予期せぬ通信エラーが発生しました。\n[対処法] サーバーが混雑しているか、一時的にネットワーク接続が途切れた可能性があります。数分時間を置いてから再度お試しください。";
+    return formatApiErrorGuide(error);
   }
 };
 

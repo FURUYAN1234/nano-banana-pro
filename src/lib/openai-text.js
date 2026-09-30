@@ -11,6 +11,7 @@
 
 import { getOpenAIApiKey } from './openai';
 import { openAISources } from './sns-explanation.js';
+import {createApiError, readApiJson, aggregateApiErrors, formatApiErrorDetails, shouldStopApiFallback, sanitizeErrorMessage} from './api-errors.js';
 import {
     OPENAI_TEXT_MODEL_IDS,
     OPENAI_VISION_MODEL_IDS,
@@ -19,6 +20,10 @@ import {
 } from './openai-model-routes.js';
 
 const OPENAI_TEXT_TIMEOUT_MS = 600_000;
+const usesReasoningModel = modelId => modelId.startsWith('gpt-6-') || modelId.startsWith('gpt-5.6-');
+// 推論と本文は同じ上限を消費する。旧モデルの本文用8K枠を推論モデルへ流用しない。
+// https://developers.openai.com/api/docs/guides/reasoning#allocating-space-for-reasoning
+const getTextOutputTokenLimit = modelId => usesReasoningModel(modelId) ? 32768 : 8192;
 
 const extractResponsesOutputText = (response) => (
     (response.output || [])
@@ -30,7 +35,40 @@ const extractResponsesOutputText = (response) => (
         .trim()
 );
 
-const requestOpenAIWebSearch = async ({ modelId, prompt, systemInstruction, timeoutMs, apiKey }) => {
+const readCompleteOpenAIText = (data, modelId, webSearch, onThinkingUpdate) => {
+    const choice = data.choices?.[0];
+    const finish = webSearch ? data.status : choice?.finish_reason;
+    const reason = webSearch ? data.incomplete_details?.reason : null;
+    const usage = data.usage;
+    const tokenCount = value => Number.isInteger(value) && value >= 0 ? value : 'unknown';
+    const outputTokens = tokenCount(usage?.output_tokens ?? usage?.completion_tokens);
+    const reasoningTokens = tokenCount(usage?.output_tokens_details?.reasoning_tokens ?? usage?.completion_tokens_details?.reasoning_tokens);
+    const diagnostics = sanitizeErrorMessage(`finish=${finish || 'unknown'}${reason ? `; reason=${reason}` : ''}; output_tokens=${outputTokens}; reasoning_tokens=${reasoningTokens}; limit=${getTextOutputTokenLimit(modelId)}`);
+    onThinkingUpdate?.(`> [RESPONSE] ${modelId}: ${diagnostics}`);
+
+    const refusal = webSearch
+        ? (data.output || []).flatMap(item => item.content || []).find(part => part.type === 'refusal')?.refusal
+        : choice?.message?.refusal;
+    const fail = (code, message) => { throw createApiError(`${message} (${diagnostics})`, {provider:'openai', model:modelId, code}); };
+    if (refusal || finish === 'content_filter' || reason === 'content_filter') {
+        fail('content_policy_violation', refusal || 'モデルが安全基準により生成を拒否しました。');
+    }
+    if (finish === 'length' || reason === 'max_output_tokens') {
+        fail('OUTPUT_TOKEN_LIMIT', '推論・本文の生成が出力トークン上限で途中終了しました。未完成の本文は採用しません。');
+    }
+    if (webSearch && finish && finish !== 'completed') {
+        fail('INCOMPLETE_RESPONSE', 'OpenAIの応答が完了していません。');
+    }
+    const content = webSearch ? data.output_text || extractResponsesOutputText(data) : choice?.message?.content;
+    if (content != null && typeof content !== 'string') {
+        fail('INVALID_RESPONSE', 'OpenAIの応答本文がテキストではありません。');
+    }
+    const text = (content || '').trim();
+    if (!text) fail('EMPTY_RESPONSE', 'OpenAI returned no text output.');
+    return text;
+};
+
+const requestOpenAIWebSearch = async ({ modelId, prompt, systemInstruction, timeoutMs, apiKey, signal, onThinkingUpdate }) => {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
     try {
@@ -50,23 +88,18 @@ const requestOpenAIWebSearch = async ({ modelId, prompt, systemInstruction, time
                 model: modelId,
                 input,
                 tools: [{ type: 'web_search' }],
-                max_output_tokens: 8192
+                max_output_tokens: getTextOutputTokenLimit(modelId)
             }),
-            signal: controller.signal
+            signal: signal ? AbortSignal.any([signal, controller.signal]) : controller.signal
         });
-        const data = await response.json().catch(() => ({}));
-        if (!response.ok) {
-            throw new Error(data.error?.message || response.statusText || `HTTP ${response.status}`);
-        }
+        const data = await readApiJson(response, {provider:'openai', model:modelId});
 
-        const text = data.output_text || extractResponsesOutputText(data);
-        if (!text) {
-            throw new Error('OpenAI Web Search returned no text output.');
-        }
+        const text = readCompleteOpenAIText(data, modelId, true, onThinkingUpdate);
         return { text, sources: openAISources(data), usage: data.usage };
     } catch (error) {
-        if (error.name === 'AbortError') {
-            throw new Error(`Timeout awaiting web search from ${modelId} (${timeoutMs / 1000}s limit)`);
+        if (signal?.aborted) throw createApiError('処理を中断しました。', {provider:'openai', model:modelId, code:'CANCELLED'});
+        if (controller.signal.aborted || error.name === 'AbortError') {
+            throw createApiError(`Timeout awaiting web search from ${modelId} (${timeoutMs / 1000}s limit)`, {provider:'openai', model:modelId, code:'TIMEOUT'});
         }
         throw error;
     } finally {
@@ -74,11 +107,11 @@ const requestOpenAIWebSearch = async ({ modelId, prompt, systemInstruction, time
     }
 };
 
-export const requestOpenAIChatCompletion = async ({modelId, messages, apiKey, timeoutMs}) => {
+export const requestOpenAIChatCompletion = async ({modelId, messages, apiKey, timeoutMs, signal}) => {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
     try {
-        const usesModernChatParameters = modelId.startsWith('gpt-6-') || modelId.startsWith('gpt-5.6-');
+        const usesModernChatParameters = usesReasoningModel(modelId);
         const response = await fetch('https://api.openai.com/v1/chat/completions', {
             method: 'POST',
             headers: {'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}`},
@@ -86,15 +119,16 @@ export const requestOpenAIChatCompletion = async ({modelId, messages, apiKey, ti
                 model: modelId,
                 messages,
                 ...(usesModernChatParameters
-                    ? {max_completion_tokens: 8192}
-                    : {temperature: 0.7, max_tokens: 8192}),
+                    ? {max_completion_tokens: getTextOutputTokenLimit(modelId)}
+                    : {temperature: 0.7, max_tokens: getTextOutputTokenLimit(modelId)}),
             }),
-            signal: controller.signal,
+            signal: signal ? AbortSignal.any([signal, controller.signal]) : controller.signal,
         });
-        return {response, data: await response.json()};
+        return {response, data: await readApiJson(response, {provider:'openai', model:modelId})};
     } catch (error) {
+        if (signal?.aborted) throw createApiError('処理を中断しました。', {provider:'openai', model:modelId, code:'CANCELLED'});
         if (controller.signal.aborted || error?.name === 'AbortError') {
-            throw new Error(`Timeout awaiting response from ${modelId} (${timeoutMs / 1000}s limit)`);
+            throw createApiError(`Timeout awaiting response from ${modelId} (${timeoutMs / 1000}s limit)`, {provider:'openai', model:modelId, code:'TIMEOUT'});
         }
         throw error;
     } finally {
@@ -109,7 +143,7 @@ export const requestOpenAIChatCompletion = async ({modelId, messages, apiKey, ti
  */
 export const callOpenAIText = async (prompt, images = null, systemInstruction = null, onThinkingUpdate, options = {}) => {
     const apiKey = getOpenAIApiKey();
-    if (!apiKey) throw new Error("OpenAI APIキーが設定されていません。");
+    if (!apiKey) throw createApiError("OpenAI APIキーが設定されていません。", {provider:'openai', code:'KEY_NOT_CONFIGURED'});
     const timeoutMs = options.timeoutMs ?? OPENAI_TEXT_TIMEOUT_MS;
 
     // Vision、STEP2専用のシナリオ、その他テキストを明確に分離する。
@@ -134,11 +168,13 @@ export const callOpenAIText = async (prompt, images = null, systemInstruction = 
         onThinkingUpdate(`> [MODEL] 固定開始モデル: ${MODEL_IDS[0]}（失敗時は下位モデルへフォールバック）`);
     }
 
+    const failures = [];
     let attemptIndex = 0;
     for (const modelId of MODEL_IDS) {
+        if (options.signal?.aborted) throw createApiError('処理を中断しました。', {provider:'openai', model:modelId, code:'CANCELLED'});
         attemptIndex++;
         try {
-            const usesModernChatParameters = modelId.startsWith("gpt-6-") || modelId.startsWith("gpt-5.6-");
+            const usesModernChatParameters = usesReasoningModel(modelId);
             console.log(`[OpenAI] Attempting connection with ${modelId}...`);
             if (onThinkingUpdate) {
                 if (attemptIndex === 1) {
@@ -146,6 +182,8 @@ export const callOpenAIText = async (prompt, images = null, systemInstruction = 
                 } else {
                     onThinkingUpdate(`> [API] 代替モデル ${modelId} で再解析を開始します... (${attemptIndex}/${MODEL_IDS.length})`);
                 }
+                onThinkingUpdate(`> [API] このモデルの応答待ち上限: ${timeoutMs / 1000}秒`);
+                onThinkingUpdate(`> [API] 出力上限: ${getTextOutputTokenLimit(modelId).toLocaleString()} tokens${usesModernChatParameters ? '（推論と本文の合計）' : ''}`);
             }
 
             if (useWebSearch) {
@@ -154,7 +192,9 @@ export const callOpenAIText = async (prompt, images = null, systemInstruction = 
                     prompt,
                     systemInstruction,
                     timeoutMs,
-                    apiKey
+                    apiKey,
+                    signal: options.signal,
+                    onThinkingUpdate
                 });
                 if (onThinkingUpdate) onThinkingUpdate('> [API] OpenAI Web Searchでニュースを確認し、シナリオを生成しました。');
                 if (onThinkingUpdate) onThinkingUpdate(`> [MODEL] 最終採用モデル: ${modelId}`);
@@ -222,42 +262,11 @@ export const callOpenAIText = async (prompt, images = null, systemInstruction = 
                 content: userContent.length === 1 ? prompt : userContent
             });
 
-            const {response, data} = await requestOpenAIChatCompletion({modelId, messages, apiKey, timeoutMs});
-
-            if (!response.ok) {
-                const errorMsg = data.error?.message || response.statusText;
-                console.warn(`[OpenAI] ${modelId} failed: ${response.status} ${errorMsg}`);
-
-                // レート制限 or モデル未対応の場合は次のモデルへ
-                if (response.status === 429) {
-                    if (onThinkingUpdate) onThinkingUpdate(`> [API] レート制限(429)。次のモデルを試行します...`);
-                    continue;
-                }
-                if (response.status === 404) {
-                    if (onThinkingUpdate) onThinkingUpdate(`> [API] モデル未対応(404)。次のモデルを試行します...`);
-                    continue;
-                }
-                // 400系/500系エラーも次のモデルへフォールバック
-                if (onThinkingUpdate) onThinkingUpdate(`> [API] エラー(${response.status})。次のモデルを試行します...`);
-                continue;
-            }
+            const {data} = await requestOpenAIChatCompletion({modelId, messages, apiKey, timeoutMs, signal:options.signal});
 
             const choice = data.choices?.[0];
 
-            if (!choice || !choice.message?.content) {
-                console.warn(`[OpenAI] Empty response from ${modelId}`);
-                if (onThinkingUpdate) onThinkingUpdate(`> [API] モデル応答なし。次のモデルへフォールバックします。`);
-                continue;
-            }
-
-            const finalOutput = choice.message.content;
-
-            // [Safety Refusal Check]
-            if (finalOutput.includes("I'm sorry") || finalOutput.includes("cannot assist") || finalOutput.includes("can't assist")) {
-                console.warn(`[OpenAI] ${modelId} returned safety refusal: "${finalOutput.trim()}"`);
-                if (onThinkingUpdate) onThinkingUpdate(`> [API] セーフティ拒否反応を検出。次のモデルへフォールバックします...`);
-                continue;
-            }
+            const finalOutput = readCompleteOpenAIText(data, modelId, false, onThinkingUpdate);
 
             if (onThinkingUpdate) onThinkingUpdate(`> [API] 応答の受信が完了しました。`);
             if (onThinkingUpdate) onThinkingUpdate(`> [MODEL] 最終採用モデル: ${modelId}`);
@@ -273,20 +282,15 @@ export const callOpenAIText = async (prompt, images = null, systemInstruction = 
             };
 
         } catch (err) {
-            console.warn(`Model ${modelId} failed:`, err.message);
-            if (err.message.includes("429") || err.message.includes("Quota")) {
-                if (onThinkingUpdate) onThinkingUpdate(`> [API] 回数制限。次のモデルを試行します。`);
-            } else if (err.message.includes("Timeout")) {
-                if (onThinkingUpdate) onThinkingUpdate(`> [API] タイムアウト。次のモデルを試行します。`);
-            } else {
-                if (onThinkingUpdate) onThinkingUpdate(`> [API] エラー発生。次のモデルへバイパスします。(${err.message})`);
-            }
+            const failure = createApiError(err.message, {provider:'openai', model:modelId, status:err.status, code:err.code, name:err.name});
+            failures.push(failure);
+            console.warn(formatApiErrorDetails(failure));
+            if (onThinkingUpdate) onThinkingUpdate(`> [API] 試行失敗: ${formatApiErrorDetails(failure)}`);
+            if (shouldStopApiFallback(failure)) throw failure;
         }
     }
 
     // 全モデル失敗
     if (onThinkingUpdate) onThinkingUpdate("> [API] 全モデルとの通信に失敗しました。");
-    throw new Error(useWebSearch
-        ? "OpenAI Web Search: 全モデル接続失敗。APIキーの有効性・残高・Web Search利用可否を確認してください。"
-        : "OpenAI: 全モデル接続失敗。APIキーの有効性・残高・レート制限を確認してください。");
+    throw aggregateApiErrors('openai', failures);
 };

@@ -178,6 +178,17 @@ export const normalizeMangaPage = async (dataUrl) => {
     mode: plan ? 'band-layout' : 'contained-source' };
 };
 
+const inspectImageDimensions = async (dataUrl) => {
+  const image = new Image();
+  image.src = dataUrl;
+  await image.decode();
+  return { width: image.naturalWidth, height: image.naturalHeight };
+};
+
+const hasA4PageRatio = ({ width, height } = {}) => Number.isFinite(width)
+  && Number.isFinite(height) && width > 0 && height > 0
+  && Math.abs(width - (height * PAGE_LAYOUT.width / PAGE_LAYOUT.height)) <= 1;
+
 export const extractMangaPanelCrops = async (dataUrl) => {
   const image = new Image();
   image.src = dataUrl;
@@ -203,9 +214,23 @@ export const extractMangaPanelCrops = async (dataUrl) => {
   }).filter(Boolean);
 };
 
-export const normalizePageCandidate = async (candidate, normalize = normalizeMangaPage) => {
+export const normalizePageCandidate = async (
+  candidate,
+  normalize = normalizeMangaPage,
+  inspect = inspectImageDimensions,
+) => {
   if (candidate.pageLayout?.applied) return candidate;
   const originalImage = `data:${candidate.mimeType || 'image/png'};base64,${candidate.base64Img}`;
+  try {
+    const dimensions = await inspect(originalImage);
+    if (hasA4PageRatio(dimensions)) {
+      return { ...candidate, pageLayout: {
+        applied: true, mode: 'already-a4', width: dimensions.width, height: dimensions.height,
+      } };
+    }
+  } catch {
+    // The normalizer below owns the actionable decode error and reason.
+  }
   try {
     const result = await normalize(originalImage);
     if (!result.applied) return { ...candidate, pageLayout: result };

@@ -6,6 +6,44 @@ import vm from 'node:vm';
 const workflow = readFileSync(new URL('../src/hooks/useMangaWorkflow.js', import.meta.url), 'utf8');
 const assembly = workflow.slice(workflow.indexOf('const assemblePrompt ='), workflow.indexOf('// [v3.04]'));
 
+test('scenario invalidation releases STEP3 and an old review cannot unlock or overwrite a new run', async () => {
+  const reviews = [];
+  let active = false;
+  let output = '';
+  const context = {
+    scenarioRunEpochRef:{current:0}, promptAssemblyRunRef:{current:0}, promptAssemblyAbortRef:{current:null},
+    scenario:'fixture scenario', castList:'fixture cast', validateMangaScenario:()=>({ok:true}),
+    setIsAssembling:value=>{active=value;}, setFinalPrompt:value=>{output=value;},
+    setGenLog:()=>{},setPolicyErrorMsg:()=>{},setPolicyFixLog:()=>{},setIsPolicyPanelOpen:()=>{},setShowPolicyChoice:()=>{},
+    lastPolicyErrorRef:{current:''},setAssembleThought:()=>{},normalizePromptProviderFamily:value=>value,getCurrentPromptProviderFamily:()=> 'gemini',
+    Date,AbortController,setInterval:()=>1,clearInterval:()=>{},resolvedPunchlineTypeRef:{current:'gag'},resolveScenarioEndingType:()=> 'gag',
+    punchlineType:'gag',updateResolvedPunchlineType:()=>{},PROMPT_PROVIDER_FAMILIES:{CHATGPT:'chatgpt'},buildMangaPrompt:()=> 'built prompt',
+    colorMode:'color',bg360Image:null,bg360Analysis:null,bg360Enabled:false,bg360CroppedPanels:null,SYSTEM_VERSION:'fixture',
+    OPENAI_SCENARIO_MODEL_OPTIONS:[],scenarioUsedModelRef:{current:null},getEndingModePolicy:()=>({endingTone:'gag'}),
+    reviewComedyPrompt:input=>new Promise(resolve=>reviews.push({resolve,signal:input.signal})),callAI:()=>{},isDocumentaryEnding:()=>false,
+    assertPromptEndingModeConsistency:()=>{},assertPrintableDialogue:()=>{},showStatus:()=>{},console,
+    qualityRetryAbortRef:{current:false},setGeneratedImage:()=>{},setIsGeneratingImage:()=>{},setIsFixingPolicy:()=>{},setPolicyAutoRetrying:()=>{}
+  };
+  const resetStart = workflow.includes('const invalidatePromptAssembly =') ? 'const invalidatePromptAssembly =' : 'const invalidateScenarioOutput =';
+  const invalidation = workflow.slice(workflow.indexOf(resetStart), workflow.indexOf('const setScenarioFromUser ='));
+  vm.createContext(context);
+  vm.runInContext(assembly + invalidation + 'globalThis.start=assemblePrompt;globalThis.invalidate=invalidateScenarioOutput;', context);
+  const first = context.start();
+  assert.equal(active, true);
+  context.invalidate();
+  assert.equal(active, false, 'invalidated assembly must release its loading state immediately');
+  assert.equal(reviews[0].signal.aborted, true, 'the invalidated API request must be cancelled');
+  const second = context.start();
+  reviews[0].resolve({prompt:'stale prompt'});
+  assert.equal(await first, null);
+  assert.equal(active, true, 'old finally must not unlock the new run');
+  assert.equal(output, '');
+  reviews[1].resolve({prompt:'current prompt'});
+  assert.equal(await second, 'current prompt');
+  assert.equal(output, 'current prompt');
+  assert.equal(active, false);
+});
+
 test('prompt review updates one elapsed-time line and ignores superseded runs', () => {
   let now = 10000;
   let thought = 'AI精査中...';
