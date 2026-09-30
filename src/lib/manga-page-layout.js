@@ -214,6 +214,18 @@ export const extractMangaPanelCrops = async (dataUrl) => {
   }).filter(Boolean);
 };
 
+export const formatPageLayoutStatus = (pageLayout) => {
+  if (!pageLayout?.applied) {
+    return `[ページ配置] 未適用：${pageLayout?.reason || '配置情報を確認できません。'} 元画像を保持します。`;
+  }
+  if (pageLayout.mode === 'already-a4') {
+    return `[ページ配置] ${pageLayout.width}×${pageLayout.height}はA4比率のため、再処理せずそのまま表示します。`;
+  }
+  const layout = pageLayout.layout;
+  if (!layout) return '[ページ配置] 配置の詳細は未確認です。画像は保持します。';
+  return `[ページ配置] ${layout.width}×${layout.height}へ自動補正してから表示します。タイトル${layout.titleHeight}px・コマ全体${layout.panelHeight}px・フッター${layout.footerHeight}px。元のAPI画像も保持しました。`;
+};
+
 export const normalizePageCandidate = async (
   candidate,
   normalize = normalizeMangaPage,

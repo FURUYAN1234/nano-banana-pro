@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { setApiKey } from '../lib/gemini';
 import { generateImageWithImagen } from '../lib/imagen';
 import { buildImageEditRequest } from '../lib/image-edit.js';
+import { formatApiErrorGuide } from '../lib/api-errors.js';
 import { generateImageWithOpenAI, setOpenAIApiKey } from '../lib/openai';
 import {buildOpenAIReferencePlan, appendOpenAIReferencePrompt, getOpenAIPromptBodyBudget} from '../lib/openai-image-references.js';
 import {buildGeminiReferencePlan, buildGeminiImageApiPrompt} from '../lib/gemini-image-references.js';
@@ -26,7 +27,7 @@ import {
   normalizePromptProviderFamily
 } from '../lib/prompt-assembler';
 import { addGenerationHistoryItem } from '../lib/generation-history';
-import { extractMangaPanelCrops, normalizePageCandidate } from '../lib/manga-page-layout.js';
+import { extractMangaPanelCrops, normalizePageCandidate, formatPageLayoutStatus } from '../lib/manga-page-layout.js';
 import { generateScenario, enhanceScenarioText } from '../lib/scenario-provider';
 import { fixPolicyViolation } from '../lib/policy-fixer';
 import { verifyApiKeyConnection } from '../lib/api-key-preflight';
@@ -1469,12 +1470,7 @@ export default function useMangaWorkflow() {
       setGeneratedImage(img);
       setIsFallbackUsed(false);
       setImageQualityNeedsRepair(false);
-      if (candidate.pageLayout.mode === 'already-a4') {
-        log(`[ページ配置] ${candidate.pageLayout.width}×${candidate.pageLayout.height}はA4比率のため、再処理せずそのまま表示します。`);
-      } else {
-        const layout = candidate.pageLayout.layout;
-        log(`[ページ配置] ${layout.width}×${layout.height}へ自動補正してから表示します。元のAPI画像も保持しました。`);
-      }
+      log(formatPageLayoutStatus(candidate.pageLayout));
       log('[画像修正] 完了。修正前の画像は履歴から選べます。自動品質検査は未実行です。');
       showStatus('修正版を表示しました。変更箇所を確認してください。元画像は履歴に残っています。');
       return true;
@@ -1643,12 +1639,7 @@ export default function useMangaWorkflow() {
         };
         if (qualityMode !== 'four-panel') return candidate;
         const normalized = await normalizePageCandidate(candidate);
-        if (normalized.pageLayout.applied) {
-          const layout = normalized.pageLayout.layout;
-          statCallback(`[ページ配置] ${layout.width}×${layout.height}／タイトル${layout.titleHeight}px・コマ全体${layout.panelHeight}px・フッター${layout.footerHeight}px。各コマの相対高と書体を保持し、元画像も保存しました。`);
-        } else {
-          statCallback(`[ページ配置] 未適用：${normalized.pageLayout.reason} 元画像を保持します。`);
-        }
+        statCallback(formatPageLayoutStatus(normalized.pageLayout));
         return normalized;
       };
 
@@ -2012,13 +2003,7 @@ export default function useMangaWorkflow() {
           `[ERROR GUIDE] 3. コピーしたプロンプトを貼り付け、元の「キャラクター設定画像」を一緒に添付して送信してください。`
         ];
       } else {
-        guideLines = [
-          `[ERROR GUIDE] ⏲️ 接続タイムアウト、または一時的な通信エラーで生成に失敗しました（${isOpenAIEngine ? 'OpenAI' : 'Google'}サーバーの混雑など）。`,
-          "[ERROR GUIDE] 【対処法】数分時間を置いてから「画像を生成する」を再度試すか、以下の手順で公式ウェブ版から生成してください。",
-          "[ERROR GUIDE] 1. 画面左下の「プロンプトをコピーする」ボタンを押します。",
-          `[ERROR GUIDE] 2. ${isOpenAIEngine ? 'ChatGPTウェブ版' : 'Geminiウェブ版'} を開きます: ${isOpenAIEngine ? 'https://chatgpt.com/' : 'https://gemini.google.com/app'}`,
-          `[ERROR GUIDE] 3. コピーしたプロンプトを貼り付け、元の「キャラクター設定画像」を一緒に添付して送信してください。`
-        ];
+        guideLines = formatApiErrorGuide(error).split('\n');
       }
 
       setGenLog(prev => [

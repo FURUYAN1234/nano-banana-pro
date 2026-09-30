@@ -1,6 +1,6 @@
 # Super FURU AI 4-koma System / Super FURU AI 4コマシステム
 
-> Current source version: **v6.7.1** / 現在のソース版: **v6.7.1**
+> Current source version: **v6.7.2** / 現在のソース版: **v6.7.2**
 
 An experimental web application in which AI handles topic research, story structure, direction, prompt construction, image generation, and quality review for a four-panel manga. / AIが話題調査、構成、演出、プロンプト構築、画像生成、品質確認まで担当する4コマ漫画制作Webアプリです。
 
@@ -346,11 +346,14 @@ The production application is published from the `main` branch through the repos
 
 **Why are there two ComfyUI download buttons? / ComfyUIのダウンロードボタンが2つあるのはなぜですか？**  The JSON defines the workflow, while the ZIP supplies three custom-node folders and documentation; three additional runtime dependencies are installed separately. / JSONはワークフロー定義、ZIPはカスタムノード3フォルダーと導入文書です。さらに実行依存3項目を別途導入します。
 
-**Where are older packages? / 旧版はどこですか？**  Older source tags remain for audit history. Use the current `20260928-173220` JSON button and matching v6.7.1 FourPanel Release asset. This pair is labeled interim until the combined graph passes an end-to-end run. / 旧タグは監査用履歴として残します。新規導入は現行の`20260928-173220`ワークフローボタンと対応するv6.7.1 FourPanel Releaseアセットを使用してください。統合グラフの全経路実走までは中間配布です。
+**Where are older packages? / 旧版はどこですか？**  Older source tags remain for audit history. Use the current `20260928-173220` JSON button and matching v6.7.2 FourPanel Release asset. This pair is labeled interim until the combined graph passes an end-to-end run. / 旧タグは監査用履歴として残します。新規導入は現行の`20260928-173220`ワークフローボタンと対応するv6.7.2 FourPanel Releaseアセットを使用してください。統合グラフの全経路実走までは中間配布です。
 
 **Is this the T2V/I2V/Ref2V repository? / T2V・I2V・Ref2Vのリポジトリですか？**  No. Those workflows are maintained separately in [comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows). / いいえ。それらは別の[comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows)で管理します。
 
 ## 📋 ChangeLog
+
+### v6.7.2 (2026-09-30)
+- **[Fix & UX]** API生成後にA4画像の表示が停止する不具合を修正。OpenAIとGeminiの実生成・表示を確認し、内部エラーを通信混雑と誤表示する案内も修正しました。 / Fixed the post-generation A4 display crash, verified real OpenAI and Gemini image output, and stopped misreporting internal errors as network congestion.
 
 ### v6.7.1 (2026-09-30)
 - **[Fix & UX]** STEP2の出力上限不足と未完了判定を修正し、API画像へ追加指示を送れるようにしました。修正版はA4比率を表示前に判定し、正しい画像は再処理せず、ずれた画像だけ自動補正します。APIエラーは原因別に表示します。 / Fixed STEP2 output ceilings and incomplete-response handling, added follow-up edits for API images, automatically corrected only off-ratio edited pages before display, and separated API errors by cause.

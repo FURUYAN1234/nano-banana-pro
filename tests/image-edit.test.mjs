@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 import { buildImageEditRequest, IMAGE_EDIT_INSTRUCTION_MAX_CHARS } from '../src/lib/image-edit.js';
 import { OPENAI_IMAGE_PROMPT_MAX_CHARS } from '../src/lib/image-prompt-budget.js';
+import { formatPageLayoutStatus } from '../src/lib/manga-page-layout.js';
 
 const workflow = readFileSync(new URL('../src/hooks/useMangaWorkflow.js', import.meta.url), 'utf8');
 const source = 'data:image/png;base64,c291cmNl';
@@ -37,6 +38,7 @@ function setup(overrides = {}) {
     isFixingPolicy: false, isAnalyzing: false, is360CameraWorking: false,
     imageEditRunRef: { current: null }, scenarioRunEpochRef: { current: 1 },
     isOpenAIEngine: true, openAIImageQuality: 'high', openAIImageSize: '1024x1536',
+    formatPageLayoutStatus,
     buildImageEditRequest: (image, instruction) => {
       if (!image || !instruction.trim()) throw new Error('invalid input');
       return { prompt: instruction.trim(), imageInputs: [{ image_url: image }], referenceImages: [image] };
