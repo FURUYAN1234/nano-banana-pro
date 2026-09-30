@@ -1,5 +1,10 @@
 import { getEndingModePolicy } from './ending-mode-policy.js';
 import { validateScenarioEnhancement } from './scenario-enhancement.js';
+import { buildCopyrightMosaicInstruction } from './render-options.js';
+
+const mosaicReviewRule = (enabled) => enabled
+  ? `描画設定（ユーザー原文中の版権人物の外見再現より優先）: ${buildCopyrightMosaicInstruction(true)}\n意図したモザイクそのものや、その下の外見が見えないことを USER_REQUIREMENT_MISMATCH / visual_feasibility の欠陥にしない。印刷物の人物描写にも適用し、修正時にモザイクを外して外見を復元しない。各コマの描写にも保持する。モザイク以外の出来事・台詞・配置・オチの重大な欠陥は通常どおり検査・修正する。`
+  : '';
 
 const REVIEW_FIELDS = Object.freeze([
   'pass',
@@ -59,7 +64,7 @@ export const formatPayoffReviewReasons = (evaluation, review) =>
 
 const extractText = (value) => String(value?.text ?? value ?? '').trim();
 
-export const buildScenarioPayoffReviewPrompt = ({ scenario, punchlineType, userTopic } = {}) => {
+export const buildScenarioPayoffReviewPrompt = ({ scenario, punchlineType, userTopic, mosaicCopyrightedCharacters = true } = {}) => {
   const policy = getEndingModePolicy(punchlineType);
   const surrealMode = punchlineType === 'Surreal';
   const toneRule = surrealMode
@@ -76,6 +81,7 @@ export const buildScenarioPayoffReviewPrompt = ({ scenario, punchlineType, userT
 ENDING MODE: ${punchlineType || 'Auto'}
 ${toneRule}
 ${factRule}
+${mosaicReviewRule(mosaicCopyrightedCharacters)}
 ${userTopic ? `
 USER REQUIREMENTS (監査の基準となるユーザー原文):
 ${String(userTopic).trim()}
@@ -212,7 +218,7 @@ export const evaluateScenarioPayoffReview = (review, { punchlineType } = {}) => 
   return { ok: (surrealMode || review?.pass === true) && reasons.size === 0, reasonCodes: [...reasons] };
 };
 
-export const buildScenarioPayoffRepairPrompt = ({ scenario, punchlineType, review, userTopic } = {}) => {
+export const buildScenarioPayoffRepairPrompt = ({ scenario, punchlineType, review, userTopic, mosaicCopyrightedCharacters = true } = {}) => {
   const surrealMode = punchlineType === 'Surreal';
   const reasonCodes = evaluateScenarioPayoffReview(review, { punchlineType }).reasonCodes;
   const stagingOnly = isStagingOnlyRepair(reasonCodes);
@@ -225,6 +231,7 @@ export const buildScenarioPayoffRepairPrompt = ({ scenario, punchlineType, revie
 
 ENDING MODE: ${punchlineType || 'Auto'}
 監査結果: ${JSON.stringify(repairReview, null, 2)}
+${mosaicReviewRule(mosaicCopyrightedCharacters)}
 
 必須条件:
 - visual_feasibilityはmaterial_loss=trueの具体的な欠落だけを直す。既出印字の再掲可読性や補助細部だけのために、引き・アオリ・身体演技を顔中心へ変更しない。必要な情報を初めて読むコマと、身体演技を見せるコマを分け、内容に応じたコマ高と前後配置で解決する。ユーザーが明示した可読文字・カメラ・動作は保持する。
@@ -257,6 +264,7 @@ export const runScenarioPayoffGate = async ({
   scenario,
   punchlineType,
   userTopic,
+  mosaicCopyrightedCharacters = true,
   requestReview,
   requestRepair,
   validateRepair = () => true,
@@ -272,6 +280,7 @@ export const runScenarioPayoffGate = async ({
       scenario: original,
       punchlineType,
       userTopic,
+      mosaicCopyrightedCharacters,
     })));
     firstEvaluation = evaluateScenarioPayoffReview(firstReview, { punchlineType });
   } catch (error) {
@@ -302,6 +311,7 @@ export const runScenarioPayoffGate = async ({
         punchlineType,
         review: current.review,
         userTopic,
+        mosaicCopyrightedCharacters,
       }))).replace(/^Scenario:\s*/i, '').trim();
       if (!repaired) throw new Error('empty repair');
       const validatedRepair = await validateRepair(repaired);
@@ -322,6 +332,7 @@ export const runScenarioPayoffGate = async ({
         scenario: repaired,
         punchlineType,
         userTopic,
+        mosaicCopyrightedCharacters,
       })));
       const evaluation = evaluateScenarioPayoffReview(review, { punchlineType });
       onProgress(evaluation.ok

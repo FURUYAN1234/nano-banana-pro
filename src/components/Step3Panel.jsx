@@ -10,6 +10,8 @@ import ThinkingLog from './ThinkingLog';
  * STEP 03: プロンプト生成パネル
  */
 export default function Step3Panel({
+  showWatermarks = true,
+  setShowWatermarks,
   step3Ref,
   currentStep,
   isSearching,
@@ -76,6 +78,13 @@ export default function Step3Panel({
           <br />選択後にSTEP3を押して反映します。全設定リセットまで選択を保持します。
         </p>
       </fieldset>
+
+      <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer"
+        style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+        <input type="checkbox" checked={showWatermarks} disabled={controlsDisabled}
+          onChange={(event) => setShowWatermarks(event.target.checked)} />
+        <span>ウオーターマークを表記する</span>
+      </label>
 
       <button
         ref={promptActionRef}

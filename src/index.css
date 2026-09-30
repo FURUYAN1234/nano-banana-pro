@@ -2,6 +2,24 @@
 @tailwind components;
 @tailwind utilities;
 
+.api-key-links { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.api-key-link {
+  display: inline-block;
+  background: #172334;
+  border: 1px solid currentColor;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.5;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.api-key-link--gemini, .api-key-link--gemini:visited { color: #67e8f9; }
+.api-key-link--openai, .api-key-link--openai:visited { color: #6ee7b7; }
+.api-key-link:hover { color: #fff; background: #263c54; }
+.api-key-link:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+
 .image-edit-submit { background-color: #ddd6fe; color: #4c1d95; }
 .image-edit-submit:hover:not(:disabled) { background-color: #c4b5fd; }
 .image-edit-submit:focus-visible { outline: 2px solid #c4b5fd; outline-offset: 3px; }

@@ -46,6 +46,29 @@ const WEAK_SLOGAN_REVIEW = {
   reason_codes: [],
 };
 
+test('mosaic selection reaches scenario review, repair and re-review without exempting real defects', async () => {
+  for (const enabled of [true, false]) {
+    const prompts = [];
+    let reviews = 0;
+    const result = await runScenarioPayoffGate({
+      scenario: 'ORIGINAL', userTopic: '展示物と記念撮影する',
+      mosaicCopyrightedCharacters: enabled,
+      requestReview: async prompt => {
+        prompts.push(prompt);
+        return JSON.stringify(reviews++ ? STRONG_GAG_REVIEW : WEAK_SLOGAN_REVIEW);
+      },
+      requestRepair: async prompt => { prompts.push(prompt); return 'REPAIRED'; },
+    });
+    assert.equal(result.status, 'repaired', 'real narrative defects still require repair');
+    assert.equal(prompts.length, 3);
+    for (const prompt of prompts) {
+      assert.equal(prompt.includes('版権キャラクターにおおきなモザイクをかける'), enabled);
+      assert.equal(prompt.includes('意図したモザイクそのもの'), enabled);
+      assert.ok(prompt.includes('展示物と記念撮影する'));
+    }
+  }
+});
+
 test('page camera review catches renamed low-angle repetition, repairs once and preserves dialogue', async () => {
   const repeated = { ...STRONG_GAG_REVIEW, camera_rhythm: {
     ...CAMERA_RHYTHM, repeated_panels: [2, 3, 4], material_repeat: true,

@@ -53,6 +53,7 @@ export const getApiErrorInfo = error => {
   if (error?.code === 'OUTPUT_TOKEN_LIMIT') return info('output_limit', 'AIの出力トークン上限に到達', '推論と本文の生成が上限で途中終了しました。未完成の結果は採用せず停止しました。入力を整理するか、別のモデルで再実行してください。待機では解消しません。');
   if (error?.code === 'INCOMPLETE_RESPONSE') return info('response', 'AI応答が未完了', '応答の終了状態を確認してください。途中の本文は採用していません。');
   if (error?.code === 'EMPTY_RESPONSE') return info('empty', 'AIから空の応答', '応答本文がありませんでした。再試行しても続く場合は入力とモデルを確認してください。');
+  if (error?.code === 'NO_IMAGE_OUTPUT') return info('empty_image', 'AIの応答に画像がありません', '画像データを受け取れませんでした。詳細の終了状態と応答を確認してください。この情報だけではパラメーター不正・安全基準による拒否・一時的な障害のいずれかは確定できません。');
   if (error?.code === 'INVALID_RESPONSE' || error?.name === 'SyntaxError') return info('response', 'AI応答形式のエラー', '応答を読み取れませんでした。再試行しても続く場合は詳細を確認してください。');
   if (status >= 400) return info('request', 'APIリクエストが拒否されました', '詳細にある入力・パラメーターの問題を確認してください。待機だけでは解消しない場合があります。');
   if (['TypeError', 'ReferenceError', 'RangeError'].includes(error?.name)) return info('internal', 'アプリ内部エラー', '待機では解消できない可能性があります。表示された詳細と直前の操作を報告してください。');

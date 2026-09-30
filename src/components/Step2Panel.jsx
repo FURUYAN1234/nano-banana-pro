@@ -38,6 +38,9 @@ const DEFAULT_OPENAI_SCENARIO_MODEL_LABEL = OPENAI_SCENARIO_MODEL_OPTIONS
  * STEP 02: シナリオ構築設定パネル
  */
 export default function Step2Panel({
+  mosaicCopyrightedCharacters = true,
+  setMosaicCopyrightedCharacters,
+  isRenderOptionsLocked = false,
   step2Ref,
   currentStep,
   isAnalyzing,
@@ -374,6 +377,13 @@ export default function Step2Panel({
               </select>
               <ChevronDown size={20} strokeWidth={3} className="punchline-select-chevron" aria-hidden="true" />
             </div>
+            <label className="mt-2 flex items-center gap-2 text-xs text-slate-300 cursor-pointer"
+              style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px', marginTop: '8px' }}>
+              <input type="checkbox" checked={mosaicCopyrightedCharacters}
+                disabled={isRenderOptionsLocked}
+                onChange={(event) => setMosaicCopyrightedCharacters(event.target.checked)} />
+              <span>版権キャラクターにモザイクをかける</span>
+            </label>
           </div>
           {isOpenAIEngine && (
           <div className="scenario-model-select-card flex-1 bg-[#050505] p-3 rounded-xl border border-cyan-500/20">

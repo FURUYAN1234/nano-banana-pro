@@ -8,7 +8,7 @@ export const GEMINI_A4_RELAYOUT_PROMPT = `${SOURCE_LOCK}
 
 Rebuild the whole page as exactly four horizontal manga panels stacked vertically in an exact A4 portrait canvas at ${MANGA_MANUSCRIPT_RATIO_LABEL} (width:height, approximately ${MANGA_MANUSCRIPT_ASPECT_LABEL}). Preserve the existing relative panel heights, complete artwork, dialogue and title lettering. Keep uniform white gutters and no extra outer margins. Do not make the page extremely tall, square, landscape, or a single illustration. This is a layout correction, not a new story or redesign.
 
-Before returning the image, verify that all four panels are present, keep their relative heights, are fully visible, and retain the original Japanese dialogue and speaker-to-bubble assignment. Keep both watermarks fully inside a separate footer with visible safe margins; never clip any glyph.`;
+Before returning the image, verify that all four panels are present, keep their relative heights, are fully visible, and retain the original Japanese dialogue and speaker-to-bubble assignment. If the source has watermarks, preserve them fully inside a separate footer with visible safe margins; never clip any glyph. If the source has none, do not add any. Preserve any intentional character mosaic.`;
 
 export const GEMINI_2K_REFINEMENT_PROMPT = `${SOURCE_LOCK}
 

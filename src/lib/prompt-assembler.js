@@ -1,3 +1,4 @@
+import { buildRenderOptionsContract } from './render-options.js';
 import { stripSourceMetadata } from './sns-explanation.js';
 import { MANGA_FACIAL_ACTING_LOCK_COMPACT } from './facial-acting.js';
 import { formatGeneratedMangaTitle } from './manga-title.js';
@@ -561,6 +562,8 @@ export const normalizePromptProviderFamily = (providerFamily) => {
  * @returns {string} 構築された最終プロンプト
  */
 export const buildMangaPrompt = ({
+  mosaicCopyrightedCharacters = true,
+  showWatermarks = true,
   scenario,
   castList,
   colorMode,
@@ -708,6 +711,7 @@ Dialogue (verbatim bubbles): ${extractDialogueOnly(pt, castList, { forImagePromp
     panelSections = eyeLineBase ? `${eyeLineBase}\n\n${panelSections}` : panelSections;
 
     rawPrompt = buildChatGPTMangaPrompt({
+      showWatermarks,
       safeTopic, watermarkEng, styleCore, safeLocation, isMonochrome,
       bg360Image, bg360Analysis, bg360Enabled, bg360CroppedPanels,
       VAR_CAST_LIST_CHATGPT, identityMatrix, activeOutfit: promptActiveOutfit,
@@ -753,6 +757,7 @@ ${geminiRearForegroundLock}`;
 
     const antiCharSheetPrefix = ANTI_CHARSHEET_PREFIX;
     rawPrompt = antiCharSheetPrefix + buildGeminiMangaPrompt({
+      showWatermarks,
       safeTopic, watermarkEng, styleCore, safeLocation, isMonochrome,
       bg360Image, bg360Analysis, bg360Enabled, bg360CroppedPanels,
       VAR_CAST_LIST: promptCastList, identityMatrix, activeOutfit: promptActiveOutfit,
@@ -770,6 +775,10 @@ ${geminiRearForegroundLock}`;
   // 年齢セーフティフィルターの適用
   let safePrompt = applySafetyAgeUp(rawPrompt.trim());
   if (isMonochrome) safePrompt = `${MONOCHROME_RENDERING_LOCK}\n\n${safePrompt}`;
+  safePrompt = `${buildRenderOptionsContract({ mosaicCopyrightedCharacters, showWatermarks })}\n\n${safePrompt}`;
+  if (!isChatGPTFamily && mosaicCopyrightedCharacters) {
+    safePrompt += '\n\nFINAL MOSAIC OVERRIDE (never print): After drawing the artwork, apply an opaque coarse mosaic OVERLAY to every copyrighted character depiction, including printed figures. Cover the ENTIRE figure from head/ears to hands/feet, extending slightly beyond its silhouette; never mask only the central face. Each square is one flat opaque color with no eyes, mouth or fine artwork drawn inside or over it. Use extra-large blocks (about 4–6 across the face). Preserve the scripted subject category, overall silhouette, dominant colors and story role underneath the overlay; obscure identifying fine details without redesigning the subject. Never replace the masked subject with another person, species or object. A printed figure remains the same printed figure across panels, not a living cast member. The opaque overlay overrides sharpness and natural-artwork rules only within its mask. Keep original characters, dialogue, title and surrounding scene text unobscured. Do not substitute pixel-art styling for this full-area overlay.';
+  }
 
   // ドキュメンタリーモード時の危険ワード言い換え
   if (isDocumentaryEnding(punchlineType)) {

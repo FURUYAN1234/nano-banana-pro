@@ -4,8 +4,35 @@ import {readFileSync} from 'node:fs';
 import {buildGeminiReferencePlan, buildGeminiImageApiPrompt} from '../src/lib/gemini-image-references.js';
 import {generateImageWithImagen} from '../src/lib/imagen.js';
 import {setApiKey} from '../src/lib/gemini.js';
+import {getApiErrorInfo} from '../src/lib/api-errors.js';
 
 const workflow = readFileSync(new URL('../src/hooks/useMangaWorkflow.js', import.meta.url), 'utf8');
+
+test('missing Gemini image retains response evidence without inventing a parameter error or running account diagnostics', async () => {
+  const savedFetch = globalThis.fetch;
+  let calls = 0;
+  setApiKey('test-only-gemini-key');
+  globalThis.fetch = async () => {
+    calls++;
+    return new Response(JSON.stringify({status: 'completed', steps: []}));
+  };
+  try {
+    await assert.rejects(generateImageWithImagen('approved', () => {}), error => {
+      assert.equal(error.code, 'NO_IMAGE_OUTPUT');
+      assert.equal(error.provider, 'Gemini');
+      assert.equal(error.status, 200);
+      assert.match(error.message, /completed/);
+      assert.equal(getApiErrorInfo(error).kind, 'empty_image');
+      assert.doesNotMatch(getApiErrorInfo(error).label, /パラメータ|認証|安全基準/);
+      return true;
+    });
+    assert.equal(calls, 1);
+    assert.doesNotMatch(workflow, /invalid_request[^\n]+Unexpected response format from Gemini/);
+  } finally {
+    globalThis.fetch = savedFetch;
+    setApiKey('');
+  }
+});
 
 test('Gemini generation combines loaded character sheets with its existing background references', () => {
   assert.match(workflow, /buildGeminiReferencePlan\(\{\s*characterImages: images,/);

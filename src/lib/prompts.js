@@ -1,3 +1,4 @@
+import { buildCopyrightMosaicInstruction } from './render-options.js';
 import { getPunchlineLabel } from './constants';
 import { SAFE_VISUAL_CONTENT_LOCK } from './location-policy';
 import { FINAL_PANEL_ACTIVE_STAGING_SCENARIO_CONTRACT, SCENARIO_EXPRESSIVE_STAGING_CONTRACT } from './final-panel-staging';
@@ -247,6 +248,7 @@ ${scenario}
  * 指定された日付、カテゴリ、入力モードなどに基づいて4コマ漫画のシナリオを生成する
  */
 export const getScenarioPrompt = ({
+  mosaicCopyrightedCharacters = true,
   randomCategory,
   targetDate,
   inputMode,
@@ -305,6 +307,7 @@ export const getScenarioPrompt = ({
          【Context Force Reboot】
          Ignore all previous instructions and conversation history. This is a fresh, standalone session.
          ${contextRebootLock}
+         ${buildCopyrightMosaicInstruction(mosaicCopyrightedCharacters)}
 
           あなたは${isSeriousDocumentary ? '原文の事実関係を守り、深刻な余韻を構成するプロのドキュメンタリー漫画脚本家' : isGeneralSerious ? '人物の感情と出来事の因果を、力強い画面で構成するプロのシリアス漫画脚本家' : 'プロの風刺漫画脚本家'}です。
 
@@ -855,6 +858,7 @@ const REFERENCE_SHEET_OUTFIT_RENDERING_LOCK = `REFERENCE-SHEET OUTFIT RENDERING 
 
 export const buildChatGPTMangaPrompt = (p) => {
   const {
+    showWatermarks = true,
     safeTopic, watermarkEng, styleCore, safeLocation, isMonochrome = false,
     bg360Image, bg360Analysis, bg360Enabled,
     VAR_CAST_LIST_CHATGPT, identityMatrix, activeOutfit,
@@ -890,9 +894,9 @@ FORMAT:
 ${MANGA_PAGE_ENVELOPE}
 - Top title EXACTLY "${safeTopic}", large black, centered.
 ${MANGA_PAGE_TYPOGRAPHY_LOCK_COMPACT}
-- Bottom-right 4th-panel watermark EXACTLY "${watermarkEng}", tiny horizontal.
+${showWatermarks ? `- Bottom-right 4th-panel watermark EXACTLY "${watermarkEng}", tiny horizontal.
 - Bottom-left 4th-panel watermark EXACTLY "ネームから全自動の自律式統合AI漫画システム :https://note.com/happy_duck780", tiny horizontal. Copy "自律式" exactly.
-${MANGA_FOOTER_EXCLUSIVITY}
+${MANGA_FOOTER_EXCLUSIVITY}` : ''}
 
 ${scriptLock}
 
@@ -961,6 +965,7 @@ ${isMonochrome ? `\n${MONOCHROME_FINAL_CHROMA_AUDIT}` : ''}
  */
 export const buildGeminiMangaPrompt = (p) => {
   const {
+    showWatermarks = true,
     safeTopic, watermarkEng, styleCore, safeLocation, isMonochrome = false,
     bg360Image, bg360Analysis, bg360Enabled, bg360CroppedPanels,
     VAR_CAST_LIST, identityMatrix, activeOutfit,
@@ -1012,10 +1017,10 @@ ${MANGA_PAGE_ENVELOPE}
 Top page: draw large black Japanese text title: "${safeTopic}"
 Do NOT add quote marks around the title or invent extra punctuation. Preserve the exact punctuation already present in the specified title.
 ${MANGA_PAGE_TYPOGRAPHY_LOCK}
-Draw tiny English watermark in the footer below panel 4, on the right: "${watermarkEng}" (clean sans-serif). VERBATIM COPY — do NOT paraphrase or alter any word.
+${showWatermarks ? `Draw tiny English watermark in the footer below panel 4, on the right: "${watermarkEng}" (clean sans-serif). VERBATIM COPY — do NOT paraphrase or alter any word.
 Draw tiny Japanese watermark in the footer below panel 4, on the left: "ネームから全自動の自律式統合AI漫画システム :https://note.com/happy_duck780" (in an extremely small font size to prevent overlapping with the right watermark). ⚠️ CRITICAL: The word "自律式" must appear EXACTLY as written. Do NOT replace it with topic-related words. Copy character-by-character.
 Watermarks standard horizontal, fully inside the footer with visible safe margins. Keep left/right text separate; never touch, overlap or clip against the image edges.
-${MANGA_FOOTER_EXCLUSIVITY}
+${MANGA_FOOTER_EXCLUSIVITY}` : ''}
 
 GUTTERS: THICK white gap (3% canvas height, 40-45px) between panels. Panels MUST NOT touch.
 
@@ -1107,7 +1112,7 @@ ${preserveReferenceStyle ? `REFERENCE-SHEET STYLE QA LOCK:
 - Follow SCENE LETTERING: keep scripted scene text exact; other physical surfaces may freely contain natural context-appropriate lettering with no amount, density or readability cap.
 - Maintain character consistency across all 4 panels.
 - Flow is from top panel to bottom panel.
-- Keep every watermark glyph fully inside the footer, inset from the image edges. The text must be oriented horizontally (left-to-right).
+${showWatermarks ? '- Keep every watermark glyph fully inside the footer, inset from the image edges. The text must be oriented horizontally (left-to-right).' : ''}
 - CRITICAL COMPOSITION BAN: Do NOT draw floating close-up eyes, partial face crops, or ghostly face overlays in the background of any panel. Every character must be drawn as a complete physical presence within the scene. No "dramatic eye insert" or "background eye close-up" compositions allowed.
 ${isMonochrome ? `CHARACTER QA: shape/design, stable ink/tone and white lit skin; no source colors.\n${MONOCHROME_FINAL_CHROMA_AUDIT}` : ''}
       `;

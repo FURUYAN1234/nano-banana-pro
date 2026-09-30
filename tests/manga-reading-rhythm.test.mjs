@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { buildRenderOptionsContract } from '../src/lib/render-options.js';
 import test, { after, before } from 'node:test';
 import { createServer } from 'vite';
 
@@ -149,7 +150,7 @@ test('Web prompts retain limb ownership and occlusion checks under every compact
   for (const providerFamily of ['chatgpt', 'gemini']) {
     for (const colorMode of ['color', 'monochrome']) {
       for (const size of [0, 6000, 16000]) {
-        const input = scenario.replace('AがBに本を差し出す。', `AがBに本を差し出す。${'静かな室内。'.repeat(size / 6)}`);
+        const input = scenario.replace('AがBに本を差し出す。', `AがBに本を差し出す。${'静かな室内。'.repeat(Math.max(0, size - buildRenderOptionsContract().length) / 6)}`);
         const prompt = buildMangaPrompt({ scenario: input, castList, providerFamily, colorMode, systemVersion: 'test' });
         const minimal = prompt.includes('connect each L/R hand-arm-shoulder');
         const compact = prompt.includes('hands-wrists-elbows-shoulders');
@@ -235,7 +236,7 @@ test('balloon ownership survives every provider, medium and compaction without f
   for (const providerFamily of ['chatgpt', 'gemini']) {
     for (const colorMode of ['color', 'monochrome']) {
       for (const size of [0, 6000, 16000]) {
-        const input = scenario.replace('AがBに本を差し出す。', `Aは左、Bは右。画面内の無言の人物を見る。${'静かな室内。'.repeat(size / 6)}`);
+        const input = scenario.replace('AがBに本を差し出す。', `Aは左、Bは右。画面内の無言の人物を見る。${'静かな室内。'.repeat(Math.max(0, size - buildRenderOptionsContract().length) / 6)}`);
         const prompt = buildMangaPrompt({ scenario: input, castList, providerFamily, colorMode, systemVersion: 'test' });
         assert.doesNotMatch(prompt, /freeze (?:balloon )?bodies|freeze numeric slots|never move a body toward its speaker|BUBBLE SLOTS:/i);
         assert.match(prompt, /B1 rightmost regardless of speaker/);

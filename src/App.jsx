@@ -40,6 +40,10 @@ function App() {
     castList,
     categories,
     colorMode,
+    mosaicCopyrightedCharacters,
+    setMosaicCopyrightedCharacters,
+    showWatermarks,
+    setShowWatermarks,
     setColorMode,
     isColorModeLocked,
     copyPrompt,
@@ -349,6 +353,9 @@ function App() {
 
             {/* 02: シナリオ設定 (Static Layout) */}
             <Step2Panel
+              mosaicCopyrightedCharacters={mosaicCopyrightedCharacters}
+              setMosaicCopyrightedCharacters={setMosaicCopyrightedCharacters}
+              isRenderOptionsLocked={isColorModeLocked}
               step2Ref={step2Ref}
               currentStep={currentStep}
               isAnalyzing={isAnalyzing}
@@ -429,6 +436,8 @@ function App() {
 
                 {/* 03: プロンプト生成 - Tailwind p-8等がJITで無視されるためインラインスタイルで適用 */}
                 <Step3Panel
+                  showWatermarks={showWatermarks}
+                  setShowWatermarks={setShowWatermarks}
                   colorMode={colorMode}
                   setColorMode={setColorMode}
                   isColorModeLocked={isColorModeLocked}

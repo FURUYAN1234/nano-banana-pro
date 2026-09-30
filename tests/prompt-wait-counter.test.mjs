@@ -18,7 +18,7 @@ test('scenario invalidation releases STEP3 and an old review cannot unlock or ov
     lastPolicyErrorRef:{current:''},setAssembleThought:()=>{},normalizePromptProviderFamily:value=>value,getCurrentPromptProviderFamily:()=> 'gemini',
     Date,AbortController,setInterval:()=>1,clearInterval:()=>{},resolvedPunchlineTypeRef:{current:'gag'},resolveScenarioEndingType:()=> 'gag',
     punchlineType:'gag',updateResolvedPunchlineType:()=>{},PROMPT_PROVIDER_FAMILIES:{CHATGPT:'chatgpt'},buildMangaPrompt:()=> 'built prompt',
-    colorMode:'color',bg360Image:null,bg360Analysis:null,bg360Enabled:false,bg360CroppedPanels:null,SYSTEM_VERSION:'fixture',
+    colorMode:'color',mosaicCopyrightedCharacters:true,showWatermarks:true,assertRenderOptions:()=>{},bg360Image:null,bg360Analysis:null,bg360Enabled:false,bg360CroppedPanels:null,SYSTEM_VERSION:'fixture',
     OPENAI_SCENARIO_MODEL_OPTIONS:[],scenarioUsedModelRef:{current:null},getEndingModePolicy:()=>({endingTone:'gag'}),
     reviewComedyPrompt:input=>new Promise(resolve=>reviews.push({resolve,signal:input.signal})),callAI:()=>{},isDocumentaryEnding:()=>false,
     assertPromptEndingModeConsistency:()=>{},assertPrintableDialogue:()=>{},showStatus:()=>{},console,

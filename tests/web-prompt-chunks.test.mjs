@@ -21,7 +21,7 @@ test('copied Web prompt ends at the next line without adding an empty line', () 
 
 test('the STEP4 full, split and TXT copy paths share the trailing-newline preparation', () => {
   const source = readFileSync(new URL('../src/hooks/useMangaWorkflow.js', import.meta.url), 'utf8');
-  assert.match(source, /const prepareWebCopyPrompt = \(prompt\) => ensureWebPromptTrailingNewline\(/);
+  assert.match(source, /const prepareWebCopyPrompt = \(prompt\) => \{[\s\S]*?assertRenderOptions\([\s\S]*?return ensureWebPromptTrailingNewline\(/);
   assert.match(source, /webCopyPartLengths = splitWebPromptForPaste\(prepareWebCopyPrompt\(finalPrompt\)\)/);
   assert.match(source, /copiedPrompt = prepareWebCopyPrompt\(finalPrompt\)/);
 });

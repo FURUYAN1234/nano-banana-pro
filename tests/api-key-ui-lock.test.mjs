@@ -4,6 +4,26 @@ import { readFile } from 'node:fs/promises';
 
 const readSource = (path) => readFile(new URL(path, import.meta.url), 'utf8');
 
+test('both API dialogs link the bundled PDF next to OpenAI acquisition under a deployment base path', async () => {
+  const { createServer } = await import('vite');
+  const { default: React } = await import('react');
+  const { renderToStaticMarkup } = await import('react-dom/server');
+  const server = await createServer({ configFile: false, base: '/nano-banana-pro/', appType: 'custom', logLevel: 'silent', server: { middlewareMode: true, hmr: false } });
+  try {
+    const { default: ApiKeyModal } = await server.ssrLoadModule('/src/components/ApiKeyModal.jsx');
+    for (const provider of ['google', 'openai']) {
+      const html = renderToStaticMarkup(React.createElement(ApiKeyModal, {isOpen: true, provider}));
+      assert.match(html, /href="https:\/\/platform.openai.com\/api-keys"/);
+      assert.match(html, /href="\/nano-banana-pro\/downloads\/openai-api-beginner-guide-2026-09-30.pdf" target="_blank" rel="noreferrer"[^>]*>OpenAI APIマニュアル<\/a>/);
+      assert.ok(html.indexOf('platform.openai.com/api-keys') < html.indexOf('OpenAI APIマニュアル'));
+    }
+    const pdf = await readFile(new URL('../public/downloads/openai-api-beginner-guide-2026-09-30.pdf', import.meta.url));
+    assert.equal(pdf.subarray(0, 5).toString(), '%PDF-');
+  } finally {
+    await server.close();
+  }
+});
+
 test('API key modal does not label an unverified key as a running engine', async () => {
   const source = await readSource('../src/components/ApiKeyModal.jsx');
 

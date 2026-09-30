@@ -63,6 +63,7 @@ const ApiKeyModal = ({ isOpen, onSave, onClose, provider = "google" }) => {
   // リンクURLはDual Mode時は入力内容に応じて動的に切り替え
   const geminiLinkUrl = "https://aistudio.google.com/app/apikey";
   const openaiLinkUrl = "https://platform.openai.com/api-keys";
+  const openaiManualUrl = `${import.meta.env.BASE_URL}downloads/openai-api-beginner-guide-2026-09-30.pdf`;
   const linkUrl = isOpenAIProvider ? openaiLinkUrl : geminiLinkUrl;
   const linkText = isOpenAIProvider ? "🔑 OpenAI キーを取得" : "🔑 キーを取得";
 
@@ -155,27 +156,35 @@ const ApiKeyModal = ({ isOpen, onSave, onClose, provider = "google" }) => {
                 )}
               </div>
               {/* キー取得リンク（両方表示） */}
-              <div className="flex items-center gap-4">
-                <a href={geminiLinkUrl} target="_blank" rel="noreferrer" className="text-[11px] text-cyan-400 hover:text-cyan-300 underline decoration-cyan-400/30 whitespace-nowrap">
+              <div className="api-key-links">
+                <a href={geminiLinkUrl} target="_blank" rel="noreferrer" className="api-key-link api-key-link--gemini">
                   🔵 Gemini キー取得（無料）
                 </a>
                 <span className="text-slate-600 text-[10px]">|</span>
-                <a href={openaiLinkUrl} target="_blank" rel="noreferrer" className="text-[11px] text-emerald-400 hover:text-emerald-300 underline decoration-emerald-400/30 whitespace-nowrap">
+                <a href={openaiLinkUrl} target="_blank" rel="noreferrer" className="api-key-link api-key-link--openai">
                   🟢 OpenAI キー取得（従量課金）
+                </a>
+                <a href={openaiManualUrl} target="_blank" rel="noreferrer" className="api-key-link api-key-link--openai">
+                  OpenAI APIマニュアル
                 </a>
               </div>
             </div>
           ) : (
             /* 非Dualモード（OpenAI単体モーダル）: 従来通り */
-            <div className="flex justify-end">
+            <div className="api-key-links">
               <a
                 href={linkUrl}
                 target="_blank"
                 rel="noreferrer"
-                className={`text-[11px] ${activeColor === 'emerald' ? 'text-emerald-400 hover:text-emerald-300 decoration-emerald-400/30' : 'text-cyan-400 hover:text-cyan-300 decoration-cyan-400/30'} underline whitespace-nowrap shrink-0`}
+                className={`api-key-link api-key-link--${isOpenAIProvider ? 'openai' : 'gemini'}`}
               >
                 {linkText}
               </a>
+              {isOpenAIProvider && (
+                <a href={openaiManualUrl} target="_blank" rel="noreferrer" className="api-key-link api-key-link--openai">
+                  OpenAI APIマニュアル
+                </a>
+              )}
             </div>
           )}
         </div>

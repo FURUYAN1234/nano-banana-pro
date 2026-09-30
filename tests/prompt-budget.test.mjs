@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { buildRenderOptionsContract } from '../src/lib/render-options.js';
 import test, { after, before } from 'node:test';
 import { createServer } from 'vite';
 
@@ -121,7 +122,7 @@ test('ChatGPT default removes repeated instructions without treating the Web pas
     systemVersion: 'test',
   });
   // Keep the concrete camera, acting and light cues once without approaching the API ceiling.
-  assert.ok(prompt.length < 18000, `unexpected prompt expansion: ${prompt.length}`);
+  assert.ok(prompt.length - buildRenderOptionsContract().length < 18000, `unexpected prompt expansion beyond render options: ${prompt.length}`);
   assert.equal((prompt.match(/FOCAL READABILITY:/g) || []).length, 1);
   assert.ok(prompt.length <= 32000);
   assert.match(prompt, /Outfit assignment:|role-specific outfit assignments:/);

@@ -277,6 +277,7 @@ export const parseScenarioResponse = (result, {
  * ニュースカテゴリまたは手動トピックから4コマ漫画のシナリオを生成する
  */
 export async function generateScenario({
+  mosaicCopyrightedCharacters = true,
   castList,
   categories,
   inputMode,
@@ -410,6 +411,7 @@ export async function generateScenario({
     extractedArticleText, customLocation, backgroundLocation
   ].filter(Boolean).join('\n');
   const scenarioPrompt = getScenarioPrompt({
+    mosaicCopyrightedCharacters,
     randomCategory,
     targetDate,
     inputMode,
@@ -521,6 +523,7 @@ export async function generateScenario({
   parsedData = { ...parsedData, punchline: generatedEnding.label };
   const payoffGate = await runScenarioPayoffGate({
     scenario: parsedData.scenario,
+    mosaicCopyrightedCharacters,
     punchlineType: resolvedEndingType,
     userTopic: inputMode === 'manual' ? manualTopic : '',
     requestReview: (prompt) => callAI(prompt, [], scenarioCastContext, onProgress, {

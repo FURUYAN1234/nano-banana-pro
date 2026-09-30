@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { buildRenderOptionsContract } from '../src/lib/render-options.js';
 import test, { after, before } from 'node:test';
 import { createServer } from 'vite';
 
@@ -113,7 +114,7 @@ test('compressed four-panel prompts retain concrete camera, acting, expression a
 
 test('generic wardrobe component continuity survives both providers, media, styles and long compaction', () => {
   for (const providerFamily of ['chatgpt', 'gemini']) for (const colorMode of ['color', 'monochrome']) {
-    for (const punchlineType of ['Auto', 'SeriousDocumentary']) for (const extra of ['', ' identity detail'.repeat(800)]) {
+    for (const punchlineType of ['Auto', 'SeriousDocumentary']) for (const extra of ['', ' identity detail'.repeat(800).slice(0, -buildRenderOptionsContract().length)]) {
       const scenario = SCENARIO.replace(/(\[EMOTION:[^\]]+\])/g, '$1\n[Camera: eye-level medium shot]');
       const prompt = buildMangaPrompt({ scenario, castList: CAST_LIST + extra, colorMode, providerFamily, punchlineType, systemVersion: 'test' });
       assert.match(prompt, /WARDROBE COMPONENT LOCK:/);

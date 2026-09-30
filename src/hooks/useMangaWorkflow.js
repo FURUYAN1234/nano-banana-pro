@@ -3,6 +3,7 @@ import { useState, useRef, useEffect } from 'react';
 // --- Imports (paths adjusted from ./lib/ to ../lib/) ---
 import { setApiKey } from '../lib/gemini';
 import { generateImageWithImagen } from '../lib/imagen';
+import { assertRenderOptions, readRenderOptions } from '../lib/render-options.js';
 import { buildImageEditRequest } from '../lib/image-edit.js';
 import { formatApiErrorGuide } from '../lib/api-errors.js';
 import { generateImageWithOpenAI, setOpenAIApiKey } from '../lib/openai';
@@ -180,6 +181,8 @@ export default function useMangaWorkflow() {
 
   const [status, setStatus] = useState("");
   const [colorMode, setColorModeState] = useState("color");
+  const [mosaicCopyrightedCharacters, setMosaicCopyrightedCharactersState] = useState(true);
+  const [showWatermarks, setShowWatermarksState] = useState(true);
   const [isDragging, setIsDragging] = useState(false);
   const [genLog, setGenLog] = useState([]); // New Log State
 
@@ -811,6 +814,7 @@ export default function useMangaWorkflow() {
 
     try {
       const result = await generateScenario({
+        mosaicCopyrightedCharacters,
         castList,
         categories: effectiveCategories,
         inputMode: effectiveInputMode,
@@ -965,6 +969,29 @@ export default function useMangaWorkflow() {
     || isSearching || isAnalyzing || isEnhancing || is360CameraWorking
     || isFixingPolicy || policyAutoRetrying;
 
+  const setMosaicCopyrightedCharacters = (enabled) => {
+    if (isColorModeLocked || enabled === mosaicCopyrightedCharacters) return;
+    setMosaicCopyrightedCharactersState(Boolean(enabled));
+    setScenarioFromUser('');
+    setExplanation('');
+    setExplanationNotice('');
+    setOriginalScenario('');
+    setScenarioThought('');
+    setAssembleThought('');
+    setEnhanceLog('');
+    setGenLog([]);
+    showStatus('モザイク設定を変更しました。STEP2からシナリオを作り直してください。');
+  };
+
+  const setShowWatermarks = (enabled) => {
+    if (isColorModeLocked || enabled === showWatermarks) return;
+    setShowWatermarksState(Boolean(enabled));
+    invalidateScenarioOutput();
+    setAssembleThought('');
+    setGenLog([]);
+    showStatus('ウオーターマーク設定を変更しました。STEP3で指示文を再構築してください。');
+  };
+
   // Selection invalidates dependent output but never initiates assembly/API work.
   // STEP1/STEP2 resets preserve this preference; only full settings reset clears it.
   const setColorMode = (value) => {
@@ -1043,6 +1070,8 @@ export default function useMangaWorkflow() {
         : undefined;
       // [v3.82-alpha] リファクタリング: 外部モジュールでプロンプトを構築
       const safePrompt = buildMangaPrompt({
+        mosaicCopyrightedCharacters,
+        showWatermarks,
         scenario: currentScenario,
         castList,
         colorMode,
@@ -1088,6 +1117,7 @@ export default function useMangaWorkflow() {
 
       assertPromptEndingModeConsistency({ prompt: reviewed.prompt, punchlineType: activePunchlineType });
       assertPrintableDialogue(reviewed.prompt);
+      assertRenderOptions(reviewed.prompt, { mosaicCopyrightedCharacters, showWatermarks });
       setFinalPrompt(reviewed.prompt);
       setAssembleThought(prev => prev + `\n> 出力モード: ${colorMode === 'monochrome' ? '漫画原稿三階調（白地・黒ベタ・単一スクリーントーン）' : 'カラー'}`);
       setAssembleThought(prev => prev + `\n> ${reviewed.warning || "AI精査完了"}`);
@@ -1217,6 +1247,8 @@ export default function useMangaWorkflow() {
     setIsGeneratingImage(false);
     setPolicyAutoRetrying(false);
     setColorModeState("color");
+    setMosaicCopyrightedCharactersState(true);
+    setShowWatermarksState(true);
     resetScenarioModelId();
     setCastList("");
     setScenario("");
@@ -1300,11 +1332,14 @@ export default function useMangaWorkflow() {
 
   // Use the same complete text as the initial API request, including image roles.
   // Validate again at copy time because the user may edit the text or references.
-  const prepareWebCopyPrompt = (prompt) => ensureWebPromptTrailingNewline(getCurrentPromptProviderFamily() === PROMPT_PROVIDER_FAMILIES.CHATGPT
-    ? appendOpenAIReferencePrompt(prompt, buildOpenAIReferencePlan({
-      characterImages: images, backgroundImage: bg360Image, backgroundEnabled: bg360Enabled,
-    }))
-    : prompt);
+  const prepareWebCopyPrompt = (prompt) => {
+    if (inferImageQualityMode(prompt) === 'four-panel') assertRenderOptions(prompt, { mosaicCopyrightedCharacters, showWatermarks });
+    return ensureWebPromptTrailingNewline(getCurrentPromptProviderFamily() === PROMPT_PROVIDER_FAMILIES.CHATGPT
+      ? appendOpenAIReferencePrompt(prompt, buildOpenAIReferencePlan({
+        characterImages: images, backgroundImage: bg360Image, backgroundEnabled: bg360Enabled,
+      }))
+      : prompt);
+  };
 
   let webCopyPartLengths = [];
   if (finalPrompt) {
@@ -1497,6 +1532,7 @@ export default function useMangaWorkflow() {
     const metadataSettings = {
       punchline_type: punchlineType,
       color_mode: colorMode,
+      ...readRenderOptions(currentPrompt),
       expression_enhancement: Boolean(enhanceExpressions),
       body_language_enhancement: Boolean(enhanceBodyLang),
       effects_enhancement: Boolean(enhanceEffects),
@@ -1514,6 +1550,7 @@ export default function useMangaWorkflow() {
     try {
       assertPromptEndingModeConsistency({ prompt: currentPrompt, punchlineType: resolvedPunchlineTypeRef.current || punchlineType });
       assertPrintableDialogue(currentPrompt);
+      if (qualityMode === 'four-panel') assertRenderOptions(currentPrompt, { mosaicCopyrightedCharacters, showWatermarks });
     } catch (error) {
       showStatus(error.message);
       setGenLog(prev => [...prev, `[PROMPT VALIDATION ERROR] ${error.message}`]);
@@ -1973,7 +2010,9 @@ export default function useMangaWorkflow() {
         guideLines = [
           "[ERROR GUIDE] OpenAI APIキーをメモリから読み取れませんでした。作業内容を保持したまま再入力画面を開きます。"
         ];
-      } else if (errMsg.includes("Unknown parameter") || errMsg.includes("Invalid parameter") || errMsg.includes("Invalid value at") || errMsg.includes("invalid_request") || errMsg.includes("Unexpected response format from Gemini Interactions API")) {
+      } else if (error.code === 'NO_IMAGE_OUTPUT') {
+        guideLines = formatApiErrorGuide(error).split('\n');
+      } else if (errMsg.includes("Unknown parameter") || errMsg.includes("Invalid parameter") || errMsg.includes("Invalid value at") || errMsg.includes("invalid_request")) {
         // [v3.56] APIリクエストのパラメータ不正（コンテンツポリシーとは無関係）
         guideLines = [
           `[ERROR GUIDE] ⚙️ APIパラメータの形式が不正です（${isOpenAIEngine ? 'OpenAI' : 'Google'}側の仕様変更の可能性）。`,
@@ -2459,6 +2498,10 @@ export default function useMangaWorkflow() {
     castList,
     categories,
     colorMode,
+    mosaicCopyrightedCharacters,
+    setMosaicCopyrightedCharacters,
+    showWatermarks,
+    setShowWatermarks,
     setColorMode,
     isColorModeLocked,
     copyPrompt,

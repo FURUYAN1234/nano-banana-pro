@@ -1,4 +1,5 @@
 import { getApiKey } from "./gemini.js";
+import { createApiError } from "./api-errors.js";
 import { GEMINI_IMAGE_MODEL_IDS } from './gemini-model-routes.js';
 import { DEFAULT_GEMINI_IMAGE_OPTIONS } from './gemini-image-settings.js';
 
@@ -120,7 +121,9 @@ export const generateImageWithImagen = async (prompt, onStatusUpdate, referenceI
                     .map(part => part.text)
                     .join(" ")
                     .slice(0, 500);
-                throw new Error(`Unexpected response format from Gemini Interactions API: missing image step${textResponse ? `. Text response: ${textResponse}` : ""}`);
+                throw createApiError(`Geminiの応答に画像がありませんでした。終了状態: ${data.status || 'unknown'}; steps: ${(data.steps || []).length}${textResponse ? `. Text response: ${textResponse}` : ''}`, {
+                    provider: 'Gemini', model: modelId, status: response.status, code: 'NO_IMAGE_OUTPUT'
+                });
 
             } else {
                 // Classic Imagen Model Logic
@@ -168,12 +171,16 @@ export const generateImageWithImagen = async (prompt, onStatusUpdate, referenceI
                 errorMsg = "API Time out (180秒経過による強制切断)";
             }
             console.warn(`[ImageGen] Model ${modelId} failed:`, errorMsg);
-            lastError = new Error(errorMsg);
+            lastError = e.code ? e : new Error(errorMsg);
             if (onStatusUpdate) onStatusUpdate(`[FAILED] ${modelId}: ${errorMsg}`);
         } finally {
             if (timeoutId) clearTimeout(timeoutId);
         }
     }
+
+    // A successful HTTP response without an image is not evidence of an account
+    // or request-parameter failure. Preserve it instead of diagnosing a different request.
+    if (lastError?.code === 'NO_IMAGE_OUTPUT') throw lastError;
 
     if (onStatusUpdate) onStatusUpdate("[SYSTEM] 画像生成エラー。アカウント状態を診断中...");
 

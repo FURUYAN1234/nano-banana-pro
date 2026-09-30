@@ -1,8 +1,8 @@
 {
-  "readmeSha256": "74ad1ded47cbef2d51c80124959e9753efa7806f004fbae44d9b5d2a86f9d9f2",
-  "sourceTree": "6c8eceaf446fb6d3acdc1d14158890e035b1b712",
-  "publicTree": "be9a93632c25600e7e8fe9ef7d2be0ffaf9bc2cc",
-  "packageSha256": "76bfc51d0a5b6835260277f42d97f96c52439641c4be9d3b8730aca84c913c74",
+  "readmeSha256": "5979ab439f151a9b4e292db72944662899b2a564478041c74599292aaa9a473e",
+  "sourceTree": "0c46e6490a3e7420947d08368910c39b0f17163a",
+  "publicTree": "faab67e2656b310f1c8ee1444283a49654c36821",
+  "packageSha256": "30d1d25c998b1861db198a76fce1a22577a26cfd2b9d952b02aeadbc71b62c31",
   "releaseAssetSha256": "046b655cb0536defaffb48055f0dede324b6d818e2916510bd4acea577295b5f",
   "reviewedSections": [
     "AI Manga Creative Suite / AIまんが制作エコシステム",
@@ -18,5 +18,5 @@
     "📋 ChangeLog",
     "License / ライセンス"
   ],
-  "findings": "v6.7.2の本文12節を確認。エコシステム、フロー図、機能、Quick start、API経路、保護策、H3配布、ライセンス・秘密情報、開発、FAQ、履歴、Licenseの各説明を確認し、変更のないソース・public・配布ZIPについてはv6.7.1の検証を差分とハッシュで照合して再利用した。今回変更した新規生成・追加修正共通の配置結果表示と原因別エラーは実装・回帰テスト・現在の両API表示で確認。OpenAI 2240×3168の再処理なし表示とGemini 848×1200への補正を確認し、本文のA4説明と一致する。吹き出し等の品質警告は残り、FAQの結果保証なし・目視確認必要を維持。旧版を指していたZIPリンク2箇所をv6.7.2へ同期し、FAQと同じアセットを案内。モデル経路・単価の既存日付・STEP1安全判定の限界を全経路成功と誇張しない。公開URLのv6.7.2反映は正式トランザクション後の別検証とする。"
+  "findings": "v6.7.3: reviewed all current README section headings against the preceding v6.7.2 review and this release diff. Unchanged ecosystem, workflow map, models/pricing dated snapshots, H3 package/privacy, development and license sections reuse unchanged evidence. Checked new render options against state defaults, invalidation, scenario review, both prompt templates and QA/repair; corrected the footer description to apply only when enabled. Quick start matches the bright API acquisition links and bundled manual in both dialogs; PDF bytes match source, HTTP response and dist, while IAB preview remains unavailable. API error description and release notes distinguish missing image output from parameter failure. Current source, FAQ and Release-asset links use v6.7.3. Real OpenAI option evidence is preserved; Gemini full-body masking was user-accepted for release, with subject/dialogue defects and final no-image response explicitly recorded rather than claimed as full visual success. Prior unchanged README review and distribution evidence are retained in Git history. No claim of completed deployment before the official receipt."
 }
