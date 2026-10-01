@@ -1,8 +1,24 @@
 {
-  "readmeSha256": "0073e73df38eee31beafd7d09fcb29c1bd4e2322bfa9915b0860abfd91d57ebb",
-  "sourceTree": "7e9d12b53f0895c350a6f8a9f7b537465afd325c",
-  "publicTree": "f494ff7d542b2c8c7118886fe086afba2d2e1341",
-  "packageSha256": "561d884942cd09b9059497126dbb9e7012101eff59bb61546297cf3745799bd1",
+  "manualVersion": "6.7.8",
+  "manualSourceSha256": "bfd8ab5edfba645636a57a810ad4be7ce3edbc5f73ab4f9b37bc21fb9645af03",
+  "manualFiles": [
+    {
+      "name": "gemini-api-beginner-guide-2026-10-01.pdf",
+      "sha256": "8678510f9c25fc55655406f9135aab32a5e97b0e24fc7cc6f0e9d82193bb3d04"
+    },
+    {
+      "name": "openai-api-beginner-guide-2026-09-30.pdf",
+      "sha256": "15a7773a16ab15ca9d65f606cca797bab4047e92577d824177a61b21fe8a362a"
+    },
+    {
+      "name": "super-furu-ai-4koma-full-manual-2026-10-01.pdf",
+      "sha256": "66bf5afac8c5a1e00b3de9ad54bcb6b477f7a2f3a91fe5c0d90ca26e02613a86"
+    }
+  ],
+  "readmeSha256": "a7266365fe0528728983b1e15a504b5a9710ce7b527871903e9458757d1e1829",
+  "sourceTree": "12926fdb1a1329bf31ef6fea76e9f0450e202a95",
+  "publicTree": "1e0a106072d37292017517b3154acc45dd8a6163",
+  "packageSha256": "b5b64a6b0ad782d46ac96bf9ba2efda4c324ed130c50bf0e18eb342b2703183b",
   "releaseAssetSha256": "046b655cb0536defaffb48055f0dede324b6d818e2916510bd4acea577295b5f",
   "reviewedSections": [
     "AI Manga Creative Suite / AIまんが制作エコシステム",
@@ -18,22 +34,6 @@
     "📋 ChangeLog",
     "License / ライセンス"
   ],
-  "findings": "v6.7.5: reviewed every current README section against the verified v6.7.4 body audit, current working-tree diff and actual route/config/UI. STEP2 and enhancement now default to Sol 6.1 in both development and production; all11 options, Astra manual selection and downward routing remain unchanged. Shared render contract, both provider reference manifests, final Gemini override and QA isolate explicitly scripted depicted copyright targets from identity reference sheets and preserve intentional original masks. Positive and negative local regressions exercise these boundaries; pixel adherence remains unverified until root live visual acceptance checks original cast unmasked and printed target masked. Current headings, version, release download URL and FAQ use6.7.5; historical entries remain historical. Existing ecosystem, quick start, STEP1/3/4, image safeguards, A4 map, PDF/workflow public assets, H3 interim limits/licenses/privacy, development and FAQ reuse unchanged prior evidence. Public files were checked in current tree; generated diagrams retain unchanged flow. No paid API/deploy/push by local preparation owner; public release links are candidate targets until official receipt. No secret or sample-specific production rule added. Live OpenAI target-boundary check passed; Gemini one repair preserved original cast and added mosaic in all panels, but ears/tails remain exposed. User accepted that disclosed Gemini limitation on 2026-10-01; no full-silhouette success claim. v6.7.6: reviewed current README headings and changed quick-start against ApiKeyModal, SystemHeader, bundled PDF files and focused check. Only manual buttons, spacing and documentation changed; shared Tailwind and connection placement changes were reverted. Existing generation, ecosystem, H3, privacy and license sections retain prior verified evidence. Official OpenAI pricing checked 2026-10-01: Astra 10/50, Sol6.1 2/10, Sunburst/Flare image8/30 text5 unchanged. Public button/PDF readback remains pending official delivery. Release ZIP URLs and generated version diagrams synchronized to6.7.6. Latest user-requested whole-body synchronization: all12 README sections compared with current manual and source, new deployment documentation gate described, known Gemini mosaic limit retained. Reviewed PDFs and SHA evidence renewed; public note full-body corrections identified for current version, PDF controls, pricing date and Release asset URLs. v6.7.7: reviewed the current 12 README sections against the preceding verified body and current diff. Functional routes and limitations remain unchanged. Current version, release asset links, diagrams and changelog match 6.7.7. Gemini manual uses the existing provider button styling with 10px additional spacing; actual browser computed styles and screenshot were checked before user approval.",
-  "manualVersion": "6.7.7",
-  "manualSourceSha256": "2220e9591c2b5c335b35441da99c6e67f4514ef73af77d20f07b53ce43545bc2",
-  "manualFiles": [
-    {
-      "name": "gemini-api-beginner-guide-2026-10-01.pdf",
-      "sha256": "d9b29ce8668aaab6f61d1d814b107737651caba9419f46c42c65041b464e180a"
-    },
-    {
-      "name": "openai-api-beginner-guide-2026-09-30.pdf",
-      "sha256": "15a7773a16ab15ca9d65f606cca797bab4047e92577d824177a61b21fe8a362a"
-    },
-    {
-      "name": "super-furu-ai-4koma-full-manual-2026-10-01.pdf",
-      "sha256": "080e2d2f520151c056b239a6baa0241df080cf7b45f6a73c9665137c58053a20"
-    }
-  ],
-  "manualFindings": "v6.7.6: compared full27-page application manual with README and current connection/STEP1-4/QA/history/model routes; corrected API button name,11-model downward fallback, Gemini848x1200 dimensions and observed mosaic limit. Gemini12-page guide still matches connection/key procedure; both PDFs carry6.7.6 footer and all39 rendered pages were visually inspected without clipping. Existing20-page OpenAI guide is account setup guidance with its explicit2026-09-30 source date, unchanged by this release; checked its connection instructions for current applicability. Older screenshots are explicitly identified as6.7.4, not current live captures. Durable safe source/figures retained; PDF A4,privacy,textbounds,links checks passed. v6.7.7: regenerated both guides with current version. Visually reviewed all 39 rendered pages; no clipping or overlap. Current functional instructions remain applicable; old illustrated screenshots remain explicitly dated. Current PDF hashes renewed."
+  "findings": "Reviewed all12 current README sections against current6.7.8 diff, UI observations and retained unchanged6.7.7 evidence. Current version, release ZIP links, diagrams and changelog are6.7.8. Ecosystem/quick-start/provider selection/API routes/H3 interim distribution/privacy/licenses/development/FAQ retain their existing routes and limitations. Changed prompt safeguards now describe source protection, per-panel direction, semantic skin/material/shadow tones, native evidence for material repair, and uncertainty retention. Added current manual/example and original settings-clear provider-switch guidance; monochrome split-copy is available. Gemini accepted monochrome used one additional edit; normal color accepted with warnings. OpenAI accepted short-input BW does not prove ordinary STEP3 reliability. No general perfect-quality claim. No API persistence/switch feature introduced. Full997 tests and strict lint pass; credentials pattern scan of53 staged files clean. Latest asset visual evidence is actual CUA screenshots; H3 ZIP unchanged and previous verified release evidence retained.",
+  "manualFindings": "Complete manual30pages and Gemini guide12pages rebuilt for6.7.8. All42 rendered pages visually reviewed; final Gemini page7 separately inspected. All A4 dimensions, text bounds, links, privacy and naming checks pass. Application captures updated to6.7.8. Gemini color and edited BW examples are actual accepted outputs, explicitly labeled generation-time6.7.7 and additional-edit distinction. Original settings-clear switching remains documented. Google API-key/billing/pricing sources rechecked2026-10-01. Unchanged OpenAI account guide remains dated2026-09-30; no app-workflow screenshot replacement is implied for that separate guide."
 }
