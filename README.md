@@ -358,6 +358,7 @@ The production application is published from the `main` branch through the repos
 ## 📋 ChangeLog
 
 ### v6.7.6 (2026-10-01)
+- **[Docs]** Update the full manual to v6.7.6, including current model selection, API button names, Gemini dimensions and observed mosaic limits; require manuals/README body review for each deployment and whole-note-body readback after publication. / 全機能マニュアルをv6.7.6のモデル選択・APIボタン名・Gemini寸法・モザイクの確認済み制限へ更新。デプロイごとのマニュアル／README本文確認と、公開後のnote全文読み戻しを必須化。
 - **[Fix & UX]** Gemini APIとアプリ全体のPDFマニュアルを同梱し、接続画面とタイトル左側に閲覧ボタンを追加。 / Bundle Gemini API and full application PDF manuals with buttons in the connection panel and beside the title.
 
 ### v6.7.5 (2026-10-01)

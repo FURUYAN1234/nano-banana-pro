@@ -23,3 +23,9 @@ test('a changed README, source tree, or section list invalidates the prior audit
 test('an empty review finding cannot satisfy the release gate', () => {
   assert.match(validateReadmeBodyAudit({ ...audit, findings: '' }, evidence).join(' '), /findings/);
 });
+
+test('a new release or a changed PDF requires a renewed manual review', () => {
+  assert.match(validateReadmeBodyAudit(audit, { ...evidence, manualVersion: 'next' }).join(' '), /manualVersion/);
+  assert.match(validateReadmeBodyAudit(audit, { ...evidence, manualFiles: evidence.manualFiles.map((file) => ({ ...file, sha256: 'changed' })) }).join(' '), /manualFiles/);
+  assert.match(validateReadmeBodyAudit({ ...audit, manualFindings: '' }, evidence).join(' '), /manualFindings/);
+});

@@ -1,0 +1,355 @@
+from pathlib import Path
+from xml.sax.saxutils import escape
+import json,re,hashlib
+from PIL import Image,ImageOps,ImageDraw
+from reportlab.pdfgen import canvas
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.colors import HexColor
+from reportlab.lib.styles import ParagraphStyle
+from reportlab.platypus import Paragraph,Table,TableStyle
+from reportlab.lib.utils import ImageReader
+from pypdf import PdfReader
+import pypdfium2 as pdfium
+
+BASE=Path(__file__).resolve().parents[2]/'output/pdf'
+(BASE/'source').mkdir(parents=True,exist_ok=True)
+ASSETS=Path(__file__).resolve().parent/'assets'
+RENDER=BASE.parents[1]/'tmp/pdfs/gemini-system-manuals'
+RENDER.mkdir(parents=True,exist_ok=True)
+pdfmetrics.registerFont(TTFont('JP','C:/Windows/Fonts/BIZ-UDGothicR.ttc',subfontIndex=0))
+pdfmetrics.registerFont(TTFont('JPB','C:/Windows/Fonts/BIZ-UDGothicB.ttc',subfontIndex=0))
+pdfmetrics.registerFontFamily('JP',normal='JP',bold='JPB')
+W,H=A4; M=44; CW=W-2*M
+INK=HexColor('#152f44'); TEAL=HexColor('#087c86'); GRAY=HexColor('#566b7a')
+STYLES={
+ 'body':ParagraphStyle('body',fontName='JP',fontSize=11,leading=18,wordWrap='CJK',textColor=INK),
+ 'h2':ParagraphStyle('h2',fontName='JPB',fontSize=14,leading=21,wordWrap='CJK',textColor=TEAL),
+ 'small':ParagraphStyle('small',fontName='JP',fontSize=9,leading=14,wordWrap='CJK',textColor=GRAY),
+ 'table':ParagraphStyle('table',fontName='JP',fontSize=10,leading=16,wordWrap='CJK',textColor=INK),
+}
+APP='https://furuyan1234.github.io/nano-banana-pro/'
+SOURCES={
+ 'key':('Google公式：APIキーの取得・管理','https://ai.google.dev/gemini-api/docs/api-key?hl=ja'),
+ 'billing':('Google公式：課金','https://ai.google.dev/gemini-api/docs/billing?hl=ja'),
+ 'pricing':('Google公式：料金表','https://ai.google.dev/gemini-api/docs/pricing?hl=ja'),
+ 'limits':('Google公式：レート制限','https://ai.google.dev/gemini-api/docs/rate-limits?hl=ja'),
+ 'errors':('Google公式：トラブルシューティング','https://ai.google.dev/gemini-api/docs/troubleshooting?hl=ja'),
+ 'regions':('Google公式：利用可能な地域','https://ai.google.dev/gemini-api/docs/available-regions?hl=ja'),
+ 'terms':('Google公式：Gemini API利用規約','https://ai.google.dev/gemini-api/terms?hl=ja'),
+ 'studio':('Google AI Studio：APIキー画面','https://aistudio.google.com/app/api-keys'),
+ 'app':('Super FURU AI 4-koma Systemを開く',APP),
+}
+
+def page(title,*blocks,shot=None,caption='',refs=()):
+ return dict(title=title,blocks=list(blocks),shot=shot,caption=caption,refs=list(refs))
+
+GEMINI=[
+page('Gemini API 取得マニュアル',
+ ('h2','はじめての取得・接続・費用確認'),
+ ('body','Super FURU AI 4-koma Systemで使うGemini APIキーを取得するための、日本語操作ガイドです。Googleアカウントでのログインから、プロジェクト選択、キー発行、アプリへの接続まで順番に説明します。'),
+ ('box','この冊子の対象','パソコンのブラウザで作業する初心者向けです。APIとは、アプリからAIへ処理を依頼する仕組みです。プログラムを書く必要はありません。'),
+ ('body','2026年10月1日確認。画面写真はCodex内蔵ブラウザで取得しました。キー値、個人のプロジェクト名、請求情報は掲載していません。画面の表記や利用条件は変更される場合があります。'),
+ ('body','キーを取得するだけで、すべてのモデルを無料で利用できるわけではありません。画像生成や検索、解析、修正にも費用が発生する場合があります。'),refs=('studio','app')),
+page('目次と最短の作業順',
+ ('rows',[['ページ','内容'],['3','GoogleアカウントとAI Studio'],['4','APIキー画面を開く'],['5','プロジェクトを選ぶ'],['6','キーを作成・コピーする'],['7','アプリへ接続する'],['8','無料枠と有料枠の違い'],['9','有料枠の設定と費用確認'],['10','キーの安全な管理'],['11','接続できないとき'],['12','公式リンクと完了チェック']]),
+ ('box','最短ルート','AI Studioへログイン → APIキー画面 → プロジェクト確認 → キー作成・コピー → アプリに貼り付け → 接続状態を確認。画像APIを使う前に料金・利用枠を確認します。')),
+page('01  Googleアカウントで準備する',
+ ('body','1. 自分のGoogleアカウントを用意します。仕事・学校のアカウントは、組織の管理設定によって利用できないことがあります。'),
+ ('body','2. Google AI Studioを開き、利用したいアカウントでログインします。複数アカウントがある場合は、右上のアカウント表示を確認します。'),
+ ('body','3. 初回だけ、対象地域・年齢・利用規約などの案内が表示される場合があります。内容を確認し、ご自身で必要な手続きを進めます。本冊子の撮影では新規アカウント作成や規約への同意は行っていません。'),
+ ('box','新規利用と既存利用で表示が違います','新規ユーザーでは、規約同意後に既定のプロジェクトとキーが用意されることがあります。すでにGoogle Cloudを利用している場合は、既存プロジェクトの取り込みが必要になることがあります。'),refs=('studio','regions','terms')),
+page('02  APIキー画面を開く',
+ ('body','左側の「API キー」を選びます。英語表示の場合は「API keys」です。右上の「API キーを作成」から発行画面を開けます。'),
+ ('body','下の写真は画面上部だけを掲載しています。既存キー一覧・アカウント情報は除外しています。'),
+ ('box','画面の入り方','上の「Get API key」から同じ管理画面へ移動する場合もあります。リンク先がGoogle AI Studioであることを確認してください。'),shot='gemini-entry-safe.jpg',caption='実画面：APIキーの管理画面上部（個人の一覧情報を除外）',refs=('studio',)),
+page('03  プロジェクトを確認する',
+ ('body','プロジェクトは、API利用量や課金をまとめて管理する入れ物です。キーを発行するときには、使用するプロジェクトを選びます。'),
+ ('body','1. 既定プロジェクトがある場合は、目的に合うものか確認します。2. すでにGoogle Cloudプロジェクトがある場合は、AI Studioの「プロジェクト」から「プロジェクトをインポート」を選び、対象を取り込みます。3. APIキー画面に戻り、そのプロジェクトを選びます。'),
+ ('body','プロジェクトがない場合は、AI Studioのプロジェクト画面に表示される作成操作を利用します。組織アカウントでは、作成・API有効化・キー発行の権限が必要です。'),
+ ('box','プロジェクトが見つからない場合','AI StudioにはすべてのCloudプロジェクトが自動表示されるわけではありません。ログイン先アカウント、プロジェクトの取り込み、権限の順に確認します。'),refs=('key',)),
+page('04  キーを作成してコピーする',
+ ('body','1. 「API キーを作成」を押します。2. キー名には、用途が分かる名前を付けます。3. 使用するプロジェクトを選び、内容を確認して「キーを作成」を押します。'),
+ ('body','4. 作成後のコピー操作でキーをクリップボードへ入れます。表示方法はアカウントや画面の更新で変わる場合があります。キーはアプリの入力欄へ直接貼り付けます。'),
+ ('box','キーはパスワードと同じ扱いです','メール、SNS、公開メモ、マニュアル、画面写真へ貼り付けないでください。発行画面の写真は、キー名入力部分だけを掲載しています。撮影のためのキー発行はしていません。'),shot='gemini-form-safe.jpg',caption='実画面：新しいキーの名前欄（プロジェクト欄・キー値は掲載しません）',refs=('key',)),
+page('05  アプリへ接続する',
+ ('body','1. Super FURU AI 4-koma Systemを開きます。2. 上部のAPIキー入力欄へ、取得したGeminiキーを貼り付けます。3. 「接続」を押し、接続判定が終わるまで待ちます。'),
+ ('body','接続成功後は「Gemini Engine」の表示を確認します。接続したプロバイダーがSTEP1からSTEP4までの処理先になります。OpenAIを併用するための別キーは、このGemini経路には必要ありません。'),
+ ('box','再読み込みしたら再入力','本アプリのキーはブラウザのメモリ内で扱います。再読み込み・終了・全設定クリアで接続状態が失われるため、必要に応じて再入力してください。入力欄が空の画面写真を掲載しています。'),shot='app-connection-safe.jpg',caption='実画面：未入力のAPI接続欄',refs=('app',)),
+page('06  無料枠と有料枠を理解する',
+ ('rows',[['区別するもの','意味'],['キーの発行','APIへ接続するための認証情報を作ること'],['無料枠','対象モデル・用途・回数などの範囲内で利用できる枠'],['有料枠','課金設定をしたプロジェクトで利用量に応じて支払う枠'],['GoogleのAI契約','個人向けWebサービスの契約。APIの請求設定とは別に確認するもの']]),
+ ('body','アプリのリンクに「無料」と書かれていても、画像APIを含む全機能の無料利用を保証する表示ではありません。使うモデルの料金表とAI Studioのプロジェクト状態を確認します。'),
+ ('body','同じキーで複数回処理すると、解析・シナリオ・整合性確認・画像生成・画像検査・自動修正の利用量が積み上がります。まず手動操作で進め、連続ループは必要なときだけ有効にします。'),refs=('pricing','billing')),
+page('07  有料枠の設定と利用額確認',
+ ('body','無料枠では対象モデルを使えない場合、AI Studioの「プロジェクト」または「課金」から請求設定の案内を開きます。請求先アカウント・支払方法・対象プロジェクトを確認し、ご自身で申し込みます。'),
+ ('body','Google公式の現行案内では、前払いの初期設定に最低5米ドル相当のクレジット購入が必要になる場合があります。既存アカウントでは後払い等の表示が残る場合もあるため、実際の画面に従って確認してください。'),
+ ('body','左メニューの「使用量」「レート制限」「利用額」「課金」で、対象プロジェクトの状態と費用を確認します。上限設定が表示される場合は、その対象期間・適用範囲も確認します。通知だけの予算アラートを、自動停止の保証と考えないでください。'),
+ ('box','前払い残高にも注意','残高不足や利用枠の制限で処理が止まることがあります。請求設定・クレジット購入は、APIキーを取得する操作とは別です。本冊子の作成時には請求変更や支払いを行っていません。'),refs=('billing','pricing')),
+page('08  キーを安全に管理する',
+ ('body','キーは他人へ渡さず、画像や公開ファイルへ入れないでください。アプリに入力したキーは、選択したGoogle APIへの認証・実行に使われます。「外部送信なし」という接続欄の表現は、API認証の通信まで行わない意味ではありません。'),
+ ('body','2026年5月28日以降、AI Studioで新規作成するキーは認可キーが既定です。古い無制限の標準キーは拒否されることがあります。動かない古いキーについて、制限をすべて解除する方法で対処しないでください。'),
+ ('body','漏洩が疑われる場合は、Googleの管理画面で新しいキーを用意し、アプリで動作を確認してから古いキーを失効させます。利用額と使用状況も確認します。'),
+ ('box','投入する資料にも注意','キャラクター画像・文章・生成画像は、実行する工程で選択したAIプロバイダーへ送信されます。無料枠と有料枠ではデータ利用条件が異なるため、個人情報や未公開資料を送る前に公式条件を確認してください。'),refs=('key','terms')),
+page('09  接続できないときの確認',
+ ('rows',[['症状','確認する順番'],['キーが無効・認証エラー','前後の空白、別サービスのキー、失効、古い無制限キー、選択アカウントを確認'],['403・権限不足','プロジェクトの権限、API利用条件、モデル利用可否、地域条件を確認'],['429・利用枠超過','レート制限、対象モデルの無料枠、有料枠の状態・残高を確認。連打せず待つ'],['画像だけ失敗','接続成功と画像モデル利用成功は別。料金・画像モデル権限・拒否理由を確認'],['キーやプロジェクトが見えない','ログインアカウント、インポート、組織権限を確認'],['一時的なサーバーエラー','通信状態と公式障害情報を確認し、現在のエラーを記録']]),
+ ('body','問い合わせの際は、エラーの種類と時刻だけを伝えます。キー値や個人の請求情報を含むスクリーンショットは送らないでください。'),refs=('errors','limits')),
+page('完了チェックと公式リンク',
+ ('body','□ 自分のGoogleアカウントを確認した　□ 目的のプロジェクトを選んだ　□ キーを安全にコピーした　□ アプリの接続先がGeminiになった　□ 利用したいモデルの料金・利用枠を確認した　□ キーを公開資料に含めていない'),
+ ('body','ここまでで取得・接続の準備は完了です。漫画の制作手順は、別冊「Super FURU AI 4-koma System 全機能マニュアル」で説明しています。接続成功だけでは、画像生成の利用可否や品質まで確認したことにはなりません。'),
+ ('h2','クリックできる公式リンク'),
+ ('links',['studio','key','billing','pricing','limits','errors','regions','terms','app']),
+ ('small','確認範囲：既存のログイン済みAI Studioで管理画面と発行前フォームを確認。新規登録、キー発行、請求設定、支払い、有料画像生成は実施していません。画面が未観測の手順は公式情報に基づく説明です。')),
+]
+
+SYSTEM=[
+page('全機能マニュアル',('h2','Super FURU AI 4-koma System'),
+ ('body','キャラクター資料と題材から、4コマの構成、画像用の指示文、生成画像、保存まで進める日本語操作ガイドです。各機能の目的、操作順、変更が反映される工程、費用と保存の注意を説明します。'),
+ ('box','対象版と画面写真','2026年10月1日更新、v6.7.6対応。OpenAIシナリオの初期選択はGPT-6.1 Solです。タイトル左の「使い方マニュアル」と接続欄の「Gemini APIマニュアル」でPDFを別タブへ開けます。既存の操作写真は公開版v6.7.4の撮影です。ボタン配置は現行画面と本文を参照してください。'),
+ ('body','画面写真はCodex内蔵ブラウザで取得しています。実行を伴う画面が撮影できない機能は、現行の画面部品と処理コードを照合して説明し、生成済みの画面を作り物で代用しません。'),refs=('app',)),
+page('目次・機能の見つけ方',
+ ('rows',[['ページ','機能'],['3-4','4ステップの流れ・API接続'],['5-6','キャラクター・作風JSON・360°背景'],['7-9','ニュース、自由入力、舞台・衣装・結末'],['10-11','シナリオ編集、SNS説明、演出強化'],['12-14','カラー／白黒、モザイク、ウオーターマーク、プロンプト構築・編集'],['15-18','Webコピー、Web修正・高解像度、API生成、検査・自動修正'],['19-21','追加修正、画像履歴・保存、制作情報'],['22-23','全自動・連続ループ、やり直しとモデル確認'],['24-25','1枚絵、動画化・関連アプリ'],['26-27','トラブル対処、完成前チェック・参照情報']]),
+ ('small','版によって表示名や選択肢が変わります。後続STEPが表示されない場合は、直前のSTEPが完了しているか確認してください。')),
+page('基本の流れ：4つのSTEP',
+ ('rows',[['工程','入力 → 出力'],['STEP1 解析','キャラクター画像 → 名前・外見・性格・関係性'],['STEP2 シナリオ','題材と設定 → タイトル・4コマ台本・SNS説明'],['STEP3 プロンプト','台本と描画条件 → 編集可能な画像指示文'],['STEP4 画像生成','画像指示文 → API画像、またはWeb手動生成用コピー']]),
+ ('body','まず手動で1作品を作ると、どの設定がどの工程へ反映されるか分かります。前工程の内容を変えた場合は、その後の指示文や画像を作り直してください。設定変更だけで完成済み画像が描き換わることはありません。'),
+ ('box','処理中の表示','解析・生成・精査は進捗ログへ表示されます。実行に時間がかかる場合は、現在の工程と経過時間を確認し、同じボタンを連打しないでください。完成した最終プロンプトがない間は、STEP4の設定やコピー等は表示されません。')),
+page('API接続と処理先の選択',
+ ('body','上部の入力欄へGeminiまたはOpenAIのキーを入力し、「接続」を押します。接続先はSTEP1～4で共通です。Gemini経路のニュース検索はGoogleの検索連携、OpenAI経路はOpenAIのWeb検索を使います。'),
+ ('body','Gemini APIの取得リンクの右側に「Gemini APIマニュアル」、OpenAIのリンクの隣に「OpenAI APIマニュアル」があります。未接続でも取得手順を確認できます。キーはブラウザ内メモリで保持し、再読み込み後は再入力が必要です。Web版の契約とAPI料金は別です。'),
+ ('box','何が送信されるか','実行時には、必要なキャラクター資料、題材、台本、プロンプト、画像が選択したプロバイダーへ送られます。キーも認証・実行のために送信されます。キーをファイルへ貼り付けたり、公開したりしないでください。'),shot='app-connection-safe.jpg',caption='実画面：APIキー未入力の接続欄',refs=('app',)),
+page('STEP1  キャラクターを読み込む',
+ ('body','「キャラクター設定画像を選択 (STEP 1)」で画像を選ぶか、ドロップ領域へ画像を投げ込みます。複数枚を一度に読み込み、後から追加することもできます。不要なシートは個別に取り除きます。'),
+ ('body','名前、性格、外見の特徴が書かれた設定シートを推奨します。解析された「キャラクター設定」は編集でき、コピーして別の作業にも使えます。名前や関係性の誤読を、シナリオを作る前に直してください。'),
+ ('body','参照シートの紙面配置・説明ラベル・立ち姿を、そのまま漫画へ写すための機能ではありません。人物の識別情報を取り出して、台本の動作へ使います。台本に必要な店員・受付係などは、参照画像がなくても設計されます。'),
+ ('box','資料の選び方','複数の人物を区別できる資料を用意し、同じ人物の別角度は名前を揃えます。資料の読み取りにもAPI利用料が発生する場合があります。')),
+page('作風JSONと360°背景',
+ ('body','作風設定JSONをキャラクター資料と一緒に読み込むと、描線やタッチ等の作風設定を取り込めます。Story Maker等で出力した対応形式を使います。JSONは画像ではなく設定データです。'),
+ ('body','横:縦が2:1の全天球画像は、360°背景としてキャラクター画像と分けて扱われます。背景を解析し、コマごとの撮影方向に合わせた切り出しを画像生成へ渡します。普通の写真を2:1にしただけでは、全天球として自然な背景になるとは限りません。'),
+ ('body','背景の利用スイッチや、360°表示の操作が出た場合は、使う背景と方向を確認します。背景を固定しても、人物の動作・手・小道具・吹き出しの整合確認は必要です。'),
+ ('box','使わなくても制作できます','作風JSONと360°背景は任意です。初めての1作品は、キャラクター資料と短い題材だけで進めると確認しやすくなります。')),
+page('STEP2  ニュース検索',
+ ('body','「ニュース検索」を選び、対象日付とカテゴリを設定します。政治・経済、スポーツ、動物・癒し、グルメ、エンタメ、科学・宇宙、B級ニュース、生活・健康のカテゴリから題材を探します。'),
+ ('body','日付には曜日が表示され、季節の目安も示されます。選択したカテゴリと日付を確認して「シナリオ作成を実行 (STEP 2)」を押します。接続先の検索機能を使って記事を調べ、題材と4コマ台本を構築します。'),
+ ('box','出典の確認','取得されたリンクや説明を読み、対象日付、登場人物、場所、数値などを原記事で確認します。検索結果やAIの説明だけで事実の正確さを保証する機能ではありません。'),
+ ('body','別の題材で作り直すときは、同じキャラクターを残してSTEP2からやり直せます。検索や文章生成にもAPI料金が発生する場合があります。')),
+page('STEP2  自由入力・URL・持ち込み台本',
+ ('body','「自由入力」を選び、漫画にしたい出来事、テーマ、記事本文を入力します。URLを入力した場合は、取得に成功した本文を材料として使います。認証ページや取得できないサイトは、読めたことにはなりません。'),
+ ('body','意図した舞台・人物・出来事・台詞を明確にすると、題材が伝わりやすくなります。自由入力の内容が中心になり、ニュース検索用のカテゴリや前回の題材を混ぜない構成です。'),
+ ('body','他のアプリで作った台本は、生成シナリオ欄へ直接貼り付けられます。Topic: / Location: / Outfit: / Punchline: / Scenario: など、画面に案内される形式に合わせてください。入力した台本は、STEP3へ渡す前に4コマと人物・台詞を確認します。'),
+ ('box','入力例の扱い','自由入力の例文や記入形式は操作説明です。入力しただけでニュース検索や画像生成が完了したことにはなりません。')),
+page('舞台・衣装・結末を指定する',
+ ('body','「指定場所」は、駅前広場、会場、店内などの舞台指定です。「指定服装」は、キャラシート通り、制服などの衣装指定です。空欄ならAIが題材から設計します。明示した指定を優先します。'),
+ ('rows',[['結末の種類','選べる方向性'],['全体おまかせ','題材に応じてギャグ／シリアスを選ぶ'],['シリアス','静かな余韻、決意・再出発、警告、問題提起、感動・救い、悲劇・喪失'],['ギャグ','静寂型、爆発型、感動詐欺、メタフィクション、理不尽な制裁、天丼、夢オチ、盛大な勘違い、打ち切りエンド'],['種類内おまかせ','ギャグまたはシリアスの範囲でAIが選ぶ'],['ドキュメンタリー','原文の事実を保ち、最後の着地をギャグまたはシリアスとして漫画化']]),
+ ('body','自動で選ばれた結末は、後続STEPへ引き継ぎます。シリアス・ドキュメンタリーでは、参照の絵柄や頭身を保つ方針です。事実保持の結果は原文と照合してください。')),
+page('シナリオを読む・編集する',
+ ('body','STEP2の出力には、タイトル、題材、場所、衣装、結末、各コマの人物・動作・カメラ・台詞が含まれます。自由に編集し、「シナリオをコピー」で保存用のテキストを取り出せます。'),
+ ('body','人物の位置、衣装、小道具の持ち主、前のコマからの動作のつながりを確認します。Camera: 行や角括弧のカメラ指定は、画像用の指示へ引き継ぎます。画面や看板の引用文字と、人物が本当に話す台詞を区別してください。'),
+ ('h2','SNS投稿用の説明文'),
+ ('body','題材の短い説明文と出典リンクは、漫画台本とは別に管理します。必要に応じて説明を編集・コピーし、投稿時に画像と合わせて使います。この機能はSNSへの自動投稿ではありません。'),
+ ('box','編集後はSTEP3を作り直す','シナリオを書き換えると、以前のプロンプトや表示画像は新しい台本の結果ではなくなります。新しい内容をSTEP3で組み立て直してから生成してください。')),
+page('シナリオ強化と元に戻す操作',
+ ('body','シナリオができたら「シナリオ強化」を開き、強化したい項目を選びます。表情、身体、演出、背景、カメラ、セリフ、物語の演出を個別に選択できます。'),
+ ('body','「シナリオ強化実行」で、指定した項目を改善します。ギャグ・シリアス・ドキュメンタリーの方向性に合わせた演出を使います。強化後は台詞や出来事が変わり過ぎていないか読み直します。'),
+ ('body','「強化前に戻す」で元のシナリオへ戻せます。強化・復元・手動編集の後はSTEP3を再構築します。強化も文章APIを使うため、追加の利用料が発生する場合があります。'),
+ ('box','カメラの強弱を見る','4コマがすべて同じ距離・同じ目線になっていないか確認します。意味のある反復や、明示した正面・肩越し等の構図は残し、身体の動きと反応が読めることを重視します。')),
+page('STEP3  カラー／白黒の選択',
+ ('body','「出力モード」でカラーまたは白黒を選び、「画像用の指示文（プロンプト）を構築する」で反映します。初期値はカラーです。白黒は、生成時に墨線・白地・黒ベタ・限定した網点等を指示するモードです。'),
+ ('body','モードを変更すると古い指示文と現在の画像表示がクリアされます。変更だけで画像生成は始まりません。履歴は残り、STEP1／STEP2からのやり直しでも選択を保持します。全設定クリアでカラーへ戻ります。'),
+ ('box','白黒は印刷の適合保証ではありません','仕上げ画像を読み込んでピクセル変換する機能ではありません。厳密な二値、解像度、出版社の入稿規定は、保存した実画像で別途確認してください。'),
+ ('body','人物の特徴、演技、カメラ、背景の遠近感、台詞は白黒でも維持する方針ですが、画像AIがすべて正確に描けるとは限りません。')),
+page('モザイクとウオーターマーク',
+ ('rows',[['設定','反映する工程'],['版権キャラクターにモザイクをかける','STEP2から作り直して反映。初期状態ON'],['ウオーターマークを表記する','STEP3から作り直して反映。初期状態ON']]),
+ ('body','モザイクは台本の動作で描く既存作品の人物を対象とする描画指示です。参照画像があること、画風が似ていること、同名であることだけを理由にオリジナル人物を隠す仕様ではありません。原文で人物へのモザイクを明示した場合は、その指定領域を扱います。'),
+ ('body','ウオーターマークをOFFにすると、左右フッターのクレジット描画指示を外します。ONでは、外側フッターへ1回ずつ配置するよう指示します。'),
+ ('box','完成画像へ後からは反映されません','既存画像の自動加工ではありません。実画像で対象・非対象とクレジットを確認します。今回のGemini検証では元の人物を保持しましたが、対象小物の耳・尾が一部露出しました。対象全体を必ず隠す保証はありません。')),
+page('プロンプト構築・精査・手動編集',
+ ('body','STEP3は、人物設定と台本を接続先に合う画像プロンプトへ組み立て、文章AIによる整合性確認を行います。画面に完成した指示文が出たら、内容を確認し、必要な箇所を編集できます。'),
+ ('body','プロンプトには縦1列の4コマ、人物同一性、台詞、吹き出しの順と話者、カメラ、人体・小道具、カラー／白黒、A4ページ比率等の条件を含めます。長文でも重要な台詞や人物対応を維持する方針です。'),
+ ('body','精査が失敗した場合は、元の指示文を残し、「精査未完了」と実際の理由を表示します。指示文が表示されているだけで、整合性確認に合格したとは限りません。'),
+ ('box','手動編集の注意','人物名、台詞の引用符、話者、コマ数、カメラ指定を壊さないようにします。台本側の内容を変えたい場合はSTEP2を編集し、STEP3から再構築すると整合を取りやすくなります。')),
+page('Web / Workで手動生成する',
+ ('body','STEP4の「プロンプトをコピーする（Web / Work用）」を使い、対応するChatGPTまたはGeminiの公式チャットへ貼り付けます。キャラクター資料と、必要な背景資料も添付します。API生成とは別の手動経路です。'),
+ ('body','OpenAI側で長文が分割表示される場合は、番号順にすべてを同じ入力欄へ貼り付けます。途中では送信せず、画像の添付と全文の貼り付けを終えてから1回だけ送信します。全文コピーは、長い貼り付けがTXT添付へ変わる場合に注意してください。'),
+ ('body','「全文プロンプトを.txtで保存する」でテキストファイルも保存できます。TXT添付を使う場合は、チャット側で内容を読んで画像を生成するよう指示します。'),
+ ('box','Web画像はアプリへ自動では戻りません','Webで作った画像は、アプリのAPI生成後検査・履歴へ自動登録されません。台詞・コマ数・人物・手を、ご自身で確認してWeb側から保存します。別添のWeb制作情報JSONは画像の真正性の証明ではありません。')),
+page('Web画像の修正・高解像度化',
+ ('body','画像生成の説明パネルには、外部Webサービスで使う補助プロンプトがあります。アプリ内APIで後処理するボタンとは区別してください。'),
+ ('rows',[['コピーする文章','使い方'],['Gemini用画像比率修正','生成済み画像と一緒にGemini Webへ貼り付け、A4配置や人物・手足等の修正を依頼する'],['Gemini用2K高解像度','画像と一緒にGemini Webへ貼り付け、高精細な再仕上げを依頼する'],['画像比率修正','ChatGPT側の生成済み画像に、A4比率の修正指示を添える'],['画像2倍アップスケール','ChatGPTへ画像と指示を送り、元の縦横を2倍にする仕上げを依頼する']]),
+ ('box','寸法・台詞・人物を確認','コピーした指示だけで、指定寸法や画質改善の成功は保証されません。Webの返した実画像を保存し、画素数、台詞、人物、線の変化を確認してください。外部サービスの利用条件・料金が適用されます。')),
+page('STEP4  APIで画像を生成する',
+ ('body','完成プロンプトを確認して「APIで画像をアプリ内で生成する（STEP4）」を押します。最終プロンプトから新しい画像を作る操作です。表示画像だけを直したい場合は、後述の画像下の追加指示欄を使います。'),
+ ('body','OpenAIの品質設定は、GPT Image 2.0 / high、2.5 Flare / high・xhigh、2.5 Sunburst / high・xhigh・maxです。Sunburstが利用可能な接続ではxhighが初期選択で、利用不可の接続では2.0 / highを初期選択します。設定欄の表示だけで生成成功を保証しません。'),
+ ('rows',[['ページ条件','寸法'],['A4標準','1120 × 1584 px'],['A4大','2240 × 3168 px'],['比率','横:縦 = 210:297（70:99）'],['構成','タイトル帯、縦1列の4コマ全体、フッター']]),
+ ('body','OpenAIのサイズ既定はA4大で、選択は再読み込みまで保持します。Geminiはgemini-3.1-flash-imageへ1K／3:4で送信し、896×1200をA4の848×1200へ正規化します。独立した品質・サイズ選択はありません。生成・追加修正後は比率がずれた画像だけを補正します。実寸表示を確認してください。')),
+page('画像検査と自動修正',
+ ('body','API生成後には、コマ数、人物の同一性、眼鏡・衣装、手足、台詞、吹き出し順と尾、カメラ、小道具、余分な文字、出力モードなどをAIで検査します。画像から独立した文字の転記も使います。'),
+ ('body','自動修正は既定ONで、品質不合格の原因と過去の候補を解析し、最大3回の修正を行います。初回を含め最大4枚です。各候補を検査して比較し、最良候補を保持します。全候補が不合格の場合も、警告付きで最良候補を採用して続行します。'),
+ ('body','「表示中の画像を品質再検査する」は解析だけを行い、新しい画像を作りません。検査API料金は発生する場合があります。生成中の「自動修正を停止（現在の応答後）」は、残りの品質修正を止め、送信済み処理や費用は取り消しません。'),
+ ('box','AI判定を完成保証にしない','未確認と軽微な違いは、重大な誤りと区別します。AIは文字を読み違えたり、誤りを見逃すことがあります。完成画像の台詞、人物、手、構図は利用者も確認してください。解析・検査・修正にも追加料金がかかります。')),
+page('表示中の画像へ追加指示を送る',
+ ('body','画像ができると、その下へ6行の「この画像への追加指示」欄が表示されます。変更したい箇所と変更内容を具体的に入力し、「追加指示を送信して修正」を押します。'),
+ ('body','表示中の画像と今回の指示を、接続中のGeminiまたはOpenAIへ送ります。1回の操作で1つの修正版を作り、成功した画像を履歴へ追加します。通常の新規生成の自動品質修正ループは再実行しません。'),
+ ('body','処理中は入力・送信を無効にします。失敗時には元の画像と入力指示を残します。修正後の実寸と、人物・台詞・画面の変化を確認してください。'),
+ ('box','原画像を残す方法','成功した修正版から元へ戻したい場合は履歴で選びます。履歴は直近10件・現在のセッションのみなので、大事な画像は修正前にもダウンロードしてください。送信のたびにAPI料金が発生します。')),
+page('画像履歴・ダウンロード・比率補正',
+ ('body','履歴には各生成の最終採用画像が直近10件まで残ります。途中の品質修正候補は内部比較用です。11件目が加わると最古の履歴が外れるため、必要な作品は先に保存します。'),
+ ('body','履歴のサムネイルを選ぶと、その画像が表示されます。「PNGをダウンロード（制作情報入り）」で表示中の画像を保存します。各履歴の削除操作もあります。削除する前に必要なファイルが手元にあるか確認します。'),
+ ('body','履歴と画像はブラウザのメモリだけに保持され、再読み込み後には残りません。保存先フォルダーの自動選択や画像の自動ファイル保存はしません。ブラウザのダウンロード機能を使います。'),
+ ('box','旧画像の救済用の比率操作','確認済みレイアウト情報がない画像では「ページ比率を揃える（追加課金なし）」が表示される場合があります。A4へ配置を整える操作で、絵をAIで描き直す操作ではありません。整形後も台詞や絵が切れていないか確認します。')),
+page('制作情報：API画像とWeb用JSON',
+ ('body','APIで保存するPNGには、実際の生成モデル、アプリ版、生成条件、画像ハッシュ等の制作情報を入れます。後から制作条件を確認しやすくする仕組みです。'),
+ ('body','Web手動生成の場合は、最終プロンプトができた時点で安全化済みの別添制作情報JSONを保存できます。これはWeb画像の生成前に準備した条件の記録です。APIで実際に作った画像の記録と区別します。'),
+ ('body','APIキー、完全な端末ログ、参照画像の元データ、ローカルパスなどを制作情報へ入れない設計です。ただし台本・題材などの記録内容は、公開前にご自身でも確認してください。'),
+ ('box','署名や公的証明ではありません','画像ハッシュやモデルの記録だけで、外部Web画像の生成元、権利、事実性、未改変を保証しません。投稿先がPNGのメタデータを削除・再圧縮する可能性もあるため、元ファイルと別添記録を手元に残します。')),
+page('全自動モードと連続ループ',
+ ('body','「全自動モード（フルオート） ON」にしてキャラクター画像をドロップすると、解析後のSTEP2～4を順番に進めます。画像を読み込んだ後でONにする操作もあります。通常は1作品の完了後に自動OFFになります。'),
+ ('body','中断するときは同じフルオートボタンを押します。すでに完成した内容を残し、以後は各STEPの手動操作で進められます。現在の工程・待機カウントダウンを確認します。'),
+ ('body','「連続ループ生成」をONにすると、同じキャラクターを使い、別シナリオの作品を繰り返し生成します。完全に止めるにはフルオートの中断を使います。'),
+ ('box','費用と保存に注意','ループは複数の文章・画像API呼び出しを続けます。品質修正も有効なら費用が増えます。画像は自動でファイル保存されず、履歴の10件制限もあるため、残したい作品は適宜ダウンロードしてください。')),
+page('やり直し・接続先変更・Model Chain',
+ ('rows',[['操作','残すもの／やり直す範囲'],['シナリオ（STEP2）からやり直す','キャラクター設定を残し、シナリオ以降を作り直す'],['キャラクター解析（STEP1）からやり直す','API接続を残し、資料・解析・後続工程を作り直す'],['最初からやり直す（設定クリア）','すべての作業・設定をクリアし、APIキーの入力へ戻る'],['Model Chain','現在のモデル構成やフォールバックの順序を確認する']]),
+ ('body','プロバイダーを切り替える場合は、必要な画像とテキストを先に保存してから、全設定クリアで接続画面へ戻ります。キーを入力し直して接続します。'),
+ ('body','OpenAIのSTEP2と任意のシナリオ強化は全11モデルから選べ、初期値はGPT-6.1 Solです。GPT-6 Astraは手動選択できます。失敗時は選択位置より後の候補だけへ切り替わり、自動でAstraへ昇格しません。実際の採用モデルはログ・表示で確認します。選択は再読み込みまで有効です。Geminiは接続先固有のモデル経路を使用します。'),
+ ('small','モデルの一覧表示や参考単価は、利用権限・生成成功・実際の請求額の保証ではありません。')),
+page('ChatGPT用の1枚絵演出プロンプト',
+ ('body','接続後に表示される「ChatGPT用 1枚絵エモーショナルプロンプトをコピー」は、4コマとは別の用途です。感情に応じたカメラ、光、表情、VFX等を指示する文章をコピーします。'),
+ ('body','ChatGPTのチャット欄へ指示文を貼り付け、元のキャラクター画像と描きたい場面・感情の条件を合わせて送ります。出力は1枚絵として確認します。'),
+ ('box','このボタンでアプリ内API生成は始まりません','コピーした文章を外部チャットで使う機能です。4コマのSTEP2～4や、アプリ内の生成後検査・画像履歴とは別の操作になります。外部チャットの利用条件と費用を確認してください。'),
+ ('body','完成した1枚絵は、そのWeb画面で保存し、人物、手、文字、構図、光を確認します。コピー文ができたことと、実画像の品質が確認できたことは別です。')),
+page('動画化支援と関連アプリ',
+ ('body','STEP4の動画化ガイドでは、完成した4コマを動画へ渡す方法を説明します。汎用MiniMax H3プロンプトのコピー、FourPanel用ComfyUIワークフローJSON、対応カスタムノード・導入セットのダウンロードが用意されています。'),
+ ('body','ComfyUIは別の実行環境です。同梱READMEとVALIDATIONでGPU、モデル、導入条件、検証範囲を確認してください。配布版は統合グラフの全体実走が未確認の中間配布で、完成品質の保証ではありません。'),
+ ('body','APIキーはComfyUIサーバーのプロセスメモリに保持し、未登録のプロバイダーで実行する場合に入力します。ワークフローJSONへキーを書き込まないでください。サーバー終了・再起動で再入力が必要になります。'),
+ ('h2','完成漫画を次の制作へ'),
+ ('body','AI Voice Comic Makerへ画像を渡すと、カメラ移動・BGM・音声の縦型動画制作に利用できます。Story Maker、Character Sheet Maker、背景や翻訳の関連ツールは別アプリです。本アプリのボタンだけで外部動画が完成するものではありません。')),
+page('エラー・ポリシー制限・復旧',
+ ('body','認証・利用枠・通信・精査失敗は、画面に出た実際の理由から確認します。キー入力だけで画像モデルの利用が許可されるとは限りません。OpenAI画像モデルでは、アカウントの本人確認・組織確認が必要な場合があります。書類は公式画面へ提出します。'),
+ ('body','画像APIのコンテンツポリシー拒否では、表現の見直しと画像再生成を内部で最大5回試す場合があります。これは品質修正の最大3回とは別の仕組みです。文章・画像APIの追加料金が発生する場合があります。'),
+ ('body','上限まで拒否が続いた場合は、「もう一度自動修正して再生成する」または「Web版に切り替える」が表示されます。手動救済パネルでは「制限の理由を尋ねる質問をコピー」を外部チャットへ送り、返された理由を入力して「表現をマイルドに修正して再生成する」を使えます。繰り返す前に理由と費用を確認します。'),
+ ('box','最後の成功結果を保存','ポリシー制限や解析失敗で、最後の成功画像や履歴を誤って合格扱いしない設計です。警告の有無を確認し、再読み込みや設定クリアの前に必要な画像とプロンプトを保存してください。')),
+page('完成前チェックと参照情報',
+ ('body','□ 4コマが縦1列に収まる　□ 人物が同一で、必要な人数がいる　□ 手足・小道具の持ち主が正しい　□ 台詞が原文通りで話者と尾が一致する　□ 右から左の読順が自然　□ 衣装と動作がつながる　□ カメラ・表情・光に見せ場がある　□ モザイクとフッターが意図通り　□ 実寸と保存ファイルを確認した'),
+ ('h2','公開する前の確認'),
+ ('body','ニュース題材は出典と事実を確認し、画像AIの判定を権利・事実・品質の保証として扱わないでください。未確認や警告付き採用は、目視確認を終えるまで未確認です。'),
+ ('links',['app','key','pricing','billing']),
+ ('small','機能の説明は現行READMEと、接続・各STEP・追加修正・履歴・モデル表示・制作情報等の実装を照合しました。外部アプリの新規実行、有料画像生成、全自動の連続実行、公開作業は本冊子作成のためには行っていません。')),
+]
+
+for p in SYSTEM:
+ if p['title']=='API接続と処理先の選択':
+  p.update(shot='app-connected-header.jpg',caption='実画面：Gemini接続後のヘッダーとやり直し操作')
+ elif p['title']=='STEP1  キャラクターを読み込む':
+  p.update(shot='app-step1-safe.jpg',caption='実画面：キャラクター資料の選択と抽出設定欄（未解析）')
+ elif p['title']=='全自動モードと連続ループ':
+  p.update(shot='app-auto-controls.jpg',caption='実画面：フルオート・連続ループの操作ボタン（実行前）')
+
+
+class Book:
+ def __init__(self,path,title,pages):
+  self.path=path; self.pages=pages; self.c=canvas.Canvas(str(path),pagesize=A4,pageCompression=1)
+  self.c.setTitle(title);self.c.setAuthor('Super FURU AI 4-koma System');self.c.setSubject('日本語操作マニュアル / v6.7.6 / 2026-10-01')
+  self.y=0;self.number=0;self.layout=[]
+ def para(self,text,style='body',gap=10):
+  p=Paragraph(text,STYLES[style]);_,h=p.wrap(CW,1000)
+  if self.y-h<64:raise ValueError(f'overflow {self.path.name} page {self.number} at {text[:40]}')
+  p.drawOn(self.c,M,self.y-h);self.y-=h+gap
+ def box(self,title,text):
+  p=Paragraph('<b>'+escape(title)+'</b><br/>'+escape(text),STYLES['body']);_,h=p.wrap(CW-26,1000)
+  if self.y-h-24<64:raise ValueError('box overflow')
+  self.c.setFillColor(HexColor('#edf7f7'));self.c.roundRect(M,self.y-h-23,CW,h+23,7,fill=1,stroke=0)
+  p.drawOn(self.c,M+13,self.y-h-11);self.y-=h+36
+ def rows(self,rows):
+  data=[[Paragraph(escape(str(v)),STYLES['table']) for v in row] for row in rows]
+  t=Table(data,colWidths=[CW*.31,CW*.69]);t.setStyle(TableStyle([('BACKGROUND',(0,0),(-1,0),HexColor('#e2f0f2')),('VALIGN',(0,0),(-1,-1),'TOP'),('LINEBELOW',(0,0),(-1,-1),.45,HexColor('#ccdce0')),('TOPPADDING',(0,0),(-1,-1),8),('BOTTOMPADDING',(0,0),(-1,-1),8),('LEFTPADDING',(0,0),(-1,-1),9),('RIGHTPADDING',(0,0),(-1,-1),9)]))
+  _,h=t.wrap(CW,1000)
+  if self.y-h<64:raise ValueError('table overflow')
+  t.drawOn(self.c,M,self.y-h);self.y-=h+14
+ def shot(self,name,caption):
+  p=ASSETS/name
+  if not p.exists():raise FileNotFoundError(p)
+  im=Image.open(p);iw,ih=im.size;w=min(CW,420*iw/ih);h=w*ih/iw
+  if self.y-h-32<64:raise ValueError('shot overflow')
+  x=M+(CW-w)/2;self.c.drawImage(ImageReader(im),x,self.y-h,width=w,height=h)
+  self.y-=h+9;self.para(escape(caption),'small',12)
+ def build(self):
+  for i,page in enumerate(self.pages,1):
+   self.number=i;self.y=H-114;c=self.c
+   c.setFillColor(TEAL);c.rect(0,H-8,W,8,fill=1,stroke=0)
+   c.setFont('JPB',9);c.drawString(M,H-34,'Super FURU AI 4-koma System | 操作マニュアル')
+   c.setFillColor(INK);c.setFont('JPB',20);c.drawString(M,H-74,page['title'])
+   c.setStrokeColor(HexColor('#ccdce0'));c.line(M,H-91,W-M,H-91)
+   c.bookmarkPage(f'p{i}');c.addOutlineEntry(page['title'],f'p{i}',0,False)
+   for b in page['blocks']:
+    if b[0] in STYLES:self.para(escape(b[1]),b[0])
+    elif b[0]=='box':self.box(b[1],b[2])
+    elif b[0]=='rows':self.rows(b[1])
+    elif b[0]=='links':
+     for k in b[1]:
+      label,url=SOURCES[k];self.para(f'<link href="{escape(url)}" color="#087c86">{escape(label)} →</link>','small',7)
+   if page['shot']:self.shot(page['shot'],page['caption'])
+   if page['refs']:
+    self.para('参照：'+' / '.join(f'<link href="{escape(SOURCES[k][1])}" color="#087c86">{escape(SOURCES[k][0])}</link>' for k in page['refs']),'small',0)
+   c.setFillColor(GRAY);c.setFont('JP',8);c.drawString(M,33,'v6.7.6対応 | 2026年10月1日更新 | A4 日本語版');c.drawRightString(W-M,33,f'{i:02d} / {len(self.pages):02d}')
+   self.layout.append(dict(page=i,bottom_y=round(self.y,2)));c.showPage()
+  c.save();return self.layout
+
+def crop_assets():
+ # Crop actual in-app-browser screenshots before embedding: excluded pixels must
+ # not remain as recoverable image data inside the delivered PDF.
+ for src,dst,rect in [
+  ('gemini-header-only.jpg','gemini-entry-safe.jpg',(275,30,1220,170)),
+  ('gemini-form-full.jpg','gemini-form-safe.jpg',(390,215,890,365)),
+  ('app-overview.jpg','app-connection-safe.jpg',(7,7,483,137)),
+  ('gemini-official-full.jpg','gemini-doc-safe.jpg',(325,340,925,570)),
+  ('app-unlocked-full.jpg','app-connected-header.jpg',(8,132,768,317)),
+  ('app-unlocked-full.jpg','app-step1-safe.jpg',(8,319,768,671)),
+  ('app-unlocked-full.jpg','app-auto-controls.jpg',(8,8,768,122)),
+ ]:
+  p=ASSETS/src
+  if p.exists():
+   im=Image.open(p);assert rect[2]<=im.width and rect[3]<=im.height,(src,im.size)
+   im.crop(rect).save(ASSETS/dst,quality=95)
+
+def verify_and_render(path,layout,pages):
+ r=PdfReader(path);text='\n'.join(p.extract_text() for p in r.pages)
+ assert len(r.pages)==len(pages)
+ assert not re.search(r'nano\s*banana|ナノ[・\s]*バナナ',text,re.I)
+ assert not re.search(r'AIza[A-Za-z0-9_-]{20,}|sk-(?:proj-)?[A-Za-z0-9_-]{20,}|gen-lang-client-\d+|sx717|@[A-Za-z0-9.-]+\.[A-Za-z]{2,}',text)
+ assert all(p['bottom_y']>=64 for p in layout)
+ assert all(abs(float(p.mediabox.width)-W)<1 and abs(float(p.mediabox.height)-H)<1 for p in r.pages)
+ links=[]
+ for p in r.pages:
+  for a in p.get('/Annots',[]):
+   action=a.get_object().get('/A',{})
+   if '/URI' in action:
+    url=str(action['/URI']);assert url.startswith('https://') and not re.search(r'AIza|sk-proj|gen-lang-client',url);links.append(url)
+ assert len(links)>=4
+ import pdfplumber
+ with pdfplumber.open(path) as doccheck:
+  assert all(30<=ch['x0'] and ch['x1']<=W-30 for p in doccheck.pages for ch in p.chars)
+ doc=pdfium.PdfDocument(str(path));renders=[]
+ for i,p in enumerate(doc):
+  out=RENDER/f'{path.stem}-{i+1:02d}.png';p.render(scale=1.25).to_pil().save(out);renders.append(out)
+ # Compact contact sheets for all-page visual inspection, with readable full
+ # resolution individual renders kept alongside for detailed review.
+ for start in range(0,len(renders),6):
+  tiles=[]
+  for p in renders[start:start+6]:
+   im=Image.open(p).convert('RGB');im.thumbnail((450,637));tiles.append(im)
+  sheet=Image.new('RGB',(450*3,660*2),'#d5dfe2')
+  for j,im in enumerate(tiles):sheet.paste(im,((j%3)*450,(j//3)*660))
+  sheet.save(RENDER/f'{path.stem}-sheet-{start//6+1}.png')
+ (BASE/'source'/f'{path.stem}-text.txt').write_text(text,encoding='utf-8')
+ return dict(file=str(path),pages=len(r.pages),sha256=hashlib.sha256(path.read_bytes()).hexdigest(),a4=True,naming_scan='pass',privacy_text_scan='pass',links=len(links),text_bounds='pass',layout=layout,visual_review='pending')
+
+if __name__=='__main__':
+ crop_assets()
+ reports=[]
+ for filename,title,pages in [
+  ('gemini-api-beginner-guide-2026-10-01.pdf','Gemini API 取得マニュアル',GEMINI),
+  ('super-furu-ai-4koma-full-manual-2026-10-01.pdf','Super FURU AI 4-koma System 全機能マニュアル',SYSTEM),
+ ]:
+  path=BASE/filename;layout=Book(path,title,pages).build();reports.append(verify_and_render(path,layout,pages))
+ (BASE/'source'/'gemini-system-manuals-qa.json').write_text(json.dumps(reports,ensure_ascii=False,indent=2),encoding='utf-8')
+ print(json.dumps([{k:r[k] for k in ['file','pages','naming_scan','privacy_text_scan','visual_review']} for r in reports],ensure_ascii=False))
