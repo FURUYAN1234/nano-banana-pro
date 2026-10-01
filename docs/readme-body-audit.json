@@ -1,8 +1,8 @@
 {
-  "readmeSha256": "4c8c529a7bc3b46522c00786ad04507d737d26bfc381202042a1ad817e629409",
+  "readmeSha256": "f55e485f0a56db85e88705d082cc551d1a95fa6ab8590da1ed83567bda3ebbb9",
   "sourceTree": "da22d85385cbe8823c5eba975dc03680abaa6c06",
   "publicTree": "29b2293f5b8d7ba6889e1d95bbead6bf36fa5558",
-  "packageSha256": "3b9698e86752e0019022f2b76f2326dfc91c1082c102c533c03ca3622a3fea4a",
+  "packageSha256": "a748dd478ac7b3abe3d40ba13b757ea90d9dfb89e405d98a45fed2809cbd01c4",
   "releaseAssetSha256": "046b655cb0536defaffb48055f0dede324b6d818e2916510bd4acea577295b5f",
   "reviewedSections": [
     "AI Manga Creative Suite / AIまんが制作エコシステム",
@@ -18,5 +18,5 @@
     "📋 ChangeLog",
     "License / ライセンス"
   ],
-  "findings": "v6.7.4: reviewed every current README heading against the verified v6.7.3 body audit and current diff. The model table, production default, selection lifetime, downward fallback and Model Chain manual Astra explanation now match config, route and UI. STEP1/3/4 paths remain unchanged. Normal Sol 6.1 pricing is $2/$10 per MTok as officially verified 2026-09-30, distinct from older dated price snapshots. Current version and Release download links are6.7.4; history stays historical. Existing ecosystem, A4 map, quick start, mosaic/footer, API manual, prompt/privacy, H3 archive/license, development and FAQ behavior reuses unchanged v6.7.3 evidence. Both diagram diffs change version labels only. Real Sol 6.1 scenario and one image validated the route and options; feet crop/screen-angle/internal QA uncertainty is explicitly retained, not converted into an all-quality pass or Astra equivalence. No personal sample content or keys added to production. Release publication remains pending the official receipt."
+  "findings": "v6.7.5: reviewed every current README section against the verified v6.7.4 body audit, current working-tree diff and actual route/config/UI. STEP2 and enhancement now default to Sol 6.1 in both development and production; all11 options, Astra manual selection and downward routing remain unchanged. Shared render contract, both provider reference manifests, final Gemini override and QA isolate explicitly scripted depicted copyright targets from identity reference sheets and preserve intentional original masks. Positive and negative local regressions exercise these boundaries; pixel adherence remains unverified until root live visual acceptance checks original cast unmasked and printed target masked. Current headings, version, release download URL and FAQ use6.7.5; historical entries remain historical. Existing ecosystem, quick start, STEP1/3/4, image safeguards, A4 map, PDF/workflow public assets, H3 interim limits/licenses/privacy, development and FAQ reuse unchanged prior evidence. Public files were checked in current tree; generated diagrams retain unchanged flow. No paid API/deploy/push by local preparation owner; public release links are candidate targets until official receipt. No secret or sample-specific production rule added."
 }

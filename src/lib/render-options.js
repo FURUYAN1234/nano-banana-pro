@@ -1,7 +1,10 @@
 export const COPYRIGHT_MOSAIC_INSTRUCTION = '版権キャラクターにおおきなモザイクをかける';
 
+// 参照資料の役割と、台本で実際に描く遮蔽対象を同一視しない。
+export const COPYRIGHT_MOSAIC_TARGET_SCOPE = 'MOSAIC TARGET SCOPE: Sheets/names/labels/style/likeness never prove copyright. copyrighted_mosaic=on: mask only existing-work figures explicitly depicted in Action (including prints); exclude name-only mentions, unrelated originals and text. Preserve explicit cast masks only on named subject/region.';
+
 export const buildCopyrightMosaicInstruction = (enabled = true) => enabled
-  ? `${COPYRIGHT_MOSAIC_INSTRUCTION}。既存作品の人物描写だけを特大モザイクで覆う。顔幅が横4〜6個ほどの不透明な正方形ブロックになる大きさ。ドット絵化ではなく、目・口・顔の細部を判読できなくする粗い遮蔽を、人物全体と印刷物内の人物にも適用。外見の再現より優先。名前・役割・行動は保持。同名だけのオリジナル人物や背景・台詞・タイトルは隠さず、この指示を作中に印字しない。`
+  ? `${COPYRIGHT_MOSAIC_INSTRUCTION}。特大モザイク（顔幅に4〜6個の不透明な正方形）で対象人物全体と印刷人物の目・口・顔の細部を判読できなくする。ドット絵化ではなく遮蔽。外見より遮蔽を優先し、名前・役割・行動を保持。指示は印字しない。\n${COPYRIGHT_MOSAIC_TARGET_SCOPE}`
   : '';
 
 export const buildRenderOptionsContract = ({ mosaicCopyrightedCharacters = true, showWatermarks = true } = {}) => [
@@ -27,7 +30,7 @@ export const assertRenderOptions = (prompt, options) => {
 export const buildRenderOptionsQa = (prompt = '') => {
   const options = readRenderOptions(prompt);
   return [
-    options.mosaicCopyrightedCharacters ? 'MOSAIC CHECK: inspect copyrighted character depictions, including printed artwork. Large opaque square blocks must obscure facial details. Pixel-art styling or tiny pixels leaving eyes and mouth legible are insufficient; report clearly visible missing/insufficient masking as action_fidelity with panel and pixel evidence. Intentional mosaic on copyrighted characters is not a defect. Do not restore or invent their concealed face, clothing or anatomy. Inspect visible story actions and unaffected characters normally; hidden details remain unverified and are not repair targets. Mosaic on unrelated original characters or required text is not authorized.' : '',
+    options.mosaicCopyrightedCharacters ? `${COPYRIGHT_MOSAIC_TARGET_SCOPE}\nMOSAIC CHECK: inspect only authorized target depictions in the generated candidate, including printed artwork; reference sheets are comparison evidence, never output areas to mask. Large opaque square blocks must obscure facial details. Pixel-art styling or tiny pixels leaving eyes and mouth legible are insufficient; report clearly visible missing/insufficient masking as action_fidelity with panel and pixel evidence. Intentional mosaic on copyrighted characters is not a defect. Do not restore or invent their concealed face, clothing or anatomy. Inspect visible story actions and unaffected characters normally; hidden details remain unverified and are not repair targets. Mosaic on unrelated original characters or required text is not authorized. A reference's likeness alone is insufficient evidence to demand added masking or a paid repair.` : '',
     options.showWatermarks
       ? 'WATERMARK EDGE CHECK: inspect the complete left and right footer text from pixels, including the first/last glyphs and their top/bottom strokes. Record cropped or missing required watermark text as panel_layout, and unreadable text as unverified. A clipped URL or credit is not an acceptable decorative-text fallback. Do not infer missing glyphs from the supplied prompt.'
       : 'FOOTER CHECK: no footer watermarks are requested. Their absence is correct, not missing required text or a layout defect. Do not add credits during repair. Inspect the title, dialogue and scripted in-scene text normally.',

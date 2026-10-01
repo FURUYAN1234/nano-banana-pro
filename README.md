@@ -1,8 +1,10 @@
 # Super FURU AI 4-koma System / Super FURU AI 4コマシステム
 
-> Current source version: **v6.7.4** / 現在のソース版: **v6.7.4**
+> Current source version: **v6.7.5** / 現在のソース版: **v6.7.5**
 
 描画オプション：STEP2の「版権キャラクターにモザイクをかける」と、STEP3の「ウオーターマークを表記する」は初期状態でONです。前者はシナリオ構築と最終画像プロンプトに「版権キャラクターにおおきなモザイクをかける」を追加し、後者をOFFにすると左右のフッターの描画指示を外します。OpenAI／GeminiのAPIとWeb用コピーに共通で反映します。設定変更後はモザイクならSTEP2、ウオーターマークならSTEP3から再作成してください。変更だけでAPIは実行されません。選択は全設定リセットまたは再読込まで保持します。生成済み画像には遡って反映されず、AIの対象判断・描画は実画像で確認してください。
+
+モザイク対象は台本のActionで実際に描く既存作品の人物描写です。参照キャラクターシートの存在、画風、外見の類似、同名だけを根拠にオリジナルの登場人物を隠しません。原文で本人への意図的なモザイクを指定した場合は、その対象・領域だけに適用します。最終画像で対象と非対象の両方を確認してください。OpenAIシナリオモデルの初期選択は開発版・公開版ともGPT-6.1 Solです。
 
 An experimental web application in which AI handles topic research, story structure, direction, prompt construction, image generation, and quality review for a four-panel manga. / AIが話題調査、構成、演出、プロンプト構築、画像生成、品質確認まで担当する4コマ漫画制作Webアプリです。
 
@@ -120,7 +122,7 @@ OpenAI reasoning models reserve up to 32,768 tokens for reasoning plus text; leg
 | OpenAI | `gpt-6-astra` → `gpt-6.1-sol` → `gpt-6-sol` → `gpt-5.6-sol` → `gpt-5.6-terra` → `gpt-6-luna` → `gpt-5.6-luna` → `gpt-4.1` → `gpt-4.1-mini` → `gpt-4.1-nano` → `gpt-4o` |
 | Google Gemini | `gemini-3.8-flash` → `gemini-3.7-flash` → `gemini-3.6-flash` → `gemini-3.5-flash` → `gemini-3.5-flash-lite` → `gemini-3.1-flash-lite` |
 
-`gpt-6.1-sol` is the public default for OpenAI scenario work, while local development starts from `gpt-6-luna` for lower-cost validation. The dropdown can explicitly start from any listed GPT-6.1, GPT-6, GPT-5.6, GPT-4.1, or GPT-4o option; on failure, the app tries only the models below that selection in the displayed order. `gpt-6-astra` is unrelated to Google's Project Astra product name. The app sends the scenario prompt through its provider route and does not inherit the Codex desktop task's High or Extra High reasoning setting. Model presence in a list is not proof of image quality; the rendered manga still requires visual review. / OpenAIのシナリオ作成では、公開版は`gpt-6.1-sol`、ローカル開発版は低コスト検証用の`gpt-6-luna`から開始します。プルダウンでは一覧にあるGPT-6.1、GPT-6、GPT-5.6、GPT-4.1、GPT-4oの各モデルを開始位置として明示選択でき、失敗時は選択位置より下のモデルだけを表示順に試します。`gpt-6-astra`はGoogleのProject Astraという製品名とは別物です。アプリは選択プロバイダーの経路へシナリオ指示を送信し、Codexデスクトップ作業の「高い」「極高」推論設定を引き継ぎません。モデル一覧への表示は画像品質の証明ではなく、生成画像の目視確認が必要です。
+`gpt-6.1-sol` is the public default for OpenAI scenario work, and local development uses the same default. The dropdown can explicitly start from any listed GPT-6.1, GPT-6, GPT-5.6, GPT-4.1, or GPT-4o option; on failure, the app tries only the models below that selection in the displayed order. `gpt-6-astra` is unrelated to Google's Project Astra product name. The app sends the scenario prompt through its provider route and does not inherit the Codex desktop task's High or Extra High reasoning setting. Model presence in a list is not proof of image quality; the rendered manga still requires visual review. / OpenAIのシナリオ作成では、公開版・ローカル開発版とも`gpt-6.1-sol`から開始します。プルダウンでは一覧にあるGPT-6.1、GPT-6、GPT-5.6、GPT-4.1、GPT-4oの各モデルを開始位置として明示選択でき、失敗時は選択位置より下のモデルだけを表示順に試します。`gpt-6-astra`はGoogleのProject Astraという製品名とは別物です。アプリは選択プロバイダーの経路へシナリオ指示を送信し、Codexデスクトップ作業の「高い」「極高」推論設定を引き継ぎません。モデル一覧への表示は画像品質の証明ではなく、生成画像の目視確認が必要です。
 
 STEP3 shows `⏳ AI応答を待機中... (○秒経過)` directly below its build button while the connected text API reviews the prompt, then stops the counter when processing ends. / STEP3は接続中の文章APIがプロンプトを精査している間、構築ボタン直下に`⏳ AI応答を待機中... (○秒経過)`を表示し、処理完了時にカウントを停止します。
 
@@ -223,7 +225,7 @@ The default OpenAI image setting is Sunburst / xhigh at the large exact A4 manus
 
 On the Gemini route, STEP2 starts with Gemini 3.8 Flash and shows its purpose plus the 2026-09-25 introductory prices directly above the action button: $0.75 input and $3.75 output per million tokens. Failure-only fallback proceeds through 3.7 Flash, 3.6 Flash, 3.5 Flash, 3.5 Flash-Lite, and 3.1 Flash-Lite. STEP4 uses Gemini 3.1 Flash Image with explicit `1K / 3:4`; the API transport is 896×1200 and the app normalizes the complete page to A4 848×1200. Gemini has no separate quality selector here. The same panel shows the official 1K image-output reference price of $0.067 per image (up to $0.268 for four generated candidates), image/text input at $0.50 per million tokens, and text/thinking output at $3.00 per million tokens. Automatic repair and QA can add request charges. These are deploy-time reference prices rather than live billing. / Gemini経路のSTEP2はGemini 3.8 Flashから開始し、用途と2026-09-25時点の導入価格（入力$0.75、出力$3.75／100万トークン）を実行ボタン直前に表示します。失敗時だけ3.7 Flash、3.6 Flash、3.5 Flash、3.5 Flash-Lite、3.1 Flash-Liteへ順に切り替えます。STEP4はGemini 3.1 Flash Imageの`1K / 3:4`を明示し、API搬送896×1200からページ全体をA4 848×1200へ正規化します。この経路に独立した品質選択はありません。同じ欄に公式参考単価として1K画像出力$0.067／枚（4候補なら最大$0.268）、画像・テキスト入力$0.50／100万トークン、テキスト・思考出力$3.00／100万トークンを表示します。自動修正・品質解析の実行回数分だけ料金が増える場合があります。いずれもデプロイ時点の参考値で、実際の請求額ではありません。
 
-OpenAI STEP2 and enhancement use the selected scenario model. The public build starts from GPT-6.1 Sol; local development starts from GPT-6 Luna. Selection lasts until reload, and failure-only fallback follows the order shown above. The progress log records the selected and adopted models. Model Chain displays the active STEP2 route and retains upper choices such as Astra as Selectable (manual selection only). Character analysis, prompt review and image generation have separate routes. / OpenAIのSTEP2と任意の強化は選択中のシナリオモデルを使います。公開版はGPT-6.1 Sol、ローカル開発版はGPT-6 Lunaから開始します。選択は再読み込みまで有効で、失敗時だけ上記の順に下位モデルへ切り替わります。Model Chainは選択中のSTEP2経路に連動し、Astra等の上位候補もSelectable（手動選択のみ）として残します。進捗ログに選択・最終採用モデルを記録し、キャラクター解析・プロンプト確認・画像生成は別の経路を使います。
+OpenAI STEP2 and enhancement use the selected scenario model. Both public and local development builds start from GPT-6.1 Sol. Selection lasts until reload, and failure-only fallback follows the order shown above. The progress log records the selected and adopted models. Model Chain displays the active STEP2 route and retains upper choices such as Astra as Selectable (manual selection only). Character analysis, prompt review and image generation have separate routes. / OpenAIのSTEP2と任意の強化は選択中のシナリオモデルを使います。公開版・ローカル開発版ともGPT-6.1 Solから開始します。選択は再読み込みまで有効で、失敗時だけ上記の順に下位モデルへ切り替わります。Model Chainは選択中のSTEP2経路に連動し、Astra等の上位候補もSelectable（手動選択のみ）として残します。進捗ログに選択・最終採用モデルを記録し、キャラクター解析・プロンプト確認・画像生成は別の経路を使います。
 
 STEP2 reviews the story payoff, drawable staging and continuity of ensemble acting in one call, using explicit user requirements as constraints. Minor or uncertain objections retain the original. Material staging failures allow one repair while preserving dialogue and story metadata; material payoff failures allow up to three. Each repair is validated and reviewed, and the best candidate is retained with warnings if issues remain. / STEP2はユーザーの明示条件を基準に、オチ、描ける配置、人物間の演技の連続性を同じ呼び出しで監査します。軽微・未確認の指摘だけでは作り直しません。重大な配置・演技の問題は台詞と物語メタデータを保持して1回、重大なオチの問題は最大3回まで修正し、その都度検証・再監査します。問題が残れば最良候補を警告付きで保持します。
 
@@ -305,7 +307,7 @@ The copied prompt guides panel order, cast, speaker assignment, acting, camera, 
 The app provides separate download buttons for the workflow JSON and the custom-node ZIP. Both files are needed for this route. / アプリにはワークフローJSONとカスタムノードZIPのダウンロードボタンが別々にあります。この経路では両方のファイルが必要です。
 
 - [Download workflow JSON](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20260928-173220.json) / [ワークフローJSONをダウンロード](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20260928-173220.json)
-- [Download custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.7.4/ComfyUI_H3_FourPanel_NonLM_20260928-173220.zip) / [カスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.7.4/ComfyUI_H3_FourPanel_NonLM_20260928-173220.zip)
+- [Download custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.7.5/ComfyUI_H3_FourPanel_NonLM_20260928-173220.zip) / [カスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.7.5/ComfyUI_H3_FourPanel_NonLM_20260928-173220.zip)
 
 Place the ZIP's `3フォルダ` under `ComfyUI/custom_nodes/` and the workflow JSON under `ComfyUI/user/default/workflows/`. Install the separate dependencies below, then restart ComfyUI. / ZIP内の`3フォルダ`を`ComfyUI/custom_nodes/`へ、ワークフローJSONを`ComfyUI/user/default/workflows/`以下へ配置します。下記の別途必要な依存関係を導入してからComfyUIを再起動します。
 
@@ -349,11 +351,14 @@ The production application is published from the `main` branch through the repos
 
 **Why are there two ComfyUI download buttons? / ComfyUIのダウンロードボタンが2つあるのはなぜですか？**  The JSON defines the workflow, while the ZIP supplies three custom-node folders and documentation; three additional runtime dependencies are installed separately. / JSONはワークフロー定義、ZIPはカスタムノード3フォルダーと導入文書です。さらに実行依存3項目を別途導入します。
 
-**Where are older packages? / 旧版はどこですか？**  Older source tags remain for audit history. Use the current `20260928-173220` JSON button and matching v6.7.4 FourPanel Release asset. This pair is labeled interim until the combined graph passes an end-to-end run. / 旧タグは監査用履歴として残します。新規導入は現行の`20260928-173220`ワークフローボタンと対応するv6.7.4 FourPanel Releaseアセットを使用してください。統合グラフの全経路実走までは中間配布です。
+**Where are older packages? / 旧版はどこですか？**  Older source tags remain for audit history. Use the current `20260928-173220` JSON button and matching v6.7.5 FourPanel Release asset. This pair is labeled interim until the combined graph passes an end-to-end run. / 旧タグは監査用履歴として残します。新規導入は現行の`20260928-173220`ワークフローボタンと対応するv6.7.5 FourPanel Releaseアセットを使用してください。統合グラフの全経路実走までは中間配布です。
 
 **Is this the T2V/I2V/Ref2V repository? / T2V・I2V・Ref2Vのリポジトリですか？**  No. Those workflows are maintained separately in [comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows). / いいえ。それらは別の[comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows)で管理します。
 
 ## 📋 ChangeLog
+
+### v6.7.5 (2026-10-01)
+- **[Fix & UX]** 参照シートとモザイク対象を区別し、意図的な対象指定を保持。開発版もGPT-6.1 Solを初期選択に統一。 / Separate character references from authorized mosaic targets, preserve intentional masks, and default development to GPT-6.1 Sol.
 
 ### v6.7.4 (2026-09-30)
 - **[Fix & UX]** STEP2にGPT-6.1 Solを追加し公開版の初期モデルに設定。Model Chainを選択モデルと連動しAstraの手動選択を維持。GPT-6.xのAPI出力上限指定を修正。 / Added GPT-6.1 Sol as the production STEP2 default, synchronized Model Chain with the selected route while retaining manual Astra, and fixed GPT-6.x completion parameters.

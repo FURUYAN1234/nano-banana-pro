@@ -6,6 +6,8 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 import { assertRenderOptions, buildRenderOptionsContract, readRenderOptions } from '../src/lib/render-options.js';
+import { buildOpenAIReferencePlan } from '../src/lib/openai-image-references.js';
+import { buildGeminiReferencePlan } from '../src/lib/gemini-image-references.js';
 
 let server, buildMangaPrompt, getScenarioPrompt, qa, compare, repair;
 before(async () => {
@@ -20,6 +22,39 @@ after(async () => { await server?.close(); });
 const castList = '## 葵\n黒髪の成人女性、眼鏡。\n## 凛\n茶髪の成人女性。';
 const scenario = `Topic: 展示会の記念写真\nLocation: 展示会\n${[1, 2, 3, 4].map(n => `[${n}コマ目]\n[Camera: ローアングル]\nAction: 葵が凛に本を渡す。凛は本を受け取る。\n葵「記念写真だね」\n凛「よく見えるよ」`).join('\n')}`;
 const build = (options = {}) => buildMangaPrompt({ scenario, castList, providerFamily: 'chatgpt', systemVersion: 'test', punchlineType: 'Auto', cinematicTechniques: false, ...options });
+
+test('mosaic targets come from panel action, never sheet names, familiar likeness or reference presence', () => {
+  const args = { randomCategory: '', targetDate: '2026-10-01', inputMode: 'manual', manualTopic: '展示会で記念撮影', customLocation: '', customOutfit: '', punchlineType: 'Auto' };
+  const scoped = /MOSAIC TARGET SCOPE:[^\n]+Sheets\/names\/labels\/style\/likeness never prove copyright/;
+  for (const providerFamily of ['chatgpt', 'gemini']) {
+    const prompt = build({ providerFamily });
+    assert.match(getScenarioPrompt(args), scoped);
+    assert.match(prompt, scoped);
+    assert.match(prompt, /names\/labels\/style\/likeness never prove copyright/);
+    assert.match(prompt, /explicitly depicted in Action/);
+    assert.match(qa({ finalPrompt: prompt }), scoped);
+    assert.match(compare({ finalPrompt: prompt }), scoped);
+    assert.match(repair({ originalPrompt: prompt, issues: [] }), scoped);
+    assert.throws(() => assertRenderOptions(prompt.replace(/MOSAIC TARGET SCOPE:[^\n]+/g, ''), { mosaicCopyrightedCharacters: true, showWatermarks: true }), /STEP3/);
+  }
+  const image = 'data:image/png;base64,YQ==';
+  for (const plan of [buildOpenAIReferencePlan({ characterImages: [image] }), buildGeminiReferencePlan({ characterImages: [image] })]) {
+    assert.match(plan.rolePrompt, scoped);
+    assert.match(plan.rolePrompt, /never prove copyright/);
+    assert.match(plan.rolePrompt, /copyrighted_mosaic=on: mask only/);
+  }
+});
+
+test('explicit intentional mosaic on a cast subject stays allowed while unrelated cast stays protected', () => {
+  const deliberate = scenario.replaceAll('葵が凛に本を渡す。', '葵の顔だけに意図的なモザイクをかける。葵が凛に本を渡す。');
+  for (const providerFamily of ['chatgpt', 'gemini']) {
+    const prompt = build({ providerFamily, scenario: deliberate });
+    assert.match(prompt, /葵の顔だけに意図的なモザイクをかける/);
+    assert.match(prompt, /Preserve explicit cast masks only/);
+    assert.match(prompt, /exclude name-only mentions, unrelated originals and text/);
+    assert.match(qa({ finalPrompt: prompt }), /Preserve explicit cast masks/);
+  }
+});
 
 test('STEP2 adds the exact mosaic instruction by default and omits it when unchecked', () => {
   const args = { randomCategory: '', targetDate: '2026-09-30', inputMode: 'manual', manualTopic: '展示会で記念撮影', customLocation: '', customOutfit: '', punchlineType: 'Auto' };

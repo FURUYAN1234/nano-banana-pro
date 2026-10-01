@@ -10,8 +10,8 @@ import {
   getOpenAIScenarioModelRoute,
 } from '../src/lib/openai-model-routes.js';
 
-test('local validation starts on Luna while production starts on Sol 6.1', () => {
-  assert.equal(resolveDefaultOpenAIScenarioModelId(true), 'gpt-6-luna');
+test('development and production both start on Sol 6.1', () => {
+  assert.equal(resolveDefaultOpenAIScenarioModelId(true), 'gpt-6.1-sol');
   assert.equal(resolveDefaultOpenAIScenarioModelId(false), 'gpt-6.1-sol');
 });
 
