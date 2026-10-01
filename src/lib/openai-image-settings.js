@@ -6,7 +6,7 @@ import {
 export const OPENAI_IMAGE_MODEL = 'gpt-image-2.5-flare';
 export const DEFAULT_OPENAI_IMAGE_QUALITY = 'sunburst-xhigh';
 export const DEFAULT_OPENAI_IMAGE_SIZE = MANGA_MANUSCRIPT_LARGE.value;
-export const OPENAI_IMAGE_PRICE_SNAPSHOT_DATE = '2026-09-28';
+export const OPENAI_IMAGE_PRICE_SNAPSHOT_DATE = '2026-10-01';
 const OPENAI_IMAGE_PRICING_USD_PER_M = Object.freeze({
   'gpt-image-2.5-sunburst': Object.freeze({
     imageInput: 8,
