@@ -1,3 +1,9 @@
+## v6.7.6 PDF manual buttons — 2026-10-01
+
+- User authorized deploy, note, remaining seven-app X/Facebook announcements and final official full backup. Manual buttons bundle the existing Gemini (12 pages) and full app (27 pages) PDFs. Gemini button is beside the Gemini key link; header button uses the existing pale-blue action palette and 48px separation from the title/icon. Shared Tailwind, title sizing and connection placement edits were reverted at user direction.
+- Focused PDF check and component lint pass. Official transaction passed preflight but validation stopped before external effects because this HANDOFF lacked v6.7.6. Record repaired; diagnostic full gates pending, official retry requires explicit authorization. Existing IAB app tab is user-facing and retains its current connection state; do not reload or inspect credentials.
+- Root PLAN owns the remaining social/backup sequence. Preserve prior accepted Gemini mosaic limitations and live proofs; no additional paid run.
+
 ## Active: character-sheet mosaic target-scope repair — 2026-10-01
 
 - User requested fixing unintended mosaic on sheet-referenced cast, actual API visual proof, then deploy/note/X/Facebook. Root owns paid generation, visual acceptance and external delivery; this entry grants no new runs or backup. Existing image candidates and unrelated local work remain preserved.
