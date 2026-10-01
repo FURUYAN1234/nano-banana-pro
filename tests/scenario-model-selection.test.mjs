@@ -42,7 +42,7 @@ test('the STEP2 selectable route includes every supported scenario fallback mode
   );
   assert.ok(OPENAI_SCENARIO_MODEL_OPTIONS.every(({ label, description }) => label && description));
   assert.equal(OPENAI_SCENARIO_PRICE_SNAPSHOT_DATE, '2026-09-28');
-  assert.equal(OPENAI_SCENARIO_MODEL_OPTIONS.find(({ id }) => id === 'gpt-6.1-sol').priceSnapshotDate, '2026-09-30');
+  assert.equal(OPENAI_SCENARIO_MODEL_OPTIONS.find(({ id }) => id === 'gpt-6.1-sol').priceSnapshotDate, '2026-10-01');
   assert.ok(OPENAI_SCENARIO_MODEL_OPTIONS.every(({ inputPriceUsdPerM, outputPriceUsdPerM }) => (
     Number.isFinite(inputPriceUsdPerM) && Number.isFinite(outputPriceUsdPerM)
   )));
@@ -151,3 +151,4 @@ test('Sol 6.1 uses its listed price and never escalates fallback to Astra', () =
   assert.ok(!getOpenAIScenarioModelRoute('gpt-6.1-sol').includes('gpt-6-astra'));
   assert.equal(getOpenAIScenarioCostEstimate('gpt-6.1-sol', { input_tokens: 1000, output_tokens: 2000 }).estimatedUsd, 0.022);
 });
+
