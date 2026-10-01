@@ -64,6 +64,7 @@ const ApiKeyModal = ({ isOpen, onSave, onClose, provider = "google" }) => {
   const geminiLinkUrl = "https://aistudio.google.com/app/apikey";
   const openaiLinkUrl = "https://platform.openai.com/api-keys";
   const openaiManualUrl = `${import.meta.env.BASE_URL}downloads/openai-api-beginner-guide-2026-09-30.pdf`;
+  const geminiManualUrl = `${import.meta.env.BASE_URL}downloads/gemini-api-beginner-guide-2026-10-01.pdf`;
   const linkUrl = isOpenAIProvider ? openaiLinkUrl : geminiLinkUrl;
   const linkText = isOpenAIProvider ? "🔑 OpenAI キーを取得" : "🔑 キーを取得";
 
@@ -159,6 +160,9 @@ const ApiKeyModal = ({ isOpen, onSave, onClose, provider = "google" }) => {
               <div className="api-key-links">
                 <a href={geminiLinkUrl} target="_blank" rel="noreferrer" className="api-key-link api-key-link--gemini">
                   🔵 Gemini キー取得（無料）
+                </a>
+                <a href={geminiManualUrl} target="_blank" rel="noreferrer" className="api-key-link api-key-link--gemini manual-link-button">
+                  Gemini APIマニュアル
                 </a>
                 <span className="text-slate-600 text-[10px]">|</span>
                 <a href={openaiLinkUrl} target="_blank" rel="noreferrer" className="api-key-link api-key-link--openai">

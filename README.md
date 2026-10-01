@@ -1,6 +1,6 @@
 # Super FURU AI 4-koma System / Super FURU AI 4コマシステム
 
-> Current source version: **v6.7.5** / 現在のソース版: **v6.7.5**
+> Current source version: **v6.7.6** / 現在のソース版: **v6.7.6**
 
 描画オプション：STEP2の「版権キャラクターにモザイクをかける」と、STEP3の「ウオーターマークを表記する」は初期状態でONです。前者はシナリオ構築と最終画像プロンプトに「版権キャラクターにおおきなモザイクをかける」を追加し、後者をOFFにすると左右のフッターの描画指示を外します。OpenAI／GeminiのAPIとWeb用コピーに共通で反映します。設定変更後はモザイクならSTEP2、ウオーターマークならSTEP3から再作成してください。変更だけでAPIは実行されません。選択は全設定リセットまたは再読込まで保持します。生成済み画像には遡って反映されず、AIの対象判断・描画は実画像で確認してください。
 
@@ -195,7 +195,7 @@ The four primary actions for STEP1 through STEP4 use the same full-width light-b
 
 1. Open the [published application](https://furuyan1234.github.io/nano-banana-pro/). / [公開アプリ](https://furuyan1234.github.io/nano-banana-pro/)を開きます。
 2. Choose Gemini API or OpenAI API and enter that provider's API key in the application. / Gemini APIまたはOpenAI APIを選び、対応するAPIキーをアプリへ入力します。
-   The connection dialog has high-contrast key acquisition links and an OpenAI API manual PDF beside the OpenAI link, opening in a separate tab. / 接続画面のキー取得リンクは、水色と明るい緑で表示します。OpenAIリンクの隣の「OpenAI APIマニュアル」から、同梱のPDFを別タブで開けます。PDFの表示方法はブラウザーの設定に依存します。
+   The connection dialog includes Gemini and OpenAI API manual PDFs beside their key acquisition links. The header's user manual opens the full application guide. All PDFs open in a separate tab. / 接続画面のGemini・OpenAIキー取得リンクの右側から、それぞれのAPIマニュアルを開けます。タイトル左側の「使い方マニュアル」はアプリ全体の操作ガイドです。同梱PDFは別タブで開き、表示方法はブラウザーの設定に依存します。
 3. Select character-sheet images with the STEP1 button or drop them into its drop zone; multiple images can be added together or later. Optional 360-degree background images and style-setting JSON files can be loaded there too. / STEP1ボタンでキャラクター設定画像（キャラシート）を選ぶか、ドロップ領域へ読み込みます。複数枚は同時または後から追加でき、任意で360°背景画像や作風設定JSONも読み込めます。
 4. Run STEP2. While the scenario request is active, the app keeps its real progress or error log directly below the STEP2 button and hides the stale result, preview and STEP3. A completed scenario reveals those controls and highlights STEP3. / STEP2を実行します。シナリオ処理中はSTEP2ボタン直下の実際の進捗・エラーログだけを表示し、古い結果・プレビュー・STEP3を隠します。シナリオ完成後に各欄を表示し、次のSTEP3を案内します。
 
@@ -351,11 +351,14 @@ The production application is published from the `main` branch through the repos
 
 **Why are there two ComfyUI download buttons? / ComfyUIのダウンロードボタンが2つあるのはなぜですか？**  The JSON defines the workflow, while the ZIP supplies three custom-node folders and documentation; three additional runtime dependencies are installed separately. / JSONはワークフロー定義、ZIPはカスタムノード3フォルダーと導入文書です。さらに実行依存3項目を別途導入します。
 
-**Where are older packages? / 旧版はどこですか？**  Older source tags remain for audit history. Use the current `20260928-173220` JSON button and matching v6.7.5 FourPanel Release asset. This pair is labeled interim until the combined graph passes an end-to-end run. / 旧タグは監査用履歴として残します。新規導入は現行の`20260928-173220`ワークフローボタンと対応するv6.7.5 FourPanel Releaseアセットを使用してください。統合グラフの全経路実走までは中間配布です。
+**Where are older packages? / 旧版はどこですか？**  Older source tags remain for audit history. Use the current `20260928-173220` JSON button and matching v6.7.6 FourPanel Release asset. This pair is labeled interim until the combined graph passes an end-to-end run. / 旧タグは監査用履歴として残します。新規導入は現行の`20260928-173220`ワークフローボタンと対応するv6.7.6 FourPanel Releaseアセットを使用してください。統合グラフの全経路実走までは中間配布です。
 
 **Is this the T2V/I2V/Ref2V repository? / T2V・I2V・Ref2Vのリポジトリですか？**  No. Those workflows are maintained separately in [comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows). / いいえ。それらは別の[comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows)で管理します。
 
 ## 📋 ChangeLog
+
+### v6.7.6 (2026-10-01)
+- **[Fix & UX]** Gemini APIとアプリ全体のPDFマニュアルを同梱し、接続画面とタイトル左側に閲覧ボタンを追加。 / Bundle Gemini API and full application PDF manuals with buttons in the connection panel and beside the title.
 
 ### v6.7.5 (2026-10-01)
 - **[Fix & UX]** 参照シートとモザイク対象を区別し、意図的な対象指定を保持。開発版もGPT-6.1 Solを初期選択に統一。 / Separate character references from authorized mosaic targets, preserve intentional masks, and default development to GPT-6.1 Sol.

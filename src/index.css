@@ -2,6 +2,25 @@
 @tailwind components;
 @tailwind utilities;
 
+.manual-link-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 12px;
+  border: 1px solid #93c5fd;
+  border-radius: 6px;
+  background: #dbeafe;
+  color: #1e3a8a;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.5;
+  text-decoration: none;
+}
+.manual-link-button:visited { color: #1e3a8a; }
+.manual-link-button:hover { color: #1e3a8a; background: #bfdbfe; }
+.manual-link-button:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+.header-manual-button { margin-right: 48px; }
+
 .api-key-links { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
 .api-key-link {
   display: inline-block;
@@ -19,6 +38,8 @@
 .api-key-link--openai, .api-key-link--openai:visited { color: #6ee7b7; }
 .api-key-link:hover { color: #fff; background: #263c54; }
 .api-key-link:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+.api-key-link.manual-link-button { margin-left: 10px; color: #1e3a8a; background: #dbeafe; text-decoration: none; }
+.api-key-link.manual-link-button:hover { background: #bfdbfe; }
 
 .image-edit-submit { background-color: #ddd6fe; color: #4c1d95; }
 .image-edit-submit:hover:not(:disabled) { background-color: #c4b5fd; }

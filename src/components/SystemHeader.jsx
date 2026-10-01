@@ -19,13 +19,21 @@ export default function SystemHeader({
   const isOpenAIEngine = getEffectiveEngine(selectedEngine, enableOpenAIApi) === 'openai';
 
   return (
-    <header className="flex flex-col items-center justify-center gap-6 bg-[#0f1115] p-6 md:p-8 rounded-xl border border-white/5 shadow-2xl relative overflow-hidden group">
+    <header className="flex flex-col items-center justify-center gap-6 bg-[#0f1115] px-6 pb-6 pt-4 md:px-8 md:pb-8 md:pt-5 rounded-xl border border-white/5 shadow-2xl relative overflow-hidden group">
       <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/5 blur-[80px] rounded-full pointer-events-none" />
 
       <div className="flex flex-col items-center text-center z-10 w-full">
         <div className="flex flex-col items-center justify-center gap-2 mb-2 w-full max-w-full overflow-hidden">
           <div className="flex flex-col items-center text-center max-w-full">
-            <div className="flex flex-row items-center justify-center gap-3 flex-nowrap text-center">
+            <div className="flex flex-row flex-wrap items-center justify-center gap-x-7 gap-y-4 text-center">
+              <a
+                href={`${import.meta.env.BASE_URL}downloads/super-furu-ai-4koma-full-manual-2026-10-01.pdf`}
+                target="_blank"
+                rel="noreferrer"
+                className="manual-link-button header-manual-button shrink-0"
+              >
+                使い方マニュアル
+              </a>
               <div className="p-2 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl shadow-lg shadow-blue-500/20 shrink-0">
                 <BrainCircuit size={28} className="text-white" />
               </div>
