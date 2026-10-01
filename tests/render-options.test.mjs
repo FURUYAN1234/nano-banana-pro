@@ -45,6 +45,16 @@ test('mosaic targets come from panel action, never sheet names, familiar likenes
   }
 });
 
+test('zero-target masking gate precedes mask instructions and cannot be removed', () => {
+  for (const providerFamily of ['chatgpt', 'gemini']) {
+    const prompt = build({ providerFamily });
+    const gate = 'No targets => NO MOSAIC.';
+    assert.ok(prompt.indexOf(gate) < prompt.indexOf('版権キャラクターにおおきなモザイクをかける'));
+    assert.match(qa({ finalPrompt: prompt }), /No targets => NO MOSAIC/);
+    assert.throws(() => assertRenderOptions(prompt.replaceAll(gate, ''), { mosaicCopyrightedCharacters: true, showWatermarks: true }), /STEP3/);
+  }
+});
+
 test('explicit intentional mosaic on a cast subject stays allowed while unrelated cast stays protected', () => {
   const deliberate = scenario.replaceAll('葵が凛に本を渡す。', '葵の顔だけに意図的なモザイクをかける。葵が凛に本を渡す。');
   for (const providerFamily of ['chatgpt', 'gemini']) {

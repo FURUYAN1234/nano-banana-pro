@@ -64,6 +64,8 @@ const sha256Hex = async (bytes) => {
   return Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, '0')).join('');
 };
 
+export const getImageContentHash = async dataUrl => sha256Hex(parseImageDataUrl(dataUrl).bytes);
+
 const providerName = (provider) => {
   if (String(provider).toLowerCase() === 'openai') return 'OpenAI';
   if (String(provider).toLowerCase() === 'gemini') return 'Google';

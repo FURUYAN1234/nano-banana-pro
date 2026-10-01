@@ -2,6 +2,16 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { buildComedyReviewRequest, applyComedyReview, reviewComedyPrompt } from '../src/lib/comedy-review.js';
 const source = 'Action: 食べた菓子が復活する。誰も驚かない。\nDialogue: また増えた。\nEYE-LINE LOCK: face viewer';
+test('a rejected assembled contract retains the original and does not request another review', async () => {
+  let calls = 0;
+  const request = async () => { calls++; return { text: JSON.stringify({ observations: [], patches: [{
+    line: 2, before: 'EYE-LINE LOCK: face viewer', after: 'EYE-LINE LOCK: follow Action', confidence: 'high', reason: '補助指示を調整',
+  }] }) }; };
+  const result = await reviewComedyPrompt({ prompt: source, validatePrompt: () => ({ valid: false }) }, request);
+  assert.equal(result.prompt, source); assert.equal(calls, 1);
+  assert.match(result.warning, /描画契約.*元の指示文を保持/);
+  assert.deepEqual(result.changes, []);
+});
 test('review forwards actual model progress and retains the concrete failure reason', async () => {
   const progress = [];
   const result = await reviewComedyPrompt({prompt: source, scenario: source, castList:''}, async (_prompt, _images, _system, update) => {

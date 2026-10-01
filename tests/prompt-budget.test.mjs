@@ -121,8 +121,11 @@ test('ChatGPT default removes repeated instructions without treating the Web pas
     colorMode: 'color', providerFamily: 'chatgpt', punchlineType: 'Documentary',
     systemVersion: 'test',
   });
-  // Keep the concrete camera, acting and light cues once without approaching the API ceiling.
-  assert.ok(prompt.length - buildRenderOptionsContract().length < 18000, `unexpected prompt expansion beyond render options: ${prompt.length}`);
+  // Rendering recipes are acceptance content, not repeated infrastructure.
+  // Keep the same overhead cap and the actual API ceiling while retaining them.
+  const recipeChars = [...prompt.matchAll(/^Style: (.+)$/gm)].reduce((sum, match) => sum + match[0].length, 0);
+  assert.ok(recipeChars > 0, 'explicit panel rendering recipes must survive soft compaction');
+  assert.ok(prompt.length - buildRenderOptionsContract().length - recipeChars < 18000, `unexpected non-recipe overhead: ${prompt.length}`);
   assert.equal((prompt.match(/FOCAL READABILITY:/g) || []).length, 1);
   assert.ok(prompt.length <= 32000);
   assert.match(prompt, /Outfit assignment:|role-specific outfit assignments:/);

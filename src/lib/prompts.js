@@ -830,7 +830,7 @@ const RICH_PANEL_COMPOSITION_LOCK = `RICH PANEL COMPOSITION / CHARACTER CLARITY 
 
 export const RICH_PANEL_COMPOSITION_LOCK_COMPACT = 'RICH PANEL COMPOSITION / CHARACTER CLARITY LOCK: physical shots keep perspective and layered foreground, midground, background with selective material detail; lower background contrast without making it blank or washed out. Use motivated key, fill and rim light with visible shadow planes and color depth suited to the beat. Scripted abstract shots may omit scenery; story evidence, acting faces, hands and props stay clear.';
 
-export const ART_STYLE_DIFFERENCE_QA_LOCK = 'ART-STYLE DIFFERENCE QA LOCK: selected recipe overrides default rendering/clean finish: visible planes, linework, shading/material, not only expression/VFX; no numeric quota. Keep Camera/Action/identity/age/wardrobe; never expose a hidden face to show style.';
+export const ART_STYLE_DIFFERENCE_QA_LOCK = 'ART-STYLE DIFFERENCE QA LOCK: Identity from refs; facial construction/ink/shading from panel recipe. G-pen subordinate to the panel recipe; linework, not only expression/VFX. Keep Camera/Action/identity/age/wardrobe; no numeric quota.';
 
 const SCENE_LETTERING_LOCK = 'SCENE LETTERING: explicit per-panel object text exact/readable; repeat only if scripted. Unspecified posters, signs, packages, menus/book covers keep natural artwork/pictograms/colors/borders/material/layout. Freely render context-appropriate lettering—readable/decorative, short/long, any amount/density. Never suppress, simplify, blank, grey, blur, pixelate, mosaic or censor a surface merely because text is unscripted.';
 
@@ -855,6 +855,17 @@ const REFERENCE_SHEET_OUTFIT_RENDERING_LOCK = `REFERENCE-SHEET OUTFIT RENDERING 
 - Garment items come from the active outfit override, not from the character sheet.
 - Apply the character sheet's linework, fold-line treatment, shading method, coloring or monochrome tone method, and degree of stylization to those overridden garments in all four panels. In monochrome, the white-paper/ink/tone contract takes priority over reference fills and shading methods.
 - Lighting may change highlight and shadow strength, but never change the selected garment items or the reference sheet's rendering method.`;
+
+// Present the drawing task before generic finishing/inspection prose. Retain
+// the complete storyboard and every supporting contract exactly once.
+const prioritizePanelArtDirection = (prompt, panelSections, preserveReferenceStyle, scriptLock, isMonochrome) => {
+  if (preserveReferenceStyle || !/PANEL STYLE LOCK:/.test(panelSections)) return prompt;
+  const storyboard = `PANEL DESCRIPTIONS:\n\n${panelSections}`;
+  if (!prompt.includes(storyboard)) throw new Error('Missing manga storyboard during art-direction assembly.');
+  return `PANEL-FIRST ART DIRECTION:
+${isMonochrome ? `${storyboard}\n${scriptLock}` : `${scriptLock}\n${storyboard}`}
+${prompt.replace(storyboard, '').replace(scriptLock, '')}`;
+};
 
 export const buildChatGPTMangaPrompt = (p) => {
   const {
@@ -886,9 +897,9 @@ Use the 360° background image's lighting direction (${bg360Analysis.lighting}),
     ? 'REFERENCE-SHEET STYLE QA LOCK:\n- Compare all four panels to the attached character sheets. Redraw any panel that changes linework, coloring method, shading design, facial construction, eye design, body proportions or degree of stylization.'
     : isMonochrome ? MONOCHROME_STYLE_QA : ART_STYLE_DIFFERENCE_QA_LOCK;
 
-  return `OUTPUT: Single image. Draw manga directly.
+  const prompt = `OUTPUT: Single image. Draw manga directly.
 
-ABSOLUTE TASK: new 4-panel manga, not a reference sheet. Use character refs for ${preserveReferenceStyle ? 'identity and the same art style across all four panels' : isMonochrome ? 'face/eye shape, hair structure, glasses and design; all regions obey the black ink plate' : 'face, hair, eyes, skin, glasses'}.
+ABSOLUTE TASK: new 4-panel manga, not a reference sheet. Use character refs for ${preserveReferenceStyle ? 'identity and the same art style across all four panels' : isMonochrome ? 'identity, hair, glasses and design; panel recipes redraw faces within the black ink plate' : 'face, hair, eyes, skin, glasses'}.
 
 FORMAT:
 ${MANGA_PAGE_ENVELOPE}
@@ -916,13 +927,13 @@ ${bg360Block}
 CAMERA: vary angles; preserve anatomy and the script lock.
 
 CHARACTER IDENTITY:
-- ${isMonochrome ? 'Reproduce reference geometry and design using black ink/white paper: face/eye shape, hairstyle, glasses and accessory shapes. No source hue or skin base tone.' : 'Reproduce reference face, hair, eyes, skin, accessories.'} No feature swapping.
+- ${isMonochrome ? preserveReferenceStyle ? 'Reproduce reference geometry and design using black ink/white paper: face/eye shape, hairstyle, glasses and accessory shapes. No source hue or skin base tone.' : 'Keep reference identity/ink assignments; panel recipe redraws facial construction. No source hue.' : preserveReferenceStyle ? 'Reproduce reference face, hair, eyes, skin, accessories.' : 'Keep reference identity/colors; panel recipe redraws facial construction.'} No feature swapping.
 ${outfitRule}
 ${preserveReferenceStyle
   ? (activeOutfit ? REFERENCE_SHEET_OUTFIT_RENDERING_LOCK : REFERENCE_SHEET_WARDROBE_STYLE_LOCK)
   : isMonochrome ? MONOCHROME_WARDROBE_LOCK : CROSS_PANEL_WARDROBE_COLOR_LOCK}
 ${WARDROBE_ENVIRONMENT_CONTRAST_LOCK}
-- Adults 20+. Keep each character recognizable through hairstyle, wardrobe, glasses, and other identity anchors across panels; facial expression and drawing style may vary with the scene. ${isMonochrome ? 'Keep ink/tone assignments; lit skin always white.' : 'Keep canonical skin and outfit colors under changing light.'}
+- Adults 20+. Keep each character recognizable through hairstyle, wardrobe, glasses, and other identity anchors across panels; facial expression and drawing style may vary with the scene. ${isMonochrome ? 'Keep skin bases in light: light=paper, dark/tanned=screen.' : 'Keep canonical skin and outfit colors under changing light.'}
 ${WARDROBE_COMPONENT_LOCK}
 - Cast details: ${compactCastDetails}
 - Identity Anchor: ${identityMatrix}
@@ -942,7 +953,7 @@ DIALOGUE / BUBBLE QA LOCK:
 - Treat every quoted TEXT value as one immutable typeset layer. Before final render, visually compare every glyph and punctuation mark with TEXT; redraw the lettering on any mismatch. Each bubble tail tip must terminate at its assigned speaker's mouth/head silhouette, never at a neighbor or empty space. Trace every tail; no extra bubbles, captions, narration, or printed routing speaker labels.
 
 CHARACTER QA PASS:
-- ${isMonochrome ? 'Match face/eye shape, hairstyle, glasses, outfit design and stable ink/tone assignments, with pure white lit skin' : 'Match hair color, hairstyle, eye color, glasses status, skin tone, outfit, and accessories'}; redraw swaps, merges, or wrong cast.
+- ${isMonochrome ? 'Match identity, hairstyle, glasses, outfit design and stable skin bases in light (light=paper, dark/tanned=screen); selected panel styles may redraw faces unless reference-style locked' : 'Match hair color, hairstyle, eye color, glasses status, skin tone, outfit, and accessories'}; redraw swaps, merges, or wrong cast.
 
 ${artStyleQa}
 
@@ -957,6 +968,7 @@ PANEL DESCRIPTIONS:
 ${panelSections}
 ${isMonochrome ? `\n${MONOCHROME_FINAL_CHROMA_AUDIT}` : ''}
 `;
+  return prioritizePanelArtDirection(prompt, panelSections, preserveReferenceStyle, scriptLock, isMonochrome);
 };
 
 /**
@@ -1007,7 +1019,7 @@ CLOTHING:
     ? `OUTFIT OVERRIDE: Follow role-specific outfit assignments: ${activeOutfit}; unscoped categories apply to all.`
     : '';
 
-  return `[FORMAT: A4 PORTRAIT ${MANGA_MANUSCRIPT_RATIO_LABEL}; keep selected source tier ${MANGA_MANUSCRIPT_STANDARD.value} or ${MANGA_MANUSCRIPT_LARGE.value} 🚨 NO square/landscape/long-strip]
+  const prompt = `[FORMAT: A4 PORTRAIT ${MANGA_MANUSCRIPT_RATIO_LABEL}; keep selected source tier ${MANGA_MANUSCRIPT_STANDARD.value} or ${MANGA_MANUSCRIPT_LARGE.value} 🚨 NO square/landscape/long-strip]
 Generate highly detailed, professional 4-koma (4-panel vertical) manga.
 MUST have the exact A4 portrait aspect ratio ${MANGA_MANUSCRIPT_RATIO_LABEL} (width:height, approximately ${MANGA_MANUSCRIPT_ASPECT_LABEL}).
 
@@ -1033,7 +1045,7 @@ ${bg360Block}
 
 VISUAL REPRODUCTION:
 Strictly reproduce reference image designs:
-- ${isMonochrome ? 'EXACT hairstyle, face/eye shape and stable ink/tone assignments; pure white lit skin, never copy reference colors.' : 'EXACT hairstyle/color, eye color/shape, skin tone.'}
+- ${isMonochrome ? preserveReferenceStyle ? 'EXACT hairstyle, face/eye shape and stable skin bases: light=paper, dark/tanned=screen; no source hue.' : 'Keep reference identity/ink assignments; panel recipe redraws facial construction. Skin bases: light=paper, dark/tanned=screen; no source hue.' : 'EXACT hairstyle/color, eye color/shape, skin tone.'}
 - EXACT accessories (glasses, hats). NO add/remove.
 - NO feature swapping. Keep unique charm points in EVERY panel.
 ${outfitSection}
@@ -1114,6 +1126,7 @@ ${preserveReferenceStyle ? `REFERENCE-SHEET STYLE QA LOCK:
 - Flow is from top panel to bottom panel.
 ${showWatermarks ? '- Keep every watermark glyph fully inside the footer, inset from the image edges. The text must be oriented horizontally (left-to-right).' : ''}
 - CRITICAL COMPOSITION BAN: Do NOT draw floating close-up eyes, partial face crops, or ghostly face overlays in the background of any panel. Every character must be drawn as a complete physical presence within the scene. No "dramatic eye insert" or "background eye close-up" compositions allowed.
-${isMonochrome ? `CHARACTER QA: shape/design, stable ink/tone and white lit skin; no source colors.\n${MONOCHROME_FINAL_CHROMA_AUDIT}` : ''}
+${isMonochrome ? `CHARACTER QA: identity and stable skin bases in light: light=paper, dark/tanned=screen; no source hue.\n${MONOCHROME_FINAL_CHROMA_AUDIT}` : ''}
       `;
+  return prioritizePanelArtDirection(prompt, panelSections, preserveReferenceStyle, scriptLock, isMonochrome);
 };

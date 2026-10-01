@@ -18,7 +18,7 @@ test('image generation displays the received image before running one visible co
   assert.match(workflowSource, /\[QUALITY QA\].*キャラクターシート・人物・手・小物・吹き出し/);
   assert.match(workflowSource, /formatImageQualityIssue/);
   assert.match(workflowSource, /qualityOutcome\.validationWarning/);
-  assert.match(workflowSource, /const qualityMode = inferImageQualityMode\(currentPrompt\)/);
+  assert.match(workflowSource, /const qualityMode = inferImageQualityMode\(editablePrompt\)/);
   assert.match(workflowSource, /parseImageQualityQaResponse\(qualityResponse.text, \{[\s\S]*mode: qualityMode,[\s\S]*finalPrompt: candidatePrompt,[\s\S]*referenceImageCount:\s*images\.length/);
   assert.match(workflowSource, /buildImageQualityQaPrompt\(\{[\s\S]*scenario,[\s\S]*castList,[\s\S]*finalPrompt:\s*candidatePrompt,[\s\S]*mode:\s*qualityMode/);
   assert.match(workflowSource, /referenceImageCount:\s*images\.length,[\s\S]*panelCropCount:\s*panelImages\.length/);

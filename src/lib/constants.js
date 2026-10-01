@@ -3,7 +3,7 @@ import { getEndingModePolicy } from './ending-mode-policy.js';
 // --- 定数・タグ定義 (constants.js) ---
 // App.jsx から抽出された共有定数
 
-export const SYSTEM_VERSION = "v6.7.7";
+export const SYSTEM_VERSION = "v6.7.8";
 
 // --- Punchline ラベル変換関数 ---
 export const getPunchlineLabel = (type) => {
@@ -126,7 +126,7 @@ export const EMOTION_STYLES = {
     vfx: '(Exaggerated sweat drops:1.3), (popping veins:1.2), (comedic steam from head), (glasses preserved on chibi face if character wears them:1.5)',
   },
   GEKIGA: {
-    style: 'In THIS PANEL ONLY, draw forceful realistic gekiga: carved facial planes at brow, nose, cheek and jaw; tense eyelids and mouth, bold pressure-varied contours, sculpted solid-black facial shadows and directional crosshatching. Redraw facial construction, not just darker anime shading. Keep recognizable identity, age, pose and FULL COLOR.',
+    style: 'In THIS PANEL ONLY, fully redraw faces as realistic GEKIGA manga: angular carved brow/nose/cheek/jaw anatomy, thick variable brush contours, solid ink shadow planes and directional facial crosshatching. Redraw facial construction, not just darker anime shading or speed lines. Keep each recognizable identity and age; preserve scripted eyelids, mouth, gaze, Camera/Action and body acting. FULL COLOR.',
     proportions: '',
     vfx: '(Heavy crosshatching shadows:1.4), (dramatic rim lighting:1.5), (high contrast deep shadows with stark chiaroscuro lighting), (intense speed lines in background)',
     surfaceException: 'intentional crosshatching and deep ink shadows only',
@@ -275,7 +275,7 @@ EMOTION_STYLES.GOLDEN_HOUR = {
 // Budget-safe drawing recipes. Keep the visual operation, not a bare style name.
 export const COMPACT_EMOTION_STYLES = Object.freeze({
   CHIBI_GAG: 'Expressive chibi; keep Camera/Action, body acting, gaze and faces. Reduce deformation if it hides acting/perspective; no zoom for cuteness.',
-  GEKIGA: 'Carved facial planes: brow/nose/cheek/jaw; tense eyelids/mouth, bold tapered ink, solid-black face shadows, directional hatching. Same identity/age; full color.',
+  GEKIGA: 'Realistic gekiga: sculpted face planes at brow/nose/cheek/jaw, brush ink/facial hatching; rebuild, not darker anime. Keep scripted eyelids/mouth/acting, identity/age/color.',
   SHOUJO: 'Delicate thin linework, fine eyelashes, luminous layered irises, airy soft shading, petals and bokeh behind clear acting faces.',
   HORROR: 'Deep ink masses, sharp lit facial planes and eerie rim/underlighting; keep scripted framing and cast.',
   BLANK: 'Affected face: blank pupil-less eyes behind retained glasses, pale face, rigid acting and dark emotional aura.',

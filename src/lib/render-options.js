@@ -1,10 +1,10 @@
 export const COPYRIGHT_MOSAIC_INSTRUCTION = '版権キャラクターにおおきなモザイクをかける';
 
 // 参照資料の役割と、台本で実際に描く遮蔽対象を同一視しない。
-export const COPYRIGHT_MOSAIC_TARGET_SCOPE = 'MOSAIC TARGET SCOPE: Sheets/names/labels/style/likeness never prove copyright. copyrighted_mosaic=on: mask only existing-work figures explicitly depicted in Action (including prints); exclude name-only mentions, unrelated originals and text. Preserve explicit cast masks only on named subject/region.';
+export const COPYRIGHT_MOSAIC_TARGET_SCOPE = 'MOSAIC TARGET SCOPE: No targets => NO MOSAIC. Sheets/names/labels/style/likeness never prove copyright. copyrighted_mosaic=on: mask only existing-work figures explicitly depicted in Action/prints; exclude name-only mentions, unrelated originals and text. Preserve explicit cast masks only on named subject/region.';
 
 export const buildCopyrightMosaicInstruction = (enabled = true) => enabled
-  ? `${COPYRIGHT_MOSAIC_INSTRUCTION}。特大モザイク（顔幅に4〜6個の不透明な正方形）で対象人物全体と印刷人物の目・口・顔の細部を判読できなくする。ドット絵化ではなく遮蔽。外見より遮蔽を優先し、名前・役割・行動を保持。指示は印字しない。\n${COPYRIGHT_MOSAIC_TARGET_SCOPE}`
+  ? `${COPYRIGHT_MOSAIC_TARGET_SCOPE}\n${COPYRIGHT_MOSAIC_INSTRUCTION}。特大モザイク（顔幅に4〜6個の不透明な正方形）で版権対象全体と印刷人物の目・口・顔の細部を判読できなくする。ドット絵化ではなく遮蔽。名前/役割/行動保持、遮蔽優先。指示非印字。`
   : '';
 
 export const buildRenderOptionsContract = ({ mosaicCopyrightedCharacters = true, showWatermarks = true } = {}) => [

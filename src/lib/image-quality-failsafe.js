@@ -1,6 +1,6 @@
 import { buildRenderOptionsQa } from './render-options.js';
 import { isMonochromePrompt } from './manga-render-mode.js';
-import { extractBubbleContracts, extractCriticalRearCameraContracts, hasCriticalRearCameraContract } from './image-quality-qa.js';
+import { assessMonochromeEvidence, extractBubbleContracts, extractCriticalRearCameraContracts, hasCriticalRearCameraContract } from './image-quality-qa.js';
 
 export const IMAGE_QUALITY_MAX_ATTEMPTS = 4;
 export const IMAGE_REPAIR_PROMPT_MAX_CHARS = 31000;
@@ -64,7 +64,8 @@ const MATERIAL_IMAGE_ISSUES = new Set([
   'monochrome_rendering', 'story_integrity',
 ]);
 
-export const isMaterialImageQualityIssue = (issue) => {
+export const isMaterialImageQualityIssue = (issue, evidenceContext) => {
+  if (issue?.type === 'monochrome_rendering') return assessMonochromeEvidence(issue, evidenceContext).repairable;
   if (issue?.type === 'character_reference') {
     const features = new Set(Array.isArray(issue.materialFeatures) ? issue.materialFeatures : []);
     return features.has('eyewear') || features.has('defining_accessory')
@@ -75,7 +76,7 @@ export const isMaterialImageQualityIssue = (issue) => {
 };
 
 const getRepairableIssues = (review) => (Array.isArray(review?.issues) ? review.issues : [])
-  .filter(isMaterialImageQualityIssue)
+  .filter(issue => isMaterialImageQualityIssue(issue, review?.evidenceContext))
   // Vision reviewers often repeat the same panel/camera defect once per
   // dimension. Keep one actionable record per defect so the analysis model
   // can return a complete plan instead of failing on a long duplicate list.
@@ -92,7 +93,7 @@ const formatReviewProgress = (label, review) => {
   if (review?.pass === true) return `${label}: 合格。明確な修正対象はありません。`;
   const issues = Array.isArray(review?.issues) ? review.issues : [];
   if (!issues.length) return `${label}: 判定を確認できませんでした。画像はこの理由だけで再生成しません。`;
-  const prioritized = [...getRepairableIssues(review), ...issues.filter(issue => !isMaterialImageQualityIssue(issue))];
+  const prioritized = [...getRepairableIssues(review), ...issues.filter(issue => !isMaterialImageQualityIssue(issue, review?.evidenceContext))];
   const details = prioritized.slice(0, 5).map(issue =>
     `${issue?.panel ? `${issue.panel}コマ / ` : ''}${issue?.subject ? `${issue.subject} / ` : ''}${issue?.reason || issue?.type || '根拠未取得'}`);
   const remainder = prioritized.length > 5 ? ` / ほか${prioritized.length - 5}件` : '';
@@ -162,7 +163,7 @@ const buildBoundedRepairPrompt = ({ basePrompt, analysis, history, maxChars = IM
   const priorAttempts = history.map(({ attempt, analysis: plans, outcome }) => ({
     attempt,
     plans: plans?.map(({ key, nextStrategy }) => ({ key, nextStrategy })),
-    outcome: outcome && { pass: outcome.pass, unresolved: outcome.issues?.filter(isMaterialImageQualityIssue).map(issueKey) },
+    outcome: outcome && { pass: outcome.pass, unresolved: outcome.issues?.filter(issue => isMaterialImageQualityIssue(issue, outcome.evidenceContext)).map(issueKey) },
   }));
   const historyText = history.length ? `\nPRIOR ATTEMPTS (internal; preserve resolved fixes):\n${compactRepairData(priorAttempts, 1000)}` : '';
   const operations = `\n\nFAILURE ANALYSIS AND REPAIR PLAN (internal; NEVER PRINT):\n${planText}`;

@@ -67,20 +67,27 @@ test('focal ink, sharp story cues and actual exaggerated acting survive every ou
   }
   for (const { prompt, colorMode } of outputs) {
     assert.match(prompt, /FOCAL READABILITY:/);
+    if (colorMode === 'monochrome') {
+      assert.match(prompt, /Focal ink follows the panel recipe; NORMAL=pressure-taper/);
+      assert.match(prompt, /Bold focal silhouettes\/contacts, fine separate face\/hand lines/);
+      assert.match(prompt, /no uniform thickening\/clogging/);
+      assert.match(prompt, /Sharp story reactions\/props\/text/);
+    } else {
     assert.match(prompt, /G-pen.*pressure|pressure.*G-pen/i);
     assert.match(prompt, /thick-to-hairline strokes/);
     assert.match(prompt, /bold outer silhouette.*overlap accents, fine eyes\/mouth\/fingers/);
     assert.match(prompt, /Never uniform thick outlines or black-clogged features/);
     assert.match(prompt, /story-critical reactions.*(?:sharp|crisp)/i);
+    }
     if (colorMode === 'monochrome') {
-      assert.match(prompt, /white\/solid-black planes/);
-      assert.match(prompt, /If focal still merges, reduce BG line density or place bounded solid black behind light silhouettes/);
+      assert.match(prompt, /white\/black planes/);
+      assert.match(prompt, /If merged: fewer BG lines or bounded black behind light forms/);
       assert.doesNotMatch(prompt, /lighten\/desaturate BG|warm\/cool color planes/);
     } else {
       assert.match(prompt, /(?:pale|lighten).*desaturat/i);
       assert.match(prompt, /local light\/dark value and warm\/cool color planes/);
     }
-    assert.match(prompt, /clear gaps at faces\/hands/);
+    assert.match(prompt, /clear gaps at faces\/hands|face\/hand gaps/);
     assert.match(prompt, /speed lines.*(?:substitute|replace)|(?:substitute|replace).*speed lines/i);
     assert.match(prompt, /actual.*(?:projection|pose)|(?:projection|pose).*actual/i);
     assert.match(prompt, /explicit quiet/);

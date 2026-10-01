@@ -6,6 +6,8 @@ import { createServer } from 'vite';
 let server;
 let buildSingleImageEmotionalPrompt;
 let buildMangaPrompt;
+let buildImageQualityQaPrompt;
+let buildImageQualityRepairPrompt;
 
 before(async () => {
   server = await createServer({
@@ -15,10 +17,31 @@ before(async () => {
   });
   ({ buildSingleImageEmotionalPrompt } = await server.ssrLoadModule('/src/lib/single-image-prompt.js'));
   ({ buildMangaPrompt } = await server.ssrLoadModule('/src/lib/prompt-assembler.js'));
+  ({ buildImageQualityQaPrompt } = await server.ssrLoadModule('/src/lib/image-quality-qa.js'));
+  ({ buildImageQualityRepairPrompt } = await server.ssrLoadModule('/src/lib/image-quality-failsafe.js'));
 });
 
 after(async () => {
   await server?.close();
+});
+
+test('cheek treatment follows narrative cues and medium without banning expressive blush or triggering cosmetic repairs', () => {
+  const scenario = ['NORMAL', 'WATERCOLOR', 'GEKIGA', 'CHIBI_GAG'].map((style, i) =>
+    `[${i + 1}コマ目]\n[EMOTION: ${style}]\nAction: 葵が照れて頬を赤らめ、凛は落ち着いて資料を見る。\n葵「ありがとう。」`).join('\n');
+  const prompts = [buildSingleImageEmotionalPrompt(), ...['chatgpt', 'gemini'].map(providerFamily =>
+    buildMangaPrompt({ scenario, castList: '## 葵\n- adult, short hair\n## 凛\n- adult, long hair', colorMode: 'color', providerFamily, punchlineType: 'Auto' }))];
+  for (const prompt of prompts) {
+    assert.match(prompt, /CHEEK RENDERING:.*story\/reference.*panel medium/);
+    assert.match(prompt, /watercolor=skin-integrated wash/);
+    assert.match(prompt, /no default blush stamps\/stripes across cast/);
+    assert.match(prompt, /Preserve expressive blush, makeup and ink\/shadow planes/);
+    assert.match(prompt, /never copy incidental reference-sheet blush as a permanent facial trait/);
+    assert.doesNotMatch(prompt, /never blush|no blush allowed/i);
+    const repair = buildImageQualityRepairPrompt({ originalPrompt: prompt, issues: [], sourceMode: 'source-image' });
+    assert.ok(repair.includes('CHEEK RENDERING:'));
+  }
+  const qa = buildImageQualityQaPrompt({ finalPrompt: prompts[1] });
+  assert.match(qa, /Cosmetic cheek-style differences alone.*unverified.*not.*paid repair/);
 });
 
 test('single-image copy prompt applies the current shared image-quality contract', () => {
@@ -57,7 +80,7 @@ test('single-image copy prompt applies the current shared image-quality contract
   assert.match(prompt, /one primary focal subject/i);
   assert.match(prompt, /strongest G-pen-like contour|Focal G-pen: strongest pressure-tapered/i);
   assert.match(prompt, /background.*lighter.*lower-contrast/i);
-  assert.match(prompt, /depth-of-field blur.*merged.*lighten.*desaturate.*background.*strengthen.*G-pen/i);
+  assert.match(prompt, /depth-of-field blur.*merges.*lighten\/desaturate BG.*strengthen focal G-pen/i);
   assert.match(prompt, /back of the head.*do not invent eyes, nose, or mouth|rear head.*no invented face/i);
   assert.match(prompt, /skull, face edge, ear and eyewear share one head volume/);
   assert.match(prompt, /keep scripted head turn and occlusion/);

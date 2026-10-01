@@ -44,7 +44,7 @@ const protectPrintableText = (promptText) => {
 //   - ギャル/gal → fashionable（ティーン文化の脱色）
 //   - ローアングル → ミディアムアングル（アップスカート防止）
 //   - 低身長 → 削除（幼く見える要素の排除）
-const applySafetyAgeUp = (promptText) => {
+const applySafetyAgeUp = (promptText, { includeCastingConstraint = true } = {}) => {
   const printable = protectPrintableText(promptText);
   const SAFETY_REPLACEMENTS = [
     // --- レベル1: 年齢タグ of 変換 ---
@@ -136,7 +136,7 @@ const applySafetyAgeUp = (promptText) => {
   // --- レベル7: 成人宣言ヘッダーの注入 ---
   // Gemini/ChatGPTそれぞれのキャラ見出し直前に「全員20歳以上の成人」を明示注入
   const ageDeclaration = 'NON-VISIBLE CASTING CONSTRAINT: Every depicted person is an adult, age 20 or older. Mature adult features/proportions. Never render any part of it as visible text.';
-  if (!result.includes(ageDeclaration)) {
+  if (includeCastingConstraint && !result.includes(ageDeclaration)) {
     if (result.includes('Important Character Cast:')) {
       result = result.replace(
         'Important Character Cast:',

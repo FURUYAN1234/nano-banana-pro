@@ -24,7 +24,9 @@ export const HEAD_VOLUME_LOCK = 'skull, face edge, ear and eyewear share one hea
 
 export const SHARED_IMAGE_QUALITY_CONTRACT_COMPACT = `SHARED IMAGE QUALITY CONTRACT: one primary focal subject; keep anatomy/props; ${HEAD_VOLUME_LOCK}`;
 
-export const SKIN_LIGHTING = 'SKIN LIGHT: colored facial skin keeps its base hue with small, soft, modest highlights; no chalk-white nose/cheek blobs. Preserve key/fill/rim, shadow depth and eye/hair glints. Explicit wet/glossy or stylized lighting wins; monochrome keeps white-paper rules.';
+export const CHEEK_RENDERING = 'CHEEK RENDERING: story/reference identity cues and panel medium (watercolor=skin-integrated wash); no default blush stamps/stripes across cast. Preserve expressive blush, makeup and ink/shadow planes; never copy incidental reference-sheet blush as a permanent facial trait.';
+
+export const SKIN_LIGHTING = `SKIN LIGHT: colored facial skin keeps its base hue with small, soft, modest highlights; no chalk-white nose/cheek blobs. Preserve key/fill/rim, shadow depth and eye/hair glints. Explicit wet/glossy or stylized lighting wins; monochrome keeps white-paper rules. ${CHEEK_RENDERING}`;
 
 export const FOCAL_SUBJECT_SEPARATION_FALLBACK = 'FOCAL SUBJECT SEPARATION FALLBACK: If depth-of-field blur still leaves a focal person merged into the background, further lighten and desaturate background colors and strengthen that person\'s G-pen contour. Preserve requested lighting, setting evidence, and monochrome tone rules.';
 
@@ -48,7 +50,6 @@ export const SHARED_IMAGE_QUALITY_CONTRACT = `
 - Preserve the user's requested cast, action, setting, and camera. Quality enrichment must support those directions, never replace them.
 - Render a rich physical setting with meaningful environmental anchors and layered foreground, midground, and background; do not default to empty walls, flat gradients, or generic blank rooms unless physical emptiness is explicitly requested.
 - Establish one primary focal subject or action per image/panel and at most one supporting focal cue. Make the primary subject the first read through scale, placement, light and contrast. Give its silhouette, acting face, important hand and story prop the strongest G-pen-like contour: visibly heavier pressure-tapered strokes with the boldest contact/overlap accents on that focal path. Render secondary figures and background detail with a clear step down to lighter, thinner, lower-contrast lines or controlled depth-of-field. Omit nonessential micro-detail instead of making every object equally sharp.
-- ${FOCAL_SUBJECT_SEPARATION_FALLBACK}
 - ${FOCAL_READABILITY}
 - Keep lighting and color coherent between cast and setting: use a motivated key light, fill, and rim or equivalent emotional lighting, with the cast clear against a softer, lower-contrast background.
 - ${SKIN_LIGHTING}

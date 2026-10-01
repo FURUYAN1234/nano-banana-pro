@@ -24,7 +24,7 @@ test('generated image actions expose only the PNG download label and no debug co
   assert.match(source, /APIで新しい画像を生成する（STEP4）/);
   assert.doesNotMatch(source, /最終プロンプトから毎回、新規画像を生成します/);
   assert.match(workflow, /setImageQualityNeedsRepair\(false\)[\s\S]*const hasDefiniteFinalFailure/);
-  assert.match(workflow, /qualityResult\.issues\.some\(isMaterialImageQualityIssue\)/);
+  assert.match(workflow, /qualityResult\.issues\.some\(issue => isMaterialImageQualityIssue\(issue, qualityResult\.evidenceContext\)\)/);
   assert.match(workflow, /setImageQualityNeedsRepair\(Boolean\(repairEnabled && hasDefiniteFinalFailure\)\)/);
   assert.match(workflow, /generationHistory\.find\(item => item\.img === generatedImage\)/);
   assert.match(workflow, /originalImage: retainedHistory\?\.originalImage/);

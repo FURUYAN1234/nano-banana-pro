@@ -2,6 +2,7 @@ import { buildRenderOptionsQa } from './render-options.js';
 import { isMonochromePrompt, MONOCHROME_QA_RULE } from './manga-render-mode.js';
 import { readBubbleTextValues } from './bubble-text.js';
 import { getPanelShotExecution, isPullbackShot } from './composition-variety.js';
+import { CHEEK_RENDERING } from './shared-image-quality.js';
 
 const ISSUE_TYPES = new Set([
   'monochrome_rendering',
@@ -548,6 +549,7 @@ export const buildImageQualityQaPrompt = ({
   mode = 'four-panel',
   referenceImageCount = 0,
   panelCropCount = 0,
+  evidenceContext,
 } = {}) => {
   const isSingleImage = mode === 'single-image';
   const inspectionScope = isSingleImage
@@ -576,10 +578,13 @@ No character reference sheet is supplied; do not report character_reference.`;
 ${inspectionScope}
 
 ${referenceInspection}
+${isMonochromePrompt(finalPrompt) ? '' : `${CHEEK_RENDERING} Cosmetic cheek-style differences alone are unverified observations, not a paid repair trigger; do not confuse motivated blush/makeup or gekiga facial hatching with identity/anatomy defects.`}
 ${!isSingleImage && extractPullbackPanels(finalPrompt).size ? 'LONG-SHOT SCALE EVIDENCE: for each requested long/pullback shot, framing.scale_evidence={"subject":"largest story actor, not a background extra","top":0.0,"bottom":1.0,"extent":"whole|knees_crop|waist_crop|chest_crop|head_only|occluded","setting":"locate continuous space around and between actors"}. Measure the visible actor from top to bottom relative to that panel (0..1), not the page or source target. All cast present, wide lens, floor behind faces or a long-shot label is not proof of distance. A panel-filling cropped torso is not a long shot. A scale-only shortfall without lost story/action is unverified, not a paid-repair trigger.' : ''}
 ${contactContracts.length ? `ACTION INVENTORY: Compare the approved Action with the visible image, including each named actor's actual prop, hand and action phase. Actors with scripted manipulation by panel: ${contactContracts.map(({ panel, actors }) => `panel ${panel}: ${actors.join(', ')}`).join('; ')}. For each named actor return one action_fidelity.contacts entry with actor, target, observed, status (ok|defect|uncertain), and pixel-grounded evidence. Do not replace the scripted target or phase with a stock pose, or demand contact belonging to an unrelated or later action. Report a visible deviation, but do not call a small phase or gesture difference a story failure when the panel and punchline remain coherent. If small or occluded, use uncertain.` : ''}
 ${isSingleImage ? '' : 'WARDROBE CONTINUITY CHECK: compare each recurring character across panels, independently of reference-sheet availability. Record the same clothing component and exposed region in two panels before comparing presence/count/shape/attachment, including visible inner garment under an outer garment and shoulder-worn accessory strap paths. Anchor attachment to the wearer\'s anatomical left/right, never screen-left/right: a camera or pose reversal alone is not a side swap. Compare against the approved outfit; unspecified details are designed once, not separately per shot. Simplified or chibi art retains construction while acting, expression and camera remain free. Occlusion, cropping, foreshortening or reversed viewpoint is not disappearance; when the region reappears, its design must agree. Respect scripted dressing, undressing, transfer, damage and other state changes. Do not add a named garment or ban one globally. Include an observations.wardrobe summary naming compared panels, visible layers/attachments and uncertainty. Report wardrobe_continuity only with wardrobe_evidence: {"component":"observed clothing component","difference_kind":"component_state|layering|anatomical_side","first_panel":1,"first_location":"person and exposed region","later_location":"same person and exposed region","first_state":"visible component state","later_state":"different visible state","first_visibility":"clear|occluded|cropped|uncertain","later_visibility":"clear|occluded|cropped|uncertain","matched_features":["two independent identity cues"],"scripted_change":"none|present|uncertain","layer_relation":"required for layering: visible inner/outer relation","first_body_side":"required for anatomical_side: anatomical_left|anatomical_right","later_body_side":"required for anatomical_side: anatomical_left|anatomical_right"}. Both compared regions must be clearly visible; never infer hidden clothing or use screen-side movement as proof. Unresolved identity, wearer side or state change is unverified, not a repair target.'}
-${isMonochromePrompt(finalPrompt) ? MONOCHROME_QA_RULE : ''}
+${isMonochromePrompt(finalPrompt) ? `${MONOCHROME_QA_RULE}
+MONOCHROME EVIDENCE: For each monochrome_rendering issue, provide monochromeEvidence: {sourceStage, sourceHash, scale, region:{x,y,width,height}, expectedRole, observedPattern, observation, materialImpact, status, detailScale}. Use only the caller's sourceViews below; region coordinates are original pixels within that view. expectedRole: paper/canonical-dark-skin/assigned-material/bounded-shadow/ink. observedPattern: broad-screen-veil/base-wash/base-whitened/base-drift/shadow-erased/facial-strokes-erased/visible-color. status=defect only for a visible material mismatch; otherwise uncertain/ok. detailScale=broad or fine. Tiny dots/lines seen only in resized full-page/crops are uncertain. A screen base on dark skin, broad motivated shadow, small highlight or neutral edge antialiasing is allowed. Never fabricate an ROI/hash. scale=1 means no app resize, not proof of your internal visual resolution.
+Trusted sourceViews: ${JSON.stringify(evidenceContext?.sourceViews || [])}` : ''}
 ${isSingleImage ? '' : buildRenderOptionsQa(finalPrompt)}
 ${isSingleImage ? '' : 'TITLE BAND CHECK: the title must sit on a plain open background, not inside a box. A closed rectangular outline, border, frame, rule, underline, banner, plaque, label or badge around the title is a panel_layout defect even when the title text itself is exact.'}
 ${isSingleImage ? '' : 'PANEL EDGE CONTINUITY CHECK: inspect every place a visible head or hair meets a panel boundary. Ordinary containment requires the complete silhouette and clear headroom. An artistically intentional panel-border breakthrough is allowed only when one continuous head/hair silhouette passes cleanly in front of the border: the border line stops behind it and resumes after it. A border slicing through face/hair, a severed contour, duplicated outside fragment, or inside/outside offset is a panel_layout defect. Record this independently as camera_geometry.dimensions.boundary; attractiveness alone is not evidence.'}
@@ -660,7 +665,39 @@ ${String(finalPrompt)}
 `.trim();
 };
 
-export const parseImageQualityQaResponse = (responseText, { mode = 'four-panel', finalPrompt = '', referenceImageCount = 0, completionTokens, finishReason } = {}) => {
+// Only caller-supplied image provenance can authorize a paid monochrome repair.
+export const assessMonochromeEvidence = (issue, context) => {
+  const evidence = issue?.monochromeEvidence;
+  const unknown = { status: 'unverified', repairable: false };
+  if (!evidence || !Array.isArray(context?.sourceViews)) return unknown;
+  const view = context.sourceViews.find(view => view.hash && view.hash === evidence.sourceHash
+    && view.stage === evidence.sourceStage && view.scale === evidence.scale);
+  const region = evidence.region;
+  const inside = (r, bounds) => r && bounds && [r.x, r.y, r.width, r.height].every(Number.isInteger)
+    && r.width > 0 && r.height > 0 && r.x >= bounds.x && r.y >= bounds.y
+    && r.x + r.width <= bounds.x + bounds.width && r.y + r.height <= bounds.y + bounds.height;
+  if (!view || view.scale !== 1 || !['original', 'normalized'].includes(view.stage)
+      || !inside(region, { x: 0, y: 0, width: view.width, height: view.height })
+      || !inside(region, view.region) || !String(evidence.observation || '').trim()
+      || !['paper', 'canonical-dark-skin', 'assigned-material', 'bounded-shadow', 'ink'].includes(evidence.expectedRole)) return unknown;
+  if (evidence.status === 'ok') return { status: 'pass', repairable: false };
+  // These are explicit mismatches, never a screen-area or gray-pixel quota.
+  const failures = {
+    paper: ['broad-screen-veil', 'base-wash'],
+    'canonical-dark-skin': ['base-whitened'],
+    'assigned-material': ['base-drift'],
+    'bounded-shadow': ['shadow-erased'],
+    ink: ['facial-strokes-erased', 'visible-color'],
+  };
+  if (evidence.status !== 'defect' || evidence.materialImpact !== 'material'
+      || !failures[evidence.expectedRole].includes(evidence.observedPattern)) return unknown;
+  // Fine dots/hairlines require a true native ROI, not a whole-page Vision claim.
+  if (evidence.detailScale === 'fine' && !(view.region.width < view.width || view.region.height < view.height)) return unknown;
+  if (!['broad', 'fine'].includes(evidence.detailScale)) return unknown;
+  return { status: 'fail', repairable: true };
+};
+
+export const parseImageQualityQaResponse = (responseText, { mode = 'four-panel', finalPrompt = '', referenceImageCount = 0, completionTokens, finishReason, evidenceContext } = {}) => {
   if (finishReason === 'length' || finishReason === 'max_output_tokens') {
     return { pass: false, issues: [unverifiedIssue('品質検査の応答が出力上限で終了しました。検査未完了のため合格判定や画像再生成には使いません。')] };
   }
@@ -672,6 +709,11 @@ export const parseImageQualityQaResponse = (responseText, { mode = 'four-panel',
 
   let issues = parsed.issues.map(normalizeIssue);
   issues = issues.map((issue, index) => {
+    if (issue.type === 'monochrome_rendering') {
+      const grounded = { ...issue, monochromeEvidence: parsed.issues[index]?.monochromeEvidence };
+      return assessMonochromeEvidence(grounded, evidenceContext).repairable ? grounded
+        : { ...grounded, type: 'unverified', subject: 'monochrome_rendering', reason: 'Monochrome defect lacks matching native image/region and material role evidence; no paid repair.' };
+    }
     if (mode !== 'single-image' && finalPrompt && ['bubble_speaker', 'bubble_order'].includes(issue.type)) {
       return { ...issue, type: 'unverified', subject: issue.type,
         reason: `Reviewer claim requires text-matched balloon/endpoint evidence before repair: ${issue.reason}` };
@@ -1080,6 +1122,7 @@ export const parseImageQualityQaResponse = (responseText, { mode = 'four-panel',
     issues,
     observations,
     spatialChecks,
+    evidenceContext,
   };
 };
 

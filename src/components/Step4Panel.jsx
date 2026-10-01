@@ -1067,13 +1067,89 @@ No explanations. No partial results.`;
                             </div>
                           </div>
 
+              {/* コンテンツポリシー手動救済パネル（折りたたみ式・任意で開ける） */}
+              <div style={{ margin: 0 }} className={`border border-yellow-500/30 rounded-lg overflow-hidden ${!finalPrompt ? 'opacity-40 pointer-events-none' : ''}`}>
+                <button
+                  className="w-full flex items-center justify-between px-4 py-3 bg-yellow-900/25 hover:bg-yellow-900/50 transition-all duration-150 cursor-pointer disabled:cursor-not-allowed border-l-4 border-yellow-500 hover:border-yellow-400 group/policy-hdr"
+                  style={{ display: 'flex', width: '100%', boxSizing: 'border-box', margin: 0 }}
+                  onClick={() => setIsPolicyPanelOpen(!isPolicyPanelOpen)}
+                  disabled={!finalPrompt}
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="text-base">🛡️</span>
+                    <span className="text-base font-black tracking-wide text-yellow-200 group-hover/policy-hdr:text-yellow-100 transition-colors">安全基準（ポリシー）に引っかかって画像が出ない場合（web貼り付け時）</span>
+                    {!finalPrompt && <span className="text-[10px] text-slate-500">(STEP3完了後に利用可能)</span>}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-yellow-400 group-hover/policy-hdr:text-yellow-300 transition-colors">
+                      {isPolicyPanelOpen ? 'クリックで閉じる' : 'クリックで開く'}
+                    </span>
+                    <ChevronDown size={18} className={`text-yellow-400 group-hover/policy-hdr:text-yellow-300 transition-all duration-300 ${isPolicyPanelOpen ? 'rotate-180' : ''}`} />
+                  </div>
+                </button>
+
+                {isPolicyPanelOpen && (
+                  <div className="p-3 bg-yellow-950/20 space-y-3" style={{ fontSize: '12px' }}>
+                    <div className="text-yellow-200/80 leading-relaxed space-y-2" style={{ fontSize: '11px' }}>
+                      <p>
+                        web貼り付け方式でコンテンツエラーが出た場合は、下の <strong className="text-yellow-100">「質問メッセージをコピー」</strong> ボタンを押し、ChatGPTやGeminiのチャット欄に貼り付けて送信すると、より具体的な制限の原因を教えてもらえます。
+                      </p>
+                      <p>
+                        AIから返ってきた回答を下の入力欄に貼り付けると、 <strong className="text-yellow-100">「表現を調整したプロンプトを再生成する」</strong> ボタンが押せるようになります。
+                      </p>
+                    </div>
+
+                    <button
+                      className={`${isPolicyCopied ? 'bg-green-600 border-green-500/30' : 'bg-slate-700 hover:bg-slate-600 border-white/10'} text-white px-3 py-1.5 rounded transition-all inline-flex items-center justify-center gap-1.5 border font-bold active:scale-95`}
+                      style={{ fontSize: '10px', minWidth: '120px', position: 'relative' }}
+                      onClick={() => {
+                        navigator.clipboard.writeText("先ほどのプロンプトが拒否された理由を教えてください。具体的にどの単語・表現がコンテンツポリシーに違反していましたか？");
+                        setIsPolicyCopied(true);
+                        setTimeout(() => setIsPolicyCopied(false), 2000);
+                      }}
+                    >
+                      <span style={{ visibility: isPolicyCopied ? 'hidden' : 'visible' }}>📋 制限の理由を尋ねる質問をコピー</span>
+                      {isPolicyCopied && <span style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>✅ コピー完了</span>}
+                    </button>
+
+                    <textarea
+                      style={{ color: '#ffffff', backgroundColor: '#000000' }}
+                      className="w-full bg-[#000000] text-white text-xs p-2 rounded border border-yellow-500/20 focus:border-yellow-500/50 outline-none min-h-[60px] font-mono placeholder-slate-500"
+                      value={policyErrorMsg}
+                      onChange={(e) => setPolicyErrorMsg(e.target.value)}
+                      placeholder={isOpenAIImageMode
+                        ? "例: Your request was rejected as a result of our safety system...\n例: content_policy_violation と表示された\n例: アオリ構図が弾かれたかもしれない"
+                        : "例: I can't generate images that depict minors...\n例: Geminiの回答: 制服と未成年の組み合わせが原因...\n例: アオリ構図が弾かれたかもしれない"}
+                    />
+
+                    <button
+                      className="w-full bg-yellow-600 hover:bg-yellow-500 disabled:bg-slate-700 disabled:opacity-50 text-white font-bold py-1.5 rounded-lg flex items-center justify-center gap-2 transition-all"
+                      style={{ fontSize: '12px' }}
+                      onClick={regenerateSafePrompt}
+                      disabled={isFixingPolicy || isGeneratingImage || !policyErrorMsg.trim() || !finalPrompt}
+                    >
+                      {isFixingPolicy ? (
+                        <><Loader2 size={16} className="animate-spin" /> 分析・修正中...</>
+                      ) : (
+                        <><Wand2 size={16} /> 表現をマイルドに修正して再生成する</>
+                      )}
+                    </button>
+
+                    {/* コンテンツポリシーログ */}
+                    <pre style={{ height: '160px', overflowY: 'auto' }} className="text-xs text-green-400 bg-black/60 p-3 rounded whitespace-pre-wrap font-mono custom-scrollbar leading-relaxed">
+                      {policyFixLog || "> 待機中... 「配慮版プロンプトを再生成する」ボタンを押すとAI分析を開始します。"}
+                    </pre>
+                  </div>
+                )}
+              </div>
+
                           <div className="border border-yellow-500/30 rounded-lg overflow-hidden" style={{ margin: 0 }}>
                             <button style={{ display: 'flex', width: '100%', boxSizing: 'border-box', margin: 0 }} type="button" aria-expanded={isVideoGuideOpen} aria-controls="video-guide-content"
                               className="w-full flex items-center justify-between px-4 py-3 bg-yellow-900/25 hover:bg-yellow-900/50 transition-all duration-150 cursor-pointer disabled:cursor-not-allowed border-l-4 border-yellow-500 hover:border-yellow-400 group/policy-hdr"
                               onClick={() => setIsVideoGuideOpen(!isVideoGuideOpen)}>
                               <div className="flex items-center gap-2">
                                 <span className="text-base">🎬</span>
-                                <span className="text-base font-black tracking-wide text-yellow-200 group-hover/policy-hdr:text-yellow-100 transition-colors">FURUの4コマ漫画を動画化（MiniMax H3 / ComfyUI）</span>
+                                <span className="text-base font-black tracking-wide text-yellow-200 group-hover/policy-hdr:text-yellow-100 transition-colors">4コマ漫画を動画化（miniMax H3/ComfyUI）</span>
                               </div>
                               <div className="flex items-center gap-2">
                                 <span className="text-[10px] font-black uppercase tracking-widest text-yellow-400 group-hover/policy-hdr:text-yellow-300 transition-colors">{isVideoGuideOpen ? 'クリックで閉じる' : 'クリックで開く'}</span>
@@ -1252,82 +1328,6 @@ No explanations. No partial results.`;
                   </p>
                 </div>
               )}
-
-              {/* コンテンツポリシー手動救済パネル（折りたたみ式・任意で開ける） */}
-              <div style={{ margin: 0 }} className={`border border-yellow-500/30 rounded-lg overflow-hidden ${!finalPrompt ? 'opacity-40 pointer-events-none' : ''}`}>
-                <button
-                  className="w-full flex items-center justify-between px-4 py-3 bg-yellow-900/25 hover:bg-yellow-900/50 transition-all duration-150 cursor-pointer disabled:cursor-not-allowed border-l-4 border-yellow-500 hover:border-yellow-400 group/policy-hdr"
-                  style={{ display: 'flex', width: '100%', boxSizing: 'border-box', margin: 0 }}
-                  onClick={() => setIsPolicyPanelOpen(!isPolicyPanelOpen)}
-                  disabled={!finalPrompt}
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="text-base">🛡️</span>
-                    <span className="text-base font-black tracking-wide text-yellow-200 group-hover/policy-hdr:text-yellow-100 transition-colors">安全基準（ポリシー）に引っかかって画像が出ない場合</span>
-                    {!finalPrompt && <span className="text-[10px] text-slate-500">(STEP3完了後に利用可能)</span>}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-yellow-400 group-hover/policy-hdr:text-yellow-300 transition-colors">
-                      {isPolicyPanelOpen ? 'クリックで閉じる' : 'クリックで開く'}
-                    </span>
-                    <ChevronDown size={18} className={`text-yellow-400 group-hover/policy-hdr:text-yellow-300 transition-all duration-300 ${isPolicyPanelOpen ? 'rotate-180' : ''}`} />
-                  </div>
-                </button>
-
-                {isPolicyPanelOpen && (
-                  <div className="p-3 bg-yellow-950/20 space-y-3" style={{ fontSize: '12px' }}>
-                    <div className="text-yellow-200/80 leading-relaxed space-y-2" style={{ fontSize: '11px' }}>
-                      <p>
-                        web貼り付け方式でコンテンツエラーが出た場合は、下の <strong className="text-yellow-100">「質問メッセージをコピー」</strong> ボタンを押し、ChatGPTやGeminiのチャット欄に貼り付けて送信すると、より具体的な制限の原因を教えてもらえます。
-                      </p>
-                      <p>
-                        AIから返ってきた回答を下の入力欄に貼り付けると、 <strong className="text-yellow-100">「表現を調整したプロンプトを再生成する」</strong> ボタンが押せるようになります。
-                      </p>
-                    </div>
-
-                    <button
-                      className={`${isPolicyCopied ? 'bg-green-600 border-green-500/30' : 'bg-slate-700 hover:bg-slate-600 border-white/10'} text-white px-3 py-1.5 rounded transition-all inline-flex items-center justify-center gap-1.5 border font-bold active:scale-95`}
-                      style={{ fontSize: '10px', minWidth: '120px', position: 'relative' }}
-                      onClick={() => {
-                        navigator.clipboard.writeText("先ほどのプロンプトが拒否された理由を教えてください。具体的にどの単語・表現がコンテンツポリシーに違反していましたか？");
-                        setIsPolicyCopied(true);
-                        setTimeout(() => setIsPolicyCopied(false), 2000);
-                      }}
-                    >
-                      <span style={{ visibility: isPolicyCopied ? 'hidden' : 'visible' }}>📋 制限の理由を尋ねる質問をコピー</span>
-                      {isPolicyCopied && <span style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>✅ コピー完了</span>}
-                    </button>
-
-                    <textarea
-                      style={{ color: '#ffffff', backgroundColor: '#000000' }}
-                      className="w-full bg-[#000000] text-white text-xs p-2 rounded border border-yellow-500/20 focus:border-yellow-500/50 outline-none min-h-[60px] font-mono placeholder-slate-500"
-                      value={policyErrorMsg}
-                      onChange={(e) => setPolicyErrorMsg(e.target.value)}
-                      placeholder={isOpenAIImageMode
-                        ? "例: Your request was rejected as a result of our safety system...\n例: content_policy_violation と表示された\n例: アオリ構図が弾かれたかもしれない"
-                        : "例: I can't generate images that depict minors...\n例: Geminiの回答: 制服と未成年の組み合わせが原因...\n例: アオリ構図が弾かれたかもしれない"}
-                    />
-
-                    <button
-                      className="w-full bg-yellow-600 hover:bg-yellow-500 disabled:bg-slate-700 disabled:opacity-50 text-white font-bold py-1.5 rounded-lg flex items-center justify-center gap-2 transition-all"
-                      style={{ fontSize: '12px' }}
-                      onClick={regenerateSafePrompt}
-                      disabled={isFixingPolicy || isGeneratingImage || !policyErrorMsg.trim() || !finalPrompt}
-                    >
-                      {isFixingPolicy ? (
-                        <><Loader2 size={16} className="animate-spin" /> 分析・修正中...</>
-                      ) : (
-                        <><Wand2 size={16} /> 表現をマイルドに修正して再生成する</>
-                      )}
-                    </button>
-
-                    {/* コンテンツポリシーログ */}
-                    <pre style={{ height: '160px', overflowY: 'auto' }} className="text-xs text-green-400 bg-black/60 p-3 rounded whitespace-pre-wrap font-mono custom-scrollbar leading-relaxed">
-                      {policyFixLog || "> 待機中... 「配慮版プロンプトを再生成する」ボタンを押すとAI分析を開始します。"}
-                    </pre>
-                  </div>
-                )}
-              </div>
 
               {/* Generation Log Terminal */}
               <div

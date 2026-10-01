@@ -4,6 +4,13 @@ import { readFile } from 'node:fs/promises';
 
 const readSource = (path) => readFile(new URL(path, import.meta.url), 'utf8');
 
+test('connection badge stays informational without an added switching action', async () => {
+  const header = await readSource('../src/components/SystemHeader.jsx');
+  const app = await readSource('../src/App.jsx');
+  assert.doesNotMatch(header, /onChangeApiKey|API接続を変更/);
+  assert.doesNotMatch(app, /onChangeApiKey/);
+});
+
 test('both API dialogs link the bundled PDF next to OpenAI acquisition under a deployment base path', async () => {
   const { createServer } = await import('vite');
   const { default: React } = await import('react');

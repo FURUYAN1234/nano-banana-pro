@@ -1,3 +1,11 @@
+## Active: v6.7.8 manuals and authorized publication — 2026-10-01
+
+- User accepted OpenAI color and short-input BW, Gemini edited BW and normal color; latest instruction authorizes manual and publication, with earlier note/X/Facebook/full-backup scope still unfinished. No further paid generation is needed.
+- OpenAI ordinary STEP3 lacks equivalent successful style proof; accepted BW used recovered short control plus selected-mode contract. Gemini initial BW had residual color/wardrobe issues; one generic additional edit was accepted. Normal Gemini color was accepted with QA warnings retained. Do not convert user acceptance into a claim of automatic QA perfection.
+- Unrequested in-place API switch fully removed; original settings-clear/reconnect semantics retained and regression-covered. Sole IAB5/tab15 localhost5173 remains user-owned; never create extra tabs, reload, reset, or inspect keys. Current visible connection changed to OpenAI during documentation work; cause unverified, not attributed to HMR.
+- Full suite997/997 passed in output/mono-implementation-20261001/full-current-unrestricted.log. Local version now6.7.8. Full manual30pages + Gemini guide12pages rebuilt with fresh6.7.8 captures and correctly labeled generation examples; visual/layout/privacy/link QA in progress. Latest screenshots extracted from actual CUA tool output (not user attachments).
+- Next: finalize PDF visual QA/README audit, clean candidate commits, unchanged official publisher; full-body note update and matching X/Facebook public readbacks; unchanged official full backup and independent verifier. No6.7.8 external stage started yet.
+
 ## v6.7.7 Gemini manual button correction — 2026-10-01
 
 - User approved the displayed correction and authorized deploy/note/X/Facebook/final backup. Only the Gemini API manual button now shares api-key-link and provider styling with existing API buttons; spacing-only class retains10px extra separation. Header/global UI untouched. Focused2/2 passes; fresh IAB localhost5173 computed colors/border/background/font/padding/radius equal its existing Gemini key button; screenshot output/manual-button-corrected.png. Existing user-connected tab1 remains preserved; fresh proof tab10 shown. Documentation versions/PDF footers advance to6.7.7; root PLAN owns external delivery and SNS wording cleanup.

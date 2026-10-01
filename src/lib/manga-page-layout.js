@@ -178,11 +178,32 @@ export const normalizeMangaPage = async (dataUrl) => {
     mode: plan ? 'band-layout' : 'contained-source' };
 };
 
-const inspectImageDimensions = async (dataUrl) => {
+export const inspectImageDimensions = async (dataUrl) => {
   const image = new Image();
   image.src = dataUrl;
   await image.decode();
   return { width: image.naturalWidth, height: image.naturalHeight };
+};
+
+// Sampling evidence must not acquire interpolation artefacts from the preview.
+export const extractNativeImageRegion = async (dataUrl, region) => {
+  const { x, y, width, height } = region || {};
+  if (![x, y, width, height].every(Number.isInteger) || x < 0 || y < 0 || width < 1 || height < 1) {
+    throw new RangeError('原寸領域は正しい整数pixelで指定してください。');
+  }
+  const image = new Image();
+  image.src = dataUrl;
+  await image.decode();
+  if (x + width > image.naturalWidth || y + height > image.naturalHeight) {
+    throw new RangeError('原寸領域が画像の外へ出ています。');
+  }
+  const canvas = document.createElement('canvas');
+  canvas.width = width; canvas.height = height;
+  const context = canvas.getContext('2d');
+  if (!context) throw new Error('原寸画像を切り出せません。');
+  context.imageSmoothingEnabled = false;
+  context.drawImage(image, x, y, width, height, 0, 0, width, height);
+  return { dataUrl: canvas.toDataURL('image/png'), x, y, width, height, scale: 1 };
 };
 
 const hasA4PageRatio = ({ width, height } = {}) => Number.isFinite(width)

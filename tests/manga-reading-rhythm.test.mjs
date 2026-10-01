@@ -425,7 +425,7 @@ test('monochrome permits depth-of-field in ink without relaxing skin or palette 
   for (const providerFamily of ['chatgpt', 'gemini']) {
     const prompt = buildMangaPrompt({ scenario, castList, providerFamily, colorMode: 'monochrome', systemVersion: 'test' });
     assert.match(prompt, /depth.of.field[^\n]*(?:fewer.*lines|reduce.*line density).*white gaps/i);
-    assert.match(prompt, /depth.of.field[^\n]*never add screentone for distance or blur/i);
+    assert.match(prompt, /depth.of.field[^\n]*(?:never add screentone for distance or blur|遠近・ぼけで網点を足さない)/i);
     assert.match(prompt, /(?:lit areas of faces and skin|lit skin|light skin)[^\n]*(?:white|unprinted)/i);
     assert.match(prompt, /#000000/);
     assert.match(prompt, /#FFFFFF/);

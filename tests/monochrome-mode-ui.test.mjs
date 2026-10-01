@@ -5,6 +5,8 @@ import vm from 'node:vm';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { createServer } from 'vite';
+import { ensureMangaColorModeContract, isMonochromePrompt } from '../src/lib/manga-render-mode.js';
+import { inferImageQualityMode } from '../src/lib/image-quality-failsafe.js';
 
 const source = await readFile(new URL('../src/hooks/useMangaWorkflow.js', import.meta.url), 'utf8');
 let server, Step3Panel;
@@ -14,6 +16,22 @@ before(async () => {
 });
 after(async () => { await server?.close(); });
 
+test('real generation boundary applies selected monochrome to edited four-panel briefs before API and QA', () => {
+  const boundary = source.match(/const editablePrompt = overridePrompt \|\| finalPrompt;([\s\S]*?)\n    const metadataSettings/);
+  assert.ok(boundary);
+  const run = values => vm.runInNewContext(
+    `const editablePrompt = overridePrompt || finalPrompt;${boundary[1]}\ncurrentPrompt;`,
+    { overridePrompt: null, finalPrompt: 'Four-panel manga: GEKIGA then CHIBI.', colorMode: 'monochrome', ensureMangaColorModeContract, inferImageQualityMode, ...values }
+  );
+  const mono = run({});
+  assert.equal(isMonochromePrompt(mono), true);
+  assert.ok(mono.startsWith('Four-panel manga: GEKIGA then CHIBI.'));
+  assert.equal(run({ colorMode: 'color' }), 'Four-panel manga: GEKIGA then CHIBI.');
+  const single = 'Create a SINGLE breathtaking illustration';
+  assert.equal(inferImageQualityMode(single), 'single-image');
+  assert.equal(run({ overridePrompt: single }), single);
+});
+
 test('STEP3 exposes two native radio choices, with color as default and keyboard-safe locks', () => {
   const render = props => renderToStaticMarkup(React.createElement(Step3Panel, { currentStep: 3, setColorMode() {}, ...props }));
   const normal = render({});
@@ -22,7 +40,8 @@ test('STEP3 exposes two native radio choices, with color as default and keyboard
   assert.match(normal, /全設定リセットまで選択を保持/);
   const mono = render({ colorMode: 'monochrome' });
   assert.match(mono, /checked="" value="monochrome"|value="monochrome" checked=""/);
-  assert.match(mono, /Gペン/);
+  assert.match(mono, /白地と墨線を基本に、肌の地色・素材・影へ必要なトーン/);
+  assert.match(mono, /コマごとの絵柄とカメラ・演技を保ちます/);
   assert.match(render({ isColorModeLocked: true }), /<fieldset disabled=""/);
   assert.match(render({ currentStep: 2 }), /<fieldset disabled=""/);
 });

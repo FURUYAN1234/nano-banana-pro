@@ -35,3 +35,6 @@ docs/onedrive_conflicts_20260417/
 
 
 .release-assets/
+
+# Generated PDF render proofs
+/tmp/

@@ -1,3 +1,4 @@
+import { getImageContentHash } from '../lib/generated-image-metadata.js';
 import { useState, useRef, useEffect } from 'react';
 
 // --- Imports (paths adjusted from ./lib/ to ../lib/) ---
@@ -11,7 +12,7 @@ import {buildOpenAIReferencePlan, appendOpenAIReferencePrompt, getOpenAIPromptBo
 import {buildGeminiReferencePlan, buildGeminiImageApiPrompt} from '../lib/gemini-image-references.js';
 import { callAI, setActiveEngine } from '../lib/ai-provider';
 import { reviewComedyPrompt } from '../lib/comedy-review';
-import { normalizeMangaColorMode } from '../lib/manga-render-mode.js';
+import { normalizeMangaColorMode, ensureMangaColorModeContract } from '../lib/manga-render-mode.js';
 import { assertPromptEndingModeConsistency, getEndingModePolicy, isDocumentaryEnding, resolveScenarioEndingType } from '../lib/ending-mode-policy.js';
 import { assertPrintableDialogue } from '../lib/bubble-text.js';
 import { ensureWebPromptTrailingNewline, splitWebPromptForPaste } from '../lib/web-prompt-chunks.js';
@@ -23,12 +24,13 @@ import { get360AnalysisPrompt, parse360Analysis } from '../lib/panorama360';
 import { isEquirectangularFile, readFileAsDataURL } from '../lib/input-files.js';
 import { getCharacterAnalysisPrompt } from '../lib/prompts';
 import {
-  buildMangaPrompt,
+  buildMangaPromptArtifact,
+  validateMangaPromptArtifact,
   PROMPT_PROVIDER_FAMILIES,
   normalizePromptProviderFamily
 } from '../lib/prompt-assembler';
 import { addGenerationHistoryItem } from '../lib/generation-history';
-import { extractMangaPanelCrops, normalizePageCandidate, formatPageLayoutStatus } from '../lib/manga-page-layout.js';
+import { inspectImageDimensions, extractMangaPanelCrops, normalizePageCandidate, formatPageLayoutStatus } from '../lib/manga-page-layout.js';
 import { generateScenario, enhanceScenarioText } from '../lib/scenario-provider';
 import { fixPolicyViolation } from '../lib/policy-fixer';
 import { verifyApiKeyConnection } from '../lib/api-key-preflight';
@@ -1069,7 +1071,7 @@ export default function useMangaWorkflow() {
         }))
         : undefined;
       // [v3.82-alpha] リファクタリング: 外部モジュールでプロンプトを構築
-      const safePrompt = buildMangaPrompt({
+      const promptArtifact = buildMangaPromptArtifact({
         mosaicCopyrightedCharacters,
         showWatermarks,
         scenario: currentScenario,
@@ -1087,6 +1089,7 @@ export default function useMangaWorkflow() {
         promptMaxChars
       });
 
+      const safePrompt = promptArtifact.prompt;
       const endingPolicy = getEndingModePolicy(activePunchlineType);
       setAssembleThought(prev => prev + (endingPolicy.preserveReferenceStyle
         ? "\n> 原文忠実性と全4コマの参照絵柄固定を保ってAI精査中..."
@@ -1095,6 +1098,7 @@ export default function useMangaWorkflow() {
           : "\n> ギャグの意図を保ってAI精査中..."));
       const reviewed = await reviewComedyPrompt({
         prompt: safePrompt,
+        validatePrompt: candidate => validateMangaPromptArtifact(candidate, promptArtifact),
         promptMaxChars,
         scenario: currentScenario,
         castList,
@@ -1119,7 +1123,7 @@ export default function useMangaWorkflow() {
       assertPrintableDialogue(reviewed.prompt);
       assertRenderOptions(reviewed.prompt, { mosaicCopyrightedCharacters, showWatermarks });
       setFinalPrompt(reviewed.prompt);
-      setAssembleThought(prev => prev + `\n> 出力モード: ${colorMode === 'monochrome' ? '漫画原稿三階調（白地・黒ベタ・単一スクリーントーン）' : 'カラー'}`);
+      setAssembleThought(prev => prev + `\n> 出力モード: ${colorMode === 'monochrome' ? '白黒漫画原稿（墨線・白地・肌や素材と影に応じたトーン）' : 'カラー'}`);
       setAssembleThought(prev => prev + `\n> ${reviewed.warning || "AI精査完了"}`);
       setAssembleThought(prev => prev + "\n> セーフティ年齢フィルター: 適用済み\n> 最適化ベクトル: 計算完了\n> 構造ロック: 有効\n> 風刺ロジック: 強化済み\n> [完了] 最終プロンプトを構築しました。");
       showStatus(reviewed.warning
@@ -1527,8 +1531,11 @@ export default function useMangaWorkflow() {
   // [v2.79] 戻り値変更: フルオート連鎖用（true=成功, false=失敗）
   const generateImageOnce = async (skipGuard = false, overridePrompt = null, generationOptions = {}) => {
     setImageQualityNeedsRepair(false);
-    const currentPrompt = overridePrompt || finalPrompt;
-    const qualityMode = inferImageQualityMode(currentPrompt);
+    const editablePrompt = overridePrompt || finalPrompt;
+    const qualityMode = inferImageQualityMode(editablePrompt);
+    const currentPrompt = qualityMode === 'four-panel'
+      ? ensureMangaColorModeContract(editablePrompt, colorMode)
+      : editablePrompt;
     const metadataSettings = {
       punchline_type: punchlineType,
       color_mode: colorMode,
@@ -1570,6 +1577,7 @@ export default function useMangaWorkflow() {
     const initialLogs = generationOptions.policyAttempt
       ? [`[POLICY AUTO-FIX] 画像再生成 ${generationOptions.policyAttempt}/${MAX_POLICY_RETRIES}`, "[1/5] プロンプトパラメータをロック中...", "[2/5] セーフティフィルターを検証中..."]
       : ["[1/5] プロンプトパラメータをロック中...", "[2/5] セーフティフィルターを検証中..."];
+    if (currentPrompt !== editablePrompt) initialLogs.push('[MODE] 選択中の白黒指定を、編集した描画指示に反映しました。');
     if (getCurrentPromptProviderFamily() === PROMPT_PROVIDER_FAMILIES.CHATGPT) {
       initialLogs.push("[2.5/5] ✅ ChatGPT Engine: ChatGPT-family prompt structure locked.");
     } else {
@@ -1683,8 +1691,15 @@ export default function useMangaWorkflow() {
       const reviewImageCandidate = async (candidate, candidatePrompt) => {
         progressPhase = '品質検査';
         try {
+          const candidateImage = `data:${candidate.mimeType || 'image/png'};base64,${candidate.base64Img}`;
+          const dimensions = await inspectImageDimensions(candidateImage);
+          const evidenceContext = { sourceViews: [{
+            hash: await getImageContentHash(candidateImage),
+            stage: candidate.originalImage && candidate.originalImage !== candidateImage ? 'normalized' : 'original',
+            ...dimensions, region: { x: 0, y: 0, ...dimensions }, scale: 1,
+          }] };
           const panelImages = qualityMode === 'four-panel'
-            ? await extractMangaPanelCrops(`data:${candidate.mimeType || 'image/png'};base64,${candidate.base64Img}`)
+            ? await extractMangaPanelCrops(candidateImage)
             : [];
           const qualityImageParts = buildImageQualityQaImageParts({
             candidate,
@@ -1698,6 +1713,7 @@ export default function useMangaWorkflow() {
             mode: qualityMode,
             referenceImageCount: images.length,
             panelCropCount: panelImages.length,
+            evidenceContext,
           });
           const qualityResponse = await callAI(
             qualityPrompt,
@@ -1711,6 +1727,7 @@ export default function useMangaWorkflow() {
             referenceImageCount: images.length,
             completionTokens: qualityResponse.usage?.completion_tokens ?? qualityResponse.usage?.output_tokens,
             finishReason: qualityResponse.finishReason,
+            evidenceContext,
           });
           const reviewTokens = qualityResponse.usage?.completion_tokens ?? qualityResponse.usage?.output_tokens;
           statCallback(`[QUALITY QA] 応答サイズ: ${String(qualityResponse.text ?? '').length.toLocaleString()}文字${Number.isFinite(reviewTokens) ? `・出力 ${reviewTokens.toLocaleString()} tokens` : ''}。`);
@@ -1874,7 +1891,7 @@ export default function useMangaWorkflow() {
       const qualityResult = qualityOutcome.finalReview;
       const hasDefiniteFinalFailure = qualityResult?.pass !== true
         && Array.isArray(qualityResult?.issues)
-        && qualityResult.issues.some(isMaterialImageQualityIssue);
+        && qualityResult.issues.some(issue => isMaterialImageQualityIssue(issue, qualityResult.evidenceContext));
       setImageQualityNeedsRepair(Boolean(repairEnabled && hasDefiniteFinalFailure));
       if (qualityResult.observations) {
         const labels = { title: 'タイトル', dialogue: 'セリフ・無言', hands: '左右の手', props: '小道具' };

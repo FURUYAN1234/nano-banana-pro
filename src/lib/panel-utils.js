@@ -1,5 +1,5 @@
 import { EMOTION_STYLES } from './constants.js';
-import { MONOCHROME_EMOTION_STYLES } from './manga-render-mode.js';
+import { resolveMonochromeRenderIntent } from './manga-render-mode.js';
 import { stripReferenceWardrobe } from './seasonal-outfit.js';
 import { stripSourceMetadata } from './sns-explanation.js';
 import { assertDialogueQuoteBalance } from './bubble-text.js';
@@ -1246,12 +1246,28 @@ const WRITTEN_TEXT_CONTEXT_RE = /(?:\bwritten\b|\bhandwriting\b|air-writing|fing
 const SOUND_CONTEXT_RE = /(?:sound|sfx|onomatopoeia|audio|hum|buzz|\u97f3|\u64ec\u97f3|\u52b9\u679c\u97f3|BGM|\u9cf4|\u30d6\u30fc\u30f3|\u30ce\u30a4\u30ba)/i;
 // [v4.6.3] MOOD_CONTEXT_RE から頻出語（表情・反応・状態・感情）を除外。
 // これらはセリフ周辺のト書きに頻繁に出現し、セリフのカギ括弧まで誤って置換してしまう原因となっていた。
-const MOOD_CONTEXT_RE = /(?:aura|mood|emotion|focus|silence|atmosphere|\u30aa\u30fc\u30e9|\u96f0\u56f2\u6c17|\u6c17\u914d|\u6c88\u9ed9|\u7a7a\u6c17|\u611f\u3058|\u30e0\u30fc\u30c9|\u96c6\u4e2d|\u6ca1\u5165|\u30d5\u30a9\u30fc\u30ab\u30b9|\u7dca\u5f35|\u4f59\u97fb)/i;
-const SPOKEN_TEXT_CONTEXT_RE = /(?:dialogue|speech|says|said|shouts|whispers|\u8a00|\u7b54|\u53eb|\u547c|\u545f|\u3064\u3076\u3084|\u8a71|\u554f|\u7591\u554f|\u7d76\u53eb|\u30bb\u30ea\u30d5)/i;
 const ACTION_QUOTED_TEXT_RE = /[\u300c\u300e"\u201c\u201d]([^\u300c\u300d\u300e\u300f"\u201c\u201d]{1,80})[\u300d\u300f"\u201c\u201d]/g;
 
 const protectNonDialogueTextHints = (actionText) => {
   if (!actionText) return actionText;
+
+  // A quoted list shares its owning clause. Contents of adjacent quotes are
+  // data, not context that can reclassify another label as speech/mood/sound.
+  const quotes = [...actionText.matchAll(ACTION_QUOTED_TEXT_RE)];
+  const quoteContext = (offset) => {
+    let first = quotes.findIndex(quote => quote.index === offset);
+    let last = first;
+    const isListGap = (left, right) => /^[\s、,，・/／]*$/.test(
+      actionText.slice(left.index + left[0].length, right.index));
+    while (first > 0 && isListGap(quotes[first - 1], quotes[first])) first--;
+    while (last + 1 < quotes.length && isListGap(quotes[last], quotes[last + 1])) last++;
+    const start = quotes[first].index;
+    const end = quotes[last].index + quotes[last][0].length;
+    return {
+      leftContext: actionText.slice(Math.max(0, start - 60), start).replace(ACTION_QUOTED_TEXT_RE, '').split(/[。！？!?\n]/).at(-1),
+      rightContext: actionText.slice(end, end + 60).replace(ACTION_QUOTED_TEXT_RE, '').split(/[。！？!?\n]/)[0],
+    };
+  };
 
   const removedSpokenQuoteMarker = '\uE000';
   const removedSoundQuoteMarker = '\uE001';
@@ -1271,8 +1287,7 @@ const protectNonDialogueTextHints = (actionText) => {
     // [v4.6.5-fix2] 文脈ウィンドウを56→30文字に縮小。
     // 隣接するセリフの語彙（「オーラ」「鳴らし」等）を誤って文脈として拾い、
     // MOOD_CONTEXT_RE / SOUND_CONTEXT_RE が誤マッチする問題を防止。
-    const leftContext = fullText.slice(Math.max(0, offset - 30), offset);
-    const rightContext = fullText.slice(offset + match.length, Math.min(fullText.length, offset + match.length + 30));
+    const { leftContext, rightContext } = quoteContext(offset);
     const context = `${leftContext} ${rightContext}`;
 
     if (hasAcousticQuotePostContext(rightContext)) {
@@ -1296,19 +1311,12 @@ const protectNonDialogueTextHints = (actionText) => {
       return removedSoundQuoteMarker;
     }
 
-    if (MOOD_CONTEXT_RE.test(context)) {
-      return '';
-    }
-
-    if (SPOKEN_TEXT_CONTEXT_RE.test(context)) {
-      return '';
-    }
-
     if (isLikelyDialogue) {
       return match;
     }
 
-    return '';
+    // Unclassified quoted context remains source data; it is not a new bubble.
+    return match;
   });
 
   return protectedText
@@ -1861,9 +1869,11 @@ export const buildEmotionBlock = (panelText, colorMode = 'color', { preserveRefe
     const gag = !seriousTone && SERIOUS_STYLES_FOR_GAG_OVERLAY.has(emo) && rawTagHasComedyIntent(rawEmotionTag)
       ? '\nGAG INTENT OVERLAY: retain dramatic ink/shadows while allowing exaggerated cartoon reactions and comedic timing; do not play the gag straight-serious.' : '';
     // 色に依存しない頭身指定は両モードで共有。複数人物のIMPACTは既存の全員可視レシピを優先。
-    const proportions = EMOTION_STYLES[emo]?.proportionsMulti === undefined ? EMOTION_STYLES[emo]?.proportions : '';
+    const proportions = emo === 'CHIBI_GAG'
+      ? 'CHIBI: Explicit user proportions win; otherwise retain shortened body and enlarged head within the requested Camera/Action.'
+      : EMOTION_STYLES[emo]?.proportionsMulti === undefined ? EMOTION_STYLES[emo]?.proportions : '';
     const proportionLock = proportions ? `\nPROPORTION OVERRIDE: ${proportions}` : '';
-    return `\nMONOCHROME PANEL STYLE LOCK: ${emo}; ${MONOCHROME_EMOTION_STYLES[emo] || 'Expressive black pen lines, solid blacks and the same assigned Japanese screentone; preserve canonical skin bases.'} Preserve script/Camera/Action, cast, glasses and wardrobe tone assignments.${proportionLock}${gag}`;
+    return `\nMONOCHROME PANEL STYLE LOCK: ${emo}; ${resolveMonochromeRenderIntent({ style: emo, preserveReferenceStyle, seriousTone }).lineRule} Preserve script/Camera/Action, cast, glasses and wardrobe tone assignments.${proportionLock}${gag}`;
   }
   const s = EMOTION_STYLES[emo];
   const styleLock = `PANEL STYLE LOCK: ${emo}; use the selected style recipe below; preserve identity and canonical wardrobe.`;

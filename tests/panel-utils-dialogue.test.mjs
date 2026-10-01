@@ -14,6 +14,27 @@ let buildIdentityMatrix;
 let extractActingIdentityNotes;
 let getCameraForPanel;
 
+test('action preserves a quoted label list and a device state without adding bubbles', () => {
+  const cast = '- Character [甲]: adult\n- Character [乙]: adult';
+  const labels = ['年内に整備計画', '地域ごとの重点分野', '翌年度の投資枠'];
+  const panel = '状況: ' + labels.map(s => `「${s}」`).join('、')
+    + 'と記された展示パネルの前。乙は端末の「確認中」を振り返る。\n甲「確認してみよう。」';
+  const action = extractActionOnly(panel, cast);
+  for (const label of [...labels, '確認中']) assert.ok(action.includes(label), label);
+  assert.ok(!action.includes('端末のを'));
+  const dialogue = extractDialogueOnly(panel, cast, { forImagePrompt: true });
+  assert.ok(dialogue.includes('確認してみよう。'));
+  for (const label of labels) assert.ok(!dialogue.includes(label));
+});
+
+test('quoted scene values cannot lend speech or mood classification to their neighbors', () => {
+  const cast = '- Character [甲]: adult';
+  const panel = '状況: 壁のカードには「研究予算の集中？」「設備の競争？」「整備を先に？」。甲は「点検中」の端末に向き直る。\n甲「待ってみよう。」';
+  const action = extractActionOnly(panel, cast);
+  for (const label of ['研究予算の集中？', '設備の競争？', '整備を先に？', '点検中']) assert.ok(action.includes(label), label);
+  assert.ok(!action.includes('待ってみよう。'));
+});
+
 test('rear speakers keep their own tail endpoint without exposing an invisible mouth', () => {
   const cast = '- Character [甲]: adult\n- Character [乙]: adult';
   const action = '状況: 甲が資料へ身を寄せ、乙は向かいで答える。\n甲「これかな？」\n乙「表紙を見て。」';
