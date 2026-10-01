@@ -105,7 +105,7 @@ page('完了チェックと公式リンク',
 SYSTEM=[
 page('全機能マニュアル',('h2','Super FURU AI 4-koma System'),
  ('body','キャラクター資料と題材から、4コマの構成、画像用の指示文、生成画像、保存まで進める日本語操作ガイドです。各機能の目的、操作順、変更が反映される工程、費用と保存の注意を説明します。'),
- ('box','対象版と画面写真','2026年10月1日更新、v6.7.6対応。OpenAIシナリオの初期選択はGPT-6.1 Solです。タイトル左の「使い方マニュアル」と接続欄の「Gemini APIマニュアル」でPDFを別タブへ開けます。既存の操作写真は公開版v6.7.4の撮影です。ボタン配置は現行画面と本文を参照してください。'),
+ ('box','対象版と画面写真','2026年10月1日更新、v6.7.7対応。OpenAIシナリオの初期選択はGPT-6.1 Solです。タイトル左の「使い方マニュアル」と接続欄の「Gemini APIマニュアル」でPDFを別タブへ開けます。既存の操作写真は公開版v6.7.4の撮影です。ボタン配置は現行画面と本文を参照してください。'),
  ('body','画面写真はCodex内蔵ブラウザで取得しています。実行を伴う画面が撮影できない機能は、現行の画面部品と処理コードを照合して説明し、生成済みの画面を作り物で代用しません。'),refs=('app',)),
 page('目次・機能の見つけ方',
  ('rows',[['ページ','機能'],['3-4','4ステップの流れ・API接続'],['5-6','キャラクター・作風JSON・360°背景'],['7-9','ニュース、自由入力、舞台・衣装・結末'],['10-11','シナリオ編集、SNS説明、演出強化'],['12-14','カラー／白黒、モザイク、ウオーターマーク、プロンプト構築・編集'],['15-18','Webコピー、Web修正・高解像度、API生成、検査・自動修正'],['19-21','追加修正、画像履歴・保存、制作情報'],['22-23','全自動・連続ループ、やり直しとモデル確認'],['24-25','1枚絵、動画化・関連アプリ'],['26-27','トラブル対処、完成前チェック・参照情報']]),
@@ -248,7 +248,7 @@ for p in SYSTEM:
 class Book:
  def __init__(self,path,title,pages):
   self.path=path; self.pages=pages; self.c=canvas.Canvas(str(path),pagesize=A4,pageCompression=1)
-  self.c.setTitle(title);self.c.setAuthor('Super FURU AI 4-koma System');self.c.setSubject('日本語操作マニュアル / v6.7.6 / 2026-10-01')
+  self.c.setTitle(title);self.c.setAuthor('Super FURU AI 4-koma System');self.c.setSubject('日本語操作マニュアル / v6.7.7 / 2026-10-01')
   self.y=0;self.number=0;self.layout=[]
  def para(self,text,style='body',gap=10):
   p=Paragraph(text,STYLES[style]);_,h=p.wrap(CW,1000)
@@ -290,7 +290,7 @@ class Book:
    if page['shot']:self.shot(page['shot'],page['caption'])
    if page['refs']:
     self.para('参照：'+' / '.join(f'<link href="{escape(SOURCES[k][1])}" color="#087c86">{escape(SOURCES[k][0])}</link>' for k in page['refs']),'small',0)
-   c.setFillColor(GRAY);c.setFont('JP',8);c.drawString(M,33,'v6.7.6対応 | 2026年10月1日更新 | A4 日本語版');c.drawRightString(W-M,33,f'{i:02d} / {len(self.pages):02d}')
+   c.setFillColor(GRAY);c.setFont('JP',8);c.drawString(M,33,'v6.7.7対応 | 2026年10月1日更新 | A4 日本語版');c.drawRightString(W-M,33,f'{i:02d} / {len(self.pages):02d}')
    self.layout.append(dict(page=i,bottom_y=round(self.y,2)));c.showPage()
   c.save();return self.layout
 

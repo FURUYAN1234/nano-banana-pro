@@ -1,6 +1,6 @@
 # Super FURU AI 4-koma System / Super FURU AI 4コマシステム
 
-> Current source version: **v6.7.6** / 現在のソース版: **v6.7.6**
+> Current source version: **v6.7.7** / 現在のソース版: **v6.7.7**
 
 描画オプション：STEP2の「版権キャラクターにモザイクをかける」と、STEP3の「ウオーターマークを表記する」は初期状態でONです。前者はシナリオ構築と最終画像プロンプトに「版権キャラクターにおおきなモザイクをかける」を追加し、後者をOFFにすると左右のフッターの描画指示を外します。OpenAI／GeminiのAPIとWeb用コピーに共通で反映します。設定変更後はモザイクならSTEP2、ウオーターマークならSTEP3から再作成してください。変更だけでAPIは実行されません。選択は全設定リセットまたは再読込まで保持します。生成済み画像には遡って反映されず、AIの対象判断・描画は実画像で確認してください。
 
@@ -307,7 +307,7 @@ The copied prompt guides panel order, cast, speaker assignment, acting, camera, 
 The app provides separate download buttons for the workflow JSON and the custom-node ZIP. Both files are needed for this route. / アプリにはワークフローJSONとカスタムノードZIPのダウンロードボタンが別々にあります。この経路では両方のファイルが必要です。
 
 - [Download workflow JSON](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20260928-173220.json) / [ワークフローJSONをダウンロード](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20260928-173220.json)
-- [Download custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.7.6/ComfyUI_H3_FourPanel_NonLM_20260928-173220.zip) / [カスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.7.6/ComfyUI_H3_FourPanel_NonLM_20260928-173220.zip)
+- [Download custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.7.7/ComfyUI_H3_FourPanel_NonLM_20260928-173220.zip) / [カスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.7.7/ComfyUI_H3_FourPanel_NonLM_20260928-173220.zip)
 
 Place the ZIP's `3フォルダ` under `ComfyUI/custom_nodes/` and the workflow JSON under `ComfyUI/user/default/workflows/`. Install the separate dependencies below, then restart ComfyUI. / ZIP内の`3フォルダ`を`ComfyUI/custom_nodes/`へ、ワークフローJSONを`ComfyUI/user/default/workflows/`以下へ配置します。下記の別途必要な依存関係を導入してからComfyUIを再起動します。
 
@@ -351,11 +351,14 @@ The production application is published from the `main` branch through the repos
 
 **Why are there two ComfyUI download buttons? / ComfyUIのダウンロードボタンが2つあるのはなぜですか？**  The JSON defines the workflow, while the ZIP supplies three custom-node folders and documentation; three additional runtime dependencies are installed separately. / JSONはワークフロー定義、ZIPはカスタムノード3フォルダーと導入文書です。さらに実行依存3項目を別途導入します。
 
-**Where are older packages? / 旧版はどこですか？**  Older source tags remain for audit history. Use the current `20260928-173220` JSON button and matching v6.7.6 FourPanel Release asset. This pair is labeled interim until the combined graph passes an end-to-end run. / 旧タグは監査用履歴として残します。新規導入は現行の`20260928-173220`ワークフローボタンと対応するv6.7.6 FourPanel Releaseアセットを使用してください。統合グラフの全経路実走までは中間配布です。
+**Where are older packages? / 旧版はどこですか？**  Older source tags remain for audit history. Use the current `20260928-173220` JSON button and matching v6.7.7 FourPanel Release asset. This pair is labeled interim until the combined graph passes an end-to-end run. / 旧タグは監査用履歴として残します。新規導入は現行の`20260928-173220`ワークフローボタンと対応するv6.7.7 FourPanel Releaseアセットを使用してください。統合グラフの全経路実走までは中間配布です。
 
 **Is this the T2V/I2V/Ref2V repository? / T2V・I2V・Ref2Vのリポジトリですか？**  No. Those workflows are maintained separately in [comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows). / いいえ。それらは別の[comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows)で管理します。
 
 ## 📋 ChangeLog
+
+### v6.7.7 (2026-10-01)
+- **[Fix & UX]** Gemini APIマニュアルボタンを既存のAPIボタンと同じデザインへ統一。ボタン間隔を維持。 / Match the Gemini API manual button to the existing API buttons while preserving spacing.
 
 ### v6.7.6 (2026-10-01)
 - **[Docs]** Update the full manual to v6.7.6, including current model selection, API button names, Gemini dimensions and observed mosaic limits; require manuals/README body review for each deployment and whole-note-body readback after publication. / 全機能マニュアルをv6.7.6のモデル選択・APIボタン名・Gemini寸法・モザイクの確認済み制限へ更新。デプロイごとのマニュアル／README本文確認と、公開後のnote全文読み戻しを必須化。

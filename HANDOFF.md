@@ -1,3 +1,7 @@
+## v6.7.7 Gemini manual button correction — 2026-10-01
+
+- User approved the displayed correction and authorized deploy/note/X/Facebook/final backup. Only the Gemini API manual button now shares api-key-link and provider styling with existing API buttons; spacing-only class retains10px extra separation. Header/global UI untouched. Focused2/2 passes; fresh IAB localhost5173 computed colors/border/background/font/padding/radius equal its existing Gemini key button; screenshot output/manual-button-corrected.png. Existing user-connected tab1 remains preserved; fresh proof tab10 shown. Documentation versions/PDF footers advance to6.7.7; root PLAN owns external delivery and SNS wording cleanup.
+
 ## v6.7.6 PDF manual buttons — 2026-10-01
 
 - User authorized deploy, note, remaining seven-app X/Facebook announcements and final official full backup. Manual buttons bundle the existing Gemini (12 pages) and full app (27 pages) PDFs. Gemini button is beside the Gemini key link; header button uses the existing pale-blue action palette and 48px separation from the title/icon. Shared Tailwind, title sizing and connection placement edits were reverted at user direction.

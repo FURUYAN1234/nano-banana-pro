@@ -161,7 +161,7 @@ const ApiKeyModal = ({ isOpen, onSave, onClose, provider = "google" }) => {
                 <a href={geminiLinkUrl} target="_blank" rel="noreferrer" className="api-key-link api-key-link--gemini">
                   🔵 Gemini キー取得（無料）
                 </a>
-                <a href={geminiManualUrl} target="_blank" rel="noreferrer" className="api-key-link api-key-link--gemini manual-link-button">
+                <a href={geminiManualUrl} target="_blank" rel="noreferrer" className="api-key-link api-key-link--gemini api-key-manual-link">
                   Gemini APIマニュアル
                 </a>
                 <span className="text-slate-600 text-[10px]">|</span>

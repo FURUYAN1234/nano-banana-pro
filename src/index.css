@@ -38,8 +38,7 @@
 .api-key-link--openai, .api-key-link--openai:visited { color: #6ee7b7; }
 .api-key-link:hover { color: #fff; background: #263c54; }
 .api-key-link:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
-.api-key-link.manual-link-button { margin-left: 10px; color: #1e3a8a; background: #dbeafe; text-decoration: none; }
-.api-key-link.manual-link-button:hover { background: #bfdbfe; }
+.api-key-manual-link { margin-left: 10px; }
 
 .image-edit-submit { background-color: #ddd6fe; color: #4c1d95; }
 .image-edit-submit:hover:not(:disabled) { background-color: #c4b5fd; }
