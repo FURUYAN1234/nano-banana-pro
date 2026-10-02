@@ -39,12 +39,35 @@ test('protected or ungrounded lettering never gets incidental simplification dur
     const result = await runImageQualityFailsafe({ originalCandidate: candidate('original'), originalPrompt: approved, analyzeFailure,
       reviewCandidate: async () => review(issue),
       generateRepairCandidate: async prompt => { requests++; assert.doesNotMatch(prompt, /API INCIDENTAL PRINT FALLBACK/); return candidate('repair'); },
+      // Additional repairs require the comparison to confirm the original defect.
+      compareCandidates: async (_original, _repair, _prompt, { originalIssues }) => ({
+        preferred: 'original', reason: 'Synthetic fixture: the repair is worse and the original lettering defect is still visible.',
+        originalIssueChecks: originalIssues.map((originalIssue, issueIndex) => ({ issueIndex, status: 'defect', evidence: originalIssue.reason })),
+      }),
     });
     const material = issue.type === 'bubble_text' || issue.textRole === 'story_required';
     assert.equal(requests, material ? 3 : 0);
     assert.equal(result.attempts, material ? 4 : 1);
     assert.equal(result.validationWarning, true);
   }
+});
+
+test('protected lettering without comparison corroboration stops after one repair and stays protected', async () => {
+  let requests = 0;
+  const result = await runImageQualityFailsafe({
+    originalCandidate: candidate('original'), originalPrompt: approved, analyzeFailure,
+    reviewCandidate: async () => review(printIssue({ textRole: 'story_required' })),
+    generateRepairCandidate: async prompt => {
+      requests++;
+      assert.doesNotMatch(prompt, /API INCIDENTAL PRINT FALLBACK/);
+      return candidate('repair');
+    },
+  });
+  assert.equal(requests, 1);
+  assert.equal(result.stopReason, 'no_improvement');
+  assert.equal(result.finalReview.pass, false);
+  assert.equal(result.finalReview.issues[0].type, 'unverified');
+  assert.equal(result.finalReview.issues[0].originalIssue.textRole, 'story_required');
 });
 
 test('QA requires a grounded incidental role; unknown is the default and protected text is ineligible', () => {

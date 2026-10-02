@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { buildRenderOptionsContract } from '../src/lib/render-options.js';
 import test, { after, before } from 'node:test';
 import { createServer } from 'vite';
@@ -295,6 +296,25 @@ test('planned balloon space survives final assembly and compaction for both prov
       assert.equal((prompt.match(/BALLOON LAYOUT/g)||[]).length, 1);
       assert.match(prompt,/B1 x=0\.8, \[A\] 右手前.*B2 x=0\.2, \[B\] 左奥/);
       assert.doesNotMatch(prompt,/BalloonLayout:|"anchor":|"route":/);
+    }
+  }
+});
+
+test('reported four-panel scenario keeps displayed headlines out of its nine balloons', () => {
+  // User-provided failing input, kept outside production paths.
+  const source = readFileSync(new URL('./fixtures/ai-illustration-balloon-layout.txt', import.meta.url), 'utf8');
+  const cast = ['ミク', 'リン', 'サエコ', 'アカリ', 'ヒカリ'].map(name => `- Character [${name}]: adult`).join('\n');
+  const lines = [...source.matchAll(/^(?:ミク|リン|サエコ|アカリ|ヒカリ)「(.+)」$/gm)].map(match => match[1]);
+  for (const providerFamily of ['chatgpt', 'gemini']) {
+    for (const colorMode of ['color', 'monochrome']) {
+      const prompt = buildMangaPrompt({ scenario: source, castList: cast, providerFamily, colorMode, systemVersion: 'test' });
+      assert.equal((prompt.match(/BALLOON LAYOUT/g) || []).length, 4);
+      assert.equal((prompt.match(/B\d=>\[/g) || []).length, 9);
+      for (const line of lines) assert.ok(prompt.includes(line), line);
+      const panel = prompt.split('## Panel 2')[1].split('## Panel 3')[0];
+      assert.ok(panel.includes('「小学館Webメディア　無断生成イラスト掲載で謝罪」という記事見出しが読める。'));
+      assert.match(panel, /B1="ラフ作りに使うのは便利だよ！".*B2="掲載後の謝罪じゃ遅いわ。"/);
+      assert.doesNotMatch(panel, /B\d="小学館Webメディア/);
     }
   }
 });

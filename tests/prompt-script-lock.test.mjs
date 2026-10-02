@@ -153,7 +153,7 @@ test('ChatGPT-family prompt strictly forbids replacing the scenario story or dia
   const panelIndex = prompt.indexOf('PANEL DESCRIPTIONS:');
 
   assert.ok(scriptLockIndex > -1, 'ChatGPT prompt must include a strict script lock');
-  assert.ok(scriptLockIndex < panelIndex, 'script lock must appear before detailed panel descriptions');
+  assert.ok(panelIndex > -1 && panelIndex < scriptLockIndex, 'OpenAI color must keep the complete storyboard before shared constraints');
   assert.match(prompt, /different story is a failed output|Scenario is source of truth/i);
   assert.match(prompt, /Do not replace, rewrite, paraphrase, omit, or add dialogue|verbatim dialogue; no additions\/omissions/i);
   assert.match(prompt, /BUBBLE QA.*immutable TEXT.*compare every glyph.*redraw mismatch/i);
@@ -567,10 +567,9 @@ Outfit: ビジネススーツ
       punchlineType: 'ドキュメンタリー',
       systemVersion: 'v5.2.3-test'
     });
-    const scriptLock = prompt.slice(
-      prompt.indexOf('STRICT SCRIPT LOCK'),
-      prompt.indexOf('PANEL DESCRIPTIONS:')
-    );
+    const lockStart = prompt.indexOf('STRICT SCRIPT LOCK');
+    const panelsStart = prompt.indexOf('PANEL DESCRIPTIONS:');
+    const scriptLock = prompt.slice(lockStart, panelsStart > lockStart ? panelsStart : undefined);
 
     assert.match(scriptLock, /Panel 2 required dialogue: アカリ「まだ出てきそう。」/);
     assert.match(scriptLock, /Panel 4 required dialogue: アカリ「真面目に生きよう。」/);
@@ -689,7 +688,7 @@ Punchline: ドキュメンタリー
 状況: ミクが全員を見回して言い切る。
 ミク「${LONG_DIALOGUE}」`;
 
-test('keeps long dialogue verbatim inside the highest-priority script lock for both providers', () => {
+test('keeps long dialogue verbatim inside the script lock regardless of provider section order', () => {
   for (const providerFamily of ['chatgpt', 'gemini']) {
     const prompt = buildMangaPrompt({
       scenario: LONG_DIALOGUE_SCENARIO,
@@ -699,10 +698,10 @@ test('keeps long dialogue verbatim inside the highest-priority script lock for b
       punchlineType: 'Auto',
       systemVersion: 'v4.9.9-test'
     });
-    const scriptLock = prompt.slice(
-      prompt.indexOf('STRICT SCRIPT LOCK'),
-      prompt.indexOf('PANEL DESCRIPTIONS:')
-    );
+    const lockStart = prompt.indexOf('STRICT SCRIPT LOCK');
+    const panelsStart = prompt.indexOf('PANEL DESCRIPTIONS:');
+    assert.ok(lockStart >= 0);
+    const scriptLock = prompt.slice(lockStart, panelsStart > lockStart ? panelsStart : undefined);
 
     assert.match(scriptLock, new RegExp(`Panel 4 required dialogue: ミク「${LONG_DIALOGUE.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}」`));
     assert.doesNotMatch(scriptLock, /EXACT Panel 4 Dialogue below/);

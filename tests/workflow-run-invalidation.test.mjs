@@ -18,7 +18,7 @@ test('resets and a new full-auto round invalidate in-flight work before clearing
     const start = workflow.indexOf(`const ${name} =`);
     const end = workflow.indexOf('\n  };', start);
     assert.ok(start >= 0 && end > start, name);
-    assert.match(workflow.slice(start, end), /scenarioRunEpochRef\.current \+= 1/, name);
+    assert.match(workflow.slice(start, end), /invalidateScenarioRun\(\)/, name);
   }
 });
 

@@ -68,9 +68,22 @@ const readCompleteOpenAIText = (data, modelId, webSearch, onThinkingUpdate) => {
     return text;
 };
 
+// 内容・資格情報を記録せず、待機がHTTP応答前か本文受信中かを区別する。
+const createRequestTiming = (modelId, onThinkingUpdate) => {
+    const startedAt = performance.now();
+    let stage = 'awaiting_response';
+    return (event, nextStage = stage) => {
+        stage = nextStage;
+        const details = `stage=${stage}; elapsed_ms=${Math.max(0, Math.round(performance.now() - startedAt))}`;
+        onThinkingUpdate?.(`> [TIMING] ${sanitizeErrorMessage(modelId)}: ${event}; ${details}`);
+        return details;
+    };
+};
+
 const requestOpenAIWebSearch = async ({ modelId, prompt, systemInstruction, timeoutMs, apiKey, signal, onThinkingUpdate }) => {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+    const reportTiming = createRequestTiming(modelId, onThinkingUpdate);
     try {
         const input = [];
         if (systemInstruction) {
@@ -78,6 +91,7 @@ const requestOpenAIWebSearch = async ({ modelId, prompt, systemInstruction, time
         }
         input.push({ role: 'user', content: prompt });
 
+        reportTiming('送信開始');
         const response = await fetch('https://api.openai.com/v1/responses', {
             method: 'POST',
             headers: {
@@ -92,14 +106,17 @@ const requestOpenAIWebSearch = async ({ modelId, prompt, systemInstruction, time
             }),
             signal: signal ? AbortSignal.any([signal, controller.signal]) : controller.signal
         });
+        reportTiming('HTTP応答受信', 'receiving_body');
         const data = await readApiJson(response, {provider:'openai', model:modelId});
+        reportTiming('本文受信完了', 'completed');
 
         const text = readCompleteOpenAIText(data, modelId, true, onThinkingUpdate);
         return { text, sources: openAISources(data), usage: data.usage };
     } catch (error) {
         if (signal?.aborted) throw createApiError('処理を中断しました。', {provider:'openai', model:modelId, code:'CANCELLED'});
         if (controller.signal.aborted || error.name === 'AbortError') {
-            throw createApiError(`Timeout awaiting web search from ${modelId} (${timeoutMs / 1000}s limit)`, {provider:'openai', model:modelId, code:'TIMEOUT'});
+            const timing = reportTiming('TIMEOUT');
+            throw createApiError(`Timeout awaiting web search from ${modelId} (${timeoutMs / 1000}s limit; ${timing})`, {provider:'openai', model:modelId, code:'TIMEOUT'});
         }
         throw error;
     } finally {
@@ -107,11 +124,13 @@ const requestOpenAIWebSearch = async ({ modelId, prompt, systemInstruction, time
     }
 };
 
-export const requestOpenAIChatCompletion = async ({modelId, messages, apiKey, timeoutMs, signal}) => {
+export const requestOpenAIChatCompletion = async ({modelId, messages, apiKey, timeoutMs, signal, onThinkingUpdate}) => {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+    const reportTiming = createRequestTiming(modelId, onThinkingUpdate);
     try {
         const usesModernChatParameters = usesReasoningModel(modelId);
+        reportTiming('送信開始');
         const response = await fetch('https://api.openai.com/v1/chat/completions', {
             method: 'POST',
             headers: {'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}`},
@@ -124,11 +143,15 @@ export const requestOpenAIChatCompletion = async ({modelId, messages, apiKey, ti
             }),
             signal: signal ? AbortSignal.any([signal, controller.signal]) : controller.signal,
         });
-        return {response, data: await readApiJson(response, {provider:'openai', model:modelId})};
+        reportTiming('HTTP応答受信', 'receiving_body');
+        const data = await readApiJson(response, {provider:'openai', model:modelId});
+        reportTiming('本文受信完了', 'completed');
+        return {response, data};
     } catch (error) {
         if (signal?.aborted) throw createApiError('処理を中断しました。', {provider:'openai', model:modelId, code:'CANCELLED'});
         if (controller.signal.aborted || error?.name === 'AbortError') {
-            throw createApiError(`Timeout awaiting response from ${modelId} (${timeoutMs / 1000}s limit)`, {provider:'openai', model:modelId, code:'TIMEOUT'});
+            const timing = reportTiming('TIMEOUT');
+            throw createApiError(`Timeout awaiting response from ${modelId} (${timeoutMs / 1000}s limit; ${timing})`, {provider:'openai', model:modelId, code:'TIMEOUT'});
         }
         throw error;
     } finally {
@@ -262,7 +285,7 @@ export const callOpenAIText = async (prompt, images = null, systemInstruction = 
                 content: userContent.length === 1 ? prompt : userContent
             });
 
-            const {data} = await requestOpenAIChatCompletion({modelId, messages, apiKey, timeoutMs, signal:options.signal});
+            const {data} = await requestOpenAIChatCompletion({modelId, messages, apiKey, timeoutMs, signal:options.signal, onThinkingUpdate});
 
             const choice = data.choices?.[0];
 

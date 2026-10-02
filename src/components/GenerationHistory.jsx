@@ -22,9 +22,9 @@ export default function GenerationHistory({
       {/* 生成中は履歴をロック */}
       {isGenerating && (
         <div style={{ position: 'absolute', inset: 0, zIndex: 10, backgroundColor: 'rgba(10,12,16,0.6)', backdropFilter: 'blur(2px)', pointerEvents: 'auto', borderRadius: '1rem' }} className="flex items-center justify-center">
-          <span className="text-xs font-bold text-slate-400 bg-black/80 px-3 py-1 rounded-full border border-white/10 shadow-lg flex items-center gap-2">
+          {!isGeneratingImage && <span className="text-xs font-bold text-slate-400 bg-black/80 px-3 py-1 rounded-full border border-white/10 shadow-lg flex items-center gap-2">
             <Loader2 size={12} className="animate-spin" /> 生成中...
-          </span>
+          </span>}
         </div>
       )}
       <div className="flex items-center justify-between mb-4 border-b border-white/5 pb-2 relative z-0">

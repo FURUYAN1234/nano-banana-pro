@@ -43,9 +43,9 @@ import {
   formatGeminiImageSettingsSummary,
 } from '../lib/gemini-image-settings';
 
-const COMFYUI_WORKFLOW_FILENAME = 'FourPanel_NonLM_4step_20260928-173220.json';
+const COMFYUI_WORKFLOW_FILENAME = 'FourPanel_NonLM_4step_20261002-071924.json';
 const COMFYUI_WORKFLOW_DOWNLOAD_URL = `${import.meta.env.BASE_URL}workflows/${COMFYUI_WORKFLOW_FILENAME}`;
-const COMFYUI_CUSTOM_NODE_FILENAME = 'ComfyUI_H3_FourPanel_NonLM_20260928-173220.zip';
+const COMFYUI_CUSTOM_NODE_FILENAME = 'ComfyUI_H3_FourPanel_NonLM_20261002-071924_authfix1.zip';
 const COMFYUI_CUSTOM_NODE_DOWNLOAD_URL = `https://github.com/FURUYAN1234/nano-banana-pro/releases/download/${SYSTEM_VERSION}/${COMFYUI_CUSTOM_NODE_FILENAME}`;
 const COMFYUI_H3_AUDIO_REFINE_REPOSITORY_URL = 'https://github.com/Adudeguyman/ComfyUI-H3-AudioRefine';
 const COMFYUI_PLAGUE_KIND_REPOSITORY_URL = 'https://github.com/PlagueKind/ComfyUI-PlagueKind-Nodes';
@@ -387,6 +387,15 @@ export default function Step4Panel({
   const hasFixedPageLayout = displayedHistory?.pageLayout?.applied === true;
   const isFourPanelPage = inferImageQualityMode(finalPrompt) === 'four-panel';
   const generationWaitLog = genLog.find(log => String(log).startsWith('[WAIT]'));
+  // Each request resets the log. This receipt accompanies the current request's
+  // setGeneratedImage call, so a retained image from an earlier run is not ready.
+  const hasCurrentRunImage = Boolean(generatedImage) && genLog.some(log => String(log).startsWith('[4/5] データストリーム受信完了'));
+  const processingStatus = (
+    <p role="status" className="step4-processing-status">
+      <Loader2 size={18} aria-hidden="true" className="step4-processing-spinner" />
+      <span>{generationWaitLog?.replace(/^\[WAIT\]\s*(?:⏳\s*)?/, '') || '画像生成中… 合計0秒経過'}</span>
+    </p>
+  );
   const getGeneratedImageFilename = () => {
     let rawTitle = mangaTitle;
     if (!rawTitle && scenario) {
@@ -1245,7 +1254,7 @@ No explanations. No partial results.`;
                                     <li>下のボタンから <code>{COMFYUI_WORKFLOW_FILENAME}</code> を保存し、<code>ComfyUI/user/default/workflows/</code> 以下へ配置します。</li>
                                     <li>同梱3フォルダ、別途必須3項目、JSONの配置後、ComfyUIを完全に再起動してからワークフローを開きます。</li>
                                     <li><code>4. API設定＋画像変換＋H3プロンプト生成（同一Provider）</code> ノードで <code>OpenAI API</code> または <code>Google Gemini API</code> を選びます。ワークフローを開いただけ、またはProviderを変更しただけでは入力ダイアログを表示しません。「実行する」を押した時、選択中のProviderが未登録なら、そのProviderの入力ダイアログを開いてキュー投入を保留します。利用者が直接入力して認証に成功すると保留中の同じ実行を1回だけ続け、ダイアログを閉じると今回の実行だけを中止します。ノードの「<strong>APIキー未登録／入力</strong>」ボタンから先に登録することもできます。キーはワークフローJSON、配布ZIP、設定ファイル、ブラウザ保存領域、ディスクには保存されず、接続中のComfyUIサーバーのプロセスメモリだけに保持されます。ワークフローのシート移動や別ワークフローへの切替では残り、ComfyUIアプリ／サーバーを終了または再起動すると消去されるため、次回実行時は再入力してください。1回の実行では、選択中の同一Providerが画像変換とH3プロンプト作成の両方に使われ、認証確認または実行時だけ、そのComfyUIサーバーから選択したAPIへ送信されます。</li>
-                                    <li>Google Gemini APIでは画像変換に <code>gemini-3.1-flash-image</code>、H3プロンプト作成・画像QAに <code>gemini-2.5-flash</code> を使います。OpenAI APIでは画像変換に <code>gpt-image-2</code>、H3プロンプト作成に <code>gpt-4.1-mini</code>、人物・読順の検査等に <code>gpt-5.4</code> を使います。</li>
+                                    <li>モデルはノードの一括設定または個別設定で選択します。文章処理の接続確認にも選択中のモデルを使います。利用可能なモデルと料金は、選択したProviderのアカウント条件を確認してください。</li>
                                     <li>モデル本体は配布セットに含まれません。<code>models.json</code> の配布元と各ライセンスを確認し、利用者自身で取得してください。</li>
                                   </ol>
                                   <div className="mt-3 border-t border-amber-300/20 pt-2">
@@ -1262,11 +1271,11 @@ No explanations. No partial results.`;
                                   </div>
                                 </div>
                                 <div className="mt-3 space-y-1 text-[10px] leading-relaxed text-slate-300">
-                                  <p><strong>既定の設定</strong>：4コマを物語の4幕として扱います。「軽く要約＋必要な台詞だけ延長」では、意味と語尾を保てる範囲で台詞を整え、基本5秒に収まらない台詞だけ最大15秒まで延長します。台詞がない場合だけ既定30秒です。映像はFused 4ステップ、音声再精錬は4ステップ（denoise 1.0）です。採用区間を結合した後、ACE-Stepで全尺のインストBGMを作曲・合成する構成です。区間ごとに生成・検査し、品質不合格なら初回込み最大5候補を比較します。途中で合格したら即座に次へ進み、全候補が不合格なら最良候補を保持して続行します。4・5回目の候補も途中再開できます。H3生成前には日本語台詞の読みも確認します。</p>
-                                  <p>必要なモデルはH3用4点とACE-Step用1点です。同梱の <code>models.json</code> に取得先とハッシュがあります。<code>H3 SLA Attention</code> の <a href={COMFYUI_PLAGUE_KIND_REPOSITORY_URL} target="_blank" rel="noreferrer" className="text-cyan-300 underline hover:text-cyan-200">ComfyUI-PlagueKind-Nodes <ExternalLink className="inline" size={11} /></a> と音声補正の <a href={COMFYUI_H3_AUDIO_REFINE_REPOSITORY_URL} target="_blank" rel="noreferrer" className="text-cyan-300 underline hover:text-cyan-200">ComfyUI-H3-AudioRefine <ExternalLink className="inline" size={11} /></a> はZIPに含まれないため、対応Triton環境とともに別途導入してください。</p>
+                                  <p><strong>既定の設定</strong>：4コマを物語の4幕として扱います。「軽く要約＋必要な台詞だけ延長」では、意味と語尾を保てる範囲で台詞を整え、基本5秒に収まらない台詞だけ最大15秒まで延長します。台詞がない場合だけ既定30秒です。映像はFused 4ステップ、音声再精錬は4ステップ（denoise 1.0）です。採用区間を結合します。この配布版に独立したBGM作曲・合成ノードは含みません。区間ごとに生成・検査し、品質不合格なら初回込み最大5候補を比較します。途中で合格したら即座に次へ進み、全候補が不合格なら最良候補を保持して続行します。4・5回目の候補も途中再開できます。H3生成前には日本語台詞の読みも確認します。</p>
+                                  <p>必要なモデルはH3用4点です。同梱の <code>models.json</code> に取得先とハッシュがあります。<code>H3 SLA Attention</code> の <a href={COMFYUI_PLAGUE_KIND_REPOSITORY_URL} target="_blank" rel="noreferrer" className="text-cyan-300 underline hover:text-cyan-200">ComfyUI-PlagueKind-Nodes <ExternalLink className="inline" size={11} /></a> と音声補正の <a href={COMFYUI_H3_AUDIO_REFINE_REPOSITORY_URL} target="_blank" rel="noreferrer" className="text-cyan-300 underline hover:text-cyan-200">ComfyUI-H3-AudioRefine <ExternalLink className="inline" size={11} /></a> はZIPに含まれないため、対応Triton環境とともに別途導入してください。</p>
                                   <p>H3本体にはタイトル、字幕、URL、終了クレジットを生成させません。タイトルは <code>overlay_title</code> として抽出し、動画生成後に左上へ一度だけ、黒字＋白縁、背景バーなしで合成します。固定クレジットも後段ノードで合成します。</p>
                                   <p>人物集合と識別署名は各入力漫画の各コマから動的に導出し、特定の人数や外見、最終フレームの構成を固定しません。人物IDと話者IDの対応を区間分割後も維持し、時系列の6フレームで話者の口の動きも検査します。音声と映像が同時に不合格でも、人物重複・外見・話者口形の問題を構造化して映像ショットを差し替えます。同一区間で映像不合格が2回続くと、台詞・時刻・人物・音・BGMを変えず、話者を読み取りやすい単純な構図へ切り替えます。全候補が不合格の場合は検査結果上の最良候補を採用するため、採用済みでも全検査合格とは限りません。完成動画の台詞・話者・映像は利用者も確認してください。</p>
-                                  <p>現行配布版は識別子 <code>20260928-173220</code> の<strong>中間配布</strong>です。36秒・864×480の動画生成と、別実行でのACE-Step BGM合成は確認されていますが、このZIPの統合グラフ全体は未実走です。サンプルの <code>quality_status: needs_review</code> は終盤2区間の台詞確認が未了であることを示します。完成動画の台詞とBGMを確認してから利用してください。別PC実行も未検証です。別製品のT2V・I2V・Ref2V版は更新しません。同梱の <code>README.md</code>、<code>VALIDATION.md</code> に導入条件と検証範囲を記載しています。</p>
+                                  <p>現行配布版は <code>20261002-071924_authfix1</code> です。提供された28ノードのワークフローを保持し、選択モデルと接続確認の不整合を修正しています。同梱の生成記録は <code>quality_status: needs_review</code> で、完成動画の内容確認が必要です。今回の配布準備ではComfyUIの動画再生成・別PC実行は行っていません。別製品のT2V・I2V・Ref2V版は更新しません。同梱の <code>README.md</code>、<code>VALIDATION.md</code>、<code>REPRODUCE.md</code> に導入条件と検証範囲を記載しています。</p>
                                   <p>APIキー・認証情報・モデル本体・漫画画像・生成動画は配布物に含まれません。</p>
                                   <p><code>ComfyUI-NanoBanana-H3</code> はこのワークフロー専用の独自統合ノードです。フォルダ内の独自ソースは MIT、<code>ComfyUI-MiniMax-H3-Long-Video</code> は GPL-3.0-only、<code>ComfyUI-Spectrum-MiniMax-H3</code> は GPL-3.0-or-later です。別途導入するComfyUI本体、PlagueKind、AudioRefine、Triton、モデル、外部API、利用者の入出力はそれぞれの条件に従います。</p>
                                 </div>
@@ -1357,7 +1366,7 @@ No explanations. No partial results.`;
       </section>
 
       {/* 右: 生成画像エリア */}
-      <section ref={imageResultRef} className="relative group bg-[#0d1117] rounded-xl border border-white/5 min-h-[600px] flex flex-col overflow-hidden">
+      <section className="relative group bg-[#0d1117] rounded-xl border border-white/5 min-h-[600px] flex flex-col overflow-hidden">
         {/* 描画エリアロックオーバーレイ */}
         {(((!generatedImage && !isGeneratingImage) || isSearching || isAssembling || isEnhancing || (isFullAutoMode && fullAutoStep > 0 && fullAutoStep < 4)) && !isGeneratingImage) && (
           <div style={{ position: 'absolute', inset: 0, zIndex: 200, backgroundColor: 'rgba(10,12,16,0.85)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)', pointerEvents: 'auto', borderRadius: '0.75rem' }} className="flex flex-col items-center justify-center">
@@ -1372,24 +1381,9 @@ No explanations. No partial results.`;
           </div>
         )}
 
-        {/* 画像生成中のオーバーレイ */}
-        {isGeneratingImage && (
-          <div style={{ position: 'absolute', inset: 0, zIndex: 200, backgroundColor: 'rgba(10,12,16,0.85)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)', pointerEvents: 'auto', borderRadius: '0.75rem' }} className="flex flex-col items-center justify-center">
-            <div className="relative flex flex-col items-center justify-center space-y-6 w-full max-w-md mx-auto">
-              <Loader2 size={64} className="animate-spin text-blue-500 mx-auto" />
-              <div className="absolute inset-0 blur-xl bg-blue-500/10 animate-pulse pointer-events-none" />
-
-              <div className="z-10 bg-black/80 border border-blue-500/50 rounded-2xl px-8 py-6 shadow-[0_0_30px_rgba(59,130,246,0.3)] animate-in fade-in zoom-in duration-300 backdrop-blur-md w-full">
-                <p className="text-lg font-black text-blue-400 tracking-widest animate-pulse flex items-center justify-center gap-2">
-                  画像生成中 <span className="flex space-x-1"><span className="animate-bounce delay-75">.</span><span className="animate-bounce delay-150">.</span><span className="animate-bounce delay-300">.</span></span>
-                </p>
-                <p className="text-xs text-blue-200/90 mt-4 font-bold text-center leading-relaxed">
-                  高品質な画像を生成しています。<br />
-                  <span className="text-orange-400">※生成時間はモデル・品質・混雑状況で変わります。<br/>このままお待ちください。</span>
-                </p>
-              </div>
-            </div>
-          </div>
+        {/* 取得済み画像は検査・修正の待機中にも閲覧と保存を可能にする。 */}
+        {isGeneratingImage && !hasCurrentRunImage && (
+          <div style={{ position: 'absolute', inset: 0, zIndex: 200, backgroundColor: 'rgba(10,12,16,0.85)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)', pointerEvents: 'auto', borderRadius: '0.75rem' }} />
         )}
 
         {/* Title Header */}
@@ -1406,8 +1400,11 @@ No explanations. No partial results.`;
         <div className="flex-1 flex flex-col items-center justify-center relative p-4 bg-[url('https://www.transparenttextures.com/patterns/dark-matter.png')]">
           {generatedImage ? (
             <div className="w-full h-full flex flex-col items-center justify-center gap-4">
-              <img src={generatedImage} className={`max-w-full max-h-[70vh] object-contain shadow-2xl${isGeneratingImage ? '' : ' generated-image-reveal'}`} alt="Generated Result"
-                onLoad={event => setDisplayedImageSize({ image: generatedImage, width: event.currentTarget.naturalWidth, height: event.currentTarget.naturalHeight })} />
+              <div ref={imageResultRef} className="step4-image-display">
+                <img src={generatedImage} className={`max-w-full max-h-[70vh] object-contain shadow-2xl${isGeneratingImage ? '' : ' generated-image-reveal'}`} alt="Generated Result"
+                  onLoad={event => setDisplayedImageSize({ image: generatedImage, width: event.currentTarget.naturalWidth, height: event.currentTarget.naturalHeight })} />
+                {isGeneratingImage && processingStatus}
+              </div>
               <p style={{ fontSize: '11px', lineHeight: 1.6 }} className="text-slate-400">{getDisplayedImageInfo(displayedImageSize?.image === generatedImage ? displayedImageSize : null, displayedHistory?.pageLayout)}</p>
               <ImageEditForm key={generatedImage} image={generatedImage}
                 busy={isGeneratingImage || isSearching || isAssembling || isEnhancing || isFixingPolicy || isFullAutoMode}
@@ -1470,11 +1467,14 @@ No explanations. No partial results.`;
 
             </div>
           ) : (
-            <div className="opacity-30 space-y-6 flex flex-col items-center justify-center w-full h-full text-center">
-              <BrainCircuit size={80} className="mx-auto" />
-              <div className="space-y-2 text-center">
-                <p className="text-sm font-black uppercase tracking-[0.5em] text-slate-500">Ready to Start</p>
-                <p className="text-[10px] font-bold text-slate-600">ここに生成された4コマ漫画が表示されます</p>
+            <div ref={imageResultRef} className="step4-image-display" data-empty="true">
+              {isGeneratingImage && processingStatus}
+              <div className="opacity-30 space-y-6 flex flex-col items-center justify-center w-full h-full text-center">
+                <BrainCircuit size={80} className="mx-auto" />
+                <div className="space-y-2 text-center">
+                  <p className="text-sm font-black uppercase tracking-[0.5em] text-slate-500">Ready to Start</p>
+                  <p className="text-[10px] font-bold text-slate-600">ここに生成された4コマ漫画が表示されます</p>
+                </div>
               </div>
             </div>
           )}

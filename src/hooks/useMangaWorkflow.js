@@ -30,7 +30,7 @@ import {
   normalizePromptProviderFamily
 } from '../lib/prompt-assembler';
 import { addGenerationHistoryItem } from '../lib/generation-history';
-import { inspectImageDimensions, extractMangaPanelCrops, normalizePageCandidate, formatPageLayoutStatus } from '../lib/manga-page-layout.js';
+import { inspectImageDimensions, inspectNativeMonochromeChroma, extractMangaPanelCrops, normalizePageCandidate, formatPageLayoutStatus } from '../lib/manga-page-layout.js';
 import { generateScenario, enhanceScenarioText } from '../lib/scenario-provider';
 import { fixPolicyViolation } from '../lib/policy-fixer';
 import { verifyApiKeyConnection } from '../lib/api-key-preflight';
@@ -50,7 +50,7 @@ import {
   buildActorHandAuditPrompt,
   parseActorHandAuditResponse,
   extractPanelCastContracts,
-  buildCriticalCameraQaPrompt,
+  buildCriticalCameraQaRequest,
   parseCriticalCameraQaResponse,
   buildImageQualityComparisonPrompt,
   parseImageQualityComparison,
@@ -293,8 +293,32 @@ export default function useMangaWorkflow() {
     setIsAssembling(false);
   };
 
-  const invalidateScenarioOutput = () => {
+  const finishScenarioTiming = (epoch, outcome) => {
+    const timing = scenarioRunEpochRef.timing;
+    if (!timing || timing.epoch !== epoch) return;
+    scenarioRunEpochRef.timing = null;
+    const elapsed = Math.max(0, Date.now() - timing.startedAt);
+    setScenarioThought(prev => `${prev}\n> [STEP2 TIME] ${outcome}: ${(elapsed / 1000).toFixed(3)}秒`);
+  };
+
+  const invalidateScenarioRun = () => {
+    finishScenarioTiming(scenarioRunEpochRef.current, '中断（入力変更・リセット時点）');
     scenarioRunEpochRef.current += 1;
+    invalidatePromptAssembly();
+    qualityRetryAbortRef.current = true;
+    // The invalidating action owns cleanup. Obsolete finally blocks must not
+    // clear a successor's busy state when their requests eventually settle.
+    setIsSearching(false);
+    setIsEnhancing(false);
+    setIs360CameraWorking(false);
+    setIsGeneratingImage(false);
+    setIsFixingPolicy(false);
+    setPolicyAutoRetrying(false);
+    return scenarioRunEpochRef.current;
+  };
+
+  const invalidateScenarioOutput = () => {
+    invalidateScenarioRun();
     invalidatePromptAssembly();
     qualityRetryAbortRef.current = true;
     setFinalPrompt("");
@@ -305,7 +329,7 @@ export default function useMangaWorkflow() {
   };
 
   const setScenarioFromUser = (nextScenario) => {
-    scenarioRunEpochRef.current += 1;
+    invalidateScenarioRun();
     invalidatePromptAssembly();
     qualityRetryAbortRef.current = true;
     fullAutoAbortRef.current = true;
@@ -327,7 +351,7 @@ export default function useMangaWorkflow() {
   const setPunchlineType = (value) => {
     const nextPunchlineType = String(value || 'Auto');
     if (nextPunchlineType === punchlineType && !resolvedPunchlineTypeRef.current) return;
-    scenarioRunEpochRef.current += 1;
+    invalidateScenarioRun();
     qualityRetryAbortRef.current = true;
     invalidatePromptAssembly();
     fullAutoAbortRef.current = true;
@@ -651,7 +675,6 @@ export default function useMangaWorkflow() {
     if (!anySelected) return showStatus("少なくとも1つの強化カテゴリをONにしてください。");
     if (isEnhancing) return;
     const enhanceEpoch = scenarioRunEpochRef.current;
-    let applied = false;
 
     setIsEnhancing(true);
     setEnhanceLog("> [START] シナリオ強化を開始します...");
@@ -676,6 +699,7 @@ export default function useMangaWorkflow() {
 
     let enhanceTickCount = 0;
     const enhanceTimer = setInterval(() => {
+      if (enhanceEpoch !== scenarioRunEpochRef.current) return;
       enhanceTickCount++;
       setEnhanceLog(prev => {
         const elapsed = Math.floor(enhanceTickCount * 0.8);
@@ -705,7 +729,6 @@ export default function useMangaWorkflow() {
 
       if (result && result.text && (result.validation?.ok || result.validationWarning)) {
         invalidateScenarioOutput();
-        applied = true;
         setScenario(result.text);
         setEnhanceLog(prev => {
           const retryInfo = result.attempts > 1 ? ` / 自動修正 ${result.attempts - 1}回` : '';
@@ -738,7 +761,7 @@ export default function useMangaWorkflow() {
       showStatus("強化エラー: " + error.message);
     } finally {
       clearInterval(enhanceTimer);
-      if (applied || enhanceEpoch === scenarioRunEpochRef.current) setIsEnhancing(false);
+      if (enhanceEpoch === scenarioRunEpochRef.current) setIsEnhancing(false);
     }
   };
 
@@ -758,8 +781,6 @@ export default function useMangaWorkflow() {
     if (!castList) return showStatus("先にキャラクターを解析してください。");
     if (isSearching) return;
 
-    const scenarioRunEpoch = ++scenarioRunEpochRef.current;
-
     const effectiveCategories = Array.isArray(categoriesOverride) ? categoriesOverride : categories;
     const effectiveInputMode = inputModeOverride || inputMode;
 
@@ -772,7 +793,7 @@ export default function useMangaWorkflow() {
       return;
     }
 
-    invalidatePromptAssembly();
+    const scenarioRunEpoch = invalidateScenarioRun();
     setIsSearching(true);
     setExplanation("");
     setExplanationNotice("");
@@ -801,6 +822,8 @@ export default function useMangaWorkflow() {
     }
 
     const scenarioStartedAt = Date.now();
+    scenarioRunEpochRef.timing = { epoch: scenarioRunEpoch, startedAt: scenarioStartedAt };
+    let scenarioOutcome = '失敗';
     const scenarioTimer = setInterval(() => {
       setScenarioThought(prev => {
         if (scenarioRunEpoch !== scenarioRunEpochRef.current) return prev;
@@ -947,6 +970,7 @@ export default function useMangaWorkflow() {
         });
       }
 
+      scenarioOutcome = '完了';
       return finalScenarioText;
     } catch (error) {
       if (scenarioRunEpoch !== scenarioRunEpochRef.current) return null;
@@ -962,6 +986,8 @@ export default function useMangaWorkflow() {
     } finally {
       clearInterval(scenarioTimer);
       if (scenarioRunEpoch === scenarioRunEpochRef.current) {
+        finishScenarioTiming(scenarioRunEpoch, scenarioOutcome);
+        setIs360CameraWorking(false);
         setIsSearching(false);
       }
     }
@@ -1068,6 +1094,7 @@ export default function useMangaWorkflow() {
       const promptMaxChars = effectiveProviderFamily === PROMPT_PROVIDER_FAMILIES.CHATGPT
         ? getOpenAIPromptBodyBudget(buildOpenAIReferencePlan({
           characterImages: images, backgroundImage: bg360Image, backgroundEnabled: bg360Enabled,
+          colorMode,
         }))
         : undefined;
       // [v3.82-alpha] リファクタリング: 外部モジュールでプロンプトを構築
@@ -1157,7 +1184,7 @@ export default function useMangaWorkflow() {
 
   // [v3.59] ソフトリセット: キャラクター解析(STEP1)を保持し、STEP2以降をリセット
   const partialReset = () => {
-    scenarioRunEpochRef.current += 1;
+    invalidateScenarioRun();
     qualityRetryAbortRef.current = true;
     fullAutoAbortRef.current = true;
     invalidatePromptAssembly();
@@ -1241,7 +1268,7 @@ export default function useMangaWorkflow() {
 
   // [v3.59] ハードリセット: 全データ消去 + APIキー再入力モーダルを表示
   const hardReset = () => {
-    scenarioRunEpochRef.current += 1;
+    invalidateScenarioRun();
     qualityRetryAbortRef.current = true;
     fullAutoAbortRef.current = true;
     invalidatePromptAssembly();
@@ -1341,6 +1368,7 @@ export default function useMangaWorkflow() {
     return ensureWebPromptTrailingNewline(getCurrentPromptProviderFamily() === PROMPT_PROVIDER_FAMILIES.CHATGPT
       ? appendOpenAIReferencePrompt(prompt, buildOpenAIReferencePlan({
         characterImages: images, backgroundImage: bg360Image, backgroundEnabled: bg360Enabled,
+        colorMode,
       }))
       : prompt);
   };
@@ -1589,9 +1617,11 @@ export default function useMangaWorkflow() {
     const generationStartedAt = Date.now();
     let progressPhase = generationOptions.reviewOnly ? '品質再検査' : '画像生成';
     const genTimer = setInterval(() => {
+      if (qualityRunEpoch !== scenarioRunEpochRef.current) return;
       const elapsed = Math.floor((Date.now() - generationStartedAt) / 1000);
       const waitLine = `[WAIT] ⏳ ${progressPhase}中… 合計${elapsed}秒経過`;
       setGenLog(prev => {
+        if (qualityRunEpoch !== scenarioRunEpochRef.current) return prev;
         const waitIndex = prev.findIndex(entry => entry.startsWith("[WAIT]"));
         if (waitIndex !== -1) {
           const newLog = [...prev];
@@ -1615,7 +1645,8 @@ export default function useMangaWorkflow() {
       if (qualityRunEpoch !== scenarioRunEpochRef.current) return false;
 
       const statCallback = (msg) => {
-        setGenLog(prev => [...prev, msg]);
+        if (qualityRunEpoch !== scenarioRunEpochRef.current) return;
+        setGenLog(prev => qualityRunEpoch === scenarioRunEpochRef.current ? [...prev, msg] : prev);
       };
 
       const geminiReferenceImages = Array.isArray(generationOptions.referenceImages)
@@ -1636,6 +1667,7 @@ export default function useMangaWorkflow() {
             backgroundImage: bg360Image,
             backgroundEnabled: bg360Enabled,
             originalCandidate: repairSource,
+            colorMode,
           });
           const apiPrompt = appendOpenAIReferencePrompt(prompt, referencePlan);
           metadataPrompt = apiPrompt;
@@ -1688,8 +1720,9 @@ export default function useMangaWorkflow() {
         return normalized;
       };
 
-      const reviewImageCandidate = async (candidate, candidatePrompt) => {
+      const reviewImageCandidate = async (candidate, candidatePrompt, { onReviewProgress } = {}) => {
         progressPhase = '品質検査';
+        let review;
         try {
           const candidateImage = `data:${candidate.mimeType || 'image/png'};base64,${candidate.base64Img}`;
           const dimensions = await inspectImageDimensions(candidateImage);
@@ -1698,6 +1731,25 @@ export default function useMangaWorkflow() {
             stage: candidate.originalImage && candidate.originalImage !== candidateImage ? 'normalized' : 'original',
             ...dimensions, region: { x: 0, y: 0, ...dimensions }, scale: 1,
           }] };
+          if (isOpenAIEngine && colorMode === 'monochrome' && qualityMode === 'four-panel') {
+            let nativeChroma, reason;
+            try {
+              nativeChroma = { ...await inspectNativeMonochromeChroma(candidateImage),
+                sourceHash: evidenceContext.sourceViews[0].hash, sourceStage: evidenceContext.sourceViews[0].stage, scale: 1 };
+              const region = nativeChroma.region;
+              reason = nativeChroma.status === 'detected'
+                ? `原寸RGBに広い色残りを検出。領域${JSON.stringify(region.bounds)}、RGB=${region.sampleRgb.join('/')}、色画素率${(nativeChroma.coloredFraction * 100).toFixed(2)}%。物体は認識せず、自動有料修正には使用しません。`
+                : '原寸RGBで広い色残りを検出せず。墨線・白地・網点の適合を保証する検査ではありません。';
+            } catch (error) {
+              nativeChroma = { status: 'unverified', sourceHash: evidenceContext.sourceViews[0].hash };
+              reason = `原寸RGB検査は未確認です: ${error.message}`;
+            }
+            review = { pass: false, nativeChroma, observations: { monochrome_native_chroma: reason },
+              issues: nativeChroma.status === 'not_detected' ? []
+                : [{ type: 'unverified', panel: null, subject: 'monochrome_native_chroma', reason }] };
+            statCallback(`[原寸RGB検査] ${reason}`);
+            onReviewProgress?.(review);
+          }
           const panelImages = qualityMode === 'four-panel'
             ? await extractMangaPanelCrops(candidateImage)
             : [];
@@ -1714,6 +1766,7 @@ export default function useMangaWorkflow() {
             referenceImageCount: images.length,
             panelCropCount: panelImages.length,
             evidenceContext,
+            requirePanelStyleEvidence: isOpenAIEngine && colorMode === 'color',
           });
           const qualityResponse = await callAI(
             qualityPrompt,
@@ -1721,14 +1774,23 @@ export default function useMangaWorkflow() {
             null,
             (msg) => statCallback(`[QUALITY QA] ${msg}`)
           );
-          const review = parseImageQualityQaResponse(qualityResponse.text, {
+          const nativeReview = review;
+          review = parseImageQualityQaResponse(qualityResponse.text, {
             mode: qualityMode,
             finalPrompt: candidatePrompt,
             referenceImageCount: images.length,
             completionTokens: qualityResponse.usage?.completion_tokens ?? qualityResponse.usage?.output_tokens,
             finishReason: qualityResponse.finishReason,
             evidenceContext,
+            requirePanelStyleEvidence: isOpenAIEngine && colorMode === 'color',
           });
+          if (nativeReview?.nativeChroma) {
+            review = { ...review, nativeChroma: nativeReview.nativeChroma,
+              pass: review.pass && nativeReview.issues.length === 0,
+              issues: [...review.issues, ...nativeReview.issues],
+              observations: { ...review.observations, ...nativeReview.observations } };
+          }
+          onReviewProgress?.(review);
           const reviewTokens = qualityResponse.usage?.completion_tokens ?? qualityResponse.usage?.output_tokens;
           statCallback(`[QUALITY QA] 応答サイズ: ${String(qualityResponse.text ?? '').length.toLocaleString()}文字${Number.isFinite(reviewTokens) ? `・出力 ${reviewTokens.toLocaleString()} tokens` : ''}。`);
           const missingHandPanels = new Set(review.issues
@@ -1752,6 +1814,8 @@ export default function useMangaWorkflow() {
                     && !stillMissing.has(`${issue.panel}:${issue.subject}`)
                   ));
                   review.issues.push(...auditIssues.filter(issue => !issue.reason?.startsWith('Missing or incomplete per-actor visible-hand inventory')));
+                  review.pass = review.issues.length === 0;
+                  onReviewProgress?.(review);
                   const material = auditIssues.filter(issue => issue.type === 'anatomy');
                   statCallback(`[手の独立監査 / ${contract.panel}コマ] ${material.length ? `重大な手の破綻 ${material.map(issue => issue.subject).join('・')}` : auditIssues.length ? '判定に未確認あり' : '可視の手の数に異常なし'}。`);
                 } catch (error) {
@@ -1765,6 +1829,7 @@ export default function useMangaWorkflow() {
             review.pass = false;
             review.issues.push({ type: 'unverified', panel: null, subject: 'page_layout', reason: candidate.pageLayout.reason });
           }
+          onReviewProgress?.(review);
           if (qualityMode === 'single-image') return review;
           // 正解は渡さず候補ページと同一ページの拡大コマから文字・実字の位置を読む。
           let inventoryText = '';
@@ -1779,9 +1844,10 @@ export default function useMangaWorkflow() {
           return applyBubbleInventory(review, inventoryText, candidatePrompt);
         } catch (qualityError) {
           return {
+            ...review,
             pass: false,
             requestFailed: true,
-            issues: [{
+            issues: [...(review?.issues || []), {
               type: 'unverified',
               panel: null,
               subject: 'image quality review',
@@ -1793,17 +1859,14 @@ export default function useMangaWorkflow() {
 
       const reviewCriticalCameraCandidate = async (candidate, candidatePrompt) => {
         progressPhase = 'カメラ検査';
-        const cameraPrompt = buildCriticalCameraQaPrompt({
-          finalPrompt: candidatePrompt,
-          panelCropCount: qualityMode === 'four-panel' ? 4 : 0,
-        });
-        if (!cameraPrompt) return { pass: true, issues: [] };
         const panelImages = qualityMode === 'four-panel'
           ? await extractMangaPanelCrops(`data:${candidate.mimeType || 'image/png'};base64,${candidate.base64Img}`)
           : [];
+        const cameraRequest = buildCriticalCameraQaRequest({ candidate, panelImages, finalPrompt: candidatePrompt });
+        if (!cameraRequest.prompt) return { pass: true, issues: [] };
         const response = await callAI(
-          cameraPrompt,
-          buildImageQualityQaImageParts({ candidate, panelImages }),
+          cameraRequest.prompt,
+          cameraRequest.images,
           null,
           msg => statCallback(`[カメラ独立監査] ${msg}`),
         );
@@ -1911,7 +1974,11 @@ export default function useMangaWorkflow() {
         && qualityOutcome.originalReview.issues.length > 0
         && qualityOutcome.originalReview.issues.every((issue) => issue?.type === 'unverified');
 
-      if (!qualityOutcome.originalReview.pass && qualityReviewUnverified) {
+      if (qualityOutcome.originalReview.nativeChroma?.status === 'detected') {
+        setGenLog(prev => [...prev,
+          '[QUALITY QA] ⚠️ 原寸RGBに広い色残りを検出しました。物体認識は行わず、この結果だけでは自動有料修正しません。',
+          ...qualityOutcome.originalReview.issues.map(issue => `[QUALITY QA] ${formatImageQualityIssue(issue)}`)]);
+      } else if (!qualityOutcome.originalReview.pass && qualityReviewUnverified) {
         setGenLog(prev => [
           ...prev,
           '[QUALITY QA] ℹ️ 画像品質レビューは未確認です。画像の具体的な問題は検出されていません。',
@@ -2098,6 +2165,7 @@ export default function useMangaWorkflow() {
         initialPolicyError,
         shouldStop: () => policyEpoch !== scenarioRunEpochRef.current || (isFullAutoMode && fullAutoAbortRef.current),
         repairPrompt: async ({ prompt, policyError, attempt, maxRetries }) => {
+          if (policyEpoch !== scenarioRunEpochRef.current) return null;
           setIsFixingPolicy(true);
           setPolicyFixLog(prev => `${prev}\n> [AUTO-FIX ${attempt}/${maxRetries}] 拒否原因を解析し、安全な表現へ修正中...`);
           setGenLog(prev => [
@@ -2108,10 +2176,13 @@ export default function useMangaWorkflow() {
             finalPrompt: prompt,
             policyErrorMsg: policyError,
             selectedEngine,
-            onProgress: (msg) => setPolicyFixLog(prev => `${prev}\n> ${msg}`),
+            onProgress: (msg) => {
+              if (policyEpoch === scenarioRunEpochRef.current) setPolicyFixLog(prev => `${prev}\n> ${msg}`);
+            },
           });
         },
         generateImage: async ({ prompt, attempt, maxRetries }) => {
+          if (policyEpoch !== scenarioRunEpochRef.current) return { success: false, policyError: '' };
           setFinalPrompt(prompt);
           setPolicyPromptHistory(prev => prev[prev.length - 1] === prompt ? prev : [...prev, prompt]);
           setPolicyErrorMsg("");
@@ -2177,12 +2248,14 @@ export default function useMangaWorkflow() {
   };
 
   const regenerateImage = async (skipGuard = false, overridePrompt = null, generationOptions = {}) => {
+    const generationEpoch = scenarioRunEpochRef.current;
     const currentPrompt = overridePrompt || finalPrompt;
     setPolicyPromptHistory([]);
     const success = await generateImageOnce(skipGuard, overridePrompt, {
       ...generationOptions,
       suppressPolicyChoice: true,
     });
+    if (generationEpoch !== scenarioRunEpochRef.current) return false;
     if (success || !lastPolicyErrorRef.current) return success;
 
     return runPolicyAutoRetries({
@@ -2197,11 +2270,13 @@ export default function useMangaWorkflow() {
   // Phase 2: そのテーブルを機械的に元プロンプトに適用（全文再出力不要）
   const regenerateSafePrompt = async () => {
     if (!finalPrompt || !policyErrorMsg.trim()) return;
+    const policyEpoch = scenarioRunEpochRef.current;
     setIsFixingPolicy(true);
     setPolicyFixLog("> [Phase 0/5] コンテンツポリシーアドバイザーを起動中...");
 
     let policyTickCount = 0;
     const policyTimer = setInterval(() => {
+      if (policyEpoch !== scenarioRunEpochRef.current) return;
       policyTickCount++;
       setPolicyFixLog(prev => {
         const elapsed = Math.floor(policyTickCount * 1.0);
@@ -2219,9 +2294,12 @@ export default function useMangaWorkflow() {
         finalPrompt,
         policyErrorMsg,
         selectedEngine,
-        onProgress: (msg) => setPolicyFixLog(prev => prev + `\n> ${msg}`)
+        onProgress: (msg) => {
+          if (policyEpoch === scenarioRunEpochRef.current) setPolicyFixLog(prev => prev + `\n> ${msg}`);
+        }
       });
 
+      if (policyEpoch !== scenarioRunEpochRef.current) return;
       if (result.success && result.modifiedPrompt) {
         setFinalPrompt(result.modifiedPrompt);
         if (result.method === "replacement") {
@@ -2234,11 +2312,12 @@ export default function useMangaWorkflow() {
         lastPolicyErrorRef.current = "";
       }
     } catch (error) {
+      if (policyEpoch !== scenarioRunEpochRef.current) return;
       console.error(error);
       setPolicyFixLog(prev => prev + `\n> [ERROR] ${error.message}`);
     } finally {
       clearInterval(policyTimer);
-      setIsFixingPolicy(false);
+      if (policyEpoch === scenarioRunEpochRef.current) setIsFixingPolicy(false);
     }
   };
 
@@ -2307,13 +2386,19 @@ export default function useMangaWorkflow() {
     }
 
     // フルオート開始
-    scenarioRunEpochRef.current += 1;
+    const fullAutoRun = (scenarioRunEpochRef.fullAutoRun || 0) + 1;
+    scenarioRunEpochRef.fullAutoRun = fullAutoRun;
+    let fullAutoEpoch = invalidateScenarioRun();
+    let nextRoundQueued = false;
+    const ownsRun = () => scenarioRunEpochRef.fullAutoRun === fullAutoRun;
+    const isCurrent = () => ownsRun() && scenarioRunEpochRef.current === fullAutoEpoch && !fullAutoAbortRef.current;
     qualityRetryAbortRef.current = true;
     setPolicyAutoRetrying(false);
     fullAutoAbortRef.current = false;
     setIsFullAutoMode(true);
     setEnableChatGPTMode(isOpenAIEngine);
 
+    try {
     // [v4.2.7] 新しい周回の開始時に、前回の生成データ（シナリオ、プロンプト、画像等）を即時リセット
     // これにより currentStep が 2 に下がり、画面レイアウトの再レンダリングが先行して完了します
     setScenario("");
@@ -2345,10 +2430,15 @@ export default function useMangaWorkflow() {
 
     // 自動スクロール: STEP2へ (ステート更新に伴う再レンダリング完了を待ってからスクロールを実行)
     await new Promise(r => setTimeout(r, 400));
+    if (!isCurrent()) return;
     step2Ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     await new Promise(r => setTimeout(r, 600)); // スクロール完了をしっかり待つ
 
-    const generatedScenario = await generateScenarioFromNews(overrideCategories, "news");
+    if (!isCurrent()) return;
+    const scenarioRequest = generateScenarioFromNews(overrideCategories, "news");
+    fullAutoEpoch = scenarioRunEpochRef.current;
+    const generatedScenario = await scenarioRequest;
+    if (!isCurrent()) return;
     if (fullAutoAbortRef.current || !generatedScenario) {
       setIsFullAutoMode(false);
       setFullAutoStep(0);
@@ -2362,8 +2452,10 @@ export default function useMangaWorkflow() {
     step3Ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     await new Promise(r => setTimeout(r, 300));
 
+    if (!isCurrent()) return;
     const fullAutoProviderFamily = getCurrentPromptProviderFamily();
     const generatedPrompt = await assemblePrompt(true, generatedScenario, fullAutoProviderFamily);
+    if (!isCurrent()) return;
     if (fullAutoAbortRef.current || !generatedPrompt) {
       setIsFullAutoMode(false);
       setFullAutoStep(0);
@@ -2378,8 +2470,10 @@ export default function useMangaWorkflow() {
     window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
     await new Promise(r => setTimeout(r, 300));
 
+    if (!isCurrent()) return;
     // 手動生成と同じ共通ループで、ポリシー拒否時は最大5回まで内部修正する。
     const step4ok = await regenerateImage(true, generatedPrompt);
+    if (!isCurrent()) return;
 
     // ポリシー関連のステートをクリーンアップ
     setIsFixingPolicy(false);
@@ -2406,6 +2500,7 @@ export default function useMangaWorkflow() {
     
     // 最終スクロール: 生成画像へ
     await new Promise(r => setTimeout(r, 800));
+    if (!isCurrent()) return;
     imageResultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
     if (isEndlessModeRef.current) {
@@ -2417,10 +2512,15 @@ export default function useMangaWorkflow() {
             ? "🔄 ポリシーエラーのため次の作品に進みます..."
             : "🔄 生成エラーのため次の作品に進みます...");
         setTimeout(() => {
-          if (!fullAutoAbortRef.current) {
+          if (isCurrent()) {
             setTriggerFullAuto(prev => prev + 1);
+          } else if (ownsRun()) {
+            setIsFullAutoMode(false);
+            setFullAutoStep(0);
+            setIsAborting(false);
           }
         }, 2000); // 少し待ってから次へ
+        nextRoundQueued = true;
       } else {
         setIsFullAutoMode(false);
         setFullAutoStep(0);
@@ -2436,15 +2536,30 @@ export default function useMangaWorkflow() {
         showStatus("🎉 フルオート生成完了！4コマ漫画が生成されました！");
       }
     }
+    } catch (error) {
+      if (isCurrent()) {
+        fullAutoAbortRef.current = true;
+        setGenLog(prev => [...prev, `[FULL-AUTO ERROR] ${translateApiError(error)}`]);
+        showStatus('フルオートを停止しました。エラー理由を確認し、続きのSTEPから再実行してください。');
+      }
+    } finally {
+      if (ownsRun() && !nextRoundQueued) {
+        isFullAutoModeRef.current = false;
+        setIsFullAutoMode(false);
+        setFullAutoStep(0);
+        setIsAborting(false);
+      }
+    }
   };
 
   // [v2.78] フルオートトグルハンドラ
   // castList有 → 即実行 / castList無 → 武装待機（ドロップで自動開始）
     const handleFullAutoToggle = async () => {
+    scenarioRunEpochRef.fullAutoRun = (scenarioRunEpochRef.fullAutoRun || 0) + 1;
     if (isFullAutoMode) {
       // 実行中 or 武装中 → 中断/解除
       fullAutoAbortRef.current = true;
-      scenarioRunEpochRef.current += 1;
+      invalidateScenarioRun();
       invalidatePromptAssembly();
       
       // [v4.2.7] 中断時にAPI通信の完了を待たず、即座にUIのローディング表示を消去して操作可能に戻す
@@ -2478,7 +2593,7 @@ export default function useMangaWorkflow() {
   // eslint-disable-next-line no-unused-vars
   const abortFullAuto = () => {
     fullAutoAbortRef.current = true;
-    scenarioRunEpochRef.current += 1;
+    invalidateScenarioRun();
     invalidatePromptAssembly();
     
     // [v4.2.7] 中断時に即座にUIのローディング状態を解除

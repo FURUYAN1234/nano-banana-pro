@@ -11,14 +11,38 @@ import {
   formatImageQualityStopReason,
   parseImageFailureAnalysis,
   buildImageFailureAnalysisPrompt,
+  enforceBubbleComparison,
+  enforceCriticalCameraComparison,
+  isMaterialImageQualityIssue,
 } from '../src/lib/image-quality-failsafe.js';
+
+test('a requested drawing-medium failure requires complete visible evidence before paid repair', () => {
+  const issue = { type: 'art_style', panel: 3, styleEvidence: {
+    expectedStyle: 'GEKIGA', observedStyle: 'smooth anime face', visibleRegion: 'face',
+    subject: 'visible speaker', location: 'right foreground', observed: 'large anime eyes and smooth face; ink appears only on clothing',
+    status: 'defect', materialImpact: 'requested_medium_missing',
+  } };
+  assert.equal(isMaterialImageQualityIssue(issue), true);
+  for (const key of Object.keys(issue.styleEvidence)) {
+    const evidence = { ...issue.styleEvidence };
+    delete evidence[key];
+    assert.equal(isMaterialImageQualityIssue({ ...issue, styleEvidence: evidence }), false, key);
+  }
+  assert.equal(isMaterialImageQualityIssue({ type: 'art_style', panel: 3 }), false);
+  assert.equal(isMaterialImageQualityIssue({ ...issue, styleEvidence: { ...issue.styleEvidence, status: 'uncertain' } }), false);
+  assert.equal(isMaterialImageQualityIssue({ ...issue, styleEvidence: { ...issue.styleEvidence, materialImpact: 'minor_variation' } }), false);
+});
 
 const analysis = ({ issues, history }) => JSON.stringify({ corrections: issues.map((issue, issueIndex) => ({
   issueIndex, observed: issue.reason, expected: 'approved geometry', cause: 'possible wrong overlap',
   previousFailure: history.length ? 'Prior contact correction failed' : 'First attempt',
   nextStrategy: `Rebuild contact at revision ${history.length + 1}`, verification: 'Trace separate contours and count limbs',
 })) });
-const runImageQualityFailsafe = options => executeQualityGate({ analyzeFailure: async context => analysis(context), ...options });
+const confirmedOriginal = async (_before, _after, _prompt, { originalIssues = [] } = {}) => ({
+  preferred: 'original', reason: 'Fixture: original defect still visible; repair is worse.',
+  originalIssueChecks: originalIssues.map((issue, issueIndex) => ({ issueIndex, status: 'defect', evidence: issue.reason })),
+});
+const runImageQualityFailsafe = options => executeQualityGate({ analyzeFailure: async context => analysis(context), compareCandidates: confirmedOriginal, ...options });
 
 const SINGLE_IMAGE_PROMPT = `[ ANTIGRAVITY EMOTIONAL CINEMA ENGINE v2.1 ]
 Create a SINGLE breathtaking illustration.`;
@@ -28,6 +52,168 @@ const pass = { pass: true, issues: [] };
 const fail = (type = 'anatomy') => ({
   pass: false,
   issues: [{ type, panel: 2, subject: 'アカリ', reason: '腕が1本多い' }],
+});
+
+test('rejected repair stops without repeating the stale defect and preserves both candidates', async () => {
+  let repairs = 0;
+  const result = await runImageQualityFailsafe({ originalCandidate: candidate('original'), originalPrompt: 'APPROVED',
+    reviewCandidate: async image => image.id === 'original' ? fail('panel_layout') : fail('bubble_order'),
+    generateRepairCandidate: async () => { repairs++; return candidate('repair'); },
+    compareCandidates: async () => ({ preferred: 'original', reason: 'The repair worsened dialogue; cast appears correct in both.' }),
+  });
+  assert.equal(repairs, 1);
+  assert.equal(result.stopReason, 'no_improvement');
+  assert.equal(result.validationWarning, true);
+  assert.equal(result.candidate.id, 'original');
+  assert.equal(result.candidates.length, 2);
+});
+
+test('a quality API request timeout remains unverified and retains the image', async () => {
+  const result = await runImageQualityFailsafe({ originalCandidate: candidate('original'), originalPrompt: 'APPROVED',
+    reviewCandidate: async () => { throw new Error('The quality API request timed out.'); },
+    generateRepairCandidate: async () => assert.fail('timeout is not an image defect'),
+  });
+  assert.equal(result.stopReason, 'unverified');
+  assert.equal(result.validationWarning, true);
+  assert.equal(result.canContinue, true);
+  assert.equal(result.candidate.id, 'original');
+  assert.match(result.finalReview.issues[0].reason, /API request timed out/);
+});
+
+test('comparison reconciles disproved, uncertain or missing defect checks without declaring PASS', async () => {
+  for (const checks of [
+    [{ issueIndex: 0, status: 'ok', evidence: 'Both hands are separate and correctly attached.' }],
+    [{ issueIndex: 0, status: 'uncertain', evidence: 'The elbow is obscured.' }],
+    [],
+    [{ issueIndex: 1, status: 'defect', evidence: 'A different alleged issue is visible.' }],
+    [{ issueIndex: 0, status: 'defect', evidence: 'extra arm' }, { issueIndex: 0, status: 'ok', evidence: 'two arms' }],
+  ]) {
+    const original = fail();
+    const result = await runImageQualityFailsafe({
+      originalCandidate: candidate('original'), originalPrompt: 'APPROVED',
+      reviewCandidate: async image => image.id === 'original' ? original : fail('bubble_text'),
+      generateRepairCandidate: async () => candidate('repair'),
+      compareCandidates: async () => ({ preferred: 'original', reason: 'Original preserves the dialogue.', originalIssueChecks: checks }),
+    });
+    assert.equal(result.attempts, 2);
+    assert.equal(result.finalReview.pass, false);
+    assert.equal(result.finalReview.issues[0].type, 'unverified');
+    assert.deepEqual(result.finalReview.issues[0].originalIssue, original.issues[0]);
+    assert.deepEqual(result.finalReview.issues[0].comparisonEvidence.checks, checks.filter(check => check.issueIndex === 0));
+    assert.equal(result.originalReview.issues[0].type, 'anatomy');
+    assert.equal(result.candidates[0].review, result.finalReview);
+  }
+});
+
+test('preference overrides retain structured checks used to authorize further repairs', () => {
+  const comparison = { preferred: 'repair', reason: 'original comparison', originalIssueChecks: [{ issueIndex: 0, status: 'defect', evidence: 'visible extra limb' }] };
+  const before = { ...fail(), bubbleInventory: [{ panel: 1, status: 'ok' }] };
+  const after = { ...fail('bubble_text'), bubbleInventory: [{ panel: 1, status: 'defect' }] };
+  const bubble = enforceBubbleComparison(comparison, before, after);
+  assert.equal(bubble.preferred, 'original');
+  assert.deepEqual(bubble.originalIssueChecks, comparison.originalIssueChecks);
+  const camera = enforceCriticalCameraComparison({ ...comparison, preferred: 'original' }, fail('camera_geometry'), { ...pass, criticalCameraAudit: pass });
+  assert.equal(camera.preferred, 'repair');
+  assert.deepEqual(camera.originalIssueChecks, comparison.originalIssueChecks);
+});
+
+test('timeout retains the last acquired review and cannot accept late mutations', async () => {
+  const primary = { ...fail(), observations: { hands: 'Visible extra limb' } };
+  let lateWrite;
+  const result = await runImageQualityFailsafe({
+    originalCandidate: candidate('original'), originalPrompt: 'APPROVED', allowRepair: false,
+    reviewCandidate: async (_image, _prompt, { onReviewProgress }) => {
+      onReviewProgress?.(primary);
+      lateWrite = () => { primary.issues.length = 0; onReviewProgress?.(pass); };
+      throw new Error('A supplementary API request timed out.');
+    },
+    generateRepairCandidate: async () => assert.fail('review timeout does not authorize repair'),
+  });
+  lateWrite();
+  assert.equal(result.stopReason, 'repair_disabled');
+  assert.equal(result.finalReview.pass, false);
+  assert.equal(result.finalReview.issues[0].type, 'anatomy');
+  assert.equal(result.finalReview.observations.hands, 'Visible extra limb');
+  assert.ok(result.finalReview.issues.some(issue => issue.type === 'unverified'));
+});
+
+test('a different identity feature on the same actor cannot corroborate the original defect', async () => {
+  let reviews = 0;
+  const result = await runImageQualityFailsafe({
+    originalCandidate: candidate('original'), originalPrompt: 'APPROVED',
+    reviewCandidate: async () => ({ pass: false, issues: [{
+      type: 'character_reference', panel: 2, subject: 'actor',
+      materialFeatures: ++reviews === 1 ? ['eyewear'] : ['defining_accessory'],
+      reason: reviews === 1 ? 'required glasses missing' : 'required pendant missing',
+    }] }),
+    generateRepairCandidate: async () => assert.fail('different feature does not confirm missing glasses'),
+  });
+  assert.equal(result.attempts, 1);
+  assert.equal(result.finalReview.issues[0].type, 'unverified');
+});
+
+test('comparison checks map only to their exact alleged person and panel while confirmed defects continue', async () => {
+  const disputed = { type: 'anatomy', panel: 1, subject: 'first actor', reason: 'uncertain arm contour' };
+  const confirmed = { type: 'anatomy', panel: 2, subject: 'second actor', reason: 'visible third arm' };
+  const planned = [];
+  let repairs = 0;
+  const result = await runImageQualityFailsafe({
+    originalCandidate: candidate('original'), originalPrompt: 'APPROVED',
+    reviewCandidate: async image => image.id === 'original' ? { pass: false, issues: [disputed, confirmed] } : fail('bubble_text'),
+    analyzeFailure: async context => { planned.push(context.issues); return analysis(context); },
+    generateRepairCandidate: async () => candidate(`repair${++repairs}`),
+    compareCandidates: async (_before, _after, _prompt, { originalIssues }) => ({
+      preferred: 'original', reason: 'Original dialogue is better',
+      originalIssueChecks: originalIssues.map((issue, issueIndex) => ({ issueIndex,
+        status: issue.subject === confirmed.subject ? 'defect' : 'ok', evidence: issue.reason })),
+    }),
+  });
+  assert.equal(repairs, 3);
+  assert.deepEqual(planned.map(issues => issues.map(issue => issue.subject)), [
+    ['first actor', 'second actor'], ['second actor'], ['second actor'],
+  ]);
+  assert.equal(result.finalReview.issues[0].type, 'unverified');
+  assert.equal(result.finalReview.issues[1].type, 'anatomy');
+});
+
+test('bubble preference override preserves confirmation for all three warranted repairs', async () => {
+  let repairs = 0;
+  const result = await runImageQualityFailsafe({
+    originalCandidate: candidate('original'), originalPrompt: 'APPROVED',
+    reviewCandidate: async image => image.id === 'original'
+      ? { ...fail(), bubbleInventory: [{ panel: 1, status: 'ok' }] }
+      : { ...fail('bubble_text'), bubbleInventory: [{ panel: 1, status: 'defect' }] },
+    generateRepairCandidate: async () => candidate(`repair${++repairs}`),
+    compareCandidates: async (...args) => ({ ...await confirmedOriginal(...args), preferred: 'repair' }),
+  });
+  assert.equal(repairs, 3);
+  assert.equal(result.candidate.id, 'original');
+  assert.equal(result.finalReview.issues[0].type, 'anatomy');
+  assert.ok(result.history.every(entry => entry.comparison.originalIssueChecks[0].status === 'defect'));
+});
+
+test('elapsed workflow time never shortens individual API request limits or skips required checks', async t => {
+  let now = 0;
+  t.mock.method(Date, 'now', () => now);
+  const requestLimits = [];
+  const result = await runImageQualityFailsafe({
+    originalCandidate: candidate('original'), originalPrompt: 'APPROVED',
+    reviewCandidate: async (image, _prompt, options) => {
+      requestLimits.push(options?.timeoutMs); now += 600_001;
+      return image.id === 'original' ? fail() : pass;
+    },
+    analyzeFailure: async context => { requestLimits.push(context.requestOptions?.timeoutMs); now += 600_001; return analysis(context); },
+    generateRepairCandidate: async () => { now += 600_001; return candidate('repair'); },
+    compareCandidates: async (_before, _after, _prompt, options) => {
+      requestLimits.push(options?.timeoutMs); now += 600_001;
+      return { preferred: 'repair', reason: 'Visible defect is corrected' };
+    },
+  });
+  assert.deepEqual(requestLimits, [undefined, undefined, undefined, undefined]);
+  assert.equal(result.candidate.id, 'repair');
+  assert.equal(result.finalReview.pass, true);
+  assert.equal(result.validationWarning, false);
+  assert.equal(result.candidates.length, 2);
 });
 
 test('progress explains the defect that warrants repair and the result of each recheck', async () => {
@@ -260,7 +446,7 @@ test('duplicate panel dimensions are collapsed before AI repair analysis', async
     ] }),
     analyzeFailure: async context => { analyzedIssues = context.issues; return analysis(context); },
     generateRepairCandidate: async () => candidate('repair'),
-    compareCandidates: async () => ({ preferred: 'original', reason: 'retain baseline' }),
+    compareCandidates: confirmedOriginal,
   });
   assert.equal(analyzedIssues.length, 1);
   assert.deepEqual(analyzedIssues.map(issue => issue.type), ['camera_geometry']);
@@ -434,9 +620,9 @@ test('all four candidates may fail but the best earlier image continues with res
   const result = await runImageQualityFailsafe({ originalCandidate: candidate('original'), originalPrompt: 'APPROVED',
     reviewCandidate: async () => fail('bubble_order'),
     generateRepairCandidate: async () => candidate(`repair${++images}`),
-    compareCandidates: async (best, next) => {
+    compareCandidates: async (best, next, prompt, options) => {
       compared.push([best.id, next.id]);
-      return { preferred: next.id === 'repair1' ? 'repair' : 'original', reason: 'First repair preserves more correct details' };
+      return { ...await confirmedOriginal(best, next, prompt, options), preferred: next.id === 'repair1' ? 'repair' : 'original', reason: 'First repair preserves more correct details' };
     },
   });
   assert.equal(images, 3);
@@ -555,7 +741,8 @@ test('comparison failure does not discard the original', async () => {
     compareCandidates: async () => { throw new Error('comparison unavailable'); },
   });
   assert.equal(result.candidate.id, 'original');
-  assert.equal(result.attempts, 4);
+  assert.equal(result.attempts, 2);
+  assert.equal(result.stopReason, 'no_improvement');
 });
 
 test('retains the saved original and stops after three unsuccessful repairs', async () => {
@@ -640,6 +827,7 @@ test('repair prompt keeps bubble order hard and bounds internal retry history', 
   const longOriginal = 'A'.repeat(15000);
   const result = await executeQualityGate({
     originalCandidate: candidate('original'), originalPrompt: longOriginal,
+    compareCandidates: confirmedOriginal,
     reviewCandidate: async () => fail('bubble_order'),
     analyzeFailure: async ({ issues, history }) => JSON.stringify({ corrections: issues.map((issue, issueIndex) => ({
       issueIndex, observed: 'x'.repeat(4000), expected: 'y'.repeat(4000), cause: 'z'.repeat(4000),

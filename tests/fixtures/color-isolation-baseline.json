@@ -1,0 +1,23 @@
+[
+  {
+    "options": {
+      "providerFamily": "chatgpt",
+      "colorMode": "monochrome"
+    },
+    "sha256": "8f1c7161dfb6aa9f639de3eafc2b69087300db0137b9706565e0e8804a674b67"
+  },
+  {
+    "options": {
+      "providerFamily": "gemini",
+      "colorMode": "color"
+    },
+    "sha256": "6cca6f65afc51fbbb83f5514a044349a3c3b407c9726ce85293de7715b7f8034"
+  },
+  {
+    "options": {
+      "providerFamily": "gemini",
+      "colorMode": "monochrome"
+    },
+    "sha256": "7122cb2caba92233ebea1164781cf29437035751f407489804dfa01d720ae9cb"
+  }
+]

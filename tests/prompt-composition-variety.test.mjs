@@ -42,7 +42,9 @@ test('both provider prompts keep shot scale ahead of facial readability after co
   for (const providerFamily of ['chatgpt', 'gemini']) {
     const prompt = buildMangaPrompt({ scenario, castList: CAST_LIST, providerFamily, colorMode: 'color' });
     assert.match(prompt, /body extent.*continuous setting/);
-    assert.match(prompt, /readability never changes shot scale/i);
+    assert.match(prompt, providerFamily === 'chatgpt'
+      ? /keep shot scale\/elevation\/camera side\/head turn/i
+      : /readability never changes shot scale/i);
     assert.match(prompt, /explicit scale.*wins/i);
     assert.equal((prompt.match(/wide framing/g) || []).length, 1);
     assert.match(prompt, /Please check this revision/);
@@ -73,7 +75,9 @@ test('initial scenario and both image paths reserve room for body acting without
     const prompt = buildMangaPrompt({ scenario: directed, castList: CAST_LIST, providerFamily, colorMode: 'color' });
     assert.match(prompt, /手前の人物を大きく/);
     assert.match(prompt, /body action.*panel height/);
-    assert.match(prompt, /readability never changes shot scale or elevation/);
+    assert.match(prompt, providerFamily === 'chatgpt'
+      ? /keep shot scale\/elevation\/camera side\/head turn/
+      : /readability never changes shot scale or elevation/);
     assert.doesNotMatch(prompt, /half the panel height/);
     assert.match(prompt, /The deadline moved forward/);
   }

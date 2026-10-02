@@ -185,6 +185,63 @@ export const inspectImageDimensions = async (dataUrl) => {
   return { width: image.naturalWidth, height: image.naturalHeight };
 };
 
+// Read-only chroma evidence, not a grayscale conversion or a manuscript-quality
+// verdict. Neutral antialiasing is allowed; sparse colored dots/lines are not a
+// broad color area. Bounds and samples always refer to the supplied native grid.
+export const analyzeNativeMonochromeChroma = ({ data, width, height } = {}) => {
+  if (!Number.isInteger(width) || !Number.isInteger(height) || width < 1 || height < 1
+    || data?.length !== width * height * 4) throw new RangeError('原寸RGBA画素と画像寸法が一致しません。');
+  const count = width * height;
+  const mask = new Uint8Array(count);
+  let coloredPixels = 0, maxChannelDifference = 0;
+  for (let i = 0; i < count; i++) {
+    const offset = i * 4;
+    if (data[offset + 3] < 200) continue;
+    const difference = Math.max(data[offset], data[offset + 1], data[offset + 2])
+      - Math.min(data[offset], data[offset + 1], data[offset + 2]);
+    maxChannelDifference = Math.max(maxChannelDifference, difference);
+    if (difference > 8) { mask[i] = 1; coloredPixels++; }
+  }
+  let region = null;
+  const stack = new Uint32Array(coloredPixels);
+  for (let start = 0; start < count; start++) {
+    if (mask[start] !== 1) continue;
+    let pending = 1, area = 0, left = width, right = 0, top = height, bottom = 0;
+    stack[0] = start; mask[start] = 2;
+    while (pending) {
+      const index = stack[--pending], x = index % width, y = Math.floor(index / width);
+      area++; left = Math.min(left, x); right = Math.max(right, x); top = Math.min(top, y); bottom = Math.max(bottom, y);
+      if (x > 0 && mask[index - 1] === 1) { mask[index - 1] = 2; stack[pending++] = index - 1; }
+      if (x + 1 < width && mask[index + 1] === 1) { mask[index + 1] = 2; stack[pending++] = index + 1; }
+      if (y > 0 && mask[index - width] === 1) { mask[index - width] = 2; stack[pending++] = index - width; }
+      if (y + 1 < height && mask[index + width] === 1) { mask[index + width] = 2; stack[pending++] = index + width; }
+    }
+    const bounds = { x: left, y: top, width: right - left + 1, height: bottom - top + 1 };
+    const fraction = area / (bounds.width * bounds.height);
+    // Require a filled two-dimensional component, not its bounding box alone.
+    if (bounds.width >= 16 && bounds.height >= 16 && area >= 256 && fraction >= 0.5
+      && (!region || area > region.coloredPixels)) {
+      region = { bounds, coloredPixels: area, coloredFraction: fraction,
+        sampleRgb: Array.from(data.slice(start * 4, start * 4 + 3)) };
+    }
+  }
+  return { status: region ? 'detected' : 'not_detected', width, height, coloredPixels,
+    coloredFraction: coloredPixels / count, maxChannelDifference, region };
+};
+
+export const inspectNativeMonochromeChroma = async (dataUrl) => {
+  const image = new Image();
+  image.src = dataUrl;
+  await image.decode();
+  const canvas = document.createElement('canvas');
+  canvas.width = image.naturalWidth; canvas.height = image.naturalHeight;
+  const context = canvas.getContext('2d', { willReadFrequently: true });
+  if (!context) throw new Error('原寸RGB検査用Canvasを初期化できません。');
+  context.imageSmoothingEnabled = false;
+  context.drawImage(image, 0, 0);
+  return analyzeNativeMonochromeChroma(context.getImageData(0, 0, canvas.width, canvas.height));
+};
+
 // Sampling evidence must not acquire interpolation artefacts from the preview.
 export const extractNativeImageRegion = async (dataUrl, region) => {
   const { x, y, width, height } = region || {};

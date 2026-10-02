@@ -45,8 +45,10 @@ test('planning and enhancement keep back-view acting without inventing a visible
 });
 
 test('both image paths and single-image copy keep visibility subordinate to the scripted view', () => {
-  for (const prompt of [build('chatgpt'), build('gemini'), singleImagePrompt.buildSingleImageEmotionalPrompt()]) {
-    assert.match(prompt, /readability never changes shot scale or elevation, camera side or head turn/);
+  for (const [route, prompt] of [['chatgpt', build('chatgpt')], ['gemini', build('gemini')], ['single', singleImagePrompt.buildSingleImageEmotionalPrompt()]]) {
+    assert.match(prompt, route === 'chatgpt'
+      ? /keep shot scale\/elevation\/camera side\/head turn/
+      : /readability never changes shot scale or elevation, camera side or head turn/);
     assert.match(prompt, /visible features only/);
     assert.match(prompt, /rear acting.*head.*shoulder.*weight/i);
     assert.match(prompt, /keep scripted profiles\/turns/);
@@ -62,30 +64,37 @@ test('focal ink, sharp story cues and actual exaggerated acting survive every ou
     for (const colorMode of ['color', 'monochrome']) {
       outputs.push({ prompt: buildMangaPrompt({ providerFamily, colorMode, scenario, castList,
         analysis: castList + '\n' + 'Consistent identity detail. '.repeat(200),
-        currentTitle: '演出検証', activeLocation: '作業室', activeOutfit: '作業服', punchlineType: 'Auto' }), colorMode });
+        currentTitle: '演出検証', activeLocation: '作業室', activeOutfit: '作業服', punchlineType: 'Auto' }), colorMode, providerFamily });
     }
   }
-  for (const { prompt, colorMode } of outputs) {
+  for (const { prompt, colorMode, providerFamily } of outputs) {
+    const panelColorMedia = providerFamily === 'chatgpt' && colorMode === 'color';
     assert.match(prompt, /FOCAL READABILITY:/);
     if (colorMode === 'monochrome') {
       assert.match(prompt, /Focal ink follows the panel recipe; NORMAL=pressure-taper/);
       assert.match(prompt, /Bold focal silhouettes\/contacts, fine separate face\/hand lines/);
       assert.match(prompt, /no uniform thickening\/clogging/);
       assert.match(prompt, /Sharp story reactions\/props\/text/);
+    } else if (panelColorMedia) {
+      assert.match(prompt, /NORMAL\/unmarked[^\n]*pressure[^\n]*thick-to-hairline[^\n]*(?:contour|silhouette|outline|accents)/i);
+      assert.match(prompt, /Focal strokes follow panel medium/);
+      assert.match(prompt, /Legible faces in that medium/);
+      assert.doesNotMatch(prompt, /Focal G-pen:|fine eyes\/mouth\/fingers/);
+      assert.match(prompt, /story-critical reactions.*(?:sharp|crisp)/i);
     } else {
-    assert.match(prompt, /G-pen.*pressure|pressure.*G-pen/i);
-    assert.match(prompt, /thick-to-hairline strokes/);
-    assert.match(prompt, /bold outer silhouette.*overlap accents, fine eyes\/mouth\/fingers/);
-    assert.match(prompt, /Never uniform thick outlines or black-clogged features/);
-    assert.match(prompt, /story-critical reactions.*(?:sharp|crisp)/i);
+      assert.match(prompt, /G-pen.*pressure|pressure.*G-pen/i);
+      assert.match(prompt, /thick-to-hairline strokes/);
+      assert.match(prompt, /bold outer silhouette.*overlap accents, fine eyes\/mouth\/fingers/);
+      assert.match(prompt, /Never uniform thick outlines or black-clogged features/);
+      assert.match(prompt, /story-critical reactions.*(?:sharp|crisp)/i);
     }
     if (colorMode === 'monochrome') {
       assert.match(prompt, /white\/black planes/);
       assert.match(prompt, /If merged: fewer BG lines or bounded black behind light forms/);
-      assert.doesNotMatch(prompt, /lighten\/desaturate BG|warm\/cool color planes/);
+      assert.doesNotMatch(prompt, /lighten\/desaturate BG|warm\/cool (?:color )?planes/);
     } else {
       assert.match(prompt, /(?:pale|lighten).*desaturat/i);
-      assert.match(prompt, /local light\/dark value and warm\/cool color planes/);
+      assert.match(prompt, panelColorMedia ? /light\/dark and warm\/cool planes/ : /local light\/dark value and warm\/cool color planes/);
     }
     assert.match(prompt, /clear gaps at faces\/hands|face\/hand gaps/);
     assert.match(prompt, /speed lines.*(?:substitute|replace)|(?:substitute|replace).*speed lines/i);
@@ -330,7 +339,7 @@ test('both providers retain expressive permission and geometry protections after
     assert.match(prompt, /continuous.*(?:silhouette|hair)|uncut/i);
     assert.match(prompt, /no (?:clip|cut)|uncut|never run a border.*through.*(?:face|hair)/i);
     assert.match(prompt, /if.*blur.*(?:still )?(?:merges|merged|buried).*?(?:pale|lighten).*desaturate.*(?:BG|background)|if.*depth-of-field.*(?:still )?(?:merges|merged|buried).*lighten.*desaturate.*background/i);
-    assert.match(prompt, /strengthen.*G-pen/i);
+    assert.match(prompt, provider === 'chatgpt' ? /strengthen focal separation in the panel medium/i : /strengthen.*G-pen/i);
     assert.match(prompt, /panel contrast/i);
     assert.match(prompt, /OBJECT GEOMETRY LOCK/);
     assert.match(prompt, /FUNCTIONAL SURFACE/);

@@ -119,7 +119,9 @@ test('monochrome style changes retain white skin and do not inherit incidental b
     assert.doesNotMatch(prompt, /one (?:deliberate emotional )?peak|Reproduce reference geometry and design/);
     assert.match(prompt, /no default\/peak or copied sheet blush|既定の頬模様・見本の赤面の転写は禁止/);
     assert.match(prompt, /CHIBI_GAG;.*2-3 heads tall.*explicit proportions override.*Enlarge the skull.*compress torso.*Camera\/Action/i);
-    assert.match(prompt, /GEKIGA;.*smaller anatomically proportioned eyes.*constructed nose bridge.*Replace round anime facial construction/);
+    assert.match(prompt, providerFamily === 'chatgpt'
+      ? /GEKIGA;.*small realistic eyes\/irises.*strong nose bridges.*Same identity, not anime proportions/
+      : /GEKIGA;.*smaller anatomically proportioned eyes.*constructed nose bridge.*Replace round anime facial construction/);
     assert.match(prompt, /WATERCOLOR;.*assigned material\/shadow masks.*lit light skin/);
     assert.match(prompt, /panel recipe redraws facial construction/);
     assert.equal((prompt.match(/CHEEKS: none/g) || []).length, 4);
@@ -170,7 +172,7 @@ test('ink-only quality and selective screen masks survive full and compressed pr
     for (const [promptMaxChars, extra] of [[32000, ''], [19000, ''], [32000, '人物は本棚の前から机の方へ歩きながら、相手の返事を待っている。'.repeat(20)]]) {
       const options = { promptMaxChars, cinematicTechniques: false, scenario: scenario(undefined, extra) };
       const prompt = build(family, 'monochrome', options);
-      assert.doesNotMatch(prompt, /warm\/cool color planes|lighten\/desaturate BG|desaturate background colors|colored facial skin keeps/);
+      assert.doesNotMatch(prompt, /warm\/cool (?:color )?planes|lighten\/desaturate BG|desaturate background colors|colored facial skin keeps/);
       assert.match(prompt, /SCREEN MASK:.*unassigned.*white.*never.*brightness.*dots/i);
       assert.match(prompt, /INK LIGHT SOURCE:.*white cutouts.*no glow.*veil/i);
       assert.match(prompt, /NEUTRAL INK:.*R=G=B.*tint/i);
@@ -183,7 +185,7 @@ test('ink-only quality and selective screen masks survive full and compressed pr
       if (extra) assert.ok(prompt.includes(extra), 'long Action must remain intact');
       if (family === 'chatgpt') assert.ok(prompt.length <= promptMaxChars);
       const color = build(family, 'color', options);
-      assert.match(color, /warm\/cool color planes/);
+      assert.match(color, family === 'chatgpt' ? /warm\/cool planes/ : /warm\/cool color planes/);
       assert.doesNotMatch(color, /SCREEN MASK:|NEUTRAL INK:/);
     }
   }

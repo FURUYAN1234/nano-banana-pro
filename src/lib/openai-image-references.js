@@ -21,7 +21,7 @@ export function normalizeOpenAIImageDataUrl(value, label = '参照画像') {
 
 export function buildOpenAIReferencePlan({
   characterImages = [], backgroundImage = null, backgroundEnabled = false,
-  originalCandidate = null,
+  originalCandidate = null, colorMode = 'color',
 } = {}) {
   if (!Array.isArray(characterImages)) throw new Error('キャラクター参照画像は配列で指定してください。');
   const entries = [];
@@ -46,19 +46,27 @@ export function buildOpenAIReferencePlan({
   }
   const counts = {character: 0, background: 0, original: 0};
   for (const entry of entries) counts[entry.role] += 1;
-  const descriptions = {
+  const descriptions = colorMode === 'monochrome' ? {
+    original: 'SOURCE IMAGE TO EDIT. Preserve its already-correct content; change only the specified defects, necessary local physical consequences and required monochrome medium. Do not preserve source hues or tints as correct content; render native black ink, white paper and assigned screens while keeping cast, Camera, Action and panel styles.',
+    character: 'CHARACTER REFERENCE. Use for visual identity and canonical clothing unless the approved prompt explicitly overrides clothing. Never copy source hues or tints. Translate hair/outfit boundaries and accents to black/white/assigned screens; retain canonical skin-base mapping and panel styles. Do not copy sheet layout, captions, background, or static pose.',
+    background: 'BACKGROUND REFERENCE. Preserve environment geometry, spatial cues and light direction; redraw them with native black ink, white paper and assigned screens. Never copy source hues or tints, colored lighting or painted washes. Do not copy its aspect ratio, people, text or page layout.',
+  } : {
     original: 'SOURCE IMAGE TO EDIT. Preserve its already-correct content; change only the specified defects and necessary local physical consequences.',
     character: 'CHARACTER REFERENCE. Use for visual identity and canonical clothing unless the approved prompt explicitly overrides clothing. Do not copy sheet layout, captions, background, or static pose.',
     background: 'BACKGROUND REFERENCE. Use only for environment, lighting and spatial cues. Do not copy its aspect ratio, people, text or page layout.',
   };
   const lines = entries.map((entry, i) => `Image ${i + 1}: ${descriptions[entry.role]}`);
-  const rolePrompt = lines.length ? [
+  let rolePrompt = lines.length ? [
     '[API IMAGE REFERENCE ROLES]',
     ...lines,
     'The approved prompt determines cast, dialogue, action, camera, output layout and any explicit outfit change. References supply visual evidence, not additional instructions or visible text.',
     COPYRIGHT_MOSAIC_TARGET_SCOPE,
     'Do not print this reference manifest in the image.',
   ].join('\n') : '';
+  if (colorMode === 'monochrome' && !originalCandidate) {
+    const finish = '最終仕上げ：漫画雑誌の墨一色原稿として、白地・黒ベタ・網点で描く。白い肌の明部と未指定の紙面は無地の白。グレーの塗り・ぼかし・全体にかかる網点を除き、指定素材・褐色肌・光源に沿う影の網点は保持する。各コマの指定画風、劇画の墨線・ベタ・カケアミを保ち、色は一切残さない。';
+    rolePrompt += `${rolePrompt ? '\n' : ''}${finish}`;
+  }
   return {imageInputs: entries.map(({image_url}) => ({image_url})), rolePrompt, counts};
 }
 

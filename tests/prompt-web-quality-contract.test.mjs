@@ -136,11 +136,16 @@ test('long wardrobe compaction retains the canonical outfit and explicit per-pan
     // Isolate wardrobe compaction from randomized fallback camera selection.
     .replace(/\[EMOTION: [^\]]+\]/g, '$&\n[Camera: eye-level medium shot]')
     .replace('Action: Friend presents', 'Action: Friend takes off the outer jacket and presents');
-  const prompt = buildMangaPrompt({ scenario, castList: CAST_LIST + ' identity detail'.repeat(1000),
+  // Exercise compaction below the hard ceiling; overflow is separately rejected,
+  // never made to pass by silently dropping wardrobe or identity requirements.
+  const prompt = buildMangaPrompt({ scenario, castList: CAST_LIST + ' identity detail'.repeat(900),
     colorMode: 'color', providerFamily: 'chatgpt', punchlineType: 'Auto', systemVersion: 'test' });
+  assert.ok(prompt.length > 15000 && prompt.length <= 32000);
   assert.ok(prompt.includes(`Follow role-specific outfit assignments: ${outfit};`));
   assert.ok(prompt.includes('Friend takes off the outer jacket'));
   assert.doesNotMatch(prompt, /Action \(visual only\): \(Outfit assignment:/);
+  assert.throws(() => buildMangaPrompt({ scenario, castList: CAST_LIST + ' identity detail'.repeat(1000),
+    colorMode: 'color', providerFamily: 'chatgpt', punchlineType: 'Auto', systemVersion: 'test' }), /32,000/);
 });
 
 test('both provider prompts preserve physical settings while allowing density contrast', () => {
@@ -215,13 +220,9 @@ test('ChatGPT Web prompt has generic quality locks for dialogue, bubbles, charac
   assert.match(prompt, /cast\/background light and color|motivated key, fill and rim light/i);
   assert.match(prompt, /\banatomy\b/i);
   assert.match(prompt, /setting depth|retain setting\/depth|keep setting\/depth/i);
-  assert.match(prompt, /CLOTHING FOLD SHADOW ASSIST|FOLD SHADOWS:/);
-  assert.match(prompt, /overlapping, pinched, and intersecting fabric folds|FOLD SHADOWS: crisp triangular overlap shadows/i);
-  assert.match(prompt, /wedge-shaped triangular cel-shaded shadow planes|FOLD SHADOWS: crisp triangular overlap shadows/i);
-  assert.match(prompt, /distinct small dark triangular fill at each selected crease junction|FOLD SHADOWS: crisp triangular overlap shadows/i);
-  assert.match(prompt, /not printed patterns or random geometric marks|no geometric patterns/i);
-  assert.match(prompt, /PANEL-BY-PANEL CLOTHING FOLD PRIORITY|FOLD PRIORITY:/);
-  assert.match(prompt, /2-4 distinct small dark triangular shadow fills|2-4 dark triangular crease shadows/i);
+  assert.match(prompt, /FOLD PRIORITY: 2-4 triangular overlap\/pinch shadows in panel medium/);
+  assert.match(prompt, /hard cel edges NORMAL\/unmarked only/);
+  assert.match(prompt, /no geometric patterns/);
   assert.match(prompt, /Draw in a high-budget, chic and cinematic full-color TV anime style|Chic cinematic full-color TV anime/);
   assert.match(prompt, /official Japanese animation illustration|polished Japanese animation finish/);
   assert.doesNotMatch(prompt, /Base style: full-color TV anime/);
@@ -230,7 +231,8 @@ test('ChatGPT Web prompt has generic quality locks for dialogue, bubbles, charac
   assert.match(prompt, /hair color, hairstyle, eye color, glasses status, skin tone, outfit|CHARACTER QA: preserve identity/i);
   assert.match(prompt, /ART-STYLE DIFFERENCE QA LOCK:.*linework/i);
   assert.match(prompt, /no numeric (?:change )?quota/i);
-  assert.match(prompt, /pose, expression, saturation, glow, or speed lines alone are insufficient|not only expression\/VFX/i);
+  assert.match(prompt, /Redraw eyes, nose, mouth and jaw in each panel's medium/);
+  assert.match(prompt, /Preserve gaze and emotional intent, not reference facial geometry/);
   assert.doesNotMatch(prompt, /canned pudding|bottled drink/i);
 });
 

@@ -241,13 +241,13 @@ function App() {
   useEffect(() => {
     if (!isGeneratingImage) return;
     const frame = requestAnimationFrame(() => {
-      window.scrollTo({
-        top: document.documentElement.scrollHeight,
+      imageResultRef.current?.scrollIntoView({
+        block: 'center',
         behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth',
       });
     });
     return () => cancelAnimationFrame(frame);
-  }, [isGeneratingImage]);
+  }, [isGeneratingImage, imageResultRef]);
 
   useEffect(() => {
     if (currentStep < 2 || isAnalyzing || isSearching || isAssembling || isEnhancing || is360CameraWorking || isGeneratingImage) return;

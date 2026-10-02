@@ -59,11 +59,24 @@ test('the next actionable STEP button pulses after each completed step', async (
   assert.match(css, /@media \(prefers-reduced-motion: reduce\)[\s\S]*\.next-step-gentle-pulse[\s\S]*animation:\s*none/);
 });
 
-test('image generation scrolls to the page bottom once on start and respects reduced motion', async () => {
+test('image generation centers the actual image display once and respects reduced motion', async () => {
   const app = await readFile(new URL('../src/App.jsx', import.meta.url), 'utf8');
-  assert.match(app, /if \(!isGeneratingImage\) return;[\s\S]*?requestAnimationFrame\([\s\S]*?window\.scrollTo\(\{\s*top: document\.documentElement\.scrollHeight/);
-  assert.match(app, /matchMedia\('\(prefers-reduced-motion: reduce\)'\)\.matches \? 'instant' : 'smooth'/);
-  assert.match(app, /cancelAnimationFrame\(frame\);\s*\}, \[isGeneratingImage\]\)/);
+  const effect = app.match(/useEffect\(\(\) => \{\s*if \(!isGeneratingImage\) return;([\s\S]*?)\}, \[isGeneratingImage, imageResultRef\]\);/)[1];
+  const execute = new Function('isGeneratingImage', 'requestAnimationFrame', 'cancelAnimationFrame', 'imageResultRef', 'window', 'document',
+    `if (!isGeneratingImage) return; ${effect}`);
+  for (const reduce of [false, true]) {
+    const calls = [];
+    const options = [fn => { fn(); return 1; }, id => calls.push({ cancelled: id }),
+      { current: { scrollIntoView: options => calls.push(options) } },
+      { matchMedia: () => ({ matches: reduce }), scrollTo: () => calls.push('incorrect page bottom') },
+      { documentElement: { scrollHeight: 9000 } }];
+    assert.equal(execute(false, ...options), undefined);
+    assert.equal(calls.length, 0);
+    const cleanup = execute(true, ...options);
+    assert.deepEqual(calls, [{ block: 'center', behavior: reduce ? 'instant' : 'smooth' }]);
+    cleanup();
+    assert.deepEqual(calls[1], { cancelled: 1 });
+  }
 });
 
 test('the completed result fades once without animating behind the progress overlay', async () => {
@@ -74,7 +87,8 @@ test('the completed result fades once without animating behind the progress over
   assert.match(step4, /isGeneratingImage \? '' : ' generated-image-reveal'/);
   assert.match(css, /@keyframes generated-image-reveal\s*\{\s*from \{ opacity: 0; \}\s*to \{ opacity: 1; \}/);
   assert.match(css, /animation: generated-image-reveal 450ms ease-out both/);
-  assert.match(css, /@media \(prefers-reduced-motion: reduce\)\s*\{\s*\.generated-image-reveal\s*\{\s*animation: none/);
+  const reducedMotionRules = css.match(/@media \(prefers-reduced-motion: reduce\)\s*\{([\s\S]*?)^\}/m)?.[1] || '';
+  assert.match(reducedMotionRules, /\.generated-image-reveal\s*\{\s*animation: none/);
 });
 
 test('STEP4 keeps its wall-clock timer visible in the sticky header through generation and QA', async () => {

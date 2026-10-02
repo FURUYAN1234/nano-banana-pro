@@ -124,7 +124,7 @@ test('quality upgrades require route-specific evidence without an unwanted singl
   assert.match(standards, /品質改善を完了と報告する前/);
 });
 
-test('four-panel and single-image outputs consume the same shared quality contract', () => {
+test('four-panel and single-image outputs retain common quality requirements with scoped panel-medium strokes', () => {
   const scenario = `
 [1コマ目: 起]
 状況: Hero が駅のロビーで地図を開く。
@@ -158,7 +158,14 @@ Hero「行こう。」`;
     assert.match(prompt, /reference-sheet pose is identity evidence, not a recurring action/i);
     assert.match(prompt, /BODY ACTING BASELINE:.*allow.*pointing.*reaching.*impact/i);
     assert.match(prompt, /one primary focal subject/i);
-    assert.match(prompt, /strongest G-pen-like contour|Focal G-pen: strongest pressure-tapered/i);
+    if (providerFamily === 'chatgpt') {
+      assert.match(prompt, /NORMAL\/unmarked[^\n]*pressure[^\n]*thick-to-hairline[^\n]*(?:contour|silhouette|outline|accents)/i);
+      assert.match(prompt, /Focal strokes follow panel medium/);
+      assert.match(prompt, /Legible faces in that medium/);
+      assert.doesNotMatch(prompt, /Focal G-pen:/);
+    } else {
+      assert.match(prompt, /strongest G-pen-like contour|Focal G-pen: strongest pressure-tapered/i);
+    }
     assert.match(prompt, /back of the head.*do not invent eyes, nose, or mouth|rear head.*no invented face/i);
   }
 

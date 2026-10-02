@@ -368,8 +368,8 @@ export const isLikelyPerson = (name, validCharacters = []) => {
 
 const ACOUSTIC_QUOTE_POST_RE = /^\s*(?:という[^\n「」]{0,12}音|っていう[^\n「」]{0,12}音|と[^\n「」]{0,20}(?:音(?:が|を|で|。|、|$)|異音|金属音|爆音|轟音|衝撃音))/;
 const SPOKEN_QUOTE_POST_RE = /^\s*(?:と|って)\s*(?:[^「」。！？!?\n]{0,32})?(?:言[いうっわえお]|いう|叫[びぶんべぼ]|呼[びぶんべぼ]|呟[きくいけこ]|つぶや[きくいけこ]|囁[きくいけこ]|ささや[きくいけこ]|読み(?:上げ|あげ)|発表(?:し|する)|告げ|答[えう]|返[しすせそ]|話[しすせそ]|語[りるっれろ]|宣言(?:し|する)|絶叫|嘆[きくいけこ]|漏ら[しす]|口に(?:し|する|出)|述べ|怒鳴[りるっれろ]|呻[きくいけこ]|うめ[きくいけこ]|唸[りるっれろ]|ツッコ[みむん]|つっこ[みむん]|突っ込[みむん]|問[いうえお]|尋ね)/;
-// 引用直後が印字・表示の説明なら、後続の動作や発話動詞へ探索を延ばさない。
-const SURFACE_QUOTE_POST_RE = /^\s*(?:(?:と|って)(?:だけ)?[^「」。！？!?\n、]{0,12}?(?:書[かきくいけ]|記[さしす載]|印字|印刷|刻[まみむ印]|表示|掲示|貼[らりるっ]|刺繍)|(?:という|っていう|の)?(?:文字|文言|表示|案内|内容|項目|メニュー|ラベル|札|名札|看板)(?:を|に|が|は|の|と|で|、|。|$))/;
+// 引用直後が印字・表示や文書の名称なら、「という」を発話とせず面文字を保持する。
+const SURFACE_QUOTE_POST_RE = /^\s*(?:(?:と|って)(?:だけ)?[^「」。！？!?\n、]{0,12}?(?:書[かきくいけ]|記[さしす載]|印字|印刷|刻[まみむ印]|表示|掲示|貼[らりるっ]|刺繍)|(?:という|っていう|の)?(?:(?:(?:記事|新聞|ニュース|資料|投稿|画面)の?)?(?:文字|文言|表示|案内|内容|項目|メニュー|ラベル|札|名札|看板|見出し|タイトル|題名|表題)|記事|新聞|ニュース|資料|投稿)(?:を|に|が|は|の|と|で|、|。|$))/;
 const REPORTED_SOURCE_QUOTE_POST_RE = /^\s*(?:という|っていう|との)[^「」。！？!?\n]{1,24}の(?:言葉|発言|コメント|声明|引用|記述)(?=で|を|に|が|は|、|。|$)/u;
 const STRUCTURAL_LINE_PREFIX_PATTERN = String.raw`(?:[-*+>・●▪◦]\s*)?[【\[（(]?\s*`;
 const STAGING_GAG_LABEL_PATTERN = String.raw`(?:演出(?:\s*[・･／/]?\s*ギャグ)?|ギャグ(?:\s*[・･／/]?\s*演出))`;
@@ -1855,7 +1855,11 @@ const extractRawEmotionTag = (panelText) => {
 };
 
 // [v2.31] パネルの感情スタイル指示を構築（マルチキャラ対応）
-export const buildEmotionBlock = (panelText, colorMode = 'color', { preserveReferenceStyle = false, seriousTone = false } = {}) => {
+export const OPENAI_COLOR_GEKIGA_STYLE = 'THIS PANEL ONLY: high-intensity GEKIGA faces, not anime faces with gritty backgrounds. Redraw visible faces with small realistic eyes/irises, heavy anatomical eyelids, pronounced nose bridges and carved cheek/jaw planes. Put large solid-black shadow planes and dense directional crosshatching ON faces/hands, bold ink beside sharp white cuts. FULL COLOR. Keep identity/age and scripted emotion/gaze/pose/Camera; no added anger, age or wrinkles. Same face means same identity, not retained anime proportions.';
+
+const OPENAI_MONOCHROME_GEKIGA_STYLE = 'THIS PANEL ONLY: redraw GEKIGA faces with small realistic eyes/irises, heavy eyelids, strong nose bridges; carved facial planes at brow/cheek/jaw. Large solid-black shadow planes and dense directional crosshatching ON faces/hands in shadow, sharp white cuts. Same identity, not anime proportions. Keep identity/age, scripted emotion/gaze/pose/Camera; no added anger, age or wrinkles. 白紙に墨一色。白肌の明部は墨線の間を無地白とし、灰色・網点の下地なし。光源に沿う局所影、褐色肌、衣服のトーンは残す。';
+
+export const buildEmotionBlock = (panelText, colorMode = 'color', { preserveReferenceStyle = false, seriousTone = false, providerFamily = '' } = {}) => {
   const emo = extractEmotionStyle(panelText);
   if (preserveReferenceStyle) {
     return `\nREFERENCE-SHEET PANEL ACTING ONLY: interpret [EMOTION: ${emo}] as expression, gaze, posture and timing only. Keep the same reference-sheet linework, rendering, facial construction and body proportions; no panel-specific art-style or proportion change.`;
@@ -1873,7 +1877,10 @@ export const buildEmotionBlock = (panelText, colorMode = 'color', { preserveRefe
       ? 'CHIBI: Explicit user proportions win; otherwise retain shortened body and enlarged head within the requested Camera/Action.'
       : EMOTION_STYLES[emo]?.proportionsMulti === undefined ? EMOTION_STYLES[emo]?.proportions : '';
     const proportionLock = proportions ? `\nPROPORTION OVERRIDE: ${proportions}` : '';
-    return `\nMONOCHROME PANEL STYLE LOCK: ${emo}; ${resolveMonochromeRenderIntent({ style: emo, preserveReferenceStyle, seriousTone }).lineRule} Preserve script/Camera/Action, cast, glasses and wardrobe tone assignments.${proportionLock}${gag}`;
+    const lineRule = providerFamily === 'chatgpt' && emo === 'GEKIGA'
+      ? OPENAI_MONOCHROME_GEKIGA_STYLE
+      : resolveMonochromeRenderIntent({ style: emo, preserveReferenceStyle, seriousTone }).lineRule;
+    return `\nMONOCHROME PANEL STYLE LOCK: ${emo}; ${lineRule} Preserve script/Camera/Action, cast, glasses and wardrobe tone assignments.${proportionLock}${gag}`;
   }
   const s = EMOTION_STYLES[emo];
   const styleLock = `PANEL STYLE LOCK: ${emo}; use the selected style recipe below; preserve identity and canonical wardrobe.`;
@@ -1910,7 +1917,8 @@ export const buildEmotionBlock = (panelText, colorMode = 'color', { preserveRefe
     return block + gagOverlay;
   }
 
-  let block = `\n${styleLock}\nStyle: ${s.style}`;
+  const style = providerFamily === 'chatgpt' && emo === 'GEKIGA' ? OPENAI_COLOR_GEKIGA_STYLE : s.style;
+  let block = `\n${styleLock}\nStyle: ${style}`;
   if (s.proportions) block += `\nPROPORTION OVERRIDE: ${s.proportions}`;
   if (s.vfx) block += `\nVFX: ${s.vfx}`;
   if (s.surfaceException) block += `\nSTYLE EXCEPTION: ${s.surfaceException}. Intentional style marks may model faces and skin; no unrelated noise.`;

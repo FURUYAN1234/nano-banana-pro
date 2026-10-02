@@ -242,7 +242,8 @@ test('soft Web target may be exceeded to retain critical content', () => {
   assert.match(prompt, /foreground hand/i);
   assert.match(prompt, /TITLE BAND:.*no.*(?:box|frame|border)/i);
   assert.match(prompt, /HAND \/ PROP KINEMATICS LOCK:.*anatomical LEFT and RIGHT/);
-  assert.match(prompt, /FOLD SHADOWS: crisp triangular overlap shadows; no geometric patterns\./);
+  assert.match(prompt, /FOLD PRIORITY: 2-4 triangular overlap\/pinch shadows in panel medium/);
+  assert.match(prompt, /hard cel edges NORMAL\/unmarked only; no geometric patterns/);
   assert.doesNotMatch(prompt, /NO quotes\/punctuation around title/);
 });
 

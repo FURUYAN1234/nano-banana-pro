@@ -191,7 +191,53 @@ body {
   animation: generated-image-reveal 450ms ease-out both;
 }
 
+.step4-image-display {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.step4-image-display[data-empty="true"] {
+  min-height: min(60vh, 480px);
+}
+
+.step4-processing-status {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 201;
+  max-width: calc(100vw - 24px);
+  box-sizing: border-box;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  padding: 6px 10px;
+  font-size: 16px;
+  line-height: 24px;
+  white-space: nowrap;
+  color: #bfdbfe;
+  background: rgba(23, 37, 84, 0.85);
+}
+
+.step4-processing-spinner {
+  flex-shrink: 0;
+  animation: step4-processing-spin 0.9s linear infinite;
+}
+
+@keyframes step4-processing-spin {
+  to { transform: rotate(360deg); }
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .step4-processing-spinner {
+    animation: none;
+  }
+
   .generated-image-reveal {
     animation: none;
   }

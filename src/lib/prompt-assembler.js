@@ -8,12 +8,16 @@ import {
   buildChatGPTMangaPrompt, 
   buildGeminiMangaPrompt,
   RICH_PANEL_COMPOSITION_LOCK_COMPACT,
-  ART_STYLE_DIFFERENCE_QA_LOCK
+  ART_STYLE_DIFFERENCE_QA_LOCK,
+  OPENAI_COLOR_STYLE_QA,
+  OPENAI_COLOR_FOCAL_READABILITY,
+  OPENAI_COLOR_FOLD_PRIORITY
 } from './prompts';
 import { 
   cleanCastList, 
   buildIdentityMatrix, 
   buildEmotionBlock, 
+  OPENAI_COLOR_GEKIGA_STYLE,
   extractPlacementRule, 
   extractCastLimitRule, 
   getCameraForChatGPT, 
@@ -194,6 +198,9 @@ const compactBudgetEyeLine = (line) => {
 
 const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt(prompt), preserveReferenceStyle = false, seriousTone = false, maxChars = OPENAI_IMAGE_PROMPT_MAX_CHARS, preservePanelRecipes = false, sourceBlocks = []) => {
   if (prompt.length <= maxChars) return prompt;
+  const panelColorMedia = !monochrome && !preserveReferenceStyle;
+  const focalReadability = monochrome ? MONOCHROME_FOCAL_READABILITY : panelColorMedia ? OPENAI_COLOR_FOCAL_READABILITY : FOCAL_READABILITY;
+  const artStyleQa = panelColorMedia ? OPENAI_COLOR_STYLE_QA : ART_STYLE_DIFFERENCE_QA_LOCK;
   // 圧縮対象は指示だけ。台詞内の制御語・引用符を置換しない。
   let tokenPrefix = '__DIALOGUE_LITERAL_';
   while (prompt.includes(tokenPrefix)) tokenPrefix += '_';
@@ -223,14 +230,14 @@ const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt
     .replace(/CONVERSATIONAL DEPTH BASE:[^\n]*/g, 'CONVERSATIONAL DEPTH BASE: Action gaze first; varied depth.')
     .replace(/EYE-LINE LOCK:[^\n]*/g, compactConversationEyeLine)
     .replace(/MANGA FINISH ASSIST:[^\n]*/g, 'FINISH: bubbles, anatomy.')
-    .replace(/\[ SHARED IMAGE QUALITY CONTRACT[\s\S]*?(?=\n- Clean finish:)/g, `${SHARED_IMAGE_QUALITY_CONTRACT_COMPACT}\n${monochrome ? MONOCHROME_FOCAL_READABILITY : FOCAL_READABILITY}\n${monochrome ? MONOCHROME_SKIN_LIGHTING : SKIN_LIGHTING}\n${BODY_ACTING_BASELINE_COMPACT}\n${EXPRESSIVE_DIRECTION}\n${PANEL_EDGE_CONTINUITY_LOCK_COMPACT}\n${FUNCTIONAL_SURFACE_ORIENTATION_LOCK_COMPACT}\n${OBJECT_GEOMETRY_LOCK_COMPACT}`)
+    .replace(/\[ SHARED IMAGE QUALITY CONTRACT[\s\S]*?(?=\n- Clean finish:)/g, `${SHARED_IMAGE_QUALITY_CONTRACT_COMPACT}\n${focalReadability}\n${monochrome ? MONOCHROME_SKIN_LIGHTING : SKIN_LIGHTING}\n${BODY_ACTING_BASELINE_COMPACT}\n${EXPRESSIVE_DIRECTION}\n${PANEL_EDGE_CONTINUITY_LOCK_COMPACT}\n${FUNCTIONAL_SURFACE_ORIENTATION_LOCK_COMPACT}\n${OBJECT_GEOMETRY_LOCK_COMPACT}`)
     .replace(/PANEL EDGE CONTINUITY LOCK:[^\n]*/g, PANEL_EDGE_CONTINUITY_LOCK_COMPACT)
     .replace(/FACIAL ACTING LOCK:[\s\S]*?(?=\n- CLEAN SURFACE PROTOCOL:)/g, FACIAL_ACTING_LOCK_COMPACT)
     .replace(/RICH PANEL COMPOSITION \/ CHARACTER CLARITY LOCK:[\s\S]*?(?=\n- CLOTHING FOLD SHADOW ASSIST:)/g, RICH_PANEL_COMPOSITION_LOCK_COMPACT)
     .replace(/CLEAN SURFACE PROTOCOL:[^\n]*/g, 'CLEAN: no noise except style exceptions.')
-    .replace(/CLOTHING FOLD SHADOW ASSIST:[^\n]*/g, 'FOLD SHADOWS: crisp triangular overlap shadows; no geometric patterns.')
+    .replace(/CLOTHING FOLD SHADOW ASSIST:[^\n]*/g, panelColorMedia ? 'FOLD SHADOWS: follow panel medium and FOLD PRIORITY.' : 'FOLD SHADOWS: crisp triangular overlap shadows; no geometric patterns.')
     .replace(/SAFE VISUAL CONTENT LOCK:[^\n]*/g, 'SAFE VISUAL: no gore/blood/organs/flesh/organic horror; ordinary architecture; preserve script/cast/dialogue/camera/layout.')
-    .replace(/PANEL-BY-PANEL CLOTHING FOLD PRIORITY:[^\n]*/g, 'FOLD PRIORITY: 2-4 dark triangular crease shadows.')
+    .replace(/PANEL-BY-PANEL CLOTHING FOLD PRIORITY:[^\n]*/g, panelColorMedia ? OPENAI_COLOR_FOLD_PRIORITY : 'FOLD PRIORITY: 2-4 dark triangular crease shadows.')
     .replace(/FINAL-PANEL ACTIVE STAGING LOCK:[^\n]*/g, 'FINAL-PANEL ACTIVE STAGING LOCK: no lineup; distinct actions; readable faces, silhouettes, hands.')
     .replace(
       /MANGA CAMERA \/ POSE VARIETY LOCK:[\s\S]*?(?=\n+(?:BODY ACTING \/ GESTURE VARIETY LOCK|HAND \/ PROP KINEMATICS LOCK|VISUAL STORY EVIDENCE LOCK|SETTING CONTINUITY \(LOW PRIORITY\)|FINAL-PANEL ACTIVE STAGING LOCK|ART \/ RENDERING QUALITY:))/g,
@@ -304,11 +311,11 @@ const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt
       RICH_PANEL_COMPOSITION_LOCK_COMPACT
     )
     .replace(/SAFE VISUAL:[^\n]*/g, 'SAFE VISUAL: no gore/blood/organs/flesh/organic horror; preserve script/cast/dialogue/camera/layout.')
-    .replace(/FOLD PRIORITY:[^\n]*/g, 'FOLD PRIORITY: 2-4 dark triangular crease shadows.')
+    .replace(/FOLD PRIORITY:[^\n]*/g, panelColorMedia ? OPENAI_COLOR_FOLD_PRIORITY : 'FOLD PRIORITY: 2-4 dark triangular crease shadows.')
     .replace(/CROSS-PANEL WARDROBE COLOR LOCK:[^\n]*/g, compactWardrobeLock)
-    .replace(/^ART-STYLE DIFFERENCE QA LOCK:[^\n]*/gm, ART_STYLE_DIFFERENCE_QA_LOCK)
+    .replace(/^ART-STYLE DIFFERENCE QA LOCK:[^\n]*/gm, artStyleQa)
     .replace(/^(PANEL STYLE LOCK: ([^;\n]+);[^\n]*\n)Style: [^\n]*/gm,
-      (block, lock, style) => !preservePanelRecipes && COMPACT_EMOTION_STYLES[style] ? `${lock}Style: ${COMPACT_EMOTION_STYLES[style]}` : block)
+      (block, lock, style) => !preservePanelRecipes && COMPACT_EMOTION_STYLES[style] ? `${lock}Style: ${panelColorMedia && style === 'GEKIGA' ? OPENAI_COLOR_GEKIGA_STYLE : COMPACT_EMOTION_STYLES[style]}` : block)
     .replace(/^PANEL STYLE LOCK: ([^;\n]+);[^\n]*/gm, 'PANEL STYLE LOCK: $1;')
     .replace(/^GAG INTENT OVERLAY:[^\n]*/gm, 'GAG INTENT OVERLAY: keep dramatic rendering; express humor through acting/timing, never flatten into plain chibi.')
     .replace(/^PROPORTION OVERRIDE: Explicit user proportions win\.[^\n]*/gm, 'PROPORTION OVERRIDE: Explicit user proportions win; otherwise camera/acting/expression before chibi degree.')
@@ -388,7 +395,7 @@ const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt
     .replace(/SHARED IMAGE QUALITY CONTRACT:[^\n]*/g, SHARED_IMAGE_QUALITY_CONTRACT_COMPACT)
     .replace(/MANGA CAMERA \/ POSE VARIETY LOCK:[^\n]*/g, 'MANGA CAMERA / POSE VARIETY LOCK: preserve scripted front/back/left/right, elevation, crop and lens; vary unspecified shots only. Overhead shows upper planes; low shows undersides/convergence; rear/side shows body planes. Telephoto compresses depth; wide expands near/far; fisheye edge distortion if requested. One projection for cast/setting; story-relevant focal form, no stock foot thrust. Eye-line is gaze, not camera height. Preserve Action/contact and scripted frontal/repeats.')
     .replace(/RICH PANEL COMPOSITION \/ CHARACTER CLARITY LOCK:[^\n]*/g, 'RICH PANEL COMPOSITION / CHARACTER CLARITY LOCK: layered foreground/midground/background, selective material detail and motivated key, fill and rim light with shadow/color depth; background lower contrast without making it blank or washed out. Keep setting or scripted abstraction; story evidence, acting faces, hands and props stay clear.')
-    .replace(/FOCAL READABILITY:[^\n]*/g, monochrome ? MONOCHROME_FOCAL_READABILITY : FOCAL_READABILITY)
+    .replace(/FOCAL READABILITY:[^\n]*/g, focalReadability)
     .replace(/EXPRESSIVE DIRECTION:[^\n]*/g, EXPRESSIVE_DIRECTION)
     // The global gesture and expressive contracts already retain motion,
     // support/contact and exact Camera/Action. Avoid repeating them at the cap.
@@ -431,11 +438,11 @@ const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt
     .replace(/^- Only Dialogue becomes white bubbles:[^\n]*/gm, '- Only Dialogue becomes white bubbles: vertical Japanese tategaki, verbatim; no paraphrase/synonyms/softening/addition/omission/horizontal text.')
     .replace(/^- Explicit scripted handwriting[^\n]*/gm, '- Scripted surface text exact; unscripted never becomes bubble/narration/metadata.')
     .replace(/^SCENE LETTERING:[^\n]*/gm, 'SCENE LETTERING: scripted object text exact, repeated only if scripted. Other surfaces: natural artwork/pictograms/colors/borders/material/layout; freely render context-appropriate readable/decorative lettering, short/long, any amount/density. Never suppress/simplify/blank/grey/blur/pixelate/mosaic/censor surfaces for unscripted text.')
-    .replace(/^ART-STYLE DIFFERENCE QA LOCK:[^\n]*/gm, ART_STYLE_DIFFERENCE_QA_LOCK)
+    .replace(/^ART-STYLE DIFFERENCE QA LOCK:[^\n]*/gm, artStyleQa)
     // The finish, fold-shadow and identity contracts above already cover these
     // short reminders when a caller explicitly requests a tighter hard budget.
     .replace(/^- CLEAN:[^\n]*/gm, '- CLEAN: no noise except style exceptions.')
-    .replace(/^FOLD PRIORITY:[^\n]*/gm, 'FOLD PRIORITY: 2-4 dark triangular crease shadows at overlap/pinch only.')
+    .replace(/^FOLD PRIORITY:[^\n]*/gm, panelColorMedia ? OPENAI_COLOR_FOLD_PRIORITY : 'FOLD PRIORITY: 2-4 dark triangular crease shadows at overlap/pinch only.')
     .replace(/^CHARACTER QA:[^\n]*/gm, monochrome ? 'CHARACTER QA: identity/wardrobe/ink/tone.' : 'CHARACTER QA: preserve identity/wardrobe.')
     .replace(/\. Keep faces\/skin clean; do not add unrelated noise\./g, '. Faces/skin clean; no unrelated noise.')
     .replace(/\. Intentional style marks may model faces and skin; no unrelated noise\./g, '. Style marks on faces/skin allowed.')
@@ -764,7 +771,7 @@ export const buildMangaPromptArtifact = ({
 ${source(`Camera: ${camera}`)}
 ${getEndingSafePanelShotExecution(camera, seriousTone)}
 ${isMonochrome ? source(buildMonochromePanelInkLock(pt, identityMatrix)) : ''}
-${source(buildEmotionBlock(pt, colorMode, { preserveReferenceStyle, seriousTone }))}
+${source(buildEmotionBlock(pt, colorMode, { preserveReferenceStyle, seriousTone, providerFamily: 'chatgpt' }))}
 ${extractPlacementRule(pt, castList, { compact: true, colorMode }).replace(/\\\\[/g, '').replace(/\\\\]/g, '')}
 ${extractCastLimitRule(pt, castList, { compact: true }).replace(/\\\\[/g, '').replace(/\\\\]/g, '')}
 COMPOSITION STAGING: ${getPanelCompositionAssist(pt, num, { compact: true })}

@@ -14,6 +14,32 @@ let buildIdentityMatrix;
 let extractActingIdentityNotes;
 let getCameraForPanel;
 
+test('quoted document headings remain surface text instead of borrowing a nearby speaker', () => {
+  const cast = '- Character [甲]: adult\n- Character [乙]: adult';
+  for (const description of ['という記事見出し', 'という記事の見出し', 'っていう新聞のタイトル', 'という見出し', 'という表題', 'という記事']) {
+    const source = `状況: 甲は端末へ身を乗り出す。画面には「開催日を変更します」${description}が読める。乙は資料を見返す。\n甲「確認しよう。」\n乙「日程を直そう。」`;
+    assert.deepEqual(extractDialogueOnly(source, cast, { asEntries: true }), [
+      { speaker: '甲', text: '確認しよう。' }, { speaker: '乙', text: '日程を直そう。' }
+    ], description);
+    assert.ok(extractActionOnly(source, cast).includes(`「開催日を変更します」${description}が読める。`), description);
+  }
+});
+
+test('actual spoken headings and plain speech remain dialogue', () => {
+  const cast = '- Character [甲]: adult';
+  for (const source of [
+    '状況: 甲は記事の見出しを「開催日を変更します」と読み上げる。',
+    '状況: 甲は「開催日を変更します」という。',
+    '状況: 甲は「開催日を変更します」と言う。',
+    '甲「開催日を変更しますという記事見出しが読める。」'
+  ]) {
+    const entries = extractDialogueOnly(source, cast, { asEntries: true });
+    assert.equal(entries.length, 1, source);
+    assert.equal(entries[0].speaker, '甲');
+    assert.ok(entries[0].text.startsWith('開催日を変更します'));
+  }
+});
+
 test('action preserves a quoted label list and a device state without adding bubbles', () => {
   const cast = '- Character [甲]: adult\n- Character [乙]: adult';
   const labels = ['年内に整備計画', '地域ごとの重点分野', '翌年度の投資枠'];

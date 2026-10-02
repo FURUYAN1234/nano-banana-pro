@@ -22,7 +22,8 @@ test('scenario invalidation releases STEP3 and an old review cannot unlock or ov
     OPENAI_SCENARIO_MODEL_OPTIONS:[],scenarioUsedModelRef:{current:null},getEndingModePolicy:()=>({endingTone:'gag'}),
     reviewComedyPrompt:input=>new Promise(resolve=>reviews.push({resolve,signal:input.signal})),callAI:()=>{},isDocumentaryEnding:()=>false,
     assertPromptEndingModeConsistency:()=>{},assertPrintableDialogue:()=>{},showStatus:()=>{},console,
-    qualityRetryAbortRef:{current:false},setGeneratedImage:()=>{},setIsGeneratingImage:()=>{},setIsFixingPolicy:()=>{},setPolicyAutoRetrying:()=>{}
+    qualityRetryAbortRef:{current:false},setGeneratedImage:()=>{},setIsGeneratingImage:()=>{},setIsFixingPolicy:()=>{},setPolicyAutoRetrying:()=>{},
+    setIsSearching:()=>{},setIsEnhancing:()=>{},setIs360CameraWorking:()=>{}
   };
   const resetStart = workflow.includes('const invalidatePromptAssembly =') ? 'const invalidatePromptAssembly =' : 'const invalidateScenarioOutput =';
   const invalidation = workflow.slice(workflow.indexOf(resetStart), workflow.indexOf('const setScenarioFromUser ='));
@@ -76,4 +77,43 @@ test('prompt review updates one elapsed-time line and ignores superseded runs', 
   tick();
   assert.equal(thought, previous);
   assert.match(assembly, /finally\s*\{\s*clearInterval\(thinkTimer\)/);
+});
+
+test('obsolete STEP4 timer and API callbacks leave the current generation log intact', () => {
+  const generation = workflow.slice(workflow.indexOf('const generateImageOnce ='), workflow.indexOf('const runPolicyAutoRetries ='));
+  const timer = generation.slice(generation.indexOf('const generationStartedAt'), generation.indexOf('// Artificial delay'));
+  const callback = generation.slice(generation.indexOf('const statCallback ='), generation.indexOf('const geminiReferenceImages ='));
+  let now = 1000, tick;
+  let log = ['current log'];
+  let deferred = false;
+  const updates = [];
+  const epoch = { current: 1 };
+  const context = {
+    Date: { now: () => now }, generationOptions: {}, qualityRunEpoch: 1, scenarioRunEpochRef: epoch,
+    setInterval: fn => { tick = fn; return 1; },
+    setGenLog: update => { if (deferred) updates.push(update); else log = update(log); },
+  };
+  vm.createContext(context);
+  vm.runInContext(timer + callback + 'globalThis.progress = statCallback;', context);
+  now = 3000;
+  tick();
+  context.progress('active API progress');
+  assert.equal(log[1], '[WAIT] ⏳ 画像生成中… 合計2秒経過');
+  assert.equal(log[2], 'active API progress');
+
+  // React may apply a functional update after the scenario is superseded.
+  deferred = true;
+  tick();
+  context.progress('queued obsolete progress');
+  epoch.current = 2;
+  log = ['new generation'];
+  const currentLog = log;
+  for (const update of updates.splice(0)) log = update(log);
+  assert.equal(log, currentLog);
+
+  deferred = false;
+  now = 99000;
+  tick();
+  context.progress('late obsolete progress');
+  assert.equal(log, currentLog);
 });

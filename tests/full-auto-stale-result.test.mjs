@@ -7,11 +7,15 @@ const source = await readFile(
   'utf8',
 );
 
+// Callback execution, late success/failure, and successor ownership are covered
+// by workflow-busy-state.test.mjs. These contracts check the UI/STEP2 callers
+// remain wired to that shared invalidation boundary.
+
 test('manual scenario takeover invalidates an in-flight full-auto scenario result', () => {
   assert.match(source, /const scenarioRunEpochRef = useRef\(0\)/);
   assert.match(
     source,
-    /const setScenarioFromUser = \(nextScenario\) => \{[\s\S]*?scenarioRunEpochRef\.current \+= 1;[\s\S]*?fullAutoAbortRef\.current = true;[\s\S]*?setScenario\(nextScenario\);[\s\S]*?\};/,
+    /const setScenarioFromUser = \(nextScenario\) => \{[\s\S]*?invalidateScenarioRun\(\);[\s\S]*?fullAutoAbortRef\.current = true;[\s\S]*?setScenario\(nextScenario\);[\s\S]*?\};/,
   );
   assert.match(source, /setScenario: setScenarioFromUser/);
 });
@@ -19,13 +23,13 @@ test('manual scenario takeover invalidates an in-flight full-auto scenario resul
 test('STEP2 applies an async result only while its captured run epoch is current', () => {
   assert.match(
     source,
-    /const scenarioRunEpoch = \+\+scenarioRunEpochRef\.current;[\s\S]*?const result = await generateScenario\([\s\S]*?if \(scenarioRunEpoch !== scenarioRunEpochRef\.current\) \{[\s\S]*?return null;[\s\S]*?\}[\s\S]*?setScenario\(finalScenarioText\);/,
+    /const scenarioRunEpoch = invalidateScenarioRun\(\);[\s\S]*?const result = await generateScenario\([\s\S]*?if \(scenarioRunEpoch !== scenarioRunEpochRef\.current\) \{[\s\S]*?return null;[\s\S]*?\}[\s\S]*?setScenario\(finalScenarioText\);/,
   );
 });
 
 test('stopping full-auto invalidates the current scenario run before clearing loading state', () => {
   assert.match(
     source,
-    /if \(isFullAutoMode\) \{[\s\S]*?fullAutoAbortRef\.current = true;[\s\S]*?scenarioRunEpochRef\.current \+= 1;[\s\S]*?setIsSearching\(false\);/,
+    /if \(isFullAutoMode\) \{[\s\S]*?fullAutoAbortRef\.current = true;[\s\S]*?invalidateScenarioRun\(\);[\s\S]*?setIsSearching\(false\);/,
   );
 });

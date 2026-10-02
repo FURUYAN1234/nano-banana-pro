@@ -4,14 +4,16 @@ import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import test from 'node:test';
 import { runInNewContext } from 'node:vm';
 import { inflateRawSync } from 'node:zlib';
+import { spawnSync } from 'node:child_process';
+import { pathToFileURL } from 'node:url';
 
 const step4PanelSource = readFileSync(new URL('../src/components/Step4Panel.jsx', import.meta.url), 'utf8');
 const standardH3PromptSource = readFileSync(new URL('../src/lib/minimax-h3-prompt.js', import.meta.url), 'utf8');
 const readmeSource = readFileSync(new URL('../README.md', import.meta.url), 'utf8');
 const packageJson = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
 const releaseContract = JSON.parse(readFileSync(new URL('../../scripts/release-apps.json', import.meta.url), 'utf8'));
-const workflowUrl = new URL('../public/workflows/FourPanel_NonLM_4step_20260928-173220.json', import.meta.url);
-const customNodeZipUrl = new URL('../.release-assets/ComfyUI_H3_FourPanel_NonLM_20260928-173220.zip', import.meta.url);
+const workflowUrl = process.env.H3_WORKFLOW_JSON ? pathToFileURL(process.env.H3_WORKFLOW_JSON) : new URL('../public/workflows/FourPanel_NonLM_4step_20261002-071924.json', import.meta.url);
+const customNodeZipUrl = process.env.H3_CUSTOM_NODE_ZIP ? pathToFileURL(process.env.H3_CUSTOM_NODE_ZIP) : new URL('../.release-assets/ComfyUI_H3_FourPanel_NonLM_20261002-071924_authfix1.zip', import.meta.url);
 const sourceAttributesUrl = new URL('../.gitattributes', import.meta.url);
 const publishedAttributesUrl = new URL('../public/.gitattributes', import.meta.url);
 const publicWorkflowDirectoryUrl = new URL('../public/workflows/', import.meta.url);
@@ -46,6 +48,81 @@ const readZipFilesFromBuffer = (archive) => {
   return files;
 };
 
+test('distributed authentication accepts every global and individual model while rejecting unknown selections', () => {
+  const archive = readZipFilesFromBuffer(readFileSync(customNodeZipUrl));
+  const source = (suffix) => [...archive].find(([name]) => name.endsWith(suffix))?.[1].toString('utf8');
+  const settings = source('/ComfyUI-NanoBanana-H3/model_settings.py');
+  const server = source('/ComfyUI-NanoBanana-H3/__init__.py');
+  const browser = source('/web/nanobanana_h3_dialogue_contract_v1.js');
+  assert.ok(settings && server && browser, 'the distributed authentication contract must be complete');
+  const python = (script, payload) => {
+    const result = spawnSync('python', ['-B', '-c', script], {
+      input: JSON.stringify(payload), encoding: 'utf8', env: { ...process.env, PYTHONIOENCODING: 'utf-8' },
+    });
+    assert.equal(result.status, 0, result.stderr || result.stdout);
+    return JSON.parse(result.stdout);
+  };
+  const presets = python(`import ast,json,sys
+t=ast.parse(json.load(sys.stdin)['settings'])
+print(json.dumps(next(ast.literal_eval(n.value) for n in t.body if isinstance(n,ast.Assign) and any(isinstance(x,ast.Name) and x.id=='PRESETS' for x in n.targets))))`, { settings });
+  let preset;
+  const context = { app: { registerExtension() {}, graph: {
+    links: { 1: { origin_id: 7 } }, getNodeById() { return { widgets: [{ name: 'preset', value: preset }] }; },
+  } }, api: {} };
+  runInNewContext(browser.replace(/^import .*;\s*$/gm, ''), context);
+  const cases = [];
+  for (const [label, model] of Object.entries(presets)) {
+    if (model == null) continue;
+    preset = label;
+    for (const mode of ['individual', 'global']) {
+      const node = { widgets: [{ name: 'text_model', value: mode === 'global' ? '一括設定に従う' : model }], inputs: [{ name: 'api_models', link: 1 }] };
+      cases.push({ mode, expected: model, selection: context.selectedVerificationModel(node) });
+    }
+  }
+  assert.equal(cases.length, 48, 'all 24 advertised models need both authentication paths');
+  preset = 'unknown-preset';
+  assert.equal(context.selectedVerificationModel({ widgets: [], inputs: [{ name: 'api_models', link: 1 }] }), 'unknown-preset', 'unknown global choices must reach the rejecting server boundary, never silently become the legacy model');
+  const result = python(`import ast,asyncio,json,re,sys,types
+p=json.load(sys.stdin); settings={};exec(compile(p['settings'],'model_settings.py','exec'),settings)
+t=ast.parse(p['server']); names={'_sanitize_api_key','_credential','_set_session_credential','_session_credential_configured','save_credential','credential_status'}
+functions=[n for n in t.body if isinstance(n,(ast.FunctionDef,ast.AsyncFunctionDef)) and n.name in names]
+for n in functions:n.decorator_list=[]
+program=compile(ast.fix_missing_locations(ast.Module(body=functions,type_ignores=[])),'distributed_credential.py','exec')
+token='synthetic-unit-test-placeholder-only'; calls=[]
+class Web:
+ @staticmethod
+ def json_response(body,status=200):return {'status':status,'body':body}
+class Request:
+ def __init__(self,body=None,query=None):self.body=body;self.query=query or {}
+ async def json(self):return self.body
+def validate(provider,key,model):calls.append((provider,model))
+def fresh():
+ n={'re':re,'asyncio':asyncio,'web':Web,'model_settings':types.SimpleNamespace(**settings),'_SESSION_CREDENTIALS':{},'_LAST_CREDENTIAL_PROVIDER':None,'_UNIFIED_SLOT':'workflow_api','_PROVIDERS':('OpenAI API','Google Gemini API'),'_SLOT_RE':re.compile(r'^[A-Za-z0-9_-]+$'),'_validate_credential':validate};exec(program,n);return n
+def invoke(selection,provider='OpenAI API'):
+ n=fresh(); before=len(calls);result=asyncio.run(n['save_credential'](Request({'provider':provider,'slot':'workflow_api','api_key':token,'model':selection})))
+ assert token not in json.dumps(result),'response disclosed a synthetic credential'
+ return n,result,calls[before:]
+for c in p['cases']:
+ n,r,used=invoke(c['selection']);assert r['status']==200,(c['mode'],c['expected'],r['status'])
+ assert used==[('OpenAI API',c['expected'])],(c['mode'],c['expected'],'wrong verification model')
+ assert r['body']['verification_model']==c['expected']
+ assert n['_credential']('OpenAI API')==token
+for selection in [None,'現行互換']:
+ n,r,used=invoke(selection);assert r['status']==200 and used==[('OpenAI API',None)]
+for selection in ['unknown-model','unknown-preset','一括設定に従う',123,{},[]]:
+ n,r,used=invoke(selection);assert r['status']==400 and not used and not n['_SESSION_CREDENTIALS']
+n,r,used=invoke('gpt-6-luna','Google Gemini API');assert r['status']==400 and not used
+n,r,used=invoke(None,'Google Gemini API');assert r['status']==200 and used==[('Google Gemini API',None)]
+n=fresh();n['_set_session_credential']('OpenAI API','workflow_api',token)
+assert n['_session_credential_configured']('OpenAI API','workflow_api')
+assert not n['_session_credential_configured']('Google Gemini API','workflow_api')
+assert not fresh()['_session_credential_configured']('OpenAI API','workflow_api')
+r=asyncio.run(n['credential_status'](Request(query={'provider':'OpenAI API','slot':'workflow_api'})))
+assert r['body']=={'configured':True,'provider':'OpenAI API','slot':'workflow_api','storage':'process_memory'} and token not in json.dumps(r)
+print(json.dumps({'model_paths':len(p['cases']),'negative_cases':7,'memory_and_status':True}))`, { settings, server, cases });
+  assert.deepEqual(result, { model_paths: 48, negative_cases: 7, memory_and_status: true });
+});
+
 test('STEP4 provides the generic standard-H3 prompt and separate current Fused4 SLA downloads', () => {
   assert.match(step4PanelSource, /標準H3・汎用プロンプトをコピー[\s\S]*同梱カスタムノード3点・導入セットをダウンロード[\s\S]*Fused4step・SLA ワークフローをダウンロード/);
   assert.match(step4PanelSource, /COMFYUI_WORKFLOW_DOWNLOAD_URL/);
@@ -53,13 +130,14 @@ test('STEP4 provides the generic standard-H3 prompt and separate current Fused4 
   assert.match(step4PanelSource, /href=\{COMFYUI_CUSTOM_NODE_DOWNLOAD_URL\}[\s\S]*?download=\{COMFYUI_CUSTOM_NODE_FILENAME\}/);
   assert.match(step4PanelSource, /href=\{COMFYUI_WORKFLOW_DOWNLOAD_URL\}[\s\S]*?download=\{COMFYUI_WORKFLOW_FILENAME\}/);
   assert.notEqual(workflowUrl.pathname, customNodeZipUrl.pathname, 'the two downloads must target different files');
-  assert.match(step4PanelSource, /FourPanel_NonLM_4step_20260928-173220\.json/);
-  assert.match(step4PanelSource, /ComfyUI_H3_FourPanel_NonLM_20260928-173220\.zip/);
+  assert.match(step4PanelSource, /FourPanel_NonLM_4step_20261002-071924\.json/);
+  assert.match(step4PanelSource, /ComfyUI_H3_FourPanel_NonLM_20261002-071924_authfix1\.zip/);
   assert.match(step4PanelSource, /github\.com\/FURUYAN1234\/nano-banana-pro\/releases\/download\/\$\{SYSTEM_VERSION\}/);
   assert.match(step4PanelSource, /ComfyUI-NanoBanana-H3.*ComfyUI-MiniMax-H3-Long-Video.*ComfyUI-Spectrum-MiniMax-H3/s);
   assert.match(step4PanelSource, /軽く要約＋必要な台詞だけ延長.*基本5秒.*最大15秒.*台詞がない場合だけ既定30秒/s);
-  assert.match(step4PanelSource, /Fused 4ステップ.*音声再精錬.*4ステップ.*denoise 1\.0.*ACE-Step.*全尺/s);
-  assert.match(step4PanelSource, /中間配布.*統合グラフ全体は未実走.*quality_status: needs_review/s);
+  assert.match(step4PanelSource, /Fused 4ステップ.*音声再精錬.*4ステップ.*denoise 1\.0.*独立したBGM作曲・合成ノードは含みません/s);
+  assert.match(step4PanelSource, /28ノード.*quality_status: needs_review/s);
+  assert.match(step4PanelSource, /一括設定または個別設定.*接続確認にも選択中のモデル/s);
   assert.match(step4PanelSource, /H3 SLA Attention.*ComfyUI-PlagueKind-Nodes/s);
   assert.match(step4PanelSource, /ComfyUI-H3-AudioRefine.*Triton|Triton.*ComfyUI-H3-AudioRefine/s);
   assert.match(step4PanelSource, /https:\/\/github\.com\/Adudeguyman\/ComfyUI-H3-AudioRefine/);
@@ -100,22 +178,24 @@ test('standard H3 clipboard prompt is generic and carries transferable four-pane
 test('supplied current Fused4 SLA workflow bytes and graph are preserved', () => {
   assert.equal(existsSync(workflowUrl), true, 'workflow JSON must be distributed from public/workflows');
   const bytes = readFileSync(workflowUrl);
-  assert.equal(hashBytes(bytes), '167983b8026da29262e11b4ef61f36e4dbec97b3a6e643fabec1ea43db005452');
+  assert.equal(hashBytes(bytes), 'cad9cb67c7138deb14588f567b8dda5f06c0862ea6b787a1cd12faa55dba45d0');
   assert.doesNotMatch(readFileSync(sourceAttributesUrl, 'utf8'), /public\/downloads\/.*\.zip/);
-  assert.match(readFileSync(publishedAttributesUrl, 'utf8'), /workflows\/FourPanel_NonLM_4step_20260928-173220\.json -text/);
+  assert.match(readFileSync(publishedAttributesUrl, 'utf8'), /workflows\/FourPanel_NonLM_4step_20261002-071924\.json -text/);
   assert.doesNotMatch(readFileSync(publishedAttributesUrl, 'utf8'), /downloads\/.*\.zip/);
   assert.match(packageJson.scripts.deploy, /gh-pages -d dist --dotfiles/);
   const workflow = JSON.parse(bytes.toString('utf8'));
-  assert.equal(workflow.nodes.length, 27);
+  assert.equal(workflow.nodes.length, 28);
   assert.equal(workflow.links.length, 36);
-  for (const type of ['MiniMaxH3CloudPrompt', 'MiniMaxH3LongReferenceSampler', 'TimestampedSaveVideo', 'NanoBananaH3Transform', 'JapaneseDialoguePronunciationReview', 'DeterministicTitleWatermarkOverlay', 'DeterministicEndCreditOverlay', 'H3SLAAttention', 'H3SeparateMusicPlan', 'H3ContinuousBGM']) assert.ok(workflow.nodes.some((node) => node.type === type), `${type} must be present`);
+  for (const type of ['MiniMaxH3CloudPrompt', 'MiniMaxH3LongReferenceSampler', 'TimestampedSaveVideo', 'NanoBananaH3Transform', 'JapaneseDialoguePronunciationReview', 'DeterministicTitleWatermarkOverlay', 'DeterministicEndCreditOverlay', 'H3SLAAttention', 'H3APIModelSettings']) assert.ok(workflow.nodes.some((node) => node.type === type), `${type} must be present`);
+  assert.equal(workflow.nodes.some(node => ['H3SeparateMusicPlan', 'H3ContinuousBGM'].includes(node.type)), false, 'the supplied graph has no independent BGM composition/mixing path');
+  assert.deepEqual(workflow.nodes.find(node => node.type === 'H3APIModelSettings').widgets_values, ['GPT-6 Luna', '無効']);
   const text = bytes.toString('utf8');
   assert.match(text, /5秒/);
   assert.match(text, /軽く要約＋必要な台詞だけ延長/);
   assert.match(text, /30秒/);
-  assert.match(text, /全尺のインストBGM/);
   assert.match(text, /latest_saved_video_url/);
-  assert.match(text, /ACE-Step/);
+  assert.equal(workflow.extra.h3_generated_bgm.separate_composer_connected, false);
+  assert.equal(workflow.extra.production_approval.all_content_verified, false, 'content warnings must remain visible');
   const longVideoNode = workflow.nodes.find((node) => node.type === 'MiniMaxH3LongReferenceSampler');
   assert.equal(longVideoNode.widgets_values[13], 4, 'the supplied sampler must preserve four generation steps');
   assert.equal(longVideoNode.widgets_values[14], 1, 'the supplied sampler must preserve full denoise');
@@ -126,13 +206,13 @@ test('supplied current Fused4 SLA workflow bytes and graph are preserved', () =>
 test('release asset preserves the supplied timestamped distribution manifest, licensing, verifier, and no credential artifact', () => {
   assert.equal(existsSync(customNodeZipUrl), true, 'custom-node bundle must be staged outside the Git source tree');
   const bundleBytes = readFileSync(customNodeZipUrl);
-  assert.equal(hashBytes(bundleBytes), '046b655cb0536defaffb48055f0dede324b6d818e2916510bd4acea577295b5f');
+  assert.equal(hashBytes(bundleBytes), '341487084ffc48f14569609c36557d77b4770a052b70f2323488dc0604e6d7f0');
   const releaseAsset = releaseContract.apps.find(app => app.id === 'nano-banana-pro')?.releaseAssets?.[0];
-  assert.equal(releaseAsset?.path, '.release-assets/ComfyUI_H3_FourPanel_NonLM_20260928-173220.zip');
-  assert.equal(releaseAsset?.name, 'ComfyUI_H3_FourPanel_NonLM_20260928-173220.zip');
-  const files = new Map([...readZipFilesFromBuffer(bundleBytes)].map(([name, content]) => [name.replace(/^ComfyUI_H3_FourPanel_NonLM_20260928-173220\//, ''), content]));
+  assert.equal(releaseAsset?.path, '.release-assets/ComfyUI_H3_FourPanel_NonLM_20261002-071924_authfix1.zip');
+  assert.equal(releaseAsset?.name, 'ComfyUI_H3_FourPanel_NonLM_20261002-071924_authfix1.zip');
+  const files = new Map([...readZipFilesFromBuffer(bundleBytes)].map(([name, content]) => [name.replace(/^ComfyUI_H3_FourPanel_NonLM_20261002-071924\//, ''), content]));
   const expected = [
-    'VERSION.json', 'models.json', 'README.md', 'VALIDATION.md', 'verify_package.py', 'SHA256SUMS.json', 'LICENSES_AND_NOTICES.md', 'workflows/FourPanel_NonLM_4step_20260928-173220.json',
+    'VERSION.json', 'models.json', 'README.md', 'VALIDATION.md', 'verify_package.py', 'SHA256SUMS.json', 'LICENSES_AND_NOTICES.md', 'workflows/FourPanel_NonLM_4step_20261002-071924.json',
     'custom_nodes/ComfyUI-NanoBanana-H3/LICENSE', 'custom_nodes/ComfyUI-NanoBanana-H3/__init__.py', 'custom_nodes/ComfyUI-NanoBanana-H3/web/nanobanana_h3_dialogue_contract_v1.js',
     'custom_nodes/ComfyUI-MiniMax-H3-Long-Video/LICENSE', 'custom_nodes/ComfyUI-MiniMax-H3-Long-Video/minimax_h3_long_video/nodes.py',
     'custom_nodes/ComfyUI-Spectrum-MiniMax-H3/LICENSE', 'custom_nodes/ComfyUI-Spectrum-MiniMax-H3/comfyui_spectrum_h3/nodes.py',
@@ -141,17 +221,23 @@ test('release asset preserves the supplied timestamped distribution manifest, li
   for (const name of ['custom_nodes/ComfyUI-NanoBanana-H3/speaker_audit.py', 'licenses/MINIMAX_H3_LICENSE.txt', 'licenses/NOTICE.txt']) assert.ok(files.has(name), `${name} must be present`);
   assert.match(step4PanelSource, /採用済みでも全検査合格とは限りません/);
   assert.match(readmeSource, /採用済みでも全検査合格とは限りません/);
-  assert.equal(hashBytes(files.get('workflows/FourPanel_NonLM_4step_20260928-173220.json')), '167983b8026da29262e11b4ef61f36e4dbec97b3a6e643fabec1ea43db005452');
+  assert.equal(hashBytes(files.get('workflows/FourPanel_NonLM_4step_20261002-071924.json')), 'cad9cb67c7138deb14588f567b8dda5f06c0862ea6b787a1cd12faa55dba45d0');
   const license = files.get('custom_nodes/ComfyUI-NanoBanana-H3/LICENSE').toString('utf8');
   assert.match(license, /MIT License/);
   assert.equal(files.has('custom_nodes/ComfyUI-H3-AudioRefine/LICENSE'), false, 'AudioRefine is a separately required dependency');
   assert.equal(files.has('custom_nodes/ComfyUI-PlagueKind-Nodes/LICENSE'), false, 'PlagueKind is a separately required dependency');
   const bundleReadme = files.get('README.md').toString('utf8');
   assert.match(bundleReadme, /three custom-node packages|カスタムノード3種/);
-  assert.match(bundleReadme, /not stored in this ZIP|キーはZIPに含みません/);
-  assert.match(files.get('VERSION.json').toString('utf8'), /"status": "interim"/);
-  assert.match(files.get('VALIDATION.md').toString('utf8'), /end-to-end GUI run pending/);
-  assert.equal(JSON.parse(files.get('models.json').toString('utf8')).length, 5);
+  assert.match(bundleReadme, /No model weights, keys.*are bundled/s);
+  assert.match(bundleReadme, /ComfyUI-H3-AudioRefine.*H3AudioRefineSampler/s);
+  const version = JSON.parse(files.get('VERSION.json').toString('utf8'));
+  assert.equal(version.status, 'tested-output-with-content-warnings');
+  assert.equal(version.quality_status, 'needs_review');
+  assert.equal(version.distribution_revision, 'authfix1');
+  assert.equal(version.base_archive_sha256, '80bfbf8569f0875e4d14d804cf090e3c805975f7dc0a53a4d7a5ed7a712a8b82');
+  assert.match(files.get('VALIDATION.md').toString('utf8'), /do not call a real API or run ComfyUI\/GPU generation/);
+  assert.match(files.get('VALIDATION.md').toString('utf8'), /Pending: segment 6 speaker\/pronunciation warnings/);
+  assert.equal(JSON.parse(files.get('models.json').toString('utf8')).length, 4);
   const serverCode = files.get('custom_nodes/ComfyUI-NanoBanana-H3/__init__.py').toString('utf8');
   const browserCode = files.get('custom_nodes/ComfyUI-NanoBanana-H3/web/nanobanana_h3_dialogue_contract_v1.js').toString('utf8');
   assert.match(serverCode, /_SESSION_CREDENTIALS:\s*dict\[str, dict\[str, str\]\] = \{\}/);
@@ -176,7 +262,7 @@ test('release asset preserves the supplied timestamped distribution manifest, li
 });
 
 test('README matches the current H3 API distribution and workflow does not describe credential persistence', () => {
-  assert.match(readmeSource, /FourPanel_NonLM_4step_20260928-173220/);
+  assert.match(readmeSource, /FourPanel_NonLM_4step_20261002-071924/);
   assert.match(readmeSource, /Fused4step・SLA 配布ワークフロー/);
   assert.match(readmeSource, /不足モデル.*ダウンロード/);
   assert.match(readmeSource, /3フォルダ/);
@@ -184,7 +270,7 @@ test('README matches the current H3 API distribution and workflow does not descr
   assert.match(readmeSource, /https:\/\/github\.com\/Adudeguyman\/ComfyUI-H3-AudioRefine/);
   assert.match(readmeSource, /区間.*生成.*検査.*最大5候補/s);
   assert.match(readmeSource, /ComfyUI-NanoBanana-H3.*MIT.*ComfyUI-MiniMax-H3-Long-Video.*GPL-3\.0-only.*ComfyUI-Spectrum-MiniMax-H3.*GPL-3\.0-or-later/s);
-  assert.ok(readmeSource.includes(`/releases/download/v${packageJson.version}/ComfyUI_H3_FourPanel_NonLM_20260928-173220.zip`));
+  assert.ok(readmeSource.includes(`/releases/download/v${packageJson.version}/ComfyUI_H3_FourPanel_NonLM_20261002-071924_authfix1.zip`));
   assert.match(readmeSource, /ComfyUIサーバーのプロセスメモリ/);
   assert.match(readmeSource, /再起動.*消去/);
   assert.doesNotMatch(readmeSource, /### Unreleased \/ 未公開（2026-09-28）/);
@@ -243,6 +329,24 @@ test('distributed credential gate defers execution, cancels without queuing, and
   });
   extension.setup();
   assert.equal(overlay, undefined, 'loading the workflow must not open a credential dialog');
+
+  class WorkflowNode {
+    constructor() { this.type = 'NanoBananaH3Transform'; this.widgets = [{ name: 'provider', value: 'OpenAI API' }]; }
+    setDirtyCanvas() {}
+    addWidget(type, name, value) { const widget = { type, name, value }; this.widgets.push(widget); return widget; }
+  }
+  extension.beforeRegisterNodeDef(WorkflowNode, { name: 'NanoBananaH3Transform' });
+  const switchedNode = new WorkflowNode();
+  switchedNode.onNodeCreated();
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(overlay, undefined, 'node creation only checks registration state');
+  switchedNode.widgets[0].value = 'Google Gemini API';
+  switchedNode.onWidgetChanged('provider', 'Google Gemini API', 'OpenAI API');
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(overlay, undefined, 'provider changes must not request a key until Execute');
+  switchedNode.onConfigure();
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(overlay, undefined, 'workflow configuration must not open the dialog');
 
   const cancelled = app.queuePrompt('cancelled');
   await new Promise(resolve => setImmediate(resolve));

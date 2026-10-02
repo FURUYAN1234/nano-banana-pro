@@ -5,7 +5,7 @@ import { FINAL_PANEL_ACTIVE_STAGING_SCENARIO_CONTRACT, SCENARIO_EXPRESSIVE_STAGI
 import { buildScenarioEnhancementPrompt } from './scenario-enhancement';
 import { buildManualTopicExclusionPrompt } from './manual-topic-exclusions';
 import { buildSeasonalOutfitInstruction, getSeasonContext, SCENARIO_WARDROBE_CONTRACT } from './seasonal-outfit';
-import { PANEL_EDGE_CONTINUITY_LOCK, SHARED_IMAGE_QUALITY_CONTRACT, WARDROBE_ENVIRONMENT_CONTRAST_LOCK, WARDROBE_COMPONENT_LOCK } from './shared-image-quality';
+import { FOCAL_READABILITY, PANEL_EDGE_CONTINUITY_LOCK, SHARED_IMAGE_QUALITY_CONTRACT, WARDROBE_ENVIRONMENT_CONTRAST_LOCK, WARDROBE_COMPONENT_LOCK } from './shared-image-quality';
 import { MONOCHROME_IMAGE_QUALITY_CONTRACT, MONOCHROME_WARDROBE_LOCK, MONOCHROME_STYLE_QA, MONOCHROME_BACKGROUND_LOCK, MONOCHROME_FINAL_CHROMA_AUDIT } from './manga-render-mode.js';
 import {
   MANGA_FACIAL_ACTING_LOCK,
@@ -832,6 +832,16 @@ export const RICH_PANEL_COMPOSITION_LOCK_COMPACT = 'RICH PANEL COMPOSITION / CHA
 
 export const ART_STYLE_DIFFERENCE_QA_LOCK = 'ART-STYLE DIFFERENCE QA LOCK: Identity from refs; facial construction/ink/shading from panel recipe. G-pen subordinate to the panel recipe; linework, not only expression/VFX. Keep Camera/Action/identity/age/wardrobe; no numeric quota.';
 
+// OpenAI color only: preserve the actor and performance, not a single drawing
+// method. The compactor must retain the same scope instead of restoring cel rules.
+export const OPENAI_COLOR_STYLE_QA = 'ART-STYLE DIFFERENCE QA LOCK: Preserve gaze and emotional intent, not reference facial geometry. Redraw eyes, nose, mouth and jaw in each panel\'s medium. Keep Camera/Action/identity/age/wardrobe; linework/folds follow panel medium, not fixed anime; no numeric quota.';
+export const OPENAI_COLOR_FOCAL_READABILITY = FOCAL_READABILITY
+  .replace('readability never changes shot scale or elevation, camera side or head turn; visible features only.', 'keep shot scale/elevation/camera side/head turn; visible features only.')
+  .replace(/Focal G-pen:.*?Story-critical/, 'Focal strokes follow panel medium. NORMAL/unmarked only: G-pen pressure taper, thick-to-hairline focal contour accents. GEKIGA carved ink planes; WATERCOLOR washes; CHIBI simplified forms. Legible faces in that medium. Story-critical')
+  .replace('Support/BG thinner, lower contrast; local light/dark value and warm/cool color planes, motivated edge light and clear gaps at faces/hands.', 'Support/BG: thinner, lower contrast; light/dark and warm/cool planes, motivated edge light, clear face/hand gaps.')
+  .replace('strengthen focal G-pen.', 'strengthen focal separation in the panel medium.');
+export const OPENAI_COLOR_FOLD_PRIORITY = 'FOLD PRIORITY: 2-4 triangular overlap/pinch shadows in panel medium; hard cel edges NORMAL/unmarked only; no geometric patterns.';
+
 const SCENE_LETTERING_LOCK = 'SCENE LETTERING: explicit per-panel object text exact/readable; repeat only if scripted. Unspecified posters, signs, packages, menus/book covers keep natural artwork/pictograms/colors/borders/material/layout. Freely render context-appropriate lettering—readable/decorative, short/long, any amount/density. Never suppress, simplify, blank, grey, blur, pixelate, mosaic or censor a surface merely because text is unscripted.';
 
 // 4コマの焦点・密度差を調整し、1枚絵の基準は変更しない。
@@ -858,12 +868,12 @@ const REFERENCE_SHEET_OUTFIT_RENDERING_LOCK = `REFERENCE-SHEET OUTFIT RENDERING 
 
 // Present the drawing task before generic finishing/inspection prose. Retain
 // the complete storyboard and every supporting contract exactly once.
-const prioritizePanelArtDirection = (prompt, panelSections, preserveReferenceStyle, scriptLock, isMonochrome) => {
+const prioritizePanelArtDirection = (prompt, panelSections, preserveReferenceStyle, scriptLock, storyboardFirst) => {
   if (preserveReferenceStyle || !/PANEL STYLE LOCK:/.test(panelSections)) return prompt;
   const storyboard = `PANEL DESCRIPTIONS:\n\n${panelSections}`;
   if (!prompt.includes(storyboard)) throw new Error('Missing manga storyboard during art-direction assembly.');
   return `PANEL-FIRST ART DIRECTION:
-${isMonochrome ? `${storyboard}\n${scriptLock}` : `${scriptLock}\n${storyboard}`}
+${storyboardFirst ? `${storyboard}\n${scriptLock}` : `${scriptLock}\n${storyboard}`}
 ${prompt.replace(storyboard, '').replace(scriptLock, '')}`;
 };
 
@@ -893,9 +903,10 @@ Use the 360° background image's lighting direction (${bg360Analysis.lighting}),
   const clothingFoldRule = preserveReferenceStyle
     ? 'Preserve the character-sheet treatment of fabric folds and shadows; do not impose a different cel-shading or painting method.'
     : `${isMonochrome ? 'use a few localized solid-black or hatched wedge shadows where fabric overlaps; preserve white lit fabric and garment tone assignments. Do not scatter geometric patterns.' : 'for full-color clothing only, render overlapping, pinched, and intersecting fabric folds with a few crisp wedge-shaped triangular cel-shaded shadow planes. Make a distinct small dark triangular fill at each selected crease junction, not merely a soft fold gradient. Use them as form shadows, not printed patterns or random geometric marks; preserve the outfit, material, and scene lighting.'}`;
+  const panelColorMedia = !isMonochrome && !preserveReferenceStyle;
   const artStyleQa = preserveReferenceStyle
     ? 'REFERENCE-SHEET STYLE QA LOCK:\n- Compare all four panels to the attached character sheets. Redraw any panel that changes linework, coloring method, shading design, facial construction, eye design, body proportions or degree of stylization.'
-    : isMonochrome ? MONOCHROME_STYLE_QA : ART_STYLE_DIFFERENCE_QA_LOCK;
+    : isMonochrome ? MONOCHROME_STYLE_QA : OPENAI_COLOR_STYLE_QA;
 
   const prompt = `OUTPUT: Single image. Draw manga directly.
 
@@ -912,13 +923,13 @@ ${MANGA_FOOTER_EXCLUSIVITY}` : ''}
 ${scriptLock}
 
 ART / RENDERING QUALITY:
-${mangaImageQualityContract(isMonochrome)}
+${panelColorMedia ? mangaImageQualityContract(false).replace(FOCAL_READABILITY, OPENAI_COLOR_FOCAL_READABILITY) : mangaImageQualityContract(isMonochrome)}
 - Clean finish: ${isMonochrome ? 'crisp focal ink; simplify distant lines while keeping setting shapes and white light planes.' : 'crisp foreground, softer background, lighting.'}
 ${MANGA_FACIAL_ACTING_LOCK}
 - CLEAN SURFACE PROTOCOL: ${isMonochrome ? 'regular black-on-white dots and intentional hatching allowed; no random noise, moire or marks on lit skin.' : 'no grain/speckles/dithering/rough texture/pores/moire/dust/particles/sparkle unless a panel style exception allows it.'}
 - MANGA FINISH ASSIST: preserve script/cast/camera/layout; keep bubble space, ${isMonochrome ? 'readable ink shapes and screen density' : 'cast/background light and color'}, coherent anatomy, and setting depth.
 ${isMonochrome ? MONOCHROME_BACKGROUND_LOCK : RICH_PANEL_COMPOSITION_LOCK}
-- CLOTHING FOLD SHADOW ASSIST: ${clothingFoldRule}
+- CLOTHING FOLD SHADOW ASSIST: ${panelColorMedia ? 'Follow panel medium and FOLD PRIORITY below.' : clothingFoldRule}
 ${SAFE_VISUAL_CONTENT_LOCK}
 - ${styleCore}
 - Setting: ${safeLocation}
@@ -961,14 +972,16 @@ THINGS TO AVOID:
 - No plastic skin, extra credits/watermarks, floating/ghost eyes/faces or duplicate humans.
 - No sparkle/glow dust unless scripted. HAND ANATOMY: correct hands; five digits (one thumb + four fingers); every foreground hand/foreshortened hand; no four-digit/mirrored/extra/backward hands.
 
-PANEL-BY-PANEL CLOTHING FOLD PRIORITY: ${preserveReferenceStyle ? 'Follow the character sheet\'s existing fold-line and shadow treatment in every panel; do not introduce a new rendering method.' : 'When a panel shows folded clothing, render 2-4 distinct small dark triangular shadow fills at visible crease junctions. Use hard cel-shaded edges, especially on light shirts, blouses, jackets, and sleeves. These are localized form shadows only: never scatter triangles across smooth fabric or turn them into a print/pattern.'}
+PANEL-BY-PANEL CLOTHING FOLD PRIORITY: ${panelColorMedia ? OPENAI_COLOR_FOLD_PRIORITY : preserveReferenceStyle ? 'Follow the character sheet\'s existing fold-line and shadow treatment in every panel; do not introduce a new rendering method.' : 'When a panel shows folded clothing, render 2-4 distinct small dark triangular shadow fills at visible crease junctions. Use hard cel-shaded edges, especially on light shirts, blouses, jackets, and sleeves. These are localized form shadows only: never scatter triangles across smooth fabric or turn them into a print/pattern.'}
 
 PANEL DESCRIPTIONS:
 
 ${panelSections}
 ${isMonochrome ? `\n${MONOCHROME_FINAL_CHROMA_AUDIT}` : ''}
 `;
-  return prioritizePanelArtDirection(prompt, panelSections, preserveReferenceStyle, scriptLock, isMonochrome);
+  // The accepted OpenAI color input put the complete storyboard before shared
+  // constraints. Gemini retains its own ordering; no selected recipe is rewritten.
+  return prioritizePanelArtDirection(prompt, panelSections, preserveReferenceStyle, scriptLock, true);
 };
 
 /**

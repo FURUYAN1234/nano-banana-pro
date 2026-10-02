@@ -1,0 +1,502 @@
+{
+  "capturedAt": "2026-10-02T01:40:56.116Z",
+  "purpose": "Accepted OpenAI color and Gemini output frozen before OpenAI-only monochrome GEKIGA strengthening. Do not regenerate to accept regressions.",
+  "sourceHashes": {
+    "src/lib/constants.js": "f1aca11d499cf34bada98e84130c493777d3a8f1a70e3d6723eace6c64e29da1",
+    "src/lib/panel-utils.js": "34ca786c0462c1257122bcdb4eea4e87998bf360abb4c75212ea81342dbc6653",
+    "src/lib/prompts.js": "b34f3d0afbff349c73e98c97825136925344716fa42f69cd3653ebb4cb59fd85",
+    "src/lib/prompt-assembler.js": "98ae7f673dec497ee7924a1ae0146fc9eed2158b4e51189b1d07c0334505e9ed"
+  },
+  "scenarioFixture": "ai-illustration-balloon-layout.txt",
+  "scenarioSha256": "f699a37f213dd8d8bf6e87b3ca4bd425d10ffb140b5a104acd36f7e1742b692f",
+  "options": {
+    "castList": "ミク、リン、サエコ、アカリ、ヒカリ",
+    "systemVersion": "v6.7.8",
+    "punchlineType": "Auto",
+    "cinematicTechniques": false
+  },
+  "cases": [
+    {
+      "name": "gekiga-panel-1",
+      "emotions": [
+        "GEKIGA",
+        "NORMAL",
+        "WATERCOLOR",
+        "CHIBI_GAG"
+      ]
+    },
+    {
+      "name": "gekiga-panel-2",
+      "emotions": [
+        "CHIBI_GAG",
+        "GEKIGA",
+        "NORMAL",
+        "WATERCOLOR"
+      ]
+    },
+    {
+      "name": "gekiga-panel-3",
+      "emotions": [
+        "WATERCOLOR",
+        "CHIBI_GAG",
+        "GEKIGA",
+        "NORMAL"
+      ]
+    },
+    {
+      "name": "gekiga-panel-4",
+      "emotions": [
+        "NORMAL",
+        "WATERCOLOR",
+        "CHIBI_GAG",
+        "GEKIGA"
+      ]
+    },
+    {
+      "name": "reference-style-exception",
+      "emotions": [
+        "NORMAL",
+        "WATERCOLOR",
+        "GEKIGA",
+        "CHIBI_GAG"
+      ],
+      "ending": "SeriousDocumentary"
+    }
+  ],
+  "records": [
+    {
+      "case": "gekiga-panel-1",
+      "providerFamily": "chatgpt",
+      "colorMode": "color",
+      "promptMaxChars": 24000,
+      "sha256": "943575ef5b8e6cb8d883097bf5014f290a6d47f436ccf0215558e24b0e792a7a",
+      "utf8Bytes": 25316,
+      "characters": 21031
+    },
+    {
+      "case": "gekiga-panel-1",
+      "providerFamily": "chatgpt",
+      "colorMode": "color",
+      "promptMaxChars": 32000,
+      "sha256": "943575ef5b8e6cb8d883097bf5014f290a6d47f436ccf0215558e24b0e792a7a",
+      "utf8Bytes": 25316,
+      "characters": 21031
+    },
+    {
+      "case": "gekiga-panel-1",
+      "providerFamily": "gemini",
+      "colorMode": "color",
+      "promptMaxChars": 24000,
+      "sha256": "51bf86a603cbc3c2f878c90d7cf67440a2f419a13db551b240822fd4f43b2a22",
+      "utf8Bytes": 63239,
+      "characters": 57573
+    },
+    {
+      "case": "gekiga-panel-1",
+      "providerFamily": "gemini",
+      "colorMode": "color",
+      "promptMaxChars": 32000,
+      "sha256": "51bf86a603cbc3c2f878c90d7cf67440a2f419a13db551b240822fd4f43b2a22",
+      "utf8Bytes": 63239,
+      "characters": 57573
+    },
+    {
+      "case": "gekiga-panel-1",
+      "providerFamily": "gemini",
+      "colorMode": "monochrome",
+      "promptMaxChars": 24000,
+      "sha256": "f14b997032f00e69d53674e1e8b93f3d656efb81ff7e17c9e75e43cfd0d002bc",
+      "utf8Bytes": 68337,
+      "characters": 62671
+    },
+    {
+      "case": "gekiga-panel-1",
+      "providerFamily": "gemini",
+      "colorMode": "monochrome",
+      "promptMaxChars": 32000,
+      "sha256": "f14b997032f00e69d53674e1e8b93f3d656efb81ff7e17c9e75e43cfd0d002bc",
+      "utf8Bytes": 68337,
+      "characters": 62671
+    },
+    {
+      "case": "gekiga-panel-2",
+      "providerFamily": "chatgpt",
+      "colorMode": "color",
+      "promptMaxChars": 24000,
+      "sha256": "c6ba16c23c076f599b72cb822884c4ae5d26a450367ccd32bf5652ab54c9e205",
+      "utf8Bytes": 25316,
+      "characters": 21031
+    },
+    {
+      "case": "gekiga-panel-2",
+      "providerFamily": "chatgpt",
+      "colorMode": "color",
+      "promptMaxChars": 32000,
+      "sha256": "c6ba16c23c076f599b72cb822884c4ae5d26a450367ccd32bf5652ab54c9e205",
+      "utf8Bytes": 25316,
+      "characters": 21031
+    },
+    {
+      "case": "gekiga-panel-2",
+      "providerFamily": "gemini",
+      "colorMode": "color",
+      "promptMaxChars": 24000,
+      "sha256": "49876278d899886b3034155c321f72129dc7d0e56c43b4c2091ca05f80f3d35c",
+      "utf8Bytes": 63239,
+      "characters": 57573
+    },
+    {
+      "case": "gekiga-panel-2",
+      "providerFamily": "gemini",
+      "colorMode": "color",
+      "promptMaxChars": 32000,
+      "sha256": "49876278d899886b3034155c321f72129dc7d0e56c43b4c2091ca05f80f3d35c",
+      "utf8Bytes": 63239,
+      "characters": 57573
+    },
+    {
+      "case": "gekiga-panel-2",
+      "providerFamily": "gemini",
+      "colorMode": "monochrome",
+      "promptMaxChars": 24000,
+      "sha256": "29ebe83e8d8e51c39f594eb53f6d93be10a07f9e84232010b61261015f73f0f9",
+      "utf8Bytes": 68337,
+      "characters": 62671
+    },
+    {
+      "case": "gekiga-panel-2",
+      "providerFamily": "gemini",
+      "colorMode": "monochrome",
+      "promptMaxChars": 32000,
+      "sha256": "29ebe83e8d8e51c39f594eb53f6d93be10a07f9e84232010b61261015f73f0f9",
+      "utf8Bytes": 68337,
+      "characters": 62671
+    },
+    {
+      "case": "gekiga-panel-3",
+      "providerFamily": "chatgpt",
+      "colorMode": "color",
+      "promptMaxChars": 24000,
+      "sha256": "4194a8906ebc83dad624181f0f8fe977dbdcdbecaca5de1314b5552bfa1942c5",
+      "utf8Bytes": 25316,
+      "characters": 21031
+    },
+    {
+      "case": "gekiga-panel-3",
+      "providerFamily": "chatgpt",
+      "colorMode": "color",
+      "promptMaxChars": 32000,
+      "sha256": "4194a8906ebc83dad624181f0f8fe977dbdcdbecaca5de1314b5552bfa1942c5",
+      "utf8Bytes": 25316,
+      "characters": 21031
+    },
+    {
+      "case": "gekiga-panel-3",
+      "providerFamily": "gemini",
+      "colorMode": "color",
+      "promptMaxChars": 24000,
+      "sha256": "d73e0020a12073acae01547be4379e865ed93023993cf03ba0575780cb81ecd9",
+      "utf8Bytes": 63239,
+      "characters": 57573
+    },
+    {
+      "case": "gekiga-panel-3",
+      "providerFamily": "gemini",
+      "colorMode": "color",
+      "promptMaxChars": 32000,
+      "sha256": "d73e0020a12073acae01547be4379e865ed93023993cf03ba0575780cb81ecd9",
+      "utf8Bytes": 63239,
+      "characters": 57573
+    },
+    {
+      "case": "gekiga-panel-3",
+      "providerFamily": "gemini",
+      "colorMode": "monochrome",
+      "promptMaxChars": 24000,
+      "sha256": "10a7d37456937d87daedff5c7de006c40880d5eb2583c4778333fdb0d1b343d7",
+      "utf8Bytes": 68337,
+      "characters": 62671
+    },
+    {
+      "case": "gekiga-panel-3",
+      "providerFamily": "gemini",
+      "colorMode": "monochrome",
+      "promptMaxChars": 32000,
+      "sha256": "10a7d37456937d87daedff5c7de006c40880d5eb2583c4778333fdb0d1b343d7",
+      "utf8Bytes": 68337,
+      "characters": 62671
+    },
+    {
+      "case": "gekiga-panel-4",
+      "providerFamily": "chatgpt",
+      "colorMode": "color",
+      "promptMaxChars": 24000,
+      "sha256": "d6a1b808cbbd29704d9a784bedb6b59e5e1befb41d8b8ef637c8a26e721231d1",
+      "utf8Bytes": 25316,
+      "characters": 21031
+    },
+    {
+      "case": "gekiga-panel-4",
+      "providerFamily": "chatgpt",
+      "colorMode": "color",
+      "promptMaxChars": 32000,
+      "sha256": "d6a1b808cbbd29704d9a784bedb6b59e5e1befb41d8b8ef637c8a26e721231d1",
+      "utf8Bytes": 25316,
+      "characters": 21031
+    },
+    {
+      "case": "gekiga-panel-4",
+      "providerFamily": "gemini",
+      "colorMode": "color",
+      "promptMaxChars": 24000,
+      "sha256": "1141efbd7f8b8be14301a0cdfe3022f9a8f33fdf5eff25c312d91b231a14f1fe",
+      "utf8Bytes": 63239,
+      "characters": 57573
+    },
+    {
+      "case": "gekiga-panel-4",
+      "providerFamily": "gemini",
+      "colorMode": "color",
+      "promptMaxChars": 32000,
+      "sha256": "1141efbd7f8b8be14301a0cdfe3022f9a8f33fdf5eff25c312d91b231a14f1fe",
+      "utf8Bytes": 63239,
+      "characters": 57573
+    },
+    {
+      "case": "gekiga-panel-4",
+      "providerFamily": "gemini",
+      "colorMode": "monochrome",
+      "promptMaxChars": 24000,
+      "sha256": "6bf30a641b897d08b0a48d4494209ca8c6a6dec5025d833064d95db68e59fee9",
+      "utf8Bytes": 68337,
+      "characters": 62671
+    },
+    {
+      "case": "gekiga-panel-4",
+      "providerFamily": "gemini",
+      "colorMode": "monochrome",
+      "promptMaxChars": 32000,
+      "sha256": "6bf30a641b897d08b0a48d4494209ca8c6a6dec5025d833064d95db68e59fee9",
+      "utf8Bytes": 68337,
+      "characters": 62671
+    },
+    {
+      "case": "reference-style-exception",
+      "providerFamily": "chatgpt",
+      "colorMode": "color",
+      "promptMaxChars": 24000,
+      "sha256": "186600c2fc7930dfe9b7bf0d380d93093250ed1ab21ee184437d483bc60f1b09",
+      "utf8Bytes": 26066,
+      "characters": 21779
+    },
+    {
+      "case": "reference-style-exception",
+      "providerFamily": "chatgpt",
+      "colorMode": "color",
+      "promptMaxChars": 32000,
+      "sha256": "186600c2fc7930dfe9b7bf0d380d93093250ed1ab21ee184437d483bc60f1b09",
+      "utf8Bytes": 26066,
+      "characters": 21779
+    },
+    {
+      "case": "reference-style-exception",
+      "providerFamily": "gemini",
+      "colorMode": "color",
+      "promptMaxChars": 24000,
+      "sha256": "1c470bcf699271a3578c94423a4fd1f494ad64223b126cacc54ab9471edb034e",
+      "utf8Bytes": 62257,
+      "characters": 56589
+    },
+    {
+      "case": "reference-style-exception",
+      "providerFamily": "gemini",
+      "colorMode": "color",
+      "promptMaxChars": 32000,
+      "sha256": "1c470bcf699271a3578c94423a4fd1f494ad64223b126cacc54ab9471edb034e",
+      "utf8Bytes": 62257,
+      "characters": 56589
+    },
+    {
+      "case": "reference-style-exception",
+      "providerFamily": "gemini",
+      "colorMode": "monochrome",
+      "promptMaxChars": 24000,
+      "sha256": "241439f8b28a207d7bc555a43628a582a105e4facbb7ff300226fc806f584294",
+      "utf8Bytes": 68960,
+      "characters": 63292
+    },
+    {
+      "case": "reference-style-exception",
+      "providerFamily": "gemini",
+      "colorMode": "monochrome",
+      "promptMaxChars": 32000,
+      "sha256": "241439f8b28a207d7bc555a43628a582a105e4facbb7ff300226fc806f584294",
+      "utf8Bytes": 68960,
+      "characters": 63292
+    },
+    {
+      "case": "reference-style-exception",
+      "providerFamily": "chatgpt",
+      "colorMode": "monochrome",
+      "promptMaxChars": 24000,
+      "sha256": "ae2993cec402f4a781dd190b623e03d9424118c5ce1e108fe40f6094ca75121f",
+      "utf8Bytes": 27979,
+      "characters": 23146
+    },
+    {
+      "case": "reference-style-exception",
+      "providerFamily": "chatgpt",
+      "colorMode": "monochrome",
+      "promptMaxChars": 32000,
+      "sha256": "ae2993cec402f4a781dd190b623e03d9424118c5ce1e108fe40f6094ca75121f",
+      "utf8Bytes": 27979,
+      "characters": 23146
+    }
+  ],
+  "nonTargetPanels": [
+    {
+      "case": "gekiga-panel-1",
+      "promptMaxChars": 24000,
+      "panels": [
+        {
+          "panel": 2,
+          "sha256": "fe17e12ed2f6dfcae9eb33b78ccc2bd125865b4cfd50f00879d968b57e2ced3f"
+        },
+        {
+          "panel": 3,
+          "sha256": "180a73f18d081a7c8f46b2870f70bac06a43a6972c3af9d489aa9e22b03792be"
+        },
+        {
+          "panel": 4,
+          "sha256": "080687ccdc474e93c7fc6011ef1e99091c91753ce19bd0dd4cabcddc39a9fae8"
+        }
+      ]
+    },
+    {
+      "case": "gekiga-panel-1",
+      "promptMaxChars": 32000,
+      "panels": [
+        {
+          "panel": 2,
+          "sha256": "fe17e12ed2f6dfcae9eb33b78ccc2bd125865b4cfd50f00879d968b57e2ced3f"
+        },
+        {
+          "panel": 3,
+          "sha256": "180a73f18d081a7c8f46b2870f70bac06a43a6972c3af9d489aa9e22b03792be"
+        },
+        {
+          "panel": 4,
+          "sha256": "080687ccdc474e93c7fc6011ef1e99091c91753ce19bd0dd4cabcddc39a9fae8"
+        }
+      ]
+    },
+    {
+      "case": "gekiga-panel-2",
+      "promptMaxChars": 24000,
+      "panels": [
+        {
+          "panel": 1,
+          "sha256": "9c09b20aef8d7d6b6e32802b5daf018ce1a4625884f118581c3509cf89a0fa18"
+        },
+        {
+          "panel": 3,
+          "sha256": "fcc51c9f90d08a722d98b43834c6ff5e482c6066a9466c682faba592af904fe9"
+        },
+        {
+          "panel": 4,
+          "sha256": "2877922745374b8b22ed59c1e0583573243d00ca0d06a5fb0a922038aefbdf79"
+        }
+      ]
+    },
+    {
+      "case": "gekiga-panel-2",
+      "promptMaxChars": 32000,
+      "panels": [
+        {
+          "panel": 1,
+          "sha256": "9c09b20aef8d7d6b6e32802b5daf018ce1a4625884f118581c3509cf89a0fa18"
+        },
+        {
+          "panel": 3,
+          "sha256": "fcc51c9f90d08a722d98b43834c6ff5e482c6066a9466c682faba592af904fe9"
+        },
+        {
+          "panel": 4,
+          "sha256": "2877922745374b8b22ed59c1e0583573243d00ca0d06a5fb0a922038aefbdf79"
+        }
+      ]
+    },
+    {
+      "case": "gekiga-panel-3",
+      "promptMaxChars": 24000,
+      "panels": [
+        {
+          "panel": 1,
+          "sha256": "465b4ae719687eee06920f8a5fac4e6c97b70145398687cdc194ea79fe2ec3bf"
+        },
+        {
+          "panel": 2,
+          "sha256": "a326d51e3f01d97be65d218391fb76a18eac8053eebe7aa240f5f3c75ac780e7"
+        },
+        {
+          "panel": 4,
+          "sha256": "780b9de301c66dfb17e45a6e389cf59dc8bbcd35444f20053c0077d66311ec85"
+        }
+      ]
+    },
+    {
+      "case": "gekiga-panel-3",
+      "promptMaxChars": 32000,
+      "panels": [
+        {
+          "panel": 1,
+          "sha256": "465b4ae719687eee06920f8a5fac4e6c97b70145398687cdc194ea79fe2ec3bf"
+        },
+        {
+          "panel": 2,
+          "sha256": "a326d51e3f01d97be65d218391fb76a18eac8053eebe7aa240f5f3c75ac780e7"
+        },
+        {
+          "panel": 4,
+          "sha256": "780b9de301c66dfb17e45a6e389cf59dc8bbcd35444f20053c0077d66311ec85"
+        }
+      ]
+    },
+    {
+      "case": "gekiga-panel-4",
+      "promptMaxChars": 24000,
+      "panels": [
+        {
+          "panel": 1,
+          "sha256": "808efe35a47d39a99e7583ababb49aedd43f88b636a6d982bb16e51a44d82a62"
+        },
+        {
+          "panel": 2,
+          "sha256": "ade514b2cde7723bcdcdd05f9b6bae42154b9f74b56ce65fbafa8d9ddbf8b041"
+        },
+        {
+          "panel": 3,
+          "sha256": "bd203e512224382b4aa046dfc0f9a003704eeed737d52d14062ce657c9b2318b"
+        }
+      ]
+    },
+    {
+      "case": "gekiga-panel-4",
+      "promptMaxChars": 32000,
+      "panels": [
+        {
+          "panel": 1,
+          "sha256": "808efe35a47d39a99e7583ababb49aedd43f88b636a6d982bb16e51a44d82a62"
+        },
+        {
+          "panel": 2,
+          "sha256": "ade514b2cde7723bcdcdd05f9b6bae42154b9f74b56ce65fbafa8d9ddbf8b041"
+        },
+        {
+          "panel": 3,
+          "sha256": "bd203e512224382b4aa046dfc0f9a003704eeed737d52d14062ce657c9b2318b"
+        }
+      ]
+    }
+  ]
+}

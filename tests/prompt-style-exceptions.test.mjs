@@ -30,10 +30,10 @@ test('source protection retains panel-first art direction for both providers and
       const finishing = providerFamily === 'chatgpt' ? prompt.indexOf('OUTPUT: Single image.') : prompt.lastIndexOf('\nStyle:');
       assert.ok(firstPanel >= 0 && finishing > firstPanel, providerFamily + '/' + colorMode);
       assert.ok(prompt.indexOf('## Panel 4') < finishing);
-      if (colorMode === 'monochrome') {
-        assert.ok(prompt.indexOf('## Panel 4') < prompt.indexOf('STRICT SCRIPT LOCK:'), 'monochrome drawing brief must precede global audit prose');
+      if (colorMode === 'monochrome' || providerFamily === 'chatgpt') {
+        assert.ok(prompt.indexOf('## Panel 4') < prompt.indexOf('STRICT SCRIPT LOCK:'), 'OpenAI and monochrome drawing brief must precede global audit prose');
       } else {
-        assert.ok(prompt.indexOf('STRICT SCRIPT LOCK:') < firstPanel, 'accepted color ordering stays unchanged');
+        assert.ok(prompt.indexOf('STRICT SCRIPT LOCK:') < firstPanel, 'Gemini color ordering stays unchanged');
       }
       const locked = buildMangaPrompt({ ...options, punchlineType: 'SeriousDocumentary' });
       assert.doesNotMatch(locked, /PANEL-FIRST ART DIRECTION:/);
@@ -71,9 +71,17 @@ after(async () => {
 test('panel recipes can redraw reference facial rendering without changing identity or camera', () => {
   for (const providerFamily of ['chatgpt', 'gemini']) {
     const prompt = buildMangaPrompt({ scenario: buildScenarioWithEmotions(['NORMAL', 'IMPACT', 'GEKIGA', 'IMPACT']), castList: CAST_LIST, colorMode: 'color', providerFamily, punchlineType: 'Auto', systemVersion: 'test' });
-    assert.match(prompt, /Identity from refs; facial construction\/ink\/shading from panel recipe/);
+    if (providerFamily === 'chatgpt') {
+      assert.match(prompt, /Preserve gaze and emotional intent, not reference facial geometry/);
+      assert.match(prompt, /Redraw eyes, nose, mouth and jaw in each panel's medium/);
+      assert.match(prompt, /linework\/folds follow panel medium, not fixed anime/);
+      assert.match(prompt, /Same face means same identity, not retained anime proportions/);
+      assert.match(prompt, /Keep identity\/age and scripted emotion\/gaze\/pose\/Camera/);
+    } else {
+      assert.match(prompt, /Identity from refs; facial construction\/ink\/shading from panel recipe/);
+      assert.match(prompt, /Redraw facial construction, not just darker anime shading/);
+    }
     assert.match(prompt, /Keep Camera\/Action\/identity\/age\/wardrobe/);
-    assert.match(prompt, /Redraw facial construction, not just darker anime shading/);
   }
 });
 
@@ -118,14 +126,24 @@ test('budget compression preserves executable style recipes, not just style name
       castList: CAST_LIST + ' stable identity detail'.repeat(400),
       colorMode: 'color', providerFamily, punchlineType: 'Auto', systemVersion: 'test'
     });
-    assert.match(prompt, /Style:.*(?:angular carved brow\/nose\/cheek\/jaw anatomy|Realistic gekiga: sculpted face planes.*brush ink\/facial hatching)/i);
+    assert.match(prompt, providerFamily === 'chatgpt'
+      ? /Style:.*Redraw visible faces.*small realistic eyes\/irises.*nose bridges.*carved cheek\/jaw planes.*solid-black shadow planes.*crosshatching ON faces\/hands/i
+      : /Style:.*(?:angular carved brow\/nose\/cheek\/jaw anatomy|Realistic gekiga: sculpted face planes.*brush ink\/facial hatching)/i);
     assert.match(prompt, /Style:.*delicate thin linework/i);
     assert.match(prompt, /Style:.*transparent color washes/i);
     assert.match(prompt, /Style:.*chibi.*Camera\/Action.*gaze/i);
-    assert.match(prompt, /facial construction\/ink\/shading from panel recipe/i);
-    assert.match(prompt, /Identity from refs/i);
-    assert.match(prompt, /G-pen.*subordinate to the panel recipe/i);
-    assert.match(prompt, /redraw facial construction, not just darker anime shading|Realistic gekiga:.*rebuild, not darker anime/i);
+    if (providerFamily === 'chatgpt') {
+      assert.match(prompt, /Preserve gaze and emotional intent, not reference facial geometry/);
+      assert.match(prompt, /Redraw eyes, nose, mouth and jaw in each panel's medium/);
+      assert.match(prompt, /linework\/folds follow panel medium, not fixed anime/);
+      assert.match(prompt, /Same face means same identity, not retained anime proportions/);
+      assert.match(prompt, /Keep identity\/age and scripted emotion\/gaze\/pose\/Camera/);
+    } else {
+      assert.match(prompt, /facial construction\/ink\/shading from panel recipe/i);
+      assert.match(prompt, /Identity from refs/i);
+      assert.match(prompt, /G-pen.*subordinate to the panel recipe/i);
+      assert.match(prompt, /redraw facial construction, not just darker anime shading|Realistic gekiga:.*rebuild, not darker anime/i);
+    }
     assert.doesNotMatch(prompt, /narrow natural eyes/);
     assert.match(prompt, /Keep Camera\/Action\/identity\/age\/wardrobe/);
     assert.doesNotMatch(prompt, /ALL characters.*2-3|dot-like eyes|Characters look older/i);
