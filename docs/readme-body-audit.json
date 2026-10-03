@@ -15,7 +15,7 @@
       "sha256": "c48a08c1b72bbb64d898a511fade8d93b92a6e0df3818f45fc30c502d8da7a25"
     }
   ],
-  "readmeSha256": "2d42944c54ea3d85cd1d96a5a4776f7e1eb80be4d5f15aec6b063b16c6ae36fd",
+  "readmeSha256": "50281bf4b322dc0ccf68f9f59a0a1388e3ec7d08a440e640410ad0da65fda9f2",
   "sourceTree": "66d524a8ccf26bb2143fb8fa8de7e959c75c3aac",
   "publicTree": "6f4a01d2b8cb99a3deb5b36941ef9c60b4b57260",
   "packageSha256": "51fcce8881b3272ce77325f0a52d477c8d83b4a3d0e13f5d87fffbc01ef15010",
@@ -36,6 +36,6 @@
     "📋 ChangeLog",
     "License / ライセンス"
   ],
-  "findings": "Reviewed the current feature map, connection and model defaults, STEP1-4, materiality and uncertain QA results, Web/API routes, video package requirements, privacy and usage. Added actual v6.8.1 UI and verified API artwork. Body describes current functions; historical versions are confined to ChangeLog.",
+  "findings": "Reviewed the current feature map, connection and model defaults, STEP1-4, materiality and uncertain QA results, Web/API routes, video package requirements, privacy and usage. Added actual v6.8.1 UI and verified API artwork. Body describes current functions; historical versions are confined to ChangeLog. Preserved the remote README media link while merging current documentation.",
   "manualFindings": "All three guides now describe v6.8.1 current operation: OpenAI 20 pages, Gemini 12 pages, full manual 32 pages. Every page was rendered and visually reviewed, with A4 bounds, links, private-text scans and no historical app version assertions passing. Current app captures and API artwork are included."
 }

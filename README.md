@@ -15,6 +15,8 @@ An experimental web application in which AI handles topic research, story struct
 
 左はv6.8.1の実画面、右はOpenAI API（GPT Image 2.5 Sunburst / max）で生成して確認した作例です。画風・人物の縮尺・台詞は画像を見て確認し、自動検査の未確認項目や軽微な見切れは注意事項として扱います。生成ごとに同じ品質を保証するものではありません。 / Actual application view and an inspected API-generated example. Review the rendered result as well as automated findings; outputs vary.
 
+https://github.com/user-attachments/assets/15608ccc-8d86-4b78-9ff3-785201b42629
+
 ## Visual direction and reading / 演出と読みやすさ
 
 描画オプション：STEP2の「版権キャラクターにモザイクをかける」と、STEP3の「ウオーターマークを表記する」は初期状態でONです。前者はシナリオ構築と最終画像プロンプトに「版権キャラクターにおおきなモザイクをかける」を追加し、後者をOFFにすると左右のフッターの描画指示を外します。OpenAI／GeminiのAPIとWeb用コピーに共通で反映します。設定変更後はモザイクならSTEP2、ウオーターマークならSTEP3から再作成してください。変更だけでAPIは実行されません。選択は全設定リセットまたは再読込まで保持します。生成済み画像には遡って反映されず、AIの対象判断・描画は実画像で確認してください。
@@ -507,4 +509,3 @@ Older release history is available in [GitHub Releases](https://github.com/FURUY
 ## License / ライセンス
 
 The web application source is licensed under the repository [LICENSE](LICENSE). Bundled ComfyUI packages retain the separate licenses listed above. / Webアプリのソースはリポジトリの[LICENSE](LICENSE)に従い、同梱ComfyUIパッケージには上記の個別ライセンスが適用されます。
-
