@@ -62,9 +62,9 @@ Load a completed four-panel manga into [AI Voice Comic Maker](https://github.com
 
 ## A4 workflow map / A4縦フローチャート
 
-![Full workflow flowchart covering API connection, STEP1–STEP4, image generation, QA, policy repair, history, and saving.](public/diagrams/nano-banana-pro-workflow-a4.png)
+![Full workflow flowchart covering API connection, STEP1–STEP4, image generation, QA, policy repair, history, and saving.](public/diagrams/nano-banana-pro-workflow-a4.svg)
 
-This diagram covers the full path from source analysis through scenario thinking, prompt assembly, API image generation, quality review, policy-repair retries, history, and saving. It is generated from `scripts/generate_workflow_diagram.mjs`; `npm run build` regenerates it, and the generator checks the orchestration points it documents. When the workflow changes materially, replace both this README PNG and the matching uploaded PNG in the note article. / この図は、素材解析から台本の思考ルーチン、プロンプト組み立て、API画像生成、品質検査、ポリシー修正の再試行、履歴、保存までを一枚にまとめています。正本は `scripts/generate_workflow_diagram.mjs` です。`npm run build` 時に再生成され、図が参照する処理の制御点も検査します。フローを大きく変える際は、この図も更新し、公開リリース時にREADMEとnoteの画像を同じ内容へ差し替えます。
+This diagram covers the full path from source analysis through scenario thinking, prompt assembly, API image generation, quality review, policy-repair retries, history, and saving. It is generated from `scripts/generate_workflow_diagram.mjs`; `npm run build` regenerates it, and the generator checks the orchestration points it documents. When the workflow changes materially, replace both this README diagram and the matching uploaded image in the note article. / この図は、素材解析から台本の思考ルーチン、プロンプト組み立て、API画像生成、品質検査、ポリシー修正の再試行、履歴、保存までを一枚にまとめています。正本は `scripts/generate_workflow_diagram.mjs` です。`npm run build` 時に再生成され、図が参照する処理の制御点も検査します。フローを大きく変える際は、この図も更新し、公開リリース時にREADMEとnoteの画像を同じ内容へ差し替えます。
 
 ### Reasoning routine / 思考ルーチン
 
