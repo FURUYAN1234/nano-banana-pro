@@ -403,7 +403,7 @@ test('final prompts retain setting depth, exact hand performance and explicit-on
       assert.match(prompt, /(?:retain|keep) setting\/depth/i);
       assert.match(prompt, /no default blank(?: backdrop)?/i);
       assert.doesNotMatch(prompt, /broad blank\/flat areas|not just blur|no blur|never blur|instead of blur|not blurred pixels/i);
-      assert.match(prompt, /supporting (?:cast|figures).*smaller\/lower contrast|support smaller\/lower-contrast/i);
+      assert.match(prompt, /supporting cast: lower visual emphasis, never miniature bodies|脇役縮小禁止/i);
       assert.match(prompt, /exact hand pose\/contact\/gaze/i);
       assert.match(prompt, /no stock-pose substitution/i);
       assert.match(prompt, /SCENE LETTERING:.*(?:explicit|scripted).*exact/i);

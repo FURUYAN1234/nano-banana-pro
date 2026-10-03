@@ -64,7 +64,6 @@ import {
   MANGA_PROMPT_PRIORITY
 } from './composition-variety';
 import {
-  getPanelHandRoleResolution,
   HAND_PROP_KINEMATICS_LOCK,
   HAND_PROP_KINEMATICS_LOCK_COMPACT
 } from './hand-prop-kinematics';
@@ -456,7 +455,7 @@ const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt
       '')
     .replace(/^FUNCTIONAL SURFACE ORIENTATION LOCK:[^\n]*/gm, FUNCTIONAL_SURFACE_ORIENTATION_LOCK_COMPACT)
     // 同じ台本・人体保護はPROMPT PRIORITYに残す。読順・尻尾・演技条件は省略しない。
-    .replace(/^PAGE READING RHYTHM:[^\n]*/gm, 'PAGE READING RHYTHM: one primary focal target/panel. PROFESSIONAL VISUAL FLOW PRIORITY: panel entry -> primary focal -> reaction/prop -> next bubble -> next panel; top-right, right-to-left. Gaze/head/torso/hands/diagonals/light/contrast guide negative space; clear story/joke, peak/quiet, density. Scripted abstract BG: props stay. INTERACTION: reactions readable; support smaller/lower-contrast. ACTING: vary gaze/weight/hands. DEPTH: real shots retain setting/depth; far blur; no default blank backdrop. MULTIPLE BUBBLES: B1 rightmost regardless of speaker; later bubbles strictly left. BALLOON OWNERSHIP: move/reflow balloon bodies near mapped speakers preserving order and Camera/Action; never end at non-speakers. SINGLE BUBBLE: speaker-side space. TAIL GEOMETRY: lower speaker-facing root; shortest unobstructed route to mapped mouth/head; never cross face/hair/text.')
+    .replace(/^PAGE READING RHYTHM:[^\n]*/gm, 'PAGE READING RHYTHM: one primary focal target/panel. PROFESSIONAL VISUAL FLOW PRIORITY: panel entry -> primary focal -> reaction/prop -> next bubble -> next panel; top-right, right-to-left. Gaze/head/torso/hands/diagonals/light/contrast guide negative space; clear story/joke, peak/quiet, density. Scripted abstract BG: props stay. INTERACTION: reactions readable; 脇役縮小禁止。遠近・遮蔽・接地に整合。指定体格差・ちび保持。 ACTING: vary gaze/weight/hands. DEPTH: real shots retain setting/depth; far blur; no default blank backdrop. MULTIPLE BUBBLES: B1 rightmost regardless of speaker; later bubbles strictly left. BALLOON OWNERSHIP: move/reflow balloon bodies near mapped speakers preserving order and Camera/Action; never end at non-speakers. SINGLE BUBBLE: speaker-side space. TAIL GEOMETRY: lower speaker-facing root; shortest unobstructed route to mapped mouth/head; never cross face/hair/text.')
     .replace(/^PROMPT PRIORITY:[^\n]*/gm, "PROMPT PRIORITY: protect cast/count/identity/glasses, wardrobe, exact script, Camera geometry, layout/style/medium. CAMERA FIRST: fixed view; Action contact wins if Camera depth conflicts: move that actor's sole body within reach; never borrow another actor's hand; never relocate for legibility/chibi or mirror screen-left/right. Never derive body positions from dialogue order. Simplify only unspecified background texture and decorative VFX. Never print.")
     .replace(/^[\t ]+|[\t ]+$/gm, '')
     .replace(/[\t ]{2,}/g, ' ')
@@ -777,7 +776,7 @@ ${extractCastLimitRule(pt, castList, { compact: true }).replace(/\\\\[/g, '').re
 COMPOSITION STAGING: ${getPanelCompositionAssist(pt, num, { compact: true })}
 ${FUNCTIONAL_SURFACE_PANEL_CHECK}
 ${eyeLineRule}
-${getPanelHandRoleResolution(pt)}
+
 ${source(`Action (visual only): ${buildPanelActionText(pt, castList, promptActiveOutfit, colorMode)}`)}
 Dialogue (verbatim bubbles): ${extractDialogueOnly(pt, castList, { forImagePrompt: true })}`;
     }).join('\n\n');
@@ -821,7 +820,7 @@ COMPOSITION STAGING: ${getPanelCompositionAssist(pt, num)}
 ${FUNCTIONAL_SURFACE_PANEL_CHECK}
 ${lensRule}
 ${eyeLineRule}
-${getPanelHandRoleResolution(pt)}
+
 ${source(`Action (Visual ONLY, non-dialogue; do NOT render quoted words as visible text unless this action explicitly says handwriting, signage, board text, label text, or screen text): ${buildPanelActionText(pt, castList, promptActiveOutfit, colorMode)}.`)}
 Dialogue (ONLY inside bubbles): ${extractDialogueOnly(pt, castList, { forImagePrompt: true })}.
 ${geminiRearForegroundLock}`;

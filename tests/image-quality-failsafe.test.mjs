@@ -417,6 +417,27 @@ test('a coherent image with only gesture or incidental-print differences is kept
   assert.equal(result.canContinue, true);
 });
 
+test('grounded harmless differences remain warnings, but anatomy and story errors cannot be waived', async () => {
+  const issue = { type: 'object_geometry', panel: 1, subject: 'background ornament', reason: 'Slight contour variation.', material_impact: 'none', impact_reason: 'The object remains plausible and the story and action are intact.' };
+  const review = parseImageQualityQaResponse(JSON.stringify({ pass: false, issues: [issue] }), { mode: 'single-image' });
+  assert.equal(isMaterialImageQualityIssue(review.issues[0]), false);
+  const result = await runImageQualityFailsafe({
+    originalCandidate: candidate('original'), originalPrompt: 'APPROVED',
+    reviewCandidate: async () => review,
+    generateRepairCandidate: async () => assert.fail('harmless variation must not spend an image request'),
+  });
+  assert.equal(result.canContinue, true);
+  assert.equal(result.validationWarning, true);
+  assert.equal(result.attempts, 1);
+  assert.equal(result.finalReview.pass, false);
+  for (const type of ['anatomy', 'story_integrity', 'bubble_text', 'bubble_speaker', 'bubble_order', 'cast_count', 'panel_layout']) {
+    const critical = parseImageQualityQaResponse(JSON.stringify({ pass: false, issues: [{ ...issue, type, reason: 'Visible left hand attached to the right wrist.' }] }), { mode: 'single-image' });
+    assert.equal(isMaterialImageQualityIssue(critical.issues[0]), true, type);
+  }
+  const unsupported = parseImageQualityQaResponse(JSON.stringify({ pass: false, issues: [{ ...issue, impact_reason: '' }] }), { mode: 'single-image' });
+  assert.equal(isMaterialImageQualityIssue(unsupported.issues[0]), true);
+});
+
 test('a clear extra limb still triggers repair while minor issues are excluded from the repair plan', async () => {
   let plannedIssues;
   let repairs = 0;

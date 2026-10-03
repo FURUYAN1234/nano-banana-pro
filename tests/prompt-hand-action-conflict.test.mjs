@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test, { after, before } from 'node:test';
 import { createServer } from 'vite';
 import { HAND_PROP_KINEMATICS_LOCK, HAND_PROP_KINEMATICS_LOCK_COMPACT } from '../src/lib/hand-prop-kinematics.js';
+import { extractPanelCastContracts, extractPanelContactActors } from '../src/lib/image-quality-qa.js';
 
 let server;
 let buildMangaPrompt;
@@ -50,6 +51,22 @@ Outfit: 私服
 [4コマ目: 結]
 状況: リンとサエコが掲示板を見直す。
 リン「整理できたね。」`;
+
+test('QA reads cast and contact actors from actual prompts for both providers and budgets', () => {
+  for (const providerFamily of ['chatgpt', 'gemini']) {
+    for (const promptMaxChars of [24000, 32000]) {
+      const prompt = buildMangaPrompt({ scenario: DEPTH_CONTACT_CONFLICT_SCENARIO,
+        castList: CAST_LIST, colorMode: 'color', providerFamily, promptMaxChars,
+        punchlineType: 'Auto', systemVersion: 'test' });
+      const contracts = extractPanelCastContracts(prompt);
+      assert.equal(contracts.length, 4, `${providerFamily}/${promptMaxChars}: ${prompt.split('\n').filter(line => /Panel|CAST COUNT|exactly|EXACTLY|コマ/.test(line)).slice(-18).join('\n')}`);
+      assert.ok(contracts.find(item => item.panel === 2).names.includes('リン'));
+      assert.ok(contracts.find(item => item.panel === 2).names.includes('サエコ'));
+      const contacts = extractPanelContactActors(prompt).find(item => item.panel === 2);
+      assert.ok(contacts?.actors.includes('リン'), `${providerFamily}/${promptMaxChars}: scripted contact is retained`);
+    }
+  }
+});
 
 test('a foreground prop contact takes precedence over a conflicting background actor placement', () => {
   for (const providerFamily of ['chatgpt', 'gemini']) {
@@ -170,7 +187,7 @@ test('all hand and prop situations use one shared kinematics contract with a two
   assert.match(HAND_PROP_KINEMATICS_LOCK_COMPACT, /shoulder>elbow>wrist>hand/i);
 });
 
-test('panel-specific guard resolves the reported glasses, handkerchief, and pointing overbooking in panel 4', () => {
+test('reported overbooking retains the shared two-hand constraint without inventing completed actions', () => {
   for (const providerFamily of ['chatgpt', 'gemini']) {
     const prompt = buildMangaPrompt({
       scenario: REPORTED_SHINAGAWA_SCENARIO,
@@ -183,10 +200,10 @@ test('panel-specific guard resolves the reported glasses, handkerchief, and poin
     const panel = panelFourSection(prompt);
 
     assert.match(panel, /ヒカリが丸眼鏡を指先で直し/);
-    assert.match(panel, /HAND ROLE RESOLUTION:/);
-    assert.match(panel, /final explicit LEFT and RIGHT roles only/i);
-    assert.match(panel, /earlier unsided gesture is completed and not visible/i);
-    assert.match(panel, /never draw a third hand/i);
+    assert.doesNotMatch(panel, /HAND ROLE RESOLUTION:/);
+    assert.match(handKinematicsLine(prompt), /one simultaneous role\/contact per hand/i);
+    assert.match(handKinematicsLine(prompt), /final described state/i);
+    assert.match(handKinematicsLine(prompt), /(?:never add a|never) third hand/i);
   }
 });
 
@@ -197,6 +214,17 @@ test('ordinary two-hand actions do not receive an overbooking guard', () => {
   ]) {
     const panel = panelTwoSection(buildPrompt('chatgpt', action));
     assert.doesNotMatch(panel, /HAND ROLE RESOLUTION:/);
+  }
+});
+
+test('different actors and completed gestures never acquire an invented completed action', () => {
+  for (const action of [
+    'ミクは両手で箱を持つ。ヒカリは左手で本を持ち、右手で扉を開ける。',
+    'ヒカリは眼鏡を指先で直し終えてから、左手で箱を持ち、右手で扉を開ける。',
+  ]) for (const provider of ['chatgpt', 'gemini']) {
+    const panel = panelTwoSection(buildPrompt(provider, action));
+    assert.ok(panel.includes(action));
+    assert.doesNotMatch(panel, /This Action overbooks one actor|earlier unsided gesture is completed and not visible/i);
   }
 });
 

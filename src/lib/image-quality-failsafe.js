@@ -68,6 +68,11 @@ const MATERIAL_IMAGE_ISSUES = new Set([
 ]);
 
 export const isMaterialImageQualityIssue = (issue, evidenceContext) => {
+  // Only grounded, harmless visual variations may waive these broad categories.
+  // Anatomy, dialogue, cast and story defects cannot be waived by an impact label.
+  if (['object_geometry', 'camera_geometry', 'wardrobe_continuity'].includes(issue?.type)
+    && ['none', 'minor_variation'].includes(issue.materialImpact)
+    && typeof issue.impactReason === 'string' && issue.impactReason.trim()) return false;
   if (issue?.type === 'art_style') {
     const evidence = issue.styleEvidence;
     return evidence?.status === 'defect' && evidence.materialImpact === 'requested_medium_missing'

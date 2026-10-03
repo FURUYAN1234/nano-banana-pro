@@ -26,6 +26,37 @@ const payload = (web, { text = '', limited = false, refusal = false } = {}) => w
   usage: { prompt_tokens: 20000, completion_tokens: 32768, completion_tokens_details: { reasoning_tokens: 32000 } },
 };
 
+test('primary image QA uses model-specific headroom and reports the actual request limit', async () => {
+  for (const target of ['gpt-4.1', 'gpt-4o', 'gpt-4.1-mini']) {
+    const bodies = [], logs = [];
+    globalThis.fetch = async (_url, init) => {
+      const body = JSON.parse(init.body); bodies.push(body);
+      return body.model === target ? Response.json(payload(false, { text: 'complete review'.repeat(1000) }))
+        : Response.json({ error: { message: 'Temporary fixture outage' } }, { status: 503 });
+    };
+    const result = await client.callOpenAIText('review', ['data:image/png;base64,fixture'], null,
+      line => logs.push(line), { outputProfile: 'image-quality-review' });
+    const limit = target === 'gpt-4o' ? 16384 : 32768;
+    assert.equal(result.model, target);
+    assert.equal(bodies.at(-1).max_tokens, limit);
+    assert.ok(logs.some(line => line.includes('[RESPONSE]') && line.includes(`limit=${limit}`)));
+    assert.ok(logs.some(line => line.includes(`${limit.toLocaleString()} tokens`)));
+  }
+});
+
+test('primary QA truncation never walks the fallback chain or accepts parseable partial JSON', async () => {
+  let calls = 0;
+  globalThis.fetch = async () => { calls++; return Response.json(payload(false, { text: '{"pass":true,"issues":[]}', limited: true })); };
+  await assert.rejects(client.callOpenAIText('review', ['data:image/png;base64,fixture'], null, null,
+    { outputProfile: 'image-quality-review' }), error => error.code === 'OUTPUT_TOKEN_LIMIT' && /limit=32768/.test(error.message));
+  assert.equal(calls, 1);
+});
+
+test('invalid output purpose fails before a provider request', async () => {
+  globalThis.fetch = async () => assert.fail('invalid local option cannot spend a request');
+  await assert.rejects(client.callOpenAIText('review', null, null, null, { outputProfile: 'unbounded' }), /Unsupported output profile/);
+});
+
 for (const web of [false, true]) {
   const route = web ? 'Responses search' : 'Chat';
   test(`${route}: reasoning receives headroom without lowering effort or changing the selected model`, async () => {

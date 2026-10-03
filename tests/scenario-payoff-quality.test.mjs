@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
+import * as payoffQuality from '../src/lib/scenario-payoff-quality.js';
 
 import {
   buildScenarioPayoffRepairPrompt,
@@ -9,6 +10,7 @@ import {
   parseScenarioPayoffReview,
   runScenarioPayoffGate,
 } from '../src/lib/scenario-payoff-quality.js';
+const { applyScenarioStagingPatch } = payoffQuality;
 
 const CAMERA_RHYTHM = {
   shots: ['high / left-front / wide / room layout', 'eye-level / profile / close / doubt', 'rear / medium / telephoto / discovery', 'low / right-front / wide / payoff'].map((signature, index) => ({ panel: index + 1, signature, purpose: ['場所と関係を示す', '疑いの表情を読む', '発見を共有する', '行動の帰結を見せる'][index] })),
@@ -45,6 +47,78 @@ const WEAK_SLOGAN_REVIEW = {
   ensemble_continuity: [1, 2, 3, 4].map(panel => ({ panel, material_break: false, evidence: `Panel ${panel} continues its actors and reactions.`, correction: '' })),
   reason_codes: [],
 };
+
+const BALLOON_SCENARIO = '## タイトル: 試験\n' + [1, 2, 3, 4].map(panel =>
+  `[${panel}コマ目: 起]\n[Camera: 俯瞰]\nBalloonLayout: [{"speaker":"A","x":0.7,"anchor":"画面左のAの口元","route":"右上から左へ"}]\n状況: Aが札を確認する。\nA「確認するよ。」`).join('\n');
+const BALLOON_REVIEW = { ...STRONG_GAG_REVIEW, pass: false, reason_codes: ['BALLOON_LAYOUT_X_ANCHOR_CONTRADICTION'],
+  visual_feasibility: STRONG_GAG_REVIEW.visual_feasibility.map(item => item.panel === 1
+    ? { ...item, feasible: false, material_loss: true, correction: 'Move the sole balloon near its speaker without changing the action.' } : item) };
+
+test('balloon-only repair requests and applies bounded field patches before re-audit', async () => {
+  let reviews = 0;
+  const layout = [{ speaker: 'A', x: 0.3, anchor: '画面左のAの口元', route: '左上の余白から最短でAへ' }];
+  const result = await runScenarioPayoffGate({ scenario: BALLOON_SCENARIO,
+    requestReview: async () => JSON.stringify(reviews++ ? STRONG_GAG_REVIEW : BALLOON_REVIEW),
+    requestRepair: async prompt => {
+      assert.match(prompt, /STAGING PATCH JSON/);
+      assert.match(prompt, /BalloonLayout/);
+      return JSON.stringify([{ panel: 1, field: 'BalloonLayout', value: layout }]);
+    },
+  });
+  assert.equal(reviews, 2);
+  assert.equal(result.status, 'repaired');
+  assert.equal(result.scenario, BALLOON_SCENARIO.replace(/BalloonLayout: .*/, `BalloonLayout: ${JSON.stringify(layout)}`));
+});
+
+test('staging patch rejects dialogue, unknown fields, duplicate edits and malformed layout before re-audit', async () => {
+  for (const edits of [
+    [{ panel: 1, field: 'dialogue', value: '別の台詞' }],
+    [{ panel: 1, field: 'Camera', value: '俯瞰\nA「別の台詞」' }],
+    [{ panel: 5, field: '状況', value: '別の事件' }],
+    [{ panel: 1, field: '状況', value: '変更' }, { panel: 1, field: '状況', value: '変更2' }],
+    [{ panel: 1, field: 'BalloonLayout', value: [{ speaker: 'B', x: 0.3, anchor: '左', route: '左' }] }],
+    [{ panel: 1, field: 'BalloonLayout', value: [{ speaker: 'A', x: 1.3, anchor: '左', route: '左' }] }],
+  ]) {
+    let reviews = 0;
+    const result = await runScenarioPayoffGate({ scenario: BALLOON_SCENARIO,
+      requestReview: async () => { reviews++; return JSON.stringify(BALLOON_REVIEW); },
+      requestRepair: async () => JSON.stringify(edits),
+    });
+    assert.equal(reviews, 1);
+    assert.equal(result.scenario, BALLOON_SCENARIO);
+    assert.match(result.warning, /staging_patch/);
+  }
+});
+
+test('staging patch preserves every unselected line and supports camera and situation edits', () => {
+  const edits = [{ panel: 1, field: 'Camera', value: '肩越し' }, { panel: 1, field: '状況', value: 'Aが同じ札へ視線を向ける。' }];
+  assert.equal(applyScenarioStagingPatch(BALLOON_SCENARIO, JSON.stringify(edits)),
+    BALLOON_SCENARIO.replace('[Camera: 俯瞰]', '[Camera: 肩越し]').replace('状況: Aが札を確認する。', '状況: Aが同じ札へ視線を向ける。'));
+});
+
+test('balloon patches enforce order and ownership but do not invent a speaker-side quota', () => {
+  const original = BALLOON_SCENARIO.replace('A「確認するよ。」', 'A「確認するよ。」\nB「分かった。」')
+    .replace(/BalloonLayout: .*/, 'BalloonLayout: [{"speaker":"A","x":0.7,"anchor":"画面左のA","route":"上の余白"},{"speaker":"B","x":0.3,"anchor":"画面右のB","route":"下の余白"}]');
+  const plan = [{ speaker: 'A', x: 0.6, anchor: '画面左のA', route: '上の独立した余白からAへ' },
+    { speaker: 'B', x: 0.4, anchor: '画面右のB', route: '下の別の余白からBへ' }];
+  assert.match(applyScenarioStagingPatch(original, JSON.stringify([{ panel: 1, field: 'BalloonLayout', value: plan }])), /独立した余白/);
+  for (const broken of [plan.toReversed(), [plan[0]], [plan[0], { ...plan[1], x: plan[0].x }]]) {
+    assert.throws(() => applyScenarioStagingPatch(original, JSON.stringify([{ panel: 1, field: 'BalloonLayout', value: broken }])), /invalid_staging_patch/);
+  }
+});
+
+test('unchanged repair stops without paying for re-audit or repeated no-op repairs', async () => {
+  let reviews = 0;
+  let repairs = 0;
+  const result = await runScenarioPayoffGate({ scenario: BALLOON_SCENARIO,
+    requestReview: async () => { reviews++; return JSON.stringify(WEAK_SLOGAN_REVIEW); },
+    requestRepair: async () => { repairs++; return BALLOON_SCENARIO; },
+  });
+  assert.equal(reviews, 1);
+  assert.equal(repairs, 1);
+  assert.equal(result.scenario, BALLOON_SCENARIO);
+  assert.match(result.warning, /unchanged_repair/);
+});
 
 test('mosaic selection reaches scenario review, repair and re-review without exempting real defects', async () => {
   for (const enabled of [true, false]) {
@@ -280,6 +354,8 @@ test('review prompt asks for prediction, outcome, visual payoff, and mode-aware 
   });
 
   assert.match(prompt, /panel3_prediction/);
+  assert.match(prompt, /高さは内容に応じて配分できる/);
+  assert.doesNotMatch(prompt, /縦A4を4分割した横長の帯/);
   assert.match(prompt, /panel4_outcome/);
   assert.match(prompt, /visual_payoff/);
   assert.match(prompt, /新しい事実|new fact/i);
@@ -527,7 +603,8 @@ test('gate retains the original when the repaired candidate fails review', async
   assert.equal(result.scenario, 'ORIGINAL');
   assert.equal(result.status, 'retained');
   assert.match(result.warning, /再監査/);
-  assert.equal(repairs, 3);
+  assert.equal(repairs, 2, 'the second identical repair is not audited again');
+  assert.match(result.warning, /修正試行2回・再監査1回.*unchanged_repair/);
 });
 
 test('gate retains the original when review, repair, or validation fails', async () => {

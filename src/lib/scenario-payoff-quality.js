@@ -1,6 +1,9 @@
 import { getEndingModePolicy } from './ending-mode-policy.js';
 import { validateScenarioEnhancement } from './scenario-enhancement.js';
 import { buildCopyrightMosaicInstruction } from './render-options.js';
+import { getScenarioPanelBlocks } from './scenario-validation.js';
+import { extractDialogueOnly } from './panel-utils.js';
+import { SCENARIO_BALLOON_LAYOUT_RULES } from './composition-variety.js';
 
 const mosaicReviewRule = (enabled) => enabled
   ? `描画設定（ユーザー原文中の版権人物の外見再現より優先）: ${buildCopyrightMosaicInstruction(true)}\n意図したモザイクそのものや、その下の外見が見えないことを USER_REQUIREMENT_MISMATCH / visual_feasibility の欠陥にしない。印刷物の人物描写にも適用し、修正時にモザイクを外して外見を復元しない。各コマの描写にも保持する。モザイク以外の出来事・台詞・配置・オチの重大な欠陥は通常どおり検査・修正する。`
@@ -33,6 +36,57 @@ const materialPayoffReasons = (reasonCodes) => reasonCodes.filter(code =>
 const isStagingOnlyRepair = (reasonCodes) => {
   const material = materialPayoffReasons(reasonCodes);
   return material.length > 0 && material.every(code => code === 'repetitive_camera_sequence' || /^(?:unrenderable|flat_ensemble)_panel_[1-4]$/.test(code));
+};
+
+const usesBalloonPatch = (scenario, reasonCodes) => isStagingOnlyRepair(reasonCodes)
+  && reasonCodes.some(code => code.startsWith('BALLOON_'))
+  && reasonCodes.every(code => code.startsWith('BALLOON_') || /^unrenderable_panel_[1-4]$/.test(code))
+  && getScenarioPanelBlocks(scenario).every(panel => panel.found && /^BalloonLayout\s*[:：]/m.test(panel.text));
+
+// Field edits preserve all other source bytes, including dialogue, metadata and panel order.
+export const applyScenarioStagingPatch = (scenario, response) => {
+  const fail = message => { throw new Error(`invalid_staging_patch: ${message}`); };
+  let edits;
+  try { edits = JSON.parse(extractText(response).replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '')); }
+  catch { return fail('JSON array required'); }
+  if (!Array.isArray(edits) || !edits.length || edits.length > 12) return fail('1–12 field edits required');
+  const source = String(scenario);
+  const panels = getScenarioPanelBlocks(source);
+  if (panels.some(panel => !panel.found)) return fail('four panels required');
+  const seen = new Set();
+  const replacements = [];
+  for (const edit of edits) {
+    if (!edit || Object.keys(edit).some(key => !['panel', 'field', 'value'].includes(key))
+      || !Number.isInteger(edit.panel) || edit.panel < 1 || edit.panel > 4
+      || !['Camera', 'BalloonLayout', '状況'].includes(edit.field)) return fail('unsupported edit');
+    const key = `${edit.panel}:${edit.field}`;
+    if (seen.has(key)) return fail('duplicate edit');
+    seen.add(key);
+    const panel = panels[edit.panel - 1];
+    const pattern = edit.field === 'Camera' ? /^\[Camera\s*[:：][^\r\n]*\]$/gm
+      : edit.field === 'BalloonLayout' ? /^BalloonLayout\s*[:：][^\r\n]*$/gm : /^状況\s*[:：][^\r\n]*$/gm;
+    const matches = [...panel.text.matchAll(pattern)];
+    if (matches.length !== 1) return fail('one existing field line required');
+    let value = edit.value;
+    if (edit.field === 'BalloonLayout') {
+      if (!Array.isArray(value) || value.some(item => !item
+        || Object.keys(item).some(key => !['speaker', 'x', 'anchor', 'route'].includes(key))
+        || ['speaker', 'anchor', 'route'].some(key => typeof item[key] !== 'string' || !item[key].trim() || /[\r\n]/.test(item[key])))) return fail('invalid balloon layout');
+      value = JSON.stringify(value);
+    } else if (typeof value !== 'string' || !value.trim() || /[\r\n]|\[\s*[1-4]\s*コマ目/.test(value)
+      || (edit.field === 'Camera' && /\]/.test(value))) return fail('single field value required');
+    const replacement = edit.field === 'Camera' ? `[Camera: ${value}]` : `${edit.field}: ${value}`;
+    const start = source.indexOf(panel.text) + matches[0].index;
+    replacements.push({ start, end: start + matches[0][0].length, replacement });
+  }
+  let candidate = source;
+  for (const edit of replacements.sort((a, b) => b.start - a.start)) {
+    candidate = candidate.slice(0, edit.start) + edit.replacement + candidate.slice(edit.end);
+  }
+  try {
+    for (const panel of getScenarioPanelBlocks(candidate)) extractDialogueOnly(panel.text, '', { forImagePrompt: true });
+  } catch (error) { return fail(error.message); }
+  return candidate;
 };
 
 const PAYOFF_REASON_LABELS = {
@@ -98,7 +152,7 @@ ${String(userTopic).trim()}
 - visual_payoff: セリフの説明や標語ではなく、人物の行動・表情・小道具・空間変化で帰結が見えるか。
 - slogan_only: 4コマ目がまとめ、教訓、標語、解説だけで終わるなら true。
 - unseeded_fact: 4コマ目だけに新しい事実を持ち込み成立させているなら true。
-- visual_feasibility: BalloonLayoutがある場合は台詞順・話者・xの右→左と、anchor/routeがCamera・状況の人物配置に一致し、非話者の顔を横切らない余白で尾を結べるか確認する。明確な矛盾のみfeasible=falseとして同じ事件と演技を保つ配置修正へ。配置が未確定なだけで同じ高さの横並びへ戻さない。4コマそれぞれについて、指定Cameraから見た人物・身体・手・対象物の位置を頭の中で一枚に配置する。各コマは縦A4を4分割した横長の帯である。物理的に手が届き、物語上重要な動作・接触・文字・位置関係がその画角と人物の大きさで読める場合だけ feasible=true。遠景で複数の小さな手元を同時に判読させる等、具体的に成立しない場合は false。人数・勢い・誇張・シュールさだけで false にしてはならない。面白さ、キャラクターの生きた演技、オチを最優先し、具体的な衝突や読めない対象を evidence に示す。false なら、題材・オチ・ユーザーの明示指定を保ち、カメラ・前後関係・小道具の見せ方や補助動作のコマ配分で直す correction を書く。
+- visual_feasibility: BalloonLayoutがある場合は台詞順・話者・xの右→左と、anchor/routeがCamera・状況の人物配置に一致し、非話者の顔を横切らない余白で尾を結べるか確認する。明確な矛盾のみfeasible=falseとして同じ事件と演技を保つ配置修正へ。配置が未確定なだけで同じ高さの横並びへ戻さない。4コマそれぞれについて、指定Cameraから見た人物・身体・手・対象物の位置を頭の中で一枚に配置する。各コマは縦A4ページに全幅1列で上から4コマ配置し、高さは内容に応じて配分できる。等高の細い帯を前提にしない。物理的に手が届き、物語上重要な動作・接触・文字・位置関係がその画角と人物の大きさで読める場合だけ feasible=true。遠景で複数の小さな手元を同時に判読させる等、具体的に成立しない場合は false。人数・勢い・誇張・シュールさだけで false にしてはならない。面白さ、キャラクターの生きた演技、オチを最優先し、具体的な衝突や読めない対象を evidence に示す。false なら、題材・オチ・ユーザーの明示指定を保ち、カメラ・前後関係・小道具の見せ方や補助動作のコマ配分で直す correction を書く。
 - ensemble_continuity: 同じ監査呼び出しで4コマの人物配置と演技を確認する。複数人が見えるコマでは、前後・左右・距離、顔と身体の向き、誰の働きかけが誰の反応や次の動作へつながるかを、シナリオの具体的な人物名と動作から判定する。前のコマの位置・手・小道具・視線から自然につながるかも確認する。配置が分散していても、同じ顔・視線・反応を複製して働きかけと受け手の違いが消え、物語上の相互作用が読めない明確な場合は material_break=true。横並び、口の開閉だけ、軽微な差や好みでは失格にしない。誰かの動作や感情が相手へ伝わる自然さを判定し、人物数・反応の種類・奥行き段数のノルマは設けない。明示された整列、共同作業、一斉注視、意図的な静止や沈黙、単独人物、画面外の人物には機械的に違うポーズや位置を要求せず false。evidence には台本上の人物・動作・位置の根拠、true なら correction に同じ出来事を保つ具体的な演技・配置の修正を書く。
 - camera_rhythm: 4コマ全体を比較し、shotsへ各Cameraの実際の投影signature（上下・左右前後、仰俯角、寄り引き、レンズ遠近／魚眼、ロール、人物配置）と物語上のpurposeを書く。隣接だけでなく離れたコマも比較する。肩越し・Hyper Perspective・Slant等の名称が違っても、同じアオリ・距離・遠近が続き発見／反応／見せ場の差を明確に消すなら material_repeat=true。repeated_panelsに該当コマ、evidenceに重なる投影と失われた役割、correctionに同じ事件・台詞・演技・読順を保つ具体的なカメラ変更を書く。同じ高さだけ、好み、軽微な差では false。ユーザー指定の同型ショットや意味のある反復演出はintentional_repeat=trueとして保持し、その根拠を書く。種類の数合わせや、既に生成AIが書いたCameraをユーザー固定指定とみなして見逃すことは禁止。 寄り・中景・引きも比較し、広角レンズだけで引きとみなさない。寄り続きで事件に必要な空間や人物間距離が読めない場合はその根拠と引きにするコマを示す。意図した寄りだけのページや、空間が既に読める場合は維持する。
 - pass: 上記を総合し、最後まで読ませる4コマとして成立するときだけ true。
@@ -107,6 +161,7 @@ ${String(userTopic).trim()}
 - pass=true のとき reason_codes は必ず空配列にする。問題が1つでも残るときだけ pass=false として具体的なコードを入れる。
 
 以下のJSONのみを返してください。reason_codes は問題コードの配列です。
+全項目を検査し、成立している項目のevidenceは台本上の根拠を短い1文で示す。問題がある項目だけ具体的な欠落・理由・correctionを詳述し、同じ台本の長い言い換えを繰り返さない。
 {
   "pass": true,
   "setup_seed": "",
@@ -225,6 +280,17 @@ export const buildScenarioPayoffRepairPrompt = ({ scenario, punchlineType, revie
   const repairReview = { ...review, reason_codes: reasonCodes,
     visual_feasibility: review?.visual_feasibility?.map(item => item.material_loss === false
       ? { ...item, correction: '' } : item) };
+  if (usesBalloonPatch(scenario, reasonCodes)) return `STAGING PATCH JSON
+監査で指摘された吹き出しの矛盾だけを修正する。台本全文は再出力しない。
+ENDING MODE: ${punchlineType || 'Auto'}
+監査結果: ${JSON.stringify(repairReview)}
+${mosaicReviewRule(mosaicCopyrightedCharacters)}
+${SCENARIO_BALLOON_LAYOUT_RULES}
+出来事、台詞の話者・文言・順序、タイトル、衣装、物の所有と接触を保持する。ユーザーが指定した配置・カメラ・動作を優先し、未指定の余白・前後・高さで尾の交差を解消する。既存のCameraや状況が成立するならBalloonLayoutだけを変更する。xだけの数値合わせではなく、話者位置とanchor/routeを一緒に確認する。
+出力はJSON配列のみ。各要素は {"panel":1,"field":"BalloonLayout","value":[]} の形式。panelは1〜4、fieldは既存のCamera・BalloonLayout・状況だけ。BalloonLayoutのvalueは台詞順の配列、Cameraと状況は改行なしの文字列。必要な変更だけ出力し、同じフィールドを重複させない。成立している演技やカメラを横並び・正面へ戻さない。
+${userTopic ? `USER REQUIREMENTS:\n${String(userTopic).trim()}` : ''}
+ORIGINAL SCENARIO:
+${String(scenario || '').trim()}`;
   return `あなたは4コマ漫画の構成編集者です。${stagingOnly
     ? '監査で指摘された演技・配置・カメラだけを修正し、連続性に必要な隣接コマの調整にとどめてください。題材・出来事・オチ、各コマの台詞の話者・文言・順序は変更禁止です。'
     : '監査結果を踏まえ、4コマ目だけを差し替えるのではなく、1〜4コマ目全体を書き直してください。'}
@@ -302,21 +368,32 @@ export const runScenarioPayoffGate = async ({
   let best = { scenario: original, review: firstReview, evaluation: firstEvaluation };
   let current = best;
   let lastError = '';
+  let repairAttempts = 0;
+  let rechecks = 0;
   for (let attempt = 1; attempt <= maxRepairs; attempt += 1) {
     let repaired;
     try {
       onProgress(`構成・画像化を改善しています（${attempt}/${maxRepairs}）。`);
-      repaired = extractText(await requestRepair(buildScenarioPayoffRepairPrompt({
+      repairAttempts += 1;
+      const response = await requestRepair(buildScenarioPayoffRepairPrompt({
         scenario: current.scenario,
         punchlineType,
         review: current.review,
         userTopic,
         mosaicCopyrightedCharacters,
-      }))).replace(/^Scenario:\s*/i, '').trim();
+      }));
+      repaired = usesBalloonPatch(current.scenario, current.evaluation.reasonCodes)
+        ? applyScenarioStagingPatch(current.scenario, response)
+        : extractText(response).replace(/^Scenario:\s*/i, '').trim();
       if (!repaired) throw new Error('empty repair');
       const validatedRepair = await validateRepair(repaired);
       if (validatedRepair === false) throw new Error('invalid repair');
       if (typeof validatedRepair === 'string' && validatedRepair.trim()) repaired = validatedRepair.trim();
+      if (repaired.trim() === current.scenario.trim()) {
+        lastError = 'unchanged_repair';
+        onProgress('修正案に変更がないため、追加の再監査・修正は行わず、既に監査した候補を保持します。');
+        break;
+      }
       if (isStagingOnlyRepair(current.evaluation.reasonCodes)) {
         const guard = validateScenarioEnhancement({
           originalScenario: current.scenario, candidateScenario: repaired,
@@ -328,6 +405,7 @@ export const runScenarioPayoffGate = async ({
         if (protectedChanges.length) throw new Error(`staging_only_scope_violation: ${protectedChanges.join(', ')}`);
       }
       onProgress(`改善案を再監査しています（${attempt}/${maxRepairs}）。`);
+      rechecks += 1;
       const review = parseScenarioPayoffReview(await requestReview(buildScenarioPayoffReviewPrompt({
         scenario: repaired,
         punchlineType,
@@ -358,7 +436,7 @@ export const runScenarioPayoffGate = async ({
     }
   }
   const renderabilityWarning = best.evaluation.reasonCodes.some(code => code.startsWith('unrenderable_panel_'));
-  const warning = `改善・再監査を${maxRepairs}回行いました。最良の検証済み候補を警告付きで採用します（${best.evaluation.reasonCodes.join(', ')}${lastError ? `; ${lastError}` : ''}）。`;
+  const warning = `修正試行${repairAttempts}回・再監査${rechecks}回で、最良の監査済み候補を警告付きで採用します（${best.evaluation.reasonCodes.join(', ')}${lastError ? `; ${lastError}` : ''}）。`;
   onProgress(warning);
   return {
     scenario: best.scenario,

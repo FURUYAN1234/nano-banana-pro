@@ -19,6 +19,55 @@ import {
   applyBubbleInventory,
 } from '../src/lib/image-quality-qa.js';
 
+const tableQaArrays = value => {
+  if (Array.isArray(value)) {
+    const rows = value.map(tableQaArrays);
+    if (rows.length > 1 && rows.every(row => row && !Array.isArray(row) && typeof row === 'object')) {
+      const columns = Object.keys(rows[0]);
+      if (rows.every(row => Object.keys(row).join('|') === columns.join('|'))) {
+        return { $columns: columns, $rows: rows.map(row => columns.map(key => row[key])) };
+      }
+    }
+    return rows;
+  }
+  return value && typeof value === 'object'
+    ? Object.fromEntries(Object.entries(value).map(([key, item]) => [key, tableQaArrays(item)])) : value;
+};
+
+test('compact QA inventory tables preserve the same complete checks and material verdicts', () => {
+  const report = { pass: true, observations, spatial_checks: spatialChecks(), issues: [] };
+  const table = tableQaArrays(report);
+  assert.ok(JSON.stringify(table).length < JSON.stringify(report).length);
+  assert.deepEqual(parseImageQualityQaResponse(JSON.stringify(table)), parseImageQualityQaResponse(JSON.stringify(report)));
+  report.spatial_checks[1].object_geometry = { status: 'defect', evidence: 'Visible tray penetrates the wrist.' };
+  const result = parseImageQualityQaResponse(JSON.stringify(tableQaArrays(report)));
+  assert.ok(result.issues.some(issue => issue.type === 'object_geometry' && issue.panel === 2));
+});
+
+test('invalid or truncated QA table rows cannot become PASS or a paid repair', () => {
+  for (const table of [
+    { $columns: ['panel', 'panel'], $rows: [[1, 2]] },
+    { $columns: ['panel'], $rows: [[1, 2]] },
+    { $columns: ['panel', 'hand_geometry'], $rows: [[1]] },
+    { $columns: ['__proto__'], $rows: [[{}]] },
+    { $columns: ['panel'], $rows: [[1]], extra: true },
+  ]) {
+    const result = parseImageQualityQaResponse(JSON.stringify({ pass: true, observations, spatial_checks: table, issues: [] }));
+    assert.equal(result.pass, false);
+    assert.ok(result.issues.every(issue => issue.type === 'unverified'));
+  }
+  const truncated = parseImageQualityQaResponse(JSON.stringify(tableQaArrays({ pass: true, observations, spatial_checks: spatialChecks(), issues: [] })), { finishReason: 'length' });
+  assert.equal(truncated.pass, false);
+  assert.ok(truncated.issues.every(issue => issue.type === 'unverified'));
+});
+
+test('QA requests ordinary object arrays without a second table transport grammar', () => {
+  const prompt = buildImageQualityQaPrompt({ referenceImageCount: 2 });
+  assert.match(prompt, /Use ordinary JSON objects and arrays/);
+  assert.doesNotMatch(prompt, /Encode arrays.*\$columns/);
+  assert.match(prompt, /Never omit.*inventory|every.*inventory/s);
+});
+
 test('malformed QA reports only value-safe response shape and size without accepting an incomplete review', () => {
   const response = '{"private_text":"do not echo this"';
   const result = parseImageQualityQaResponse(response, { completionTokens: 8192 });
@@ -28,7 +77,8 @@ test('malformed QA reports only value-safe response shape and size without accep
   assert.doesNotMatch(result.issues[0].reason, /private_text|do not echo/);
   assert.match(parseImageQualityQaResponse('{"pass":"true","issues":[]}').issues[0].reason, /pass=string; issues=array/);
   const prompt = buildImageQualityQaPrompt({ finalPrompt: '## Panel 1\nCamera: low angle' });
-  assert.match(prompt, /under 4500 output tokens/);
+  assert.doesNotMatch(prompt, /under 4500 output tokens|evidence\/observed at most 60 characters/);
+  assert.match(prompt, /Complete required evidence takes priority over brevity/);
   assert.match(prompt, /Keep exact visible dialogue.*all required inventories, coordinates and dimensions/);
 });
 
@@ -72,7 +122,11 @@ test('camera QA requests every dimension required by its parser', () => {
 
 test('long-shot PASS needs measured subject scale and setting evidence, not a group-count label', () => {
   const finalPrompt = '## Panel 1\nCamera: high-angle long shot\nCAST COUNT: [A] each EXACTLY ONCE.';
-  const review = () => ({ pass: true, issues: [], observations, spatial_checks: spatialChecks() });
+  const review = () => {
+    const spatial = spatialChecks();
+    spatial[0].hand_geometry.actor_limb_inventory = [{ actor: 'A', visible_hands: [], evidence: 'Hands hidden by the counter.' }];
+    return { pass: true, issues: [], observations, spatial_checks: spatial };
+  };
   const labelOnly = review();
   labelOnly.spatial_checks[0].camera_geometry.dimensions.framing.observed = 'full group, long shot, continuous setting';
   const ungrounded = parseImageQualityQaResponse(JSON.stringify(labelOnly), { finalPrompt });
@@ -325,16 +379,16 @@ const spatialChecks = (count = 4) => Array.from({ length: count }, (_, index) =>
 const observations = { title: 'No title requested', dialogue: 'Panels 1-4 have no bubbles as requested', hands: 'No hand side requested', props: 'Paper held at its lower edge' };
 
 const stylePrompt = ['NORMAL', 'WATERCOLOR', 'GEKIGA', 'CHIBI_GAG'].map((style, index) =>
-  `## Panel ${index + 1}\nCamera: eye-level\n${style === 'NORMAL' ? '' : `PANEL STYLE LOCK: ${style};\nStyle: Draw this panel in ${style}.`}`).join('\n');
+  `## Panel ${index + 1}\nCamera: eye-level\nCAST COUNT: [foreground actor] each EXACTLY ONCE;\n${style === 'NORMAL' ? '' : `PANEL STYLE LOCK: ${style};\nStyle: Draw this panel in ${style}.`}`).join('\n');
 const styleReport = () => ({ pass: true, issues: [], observations, spatial_checks: spatialChecks().map((entry, index) => ({
-  ...entry, art_style: {
+  ...entry, hand_geometry: { ...entry.hand_geometry, actor_limb_inventory: [{ actor: 'foreground actor', visible_hands: [], evidence: 'Hands outside the frame.' }] }, art_style: {
     expected_style: ['NORMAL', 'WATERCOLOR', 'GEKIGA', 'CHIBI_GAG'][index],
     observed_style: ['NORMAL', 'WATERCOLOR', 'GEKIGA', 'CHIBI_GAG'][index],
     status: 'ok', material_impact: 'none',
     linework: { status: 'ok', location: 'foreground actor outline', observed: 'Variable brush contours around jaw and hair.' },
     coloring: { status: 'ok', location: 'foreground face and clothing', observed: 'Distinct lit planes and bounded shadow fills.' },
-    face: { status: 'ok', visibility: 'clear', subject: 'foreground actor', location: 'left foreground',
-      observed: 'Carved brow/nose/jaw; facial ink models cheek planes.', construction: 'realistic_planes', ink: 'modeled_ink' },
+    faces: [{ status: 'ok', visibility: 'clear', subject: 'foreground actor', location: 'left foreground',
+      observed: 'Carved brow/nose/jaw; facial ink models cheek planes.', construction: 'realistic_planes', ink: 'modeled_ink' }],
   },
 })) });
 
@@ -348,7 +402,9 @@ test('optional color style QA requires every selected panel observation and leav
   for (const finalPrompt of [`[ MONOCHROME THREE-TONE MANUSCRIPT LOCK ]\n${stylePrompt}`, '## Panel 1\nReference-sheet style only.']) {
     assert.equal(buildImageQualityQaPrompt({ finalPrompt, requirePanelStyleEvidence: true }), buildImageQualityQaPrompt({ finalPrompt }));
   }
-  const report = { pass: true, issues: [], observations, spatial_checks: spatialChecks() };
+  const report = { pass: true, issues: [], observations, spatial_checks: spatialChecks().map(entry => {
+    withHandInventory(entry, ['foreground actor']); return entry;
+  }) };
   assert.equal(parseImageQualityQaResponse(JSON.stringify(report), { finalPrompt: stylePrompt }).pass, true);
   const missing = parseImageQualityQaResponse(JSON.stringify(report), { finalPrompt: stylePrompt, requirePanelStyleEvidence: true });
   assert.equal(missing.pass, false);
@@ -360,7 +416,7 @@ test('grounded panel media can pass but normal anime faces cannot satisfy GEKIGA
   const report = styleReport();
   const parse = () => parseImageQualityQaResponse(JSON.stringify(report), { finalPrompt: stylePrompt, requirePanelStyleEvidence: true });
   assert.equal(parse().pass, true);
-  Object.assign(report.spatial_checks[2].art_style.face, { construction: 'anime_template', ink: 'flat',
+  Object.assign(report.spatial_checks[2].art_style.faces[0], { construction: 'anime_template', ink: 'flat',
     observed: 'Large flat anime eyes and dot nose; ink only on clothes.' });
   report.spatial_checks[2].art_style.material_impact = 'requested_medium_missing';
   report.spatial_checks[2].art_style.status = 'defect';
@@ -374,14 +430,141 @@ test('grounded panel media can pass but normal anime faces cannot satisfy GEKIGA
   assert.match(issue.styleEvidence.observed, /flat anime/);
 });
 
+test('a good primary gekiga face cannot conceal a clearly anime secondary face', () => {
+  for (const names of [['A', 'B'], ['B', 'A']]) {
+    const report = styleReport();
+    const style = report.spatial_checks[2].art_style;
+    style.faces = names.map(subject => ({ ...style.faces[0], subject }));
+    Object.assign(style.faces[1], { status: 'defect', construction: 'anime_template', ink: 'flat',
+      location: 'right visible face', observed: 'Flat anime nose and cheek without modeled ink planes.' });
+    style.status = 'defect'; style.material_impact = 'requested_medium_missing';
+    const finalPrompt = stylePrompt.replace('## Panel 3\nCamera: eye-level\nCAST COUNT: [foreground actor]', `## Panel 3\nCamera: eye-level\nCAST COUNT: [${names.join('], [')}]`);
+    const result = parseImageQualityQaResponse(JSON.stringify(report), { finalPrompt, requirePanelStyleEvidence: true });
+    assert.ok(result.issues.some(issue => issue.type === 'art_style' && issue.subject === names[1]));
+  }
+});
+
+test('fatal QA report format failures mark the request unusable', () => {
+  for (const text of ['broken JSON', '{"pass":true}', '{"pass":true,"issues":[],"spatial_checks":{"$columns":["panel"],"$rows":[[]]}}']) {
+    const review = parseImageQualityQaResponse(text);
+    assert.equal(review.requestFailed, true);
+    assert.equal(review.pass, false);
+    assert.ok(review.issues.every(issue => !isMaterialImageQualityIssue(issue)));
+  }
+});
+
+test('invalid QA table diagnostics identify structural cause without echoing cell values', () => {
+  const result = parseImageQualityQaResponse(JSON.stringify({ pass: true, issues: [], spatial_checks: {
+    $columns: ['panel', 'object_geometry'], $rows: [[1, 'private-cell-do-not-echo', 'extra-cell']],
+  } }));
+  assert.equal(result.requestFailed, true);
+  assert.match(result.issues[0].reason, /row 0 width=3; expected=2/);
+  assert.doesNotMatch(result.issues[0].reason, /private-cell|extra-cell/);
+});
+
+test('scale audit distinguishes incoherent miniature actors from valid distance or scripted stylization', () => {
+  const prompt = buildImageQualityQaPrompt({ referenceImageCount: 2 });
+  assert.match(prompt, /actor scale against occlusion and ground-plane depth/i);
+  assert.match(prompt, /valid distant actors, scripted size differences and chibi/i);
+  const bad = spatialChecks();
+  bad[1].object_geometry = { status: 'defect', evidence: 'Foreground adult overlaps the nearer torso but has one-quarter head scale with no supporting depth or scripted size change.' };
+  const result = parseImageQualityQaResponse(JSON.stringify({ pass: false, observations, spatial_checks: bad, issues: [] }));
+  assert.ok(result.issues.some(issue => issue.type === 'object_geometry' && issue.panel === 2));
+  const good = spatialChecks();
+  good[1].object_geometry = { status: 'ok', evidence: 'Smaller distant adults stand behind the foreground body with consistent ground plane and occlusion.' };
+  assert.ok(!parseImageQualityQaResponse(JSON.stringify({ pass: true, observations, spatial_checks: good, issues: [] })).issues.some(issue => issue.type === 'object_geometry'));
+});
+
+test('cast contracts accept emitted punctuation but never infer a roster from nearby prose', () => {
+  for (const suffix of ['; no duplicates.', '.']) {
+    assert.deepEqual(extractPanelCastContracts(`## Panel 1\nCAST COUNT: [A], [B] each EXACTLY ONCE${suffix}`),
+      [{ panel: 1, names: ['A', 'B'], replicaNames: [] }]);
+  }
+  for (const line of ['Action (visual only): [A] each EXACTLY ONCE.', 'CAST COUNT: [A] each EXACTLY ONCEISH.',
+    'CAST COUNT: [A] could appear.', 'ANTI-CLONE REMINDER: [A] is optional.']) {
+    assert.deepEqual(extractPanelCastContracts(`## Panel 1\n${line}`), []);
+  }
+});
+
+test('style coverage requires each named actor and preserves grounded hidden faces', () => {
+  const names = ['A', 'B'];
+  const finalPrompt = stylePrompt.replaceAll('[foreground actor]', '[A], [B]');
+  const makeReport = () => {
+    const report = styleReport();
+    for (const entry of report.spatial_checks) {
+      withHandInventory(entry, names);
+      entry.art_style.faces = names.map(subject => ({ ...entry.art_style.faces[0], subject }));
+    }
+    return report;
+  };
+  const parse = report => parseImageQualityQaResponse(JSON.stringify(report), { finalPrompt, requirePanelStyleEvidence: true });
+  assert.equal(parse(makeReport()).pass, true);
+  for (const mutate of [
+    faces => faces.pop(),
+    faces => faces.push({ ...faces[0] }),
+    faces => { faces[1].subject = 'unknown actor'; },
+    faces => { faces[1].observed = ''; },
+    faces => { faces[1].visibility = 'uncertain'; },
+  ]) {
+    const report = makeReport(); mutate(report.spatial_checks[2].art_style.faces);
+    const result = parse(report);
+    assert.equal(result.pass, false);
+    assert.equal(result.issues.some(isMaterialImageQualityIssue), false);
+  }
+  for (const visibility of ['hidden', 'back_view', 'too_small']) {
+    const report = makeReport();
+    Object.assign(report.spatial_checks[2].art_style.faces[1], { visibility, status: 'not_visible',
+      observed: 'Rear head behind the left shoulder; facial planes cannot be seen.' });
+    assert.equal(parse(report).pass, true, 'one unavailable face does not force reorientation when the other visible face is verified');
+    Object.assign(report.spatial_checks[2].art_style.faces[0], { visibility, status: 'not_visible' });
+    assert.equal(parse(report).pass, false, 'no observable face cannot certify facial rendering');
+  }
+  const legacy = makeReport();
+  for (const entry of legacy.spatial_checks) { entry.art_style.face = entry.art_style.faces[0]; delete entry.art_style.faces; }
+  assert.equal(parse(legacy).pass, false, 'one legacy focal face cannot certify a group');
+  const single = styleReport();
+  for (const entry of single.spatial_checks) { entry.art_style.face = entry.art_style.faces[0]; delete entry.art_style.faces; }
+  assert.equal(parseImageQualityQaResponse(JSON.stringify(single), { finalPrompt: stylePrompt, requirePanelStyleEvidence: true }).pass, true);
+});
+
+test('dense four-panel five-person QA tables preserve every expanded record and verdict', () => {
+  const names = ['A', 'B', 'C', 'D', 'E'];
+  const finalPrompt = stylePrompt.replaceAll('[foreground actor]', names.map(name => `[${name}]`).join(', '));
+  const report = styleReport();
+  for (const entry of report.spatial_checks) {
+    withHandInventory(entry, names);
+    entry.art_style.faces = names.map(subject => ({ ...entry.art_style.faces[0], subject }));
+    entry.cast_instances = names.map(name => ({ name, observed_count: 1, status: 'ok', instances: [
+      { location: `${name} foreground`, matched_features: ['hairstyle', 'eyewear'] },
+    ] }));
+    entry.identity_checks = names.map(name => ({ name, status: 'ok', evidence: `${name} retains hair and eyewear.` }));
+    entry.surface_text.visible_texts = [{ subject: 'card', text: '一日店長。', text_role: 'story_required', text_role_reason: 'requested sign' },
+      { subject: 'board', text: '当たり！', text_role: 'story_required', text_role_reason: 'requested board' }];
+    entry.bubble_speaker.bubbles = names.slice(0, 2).map((subject, index) => ({ id: `B${index + 1}`, speaker: subject,
+      text: index ? 'ありがとう！' : 'どうぞ。', x: index ? 0.25 : 0.75, y: 0.2, evidence: 'Visible balloon and mouth endpoint.' }));
+  }
+  const parse = value => parseImageQualityQaResponse(JSON.stringify(value), { finalPrompt, requirePanelStyleEvidence: true });
+  for (const defective of [false, true]) {
+    if (defective) {
+      const style = report.spatial_checks[2].art_style;
+      Object.assign(style.faces[4], { construction: 'anime_template', ink: 'flat', status: 'defect' });
+      style.status = 'defect'; style.material_impact = 'requested_medium_missing';
+    }
+    const regular = parse(report), compact = parse(tableQaArrays(report));
+    assert.deepEqual(compact, regular);
+    assert.deepEqual(compact.spatialChecks, report.spatial_checks);
+    assert.equal(compact.issues.some(issue => issue.type === 'art_style'), defective);
+  }
+});
+
 test('style uncertainty, hidden faces, minor differences and bare style labels cannot spend a repair', () => {
   for (const mutate of [
-    style => { delete style.face; },
-    style => { style.face.visibility = 'hidden'; style.face.status = 'not_visible'; },
-    style => { style.face.visibility = 'uncertain'; },
-    style => { style.face.construction = 'uncertain'; },
-    style => { style.face.observed = ''; },
-    style => { style.face.construction = 'anime_template'; style.material_impact = 'minor_variation'; },
+    style => { delete style.faces[0]; },
+    style => { style.faces[0].visibility = 'hidden'; style.faces[0].status = 'not_visible'; },
+    style => { style.faces[0].visibility = 'uncertain'; },
+    style => { style.faces[0].construction = 'uncertain'; },
+    style => { style.faces[0].observed = ''; },
+    style => { style.faces[0].construction = 'anime_template'; style.material_impact = 'minor_variation'; },
     style => { style.expected_style = 'NORMAL'; },
     style => { style.observed_style = 'NORMAL'; },
     style => { style.status = 'defect'; },
@@ -402,7 +585,7 @@ test('style uncertainty, hidden faces, minor differences and bare style labels c
     const style = conflicting.spatial_checks[2].art_style;
     style.status = status;
     style.material_impact = 'requested_medium_missing';
-    Object.assign(style.face, { construction: 'anime_template', ink: 'flat', status: 'defect',
+    Object.assign(style.faces[0], { construction: 'anime_template', ink: 'flat', status: 'defect',
       observed: 'Large flat anime eyes and dot nose; ink only on clothes.' });
     const conflict = parseImageQualityQaResponse(JSON.stringify(conflicting), { finalPrompt: stylePrompt, requirePanelStyleEvidence: true });
     assert.equal(conflict.pass, false);
@@ -418,7 +601,7 @@ test('style uncertainty, hidden faces, minor differences and bare style labels c
 test('style comparison uses visible medium evidence beyond GEKIGA and preserves allowed face construction', () => {
   const report = styleReport();
   const parse = () => parseImageQualityQaResponse(JSON.stringify(report), { finalPrompt: stylePrompt, requirePanelStyleEvidence: true });
-  Object.assign(report.spatial_checks[1].art_style.face, { construction: 'anime_template', ink: 'flat' });
+  Object.assign(report.spatial_checks[1].art_style.faces[0], { construction: 'anime_template', ink: 'flat' });
   assert.equal(parse().pass, true, 'watercolor need not reconstruct facial anatomy as GEKIGA');
   const watercolor = report.spatial_checks[1].art_style;
   watercolor.coloring = { status: 'defect', location: 'face and clothing', observed: 'Opaque flat cel fills; no transparent painted washes.' };
@@ -427,7 +610,7 @@ test('style comparison uses visible medium evidence beyond GEKIGA and preserves 
   const result = parse();
   assert.equal(result.pass, false);
   assert.equal(result.issues.find(issue => issue.type === 'art_style').styleEvidence.visibleRegion, 'coloring');
-  delete watercolor.face;
+  delete watercolor.faces[0];
   const partlyUnobserved = parse();
   assert.ok(partlyUnobserved.issues.some(issue => issue.type === 'art_style'), 'a missing face observation cannot hide a clear coloring defect');
   assert.ok(partlyUnobserved.issues.some(issue => issue.type === 'unverified'));

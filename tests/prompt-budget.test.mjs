@@ -173,7 +173,7 @@ test('soft Web target may be exceeded to retain critical content', () => {
   assert.match(prompt, /depth.of.field/i);
   assert.match(prompt, /retain setting\/depth|keep setting\/depth/);
   assert.doesNotMatch(prompt, /broad blank\/flat areas|not just blur/);
-  assert.match(prompt, /supporting cast smaller\/lower contrast|support smaller\/lower-contrast/);
+  assert.match(prompt, /supporting cast: lower visual emphasis, never miniature bodies|脇役縮小禁止/);
   assert.match(prompt, /exact hand pose\/contact\/gaze/);
   assert.match(prompt, /no stock-pose substitution/);
   assert.match(prompt, /SCENE LETTERING:.*(?:explicit|scripted).*exact/);

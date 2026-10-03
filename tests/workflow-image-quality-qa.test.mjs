@@ -7,6 +7,35 @@ import * as imageQualityQa from '../src/lib/image-quality-qa.js';
 const workflowSource = await readFile(new URL('../src/hooks/useMangaWorkflow.js', import.meta.url), 'utf8');
 const step4Source = await readFile(new URL('../src/components/Step4Panel.jsx', import.meta.url), 'utf8');
 
+test('a malformed primary QA report stops supplementary paid audits and keeps the image', async () => {
+  const callback = workflowSource.match(/const reviewImageCandidate = ([\s\S]+?);\r?\n\r?\n      const reviewCriticalCameraCandidate/)[1];
+  for (const text of ['not JSON', '{"pass":true,"issues":[],"spatial_checks":{"$columns":["panel"],"$rows":[[]]}}']) {
+    let requests = 0;
+    const requestOptions = [];
+    const context = {
+      ...imageQualityQa, qualityMode: 'four-panel', scenario: '', castList: '', images: [], isOpenAIEngine: true, colorMode: 'color',
+      inspectImageDimensions: async () => ({ width: 100, height: 400 }), getImageContentHash: async () => 'hash',
+      extractMangaPanelCrops: async () => ['one', 'two', 'three', 'four'],
+      buildImageQualityQaImageParts: () => [], buildImageQualityQaPrompt: () => 'primary',
+      callAI: async (_prompt, _images, _system, _log, options) => {
+        requests++; requestOptions.push(options);
+        return { text };
+      }, statCallback: () => {},
+    };
+    const reviewCandidate = new Function(...Object.keys(context), `let progressPhase; return (${callback});`)(...Object.values(context));
+    const candidate = { base64Img: 'image', mimeType: 'image/png' };
+    const originalPrompt = "## Panel 3\nEXPLICIT REAR CAMERA: camera is physically behind [Observer]'s shoulder; rear head/shoulder foreground.";
+    assert.equal(imageQualityQa.hasCriticalRearCameraContract(originalPrompt), true);
+    const result = await runImageQualityFailsafe({ originalCandidate: candidate, originalPrompt, reviewCandidate,
+      allowRepair: true, reviewCriticalCamera: async () => assert.fail('failed primary cannot spend camera audit'),
+      generateRepairCandidate: async () => assert.fail('malformed evidence cannot spend an image') });
+    assert.equal(requests, 1);
+    assert.deepEqual(requestOptions, [{ outputProfile: 'image-quality-review' }]);
+    assert.equal(result.candidate, candidate);
+    assert.equal(result.finalReview.requestFailed, true);
+  }
+});
+
 test('the actual independent camera workflow sends only the contract panel without another generation', async () => {
   const callback = workflowSource.match(/const reviewCriticalCameraCandidate = ([\s\S]+?);\r?\n\r?\n      const retainedImage/)[1];
   const finalPrompt = "## Panel 3\nEXPLICIT REAR CAMERA: camera is physically behind [Observer]'s shoulder; rear head/shoulder foreground.";

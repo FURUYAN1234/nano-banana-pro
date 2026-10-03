@@ -38,3 +38,7 @@ docs/onedrive_conflicts_20260417/
 
 # Generated PDF render proofs
 /tmp/
+
+# Python manual build cache
+__pycache__/
+*.pyc

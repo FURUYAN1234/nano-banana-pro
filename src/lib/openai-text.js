@@ -23,7 +23,12 @@ const OPENAI_TEXT_TIMEOUT_MS = 600_000;
 const usesReasoningModel = modelId => /^gpt-(?:6(?:\.\d+)?|5\.6)-/.test(modelId);
 // 推論と本文は同じ上限を消費する。旧モデルの本文用8K枠を推論モデルへ流用しない。
 // https://developers.openai.com/api/docs/guides/reasoning#allocating-space-for-reasoning
-const getTextOutputTokenLimit = modelId => usesReasoningModel(modelId) ? 32768 : 8192;
+const IMAGE_QA_OUTPUT_LIMITS = Object.freeze({ 'gpt-4.1': 32768, 'gpt-4.1-mini': 32768, 'gpt-4o': 16384 });
+const getTextOutputTokenLimit = (modelId, outputProfile) => {
+    if (outputProfile !== undefined && outputProfile !== 'image-quality-review') throw new TypeError('Unsupported output profile');
+    if (usesReasoningModel(modelId)) return 32768;
+    return outputProfile === 'image-quality-review' ? IMAGE_QA_OUTPUT_LIMITS[modelId] ?? 8192 : 8192;
+};
 
 const extractResponsesOutputText = (response) => (
     (response.output || [])
@@ -35,7 +40,7 @@ const extractResponsesOutputText = (response) => (
         .trim()
 );
 
-const readCompleteOpenAIText = (data, modelId, webSearch, onThinkingUpdate) => {
+const readCompleteOpenAIText = (data, modelId, webSearch, onThinkingUpdate, outputTokenLimit) => {
     const choice = data.choices?.[0];
     const finish = webSearch ? data.status : choice?.finish_reason;
     const reason = webSearch ? data.incomplete_details?.reason : null;
@@ -43,7 +48,7 @@ const readCompleteOpenAIText = (data, modelId, webSearch, onThinkingUpdate) => {
     const tokenCount = value => Number.isInteger(value) && value >= 0 ? value : 'unknown';
     const outputTokens = tokenCount(usage?.output_tokens ?? usage?.completion_tokens);
     const reasoningTokens = tokenCount(usage?.output_tokens_details?.reasoning_tokens ?? usage?.completion_tokens_details?.reasoning_tokens);
-    const diagnostics = sanitizeErrorMessage(`finish=${finish || 'unknown'}${reason ? `; reason=${reason}` : ''}; output_tokens=${outputTokens}; reasoning_tokens=${reasoningTokens}; limit=${getTextOutputTokenLimit(modelId)}`);
+    const diagnostics = sanitizeErrorMessage(`finish=${finish || 'unknown'}${reason ? `; reason=${reason}` : ''}; output_tokens=${outputTokens}; reasoning_tokens=${reasoningTokens}; limit=${outputTokenLimit}`);
     onThinkingUpdate?.(`> [RESPONSE] ${modelId}: ${diagnostics}`);
 
     const refusal = webSearch
@@ -80,7 +85,7 @@ const createRequestTiming = (modelId, onThinkingUpdate) => {
     };
 };
 
-const requestOpenAIWebSearch = async ({ modelId, prompt, systemInstruction, timeoutMs, apiKey, signal, onThinkingUpdate }) => {
+const requestOpenAIWebSearch = async ({ modelId, prompt, systemInstruction, timeoutMs, apiKey, signal, onThinkingUpdate, outputTokenLimit }) => {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
     const reportTiming = createRequestTiming(modelId, onThinkingUpdate);
@@ -102,7 +107,7 @@ const requestOpenAIWebSearch = async ({ modelId, prompt, systemInstruction, time
                 model: modelId,
                 input,
                 tools: [{ type: 'web_search' }],
-                max_output_tokens: getTextOutputTokenLimit(modelId)
+                max_output_tokens: outputTokenLimit
             }),
             signal: signal ? AbortSignal.any([signal, controller.signal]) : controller.signal
         });
@@ -110,7 +115,7 @@ const requestOpenAIWebSearch = async ({ modelId, prompt, systemInstruction, time
         const data = await readApiJson(response, {provider:'openai', model:modelId});
         reportTiming('本文受信完了', 'completed');
 
-        const text = readCompleteOpenAIText(data, modelId, true, onThinkingUpdate);
+        const text = readCompleteOpenAIText(data, modelId, true, onThinkingUpdate, outputTokenLimit);
         return { text, sources: openAISources(data), usage: data.usage };
     } catch (error) {
         if (signal?.aborted) throw createApiError('処理を中断しました。', {provider:'openai', model:modelId, code:'CANCELLED'});
@@ -124,7 +129,7 @@ const requestOpenAIWebSearch = async ({ modelId, prompt, systemInstruction, time
     }
 };
 
-export const requestOpenAIChatCompletion = async ({modelId, messages, apiKey, timeoutMs, signal, onThinkingUpdate}) => {
+export const requestOpenAIChatCompletion = async ({modelId, messages, apiKey, timeoutMs, signal, onThinkingUpdate, outputTokenLimit = getTextOutputTokenLimit(modelId)}) => {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
     const reportTiming = createRequestTiming(modelId, onThinkingUpdate);
@@ -138,8 +143,8 @@ export const requestOpenAIChatCompletion = async ({modelId, messages, apiKey, ti
                 model: modelId,
                 messages,
                 ...(usesModernChatParameters
-                    ? {max_completion_tokens: getTextOutputTokenLimit(modelId)}
-                    : {temperature: 0.7, max_tokens: getTextOutputTokenLimit(modelId)}),
+                    ? {max_completion_tokens: outputTokenLimit}
+                    : {temperature: 0.7, max_tokens: outputTokenLimit}),
             }),
             signal: signal ? AbortSignal.any([signal, controller.signal]) : controller.signal,
         });
@@ -195,6 +200,7 @@ export const callOpenAIText = async (prompt, images = null, systemInstruction = 
     let attemptIndex = 0;
     for (const modelId of MODEL_IDS) {
         if (options.signal?.aborted) throw createApiError('処理を中断しました。', {provider:'openai', model:modelId, code:'CANCELLED'});
+        const outputTokenLimit = getTextOutputTokenLimit(modelId, options.outputProfile);
         attemptIndex++;
         try {
             const usesModernChatParameters = usesReasoningModel(modelId);
@@ -206,7 +212,7 @@ export const callOpenAIText = async (prompt, images = null, systemInstruction = 
                     onThinkingUpdate(`> [API] 代替モデル ${modelId} で再解析を開始します... (${attemptIndex}/${MODEL_IDS.length})`);
                 }
                 onThinkingUpdate(`> [API] このモデルの応答待ち上限: ${timeoutMs / 1000}秒`);
-                onThinkingUpdate(`> [API] 出力上限: ${getTextOutputTokenLimit(modelId).toLocaleString()} tokens${usesModernChatParameters ? '（推論と本文の合計）' : ''}`);
+                onThinkingUpdate(`> [API] 出力上限: ${outputTokenLimit.toLocaleString()} tokens${usesModernChatParameters ? '（推論と本文の合計）' : ''}`);
             }
 
             if (useWebSearch) {
@@ -217,7 +223,8 @@ export const callOpenAIText = async (prompt, images = null, systemInstruction = 
                     timeoutMs,
                     apiKey,
                     signal: options.signal,
-                    onThinkingUpdate
+                    onThinkingUpdate,
+                    outputTokenLimit
                 });
                 if (onThinkingUpdate) onThinkingUpdate('> [API] OpenAI Web Searchでニュースを確認し、シナリオを生成しました。');
                 if (onThinkingUpdate) onThinkingUpdate(`> [MODEL] 最終採用モデル: ${modelId}`);
@@ -285,11 +292,11 @@ export const callOpenAIText = async (prompt, images = null, systemInstruction = 
                 content: userContent.length === 1 ? prompt : userContent
             });
 
-            const {data} = await requestOpenAIChatCompletion({modelId, messages, apiKey, timeoutMs, signal:options.signal, onThinkingUpdate});
+            const {data} = await requestOpenAIChatCompletion({modelId, messages, apiKey, timeoutMs, signal:options.signal, onThinkingUpdate, outputTokenLimit});
 
             const choice = data.choices?.[0];
 
-            const finalOutput = readCompleteOpenAIText(data, modelId, false, onThinkingUpdate);
+            const finalOutput = readCompleteOpenAIText(data, modelId, false, onThinkingUpdate, outputTokenLimit);
 
             if (onThinkingUpdate) onThinkingUpdate(`> [API] 応答の受信が完了しました。`);
             if (onThinkingUpdate) onThinkingUpdate(`> [MODEL] 最終採用モデル: ${modelId}`);

@@ -12,6 +12,18 @@ let MANGA_COMPOSITION_VARIETY_LOCK_COMPACT;
 let MANGA_GESTURE_VARIETY_LOCK;
 let cinematicCompositionMap;
 
+test('supporting actors retain physical scale and depth in both provider budgets', () => {
+  for (const providerFamily of ['chatgpt', 'gemini']) {
+    for (const promptMaxChars of [24000, 32000]) {
+      const prompt = buildMangaPrompt({ scenario: FOUR_PANEL_SCENARIO, castList: CAST_LIST, providerFamily, colorMode: 'color', promptMaxChars });
+      assert.match(prompt, /supporting cast: lower visual emphasis, never miniature bodies|脇役縮小禁止/i);
+      assert.match(prompt, /scale follows depth, occlusion and ground plane|遠近・遮蔽・接地に整合/i);
+      assert.match(prompt, /preserve scripted size differences and chibi|指定体格差・ちび保持/i);
+      assert.doesNotMatch(prompt, /supporting cast smaller\/lower contrast|support smaller\/lower-contrast/i);
+    }
+  }
+});
+
 test('unspecified rear staging never adds a head turn just to expose a face', () => {
   for (const compact of [false, true]) {
     const rear = getPanelCompositionAssist('[Camera: 俯瞰]', 3, { compact });

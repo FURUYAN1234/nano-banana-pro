@@ -1,4 +1,14 @@
-## Active: v6.8.0 max / focal depth / progress delivery — 2026-10-03
+## Current delivery — 2026-10-03 v6.8.1
+
+User authorized deployment, note/Facebook updates, X text in chat only, and full backup last. Materiality policy and focused 150 regression checks passed; all three PDF manuals and README reflect current functions, with current UI and API artwork. Canonical acceptance evidence and remaining delivery: [task record](docs/superpowers/plans/2026-10-03-step2-quality-budget-handoff.md).
+
+## Active: STEP2 / image QA — Astra implementation handoff, 2026-10-03
+
+- Latest implementation/API phase executed: user explicitly ordered bugfix, image regeneration and verification. New normal STEP3→STEP4 image completed190s (Sunburst/max2240×3168, one new image, auto repair OFF). User and independent visual review confirm stronger gekiga and corrected foreground-miniature/depth inconsistency. Preserve this image; no further confidence-only generation.
+- Single current record: [Implementation plan](docs/superpowers/plans/2026-10-03-step2-quality-budget-handoff.md), current-status section. All1,132 tests, lint/build pass. Shared scale constraints survive full/compact/Web output; ordinary JSON QA retains evidence without mandatory positional tables. Main QA completed10,878tokens without truncation; no four-panel hand supplements in this run.
+- Evidence/limits: output/step2-cost-api-20261003/scale-fixed-first.png (SHA2564F2480D3...87D6D8), scale-final-generation-prompt.txt, scale-final-step4-dom.txt, scale-fixed-result-ui.png. Feet remain outside the requested full-body crop; some hand/text/camera QA remains unverified. Improvement confirmation does not mean universal image QA PASS. Original conditional release, X Markdown only, note/Facebook and final backup remain unperformed.
+- Existing IAB: browser2/tab3/providerTabId1 at http://127.0.0.1:5173/, exactly1 tab with the new result. Current generation/QA/test sessions all ended; credentials retained, no reload/new tabs/key reads. The earlier approval rejection was resolved by the user's explicit regeneration instruction; do not ask again for the already completed same run.
+## Previous: v6.8.0 max / focal depth / progress delivery — 2026-10-03 (completed; root PLAN receipt is authoritative)
 
 - Current authority: implement and verify max default, include pending STEP2–4 final elapsed-time retention, retain the STEP2 progress frame after scenario completion; then official deploy/release, update existing note and Facebook, write X announcement Markdown only, and run official standalone full backup last. No direct X post, unrelated app edits, native Computer Use or extra paid generation.
 - Implementation: Sunburst/max when available (existing GPT Image 2/high availability fallback and manual choices preserved), independent A4-large size; STEP2 frame visible even when an externally pasted script has no execution log, without inventing completion; STEP2–4 elapsed time stays last and stale runs cannot overwrite newer work. Shared optional focal depth preserves scripted camera, acting and per-panel media; required text/deep focus may stay sharp.

@@ -1774,7 +1774,8 @@ export default function useMangaWorkflow() {
             qualityPrompt,
             qualityImageParts,
             null,
-            (msg) => statCallback(`[QUALITY QA] ${msg}`)
+            (msg) => statCallback(`[QUALITY QA] ${msg}`),
+            { outputProfile: 'image-quality-review' }
           );
           const nativeReview = review;
           review = parseImageQualityQaResponse(qualityResponse.text, {
@@ -1795,6 +1796,7 @@ export default function useMangaWorkflow() {
           onReviewProgress?.(review);
           const reviewTokens = qualityResponse.usage?.completion_tokens ?? qualityResponse.usage?.output_tokens;
           statCallback(`[QUALITY QA] 応答サイズ: ${String(qualityResponse.text ?? '').length.toLocaleString()}文字${Number.isFinite(reviewTokens) ? `・出力 ${reviewTokens.toLocaleString()} tokens` : ''}。`);
+          if (review.requestFailed) return review;
           const missingHandPanels = new Set(review.issues
             .filter(issue => issue.type === 'unverified' && issue.reason?.startsWith('Missing or incomplete per-actor visible-hand inventory'))
             .map(issue => issue.panel));

@@ -1,20 +1,33 @@
 # Super FURU AI 4-koma System / Super FURU AI 4コマシステム
 
-> Current source version: **v6.8.0** / 現在のソース版: **v6.8.0**
+> Current source version: **v6.8.1** / 現在のソース版: **v6.8.1**
+
+
+An experimental web application in which AI handles topic research, story structure, direction, prompt construction, image generation, and quality review for a four-panel manga. / AIが話題調査、構成、演出、プロンプト構築、画像生成、品質確認まで担当する4コマ漫画制作Webアプリです。
+
+[アプリを開く / Open the app](https://furuyan1234.github.io/nano-banana-pro/) · [全機能PDFマニュアル / Full manual](https://furuyan1234.github.io/nano-banana-pro/downloads/super-furu-ai-4koma-full-manual-2026-10-01.pdf)
+
+## Application screen and output / 操作画面と生成例
+
+| 操作画面 / Application | 生成例 / Generated manga |
+|---|---|
+| <img src="docs/manuals/assets/app-current.png" width="460" alt="v6.8.1の接続状態、キャラクター解析、シナリオ設定の画面"> | <img src="docs/manuals/assets/current-color-example.jpg" width="460" alt="APIで生成し目視確認した4コマ漫画。コマごとの演出、劇画表現と人物の遠近の例"> |
+
+左はv6.8.1の実画面、右はOpenAI API（GPT Image 2.5 Sunburst / max）で生成して確認した作例です。画風・人物の縮尺・台詞は画像を見て確認し、自動検査の未確認項目や軽微な見切れは注意事項として扱います。生成ごとに同じ品質を保証するものではありません。 / Actual application view and an inspected API-generated example. Review the rendered result as well as automated findings; outputs vary.
+
+## Visual direction and reading / 演出と読みやすさ
 
 描画オプション：STEP2の「版権キャラクターにモザイクをかける」と、STEP3の「ウオーターマークを表記する」は初期状態でONです。前者はシナリオ構築と最終画像プロンプトに「版権キャラクターにおおきなモザイクをかける」を追加し、後者をOFFにすると左右のフッターの描画指示を外します。OpenAI／GeminiのAPIとWeb用コピーに共通で反映します。設定変更後はモザイクならSTEP2、ウオーターマークならSTEP3から再作成してください。変更だけでAPIは実行されません。選択は全設定リセットまたは再読込まで保持します。生成済み画像には遡って反映されず、AIの対象判断・描画は実画像で確認してください。
 
 モザイク対象は台本のActionで実際に描く既存作品の人物描写です。参照キャラクターシートの存在、画風、外見の類似、同名だけを根拠にオリジナルの登場人物を隠しません。原文で本人への意図的なモザイクを指定した場合は、その対象・領域だけに適用します。最終画像で対象と非対象の両方を確認してください。OpenAIシナリオモデルの初期選択は開発版・公開版ともGPT-6.1 Solです。
 
-An experimental web application in which AI handles topic research, story structure, direction, prompt construction, image generation, and quality review for a four-panel manga. / AIが話題調査、構成、演出、プロンプト構築、画像生成、品質確認まで担当する4コマ漫画制作Webアプリです。
+Dialogue and page-layout safeguards / 台詞とコマ割り: Printable dialogue is kept separate from speaker routing metadata, with malformed quotes rejected before copying or API submission. Both provider prompts retain four full-width horizontal panels in one vertical column, including after long-prompt compaction. / 台詞本文と話者メタデータを分離し、括弧が壊れた本文はコピー・API送信前に拒否します。両provider・長文圧縮後も、横長4コマを縦1列に積む指定を保持します。台本や設定を変更したらSTEP3でプロンプトを再構築してください。生成AIの描画と画像QAには誤りが残り得るため、実画像の目視確認は必要です。
 
-Dialogue and page-layout safeguards / 台詞とコマ割り: Printable dialogue is kept separate from speaker routing metadata, with malformed quotes rejected before copying or API submission. Both provider prompts retain four full-width horizontal panels in one vertical column, including after long-prompt compaction. / 台詞本文と話者メタデータを分離し、括弧が壊れた本文はコピー・API送信前に拒否します。両provider・長文圧縮後も、横長4コマを縦1列に積む指定を保持します。保存済みの旧プロンプトはSTEP3から再構築してください。生成AIの描画と画像QAには誤りが残り得るため、実画像の目視確認は必要です。
-
-Quoted source text / 出典の引用: A quotation identified as wording from an article, document or other source remains part of the scene and is not assigned to a nearby character's speech bubble. A character explicitly speaking or reading aloud still gets a bubble. Rebuild STEP3 to apply this local fix to an existing scenario. / 記事・文書などの言葉として示された引用は状況描写に残し、近くの人物の吹き出しへ入れません。人物が実際に発話・音読する引用は台詞として保持します。既存のシナリオへの反映にはSTEP3を作り直してください。
+Quoted source text / 出典の引用: A quotation identified as wording from an article, document or other source remains part of the scene and is not assigned to a nearby character's speech bubble. A character explicitly speaking or reading aloud still gets a bubble. Rebuild STEP3 after changing the script. / 記事・文書などの言葉として示された引用は状況描写に残し、近くの人物の吹き出しへ入れません。人物が実際に発話・音読する引用は台詞として保持します。既存のシナリオへの反映にはSTEP3を作り直してください。
 
 Single-speaker balloon / 発話が一つのコマ: A lone balloon stays near its mapped speaker while the cast retains the scripted camera positions. A distant body with only a claimed tail connection remains unverified for visual inspection; it does not trigger image regeneration by itself. Rebuild STEP3 for an existing scenario, then inspect the rendered page before publishing. / 発話が一つならフキダシ本体を話者の近くに置き、人物のカメラ指定位置は保持します。本体が話者から大きく離れ、ヒゲ接続の申告だけがある場合は目視確認待ちとし、それだけで再生成しません。既存シナリオはSTEP3から作り直し、公開前に実画像を確認してください。
 
-Balloon planning / 吹き出しの配置設計: New STEP2 scenarios plan speaker positions, balloon space and tail routes together. When a layout is present, STEP3 checks speaker order, completeness and right-to-left placement before image submission. Existing scenarios without this field remain supported. Generated images still require visual review. / 新しいSTEP2では人物位置・吹き出しの余白・尾の経路を一緒に設計します。配置データがある場合、STEP3で話者順・記入漏れ・右から左の配置を検証してから画像へ進みます。従来形式のシナリオも使えます。生成画像の目視確認は引き続き必要です。
+Balloon planning / 吹き出しの配置設計: STEP2 scenarios plan speaker positions, balloon space and tail routes together. When a layout is present, STEP3 checks speaker order, completeness and right-to-left placement before image submission. Scenarios without layout metadata are supported. Generated images still require visual review. / STEP2では人物位置・吹き出しの余白・尾の経路を一緒に設計します。配置データがある場合、STEP3で話者順・記入漏れ・右から左の配置を検証してから画像へ進みます。配置データのないシナリオも使えます。生成画像の目視確認は引き続き必要です。
 
 Explicit camera fields / 明示カメラ指定: Both `[Camera: ...]` tags and standalone `Camera:` lines take precedence over fallback shots for either provider. / 角括弧タグと独立したカメラ指定行のどちらも、既定の画角より優先します。
 
@@ -113,6 +126,8 @@ The story routine is a constrained editor rather than a single request to “mak
 
 These are generation and review constraints, not guarantees. Provider image models can still miss anatomy, Japanese glyphs or exact staging, so the actual output remains the acceptance evidence. / これらは生成・検査条件であり、結果保証ではありません。画像モデルは人体、日本語文字、厳密な構図を誤る場合があるため、採否は実際の出力画像で確認します。
 
+STEP2 keeps the material story, acting and camera audit. For balloon-only defects it requests only existing BalloonLayout/Camera/situation field edits, validates their schema and speaker/order mapping locally, and re-audits the resulting scenario. Invalid edits retain the previous candidate; unchanged repairs stop without another audit. / STEP2は物語・演技・カメラの重大欠陥の監査を維持します。吹き出しだけの問題は既存のBalloonLayout・Camera・状況への差分だけを依頼し、書式・話者・読順をローカル検査してから修正後の台本を再監査します。不正な変更は前候補を保持し、無変更の修正案は追加監査せず停止します。処理時間の短縮や最終画像の正確さを保証するものではありません。
+
 ### Models used by the scenario routine / シナリオルーチンのモデル
 
 OpenAI reasoning models reserve up to 32,768 tokens for reasoning plus text; legacy models retain an 8,192-token text limit. These are ceilings, not fixed consumption. Both manual and news-search routes check completion before accepting text. A token-limit termination stops with its exact reason instead of treating it as an empty response, accepting a partial scenario, or cycling through other models. Logs show the finish status, output/reasoning usage and configured limit. Genuine completed empty responses retain the normal fallback route; scenario-quality review remains separate. / OpenAI推論モデルは推論＋本文の上限を32,768トークン、旧モデルは本文上限を8,192トークンに分けます。毎回その量を使う設定ではありません。自由入力・ニュース検索とも終了状態を確認してから本文を採用し、上限で途中終了した場合は理由を表示して停止します。空応答扱いでモデルを次々切り替えたり、途中のシナリオを成功扱いしたりしません。ログには終了状態・出力／推論使用量・設定上限を表示します。正常終了した本当の空応答のフォールバックと、シナリオ品質による修正は別に扱います。
@@ -203,6 +218,8 @@ The four primary actions for STEP1 through STEP4 use the same full-width light-b
 3. Select character-sheet images with the STEP1 button or drop them into its drop zone; multiple images can be added together or later. Optional 360-degree background images and style-setting JSON files can be loaded there too. / STEP1ボタンでキャラクター設定画像（キャラシート）を選ぶか、ドロップ領域へ読み込みます。複数枚は同時または後から追加でき、任意で360°背景画像や作風設定JSONも読み込めます。
 4. Run STEP2. While the scenario request is active, the app keeps its real progress or error log directly below the STEP2 button and hides the stale result, preview and STEP3. A completed scenario reveals those controls and highlights STEP3. / STEP2を実行します。シナリオ処理中はSTEP2ボタン直下の実際の進捗・エラーログだけを表示し、古い結果・プレビュー・STEP3を隠します。シナリオ完成後に各欄を表示し、次のSTEP3を案内します。
 
+Acceptance policy / 採用基準: Harmless, physically coherent differences with grounded impact evidence remain warnings; uncertain observations alone do not trigger paid image regeneration. Anatomically reversed hands, extra/missing limbs, incorrect dialogue or speakers, and broken cast/story structure remain repair targets. A foot outside the frame is advisory when the intended action and dramatic angle remain readable. Warning acceptance is not a claim that every detail was verified. / 物理的に自然で作品の理解や演技に影響しない違いは、根拠を添えて注意事項として採用します。判定不能だけでは有料の画像再生成を行いません。手の左右逆、手足の増減、台詞・話者・人数・物語の破綻は修正対象です。アオリや演技が成立する足先の見切れは注意事項とし、全項目を確認済みとは表示しません。
+
 When an automatic check or retry runs, the relevant STEP progress log reports the failed condition, why another inspection or correction is warranted, and the result. STEP2 shows scenario, composition and optional enhancement outcomes; STEP3 shows whether prompt-review suggestions were applied or the original was retained; STEP4 shows each image and critical-camera QA result, the reason for any repair, and candidate selection. STEP1 character analysis has no automatic reinspection loop. Unverified or minor findings alone do not trigger image regeneration. / 自動検査・再試行が動く場合、該当STEPの進捗窓に不合格条件、再検査・修正の理由、その結果を表示します。STEP2は台本・構成・任意の強化、STEP3は指示文の精査案の採否、STEP4は画像と重要なカメラ構図の各検査結果、修正理由、候補の採否を表示します。STEP1のキャラクター解析には自動再検査ループがありません。未確認や軽微な指摘だけで画像を再生成しません。
 
 STEP3 now names why a proposed edit was rejected and states clearly when none was applied. STEP4 lists concrete repair reasons before uncertain observations. A timed-out repair with no returned image is reported as retaining the original, without claiming a comparison. Repair prompts keep the approved script and each correction strategy/check, while omitting repeated diagnostic prose from the outset; oversized repair instructions retain the original image. A QA response cut off by its output limit remains unverified and cannot authorize image regeneration. / STEP3は精査案を見送った理由を示し、適用0件も明示します。STEP4は未確認事項より先に具体的な修正理由を表示します。修正画像のAPIがタイムアウトして画像を受信していない場合は、比較済みとせず元画像の保持を表示します。修正指示は台本と修正方法・確認方法を残し、診断文の重複を最初から省き、修正指示が長すぎる場合は元画像を保持します。検査応答が出力上限で途切れた場合は未確認とし、その応答から画像を再生成しません。
@@ -217,6 +234,8 @@ STEP3 keeps quoted article headings and document titles as scene text rather tha
 The app can also produce a prompt for manual use on the Gemini or ChatGPT website; a ChatGPT subscription does not include OpenAI API usage, and API billing is separate. / GeminiまたはChatGPTのWeb画面へ手動で貼り付けるプロンプトも作成できます。ChatGPTのサブスクリプションにOpenAI API利用料は含まれず、API課金は別です。
 
 Explicit shoulder-camera ownership survives clothing descriptions and Web-prompt compaction. When a generic shoulder-view camera names who is in the foreground or on the camera side, that person remains the foreground shoulder owner instead of being replaced by dialogue order. Low-angle cues preserve the scripted proportions; a chest-held document may be hidden by a rear-facing holder instead of appearing through their back. These are prompt constraints; the rendered result still needs visual review. / 肩越しカメラの人物指定は、衣装の修飾語やWeb用の短縮後も保持します。一般的な肩越し構図でも、手前・前景・カメラ側の人物が明記されている場合は、その人物を前景の肩として固定し、台詞順で別人へ置き換えません。アオリでも指定頭身を維持し、背面から見た人物が胸元に抱える書類は、背中を透けて見せず自然に隠してよいと指示します。これらは生成指示であり、描画結果は目視確認が必要です。
+
+Supporting actors keep physical scale consistent with depth, overlap and the ground plane, including after Web compaction. Lower visual emphasis does not mean miniature bodies. Real distance, scripted size differences and chibi remain allowed; image QA compares size with visible depth cues and leaves ambiguous depth unverified. / 脇役も遠近・重なり・地面に合う大きさを保ち、Web短縮後も目立ち方を抑えるためだけの小人化を指示しません。遠方の人物、台本で指定した身長差やちび表現は許容します。画像検査は縮尺と見える前後関係を照合し、判断できない奥行きは未確認とします。描画結果の保証ではありません。
 
 ### Run locally from the GitHub ZIP / GitHubのZIPからローカル起動（Windows）
 
@@ -266,7 +285,7 @@ Before Gemini image generation, internal bubble-routing tokens such as numbered 
 
 複数台詞でも吹き出し本体の座標は固定せず、右から左への順序を保ちながら指定話者の近くへ配置し、ヒゲの通路を同時に確保します。画面内の人物を含む別人へヒゲを接続しません。 / Balloon bodies may move toward their mapped speakers while preserving right-to-left order and the scripted camera/action; clear tail routes are planned together, never reassigned to nearby non-speakers or screen figures.
 
-Web貼り付けとAPIで共通の元プロンプトに、B番号に対応する話者を保持します。複数の吹き出しは話者の位置と切り離して `RIGHTMOST` / `LEFT OF Bn` / `LEFTMOST` の順序を固定し、単独の吹き出しは話者側の空きへ置いて、頭・顔・髪・文字を横切らない最短のしっぽを指定話者へ接続します。案内板・画面・メニューなどの列挙文字を人物が読むト書きは作中面の文字として保持し、明示された発話だけを吹き出しへ入れます。Web短縮でも話者、順序、しっぽの接続先を削りません。古いプロンプトはSTEP3で再構築してください。ト書きの短縮名・背景集団からの人数制約と、編集済みの結末・自由記述の人物特徴も反映します。 / The shared API and Web prompt retains each B-number-to-speaker mapping. Multiple bubbles keep their explicit `RIGHTMOST` / `LEFT OF Bn` / `LEFTMOST` order independently of speaker position; a single bubble instead uses clear space on its speaker's side and the shortest tail route that avoids heads, faces, hair and text. Enumerated copy that a character reads from a board, screen, menu or similar surface stays on that in-scene surface; only explicit speech enters a bubble. Web compaction preserves the speaker, order and tail endpoint.
+Web貼り付けとAPIで共通の元プロンプトに、B番号に対応する話者を保持します。複数の吹き出しは話者の位置と切り離して `RIGHTMOST` / `LEFT OF Bn` / `LEFTMOST` の順序を固定し、単独の吹き出しは話者側の空きへ置いて、頭・顔・髪・文字を横切らない最短のしっぽを指定話者へ接続します。案内板・画面・メニューなどの列挙文字を人物が読むト書きは作中面の文字として保持し、明示された発話だけを吹き出しへ入れます。Web短縮でも話者、順序、しっぽの接続先を削りません。台本や設定を変更したらSTEP3で再構築してください。ト書きの短縮名・背景集団からの人数制約と、編集済みの結末・自由記述の人物特徴も反映します。 / The shared API and Web prompt retains each B-number-to-speaker mapping. Multiple bubbles keep their explicit `RIGHTMOST` / `LEFT OF Bn` / `LEFTMOST` order independently of speaker position; a single bubble instead uses clear space on its speaker's side and the shortest tail route that avoids heads, faces, hair and text. Enumerated copy that a character reads from a board, screen, menu or similar surface stays on that in-scene surface; only explicit speech enters a bubble. Web compaction preserves the speaker, order and tail endpoint.
 
 Page proportions use one A4 manga-manuscript contract: 210:297 (width:height, approximately 1:1.414). Standard output is 1120×1584 with a 103px title band, one undivided 1446px four-panel block, and a compact 35px footer; the large API tier is 2240×3168 with every value doubled. Individual panel heights remain content-driven because the panel block is moved and scaled as one bitmap; the app never slices its four panels or replaces the model-rendered extra-bold condensed Japanese Gothic title. If the generated title is enclosed by an aligned rectangular rule, normalization removes that surrounding rule while retaining the rendered title glyphs. Every new or edited API result is checked before display. An already-correct A4 result passes through without canvas re-encoding; only an off-ratio image is reconstructed on the A4 canvas. If band detection is ambiguous, the complete source is contained without cropping. A manual ratio action remains only as a recovery tool for legacy or externally supplied images without verified layout metadata. Both credit lines are restricted to the outer footer and must not be duplicated inside story panels or on in-scene pages. / ページ配分は210:297（横:縦、約1:1.414）のA4漫画原稿契約だけを使用します。標準は1120×1584（タイトル103px、分割しない4コマ全体1446px、フッター35px、左右7px）、大サイズは2240×3168で全値を2倍します。4コマ全体を1枚のビットマップとして移動・拡縮するため、各コマの高さは内容に応じた比率を維持し、個別コマの切断やモデルが描いた極太・長体の日本語ゴシックタイトルの置換は行いません。新規生成・追加修正のAPI結果は表示前に比率を確認し、A4比率が正しければCanvasで再処理せず、ずれた画像だけA4へ自動再配置します。領域検出が曖昧でも元画像全体を切らずに収めます。手動の比率補正は、確認済みレイアウト情報を持たない旧画像・外部画像の救済用としてだけ残します。ウオーターマークがONの場合、クレジット2行は外側フッターだけに1回ずつ置き、コマ内や作中原稿へ複製しないよう指示します。
 
@@ -275,6 +294,10 @@ On the API path, a separate image-transcription pass that receives neither the s
 If the image API rejects a prompt under its content policy, STEP4 internally analyzes and softens the rejected wording, then retries image generation up to five times and stops on the first success. Each retry uses both the text API and image API and may incur charges. The app retains the last successful displayed image, image history, original prompt and repaired prompt sequence. Only after the internal limit is exhausted does it show controls to run another bounded cycle or switch to the provider's Web interface. / 画像APIがコンテンツポリシーで拒否した場合、STEP4は拒否表現を内部で解析して安全な言葉へ修正し、最初に成功するまで画像生成を最大5回再試行します。各試行では文章APIと画像APIを使用し、料金が発生する場合があります。最後に成功した表示画像と画像履歴、元プロンプト、各修正版の順序を保持します。内部上限まで失敗した場合だけ、もう一度上限付きで試す操作とWeb版へ切り替える操作を表示します。
 
 ## Prompt and image safeguards / プロンプトと画像の確認
+
+Visual QA requests ordinary JSON objects and arrays, retaining actors, hands, text, coordinates and checks instead of imposing a second positional table format. Compatible older table responses are still validated and expanded; malformed reports and output-limit termination remain unverified and cannot authorize image repair. Required evidence takes priority over a fixed brevity target. QA reads cast contracts from both compact and full provider prompts. This does not guarantee that every API review fits its output limit. / 画像QAは通常のJSON形式で回答を求め、人物・手・文字・座標・検査項目を保持します。位置依存の表形式への変換を追加要求しません。以前の表形式の回答も検証・展開できますが、不正な回答や出力上限での終了は未確認として扱い、画像修正の根拠にはしません。固定の短文化目標より必須の根拠を優先し、短縮版・通常版のプロンプト双方から人物一覧を読み取ります。すべてのAPI検査が上限内に収まる保証ではありません。
+
+Primary OpenAI image QA has its own output allowance (GPT-4.1/mini: 32,768 tokens; GPT-4o: 16,384); ordinary text and STEP2 limits are unchanged. Truncated or malformed primary reports stop supplementary paid audits and keep the image. Color panel-style QA checks every named, readable face, rather than certifying a group from one successful face; located hidden/rear/tiny faces do not force a new pose or a paid repair. Hand instructions retain each actor's scripted actions and the shared two-hand constraint without inferring that different actors' gestures belong to one person. / OpenAIの主画像QAには専用の回答枠を設けます（GPT-4.1/mini:32,768トークン、GPT-4o:16,384）。通常テキストとSTEP2の上限は変えません。主検査の切断・不正な回答時は補助の有料検査を止め、元画像を保持します。カラーのコマ別画風検査は代表１人だけでなく、判読できる各人物の顔を確認します。根拠のある後ろ姿・遮蔽・小さすぎる顔のために、ポーズ変更や有料修正を要求しません。手の指示は各人物の動作と共通の２本制約を保持し、別人物の動作を一人のものと誤認して削除しません。
 
 The prompt preserves explicit cast, dialogue, props, action, camera direction, and quiet beats while allowing variation in camera height, tilt, depth, and body acting. / 明示した登場人物、台詞、小物、動作、カメラ方向、静かな間を保持しながら、カメラの高低・傾き・奥行き・身体演技に変化を付けます。
 
@@ -288,7 +311,7 @@ Four-panel prompts protect cast count and identity, glasses, the approved outfit
 
 Explicit abstract beats may omit scenery to contrast with detailed setting shots, while preserving story props and contacts. Deformation follows the selected panel style and never overrides a locked reference style or normal proportions. Necessary reactions remain readable even in supporting characters; individual gaze, weight and hand roles vary while scripted synchronized actions remain intact. These exceptions also survive prompt compaction. / 意図的な抽象コマでは背景を大胆に省略し、描き込むコマとの落差を作れます。必要な小道具と接触は保持します。デフォルメは選択されたコマの画風に従い、参照画風固定や通常頭身の指定を上書きしません。脇役でも必要な反応は読めるようにし、視線・重心・手の役割を描き分けます。指定された一斉動作は保ち、短縮後の指示にもこれらの条件を残します。
 
-The current illustrated manual covers v6.8.0, including local ZIP launch and current generation behavior. Existing interface captures are labeled v6.7.8. The separate OpenAI API beginner guide retains its 2026-09-30 account setup instructions and older interface examples; use the full application manual for current app operations. To switch providers, save needed images and text, use the existing settings-clear action, then connect again. / 全機能PDFはv6.8.0のローカル起動・生成動作に対応しています。既存画面写真はv6.7.8撮影と明記しています。別冊OpenAI API初心者ガイドは2026-09-30時点のアカウント設定手順と旧画面例を保持し、現行アプリの操作は全機能PDFで案内します。API接続先を変えるときは必要な画像と文章を保存し、従来の「設定クリア」から再接続してください。
+The illustrated manuals cover the current application: API setup, local ZIP launch, STEP1–4, model selection, image review and repair, Web prompting, saving, automation and video support. To switch providers, save needed images and text, clear settings and reconnect. / 図入りマニュアルは現行アプリのAPI準備、ローカル起動、STEP1～4、モデル選択、品質検査・修正、Web貼り付け、保存、全自動運転、動画化支援を説明します。接続先変更時は必要な画像・文章を保存し、設定クリアから再接続します。
 
 The illustrated Gemini monochrome example uses one additional image edit to remove residual color and align clothing; the color example uses normal generation. These examples do not guarantee identical results on every run. Review color, clothing, dialogue and style, and use the existing additional-instruction field when needed. / 掲載したGemini白黒例は、初回出力に残った色と衣装の違いを追加指示で修正した画像です。カラー例は通常の画像生成です。毎回の同一結果を保証するものではなく、色・衣装・台詞・絵柄を確認し、必要な箇所は画像下の追加指示で修正します。
 
@@ -346,7 +369,7 @@ The copied prompt guides panel order, cast, speaker assignment, acting, camera, 
 The app provides separate download buttons for the workflow JSON and the custom-node ZIP. Both files are needed for this route. / アプリにはワークフローJSONとカスタムノードZIPのダウンロードボタンが別々にあります。この経路では両方のファイルが必要です。
 
 - [Download workflow JSON](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261002-071924.json) / [ワークフローJSONをダウンロード](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261002-071924.json)
-- [Download custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.8.0/ComfyUI_H3_FourPanel_NonLM_20261002-071924_authfix1.zip) / [カスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.8.0/ComfyUI_H3_FourPanel_NonLM_20261002-071924_authfix1.zip)
+- [Download custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.8.1/ComfyUI_H3_FourPanel_NonLM_20261002-071924_authfix1.zip) / [カスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.8.1/ComfyUI_H3_FourPanel_NonLM_20261002-071924_authfix1.zip)
 
 Place the ZIP's `3フォルダ` under `ComfyUI/custom_nodes/` and the workflow JSON under `ComfyUI/user/default/workflows/`. Install the separate dependencies below, then restart ComfyUI. / ZIP内の`3フォルダ`を`ComfyUI/custom_nodes/`へ、ワークフローJSONを`ComfyUI/user/default/workflows/`以下へ配置します。下記の別途必要な依存関係を導入してからComfyUIを再起動します。
 
@@ -358,7 +381,7 @@ Dialogue starts at five seconds and only lines that need more time extend up to 
 
 The workflow generates and checks each segment, comparing up to five candidates including the first. It moves on as soon as one passes; if none passes, it retains the best inspected candidate for review. A retained candidate is not necessarily a full QA pass. / ワークフローは区間ごとに生成・検査し、初回込み最大5候補を比較します。途中で合格すれば直ちに次へ進み、全候補が不合格なら検査上の最良候補を確認用に保持します。採用済みでも全検査合格とは限りません。
 
-The current `20261002-071924_authfix1` package retains the supplied 28-node workflow and fixes model selection at the authentication boundary. It has no separate BGM composition/mixing stage. The bundled generation report remains `quality_status: needs_review`; review the actual dialogue and video. This release preparation did not rerun ComfyUI video generation or validate another PC. See the bundled validation and reproduction documents for the distinction between original results and this authentication correction. / 現行の `20261002-071924_authfix1` 配布は、提供された28ノードのワークフローを保持してモデル選択と認証受付の不整合を修正したものです。独立したBGM作曲・合成工程はありません。同梱の生成記録は `quality_status: needs_review` のため、台詞と動画を確認してください。今回の配布準備ではComfyUI動画再生成・別PC実行は行っていません。元の実行結果と今回の認証修正の検証範囲は、同梱の検証記録と再現手順で区別しています。
+The `20261002-071924_authfix1` package contains the 28-node workflow and companion custom nodes. There is no separate BGM composition/mixing stage. Follow the bundled environment and setup requirements; inspect the dialogue and video produced in your environment. / `20261002-071924_authfix1` 配布には28ノードのワークフローと対応カスタムノードを含みます。独立したBGM作曲・合成工程はありません。同梱の環境要件・導入手順に従い、実行した台詞・映像・音声を確認してください。
 
 ## Package licenses and privacy / 配布ライセンスと個人情報
 
@@ -390,11 +413,14 @@ The production application is published from the `main` branch through the repos
 
 **Why are there two ComfyUI download buttons? / ComfyUIのダウンロードボタンが2つあるのはなぜですか？**  The JSON defines the workflow, while the ZIP supplies three custom-node folders and documentation; three additional runtime dependencies are installed separately. / JSONはワークフロー定義、ZIPはカスタムノード3フォルダーと導入文書です。さらに実行依存3項目を別途導入します。
 
-**Where are older packages? / 旧版はどこですか？** Older source tags remain available. For a new installation, use the `20261002-071924` JSON and matching v6.8.0 FourPanel Release asset (`authfix1` ZIP). Review the bundled validation limits before use. / 旧タグは履歴として残します。新規導入は `20261002-071924` のJSONと対応するv6.8.0 FourPanel Releaseアセット（`authfix1` ZIP）を使用し、同梱の検証範囲を確認してください。
+**Which video package should I install? / 動画化には何を入れますか？** Use the `20261002-071924` workflow JSON and matching FourPanel Release asset (`authfix1` ZIP). Follow the bundled environment and validation instructions. / `20261002-071924` のワークフローJSONと対応するFourPanel Releaseアセット（`authfix1` ZIP）を使い、同梱の環境要件と確認手順に従ってください。
 
 **Is this the T2V/I2V/Ref2V repository? / T2V・I2V・Ref2Vのリポジトリですか？**  No. Those workflows are maintained separately in [comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows). / いいえ。それらは別の[comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows)で管理します。
 
 ## 📋 ChangeLog
+
+### v6.8.1 (2026-10-03)
+- **[Fix & UX]** 品質検査の出力不足と無駄な再監査を修正。軽微な差異は注意事項として保持し、重大な人体破綻は修正対象を維持。劇画の人物別確認と遠近に沿う縮尺を改善。 / Fix incomplete quality reports and unnecessary re-audits; retain harmless differences as warnings while preserving material anatomy checks, per-character style evidence and depth-consistent scale.
 
 ### v6.8.0 (2026-10-03)
 - **[Fix & UX]** 画像生成をSunburst/max既定に変更。STEP2の進捗枠とSTEP2〜4の終了時間を保持し、カメラ・画風を保つ条件付き焦点表現を調整。 / Default image generation to Sunburst/max, retain the STEP2 progress frame and STEP2–4 completion times, and refine conditional focal depth while preserving camera and panel media.
