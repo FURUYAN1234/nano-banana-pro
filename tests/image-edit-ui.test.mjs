@@ -42,6 +42,14 @@ const renderStep4 = props => renderToStaticMarkup(React.createElement(Step4Panel
   isGeneratingImage: true, ...props,
 }));
 
+test('completed STEP4 keeps its elapsed time last even after a post-generation status message', () => {
+  const html = renderStep4({ isGeneratingImage: false,
+    genLog: ['[WAIT] STEP4終了（合計133秒）', '[POLICY AUTO-FIX] 処理結果'],
+  });
+  assert.ok(html.indexOf('STEP4終了（合計133秒）') > html.indexOf('[POLICY AUTO-FIX] 処理結果'));
+  assert.equal(html.split('STEP4終了（合計133秒）').length - 1, 1);
+});
+
 test('an existing image remains visible and downloadable during QA while image edits stay locked', () => {
   const html = renderStep4({ generatedImage: 'data:image/png;base64,YQ==' });
   const result = html.slice(html.lastIndexOf('<section'));

@@ -1,4 +1,17 @@
-## Active: STEP2・STEP3・OpenAIカラー・STEP4の修復 — 2026-10-02
+## Active: v6.8.0 max / focal depth / progress delivery — 2026-10-03
+
+- Current authority: implement and verify max default, include pending STEP2–4 final elapsed-time retention, retain the STEP2 progress frame after scenario completion; then official deploy/release, update existing note and Facebook, write X announcement Markdown only, and run official standalone full backup last. No direct X post, unrelated app edits, native Computer Use or extra paid generation.
+- Implementation: Sunburst/max when available (existing GPT Image 2/high availability fallback and manual choices preserved), independent A4-large size; STEP2 frame visible even when an externally pasted script has no execution log, without inventing completion; STEP2–4 elapsed time stays last and stale runs cannot overwrite newer work. Shared optional focal depth preserves scripted camera, acting and per-panel media; required text/deep focus may stay sharp.
+- Live evidence: native IAB browser5/tab5 on localhost; accepted onsen sample generated through normal STEP3 gpt-4.1 and STEP4 Sunburst/max 2240×3168, automatic repair OFF, 172 seconds. Visible normal/watercolor/gekiga/chibi separation, acting, moderate G-pen and required 900-yen lettering confirmed. P4 rear-camera drift and QA evidence warnings remain; this is not universal camera/quality proof. PNG, prompt TXT and production JSON exported before version update; safe inputs and screenshots retained under ignored output/focal-depth-api-20261003. Version HMR reset the UI; no key value inspected or saved.
+- Verification: related45 tests pass, lint and diff check pass; full-suite initial failures were old default-quality expectation, release link and stale document audit. Those are updated before the final release gate. New STEP2 empty-frame regression failed before the fix and passes after; real completed-log behavior also passes. PDFs regenerated for v6.8.0 and all44 pages visually reviewed; unchanged dated OpenAI account guide retained.
+- Delivery remains pending: final full tests/build/preflight, official publisher without full-backup switch, note/Facebook readback with friends exclusions, X Markdown exception, official full backup and independent hash/parity/lock verification. Preserve other root tasks and local user-owned tabs.
+## 次回更新待ち: 進捗窓内の終了時間保持 — 2026-10-02
+
+- ユーザー指定: STEP2〜4の時間を処理終了後も進捗窓内の最終行に残す。今回はローカル修正のみ、次回更新に含める。公開・追加API生成・バックアップは実施しない。
+- 実装: 既存の終了処理で待機中表示を最終所要時間へ置換。STEP3/4の即時終了とエラー終了でも時間を残し、旧実行の終了処理は新実行へ干渉しない。STEP4の補足ログ追加後も時間を末尾に表示。プロンプト・画風・API上限は変更なし。
+- 検証: 関連45テストと対象ESLint成功。実コンポーネントの固定値プレビューでSTEP2/3/4の表示確認済み（実API計測ではない）。画像: scratch/step-completion-time/verified.png。README追記済み。次回の正式更新時にこのローカル差分を含める。
+
+## 以前の修復・公開準備記録: STEP2・STEP3・OpenAIカラー・STEP4 — 2026-10-02
 
 - v6.7.9公開準備: 最終カラーPNG SHA256 `0c4a4c60c49ecd557f34bb20a3b13b386aba99bdc6aa105b3008e365e18167c6`。H3原ZIPの24選択モデル/5認証モデル不整合を検出し、原版を保持したauthfix1を作成。選択設定を正本に認証を解決し、個別/一括48経路と未知値拒否・Provider分離・非永続化を回帰確認。配布SHA256 `341487084ffc48f14569609c36557d77b4770a052b70f2323488dc0604e6d7f0`。JSONは原版と同一。動画実走/別PCは今回未実施、同梱needs_reviewを保持。全機能32頁＋Gemini12頁を更新し全44頁目視。READMEにGitHub ZIPからNode/npm/start_app.bat起動を追加。版番号反映で開発画面は再読込・未接続になったが、検証画像/指示文/ログは事前保存済み。追加生成不要。次は全回帰/文書監査・正式公開→note/X/FB→フルバックアップ。
 - 現在の承認/納品境界（後続の旧ローカル限定記述を更新）: 最後のカラー通常生成で描き分けを確認したら、指定H3 ZIPをボタンへ割当、正式デプロイ、PDF/README/マニュアル/noteへGitHub ZIP→解凍→start_app.batのローカル起動方法を追記、note/X/Facebook更新、最後に正式フルバックアップ。対象nano-banana-pro、候補v6.7.9。既存画風ロジックの追加改変・追加有料生成・他アプリ変更は対象外。H3 credential gate、全suite/lint/build、文書全体/全PDFページ、正式receipt/公開readback、SNSreceipt、バックアップhash/parity/lockで各段階を証明する。既存キープ1/2は保持。

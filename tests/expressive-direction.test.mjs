@@ -113,6 +113,57 @@ test('scenario direction seeks expressive readable manga without performance quo
   assert.doesNotMatch(prompt, /最低2つ選択|少なくとも2人が.*物理アクション/);
 });
 
+test('case-by-case near/far focus and required background text survive every prompt route', () => {
+  const outputs = [singleImagePrompt.buildSingleImageEmotionalPrompt()];
+  for (const providerFamily of ['chatgpt', 'gemini']) for (const colorMode of ['color', 'monochrome']) {
+    for (const extra of ['', ' Consistent identity detail.'.repeat(300)]) {
+      outputs.push(buildMangaPrompt({ scenario, castList: castList + extra,
+        colorMode, providerFamily, punchlineType: 'Auto', systemVersion: 'test' }));
+    }
+  }
+  for (const prompt of outputs) {
+    assert.ok(prompt.includes('FOCUS PLAN:'), 'FOCUS PLAN missing from generated prompt');
+    assert.match(prompt, /optional near\/far soft/);
+    assert.match(prompt, /story\/required text\/deep focus sharp/);
+    assert.match(prompt, /shot scale|Camera scale/);
+    assert.doesNotMatch(prompt, /Clean finish: crisp foreground, softer background/);
+  }
+});
+
+test('focus separation preserves scripted cameras, acting and panel media under compaction', () => {
+  const cameras = ['high overhead wide fisheye view', 'rear right telephoto close-up',
+    'left low upward view, 25 degree Dutch tilt', 'front high-angle zoomed-out view'];
+  const styles = ['NORMAL', 'WATERCOLOR', 'GEKIGA', 'CHIBI_GAG'];
+  let index = 0;
+  const input = scenario.replace(/\[Camera:[^\]]+\]/g,
+    () => `[EMOTION: ${styles[index]}]\n[Camera: ${cameras[index++]}]`);
+  assert.equal(index, 4);
+  for (const providerFamily of ['chatgpt', 'gemini']) {
+    const prompt = buildMangaPrompt({ scenario: input, castList: castList + ' Consistent identity detail.'.repeat(300),
+      colorMode: 'color', providerFamily, punchlineType: 'Auto', systemVersion: 'test' });
+    for (const camera of cameras) assert.ok(prompt.includes(camera), camera);
+    assert.ok(prompt.includes('FOCUS PLAN:'), 'FOCUS PLAN missing after compaction');
+    assert.match(prompt, /shot scale|Camera scale/);
+    for (const action of ['予定表を指さす', '椅子を引く', '資料を拾う', '静かに目を伏せる']) {
+      assert.ok(prompt.includes(action), `scripted acting missing: ${action}`);
+    }
+    const normalPanel = prompt.split('## Panel 1')[1].split('## Panel 2')[0];
+    assert.doesNotMatch(normalPanel, /PANEL STYLE LOCK: (?:WATERCOLOR|GEKIGA|CHIBI_GAG)/);
+    assert.match(prompt, /PANEL STYLE LOCK: WATERCOLOR/);
+    assert.match(prompt, /PANEL STYLE LOCK: GEKIGA/);
+    assert.match(prompt, /PANEL STYLE LOCK: CHIBI_GAG/);
+  }
+});
+
+test('visual review audits focus without forcing blur on readable background text or paid repair', () => {
+  const prompt = quality.buildImageQualityQaPrompt({ scenario, castList,
+    finalPrompt: build('chatgpt'), panelCropCount: 4 });
+  assert.ok(prompt.includes('FOCUS EVIDENCE:'), 'Focus evidence audit missing');
+  assert.match(prompt, /near foreground, focal plane and distant background/);
+  assert.match(prompt, /required background text\/screens and explicit deep focus are valid/);
+  assert.match(prompt, /minor or uncertain focus differences cannot trigger paid repair/);
+});
+
 test('compressed monitor geometry, gaze and reading flow retain the in-scene recipient', () => {
   for (const provider of ['chatgpt', 'gemini']) {
     const input = scenario.replace('椅子を引く', 'モニタを操作し、SpeakerBへ顔を向ける');

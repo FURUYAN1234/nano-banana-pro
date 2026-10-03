@@ -447,10 +447,8 @@ export default function Step2Panel({
       {/* RESULT & LOG AREA */}
       <div className="space-y-4 mt-6">
         {/* Log */}
-        <div ref={scenarioProgressRef} className={scenarioThought ? 'mt-4' : undefined}>
-          {scenarioThought && (
-            <ThinkingLog thought={scenarioThought} />
-          )}
+        <div ref={scenarioProgressRef} className="mt-4">
+          <ThinkingLog thought={scenarioThought} placeholder="> STEP2を実行すると、進捗と終了時間をここに表示します。" />
         </div>
 
         {!isSearching && (

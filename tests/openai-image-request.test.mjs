@@ -11,7 +11,7 @@ test('gpt-image request uses the supported low moderation level', () => {
   const request = buildOpenAIImageRequestBody('full production manga prompt');
 
   assert.equal(request.model, 'gpt-image-2.5-sunburst');
-  assert.equal(request.quality, 'xhigh');
+  assert.equal(request.quality, 'max');
   assert.equal(request.prompt, 'full production manga prompt');
   assert.equal(request.moderation, 'low');
   assert.equal(request.stream, true);

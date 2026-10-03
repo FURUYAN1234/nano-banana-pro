@@ -387,6 +387,8 @@ export default function Step4Panel({
   const hasFixedPageLayout = displayedHistory?.pageLayout?.applied === true;
   const isFourPanelPage = inferImageQualityMode(finalPrompt) === 'four-panel';
   const generationWaitLog = genLog.find(log => String(log).startsWith('[WAIT]'));
+  const visibleGenLog = genLog.filter(log => !String(log).startsWith('[WAIT]'));
+  if (!isGeneratingImage && generationWaitLog) visibleGenLog.push(generationWaitLog);
   // Each request resets the log. This receipt accompanies the current request's
   // setGeneratedImage call, so a retained image from an earlier run is not ready.
   const hasCurrentRunImage = Boolean(generatedImage) && genLog.some(log => String(log).startsWith('[4/5] データストリーム受信完了'));
@@ -782,7 +784,7 @@ export default function Step4Panel({
                     大サイズは拡大・印刷向けです。手や台詞の正確さを保証する設定ではありません。
                   </p>
                   <p className="step4-help-copy mt-2 text-slate-400">
-                    初回接続時、GPT Image 2.5 Sunburstが利用可能ならSunburst / xhighを、利用できない場合はGPT Image 2.0 / highを初期選択します。
+                    初回接続時、GPT Image 2.5 Sunburstが利用可能ならSunburst / maxを、利用できない場合はGPT Image 2.0 / highを初期選択します。
                   </p>
                   <p className="step4-help-copy mt-2 text-slate-300">
                     GPT Image 2.5 Sunburstが初期選択されなかった場合も、上のプルダウンからモデルを変更できます。生成時のエラーで自動切替・自動再送信はしません。
@@ -1352,7 +1354,7 @@ No explanations. No partial results.`;
                 {genLog.length === 0 ? (
                   <div className="text-white/30">待機中... 「画像を生成する」ボタンを押すと開始します。</div>
                 ) : (
-                  genLog.filter(log => !isGeneratingImage || !String(log).startsWith('[WAIT]')).map((log, i) => (
+                  visibleGenLog.map((log, i) => (
                     <div key={i} className="mb-1 leading-relaxed" style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', lineHeight: 1.35, marginBottom: 0 }}>
                       {String(log).replace(/^(\[品質検査[^\]]*\])\s*/, '$1\n').replace(/\s+(?=Panel\s+\d+\s*:)/g, '\n')}
                     </div>

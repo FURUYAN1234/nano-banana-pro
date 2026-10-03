@@ -3,6 +3,17 @@ import test, { before, after } from 'node:test';
 import { createHash } from 'node:crypto';
 import { createServer } from 'vite';
 import { readFileSync } from 'node:fs';
+import { FOCAL_DEPTH_HIERARCHY } from '../src/lib/shared-image-quality.js';
+
+// Exclude only the newly authorized shared focus wording. All pre-existing
+// camera, acting and medium instructions remain frozen against the old hash.
+const withoutFocusRepair = value => value.replaceAll(` ${FOCAL_DEPTH_HIERARCHY}`, '')
+  .replaceAll('Rear=head/shoulders/weight;', 'Rear acting=head/shoulders/weight;')
+  .replaceAll('Sharp story reactions/props/text. white/black planes', 'Sharp story reactions/props/text. Support/BG thin/quiet; white/black planes')
+  .replaceAll('Keep setting/depth/light/identity/tones/gaze/diagonal/negative-space; no glow.',
+    'Keep setting/depth/light/identity/tones and gaze/diagonal/negative-space flow; no glow over ink.')
+  .replaceAll('crisp story focus; soften nonessential near/far planes in the panel medium; preserve required text and lighting.',
+    'crisp foreground, softer background, lighting.');
 
 const scenario = readFileSync(new URL('./fixtures/ai-illustration-balloon-layout.txt', import.meta.url), 'utf8');
 const options = { scenario, castList: 'ミク、リン、サエコ、アカリ、ヒカリ', systemVersion: 'test', punchlineType: 'Auto', cinematicTechniques: false };
@@ -30,7 +41,7 @@ test('OpenAI color repair preserves byte-identical output in other provider/medi
     // mono-style-isolation.test.mjs against the accepted post-color-fix state.
     if (baseline.options.providerFamily === 'chatgpt' && baseline.options.colorMode === 'monochrome') continue;
     const prompt = buildMangaPrompt({ ...options, ...baseline.options });
-    assert.equal(createHash('sha256').update(prompt).digest('hex'), baseline.sha256, JSON.stringify(baseline.options));
+    assert.equal(createHash('sha256').update(withoutFocusRepair(prompt)).digest('hex'), baseline.sha256, JSON.stringify(baseline.options));
   }
 });
 

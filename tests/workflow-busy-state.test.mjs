@@ -121,6 +121,7 @@ for (const outcome of ['complete', 'failed', 'cancelled']) {
     let now = 1000;
     const { state, bind } = harness({ Date: { now: () => now }, generateScenario: () => request.promise });
     const pending = bind('generateScenarioFromNews')();
+    state.scenarioThought += '\n> ⏳ AI応答を待機中... (120秒経過)';
     now = 126432;
     if (outcome === 'cancelled') state.setScenarioFromUser('replacement');
     else if (outcome === 'complete') request.resolve(result);
@@ -128,6 +129,8 @@ for (const outcome of ['complete', 'failed', 'cancelled']) {
     if (outcome === 'cancelled') { now = 500000; request.resolve(result); }
     await pending;
     assert.match(state.scenarioThought, /125\.432秒/);
+    assert.match(state.scenarioThought.split('\n').at(-1), /\[STEP2 TIME\].*125\.432秒/);
+    assert.doesNotMatch(state.scenarioThought, /AI応答を待機中/);
     assert.match(state.scenarioThought, new RegExp({ complete: '完了', failed: '失敗', cancelled: '中断' }[outcome]));
     assert.equal(state.isSearching, false);
   });

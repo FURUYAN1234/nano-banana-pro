@@ -92,6 +92,22 @@ test('STEP2 result controls return after generation finishes', () => {
   assert.match(html, /シナリオ強化/);
 });
 
+test('STEP2 progress frame remains for pasted scenarios without inventing an API result', () => {
+  const html = renderStep2({ currentStep: 4, scenario: '手入力したシナリオ', scenarioThought: '' });
+  assert.match(html, /Neural Process/);
+  assert.match(html, /STEP2を実行すると/);
+  assert.doesNotMatch(html, /STEP2 TIME|シナリオ生成完了/);
+});
+
+test('STEP2 completion log and final time remain beside the generated scenario', () => {
+  const html = renderStep2({ currentStep: 3, scenario: '生成済みシナリオ',
+    scenarioThought: '> シナリオ生成完了\n> [STEP2 TIME] 完了: 12.345秒' });
+  assert.match(html, /シナリオ生成完了/);
+  assert.match(html, /\[STEP2 TIME\] 完了: 12\.345秒/);
+  assert.match(html, /生成されたシナリオ/);
+  assert.doesNotMatch(html, /STEP2を実行すると/);
+});
+
 test('preview and STEP3 are disclosed only after a scenario exists', async () => {
   const app = await readFile(new URL('../src/App.jsx', import.meta.url), 'utf8');
 

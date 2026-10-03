@@ -3,12 +3,23 @@ import test, { before, after } from 'node:test';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { createServer } from 'vite';
+import { FOCAL_DEPTH_HIERARCHY } from '../src/lib/shared-image-quality.js';
+
+// Retain the original isolation baseline; normalize only the authorized shared
+// focus contract, independently covered by expressive-direction.test.mjs.
+const withoutFocusRepair = value => value.replaceAll(` ${FOCAL_DEPTH_HIERARCHY}`, '')
+  .replaceAll('Rear=head/shoulders/weight;', 'Rear acting=head/shoulders/weight;')
+  .replaceAll('Sharp story reactions/props/text. white/black planes', 'Sharp story reactions/props/text. Support/BG thin/quiet; white/black planes')
+  .replaceAll('Keep setting/depth/light/identity/tones/gaze/diagonal/negative-space; no glow.',
+    'Keep setting/depth/light/identity/tones and gaze/diagonal/negative-space flow; no glow over ink.')
+  .replaceAll('crisp story focus; soften nonessential near/far planes in the panel medium; preserve required text and lighting.',
+    'crisp foreground, softer background, lighting.');
 
 // This is the accepted COLOR state immediately before the mono-only change,
 // not the earlier pre-color-repair baseline. Update only after explicit approval.
 const baseline = JSON.parse(readFileSync(new URL('./fixtures/mono-style-isolation-baseline.json', import.meta.url), 'utf8'));
 const scenario = readFileSync(new URL(`./fixtures/${baseline.scenarioFixture}`, import.meta.url), 'utf8');
-const sha256 = value => createHash('sha256').update(value).digest('hex');
+const sha256 = value => createHash('sha256').update(withoutFocusRepair(value)).digest('hex');
 let server, buildMangaPrompt;
 before(async () => {
   server = await createServer({ appType: 'custom', logLevel: 'silent', server: { middlewareMode: true, hmr: false } });
@@ -49,8 +60,8 @@ for (const record of baseline.records) {
     const prompt = buildMangaPrompt({ ...baseline.options, scenario: scenarioFor(input),
       providerFamily: record.providerFamily, colorMode: record.colorMode, promptMaxChars: record.promptMaxChars });
     assert.equal(sha256(prompt), record.sha256, 'a non-target prompt byte changed');
-    assert.equal(Buffer.byteLength(prompt), record.utf8Bytes);
-    assert.equal(prompt.length, record.characters);
+    assert.equal(Buffer.byteLength(withoutFocusRepair(prompt)), record.utf8Bytes);
+    assert.equal(withoutFocusRepair(prompt).length, record.characters);
     if (input.ending) assert.match(prompt, /REFERENCE-SHEET/);
   });
 }

@@ -1,4 +1,4 @@
-import { FOCAL_READABILITY, FOCAL_SUBJECT_SEPARATION_FALLBACK, SKIN_LIGHTING, SHARED_IMAGE_QUALITY_CONTRACT } from './shared-image-quality.js';
+import { FOCAL_DEPTH_HIERARCHY, FOCAL_READABILITY, FOCAL_SUBJECT_SEPARATION_FALLBACK, SKIN_LIGHTING, SHARED_IMAGE_QUALITY_CONTRACT } from './shared-image-quality.js';
 
 export const normalizeMangaColorMode = (value) => value === 'monochrome' ? 'monochrome' : 'color';
 export const isMonochromePrompt = (prompt) => {
@@ -158,7 +158,7 @@ export const MONOCHROME_BACKGROUND_LOCK_COMPACT = 'MONOCHROME BACKGROUND CLARITY
 
 // Adapt only our authored quality text, never replace words in user dialogue,
 // Actions, cast descriptions or other source data.
-export const MONOCHROME_FOCAL_READABILITY = 'FOCAL READABILITY: Focal ink follows the panel recipe; NORMAL=pressure-taper. Camera scale/height/side/head turn fixed; visible features only. Rear acting=head/shoulders/weight; scripted profiles win. Bold focal silhouettes/contacts, fine separate face/hand lines; no uniform thickening/clogging. Sharp story reactions/props/text. Support/BG thin/quiet; white/black planes, motivated edge light, face/hand gaps. If merged: fewer BG lines or bounded black behind light forms; stronger style ink. Keep setting/depth/light/identity/tones and gaze/diagonal/negative-space flow; no glow over ink.';
+export const MONOCHROME_FOCAL_READABILITY = `FOCAL READABILITY: Focal ink follows the panel recipe; NORMAL=pressure-taper. Camera scale/height/side/head turn fixed; visible features only. Rear=head/shoulders/weight; scripted profiles win. Bold focal silhouettes/contacts, fine separate face/hand lines; no uniform thickening/clogging. Sharp story reactions/props/text. white/black planes, motivated edge light, face/hand gaps. If merged: fewer BG lines or bounded black behind light forms; stronger style ink. Keep setting/depth/light/identity/tones/gaze/diagonal/negative-space; no glow. ${FOCAL_DEPTH_HIERARCHY}`;
 export const MONOCHROME_SKIN_LIGHTING = 'BODY VOLUME: wrap connected form shadows around turning limbs/torso; retain hair/jaw/clothing cast shadows. Follow light direction; no fixed shadow quota. Shade=bounded screen/black, lit=canonical base; no wash. FACE INK: tapered eyes/nose/mouth, distinct white gaps; no feature merging or disappearing hairlines. Bold silhouettes, fine facial lines; shadows preserve expression.';
 export const MONOCHROME_IMAGE_QUALITY_CONTRACT = SHARED_IMAGE_QUALITY_CONTRACT
   .replace(FOCAL_READABILITY, MONOCHROME_FOCAL_READABILITY)

@@ -298,7 +298,7 @@ export default function useMangaWorkflow() {
     if (!timing || timing.epoch !== epoch) return;
     scenarioRunEpochRef.timing = null;
     const elapsed = Math.max(0, Date.now() - timing.startedAt);
-    setScenarioThought(prev => `${prev}\n> [STEP2 TIME] ${outcome}: ${(elapsed / 1000).toFixed(3)}秒`);
+    setScenarioThought(prev => `${prev.replace(/\n> ⏳ AI応答を待機中\.\.\..*\(\d+秒経過\)/g, '')}\n> [STEP2 TIME] ${outcome}: ${(elapsed / 1000).toFixed(3)}秒`);
   };
 
   const invalidateScenarioRun = () => {
@@ -1168,6 +1168,8 @@ export default function useMangaWorkflow() {
     } finally {
       clearInterval(thinkTimer);
       if (assemblyRun === promptAssemblyRunRef.current) {
+        const elapsed = Math.max(0, Date.now() - assemblyStartedAt);
+        setAssembleThought(prev => `${prev.replace(/\n> ⏳ AI応答を待機中\.\.\..*\(\d+秒経過\)/g, '')}\n> [STEP3 TIME] 処理終了（合計${(elapsed / 1000).toFixed(3)}秒）`);
         promptAssemblyAbortRef.current = null;
         setIsAssembling(false);
       }
@@ -2142,8 +2144,9 @@ export default function useMangaWorkflow() {
     } finally {
       clearInterval(genTimer);
       if (qualityRunEpoch === scenarioRunEpochRef.current) {
-        setGenLog(prev => prev.map(log => log.startsWith('[WAIT]')
-          ? `[WAIT] STEP4終了（合計${Math.floor((Date.now() - generationStartedAt) / 1000)}秒）` : log));
+        const elapsed = Math.max(0, Date.now() - generationStartedAt);
+        setGenLog(prev => [...prev.filter(log => !log.startsWith('[WAIT]')),
+          `[WAIT] STEP4終了（合計${Math.floor(elapsed / 1000)}秒）`]);
         setIsGeneratingImage(false);
       }
     }

@@ -672,6 +672,8 @@ No character reference sheet is supplied; do not report character_reference.`;
   return `
 ${inspectionScope}
 
+FOCUS EVIDENCE: In observations.camera record each panel's near foreground, focal plane and distant background with visible locations and relative edge/detail/contrast. Judge the story's intended focal action and reading flow, not distance alone: required background text/screens and explicit deep focus are valid. Observe actual medium-specific softening or simplification; do not require photographic bokeh, front-facing portraits, quieter acting or uniform styles. Missing pixel evidence is unverified; minor or uncertain focus differences cannot trigger paid repair.
+
 ${referenceInspection}
 ${isMonochromePrompt(finalPrompt) ? '' : `${CHEEK_RENDERING} Cosmetic cheek-style differences alone are unverified observations, not a paid repair trigger; do not confuse motivated blush/makeup or gekiga facial hatching with identity/anatomy defects.`}
 ${!isSingleImage && extractPullbackPanels(finalPrompt).size ? 'LONG-SHOT SCALE EVIDENCE: for each requested long/pullback shot, framing.scale_evidence={"subject":"largest story actor, not a background extra","top":0.0,"bottom":1.0,"extent":"whole|knees_crop|waist_crop|chest_crop|head_only|occluded","setting":"locate continuous space around and between actors"}. Measure the visible actor from top to bottom relative to that panel (0..1), not the page or source target. All cast present, wide lens, floor behind faces or a long-shot label is not proof of distance. A panel-filling cropped torso is not a long shot. A scale-only shortfall without lost story/action is unverified, not a paid-repair trigger.' : ''}

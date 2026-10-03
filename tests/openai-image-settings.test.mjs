@@ -12,12 +12,12 @@ test('each Sunburst choice sends its model and quality separately', () => {
   }
 });
 
-test('chooses Sunburst xhigh only when the verified model list contains Sunburst', async () => {
+test('chooses Sunburst max only when the verified model list contains Sunburst', async () => {
   const settings = await import(`../src/lib/openai-image-settings.js?initial-selection=${Date.now()}`);
 
   assert.equal(
     settings.selectInitialOpenAIImageQuality(['gpt-image-2.5-sunburst', 'gpt-image-2']),
-    'sunburst-xhigh',
+    'sunburst-max',
   );
   assert.equal(
     settings.selectInitialOpenAIImageQuality(['gpt-image-2.5-flare', 'gpt-image-2']),
@@ -25,16 +25,16 @@ test('chooses Sunburst xhigh only when the verified model list contains Sunburst
   );
 });
 
-test('selection starts at xhigh and never reads or writes browser storage', () => {
+test('selection starts at max and never reads or writes browser storage', () => {
   const descriptor = Object.getOwnPropertyDescriptor(globalThis, 'localStorage');
   const values = new Map();
   Object.defineProperty(globalThis, 'localStorage', { configurable: true, value: {
     getItem: key => values.get(key), setItem: (key, value) => values.set(key, value),
   } });
   try {
-    assert.equal(settings.DEFAULT_OPENAI_IMAGE_QUALITY, 'sunburst-xhigh');
+    assert.equal(settings.DEFAULT_OPENAI_IMAGE_QUALITY, 'sunburst-max');
     assert.equal(settings.normalizeOpenAIImageQuality('high'), 'high');
-    assert.equal(settings.normalizeOpenAIImageQuality('invalid'), 'sunburst-xhigh');
+    assert.equal(settings.normalizeOpenAIImageQuality('invalid'), 'sunburst-max');
     assert.equal(settings.readOpenAIImageQuality, undefined);
     assert.equal(settings.saveOpenAIImageQuality, undefined);
     assert.equal(values.size, 0);
@@ -76,7 +76,7 @@ test('formats the current quality and size for the collapsed STEP4 settings butt
   );
   assert.equal(
     settings.formatOpenAIImageSettingsSummary('invalid', 'invalid'),
-    'GPT Image 2.5 Sunburst / xhigh・A4大：2240×3168',
+    'GPT Image 2.5 Sunburst / max・A4大：2240×3168',
   );
 });
 

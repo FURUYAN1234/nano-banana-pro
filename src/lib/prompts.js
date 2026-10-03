@@ -924,7 +924,7 @@ ${scriptLock}
 
 ART / RENDERING QUALITY:
 ${panelColorMedia ? mangaImageQualityContract(false).replace(FOCAL_READABILITY, OPENAI_COLOR_FOCAL_READABILITY) : mangaImageQualityContract(isMonochrome)}
-- Clean finish: ${isMonochrome ? 'crisp focal ink; simplify distant lines while keeping setting shapes and white light planes.' : 'crisp foreground, softer background, lighting.'}
+- Clean finish: ${isMonochrome ? 'crisp focal ink; simplify distant lines while keeping setting shapes and white light planes.' : 'crisp story focus; soften nonessential near/far planes in the panel medium; preserve required text and lighting.'}
 ${MANGA_FACIAL_ACTING_LOCK}
 - CLEAN SURFACE PROTOCOL: ${isMonochrome ? 'regular black-on-white dots and intentional hatching allowed; no random noise, moire or marks on lit skin.' : 'no grain/speckles/dithering/rough texture/pores/moire/dust/particles/sparkle unless a panel style exception allows it.'}
 - MANGA FINISH ASSIST: preserve script/cast/camera/layout; keep bubble space, ${isMonochrome ? 'readable ink shapes and screen density' : 'cast/background light and color'}, coherent anatomy, and setting depth.

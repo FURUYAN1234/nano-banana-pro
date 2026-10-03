@@ -1,10 +1,10 @@
 {
-  "manualVersion": "6.7.9",
-  "manualSourceSha256": "6380ea353b257fe55b167fbcfd1d46c2375e88ed508de057be85e31e2af1a4fb",
+  "manualVersion": "6.8.0",
+  "manualSourceSha256": "e29020f7a36f8efe4bd61e236f43463753aee5655310bf63a61659832f1703c5",
   "manualFiles": [
     {
       "name": "gemini-api-beginner-guide-2026-10-01.pdf",
-      "sha256": "5c38ab11b2b78cb02f596aa98aecb3350f12ed2adc8d65d1d1b5af95f721275d"
+      "sha256": "5445a2530248b8b9eba5694427af912d410bb50617640570884b2d863eeab412"
     },
     {
       "name": "openai-api-beginner-guide-2026-09-30.pdf",
@@ -12,13 +12,13 @@
     },
     {
       "name": "super-furu-ai-4koma-full-manual-2026-10-01.pdf",
-      "sha256": "49775ebf65a907de8b466b5c558bbd26a3fec9a6fcf7d76a7e1116ec94f06cb3"
+      "sha256": "a8a681743a35046dd147a82b27a148745803119dc586f14f49e42788d98015a1"
     }
   ],
-  "readmeSha256": "609d8fb8b8268805169060f604e204c3215cacb66ceb71fb6e85d98f54961b47",
+  "readmeSha256": "f8516ac59ba06f79318beec82510270b5a62033bf0c729b24a6a50a6a96c247c",
   "sourceTree": "c71ce334570e9352c9784b59334fdfb4c6964bf6",
-  "publicTree": "990e5603c568f4e8014bb7e2fa5566b41b85ccf0",
-  "packageSha256": "d4744fd12c1358ac5de37cd2394bfce166f616c934b756e60cd2b6c29a2adb83",
+  "publicTree": "1268581ea63006ac13b77650542a9ef523eded9f",
+  "packageSha256": "3e3cad5f5c172c6f885e3655f81dcfd0c459b467a8a8ad26432970c8241262da",
   "releaseAssetSha256": "341487084ffc48f14569609c36557d77b4770a052b70f2323488dc0604e6d7f0",
   "reviewedSections": [
     "AI Manga Creative Suite / AIまんが制作エコシステム",
@@ -34,6 +34,7 @@
     "📋 ChangeLog",
     "License / ライセンス"
   ],
-  "findings": "2026-10-02 v6.7.9: reviewed all current README sections and retained dated historical entries. Compared current STEP1-4, provider/model selection, wardrobe/ending modes, prompt/copy/metadata boundaries, style recipes, source-quote extraction, busy-state ownership, image-area status and per-request API inspection with source and retained live evidence. Added Windows GitHub Code/Download ZIP and Release source ZIP extraction, Node/npm prerequisites, actual start_app.bat behavior, initial dependency network access, launcher lifetime, API charges and upgrade separation from H3 ZIP. Corrected manual version/capture dates and retained the separate older OpenAI account-guide scope. Updated active H3 links to the unchanged supplied 20261002 workflow and explicitly identified authfix1 ZIP, 28 nodes, four model references, no independent BGM mix, three node packages and external dependencies. Reviewed original and fixed ZIP manifest/security/credential regressions; original needs_review and no new GPU/another-PC run are explicit. Final normal OpenAI color STEP3 and initial image visibly separate normal/watercolor/gekiga/chibi; saved monochrome examples retain ink and motivated shadow tones. These observed samples do not guarantee all image QA, print compliance or future latency. Ecosystem, licenses, source provenance, model-price snapshot dates and FAQ remain scoped to recorded evidence. No new credential values or sample-specific production rule was added.",
-  "manualFindings": "Updated v6.7.9 full manual 32 pages and Gemini guide 12 pages with the existing generator. All 44 rendered pages visually reviewed by PDF reviewer; final changed pages and full-manual 28/31/32 individually inspected at native display. A4, text bounds, links (26+10), privacy/naming and overflow pass; public copies match generated SHA256. Local launch, current progress/inspection and H3 authfix1 scope documented. Existing app screenshots explicitly v6.7.8 and Gemini examples v6.7.7; no false new capture. Google acquisition review date retained 2026-10-01, booklet update 2026-10-02. Separate 20-page OpenAI API account guide is byte-identical to previously visually verified 2026-09-30 edition; source content reviewed, older UI examples acknowledged, current operation delegated to updated full guide. Evidence output/pdf/source/gemini-system-manuals-qa.json."
+  "srcTree": "aed4cb6229ff3b644000afa4d67a2895e0a1692a",
+  "findings": "2026-10-02 v6.7.9: reviewed all current README sections and retained dated historical entries. Compared current STEP1-4, provider/model selection, wardrobe/ending modes, prompt/copy/metadata boundaries, style recipes, source-quote extraction, busy-state ownership, image-area status and per-request API inspection with source and retained live evidence. Added Windows GitHub Code/Download ZIP and Release source ZIP extraction, Node/npm prerequisites, actual start_app.bat behavior, initial dependency network access, launcher lifetime, API charges and upgrade separation from H3 ZIP. Corrected manual version/capture dates and retained the separate older OpenAI account-guide scope. Updated active H3 links to the unchanged supplied 20261002 workflow and explicitly identified authfix1 ZIP, 28 nodes, four model references, no independent BGM mix, three node packages and external dependencies. Reviewed original and fixed ZIP manifest/security/credential regressions; original needs_review and no new GPU/another-PC run are explicit. Final normal OpenAI color STEP3 and initial image visibly separate normal/watercolor/gekiga/chibi; saved monochrome examples retain ink and motivated shadow tones. These observed samples do not guarantee all image QA, print compliance or future latency. Ecosystem, licenses, source provenance, model-price snapshot dates and FAQ remain scoped to recorded evidence. No new credential values or sample-specific production rule was added. 2026-10-03 v6.8.0: reviewed current README body sections against retained unchanged source evidence and current changed execution paths. Updated available Sunburst default to max, preserved independent A4-large size and manual choices, retained STEP2 frame without fabricated execution status, and retained final STEP2-4 elapsed time. Current manual and Release asset links now use v6.8.0; historical changelog statements remain dated. Accepted live normal STEP3/STEP4 onsen sample at max 2240x3168 confirms distinct normal, watercolor, gekiga and chibi media, acting and readable required price text. P4 rear-camera drift and evidence-only QA warnings remain; no universal quality/camera guarantee. Shared focus guidance is conditional and does not override camera, acting, per-panel medium or required text. No new generation or H3 GPU validation was added.",
+  "manualFindings": "2026-10-03 v6.8.0: rebuilt the 32-page full manual and 12-page Gemini guide using the existing generator; all 44 rendered pages visually reviewed on eight contact sheets, including changed max selection and STEP2-4 progress text. Headings, paragraphs, tables and footers fit; A4, text bounds, links, privacy and naming scans pass. Public PDF copies match generated SHA256. Historic v6.7.8 screenshots and v6.7.7 Gemini examples retain explicit capture dates; booklet update is 2026-10-03 and source-review dates remain dated. Separate 20-page OpenAI account guide is unchanged from the previously verified 2026-09-30 edition. QA receipt: output/pdf/source/gemini-system-manuals-qa.json."
 }
