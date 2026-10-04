@@ -102,9 +102,10 @@ try {
   const updatedPkg = pkgContent.replace(/"version":\s*"[^"]+"/, `"version": "${newVersion}"`);
   fs.writeFileSync(targetFiles.packageJson, updatedPkg, 'utf8');
   const packageLockContent = fs.readFileSync(targetFiles.packageLock, 'utf8');
-  const updatedPackageLock = packageLockContent
-    .replace(/"version":\s*"[^"]+"/, `"version": "${newVersion}"`)
-    .replace(/("":\s*\{\s*"name":\s*"nano-banana-pro",\s*"version":\s*")[^"]+"/, `$1${newVersion}"`);
+  const packageLock = JSON.parse(packageLockContent);
+  packageLock.version = newVersion;
+  packageLock.packages[''].version = newVersion;
+  const updatedPackageLock = JSON.stringify(packageLock, null, 2) + '\n';
   fs.writeFileSync(targetFiles.packageLock, updatedPackageLock, 'utf8');
   console.log(`      -> version: "${newVersion}"`);
 

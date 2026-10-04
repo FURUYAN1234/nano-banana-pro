@@ -5,6 +5,7 @@
 - 実証: 初回STEP3 3.872秒169tokens、初回画像371秒は不要モザイクあり。承認後のSTEP3 4.550秒272tokens、同じ7シート・台本・Sunburst/max2240x3168・自動修正OFFで追加画像321秒。不要モザイク消失を目視確認し、ユーザーも確認。同一人物のbubble_speaker誤判定も解消。原寸PNGデコード成功。3コマの台詞「塩は湧かぬ」の字形崩れとQAの証拠不足警告は残るため画像全体の完全合格とはしない。
 - 証拠: ignored output/salt-step3-api/ の元台本・解析cast、fixed-final-prompt.txt、fixed-step4-complete-dom.txt、fixed-step4-complete.jpg、fixed-generated-original.png（2240x3168）。初回generated-original.pngは保存時切詰めにより無効、初回はスクリーンショットを参照。
 - 検証: 元台本両プロバイダ/カラー白黒/括弧形式で9台詞一致。最終全1155件中1154PASS、残る1件は文書更新後に再収集するREADME監査。元の19000字上限を維持した関連81件PASS。新規モザイク指示を既存契約の同等短文に圧縮し、旧画風スナップショットは変更なし。最終strict lint0・本番build成功。PDF44ページ全体と変更ページ13/14/24の原寸表示を確認済み。残るREADME監査を候補commitへ紐付けてから公式公開。
+- 公開前停止: 正式トランザクション190541はvalidationで終了1。push/tag/Pages/配布コピーは未開始。lockfileのルートpackages.versionだけ6.8.3が残ったことが原因（license欄追加で更新スクリプトの列順依存regexが不一致）。JSONキーで更新する共有処理へ修正し、実スクリプト実行による列順違いと依存版不変の回帰をRED→GREEN。関連6件/lint0成功、全件再確認中。正式リリースの再実行は明示承認後。noteは9段落限定編集と5ブロック追加を一時保存、既存56図版＋見出し画像、無関係229ブロックの内容を保持。まだ未公開。
 - 状態: 原本と入力を保存済み。元IAB browser5/tab1 localhost5173はユーザー所有、再読込せず保持。サーバーsession64053待受。リリース・告知・バックアップ未開始。追加料金発生なし。
 
 ## 2026-10-04 1枚絵追加プロンプト圧縮版の採用（ローカル）
