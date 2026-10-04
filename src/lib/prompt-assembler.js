@@ -526,15 +526,20 @@ const compactScriptLockOrReference = (text, maxLength, referenceText) => {
 const buildStrictScriptLock = ({ safeTopic, panels, castList, activeOutfit, isMonochrome = false, preserveReferenceStyle = false, seriousTone = false }) => {
   const panelLocks = panels.map((panelText, index) => {
     const panelNumber = index + 1;
-    const storyBeat = compactScriptLockOrReference(
-      buildPanelActionText(panelText, castList, activeOutfit, isMonochrome ? 'monochrome' : 'color'),
-      80,
-      `EXACT Panel ${panelNumber} Action below`
-    );
-    const dialogue = extractDialogueOnly(panelText, castList, {forImagePrompt: true, forScriptLock: true})
-      || `EXACT Panel ${panelNumber} Dialogue below`;
-    return `- Panel ${panelNumber} required story beat: ${storyBeat}
+    try {
+      const storyBeat = compactScriptLockOrReference(
+        buildPanelActionText(panelText, castList, activeOutfit, isMonochrome ? 'monochrome' : 'color'),
+        80,
+        `EXACT Panel ${panelNumber} Action below`
+      );
+      const dialogue = extractDialogueOnly(panelText, castList, {forImagePrompt: true, forScriptLock: true})
+        || `EXACT Panel ${panelNumber} Dialogue below`;
+      return `- Panel ${panelNumber} required story beat: ${storyBeat}
 - Panel ${panelNumber} required dialogue: ${dialogue}`;
+    } catch (error) {
+      if (error?.code === 'BALLOON_LAYOUT_INVALID') error.panelNumber = panelNumber;
+      throw error;
+    }
   }).join('\n');
 
   return `STRICT SCRIPT LOCK:

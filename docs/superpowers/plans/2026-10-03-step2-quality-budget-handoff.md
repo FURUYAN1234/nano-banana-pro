@@ -12,9 +12,11 @@
 
 実装・実API生成・ユーザーの劇画/縮尺確認は完了。v6.8.1の軽微差注意事項/重大人体破綻保護ルールは関連150テスト通過。READMEに実v6.8.1画面と検証済み作例を追加し、全機能32ページ・Gemini12ページ・OpenAI20ページのPDFを更新、全64ページのレンダリング/内容/視認性を確認。README本文は現行機能として整理し、旧バージョン記述はChangeLogへ限定。
 
-正式リリースは `backups/release_receipts/nano-banana-pro-v6.8.1-2026-10-03_182656.json` のvalidation段階で失敗し、push/公開/配布コピーは未実行。通常権限の全1133テストでは1132成功、1件はREADME FAQの現行配布版表記の脱落。修正後、該当1件のテスト成功。正式手順の再実行はAGENTSの失敗後再実行ルールによりユーザーへ確認中（2026-10-03、このチャットの非同期質問）。許可を受けたら公式publish_app_release.ps1を再実行し、note公開→Facebook→X文面をここへ表示→最後に公式フルバックアップ。Xの直接投稿は除外。
+正式リリース v6.8.1 は完了。全1,133テスト、lint、build成功。リモートREADMEのメディア追加を保持して統合し、候補3b4d369を公開。正式receipt: `backups/release_receipts/nano-banana-pro-v6.8.1-2026-10-03_190242.json`、全10段階verified、2026-10-03 19:07完了。GitHub Release/配布asset/Pages/Cドライブ公開コピーを確認。完了済みリリースを再実行しない。
 
-noteはIAB browser 2/tab 4で未公開下書き。リンクカードのcut/pasteで添付/音声/カードが失われるため、2026-10-03 18:34の保存版へUIで復元済み。元の56 figureと埋め込みキーが戻ったことを確認。安全な本文整理（冒頭品質基準、PDF3冊案内、Web説明、全自動実測記録削除など）は保持。カードや添付の移動を再試行しない。公開前に残る旧版説明/マニュアル添付の扱い、配布リンク、6.8.1更新履歴を整理し、元メディアとの照合を必ず行う。公開リンクの切替は実リリース成功後。アプリ tab 3/localhost は保持し、再読込・キー要求・新規localhostタブは不要。
+note本文・タイトル・現行PDF・履歴の更新と公開読戻し、Facebook同文・改行・友達（一部除外）の固有URL読戻しは完了。非公開証跡: `output/step2-cost-api-20261003/social-v681-receipt.json`。noteは56 figure、画像/動画/音声は保持、OpenAI添付PDFは最新版715KBへ差し替え、配布先カードは保存資料区画に保持。X直接投稿はユーザー除外、最終回答へMarkdownを表示。共通三媒体ゲートはX URLなしのため意図どおり不通過であり、三媒体投稿完了とは報告しない。アプリの接続済みlocalhostタブを保持。
+
+完了: 最後の公式フルバックアップ `antigravity_full_backup_2026-10-03_193253.zip`（390.9MB）を保存。公式verify_full_backup.ps1がFULL_BACKUP_VERIFIED apps=7を返し、ZIP可読性・local/Drive SHA一致・7アプリ公開コピー・lock解放を確認。SHA256: D3D23C7C17E48E24FDCB8E416C15AB9A0D87611729270152844F9F70822ED5D8。対応manifestはroot backups内。バックアップ台帳のprivate GitHub同期も完了。リリース・バックアップの実行中セッションなし。X文面を最終回答へ表示して納品する。
 
 ### 最新の証拠と次の操作
 

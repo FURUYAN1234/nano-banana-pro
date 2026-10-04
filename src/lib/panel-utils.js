@@ -369,7 +369,7 @@ export const isLikelyPerson = (name, validCharacters = []) => {
 const ACOUSTIC_QUOTE_POST_RE = /^\s*(?:という[^\n「」]{0,12}音|っていう[^\n「」]{0,12}音|と[^\n「」]{0,20}(?:音(?:が|を|で|。|、|$)|異音|金属音|爆音|轟音|衝撃音))/;
 const SPOKEN_QUOTE_POST_RE = /^\s*(?:と|って)\s*(?:[^「」。！？!?\n]{0,32})?(?:言[いうっわえお]|いう|叫[びぶんべぼ]|呼[びぶんべぼ]|呟[きくいけこ]|つぶや[きくいけこ]|囁[きくいけこ]|ささや[きくいけこ]|読み(?:上げ|あげ)|発表(?:し|する)|告げ|答[えう]|返[しすせそ]|話[しすせそ]|語[りるっれろ]|宣言(?:し|する)|絶叫|嘆[きくいけこ]|漏ら[しす]|口に(?:し|する|出)|述べ|怒鳴[りるっれろ]|呻[きくいけこ]|うめ[きくいけこ]|唸[りるっれろ]|ツッコ[みむん]|つっこ[みむん]|突っ込[みむん]|問[いうえお]|尋ね)/;
 // 引用直後が印字・表示や文書の名称なら、「という」を発話とせず面文字を保持する。
-const SURFACE_QUOTE_POST_RE = /^\s*(?:(?:と|って)(?:だけ)?[^「」。！？!?\n、]{0,12}?(?:書[かきくいけ]|記[さしす載]|印字|印刷|刻[まみむ印]|表示|掲示|貼[らりるっ]|刺繍)|(?:という|っていう|の)?(?:(?:(?:記事|新聞|ニュース|資料|投稿|画面)の?)?(?:文字|文言|表示|案内|内容|項目|メニュー|ラベル|札|名札|看板|見出し|タイトル|題名|表題)|記事|新聞|ニュース|資料|投稿)(?:を|に|が|は|の|と|で|、|。|$))/;
+const SURFACE_QUOTE_POST_RE = /^\s*(?:(?:という|っていう|との)(?:記述|文章|文面|記載|一節|一文)(?=を|に|が|は|の|で|と|、|。|$)|(?:と|って)(?:だけ)?[^「」。！？!?\n、]{0,12}?(?:書[かきくいけ]|記[さしす載]|印字|印刷|刻[まみむ印]|表示|掲示|貼[らりるっ]|刺繍)|(?:という|っていう|の)?(?:(?:(?:記事|新聞|ニュース|資料|投稿|画面)の?)?(?:文字|文言|表示|案内|内容|項目|メニュー|ラベル|札|名札|看板|見出し|タイトル|題名|表題)|記事|新聞|ニュース|資料|投稿)(?:を|に|が|は|の|と|で|、|。|$))/;
 const REPORTED_SOURCE_QUOTE_POST_RE = /^\s*(?:という|っていう|との)[^「」。！？!?\n]{1,24}の(?:言葉|発言|コメント|声明|引用|記述)(?=で|を|に|が|は|、|。|$)/u;
 const STRUCTURAL_LINE_PREFIX_PATTERN = String.raw`(?:[-*+>・●▪◦]\s*)?[【\[（(]?\s*`;
 const STAGING_GAG_LABEL_PATTERN = String.raw`(?:演出(?:\s*[・･／/]?\s*ギャグ)?|ギャグ(?:\s*[・･／/]?\s*演出))`;
@@ -682,20 +682,25 @@ export const getCameraForChatGPT = (panelText, cameraState) => {
 
 const BALLOON_LAYOUT_LINE_RE = /^\s*BalloonLayout\s*[:：]\s*(.*)$/gim;
 
-const renderBalloonLayout = (source, entries, rearSubject = '') => {
+const renderBalloonLayout = (source, entries, rearSubject = '', uncertainRear = false) => {
   const lines = [...String(source).matchAll(BALLOON_LAYOUT_LINE_RE)];
   if (!lines.length) return ''; // Existing/manual scenarios keep their supported format.
-  const fail = () => { throw new Error('BalloonLayout: 台詞順・話者・左右の余白・尾の経路が一致しません。配置設計を確認してください。'); };
+  const fail = (reason, detail) => { throw Object.assign(new Error(`BalloonLayout: ${detail}`), {code: 'BALLOON_LAYOUT_INVALID', reason}); };
   let plan;
-  try { plan = JSON.parse(lines[0][1]); } catch { return fail(); }
-  if (lines.length !== 1 || !Array.isArray(plan) || plan.length !== entries.length) return fail();
-  if (!plan.every((item, i) => item && typeof item.speaker === 'string'
-    && item.speaker.trim() === entries[i].speaker
-    && Number.isFinite(item.x) && item.x > 0 && item.x < 1
-    && (i === 0 || plan[i - 1].x > item.x)
-    && ['anchor', 'route'].every(key => typeof item[key] === 'string' && item[key].trim()))) return fail();
+  try { plan = JSON.parse(lines[0][1]); } catch { return fail('json', '配置JSONを読み取れません。'); }
+  if (lines.length !== 1 || !Array.isArray(plan)) return fail('schema', '配置はコマごとに1つのJSON配列で指定してください。');
+  if (plan.length !== entries.length) return fail('count', `配置${plan.length}件、抽出台詞${entries.length}件で一致しません。`);
+  for (const [i, item] of plan.entries()) {
+    if (!item || typeof item !== 'object' || Array.isArray(item)) return fail('schema', `配置${i + 1}はオブジェクトで指定してください。`);
+    if (typeof item.speaker !== 'string' || item.speaker.trim() !== entries[i].speaker) return fail('speaker', `配置${i + 1}の話者と抽出台詞の話者が一致しません。`);
+    if (!Number.isFinite(item.x) || item.x <= 0 || item.x >= 1) return fail('x_range', `配置${i + 1}のxは0より大きく1未満の数値にしてください。`);
+    if (i > 0 && plan[i - 1].x <= item.x) return fail('x_order', `配置${i + 1}のxが右から左の台詞順と一致しません。`);
+    for (const key of ['anchor', 'route']) {
+      if (typeof item[key] !== 'string' || !item[key].trim()) return fail(key, `配置${i + 1}の${key}が空欄です。`);
+    }
+  }
   if (!plan.length) return '';
-  const visibleAnchor = (value, speaker) => speaker !== rearSubject ? value : value
+  const visibleAnchor = (value, speaker) => speaker !== rearSubject && !uncertainRear ? value : value
     .replace(/口元|口もと|\bmouth\b/gi, '頭の見える輪郭')
     .replace(/(^|の|から|\s)口(?=へ|に|の|$)/g, '$1頭の見える輪郭');
   return ` BALLOON LAYOUT (NEVER PRINT; x=0 left/1 right; preserve Camera/Action): ${plan.map((item, i) => `B${i + 1} x=${item.x}, [${item.speaker}] ${visibleAnchor(item.anchor, item.speaker)}, tail=${visibleAnchor(item.route, item.speaker)}`).join('; ')}.`;
@@ -989,17 +994,19 @@ export const extractDialogueOnly = (fullPanelText, castList, options = {}) => {
 
   // [v2.22] 「吹き出し描くな」指示を廃止。セリフが無い場合でも描画を阻害しない
   if (speechBubbleEntries.length === 0) {
-    if (options.asEntries) return [];
     if (options.forImagePrompt) renderBalloonLayout(layoutSource, []);
+    if (options.asEntries) return [];
     return "(Characters interact without dialogue in this panel)";
   }
   const orderedEntries = speechBubbleEntries
     .sort((a, b) => a.order - b.order || a.sequence - b.sequence);
-  if (options.asEntries) return orderedEntries.map(({ speaker, text }) => ({ speaker, text }));
+  if (options.asEntries && !options.forImagePrompt) return orderedEntries.map(({ speaker, text }) => ({ speaker, text }));
 
   if (options.forImagePrompt) {
-    const rearSubject = extractExplicitRearSubject(fullPanelText, collectCastNames(castList));
-    const layout = renderBalloonLayout(layoutSource, orderedEntries, rearSubject);
+    const rear = extractExplicitRearSubject(fullPanelText, collectCastNameEntries(castList));
+    const rearSubject = rear.subject;
+    const layout = renderBalloonLayout(layoutSource, orderedEntries, rearSubject, ['unresolved', 'ambiguous'].includes(rear.status));
+    if (options.asEntries) return orderedEntries.map(({ speaker, text }) => ({ speaker, text }));
     // 上位台本には本文だけを再掲し、話者名は各コマの尻尾メタデータに一元化する。
     if (options.forScriptLock) {
       const values = orderedEntries.map((entry, index) => `B${index + 1}=${JSON.stringify(entry.text)}`).join('; ');
@@ -1017,7 +1024,7 @@ export const extractDialogueOnly = (fullPanelText, castList, options = {}) => {
     if (mappedSpeakers.length >= 1) {
       const endpointTargets = orderedEntries
         .map((entry, index) => entry.speaker
-          ? `B${index + 1}=>[${entry.speaker}] ${entry.speaker === rearSubject ? 'visible rear-head contour (never expose mouth)' : 'mouth/head'}`
+          ? `B${index + 1}=>[${entry.speaker}] ${entry.speaker === rearSubject ? 'visible rear-head contour (never expose mouth)' : ['unresolved', 'ambiguous'].includes(rear.status) ? 'visible contour from scripted Camera (never expose a hidden mouth)' : 'mouth/head'}`
           : `B${index + 1}=>match the visually speaking character`)
         .join('; ');
       return `TEXT (PRINT VALUES ONLY): ${visibleText}. TAIL TIP LOCK (NEVER PRINT; proximity never reassigns): ${endpointTargets}.${layout}`;
@@ -1069,7 +1076,14 @@ const buildExplicitStagingSides = (text, castNames) => {
   return '';
 };
 
-const extractExplicitRearSubject = (text, castNames) => {
+const extractExplicitRearSubject = (text, castEntries) => {
+  const castNames = [...new Set(castEntries.flatMap(entry => entry.aliases))].sort((a, b) => b.length - a.length);
+  const resolve = names => {
+    const actors = [...new Set(castEntries.filter(entry => entry.aliases.some(alias => names.includes(alias))).map(entry => entry.nameOnly))];
+    return actors.length === 1 ? {status: 'resolved', subject: actors[0]} : {status: 'ambiguous', subject: ''};
+  };
+  // Latin aliases must match whole identifiers (Alpha is not SuperAlpha).
+  const boundedName = name => `${/^[A-Za-z0-9_]/.test(name) ? '(?<![A-Za-z0-9_])' : ''}${escapeRegex(name)}${/[A-Za-z0-9_]$/.test(name) ? '(?![A-Za-z0-9_])' : ''}`;
   // 台詞内の比喩は除外し、Camera行とト書きの明示構図を読む。
   const cameraText = (String(text || '').match(CAMERA_INSTRUCTION_LINE_RE) || []).join(' ');
   const shoulderCamera = /肩|ショルダー|shoulder|\bOTS\b/i.test(cameraText);
@@ -1077,33 +1091,37 @@ const extractExplicitRearSubject = (text, castNames) => {
   const castNamePattern = castNames.map(escapeRegex).join('|');
   // Cameraの撮影位置を優先し、Action内の人物の立ち位置を撮影位置と取り違えない。
   for (const [source, isCamera] of [[cameraText, true], [actionText, false]]) {
-    const explicitShoulderSubject = castNames.find((name) => {
-      const escapedName = escapeRegex(name);
+    const explicitShoulderSubject = castNames.filter((name) => {
+      const escapedName = boundedName(name);
       // 衣装・役割の修飾語は許可するが、文の区切りや別人物まで跨いで
       // 肩越しの撮影対象を取り違えない。
       const japaneseShoulder = new RegExp(`\\[?${escapedName}\\]?(?:の(?:(?!${castNamePattern})[^\\n、，,。.!?！？;；]){0,48}?)?(?:右|左)?(?:肩|ショルダー)(?:越し|ごし)`, 'i');
       const englishShoulder = new RegExp(`(?:over|from\\s+behind|behind)\\s+(?:the\\s+)?\\[?${escapedName}\\]?(?:['’]s)?\\s+(?:(?:right|left)\\s+)?shoulder`, 'i');
       return japaneseShoulder.test(source) || englishShoulder.test(source);
     });
-    if (explicitShoulderSubject) return explicitShoulderSubject;
+    if (explicitShoulderSubject.length) return resolve(explicitShoulderSubject);
     if (isCamera && shoulderCamera) {
-      const foregroundSubject = castNames.find((name) => {
-        const escapedName = escapeRegex(name);
+      const foregroundSubject = castNames.filter((name) => {
+        const escapedName = boundedName(name);
         const japaneseForeground = new RegExp(`(?:手前|前景)(?:の)?(?:右|左)?\\s*\\[?${escapedName}\\]?|\\[?${escapedName}\\]?[^\\n、，,。.!?！？;；]{0,36}(?:を|が|は)?(?:手前|前景)(?:に|で)?`, 'i');
         const englishForeground = new RegExp(`(?:foreground|camera[- ]side)[^\\n,.!?;]{0,36}\\[?${escapedName}\\]?|\\[?${escapedName}\\]?[^\\n,.!?;]{0,36}(?:in|at|as)\\s+(?:the\\s+)?(?:foreground|camera[- ]side)`, 'i');
         return japaneseForeground.test(source) || englishForeground.test(source);
       });
-      if (foregroundSubject) return foregroundSubject;
-      const rearSubject = castNames.find((name) => {
-        const escapedName = escapeRegex(name);
+      if (foregroundSubject.length) return resolve(foregroundSubject);
+      const rearSubject = castNames.filter((name) => {
+        const escapedName = boundedName(name);
         const japaneseRear = new RegExp(`\\[?${escapedName}\\]?の(?:右|左)?(?:後方|後ろ|背後|背中側)`, 'i');
         const englishRear = new RegExp(`(?:from\\s+)?behind\\s+(?:the\\s+)?\\[?${escapedName}\\]?(?![\\p{L}\\p{N}_])`, 'iu');
         return japaneseRear.test(source) || englishRear.test(source);
       });
-      if (rearSubject) return rearSubject;
+      if (rearSubject.length) return resolve(rearSubject);
+    }
+    // A named but unregistered shoulder must not be replaced by another actor.
+    if (/(?:[\p{L}\p{N}_]+の(?:右|左)?(?:肩|ショルダー)(?:越し|ごし)|(?:over|behind)\s+(?:the\s+)?[\p{L}\p{N}_]+[’']s\s+(?:(?:right|left)\s+)?shoulder)/iu.test(source)) {
+      return {status: 'unresolved', subject: ''};
     }
   }
-  return '';
+  return {status: 'unspecified', subject: ''};
 };
 
 // 明示された左右・前後関係を、台詞順から作る既定スロットで上書きしない。
@@ -1114,7 +1132,7 @@ const hasScriptedSpatialStaging = (text = '') => {
     || /(?:画面|コマ)(?:の)?(?:右|左)|(?:左|右)(?:手前|奥|前景|端)|(?:前景|中景|後景)|screen[- ](?:left|right)|foreground|midground|background/i.test(action);
 };
 
-const buildRequiredDepthAssignment = (speakers, listeners, requireVisibleRear = false, explicitRearSubject = '', functionalActionMode = '', preserveScriptedGaze = false) => {
+const buildRequiredDepthAssignment = (speakers, listeners, requireVisibleRear = false, explicitRearSubject = '', functionalActionMode = '', preserveScriptedGaze = false, rearStatus = 'unspecified') => {
   if (!requireVisibleRear) {
     return 'VIEWPOINT FREEDOM: three-quarter/profile; bold height/tilt/foreshortening; no forced rear shoulder.';
   }
@@ -1132,13 +1150,14 @@ const buildRequiredDepthAssignment = (speakers, listeners, requireVisibleRear = 
     || 'active speaker';
   const primaryLabel = primary === 'active speaker' ? primary : `[${primary}]`;
   const partnerLabel = partner === 'described listener group' ? partner : `[${partner}]`;
-  const functionalConsequence = functionalActionMode === 'presentation'
-    ? `OTS FUNCTIONAL FACE CONSEQUENCE: derive target from Action, never holder—read/operate=self; submit/present/show=recipient. Face the recipient and derive visibility from recipient side.`
-    : functionalActionMode === 'self-use'
-      ? `OTS FUNCTIONAL FACE CONSEQUENCE: derive target from Action, never holder—read/operate=self; submit/present/show=recipient. ${partnerLabel} reads/operates: front+UI camera-visible to user+camera; ${primaryLabel} is across the object, so show its back/edge from camera unless Action targets ${primaryLabel}.`
-      : 'OTS FUNCTIONAL FACE CONSEQUENCE: Action target—read/operate=self; submit/present/show=recipient; visibility follows target side.';
+  const functionalConsequence = functionalActionMode
+    ? 'OTS FUNCTIONAL FACE CONSEQUENCE: Use the reader/operator or recipient explicitly described in Action, never Camera-side position. read/operate=self; submit/present/show=recipient. Preserve scripted contact/gaze/projection; derive visible front/back/edge from those relations.'
+    : 'OTS FUNCTIONAL FACE CONSEQUENCE: Action target—read/operate=self; submit/present/show=recipient; visibility follows target side.';
+  if (['unresolved', 'ambiguous'].includes(rearStatus)) {
+    return `EXPLICIT REAR CAMERA: preserve the shoulder specified in Camera; never assign an actor from dialogue order. Keep scripted head turns, gaze, foreground/depth and visible contours; never expose a hidden mouth for a tail. ${functionalConsequence}`;
+  }
   if (preserveScriptedGaze) {
-    return `EXPLICIT REAR CAMERA: camera is physically behind ${partnerLabel}'s shoulder; rear head/shoulder foreground. No profile/front for readability/style; only scripted head turns expose faces. Keep orientation/gaze; unseen facial acting stays off-camera, conveyed by head pitch/shoulders/weight. ${functionalConsequence}`;
+    return `EXPLICIT REAR CAMERA: camera is physically behind ${partnerLabel}'s shoulder; rear head/shoulder FG. Scripted turns/gaze; hidden acting via head/shoulders/weight; no forced front/profile. ${functionalConsequence}`;
   }
   const visibleRearCheck = requireVisibleRear
     ? `${explicitRearSubject ? ' EXPLICIT REAR CAMERA:' : ''} VISIBLE REAR DEPTH CHECK: camera is physically behind ${partnerLabel}'s shoulder; show the back of ${partnerLabel}'s head or shoulder foreground, facing ${primaryLabel}, not as backdrop. Do NOT show ${partnerLabel}'s face front-on. ${functionalConsequence}`
@@ -1153,14 +1172,14 @@ export const buildPanelEyeLineRule = (panelText, castList) => {
     .map((match) => match[1].trim())
     .filter((name, index, names) => name && names.indexOf(name) === index);
   const actionAndDialogueText = text.replace(CAMERA_INSTRUCTION_LINE_RE, '');
-  const canonicalCastNames = [...new Set(collectCastNames(castList)
-    .map((name) => name.split('(')[0].trim())
-    .filter(Boolean))];
+  const castEntries = collectCastNameEntries(castList);
+  const canonicalCastNames = [...new Set(castEntries.map(entry => entry.nameOnly))];
   const mentionedCastNames = canonicalCastNames
     .filter((name) => actionAndDialogueText.includes(name));
-  const explicitRearSubject = extractExplicitRearSubject(text, canonicalCastNames);
+  const rear = extractExplicitRearSubject(text, castEntries);
+  const explicitRearSubject = rear.subject;
   const cameraText = (text.match(CAMERA_INSTRUCTION_LINE_RE) || []).join(' ');
-  const requestedRearCamera = Boolean(explicitRearSubject) || EXPLICIT_REAR_CAMERA_RE.test(cameraText);
+  const requestedRearCamera = rear.status !== 'unspecified' || EXPLICIT_REAR_CAMERA_RE.test(cameraText);
   const explicitDetailCamera = !explicitRearSubject && EXPLICIT_DETAIL_CAMERA_RE.test(cameraText);
   const functionalActionMode = FUNCTIONAL_PRESENTATION_ACTION_RE.test(actionAndDialogueText)
     ? 'presentation'
@@ -1180,23 +1199,23 @@ export const buildPanelEyeLineRule = (panelText, castList) => {
   if (explicitDirectAddress) {
     return 'DIRECT-ADDRESS EXCEPTION: camera-facing is allowed only for the explicit in-story address; all others retain their scripted gaze targets.';
   }
-  const scriptedGaze = /視線|目線|見つめ|見上げ|見下ろ|睨|を見る|を見返|へ振り向|へ顔を向け|\b(?:gaze|looks? at|watches?)\b/i.test(extractActionOnly(text));
+  const scriptedGaze = /視線|目線|目は|目を|振り返|気にして|見つめ|見据|凝視|注視|眺め|見上げ|見下ろ|睨|を見る|を見返|へ振り向|へ顔を向け|\b(?:gaze|looks? at|watches?)\b/i.test(extractActionOnly(text));
   if (/\[USER STAGING LOCK - ABSOLUTE\]/i.test(actionAndDialogueText)) {
     const stagingSides = buildExplicitStagingSides(actionAndDialogueText, mentionedCastNames);
     const listeners = mentionedCastNames.filter((name) => !speakers.includes(name));
-    return `EYE-LINE LOCK: obey USER STAGING LOCK exactly for speakers and listeners; never lens/front unless explicit direct address. ${stagingSides} ${buildRequiredDepthAssignment(speakers, listeners, requestedRearCamera, explicitRearSubject, functionalActionMode, true)} Camera preserves the scenario direction.`;
+    return `EYE-LINE LOCK: obey USER STAGING LOCK exactly for speakers and listeners; never lens/front unless explicit direct address. ${stagingSides} ${buildRequiredDepthAssignment(speakers, listeners, requestedRearCamera, explicitRearSubject, functionalActionMode, true, rear.status)} Camera preserves the scenario direction.`;
   }
   if (scriptedGaze) {
     const listeners = mentionedCastNames.filter(name => !speakers.includes(name));
     const cameraLock = requestedRearCamera
-      ? buildRequiredDepthAssignment(speakers, listeners, true, explicitRearSubject, functionalActionMode, true)
+      ? buildRequiredDepthAssignment(speakers, listeners, true, explicitRearSubject, functionalActionMode, true, rear.status)
       : explicitDetailCamera ? 'EXPLICIT DETAIL CAMERA LOCK: preserve overhead/detail framing and depth.' : 'Preserve scripted camera and depth.';
     return `EYE-LINE LOCK: keep each actor's scripted gaze target; no forced mutual/lens gaze. ${cameraLock}`;
   }
   if (speakers.length < 2 && !stagedSpeakerAndListener) {
     if (requestedRearCamera) {
       const listeners = mentionedCastNames.filter((name) => !speakers.includes(name));
-      return `EYE-LINE LOCK: preserve each scripted gaze target; never lens/front. ${buildRequiredDepthAssignment(speakers, listeners, true, explicitRearSubject, functionalActionMode)} Camera preserves the scenario direction.`;
+      return `EYE-LINE LOCK: preserve each scripted gaze target; never lens/front. ${buildRequiredDepthAssignment(speakers, listeners, true, explicitRearSubject, functionalActionMode, false, rear.status)} Camera preserves the scenario direction.`;
     }
     return explicitDetailCamera
       ? 'EXPLICIT DETAIL CAMERA LOCK: preserve the scripted overhead, hand-detail, or close-up framing; do not invent a rear shoulder or force frontal portraits.'
@@ -1215,7 +1234,7 @@ export const buildPanelEyeLineRule = (panelText, castList) => {
     return `EYE-LINE LOCK: ${roleStaging} never lens/front. EXPLICIT DETAIL CAMERA LOCK: preserve the scripted overhead, hand-detail, or close-up framing; do not invent a rear shoulder or force frontal portraits. Camera preserves scenario direction.`;
   }
 
-  return `EYE-LINE LOCK: ${roleStaging} never lens/front. ${buildRequiredDepthAssignment(speakers, listeners, requestedRearCamera, explicitRearSubject, functionalActionMode)} Camera preserves scenario direction.`;
+  return `EYE-LINE LOCK: ${roleStaging} never lens/front. ${buildRequiredDepthAssignment(speakers, listeners, requestedRearCamera, explicitRearSubject, functionalActionMode, false, rear.status)} Camera preserves scenario direction.`;
 };
 
 export const cleanseActionGagSymbols = (actionText) => {
@@ -1583,11 +1602,11 @@ export const extractCastLimitRule = (fullPanelText, castList, options = {}) => {
 
   // The bubble parser is the source of truth for speakers, including multiple
   // utterances on one line and speakers written after the quote.
-  const dialogue = extractDialogueOnly(fullPanelText, castList, {forImagePrompt: true});
-  const speakers = [...new Set([...dialogue.matchAll(/B\d+=>\[([^\]]+)\] mouth\/head/g)]
-    .map((match) => {
-      const alias = findSpeakerCastMatch(match[1], validCharacters);
-      return alias ? charLookup[alias].name : match[1];
+  const entries = extractDialogueOnly(fullPanelText, castList, {forImagePrompt: true, asEntries: true});
+  const speakers = [...new Set(entries
+    .map(({speaker}) => {
+      const alias = findSpeakerCastMatch(speaker, validCharacters);
+      return alias ? charLookup[alias].name : speaker;
     }))];
 
   // [v3.95] セリフ行以外のテキストを抽出して登場人物を検出する (セリフ内言及によるキャラ誤認バグの完全排除)
@@ -1648,7 +1667,7 @@ export const extractCastLimitRule = (fullPanelText, castList, options = {}) => {
   // Visual Action テキストからも登場キャラ名を検出
   const allPanelCharacters = [...speakers];
   const canonicalValidCharacters = [...new Set(Object.values(charLookup).map(obj => obj.name))];
-  const explicitRearSubject = extractExplicitRearSubject(fullPanelText, canonicalValidCharacters);
+  const explicitRearSubject = extractExplicitRearSubject(fullPanelText, collectCastNameEntries(castList)).subject;
   // An unqualified group subject refers to the registered cast, not unnamed mobs.
   // Keep qualified groups such as 社員全員 separate from the main cast.
   const hasUnqualifiedCastGroup = /(?:^|[。！？\n:：／、])\s*(?:全員|一同|みんな|他のメンバー)(?:が|は|も|で|、)/u.test(actionAndMetaText);

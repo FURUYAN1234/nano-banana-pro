@@ -452,3 +452,25 @@ test('monochrome permits depth-of-field in ink without relaxing skin or palette 
     assert.doesNotMatch(prompt, /no blur|never blur|instead of blur|not blurred pixels/i);
   }
 });
+
+
+test('reported-document scenario preserves all seven utterances and passes both provider assemblies', async () => {
+  const {extractDialogueOnly} = await server.ssrLoadModule('/src/lib/panel-utils.js');
+  const input = readFileSync(new URL('./fixtures/reported-document-balloon-layout.txt',import.meta.url),'utf8');
+  const cast = ['アカリ','ヒカリ','ミク','リン','サエコ'].map(name=>`## ${name}\n- adult`).join('\n');
+  const expected = [
+    [{speaker:'ヒカリ',text:'題材では、3年間で申告漏れを指摘されたそうよ。'}],
+    [{speaker:'ミク',text:'線が絡まりすぎじゃん！'},{speaker:'リン',text:'税理士側は、経済的な目的があったと主張してるのね。'}],
+    [{speaker:'サエコ',text:'調査対象は30社以上。断定はできないわ。'},{speaker:'アカリ',text:'AI、そこだけ即答なんだ！'}],
+    [{speaker:'アカリ',text:'関口さんは悪くないよね、悪いのは生成AIだよね！'},{speaker:'ヒカリ',text:'それも夢の中の結論よ。'}]
+  ];
+  for (const source of [input,input.replaceAll('\n','\r\n')]) {
+    const panels=source.split(/\[\dコマ目[^\]]*\]/u).slice(1);
+    assert.deepEqual(panels.map(panel=>extractDialogueOnly(panel,cast,{asEntries:true})),expected);
+    for (const providerFamily of ['chatgpt','gemini']) {
+      assert.doesNotThrow(()=>buildMangaPrompt({scenario:source,castList:cast,providerFamily,colorMode:'color',systemVersion:'test'}));
+      const broken=source.replace('"x":0.34','"x":0.99');
+      assert.throws(()=>buildMangaPrompt({scenario:broken,castList:cast,providerFamily,colorMode:'color'}),error=>error.code==='BALLOON_LAYOUT_INVALID' && error.panelNumber===2 && error.reason==='x_order');
+    }
+  }
+});

@@ -61,3 +61,13 @@ test('documentary source fidelity errors are explained as local validation failu
   assert.match(guide, /通信エラーではありません/);
   assert.doesNotMatch(guide, /タイムアウト/);
 });
+
+
+test('balloon mismatch guide reports evidence without blaming the input or network', () => {
+  const error=Object.assign(new Error('BalloonLayout: 配置2件、抽出台詞3件で一致しません。'),{code:'BALLOON_LAYOUT_INVALID',reason:'count',panelNumber:2});
+  const guide=translateApiError(error);
+  assert.match(guide,/吹き出し配置と抽出台詞の不一致/);
+  assert.match(guide,/2コマ目/);
+  assert.match(guide,/配置2件、抽出台詞3件/);
+  assert.doesNotMatch(guide,/入力箇所を修正|サーバー混雑|通信障害です/);
+});

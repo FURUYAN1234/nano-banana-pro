@@ -26,6 +26,20 @@ test('edit request carries the source image and latest instruction without old s
   assert.throws(() => buildImageEditRequest(source, 'x'.repeat(40000)), /上限|長|文字/);
 });
 
+test('a requested face repair preserves the shot and acting while rebuilding connected head geometry', () => {
+  const prompt = buildImageEditRequest(source, '2コマ目右の人物の顔崩れだけ修正。').prompt;
+  assert.match(prompt, /LOCAL ANATOMY REPAIR/);
+  assert.match(prompt, /cranium, face, ear, jaw and neck/);
+  assert.match(prompt, /head turn, gaze, expression/);
+  assert.match(prompt, /perspective, foreshortening/);
+  assert.match(prompt, /focus\/blur and linework/);
+  assert.match(prompt, /only when requested/);
+  assert.ok(prompt.endsWith('2コマ目右の人物の顔崩れだけ修正。'));
+  const transformation = buildImageEditRequest(source, '顔を意図的な異形へ変える').prompt;
+  assert.match(transformation, /user instruction takes priority/);
+  assert.ok(transformation.endsWith('顔を意図的な異形へ変える'));
+});
+
 function setup(overrides = {}) {
   let displayed = source;
   let history = [{ id: 1, img: source }];

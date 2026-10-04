@@ -1,3 +1,14 @@
+## 2026-10-04 最新承認: 引用・肩越し修正と実画像検証
+
+ローカル修正済み。3回目の局所編集で斜め後ろ姿の自然な頭部を確認し、実画像提示後にユーザー「じゃこれで進めて」で採用。v6.8.2公開準備中、正式リリース/告知/バックアップは未実行。必要なバグ修正API使用は包括承認済み。単一進捗記録: [実装計画](docs/superpowers/plans/2026-10-04-balloon-quote-and-camera-identity-plan.md)。サブエージェント禁止。
+
+## Historical planning record (superseded above): STEP3 quotation / rear-camera identity — 2026-10-04
+
+- User requests diagnosis and an implementation plan, then stop. Main agent only; no subagents until explicitly requested. Implementation starts only after the user switches to Astra High and gives the implementation instruction.
+- Canonical record: [diagnosis, evidence and implementation plan](docs/superpowers/plans/2026-10-04-balloon-quote-and-camera-identity-plan.md). Exact scenario reproduces false document-text dialogue in panel 2 on both prompt providers. Supplied Web prompt reproduces rear-camera subject/alias conflicts; original/corrected shared images visually reviewed. Causal impact on the face and API image quality remain unproven. User accepts isolated Web-only drawing variation; do not broaden image-repair scope.
+- Highest visual acceptance: preserve engaging staging; no flat side-by-side comedy-conversation lineup imposed by balloon order. Preserve time-ordered interpersonal actions/reactions and each character's gaze shifts toward partners/props; no uniform speaker-facing or mutual-gaze override. Preserve focal-character G-pen pressure/taper/contour accents where the panel medium supports them, with medium-specific line/plane emphasis elsewhere.
+- No application/test implementation, paid generation, commit/push, release, publication or backup performed. Necessary later API verification is now authorized in the in-app browser, within the existing one-run boundary; this does not authorize starting implementation before the user's instruction. Preserve all current camera directions/elevations/zoom/telephoto/fisheye/wide/Dutch angles, acting, expressions and effects, including character-focused near/far blur, faded lines/colors and contrast-based eye guidance; no flattening or uniform sharpening to hide the defect. Preserve the existing 2026-10-03 handoff-plan edits. Next: wait for the user's implementation instruction.
+
 ## Current delivery — 2026-10-03 v6.8.1
 
 User authorized deployment, note/Facebook updates, X text in chat only, and full backup last. Materiality policy and focused 150 regression checks passed; all three PDF manuals and README reflect current functions, with current UI and API artwork. Canonical acceptance evidence and remaining delivery: [task record](docs/superpowers/plans/2026-10-03-step2-quality-budget-handoff.md).

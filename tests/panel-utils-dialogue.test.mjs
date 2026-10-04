@@ -1023,3 +1023,30 @@ test('maps fear-like emotion tags to safe dramatic styling while preserving come
   assert.match(hyperGagBlock, /PANEL STYLE LOCK: IMPACT/);
   assert.doesNotMatch(hyperGagBlock, /GAG INTENT OVERLAY/);
 });
+
+
+test('document nominal quotations stay in Action while actual speech remains dialogue', () => {
+  const cast = '## 甲\n- adult\n## 乙\n- adult';
+  for (const noun of ['記述', '文章', '文面', '記載', '一節', '一文']) {
+    const source = `状況: 甲は資料の「計画の再検討が必要」という${noun}を確かめる。\n乙「確認します。」`;
+    assert.deepEqual(extractDialogueOnly(source, cast, {asEntries:true}), [{speaker:'乙',text:'確認します。'}], noun);
+    assert.ok(extractActionOnly(source, cast).includes('「計画の再検討が必要」'), noun);
+  }
+  for (const ending of ['と読み上げる', 'という', 'と言う']) {
+    assert.deepEqual(extractDialogueOnly(`状況: 甲は資料を見て「計画の再検討が必要」${ending}。`, cast, {asEntries:true}), [{speaker:'甲',text:'計画の再検討が必要'}]);
+  }
+});
+
+test('invalid BalloonLayout exposes the precise reason without weakening validation', () => {
+  const good = [{speaker:'甲',x:0.75,anchor:'甲の口元',route:'上の余白'}, {speaker:'乙',x:0.25,anchor:'乙の口元',route:'左余白'}];
+  const cases = [
+    ['{','json'], ['{}','schema'], [JSON.stringify(good.slice(0,1)),'count'],
+    [JSON.stringify(good.map((v,i)=>i ? v : {...v,speaker:'乙'})),'speaker'],
+    [JSON.stringify(good.map((v,i)=>i ? v : {...v,x:1})),'x_range'],
+    [JSON.stringify(good.map((v,i)=>i ? v : {...v,x:0.1})),'x_order'],
+    ...['anchor','route'].map(key=>[JSON.stringify(good.map((v,i)=>i ? v : {...v,[key]:''})),key])
+  ];
+  for (const [layout, reason] of cases) {
+    assert.throws(()=>extractDialogueOnly(`BalloonLayout: ${layout}\n甲「一。」\n乙「二。」`, '## 甲\n## 乙', {forImagePrompt:true}), error=>error.code === 'BALLOON_LAYOUT_INVALID' && error.reason === reason, reason);
+  }
+});

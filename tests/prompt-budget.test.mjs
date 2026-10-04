@@ -189,10 +189,16 @@ test('soft Web target may be exceeded to retain critical content', () => {
   const eyeLines = prompt.match(/^EYE-LINE LOCK:[^\n]*/gm) || [];
   assert.equal(eyeLines.length, 4);
   eyeLines.forEach((line, index) => {
-    for (const name of participants[index]) assert.ok(line.includes(`[${name}]`));
+    const panel = prompt.split(`## Panel ${index + 1}`)[1].split(`## Panel ${index + 2}`)[0];
+    for (const name of participants[index]) assert.ok(panel.includes(`[${name}]`));
     if (index === 2) {
       assert.match(line, /camera behind \[アカリ\]|camera is physically behind \[アカリ\]/);
       assert.match(line, /rear head\/shoulder|back of \[アカリ\]'s head or shoulder/);
+    } else if ([0, 3].includes(index)) {
+      // Explicit eye movement must survive rather than being replaced by the
+      // previous "everyone watches the active speaker" template.
+      assert.match(line, /keep each actor's scripted gaze target/);
+      assert.doesNotMatch(line, /reactors watch speaker|camera behind|camera is physically behind/);
     } else {
       assert.match(line, /VIEWPOINT FREEDOM/);
       assert.doesNotMatch(line, /camera behind|camera is physically behind/);

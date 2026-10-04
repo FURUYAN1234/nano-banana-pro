@@ -1,5 +1,6 @@
 import { buildRenderOptionsQa } from './render-options.js';
 import { isMonochromePrompt } from './manga-render-mode.js';
+import { LOCAL_ANATOMY_REPAIR } from './shared-image-quality.js';
 import { assessMonochromeEvidence, extractBubbleContracts, extractCriticalRearCameraContracts, hasCriticalRearCameraContract } from './image-quality-qa.js';
 
 export const IMAGE_QUALITY_MAX_ATTEMPTS = 4;
@@ -263,6 +264,7 @@ export const parseImageFailureAnalysis = (text, { issues, history = [], original
 };
 
 export const buildImageQualityRepairPrompt = ({ originalPrompt = '', issues = [], mode, sourceMode = 'regenerate', attempt = 2 } = {}) => {
+  const anatomyRepair = issues.some(issue => issue?.type === 'anatomy') ? LOCAL_ANATOMY_REPAIR : '';
   const concreteIssues = issues
     .filter((issue) => issue?.type !== 'unverified')
     .slice(0, 8)
@@ -288,6 +290,7 @@ export const buildImageQualityRepairPrompt = ({ originalPrompt = '', issues = []
   CHANGE:
   Correct only the concrete visible defects listed below, using the smallest coherent edit:
   ${concreteIssues || '- No concrete issue was supplied; do not introduce any change.'}
+  ${anatomyRepair}
   ${bubbleOrderRepair}
   ${bubbleMoves}
   PRESERVE:
@@ -315,6 +318,7 @@ IMAGE QUALITY CORRECTION ATTEMPT (bounded candidate ${attempt}/${IMAGE_QUALITY_M
 ${preservationLock}
 Correct only these concrete visible issues:
 ${concreteIssues || '- No concrete issue was supplied; preserve the approved page without adding content.'}
+${anatomyRepair}
 ${bubbleOrderRepair}
 ${bubbleMoves}
 Do not add speaker names, metadata, translations, annotations, or extra text.

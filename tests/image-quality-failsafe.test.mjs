@@ -38,6 +38,21 @@ const analysis = ({ issues, history }) => JSON.stringify({ corrections: issues.m
   previousFailure: history.length ? 'Prior contact correction failed' : 'First attempt',
   nextStrategy: `Rebuild contact at revision ${history.length + 1}`, verification: 'Trace separate contours and count limbs',
 })) });
+
+test('concrete anatomy repair adds local reconstruction without changing camera or coherent stylization', () => {
+  for (const sourceMode of ['source-image', 'regenerate']) {
+    const prompt = buildImageQualityRepairPrompt({originalPrompt:'APPROVED', sourceMode,
+      issues:[{type:'anatomy',panel:2,subject:'foreground actor',reason:'face detached from skull'}]});
+    assert.match(prompt, /LOCAL ANATOMY REPAIR/);
+    assert.match(prompt, /cranium, face, ear, jaw and neck/);
+    assert.match(prompt, /head turn, gaze, expression/);
+    assert.match(prompt, /keep coherent stylization/);
+    for (const type of ['bubble_text', 'unverified']) {
+      assert.doesNotMatch(buildImageQualityRepairPrompt({originalPrompt:'APPROVED', sourceMode,
+        issues:[{type,panel:2,reason:'text uncertain'}]}), /LOCAL ANATOMY REPAIR/);
+    }
+  }
+});
 const confirmedOriginal = async (_before, _after, _prompt, { originalIssues = [] } = {}) => ({
   preferred: 'original', reason: 'Fixture: original defect still visible; repair is worse.',
   originalIssueChecks: originalIssues.map((issue, issueIndex) => ({ issueIndex, status: 'defect', evidence: issue.reason })),

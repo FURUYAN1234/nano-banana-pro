@@ -69,288 +69,288 @@
       "providerFamily": "chatgpt",
       "colorMode": "color",
       "promptMaxChars": 24000,
-      "sha256": "943575ef5b8e6cb8d883097bf5014f290a6d47f436ccf0215558e24b0e792a7a",
-      "utf8Bytes": 25316,
-      "characters": 21031
+      "sha256": "4b329a5a142b5c810c87dda02f4ed9ea595155d85f453be33a0308ca9b53f605",
+      "utf8Bytes": 25765,
+      "characters": 21466
     },
     {
       "case": "gekiga-panel-1",
       "providerFamily": "chatgpt",
       "colorMode": "color",
       "promptMaxChars": 32000,
-      "sha256": "943575ef5b8e6cb8d883097bf5014f290a6d47f436ccf0215558e24b0e792a7a",
-      "utf8Bytes": 25316,
-      "characters": 21031
+      "sha256": "4b329a5a142b5c810c87dda02f4ed9ea595155d85f453be33a0308ca9b53f605",
+      "utf8Bytes": 25765,
+      "characters": 21466
     },
     {
       "case": "gekiga-panel-1",
       "providerFamily": "gemini",
       "colorMode": "color",
       "promptMaxChars": 24000,
-      "sha256": "51bf86a603cbc3c2f878c90d7cf67440a2f419a13db551b240822fd4f43b2a22",
-      "utf8Bytes": 63239,
-      "characters": 57573
+      "sha256": "f390e50ef9b0d49dc864d6decf126519206f0b77110fcf029b014de80e2ca0de",
+      "utf8Bytes": 62810,
+      "characters": 57172
     },
     {
       "case": "gekiga-panel-1",
       "providerFamily": "gemini",
       "colorMode": "color",
       "promptMaxChars": 32000,
-      "sha256": "51bf86a603cbc3c2f878c90d7cf67440a2f419a13db551b240822fd4f43b2a22",
-      "utf8Bytes": 63239,
-      "characters": 57573
+      "sha256": "f390e50ef9b0d49dc864d6decf126519206f0b77110fcf029b014de80e2ca0de",
+      "utf8Bytes": 62810,
+      "characters": 57172
     },
     {
       "case": "gekiga-panel-1",
       "providerFamily": "gemini",
       "colorMode": "monochrome",
       "promptMaxChars": 24000,
-      "sha256": "f14b997032f00e69d53674e1e8b93f3d656efb81ff7e17c9e75e43cfd0d002bc",
-      "utf8Bytes": 68337,
-      "characters": 62671
+      "sha256": "9838108caecd57d480cd5c57631e4173ffa35fa2d3ec3a8b20ce03c980f7f142",
+      "utf8Bytes": 67908,
+      "characters": 62270
     },
     {
       "case": "gekiga-panel-1",
       "providerFamily": "gemini",
       "colorMode": "monochrome",
       "promptMaxChars": 32000,
-      "sha256": "f14b997032f00e69d53674e1e8b93f3d656efb81ff7e17c9e75e43cfd0d002bc",
-      "utf8Bytes": 68337,
-      "characters": 62671
+      "sha256": "9838108caecd57d480cd5c57631e4173ffa35fa2d3ec3a8b20ce03c980f7f142",
+      "utf8Bytes": 67908,
+      "characters": 62270
     },
     {
       "case": "gekiga-panel-2",
       "providerFamily": "chatgpt",
       "colorMode": "color",
       "promptMaxChars": 24000,
-      "sha256": "c6ba16c23c076f599b72cb822884c4ae5d26a450367ccd32bf5652ab54c9e205",
-      "utf8Bytes": 25316,
-      "characters": 21031
+      "sha256": "0e16dd1056194f08cf4a58c6657b82642d06b2431b6272bebda2969a2d388991",
+      "utf8Bytes": 25765,
+      "characters": 21466
     },
     {
       "case": "gekiga-panel-2",
       "providerFamily": "chatgpt",
       "colorMode": "color",
       "promptMaxChars": 32000,
-      "sha256": "c6ba16c23c076f599b72cb822884c4ae5d26a450367ccd32bf5652ab54c9e205",
-      "utf8Bytes": 25316,
-      "characters": 21031
+      "sha256": "0e16dd1056194f08cf4a58c6657b82642d06b2431b6272bebda2969a2d388991",
+      "utf8Bytes": 25765,
+      "characters": 21466
     },
     {
       "case": "gekiga-panel-2",
       "providerFamily": "gemini",
       "colorMode": "color",
       "promptMaxChars": 24000,
-      "sha256": "49876278d899886b3034155c321f72129dc7d0e56c43b4c2091ca05f80f3d35c",
-      "utf8Bytes": 63239,
-      "characters": 57573
+      "sha256": "19acba53f4ab59b9b78248af776b826b9f1135d2950ebe2d60db98c5718bbabb",
+      "utf8Bytes": 62810,
+      "characters": 57172
     },
     {
       "case": "gekiga-panel-2",
       "providerFamily": "gemini",
       "colorMode": "color",
       "promptMaxChars": 32000,
-      "sha256": "49876278d899886b3034155c321f72129dc7d0e56c43b4c2091ca05f80f3d35c",
-      "utf8Bytes": 63239,
-      "characters": 57573
+      "sha256": "19acba53f4ab59b9b78248af776b826b9f1135d2950ebe2d60db98c5718bbabb",
+      "utf8Bytes": 62810,
+      "characters": 57172
     },
     {
       "case": "gekiga-panel-2",
       "providerFamily": "gemini",
       "colorMode": "monochrome",
       "promptMaxChars": 24000,
-      "sha256": "29ebe83e8d8e51c39f594eb53f6d93be10a07f9e84232010b61261015f73f0f9",
-      "utf8Bytes": 68337,
-      "characters": 62671
+      "sha256": "d5062868e90d119baebdac4de2d37316c501be0402a184dbbb1732990f23dd5f",
+      "utf8Bytes": 67908,
+      "characters": 62270
     },
     {
       "case": "gekiga-panel-2",
       "providerFamily": "gemini",
       "colorMode": "monochrome",
       "promptMaxChars": 32000,
-      "sha256": "29ebe83e8d8e51c39f594eb53f6d93be10a07f9e84232010b61261015f73f0f9",
-      "utf8Bytes": 68337,
-      "characters": 62671
+      "sha256": "d5062868e90d119baebdac4de2d37316c501be0402a184dbbb1732990f23dd5f",
+      "utf8Bytes": 67908,
+      "characters": 62270
     },
     {
       "case": "gekiga-panel-3",
       "providerFamily": "chatgpt",
       "colorMode": "color",
       "promptMaxChars": 24000,
-      "sha256": "4194a8906ebc83dad624181f0f8fe977dbdcdbecaca5de1314b5552bfa1942c5",
-      "utf8Bytes": 25316,
-      "characters": 21031
+      "sha256": "1a60f7e94ff3261bb78b325ffc1f482a16fda5999df9bb1188bca80c8f73959f",
+      "utf8Bytes": 25765,
+      "characters": 21466
     },
     {
       "case": "gekiga-panel-3",
       "providerFamily": "chatgpt",
       "colorMode": "color",
       "promptMaxChars": 32000,
-      "sha256": "4194a8906ebc83dad624181f0f8fe977dbdcdbecaca5de1314b5552bfa1942c5",
-      "utf8Bytes": 25316,
-      "characters": 21031
+      "sha256": "1a60f7e94ff3261bb78b325ffc1f482a16fda5999df9bb1188bca80c8f73959f",
+      "utf8Bytes": 25765,
+      "characters": 21466
     },
     {
       "case": "gekiga-panel-3",
       "providerFamily": "gemini",
       "colorMode": "color",
       "promptMaxChars": 24000,
-      "sha256": "d73e0020a12073acae01547be4379e865ed93023993cf03ba0575780cb81ecd9",
-      "utf8Bytes": 63239,
-      "characters": 57573
+      "sha256": "83ae36608814fdc77303be62333a5b76765a0546492ac1732310523f82982534",
+      "utf8Bytes": 62810,
+      "characters": 57172
     },
     {
       "case": "gekiga-panel-3",
       "providerFamily": "gemini",
       "colorMode": "color",
       "promptMaxChars": 32000,
-      "sha256": "d73e0020a12073acae01547be4379e865ed93023993cf03ba0575780cb81ecd9",
-      "utf8Bytes": 63239,
-      "characters": 57573
+      "sha256": "83ae36608814fdc77303be62333a5b76765a0546492ac1732310523f82982534",
+      "utf8Bytes": 62810,
+      "characters": 57172
     },
     {
       "case": "gekiga-panel-3",
       "providerFamily": "gemini",
       "colorMode": "monochrome",
       "promptMaxChars": 24000,
-      "sha256": "10a7d37456937d87daedff5c7de006c40880d5eb2583c4778333fdb0d1b343d7",
-      "utf8Bytes": 68337,
-      "characters": 62671
+      "sha256": "e49e5dc6cc2c96dc77b5ae7be3b1d527ea71ba65bbc9ff9a5e253aba9d409b20",
+      "utf8Bytes": 67908,
+      "characters": 62270
     },
     {
       "case": "gekiga-panel-3",
       "providerFamily": "gemini",
       "colorMode": "monochrome",
       "promptMaxChars": 32000,
-      "sha256": "10a7d37456937d87daedff5c7de006c40880d5eb2583c4778333fdb0d1b343d7",
-      "utf8Bytes": 68337,
-      "characters": 62671
+      "sha256": "e49e5dc6cc2c96dc77b5ae7be3b1d527ea71ba65bbc9ff9a5e253aba9d409b20",
+      "utf8Bytes": 67908,
+      "characters": 62270
     },
     {
       "case": "gekiga-panel-4",
       "providerFamily": "chatgpt",
       "colorMode": "color",
       "promptMaxChars": 24000,
-      "sha256": "d6a1b808cbbd29704d9a784bedb6b59e5e1befb41d8b8ef637c8a26e721231d1",
-      "utf8Bytes": 25316,
-      "characters": 21031
+      "sha256": "629ba506cfdc476ed4d57840502b8d0d3ddc2240647a5f4ae09812504ff5dc4d",
+      "utf8Bytes": 25765,
+      "characters": 21466
     },
     {
       "case": "gekiga-panel-4",
       "providerFamily": "chatgpt",
       "colorMode": "color",
       "promptMaxChars": 32000,
-      "sha256": "d6a1b808cbbd29704d9a784bedb6b59e5e1befb41d8b8ef637c8a26e721231d1",
-      "utf8Bytes": 25316,
-      "characters": 21031
+      "sha256": "629ba506cfdc476ed4d57840502b8d0d3ddc2240647a5f4ae09812504ff5dc4d",
+      "utf8Bytes": 25765,
+      "characters": 21466
     },
     {
       "case": "gekiga-panel-4",
       "providerFamily": "gemini",
       "colorMode": "color",
       "promptMaxChars": 24000,
-      "sha256": "1141efbd7f8b8be14301a0cdfe3022f9a8f33fdf5eff25c312d91b231a14f1fe",
-      "utf8Bytes": 63239,
-      "characters": 57573
+      "sha256": "8f6aeb1337e100b9b04c337f7d0ffb5a2afd426883b784f4339bdb2b109ce2ce",
+      "utf8Bytes": 62810,
+      "characters": 57172
     },
     {
       "case": "gekiga-panel-4",
       "providerFamily": "gemini",
       "colorMode": "color",
       "promptMaxChars": 32000,
-      "sha256": "1141efbd7f8b8be14301a0cdfe3022f9a8f33fdf5eff25c312d91b231a14f1fe",
-      "utf8Bytes": 63239,
-      "characters": 57573
+      "sha256": "8f6aeb1337e100b9b04c337f7d0ffb5a2afd426883b784f4339bdb2b109ce2ce",
+      "utf8Bytes": 62810,
+      "characters": 57172
     },
     {
       "case": "gekiga-panel-4",
       "providerFamily": "gemini",
       "colorMode": "monochrome",
       "promptMaxChars": 24000,
-      "sha256": "6bf30a641b897d08b0a48d4494209ca8c6a6dec5025d833064d95db68e59fee9",
-      "utf8Bytes": 68337,
-      "characters": 62671
+      "sha256": "cb3973592bc9bd85371c5c2d95de536ef6323c710c50c358ee0a93d0dcc5f5f5",
+      "utf8Bytes": 67908,
+      "characters": 62270
     },
     {
       "case": "gekiga-panel-4",
       "providerFamily": "gemini",
       "colorMode": "monochrome",
       "promptMaxChars": 32000,
-      "sha256": "6bf30a641b897d08b0a48d4494209ca8c6a6dec5025d833064d95db68e59fee9",
-      "utf8Bytes": 68337,
-      "characters": 62671
+      "sha256": "cb3973592bc9bd85371c5c2d95de536ef6323c710c50c358ee0a93d0dcc5f5f5",
+      "utf8Bytes": 67908,
+      "characters": 62270
     },
     {
       "case": "reference-style-exception",
       "providerFamily": "chatgpt",
       "colorMode": "color",
       "promptMaxChars": 24000,
-      "sha256": "186600c2fc7930dfe9b7bf0d380d93093250ed1ab21ee184437d483bc60f1b09",
-      "utf8Bytes": 26066,
-      "characters": 21779
+      "sha256": "1b737a8fe0064585aeb24fdea34efba3c8630fcde4d9fa71c84ed12c4cb7038d",
+      "utf8Bytes": 26515,
+      "characters": 22214
     },
     {
       "case": "reference-style-exception",
       "providerFamily": "chatgpt",
       "colorMode": "color",
       "promptMaxChars": 32000,
-      "sha256": "186600c2fc7930dfe9b7bf0d380d93093250ed1ab21ee184437d483bc60f1b09",
-      "utf8Bytes": 26066,
-      "characters": 21779
+      "sha256": "1b737a8fe0064585aeb24fdea34efba3c8630fcde4d9fa71c84ed12c4cb7038d",
+      "utf8Bytes": 26515,
+      "characters": 22214
     },
     {
       "case": "reference-style-exception",
       "providerFamily": "gemini",
       "colorMode": "color",
       "promptMaxChars": 24000,
-      "sha256": "1c470bcf699271a3578c94423a4fd1f494ad64223b126cacc54ab9471edb034e",
-      "utf8Bytes": 62257,
-      "characters": 56589
+      "sha256": "5bfce0c5e616542afb42e7b6fd123d972debb7b29e426e89335a74980ed380bf",
+      "utf8Bytes": 61828,
+      "characters": 56188
     },
     {
       "case": "reference-style-exception",
       "providerFamily": "gemini",
       "colorMode": "color",
       "promptMaxChars": 32000,
-      "sha256": "1c470bcf699271a3578c94423a4fd1f494ad64223b126cacc54ab9471edb034e",
-      "utf8Bytes": 62257,
-      "characters": 56589
+      "sha256": "5bfce0c5e616542afb42e7b6fd123d972debb7b29e426e89335a74980ed380bf",
+      "utf8Bytes": 61828,
+      "characters": 56188
     },
     {
       "case": "reference-style-exception",
       "providerFamily": "gemini",
       "colorMode": "monochrome",
       "promptMaxChars": 24000,
-      "sha256": "241439f8b28a207d7bc555a43628a582a105e4facbb7ff300226fc806f584294",
-      "utf8Bytes": 68960,
-      "characters": 63292
+      "sha256": "f42e09cf69e72e41db8ad1e5bbb35742fad684ee7b2ccb381889c74b832c70fb",
+      "utf8Bytes": 68531,
+      "characters": 62891
     },
     {
       "case": "reference-style-exception",
       "providerFamily": "gemini",
       "colorMode": "monochrome",
       "promptMaxChars": 32000,
-      "sha256": "241439f8b28a207d7bc555a43628a582a105e4facbb7ff300226fc806f584294",
-      "utf8Bytes": 68960,
-      "characters": 63292
+      "sha256": "f42e09cf69e72e41db8ad1e5bbb35742fad684ee7b2ccb381889c74b832c70fb",
+      "utf8Bytes": 68531,
+      "characters": 62891
     },
     {
       "case": "reference-style-exception",
       "providerFamily": "chatgpt",
       "colorMode": "monochrome",
       "promptMaxChars": 24000,
-      "sha256": "ae2993cec402f4a781dd190b623e03d9424118c5ce1e108fe40f6094ca75121f",
-      "utf8Bytes": 27979,
-      "characters": 23146
+      "sha256": "6585bf4831ced633426fabc3a966c2606fc9f1cbee91644cf5f8859eeeec321d",
+      "utf8Bytes": 28428,
+      "characters": 23581
     },
     {
       "case": "reference-style-exception",
       "providerFamily": "chatgpt",
       "colorMode": "monochrome",
       "promptMaxChars": 32000,
-      "sha256": "ae2993cec402f4a781dd190b623e03d9424118c5ce1e108fe40f6094ca75121f",
-      "utf8Bytes": 27979,
-      "characters": 23146
+      "sha256": "6585bf4831ced633426fabc3a966c2606fc9f1cbee91644cf5f8859eeeec321d",
+      "utf8Bytes": 28428,
+      "characters": 23581
     }
   ],
   "nonTargetPanels": [
@@ -360,7 +360,7 @@
       "panels": [
         {
           "panel": 2,
-          "sha256": "fe17e12ed2f6dfcae9eb33b78ccc2bd125865b4cfd50f00879d968b57e2ced3f"
+          "sha256": "69f2e5d47442533929c5e12d9d8be1e29feb94b5c7420c47f1be0c9c257c9aad"
         },
         {
           "panel": 3,
@@ -378,7 +378,7 @@
       "panels": [
         {
           "panel": 2,
-          "sha256": "fe17e12ed2f6dfcae9eb33b78ccc2bd125865b4cfd50f00879d968b57e2ced3f"
+          "sha256": "69f2e5d47442533929c5e12d9d8be1e29feb94b5c7420c47f1be0c9c257c9aad"
         },
         {
           "panel": 3,
@@ -396,7 +396,7 @@
       "panels": [
         {
           "panel": 1,
-          "sha256": "9c09b20aef8d7d6b6e32802b5daf018ce1a4625884f118581c3509cf89a0fa18"
+          "sha256": "7eae06052f81e1fbaf5c602f9d7c6b7adaa4cfb44644da4f43e3858734f94a9d"
         },
         {
           "panel": 3,
@@ -414,7 +414,7 @@
       "panels": [
         {
           "panel": 1,
-          "sha256": "9c09b20aef8d7d6b6e32802b5daf018ce1a4625884f118581c3509cf89a0fa18"
+          "sha256": "7eae06052f81e1fbaf5c602f9d7c6b7adaa4cfb44644da4f43e3858734f94a9d"
         },
         {
           "panel": 3,
@@ -432,11 +432,11 @@
       "panels": [
         {
           "panel": 1,
-          "sha256": "465b4ae719687eee06920f8a5fac4e6c97b70145398687cdc194ea79fe2ec3bf"
+          "sha256": "4e2c416a689d4341c3495f214a71ff87634ee0262208c536c7f441318c6917c6"
         },
         {
           "panel": 2,
-          "sha256": "a326d51e3f01d97be65d218391fb76a18eac8053eebe7aa240f5f3c75ac780e7"
+          "sha256": "e7426ad7d5a2cd32ad41efbe2a01056fd7e3b81999747477fb5ef8eb01d968ed"
         },
         {
           "panel": 4,
@@ -450,11 +450,11 @@
       "panels": [
         {
           "panel": 1,
-          "sha256": "465b4ae719687eee06920f8a5fac4e6c97b70145398687cdc194ea79fe2ec3bf"
+          "sha256": "4e2c416a689d4341c3495f214a71ff87634ee0262208c536c7f441318c6917c6"
         },
         {
           "panel": 2,
-          "sha256": "a326d51e3f01d97be65d218391fb76a18eac8053eebe7aa240f5f3c75ac780e7"
+          "sha256": "e7426ad7d5a2cd32ad41efbe2a01056fd7e3b81999747477fb5ef8eb01d968ed"
         },
         {
           "panel": 4,
@@ -468,11 +468,11 @@
       "panels": [
         {
           "panel": 1,
-          "sha256": "808efe35a47d39a99e7583ababb49aedd43f88b636a6d982bb16e51a44d82a62"
+          "sha256": "bf5c56d4eb43603fc2457c7d85731f6c0fd71c6066fdedd038811cc3306a9b14"
         },
         {
           "panel": 2,
-          "sha256": "ade514b2cde7723bcdcdd05f9b6bae42154b9f74b56ce65fbafa8d9ddbf8b041"
+          "sha256": "c0ef1f603468f39041c5b61b82e48325f44969fec743c77d5d619c577d707eb3"
         },
         {
           "panel": 3,
@@ -486,11 +486,11 @@
       "panels": [
         {
           "panel": 1,
-          "sha256": "808efe35a47d39a99e7583ababb49aedd43f88b636a6d982bb16e51a44d82a62"
+          "sha256": "bf5c56d4eb43603fc2457c7d85731f6c0fd71c6066fdedd038811cc3306a9b14"
         },
         {
           "panel": 2,
-          "sha256": "ade514b2cde7723bcdcdd05f9b6bae42154b9f74b56ce65fbafa8d9ddbf8b041"
+          "sha256": "c0ef1f603468f39041c5b61b82e48325f44969fec743c77d5d619c577d707eb3"
         },
         {
           "panel": 3,
@@ -498,5 +498,10 @@
         }
       ]
     }
-  ]
+  ],
+  "stagingRevision": {
+    "date": "2026-10-04",
+    "comparedTo": "3b4d369",
+    "changes": "Only scripted gaze, explicit shoulder identity, and visible-contour tail wording. Every other byte matched HEAD across 32 whole outputs and 8 monochrome neighbor cases. This is prompt isolation evidence, not image acceptance."
+  }
 }

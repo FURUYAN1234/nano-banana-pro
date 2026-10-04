@@ -38,6 +38,7 @@ export const getApiErrorInfo = error => {
   const text = `${error?.code || ''} ${message}`.toLowerCase();
   const status = Number(error?.status) || Number(message.match(/(?:\bHTTP\s+|\bCode:\s*|^)([45]\d\d)\b/i)?.[1]);
   const info = (kind, label, advice) => ({kind, label, advice});
+  if (error?.code === 'BALLOON_LAYOUT_INVALID') return info('balloon_layout', '吹き出し配置と抽出台詞の不一致', '詳細のコマと配置・抽出台詞を照合してください。引用の抽出違いも含めて確認が必要です。通信障害ではありません。');
   if (error?.name === 'AbortError' || error?.code === 'CANCELLED') return info('cancelled', '処理を中断しました', '必要なら現在の入力で再実行してください。');
   if (status === 504) return info('timeout', 'APIサーバーの応答待ち時間切れ', 'API側がHTTP 504を返しました。時間を置いて再試行してください。');
   if (status >= 500) return info('server', 'APIサーバー側のエラー', '時間を置いて再試行してください。繰り返す場合はプロバイダーの稼働状況を確認してください。');
@@ -62,7 +63,7 @@ export const getApiErrorInfo = error => {
 };
 
 export const formatApiErrorDetails = error => {
-  const tags = [error?.provider, error?.model, error?.status && `HTTP ${error.status}`, error?.code].filter(Boolean);
+  const tags = [Number.isInteger(error?.panelNumber) && `${error.panelNumber}コマ目`, error?.provider, error?.model, error?.status && `HTTP ${error.status}`, error?.code].filter(Boolean);
   return sanitizeErrorMessage(`${tags.length ? `[${tags.join(' / ')}] ` : ''}${error?.message ?? error ?? '詳細なし'}`);
 };
 

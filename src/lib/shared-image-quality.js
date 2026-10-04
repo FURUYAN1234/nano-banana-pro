@@ -24,6 +24,8 @@ export const FOCAL_READABILITY = `FOCAL READABILITY: readability never changes s
 
 export const HEAD_VOLUME_LOCK = 'skull, face edge, ear and eyewear share one head volume; keep scripted head turn and occlusion. One anatomical ear per side; occlude far ear. No stretched/stacked skulls; jaw/neck align. Rear head has no invented face; allow profiles/stylization/foreshortening. Rigid headwear shares skull rotation: view-correct front/back/edge; explicit two-sided designs allowed.';
 
+export const LOCAL_ANATOMY_REPAIR = 'LOCAL ANATOMY REPAIR: only when requested or a concrete anatomy defect is listed, rebuild the defective connection locally. For a head defect, connect cranium, face, ear, jaw and neck as one projected volume. Preserve camera, perspective, foreshortening, head turn, gaze, expression, pose, focus/blur and linework; keep coherent stylization and intended transformations. Do not expose hidden features or turn the subject toward the viewer to simplify the repair.';
+
 export const SHARED_IMAGE_QUALITY_CONTRACT_COMPACT = `SHARED IMAGE QUALITY CONTRACT: one primary focal subject; keep anatomy/props; ${HEAD_VOLUME_LOCK}`;
 
 export const CHEEK_RENDERING = 'CHEEK RENDERING: story/reference identity cues and panel medium (watercolor=skin-integrated wash); no default blush stamps/stripes across cast. Preserve expressive blush, makeup and ink/shadow planes; never copy incidental reference-sheet blush as a permanent facial trait.';

@@ -53,7 +53,7 @@ page('Gemini API 取得マニュアル',
  ('h2','はじめての取得・接続・費用確認'),
  ('body','Super FURU AI 4-koma Systemで使うGemini APIキーを取得するための、日本語操作ガイドです。Googleアカウントでのログインから、プロジェクト選択、キー発行、アプリへの接続まで順番に説明します。'),
  ('box','この冊子の対象','パソコンのブラウザで作業する初心者向けです。APIとは、アプリからAIへ処理を依頼する仕組みです。プログラムを書く必要はありません。'),
- ('body','v6.8.1対応。Google AI StudioでAPIキーを用意し、本アプリへ接続する手順を説明します。画面写真は操作に必要な部分のみを掲載しています。画面の表記や利用条件はアカウントによって異なる場合があります。'),
+ ('body','v6.8.2対応。Google AI StudioでAPIキーを用意し、本アプリへ接続する手順を説明します。画面写真は操作に必要な部分のみを掲載しています。画面の表記や利用条件はアカウントによって異なる場合があります。'),
  ('body','キーを取得するだけで、すべてのモデルを無料で利用できるわけではありません。画像生成や検索、解析、修正にも費用が発生する場合があります。'),refs=('studio','app')),
 page('目次と最短の作業順',
  ('rows',[['ページ','内容'],['3','GoogleアカウントとAI Studio'],['4','APIキー画面を開く'],['5','プロジェクトを選ぶ'],['6','キーを作成・コピーする'],['7','アプリへ接続する'],['8','無料枠と有料枠の違い'],['9','有料枠の設定と費用確認'],['10','キーの安全な管理'],['11','接続できないとき'],['12','公式リンクと完了チェック']]),
@@ -79,7 +79,7 @@ page('04  キーを作成してコピーする',
 page('05  アプリへ接続する',
  ('body','1. Super FURU AI 4-koma Systemを開きます。2. 上部のAPIキー入力欄へ、取得したGeminiキーを貼り付けます。3. 「接続」を押し、接続判定が終わるまで待ちます。'),
  ('body','接続成功後は「Gemini Engine」の表示を確認します。接続したプロバイダーがSTEP1からSTEP4までの処理先になります。OpenAIを併用するための別キーは、このGemini経路には必要ありません。'),
- ('box','再読み込みしたら再入力','本アプリのキーはブラウザのメモリ内で扱います。再読み込み・終了・全設定クリアで接続状態が失われるため、必要に応じて再入力してください。別のAPIへ切り替えるときは、必要な画像を保存し、設定クリアから接続し直してください。'),shot='app-connected-header.jpg',caption='実画面：設定クリア位置（OpenAI接続例）。Gemini接続時はGemini Engineと表示されます',refs=('app',)),
+ ('box','再読み込みしたら再入力','本アプリのキーはブラウザのメモリ内で扱います。再読み込み・終了・全設定クリアで接続状態が失われるため、必要に応じて再入力してください。別のAPIへ切り替えるときは、必要な画像を保存し、設定クリアから接続し直してください。'),shot='app-connected-header.jpg',caption='前版の実画面（操作配置は共通）：設定クリア位置。GeminiではGemini Engineと表示',refs=('app',)),
 page('06  無料枠と有料枠を理解する',
  ('rows',[['区別するもの','意味'],['キーの発行','APIへ接続するための認証情報を作ること'],['無料枠','対象モデル・用途・回数などの範囲内で利用できる枠'],['有料枠','課金設定をしたプロジェクトで利用量に応じて支払う枠'],['GoogleのAI契約','個人向けWebサービスの契約。APIの請求設定とは別に確認するもの']]),
  ('body','アプリのリンクに「無料」と書かれていても、画像APIを含む全機能の無料利用を保証する表示ではありません。使うモデルの料金表とAI Studioのプロジェクト状態を確認します。'),
@@ -108,7 +108,7 @@ page('完了チェックと公式リンク',
 SYSTEM=[
 page('全機能マニュアル',('h2','Super FURU AI 4-koma System'),
  ('body','キャラクター資料と題材から、4コマの構成、画像用の指示文、生成画像、保存まで進める日本語操作ガイドです。各機能の目的、操作順、変更が反映される工程、費用と保存の注意を説明します。'),
- ('box','このマニュアルの使い方','v6.8.1の全機能を、準備から保存まで操作順に説明します。OpenAIシナリオの初期選択はGPT-6.1 Solです。タイトル左の「使い方マニュアル」と接続欄のAPIマニュアルから、必要な説明を開けます。'),
+ ('box','このマニュアルの使い方','v6.8.2の全機能を、準備から保存まで操作順に説明します。OpenAIシナリオの初期選択はGPT-6.1 Solです。タイトル左の「使い方マニュアル」と接続欄のAPIマニュアルから、必要な説明を開けます。'),
  ('body','画面写真はCodex内蔵ブラウザで取得しています。実行を伴う画面が撮影できない機能は、現行の画面部品と処理コードを照合して説明し、生成済みの画面を作り物で代用しません。'),refs=('app',)),
 page('目次・機能の見つけ方',
  ('rows',[['ページ','機能'],['3-4','4ステップの流れ・API接続'],['5-6','キャラクター・作風JSON・360°背景'],['7-9','ニュース、自由入力、舞台・衣装・結末'],['10-11','シナリオ編集、SNS説明、演出強化'],['12-14','カラー／白黒、モザイク、ウオーターマーク、プロンプト構築・編集'],['15-18','Webコピー、Web修正・高解像度、API生成、検査・自動修正'],['19-21','追加修正、画像履歴・保存、制作情報'],['22-23','全自動・連続ループ、やり直しとモデル確認'],['24-25','1枚絵、動画化・関連アプリ'],['26-27','トラブル対処、完成前チェック・参照情報'],['28-30','白黒の描画指定・生成例・部分修正'],['31-32','Windowsでのローカル起動・STEP4の待機と検査']]),
@@ -193,6 +193,8 @@ page('画像検査と自動修正',
 page('表示中の画像へ追加指示を送る',
  ('body','画像ができると、その下へ6行の「この画像への追加指示」欄が表示されます。変更したい箇所と変更内容を具体的に入力し、「追加指示を送信して修正」を押します。'),
  ('body','表示中の画像と今回の指示を、接続中のGeminiまたはOpenAIへ送ります。1回の操作で1つの修正版を作り、成功した画像を履歴へ追加します。通常の新規生成の自動品質修正ループは再実行しません。'),
+ ('body','顔崩れはコマと人物を指定し、頭蓋・顔・耳・顎・首のつながりを局所的に直します。カメラ、顔の向き、視線、表情、ぼかし、線の強弱を保つ条件を添えます。検査の見逃しもあるため、修正前後を見比べてください。'),
+ ('body','後ろ姿で崩れが残る場合は、そのコマだけ頬や目を自然に隠し、後頭部・耳の裏側と肩の姿勢で反応を伝えるよう追加指定できます。横顔や振り向きを一律に禁止するものではありません。'),
  ('body','処理中は入力・送信を無効にします。失敗時には元の画像と入力指示を残します。修正後の実寸と、人物・台詞・画面の変化を確認してください。'),
  ('box','原画像を残す方法','成功した修正版から元へ戻したい場合は履歴で選びます。履歴は直近10件・現在のセッションのみなので、大事な画像は修正前にもダウンロードしてください。送信のたびにAPI料金が発生します。')),
 page('画像履歴・ダウンロード・比率補正',
@@ -277,7 +279,7 @@ page('STEP4の待機・検査と画像の保持',
 
 for p in SYSTEM:
  if p['title']=='API接続と処理先の選択':
-  p.update(shot='app-connected-header.jpg',caption='実画面：接続後ヘッダーと設定クリア操作（OpenAI接続例）')
+  p.update(shot='app-connected-header.jpg',caption='前版の実画面（操作配置は共通）：接続後ヘッダーと設定クリア（OpenAI接続例）')
  elif p['title']=='STEP1  キャラクターを読み込む':
   p.update(shot='app-step1-safe.jpg',caption='実画面：2枚のキャラクター資料を読み込んだ状態')
  elif p['title']=='全自動モードと連続ループ':
@@ -287,7 +289,7 @@ for p in SYSTEM:
 class Book:
  def __init__(self,path,title,pages):
   self.path=path; self.pages=pages; self.c=canvas.Canvas(str(path),pagesize=A4,pageCompression=1)
-  self.c.setTitle(title);self.c.setAuthor('Super FURU AI 4-koma System');self.c.setSubject('日本語操作マニュアル / v6.8.1 / 2026-10-03')
+  self.c.setTitle(title);self.c.setAuthor('Super FURU AI 4-koma System');self.c.setSubject('日本語操作マニュアル / v6.8.2 / 2026-10-04')
   self.y=0;self.number=0;self.layout=[]
  def para(self,text,style='body',gap=10):
   p=Paragraph(text,STYLES[style]);_,h=p.wrap(CW,1000)
@@ -329,7 +331,7 @@ class Book:
    if page['shot']:self.shot(page['shot'],page['caption'])
    if page['refs']:
     self.para('参照：'+' / '.join(f'<link href="{escape(SOURCES[k][1])}" color="#087c86">{escape(SOURCES[k][0])}</link>' for k in page['refs']),'small',0)
-   c.setFillColor(GRAY);c.setFont('JP',8);c.drawString(M,33,'v6.8.1対応 | 2026年10月3日更新 | A4 日本語版');c.drawRightString(W-M,33,f'{i:02d} / {len(self.pages):02d}')
+   c.setFillColor(GRAY);c.setFont('JP',8);c.drawString(M,33,'v6.8.2対応 | 2026年10月4日更新 | A4 日本語版');c.drawRightString(W-M,33,f'{i:02d} / {len(self.pages):02d}')
    self.layout.append(dict(page=i,bottom_y=round(self.y,2)));c.showPage()
   c.save();return self.layout
 
@@ -353,11 +355,11 @@ def crop_assets():
 def verify_and_render(path,layout,pages):
  r=PdfReader(path);text='\n'.join(p.extract_text() for p in r.pages)
  assert len(r.pages)==len(pages)
- assert all('v6.8.1対応' in p.extract_text() and '2026年10月3日更新' in p.extract_text() for p in r.pages)
+ assert all('v6.8.2対応' in p.extract_text() and '2026年10月4日更新' in p.extract_text() for p in r.pages)
  if 'full-manual' in path.name:
   for required in ['Download ZIP','Node.js','start_app.bat','npm install','node_modules','ウィンドウ','画像表示予定枠の中央','累積時間だけでは打ち切りません','原寸RGB','褐色肌','カケアミ']:
    assert re.sub(r'\s+','',required) in re.sub(r'\s+','',text),required
- assert set(re.findall(r'v[0-9]+\.[0-9]+\.[0-9]+',text)) <= {'v6.8.1'}, 'Historical version in current manual'
+ assert set(re.findall(r'v[0-9]+\.[0-9]+\.[0-9]+',text)) <= {'v6.8.2'}, 'Historical version in current manual'
  assert not re.search(r'nano\s*banana|ナノ[・\s]*バナナ',text,re.I)
  assert not re.search(r'AIza[A-Za-z0-9_-]{20,}|sk-(?:proj-)?[A-Za-z0-9_-]{20,}|gen-lang-client-\d+|sx717|@[A-Za-z0-9.-]+\.[A-Za-z]{2,}',text)
  assert all(p['bottom_y']>=64 for p in layout)

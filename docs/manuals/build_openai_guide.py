@@ -29,7 +29,7 @@ styles={
  'url':ParagraphStyle('url',fontName='JP',fontSize=9,leading=14,textColor=TEAL,wordWrap='CJK',splitLongWords=True),
 }
 c=canvas.Canvas(str(OUT),pagesize=A4,pageCompression=1)
-c.setTitle('はじめてのOpenAI API取得・設定ガイド | 2026-10-03')
+c.setTitle('はじめてのOpenAI API取得・設定ガイド | 2026-10-04')
 c.setAuthor('Super FURU AI 4-koma System')
 c.setSubject('新規登録からシナリオ作成とGPT Image 2.5のアプリ内画像生成まで')
 page=0; y=0; transcript=[]; checks=[]
@@ -49,7 +49,7 @@ def new(title,kicker='操作ガイド',sources=''):
  c.setFont('JPB',21); c.setFillColor(INK); c.drawString(M,H-73,title)
  c.setStrokeColor(HexColor('#cfdddf')); c.line(M,H-89,W-M,H-89)
  c.bookmarkPage(f'p{page}'); c.addOutlineEntry(title,f'p{page}',0,False)
- c.setFont('JP',8); c.setFillColor(GRAY); c.drawString(M,31,'v6.8.1対応 | 2026年10月3日更新 | A4 日本語版')
+ c.setFont('JP',8); c.setFillColor(GRAY); c.drawString(M,31,'v6.8.2対応 | 2026年10月4日更新 | A4 日本語版')
  c.drawRightString(W-M,31,f'{page:02d} / 20')
  if sources: c.setFont('JP',7.5); c.drawString(M,45,'根拠: '+sources+'（出典一覧は20ページ）')
  transcript.append('\n\n'+str(page)+'. '+title)
@@ -236,14 +236,14 @@ p('キーにはsk-で始まる形式があります。本資料には有効な�
 # 16
 new('⑫ 漫画アプリへキーを接続する','ここからアプリ内の操作です','公開アプリ・現行ソース')
 link('Super FURU AI 4-koma Systemを開く','https://furuyan1234.github.io/nano-banana-pro/')
-shot('app-connected-header.jpg','OpenAI接続後のアプリ上部。接続表示を確認してSTEP1へ進みます。',maxh=143,width=350)
+shot('app-connected-header.jpg','前版の実画面（操作配置は共通）：OpenAI接続表示を確認してSTEP1へ進みます。',maxh=143,width=350)
 steps([('最初のAPIキー入力欄を押す','「Gemini AI Key または OpenAI Key (sk-...)」とある欄に、⑪でコピーした<b>OpenAIの秘密キー全文</b>を貼り付けます。WindowsはCtrl+Vです。'),('「接続」を押す','入力の先頭でOpenAI形式と判定されます。「形式（未検証）」だけでは接続完了ではありません。接続確認が終わるまで待ちます。'),('「ChatGPT Engine」などOpenAIの接続表示を確認','このアプリの表示名にChatGPTとあっても、ここではOpenAI APIを使用します。ChatGPTサブスク枠の消費ではありません。')])
 box('接続成功＝画像モデルの利用成功、ではありません','現行アプリの接続確認はモデル一覧へのアクセスを確認します。GPT Image 2.5で本当に生成できるかは、モデル権限・認証・残高を整えたうえで⑬の実際の画像生成で確認します。')
 p('キーは現行アプリのブラウザーメモリーで保持されます。再読み込み・終了後は再入力が必要です。信頼できる配布先と自分の端末で使ってください。キーは認証のためOpenAIへ送信され、API処理では選んだ文章・画像も送信されます。','small')
 p('すでに作業中の場合、「最初からやり直す（設定クリア）」は制作中データも消します。キーを入れ直すために押す前に、必要な画像・文章を保存してください。','small')
 
 # 17
-new('⑬ GPT-6から画像生成まで進める','1枚ずつ手動で進める初回向けの設定例','公開アプリv6.8.1・現行ソース・G')
+new('⑬ GPT-6から画像生成まで進める','1枚ずつ手動で進める初回向けの設定例','公開アプリv6.8.2・現行ソース・G')
 box('最初は連続実行を使わない','全自動モードと連続ループ生成は有効にせず、各STEPを手動で進めます。「ON」と書かれたボタンが有効化の操作名になっている場合もあるため、ボタン名だけで動作中と判断しないでください。')
 steps([('STEP1：キャラクター設定画像を読み込む','「キャラクター設定画像を選択（STEP1）」から自分の画像を選び、解析完了を待ちます。解析にもAPI料金が発生します。'),('STEP2：題材とシナリオモデルを選ぶ','「自由入力」へ描きたい内容を入れます。「OpenAIシナリオモデル」の初期選択は<b>GPT-6.1 Sol</b>です。必要に応じてAstraなどを選び、「シナリオ作成を実行（STEP2）」を押します。失敗時に下位モデルへ移る場合はログの最終採用モデルを確認します。'),('STEP3：画像用プロンプトを作る','シナリオを確認して「画像用の指示文（プロンプト）を構築する（STEP3）」を押し、完了を待ちます。'),('STEP4：品質とサイズを確認する','「API生成時の品質・サイズ」を開きます。「API画像生成の品質」を<b>GPT Image 2.5 Sunburst / max</b>にします。画像サイズは初回の確認なら<b>A4標準：1120×1584</b>を提案。既定はA4大：2240×3168です。'),('自動修正を外してから、1回だけ画像生成する','初回の課金を把握しやすくするため、「最大3回修正する（初回込み最大4枚）」のチェックを外します。そのうえで<b>「APIで新しい画像を生成する（STEP4）」</b>を押し、完了を待ちます。')])
 box('生成完了の確認と保存','アプリ内に画像が表示され、画像生成ログのモデルが<b>GPT Image 2.5 Sunburst</b>等になっていることを確認します。2.0で成功しただけでは、2.5の利用確認にはなりません。出来上がった画像は保存します。')
@@ -262,7 +262,7 @@ for label,url in links:link(label,url)
 p('リンク先はログイン状態・権限により初回設定へ戻る場合があります。正しい組織を選んでから進めてください。Project固有のURLに入るIDは人ごとに異なるため、この資料には書いていません。','small')
 
 # 20
-new('公式出典・この資料の範囲','v6.8.1の操作とAPI設定をまとめたガイド')
+new('公式出典・この資料の範囲','v6.8.2の操作とAPI設定をまとめたガイド')
 p('実画面はProject作成、組織側のBillingメニュー、Billingのタブと操作、カード追加の空欄、キー作成フォーム、アプリの接続表示を掲載しています。初回専用の画面はアカウントの状態によって異なります。','small')
 p('新規登録・支払い・本人確認・キー発行の説明は公式情報に基づきます。ご自身のアカウントに表示された条件を確認して進めてください。各利用者での認証・利用可否を保証するものではありません。','small')
 sources=[
@@ -285,7 +285,7 @@ for label,url in sources:
 p('入力例のmanga-app／Personal manga、初回5～10米ドル、30日のキー期限、初回の小さい画像サイズ・自動修正OFFは本資料の説明例・提案です。OpenAIの必須条件とは区別しています。','small')
 end();c.save()
 (BASE/'source'/'guide-text.txt').write_text('\n'.join(transcript),encoding='utf-8')
-(BASE/'source'/'layout-check.json').write_text(json.dumps({'pages':page,'layout':checks,'date':'2026-10-03'},ensure_ascii=False,indent=2),encoding='utf-8')
+(BASE/'source'/'layout-check.json').write_text(json.dumps({'pages':page,'layout':checks,'date':'2026-10-04'},ensure_ascii=False,indent=2),encoding='utf-8')
 print(f'CREATED {OUT} pages={page}')
 
 # Reuse the shared manual gate: render every page and reject stale versions,

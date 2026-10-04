@@ -6,6 +6,9 @@ import { readFile } from 'node:fs/promises';
 let server;
 let buildMangaPrompt;
 let getCameraForPanel;
+let buildPanelEyeLineRule;
+let extractDialogueOnly;
+let extractCastLimitRule;
 
 before(async () => {
   server = await createServer({
@@ -14,7 +17,7 @@ before(async () => {
     server: { middlewareMode: true }
   });
   ({ buildMangaPrompt } = await server.ssrLoadModule('/src/lib/prompt-assembler.js'));
-  ({ getCameraForPanel } = await server.ssrLoadModule('/src/lib/panel-utils.js'));
+  ({ getCameraForPanel, buildPanelEyeLineRule, extractDialogueOnly, extractCastLimitRule } = await server.ssrLoadModule('/src/lib/panel-utils.js'));
 });
 
 after(async () => {
@@ -394,12 +397,12 @@ test('an explicit over-the-shoulder subject controls the rear foreground instead
     assert.match(panel, /back of \[SpeakerA\]'s head or shoulder(?: in)? foreground/i);
     assert.doesNotMatch(panel, /camera is physically behind \[SpeakerB\]'s shoulder/i);
     assert.match(panel, /OTS FUNCTIONAL FACE CONSEQUENCE:/);
-    assert.match(panel, /\[SpeakerA\].*(?:camera-visible|visible to camera|user\+camera|and camera)/i);
-    assert.match(panel, /\[SpeakerB\].*(?:back\/edge|back or edge)/i);
+    assert.match(panel, /Use the reader\/operator or recipient explicitly described in Action/);
+    assert.match(panel, /derive visible front\/back\/edge from those relations/);
     assert.match(panel, /Do NOT show \[SpeakerA\]'s face front-on/i);
     assert.match(panel, /read\/operate=self/i);
     assert.match(panel, /submit\/present\/show=recipient/i);
-    assert.match(panel, /SpeakerA.*reads\/operates.*front\+UI camera-visible/i);
+    assert.doesNotMatch(panel, /\[SpeakerA\] reads\/operates|\[SpeakerB\] is across the object/);
   }
 });
 
@@ -472,7 +475,7 @@ test('an explicit presentation targets the recipient rather than the holder or c
   for (const providerFamily of ['chatgpt', 'gemini']) {
     const panel = panelTwoSection(buildPrompt(providerFamily, EXPLICIT_SHOULDER_PRESENTATION));
     assert.match(panel, /submit\/present\/show=recipient/i);
-    assert.match(panel, /derive visibility from recipient side/i);
+    assert.match(panel, /recipient explicitly described in Action/);
     assert.doesNotMatch(panel, /SpeakerA.*reads\/operates.*front\+UI camera-visible/i);
   }
 });
@@ -481,7 +484,7 @@ test('Japanese screen-viewing action keeps the screen front visible from the nam
   for (const providerFamily of ['chatgpt', 'gemini']) {
     const panel = panelTwoSection(buildPrompt(providerFamily, EXPLICIT_SHOULDER_JAPANESE_VIEW));
     assert.match(panel, /EXPLICIT REAR CAMERA/i);
-    assert.match(panel, /SpeakerA.*reads\/operates.*front\+UI camera-visible/i);
+    assert.doesNotMatch(panel, /\[SpeakerA\] reads\/operates|\[SpeakerB\] is across the object/);
   }
 });
 
@@ -515,4 +518,81 @@ test('Gemini lens conversion preserves the literal shoulder owner and viewing di
     assert.ok(result.startsWith(camera + '; '), result);
     assert.match(result, /NEVER draw text of camera names/);
   }
+});
+
+
+test('OTS aliases resolve one canonical actor across gaze, tail and cast', () => {
+  const cast = '## 甲（Alpha）\n- adult\n## 乙 (Beta)\n- adult';
+  for (const name of ['甲','Alpha','alpha','ALPHA']) {
+    const panel = `[Camera: ${name}の右肩越し、広角、ダッチアングル]\n状況: 甲は画面を見つめて操作する。乙は左奥でカードを動かす。\n甲「確認しよう。」\n乙「了解。」`;
+    const rule = buildPanelEyeLineRule(panel,cast);
+    assert.match(rule, /behind \[甲\]'s shoulder/);
+    assert.doesNotMatch(rule, /behind \[(?:Alpha|乙)\]'s shoulder/);
+    assert.doesNotMatch(rule, /is across the object|\[甲\] reads\/operates/);
+    assert.match(extractDialogueOnly(panel,cast,{forImagePrompt:true}), /B1=>\[甲\] visible rear-head contour/);
+    assert.doesNotMatch(extractCastLimitRule(panel,cast), /\[Alpha\]/);
+  }
+});
+
+test('unknown, colliding and partial camera names cannot fall back to the second speaker', () => {
+  for (const [name,cast] of [
+    ['ObserverX','## 甲 (Alpha)\n## 乙 (Beta)'],
+    ['Alpha','## 甲 (Alpha)\n## 乙 (Alpha)'],
+    ['SuperAlpha','## 甲 (Alpha)\n## 乙 (Beta)']
+  ]) {
+    const panel = `[Camera: ${name}の右肩越し]\n状況: 甲は画面を見つめる。乙はカードを見る。\n甲「一。」\n乙「二。」`;
+    assert.doesNotMatch(buildPanelEyeLineRule(panel,cast), /behind \[(?:甲|乙|Alpha)\]'s shoulder/);
+    assert.match(buildPanelEyeLineRule(panel,cast), /never assign.*dialogue order/i);
+    assert.doesNotMatch(extractDialogueOnly(panel,cast,{forImagePrompt:true}), /mouth\/head/);
+  }
+});
+
+
+test('camera, temporal gaze, focal depth and expressive linework survive aliases and balloon order', () => {
+  const cast='## 甲 (Alpha)\n- adult\n## 乙 (Beta)\n- adult\n## 丙 (Gamma)\n- adult';
+  const beats=[
+    '甲は右手前で乙に資料を示す。乙は左奥から資料を見る。丙は奥で画面を見る。',
+    '乙は資料へ視線を移し、眉を上げて身を屈める。甲は背を伸ばして待つ。丙は画面を見つめる。',
+    '甲は乙の顔を見る。乙の驚きを受けて口を開く。丙は画面を見つめる。',
+    '乙は甲へ視線を戻して返す。甲は机へ手をついて受け止める。丙は画面を見つめる。'
+  ];
+  const cameras=['Alphaの右肩越し、左前上方の俯瞰、望遠', '右下からアオリ、広角、手前と奥の距離差', '後方から魚眼、ダッチアングル、寄りとズーム', '左前から引き、deep focus、奥まで見える'];
+  for (const providerFamily of ['chatgpt','gemini']) for (const colorMode of ['color','monochrome']) for (const reverse of [false,true]) {
+    const names=reverse ? ['乙','甲'] : ['甲','乙'];
+    const source='## Title: 反応の連鎖\nLocation: 会議室\nOutfit: business casual\n'+beats.map((beat,i)=>`[${i+1}コマ目: 展開]\n[EMOTION: ${['NORMAL','WATERCOLOR','GEKIGA','CHIBI_GAG'][i]}]\n[Camera: ${cameras[i]}]\nBalloonLayout: ${JSON.stringify(names.map((speaker,j)=>({speaker,x:j?0.25:0.75,anchor:speaker+'の輪郭',route:'上の余白'})))}\n状況: ${beat} 主役の顔と重要な資料文字は明瞭。手前と奥は意図的に薄い線と低コントラスト。\n${names[0]}「確認。」\n${names[1]}「了解。」`).join('\n');
+    const prompt=buildMangaPrompt({scenario:source,castList:cast,providerFamily,colorMode,systemVersion:'test',promptMaxChars:32000});
+    beats.forEach((beat,i)=>{
+      const panel=prompt.split(`## Panel ${i+1}`)[1].split(`## Panel ${i+2}`)[0];
+      assert.ok(panel.includes(beat),`${providerFamily}/${i+1} action`);
+      assert.ok(panel.includes(cameras[i]),`${providerFamily}/${i+1} camera`);
+      assert.match(panel,/scripted gaze target/);
+      assert.doesNotMatch(panel,/reactors watch the active speaker|is across the object/);
+    });
+    assert.match(prompt,/G-pen|G pen/i);
+    assert.match(prompt,/FOCAL READABILITY|FOCUS PLAN/);
+    assert.match(prompt,/RICH PANEL COMPOSITION|PAGE READING RHYTHM/);
+  }
+});
+
+
+test('eye and head target clauses keep independent gaze instead of a speaker default', () => {
+  for (const target of ['甲の目は画面へ、乙は資料を気にしている。','甲は画面を振り返る。乙は資料へ目を走らせる。','甲は端末を見据える。乙は資料を凝視する。','甲は窓を眺め、乙は手元を注視する。']) {
+    const rule=buildPanelEyeLineRule(`[Camera: 斜めの広角]\n状況: ${target}\n甲「一。」\n乙「二。」`, '## 甲\n## 乙');
+    assert.match(rule,/keep each actor.s scripted gaze target/);
+    assert.doesNotMatch(rule,/reactors watch the active speaker/);
+  }
+});
+
+test('cast counting uses speech entries even when every tail targets a visible contour', () => {
+  const panel = '[Camera: ObserverXの右肩越し]\n甲「確認。」\n乙「了解。」';
+  const result = extractCastLimitRule(panel, '甲、乙');
+  assert.match(result, /\[甲\]/);
+  assert.match(result, /\[乙\]/);
+  assert.match(result, /2 (?:people|distinct individuals)/);
+  assert.deepEqual(extractDialogueOnly(panel, '甲、乙', {asEntries: true, forImagePrompt: true}), [
+    {speaker: '甲', text: '確認。'}, {speaker: '乙', text: '了解。'}
+  ]);
+  const invalid = panel + '\nBalloonLayout: [{"speaker":"甲","x":0.7,"anchor":"甲の輪郭","route":"上"}]';
+  assert.throws(() => extractCastLimitRule(invalid, '甲、乙'), {code: 'BALLOON_LAYOUT_INVALID'});
+  assert.throws(() => extractDialogueOnly(invalid, '甲、乙', {asEntries: true, forImagePrompt: true}), {code: 'BALLOON_LAYOUT_INVALID'});
 });
