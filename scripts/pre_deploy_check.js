@@ -2,10 +2,15 @@ import { execSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import { collectReadmeBodyEvidence, validateReadmeBodyAudit } from './readme_body_audit.mjs';
+import { assertPublicSkillDistribution } from './public_skill_distribution.mjs';
 
 console.log("🛡️ [Security Check] Validating Git Environment...");
 
 try {
+    assertPublicSkillDistribution(
+        execSync('git ls-files -z').toString().split('\0').filter(Boolean),
+        JSON.parse(fs.readFileSync('skills-lock.json', 'utf8')),
+    );
     // 1. Check for Merge State
     const gitDir = path.join(process.cwd(), '.git');
     if (fs.existsSync(path.join(gitDir, 'MERGE_HEAD'))) {

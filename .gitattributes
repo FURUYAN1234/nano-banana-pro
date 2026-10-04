@@ -1,3 +1,5 @@
 * text=auto eol=lf
 *.pdf binary
+/.agents/skills/pdf export-ignore
+/.agents/skills/pdf/** export-ignore
 public/workflows/FourPanel_NonLM_4step_20260922104144.json -text

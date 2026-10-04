@@ -1,5 +1,5 @@
 {
-  "manualVersion": "6.8.2",
+  "manualVersion": "6.8.3",
   "manualSourceSha256": "b08b69a0fbd6762bbbb56f3e93d425e33c3946cdca550d850af0ce83a342d207",
   "manualFiles": [
     {
@@ -15,10 +15,10 @@
       "sha256": "80c5fd69003cda981dd3dd0d58adf2914b12ef4794ffd98cc8b4d6ba58e248c9"
     }
   ],
-  "readmeSha256": "aad3983e25b958823297b51ef380f64f26ded908dfdc807297d952190b4907dc",
-  "sourceTree": "b8f821e35dffa54d9d54543bec878969bf06b6bb",
-  "publicTree": "b47f393676b8a8f6c18561309f604b6f3dd96216",
-  "packageSha256": "28d467ef1abaf811d0c2345fa4bacf728754c2619d923d9d35c7d9fccfb298bf",
+  "readmeSha256": "fa49604b9468dd9eb909868f5de08ea2d7de4fb943e08e6414489504d9180cac",
+  "sourceTree": "f339b72120fb17e2f7bf6684d6de041dcdcf76a8",
+  "publicTree": "eacdf565ba32ccea6c86e228c29b84163ff2918c",
+  "packageSha256": "33d541d7e45894089a62de63b415b6c2a13d38c5657b050a0d8cc9fc1bb0b9c3",
   "releaseAssetSha256": "341487084ffc48f14569609c36557d77b4770a052b70f2323488dc0604e6d7f0",
   "reviewedSections": [
     "Application screen and output / 操作画面と生成例",
@@ -36,6 +36,6 @@
     "📋 ChangeLog",
     "License / ライセンス"
   ],
-  "findings": "Reviewed all README sections against current UI, prompt/edit/QA routes, source settings and unchanged H3 distribution contract. Corrected document-quote classification, canonical shoulder identity, local head repair and independent gaze guidance; removed the obsolete claim that dialogue order positions actors. Preserved provider, cost, metadata, history and bounded retry limitations. Existing screenshots are explicitly labeled as previous-release controls with unchanged layout. Image fixes are not advertised as guaranteed initial-generation quality.",
-  "manualFindings": "Rebuilt all three v6.8.2 manuals: Gemini 12 pages, OpenAI 20 pages and full guide 32 pages. Reviewed every rendered page, then rechecked the changed connection captions and local head-repair page after rebuilding. A4 bounds, links, text privacy and naming scans passed. Added optional natural rear-view occlusion after an unsuccessful local head repair; retained camera and acting freedom. Previous-release UI screenshots are identified as such, with unchanged controls."
+  "findings": "Incremental whole-body review against the previously reviewed v6.8.2 baseline: unchanged README sections and generation/provider sources retain their prior review; current version and Release asset URLs now match v6.8.3. Reviewed the complete changed license section, prior-grant notices and third-party PDF skill exclusion. Added an explicit compatibility note for unchanged v6.8.2 operation manuals. Third-party ComfyUI conditions, existing screenshots, provider costs and quality limitations remain unchanged. No new API or visual-generation claim is made.",
+  "manualFindings": "All three unchanged manuals retain the verified v6.8.2 hashes: 12 Gemini, 20 OpenAI and 32 full-guide pages. The fresh 64-page text audit found no conflicting app-license terms. Prior complete visual review is reused only for byte-identical PDFs; no new visual review or PDF regeneration was performed. v6.8.2 labels describe the compatible operation guide, and README explicitly states applicability to v6.8.3. Current license terms are provided separately in LICENSE."
 }

@@ -1,3 +1,7 @@
+## 2026-10-04 v6.8.3 distribution and application terms
+
+Public-release candidate: common application terms preserve ordinary use and output monetization while requiring written permission for paid app redistribution/services; valid prior grants and third-party licenses remain. The third-party PDF development skill is excluded from tracked/public distribution and guarded against reintroduction. Local originals remain outside distribution. Generation/provider behavior and existing operation manuals are unchanged. This release does not retry the separate v6.8.2 full backup. Root PLAN owns public verification and note-controller limitations.
+
 ## 2026-10-04 最新承認: 引用・肩越し修正と実画像検証
 
 ローカル修正済み。3回目の局所編集で斜め後ろ姿の自然な頭部を確認し、実画像提示後にユーザー「じゃこれで進めて」で採用。v6.8.2公開準備中、正式リリース/告知/バックアップは未実行。必要なバグ修正API使用は包括承認済み。単一進捗記録: [実装計画](docs/superpowers/plans/2026-10-04-balloon-quote-and-camera-identity-plan.md)。サブエージェント禁止。

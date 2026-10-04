@@ -42,3 +42,6 @@ docs/onedrive_conflicts_20260417/
 # Python manual build cache
 __pycache__/
 *.pyc
+
+# Locally installed third-party PDF skill: separate permission is required for distribution.
+/.agents/skills/pdf/

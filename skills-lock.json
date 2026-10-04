@@ -291,11 +291,6 @@
       "sourceType": "github",
       "computedHash": "e379bdda8ebbfe350f509905357513732b8781c8e83c7ce6fcedd9086665046c"
     },
-    "pdf": {
-      "source": "anthropics/skills",
-      "sourceType": "github",
-      "computedHash": "37226d4220d844377e6b2a386c51a011df4cd130855ff0b80bcc22f9c28abd57"
-    },
     "perplexity": {
       "source": "softaworks/agent-toolkit",
       "sourceType": "github",

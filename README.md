@@ -1,11 +1,13 @@
 # Super FURU AI 4-koma System / Super FURU AI 4コマシステム
 
-> Current source version: **v6.8.2** / 現在のソース版: **v6.8.2**
+> Current source version: **v6.8.3** / 現在のソース版: **v6.8.3**
 
 
 An experimental web application in which AI handles topic research, story structure, direction, prompt construction, image generation, and quality review for a four-panel manga. / AIが話題調査、構成、演出、プロンプト構築、画像生成、品質確認まで担当する4コマ漫画制作Webアプリです。
 
 [アプリを開く / Open the app](https://furuyan1234.github.io/nano-banana-pro/) · [全機能PDFマニュアル / Full manual](https://furuyan1234.github.io/nano-banana-pro/downloads/super-furu-ai-4koma-full-manual-2026-10-01.pdf)
+
+The bundled v6.8.2 operation manuals also apply to v6.8.3; this release changes distribution terms and excludes a development skill without changing the creation workflow. Current application terms are in [LICENSE](LICENSE). / 同梱のv6.8.2操作マニュアルはv6.8.3でも利用できます。本版は利用条件と開発用skillの配布範囲を更新し、制作の操作手順は変更していません。現在のアプリ利用条件は [LICENSE](LICENSE) を参照してください。
 
 ## Application screen and output / 操作画面と生成例
 
@@ -377,7 +379,7 @@ The copied prompt guides panel order, cast, speaker assignment, acting, camera, 
 The app provides separate download buttons for the workflow JSON and the custom-node ZIP. Both files are needed for this route. / アプリにはワークフローJSONとカスタムノードZIPのダウンロードボタンが別々にあります。この経路では両方のファイルが必要です。
 
 - [Download workflow JSON](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261002-071924.json) / [ワークフローJSONをダウンロード](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261002-071924.json)
-- [Download custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.8.2/ComfyUI_H3_FourPanel_NonLM_20261002-071924_authfix1.zip) / [カスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.8.2/ComfyUI_H3_FourPanel_NonLM_20261002-071924_authfix1.zip)
+- [Download custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.8.3/ComfyUI_H3_FourPanel_NonLM_20261002-071924_authfix1.zip) / [カスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.8.3/ComfyUI_H3_FourPanel_NonLM_20261002-071924_authfix1.zip)
 
 Place the ZIP's `3フォルダ` under `ComfyUI/custom_nodes/` and the workflow JSON under `ComfyUI/user/default/workflows/`. Install the separate dependencies below, then restart ComfyUI. / ZIP内の`3フォルダ`を`ComfyUI/custom_nodes/`へ、ワークフローJSONを`ComfyUI/user/default/workflows/`以下へ配置します。下記の別途必要な依存関係を導入してからComfyUIを再起動します。
 
@@ -421,11 +423,14 @@ The production application is published from the `main` branch through the repos
 
 **Why are there two ComfyUI download buttons? / ComfyUIのダウンロードボタンが2つあるのはなぜですか？**  The JSON defines the workflow, while the ZIP supplies three custom-node folders and documentation; three additional runtime dependencies are installed separately. / JSONはワークフロー定義、ZIPはカスタムノード3フォルダーと導入文書です。さらに実行依存3項目を別途導入します。
 
-**Which video package should I install? / 動画化には何を入れますか？** Use the `20261002-071924` workflow JSON and matching v6.8.2 FourPanel Release asset (`authfix1` ZIP). Follow the bundled environment and validation instructions. / `20261002-071924` のワークフローJSONと対応するv6.8.2 FourPanel Releaseアセット（`authfix1` ZIP）を使い、同梱の環境要件と確認手順に従ってください。
+**Which video package should I install? / 動画化には何を入れますか？** Use the `20261002-071924` workflow JSON and matching v6.8.3 FourPanel Release asset (`authfix1` ZIP). Follow the bundled environment and validation instructions. / `20261002-071924` のワークフローJSONと対応するv6.8.3 FourPanel Releaseアセット（`authfix1` ZIP）を使い、同梱の環境要件と確認手順に従ってください。
 
 **Is this the T2V/I2V/Ref2V repository? / T2V・I2V・Ref2Vのリポジトリですか？**  No. Those workflows are maintained separately in [comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows). / いいえ。それらは別の[comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows)で管理します。
 
 ## 📋 ChangeLog
+
+### v6.8.3 (2026-10-04)
+- **[Fix & UX]** アプリ利用条件を統一し、再配布許諾未確認の第三者PDF skillを公開配布対象から除外。既存の有効な許諾とアプリの生成機能は保持。 / Unified application terms and excluded a third-party PDF skill from public distribution while preserving valid prior grants and generation behavior.
 
 ### v6.8.2 (2026-10-03)
 - **[Fix & UX]** 資料引用を台詞と誤認するSTEP3停止と肩越し人物の誤割当を修正。顔などの局所修正で構図・演技を維持する指示を強化。 / Fix STEP3 document quotations and shoulder-view identity resolution; preserve composition and acting during local anatomy edits.
@@ -517,4 +522,10 @@ Older release history is available in [GitHub Releases](https://github.com/FURUY
 
 ## License / ライセンス
 
-The web application source is licensed under the repository [LICENSE](LICENSE). Bundled ComfyUI packages retain the separate licenses listed above. / Webアプリのソースはリポジトリの[LICENSE](LICENSE)に従い、同梱ComfyUIパッケージには上記の個別ライセンスが適用されます。
+この条件を添付して今後公開する版から、[FURU アプリ利用条件](LICENSE)を適用します（準備日: 2026-10-04）。個人利用・業務利用・受託制作は無料で、利用者自身の投稿・作品の収益化もできます。外部APIなどの料金は別です。
+
+アプリ本体や改変版の転売・有料再配布・有料サービス化・有料商材への同梱は、FURU の事前の書面による許可が必要です。第三者のライセンス、適法な引用、アプリを同梱しない独立した解説・教育は制限しません。生成物について、第三者の権利がすべて処理済みになることを保証するものではありません。
+
+有効に付与済みの過去版の許諾は取り消しません。引き継いだ部分の従前の権利も保持します。[以前の表示と適用範囲](docs/licenses/previous-notices.md)をご確認ください。本条件は商用再配布等を制限する独自条件で、OSIの意味でのオープンソースライセンスではありません。
+
+Future versions distributed with these [FURU Application Terms](LICENSE) allow free personal, business and commissioned use, including monetization of users' own outputs. Prior written permission is required to sell or redistribute the app for a fee, offer its functionality as a paid service, or bundle it with paid information products. Third-party terms, lawful quotation and independent explanation remain unaffected. Valid prior grants remain available for earlier versions and inherited portions. Third-party rights in outputs are not guaranteed. These are custom source-available terms, not an OSI open-source license.

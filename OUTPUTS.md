@@ -13,3 +13,5 @@ applicable law, and the current terms of every selected AI provider. Outputs
 may be non-unique and may contain material subject to other rights.
 
 これは、ユーザー入力、第三者素材、またはプロバイダー出力に関する保証・権利移転ではありません。利用者は、自身の入力、適用法令、および選択した各AIプロバイダーの最新規約に従う責任を負います。生成物は一意でない場合があり、他者の権利が関係する内容を含む可能性があります。
+
+利用者自身の成果物の販売・広告収益化・納品には、FURU の追加許可や利用料は不要です。アプリ本体の有料再配布・有料サービス化とは区別します。詳しくは [LICENSE](LICENSE) をご覧ください。 / Monetizing users' own outputs requires no additional permission or fee from FURU; paid distribution or hosting of the app is a separate matter governed by LICENSE.

@@ -1,35 +1,7 @@
-# Original content license / 独自創作コンテンツのライセンス
+# 付属文書と過去の許諾 / Documentation and prior grants
 
-The MIT License in the repository root applies to FURU's original program
-source code. This document separately identifies original non-code creative
-content released under [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/).
+この条件を添付して今後公開する版の新規・変更部分のうち、FURU が許諾権限を持つ付属説明文と同梱プロンプトには、[LICENSE](LICENSE)の利用条件を適用します。既存部分に有効に付与済みのMITまたはCC BY-NC-SAその他の許諾は取り消しません。
 
-リポジトリ直下の `LICENSE` は、FURU が権利を有するプログラム・ソースコードに適用されます。本書は、別途 CC BY-NC-SA 4.0 で公開する非コードの創作コンテンツを明確にするものです。
+[以前の対象範囲と表示](docs/licenses/previous-notices.md)を保持しています。第三者素材、別ライセンスの明示された同梱プロジェクト、ユーザー入力と生成物は本アプリの新条件の対象外です。
 
-## Covered material / 対象
-
-CC BY-NC-SA 4.0 applies only to FURU's original, non-code material that is
-explicitly marked `CC-BY-NC-SA-4.0` in its file header or is listed here:
-
-- The explanatory prose in `README.md`, excluding code snippets, third-party
-  quotations, license texts, names and marks, and links.
-- Original character-setting, prompt-design, and illustrative assets only when
-  a future file explicitly carries that marker or is added to this list.
-
-CC BY-NC-SA 4.0 は、ファイル内に `CC-BY-NC-SA-4.0` と明示された FURU の非コード創作物、または本書に列挙されたものだけに適用されます。現時点では、コード片・第三者引用・ライセンス本文・名称や商標・リンクを除く `README.md` の解説文が対象です。将来追加するキャラクター設定、プロンプト設計文書、作例・画像資産は、対象表示または本書への追記がある場合に限り対象とします。
-
-## Conditions / 条件
-
-Covered material may be shared and adapted for non-commercial purposes only,
-with attribution and under the same CC BY-NC-SA 4.0 license. Commercial use of
-covered material needs FURU's prior written permission.
-
-対象コンテンツは、適切なクレジット表示、非営利利用、同一ライセンスでの共有を条件に利用・改変・再配布できます。対象コンテンツの商用利用には、FURU の事前の書面による許諾が必要です。
-
-## Exclusions / 対象外
-
-This license does not apply to program source code, user uploads, generated
-outputs, third-party material, provider names, logos, or other marks. It grants
-only rights that FURU has authority to grant.
-
-本書は、プログラム・ソースコード、ユーザーがアップロードした素材、生成物、第三者素材、プロバイダー名、ロゴその他の商標には適用されません。本書による許諾は、FURU が許諾権限を有する権利に限られます。
+Future documentation and bundled prompts follow LICENSE only to the extent FURU can license their new or changed portions. Prior valid grants remain available for existing portions. Third-party materials and separately licensed projects retain their own terms.
