@@ -1,24 +1,24 @@
 {
-  "manualVersion": "6.8.1",
-  "manualSourceSha256": "57e62cdefd8443fccc7459a6ae96bdf48baf143131d9942a4b7c53f3872d2a74",
+  "manualVersion": "6.8.2",
+  "manualSourceSha256": "b08b69a0fbd6762bbbb56f3e93d425e33c3946cdca550d850af0ce83a342d207",
   "manualFiles": [
     {
       "name": "gemini-api-beginner-guide-2026-10-01.pdf",
-      "sha256": "92c4306bce1dfb1313625dcbd1a405175f335a6ebdd6475c6760bc09ff7c6a00"
+      "sha256": "d0d5a8819c5d9bea755485add066daa1d537930368e9dc9146d3319fa237d85c"
     },
     {
       "name": "openai-api-beginner-guide-2026-09-30.pdf",
-      "sha256": "596cd8ad5161d052574f3e2611cdd13fb5b7b3fd28ec65668c960f031610cf77"
+      "sha256": "b732f0f844983098f1f89ffcc52883c18131b315f47e6092a9b62950971b873e"
     },
     {
       "name": "super-furu-ai-4koma-full-manual-2026-10-01.pdf",
-      "sha256": "c48a08c1b72bbb64d898a511fade8d93b92a6e0df3818f45fc30c502d8da7a25"
+      "sha256": "80c5fd69003cda981dd3dd0d58adf2914b12ef4794ffd98cc8b4d6ba58e248c9"
     }
   ],
-  "readmeSha256": "50281bf4b322dc0ccf68f9f59a0a1388e3ec7d08a440e640410ad0da65fda9f2",
-  "sourceTree": "66d524a8ccf26bb2143fb8fa8de7e959c75c3aac",
-  "publicTree": "6f4a01d2b8cb99a3deb5b36941ef9c60b4b57260",
-  "packageSha256": "51fcce8881b3272ce77325f0a52d477c8d83b4a3d0e13f5d87fffbc01ef15010",
+  "readmeSha256": "aad3983e25b958823297b51ef380f64f26ded908dfdc807297d952190b4907dc",
+  "sourceTree": "b8f821e35dffa54d9d54543bec878969bf06b6bb",
+  "publicTree": "90e7b95ed167c8af71915bb42a5b3ea50574acf8",
+  "packageSha256": "28d467ef1abaf811d0c2345fa4bacf728754c2619d923d9d35c7d9fccfb298bf",
   "releaseAssetSha256": "341487084ffc48f14569609c36557d77b4770a052b70f2323488dc0604e6d7f0",
   "reviewedSections": [
     "Application screen and output / 操作画面と生成例",
@@ -36,6 +36,6 @@
     "📋 ChangeLog",
     "License / ライセンス"
   ],
-  "findings": "Reviewed the current feature map, connection and model defaults, STEP1-4, materiality and uncertain QA results, Web/API routes, video package requirements, privacy and usage. Added actual v6.8.1 UI and verified API artwork. Body describes current functions; historical versions are confined to ChangeLog. Preserved the remote README media link while merging current documentation.",
-  "manualFindings": "All three guides now describe v6.8.1 current operation: OpenAI 20 pages, Gemini 12 pages, full manual 32 pages. Every page was rendered and visually reviewed, with A4 bounds, links, private-text scans and no historical app version assertions passing. Current app captures and API artwork are included."
+  "findings": "Reviewed all README sections against current UI, prompt/edit/QA routes, source settings and unchanged H3 distribution contract. Corrected document-quote classification, canonical shoulder identity, local head repair and independent gaze guidance; removed the obsolete claim that dialogue order positions actors. Preserved provider, cost, metadata, history and bounded retry limitations. Existing screenshots are explicitly labeled as previous-release controls with unchanged layout. Image fixes are not advertised as guaranteed initial-generation quality.",
+  "manualFindings": "Rebuilt all three v6.8.2 manuals: Gemini 12 pages, OpenAI 20 pages and full guide 32 pages. Reviewed every rendered page, then rechecked the changed connection captions and local head-repair page after rebuilding. A4 bounds, links, text privacy and naming scans passed. Added optional natural rear-view occlusion after an unsuccessful local head repair; retained camera and acting freedom. Previous-release UI screenshots are identified as such, with unchanged controls."
 }
