@@ -796,6 +796,26 @@ Dialogue: silent`;
   assert.ok(!review.issues.some(issue => issue.type === 'bubble_speaker'));
 });
 
+test('registered full names and bracket typography are one speaker, but unknown titles and other people are not', () => {
+  for (const castLine of ['- Character [ルカ（夜の案内人）]: blue coat', '- [ルカ（夜の案内人）]: blue coat', 'MOSAIC PROTECTED CAST: ["ルカ（夜の案内人）"]']) {
+    const finalPrompt = `${castLine}\n## Panel 1\nDialogue (verbatim bubbles): TEXT (PRINT VALUES ONLY): B1="出発だ。". TAIL TIP LOCK: B1=>[ルカ] mouth/head.\n## Panel 2\nDialogue: silent\n## Panel 3\nDialogue: silent\n## Panel 4\nDialogue: silent`;
+    const inspect = target => {
+      const checks = spatialChecks();
+      checks[0].bubble_speaker = { status: 'ok', evidence: 'Tail touches the blue-coated actor at right.', left_to_right_texts: ['出発だ。'], bubbles: [{
+        bubble: 'B1', text: '出発だ。', expected_speaker: 'ルカ【夜の案内人】', observed_tail_target: target,
+        tail_endpoint_evidence: 'The tip touches the visible head silhouette.', endpoint_relation: 'touches_speaker',
+        tail_tip: { x: 0.5, y: 0.3 }, speaker_anchor: { x: 0.51, y: 0.31, part: 'head' },
+        root_relation: 'lower_speaker_facing', path_relation: 'clear', tail_path_evidence: 'The lower root crosses empty space only.',
+        center_x: 0.7, position_evidence: 'Right balloon body.',
+      }] };
+      return parseImageQualityQaResponse(JSON.stringify({ pass: true, issues: [], observations, spatial_checks: checks }), { finalPrompt });
+    };
+    const same = inspect('ルカ【夜の案内人】');
+    assert.ok(!same.issues.some(issue => issue.type === 'bubble_speaker' || /reviewer copied/.test(issue.reason)), castLine);
+    for (const other of ['ルカ【別の称号】', '他人']) assert.ok(inspect(other).issues.some(issue => issue.type === 'bubble_speaker'));
+  }
+});
+
 test('reading order rejects reversed balloon bodies even when text and speaker tails pass', () => {
   const review = (positions, mode) => {
     const checks = spatialChecks(mode === 'single-image' ? 1 : 4);

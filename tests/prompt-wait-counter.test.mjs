@@ -12,7 +12,7 @@ test('scenario invalidation releases STEP3 and an old review cannot unlock or ov
   let output = '';
   const context = {
     scenarioRunEpochRef:{current:0}, promptAssemblyRunRef:{current:0}, promptAssemblyAbortRef:{current:null},
-    scenario:'fixture scenario', castList:'fixture cast', validateMangaScenario:()=>({ok:true}),
+    scenario:'fixture scenario', castList:'fixture cast', collectCastNameEntries:()=>[], validateMangaScenario:()=>({ok:true}),
     setIsAssembling:value=>{active=value;}, setFinalPrompt:value=>{output=value;},
     setGenLog:()=>{},setPolicyErrorMsg:()=>{},setPolicyFixLog:()=>{},setIsPolicyPanelOpen:()=>{},setShowPolicyChoice:()=>{},
     lastPolicyErrorRef:{current:''},setAssembleThought:()=>{},normalizePromptProviderFamily:value=>value,getCurrentPromptProviderFamily:()=> 'gemini',

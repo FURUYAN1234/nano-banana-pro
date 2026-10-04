@@ -14,6 +14,56 @@ let buildIdentityMatrix;
 let extractActingIdentityNotes;
 let getCameraForPanel;
 
+test('bracketed cast titles preserve all three reported salt-scene speakers', () => {
+  const names = ['ガルーナ【ガル】', 'エムバ・ババトゥンデ【黒き守護者・ババ】', 'ユウ【スミレ】'];
+  const words = ['塩一粒が、交渉の札か。', '命に要るものほど、棚の主が強い。', '生き物には欠かせないものね。'];
+  const cast = names.map(name => `## ${name}`).join('\n');
+  const plan = names.map((speaker, i) => ({ speaker, x: [0.82, 0.53, 0.23][i], anchor: '頭の輪郭', route: '上の余白から口元へ' }));
+  const source = `[1コマ目: 起]\nBalloonLayout: ${JSON.stringify(plan)}\n状況: 棚の小さな塩皿を三人が見る。\n${names.map((name, i) => `${name}「${words[i]}」`).join('\n')}`;
+  assert.deepEqual(extractDialogueOnly(source, cast, { asEntries: true, forImagePrompt: true }), names.map((speaker, i) => ({ speaker, text: words[i] })));
+  const action = extractActionOnly(source, cast);
+  assert.ok(action.includes('棚の小さな塩皿'));
+  for (const text of words) assert.ok(!action.includes(text), text);
+});
+
+test('registered long names and bracketed titles survive speaker parsing without admitting narration', () => {
+  for (const name of ['アレクサンドリア・フォン・ヴェストファーレン', '旅人【遠い海より来た案内人】', '旅人[遠い海より来た案内人]']) {
+    const cast = `## ${name}\n## 同行者`;
+    for (const label of [name, `【${name}】`, `[${name}]`]) {
+      const source = `${label}「確かめよう。」\n状況: ${name}は「受付終了」という看板を見る。\n同行者「戻ろう。」`;
+      assert.deepEqual(extractDialogueOnly(source, cast, { asEntries: true }), [
+        { speaker: name, text: '確かめよう。' }, { speaker: '同行者', text: '戻ろう。' }
+      ], label);
+      assert.ok(!extractActionOnly(source, cast).includes('確かめよう。'), label);
+      assert.ok(extractActionOnly(source, cast).includes('受付終了'), label);
+    }
+  }
+});
+
+test('unknown bracketed names retain their full label while real balloon mismatches still fail', () => {
+  const speaker = '旅人【海より来た人】';
+  const entry = { speaker, x: 0.7, anchor: '頭の輪郭', route: '上から口元へ' };
+  const dialogue = `${speaker}「確かめよう。」`;
+  assert.deepEqual(extractDialogueOnly(dialogue, '', { asEntries: true }), [{ speaker, text: '確かめよう。' }]);
+  assert.doesNotThrow(() => extractDialogueOnly(`BalloonLayout: ${JSON.stringify([entry])}\n${dialogue}`, '', { forImagePrompt: true }));
+  for (const [layout, reason] of [[[entry, { ...entry, x: 0.3 }], 'count'], [[{ ...entry, speaker: '別人' }], 'speaker']]) {
+    assert.throws(() => extractDialogueOnly(`BalloonLayout: ${JSON.stringify(layout)}\n${dialogue}`, '', { forImagePrompt: true }), error => error.code === 'BALLOON_LAYOUT_INVALID' && error.reason === reason);
+  }
+});
+
+test('layout accepts registered title bracket variants but rejects a different title or owner', () => {
+  const cast = '## 案内役（遠い海から来た旅人）\n## 同行者（記録係）';
+  const speaker = '案内役【遠い海から来た旅人】';
+  const item = { speaker, x: 0.7, anchor: '頭の輪郭', route: '上から口元へ' };
+  const source = `BalloonLayout: ${JSON.stringify([item])}\n${speaker}「確かめよう。」`;
+  assert.deepEqual(extractDialogueOnly(source, cast, { asEntries: true, forImagePrompt: true }), [{ speaker: '案内役', text: '確かめよう。' }]);
+  const prompt = extractDialogueOnly(source, cast, { forImagePrompt: true });
+  assert.ok(prompt.includes('B1 x=0.7, [案内役]'));
+  for (const wrong of ['案内役【別の旅人】', '同行者【記録係】', '未登録の案内役']) {
+    assert.throws(() => extractDialogueOnly(source.replace(JSON.stringify([item]), JSON.stringify([{ ...item, speaker: wrong }])), cast, { forImagePrompt: true }), error => error.code === 'BALLOON_LAYOUT_INVALID' && error.reason === 'speaker', wrong);
+  }
+});
+
 test('quoted document headings remain surface text instead of borrowing a nearby speaker', () => {
   const cast = '- Character [甲]: adult\n- Character [乙]: adult';
   for (const description of ['という記事見出し', 'という記事の見出し', 'っていう新聞のタイトル', 'という見出し', 'という表題', 'という記事']) {

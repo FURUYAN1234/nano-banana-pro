@@ -5,6 +5,7 @@ import { createServer } from 'vite';
 
 let server;
 let buildMangaPrompt;
+let extractBubbleContracts;
 
 before(async () => {
   server = await createServer({
@@ -13,7 +14,7 @@ before(async () => {
     server: { middlewareMode: true }
   });
   const assembler = await server.ssrLoadModule('/src/lib/prompt-assembler.js');
-  const { extractBubbleContracts } = await server.ssrLoadModule('/src/lib/image-quality-qa.js');
+  ({ extractBubbleContracts } = await server.ssrLoadModule('/src/lib/image-quality-qa.js'));
   const { readBubbleTextValues } = await server.ssrLoadModule('/src/lib/bubble-text.js');
   // 既存の台詞内容・順序回帰は表示形式ではなく話者と本文の組で照合する。
   // Geminiの生のTEXT/TAILS分離形式はgemini-script-routing.test.mjsで別途検査する。
@@ -36,6 +37,26 @@ before(async () => {
 
 after(async () => {
   await server?.close();
+});
+
+test('reported salt scenario builds both provider prompts with all nine exact speaker/text pairs', () => {
+  const scenario = readFileSync(new URL('./fixtures/salt-balloon-layout.txt', import.meta.url), 'utf8');
+  // The explicit dialogue lines are the independent expected contract, not parser output.
+  const expected = scenario.split(/\[\dコマ目:[^\]]+\]/).slice(1).map(panel =>
+    [...panel.matchAll(/^([^\n「]+)「([^\n]+)」$/gm)].map(([, speaker, text]) => ({ speaker, text })));
+  assert.deepEqual(expected.map(panel => panel.length), [3, 2, 2, 2]);
+  const castList = [...new Set(expected.flat().map(entry => entry.speaker))].map(name => `## ${name}`).join('\n');
+  for (const providerFamily of ['chatgpt', 'gemini']) {
+    for (const colorMode of ['color', 'monochrome']) {
+      const prompt = buildMangaPrompt({ scenario, castList, providerFamily, colorMode, punchlineType: 'Auto', systemVersion: 'test' });
+      const panels = extractBubbleContracts(prompt);
+      assert.deepEqual(panels.map(panel => panel.bubbles.map(({ speaker, text }) => ({ speaker, text }))), expected, `${providerFamily}/${colorMode}`);
+      const roundCast = castList.replaceAll('【', '（').replaceAll('】', '）');
+      const roundPrompt = buildMangaPrompt({ scenario, castList: roundCast, providerFamily, colorMode, punchlineType: 'Auto', systemVersion: 'test' });
+      const roundExpected = expected.map(panel => panel.map(({ speaker, text }) => ({ speaker: speaker.split('【')[0], text })));
+      assert.deepEqual(extractBubbleContracts(roundPrompt).map(panel => panel.bubbles.map(({ speaker, text }) => ({ speaker, text }))), roundExpected, `${providerFamily}/${colorMode}/round-cast`);
+    }
+  }
 });
 
 const CAST_LIST = `

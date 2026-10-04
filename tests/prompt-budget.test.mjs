@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { buildRenderOptionsContract } from '../src/lib/render-options.js';
+import { buildRenderOptionsContract, buildProtectedCastContract, readProtectedCast } from '../src/lib/render-options.js';
 import test, { after, before } from 'node:test';
 import { createServer } from 'vite';
 
@@ -125,7 +125,7 @@ test('ChatGPT default removes repeated instructions without treating the Web pas
   // Keep the same overhead cap and the actual API ceiling while retaining them.
   const recipeChars = [...prompt.matchAll(/^Style: (.+)$/gm)].reduce((sum, match) => sum + match[0].length, 0);
   assert.ok(recipeChars > 0, 'explicit panel rendering recipes must survive soft compaction');
-  assert.ok(prompt.length - buildRenderOptionsContract().length - recipeChars < 18000, `unexpected non-recipe overhead: ${prompt.length}`);
+  assert.ok(prompt.length - buildRenderOptionsContract().length - buildProtectedCastContract(readProtectedCast(prompt)).length - recipeChars < 18000, `unexpected non-recipe overhead: ${prompt.length}`);
   assert.equal((prompt.match(/FOCAL READABILITY:/g) || []).length, 1);
   assert.ok(prompt.length <= 32000);
   assert.match(prompt, /Outfit assignment:|role-specific outfit assignments:/);

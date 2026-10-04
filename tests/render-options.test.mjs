@@ -23,15 +23,31 @@ const castList = '## 葵\n黒髪の成人女性、眼鏡。\n## 凛\n茶髪の�
 const scenario = `Topic: 展示会の記念写真\nLocation: 展示会\n${[1, 2, 3, 4].map(n => `[${n}コマ目]\n[Camera: ローアングル]\nAction: 葵が凛に本を渡す。凛は本を受け取る。\n葵「記念写真だね」\n凛「よく見えるよ」`).join('\n')}`;
 const build = (options = {}) => buildMangaPrompt({ scenario, castList, providerFamily: 'chatgpt', systemVersion: 'test', punchlineType: 'Auto', cinematicTechniques: false, ...options });
 
+test('registered cast exclusion is bound to final generation, QA, repair and send validation', () => {
+  for (const providerFamily of ['chatgpt', 'gemini']) {
+    const prompt = build({ providerFamily });
+    const guard = 'MOSAIC PROTECTED CAST: ["葵","凛"]';
+    assert.ok(prompt.includes(guard));
+    for (const text of [prompt, qa({ finalPrompt: prompt }), repair({ originalPrompt: prompt, issues: [] })]) {
+      assert.ok(text.includes(guard));
+      assert.match(text, /Never automatically mosaic these registered characters/);
+    }
+    const options = { mosaicCopyrightedCharacters: true, showWatermarks: true, protectedCast: ['葵', '凛'] };
+    assert.equal(assertRenderOptions(prompt, options), prompt);
+    assert.throws(() => assertRenderOptions(prompt.replace(guard, 'MOSAIC PROTECTED CAST: []'), options), /STEP3/);
+    assert.throws(() => assertRenderOptions(prompt, { ...options, protectedCast: ['別人'] }), /STEP3/);
+  }
+});
+
 test('mosaic targets come from panel action, never sheet names, familiar likeness or reference presence', () => {
   const args = { randomCategory: '', targetDate: '2026-10-01', inputMode: 'manual', manualTopic: '展示会で記念撮影', customLocation: '', customOutfit: '', punchlineType: 'Auto' };
-  const scoped = /MOSAIC TARGET SCOPE:[^\n]+Sheets\/names\/labels\/style\/likeness never prove copyright/;
+  const scoped = /MOSAIC TARGET SCOPE:[^\n]+Sheets\/names\/style\/likeness never prove copyright/;
   for (const providerFamily of ['chatgpt', 'gemini']) {
     const prompt = build({ providerFamily });
     assert.match(getScenarioPrompt(args), scoped);
     assert.match(prompt, scoped);
-    assert.match(prompt, /names\/labels\/style\/likeness never prove copyright/);
-    assert.match(prompt, /explicitly depicted in Action/);
+    assert.match(prompt, /names\/style\/likeness never prove copyright/);
+    assert.match(prompt, /Only existing-work depictions in Action\/prints/);
     assert.match(qa({ finalPrompt: prompt }), scoped);
     assert.match(compare({ finalPrompt: prompt }), scoped);
     assert.match(repair({ originalPrompt: prompt, issues: [] }), scoped);
@@ -41,7 +57,7 @@ test('mosaic targets come from panel action, never sheet names, familiar likenes
   for (const plan of [buildOpenAIReferencePlan({ characterImages: [image] }), buildGeminiReferencePlan({ characterImages: [image] })]) {
     assert.match(plan.rolePrompt, scoped);
     assert.match(plan.rolePrompt, /never prove copyright/);
-    assert.match(plan.rolePrompt, /copyrighted_mosaic=on: mask only/);
+    assert.match(plan.rolePrompt, /Only existing-work depictions in Action\/prints/);
   }
 });
 
@@ -60,9 +76,9 @@ test('explicit intentional mosaic on a cast subject stays allowed while unrelate
   for (const providerFamily of ['chatgpt', 'gemini']) {
     const prompt = build({ providerFamily, scenario: deliberate });
     assert.match(prompt, /葵の顔だけに意図的なモザイクをかける/);
-    assert.match(prompt, /Preserve explicit cast masks only/);
-    assert.match(prompt, /exclude name-only mentions, unrelated originals and text/);
-    assert.match(qa({ finalPrompt: prompt }), /Preserve explicit cast masks/);
+    assert.match(prompt, /Explicit cast subject\/region masks only/);
+    assert.match(prompt, /no name-only mentions, originals or text/);
+    assert.match(qa({ finalPrompt: prompt }), /Explicit cast subject\/region masks only/);
   }
 });
 

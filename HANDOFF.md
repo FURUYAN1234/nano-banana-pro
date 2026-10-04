@@ -1,3 +1,18 @@
+## 2026-10-04 v6.8.4 STEP3話者名・登録キャスト保護（公開準備）
+
+- 対象・承認: Nanoのみ。報告台本「異世界の塩が高い」のSTEP3停止と登録キャストへの不要モザイクを修正。実API追加1枚の承認を受けて終了。次は正式デプロイ→note・Facebook更新→X文章をチャットのコードブロック→最後に正式フルバックアップ。X直接投稿なし、追加生成なし、他アプリ変更なし。既存承認済み1枚絵圧縮版を含む。
+- 共有修正: 話者名の外枠除去と登録名照合で9台詞を保持。登録された括弧違い表記をQAでも同一人物として扱い、別人・異なる称号は拒否。登録キャスト一覧を最終プロンプト・QA・修正経路で共有し、自動モザイク対象から除外。現在の登録名と異なる古いプロンプトはSTEP3再構築を要求。明示的な部位マスクは引き続き可能。
+- 実証: 初回STEP3 3.872秒169tokens、初回画像371秒は不要モザイクあり。承認後のSTEP3 4.550秒272tokens、同じ7シート・台本・Sunburst/max2240x3168・自動修正OFFで追加画像321秒。不要モザイク消失を目視確認し、ユーザーも確認。同一人物のbubble_speaker誤判定も解消。原寸PNGデコード成功。3コマの台詞「塩は湧かぬ」の字形崩れとQAの証拠不足警告は残るため画像全体の完全合格とはしない。
+- 証拠: ignored output/salt-step3-api/ の元台本・解析cast、fixed-final-prompt.txt、fixed-step4-complete-dom.txt、fixed-step4-complete.jpg、fixed-generated-original.png（2240x3168）。初回generated-original.pngは保存時切詰めにより無効、初回はスクリーンショットを参照。
+- 検証: 元台本両プロバイダ/カラー白黒/括弧形式で9台詞一致。最終全1155件中1154PASS、残る1件は文書更新後に再収集するREADME監査。元の19000字上限を維持した関連81件PASS。新規モザイク指示を既存契約の同等短文に圧縮し、旧画風スナップショットは変更なし。最終strict lint0・本番build成功。PDF44ページ全体と変更ページ13/14/24の原寸表示を確認済み。残るREADME監査を候補commitへ紐付けてから公式公開。
+- 状態: 原本と入力を保存済み。元IAB browser5/tab1 localhost5173はユーザー所有、再読込せず保持。サーバーsession64053待受。リリース・告知・バックアップ未開始。追加料金発生なし。
+
+## 2026-10-04 1枚絵追加プロンプト圧縮版の採用（ローカル）
+
+- ユーザーがチャット掲載の圧縮版で「いけた」と確認し、その本文の採用を指示。`buildSingleImageEmotionalPrompt()` を同一の8,784文字へ置換。全文の共有契約を後付けせず、承認本文内に共通品質要件を保持する。4コマの生成指示は変更なし。
+- コピーの実ハンドラーをローカルテストで実行し、クリップボードへ渡す全文・完了状態・OpenAI限定表示を確認。承認本文との完全一致とSHA-256固定、9,500文字以内、品質条件の保持を検証。旧9,991文字で文字数テストRED、反映後の関連42件・対象ESLint・diff check PASS。実ブラウザでの再貼付や追加API生成は行っていない。
+- READMEへ「ユーザー文の後ろへ同じ未送信欄に追記し、参照画像と一度だけ送信」を同期。ローカル変更のみ。commit・公開・配布コピー更新・バックアップは未実施。
+
 ## 2026-10-04 v6.8.3 distribution and application terms
 
 Public-release candidate: common application terms preserve ordinary use and output monetization while requiring written permission for paid app redistribution/services; valid prior grants and third-party licenses remain. The third-party PDF development skill is excluded from tracked/public distribution and guarded against reintroduction. Local originals remain outside distribution. Generation/provider behavior and existing operation manuals are unchanged. This release does not retry the separate v6.8.2 full backup. Root PLAN owns public verification and note-controller limitations.

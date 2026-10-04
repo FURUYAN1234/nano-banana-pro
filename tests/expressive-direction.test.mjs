@@ -46,6 +46,15 @@ test('planning and enhancement keep back-view acting without inventing a visible
 
 test('both image paths and single-image copy keep visibility subordinate to the scripted view', () => {
   for (const [route, prompt] of [['chatgpt', build('chatgpt')], ['gemini', build('gemini')], ['single', singleImagePrompt.buildSingleImageEmotionalPrompt()]]) {
+    if (route === 'single') {
+      assert.match(prompt, /Preserve explicit camera position, side, height, tilt, lens, crop and head turns/);
+      assert.match(prompt, /Never change them merely to reveal a face, hand, object or text/);
+      assert.match(prompt, /rear-view emotion through head pitch, shoulder tension and weight/);
+      assert.match(prompt, /Allow coherent profiles, stylization and foreshortening/);
+      assert.match(prompt, /Rigid headwear follows skull rotation with correct front\/back\/edge/);
+      assert.match(prompt, /explicitly two-sided designs remain valid/);
+      continue;
+    }
     assert.match(prompt, route === 'chatgpt'
       ? /keep shot scale\/elevation\/camera side\/head turn/
       : /readability never changes shot scale or elevation, camera side or head turn/);
@@ -68,6 +77,18 @@ test('focal ink, sharp story cues and actual exaggerated acting survive every ou
     }
   }
   for (const { prompt, colorMode, providerFamily } of outputs) {
+    if (!providerFamily) {
+      assert.match(prompt, /G-pen-like line hierarchy.*pressure-tapered thick-to-hairline strokes.*bold contact\/overlap accents and fine eyes, mouth and fingers/);
+      assert.match(prompt, /Avoid uniform heavy outlines or black-clogged features/);
+      assert.match(prompt, /Keep story-critical reactions, visible props and required lettering sharp/);
+      assert.match(prompt, /lighten\/desaturate the background or deepen values behind a light silhouette/);
+      assert.match(prompt, /local light\/dark separation and emotion-appropriate warm\/cool contrast/);
+      assert.match(prompt, /clear overlaps or gaps near faces and hands/);
+      assert.match(prompt, /Speed lines cannot replace actual motion or perspective/);
+      assert.match(prompt, /preserve quiet moments/);
+      assert.match(prompt, /Lead the eye.*gaze, diagonals, negative space/);
+      continue;
+    }
     const panelColorMedia = providerFamily === 'chatgpt' && colorMode === 'color';
     assert.match(prompt, /FOCAL READABILITY:/);
     if (colorMode === 'monochrome') {
@@ -122,6 +143,13 @@ test('case-by-case near/far focus and required background text survive every pro
     }
   }
   for (const prompt of outputs) {
+    if (prompt.startsWith('[ ANTIGRAVITY EMOTIONAL CINEMA ENGINE')) {
+      assert.match(prompt, /Optional near\/far softness may separate depth planes/);
+      assert.match(prompt, /Keep story-critical reactions, visible props and required lettering sharp; honor explicit deep focus/);
+      assert.match(prompt, /Preserve explicit camera position, side, height, tilt, lens, crop and head turns/);
+      assert.doesNotMatch(prompt, /Clean finish: crisp foreground, softer background/);
+      continue;
+    }
     assert.ok(prompt.includes('FOCUS PLAN:'), 'FOCUS PLAN missing from generated prompt');
     assert.match(prompt, /optional near\/far soft/);
     assert.match(prompt, /story\/required text\/deep focus sharp/);
@@ -492,7 +520,7 @@ test('visual evidence follows scripted panels without a numeric quota and style 
 test('single-image copy text shares expressive permission without a four-panel requirement', () => {
   const text = singleImagePrompt.buildSingleImageEmotionalPrompt();
   assert.ok(text, 'exported single-image prompt');
-  assert.match(text, /EXPRESSIVE DIRECTION:/);
+  assert.match(text, /Allow motivated pointing, reaching, impact, recoil, leaps and strong foreshortening/);
   assert.match(text, /full-body/);
   assert.doesNotMatch(text, /Across the four panels|at least three.*panels/);
 });

@@ -1,0 +1,14 @@
+import { buildCopyrightMosaicInstruction, buildProtectedCastContract, readProtectedCast, COPYRIGHT_MOSAIC_TARGET_SCOPE } from '../../src/lib/render-options.js';
+
+// Keep the older art-direction/reference baselines frozen. Exclude ONLY the
+// authorized masking contract, whose positive/negative gates have dedicated tests.
+const priorScope = 'MOSAIC TARGET SCOPE: No targets => NO MOSAIC. Sheets/names/labels/style/likeness never prove copyright. copyrighted_mosaic=on: mask only existing-work figures explicitly depicted in Action/prints; exclude name-only mentions, unrelated originals and text. Preserve explicit cast masks only on named subject/region.';
+const priorInstruction = `${priorScope}\n版権キャラクターにおおきなモザイクをかける。特大モザイク（顔幅に4〜6個の不透明な正方形）で版権対象全体と印刷人物の目・口・顔の細部を判読できなくする。ドット絵化ではなく遮蔽。名前/役割/行動保持、遮蔽優先。指示非印字。`;
+export const withoutMosaicRepair = value => {
+  const guard = buildProtectedCastContract(readProtectedCast(value));
+  return (guard ? value.replace(`${guard}\n`, '') : value)
+    .replaceAll(buildCopyrightMosaicInstruction(true), priorInstruction)
+    .replaceAll(COPYRIGHT_MOSAIC_TARGET_SCOPE, priorScope)
+    .replaceAll('FINAL MOSAIC OVERRIDE (never print): Opaque coarse mosaic OVERLAY only under MOSAIC TARGET SCOPE; protected cast excluded. Cover ENTIRE figure, head/ears through hands/feet, just beyond silhouette; not face-only. Flat opaque squares, 4–6 across face; no eyes/mouth/artwork over blocks. Preserve the scripted subject category, overall silhouette, dominant colors and story role; obscure fine identity details, no redesign. Never replace the masked subject with another person, species or object. Printed figures stay printed across panels. Mask overrides sharpness/natural artwork only inside it. Keep other cast/text clear; preserve explicit subject/region masks. Opaque overlay, not pixel-art styling.',
+      'FINAL MOSAIC OVERRIDE (never print): After drawing the artwork, apply an opaque coarse mosaic OVERLAY only under MOSAIC TARGET SCOPE. Cover the ENTIRE figure from head/ears to hands/feet, extending slightly beyond its silhouette; never mask only the central face. Each square is one flat opaque color with no eyes, mouth or fine artwork drawn inside or over it. Use extra-large blocks (about 4–6 across the face). Preserve the scripted subject category, overall silhouette, dominant colors and story role underneath the overlay; obscure identifying fine details without redesigning the subject. Never replace the masked subject with another person, species or object. A printed figure remains the same printed figure across panels, not a living cast member. The opaque overlay overrides sharpness and natural-artwork rules only within its mask. Keep unrelated cast and text clear; preserve explicit subject/region masks. Do not substitute pixel-art styling for this full-area overlay.');
+};

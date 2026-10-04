@@ -1,4 +1,4 @@
-import { buildRenderOptionsContract } from './render-options.js';
+import { buildRenderOptionsContract, buildProtectedCastContract } from './render-options.js';
 import { stripSourceMetadata } from './sns-explanation.js';
 import { MANGA_FACIAL_ACTING_LOCK_COMPACT } from './facial-acting.js';
 import { formatGeneratedMangaTitle } from './manga-title.js';
@@ -15,6 +15,7 @@ import {
 } from './prompts';
 import { 
   cleanCastList, 
+  collectCastNameEntries,
   buildIdentityMatrix, 
   buildEmotionBlock, 
   OPENAI_COLOR_GEKIGA_STYLE,
@@ -855,8 +856,12 @@ ${geminiRearForegroundLock}`;
     safePrompt = `${MONOCHROME_RENDERING_LOCK}\n\n${safePrompt}`;
   }
   safePrompt = `${buildRenderOptionsContract({ mosaicCopyrightedCharacters, showWatermarks })}\n\n${safePrompt}`;
+  if (mosaicCopyrightedCharacters) {
+    const protectedCast = buildProtectedCastContract(collectCastNameEntries(castList).map(entry => entry.displayName));
+    if (protectedCast) safePrompt = `${protectedCast}\n${safePrompt}`;
+  }
   if (!isChatGPTFamily && mosaicCopyrightedCharacters) {
-    safePrompt += '\n\nFINAL MOSAIC OVERRIDE (never print): After drawing the artwork, apply an opaque coarse mosaic OVERLAY only under MOSAIC TARGET SCOPE. Cover the ENTIRE figure from head/ears to hands/feet, extending slightly beyond its silhouette; never mask only the central face. Each square is one flat opaque color with no eyes, mouth or fine artwork drawn inside or over it. Use extra-large blocks (about 4–6 across the face). Preserve the scripted subject category, overall silhouette, dominant colors and story role underneath the overlay; obscure identifying fine details without redesigning the subject. Never replace the masked subject with another person, species or object. A printed figure remains the same printed figure across panels, not a living cast member. The opaque overlay overrides sharpness and natural-artwork rules only within its mask. Keep unrelated cast and text clear; preserve explicit subject/region masks. Do not substitute pixel-art styling for this full-area overlay.';
+    safePrompt += '\n\nFINAL MOSAIC OVERRIDE (never print): Opaque coarse mosaic OVERLAY only under MOSAIC TARGET SCOPE; protected cast excluded. Cover ENTIRE figure, head/ears through hands/feet, just beyond silhouette; not face-only. Flat opaque squares, 4–6 across face; no eyes/mouth/artwork over blocks. Preserve the scripted subject category, overall silhouette, dominant colors and story role; obscure fine identity details, no redesign. Never replace the masked subject with another person, species or object. Printed figures stay printed across panels. Mask overrides sharpness/natural artwork only inside it. Keep other cast/text clear; preserve explicit subject/region masks. Opaque overlay, not pixel-art styling.';
   }
 
   // ドキュメンタリーモード時の危険ワード言い換え

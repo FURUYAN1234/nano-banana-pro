@@ -9,6 +9,7 @@ import {
   getOpenAIPromptBodyBudget,
 } from '../src/lib/openai-image-references.js';
 import { buildOpenAIImageRequest } from '../src/lib/openai.js';
+import { withoutMosaicRepair } from './helpers/mosaic-isolation.mjs';
 
 // 非productionのrequest-shape用データ。生成画質の証拠には使用しない。
 const image = text => `data:image/png;base64,${Buffer.from(text).toString('base64')}`;
@@ -33,7 +34,7 @@ test('only initial OpenAI monochrome requests end with the ink manuscript finish
   const repair = buildOpenAIReferencePlan({ colorMode: 'monochrome', characterImages: [image('a')],
     backgroundImage: image('b'), backgroundEnabled: true, originalCandidate: { base64Img: 'Yw==', mimeType: 'image/png' } });
   assert.doesNotMatch(repair.rolePrompt, /最終仕上げ/);
-  assert.equal(createHash('sha256').update(JSON.stringify(repair)).digest('hex'), '4f92da4002dc395e8a7e9609a99200faf893a406264a90d3ca67e52cb3c2fc5f');
+  assert.equal(createHash('sha256').update(JSON.stringify({ ...repair, rolePrompt: withoutMosaicRepair(repair.rolePrompt) })).digest('hex'), '4f92da4002dc395e8a7e9609a99200faf893a406264a90d3ca67e52cb3c2fc5f');
 });
 
 test('color reference plans retain byte-identical initial, background and repair manifests', () => {
@@ -50,7 +51,7 @@ test('color reference plans retain byte-identical initial, background and repair
     for (const colorMode of ['color', undefined]) {
       const plan = buildOpenAIReferencePlan({ ...options, colorMode });
       assert.deepEqual(plan, before);
-      assert.equal(createHash('sha256').update(JSON.stringify(plan)).digest('hex'), expected);
+      assert.equal(createHash('sha256').update(JSON.stringify({ ...plan, rolePrompt: withoutMosaicRepair(plan.rolePrompt) })).digest('hex'), expected);
     }
   }
 });

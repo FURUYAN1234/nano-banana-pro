@@ -32,7 +32,7 @@ const pushUnique = (list, value) => {
   if (cleanValue && !list.includes(cleanValue)) list.push(cleanValue);
 };
 
-const collectCastNameEntries = (castListText = '') => {
+export const collectCastNameEntries = (castListText = '') => {
   const entries = [];
   String(castListText).split('\n').forEach((line) => {
     const cleanLine = line.replace(/\*\*/g, '').trim();
@@ -423,15 +423,20 @@ const stripMatchingStructuralWrapper = (line = '') => {
   return matchingCloser === match[4] ? `${match[1]}${match[3]}` : line;
 };
 
+// Only unwrap a complete speaker wrapper; a suffix such as 名前【別名】 is identity.
+const unwrapSpeakerLabel = (value = '') => stripMatchingStructuralWrapper(String(value).trim()).trim();
+
+const speakerNameForHeuristics = (value = '') => String(value).replace(/[【\[（(].*?[】\]）)]/g, '').trim();
+
 const normalizeDialogueSpeakerPrefix = (value = '') =>
-  String(value)
+  unwrapSpeakerLabel(value)
     .replace(/^[\s\-*・、。:：]+/, '')
-    .replace(/[【\[（(].*?[】\]）)]/g, '')
+    .replace(/[（(].*?[）)]/g, '')
     .replace(/^(?:セリフ|台詞|Dialogue|Speech\s*Bubble\s*\d*)\s*[:：-]?\s*/i, '')
     .trim();
 
 const isGenericShortSpeakerPrefix = (value = '') => {
-  const clean = normalizeDialogueSpeakerPrefix(value);
+  const clean = speakerNameForHeuristics(normalizeDialogueSpeakerPrefix(value));
   if (!clean || clean.length > 18) return false;
   if (META_SPEAKER_LABEL_RE.test(clean)) return false;
   if (!/[\u3040-\u30FF\u4E00-\u9FFFA-Za-zＡ-Ｚａ-ｚ]/u.test(clean)) return false;
@@ -682,7 +687,7 @@ export const getCameraForChatGPT = (panelText, cameraState) => {
 
 const BALLOON_LAYOUT_LINE_RE = /^\s*BalloonLayout\s*[:：]\s*(.*)$/gim;
 
-const renderBalloonLayout = (source, entries, rearSubject = '', uncertainRear = false) => {
+const renderBalloonLayout = (source, entries, rearSubject = '', uncertainRear = false, validCharacters = []) => {
   const lines = [...String(source).matchAll(BALLOON_LAYOUT_LINE_RE)];
   if (!lines.length) return ''; // Existing/manual scenarios keep their supported format.
   const fail = (reason, detail) => { throw Object.assign(new Error(`BalloonLayout: ${detail}`), {code: 'BALLOON_LAYOUT_INVALID', reason}); };
@@ -690,9 +695,14 @@ const renderBalloonLayout = (source, entries, rearSubject = '', uncertainRear = 
   try { plan = JSON.parse(lines[0][1]); } catch { return fail('json', '配置JSONを読み取れません。'); }
   if (lines.length !== 1 || !Array.isArray(plan)) return fail('schema', '配置はコマごとに1つのJSON配列で指定してください。');
   if (plan.length !== entries.length) return fail('count', `配置${plan.length}件、抽出台詞${entries.length}件で一致しません。`);
+  // Accept bracket typography only for a complete registered name/title, never fuzzy substrings.
+  const bracketKey = value => value.trim().replace(/[【\[（(]/g, '(').replace(/[】\]）)]/g, ')');
   for (const [i, item] of plan.entries()) {
     if (!item || typeof item !== 'object' || Array.isArray(item)) return fail('schema', `配置${i + 1}はオブジェクトで指定してください。`);
-    if (typeof item.speaker !== 'string' || item.speaker.trim() !== entries[i].speaker) return fail('speaker', `配置${i + 1}の話者と抽出台詞の話者が一致しません。`);
+    if (typeof item.speaker !== 'string') return fail('speaker', `配置${i + 1}の話者と抽出台詞の話者が一致しません。`);
+    const registeredSpeaker = validCharacters.find(name => bracketKey(name) === bracketKey(item.speaker));
+    const canonicalSpeaker = registeredSpeaker ? registeredSpeaker.split(/[（(]/)[0].trim() : item.speaker.trim();
+    if (item.speaker.trim() !== entries[i].speaker && canonicalSpeaker !== entries[i].speaker) return fail('speaker', `配置${i + 1}の話者と抽出台詞の話者が一致しません。`);
     if (!Number.isFinite(item.x) || item.x <= 0 || item.x >= 1) return fail('x_range', `配置${i + 1}のxは0より大きく1未満の数値にしてください。`);
     if (i > 0 && plan[i - 1].x <= item.x) return fail('x_order', `配置${i + 1}のxが右から左の台詞順と一致しません。`);
     for (const key of ['anchor', 'route']) {
@@ -703,7 +713,7 @@ const renderBalloonLayout = (source, entries, rearSubject = '', uncertainRear = 
   const visibleAnchor = (value, speaker) => speaker !== rearSubject && !uncertainRear ? value : value
     .replace(/口元|口もと|\bmouth\b/gi, '頭の見える輪郭')
     .replace(/(^|の|から|\s)口(?=へ|に|の|$)/g, '$1頭の見える輪郭');
-  return ` BALLOON LAYOUT (NEVER PRINT; x=0 left/1 right; preserve Camera/Action): ${plan.map((item, i) => `B${i + 1} x=${item.x}, [${item.speaker}] ${visibleAnchor(item.anchor, item.speaker)}, tail=${visibleAnchor(item.route, item.speaker)}`).join('; ')}.`;
+  return ` BALLOON LAYOUT (NEVER PRINT; x=0 left/1 right; preserve Camera/Action): ${plan.map((item, i) => `B${i + 1} x=${item.x}, [${entries[i].speaker}] ${visibleAnchor(item.anchor, entries[i].speaker)}, tail=${visibleAnchor(item.route, entries[i].speaker)}`).join('; ')}.`;
 };
 
 export const extractDialogueOnly = (fullPanelText, castList, options = {}) => {
@@ -786,7 +796,7 @@ export const extractDialogueOnly = (fullPanelText, castList, options = {}) => {
 
     const isInstruction = isInstructionLine(line);
     if (match && match[1].trim() && !isInstruction) {
-      let tempSpeaker = match[1].replace(/^[【\[（(]/, '').replace(/[】\]）)]$/, '').trim();
+      let tempSpeaker = unwrapSpeakerLabel(match[1]);
       // ベースとなる話者名（カッコ内のト書きを無視）
       let tempSpeakerBase = tempSpeaker.replace(/[（(].*?[）)]/g, '').trim();
 
@@ -800,10 +810,11 @@ export const extractDialogueOnly = (fullPanelText, castList, options = {}) => {
         const normalizedName = nameOnly.replace(/[\s・]/g, '');
         return nameOnly && (tempSpeakerBase === nameOnly || tempSpeakerBase === c || normalizedSpeaker === normalizedName);
       });
-      const hasSentenceParticles = !isExactCastMatch && /(?:が|を|に|で|へ|は|も|と|から|まで|より)/.test(tempSpeakerBase) && tempSpeakerBase.length > 5;
-      const endsWithParticle = !isExactCastMatch && /(?:が|を|に|で|へ|は|も|と|から|まで|より)$/.test(tempSpeakerBase);
+      const heuristicName = speakerNameForHeuristics(tempSpeakerBase);
+      const hasSentenceParticles = !isExactCastMatch && /(?:が|を|に|で|へ|は|も|と|から|まで|より)/.test(heuristicName) && heuristicName.length > 5;
+      const endsWithParticle = !isExactCastMatch && /(?:が|を|に|で|へ|は|も|と|から|まで|より)$/.test(heuristicName);
       const isNarrationSubject = isNarrationSubjectSpeakerCandidate(tempSpeakerBase, validCharacters);
-      const isTooLong = tempSpeakerBase.length > 20; // 複数人を中黒で列挙する表記を許容するため長めに設定
+      const isTooLong = !isExactCastMatch && heuristicName.length > 20;
       // [v4.6.3] 照明・SE・演出など舞台指示用語をメタタグとして除外
       // [v4.6.10] 「セリフ」「台詞」「Dialogue」をメタタグに追加（スピーカー誤認識防止）
       const isMetaTag = META_SPEAKER_LABEL_RE.test(tempSpeakerBase);
@@ -1005,7 +1016,7 @@ export const extractDialogueOnly = (fullPanelText, castList, options = {}) => {
   if (options.forImagePrompt) {
     const rear = extractExplicitRearSubject(fullPanelText, collectCastNameEntries(castList));
     const rearSubject = rear.subject;
-    const layout = renderBalloonLayout(layoutSource, orderedEntries, rearSubject, ['unresolved', 'ambiguous'].includes(rear.status));
+    const layout = renderBalloonLayout(layoutSource, orderedEntries, rearSubject, ['unresolved', 'ambiguous'].includes(rear.status), validCharacters);
     if (options.asEntries) return orderedEntries.map(({ speaker, text }) => ({ speaker, text }));
     // 上位台本には本文だけを再掲し、話者名は各コマの尻尾メタデータに一元化する。
     if (options.forScriptLock) {
@@ -1376,7 +1387,7 @@ export const extractActionOnly = (fullPanelText, castList, placementRule = "") =
     const isInstruction = isInstructionLine(line);
     if (match && match[1].trim() && !isInstruction) {
       let tempSpeaker = match[1].replace(/^(SFX|効果音|BGM|Action)/i, '').trim();
-      tempSpeaker = tempSpeaker.replace(/^[【\[（(]/, '').replace(/[】\]）)]$/, '').trim();
+      tempSpeaker = unwrapSpeakerLabel(tempSpeaker);
       // [v4.6.4] キャスト名完全一致バイパス: 助詞を含むキャスト名（例: と■のよ■ゆき子）を正しく認識
       const normalizedSpeakerA = tempSpeaker.replace(/[\s・]/g, '');
       const isExactCastMatch = validCharacters.some(c => {
@@ -1384,10 +1395,11 @@ export const extractActionOnly = (fullPanelText, castList, placementRule = "") =
         const normalizedName = nameOnly.replace(/[\s・]/g, '');
         return nameOnly && (tempSpeaker === nameOnly || tempSpeaker === c || normalizedSpeakerA === normalizedName);
       });
-      const hasSentenceParticles = !isExactCastMatch && /[がをにでへはもとからまでより]/.test(tempSpeaker) && tempSpeaker.length > 5;
+      const heuristicName = speakerNameForHeuristics(tempSpeaker);
+      const hasSentenceParticles = !isExactCastMatch && /[がをにでへはもとからまでより]/.test(heuristicName) && heuristicName.length > 5;
       const isNarrationSubject = isNarrationSubjectSpeakerCandidate(tempSpeaker, validCharacters);
       // [v4.6.3] extractDialogueOnly と閾値を統一（12→20）。不一致だとセリフがAction側に残り、protectNonDialogueTextHintsで破壊される
-      const isTooLong = tempSpeaker.length > 20;
+      const isTooLong = !isExactCastMatch && heuristicName.length > 20;
       // [v4.6.3] 照明・SE・演出など舞台指示用語をメタタグとして除外
       // [v4.6.10] 「セリフ」「台詞」「Dialogue」をメタタグに追加
       const isMetaTag = META_SPEAKER_LABEL_RE.test(tempSpeaker);
@@ -1512,7 +1524,7 @@ export const extractPlacementRule = (fullPanelText, castList, options = {}) => {
   dialogLines.forEach(line => {
     const match = line.match(/^(.*?)(?:[:：]|「)/);
     if (match && match[1].trim()) {
-      let speaker = match[1].replace(/^(SFX|効果音|BGM|Action|状況(?:演出)?|EMOTION|[\(（].*?[\)）]|\[.*?\])/gi, '').replace(/^[【\[（(]/, '').replace(/[】\]）)]$/, '').trim();
+      let speaker = unwrapSpeakerLabel(match[1].replace(/^(SFX|効果音|BGM|Action|状況(?:演出)?|EMOTION|[\(（].*?[\)）])/gi, ''));
       // [v4.6.4] キャスト名完全一致バイパス: 助詞を含むキャスト名（例: と■のよ■ゆき子）を正しく認識
       const normalizedSpeakerP = speaker.replace(/[\s・]/g, '');
       const isExactCastMatchP = validCharsForPlacement.some(c => {
@@ -1521,7 +1533,7 @@ export const extractPlacementRule = (fullPanelText, castList, options = {}) => {
       });
       const hasSentenceParticles = !isExactCastMatchP && /[がをにでへはもとからまでより]/.test(speaker) && speaker.length > 5;
       const isNarrationSubjectP = isNarrationSubjectSpeakerCandidate(speaker, validCharsForPlacement);
-      const isTooLong = speaker.length > 12;
+      const isTooLong = !isExactCastMatchP && speakerNameForHeuristics(speaker).length > 12;
       // [v4.6.3] 照明・SE・演出など舞台指示用語をメタタグとして除外
       // [v4.6.10] 「セリフ」「台詞」「Dialogue」をメタタグに追加
       const isMetaTag = META_SPEAKER_LABEL_RE.test(speaker);
@@ -1621,7 +1633,7 @@ export const extractCastLimitRule = (fullPanelText, castList, options = {}) => {
     let isDialogue = false;
     if (match && match[1].trim()) {
       let tempSpeaker = match[1].replace(/^(SFX|効果音|BGM|Action)/i, '').trim();
-      tempSpeaker = tempSpeaker.replace(/^[【\[（(]/, '').replace(/[】\]）)]$/, '').trim();
+      tempSpeaker = unwrapSpeakerLabel(tempSpeaker);
       // [v4.6.4] キャスト名完全一致バイパス: 助詞を含むキャスト名（例: と■のよ■ゆき子）を正しく認識
       const normalizedSpeakerC = tempSpeaker.replace(/[\s・]/g, '');
       const isExactCastMatchC = validCharacters.some(c => {
@@ -1631,7 +1643,7 @@ export const extractCastLimitRule = (fullPanelText, castList, options = {}) => {
       });
       const hasSentenceParticles = !isExactCastMatchC && /[がをにでへはもとからまでより]/.test(tempSpeaker) && tempSpeaker.length > 5;
       const isNarrationSubjectC = isNarrationSubjectSpeakerCandidate(tempSpeaker, validCharacters);
-      const isTooLong = tempSpeaker.length > 12;
+      const isTooLong = !isExactCastMatchC && speakerNameForHeuristics(tempSpeaker).length > 12;
       // [v4.6.10] 「セリフ」「台詞」「Dialogue」をメタタグに追加
       const isMetaTag = META_SPEAKER_LABEL_RE.test(tempSpeaker);
       const isSoundEffect = /^[^a-zA-Z]*([\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF])([ーッっ]*\1){1,}[ーッっ！!ン]*$/u.test(tempSpeaker.replace(/[（(].*$/, '').trim());
@@ -1921,7 +1933,7 @@ export const buildEmotionBlock = (panelText, colorMode = 'color', { preserveRefe
     if (/^\[EMOTION:/i.test(line.trim())) return;
     const m = line.match(/^(.*?)(?:[:：]|「)/);
     if (m && m[1].trim()) {
-      const sp = m[1].replace(/^[【\[（(]/, '').replace(/[】\]）)]$/, '').trim();
+      const sp = unwrapSpeakerLabel(m[1]);
       if (sp && !speakersInPanel.includes(sp) && !META_SPEAKER_LABEL_RE.test(sp)) speakersInPanel.push(sp);
     }
   });

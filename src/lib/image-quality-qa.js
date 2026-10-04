@@ -1,4 +1,4 @@
-import { buildRenderOptionsQa } from './render-options.js';
+import { buildRenderOptionsQa, readProtectedCast } from './render-options.js';
 import { isMonochromePrompt, MONOCHROME_QA_RULE } from './manga-render-mode.js';
 import { readBubbleTextValues } from './bubble-text.js';
 import { getPanelShotExecution, isPullbackShot } from './composition-variety.js';
@@ -351,11 +351,18 @@ const normalizeSpeakerKey = (value) => String(value || '')
 
 const buildSpeakerAliasMap = (prompt) => {
   const aliases = new Map();
-  for (const match of String(prompt || '').matchAll(/Character\s+\[([^\]\n()]+?)\s*\(([^)\n]+)\)\]/g)) {
-    const canonical = normalizeSpeakerKey(match[1]);
+  const names = [...readProtectedCast(prompt), ...Array.from(String(prompt || '').matchAll(/^[ \t]*(?:-[ \t]*)?(?:Character[ \t]*)?\[([^\]\n]+)\][ \t]*(?=:|$)/gm), match => match[1])];
+  const register = (name, canonical) => {
+    const key = normalizeSpeakerKey(name);
+    if (key) aliases.set(key, aliases.has(key) && aliases.get(key) !== canonical ? null : canonical);
+  };
+  for (const name of names) {
+    const match = name.normalize('NFKC').match(/^(.*?)\s*(?:\(([^()]+)\)|【([^【】]+)】)$/);
+    const canonical = normalizeSpeakerKey(match ? match[1] : name);
     if (!canonical) continue;
-    aliases.set(canonical, canonical);
-    aliases.set(normalizeSpeakerKey(match[2]), canonical);
+    register(name, canonical);
+    register(canonical, canonical);
+    if (match) register(match[2] || match[3], canonical);
   }
   return aliases;
 };

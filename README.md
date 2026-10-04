@@ -1,13 +1,13 @@
 # Super FURU AI 4-koma System / Super FURU AI 4コマシステム
 
-> Current source version: **v6.8.3** / 現在のソース版: **v6.8.3**
+> Current source version: **v6.8.4** / 現在のソース版: **v6.8.4**
 
 
 An experimental web application in which AI handles topic research, story structure, direction, prompt construction, image generation, and quality review for a four-panel manga. / AIが話題調査、構成、演出、プロンプト構築、画像生成、品質確認まで担当する4コマ漫画制作Webアプリです。
 
 [アプリを開く / Open the app](https://furuyan1234.github.io/nano-banana-pro/) · [全機能PDFマニュアル / Full manual](https://furuyan1234.github.io/nano-banana-pro/downloads/super-furu-ai-4koma-full-manual-2026-10-01.pdf)
 
-The bundled v6.8.2 operation manuals also apply to v6.8.3; this release changes distribution terms and excludes a development skill without changing the creation workflow. Current application terms are in [LICENSE](LICENSE). / 同梱のv6.8.2操作マニュアルはv6.8.3でも利用できます。本版は利用条件と開発用skillの配布範囲を更新し、制作の操作手順は変更していません。現在のアプリ利用条件は [LICENSE](LICENSE) を参照してください。
+The full operation manual and Gemini setup guide cover v6.8.4. The unchanged OpenAI setup guide remains applicable. Current application terms are in [LICENSE](LICENSE). / 全機能マニュアルとGemini API取得ガイドはv6.8.4対応です。OpenAI API取得ガイドの接続手順は引き続き利用できます。現在のアプリ利用条件は [LICENSE](LICENSE) を参照してください。
 
 ## Application screen and output / 操作画面と生成例
 
@@ -238,6 +238,10 @@ With automatic repair OFF, STEP4's “Review the displayed image” button runs 
 
 STEP3 keeps quoted article headings and document titles as scene text rather than extra dialogue. Explicit speech, including reading aloud, remains dialogue; invalid balloon counts, owners or coordinate order still stop prompt construction. After updating the app, rebuild STEP3 from the saved scenario. / STEP3は、引用された記事見出し・文書タイトルを作中文字として保持し、余分な台詞にしません。「読み上げる」などの明示発話は台詞に残し、吹き出しの件数・話者・座標順が不正なら構築を停止します。修正版へ更新後、保存済み台本からSTEP3を再実行してください。
 
+Speaker names retain bracketed aliases and titles (for example, `名前【別名】`); registered names are not discarded merely for being long. / `名前【別名】` などの括弧付き話者名を保持し、登録済みの人物名を長さだけで台詞から除外しません。
+
+Registered sheet characters are explicitly excluded from automatic copyright mosaics in generation and review. Only a scripted mask of a named character/region overrides that exclusion. Rebuild STEP3 if the exclusion no longer matches the cast. QA resolves registered full names and aliases across bracket styles, while still rejecting another person's balloon tail. / 登録済みシートの人物は、生成・品質検査の両方で自動モザイクの対象外にします。台本に本人・領域への遮蔽指定がある場合だけ例外です。除外指定と現在のキャストが一致しない場合はSTEP3の再構築が必要です。品質検査も登録済みの正式名・別名・括弧表記を照合し、別人への吹き出し接続は引き続き検出します。生成モデルが指定を守る保証ではないため、実画像の確認は必要です。
+
 5. Review the editable scenario and prompt, then run STEP4. / 編集可能なシナリオとプロンプトを確認し、STEP4を実行します。
 6. Inspect the actual image, especially dialogue, hands, props, character identity, and panel order. / 実画像の台詞、手、小物、人物の同一性、コマ順を確認します。
 
@@ -340,6 +344,8 @@ Monochrome repair decisions require localized, material evidence tied to a suppl
 
 OpenAI monochrome references supply identity, clothing and structure; their colors are interpreted as black ink, white paper and assigned screentones. Four-panel QA also reads native-size RGB pixels without changing the PNG or calling another API. Broad residual color prevents a pass and retains the image; this finding alone does not trigger automatic repair. Tiny channel differences, neutral antialiasing and sparse colored marks do not count as broad color areas. These additions do not apply to color output or Gemini. Live API improvement remains unverified. / OpenAI白黒では、参照画像を人物の同一性・衣装・構造の根拠とし、元の色を引き継がず黒インク・白地・指定網点へ解釈します。4コマの原寸RGB検査はPNGを変更せず、追加APIも呼ばない読み取り検査です。広い色残りを検出した場合は合格扱いにせず画像を保持し、この検出だけでは自動修正しません。微小な色差・中立色のアンチエイリアス・疎な色線や点は広い色面として扱いません。この追加処理はカラー出力やGeminiへ適用しません。実APIでの改善は未確認です。
 
+**Single-image append prompt / 1枚絵の追加プロンプト**: The ChatGPT single-image copy button copies the accepted compact 8,784-character prompt. Write your image request first, append this text in the same unsent composer, attach any references, then send once. Explicit user content, style and camera choices take priority; quality directions supplement unspecified details. / 「ChatGPT用 1枚絵エモーショナルプロンプトをコピー」は、採用済みの圧縮版8,784文字をコピーします。ChatGPTの入力欄に描きたい内容を書き、改行してその後ろへ追加文を貼り、必要な参照画像も添えて最後に一度だけ送信してください。ユーザーの内容・画風・カメラ指定を優先し、未指定部分を品質指示で補います。追加文は1回の貼り付け目安9,500文字以内で管理します。ユーザー文と追加文を外部で結合して一括貼付する場合、その合計がこの目安を超えることがあるため、別々に貼ってください。
+
 **ChatGPT / Work long prompts / 長文プロンプト**: ChatGPT向け4コマプロンプトの共通上限は、参照画像の説明を含めて **32,000文字** です。約15,000文字をソフト目安として、安全に削れる重複を先に圧縮します。必要な台詞・構図・人物・画風の指定が残る場合は目安を超えても保持し、Webコピー・.txt保存・初回API送信は同じ指示文と参照説明を使います。構築時は参照説明の分を実測して確保し、編集後のコピー／保存／API送信でも上限を再検査します。収まらない台詞や指示を黙って切り捨てません。これは [GPT Image APIの上限](https://developers.openai.com/api/reference/cli/resources/images/methods/generate) に合わせたアプリ側の共通上限であり、Web入力欄や添付ファイルの絶対上限ではありません。 / The shared four-panel ceiling follows the GPT Image API: 32,000 characters including reference instructions. A soft target of about 15,000 characters first compacts safe repetition, but necessary script and visual instructions may exceed it. Web copy, TXT export and the initial API request use the same complete text. Reference instructions reserve their actual length; overflow is rejected rather than silently truncated.
 
 プロンプトの設計目標は文字数ではなく完成画像の品質です。短くても効く指示を優先し、台詞・構図・人物識別・画風などの必要な条件を守るためにだけ長くします。32,000文字は使い切る目標ではなく上限であり、長文化による画質向上は保証されません。 / The design target is image quality, not prompt length. Prefer concise effective instructions and use extra length only to preserve necessary visual and story constraints; the 32,000-character ceiling is not a target.
@@ -379,7 +385,7 @@ The copied prompt guides panel order, cast, speaker assignment, acting, camera, 
 The app provides separate download buttons for the workflow JSON and the custom-node ZIP. Both files are needed for this route. / アプリにはワークフローJSONとカスタムノードZIPのダウンロードボタンが別々にあります。この経路では両方のファイルが必要です。
 
 - [Download workflow JSON](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261002-071924.json) / [ワークフローJSONをダウンロード](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261002-071924.json)
-- [Download custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.8.3/ComfyUI_H3_FourPanel_NonLM_20261002-071924_authfix1.zip) / [カスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.8.3/ComfyUI_H3_FourPanel_NonLM_20261002-071924_authfix1.zip)
+- [Download custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.8.4/ComfyUI_H3_FourPanel_NonLM_20261002-071924_authfix1.zip) / [カスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.8.4/ComfyUI_H3_FourPanel_NonLM_20261002-071924_authfix1.zip)
 
 Place the ZIP's `3フォルダ` under `ComfyUI/custom_nodes/` and the workflow JSON under `ComfyUI/user/default/workflows/`. Install the separate dependencies below, then restart ComfyUI. / ZIP内の`3フォルダ`を`ComfyUI/custom_nodes/`へ、ワークフローJSONを`ComfyUI/user/default/workflows/`以下へ配置します。下記の別途必要な依存関係を導入してからComfyUIを再起動します。
 
@@ -423,11 +429,14 @@ The production application is published from the `main` branch through the repos
 
 **Why are there two ComfyUI download buttons? / ComfyUIのダウンロードボタンが2つあるのはなぜですか？**  The JSON defines the workflow, while the ZIP supplies three custom-node folders and documentation; three additional runtime dependencies are installed separately. / JSONはワークフロー定義、ZIPはカスタムノード3フォルダーと導入文書です。さらに実行依存3項目を別途導入します。
 
-**Which video package should I install? / 動画化には何を入れますか？** Use the `20261002-071924` workflow JSON and matching v6.8.3 FourPanel Release asset (`authfix1` ZIP). Follow the bundled environment and validation instructions. / `20261002-071924` のワークフローJSONと対応するv6.8.3 FourPanel Releaseアセット（`authfix1` ZIP）を使い、同梱の環境要件と確認手順に従ってください。
+**Which video package should I install? / 動画化には何を入れますか？** Use the `20261002-071924` workflow JSON and matching v6.8.4 FourPanel Release asset (`authfix1` ZIP). Follow the bundled environment and validation instructions. / `20261002-071924` のワークフローJSONと対応するv6.8.4 FourPanel Releaseアセット（`authfix1` ZIP）を使い、同梱の環境要件と確認手順に従ってください。
 
 **Is this the T2V/I2V/Ref2V repository? / T2V・I2V・Ref2Vのリポジトリですか？**  No. Those workflows are maintained separately in [comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows). / いいえ。それらは別の[comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows)で管理します。
 
 ## 📋 ChangeLog
+
+### v6.8.4 (2026-10-04)
+- **[Fix & UX]** 括弧付き話者名の台詞欠落と登録キャストへのモザイク誤適用を修正。1枚絵の追加指示を圧縮。 / Fixed dialogue loss for bracketed speaker names and unintended mosaic on registered cast; shortened the single-image add-on prompt.
 
 ### v6.8.3 (2026-10-04)
 - **[Fix & UX]** アプリ利用条件を統一し、再配布許諾未確認の第三者PDF skillを公開配布対象から除外。既存の有効な許諾とアプリの生成機能は保持。 / Unified application terms and excluded a third-party PDF skill from public distribution while preserving valid prior grants and generation behavior.

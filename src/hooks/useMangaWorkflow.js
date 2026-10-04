@@ -5,6 +5,7 @@ import { useState, useRef, useEffect } from 'react';
 import { setApiKey } from '../lib/gemini';
 import { generateImageWithImagen } from '../lib/imagen';
 import { assertRenderOptions, readRenderOptions } from '../lib/render-options.js';
+import { collectCastNameEntries } from '../lib/panel-utils.js';
 import { buildImageEditRequest } from '../lib/image-edit.js';
 import { formatApiErrorGuide } from '../lib/api-errors.js';
 import { generateImageWithOpenAI, setOpenAIApiKey } from '../lib/openai';
@@ -1148,7 +1149,7 @@ export default function useMangaWorkflow() {
 
       assertPromptEndingModeConsistency({ prompt: reviewed.prompt, punchlineType: activePunchlineType });
       assertPrintableDialogue(reviewed.prompt);
-      assertRenderOptions(reviewed.prompt, { mosaicCopyrightedCharacters, showWatermarks });
+      assertRenderOptions(reviewed.prompt, { mosaicCopyrightedCharacters, showWatermarks, protectedCast: collectCastNameEntries(castList).map(entry => entry.displayName) });
       setFinalPrompt(reviewed.prompt);
       setAssembleThought(prev => prev + `\n> 出力モード: ${colorMode === 'monochrome' ? '白黒漫画原稿（墨線・白地・肌や素材と影に応じたトーン）' : 'カラー'}`);
       setAssembleThought(prev => prev + `\n> ${reviewed.warning || "AI精査完了"}`);
@@ -1366,7 +1367,7 @@ export default function useMangaWorkflow() {
   // Use the same complete text as the initial API request, including image roles.
   // Validate again at copy time because the user may edit the text or references.
   const prepareWebCopyPrompt = (prompt) => {
-    if (inferImageQualityMode(prompt) === 'four-panel') assertRenderOptions(prompt, { mosaicCopyrightedCharacters, showWatermarks });
+    if (inferImageQualityMode(prompt) === 'four-panel') assertRenderOptions(prompt, { mosaicCopyrightedCharacters, showWatermarks, protectedCast: collectCastNameEntries(castList).map(entry => entry.displayName) });
     return ensureWebPromptTrailingNewline(getCurrentPromptProviderFamily() === PROMPT_PROVIDER_FAMILIES.CHATGPT
       ? appendOpenAIReferencePrompt(prompt, buildOpenAIReferencePlan({
         characterImages: images, backgroundImage: bg360Image, backgroundEnabled: bg360Enabled,
@@ -1587,7 +1588,7 @@ export default function useMangaWorkflow() {
     try {
       assertPromptEndingModeConsistency({ prompt: currentPrompt, punchlineType: resolvedPunchlineTypeRef.current || punchlineType });
       assertPrintableDialogue(currentPrompt);
-      if (qualityMode === 'four-panel') assertRenderOptions(currentPrompt, { mosaicCopyrightedCharacters, showWatermarks });
+      if (qualityMode === 'four-panel') assertRenderOptions(currentPrompt, { mosaicCopyrightedCharacters, showWatermarks, protectedCast: collectCastNameEntries(castList).map(entry => entry.displayName) });
     } catch (error) {
       showStatus(error.message);
       setGenLog(prev => [...prev, `[PROMPT VALIDATION ERROR] ${error.message}`]);

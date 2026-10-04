@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import test, { after, before } from 'node:test';
 import { createServer } from 'vite';
@@ -6,6 +7,7 @@ import { createServer } from 'vite';
 let server;
 let buildSingleImageEmotionalPrompt;
 let buildMangaPrompt;
+let ControlBar;
 let buildImageQualityQaPrompt;
 let buildImageQualityRepairPrompt;
 
@@ -16,6 +18,7 @@ before(async () => {
     server: { middlewareMode: true }
   });
   ({ buildSingleImageEmotionalPrompt } = await server.ssrLoadModule('/src/lib/single-image-prompt.js'));
+  ({ default: ControlBar } = await server.ssrLoadModule('/src/components/ControlBar.jsx'));
   ({ buildMangaPrompt } = await server.ssrLoadModule('/src/lib/prompt-assembler.js'));
   ({ buildImageQualityQaPrompt } = await server.ssrLoadModule('/src/lib/image-quality-qa.js'));
   ({ buildImageQualityRepairPrompt } = await server.ssrLoadModule('/src/lib/image-quality-failsafe.js'));
@@ -28,8 +31,8 @@ after(async () => {
 test('cheek treatment follows narrative cues and medium without banning expressive blush or triggering cosmetic repairs', () => {
   const scenario = ['NORMAL', 'WATERCOLOR', 'GEKIGA', 'CHIBI_GAG'].map((style, i) =>
     `[${i + 1}コマ目]\n[EMOTION: ${style}]\nAction: 葵が照れて頬を赤らめ、凛は落ち着いて資料を見る。\n葵「ありがとう。」`).join('\n');
-  const prompts = [buildSingleImageEmotionalPrompt(), ...['chatgpt', 'gemini'].map(providerFamily =>
-    buildMangaPrompt({ scenario, castList: '## 葵\n- adult, short hair\n## 凛\n- adult, long hair', colorMode: 'color', providerFamily, punchlineType: 'Auto' }))];
+  const prompts = ['chatgpt', 'gemini'].map(providerFamily =>
+    buildMangaPrompt({ scenario, castList: '## 葵\n- adult, short hair\n## 凛\n- adult, long hair', colorMode: 'color', providerFamily, punchlineType: 'Auto' }));
   for (const prompt of prompts) {
     assert.match(prompt, /CHEEK RENDERING:.*story\/reference.*panel medium/);
     assert.match(prompt, /watercolor=skin-integrated wash/);
@@ -44,75 +47,91 @@ test('cheek treatment follows narrative cues and medium without banning expressi
   assert.match(qa, /Cosmetic cheek-style differences alone.*unverified.*not.*paid repair/);
 });
 
-test('single-image copy prompt applies the current shared image-quality contract', () => {
+test('single-image copy retains the accepted compact text below the safe paste budget', () => {
   const prompt = buildSingleImageEmotionalPrompt();
-
-  assert.match(prompt, /ANTIGRAVITY EMOTIONAL CINEMA ENGINE/);
-  assert.match(prompt, /SHARED IMAGE QUALITY CONTRACT/);
-  assert.match(prompt, /OBJECT GEOMETRY LOCK/);
-  assert.match(prompt, /no (?:accidental )?penetration, fusion or edge tangency/);
-  assert.match(prompt, /every glyph's top direction/);
-  assert.match(prompt, /Stacking or turning a book must not re-typeset/);
-  assert.match(prompt, /Horizontal or vertical writing can both be valid/);
-  assert.match(prompt, /flat-page text appears upside-down or rotated/);
-  assert.match(prompt, /actual reader's rear head\/shoulder foreground/);
-  assert.match(prompt, /preserve the user's requested cast, action, setting, and camera/i);
-  assert.match(prompt, /rich physical setting/i);
-  assert.match(prompt, /lighting and color coherent/i);
-  assert.match(prompt, /coherent anatomy/i);
-  assert.match(prompt, /clothing-fold shadows/i);
-  assert.match(prompt, /Do not duplicate, merge, or replace main characters/i);
-  assert.match(prompt, /Allow ordinary background people suited to the setting/i);
-  assert.match(prompt, /FUNCTIONAL SURFACE ORIENTATION LOCK/);
-  assert.match(prompt, /Front faces actual operator\/customer\/reader/i);
-  assert.match(prompt, /move the camera, never rotate the object toward the viewer/i);
-  assert.match(prompt, /documents, forms, printed pages, cards, books, maps/i);
-  assert.match(prompt, /direction-dependent information, control, optical, or service face/i);
-  assert.match(prompt, /receipts, tickets, menus, newspapers, keyboards, control panels, camera lenses, and rear monitors/i);
-  assert.match(prompt, /explicitly says.*present.*camera or viewer/i);
-  assert.match(prompt, /Derive target from Action, not holder/i);
-  assert.match(prompt, /read\/operate=self.*submit\/present\/show=recipient/i);
-  assert.match(prompt, /BODY ACTING BASELINE/);
-  assert.match(prompt, /Never default to a flat, eye-level, center-framed shot/i);
-  assert.match(prompt, /reference-sheet pose is identity evidence, not a recurring action/i);
-  assert.match(prompt, /BODY ACTING BASELINE:.*allow.*pointing.*reaching.*impact/i);
-  assert.match(prompt, /action phase.*support or airborne trajectory.*contact target/i);
-  assert.match(prompt, /one primary focal subject/i);
-  assert.match(prompt, /strongest G-pen-like contour|Focal G-pen: strongest pressure-tapered/i);
-  assert.match(prompt, /background.*lighter.*lower-contrast/i);
-  assert.match(prompt, /depth-of-field blur.*merges.*lighten\/desaturate BG.*strengthen focal G-pen/i);
-  assert.match(prompt, /back of the head.*do not invent eyes, nose, or mouth|rear head.*no invented face/i);
-  assert.match(prompt, /skull, face edge, ear and eyewear share one head volume/);
-  assert.match(prompt, /keep scripted head turn and occlusion/);
-  assert.match(prompt, /shoulder, elbow, wrist, hip, knee, and ankle/i);
-  assert.match(prompt, /explicit outfit overrides setting era\/culture/i);
-  assert.match(prompt, /preserve intentional mismatch/i);
-  assert.match(prompt, /no outfit: infer from setting/i);
+  assert.ok(prompt.length <= 9500, `expected no more than 9,500 chars for Web copy, got ${prompt.length}`);
+  assert.equal(prompt.length, 8784);
+  // Pin the user-tested text: shared four-panel additions must not silently enlarge this copy.
+  assert.equal(createHash('sha256').update(prompt).digest('hex'),
+    'd1f41c6516eda253be71b3996836c47078f6af011ae8e99c31a3f2e513e1b9ab');
+  assert.doesNotMatch(prompt, /SHARED IMAGE QUALITY CONTRACT|four panels|panel contrast|CINEMATIC_TECHNIQUES/i);
 });
 
-test('single-image copy prompt retains its established emotional and rendering safeguards', () => {
+test('compact append prompt preserves content priority, rendering and geometry safeguards', () => {
   const prompt = buildSingleImageEmotionalPrompt();
-
-  assert.match(prompt, /Facial Action Coding System/);
-  assert.match(prompt, /line-weight hierarchy/i);
-  assert.match(prompt, /No character-sheet layout/i);
-  assert.match(prompt, /matching shoulder/i);
-  assert.match(prompt, /vertical Japanese only/i);
+  for (const requirement of [
+    /user's preceding prompt and supplied references/,
+    /Explicit user choices take priority/,
+    /Improve unspecified details without replacing the user's idea/,
+    /brows, eyelids, mouth, cheeks, gaze, posture, gesture and weight/,
+    /Preserve requested actions.*pointing, reaching, impact, recoil, leaps and strong foreshortening/,
+    /Preserve explicit camera position, side, height, tilt, lens, crop and head turns/,
+    /one primary subject or action and at most one supporting focal cue/,
+    /Use at most one optional framing.*existing physical scene cue/,
+    /Otherwise retain the baseline view/,
+    /G-pen-like line hierarchy.*pressure-tapered thick-to-hairline/,
+    /Avoid uniform heavy outlines or black-clogged features/,
+    /lighten\/desaturate the background or deepen values/,
+    /Preserve form shadows and eye\/hair glints/,
+    /watercolor blush integrates with skin/,
+    /Avoid automatic identical cheek stamps or stripes/,
+    /do not treat incidental reference blush as a permanent trait/,
+    /Preserve requested makeup, expressive blush and deliberate ink\/shadow planes/,
+    /Hands and feet belong to the correct person/,
+    /anatomical left\/right follows that person's body, not the viewer/,
+    /Naturally hidden or cropped limbs need not be exposed/,
+    /Project skull, face edge, ears, jaw, neck and eyewear as one head volume/,
+    /Explicit outfits override the setting's era, culture or genre/,
+    /Infer clothing from the setting only where unspecified/,
+    /No penetration, fusion or tangent edges/,
+    /Preserve intended surreal gags and transformations/,
+    /Reading\/operating targets the user of the object; showing\/submitting targets the recipient/,
+    /monitor rear shows casing and stand, never screen content through it/,
+    /never project its front or the person's hands through their back/,
+    /Do not rotate objects toward the camera just for legibility/,
+    /actual reader.*not automatically behind a different holder/,
+    /including each glyph's top direction.*rotate and project the entire printed texture/,
+    /Never bridge different faces or mistake a page-block edge for a cover/,
+    /preserving its wording/,
+    /default to vertical Japanese; honor an explicit alternative/,
+    /Do not add bubbles otherwise/,
+    /text may appear rotated or upside down/,
+    /no unintended grain, speckles, dithering, moire/,
+    /Do not print these checks or directions in the artwork/
+  ]) assert.match(prompt, requirement);
+  assert.doesNotMatch(prompt, /never blush|no blush allowed|vertical Japanese only/i);
+  const repair = buildImageQualityRepairPrompt({ originalPrompt: prompt, issues: [], sourceMode: 'source-image' });
+  assert.ok(repair.includes(prompt), 'repair route must retain the full approved single-image prompt');
 });
 
-test('single-image copy prompt keeps one cinematic router within a 10k Web-copy soft budget', () => {
-  const prompt = buildSingleImageEmotionalPrompt();
-
-  assert.match(prompt, /CINEMATIC DEPTH ROUTER/);
-  assert.match(prompt, /one existing physical scene cue.*one optional/i);
-  assert.match(prompt, /Otherwise keep the baseline camera/i);
-  assert.match(prompt, /User camera, cast, action, anatomy, and text win/i);
-  assert.doesNotMatch(prompt, /frame_within_frame|story_reflection|prism_refraction|CINEMATIC_TECHNIQUES/);
-  assert.equal((prompt.match(/CINEMATIC DEPTH ROUTER/g) || []).length, 1);
-  // Empirical ChatGPT Web-copy budget: larger pastes may become attachments.
-  // This is not the OpenAI Image API limit; that transport guard is 32,000 chars.
-  assert.ok(prompt.length <= 10000, `expected no more than 10,000 chars for Web copy, got ${prompt.length}`);
-  assert.match(prompt, /Other requested printed text follows its physical surface and specified writing direction/);
+test('the actual single-image button handler copies the complete accepted text', async (t) => {
+  const originalNavigator = Object.getOwnPropertyDescriptor(globalThis, 'navigator');
+  const copied = [];
+  const states = [];
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  Object.defineProperty(globalThis, 'navigator', { configurable: true,
+    value: { clipboard: { writeText: async text => { copied.push(text); } } } });
+  t.after(() => {
+    if (originalNavigator) Object.defineProperty(globalThis, 'navigator', originalNavigator);
+    else delete globalThis.navigator;
+  });
+  const tree = ControlBar({ selectedEngine: 'openai', enableOpenAIApi: true,
+    currentStep: 1, setIsPolicyCopied: value => states.push(value) });
+  function findCopyButton(node) {
+    if (!node || typeof node !== 'object') return undefined;
+    if (node.type === 'button' && node.props.title?.includes('1枚絵')) return node;
+    const children = [node.props?.children].flat(Infinity);
+    return children.map(findCopyButton).find(Boolean);
+  }
+  const button = findCopyButton(tree);
+  assert.ok(button, 'OpenAI mode exposes the single-image copy action');
+  await button.props.onClick();
+  assert.deepEqual(copied, [buildSingleImageEmotionalPrompt()]);
+  assert.deepEqual(states, [true]);
+  t.mock.timers.tick(2000);
+  assert.deepEqual(states, [true, false]);
+  const geminiTree = ControlBar({ selectedEngine: 'gemini', enableOpenAIApi: false, currentStep: 1 });
+  assert.equal(findCopyButton(geminiTree), undefined, 'single-image ChatGPT action stays scoped to OpenAI');
 });
 
 test('quality upgrades require route-specific evidence without an unwanted single-image API run', () => {
