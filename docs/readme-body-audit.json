@@ -1,10 +1,10 @@
 {
-  "manualVersion": "6.8.3",
-  "manualSourceSha256": "b08b69a0fbd6762bbbb56f3e93d425e33c3946cdca550d850af0ce83a342d207",
+  "manualVersion": "6.8.4",
+  "manualSourceSha256": "abb2a22b06035d05e9c38349fec2d64934806e1aac3dbaf339d47d888dd9f050",
   "manualFiles": [
     {
       "name": "gemini-api-beginner-guide-2026-10-01.pdf",
-      "sha256": "d0d5a8819c5d9bea755485add066daa1d537930368e9dc9146d3319fa237d85c"
+      "sha256": "10dfafd8367caed14bee69845903cffb99c33d7ff7d5d72f94233207e9825203"
     },
     {
       "name": "openai-api-beginner-guide-2026-09-30.pdf",
@@ -12,13 +12,13 @@
     },
     {
       "name": "super-furu-ai-4koma-full-manual-2026-10-01.pdf",
-      "sha256": "80c5fd69003cda981dd3dd0d58adf2914b12ef4794ffd98cc8b4d6ba58e248c9"
+      "sha256": "e66892ba2bb9130846c1342e6d4a3b123f67ed37448155174241c58ee92352c9"
     }
   ],
-  "readmeSha256": "fa49604b9468dd9eb909868f5de08ea2d7de4fb943e08e6414489504d9180cac",
-  "sourceTree": "f339b72120fb17e2f7bf6684d6de041dcdcf76a8",
-  "publicTree": "eacdf565ba32ccea6c86e228c29b84163ff2918c",
-  "packageSha256": "33d541d7e45894089a62de63b415b6c2a13d38c5657b050a0d8cc9fc1bb0b9c3",
+  "readmeSha256": "310ae224a525645c0491c2fb92814d1e15cc6265c29620009d3235214639f117",
+  "sourceTree": "7127f18decc9dfc9e04e091c3f9130ffab569f39",
+  "publicTree": "417ba3978273fec17e3ee8e8749e2921f3dad05a",
+  "packageSha256": "1151e0e951cc853e7f1cb566b8ce58986d3679786b1df872029932eb9c6c6bcc",
   "releaseAssetSha256": "341487084ffc48f14569609c36557d77b4770a052b70f2323488dc0604e6d7f0",
   "reviewedSections": [
     "Application screen and output / 操作画面と生成例",
@@ -36,6 +36,6 @@
     "📋 ChangeLog",
     "License / ライセンス"
   ],
-  "findings": "Incremental whole-body review against the previously reviewed v6.8.2 baseline: unchanged README sections and generation/provider sources retain their prior review; current version and Release asset URLs now match v6.8.3. Reviewed the complete changed license section, prior-grant notices and third-party PDF skill exclusion. Added an explicit compatibility note for unchanged v6.8.2 operation manuals. Third-party ComfyUI conditions, existing screenshots, provider costs and quality limitations remain unchanged. No new API or visual-generation claim is made.",
-  "manualFindings": "All three unchanged manuals retain the verified v6.8.2 hashes: 12 Gemini, 20 OpenAI and 32 full-guide pages. The fresh 64-page text audit found no conflicting app-license terms. Prior complete visual review is reused only for byte-identical PDFs; no new visual review or PDF regeneration was performed. v6.8.2 labels describe the compatible operation guide, and README explicitly states applicability to v6.8.3. Current license terms are provided separately in LICENSE."
+  "findings": "Incremental whole-body review against the verified v6.8.3 baseline. All fourteen current sections were compared by diff and current feature contracts. Unchanged provider routes, defaults, limits, licenses, workflow assets and screenshots retain prior evidence. Updated full registered-name parsing and strict distinct-person handling, protected-cast automatic mosaic exclusion with explicit-mask exception, stale-prompt rejection, and the approved 8784-character single-image send-once instructions. Current version and Release links match v6.8.4. The original 19000-character regression ceiling remains unchanged. Live OpenAI STEP3 and the authorized second Sunburst/max generation completed with seven sheets; unwanted mosaics were absent. Lettering and camera deviations and QA uncertainty remain recorded privately; no perfect-output claim. Current note body was read in IAB and the matching paragraphs identified for narrow post-release publication.",
+  "manualFindings": "Rebuilt 12-page Gemini and 32-page full manuals for v6.8.4. All 44 rendered pages reviewed in eight contact sheets, with full-size review of changed pages 13,14,24; no clipping, overlap or unreadable layout. Automated A4, text bounds, naming, privacy and links checks passed. Existing screenshots remain clearly labeled as previous screens. OpenAI 20-page guide is byte-identical to the previously reviewed baseline and its setup instructions are unchanged; prior visual evidence is reused only for that PDF. Public PDF bytes match reviewed outputs."
 }
