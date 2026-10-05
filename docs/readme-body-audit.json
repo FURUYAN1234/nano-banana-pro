@@ -1,10 +1,10 @@
 {
-  "manualVersion": "6.8.6",
-  "manualSourceSha256": "d53676e9f7fbc7518db34e50c64bb910d19d3aa74b8f89d806068791afc26150",
+  "manualVersion": "6.8.7",
+  "manualSourceSha256": "c3fa2e51add70146dd1c05dbcfad20a0e4a89421d179bf5d43adf2d69b8984b2",
   "manualFiles": [
     {
       "name": "gemini-api-beginner-guide-2026-10-01.pdf",
-      "sha256": "3397d439da74bc7ed05acfb4de1848cd7497da56ea49c0bb6139b638e27dc946"
+      "sha256": "e078fe89a440b6ae323898e508ece6e02cedfa7bdc08f68d1ddbc81a6b5c22c8"
     },
     {
       "name": "openai-api-beginner-guide-2026-09-30.pdf",
@@ -12,13 +12,13 @@
     },
     {
       "name": "super-furu-ai-4koma-full-manual-2026-10-01.pdf",
-      "sha256": "d8034ce1774fa5efd35ac157f71406a077b3c668eb966eddc1a45c106b72549d"
+      "sha256": "c535eba74cc270d31fa63fb584bd847a96e47b9a200dd4d8d489d30629d14fa2"
     }
   ],
-  "readmeSha256": "019d06f4c2c7083b94ba80c34f37106c1943f1dfa3f53cdcbec1748420d9338e",
-  "sourceTree": "b5a7583c944d0dbb09a307793c7adb2489c736d5",
-  "publicTree": "ddb028c7b9efc2bc0842b3757d7ba7d67871e410",
-  "packageSha256": "d4e4599d0395bf96a3b10ad4b247e653e3bbb08f635fb6566e85d14e31615841",
+  "readmeSha256": "608926f487b362859038441ef638b149e671da92964a53c654be4e0ac6d78acd",
+  "sourceTree": "852c416359df77e5e5748bb554a5f0b3b828b688",
+  "publicTree": "f4c0ce0673a87ac34832f9484af6960f0c31d2d6",
+  "packageSha256": "5f246c732019e44b82e6889251fa807462a5b51f7bf4dfc6aa0bbdf8f4829b49",
   "releaseAssetSha256": "341487084ffc48f14569609c36557d77b4770a052b70f2323488dc0604e6d7f0",
   "reviewedSections": [
     "Application screen and output / 操作画面と生成例",
@@ -36,6 +36,6 @@
     "📋 ChangeLog",
     "License / ライセンス"
   ],
-  "findings": "Reviewed all fourteen README sections against the v6.8.6 candidate. Updated STEP3 chorus-member parsing, actual cast counting, per-panel style and camera behavior, preferred vertical lettering with composition-led horizontal lettering, and topic-specific endings with a concrete-payoff audit. Updated package version and H3 release links. Generated-image fidelity is not guaranteed; visual review remains required.",
-  "manualFindings": "Rebuilt the 32-page full manual and 12-page Gemini guide for v6.8.6; reviewed all rendered pages for legibility, clipping, version footer and page flow. The unchanged 20-page OpenAI guide was reviewed and remains applicable. All three PDFs passed text bounds, link and privacy scans."
+  "findings": "Reviewed all fourteen README sections against v6.8.7 source and existing distribution. Corrected the current manual and download versions, the single-image copied length to 8911, and the policy retry description to five revision considerations with failure feedback and separately counted valid image resends. Documented scene-led style/ending selection and speaker focus while preserving causal payoff, explicit direction, media, safety and documentary contracts. Unchanged setup, H3 package, privacy and terms sections remain applicable. Generated images still require visual inspection.",
+  "manualFindings": "Rebuilt and visually inspected every rendered page of the 12-page Gemini guide and 32-page full manual for v6.8.7. Reviewed all 20 unchanged OpenAI guide pages. All 64 pages remain readable without clipping or missing content; prior-version UI screenshots are explicitly examples. Updated endings, focus, page containment and policy repair counts; text-bound, link and privacy checks passed. Reviewed both updated A4 diagrams and corrected the policy label overlap."
 }
