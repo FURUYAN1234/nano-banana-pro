@@ -16,7 +16,9 @@ test('camera enhancement compares the page using the shared sequence rule only w
   const selected = enhancementModule.buildScenarioEnhancementPrompt({ scenario: originalScenario, selectedCategories: ['camera'] });
   const unselected = enhancementModule.buildScenarioEnhancementPrompt({ scenario: originalScenario, selectedCategories: ['expressions'] });
   assert.match(selected, /4コマ全体.*比較/);
-  assert.match(selected, /魚眼.*曲線/);
+  assert.match(selected, /自動設計では魚眼・フィッシュアイを使わない/);
+  assert.match(selected, /広角・超広角は使えるが、通常の直線投影を保ち/);
+  assert.ok(selected.includes(originalScenario), 'the explicit original camera directions remain in the enhancement input');
   assert.match(selected, /ダッチ.*ロール/);
   assert.doesNotMatch(unselected, /カメラのページ設計/);
 });
@@ -165,6 +167,41 @@ test('a selected dialogue-only rewrite is accepted when protected fields stay un
   });
 
   assert.equal(validation.ok, true, validation.issues?.join('; '));
+});
+
+test('enhancement limits newly chosen emotion styles to the automatic palette while keeping unchanged legacy styles', async () => {
+  const validateStyle = style => enhancementModule.validateScenarioEnhancement({
+    originalScenario,
+    candidateScenario: originalScenario.replace('[EMOTION: GEKIGA]', `[EMOTION: ${style}]`),
+    selectedCategories: ['expressions']
+  });
+
+  for (const style of ['PASTEL', 'THICK_PAINT', 'SHADOW']) {
+    const result = validateStyle(style);
+    assert.equal(result.ok, false, `${style} must not become a newly chosen automatic style`);
+    assert.ok(result.issueCodes.includes('emotion_outside_automatic_palette'), style);
+  }
+  for (const style of ['NORMAL', 'WATERCOLOR', 'POP_ART', 'SKETCH', 'CHIBI_GAG']) {
+    const result = validateStyle(style);
+    assert.equal(result.ok, true, `${style}: ${result.issues?.join('; ')}`);
+  }
+
+  const legacy = originalScenario.replace('[EMOTION: GEKIGA]', '[EMOTION: PASTEL]');
+  const preserved = enhancementModule.validateScenarioEnhancement({
+    originalScenario: legacy,
+    candidateScenario: legacy.replace('ミク「これ、流行るかな。」', 'ミク「次の流行、これで決まり？」'),
+    selectedCategories: ['dialogue']
+  });
+  assert.equal(preserved.ok, true, 'unchanged explicit legacy styles remain valid during an unrelated edit');
+
+  const fallback = await enhancementModule.runValidatedScenarioEnhancement({
+    originalScenario,
+    selectedCategories: ['expressions'],
+    buildPrompt: () => 'test',
+    requestEnhancement: async () => ({ text: originalScenario.replace('[EMOTION: GEKIGA]', '[EMOTION: PASTEL]') })
+  });
+  assert.equal(fallback.fallbackToOriginal, true, 'an excluded style must never become the best safe fallback');
+  assert.equal(fallback.text, originalScenario);
 });
 
 test('camera-only enhancement rejects unrelated situation and effect edits', () => {

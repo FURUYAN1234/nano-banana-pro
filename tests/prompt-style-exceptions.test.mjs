@@ -79,9 +79,70 @@ test('panel recipes can redraw reference facial rendering without changing ident
       assert.match(prompt, /Keep identity\/age and scripted emotion\/gaze\/pose\/Camera/);
     } else {
       assert.match(prompt, /Identity from refs; facial construction\/ink\/shading from panel recipe/);
-      assert.match(prompt, /Redraw facial construction, not just darker anime shading/);
+      assert.match(prompt, /Redraw visible faces with small realistic eyes/);
     }
     assert.match(prompt, /Keep Camera\/Action\/identity\/age\/wardrobe/);
+  }
+});
+
+test('the visually verified gekiga facial anatomy survives providers, media and prompt budgets', () => {
+  for (const providerFamily of ['chatgpt', 'gemini']) {
+    for (const colorMode of ['color', 'monochrome']) {
+      for (const promptMaxChars of [24000, 32000]) {
+        const options = { scenario: buildScenarioWithEmotions(['NORMAL', 'GEKIGA', 'NORMAL', 'NORMAL']),
+          castList: CAST_LIST, colorMode, providerFamily, promptMaxChars, punchlineType: 'Auto', systemVersion: 'test' };
+        const prompt = buildMangaPrompt(options);
+        const faceRecipe = prompt.split('## Panel 2')[1].split('## Panel 3')[0];
+        assert.match(faceRecipe, /Redraw visible faces with small realistic eyes\/irises/i);
+        assert.match(faceRecipe, /heavy anatomical eyelids/i);
+        assert.match(faceRecipe, /pronounced nose bridges/i);
+        assert.match(faceRecipe, /carved cheek\/jaw planes/i);
+        assert.match(faceRecipe, /identity\/age/i);
+        assert.match(faceRecipe, /ink|crosshatching/i);
+        assert.match(faceRecipe, /Camera|camera/);
+        const locked = buildMangaPrompt({ ...options, punchlineType: 'SeriousDocumentary' });
+        assert.doesNotMatch(locked, /Redraw visible faces with small realistic eyes/i);
+      }
+    }
+  }
+  assert.match(COMPACT_EMOTION_STYLES.GEKIGA, /Redraw visible faces with small realistic eyes/i);
+  const fullPage = buildMangaPrompt({ scenario: buildScenarioWithEmotions(Array(4).fill('GEKIGA')),
+    castList: CAST_LIST, colorMode: 'color', providerFamily: 'chatgpt', promptMaxChars: 24000,
+    punchlineType: 'Auto', systemVersion: 'test' });
+  assert.equal((fullPage.match(/Redraw visible faces with small realistic eyes/g) || []).length, 4);
+  assert.equal((fullPage.match(/not anime faces with gritty backgrounds/g) || []).length, 4);
+  assert.ok(fullPage.length <= 24000);
+});
+
+test('color anime fallback belongs only to effective NORMAL panels, never the page', () => {
+  for (const providerFamily of ['chatgpt', 'gemini']) {
+    for (const promptMaxChars of [24000, 32000]) {
+      for (const emotions of [Array(4).fill('NORMAL'), ['NORMAL', 'GEKIGA', 'WATERCOLOR', 'CHIBI_GAG'], Array(4).fill('GEKIGA')]) {
+        const prompt = buildMangaPrompt({ scenario: buildScenarioWithEmotions(emotions), castList: CAST_LIST,
+          providerFamily, colorMode: 'color', promptMaxChars, punchlineType: 'Auto', systemVersion: 'test' });
+        const animeDefaults = prompt.match(/^.*(?:TV anime style|clean anime illustration background|smooth cel shading).*$/gm) || [];
+        assert.equal(animeDefaults.length, emotions.filter(style => style === 'NORMAL').length);
+        for (const line of animeDefaults) assert.match(line, /^NORMAL PANEL RENDERING:/);
+        const sections = prompt.split(/^## Panel \d+\s*$/m).slice(1);
+        for (let index = 0; index < 4; index++) {
+          assert.equal(sections[index].includes('NORMAL PANEL RENDERING:'), emotions[index] === 'NORMAL');
+        }
+      }
+    }
+  }
+});
+
+test('local color fallback retains unmarked and serious suppressed-chibi defaults without changing reference or ink modes', () => {
+  for (const providerFamily of ['chatgpt', 'gemini']) {
+    const options = { scenario: buildScenarioWithEmotions(Array(4).fill('NORMAL')).replaceAll('[EMOTION: NORMAL]', ''),
+      castList: CAST_LIST, providerFamily, colorMode: 'color', punchlineType: 'Auto', systemVersion: 'test' };
+    assert.equal((buildMangaPrompt(options).match(/^NORMAL PANEL RENDERING:/gm) || []).length, 4);
+    const serious = buildMangaPrompt({ ...options, scenario: buildScenarioWithEmotions(Array(4).fill('CHIBI_GAG')), punchlineType: 'SeriousAuto' });
+    assert.equal((serious.match(/^NORMAL PANEL RENDERING:/gm) || []).length, 4);
+    assert.match(serious, /SERIOUS PANEL ACTING ONLY:/);
+    for (const overrides of [{ colorMode: 'monochrome' }, { punchlineType: 'SeriousDocumentary' }]) {
+      assert.doesNotMatch(buildMangaPrompt({ ...options, ...overrides }), /NORMAL PANEL RENDERING:/);
+    }
   }
 });
 
@@ -127,8 +188,8 @@ test('budget compression preserves executable style recipes, not just style name
       colorMode: 'color', providerFamily, punchlineType: 'Auto', systemVersion: 'test'
     });
     assert.match(prompt, providerFamily === 'chatgpt'
-      ? /Style:.*Redraw visible faces.*small realistic eyes\/irises.*nose bridges.*carved cheek\/jaw planes.*solid-black shadow planes.*crosshatching ON faces\/hands/i
-      : /Style:.*(?:angular carved brow\/nose\/cheek\/jaw anatomy|Realistic gekiga: sculpted face planes.*brush ink\/facial hatching)/i);
+      ? /Style:.*Redraw visible faces.*small realistic eyes\/irises.*nose bridges.*cheek\/jaw.*solid-black shadow planes.*crosshatching ON faces\/hands/i
+      : /Style:.*Redraw visible faces.*heavy anatomical eyelids.*cheek\/jaw/i);
     assert.match(prompt, /Style:.*delicate thin linework/i);
     assert.match(prompt, /Style:.*transparent color washes/i);
     assert.match(prompt, /Style:.*chibi.*Camera\/Action.*gaze/i);
@@ -142,7 +203,7 @@ test('budget compression preserves executable style recipes, not just style name
       assert.match(prompt, /facial construction\/ink\/shading from panel recipe/i);
       assert.match(prompt, /Identity from refs/i);
       assert.match(prompt, /G-pen.*subordinate to the panel recipe/i);
-      assert.match(prompt, /redraw facial construction, not just darker anime shading|Realistic gekiga:.*rebuild, not darker anime/i);
+      assert.match(prompt, /Keep recognizable identity\/age, scripted gaze, Camera\/Action and body acting|keep identity\/age\/color, gaze and Camera\/Action/i);
     }
     assert.doesNotMatch(prompt, /narrow natural eyes/);
     assert.match(prompt, /Keep Camera\/Action\/identity\/age\/wardrobe/);
@@ -175,7 +236,7 @@ test('monochrome preserves strong facial drawing and camera-first chibi interpre
     scenario: buildScenarioWithEmotions(['GEKIGA', 'SHOUJO', 'WATERCOLOR', 'CHIBI_GAG']),
     castList: CAST_LIST, colorMode: 'monochrome', providerFamily: 'chatgpt', punchlineType: 'Auto'
   });
-  assert.match(prompt, /GEKIGA;.*carved facial planes.*brow.*cheek.*jaw/i);
+  assert.match(prompt, /GEKIGA;.*small realistic eyes\/irises.*heavy anatomical eyelids.*pronounced nose bridges.*carved cheek\/jaw/i);
   assert.match(prompt, /CHIBI_GAG;.*Camera\/Action.*gaze/i);
   assert.match(prompt, /Explicit user proportions win/i);
   assert.match(prompt, /CHIBI: Explicit user proportions win; otherwise retain shortened body and enlarged head within the requested Camera\/Action/);

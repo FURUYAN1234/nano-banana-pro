@@ -32,6 +32,8 @@ import {
   SEASONAL_OUTFIT_RETRY_INSTRUCTION
 } from './seasonal-outfit';
 import {
+  assertGeneratedScenarioCameraContract,
+  assertGeneratedScenarioStyleContract,
   formatMangaScenarioValidationIssue,
   validateMangaScenario
 } from './scenario-validation';
@@ -55,7 +57,9 @@ const scenarioRetryLabels = {
   SEASONAL_OUTFIT: '題材に基づく服装選定と季節整合性',
   MANUAL_TOPIC_EXCLUSION: '手動入力の禁止条件',
   DOCUMENTARY_SOURCE_FIDELITY: '原文の数値・時系列',
-  DIALOGUE_CONTRACT: '各コマの吹き出しセリフ'
+  DIALOGUE_CONTRACT: '各コマの吹き出しセリフ',
+  CAMERA_CONTRACT: '自動構成の非アイレベル・カメラ投影',
+  STYLE_CONTRACT: '自動構成で使用できる画風'
 };
 
 const getManualTopicAnchor = (manualTopic = '') => {
@@ -152,6 +156,8 @@ const validateScenarioForRetry = ({
   castList
 }) => {
   const checks = [
+    ['CAMERA_CONTRACT', () => assertGeneratedScenarioCameraContract(scenario.scenario, manualTopic)],
+    ['STYLE_CONTRACT', () => assertGeneratedScenarioStyleContract(scenario.scenario)],
     ['SCENARIO_CONTENT', () => assertSafeScenarioContent(scenario)],
     ...(manualTopic ? [[
       'INPUT_MODE_LABEL_LEAK',
@@ -187,6 +193,7 @@ const validateScenarioForRetry = ({
     error.code = failures[0].code;
     error.qualityScore = checks.length - failures.length;
     error.qualityIssues = failures;
+    error.scenario = scenario.scenario;
     throw error;
   }
   return true;
@@ -200,12 +207,14 @@ export const formatScenarioRetryProgress = ({ code, message, nextAttempt, maxAtt
 };
 
 const scenarioQualityRetryInstructions = {
+  STYLE_CONTRACT: 'STYLE CONTRACT RETRY: Use only the offered automatic drawing palette: NORMAL, GEKIGA, WATERCOLOR, POP_ART, SKETCH, CHIBI_GAG. Respect the selected mode constraints. Keep the Camera, dialogue, cast, action and story; choose an available medium that fits the scene, without a fixed rotation or count quota.',
   SCENARIO_CONTENT: SAFE_CONTENT_RETRY_INSTRUCTION,
   INPUT_MODE_LABEL_LEAK: 'INPUT MODE LABEL RETRY: Rewrite the complete scenario using only the user-provided subject matter. Do not copy interface labels, input-method metadata, placeholder names, or prior-session topics into any output field.',
   DOCUMENTARY_SOURCE_FIDELITY: DOCUMENTARY_SOURCE_FIDELITY_RETRY_INSTRUCTION,
   SEASONAL_OUTFIT: SEASONAL_OUTFIT_RETRY_INSTRUCTION,
   MANUAL_TOPIC_EXCLUSION: MANUAL_TOPIC_EXCLUSION_RETRY_INSTRUCTION,
-  DIALOGUE_CONTRACT: DIALOGUE_CONTRACT_RETRY_INSTRUCTION
+  DIALOGUE_CONTRACT: DIALOGUE_CONTRACT_RETRY_INSTRUCTION,
+  CAMERA_CONTRACT: 'CAMERA CONTRACT RETRY: Preserve the story, cast, dialogue, action and explicit USER camera choices. For every automatically designed panel write a physical high or low viewpoint and visible projection in [Camera:]. OTS, lens names, tilt or gaze alone do not specify elevation. No eye-level unless the original user explicitly requests it for that panel. Do not use fisheye: wide-angle remains allowed with rectilinear projection, without a circular lens border or barrel distortion. Do not treat the previous AI-written Camera as a user lock. Choose elevation, azimuth, distance and lens from the story; no fixed shot rotation or shot-count quota.'
 };
 
 // [v3.85-alpha] シナリオ生成と強化ロジックの外部モジュール化
@@ -493,9 +502,8 @@ export async function generateScenario({
         : ''
     ].filter(Boolean).join('\n\n'),
     onRetry: (retry) => onProgress(formatScenarioRetryProgress(retry)),
-    fatalValidationCodes: isDocumentaryEnding(activePunchlineType)
-      ? ['DOCUMENTARY_SOURCE_FIDELITY']
-      : [],
+    fatalValidationCodes: ['CAMERA_CONTRACT', 'STYLE_CONTRACT', ...(isDocumentaryEnding(activePunchlineType)
+      ? ['DOCUMENTARY_SOURCE_FIDELITY'] : [])],
     maxAttempts: 3
   });
   onProgress(safeScenarioResult.validationWarning
@@ -575,6 +583,8 @@ export async function generateScenario({
     onProgress
   });
   parsedData = { ...parsedData, scenario: payoffGate.scenario };
+  assertGeneratedScenarioCameraContract(parsedData.scenario, inputMode === 'manual' ? manualTopic : '');
+  assertGeneratedScenarioStyleContract(parsedData.scenario);
   const payoffValidationWarning = payoffGate.warning
     ? { code: payoffGate.renderabilityWarning ? 'VISUAL_FEASIBILITY' : 'NARRATIVE_PAYOFF', message: payoffGate.warning }
     : null;

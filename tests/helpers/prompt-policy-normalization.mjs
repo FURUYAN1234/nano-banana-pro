@@ -8,7 +8,7 @@ export const restorePreSelectionContracts = value => {
   let result = String(value);
   const compact = result.includes('TYPE: title ');
   for (const contract of selectionContracts.entries) {
-    result = result.replaceAll(contract.current, compact && contract.compactPrevious || contract.previous);
+    result = result.replaceAll(contract.current, compact ? contract.compactPrevious ?? contract.previous : contract.previous);
   }
   result = result
     .replaceAll('look down from the scripted higher viewpoint, not eye-level: head/shoulder tops, shortened torsos, upper prop faces, floor/table planes as visible', 'look down from physically above heads, not eye-level: head/shoulder tops, short torsos, upper prop faces, floor/table planes')

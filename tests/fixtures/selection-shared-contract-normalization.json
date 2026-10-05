@@ -33,6 +33,151 @@
       "current": "SCENE LETTERING: scripted object text exact/readable; repeat only if scripted. Otherwise keep natural artwork/icons/colors/borders/material/layout and any context-appropriate lettering, length/density/readability. No censoring/blanking/simplifying just for unscripted text; depth blur/thin/pale allowed, required text readable.",
       "previous": "SCENE LETTERING: explicit per-panel object text exact/readable; repeat only if scripted. Unspecified posters, signs, packages, menus/book covers keep natural artwork/pictograms/colors/borders/material/layout. Freely render context-appropriate lettering—readable/decorative, short/long, any amount/density. Never suppress, simplify, blank, grey, blur, pixelate, mosaic or censor a surface merely because text is unscripted.",
       "compactPrevious": "SCENE LETTERING: scripted object text exact, repeated only if scripted. Other surfaces: natural artwork/pictograms/colors/borders/material/layout; freely render context-appropriate readable/decorative lettering, short/long, any amount/density. Never suppress/simplify/blank/grey/blur/pixelate/mosaic/censor surfaces for unscripted text."
+    },
+    {
+      "name": "MANGA_COMPOSITION_VARIETY_LOCK",
+      "sourceCommit": "e8dc996a8e9774f3137a4db34f54e5675896138a",
+      "current": "MANGA CAMERA / POSE VARIETY LOCK:\n- Preserve scripted Camera/Action, props, limbs and eye-lines, including quiet and repeated shots, frontal views and symmetry. There is no numeric variety quota.\n- Eye-line is gaze, not camera height. Execute elevation, azimuth, crop and lens depth separately; chibi, large foreground, OTS or bokeh alone do not establish a different camera angle.\n- Never flatten scripted high/low elevation: faces, bodies and setting share its projection; quiet acting, readable text and chibi never lift or lower the camera to eye-level. Preserve explicitly requested pitch strength.\n- CAMERA SIGNATURE: where direction is unspecified, vary the story-motivated combination of elevation, azimuth, framing, lens depth, subject blocking and focal-depth source; a renamed shot with the same geometry is not variety. Preserve explicit repeated framing and quiet visual refrains.\n- When strong perspective serves a beat, choose one story-relevant focal form (hand, face, key prop, receiver reaction, or environmental depth); do not default to a foot thrust, centered frontal face or lens-facing hand. Use a foreshortened limb only when its scripted action/contact makes that limb the focal form.\n- COMPOSITION STAGING fills an unspecified azimuth only. Turn the torso and stagger hands in depth/height when the Action permits; preserve exact hand roles, support and contacts.\n- VFX follows the chosen camera and never forces a different pose or framing.",
+      "previous": "MANGA CAMERA / POSE VARIETY LOCK:\n- Preserve scripted Camera/Action, props, limbs and eye-lines, including quiet and repeated shots, frontal views and symmetry. There is no numeric variety quota.\n- Eye-line is gaze, not camera height. Execute elevation, azimuth, crop and lens depth separately; chibi, large foreground, OTS or bokeh alone do not establish a different camera angle.\n- CAMERA SIGNATURE: where direction is unspecified, vary the story-motivated combination of elevation, azimuth, framing, lens depth, subject blocking and focal-depth source; a renamed shot with the same geometry is not variety. Preserve explicit repeated framing and quiet visual refrains.\n- When strong perspective serves a beat, choose one story-relevant focal form (hand, face, key prop, receiver reaction, or environmental depth); do not default to a foot thrust, centered frontal face or lens-facing hand. Use a foreshortened limb only when its scripted action/contact makes that limb the focal form.\n- COMPOSITION STAGING fills an unspecified azimuth only. Turn the torso and stagger hands in depth/height when the Action permits; preserve exact hand roles, support and contacts.\n- VFX follows the chosen camera and never forces a different pose or framing."
+    },
+    {
+      "name": "MANGA_COMPOSITION_VARIETY_LOCK_COMPACT",
+      "sourceCommit": "e8dc996a8e9774f3137a4db34f54e5675896138a",
+      "current": "MANGA CAMERA / POSE VARIETY LOCK: Eye-line is gaze, not camera height. Honor scripted front/back/left/right camera side, crop and lens; vary unspecified shots only when story-motivated and keep explicit frontal or repeated shots. Never flatten scripted high/low elevation: faces, bodies and setting share its projection; retain requested pitch strength even for quiet acting, text or chibi. Show overhead through head tops and upper planes, low angles through undersides and upward convergence, rear/side views through visible body planes. Telephoto compresses near/far scale; wide angle expands it; fisheye adds curved edge distortion only when requested. Project actors and setting from the same viewpoint; camera labels, blur or VFX alone do not create an angle. Use a story-relevant focal form, never default to a foot thrust; preserve hand contact; stagger body axes and hands only when Action permits.",
+      "previous": "MANGA CAMERA / POSE VARIETY LOCK: Eye-line is gaze, not camera height. Honor scripted front/back/left/right camera side, crop and lens; vary unspecified shots only when story-motivated and keep explicit frontal or repeated shots. Show overhead through head tops and upper planes, low angles through undersides and upward convergence, rear/side views through visible body planes. Telephoto compresses near/far scale; wide angle expands it; fisheye adds curved edge distortion only when requested. Project actors and setting from the same viewpoint; camera labels, blur or VFX alone do not create an angle. Use a story-relevant focal form, never default to a foot thrust; preserve hand contact; stagger body axes and hands only when Action permits."
+    },
+    {
+      "name": "ACTOR_MEDIUM_CHIBI_GAG_FULL",
+      "sourceCommit": "e8dc996a8e9774f3137a4db34f54e5675896138a",
+      "current": "In THIS PANEL ONLY, redraw the actors as expressive chibi: enlarged heads above shortened torsos and jointed limbs, not just bigger eyes on normal bodies. Preserve Camera/Action, body acting, gaze, facial reactions, hair and glasses. Adapt deformation to keep acting and perspective readable; never replace chibi with unchanged anime or zoom for cuteness.",
+      "previous": "In THIS PANEL ONLY, use expressive chibi caricature. Preserve Camera/Action, jointed body acting, individual gaze and facial reactions, recognizable hair and glasses. Reduce deformation when tiny bodies or enlarged heads would hide acting or flatten perspective; never zoom in to show cuteness."
+    },
+    {
+      "name": "ACTOR_MEDIUM_CHIBI_GAG_COMPACT",
+      "sourceCommit": "e8dc996a8e9774f3137a4db34f54e5675896138a",
+      "current": "Redraw enlarged heads, shortened torsos and jointed limbs as expressive chibi, not unchanged anime. Keep Camera/Action, acting/gaze/hair/glasses; readable perspective, no zoom for cuteness.",
+      "previous": "Expressive chibi; keep Camera/Action, body acting, gaze and faces. Reduce deformation if it hides acting/perspective; no zoom for cuteness."
+    },
+    {
+      "name": "ACTOR_MEDIUM_WATERCOLOR_FULL",
+      "sourceCommit": "e8dc996a8e9774f3137a4db34f54e5675896138a",
+      "current": "In THIS PANEL ONLY, paint the actors as watercolor: transparent color washes with pigment layers, broken soft edges and pigment pooling on faces, hair and clothing, with crisp focal facial/hand accents and paper grain. Preserve Camera/Action and identity. A watercolor background behind unchanged cel-shaded actors is insufficient.",
+      "previous": "In THIS PANEL ONLY, shift to a soft watercolor painting style with blurred edges, transparent color washes, and visible paper texture. The mood is nostalgic and dreamlike."
+    },
+    {
+      "name": "ACTOR_MEDIUM_WATERCOLOR_COMPACT",
+      "sourceCommit": "e8dc996a8e9774f3137a4db34f54e5675896138a",
+      "current": "Transparent pigment layers, pooling and broken edges ON actor faces/hair/clothing, not just background; paper grain and crisp focal facial/hand accents. Keep Camera/Action/identity.",
+      "previous": "Transparent color washes, soft pigment edges and paper grain; controlled crisp facial/hand accents."
+    },
+    {
+      "name": "ACTOR_MEDIUM_UKIYOE_FULL",
+      "sourceCommit": "e8dc996a8e9774f3137a4db34f54e5675896138a",
+      "current": "In THIS PANEL ONLY, redraw the existing actors and scene as ukiyo-e woodblock: carved black contours, flat pigment planes and rhythmic printed shapes on faces and clothing. Preserve Camera/Action, identity, canonical hair colors and accessories; do not substitute a stock historical scene or leave normal anime actors over a woodblock background.",
+      "previous": "In THIS PANEL ONLY, shift to a Japanese ukiyo-e woodblock print style. Use flat areas of bold color with strong black outlines. Characters are drawn with stylized proportions reminiscent of Edo-period art. Backgrounds feature iconic elements like waves, mountains, or cherry blossoms in the flat ukiyo-e tradition. IMPORTANT: Maintain each character's identity (hair color, accessories) despite the art style shift."
+    },
+    {
+      "name": "ACTOR_MEDIUM_UKIYOE_COMPACT",
+      "sourceCommit": "e8dc996a8e9774f3137a4db34f54e5675896138a",
+      "current": "Carved woodblock actor contours, flat pigment planes and rhythmic printed shapes on faces/clothing; existing scene, Camera/Action/identity fixed.",
+      "previous": "Carved woodblock contours, flat pigment planes, patterned textures and rhythmic curves applied to the existing scene."
+    },
+    {
+      "name": "ACTOR_MEDIUM_POP_ART_FULL",
+      "sourceCommit": "e8dc996a8e9774f3137a4db34f54e5675896138a",
+      "current": "In THIS PANEL ONLY, redraw actors as pop-art print: thick graphic contours, flat vivid pigment planes and controlled Ben-Day dots modeling faces and clothing. Keep Camera/Action, identity, dialogue and bubble layout. Colorful dots only behind unchanged anime actors are insufficient.",
+      "previous": "In THIS PANEL ONLY, shift to a vibrant pop art comic style inspired by Roy Lichtenstein. Use bold primary colors (red, blue, yellow), thick black outlines, and Ben-Day dot patterns for shading. The composition should feel graphic and punchy with high contrast. Speech bubbles should have bold jagged edges."
+    },
+    {
+      "name": "ACTOR_MEDIUM_POP_ART_COMPACT",
+      "sourceCommit": "e8dc996a8e9774f3137a4db34f54e5675896138a",
+      "current": "Bold graphic actor contours, flat vivid pigment and Ben-Day dots on faces/clothing; Camera/Action/identity/lettering fixed, not background-only dots.",
+      "previous": "Bold graphic contours, flat vivid planes and controlled Ben-Day dots; preserve faces and lettering."
+    },
+    {
+      "name": "ACTOR_MEDIUM_SKETCH_FULL",
+      "sourceCommit": "e8dc996a8e9774f3137a4db34f54e5675896138a",
+      "current": "In THIS PANEL ONLY, construct the actors with loose visible pencil strokes, rough hatching and paper grain; faces, hair and clothing share the sketch medium, with readable focal features. Keep Camera/Action and recognizable identity. Paper texture behind clean cel actors is insufficient.",
+      "previous": "In THIS PANEL ONLY, the art style shifts to a rough pencil sketch or storyboard draft. Lines are loose, scratchy, and intentionally unfinished. Some areas may have construction lines or rough hatching visible. The effect suggests this panel is a \"raw thought\" or \"unpolished reality\" breaking through the clean manga surface. IMPORTANT: Characters must still be recognizable by their key features."
+    },
+    {
+      "name": "ACTOR_MEDIUM_SKETCH_COMPACT",
+      "sourceCommit": "e8dc996a8e9774f3137a4db34f54e5675896138a",
+      "current": "Visible pencil strokes and deliberate hatching construct actor faces/hair/clothing; paper grain, readable features, Camera/Action/identity fixed.",
+      "previous": "Visible energetic pencil strokes, deliberate hatching and paper grain; readable facial features and action."
+    },
+    {
+      "name": "ACTOR_MEDIUM_THICK_PAINT_FULL",
+      "sourceCommit": "e8dc996a8e9774f3137a4db34f54e5675896138a",
+      "current": "In THIS PANEL ONLY, paint actor faces, hair and clothing with overlapping opaque brush masses, visible layered strokes and impasto-like edge accents; model turning forms through pigment and light, not only a textured background. Preserve Camera/Action, recognizable identity, age and focal facial features.",
+      "previous": "In THIS PANEL ONLY, shift to a thick impasto digital painting style. Use heavy brush strokes with visible texture, rich color layering, and strong three-dimensional form through dramatic light and shadow modeling. The overall impression should feel weighty, substantial, and premium like a gallery painting."
+    },
+    {
+      "name": "ACTOR_MEDIUM_THICK_PAINT_COMPACT",
+      "sourceCommit": "e8dc996a8e9774f3137a4db34f54e5675896138a",
+      "current": "Opaque brush masses and layered strokes model actor faces/hair/clothing, with impasto-like edges; Camera/Action/identity/age fixed, not background texture alone.",
+      "previous": "Sculpted opaque color masses, visible layered brush strokes and impasto-like edge accents."
+    },
+    {
+      "name": "GEKIGA_FACE_FULL",
+      "sourceCommit": "e8dc996a8e9774f3137a4db34f54e5675896138a",
+      "current": "In THIS PANEL ONLY, fully redraw faces as realistic GEKIGA manga. Redraw visible faces with small realistic eyes/irises, heavy anatomical eyelids, pronounced nose bridges and carved cheek/jaw planes. Thick variable brush contours, solid ink shadow planes and directional facial crosshatching model this anatomy. Keep recognizable identity/age, scripted gaze, Camera/Action and body acting; no added anger, age or wrinkles. FULL COLOR.",
+      "previous": "In THIS PANEL ONLY, fully redraw faces as realistic GEKIGA manga: angular carved brow/nose/cheek/jaw anatomy, thick variable brush contours, solid ink shadow planes and directional facial crosshatching. Redraw facial construction, not just darker anime shading or speed lines. Keep each recognizable identity and age; preserve scripted eyelids, mouth, gaze, Camera/Action and body acting. FULL COLOR."
+    },
+    {
+      "name": "GEKIGA_FACE_COMPACT",
+      "sourceCommit": "e8dc996a8e9774f3137a4db34f54e5675896138a",
+      "current": "Realistic gekiga: Redraw visible faces with small realistic eyes/irises, heavy anatomical eyelids, pronounced nose bridges and carved cheek/jaw planes. Brush ink/facial hatching; keep identity/age/color, gaze and Camera/Action.",
+      "previous": "Realistic gekiga: sculpted face planes at brow/nose/cheek/jaw, brush ink/facial hatching; rebuild, not darker anime. Keep scripted eyelids/mouth/acting, identity/age/color."
+    },
+    {
+      "name": "GEKIGA_FACE_OPENAI_COLOR",
+      "sourceCommit": "e8dc996a8e9774f3137a4db34f54e5675896138a",
+      "current": "THIS PANEL ONLY: high-intensity GEKIGA faces, not anime faces with gritty backgrounds. Redraw visible faces with small realistic eyes/irises, heavy anatomical eyelids, pronounced nose bridges and carved cheek/jaw planes. Put large solid-black shadow planes and dense directional crosshatching ON faces/hands, bold ink beside sharp white cuts. FULL COLOR. Keep identity/age and scripted emotion/gaze/pose/Camera; no added anger, age or wrinkles. Same face means same identity, not retained anime proportions.",
+      "previous": "THIS PANEL ONLY: high-intensity GEKIGA faces, not anime faces with gritty backgrounds. Redraw visible faces with small realistic eyes/irises, heavy anatomical eyelids, pronounced nose bridges and carved cheek/jaw planes. Put large solid-black shadow planes and dense directional crosshatching ON faces/hands, bold ink beside sharp white cuts. FULL COLOR. Keep identity/age and scripted emotion/gaze/pose/Camera; no added anger, age or wrinkles. Same face means same identity, not retained anime proportions."
+    },
+    {
+      "name": "GEKIGA_FACE_OPENAI_MONO",
+      "sourceCommit": "e8dc996a8e9774f3137a4db34f54e5675896138a",
+      "current": "THIS PANEL ONLY: redraw GEKIGA faces. Redraw visible faces with small realistic eyes/irises, heavy anatomical eyelids, pronounced nose bridges and carved cheek/jaw planes. Large solid-black shadow planes and dense directional crosshatching ON faces/hands in shadow, sharp white cuts. Same identity, not anime proportions. Keep identity/age, scripted emotion/gaze/pose/Camera; no added anger, age or wrinkles. 白紙に墨一色。白肌の明部は墨線の間を無地白とし、灰色・網点の下地なし。光源に沿う局所影、褐色肌、衣服のトーンは残す。",
+      "previous": "THIS PANEL ONLY: redraw GEKIGA faces with small realistic eyes/irises, heavy eyelids, strong nose bridges; carved facial planes at brow/cheek/jaw. Large solid-black shadow planes and dense directional crosshatching ON faces/hands in shadow, sharp white cuts. Same identity, not anime proportions. Keep identity/age, scripted emotion/gaze/pose/Camera; no added anger, age or wrinkles. 白紙に墨一色。白肌の明部は墨線の間を無地白とし、灰色・網点の下地なし。光源に沿う局所影、褐色肌、衣服のトーンは残す。"
+    },
+    {
+      "name": "GEKIGA_FACE_GEMINI_MONO",
+      "sourceCommit": "e8dc996a8e9774f3137a4db34f54e5675896138a",
+      "current": "Fully redraw GEKIGA faces with carved facial planes. Redraw visible faces with small realistic eyes/irises, heavy anatomical eyelids, pronounced nose bridges and carved cheek/jaw planes. Brush contours, solid ink shadows and directional crosshatching model turning planes. Keep identity/age, scripted gaze, Camera/Action/body acting and skin bases.",
+      "previous": "Fully redraw GEKIGA faces with carved facial planes: smaller anatomically proportioned eyes, constructed nose bridge, angular brow/cheek/jaw, brush contours, solid ink shadows and directional crosshatching on turning planes. Replace round anime facial construction, not just its shading. Keep identity/age, scripted eyelids/mouth/gaze, Camera/Action/body acting and skin bases."
+    },
+    {
+      "name": "PANEL_NORMAL_LOCAL",
+      "sourceCommit": "e8dc996a8e9774f3137a4db34f54e5675896138a",
+      "current": "\nNORMAL PANEL RENDERING: Chic cinematic full-color TV anime style; polished Japanese animation finish.\n",
+      "previous": "\n",
+      "compactPrevious": ""
+    },
+    {
+      "name": "PANEL_NORMAL_GLOBAL",
+      "sourceCommit": "e8dc996a8e9774f3137a4db34f54e5675896138a",
+      "current": "Follow each panel's selected drawing medium and rendering recipe.",
+      "previous": "Chic cinematic full-color TV anime style; polished Japanese animation finish. NORMAL/unmarked only; panel styles override."
+    },
+    {
+      "name": "PANEL_NORMAL_GEMINI_BACKGROUND",
+      "sourceCommit": "e8dc996a8e9774f3137a4db34f54e5675896138a",
+      "current": "(background rendering follows the selected panel medium: 2.5)",
+      "previous": "(clean anime illustration background: 2.5)"
+    },
+    {
+      "name": "PANEL_NORMAL_GEMINI_STROKES",
+      "sourceCommit": "e8dc996a8e9774f3137a4db34f54e5675896138a",
+      "current": "(linework and shading follow the selected panel medium: 2.5)",
+      "previous": "(Meticulous clean line art, smooth cel shading: 2.5)"
+    },
+    {
+      "name": "COLOR_REFERENCE_IDENTITY_SCOPE",
+      "sourceCommit": "e8dc996a8e9774f3137a4db34f54e5675896138a",
+      "current": "identity, hair, eye/skin colors and glasses; panel recipes determine facial construction and body stylization",
+      "previous": "face, hair, eyes, skin, glasses"
     }
   ]
 }

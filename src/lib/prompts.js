@@ -1,5 +1,5 @@
 import { buildCopyrightMosaicInstruction } from './render-options.js';
-import { getPunchlineLabel, COMPACT_EMOTION_STYLES } from './constants';
+import { getPunchlineLabel, COMPACT_EMOTION_STYLES, STYLE_DRAWING_CONTRACTS } from './constants';
 import { buildRecentStoryContext } from './generation-history.js';
 import { SAFE_VISUAL_CONTENT_LOCK } from './location-policy';
 import { FINAL_PANEL_ACTIVE_STAGING_SCENARIO_CONTRACT, SCENARIO_EXPRESSIVE_STAGING_CONTRACT } from './final-panel-staging';
@@ -28,12 +28,13 @@ import {
 
 const buildSceneStyleSelection = (serious = false) => `【場面から選ぶ絵柄】
 - 絵柄に優劣や好き嫌いを設けない。物語の出来事・演技・表情・光・構図を先に決め、その場面を最も伝える描画方式を選ぶ。オチの型、人物の性格、題材カテゴリだけから絵柄を固定しない。
-- 各コマに[EMOTION: XXX]を1つ付ける。種類数・頻度のノルマ、NORMAL回避、4コマ目の固定優先は設けない。必要な画風差は顔の造形・線・影・塗りに反映し、タグ名や暗さだけで済ませない。同じ絵柄が場面に適切なら反復してよい。
+- 各コマに[EMOTION: XXX]を1つ付ける。自動候補は以下の一覧にある画風だけとする。種類数・頻度のノルマ、NORMAL回避、4コマ目の固定優先は設けない。必要な画風差は顔の造形・線・影・塗りに反映し、タグ名や暗さだけで済ませない。同じ絵柄が場面に適切なら反復してよい。
+- drawing_familyは人物の描法系統。同系統のタグ差だけでは大きな描法変更にならない。絵柄変化を使う場面では、人物の顔・頭身・線・塗りに見える差を選び、照明・背景・効果線だけの差で代用しない。場面と明示指定を優先し、系統の巡回や数のノルマは設けない。
 - ユーザーの画風・頭身指定と、選択したモードの参照画風固定を優先する。シリアスな意図を勝手にギャグ化しない。以下は描画特徴であり、採用順位や特定の場面専用の一覧ではない。
-- NORMAL: 基本のアニメ作画。演技と照明に合わせて表情・陰影を描く。
+- NORMAL: 基本のアニメ作画。演技と照明に合わせて表情・陰影を描く。 [drawing_family=anime]
 ${serious ? '- このシリアスモードでは、ギャグ用の頭身変形は使わず、参照人物の頭身を保つ。' : ''}
-${Object.entries(COMPACT_EMOTION_STYLES).filter(([tag]) => tag !== 'HORROR' && (!serious || tag !== 'CHIBI_GAG')).map(([tag, recipe]) => `- ${tag}: ${recipe}`).join('\n')}
-- HORRORは旧タグ互換名でGEKIGAへ解決される。新規には対応する描画方式を直接選ぶ。`;
+${Object.entries(COMPACT_EMOTION_STYLES).filter(([tag]) => STYLE_DRAWING_CONTRACTS[tag].automatic && (!serious || tag !== 'CHIBI_GAG')).map(([tag, recipe]) => `- ${tag}: ${recipe} [drawing_family=${STYLE_DRAWING_CONTRACTS[tag].family}]`).join('\n')}
+`;
 
 const SCENE_STYLE_SELECTION = buildSceneStyleSelection();
 
@@ -618,7 +619,7 @@ ${styleJson.anti_patterns ? `            - 絶対禁止事項:\n${styleJson.anti
              - 物語の注視対象と実際の身体・小道具の配置から撮影位置を決め、以下のA/Bを併用して最適なCameraを記述する。静かな会話でも俯瞰・アオリ・望遠・広角・寄り引きを使える。高低や焦点距離を感情の激しさや特定の性格に結びつけない。
 
              **【A. 撮影位置とレンズ】**: 会話・静止・アクションのいずれでも、出来事を伝える視点を選ぶ。強度は物語に合わせる。
-             - 選択肢: 俯瞰/バードアイ、ローアングル/アオリ、ダッチアングル、超広角/フィッシュアイ、望遠圧縮、ワームズアイ、ドローン俯瞰、パンニング/追跡ショット
+             - 選択肢: 俯瞰/バードアイ、ローアングル/アオリ、ダッチアングル、広角/超広角、望遠圧縮、ワームズアイ、ドローン俯瞰、パンニング/追跡ショット
              - 全てのCameraで「カメラがどこにあり」「どの面が見えるか」「人物と背景の大きさがどう違うか」を具体化する。静かなコマでも明確な高低差や距離の圧縮を使い、不要な身体の変形や騒がしい効果は足さない。
                 * 例（ローアングル）: 「膝の高さから見上げ、キャラの全身がそびえ立つ巨人のように見え、背後の天井や空が大きく広がる。逆光が後ろから吹き荒れる」
 
@@ -912,7 +913,7 @@ Use the 360° background image's lighting direction (${bg360Analysis.lighting}),
 
   const prompt = `OUTPUT: Single image. Draw manga directly.
 
-ABSOLUTE TASK: new 4-panel manga, not a reference sheet. Use character refs for ${preserveReferenceStyle ? 'identity and the same art style across all four panels' : isMonochrome ? 'identity, hair, glasses and design; panel recipes redraw faces within the black ink plate' : 'face, hair, eyes, skin, glasses'}.
+ABSOLUTE TASK: new 4-panel manga, not a reference sheet. Use character refs for ${preserveReferenceStyle ? 'identity and the same art style across all four panels' : isMonochrome ? 'identity, hair, glasses and design; panel recipes redraw faces within the black ink plate' : 'identity, hair, eye/skin colors and glasses; panel recipes determine facial construction and body stylization'}.
 
 FORMAT:
 ${MANGA_PAGE_ENVELOPE}
@@ -1090,8 +1091,8 @@ ${preserveReferenceStyle
   ? (isMonochrome
     ? '(reference-sheet linework and proportions translated only into white paper, solid black and one bounded Japanese screentone: 2.8)'
     : '(exact reference-sheet linework, coloring method, shading design and proportions: 2.8)')
-  : isMonochrome ? '(clean ink background with selectively simplified detail: 2.5)\n(crisp black penwork, white highlights, one bounded screentone and deliberate line hatching: 2.5)' : `(clean anime illustration background: 2.5)
-(Meticulous clean line art, smooth cel shading: 2.5)
+  : isMonochrome ? '(clean ink background with selectively simplified detail: 2.5)\n(crisp black penwork, white highlights, one bounded screentone and deliberate line hatching: 2.5)' : `(background rendering follows the selected panel medium: 2.5)
+(linework and shading follow the selected panel medium: 2.5)
 (Soft diffused backlight, rim light: 2.4)
 (Cinematic depth of field, soft bokeh: 2.3)
 (chic cinematic color grading, elegant deep colors: 1.4)`}

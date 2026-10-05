@@ -7,8 +7,9 @@ import {
 } from './composition-variety.js';
 import { SCENARIO_FACIAL_ACTING_CONTRACT } from './facial-acting.js';
 import { getEndingModePolicy } from './ending-mode-policy.js';
-import { extractDialogueOnly, getScriptedCamera } from './panel-utils.js';
+import { extractDialogueOnly, extractEmotionStyle, getScriptedCamera } from './panel-utils.js';
 import { getScenarioPanelBlocks } from './scenario-validation.js';
+import { STYLE_DRAWING_CONTRACTS } from './constants.js';
 
 const CATEGORY_DEFINITIONS = Object.freeze({
   expressions: {
@@ -105,6 +106,7 @@ const HARD_ENHANCEMENT_ISSUE_CODES = new Set([
   'dialogue_changed_without_selection',
   'camera_changed_without_selection',
   'emotion_changed_without_selection',
+  'emotion_outside_automatic_palette',
   'background_changed_without_selection',
   'situation_changed_without_selection',
   'effects_changed_without_selection',
@@ -274,6 +276,9 @@ export const buildScenarioEnhancementPrompt = ({
   const facialActingRule = selected.includes('expressions')
     ? `\n${SCENARIO_FACIAL_ACTING_CONTRACT}`
     : '';
+  const styleSelectionRule = selected.includes('expressions') || selected.includes('gag')
+    ? `- 選択カテゴリとモードがEMOTION変更を許す場合、新しく選ぶ画風は ${Object.entries(STYLE_DRAWING_CONTRACTS).filter(([, contract]) => contract.automatic).map(([style]) => style).join(', ')} のみ。内容に合わせて選び、種類数・頻度のノルマや巡回を設けない。同じコマで変更しない元の明示画風は、この一覧外でも保持する。`
+    : '';
   const styleBlock = styleJson
     ? `\n【作風情報】\n選択カテゴリの編集範囲内だけで参照する。元のLogline、Punchline、静けさやテンポを上書きしない。\n- 作風名: ${styleJson.style_name || ''}\n- 詳細: ${styleJson.reproduction_prompt || ''}\n${styleJson.anti_patterns ? `- 禁止: ${styleJson.anti_patterns}` : ''}\n`
     : '';
@@ -293,6 +298,7 @@ export const buildScenarioEnhancementPrompt = ({
 - ト書きの服装も確定済みOutfitに合わせ、キャラシートの参考衣装を復活させない。参考衣装に合わせるために舞台や役割を変更しない
 - LoglineとPunchlineが示す物語の温度、静けさ、テンポを最優先し、派手さを目的に反転させない
 ${narrativeModeRule}
+${styleSelectionRule}
 - 選択されていないカテゴリは変更しない。未選択: ${lockedLabels || 'なし'}
 - 全身の誇張や強い遠近法は許可する。手足の接続・本数と小道具の所有・向きを保ち、部位の増殖、身体崩壊、ボディホラーを新たに加えない
 - 「MAX」「限界」「極端に」など強度語の機械的な足し算ではなく、具体性と読みやすさを上げる
@@ -456,6 +462,14 @@ export const validateScenarioEnhancement = ({
       'emotion_changed_without_selection',
       '表情未選択なのにEMOTIONタグが変更されています'
     );
+  }
+  const originalPanels = getScenarioPanelBlocks(originalScenario);
+  for (const panel of getScenarioPanelBlocks(candidateScenario)) {
+    const originalPanel = originalPanels.find(entry => entry.num === panel.num);
+    if (!arraysEqual(extractTagValues(originalPanel?.text || '', 'EMOTION'), extractTagValues(panel.text, 'EMOTION'))
+      && !STYLE_DRAWING_CONTRACTS[extractEmotionStyle(panel.text)]?.automatic) {
+      addIssue(issues, issueCodes, 'emotion_outside_automatic_palette', `${panel.num}コマ目: 変更するEMOTIONは自動候補の画風から選び、未変更の明示画風は保持してください`);
+    }
   }
 
   if (

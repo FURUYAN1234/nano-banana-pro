@@ -390,7 +390,7 @@ const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt
     .replace(/^(CAST LIMIT: required cast [^\n]+?); focus follows Camera\/Action\./gm, '$1.')
     // Local projection cues retain the same geometry without repeating prose.
     .replace(/below all faces \(crouched\/chibi too\); look up: chin\/jaw\/prop undersides, forehead recedes, low horizon, upward convergence\. Face\/body\/setting share projection, no frontal face on tilted BG; keep scripted height\/pitch\/proportions/g,
-      'below faces (crouched/chibi too); chin/jaw/prop undersides, receding forehead, low horizon/upward convergence')
+      'below faces (crouched/chibi too); chin/jaw/prop undersides, receding forehead, low horizon/upward convergence. Face/body/setting share projection, no frontal face on tilted BG; keep scripted height/pitch/proportions')
     .replace(/wide framing: body extent and continuous setting reveal actor distances; foreground may stay large, receding actors smaller; not a bust portrait\. Explicit scale\/crop wins; no uniform shrinking to a fixed ratio/g,
       'wide framing: body extent/setting show distance; large foreground, smaller receding actors; no bust crop or uniform shrinking; explicit scale/crop wins')
     .replace(/^Action \(visual only\):[^\n]*/gm, line => sharedOutfit
@@ -703,7 +703,7 @@ export const buildMangaPromptArtifact = ({
     ? buildReferenceSheetArtStyleLock({ monochrome: isMonochrome })
     : isMonochrome
     ? 'Draw a finished Japanese manga manuscript with expressive ink, paper reserves, assigned skin/material tones and motivated shadows; preserve camera and acting.'
-    : "Chic cinematic full-color TV anime style; polished Japanese animation finish. NORMAL/unmarked only; panel styles override.";
+    : "Follow each panel's selected drawing medium and rendering recipe.";
 
   const dynamicCamera = DYNAMIC_CAMERA_PROTOCOL;
 

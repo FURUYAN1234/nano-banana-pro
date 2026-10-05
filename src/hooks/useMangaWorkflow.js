@@ -984,6 +984,10 @@ export default function useMangaWorkflow() {
         setShowOpenAIKeyModal(true);
       }
       const translatedMsg = translateApiError(error);
+      if (['CAMERA_CONTRACT', 'STYLE_CONTRACT'].includes(error.code) && error.scenario) {
+        const contract = error.code === 'CAMERA_CONTRACT' ? 'カメラ' : '画風';
+        setScenarioThought(prev => prev + `\n\n[${contract}契約未達・未採用候補を保持]\n${error.scenario}\n\n自動構成の${contract}契約が未達のためSTEP3・画像生成へ進めません。`);
+      }
       setScenarioThought(prev => prev + `\n\n[システムエラー]: ${error.message}\n--------------------------------------------------\n${translatedMsg}`);
       showStatus("シナリオ生成エラー");
       setIs360CameraWorking(false);
@@ -2003,7 +2007,7 @@ export default function useMangaWorkflow() {
       } else if (!qualityOutcome.originalReview.pass && qualityReviewUnverified) {
         setGenLog(prev => [
           ...prev,
-          '[QUALITY QA] ℹ️ 画像品質レビューは未確認です。画像の具体的な問題は検出されていません。',
+          '[QUALITY QA] ℹ️ 画像品質レビューは未完了です。検査証拠が不足または矛盾しているため、合格を確認できません。',
           ...qualityOutcome.originalReview.issues.map((issue) => `[QUALITY QA] ${formatImageQualityIssue(issue)}`)
         ]);
       } else if (!qualityOutcome.originalReview.pass) {

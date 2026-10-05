@@ -7,6 +7,21 @@ import * as imageQualityQa from '../src/lib/image-quality-qa.js';
 const workflowSource = await readFile(new URL('../src/hooks/useMangaWorkflow.js', import.meta.url), 'utf8');
 const step4Source = await readFile(new URL('../src/components/Step4Panel.jsx', import.meta.url), 'utf8');
 
+test('unverified quality logging states that judging is incomplete and retains the actual observation', () => {
+  const block = workflowSource.match(/const qualityReviewUnverified = ([\s\S]+?)\r?\n      if \(qualityOutcome.repairReview/)[0]
+    .replace(/\r?\n      if \(qualityOutcome.repairReview$/, '');
+  const qualityOutcome = { originalReview: { pass: false, issues: [{ type: 'unverified', panel: 2,
+    subject: 'art_style', reason: 'Actor at left retains a flat anime face; ink evidence is unresolved.' }] } };
+  let log = ['earlier generation'];
+  new Function('qualityOutcome', 'setGenLog', 'formatImageQualityIssue', block)(
+    qualityOutcome, callback => { log = callback(log); }, imageQualityQa.formatImageQualityIssue);
+  assert.match(log.join('\n'), /未完了/);
+  assert.match(log.join('\n'), /合格を確認できません/);
+  assert.doesNotMatch(log.join('\n'), /具体的な問題は検出されていません|異常なし|PASS/);
+  assert.ok(log.some(line => line.includes(qualityOutcome.originalReview.issues[0].reason)));
+  assert.equal(log[0], 'earlier generation');
+});
+
 test('a malformed primary QA report stops supplementary paid audits and keeps the image', async () => {
   const callback = workflowSource.match(/const reviewImageCandidate = ([\s\S]+?);\r?\n\r?\n      const reviewCriticalCameraCandidate/)[1];
   for (const text of ['not JSON', '{"pass":true,"issues":[],"spatial_checks":{"$columns":["panel"],"$rows":[[]]}}']) {

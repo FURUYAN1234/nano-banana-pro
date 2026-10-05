@@ -7,10 +7,51 @@ let buildMangaPrompt;
 let getScenarioPrompt;
 let getPanelCompositionAssist;
 let getPanelShotExecution;
+let classifyCameraElevation;
+let isFisheyeCamera;
+let isPullbackShot;
 let MANGA_COMPOSITION_VARIETY_LOCK;
 let MANGA_COMPOSITION_VARIETY_LOCK_COMPACT;
 let MANGA_GESTURE_VARIETY_LOCK;
 let cinematicCompositionMap;
+let cameraAngles;
+let openAIColorGekigaStyle;
+
+test('repeated prompt compaction preserves each low shot projection and quiet scripted pitch', () => {
+  const cameras = [
+    '左前の低い位置から見上げる中景',
+    '右前の低めの位置から穏やかに見上げる固定の中景。弱い仰角を保つ。',
+    '正面の低い位置から見上げる寄り',
+    '左横の低い位置から見上げる引きの全身',
+  ];
+  let cameraIndex = 0;
+  const scenario = FOUR_PANEL_SCENARIO
+    .replace(/\[EMOTION: [^\]]+\]/g, '[EMOTION: GEKIGA]')
+    .replace(/\[Camera: [^\]]+\]/g, () => `[Camera: ${cameras[cameraIndex++]}]`)
+    .replace('SpeakerB stands and presses a document onto the table with both hands.',
+      'SpeakerB remains motionless with both hands resting on the document, listening quietly.');
+  const actions = [...scenario.matchAll(/^Action: (.+)$/gm)].map(match => match[1]);
+
+  for (const promptMaxChars of [24000, 32000]) {
+    const prompt = buildMangaPrompt({ scenario, castList: CAST_LIST, providerFamily: 'chatgpt',
+      colorMode: 'color', punchlineType: 'Auto', cinematicTechniques: false, promptMaxChars });
+    assert.ok(prompt.length > 15000, 'the fixture must exercise repeated soft-target compaction');
+    assert.ok(prompt.length <= promptMaxChars);
+    const panels = prompt.split(/^## Panel \d+\s*$/m).slice(1);
+    assert.equal(panels.length, 4);
+    for (const [index, panel] of panels.entries()) {
+      assert.equal(panel.match(/^Camera: (.+)$/m)?.[1], cameras[index]);
+      assert.ok(panel.match(/^Action \(visual only\):(.+)$/m)?.[1].endsWith(actions[index]));
+      assert.equal(panel.match(/^Style: (.+)$/m)?.[1], openAIColorGekigaStyle);
+      const shot = panel.match(/^SHOT EXECUTION:.*$/m)?.[0] || '';
+      assert.match(shot, /(?:Face\/body\/setting|facial planes, body and setting) share projection/i,
+        `panel ${index + 1}, ${promptMaxChars}: preserve local face/body/setting projection`);
+      assert.match(shot, /(?:no|not) frontal faces? on (?:a )?tilted (?:BG|background)/i);
+      assert.match(shot, /(?:keep|preserve) scripted height\/pitch\/proportions/i);
+      assert.doesNotMatch(shot, /floor-level|extreme|steep|\d+\s*(?:degrees|°)/i);
+    }
+  }
+});
 
 test('supporting actors retain physical scale and depth in both provider budgets', () => {
   for (const providerFamily of ['chatgpt', 'gemini']) {
@@ -107,6 +148,65 @@ test('explicit floor-level upward shots retain floor height instead of the gener
   assert.match(getPanelShotExecution('床近くから水平に撮る'), /horizontal aim/);
 });
 
+test('camera height prose receives the same projection cues as named high and low angles', () => {
+  for (const camera of ['肩越しにやや高く撮る中景', '右後方の高めから撮影', '左後方から高めに撮る広角', '高めに撮影する中景', '顔より高い位置から撮る', '目の高さより高い位置から撮る', '少し上からの中景']) {
+    assert.equal(classifyCameraElevation(camera), 'high', camera);
+    assert.match(getPanelShotExecution(camera), /look down.*head\/shoulder tops/, camera);
+  }
+  for (const camera of ['左前の低めから撮る中景', '右前から低めに撮る望遠接写', '低めに撮影する中景', '斜め前から低く撮影する', '目線より低い位置からの広角', '目の高さより低い位置から撮る', '机上すれすれから撮る']) {
+    assert.equal(classifyCameraElevation(camera), 'low', camera);
+    assert.match(getPanelShotExecution(camera), /below faces.*look up/, camera);
+  }
+});
+
+test('camera elevation classification does not turn subject height into a camera angle', () => {
+  for (const camera of ['中景。主人公は背が高い', '肩越し。顔を高く上げる', '正面。低めの椅子に座る', '中景。頭が高い位置に見える', 'ワイド。低い位置の手を見せる']) {
+    assert.equal(classifyCameraElevation(camera), 'unspecified', camera);
+    assert.doesNotMatch(getPanelShotExecution(camera), /look down|look up|below faces/, camera);
+  }
+  for (const camera of ['低い机の高さでアイレベルの中景', '床近く、座った人物の目の高さから撮る', 'eye-level shot from a low platform']) {
+    assert.equal(classifyCameraElevation(camera), 'eye', camera);
+    assert.doesNotMatch(getPanelShotExecution(camera), /look down|look up|below faces/, camera);
+  }
+  assert.equal(classifyCameraElevation('俯瞰、アイレベル禁止'), 'high');
+  assert.equal(classifyCameraElevation('low angle, not eye-level'), 'low');
+});
+
+test('relative lateral camera height remains distinct from an actor looking up or down', () => {
+  for (const camera of ['右側面から低めの斜め寄り', '机の高さより低い左前からの中景']) {
+    assert.equal(classifyCameraElevation(camera), 'low', camera);
+    assert.match(getPanelShotExecution(camera), /low camera below faces.*look up/, camera);
+  }
+  for (const camera of ['中景。主人公が相手を見下ろす', '中景、相手は天井を見上げる']) {
+    assert.equal(classifyCameraElevation(camera), 'unspecified', camera);
+    assert.doesNotMatch(getPanelShotExecution(camera), /look down|look up/, camera);
+  }
+  assert.equal(classifyCameraElevation('カメラが人物を見下ろす'), 'high');
+  assert.equal(classifyCameraElevation('俯瞰。人物が相手を見下ろす'), 'high');
+  assert.equal(classifyCameraElevation('低い位置から人物が相手を見下ろす様子を撮る'), 'low');
+});
+
+test('camera-relative English placement and positive pitch angles retain their elevation', () => {
+  for (const camera of ['camera above the actors', 'camera positioned above eye level', '俯角30度の中景', '俯角: 0.5°']) {
+    assert.equal(classifyCameraElevation(camera), 'high', camera);
+    assert.match(getPanelShotExecution(camera), /look down/, camera);
+  }
+  for (const camera of ['camera below the faces', 'camera placed below eye-level', '仰角25度の中景', '仰角: 0.5°']) {
+    assert.equal(classifyCameraElevation(camera), 'low', camera);
+    assert.match(getPanelShotExecution(camera), /look up/, camera);
+  }
+  for (const camera of ['her head is above the camera', 'hands below eye level', '仰角0度', '俯角0°', '仰角-20度']) {
+    assert.equal(classifyCameraElevation(camera), 'unspecified', camera);
+  }
+});
+
+test('final camera contracts prevent flattening faces and bodies with specified elevation', () => {
+  for (const lock of [MANGA_COMPOSITION_VARIETY_LOCK, MANGA_COMPOSITION_VARIETY_LOCK_COMPACT]) {
+    assert.match(lock, /never flatten.*(?:high\/low|elevation)/i);
+    assert.match(lock, /face.*bod.*setting.*projection/i);
+  }
+});
+
 before(async () => {
   server = await createServer({
     appType: 'custom',
@@ -118,11 +218,15 @@ before(async () => {
   ({
     getPanelCompositionAssist,
     getPanelShotExecution,
+    classifyCameraElevation,
+    isFisheyeCamera,
+    isPullbackShot,
     MANGA_COMPOSITION_VARIETY_LOCK,
     MANGA_COMPOSITION_VARIETY_LOCK_COMPACT,
     MANGA_GESTURE_VARIETY_LOCK,
   } = await server.ssrLoadModule('/src/lib/composition-variety.js'));
-  ({ cinematicCompositionMap } = await server.ssrLoadModule('/src/lib/constants.js'));
+  ({ cinematicCompositionMap, cameraAngles } = await server.ssrLoadModule('/src/lib/constants.js'));
+  ({ OPENAI_COLOR_GEKIGA_STYLE: openAIColorGekigaStyle } = await server.ssrLoadModule('/src/lib/panel-utils.js'));
 });
 
 after(async () => {
@@ -197,7 +301,8 @@ test('STEP2 plans a page of motivated contrasting shots across independent camer
   const prompt = buildNormalScenarioPrompt();
   assert.match(prompt, /4コマ全体.*比較/);
   assert.match(prompt, /アオリ.*反復.*見せ場/);
-  assert.match(prompt, /魚眼.*曲線|曲線.*魚眼/);
+  assert.match(prompt, /魚眼.*(?:禁止|使わない)/);
+  assert.doesNotMatch(prompt, /選択肢:[^\n]*フィッシュアイ/);
   assert.match(prompt, /ダッチ.*ロール|ロール.*ダッチ/);
   assert.match(prompt, /各コマ.*役割.*Camera/);
   assert.match(prompt, /寄り・中景・引き/);
@@ -221,6 +326,90 @@ test('Japanese Dutch and fisheye specify observable separate projection cues', (
   assert.doesNotMatch(getPanelShotExecution('目の高さで右側面、望遠、ダッチアングル'), /look up|look down/);
   assert.match(getPanelShotExecution('真上から魚眼レンズで見下ろす全景'), /curved.*edges/);
   assert.doesNotMatch(getPanelShotExecution('真上から広角で見下ろす全景'), /curved.*edges/);
+});
+
+test('automatic camera fallbacks keep wide-angle options without fisheye', () => {
+  assert.ok(cameraAngles.some(camera => /wide.angle/i.test(camera)));
+  for (const camera of cameraAngles) assert.doesNotMatch(camera, /fish[ -]?eye|魚眼|フィッシュアイ|barrel distortion|spherical.*distortion/i);
+});
+
+test('negative fisheye instructions do not add fisheye projection to ordinary wide angles', () => {
+  for (const camera of ['俯瞰の広角、魚眼禁止', 'アオリの広角、魚眼なし', '俯瞰、フィッシュアイではなく広角', '俯瞰の広角、魚眼は使用しない', '俯瞰の超広角、魚眼は使用しない', 'high-angle wide-angle shot, no fisheye', 'low-angle wide-angle shot without fish-eye distortion', 'high-angle wide-angle shot, do not use fisheye']) {
+    const execution = getPanelShotExecution(camera);
+    assert.match(execution, /near\/far scale contrast/, camera);
+    assert.doesNotMatch(execution, /fisheye:|curved outer edges|radial warp/, camera);
+  }
+});
+
+for (const [camera, elevation] of [
+  ['低い位置から見上げる。魚眼・アイレベルは使わない。', 'low'],
+  ['高い位置から見下ろす。魚眼と広角は使わない。', 'high'],
+  ['低い位置から見上げる。魚眼、広角、アイレベルは使わない。', 'low'],
+  ['低い位置から見上げる。魚眼・広角禁止。', 'low'],
+  ['低い位置から見上げる。広角、アイレベル、魚眼を使わない。', 'low'],
+]) {
+  test(`enumerated camera prohibitions preserve the affirmative elevation: ${camera}`, () => {
+    const shot = getPanelShotExecution(camera);
+    assert.deepEqual({
+      fisheye: isFisheyeCamera(camera),
+      elevation: classifyCameraElevation(camera),
+      fisheyeProjection: /fisheye:|curved outer edges|radial warp/.test(shot),
+      wideProjection: /near\/far scale contrast/.test(shot),
+      elevationProjection: (elevation === 'low' ? /low camera below faces.*look up/ : /look down.*head\/shoulder tops/).test(shot),
+    }, { fisheye: false, elevation, fisheyeProjection: false, wideProjection: false, elevationProjection: true });
+  });
+}
+
+test('enumerated camera prohibitions do not remove an affirmative wide lens outside the list', () => {
+  const camera = '低い位置から見上げる広角。魚眼・アイレベルは使わない。';
+  const shot = getPanelShotExecution(camera);
+  assert.equal(isFisheyeCamera(camera), false);
+  assert.equal(classifyCameraElevation(camera), 'low');
+  assert.match(shot, /low camera below faces.*look up/);
+  assert.match(shot, /near\/far scale contrast/);
+  assert.doesNotMatch(shot, /fisheye:|curved outer edges|radial warp/);
+});
+
+for (const camera of ['low-angle wide-angle, no fisheye or eye-level', 'low-angle wide-angle without eye-level or fisheye']) {
+  test(`English camera prohibition lists retain affirmative elevation and lens: ${camera}`, () => {
+    assert.equal(isFisheyeCamera(camera), false);
+    assert.equal(classifyCameraElevation(camera), 'low');
+    assert.match(getPanelShotExecution(camera), /low camera below faces.*near\/far scale contrast/);
+    assert.doesNotMatch(getPanelShotExecution(camera), /fisheye:|radial warp/);
+  });
+}
+
+test('direct pullback classification agrees with execution for prohibited and affirmative framing', () => {
+  for (const camera of ['全景禁止。', 'ズームアウトは使わない。', '全景・遠景は禁止。']) {
+    assert.equal(isPullbackShot(camera), false, camera);
+    assert.doesNotMatch(getPanelShotExecution(camera), /wide framing/, camera);
+  }
+  for (const camera of ['全景。魚眼・アイレベルは使わない。', '全身の引き。接写禁止。']) {
+    assert.equal(isPullbackShot(camera), true, camera);
+    assert.match(getPanelShotExecution(camera), /wide framing/, camera);
+  }
+  assert.equal(isPullbackShot('広角の顔のアップ。'), false);
+});
+
+test('single camera prohibitions leave later affirmative elevation lens and framing cues', () => {
+  assert.equal(classifyCameraElevation('俯瞰禁止。アオリ。'), 'low');
+  assert.equal(classifyCameraElevation('アオリ禁止。俯瞰。'), 'high');
+  assert.doesNotMatch(getPanelShotExecution('望遠禁止。広角。'), /compressed depth/);
+  assert.match(getPanelShotExecution('望遠禁止。広角。'), /near\/far scale contrast/);
+  assert.doesNotMatch(getPanelShotExecution('ダッチ禁止。顔のアップ。'), /tilt scene axes/);
+  assert.match(getPanelShotExecution('全身禁止。顔のアップ。'), /tight crop/);
+  assert.doesNotMatch(getPanelShotExecution('全身禁止。顔のアップ。'), /head-to-feet/);
+});
+
+test('affirmative fisheye and eye-level directives retain their existing interpretation', () => {
+  const fisheye = '低い位置から見上げる魚眼。';
+  assert.equal(isFisheyeCamera(fisheye), true);
+  assert.equal(classifyCameraElevation(fisheye), 'low');
+  assert.match(getPanelShotExecution(fisheye), /low camera below faces.*fisheye: curved outer edges, radial warp/);
+  const eyeLevel = 'アイレベルの正面。';
+  assert.equal(isFisheyeCamera(eyeLevel), false);
+  assert.equal(classifyCameraElevation(eyeLevel), 'eye');
+  assert.doesNotMatch(getPanelShotExecution(eyeLevel), /look up|look down|fisheye:/);
 });
 
 test('STEP2 designs continuous relational staging instead of directing every listener toward one speaker', () => {
@@ -314,6 +503,35 @@ test('explicit full-body framing outranks a nearby-view phrase without forcing f
   assert.doesNotMatch(closeup, /head-to-feet|BOTH shoes/);
 });
 
+for (const camera of ['顔～胸の寄り。', '通常レンズの寄り。', '胸上を収める寄り。', '顔の寄り', '胸上を収める寄り、左前から']) {
+  test(`Japanese standalone close framing executes a tight crop: ${camera}`, () => {
+    const shot = getPanelShotExecution(camera);
+    assert.match(shot, /tight crop on focal subject/);
+    assert.doesNotMatch(shot, /wide framing|head-to-feet/);
+  });
+}
+
+for (const lens of ['長焦点', '長い焦点距離']) {
+  test(`Japanese long focal length executes telephoto depth: ${lens}`, () => {
+    const shot = getPanelShotExecution(`左前の低めから${lens}で撮る中景。`);
+    assert.match(shot, /distant camera \+ long focal length: compressed depth/);
+    assert.match(shot, /background relatively larger\/closer/);
+    assert.doesNotMatch(shot, /tight crop|wide framing|head-to-feet|near\/far scale contrast/);
+  });
+}
+
+test('Japanese directional placement and physical contact do not imply a close crop', () => {
+  for (const camera of ['右寄り', '左側面寄り', '正面寄り', '背後寄り。', '画面上方に寄せた', '二人が肩を寄せ合う中景。', '人物が隣の相手に寄り添う中景。']) {
+    assert.doesNotMatch(getPanelShotExecution(camera), /tight crop/, camera);
+  }
+});
+
+test('explicit full-body extent still outranks standalone Japanese close framing', () => {
+  const shot = getPanelShotExecution('全身を頭から足先まで入れる。通常レンズの寄り。');
+  assert.match(shot, /head-to-feet inside panel/);
+  assert.doesNotMatch(shot, /tight crop/);
+});
+
 test('relative Japanese elevations project actor faces and setting together without a lens or crop override', () => {
   const low = getPanelShotExecution('左前の低めの位置から望遠の中景');
   assert.match(low, /low camera below faces/);
@@ -348,10 +566,14 @@ test('an unnamed diagonal camera side follows action geometry while named sides 
   }
 });
 
-test('normal STEP2 generation keeps expressive direction without numeric variety quotas', () => {
+test('normal STEP2 generation requires non-eye-level design with user overrides and no numeric variety quotas', () => {
   const prompt = buildNormalScenarioPrompt();
 
-  assert.doesNotMatch(prompt, /真正面は最大1コマ|アイレベル.*原則禁止|最低3種類/);
+  assert.match(prompt, /自動設計.*アイレベル.*禁止/);
+  assert.match(prompt, /ユーザー.*明示.*アイレベル/);
+  assert.match(prompt, /生成AI.*Camera.*ユーザー指定.*みなさない/);
+  assert.match(prompt, /撮影高度.*仰俯角.*見える/);
+  assert.doesNotMatch(prompt, /真正面は最大1コマ|最低3種類|固定巡回/);
   assert.match(prompt, /種類数.*ノルマ/);
   assert.match(prompt, /被写体に対する水平方位/);
   assert.match(prompt, /肩・腰・顔/);

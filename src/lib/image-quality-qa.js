@@ -4,6 +4,7 @@ import { readBubbleTextValues } from './bubble-text.js';
 import { getPanelShotExecution, isPullbackShot } from './composition-variety.js';
 import { CHEEK_RENDERING } from './shared-image-quality.js';
 import { parseCollectiveSpeaker, collectiveMemberKeys } from './panel-utils.js';
+import { STYLE_DRAWING_CONTRACTS, EMOTION_STYLES, COMPACT_EMOTION_STYLES } from './constants.js';
 
 const ISSUE_TYPES = new Set([
   'monochrome_rendering',
@@ -32,19 +33,30 @@ const ISSUE_TYPES = new Set([
 // These are camera instructions emitted by getPanelShotExecution, not image
 // observations. A reviewer repeating them without pixel-specific evidence is
 // uncertain even when it labels the dimension "ok".
-const CAMERA_SHOT_INSTRUCTION_ECHO_RE = /head\/shoulder tops,\s*shortened torsos,\s*upper prop faces|lower face\/prop undersides,\s*horizon below face|compressed depth,\s*background relatively larger\/closer/i;
+const CAMERA_SHOT_INSTRUCTION_ECHO_RE = /head\/shoulder tops,\s*shortened torsos,\s*upper prop faces|lower face\/prop undersides,\s*horizon below face|chin\/jaw undersides,\s*prop undersides from below|compressed depth,\s*background relatively larger\/closer/i;
 
-const upwardPanels = prompt => new Set([...String(prompt).matchAll(/^## Panel (\d+)\s*\n([\s\S]*?)(?=^## Panel \d+\s*\n|$(?![\s\S]))/gm)]
-  .filter(([, , body]) => {
+const cameraContracts = prompt => new Map([...String(prompt).matchAll(/^## Panel (\d+)\s*\n([\s\S]*?)(?=^## Panel \d+\s*\n|$(?![\s\S]))/gm)]
+  .map(([, panel, body]) => {
     const camera = body.match(/^Camera:\s*(.*)$/im)?.[1] || '';
-    return /look up:/.test(getPanelShotExecution(camera));
-  }).map(([, panel]) => Number(panel)));
+    const execution = getPanelShotExecution(camera);
+    // Use the same effective shot contract that reaches image generation.
+    const required = new Set();
+    if (/look down|look up:|keep horizontal aim|height landmark/.test(execution) || /eye[ -]level|アイレベル/i.test(camera)) required.add('elevation');
+    if (/oblique view|side view|show back planes/.test(execution) || /over.the.shoulder|肩越し|正面|front[ -]on/i.test(camera)) required.add('azimuth');
+    if (/tight crop|head-to-feet|wide framing/.test(execution)) required.add('framing');
+    if (/long focal length|near\/far scale contrast|fisheye:/.test(execution)) required.add('lens');
+    return [Number(panel), { camera, execution, required, projection: /look down/.test(execution) ? 'top' : /look up:/.test(execution) ? 'underside' : null }];
+  }));
 
-const hasUpwardProjectionEvidence = dimension => Array.isArray(dimension?.projection_cues)
-  && new Set(dimension.projection_cues.filter(cue => cue?.surface === 'underside'
+const hasProjectionEvidence = (dimension, surface) => Array.isArray(dimension?.projection_cues)
+  && new Set(dimension.projection_cues.filter(cue => cue?.surface === surface
     && typeof cue.subject === 'string' && cue.subject.trim()
     && ['x', 'y'].every(axis => Number.isFinite(cue[axis]) && cue[axis] >= 0 && cue[axis] <= 1))
     .map(cue => cue.subject.trim().toLowerCase())).size >= 2;
+
+const normalizeCameraEvidence = text => String(text || '').normalize('NFKC').toLowerCase().replace(/[\s\p{P}]/gu, '');
+const repeatsCameraRequest = (dimension, contract) => [dimension.requested, contract?.camera, contract?.execution]
+  .some(request => request && normalizeCameraEvidence(request) === normalizeCameraEvidence(dimension.observed));
 
 const extractFullBodyPanels = (prompt) => new Set([...String(prompt).matchAll(
   /^## Panel (\d+)\s*\n([\s\S]*?)(?=^## Panel \d+\s*\n|$(?![\s\S]))/gm,
@@ -656,14 +668,35 @@ const resolveOrientationEvidence = (check, panel) => {
 const panelStyleContracts = (finalPrompt, mode, enabled) => {
   if (!enabled || mode === 'single-image' || isMonochromePrompt(finalPrompt)) return [];
   const panels = [...String(finalPrompt).matchAll(/^## Panel (\d+)\s*\n([\s\S]*?)(?=^## Panel \d+\s*\n|$(?![\s\S]))/gm)]
-    .map(([, panel, body]) => ({ panel: Number(panel), style: body.match(/^PANEL STYLE LOCK:\s*([A-Z][A-Z0-9_]*)\b/m)?.[1] }));
+    .map(([, panel, body]) => ({ panel: Number(panel), style: body.match(/^PANEL STYLE LOCK:\s*([A-Z][A-Z0-9_]*)\b/m)?.[1],
+      recipe: body.match(/^Style:\s*(.+)$/m)?.[1] || '' }));
   // Reference-style/documentary routes deliberately have no per-panel locks.
   return panels.some(panel => panel.style) ? panels.map(panel => ({ ...panel, style: panel.style || 'NORMAL' })) : [];
 };
 
 const hasStyleText = value => typeof value === 'string' && !!value.trim();
+const STYLE_OBSERVATION_LABELS = [...new Set([
+  ...Object.keys(STYLE_DRAWING_CONTRACTS),
+  ...Object.values(STYLE_DRAWING_CONTRACTS).flatMap(({ family, actorCue }) => [family, actorCue]),
+  'realistic_planes', 'anime_template', 'caricature', 'modeled_ink', 'flat', 'other',
+  'ok', 'pass', 'defect', 'uncertain', 'none', 'minor_variation', 'requested_medium_missing',
+].filter(Boolean).map(normalizeCameraEvidence))].sort((a, b) => b.length - a.length);
+const hasStyleObservation = value => {
+  if (!hasStyleText(value)) return false;
+  let remaining = normalizeCameraEvidence(value);
+  for (const label of STYLE_OBSERVATION_LABELS) remaining = remaining.replaceAll(label, '');
+  return !!remaining;
+};
 const hasStyleRegionEvidence = region => ['ok', 'defect', 'uncertain'].includes(region?.status)
-  && hasStyleText(region.location) && hasStyleText(region.observed);
+  && hasStyleText(region.location) && hasStyleObservation(region.observed);
+const echoesStyleInstruction = (region, { style, recipe }) => {
+  const observed = normalizeCameraEvidence(region?.observed);
+  return observed && [style, recipe, EMOTION_STYLES[style]?.style, COMPACT_EMOTION_STYLES[style], STYLE_DRAWING_CONTRACTS[style]?.evidence]
+    .filter(Boolean).some(source => {
+      const normalized = normalizeCameraEvidence(source);
+      return normalized === observed || observed.length >= 24 && normalized.includes(observed);
+    });
+};
 
 // A style name or reviewer verdict cannot authorize a paid repair. Derive the
 // issue from located observations of the requested medium on this panel.
@@ -678,10 +711,13 @@ const resolvePanelStyleEvidence = (checks, contract, expectedActors) => {
     return [uncertain('Panel style lacks a matching contract and complete visible-medium observations.')];
   }
   const conflicts = [];
+  const faceDiscrepancyObservations = [];
   let incomplete = false;
+  const actorCue = STYLE_DRAWING_CONTRACTS[style]?.actorCue;
   for (const name of ['linework', 'coloring']) {
     const region = check[name];
-    if (!hasStyleRegionEvidence(region) || region.status === 'uncertain') incomplete = true;
+    if (!hasStyleRegionEvidence(region) || region.status === 'uncertain' || echoesStyleInstruction(region, contract)
+      || actorCue && region.scope !== 'actor') incomplete = true;
     else if (region.status === 'defect') conflicts.push({ name, region, subject: `panel ${panel} ${name}` });
   }
   // One successful focal face cannot certify the other named actors.
@@ -695,10 +731,22 @@ const resolvePanelStyleEvidence = (checks, contract, expectedActors) => {
     if (!face || !hasStyleText(face.location) || !hasStyleText(face.observed)) { incomplete = true; continue; }
     // Located, explicitly unavailable faces need no invented front view or repair.
     if (['hidden', 'back_view', 'too_small'].includes(face.visibility) && face.status === 'not_visible') continue;
-    if (!hasStyleRegionEvidence(face) || face.visibility !== 'clear' || face.status === 'uncertain') {
+    if (!hasStyleRegionEvidence(face) || face.visibility !== 'clear' || face.status === 'uncertain'
+      || echoesStyleInstruction(face, contract)) {
       incomplete = true; continue;
     }
     visibleFaces++;
+    if (face.status === 'defect' || style === 'GEKIGA' && (face.construction === 'anime_template' || face.ink === 'flat')) {
+      faceDiscrepancyObservations.push(`${actor} at ${face.location.trim()}: ${face.observed.trim()}`);
+    }
+    if (actorCue && (face.rendering_scope !== 'actor' || ![actorCue, 'other'].includes(face.rendering))) {
+      incomplete = true; continue;
+    }
+    if (actorCue && face.rendering !== actorCue) {
+      if (face.status === 'defect') conflicts.push({ name: 'face', region: face, subject: actor });
+      else incomplete = true;
+      continue;
+    }
     if (style === 'GEKIGA') {
       const constructionKnown = ['realistic_planes', 'anime_template', 'caricature', 'other'].includes(face.construction);
       const inkKnown = ['modeled_ink', 'flat', 'other'].includes(face.ink);
@@ -723,6 +771,10 @@ const resolvePanelStyleEvidence = (checks, contract, expectedActors) => {
     issues.push(uncertain('Style verdict or label is uncertain, minor, or unsupported by a material visible-medium conflict.'));
   }
   if (incomplete) issues.push(uncertain('Panel style evidence is incomplete or its visible face/medium cannot be resolved; keep hidden regions hidden.'));
+  const unresolved = issues.find(issue => issue.type === 'unverified');
+  if (unresolved && faceDiscrepancyObservations.length) {
+    unresolved.reason += ` Reported face discrepancy: ${faceDiscrepancyObservations.join('; ')}. This does not complete the evidence required for repair.`;
+  }
   return issues;
 };
 
@@ -742,13 +794,17 @@ export const buildImageQualityQaPrompt = ({
   // otherwise a complete-looking response can silently omit facial medium.
   const styleSchema = styleContracts.length ? `${JSON.stringify({ art_style: {
     expected_style:'requested code', observed_style:'observed medium or uncertain', status:'uncertain', material_impact:'uncertain',
-    linework:{status:'uncertain',location:'visible region',observed:'actual strokes'},
-    coloring:{status:'uncertain',location:'visible region',observed:'actual pigment or shadows'},
-    faces:[{subject:'exact cast name',status:'uncertain',visibility:'uncertain',location:'face location',observed:'actual face planes and ink',construction:'uncertain',ink:'uncertain'}],
+    linework:{status:'uncertain',scope:'uncertain',location:'visible region',observed:'actual strokes'},
+    coloring:{status:'uncertain',scope:'uncertain',location:'visible region',observed:'actual pigment or shadows'},
+    faces:[{subject:'exact cast name',status:'uncertain',visibility:'uncertain',location:'face location',observed:'actual face/body rendering',construction:'uncertain',ink:'uncertain',rendering:'uncertain',rendering_scope:'uncertain'}],
   } }).slice(1,-1)},` : '';
+  const actorMediumRules = [...new Set(styleContracts.map(({ style }) => style))]
+    .filter(style => STYLE_DRAWING_CONTRACTS[style]?.actorCue)
+    .map(style => `${style}: rendering=${STYLE_DRAWING_CONTRACTS[style].actorCue}; ${STYLE_DRAWING_CONTRACTS[style].evidence}`).join('\n');
   const styleInspection = styleContracts.length ? `
 
-PANEL STYLE EVIDENCE: requested styles ${styleContracts.map(({ panel, style }) => `${panel}=${style}`).join(', ')}. Judge each panel against its own submitted recipe; do not spread one medium across the page. In every spatial_checks entry add art_style: {"expected_style":"requested code","observed_style":"closest observed code or uncertain","status":"ok|defect|uncertain","material_impact":"none|minor_variation|requested_medium_missing|uncertain","linework":{"status":"ok|defect|uncertain","location":"visible region","observed":"actual strokes"},"coloring":{"status":"ok|defect|uncertain","location":"visible region","observed":"actual pigment/shadow treatment"},"faces":[{"status":"ok|defect|uncertain|not_visible","visibility":"clear|hidden|back_view|too_small|uncertain","subject":"exact cast name","location":"face location","observed":"visible face construction/marks or concrete reason unavailable"}]}. Include exactly one face record for EVERY actor in the submitted panel cast contract, not just a primary face. A clear secondary face must also match the panel medium. Use not_visible only with a located hidden/back-view/too-small explanation; keep uncertain visibility uncertain. Do not require equal shadow strength, identical faces or a front view. Eye size alone is not a style failure. Keep each location/observed phrase short (40 characters when possible); no repeated source text. Evidence concerns pixels, not genre labels, mood, clothes or identity. Compare foreground drawing and coloring with the recipe; minor variations cannot warrant repair. Preserve Camera/Action, age and recognizable identity. When faces are hidden or too small, record hidden/uncertain, never imagine them or demand a front view. For GEKIGA only, each clear face must also record construction=realistic_planes|anime_template|caricature|other|uncertain and ink=modeled_ink|flat|other|uncertain. Observe brow, eye, nose, cheek and jaw planes and ink ON the face. Ink on clothes or background can never prove a GEKIGA face. An unchanged flat anime face is not GEKIGA even with hatched clothing/background; mark requested_medium_missing only for this clear material conflict or another located missing requested medium. Watercolor/chibi/other recipes do not require GEKIGA face anatomy. A style label alone or missing/ambiguous observations is unverified, not a paid repair trigger. A located not_visible face is exempt; when no face can be evaluated, facial style remains unverified.` : '';
+PANEL STYLE EVIDENCE: requested styles ${styleContracts.map(({ panel, style }) => `${panel}=${style}`).join(', ')}. Judge each panel against its own submitted recipe; do not spread one medium across the page. In every spatial_checks entry add art_style: {"expected_style":"requested code","observed_style":"closest observed code or uncertain","status":"ok|defect|uncertain","material_impact":"none|minor_variation|requested_medium_missing|uncertain","linework":{"status":"ok|defect|uncertain","scope":"actor|background|uncertain","location":"visible region","observed":"actual strokes"},"coloring":{"status":"ok|defect|uncertain","scope":"actor|background|uncertain","location":"visible region","observed":"actual pigment/shadow treatment"},"faces":[{"status":"ok|defect|uncertain|not_visible","visibility":"clear|hidden|back_view|too_small|uncertain","subject":"exact cast name","location":"face/body location","observed":"visible face/body rendering or concrete reason unavailable"}]}. Include exactly one face record for EVERY actor in the submitted panel cast contract, not just a primary face. A clear secondary face must also match the panel medium. Use not_visible only with a located hidden/back-view/too-small explanation; keep uncertain visibility uncertain. Do not require equal shadow strength, identical faces or a front view. Eye size alone is not a style failure. Keep each location/observed phrase short (40 characters when possible); no repeated source text. Evidence concerns pixels, not genre labels, mood, clothes or identity. Compare foreground drawing and coloring with the recipe; minor variations cannot warrant repair. Preserve Camera/Action, age and recognizable identity. When faces are hidden or too small, record hidden/uncertain, never imagine them or demand a front view. For GEKIGA only, each clear face must also record construction=realistic_planes|anime_template|caricature|other|uncertain and ink=modeled_ink|flat|other|uncertain. Observe brow, eye, nose, cheek and jaw planes and ink ON the face. Ink on clothes or background can never prove a GEKIGA face. An unchanged flat anime face is not GEKIGA even with hatched clothing/background; mark requested_medium_missing only for this clear material conflict or another located missing requested medium. Watercolor/chibi/other recipes do not require GEKIGA face anatomy. A style label alone or missing/ambiguous observations is unverified, not a paid repair trigger. A located not_visible face is exempt; when no face can be evaluated, facial style remains unverified.
+${actorMediumRules ? `ACTOR MEDIUM CUES: for these styles, each clear faces record also needs rendering (the observed cue below, other, or uncertain) and rendering_scope (actor|background|uncertain). Describe that actor's visible body/line/pigment in observed, not merely the label or copied recipe. linework/coloring must also locate actor rendering; background-only effects cannot prove an actor medium. Hidden bodies or ambiguous pigment stay uncertain; never change Camera or spend a repair merely to expose evidence.\n${actorMediumRules}` : ''}` : '';
   const inspectionScope = isSingleImage
     ? `You are the visible quality gate for a generated single illustration. Inspect the supplied image as one continuous scene and compare it with the submitted prompt.
 Do not expect or reward a panel grid, comic layout, speech bubbles, or dialogue unless the submitted prompt explicitly requests them. The reference sheets guide visible identities; they do not require every reference character to appear unless the submitted prompt requests that cast.`
@@ -843,7 +899,7 @@ For every surface_text issue include text_role (incidental, story_required, or u
 Before deciding pass, compare the exact requested title, each panel's dialogue or explicit silence, anatomical hand side (not screen-left/screen-right), and prop ownership before and after each transfer. Trace each relevant hand to its shoulder and body orientation. If the connection cannot be resolved, report unverified rather than guessing. For each of these four checks, include a short observation with panel numbers, expected versus visible state, or an explicit not-applicable reason. A plausible story or attractive finish is not proof of script compliance.
 ACTOR HAND COUNT: In each hand_geometry for panels with CAST COUNT, return actor_limb_inventory with one record for every named actor: {"actor":"exact cast name","visible_hands":[{"anatomical_side":"left|right|uncertain","x":0.0,"y":0.0,"shoulder_connection":"clear|detached|uncertain"}],"evidence":"pixel-grounded hand locations and arm paths, or reason no hand is visible"}. Coordinates are panel-relative. Count distinct visible hands before digit grading. Three distinct hands belonging to one actor are an anatomy defect even when the third hand side is unclear. A detached hand with clear ownership is also a defect. For overlap, crop or unresolved ownership, use uncertain and retain the candidate; do not infer hidden hands or flatten expressive poses.
 HAND ENDPOINT AND DIGIT EVIDENCE: In every spatial_checks entry return hand_geometry. Inventory every visible hand for every named character, including small background hands, before grading any single prominent hand. Trace every visible arm from shoulder through elbow and wrist to its endpoint before counting digits, and compare nearby feet/footwear so a shoe or foot cannot be mislabeled as a hand. A named character with more than two visible shoulder-connected arms or hands is an anatomy defect even when each individual hand has five digits or matches a scripted verb. Inspect every large, foreground, foreshortened, open, or action-critical visible arm endpoint. Return hands entries {"subject":"character and anatomical hand","location":"pixel-grounded panel location","pose":"open/gripping/fist/other","observed_endpoint":"hand|foot|shoe|object|ambiguous","wrist_palm_connection":"clear|missing|ambiguous","palm_evidence":"visible wrist, palm plane and separation from any shoe/foot","visible_digits":5,"occluded_digits":0,"status":"ok|defect|uncertain","evidence":"separate thumb/finger contours and their palm connection"}. Status ok requires observed_endpoint:"hand", wrist_palm_connection:"clear", grounded palm_evidence, and visible_digits plus occluded_digits equal five. If an arm ends in a foot, shoe, footwear or object, use defect even when the silhouette has five protrusions. Use uncertain when endpoint type, wrist/palm connection, overlap or crop cannot be resolved. Use status:not_applicable with hands:[] only when no arm endpoint is visible enough to inspect; never copy the requested anatomy as observed evidence.
-UPWARD EVIDENCE: for a requested upward camera at any height, elevation.projection_cues must locate observed undersides of two distinct visible subjects/surfaces as {"subject":"specific actor or prop","surface":"underside|top|front|unclear","x":0.0,"y":0.0}, within the panel. Inspect faces/bodies as well as the setting; ceiling, large foreground, chibi, tilted background or a camera label alone is not proof. Missing/ambiguous projection is uncertain, not ok. No full-body requirement or regeneration from weak angle alone.
+ELEVATION PROJECTION EVIDENCE: for a requested upward camera, elevation.projection_cues must locate observed undersides; for a requested downward camera, locate observed tops. Include two distinct visible subjects/surfaces as {"subject":"specific actor or prop surface","surface":"underside|top|front|unclear","x":0.0,"y":0.0}, within the panel. Inspect faces/bodies as well as the setting; ceiling, floor, large foreground, chibi, tilted background or a camera label alone is not proof. A requested camera dimension cannot be not_applicable, and copying its label/request into observed is not evidence. Missing/ambiguous projection is uncertain, not ok. No full-body requirement or regeneration from weak angle alone.
 
 BUBBLE TAIL EVIDENCE: for every visible speech bubble, trace the complete tail from its root on the bubble outline to the actual mouth/head silhouette it touches. Bubble position or the nearest body is not speaker evidence. In each bubble_speaker check return bubbles entries {"bubble":"B1","text":"visible dialogue","expected_speaker":"name from TAIL TIP LOCK or TAILS metadata","observed_tail_target":"name located from visible identity features","tail_endpoint_evidence":"specific visible tip endpoint and identity cues","endpoint_relation":"touches_speaker|points_to_speaker|wrong_character|empty_space|ambiguous|missing","tail_tip":{"x":0.62,"y":0.31},"speaker_anchor":{"x":0.60,"y":0.34,"part":"mouth|head"},"root_relation":"lower_speaker_facing|other|ambiguous","path_relation":"clear|crosses_head|crosses_face|crosses_hair|crosses_text|ambiguous","tail_path_evidence":"visible root location and every crossed silhouette or clear empty corridor","center_x":0.75,"position_evidence":"visible balloon body location"}. tail_tip and speaker_anchor are independently observed points normalized within that panel: x=0 left/1 right, y=0 top/1 bottom. speaker_anchor is the nearest point on the assigned speaker's mouth/head silhouette, not the center of their face. Use touches_speaker only when the visible tip actually meets that silhouette and both points agree; direction, proximity, or pointing toward it is insufficient. root_relation is lower_speaker_facing only when the root leaves the lower half near lower-center on the assigned speaker's side. path_relation is clear only when the shortest visible route stays in empty space and does not cross, overlap, or pass over any head, face, hair, or dialogue text. center_x is the observed balloon BODY center, excluding its tail, normalized to panel width. Match IDs by TEXT and take expected_speaker only from the submitted mapping, never from the apparent target or bubble position. Do not copy requested slot coordinates as observations. For multi-bubble manga panels, independently inspect every adjacent pair: center_x(B1)>center_x(B2)>center_x(B3)...; vertical staggering cannot excuse a horizontal reversal. If a position or text-to-ID match is unclear, omit center_x and report uncertain, never invent it. If the tip reaches a different person, use wrong_character; if it ends in empty space use empty_space; if missing, cropped, unexpectedly forked for an individual speaker, or ambiguous use ambiguous or missing. Use not_applicable with bubbles:[] only when the panel has no speech bubble.
 COLLECTIVE BALLOONS: A mapped collective speaker denotes its members, never an extra person. For each such bubble return targets: an array with one observation per required member, each using observed_tail_target (exact member name), endpoint_relation, tail_endpoint_evidence, tail_tip, speaker_anchor, root_relation, path_relation and tail_path_evidence from the same schema above. Use the submitted members list, or the panel cast for an unqualified whole-group speaker. Identify each actual endpoint from pixels; do not copy membership as observed coverage. A deliberately branched collective tail is allowed; inspect each branch separately. A group description is not an identity mismatch. If member identity, coverage or a branch is unresolved, mark it ambiguous; never invent coordinates or a defect.
@@ -974,7 +1030,7 @@ export const parseImageQualityQaResponse = (responseText, { mode = 'four-panel',
   for (const contract of panelStyleContracts(finalPrompt, mode, requirePanelStyleEvidence)) {
     issues.push(...resolvePanelStyleEvidence(spatialChecks, contract, castContracts.find(item => item.panel === contract.panel)?.names || []));
   }
-  const upwardProjectionPanels = mode === 'single-image' ? new Set() : upwardPanels(finalPrompt);
+  const panelCameraContracts = mode === 'single-image' ? new Map() : cameraContracts(finalPrompt);
   const bubbleContracts = mode === 'single-image' || !finalPrompt ? [] : extractBubbleContracts(finalPrompt);
   const contactContracts = mode === 'single-image' || !finalPrompt ? [] : extractPanelContactActors(finalPrompt);
   const fullBodyPanels = mode === 'single-image' ? new Set() : extractFullBodyPanels(finalPrompt);
@@ -1263,9 +1319,15 @@ export const parseImageQualityQaResponse = (responseText, { mode = 'four-panel',
         // A fluent overall verdict cannot stand in for evidence on each independent axis.
         for (const axis of ['elevation', 'azimuth', 'framing', 'lens', 'boundary']) {
           const dimension = check?.dimensions?.[axis];
+          const cameraContract = panelCameraContracts.get(entry.panel);
           const grounded = ['requested', 'observed'].every(key => typeof dimension?.[key] === 'string' && dimension[key].trim());
           if (!grounded || !statuses.has(dimension?.status)) {
             issues.push({ type: 'unverified', panel: entry.panel, subject: type, reason: `Camera ${axis} lacks separate requested and observed evidence.` });
+          } else if ((dimension.status === 'not_applicable' && cameraContract?.required.has(axis))
+            || (dimension.status === 'ok' && repeatsCameraRequest(dimension, cameraContract))) {
+            dimension.status = 'uncertain';
+            issues.push({ type: 'unverified', panel: entry.panel, subject: type,
+              reason: `Camera ${axis} lacks independent evidence for its explicit request; a missing check or copied camera label cannot verify the image.` });
           } else if (axis === 'framing' && dimension.status === 'ok' && pullbackPanels.has(entry.panel)
             && (!hasGroundedShotScale(dimension)
               || (['waist_crop', 'chest_crop', 'head_only'].includes(dimension.scale_evidence.extent)
@@ -1288,11 +1350,11 @@ export const parseImageQualityQaResponse = (responseText, { mode = 'four-panel',
               castContracts.find(contract => contract.panel === entry.panel)?.names || []))) {
             issues.push({ type: 'unverified', panel: entry.panel, subject: type,
               reason: 'Camera framing claims full bodies without a per-actor visible-foot inventory; keep the image and verify the crop.' });
-          } else if (axis === 'elevation' && dimension.status === 'ok' && upwardProjectionPanels.has(entry.panel)
-            && !hasUpwardProjectionEvidence(dimension)) {
+          } else if (axis === 'elevation' && dimension.status === 'ok' && cameraContract?.projection
+            && !hasProjectionEvidence(dimension, cameraContract.projection)) {
             dimension.status = 'uncertain';
             issues.push({ type: 'unverified', panel: entry.panel, subject: type,
-              reason: 'Upward camera PASS lacks two localized underside projection cues; preserve the image for visual review.' });
+              reason: `${cameraContract.projection === 'top' ? 'Downward' : 'Upward'} camera PASS lacks two localized ${cameraContract.projection} projection cues; preserve the image for visual review.` });
           } else if (dimension.status === 'ok' && CAMERA_SHOT_INSTRUCTION_ECHO_RE.test(dimension.observed)) {
             dimension.status = 'uncertain';
             issues.push({ type: 'unverified', panel: entry.panel, subject: type,

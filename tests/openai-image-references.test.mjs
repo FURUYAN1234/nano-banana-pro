@@ -14,6 +14,34 @@ import { withoutMosaicRepair } from './helpers/mosaic-isolation.mjs';
 // 非productionのrequest-shape用データ。生成画質の証拠には使用しない。
 const image = text => `data:image/png;base64,${Buffer.from(text).toString('base64')}`;
 
+// Preserve the previous manifest snapshots except for the two declared additions.
+const withoutPanelRenderingPriority = text => text
+  .replaceAll(" Identity means the individual's identifying traits. The selected panel rendering recipe determines face/eye construction and body stylization; preserve the reference drawing style only under an explicit reference-style lock in the approved prompt.", '')
+  .replace('camera, panel medium and rendering recipe, output layout', 'camera, output layout');
+
+test('character reference identity defers construction to the selected panel recipe unless reference style is explicitly locked', () => {
+  for (const colorMode of ['color', 'monochrome']) {
+    for (const repair of [false, true]) {
+      const plan = buildOpenAIReferencePlan({ colorMode, characterImages: [image('sheet')],
+        backgroundImage: image('background'), backgroundEnabled: true,
+        ...(repair ? { originalCandidate: { base64Img: 'Yw==', mimeType: 'image/png' } } : {}) });
+      const character = plan.rolePrompt.split('\n').find(line => line.includes('CHARACTER REFERENCE'));
+      assert.match(character, /identity and canonical clothing unless the approved prompt explicitly overrides clothing/);
+      assert.match(character, /Identity means the individual's identifying traits/);
+      assert.match(character, /selected panel rendering recipe determines face\/eye construction and body stylization/);
+      assert.match(character, /preserve the reference drawing style only under an explicit reference-style lock in the approved prompt/);
+      assert.match(plan.rolePrompt, /approved prompt determines.*panel medium and rendering recipe/);
+      const background = plan.rolePrompt.split('\n').find(line => line.includes('BACKGROUND REFERENCE'));
+      assert.doesNotMatch(background, /face\/eye|body stylization|reference-style lock/);
+      if (repair) {
+        const original = plan.rolePrompt.split('\n').find(line => line.includes('SOURCE IMAGE TO EDIT'));
+        assert.match(original, /Preserve its already-correct content; change only the specified defects/);
+        assert.doesNotMatch(original, /face\/eye|body stylization|reference-style lock/);
+      }
+    }
+  }
+});
+
 test('only initial OpenAI monochrome requests end with the ink manuscript finishing instruction, even without references', () => {
   const finish = '最終仕上げ：漫画雑誌の墨一色原稿として、白地・黒ベタ・網点で描く。白い肌の明部と未指定の紙面は無地の白。グレーの塗り・ぼかし・全体にかかる網点を除き、指定素材・褐色肌・光源に沿う影の網点は保持する。各コマの指定画風、劇画の墨線・ベタ・カケアミを保ち、色は一切残さない。';
   for (const count of [0, 2, 16]) {
@@ -34,10 +62,10 @@ test('only initial OpenAI monochrome requests end with the ink manuscript finish
   const repair = buildOpenAIReferencePlan({ colorMode: 'monochrome', characterImages: [image('a')],
     backgroundImage: image('b'), backgroundEnabled: true, originalCandidate: { base64Img: 'Yw==', mimeType: 'image/png' } });
   assert.doesNotMatch(repair.rolePrompt, /最終仕上げ/);
-  assert.equal(createHash('sha256').update(JSON.stringify({ ...repair, rolePrompt: withoutMosaicRepair(repair.rolePrompt) })).digest('hex'), '4f92da4002dc395e8a7e9609a99200faf893a406264a90d3ca67e52cb3c2fc5f');
+  assert.equal(createHash('sha256').update(JSON.stringify({ ...repair, rolePrompt: withoutPanelRenderingPriority(withoutMosaicRepair(repair.rolePrompt)) })).digest('hex'), '4f92da4002dc395e8a7e9609a99200faf893a406264a90d3ca67e52cb3c2fc5f');
 });
 
-test('color reference plans retain byte-identical initial, background and repair manifests', () => {
+test('color reference plans retain initial, background and repair manifests except for declared panel rendering priority', () => {
   const characterImages = [image('a')];
   const backgroundImage = image('b');
   const originalCandidate = { base64Img: 'Yw==', mimeType: 'image/png' };
@@ -51,7 +79,7 @@ test('color reference plans retain byte-identical initial, background and repair
     for (const colorMode of ['color', undefined]) {
       const plan = buildOpenAIReferencePlan({ ...options, colorMode });
       assert.deepEqual(plan, before);
-      assert.equal(createHash('sha256').update(JSON.stringify({ ...plan, rolePrompt: withoutMosaicRepair(plan.rolePrompt) })).digest('hex'), expected);
+      assert.equal(createHash('sha256').update(JSON.stringify({ ...plan, rolePrompt: withoutPanelRenderingPriority(withoutMosaicRepair(plan.rolePrompt)) })).digest('hex'), expected);
     }
   }
 });

@@ -223,9 +223,12 @@ test('ChatGPT Web prompt has generic quality locks for dialogue, bubbles, charac
   assert.match(prompt, /FOLD PRIORITY: 2-4 triangular overlap\/pinch shadows in panel medium/);
   assert.match(prompt, /hard cel edges NORMAL\/unmarked only/);
   assert.match(prompt, /no geometric patterns/);
-  assert.match(prompt, /Draw in a high-budget, chic and cinematic full-color TV anime style|Chic cinematic full-color TV anime/);
-  assert.match(prompt, /official Japanese animation illustration|polished Japanese animation finish/);
-  assert.doesNotMatch(prompt, /Base style: full-color TV anime/);
+  assert.match(prompt, /Follow each panel's selected drawing medium and rendering recipe/);
+  assert.match(prompt, /linework\/folds follow panel medium, not fixed anime/);
+  for (const style of ['WATERCOLOR', 'RETRO', 'GEKIGA', 'MONOCHROME_ACCENT']) {
+    assert.match(prompt, new RegExp(`PANEL STYLE LOCK: ${style}[^\\n]*\\nStyle: \\S`));
+  }
+  assert.doesNotMatch(prompt, /Draw in a high-budget, chic and cinematic full-color TV anime style|Chic cinematic full-color TV anime|official Japanese animation illustration|polished Japanese animation finish|Base style: full-color TV anime/);
   assert.match(prompt, /immutable typeset layer.*compare every glyph|BUBBLE QA: immutable TEXT.*compare every glyph/i);
   assert.match(prompt, /bubble tail tip must terminate at its assigned speaker's mouth\/head silhouette|mapped tails/i);
   assert.match(prompt, /hair color, hairstyle, eye color, glasses status, skin tone, outfit|CHARACTER QA: preserve identity/i);

@@ -3,7 +3,7 @@ import { getEndingModePolicy } from './ending-mode-policy.js';
 // --- 定数・タグ定義 (constants.js) ---
 // App.jsx から抽出された共有定数
 
-export const SYSTEM_VERSION = "v6.8.7";
+export const SYSTEM_VERSION = "v6.8.8";
 
 // --- Punchline ラベル変換関数 ---
 export const getPunchlineLabel = (type) => {
@@ -113,6 +113,10 @@ export const getModelBadgeInfo = (modelId) => {
   };
 };
 
+// Retain the facial anatomy recipe verified in the saved API output.
+// Share it across providers and compression tiers instead of paraphrasing it.
+export const GEKIGA_FACE_CONSTRUCTION = 'Redraw visible faces with small realistic eyes/irises, heavy anatomical eyelids, pronounced nose bridges and carved cheek/jaw planes.';
+
 // [v2.25] 感情連動スタイル定義 - 固有名詞ゼロ (Trademark Sanitization準拠)
 export const EMOTION_STYLES = {
   NORMAL: {
@@ -121,12 +125,12 @@ export const EMOTION_STYLES = {
     vfx: '',
   },
   CHIBI_GAG: {
-    style: 'In THIS PANEL ONLY, use expressive chibi caricature. Preserve Camera/Action, jointed body acting, individual gaze and facial reactions, recognizable hair and glasses. Reduce deformation when tiny bodies or enlarged heads would hide acting or flatten perspective; never zoom in to show cuteness.',
+    style: 'In THIS PANEL ONLY, redraw the actors as expressive chibi: enlarged heads above shortened torsos and jointed limbs, not just bigger eyes on normal bodies. Preserve Camera/Action, body acting, gaze, facial reactions, hair and glasses. Adapt deformation to keep acting and perspective readable; never replace chibi with unchanged anime or zoom for cuteness.',
     proportions: 'Explicit user proportions win. Otherwise choose the degree of chibi deformation around camera, body acting and expression; no compulsory all-cast head ratio.',
     vfx: '(Exaggerated sweat drops:1.3), (popping veins:1.2), (comedic steam from head), (glasses preserved on chibi face if character wears them:1.5)',
   },
   GEKIGA: {
-    style: 'In THIS PANEL ONLY, fully redraw faces as realistic GEKIGA manga: angular carved brow/nose/cheek/jaw anatomy, thick variable brush contours, solid ink shadow planes and directional facial crosshatching. Redraw facial construction, not just darker anime shading or speed lines. Keep each recognizable identity and age; preserve scripted eyelids, mouth, gaze, Camera/Action and body acting. FULL COLOR.',
+    style: `In THIS PANEL ONLY, fully redraw faces as realistic GEKIGA manga. ${GEKIGA_FACE_CONSTRUCTION} Thick variable brush contours, solid ink shadow planes and directional facial crosshatching model this anatomy. Keep recognizable identity/age, scripted gaze, Camera/Action and body acting; no added anger, age or wrinkles. FULL COLOR.`,
     proportions: '',
     vfx: '(Heavy crosshatching shadows:1.4), (dramatic rim lighting:1.5), (high contrast deep shadows with stark chiaroscuro lighting), (intense speed lines in background)',
     surfaceException: 'intentional crosshatching and deep ink shadows only',
@@ -159,7 +163,7 @@ export const EMOTION_STYLES = {
     vfxMulti: '(Explosive radial speed lines from center:1.5), (intense glowing energy aura:1.2), (intense dramatic backlight), (dynamic action poses:1.3)',
   },
   WATERCOLOR: {
-    style: 'In THIS PANEL ONLY, shift to a soft watercolor painting style with blurred edges, transparent color washes, and visible paper texture. The mood is nostalgic and dreamlike.',
+    style: 'In THIS PANEL ONLY, paint the actors as watercolor: transparent color washes with pigment layers, broken soft edges and pigment pooling on faces, hair and clothing, with crisp focal facial/hand accents and paper grain. Preserve Camera/Action and identity. A watercolor background behind unchanged cel-shaded actors is insufficient.',
     proportions: '',
     vfx: '(Soft watercolor washes:1.4), (blurred dreamy edges:1.3), (muted warm sepia tones), (visible paper grain texture)',
     surfaceException: 'intentional watercolor wash and paper grain only',
@@ -197,18 +201,18 @@ EMOTION_STYLES.FLASHBACK = {
   vfx: '(Warm sepia color grading:1.5), (soft vignette darkening at panel edges:1.4), (dreamy soft-focus gaussian blur:1.3), (faded desaturated colors:1.2), (wavy or dissolved panel border edges:1.2)',
 };
 EMOTION_STYLES.UKIYOE = {
-  style: 'In THIS PANEL ONLY, shift to a Japanese ukiyo-e woodblock print style. Use flat areas of bold color with strong black outlines. Characters are drawn with stylized proportions reminiscent of Edo-period art. Backgrounds feature iconic elements like waves, mountains, or cherry blossoms in the flat ukiyo-e tradition. IMPORTANT: Maintain each character\'s identity (hair color, accessories) despite the art style shift.',
+  style: 'In THIS PANEL ONLY, redraw the existing actors and scene as ukiyo-e woodblock: carved black contours, flat pigment planes and rhythmic printed shapes on faces and clothing. Preserve Camera/Action, identity, canonical hair colors and accessories; do not substitute a stock historical scene or leave normal anime actors over a woodblock background.',
   proportions: 'Characters may appear slightly elongated with elegant poses typical of ukiyo-e figure drawing.',
   vfx: '(Flat bold color areas with no gradients:1.4), (thick black woodblock-style outlines:1.5), (stylized wave or cloud patterns in background:1.3), (traditional Japanese color palette - indigo vermillion ochre:1.3)',
 };
 EMOTION_STYLES.POP_ART = {
-  style: 'In THIS PANEL ONLY, shift to a vibrant pop art comic style inspired by Roy Lichtenstein. Use bold primary colors (red, blue, yellow), thick black outlines, and Ben-Day dot patterns for shading. The composition should feel graphic and punchy with high contrast. Speech bubbles should have bold jagged edges.',
+  style: 'In THIS PANEL ONLY, redraw actors as pop-art print: thick graphic contours, flat vivid pigment planes and controlled Ben-Day dots modeling faces and clothing. Keep Camera/Action, identity, dialogue and bubble layout. Colorful dots only behind unchanged anime actors are insufficient.',
   proportions: '',
   vfx: '(Bold Ben-Day halftone dot shading:1.5), (primary color palette - red blue yellow:1.4), (thick bold pop art outlines:1.4), (high contrast flat color fills:1.3), (retro comic book printing texture:1.2)',
   surfaceException: 'intentional Ben-Day dots and retro print texture only',
 };
 EMOTION_STYLES.SKETCH = {
-  style: 'In THIS PANEL ONLY, the art style shifts to a rough pencil sketch or storyboard draft. Lines are loose, scratchy, and intentionally unfinished. Some areas may have construction lines or rough hatching visible. The effect suggests this panel is a "raw thought" or "unpolished reality" breaking through the clean manga surface. IMPORTANT: Characters must still be recognizable by their key features.',
+  style: 'In THIS PANEL ONLY, construct the actors with loose visible pencil strokes, rough hatching and paper grain; faces, hair and clothing share the sketch medium, with readable focal features. Keep Camera/Action and recognizable identity. Paper texture behind clean cel actors is insufficient.',
   proportions: '',
   vfx: '(Rough pencil sketch lines:1.5), (visible construction guidelines:1.3), (loose crosshatch shading:1.4), (unfinished edges fading to white paper:1.3), (graphite pencil texture on paper grain:1.2)',
   surfaceException: 'intentional pencil grain, rough hatching, and construction lines only',
@@ -221,7 +225,7 @@ EMOTION_STYLES.NEON = {
 };
 // [v2.95] 画風パレット拡張: 6つの新EMOTION_STYLES（厚塗り・パステル・セル画・ダーク・繊細線・高彩度）
 EMOTION_STYLES.THICK_PAINT = {
-  style: 'In THIS PANEL ONLY, shift to a thick impasto digital painting style. Use heavy brush strokes with visible texture, rich color layering, and strong three-dimensional form through dramatic light and shadow modeling. The overall impression should feel weighty, substantial, and premium like a gallery painting.',
+  style: 'In THIS PANEL ONLY, paint actor faces, hair and clothing with overlapping opaque brush masses, visible layered strokes and impasto-like edge accents; model turning forms through pigment and light, not only a textured background. Preserve Camera/Action, recognizable identity, age and focal facial features.',
   proportions: '',
   vfx: '(Visible thick brush stroke texture:1.5), (rich oil painting color depth:1.4), (dramatic chiaroscuro light modeling:1.4), (three-dimensional form through heavy shading:1.3), (warm subsurface scattering on skin:1.2)',
   surfaceException: 'intentional visible brush-stroke texture and paint layering only',
@@ -274,23 +278,23 @@ EMOTION_STYLES.GOLDEN_HOUR = {
 
 // Budget-safe drawing recipes. Keep the visual operation, not a bare style name.
 export const COMPACT_EMOTION_STYLES = Object.freeze({
-  CHIBI_GAG: 'Expressive chibi; keep Camera/Action, body acting, gaze and faces. Reduce deformation if it hides acting/perspective; no zoom for cuteness.',
-  GEKIGA: 'Realistic gekiga: sculpted face planes at brow/nose/cheek/jaw, brush ink/facial hatching; rebuild, not darker anime. Keep scripted eyelids/mouth/acting, identity/age/color.',
+  CHIBI_GAG: 'Redraw enlarged heads, shortened torsos and jointed limbs as expressive chibi, not unchanged anime. Keep Camera/Action, acting/gaze/hair/glasses; readable perspective, no zoom for cuteness.',
+  GEKIGA: `Realistic gekiga: ${GEKIGA_FACE_CONSTRUCTION} Brush ink/facial hatching; keep identity/age/color, gaze and Camera/Action.`,
   SHOUJO: 'Delicate thin linework, fine eyelashes, luminous layered irises, airy soft shading, petals and bokeh behind clear acting faces.',
   HORROR: 'Deep ink masses, sharp lit facial planes and eerie rim/underlighting; keep scripted framing and cast.',
   BLANK: 'Affected face: blank pupil-less eyes behind retained glasses, pale face, rigid acting and dark emotional aura.',
   IMPACT: 'Forceful brush contours, hard shadow masses and explosive strokes; crisp action silhouettes in the scripted crop.',
-  WATERCOLOR: 'Transparent color washes, soft pigment edges and paper grain; controlled crisp facial/hand accents.',
+  WATERCOLOR: 'Transparent pigment layers, pooling and broken edges ON actor faces/hair/clothing, not just background; paper grain and crisp focal facial/hand accents. Keep Camera/Action/identity.',
   RETRO: 'Bold period-manga contours, graphic screentone shadows and classic expressive marks; keep canonical character colors.',
   GLITTER: 'Golden backlight, brilliant controlled sparkles and hair rim highlights; preserve scripted expressions.',
   SHADOW: 'Existing actor in deep cast-shadow silhouette with readable eye highlights and facial contour; no new figure.',
   SPEED: 'Directional strokes and panning streaks following actual movement; sharp focal face and limbs.',
   FLASHBACK: 'Delicate faded-memory rendering, soft vignette and subdued environmental palette; identity and costume remain.',
-  UKIYOE: 'Carved woodblock contours, flat pigment planes, patterned textures and rhythmic curves applied to the existing scene.',
-  POP_ART: 'Bold graphic contours, flat vivid planes and controlled Ben-Day dots; preserve faces and lettering.',
-  SKETCH: 'Visible energetic pencil strokes, deliberate hatching and paper grain; readable facial features and action.',
+  UKIYOE: 'Carved woodblock actor contours, flat pigment planes and rhythmic printed shapes on faces/clothing; existing scene, Camera/Action/identity fixed.',
+  POP_ART: 'Bold graphic actor contours, flat vivid pigment and Ben-Day dots on faces/clothing; Camera/Action/identity/lettering fixed, not background-only dots.',
+  SKETCH: 'Visible pencil strokes and deliberate hatching construct actor faces/hair/clothing; paper grain, readable features, Camera/Action/identity fixed.',
   NEON: 'Colored neon rims and sharp reflected light on dark surfaces, controlled glow behind crisp faces.',
-  THICK_PAINT: 'Sculpted opaque color masses, visible layered brush strokes and impasto-like edge accents.',
+  THICK_PAINT: 'Opaque brush masses and layered strokes model actor faces/hair/clothing, with impasto-like edges; Camera/Action/identity/age fixed, not background texture alone.',
   PASTEL: 'Soft pastel pigment, gentle diffused light and airy low-contrast shading; clear focal edges.',
   CEL: 'Decisive animation ink, flat color fills and hard-edged cel-shadow planes; no painterly gradients.',
   DARK_ANIME: 'Deep low-key shadow planes, restrained environmental color and narrow motivated rim light.',
@@ -301,17 +305,33 @@ export const COMPACT_EMOTION_STYLES = Object.freeze({
   GOLDEN_HOUR: 'Amber sunset key light, long cast shadows and warm rim highlights; cinematic color depth.'
 });
 
+// One palette contract drives automatic selection and observed actor-medium QA.
+// Automatic selection uses the six visually reviewed media. Other recipes
+// remain readable for explicitly imported/manual scenarios.
+const actorDrawingStyles = {
+  GEKIGA: { family: 'gekiga' },
+  CHIBI_GAG: { family: 'chibi', actorCue: 'shortened_body', evidence: 'enlarged head plus shortened torso and jointed limbs, projected through the fixed Camera' },
+  WATERCOLOR: { family: 'watercolor', actorCue: 'transparent_washes', evidence: 'transparent pigment layers and broken pooling edges on the actor, not just paper or background' },
+  UKIYOE: { family: 'woodblock', actorCue: 'woodblock_planes', evidence: 'carved actor contours and flat pigment planes' },
+  POP_ART: { family: 'pop_print', actorCue: 'ben_day_print', evidence: 'bold actor contours, flat color and Ben-Day print marks on actor planes' },
+  SKETCH: { family: 'pencil', actorCue: 'pencil_strokes', evidence: 'visible pencil strokes and hatching constructing the actor' },
+  THICK_PAINT: { family: 'opaque_paint', actorCue: 'opaque_brush_masses', evidence: 'overlapping opaque brush masses modeling the actor' },
+};
+export const STYLE_DRAWING_CONTRACTS = Object.freeze(Object.fromEntries(Object.keys(EMOTION_STYLES).map(style => [style,
+  Object.freeze({ family: 'anime', actorCue: null, automatic: ['NORMAL', 'GEKIGA', 'WATERCOLOR', 'POP_ART', 'SKETCH', 'CHIBI_GAG'].includes(style), ...actorDrawingStyles[style] }),
+])));
+
 // [v2.53.3] HYPER-DYNAMIC Camera Angle Generator — 数値ウェイト付きタグ強化版
 export const cameraAngles = [
-  "EXTREME FISH-EYE LOW ANGLE: (fish-eye barrel distortion:1.8), (extreme low angle:1.7), (bulging foreground objects:1.6), (curved horizon:1.5). Camera at knee height, spherical distortion warps floor outward, character legs appear massive",
+  "LOW ANGLE WIDE SHOT: (rectilinear wide-angle perspective:1.8), (low angle:1.7), (near-far scale contrast:1.6). Camera at knee height looking up; foreground and distant bodies follow coherent perspective, straight setting lines remain straight",
   "DYNAMIC TELEPHOTO HIGH ANGLE: (telephoto compression:1.8), (extreme high angle:1.7), (flattened depth:1.6), (compressed background:1.5). Looking down from above, faces large, bodies compress vertically",
   "EXTREME DUTCH ANGLE (30° tilt): (dutch angle 30 degrees:1.8), (tilted horizon:1.7), (diagonal composition:1.6), (zero horizontal lines:1.5). Entire scene tilted 30 degrees, floor becomes steep diagonal",
-  "ULTRA LOW ANGLE FISH-EYE: (extreme low angle:1.8), (fish-eye distortion:1.7), (exaggerated foreshortening:1.6), (towering characters:1.5). Camera on floor looking straight up, ceiling curves into dome",
+  "FLOOR-LEVEL WIDE ANGLE: (extreme low angle:1.8), (rectilinear wide-angle depth:1.7), (exaggerated foreshortening:1.6), (towering characters:1.5). Camera on floor looking up; ceiling and architectural lines retain straight projection",
   "DRAMATIC TELEPHOTO MEDIUM SHOT: (telephoto compression:1.8), (claustrophobic depth:1.7), (flattened spatial layers:1.6). Background objects unnaturally close to characters",
   "BIRD'S EYE DUTCH ANGLE (20° tilt): (extreme high angle:1.8), (bird's eye view:1.7), (dutch angle 20 degrees:1.6), (foreshortened bodies:1.5). Directly overhead, tilted 20 degrees",
-  "EXTREME WIDE ANGLE OVER-THE-SHOULDER: (fish-eye distortion:1.7), (over-the-shoulder composition:1.6), (barrel distortion:1.5). Fish-eye from behind one character's massive shoulder",
+  "WIDE ANGLE OVER-THE-SHOULDER: (rectilinear wide-angle perspective:1.7), (over-the-shoulder composition:1.6), (foreground-background depth:1.5). View from behind one character's shoulder with straight environmental edges",
   "CINEMATIC LOW ANGLE TELEPHOTO: (extreme low angle:1.8), (telephoto compression:1.7), (imposing heroic pose:1.5). Camera below chin level, background compresses dramatically flat",
-  "DYNAMIC ACTION FISH-EYE WIDE SHOT: (fish-eye barrel distortion:1.8), (spherical scene distortion:1.7), (exaggerated depth separation:1.6). Full scene through spherical distortion, edges curve dramatically",
+  "DYNAMIC ACTION WIDE SHOT: (rectilinear wide-angle perspective:1.8), (coherent spatial depth:1.7), (exaggerated depth separation:1.6). Full scene with strong near-far scale contrast and straight setting lines",
   "WORM'S EYE EXTREME DUTCH (15° tilt): (extreme low angle:1.8), (worm's eye view:1.7), (dutch angle 15 degrees:1.6), (towering full-body from below:1.5). Camera at ground level tilted, ant's-eye perspective. NEVER crop to shoes only"
 ];
 

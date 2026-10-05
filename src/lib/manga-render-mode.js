@@ -1,4 +1,5 @@
 import { FOCAL_DEPTH_HIERARCHY, FOCAL_READABILITY, FOCAL_SUBJECT_SEPARATION_FALLBACK, SKIN_LIGHTING, SHARED_IMAGE_QUALITY_CONTRACT } from './shared-image-quality.js';
+import { GEKIGA_FACE_CONSTRUCTION } from './constants.js';
 
 export const normalizeMangaColorMode = (value) => value === 'monochrome' ? 'monochrome' : 'color';
 export const isMonochromePrompt = (prompt) => {
@@ -173,7 +174,7 @@ export const MONOCHROME_IMAGE_QUALITY_CONTRACT = SHARED_IMAGE_QUALITY_CONTRACT
 // colored recipes are not included and then contradicted by a later warning.
 export const MONOCHROME_EMOTION_STYLES = Object.freeze({
   CHIBI_GAG: 'Super-deformed chibi anatomy: normally 2-3 heads tall, unless explicit proportions override. Enlarge the skull; compress torso and jointed limbs, not merely eyes. Preserve Camera/Action, body acting, individual gaze/reactions, hair/glasses. Project this redesigned body into the same shot, not a zoom or lineup. Black accents on white.',
-  GEKIGA: 'Fully redraw GEKIGA faces with carved facial planes: smaller anatomically proportioned eyes, constructed nose bridge, angular brow/cheek/jaw, brush contours, solid ink shadows and directional crosshatching on turning planes. Replace round anime facial construction, not just its shading. Keep identity/age, scripted eyelids/mouth/gaze, Camera/Action/body acting and skin bases.',
+  GEKIGA: `Fully redraw GEKIGA faces with carved facial planes. ${GEKIGA_FACE_CONSTRUCTION} Brush contours, solid ink shadows and directional crosshatching model turning planes. Keep identity/age, scripted gaze, Camera/Action/body acting and skin bases.`,
   SHOUJO: 'Romantic delicate black penwork, outlined flowers and airy white highlights; sparse regular screen dots behind the cast and star-shaped eye highlights. Keep faces, glasses and dialogue readable.',
   HORROR: 'Tense horror-manga penwork, jagged contours and strong black shadow masses with sparse hatching; preserve the existing cast, readable faces and scripted comedic exaggeration.',
   BLANK: 'Frozen deadpan expression, blank white eyes and stiff posture; clean sparse ink contours and canonical facial bases. Preserve glasses around the blank eyes.',

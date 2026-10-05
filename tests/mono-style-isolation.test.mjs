@@ -68,10 +68,29 @@ test('shared-contract normalization never masks a changed rendering recipe or us
   const recipe = prompt.match(/^Style: .+$/m)?.[0];
   const action = prompt.match(/^Action \(visual only\):.+$/m)?.[0];
   assert.ok(recipe && action);
-  assert.ok(withoutFocusRepair(prompt).includes(recipe));
+  assert.ok(withoutFocusRepair(prompt).includes(withoutFocusRepair(recipe)));
   assert.ok(withoutFocusRepair(prompt).includes(action));
   for (const unchanged of [recipe, action]) {
     assert.notEqual(sha256(prompt.replace(unchanged, `${unchanged} UNAUTHORIZED CHANGE`)), sha256(prompt));
+  }
+});
+
+test('actor-medium normalization is exact and preserves unknown recipe changes and user content', () => {
+  const mapping = JSON.parse(readFileSync(new URL('./fixtures/selection-shared-contract-normalization.json', import.meta.url), 'utf8'));
+  const entries = mapping.entries.filter(entry => /^(?:ACTOR_MEDIUM_|GEKIGA_FACE_|PANEL_NORMAL_)/.test(entry.name));
+  assert.equal(entries.length, 21);
+  for (const entry of entries) {
+    assert.equal(restorePreSelectionContracts(entry.current), entry.previous, entry.name);
+    const altered = entry.current.replace(/\S+/, 'UNAUTHORIZED_RECIPE');
+    assert.notEqual(altered, entry.current);
+    assert.equal(restorePreSelectionContracts(altered), altered, entry.name);
+    const before = `Style: USER RECIPE\nAction (visual only): USER ACTION\n${entry.current}\nCamera: USER CAMERA`;
+    assert.equal(restorePreSelectionContracts(before), before.replace(entry.current, entry.previous), entry.name);
+    if (Object.hasOwn(entry, 'compactPrevious')) {
+      const compact = `TYPE: title verified\n${entry.current}\nCamera: USER CAMERA`;
+      assert.equal(restorePreSelectionContracts(compact), compact.replace(entry.current, entry.compactPrevious), entry.name);
+      assert.equal(restorePreSelectionContracts(compact.replace(entry.current, altered)), compact.replace(entry.current, altered), entry.name);
+    }
   }
 });
 

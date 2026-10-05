@@ -1,4 +1,4 @@
-import { EMOTION_STYLES } from './constants.js';
+import { EMOTION_STYLES, GEKIGA_FACE_CONSTRUCTION } from './constants.js';
 import { resolveMonochromeRenderIntent } from './manga-render-mode.js';
 import { stripReferenceWardrobe } from './seasonal-outfit.js';
 import { stripSourceMetadata } from './sns-explanation.js';
@@ -1987,9 +1987,10 @@ const extractRawEmotionTag = (panelText) => {
 };
 
 // [v2.31] パネルの感情スタイル指示を構築（マルチキャラ対応）
-export const OPENAI_COLOR_GEKIGA_STYLE = 'THIS PANEL ONLY: high-intensity GEKIGA faces, not anime faces with gritty backgrounds. Redraw visible faces with small realistic eyes/irises, heavy anatomical eyelids, pronounced nose bridges and carved cheek/jaw planes. Put large solid-black shadow planes and dense directional crosshatching ON faces/hands, bold ink beside sharp white cuts. FULL COLOR. Keep identity/age and scripted emotion/gaze/pose/Camera; no added anger, age or wrinkles. Same face means same identity, not retained anime proportions.';
+export const OPENAI_COLOR_GEKIGA_STYLE = `THIS PANEL ONLY: high-intensity GEKIGA faces, not anime faces with gritty backgrounds. ${GEKIGA_FACE_CONSTRUCTION} Put large solid-black shadow planes and dense directional crosshatching ON faces/hands, bold ink beside sharp white cuts. FULL COLOR. Keep identity/age and scripted emotion/gaze/pose/Camera; no added anger, age or wrinkles. Same face means same identity, not retained anime proportions.`;
 
-const OPENAI_MONOCHROME_GEKIGA_STYLE = 'THIS PANEL ONLY: redraw GEKIGA faces with small realistic eyes/irises, heavy eyelids, strong nose bridges; carved facial planes at brow/cheek/jaw. Large solid-black shadow planes and dense directional crosshatching ON faces/hands in shadow, sharp white cuts. Same identity, not anime proportions. Keep identity/age, scripted emotion/gaze/pose/Camera; no added anger, age or wrinkles. 白紙に墨一色。白肌の明部は墨線の間を無地白とし、灰色・網点の下地なし。光源に沿う局所影、褐色肌、衣服のトーンは残す。';
+const OPENAI_MONOCHROME_GEKIGA_STYLE = `THIS PANEL ONLY: redraw GEKIGA faces. ${GEKIGA_FACE_CONSTRUCTION} Large solid-black shadow planes and dense directional crosshatching ON faces/hands in shadow, sharp white cuts. Same identity, not anime proportions. Keep identity/age, scripted emotion/gaze/pose/Camera; no added anger, age or wrinkles. 白紙に墨一色。白肌の明部は墨線の間を無地白とし、灰色・網点の下地なし。光源に沿う局所影、褐色肌、衣服のトーンは残す。`;
+const NORMAL_COLOR_RENDERING = '\nNORMAL PANEL RENDERING: Chic cinematic full-color TV anime style; polished Japanese animation finish.';
 
 export const buildEmotionBlock = (panelText, colorMode = 'color', { preserveReferenceStyle = false, seriousTone = false, providerFamily = '' } = {}) => {
   const emo = extractEmotionStyle(panelText);
@@ -1998,9 +1999,9 @@ export const buildEmotionBlock = (panelText, colorMode = 'color', { preserveRefe
   }
   const rawEmotionTag = extractRawEmotionTag(panelText);
   if (seriousTone && /CHIBI(?:_GAG)?|COMEDY/i.test(rawEmotionTag)) {
-    return '\nSERIOUS PANEL ACTING ONLY: interpret the emotion cue through expression, gaze, posture, timing, camera and lighting. Keep normal anatomy and the selected serious visual style; no chibi form, comic deformation, gag overlay or proportion change.';
+    return `${colorMode === 'monochrome' ? '' : NORMAL_COLOR_RENDERING}\nSERIOUS PANEL ACTING ONLY: interpret the emotion cue through expression, gaze, posture, timing, camera and lighting. Keep normal anatomy and the selected serious visual style; no chibi form, comic deformation, gag overlay or proportion change.`;
   }
-  if (emo === 'NORMAL') return '';
+  if (emo === 'NORMAL') return colorMode === 'monochrome' ? '' : NORMAL_COLOR_RENDERING;
   if (colorMode === 'monochrome') {
     const gag = !seriousTone && SERIOUS_STYLES_FOR_GAG_OVERLAY.has(emo) && rawTagHasComedyIntent(rawEmotionTag)
       ? '\nGAG INTENT OVERLAY: retain dramatic ink/shadows while allowing exaggerated cartoon reactions and comedic timing; do not play the gag straight-serious.' : '';

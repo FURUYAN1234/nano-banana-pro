@@ -163,17 +163,35 @@ test('image cast projection retains tagged identity across table and subsection 
 // Synthetic transport fixture only: this exercises the real orchestration,
 // parser, validation/retry and enhancement paths without a paid model call.
 const fixtureBody = `[1コマ目: 起]
+[Camera: 左後方から俯瞰の引き]
 状況: テスト人物が会館で受付机に案内板を置く。
 テスト人物「準備できた」
 [2コマ目: 承]
+[Camera: 机より低い位置から見上げる接写]
 状況: テスト人物が受付机の筆記具を手に取る。
 テスト人物「書こう」
 [3コマ目: 転]
+[Camera: 右後方から見下ろす中景]
 状況: テスト人物が案内板を振り返る。
 テスト人物「逆だ」
 [4コマ目: 結]
+[Camera: 床から見上げる広角の全身]
 状況: テスト人物が案内板を回して入口を指す。
 テスト人物「こちらです」`;
+
+test('automatic scenario generation fails closed and preserves a camera-invalid candidate after bounded retries', async () => {
+  let calls = 0;
+  const invalid = fixtureBody.replace(/\[Camera:[^\]]+\]/g, '[Camera: アイレベル・肩越し]');
+  setFixtureResponse(async () => {
+    calls += 1;
+    return { text: `Topic: 会館の受付\nLocation: 地域会館\nOutfit: 動きやすい私服\nScenario:\n${invalid}`, model: 'test-fixture' };
+  });
+  await assert.rejects(() => generateScenario({
+    castList: referenceCast, categories: [], inputMode: 'manual', manualTopic: '地域会館の受付',
+    targetDate: '2026-09-15', customLocation: '', customOutfit: '', punchlineType: 'Surreal', onProgress: () => {}
+  }), error => error.code === 'CAMERA_CONTRACT' && error.scenario.includes('アイレベル'));
+  assert.equal(calls, 3, 'no payoff audit or image call after the generation gate fails');
+});
 
 const payoffReviewResponse = JSON.stringify({
   pass: true,

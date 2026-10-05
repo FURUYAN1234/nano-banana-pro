@@ -41,13 +41,12 @@ test('ending selection receives prior mechanisms without banning an ending or fi
   }
 });
 
-test('scene-based style palette is complete, without ending preferences or tag quotas', () => {
+test('scene-based automatic palette contains only the six accepted media, without tag quotas', () => {
+  const accepted = ['NORMAL', 'GEKIGA', 'WATERCOLOR', 'POP_ART', 'SKETCH', 'CHIBI_GAG'];
   for (const punchlineType of ['GagAuto', 'SeriousAuto', 'Dream', 'Explosion', 'Surreal']) {
     const prompt = getScenarioPrompt({ ...options, punchlineType, comedyTone: punchlineType === 'Explosion' ? 'HighTension' : 'Auto' });
-    for (const style of Object.keys(EMOTION_STYLES)) {
-      if (punchlineType === 'SeriousAuto' && style === 'CHIBI_GAG') continue;
-      assert.ok(prompt.includes(style), `${punchlineType}: missing ${style}`);
-    }
+    const offered = [...prompt.matchAll(/^- ([A-Z_]+):.*drawing_family=/gm)].map(match => match[1]);
+    assert.deepEqual([...new Set(offered)].sort(), accepted.filter(style => punchlineType !== 'SeriousAuto' || style !== 'CHIBI_GAG').sort());
     if (punchlineType === 'SeriousAuto') assert.doesNotMatch(prompt, /CHIBI_GAG/);
     assert.match(prompt, /絵柄に優劣や好き嫌い/);
     assert.doesNotMatch(prompt, /推奨EMOTION|推奨される感情絵柄タグ|NORMAL以外のタグを優先|少なくとも2種類以上のタグ|EMOTION: SAD/);
@@ -55,4 +54,20 @@ test('scene-based style palette is complete, without ending preferences or tag q
   }
   const documentary = getScenarioPrompt({ ...options, punchlineType: 'SeriousDocumentary' });
   assert.match(documentary, /EMOTION.*必ずNORMAL|必ずNORMAL/);
+});
+
+test('automatic choices retain six visible drawing media and preserve excluded manual recipes', () => {
+  const prompt = getScenarioPrompt({ ...options, punchlineType: 'GagAuto' });
+  assert.doesNotMatch(prompt, /^- PASTEL:/m);
+  assert.match(EMOTION_STYLES.PASTEL.style, /pastel/i);
+  assert.match(prompt, /NORMAL:.*drawing_family=anime/);
+  for (const tag of ['IMPACT', 'CEL', 'UKIYOE', 'THICK_PAINT', 'PASTEL']) {
+    assert.doesNotMatch(prompt, new RegExp(`^- ${tag}:`, 'm'));
+    assert.ok(EMOTION_STYLES[tag].style);
+  }
+  for (const tag of ['GEKIGA', 'CHIBI_GAG', 'WATERCOLOR', 'POP_ART', 'SKETCH']) {
+    assert.ok(prompt.includes(`- ${tag}:`));
+    assert.doesNotMatch(prompt.match(new RegExp(`^- ${tag}:.*$`, 'm'))[0], /drawing_family=anime/);
+  }
+  assert.match(prompt, /同系統のタグ差だけでは.*描法変更/);
 });

@@ -1,13 +1,13 @@
 # Super FURU AI 4-koma System / Super FURU AI 4コマシステム
 
-> Current source version: **v6.8.7** / 現在のソース版: **v6.8.7**
+> Current source version: **v6.8.8** / 現在のソース版: **v6.8.8**
 
 
 An experimental web application in which AI handles topic research, story structure, direction, prompt construction, image generation, and quality review for a four-panel manga. / AIが話題調査、構成、演出、プロンプト構築、画像生成、品質確認まで担当する4コマ漫画制作Webアプリです。
 
 [アプリを開く / Open the app](https://furuyan1234.github.io/nano-banana-pro/) · [全機能PDFマニュアル / Full manual](https://furuyan1234.github.io/nano-banana-pro/downloads/super-furu-ai-4koma-full-manual-2026-10-01.pdf)
 
-The full operation manual and Gemini setup guide cover v6.8.7. The unchanged OpenAI setup guide remains applicable. Current application terms are in [LICENSE](LICENSE). / 全機能マニュアルとGemini API取得ガイドはv6.8.7対応です。OpenAI API取得ガイドの接続手順は引き続き利用できます。現在のアプリ利用条件は [LICENSE](LICENSE) を参照してください。
+The full operation manual and Gemini setup guide cover v6.8.8. The unchanged OpenAI setup guide remains applicable. Current application terms are in [LICENSE](LICENSE). / 全機能マニュアルとGemini API取得ガイドはv6.8.8対応です。OpenAI API取得ガイドの接続手順は引き続き利用できます。現在のアプリ利用条件は [LICENSE](LICENSE) を参照してください。
 
 ## Application screen and output / 操作画面と生成例
 
@@ -20,6 +20,10 @@ The full operation manual and Gemini setup guide cover v6.8.7. The unchanged Ope
 https://github.com/user-attachments/assets/15608ccc-8d86-4b78-9ff3-785201b42629
 
 ## Visual direction and reading / 演出と読みやすさ
+
+Automatic camera design / 自動カメラ設計: STEP2 requires a high or low viewpoint for every automatically designed panel; only an explicit user request can permit eye level. Missing elevation is rejected after bounded retries, with the unaccepted candidate retained in the progress log. Japanese camera-height phrases and positive pitch angles share the same projection parser used by assembly and QA. / STEP2の自動構成は全コマで俯瞰またはアオリを指定し、アイレベルはユーザーの明示指定があるコマだけに限定します。高さ未指定の候補は規定回数の検査後も未達なら次工程へ送らず、進捗欄へ保持します。「高めに撮る」「低めから」などの表現と正の仰俯角を共通判定し、画像QAでは指定文の丸写しを観察証拠にしません。高低の投影証拠が不足する画像は未確認として保持します。画像の出来を保証するものではなく、Webで別途生成した画像はアプリの自動QA対象にはなりません。
+
+「魚眼・アイレベルは使わない」などの禁止指定を採用指示と取り違えず、「顔〜胸の寄り」「長焦点」も画角として認識します。短縮後も顔・身体のアオリ投影指示を保持します。劇画の顔立ちは生成結果で差が残るため、未確認項目を成功として表示しません。最新の指定修正後の実画像改善は未確認です。通常の広角は自動構成に残し、魚眼は自動候補から外しています。画風の自動候補は通常・劇画・水彩・ポップアート・鉛筆スケッチ・ちびキャラの6種類です。コマの内容と演技に応じて選び、順番や回数は固定しません。選択モードの画風固定を守り、取り込んだ台本の既存画風も保持します。画像QAは背景効果や分類名だけで合格にせず、人物の形・線・塗りを確認します。 / Automatic direction retains rectilinear wide angles and excludes fisheye. Choose normal, gekiga, watercolor, pop art, pencil sketch or chibi to suit each scene, without a fixed order or frequency. Selected-mode locks and imported styles remain supported. QA requires observed figure construction, linework and paint, not background effects or classification labels alone.
 
 描画オプション：STEP2の「版権キャラクターにモザイクをかける」と、STEP3の「ウオーターマークを表記する」は初期状態でONです。前者はシナリオ構築と最終画像プロンプトに「版権キャラクターにおおきなモザイクをかける」を追加し、後者をOFFにすると左右のフッターの描画指示を外します。OpenAI／GeminiのAPIとWeb用コピーに共通で反映します。設定変更後はモザイクならSTEP2、ウオーターマークならSTEP3から再作成してください。変更だけでAPIは実行されません。選択は全設定リセットまたは再読込まで保持します。生成済み画像には遡って反映されず、AIの対象判断・描画は実画像で確認してください。
 
@@ -400,12 +404,12 @@ The copied prompt guides panel order, cast, speaker assignment, acting, camera, 
 
 The app provides separate download buttons for the workflow JSON and the custom-node ZIP. Both files are needed for this route. / アプリにはワークフローJSONとカスタムノードZIPのダウンロードボタンが別々にあります。この経路では両方のファイルが必要です。
 
-- [Download workflow JSON](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261002-071924.json) / [ワークフローJSONをダウンロード](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261002-071924.json)
-- [Download custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.8.7/ComfyUI_H3_FourPanel_NonLM_20261002-071924_authfix1.zip) / [カスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.8.7/ComfyUI_H3_FourPanel_NonLM_20261002-071924_authfix1.zip)
+- [Download workflow JSON](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261005233427.json) / [ワークフローJSONをダウンロード](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261005233427.json)
+- [Download custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.8.8/ComfyUI_H3_FourPanel_NonLM_20261005233427_authfix1.zip) / [カスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.8.8/ComfyUI_H3_FourPanel_NonLM_20261005233427_authfix1.zip)
 
 Place the ZIP's `3フォルダ` under `ComfyUI/custom_nodes/` and the workflow JSON under `ComfyUI/user/default/workflows/`. Install the separate dependencies below, then restart ComfyUI. / ZIP内の`3フォルダ`を`ComfyUI/custom_nodes/`へ、ワークフローJSONを`ComfyUI/user/default/workflows/`以下へ配置します。下記の別途必要な依存関係を導入してからComfyUIを再起動します。
 
-Four required H3 model weights are not bundled. Use `models.json` and the workflow's `不足モデル` display to open the `ダウンロード` sources under each model's own terms. / 必須のH3モデル4点は同梱しません。`models.json`およびワークフローの`不足モデル`表示から各モデルの`ダウンロード`元を開き、個別条件を確認して取得します。
+The six model components in `models.json` are not bundled: four H3 models, ACE-Step for BGM, and Whisper for audio inspection. Use `models.json` and the workflow's `不足モデル` display to open the `ダウンロード` sources under each model's own terms. / `models.json`に記載した6構成（H3モデル4点、BGM用ACE-Step、音声検査用Whisper）は同梱しません。`models.json`およびワークフローの`不足モデル`表示から各モデルの`ダウンロード`元を開き、個別条件を確認して取得します。
 
 H3 SLA Attention requires separately installed [ComfyUI-PlagueKind-Nodes](https://github.com/PlagueKind/ComfyUI-PlagueKind-Nodes) and a compatible Triton environment; audio refinement requires separately installed [ComfyUI-H3-AudioRefine](https://github.com/Adudeguyman/ComfyUI-H3-AudioRefine). / H3 SLA Attentionには別途導入する[ComfyUI-PlagueKind-Nodes](https://github.com/PlagueKind/ComfyUI-PlagueKind-Nodes)と対応Triton環境が必要で、音声補正には別途導入する[ComfyUI-H3-AudioRefine](https://github.com/Adudeguyman/ComfyUI-H3-AudioRefine)を使用します。
 
@@ -413,7 +417,9 @@ Dialogue starts at five seconds and only lines that need more time extend up to 
 
 The workflow generates and checks each segment, comparing up to five candidates including the first. It moves on as soon as one passes; if none passes, it retains the best inspected candidate for review. A retained candidate is not necessarily a full QA pass. / ワークフローは区間ごとに生成・検査し、初回込み最大5候補を比較します。途中で合格すれば直ちに次へ進み、全候補が不合格なら検査上の最良候補を確認用に保持します。採用済みでも全検査合格とは限りません。
 
-The `20261002-071924_authfix1` package contains the 28-node workflow and companion custom nodes. There is no separate BGM composition/mixing stage. Follow the bundled environment and setup requirements; inspect the dialogue and video produced in your environment. / `20261002-071924_authfix1` 配布には28ノードのワークフローと対応カスタムノードを含みます。独立したBGM作曲・合成工程はありません。同梱の環境要件・導入手順に従い、実行した台詞・映像・音声を確認してください。
+The `20261005233427` package contains the 30-node workflow and companion custom nodes. H3 generates dialogue, restrained effects, and ambient sound; after the segments are joined, ACE-Step generates and checks one continuous instrumental BGM track for mixing. Follow the bundled environment and setup requirements; inspect the dialogue, video, and audio produced in your environment. / `20261005233427` 配布には30ノードのワークフローと対応カスタムノードを含みます。H3が台詞・控えめな効果音・環境音を生成し、区間結合後にACE-Stepで全尺を通したインストBGMを1曲生成・検査して合成します。同梱の環境要件・導入手順に従い、実行した台詞・映像・音声を確認してください。
+
+The `_authfix1` package reapplies the existing authentication-model validation fix at the browser and server boundaries; the workflow is unchanged. Local distribution and credential checks pass. Live authentication and full ComfyUI execution remain unverified. / `_authfix1` はブラウザーとサーバーの認証モデル検証に既存の修正を再適用した版で、ワークフロー本体は同じです。ローカルの配布・資格情報検査は成功しています。実API認証とComfyUI全体の実行は未検証です。
 
 ## Package licenses and privacy / 配布ライセンスと個人情報
 
@@ -445,11 +451,14 @@ The production application is published from the `main` branch through the repos
 
 **Why are there two ComfyUI download buttons? / ComfyUIのダウンロードボタンが2つあるのはなぜですか？**  The JSON defines the workflow, while the ZIP supplies three custom-node folders and documentation; three additional runtime dependencies are installed separately. / JSONはワークフロー定義、ZIPはカスタムノード3フォルダーと導入文書です。さらに実行依存3項目を別途導入します。
 
-**Which video package should I install? / 動画化には何を入れますか？** Use the `20261002-071924` workflow JSON and matching v6.8.7 FourPanel Release asset (`authfix1` ZIP). Follow the bundled environment and validation instructions. / `20261002-071924` のワークフローJSONと対応するv6.8.7 FourPanel Releaseアセット（`authfix1` ZIP）を使い、同梱の環境要件と確認手順に従ってください。
+**Which video package should I install? / 動画化には何を入れますか？** Use the `20261005233427` workflow JSON and matching v6.8.8 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261005233427` のワークフローJSONと対応するv6.8.8 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
 
 **Is this the T2V/I2V/Ref2V repository? / T2V・I2V・Ref2Vのリポジトリですか？**  No. Those workflows are maintained separately in [comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows). / いいえ。それらは別の[comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows)で管理します。
 
 ## 📋 ChangeLog
+
+### v6.8.8 (2026-10-06)
+- **[Fix & UX]** カメラの禁止指定・寄り・長焦点の判定と圧縮時の投影指示を修正。6画風の自動選択、劇画の顔指定と未確認表示を整理し、最新H3配布物へ更新。 / Fix camera negation, close-up and telephoto parsing and preserve projection instructions during compaction. Refine six automatic styles, gekiga face instructions and unverified findings; update the H3 package.
 
 ### v6.8.7 (2026-10-05)
 - **[Fix & UX]** 外枠・話者の焦点・シーンに応じた絵柄と結末の選択を見直し、無効な修正案は理由を引き継いで再検討。 / Revised page containment, speaker focus and scene-led style/ending selection; invalid repair proposals are replanned with failure feedback.
@@ -493,64 +502,6 @@ The production application is published from the `main` branch through the repos
 
 ### v6.7.4 (2026-09-30)
 - **[Fix & UX]** STEP2にGPT-6.1 Solを追加し公開版の初期モデルに設定。Model Chainを選択モデルと連動しAstraの手動選択を維持。GPT-6.xのAPI出力上限指定を修正。 / Added GPT-6.1 Sol as the production STEP2 default, synchronized Model Chain with the selected route while retaining manual Astra, and fixed GPT-6.x completion parameters.
-
-### v6.7.3 (2026-09-30)
-- **[Fix & UX]** モザイク・透かしの切替とOpenAI APIマニュアルを追加。API取得リンクの視認性と画像未返却時の案内を改善。 / Add mosaic and footer options plus an OpenAI API manual; improve API links and missing-image diagnostics.
-
-### v6.7.2 (2026-09-30)
-- **[Fix & UX]** API生成後にA4画像の表示が停止する不具合を修正。OpenAIとGeminiの実生成・表示を確認し、内部エラーを通信混雑と誤表示する案内も修正しました。 / Fixed the post-generation A4 display crash, verified real OpenAI and Gemini image output, and stopped misreporting internal errors as network congestion.
-
-### v6.7.1 (2026-09-30)
-- **[Fix & UX]** STEP2の出力上限不足と未完了判定を修正し、API画像へ追加指示を送れるようにしました。修正版はA4比率を表示前に判定し、正しい画像は再処理せず、ずれた画像だけ自動補正します。APIエラーは原因別に表示します。 / Fixed STEP2 output ceilings and incomplete-response handling, added follow-up edits for API images, automatically corrected only off-ratio edited pages before display, and separated API errors by cause.
-
-### v6.7.0 (2026-09-29)
-- **[Fix & UX]** モノクロ原稿の白地・網点・人体影の境界を調整し、対象日付に日本語の曜日を表示。 / Refined monochrome paper-white, screentone and anatomical-shadow boundaries, and added Japanese weekdays to target dates.
-
-### v6.6.9 (2026-09-29)
-- **[Fix & UX]** 4コマのカメラ、人物間の反応、表情と身体演技を内容に沿って設計し、衣装・小物・頭部の連続性と話者・吹き出しの対応を改善。進捗窓に再検査の理由と結果を表示し、曖昧な指摘だけで再生成しない。 / Improved story-driven camera work, character interaction and acting, cross-panel continuity, and speaker-to-balloon matching. Progress logs explain reinspection decisions and uncertain findings alone do not trigger regeneration.
-
-### v6.6.8 (2026-09-28)
-- **[Fix & UX]** 記事内の引用を台詞にしないよう修正し、単独フキダシを話者の近くへ配置。長いヒゲは未確認として扱います。 / Keep reported article quotations out of speech bubbles, place a sole balloon near its speaker, and flag distant tail claims for visual review.
-
-### v6.6.7 (2026-09-28)
-- **[Fix & UX]** 再検査の矛盾・軽微な人物差分による過剰な画像修正を抑制し、4コマH3中間配布ZIPと対応JSONを更新 / Prevent paid image repairs from conflicting or minor QA findings and update the matching interim four-panel H3 ZIP and workflow JSON
-
-### v6.6.6 (2026-09-28)
-- **[Fix & UX]** 吹き出し本体の固定座標を廃止し、読順と話者を保ちながら人物に合わせて配置する共通指示へ修正 / Removed fixed balloon body slots while preserving reading order and speaker ownership
-
-### v6.6.5 (2026-09-27)
-- **[Fix & UX]** 人物のGペンの強弱と焦点・背景の濃淡、漫画の身体演技を調整。題材本文の演出指示への誤昇格と、小道具が隣のコマへ漏れる指示不足を修正 / Refined focal G-pen line weight, background separation and expressive acting; fixed topic-to-staging misclassification and panel containment guidance
-
-### v6.6.4 (2026-09-27)
-- **[Fix & UX]** 分割・全文コピー末尾の改行と、掲示板へ触れる人物の身体位置、俯瞰指定の解釈、画像QAの指示文反復判定を修正 / Fixed trailing newlines for Web copy, actor placement at contacted props, high-position camera cues, and camera QA instruction echoes
-
-### v6.6.3 (2026-09-27)
-- **[長文プロンプト]** 約15,000字を目安に安全な重複を先に圧縮し、台詞・構図・人物・画風に必要な指示は残します。15,000字超は失格扱いせず、参照説明込み32,000字のAPI上限を守ります。分割コピーは行境界で切り、順に貼れば原文へ戻ります。 / Safely compact repeated instructions around a soft 15,000-character target while preserving required script and visual constraints. The 32,000-character API ceiling includes reference instructions. Split copies prefer line boundaries and concatenate exactly.
-- **[不具合修正]** 台詞とコマ指定、安全化フィルタ、外部APIの途中停止と応答待ち、画像QAの未確認表示、古い非同期結果の混入、生成履歴の制作情報など、監査で確認した不具合を修正しました。 / Fixed audited defects in dialogue and panel handling, safety conversion, API completion and timeouts, image-QA uncertainty, stale asynchronous results, and generation-history provenance.
-
-### v6.6.2 (2026-09-26)
-- **[Fix & UX]** 分割コピーのボタン間に12px、全文コピーの上下に20pxの余白を確保。全文コピーを黄色に分け、細いボタンを維持。コピー・TXT保存の成功時は元の色を保ち、押したボタンに約2秒チェック印と完了文言を表示 / Added spacing and an amber full-copy action while retaining compact button height. Successful copy and TXT save retain their base colors and show a check mark and confirmation for about two seconds.
-- **[Web guidance]** 貼付手順と文字数の説明を分割ボタンの上へ統合し、重複ガイドを削除。全文コピー直下のTXT保存を明るい無彩色に変更し、その下の別添制作情報JSONとの用途の違いを明記 / Consolidated guidance above the numbered actions, removed a duplicate hint, placed a readable TXT action directly below full copy, and explained the separate production-record JSON below it.
-- **[Copy layout]** 「ChatGPT Webへの貼り付け手順」見出しを追加。全文コピーには合計文字数を表示し、「全文プロンプトを.txtで保存する」と制作情報JSON保存の間に16pxの余白を確保 / Added a Web-paste heading, a total-character count on full copy, a clearer TXT label, and 16px between TXT and JSON actions.
-
-### v6.6.1 (2026-09-26)
-- **[Fix & UX]** 長文プロンプトの分割コピーを追加。番号順に明るくなる細いボタンと全文コピーを用意し、TXT化の注意を表示。描写を守り、参照説明込み32,000文字の共通上限で管理。 / Added numbered split-copy buttons with progressively lighter backgrounds, a full-copy option and TXT conversion guidance. Preserve rendering instructions within the shared 32,000-character budget including reference roles.
-
-### v6.6.0 (2026-09-25)
-- **[台詞・コマ割り]** 発話本文と話者メタデータを分離し、引用・長文圧縮・両AIの経路で日本語台詞の本文と縦書き条件を保護。Web貼付の4コマを横長・縦1列で明示 / Separated dialogue text from speaker metadata and preserved exact Japanese speech and vertical-setting instructions through quoting, long-prompt compaction and both providers. Clarified four full-width horizontal panels in one vertical column for Web-pasted output.
-- **[衣装連続性]** 特定人物・衣服に依存しない共通ルールで、衣装と付属品の有無・数・形・取付位置をコマ間で保護。台本上の着脱や遮蔽は別状態として扱い、衣装比較の根拠が足りない場合は未確認にする / Added a generic cross-panel rule for garment and accessory presence, count, shape and attachment. Scripted changes and occlusion remain distinct; insufficient comparison evidence is reported as unverified.
-
-### v6.5.9 (2026-09-25)
-- **[Fix & UX]** A4大を既定化し、頭髪の枠際連続性、背景からの主役分離、プロ漫画の視線誘導を強化。1枚絵のWebコピー上限を10,000字へ更新。Geminiのモデル・サイズ・単価表示、自然文画像搬送、長文修正、ローマ字話者照合を追加 / Made A4 large the default, strengthened clean head/hair panel-edge continuity, focal separation from backgrounds, and professional manga visual flow; raised the single-image Web-copy soft budget to 10,000 characters; added Gemini model/size/pricing UI, natural-language image transport, long repair support, and romanized speaker matching
-- **[Model Chain]** デプロイ前照合でGemini文章・Visionを3.8→3.7→3.6→3.5→3.5 Lite→3.1 Liteへ更新し、3.8の導入価格と非推奨samplingパラメータ除去を同期 / Updated Gemini text and vision routes to 3.8→3.7→3.6→3.5→3.5 Lite→3.1 Lite, synchronized 3.8 introductory pricing, and removed deprecated sampling parameters
-- **[Bubble Order]** 画像モデルが話者位置を優先して順序を逆転しないよう、吹き出し本体を人物より先に数値スロットへ固定する短縮契約を明示 / Made the compact prompt explicitly freeze balloon bodies at numeric slots before actors so speaker proximity cannot reverse right-to-left reading order
-
-### v6.5.8 (2026-09-25)
-- **[Fix & UX]** Web版生成用の制作情報JSONとAPI生成PNGの制作情報を別経路に分離し、画像生成前でもWeb版JSONを保存できる状態へ戻しました。API専用項目の混入を拒否する境界と正負の回帰テストを追加しました。 / Separated the Web companion JSON from API-generated PNG metadata so the Web record can be saved before image generation. Added a hard boundary and positive/negative regression tests that reject API-only fields in the Web path.
-
-### v6.5.7 (2026-09-25)
-- **[STEP4 UI]** 制作情報の保存案内を手動JSON保存欄からAPI生成ボタン直下へ移し、API生成に関係する説明だと分かる配置にしました。 / Moved the production-record notice from the manual JSON area to directly below the API generation button so its scope is clear.
-- **[Spacing]** API生成ボタンと設定欄の間にあった不要な空きを除きました。保存内容と除外対象は変更していません。 / Removed the unnecessary gap above API settings without changing the stored record or privacy exclusions.
 
 Older release history is available in [GitHub Releases](https://github.com/FURUYAN1234/nano-banana-pro/releases). / 以前の更新履歴は [GitHub Releases](https://github.com/FURUYAN1234/nano-banana-pro/releases) で確認できます。
 

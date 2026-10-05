@@ -1,4 +1,6 @@
-import { extractDialogueOnly } from './panel-utils.js';
+import { extractDialogueOnly, extractEmotionStyle } from './panel-utils.js';
+import { classifyCameraElevation, isFisheyeCamera } from './composition-variety.js';
+import { STYLE_DRAWING_CONTRACTS } from './constants.js';
 
 const PANEL_NUMBER_MAP = new Map([
   ['1', 1],
@@ -55,6 +57,51 @@ export const getScenarioPanelBlocks = (scenarioText) => {
       text: text.slice(match.index, end).trim()
     };
   });
+};
+
+const userRequestsEyeLevel = (userTopic, panelNumber) => {
+  const source = String(userTopic || '').normalize('NFKC');
+  const negated = /禁止|しない|使わない|用いない|避け|不可|ではなく|でなく|以外|\b(?:not|never|no|avoid)\b/i;
+  const userPanel = getScenarioPanelBlocks(source).find(panel => panel.num === panelNumber && panel.found);
+  const explicitCamera = userPanel?.text.match(/\[Camera\s*[:：]\s*([^\]]+)\]/i)?.[1];
+  if (explicitCamera && !negated.test(explicitCamera) && classifyCameraElevation(explicitCamera) === 'eye') return true;
+  return source.split(/[。！？、，,;；\n]/u).some(sentence => {
+    if (!/(?:アイレベル(?:で|に|の)|eye[ -]level\s+(?:shot|view|camera))/i.test(sentence)
+      || negated.test(sentence)) return false;
+    const panels = [...sentence.matchAll(/([1-4一二三四])\s*コマ目/gu)]
+      .map(match => normalizePanelNumber(match[1]));
+    return panels.length ? panels.includes(panelNumber)
+      : /全コマ|各コマ|カメラ(?:は|を)|\b(?:all|every) panels?\b/i.test(sentence);
+  });
+};
+
+// Only the original user input can grant an eye-level exception. Generated
+// Camera text is not user authority. Imported/manual scenarios keep their own
+// contract; this guard belongs to the automatic scenario-generation boundary.
+export const assertGeneratedScenarioCameraContract = (scenarioText, userTopic = '') => {
+  const invalid = getScenarioPanelBlocks(scenarioText).filter(panel => {
+    const camera = panel.text.match(/\[Camera\s*[:：]\s*([^\]]+)\]/i)?.[1] || '';
+    const elevation = classifyCameraElevation(camera);
+    return !panel.found || isFisheyeCamera(camera) || (elevation !== 'high' && elevation !== 'low'
+      && !(elevation === 'eye' && userRequestsEyeLevel(userTopic, panel.num)));
+  });
+  if (!invalid.length) return true;
+  const error = new Error(`${invalid.map(panel => panel.num).join('・')}コマ目: 自動構成のCameraには俯瞰またはアオリの撮影位置・投影を明記してください。肩越し・レンズ名だけでは高さになりません。ユーザーが明示したコマ以外のアイレベルは禁止です。魚眼は使わず、広角は通常の直線投影で指定してください。`);
+  error.code = 'CAMERA_CONTRACT';
+  error.scenario = String(scenarioText || '');
+  error.qualityScore = 4 - invalid.length;
+  throw error;
+};
+
+export const assertGeneratedScenarioStyleContract = (scenarioText) => {
+  const invalid = getScenarioPanelBlocks(scenarioText).filter(panel =>
+    STYLE_DRAWING_CONTRACTS[extractEmotionStyle(panel.text)]?.automatic === false);
+  if (!invalid.length) return true;
+  const error = new Error(`${invalid.map(panel => panel.num).join('・')}コマ目: 自動生成の選択対象外の画風です。許可された既存の描法から場面に合うものを選び、Camera・演技・台詞を保持してください。`);
+  error.code = 'STYLE_CONTRACT';
+  error.scenario = String(scenarioText || '');
+  error.qualityScore = 4 - invalid.length;
+  throw error;
 };
 
 export const validateMangaScenario = (scenarioText, castList = '') => {

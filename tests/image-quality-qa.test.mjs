@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { isMaterialImageQualityIssue } from '../src/lib/image-quality-failsafe.js';
+import { getPanelShotExecution } from '../src/lib/composition-variety.js';
 import * as imageQualityQa from '../src/lib/image-quality-qa.js';
 
 import {
@@ -125,6 +126,10 @@ test('long-shot PASS needs measured subject scale and setting evidence, not a gr
   const review = () => {
     const spatial = spatialChecks();
     spatial[0].hand_geometry.actor_limb_inventory = [{ actor: 'A', visible_hands: [], evidence: 'Hands hidden by the counter.' }];
+    spatial[0].camera_geometry.dimensions.elevation.projection_cues = [
+      { subject: 'actor crown', surface: 'top', x: 0.65, y: 0.25 },
+      { subject: 'counter surface', surface: 'top', x: 0.3, y: 0.6 },
+    ];
     return { pass: true, issues: [], observations, spatial_checks: spatial };
   };
   const labelOnly = review();
@@ -146,6 +151,9 @@ test('long-shot PASS needs measured subject scale and setting evidence, not a gr
   assert.equal(cropped.spatialChecks[0].camera_geometry.dimensions.framing.status, 'uncertain');
 
   delete framing.scale_evidence;
+  grounded.spatial_checks[0].camera_geometry.dimensions.lens = {
+    requested: 'wide-angle', observed: 'Near hand at lower left is much larger than the receding torso beside the doorway.', status: 'ok',
+  };
   assert.equal(parseImageQualityQaResponse(JSON.stringify(grounded), { finalPrompt: '## Panel 1\nCamera: wide-angle close-up' }).pass, true);
   assert.match(buildImageQualityQaPrompt({ finalPrompt }), /scale_evidence/);
 });
@@ -385,9 +393,10 @@ const styleReport = () => ({ pass: true, issues: [], observations, spatial_check
     expected_style: ['NORMAL', 'WATERCOLOR', 'GEKIGA', 'CHIBI_GAG'][index],
     observed_style: ['NORMAL', 'WATERCOLOR', 'GEKIGA', 'CHIBI_GAG'][index],
     status: 'ok', material_impact: 'none',
-    linework: { status: 'ok', location: 'foreground actor outline', observed: 'Variable brush contours around jaw and hair.' },
-    coloring: { status: 'ok', location: 'foreground face and clothing', observed: 'Distinct lit planes and bounded shadow fills.' },
+    linework: { status: 'ok', scope: 'actor', location: 'foreground actor outline', observed: 'Variable brush contours around jaw and hair.' },
+    coloring: { status: 'ok', scope: 'actor', location: 'foreground face and clothing', observed: 'Distinct lit planes and bounded shadow fills.' },
     faces: [{ status: 'ok', visibility: 'clear', subject: 'foreground actor', location: 'left foreground',
+      rendering: [null, 'transparent_washes', null, 'shortened_body'][index], rendering_scope: 'actor',
       observed: 'Carved brow/nose/jaw; facial ink models cheek planes.', construction: 'realistic_planes', ink: 'modeled_ink' }],
   },
 })) });
@@ -604,7 +613,7 @@ test('style comparison uses visible medium evidence beyond GEKIGA and preserves 
   Object.assign(report.spatial_checks[1].art_style.faces[0], { construction: 'anime_template', ink: 'flat' });
   assert.equal(parse().pass, true, 'watercolor need not reconstruct facial anatomy as GEKIGA');
   const watercolor = report.spatial_checks[1].art_style;
-  watercolor.coloring = { status: 'defect', location: 'face and clothing', observed: 'Opaque flat cel fills; no transparent painted washes.' };
+  watercolor.coloring = { status: 'defect', scope: 'actor', location: 'face and clothing', observed: 'Opaque flat cel fills; no transparent painted washes.' };
   watercolor.material_impact = 'requested_medium_missing';
   watercolor.status = 'defect';
   const result = parse();
@@ -872,6 +881,89 @@ Dialogue: silent`;
   assert.equal(individual.members, undefined);
 });
 
+test('unverified style evidence retains located face discrepancy observations without authorizing repair', () => {
+  const observed = 'Large flat anime eyes and a dot nose remain; hatching is only on clothes.';
+  for (const mismatch of ['unknown_ink', 'missing_ink', 'uncertain_panel', 'contradictory_panel']) {
+    const report = styleReport();
+    const style = report.spatial_checks[2].art_style;
+    Object.assign(style, { status: 'defect', material_impact: 'requested_medium_missing' });
+    Object.assign(style.faces[0], { status: 'defect', construction: 'anime_template', ink: 'flat',
+      location: 'upper left face', observed });
+    if (mismatch === 'unknown_ink') style.faces[0].ink = 'uncertain';
+    if (mismatch === 'missing_ink') delete style.faces[0].ink;
+    if (mismatch === 'uncertain_panel') style.status = 'uncertain';
+    if (mismatch === 'contradictory_panel') style.status = 'ok';
+    const result = parseImageQualityQaResponse(JSON.stringify(report), { finalPrompt: stylePrompt, requirePanelStyleEvidence: true });
+    assert.equal(result.pass, false, mismatch);
+    assert.ok(result.issues.every(issue => issue.type === 'unverified'), mismatch);
+    assert.equal(result.issues.some(isMaterialImageQualityIssue), false, mismatch);
+    const reason = result.issues.map(issue => issue.reason).join('\n');
+    assert.ok(reason.includes(observed), mismatch);
+    assert.match(reason, /foreground actor.*upper left face/);
+  }
+  const hidden = styleReport();
+  Object.assign(hidden.spatial_checks[2].art_style.faces[0], { visibility: 'back_view', status: 'not_visible',
+    construction: 'anime_template', observed: 'Rear head hides all facial features.' });
+  const unavailable = parseImageQualityQaResponse(JSON.stringify(hidden), { finalPrompt: stylePrompt, requirePanelStyleEvidence: true });
+  assert.ok(unavailable.issues.every(issue => issue.type === 'unverified'));
+  assert.doesNotMatch(unavailable.issues.map(issue => issue.reason).join('\n'), /Reported face discrepancy/);
+  assert.equal(parseImageQualityQaResponse(JSON.stringify(styleReport()), { finalPrompt: stylePrompt, requirePanelStyleEvidence: true }).pass, true);
+});
+
+test('actor media cannot pass on background-only cues, missing body or pigment evidence, or recipe echoes', () => {
+  for (const [style, cue, observed] of [
+    ['CHIBI_GAG', 'shortened_body', 'Left actor has an enlarged cranium above a visibly short torso and jointed short arms.'],
+    ['WATERCOLOR', 'transparent_washes', 'Left cheek and blue sleeve have translucent pigment pooling at broken edges.'],
+    ['UKIYOE', 'woodblock_planes', 'Left face and sleeve use carved black contours surrounding flat pigment shapes.'],
+    ['POP_ART', 'ben_day_print', 'Left cheek shadows contain regular colored dots bounded by bold black contours.'],
+    ['SKETCH', 'pencil_strokes', 'Left jaw and collar are built from separate scratchy graphite strokes.'],
+    ['THICK_PAINT', 'opaque_brush_masses', 'Left cheek and jacket turn through overlapping opaque brush masses.'],
+  ]) {
+    const prompt = stylePrompt.replace('## Panel 1\nCamera: eye-level', `## Panel 1\nPANEL STYLE LOCK: ${style};\nStyle: Redraw the actor in ${style}.\nCamera: eye-level`);
+    const report = styleReport();
+    const art = report.spatial_checks[0].art_style;
+    art.expected_style = art.observed_style = style;
+    Object.assign(art.faces[0], { observed, rendering: cue, rendering_scope: 'actor' });
+    art.linework.scope = art.coloring.scope = 'actor';
+    const parse = () => parseImageQualityQaResponse(JSON.stringify(report), { finalPrompt: prompt, requirePanelStyleEvidence: true });
+    assert.equal(parse().pass, true, style);
+    for (const patch of [{ rendering: undefined }, { rendering: 'uncertain' }, { rendering_scope: 'background' },
+      { observed: `Redraw the actor in ${style}.` }, { observed: style }]) {
+      const saved = { ...art.faces[0] };
+      Object.assign(art.faces[0], patch);
+      const result = parse();
+      assert.equal(result.pass, false, `${style}: ${JSON.stringify(patch)}`);
+      assert.equal(result.issues.some(isMaterialImageQualityIssue), false);
+      art.faces[0] = saved;
+    }
+    art.linework.scope = art.coloring.scope = 'background';
+    const background = parse();
+    assert.equal(background.pass, false, `${style}: background alone`);
+    assert.equal(background.issues.some(isMaterialImageQualityIssue), false);
+  }
+});
+
+test('style observations must describe pixels rather than repeat classification enums or verdicts', () => {
+  for (const panel of [0, 1, 2, 3]) {
+    for (const field of ['linework', 'coloring', 'face']) {
+      for (const observed of ['realistic_planes', 'modeled_ink', 'realistic_planes / modeled_ink: ok',
+        'transparent_washes', 'shortened_body', 'pencil_strokes; none', 'GEKIGA, pass']) {
+        const report = styleReport();
+        const style = report.spatial_checks[panel].art_style;
+        const region = field === 'face' ? style.faces[0] : style[field];
+        region.observed = observed;
+        const result = parseImageQualityQaResponse(JSON.stringify(report), { finalPrompt: stylePrompt, requirePanelStyleEvidence: true });
+        assert.equal(result.pass, false, `panel ${panel + 1} ${field}: ${observed}`);
+        assert.ok(result.issues.some(issue => issue.type === 'unverified' && issue.subject === 'art_style'));
+        assert.equal(result.issues.some(isMaterialImageQualityIssue), false);
+      }
+    }
+  }
+  const report = styleReport();
+  report.spatial_checks[2].art_style.faces[0].observed = 'Small eyes sit under thick upper lids; a triangular nose-side shadow joins the hatched cheek.';
+  assert.equal(parseImageQualityQaResponse(JSON.stringify(report), { finalPrompt: stylePrompt, requirePanelStyleEvidence: true }).pass, true);
+});
+
 test('the primary QA response example contains the required per-face style observations', () => {
   const request = buildImageQualityQaPrompt({ finalPrompt: stylePrompt, requirePanelStyleEvidence:true });
   const example = JSON.parse(request.match(/^\{"pass":true[^\n]+/m)[0]);
@@ -974,6 +1066,69 @@ test('upward camera PASS needs localized surface evidence, without regenerating 
   assert.equal(ordinary.issues.some(i => /projection cues/.test(i.reason)), false);
   const horizontal = parseImageQualityQaResponse(JSON.stringify({pass:true,issues:[],observations,spatial_checks:checks}), {finalPrompt:'## Panel 1\nCamera: 低い位置から水平に撮る'});
   assert.equal(horizontal.issues.some(i => /projection cues/.test(i.reason)), false);
+});
+
+test('downward camera PASS needs localized top surfaces, while ambiguous views retain the image', () => {
+  for (const camera of ['high-angle', '俯瞰', '肩越しにやや高く撮る']) {
+    const checks = spatialChecks();
+    const elevation = checks[0].camera_geometry.dimensions.elevation;
+    const parse = () => parseImageQualityQaResponse(JSON.stringify({ pass: true, issues: [], observations, spatial_checks: checks }), {
+      finalPrompt: `## Panel 1\nCamera: ${camera}`,
+    });
+    const labelOnly = parse();
+    assert.equal(labelOnly.pass, false, camera);
+    assert.ok(labelOnly.issues.some(issue => /projection cues/.test(issue.reason)), camera);
+    assert.equal(labelOnly.issues.some(isMaterialImageQualityIssue), false);
+    elevation.projection_cues = [
+      { subject: 'actor crown', surface: 'top', x: 0.65, y: 0.25 },
+      { subject: 'table surface', surface: 'top', x: 0.3, y: 0.6 },
+    ];
+    assert.equal(parse().pass, true, camera);
+    for (const badCue of [
+      { ...elevation.projection_cues[0] },
+      { subject: 'table surface', surface: 'front', x: 0.3, y: 0.6 },
+      { subject: 'table surface', surface: 'top', x: 1.4, y: 0.6 },
+    ]) {
+      elevation.projection_cues[1] = badCue;
+      assert.equal(parse().pass, false, camera);
+      assert.equal(parse().issues.some(isMaterialImageQualityIssue), false);
+    }
+  }
+});
+
+test('explicit camera dimensions cannot pass as not applicable or copied labels', () => {
+  for (const [axis, camera, observed] of [
+    ['elevation', 'low-angle', 'Chin underside at upper right and shelf underside across the top.'],
+    ['azimuth', 'left side view', 'Left cheek and left shoulder overlap the far upper arm at panel right.'],
+    ['azimuth', 'rear view', 'Rear skull and back shoulder plane cover the partner at the lower left.'],
+    ['framing', 'close-up', 'Face fills the right half and both shoulders leave the lower border.'],
+    ['lens', 'wide-angle', 'Near hand fills lower left; its owner recedes to a small torso beside the doorway.'],
+    ['lens', 'telephoto', 'Rear doorway is almost the height of the foreground actor, with weakly converging floor edges.'],
+    ['lens', 'fisheye', 'Door posts curve outward at both edges while the central face remains centered.'],
+  ]) {
+    const checks = spatialChecks();
+    const dimension = checks[0].camera_geometry.dimensions[axis];
+    const parse = () => parseImageQualityQaResponse(JSON.stringify({ pass: true, issues: [], observations, spatial_checks: checks }), {
+      finalPrompt: `## Panel 1\nCamera: ${camera}`,
+    });
+    Object.assign(dimension, { requested: camera, observed, status: 'not_applicable' });
+    if (axis === 'elevation') dimension.projection_cues = [
+      { subject: 'chin', surface: 'underside', x: 0.7, y: 0.3 },
+      { subject: 'shelf', surface: 'underside', x: 0.3, y: 0.1 },
+    ];
+    const omitted = parse();
+    assert.equal(omitted.pass, false, `${axis}: ${camera}`);
+    assert.equal(omitted.issues.some(isMaterialImageQualityIssue), false);
+    Object.assign(dimension, { status: 'ok', observed: camera });
+    const copied = parse();
+    assert.equal(copied.pass, false, `${axis}: ${camera}`);
+    assert.equal(copied.issues.some(isMaterialImageQualityIssue), false);
+    dimension.observed = observed;
+    assert.equal(parse().pass, true, `${axis}: ${camera}`);
+  }
+  assert.equal(parseImageQualityQaResponse(JSON.stringify({ pass: true, issues: [], observations, spatial_checks: spatialChecks() }), {
+    finalPrompt: '## Panel 1\nCamera: eye-level',
+  }).pass, true, 'an unspecified lens remains not applicable');
 });
 
 test('camera PASS needs separate grounded dimensions and cannot mask a failed lens or side', () => {
@@ -1115,6 +1270,28 @@ test('camera review cannot pass by repeating the generated shot instruction as o
   const review = parseImageQualityQaResponse(JSON.stringify({ pass: true, issues: [], observations, spatial_checks: checks }));
   assert.equal(review.pass, false);
   assert.ok(review.issues.some(issue => issue.panel === 4 && issue.subject === 'camera_geometry' && issue.type === 'unverified'));
+});
+
+test('current shot execution cannot substitute for observed camera evidence', () => {
+  for (const [axis, camera, observed] of [
+    ['elevation', 'low-angle', getPanelShotExecution('low-angle')],
+    ['elevation', 'low-angle', 'chin/jaw undersides, prop undersides from below; forehead recedes, horizon below faces'],
+    ['lens', 'wide-angle', getPanelShotExecution('wide-angle')],
+    ['lens', 'fisheye', getPanelShotExecution('fisheye')],
+  ]) {
+    const checks = spatialChecks();
+    checks[0].camera_geometry.dimensions[axis] = { requested: camera, observed, status: 'ok' };
+    checks[0].camera_geometry.dimensions.elevation.projection_cues = [
+      { subject: 'chin', surface: 'underside', x: 0.7, y: 0.3 },
+      { subject: 'shelf', surface: 'underside', x: 0.3, y: 0.1 },
+    ];
+    const review = parseImageQualityQaResponse(JSON.stringify({ pass: true, issues: [], observations, spatial_checks: checks }), {
+      finalPrompt: `## Panel 1\nCamera: ${camera}`,
+    });
+    assert.equal(review.pass, false, `${camera}: ${observed}`);
+    assert.ok(review.issues.some(issue => issue.subject === 'camera_geometry' && issue.type === 'unverified'));
+    assert.equal(review.issues.some(isMaterialImageQualityIssue), false);
+  }
 });
 
 test('panel-border head clipping cannot hide behind an overall camera PASS', () => {

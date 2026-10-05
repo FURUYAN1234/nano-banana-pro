@@ -79,7 +79,7 @@ test('OpenAI color GEKIGA intensifies facial drawing without changing acting or 
     const prompt = buildMangaPrompt({ ...options, providerFamily: 'chatgpt', colorMode: 'color', promptMaxChars });
     const panels = prompt.split(/^## Panel \d+\s*$/m).slice(1);
     assert.match(panels[0], /high-intensity GEKIGA/);
-    assert.match(panels[0], /large solid-black shadow planes/);
+    assert.match(panels[0], /large solid-black shadow planes/i);
     assert.match(panels[0], /dense directional crosshatching/);
     assert.match(panels[0], /small realistic eyes\/irises/);
     assert.match(panels[0], /crosshatching ON faces\/hands/);

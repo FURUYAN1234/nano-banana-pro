@@ -92,8 +92,9 @@ for (const family of ['chatgpt', 'gemini']) {
   test(`${family}: default/color ignores monochrome words in cast metadata`, () => {
     for (const mode of [undefined, 'color', 'auto']) {
       const prompt = build(family, mode, { castList: `${castList}\nstyle_tag: monochrome screentone` });
-      assert.match(prompt, /cinematic full-color TV anime style/);
-      assert.doesNotMatch(prompt, /\[ MONOCHROME TWO-VALUE RENDERING LOCK \]/);
+      assert.match(prompt, /Follow each panel's selected drawing medium and rendering recipe/);
+      assert.match(prompt, /PANEL STYLE LOCK: GEKIGA;[\s\S]*FULL COLOR/);
+      assert.doesNotMatch(prompt, /\[ MONOCHROME (?:TWO-VALUE|THREE-TONE) (?:RENDERING|MANUSCRIPT) LOCK \]/);
     }
   });
   test(`${family}: panorama is rendered in ink rather than requiring reference colors`, () => {
@@ -120,8 +121,8 @@ test('monochrome style changes retain white skin and do not inherit incidental b
     assert.match(prompt, /no default\/peak or copied sheet blush|既定の頬模様・見本の赤面の転写は禁止/);
     assert.match(prompt, /CHIBI_GAG;.*2-3 heads tall.*explicit proportions override.*Enlarge the skull.*compress torso.*Camera\/Action/i);
     assert.match(prompt, providerFamily === 'chatgpt'
-      ? /GEKIGA;.*small realistic eyes\/irises.*strong nose bridges.*Same identity, not anime proportions/
-      : /GEKIGA;.*smaller anatomically proportioned eyes.*constructed nose bridge.*Replace round anime facial construction/);
+      ? /GEKIGA;.*small realistic eyes\/irises, heavy anatomical eyelids, pronounced nose bridges and carved cheek\/jaw planes.*Same identity, not anime proportions/
+      : /GEKIGA; Fully redraw GEKIGA faces.*small realistic eyes\/irises, heavy anatomical eyelids, pronounced nose bridges and carved cheek\/jaw planes.*Keep identity\/age, scripted gaze, Camera\/Action\/body acting/);
     assert.match(prompt, /WATERCOLOR;.*assigned material\/shadow masks.*lit light skin/);
     assert.match(prompt, /panel recipe redraws facial construction/);
     assert.equal((prompt.match(/CHEEKS: none/g) || []).length, 4);
@@ -254,7 +255,7 @@ test('ink lighting and physical depth survive long Web compaction without changi
     assert.doesNotMatch(mono, /overrides ALL color\/paint\/lighting/);
     assert.deepEqual(mono.match(/^Camera:.*$/gm), color.match(/^Camera:.*$/gm));
     assert.deepEqual(mono.match(/^Action \(visual only\):.*$/gm), color.match(/^Action \(visual only\):.*$/gm));
-    assert.match(mono, /carved facial planes|carved brow\/nose\/cheek\/jaw planes/i);
+    assert.match(mono, /Redraw visible faces with small realistic eyes\/irises, heavy anatomical eyelids, pronounced nose bridges and carved cheek\/jaw planes/i);
     assert.doesNotMatch(mono, /PROPORTION OVERRIDE: Use 7-8 head proportions/);
     if (family === 'chatgpt') assert.ok(mono.length <= 32000, `shared Web/API budget: ${mono.length}`);
   }
