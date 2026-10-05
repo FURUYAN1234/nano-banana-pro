@@ -1,10 +1,10 @@
 {
-  "manualVersion": "6.8.7",
-  "manualSourceSha256": "c3fa2e51add70146dd1c05dbcfad20a0e4a89421d179bf5d43adf2d69b8984b2",
+  "manualVersion": "6.8.8",
+  "manualSourceSha256": "019040500d935de7e3aa7bc9d1a0b15cf19d58846ff5ed508cb53eeee71f2d9c",
   "manualFiles": [
     {
       "name": "gemini-api-beginner-guide-2026-10-01.pdf",
-      "sha256": "e078fe89a440b6ae323898e508ece6e02cedfa7bdc08f68d1ddbc81a6b5c22c8"
+      "sha256": "7b03bede5d8c01a421a233689471b31e5cc38bdf6e765ca76ac270421b9c6f96"
     },
     {
       "name": "openai-api-beginner-guide-2026-09-30.pdf",
@@ -12,14 +12,14 @@
     },
     {
       "name": "super-furu-ai-4koma-full-manual-2026-10-01.pdf",
-      "sha256": "c535eba74cc270d31fa63fb584bd847a96e47b9a200dd4d8d489d30629d14fa2"
+      "sha256": "2d2b291ac48f72c156f5ac3886e559c65c3bd81af2f5e7ba852631e821488e42"
     }
   ],
-  "readmeSha256": "608926f487b362859038441ef638b149e671da92964a53c654be4e0ac6d78acd",
-  "sourceTree": "852c416359df77e5e5748bb554a5f0b3b828b688",
-  "publicTree": "f4c0ce0673a87ac34832f9484af6960f0c31d2d6",
-  "packageSha256": "5f246c732019e44b82e6889251fa807462a5b51f7bf4dfc6aa0bbdf8f4829b49",
-  "releaseAssetSha256": "341487084ffc48f14569609c36557d77b4770a052b70f2323488dc0604e6d7f0",
+  "readmeSha256": "208a6260317aaafeeba4c2a1fb5ced9e1fe8e992cfaf46ecdb7f916808e94a2a",
+  "sourceTree": "557020a738c9a970910fe0d65c1c43235ff5a696",
+  "publicTree": "f09085242e6d3414034c1306e42685ba032a330c",
+  "packageSha256": "85b59a4d5b6e52cab65c249bd88fabae49d014413a6117d2ffa5befb4d1395e4",
+  "releaseAssetSha256": "9e41886be6afa0ebfad6d244ecf53f37260a92f73b30309319029cc87e1ddb4e",
   "reviewedSections": [
     "Application screen and output / 操作画面と生成例",
     "Visual direction and reading / 演出と読みやすさ",
@@ -36,6 +36,6 @@
     "📋 ChangeLog",
     "License / ライセンス"
   ],
-  "findings": "Reviewed all fourteen README sections against v6.8.7 source and existing distribution. Corrected the current manual and download versions, the single-image copied length to 8911, and the policy retry description to five revision considerations with failure feedback and separately counted valid image resends. Documented scene-led style/ending selection and speaker focus while preserving causal payoff, explicit direction, media, safety and documentary contracts. Unchanged setup, H3 package, privacy and terms sections remain applicable. Generated images still require visual inspection.",
-  "manualFindings": "Rebuilt and visually inspected every rendered page of the 12-page Gemini guide and 32-page full manual for v6.8.7. Reviewed all 20 unchanged OpenAI guide pages. All 64 pages remain readable without clipping or missing content; prior-version UI screenshots are explicitly examples. Updated endings, focus, page containment and policy repair counts; text-bound, link and privacy checks passed. Reviewed both updated A4 diagrams and corrected the policy label overlap."
+  "findings": "Reviewed the fourteen current README sections against the v6.8.8 source and distribution. Updated current version, six content-selected styles, camera negation/close-up/telephoto handling, projection preservation and unverified gekiga results. Checked H3 workflow, 30 nodes and six model components, matching authfix1 release asset and memory-only credential behavior. Setup, provider routes, storage/privacy and license descriptions remain applicable. Kept prior image examples explicitly qualified and trimmed history to fifteen releases. No new visual GEKIGA success or full ComfyUI execution is claimed.",
+  "manualFindings": "Rebuilt the 12-page Gemini guide and 32-page full manual for v6.8.8; visually inspected all 44 rendered pages, then re-inspected changed pages 11 and 28 after adding camera and six-style guidance. No clipping, missing glyphs or overlapping content observed. Automatic text bounds, page size, link and privacy scans passed. OpenAI guide remains byte-identical to the previously reviewed 20-page version (SHA256 b732f0f844983098f1f89ffcc52883c18131b315f47e6092a9b62950971b873e). H3 filenames and dependencies match current downloads."
 }
