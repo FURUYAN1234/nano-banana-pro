@@ -84,7 +84,7 @@ export const MANGA_COMPOSITION_VARIETY_LOCK = `MANGA CAMERA / POSE VARIETY LOCK:
 export const MANGA_COMPOSITION_VARIETY_LOCK_COMPACT = 'MANGA CAMERA / POSE VARIETY LOCK: Eye-line is gaze, not camera height. Honor scripted front/back/left/right camera side, crop and lens; vary unspecified shots only when story-motivated and keep explicit frontal or repeated shots. Show overhead through head tops and upper planes, low angles through undersides and upward convergence, rear/side views through visible body planes. Telephoto compresses near/far scale; wide angle expands it; fisheye adds curved edge distortion only when requested. Project actors and setting from the same viewpoint; camera labels, blur or VFX alone do not create an angle. Use a story-relevant focal form, never default to a foot thrust; preserve hand contact; stagger body axes and hands only when Action permits.';
 
 // 4コマの追加演出だけを従属させ、台本・人物・媒体の制約は短縮時も保持する。
-export const MANGA_PROMPT_PRIORITY = 'PROMPT PRIORITY: protect cast/count/identity/glasses, wardrobe, exact script, Camera geometry, layout/style/medium. CAMERA FIRST: project actors/props from fixed Camera; Action contact takes precedence over conflicting actor depth, so move that actor\'s sole body within reach of the prop; never relocate for legibility or chibi. No screen-left/right mirroring. Simplify only unspecified background texture and decorative VFX. Never print.';
+export const MANGA_PROMPT_PRIORITY = 'PROMPT PRIORITY: cast/count/identity/glasses/wardrobe, exact script/Camera/panel medium/layout. 人数のため顔出し/横並び/画風・投影変更不可。 CAMERA FIRST: project actors/props from fixed Camera; Action contact takes precedence over conflicting actor depth, so move that actor\'s sole body within reach of the prop; never relocate for legibility or chibi. No screen-left/right mirroring. Simplify only unspecified background texture and decorative VFX. Never print.';
 
 export const MANGA_GESTURE_VARIETY_LOCK = `BODY ACTING / GESTURE VARIETY LOCK:
 - A reference-sheet pose is identity evidence, not a recurring action or personality signature. Reproduce identity and clothing, but derive acting from the current story beat.
@@ -122,7 +122,9 @@ export const getPanelShotExecution = (camera = '') => {
   // 「全身寄り」等の距離表現で、明示された全身の画角を接写へ変えない。
   const close = !full && CLOSE_SHOT_RE.test(text);
   const floor = /(?:floor|ground)[ -]level|(?:床|地面)(?:すれすれ|近く|付近|から)/i.test(text);
-  const low = floor || /低(?:い|めの)(?:撮影)?位置|低所(?:から|の|に|より)?/i.test(text);
+  const eyeLevel = /アイレベル|eye[ -]level/i.test(text);
+  const relativeLow = /より(?:も)?低い|(?:[^\s、。]+上|[^\s、。]+面)すれすれ|worm['’]?s?[ -]eye|ワームズアイ/i.test(text);
+  const low = floor || !eyeLevel && (relativeLow || /低(?:い|めの)(?:撮影)?位置|低所(?:から|の|に|より)?/i.test(text));
   const horizontal = /水平(?:に|の|を保)|horizontal|level aim/i.test(text);
   if (close) cues.push('tight crop on focal subject');
   else if (full) cues.push('head-to-feet inside panel with headroom and floor beyond BOTH shoes; hips/knees/feet unobscured');

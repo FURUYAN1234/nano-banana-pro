@@ -1145,7 +1145,7 @@ export default function useMangaWorkflow() {
         setAssembleThought(prev => prev + `\n> [${endingPolicy.preserveReferenceStyle ? 'シリアス' : 'ギャグ'}・ドキュメンタリー] コンテンツセーフティ・サニタイザー適用済み (危険ワードを安全な言い換えに自動変換)`);
       }
 
-      setAssembleThought(prev => prev + "\n> [v3.31] 事故防止プロトコル全モデル適用済み:\n>   ✅ 縦書きセリフ強制\n>   ✅ セリフ勝手追加禁止\n>   ✅ キャラの外見は維持し、設定資料の配置・説明文はコピーしない\n>   ✅ カメラワーク平易化禁止\n>   ✅ プロンプト分岐 (ChatGPT/Gemini)\n>   ✅ 出力前チェックリスト追加");
+      setAssembleThought(prev => prev + "\n> [v3.31] 事故防止プロトコル全モデル適用済み:\n>   ✅ 縦書きを優先（構図に適した横書きは許容）\n>   ✅ セリフ勝手追加禁止\n>   ✅ キャラの外見は維持し、設定資料の配置・説明文はコピーしない\n>   ✅ カメラワーク平易化禁止\n>   ✅ プロンプト分岐 (ChatGPT/Gemini)\n>   ✅ 出力前チェックリスト追加");
 
       assertPromptEndingModeConsistency({ prompt: reviewed.prompt, punchlineType: activePunchlineType });
       assertPrintableDialogue(reviewed.prompt);
@@ -1798,13 +1798,16 @@ export default function useMangaWorkflow() {
           const reviewTokens = qualityResponse.usage?.completion_tokens ?? qualityResponse.usage?.output_tokens;
           statCallback(`[QUALITY QA] 応答サイズ: ${String(qualityResponse.text ?? '').length.toLocaleString()}文字${Number.isFinite(reviewTokens) ? `・出力 ${reviewTokens.toLocaleString()} tokens` : ''}。`);
           if (review.requestFailed) return review;
+          const missingCastEvidence = issue => issue.type === 'unverified' && (issue.subject === 'cast_count'
+            || issue.reason?.startsWith('Named-cast count lacks distinct body locations'));
           const missingHandPanels = new Set(review.issues
-            .filter(issue => issue.type === 'unverified' && issue.reason?.startsWith('Missing or incomplete per-actor visible-hand inventory'))
+            .filter(issue => issue.type === 'unverified' && issue.reason?.startsWith('Missing or incomplete per-actor visible-hand inventory')
+              || missingCastEvidence(issue))
             .map(issue => issue.panel));
           if (qualityMode === 'four-panel' && panelImages.length === 4 && missingHandPanels.size) {
             const contracts = extractPanelCastContracts(candidatePrompt).filter(({ panel }) => missingHandPanels.has(panel));
             if (contracts.length) {
-              statCallback(`[QUALITY QA] 人物別の手の記録が欠けた${contracts.map(({ panel }) => `${panel}コマ`).join('・')}を各コマの拡大画像で補足検査します。画像は再生成しません。`);
+              statCallback(`[QUALITY QA] 人物・手の記録が欠けた${contracts.map(({ panel }) => `${panel}コマ`).join('・')}を各コマの拡大画像で補足検査します。画像は再生成しません。`);
               const cropParts = buildImageQualityQaImageParts({ candidate, panelImages }).slice(1);
               for (const contract of contracts) {
                 try {
@@ -1817,12 +1820,16 @@ export default function useMangaWorkflow() {
                   review.issues = review.issues.filter(issue => !(
                     issue.panel === contract.panel && issue.reason?.startsWith('Missing or incomplete per-actor visible-hand inventory')
                     && !stillMissing.has(`${issue.panel}:${issue.subject}`)
+                  ) && !(
+                    issue.panel === contract.panel && missingCastEvidence(issue)
+                    && !auditIssues.some(item => missingCastEvidence(item)
+                      && (issue.subject === 'cast_count' || item.subject === issue.subject))
                   ));
                   review.issues.push(...auditIssues.filter(issue => !issue.reason?.startsWith('Missing or incomplete per-actor visible-hand inventory')));
                   review.pass = review.issues.length === 0;
                   onReviewProgress?.(review);
-                  const material = auditIssues.filter(issue => issue.type === 'anatomy');
-                  statCallback(`[手の独立監査 / ${contract.panel}コマ] ${material.length ? `重大な手の破綻 ${material.map(issue => issue.subject).join('・')}` : auditIssues.length ? '判定に未確認あり' : '可視の手の数に異常なし'}。`);
+                  const material = auditIssues.filter(issue => issue.type === 'anatomy' || issue.type === 'cast_count');
+                  statCallback(`[手の独立監査 / ${contract.panel}コマ] ${material.length ? `手・人数の明確な不一致 ${material.map(issue => issue.subject).join('・')}` : auditIssues.length ? '判定に未確認あり' : '人物・可視の手の数に異常なし'}。`);
                 } catch (error) {
                   statCallback(`[手の独立監査 / ${contract.panel}コマ] 未確認: ${error.message}`);
                 }

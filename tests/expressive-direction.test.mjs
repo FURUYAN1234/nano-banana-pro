@@ -221,7 +221,7 @@ test('panel props and lettering cannot spill into another scene, while explicit 
 test('camera is a protected projection, not movable for face or screen legibility', () => {
   for (const provider of ['chatgpt', 'gemini']) {
     const prompt = build(provider);
-    assert.match(prompt, /PROMPT PRIORITY:.*Camera geometry/);
+    assert.match(prompt, /PROMPT PRIORITY:.*(?:Camera geometry|exact script\/Camera\/panel medium)/);
     assert.match(prompt, /CAMERA FIRST:.*never relocate.*legibility/);
     assert.match(prompt, /(?:Only when Camera leaves position unspecified|If unspecified, move camera)/);
     for (const panel of prompt.split(/## Panel \d/).slice(1)) {
@@ -272,6 +272,19 @@ test('floor camera height and viewing pitch remain separate', () => {
   const down = getPanelShotExecution('床近くから小物を見下ろす');
   assert.match(down, /look down/);
   assert.doesNotMatch(down, /look up|underside/);
+});
+
+test('relative camera height and worms-eye framing keep upward projection without inventing floor height', () => {
+  for (const camera of ['机の高さより低い左前からの中景', '棚よりも低い位置から撮る', '卓上すれすれのワームズアイ', "worm's-eye view", 'worms eye view']) {
+    const cue = getPanelShotExecution(camera);
+    assert.match(cue, /below.*faces|look up/);
+    assert.match(cue, /undersides/);
+    assert.doesNotMatch(cue, /floor-level/);
+  }
+  const level = getPanelShotExecution('卓上すれすれから水平に撮る');
+  assert.match(level, /below.*faces/);
+  assert.doesNotMatch(level, /look up/);
+  assert.doesNotMatch(getPanelShotExecution('人物の肩が机より低い、カメラはアイレベル'), /look up/);
 });
 
 test('supplied four-panel scenario retains observable height cues after prompt compaction', () => {

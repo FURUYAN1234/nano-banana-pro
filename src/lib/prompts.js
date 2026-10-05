@@ -67,7 +67,7 @@ const MANGA_PAGE_TYPOGRAPHY_LOCK = `PAGE TYPE HIERARCHY:
 - Do not use the page-title typeface for dialogue, captions, or speech bubbles.
 
 SPEECH BUBBLE TYPE LOCK:
-- Render every Japanese dialogue bubble in vertical Japanese tategaki using regular-weight Japanese manga Mincho-style type: slender, even strokes, clear counters, tight but readable vertical spacing, and black text on a white bubble.
+- Prefer vertical Japanese tategaki in regular manga Mincho: slender black strokes on white, clear counters and readable spacing.
 - ${VERTICAL_DIALOGUE_GEOMETRY}
 - Keep this same regular Mincho-style dialogue treatment in every panel, regardless of emotion, panel style, or dialogue intensity.
 - NEVER use bold Gothic or bold sans-serif inside speech bubbles, including shouts or punchlines. Keep emphasis through bubble shape, composition, or punctuation instead of changing the dialogue font weight or family.`;
@@ -505,7 +505,8 @@ ${styleJson.anti_patterns ? `            - 絶対禁止事項:\n${styleJson.anti
                 * **不条理を使った場合**: → 題材の道具の使い方や人物同士の関係に、読者が見て分かる意外な食い違いを作り、状況欄に明記する。説明不能な異物や巨大物の追加を既定にせず、常識外れの行為を登場人物が当然のように続ける見せ方も使う。
                 * **置換を使った場合**: → 元の文脈と置換先のビジュアル差を最大化。「国際会議の荘厳なテーブルに幼稚園児の工作道具が並んでいる」等、視覚的ミスマッチを明記
                 * **常識に戻るを使った場合**: → 暴走キャラに[EMOTION: IMPACT]や[EMOTION: CHIBI_GAG]、常識キャラだけ[EMOTION: NORMAL]で冷静な表情。温度差を絵で表現する
-             - ${punchlineType === 'Auto' ? `**【オチの多様化 (Punchline Variety Enforcement)】**: 4コマ目のオチが毎回同じパターンにならないよう、以下の9系統からネタに最適なものを選択せよ。
+             - **【結末の判読性】**: 誰に何が起き、何が変わったのかを、前の手掛かりと最後の行動・受け手の反応で見せる。最後の台詞で新設定を説明するだけにせず、読者が絵と短い台詞から落差を読み取れるようにする。指定したオチや意図的な沈黙・不条理は保つ。
+             - ${['Auto', 'GagAuto'].includes(punchlineType) ? `**【オチの多様化 (Punchline Variety Enforcement)】**: 題材の欲求・障害・人物の行動から、異なる結末の可能性を短く比較し、前のコマの種を最も明瞭に回収するものを選ぶ。型の抽選や固定順では決めない。4コマ目だけで眠る・目覚める・夢だった・ループ・メタ終了などへ逃げ、積み上げた出来事を帳消しにしない。これらも題材に必要な種と見て分かる落差・帰結があるなら使用可能。特定の型や眠る動作そのものは禁止しない。以下の9系統からネタに最適なものを選択せよ。
                 * **爆発型**: 全員が限界突破。叫び・暴走・カオスで画面爆発（推奨EMOTION: IMPACT, CHIBI_GAG）
                 * **静寂型（シュール）**: 全員が無言で固まる。沈黙と虚無が最大の笑い（推奨EMOTION: NORMAL（通常の真顔・呆れ・点目）、CHIBI_GAG（ちび呆れ）。⚠️BLANK（白目）は安易に乱用せず、真顔や呆れ顔とバランスよく選択せよ）
                 * **感動詐欺**: 狂った状況のまま感動的なイイハナシダナーで終わる理不尽な美しさ（推奨EMOTION: SHOUJO, WATERCOLOR）
@@ -667,7 +668,7 @@ ${styleJson.anti_patterns ? `            - 絶対禁止事項:\n${styleJson.anti
           Location: [${adaptiveLocationMode ? '題材本文・出来事・4コマの行動に最も適した、安全で具体的な非生体ロケーションを1つ記入せよ' : `必ず『${effectiveLocationPlan.anchorName}』にせよ`}]
           VisualEvidence: [元トピックや出来事を絵で伝える具体的な手掛かりを「、」区切りで記入せよ。数合わせはしない]
           Outfit: [${customOutfit.trim() ? "必ず『" + customOutfit.trim() + "』にせよ" : "今回の題材に基づくイベント、職業、安全、場所、天候、屋内環境、季節に適した具体的な服装カテゴリーを記入せよ。※「キャラシート準拠」「デフォルト」および原文・指定に根拠のない学校制服は禁止"}]
-          Punchline: [${punchlineType === 'SeriousAuto' ? '選択したシリアス結末の方向性を、静かな余韻、決意・再出発、警告、問題提起、感動・救い、悲劇・喪失のいずれかで記載せよ' : punchlineType !== 'Auto' ? "必ず『" + getPunchlineLabel(punchlineType) + "』と記載せよ" : "適用したオチの方向性（例: 爆発型、天丼爆発型、シュール、感動詐欺など）"}]
+          Punchline: [${punchlineType === 'SeriousAuto' ? '選択したシリアス結末の方向性を、静かな余韻、決意・再出発、警告、問題提起、感動・救い、悲劇・喪失のいずれかで記載せよ' : !['Auto', 'GagAuto'].includes(punchlineType) ? "必ず『" + getPunchlineLabel(punchlineType) + "』と記載せよ" : "選択した具体的な結末名を、静寂型 (シュール)、爆発型 (カオス)、感動詐欺、メタフィクション、理不尽な制裁、天丼、夢オチ (ループ)、盛大な勘違い (すれ違い)、打ち切りエンドのいずれかで記載せよ"}]
           Scenario:
           [1コマ目: 起]
           [EMOTION: XXX]
@@ -954,7 +955,7 @@ KEY PROP / OBJECT CONSISTENCY:
 - Match key object EXACTLY to Action/Dialogue; never substitute its identity. Contents, condition and holder follow each panel's scripted state.
 
 TEXT RULES:
-- Only Dialogue becomes white bubbles: vertical Japanese tategaki, verbatim character-by-character; no paraphrase, synonyms, softening, added/omitted words, or horizontal text.
+- Only Dialogue becomes white bubbles: prefer_vertical Japanese tategaki, verbatim character-by-character; horizontal is allowed for composition/readability; no paraphrase, synonyms, softening, added/omitted words.
 - In each Dialogue block, ONLY decoded quoted values after "TEXT (PRINT VALUES ONLY)" are printed. Names after TAILS or TAIL TIP LOCK are routing metadata: NEVER print them, field labels, bubble IDs or wrapper quotation marks. Preserve literal names or quotation marks that are part of the TEXT value itself.
 - Tails point to actual speakers; right-to-left manga order.
 - Explicit scripted handwriting/signage/label/print/screen/board stays exact. Unscripted in-scene lettering is freely allowed on physical surfaces, but it never becomes a speech bubble, narration, prompt label or metadata.

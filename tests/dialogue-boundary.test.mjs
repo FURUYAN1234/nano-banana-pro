@@ -83,11 +83,12 @@ test('long-prompt compaction cannot interpret literal speech as a rendering dire
   assert.equal(extractBubbleContracts(prompt).find(p => p.panel === 4)?.bubbles[0]?.text, text);
 });
 
-test('full and compact provider prompts retain upright column geometry even for a shout', () => {
+test('full and compact provider prompts prefer upright columns and allow composition-led horizontal lettering', () => {
   for (const providerFamily of ['chatgpt', 'gemini']) {
     const prompt = build('甲「待ってーっ！」', providerFamily);
     assert.match(prompt, /upright[^\n]*top-to-bottom[^\n]*right-to-left/i);
-    assert.match(prompt, /(?:shouts|shouting)[^\n]*single|single[^\n]*(?:shouts|shouting)/i);
+    assert.match(prompt, /prefer_vertical/);
+    assert.match(prompt, /horizontal allowed.*composition\/readability/i);
   }
 });
 

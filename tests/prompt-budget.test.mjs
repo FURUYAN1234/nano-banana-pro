@@ -125,7 +125,7 @@ test('ChatGPT default removes repeated instructions without treating the Web pas
   // Keep the same overhead cap and the actual API ceiling while retaining them.
   const recipeChars = [...prompt.matchAll(/^Style: (.+)$/gm)].reduce((sum, match) => sum + match[0].length, 0);
   assert.ok(recipeChars > 0, 'explicit panel rendering recipes must survive soft compaction');
-  assert.ok(prompt.length - buildRenderOptionsContract().length - buildProtectedCastContract(readProtectedCast(prompt)).length - recipeChars < 18000, `unexpected non-recipe overhead: ${prompt.length}`);
+  assert.ok(prompt.length - buildRenderOptionsContract().length - buildProtectedCastContract(readProtectedCast(prompt)).length - recipeChars < 18000, `unexpected non-recipe overhead: ${prompt.length - buildRenderOptionsContract().length - buildProtectedCastContract(readProtectedCast(prompt)).length - recipeChars}; total=${prompt.length}`);
   assert.equal((prompt.match(/FOCAL READABILITY:/g) || []).length, 1);
   assert.ok(prompt.length <= 32000);
   assert.match(prompt, /Outfit assignment:|role-specific outfit assignments:/);
@@ -233,9 +233,9 @@ test('soft Web target may be exceeded to retain critical content', () => {
   );
   assert.doesNotMatch(prompt, /B1="\[ミク\]/);
   assert.match(prompt, /Dialogue \(verbatim bubbles\):/);
-  assert.match(prompt, /vertical Japanese tategaki/i);
-  assert.match(prompt, /softening/);
-  assert.match(prompt, /synonyms/);
+  assert.match(prompt, /prefer_vertical/i);
+  assert.match(prompt, /softening|軟化/);
+  assert.match(prompt, /synonyms|言換/);
   assert.match(prompt, /MUST HAVE glasses/);
   assert.match(prompt, /MUST NOT have glasses/);
   assert.match(prompt, /THINGS TO AVOID:/);

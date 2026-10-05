@@ -1025,19 +1025,18 @@ If ANY of the following occurs, REGENERATE AGAIN automatically:
 Repeat regeneration until ALL conditions are satisfied.
 
 ━━━━━━━━━━━━━━━━━━
-■ HORIZONTAL-TO-VERTICAL TEXT CORRECTION (CRITICAL)
+■ DIALOGUE WRITING DIRECTION
 ━━━━━━━━━━━━━━━━━━
-- ALL text inside speech bubbles MUST be vertical Japanese (tategaki: top-to-bottom, right-to-left columns).
-- If ANY speech bubble text is horizontal (yokogaki: left-to-right), you MUST redraw those bubbles with vertical text.
-- This applies to ALL panels — check every single speech bubble.
-- Horizontal text in speech bubbles is a FAILURE condition and requires immediate correction.
+- Prefer vertical Japanese (tategaki: top-to-bottom, right-to-left columns).
+- Keep horizontal lettering when it best serves the composition and readability.
+- Inspect every bubble for exact text and readable order; horizontal direction alone is not a failure.
 
 ━━━━━━━━━━━━━━━━━━
 ■ OUTPUT RULE
 ━━━━━━━━━━━━━━━━━━
 SELF-REVIEW before finalizing:
 1. Verify finger count on all visible hands (exactly 5 fingers each).
-2. Verify ALL speech bubble text is vertical (tategaki). If ANY horizontal text is found → REDRAW those bubbles immediately.
+2. Prefer tategaki; preserve coherent horizontal lettering where composition/readability benefits. Never redraw solely for horizontal direction.
 3. Check for text errors or garbled characters and fix internally.
 4. Verify the top title is present, centered, fully visible, and copied exactly.
 

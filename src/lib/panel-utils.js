@@ -304,6 +304,7 @@ const findExactCastMatch = (speaker, validCharacters = []) => {
     return (
       speaker === c ||
       speaker === nameOnly ||
+      speakerTypographyKey(speaker) === speakerTypographyKey(c) ||
       speakerKey === normalizeSpeakerKey(c) ||
       speakerKey === normalizeSpeakerKey(nameOnly)
     );
@@ -312,7 +313,7 @@ const findExactCastMatch = (speaker, validCharacters = []) => {
 
 const findSpeakerCastMatch = (speaker, validCharacters = []) => {
   // A collective label may contain cast names, but is never one of its members.
-  if (parseCollectiveSpeaker(speaker)) return '';
+  if (parseCollectiveSpeaker(speaker, validCharacters)) return '';
   const exactMatch = findExactCastMatch(speaker, validCharacters);
   if (exactMatch) return exactMatch;
 
@@ -336,10 +337,9 @@ const findSpeakerCastMatch = (speaker, validCharacters = []) => {
     return '';
   }
 
-  return validCharacters.find(c => {
-    const nameOnly = c.split(/[（(]/)[0].trim();
-    return nameOnly && (speaker.includes(nameOnly) || nameOnly.includes(speaker));
-  });
+  // A partial name can belong to a different person (for example, someone's
+  // colleague). Only complete identities or the role resolution above may map.
+  return '';
 };
 
 /**
@@ -431,11 +431,20 @@ const unwrapSpeakerLabel = (value = '') => stripMatchingStructuralWrapper(String
 const speakerTypographyKey = (value = '') => unwrapSpeakerLabel(value)
   .replace(/[【\[（(]/g, '(').replace(/[】\]）)]/g, ')').replace(/[\s・]/g, '');
 
-export const parseCollectiveSpeaker = (value = '') => {
+export const parseCollectiveSpeaker = (value = '', validCharacters = []) => {
   const label = unwrapSpeakerLabel(value);
   const match = label.match(/^(全員|みんな|一同|全キャラ|全メンバー|[二三四五六七八九十0-9０-９]+人)(?:\s*([（(【\[])(.+)([）)】\]]))?$/u);
-  if (!match || (match[2] && { '（': '）', '(': ')', '【': '】', '[': ']' }[match[2]] !== match[4])) return null;
-  return { name: match[1], members: match[3]?.trim() || '' };
+  if (match) {
+    if (match[2] && { '（': '）', '(': ')', '【': '】', '[': ']' }[match[2]] !== match[4]) return null;
+    return { name: match[1], members: match[3]?.trim() || '' };
+  }
+  // An interpunct can be part of ONE registered identity. Resolve that first,
+  // then recognize a list only when every owner is a known identity or role.
+  if (!validCharacters.length || findExactCastMatch(label, validCharacters)) return null;
+  const keys = collectiveMemberKeys(label, validCharacters);
+  if (!keys || keys.length < 2 || keys.some(key => !findExactCastMatch(key, validCharacters)
+    && (!isGenericRoleSpeaker(key) || JA_PARTICLE_AFTER_SUBJECT_RE.test(key)))) return null;
+  return { name: label, members: label, enumerated: true };
 };
 
 // Resolve complete identities only. Substring/fuzzy matching is unsafe at the
@@ -446,31 +455,37 @@ const layoutSpeakerKey = (value, validCharacters) => {
   return registered.length === 1 ? speakerTypographyKey(registered[0].split(/[（(]/)[0]) : key;
 };
 
-export const collectiveMemberKeys = (members, validCharacters) => {
+export const collectiveMemberKeys = (members, validCharacters, sorted = true) => {
   if (!members) return [];
-  if (!validCharacters.length) return members.split(/[・、,，／/]/u).map(speakerTypographyKey).sort();
+  if (!validCharacters.length) {
+    const keys = members.split(/[・、,，／/]/u).map(speakerTypographyKey);
+    return sorted ? keys.sort() : keys;
+  }
   // Consume full registered names before separators, including names with an interpunct.
   const names = [...new Set(validCharacters.flatMap(name => [name, name.split(/[（(]/)[0].trim()]))]
     .sort((a, b) => b.length - a.length);
+  const registeredKeys = new Set(names.map(speakerTypographyKey));
   const keys = [];
   let rest = members.trim();
   while (rest) {
-    const name = names.find(candidate => rest.startsWith(candidate)
-      && (!rest.slice(candidate.length) || /^[\s・、,，／/]/u.test(rest.slice(candidate.length))))
+    const ends = [...rest.matchAll(/[\s・、,，／/]/gu)].map(match => match.index).concat(rest.length).reverse();
+    const name = ends.map(end => rest.slice(0, end).trim()).find(candidate => candidate && registeredKeys.has(speakerTypographyKey(candidate)))
       || rest.match(/^[^・、,，／/]+/u)?.[0]?.trim();
     if (!name) return null;
     keys.push(layoutSpeakerKey(name, validCharacters));
     rest = rest.slice(name.length).replace(/^[\s・、,，／/]+/u, '');
   }
-  return keys.sort();
+  return sorted ? keys.sort() : keys;
 };
 
 const layoutSpeakerMatches = (label, entry, validCharacters) => {
   if (!label.trim() || !entry.speaker) return false;
-  const layoutGroup = parseCollectiveSpeaker(label);
-  const dialogueGroup = parseCollectiveSpeaker(entry.sourceSpeaker || entry.speaker);
+  const layoutGroup = parseCollectiveSpeaker(label, validCharacters);
+  const dialogueGroup = parseCollectiveSpeaker(entry.sourceSpeaker || entry.speaker, validCharacters);
   if (layoutGroup || dialogueGroup) {
-    if (!layoutGroup || !dialogueGroup || layoutGroup.name !== dialogueGroup.name) return false;
+    if (!layoutGroup || !dialogueGroup) return false;
+    if (layoutGroup.name !== dialogueGroup.name
+      && !(layoutGroup.members && dialogueGroup.members && (layoutGroup.enumerated || dialogueGroup.enumerated))) return false;
     const left = collectiveMemberKeys(layoutGroup.members, validCharacters);
     const right = collectiveMemberKeys(dialogueGroup.members, validCharacters);
     return left !== null && right !== null && (!left.length || !right.length || JSON.stringify(left) === JSON.stringify(right));
@@ -488,6 +503,7 @@ const speakerNameForHeuristics = (value = '') => String(value).replace(/[【\[�
 const normalizeDialogueSpeakerPrefix = (value = '') =>
   (parseCollectiveSpeaker(value)?.name || unwrapSpeakerLabel(value))
     .replace(/^[\s\-*・、。:：]+/, '')
+    .replace(/\s*(?:→|[-=]>|[:：])\s*$/u, '')
     .replace(/[（(].*?[）)]/g, '')
     .replace(/^(?:セリフ|台詞|Dialogue|Speech\s*Bubble\s*\d*)\s*[:：-]?\s*/i, '')
     .trim();
@@ -520,6 +536,8 @@ const isNarrationSubjectSpeakerCandidate = (value = '', validCharacters = []) =>
 };
 
 const isExplicitSameLineSpeakerPrefix = (value = '', validCharacters = []) => {
+  if (findExactCastMatch(unwrapSpeakerLabel(value), validCharacters)
+    || parseCollectiveSpeaker(value, validCharacters)) return true;
   const clean = normalizeDialogueSpeakerPrefix(value);
   if (!isGenericShortSpeakerPrefix(clean)) return false;
   if (clean === '全員' || clean === 'みんな' || clean === 'Speaker') return true;
@@ -542,6 +560,12 @@ const getExplicitSameLineSpeakerName = (value = '', validCharacters = []) => {
 };
 
 const getImmediateInlineSpeakerName = (value = '', validCharacters = []) => {
+  const previousClose = String(value).lastIndexOf('」');
+  if (previousClose >= 0) {
+    const completeLabel = String(value).slice(previousClose + 1).replace(/^[\s、。！？!?…:：]+/u, '').trim();
+    const explicit = getExplicitSameLineSpeakerName(completeLabel, validCharacters);
+    if (explicit) return explicit;
+  }
   const match = String(value).match(/(?:^|[、。！？!?…）)」\s])([\p{L}\p{N}_・\s]{1,24})\s*(?:→|[-=]>|[:：])?\s*$/u);
   if (!match) return '';
   return getExplicitSameLineSpeakerName(match[1], validCharacters);
@@ -767,7 +791,9 @@ const renderBalloonLayout = (source, entries, rearSubject = '', uncertainRear = 
     .replace(/口元|口もと|\bmouth\b/gi, '頭の見える輪郭')
     .replace(/(^|の|から|\s)口(?=へ|に|の|$)/g, '$1頭の見える輪郭');
   return ` BALLOON LAYOUT (NEVER PRINT; x=0 left/1 right; preserve Camera/Action): ${plan.map((item, i) => {
-    const members = parseCollectiveSpeaker(item.speaker)?.members || parseCollectiveSpeaker(entries[i].sourceSpeaker)?.members;
+    const sourceMembers = parseCollectiveSpeaker(item.speaker, validCharacters)?.members || parseCollectiveSpeaker(entries[i].sourceSpeaker, validCharacters)?.members;
+    const members = sourceMembers ? (collectiveMemberKeys(sourceMembers, validCharacters, false) || [])
+      .map(key => (findExactCastMatch(key, validCharacters)?.split(/[（(]/)[0].trim() || key).replace(/\s/g, '')).join('・') : '';
     return `B${i + 1} x=${item.x}, [${entries[i].speaker}]${members ? ` members=${members}` : ''} ${visibleAnchor(item.anchor, entries[i].speaker)}, tail=${visibleAnchor(item.route, entries[i].speaker)}`;
   }).join('; ')}.`;
 };
@@ -853,7 +879,10 @@ export const extractDialogueOnly = (fullPanelText, castList, options = {}) => {
 
     const isInstruction = isInstructionLine(line);
     if (match && match[1].trim() && !isInstruction) {
-      let tempSpeaker = unwrapSpeakerLabel(match[1]);
+      let tempSpeaker = unwrapSpeakerLabel(match[1]).replace(/\s*(?:→|[-=]>|[:：])\s*$/u, '');
+      // A parenthesis around several inline utterances opens before the first
+      // owner and closes after the last. It is stage punctuation, not identity.
+      if (/^[（(]/u.test(tempSpeaker) && !/[）)]/u.test(tempSpeaker)) tempSpeaker = tempSpeaker.slice(1).trim();
       // ベースとなる話者名（カッコ内のト書きを無視）
       let tempSpeakerBase = tempSpeaker.replace(/[（(].*?[）)]/g, '').trim();
 
@@ -862,7 +891,7 @@ export const extractDialogueOnly = (fullPanelText, castList, options = {}) => {
       // [v4.6.4] キャスト名完全一致バイパス: 助詞を含むキャスト名（例: と■のよ■ゆき子）を正しく認識
       // シナリオ内ではスペースが省略されることが多いため、スペース除去比較も行う
       const normalizedSpeaker = tempSpeakerBase.replace(/[\s・]/g, '');
-      const isExactCastMatch = validCharacters.some(c => {
+      const isExactCastMatch = Boolean(parseCollectiveSpeaker(tempSpeakerBase, validCharacters)) || validCharacters.some(c => {
         const nameOnly = c.split(/[（(]/)[0].trim();
         const normalizedName = nameOnly.replace(/[\s・]/g, '');
         return nameOnly && (tempSpeakerBase === nameOnly || tempSpeakerBase === c || normalizedSpeaker === normalizedName);
@@ -1068,13 +1097,14 @@ export const extractDialogueOnly = (fullPanelText, castList, options = {}) => {
   }
   const orderedEntries = speechBubbleEntries
     .sort((a, b) => a.order - b.order || a.sequence - b.sequence);
-  if (options.asEntries && !options.forImagePrompt) return orderedEntries.map(({ speaker, text }) => ({ speaker, text }));
+  const entryValue = ({speaker, text, sourceSpeaker}) => ({speaker, text, ...(options.withSourceSpeaker ? {sourceSpeaker} : {})});
+  if (options.asEntries && !options.forImagePrompt) return orderedEntries.map(entryValue);
 
   if (options.forImagePrompt) {
     const rear = extractExplicitRearSubject(fullPanelText, collectCastNameEntries(castList));
     const rearSubject = rear.subject;
     const layout = renderBalloonLayout(layoutSource, orderedEntries, rearSubject, ['unresolved', 'ambiguous'].includes(rear.status), validCharacters);
-    if (options.asEntries) return orderedEntries.map(({ speaker, text }) => ({ speaker, text }));
+    if (options.asEntries) return orderedEntries.map(entryValue);
     // 上位台本には本文だけを再掲し、話者名は各コマの尻尾メタデータに一元化する。
     if (options.forScriptLock) {
       const values = orderedEntries.map((entry, index) => `B${index + 1}=${JSON.stringify(entry.text)}`).join('; ');
@@ -1155,7 +1185,15 @@ const extractExplicitRearSubject = (text, castEntries) => {
   // 台詞内の比喩は除外し、Camera行とト書きの明示構図を読む。
   const cameraText = (String(text || '').match(CAMERA_INSTRUCTION_LINE_RE) || []).join(' ');
   const shoulderCamera = /肩|ショルダー|shoulder|\bOTS\b/i.test(cameraText);
-  const actionText = String(text || '').replace(CAMERA_INSTRUCTION_LINE_RE, '').replace(/[「『"][^」』"\n]*[」』"]/g, '');
+  const actionText = String(text || '').replace(CAMERA_INSTRUCTION_LINE_RE, '').replace(/[「『"][^」』"\n]*[」』"]/g, '')
+    .split(/(?<=[。!?！？])|\n/u)
+    .filter(clause => {
+      // An in-scene observer's sightline is not the camera's vantage point.
+      const observer = castNames.some(name => new RegExp(`${boundedName(name)}(?:は|が|\\s+(?:looks?|watches?|peeks?))`, 'i').test(clause));
+      const gaze = /見る|見つめ|見守|覗|視線|目を|look|watch|peek/i.test(clause);
+      const camera = /撮影|撮る|カメラ|画角|ショット|camera|shot|filmed|viewpoint/i.test(clause);
+      return !(observer && gaze && !camera);
+    }).join(' ');
   const castNamePattern = castNames.map(escapeRegex).join('|');
   // Cameraの撮影位置を優先し、Action内の人物の立ち位置を撮影位置と取り違えない。
   for (const [source, isCamera] of [[cameraText, true], [actionText, false]]) {
@@ -1447,7 +1485,7 @@ export const extractActionOnly = (fullPanelText, castList, placementRule = "") =
       tempSpeaker = unwrapSpeakerLabel(tempSpeaker);
       // [v4.6.4] キャスト名完全一致バイパス: 助詞を含むキャスト名（例: と■のよ■ゆき子）を正しく認識
       const normalizedSpeakerA = tempSpeaker.replace(/[\s・]/g, '');
-      const isExactCastMatch = validCharacters.some(c => {
+      const isExactCastMatch = Boolean(parseCollectiveSpeaker(tempSpeaker, validCharacters)) || validCharacters.some(c => {
         const nameOnly = c.split(/[（(]/)[0].trim();
         const normalizedName = nameOnly.replace(/[\s・]/g, '');
         return nameOnly && (tempSpeaker === nameOnly || tempSpeaker === c || normalizedSpeakerA === normalizedName);
@@ -1596,7 +1634,7 @@ export const extractPlacementRule = (fullPanelText, castList, options = {}) => {
       const isMetaTag = META_SPEAKER_LABEL_RE.test(speaker);
       const isSoundEffect = /^[^a-zA-Z]*([\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF])([ーッっ]*\1){1,}[ーッっ！!ン]*$/u.test(speaker.replace(/[（(].*$/, '').trim());
       const hasReactionTag = /[（(]\s*リアクション/i.test(match[1]);
-      const isDummySpeaker = /^(全員|みんな|Speaker)$/i.test(speaker);
+      const isDummySpeaker = Boolean(parseCollectiveSpeaker(speaker, validCharsForPlacement)) || /^(全員|みんな|Speaker)$/i.test(speaker);
       if (hasSentenceParticles || isNarrationSubjectP || isTooLong || isMetaTag || isSoundEffect || hasReactionTag || isDummySpeaker) return;
       // [v4.6.3] コロン形式ト書き判定: extractDialogueOnly と同期
       if (match[0].trim().endsWith(':') || match[0].trim().endsWith('：')) {
@@ -1671,14 +1709,17 @@ export const extractCastLimitRule = (fullPanelText, castList, options = {}) => {
 
   // The bubble parser is the source of truth for speakers, including multiple
   // utterances on one line and speakers written after the quote.
-  const entries = extractDialogueOnly(fullPanelText, castList, {forImagePrompt: true, asEntries: true});
-  const speakers = [...new Set(entries
-    // Collective speech names a set of the scripted actors, not another body.
-    .filter(({ speaker }) => !parseCollectiveSpeaker(speaker))
-    .map(({speaker}) => {
-      const alias = findSpeakerCastMatch(speaker, validCharacters);
-      return alias ? charLookup[alias].name : speaker;
-    }))];
+  const entries = extractDialogueOnly(fullPanelText, castList, {forImagePrompt: true, asEntries: true, withSourceSpeaker: true});
+  const speakers = [...new Set(entries.flatMap(({speaker, sourceSpeaker}) => {
+    const group = parseCollectiveSpeaker(sourceSpeaker || speaker, validCharacters);
+    // Count the actual owners of explicit collective dialogue, including guests.
+    // An unqualified group still relies on the scripted cast/action context.
+    const owners = group ? collectiveMemberKeys(group.members, validCharacters) || [] : [speaker];
+    return owners.map(owner => {
+      const alias = findSpeakerCastMatch(owner, validCharacters);
+      return alias ? charLookup[alias].name : owner;
+    });
+  }))];
 
   // [v3.95] セリフ行以外のテキストを抽出して登場人物を検出する (セリフ内言及によるキャラ誤認バグの完全排除)
   const actionAndMetaLines = [];
@@ -1695,7 +1736,7 @@ export const extractCastLimitRule = (fullPanelText, castList, options = {}) => {
       tempSpeaker = unwrapSpeakerLabel(tempSpeaker);
       // [v4.6.4] キャスト名完全一致バイパス: 助詞を含むキャスト名（例: と■のよ■ゆき子）を正しく認識
       const normalizedSpeakerC = tempSpeaker.replace(/[\s・]/g, '');
-      const isExactCastMatchC = validCharacters.some(c => {
+      const isExactCastMatchC = Boolean(parseCollectiveSpeaker(tempSpeaker, validCharacters)) || validCharacters.some(c => {
         const nameOnly = c.split(/[（(]/)[0].trim();
         const normalizedName = nameOnly.replace(/[\s・]/g, '');
         return nameOnly && (tempSpeaker === nameOnly || tempSpeaker === c || normalizedSpeakerC === normalizedName);
@@ -1810,7 +1851,7 @@ export const extractCastLimitRule = (fullPanelText, castList, options = {}) => {
     let cloneWarning = compact
       ? `CAST COUNT: ${allCharBrackets.join(', ')} each EXACTLY ONCE; no named-character duplicates.`
       : `ANTI-CLONE REMINDER: ${allCharBrackets.join(', ')} — each appears EXACTLY ONCE. If a character is mentioned in both the placement rule AND the visual action, they are the SAME person — do NOT draw a second copy.`;
-    cloneWarning += '\nCAST INSTANCE LOCK: allocate each named actor one body silhouette (a full-size physical actor), in one depth position, one time in this panel. Every Camera/Action/dialogue/reaction mention updates that same physical body; never create another full-size body from a repeated mention, even across foreground/background or panel-edge occlusion.';
+    cloneWarning += '\nCAST INSTANCE LOCK: allocate each named actor one physical body silhouette at scripted depth, including background actors. Every Camera/Action/dialogue/reaction mention updates that same physical body; never clone, omit a required actor, or substitute a depicted replica. Preserve scripted crops, hidden faces and expressive depth.';
     if (replicaBrackets.length > 0) {
       cloneWarning += `\nDIEGETIC REPLICA LAYER: ${replicaBrackets.join(', ')} may appear as one tiny replica each, fully inside the explicitly scripted container/surface. Replicas are representations, not additional physical actors; never render them full-size or outside that container/surface.`;
     }

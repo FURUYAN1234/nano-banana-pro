@@ -14,6 +14,70 @@ let buildIdentityMatrix;
 let extractActingIdentityNotes;
 let getCameraForPanel;
 
+test('an actors shoulder-over gaze does not silently become the cameras shoulder-over view', () => {
+  const cast = '## 甲\n## 乙';
+  const panel = '[Camera: 左上からの俯瞰]\n状況: 乙は甲の肩越しに用紙を見つめる。甲は机の向こうで説明する。\n甲「ここだよ。」';
+  const rule = extractCastLimitRule(panel, cast);
+  assert.doesNotMatch(rule, /OTS CAST INSTANCE LOCK|rear head\/shoulder foreground/);
+  const explicit = extractCastLimitRule(panel.replace('左上からの俯瞰', '甲の肩越し'), cast);
+  assert.match(explicit, /OTS CAST INSTANCE LOCK/);
+  const actionShot = extractCastLimitRule('状況: 甲の肩越しから撮影し、乙を捉える。\n乙「ここだよ。」', cast);
+  assert.match(actionShot, /OTS CAST INSTANCE LOCK/);
+});
+
+test('enumerated chorus speakers retain every owner across STEP3 dialogue, action and cast boundaries', () => {
+  const names = ['アカリ', 'ヒカリ', 'ミク', 'リン', 'サエコ'];
+  const cast = names.map(name => `## ${name}`).join('\n');
+  for (const separator of ['・', '、', ',', '／', '・ ', ' / ']) {
+    const speaker = names.join(separator);
+    const plan = [{ speaker, x: 0.55, anchor: '五人の顔', route: '各人へ分岐' }];
+    const source = `BalloonLayout: ${JSON.stringify(plan)}\n${speaker}「雑な生成AIユーザー、作者の声も聞いて！」`;
+    assert.deepEqual(extractDialogueOnly(source, cast, {asEntries:true}), [{speaker, text:'雑な生成AIユーザー、作者の声も聞いて！'}]);
+    const prompt = extractDialogueOnly(source, cast, {forImagePrompt:true});
+    assert.match(prompt, /members=/);
+    for (const name of names) assert.ok(prompt.includes(name));
+    assert.doesNotMatch(extractActionOnly(source, cast), /作者の声/);
+    const count = extractCastLimitRule(source, cast, {compact:true});
+    assert.match(count, /TOTAL 5 people|exactly 5 people/i);
+    assert.doesNotMatch(count, /GUEST CONTINUITY/);
+  }
+});
+
+test('enumerated owners are compared as identities while an interpunct in one registered name is preserved', () => {
+  const cast = '## ジョン・スミス\n## 案内役（旅人）\n## はるか';
+  for (const [layout, dialogue, allowed] of [
+    ['ジョン・スミス', 'ジョン・スミス', true],
+    ['ジョン・スミス・はるか', 'はるか、ジョン・スミス', true],
+    ['ジョン スミス・はるか', 'はるか・ジョン・スミス', true],
+    ['全員（ジョン・スミス・はるか）', 'はるか、ジョン・スミス', true],
+    ['はるか・案内役', '全員（案内役・はるか）', true],
+    ['ジョン・スミス・店員', '店員／ジョン・スミス', true],
+    ['はるか・案内役', '案内役・はるか', true],
+    ['ジョン・スミス・はるか', 'ジョン・スミス', false],
+    ['ジョン・スミス・はるか', 'ジョン・スミス・店員', false],
+  ]) {
+    const source = `BalloonLayout: ${JSON.stringify([{speaker:layout,x:0.6,anchor:'頭',route:'口元へ'}])}\n${dialogue}「確認します。」`;
+    if (allowed) assert.doesNotThrow(() => extractDialogueOnly(source, cast, {forImagePrompt:true}), layout);
+    else assert.throws(() => extractDialogueOnly(source, cast, {forImagePrompt:true}), {code:'BALLOON_LAYOUT_INVALID',reason:'speaker'});
+  }
+});
+
+test('long registered chorus labels after another quote remain complete owners', () => {
+  const names = ['異世界から長い旅を終えて帰ってきた案内役', '宇宙船の操縦をいつも担当している助手'];
+  const cast = ['甲', ...names].map(name => `## ${name}`).join('\n');
+  const group = names.join('・');
+  const plan = [{speaker:'甲',x:0.8,anchor:'甲の頭',route:'甲へ'}, {speaker:group,x:0.2,anchor:'二人の頭',route:'二人へ'}];
+  const source = `BalloonLayout: ${JSON.stringify(plan)}\n甲「始めます。」 ${group}「準備できました。」`;
+  assert.deepEqual(extractDialogueOnly(source, cast, {forImagePrompt:true,asEntries:true}), [{speaker:'甲',text:'始めます。'}, {speaker:group,text:'準備できました。'}]);
+});
+
+test('an explicit distinct owner is not silently assigned to a cast substring', () => {
+  const owner = '甲の同僚';
+  const source = `BalloonLayout: ${JSON.stringify([{speaker:owner,x:0.6,anchor:'同僚の頭',route:'同僚へ'}])}\n${owner}「確認します。」`;
+  assert.deepEqual(extractDialogueOnly(source, '## 甲', {forImagePrompt:true,asEntries:true}), [{speaker:owner,text:'確認します。'}]);
+  assert.match(extractCastLimitRule(source, '## 甲', {compact:true}), /GUEST CONTINUITY: \[甲の同僚\]/);
+});
+
 test('collective speakers are not extra bodies while actual guest speakers remain counted', () => {
   const cast = '## 甲\n## 乙\n## 丙';
   for (const group of ['全員', 'みんな', '一同', '二人']) {
@@ -314,7 +378,7 @@ test('a fully silent panel keeps named Action actors instead of marking the whol
   const rule = extractCastLimitRule('状況: ミクはリンの隣へ座り直し、リンは古い半券をミクの掌へ重ねる。\nセリフなし', cast, { compact: true });
 
   assert.match(rule, /CAST COUNT:.*\[ミク\].*\[リン\]/);
-  assert.match(rule, /CAST INSTANCE LOCK:.*one body silhouette.*one depth position.*one time/is);
+  assert.match(rule, /CAST INSTANCE LOCK:.*one physical body silhouette.*scripted depth/is);
   assert.match(rule, /NO OTHER HUMANS: exactly 2 people/);
   assert.doesNotMatch(rule, /ABSENT unless explicitly required/);
   assert.doesNotMatch(rule, /ABSENT:[^\n]*ミク|ABSENT:[^\n]*リン/);

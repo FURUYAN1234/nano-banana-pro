@@ -1,9 +1,26 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { applyBubbleInventory, buildBubbleInventoryPrompt } from '../src/lib/image-quality-qa.js';
+import { applyBubbleInventory, buildBubbleInventoryPrompt, buildImageQualityQaPrompt, parseImageQualityQaResponse } from '../src/lib/image-quality-qa.js';
 import { enforceBubbleComparison, buildImageQualityRepairPrompt, parseImageFailureAnalysis } from '../src/lib/image-quality-failsafe.js';
+import { VERTICAL_DIALOGUE_GEOMETRY } from '../src/lib/bubble-text.js';
 
 const prompt = '## Panel 3\nDialogue (verbatim bubbles): TEXT (PRINT VALUES ONLY): B1="袋はここで開く？"; B2="ああ、ここで受け止めよう。". TAIL TIP LOCK: B1=>[ユウ]; B2=>[エムバ].';
+test('QA requests horizontal tolerance only for the preferred writing policy', () => {
+  const preferred = buildImageQualityQaPrompt({ finalPrompt: `${VERTICAL_DIALOGUE_GEOMETRY}\n${prompt}` });
+  assert.match(preferred, /permits coherent horizontal\/mixed dialogue/);
+  assert.match(preferred, /Writing direction alone is never a defect or a repair trigger/);
+  assert.doesNotMatch(preferred, /horizontal rows or mixed horizontal\/vertical layout are also a defect/);
+  const strict = buildImageQualityQaPrompt({ finalPrompt: `TYPE: BUBBLES: vertical tategaki.\n${prompt}` });
+  assert.match(strict, /horizontal rows or mixed horizontal\/vertical layout are also a defect/);
+});
+test('removing an orientation-only finding keeps each remaining issue paired with its own evidence', () => {
+  const result = parseImageQualityQaResponse(JSON.stringify({ pass:false, issues:[
+    { type:'bubble_text', panel:3, subject:'bubble_writing_direction', reason:'Horizontal.' },
+    { type:'character_reference', panel:3, subject:'ユウ', reason:'Drawing changed.', identity_evidence:{ difference_kind:'style_only' } },
+  ] }), { finalPrompt:`${VERTICAL_DIALOGUE_GEOMETRY}\n${prompt}` });
+  assert.ok(result.issues.some(issue=>issue.subject==='ユウ' && issue.reason.includes('drawing-style difference alone')));
+  assert.ok(!result.issues.some(issue=>issue.subject==='bubble_writing_direction'));
+});
 const review = { pass: true, issues: [], observations: { dialogue: 'Correct' } };
 const inventory = reversed => JSON.stringify({ panels: [{ panel: 3, balloons: [
   { text: '袋はここで開く？', center_x: reversed ? 0.4 : 0.8 },
@@ -130,6 +147,25 @@ test('independent direction evidence overrides a general PASS for horizontal or 
     assert.equal(result.bubbleInventory[0].status, 'ok', 'direction is separate from balloon order');
     assert.match(buildImageQualityRepairPrompt({ originalPrompt: verticalPrompt, issues: result.issues }), /bubble_text/);
   }
+});
+
+test('preferred vertical dialogue allows coherent horizontal lettering without paid direction repair', () => {
+  const preferred = `TYPE: BUBBLES: vertical tategaki. ${VERTICAL_DIALOGUE_GEOMETRY}\n${prompt}`;
+  const result = applyBubbleInventory(review, directionInventory('horizontal'), preferred);
+  assert.equal(result.pass, true);
+  assert.ok(!result.issues.some(issue => issue.subject === 'bubble_writing_direction'));
+  const withOldDirectionFinding = { ...review, pass: false, issues: [
+    { type: 'bubble_text', panel: 3, subject: 'bubble_writing_direction', reason: 'Horizontal rows.' },
+    { type: 'bubble_text', panel: 3, subject: 'verbatim', reason: 'A required word is missing.' },
+  ] };
+  const retained = applyBubbleInventory(withOldDirectionFinding, directionInventory('horizontal'), preferred);
+  assert.ok(!retained.issues.some(issue => issue.subject === 'bubble_writing_direction'));
+  assert.ok(retained.issues.some(issue => issue.subject === 'verbatim'));
+  const reverse = JSON.parse(directionInventory('horizontal'));
+  reverse.panels[0].text_regions.reverse();
+  reverse.panels[0].text_regions[0].center_x = 0.8;
+  reverse.panels[0].text_regions[1].center_x = 0.4;
+  assert.ok(applyBubbleInventory(review, JSON.stringify(reverse), preferred).issues.some(issue => issue.type === 'bubble_order'));
 });
 
 test('unknown, missing or ungrounded direction remains unverified rather than an invented repair target', () => {

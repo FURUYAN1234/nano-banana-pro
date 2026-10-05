@@ -20,6 +20,7 @@ const CAMERA_RHYTHM = {
 
 const STRONG_GAG_REVIEW = {
   pass: true,
+  payoff_clarity: { material_failure: false, evidence: '入口の札と同じ扉が、近道で出発点へ戻る結果を示す。', correction: '' },
   setup_seed: '主人公が最短経路だけを信じて急ぐ。',
   panel3_prediction: '近道を選べば間に合うと読者が予想する。',
   panel4_outcome: '近道の出口が出発地点へ戻り、本人が同じ扉から飛び出す。',
@@ -35,6 +36,7 @@ const STRONG_GAG_REVIEW = {
 
 const WEAK_SLOGAN_REVIEW = {
   pass: true,
+  payoff_clarity: { material_failure: false, evidence: '結末の宣言自体は読めるが、視覚的なオチがない。', correction: '' },
   setup_seed: '作業手順を説明する。',
   panel3_prediction: '全員が作業を続ける。',
   panel4_outcome: '大切なのは確認だと宣言する。',
@@ -53,6 +55,48 @@ const BALLOON_SCENARIO = '## タイトル: 試験\n' + [1, 2, 3, 4].map(panel =>
 const BALLOON_REVIEW = { ...STRONG_GAG_REVIEW, pass: false, reason_codes: ['BALLOON_LAYOUT_X_ANCHOR_CONTRADICTION'],
   visual_feasibility: STRONG_GAG_REVIEW.visual_feasibility.map(item => item.panel === 1
     ? { ...item, feasible: false, material_loss: true, correction: 'Move the sole balloon near its speaker without changing the action.' } : item) };
+
+test('unreadable reset payoff is repaired despite superficial visual outcome approval', async () => {
+  const unclear = { ...STRONG_GAG_REVIEW, payoff_clarity: {
+    material_failure: true,
+    evidence: '最後に突然別の部屋で目覚め、前の事件とのつながりも現実との差も示されない。',
+    correction: '前半の小道具を現実側にも置き、予測と結果の違いを行動で回収する。',
+  } };
+  assert.ok(evaluateScenarioPayoffReview(unclear, { punchlineType: 'Dream' }).reasonCodes.includes('unclear_payoff'));
+  let reviews = 0;
+  let repairs = 0;
+  const result = await runScenarioPayoffGate({ scenario: 'ORIGINAL', punchlineType: 'Dream',
+    requestReview: async () => JSON.stringify(reviews++ ? STRONG_GAG_REVIEW : unclear),
+    requestRepair: async prompt => {
+      repairs++;
+      assert.match(prompt, /何が変わった/);
+      return 'SEEDED DREAM PAYOFF';
+    },
+  });
+  assert.equal(result.status, 'repaired');
+  assert.equal(repairs, 1);
+});
+
+test('clear dream, meaningful sleep and deliberate surreal beats are allowed without repair', async () => {
+  for (const punchlineType of ['Dream', 'GagAuto', 'Surreal']) {
+    const review = { ...STRONG_GAG_REVIEW, payoff_clarity: {
+      material_failure: false, evidence: '前半の準備と寝ながら達成する行動の食い違いが画面で読める。', correction: '',
+    } };
+    const result = await runScenarioPayoffGate({ scenario: 'CLEAR SLEEPING PAYOFF', punchlineType,
+      requestReview: async () => JSON.stringify(review),
+      requestRepair: async () => assert.fail('sleep or dream alone must not trigger repair'),
+    });
+    assert.equal(result.status, 'passed');
+  }
+  assert.equal(evaluateScenarioPayoffReview({ ...STRONG_GAG_REVIEW, reason_codes: ['unclear_payoff'] }).ok, true);
+});
+
+test('payoff clarity requires evidence and correction for a material failure', () => {
+  for (const payoff_clarity of [undefined, {}, { material_failure: true, evidence: '', correction: '直す' },
+    { material_failure: true, evidence: '出来事の差が見えない', correction: '' }]) {
+    assert.throws(() => parseScenarioPayoffReview(JSON.stringify({ ...STRONG_GAG_REVIEW, payoff_clarity })), /incomplete_payoff_review/);
+  }
+});
 
 test('balloon-only repair requests and applies bounded field patches before re-audit', async () => {
   let reviews = 0;

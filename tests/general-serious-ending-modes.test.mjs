@@ -172,8 +172,18 @@ test('Auto routes clearly tragic or inappropriate-to-joke topics into serious mo
   assert.equal(bereavement.tone, 'serious');
   assert.equal(ordinary.tone, 'gag');
   assert.equal(resolveAutoEndingType('大規模事故で死者と負傷者が出た。', () => 0.99), 'SeriousAuto');
-  assert.equal(resolveAutoEndingType('猫が箱を取り合う。', () => 0), 'Surreal');
-  assert.equal(resolveAutoEndingType('猫が箱を取り合う。', () => 0.999), 'CanceledEnding');
+  assert.equal(resolveAutoEndingType('猫が箱を取り合う。', () => 0), 'GagAuto');
+  assert.equal(resolveAutoEndingType('猫が箱を取り合う。', () => 0.999), 'GagAuto');
+});
+
+test('automatic gag choice considers the topic without forcing a randomly selected reset ending', () => {
+  const prompt = buildScenarioRequest('GagAuto');
+  assert.match(prompt, /オチの多様化/);
+  assert.match(prompt, /題材.*欲求.*障害/);
+  assert.match(prompt, /帳消し/);
+  assert.doesNotMatch(prompt, /強制オチ指定: 夢オチ/);
+  assert.doesNotMatch(prompt, /Punchline: \[必ず『GagAuto』/);
+  assert.match(buildScenarioRequest('Dream'), /強制オチ指定: 夢オチ/);
 });
 
 test('general serious scenario prompts use serious story structure without gag or chibi coercion', () => {

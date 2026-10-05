@@ -1,5 +1,3 @@
-import { GAG_ENDING_OPTIONS } from './ending-mode-policy.js';
-
 const SERIOUS_REQUIRED_SIGNALS = Object.freeze([
   /(?:死亡|死者|亡くな|犠牲者|遺族|死別|葬儀|追悼|自殺|殺害|殺人|虐殺)/u,
   /(?:大規模)?(?:地震|津波|洪水|土砂崩れ|噴火|災害|被災|震災|戦争|紛争|空爆)/u,
@@ -26,11 +24,8 @@ export const classifyTopicTreatment = (sourceText = '') => {
   return { tone: 'gag', level: 'gag-allowed', signal: null };
 };
 
-export const resolveAutoEndingType = (sourceText = '', random = Math.random) => {
+export const resolveAutoEndingType = (sourceText = '') => {
   if (classifyTopicTreatment(sourceText).tone === 'serious') return 'SeriousAuto';
-  const index = Math.min(
-    GAG_ENDING_OPTIONS.length - 1,
-    Math.floor(Math.max(0, Number(random()) || 0) * GAG_ENDING_OPTIONS.length)
-  );
-  return GAG_ENDING_OPTIONS[index].value;
+  // The writer selects a concrete ending from the topic, not a forced random draw.
+  return 'GagAuto';
 };

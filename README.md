@@ -1,6 +1,6 @@
 # Super FURU AI 4-koma System / Super FURU AI 4コマシステム
 
-> Current source version: **v6.8.5** / 現在のソース版: **v6.8.5**
+> Current source version: **v6.8.6** / 現在のソース版: **v6.8.6**
 
 
 An experimental web application in which AI handles topic research, story structure, direction, prompt construction, image generation, and quality review for a four-panel manga. / AIが話題調査、構成、演出、プロンプト構築、画像生成、品質確認まで担当する4コマ漫画制作Webアプリです。
@@ -29,7 +29,11 @@ Dialogue and page-layout safeguards / 台詞とコマ割り: Printable dialogue 
 
 Quoted source text / 出典の引用: Wording identified as an article or document quotation, including a quoted passage followed by "という記述", remains scene text rather than a nearby character's speech. Explicit speaking or reading aloud still gets a bubble. Balloon-layout errors identify the panel and mismatch without assuming user error. Rebuild STEP3 for existing scripts. / 「という記述」などで資料の文言を示す引用は状況描写に残し、近くの人物の吹き出しへ入れません。人物が実際に発話・音読する引用は台詞として保持します。配置エラーでは対象コマと不一致の内容を示し、入力の誤りと決めつけません。既存のシナリオへの反映にはSTEP3を作り直してください。
 
-Balloon speaker labels / 吹き出し配置の話者表記: STEP3 accepts complete-name bracket/spacing variants and acting annotations repeated on the same dialogue line. Collective labels retain their member routing instead of being assigned to one cast member. Different owners, conflicting member lists, empty owners, count/order errors and missing routes still stop assembly. / 話者名の外括弧・空白・中黒の表記差と、同じ台詞行にある演技注記を照合します。「全員（構成員の列挙）」などの集合話者は内訳を配置情報に残し、一人の人物へ置き換えません。参照シートのない店員なども内訳に含められます。別人・内訳の食い違い・空の話者・台詞件数や読順の不一致・尾の経路の欠落は引き続き停止し、話者エラーでは配置側と台詞側の表記を表示します。
+Balloon speaker labels / 吹き出し配置の話者表記: STEP3 accepts complete-name bracket/spacing variants and acting annotations repeated on the same dialogue line. Collective labels and lists of complete cast names retain their member routing instead of being assigned to one cast member. Different owners, conflicting member lists, empty owners, count/order errors and missing routes still stop assembly. / 話者名の外括弧・空白・中黒の表記差と、同じ台詞行にある演技注記を照合します。「全員（構成員の列挙）」や人物名を列挙した合唱は内訳を配置情報に残し、一人の人物へ置き換えません。参照シートのない店員なども内訳に含められます。別人・内訳の食い違い・空の話者・台詞件数や読順の不一致・尾の経路の欠落は引き続き停止し、話者エラーでは配置側と台詞側の表記を表示します。
+
+Dialogue lettering / 台詞の書字方向: Prefer vertical Japanese lettering. Horizontal lettering is allowed when it best serves composition or readability; direction alone does not fail image QA or trigger paid regeneration. / 台詞は極力縦書きにします。構図や読みやすさに最適な横書きは許容し、横書きだけで画像を不合格にしたり有料再生成したりしません。背景の人物も実体の人数へ含め、紙・画面内に描かれた人物で代替しません。遮蔽や識別困難な人物は未確認とし、明確な欠落と区別します。
+
+Camera and panel styles / カメラと各コマの絵柄: Cast counting does not require exposed faces or a lineup and does not override the scripted projection or panel medium. Relative low camera positions and worms-eye views receive upward projection cues; a character looking over another's shoulder is distinct from an over-the-shoulder camera. / 人数を満たすために顔を見せたり横並びにしたりせず、指定した投影と各コマの絵柄を保持します。基準より低い撮影位置とワームズアイにも投影の補助指示を出し、人物の「肩越しに見る」視線と肩越しカメラを区別します。指示とローカル検査が通っても、実画像が指定を満たすとは限りません。
 
 Single-speaker balloon / 発話が一つのコマ: A lone balloon stays near its mapped speaker while the cast retains the scripted camera positions. A distant body with only a claimed tail connection remains unverified for visual inspection; it does not trigger image regeneration by itself. Rebuild STEP3 for an existing scenario, then inspect the rendered page before publishing. / 発話が一つならフキダシ本体を話者の近くに置き、人物のカメラ指定位置は保持します。本体が話者から大きく離れ、ヒゲ接続の申告だけがある場合は目視確認待ちとし、それだけで再生成しません。既存シナリオはSTEP3から作り直し、公開前に実画像を確認してください。
 
@@ -135,6 +139,8 @@ The story routine is a constrained editor rather than a single request to “mak
 These are generation and review constraints, not guarantees. Provider image models can still miss anatomy, Japanese glyphs or exact staging, so the actual output remains the acceptance evidence. / これらは生成・検査条件であり、結果保証ではありません。画像モデルは人体、日本語文字、厳密な構図を誤る場合があるため、採否は実際の出力画像で確認します。
 
 STEP2 keeps the material story, acting and camera audit. For balloon-only defects it requests only existing BalloonLayout/Camera/situation field edits, validates their schema and speaker/order mapping locally, and re-audits the resulting scenario. Invalid edits retain the previous candidate; unchanged repairs stop without another audit. / STEP2は物語・演技・カメラの重大欠陥の監査を維持します。吹き出しだけの問題は既存のBalloonLayout・Camera・状況への差分だけを依頼し、書式・話者・読順をローカル検査してから修正後の台本を再監査します。不正な変更は前候補を保持し、無変更の修正案は追加監査せず停止します。処理時間の短縮や最終画像の正確さを保証するものではありません。
+
+Automatic endings are chosen from the topic rather than a random forced category. The story audit checks whether the final action makes the change readable, with evidence and a correction for material failures. A coherent dream, sleeping action, loop, silence or surreal contrast remains allowed; a selected ending is preserved. / おまかせの結末は型の抽選で強制せず、題材から選びます。構成監査は最後の行動から何が変わったか読めるかを確認し、重大な欠落には根拠と具体的な修正を求めます。成立する夢・睡眠・ループ・沈黙・シュールは残し、指定したオチを勝手に別の型へ変えません。実際の分かりやすさは生成台本・画像での確認が必要です。
 
 ### Models used by the scenario routine / シナリオルーチンのモデル
 
@@ -389,7 +395,7 @@ The copied prompt guides panel order, cast, speaker assignment, acting, camera, 
 The app provides separate download buttons for the workflow JSON and the custom-node ZIP. Both files are needed for this route. / アプリにはワークフローJSONとカスタムノードZIPのダウンロードボタンが別々にあります。この経路では両方のファイルが必要です。
 
 - [Download workflow JSON](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261002-071924.json) / [ワークフローJSONをダウンロード](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261002-071924.json)
-- [Download custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.8.5/ComfyUI_H3_FourPanel_NonLM_20261002-071924_authfix1.zip) / [カスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.8.5/ComfyUI_H3_FourPanel_NonLM_20261002-071924_authfix1.zip)
+- [Download custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.8.6/ComfyUI_H3_FourPanel_NonLM_20261002-071924_authfix1.zip) / [カスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.8.6/ComfyUI_H3_FourPanel_NonLM_20261002-071924_authfix1.zip)
 
 Place the ZIP's `3フォルダ` under `ComfyUI/custom_nodes/` and the workflow JSON under `ComfyUI/user/default/workflows/`. Install the separate dependencies below, then restart ComfyUI. / ZIP内の`3フォルダ`を`ComfyUI/custom_nodes/`へ、ワークフローJSONを`ComfyUI/user/default/workflows/`以下へ配置します。下記の別途必要な依存関係を導入してからComfyUIを再起動します。
 
@@ -433,11 +439,14 @@ The production application is published from the `main` branch through the repos
 
 **Why are there two ComfyUI download buttons? / ComfyUIのダウンロードボタンが2つあるのはなぜですか？**  The JSON defines the workflow, while the ZIP supplies three custom-node folders and documentation; three additional runtime dependencies are installed separately. / JSONはワークフロー定義、ZIPはカスタムノード3フォルダーと導入文書です。さらに実行依存3項目を別途導入します。
 
-**Which video package should I install? / 動画化には何を入れますか？** Use the `20261002-071924` workflow JSON and matching v6.8.5 FourPanel Release asset (`authfix1` ZIP). Follow the bundled environment and validation instructions. / `20261002-071924` のワークフローJSONと対応するv6.8.5 FourPanel Releaseアセット（`authfix1` ZIP）を使い、同梱の環境要件と確認手順に従ってください。
+**Which video package should I install? / 動画化には何を入れますか？** Use the `20261002-071924` workflow JSON and matching v6.8.6 FourPanel Release asset (`authfix1` ZIP). Follow the bundled environment and validation instructions. / `20261002-071924` のワークフローJSONと対応するv6.8.6 FourPanel Releaseアセット（`authfix1` ZIP）を使い、同梱の環境要件と確認手順に従ってください。
 
 **Is this the T2V/I2V/Ref2V repository? / T2V・I2V・Ref2Vのリポジトリですか？**  No. Those workflows are maintained separately in [comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows). / いいえ。それらは別の[comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows)で管理します。
 
 ## 📋 ChangeLog
+
+### v6.8.6 (2026-10-05)
+- **[Fix & UX]** STEP2が題材に沿った明確な結末を選び、STEP3は合唱・人数・コマ別の画風とカメラ指定を保つよう改善。 / Improved topic-specific clear endings in STEP2 and preserved group dialogue, cast counts, per-panel art styles and camera direction in STEP3.
 
 ### v6.8.5 (2026-10-05)
 - **[Fix & UX]** 集合話者の表記差によるSTEP3誤停止と人数の過剰計上を修正。画像検査は構成員の接続証拠を照合し、表記差だけで追加生成しません。 / Fixed collective-speaker STEP3 mismatches and extra cast counts. Image QA checks member tail evidence and no longer triggers repair from a group wording difference.

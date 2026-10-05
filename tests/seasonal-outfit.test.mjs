@@ -177,6 +177,7 @@ const fixtureBody = `[1コマ目: 起]
 
 const payoffReviewResponse = JSON.stringify({
   pass: true,
+  payoff_clarity: { material_failure: false, evidence: '案内板の向きと入口の対応が回転によって変わる。', correction: '' },
   setup_seed: '受付机に案内板を置く。',
   panel3_prediction: '案内板の向きが誤っていると分かる。',
   panel4_outcome: '案内板を回して正しい入口を示す。',

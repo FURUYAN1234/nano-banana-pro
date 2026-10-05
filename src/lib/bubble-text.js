@@ -1,4 +1,4 @@
-export const VERTICAL_DIALOGUE_GEOMETRY = 'Upright glyphs top-to-bottom; columns right-to-left. No horizontal/rotated rows, including single-balloon shouts.';
+export const VERTICAL_DIALOGUE_GEOMETRY = 'DIALOGUE WRITING POLICY: prefer_vertical: upright top-to-bottom glyphs; columns right-to-left. Horizontal allowed if best for composition/readability.';
 
 // 印字本文はJSON文字列として往復させる。本文中の引用符やB番号を制御情報へ解釈しない。
 export const readBubbleTextValues = (source = '', { strict = false } = {}) => {

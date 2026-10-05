@@ -691,7 +691,8 @@ test('focused hand audit can turn omitted general-review inventory into a materi
   const contracts = [{ panel: 4, names: ['A'] }];
   assert.match(buildActorHandAuditPrompt(contracts), /three distinct visible hands/i);
   const hand = (side, x) => ({ anatomical_side: side, x, y: 0.6, shoulder_connection: 'clear' });
-  const response = hands => JSON.stringify({ panels: [{ panel: 4, actor_limb_inventory: [{
+  const response = hands => JSON.stringify({ panels: [{ panel: 4, cast_instances: [{ name: 'A', observed_count: 1, status: 'ok',
+    instances: [{ location: 'center physical body', matched_features: ['short hair', 'light jacket'] }] }], actor_limb_inventory: [{
     actor: 'A', visible_hands: hands, evidence: 'Fist at upper left, book grip at center, palm below the book.',
   }] }] });
   const clear = parseActorHandAuditResponse(response([hand('left', 0.2), hand('right', 0.5), hand('uncertain', 0.7)]), contracts);
@@ -854,6 +855,48 @@ Dialogue: silent`;
     { ...target('乙'), endpoint_relation: 'empty_space' },
   ]) assert.ok(inspect([target('甲'), bad]).issues.some(issue => issue.type === 'bubble_speaker'));
   assert.match(buildImageQualityQaPrompt({ finalPrompt }), /COLLECTIVE.*targets/s);
+});
+
+test('enumerated collective bubble contracts retain complete owners and preserve single interpunct names', () => {
+  const prompt = speaker => `## Panel 1
+CAST COUNT: [ジョン・スミス], [はるか], [甲] each EXACTLY ONCE.
+Dialogue (verbatim bubbles): TEXT (PRINT VALUES ONLY): B1="確認しよう。". TAIL TIP LOCK: B1=>[${speaker}] mouth/head.
+## Panel 2
+Dialogue: silent`;
+  for (const speaker of ['ジョン・スミス・はるか', 'はるか／ジョン スミス']) {
+    const bubble = imageQualityQa.extractBubbleContracts(prompt(speaker))[0].bubbles[0];
+    assert.deepEqual(bubble.members, ['はるか', 'ジョンスミス']);
+  }
+  const individual = imageQualityQa.extractBubbleContracts(prompt('ジョン・スミス'))[0].bubbles[0];
+  assert.equal(individual.speaker, 'ジョン・スミス');
+  assert.equal(individual.members, undefined);
+});
+
+test('the primary QA response example contains the required per-face style observations', () => {
+  const request = buildImageQualityQaPrompt({ finalPrompt: stylePrompt, requirePanelStyleEvidence:true });
+  const example = JSON.parse(request.match(/^\{"pass":true[^\n]+/m)[0]);
+  const style = example.spatial_checks[0].art_style;
+  assert.ok(style?.linework && style.coloring && Array.isArray(style.faces));
+  assert.ok(style.faces[0].construction && style.faces[0].ink && style.faces[0].visibility);
+  const plain = buildImageQualityQaPrompt({ finalPrompt:stylePrompt });
+  assert.equal(JSON.parse(plain.match(/^\{"pass":true[^\n]+/m)[0]).spatial_checks[0].art_style,undefined);
+});
+
+test('focused body and hand audit distinguishes a missing actor from hidden hands or unresolved occlusion', () => {
+  const contracts = [{ panel: 4, names: ['A'] }];
+  const inspect = record => parseActorHandAuditResponse(JSON.stringify({ panels: [{ panel: 4,
+    cast_instances: record ? [record] : [],
+    actor_limb_inventory: [{ actor: 'A', visible_hands: [], evidence: 'No visible hands.' }],
+  }] }), contracts);
+  const missing = { name: 'A', observed_count: 0, status: 'defect', evidence: 'Whole panel inspected: no matching physical body; only a drawing on the paper.', instances: [] };
+  assert.ok(inspect(missing).some(issue => issue.type === 'cast_count' && isMaterialImageQualityIssue(issue)));
+  for (const record of [undefined, { ...missing, status: 'uncertain' }, { ...missing, evidence: '' }]) {
+    const issues = inspect(record);
+    assert.ok(issues.some(issue => issue.type === 'unverified'));
+    assert.ok(!issues.some(isMaterialImageQualityIssue));
+  }
+  assert.deepEqual(inspect({ name: 'A', observed_count: 1, status: 'ok',
+    instances: [{ location: 'rear head and shoulder; face hidden', matched_features: ['twin tails', 'striped jacket'] }] }), []);
 });
 
 test('reading order rejects reversed balloon bodies even when text and speaker tails pass', () => {

@@ -16,6 +16,7 @@ const REVIEW_FIELDS = Object.freeze([
   'panel4_outcome',
   'shift_kind',
   'visual_payoff',
+  'payoff_clarity',
   'slogan_only',
   'unseeded_fact',
   'visual_feasibility',
@@ -27,7 +28,7 @@ const REVIEW_FIELDS = Object.freeze([
 const ALLOWED_SHIFTS = new Set(['reversal', 'payoff', 'consequence', 'reframe']);
 const MATERIAL_PAYOFF_REASONS = new Set([
   'no_panel4_outcome', 'no_visual_payoff', 'slogan_only', 'documentary_fact_invention',
-  'repetitive_camera_sequence',
+  'repetitive_camera_sequence', 'unclear_payoff',
 ]);
 
 const materialPayoffReasons = (reasonCodes) => reasonCodes.filter(code =>
@@ -96,6 +97,7 @@ const PAYOFF_REASON_LABELS = {
   no_visual_payoff: '絵で伝わるオチがない',
   slogan_only: '4コマ目が標語・説明だけになっている',
   no_payoff_shift: '予測から帰結への変化がない',
+  unclear_payoff: '何が変わったのか読者に伝わらない',
   documentary_fact_invention: '原文にない事実が追加された',
 };
 
@@ -150,6 +152,7 @@ ${String(userTopic).trim()}
 - panel4_outcome: 4コマ目で実際に起きる、目で確認できる帰結。
 - shift_kind: reversal / payoff / consequence / reframe / none のいずれか。
 - visual_payoff: セリフの説明や標語ではなく、人物の行動・表情・小道具・空間変化で帰結が見えるか。
+- payoff_clarity: 4コマ目で誰に何が起き、何が変わったのかを、前のコマの具体的な手掛かりと最後の行動・反応から読者が読み取れるか。突然の別場面や設定の後出しで前の出来事を帳消しにし、落差・帰結が読めない明確な場合だけmaterial_failure=trueとする。evidenceに失われた手掛かりと台本上の根拠、correctionに同じ題材・指定結末を保つ具体的な回収方法を書く。眠る、夢、ループ、メタ、沈黙という型だけで失格にしない。明示された夢オチを別の型へ変えず、シュールでは因果説明を強制せず目に見える食い違いを評価する。好み・小さな違和感・不確かな推測はfalse。
 - slogan_only: 4コマ目がまとめ、教訓、標語、解説だけで終わるなら true。
 - unseeded_fact: 4コマ目だけに新しい事実を持ち込み成立させているなら true。
 - visual_feasibility: BalloonLayoutがある場合は台詞順・話者・xの右→左と、anchor/routeがCamera・状況の人物配置に一致し、非話者の顔を横切らない余白で尾を結べるか確認する。明確な矛盾のみfeasible=falseとして同じ事件と演技を保つ配置修正へ。配置が未確定なだけで同じ高さの横並びへ戻さない。4コマそれぞれについて、指定Cameraから見た人物・身体・手・対象物の位置を頭の中で一枚に配置する。各コマは縦A4ページに全幅1列で上から4コマ配置し、高さは内容に応じて配分できる。等高の細い帯を前提にしない。物理的に手が届き、物語上重要な動作・接触・文字・位置関係がその画角と人物の大きさで読める場合だけ feasible=true。遠景で複数の小さな手元を同時に判読させる等、具体的に成立しない場合は false。人数・勢い・誇張・シュールさだけで false にしてはならない。面白さ、キャラクターの生きた演技、オチを最優先し、具体的な衝突や読めない対象を evidence に示す。false なら、題材・オチ・ユーザーの明示指定を保ち、カメラ・前後関係・小道具の見せ方や補助動作のコマ配分で直す correction を書く。
@@ -169,6 +172,7 @@ ${String(userTopic).trim()}
   "panel4_outcome": "",
   "shift_kind": "reversal",
   "visual_payoff": true,
+  "payoff_clarity": {"material_failure":false,"evidence":"specific setup cue and visible final action explain what changes, or readable absurd contrast","correction":""},
   "slogan_only": false,
   "unseeded_fact": false,
   "visual_feasibility": [{"panel":1,"feasible":true,"evidence":"camera, actor, and focal hand/prop relation at readable scale","correction":""},{"panel":2,"feasible":true,"evidence":"camera, actor, and focal hand/prop relation at readable scale","correction":""},{"panel":3,"feasible":true,"evidence":"camera, actor, and focal hand/prop relation at readable scale","correction":""},{"panel":4,"feasible":true,"evidence":"camera, actor, and focal hand/prop relation at readable scale","correction":""}],
@@ -217,6 +221,11 @@ export const parseScenarioPayoffReview = (text) => {
     || typeof parsed.panel4_outcome !== 'string'
     || typeof parsed.shift_kind !== 'string'
     || typeof parsed.visual_payoff !== 'boolean'
+    || !parsed.payoff_clarity
+    || typeof parsed.payoff_clarity.material_failure !== 'boolean'
+    || typeof parsed.payoff_clarity.evidence !== 'string' || !parsed.payoff_clarity.evidence.trim()
+    || typeof parsed.payoff_clarity.correction !== 'string'
+    || (parsed.payoff_clarity.material_failure && !parsed.payoff_clarity.correction.trim())
     || typeof parsed.slogan_only !== 'boolean'
     || typeof parsed.unseeded_fact !== 'boolean'
     || !Array.isArray(parsed.visual_feasibility)
@@ -249,13 +258,16 @@ export const evaluateScenarioPayoffReview = (review, { punchlineType } = {}) => 
     ? new Set()
     : new Set((review?.reason_codes || []).filter(Boolean).map(String)
       // Panel evidence is authoritative, not an unsupported model-generated code.
-      .filter(code => !code.startsWith('flat_ensemble_panel_') && !code.startsWith('unrenderable_panel_') && code !== 'repetitive_camera_sequence'));
+      .filter(code => !code.startsWith('flat_ensemble_panel_') && !code.startsWith('unrenderable_panel_')
+        && code !== 'repetitive_camera_sequence' && code !== 'unclear_payoff'));
 
   if (!surrealMode && !String(review?.setup_seed || '').trim()) reasons.add('no_setup_seed');
   if (!surrealMode && !String(review?.panel3_prediction || '').trim()) reasons.add('no_panel3_prediction');
   if (!String(review?.panel4_outcome || '').trim()) reasons.add('no_panel4_outcome');
   if (!review?.visual_payoff) reasons.add('no_visual_payoff');
   if (review?.slogan_only) reasons.add('slogan_only');
+  if (review?.payoff_clarity?.material_failure === true
+    && review.payoff_clarity.evidence?.trim() && review.payoff_clarity.correction?.trim()) reasons.add('unclear_payoff');
   if (!surrealMode && !ALLOWED_SHIFTS.has(review?.shift_kind)) reasons.add('no_payoff_shift');
   if (!surrealMode && review?.unseeded_fact) reasons.add('unseeded_fact');
   if (policy.documentary && review?.unseeded_fact) reasons.add('documentary_fact_invention');
@@ -311,6 +323,7 @@ ${stagingOnly ? '- 成立しているフリ・予測・帰結はそのまま保�
 - 前のコマから連続した動作と位置、小道具の持ち主を引き継ぎ、働きかける人物と受け手の反応を前後関係・視線・身体の向き・重心で描き分ける。監査で指摘された横並びと同一反応を、元の出来事・台詞・意図的な静止や一斉動作を保ちながら直す。全員に余計な動作を増やさない。
 - カメラ反復の指摘は、各コマの役割に合わせて撮影位置・仰俯角・距離・レンズ・ロール・配置を組み直す。全4コマの見える投影を比較し、名称だけの変更、固定の角度巡回、全コマのアオリ化を避ける。ユーザーの固定指定、意味のある反復、連続した人物関係と読みやすい吹き出しの順・尾を保持し、画質・演技・光・勢いを弱めない。
 - 4コマ目を標語、教訓、解説だけで終わらせない。
+- 4コマ目で誰に何が起き、何が変わったのかを、前の手掛かりと最後の行動・受け手の反応で見せる。唐突な別場面や設定の後出しで出来事を帳消しにする逃げを避ける。夢・ループ・メタなどの明示指定は保ち、その型に必要な種と見て分かる落差を補う。シュールは因果説明で弱めず、視覚的な食い違いを明瞭にする。成立している睡眠・沈黙・余韻は変更しない。
 - 出力は${stagingOnly ? '元のタイトル・メタデータ行を保持し、' : ''} [1コマ目: 起] から [4コマ目: 結] までのシナリオ本文だけにする。
 ${userTopic ? `- 次のユーザー原文にある人物・台詞・出来事・カメラ・オチなどの明示条件を最優先で保持する。画像化の調整で削除・反転しない。\nUSER REQUIREMENTS:\n${String(userTopic).trim()}` : ''}
 
