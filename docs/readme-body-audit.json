@@ -17,7 +17,7 @@
   ],
   "readmeSha256": "1fa136aae76b3039685c6c5bf84cfeab5c5a55b0d61c5a234a9b5f724b53b377",
   "sourceTree": "91ec89f20879801b791602088ff19dacd0e89437",
-  "publicTree": "2c2839b7944016384f24469b5ea4edc920f4bf6e",
+  "publicTree": "6b00387e7870947022e8fa378ead6817023a1bca",
   "packageSha256": "97f4aadf8d3f52d90e983b84664cf492e76d671d691371ddd5c0782b287336fd",
   "releaseAssetSha256": "341487084ffc48f14569609c36557d77b4770a052b70f2323488dc0604e6d7f0",
   "reviewedSections": [
@@ -36,6 +36,6 @@
     "📋 ChangeLog",
     "License / ライセンス"
   ],
-  "findings": "Incremental whole-body review against the verified v6.8.4 baseline. All fourteen current README sections were compared by diff and current feature contracts; unchanged API routes, defaults, limits, licenses, workflow assets and screenshots retain prior evidence. Updated collective-speaker normalization, physical cast counting, strict layout validation and member-tail evidence QA. Current version and release/download links match v6.8.5. Real STEP3 and one Sunburst/max image completed using the unchanged user scenario; eight dialogue lines matched OCR. The approved same-image QA recheck completed and no extra image was generated. Missing member-target evidence remains unverified; anatomy and direction are not claimed perfect.",
+  "findings": "Incremental whole-body review against the verified v6.8.4 baseline. All fourteen current README sections were compared by diff and current feature contracts; unchanged API routes, defaults, limits, licenses, workflow assets and screenshots retain prior evidence. Updated collective-speaker normalization, physical cast counting, strict layout validation and member-tail evidence QA. Current version and release/download links match v6.8.5. Real STEP3 and one Sunburst/max image completed using the unchanged user scenario; eight dialogue lines matched OCR. The approved same-image QA recheck completed and no extra image was generated. Missing member-target evidence remains unverified; anatomy and direction are not claimed perfect. Generated workflow and reasoning SVGs were compared byte-for-byte with the prior candidate: only the header version changed from v6.8.4 to v6.8.5.",
   "manualFindings": "Rebuilt the 12-page Gemini and 32-page full manuals for v6.8.5. All 44 rendered pages reviewed in eight contact sheets and changed full-manual pages 14 and 18 reviewed at full size. No clipping or overlap observed. Automated A4, text bounds, naming, privacy and link checks passed. Existing screenshots retain previous-screen labels. The unchanged 20-page OpenAI guide retains its prior visual review. Public PDF bytes match reviewed generated outputs."
 }
