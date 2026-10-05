@@ -1,4 +1,29 @@
-## 2026-10-04 v6.8.4 STEP3話者名・登録キャスト保護（公開準備）
+## 2026-10-05 v6.8.5 正式公開・告知・フルバックアップ（実行中）
+
+- 最新承認: Nanoの正式デプロイ、note更新、Facebook投稿、X用文章の納品、最後に正式フルバックアップ。X直接投稿なし。他アプリのリリース変更なし。進捗正本はこのHANDOFF。
+- 候補: 集合話者のSTEP3照合・人数計算・QA誤判定修正。既存実API証拠を保持し、追加の有料生成なし。v6.8.5へ同期済み、README・PDF監査と正式公開前チェックを実施中。
+- 次: PDF全ページ確認、監査記録更新、全テスト/lint/build、正式publish_app_release.ps1、公開読戻し、note/Facebook読戻し、X文章、backup_full.ps1と独立復元ゲート。
+
+## 2026-10-05 STEP3誤停止・人数指定・集合話者QA修正（実API検証終了、画像品質には未達あり）
+
+- 対象/境界: Nanoの提示全文「生成AIで減る依頼」。原文fixtureを保持し、ローカル修正と実API検証まで。最新の「直してAPI検証」指示で集合話者QAの修正と同じ画像の再検査1回を追加実行済み。公開・バックアップは未承認。HANDOFFを唯一の作業記録とする。
+- 共通原因/修正: BalloonLayoutと台詞で集合話者の括弧内訳・外括弧・空白/中黒・同じ演技注記の照合が不一致。集合話者を部分一致で一人に変換する問題も修正。構成員メタデータを保持し、別人・異なる内訳・空話者・件数/x/anchor/route違反は引き続き拒否。エラーには両側の名前を表示。特定台本の書換えや座標緩和なし。
+- 実APIで追加発見: 最初のSTEP3は6.575秒で通過したが、人数計算が「全員」を架空の6人目として追加していた。画像生成前に止め、extractCastLimitRuleの共有入口で集合話者を物理人数から除外。実際の店員などゲストは残す回帰をRED→GREENで追加。両provider/カラー白黒の原文回帰でも8台詞・5人を固定。
+- ローカル証拠: 人数修正前の全1161件中1160PASS、README追記後の公開監査readmeSha256不一致1件（output/step3-regression-tests.log）。監査記録を偽更新しない。人数修正後はpanel-utils-dialogue/prompt-script-lock/prompt-diegetic-replicaの3suiteと対象eslintが成功。先のstrict lint/buildも成功、既存chunk/Browserslist警告あり。最終diff check成功。最新人数修正後の全suite/build再実行なし。
+- 承認後の実証: 追加STEP3 1回＋画像1枚を実行。STEP3 gpt-4.1 5.784秒/763tokens、精査提案1件は適用条件外として元文維持。提示scenarioはfixtureと完全一致、8台詞を保持、P4 TOTAL 5 peopleを確認。Sunburst/max2240x3168、参照2枚、自動修正OFFで画像1枚、STEP4は検査込み453秒で終了。主検査67.486秒、読順転記17.979秒。UI操作ロック解除・履歴1件を確認。
+- 目視結果: 各コマ2/2/2/5人、8台詞が描かれ、不要モザイクや明瞭なアカリの腕/胴体逆転は今回見られない。ただし別場面なので添付Web画像の再現試験ではない。P4集合台詞が横書き、全身指定に対して脚が枠外、ミクの枠押さえが前方へ手を出す演技に変化しており画像全体は合格にしない。元台本P3のCameraとAction左右矛盾も保持したまま。
+- 集合話者QA修正: 全員とall group headsの単純文字列比較を廃止し、共通の集合話者パーサーで構成員を復元。QAに各構成員のtail観察を要求し、証拠不足・重複・未観測はunverified、明確なwrong_character/empty_space/顔横断はbubble_speakerを維持。無関係な個人話者の照合は変更なし。回帰RED→GREEN、関連7suite・strict lint0・本番build成功（既存chunk/Browserslist警告）。README/troubleshooting同期。公開用README監査ハッシュの更新は未実施。
+- 証拠: ignored output/collective-step3-api/にscenario.txt、cast-analysis.txt、final-prompt.txt、step4-complete-ax.txt、step4-complete.jpg、generated-original.png。PNG2240x3168/10343545bytes、全chunk CRCとzlibデコード成功、SHA256 e597c75f4b5dc943bc06f358044a76c4157989d5b20b8f08d2baa12e083f6592。ブラウザー大容量返却の切詰めを検出し180000字ずつ再取得して完全保存。IAB同一providerTabId browser-use:03ea6584-4aaf-4624-99d1-81e969959d90、現browser6/tab1 localhost5173を成果物として保持。サーバーsession1388待受、API実行終了。キー値は未読・未保存。
+- 最新実API証拠: 同一IAB・同一最終プロンプト・同じ2240x3168画像を再検査1回。gpt-4.1主検査57.940秒/10208tokens、読順転記16.393秒/1476tokens、肩越し独立検査2.823秒/140tokens、合計81秒で完了。旧group文字列差のbubble_speakerは消失。構成員別targetsが不足したためunverifiedとして元画像保持、全体合格にはしない。今回は全8台詞の読順転記一致。追加画像生成0回、最終履歴1件、UIロック解除を確認。qa-fixed-complete-ax.txt/jpgを同じignored証拠フォルダへ保存。次はユーザーへの報告。公開には候補版README/PDF等の正式監査更新が必要。
+
+## 2026-10-04 v6.8.4 STEP3話者名・登録キャスト保護（公開完了・バックアップ照合失敗）
+
+- 最新状態（下記の公開前経過を更新）: 再実行の明示承認後、正式release transaction 192011が終了0。公開commit `3e4ed5e138cc74fb2c4d896d842cce2cb394c5d5`、全1156 tests・lint・build・README/PDF監査PASS。公開JS/CSS/PDFのバイト一致とIAB v6.8.4表示、C配布コピーを検証済み。再デプロイ不要。
+- note公開・Facebook投稿とも固有URLから本文を読戻し済み。note243ブロック、既存56図版と無関係229ブロックを保持。Facebook本文はX引渡し本文と改行込み一致、友達（一部除外）。private receiptはignored `output/salt-step3-api/social-v684-receipt.json`。Xはユーザー指定のコードブロック引渡しのみで投稿しないため、全3媒体投稿ゲートはmissing xとなることを確認。依頼済み媒体の公開は完了。
+- X本文をチャットのコードブロックで引渡し済み。正式backup `2026-10-04_193245` は8/8配布照合、差分snapshot保存、ZIP作成とDriveコピーまで進んだが、Drive SHA-256照合90秒timeoutで終了1。ローカルZIP678543148bytes/15360entries読み取り成功、SHA256 `55C9A7FDA5CCC33CEC07FFEA8D2A656D1FB4C919C8117640F015EBB35E67B4A2`。Drive同名ZIPも同サイズ。manifest未作成、lock解除済み、staging/旧backup保持。完了扱いにしない。失敗後は読み取り診断のみ、正式再実行は追加の明示承認が必要。公開処理を繰り返さない。原本IAB tab1の生成結果と入力を保持し、確認用3tabsは閉じた。追加生成なし。
+- 読み取り診断終了: Drive既存ZIPをGet-FileHashで最後まで読取り、上記ローカルSHA256と完全一致（90秒超）。破損ではなく照合期限不足。公式manifest/最終ゲートは未完了のまま。ユーザーへ待ち時間10分への限定修正・回帰検証と公式フルバックアップ再実行の承認を質問済み。承認到着まではスクリプト変更・再実行をしない。
+- 最終指示: ユーザーは「現状を保持して、今回は再実行しない」を選択。タイムアウト値も正式スクリプトも変更せず、再バックアップしない。ローカル/Drive ZIPのハッシュ一致と読み取り診断済み状態を保持。manifest未作成のため正式フルバックアップ未完了と報告し、依頼された停止境界で終了。
+- 後続依頼「次回のバックアップは照合待ち時間を延ばす設定」対応済み: root `scripts/backup_full.ps1` のDrive ZIP照合だけ90秒→600秒へ変更。既存launcherから同scriptを呼ぶため次回自動適用。実バックアップ・転送・再実行なし。既存fixtureに遅い正常照合の回帰を追加し、旧90秒でRED、新600秒で全16ケースPASS（時間切れ/ハッシュ不一致/失敗時の旧backup保持もPASS）。PowerShell構文検証とdiff check成功。ローカル設定変更のみで、前回backupの正式未完了状態は変わらない。
 
 - 対象・承認: Nanoのみ。報告台本「異世界の塩が高い」のSTEP3停止と登録キャストへの不要モザイクを修正。実API追加1枚の承認を受けて終了。次は正式デプロイ→note・Facebook更新→X文章をチャットのコードブロック→最後に正式フルバックアップ。X直接投稿なし、追加生成なし、他アプリ変更なし。既存承認済み1枚絵圧縮版を含む。
 - 共有修正: 話者名の外枠除去と登録名照合で9台詞を保持。登録された括弧違い表記をQAでも同一人物として扱い、別人・異なる称号は拒否。登録キャスト一覧を最終プロンプト・QA・修正経路で共有し、自動モザイク対象から除外。現在の登録名と異なる古いプロンプトはSTEP3再構築を要求。明示的な部位マスクは引き続き可能。

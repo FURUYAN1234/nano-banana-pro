@@ -53,7 +53,7 @@ page('Gemini API 取得マニュアル',
  ('h2','はじめての取得・接続・費用確認'),
  ('body','Super FURU AI 4-koma Systemで使うGemini APIキーを取得するための、日本語操作ガイドです。Googleアカウントでのログインから、プロジェクト選択、キー発行、アプリへの接続まで順番に説明します。'),
  ('box','この冊子の対象','パソコンのブラウザで作業する初心者向けです。APIとは、アプリからAIへ処理を依頼する仕組みです。プログラムを書く必要はありません。'),
- ('body','v6.8.4対応。Google AI StudioでAPIキーを用意し、本アプリへ接続する手順を説明します。画面写真は操作に必要な部分のみを掲載しています。画面の表記や利用条件はアカウントによって異なる場合があります。'),
+ ('body','v6.8.5対応。Google AI StudioでAPIキーを用意し、本アプリへ接続する手順を説明します。画面写真は操作に必要な部分のみを掲載しています。画面の表記や利用条件はアカウントによって異なる場合があります。'),
  ('body','キーを取得するだけで、すべてのモデルを無料で利用できるわけではありません。画像生成や検索、解析、修正にも費用が発生する場合があります。'),refs=('studio','app')),
 page('目次と最短の作業順',
  ('rows',[['ページ','内容'],['3','GoogleアカウントとAI Studio'],['4','APIキー画面を開く'],['5','プロジェクトを選ぶ'],['6','キーを作成・コピーする'],['7','アプリへ接続する'],['8','無料枠と有料枠の違い'],['9','有料枠の設定と費用確認'],['10','キーの安全な管理'],['11','接続できないとき'],['12','公式リンクと完了チェック']]),
@@ -108,7 +108,7 @@ page('完了チェックと公式リンク',
 SYSTEM=[
 page('全機能マニュアル',('h2','Super FURU AI 4-koma System'),
  ('body','キャラクター資料と題材から、4コマの構成、画像用の指示文、生成画像、保存まで進める日本語操作ガイドです。各機能の目的、操作順、変更が反映される工程、費用と保存の注意を説明します。'),
- ('box','このマニュアルの使い方','v6.8.4の全機能を、準備から保存まで操作順に説明します。OpenAIシナリオの初期選択はGPT-6.1 Solです。タイトル左の「使い方マニュアル」と接続欄のAPIマニュアルから、必要な説明を開けます。'),
+ ('box','このマニュアルの使い方','v6.8.5の全機能を、準備から保存まで操作順に説明します。OpenAIシナリオの初期選択はGPT-6.1 Solです。タイトル左の「使い方マニュアル」と接続欄のAPIマニュアルから、必要な説明を開けます。'),
  ('body','画面写真はCodex内蔵ブラウザで取得しています。実行を伴う画面が撮影できない機能は、現行の画面部品と処理コードを照合して説明し、生成済みの画面を作り物で代用しません。'),refs=('app',)),
 page('目次・機能の見つけ方',
  ('rows',[['ページ','機能'],['3-4','4ステップの流れ・API接続'],['5-6','キャラクター・作風JSON・360°背景'],['7-9','ニュース、自由入力、舞台・衣装・結末'],['10-11','シナリオ編集、SNS説明、演出強化'],['12-14','カラー／白黒、モザイク、ウオーターマーク、プロンプト構築・編集'],['15-18','Webコピー、Web修正・高解像度、API生成、検査・自動修正'],['19-21','追加修正、画像履歴・保存、制作情報'],['22-23','全自動・連続ループ、やり直しとモデル確認'],['24-25','1枚絵、動画化・関連アプリ'],['26-27','トラブル対処、完成前チェック・参照情報'],['28-30','白黒の描画指定・生成例・部分修正'],['31-32','Windowsでのローカル起動・STEP4の待機と検査']]),
@@ -169,6 +169,7 @@ page('モザイクとウオーターマーク',
 page('プロンプト構築・精査・手動編集',
  ('body','STEP3は、人物設定と台本を接続先に合う画像プロンプトへ組み立て、文章AIによる整合性確認を行います。画面に完成した指示文が出たら、内容を確認し、必要な箇所を編集できます。'),
  ('body','プロンプトには縦1列の4コマ、人物同一性、台詞、吹き出しの順と話者、カメラ、人体・小道具、カラー／白黒、A4ページ比率等を含めます。「名前【別名】」等の括弧付き話者名や長い登録名を保持し、品質検査でも登録された正式名・別名を照合します。別人への吹き出し接続や不正な件数は引き続き検出します。'),
+ ('body','「全員（構成員の列挙）」などの集合話者は、一人の人物や追加の人数として扱いません。配置と台詞の内訳・括弧・空白を照合し、別人や異なる構成員、不正な件数・読順・尾の経路は引き続き拒否します。保存済み台本はSTEP3から再構築してください。'),
  ('body','精査が失敗した場合は、元の指示文を残し、「精査未完了」と実際の理由を表示します。指示文が表示されているだけで、整合性確認に合格したとは限りません。'),
  ('box','手動編集の注意','人物名、台詞の引用符、話者、コマ数、カメラ指定を壊さないようにします。台本側の内容を変えたい場合はSTEP2を編集し、STEP3から再構築すると整合を取りやすくなります。')),
 page('Web / Workで手動生成する',
@@ -188,6 +189,7 @@ page('STEP4  APIで画像を生成する',
 page('画像検査と自動修正',
  ('body','API生成後には、コマ数、人物の同一性、眼鏡・衣装、手足、台詞、吹き出し順と尾、カメラ、小道具、余分な文字、出力モードなどをAIで検査します。画像から独立した文字の転記も使います。'),
  ('body','自動修正は既定ONで、重大な破綻だけを最大3回修正し、初回を含め最大4枚から最良候補を保持します。手の左右逆や余分な手足、台詞・話者の誤りは修正対象です。作品に影響しない違い、演技が成立する足切れ、判定不能は注意事項として続行し、それだけでは再生成しません。検査回答が不完全なら追加検査を止め、未確認として画像を保持します。'),
+ ('body','集合話者の尾は構成員ごとの接続証拠を確認します。「全員」と検査AIの説明文が違うだけでは修正を起動しません。判別不能は未確認として画像を保持し、明確な別人への接続や顔を横切る尾は修正対象に残します。'),
  ('body','自動修正OFFの「表示中の画像を品質再検査する」は解析だけで、画像を再生成しません。ONでは「再検査し、必要な箇所だけ修正する」となり、画像修正の料金も発生し得ます。生成中の「自動修正を停止（現在の応答後）」は残りの品質修正を止め、送信済みの処理や費用は取り消しません。待機・検査の表示は32ページを参照してください。'),
  ('box','AI判定を完成保証にしない','未確認と軽微な違いは、重大な誤りと区別します。AIは文字を読み違えたり、誤りを見逃すことがあります。完成画像の台詞、人物、手、構図は利用者も確認してください。解析・検査・修正にも追加料金がかかります。')),
 page('表示中の画像へ追加指示を送る',
@@ -289,7 +291,7 @@ for p in SYSTEM:
 class Book:
  def __init__(self,path,title,pages):
   self.path=path; self.pages=pages; self.c=canvas.Canvas(str(path),pagesize=A4,pageCompression=1)
-  self.c.setTitle(title);self.c.setAuthor('Super FURU AI 4-koma System');self.c.setSubject('日本語操作マニュアル / v6.8.4 / 2026-10-04')
+  self.c.setTitle(title);self.c.setAuthor('Super FURU AI 4-koma System');self.c.setSubject('日本語操作マニュアル / v6.8.5 / 2026-10-05')
   self.y=0;self.number=0;self.layout=[]
  def para(self,text,style='body',gap=10):
   p=Paragraph(text,STYLES[style]);_,h=p.wrap(CW,1000)
@@ -331,7 +333,7 @@ class Book:
    if page['shot']:self.shot(page['shot'],page['caption'])
    if page['refs']:
     self.para('参照：'+' / '.join(f'<link href="{escape(SOURCES[k][1])}" color="#087c86">{escape(SOURCES[k][0])}</link>' for k in page['refs']),'small',0)
-   c.setFillColor(GRAY);c.setFont('JP',8);c.drawString(M,33,'v6.8.4対応 | 2026年10月4日更新 | A4 日本語版');c.drawRightString(W-M,33,f'{i:02d} / {len(self.pages):02d}')
+   c.setFillColor(GRAY);c.setFont('JP',8);c.drawString(M,33,'v6.8.5対応 | 2026年10月5日更新 | A4 日本語版');c.drawRightString(W-M,33,f'{i:02d} / {len(self.pages):02d}')
    self.layout.append(dict(page=i,bottom_y=round(self.y,2)));c.showPage()
   c.save();return self.layout
 
@@ -355,11 +357,11 @@ def crop_assets():
 def verify_and_render(path,layout,pages):
  r=PdfReader(path);text='\n'.join(p.extract_text() for p in r.pages)
  assert len(r.pages)==len(pages)
- assert all('v6.8.4対応' in p.extract_text() and '2026年10月4日更新' in p.extract_text() for p in r.pages)
+ assert all('v6.8.5対応' in p.extract_text() and '2026年10月5日更新' in p.extract_text() for p in r.pages)
  if 'full-manual' in path.name:
   for required in ['Download ZIP','Node.js','start_app.bat','npm install','node_modules','ウィンドウ','画像表示予定枠の中央','累積時間だけでは打ち切りません','原寸RGB','褐色肌','カケアミ']:
    assert re.sub(r'\s+','',required) in re.sub(r'\s+','',text),required
- assert set(re.findall(r'v[0-9]+\.[0-9]+\.[0-9]+',text)) <= {'v6.8.4'}, 'Historical version in current manual'
+ assert set(re.findall(r'v[0-9]+\.[0-9]+\.[0-9]+',text)) <= {'v6.8.5'}, 'Historical version in current manual'
  assert not re.search(r'nano\s*banana|ナノ[・\s]*バナナ',text,re.I)
  assert not re.search(r'AIza[A-Za-z0-9_-]{20,}|sk-(?:proj-)?[A-Za-z0-9_-]{20,}|gen-lang-client-\d+|sx717|@[A-Za-z0-9.-]+\.[A-Za-z]{2,}',text)
  assert all(p['bottom_y']>=64 for p in layout)

@@ -816,6 +816,46 @@ test('registered full names and bracket typography are one speaker, but unknown 
   }
 });
 
+test('collective tails require member evidence, not literal equality with a group description', () => {
+  const finalPrompt = `MOSAIC PROTECTED CAST: ["甲","乙","丙"]
+## Panel 1
+CAST COUNT: [甲], [乙], [丙] each EXACTLY ONCE.
+Dialogue (verbatim bubbles): TEXT (PRINT VALUES ONLY): B1="確認しよう。". TAIL TIP LOCK: B1=>[全員] mouth/head. BALLOON LAYOUT (NEVER PRINT): B1 x=0.7, [全員] members=甲・乙 頭, tail=二人へ.
+## Panel 2
+Dialogue: silent
+## Panel 3
+Dialogue: silent
+## Panel 4
+Dialogue: silent`;
+  const target = name => ({ observed_tail_target: name, endpoint_relation: 'points_to_speaker',
+    tail_endpoint_evidence: `Visible branch points to ${name}'s head.`,
+    tail_tip: { x: 0.5, y: 0.3 }, speaker_anchor: { x: 0.51, y: 0.31, part: 'head' },
+    root_relation: 'lower_speaker_facing', path_relation: 'clear', tail_path_evidence: 'The lower branch crosses empty space.' });
+  const inspect = targets => {
+    const checks = spatialChecks();
+    checks[0].hand_geometry.actor_limb_inventory = ['甲', '乙', '丙'].map(actor => ({ actor, visible_hands: [], evidence: 'Hands are cropped out.' }));
+    checks[0].bubble_speaker = { status: 'ok', evidence: 'Visible group balloon.', left_to_right_texts: ['確認しよう。'], bubbles: [{
+      bubble: 'B1', text: '確認しよう。', expected_speaker: '全員', observed_tail_target: 'all group heads',
+      tail_endpoint_evidence: 'Tail splits toward the group.', targets,
+    }] };
+    return parseImageQualityQaResponse(JSON.stringify({ pass: true, issues: [], observations, spatial_checks: checks }), { finalPrompt });
+  };
+  for (const targets of [undefined, [], [target('甲')], [target('甲'), target('甲')]]) {
+    const review = inspect(targets);
+    assert.equal(review.pass, false);
+    assert.ok(review.issues.some(issue => issue.type === 'unverified' && issue.subject === 'B1'));
+    assert.ok(!review.issues.some(issue => issue.type === 'bubble_speaker'), JSON.stringify(review.issues));
+    assert.ok(!review.issues.some(isMaterialImageQualityIssue));
+  }
+  assert.equal(inspect([target('乙'), target('甲')]).pass, true);
+  for (const bad of [
+    { ...target('丙'), endpoint_relation: 'wrong_character' },
+    { ...target('乙'), path_relation: 'crosses_face' },
+    { ...target('乙'), endpoint_relation: 'empty_space' },
+  ]) assert.ok(inspect([target('甲'), bad]).issues.some(issue => issue.type === 'bubble_speaker'));
+  assert.match(buildImageQualityQaPrompt({ finalPrompt }), /COLLECTIVE.*targets/s);
+});
+
 test('reading order rejects reversed balloon bodies even when text and speaker tails pass', () => {
   const review = (positions, mode) => {
     const checks = spatialChecks(mode === 'single-image' ? 1 : 4);

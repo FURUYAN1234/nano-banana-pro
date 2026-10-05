@@ -1,13 +1,13 @@
 # Super FURU AI 4-koma System / Super FURU AI 4コマシステム
 
-> Current source version: **v6.8.4** / 現在のソース版: **v6.8.4**
+> Current source version: **v6.8.5** / 現在のソース版: **v6.8.5**
 
 
 An experimental web application in which AI handles topic research, story structure, direction, prompt construction, image generation, and quality review for a four-panel manga. / AIが話題調査、構成、演出、プロンプト構築、画像生成、品質確認まで担当する4コマ漫画制作Webアプリです。
 
 [アプリを開く / Open the app](https://furuyan1234.github.io/nano-banana-pro/) · [全機能PDFマニュアル / Full manual](https://furuyan1234.github.io/nano-banana-pro/downloads/super-furu-ai-4koma-full-manual-2026-10-01.pdf)
 
-The full operation manual and Gemini setup guide cover v6.8.4. The unchanged OpenAI setup guide remains applicable. Current application terms are in [LICENSE](LICENSE). / 全機能マニュアルとGemini API取得ガイドはv6.8.4対応です。OpenAI API取得ガイドの接続手順は引き続き利用できます。現在のアプリ利用条件は [LICENSE](LICENSE) を参照してください。
+The full operation manual and Gemini setup guide cover v6.8.5. The unchanged OpenAI setup guide remains applicable. Current application terms are in [LICENSE](LICENSE). / 全機能マニュアルとGemini API取得ガイドはv6.8.5対応です。OpenAI API取得ガイドの接続手順は引き続き利用できます。現在のアプリ利用条件は [LICENSE](LICENSE) を参照してください。
 
 ## Application screen and output / 操作画面と生成例
 
@@ -28,6 +28,8 @@ https://github.com/user-attachments/assets/15608ccc-8d86-4b78-9ff3-785201b42629
 Dialogue and page-layout safeguards / 台詞とコマ割り: Printable dialogue is kept separate from speaker routing metadata, with malformed quotes rejected before copying or API submission. Both provider prompts retain four full-width horizontal panels in one vertical column, including after long-prompt compaction. / 台詞本文と話者メタデータを分離し、括弧が壊れた本文はコピー・API送信前に拒否します。両provider・長文圧縮後も、横長4コマを縦1列に積む指定を保持します。台本や設定を変更したらSTEP3でプロンプトを再構築してください。生成AIの描画と画像QAには誤りが残り得るため、実画像の目視確認は必要です。
 
 Quoted source text / 出典の引用: Wording identified as an article or document quotation, including a quoted passage followed by "という記述", remains scene text rather than a nearby character's speech. Explicit speaking or reading aloud still gets a bubble. Balloon-layout errors identify the panel and mismatch without assuming user error. Rebuild STEP3 for existing scripts. / 「という記述」などで資料の文言を示す引用は状況描写に残し、近くの人物の吹き出しへ入れません。人物が実際に発話・音読する引用は台詞として保持します。配置エラーでは対象コマと不一致の内容を示し、入力の誤りと決めつけません。既存のシナリオへの反映にはSTEP3を作り直してください。
+
+Balloon speaker labels / 吹き出し配置の話者表記: STEP3 accepts complete-name bracket/spacing variants and acting annotations repeated on the same dialogue line. Collective labels retain their member routing instead of being assigned to one cast member. Different owners, conflicting member lists, empty owners, count/order errors and missing routes still stop assembly. / 話者名の外括弧・空白・中黒の表記差と、同じ台詞行にある演技注記を照合します。「全員（構成員の列挙）」などの集合話者は内訳を配置情報に残し、一人の人物へ置き換えません。参照シートのない店員なども内訳に含められます。別人・内訳の食い違い・空の話者・台詞件数や読順の不一致・尾の経路の欠落は引き続き停止し、話者エラーでは配置側と台詞側の表記を表示します。
 
 Single-speaker balloon / 発話が一つのコマ: A lone balloon stays near its mapped speaker while the cast retains the scripted camera positions. A distant body with only a claimed tail connection remains unverified for visual inspection; it does not trigger image regeneration by itself. Rebuild STEP3 for an existing scenario, then inspect the rendered page before publishing. / 発話が一つならフキダシ本体を話者の近くに置き、人物のカメラ指定位置は保持します。本体が話者から大きく離れ、ヒゲ接続の申告だけがある場合は目視確認待ちとし、それだけで再生成しません。既存シナリオはSTEP3から作り直し、公開前に実画像を確認してください。
 
@@ -289,6 +291,8 @@ The API key chosen at connection time fixes one provider for every application s
 
 Automatic repair is enabled by default, with at most three repairs (four images including the initial generation). Before each repair, AI analyzes visible defects, possible causes and prior outcomes, then supplies a changed repair strategy and verification criteria. Identical strategies for recurring defects are rejected and reanalyzed once. Each candidate is checked and compared with the best retained image. If all candidates fail, the best available image is used with explicit warnings and processing continues; manual cancellation still stops it. Analysis and QA also incur API costs. / 自動修正は既定ONで、最大3回（初回込み4枚）です。各修正前にAIが実際の誤り・原因仮説・過去の結果を解析し、修正方針と確認項目を作成します。同じ不具合への同一方針は拒否して1回再解析します。各候補を検査し、その時点の最良候補と比較します。全候補が不合格でも最良候補を警告付きで採用し、後続処理を続けます。明示的な停止操作は尊重します。解析・再検査にもAPI料金がかかります。
 
+Collective speech balloons are checked against the named members and visible tail branches. A wording difference such as a group label versus a group description does not trigger paid repair. Unresolved member coverage stays unverified; visible wrong targets and crossed faces remain defects. / 集合話者の吹き出しは、構成員と見えるしっぽの接続先を照合します。集合名と説明文の表記差だけでは有料修正を起動しません。誰に接続しているか判別できない場合は未確認とし、明確な別人への接続や顔の横断は修正対象に残します。
+
 STEP4 uses each API request's own response timeout; it does not stop the workflow solely because total elapsed time exceeds a fixed duration. If a quality-check request times out, the app retains the selected image and findings already obtained, with incomplete checks marked unverified rather than passed. If comparison disproves an earlier defect or cannot reconfirm it, that finding becomes unverified; the old finding alone cannot trigger another paid repair. Other confirmed material defects remain eligible within the three-repair limit. / STEP4は各APIリクエスト固有の応答待ち上限を使い、全体の経過時間だけで処理を打ち切りません。品質検査のリクエストが時間切れになっても、選択済み画像と取得できた検査結果を保持し、未完了の検査を合格扱いにしません。候補比較で以前の欠陥が否定されたり再確認できなかった場合は、その指摘を未確認へ変更し、古い指摘だけで有料修正を繰り返しません。別の明確な重大欠陥は、最大3回の範囲で修正対象に残ります。
 
 An image from a previous run is masked until the current run receives its first image. That newly received image remains visible and downloadable while STEP4 inspection or repair continues; editing remains locked during processing. The independent rear/over-the-shoulder camera check sends only the complete crops of the required panels, labeled with their original panel numbers. If those crops are unavailable, it checks the complete page instead. This avoids duplicate and unrelated image attachments without dropping a required check. / 前回の画像は今回の生成画像を受信するまでマスクします。今回取得した画像はSTEP4の検査・修正中も閲覧・保存でき、処理中の編集操作はロックします。背面・肩越し構図の独立カメラ検査には、対象コマ全体の切り出し画像だけを元のコマ番号付きで送ります。切り出し画像を使えない場合はページ全体を検査します。必要な検査を省かず、重複した画像や対象外コマの添付を避けます。
@@ -385,7 +389,7 @@ The copied prompt guides panel order, cast, speaker assignment, acting, camera, 
 The app provides separate download buttons for the workflow JSON and the custom-node ZIP. Both files are needed for this route. / アプリにはワークフローJSONとカスタムノードZIPのダウンロードボタンが別々にあります。この経路では両方のファイルが必要です。
 
 - [Download workflow JSON](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261002-071924.json) / [ワークフローJSONをダウンロード](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261002-071924.json)
-- [Download custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.8.4/ComfyUI_H3_FourPanel_NonLM_20261002-071924_authfix1.zip) / [カスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.8.4/ComfyUI_H3_FourPanel_NonLM_20261002-071924_authfix1.zip)
+- [Download custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.8.5/ComfyUI_H3_FourPanel_NonLM_20261002-071924_authfix1.zip) / [カスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.8.5/ComfyUI_H3_FourPanel_NonLM_20261002-071924_authfix1.zip)
 
 Place the ZIP's `3フォルダ` under `ComfyUI/custom_nodes/` and the workflow JSON under `ComfyUI/user/default/workflows/`. Install the separate dependencies below, then restart ComfyUI. / ZIP内の`3フォルダ`を`ComfyUI/custom_nodes/`へ、ワークフローJSONを`ComfyUI/user/default/workflows/`以下へ配置します。下記の別途必要な依存関係を導入してからComfyUIを再起動します。
 
@@ -429,11 +433,14 @@ The production application is published from the `main` branch through the repos
 
 **Why are there two ComfyUI download buttons? / ComfyUIのダウンロードボタンが2つあるのはなぜですか？**  The JSON defines the workflow, while the ZIP supplies three custom-node folders and documentation; three additional runtime dependencies are installed separately. / JSONはワークフロー定義、ZIPはカスタムノード3フォルダーと導入文書です。さらに実行依存3項目を別途導入します。
 
-**Which video package should I install? / 動画化には何を入れますか？** Use the `20261002-071924` workflow JSON and matching v6.8.4 FourPanel Release asset (`authfix1` ZIP). Follow the bundled environment and validation instructions. / `20261002-071924` のワークフローJSONと対応するv6.8.4 FourPanel Releaseアセット（`authfix1` ZIP）を使い、同梱の環境要件と確認手順に従ってください。
+**Which video package should I install? / 動画化には何を入れますか？** Use the `20261002-071924` workflow JSON and matching v6.8.5 FourPanel Release asset (`authfix1` ZIP). Follow the bundled environment and validation instructions. / `20261002-071924` のワークフローJSONと対応するv6.8.5 FourPanel Releaseアセット（`authfix1` ZIP）を使い、同梱の環境要件と確認手順に従ってください。
 
 **Is this the T2V/I2V/Ref2V repository? / T2V・I2V・Ref2Vのリポジトリですか？**  No. Those workflows are maintained separately in [comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows). / いいえ。それらは別の[comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows)で管理します。
 
 ## 📋 ChangeLog
+
+### v6.8.5 (2026-10-05)
+- **[Fix & UX]** 集合話者の表記差によるSTEP3誤停止と人数の過剰計上を修正。画像検査は構成員の接続証拠を照合し、表記差だけで追加生成しません。 / Fixed collective-speaker STEP3 mismatches and extra cast counts. Image QA checks member tail evidence and no longer triggers repair from a group wording difference.
 
 ### v6.8.4 (2026-10-04)
 - **[Fix & UX]** 括弧付き話者名の台詞欠落と登録キャストへのモザイク誤適用を修正。1枚絵の追加指示を圧縮。 / Fixed dialogue loss for bracketed speaker names and unintended mosaic on registered cast; shortened the single-image add-on prompt.

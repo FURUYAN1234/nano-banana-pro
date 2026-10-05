@@ -14,6 +14,74 @@ let buildIdentityMatrix;
 let extractActingIdentityNotes;
 let getCameraForPanel;
 
+test('collective speakers are not extra bodies while actual guest speakers remain counted', () => {
+  const cast = '## 甲\n## 乙\n## 丙';
+  for (const group of ['全員', 'みんな', '一同', '二人']) {
+    const source = `状況: 甲と乙が机を囲む。\n${group}「確認します。」\n甲「準備できた。」`;
+    const rule = extractCastLimitRule(source, cast, { compact: true });
+    assert.doesNotMatch(rule, new RegExp(`\\[${group}\\]`), group);
+    assert.match(rule, /TOTAL 2 people|exactly 2 people/i, group);
+  }
+  const guestRule = extractCastLimitRule('状況: 甲と乙が机を囲む。\n店員「確認します。」', cast, { compact: true });
+  assert.match(guestRule, /GUEST CONTINUITY: \[店員\]/);
+  assert.match(guestRule, /TOTAL 3 people|exactly 3 people/i);
+});
+
+test('layout and dialogue share exact name typography and explicit acting-label normalization', () => {
+  const cast = '## 甲\n## 乙\n## ジョン・スミス';
+  for (const [speaker, label, expected] of [
+    ['【甲】', '【甲】', '甲'], ['[甲]', '甲', '甲'],
+    ['ジョンスミス', 'ジョンスミス', 'ジョン・スミス'],
+    ['ジョン スミス', 'ジョン・スミス', 'ジョン・スミス'],
+    ['甲（驚いて）', '甲（驚いて）', '甲'],
+  ]) {
+    const plan = [{ speaker, x: 0.7, anchor: '頭', route: '上から口元へ' }];
+    const source = `BalloonLayout: ${JSON.stringify(plan)}\n${label}「確認します。」`;
+    assert.deepEqual(extractDialogueOnly(source, cast, { asEntries: true, forImagePrompt: true }), [{ speaker: expected, text: '確認します。' }], label);
+  }
+});
+
+test('collective layout annotations match collective dialogue without assigning it to one member', () => {
+  const cast = '## 甲\n## 乙\n## 丙';
+  for (const group of ['全員', 'みんな', '一同', '全キャラ', '全メンバー', '二人']) {
+    for (const [open, close] of [['（', '）'], ['(', ')'], ['【', '】'], ['[', ']']]) {
+      const speaker = `${group}${open}甲・乙${close}`;
+      const plan = [{ speaker, x: 0.7, anchor: '二人の頭', route: '二人へ' }];
+      for (const label of [group, speaker]) {
+        const source = `BalloonLayout: ${JSON.stringify(plan)}\n${label}「確認します。」`;
+        const entries = extractDialogueOnly(source, cast, { asEntries: true, forImagePrompt: true });
+        assert.equal(entries.length, 1);
+        assert.ok(entries[0].speaker.startsWith(group), `${label}: ${entries[0].speaker}`);
+        assert.equal(entries[0].text, '確認します。');
+        assert.ok(extractDialogueOnly(source, cast, { forImagePrompt: true }).includes('甲・乙'), 'member routing is retained');
+      }
+    }
+  }
+});
+
+test('normalization still rejects different people, titles, group members and missing owners', () => {
+  const cast = '## 甲\n## 乙\n## 丙\n## 案内役（旅人）';
+  for (const [speaker, label] of [
+    ['甲', '乙'], ['甲の同僚', '甲'], ['案内役【別の旅人】', '案内役'],
+    ['全員（甲・乙）', '甲'], ['甲', '全員'],
+    ['全員（甲・乙）', '全員（乙・丙）'], ['全員（甲・店員）', '全員（乙・店員）'],
+    ['', ''], ['全員（甲・乙）', '一同'],
+  ]) {
+    const plan = [{ speaker, x: 0.7, anchor: '頭', route: '上から' }];
+    const source = `BalloonLayout: ${JSON.stringify(plan)}\n${label}「確認します。」`;
+    assert.throws(() => extractDialogueOnly(source, cast, { forImagePrompt: true }), error => error.code === 'BALLOON_LAYOUT_INVALID' && error.reason === 'speaker', `${speaker}/${label}`);
+  }
+});
+
+test('collective members can include a scripted guest outside the reference cast', () => {
+  const speaker = '全員（ジョン・スミス・店員）';
+  const plan = [{ speaker, x: 0.7, anchor: '二人の頭', route: '二人へ' }];
+  for (const label of ['全員', '全員（店員・ジョン・スミス）']) {
+    const source = `BalloonLayout: ${JSON.stringify(plan)}\n状況: ジョン・スミスと店員が声をそろえる。\n${label}「確認します。」`;
+    assert.deepEqual(extractDialogueOnly(source, '## ジョン・スミス', { asEntries: true, forImagePrompt: true }), [{ speaker: '全員', text: '確認します。' }]);
+  }
+});
+
 test('bracketed cast titles preserve all three reported salt-scene speakers', () => {
   const names = ['ガルーナ【ガル】', 'エムバ・ババトゥンデ【黒き守護者・ババ】', 'ユウ【スミレ】'];
   const words = ['塩一粒が、交渉の札か。', '命に要るものほど、棚の主が強い。', '生き物には欠かせないものね。'];

@@ -72,6 +72,23 @@ const CAST_LIST = `
 - short blonde hair, glasses
 `;
 
+test('reported AI replacement scenario preserves all eight bubbles through both STEP3 provider builds', () => {
+  const scenario = readFileSync(new URL('./fixtures/ai-replaced-requests.txt', import.meta.url), 'utf8');
+  const expected = scenario.split(/\[\dコマ目:[^\]]+\]/).slice(1).map(panel =>
+    [...panel.matchAll(/^([^\n「]+)「([^\n]+)」$/gm)].map(([, speaker, text]) => ({ speaker, text })));
+  assert.deepEqual(expected.map(panel => panel.length), [2, 2, 2, 2]);
+  for (const providerFamily of ['chatgpt', 'gemini']) {
+    for (const colorMode of ['color', 'monochrome']) {
+      const prompt = buildMangaPrompt({ scenario, castList: CAST_LIST, providerFamily, colorMode, punchlineType: 'Auto', systemVersion: 'test' });
+      assert.deepEqual(extractBubbleContracts(prompt).map(panel => panel.bubbles.map(({ speaker, text }) => ({ speaker, text }))), expected, `${providerFamily}/${colorMode}`);
+      const lastPanel = prompt.split('## Panel 4')[1];
+      assert.ok(lastPanel, 'fourth panel exists');
+      assert.doesNotMatch(lastPanel.match(/CAST COUNT:[^\n]+/)?.[0] || '', /\[全員\]/);
+      assert.doesNotMatch(lastPanel, /GUEST CONTINUITY: \[全員\]|TOTAL 6 people/);
+    }
+  }
+});
+
 const SCENARIO = `
 ## タイトル: 塩ポップコーン論争勃発!?
 Location: 映画館ロビー

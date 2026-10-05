@@ -311,6 +311,8 @@ const findExactCastMatch = (speaker, validCharacters = []) => {
 };
 
 const findSpeakerCastMatch = (speaker, validCharacters = []) => {
+  // A collective label may contain cast names, but is never one of its members.
+  if (parseCollectiveSpeaker(speaker)) return '';
   const exactMatch = findExactCastMatch(speaker, validCharacters);
   if (exactMatch) return exactMatch;
 
@@ -426,10 +428,65 @@ const stripMatchingStructuralWrapper = (line = '') => {
 // Only unwrap a complete speaker wrapper; a suffix such as 名前【別名】 is identity.
 const unwrapSpeakerLabel = (value = '') => stripMatchingStructuralWrapper(String(value).trim()).trim();
 
+const speakerTypographyKey = (value = '') => unwrapSpeakerLabel(value)
+  .replace(/[【\[（(]/g, '(').replace(/[】\]）)]/g, ')').replace(/[\s・]/g, '');
+
+export const parseCollectiveSpeaker = (value = '') => {
+  const label = unwrapSpeakerLabel(value);
+  const match = label.match(/^(全員|みんな|一同|全キャラ|全メンバー|[二三四五六七八九十0-9０-９]+人)(?:\s*([（(【\[])(.+)([）)】\]]))?$/u);
+  if (!match || (match[2] && { '（': '）', '(': ')', '【': '】', '[': ']' }[match[2]] !== match[4])) return null;
+  return { name: match[1], members: match[3]?.trim() || '' };
+};
+
+// Resolve complete identities only. Substring/fuzzy matching is unsafe at the
+// layout boundary: a title, a different owner, or a group must not be discarded.
+const layoutSpeakerKey = (value, validCharacters) => {
+  const key = speakerTypographyKey(value);
+  const registered = validCharacters.filter(name => speakerTypographyKey(name) === key);
+  return registered.length === 1 ? speakerTypographyKey(registered[0].split(/[（(]/)[0]) : key;
+};
+
+export const collectiveMemberKeys = (members, validCharacters) => {
+  if (!members) return [];
+  if (!validCharacters.length) return members.split(/[・、,，／/]/u).map(speakerTypographyKey).sort();
+  // Consume full registered names before separators, including names with an interpunct.
+  const names = [...new Set(validCharacters.flatMap(name => [name, name.split(/[（(]/)[0].trim()]))]
+    .sort((a, b) => b.length - a.length);
+  const keys = [];
+  let rest = members.trim();
+  while (rest) {
+    const name = names.find(candidate => rest.startsWith(candidate)
+      && (!rest.slice(candidate.length) || /^[\s・、,，／/]/u.test(rest.slice(candidate.length))))
+      || rest.match(/^[^・、,，／/]+/u)?.[0]?.trim();
+    if (!name) return null;
+    keys.push(layoutSpeakerKey(name, validCharacters));
+    rest = rest.slice(name.length).replace(/^[\s・、,，／/]+/u, '');
+  }
+  return keys.sort();
+};
+
+const layoutSpeakerMatches = (label, entry, validCharacters) => {
+  if (!label.trim() || !entry.speaker) return false;
+  const layoutGroup = parseCollectiveSpeaker(label);
+  const dialogueGroup = parseCollectiveSpeaker(entry.sourceSpeaker || entry.speaker);
+  if (layoutGroup || dialogueGroup) {
+    if (!layoutGroup || !dialogueGroup || layoutGroup.name !== dialogueGroup.name) return false;
+    const left = collectiveMemberKeys(layoutGroup.members, validCharacters);
+    const right = collectiveMemberKeys(dialogueGroup.members, validCharacters);
+    return left !== null && right !== null && (!left.length || !right.length || JSON.stringify(left) === JSON.stringify(right));
+  }
+  const expected = layoutSpeakerKey(entry.speaker, validCharacters);
+  if (layoutSpeakerKey(label, validCharacters) === expected) return true;
+  // Acting annotations are safe only when the exact same label occurs on this
+  // utterance. Never erase an arbitrary layout-only suffix to make it pass.
+  return speakerTypographyKey(label) === speakerTypographyKey(entry.sourceSpeaker || '')
+    && layoutSpeakerKey(normalizeDialogueSpeakerPrefix(label), validCharacters) === expected;
+};
+
 const speakerNameForHeuristics = (value = '') => String(value).replace(/[【\[（(].*?[】\]）)]/g, '').trim();
 
 const normalizeDialogueSpeakerPrefix = (value = '') =>
-  unwrapSpeakerLabel(value)
+  (parseCollectiveSpeaker(value)?.name || unwrapSpeakerLabel(value))
     .replace(/^[\s\-*・、。:：]+/, '')
     .replace(/[（(].*?[）)]/g, '')
     .replace(/^(?:セリフ|台詞|Dialogue|Speech\s*Bubble\s*\d*)\s*[:：-]?\s*/i, '')
@@ -695,14 +752,10 @@ const renderBalloonLayout = (source, entries, rearSubject = '', uncertainRear = 
   try { plan = JSON.parse(lines[0][1]); } catch { return fail('json', '配置JSONを読み取れません。'); }
   if (lines.length !== 1 || !Array.isArray(plan)) return fail('schema', '配置はコマごとに1つのJSON配列で指定してください。');
   if (plan.length !== entries.length) return fail('count', `配置${plan.length}件、抽出台詞${entries.length}件で一致しません。`);
-  // Accept bracket typography only for a complete registered name/title, never fuzzy substrings.
-  const bracketKey = value => value.trim().replace(/[【\[（(]/g, '(').replace(/[】\]）)]/g, ')');
   for (const [i, item] of plan.entries()) {
     if (!item || typeof item !== 'object' || Array.isArray(item)) return fail('schema', `配置${i + 1}はオブジェクトで指定してください。`);
     if (typeof item.speaker !== 'string') return fail('speaker', `配置${i + 1}の話者と抽出台詞の話者が一致しません。`);
-    const registeredSpeaker = validCharacters.find(name => bracketKey(name) === bracketKey(item.speaker));
-    const canonicalSpeaker = registeredSpeaker ? registeredSpeaker.split(/[（(]/)[0].trim() : item.speaker.trim();
-    if (item.speaker.trim() !== entries[i].speaker && canonicalSpeaker !== entries[i].speaker) return fail('speaker', `配置${i + 1}の話者と抽出台詞の話者が一致しません。`);
+    if (!layoutSpeakerMatches(item.speaker, entries[i], validCharacters)) return fail('speaker', `配置${i + 1}の話者${JSON.stringify(item.speaker)}と抽出台詞の話者${JSON.stringify(entries[i].sourceSpeaker || entries[i].speaker)}が一致しません。`);
     if (!Number.isFinite(item.x) || item.x <= 0 || item.x >= 1) return fail('x_range', `配置${i + 1}のxは0より大きく1未満の数値にしてください。`);
     if (i > 0 && plan[i - 1].x <= item.x) return fail('x_order', `配置${i + 1}のxが右から左の台詞順と一致しません。`);
     for (const key of ['anchor', 'route']) {
@@ -713,7 +766,10 @@ const renderBalloonLayout = (source, entries, rearSubject = '', uncertainRear = 
   const visibleAnchor = (value, speaker) => speaker !== rearSubject && !uncertainRear ? value : value
     .replace(/口元|口もと|\bmouth\b/gi, '頭の見える輪郭')
     .replace(/(^|の|から|\s)口(?=へ|に|の|$)/g, '$1頭の見える輪郭');
-  return ` BALLOON LAYOUT (NEVER PRINT; x=0 left/1 right; preserve Camera/Action): ${plan.map((item, i) => `B${i + 1} x=${item.x}, [${entries[i].speaker}] ${visibleAnchor(item.anchor, entries[i].speaker)}, tail=${visibleAnchor(item.route, entries[i].speaker)}`).join('; ')}.`;
+  return ` BALLOON LAYOUT (NEVER PRINT; x=0 left/1 right; preserve Camera/Action): ${plan.map((item, i) => {
+    const members = parseCollectiveSpeaker(item.speaker)?.members || parseCollectiveSpeaker(entries[i].sourceSpeaker)?.members;
+    return `B${i + 1} x=${item.x}, [${entries[i].speaker}]${members ? ` members=${members}` : ''} ${visibleAnchor(item.anchor, entries[i].speaker)}, tail=${visibleAnchor(item.route, entries[i].speaker)}`;
+  }).join('; ')}.`;
 };
 
 export const extractDialogueOnly = (fullPanelText, castList, options = {}) => {
@@ -756,7 +812,7 @@ export const extractDialogueOnly = (fullPanelText, castList, options = {}) => {
   const bubbleKeys = new Set();
   let bubbleSequence = 0;
 
-  const pushSpeechBubble = (speaker, text, order = Number.MAX_SAFE_INTEGER) => {
+  const pushSpeechBubble = (speaker, text, order = Number.MAX_SAFE_INTEGER, sourceSpeaker = '') => {
     const cleanText = String(text || '').trim();
     const cleanSpeaker = String(speaker || '').trim();
     if (!cleanText) return;
@@ -767,6 +823,7 @@ export const extractDialogueOnly = (fullPanelText, castList, options = {}) => {
       order,
       sequence: bubbleSequence,
       speaker: cleanSpeaker,
+      sourceSpeaker,
       text: cleanText
     });
     bubbleSequence++;
@@ -884,7 +941,7 @@ export const extractDialogueOnly = (fullPanelText, castList, options = {}) => {
       if (!firstQuote) clean = clean.replace(/（.*?）|\(.*?\)/g, '');
       clean = clean.trim();
 
-      pushSpeechBubble(detectedSpeaker, clean, lineOrder);
+      pushSpeechBubble(detectedSpeaker, clean, lineOrder, match?.[1]?.trim() || detectedSpeaker);
       if (firstQuote) explicitQuoteOffsets.add(lineOrder + firstQuote.start);
     }
   });
@@ -1616,6 +1673,8 @@ export const extractCastLimitRule = (fullPanelText, castList, options = {}) => {
   // utterances on one line and speakers written after the quote.
   const entries = extractDialogueOnly(fullPanelText, castList, {forImagePrompt: true, asEntries: true});
   const speakers = [...new Set(entries
+    // Collective speech names a set of the scripted actors, not another body.
+    .filter(({ speaker }) => !parseCollectiveSpeaker(speaker))
     .map(({speaker}) => {
       const alias = findSpeakerCastMatch(speaker, validCharacters);
       return alias ? charLookup[alias].name : speaker;

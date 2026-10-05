@@ -3,6 +3,7 @@ import { isMonochromePrompt, MONOCHROME_QA_RULE } from './manga-render-mode.js';
 import { readBubbleTextValues } from './bubble-text.js';
 import { getPanelShotExecution, isPullbackShot } from './composition-variety.js';
 import { CHEEK_RENDERING } from './shared-image-quality.js';
+import { parseCollectiveSpeaker, collectiveMemberKeys } from './panel-utils.js';
 
 const ISSUE_TYPES = new Set([
   'monochrome_rendering',
@@ -247,7 +248,16 @@ export const extractBubbleContracts = (prompt) => [...String(prompt).replace(/^[
     const speakers = new Map([...body.matchAll(/\b(B\d+)\s*(?:=>|->)\s*\[([^\]]+)\]/g)]
       .map(([, bubble, speaker]) => [bubble, speaker.trim()]));
     const bubbles = readBubbleTextValues(dialogue)
-      .map(({ bubble, text }) => ({ bubble, text, speaker: speakers.get(bubble) || '' }));
+      .map(({ bubble, text }) => {
+        const speaker = speakers.get(bubble) || '';
+        const group = parseCollectiveSpeaker(speaker);
+        if (!group) return { bubble, text, speaker };
+        const layout = body.match(/BALLOON LAYOUT[^\n]*/)?.[0] || '';
+        const members = layout.match(new RegExp(`\\b${bubble}\\s+x=[^;]*?\\bmembers=([^;]*?)(?=\\s|;|$)`))?.[1] || group.members;
+        const cast = readPanelCastNames(body);
+        return { bubble, text, speaker, members: members ? collectiveMemberKeys(members, cast) || []
+          : /人$/.test(group.name) ? [] : cast };
+      });
     return { panel: Number(number), texts: bubbles.map(entry => entry.text), bubbles };
   });
 
@@ -370,6 +380,45 @@ const buildSpeakerAliasMap = (prompt) => {
 const normalizeSpeaker = (value, aliases) => {
   const key = normalizeSpeakerKey(value);
   return aliases.get(key) || key;
+};
+
+// A group label is not a physical endpoint. Only named member observations
+// can establish coverage or a material wrong-target/route defect.
+const collectiveTailIssues = (bubble, expected, panel, aliases) => {
+  const issues = [];
+  const add = (type, reason) => issues.push({ type, panel, subject: bubble.bubble, reason });
+  const members = new Set(expected.members.map(name => normalizeSpeaker(name, aliases)));
+  const targets = Array.isArray(bubble.targets) ? bubble.targets : [];
+  const seen = new Set();
+  const point = value => value && Number.isFinite(value.x) && value.x >= 0 && value.x <= 1
+    && Number.isFinite(value.y) && value.y >= 0 && value.y <= 1;
+  if (!members.size || !targets.length) add('unverified', 'Collective balloon needs named member tail evidence; a group description alone cannot authorize repair.');
+  for (const target of targets) {
+    const name = normalizeSpeaker(target?.observed_tail_target, aliases);
+    const grounded = name && typeof target.tail_endpoint_evidence === 'string' && target.tail_endpoint_evidence.trim()
+      && point(target.tail_tip) && point(target.speaker_anchor) && ['head', 'mouth'].includes(target.speaker_anchor.part);
+    if (!grounded) { add('unverified', 'Collective tail lacks a named endpoint, coordinates or visible evidence.'); continue; }
+    if (seen.has(name)) add('unverified', 'Collective tail inventory repeats a member instead of proving distinct coverage.');
+    seen.add(name);
+    const relation = target.endpoint_relation;
+    if (['wrong_character', 'empty_space'].includes(relation)) {
+      add('bubble_speaker', `Collective tail endpoint is ${relation}: ${target.tail_endpoint_evidence}`);
+    } else if (!members.has(name) || !['touches_speaker', 'points_to_speaker'].includes(relation)) {
+      add('unverified', 'Collective tail target or endpoint relation is unresolved; do not infer a wrong person from a name difference.');
+    } else if (Math.hypot(target.tail_tip.x - target.speaker_anchor.x, target.tail_tip.y - target.speaker_anchor.y) > 0.12) {
+      add('unverified', 'Collective tail coordinates do not establish proximity to the assigned member.');
+    }
+    if (!['lower_speaker_facing', 'other', 'ambiguous'].includes(target.root_relation)
+      || !['clear', 'crosses_head', 'crosses_face', 'crosses_hair', 'crosses_text', 'ambiguous'].includes(target.path_relation)
+      || typeof target.tail_path_evidence !== 'string' || !target.tail_path_evidence.trim()
+      || target.root_relation === 'ambiguous' || target.path_relation === 'ambiguous') {
+      add('unverified', 'Collective tail branch lacks grounded root/path evidence.');
+    } else if (target.root_relation !== 'lower_speaker_facing' || target.path_relation !== 'clear') {
+      add('bubble_speaker', `Collective tail geometry is ${target.root_relation}/${target.path_relation}. ${target.tail_path_evidence}`);
+    }
+  }
+  if ([...members].some(name => !seen.has(name))) add('unverified', 'Collective tail inventory does not resolve every required member.');
+  return issues;
 };
 
 const VISIBLE_PROMPT_METADATA_RE = /(?:\bB\d+\s*(?:x\s*=|(?:RIGHT|LEFT)(?:-?SIDE|MOST)?\b)|\b(?:RIGHT|LEFT)(?:-?SIDE|MOST)\b|BUBBLE\s*SLOTS?|TAIL(?:\s*TIP)?\s*LOCK|PRINT\s*VALUES\s*ONLY)/i;
@@ -770,7 +819,8 @@ ACTOR HAND COUNT: In each hand_geometry for panels with CAST COUNT, return actor
 HAND ENDPOINT AND DIGIT EVIDENCE: In every spatial_checks entry return hand_geometry. Inventory every visible hand for every named character, including small background hands, before grading any single prominent hand. Trace every visible arm from shoulder through elbow and wrist to its endpoint before counting digits, and compare nearby feet/footwear so a shoe or foot cannot be mislabeled as a hand. A named character with more than two visible shoulder-connected arms or hands is an anatomy defect even when each individual hand has five digits or matches a scripted verb. Inspect every large, foreground, foreshortened, open, or action-critical visible arm endpoint. Return hands entries {"subject":"character and anatomical hand","location":"pixel-grounded panel location","pose":"open/gripping/fist/other","observed_endpoint":"hand|foot|shoe|object|ambiguous","wrist_palm_connection":"clear|missing|ambiguous","palm_evidence":"visible wrist, palm plane and separation from any shoe/foot","visible_digits":5,"occluded_digits":0,"status":"ok|defect|uncertain","evidence":"separate thumb/finger contours and their palm connection"}. Status ok requires observed_endpoint:"hand", wrist_palm_connection:"clear", grounded palm_evidence, and visible_digits plus occluded_digits equal five. If an arm ends in a foot, shoe, footwear or object, use defect even when the silhouette has five protrusions. Use uncertain when endpoint type, wrist/palm connection, overlap or crop cannot be resolved. Use status:not_applicable with hands:[] only when no arm endpoint is visible enough to inspect; never copy the requested anatomy as observed evidence.
 UPWARD EVIDENCE: for a requested upward camera at any height, elevation.projection_cues must locate observed undersides of two distinct visible subjects/surfaces as {"subject":"specific actor or prop","surface":"underside|top|front|unclear","x":0.0,"y":0.0}, within the panel. Inspect faces/bodies as well as the setting; ceiling, large foreground, chibi, tilted background or a camera label alone is not proof. Missing/ambiguous projection is uncertain, not ok. No full-body requirement or regeneration from weak angle alone.
 
-BUBBLE TAIL EVIDENCE: for every visible speech bubble, trace the complete tail from its root on the bubble outline to the actual mouth/head silhouette it touches. Bubble position or the nearest body is not speaker evidence. In each bubble_speaker check return bubbles entries {"bubble":"B1","text":"visible dialogue","expected_speaker":"name from TAIL TIP LOCK or TAILS metadata","observed_tail_target":"name located from visible identity features","tail_endpoint_evidence":"specific visible tip endpoint and identity cues","endpoint_relation":"touches_speaker|points_to_speaker|wrong_character|empty_space|ambiguous|missing","tail_tip":{"x":0.62,"y":0.31},"speaker_anchor":{"x":0.60,"y":0.34,"part":"mouth|head"},"root_relation":"lower_speaker_facing|other|ambiguous","path_relation":"clear|crosses_head|crosses_face|crosses_hair|crosses_text|ambiguous","tail_path_evidence":"visible root location and every crossed silhouette or clear empty corridor","center_x":0.75,"position_evidence":"visible balloon body location"}. tail_tip and speaker_anchor are independently observed points normalized within that panel: x=0 left/1 right, y=0 top/1 bottom. speaker_anchor is the nearest point on the assigned speaker's mouth/head silhouette, not the center of their face. Use touches_speaker only when the visible tip actually meets that silhouette and both points agree; direction, proximity, or pointing toward it is insufficient. root_relation is lower_speaker_facing only when the root leaves the lower half near lower-center on the assigned speaker's side. path_relation is clear only when the shortest visible route stays in empty space and does not cross, overlap, or pass over any head, face, hair, or dialogue text. center_x is the observed balloon BODY center, excluding its tail, normalized to panel width. Match IDs by TEXT and take expected_speaker only from the submitted mapping, never from the apparent target or bubble position. Do not copy requested slot coordinates as observations. For multi-bubble manga panels, independently inspect every adjacent pair: center_x(B1)>center_x(B2)>center_x(B3)...; vertical staggering cannot excuse a horizontal reversal. If a position or text-to-ID match is unclear, omit center_x and report uncertain, never invent it. If the tip reaches a different person, use wrong_character; if it ends in empty space use empty_space; if missing, cropped, forked, or ambiguous use ambiguous or missing. Use not_applicable with bubbles:[] only when the panel has no speech bubble.
+BUBBLE TAIL EVIDENCE: for every visible speech bubble, trace the complete tail from its root on the bubble outline to the actual mouth/head silhouette it touches. Bubble position or the nearest body is not speaker evidence. In each bubble_speaker check return bubbles entries {"bubble":"B1","text":"visible dialogue","expected_speaker":"name from TAIL TIP LOCK or TAILS metadata","observed_tail_target":"name located from visible identity features","tail_endpoint_evidence":"specific visible tip endpoint and identity cues","endpoint_relation":"touches_speaker|points_to_speaker|wrong_character|empty_space|ambiguous|missing","tail_tip":{"x":0.62,"y":0.31},"speaker_anchor":{"x":0.60,"y":0.34,"part":"mouth|head"},"root_relation":"lower_speaker_facing|other|ambiguous","path_relation":"clear|crosses_head|crosses_face|crosses_hair|crosses_text|ambiguous","tail_path_evidence":"visible root location and every crossed silhouette or clear empty corridor","center_x":0.75,"position_evidence":"visible balloon body location"}. tail_tip and speaker_anchor are independently observed points normalized within that panel: x=0 left/1 right, y=0 top/1 bottom. speaker_anchor is the nearest point on the assigned speaker's mouth/head silhouette, not the center of their face. Use touches_speaker only when the visible tip actually meets that silhouette and both points agree; direction, proximity, or pointing toward it is insufficient. root_relation is lower_speaker_facing only when the root leaves the lower half near lower-center on the assigned speaker's side. path_relation is clear only when the shortest visible route stays in empty space and does not cross, overlap, or pass over any head, face, hair, or dialogue text. center_x is the observed balloon BODY center, excluding its tail, normalized to panel width. Match IDs by TEXT and take expected_speaker only from the submitted mapping, never from the apparent target or bubble position. Do not copy requested slot coordinates as observations. For multi-bubble manga panels, independently inspect every adjacent pair: center_x(B1)>center_x(B2)>center_x(B3)...; vertical staggering cannot excuse a horizontal reversal. If a position or text-to-ID match is unclear, omit center_x and report uncertain, never invent it. If the tip reaches a different person, use wrong_character; if it ends in empty space use empty_space; if missing, cropped, unexpectedly forked for an individual speaker, or ambiguous use ambiguous or missing. Use not_applicable with bubbles:[] only when the panel has no speech bubble.
+COLLECTIVE BALLOONS: A mapped collective speaker denotes its members, never an extra person. For each such bubble return targets: an array with one observation per required member, each using observed_tail_target (exact member name), endpoint_relation, tail_endpoint_evidence, tail_tip, speaker_anchor, root_relation, path_relation and tail_path_evidence from the same schema above. Use the submitted members list, or the panel cast for an unqualified whole-group speaker. Identify each actual endpoint from pixels; do not copy membership as observed coverage. A deliberately branched collective tail is allowed; inspect each branch separately. A group description is not an identity mismatch. If member identity, coverage or a branch is unresolved, mark it ambiguous; never invent coordinates or a defect.
 PIXEL READING ORDER: In every bubble_speaker check include left_to_right_texts: an array of the actual visible balloon texts scanned from the LEFT edge to the RIGHT edge of the image panel, irrespective of B numbers, expected order, speaker position or vertical offset. This is a physical inventory, NOT Japanese reading order. Transcribe each balloon internally in normal Japanese reading order. Do not copy the script order or requested coordinates. Include every balloon once; use [] only for no balloons. If unclear, omit the array rather than guess. The application independently matches this inventory against the submitted dialogue.
 SPATIAL EVIDENCE: inspect the visible image before reading its intended geometry into it. Return spatial_checks with exactly one entry for ${isSingleImage ? 'the single scene (panel: 1)' : 'each panel (panel: 1, 2, 3, 4)'}. For every entry, inspect bubble_speaker, object_geometry, surface_text and prop_orientation separately. Each requires status (ok, defect, uncertain, or not_applicable) and short evidence naming the visible tail endpoint, objects/surfaces and their boundary, text-axis or reader/camera/visible-face relationship. Trace the rear contour where it disappears and resumes; for text, identify its supporting face and local axes. For prop_orientation identify the actual action target, camera side and visible front/back, not just the holder. A generic "correct" or "all props consistent" is not evidence. Use not_applicable only with a concrete absence reason, uncertain for unresolved geometry, and defect for a visible contradiction. Include any defect in issues even if ownership or text spelling is correct. Do not omit an entry because a different check already passed. Put the same evidence in the dialogue or props observation concisely, without adding another narrative report.
 In each prop_orientation check also return surfaces, one entry per relevant object: {"subject":"object identifier","visible_face":"front|back|edge|unknown","cues":["display_content|printed_content|working_controls|rear_shell|rear_mount|camera_module|edge_only|unclear"],"active_face":"front|back|none","active_face_evidence":"visible Action evidence for the operated face or none","visual_evidence":"specific pixel cues and location, not intended geometry","camera_side":"same_half_space|opposite_half_space|edge_on|unknown","target_evidence":"actual reader/recipient and observed camera side with visible evidence"}. camera_side compares camera and intended reader across the physical surface plane, NOT their positions around the table: both may be above a flat page even across a desk. Text inversion is checked separately under surface_text. Use front/back only with positive visible cues; unclear geometry stays unknown. Use surfaces:[] only when no relevant face is present. Derive the verdict from these observations: ordinary readable front uses same_half_space=front and opposite_half_space=back; an evidenced active rear uses same_half_space=back and opposite_half_space=front. Conflicting cues are unverified, not a reason to rotate an object. Gag-supported abnormal geometry remains exempt; explain it as not_applicable with surfaces:[] if projection is intentionally impossible.
@@ -1073,6 +1123,10 @@ export const parseImageQualityQaResponse = (responseText, { mode = 'four-panel',
             if (expected?.speaker && normalizeSpeaker(bubble.expected_speaker, speakerAliases) !== normalizeSpeaker(expected.speaker, speakerAliases)) {
               issues.push({ type: 'unverified', panel: entry.panel, subject: bubble.bubble,
                 reason: `${bubble.bubble} reviewer copied [${bubble.expected_speaker}] instead of submitted speaker [${expected.speaker}]; verify the visible tail before repairing the image.` });
+            }
+            if (expected?.members) {
+              issues.push(...collectiveTailIssues(bubble, expected, entry.panel, speakerAliases));
+              continue;
             }
             if (normalizeSpeaker(submittedSpeaker, speakerAliases) !== normalizeSpeaker(bubble.observed_tail_target, speakerAliases)) {
               issues.push({ type: 'bubble_speaker', panel: entry.panel, subject: bubble.bubble,
