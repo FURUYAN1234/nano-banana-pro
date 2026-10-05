@@ -1,10 +1,10 @@
 {
-  "manualVersion": "6.8.5",
-  "manualSourceSha256": "6529e7fd32e2423e0bae242ec8a140a368b766745fc025bc41e5b420c8f9faa6",
+  "manualVersion": "6.8.6",
+  "manualSourceSha256": "d53676e9f7fbc7518db34e50c64bb910d19d3aa74b8f89d806068791afc26150",
   "manualFiles": [
     {
       "name": "gemini-api-beginner-guide-2026-10-01.pdf",
-      "sha256": "f3a38f639242a8db9c2955a6d198b8f906bbbbe1b6972211cdd3431bd7d7f6f6"
+      "sha256": "3397d439da74bc7ed05acfb4de1848cd7497da56ea49c0bb6139b638e27dc946"
     },
     {
       "name": "openai-api-beginner-guide-2026-09-30.pdf",
@@ -12,13 +12,13 @@
     },
     {
       "name": "super-furu-ai-4koma-full-manual-2026-10-01.pdf",
-      "sha256": "ff08789adc81df9e0b4addd0e16c627bc78c7ed0d40e9924561dad0d04a106c4"
+      "sha256": "d8034ce1774fa5efd35ac157f71406a077b3c668eb966eddc1a45c106b72549d"
     }
   ],
-  "readmeSha256": "1fa136aae76b3039685c6c5bf84cfeab5c5a55b0d61c5a234a9b5f724b53b377",
-  "sourceTree": "91ec89f20879801b791602088ff19dacd0e89437",
-  "publicTree": "6b00387e7870947022e8fa378ead6817023a1bca",
-  "packageSha256": "97f4aadf8d3f52d90e983b84664cf492e76d671d691371ddd5c0782b287336fd",
+  "readmeSha256": "019d06f4c2c7083b94ba80c34f37106c1943f1dfa3f53cdcbec1748420d9338e",
+  "sourceTree": "b5a7583c944d0dbb09a307793c7adb2489c736d5",
+  "publicTree": "ddb028c7b9efc2bc0842b3757d7ba7d67871e410",
+  "packageSha256": "d4e4599d0395bf96a3b10ad4b247e653e3bbb08f635fb6566e85d14e31615841",
   "releaseAssetSha256": "341487084ffc48f14569609c36557d77b4770a052b70f2323488dc0604e6d7f0",
   "reviewedSections": [
     "Application screen and output / 操作画面と生成例",
@@ -36,6 +36,6 @@
     "📋 ChangeLog",
     "License / ライセンス"
   ],
-  "findings": "Incremental whole-body review against the verified v6.8.4 baseline. All fourteen current README sections were compared by diff and current feature contracts; unchanged API routes, defaults, limits, licenses, workflow assets and screenshots retain prior evidence. Updated collective-speaker normalization, physical cast counting, strict layout validation and member-tail evidence QA. Current version and release/download links match v6.8.5. Real STEP3 and one Sunburst/max image completed using the unchanged user scenario; eight dialogue lines matched OCR. The approved same-image QA recheck completed and no extra image was generated. Missing member-target evidence remains unverified; anatomy and direction are not claimed perfect. Generated workflow and reasoning SVGs were compared byte-for-byte with the prior candidate: only the header version changed from v6.8.4 to v6.8.5.",
-  "manualFindings": "Rebuilt the 12-page Gemini and 32-page full manuals for v6.8.5. All 44 rendered pages reviewed in eight contact sheets and changed full-manual pages 14 and 18 reviewed at full size. No clipping or overlap observed. Automated A4, text bounds, naming, privacy and link checks passed. Existing screenshots retain previous-screen labels. The unchanged 20-page OpenAI guide retains its prior visual review. Public PDF bytes match reviewed generated outputs."
+  "findings": "Reviewed all fourteen README sections against the v6.8.6 candidate. Updated STEP3 chorus-member parsing, actual cast counting, per-panel style and camera behavior, preferred vertical lettering with composition-led horizontal lettering, and topic-specific endings with a concrete-payoff audit. Updated package version and H3 release links. Generated-image fidelity is not guaranteed; visual review remains required.",
+  "manualFindings": "Rebuilt the 32-page full manual and 12-page Gemini guide for v6.8.6; reviewed all rendered pages for legibility, clipping, version footer and page flow. The unchanged 20-page OpenAI guide was reviewed and remains applicable. All three PDFs passed text bounds, link and privacy scans."
 }
