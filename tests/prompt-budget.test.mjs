@@ -121,11 +121,15 @@ test('ChatGPT default removes repeated instructions without treating the Web pas
     colorMode: 'color', providerFamily: 'chatgpt', punchlineType: 'Documentary',
     systemVersion: 'test',
   });
-  // Rendering recipes are acceptance content, not repeated infrastructure.
+  // Rendering recipes and local projection are acceptance content, not repeated infrastructure.
   // Keep the same overhead cap and the actual API ceiling while retaining them.
   const recipeChars = [...prompt.matchAll(/^Style: (.+)$/gm)].reduce((sum, match) => sum + match[0].length, 0);
   assert.ok(recipeChars > 0, 'explicit panel rendering recipes must survive soft compaction');
-  assert.ok(prompt.length - buildRenderOptionsContract().length - buildProtectedCastContract(readProtectedCast(prompt)).length - recipeChars < 18000, `unexpected non-recipe overhead: ${prompt.length - buildRenderOptionsContract().length - buildProtectedCastContract(readProtectedCast(prompt)).length - recipeChars}; total=${prompt.length}`);
+  const projectionChars = [...prompt.matchAll(/Face\/body\/setting share projection, no frontal face on tilted BG; keep scripted height\/pitch\/proportions/g)]
+    .reduce((sum, match) => sum + match[0].length, 0);
+  assert.ok(projectionChars > 0, 'local face/body projection must survive soft compaction');
+  const overhead = prompt.length - buildRenderOptionsContract().length - buildProtectedCastContract(readProtectedCast(prompt)).length - recipeChars - projectionChars;
+  assert.ok(overhead < 18000, `unexpected non-rendering overhead: ${overhead}; total=${prompt.length}`);
   assert.equal((prompt.match(/FOCAL READABILITY:/g) || []).length, 1);
   assert.ok(prompt.length <= 32000);
   assert.match(prompt, /Outfit assignment:|role-specific outfit assignments:/);
