@@ -23,10 +23,10 @@ test('STEP4 generation button is visibly separated from the settings-file save b
   );
 });
 
-test('quality retry stop control appears only while automatic repair is enabled and generation is active', () => {
+test('quality retry stop control appears while enabled generation or policy repair is active', () => {
   assert.match(
     step4PanelSource,
-    /\{isGeneratingImage && allowImageQualityRepair && \([\s\S]*?<button[\s\S]*?type="button"[\s\S]*?onClick=\{stopQualityRetries\}/,
+    /\{\(isGeneratingImage \|\| policyAutoRetrying\) && allowImageQualityRepair && \([\s\S]*?<button[\s\S]*?type="button"[\s\S]*?onClick=\{stopQualityRetries\}/,
   );
   assert.match(step4PanelSource, /自動修正を停止（現在の応答後）/);
   assert.doesNotMatch(step4PanelSource, /現在のAPI応答後、追加画像を生成しません/);

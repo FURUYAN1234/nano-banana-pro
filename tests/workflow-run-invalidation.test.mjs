@@ -22,6 +22,11 @@ test('resets and a new full-auto round invalidate in-flight work before clearing
   }
 });
 
+test('hard reset clears session story comparison data before clearing public history', () => {
+  const hardReset = workflow.slice(workflow.indexOf('const hardReset ='), workflow.indexOf('\n  };', workflow.indexOf('const hardReset =')));
+  assert.match(hardReset, /recentScenarioTextsRef\.current = \[\];[\s\S]*setGenerationHistory\(\[\]\)/);
+});
+
 test('image generation discards stale API and QA results after reset', () => {
   const generation = workflow.slice(workflow.indexOf('const generateImageOnce ='), workflow.indexOf('const runPolicyAutoRetries ='));
   assert.match(generation, /await generateImageCandidate\(currentPrompt\);[\s\S]*if \(qualityRunEpoch !== scenarioRunEpochRef\.current\) return false;[\s\S]*setGeneratedImage\(finalImageStr\)/);

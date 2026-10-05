@@ -8,6 +8,7 @@ import {
   buildChatGPTMangaPrompt, 
   buildGeminiMangaPrompt,
   RICH_PANEL_COMPOSITION_LOCK_COMPACT,
+  SCENE_LETTERING_LOCK,
   ART_STYLE_DIFFERENCE_QA_LOCK,
   OPENAI_COLOR_STYLE_QA,
   OPENAI_COLOR_FOCAL_READABILITY,
@@ -221,10 +222,12 @@ const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt
   const compactWardrobeLock = preserveReferenceStyle
     ? "REFERENCE-SHEET WARDROBE AND RENDERING LOCK: explicit outfit overrides setting era/culture; preserve mismatch. Keep garment items and rendering method across panels."
       : 'CROSS-PANEL WARDROBE COLOR LOCK: fix garment items/colors once; reuse in all panels; style and lighting never change canonical wardrobe. Explicit outfit overrides setting era/culture; no period substitution. No outfit: infer from setting.';
-  const compacted = mapAuthored(protectedPrompt, part => part
+  // This body-placement rule is identical for every panel. Keep one global
+  // copy instead of spending the source/recipe budget repeating it four times.
+  const compacted = 'PLACEMENT (all panels): Keep Camera/Action bodies/depth/contacts; never derive body positions from dialogue order.\n' + mapAuthored(protectedPrompt, part => part
     // Identity Matrix and per-dialogue tail mapping already carry the identities
     // and reading order. Keep only the distinct body-staging constraint here.
-    .replace(/^PLACEMENT\/IDENTITY:[^\n]*/gm, 'PLACEMENT: Keep Camera/Action bodies/depth/contacts; never derive body positions from dialogue order.')
+    .replace(/^(?:PLACEMENT\/IDENTITY|PLACEMENT \(all panels\)):[^\n]*\n?/gm, '')
     .replace(/LIMB OWNERSHIP CHECK[^\n]*/g, LIMB_OWNERSHIP_CHECK_COMPACT)
     .replace(MANGA_READING_RHYTHM_LOCK, MANGA_READING_RHYTHM_LOCK_COMPACT)
     .replace(/CONVERSATIONAL DEPTH BASE:[^\n]*/g, 'CONVERSATIONAL DEPTH BASE: Action gaze first; varied depth.')
@@ -244,6 +247,7 @@ const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt
       MANGA_COMPOSITION_VARIETY_LOCK_COMPACT
     )
     .replace(/COMPOSITION STAGING: PRESERVE EXPLICIT AZIMUTH:[^\n]*/g, 'COMPOSITION STAGING: PRESERVE EXPLICIT AZIMUTH; keep scripted body orientation and symmetry.')
+    .replace(/COMPOSITION STAGING: SCENE-DRIVEN AZIMUTH:[^\n]*/g, 'COMPOSITION STAGING: SCENE-DRIVEN AZIMUTH; Camera/Action governs orientation, quiet/repeated framing.')
     .replace(/COMPOSITION STAGING: LEFT-FRONT OBLIQUE:[^\n]*/g, 'COMPOSITION STAGING: LEFT-FRONT OBLIQUE 35-55 degrees; unequal shoulder depth.')
     .replace(/COMPOSITION STAGING: RIGHT-FRONT OBLIQUE:[^\n]*/g, 'COMPOSITION STAGING: RIGHT-FRONT OBLIQUE 35-55 degrees; near hand larger.')
     .replace(/COMPOSITION STAGING: REAR THREE-QUARTER:[^\n]*/g, 'COMPOSITION STAGING: REAR THREE-QUARTER 30-50 degrees; layered depth.')
@@ -293,7 +297,7 @@ const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt
     .replace(/- Top title EXACTLY ("[^"]+")[^\n]*/g, '- Top title EXACTLY $1.')
     .replace(/- Bottom-right 4th-panel watermark EXACTLY ("[^"]+")[^\n]*/g, '- Bottom-right watermark EXACTLY $1.')
     .replace(/- Bottom-left 4th-panel watermark EXACTLY ("[^"]+")[^\n]*/g, '- Bottom-left watermark EXACTLY $1.')
-    .replace(/- Clean finish:[^\n]*/g, monochrome ? '- CLEAN FINISH: crisp focal ink; fewer distant lines; white light planes.' : '- CLEAN FINISH: crisp FG, soft BG, coherent light.')
+    .replace(/- Clean finish:[^\n]*/g, monochrome ? '- CLEAN FINISH: crisp focal ink; fewer nonfocal lines; white light planes.' : '- CLEAN FINISH: crisp story focus; soften nonessential near/far planes; coherent light.')
     .replace(/HAND \/ PROP KINEMATICS LOCK:[^\n]*/g, HAND_PROP_KINEMATICS_LOCK_COMPACT)
     .replace(
       /VISUAL STORY EVIDENCE LOCK:[^\n]*/g,
@@ -349,6 +353,7 @@ const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt
     .replace(/^- REFERENCE ROLE: shape\/design only; no source color or sheet labels\/layout\/poses\.$/gm, '- REFERENCE ROLE: shape/design; no hue, sheet labels/layout/poses.')
     .replace(/^FUNCTIONAL SURFACE PANEL CHECK:[^\n]*/gm, 'FUNCTIONAL SURFACE PANEL CHECK: target/side/axes.')
     .replace(/^COMPOSITION STAGING: PRESERVE EXPLICIT AZIMUTH[^\n]*/gmi, 'COMPOSITION STAGING: PRESERVE EXPLICIT AZIMUTH.')
+    .replace(/^COMPOSITION STAGING: SCENE-DRIVEN AZIMUTH[^\n]*/gm, 'COMPOSITION STAGING: SCENE-DRIVEN AZIMUTH; Camera/Action wins.')
     .replace(/^COMPOSITION STAGING: (LEFT-FRONT OBLIQUE|RIGHT-FRONT OBLIQUE|REAR THREE-QUARTER|DIAGONAL LEFT-FRONT)[^\n]*/gm, 'COMPOSITION STAGING: $1.')
     .replace(/^BODY ACTING \/ GESTURE VARIETY LOCK:[^\n]*/gm, MANGA_GESTURE_VARIETY_LOCK_COMPACT)
     .replace(/^- Draw in a high-budget, chic and cinematic full-color TV anime style\.[^\n]*/gm, '- Chic cinematic full-color TV anime style; polished Japanese animation finish.')
@@ -377,7 +382,17 @@ const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt
     // Shared generated instructions stay global rather than repeating per panel.
     .replace(/^CAST DEPTH: Action contact wins over depth;[^\n]*\n?/gm, '')
     // PROMPT PRIORITY keeps Camera/Action and the same body-order rule globally.
-    .replace(/^PLACEMENT: (?:Keep Camera\/Action bodies\/depth\/contacts; never derive body positions from dialogue order\.|never derive body positions from dialogue order; exact Camera\/Action\.)\n?/gm, '')
+    .replace(/^PLACEMENT(?: \(all panels\))?: (?:Keep Camera\/Action bodies\/depth\/contacts; never derive body positions from dialogue order\.|never derive body positions from dialogue order; exact Camera\/Action\.)\n?/gm, '')
+    .replace(/^IDENTITY CONTINUITY:[^\n]*/gm, 'IDENTITY CONTINUITY: same hair/wardrobe/glasses/identity anchors; expressions and panel drawing styles may vary.')
+    // The global PROP STATE line already carries this exact constraint.
+    .replace(/^KEY PROP \/ OBJECT CONSISTENCY:\n- Props: preserve identity; scripted state\/holder changes only\.\n?/gm, '')
+    // The focus hierarchy is global; cast membership never assigns optical focus.
+    .replace(/^(CAST LIMIT: required cast [^\n]+?); focus follows Camera\/Action\./gm, '$1.')
+    // Local projection cues retain the same geometry without repeating prose.
+    .replace(/below all faces \(crouched\/chibi too\); look up: chin\/jaw\/prop undersides, forehead recedes, low horizon, upward convergence\. Face\/body\/setting share projection, no frontal face on tilted BG; keep scripted height\/pitch\/proportions/g,
+      'below faces (crouched/chibi too); chin/jaw/prop undersides, receding forehead, low horizon/upward convergence')
+    .replace(/wide framing: body extent and continuous setting reveal actor distances; foreground may stay large, receding actors smaller; not a bust portrait\. Explicit scale\/crop wins; no uniform shrinking to a fixed ratio/g,
+      'wide framing: body extent/setting show distance; large foreground, smaller receding actors; no bust crop or uniform shrinking; explicit scale/crop wins')
     .replace(/^Action \(visual only\):[^\n]*/gm, line => sharedOutfit
       ? line.replace(`Action (visual only): (Outfit assignment: ${sharedOutfit}) `, 'Action (visual only): ')
       : line)
@@ -394,12 +409,12 @@ const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt
     .replace(/LIMB OWNERSHIP CHECK:[^\n]*/g, LIMB_OWNERSHIP_CHECK_MINIMAL)
     .replace(/SHARED IMAGE QUALITY CONTRACT:[^\n]*/g, SHARED_IMAGE_QUALITY_CONTRACT_COMPACT)
     .replace(/MANGA CAMERA \/ POSE VARIETY LOCK:[^\n]*/g, 'MANGA CAMERA / POSE VARIETY LOCK: preserve scripted front/back/left/right, elevation, crop and lens; vary unspecified shots only. Overhead shows upper planes; low shows undersides/convergence; rear/side shows body planes. Telephoto compresses depth; wide expands near/far; fisheye edge distortion if requested. One projection for cast/setting; story-relevant focal form, no stock foot thrust. Eye-line is gaze, not camera height. Preserve Action/contact and scripted frontal/repeats.')
-    .replace(/RICH PANEL COMPOSITION \/ CHARACTER CLARITY LOCK:[^\n]*/g, 'RICH PANEL COMPOSITION / CHARACTER CLARITY LOCK: layered foreground/midground/background, selective material detail and motivated key, fill and rim light with shadow/color depth; background lower contrast without making it blank or washed out. Keep setting or scripted abstraction; story evidence, acting faces, hands and props stay clear.')
+    .replace(/RICH PANEL COMPOSITION \/ CHARACTER CLARITY LOCK:[^\n]*/g, RICH_PANEL_COMPOSITION_LOCK_COMPACT)
     .replace(/FOCAL READABILITY:[^\n]*/g, focalReadability)
     .replace(/EXPRESSIVE DIRECTION:[^\n]*/g, EXPRESSIVE_DIRECTION)
     // The global gesture and expressive contracts already retain motion,
     // support/contact and exact Camera/Action. Avoid repeating them at the cap.
-    .replace(/^BODY ACTING BASELINE:[^\n]*/gm, BODY_ACTING_BASELINE_COMPACT)
+    .replace(/^BODY ACTING BASELINE:[^\n]*\n?/gm, '')
     .replace(/^FINAL-PANEL STORY STAGING:[^\n]*/gm, 'FINAL-PANEL STORY STAGING: vivid scripted payoff; individual reactions; depth/silhouette/scale contrast. Keep intentional stillness and silence/deadpan amid action; Do not invent extra hand actions or crowding to occupy cast.')
     .replace(/CROSS-PANEL WARDROBE COLOR LOCK:[^\n]*/g, compactWardrobeLock)
     .replace(/^- CLEAN FINISH:[^\n]*\n?/gm, '')
@@ -437,7 +452,7 @@ const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt
     .replace(/^(?:ART \/ RENDERING QUALITY:|CHARACTER IDENTITY:|TEXT RULES:)\n/gm, '')
     .replace(/^- Only Dialogue becomes white bubbles:[^\n]*/gm, '- Only Dialogue becomes white bubbles: verbatim・言換/軟化/追加/省略禁止。TYPE準拠。')
     .replace(/^- Explicit scripted handwriting[^\n]*/gm, '- Scripted surface text exact; unscripted never becomes bubble/narration/metadata.')
-    .replace(/^SCENE LETTERING:[^\n]*/gm, 'SCENE LETTERING: scripted object text exact, repeated only if scripted. Other surfaces: natural artwork/pictograms/colors/borders/material/layout; freely render context-appropriate readable/decorative lettering, short/long, any amount/density. Never suppress/simplify/blank/grey/blur/pixelate/mosaic/censor surfaces for unscripted text.')
+    .replace(/^SCENE LETTERING:[^\n]*/gm, SCENE_LETTERING_LOCK)
     .replace(/^ART-STYLE DIFFERENCE QA LOCK:[^\n]*/gm, artStyleQa)
     // The finish, fold-shadow and identity contracts above already cover these
     // short reminders when a caller explicitly requests a tighter hard budget.

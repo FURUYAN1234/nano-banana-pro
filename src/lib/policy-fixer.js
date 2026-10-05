@@ -45,22 +45,37 @@ export function applyPolicyReplacements(finalPrompt, replacements, onProgress = 
 export async function fixPolicyViolation({
   finalPrompt,
   policyErrorMsg,
-  onProgress
+  repairFeedback = '',
+  shouldStop = () => false,
+  onProgress = () => {}
 }) {
   if (!finalPrompt || !policyErrorMsg) {
     throw new Error("プロンプトとエラーメッセージが必要です。");
   }
+  if (shouldStop()) return {success: false, reason: 'cancelled'};
+  const finalizeRepair = (candidate, details) => {
+    try {
+      const modifiedPrompt = assertPolicyRepairPreservesPrompt(finalPrompt, candidate);
+      return {success: true, ...details, modifiedPrompt};
+    } catch (error) {
+      onProgress(error.message);
+      return {success: false, reason: 'invalid_repair', message: error.message};
+    }
+  };
 
   onProgress("[Phase 1/5] エラーメッセージを解析中...");
   onProgress("[Phase 2/5] 問題箇所の特定をAIにリクエスト中...");
 
-  const metaPrompt = getPolicyAnalysisPrompt(policyErrorMsg.trim(), finalPrompt);
+  const metaPrompt = getPolicyAnalysisPrompt(policyErrorMsg.trim(), finalPrompt, repairFeedback);
 
   const result = await callAI(metaPrompt, [], null, onProgress);
+  if (shouldStop()) return {success: false, reason: 'cancelled'};
   onProgress("[Phase 3/5] AIの応答を受信・解析中...");
 
-  if (!result.text || result.text.trim().length < 10) {
-    throw new Error("AIからの応答が空です。エラー情報をより詳しく入力して再試行してください。");
+  if (!result.text || !result.text.trim()) {
+    const message = 'AIからの応答が空で、修正案を確認できませんでした。';
+    onProgress(message);
+    return {success: false, reason: 'invalid_response', message};
   }
 
   onProgress("[Phase 4/5] 置換テーブルをプロンプトに適用中...");
@@ -79,40 +94,41 @@ export async function fixPolicyViolation({
       jsonStr = jsonStr.substring(bracketStart, bracketEnd + 1);
     }
     replacements = JSON.parse(jsonStr);
-    isJsonSuccess = Array.isArray(replacements) && replacements.length > 0;
+    isJsonSuccess = Array.isArray(replacements);
   } catch (parseError) {
     console.warn("JSON parse error, falling back to full regeneration:", parseError);
   }
 
   if (isJsonSuccess) {
+    if (!replacements.length) {
+      const message = '承認済み契約を保った安全な修正箇所を特定できませんでした。元の内容は変更していません。';
+      onProgress(message);
+      return {success: false, reason: 'no_safe_revision', message};
+    }
     const {modifiedPrompt, appliedCount, failedCount} = applyPolicyReplacements(finalPrompt, replacements, onProgress);
 
     if (appliedCount > 0) {
-      assertPolicyRepairPreservesPrompt(finalPrompt, modifiedPrompt);
-      return {
-        success: true,
+      return finalizeRepair(modifiedPrompt, {
         method: "replacement",
-        modifiedPrompt,
         appliedCount,
         failedCount
-      };
+      });
     }
   }
 
   // 置換テーブルの取得に失敗したか、置換箇所がプロンプト内に見つからなかった場合は
   // 全文再生成方式のフォールバック処理を実行する
   onProgress("[Fallback] 全文再生成モードで修正中...");
-  const fallbackPrompt = getPolicyFallbackPrompt(policyErrorMsg.trim(), finalPrompt);
+  if (shouldStop()) return {success: false, reason: 'cancelled'};
+  const fallbackPrompt = getPolicyFallbackPrompt(policyErrorMsg.trim(), finalPrompt, repairFeedback);
   const fallbackResult = await callAI(fallbackPrompt, [], null, onProgress);
+  if (shouldStop()) return {success: false, reason: 'cancelled'};
 
   if (fallbackResult.text && fallbackResult.text.length > 100) {
-    const modifiedPrompt = assertPolicyRepairPreservesPrompt(finalPrompt, fallbackResult.text.trim());
-    return {
-      success: true,
-      method: "regeneration",
-      modifiedPrompt
-    };
+    return finalizeRepair(fallbackResult.text.trim(), {method: "regeneration"});
   } else {
-    throw new Error("フォールバックでも適切な応答が得られませんでした。");
+    const message = 'フォールバックの応答が空または短すぎるため、完全な修正案を確認できませんでした。';
+    onProgress(message);
+    return {success: false, reason: 'invalid_response', message};
   }
 }

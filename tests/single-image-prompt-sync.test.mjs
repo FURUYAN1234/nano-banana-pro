@@ -50,10 +50,10 @@ test('cheek treatment follows narrative cues and medium without banning expressi
 test('single-image copy retains the accepted compact text below the safe paste budget', () => {
   const prompt = buildSingleImageEmotionalPrompt();
   assert.ok(prompt.length <= 9500, `expected no more than 9,500 chars for Web copy, got ${prompt.length}`);
-  assert.equal(prompt.length, 8784);
-  // Pin the user-tested text: shared four-panel additions must not silently enlarge this copy.
+  assert.equal(prompt.length, 8911);
+  // Pin the accepted copy plus the scoped focal-depth repair; no unrelated four-panel additions.
   assert.equal(createHash('sha256').update(prompt).digest('hex'),
-    'd1f41c6516eda253be71b3996836c47078f6af011ae8e99c31a3f2e513e1b9ab');
+    'c9d3b117f0169252f69e576a8cb5f8273a757056ed3069e2222ed36d37fe7b1e');
   assert.doesNotMatch(prompt, /SHARED IMAGE QUALITY CONTRACT|four panels|panel contrast|CINEMATIC_TECHNIQUES/i);
 });
 
@@ -173,9 +173,9 @@ Hero「行こう。」`;
     assert.match(prompt, /documents, forms, printed pages, cards, books, maps/i);
     assert.match(prompt, /(?:direction-dependent information, control, optical, or service face|directional faces)/i);
     assert.match(prompt, /(?:explicitly says.*present.*camera or viewer|Present to camera\/viewer only if scripted)/i);
-    assert.match(prompt, /BODY ACTING BASELINE/);
+    assert.match(prompt, /BODY ACTING BASELINE|BODY ACTING \/ GESTURE VARIETY LOCK/);
     assert.match(prompt, /reference-sheet pose is identity evidence, not a recurring action/i);
-    assert.match(prompt, /BODY ACTING BASELINE:.*allow.*pointing.*reaching.*impact/i);
+    assert.match(prompt, /BODY ACTING BASELINE:.*allow.*pointing.*reaching.*impact|BODY ACTING \/ GESTURE VARIETY LOCK:.*Full-body exaggeration.*preserve explicitly scripted pointing\/surface impact.*exact hand pose\/contact/i);
     assert.match(prompt, /one primary focal subject/i);
     if (providerFamily === 'chatgpt') {
       assert.match(prompt, /NORMAL\/unmarked[^\n]*pressure[^\n]*thick-to-hairline[^\n]*(?:contour|silhouette|outline|accents)/i);

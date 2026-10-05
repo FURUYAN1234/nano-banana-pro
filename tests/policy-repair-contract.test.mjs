@@ -32,3 +32,20 @@ test('fallback policy regeneration preserves the approved contract and avoids fi
   assert.doesNotMatch(prompt, /モダンなIT企業のオフィス/);
   assert.doesNotMatch(prompt, /tailored slacks/);
 });
+
+test('both policy prompts use bounded failure feedback as diagnostic data while preserving safety and content', () => {
+  for (const build of [getPolicyAnalysisPrompt, getPolicyFallbackPrompt]) {
+    const feedback = '前案は無変更。設定契約を維持した別案が必要。';
+    const plain = build('generic refusal', 'APPROVED PROMPT');
+    const informed = build('generic refusal', 'APPROVED PROMPT', feedback);
+    assert.ok(informed.includes(JSON.stringify(feedback)));
+    assert.match(informed, /内部検査データ/);
+    assert.match(informed, /回数.*無関係.*変更/);
+    assert.ok(!plain.includes('内部検査データ'));
+    const long = build('generic refusal', 'APPROVED PROMPT', feedback.repeat(1000));
+    assert.ok(long.length - plain.length < 2400, 'feedback cannot duplicate an unbounded history');
+    const latest = build('generic refusal', 'APPROVED PROMPT', `${'Old diagnostic. '.repeat(1000)}LATEST FAILURE: preserve render settings.`);
+    assert.ok(latest.includes('LATEST FAILURE: preserve render settings.'), 'retain the latest failure when earlier feedback is long');
+    assert.equal(informed.split('APPROVED PROMPT').length - 1, 1);
+  }
+});

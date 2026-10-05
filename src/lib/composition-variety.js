@@ -1,17 +1,4 @@
 const EXPLICIT_AZIMUTH_RE = /(?:左(?:側|斜め|前|後ろ)?|右(?:側|斜め|前|後ろ)?|斜め(?:前|後ろ)|肩越し|背後|背越し|後方|横顔|側面|正面|over[ -]the[ -]shoulder|\bOTS\b|three-quarter|3\/4|front-left|front-right|front[ -]on|frontal|rear(?:ward)?|side(?:ways)?|profile)/i;
-const PANEL_AZIMUTH_SLOTS = [
-  'LEFT-FRONT OBLIQUE: place the camera 35-55 degrees to the subject\'s left-front; turn shoulders and hips away from a square-on lens-facing pose.',
-  'RIGHT-FRONT OBLIQUE: place the camera 35-55 degrees to the subject\'s right-front; show near/far shoulder and torso planes with receding setting edges; scale hands only as scripted contact requires.',
-  'REAR THREE-QUARTER: place the camera behind one shoulder or 30-50 degrees toward the subject\'s rear; preserve the scripted head turn and rear silhouette; emotion can read through head pitch, shoulder tension and weight.',
-  'DIAGONAL LEFT-FRONT: place the camera 30-50 degrees to the subject\'s left-front and combine it with the scripted tilt/elevation; keep the body axis diagonal rather than bilaterally centered.'
-];
-
-const COMPACT_PANEL_AZIMUTH_SLOTS = [
-  'LEFT-FRONT OBLIQUE 35-55 degrees; unequal shoulder depth.',
-  'RIGHT-FRONT OBLIQUE 35-55 degrees; near/far shoulder and torso planes, receding setting edges; preserve scripted hand contact.',
-  'REAR THREE-QUARTER 30-50 degrees; scripted head turn, rear silhouette and layered depth.',
-  'DIAGONAL LEFT-FRONT 30-50 degrees; combine the scripted tilt/elevation with an asymmetric body axis.'
-];
 
 export const SCENARIO_CAMERA_SEQUENCE_RULES = `【カメラのページ設計】
 - 4コマ全体を比較してからCameraを確定する。各コマの役割（発見・疑念・関係の変化・帰結など）に最も効く撮影位置・水平方位・距離・レンズ感・被写体配置・奥行きの作り方を選び、Cameraへ役割と見える投影を書く。名前だけ違う同じ視点を、離れたコマも含めて重複させない。アオリを反復して見せ場の落差を消さず、動作・受け手・小道具・環境から内容に合う奥行き源を選ぶ。明示された同型ショットや意味のある静かな反復は保持する。
@@ -108,7 +95,7 @@ export const SCENARIO_SHOT_DESIGN_RULES = `【画角と身体動作の一体設�
 - Cameraには撮影位置と画面に見える証拠を書く。俯瞰なら頭頂・机天面、床からの煽りなら大きな前景と上へ伸びる身体、傾きなら斜めの環境線、全身なら頭から足先と明記する。`;
 
 const FULL_BODY_SHOT_RE = /full[ -]body|graceful full shot|head.to.(?:toe|feet)|全身|頭から(?:両)?(?:足先|つま先|靴)|足元から上半身/i;
-const CLOSE_SHOT_RE = /close[ -]?up|deep emotion close|zoom[ -]?in|ズームイン|アップ|寄りの|寄る|接写/i;
+const CLOSE_SHOT_RE = /close[ -]?up|deep emotion close|zoom[ -]?in|ズームイン|アップ|(?<!側面|正面|背面|方|側|左|右|前|後|上|下|奥|横)寄りの|寄る|接写/i;
 
 // A wide lens does not set framing; explicit close crops still win.
 export const isPullbackShot = (camera = '') => /zoom[ -]?out|ズームアウト|引き|引いた|引いて|全景|遠景|epic wide|wide shot|long shot|ワイドショット/i.test(camera)
@@ -124,15 +111,17 @@ export const getPanelShotExecution = (camera = '') => {
   const floor = /(?:floor|ground)[ -]level|(?:床|地面)(?:すれすれ|近く|付近|から)/i.test(text);
   const eyeLevel = /アイレベル|eye[ -]level/i.test(text);
   const relativeLow = /より(?:も)?低い|(?:[^\s、。]+上|[^\s、。]+面)すれすれ|worm['’]?s?[ -]eye|ワームズアイ/i.test(text);
-  const low = floor || !eyeLevel && (relativeLow || /低(?:い|めの)(?:撮影)?位置|低所(?:から|の|に|より)?/i.test(text));
+  const low = floor || !eyeLevel && (relativeLow || /低(?:い|めの)(?:撮影)?(?:位置|斜め)|低所(?:から|の|に|より)?/i.test(text));
   const horizontal = /水平(?:に|の|を保)|horizontal|level aim/i.test(text);
   if (close) cues.push('tight crop on focal subject');
-  else if (full) cues.push('head-to-feet inside panel with headroom and floor beyond BOTH shoes; hips/knees/feet unobscured');
+  else if (full) cues.push('head-to-feet inside panel with headroom and floor beyond BOTH shoes; natural occlusion allowed; keep Camera/cast, never expose hidden limbs');
   if (isPullbackShot(text)) cues.push('wide framing: body extent and continuous setting reveal actor distances; foreground may stay large, receding actors smaller; not a bust portrait. Explicit scale/crop wins; no uniform shrinking to a fixed ratio');
-  if (/overhead|high[ -]angle|innocent high|俯瞰|真上|斜め上(?:から|より|の(?:視点|位置|カメラ))|上から|高(?:い|めの)(?:撮影)?位置(?:から|より|に)|高所から|上方から|見下ろ[すし]/i.test(text)) cues.push(`look down from physically above heads, not eye-level: head/shoulder tops, short torsos, upper prop faces, floor/table planes; actors and setting share downward projection; ${close ? '' : 'headroom/breakout; border behind hair; intact; '}keep projection even with omitted BG`);
+  if (/overhead|high[ -]angle|innocent high|俯瞰|真上|斜め上(?:から|より|の(?:視点|位置|カメラ))|上から|高(?:い|めの)(?:撮影)?位置(?:から|より|に)|高所から|上方から|見下ろ[すし]/i.test(text)) cues.push(`look down from the scripted higher viewpoint, not eye-level: head/shoulder tops, shortened torsos, upper prop faces, floor/table planes as visible; actors and setting share downward projection; ${close ? '' : 'headroom/breakout; border behind hair; intact; '}keep projection even with omitted BG; pitch strength follows script, never force steep overhead`);
   else if (low || /low[ -]angle|dominant low|ローアングル|アオリ|煽[りる]|下から|見上げ/i.test(text)) cues.push(`${floor ? 'floor-level' : 'low'} camera below faces including crouched/chibi; ${horizontal ? 'keep horizontal aim and a low horizon' : 'look up: chin/jaw undersides, prop undersides from below; forehead recedes, horizon below faces, upward convergence; facial planes, body and setting share projection, not frontal faces on a tilted background'}; preserve scripted height/pitch/proportions`);
-  if (/(?:斜め(?:に(?:見上げ|見下ろ)|から|上|下|前|後ろ)|(?:左|右)(?:前|後)?斜め|diagonal (?:view|camera)|oblique|three-quarter|3\/4)/i.test(text) && !/(?:正面|真正面|front[ -]on|frontal)/i.test(text)) cues.push('oblique view: near/far body planes, receding setting edges/floor planes; staggered depth, not a flat frontal lineup; keep named camera side');
-  if (/の(?:左|右)?(?:後方|後ろ|背中側)|rear[ -]view|from (?:the )?(?:(?:left|right)[ -])?rear/i.test(text)) cues.push('show back planes of the scripted subject; preserve crop/distance, no forced close OTS');
+  if (/(?:膝|腰|胸|肩|[^\s、。]+台|机|卓)(?:の高さ|高)から/i.test(text)) cues.push('keep scripted height landmark; pitch strength follows script; faces/text never lift camera');
+  if (/(?:斜め(?:に(?:見上げ|見下ろ)|から|上|下|前|後ろ)|(?:左|右)(?:(?:前|後)?斜め|(?:前|後)方)|diagonal (?:view|camera)|oblique|three-quarter|3\/4)/i.test(text) && !/(?:正面|真正面|front[ -]on|frontal)/i.test(text)) cues.push('oblique view: near/far body planes, receding setting edges/floor planes; staggered depth, not a flat frontal lineup; keep named camera side');
+  if (/(?:左|右)?側面から|side[ -]view|profile (?:view|shot)/i.test(text)) cues.push('side view: near/far body planes/limb overlap follow named side; no forced front-facing cast');
+  if (/の(?:左|右)?(?:後方|後ろ|背中側)|(?:左|右)(?:後方|後ろ)(?:から|より|へ)|rear[ -]view|from (?:the )?(?:(?:left|right)[ -])?rear/i.test(text)) cues.push('show back planes of the scripted subject; preserve crop/distance, no forced close OTS');
   if (/telephoto|long[ -]lens|望遠/i.test(text)) cues.push('distant camera + long focal length: compressed depth, background relatively larger/closer; overlapping depth planes at similar scale, weak convergence of receding edges; not blur alone');
   else if (/wide[ -]angle|fisheye|広角|魚眼|hyper perspective/i.test(text)) cues.push('near/far scale contrast; keep focal subject');
   if (/fish[ -]?eye|魚眼/i.test(text)) cues.push('fisheye: curved outer edges, radial warp');
@@ -140,7 +129,7 @@ export const getPanelShotExecution = (camera = '') => {
   return cues.length ? `SHOT EXECUTION: ${cues.join('; ')}.` : '';
 };
 
-export const getPanelCompositionAssist = (panelText, panelNumber, { compact = false } = {}) => {
+export const getPanelCompositionAssist = (panelText, _panelNumber, { compact = false } = {}) => {
   const camera = String(panelText || '').match(/\[Camera:\s*([^\]]+)\]/i)?.[1] || '';
   if (EXPLICIT_AZIMUTH_RE.test(camera)) {
     return compact
@@ -148,6 +137,8 @@ export const getPanelCompositionAssist = (panelText, panelNumber, { compact = fa
       : 'PRESERVE EXPLICIT AZIMUTH: keep the scenario\'s named horizontal direction, body orientation and symmetry; do not add a conflicting turn.';
   }
 
-  const index = Math.max(0, (Number(panelNumber) || 1) - 1) % PANEL_AZIMUTH_SLOTS.length;
-  return compact ? COMPACT_PANEL_AZIMUTH_SLOTS[index] : PANEL_AZIMUTH_SLOTS[index];
+  // コマ番号による固定ローテーションは、同じ演技に不要な振り向きや視点を足す。
+  return compact
+    ? 'SCENE-DRIVEN AZIMUTH: Action/contact/gaze; scripted head turn/symmetry/quiet/repeats; no numbered rotation.'
+    : 'SCENE-DRIVEN AZIMUTH: unspecified side follows Action/contact/gaze and spatial continuity; show near/far body/setting planes. Keep scripted head turn/body orientation/symmetry/quiet/repeated framing; no panel-number rotation or forced face exposure.';
 };

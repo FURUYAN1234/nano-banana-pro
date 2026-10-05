@@ -407,7 +407,7 @@ test('final prompts retain setting depth, exact hand performance and explicit-on
       assert.match(prompt, /exact hand pose\/contact\/gaze/i);
       assert.match(prompt, /no stock-pose substitution/i);
       assert.match(prompt, /SCENE LETTERING:.*(?:explicit|scripted).*exact/i);
-      assert.match(prompt, /freely render context-appropriate lettering.*readable\/decorative.*short\/long.*any amount\/density|context-appropriate readable\/decorative lettering, short\/long, any amount\/density/i);
+      assert.match(prompt, /any context-appropriate lettering, length\/density\/readability/i);
       assert.doesNotMatch(prompt, /Action text: only scripted|include sparse|no gibberish|pseudo-lettering|unrelated text/i);
       assert.ok(prompt.includes('返却用'));
       assert.doesNotMatch(prompt, /background rich but|Do not leave plain empty walls|do not default to empty walls|rich setting/i);

@@ -370,7 +370,8 @@ test('workflow invalidates stale ending output and guards assembly, Web copy, an
   assert.match(workflowSource, /const setPunchlineType = \(value\) => {[\s\S]*?setScenario\(""\);[\s\S]*?setFinalPrompt\(""\);[\s\S]*?setGeneratedImage\(null\);/);
   assert.match(workflowSource, /assertPromptEndingModeConsistency\(\{ prompt: reviewed\.prompt, punchlineType: activePunchlineType \}\);[\s\S]*?setFinalPrompt\(reviewed\.prompt\)/);
   assert.match(workflowSource, /const copyPrompt = async \(asTextFile = false, partIndex = null\) => {[\s\S]*?assertPromptEndingModeConsistency\(\{ prompt: finalPrompt, punchlineType: resolvedPunchlineTypeRef\.current \|\| punchlineType \}\);[\s\S]*?await navigator\.clipboard\.writeText\(textToCopy\)/);
-  assert.match(workflowSource, /const generateImageOnce = async[\s\S]*?assertPromptEndingModeConsistency\(\{ prompt: currentPrompt, punchlineType: resolvedPunchlineTypeRef\.current \|\| punchlineType \}\);[\s\S]*?setIsGeneratingImage\(true\)/);
+  assert.match(workflowSource, /const assertImageGenerationPrompt = \(prompt\) => {[\s\S]*?assertPromptEndingModeConsistency\(\{ prompt, punchlineType: resolvedPunchlineTypeRef\.current \|\| punchlineType \}\)/);
+  assert.match(workflowSource, /const generateImageOnce = async[\s\S]*?assertImageGenerationPrompt\(currentPrompt\);[\s\S]*?setIsGeneratingImage\(true\)/);
   assert.match(workflowSource, /const regenerateImage = async[\s\S]*?generateImageOnce\(skipGuard, overridePrompt/);
 });
 

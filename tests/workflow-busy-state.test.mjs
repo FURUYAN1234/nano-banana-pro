@@ -1,6 +1,11 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
+import { collectRecentScenarioOutcomes } from '../src/lib/generation-history.js';
+import { retryImagePolicyGeneration } from '../src/lib/image-policy-retry.js';
+import { assertRenderOptions, buildRenderOptionsContract } from '../src/lib/render-options.js';
+import { assertPrintableDialogue } from '../src/lib/bubble-text.js';
+import { assertPromptEndingModeConsistency } from '../src/lib/ending-mode-policy.js';
 
 const source = await readFile(new URL('../src/hooks/useMangaWorkflow.js', import.meta.url), 'utf8');
 const step2 = await readFile(new URL('../src/components/Step2Panel.jsx', import.meta.url), 'utf8');
@@ -25,12 +30,13 @@ function harness(overrides = {}) {
     scenario: 'Original scenario with enough text for enhancement', castList: 'Reference cast with sufficient detail',
     originalScenario: '', scenarioThought: '', enhanceLog: '', genLog: [], finalPrompt: 'Original prompt',
     isSearching: false, isEnhancing: false, isGeneratingImage: false, isFixingPolicy: false,
-    policyAutoRetrying: false, is360CameraWorking: false, isFullAutoMode: false, isAborting: false,
+    policyAutoRetrying: false, allowImageQualityRepair: true, is360CameraWorking: false, isFullAutoMode: false, isAborting: false,
     isAssembling: false, isAnalyzing: false,
     scenarioRunEpochRef: { current: 0 }, promptAssemblyRunRef: { current: 0 },
     promptAssemblyAbortRef: { current: null }, fullAutoAbortRef: { current: false },
     isFullAutoModeRef: { current: false }, qualityRetryAbortRef: { current: false },
     resolvedPunchlineTypeRef: { current: '' }, scenarioUsedModelRef: { current: null },
+    recentScenarioTextsRef: { current: [] }, generationHistory: [], collectRecentScenarioOutcomes,
     lastPolicyErrorRef: { current: '' }, isEndlessModeRef: { current: false },
     step2Ref: { current: null }, step3Ref: { current: null }, imageResultRef: { current: null },
     enhanceExpressions: true, enhanceBodyLang: false, enhanceEffects: false,
@@ -44,6 +50,8 @@ function harness(overrides = {}) {
     updateResolvedPunchlineType: () => {}, showStatus: () => {},
     validateMangaScenario: () => ({ ok: true }), formatGeneratedMangaTitle: title => title,
     translateApiError: error => error.message, console: { error: () => {} },
+    assertPromptEndingModeConsistency: () => {}, assertPrintableDialogue: () => {}, assertRenderOptions: () => {},
+    inferImageQualityMode: () => 'four-panel', collectCastNameEntries: () => [], showWatermarks: true,
     setInterval: () => 1, clearInterval: () => {}, setTimeout: fn => { fn(); return 1; },
     window: { scrollTo: () => {} }, document: { body: { scrollHeight: 1 } },
     getCurrentPromptProviderFamily: () => 'chatgpt', ...overrides,
@@ -63,7 +71,7 @@ function harness(overrides = {}) {
   });
   const bind = name => (state[name] = new Function('scope', `with (scope) { return (${callback(name)}); }`)(scope));
   for (const name of ['finishScenarioTiming', 'invalidateScenarioRun', 'invalidatePromptAssembly',
-    'invalidateScenarioOutput', 'setScenarioFromUser', 'setPunchlineType']) {
+    'invalidateScenarioOutput', 'setScenarioFromUser', 'setPunchlineType', 'assertImageGenerationPrompt']) {
     if (source.includes(`const ${name} = `)) bind(name);
   }
   return { state, bind };
@@ -159,6 +167,29 @@ test('stale STEP2 success/failure cannot replace newer timing or release newer l
   }
 });
 
+test('hard reset clears both story-history sources and stale STEP2 cannot restore them', async () => {
+  const request = deferred();
+  let providerInput;
+  const { state, bind } = harness({
+    recentScenarioTextsRef: { current: ['[4コマ目: 結]\n状況: 箱を開くと贈り物が現れる。'] },
+    generationHistory: [{ metadataContext: { scenario: '[4コマ目: 結]\n状況: 探していた鍵は手元にあった。' } }],
+    resetScenarioModelId: () => {}, DEFAULT_CATEGORIES: [],
+    generateScenario: input => { providerInput = input; return request.promise; },
+  });
+  const pending = bind('generateScenarioFromNews')();
+  assert.equal(providerInput.recentScenarios.length, 2, 'both existing history sources reach STEP2');
+
+  bind('hardReset')();
+  assert.deepEqual(state.recentScenarioTextsRef.current, []);
+  assert.deepEqual(state.generationHistory, []);
+
+  request.resolve(result);
+  assert.equal(await pending, null, 'the generation invalidated by reset is discarded');
+  assert.equal(state.scenario, '');
+  assert.deepEqual(state.recentScenarioTextsRef.current, []);
+  assert.deepEqual(state.generationHistory, []);
+});
+
 test('full-auto releases its own mode when an unexpected downstream error escapes', async () => {
   const { state, bind } = harness({
     generateScenarioFromNews: async () => 'generated scenario',
@@ -237,6 +268,163 @@ test('obsolete image generation cannot initiate a paid policy retry for the new 
   request.resolve(false);
   assert.equal(await pending, false);
 });
+
+for (const mode of ['disabled', 'review-only']) {
+  test(`${mode} image generation cannot automatically enter the paid policy repair path`, async () => {
+    const { state, bind } = harness({
+      allowImageQualityRepair: mode !== 'disabled',
+      generateImageOnce: async (_skip, _prompt, options) => {
+        assert.equal(options.suppressPolicyChoice, false);
+        state.lastPolicyErrorRef.current = 'Safety refusal';
+        return false;
+      },
+      runPolicyAutoRetries: () => assert.fail('automatic paid repair is disabled'),
+    });
+    assert.equal(await bind('regenerateImage')(false, null, { reviewOnly: mode === 'review-only' }), false);
+    assert.equal(state.lastPolicyErrorRef.current, 'Safety refusal');
+  });
+
+  test(`${mode} policy entry rejects direct calls before prompt repair or image generation`, async () => {
+    let repairs = 0, generations = 0;
+    const { state, bind } = harness({
+      allowImageQualityRepair: mode !== 'disabled',
+      retryImagePolicyGeneration,
+      fixPolicyViolation: async () => { repairs++; return { success: true, modifiedPrompt: 'Unapproved changed prompt' }; },
+      generateImageOnce: async () => { generations++; return true; },
+    });
+    assert.equal(await bind('runPolicyAutoRetries')({
+      initialPrompt: 'Original prompt', initialPolicyError: 'Safety refusal',
+      generationOptions: { reviewOnly: mode === 'review-only' },
+    }), false);
+    assert.equal(repairs, 0);
+    assert.equal(generations, 0);
+    assert.equal(state.finalPrompt, 'Original prompt');
+    assert.equal(state.policyAutoRetrying, false);
+    assert.equal(state.isFixingPolicy, false);
+    assert.doesNotMatch(state.genLog.join('\n'), /修正に失敗/);
+  });
+
+  test(`${mode} policy-attempt image callback cannot bypass the automatic repair guard`, async () => {
+    const { state, bind } = harness({ allowImageQualityRepair: mode !== 'disabled' });
+    assert.equal(await bind('generateImageOnce')(true, 'Unapproved changed prompt', {
+      policyAttempt: 1, reviewOnly: mode === 'review-only',
+    }), false);
+    assert.equal(state.finalPrompt, 'Original prompt');
+    assert.equal(state.isGeneratingImage, false);
+    assert.deepEqual(state.genLog, []);
+  });
+}
+
+test('enabled automatic policy repair retains its one successful repair and generation flow', async () => {
+  let generations = 0, repairs = 0;
+  const { state, bind } = harness({
+    retryImagePolicyGeneration,
+    fixPolicyViolation: async () => { repairs++; return { success: true, modifiedPrompt: 'Compliant revised prompt' }; },
+    generateImageOnce: async (_skip, prompt, options) => {
+      generations++;
+      assert.equal(options.suppressPolicyChoice, true);
+      if (generations === 1) { state.lastPolicyErrorRef.current = 'Safety refusal'; return false; }
+      assert.equal(prompt, 'Compliant revised prompt');
+      assert.equal(options.policyAttempt, 1);
+      state.lastPolicyErrorRef.current = '';
+      return true;
+    },
+  });
+  bind('runPolicyAutoRetries');
+  assert.equal(await bind('regenerateImage')(), true);
+  assert.equal(generations, 2);
+  assert.equal(repairs, 1);
+  assert.equal(state.finalPrompt, 'Compliant revised prompt');
+  assert.equal(state.policyAutoRetrying, false);
+  assert.equal(state.isFixingPolicy, false);
+});
+
+for (const valid of [false, true]) {
+  test(`${valid ? 'valid' : 'broken'} policy render contract is checked before adopting or sending the revised prompt`, async () => {
+    const original = `${buildRenderOptionsContract()}\nOriginal approved scene`;
+    const revised = `${buildRenderOptionsContract({ mosaicCopyrightedCharacters: valid })}\nCompliant revised scene`;
+    let generations = 0;
+    const { state, bind } = harness({
+      finalPrompt: original, assertRenderOptions, retryImagePolicyGeneration,
+      fixPolicyViolation: async () => ({ success: true, modifiedPrompt: revised }),
+      generateImageOnce: async (_skip, prompt) => {
+        generations++;
+        assert.equal(prompt, revised);
+        return true;
+      },
+    });
+    assert.equal(await bind('runPolicyAutoRetries')({ initialPrompt: original, initialPolicyError: 'Safety refusal' }), valid);
+    assert.equal(generations, valid ? 1 : 0);
+    assert.equal(state.finalPrompt, valid ? revised : original);
+    assert.deepEqual(state.policyPromptHistory, valid ? [original, revised] : [original]);
+    if (!valid) assert.match(state.genLog.join('\n'), /モザイク／ウオーターマークの設定が指示文と一致しません/);
+  });
+}
+
+for (const violation of [
+  { name: 'dialogue', original: 'Dialogue TEXT (PRINT VALUES ONLY): B1="Valid words"', revised: 'Dialogue TEXT (PRINT VALUES ONLY): B1=""', expected: /吹き出しの本文/ },
+  { name: 'ending mode', original: 'SERIOUS DOCUMENTARY INTENT: scene\nREFERENCE-SHEET ART-STYLE LOCK (ABSOLUTE — ALL FOUR PANELS)', revised: 'COMEDY INTENT: changed mode', punchlineType: 'SeriousDocumentary', expected: /シリアス結末と最終プロンプトが一致しません/ },
+]) {
+  test(`policy repair cannot bypass the shared ${violation.name} validator`, async () => {
+    const original = `${buildRenderOptionsContract()}\n${violation.original}`;
+    let generations = 0;
+    const { state, bind } = harness({
+      finalPrompt: original, punchlineType: violation.punchlineType || 'Auto',
+      assertRenderOptions, assertPrintableDialogue, assertPromptEndingModeConsistency, retryImagePolicyGeneration,
+      fixPolicyViolation: async () => ({ success: true, modifiedPrompt: `${buildRenderOptionsContract()}\n${violation.revised}` }),
+      generateImageOnce: async () => { generations++; return true; },
+    });
+    assert.equal(await bind('runPolicyAutoRetries')({ initialPrompt: original, initialPolicyError: 'Safety refusal' }), false);
+    assert.equal(generations, 0);
+    assert.equal(state.finalPrompt, original);
+    assert.deepEqual(state.policyPromptHistory, [original]);
+    assert.match(state.genLog.join('\n'), violation.expected);
+  });
+}
+
+test('an invalid policy proposal is replanned with feedback until a valid image can be generated', async () => {
+  const original = `${buildRenderOptionsContract()}\nApproved scene`;
+  const revised = `${buildRenderOptionsContract()}\nValid revised scene`;
+  let repairs = 0, generations = 0;
+  const { state, bind } = harness({
+    finalPrompt: original, assertRenderOptions, retryImagePolicyGeneration,
+    fixPolicyViolation: async ({ repairFeedback, shouldStop }) => {
+      repairs++;
+      assert.equal(shouldStop(), false);
+      if (repairs === 1) return { success: true, modifiedPrompt: `${buildRenderOptionsContract({ mosaicCopyrightedCharacters: false })}\nInvalid scene` };
+      assert.match(repairFeedback, /モザイク／ウオーターマークの設定/);
+      assert.equal(state.finalPrompt, original);
+      return { success: true, modifiedPrompt: revised };
+    },
+    generateImageOnce: async () => { generations++; return true; },
+  });
+  assert.equal(await bind('runPolicyAutoRetries')({ initialPrompt: original, initialPolicyError: 'Safety refusal' }), true);
+  assert.equal(repairs, 2);
+  assert.equal(generations, 1);
+  assert.equal(state.finalPrompt, revised);
+  assert.deepEqual(state.policyPromptHistory, [original, revised]);
+  assert.match(state.genLog.join('\n'), /次の修正検討へ引き継ぎます/);
+  assert.match(state.genLog.join('\n'), /修正検討2回・画像再生成1回で成功/);
+});
+
+for (const cancellation of ['obsolete', 'stop']) {
+  test(`${cancellation} policy repair cannot generate an image after prompt repair resolves`, async () => {
+    const request = deferred();
+    const { state, bind } = harness({
+      retryImagePolicyGeneration,
+      fixPolicyViolation: () => request.promise,
+      generateImageOnce: () => assert.fail('cancelled prompt repair must not generate an image'),
+    });
+    const pending = bind('runPolicyAutoRetries')({ initialPrompt: 'Original prompt', initialPolicyError: 'Safety refusal' });
+    assert.equal(state.isFixingPolicy, true);
+    if (cancellation === 'obsolete') state.setScenarioFromUser('Replacement scenario');
+    else state.qualityRetryAbortRef.current = true;
+    request.resolve({ success: true, modifiedPrompt: 'Obsolete revised prompt' });
+    assert.equal(await pending, false);
+    assert.equal(state.finalPrompt, cancellation === 'obsolete' ? '' : 'Original prompt');
+    assert.equal(state.policyAutoRetrying, false);
+  });
+}
 
 test('invalid STEP2 input leaves the existing generation and run ownership intact', async () => {
   const { state, bind } = harness({ manualTopic: '', isGeneratingImage: true, alert: () => {} });

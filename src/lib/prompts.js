@@ -1,5 +1,6 @@
 import { buildCopyrightMosaicInstruction } from './render-options.js';
-import { getPunchlineLabel } from './constants';
+import { getPunchlineLabel, COMPACT_EMOTION_STYLES } from './constants';
+import { buildRecentStoryContext } from './generation-history.js';
 import { SAFE_VISUAL_CONTENT_LOCK } from './location-policy';
 import { FINAL_PANEL_ACTIVE_STAGING_SCENARIO_CONTRACT, SCENARIO_EXPRESSIVE_STAGING_CONTRACT } from './final-panel-staging';
 import { buildScenarioEnhancementPrompt } from './scenario-enhancement';
@@ -25,16 +26,24 @@ import {
   MANGA_MANUSCRIPT_STANDARD,
 } from './manga-manuscript-format.js';
 
+const buildSceneStyleSelection = (serious = false) => `【場面から選ぶ絵柄】
+- 絵柄に優劣や好き嫌いを設けない。物語の出来事・演技・表情・光・構図を先に決め、その場面を最も伝える描画方式を選ぶ。オチの型、人物の性格、題材カテゴリだけから絵柄を固定しない。
+- 各コマに[EMOTION: XXX]を1つ付ける。種類数・頻度のノルマ、NORMAL回避、4コマ目の固定優先は設けない。必要な画風差は顔の造形・線・影・塗りに反映し、タグ名や暗さだけで済ませない。同じ絵柄が場面に適切なら反復してよい。
+- ユーザーの画風・頭身指定と、選択したモードの参照画風固定を優先する。シリアスな意図を勝手にギャグ化しない。以下は描画特徴であり、採用順位や特定の場面専用の一覧ではない。
+- NORMAL: 基本のアニメ作画。演技と照明に合わせて表情・陰影を描く。
+${serious ? '- このシリアスモードでは、ギャグ用の頭身変形は使わず、参照人物の頭身を保つ。' : ''}
+${Object.entries(COMPACT_EMOTION_STYLES).filter(([tag]) => tag !== 'HORROR' && (!serious || tag !== 'CHIBI_GAG')).map(([tag, recipe]) => `- ${tag}: ${recipe}`).join('\n')}
+- HORRORは旧タグ互換名でGEKIGAへ解決される。新規には対応する描画方式を直接選ぶ。`;
+
+const SCENE_STYLE_SELECTION = buildSceneStyleSelection();
+
 const GENERAL_SERIOUS_STORY_PRINCIPLES = `1. **【シリアスな物語として見せる】**:
                - 出来事と人物の感情を因果でつなぎ、説明だけで済ませず、選択、ためらい、対立、受容を目に見える行動として描くこと。
                - 深刻さは表情・視線・身体演技・カメラ・構図・照明・間で表現する。ボケ、ツッコミ、理不尽な制裁、夢オチ、メタ打ち切り、笑わせるための身体変形を入れない。
                - 人物が何を失い、守り、決めるのかを4コマの軸にする。静かな場面でも手、姿勢、距離、背景の奥行きと光を具体的に描き、棒立ちの会話にしない。
                - 同席する人物は、話者を見て受け止める自然な反応を示す。全員を同じ泣き顔や同じ無表情にそろえず、それぞれの立場を演技で分ける。`;
 
-const GENERAL_SERIOUS_EMOTION_RULES = `4. **【シリアス版の感情・演出タグ】**:
-             - 各コマの冒頭に[EMOTION: XXX]を1つ付け、NORMAL、GEKIGA、SHOUJO、WATERCOLOR、SHADOW、THICK_PAINT、THIN_LINE、GOLDEN_HOURから内容に合うものを選ぶこと。
-             - タグは感情、光、線、空気感の補助として使い、ちび化、ギャグ化、白目オチ、頭身変更を行わない。
-             - 4コマで少なくとも2種類の画角と、寄り・引き、高低、前景・中景・後景の変化を作る。静かな話でもカメラと演技を弱めない。`;
+const GENERAL_SERIOUS_EMOTION_RULES = buildSceneStyleSelection(true);
 
 const SERIOUS_ENDING_INSTRUCTIONS = Object.freeze({
   QuietAftermath: '4コマ目を「静かな余韻」で締める。言い切らない視線、残された物、人物間の距離、環境音の止まり方など、出来事の後に残る感情を具体的な画面で示す。',
@@ -91,7 +100,7 @@ export const getCharacterAnalysisPrompt = () => {
   return `
         /* SYSTEM: ABSOLUTE CONTEXT RESET. FORGET ALL PREVIOUS CHARACTERS. */
         /* TARGET: Analyze ALL currently uploaded images. Do not recall past sessions. */
-        
+
         あなたはプロの漫画家兼キャラクターデザイナー（解析特化）です。
         以下の「絶対厳守ルール」に従い、現在の全ての画像を解析してください。
 
@@ -112,18 +121,18 @@ export const getCharacterAnalysisPrompt = () => {
            - 年齢感も記述せよ (young adult, adult, elderly)。"girl", "boy", "teenager", "child" は使用禁止。
 
         B. **髪の完全構造化 (Strict Hair Analysis)**:
-           - **【ハゲ/坊主 (Bald/Buzz)】**: 
+           - **【ハゲ/坊主 (Bald/Buzz)】**:
              - 髪が無い場合は**「Bald」**、坊主なら**「Buzz Cut」**とせよ。
-           - **【色 (Tone/Color)】**: 
+           - **【色 (Tone/Color)】**:
              - 白黒の場合: 「ベタ(黒)→Black」「トーン(灰)→Brown/Dirty Blonde」「白→Silver/Blonde」。
              - カラーの場合: 「赤(Red)」「茶(Brown)」「オレンジ(Ginger)」を厳密区別せよ。
-           - **【構造 (Structure) - 重要】**: 
+           - **【構造 (Structure) - 重要】**:
              - **髪のトポロジー解析 (Hair Topology Vectors)**:
                - **毛先座標 (End Points)**: 毛先がどこにあるか？(顎ライン、肩ライン、鎖骨下、腰)。
                - **重要 (Black Hair Warning)**: **黒髪は制服やアウトラインと同化して短く見えやすい。**
              - 「肩に掛かっているか？」「背中に線があるか？」を凝視せよ。
              - **姫カット(Sidelocks/Hime-cut)**がある場合、後ろ髪が長い確率が極めて高い。**安易にBobと判定するな。**
-           - **絶対長 (Absolute Length)**: 
+           - **絶対長 (Absolute Length)**:
              - **Bob**: 毛先が「顎〜首」で止まっている。完全に宙に浮いている。
              - **Medium**: 毛先が「肩」に触れている。
              - **Long**: 毛先が「鎖骨」より下。**黒髪の場合は特に注意して探せ。**
@@ -132,20 +141,20 @@ export const getCharacterAnalysisPrompt = () => {
            - 頭頂部のボリューム、サイドの膨らみを記述せよ。
          - 単なる「Short」は禁止。「Chin-length Bob」や「Shoulder-length Layered」など具体的に。
        - **【前髪 (Bangs)】**: Hime, Parted, Blunt, Asymmetric.
-       - **【アレンジ (Arrangement)】**: 
+       - **【アレンジ (Arrangement)】**:
          - **重要**: 後ろ髪が見えなくても、**Ponytail, Twintails, Bun, Braid**の兆候を見逃すな。
          - 結っている＝**Long Hair**タグ必須。
 
         C. **顔・アクセサリー (Face & Accessories)】**:
-           - **【アイウェア (Eyewear)】**: 
+           - **【アイウェア (Eyewear)】**:
              - **サングラスを絶対に見逃すな**。レンズが黒/不透明なら (black sunglasses:1.5)。
              - 透明レンズなら (glasses:1.2)。形状(Under-rim, Round)も特定せよ。
              - **【最重要リスク】** 眼鏡をかけていない場合は、他のキャラの眼鏡が伝染するハルシネーションを防ぐため、必ず **(no glasses:1.5)** と出力せよ。
-           - **【髭 (Facial Hair)】**: 
+           - **【髭 (Facial Hair)】**:
              - **絶対に髭を見逃すな**。(white beard:1.5), (mustache:1.5), (stubble:1.2).
              - 老人キャラは髭がある確率が高い。
            - **【目 (Eyes)】**: ツリ目(Tsurime)、タレ目(Tareme)、瞳の色。
-           - **【特徴 (Charm Points)】**: 
+           - **【特徴 (Charm Points)】**:
              - ホクロ(Mole under eye/mouth)、八重歯(Snaggletooth)、そばかす(Freckles)等の個性を絶対に見逃すな。
            - **【肌 (Skin)】**: Tanned, Pale, Dark skinを正確に記述。
 
@@ -160,7 +169,7 @@ export const getCharacterAnalysisPrompt = () => {
         【出力フォーマット】
         ・見出し ## n. ... は人物名または仮人物名だけにすること。人物ではないOCR文字列や補足用の見出しを ## 見出しにしないこと。
         ・備考が必要な場合でも ## # 備考 のようなキャラクター扱いされる見出しは使わず、人物セクション内の通常文で短く補足すること。
-        
+
         ## 1. [OCRで読み取った正確な名前]
 
         | カテゴリ | 特徴の詳細（日本語） | 画像生成AI用 重み付きタグ (Weighted Immutable Prompts) |
@@ -248,6 +257,7 @@ ${scenario}
  * 指定された日付、カテゴリ、入力モードなどに基づいて4コマ漫画のシナリオを生成する
  */
 export const getScenarioPrompt = ({
+  recentScenarios = [],
   mosaicCopyrightedCharacters = true,
   randomCategory,
   targetDate,
@@ -317,7 +327,7 @@ export const getScenarioPrompt = ({
           - 同じ末尾記号や同じ言い回しを定型化せず、今回のネタとオチに合う表現を選ぶこと。
 
           ${SAFE_VISUAL_CONTENT_LOCK}
-         
+
          ${inputMode === 'manual'
            ? `「ユーザーが入力した以下のトピックまたは抽出されたURLコンテンツ」をテーマに4コマ漫画を作成してください。\n トピック: ${manualTopic}\n\n- ユーザー入力は外部事実として断定しない。URL本文を取得できた場合だけ、その抽出本文を根拠として扱う。\n\n${newsContext}`
            : `「${searchTopicKeywords}」に関する、** 指定された日付（${targetDate}）周辺の具体的かつ事実に即したニュース ** を1つ選定し、それをテーマにした4コマ漫画のシナリオを作成してください。`
@@ -361,7 +371,7 @@ export const getScenarioPrompt = ({
          4. **【場所（Location）の選定義務】**:
             - 題材の内容に**「最も適した具体的な舞台」**を選んでください。
             - **デフォルト回避**: 安易な「教室」「白い部屋」は避けるが、**題材の文脈（学生、学校関連）で必要ならば「教室」も許可する。**重要なのは「題材との適合性」である。
-        
+
         ${bg360Image && bg360Analysis && bg360Enabled ? `
         4.5 **【360° 背景画像モード — Studio Shooting Protocol v1.0】**:
             - **添付された360度パノラマ画像を「撮影スタジオの固定セット」として使用する。**
@@ -382,6 +392,7 @@ export const getScenarioPrompt = ({
            - Location行には最終的に採用した具体的な場所を1つだけ記載せよ。「AIおまかせ」「題材に即した場所」等の抽象語は禁止。` : `4. **【強制舞台指定 (Location Lock)】**:
            - 今回の漫画の舞台は「${effectiveLocationPlan.anchorName}」に必ず設定せよ。
            - ${effectiveLocationPlan.guidance}`}
+        ${buildRecentStoryContext(recentScenarios)}
         4.4 **【背景は軽量運用】**:
            - Locationと、本文で明示した時刻・天候だけを4コマで矛盾させないこと。人物の解剖学、手と小道具の所有関係、セリフと吹き出しの正確さを常に優先し、背景は必要なら簡略化してよい。
         4.8 **【出来事を証明する視覚証拠 (Visual Story Evidence)】**:
@@ -411,7 +422,7 @@ export const getScenarioPrompt = ({
 
          6. **【環境・リアクションのディテール構築 (Structural Directives)】**:
             以下のガイドラインを参照し、指定された場所の小道具や環境、キャラクターのリアクションを、**シナリオのト書き(Action)として構造的かつ文脈に沿って描写**せよ。AI特有の抽象的な表現は禁止する。
-            
+
             ${ragReactions}
 
 ${styleJson && !isSeriousDocumentary ? `         7. **【作風完全適用の義務 (Strict Style Adherence)】**:
@@ -434,7 +445,7 @@ ${styleJson.anti_patterns ? `            - 絶対禁止事項:\n${styleJson.anti
                  * あるコマで起きた出来事を、別のコマで「その場にいなかったキャラ」が知っている前提で反応させるのは禁止（伝聞や目撃の描写がない限り）。
                  * **ただし「知らない＝登場禁止」ではない。** 知らないなりのリアクション（「えー、なにそれー？」「さっぱり分かんない！」等）で登場させ、全員登場義務と両立させよ。
                   * **目的**: キャラの「らしさ」を守り、AIが全キャラを同質化させるハルシネーションを防止する。
-  
+
            ${isSeriousDocumentary ? `1. **【原文忠実な視覚化】**:
                - 原文の事実、人物、出来事、順序、因果関係を変えず、本文に書かれた内容をキャラクターの会話と行動へ置き換えること。
                - 原文にない事件、原因、結果、断定、架空の小道具、無関係な舞台を追加しないこと。
@@ -445,7 +456,7 @@ ${styleJson.anti_patterns ? `            - 絶対禁止事項:\n${styleJson.anti
                - **【身体表現】**: 感情を具体的な全身の動勢、重心、表情とシルエットに変換し、漫画らしく大胆に誇張する。静かな間との落差を作り、手や持ち物の数を増やさず演技の強さで見せる。
               - **【構図】**: 主役の動作と表情を際立たせ、話に関わる脇役の反応との対比で笑いを絵にする。前後の配置、大小、傾き、余白で勢いと読みやすさを両立し、人数や動作の数合わせで過密にしない。指定された静止や沈黙はその間を生かす。
               - **【超重要】汗マークや怒りマークなどの「漫符」を描写する場合、文字ラベル（例: "POPPING VEIN", "LARGE SWEAT DROP"など）や設定資料に書かれるような矢印・注釈テキストを画面内に絶対に描画させないこと。純粋な視覚的シンボルのみを使用し、一切の英単語ラベルを排除せよ。**`}
-  
+
            2. **テキストの量的制限 (Compact Text Quantity)**:
               - **厳守**: 1コマあたりのフキダシは**「最大3つまで」**。（3人の掛け合いも積極活用せよ）
               - セリフは**「短い一文」**に収めよ（例: 「なんだって！？」OK、「それはつまり...ということなのか？」NG）。
@@ -499,32 +510,32 @@ ${styleJson.anti_patterns ? `            - 絶対禁止事項:\n${styleJson.anti
                * **自虐**: キャラが自分の設定・弱点・過去の失敗をネタにする。親近感と笑いを同時に生む
              - **【ギャグ強度の方針】**: 強烈なボケを最優先。おとなしい優等生ギャグは禁止。多少カオスでも「勢い」と「テンション」で笑わせろ。ただし完全な意味不明（読者が何が起きたか理解できない）は避けよ。
               - **【ズレ技法→ビジュアルギャグ自動マッピング】**: 選択したズレ技法に応じて、以下のビジュアル演出を「状況」欄に自動的に仕込め。笑いはテキストだけでなく「絵」でも表現するのが漫画の鉄則。
-                * **誇張を使った場合**: → [EMOTION: CHIBI_GAG] または [EMOTION: IMPACT] を推奨（BLANKは安易に乱用しないこと）。強い短縮遠近法、全身を使う爆発的リアクション、題材に意味のある規模差から、何を誇張するか選び状況欄に明記せよ。小道具の増量・巨大化を必須にせず、人物の動作と受け手の反応でも迫力を作る。
-                * **逆転を使った場合**: → 普段と真逆のEMOTIONタグを選べ（普段クールなキャラに[EMOTION: CHIBI_GAG]、普段ふざけたキャラに[EMOTION: GEKIGA]）。ギャップをビジュアルで表現する
-                * **緊張と緩和を使った場合**: → 1〜3コマ目は[EMOTION: GEKIGA]や[EMOTION: SHADOW]で極限の緊張感を絵で作り、4コマ目で[EMOTION: CHIBI_GAG]や[EMOTION: IMPACT]に急転直下（BLANKも状況に応じて使用可）。「絵柄の急変」で落差を最大化する
+                * **誇張を使った場合**: → 強い短縮遠近法、全身を使う爆発的リアクション、題材に意味のある規模差から、何を誇張するか選び状況欄に明記せよ。小道具の増量・巨大化を必須にせず、人物の動作と受け手の反応でも迫力を作る。
+                * **逆転を使った場合**: → 予想と結果の逆転を身体演技と受け手の反応で見せ、必要な描画方式を場面から選ぶ
+                * **緊張と緩和を使った場合**: → 緊張の積み上げと解放を表情・身体・空間・描画方式の落差で見せる。使う絵柄と変えるコマは場面から選び、固定しない
                 * **不条理を使った場合**: → 題材の道具の使い方や人物同士の関係に、読者が見て分かる意外な食い違いを作り、状況欄に明記する。説明不能な異物や巨大物の追加を既定にせず、常識外れの行為を登場人物が当然のように続ける見せ方も使う。
                 * **置換を使った場合**: → 元の文脈と置換先のビジュアル差を最大化。「国際会議の荘厳なテーブルに幼稚園児の工作道具が並んでいる」等、視覚的ミスマッチを明記
-                * **常識に戻るを使った場合**: → 暴走キャラに[EMOTION: IMPACT]や[EMOTION: CHIBI_GAG]、常識キャラだけ[EMOTION: NORMAL]で冷静な表情。温度差を絵で表現する
+                * **常識に戻るを使った場合**: → 行動と受け止め方の温度差を表情・姿勢・描画方式で表現する。人物の役割から絵柄を固定しない
              - **【結末の判読性】**: 誰に何が起き、何が変わったのかを、前の手掛かりと最後の行動・受け手の反応で見せる。最後の台詞で新設定を説明するだけにせず、読者が絵と短い台詞から落差を読み取れるようにする。指定したオチや意図的な沈黙・不条理は保つ。
              - ${['Auto', 'GagAuto'].includes(punchlineType) ? `**【オチの多様化 (Punchline Variety Enforcement)】**: 題材の欲求・障害・人物の行動から、異なる結末の可能性を短く比較し、前のコマの種を最も明瞭に回収するものを選ぶ。型の抽選や固定順では決めない。4コマ目だけで眠る・目覚める・夢だった・ループ・メタ終了などへ逃げ、積み上げた出来事を帳消しにしない。これらも題材に必要な種と見て分かる落差・帰結があるなら使用可能。特定の型や眠る動作そのものは禁止しない。以下の9系統からネタに最適なものを選択せよ。
-                * **爆発型**: 全員が限界突破。叫び・暴走・カオスで画面爆発（推奨EMOTION: IMPACT, CHIBI_GAG）
-                * **静寂型（シュール）**: 全員が無言で固まる。沈黙と虚無が最大の笑い（推奨EMOTION: NORMAL（通常の真顔・呆れ・点目）、CHIBI_GAG（ちび呆れ）。⚠️BLANK（白目）は安易に乱用せず、真顔や呆れ顔とバランスよく選択せよ）
-                * **感動詐欺**: 狂った状況のまま感動的なイイハナシダナーで終わる理不尽な美しさ（推奨EMOTION: SHOUJO, WATERCOLOR）
-                * **メタ崩壊型**: 漫画 of 枠線・作者・読者・システム自体に言及し次元の壁を破壊（推奨EMOTION: IMPACT, NORMAL。⚠️BLANKは乱用禁止）
-                * **理不尽な制裁型**: 一番まともなキャラが突然物理的・社会的に取り返しのつかない制裁を受ける（推奨EMOTION: IMPACT, GEKIGA）
-                * **天丼爆発型**: 繰り返したボケの意味や受け手を最後に反転し、強烈に回収する。物のサイズ増加だけで締めない（推奨EMOTION: IMPACT）
-                * **夢オチ型**: 壮大な展開が全て夢だったと判明し、現実との落差で笑わせる（推奨EMOTION: SAD, SHADOW, CHIBI_GAG。⚠️BLANKは乱用禁止）
-                * **盛大な勘違い型**: 全ての行動が根本的な勘違いの上に成り立っていたと判明し全てが台無しに（推奨EMOTION: CHIBI_GAG, NORMAL。⚠️BLANKは乱用禁止）
-                * **打ち切りエンド型**: 話が盛り上がりきった直後「俺たちの戦いはこれからだ！」で強制終了（推奨EMOTION: IMPACT, NORMAL。⚠️BLANKは乱用禁止）` : 
-                punchlineType === 'Surreal' ? `**【強制オチ指定: 静寂型（シュール）】**: 4コマ目のオチは必ず「静寂型（シュール）」にすること。全員が無言で固まる、沈黙と虚無による笑いを生み出せ。推奨EMOTION: NORMAL（通常の真顔・呆れ顔・点目など）, CHIBI_GAG（ちびキャラでの呆れ・困惑）。⚠️BLANKは乱用せず、呆れや真顔とバランスよく選択せよ。` :
-                punchlineType === 'Explosion' ? `**【強制オチ指定: 爆発型】**: 4コマ目のオチは必ず「爆発型」にすること。全員が限界突破し、叫び・暴走・カオスで画面を爆発させろ。推奨EMOTION: IMPACT, CHIBI_GAG` :
+                * **爆発型**: 全員が限界突破。叫び・暴走・カオスで画面爆発
+                * **静寂型（シュール）**: 全員が無言で固まる。沈黙と虚無が最大の笑い
+                * **感動詐欺**: 狂った状況のまま感動的なイイハナシダナーで終わる理不尽な美しさ
+                * **メタ崩壊型**: 漫画 of 枠線・作者・読者・システム自体に言及し次元の壁を破壊
+                * **理不尽な制裁型**: 一番まともなキャラが突然物理的・社会的に取り返しのつかない制裁を受ける
+                * **天丼爆発型**: 繰り返したボケの意味や受け手を最後に反転し、強烈に回収する。物のサイズ増加だけで締めない
+                * **夢オチ型**: 壮大な展開が全て夢だったと判明し、現実との落差で笑わせる
+                * **盛大な勘違い型**: 全ての行動が根本的な勘違いの上に成り立っていたと判明し全てが台無しに
+                * **打ち切りエンド型**: 話が盛り上がりきった直後「俺たちの戦いはこれからだ！」で強制終了` :
+                punchlineType === 'Surreal' ? `**【強制オチ指定: 静寂型（シュール）】**: 4コマ目のオチは必ず「静寂型（シュール）」にすること。全員が無言で固まる、沈黙と虚無による笑いを生み出せ。` :
+                punchlineType === 'Explosion' ? `**【強制オチ指定: 爆発型】**: 4コマ目のオチは必ず「爆発型」にすること。全員が限界突破し、叫び・暴走・カオスで画面を爆発させろ。` :
                 punchlineType === 'FakeEmotion' ? `**【強制オチ指定: 感動詐欺】**: 4コマ目のオチは必ず「感動詐欺（いい話風の狂気）」にすること。狂った状況のまま、なぜか感動的なBGMが流れているような理不尽なイイハナシダナーで終わらせろ。` :
                 punchlineType === 'Metafiction' ? `**【強制オチ指定: メタフィクション】**: 4コマ目のオチは必ず「メタフィクション」にすること。漫画の枠線、作者、読者、システム自体に言及し、次元の壁を破壊しろ。` :
                 punchlineType === 'Unreasonable' ? `**【強制オチ指定: 理不尽な制裁】**: 4コマ目のオチは必ず「理不尽な制裁」にすること。一番まともなキャラが突然物理的・社会的に取り返しのつかない制裁を受ける、または全員が破滅しろ。` :
                 punchlineType === 'RunningGag' ? `**【強制オチ指定: 天丼】**: 4コマ目のオチは必ず「天丼（繰り返しギャグの最終形態）」にすること。1〜3コマ目で仕込んだボケを最終コマで強烈に回収せよ。反復は維持し、意味・受け手・結果の変化で意外性を作る。物の増量や長大化だけに頼らない。` :
-                punchlineType === 'Dream' ? `**【強制オチ指定: 夢オチ】**: 4コマ目のオチは必ず「夢オチ」にすること。1〜3コマ目の壮大な展開が全て夢だったと判明し、現実の落差で笑わせろ。目覚めた後の「え、今の全部…？」という虚無感と、夢の中の方がまだマシだったという絶望のダブルパンチを叩き込め。推奨EMOTION: SAD, SHADOW, CHIBI_GAG（ズッコケ）。⚠️BLANKは乱用を避け、目覚めた後のリアクションはNORMAL等も検討せよ。` :
-                punchlineType === 'Misunderstanding' ? `**【強制オチ指定: 盛大な勘違い】**: 4コマ目のオチは必ず「盛大な勘違い」にすること。1〜3コマ目の全ての行動や感動が、根本的な勘違いの上に成り立っていたと4コマ目で判明し、全てが台無しになる。「え、そもそもの前提が違ったの…？」という脱力と虚無で終わらせろ。推奨EMOTION: CHIBI_GAG, NORMAL。⚠️BLANKは乱用せず、呆れや真顔とバランスよく選択せよ。` :
-                punchlineType === 'CanceledEnding' ? `**【強制オチ指定: 打ち切りエンド】**: 4コマ目のオチは必ず「打ち切りエンド」にすること。話が盛り上がりきった3コマ目の直後、4コマ目で唐突に「俺たちの戦いはこれからだ！」「※この漫画は諸事情により打ち切りとなりました」的なメタ的な強制終了で幕を閉じろ。物語の途中感と投げっぱなし感を全力で演出せよ。推奨EMOTION: IMPACT, NORMAL。⚠️BLANKは乱用禁止。` :
+                punchlineType === 'Dream' ? `**【強制オチ指定: 夢オチ】**: 4コマ目のオチは必ず「夢オチ」にすること。1〜3コマ目の壮大な展開が全て夢だったと判明し、現実の落差で笑わせろ。目覚めた後の「え、今の全部…？」という虚無感と、夢の中の方がまだマシだったという絶望のダブルパンチを叩き込め。` :
+                punchlineType === 'Misunderstanding' ? `**【強制オチ指定: 盛大な勘違い】**: 4コマ目のオチは必ず「盛大な勘違い」にすること。1〜3コマ目の全ての行動や感動が、根本的な勘違いの上に成り立っていたと4コマ目で判明し、全てが台無しになる。「え、そもそもの前提が違ったの…？」という脱力と虚無で終わらせろ。` :
+                punchlineType === 'CanceledEnding' ? `**【強制オチ指定: 打ち切りエンド】**: 4コマ目のオチは必ず「打ち切りエンド」にすること。話が盛り上がりきった3コマ目の直後、4コマ目で唐突に「俺たちの戦いはこれからだ！」「※この漫画は諸事情により打ち切りとなりました」的なメタ的な強制終了で幕を閉じろ。物語の途中感と投げっぱなし感を全力で演出せよ。` :
                 punchlineType === 'Documentary' ? `**【強制モード: ギャグ・ドキュメンタリー（原文忠実＋オチだけギャグ漫画化）】**:
                 このモードでは、入力された元ネタ（ニュース記事・URL記事・ユーザー提供テキスト）の**事実・内容をそのまま忠実に**4コマ漫画のシナリオに変換する。
                 **【数値・時系列の完全固定】**: 入力本文の日付、施行日、時刻、期間、数量、割合、価格、変更前後の値をすべて抽出してシナリオ内に保持する。同値の時刻表記への正規化だけを許可し、省略、別の値への置換、曖昧化、順序変更は禁止する。
@@ -550,21 +561,21 @@ ${styleJson.anti_patterns ? `            - 絶対禁止事項:\n${styleJson.anti
                 comedyTone === 'IntellectualBlack' ? '知性派ブラック系' : '自動'
               }】**:
                 ${
-                  comedyTone === 'HighTension' ? `今回は「ハイテンション爆発系」のトーンを徹底せよ。キャラクターは激しく叫び、オーバーリアクションをし、物理的または感情的に限界突破して暴走すること。ツッコミは烈火のごとく激しく、ボケは常軌を逸したハイテンションで行うこと。セリフの文末には「！」や「！？」を多用し、勢いを最大化せよ。推奨される感情絵柄タグ: IMPACT, CHIBI_GAG` :
-                  comedyTone === 'SurrealQuiet' ? `今回は「シュール静寂系」のトーンを徹底せよ。狂った状況やボケに対して、キャラクターはあえて無表情、淡々とした態度、または真顔でリアクションすること。嵐の後のような静けさ、噛み合わない静かな狂気、奇妙な「間」を演出し、台詞も短く淡々としたものにせよ。大騒ぎせず、シュールな静寂で笑いを誘え。推奨される感情絵柄タグ: NORMAL（真顔・呆れ顔・点目など）, CHIBI_GAG, SHADOW。⚠️BLANKは乱用せず、真顔や呆れ顔とバランスよく選択せよ。` :
-                  comedyTone === 'IntellectualBlack' ? `今回は「知性派ブラック系」のトーンを徹底せよ。現代社会の風刺、ブラックユーア、痛烈な皮肉、ダブルミーニング（裏の意味）を散りばめること。表面的には普通に見えても「よく考えると恐ろしい事実や狂気」が浮かび上がるように構成せよ。キャラクターは冷ややかに、あるいは皮肉たっぷりに会話を交わすこと。推奨される感情絵柄タグ: DARK_ANIME, GEKIGA, SHADOW` :
+                  comedyTone === 'HighTension' ? `今回は「ハイテンション爆発系」のトーンを徹底せよ。キャラクターは激しく叫び、オーバーリアクションをし、物理的または感情的に限界突破して暴走すること。ツッコミは烈火のごとく激しく、ボケは常軌を逸したハイテンションで行うこと。セリフの文末には「！」や「！？」を多用し、勢いを最大化せよ。` :
+                  comedyTone === 'SurrealQuiet' ? `今回は「シュール静寂系」のトーンを徹底せよ。狂った状況やボケに対して、キャラクターはあえて無表情、淡々とした態度、または真顔でリアクションすること。嵐の後のような静けさ、噛み合わない静かな狂気、奇妙な「間」を演出し、台詞も短く淡々としたものにせよ。大騒ぎせず、シュールな静寂で笑いを誘え。` :
+                  comedyTone === 'IntellectualBlack' ? `今回は「知性派ブラック系」のトーンを徹底せよ。現代社会の風刺、ブラックユーア、痛烈な皮肉、ダブルミーニング（裏の意味）を散りばめること。表面的には普通に見えても「よく考えると恐ろしい事実や狂気」が浮かび上がるように構成せよ。キャラクターは冷ややかに、あるいは皮肉たっぷりに会話を交わすこと。` :
                   `ネタに合わせて最適なコメディトーン（ハイテンション爆発系、シュール静寂系、知性派ブラック系）を自律的に選択し、そのトーンに徹せよ。`
                 }
               - **【Anti-Persona-Gravity Protocol（ペルソナ引力抑制）v2.0 — オチ多様化強制】**:
                 * **問題**: 特定のキャラクター（特に「風紀委員」「委員長」「リーダー」等の権威的ペルソナを持つキャラ）が、オチを毎回独占し、「裁定・没収・制裁・処罰・禁止命令」系のワンパターンなオチになりやすい。
-                * **対策（オチ担当キャラの強制分散）**: 4コマ目の「決めゼリフ」または「決定的行動（オチの主導権）」を担当するキャラクターは、CastList内の全キャラに均等に分散させよ。権威的キャラが毎回オチを支配するのは禁止。
+                * **対策（題材から決め役を選ぶ）**: 4コマ目の決定的行動と反応を、今回の欲求・障害・行動から選ぶ。性格ラベルだけで決め役を固定せず、全キャラへの均等配分も強制しない。明示された主役や反復演出は保つ。
                 * **具体的な分散パターン（以下を積極的に活用せよ）**:
                   - 普段ボケ役のキャラが4コマ目で急に核心を突く正論を言い放つ
                   - 普段おとなしい・天然キャラが4コマ目で最も破壊的な行動を取る
                   - 権威キャラが4コマ目では逆にツッコまれる側・被害者になる
                   - 全員が同時にボケて誰もツッコまないカオスで終わる
                   - モブキャラや通行人が最後に一番おいしいセリフを持っていく
-                * **注意**: 権威キャラがオチを担当すること自体は禁止しない。ただし連続使用を避け、他キャラにも均等にオチの見せ場を与えること。「いつも同じキャラが裁いて終わり」は読者に飽きられる最大の原因である。
+                * **注意**: 権威キャラがオチを担当すること自体は禁止しない。担当者は伏線・動機・行動から選び、均等配分や連続回避のためだけに変えない。同じ人物でも今回の題材に根ざす帰結ならよい。
 
            3.8 **【Guard C: AI定型文とクリシェの完全排除】**:
                - 以下のAI特有の退屈な表現・クリシェをシナリオ（ト書き・セリフ）から**完全に排除**せよ:
@@ -598,43 +609,21 @@ ${styleJson.anti_patterns ? `            - 絶対禁止事項:\n${styleJson.anti
              - 4コマ目も同じ絵柄・線・塗り・陰影・顔・頭身を維持し、演技と構図だけを強めること。` : isGeneralSerious ? GENERAL_SERIOUS_EMOTION_RULES : `4. **4コマ目の演出**:
              - 必ずしもデフォルメ（SD）にする必要はない。ネタがシリアスなら、**劇画調のリアルな絶望顔**で落としても良い。ネタに合わせてスタイルを適応させよ。
 
-          5. **【感情絵柄タグ (Emotion Style Tag)】**:
-             - 各コマの冒頭に、そのコマの演出に最適な[EMOTION: XXX]タグを**必ず1つ**付与せよ。
-             - 選択肢（この中から選べ）:
-               - NORMAL: 通常の美麗アニメ作画。日常会話、穏やかなシーン。
-               - CHIBI_GAG: ちびキャラ化。ツッコミ、呆れ、軽いギャグ、恥ずかしさ。頭身の変形よりカメラ・身体演技・表情を優先。全員一律の縮小にしない。
-               - GEKIGA: 劇画調リアル。本気の怒り、覚悟、緊張、決意。眉・鼻・頬・顎を骨格的な面と力強い描線で描き、顔にも深い墨影と斜線を付ける。年齢や別人化で代用しない。
-               - SHOUJO: 少女漫画風キラキラ。感動、喜び、恋愛的ときめき。花びらや星が舞う。
-               - BLANK: 白目・魂抜け。物理的な絶望や、頭から魂が抜けるレベルの衝撃に限定。安易な静寂・オチ・沈黙シーンでの乱用は避け、無言の静寂や呆れは NORMAL の「真顔・点目」や CHIBI_GAG でも表現して表情のバリエーションを確保すること。
-               - IMPACT: インパクトフレーム。大爆笑、大激怒、驚天動地。集中線で画面が爆発。
-               - WATERCOLOR: 水彩画風。ノスタルジック、回想シーン。
-               - RETRO: レトロ漫画風。昭和テイスト、コミカル。
-               - GLITTER: キラキラオーラ。自信満々、ドヤ顔、勝利宣言。
-               - SHADOW: シルエット演出。策略、不穏、腹黒。
-             - 【重要】毎回同じタグを繰り返すな。4コマの中で少なくとも2種類以上のタグを使い分けよ。
-                - THICK_PAINT: 厚塗りアニメ調。質感・光沢・立体感が強調される重厚な表現。政治・経済・軍事等のシリアスなニュースや、決意・覚悟の場面に。
-                - PASTEL: パステルアニメ調。淡い色合い、やわらかいタッチ、やさしい空気感。ほのぼの日常・癒し系の話題や、回想・夢の中の描写に。
-                - CEL: セル画風。フラットな色面、はっきりした影、くっきりした輪郭。昔のTVアニメのようなノスタルジックかつポップな表現。エンタメ・懐かしい話題に。
-                - DARK_ANIME: ダークアニメ調。暗いトーン、深い影、ミステリアスな雰囲気。事件・サスペンス・不穏なニュース・陰謀論的展開に。
-                - THIN_LINE: 繊細線画調。極細の描線、髪の毛一本一本まで繊細に描く美麗表現。感動系・エモーショナルな場面、静かな感情の機微に。
-                - HIGH_SATURATION: 高彩度ビビッド。鮮やかで目を引くパワフルな色彩。スポーツ・祭り・勝利・興奮等の派手でエネルギッシュな場面に。
-                - SUMI_INK: 墨インクスプラッシュ。キャラの背後に黒い墨が弾け、筆のストロークが走る和風演出。白い余白と墨のコントラストが強烈。和風バトルパロディ、必殺技、侍・書道ネタ、威厳ある登場シーンに。UKIYOEが「静的な平面表現」であるのに対し、SUMI_INKは「動的な墨の飛沫」。
-                - MONOCHROME_ACCENT: モノクロ一点カラー。画面全体をグレースケールにし、重要な要素だけ1色だけ鮮やかに残す映画的演出。「ここだけがおかしい」「これが全ての元凶」等の視覚的皮肉や衝撃的発見の強調に。
-                - GOLDEN_HOUR: ゴールデンアワー。黄金の夕暮れ光で全てを包み、長い影が伸びる映画的情景。感動詐欺オチとの相性が最高。SHOUJOの「花びら・キラキラ」やFLASHBACKの「セピア・回想」とは異なり、リアルな夕暮れの温かい光による「美しすぎる締め」。
-             - オチのコマ（4コマ目）は特に、NORMAL以外のタグを優先的に選べ。`}
+          5. ${SCENE_STYLE_SELECTION}
+             - 必要な画風差を実際の線・顔・陰影へ反映する。`}
 
           6. **【カメラ演出タグ (Camera Direction Tag) — 極限物理描写 & シネマティック構図 v4.5】**:
              - 各コマを最終的な横長の漫画画面として先に想像し、オチの迫力・人物の生きた演技・カメラの面白さを保ったまま、物語上重要な手・対象物・接触と人物の位置関係が一枚で読める配置を選べ。遠い全景へ複数の小さな手元の判読を同時要求しない。手が届かない場合は人物と小道具の前後位置を組み直し、補助動作は他コマへ配分する。明示された人物・動作・Camera・セリフを削除して帳尻を合わせない。
              - 各コマの冒頭に [Camera: XXX] タグを**必ず1つ**付与せよ。
              - 物語の注視対象と実際の身体・小道具の配置から撮影位置を決め、以下のA/Bを併用して最適なCameraを記述する。静かな会話でも俯瞰・アオリ・望遠・広角・寄り引きを使える。高低や焦点距離を感情の激しさや特定の性格に結びつけない。
-             
+
              **【A. 撮影位置とレンズ】**: 会話・静止・アクションのいずれでも、出来事を伝える視点を選ぶ。強度は物語に合わせる。
              - 選択肢: 俯瞰/バードアイ、ローアングル/アオリ、ダッチアングル、超広角/フィッシュアイ、望遠圧縮、ワームズアイ、ドローン俯瞰、パンニング/追跡ショット
              - 全てのCameraで「カメラがどこにあり」「どの面が見えるか」「人物と背景の大きさがどう違うか」を具体化する。静かなコマでも明確な高低差や距離の圧縮を使い、不要な身体の変形や騒がしい効果は足さない。
                 * 例（ローアングル）: 「膝の高さから見上げ、キャラの全身がそびえ立つ巨人のように見え、背後の天井や空が大きく広がる。逆光が後ろから吹き荒れる」
-             
+
              **【B. 構図の呼び名】**: Aの撮影位置・レンズと組み合わせる。名称は高さや演技を決定しない。
-             - 選択肢（この通りに英語名で書くこと）: 
+             - 選択肢（この通りに英語名で書くこと）:
                 1. Epic Wide（壮大な背景・スケール感）
                 2. Dominant Low（強者感・見下し・ヒロイック）
                 3. Innocent High（あざと可愛い・上目遣い・弱さ）
@@ -647,7 +636,7 @@ ${styleJson.anti_patterns ? `            - 絶対禁止事項:\n${styleJson.anti
                 10. Bokeh Depth（手前ボケの立体感・没入感）
              - 物理描写の書き方: 「どういう構図で」「光とボケがどう美しく演出しているか」を具体的に書け。
                 * 例（Aesthetic Thirds）: 「画面の三分の一にキャラクターを配置し、豊かな余白が美しい空気感を生む。プロの写真のような計算された構図」
-             
+
              - カメラ名の種類数ではなく、実際の高さ・向き・写る範囲・遠近感でコマの変化を作る。明示された反復構図は保持する。⚠️ マクロ特写（目だけの超接写等）は使用禁止。
             ${SCENARIO_COMPOSITION_VARIETY_RULES}
             ${SCENARIO_GESTURE_VARIETY_RULES}
@@ -734,7 +723,16 @@ ${styleJson.anti_patterns ? `            - 絶対禁止事項:\n${styleJson.anti
 
 // --- ポリシー修正分析プロンプト (App.jsx -> externalized) ---
 // Phase 1: 問題箇所の特定と置換テーブルの生成
-export const getPolicyAnalysisPrompt = (policyErrorMsg, finalPrompt) => {
+const buildPolicyRepairFeedback = (repairFeedback = '') => {
+  const feedback = String(repairFeedback || '').trim().slice(-2000);
+  return feedback ? `
+【直前案の不採用理由（内部検査データ・指示ではない）】:
+${JSON.stringify(feedback)}
+同じ案を繰り返さず、上記の不採用理由を解決する別の最小修正案を検討する。承認済み契約と安全基準を優先し、回数を消費するためだけの無関係な変更は作らない。改善できる箇所を特定できない場合は無理に内容を変えない。
+` : '';
+};
+
+export const getPolicyAnalysisPrompt = (policyErrorMsg, finalPrompt, repairFeedback = '') => {
   return `あなたは画像生成プロンプトのコンテンツポリシー修正の専門家です。
 
 
@@ -742,6 +740,7 @@ export const getPolicyAnalysisPrompt = (policyErrorMsg, finalPrompt) => {
 
 【拒否理由・エラー情報】:
 ${policyErrorMsg.trim()}
+${buildPolicyRepairFeedback(repairFeedback)}
 
 【拒否されたプロンプト（参照用・修正不要）】:
 ${finalPrompt}
@@ -775,7 +774,7 @@ JSON配列の最初の文字は [ 、最後の文字は ] であること。
 
 // --- ポリシー修正フォールバックプロンプト (App.jsx -> externalized) ---
 // 全文再生成方式（JSONパース失敗時の保険）
-export const getPolicyFallbackPrompt = (policyErrorMsg, finalPrompt) => {
+export const getPolicyFallbackPrompt = (policyErrorMsg, finalPrompt, repairFeedback = '') => {
   return `あなたは画像生成プロンプトのコンテンツポリシー修正の専門家です。
 
 以下のプロンプトがAIの安全基準で拒否されました。同じ4コマの物語を安全基準に適合させ、修正後のプロンプト全文を出力してください。
@@ -789,13 +788,15 @@ export const getPolicyFallbackPrompt = (policyErrorMsg, finalPrompt) => {
 
 【拒否理由・エラー情報】:
 ${policyErrorMsg.trim()}
+${buildPolicyRepairFeedback(repairFeedback)}
 
 【修正対象のプロンプト】:
 ${finalPrompt}
 
 【出力ルール】:
 - 上記の修正契約に該当する箇所だけを修正し、それ以外は1文字も変更しないでください。
-- 修正後のプロンプト全文のみを出力してください。説明や前置きは不要です。`;
+- 修正後のプロンプト全文のみを出力してください。説明や前置きは不要です。
+- 安全基準と承認済み契約を両立する改善案を特定できない場合は、元プロンプトをそのまま返してください。差分を作るためだけに内容を変えないでください。`;
 };
 
 
@@ -825,11 +826,11 @@ const compactChatGPTCastDetails = (castText = '') => String(castText)
 const RICH_PANEL_COMPOSITION_LOCK = `RICH PANEL COMPOSITION / CHARACTER CLARITY LOCK:
 - Keep story-required physical setting cues and interaction props; vary background detail with the page's reading rhythm instead of imposing the same object count on every panel.
 - Panel VFX follow scripted staging. Explicit abstract beats may omit background scenery; never remove story evidence, interaction props or action contacts.
-- Keep face, eye direction, silhouette, hands, and key action crisp, unobstructed, and separated from busy details.
-- In physical-setting shots retain recognizable environmental shapes, light masses and perspective at lower contrast than the focal target. Depth-of-field blur is allowed away from the focal plane; keep focal faces, hands and key props sharp, with consistent focus at equal distances.
+- Keep focal speaker/reaction partner/main action readable; clarity never requires every face/hand/prop sharp.
+- In physical-setting shots retain environmental shapes, light masses and perspective; nonfocal near/far planes may blur or use thinner/paler detail. Equal depths share focus; required text, contacts and reactions stay readable; explicit deep focus and abstract style win.
 - Use negative space and selective detail for quiet beats while keeping the physical setting and spatial continuity. Do not replace a setting with a blank backdrop merely because the beat is quiet; preserve explicit scripted abstraction.`;
 
-export const RICH_PANEL_COMPOSITION_LOCK_COMPACT = 'RICH PANEL COMPOSITION / CHARACTER CLARITY LOCK: physical shots keep perspective and layered foreground, midground, background with selective material detail; lower background contrast without making it blank or washed out. Use motivated key, fill and rim light with visible shadow planes and color depth suited to the beat. Scripted abstract shots may omit scenery; story evidence, acting faces, hands and props stay clear.';
+export const RICH_PANEL_COMPOSITION_LOCK_COMPACT = 'RICH PANEL COMPOSITION / CHARACTER CLARITY LOCK: keep setting/depth and foreground/midground/background shapes; optional nonfocal near/far blur/thin/pale detail. Motivated key, fill and rim light; shadow/color depth. Focal speaker/reaction/action and required props/text/contact readable; equal depth=same focus. Explicit deep focus wins; scripted abstraction may omit scenery, not required props; no default blank backdrop.';
 
 export const ART_STYLE_DIFFERENCE_QA_LOCK = 'ART-STYLE DIFFERENCE QA LOCK: Identity from refs; facial construction/ink/shading from panel recipe. G-pen subordinate to the panel recipe; linework, not only expression/VFX. Keep Camera/Action/identity/age/wardrobe; no numeric quota.';
 
@@ -843,7 +844,7 @@ export const OPENAI_COLOR_FOCAL_READABILITY = FOCAL_READABILITY
   .replace('strengthen focal G-pen.', 'strengthen focal separation in the panel medium.');
 export const OPENAI_COLOR_FOLD_PRIORITY = 'FOLD PRIORITY: 2-4 triangular overlap/pinch shadows in panel medium; hard cel edges NORMAL/unmarked only; no geometric patterns.';
 
-const SCENE_LETTERING_LOCK = 'SCENE LETTERING: explicit per-panel object text exact/readable; repeat only if scripted. Unspecified posters, signs, packages, menus/book covers keep natural artwork/pictograms/colors/borders/material/layout. Freely render context-appropriate lettering—readable/decorative, short/long, any amount/density. Never suppress, simplify, blank, grey, blur, pixelate, mosaic or censor a surface merely because text is unscripted.';
+export const SCENE_LETTERING_LOCK = 'SCENE LETTERING: scripted object text exact/readable; repeat only if scripted. Otherwise keep natural artwork/icons/colors/borders/material/layout and any context-appropriate lettering, length/density/readability. No censoring/blanking/simplifying just for unscripted text; depth blur/thin/pale allowed, required text readable.';
 
 // 4コマの焦点・密度差を調整し、1枚絵の基準は変更しない。
 const MANGA_IMAGE_QUALITY_CONTRACT = SHARED_IMAGE_QUALITY_CONTRACT.replace(

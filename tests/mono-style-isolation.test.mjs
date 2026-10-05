@@ -5,13 +5,13 @@ import { readFileSync } from 'node:fs';
 import { createServer } from 'vite';
 import { FOCAL_DEPTH_HIERARCHY } from '../src/lib/shared-image-quality.js';
 import { withoutMosaicRepair } from './helpers/mosaic-isolation.mjs';
-import { restorePrePolicyContracts } from './helpers/prompt-policy-normalization.mjs';
+import { restorePrePolicyContracts, restorePreSelectionContracts } from './helpers/prompt-policy-normalization.mjs';
 
 // Retain the original isolation baseline; normalize only the authorized shared
 // focus contract, independently covered by expressive-direction.test.mjs.
 // Normalize only the authorized shared scale wording; the separate final-prompt
 // regression checks its depth/occlusion/ground-plane and stylization safeguards.
-const withoutScaleRepair = value => restorePrePolicyContracts(withoutMosaicRepair(value))
+const withoutScaleRepair = value => restorePrePolicyContracts(restorePreSelectionContracts(withoutMosaicRepair(value)))
   .replaceAll('Keep required cast once; supporting cast: lower visual emphasis, never miniature bodies; scale follows depth, occlusion and ground plane; preserve scripted size differences and chibi', 'Keep required cast once; supporting cast smaller/lower contrast when Camera/Action permits, not equal portraits')
   .replaceAll('supporting cast: lower visual emphasis, never miniature bodies; scale follows depth, occlusion and ground plane; preserve scripted size differences and chibi', 'supporting cast smaller/lower contrast')
   .replaceAll('脇役縮小禁止。遠近・遮蔽・接地に整合。指定体格差・ちび保持。', 'support smaller/lower-contrast.');
@@ -60,6 +60,19 @@ test('mono isolation covers every GEKIGA panel position, other styles, both budg
     }
   }
   assert.equal(baseline.cases.find(value => value.name === 'reference-style-exception').ending, 'SeriousDocumentary');
+});
+
+test('shared-contract normalization never masks a changed rendering recipe or user action', () => {
+  const input = baseline.cases.find(value => value.name === 'gekiga-panel-1');
+  const prompt = buildMangaPrompt({ ...baseline.options, scenario: scenarioFor(input), providerFamily: 'chatgpt', colorMode: 'color', promptMaxChars: 32000 });
+  const recipe = prompt.match(/^Style: .+$/m)?.[0];
+  const action = prompt.match(/^Action \(visual only\):.+$/m)?.[0];
+  assert.ok(recipe && action);
+  assert.ok(withoutFocusRepair(prompt).includes(recipe));
+  assert.ok(withoutFocusRepair(prompt).includes(action));
+  for (const unchanged of [recipe, action]) {
+    assert.notEqual(sha256(prompt.replace(unchanged, `${unchanged} UNAUTHORIZED CHANGE`)), sha256(prompt));
+  }
 });
 
 for (const record of baseline.records) {

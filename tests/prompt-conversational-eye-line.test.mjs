@@ -4,6 +4,13 @@ import { createServer } from 'vite';
 import { readFile } from 'node:fs/promises';
 
 let server;
+
+test('a shoulder visible in a non-rear shot does not turn a foreground actor into an OTS owner', () => {
+  const cast = '## ActorA\n- short dark hair\n## ActorB\n- long fair hair';
+  const panel = '[1コマ目]\n[Camera: 左前斜めから見上げ、左前景のActorAを腰まで捉える。左端にActorBの肩と横顔を残す。]\n状況: ActorAはActorBへ顔と目線を向ける。\nActorA「見て。」\nActorB「うん。」';
+  assert.doesNotMatch(buildPanelEyeLineRule(panel, cast), /EXPLICIT REAR CAMERA|physically behind|no front-on face/);
+  assert.match(buildPanelEyeLineRule(panel.replace('左前斜めから見上げ', 'ActorBの肩越しに見上げ'), cast), /EXPLICIT REAR CAMERA/);
+});
 let buildMangaPrompt;
 let getCameraForPanel;
 let buildPanelEyeLineRule;
@@ -283,7 +290,10 @@ test('normal multi-speaker panels keep eye-lines without imposing a shoulder vie
     assert.doesNotMatch(prompt, /far eye of every visible character fully hidden/i);
     assert.match(panel, /Camera:/);
     assert.doesNotMatch(panel, /PURE 90° SIDE-ON/);
-    assert.match(panel, /three-quarter|RIGHT-FRONT OBLIQUE/i);
+    assert.match(panel, /SCENE-DRIVEN AZIMUTH(?:.*Action.*contact.*gaze|; Camera\/Action wins)/i);
+    assert.match(prompt, /vary unspecified shots only|where direction is unspecified, vary the story-motivated/i);
+    assert.match(prompt, /Preserve Action\/contact|preserve exact hand roles, support and contacts|preserve hand contact/i);
+    assert.doesNotMatch(panel, /RIGHT-FRONT OBLIQUE|REAR THREE-QUARTER/i);
     assert.match(panel, /VIEWPOINT FREEDOM/);
     assert.doesNotMatch(panel, /VISIBLE REAR DEPTH CHECK|DEPTH ASSIGNMENT \(REQUIRED\)/);
     assert.match(panel, /EYE-LINE LOCK/);
@@ -462,7 +472,9 @@ MemberA「The loudest voice wins.」`;
     });
     const panel = prompt.match(/## Panel 1[\s\S]*?(?=## Panel 2)/)?.[0] || '';
 
-    assert.match(panel, /(?:CAST LIMIT: (?:main )?focus \[Focus\]\.|CRITICAL CAST PLACEMENT: Ensure \[Focus\] are the main focus\.)/);
+    assert.match(panel, /(?:CAST LIMIT: required cast \[Focus\][.;]|CRITICAL CAST PLACEMENT: Include \[Focus\];)/);
+    assert.match(prompt, /FOCUS PLAN:.*speaker\/reaction partner\/main action sharp/i);
+    assert.match(prompt, /preserve scripted front\/back\/left\/right, elevation, crop and lens|Preserve scripted Camera\/Action|Honor scripted front\/back\/left\/right camera side, crop and lens/i);
     assert.match(panel, /(?:FG|FG only|FOREGROUND MUST CONTAIN ONLY): \[Observer\]\./);
     assert.match(panel, /(?:BG|BG only|BACKGROUND MUST CONTAIN ONLY): \[Focus\], \[MemberA\], \[MemberB\], \[MemberC\]\./);
     assert.match(panel, /OTS CAST INSTANCE LOCK:.*\[Observer\].*(?:sole instance|one and only instance)/i);

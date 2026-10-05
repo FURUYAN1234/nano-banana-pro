@@ -50,6 +50,39 @@ const WEAK_SLOGAN_REVIEW = {
   reason_codes: [],
 };
 
+test('recent mechanism audit distinguishes repetition from an intentional or merely same-label ending', async () => {
+  const recentScenarios = [{ ending: '天丼', setup: '箱を開ける', outcome: '同じ箱がまた出る' }];
+  const comparison = { status: 'same_mechanism', matched_index: 0, evidence: '今回も箱を開け同じ箱へ戻り、名詞以外の展開が同じ。', correction: '指定された天丼のまま、受け手と帰結を今回の題材から作る。' };
+  const repeated = { ...STRONG_GAG_REVIEW, recent_repetition: comparison };
+  assert.ok(evaluateScenarioPayoffReview(repeated, { punchlineType: 'RunningGag', recentScenarios }).reasonCodes.includes('repeated_story_mechanism'));
+  for (const status of ['distinct', 'intentional_repeat']) {
+    const review = { ...repeated, recent_repetition: { ...comparison, status } };
+    assert.equal(evaluateScenarioPayoffReview(review, { punchlineType: 'RunningGag', recentScenarios }).ok, true);
+  }
+  assert.equal(evaluateScenarioPayoffReview({ ...repeated, recent_repetition: { ...comparison, matched_index: 9 } }, { recentScenarios }).reasonCodes.includes('repeated_story_mechanism'), false);
+  let calls = 0;
+  const result = await runScenarioPayoffGate({ scenario: 'CURRENT', punchlineType: 'RunningGag', recentScenarios,
+    requestReview: async prompt => {
+      assert.match(prompt, /RECENT STORY OUTCOMES/);
+      return JSON.stringify(calls++ ? { ...STRONG_GAG_REVIEW, recent_repetition: { ...comparison, status: 'distinct' } } : repeated);
+    },
+    requestRepair: async prompt => { assert.match(prompt, /同じ箱がまた出る/); return 'DISTINCT OUTCOME'; },
+  });
+  assert.equal(result.status, 'repaired');
+  assert.equal(calls, 2);
+});
+
+test('uncertain recent comparison preserves the candidate without a paid repair', async () => {
+  let repairs = 0;
+  const result = await runScenarioPayoffGate({ scenario: 'CURRENT', recentScenarios: [{ outcome: 'A' }],
+    requestReview: async () => JSON.stringify(STRONG_GAG_REVIEW),
+    requestRepair: async () => { repairs++; return 'UNWANTED'; },
+  });
+  assert.equal(repairs, 0);
+  assert.equal(result.scenario, 'CURRENT');
+  assert.match(result.warning, /recent_comparison_unverified/);
+});
+
 const BALLOON_SCENARIO = '## タイトル: 試験\n' + [1, 2, 3, 4].map(panel =>
   `[${panel}コマ目: 起]\n[Camera: 俯瞰]\nBalloonLayout: [{"speaker":"A","x":0.7,"anchor":"画面左のAの口元","route":"右上から左へ"}]\n状況: Aが札を確認する。\nA「確認するよ。」`).join('\n');
 const BALLOON_REVIEW = { ...STRONG_GAG_REVIEW, pass: false, reason_codes: ['BALLOON_LAYOUT_X_ANCHOR_CONTRADICTION'],

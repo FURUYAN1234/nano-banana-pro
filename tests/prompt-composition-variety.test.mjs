@@ -24,10 +24,11 @@ test('supporting actors retain physical scale and depth in both provider budgets
   }
 });
 
-test('unspecified rear staging never adds a head turn just to expose a face', () => {
+test('unspecified staging never assigns a rear view or a head turn just to expose a face', () => {
   for (const compact of [false, true]) {
     const rear = getPanelCompositionAssist('[Camera: 俯瞰]', 3, { compact });
-    assert.match(rear, /REAR THREE-QUARTER/);
+    assert.match(rear, /SCENE-DRIVEN AZIMUTH/);
+    assert.doesNotMatch(rear, /REAR THREE-QUARTER/);
     assert.doesNotMatch(rear, /readable turned face|keep the face readable/);
     assert.match(rear, /scripted head turn/);
     const explicit = getPanelCompositionAssist('[Camera: 正面、顔のアップ]', 3, { compact });
@@ -53,7 +54,7 @@ test('both provider prompts keep shot scale ahead of facial readability after co
   const scenario = FOUR_PANEL_SCENARIO.replace('[Camera: Over The Shoulder]', '[Camera: 引きの全身、斜め俯瞰]');
   for (const providerFamily of ['chatgpt', 'gemini']) {
     const prompt = buildMangaPrompt({ scenario, castList: CAST_LIST, providerFamily, colorMode: 'color' });
-    assert.match(prompt, /body extent.*continuous setting/);
+    assert.match(prompt, /body extent.*continuous setting|body extent\/setting show distance/);
     assert.match(prompt, providerFamily === 'chatgpt'
       ? /keep shot scale\/elevation\/camera side\/head turn/i
       : /readability never changes shot scale/i);
@@ -231,34 +232,34 @@ test('STEP2 designs continuous relational staging instead of directing every lis
   assert.doesNotMatch(prompt, /無言のリアクション役も現在の話者を見る/u);
 });
 
-test('panel composition helper preserves explicit azimuth and fills missing horizontal direction', () => {
+test('panel composition helper preserves explicit azimuth and derives missing side from the scene', () => {
   assert.match(
     getPanelCompositionAssist('[Camera: Over The Shoulder]', 1),
     /PRESERVE EXPLICIT AZIMUTH/i
   );
   assert.match(
     getPanelCompositionAssist('[Camera: ローアングル]', 2),
-    /RIGHT-FRONT OBLIQUE/i
+    /SCENE-DRIVEN AZIMUTH/i
   );
   assert.match(
     getPanelCompositionAssist('[Camera: 俯瞰]', 3),
-    /REAR THREE-QUARTER/i
+    /SCENE-DRIVEN AZIMUTH/i
   );
   assert.match(
     getPanelCompositionAssist('[Camera: ダッチアングル]', 4),
-    /DIAGONAL LEFT-FRONT/i
+    /SCENE-DRIVEN AZIMUTH/i
   );
   assert.match(
     getPanelCompositionAssist(
       '[Camera: ローアングル気味のパース — テーブル越しに人物が立ち上がる勢いと書類の動きが強調される構図。]',
       2
     ),
-    /RIGHT-FRONT OBLIQUE/i
+    /SCENE-DRIVEN AZIMUTH/i
   );
 });
 
 test('actor hand directions are not mistaken for a specified camera azimuth', () => {
-  assert.match(getPanelCompositionAssist('[Camera: 俯瞰]\n状況: SpeakerAが右手を上げる。', 2), /RIGHT-FRONT OBLIQUE/);
+  assert.match(getPanelCompositionAssist('[Camera: 俯瞰]\n状況: SpeakerAが右手を上げる。', 2), /SCENE-DRIVEN AZIMUTH/);
   assert.match(getPanelCompositionAssist('[Camera: 左前斜めから撮る]\n状況: SpeakerAが右手を上げる。', 2), /PRESERVE EXPLICIT AZIMUTH/);
 });
 
@@ -328,13 +329,13 @@ test('relative Japanese elevations project actor faces and setting together with
   assert.doesNotMatch(level, /look down|look up|below faces/);
 });
 
-test('an unnamed diagonal camera side receives a concrete azimuth while named sides stay fixed', () => {
+test('an unnamed diagonal camera side follows action geometry while named sides stay fixed', () => {
   for (const compact of [false, true]) {
     const assisted = getPanelCompositionAssist('[Camera: 低い位置から斜めに見上げる中景]', 2, { compact });
-    assert.match(assisted, /RIGHT-FRONT OBLIQUE/i);
-    assert.match(assisted, /near\/far shoulder.*setting edges/i);
+    assert.match(assisted, /SCENE-DRIVEN AZIMUTH/i);
+    assert.match(assisted, /Action.*contact.*gaze/i);
     assert.doesNotMatch(assisted, /near hand larger/i);
-    assert.match(getPanelCompositionAssist('[Camera: 斜め上から見下ろす広角]', 3, { compact }), /REAR THREE-QUARTER/i);
+    assert.match(getPanelCompositionAssist('[Camera: 斜め上から見下ろす広角]', 3, { compact }), /SCENE-DRIVEN AZIMUTH/i);
     assert.match(getPanelCompositionAssist('[Camera: 左前斜めから見上げる中景]', 2, { compact }), /PRESERVE EXPLICIT AZIMUTH/i);
     assert.match(getPanelCompositionAssist('[Camera: 正面から斜めに見上げる中景]', 2, { compact }), /PRESERVE EXPLICIT AZIMUTH/i);
     assert.match(getPanelCompositionAssist('[Camera: 斜め後ろから見る中景]', 2, { compact }), /PRESERVE EXPLICIT AZIMUTH/i);
@@ -343,7 +344,7 @@ test('an unnamed diagonal camera side receives a concrete azimuth while named si
   for (const providerFamily of ['chatgpt', 'gemini']) {
     const prompt = buildMangaPrompt({ scenario, castList: CAST_LIST, providerFamily, colorMode: 'color' });
     const panel2 = prompt.match(/## Panel 2[\s\S]*?(?=## Panel 3)/)?.[0] || '';
-    assert.match(panel2, /COMPOSITION STAGING: RIGHT-FRONT OBLIQUE/i);
+    assert.match(panel2, /COMPOSITION STAGING: SCENE-DRIVEN AZIMUTH/i);
   }
 });
 
@@ -435,7 +436,7 @@ test('both final-prompt families retain the page lock and four panel staging ass
     const prompt = buildFinalPrompt(providerFamily);
     assert.match(prompt, /MANGA CAMERA \/ POSE VARIETY LOCK/);
     assert.equal((prompt.match(/COMPOSITION STAGING:/g) || []).length, 4);
-    assert.match(prompt, /RIGHT-FRONT OBLIQUE/);
+    assert.match(prompt, /SCENE-DRIVEN AZIMUTH/);
     assert.match(prompt, /story-relevant focal form/i);
     assert.match(prompt, /BODY ACTING \/ GESTURE VARIETY LOCK/);
     assert.doesNotMatch(prompt, /NO default eye-level shot|>=3 azimuths|max 1.*front-on/i);

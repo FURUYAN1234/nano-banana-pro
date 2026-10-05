@@ -30,7 +30,7 @@ import {
   PROMPT_PROVIDER_FAMILIES,
   normalizePromptProviderFamily
 } from '../lib/prompt-assembler';
-import { addGenerationHistoryItem } from '../lib/generation-history';
+import { addGenerationHistoryItem, collectRecentScenarioOutcomes } from '../lib/generation-history';
 import { inspectImageDimensions, inspectNativeMonochromeChroma, extractMangaPanelCrops, normalizePageCandidate, formatPageLayoutStatus } from '../lib/manga-page-layout.js';
 import { generateScenario, enhanceScenarioText } from '../lib/scenario-provider';
 import { fixPolicyViolation } from '../lib/policy-fixer';
@@ -143,6 +143,7 @@ export default function useMangaWorkflow() {
   // provenance synchronous and separate so full-auto STEP 2 -> STEP 3 cannot
   // stamp the previous character-analysis model into the manga footer.
   const scenarioUsedModelRef = useRef(null);
+  const recentScenarioTextsRef = useRef([]);
   const [isFallbackUsed, setIsFallbackUsed] = useState(false);
 
   // Initialize System
@@ -840,6 +841,8 @@ export default function useMangaWorkflow() {
 
     try {
       const result = await generateScenario({
+        recentScenarios: collectRecentScenarioOutcomes([scenario, ...recentScenarioTextsRef.current,
+          ...generationHistory.map(item => item.metadataContext?.scenario)]),
         mosaicCopyrightedCharacters,
         castList,
         categories: effectiveCategories,
@@ -944,6 +947,7 @@ export default function useMangaWorkflow() {
       const locationLine = resolvedLocation ? `\nLocation: ${resolvedLocation}` : '';
       const finalScenarioText = `## タイトル: ${generatedTitle}${loglineLine}${locationLine}${visualEvidenceLine}${outfitLine}${punchlineLine}${bg360HeaderLine}${cameraWorkHeaderLine}\n\n${result.scenario} `;
       setScenario(finalScenarioText);
+      recentScenarioTextsRef.current = [finalScenarioText, ...recentScenarioTextsRef.current.filter(text => text !== finalScenarioText)].slice(0, 6);
       setMangaTitle(generatedTitle); // タイトルをstateに保存（画像ダウンロード時のファイル名に使用）
       const scenarioValidation = validateMangaScenario(finalScenarioText, castList);
       const qualityWarnings = [];
@@ -1276,6 +1280,7 @@ export default function useMangaWorkflow() {
     fullAutoAbortRef.current = true;
     invalidatePromptAssembly();
     scenarioUsedModelRef.current = null;
+    recentScenarioTextsRef.current = [];
     setIsAssembling(false);
     setIsSearching(false);
     setIsGeneratingImage(false);
@@ -1559,8 +1564,15 @@ export default function useMangaWorkflow() {
   };
 
   // --- Step 4: Image Generation ---
+  const assertImageGenerationPrompt = (prompt) => {
+    assertPromptEndingModeConsistency({ prompt, punchlineType: resolvedPunchlineTypeRef.current || punchlineType });
+    assertPrintableDialogue(prompt);
+    if (inferImageQualityMode(prompt) === 'four-panel') assertRenderOptions(prompt, { mosaicCopyrightedCharacters, showWatermarks, protectedCast: collectCastNameEntries(castList).map(entry => entry.displayName) });
+  };
+
   // [v2.79] 戻り値変更: フルオート連鎖用（true=成功, false=失敗）
   const generateImageOnce = async (skipGuard = false, overridePrompt = null, generationOptions = {}) => {
+    if (generationOptions.policyAttempt && (!allowImageQualityRepair || generationOptions.reviewOnly || qualityRetryAbortRef.current)) return false;
     setImageQualityNeedsRepair(false);
     const editablePrompt = overridePrompt || finalPrompt;
     const qualityMode = inferImageQualityMode(editablePrompt);
@@ -1586,9 +1598,7 @@ export default function useMangaWorkflow() {
     };
     if (isGeneratingImage || imageEditRunRef.current?.epoch === scenarioRunEpochRef.current || (!skipGuard && !currentPrompt)) return false;
     try {
-      assertPromptEndingModeConsistency({ prompt: currentPrompt, punchlineType: resolvedPunchlineTypeRef.current || punchlineType });
-      assertPrintableDialogue(currentPrompt);
-      if (qualityMode === 'four-panel') assertRenderOptions(currentPrompt, { mosaicCopyrightedCharacters, showWatermarks, protectedCast: collectCastNameEntries(castList).map(entry => entry.displayName) });
+      assertImageGenerationPrompt(currentPrompt);
     } catch (error) {
       showStatus(error.message);
       setGenLog(prev => [...prev, `[PROMPT VALIDATION ERROR] ${error.message}`]);
@@ -2116,14 +2126,16 @@ export default function useMangaWorkflow() {
           "[ERROR GUIDE] 【対処法】アプリ側の送信形式を修正する必要があります。通信障害として再試行しても解決しません。"
         ];
       } else if (isImagePolicyError(errMsg)) {
-        // 自動修正中は選択UIを抑制し、上限到達後だけ表示する。
+        const policyRepairEnabled = allowImageQualityRepair && !generationOptions.reviewOnly && !qualityRetryAbortRef.current;
         setPolicyErrorMsg(errMsg);
         lastPolicyErrorRef.current = errMsg; // ref経由で即時参照可能にする
-        setShowPolicyChoice(!generationOptions.suppressPolicyChoice);
+        setShowPolicyChoice(!policyRepairEnabled || !generationOptions.suppressPolicyChoice);
         guideLines = [
           "[ERROR GUIDE] 🚨 表現の一部がAIの安全基準（ポリシー）に触れたため、生成がスキップされました。",
-          `[ERROR GUIDE] 【自動修正】安全な表現への修正と画像再生成を最大${MAX_POLICY_RETRIES}回まで内部で試します。`,
-          "[ERROR GUIDE] 【手動生成】プロンプトをコピーし、公式のウェブ版チャット等に貼り付けて直接お試しください。"
+          policyRepairEnabled
+            ? `[ERROR GUIDE] 【自動修正】安全な表現への修正と画像再生成を最大${MAX_POLICY_RETRIES}回まで内部で試します。`
+            : "[ERROR GUIDE] 自動修正は無効です。この実行では追加の修正解析・画像生成を行いません。",
+          "[ERROR GUIDE] 【対処法】拒否内容を確認し、許可された表現に修正してください。"
         ];
       } else if (errMsg.includes("not found") || errMsg.includes("not supported") || errMsg.includes("404") || errMsg.includes("403") || errMsg.includes("401")) {
         // フルオートおよびエンドレスモードを停止
@@ -2164,7 +2176,14 @@ export default function useMangaWorkflow() {
 
   const runPolicyAutoRetries = async ({ initialPrompt, initialPolicyError, generationOptions = {} }) => {
     if (!initialPrompt || !initialPolicyError) return false;
+    if (!allowImageQualityRepair || generationOptions.reviewOnly || qualityRetryAbortRef.current) {
+      setShowPolicyChoice(true);
+      setGenLog(prev => [...prev, '[POLICY AUTO-FIX] 自動修正OFF・検査専用・停止指定のため、追加の修正解析・画像生成を行いません。']);
+      return false;
+    }
     const policyEpoch = scenarioRunEpochRef.current;
+    const shouldStop = () => !allowImageQualityRepair || generationOptions.reviewOnly || qualityRetryAbortRef.current
+      || policyEpoch !== scenarioRunEpochRef.current || (isFullAutoMode && fullAutoAbortRef.current);
 
     setShowPolicyChoice(false);
     setPolicyAutoRetrying(true);
@@ -2176,26 +2195,39 @@ export default function useMangaWorkflow() {
       const result = await retryImagePolicyGeneration({
         initialPrompt,
         initialPolicyError,
-        shouldStop: () => policyEpoch !== scenarioRunEpochRef.current || (isFullAutoMode && fullAutoAbortRef.current),
-        repairPrompt: async ({ prompt, policyError, attempt, maxRetries }) => {
-          if (policyEpoch !== scenarioRunEpochRef.current) return null;
+        shouldStop,
+        validatePrompt: assertImageGenerationPrompt,
+        onAttempt: ({ phase, attempt, maxRetries, reason, repairError }) => {
+          if (phase !== 'replan' || shouldStop()) return;
+          const cause = {
+            no_prompt_change: '実質的な変更なし',
+            repeated_prompt: '拒否済みの文への逆戻り',
+            invalid_repair: '必須条件との不整合',
+            no_safe_revision: '条件を保つ修正案をまだ特定できていない',
+          }[reason] || '修正案の取得失敗';
+          setGenLog(prev => [...prev, `[POLICY AUTO-FIX] 修正案を不採用（${cause}）。${repairError || ''} 画像APIへ再送せず、${attempt < maxRetries ? 'この理由を次の修正検討へ引き継ぎます。' : '今回の修正検討上限に達したため、結果をまとめます。'}`]);
+        },
+        repairPrompt: async ({ prompt, policyError, attempt, maxRetries, repairFeedback }) => {
+          if (shouldStop()) return null;
           setIsFixingPolicy(true);
           setPolicyFixLog(prev => `${prev}\n> [AUTO-FIX ${attempt}/${maxRetries}] 拒否原因を解析し、安全な表現へ修正中...`);
           setGenLog(prev => [
             ...prev,
-            `[POLICY AUTO-FIX] 🔄 自動修正 ${attempt}/${maxRetries}（この後、画像APIを再利用します）...`
+            `[POLICY AUTO-FIX] 🔄 自動修正 ${attempt}/${maxRetries}（変更内容と必須条件の検査に通った場合だけ画像APIを再利用します）...`
           ]);
           return fixPolicyViolation({
             finalPrompt: prompt,
             policyErrorMsg: policyError,
             selectedEngine,
+            repairFeedback,
+            shouldStop,
             onProgress: (msg) => {
               if (policyEpoch === scenarioRunEpochRef.current) setPolicyFixLog(prev => `${prev}\n> ${msg}`);
             },
           });
         },
         generateImage: async ({ prompt, attempt, maxRetries }) => {
-          if (policyEpoch !== scenarioRunEpochRef.current) return { success: false, policyError: '' };
+          if (shouldStop()) return { success: false, policyError: '' };
           setFinalPrompt(prompt);
           setPolicyPromptHistory(prev => prev[prev.length - 1] === prompt ? prev : [...prev, prompt]);
           setPolicyErrorMsg("");
@@ -2227,7 +2259,7 @@ export default function useMangaWorkflow() {
         setShowPolicyChoice(false);
         setGenLog(prev => [
           ...prev,
-          `[POLICY AUTO-FIX] ✅ ${result.attempts}/${MAX_POLICY_RETRIES}回目で画像生成に成功しました。`
+          `[POLICY AUTO-FIX] ✅ 修正検討${result.repairAttempts}回・画像再生成${result.attempts}回で成功しました。`
         ]);
         return true;
       }
@@ -2240,8 +2272,8 @@ export default function useMangaWorkflow() {
       setGenLog(prev => [
         ...prev,
         exhausted
-          ? `[POLICY AUTO-FIX] ⚠️ 最大${MAX_POLICY_RETRIES}回の自動修正後もポリシー拒否が続きました。`
-          : `[POLICY AUTO-FIX] ⚠️ 自動修正を停止しました（${result.reason}）。`
+          ? `[POLICY AUTO-FIX] ⚠️ 修正検討${result.repairAttempts}回（画像再生成${result.attempts}回）の上限まで検討しましたが、画像生成に至りませんでした。取得済みの画像と有効な指示文を保持します。${result.repairError || result.policyError || ''}`
+          : `[POLICY AUTO-FIX] ⚠️ 自動修正を継続できませんでした（${result.reason}）。取得済みの画像と指示文を保持します。`
       ]);
       setShowPolicyChoice(!isEndlessModeRef.current && result.reason !== 'generation_failed');
       return false;
@@ -2263,13 +2295,15 @@ export default function useMangaWorkflow() {
   const regenerateImage = async (skipGuard = false, overridePrompt = null, generationOptions = {}) => {
     const generationEpoch = scenarioRunEpochRef.current;
     const currentPrompt = overridePrompt || finalPrompt;
+    const policyRepairEnabled = allowImageQualityRepair && !generationOptions.reviewOnly;
     setPolicyPromptHistory([]);
     const success = await generateImageOnce(skipGuard, overridePrompt, {
       ...generationOptions,
-      suppressPolicyChoice: true,
+      suppressPolicyChoice: policyRepairEnabled,
     });
     if (generationEpoch !== scenarioRunEpochRef.current) return false;
     if (success || !lastPolicyErrorRef.current) return success;
+    if (!policyRepairEnabled || qualityRetryAbortRef.current) return false;
 
     return runPolicyAutoRetries({
       initialPrompt: currentPrompt,
@@ -2338,6 +2372,7 @@ export default function useMangaWorkflow() {
   const handlePolicyAutoFix = async () => {
     const errorMsg = lastPolicyErrorRef.current || policyErrorMsg;
     if (!finalPrompt || !errorMsg.trim()) return;
+    if (allowImageQualityRepair) qualityRetryAbortRef.current = false;
     return runPolicyAutoRetries({
       initialPrompt: finalPrompt,
       initialPolicyError: errorMsg,
@@ -2484,7 +2519,7 @@ export default function useMangaWorkflow() {
     await new Promise(r => setTimeout(r, 300));
 
     if (!isCurrent()) return;
-    // 手動生成と同じ共通ループで、ポリシー拒否時は最大5回まで内部修正する。
+    // 手動生成と同じ共通ループで、自動修正設定を守る。
     const step4ok = await regenerateImage(true, generatedPrompt);
     if (!isCurrent()) return;
 
@@ -2496,7 +2531,7 @@ export default function useMangaWorkflow() {
     if (!step4ok && hasPolicyError) {
       setGenLog(prev => [
         ...prev,
-        `[FULL-AUTO POLICY-FIX] ⚠️ ポリシーエラーのため自動生成を停止しました（最大${MAX_POLICY_RETRIES}回試行済み）。`,
+        '[FULL-AUTO POLICY-FIX] ⚠️ ポリシーエラーのため自動生成を停止しました。修正の実行状況は上のログを確認してください。',
         isEndlessModeRef.current
           ? "[FULL-AUTO] 次の作品に進みます..."
           : "[FULL-AUTO] ユーザーに判断を委ねます。メッセージボックスを表示します。"

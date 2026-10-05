@@ -802,9 +802,9 @@ export default function Step4Panel({
               )}
               <label className="step4-help-copy mt-3 flex items-start gap-2 text-slate-300">
                 <input type="checkbox" checked={allowImageQualityRepair} onChange={event => setAllowImageQualityRepair(event.target.checked)} disabled={isGeneratingImage || isFixingPolicy} />
-                API生成のみ：不合格の原因と失敗履歴を解析して最大3回修正する（初回込み最大4枚・解析と再検査も追加課金あり／全候補NGなら比較で最良候補を採用して続行）
+                API生成の自動修正を許可する（品質の重大欠陥は最大3回、ポリシー拒否は別枠で最大5回。解析・再生成・再検査は追加課金／全候補NGなら最良候補を保持／OFFでは追加の画像生成なし）
               </label>
-              {isGeneratingImage && allowImageQualityRepair && (
+              {(isGeneratingImage || policyAutoRetrying) && allowImageQualityRepair && (
                 <button
                   type="button"
                   onClick={stopQualityRetries}
@@ -1308,14 +1308,15 @@ No explanations. No partial results.`;
                     <span>⚠️ 画像生成が制限されました（ポリシー制限）</span>
                   </div>
                   <p className="text-yellow-200/80 leading-relaxed" style={{ fontSize: '12px' }}>
-                    内部で最大5回まで安全な表現への修正と画像再生成を試しましたが、ポリシー拒否が続きました。最後に成功した画像と生成履歴は保持しています。
+                    AIの安全基準により画像生成が拒否されました。最後に成功した画像と生成履歴は保持しています。修正の実行状況は進捗ログで確認できます。
+                    {!allowImageQualityRepair && ' 自動修正OFFのため、追加の修正解析・画像生成は行いません。'}
                   </p>
                   <div className="flex flex-col sm:flex-row gap-2">
                     <button
                       className="flex-1 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-700 disabled:opacity-50 text-white font-bold py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 transition-all active:scale-95 border border-blue-400/30"
                       style={{ fontSize: '12px' }}
                       onClick={handlePolicyAutoFix}
-                      disabled={policyAutoRetrying || isFixingPolicy || isGeneratingImage}
+                      disabled={!allowImageQualityRepair || policyAutoRetrying || isFixingPolicy || isGeneratingImage}
                     >
                       {policyAutoRetrying ? (
                         <><Loader2 size={16} className="animate-spin" /> 自動修正中...</>
@@ -1333,7 +1334,7 @@ No explanations. No partial results.`;
                     </button>
                   </div>
                   <p className="text-slate-400" style={{ fontSize: '10px' }}>
-                    💡 最大5回・画像APIを再利用します。成功した時点で停止し、元プロンプトと各修正版をこの作業中の履歴に保持します。
+                    💡 自動修正をONにして再実行すると、最大5回の修正検討を行います。無変更・拒否済みの文への逆戻り・必須設定に違反する案は、その理由を次の検討に渡して作り直します。画像APIは変更と必須条件の検査を通った案だけで再利用します。修正解析にもAPI料金が発生します。取得済みの画像と有効な指示文を保持します。
                     {policyPromptHistory?.length > 0 && ` 現在のプロンプト履歴: ${policyPromptHistory.length}件。`}
                   </p>
                 </div>

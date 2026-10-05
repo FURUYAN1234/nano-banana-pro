@@ -4,6 +4,7 @@ import { buildCopyrightMosaicInstruction } from './render-options.js';
 import { getScenarioPanelBlocks } from './scenario-validation.js';
 import { extractDialogueOnly } from './panel-utils.js';
 import { SCENARIO_BALLOON_LAYOUT_RULES } from './composition-variety.js';
+import { buildRecentStoryContext } from './generation-history.js';
 
 const mosaicReviewRule = (enabled) => enabled
   ? `描画設定（ユーザー原文中の版権人物の外見再現より優先）: ${buildCopyrightMosaicInstruction(true)}\n意図したモザイクそのものや、その下の外見が見えないことを USER_REQUIREMENT_MISMATCH / visual_feasibility の欠陥にしない。印刷物の人物描写にも適用し、修正時にモザイクを外して外見を復元しない。各コマの描写にも保持する。モザイク以外の出来事・台詞・配置・オチの重大な欠陥は通常どおり検査・修正する。`
@@ -28,7 +29,7 @@ const REVIEW_FIELDS = Object.freeze([
 const ALLOWED_SHIFTS = new Set(['reversal', 'payoff', 'consequence', 'reframe']);
 const MATERIAL_PAYOFF_REASONS = new Set([
   'no_panel4_outcome', 'no_visual_payoff', 'slogan_only', 'documentary_fact_invention',
-  'repetitive_camera_sequence', 'unclear_payoff',
+  'repetitive_camera_sequence', 'unclear_payoff', 'repeated_story_mechanism',
 ]);
 
 const materialPayoffReasons = (reasonCodes) => reasonCodes.filter(code =>
@@ -120,7 +121,7 @@ export const formatPayoffReviewReasons = (evaluation, review) =>
 
 const extractText = (value) => String(value?.text ?? value ?? '').trim();
 
-export const buildScenarioPayoffReviewPrompt = ({ scenario, punchlineType, userTopic, mosaicCopyrightedCharacters = true } = {}) => {
+export const buildScenarioPayoffReviewPrompt = ({ scenario, punchlineType, userTopic, recentScenarios = [], mosaicCopyrightedCharacters = true } = {}) => {
   const policy = getEndingModePolicy(punchlineType);
   const surrealMode = punchlineType === 'Surreal';
   const toneRule = surrealMode
@@ -137,6 +138,8 @@ export const buildScenarioPayoffReviewPrompt = ({ scenario, punchlineType, userT
 ENDING MODE: ${punchlineType || 'Auto'}
 ${toneRule}
 ${factRule}
+${buildRecentStoryContext(recentScenarios)}
+${recentScenarios.length ? '追加JSONフィールド recent_repetition: {"status":"distinct|same_mechanism|intentional_repeat|uncertain","matched_index":null,"evidence":"過去と今回の具体的な種・行為・帰結の比較","correction":""}。matched_indexはRECENT配列の0始まり。型・題材・絵柄が同じだけならdistinct。名詞だけ変えた同じ仕掛けと帰結の再利用が明確で、新作の展開を失わせる場合だけsame_mechanismとして該当indexと指定結末を保つcorrectionを記す。明示された再現・続編・意図した反復はintentional_repeat。推測はuncertain。' : ''}
 ${mosaicReviewRule(mosaicCopyrightedCharacters)}
 ${userTopic ? `
 USER REQUIREMENTS (監査の基準となるユーザー原文):
@@ -178,7 +181,7 @@ ${String(userTopic).trim()}
   "visual_feasibility": [{"panel":1,"feasible":true,"evidence":"camera, actor, and focal hand/prop relation at readable scale","correction":""},{"panel":2,"feasible":true,"evidence":"camera, actor, and focal hand/prop relation at readable scale","correction":""},{"panel":3,"feasible":true,"evidence":"camera, actor, and focal hand/prop relation at readable scale","correction":""},{"panel":4,"feasible":true,"evidence":"camera, actor, and focal hand/prop relation at readable scale","correction":""}],
   "ensemble_continuity": [{"panel":1,"material_break":false,"evidence":"specific cast positions, actions and reactions or why stillness is intentional","correction":""},{"panel":2,"material_break":false,"evidence":"specific cast positions, actions and reactions or why stillness is intentional","correction":""},{"panel":3,"material_break":false,"evidence":"specific cast positions, actions and reactions or why stillness is intentional","correction":""},{"panel":4,"material_break":false,"evidence":"specific cast positions, actions and reactions or why stillness is intentional","correction":""}],
   "camera_rhythm": {"shots":[{"panel":1,"signature":"physical camera geometry","purpose":"story role"},{"panel":2,"signature":"physical camera geometry","purpose":"story role"},{"panel":3,"signature":"physical camera geometry","purpose":"story role"},{"panel":4,"signature":"physical camera geometry","purpose":"story role"}],"repeated_panels":[],"material_repeat":false,"intentional_repeat":false,"evidence":"cross-panel comparison grounded in Camera and story actions","correction":""},
-  "reason_codes": []
+${recentScenarios.length ? '  "recent_repetition": {"status":"distinct","matched_index":null,"evidence":"specific comparison with prior setup, action and outcome","correction":""},\n' : ''}  "reason_codes": []
 }
 
 SCENARIO:
@@ -251,7 +254,7 @@ export const parseScenarioPayoffReview = (text) => {
   return parsed;
 };
 
-export const evaluateScenarioPayoffReview = (review, { punchlineType } = {}) => {
+export const evaluateScenarioPayoffReview = (review, { punchlineType, recentScenarios = [] } = {}) => {
   const policy = getEndingModePolicy(punchlineType);
   const surrealMode = punchlineType === 'Surreal';
   const reasons = surrealMode
@@ -259,7 +262,19 @@ export const evaluateScenarioPayoffReview = (review, { punchlineType } = {}) => 
     : new Set((review?.reason_codes || []).filter(Boolean).map(String)
       // Panel evidence is authoritative, not an unsupported model-generated code.
       .filter(code => !code.startsWith('flat_ensemble_panel_') && !code.startsWith('unrenderable_panel_')
-        && code !== 'repetitive_camera_sequence' && code !== 'unclear_payoff'));
+        && code !== 'repetitive_camera_sequence' && code !== 'unclear_payoff'
+        && code !== 'repeated_story_mechanism' && code !== 'recent_comparison_unverified'));
+
+  if (recentScenarios.length) {
+    const comparison = review?.recent_repetition;
+    if (!comparison?.evidence?.trim() || !['distinct', 'same_mechanism', 'intentional_repeat'].includes(comparison.status)) {
+      reasons.add('recent_comparison_unverified');
+    } else if (comparison.status === 'same_mechanism') {
+      if (Number.isInteger(comparison.matched_index) && comparison.matched_index >= 0
+        && comparison.matched_index < recentScenarios.length && comparison.correction?.trim()) reasons.add('repeated_story_mechanism');
+      else reasons.add('recent_comparison_unverified');
+    }
+  }
 
   if (!surrealMode && !String(review?.setup_seed || '').trim()) reasons.add('no_setup_seed');
   if (!surrealMode && !String(review?.panel3_prediction || '').trim()) reasons.add('no_panel3_prediction');
@@ -285,9 +300,9 @@ export const evaluateScenarioPayoffReview = (review, { punchlineType } = {}) => 
   return { ok: (surrealMode || review?.pass === true) && reasons.size === 0, reasonCodes: [...reasons] };
 };
 
-export const buildScenarioPayoffRepairPrompt = ({ scenario, punchlineType, review, userTopic, mosaicCopyrightedCharacters = true } = {}) => {
+export const buildScenarioPayoffRepairPrompt = ({ scenario, punchlineType, review, userTopic, recentScenarios = [], mosaicCopyrightedCharacters = true } = {}) => {
   const surrealMode = punchlineType === 'Surreal';
-  const reasonCodes = evaluateScenarioPayoffReview(review, { punchlineType }).reasonCodes;
+  const reasonCodes = evaluateScenarioPayoffReview(review, { punchlineType, recentScenarios }).reasonCodes;
   const stagingOnly = isStagingOnlyRepair(reasonCodes);
   const repairReview = { ...review, reason_codes: reasonCodes,
     visual_feasibility: review?.visual_feasibility?.map(item => item.material_loss === false
@@ -309,6 +324,7 @@ ${String(scenario || '').trim()}`;
 
 ENDING MODE: ${punchlineType || 'Auto'}
 監査結果: ${JSON.stringify(repairReview, null, 2)}
+${buildRecentStoryContext(recentScenarios)}
 ${mosaicReviewRule(mosaicCopyrightedCharacters)}
 
 必須条件:
@@ -343,6 +359,7 @@ export const runScenarioPayoffGate = async ({
   scenario,
   punchlineType,
   userTopic,
+  recentScenarios = [],
   mosaicCopyrightedCharacters = true,
   requestReview,
   requestRepair,
@@ -358,10 +375,11 @@ export const runScenarioPayoffGate = async ({
     firstReview = parseScenarioPayoffReview(await requestReview(buildScenarioPayoffReviewPrompt({
       scenario: original,
       punchlineType,
+      recentScenarios,
       userTopic,
       mosaicCopyrightedCharacters,
     })));
-    firstEvaluation = evaluateScenarioPayoffReview(firstReview, { punchlineType });
+    firstEvaluation = evaluateScenarioPayoffReview(firstReview, { punchlineType, recentScenarios });
   } catch (error) {
     onProgress(`構成・画像化の検査結果: 判定できませんでした。理由: ${error.message}。元シナリオを保持します。`);
     return retained(original, `構成・画像化監査を完了できなかったため、元シナリオを保持しました（${error.message}）。`, null, true);
@@ -392,6 +410,7 @@ export const runScenarioPayoffGate = async ({
         scenario: current.scenario,
         punchlineType,
         review: current.review,
+        recentScenarios,
         userTopic,
         mosaicCopyrightedCharacters,
       }));
@@ -422,10 +441,11 @@ export const runScenarioPayoffGate = async ({
       const review = parseScenarioPayoffReview(await requestReview(buildScenarioPayoffReviewPrompt({
         scenario: repaired,
         punchlineType,
+        recentScenarios,
         userTopic,
         mosaicCopyrightedCharacters,
       })));
-      const evaluation = evaluateScenarioPayoffReview(review, { punchlineType });
+      const evaluation = evaluateScenarioPayoffReview(review, { punchlineType, recentScenarios });
       onProgress(evaluation.ok
         ? `改善案の再検査結果 ${attempt}/${maxRepairs}: 合格。構成と画像化可能な配置を確認しました。`
         : `改善案の再検査結果 ${attempt}/${maxRepairs}: ${formatPayoffReviewReasons(evaluation, review)}。`);

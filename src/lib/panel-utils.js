@@ -1184,7 +1184,8 @@ const extractExplicitRearSubject = (text, castEntries) => {
   const boundedName = name => `${/^[A-Za-z0-9_]/.test(name) ? '(?<![A-Za-z0-9_])' : ''}${escapeRegex(name)}${/[A-Za-z0-9_]$/.test(name) ? '(?![A-Za-z0-9_])' : ''}`;
   // 台詞内の比喩は除外し、Camera行とト書きの明示構図を読む。
   const cameraText = (String(text || '').match(CAMERA_INSTRUCTION_LINE_RE) || []).join(' ');
-  const shoulderCamera = /肩|ショルダー|shoulder|\bOTS\b/i.test(cameraText);
+  // Visible shoulder anatomy alone does not specify a rear camera position.
+  const shoulderCamera = EXPLICIT_REAR_CAMERA_RE.test(cameraText) || /shoulder[ -](?:shot|view)|ショルダー(?:ショット|ビュー)/i.test(cameraText);
   const actionText = String(text || '').replace(CAMERA_INSTRUCTION_LINE_RE, '').replace(/[「『"][^」』"\n]*[」』"]/g, '')
     .split(/(?<=[。!?！？])|\n/u)
     .filter(clause => {
@@ -1909,8 +1910,8 @@ export const extractCastLimitRule = (fullPanelText, castList, options = {}) => {
     }
 
     return compact
-      ? `CAST LIMIT: main focus ${mainFocus}.\n${cloneWarning}${spatialConstraint}`
-      : `CRITICAL CAST PLACEMENT: Ensure ${mainFocus} are the main focus.\n${cloneWarning}${spatialConstraint}`;
+      ? `CAST LIMIT: required cast ${mainFocus}; focus follows Camera/Action.\n${cloneWarning}${spatialConstraint}`
+      : `CRITICAL CAST PLACEMENT: Include ${mainFocus}; optical focus follows Camera/Action, not cast count.\n${cloneWarning}${spatialConstraint}`;
   } else {
     // 登場キャラクターが検出されなかった場合でも、キャスト全体から除外指示を出すことは可能
     if (hasBroadGroupCue || hasCountedCastGroup) {

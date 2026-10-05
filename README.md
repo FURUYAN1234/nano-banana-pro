@@ -1,13 +1,13 @@
 # Super FURU AI 4-koma System / Super FURU AI 4コマシステム
 
-> Current source version: **v6.8.6** / 現在のソース版: **v6.8.6**
+> Current source version: **v6.8.7** / 現在のソース版: **v6.8.7**
 
 
 An experimental web application in which AI handles topic research, story structure, direction, prompt construction, image generation, and quality review for a four-panel manga. / AIが話題調査、構成、演出、プロンプト構築、画像生成、品質確認まで担当する4コマ漫画制作Webアプリです。
 
 [アプリを開く / Open the app](https://furuyan1234.github.io/nano-banana-pro/) · [全機能PDFマニュアル / Full manual](https://furuyan1234.github.io/nano-banana-pro/downloads/super-furu-ai-4koma-full-manual-2026-10-01.pdf)
 
-The full operation manual and Gemini setup guide cover v6.8.5. The unchanged OpenAI setup guide remains applicable. Current application terms are in [LICENSE](LICENSE). / 全機能マニュアルとGemini API取得ガイドはv6.8.5対応です。OpenAI API取得ガイドの接続手順は引き続き利用できます。現在のアプリ利用条件は [LICENSE](LICENSE) を参照してください。
+The full operation manual and Gemini setup guide cover v6.8.7. The unchanged OpenAI setup guide remains applicable. Current application terms are in [LICENSE](LICENSE). / 全機能マニュアルとGemini API取得ガイドはv6.8.7対応です。OpenAI API取得ガイドの接続手順は引き続き利用できます。現在のアプリ利用条件は [LICENSE](LICENSE) を参照してください。
 
 ## Application screen and output / 操作画面と生成例
 
@@ -40,6 +40,10 @@ Single-speaker balloon / 発話が一つのコマ: A lone balloon stays near its
 Balloon planning / 吹き出しの配置設計: STEP2 scenarios plan speaker positions, balloon space and tail routes together. When a layout is present, STEP3 checks speaker order, completeness and right-to-left placement before image submission. Scenarios without layout metadata are supported. Generated images still require visual review. / STEP2では人物位置・吹き出しの余白・尾の経路を一緒に設計します。配置データがある場合、STEP3で話者順・記入漏れ・右から左の配置を検証してから画像へ進みます。配置データのないシナリオも使えます。生成画像の目視確認は引き続き必要です。
 
 Explicit camera fields / 明示カメラ指定: Both `[Camera: ...]` tags and standalone `Camera:` lines take precedence over fallback shots for either provider. / 角括弧タグと独立したカメラ指定行のどちらも、既定の画角より優先します。
+
+Scene-led selection / 場面に応じた選択: STEP2 chooses art styles and endings from the story, without fixed tag quotas or character rotations. A coherent, motivated payoff takes priority over novelty. Up to six recent accepted endings from the current screen session are sent as comparison data during scenario generation and review; they are cleared by the full settings reset or reload. The same ending type, intentional repetition or an uncertain comparison alone does not trigger repair. / 絵柄・決め役・オチの型を固定配分せず、伏線と人物の動機・行動から成立する結末を優先します。同じ画面セッションの直近採用作から最大6件の結末要約を、生成・監査時に接続先AIへ比較資料として送ります。全設定リセットまたは再読込で消去されます。同じ型、意図した反復、不確かな比較だけでは修正しません。画風固定など選択モードの条件は保持します。
+
+Page and focus / 外枠とピント: Keep the four outer frame sides and corners inside the canvas with a visible margin unless full bleed is explicitly requested. Focus follows the scripted speaker, reaction or main action; nonessential foreground and background may soften or use thinner, paler detail. Required text, contacts and reactions remain readable, and explicit deep focus wins. Directional motion blur is optional for scripted movement. / 明示した断ち切りを除き、外枠の四辺・四隅と余白を残します。人数確認は全員を同じ鮮明さにする指定ではありません。話者・反応・主動作に合わせ、非重要な前後景はボケや薄描きを使えます。必要な文字・接触・反応の判読と明示した深いピントは守ります。動きがある場面では方向に沿ったモーションブラーを使えます。実画像で描画を確認してください。
 
 Shoulder-view identity / 肩越しの人物: Registered aliases resolve to one person across camera, balloon tails and cast count. Unresolved or ambiguous names are not replaced by a speaker chosen from dialogue order. Camera-side position alone does not assign the operator of a prop. Keep each actor's scripted gaze and connect tails to contours visible from the specified view. / 登録された別名は、カメラ・吹き出しの尾・人物数で同じ人物として扱います。名前を解決できない場合や別名が重複する場合、台詞順から別人へ置き換えません。カメラに近い人物を小道具の操作者と決めつけず、各人物の指定された視線と、その画角で見える輪郭への尾の接続を保ちます。
 
@@ -244,6 +248,8 @@ STEP3 now names why a proposed edit was rejected and states clearly when none wa
 
 With automatic repair OFF, STEP4's “Review the displayed image” button runs analysis without generating another image. With automatic repair ON, its label states that confirmed defects may receive paid corrections. Uncertain observations remain distinct from confirmed defects. / 自動修正OFF時のSTEP4「表示中の画像を品質再検査する」は、画像を再生成せず解析だけを行います。ON時は「再検査し、必要な箇所だけ修正する」と表示し、確認できた欠陥には追加API料金のかかる修正を行う場合があります。未確認の指摘は実画像上の根拠がある欠陥と区別します。
 
+The same OFF setting also stops automatic prompt repair and image retries after a provider policy rejection, preserving the original prompt. When ON, policy repair considers up to five revisions, separately from the three quality-repair attempts. Unchanged prompts (including whitespace-only changes), previously rejected prompts, and repairs that violate required settings are not sent to the image API or adopted in the editor: their failure reasons and short change history inform the next revision. Valid changes continue to image generation. Each revision uses one analysis request and may use one fallback analysis; image requests are counted separately. At the limit, obtained images and valid prompts remain available, with the unresolved reason shown. A changed prompt does not guarantee provider acceptance. / OFF設定はAPIの安全判定後の自動プロンプト修正・画像再試行にも適用し、元の指示文を保持します。ON時は最大5回の修正検討を行い、品質修正の最大3回とは別枠です。無変更（空白だけを含む）・拒否済み文への逆戻り・必須設定違反の案は、画像APIへの再送と編集欄への採用を見送り、不採用理由と短い変更履歴を次の検討へ渡して作り直します。変更と必須条件の検査を通った案で画像生成を続けます。各検討は解析API1回と必要時の予備解析1回を使い、画像再生成回数とは分けて表示します。解析・生成にはそれぞれ料金が発生します。上限時も取得済み画像と有効な指示文を残し、未解決の理由を表示します。文が変わっただけでAPIの受理が保証されるわけではありません。
+
 STEP3 keeps quoted article headings and document titles as scene text rather than extra dialogue. Explicit speech, including reading aloud, remains dialogue; invalid balloon counts, owners or coordinate order still stop prompt construction. After updating the app, rebuild STEP3 from the saved scenario. / STEP3は、引用された記事見出し・文書タイトルを作中文字として保持し、余分な台詞にしません。「読み上げる」などの明示発話は台詞に残し、吹き出しの件数・話者・座標順が不正なら構築を停止します。修正版へ更新後、保存済み台本からSTEP3を再実行してください。
 
 Speaker names retain bracketed aliases and titles (for example, `名前【別名】`); registered names are not discarded merely for being long. / `名前【別名】` などの括弧付き話者名を保持し、登録済みの人物名を長さだけで台詞から除外しません。
@@ -315,7 +321,7 @@ Page proportions use one A4 manga-manuscript contract: 210:297 (width:height, ap
 
 On the API path, a separate image-transcription pass that receives neither the script nor the reference images classifies every readable region before checking dialogue order. Only text inside an actual manga balloon body enters the left-to-right inventory; text printed on paper, booklets, signs, screens, boards, packages, and other in-scene surfaces is excluded even when a rectangular border surrounds it. Confirmed reversed ordering is prioritized for targeted repair, and reading-order placement is derived from the script instead of being left to the repair AI's free-form instructions. Candidate comparison also rejects any regression from a previously confirmed reading order. Image recognition can still misread the artwork, so inspect the rendered image. In STEP4, “Generate a new image with the API” (「APIで新しい画像を生成する」) always creates a new image from the final prompt. If an analysis failure or API limit ends the process early, the app shows the reason and retains the failing candidate with a warning instead of falsely marking it as passed. / APIでは、台本・参照画像を渡さない別の画像転記が、可読文字を先に分類してから台詞順を照合します。実際の漫画吹き出し内の文字だけを左右位置の一覧へ入れ、紙、冊子、看板、画面、ボード、包装など作中の物体に印刷された文字は、矩形の枠で囲まれていても吹き出しから除外します。確認できた逆順を優先して局所修正し、読順の配置指示は修正AIの自由文に任せず台本から決定します。候補比較でも既に確認できた読順の退行を採用しません。画像認識の誤読は残り得るため、実画像の確認が必要です。STEP4の「APIで新しい画像を生成する」は最終プロンプトから毎回新規画像を作ります。解析失敗やAPI上限で早期終了する場合は理由を表示し、未合格の候補を合格と偽らず警告付きで保持します。
 
-If the image API rejects a prompt under its content policy, STEP4 internally analyzes and softens the rejected wording, then retries image generation up to five times and stops on the first success. Each retry uses both the text API and image API and may incur charges. The app retains the last successful displayed image, image history, original prompt and repaired prompt sequence. Only after the internal limit is exhausted does it show controls to run another bounded cycle or switch to the provider's Web interface. / 画像APIがコンテンツポリシーで拒否した場合、STEP4は拒否表現を内部で解析して安全な言葉へ修正し、最初に成功するまで画像生成を最大5回再試行します。各試行では文章APIと画像APIを使用し、料金が発生する場合があります。最後に成功した表示画像と画像履歴、元プロンプト、各修正版の順序を保持します。内部上限まで失敗した場合だけ、もう一度上限付きで試す操作とWeb版へ切り替える操作を表示します。
+When automatic repair is enabled and the image API rejects a prompt under its content policy, STEP4 considers up to five wording revisions. Unchanged, previously rejected or contract-breaking proposals are not sent to the image API; their failure reason is passed to the next proposal. Only a changed, valid prompt is adopted and resubmitted, ending on the first successful image. Revision considerations and actual image retries are counted separately; text analysis can also incur charges. With automatic repair off, this internal revision and resend route is disabled. The app preserves the last successful image, history, original prompt and valid revisions. At the limit it offers another bounded cycle or the provider's Web route, without claiming every alternative has been exhausted. / 自動修正ONで画像APIがコンテンツポリシー拒否を返した場合、STEP4は最大5回の表現修正を検討します。無変更・拒否済みの文への逆戻り・台本契約違反の案は画像APIへ送らず、不採用理由を次の案へ渡します。有効で変更のある指示だけを採用して再送し、画像が成功すれば終了します。検討回数と実際の画像再試行回数を分け、文章解析にも料金が発生する場合があります。自動修正OFFではこの内部修正と再送を行いません。最後の成功画像・履歴・元文・有効な修正版を保持します。上限後は追加の上限付き修正またはWeb版への操作を示し、上限到達を「万策尽きた」とは扱いません。
 
 ## Prompt and image safeguards / プロンプトと画像の確認
 
@@ -395,7 +401,7 @@ The copied prompt guides panel order, cast, speaker assignment, acting, camera, 
 The app provides separate download buttons for the workflow JSON and the custom-node ZIP. Both files are needed for this route. / アプリにはワークフローJSONとカスタムノードZIPのダウンロードボタンが別々にあります。この経路では両方のファイルが必要です。
 
 - [Download workflow JSON](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261002-071924.json) / [ワークフローJSONをダウンロード](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261002-071924.json)
-- [Download custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.8.6/ComfyUI_H3_FourPanel_NonLM_20261002-071924_authfix1.zip) / [カスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.8.6/ComfyUI_H3_FourPanel_NonLM_20261002-071924_authfix1.zip)
+- [Download custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.8.7/ComfyUI_H3_FourPanel_NonLM_20261002-071924_authfix1.zip) / [カスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.8.7/ComfyUI_H3_FourPanel_NonLM_20261002-071924_authfix1.zip)
 
 Place the ZIP's `3フォルダ` under `ComfyUI/custom_nodes/` and the workflow JSON under `ComfyUI/user/default/workflows/`. Install the separate dependencies below, then restart ComfyUI. / ZIP内の`3フォルダ`を`ComfyUI/custom_nodes/`へ、ワークフローJSONを`ComfyUI/user/default/workflows/`以下へ配置します。下記の別途必要な依存関係を導入してからComfyUIを再起動します。
 
@@ -439,11 +445,14 @@ The production application is published from the `main` branch through the repos
 
 **Why are there two ComfyUI download buttons? / ComfyUIのダウンロードボタンが2つあるのはなぜですか？**  The JSON defines the workflow, while the ZIP supplies three custom-node folders and documentation; three additional runtime dependencies are installed separately. / JSONはワークフロー定義、ZIPはカスタムノード3フォルダーと導入文書です。さらに実行依存3項目を別途導入します。
 
-**Which video package should I install? / 動画化には何を入れますか？** Use the `20261002-071924` workflow JSON and matching v6.8.6 FourPanel Release asset (`authfix1` ZIP). Follow the bundled environment and validation instructions. / `20261002-071924` のワークフローJSONと対応するv6.8.6 FourPanel Releaseアセット（`authfix1` ZIP）を使い、同梱の環境要件と確認手順に従ってください。
+**Which video package should I install? / 動画化には何を入れますか？** Use the `20261002-071924` workflow JSON and matching v6.8.7 FourPanel Release asset (`authfix1` ZIP). Follow the bundled environment and validation instructions. / `20261002-071924` のワークフローJSONと対応するv6.8.7 FourPanel Releaseアセット（`authfix1` ZIP）を使い、同梱の環境要件と確認手順に従ってください。
 
 **Is this the T2V/I2V/Ref2V repository? / T2V・I2V・Ref2Vのリポジトリですか？**  No. Those workflows are maintained separately in [comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows). / いいえ。それらは別の[comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows)で管理します。
 
 ## 📋 ChangeLog
+
+### v6.8.7 (2026-10-05)
+- **[Fix & UX]** 外枠・話者の焦点・シーンに応じた絵柄と結末の選択を見直し、無効な修正案は理由を引き継いで再検討。 / Revised page containment, speaker focus and scene-led style/ending selection; invalid repair proposals are replanned with failure feedback.
 
 ### v6.8.6 (2026-10-05)
 - **[Fix & UX]** STEP2が題材に沿った明確な結末を選び、STEP3は合唱・人数・コマ別の画風とカメラ指定を保つよう改善。 / Improved topic-specific clear endings in STEP2 and preserved group dialogue, cast counts, per-panel art styles and camera direction in STEP3.

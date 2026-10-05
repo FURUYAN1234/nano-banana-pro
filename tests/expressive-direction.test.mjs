@@ -80,7 +80,7 @@ test('focal ink, sharp story cues and actual exaggerated acting survive every ou
     if (!providerFamily) {
       assert.match(prompt, /G-pen-like line hierarchy.*pressure-tapered thick-to-hairline strokes.*bold contact\/overlap accents and fine eyes, mouth and fingers/);
       assert.match(prompt, /Avoid uniform heavy outlines or black-clogged features/);
-      assert.match(prompt, /Keep story-critical reactions, visible props and required lettering sharp/);
+      assert.match(prompt, /Keep story-critical reactions, required props\/contact and lettering sharp/);
       assert.match(prompt, /lighten\/desaturate the background or deepen values behind a light silhouette/);
       assert.match(prompt, /local light\/dark separation and emotion-appropriate warm\/cool contrast/);
       assert.match(prompt, /clear overlaps or gaps near faces and hands/);
@@ -144,15 +144,15 @@ test('case-by-case near/far focus and required background text survive every pro
   }
   for (const prompt of outputs) {
     if (prompt.startsWith('[ ANTIGRAVITY EMOTIONAL CINEMA ENGINE')) {
-      assert.match(prompt, /Optional near\/far softness may separate depth planes/);
-      assert.match(prompt, /Keep story-critical reactions, visible props and required lettering sharp; honor explicit deep focus/);
+      assert.match(prompt, /Optional near\/far softness or thinner\/paler detail may separate depth planes/);
+      assert.match(prompt, /Keep story-critical reactions, required props\/contact and lettering sharp; equal depths share focus; honor explicit deep focus or abstraction/);
       assert.match(prompt, /Preserve explicit camera position, side, height, tilt, lens, crop and head turns/);
       assert.doesNotMatch(prompt, /Clean finish: crisp foreground, softer background/);
       continue;
     }
     assert.ok(prompt.includes('FOCUS PLAN:'), 'FOCUS PLAN missing from generated prompt');
     assert.match(prompt, /optional near\/far soft/);
-    assert.match(prompt, /story\/required text\/deep focus sharp/);
+    assert.match(prompt, /Required text\/contact\/reactions readable; explicit deep focus\/abstract style wins/);
     assert.match(prompt, /shot scale|Camera scale/);
     assert.doesNotMatch(prompt, /Clean finish: crisp foreground, softer background/);
   }
@@ -210,8 +210,8 @@ test('panel props and lettering cannot spill into another scene, while explicit 
   for (const providerFamily of ['chatgpt', 'gemini']) {
     for (const colorMode of ['color', 'monochrome']) {
       const prompt = buildMangaPrompt({ scenario, castList, colorMode, providerFamily, punchlineType: 'Auto', systemVersion: 'test' });
-      assert.match(prompt, /Props\/screens\/lettering stay in their own panel/);
-      assert.match(prompt, /no spill into the next scene unless explicitly scripted/);
+      assert.match(prompt, /Props\/screens\/lettering stay (?:in their own panel|in-panel)/);
+      assert.match(prompt, /no spill into the next scene unless explicitly scripted|cross-scene spill only if scripted/);
       assert.match(prompt, /breakout|breakthrough/);
       assert.match(prompt, /uncut|continuous/);
     }
@@ -259,7 +259,8 @@ test('natural Japanese camera height produces projection cues, not just enlarged
   assert.match(getPanelShotExecution('天板を浅く見下ろす近めの対面ショット'), /look down.*head\/shoulder tops/);
   const highPosition = getPanelShotExecution('高い位置から会議室右奥へ引いたワイドショット');
   assert.match(highPosition, /look down.*head\/shoulder tops/);
-  assert.match(highPosition, /physically above.*not eye-level/i);
+  assert.match(highPosition, /scripted higher viewpoint.*not eye-level/i);
+  assert.match(highPosition, /pitch strength follows script/);
   assert.match(getPanelShotExecution('床から低い斜めの引き。頭から両足先まで入れる'), /head-to-feet/);
   assert.doesNotMatch(getPanelShotExecution('アイレベルの肩越し、背景ボケ'), /look up|look down/);
   assert.doesNotMatch(getPanelShotExecution('Bokeh Depth'), /look up|look down|eye.level/);
@@ -507,7 +508,7 @@ test('lettering is planned per beat and never promoted into an all-panel reading
     .replace('SpeakerAが椅子を引く。', 'SpeakerAが台車を引く。背景に同じ掲示板の側面が見える。');
   for (const provider of ['chatgpt', 'gemini']) {
     const prompt = build(provider, input);
-    assert.match(prompt, /SCENE LETTERING:.*explicit per-panel.*freely render context-appropriate lettering.*any amount\/density|SCENE LETTERING: scripted object text exact, repeated only if scripted.*context-appropriate readable\/decorative lettering.*any amount\/density/i);
+    assert.match(prompt, /SCENE LETTERING: scripted object text exact\/readable; repeat only if scripted.*any context-appropriate lettering, length\/density\/readability/i);
     const panel1 = prompt.match(/## Panel 1[\s\S]*?(?=## Panel 2)/)[0];
     const panel2 = prompt.match(/## Panel 2[\s\S]*?(?=## Panel 3)/)[0];
     assert.match(panel1, /搬入口/);
@@ -523,8 +524,8 @@ test('visual evidence follows scripted panels without a numeric quota and style 
     const prompt = build(provider, input);
     assert.match(prompt, /VISUAL STORY EVIDENCE LOCK:/);
     assert.doesNotMatch(prompt, /at least two distinct evidence items|>=2 distinct items|across at least two panels|across >=2 panels/i);
-    assert.match(prompt, /hairstyle.*wardrobe.*recognizable|recognizable.*hairstyle.*wardrobe/i);
-    assert.match(prompt, /facial expression.*drawing style.*may vary|drawing style.*facial expression.*may vary/i);
+    assert.match(prompt, /hairstyle.*wardrobe.*recognizable|recognizable.*hairstyle.*wardrobe|same hair\/wardrobe\/glasses\/identity anchors/i);
+    assert.match(prompt, /(?:facial )?expressions?.*drawing styles?.*may vary|drawing style.*facial expression.*may vary/i);
   }
   const singleEvidence = build('chatgpt', `VisualEvidence: 掲示板\n${scenario}`);
   assert.match(singleEvidence, /VISUAL STORY EVIDENCE LOCK:/);
@@ -572,7 +573,7 @@ test('shot execution makes height and full-body framing visible while respecting
     const prompt = build(provider);
     assert.match(prompt, /SHOT EXECUTION:/);
     assert.match(prompt, /head\/shoulder tops/);
-    assert.match(prompt, /look up/);
+    assert.match(prompt, /look up|undersides.*low horizon\/upward convergence/);
   }
 });
 

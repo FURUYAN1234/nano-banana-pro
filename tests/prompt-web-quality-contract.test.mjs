@@ -104,7 +104,7 @@ test('compressed four-panel prompts retain concrete camera, acting, expression a
     assert.match(prompt, /body axis[^\n]*expression|expression[^\n]*body axis/i);
     assert.match(prompt, /motivated key[^\n]*fill[^\n]*rim/i);
     assert.match(prompt, /foreground[^\n]*midground[^\n]*background/i);
-    assert.match(prompt, /without making it blank or washed out/i);
+    assert.match(prompt, /no default blank backdrop/i);
     assert.match(prompt, /high overhead wide view/);
     assert.match(prompt, /low upward fisheye view/);
     assert.match(prompt, /rear three-quarter telephoto view/);
@@ -161,19 +161,19 @@ test('both provider prompts preserve physical settings while allowing density co
     assert.match(prompt, /story-required (?:physical )?setting cues|retain setting\/depth|keep setting\/depth/i);
     assert.match(prompt, /negative space/i);
     assert.doesNotMatch(prompt, /one fixed environmental anchor plus at least two|1 fixed anchor \+ 2 physical setting cues/i);
-    assert.match(prompt, /ABSTRACT BEAT:.*scripted.*(?:omission|omit)|setting or scripted abstraction/i);
+    assert.match(prompt, /ABSTRACT BEAT:.*scripted.*(?:omission|omit)|setting or scripted abstraction|scripted abstraction may omit scenery, not required props/i);
     assert.match(prompt, /never remove story evidence|props stay/i);
-    assert.match(prompt, /face, eye direction, silhouette, hands, and key action|story evidence, acting faces, hands and props stay clear/i);
-    assert.match(prompt, /environmental shapes[^\n]*lower contrast than the focal target|real shots (?:retain setting\/depth;|keep setting\/depth,) far blur/i);
+    assert.match(prompt, /focal speaker\/reaction partner\/main action readable|Focal speaker\/reaction\/action and required props\/text\/contact readable/i);
+    assert.match(prompt, /environmental shapes[^\n]*lower contrast than the focal target|real shots (?:retain setting\/depth;|keep setting\/depth,) far blur|keep setting\/depth and foreground\/midground\/background shapes; optional nonfocal near\/far blur\/thin\/pale|retain environmental shapes, light masses and perspective; nonfocal near\/far planes may blur or use thinner\/paler detail/i);
     assert.match(prompt, /quiet beats[^\n]*(?:reduce|lower)|peak\/quiet beat, negative space\/density|negative space; clear story\/joke, peak\/quiet, density/i);
   }
 });
 
 test('both provider prompts preserve artwork and freely allow natural incidental lettering', () => {
   for (const prompt of [buildChatGptPrompt(), buildGeminiPrompt()]) {
-    assert.match(prompt, /(?:posters?, signs?, packages?, menus?\/book covers? keep|Other surfaces:) natural artwork\/pictograms\/colors\/borders\/material\/layout/i);
-    assert.match(prompt, /never suppress, simplify, blank, grey, blur, pixelate, mosaic or censor a surface|Never suppress\/simplify\/blank\/grey\/blur\/pixelate\/mosaic\/censor surfaces/i);
-    assert.match(prompt, /freely render context-appropriate lettering.*readable\/decorative.*short\/long.*any amount\/density|context-appropriate readable\/decorative lettering, short\/long, any amount\/density/i);
+    assert.match(prompt, /(?:posters?, signs?, packages?, menus?\/book covers? keep|Other surfaces:|Otherwise keep) natural artwork\/(?:pictograms|icons)\/colors\/borders\/material\/layout/i);
+    assert.match(prompt, /never suppress, simplify, blank, grey, blur, pixelate, mosaic or censor a surface|Never suppress\/simplify\/blank\/grey\/blur\/pixelate\/mosaic\/censor (?:surfaces|for unscripted text)|No censoring\/blanking\/simplifying just for unscripted text/i);
+    assert.match(prompt, /freely render context-appropriate lettering.*readable\/decorative.*short\/long.*any amount\/density|context-appropriate readable\/decorative lettering, short\/long, any amount\/density|any context-appropriate lettering, length\/density\/readability/i);
     assert.doesNotMatch(prompt, /Action text: only scripted|include sparse|no gibberish|pseudo-lettering|unrelated text/i);
     assert.doesNotMatch(prompt, /Other surfaces unlettered|otherwise unlettered surfaces/i);
   }
@@ -206,7 +206,7 @@ test('ChatGPT Web prompt has generic quality locks for dialogue, bubbles, charac
 
   assert.match(prompt, /STRICT SCRIPT LOCK/);
   assert.match(prompt, /Top title EXACTLY "Generic Product Panic!\?"/);
-  assert.match(prompt, /KEY PROP \/ OBJECT CONSISTENCY/);
+  assert.match(prompt, /KEY PROP \/ OBJECT CONSISTENCY|PROP STATE: identity fixed; state\/holder follow script/);
   assert.match(prompt, /DIALOGUE \/ BUBBLE QA LOCK/);
   assert.match(prompt, /CHARACTER QA(?: PASS)?/);
   assert.match(prompt, /ART-STYLE DIFFERENCE QA LOCK/);

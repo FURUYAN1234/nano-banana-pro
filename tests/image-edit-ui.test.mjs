@@ -50,6 +50,25 @@ test('completed STEP4 keeps its elapsed time last even after a post-generation s
   assert.equal(html.split('STEP4終了（合計133秒）').length - 1, 1);
 });
 
+test('policy recovery UI follows the automatic-repair setting without claiming unperformed retries', () => {
+  for (const allowImageQualityRepair of [false, true]) {
+    const html = renderStep4({ isGeneratingImage: false, showPolicyChoice: true, allowImageQualityRepair });
+    const retry = html.match(/<button\b[^>]*>[^]*?もう一度自動修正して再生成する<\/button>/)?.[0];
+    assert.ok(retry);
+    const retryTag = retry.slice(retry.lastIndexOf('<button'), retry.indexOf('>', retry.lastIndexOf('<button')) + 1);
+    assert.equal(/disabled=""/.test(retryTag), !allowImageQualityRepair);
+    assert.equal(html.includes('自動修正OFFのため、追加の修正解析・画像生成は行いません。'), !allowImageQualityRepair);
+    assert.doesNotMatch(html, /内部で最大5回まで[^<]*試しました/);
+  }
+});
+
+test('policy prompt repair exposes the existing stop action before its image request', () => {
+  const html = renderStep4({ isGeneratingImage: false, isFixingPolicy: true, policyAutoRetrying: true, allowImageQualityRepair: true });
+  assert.match(html, /自動修正を停止（現在の応答後）/);
+  const manual = renderStep4({ isGeneratingImage: false, isFixingPolicy: true, policyAutoRetrying: false, allowImageQualityRepair: true });
+  assert.doesNotMatch(manual, /自動修正を停止（現在の応答後）/);
+});
+
 test('an existing image remains visible and downloadable during QA while image edits stay locked', () => {
   const html = renderStep4({ generatedImage: 'data:image/png;base64,YQ==' });
   const result = html.slice(html.lastIndexOf('<section'));

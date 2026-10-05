@@ -178,7 +178,7 @@ test('soft Web target may be exceeded to retain critical content', () => {
   assert.match(prompt, /no stock-pose substitution/);
   assert.match(prompt, /SCENE LETTERING:.*(?:explicit|scripted).*exact/);
   assert.match(prompt, /(?:per-panel|scripted) object text.*repeat(?:ed)? only if scripted/);
-  assert.match(prompt, /freely render context-appropriate lettering.*readable\/decorative.*short\/long.*any amount\/density|context-appropriate readable\/decorative lettering, short\/long, any amount\/density/i);
+  assert.match(prompt, /any context-appropriate lettering, length\/density\/readability/i);
   assert.doesNotMatch(prompt, /Action text: only scripted|include sparse|no gibberish|pseudo-lettering|unrelated text/i);
   assert.match(prompt, /OBJECT GEOMETRY LOCK/);
   assert.match(prompt, /Text follows actual cover\/spine\/page\/label face axes and perspective/);

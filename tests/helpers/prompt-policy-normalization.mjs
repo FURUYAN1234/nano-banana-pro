@@ -1,4 +1,31 @@
 import { VERTICAL_DIALOGUE_GEOMETRY } from '../../src/lib/bubble-text.js';
+import { readFileSync } from 'node:fs';
+
+// Exact inverse mappings from the reviewed pre-change commit. Never strip a
+// style recipe or normalize an unknown line: an unlisted change must fail.
+const selectionContracts = JSON.parse(readFileSync(new URL('../fixtures/selection-shared-contract-normalization.json', import.meta.url), 'utf8'));
+export const restorePreSelectionContracts = value => {
+  let result = String(value);
+  const compact = result.includes('TYPE: title ');
+  for (const contract of selectionContracts.entries) {
+    result = result.replaceAll(contract.current, compact && contract.compactPrevious || contract.previous);
+  }
+  result = result
+    .replaceAll('look down from the scripted higher viewpoint, not eye-level: head/shoulder tops, shortened torsos, upper prop faces, floor/table planes as visible', 'look down from physically above heads, not eye-level: head/shoulder tops, short torsos, upper prop faces, floor/table planes')
+    .replaceAll('; pitch strength follows script, never force steep overhead', '')
+    .replaceAll('natural occlusion allowed; keep Camera/cast, never expose hidden limbs', 'hips/knees/feet unobscured')
+    .replaceAll('Story-critical reactions/required props/lettering stay sharp; other props follow depth.', 'Story-critical reactions/visible props/lettering stay sharp.')
+    .replace(/^CAST LIMIT: required cast ([^\n]+?)(?:; focus follows Camera\/Action)?\.$/gm, 'CAST LIMIT: focus $1.')
+    .replace(/^CRITICAL CAST PLACEMENT: Include ([^\n]+?); optical focus follows Camera\/Action, not cast count\.$/gm, 'CRITICAL CAST PLACEMENT: Ensure $1 are the main focus.')
+    .replaceAll('IDENTITY CONTINUITY: same hair/wardrobe/glasses/identity anchors; expressions and panel drawing styles may vary.', 'IDENTITY CONTINUITY: keep each character recognizable through hairstyle, wardrobe, glasses and other identity anchors; facial expression and drawing style may vary with the scene without creating a new person.');
+  if (compact && !result.includes('BODY ACTING BASELINE:')) {
+    result = result.replace(/^EXPRESSIVE DIRECTION:/m, 'BODY ACTING BASELINE: allow pointing/reaching/impact/full-body exaggeration; vary silhouette; action phase/support/contact.\nEXPRESSIVE DIRECTION:');
+  }
+  if (compact && !result.includes('KEY PROP / OBJECT CONSISTENCY:')) {
+    result = result.replace(/^- Only Dialogue becomes white bubbles:/m, 'KEY PROP / OBJECT CONSISTENCY:\n- Props: preserve identity; scripted state/holder changes only.\n- Only Dialogue becomes white bubbles:');
+  }
+  return result;
+};
 
 // These older snapshots freeze art-style isolation. The user has since changed
 // the shared writing policy and required physical-cast allocation. Normalize ONLY

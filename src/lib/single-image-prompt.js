@@ -15,7 +15,7 @@ Create ONE expressive illustration from the user's preceding prompt and supplied
 - Establish one primary subject or action and at most one supporting focal cue. Lead the eye with scale, placement, gaze, diagonals, negative space, light and contrast.
 - Build meaningful foreground, midground and background from the requested setting. Keep physical location and story cues; avoid generic empty rooms, walls or gradients unless emptiness is requested.
 - Use at most one optional framing, shadow, depth or optical device when an existing physical scene cue supports it. Do not invent its source or obscure, duplicate, reflect, refract or blur important faces, hands, text or props for decoration. Otherwise retain the baseline view.
-- Optional near/far softness may separate depth planes. Keep story-critical reactions, visible props and required lettering sharp; honor explicit deep focus. Do not make every object equally sharp or detailed.
+- Optional near/far softness or thinner/paler detail may separate depth planes. Focus on the scene's speaker/reaction partner/main action. Keep story-critical reactions, required props/contact and lettering sharp; equal depths share focus; honor explicit deep focus or abstraction. Retain setting shapes; not every object equally sharp.
 
 [ 3. INK, LIGHT & COLOR ]
 - Give the focal silhouette, hair, jaw, shoulders, important hands and story props the strongest G-pen-like line hierarchy: visibly pressure-tapered thick-to-hairline strokes with bold contact/overlap accents and fine eyes, mouth and fingers. Avoid uniform heavy outlines or black-clogged features.
