@@ -1,10 +1,10 @@
 {
-  "manualVersion": "6.8.4",
-  "manualSourceSha256": "abb2a22b06035d05e9c38349fec2d64934806e1aac3dbaf339d47d888dd9f050",
+  "manualVersion": "6.8.5",
+  "manualSourceSha256": "6529e7fd32e2423e0bae242ec8a140a368b766745fc025bc41e5b420c8f9faa6",
   "manualFiles": [
     {
       "name": "gemini-api-beginner-guide-2026-10-01.pdf",
-      "sha256": "10dfafd8367caed14bee69845903cffb99c33d7ff7d5d72f94233207e9825203"
+      "sha256": "f3a38f639242a8db9c2955a6d198b8f906bbbbe1b6972211cdd3431bd7d7f6f6"
     },
     {
       "name": "openai-api-beginner-guide-2026-09-30.pdf",
@@ -12,13 +12,13 @@
     },
     {
       "name": "super-furu-ai-4koma-full-manual-2026-10-01.pdf",
-      "sha256": "e66892ba2bb9130846c1342e6d4a3b123f67ed37448155174241c58ee92352c9"
+      "sha256": "ff08789adc81df9e0b4addd0e16c627bc78c7ed0d40e9924561dad0d04a106c4"
     }
   ],
-  "readmeSha256": "310ae224a525645c0491c2fb92814d1e15cc6265c29620009d3235214639f117",
-  "sourceTree": "7127f18decc9dfc9e04e091c3f9130ffab569f39",
-  "publicTree": "417ba3978273fec17e3ee8e8749e2921f3dad05a",
-  "packageSha256": "1151e0e951cc853e7f1cb566b8ce58986d3679786b1df872029932eb9c6c6bcc",
+  "readmeSha256": "1fa136aae76b3039685c6c5bf84cfeab5c5a55b0d61c5a234a9b5f724b53b377",
+  "sourceTree": "91ec89f20879801b791602088ff19dacd0e89437",
+  "publicTree": "2c2839b7944016384f24469b5ea4edc920f4bf6e",
+  "packageSha256": "97f4aadf8d3f52d90e983b84664cf492e76d671d691371ddd5c0782b287336fd",
   "releaseAssetSha256": "341487084ffc48f14569609c36557d77b4770a052b70f2323488dc0604e6d7f0",
   "reviewedSections": [
     "Application screen and output / 操作画面と生成例",
@@ -36,6 +36,6 @@
     "📋 ChangeLog",
     "License / ライセンス"
   ],
-  "findings": "Incremental whole-body review against the verified v6.8.3 baseline. All fourteen current sections were compared by diff and current feature contracts. Unchanged provider routes, defaults, limits, licenses, workflow assets and screenshots retain prior evidence. Updated full registered-name parsing and strict distinct-person handling, protected-cast automatic mosaic exclusion with explicit-mask exception, stale-prompt rejection, and the approved 8784-character single-image send-once instructions. Current version and Release links match v6.8.4. The original 19000-character regression ceiling remains unchanged. Live OpenAI STEP3 and the authorized second Sunburst/max generation completed with seven sheets; unwanted mosaics were absent. Lettering and camera deviations and QA uncertainty remain recorded privately; no perfect-output claim. Current note body was read in IAB and the matching paragraphs identified for narrow post-release publication.",
-  "manualFindings": "Rebuilt 12-page Gemini and 32-page full manuals for v6.8.4. All 44 rendered pages reviewed in eight contact sheets, with full-size review of changed pages 13,14,24; no clipping, overlap or unreadable layout. Automated A4, text bounds, naming, privacy and links checks passed. Existing screenshots remain clearly labeled as previous screens. OpenAI 20-page guide is byte-identical to the previously reviewed baseline and its setup instructions are unchanged; prior visual evidence is reused only for that PDF. Public PDF bytes match reviewed outputs."
+  "findings": "Incremental whole-body review against the verified v6.8.4 baseline. All fourteen current README sections were compared by diff and current feature contracts; unchanged API routes, defaults, limits, licenses, workflow assets and screenshots retain prior evidence. Updated collective-speaker normalization, physical cast counting, strict layout validation and member-tail evidence QA. Current version and release/download links match v6.8.5. Real STEP3 and one Sunburst/max image completed using the unchanged user scenario; eight dialogue lines matched OCR. The approved same-image QA recheck completed and no extra image was generated. Missing member-target evidence remains unverified; anatomy and direction are not claimed perfect.",
+  "manualFindings": "Rebuilt the 12-page Gemini and 32-page full manuals for v6.8.5. All 44 rendered pages reviewed in eight contact sheets and changed full-manual pages 14 and 18 reviewed at full size. No clipping or overlap observed. Automated A4, text bounds, naming, privacy and link checks passed. Existing screenshots retain previous-screen labels. The unchanged 20-page OpenAI guide retains its prior visual review. Public PDF bytes match reviewed generated outputs."
 }
