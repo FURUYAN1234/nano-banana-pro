@@ -1,3 +1,4 @@
+import { getApiWorkSignal } from './api-work-cancellation.js';
 import { clearApiSession, getApiCredential, setApiSession } from './api-session.js';
 import { geminiSources } from './sns-explanation.js';
 import { GEMINI_TEXT_MODEL_IDS, GEMINI_VISION_MODEL_IDS } from './gemini-model-routes.js';
@@ -103,6 +104,7 @@ export const diagnoseConnection = async () => {
  * Robustly calls the Gemini API with Auto-Discovery on failure.
  */
 export const callThinkingGemini = async (prompt, images = null, systemInstruction = null, onThinkingUpdate, options = {}) => {
+    options = { ...options, signal: getApiWorkSignal(options.signal) };
     if (!getApiKey()) throw createApiError("API Key is not set.", {provider:'gemini', code:'KEY_NOT_CONFIGURED'});
     const timeoutMs = options.timeoutMs ?? GEMINI_TEXT_TIMEOUT_MS;
     const searchRequired = options.useWebSearch === true;

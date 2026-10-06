@@ -2,6 +2,17 @@ import { getScenarioPanelBlocks } from './scenario-validation.js';
 
 export const MAX_GENERATION_HISTORY_ITEMS = 10;
 
+export const getWorkflowStep = ({ castList, scenario, finalPrompt, generatedImage, promptAssemblyRun, imageSource }) => {
+  if (!castList) return 1;
+  if (!scenario) return 2;
+  if (!finalPrompt) return 3;
+  // Rebuilding the same text creates a new assembly run. Rechecking or stopping
+  // a repair does not make the already-generated source image stale.
+  const completed = Number.isInteger(imageSource?.promptAssemblyRun)
+    && imageSource.promptAssemblyRun === promptAssemblyRun && imageSource.finalPrompt === finalPrompt;
+  return generatedImage && completed ? 5 : 4;
+};
+
 // Session-only story examples, not instructions or a quota for ending labels.
 export const collectRecentScenarioOutcomes = (sources = []) => {
   const seen = new Set();

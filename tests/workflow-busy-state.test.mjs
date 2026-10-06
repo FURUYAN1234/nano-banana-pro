@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
+import { beginApiWork, cancelApiWork } from '../src/lib/api-work-cancellation.js';
 import { collectRecentScenarioOutcomes } from '../src/lib/generation-history.js';
 import { retryImagePolicyGeneration } from '../src/lib/image-policy-retry.js';
 import { assertRenderOptions, buildRenderOptionsContract } from '../src/lib/render-options.js';
@@ -27,6 +28,7 @@ function deferred() {
 
 function harness(overrides = {}) {
   const state = {
+    beginApiWork, cancelApiWork, is360Analyzing: false, isAnalyzingRef: { current: false }, analyzeThought: '',
     scenario: 'Original scenario with enough text for enhancement', castList: 'Reference cast with sufficient detail',
     originalScenario: '', scenarioThought: '', enhanceLog: '', genLog: [], finalPrompt: 'Original prompt',
     isSearching: false, isEnhancing: false, isGeneratingImage: false, isFixingPolicy: false,
@@ -96,6 +98,25 @@ for (const outcome of ['success', 'failure']) {
     assert.equal(state.scenario, 'User replacement scenario with enough text');
   });
 }
+
+test('force stop releases every STEP and full-auto/loop mode without clearing saved inputs or image', () => {
+  for (const mode of ['isAnalyzing', 'isSearching', 'isAssembling', 'isGeneratingImage', 'isFixingPolicy', 'isFullAutoMode']) {
+    const { state, bind } = harness({ [mode]: true, generatedImage: 'best image', isEndlessMode: true });
+    state.isFullAutoModeRef.current = true;
+    state.isEndlessModeRef.current = true;
+    const before = [state.castList, state.scenario, state.finalPrompt, state.generatedImage];
+    bind('stopApiProcessing')();
+    assert.deepEqual([state.castList, state.scenario, state.finalPrompt, state.generatedImage], before);
+    assert.equal(state.scenarioRunEpochRef.current, 1);
+    assert.equal(state.fullAutoAbortRef.current, true);
+    assert.equal(state.isFullAutoModeRef.current, false);
+    assert.equal(state.isEndlessModeRef.current, false);
+    for (const flag of ['isAnalyzing', 'is360Analyzing', 'isSearching', 'isAssembling', 'isGeneratingImage', 'isFixingPolicy', 'isFullAutoMode', 'isEndlessMode']) {
+      assert.equal(state[flag], false, `${mode}: ${flag}`);
+    }
+    beginApiWork();
+  }
+});
 
 test('a new STEP2 owns all busy state and stale enhancement completion cannot unlock its successor', async () => {
   const old = deferred(), current = deferred(), scenarioRequest = deferred();

@@ -1,3 +1,4 @@
+import { getApiWorkSignal } from './api-work-cancellation.js';
 /**
  * OpenAI Chat Completions API Client for Nano Banana Pro
  * v1.2.1 - Dual Engine テキスト生成モジュール
@@ -170,6 +171,7 @@ export const requestOpenAIChatCompletion = async ({modelId, messages, apiKey, ti
  *   (prompt, images, systemInstruction, onThinkingUpdate) => { text, thought, model }
  */
 export const callOpenAIText = async (prompt, images = null, systemInstruction = null, onThinkingUpdate, options = {}) => {
+    options = { ...options, signal: getApiWorkSignal(options.signal) };
     const apiKey = getOpenAIApiKey();
     if (!apiKey) throw createApiError("OpenAI APIキーが設定されていません。", {provider:'openai', code:'KEY_NOT_CONFIGURED'});
     const timeoutMs = options.timeoutMs ?? OPENAI_TEXT_TIMEOUT_MS;

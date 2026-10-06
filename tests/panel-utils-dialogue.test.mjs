@@ -14,6 +14,19 @@ let buildIdentityMatrix;
 let extractActingIdentityNotes;
 let getCameraForPanel;
 
+test('visual evidence labels remain scene instructions, not speakers or extra bubbles', () => {
+  const dialogue = { speaker: '甲', text: '駅から港まで、個別に走る案だって。' };
+  for (const label of ['VisualEvidence', 'visualevidence', '- VisualEvidence']) {
+    const source = `[1コマ目: 起]\nBalloonLayout: [{"speaker":"甲","x":0.78,"anchor":"右手前の甲の口元","route":"右上の余白から甲へ"}]\n状況: 甲が模型を指す。\n甲「${dialogue.text}」\n${label}: 模型と「技術検証」「需要予測」と書かれた計画パネル。`;
+    assert.deepEqual(extractDialogueOnly(source, '## 甲', { asEntries: true }), [dialogue], label);
+    assert.doesNotThrow(() => extractDialogueOnly(source, '## 甲', { forImagePrompt: true }), label);
+    const action = extractActionOnly(source, '## 甲');
+    assert.match(action, /技術検証/);
+    assert.match(action, /需要予測/);
+  }
+  assert.deepEqual(extractDialogueOnly('甲「VisualEvidenceの「技術検証」を確認した。」', '## 甲', { asEntries: true }), [{ speaker: '甲', text: 'VisualEvidenceの「技術検証」を確認した。' }]);
+});
+
 test('explicit offscreen continuity does not reinsert named actors into visible cast', () => {
   const cast = '## 甲\n## 乙\n## 丙\n## 丁';
   for (const compact of [true, false]) {

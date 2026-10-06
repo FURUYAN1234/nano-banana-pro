@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
+import { beginApiWork } from '../src/lib/api-work-cancellation.js';
 
 const workflow = readFileSync(new URL('../src/hooks/useMangaWorkflow.js', import.meta.url), 'utf8');
 const assembly = workflow.slice(workflow.indexOf('const assemblePrompt ='), workflow.indexOf('// [v3.04]'));
@@ -11,6 +12,7 @@ test('scenario invalidation releases STEP3 and an old review cannot unlock or ov
   let active = false;
   let output = '';
   const context = {
+    beginApiWork,
     scenarioRunEpochRef:{current:0}, promptAssemblyRunRef:{current:0}, promptAssemblyAbortRef:{current:null},
     scenario:'fixture scenario', castList:'fixture cast', collectCastNameEntries:()=>[], validateMangaScenario:()=>({ok:true}),
     setIsAssembling:value=>{active=value;}, setFinalPrompt:value=>{output=value;},
@@ -89,6 +91,7 @@ test('obsolete STEP4 timer and API callbacks leave the current generation log in
   const updates = [];
   const epoch = { current: 1 };
   const context = {
+    beginApiWork,
     Date: { now: () => now }, generationOptions: {}, qualityRunEpoch: 1, scenarioRunEpochRef: epoch,
     setInterval: fn => { tick = fn; return 1; },
     setGenLog: update => { if (deferred) updates.push(update); else log = update(log); },

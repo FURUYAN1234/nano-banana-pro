@@ -1,6 +1,46 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
+import React from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { createServer } from 'vite';
+import { getWorkflowStep } from '../src/lib/generation-history.js';
+
+test('new STEP2/STEP3 results advance the next action while repairs preserve source-image readiness', () => {
+  const ready = { castList: 'cast', scenario: 'scenario', finalPrompt: 'prompt', generatedImage: 'retained image', promptAssemblyRun: 2 };
+  const imageSource = { promptAssemblyRun: 2, finalPrompt: 'prompt' };
+  assert.equal(getWorkflowStep(ready), 4);
+  assert.equal(getWorkflowStep({ ...ready, imageSource }), 5);
+  assert.equal(getWorkflowStep({ ...ready, imageSource, promptAssemblyRun: 3 }), 4, 'same text rebuilt at STEP3 needs generation');
+  assert.equal(getWorkflowStep({ ...ready, imageSource, finalPrompt: 'edited prompt' }), 4);
+  assert.equal(getWorkflowStep({ ...ready, imageSource, genLog: ['[STOPPED] repair'] }), 5);
+  assert.equal(getWorkflowStep({ ...ready, generatedImage: null, imageSource }), 4);
+  assert.equal(getWorkflowStep({ ...ready, finalPrompt: '' }), 3);
+  assert.equal(getWorkflowStep({ ...ready, scenario: 'regenerated scenario', finalPrompt: '', imageSource }), 3);
+});
+
+test('only the next STEP4 action pulses, and neither action pulses while processing', async () => {
+  const server = await createServer({ appType: 'custom', logLevel: 'silent', server: { middlewareMode: true } });
+  try {
+    const { default: Step4Panel } = await server.ssrLoadModule('/src/components/Step4Panel.jsx');
+    const base = { finalPrompt: 'OUTPUT: Single image.', generatedImage: 'data:image/png;base64,fixture', genLog: [],
+      policyErrorMsg: '', castList: '', scenario: '', webCopyPartLengths: [], selectedEngine: 'openai' };
+    for (const currentStep of [4, 5]) {
+      for (const busy of [{}, { isGeneratingImage: true }, { isFixingPolicy: true }]) {
+        const html = renderToStaticMarkup(React.createElement(Step4Panel, { ...base, currentStep, ...busy }));
+        const buttons = [...html.matchAll(/<button\b([^>]*)>([\s\S]*?)<\/button>/g)];
+        const generate = buttons.find(([, , body]) => /APIで新しい画像を生成する|画像を生成中/.test(body));
+        const repair = buttons.find(([, , body]) => /表示中の画像を.*再検査/.test(body));
+        assert.ok(generate && repair);
+        const idle = !busy.isGeneratingImage && !busy.isFixingPolicy;
+        assert.equal(generate[1].includes('next-step-gentle-pulse'), idle && currentStep === 4);
+        assert.equal(repair[1].includes('next-step-gentle-pulse'), idle && currentStep === 5);
+      }
+    }
+  } finally {
+    await server.close();
+  }
+});
 
 test('STEP4 output stays hidden until a final prompt exists', async () => {
   const app = await readFile(new URL('../src/App.jsx', import.meta.url), 'utf8');

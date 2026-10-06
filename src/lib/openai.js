@@ -1,3 +1,4 @@
+import { getApiWorkSignal, throwIfApiWorkCancelled } from './api-work-cancellation.js';
 // ※ OpenAIの画像生成はフォールバック配列を持たず、最高品質の単一モデルを直接指定します。
 import { clearApiSession, getApiCredential, setApiSession } from './api-session.js';
 import { assertPrintableDialogue } from './bubble-text.js';
@@ -35,7 +36,7 @@ export function buildOpenAIImageRequest(prompt, {quality, size, stream = true, i
   };
 }
 
-async function generateOpenAIImageEdit(request, selectedOption, apiKey, statCallback) {
+async function generateOpenAIImageEdit(request, selectedOption, apiKey, statCallback, workSignal) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), OPENAI_IMAGE_TIMEOUT_MS);
   try {
@@ -43,7 +44,7 @@ async function generateOpenAIImageEdit(request, selectedOption, apiKey, statCall
       method: 'POST',
       headers: {'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}`},
       body: JSON.stringify(request.body),
-      signal: controller.signal,
+      signal: AbortSignal.any([controller.signal, workSignal]),
     });
     if (!response.ok) {
       const data = await response.json().catch(() => ({}));
@@ -63,6 +64,7 @@ async function generateOpenAIImageEdit(request, selectedOption, apiKey, statCall
     statCallback('[OpenAI] 参照画像を使った画像生成が完了しました。');
     return {base64Img, mimeType: 'image/png', usedModel: selectedOption.model};
   } catch (error) {
+    throwIfApiWorkCancelled(workSignal);
     if (controller.signal.aborted || error?.name === 'AbortError') {
       throw new Error(`API Time out (${OPENAI_IMAGE_TIMEOUT_SECONDS}秒経過)。画像編集の完了を確認できませんでした。`);
     }
@@ -149,6 +151,8 @@ export const readOpenAIImageStream = async (
 };
 
 export const generateImageWithOpenAI = async (prompt, statCallback, options = {}) => {
+  const workSignal = getApiWorkSignal(options.signal);
+  throwIfApiWorkCancelled(workSignal);
   const selectedOption = resolveOpenAIImageOption(options.quality);
   const quality = selectedOption.value;
   statCallback(`[OpenAI] ${selectedOption.label} にリクエストを送信中...`);
@@ -172,7 +176,7 @@ export const generateImageWithOpenAI = async (prompt, statCallback, options = {}
     imageInputs: options.imageInputs ?? [],
   });
   if (request.isEdit) {
-    return generateOpenAIImageEdit(request, selectedOption, apiKey, statCallback);
+    return generateOpenAIImageEdit(request, selectedOption, apiKey, statCallback, workSignal);
   }
 
   const controller = new AbortController();
@@ -186,7 +190,7 @@ export const generateImageWithOpenAI = async (prompt, statCallback, options = {}
       "Authorization": `Bearer ${apiKey}`
     },
     body: JSON.stringify(buildOpenAIImageRequestBody(prompt, { stream, quality, size: options.size })),
-    signal: controller.signal
+    signal: AbortSignal.any([controller.signal, workSignal])
   });
 
   try {
@@ -194,6 +198,7 @@ export const generateImageWithOpenAI = async (prompt, statCallback, options = {}
     try {
       response = await fetchImage(true);
     } catch (error) {
+      throwIfApiWorkCancelled(workSignal);
       if (controller.signal.aborted) throw error;
       if (!isBrowserStreamFetchFailure(error)) throw error;
       statCallback('[WARN] 画像ストリーム接続に失敗したため、通常応答で1回再試行します...');
@@ -223,6 +228,7 @@ export const generateImageWithOpenAI = async (prompt, statCallback, options = {}
     statCallback("[OpenAI] 画像の生成に成功しました。");
     return {base64Img, mimeType: 'image/png', usedModel: selectedOption.model};
   } catch (error) {
+    throwIfApiWorkCancelled(workSignal);
     if (controller.signal.aborted || error?.name === 'AbortError') {
       throw new Error(`API Time out (${Math.ceil(timeoutMs / 1000)}秒経過による強制切断)。画像生成の完了を確認できませんでした。`);
     }

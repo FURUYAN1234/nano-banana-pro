@@ -83,6 +83,8 @@ function App() {
     is360Analyzing,
     is360CameraWorking,
     isAborting,
+    isApiProcessing,
+    stopApiProcessing,
     isAnalyzing,
     isAssembling,
     isCastListCopied,
@@ -290,6 +292,8 @@ function App() {
         setIsEndlessMode={setIsEndlessMode}
         isEndlessModeRef={isEndlessModeRef}
         isAborting={isAborting}
+        isApiProcessing={isApiProcessing}
+        onStopApiProcessing={stopApiProcessing}
         handleFullAutoToggle={handleFullAutoToggle}
         isFullAutoMode={isFullAutoMode}
         selectedEngine={selectedEngine}

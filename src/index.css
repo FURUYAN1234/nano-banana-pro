@@ -53,6 +53,57 @@
 .sns-explanation button:disabled { opacity: .4; cursor: default; }
 .sns-explanation button:focus-visible, .sns-explanation textarea:focus-visible { outline: 2px solid #22d3ee; outline-offset: 2px; }
 
+.web-prompt-disclosure {
+  border: 1px solid #155e75;
+  border-radius: 12px;
+  background: rgba(8, 47, 73, 0.25);
+}
+
+.api-force-stop,
+.api-force-stop:disabled {
+  padding: 1px 6px;
+  border: 2px solid #dc2626;
+  border-bottom-width: 4px;
+  border-radius: 0;
+  background-color: #fed7aa;
+  color: #b91c1c;
+  font-weight: 700;
+  opacity: 1;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.api-force-stop:disabled {
+  cursor: not-allowed;
+}
+
+.api-force-stop:focus-visible {
+  outline: 2px solid #f87171;
+  outline-offset: 3px;
+}
+
+.web-prompt-disclosure-toggle {
+  padding: 12px;
+  background-color: #fed7aa;
+  color: #000;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.6;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+
+.web-prompt-disclosure-toggle:focus-visible {
+  outline: 2px solid #fb923c;
+  outline-offset: 3px;
+  border-radius: 12px;
+}
+
+.web-prompt-disclosure > div {
+  padding: 0 12px 12px;
+}
+
 .web-prompt-copy-action {
   background-color: #fef3c7;
   color: #451a03;

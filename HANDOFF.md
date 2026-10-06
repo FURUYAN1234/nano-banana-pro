@@ -1,6 +1,6 @@
-## Current: 2026-10-06 v6.8.9 公開準備
+## Current: 2026-10-06 v6.9.0 公開準備
 
-現行の作業記録は親の `PLAN.md`「Nano camera/style v6.8.9 delivery」。コマ別画材・人物投影・画面外キャストの修正と採用API画像を保持。限定検査44件、H3検査9件成功。README・PDFを候補版へ同期し、実tree監査を更新済み。正式公開・note・Facebook・X文章・フルバックアップは承認済みで、各工程の実証待ち。
+現行の作業記録は親の `PLAN.md`「Nano STEP pulse/API force stop + STEP3 parser」。全行程強制ストップ・点滅案内・Web貼付折り畳み・VisualEvidence誤抽出修正が対象。旧v6.8.9の公開・告知・バックアップは完了済み。新しい公開・note・Facebook・ここでのX文章・フルバックアップは全検証後の条件付き承認を保持。
 
 ## Previous: 2026-10-06 v6.8.8 正式デプロイ
 

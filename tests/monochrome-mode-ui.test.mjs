@@ -21,7 +21,7 @@ test('real generation boundary applies selected monochrome to edited four-panel 
   assert.ok(boundary);
   const run = values => vm.runInNewContext(
     `const editablePrompt = overridePrompt || finalPrompt;${boundary[1]}\ncurrentPrompt;`,
-    { overridePrompt: null, finalPrompt: 'Four-panel manga: GEKIGA then CHIBI.', colorMode: 'monochrome', ensureMangaColorModeContract, inferImageQualityMode, ...values }
+    { overridePrompt: null, finalPrompt: 'Four-panel manga: GEKIGA then CHIBI.', promptAssemblyRunRef: { completedRun: 1 }, colorMode: 'monochrome', ensureMangaColorModeContract, inferImageQualityMode, ...values }
   );
   const mono = run({});
   assert.equal(isMonochromePrompt(mono), true);

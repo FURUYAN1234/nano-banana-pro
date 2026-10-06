@@ -1,3 +1,4 @@
+import { getApiWorkSignal, throwIfApiWorkCancelled } from './api-work-cancellation.js';
 import { getApiKey } from "./gemini.js";
 import { createApiError } from "./api-errors.js";
 import { GEMINI_IMAGE_MODEL_IDS } from './gemini-model-routes.js';
@@ -40,6 +41,8 @@ export const buildGeminiImageGenerationConfig = ({
  * @param {Array<string>} referenceImages [v3.53 Phase3] 参照画像のbase64配列（data:プレフィックス付きまたはrawBase64）。Geminiモデル使用時にマルチモーダル入力として添付。
  */
 export const generateImageWithImagen = async (prompt, onStatusUpdate, referenceImages = [], imageOptions = {}) => {
+    const workSignal = getApiWorkSignal(imageOptions.signal);
+    throwIfApiWorkCancelled(workSignal);
     const currentApiKey = getApiKey();
     if (!currentApiKey) throw new Error("API Key is not set.");
 
@@ -90,7 +93,7 @@ export const generateImageWithImagen = async (prompt, onStatusUpdate, referenceI
                         ],
                         response_format: buildGeminiImageGenerationConfig(imageOptions)
                     }),
-                    signal: controller.signal
+                    signal: AbortSignal.any([controller.signal, workSignal])
                 });
                 data = await response.json();
 
@@ -143,7 +146,7 @@ export const generateImageWithImagen = async (prompt, onStatusUpdate, referenceI
                             personGeneration: "allow_adult" // Sometimes needed for older models, harmless if ignored
                         }
                     }),
-                    signal: controller.signal
+                    signal: AbortSignal.any([controller.signal, workSignal])
                 });
                 data = await response.json();
 
@@ -166,6 +169,7 @@ export const generateImageWithImagen = async (prompt, onStatusUpdate, referenceI
             }
 
         } catch (e) {
+            throwIfApiWorkCancelled(workSignal);
             let errorMsg = e.message;
             if (e.name === 'AbortError' || errorMsg.includes('aborted')) {
                 errorMsg = "API Time out (180秒経過による強制切断)";

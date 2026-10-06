@@ -382,6 +382,8 @@ export default function Step4Panel({
   // session flags can disagree during a hot update, so never branch on either
   // raw flag directly.
   const isOpenAIImageMode = getEffectiveEngine(selectedEngine, enableOpenAIApi) === 'openai';
+  const isChatGPTWebGuide = isOpenAIImageMode || enableChatGPTMode;
+  const WebPromptContainer = isChatGPTWebGuide ? 'details' : 'div';
   const isSeriousEnhancementMode = getEndingModePolicy(punchlineType).endingTone === 'serious';
   const displayedHistory = generationHistory.find(item => item.img === generatedImage);
   const hasFixedPageLayout = displayedHistory?.pageLayout?.applied === true;
@@ -581,7 +583,14 @@ export default function Step4Panel({
                 </div>
               )}
               
-              {(isOpenAIImageMode || enableChatGPTMode) && finalPrompt && (
+              <WebPromptContainer className={isChatGPTWebGuide ? 'web-prompt-disclosure' : 'space-y-3'}>
+                {isChatGPTWebGuide && (
+                  <summary className="web-prompt-disclosure-toggle">
+                    ChatGPTのWebでプロンプトを貼り付け（API節約可能）
+                  </summary>
+                )}
+                <div className="space-y-3">
+              {isChatGPTWebGuide && finalPrompt && (
                 <div>
                   <h3 className="web-prompt-copy-heading">ChatGPT Webへの貼り付け手順</h3>
                   <p className="text-[11px] text-cyan-200 leading-relaxed">
@@ -691,6 +700,8 @@ export default function Step4Panel({
                     )}
                 </div>
               )}
+                </div>
+              </WebPromptContainer>
             </div>
 
             <div className="relative" style={{ paddingTop: '12px' }}>
@@ -704,7 +715,7 @@ export default function Step4Panel({
                 onClick={() => regenerateImage()}
                 disabled={!finalPrompt || isGeneratingImage || isFixingPolicy}
                 aria-current={currentStep === 4 ? 'step' : undefined}
-                className={`primary-step-action primary-step-action-accent-border w-full font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg border active:scale-95 disabled:opacity-50 disabled:cursor-wait ${currentStep === 4 && !isGeneratingImage ? 'next-step-gentle-pulse' : ''}`}
+                className={`primary-step-action primary-step-action-accent-border w-full font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg border active:scale-95 disabled:opacity-50 disabled:cursor-wait ${currentStep === 4 && !isGeneratingImage && !isFixingPolicy ? 'next-step-gentle-pulse' : ''}`}
               >
                 {isGeneratingImage ? <Loader2 size={20} className="animate-spin" /> : <ImageIcon size={20} />}
                 <div className="flex flex-col items-center">
@@ -726,7 +737,7 @@ export default function Step4Panel({
                   type="button"
                   onClick={() => regenerateImage(false, null, { reviewExisting: true, reviewOnly: !allowImageQualityRepair })}
                   disabled={isGeneratingImage || isFixingPolicy}
-                  className="w-full mt-2 px-4 py-2 rounded-lg border border-blue-400/40 bg-blue-900/20 text-blue-100 text-sm font-bold disabled:opacity-50 disabled:cursor-wait"
+                  className={`w-full mt-2 px-4 py-2 rounded-lg border border-blue-400/40 bg-blue-900/20 text-blue-100 text-sm font-bold disabled:opacity-50 disabled:cursor-wait ${currentStep === 5 && !isGeneratingImage && !isFixingPolicy ? 'next-step-gentle-pulse' : ''}`}
                 >
                   {allowImageQualityRepair
                     ? '表示中の画像を再検査し、必要な箇所だけ修正する（追加API課金あり）'

@@ -1,4 +1,5 @@
 import { getImageContentHash } from '../lib/generated-image-metadata.js';
+import { beginApiWork, cancelApiWork } from '../lib/api-work-cancellation.js';
 import { useState, useRef, useEffect } from 'react';
 
 // --- Imports (paths adjusted from ./lib/ to ../lib/) ---
@@ -30,7 +31,7 @@ import {
   PROMPT_PROVIDER_FAMILIES,
   normalizePromptProviderFamily
 } from '../lib/prompt-assembler';
-import { addGenerationHistoryItem, collectRecentScenarioOutcomes } from '../lib/generation-history';
+import { addGenerationHistoryItem, collectRecentScenarioOutcomes, getWorkflowStep } from '../lib/generation-history';
 import { inspectImageDimensions, inspectNativeMonochromeChroma, extractMangaPanelCrops, normalizePageCandidate, formatPageLayoutStatus } from '../lib/manga-page-layout.js';
 import { generateScenario, enhanceScenarioText } from '../lib/scenario-provider';
 import { fixPolicyViolation } from '../lib/policy-fixer';
@@ -303,8 +304,8 @@ export default function useMangaWorkflow() {
     setScenarioThought(prev => `${prev.replace(/\n> ⏳ AI応答を待機中\.\.\..*\(\d+秒経過\)/g, '')}\n> [STEP2 TIME] ${outcome}: ${(elapsed / 1000).toFixed(3)}秒`);
   };
 
-  const invalidateScenarioRun = () => {
-    finishScenarioTiming(scenarioRunEpochRef.current, '中断（入力変更・リセット時点）');
+  const invalidateScenarioRun = (reason = '中断（入力変更・リセット時点）') => {
+    finishScenarioTiming(scenarioRunEpochRef.current, reason);
     scenarioRunEpochRef.current += 1;
     invalidatePromptAssembly();
     qualityRetryAbortRef.current = true;
@@ -467,6 +468,7 @@ export default function useMangaWorkflow() {
       return;
     }
     isAnalyzingRef.current = true;
+    beginApiWork();
     const inputEpoch = scenarioRunEpochRef.current;
     const castRevisionAtStart = castRevisionRef.current;
 
@@ -664,14 +666,17 @@ export default function useMangaWorkflow() {
       }
     } finally {
       clearInterval(thinkTimer);
-      setIsAnalyzing(false);
-      isAnalyzingRef.current = false;
+      if (inputEpoch === scenarioRunEpochRef.current) {
+        setIsAnalyzing(false);
+        isAnalyzingRef.current = false;
+      }
     }
   };
 
   // --- Step 2.5: Scenario Enhancement (v2.41) ---
   // シナリオ強化機能: 選択されたカテゴリに基づいてシナリオの演出を強化する
   const enhanceScenario = async () => {
+    beginApiWork();
     if (!scenario || scenario.length < 20) return showStatus("先にシナリオを生成してください。");
     const anySelected = enhanceExpressions || enhanceBodyLang || enhanceEffects || enhanceBackgrounds || enhanceCameraWork || enhanceDialogue || enhanceGag;
     if (!anySelected) return showStatus("少なくとも1つの強化カテゴリをONにしてください。");
@@ -780,6 +785,7 @@ export default function useMangaWorkflow() {
 
   // --- Step 2: Scenario ---
   const generateScenarioFromNews = async (categoriesOverride, inputModeOverride = null) => {
+    beginApiWork();
     if (!castList) return showStatus("先にキャラクターを解析してください。");
     if (isSearching) return;
 
@@ -1058,6 +1064,7 @@ export default function useMangaWorkflow() {
   // --- Step 3: Prompt Assembly (Super FURU v121.3) ---
   // [v2.79] 戻り値変更: フルオート連鎖用（文字列=成功, null=失敗）
   const assemblePrompt = async (skipGuard = false, overrideScenario = null, providerFamilyOverride = null) => {
+    beginApiWork();
     const promptScenarioEpoch = scenarioRunEpochRef.current;
     const currentScenario = overrideScenario || scenario;
     if (!skipGuard && (!castList || !currentScenario)) return showStatus("キャストとシナリオが必要です。");
@@ -1158,6 +1165,7 @@ export default function useMangaWorkflow() {
       assertPromptEndingModeConsistency({ prompt: reviewed.prompt, punchlineType: activePunchlineType });
       assertPrintableDialogue(reviewed.prompt);
       assertRenderOptions(reviewed.prompt, { mosaicCopyrightedCharacters, showWatermarks, protectedCast: collectCastNameEntries(castList).map(entry => entry.displayName) });
+      promptAssemblyRunRef.completedRun = assemblyRun;
       setFinalPrompt(reviewed.prompt);
       setAssembleThought(prev => prev + `\n> 出力モード: ${colorMode === 'monochrome' ? '白黒漫画原稿（墨線・白地・肌や素材と影に応じたトーン）' : 'カラー'}`);
       setAssembleThought(prev => prev + `\n> ${reviewed.warning || "AI精査完了"}`);
@@ -1481,6 +1489,7 @@ export default function useMangaWorkflow() {
       mimeType: candidate.mimeType,
       generatedAt: previous?.generatedAt,
       metadataContext: previous?.metadataContext,
+      workflowSource: previous?.workflowSource,
       fallbackOccurred: previous?.fallbackOccurred,
       qualityPass: false, selected: true,
     }));
@@ -1488,6 +1497,7 @@ export default function useMangaWorkflow() {
   };
 
   const editGeneratedImage = async (instruction) => {
+    beginApiWork();
     const epoch = scenarioRunEpochRef.current;
     if (!generatedImage || isGeneratingImage || isSearching || isAssembling || isEnhancing
       || isAnalyzing || is360CameraWorking || isFixingPolicy || isFullAutoMode
@@ -1539,6 +1549,7 @@ export default function useMangaWorkflow() {
           pageLayout: candidate.pageLayout,
           generatedAt: new Date(timestamp).toISOString(), sourceImage,
           qualityPass: false, selected: true, editInstruction: instruction.trim(),
+          workflowSource: sourceHistory?.workflowSource,
           metadataContext: {
             provider: isOpenAIEngine ? 'openai' : 'gemini', scenario: '', finalPrompt: request.prompt,
             inputImages: [{ role: 'edit_source', dataUrl: sourceImage }],
@@ -1577,8 +1588,10 @@ export default function useMangaWorkflow() {
   // [v2.79] 戻り値変更: フルオート連鎖用（true=成功, false=失敗）
   const generateImageOnce = async (skipGuard = false, overridePrompt = null, generationOptions = {}) => {
     if (generationOptions.policyAttempt && (!allowImageQualityRepair || generationOptions.reviewOnly || qualityRetryAbortRef.current)) return false;
+    beginApiWork();
     setImageQualityNeedsRepair(false);
     const editablePrompt = overridePrompt || finalPrompt;
+    const workflowSource = { promptAssemblyRun: promptAssemblyRunRef.completedRun, finalPrompt: editablePrompt };
     const qualityMode = inferImageQualityMode(editablePrompt);
     const currentPrompt = qualityMode === 'four-panel'
       ? ensureMangaColorModeContract(editablePrompt, colorMode)
@@ -1726,6 +1739,7 @@ export default function useMangaWorkflow() {
         if (!normalizedImage) throw new Error('Image response did not include usable image data.');
         const candidate = {
           base64Img: normalizedImage, mimeType: response.mimeType || 'image/png', modelId: response.usedModel,
+          workflowSource,
           metadataContext: {
             provider: isOpenAIEngine ? 'openai' : 'gemini', scenario,
             finalPrompt: metadataPrompt, inputImages: metadataInputImages, settings: metadataSettings,
@@ -1910,6 +1924,7 @@ export default function useMangaWorkflow() {
           originalImage: retainedHistory?.originalImage,
           pageLayout: retainedHistory?.pageLayout,
           metadataContext: retainedHistory?.metadataContext,
+          workflowSource: retainedHistory?.workflowSource,
         }
         : await generateImageCandidate(currentPrompt);
       if (qualityRunEpoch !== scenarioRunEpochRef.current) return false;
@@ -1929,6 +1944,7 @@ export default function useMangaWorkflow() {
           originalImage: originalCandidate.originalImage,
           pageLayout: originalCandidate.pageLayout,
           metadataContext: originalCandidate.metadataContext,
+          workflowSource: originalCandidate.workflowSource,
           qualityPass: false, selected: true,
         }));
       }
@@ -2048,6 +2064,7 @@ export default function useMangaWorkflow() {
           originalImage: qualityOutcome.candidate.originalImage,
           pageLayout: qualityOutcome.candidate.pageLayout,
           metadataContext: qualityOutcome.candidate.metadataContext,
+          workflowSource: qualityOutcome.candidate.workflowSource,
           fallbackOccurred: Boolean(qualityOutcome.candidate.modelId
             && !qualityOutcome.candidate.modelId.startsWith('gemini-3')
             && !qualityOutcome.candidate.modelId.startsWith('gpt-')),
@@ -2320,6 +2337,7 @@ export default function useMangaWorkflow() {
   // Phase 1: AIが「問題箇所 → 安全な置換」のJSONテーブルを出力
   // Phase 2: そのテーブルを機械的に元プロンプトに適用（全文再出力不要）
   const regenerateSafePrompt = async () => {
+    beginApiWork();
     if (!finalPrompt || !policyErrorMsg.trim()) return;
     const policyEpoch = scenarioRunEpochRef.current;
     setIsFixingPolicy(true);
@@ -2374,6 +2392,7 @@ export default function useMangaWorkflow() {
 
   // 上限到達後に利用者がもう一度試す場合も、同じ最大5回の内部ループを使う。
   const handlePolicyAutoFix = async () => {
+    beginApiWork();
     const errorMsg = lastPolicyErrorRef.current || policyErrorMsg;
     if (!finalPrompt || !errorMsg.trim()) return;
     if (allowImageQualityRepair) qualityRetryAbortRef.current = false;
@@ -2609,24 +2628,9 @@ export default function useMangaWorkflow() {
     const handleFullAutoToggle = async () => {
     scenarioRunEpochRef.fullAutoRun = (scenarioRunEpochRef.fullAutoRun || 0) + 1;
     if (isFullAutoMode) {
-      // 実行中 or 武装中 → 中断/解除
-      fullAutoAbortRef.current = true;
-      invalidateScenarioRun();
-      invalidatePromptAssembly();
-      
-      // [v4.2.7] 中断時にAPI通信の完了を待たず、即座にUIのローディング表示を消去して操作可能に戻す
-      setIsSearching(false);
-      setIsAssembling(false);
-      setIsGeneratingImage(false);
-      setIsFixingPolicy(false);
-      setIs360CameraWorking(false);
-      
-      setIsFullAutoMode(false);
-      setFullAutoStep(0);
-      setIsAborting(false);
-      showStatus("⏹ フルオートを中断しました。");
+      stopApiProcessing();
       return;
-      }
+    }
 
       fullAutoAbortRef.current = false;
     setIsAborting(false);
@@ -2641,12 +2645,21 @@ export default function useMangaWorkflow() {
     }
   };
 
-  // フルオート中断
-  // eslint-disable-next-line no-unused-vars
-  const abortFullAuto = () => {
+  // Manual STEP actions and full-auto share the same stop boundary.
+  const stopApiProcessing = () => {
+    cancelApiWork();
     fullAutoAbortRef.current = true;
-    invalidateScenarioRun();
-    invalidatePromptAssembly();
+    isFullAutoModeRef.current = false;
+    isEndlessModeRef.current = false;
+    scenarioRunEpochRef.fullAutoRun = (scenarioRunEpochRef.fullAutoRun || 0) + 1;
+    invalidateScenarioRun('強制停止');
+    if (isAnalyzing || is360Analyzing) setAnalyzeThought(prev => `${prev}\n> ⏹ 強制停止しました。取得済みデータを保持します。`);
+    if (isAssembling) setAssembleThought(prev => `${prev}\n> ⏹ 強制停止しました。`);
+    if (isGeneratingImage || isFixingPolicy || policyAutoRetrying) setGenLog(prev => [...prev, '[STOPPED] 強制停止しました。取得済み画像を保持します。']);
+    setIsAnalyzing(false);
+    isAnalyzingRef.current = false;
+    setIs360Analyzing(false);
+    setIsEndlessMode(false);
     
     // [v4.2.7] 中断時に即座にUIのローディング状態を解除
     setIsSearching(false);
@@ -2658,15 +2671,15 @@ export default function useMangaWorkflow() {
     setIsFullAutoMode(false);
     setFullAutoStep(0);
     setIsAborting(false);
-    showStatus("⏹ フルオートを中断しました。");
+    showStatus("⏹ API処理を強制停止しました。取得済みの台本・画像は残しています。");
   };
 
   // Determine Current Step
-  const currentStep = (!castList || castList.length < 1) ? 1
-    : (!scenario || scenario.length < 1) ? 2
-      : (!finalPrompt) ? 3
-        : (!generatedImage) ? 4
-          : 5;
+  const currentStep = getWorkflowStep({ castList, scenario, finalPrompt, generatedImage,
+    promptAssemblyRun: promptAssemblyRunRef.completedRun,
+    imageSource: generationHistory.find(item => item.img === generatedImage)?.workflowSource });
+  const isApiProcessing = isAnalyzing || is360Analyzing || isSearching || isEnhancing || isAssembling
+    || isGeneratingImage || isFixingPolicy || is360CameraWorking || policyAutoRetrying || isFullAutoMode;
 
   // --- Return all 113 variables needed by JSX ---
   return {
@@ -2723,6 +2736,8 @@ export default function useMangaWorkflow() {
     is360Analyzing,
     is360CameraWorking,
     isAborting,
+    isApiProcessing,
+    stopApiProcessing,
     isAnalyzing,
     isAssembling,
     isCastListCopied,

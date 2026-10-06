@@ -5,6 +5,7 @@ import vm from 'node:vm';
 import { buildImageEditRequest, IMAGE_EDIT_INSTRUCTION_MAX_CHARS } from '../src/lib/image-edit.js';
 import { OPENAI_IMAGE_PROMPT_MAX_CHARS } from '../src/lib/image-prompt-budget.js';
 import { formatPageLayoutStatus } from '../src/lib/manga-page-layout.js';
+import { beginApiWork } from '../src/lib/api-work-cancellation.js';
 
 const workflow = readFileSync(new URL('../src/hooks/useMangaWorkflow.js', import.meta.url), 'utf8');
 const source = 'data:image/png;base64,c291cmNl';
@@ -47,6 +48,7 @@ function setup(overrides = {}) {
   const calls = [];
   const normalizations = [];
   const context = {
+    beginApiWork,
     generatedImage: source, generationHistory: history, isGeneratingImage: false,
     isSearching: false, isAssembling: false, isEnhancing: false, isFullAutoMode: false,
     isFixingPolicy: false, isAnalyzing: false, is360CameraWorking: false,

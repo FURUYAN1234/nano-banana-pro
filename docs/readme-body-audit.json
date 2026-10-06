@@ -1,10 +1,10 @@
 {
-  "manualVersion": "6.8.9",
-  "manualSourceSha256": "b3fcb3062057ba3dee567dcb47976923b8931399259648ebf4fa8bd4123d4964",
+  "manualVersion": "6.9.0",
+  "manualSourceSha256": "924ab8eb594dafefec6f993171dde01aa3cacfe1f2ef0922f5ed0f75626c7684",
   "manualFiles": [
     {
       "name": "gemini-api-beginner-guide-2026-10-01.pdf",
-      "sha256": "16888557fd0a43f02660cbcc1a3125d3f350444ecf208479f64c5aa19d4f7a1a"
+      "sha256": "e724e730960321038dc6eba1ee2afaee0818de8343f44ad8100cf8eb580845a9"
     },
     {
       "name": "openai-api-beginner-guide-2026-09-30.pdf",
@@ -12,13 +12,13 @@
     },
     {
       "name": "super-furu-ai-4koma-full-manual-2026-10-01.pdf",
-      "sha256": "03fea137fec99d65f300150ee46e3bac28230e1257d9ac468e1d3f0cdc24e439"
+      "sha256": "bc521772001869b4e558dd0b39ade58c9485b10e641632bfd2f43ea720dbde66"
     }
   ],
-  "readmeSha256": "d46fc23c55a4f6b0e63f603b3370a5c10dc44f36e0e77d5ccb66ef761120332f",
-  "sourceTree": "3f77dbd3a0922d3c491cb5f4b008ec92a2167f4b",
-  "publicTree": "d014197d22ada8764948d3e3f9d45aa002d124c0",
-  "packageSha256": "6a64a31f48ee69a9d596731194aee093ec70fefea6a967add333859842516f2e",
+  "readmeSha256": "a40b5b1fa231f4ee033b06f77b1bec774c9ea4bc7fe77e225de3fac63979fcb9",
+  "sourceTree": "73b1b742c21b1ddf2b76ad30b22bfc05c118ed7b",
+  "publicTree": "68a26dd64709d1b91c5ea32d147c516f98232f18",
+  "packageSha256": "19353b65a9c18530194e85ca2c7b15cf5edf8a9c7d57b5a38359765d98f682d8",
   "releaseAssetSha256": "9e41886be6afa0ebfad6d244ecf53f37260a92f73b30309319029cc87e1ddb4e",
   "reviewedSections": [
     "Application screen and output / 操作画面と生成例",
@@ -36,6 +36,6 @@
     "📋 ChangeLog",
     "License / ライセンス"
   ],
-  "findings": "Reviewed all fourteen README sections against v6.8.9 source and distribution. Current version and manuals, six scene-selected styles, actor camera projection, pale watercolor across all panel objects, opaque color exceptions and post-chibi anatomy reset are synchronized. Offscreen continuity actors are excluded from physical counts. Provider and setup routes, saving, privacy, licenses and QA limitations were checked and retained. H3 20261005233427 authfix1 workflow and ZIP, thirty nodes, six model components and memory-only credentials match distribution checks. Current release links use v6.8.9; fifteen history entries retained. Accepted API comparisons show panel style changes but do not establish universal camera/quality success. No live ComfyUI execution is claimed.",
-  "manualFindings": "Rebuilt the twelve-page Gemini guide and thirty-two-page full manual for v6.8.9. All forty-four rendered pages were visually reviewed; changed full-manual page28 was additionally reviewed at full resolution. No clipping, missing glyphs or overlaps observed. Text bounds, A4 dimensions, links and privacy scans passed. Copied reviewed PDFs to public/downloads. The unchanged twenty-page OpenAI guide retains previously reviewed SHA256 b732f0f844983098f1f89ffcc52883c18131b315f47e6092a9b62950971b873e. H3 documentation matches current distribution."
+  "findings": "Reviewed all fourteen README sections against v6.9.0 source and distribution. Synchronized initially collapsed ChatGPT Web guidance, unchanged Gemini route, fixed rectangular orange/red Force Stop, next-step and repair pulses, cancellation data retention and billing limits. VisualEvidence sign quotations remain visual action with strict balloon validation intact. Provider/model routes, six media and camera constraints, metadata saving, H3 latest authfix1 package and memory-only credentials, privacy/licenses and historical entries remain applicable. Current version, manual links and H3 Release asset links target v6.9.0. Real STEP1–4, repair, full-auto and loop cancellation and ropeway STEP3/image evidence were inspected; image QA retains existing unverified evidence and no universal quality guarantee is claimed.",
+  "manualFindings": "Rebuilt twelve-page Gemini and thirty-two-page full manuals for v6.9.0. Reviewed all forty-four rendered pages, then changed full-manual pages3,14,15,22 at full resolution, including the actual current Force Stop screenshot. No missing glyphs, clipping or overlap observed; executable A4/text-bound/link/privacy checks passed. Reviewed PDFs copied to public/downloads. Unchanged twenty-page OpenAI guide retains previously reviewed SHA256 b732f0f844983098f1f89ffcc52883c18131b315f47e6092a9b62950971b873e. Latest H3 documentation and distribution are unchanged."
 }

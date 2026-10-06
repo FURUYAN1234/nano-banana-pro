@@ -1,4 +1,5 @@
 import { callAI } from './ai-provider';
+import { getApiWorkSignal, throwIfApiWorkCancelled } from './api-work-cancellation.js';
 import {
   splitSnsExplanation,
   buildSnsExplanation,
@@ -338,8 +339,9 @@ export async function generateScenario({
     const urls = manualTopic.match(urlRegex);
     if (urls && urls.length > 0) {
       onProgress(`手動入力内にURLを検出: ${urls[0]}\n> プロキシ経由でコンテンツを取得中...`);
+      const workSignal = getApiWorkSignal();
       try {
-        const response = await fetch(`https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(urls[0])}`);
+        const response = await fetch(`https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(urls[0])}`, { signal: workSignal });
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const html = await response.text();
 
@@ -370,6 +372,7 @@ export async function generateScenario({
         (指示): 上記はユーザーが入力したURL（ ${urls[0]} ）から直接抽出した本文テキストである。この内容を「最も重要な一次情報ソース」として扱い、内容を要約・反映させた上でシナリオを作成せよ。
         `;
       } catch (fetchErr) {
+        throwIfApiWorkCancelled(workSignal);
         console.error("URL Fetch Error: ", fetchErr);
         onProgress(`警告: URLコンテンツの取得に失敗しました (${fetchErr.message})。URLの内容は使用せず、ユーザー入力の本文だけでシナリオを作成します。`);
       }

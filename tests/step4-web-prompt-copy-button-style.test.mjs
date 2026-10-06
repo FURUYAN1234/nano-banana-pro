@@ -2,6 +2,15 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
+test('Web disclosure uses the requested pale orange button and black text', async () => {
+  const css = await readFile(new URL('../src/index.css', import.meta.url), 'utf8');
+  const rule = css.match(/\.web-prompt-disclosure-toggle\s*\{([^}]+)\}/)?.[1];
+  assert.ok(rule);
+  assert.match(rule, /background-color: #fed7aa;/);
+  assert.match(rule, /color: #000;/);
+  assert.match(css, /\.web-prompt-disclosure-toggle:focus-visible\s*\{/);
+});
+
 test('the STEP 3 web-prompt copy button uses a pale-yellow face instead of white', async () => {
   const [source, css] = await Promise.all([
     readFile(new URL('../src/components/Step4Panel.jsx', import.meta.url), 'utf8'),

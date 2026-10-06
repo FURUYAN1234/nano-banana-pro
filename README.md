@@ -1,13 +1,13 @@
 # Super FURU AI 4-koma System / Super FURU AI 4コマシステム
 
-> Current source version: **v6.8.9** / 現在のソース版: **v6.8.9**
+> Current source version: **v6.9.0** / 現在のソース版: **v6.9.0**
 
 
 An experimental web application in which AI handles topic research, story structure, direction, prompt construction, image generation, and quality review for a four-panel manga. / AIが話題調査、構成、演出、プロンプト構築、画像生成、品質確認まで担当する4コマ漫画制作Webアプリです。
 
 [アプリを開く / Open the app](https://furuyan1234.github.io/nano-banana-pro/) · [全機能PDFマニュアル / Full manual](https://furuyan1234.github.io/nano-banana-pro/downloads/super-furu-ai-4koma-full-manual-2026-10-01.pdf)
 
-The full operation manual and Gemini setup guide cover v6.8.9. The unchanged OpenAI setup guide remains applicable. Current application terms are in [LICENSE](LICENSE). / 全機能マニュアルとGemini API取得ガイドはv6.8.9対応です。OpenAI API取得ガイドの接続手順は引き続き利用できます。現在のアプリ利用条件は [LICENSE](LICENSE) を参照してください。
+The full operation manual and Gemini setup guide cover v6.9.0. The unchanged OpenAI setup guide remains applicable. Current application terms are in [LICENSE](LICENSE). / 全機能マニュアルとGemini API取得ガイドはv6.9.0対応です。OpenAI API取得ガイドの接続手順は引き続き利用できます。現在のアプリ利用条件は [LICENSE](LICENSE) を参照してください。
 
 ## Application screen and output / 操作画面と生成例
 
@@ -31,7 +31,7 @@ Automatic camera design / 自動カメラ設計: STEP2 requires a high or low vi
 
 Dialogue and page-layout safeguards / 台詞とコマ割り: Printable dialogue is kept separate from speaker routing metadata, with malformed quotes rejected before copying or API submission. Both provider prompts retain four full-width horizontal panels in one vertical column, including after long-prompt compaction. / 台詞本文と話者メタデータを分離し、括弧が壊れた本文はコピー・API送信前に拒否します。両provider・長文圧縮後も、横長4コマを縦1列に積む指定を保持します。台本や設定を変更したらSTEP3でプロンプトを再構築してください。生成AIの描画と画像QAには誤りが残り得るため、実画像の目視確認は必要です。
 
-Quoted source text / 出典の引用: Wording identified as an article or document quotation, including a quoted passage followed by "という記述", remains scene text rather than a nearby character's speech. Explicit speaking or reading aloud still gets a bubble. Balloon-layout errors identify the panel and mismatch without assuming user error. Rebuild STEP3 for existing scripts. / 「という記述」などで資料の文言を示す引用は状況描写に残し、近くの人物の吹き出しへ入れません。人物が実際に発話・音読する引用は台詞として保持します。配置エラーでは対象コマと不一致の内容を示し、入力の誤りと決めつけません。既存のシナリオへの反映にはSTEP3を作り直してください。
+Quoted source text / 出典の引用: Wording identified as an article or document quotation, including a quoted passage followed by "という記述", remains scene text rather than a nearby character's speech. VisualEvidence labels and quoted sign text stay in visual action, never becoming a speaker or extra bubble. Explicit speaking or reading aloud still gets a bubble. Balloon-layout errors identify the panel and mismatch without assuming user error. Rebuild STEP3 for existing scripts. / 「という記述」などで資料の文言を示す引用は状況描写に残し、近くの人物の吹き出しへ入れません。VisualEvidence欄の看板文字も視覚描写として保持し、話者や余分な台詞として数えません。人物が実際に発話・音読する引用は台詞として保持します。配置エラーでは対象コマと不一致の内容を示し、入力の誤りと決めつけません。既存のシナリオへの反映にはSTEP3を作り直してください。
 
 Balloon speaker labels / 吹き出し配置の話者表記: STEP3 accepts complete-name bracket/spacing variants and acting annotations repeated on the same dialogue line. Collective labels and lists of complete cast names retain their member routing instead of being assigned to one cast member. Different owners, conflicting member lists, empty owners, count/order errors and missing routes still stop assembly. / 話者名の外括弧・空白・中黒の表記差と、同じ台詞行にある演技注記を照合します。「全員（構成員の列挙）」や人物名を列挙した合唱は内訳を配置情報に残し、一人の人物へ置き換えません。参照シートのない店員なども内訳に含められます。別人・内訳の食い違い・空の話者・台詞件数や読順の不一致・尾の経路の欠落は引き続き停止し、話者エラーでは配置側と台詞側の表記を表示します。
 
@@ -246,6 +246,8 @@ The four primary actions for STEP1 through STEP4 use the same full-width light-b
 3. Select character-sheet images with the STEP1 button or drop them into its drop zone; multiple images can be added together or later. Optional 360-degree background images and style-setting JSON files can be loaded there too. / STEP1ボタンでキャラクター設定画像（キャラシート）を選ぶか、ドロップ領域へ読み込みます。複数枚は同時または後から追加でき、任意で360°背景画像や作風設定JSONも読み込めます。
 4. Run STEP2. While the scenario request is active, the app keeps its real progress or error log directly below the STEP2 button and hides the stale result, preview and STEP3. A completed scenario reveals those controls and highlights STEP3. / STEP2を実行します。シナリオ処理中はSTEP2ボタン直下の実際の進捗・エラーログだけを表示し、古い結果・プレビュー・STEP3を隠します。シナリオ完成後に各欄を表示し、次のSTEP3を案内します。
 
+Next-action guidance: after rebuilding STEP2, STEP3 pulses; after rebuilding STEP3, STEP4 pulses even when an earlier image is retained; after image generation finishes, the repair button pulses. Busy actions do not pulse. The fixed top bar contains Force Stop for STEP1–4, image repair, full-auto and loop mode. It aborts the current API communication, discards late responses and cancels automatic continuation while keeping received text and images. Already-submitted provider work may still be billed. / 次の操作を点滅で案内します。STEP2再生成完了後はSTEP3、STEP3再生成完了後は以前の画像を保持したままSTEP4、画像生成完了後は修正ボタンが点滅し、処理中は点滅を止めます。上部の固定枠にある「全行程強制ストップ」はSTEP1～4・画像修正・全自動・ループに共通です。API通信を中断し、停止後の応答と自動進行・次の周回予約を無効にします。取得済みの文章・画像は保持します。送信済みの処理には課金が発生する場合があります。
+
 Acceptance policy / 採用基準: Harmless, physically coherent differences with grounded impact evidence remain warnings; uncertain observations alone do not trigger paid image regeneration. Anatomically reversed hands, extra/missing limbs, incorrect dialogue or speakers, and broken cast/story structure remain repair targets. A foot outside the frame is advisory when the intended action and dramatic angle remain readable. Warning acceptance is not a claim that every detail was verified. / 物理的に自然で作品の理解や演技に影響しない違いは、根拠を添えて注意事項として採用します。判定不能だけでは有料の画像再生成を行いません。手の左右逆、手足の増減、台詞・話者・人数・物語の破綻は修正対象です。アオリや演技が成立する足先の見切れは注意事項とし、全項目を確認済みとは表示しません。
 
 When an automatic check or retry runs, the relevant STEP progress log reports the failed condition, why another inspection or correction is warranted, and the result. STEP2 shows scenario, composition and optional enhancement outcomes; STEP3 shows whether prompt-review suggestions were applied or the original was retained; STEP4 shows each image and critical-camera QA result, the reason for any repair, and candidate selection. STEP1 character analysis has no automatic reinspection loop. Unverified or minor findings alone do not trigger image regeneration. / 自動検査・再試行が動く場合、該当STEPの進捗窓に不合格条件、再検査・修正の理由、その結果を表示します。STEP2は台本・構成・任意の強化、STEP3は指示文の精査案の採否、STEP4は画像と重要なカメラ構図の各検査結果、修正理由、候補の採否を表示します。STEP1のキャラクター解析には自動再検査ループがありません。未確認や軽微な指摘だけで画像を再生成しません。
@@ -372,7 +374,7 @@ OpenAI monochrome references supply identity, clothing and structure; their colo
 
 プロンプトの設計目標は文字数ではなく完成画像の品質です。短くても効く指示を優先し、台詞・構図・人物識別・画風などの必要な条件を守るためにだけ長くします。32,000文字は使い切る目標ではなく上限であり、長文化による画質向上は保証されません。 / The design target is image quality, not prompt length. Prefer concise effective instructions and use extra length only to preserve necessary visual and story constraints; the 32,000-character ceiling is not a target.
 
-ChatGPT Webではカラー・白黒ともSTEP4に表示される分割コピーボタンを1から順に使い、**同じ入力欄へすべて貼ってから一度だけ送信**してください。1回の貼り付けは9,500文字以下にし、原文と参照画像の説明は削りません。分割位置は行境界を優先し、各区分を番号順に連続貼付すると元の全文と一致します。各コピーの末尾は改行1つで終わり、次の区分が前の行へつながりません。2026-09-26の実測では、一度に10,000文字を貼るとTXT添付になり、分割して合計32,000文字を貼ると入力欄内に保持されました。全文一括コピーと.txt保存も残しています。全文をWebへ一度に貼るとTXT化し、指示の反映や生成結果が変わる場合があるため、通常は分割を使ってください。TXTを使う場合はキャラクター参照画像、必要なら背景画像を一緒に添付し、入力欄で添付の指示文を読むよう依頼してください。「テキストフィールドに表示」への変換は不要です。分割貼付は指示の欠落を避ける方法ですが、画像モデルによる遵守や品質は保証しません。 / In ChatGPT Web, paste numbered chunks into the same composer and send once. Each chunk is at most 9,500 characters, prefers a line boundary, and ends with one newline so sequential pastes never join lines; concatenation preserves the full prompt. A single full paste may become a TXT attachment and may affect instruction adherence or output, so use the split buttons normally. Full-copy and TXT export remain available. Split pasting helps avoid omitted instructions but cannot guarantee image-model compliance or quality.
+ChatGPT Webへの貼り付け手順・コピー・TXT保存・制作情報JSON保存は、STEP4の「ChatGPTのWebでプロンプトを貼り付け（API節約可能）」を開くと表示されます（初期状態は折り畳み）。ChatGPT Webではカラー・白黒とも分割コピーボタンを1から順に使い、**同じ入力欄へすべて貼ってから一度だけ送信**してください。1回の貼り付けは9,500文字以下にし、原文と参照画像の説明は削りません。分割位置は行境界を優先し、各区分を番号順に連続貼付すると元の全文と一致します。各コピーの末尾は改行1つで終わり、次の区分が前の行へつながりません。2026-09-26の実測では、一度に10,000文字を貼るとTXT添付になり、分割して合計32,000文字を貼ると入力欄内に保持されました。全文一括コピーと.txt保存も残しています。全文をWebへ一度に貼るとTXT化し、指示の反映や生成結果が変わる場合があるため、通常は分割を使ってください。TXTを使う場合はキャラクター参照画像、必要なら背景画像を一緒に添付し、入力欄で添付の指示文を読むよう依頼してください。「テキストフィールドに表示」への変換は不要です。分割貼付は指示の欠落を避ける方法ですが、画像モデルによる遵守や品質は保証しません。 / In ChatGPT Web, paste numbered chunks into the same composer and send once. Each chunk is at most 9,500 characters, prefers a line boundary, and ends with one newline so sequential pastes never join lines; concatenation preserves the full prompt. A single full paste may become a TXT attachment and may affect instruction adherence or output, so use the split buttons normally. Full-copy and TXT export remain available. Split pasting helps avoid omitted instructions but cannot guarantee image-model compliance or quality.
 
 Recurring props do not require their lettering to be readable in every panel. New scenarios assign necessary text to the relevant story beats; other views can show the same object's side, back or distant silhouette. Explicit text and repetition remain protected. Rebuilding STEP3 does not rewrite a saved scenario. / 同じ小道具が再登場しても、その文字を毎コマ読ませる必要はありません。新規シナリオでは必要な文字を読ませるコマへ割り当て、他のコマでは同じ物の側面・背面・遠景を使えるよう指示します。明示された文字・反復は保持します。STEP3の再構築だけでは保存済みシナリオを書き換えません。
 
@@ -407,7 +409,7 @@ The copied prompt guides panel order, cast, speaker assignment, acting, camera, 
 The app provides separate download buttons for the workflow JSON and the custom-node ZIP. Both files are needed for this route. / アプリにはワークフローJSONとカスタムノードZIPのダウンロードボタンが別々にあります。この経路では両方のファイルが必要です。
 
 - [Download workflow JSON](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261005233427.json) / [ワークフローJSONをダウンロード](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261005233427.json)
-- [Download custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.8.9/ComfyUI_H3_FourPanel_NonLM_20261005233427_authfix1.zip) / [カスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.8.9/ComfyUI_H3_FourPanel_NonLM_20261005233427_authfix1.zip)
+- [Download custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.9.0/ComfyUI_H3_FourPanel_NonLM_20261005233427_authfix1.zip) / [カスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.9.0/ComfyUI_H3_FourPanel_NonLM_20261005233427_authfix1.zip)
 
 Place the ZIP's `3フォルダ` under `ComfyUI/custom_nodes/` and the workflow JSON under `ComfyUI/user/default/workflows/`. Install the separate dependencies below, then restart ComfyUI. / ZIP内の`3フォルダ`を`ComfyUI/custom_nodes/`へ、ワークフローJSONを`ComfyUI/user/default/workflows/`以下へ配置します。下記の別途必要な依存関係を導入してからComfyUIを再起動します。
 
@@ -453,11 +455,14 @@ The production application is published from the `main` branch through the repos
 
 **Why are there two ComfyUI download buttons? / ComfyUIのダウンロードボタンが2つあるのはなぜですか？**  The JSON defines the workflow, while the ZIP supplies three custom-node folders and documentation; three additional runtime dependencies are installed separately. / JSONはワークフロー定義、ZIPはカスタムノード3フォルダーと導入文書です。さらに実行依存3項目を別途導入します。
 
-**Which video package should I install? / 動画化には何を入れますか？** Use the `20261005233427` workflow JSON and matching v6.8.9 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261005233427` のワークフローJSONと対応するv6.8.9 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
+**Which video package should I install? / 動画化には何を入れますか？** Use the `20261005233427` workflow JSON and matching v6.9.0 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261005233427` のワークフローJSONと対応するv6.9.0 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
 
 **Is this the T2V/I2V/Ref2V repository? / T2V・I2V・Ref2Vのリポジトリですか？**  No. Those workflows are maintained separately in [comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows). / いいえ。それらは別の[comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows)で管理します。
 
 ## 📋 ChangeLog
+
+### v6.9.0 (2026-10-06)
+- **[Fix & UX]** 全行程強制ストップと次STEP・修正ボタンの点滅案内を追加。ChatGPT Web貼付ガイドを折り畳み、VisualEvidenceの看板文字が台詞へ混入するSTEP3不具合を修正。 / Add shared Force Stop and next-action pulses, collapse the ChatGPT Web paste guide, and keep VisualEvidence sign text out of STEP3 dialogue.
 
 ### v6.8.9 (2026-10-06)
 - **[Fix & UX]** コマごとの画材と人物の投影を分けて指定し、劇画の顔・淡い水彩・通常色の描き分けを改善。画面外の人物を重複計上しないよう修正。 / Separate panel media from actor projection, strengthen gekiga faces and pale watercolor, and exclude explicitly offscreen continuity actors from physical cast counts.
