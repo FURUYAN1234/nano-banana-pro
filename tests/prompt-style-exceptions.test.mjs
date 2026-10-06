@@ -1,11 +1,50 @@
 import assert from 'node:assert/strict';
 import test, { after, before } from 'node:test';
 import { createServer } from 'vite';
+import { readFileSync } from 'node:fs';
 import { EMOTION_STYLES, COMPACT_EMOTION_STYLES } from '../src/lib/constants.js';
 
 let server;
 let buildMangaPrompt;
 let buildMangaPromptArtifact, validateMangaPromptArtifact;
+
+test('opaque color styles retain solid color coverage beside watercolor, with explicit pale colors allowed', () => {
+  const scenario = buildScenarioWithEmotions(['WATERCOLOR', 'GEKIGA', 'CHIBI_GAG', 'NORMAL']);
+  for (const providerFamily of ['chatgpt', 'gemini']) {
+    const options = { scenario, castList: CAST_LIST, providerFamily, colorMode: 'color', punchlineType: 'Auto', promptMaxChars: 24000 };
+    const panels = buildMangaPrompt(options).split(/^## Panel \d+\s*$/m).slice(1);
+    assert.doesNotMatch(panels[0], /不透明な塗り/);
+    for (const panel of panels.slice(1)) {
+      assert.match(panel, /不透明な塗り.*水彩下地を継承しない/);
+      assert.match(panel, /明示された淡色指定は優先/);
+    }
+    for (const overrides of [{ colorMode: 'monochrome' }, { punchlineType: 'SeriousDocumentary' }]) {
+      assert.doesNotMatch(buildMangaPrompt({ ...options, ...overrides, promptMaxChars: 32000 }), /不透明な塗り/);
+    }
+  }
+  for (const style of ['GEKIGA', 'CHIBI_GAG']) {
+    assert.match(COMPACT_EMOTION_STYLES[style], /不透明な塗り.*明示された淡色指定は優先/);
+  }
+});
+
+test('mixed color media isolate tonal treatment without changing identity or explicit shared palettes', () => {
+  for (const providerFamily of ['chatgpt', 'gemini']) {
+    const options = { scenario: buildScenarioWithEmotions(['WATERCOLOR', 'GEKIGA', 'CHIBI_GAG', 'SKETCH']), castList: CAST_LIST,
+      providerFamily, colorMode: 'color', punchlineType: 'Auto', promptMaxChars: 24000 };
+    const prompt = buildMangaPrompt(options);
+    assert.equal((prompt.match(/PANEL MEDIA:/g) || []).length, 1);
+    assert.match(prompt, /彩度・明度・黒量・輪郭・紙白・にじみ.*各コマ画材に従う/);
+    assert.match(prompt, /固有色・照明方向を保持/);
+    assert.match(prompt, /IDENTITY CONTINUITY: 髪・眼鏡・服・人物.*表情は場面/);
+    assert.match(prompt, /他コマ色調継承・均色化禁止/);
+    assert.match(prompt, /明示共通色調優先/);
+    for (const overrides of [
+      { colorMode: 'monochrome' }, { punchlineType: 'SeriousDocumentary' },
+      { scenario: buildScenarioWithEmotions(Array(4).fill('WATERCOLOR')) },
+      { scenario: buildScenarioWithEmotions(Array(4).fill('NORMAL')) },
+    ]) assert.doesNotMatch(buildMangaPrompt({ ...options, ...overrides, promptMaxChars: 32000 }), /PANEL MEDIA:/);
+  }
+});
 
 // The shared output ceiling follows GPT Image API, not the browser paste threshold.
 const EMPIRICAL_CHATGPT_WEB_COPY_SOFT_BUDGET_CHARS = 32000;
@@ -17,6 +56,68 @@ before(async () => {
     server: { middlewareMode: true }
   });
   ({ buildMangaPrompt, buildMangaPromptArtifact, validateMangaPromptArtifact } = await server.ssrLoadModule('/src/lib/prompt-assembler.js'));
+});
+
+test('long reference-locked monochrome keeps camera projection and source within the existing budget', () => {
+  const fixture = JSON.parse(readFileSync(new URL('./fixtures/mono-style-isolation-baseline.json', import.meta.url), 'utf8'));
+  let panel = 0;
+  const emotions = fixture.cases.find(entry => entry.name === 'reference-style-exception').emotions;
+  const scenario = readFileSync(new URL(`./fixtures/${fixture.scenarioFixture}`, import.meta.url), 'utf8')
+    .replace(/\[EMOTION:\s*[^\]]+\]/g, () => `[EMOTION: ${emotions[panel++]}]`)
+    .replace(/^Punchline:.*$/m, 'Punchline: SeriousDocumentary');
+  const prompt = buildMangaPrompt({ ...fixture.options, scenario, providerFamily: 'chatgpt', colorMode: 'monochrome',
+    punchlineType: 'SeriousDocumentary', promptMaxChars: 24000 });
+  assert.ok(prompt.length <= 24000);
+  assert.match(prompt, /REFERENCE-SHEET/);
+  assert.match(prompt, /(?:before style\/texture|人物の投影→画風の順で描画)/);
+  for (const camera of scenario.matchAll(/\[Camera: ([^\]]+)\]/g)) assert.ok(prompt.includes(camera[1]));
+});
+
+test('watercolor constructs actor volumes with pigment instead of filtering cel shading', () => {
+  for (const providerFamily of ['chatgpt', 'gemini']) {
+    for (const promptMaxChars of [24000, 32000]) {
+      const prompt = buildMangaPrompt({ scenario: buildScenarioWithEmotions(['NORMAL', 'WATERCOLOR', 'GEKIGA', 'CHIBI_GAG']),
+        castList: CAST_LIST, providerFamily, colorMode: 'color', punchlineType: 'Auto', promptMaxChars });
+      const panel = prompt.split(/^## Panel \d+\s*$/m)[2];
+      assert.match(panel, /にじみ.*色溜まり.*重なる淡い洗い/);
+      assert.match(panel, /No cel-fill or watercolor filter over anime/);
+      assert.match(panel, /pigment shapes build faces and folds/);
+      assert.match(panel, /淡い薄塗り/);
+      assert.match(panel, /前景・人物・小物・背景すべて/);
+      assert.match(panel, /paper white through light areas/);
+      assert.match(panel, /no heavy black contours or opaque base/);
+      assert.match(panel, /Camera\/Action\/identity/);
+      assert.doesNotMatch(prompt.split(/^## Panel \d+\s*$/m)[1], /pigment shapes build faces and folds/);
+    }
+  }
+});
+
+test('head ratio resets only after a prior chibi panel, never on unaffected pages', () => {
+  for (const providerFamily of ['chatgpt', 'gemini']) {
+    for (const colorMode of ['color', 'monochrome']) {
+      const options = { castList: CAST_LIST, providerFamily, colorMode, punchlineType: 'Auto', promptMaxChars: 26000 };
+      const unchanged = buildMangaPrompt({ ...options, scenario: buildScenarioWithEmotions(['NORMAL', 'GEKIGA', 'SKETCH', 'WATERCOLOR']) });
+      assert.doesNotMatch(unchanged, /PANEL ANATOMY RESET:/);
+      const mixed = buildMangaPrompt({ ...options, scenario: buildScenarioWithEmotions(['NORMAL', 'GEKIGA', 'CHIBI_GAG', 'SKETCH']) });
+      const panels = mixed.split(/^## Panel \d+\s*$/m).slice(1);
+      panels.slice(0, 3).forEach(panel => assert.doesNotMatch(panel, /PANEL ANATOMY RESET:/));
+      assert.match(panels[3], /PANEL ANATOMY RESET:.*body\/head ratio.*facial anatomy follows THIS medium/);
+    }
+  }
+});
+
+test('non-chibi panels reset inherited deformation while preserving explicit proportions', () => {
+  for (const providerFamily of ['chatgpt', 'gemini']) {
+    for (const colorMode of ['color', 'monochrome']) {
+      const prompt = buildMangaPrompt({ scenario: buildScenarioWithEmotions(['CHIBI_GAG', 'SKETCH', 'GEKIGA', 'NORMAL']),
+        castList: CAST_LIST, providerFamily, colorMode, punchlineType: 'Auto', promptMaxChars: 26000 });
+      const panels = prompt.split(/^## Panel \d+\s*$/m).slice(1);
+      assert.doesNotMatch(panels[0], /PANEL ANATOMY RESET:/);
+      for (const panel of panels.slice(1)) {
+        assert.match(panel, /PANEL ANATOMY RESET:.*explicit.*proportions.*win/i);
+      }
+    }
+  }
 });
 
 test('source protection retains panel-first art direction for both providers and media', () => {

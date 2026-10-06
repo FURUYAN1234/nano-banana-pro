@@ -11,11 +11,11 @@ import { restorePrePolicyContracts, restorePreSelectionContracts } from './helpe
 // focus contract, independently covered by expressive-direction.test.mjs.
 // Normalize only the authorized shared scale wording; the separate final-prompt
 // regression checks its depth/occlusion/ground-plane and stylization safeguards.
-const withoutScaleRepair = value => restorePrePolicyContracts(restorePreSelectionContracts(withoutMosaicRepair(value)))
+const withoutScaleRepair = (value, context) => restorePrePolicyContracts(restorePreSelectionContracts(withoutMosaicRepair(value), context))
   .replaceAll('Keep required cast once; supporting cast: lower visual emphasis, never miniature bodies; scale follows depth, occlusion and ground plane; preserve scripted size differences and chibi', 'Keep required cast once; supporting cast smaller/lower contrast when Camera/Action permits, not equal portraits')
   .replaceAll('supporting cast: lower visual emphasis, never miniature bodies; scale follows depth, occlusion and ground plane; preserve scripted size differences and chibi', 'supporting cast smaller/lower contrast')
   .replaceAll('脇役縮小禁止。遠近・遮蔽・接地に整合。指定体格差・ちび保持。', 'support smaller/lower-contrast.');
-const withoutFocusRepair = value => withoutScaleRepair(value).replaceAll(` ${FOCAL_DEPTH_HIERARCHY}`, '')
+const withoutFocusRepair = (value, context) => withoutScaleRepair(value, context).replaceAll(` ${FOCAL_DEPTH_HIERARCHY}`, '')
   .replaceAll('Rear=head/shoulders/weight;', 'Rear acting=head/shoulders/weight;')
   .replaceAll('Sharp story reactions/props/text. white/black planes', 'Sharp story reactions/props/text. Support/BG thin/quiet; white/black planes')
   .replaceAll('Keep setting/depth/light/identity/tones/gaze/diagonal/negative-space; no glow.',
@@ -27,7 +27,7 @@ const withoutFocusRepair = value => withoutScaleRepair(value).replaceAll(` ${FOC
 // not the earlier pre-color-repair baseline. Update only after explicit approval.
 const baseline = JSON.parse(readFileSync(new URL('./fixtures/mono-style-isolation-baseline.json', import.meta.url), 'utf8'));
 const scenario = readFileSync(new URL(`./fixtures/${baseline.scenarioFixture}`, import.meta.url), 'utf8');
-const sha256 = value => createHash('sha256').update(withoutFocusRepair(value)).digest('hex');
+const sha256 = (value, context) => createHash('sha256').update(withoutFocusRepair(value, context)).digest('hex');
 let server, buildMangaPrompt;
 before(async () => {
   server = await createServer({ appType: 'custom', logLevel: 'silent', server: { middlewareMode: true, hmr: false } });
@@ -75,6 +75,27 @@ test('shared-contract normalization never masks a changed rendering recipe or us
   }
 });
 
+test('approved v6.8.9 media deltas preserve unknown changes and user content', () => {
+  const mapping = JSON.parse(readFileSync(new URL('./fixtures/selection-shared-contract-normalization.json', import.meta.url), 'utf8'));
+  const entries = mapping.entries.filter(entry => entry.name.startsWith('MEDIA_689_'));
+  assert.equal(entries.length, 10);
+  for (const entry of entries) {
+    const context = { providerFamily: entry.providerFamily, colorMode: entry.colorMode };
+    const wrap = text => `USER ACTION unchanged\n${text}\nUSER CAMERA unchanged`;
+    const expected = restorePreSelectionContracts(wrap(entry.previous), context);
+    assert.equal(restorePreSelectionContracts(wrap(entry.current), context), expected, entry.name);
+    const altered = entry.current.replace(/\S+/, 'UNAUTHORIZED_CHANGE');
+    assert.notEqual(restorePreSelectionContracts(wrap(altered), context), expected, entry.name);
+    assert.notEqual(restorePreSelectionContracts(wrap(entry.current + ' UNAUTHORIZED_CHANGE'), context), expected, entry.name);
+    assert.match(restorePreSelectionContracts(wrap(entry.current), context), /USER ACTION unchanged/);
+    assert.match(restorePreSelectionContracts(wrap(entry.current), context), /USER CAMERA unchanged/);
+    if (entry.providerFamily) {
+      assert.notEqual(restorePreSelectionContracts(wrap(entry.current), { ...context, providerFamily: 'gemini' }), expected);
+      assert.notEqual(restorePreSelectionContracts(wrap(entry.current), { ...context, colorMode: 'color' }), expected);
+    }
+  }
+});
+
 test('actor-medium normalization is exact and preserves unknown recipe changes and user content', () => {
   const mapping = JSON.parse(readFileSync(new URL('./fixtures/selection-shared-contract-normalization.json', import.meta.url), 'utf8'));
   const entries = mapping.entries.filter(entry => /^(?:ACTOR_MEDIUM_|GEKIGA_FACE_|PANEL_NORMAL_)/.test(entry.name));
@@ -116,7 +137,7 @@ test('OpenAI monochrome keeps every neighboring NORMAL, WATERCOLOR and CHIBI pan
     assert.equal(panels.length, 4);
     assert.equal(record.panels.length, 3);
     for (const panel of record.panels) {
-      assert.equal(sha256(panels[panel.panel - 1]), panel.sha256, `${record.case} panel ${panel.panel}/${record.promptMaxChars}`);
+      assert.equal(sha256(panels[panel.panel - 1], { providerFamily: 'chatgpt', colorMode: 'monochrome' }), panel.sha256, `${record.case} panel ${panel.panel}/${record.promptMaxChars}`);
     }
   }
 });

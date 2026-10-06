@@ -98,7 +98,7 @@ export const SCENARIO_SHOT_DESIGN_RULES = `【画角と身体動作の一体設�
 
 const FULL_BODY_SHOT_RE = /full[ -]body|graceful full shot|head.to.(?:toe|feet)|全身|頭から(?:両)?(?:足先|つま先|靴)|足元から上半身/i;
 const CLOSE_SHOT_RE = /close[ -]?up|deep emotion close|zoom[ -]?in|ズームイン|アップ|(?<!側面|正面|背面|方|側|左|右|前|後|上|下|奥|横)寄り(?:の|(?=[。．.!！?？、,;；\s]|$))|寄る|接写/i;
-const FLOOR_CAMERA_RE = /(?:floor|ground)[ -]level|(?:床|地面)(?:すれすれ|近く|付近|から)/i;
+const FLOOR_CAMERA_RE = /(?:floor|ground)[ -]level|(?:床|地面)(?:すれすれ|近く|付近|から(?!\s*[\d０-９一二三四五六七八九十百]))/i;
 const HIGH_CAMERA_RE = /overhead|high[ -]angle|innocent high|bird['’]?s?[ -]eye|top[ -]down|俯瞰|真上|斜め上(?:から|より|の(?:視点|位置|カメラ))|上から|高(?:い|めの?)(?:撮影)?位置(?:から|より)|高め(?:から|より|に(?:撮|捉え))|高く(?:撮|捉え|構え)|(?:カメラ|撮影位置|視点)[はをが:：\s]*(?:やや|少し)?高(?:い|め|く)|高所から|上方から|見下ろ[すし]/i;
 const LOW_CAMERA_RE = /low[ -]angle|dominant low|worm['’]?s?[ -]eye|ローアングル|ワームズアイ|アオリ|煽[りる]|下から|見上げ|低(?:い|めの?)(?:撮影)?位置(?:から|より|[、。]|$)|低(?:い|めの?)斜め|低め(?:から|より|に(?:撮|捉え))|低く(?:撮|捉え|構え)|(?:カメラ|撮影位置|視点)[はをが:：\s]*(?:やや|少し)?低(?:い|め|く)|低所(?:から|の|に|より)?|(?:[^\s、。]+上|[^\s、。]+面)すれすれ(?:から|より|[、。]|$)/i;
 
@@ -156,8 +156,12 @@ export const getPanelShotExecution = (camera = '') => {
   const elevation = classifyCameraElevation(text);
   const fisheye = isFisheyeCamera(text);
   const horizontal = /水平(?:に|の|を保)|horizontal|level aim/i.test(text);
+  if (elevation === 'high' || (elevation === 'low' && !horizontal)) cues.push('ACTOR PROJECTION FIRST: volumes before style/texture; preserve gaze/head pose');
   if (close) cues.push('tight crop on focal subject');
-  else if (full) cues.push('head-to-feet inside panel with headroom and floor beyond BOTH shoes; natural occlusion allowed; keep Camera/cast, never expose hidden limbs');
+  else if (full) {
+    const mixedCrop = /(?:腰|胸|膝|ひざ|肩)(?:から上|まで)|(?:waist|chest|knee)[ -]up|close[ -]up|bust|portrait|アップ|接写/i.test(text);
+    cues.push(`${mixedCrop ? '全身指定の被写体のみ: ' : ''}head-to-feet inside panel with headroom and floor beyond BOTH shoes; ${mixedCrop ? '他の指定クロップは保持; ' : ''}natural occlusion allowed; keep Camera/cast, never expose hidden limbs`);
+  }
   if (isPullbackShot(text)) cues.push('wide framing: body extent and continuous setting reveal actor distances; foreground may stay large, receding actors smaller; not a bust portrait. Explicit scale/crop wins; no uniform shrinking to a fixed ratio');
   if (elevation === 'high') cues.push(`look down from the scripted higher viewpoint, not eye-level: head/shoulder tops, shortened torsos, upper prop faces, floor/table planes as visible; actors and setting share downward projection; ${close ? '' : 'headroom/breakout; border behind hair; intact; '}keep projection even with omitted BG; pitch strength follows script, never force steep overhead`);
   else if (elevation === 'low') cues.push(`${floor ? 'floor-level' : 'low'} camera below faces including crouched/chibi; ${horizontal ? 'keep horizontal aim and a low horizon' : 'look up: chin/jaw undersides, prop undersides from below; forehead recedes, horizon below faces, upward convergence; facial planes, body and setting share projection, not frontal faces on a tilted background'}; preserve scripted height/pitch/proportions`);

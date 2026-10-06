@@ -14,6 +14,19 @@ let buildIdentityMatrix;
 let extractActingIdentityNotes;
 let getCameraForPanel;
 
+test('explicit offscreen continuity does not reinsert named actors into visible cast', () => {
+  const cast = '## 甲\n## 乙\n## 丙\n## 丁';
+  for (const compact of [true, false]) {
+    const rule = extractCastLimitRule('状況: 甲は窓の前に立ち、乙が横で聞く。丙と丁は画面外の前コマ位置を維持。\n甲「ここだよ。」', cast, { compact });
+    const count = rule.split('\n').find(line => /CAST COUNT:|ANTI-CLONE REMINDER:/.test(line));
+    assert.match(count, /\[甲\].*\[乙\]/);
+    assert.doesNotMatch(count, /\[丙\]|\[丁\]/);
+    assert.match(rule, /(?:do NOT draw|Do NOT draw) \[丙\], \[丁\]/);
+    const allowed = extractCastLimitRule('状況: 甲は画面外の看板を見る。乙は画面外に出ない。丙は窓の横に立つ。\n甲「ここだよ。」', cast, { compact });
+    assert.match(allowed.split('\n').find(line => /CAST COUNT:|ANTI-CLONE REMINDER:/.test(line)), /\[甲\].*\[乙\].*\[丙\]/);
+  }
+});
+
 test('an actors shoulder-over gaze does not silently become the cameras shoulder-over view', () => {
   const cast = '## 甲\n## 乙';
   const panel = '[Camera: 左上からの俯瞰]\n状況: 乙は甲の肩越しに用紙を見つめる。甲は机の向こうで説明する。\n甲「ここだよ。」';

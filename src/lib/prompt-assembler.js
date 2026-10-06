@@ -18,7 +18,7 @@ import {
   cleanCastList, 
   collectCastNameEntries,
   buildIdentityMatrix, 
-  buildEmotionBlock, 
+  buildEmotionBlock, extractEmotionStyle,
   OPENAI_COLOR_GEKIGA_STYLE,
   extractPlacementRule, 
   extractCastLimitRule, 
@@ -770,7 +770,12 @@ export const buildMangaPromptArtifact = ({
   const scriptLock = buildStrictScriptLock({ safeTopic, panels, castList, activeOutfit: promptActiveOutfit, providerFamily, isMonochrome, preserveReferenceStyle, seriousTone });
   const finalPanelStagingLock = punchlineType === 'Surreal' ? '' : FINAL_PANEL_ACTIVE_STAGING_IMAGE_LOCK;
   const identityContinuityLock = 'IDENTITY CONTINUITY: keep each character recognizable through hairstyle, wardrobe, glasses and other identity anchors; facial expression and drawing style may vary with the scene without creating a new person.';
-  const sceneLocks = [scriptLock, identityContinuityLock, documentarySourceFactLock, compositionVarietyLock, gestureVarietyLock, actingIdentityNotes, `${HAND_PROP_KINEMATICS_LOCK}\n${LIMB_OWNERSHIP_CHECK}`, visualStoryEvidenceLock, settingContinuityLock, finalPanelStagingLock, MANGA_READING_RHYTHM_LOCK]
+  const mixedColorMedia = !isMonochrome && !preserveReferenceStyle
+    && new Set(panels.map(panel => extractEmotionStyle(panel))).size > 1;
+  const mediumIsolationLock = mixedColorMedia
+    ? 'PANEL MEDIA: IDENTITY CONTINUITY: 髪・眼鏡・服・人物・固有色・照明方向を保持。表情は場面、彩度・明度・黒量・輪郭・紙白・にじみは各コマ画材に従う。他コマ色調継承・均色化禁止。明示共通色調優先。'
+    : '';
+  const sceneLocks = [scriptLock, mediumIsolationLock || identityContinuityLock, documentarySourceFactLock, compositionVarietyLock, gestureVarietyLock, actingIdentityNotes, `${HAND_PROP_KINEMATICS_LOCK}\n${LIMB_OWNERSHIP_CHECK}`, visualStoryEvidenceLock, settingContinuityLock, finalPanelStagingLock, MANGA_READING_RHYTHM_LOCK]
     .filter(Boolean)
     .join('\n');
   const panelEyeLineRules = panels.map((panel) => buildPanelEyeLineRule(panel, castList));
@@ -791,7 +796,7 @@ export const buildMangaPromptArtifact = ({
 ${source(`Camera: ${camera}`)}
 ${getEndingSafePanelShotExecution(camera, seriousTone)}
 ${isMonochrome ? source(buildMonochromePanelInkLock(pt, identityMatrix)) : ''}
-${source(buildEmotionBlock(pt, colorMode, { preserveReferenceStyle, seriousTone, providerFamily: 'chatgpt' }))}
+${source(buildEmotionBlock(pt, colorMode, { preserveReferenceStyle, seriousTone, providerFamily: 'chatgpt', resetChibiProportions: !seriousTone && panels.slice(0, i).some(panel => extractEmotionStyle(panel) === 'CHIBI_GAG') }))}
 ${extractPlacementRule(pt, castList, { compact: true, colorMode }).replace(/\\\\[/g, '').replace(/\\\\]/g, '')}
 ${extractCastLimitRule(pt, castList, { compact: true }).replace(/\\\\[/g, '').replace(/\\\\]/g, '')}
 COMPOSITION STAGING: ${getPanelCompositionAssist(pt, num, { compact: true })}
@@ -834,7 +839,7 @@ Dialogue (verbatim bubbles): ${extractDialogueOnly(pt, castList, { forImagePromp
 ${source(`Camera: ${camera}.`)}
 ${getEndingSafePanelShotExecution(camera, seriousTone)}
 ${isMonochrome ? source(buildMonochromePanelInkLock(pt, identityMatrix)) : ''}
-${source(buildEmotionBlock(pt, colorMode, { preserveReferenceStyle, seriousTone }))}
+${source(buildEmotionBlock(pt, colorMode, { preserveReferenceStyle, seriousTone, resetChibiProportions: !seriousTone && panels.slice(0, i).some(panel => extractEmotionStyle(panel) === 'CHIBI_GAG') }))}
 ${extractPlacementRule(pt, castList, { colorMode })}
 ${extractCastLimitRule(pt, castList)}
 COMPOSITION STAGING: ${getPanelCompositionAssist(pt, num)}
@@ -890,9 +895,15 @@ ${geminiRearForegroundLock}`;
   const baselinePrompt = isChatGPTFamily && clarifiedPrompt.length > promptTargetChars
     ? compactForSoftTarget(clarifiedPrompt)
     : clarifiedPrompt;
-  const budgetedPrompt = isChatGPTFamily && baselinePrompt.length > promptMaxChars
+  let budgetedPrompt = isChatGPTFamily && baselinePrompt.length > promptMaxChars
     ? compactChatGPTConversationRules(baselinePrompt, isMonochrome, preserveReferenceStyle, seriousTone, promptMaxChars, false, sourceBlocks)
     : baselinePrompt;
+  if (isChatGPTFamily && budgetedPrompt.length > promptMaxChars) {
+    // Share only this repeated generated cue. Never touch Camera/Action or the
+    // per-panel projection details, and still fail closed if the budget cannot fit.
+    const sharedProjection = budgetedPrompt.replace(/^SHOT EXECUTION: ACTOR PROJECTION FIRST: volumes before style\/texture; preserve gaze\/head pose; /gm, 'SHOT EXECUTION: ');
+    if (sharedProjection !== budgetedPrompt) budgetedPrompt = `人物の投影→画風の順で描画。\n${sharedProjection}`;
+  }
   if (isChatGPTFamily) assertImagePromptBudget(budgetedPrompt, promptMaxChars);
   if (cinematicAssignments.length === 0) return captureMangaPromptArtifact(assertPrintableDialogue(budgetedPrompt), colorMode);
 

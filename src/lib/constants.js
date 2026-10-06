@@ -3,7 +3,7 @@ import { getEndingModePolicy } from './ending-mode-policy.js';
 // --- 定数・タグ定義 (constants.js) ---
 // App.jsx から抽出された共有定数
 
-export const SYSTEM_VERSION = "v6.8.8";
+export const SYSTEM_VERSION = "v6.8.9";
 
 // --- Punchline ラベル変換関数 ---
 export const getPunchlineLabel = (type) => {
@@ -115,7 +115,8 @@ export const getModelBadgeInfo = (modelId) => {
 
 // Retain the facial anatomy recipe verified in the saved API output.
 // Share it across providers and compression tiers instead of paraphrasing it.
-export const GEKIGA_FACE_CONSTRUCTION = 'Redraw visible faces with small realistic eyes/irises, heavy anatomical eyelids, pronounced nose bridges and carved cheek/jaw planes.';
+export const GEKIGA_FACE_CONSTRUCTION = 'Redraw visible faces with small realistic eyes/irises, heavy anatomical eyelids, pronounced nose bridges and carved cheek/jaw planes. 全人物を劇画化。顔にも写実的な陰影と斜線。背景・服だけ劇画にしない。';
+export const OPAQUE_COLOR_RENDERING = '色は不透明な塗りで鮮明に置き、淡い水彩下地を継承しない。明示された淡色指定は優先。';
 
 // [v2.25] 感情連動スタイル定義 - 固有名詞ゼロ (Trademark Sanitization準拠)
 export const EMOTION_STYLES = {
@@ -125,12 +126,12 @@ export const EMOTION_STYLES = {
     vfx: '',
   },
   CHIBI_GAG: {
-    style: 'In THIS PANEL ONLY, redraw the actors as expressive chibi: enlarged heads above shortened torsos and jointed limbs, not just bigger eyes on normal bodies. Preserve Camera/Action, body acting, gaze, facial reactions, hair and glasses. Adapt deformation to keep acting and perspective readable; never replace chibi with unchanged anime or zoom for cuteness.',
+    style: `In THIS PANEL ONLY, redraw the actors as expressive chibi: enlarged heads above shortened torsos and jointed limbs, not just bigger eyes on normal bodies. Preserve Camera/Action, body acting, gaze, facial reactions, hair and glasses. Adapt deformation to keep acting and perspective readable; never replace chibi with unchanged anime or zoom for cuteness. ${OPAQUE_COLOR_RENDERING}`,
     proportions: 'Explicit user proportions win. Otherwise choose the degree of chibi deformation around camera, body acting and expression; no compulsory all-cast head ratio.',
     vfx: '(Exaggerated sweat drops:1.3), (popping veins:1.2), (comedic steam from head), (glasses preserved on chibi face if character wears them:1.5)',
   },
   GEKIGA: {
-    style: `In THIS PANEL ONLY, fully redraw faces as realistic GEKIGA manga. ${GEKIGA_FACE_CONSTRUCTION} Thick variable brush contours, solid ink shadow planes and directional facial crosshatching model this anatomy. Keep recognizable identity/age, scripted gaze, Camera/Action and body acting; no added anger, age or wrinkles. FULL COLOR.`,
+    style: `In THIS PANEL ONLY, fully redraw faces as realistic GEKIGA manga. ${GEKIGA_FACE_CONSTRUCTION} Thick variable brush contours, solid ink shadow planes and directional facial crosshatching model this anatomy. Keep recognizable identity/age, scripted gaze, Camera/Action and body acting; no added anger, age or wrinkles. FULL COLOR. ${OPAQUE_COLOR_RENDERING}`,
     proportions: '',
     vfx: '(Heavy crosshatching shadows:1.4), (dramatic rim lighting:1.5), (high contrast deep shadows with stark chiaroscuro lighting), (intense speed lines in background)',
     surfaceException: 'intentional crosshatching and deep ink shadows only',
@@ -163,9 +164,9 @@ export const EMOTION_STYLES = {
     vfxMulti: '(Explosive radial speed lines from center:1.5), (intense glowing energy aura:1.2), (intense dramatic backlight), (dynamic action poses:1.3)',
   },
   WATERCOLOR: {
-    style: 'In THIS PANEL ONLY, paint the actors as watercolor: transparent color washes with pigment layers, broken soft edges and pigment pooling on faces, hair and clothing, with crisp focal facial/hand accents and paper grain. Preserve Camera/Action and identity. A watercolor background behind unchanged cel-shaded actors is insufficient.',
+    style: 'In THIS PANEL ONLY: transparent color washes ON faces/hair/clothes. 前景・人物・小物・背景すべて透明水彩の淡い薄塗り。水のにじみ、色溜まり、重なる淡い洗い。Luminous diluted color, paper white through light areas, pale soft shadows and sparse colored edges; no heavy black contours or opaque base. No cel-fill or watercolor filter over anime; pigment shapes build faces and folds. Keep dark hair/wardrobe identity, legible eyes/hands/text and Camera/Action/identity.',
     proportions: '',
-    vfx: '(Soft watercolor washes:1.4), (blurred dreamy edges:1.3), (muted warm sepia tones), (visible paper grain texture)',
+    vfx: '(Luminous transparent watercolor washes:1.4), (soft broken pigment edges:1.3), (paper white through light areas), (subtle paper grain)',
     surfaceException: 'intentional watercolor wash and paper grain only',
   },
   RETRO: {
@@ -278,13 +279,13 @@ EMOTION_STYLES.GOLDEN_HOUR = {
 
 // Budget-safe drawing recipes. Keep the visual operation, not a bare style name.
 export const COMPACT_EMOTION_STYLES = Object.freeze({
-  CHIBI_GAG: 'Redraw enlarged heads, shortened torsos and jointed limbs as expressive chibi, not unchanged anime. Keep Camera/Action, acting/gaze/hair/glasses; readable perspective, no zoom for cuteness.',
-  GEKIGA: `Realistic gekiga: ${GEKIGA_FACE_CONSTRUCTION} Brush ink/facial hatching; keep identity/age/color, gaze and Camera/Action.`,
+  CHIBI_GAG: `Redraw enlarged heads, shortened torsos and jointed limbs as expressive chibi, not unchanged anime. Keep Camera/Action, acting/gaze/hair/glasses; readable perspective, no zoom for cuteness. ${OPAQUE_COLOR_RENDERING}`,
+  GEKIGA: `Realistic gekiga: ${GEKIGA_FACE_CONSTRUCTION} Brush ink/facial hatching; keep identity/age/color, gaze and Camera/Action. ${OPAQUE_COLOR_RENDERING}`,
   SHOUJO: 'Delicate thin linework, fine eyelashes, luminous layered irises, airy soft shading, petals and bokeh behind clear acting faces.',
   HORROR: 'Deep ink masses, sharp lit facial planes and eerie rim/underlighting; keep scripted framing and cast.',
   BLANK: 'Affected face: blank pupil-less eyes behind retained glasses, pale face, rigid acting and dark emotional aura.',
   IMPACT: 'Forceful brush contours, hard shadow masses and explosive strokes; crisp action silhouettes in the scripted crop.',
-  WATERCOLOR: 'Transparent pigment layers, pooling and broken edges ON actor faces/hair/clothing, not just background; paper grain and crisp focal facial/hand accents. Keep Camera/Action/identity.',
+  WATERCOLOR: '前景・人物・小物・背景すべて透明水彩の淡い薄塗り、にじみ、色溜まり、重なる淡い洗い。Dilute luminous color, paper white through light areas, pale soft shadows; no heavy black contours or opaque base. No cel-fill or watercolor filter over anime; pigment shapes build faces and folds. Keep dark hair/wardrobe, legible eyes/hands/text, Camera/Action/identity.',
   RETRO: 'Bold period-manga contours, graphic screentone shadows and classic expressive marks; keep canonical character colors.',
   GLITTER: 'Golden backlight, brilliant controlled sparkles and hair rim highlights; preserve scripted expressions.',
   SHADOW: 'Existing actor in deep cast-shadow silhouette with readable eye highlights and facial contour; no new figure.',

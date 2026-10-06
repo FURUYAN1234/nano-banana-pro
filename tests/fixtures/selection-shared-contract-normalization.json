@@ -1,7 +1,59 @@
 {
-  "purpose": "Exact inverse mappings for approved shared contracts only. No style recipe, user source or arbitrary prompt line is normalized.",
+  "purpose": "Exact inverse mappings for explicitly approved shared contracts and media deltas only. Unknown recipe changes and user content remain detectable; baseline hashes are unchanged.",
   "sourceCommit": "1da0524dceb0c3d4532bc8c552b1ce2e1ab387f6",
   "entries": [
+    {
+      "name": "MEDIA_689_chibi-reset-mono-spacing",
+      "current": "PANEL INK:white/black;no veil. CHEEKS: none.\n\nPANEL ANATOMY RESET: ordinary body/head ratio, no inherited chibi; facial anatomy follows THIS medium. Explicit scripted proportions win.",
+      "previous": "PANEL INK:white/black;no veil. CHEEKS: none.",
+      "providerFamily": "chatgpt",
+      "colorMode": "monochrome"
+    },
+    {
+      "name": "MEDIA_689_watercolor-full",
+      "current": "In THIS PANEL ONLY: transparent color washes ON faces/hair/clothes. 前景・人物・小物・背景すべて透明水彩の淡い薄塗り。水のにじみ、色溜まり、重なる淡い洗い。Luminous diluted color, paper white through light areas, pale soft shadows and sparse colored edges; no heavy black contours or opaque base. No cel-fill or watercolor filter over anime; pigment shapes build faces and folds. Keep dark hair/wardrobe identity, legible eyes/hands/text and Camera/Action/identity.",
+      "previous": "In THIS PANEL ONLY, paint the actors as watercolor: transparent color washes with pigment layers, broken soft edges and pigment pooling on faces, hair and clothing, with crisp focal facial/hand accents and paper grain. Preserve Camera/Action and identity. A watercolor background behind unchanged cel-shaded actors is insufficient."
+    },
+    {
+      "name": "MEDIA_689_watercolor-compact",
+      "current": "前景・人物・小物・背景すべて透明水彩の淡い薄塗り、にじみ、色溜まり、重なる淡い洗い。Dilute luminous color, paper white through light areas, pale soft shadows; no heavy black contours or opaque base. No cel-fill or watercolor filter over anime; pigment shapes build faces and folds. Keep dark hair/wardrobe, legible eyes/hands/text, Camera/Action/identity.",
+      "previous": "Transparent pigment layers, pooling and broken edges ON actor faces/hair/clothing, not just background; paper grain and crisp focal facial/hand accents. Keep Camera/Action/identity."
+    },
+    {
+      "name": "MEDIA_689_watercolor-effects",
+      "current": "(Luminous transparent watercolor washes:1.4), (soft broken pigment edges:1.3), (paper white through light areas), (subtle paper grain)",
+      "previous": "(Soft watercolor washes:1.4), (blurred dreamy edges:1.3), (muted warm sepia tones), (visible paper grain texture)"
+    },
+    {
+      "name": "MEDIA_689_opaque-color-only",
+      "current": " 色は不透明な塗りで鮮明に置き、淡い水彩下地を継承しない。明示された淡色指定は優先。",
+      "previous": ""
+    },
+    {
+      "name": "MEDIA_689_mixed-media-identity",
+      "current": "PANEL MEDIA: IDENTITY CONTINUITY: 髪・眼鏡・服・人物・固有色・照明方向を保持。表情は場面、彩度・明度・黒量・輪郭・紙白・にじみは各コマ画材に従う。他コマ色調継承・均色化禁止。明示共通色調優先。",
+      "previous": "IDENTITY CONTINUITY: keep each character recognizable through hairstyle, wardrobe, glasses and other identity anchors; facial expression and drawing style may vary with the scene without creating a new person."
+    },
+    {
+      "name": "MEDIA_689_projection-shared",
+      "current": "人物の投影→画風の順で描画。\n",
+      "previous": ""
+    },
+    {
+      "name": "MEDIA_689_projection-panel",
+      "current": "ACTOR PROJECTION FIRST: volumes before style/texture; preserve gaze/head pose; ",
+      "previous": ""
+    },
+    {
+      "name": "MEDIA_689_chibi-reset",
+      "current": "\nPANEL ANATOMY RESET: ordinary body/head ratio, no inherited chibi; facial anatomy follows THIS medium. Explicit scripted proportions win.",
+      "previous": ""
+    },
+    {
+      "name": "MEDIA_689_gekiga-face",
+      "current": " 全人物を劇画化。顔にも写実的な陰影と斜線。背景・服だけ劇画にしない。",
+      "previous": ""
+    },
     {
       "name": "EXPRESSIVE_DIRECTION",
       "current": "EXPRESSIVE DIRECTION: clear/lively manga; bold height/tilt/foreshortening, full-body exaggeration, weight/silhouette/faces. Actual Camera/Action; speed lines never substitute for motion/perspective. Optional directional motion blur: scripted motion path; focal action/contact/text readable; never invent motion in still scenes. No default eye-level tableau. Build panel contrast: scale/light/VFX. Keep explicit quiet beats, Camera/Action, identity, verbatim dialogue, limbs, prop ownership/facing; exaggeration is not a drawing defect.",

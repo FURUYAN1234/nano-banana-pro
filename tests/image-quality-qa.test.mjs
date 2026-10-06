@@ -127,7 +127,7 @@ test('long-shot PASS needs measured subject scale and setting evidence, not a gr
     const spatial = spatialChecks();
     spatial[0].hand_geometry.actor_limb_inventory = [{ actor: 'A', visible_hands: [], evidence: 'Hands hidden by the counter.' }];
     spatial[0].camera_geometry.dimensions.elevation.projection_cues = [
-      { subject: 'actor crown', surface: 'top', x: 0.65, y: 0.25 },
+      { subject: 'actor crown', actor: 'A', surface: 'top', x: 0.65, y: 0.25 },
       { subject: 'counter surface', surface: 'top', x: 0.3, y: 0.6 },
     ];
     return { pass: true, issues: [], observations, spatial_checks: spatial };
@@ -1041,6 +1041,27 @@ test('physical text order overrides reviewer PASS and invented correct B coordin
   );
   for (const texts of [undefined, [], ['先に話す。'], ['違う。', '先に話す。']]) {
     assert.ok(review(texts).issues.some(issue => issue.type === 'unverified' && issue.subject === 'bubble_order'));
+  }
+});
+
+test('cast camera projection cannot pass from props alone in any drawing medium', () => {
+  for (const style of ['NORMAL', 'GEKIGA', 'WATERCOLOR', 'POP_ART', 'SKETCH', 'CHIBI_GAG']) {
+    const finalPrompt = `## Panel 1\nCamera: low-angle\nCAST COUNT: [A] each EXACTLY ONCE.\nPANEL STYLE LOCK: ${style}`;
+    const checks = spatialChecks();
+    const elevation = checks[0].camera_geometry.dimensions.elevation;
+    elevation.projection_cues = [
+      { subject: 'shelf', surface: 'underside', x: 0.2, y: 0.3 },
+      { subject: 'table', surface: 'underside', x: 0.6, y: 0.7 },
+    ];
+    const parse = () => parseImageQualityQaResponse(JSON.stringify({ pass: true, issues: [], observations, spatial_checks: checks }), { finalPrompt });
+    assert.ok(parse().issues.some(i => i.subject === 'camera_geometry' && /actor projection/.test(i.reason)), style);
+    assert.equal(parse().issues.some(isMaterialImageQualityIssue), false);
+    elevation.projection_cues[0] = { subject: 'A jaw underside', actor: 'A', surface: 'underside', x: 0.2, y: 0.3 };
+    assert.equal(parse().issues.some(i => /actor projection/.test(i.reason)), false);
+    elevation.projection_cues[0].actor = 'unlisted person';
+    assert.ok(parse().issues.some(i => /actor projection/.test(i.reason)));
+    const scenery = parseImageQualityQaResponse(JSON.stringify({ pass: true, issues: [], observations, spatial_checks: checks }), { finalPrompt: '## Panel 1\nCamera: low-angle empty room' });
+    assert.equal(scenery.issues.some(i => /actor projection/.test(i.reason)), false);
   }
 });
 

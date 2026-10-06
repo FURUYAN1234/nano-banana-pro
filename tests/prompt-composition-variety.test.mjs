@@ -14,6 +14,15 @@ let MANGA_COMPOSITION_VARIETY_LOCK;
 let MANGA_COMPOSITION_VARIETY_LOCK_COMPACT;
 let MANGA_GESTURE_VARIETY_LOCK;
 let cinematicCompositionMap;
+test('high and low shots construct actor projection before medium-specific marks', () => {
+  for (const camera of ['俯瞰・広角', 'アオリ・望遠']) {
+    const execution = getPanelShotExecution(camera);
+    assert.match(execution, /ACTOR PROJECTION FIRST/);
+    assert.match(execution, /before style\/texture/);
+    assert.match(execution, /preserve gaze\/head pose/);
+  }
+  assert.doesNotMatch(getPanelShotExecution('eye-level horizontal'), /ACTOR PROJECTION FIRST/);
+});
 let cameraAngles;
 let openAIColorGekigaStyle;
 
@@ -44,6 +53,8 @@ test('repeated prompt compaction preserves each low shot projection and quiet sc
       assert.ok(panel.match(/^Action \(visual only\):(.+)$/m)?.[1].endsWith(actions[index]));
       assert.equal(panel.match(/^Style: (.+)$/m)?.[1], openAIColorGekigaStyle);
       const shot = panel.match(/^SHOT EXECUTION:.*$/m)?.[0] || '';
+      assert.match(shot, /ACTOR PROJECTION FIRST:.*before style\/texture/,
+        'repeated compaction must retain actor construction before rendering style');
       assert.match(shot, /(?:Face\/body\/setting|facial planes, body and setting) share projection/i,
         `panel ${index + 1}, ${promptMaxChars}: preserve local face/body/setting projection`);
       assert.match(shot, /(?:no|not) frontal faces? on (?:a )?tilted (?:BG|background)/i);
@@ -326,6 +337,16 @@ test('Japanese Dutch and fisheye specify observable separate projection cues', (
   assert.doesNotMatch(getPanelShotExecution('目の高さで右側面、望遠、ダッチアングル'), /look up|look down/);
   assert.match(getPanelShotExecution('真上から魚眼レンズで見下ろす全景'), /curved.*edges/);
   assert.doesNotMatch(getPanelShotExecution('真上から広角で見下ろす全景'), /curved.*edges/);
+});
+
+test('measured camera height is not floor-level and mixed crops stay subject-specific', () => {
+  const shot = getPanelShotExecution('ローアングル。床から80センチ、仰角18度。手前の人物は腰まで、奥の動物は全身。');
+  assert.match(shot, /low camera/);
+  assert.doesNotMatch(shot, /floor-level camera/);
+  assert.match(shot, /全身指定の被写体のみ/);
+  assert.match(shot, /他の指定クロップは保持/);
+  assert.match(getPanelShotExecution('床すれすれから見上げる全身'), /floor-level camera/);
+  assert.match(getPanelShotExecution('床から見上げる全身'), /floor-level camera/);
 });
 
 test('automatic camera fallbacks keep wide-angle options without fisheye', () => {

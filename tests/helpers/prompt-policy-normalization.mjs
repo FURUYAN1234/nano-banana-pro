@@ -2,12 +2,14 @@ import { VERTICAL_DIALOGUE_GEOMETRY } from '../../src/lib/bubble-text.js';
 import { readFileSync } from 'node:fs';
 
 // Exact inverse mappings from the reviewed pre-change commit. Never strip a
-// style recipe or normalize an unknown line: an unlisted change must fail.
+// unknown recipe or prompt line: an unlisted change must fail.
 const selectionContracts = JSON.parse(readFileSync(new URL('../fixtures/selection-shared-contract-normalization.json', import.meta.url), 'utf8'));
-export const restorePreSelectionContracts = value => {
+export const restorePreSelectionContracts = (value, context = {}) => {
   let result = String(value);
   const compact = result.includes('TYPE: title ');
   for (const contract of selectionContracts.entries) {
+    if (contract.providerFamily && contract.providerFamily !== context.providerFamily) continue;
+    if (contract.colorMode && contract.colorMode !== context.colorMode) continue;
     result = result.replaceAll(contract.current, compact ? contract.compactPrevious ?? contract.previous : contract.previous);
   }
   result = result

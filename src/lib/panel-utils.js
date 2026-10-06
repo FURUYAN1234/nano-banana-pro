@@ -1,4 +1,4 @@
-import { EMOTION_STYLES, GEKIGA_FACE_CONSTRUCTION } from './constants.js';
+import { EMOTION_STYLES, GEKIGA_FACE_CONSTRUCTION, OPAQUE_COLOR_RENDERING } from './constants.js';
 import { resolveMonochromeRenderIntent } from './manga-render-mode.js';
 import { stripReferenceWardrobe } from './seasonal-outfit.js';
 import { stripSourceMetadata } from './sns-explanation.js';
@@ -1775,6 +1775,21 @@ export const extractCastLimitRule = (fullPanelText, castList, options = {}) => {
     }
   });
   const actionAndMetaText = actionAndMetaLines.join('\n');
+  // A named continuity note is not a request to render that actor. Only match
+  // explicit offscreen location predicates, never a gaze target or negation.
+  const castNamePattern = validCharacters.map(escapeRegex).sort((a, b) => b.length - a.length).join('|');
+  const offscreenCast = new Set();
+  if (castNamePattern) {
+    const offscreenLocation = new RegExp(`((?:${castNamePattern})(?:\\s*(?:と|や|、|及び)\\s*(?:${castNamePattern}))*)は\\s*(?:引き続き|そのまま)?(?:画面外|フレーム外)(?:の(?:前コマ|元の)?位置を維持|に(?:いる|居る|残る|留まる)|で待機|[。\\n]|$)`, 'gu');
+    for (const match of actionAndMetaText.matchAll(offscreenLocation)) {
+      for (const name of match[1].matchAll(new RegExp(castNamePattern, 'gu'))) {
+        const canonical = charLookup[name[0]].name;
+        // Dialogue owners retain the existing voice/tail contract; this rule
+        // removes non-speaking continuity mentions from the physical roster.
+        if (!speakers.includes(canonical)) offscreenCast.add(canonical);
+      }
+    }
+  }
   const hasBroadGroupCue = /(?:全員|みんな|一同|全キャラ|全メンバー|主要人物全員|メンバー全員|全員集合|everyone|all characters|the whole group)/i.test(actionAndMetaText);
 
   // Visual Action テキストからも登場キャラ名を検出
@@ -1796,18 +1811,18 @@ export const extractCastLimitRule = (fullPanelText, castList, options = {}) => {
   const hasAllMainCastCue = hasUnqualifiedCastGroup || hasCountedCastGroup || hasRemainingCastGroup || /(?:他キャラ全員|キャラ全員|全キャラ|全メンバー|全員集合|メンバー全員|主要人物全員|all characters|the whole main cast)/i.test(actionAndMetaText);
   if (hasAllMainCastCue) {
     canonicalValidCharacters.forEach((canonicalName) => {
-      if (!allPanelCharacters.includes(canonicalName)) {
+      if (!offscreenCast.has(canonicalName) && !allPanelCharacters.includes(canonicalName)) {
         allPanelCharacters.push(canonicalName);
       }
     });
   }
   validCharacters.forEach(charName => {
     const canonicalName = charLookup[charName].name;
-    if (!allPanelCharacters.includes(canonicalName) && actionAndMetaText.includes(charName)) {
+    if (!offscreenCast.has(canonicalName) && !allPanelCharacters.includes(canonicalName) && actionAndMetaText.includes(charName)) {
       allPanelCharacters.push(canonicalName);
     }
   });
-  if (explicitRearSubject && !allPanelCharacters.includes(explicitRearSubject)) {
+  if (explicitRearSubject && !offscreenCast.has(explicitRearSubject) && !allPanelCharacters.includes(explicitRearSubject)) {
     allPanelCharacters.push(explicitRearSubject);
   }
 
@@ -1824,7 +1839,7 @@ export const extractCastLimitRule = (fullPanelText, castList, options = {}) => {
 
   // スピーカー最大3名をメインアクターとして登録
   const panelActors = speakers.slice(0, 3).map(s => `[${s}]`);
-  const explicitRearActor = explicitRearSubject ? `[${explicitRearSubject}]` : '';
+  const explicitRearActor = explicitRearSubject && !offscreenCast.has(explicitRearSubject) ? `[${explicitRearSubject}]` : '';
   const allCharBrackets = allPanelCharacters.map(c => `[${c}]`);
   const replicaNames = extractDiegeticReplicaNames(actionAndMetaText, allPanelCharacters);
   const replicaBrackets = replicaNames.map(c => `[${c}]`);
@@ -1987,12 +2002,12 @@ const extractRawEmotionTag = (panelText) => {
 };
 
 // [v2.31] パネルの感情スタイル指示を構築（マルチキャラ対応）
-export const OPENAI_COLOR_GEKIGA_STYLE = `THIS PANEL ONLY: high-intensity GEKIGA faces, not anime faces with gritty backgrounds. ${GEKIGA_FACE_CONSTRUCTION} Put large solid-black shadow planes and dense directional crosshatching ON faces/hands, bold ink beside sharp white cuts. FULL COLOR. Keep identity/age and scripted emotion/gaze/pose/Camera; no added anger, age or wrinkles. Same face means same identity, not retained anime proportions.`;
+export const OPENAI_COLOR_GEKIGA_STYLE = `THIS PANEL ONLY: high-intensity GEKIGA faces, not anime faces with gritty backgrounds. ${GEKIGA_FACE_CONSTRUCTION} Put large solid-black shadow planes and dense directional crosshatching ON faces/hands, bold ink beside sharp white cuts. FULL COLOR. ${OPAQUE_COLOR_RENDERING} Keep identity/age and scripted emotion/gaze/pose/Camera; no added anger, age or wrinkles. Same face means same identity, not retained anime proportions.`;
 
 const OPENAI_MONOCHROME_GEKIGA_STYLE = `THIS PANEL ONLY: redraw GEKIGA faces. ${GEKIGA_FACE_CONSTRUCTION} Large solid-black shadow planes and dense directional crosshatching ON faces/hands in shadow, sharp white cuts. Same identity, not anime proportions. Keep identity/age, scripted emotion/gaze/pose/Camera; no added anger, age or wrinkles. 白紙に墨一色。白肌の明部は墨線の間を無地白とし、灰色・網点の下地なし。光源に沿う局所影、褐色肌、衣服のトーンは残す。`;
-const NORMAL_COLOR_RENDERING = '\nNORMAL PANEL RENDERING: Chic cinematic full-color TV anime style; polished Japanese animation finish.';
+const NORMAL_COLOR_RENDERING = `\nNORMAL PANEL RENDERING: Chic cinematic full-color TV anime style; polished Japanese animation finish. ${OPAQUE_COLOR_RENDERING}`;
 
-export const buildEmotionBlock = (panelText, colorMode = 'color', { preserveReferenceStyle = false, seriousTone = false, providerFamily = '' } = {}) => {
+export const buildEmotionBlock = (panelText, colorMode = 'color', { preserveReferenceStyle = false, seriousTone = false, providerFamily = '', resetChibiProportions = false } = {}) => {
   const emo = extractEmotionStyle(panelText);
   if (preserveReferenceStyle) {
     return `\nREFERENCE-SHEET PANEL ACTING ONLY: interpret [EMOTION: ${emo}] as expression, gaze, posture and timing only. Keep the same reference-sheet linework, rendering, facial construction and body proportions; no panel-specific art-style or proportion change.`;
@@ -2001,7 +2016,9 @@ export const buildEmotionBlock = (panelText, colorMode = 'color', { preserveRefe
   if (seriousTone && /CHIBI(?:_GAG)?|COMEDY/i.test(rawEmotionTag)) {
     return `${colorMode === 'monochrome' ? '' : NORMAL_COLOR_RENDERING}\nSERIOUS PANEL ACTING ONLY: interpret the emotion cue through expression, gaze, posture, timing, camera and lighting. Keep normal anatomy and the selected serious visual style; no chibi form, comic deformation, gag overlay or proportion change.`;
   }
-  if (emo === 'NORMAL') return colorMode === 'monochrome' ? '' : NORMAL_COLOR_RENDERING;
+  const anatomyReset = resetChibiProportions && ['NORMAL', 'GEKIGA', 'WATERCOLOR', 'POP_ART', 'SKETCH'].includes(emo)
+    ? '\nPANEL ANATOMY RESET: ordinary body/head ratio, no inherited chibi; facial anatomy follows THIS medium. Explicit scripted proportions win.' : '';
+  if (emo === 'NORMAL') return (colorMode === 'monochrome' ? '' : NORMAL_COLOR_RENDERING) + anatomyReset;
   if (colorMode === 'monochrome') {
     const gag = !seriousTone && SERIOUS_STYLES_FOR_GAG_OVERLAY.has(emo) && rawTagHasComedyIntent(rawEmotionTag)
       ? '\nGAG INTENT OVERLAY: retain dramatic ink/shadows while allowing exaggerated cartoon reactions and comedic timing; do not play the gag straight-serious.' : '';
@@ -2013,7 +2030,7 @@ export const buildEmotionBlock = (panelText, colorMode = 'color', { preserveRefe
     const lineRule = providerFamily === 'chatgpt' && emo === 'GEKIGA'
       ? OPENAI_MONOCHROME_GEKIGA_STYLE
       : resolveMonochromeRenderIntent({ style: emo, preserveReferenceStyle, seriousTone }).lineRule;
-    return `\nMONOCHROME PANEL STYLE LOCK: ${emo}; ${lineRule} Preserve script/Camera/Action, cast, glasses and wardrobe tone assignments.${proportionLock}${gag}`;
+    return `\nMONOCHROME PANEL STYLE LOCK: ${emo}; ${lineRule} Preserve script/Camera/Action, cast, glasses and wardrobe tone assignments.${proportionLock}${gag}${anatomyReset}`;
   }
   const s = EMOTION_STYLES[emo];
   const styleLock = `PANEL STYLE LOCK: ${emo}; use the selected style recipe below; preserve identity and canonical wardrobe.`;
@@ -2047,7 +2064,7 @@ export const buildEmotionBlock = (panelText, colorMode = 'color', { preserveRefe
     if (s.proportionsMulti) block += `\nPROPORTION OVERRIDE: ${s.proportionsMulti}`;
     if (s.vfxMulti) block += `\nVFX: ${s.vfxMulti}`;
     if (s.surfaceException) block += `\nSTYLE EXCEPTION: ${s.surfaceException}. Intentional style marks may model faces and skin; no unrelated noise.`;
-    return block + gagOverlay;
+    return block + gagOverlay + anatomyReset;
   }
 
   const style = providerFamily === 'chatgpt' && emo === 'GEKIGA' ? OPENAI_COLOR_GEKIGA_STYLE : s.style;
@@ -2055,7 +2072,7 @@ export const buildEmotionBlock = (panelText, colorMode = 'color', { preserveRefe
   if (s.proportions) block += `\nPROPORTION OVERRIDE: ${s.proportions}`;
   if (s.vfx) block += `\nVFX: ${s.vfx}`;
   if (s.surfaceException) block += `\nSTYLE EXCEPTION: ${s.surfaceException}. Intentional style marks may model faces and skin; no unrelated noise.`;
-  return block + gagOverlay;
+  return block + gagOverlay + anatomyReset;
 };
 
 // --- Clean Cast List (Phase 3-C: castList parsing -> externalized) ---

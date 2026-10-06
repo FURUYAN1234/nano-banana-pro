@@ -1,13 +1,13 @@
 # Super FURU AI 4-koma System / Super FURU AI 4コマシステム
 
-> Current source version: **v6.8.8** / 現在のソース版: **v6.8.8**
+> Current source version: **v6.8.9** / 現在のソース版: **v6.8.9**
 
 
 An experimental web application in which AI handles topic research, story structure, direction, prompt construction, image generation, and quality review for a four-panel manga. / AIが話題調査、構成、演出、プロンプト構築、画像生成、品質確認まで担当する4コマ漫画制作Webアプリです。
 
 [アプリを開く / Open the app](https://furuyan1234.github.io/nano-banana-pro/) · [全機能PDFマニュアル / Full manual](https://furuyan1234.github.io/nano-banana-pro/downloads/super-furu-ai-4koma-full-manual-2026-10-01.pdf)
 
-The full operation manual and Gemini setup guide cover v6.8.8. The unchanged OpenAI setup guide remains applicable. Current application terms are in [LICENSE](LICENSE). / 全機能マニュアルとGemini API取得ガイドはv6.8.8対応です。OpenAI API取得ガイドの接続手順は引き続き利用できます。現在のアプリ利用条件は [LICENSE](LICENSE) を参照してください。
+The full operation manual and Gemini setup guide cover v6.8.9. The unchanged OpenAI setup guide remains applicable. Current application terms are in [LICENSE](LICENSE). / 全機能マニュアルとGemini API取得ガイドはv6.8.9対応です。OpenAI API取得ガイドの接続手順は引き続き利用できます。現在のアプリ利用条件は [LICENSE](LICENSE) を参照してください。
 
 ## Application screen and output / 操作画面と生成例
 
@@ -23,7 +23,7 @@ https://github.com/user-attachments/assets/15608ccc-8d86-4b78-9ff3-785201b42629
 
 Automatic camera design / 自動カメラ設計: STEP2 requires a high or low viewpoint for every automatically designed panel; only an explicit user request can permit eye level. Missing elevation is rejected after bounded retries, with the unaccepted candidate retained in the progress log. Japanese camera-height phrases and positive pitch angles share the same projection parser used by assembly and QA. / STEP2の自動構成は全コマで俯瞰またはアオリを指定し、アイレベルはユーザーの明示指定があるコマだけに限定します。高さ未指定の候補は規定回数の検査後も未達なら次工程へ送らず、進捗欄へ保持します。「高めに撮る」「低めから」などの表現と正の仰俯角を共通判定し、画像QAでは指定文の丸写しを観察証拠にしません。高低の投影証拠が不足する画像は未確認として保持します。画像の出来を保証するものではなく、Webで別途生成した画像はアプリの自動QA対象にはなりません。
 
-「魚眼・アイレベルは使わない」などの禁止指定を採用指示と取り違えず、「顔〜胸の寄り」「長焦点」も画角として認識します。短縮後も顔・身体のアオリ投影指示を保持します。劇画の顔立ちは生成結果で差が残るため、未確認項目を成功として表示しません。最新の指定修正後の実画像改善は未確認です。通常の広角は自動構成に残し、魚眼は自動候補から外しています。画風の自動候補は通常・劇画・水彩・ポップアート・鉛筆スケッチ・ちびキャラの6種類です。コマの内容と演技に応じて選び、順番や回数は固定しません。選択モードの画風固定を守り、取り込んだ台本の既存画風も保持します。画像QAは背景効果や分類名だけで合格にせず、人物の形・線・塗りを確認します。 / Automatic direction retains rectilinear wide angles and excludes fisheye. Choose normal, gekiga, watercolor, pop art, pencil sketch or chibi to suit each scene, without a fixed order or frequency. Selected-mode locks and imported styles remain supported. QA requires observed figure construction, linework and paint, not background effects or classification labels alone.
+「魚眼・アイレベルは使わない」などの禁止指定を採用指示と取り違えず、「顔〜胸の寄り」「長焦点」も画角として認識します。短縮後も顔・身体のアオリ投影指示を保持します。API作例では劇画の顔・淡い水彩・ちびキャラ等の描き分けを確認しています。生成ごとの差は残り、未確認項目を成功として表示しません。通常の広角は自動構成に残し、魚眼は自動候補から外しています。画風の自動候補は通常・劇画・水彩・ポップアート・鉛筆スケッチ・ちびキャラの6種類です。コマの内容と演技に応じて選び、順番や回数は固定しません。選択モードの画風固定を守り、取り込んだ台本の既存画風も保持します。画像QAは背景効果や分類名だけで合格にせず、人物の形・線・塗りを確認します。 / Automatic direction retains rectilinear wide angles and excludes fisheye. Choose normal, gekiga, watercolor, pop art, pencil sketch or chibi to suit each scene, without a fixed order or frequency. Selected-mode locks and imported styles remain supported. QA requires observed figure construction, linework and paint, not background effects or classification labels alone.
 
 描画オプション：STEP2の「版権キャラクターにモザイクをかける」と、STEP3の「ウオーターマークを表記する」は初期状態でONです。前者はシナリオ構築と最終画像プロンプトに「版権キャラクターにおおきなモザイクをかける」を追加し、後者をOFFにすると左右のフッターの描画指示を外します。OpenAI／GeminiのAPIとWeb用コピーに共通で反映します。設定変更後はモザイクならSTEP2、ウオーターマークならSTEP3から再作成してください。変更だけでAPIは実行されません。選択は全設定リセットまたは再読込まで保持します。生成済み画像には遡って反映されず、AIの対象判断・描画は実画像で確認してください。
 
@@ -60,6 +60,8 @@ Wardrobe continuity / 衣装の連続性: 4コマでは人物ごとに服と付�
 [Open the application](https://furuyan1234.github.io/nano-banana-pro/) / [アプリを開く](https://furuyan1234.github.io/nano-banana-pro/)
 
 [Read the detailed note article](https://note.com/happy_duck780/n/ndf063558c1f5) / [詳しいnote記事を読む](https://note.com/happy_duck780/n/ndf063558c1f5)
+
+Panel media and projection / コマ別の画材と投影: Watercolor applies transparent pale washes to figures, clothes, props and backgrounds. Normal, gekiga and chibi use their own opaque color treatment; explicit pale palettes still take priority. Subsequent panels reset inherited chibi anatomy. High/low camera review needs localized evidence on actors, not scenery alone. Explicitly offscreen continuity actors are excluded from physical on-screen counts. / 水彩は人物・服・小道具・背景まで淡い透明な薄塗りを指定します。通常・劇画・ちびキャラは各画風の不透明な塗りを使い、明示した淡色指定は保持します。ちび化の次のコマは頭身を戻します。俯瞰・アオリの検査は背景だけでなく人物の具体的な投影根拠を必要とし、画面外で位置を保持する人物は画面内人数へ数えません。既存の台本はSTEP3から再構築してください。
 
 ## AI Manga Creative Suite / AIまんが制作エコシステム
 
@@ -198,7 +200,7 @@ Four-panel prompts protect cast count, identity markers such as glasses, wardrob
 
 焦点はコマの物語に合わせて決めます。重要ではない極近景・遠景は、被写界深度のぼかしや、選択した画風に応じた線・細部・コントラストの低減で主焦点より弱くします。読む必要がある背景の看板・モニター・警告文や、明示した全域にピントの合う構図は鮮明に残せます。一律の背景ぼかしは行わず、カメラの位置・画角・演技・表情、通常／水彩／劇画／チビなどの画風を焦点整理のために変更しない指示です。実画像の焦点差は既存の品質検査と目視で確認し、軽微・不確かな差だけで有料再生成を開始しません。
 
-人物の焦点には強弱のあるGペン線を使います。外輪郭・髪の束・顎・肩・重なりは太く、目・口・指先は細く鮮明に描き、一律の太線や黒つぶれを避けます。背景や重要度の低い人物・小物は線密度、明暗、色の濃さ、奥行きに応じたぼかしで整理します。話の理解に必要な反応・小道具・文字は鮮明に残します。漫画らしい大きな身体演技とカメラの高低・傾き・遠近で視線を誘導し、動線だけで動きの代用をしません。明示された静止・真顔・沈黙や画風は保持します。画面や紙の表は作中の操作者・読み手へ向け、読者に見せる都合で裏表を反転させません。4コマの両プロバイダ、圧縮後、1枚絵コピーに共通の画質指示を使います。演出の目標は再生成の合否条件ではなく、軽微な差だけでAPI再生成は増やしません。小道具・画面表示・文字は所属コマに収め、明示した演出以外では隣の場面へはみ出させません。変更はSTEP3を再構築して反映し、既存の台本の演出を変える場合はSTEP2または選択式シナリオ強化を使います。実画像への反映には生成ごとの差があり、改善を保証するものではありません。
+通常画風の人物の焦点には強弱のあるGペン線を使い、水彩などでは選択した画材を優先します。外輪郭・髪の束・顎・肩・重なりは太く、目・口・指先は細く鮮明に描き、一律の太線や黒つぶれを避けます。背景や重要度の低い人物・小物は線密度、明暗、色の濃さ、奥行きに応じたぼかしで整理します。話の理解に必要な反応・小道具・文字は鮮明に残します。漫画らしい大きな身体演技とカメラの高低・傾き・遠近で視線を誘導し、動線だけで動きの代用をしません。明示された静止・真顔・沈黙や画風は保持します。画面や紙の表は作中の操作者・読み手へ向け、読者に見せる都合で裏表を反転させません。4コマの両プロバイダ、圧縮後、1枚絵コピーに共通の画質指示を使います。演出の目標は再生成の合否条件ではなく、軽微な差だけでAPI再生成は増やしません。小道具・画面表示・文字は所属コマに収め、明示した演出以外では隣の場面へはみ出させません。変更はSTEP3を再構築して反映し、既存の台本の演出を変える場合はSTEP2または選択式シナリオ強化を使います。実画像への反映には生成ごとの差があり、改善を保証するものではありません。
 
 ### Story endings / ストーリーの結末
 
@@ -382,7 +384,7 @@ Character sheets define identity rather than a reusable page layout. STEP4 asks 
 
 Functional surfaces such as phones, documents, books, and monitors are oriented toward the person using or reading them. Printed glyphs rotate and project with the physical surface instead of being forced upright to the viewer. / スマホ、書類、本、モニター等の機能面は使用者・読み手へ向けます。印字は読者へ無理に正立させず、実物の面と一緒に回転・透視投影するよう指定します。
 
-Image QA checks panel structure, character identity, body and hand integrity, prop ownership, dialogue-only bubbles, text leakage, and observable surface orientation. Each panel carries an exact-once physical-cast contract: every named actor gets one full-size body silhouette in one depth position, and every Camera, Action, dialogue, or reaction mention must reuse that body. Explicitly scripted miniatures, reflections, photos, or screen images are inventoried separately as contained diegetic replicas; they never authorize another full-size actor. QA validates both inventories so a repeated face or body is reported even across foreground/background or panel-edge occlusion. For every large, foreground, foreshortened, open, or action-critical hand, QA inventories visible and naturally occluded digits and requires their total to be five. A four-digit hand is an anatomy defect; uncertain or missing evidence remains unverified. Missing hand evidence may receive supplementary panel checks with each request using its own timeout; unresolved evidence remains unverified and cannot by itself trigger image regeneration. / 画像QAはコマ構造、人物同一性、身体・手、小物の持ち主、吹き出しが台詞だけか、余分な文字、確認可能な面の向きを検査します。各コマは登場人物ごとに実体の等身大シルエット1体・奥行き位置1か所というexact-once契約を持ち、Camera、Action、台詞、リアクションに同じ人物が繰り返し現れても同じ身体を再利用します。台本に明示されたミニチュア、鏡像、写真、画面内人物は、容器や面の中に限る劇中複製として実体とは別に棚卸しし、等身大の追加人物を許可しません。QAは両方の内訳を突合するため、前景／背景やコマ端の見切れをまたぐ同一人物の顔・身体の重複も報告します。大きい手、前景の手、短縮遠近の手、開いた手、動作上重要な手ごとに、見える指と自然に隠れた指を数え、合計5本であることを必須にします。4本指は人体不具合とし、判別不能・根拠不足は未確認に残します。手の根拠不足は各リクエスト固有の応答待ち上限でコマ別に補足検査し、解消しなければ未確認のまま保持します。それだけを理由に画像を再生成しません。
+Image QA checks panel structure, character identity, body and hand integrity, prop ownership, dialogue-only bubbles, text leakage, and observable surface orientation. Each panel carries an exact-once physical-cast contract: every on-screen named actor gets one physical body silhouette in one depth position, and every Camera, Action, dialogue, or reaction mention must reuse that body. Explicitly scripted miniatures, reflections, photos, or screen images are inventoried separately as contained diegetic replicas; they never authorize another full-size actor. QA validates both inventories so a repeated face or body is reported even across foreground/background or panel-edge occlusion. For every large, foreground, foreshortened, open, or action-critical hand, QA inventories visible and naturally occluded digits and requires their total to be five. A four-digit hand is an anatomy defect; uncertain or missing evidence remains unverified. Missing hand evidence may receive supplementary panel checks with each request using its own timeout; unresolved evidence remains unverified and cannot by itself trigger image regeneration. / 画像QAはコマ構造、人物同一性、身体・手、小物の持ち主、吹き出しが台詞だけか、余分な文字、確認可能な面の向きを検査します。各コマは画面内の登場人物ごとに実体シルエット1体・奥行き位置1か所というexact-once契約を持ち、Camera、Action、台詞、リアクションに同じ人物が繰り返し現れても同じ身体を再利用します。台本に明示されたミニチュア、鏡像、写真、画面内人物は、容器や面の中に限る劇中複製として実体とは別に棚卸しし、等身大の追加人物を許可しません。QAは両方の内訳を突合するため、前景／背景やコマ端の見切れをまたぐ同一人物の顔・身体の重複も報告します。大きい手、前景の手、短縮遠近の手、開いた手、動作上重要な手ごとに、見える指と自然に隠れた指を数え、合計5本であることを必須にします。4本指は人体不具合とし、判別不能・根拠不足は未確認に残します。手の根拠不足は各リクエスト固有の応答待ち上限でコマ別に補足検査し、解消しなければ未確認のまま保持します。それだけを理由に画像を再生成しません。
 
 ## MiniMax H3 and ComfyUI / MiniMax H3・ComfyUI動画化
 
@@ -405,7 +407,7 @@ The copied prompt guides panel order, cast, speaker assignment, acting, camera, 
 The app provides separate download buttons for the workflow JSON and the custom-node ZIP. Both files are needed for this route. / アプリにはワークフローJSONとカスタムノードZIPのダウンロードボタンが別々にあります。この経路では両方のファイルが必要です。
 
 - [Download workflow JSON](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261005233427.json) / [ワークフローJSONをダウンロード](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261005233427.json)
-- [Download custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.8.8/ComfyUI_H3_FourPanel_NonLM_20261005233427_authfix1.zip) / [カスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.8.8/ComfyUI_H3_FourPanel_NonLM_20261005233427_authfix1.zip)
+- [Download custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.8.9/ComfyUI_H3_FourPanel_NonLM_20261005233427_authfix1.zip) / [カスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.8.9/ComfyUI_H3_FourPanel_NonLM_20261005233427_authfix1.zip)
 
 Place the ZIP's `3フォルダ` under `ComfyUI/custom_nodes/` and the workflow JSON under `ComfyUI/user/default/workflows/`. Install the separate dependencies below, then restart ComfyUI. / ZIP内の`3フォルダ`を`ComfyUI/custom_nodes/`へ、ワークフローJSONを`ComfyUI/user/default/workflows/`以下へ配置します。下記の別途必要な依存関係を導入してからComfyUIを再起動します。
 
@@ -451,11 +453,14 @@ The production application is published from the `main` branch through the repos
 
 **Why are there two ComfyUI download buttons? / ComfyUIのダウンロードボタンが2つあるのはなぜですか？**  The JSON defines the workflow, while the ZIP supplies three custom-node folders and documentation; three additional runtime dependencies are installed separately. / JSONはワークフロー定義、ZIPはカスタムノード3フォルダーと導入文書です。さらに実行依存3項目を別途導入します。
 
-**Which video package should I install? / 動画化には何を入れますか？** Use the `20261005233427` workflow JSON and matching v6.8.8 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261005233427` のワークフローJSONと対応するv6.8.8 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
+**Which video package should I install? / 動画化には何を入れますか？** Use the `20261005233427` workflow JSON and matching v6.8.9 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261005233427` のワークフローJSONと対応するv6.8.9 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
 
 **Is this the T2V/I2V/Ref2V repository? / T2V・I2V・Ref2Vのリポジトリですか？**  No. Those workflows are maintained separately in [comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows). / いいえ。それらは別の[comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows)で管理します。
 
 ## 📋 ChangeLog
+
+### v6.8.9 (2026-10-06)
+- **[Fix & UX]** コマごとの画材と人物の投影を分けて指定し、劇画の顔・淡い水彩・通常色の描き分けを改善。画面外の人物を重複計上しないよう修正。 / Separate panel media from actor projection, strengthen gekiga faces and pale watercolor, and exclude explicitly offscreen continuity actors from physical cast counts.
 
 ### v6.8.8 (2026-10-06)
 - **[Fix & UX]** カメラの禁止指定・寄り・長焦点の判定と圧縮時の投影指示を修正。6画風の自動選択、劇画の顔指定と未確認表示を整理し、最新H3配布物へ更新。 / Fix camera negation, close-up and telephoto parsing and preserve projection instructions during compaction. Refine six automatic styles, gekiga face instructions and unverified findings; update the H3 package.
@@ -499,9 +504,6 @@ The production application is published from the `main` branch through the repos
 
 ### v6.7.5 (2026-10-01)
 - **[Fix & UX]** 参照シートとモザイク対象を区別し、意図的な対象指定を保持。開発版もGPT-6.1 Solを初期選択に統一。 / Separate character references from authorized mosaic targets, preserve intentional masks, and default development to GPT-6.1 Sol.
-
-### v6.7.4 (2026-09-30)
-- **[Fix & UX]** STEP2にGPT-6.1 Solを追加し公開版の初期モデルに設定。Model Chainを選択モデルと連動しAstraの手動選択を維持。GPT-6.xのAPI出力上限指定を修正。 / Added GPT-6.1 Sol as the production STEP2 default, synchronized Model Chain with the selected route while retaining manual Astra, and fixed GPT-6.x completion parameters.
 
 Older release history is available in [GitHub Releases](https://github.com/FURUYAN1234/nano-banana-pro/releases). / 以前の更新履歴は [GitHub Releases](https://github.com/FURUYAN1234/nano-banana-pro/releases) で確認できます。
 
