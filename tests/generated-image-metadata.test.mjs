@@ -162,7 +162,7 @@ test('STEP4 places concise metadata privacy guidance directly in the API generat
 
   assert.ok(apiActionIndex >= 0, 'API generation action should exist');
   assert.ok(privacyCopyIndex > apiActionIndex, 'privacy guidance should follow the API generation action');
-  assert.ok(apiSettingsIndex > privacyCopyIndex, 'privacy guidance should precede the API settings');
+  assert.ok(apiSettingsIndex < apiActionIndex, 'API settings should precede STEP4; privacy guidance stays directly below the action');
   assert.doesNotMatch(source, /安全化した同じ制作情報JSON/);
   assert.match(source, /buildGeneratedImageMetadata/);
   assert.match(source, /embedGeneratedImageMetadata/);
