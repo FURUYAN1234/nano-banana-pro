@@ -1,13 +1,13 @@
 # Super FURU AI 4-koma System / Super FURU AI 4コマシステム
 
-> Current source version: **v6.9.0** / 現在のソース版: **v6.9.0**
+> Current source version: **v6.9.1** / 現在のソース版: **v6.9.1**
 
 
 An experimental web application in which AI handles topic research, story structure, direction, prompt construction, image generation, and quality review for a four-panel manga. / AIが話題調査、構成、演出、プロンプト構築、画像生成、品質確認まで担当する4コマ漫画制作Webアプリです。
 
 [アプリを開く / Open the app](https://furuyan1234.github.io/nano-banana-pro/) · [全機能PDFマニュアル / Full manual](https://furuyan1234.github.io/nano-banana-pro/downloads/super-furu-ai-4koma-full-manual-2026-10-01.pdf)
 
-The full operation manual and Gemini setup guide cover v6.9.0. The unchanged OpenAI setup guide remains applicable. Current application terms are in [LICENSE](LICENSE). / 全機能マニュアルとGemini API取得ガイドはv6.9.0対応です。OpenAI API取得ガイドの接続手順は引き続き利用できます。現在のアプリ利用条件は [LICENSE](LICENSE) を参照してください。
+The full operation manual and Gemini setup guide cover v6.9.1. The unchanged OpenAI setup guide remains applicable. Current application terms are in [LICENSE](LICENSE). / 全機能マニュアルとGemini API取得ガイドはv6.9.1対応です。OpenAI API取得ガイドの接続手順は引き続き利用できます。現在のアプリ利用条件は [LICENSE](LICENSE) を参照してください。
 
 ## Application screen and output / 操作画面と生成例
 
@@ -374,7 +374,9 @@ OpenAI monochrome references supply identity, clothing and structure; their colo
 
 プロンプトの設計目標は文字数ではなく完成画像の品質です。短くても効く指示を優先し、台詞・構図・人物識別・画風などの必要な条件を守るためにだけ長くします。32,000文字は使い切る目標ではなく上限であり、長文化による画質向上は保証されません。 / The design target is image quality, not prompt length. Prefer concise effective instructions and use extra length only to preserve necessary visual and story constraints; the 32,000-character ceiling is not a target.
 
-ChatGPT Webへの貼り付け手順・コピー・TXT保存・制作情報JSON保存は、STEP4の「ChatGPTのWebでプロンプトを貼り付け（API節約可能）」を開くと表示されます（初期状態は折り畳み）。ChatGPT Webではカラー・白黒とも分割コピーボタンを1から順に使い、**同じ入力欄へすべて貼ってから一度だけ送信**してください。1回の貼り付けは9,500文字以下にし、原文と参照画像の説明は削りません。分割位置は行境界を優先し、各区分を番号順に連続貼付すると元の全文と一致します。各コピーの末尾は改行1つで終わり、次の区分が前の行へつながりません。2026-09-26の実測では、一度に10,000文字を貼るとTXT添付になり、分割して合計32,000文字を貼ると入力欄内に保持されました。全文一括コピーと.txt保存も残しています。全文をWebへ一度に貼るとTXT化し、指示の反映や生成結果が変わる場合があるため、通常は分割を使ってください。TXTを使う場合はキャラクター参照画像、必要なら背景画像を一緒に添付し、入力欄で添付の指示文を読むよう依頼してください。「テキストフィールドに表示」への変換は不要です。分割貼付は指示の欠落を避ける方法ですが、画像モデルによる遵守や品質は保証しません。 / In ChatGPT Web, paste numbered chunks into the same composer and send once. Each chunk is at most 9,500 characters, prefers a line boundary, and ends with one newline so sequential pastes never join lines; concatenation preserves the full prompt. A single full paste may become a TXT attachment and may affect instruction adherence or output, so use the split buttons normally. Full-copy and TXT export remain available. Split pasting helps avoid omitted instructions but cannot guarantee image-model compliance or quality.
+ChatGPT Webへの貼り付け手順・コピー・TXT保存・制作情報JSON保存は、STEP4の「ChatGPTのWebでプロンプトを貼り付け（API節約可能）／4コマ漫画を動画化」を開くと表示されます（初期状態は折り畳み）。ChatGPT Webではカラー・白黒とも分割コピーボタンを1から順に使い、**同じ入力欄へすべて貼ってから一度だけ送信**してください。1回の貼り付けは9,500文字以下にし、原文と参照画像の説明は削りません。分割位置は行境界を優先し、各区分を番号順に連続貼付すると元の全文と一致します。各コピーの末尾は改行1つで終わり、次の区分が前の行へつながりません。2026-09-26の実測では、一度に10,000文字を貼るとTXT添付になり、分割して合計32,000文字を貼ると入力欄内に保持されました。全文一括コピーと.txt保存も残しています。全文をWebへ一度に貼るとTXT化し、指示の反映や生成結果が変わる場合があるため、通常は分割を使ってください。TXTを使う場合はキャラクター参照画像、必要なら背景画像を一緒に添付し、入力欄で添付の指示文を読むよう依頼してください。プロンプトが添付ファイルになった場合でも、環境によりテキストフィールドへ戻せる場合は全文貼付が可能です。分割貼付は指示の欠落を避ける方法ですが、画像モデルによる遵守や品質は保証しません。 / In ChatGPT Web, paste numbered chunks into the same composer and send once. Each chunk is at most 9,500 characters, prefers a line boundary, and ends with one newline so sequential pastes never join lines; concatenation preserves the full prompt. A single full paste may become a TXT attachment and may affect instruction adherence or output, so use the split buttons normally. Full-copy and TXT export remain available. If an attached prompt can be returned to the composer in the current environment, full pasting is possible. Split pasting helps avoid omitted instructions but cannot guarantee image-model compliance or quality.
+
+ChatGPT Web用の「画像比率修正・アップスケール」「安全基準」「4コマ漫画を動画化」の案内は、同じ折り畳み内の制作情報JSONの説明直下にあり、それぞれ個別に開閉できます。「API生成時の品質・サイズ」は折り畳みの外で、STEP4の画像生成ボタンの直前に配置し、6pxの隙間を空けています。 / The image ratio/upscale, safety and manga-to-video help are independently collapsible inside the ChatGPT Web disclosure, below the production JSON explanation. API quality/size settings stay outside and immediately above STEP4 generation, with a 6px gap.
 
 Recurring props do not require their lettering to be readable in every panel. New scenarios assign necessary text to the relevant story beats; other views can show the same object's side, back or distant silhouette. Explicit text and repetition remain protected. Rebuilding STEP3 does not rewrite a saved scenario. / 同じ小道具が再登場しても、その文字を毎コマ読ませる必要はありません。新規シナリオでは必要な文字を読ませるコマへ割り当て、他のコマでは同じ物の側面・背面・遠景を使えるよう指示します。明示された文字・反復は保持します。STEP3の再構築だけでは保存済みシナリオを書き換えません。
 
@@ -396,7 +398,7 @@ Example: The four-panel manga above is the source artwork. The video below shows
 
 https://github.com/user-attachments/assets/868b2db5-b159-45b7-9c3d-d45e261f2ecc
 
-The expanded `FURUの4コマ漫画を動画化（MiniMax H3 / ComfyUI）` section offers a manual standard-template route and a dedicated Fused4step + SLA distribution. / `FURUの4コマ漫画を動画化（MiniMax H3 / ComfyUI）`を開くと、手動の標準テンプレート経路と専用Fused4step・SLA配布経路を選べます。
+The `4コマ漫画を動画化（miniMax H3/ComfyUI）` guide inside the ChatGPT Web disclosure offers a manual standard-template route and a dedicated Fused4step + SLA distribution. / ChatGPT Web用の折り畳み内にある`4コマ漫画を動画化（miniMax H3/ComfyUI）`を開くと、手動の標準テンプレート経路と専用Fused4step・SLA配布経路を選べます。Gemini用では従来の場所から開けます。
 
 ### Use the ComfyUI standard template yourself / ComfyUI標準テンプレートを自分で使う場合
 
@@ -409,7 +411,7 @@ The copied prompt guides panel order, cast, speaker assignment, acting, camera, 
 The app provides separate download buttons for the workflow JSON and the custom-node ZIP. Both files are needed for this route. / アプリにはワークフローJSONとカスタムノードZIPのダウンロードボタンが別々にあります。この経路では両方のファイルが必要です。
 
 - [Download workflow JSON](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261005233427.json) / [ワークフローJSONをダウンロード](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261005233427.json)
-- [Download custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.9.0/ComfyUI_H3_FourPanel_NonLM_20261005233427_authfix1.zip) / [カスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.9.0/ComfyUI_H3_FourPanel_NonLM_20261005233427_authfix1.zip)
+- [Download custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.9.1/ComfyUI_H3_FourPanel_NonLM_20261005233427_authfix1.zip) / [カスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.9.1/ComfyUI_H3_FourPanel_NonLM_20261005233427_authfix1.zip)
 
 Place the ZIP's `3フォルダ` under `ComfyUI/custom_nodes/` and the workflow JSON under `ComfyUI/user/default/workflows/`. Install the separate dependencies below, then restart ComfyUI. / ZIP内の`3フォルダ`を`ComfyUI/custom_nodes/`へ、ワークフローJSONを`ComfyUI/user/default/workflows/`以下へ配置します。下記の別途必要な依存関係を導入してからComfyUIを再起動します。
 
@@ -455,11 +457,14 @@ The production application is published from the `main` branch through the repos
 
 **Why are there two ComfyUI download buttons? / ComfyUIのダウンロードボタンが2つあるのはなぜですか？**  The JSON defines the workflow, while the ZIP supplies three custom-node folders and documentation; three additional runtime dependencies are installed separately. / JSONはワークフロー定義、ZIPはカスタムノード3フォルダーと導入文書です。さらに実行依存3項目を別途導入します。
 
-**Which video package should I install? / 動画化には何を入れますか？** Use the `20261005233427` workflow JSON and matching v6.9.0 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261005233427` のワークフローJSONと対応するv6.9.0 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
+**Which video package should I install? / 動画化には何を入れますか？** Use the `20261005233427` workflow JSON and matching v6.9.1 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261005233427` のワークフローJSONと対応するv6.9.1 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
 
 **Is this the T2V/I2V/Ref2V repository? / T2V・I2V・Ref2Vのリポジトリですか？**  No. Those workflows are maintained separately in [comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows). / いいえ。それらは別の[comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows)で管理します。
 
 ## 📋 ChangeLog
+
+### v6.9.1 (2026-10-06)
+- **[Fix & UX]** Web貼り付けの三分割・一括コピー・TXT/JSON保存を保持し、画像補助・動画化を折り畳み内に整理。API品質・サイズをSTEP4直前へ移動し、6pxの隙間と添付ファイルからの全文貼付案内を追加。 / Preserved split/full copy and TXT/JSON saving; nested image help and video conversion in Web guidance, placed API settings above STEP4 with a 6px gap, and clarified full pasting from attachments.
 
 ### v6.9.0 (2026-10-06)
 - **[Fix & UX]** 全行程強制ストップと次STEP・修正ボタンの点滅案内を追加。ChatGPT Web貼付ガイドを折り畳み、VisualEvidenceの看板文字が台詞へ混入するSTEP3不具合を修正。 / Add shared Force Stop and next-action pulses, collapse the ChatGPT Web paste guide, and keep VisualEvidence sign text out of STEP3 dialogue.

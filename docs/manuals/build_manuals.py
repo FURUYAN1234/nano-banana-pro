@@ -53,7 +53,7 @@ page('Gemini API 取得マニュアル',
  ('h2','はじめての取得・接続・費用確認'),
  ('body','Super FURU AI 4-koma Systemで使うGemini APIキーを取得するための、日本語操作ガイドです。Googleアカウントでのログインから、プロジェクト選択、キー発行、アプリへの接続まで順番に説明します。'),
  ('box','この冊子の対象','パソコンのブラウザで作業する初心者向けです。APIとは、アプリからAIへ処理を依頼する仕組みです。プログラムを書く必要はありません。'),
- ('body','v6.9.0対応。Google AI StudioでAPIキーを用意し、本アプリへ接続する手順を説明します。画面写真は操作に必要な部分のみを掲載しています。画面の表記や利用条件はアカウントによって異なる場合があります。'),
+ ('body','v6.9.1対応。Google AI StudioでAPIキーを用意し、本アプリへ接続する手順を説明します。画面写真は操作に必要な部分のみを掲載しています。画面の表記や利用条件はアカウントによって異なる場合があります。'),
  ('body','キーを取得するだけで、すべてのモデルを無料で利用できるわけではありません。画像生成や検索、解析、修正にも費用が発生する場合があります。'),refs=('studio','app')),
 page('目次と最短の作業順',
  ('rows',[['ページ','内容'],['3','GoogleアカウントとAI Studio'],['4','APIキー画面を開く'],['5','プロジェクトを選ぶ'],['6','キーを作成・コピーする'],['7','アプリへ接続する'],['8','無料枠と有料枠の違い'],['9','有料枠の設定と費用確認'],['10','キーの安全な管理'],['11','接続できないとき'],['12','公式リンクと完了チェック']]),
@@ -108,7 +108,7 @@ page('完了チェックと公式リンク',
 SYSTEM=[
 page('全機能マニュアル',('h2','Super FURU AI 4-koma System'),
  ('body','キャラクター資料と題材から、4コマの構成、画像用の指示文、生成画像、保存まで進める日本語操作ガイドです。各機能の目的、操作順、変更が反映される工程、費用と保存の注意を説明します。'),
- ('box','このマニュアルの使い方','v6.9.0の全機能を、準備から保存まで操作順に説明します。OpenAIシナリオの初期選択はGPT-6.1 Solです。STEP2は題材に沿った具体的な結末を優先し、STEP3は合唱台詞と人数、コマ別の画風・カメラ指定を保ちます。タイトル左の「使い方マニュアル」と接続欄のAPIマニュアルから、必要な説明を開けます。'),
+ ('box','このマニュアルの使い方','v6.9.1の全機能を、準備から保存まで操作順に説明します。OpenAIシナリオの初期選択はGPT-6.1 Solです。STEP2は題材に沿った具体的な結末を優先し、STEP3は合唱台詞と人数、コマ別の画風・カメラ指定を保ちます。タイトル左の「使い方マニュアル」と接続欄のAPIマニュアルから、必要な説明を開けます。'),
  ('body','画面写真はCodex内蔵ブラウザで取得しています。実行を伴う画面が撮影できない機能は、現行の画面部品と処理コードを照合して説明し、生成済みの画面を作り物で代用しません。'),refs=('app',)),
 page('目次・機能の見つけ方',
  ('rows',[['ページ','機能'],['3-4','4ステップの流れ・API接続'],['5-6','キャラクター・作風JSON・360°背景'],['7-9','ニュース、自由入力、舞台・衣装・結末'],['10-11','シナリオ編集、SNS説明、演出強化'],['12-14','カラー／白黒、モザイク、ウオーターマーク、プロンプト構築・編集'],['15-18','Webコピー、Web修正・高解像度、API生成、検査・自動修正'],['19-21','追加修正、画像履歴・保存、制作情報'],['22-23','全自動・連続ループ、やり直しとモデル確認'],['24-25','1枚絵、動画化・関連アプリ'],['26-27','トラブル対処、完成前チェック・参照情報'],['28-30','白黒の描画指定・生成例・部分修正'],['31-32','Windowsでのローカル起動・STEP4の待機と検査']]),
@@ -175,12 +175,12 @@ page('プロンプト構築・精査・手動編集',
  ('body','精査が失敗した場合は、元の指示文を残し、「精査未完了」と実際の理由を表示します。指示文が表示されているだけで、整合性確認に合格したとは限りません。'),
  ('box','手動編集の注意','人物名、台詞の引用符、話者、コマ数、カメラ指定を壊さないようにします。台本側の内容を変えたい場合はSTEP2を編集し、STEP3から再構築すると整合を取りやすくなります。')),
 page('Web / Workで手動生成する',
- ('body','ChatGPT用はSTEP4の薄いオレンジ・黒文字の「ChatGPTのWebでプロンプトを貼り付け（API節約可能）」を開き、コピー・TXT保存・制作情報JSONを使います。最初は折り畳まれ、API画像生成ボタンは外にあります。Gemini用は展開したままです。対応する公式チャットへ貼り付け、キャラクター資料と必要な背景資料を添付します。'),
+ ('body','ChatGPT用はSTEP4の薄いオレンジ・黒文字の「ChatGPTのWebでプロンプトを貼り付け（API節約可能）／4コマ漫画を動画化」を開き、コピー・TXT保存・制作情報JSONを使います。最初は折り畳まれ、API生成時の品質・サイズは折り畳みの外で、STEP4画像生成ボタンの直前に6pxの隙間を空けて置いています。Gemini用は展開したままです。対応する公式チャットへ貼り付け、キャラクター資料と必要な背景資料を添付します。'),
  ('body','OpenAI側ではカラー・白黒とも、長文が分割表示される場合は、番号順にすべてを同じ入力欄へ貼り付けます。途中では送信せず、画像の添付と全文の貼り付けを終えてから1回だけ送信します。全文コピーは、長い貼り付けがTXT添付へ変わる場合に注意してください。'),
- ('body','「全文プロンプトを.txtで保存する」でテキストファイルも保存できます。TXT添付を使う場合は、チャット側で内容を読んで画像を生成するよう指示します。'),
+ ('body','「全文プロンプトを.txtで保存する」でテキストファイルも保存できます。プロンプトが添付ファイルになった場合でも、環境によりテキストフィールドへ戻せる場合は全文貼付が可能です'),
  ('box','Web画像はアプリへ自動では戻りません','Webで作った画像は、アプリのAPI生成後検査・履歴へ自動登録されません。台詞・コマ数・人物・手を、ご自身で確認してWeb側から保存します。別添のWeb制作情報JSONは画像の真正性の証明ではありません。')),
 page('Web画像の修正・高解像度化',
- ('body','画像比率修正・アップスケールの下に「安全基準…（web貼り付け時）」、その下に「4コマ漫画を動画化（miniMax H3/ComfyUI）」があります。前者は外部チャットへ貼り付ける補助文です。'),
+ ('body','制作情報JSONの説明の下に「画像比率修正・アップスケール」「安全基準…（web貼り付け時）」「4コマ漫画を動画化（miniMax H3/ComfyUI）」があり、それぞれ個別に開閉できます。前者は外部チャットへ貼り付ける補助文です。'),
  ('rows',[['コピーする文章','使い方'],['Gemini用画像比率修正','生成済み画像と一緒にGemini Webへ貼り付け、A4配置や人物・手足等の修正を依頼する'],['Gemini用2K高解像度','画像と一緒にGemini Webへ貼り付け、高精細な再仕上げを依頼する'],['画像比率修正','ChatGPT側の生成済み画像に、A4比率の修正指示を添える'],['画像2倍アップスケール','ChatGPTへ画像と指示を送り、元の縦横を2倍にする仕上げを依頼する']]),
  ('box','寸法・台詞・人物を確認','コピーした指示だけで、指定寸法や画質改善の成功は保証されません。Webの返した実画像を保存し、画素数、台詞、人物、線の変化を確認してください。外部サービスの利用条件・料金が適用されます。')),
 page('STEP4  APIで画像を生成する',
@@ -295,7 +295,7 @@ for p in SYSTEM:
 class Book:
  def __init__(self,path,title,pages):
   self.path=path; self.pages=pages; self.c=canvas.Canvas(str(path),pagesize=A4,pageCompression=1)
-  self.c.setTitle(title);self.c.setAuthor('Super FURU AI 4-koma System');self.c.setSubject('日本語操作マニュアル / v6.9.0 / 2026-10-06')
+  self.c.setTitle(title);self.c.setAuthor('Super FURU AI 4-koma System');self.c.setSubject('日本語操作マニュアル / v6.9.1 / 2026-10-06')
   self.y=0;self.number=0;self.layout=[]
  def para(self,text,style='body',gap=10):
   p=Paragraph(text,STYLES[style]);_,h=p.wrap(CW,1000)
@@ -337,7 +337,7 @@ class Book:
    if page['shot']:self.shot(page['shot'],page['caption'])
    if page['refs']:
     self.para('参照：'+' / '.join(f'<link href="{escape(SOURCES[k][1])}" color="#087c86">{escape(SOURCES[k][0])}</link>' for k in page['refs']),'small',0)
-   c.setFillColor(GRAY);c.setFont('JP',8);c.drawString(M,33,'v6.9.0対応 | 2026年10月6日更新 | A4 日本語版');c.drawRightString(W-M,33,f'{i:02d} / {len(self.pages):02d}')
+   c.setFillColor(GRAY);c.setFont('JP',8);c.drawString(M,33,'v6.9.1対応 | 2026年10月6日更新 | A4 日本語版');c.drawRightString(W-M,33,f'{i:02d} / {len(self.pages):02d}')
    self.layout.append(dict(page=i,bottom_y=round(self.y,2)));c.showPage()
   c.save();return self.layout
 
@@ -361,11 +361,11 @@ def crop_assets():
 def verify_and_render(path,layout,pages):
  r=PdfReader(path);text='\n'.join(p.extract_text() for p in r.pages)
  assert len(r.pages)==len(pages)
- assert all('v6.9.0対応' in p.extract_text() and '2026年10月6日更新' in p.extract_text() for p in r.pages)
+ assert all('v6.9.1対応' in p.extract_text() and '2026年10月6日更新' in p.extract_text() for p in r.pages)
  if 'full-manual' in path.name:
   for required in ['Download ZIP','Node.js','start_app.bat','npm install','node_modules','ウィンドウ','画像表示予定枠の中央','累積時間だけでは打ち切りません','原寸RGB','褐色肌','カケアミ']:
    assert re.sub(r'\s+','',required) in re.sub(r'\s+','',text),required
- assert set(re.findall(r'v[0-9]+\.[0-9]+\.[0-9]+',text)) <= {'v6.9.0'}, 'Historical version in current manual'
+ assert set(re.findall(r'v[0-9]+\.[0-9]+\.[0-9]+',text)) <= {'v6.9.1'}, 'Historical version in current manual'
  assert not re.search(r'nano\s*banana|ナノ[・\s]*バナナ',text,re.I)
  assert not re.search(r'AIza[A-Za-z0-9_-]{20,}|sk-(?:proj-)?[A-Za-z0-9_-]{20,}|gen-lang-client-\d+|sx717|@[A-Za-z0-9.-]+\.[A-Za-z]{2,}',text)
  assert all(p['bottom_y']>=64 for p in layout)

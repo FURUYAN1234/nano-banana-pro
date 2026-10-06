@@ -481,360 +481,9 @@ export default function Step4Panel({
     });
   };
 
-  return (
-    <div
-      ref={outputRef}
-      className="relative flex flex-col gap-12 mt-12 border-t border-white/5 pt-12 transition-all duration-500"
-    >
-      {/* 出力結果ロックオーバーレイ */}
-      {(currentStep < 3 || isSearching || isAnalyzing || isEnhancing) && (
-        <div style={{ position: 'absolute', inset: -2, zIndex: 200, backgroundColor: 'rgba(10,12,16,0.92)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', pointerEvents: 'auto', borderRadius: '0.625rem' }} />
-      )}
-
-      {/* 左: プロンプト & 思考ログ */}
-      <section className="relative group h-full">
-        <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl blur opacity-10 group-hover:opacity-20 transition duration-1000"></div>
-        <div className="relative bg-[#0d1117] p-8 rounded-xl border border-white/5 shadow-3xl h-full flex flex-col">
-          <div className="flex items-center justify-between mb-4">
-            <label htmlFor="final-prompt-editor" className="text-[11px] font-bold text-orange-300">
-              最終プロンプト
-            </label>
-            <div className="flex items-center gap-3">
-              {!(isOpenAIImageMode && webCopyPartLengths.length > 1) && (
-                <button
-                  onClick={copyPrompt}
-                  disabled={!finalPrompt}
-                  className="bg-[#1c2128] hover:bg-white hover:text-black text-slate-400 p-2 rounded-lg transition-all border border-white/10"
-                  title="プロンプトをコピー"
-                >
-                  <Copy size={14} />
-                </button>
-              )}
-              <span className="text-[9px] font-mono text-slate-600">DYNAMIC ENGINE V1.2.3</span>
-            </div>
-          </div>
-
-          <div className="mt-2 text-[11px] text-slate-500 text-center font-mono">
-            この欄で直接編集できます。編集した内容が、プロンプトのコピーと画像生成の両方に使われます。
-          </div>
-
-          <div className="flex flex-col h-full mt-4 gap-4">
-            <div className="relative flex-1">
-              <textarea
-                id="final-prompt-editor"
-                value={finalPrompt}
-                onChange={(e) => setFinalPrompt(e.target.value)}
-                spellCheck={false}
-                style={{ color: '#ffffff', backgroundColor: '#000000', opacity: 1 }}
-                className="w-full h-full min-h-[300px] text-xs font-mono border border-white/10 resize-y focus:outline-none focus:border-orange-500/70 focus:ring-2 focus:ring-orange-500/20 leading-relaxed overflow-y-auto custom-scrollbar rounded-xl p-4 placeholder-slate-500 transition-colors"
-                placeholder="◀ 上の「画像用の指示文（プロンプト）を構築する」ボタンを押すと、ここに生成された指示文（プロンプト）が表示されます。"
-              />
-            </div>
-
-            {/* Buttons Row */}
-            <div className="flex flex-col gap-4 mt-2 relative z-50">
-              {/* 360°背景モード時のリマインダーバナー */}
-              {bg360Image && bg360Analysis && bg360Enabled && finalPrompt && (
-                <div className="bg-[#0a1628] border border-cyan-500/30 rounded-xl p-4 space-y-3">
-                  <div className="flex items-start gap-4">
-                    <div className="flex-1 space-y-1">
-                      <div className="text-xs font-bold text-cyan-300 flex items-center gap-1">
-                        <Globe size={12} /> 🌐 360°背景モード (ON)
-                      </div>
-                      <p className="text-[10px] text-slate-400 leading-relaxed">
-                        このプロンプトと一緒に以下を添付してください：<br />
-                        <span className="text-white">✅ キャラクターシート（いつも通り）</span><br />
-                        <span className="text-cyan-300">✅ 360°背景画像（読み込み済みのファイル）</span><br />
-                        <span className="text-slate-500">※AIがアスペクト比2:1の画像を自動的に背景参照として認識します</span>
-                      </p>
-                    </div>
-                  </div>
-                  {/* 360°インタラクティブビューアー */}
-                  <Panorama360Viewer imageSrc={bg360Image} height={120} />
-                  <p className="text-[9px] text-slate-600 text-center">ドラッグで回転 / ホイールでズーム</p>
-
-                  {/* カメラワーク＋クロップ画像プレビュー */}
-                  {bg360CameraWork && bg360CroppedPanels && bg360CroppedPanels.length === 4 && (
-                    <div className="mt-2 border-t border-cyan-500/20 pt-3">
-                      <div className="text-[10px] font-bold text-amber-300 mb-2 flex items-center gap-1">
-                        🎬 AI Camera Work — コマ別方角プレビュー
-                      </div>
-                      <div className="grid grid-cols-4 gap-2">
-                        {bg360CameraWork.panels.map((panel, idx) => {
-                          const dirs = ['北(正面)', '北東', '東(右)', '南東', '南(背面)', '南西', '西(左)', '北西'];
-                          const dirLabel = dirs[Math.round(((panel.yaw % 360 + 360) % 360) / 45) % 8];
-                          return (
-                            <div key={idx} className="relative">
-                              <img
-                                src={bg360CroppedPanels[idx]}
-                                alt={`Panel ${panel.panel} - ${dirLabel}`}
-                                className="w-full aspect-[4/3] object-cover rounded-md border border-cyan-500/30 shadow-lg"
-                              />
-                              <div className="absolute bottom-0 left-0 right-0 bg-black/80 text-[7px] text-cyan-200 px-1 py-0.5 rounded-b-md text-center truncate">
-                                <span className="font-bold">コマ{panel.panel}</span> {dirLabel} <span className="text-slate-400">FOV{panel.fov}°</span>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                      <p className="text-[8px] text-slate-600 text-center mt-2">各コマで使用される背景の方角</p>
-                    </div>
-                  )}
-                </div>
-              )}
-              
-              <WebPromptContainer className={isChatGPTWebGuide ? 'web-prompt-disclosure' : 'space-y-3'}>
-                {isChatGPTWebGuide && (
-                  <summary className="web-prompt-disclosure-toggle">
-                    ChatGPTのWebでプロンプトを貼り付け（API節約可能）
-                  </summary>
-                )}
-                <div className="space-y-3">
-              {isChatGPTWebGuide && finalPrompt && (
-                <div>
-                  <h3 className="web-prompt-copy-heading">ChatGPT Webへの貼り付け手順</h3>
-                  <p className="text-[11px] text-cyan-200 leading-relaxed">
-                  ChatGPT / Work用とAPI用は同じ指示文で、参照画像の説明を含め共通上限32,000文字です。
-                  {webCopyPartLengths.length > 1 && ' ChatGPT Webでは下の分割ボタンを1から順に使い、同じ入力欄へすべて貼り付けてください。'}
-                  {' キャラ画像と、背景画像がある場合はその順に添付し、最後に一度だけ送信してください。途中では送信しません。'}
-                  {' 一度に10,000文字を貼るとTXT化する例を確認しました。一括貼付では指示の反映や生成結果が変わる可能性があるため、長文は分割コピーを推奨します。'}
-                  {' 分割しても原文は削られず、API生成の指示文も変わりません。TXTを使う場合はテキストフィールドへ戻す必要はありません。'}
-                  </p>
-                </div>
-              )}
-
-              {isOpenAIImageMode && webCopyPartLengths.length > 1 ? (
-                <div className="web-prompt-copy-layout">
-                  <div className="web-prompt-copy-parts">
-                    {webCopyPartLengths.map((length, index) => (
-                      <button
-                        key={index}
-                        type="button"
-                        onClick={() => copyPrompt(false, index)}
-                        className={`w-full web-prompt-copy-part ${copiedPartIndex === index ? 'is-copied' : ''} font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-all`}
-                        style={{ '--copy-part-lightness': `${58 + (index / (webCopyPartLengths.length - 1)) * 30}%` }}
-                        aria-live="polite"
-                      >
-                        {copiedPartIndex === index ? <CheckCircle2 size={18} /> : <Copy size={18} />}
-                        {copiedPartIndex === index
-                          ? ` ${index + 1}/${webCopyPartLengths.length} コピー完了`
-                          : ` ${index + 1}/${webCopyPartLengths.length} をコピー（${length.toLocaleString()}文字）`}
-                      </button>
-                    ))}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => copyPrompt()}
-                    className={`w-full web-prompt-copy-all ${isCopied ? 'is-copied' : ''} py-2 rounded-xl flex items-center justify-center gap-2`}
-                    aria-live="polite"
-                  >
-                    {isCopied ? <CheckCircle2 size={16} /> : <Copy size={16} />}
-                    {isCopied ? ' 全文コピー完了' : ` 全文を一括コピー（${webCopyPartLengths.reduce((sum, length) => sum + length, 0).toLocaleString()}文字・Web一括はTXT化に注意）`}
-                  </button>
-                </div>
-              ) : (
-                <button
-                  onClick={copyPrompt}
-                  disabled={!finalPrompt}
-                  className={`w-full ${isCopied ? 'bg-green-600' : 'web-prompt-copy-action'} text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all border border-white/10`}
-                >
-                  {isCopied ? <CheckCircle2 size={20} /> : <Copy size={20} />}
-                  {isCopied ? "コピー完了！" : "📋 プロンプトをコピーする（Web / Work用）"}
-                </button>
-              )}
-
-              <button
-                onClick={() => copyPrompt(true)}
-                disabled={!finalPrompt}
-                className={`w-full web-prompt-save-text ${isTextSaved ? 'is-saved' : ''} py-2 rounded-xl flex items-center justify-center gap-2`}
-                aria-live="polite"
-              >
-                {isTextSaved ? <CheckCircle2 size={16} /> : <Download size={16} />}
-                {isTextSaved ? ' 保存完了！' : ' 全文プロンプトを.txtで保存する'}
-              </button>
-
-              {/* Web版の制作条件を後で引き継ぐための別添記録。画像生成の指示文ではない。 */}
-              <button
-                onClick={async () => {
-                  try {
-                    setWebMetadataError('');
-                    const metadata = await buildCurrentWebGenerationMetadata(new Date().toISOString());
-                    const blob = new Blob([serializeGeneratedImageMetadata(metadata)], { type: 'application/json;charset=utf-8' });
-                    const url = URL.createObjectURL(blob);
-                    const anchor = document.createElement('a');
-                    anchor.href = url;
-                    const titleMatch = scenario?.match(/タイトル[:：]\s*(.+)/);
-                    const titleSlug = titleMatch ? titleMatch[1].trim().substring(0, 20).replace(/[\\/:*?"<>|]/g, '_') : 'untitled';
-                    anchor.download = `AI_manga_web_metadata_${titleSlug}_${metadata.prepared_at.replace(/\D/g, '').slice(2, 14)}.json`;
-                    document.body.appendChild(anchor);
-                    anchor.click();
-                    document.body.removeChild(anchor);
-                    URL.revokeObjectURL(url);
-                    setIsMetaSaved(true);
-                    setTimeout(() => setIsMetaSaved(false), 2500);
-                  } catch (error) {
-                    setWebMetadataError(error instanceof Error ? error.message : 'Web版生成用の制作情報JSONを保存できませんでした。');
-                  }
-                }}
-                disabled={!finalPrompt}
-                className={`w-full ${isMetaSaved ? 'bg-green-600' : 'bg-amber-900/50 hover:bg-amber-800/60'} ${isMetaSaved ? 'text-white' : 'text-amber-400'} font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-all border ${isMetaSaved ? 'border-green-500/50' : 'border-amber-700/30'} disabled:opacity-30 disabled:cursor-not-allowed text-sm`}
-              >
-                {isMetaSaved ? '保存完了！' : '📂 Web版生成用 制作情報JSONを保存'}
-              </button>
-              <p className="text-[11px] text-slate-400 leading-relaxed">
-                制作情報JSONは後で制作条件を確認・引き継ぐための別ファイルです。画像生成の指示文ではないため、ChatGPTへ貼り付ける必要はありません。
-              </p>
-              {webMetadataError && <p className="mt-1 text-[10px] text-red-400">{webMetadataError}</p>}
-
-              {/* コピーボタン下の親切な補足ガイド */}
-              {finalPrompt && !isOpenAIImageMode && (
-                <div className="text-[11px] text-slate-400 mt-1 leading-relaxed bg-slate-900/60 p-2.5 rounded-lg border border-white/5">
-                  {enableChatGPTMode ? (
-                      <span>💡 <strong>【手動生成用（ChatGPT専用）】</strong> コピーしたプロンプトを <strong>ChatGPT公式Web版</strong> に貼り付け、<strong>キャラクターシート画像</strong>（および360°背景画像）を一緒に添付して送信してください。（※毎回新しいチャットで生成することを推奨）</span>
-                    ) : (
-                      (bg360Image && bg360Enabled) ? (
-                        <span>💡 <strong>【手動生成用】</strong> コピーしたプロンプトを外部の <strong>Gemini公式Web版</strong> などに貼り付け、<strong>キャラクターシート画像</strong> と <strong>360°背景画像</strong> を一緒に添付して送信してください。</span>
-                      ) : (
-                        <span>💡 <strong>【手動生成用】</strong> コピーしたプロンプトを外部の <strong>Gemini公式Web版</strong> などに貼り付け、<strong>キャラクターシート画像</strong> を一緒に添付して送信してください。</span>
-                      )
-                    )}
-                </div>
-              )}
-                </div>
-              </WebPromptContainer>
-            </div>
-
-            <div className="relative" style={{ paddingTop: '12px' }}>
-              {!isAssembling && !finalPrompt && (
-                <div style={{ position: 'absolute', inset: -2, zIndex: 200, backgroundColor: 'rgba(10,12,16,0.85)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)', pointerEvents: 'auto', borderRadius: '0.625rem' }} />
-              )}
-
-              <button
-                ref={imageActionRef}
-                style={{ display: 'flex', width: '100%', boxSizing: 'border-box', marginBottom: 0 }}
-                onClick={() => regenerateImage()}
-                disabled={!finalPrompt || isGeneratingImage || isFixingPolicy}
-                aria-current={currentStep === 4 ? 'step' : undefined}
-                className={`primary-step-action primary-step-action-accent-border w-full font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg border active:scale-95 disabled:opacity-50 disabled:cursor-wait ${currentStep === 4 && !isGeneratingImage && !isFixingPolicy ? 'next-step-gentle-pulse' : ''}`}
-              >
-                {isGeneratingImage ? <Loader2 size={20} className="animate-spin" /> : <ImageIcon size={20} />}
-                <div className="flex flex-col items-center">
-                  <span>{isGeneratingImage ? "画像を生成中..." : "APIで新しい画像を生成する（STEP4）"}</span>
-                  {!isGeneratingImage && (
-                    <>
-                      <span className="text-[10px] font-normal opacity-85">
-                        {isOpenAIImageMode ? formatOpenAIImagePricingSummary(openAIImageQuality) : formatGeminiImagePricingSummary()}
-                      </span>
-                      <span className="text-[9px] font-normal opacity-70">
-                        {isOpenAIImageMode ? `OpenAI公式料金 ${OPENAI_IMAGE_PRICE_SNAPSHOT_DATE}時点` : `Google公式料金 ${GEMINI_IMAGE_PRICE_SNAPSHOT_DATE}時点`}
-                      </span>
-                    </>
-                  )}
-                </div>
-              </button>
-              {generatedImage && (
-                <button
-                  type="button"
-                  onClick={() => regenerateImage(false, null, { reviewExisting: true, reviewOnly: !allowImageQualityRepair })}
-                  disabled={isGeneratingImage || isFixingPolicy}
-                  className={`w-full mt-2 px-4 py-2 rounded-lg border border-blue-400/40 bg-blue-900/20 text-blue-100 text-sm font-bold disabled:opacity-50 disabled:cursor-wait ${currentStep === 5 && !isGeneratingImage && !isFixingPolicy ? 'next-step-gentle-pulse' : ''}`}
-                >
-                  {allowImageQualityRepair
-                    ? '表示中の画像を再検査し、必要な箇所だけ修正する（追加API課金あり）'
-                    : '表示中の画像を品質再検査する（画像再生成なし・解析API課金あり）'}
-                </button>
-              )}
-              <p className="mt-1.5 mb-3 px-1 text-[10px] leading-snug text-slate-400">
-                生成画像には、安全化した制作情報を保存します。APIキー、参照画像本体、人物・場所の解析全文は保存しません。
-              </p>
-                          <div className="border border-yellow-500/30 rounded-lg overflow-hidden" style={{ margin: 0 }}>
-                            <button style={{ display: 'flex', width: '100%', boxSizing: 'border-box', margin: 0 }} type="button" aria-expanded={isApiSettingsOpen} aria-controls="api-settings-content"
-                              className="w-full flex items-center justify-between px-4 py-3 bg-yellow-900/25 hover:bg-yellow-900/50 transition-all duration-150 cursor-pointer disabled:cursor-not-allowed border-l-4 border-yellow-500 hover:border-yellow-400 group/policy-hdr"
-                              onClick={() => setIsApiSettingsOpen(!isApiSettingsOpen)}>
-                              <div className="flex min-w-0 items-start gap-2 text-left">
-                                <span className="mt-0.5 shrink-0 text-base">⚙️</span>
-                                <span className="min-w-0">
-                                  <span className="block text-base font-black tracking-wide text-yellow-200 group-hover/policy-hdr:text-yellow-100 transition-colors">API生成時の品質・サイズ</span>
-                                  <span className="mt-0.5 block text-[11px] leading-snug text-yellow-100/80">
-                                    {isOpenAIImageMode
-                                      ? `${formatOpenAIImageSettingsSummary(openAIImageQuality, openAIImageSize)}｜任意で変更可能`
-                                      : `Google AI：自動設定｜${formatGeminiImageSettingsSummary()}`}
-                                  </span>
-                                </span>
-                              </div>
-                              <div className="ml-3 flex shrink-0 items-center gap-2">
-                                <span className="text-[10px] font-black uppercase tracking-widest text-yellow-400 group-hover/policy-hdr:text-yellow-300 transition-colors">{isApiSettingsOpen ? 'クリックで閉じる' : 'クリックで開く'}</span>
-                                <ChevronDown size={18} className={`text-yellow-400 group-hover/policy-hdr:text-yellow-300 transition-all duration-300 ${isApiSettingsOpen ? 'rotate-180' : ''}`} />
-                              </div>
-                            </button>
-                            <div id="api-settings-content" hidden={!isApiSettingsOpen} className="p-3 bg-yellow-950/20 space-y-5">
-              {isOpenAIImageMode && (
-                <div className="mt-6 border-t border-white/20 pt-4">
-                  <label htmlFor="openai-image-quality" className="step4-setting-label block text-slate-300 mb-1">API画像生成の品質</label>
-                  <select
-                    id="openai-image-quality"
-                    value={openAIImageQuality}
-                    onChange={(event) => setOpenAIImageQuality(event.target.value)}
-                    disabled={isGeneratingImage || isFixingPolicy}
-                    className="step4-setting-select w-full rounded border border-white/20 bg-slate-900 text-white disabled:opacity-50"
-                  >
-                    {OPENAI_IMAGE_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
-                  </select>
-                  <label htmlFor="openai-image-size" className="step4-setting-label block text-slate-300 mt-3 mb-1">API画像サイズ</label>
-                  <select
-                    id="openai-image-size"
-                    value={openAIImageSize}
-                    onChange={(event) => setOpenAIImageSize(event.target.value)}
-                    disabled={isGeneratingImage || isFixingPolicy}
-                    className="step4-setting-select w-full rounded border border-white/20 bg-slate-900 text-white disabled:opacity-50"
-                  >
-                    {OPENAI_IMAGE_SIZE_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
-                  </select>
-                  <p className="step4-help-copy mt-2 text-slate-400">
-                    サイズの既定はA4漫画原稿比率の{MANGA_MANUSCRIPT_LARGE.label.replace('A4大：', '')}です。標準サイズも同じ比率です。品質とサイズの選択はリロードまで保持します。API生成は選択サイズへ正規化し、Webへコピーするプロンプトには標準・大の両方の正確な寸法を記載します。
-                    大サイズは拡大・印刷向けです。手や台詞の正確さを保証する設定ではありません。
-                  </p>
-                  <p className="step4-help-copy mt-2 text-slate-400">
-                    初回接続時、GPT Image 2.5 Sunburstが利用可能ならSunburst / maxを、利用できない場合はGPT Image 2.0 / highを初期選択します。
-                  </p>
-                  <p className="step4-help-copy mt-2 text-slate-300">
-                    GPT Image 2.5 Sunburstが初期選択されなかった場合も、上のプルダウンからモデルを変更できます。生成時のエラーで自動切替・自動再送信はしません。
-                  </p>
-                  <p className="step4-help-copy mt-2 text-slate-400">
-                    GPT Image 2.5の利用には、APIアカウントの組織認証（個人の場合は本人確認）が必要な場合があります。
-                    <a href="https://platform.openai.com/settings/organization/general" target="_blank" rel="noopener noreferrer" className="text-emerald-400 underline">組織設定</a>
-                    の「Verifications → Individual → Start」から、Personaの公式画面で対応する本人確認書類を提出し、承認をお待ちください。書類はこのアプリへ送らないでください。
-                  </p>
-                  <p className="step4-help-copy mt-2 text-slate-400">
-                    モデル一覧への表示は、そのモデル・品質での画像生成成功を保証するものではありません。承認後もAPIへの反映に時間がかかる場合があり、2.0もアカウントの利用権限によっては使用できません。この認証案内はAPI生成用で、ChatGPTのWeb貼り付け操作には不要です。
-                  </p>
-                  {openAIImageVerificationWarning && <p role="alert" className="mt-2 rounded-lg border border-amber-500/40 bg-amber-950/30 p-3 text-sm text-amber-200">{openAIImageVerificationWarning}</p>}
-                </div>
-              )}
-              <label className="step4-help-copy mt-3 flex items-start gap-2 text-slate-300">
-                <input type="checkbox" checked={allowImageQualityRepair} onChange={event => setAllowImageQualityRepair(event.target.checked)} disabled={isGeneratingImage || isFixingPolicy} />
-                API生成の自動修正を許可する（品質の重大欠陥は最大3回、ポリシー拒否は別枠で最大5回。解析・再生成・再検査は追加課金／全候補NGなら最良候補を保持／OFFでは追加の画像生成なし）
-              </label>
-              {(isGeneratingImage || policyAutoRetrying) && allowImageQualityRepair && (
-                <button
-                  type="button"
-                  onClick={stopQualityRetries}
-                  className="mt-3 mb-1 inline-flex min-h-10 items-center rounded-lg border border-amber-400/50 bg-amber-950/40 px-4 py-2 text-xs font-black text-amber-100 shadow-sm transition-colors hover:bg-amber-900/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 active:bg-amber-900/70"
-                >
-                  自動修正を停止（現在の応答後）
-                </button>
-              )}
-              {!isOpenAIImageMode && (
-                <div className="mt-1 rounded-lg border border-cyan-500/20 bg-cyan-950/20 p-3 text-[11px] leading-relaxed text-slate-300">
-                  <p className="m-0 font-bold text-cyan-200">{formatGeminiImageSettingsSummary()}</p>
-                  <p className="mt-1 mb-0">APIへ1K・3:4を明示送信し、生成後に人物や文字を伸縮せずA4比率へ配置します。Google側に品質の選択項目はありません。</p>
-                  <p className="mt-1 mb-0">{formatGeminiImagePricingSummary()}。文字・思考出力は $3.00 / 100万トークンです。自動修正・品質解析は実行回数分の追加料金が発生します。</p>
-                </div>
-              )}
-                            </div>
-                          </div>
-
-                          <div className="border border-yellow-500/30 rounded-lg overflow-hidden" style={{ margin: 0 }}>
+  const webSupportControls = (
+    <>
+<div className="border border-yellow-500/30 rounded-lg overflow-hidden" style={{ margin: 0 }}>
                             <button style={{ display: 'flex', width: '100%', boxSizing: 'border-box', margin: 0 }} type="button" aria-expanded={isImageHelpOpen} aria-controls="image-help-content"
                               className="w-full flex items-center justify-between px-4 py-3 bg-yellow-900/25 hover:bg-yellow-900/50 transition-all duration-150 cursor-pointer disabled:cursor-not-allowed border-l-4 border-yellow-500 hover:border-yellow-400 group/policy-hdr"
                               onClick={() => setIsImageHelpOpen(!isImageHelpOpen)}>
@@ -1164,6 +813,10 @@ No explanations. No partial results.`;
                 )}
               </div>
 
+    </>
+  );
+
+  const videoGuideControl = (
                           <div className="border border-yellow-500/30 rounded-lg overflow-hidden" style={{ margin: 0 }}>
                             <button style={{ display: 'flex', width: '100%', boxSizing: 'border-box', margin: 0 }} type="button" aria-expanded={isVideoGuideOpen} aria-controls="video-guide-content"
                               className="w-full flex items-center justify-between px-4 py-3 bg-yellow-900/25 hover:bg-yellow-900/50 transition-all duration-150 cursor-pointer disabled:cursor-not-allowed border-l-4 border-yellow-500 hover:border-yellow-400 group/policy-hdr"
@@ -1312,6 +965,364 @@ No explanations. No partial results.`;
                             </section>
                             </div>
                           </div>
+  );
+
+  return (
+    <div
+      ref={outputRef}
+      className="relative flex flex-col gap-12 mt-12 border-t border-white/5 pt-12 transition-all duration-500"
+    >
+      {/* 出力結果ロックオーバーレイ */}
+      {(currentStep < 3 || isSearching || isAnalyzing || isEnhancing) && (
+        <div style={{ position: 'absolute', inset: -2, zIndex: 200, backgroundColor: 'rgba(10,12,16,0.92)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', pointerEvents: 'auto', borderRadius: '0.625rem' }} />
+      )}
+
+      {/* 左: プロンプト & 思考ログ */}
+      <section className="relative group h-full">
+        <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl blur opacity-10 group-hover:opacity-20 transition duration-1000"></div>
+        <div className="relative bg-[#0d1117] p-8 rounded-xl border border-white/5 shadow-3xl h-full flex flex-col">
+          <div className="flex items-center justify-between mb-4">
+            <label htmlFor="final-prompt-editor" className="text-[11px] font-bold text-orange-300">
+              最終プロンプト
+            </label>
+            <div className="flex items-center gap-3">
+              {!(isOpenAIImageMode && webCopyPartLengths.length > 1) && (
+                <button
+                  onClick={copyPrompt}
+                  disabled={!finalPrompt}
+                  className="bg-[#1c2128] hover:bg-white hover:text-black text-slate-400 p-2 rounded-lg transition-all border border-white/10"
+                  title="プロンプトをコピー"
+                >
+                  <Copy size={14} />
+                </button>
+              )}
+              <span className="text-[9px] font-mono text-slate-600">DYNAMIC ENGINE V1.2.3</span>
+            </div>
+          </div>
+
+          <div className="mt-2 text-[11px] text-slate-500 text-center font-mono">
+            この欄で直接編集できます。編集した内容が、プロンプトのコピーと画像生成の両方に使われます。
+          </div>
+
+          <div className="flex flex-col h-full mt-4 gap-4">
+            <div className="relative flex-1">
+              <textarea
+                id="final-prompt-editor"
+                value={finalPrompt}
+                onChange={(e) => setFinalPrompt(e.target.value)}
+                spellCheck={false}
+                style={{ color: '#ffffff', backgroundColor: '#000000', opacity: 1 }}
+                className="w-full h-full min-h-[300px] text-xs font-mono border border-white/10 resize-y focus:outline-none focus:border-orange-500/70 focus:ring-2 focus:ring-orange-500/20 leading-relaxed overflow-y-auto custom-scrollbar rounded-xl p-4 placeholder-slate-500 transition-colors"
+                placeholder="◀ 上の「画像用の指示文（プロンプト）を構築する」ボタンを押すと、ここに生成された指示文（プロンプト）が表示されます。"
+              />
+            </div>
+
+            {/* Buttons Row */}
+            <div className="flex flex-col gap-4 mt-2 relative z-50">
+              {/* 360°背景モード時のリマインダーバナー */}
+              {bg360Image && bg360Analysis && bg360Enabled && finalPrompt && (
+                <div className="bg-[#0a1628] border border-cyan-500/30 rounded-xl p-4 space-y-3">
+                  <div className="flex items-start gap-4">
+                    <div className="flex-1 space-y-1">
+                      <div className="text-xs font-bold text-cyan-300 flex items-center gap-1">
+                        <Globe size={12} /> 🌐 360°背景モード (ON)
+                      </div>
+                      <p className="text-[10px] text-slate-400 leading-relaxed">
+                        このプロンプトと一緒に以下を添付してください：<br />
+                        <span className="text-white">✅ キャラクターシート（いつも通り）</span><br />
+                        <span className="text-cyan-300">✅ 360°背景画像（読み込み済みのファイル）</span><br />
+                        <span className="text-slate-500">※AIがアスペクト比2:1の画像を自動的に背景参照として認識します</span>
+                      </p>
+                    </div>
+                  </div>
+                  {/* 360°インタラクティブビューアー */}
+                  <Panorama360Viewer imageSrc={bg360Image} height={120} />
+                  <p className="text-[9px] text-slate-600 text-center">ドラッグで回転 / ホイールでズーム</p>
+
+                  {/* カメラワーク＋クロップ画像プレビュー */}
+                  {bg360CameraWork && bg360CroppedPanels && bg360CroppedPanels.length === 4 && (
+                    <div className="mt-2 border-t border-cyan-500/20 pt-3">
+                      <div className="text-[10px] font-bold text-amber-300 mb-2 flex items-center gap-1">
+                        🎬 AI Camera Work — コマ別方角プレビュー
+                      </div>
+                      <div className="grid grid-cols-4 gap-2">
+                        {bg360CameraWork.panels.map((panel, idx) => {
+                          const dirs = ['北(正面)', '北東', '東(右)', '南東', '南(背面)', '南西', '西(左)', '北西'];
+                          const dirLabel = dirs[Math.round(((panel.yaw % 360 + 360) % 360) / 45) % 8];
+                          return (
+                            <div key={idx} className="relative">
+                              <img
+                                src={bg360CroppedPanels[idx]}
+                                alt={`Panel ${panel.panel} - ${dirLabel}`}
+                                className="w-full aspect-[4/3] object-cover rounded-md border border-cyan-500/30 shadow-lg"
+                              />
+                              <div className="absolute bottom-0 left-0 right-0 bg-black/80 text-[7px] text-cyan-200 px-1 py-0.5 rounded-b-md text-center truncate">
+                                <span className="font-bold">コマ{panel.panel}</span> {dirLabel} <span className="text-slate-400">FOV{panel.fov}°</span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      <p className="text-[8px] text-slate-600 text-center mt-2">各コマで使用される背景の方角</p>
+                    </div>
+                  )}
+                </div>
+              )}
+              <WebPromptContainer className={isChatGPTWebGuide ? 'web-prompt-disclosure' : 'space-y-3'}>
+                {isChatGPTWebGuide && (
+                  <summary className="web-prompt-disclosure-toggle">
+                    ChatGPTのWebでプロンプトを貼り付け（API節約可能）／4コマ漫画を動画化
+                  </summary>
+                )}
+                <div className="space-y-3">
+              {isChatGPTWebGuide && finalPrompt && (
+                <div>
+                  <h3 className="web-prompt-copy-heading">ChatGPT Webへの貼り付け手順</h3>
+                  <p className="text-[11px] text-cyan-200 leading-relaxed">
+                  ChatGPT / Work用とAPI用は同じ指示文で、参照画像の説明を含め共通上限32,000文字です。
+                  {webCopyPartLengths.length > 1 && ' ChatGPT Webでは下の分割ボタンを1から順に使い、同じ入力欄へすべて貼り付けてください。'}
+                  {' キャラ画像と、背景画像がある場合はその順に添付し、最後に一度だけ送信してください。途中では送信しません。'}
+                  {' 一度に10,000文字を貼るとTXT化する例を確認しました。一括貼付では指示の反映や生成結果が変わる可能性があるため、長文は分割コピーを推奨します。'}
+                  {' 分割しても原文は削られず、API生成の指示文も変わりません。プロンプトが添付ファイルになった場合でも、環境によりテキストフィールドへ戻せる場合は全文貼付が可能です'}
+                  </p>
+                </div>
+              )}
+
+              {isOpenAIImageMode && webCopyPartLengths.length > 1 ? (
+                <div className="web-prompt-copy-layout">
+                  <div className="web-prompt-copy-parts">
+                    {webCopyPartLengths.map((length, index) => (
+                      <button
+                        key={index}
+                        type="button"
+                        onClick={() => copyPrompt(false, index)}
+                        className={`w-full web-prompt-copy-part ${copiedPartIndex === index ? 'is-copied' : ''} font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-all`}
+                        style={{ '--copy-part-lightness': `${58 + (index / (webCopyPartLengths.length - 1)) * 30}%` }}
+                        aria-live="polite"
+                      >
+                        {copiedPartIndex === index ? <CheckCircle2 size={18} /> : <Copy size={18} />}
+                        {copiedPartIndex === index
+                          ? ` ${index + 1}/${webCopyPartLengths.length} コピー完了`
+                          : ` ${index + 1}/${webCopyPartLengths.length} をコピー（${length.toLocaleString()}文字）`}
+                      </button>
+                    ))}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => copyPrompt()}
+                    className={`w-full web-prompt-copy-all ${isCopied ? 'is-copied' : ''} py-2 rounded-xl flex items-center justify-center gap-2`}
+                    aria-live="polite"
+                  >
+                    {isCopied ? <CheckCircle2 size={16} /> : <Copy size={16} />}
+                    {isCopied ? ' 全文コピー完了' : ` 全文を一括コピー（${webCopyPartLengths.reduce((sum, length) => sum + length, 0).toLocaleString()}文字・Web一括はTXT化に注意）`}
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={copyPrompt}
+                  disabled={!finalPrompt}
+                  className={`w-full ${isCopied ? 'bg-green-600' : 'web-prompt-copy-action'} text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all border border-white/10`}
+                >
+                  {isCopied ? <CheckCircle2 size={20} /> : <Copy size={20} />}
+                  {isCopied ? "コピー完了！" : "📋 プロンプトをコピーする（Web / Work用）"}
+                </button>
+              )}
+
+              <button
+                onClick={() => copyPrompt(true)}
+                disabled={!finalPrompt}
+                className={`w-full web-prompt-save-text ${isTextSaved ? 'is-saved' : ''} py-2 rounded-xl flex items-center justify-center gap-2`}
+                aria-live="polite"
+              >
+                {isTextSaved ? <CheckCircle2 size={16} /> : <Download size={16} />}
+                {isTextSaved ? ' 保存完了！' : ' 全文プロンプトを.txtで保存する'}
+              </button>
+
+              {/* Web版の制作条件を後で引き継ぐための別添記録。画像生成の指示文ではない。 */}
+              <button
+                onClick={async () => {
+                  try {
+                    setWebMetadataError('');
+                    const metadata = await buildCurrentWebGenerationMetadata(new Date().toISOString());
+                    const blob = new Blob([serializeGeneratedImageMetadata(metadata)], { type: 'application/json;charset=utf-8' });
+                    const url = URL.createObjectURL(blob);
+                    const anchor = document.createElement('a');
+                    anchor.href = url;
+                    const titleMatch = scenario?.match(/タイトル[:：]\s*(.+)/);
+                    const titleSlug = titleMatch ? titleMatch[1].trim().substring(0, 20).replace(/[\\/:*?"<>|]/g, '_') : 'untitled';
+                    anchor.download = `AI_manga_web_metadata_${titleSlug}_${metadata.prepared_at.replace(/\D/g, '').slice(2, 14)}.json`;
+                    document.body.appendChild(anchor);
+                    anchor.click();
+                    document.body.removeChild(anchor);
+                    URL.revokeObjectURL(url);
+                    setIsMetaSaved(true);
+                    setTimeout(() => setIsMetaSaved(false), 2500);
+                  } catch (error) {
+                    setWebMetadataError(error instanceof Error ? error.message : 'Web版生成用の制作情報JSONを保存できませんでした。');
+                  }
+                }}
+                disabled={!finalPrompt}
+                className={`w-full ${isMetaSaved ? 'bg-green-600' : 'bg-amber-900/50 hover:bg-amber-800/60'} ${isMetaSaved ? 'text-white' : 'text-amber-400'} font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-all border ${isMetaSaved ? 'border-green-500/50' : 'border-amber-700/30'} disabled:opacity-30 disabled:cursor-not-allowed text-sm`}
+              >
+                {isMetaSaved ? '保存完了！' : '📂 Web版生成用 制作情報JSONを保存'}
+              </button>
+              <p className="text-[11px] text-slate-400 leading-relaxed">
+                制作情報JSONは後で制作条件を確認・引き継ぐための別ファイルです。画像生成の指示文ではないため、ChatGPTへ貼り付ける必要はありません。
+              </p>
+              {webMetadataError && <p className="mt-1 text-[10px] text-red-400">{webMetadataError}</p>}
+              {isChatGPTWebGuide && <>{webSupportControls}{videoGuideControl}</>}
+
+              {/* コピーボタン下の親切な補足ガイド */}
+              {finalPrompt && !isOpenAIImageMode && (
+                <div className="text-[11px] text-slate-400 mt-1 leading-relaxed bg-slate-900/60 p-2.5 rounded-lg border border-white/5">
+                  {enableChatGPTMode ? (
+                      <span>💡 <strong>【手動生成用（ChatGPT専用）】</strong> コピーしたプロンプトを <strong>ChatGPT公式Web版</strong> に貼り付け、<strong>キャラクターシート画像</strong>（および360°背景画像）を一緒に添付して送信してください。（※毎回新しいチャットで生成することを推奨）</span>
+                    ) : (
+                      (bg360Image && bg360Enabled) ? (
+                        <span>💡 <strong>【手動生成用】</strong> コピーしたプロンプトを外部の <strong>Gemini公式Web版</strong> などに貼り付け、<strong>キャラクターシート画像</strong> と <strong>360°背景画像</strong> を一緒に添付して送信してください。</span>
+                      ) : (
+                        <span>💡 <strong>【手動生成用】</strong> コピーしたプロンプトを外部の <strong>Gemini公式Web版</strong> などに貼り付け、<strong>キャラクターシート画像</strong> を一緒に添付して送信してください。</span>
+                      )
+                    )}
+                </div>
+              )}
+                </div>
+              </WebPromptContainer>
+            </div>
+
+            <div className="relative" style={{ paddingTop: '12px' }}>
+              {!isAssembling && !finalPrompt && (
+                <div style={{ position: 'absolute', inset: -2, zIndex: 200, backgroundColor: 'rgba(10,12,16,0.85)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)', pointerEvents: 'auto', borderRadius: '0.625rem' }} />
+              )}
+
+                          <div className="border border-yellow-500/30 rounded-lg overflow-hidden" style={{ margin: '0 0 6px' }}>
+                            <button style={{ display: 'flex', width: '100%', boxSizing: 'border-box', margin: 0 }} type="button" aria-expanded={isApiSettingsOpen} aria-controls="api-settings-content"
+                              className="w-full flex items-center justify-between px-4 py-3 bg-yellow-900/25 hover:bg-yellow-900/50 transition-all duration-150 cursor-pointer disabled:cursor-not-allowed border-l-4 border-yellow-500 hover:border-yellow-400 group/policy-hdr"
+                              onClick={() => setIsApiSettingsOpen(!isApiSettingsOpen)}>
+                              <div className="flex min-w-0 items-start gap-2 text-left">
+                                <span className="mt-0.5 shrink-0 text-base">⚙️</span>
+                                <span className="min-w-0">
+                                  <span className="block text-base font-black tracking-wide text-yellow-200 group-hover/policy-hdr:text-yellow-100 transition-colors">API生成時の品質・サイズ</span>
+                                  <span className="mt-0.5 block text-[11px] leading-snug text-yellow-100/80">
+                                    {isOpenAIImageMode
+                                      ? `${formatOpenAIImageSettingsSummary(openAIImageQuality, openAIImageSize)}｜任意で変更可能`
+                                      : `Google AI：自動設定｜${formatGeminiImageSettingsSummary()}`}
+                                  </span>
+                                </span>
+                              </div>
+                              <div className="ml-3 flex shrink-0 items-center gap-2">
+                                <span className="text-[10px] font-black uppercase tracking-widest text-yellow-400 group-hover/policy-hdr:text-yellow-300 transition-colors">{isApiSettingsOpen ? 'クリックで閉じる' : 'クリックで開く'}</span>
+                                <ChevronDown size={18} className={`text-yellow-400 group-hover/policy-hdr:text-yellow-300 transition-all duration-300 ${isApiSettingsOpen ? 'rotate-180' : ''}`} />
+                              </div>
+                            </button>
+                            <div id="api-settings-content" hidden={!isApiSettingsOpen} className="p-3 bg-yellow-950/20 space-y-5">
+              {isOpenAIImageMode && (
+                <div className="mt-6 border-t border-white/20 pt-4">
+                  <label htmlFor="openai-image-quality" className="step4-setting-label block text-slate-300 mb-1">API画像生成の品質</label>
+                  <select
+                    id="openai-image-quality"
+                    value={openAIImageQuality}
+                    onChange={(event) => setOpenAIImageQuality(event.target.value)}
+                    disabled={isGeneratingImage || isFixingPolicy}
+                    className="step4-setting-select w-full rounded border border-white/20 bg-slate-900 text-white disabled:opacity-50"
+                  >
+                    {OPENAI_IMAGE_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+                  </select>
+                  <label htmlFor="openai-image-size" className="step4-setting-label block text-slate-300 mt-3 mb-1">API画像サイズ</label>
+                  <select
+                    id="openai-image-size"
+                    value={openAIImageSize}
+                    onChange={(event) => setOpenAIImageSize(event.target.value)}
+                    disabled={isGeneratingImage || isFixingPolicy}
+                    className="step4-setting-select w-full rounded border border-white/20 bg-slate-900 text-white disabled:opacity-50"
+                  >
+                    {OPENAI_IMAGE_SIZE_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+                  </select>
+                  <p className="step4-help-copy mt-2 text-slate-400">
+                    サイズの既定はA4漫画原稿比率の{MANGA_MANUSCRIPT_LARGE.label.replace('A4大：', '')}です。標準サイズも同じ比率です。品質とサイズの選択はリロードまで保持します。API生成は選択サイズへ正規化し、Webへコピーするプロンプトには標準・大の両方の正確な寸法を記載します。
+                    大サイズは拡大・印刷向けです。手や台詞の正確さを保証する設定ではありません。
+                  </p>
+                  <p className="step4-help-copy mt-2 text-slate-400">
+                    初回接続時、GPT Image 2.5 Sunburstが利用可能ならSunburst / maxを、利用できない場合はGPT Image 2.0 / highを初期選択します。
+                  </p>
+                  <p className="step4-help-copy mt-2 text-slate-300">
+                    GPT Image 2.5 Sunburstが初期選択されなかった場合も、上のプルダウンからモデルを変更できます。生成時のエラーで自動切替・自動再送信はしません。
+                  </p>
+                  <p className="step4-help-copy mt-2 text-slate-400">
+                    GPT Image 2.5の利用には、APIアカウントの組織認証（個人の場合は本人確認）が必要な場合があります。
+                    <a href="https://platform.openai.com/settings/organization/general" target="_blank" rel="noopener noreferrer" className="text-emerald-400 underline">組織設定</a>
+                    の「Verifications → Individual → Start」から、Personaの公式画面で対応する本人確認書類を提出し、承認をお待ちください。書類はこのアプリへ送らないでください。
+                  </p>
+                  <p className="step4-help-copy mt-2 text-slate-400">
+                    モデル一覧への表示は、そのモデル・品質での画像生成成功を保証するものではありません。承認後もAPIへの反映に時間がかかる場合があり、2.0もアカウントの利用権限によっては使用できません。この認証案内はAPI生成用で、ChatGPTのWeb貼り付け操作には不要です。
+                  </p>
+                  {openAIImageVerificationWarning && <p role="alert" className="mt-2 rounded-lg border border-amber-500/40 bg-amber-950/30 p-3 text-sm text-amber-200">{openAIImageVerificationWarning}</p>}
+                </div>
+              )}
+              <label className="step4-help-copy mt-3 flex items-start gap-2 text-slate-300">
+                <input type="checkbox" checked={allowImageQualityRepair} onChange={event => setAllowImageQualityRepair(event.target.checked)} disabled={isGeneratingImage || isFixingPolicy} />
+                API生成の自動修正を許可する（品質の重大欠陥は最大3回、ポリシー拒否は別枠で最大5回。解析・再生成・再検査は追加課金／全候補NGなら最良候補を保持／OFFでは追加の画像生成なし）
+              </label>
+              {(isGeneratingImage || policyAutoRetrying) && allowImageQualityRepair && (
+                <button
+                  type="button"
+                  onClick={stopQualityRetries}
+                  className="mt-3 mb-1 inline-flex min-h-10 items-center rounded-lg border border-amber-400/50 bg-amber-950/40 px-4 py-2 text-xs font-black text-amber-100 shadow-sm transition-colors hover:bg-amber-900/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 active:bg-amber-900/70"
+                >
+                  自動修正を停止（現在の応答後）
+                </button>
+              )}
+              {!isOpenAIImageMode && (
+                <div className="mt-1 rounded-lg border border-cyan-500/20 bg-cyan-950/20 p-3 text-[11px] leading-relaxed text-slate-300">
+                  <p className="m-0 font-bold text-cyan-200">{formatGeminiImageSettingsSummary()}</p>
+                  <p className="mt-1 mb-0">APIへ1K・3:4を明示送信し、生成後に人物や文字を伸縮せずA4比率へ配置します。Google側に品質の選択項目はありません。</p>
+                  <p className="mt-1 mb-0">{formatGeminiImagePricingSummary()}。文字・思考出力は $3.00 / 100万トークンです。自動修正・品質解析は実行回数分の追加料金が発生します。</p>
+                </div>
+              )}
+                            </div>
+                          </div>
+
+              <button
+                ref={imageActionRef}
+                style={{ display: 'flex', width: '100%', boxSizing: 'border-box', marginBottom: 0 }}
+                onClick={() => regenerateImage()}
+                disabled={!finalPrompt || isGeneratingImage || isFixingPolicy}
+                aria-current={currentStep === 4 ? 'step' : undefined}
+                className={`primary-step-action primary-step-action-accent-border w-full font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg border active:scale-95 disabled:opacity-50 disabled:cursor-wait ${currentStep === 4 && !isGeneratingImage && !isFixingPolicy ? 'next-step-gentle-pulse' : ''}`}
+              >
+                {isGeneratingImage ? <Loader2 size={20} className="animate-spin" /> : <ImageIcon size={20} />}
+                <div className="flex flex-col items-center">
+                  <span>{isGeneratingImage ? "画像を生成中..." : "APIで新しい画像を生成する（STEP4）"}</span>
+                  {!isGeneratingImage && (
+                    <>
+                      <span className="text-[10px] font-normal opacity-85">
+                        {isOpenAIImageMode ? formatOpenAIImagePricingSummary(openAIImageQuality) : formatGeminiImagePricingSummary()}
+                      </span>
+                      <span className="text-[9px] font-normal opacity-70">
+                        {isOpenAIImageMode ? `OpenAI公式料金 ${OPENAI_IMAGE_PRICE_SNAPSHOT_DATE}時点` : `Google公式料金 ${GEMINI_IMAGE_PRICE_SNAPSHOT_DATE}時点`}
+                      </span>
+                    </>
+                  )}
+                </div>
+              </button>
+              {generatedImage && (
+                <button
+                  type="button"
+                  onClick={() => regenerateImage(false, null, { reviewExisting: true, reviewOnly: !allowImageQualityRepair })}
+                  disabled={isGeneratingImage || isFixingPolicy}
+                  className={`w-full mt-2 px-4 py-2 rounded-lg border border-blue-400/40 bg-blue-900/20 text-blue-100 text-sm font-bold disabled:opacity-50 disabled:cursor-wait ${currentStep === 5 && !isGeneratingImage && !isFixingPolicy ? 'next-step-gentle-pulse' : ''}`}
+                >
+                  {allowImageQualityRepair
+                    ? '表示中の画像を再検査し、必要な箇所だけ修正する（追加API課金あり）'
+                    : '表示中の画像を品質再検査する（画像再生成なし・解析API課金あり）'}
+                </button>
+              )}
+              <p className="mt-1.5 mb-3 px-1 text-[10px] leading-snug text-slate-400">
+                生成画像には、安全化した制作情報を保存します。APIキー、参照画像本体、人物・場所の解析全文は保存しません。
+              </p>
+                          {!isChatGPTWebGuide && webSupportControls}
+
+                          {!isChatGPTWebGuide && videoGuideControl}
 
               {/* [v4.2.0] コンテンツポリシー選択メッセージボックス（パネルとは独立） */}
               {showPolicyChoice && (

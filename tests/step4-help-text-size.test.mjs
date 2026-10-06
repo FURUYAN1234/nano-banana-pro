@@ -10,7 +10,7 @@ test('STEP4 API settings explanations use the same compact scale as the video an
     readSource('src/index.css'),
   ]);
 
-  const apiHelp = source.match(/id="api-settings-content"[\s\S]*?id="image-help-content"/)?.[0] ?? '';
+  const apiHelp = source.match(/id="api-settings-content"[\s\S]*?ref=\{imageActionRef\}/)?.[0] ?? '';
 
   assert.match(apiHelp, /<p className="step4-help-copy mt-2 text-slate-400">/);
   assert.match(apiHelp, /<p className="step4-help-copy mt-2 text-slate-300">/);
@@ -24,7 +24,7 @@ test('STEP4 API quality and size controls use a compact label and select scale',
     readSource('src/index.css'),
   ]);
 
-  const apiHelp = source.match(/id="api-settings-content"[\s\S]*?id="image-help-content"/)?.[0] ?? '';
+  const apiHelp = source.match(/id="api-settings-content"[\s\S]*?ref=\{imageActionRef\}/)?.[0] ?? '';
 
   assert.match(apiHelp, /htmlFor="openai-image-quality" className="step4-setting-label/);
   assert.match(apiHelp, /id="openai-image-quality"[\s\S]*?className="step4-setting-select/);
