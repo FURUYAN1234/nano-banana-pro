@@ -1,10 +1,10 @@
 {
-  "manualVersion": "6.8.8",
-  "manualSourceSha256": "019040500d935de7e3aa7bc9d1a0b15cf19d58846ff5ed508cb53eeee71f2d9c",
+  "manualVersion": "6.8.9",
+  "manualSourceSha256": "b3fcb3062057ba3dee567dcb47976923b8931399259648ebf4fa8bd4123d4964",
   "manualFiles": [
     {
       "name": "gemini-api-beginner-guide-2026-10-01.pdf",
-      "sha256": "7b03bede5d8c01a421a233689471b31e5cc38bdf6e765ca76ac270421b9c6f96"
+      "sha256": "16888557fd0a43f02660cbcc1a3125d3f350444ecf208479f64c5aa19d4f7a1a"
     },
     {
       "name": "openai-api-beginner-guide-2026-09-30.pdf",
@@ -12,13 +12,13 @@
     },
     {
       "name": "super-furu-ai-4koma-full-manual-2026-10-01.pdf",
-      "sha256": "2d2b291ac48f72c156f5ac3886e559c65c3bd81af2f5e7ba852631e821488e42"
+      "sha256": "03fea137fec99d65f300150ee46e3bac28230e1257d9ac468e1d3f0cdc24e439"
     }
   ],
-  "readmeSha256": "208a6260317aaafeeba4c2a1fb5ced9e1fe8e992cfaf46ecdb7f916808e94a2a",
-  "sourceTree": "557020a738c9a970910fe0d65c1c43235ff5a696",
-  "publicTree": "f09085242e6d3414034c1306e42685ba032a330c",
-  "packageSha256": "85b59a4d5b6e52cab65c249bd88fabae49d014413a6117d2ffa5befb4d1395e4",
+  "readmeSha256": "d46fc23c55a4f6b0e63f603b3370a5c10dc44f36e0e77d5ccb66ef761120332f",
+  "sourceTree": "3f77dbd3a0922d3c491cb5f4b008ec92a2167f4b",
+  "publicTree": "d014197d22ada8764948d3e3f9d45aa002d124c0",
+  "packageSha256": "6a64a31f48ee69a9d596731194aee093ec70fefea6a967add333859842516f2e",
   "releaseAssetSha256": "9e41886be6afa0ebfad6d244ecf53f37260a92f73b30309319029cc87e1ddb4e",
   "reviewedSections": [
     "Application screen and output / 操作画面と生成例",
@@ -36,6 +36,6 @@
     "📋 ChangeLog",
     "License / ライセンス"
   ],
-  "findings": "Reviewed the fourteen current README sections against the v6.8.8 source and distribution. Updated current version, six content-selected styles, camera negation/close-up/telephoto handling, projection preservation and unverified gekiga results. Checked H3 workflow, 30 nodes and six model components, matching authfix1 release asset and memory-only credential behavior. Setup, provider routes, storage/privacy and license descriptions remain applicable. Kept prior image examples explicitly qualified and trimmed history to fifteen releases. No new visual GEKIGA success or full ComfyUI execution is claimed.",
-  "manualFindings": "Rebuilt the 12-page Gemini guide and 32-page full manual for v6.8.8; visually inspected all 44 rendered pages, then re-inspected changed pages 11 and 28 after adding camera and six-style guidance. No clipping, missing glyphs or overlapping content observed. Automatic text bounds, page size, link and privacy scans passed. OpenAI guide remains byte-identical to the previously reviewed 20-page version (SHA256 b732f0f844983098f1f89ffcc52883c18131b315f47e6092a9b62950971b873e). H3 filenames and dependencies match current downloads."
+  "findings": "Reviewed all fourteen README sections against v6.8.9 source and distribution. Current version and manuals, six scene-selected styles, actor camera projection, pale watercolor across all panel objects, opaque color exceptions and post-chibi anatomy reset are synchronized. Offscreen continuity actors are excluded from physical counts. Provider and setup routes, saving, privacy, licenses and QA limitations were checked and retained. H3 20261005233427 authfix1 workflow and ZIP, thirty nodes, six model components and memory-only credentials match distribution checks. Current release links use v6.8.9; fifteen history entries retained. Accepted API comparisons show panel style changes but do not establish universal camera/quality success. No live ComfyUI execution is claimed.",
+  "manualFindings": "Rebuilt the twelve-page Gemini guide and thirty-two-page full manual for v6.8.9. All forty-four rendered pages were visually reviewed; changed full-manual page28 was additionally reviewed at full resolution. No clipping, missing glyphs or overlaps observed. Text bounds, A4 dimensions, links and privacy scans passed. Copied reviewed PDFs to public/downloads. The unchanged twenty-page OpenAI guide retains previously reviewed SHA256 b732f0f844983098f1f89ffcc52883c18131b315f47e6092a9b62950971b873e. H3 documentation matches current distribution."
 }
