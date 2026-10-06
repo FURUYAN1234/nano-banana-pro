@@ -35,6 +35,38 @@ const tableQaArrays = value => {
     ? Object.fromEntries(Object.entries(value).map(([key, item]) => [key, tableQaArrays(item)])) : value;
 };
 
+test('invalid image QA is repaired once by AI with the same images; valid uncertainty does not retry', async () => {
+  const good = {text: JSON.stringify({pass:true, observations, spatial_checks:spatialChecks(), issues:[]})};
+  const images = [{image_url:'test-image'}];
+  const calls = [];
+  const result = await imageQualityQa.requestImageQualityQa({prompt:'Inspect unchanged image',images,request:async (...args) => {
+    calls.push(args); return calls.length === 1 ? {text:'{invalid'} : good;
+  }});
+  assert.equal(calls.length,2);
+  assert.strictEqual(calls[1][1],images);
+  assert.match(calls[1][0],/Inspect unchanged image/);
+  assert.equal(result.review.pass,true);
+  let count=0;
+  await imageQualityQa.requestImageQualityQa({prompt:'Inspect',images,request:async () => {
+    count++; return {text:'{"pass":false,"issues":[{"type":"unverified","reason":"occluded"}]}'};
+  }});
+  assert.equal(count,1);
+});
+
+test('QA format recovery never invents PASS after another malformed response or cancellation', async () => {
+  let count=0;
+  const result = await imageQualityQa.requestImageQualityQa({prompt:'Inspect',request:async () => {count++;return {text:'invalid'};}});
+  assert.equal(count,2);
+  assert.equal(result.review.pass,false);
+  assert.equal(result.review.requestFailed,true);
+  const controller=new AbortController();
+  count=0;
+  await assert.rejects(imageQualityQa.requestImageQualityQa({prompt:'Inspect',signal:controller.signal,request:async () => {
+    count++;controller.abort();return {text:'invalid'};
+  }}), error => error.code === 'CANCELLED');
+  assert.equal(count,1);
+});
+
 test('compact QA inventory tables preserve the same complete checks and material verdicts', () => {
   const report = { pass: true, observations, spatial_checks: spatialChecks(), issues: [] };
   const table = tableQaArrays(report);

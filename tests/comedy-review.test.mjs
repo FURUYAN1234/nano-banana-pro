@@ -2,6 +2,34 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { buildComedyReviewRequest, applyComedyReview, reviewComedyPrompt } from '../src/lib/comedy-review.js';
 const source = 'Action: 食べた菓子が復活する。誰も驚かない。\nDialogue: また増えた。\nEYE-LINE LOCK: face viewer';
+test('malformed review is repaired by the AI before publishing the reviewed prompt', async () => {
+  let calls = 0;
+  const progress = [];
+  const result = await reviewComedyPrompt({prompt:source, scenario:source, castList:''}, async (prompt) => {
+    calls++;
+    if (calls === 1) return {text:'{"patches":[], "observations":'};
+    assert.match(prompt, /応答形式|JSON/);
+    return {text:JSON.stringify({observations:[{panel:1,kind:'keep_gag',reason:'原意を保持'}],patches:[]})};
+  }, message => progress.push(message));
+  assert.equal(calls,2);
+  assert.equal(result.warning,'');
+  assert.equal(result.observations[0].reason,'原意を保持');
+  assert.equal(result.prompt,source);
+  assert.match(progress.join('\n'),/自動修復/);
+});
+
+test('cancel during format repair does not publish or start a third request', async () => {
+  let calls = 0;
+  const controller = new AbortController();
+  await assert.rejects(reviewComedyPrompt({prompt:source,signal:controller.signal},async (_p,_a,_b,_progress,{signal}) => {
+    calls++;
+    if (calls === 1) return {text:'broken'};
+    assert.equal(signal,controller.signal);
+    controller.abort();
+    return {text:JSON.stringify({observations:[],patches:[]})};
+  }), {name:'AbortError'});
+  assert.equal(calls,2);
+});
 test('a rejected assembled contract retains the original and does not request another review', async () => {
   let calls = 0;
   const request = async () => { calls++; return { text: JSON.stringify({ observations: [], patches: [{
@@ -33,12 +61,11 @@ test('cancelled review propagates cancellation instead of publishing a successfu
   }), /cancelled|中断|aborted/i);
 });
 
-test('malformed review JSON is explicitly unverified, not a transport problem', async () => {
-  const result = await reviewComedyPrompt({prompt:source, scenario:source, castList:''}, async () => ({text:'invalid JSON'}));
-  assert.equal(result.prompt, source);
-  assert.match(result.warning, /未完了/);
-  assert.match(result.warning, /応答形式/);
-  assert.doesNotMatch(result.warning, /混雑|タイムアウト/);
+test('repeated malformed review never masquerades as completed review or loops indefinitely', async () => {
+  let calls = 0;
+  await assert.rejects(reviewComedyPrompt({prompt:source, scenario:source, castList:''}, async () => {calls++;return {text:'invalid JSON'};}),error =>
+    error.code === 'AI_REVIEW_FORMAT_INVALID' && /応答形式/.test(error.message) && !/混雑|タイムアウト/.test(error.message));
+  assert.equal(calls,2);
 });
 test('preserves surreal script and accepts only exact auxiliary patches', () => {
   const raw = JSON.stringify({ observations: [{ panel: 1, kind: 'keep_gag', reason: '復活はギャグとして保持' }], patches: [{ line: 2, before: 'EYE-LINE LOCK: face viewer', after: 'EYE-LINE LOCK: follow Action', confidence: 'high', reason: '補助指示を調整' }] });
@@ -157,9 +184,9 @@ test('both provider Action annotations supply source evidence without changing t
   }
 });
 
-test('automatic review awaits a result and retains usable original on failure or invalid repair', async () => {
+test('automatic review awaits a result and retains usable original on transport failure', async () => {
   const input = { prompt: source, scenario: source, castList: '' };
-  for (const request of [async () => { throw new Error('offline'); }, async () => ({text:'invalid'}), async () => ({text:'{"observations":[],"patches":[]}'})]) {
+  for (const request of [async () => { throw new Error('offline'); }, async () => ({text:'{"observations":[],"patches":[]}'})]) {
     const result = await reviewComedyPrompt(input, request);
     assert.equal(result.prompt, source);
     assert.equal(result.original, source);
@@ -189,7 +216,7 @@ test('STEP3 review progress states the inspection target and the accepted result
 test('STEP3 harmless proposal keeps the prompt and explains the rejection', async () => {
   const progress = [];
   const result = await reviewComedyPrompt({ prompt: source, scenario: source, castList: '' },
-    async () => ({ text: 'invalid' }), message => progress.push(message));
+    async () => ({ text: JSON.stringify({observations:[],patches:[{line:2,before:'EYE-LINE LOCK: face viewer',after:'EYE-LINE LOCK: follow Action',confidence:'low',reason:'不確かな変更'}]}) }), message => progress.push(message));
   assert.equal(result.prompt, source);
   assert.ok(progress.some(message => /元の指示文を保持/.test(message)));
 });

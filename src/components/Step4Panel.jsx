@@ -38,6 +38,7 @@ import {
   MANGA_MANUSCRIPT_STANDARD,
 } from '../lib/manga-manuscript-format';
 import {
+  GEMINI_IMAGE_MODEL,
   GEMINI_IMAGE_PRICE_SNAPSHOT_DATE,
   formatGeminiImagePricingSummary,
   formatGeminiImageSettingsSummary,
@@ -464,7 +465,7 @@ export default function Step4Panel({
       generatedAtByImageRef.current.set(generatedImage, historyTime);
     }
     const modelId = displayedHistory?.modelId
-      || (isOpenAIImageMode ? resolveOpenAIImageOption(openAIImageQuality).model : 'gemini-3.1-flash-image');
+      || (isOpenAIImageMode ? resolveOpenAIImageOption(openAIImageQuality).model : GEMINI_IMAGE_MODEL);
     return buildGeneratedImageMetadata({
       appVersion: SYSTEM_VERSION,
       generatedAt: generatedAtByImageRef.current.get(generatedImage),

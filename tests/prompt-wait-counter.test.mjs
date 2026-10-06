@@ -19,7 +19,7 @@ test('scenario invalidation releases STEP3 and an old review cannot unlock or ov
     setGenLog:()=>{},setPolicyErrorMsg:()=>{},setPolicyFixLog:()=>{},setIsPolicyPanelOpen:()=>{},setShowPolicyChoice:()=>{},
     lastPolicyErrorRef:{current:''},setAssembleThought:()=>{},normalizePromptProviderFamily:value=>value,getCurrentPromptProviderFamily:()=> 'gemini',
     Date,AbortController,setInterval:()=>1,clearInterval:()=>{},resolvedPunchlineTypeRef:{current:'gag'},resolveScenarioEndingType:()=> 'gag',
-    punchlineType:'gag',updateResolvedPunchlineType:()=>{},PROMPT_PROVIDER_FAMILIES:{CHATGPT:'chatgpt'},buildMangaPromptArtifact:()=> ({prompt:'built prompt'}),validateMangaPromptArtifact:()=>({valid:true}),
+    punchlineType:'gag',updateResolvedPunchlineType:()=>{},PROMPT_PROVIDER_FAMILIES:{CHATGPT:'chatgpt'},assembleMangaPromptWithRecovery:async options=> ({artifact:{prompt:'built prompt'},scenario:options.scenario,repaired:false}),validateMangaPromptArtifact:()=>({valid:true}),
     colorMode:'color',mosaicCopyrightedCharacters:true,showWatermarks:true,assertRenderOptions:()=>{},bg360Image:null,bg360Analysis:null,bg360Enabled:false,bg360CroppedPanels:null,SYSTEM_VERSION:'fixture',
     OPENAI_SCENARIO_MODEL_OPTIONS:[],scenarioUsedModelRef:{current:null},getEndingModePolicy:()=>({endingTone:'gag'}),
     reviewComedyPrompt:input=>new Promise(resolve=>reviews.push({resolve,signal:input.signal})),callAI:()=>{},isDocumentaryEnding:()=>false,
@@ -32,11 +32,13 @@ test('scenario invalidation releases STEP3 and an old review cannot unlock or ov
   vm.createContext(context);
   vm.runInContext(assembly + invalidation + 'globalThis.start=assemblePrompt;globalThis.invalidate=invalidateScenarioOutput;', context);
   const first = context.start();
+  await new Promise(resolve => setImmediate(resolve));
   assert.equal(active, true);
   context.invalidate();
   assert.equal(active, false, 'invalidated assembly must release its loading state immediately');
   assert.equal(reviews[0].signal.aborted, true, 'the invalidated API request must be cancelled');
   const second = context.start();
+  await new Promise(resolve => setImmediate(resolve));
   reviews[0].resolve({prompt:'stale prompt'});
   assert.equal(await first, null);
   assert.equal(active, true, 'old finally must not unlock the new run');

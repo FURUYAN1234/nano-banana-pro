@@ -108,7 +108,7 @@ test('real Gemini request builder sends character and background bytes in manife
     const result = await generateImageWithImagen(buildGeminiImageApiPrompt('approved', plan), () => {}, plan.referenceImages);
     assert.equal(calls.length, 1);
     assert.ok(calls[0].url.endsWith('/v1beta/interactions'));
-    assert.equal(calls[0].body.model, 'gemini-3.1-flash-image');
+    assert.equal(calls[0].body.model, 'gemini-nano-banana-2.1');
     assert.deepEqual(calls[0].body.input.slice(1), [
       {type: 'image', mime_type: 'image/png', data: sheet.split(',')[1]},
       {type: 'image', mime_type: 'image/jpeg', data: 'Ymc='},
@@ -116,6 +116,7 @@ test('real Gemini request builder sends character and background bytes in manife
     assert.match(calls[0].body.input[0].text, /^approved\n\n\[API IMAGE REFERENCE ROLES\]/);
     assert.equal(calls[0].body.response_format.aspect_ratio, '3:4');
     assert.equal(result.base64Img, 'b3V0');
+    assert.equal(result.usedModel, 'gemini-nano-banana-2.1');
   } finally {
     globalThis.fetch = savedFetch;
     setApiKey('');

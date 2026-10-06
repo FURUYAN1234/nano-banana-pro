@@ -7,6 +7,43 @@ let buildEmotionBlock;
 let extractEmotionStyle;
 let extractActionOnly;
 let extractDialogueOnly;
+
+test('reported translation panel preserves one utterance and keeps card text in the action', () => {
+  const panel = `BalloonLayout: [{"speaker":"ヒカリ","x":0.30,"anchor":"画面左側のヒカリの頭の輪郭","route":"左上の余白からヒカリの口元へ短く結ぶ"}]
+状況: 五人は鉢巻きと翻訳家風の服のまま机を囲む。「販売の経緯」のカードは校正刷りから離れ、「翻訳・製本・販売方法」のカードは脇に残る。左側のヒカリは校正刷りの「俺様」という語のそばで赤鉛筆を止め、何も書き込まず、その一枚を机の中央へ滑らせる。右側のサエコはカードから紙へ目を移す。リンは眼鏡越しに該当箇所を見つめ、アカリは紙の端を押さえ、ミクはメモから校正刷りへ視線を移す。確定した評価の印はなく、赤鉛筆だけが紙面の余白で止まっている。
+ヒカリ「この『俺様』で、読者の目は物語に進む？ それとも訳に止まる？」`;
+  const cast = ['ミク', 'リン', 'サエコ', 'アカリ', 'ヒカリ'].map(name => `## ${name}`).join('\n');
+  assert.deepEqual(extractDialogueOnly(panel, cast, {asEntries:true}), [
+    {speaker:'ヒカリ', text:'この『俺様』で、読者の目は物語に進む？ それとも訳に止まる？'},
+  ]);
+  assert.doesNotThrow(() => extractDialogueOnly(panel, cast, {forImagePrompt:true}));
+  assert.ok(extractActionOnly(panel, cast).includes('「俺様」という語'));
+});
+
+test('attributive quotation grammar does not create speech for arbitrary nouns or speakers', () => {
+  for (const speaker of ['甲', '研究員', 'セリナ']) {
+    const cast = `## ${speaker}\n## 乙`;
+    for (const connector of ['という', 'っていう', 'と言う', 'って言う']) {
+      for (const noun of ['語', '単語', '表現', '訳語', '名称', '概念', '仮説', '選択肢', '約束', '問い', '呼称', '人物', '合言葉', 'Z案']) {
+        const description = `${speaker}は「未確定」${connector}${noun}のそばに線を引き、乙へ問いかける。`;
+        const source = `BalloonLayout: [{"speaker":"乙","x":0.5,"anchor":"乙の頭","route":"上から乙へ"}]\n状況: ${description}\n乙「調べよう。」`;
+        assert.deepEqual(extractDialogueOnly(source, cast, {asEntries:true, forImagePrompt:true}), [{speaker:'乙',text:'調べよう。'}], description);
+        assert.ok(extractActionOnly(source, cast).includes(`「未確定」${connector}${noun}`), description);
+      }
+    }
+  }
+});
+
+test('spoken quote predicates and explicit nested quotations retain the actual utterances', () => {
+  for (const ending of ['という。', 'と言う。', 'っていう。', 'って言う。', 'と言い、振り向く。', 'といって振り向く。', 'というと、乙がうなずく。', 'と言うが、乙は首を振る。', 'というけれど、乙は首を振る。', 'と小声で言う。', 'と読み上げる。', 'と尋ねる。']) {
+    const source = `状況: 甲は「調べよう」${ending}`;
+    assert.deepEqual(extractDialogueOnly(source, '## 甲\n## 乙', {asEntries:true}), [{speaker:'甲',text:'調べよう'}], ending);
+  }
+  for (const [open, close] of [['「','」'], ['『','』'], ['“','”'], ['"','"']]) {
+    const text = `この${open}未確定${close}という語を調べよう。`;
+    assert.deepEqual(extractDialogueOnly(`甲「${text}」\n乙「了解。」`, '## 甲\n## 乙', {asEntries:true}), [{speaker:'甲',text}, {speaker:'乙',text:'了解。'}]);
+  }
+});
 let extractPlacementRule;
 let extractCastLimitRule;
 let cleanCastList;

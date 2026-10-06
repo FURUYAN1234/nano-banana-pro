@@ -25,6 +25,14 @@ const chainModels = (id) => {
   return chain.models.map(({ id: modelId }) => modelId);
 };
 
+test('Gemini image route, metadata default and Model Chain share Nano Banana 2.1 without legacy fallback', async () => {
+  const { GEMINI_IMAGE_MODEL } = await import('../src/lib/gemini-image-settings.js');
+  assert.equal(GEMINI_IMAGE_MODEL, 'gemini-nano-banana-2.1');
+  assert.deepEqual(GEMINI_IMAGE_MODEL_IDS, [GEMINI_IMAGE_MODEL]);
+  assert.deepEqual(chainModels('step4-gemini'), [GEMINI_IMAGE_MODEL]);
+  assert.match(FALLBACK_CHAINS.find(c => c.id === 'step4-gemini').models[0].note, /Nano Banana 2\.1/);
+});
+
 test('the STEP2 OpenAI snapshot starts with the active scenario route', () => {
   assert.strictEqual(FALLBACK_CHAIN_SOURCE_IDS['step2-openai'], OPENAI_SCENARIO_TEXT_MODEL_IDS);
   assert.deepEqual(chainModels('step2-openai'), OPENAI_SCENARIO_TEXT_MODEL_IDS);

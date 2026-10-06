@@ -1,10 +1,10 @@
 {
-  "manualVersion": "6.9.1",
-  "manualSourceSha256": "def4cfbe48ad3fa9a2c9f6ebc76b5f79a7ea4cf30c15250b9d07866e6a68aa54",
+  "manualVersion": "6.9.2",
+  "manualSourceSha256": "ec4e5fd7adcbb99eeabe27535f1e7a7c396e52c537c8daabc5946fc54d1ed550",
   "manualFiles": [
     {
       "name": "gemini-api-beginner-guide-2026-10-01.pdf",
-      "sha256": "6f1536ef2325d4173ff13244766c48541450974f0628e2dc20ae1f4dbf764463"
+      "sha256": "11b1a8048d7e2a565f7a3d7a45d3c573dde4750f453d93d7282fb2a33bf8fde1"
     },
     {
       "name": "openai-api-beginner-guide-2026-09-30.pdf",
@@ -12,13 +12,13 @@
     },
     {
       "name": "super-furu-ai-4koma-full-manual-2026-10-01.pdf",
-      "sha256": "e1a3ef40f93fb563e1bbf2ae7057df1406568b087078b0aadab379d308ef0d7f"
+      "sha256": "f1a93f1550b588ac81b5eeb9c74d096370bdd9d818d33055677811b616c3373e"
     }
   ],
-  "readmeSha256": "7374d189941926acad0fafdc215eaf64cbaad0f4406173fbe9cc78de327c4efd",
-  "sourceTree": "fb78aecc151e0b224aa45b598882fa3c82eda997",
-  "publicTree": "70c81732eb35ee4f89f7f2a05a3de28b88d409fd",
-  "packageSha256": "4cfa1be3c9f239213500125b62069b898629f00619918d7cad8381ac7be918a9",
+  "readmeSha256": "6e63178ed0ee920261dda79bc9370744363f6c8bfd04cb7c003c7b015caef71d",
+  "sourceTree": "9d4cde746b0278e83e7370d669fe5826a657eb9a",
+  "publicTree": "cd898cee9cc820b3c3437fbb0eee1e3168134281",
+  "packageSha256": "fe5bd8d6f95d33a0bd71263c85e93b93716bf7f91502c9fe6a1aef806cee917b",
   "releaseAssetSha256": "9e41886be6afa0ebfad6d244ecf53f37260a92f73b30309319029cc87e1ddb4e",
   "reviewedSections": [
     "Application screen and output / 操作画面と生成例",
@@ -36,6 +36,6 @@
     "📋 ChangeLog",
     "License / ライセンス"
   ],
-  "findings": "Compared all fourteen README sections and the current-body diff against the reviewed v6.9.0 implementation. Updated v6.9.1 labels, the independent nested image/safety/video guides, preserved three-part/full/TXT/JSON actions, API quality/size placement with a 6px gap, attachment-to-composer guidance and current Release links. Provider/model routing, force-stop/pulse behavior, parser, media/camera/identity safeguards, privacy, license and historical entries remain unchanged. Current UI was checked through the actual STEP4 component in the in-app browser; no new paid generation was performed for this placement-only update.",
-  "manualFindings": "Rebuilt the twelve-page Gemini and thirty-two-page full manuals for v6.9.1. Reviewed all forty-four rendered pages and changed full-manual pages15 and16 at full resolution; no clipping, overlap or missing glyphs observed. A4, text bounds, links and privacy checks passed. Reviewed PDFs copied to public/downloads. The unchanged twenty-page OpenAI guide retains reviewed SHA256 b732f0f844983098f1f89ffcc52883c18131b315f47e6092a9b62950971b873e. Latest H3 authfix1 workflow/package content is unchanged."
+  "findings": "Compared every README section with the previously reviewed v6.9.1 body; changed sections: # Super FURU AI 4-koma System / Super FURU AI 4コマシステム; ## What this project does / このプロジェクトでできること; ## API routes and settings / API経路と設定; ## FAQ / よくある質問; ## 📋 ChangeLog. Reviewed changed claims against shared dialogue parsing, layout-only recovery, review format repair, abort and stream handling, new Gemini routing and settings. Current image prices were checked against Google and OpenAI official pricing on 2026-10-07. Live OpenAI and Gemini normal STEP3/STEP4 runs produced retained images; malformed prompt and image-review responses were automatically repaired, and missing layout data was repaired with script content preserved. Remaining image camera/tail evidence warnings are not a universal visual PASS. Unchanged body, media, licenses and historical material remain retained.",
+  "manualFindings": "Rebuilt the twelve-page Gemini and thirty-two-page full manuals for v6.9.2. Viewed all44 rendered pages on eight contact sheets, then full-manual pages14,17,18 individually at full resolution: no overlap, clipping or missing glyphs observed. New layout/AI review recovery and Gemini Interactions descriptions match implementation. A4, text bounds, privacy and link audits passed. Reviewed PDFs copied to public/downloads. The unchanged OpenAI guide and H3 assets retain their previous evidence."
 }

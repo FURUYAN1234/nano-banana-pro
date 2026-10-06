@@ -1,3 +1,5 @@
+import { GEMINI_IMAGE_MODEL } from './gemini-image-settings.js';
+
 // Geminiの実行順。表示用のModel Chainもこの定義を参照する。
 export const GEMINI_TEXT_MODEL_IDS = [
   'gemini-3.8-flash',
@@ -27,5 +29,5 @@ export const GEMINI_VISION_MODEL_IDS = [
 ];
 
 export const GEMINI_IMAGE_MODEL_IDS = [
-  'gemini-3.1-flash-image',
+  GEMINI_IMAGE_MODEL,
 ];

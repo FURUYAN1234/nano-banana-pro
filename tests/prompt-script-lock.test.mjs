@@ -7,6 +7,19 @@ let server;
 let buildMangaPrompt;
 let extractBubbleContracts;
 
+test('reported translation scenario completes assembly unchanged for both providers and color modes', () => {
+  const scenario = readFileSync(new URL('./fixtures/translation-question-balloon-layout.txt', import.meta.url), 'utf8');
+  const expected = scenario.split(/\[\dコマ目:[^\]]+\]/).slice(1).map(panel =>
+    [...panel.matchAll(/^([^\n「]+)「([^\n]+)」$/gm)].map(([, speaker, text]) => ({speaker, text})));
+  assert.deepEqual(expected.map(panel => panel.length), [2, 2, 1, 1]);
+  const castList = ['ミク','リン','サエコ','アカリ','ヒカリ'].map(name => `## ${name}`).join('\n');
+  for (const providerFamily of ['chatgpt', 'gemini']) for (const colorMode of ['color', 'monochrome']) {
+    const prompt = buildMangaPrompt({scenario, castList, providerFamily, colorMode, punchlineType:'Auto'});
+    assert.deepEqual(extractBubbleContracts(prompt).map(panel => panel.bubbles.map(({speaker, text}) => ({speaker, text}))), expected);
+    assert.ok(prompt.includes('「俺様」という語'));
+  }
+});
+
 test('reported VisualEvidence scenario keeps all six utterances and sign text for both providers', () => {
   const scenario = readFileSync(new URL('./fixtures/visual-evidence-balloon-layout.txt', import.meta.url), 'utf8');
   const expected = scenario.split(/\[\dコマ目:[^\]]+\]/).slice(1).map(panel =>

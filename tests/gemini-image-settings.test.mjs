@@ -25,15 +25,15 @@ test('Gemini image defaults are explicit and shared with the API request', () =>
 test('Gemini STEP4 summary states model, request size, and normalized A4 size', () => {
   assert.equal(
     formatGeminiImageSettingsSummary(),
-    'Gemini 3.1 Flash Image・1K / 3:4（API 896×1200 → A4 848×1200）・品質切替なし',
+    'Nano Banana 2.1・1K / 3:4（A4へ正規化）・品質切替なし',
   );
 });
 
 test('Gemini image price snapshot exposes per-image and retry costs', () => {
-  assert.equal(GEMINI_IMAGE_PRICE_SNAPSHOT_DATE, '2026-09-25');
+  assert.equal(GEMINI_IMAGE_PRICE_SNAPSHOT_DATE, '2026-10-07');
   assert.equal(
     formatGeminiImagePricingSummary(),
-    'Gemini 3.1 Flash Image｜画像出力 1K $0.067/枚（最大4枚 $0.268）＋入力 $0.50 / 100万トークン',
+    'Nano Banana 2.1｜画像出力 1K $0.0336/枚（最大4枚 $0.1344）＋入力 $1.50・テキスト/思考出力 $7.50 / 100万トークン',
   );
 });
 
@@ -43,4 +43,11 @@ test('Gemini pricing and concrete automatic settings are visible in STEP4', () =
   assert.match(step4PanelSource, /formatGeminiImageSettingsSummary\(\)/);
   assert.match(step4PanelSource, /Google公式料金/);
   assert.doesNotMatch(step4PanelSource, /'Google AI：自動設定'/);
+});
+
+test('image status and saved metadata recognize the configured model without a generation-number prefix', () => {
+  const workflow = readFileSync(new URL('../src/hooks/useMangaWorkflow.js', import.meta.url), 'utf8');
+  assert.doesNotMatch(workflow, /startsWith\(['"]gemini-3['"]\)/);
+  assert.match(workflow, /generatedModelId !== GEMINI_IMAGE_MODEL/);
+  assert.match(workflow, /qualityOutcome\.candidate\.modelId !== GEMINI_IMAGE_MODEL/);
 });

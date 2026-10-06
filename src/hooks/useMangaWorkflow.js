@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 
 // --- Imports (paths adjusted from ./lib/ to ../lib/) ---
 import { setApiKey } from '../lib/gemini';
+import { GEMINI_IMAGE_MODEL } from '../lib/gemini-image-settings.js';
 import { generateImageWithImagen } from '../lib/imagen';
 import { assertRenderOptions, readRenderOptions } from '../lib/render-options.js';
 import { collectCastNameEntries } from '../lib/panel-utils.js';
@@ -14,6 +15,7 @@ import {buildOpenAIReferencePlan, appendOpenAIReferencePrompt, getOpenAIPromptBo
 import {buildGeminiReferencePlan, buildGeminiImageApiPrompt} from '../lib/gemini-image-references.js';
 import { callAI, setActiveEngine } from '../lib/ai-provider';
 import { reviewComedyPrompt } from '../lib/comedy-review';
+import { assembleMangaPromptWithRecovery } from '../lib/prompt-assembly-recovery.js';
 import { normalizeMangaColorMode, ensureMangaColorModeContract } from '../lib/manga-render-mode.js';
 import { assertPromptEndingModeConsistency, getEndingModePolicy, isDocumentaryEnding, resolveScenarioEndingType } from '../lib/ending-mode-policy.js';
 import { assertPrintableDialogue } from '../lib/bubble-text.js';
@@ -26,7 +28,6 @@ import { get360AnalysisPrompt, parse360Analysis } from '../lib/panorama360';
 import { isEquirectangularFile, readFileAsDataURL } from '../lib/input-files.js';
 import { getCharacterAnalysisPrompt } from '../lib/prompts';
 import {
-  buildMangaPromptArtifact,
   validateMangaPromptArtifact,
   PROMPT_PROVIDER_FAMILIES,
   normalizePromptProviderFamily
@@ -57,7 +58,7 @@ import {
   buildImageQualityComparisonPrompt,
   parseImageQualityComparison,
   formatImageQualityIssue,
-  parseImageQualityQaResponse
+  requestImageQualityQa
 } from '../lib/image-quality-qa';
 import { buildImageFailureAnalysisPrompt, formatImageQualityStopReason, GEMINI_IMAGE_REPAIR_PROMPT_MAX_CHARS, inferImageQualityMode, isMaterialImageQualityIssue, runImageQualityFailsafe } from '../lib/image-quality-failsafe';
 import { getEffectiveEngine } from '../lib/engine-state';
@@ -1114,7 +1115,7 @@ export default function useMangaWorkflow() {
         }))
         : undefined;
       // [v3.82-alpha] リファクタリング: 外部モジュールでプロンプトを構築
-      const promptArtifact = buildMangaPromptArtifact({
+      const assembled = await assembleMangaPromptWithRecovery({
         mosaicCopyrightedCharacters,
         showWatermarks,
         scenario: currentScenario,
@@ -1130,7 +1131,13 @@ export default function useMangaWorkflow() {
         scenarioModelLabel: OPENAI_SCENARIO_MODEL_OPTIONS.find(({ id }) => id === scenarioUsedModelRef.current)?.label,
         allowScenarioQualityWarning: true,
         promptMaxChars
-      });
+      }, callAI, message => {
+        if (promptScenarioEpoch === scenarioRunEpochRef.current && assemblyRun === promptAssemblyRunRef.current) {
+          setAssembleThought(prev => prev + `\n> ${message}`);
+        }
+      }, controller.signal);
+      if (promptScenarioEpoch !== scenarioRunEpochRef.current || assemblyRun !== promptAssemblyRunRef.current) return null;
+      const promptArtifact = assembled.artifact;
 
       const safePrompt = promptArtifact.prompt;
       const endingPolicy = getEndingModePolicy(activePunchlineType);
@@ -1143,7 +1150,7 @@ export default function useMangaWorkflow() {
         prompt: safePrompt,
         validatePrompt: candidate => validateMangaPromptArtifact(candidate, promptArtifact),
         promptMaxChars,
-        scenario: currentScenario,
+        scenario: assembled.scenario,
         castList,
         reviewTone: endingPolicy.endingTone,
         preserveReferenceStyle: endingPolicy.preserveReferenceStyle,
@@ -1166,6 +1173,7 @@ export default function useMangaWorkflow() {
       assertPrintableDialogue(reviewed.prompt);
       assertRenderOptions(reviewed.prompt, { mosaicCopyrightedCharacters, showWatermarks, protectedCast: collectCastNameEntries(castList).map(entry => entry.displayName) });
       promptAssemblyRunRef.completedRun = assemblyRun;
+      if (assembled.repaired) setScenario(assembled.scenario);
       setFinalPrompt(reviewed.prompt);
       setAssembleThought(prev => prev + `\n> 出力モード: ${colorMode === 'monochrome' ? '白黒漫画原稿（墨線・白地・肌や素材と影に応じたトーン）' : 'カラー'}`);
       setAssembleThought(prev => prev + `\n> ${reviewed.warning || "AI精査完了"}`);
@@ -1799,23 +1807,16 @@ export default function useMangaWorkflow() {
             evidenceContext,
             requirePanelStyleEvidence: isOpenAIEngine && colorMode === 'color',
           });
-          const qualityResponse = await callAI(
-            qualityPrompt,
-            qualityImageParts,
-            null,
-            (msg) => statCallback(`[QUALITY QA] ${msg}`),
-            { outputProfile: 'image-quality-review' }
-          );
           const nativeReview = review;
-          review = parseImageQualityQaResponse(qualityResponse.text, {
-            mode: qualityMode,
-            finalPrompt: candidatePrompt,
-            referenceImageCount: images.length,
-            completionTokens: qualityResponse.usage?.completion_tokens ?? qualityResponse.usage?.output_tokens,
-            finishReason: qualityResponse.finishReason,
-            evidenceContext,
-            requirePanelStyleEvidence: isOpenAIEngine && colorMode === 'color',
+          const { response: qualityResponse, review: parsedReview } = await requestImageQualityQa({
+            prompt: qualityPrompt, images: qualityImageParts, request: callAI,
+            onProgress: (msg) => statCallback(`[QUALITY QA] ${msg}`),
+            options: {
+              mode: qualityMode, finalPrompt: candidatePrompt, referenceImageCount: images.length,
+              evidenceContext, requirePanelStyleEvidence: isOpenAIEngine && colorMode === 'color',
+            },
           });
+          review = parsedReview;
           if (nativeReview?.nativeChroma) {
             review = { ...review, nativeChroma: nativeReview.nativeChroma,
               pass: review.pass && nativeReview.issues.length === 0,
@@ -2066,7 +2067,7 @@ export default function useMangaWorkflow() {
           metadataContext: qualityOutcome.candidate.metadataContext,
           workflowSource: qualityOutcome.candidate.workflowSource,
           fallbackOccurred: Boolean(qualityOutcome.candidate.modelId
-            && !qualityOutcome.candidate.modelId.startsWith('gemini-3')
+            && qualityOutcome.candidate.modelId !== GEMINI_IMAGE_MODEL
             && !qualityOutcome.candidate.modelId.startsWith('gpt-')),
           qualityPass: qualityResult?.pass === true,
           selected: true,
@@ -2094,12 +2095,12 @@ export default function useMangaWorkflow() {
 
       // [v3.56] OpenAIモデル (gpt-image-2等) は正規モデルとして扱い、フォールバック警告を出さない
       const isOpenAIModel = generatedModelId && generatedModelId.startsWith("gpt-");
-      if (generatedModelId && !generatedModelId.startsWith("gemini-3") && !isOpenAIModel) {
+      if (generatedModelId && generatedModelId !== GEMINI_IMAGE_MODEL && !isOpenAIModel) {
         // gemini-2.5系やimagen系はフォールバック扱い（妥協版警告を表示）
         setIsFallbackUsed(true);
         setGenLog(prev => [
           ...prev,
-          "[WARNING] 最新モデル(Nano Banana 2)への接続がタイムアウト等で失敗しました。",
+          "[WARNING] 画像モデル(Nano Banana 2.1)への接続がタイムアウト等で失敗しました。",
           "[WARNING] 代わりに下位APIで妥協版を出力したため、描写が大きく崩れている可能性があります。",
           "[GUIDE] ★手動生成を推奨します★",
           "[GUIDE] 1. 「プロンプトをコピー」ボタンを押す",
@@ -2655,7 +2656,7 @@ export default function useMangaWorkflow() {
     invalidateScenarioRun('強制停止');
     if (isAnalyzing || is360Analyzing) setAnalyzeThought(prev => `${prev}\n> ⏹ 強制停止しました。取得済みデータを保持します。`);
     if (isAssembling) setAssembleThought(prev => `${prev}\n> ⏹ 強制停止しました。`);
-    if (isGeneratingImage || isFixingPolicy || policyAutoRetrying) setGenLog(prev => [...prev, '[STOPPED] 強制停止しました。取得済み画像を保持します。']);
+    if (isGeneratingImage || isFixingPolicy || policyAutoRetrying) setGenLog(prev => [...prev.filter(log => !log.startsWith('[WAIT]')), '[STOPPED] 強制停止しました。取得済み画像を保持します。']);
     setIsAnalyzing(false);
     isAnalyzingRef.current = false;
     setIs360Analyzing(false);

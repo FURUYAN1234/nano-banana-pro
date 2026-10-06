@@ -39,12 +39,13 @@ export function buildOpenAIImageRequest(prompt, {quality, size, stream = true, i
 async function generateOpenAIImageEdit(request, selectedOption, apiKey, statCallback, workSignal) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), OPENAI_IMAGE_TIMEOUT_MS);
+  const signal = AbortSignal.any([controller.signal, workSignal]);
   try {
     const response = await fetch(request.url, {
       method: 'POST',
       headers: {'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}`},
       body: JSON.stringify(request.body),
-      signal: AbortSignal.any([controller.signal, workSignal]),
+      signal,
     });
     if (!response.ok) {
       const data = await response.json().catch(() => ({}));
@@ -55,11 +56,12 @@ async function generateOpenAIImageEdit(request, selectedOption, apiKey, statCall
     const contentType = response.headers?.get?.('content-type') || '';
     let base64Img;
     if (contentType.includes('text/event-stream')) {
-      base64Img = await readOpenAIImageStream(response, statCallback, {eventPrefix: 'image_edit', requireFinal: true});
+      base64Img = await readOpenAIImageStream(response, statCallback, {eventPrefix: 'image_edit', signal});
     } else {
       const data = await response.json();
       base64Img = data.data?.[0]?.b64_json;
     }
+    throwIfApiWorkCancelled(workSignal);
     if (typeof base64Img !== 'string' || !base64Img.trim()) throw new Error('OpenAI画像編集の応答に完成画像データが含まれていませんでした。');
     statCallback('[OpenAI] 参照画像を使った画像生成が完了しました。');
     return {base64Img, mimeType: 'image/png', usedModel: selectedOption.model};
@@ -98,12 +100,16 @@ export const getOpenAIApiKey = () => {
 export const readOpenAIImageStream = async (
   response,
   statCallback = () => {},
-  {eventPrefix = 'image_generation'} = {},
+  {eventPrefix = 'image_generation', signal} = {},
 ) => {
+  throwIfApiWorkCancelled(signal);
   if (!response.body || typeof response.body.getReader !== 'function') {
     throw new Error('OpenAI画像ストリームを読み取れませんでした。');
   }
   const reader = response.body.getReader();
+  // fetchの中断伝播だけに依存せず、待機中のread自体を解除する。
+  const cancelReader = () => { void reader.cancel().catch(() => {}); };
+  signal?.addEventListener('abort', cancelReader, {once:true});
   const decoder = new TextDecoder();
   let buffer = '';
   let finalImage = '';
@@ -134,8 +140,10 @@ export const readOpenAIImageStream = async (
     }
   };
 
-  while (true) {
+  try {
+    while (true) {
       const chunk = await reader.read();
+      throwIfApiWorkCancelled(signal);
       buffer += decoder.decode(chunk.value || new Uint8Array(), {stream: !chunk.done});
       let boundary = buffer.match(/\r?\n\r?\n/);
       while (boundary) {
@@ -144,10 +152,15 @@ export const readOpenAIImageStream = async (
         boundary = buffer.match(/\r?\n\r?\n/);
       }
       if (chunk.done) break;
+    }
+    throwIfApiWorkCancelled(signal);
+    if (buffer.trim()) processEvent(buffer);
+    if (!finalImage) throw new Error('OpenAI画像ストリームに最終画像データが含まれていませんでした。');
+    return finalImage;
+  } finally {
+    signal?.removeEventListener('abort', cancelReader);
+    reader.releaseLock();
   }
-  if (buffer.trim()) processEvent(buffer);
-  if (!finalImage) throw new Error('OpenAI画像ストリームに最終画像データが含まれていませんでした。');
-  return finalImage;
 };
 
 export const generateImageWithOpenAI = async (prompt, statCallback, options = {}) => {
@@ -215,12 +228,14 @@ export const generateImageWithOpenAI = async (prompt, statCallback, options = {}
 
     const contentType = response.headers?.get?.('content-type') || '';
     if (contentType.includes('text/event-stream')) {
-      const base64Img = await readOpenAIImageStream(response, statCallback);
+      const base64Img = await readOpenAIImageStream(response, statCallback, {signal:AbortSignal.any([controller.signal, workSignal])});
+      throwIfApiWorkCancelled(workSignal);
       statCallback("[OpenAI] 画像の生成に成功しました。");
       return {base64Img, mimeType: 'image/png', usedModel: selectedOption.model};
     }
 
     const data = await response.json();
+    throwIfApiWorkCancelled(workSignal);
     const base64Img = data.data?.[0]?.b64_json;
     if (typeof base64Img !== 'string' || !base64Img.trim()) {
       throw new Error('APIレスポンスに画像データが含まれていませんでした。');

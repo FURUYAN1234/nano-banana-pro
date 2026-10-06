@@ -38,7 +38,16 @@ export const getApiErrorInfo = error => {
   const text = `${error?.code || ''} ${message}`.toLowerCase();
   const status = Number(error?.status) || Number(message.match(/(?:\bHTTP\s+|\bCode:\s*|^)([45]\d\d)\b/i)?.[1]);
   const info = (kind, label, advice) => ({kind, label, advice});
-  if (error?.code === 'BALLOON_LAYOUT_INVALID') return info('balloon_layout', '吹き出し配置と抽出台詞の不一致', '詳細のコマと配置・抽出台詞を照合してください。引用の抽出違いも含めて確認が必要です。通信障害ではありません。');
+  if (error?.code === 'AI_REVIEW_FORMAT_INVALID') return info('review_format', 'AI精査の自動修復が未完了', error.cause
+    ? getApiErrorInfo(error.cause).advice
+    : '台本は変更不要です。STEP3の再実行でAI精査をやり直せます。元の台本・キャラクター設定は保持しています。');
+  if (error?.code === 'BALLOON_LAYOUT_REPAIR_FAILED') {
+    const cause = getApiErrorInfo(error.cause);
+    const advice = ['auth', 'quota', 'permission', 'model', 'rate', 'network', 'timeout', 'server'].includes(cause.kind)
+      ? cause.advice : '台本の手直しは不要です。STEP3を再実行すると、保持した台本から配置の自動修復をやり直します。';
+    return info('balloon_layout', '吹き出し配置の自動修復が未完了', advice);
+  }
+  if (error?.code === 'BALLOON_LAYOUT_INVALID') return info('balloon_layout', '吹き出し配置と抽出台詞の不一致', 'STEP3で台詞・状況・カメラを保持したまま配置の自動修復を行います。');
   if (error?.name === 'AbortError' || error?.code === 'CANCELLED') return info('cancelled', '処理を中断しました', '必要なら現在の入力で再実行してください。');
   if (status === 504) return info('timeout', 'APIサーバーの応答待ち時間切れ', 'API側がHTTP 504を返しました。時間を置いて再試行してください。');
   if (status >= 500) return info('server', 'APIサーバー側のエラー', '時間を置いて再試行してください。繰り返す場合はプロバイダーの稼働状況を確認してください。');

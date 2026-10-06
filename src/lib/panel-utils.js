@@ -390,12 +390,16 @@ const ACOUSTIC_VISUAL_LINE_RE = new RegExp(
 );
 
 const hasAcousticQuotePostContext = (postText = '') => ACOUSTIC_QUOTE_POST_RE.test(postText.trim());
+// 「という＋名詞」は引用を説明する連体修飾。後方の「問う」等を探して
+// 発話に昇格させない。語彙の除外リストではなく、終止・接続の境界で区別する。
+const ATTRIBUTIVE_QUOTE_POST_RE = /^(?:と|って)(?:いう|言う)(?!(?:$|[\s、。！？!?）)]|と|が|けど|けれど|ので|から|ものの))[\p{L}\p{N}]/u;
 const hasSpokenQuotePostContext = (postText = '') => {
   const cleanPostText = postText.trim();
-  if (SURFACE_QUOTE_POST_RE.test(cleanPostText) || REPORTED_SOURCE_QUOTE_POST_RE.test(cleanPostText)) {
+  if (ATTRIBUTIVE_QUOTE_POST_RE.test(cleanPostText) || SURFACE_QUOTE_POST_RE.test(cleanPostText) || REPORTED_SOURCE_QUOTE_POST_RE.test(cleanPostText)) {
     return false;
   }
-  return !hasAcousticQuotePostContext(cleanPostText) && SPOKEN_QUOTE_POST_RE.test(cleanPostText);
+  return !hasAcousticQuotePostContext(cleanPostText)
+    && (SPOKEN_QUOTE_POST_RE.test(cleanPostText) || /^(?:と|って)\s*い(?:って|った|い(?:、|ます))/.test(cleanPostText));
 };
 
 // A quotation introduced as part of a document or display belongs to that

@@ -46,7 +46,7 @@ const usesBalloonPatch = (scenario, reasonCodes) => isStagingOnlyRepair(reasonCo
   && getScenarioPanelBlocks(scenario).every(panel => panel.found && /^BalloonLayout\s*[:：]/m.test(panel.text));
 
 // Field edits preserve all other source bytes, including dialogue, metadata and panel order.
-export const applyScenarioStagingPatch = (scenario, response) => {
+export const applyScenarioStagingPatch = (scenario, response, castList = '') => {
   const fail = message => { throw new Error(`invalid_staging_patch: ${message}`); };
   let edits;
   try { edits = JSON.parse(extractText(response).replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '')); }
@@ -86,7 +86,7 @@ export const applyScenarioStagingPatch = (scenario, response) => {
     candidate = candidate.slice(0, edit.start) + edit.replacement + candidate.slice(edit.end);
   }
   try {
-    for (const panel of getScenarioPanelBlocks(candidate)) extractDialogueOnly(panel.text, '', { forImagePrompt: true });
+    for (const panel of getScenarioPanelBlocks(candidate)) extractDialogueOnly(panel.text, castList, { forImagePrompt: true });
   } catch (error) { return fail(error.message); }
   return candidate;
 };

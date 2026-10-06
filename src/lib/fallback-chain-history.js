@@ -52,7 +52,7 @@ const GEMINI_MODEL_NOTES = {
   'gemini-3.5-flash': '安定GA',
   'gemini-3.5-flash-lite': '低遅延・低コスト',
   'gemini-3.1-flash-lite': '互換フォールバック',
-  'gemini-3.1-flash-image': 'Nano Banana 2 4コマ漫画生成用',
+  'gemini-nano-banana-2.1': 'Nano Banana 2.1 4コマ漫画生成用',
 };
 
 const describeGeminiRoute = (modelIds) => modelIds.map((id, index) => ({
@@ -175,6 +175,13 @@ export const getFallbackChains = (scenarioModelId = DEFAULT_OPENAI_SCENARIO_MODE
 };
 
 export const FALLBACK_CHAIN_HISTORY = [
+  {
+    version: 'v6.9.2', date: '2026-10-07',
+    note: 'Gemini画像生成をNano Banana 2.1へ更新。Model Chain・保存画像のモデル情報・参考料金を同期。',
+    changes: [
+      { step: 'STEP 4 (Gemini)', action: '更新', detail: 'gemini-nano-banana-2.1 / Interactions API / 1K・3:4。旧画像モデルへの自動切替なし。' },
+    ],
+  },
   // ↑ 新しいエントリはここに追加する（降順）
   {
     version: 'v6.7.4', date: '2026-09-30 22:06 JST',

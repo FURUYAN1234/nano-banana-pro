@@ -13,7 +13,7 @@ const GEMINI_IMAGE_TIMEOUT_MS = 600_000;
 
 // 画像生成モデル優先順位 (Geminiネイティブ優先)
 // ※ Imagen全系列は完全廃止予定のため、Geminiネイティブのみを指定。
-// ※ 4コマ漫画生成は Nano Banana 2 API に固定する。
+// ※ 4コマ漫画生成は Nano Banana 2.1 API に固定する。
 //    Nano Banana Pro は高品質単枚絵寄りで、漫画レイアウトの再現性が落ちるため使わない。
 export const buildGeminiImageGenerationConfig = ({
     aspectRatio = DEFAULT_GEMINI_IMAGE_OPTIONS.aspectRatio,
