@@ -1,7 +1,7 @@
 import { execSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
-import { collectReadmeBodyEvidence, validateReadmeBodyAudit } from './readme_body_audit.mjs';
+import { collectReadmeBodyEvidence, validateReadmeBodyAudit, validatePricingReview } from './readme_body_audit.mjs';
 import { assertPublicSkillDistribution } from './public_skill_distribution.mjs';
 
 console.log("🛡️ [Security Check] Validating Git Environment...");
@@ -102,6 +102,7 @@ try {
     console.log('📝 [README Body] Checking reviewed sections and source evidence...');
     const readmeAudit = JSON.parse(fs.readFileSync('docs/readme-body-audit.json', 'utf-8'));
     const readmeAuditErrors = validateReadmeBodyAudit(readmeAudit, collectReadmeBodyEvidence(process.cwd()));
+    readmeAuditErrors.push(...validatePricingReview(readmeAudit.pricingReview, collectReadmeBodyEvidence(process.cwd())));
     if (readmeAuditErrors.length > 0) {
         throw new Error(`README body audit missing or stale: ${readmeAuditErrors.join('; ')}`);
     }

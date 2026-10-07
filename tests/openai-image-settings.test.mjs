@@ -88,7 +88,7 @@ test('formats the official image API token prices for the selected STEP4 model',
   );
   assert.equal(
     settings.formatOpenAIImagePricingSummary('gpt-image-2-high'),
-    'GPT Image 2.0｜画像 入力 $4（キャッシュ $1）/ 出力 $15・テキスト 入力 $2.5（キャッシュ $0.625） USD / 100万トークン',
+    'GPT Image 2.0｜画像 入力 $8（キャッシュ $2）/ 出力 $30・テキスト 入力 $5（キャッシュ $1.25） USD / 100万トークン',
   );
   assert.equal(
     settings.formatOpenAIImagePricingSummary('invalid'),

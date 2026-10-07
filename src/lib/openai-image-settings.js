@@ -23,11 +23,11 @@ const OPENAI_IMAGE_PRICING_USD_PER_M = Object.freeze({
     cachedTextInput: 1.25,
   }),
   'gpt-image-2': Object.freeze({
-    imageInput: 4,
-    cachedImageInput: 1,
-    imageOutput: 15,
-    textInput: 2.5,
-    cachedTextInput: 0.625,
+    imageInput: 8,
+    cachedImageInput: 2,
+    imageOutput: 30,
+    textInput: 5,
+    cachedTextInput: 1.25,
   }),
 });
 export const OPENAI_IMAGE_SIZE_OPTIONS = MANGA_MANUSCRIPT_SIZE_OPTIONS;

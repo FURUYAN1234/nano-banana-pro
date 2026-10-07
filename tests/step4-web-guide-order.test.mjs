@@ -42,11 +42,50 @@ test('ChatGPT Web disclosure starts closed and contains every manual action, lea
       }
     }
     const geminiHtml = renderToStaticMarkup(React.createElement(Step4Panel, { ...props, selectedEngine: 'gemini' }));
-    assert.doesNotMatch(geminiHtml, /web-prompt-disclosure/);
+    const geminiDisclosure = geminiHtml.match(/<details class="web-prompt-disclosure">([\s\S]*?)<\/details>/)?.[1];
+    assert.ok(geminiDisclosure, 'Gemini manual controls also start collapsed');
+    assert.ok(geminiHtml.includes('テキスト/思考出力 $7.50'));
+    assert.doesNotMatch(geminiHtml, /文字・思考出力は \$3\.00/);
+    assert.match(geminiDisclosure, /Gemini Webで手動生成／4コマ漫画を動画化/);
+    assert.match(geminiDisclosure, /aria-controls="image-help-content"/);
+    assert.match(geminiDisclosure, /安全基準/);
+    assert.match(geminiDisclosure, /video-guide-content/);
+    assert.doesNotMatch(geminiDisclosure, /api-settings-content|APIで新しい画像/);
+    const geminiCopy = [...geminiDisclosure.matchAll(/<button\b([^>]*)>([\s\S]*?)<\/button>/g)]
+      .find(([, , label]) => label.includes('プロンプトをコピーする（Web / Work用）'));
+    assert.match(geminiCopy[1], /style="margin:12px 0 16px"/);
     assert.match(geminiHtml, /プロンプトをコピーする（Web \/ Work用）/);
   } finally {
     await server.close();
   }
+});
+
+test('Gemini review is beside the image and before instructions; video remains reachable without an API image', async () => {
+  const server = await createServer({ appType: 'custom', logLevel: 'silent', server: { middlewareMode: true, hmr: false } });
+  try {
+    const { default: Step4Panel } = await server.ssrLoadModule('/src/components/Step4Panel.jsx');
+    for (const generatedImage of ['', 'data:image/png;base64,YQ==']) {
+      for (const allowImageQualityRepair of [false, true]) {
+        const html = renderToStaticMarkup(React.createElement(Step4Panel, {
+          selectedEngine: 'gemini', currentStep: 5, finalPrompt: 'OUTPUT: Single image.',
+          genLog: [], policyErrorMsg: '', castList: '', scenario: '', webCopyPartLengths: [],
+          generatedImage, allowImageQualityRepair,
+        }));
+        const review = html.indexOf('AIで画像を再検査');
+        if (generatedImage) {
+          assert.ok(review > html.indexOf('alt="Generated Result"'));
+          assert.ok(review < html.indexOf('この画像への追加指示'));
+          assert.ok(html.includes(allowImageQualityRepair ? '自動修正ON' : '自動修正OFF'));
+        } else {
+          assert.equal(review, -1, 'no review action without an image');
+        }
+        const video = html.indexOf('aria-controls="video-guide-content"');
+        assert.ok(video > html.indexOf('<details class="web-prompt-disclosure">') && video < html.indexOf('</details>'),
+          'video is inside Web disclosure, accessible without an API image');
+        assert.equal((html.match(/aria-controls="video-guide-content"/g) || []).length, 1);
+      }
+    }
+  } finally { await server.close(); }
 });
 
 test('API settings stay outside Web help and immediately precede STEP4 with a small gap for every engine', async () => {

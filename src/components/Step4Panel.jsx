@@ -384,7 +384,6 @@ export default function Step4Panel({
   // raw flag directly.
   const isOpenAIImageMode = getEffectiveEngine(selectedEngine, enableOpenAIApi) === 'openai';
   const isChatGPTWebGuide = isOpenAIImageMode || enableChatGPTMode;
-  const WebPromptContainer = isChatGPTWebGuide ? 'details' : 'div';
   const isSeriousEnhancementMode = getEndingModePolicy(punchlineType).endingTone === 'serious';
   const displayedHistory = generationHistory.find(item => item.img === generatedImage);
   const hasFixedPageLayout = displayedHistory?.pageLayout?.applied === true;
@@ -481,6 +480,19 @@ export default function Step4Panel({
       settings: generationContext.settings,
     });
   };
+
+  const existingImageReviewControl = generatedImage && (
+                <button
+                  type="button"
+                  onClick={() => regenerateImage(false, null, { reviewExisting: true, reviewOnly: !allowImageQualityRepair })}
+                  disabled={isGeneratingImage || isFixingPolicy}
+                  className={`w-full mt-2 px-4 py-2 rounded-lg border border-blue-400/40 bg-blue-900/20 text-blue-100 text-sm font-bold disabled:opacity-50 disabled:cursor-wait ${currentStep === 5 && !isGeneratingImage && !isFixingPolicy ? 'next-step-gentle-pulse' : ''}`}
+                >
+                  {!isChatGPTWebGuide ? 'AIで画像を再検査' : allowImageQualityRepair
+                    ? '表示中の画像を再検査し、必要な箇所だけ修正する（追加API課金あり）'
+                    : '表示中の画像を品質再検査する（画像再生成なし・解析API課金あり）'}
+                </button>
+  );
 
   const webSupportControls = (
     <>
@@ -1069,12 +1081,10 @@ No explanations. No partial results.`;
                   )}
                 </div>
               )}
-              <WebPromptContainer className={isChatGPTWebGuide ? 'web-prompt-disclosure' : 'space-y-3'}>
-                {isChatGPTWebGuide && (
+              <details className="web-prompt-disclosure">
                   <summary className="web-prompt-disclosure-toggle">
-                    ChatGPTのWebでプロンプトを貼り付け（API節約可能）／4コマ漫画を動画化
+                    {isChatGPTWebGuide ? 'ChatGPTのWebでプロンプトを貼り付け（API節約可能）／4コマ漫画を動画化' : 'Gemini Webで手動生成／4コマ漫画を動画化'}
                   </summary>
-                )}
                 <div className="space-y-3">
               {isChatGPTWebGuide && finalPrompt && (
                 <div>
@@ -1122,6 +1132,7 @@ No explanations. No partial results.`;
                 <button
                   onClick={copyPrompt}
                   disabled={!finalPrompt}
+                  style={!isChatGPTWebGuide ? { margin: '12px 0 16px' } : undefined}
                   className={`w-full ${isCopied ? 'bg-green-600' : 'web-prompt-copy-action'} text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all border border-white/10`}
                 >
                   {isCopied ? <CheckCircle2 size={20} /> : <Copy size={20} />}
@@ -1168,10 +1179,11 @@ No explanations. No partial results.`;
                 {isMetaSaved ? '保存完了！' : '📂 Web版生成用 制作情報JSONを保存'}
               </button>
               <p className="text-[11px] text-slate-400 leading-relaxed">
-                制作情報JSONは後で制作条件を確認・引き継ぐための別ファイルです。画像生成の指示文ではないため、ChatGPTへ貼り付ける必要はありません。
+                制作情報JSONは後で制作条件を確認・引き継ぐための別ファイルです。画像生成の指示文ではないため、{isChatGPTWebGuide ? 'ChatGPT' : 'Gemini'}へ貼り付ける必要はありません。
               </p>
               {webMetadataError && <p className="mt-1 text-[10px] text-red-400">{webMetadataError}</p>}
-              {isChatGPTWebGuide && <>{webSupportControls}{videoGuideControl}</>}
+              {webSupportControls}
+              {videoGuideControl}
 
               {/* コピーボタン下の親切な補足ガイド */}
               {finalPrompt && !isOpenAIImageMode && (
@@ -1188,7 +1200,7 @@ No explanations. No partial results.`;
                 </div>
               )}
                 </div>
-              </WebPromptContainer>
+              </details>
             </div>
 
             <div className="relative" style={{ paddingTop: '12px' }}>
@@ -1277,7 +1289,7 @@ No explanations. No partial results.`;
                 <div className="mt-1 rounded-lg border border-cyan-500/20 bg-cyan-950/20 p-3 text-[11px] leading-relaxed text-slate-300">
                   <p className="m-0 font-bold text-cyan-200">{formatGeminiImageSettingsSummary()}</p>
                   <p className="mt-1 mb-0">APIへ1K・3:4を明示送信し、生成後に人物や文字を伸縮せずA4比率へ配置します。Google側に品質の選択項目はありません。</p>
-                  <p className="mt-1 mb-0">{formatGeminiImagePricingSummary()}。文字・思考出力は $3.00 / 100万トークンです。自動修正・品質解析は実行回数分の追加料金が発生します。</p>
+                  <p className="mt-1 mb-0">{formatGeminiImagePricingSummary()}。自動修正・品質解析は実行回数分の追加料金が発生します。</p>
                 </div>
               )}
                             </div>
@@ -1306,24 +1318,10 @@ No explanations. No partial results.`;
                   )}
                 </div>
               </button>
-              {generatedImage && (
-                <button
-                  type="button"
-                  onClick={() => regenerateImage(false, null, { reviewExisting: true, reviewOnly: !allowImageQualityRepair })}
-                  disabled={isGeneratingImage || isFixingPolicy}
-                  className={`w-full mt-2 px-4 py-2 rounded-lg border border-blue-400/40 bg-blue-900/20 text-blue-100 text-sm font-bold disabled:opacity-50 disabled:cursor-wait ${currentStep === 5 && !isGeneratingImage && !isFixingPolicy ? 'next-step-gentle-pulse' : ''}`}
-                >
-                  {allowImageQualityRepair
-                    ? '表示中の画像を再検査し、必要な箇所だけ修正する（追加API課金あり）'
-                    : '表示中の画像を品質再検査する（画像再生成なし・解析API課金あり）'}
-                </button>
-              )}
+              {isChatGPTWebGuide && existingImageReviewControl}
               <p className="mt-1.5 mb-3 px-1 text-[10px] leading-snug text-slate-400">
                 生成画像には、安全化した制作情報を保存します。APIキー、参照画像本体、人物・場所の解析全文は保存しません。
               </p>
-                          {!isChatGPTWebGuide && webSupportControls}
-
-                          {!isChatGPTWebGuide && videoGuideControl}
 
               {/* [v4.2.0] コンテンツポリシー選択メッセージボックス（パネルとは独立） */}
               {showPolicyChoice && (
@@ -1433,6 +1431,16 @@ No explanations. No partial results.`;
                 {isGeneratingImage && processingStatus}
               </div>
               <p style={{ fontSize: '11px', lineHeight: 1.6 }} className="text-slate-400">{getDisplayedImageInfo(displayedImageSize?.image === generatedImage ? displayedImageSize : null, displayedHistory?.pageLayout)}</p>
+              {!isChatGPTWebGuide && (
+                <div className="w-full max-w-2xl">
+                  {existingImageReviewControl}
+                  <p className="mt-2 text-[11px] text-slate-400 leading-relaxed">
+                    {allowImageQualityRepair
+                      ? '自動修正ON：AIが問題を探し、必要な箇所を修正します（追加API課金あり）。'
+                      : '自動修正OFF：検査のみ行います（画像再生成なし・解析API課金あり）。'}
+                  </p>
+                </div>
+              )}
               <ImageEditForm key={generatedImage} image={generatedImage}
                 busy={isGeneratingImage || isSearching || isAssembling || isEnhancing || isFixingPolicy || isFullAutoMode}
                 providerLabel={isOpenAIImageMode ? 'OpenAI' : 'Gemini'}
@@ -1507,7 +1515,6 @@ No explanations. No partial results.`;
           )}
         </div>
       </section>
-
 
     </div>
   );

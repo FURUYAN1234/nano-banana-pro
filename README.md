@@ -1,13 +1,13 @@
 # Super FURU AI 4-koma System / Super FURU AI 4コマシステム
 
-> Current source version: **v6.9.2** / 現在のソース版: **v6.9.2**
+> Current source version: **v6.9.3** / 現在のソース版: **v6.9.3**
 
 
 An experimental web application in which AI handles topic research, story structure, direction, prompt construction, image generation, and quality review for a four-panel manga. / AIが話題調査、構成、演出、プロンプト構築、画像生成、品質確認まで担当する4コマ漫画制作Webアプリです。
 
 [アプリを開く / Open the app](https://furuyan1234.github.io/nano-banana-pro/) · [全機能PDFマニュアル / Full manual](https://furuyan1234.github.io/nano-banana-pro/downloads/super-furu-ai-4koma-full-manual-2026-10-01.pdf)
 
-The full operation manual and Gemini setup guide cover v6.9.1. The unchanged OpenAI setup guide remains applicable. Current application terms are in [LICENSE](LICENSE). / 全機能マニュアルとGemini API取得ガイドはv6.9.1対応です。OpenAI API取得ガイドの接続手順は引き続き利用できます。現在のアプリ利用条件は [LICENSE](LICENSE) を参照してください。
+The full operation manual and Gemini setup guide cover v6.9.3. The unchanged OpenAI setup guide remains applicable. Current application terms are in [LICENSE](LICENSE). / 全機能マニュアルとGemini API取得ガイドはv6.9.3対応です。OpenAI API取得ガイドの接続手順は引き続き利用できます。現在のアプリ利用条件は [LICENSE](LICENSE) を参照してください。
 
 ## Application screen and output / 操作画面と生成例
 
@@ -258,7 +258,7 @@ When an automatic check or retry runs, the relevant STEP progress log reports th
 
 STEP3 now names why a proposed edit was rejected and states clearly when none was applied. STEP4 lists concrete repair reasons before uncertain observations. A timed-out repair with no returned image is reported as retaining the original, without claiming a comparison. Repair prompts keep the approved script and each correction strategy/check, while omitting repeated diagnostic prose from the outset; oversized repair instructions retain the original image. A QA response cut off by its output limit remains unverified and cannot authorize image regeneration. / STEP3は精査案を見送った理由を示し、適用0件も明示します。STEP4は未確認事項より先に具体的な修正理由を表示します。修正画像のAPIがタイムアウトして画像を受信していない場合は、比較済みとせず元画像の保持を表示します。修正指示は台本と修正方法・確認方法を残し、診断文の重複を最初から省き、修正指示が長すぎる場合は元画像を保持します。検査応答が出力上限で途切れた場合は未確認とし、その応答から画像を再生成しません。
 
-With automatic repair OFF, STEP4's “Review the displayed image” button runs analysis without generating another image. With automatic repair ON, its label states that confirmed defects may receive paid corrections. Uncertain observations remain distinct from confirmed defects. / 自動修正OFF時のSTEP4「表示中の画像を品質再検査する」は、画像を再生成せず解析だけを行います。ON時は「再検査し、必要な箇所だけ修正する」と表示し、確認できた欠陥には追加API料金のかかる修正を行う場合があります。未確認の指摘は実画像上の根拠がある欠陥と区別します。
+With automatic repair OFF, STEP4's “Review the displayed image” button runs analysis without generating another image. With automatic repair ON, its label states that confirmed defects may receive paid corrections. Uncertain observations remain distinct from confirmed defects. / Geminiでは画像下の「AIで画像を再検査」、OpenAIではSTEP4「表示中の画像を品質再検査する」を使います。自動修正OFF時は、画像を再生成せず解析だけを行います。ON時はOpenAIのボタン名が「再検査し、必要な箇所だけ修正する」になり、Geminiも説明に自動修正ONと表示します。確認できた欠陥には追加API料金のかかる修正を行う場合があります。未確認の指摘は実画像上の根拠がある欠陥と区別します。
 
 The same OFF setting also stops automatic prompt repair and image retries after a provider policy rejection, preserving the original prompt. When ON, policy repair considers up to five revisions, separately from the three quality-repair attempts. Unchanged prompts (including whitespace-only changes), previously rejected prompts, and repairs that violate required settings are not sent to the image API or adopted in the editor: their failure reasons and short change history inform the next revision. Valid changes continue to image generation. Each revision uses one analysis request and may use one fallback analysis; image requests are counted separately. At the limit, obtained images and valid prompts remain available, with the unresolved reason shown. A changed prompt does not guarantee provider acceptance. / OFF設定はAPIの安全判定後の自動プロンプト修正・画像再試行にも適用し、元の指示文を保持します。ON時は最大5回の修正検討を行い、品質修正の最大3回とは別枠です。無変更（空白だけを含む）・拒否済み文への逆戻り・必須設定違反の案は、画像APIへの再送と編集欄への採用を見送り、不採用理由と短い変更履歴を次の検討へ渡して作り直します。変更と必須条件の検査を通った案で画像生成を続けます。各検討は解析API1回と必要時の予備解析1回を使い、画像再生成回数とは分けて表示します。解析・生成にはそれぞれ料金が発生します。上限時も取得済み画像と有効な指示文を残し、未解決の理由を表示します。文が変わっただけでAPIの受理が保証されるわけではありません。
 
@@ -299,7 +299,7 @@ To update, save needed images and text, stop the old launcher, extract a fresh s
 
 Generation prompts retain a per-person limb ownership check even after Web-copy compaction: trace hands to shoulders and feet to hips, distinguish natural occlusion or cropping from missing limbs, and reject ownerless limbs near furniture or other bodies while preserving the scripted pose and camera. This is a drawing instruction, not an independent inspection of the finished Web image. / 生成指示には、Web貼り付け用の短縮後も人物ごとの手足確認を残します。手から肩、足から骨盤への接続を確認し、自然な遮蔽・画角外と欠損を区別し、指定した演技・構図を保ちながら家具や他人の身体の付近に出る所属不明の手足を防ぐよう指示します。これは作画指示であり、Web完成画像を独立して検査する機能ではありません。
 
-The default OpenAI image setting is Sunburst / max at the large exact A4 manuscript tier, 2240×3168; the standard tier remains available at 1120×1584 with the same 210:297 ratio. API output is normalized to the selected exact canvas. The Web-copy prompt states both exact tiers, but ChatGPT Web can still return a near-A4 canvas because it does not run the app's normalizer; a small Web-only ratio variance is accepted. Current GPT Image 2.5/2 APIs accept these custom dimensions because both edges are multiples of 16 and remain within the documented size limits. The STEP4 generation button shows the selected model's official list-price snapshot: GPT Image 2.5 Sunburst/Flare use image input $8 (cached $2), image output $30, text input $5 (cached $1.25); GPT Image 2 uses image input $4 (cached $1), image output $15, text input $2.50 (cached $0.625), all in USD per million tokens as of 2026-10-07. Larger sizes and higher quality increase cost and latency and do not guarantee correct dialogue, hands, or composition. / OpenAI画像の既定値は、利用可能な場合Sunburst / max・A4漫画原稿比率の大サイズ2240×3168です。標準サイズ1120×1584も同じ210:297比率で選択できます。API出力は選択した正確なキャンバスへ正規化します。Web貼付用プロンプトにも両方の正確な寸法を記載しますが、ChatGPT Webではアプリ側の正規化を通らないためA4近似になる場合があり、Web版だけは小さな比率誤差を許容します。現行GPT Image 2.5／2 APIは、両辺が16の倍数で仕様上限内のため、このカスタム寸法を直接受け付けます。STEP4生成ボタン内には選択中モデルの公式参考単価を表示し、2026-10-07時点でGPT Image 2.5 Sunburst/Flareは画像入力$8（キャッシュ$2）・画像出力$30・テキスト入力$5（キャッシュ$1.25）、GPT Image 2は画像入力$4（キャッシュ$1）・画像出力$15・テキスト入力$2.50（キャッシュ$0.625）です（いずれもUSD／100万トークン）。大きなサイズや高品質設定は料金と待ち時間が増え、台詞・手・構図の正確さを保証しません。
+The default OpenAI image setting is Sunburst / max at the large exact A4 manuscript tier, 2240×3168; the standard tier remains available at 1120×1584 with the same 210:297 ratio. API output is normalized to the selected exact canvas. The Web-copy prompt states both exact tiers, but ChatGPT Web can still return a near-A4 canvas because it does not run the app's normalizer; a small Web-only ratio variance is accepted. Current GPT Image 2.5/2 APIs accept these custom dimensions because both edges are multiples of 16 and remain within the documented size limits. The STEP4 generation button shows the selected model's official list-price snapshot: GPT Image 2.5 Sunburst/Flare use image input $8 (cached $2), image output $30, text input $5 (cached $1.25); GPT Image 2 uses the same standard rates: image input $8 (cached $2), image output $30, text input $5 (cached $1.25), all in USD per million tokens as of 2026-10-07. Larger sizes and higher quality increase cost and latency and do not guarantee correct dialogue, hands, or composition. / OpenAI画像の既定値は、利用可能な場合Sunburst / max・A4漫画原稿比率の大サイズ2240×3168です。標準サイズ1120×1584も同じ210:297比率で選択できます。API出力は選択した正確なキャンバスへ正規化します。Web貼付用プロンプトにも両方の正確な寸法を記載しますが、ChatGPT Webではアプリ側の正規化を通らないためA4近似になる場合があり、Web版だけは小さな比率誤差を許容します。現行GPT Image 2.5／2 APIは、両辺が16の倍数で仕様上限内のため、このカスタム寸法を直接受け付けます。STEP4生成ボタン内には選択中モデルの公式参考単価を表示し、2026-10-07時点でGPT Image 2.5 Sunburst/Flareは画像入力$8（キャッシュ$2）・画像出力$30・テキスト入力$5（キャッシュ$1.25）、GPT Image 2も通常料金は画像入力$8（キャッシュ$2）・画像出力$30・テキスト入力$5（キャッシュ$1.25）です（いずれもUSD／100万トークン）。大きなサイズや高品質設定は料金と待ち時間が増え、台詞・手・構図の正確さを保証しません。
 
 On the Gemini route, STEP2 starts with Gemini 3.8 Flash; failure-only fallback proceeds through the models shown in Model Chain. STEP4 uses Nano Banana 2.1 (`gemini-nano-banana-2.1`) through the Interactions API with `1K / 3:4`, then normalizes the full page to A4. There is no separate Gemini quality selector. As of 2026-10-07, the official reference prices are $0.0336 per 1K image (up to $0.1344 for four candidates), $1.50 input and $7.50 text/thinking output per million tokens. QA and repair requests can add charges; these are reference prices, not live billing. / GeminiのSTEP2はGemini 3.8 Flashから開始し、失敗時だけModel Chainの候補へ切り替えます。STEP4はNano Banana 2.1 (`gemini-nano-banana-2.1`) のInteractions APIへ`1K / 3:4`で送信し、ページ全体をA4へ正規化します。Geminiに独立した品質選択はありません。2026-10-07時点の公式参考価格は1K画像$0.0336／枚（4候補なら最大$0.1344）、入力$1.50、テキスト・思考出力$7.50／100万トークンです。精査と修正にも料金がかかり、表示は実際の請求額ではありません。
 
@@ -382,6 +382,8 @@ ChatGPT Webへの貼り付け手順・コピー・TXT保存・制作情報JSON�
 
 ChatGPT Web用の「画像比率修正・アップスケール」「安全基準」「4コマ漫画を動画化」の案内は、同じ折り畳み内の制作情報JSONの説明直下にあり、それぞれ個別に開閉できます。「API生成時の品質・サイズ」は折り畳みの外で、STEP4の画像生成ボタンの直前に配置し、6pxの隙間を空けています。 / The image ratio/upscale, safety and manga-to-video help are independently collapsible inside the ChatGPT Web disclosure, below the production JSON explanation. API quality/size settings stay outside and immediately above STEP4 generation, with a 6px gap.
 
+Geminiでは「Gemini Webで手動生成／4コマ漫画を動画化」にコピー・TXT/制作情報JSON保存・画像比率修正・安全基準・動画化の案内をまとめ、初期状態は折り畳みます。コピーボタンは上12px・下16pxの余白を設けています。API設定と画像生成は外側に残ります。「AIで画像を再検査」は生成画像の下、追加指示欄の直前にあり、自動修正ON/OFFと追加料金を明示します。動画化の案内は同じWeb折り畳み内で、アプリ内に生成画像がなくても開けます。 / Gemini manual-copy and Web/video help start collapsed. The copy button has 12px top and 16px bottom margins. API generation remains outside. AI review sits below the image before manual corrections, with repair mode and cost guidance. Video help remains accessible without an API-generated image.
+
 Recurring props do not require their lettering to be readable in every panel. New scenarios assign necessary text to the relevant story beats; other views can show the same object's side, back or distant silhouette. Explicit text and repetition remain protected. Rebuilding STEP3 does not rewrite a saved scenario. / 同じ小道具が再登場しても、その文字を毎コマ読ませる必要はありません。新規シナリオでは必要な文字を読ませるコマへ割り当て、他のコマでは同じ物の側面・背面・遠景を使えるよう指示します。明示された文字・反復は保持します。STEP3の再構築だけでは保存済みシナリオを書き換えません。
 
 Facial acting links eyebrows, eyelids, gaze, mouth shape and posture to each character's response phase. Non-speaking characters need not share an open-mouth expression; scripted screams, synchronized reactions and quiet beats remain allowed. This guides the prompt and does not guarantee the rendered result. / 顔演技・表情設計は人物ごとの反応の段階に合わせ、眉・まぶた・視線・口の形・姿勢を連動させます。無言の人物に同じ開口顔を配らず、明示された絶叫・一斉反応・静かな間は保持します。これはプロンプト上の指示であり、描画結果を保証しません。
@@ -402,7 +404,7 @@ Example: The four-panel manga above is the source artwork. The video below shows
 
 https://github.com/user-attachments/assets/868b2db5-b159-45b7-9c3d-d45e261f2ecc
 
-The `4コマ漫画を動画化（miniMax H3/ComfyUI）` guide inside the ChatGPT Web disclosure offers a manual standard-template route and a dedicated Fused4step + SLA distribution. / ChatGPT Web用の折り畳み内にある`4コマ漫画を動画化（miniMax H3/ComfyUI）`を開くと、手動の標準テンプレート経路と専用Fused4step・SLA配布経路を選べます。Gemini用では従来の場所から開けます。
+The `4コマ漫画を動画化（miniMax H3/ComfyUI）` guide inside the ChatGPT Web disclosure offers a manual standard-template route and a dedicated Fused4step + SLA distribution. / ChatGPT Web用の折り畳み内にある`4コマ漫画を動画化（miniMax H3/ComfyUI）`を開くと、手動の標準テンプレート経路と専用Fused4step・SLA配布経路を選べます。Gemini用も「Gemini Webで手動生成／4コマ漫画を動画化」の折り畳み内から開けます。
 
 ### Use the ComfyUI standard template yourself / ComfyUI標準テンプレートを自分で使う場合
 
@@ -415,7 +417,7 @@ The copied prompt guides panel order, cast, speaker assignment, acting, camera, 
 The app provides separate download buttons for the workflow JSON and the custom-node ZIP. Both files are needed for this route. / アプリにはワークフローJSONとカスタムノードZIPのダウンロードボタンが別々にあります。この経路では両方のファイルが必要です。
 
 - [Download workflow JSON](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261005233427.json) / [ワークフローJSONをダウンロード](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261005233427.json)
-- [Download custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.9.2/ComfyUI_H3_FourPanel_NonLM_20261005233427_authfix1.zip) / [カスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.9.2/ComfyUI_H3_FourPanel_NonLM_20261005233427_authfix1.zip)
+- [Download custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.9.3/ComfyUI_H3_FourPanel_NonLM_20261005233427_authfix1.zip) / [カスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.9.3/ComfyUI_H3_FourPanel_NonLM_20261005233427_authfix1.zip)
 
 Place the ZIP's `3フォルダ` under `ComfyUI/custom_nodes/` and the workflow JSON under `ComfyUI/user/default/workflows/`. Install the separate dependencies below, then restart ComfyUI. / ZIP内の`3フォルダ`を`ComfyUI/custom_nodes/`へ、ワークフローJSONを`ComfyUI/user/default/workflows/`以下へ配置します。下記の別途必要な依存関係を導入してからComfyUIを再起動します。
 
@@ -461,11 +463,14 @@ The production application is published from the `main` branch through the repos
 
 **Why are there two ComfyUI download buttons? / ComfyUIのダウンロードボタンが2つあるのはなぜですか？**  The JSON defines the workflow, while the ZIP supplies three custom-node folders and documentation; three additional runtime dependencies are installed separately. / JSONはワークフロー定義、ZIPはカスタムノード3フォルダーと導入文書です。さらに実行依存3項目を別途導入します。
 
-**Which video package should I install? / 動画化には何を入れますか？** Use the `20261005233427` workflow JSON and matching v6.9.2 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261005233427` のワークフローJSONと対応するv6.9.2 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
+**Which video package should I install? / 動画化には何を入れますか？** Use the `20261005233427` workflow JSON and matching v6.9.3 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261005233427` のワークフローJSONと対応するv6.9.3 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
 
 **Is this the T2V/I2V/Ref2V repository? / T2V・I2V・Ref2Vのリポジトリですか？**  No. Those workflows are maintained separately in [comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows). / いいえ。それらは別の[comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows)で管理します。
 
 ## 📋 ChangeLog
+
+### v6.9.3 (2026-10-07)
+- **[Fix & UX]** GeminiのWeb補助と動画化を折り畳みに整理。コピーの上下に余白を追加し、AI再検査を画像下の追加指示欄の前へ移動。 / Grouped Gemini Web help and video tools, spaced the copy button, and moved AI review beside the displayed image.
 
 ### v6.9.2 (2026-10-06)
 - **[Fix & UX]** STEP3の引用判定とAI自動修復、画像通信の強制停止を修正。Gemini画像をNano Banana 2.1へ更新。 / Fixed STEP3 quote parsing, automatic AI repair and image request cancellation; migrated Gemini images to Nano Banana 2.1.
