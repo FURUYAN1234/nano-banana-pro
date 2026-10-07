@@ -28,7 +28,7 @@ test('Gemini scenario price card describes the real primary route', () => {
     inputPriceUsdPerM: 0.75,
     outputPriceUsdPerM: 3.75,
   });
-  assert.equal(GEMINI_SCENARIO_PRICE_SNAPSHOT_DATE, '2026-09-25');
+  assert.equal(GEMINI_SCENARIO_PRICE_SNAPSHOT_DATE, '2026-10-07');
 });
 
 test('Gemini 3 text requests omit deprecated sampling parameters', () => {

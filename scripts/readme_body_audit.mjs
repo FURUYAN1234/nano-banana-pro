@@ -14,7 +14,7 @@ export function collectReadmeBodyEvidence(appRoot) {
   const tree = (name) => execFileSync('git', ['-C', root, 'rev-parse', `HEAD:${name}`], { encoding: 'utf8' }).trim();
 
   return {
-    pricingSourceSha256: sha256(['src/lib/openai-image-settings.js', 'src/lib/gemini-image-settings.js', 'src/config/openai-scenario-models.json'].map((name) => readFileSync(join(root, name), 'utf8')).join('\n')),
+    pricingSourceSha256: sha256(['src/lib/openai-image-settings.js', 'src/lib/gemini-image-settings.js', 'src/config/openai-scenario-models.json', 'src/lib/gemini-model-routes.js'].map((name) => readFileSync(join(root, name), 'utf8')).join('\n')),
     manualVersion: JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')).version,
     manualSourceSha256: sha256(readFileSync(join(root, 'docs/manuals/build_manuals.py'))),
     manualFiles: readdirSync(join(root, 'public/downloads')).filter((name) => /(?:guide|manual).*\.pdf$/.test(name)).sort().map((name) => ({ name, sha256: sha256(readFileSync(join(root, 'public/downloads', name))) })),

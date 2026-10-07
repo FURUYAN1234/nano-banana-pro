@@ -16,7 +16,7 @@
     }
   ],
   "readmeSha256": "a75adc7cea1b391aaaa1e225f7dce108c2866435390511eddf791ed79a0d572e",
-  "sourceTree": "bdfe612e390b06c7e681a6731e130b2c582c52e3",
+  "sourceTree": "a8852bf4765e551038166bd2a5b8bfa32407a8a0",
   "publicTree": "d82ccc620732e03ae2da4a2c57666f5b53b11fd2",
   "packageSha256": "ca13f13c904af12f041c5178af5fc9c4ac5db781960844041c45e0e557f37df2",
   "releaseAssetSha256": "9e41886be6afa0ebfad6d244ecf53f37260a92f73b30309319029cc87e1ddb4e",
@@ -46,8 +46,7 @@
       "https://ai.google.dev/gemini-api/docs/pricing"
     ],
     "findings": "Standard (not Batch) OpenAI Image2 and2.5: image input8, cached2, output30; text input5, cached1.25 USD/M. All11 scenario options match current official standard short-context rates. Gemini Nano Banana2.1 input1.50,text/thinking7.50,image30 USD/M;1K image0.0336. Removed stale Gemini3.00 supplement. Current displayed rates and confirmation dates are synchronized; review required before every deployment.",
-    "sourceSha256": "4700981bc397f146b7396f15a0a40093eb5a6fac4804d03faac4e6846c032ba8"
+    "sourceSha256": "07fc3760bf6b3eddd49cd5e83eeaef352de104d80633d23af90acf0c1a44a6ee"
   },
-  "pricingSourceSha256": "4700981bc397f146b7396f15a0a40093eb5a6fac4804d03faac4e6846c032ba8",
-  "srcTree": "d020221b50f63a9c5c3c09d780da01834249020e"
+  "pricingSourceSha256": "07fc3760bf6b3eddd49cd5e83eeaef352de104d80633d23af90acf0c1a44a6ee"
 }
