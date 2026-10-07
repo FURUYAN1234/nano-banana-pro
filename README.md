@@ -1,13 +1,13 @@
 # Super FURU AI 4-koma System / Super FURU AI 4コマシステム
 
-> Current source version: **v6.9.3** / 現在のソース版: **v6.9.3**
+> Current source version: **v6.9.4** / 現在のソース版: **v6.9.4**
 
 
 An experimental web application in which AI handles topic research, story structure, direction, prompt construction, image generation, and quality review for a four-panel manga. / AIが話題調査、構成、演出、プロンプト構築、画像生成、品質確認まで担当する4コマ漫画制作Webアプリです。
 
 [アプリを開く / Open the app](https://furuyan1234.github.io/nano-banana-pro/) · [全機能PDFマニュアル / Full manual](https://furuyan1234.github.io/nano-banana-pro/downloads/super-furu-ai-4koma-full-manual-2026-10-01.pdf)
 
-The full operation manual and Gemini setup guide cover v6.9.3. The unchanged OpenAI setup guide remains applicable. Current application terms are in [LICENSE](LICENSE). / 全機能マニュアルとGemini API取得ガイドはv6.9.3対応です。OpenAI API取得ガイドの接続手順は引き続き利用できます。現在のアプリ利用条件は [LICENSE](LICENSE) を参照してください。
+The full operation manual and Gemini setup guide cover v6.9.4. The unchanged OpenAI setup guide remains applicable. Current application terms are in [LICENSE](LICENSE). / 全機能マニュアルとGemini API取得ガイドはv6.9.4対応です。OpenAI API取得ガイドの接続手順は引き続き利用できます。現在のアプリ利用条件は [LICENSE](LICENSE) を参照してください。
 
 ## Application screen and output / 操作画面と生成例
 
@@ -417,7 +417,7 @@ The copied prompt guides panel order, cast, speaker assignment, acting, camera, 
 The app provides separate download buttons for the workflow JSON and the custom-node ZIP. Both files are needed for this route. / アプリにはワークフローJSONとカスタムノードZIPのダウンロードボタンが別々にあります。この経路では両方のファイルが必要です。
 
 - [Download workflow JSON](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261005233427.json) / [ワークフローJSONをダウンロード](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261005233427.json)
-- [Download custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.9.3/ComfyUI_H3_FourPanel_NonLM_20261005233427_authfix1.zip) / [カスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.9.3/ComfyUI_H3_FourPanel_NonLM_20261005233427_authfix1.zip)
+- [Download custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.9.4/ComfyUI_H3_FourPanel_NonLM_20261005233427_authfix1.zip) / [カスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.9.4/ComfyUI_H3_FourPanel_NonLM_20261005233427_authfix1.zip)
 
 Place the ZIP's `3フォルダ` under `ComfyUI/custom_nodes/` and the workflow JSON under `ComfyUI/user/default/workflows/`. Install the separate dependencies below, then restart ComfyUI. / ZIP内の`3フォルダ`を`ComfyUI/custom_nodes/`へ、ワークフローJSONを`ComfyUI/user/default/workflows/`以下へ配置します。下記の別途必要な依存関係を導入してからComfyUIを再起動します。
 
@@ -434,6 +434,8 @@ The `20261005233427` package contains the 30-node workflow and companion custom 
 The `_authfix1` package reapplies the existing authentication-model validation fix at the browser and server boundaries; the workflow is unchanged. Local distribution and credential checks pass. Live authentication and full ComfyUI execution remain unverified. / `_authfix1` はブラウザーとサーバーの認証モデル検証に既存の修正を再適用した版で、ワークフロー本体は同じです。ローカルの配布・資格情報検査は成功しています。実API認証とComfyUI全体の実行は未検証です。
 
 ## Package licenses and privacy / 配布ライセンスと個人情報
+
+The browser app keeps API keys in page memory, clears them on reload, and sends them to the selected provider for authentication and generation. Its Content Security Policy restricts script execution and API connections, blocks inline event handlers, and disables embedded frames; a separate guard hides the app when another site frames it. These measures reduce exposure but do not guarantee protection against every browser extension, compromised same-origin page or device. Use the official URL and save only materials you intend to retain. / ブラウザーアプリのAPIキーはページ内メモリで保持し、再読込で消去します。認証・生成時には選択したプロバイダーへ送信します。Content Security Policy（CSP）でスクリプト実行とAPI通信先を制限し、HTML内のイベント属性とフレーム読込を禁止します。他サイトのフレーム内では操作画面を表示しません。これは追加防御であり、ブラウザー拡張機能、同一オリジンの別ページ、端末の侵害まで完全に防ぐ保証ではありません。公式URLを確認して利用してください。
 
 | Included folder / 同梱フォルダー | License / ライセンス |
 |---|---|
@@ -457,17 +459,22 @@ node --test
 
 The production application is published from the `main` branch through the repository's release process. / 本番アプリはリポジトリのリリース手順を通して`main`ブランチから公開します。
 
+Every deployment requires a fresh dependency audit, the shared security checks and verification of the built CSP, alongside the existing tests and current official API-price review. Known dependency findings stop publication. The deploy CLI is temporarily pinned to `gh-pages` 6.1.1 because the newer dependency chain includes an unpatched advisory; its legacy dependencies still emit deprecation warnings. Audit success is evidence for the checked versions and date, not a permanent safety guarantee. / 毎回のデプロイで最新の依存監査、共通セキュリティ検査、生成済みCSPの検証を、既存テストと両社公式API料金の再確認に加えて実施します。既知の依存脆弱性が残れば公開を停止します。公開CLIは新しい系列の未修正依存を避けるため、暫定的に`gh-pages` 6.1.1へ固定しています。その旧依存には非推奨警告が残ります。監査成功は確認日時と対象版の証拠であり、将来の安全を保証するものではありません。
+
 ## FAQ / よくある質問
 
 **Does this guarantee perfect Japanese text? / 日本語を完全に正しく描けますか？**  No. The prompt and QA reduce known failure modes, but generated glyphs remain model output and require visual confirmation. / いいえ。プロンプトとQAで既知の失敗を減らしますが、生成文字はモデル出力のため目視確認が必要です。
 
 **Why are there two ComfyUI download buttons? / ComfyUIのダウンロードボタンが2つあるのはなぜですか？**  The JSON defines the workflow, while the ZIP supplies three custom-node folders and documentation; three additional runtime dependencies are installed separately. / JSONはワークフロー定義、ZIPはカスタムノード3フォルダーと導入文書です。さらに実行依存3項目を別途導入します。
 
-**Which video package should I install? / 動画化には何を入れますか？** Use the `20261005233427` workflow JSON and matching v6.9.3 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261005233427` のワークフローJSONと対応するv6.9.3 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
+**Which video package should I install? / 動画化には何を入れますか？** Use the `20261005233427` workflow JSON and matching v6.9.4 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261005233427` のワークフローJSONと対応するv6.9.4 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
 
 **Is this the T2V/I2V/Ref2V repository? / T2V・I2V・Ref2Vのリポジトリですか？**  No. Those workflows are maintained separately in [comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows). / いいえ。それらは別の[comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows)で管理します。
 
 ## 📋 ChangeLog
+
+### v6.9.4 (2026-10-07)
+- **[Fix & UX]** ブラウザーのスクリプト実行・通信先を制限するCSPを追加し、依存ライブラリを更新。毎回のデプロイでセキュリティ検査を必須化。 / Added browser script and connection restrictions, updated dependencies, and required security checks on every deployment.
 
 ### v6.9.3 (2026-10-07)
 - **[Fix & UX]** GeminiのWeb補助と動画化を折り畳みに整理。コピーの上下に余白を追加し、AI再検査を画像下の追加指示欄の前へ移動。 / Grouped Gemini Web help and video tools, spaced the copy button, and moved AI review beside the displayed image.

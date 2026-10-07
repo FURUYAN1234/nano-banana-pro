@@ -53,7 +53,7 @@ page('Gemini API 取得マニュアル',
  ('h2','はじめての取得・接続・費用確認'),
  ('body','Super FURU AI 4-koma Systemで使うGemini APIキーを取得するための、日本語操作ガイドです。Googleアカウントでのログインから、プロジェクト選択、キー発行、アプリへの接続まで順番に説明します。'),
  ('box','この冊子の対象','パソコンのブラウザで作業する初心者向けです。APIとは、アプリからAIへ処理を依頼する仕組みです。プログラムを書く必要はありません。'),
- ('body','v6.9.3対応。Google AI StudioでAPIキーを用意し、本アプリへ接続する手順を説明します。画面写真は操作に必要な部分のみを掲載しています。画面の表記や利用条件はアカウントによって異なる場合があります。'),
+ ('body','v6.9.4対応。Google AI StudioでAPIキーを用意し、本アプリへ接続する手順を説明します。画面写真は操作に必要な部分のみを掲載しています。画面の表記や利用条件はアカウントによって異なる場合があります。'),
  ('body','キーを取得するだけで、すべてのモデルを無料で利用できるわけではありません。画像生成や検索、解析、修正にも費用が発生する場合があります。'),refs=('studio','app')),
 page('目次と最短の作業順',
  ('rows',[['ページ','内容'],['3','GoogleアカウントとAI Studio'],['4','APIキー画面を開く'],['5','プロジェクトを選ぶ'],['6','キーを作成・コピーする'],['7','アプリへ接続する'],['8','無料枠と有料枠の違い'],['9','有料枠の設定と費用確認'],['10','キーの安全な管理'],['11','接続できないとき'],['12','公式リンクと完了チェック']]),
@@ -93,6 +93,7 @@ page('08  キーを安全に管理する',
  ('body','キーは他人へ渡さず、画像や公開ファイルへ入れないでください。アプリに入力したキーは、選択したGoogle APIへの認証・実行に使われます。「外部送信なし」という接続欄の表現は、API認証の通信まで行わない意味ではありません。'),
  ('body','2026年5月28日以降、AI Studioで新規作成するキーは認可キーが既定です。古い無制限の標準キーは拒否されることがあります。動かない古いキーについて、制限をすべて解除する方法で対処しないでください。'),
  ('body','漏洩が疑われる場合は、Googleの管理画面で新しいキーを用意し、アプリで動作を確認してから古いキーを失効させます。利用額と使用状況も確認します。'),
+ ('small','アプリのキーはページ内メモリで保持し、再読込で消去します。CSPでスクリプト実行・API通信先を制限していますが、拡張機能や端末侵害まで完全に防ぐ保証ではありません。公式URLを確認して利用してください。'),
  ('box','投入する資料にも注意','キャラクター画像・文章・生成画像は、実行する工程で選択したAIプロバイダーへ送信されます。無料枠と有料枠ではデータ利用条件が異なるため、個人情報や未公開資料を送る前に公式条件を確認してください。'),refs=('key','terms')),
 page('09  接続できないときの確認',
  ('rows',[['症状','確認する順番'],['キーが無効・認証エラー','前後の空白、別サービスのキー、失効、古い無制限キー、選択アカウントを確認'],['403・権限不足','プロジェクトの権限、API利用条件、モデル利用可否、地域条件を確認'],['429・利用枠超過','レート制限、対象モデルの無料枠、有料枠の状態・残高を確認。連打せず待つ'],['画像だけ失敗','接続成功と画像モデル利用成功は別。料金・画像モデル権限・拒否理由を確認'],['キーやプロジェクトが見えない','ログインアカウント、インポート、組織権限を確認'],['一時的なサーバーエラー','通信状態と公式障害情報を確認し、現在のエラーを記録']]),
@@ -108,7 +109,7 @@ page('完了チェックと公式リンク',
 SYSTEM=[
 page('全機能マニュアル',('h2','Super FURU AI 4-koma System'),
  ('body','キャラクター資料と題材から、4コマの構成、画像用の指示文、生成画像、保存まで進める日本語操作ガイドです。各機能の目的、操作順、変更が反映される工程、費用と保存の注意を説明します。'),
- ('box','このマニュアルの使い方','v6.9.3の全機能を、準備から保存まで操作順に説明します。OpenAIシナリオの初期選択はGPT-6.1 Solです。STEP2は題材に沿った具体的な結末を優先し、STEP3は合唱台詞と人数、コマ別の画風・カメラ指定を保ちます。タイトル左の「使い方マニュアル」と接続欄のAPIマニュアルから、必要な説明を開けます。'),
+ ('box','このマニュアルの使い方','v6.9.4の全機能を、準備から保存まで操作順に説明します。OpenAIシナリオの初期選択はGPT-6.1 Solです。STEP2は題材に沿った具体的な結末を優先し、STEP3は合唱台詞と人数、コマ別の画風・カメラ指定を保ちます。タイトル左の「使い方マニュアル」と接続欄のAPIマニュアルから、必要な説明を開けます。'),
  ('body','画面写真はCodex内蔵ブラウザで取得しています。実行を伴う画面が撮影できない機能は、現行の画面部品と処理コードを照合して説明し、生成済みの画面を作り物で代用しません。'),refs=('app',)),
 page('目次・機能の見つけ方',
  ('rows',[['ページ','機能'],['3-4','4ステップの流れ・API接続'],['5-6','キャラクター・作風JSON・360°背景'],['7-9','ニュース、自由入力、舞台・衣装・結末'],['10-11','シナリオ編集、SNS説明、演出強化'],['12-14','カラー／白黒、モザイク、ウオーターマーク、プロンプト構築・編集'],['15-18','Webコピー、Web修正・高解像度、API生成、検査・自動修正'],['19-21','追加修正、画像履歴・保存、制作情報'],['22-23','全自動・連続ループ、やり直しとモデル確認'],['24-25','1枚絵、動画化・関連アプリ'],['26-27','トラブル対処、完成前チェック・参照情報'],['28-30','白黒の描画指定・生成例・部分修正'],['31-32','Windowsでのローカル起動・STEP4の待機と検査']]),
@@ -244,6 +245,7 @@ page('完成前チェックと参照情報',
  ('body','□ 4コマが縦1列に収まる　□ 人物が同一で、必要な人数がいる　□ 手足・小道具の持ち主が正しい　□ 台詞が原文通りで話者と尾が一致する　□ 右から左の読順が自然　□ 衣装と動作がつながる　□ カメラ・表情・光に見せ場がある　□ モザイクとフッターが意図通り　□ 実寸と保存ファイルを確認した'),
  ('h2','公開する前の確認'),
  ('body','ニュース題材は出典と事実を確認し、画像AIの判定を権利・事実・品質の保証として扱わないでください。未確認や警告付き採用は、目視確認を終えるまで未確認です。'),
+ ('small','アプリはCSPでスクリプト実行・API通信先を制限し、他サイトのフレーム内では操作画面を表示しません。毎回のデプロイで依存監査・セキュリティ検査・公式API料金の確認を行います。これらは追加防御であり、安全を完全に保証するものではありません。'),
  ('links',['app','key','pricing','billing']),
  ('small','機能の説明は現行READMEと、接続・各STEP・追加修正・履歴・モデル表示・制作情報等の実装を照合しました。外部アプリの新規実行、有料画像生成、全自動の連続実行、公開作業は本冊子作成のためには行っていません。')),
 ]
@@ -296,7 +298,7 @@ for p in SYSTEM:
 class Book:
  def __init__(self,path,title,pages):
   self.path=path; self.pages=pages; self.c=canvas.Canvas(str(path),pagesize=A4,pageCompression=1)
-  self.c.setTitle(title);self.c.setAuthor('Super FURU AI 4-koma System');self.c.setSubject('日本語操作マニュアル / v6.9.3 / 2026-10-06')
+  self.c.setTitle(title);self.c.setAuthor('Super FURU AI 4-koma System');self.c.setSubject('日本語操作マニュアル / v6.9.4 / 2026-10-07')
   self.y=0;self.number=0;self.layout=[]
  def para(self,text,style='body',gap=10):
   p=Paragraph(text,STYLES[style]);_,h=p.wrap(CW,1000)
@@ -338,7 +340,7 @@ class Book:
    if page['shot']:self.shot(page['shot'],page['caption'])
    if page['refs']:
     self.para('参照：'+' / '.join(f'<link href="{escape(SOURCES[k][1])}" color="#087c86">{escape(SOURCES[k][0])}</link>' for k in page['refs']),'small',0)
-   c.setFillColor(GRAY);c.setFont('JP',8);c.drawString(M,33,'v6.9.3対応 | 2026年10月7日更新 | A4 日本語版');c.drawRightString(W-M,33,f'{i:02d} / {len(self.pages):02d}')
+   c.setFillColor(GRAY);c.setFont('JP',8);c.drawString(M,33,'v6.9.4対応 | 2026年10月7日更新 | A4 日本語版');c.drawRightString(W-M,33,f'{i:02d} / {len(self.pages):02d}')
    self.layout.append(dict(page=i,bottom_y=round(self.y,2)));c.showPage()
   c.save();return self.layout
 
@@ -362,11 +364,11 @@ def crop_assets():
 def verify_and_render(path,layout,pages):
  r=PdfReader(path);text='\n'.join(p.extract_text() for p in r.pages)
  assert len(r.pages)==len(pages)
- assert all('v6.9.3対応' in p.extract_text() and '2026年10月7日更新' in p.extract_text() for p in r.pages)
+ assert all('v6.9.4対応' in p.extract_text() and '2026年10月7日更新' in p.extract_text() for p in r.pages)
  if 'full-manual' in path.name:
   for required in ['Download ZIP','Node.js','start_app.bat','npm install','node_modules','ウィンドウ','画像表示予定枠の中央','累積時間だけでは打ち切りません','原寸RGB','褐色肌','カケアミ']:
    assert re.sub(r'\s+','',required) in re.sub(r'\s+','',text),required
- assert set(re.findall(r'v[0-9]+\.[0-9]+\.[0-9]+',text)) <= {'v6.9.3'}, 'Historical version in current manual'
+ assert set(re.findall(r'v[0-9]+\.[0-9]+\.[0-9]+',text)) <= {'v6.9.4'}, 'Historical version in current manual'
  assert not re.search(r'nano\s*banana|ナノ[・\s]*バナナ',text,re.I)
  assert not re.search(r'AIza[A-Za-z0-9_-]{20,}|sk-(?:proj-)?[A-Za-z0-9_-]{20,}|gen-lang-client-\d+|sx717|@[A-Za-z0-9.-]+\.[A-Za-z]{2,}',text)
  assert all(p['bottom_y']>=64 for p in layout)
