@@ -1,3 +1,5 @@
+Current candidate: v6.9.3. Live delivery status and evidence are tracked in the root PLAN.md (Gemini STEP4 layout task).
+
 ## Current: 2026-10-07 v6.9.2 公開準備
 
 現行作業の正本は親の `PLAN.md`「Image API apps + Nano STEP3/review/STOP (2026-10-07)」。STEP3の共通引用解析・配置修復、AI精査の形式修復、画像生成STOP、Gemini Nano Banana2.1対応を含む。OpenAI/Geminiの新規画像と精査修復を実確認。画像のカメラ・吹き出し証拠に残る警告は合格と扱わない。公式公開・note/Facebook・X本文のみ・最後のフルバックアップが未完了。
