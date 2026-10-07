@@ -17,7 +17,7 @@ test('Web guidance explains savings and the separate API bill', () => {
 
 test('long prompt guidance separates the shared API ceiling from Web input and supports TXT attachments', () => {
   assert.match(ui, /共通上限32,000文字/);
-  assert.match(ui, /プロンプトが添付ファイルになった場合でも、環境によりテキストフィールドへ戻せる場合は全文貼付が可能です/);
+  assert.match(ui, /プロンプトが添付ファイルになった場合でも、環境によりテキストフィールドへ戻せる場合は全文貼付が可能です。/);
   assert.match(ui, /onClick=\{\(\) => copyPrompt\(true\)\}/);
   assert.match(readme, /Web入力欄や添付ファイルの絶対上限ではありません/);
   assert.doesNotMatch(readme, /uses an empirical 10,000-character soft budget/);

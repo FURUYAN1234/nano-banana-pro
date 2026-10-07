@@ -7,6 +7,12 @@ import * as imageQualityQa from '../src/lib/image-quality-qa.js';
 const workflowSource = await readFile(new URL('../src/hooks/useMangaWorkflow.js', import.meta.url), 'utf8');
 const step4Source = await readFile(new URL('../src/components/Step4Panel.jsx', import.meta.url), 'utf8');
 
+// These fixtures isolate supplementary audits; format recovery is exercised below with the real helper.
+const primaryQaFixture = parse => async ({ prompt, images, request, onProgress, options }) => {
+  const response = await request(prompt, images, null, onProgress, { outputProfile: 'image-quality-review' });
+  return { response, review: parse(response.text, options) };
+};
+
 test('unverified quality logging states that judging is incomplete and retains the actual observation', () => {
   const block = workflowSource.match(/const qualityReviewUnverified = ([\s\S]+?)\r?\n      if \(qualityOutcome.repairReview/)[0]
     .replace(/\r?\n      if \(qualityOutcome.repairReview$/, '');
@@ -44,8 +50,8 @@ test('a malformed primary QA report stops supplementary paid audits and keeps th
     const result = await runImageQualityFailsafe({ originalCandidate: candidate, originalPrompt, reviewCandidate,
       allowRepair: true, reviewCriticalCamera: async () => assert.fail('failed primary cannot spend camera audit'),
       generateRepairCandidate: async () => assert.fail('malformed evidence cannot spend an image') });
-    assert.equal(requests, 1);
-    assert.deepEqual(requestOptions, [{ outputProfile: 'image-quality-review' }]);
+    assert.equal(requests, 2, 'one AI format-repair request precedes the retained-image warning');
+    assert.ok(requestOptions.every(options => options.outputProfile === 'image-quality-review'));
     assert.equal(result.candidate, candidate);
     assert.equal(result.finalReview.requestFailed, true);
   }
@@ -88,6 +94,7 @@ test('the actual workflow retains primary findings when a supplementary hand or 
       buildActorHandAuditPrompt: () => 'hands', parseActorHandAuditResponse: () => [],
       buildBubbleInventoryPrompt: () => 'bubbles', applyBubbleInventory: review => review,
     };
+    context.requestImageQualityQa = primaryQaFixture(context.parseImageQualityQaResponse);
     const reviewCandidate = new Function(...Object.keys(context), `let progressPhase; return (${callback});`)(...Object.values(context));
     const result = await runImageQualityFailsafe({
       originalCandidate: { base64Img: 'image', mimeType: 'image/png' }, originalPrompt: 'APPROVED',
@@ -132,6 +139,7 @@ test('native monochrome chroma findings survive every QA outcome without authori
       buildActorHandAuditPrompt: () => 'hands', parseActorHandAuditResponse: () => [],
       buildBubbleInventoryPrompt: () => 'bubbles', applyBubbleInventory: imageQualityQa.applyBubbleInventory,
     };
+    context.requestImageQualityQa = primaryQaFixture(context.parseImageQualityQaResponse);
     const reviewCandidate = new Function(...Object.keys(context), `let progressPhase; return (${callback});`)(...Object.values(context));
     const candidate = { base64Img: 'unchanged', mimeType: 'image/png' };
     const result = await runImageQualityFailsafe({ originalCandidate: candidate, originalPrompt: '', reviewCandidate, allowRepair: true,
@@ -162,6 +170,7 @@ test('native chroma inspection is never invoked for color, Gemini or single-imag
       extractMangaPanelCrops: async () => [], buildImageQualityQaImageParts: () => [], buildImageQualityQaPrompt: () => 'primary',
       callAI: async () => ({ text: '{}' }), parseImageQualityQaResponse: () => ({ pass: true, issues: [], observations: {} }),
       statCallback: () => {}, buildBubbleInventoryPrompt: () => 'bubbles', applyBubbleInventory: review => review };
+    context.requestImageQualityQa = primaryQaFixture(context.parseImageQualityQaResponse);
     const review = new Function(...Object.keys(context), `let progressPhase; return (${callback});`)(...Object.values(context));
     const result = await review({ base64Img: 'unchanged' }, '');
     assert.equal(result.pass, true);
@@ -178,12 +187,12 @@ test('image generation displays the received image before running one visible co
   assert.match(workflowSource, /buildImageQualityQaImageParts\(\{[\s\S]*candidate,[\s\S]*panelImages,[\s\S]*referenceImages:\s*images/);
   assert.match(workflowSource, /referenceImageCount:\s*images\.length/);
   assert.match(workflowSource, /panelCropCount:\s*panelImages\.length/);
-  assert.match(workflowSource, /callAI\([\s\S]*qualityPrompt,[\s\S]*qualityImageParts/);
+  assert.match(workflowSource, /requestImageQualityQa\(\{\s*prompt: qualityPrompt, images: qualityImageParts, request: callAI,/);
   assert.match(workflowSource, /\[QUALITY QA\].*キャラクターシート・人物・手・小物・吹き出し/);
   assert.match(workflowSource, /formatImageQualityIssue/);
   assert.match(workflowSource, /qualityOutcome\.validationWarning/);
   assert.match(workflowSource, /const qualityMode = inferImageQualityMode\(editablePrompt\)/);
-  assert.match(workflowSource, /parseImageQualityQaResponse\(qualityResponse.text, \{[\s\S]*mode: qualityMode,[\s\S]*finalPrompt: candidatePrompt,[\s\S]*referenceImageCount:\s*images\.length/);
+  assert.match(workflowSource, /requestImageQualityQa\(\{[\s\S]*options: \{\s*mode: qualityMode, finalPrompt: candidatePrompt, referenceImageCount: images\.length/);
   assert.match(workflowSource, /buildImageQualityQaPrompt\(\{[\s\S]*scenario,[\s\S]*castList,[\s\S]*finalPrompt:\s*candidatePrompt,[\s\S]*mode:\s*qualityMode/);
   assert.match(workflowSource, /referenceImageCount:\s*images\.length,[\s\S]*panelCropCount:\s*panelImages\.length/);
   assert.match(workflowSource, /originalPrompt: currentPrompt,[\s\S]*mode: qualityMode,/);

@@ -62,10 +62,10 @@ const editOptions = {eventPrefix: 'image_edit', requireFinal: true};
 const editEvent = (suffix, b64_json) => ({type: `image_edit.${suffix}`, b64_json});
 const droppingResponse = event => {
   let reads = 0;
-  return {body: {getReader: () => ({read: async () => {
-    if (reads++ === 0) return {done: false, value: new TextEncoder().encode(`data: ${JSON.stringify(event)}\n\n`)};
-    throw new TypeError('network interrupted');
-  }})}};
+  return {body: new ReadableStream({pull(controller) {
+    if (reads++ === 0) controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify(event)}\n\n`));
+    else controller.error(new TypeError('network interrupted'));
+  }})};
 };
 
 test('edits require the completed event rather than a partial or DONE marker', async () => {
