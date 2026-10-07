@@ -435,6 +435,8 @@ The `_authfix1` package reapplies the existing authentication-model validation f
 
 ## Package licenses and privacy / 配布ライセンスと個人情報
 
+This update further strengthens security while preserving the existing creation workflow. / 今回の更新では、既存の制作フローを保ちながらセキュリティをさらに強化しました。
+
 The browser app keeps API keys in page memory, clears them on reload, and sends them to the selected provider for authentication and generation. Its Content Security Policy restricts script execution and API connections, blocks inline event handlers, and disables embedded frames; a separate guard hides the app when another site frames it. These measures reduce exposure but do not guarantee protection against every browser extension, compromised same-origin page or device. Use the official URL and save only materials you intend to retain. / ブラウザーアプリのAPIキーはページ内メモリで保持し、再読込で消去します。認証・生成時には選択したプロバイダーへ送信します。Content Security Policy（CSP）でスクリプト実行とAPI通信先を制限し、HTML内のイベント属性とフレーム読込を禁止します。他サイトのフレーム内では操作画面を表示しません。これは追加防御であり、ブラウザー拡張機能、同一オリジンの別ページ、端末の侵害まで完全に防ぐ保証ではありません。公式URLを確認して利用してください。
 
 | Included folder / 同梱フォルダー | License / ライセンス |

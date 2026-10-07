@@ -16,7 +16,7 @@
       "sha256": "fb89637b42f0ae349b44131631b55a9e81a1b980903c65a0764b75b9453ac82a"
     }
   ],
-  "readmeSha256": "b9fd8fc5f31b3f12857616f564d4ade2d8235a1fce5894119c41e7310b41461d",
+  "readmeSha256": "9495065fc86db90f4dd4126830ac8849224e8eeecfcf6efbb61b69ceffab7f9a",
   "sourceTree": "d298602a61e806d940366b8a84fa91ab688c3e1e",
   "publicTree": "d250c83db95066b2c75c735c1399afa400ce1e7c",
   "packageSha256": "d7fa33a16edf585c6236083e6bce4589a22aa1c3694df6c5641284435475f4a7",
@@ -37,7 +37,7 @@
     "📋 ChangeLog",
     "License / ライセンス"
   ],
-  "findings": "Reviewed every README body section against the v6.9.4 candidate and retained the existing generation, Step4 disclosures/copy spacing, image review placement, privacy, licensing, media and history. Updated current version/release links and documented CSP, frame guard, dependency remediation and every-deploy security/pricing gates. Protection scope and gh-pages temporary pin/deprecation tradeoff are explicit. Current pricing values match official standard tables; no additional paid generation or release completion is claimed. Final source/public tree hashes are bound to the reviewed staged candidate.",
+  "findings": "Reviewed every README body section against the v6.9.4 candidate and retained the existing generation, Step4 disclosures/copy spacing, image review placement, privacy, licensing, media and history. Updated current version/release links and documented CSP, frame guard, dependency remediation and every-deploy security/pricing gates. Protection scope and gh-pages temporary pin/deprecation tradeoff are explicit. Current pricing values match official standard tables; no additional paid generation or release completion is claimed. Final source/public tree hashes are bound to the reviewed staged candidate. Public wording now leads with further security strengthening, per user instruction; technical scope and limitations remain explicit.",
   "manualFindings": "Rebuilt Gemini12 and full32 manuals for v6.9.4 and visually reviewed all44 pages across8 contact sheets plus Gemini10/full17/full27 individually. No clipping, overlap or missing glyphs observed. Added scoped security/key handling notes; retained current Step4 instructions and official prices. A4, text bounds, privacy and link checks passed; reviewed PDFs copied to public/downloads. Unchanged OpenAI20 setup guide retains its prior visual evidence and identical SHA256.",
   "pricingReview": {
     "version": "6.9.4",
