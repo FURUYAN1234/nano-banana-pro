@@ -1,4 +1,4 @@
-Current candidate: v6.9.3. Live delivery status and evidence are tracked in the root PLAN.md (Gemini STEP4 layout task).
+Current candidate: v6.9.4. Live delivery status and evidence are tracked in the root PLAN.md (Public seven-app security remediation, 2026-10-07). CSP/frame protection, dependency updates, current manuals and mandatory per-deployment security checks are prepared. Public delivery is not yet complete; prior v6.9.3 delivery is complete and must not be repeated.
 
 ## Current: 2026-10-07 v6.9.2 公開準備
 
