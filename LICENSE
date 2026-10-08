@@ -1,30 +1,48 @@
 FURU アプリ利用条件 / FURU Application Terms
-準備日 / Prepared: 2026-10-04
+改定日 / Revised: 2026-10-08
 Copyright (c) 2026 FURU / FURUYAN1234
 
-1. 対象と適用開始
-この条件を添付して今後公開する本アプリの版に適用します。準備日は過去版への適用日ではありません。対象は、FURU が許諾権限を持つ本アプリのプログラム、同梱プロンプトおよび付属説明文です。別のライセンスが明示された第三者コード、素材、モデル、外部サービス、同梱の別プロジェクトは対象外です。
+ソースコードを公開し、アプリの利用は無料です。個人の創作、業務、社内利用、受託制作、無料の組み込み・無料提供に、申請・事前連絡・FURUの許可は不要です。作成した作品は公開・販売・収益化・納品できます。外部API料金と第三者の利用条件は別です。
 
-2. 無料でできること
-個人利用、業務利用、社内利用および受託制作のために、本アプリを無料で実行、複製、検討、改変できます。利用者自身が作った投稿、文章、画像、漫画、動画などの成果物は、販売、広告収益化、納品を含めて利用できます。これらの通常利用や成果物の収益化について、FURU への利用料や個別の許可は不要です。外部APIや第三者サービスの料金は別途発生する場合があります。
+1. 対象と適用範囲
+本条件は、本条件を添付し、または配布元で適用対象として明示した版のプログラム、同梱プロンプト、付属文書のうち、FURUが許諾権限を持つ部分に適用します。以下、これらを「対象ソフトウェア」といいます。第三者のコード、モデル、素材、外部サービス、同梱の別プロジェクト、別のライセンスが明示された部分には、それぞれの条件が適用されます。紹介記事に掲載されていることだけを理由に、本条件の対象になることはありません。
+2026年10月8日改定の本条件は、この改定条件を添付または明示した配布版から適用します。既存のリリースZIPや過去版へ遡及適用しません。取得した版に添付されたLICENSEと適用範囲を確認してください。
 
-3. アプリ自体の商品化
-本アプリまたはその改変版を転売する、有料で再配布する、アプリの機能を第三者へ有料サービスとして提供する、あるいは有料の情報商材・教材・販売パッケージにアプリ本体やその複製を同梱する場合は、FURU の事前の書面による許可が必要です。利用者が本アプリを道具として用い、自身の成果物を販売・納品する行為は、この制限に含みません。
+2. 申請せずにできること
+対象ソフトウェアを、個人利用、業務利用、社内利用、受託制作のために無料で実行、複製、調査、改変できます。社内だけで使用するシステムへの組み込みや、自分の制作工程で他のツールと連携させることもできます。通常利用のための申請、事前連絡、FURUの許可は必要ありません。
+第3項の有料提供・有料商品への同梱等に該当しない、自社・他社のアプリや第三者向けサービスへの無料の組み込み・無料提供も、申請・事前連絡・FURUの許可は不要です。第5項の表示・条件保持・改変明示の条件を守ってください。広告収益や任意の寄付があることだけでは有料提供としません。ただし、対象ソフトウェアやその機能の利用条件として料金、購入、会員費等の支払いを求める場合は、第3項の対象です。
+対象ソフトウェアを道具として制作した文章、画像、漫画、動画その他の成果物は、公開、販売、広告収益化、納品に利用できます。これらについて、FURUへの利用料、申請、個別許可、FURUのクレジット表記は必要ありません。外部APIや第三者サービスの料金、素材・音声・依存ソフトウェア等のライセンスやクレジット義務は別途確認してください。
 
-4. 無料の共有
-第3項の商品化に当たらない無料の再配布は、著作権表示、この条件および第三者のライセンス表示を保持し、改変した場合はその旨を明示することで認めます。FURU の公式版や承認済み製品と誤認させてはいけません。アプリを同梱しない独立した解説、レビュー、教育、紹介や、法令上認められた引用その他の利用を、この条件によって制限しません。
+3. 事前に許可が必要なこと
+次の利用には、FURUの事前の許可が必要です。
+対象ソフトウェアやその改変版を販売、転売、有料配布すること。
+対象ソフトウェアのコードや機能を、自社・他社の有料商品、有料アプリ、有料サービスに組み込んで第三者へ提供すること。社内だけで使うシステムへの組み込みと、自分の制作工程でのツール連携は、この制限に含みません。
+対象ソフトウェアの機能を、Webサービス、API、その他の仕組みを通じて第三者が利用できるようにし、その利用に対して料金を受け取ること。
+対象ソフトウェアの複製や改変版を、有料の情報商材、教材、講座、会員サービス、販売パッケージの一部・付録・特典として提供すること。購入者・受講者・会員に限定したダウンロード提供や、無料の付録・特典という名目の場合も含みます。
+名称の変更、一部の抜き出し、形式の変換、ダウンロード提供への変更によって、この条件を回避することはできません。ただし、制限できる範囲は、FURUが権利を持つ部分の複製・翻案その他の利用に限られます。一般的なアイデア、制作手法、独自に開発した実装まで独占するものではなく、法令上認められる利用も制限しません。
+利用者が制作の依頼を受け、自分で対象ソフトウェアを使い、完成した作品を販売・納品する行為には、この許可は必要ありません。
 
-5. 生成物と第三者の権利
-本アプリを使ったという理由だけで、FURU が成果物の権利を取得したり、この条件を成果物に継承させたりすることはありません。この条件は、第三者のコード・素材・入力データ・出力物に関する権利を許諾または保証するものではありません。利用者は、使用する素材の権利と各AIプロバイダー・サービス・依存ソフトウェアの条件を確認してください。第三者のライセンスと著作権表示はそのまま有効です。
+4. メールでの問い合わせと許可
+事前許可が必要な利用を希望する場合は、対象のアプリ、利用方法、提供先、料金の有無を添えてFURUへお問い合わせください。
+FURUがメール等の記録の残る方法で、利用を許可する旨と対象範囲を返信した場合、その範囲で利用できます。紙の契約書や押印は必要ありません。
+問い合わせの送信、受付の自動返信、返答がないことだけでは、許可を得たことにはなりません。許可された用途、提供形態、対象範囲を超えて利用する場合は、改めてご相談ください。個別に合意した条件がある場合は、その合意を優先します。
 
-6. 過去版の許諾
-過去にMIT、Creative Commonsその他の条件で有効に付与された許諾は、取り消しません。過去版と、そこから引き継がれた部分について有効な従前の許諾は引き続き利用できます。この条件は、その権利を狭めるものではありません。今後新たに追加・変更する部分には、FURU が許諾できる範囲でこの条件を適用します。版と対象範囲は同梱の履歴説明も参照してください。
+5. 無料の共有と解説
+第3項に該当しない無料再配布、無料の組み込み、無料提供は、著作権表示、本条件、第三者ライセンスを保持し、改変した場合は変更した旨を明示することで認めます。ソフトウェアを配布しないサービスでは、利用者が確認できる説明ページ等にこれらを表示してください。FURUの公式版、公認商品、提携サービスであると誤認させる表示はできません。
+自分で作成したWeb記事、note等の有料記事、解説、レビュー、紹介記事、講座は、有料・無料を問わず、対象ソフトウェアの複製や改変版を商品に含めなければ、FURUへの許可、事前連絡、FURUへの利用料は不要です。紹介・解説のためにFURUが権利を持つアプリの操作画面や操作動画を掲載すること、公式配布ページへの通常のリンク、法令上認められる引用も認めます。画面や動画に含まれる第三者の作品・素材等の権利は別途確認してください。
 
-7. 保証と連絡先
-法令により認められる範囲で、本アプリは現状のまま提供され、動作、特定目的への適合性、成果物の独自性や第三者権利の非侵害を保証しません。法令上免除できない責任を除き、FURU は利用に起因する損害について責任を負いません。
-許可の相談先: https://github.com/FURUYAN1234 または https://note.com/happy_duck780
+6. 作品の権利と第三者の条件
+対象ソフトウェアを利用したことを理由に、FURUが利用者の成果物の権利を取得したり、本条件を成果物に適用したりすることはありません。
+ただし、成果物として提供するものに対象ソフトウェアそのものの複製・改変が含まれる場合、その部分には本条件が適用されます。
+成果物に著作権が成立するか、誰に権利が帰属するかは、法令、創作への関与、契約その他の事情によって決まります。FURUは、第三者の権利やAIサービスの条件まで許諾・保証するものではありません。
 
-本条件は商用再配布等を制限する独自の利用条件であり、OSIの定義におけるオープンソースライセンスではありません。
+7. 過去版と既存の許諾
+過去にMIT、Creative Commonsその他の条件で有効に付与された許諾を、本条件によって取り消したり狭めたりすることはありません。過去版や引き継がれた部分について、従前の許諾が有効な場合は、その条件に従って利用できます。
+条件を変更する場合は、対象の版と適用範囲を明示します。記事やREADMEの更新だけで、過去に取得した版の許諾や個別に合意した許可を変更することはありません。
+
+8. 提供条件
+対象ソフトウェアは現状のまま提供します。法令で認められる範囲で、動作、特定目的への適合性、成果物の独自性や第三者権利の非侵害を保証しません。法令上免除できない責任を除き、FURUは利用に起因する損害について責任を負いません。
+本条件はソースコードを公開する独自の利用条件です。商品化等に制限があるため、OSIの定義によるオープンソースライセンスではありません。
 
 English summary (the Japanese terms above govern)
-These terms apply to future app versions distributed with them, only to material FURU has authority to license. Personal, business, internal and commissioned use, copying and modification are free. Users may monetize their own outputs without a fee or permission from FURU; external service costs remain separate. Selling or distributing the app or a modified version for a fee, providing its functionality as a paid service, or bundling the app with paid information products requires prior written permission. Free redistribution must preserve notices and these terms, identify modifications, and not imply official endorsement. Independent explanation, reviews, teaching without app bundling, and lawful quotation are not restricted. Third-party materials and separately licensed projects retain their own terms. No rights in outputs are claimed merely because the app was used, and no third-party rights clearance is guaranteed. Valid prior MIT, CC or other grants remain available for earlier versions and inherited portions; new or changed material is subject to these terms only to the extent FURU can license it. The app is provided as is, subject to mandatory law. This is a custom source-available license, not an OSI open-source license.
+Revised 2026-10-08. These terms apply only to app versions distributed with or explicitly subject to this revision, and only to material FURU has authority to license. Third-party materials and separately licensed projects retain their own terms. Personal, business, internal and commissioned use, copying and modification are free without application or prior contact. Internal-only integration and connections within your own production process are allowed. Free integration into external apps and services, and free provision, do not require permission outside the paid cases below. Advertising revenue or voluntary donations alone do not count as paid provision, but payment, purchase or membership required to use the app or its functions does. You may publish, sell, monetize and deliver your own outputs without permission, fees or attribution to FURU; external API costs and third-party licensing and credit requirements remain separate. Prior permission is required to sell or distribute the app or a modified version for a fee, integrate its code or functionality into paid products, apps or services offered to third parties, offer paid access to its functionality, or include copies or modifications in paid information products, teaching materials, courses, memberships or packages, including download benefits described as free. Making and delivering commissioned works is allowed without this permission. Renaming, extracting parts, changing format or distribution method does not remove these conditions, but general ideas, techniques, independently developed implementations and lawful uses are not restricted. Permission may be granted by an explicit reply from FURU by email or another recorded method, within the scope stated in the reply; no paper contract or seal is required. An inquiry, automatic acknowledgment or silence is not permission. Individually agreed terms take precedence. Free redistribution, integration and provision outside these restricted cases must retain notices, these terms and third-party licenses, identify changes and avoid implying official endorsement. Services that do not distribute software must display these notices and conditions on an accessible information page. Independently authored Web articles, paid note articles, introductions, explanation, reviews and courses, paid or free, without software copies or modifications included, do not require permission, prior contact or fees to FURU. App screenshots and operation videos for explanation may be included insofar as FURU can authorize them; third-party rights remain separate. Ordinary links and lawful quotation are allowed. FURU acquires no rights in outputs merely because the app was used and these terms do not pass to outputs; included copies or modifications of the app remain subject to them. Copyright ownership and third-party rights in outputs are not guaranteed. Valid prior MIT, CC and other grants remain available for earlier versions and inherited portions. Existing release ZIPs and prior individual permissions are not changed by an article or README update. The app is provided as is, subject to mandatory law. These are custom source-available terms, not an OSI open-source license. The Japanese terms above govern.
