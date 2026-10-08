@@ -79,6 +79,8 @@ function App() {
     hardReset,
     imageResultRef,
     images,
+    imageInputBudget,
+    imageInputError,
     inputMode,
     is360Analyzing,
     is360CameraWorking,
@@ -340,6 +342,8 @@ function App() {
               setIsDragging={setIsDragging}
               apiKey={apiKeyForUnlockedUi}
               processFiles={processFiles}
+              imageInputBudget={imageInputBudget}
+              imageInputError={imageInputError}
               currentStep={currentStep}
               isAnalyzing={isAnalyzing}
               analysisProgressRef={step1ProgressRef}

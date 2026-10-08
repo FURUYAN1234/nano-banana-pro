@@ -13,6 +13,7 @@ import { formatApiErrorGuide } from '../lib/api-errors.js';
 import { generateImageWithOpenAI, setOpenAIApiKey } from '../lib/openai';
 import {buildOpenAIReferencePlan, appendOpenAIReferencePrompt, getOpenAIPromptBodyBudget} from '../lib/openai-image-references.js';
 import {buildGeminiReferencePlan, buildGeminiImageApiPrompt} from '../lib/gemini-image-references.js';
+import { getImageInputBudget, assertImageInputBudget, planImageAddition } from '../lib/image-input-budget.js';
 import { callAI, setActiveEngine } from '../lib/ai-provider';
 import { reviewComedyPrompt } from '../lib/comedy-review';
 import { assembleMangaPromptWithRecovery } from '../lib/prompt-assembly-recovery.js';
@@ -169,7 +170,15 @@ export default function useMangaWorkflow() {
   }, []);
 
   // getModelBadgeInfo → src/lib/constants.js に移動済み
-  const [images, setImages] = useState([]);
+  const [images, setImagesState] = useState([]);
+  const imagesRef = useRef([]);
+  const setImages = (value) => {
+    const next = typeof value === 'function' ? value(imagesRef.current) : value;
+    imagesRef.current = next;
+    setImagesState(next);
+    setImageInputError('');
+  };
+  const [imageInputError, setImageInputError] = useState('');
   const [styleJson, setStyleJson] = useState(null); // [v3.90] Style Analyzer Engine JSON
 
   // States for Steps
@@ -246,7 +255,22 @@ export default function useMangaWorkflow() {
   const [bg360ImageParts, setBg360ImageParts] = useState(null);       // Gemini API送信用パーツ
   const [bg360Analysis, setBg360Analysis] = useState(null);           // AI解析結果 {location, lighting, spatialType}
   const [is360Analyzing, setIs360Analyzing] = useState(false);        // 解析中フラグ
-  const [bg360Enabled, setBg360Enabled] = useState(false);            // [v3.50 Fix] 360°背景有効化フラグ（欠落修正 — これが無いとドロップ時にReferenceErrorでハングアップしていた）
+  const [bg360Enabled, setBg360EnabledState] = useState(false);
+  const bg360EnabledRef = useRef(false);
+  const setBg360Enabled = (value) => {
+    const next = Boolean(typeof value === 'function' ? value(bg360EnabledRef.current) : value);
+    try {
+      if (next) assertImageInputBudget({ characterImages: imagesRef.current, backgroundEnabled: true });
+    } catch (error) {
+      setImageInputError(error.message);
+      return false;
+    }
+    bg360EnabledRef.current = next;
+    setBg360EnabledState(next);
+    setImageInputError('');
+    return true;
+  };
+  const imageInputBudget = getImageInputBudget({ characterImages: images, backgroundEnabled: bg360Enabled });
   const [bg360CameraWork, setBg360CameraWork] = useState(null);        // [v3.53] 360°カメラワーク設計結果 {panels: [{panel, camera, yaw, pitch, fov, reasoning}]}
   const [bg360CroppedPanels, setBg360CroppedPanels] = useState(null);   // [v3.53 Phase2] 各コマ用クロップ済み背景画像 [base64, base64, base64, base64]
   const [is360CameraWorking, setIs360CameraWorking] = useState(false);  // [v3.53] カメラワーク設計＋クロップ処理中フラグ（Step3ブロック用）
@@ -468,6 +492,7 @@ export default function useMangaWorkflow() {
       showStatus('キャラクター解析が終わってから追加してください。');
       return;
     }
+    setImageInputError('');
     isAnalyzingRef.current = true;
     beginApiWork();
     const inputEpoch = scenarioRunEpochRef.current;
@@ -510,7 +535,7 @@ export default function useMangaWorkflow() {
       });
     }, 800);
 
-    const imageArray = [];
+    let imageArray = [];
     let detected360File = null; // [v3.48] 360度画像自動検出用
     let detectedStyleJson = null; // [v3.90] 作風JSON
 
@@ -526,8 +551,6 @@ export default function useMangaWorkflow() {
           const json = JSON.parse(text);
           if (json.style_name && json.reproduction_prompt) {
             detectedStyleJson = json;
-            setStyleJson(json);
-            showStatus(`作風を適用: ${json.style_name}`);
             setAnalyzeThought(prev => prev + `\n> 🎭 作風JSONを検出: ${json.style_name}`);
           } else {
             showStatus("⚠️ 無効なJSONです。作風解析エンジンの出力を使用してください。");
@@ -548,8 +571,20 @@ export default function useMangaWorkflow() {
         setAnalyzeThought(prev => prev + `\n> 🌐 360°背景画像を検出 (アスペクト比 2:1)。キャラシートとは分離して処理します...`);
       } else {
         imageArray.push(dataUrl);
-        setImages(prev => [...prev, dataUrl]);
       }
+    }
+
+    // Check the complete addition before changing images, style or background, or calling an API.
+    const addition = planImageAddition({
+      existingImages: imagesRef.current,
+      incomingImages: imageArray,
+      backgroundEnabled: bg360EnabledRef.current || Boolean(detected360File),
+    });
+    imageArray = addition.addedImages;
+    setImages(addition.images);
+    if (detectedStyleJson) {
+      setStyleJson(detectedStyleJson);
+      showStatus(`作風を適用: ${detectedStyleJson.style_name}`);
     }
 
     // [v3.50] 360度画像が検出された場合、バックグラウンドで空間解析を実行
@@ -657,6 +692,7 @@ export default function useMangaWorkflow() {
       if (/API Key is not set|OpenAI APIキーが設定されていません/.test(String(error.message || ''))) {
         setShowOpenAIKeyModal(true);
       }
+      if (error.code === 'IMAGE_INPUT_LIMIT') setImageInputError(error.message);
       const translatedMsg = translateApiError(error);
       setAnalyzeThought(prev => prev + `\n\n[システムエラー]: ${error.message}\n--------------------------------------------------\n${translatedMsg}`);
       showStatus("解析エラー: " + error.message);
@@ -1065,6 +1101,13 @@ export default function useMangaWorkflow() {
   // --- Step 3: Prompt Assembly (Super FURU v121.3) ---
   // [v2.79] 戻り値変更: フルオート連鎖用（文字列=成功, null=失敗）
   const assemblePrompt = async (skipGuard = false, overrideScenario = null, providerFamilyOverride = null) => {
+    try {
+      assertImageInputBudget({ characterImages: imagesRef.current, backgroundEnabled: bg360EnabledRef.current });
+    } catch (error) {
+      setImageInputError(error.message);
+      showStatus(error.message);
+      return null;
+    }
     beginApiWork();
     const promptScenarioEpoch = scenarioRunEpochRef.current;
     const currentScenario = overrideScenario || scenario;
@@ -1596,6 +1639,13 @@ export default function useMangaWorkflow() {
   // [v2.79] 戻り値変更: フルオート連鎖用（true=成功, false=失敗）
   const generateImageOnce = async (skipGuard = false, overridePrompt = null, generationOptions = {}) => {
     if (generationOptions.policyAttempt && (!allowImageQualityRepair || generationOptions.reviewOnly || qualityRetryAbortRef.current)) return false;
+    try {
+      assertImageInputBudget({ characterImages: imagesRef.current, backgroundEnabled: bg360EnabledRef.current });
+    } catch (error) {
+      setImageInputError(error.message);
+      showStatus(error.message);
+      return false;
+    }
     beginApiWork();
     setImageQualityNeedsRepair(false);
     const editablePrompt = overridePrompt || finalPrompt;
@@ -2684,6 +2734,8 @@ export default function useMangaWorkflow() {
 
   // --- Return all 113 variables needed by JSX ---
   return {
+    imageInputBudget,
+    imageInputError,
     analyzeThought,
     apiKey,
     assemblePrompt,

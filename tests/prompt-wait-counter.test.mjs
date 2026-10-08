@@ -3,9 +3,24 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 import { beginApiWork } from '../src/lib/api-work-cancellation.js';
+import { assertImageInputBudget } from '../src/lib/image-input-budget.js';
 
 const workflow = readFileSync(new URL('../src/hooks/useMangaWorkflow.js', import.meta.url), 'utf8');
 const assembly = workflow.slice(workflow.indexOf('const assemblePrompt ='), workflow.indexOf('// [v3.04]'));
+
+test('STEP3 rejects an over-budget legacy session before starting API work', async () => {
+  for (const [count, background] of [[15, false], [11, true]]) {
+    let calls = 0; let error = '';
+    const context = { assertImageInputBudget,
+      imagesRef:{current:Array.from({length:count}, (_, i) => `sheet-${i}`)}, bg360EnabledRef:{current:background},
+      beginApiWork:()=>{calls++;}, setImageInputError:value=>{error=value;}, showStatus:()=>{} };
+    vm.createContext(context);
+    vm.runInContext(assembly + 'globalThis.start=assemblePrompt;', context);
+    assert.equal(await context.start(), null);
+    assert.equal(calls, 0);
+    assert.match(error, background ? /10枚/ : /14枚/);
+  }
+});
 
 test('scenario invalidation releases STEP3 and an old review cannot unlock or overwrite a new run', async () => {
   const reviews = [];
@@ -13,6 +28,7 @@ test('scenario invalidation releases STEP3 and an old review cannot unlock or ov
   let output = '';
   const context = {
     beginApiWork,
+    assertImageInputBudget, imagesRef:{current:[]}, bg360EnabledRef:{current:false}, setImageInputError:()=>{},
     scenarioRunEpochRef:{current:0}, promptAssemblyRunRef:{current:0}, promptAssemblyAbortRef:{current:null},
     scenario:'fixture scenario', castList:'fixture cast', collectCastNameEntries:()=>[], validateMangaScenario:()=>({ok:true}),
     setIsAssembling:value=>{active=value;}, setFinalPrompt:value=>{output=value;},
@@ -55,7 +71,8 @@ test('prompt review updates one elapsed-time line and ignores superseded runs', 
   let tick;
   const epoch = { current: 1 };
   const run = { current: 1 };
-  const timer = assembly.slice(assembly.indexOf('const assemblyStartedAt'), assembly.indexOf('\n    try {'));
+  const timerStart = assembly.indexOf('const assemblyStartedAt');
+  const timer = assembly.slice(timerStart, assembly.indexOf('\n    try {', timerStart));
   vm.runInNewContext(timer, {
     Date: { now: () => now },
     setInterval: (callback, delay) => { assert.equal(delay, 1000); tick = callback; },

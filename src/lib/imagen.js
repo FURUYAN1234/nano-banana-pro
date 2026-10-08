@@ -3,6 +3,7 @@ import { getApiKey } from "./gemini.js";
 import { createApiError } from "./api-errors.js";
 import { GEMINI_IMAGE_MODEL_IDS } from './gemini-model-routes.js';
 import { DEFAULT_GEMINI_IMAGE_OPTIONS } from './gemini-image-settings.js';
+import { assertApiImageInputCount } from './image-input-budget.js';
 
 const isLocalGeminiHost = typeof window !== 'undefined'
     && ['localhost', '127.0.0.1', '::1'].includes(window.location.hostname);
@@ -41,6 +42,8 @@ export const buildGeminiImageGenerationConfig = ({
  * @param {Array<string>} referenceImages [v3.53 Phase3] 参照画像のbase64配列（data:プレフィックス付きまたはrawBase64）。Geminiモデル使用時にマルチモーダル入力として添付。
  */
 export const generateImageWithImagen = async (prompt, onStatusUpdate, referenceImages = [], imageOptions = {}) => {
+    if (!Array.isArray(referenceImages)) throw new Error('Gemini参照画像は配列で指定してください。');
+    assertApiImageInputCount('gemini', referenceImages.length);
     const workSignal = getApiWorkSignal(imageOptions.signal);
     throwIfApiWorkCancelled(workSignal);
     const currentApiKey = getApiKey();

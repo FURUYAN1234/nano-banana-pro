@@ -45,8 +45,7 @@ const cleanJa = sanitizeMarkdownBold(changesJa);
 const cleanEn = sanitizeMarkdownBold(changesEn);
 
 // 追加するChangeLogエントリの生成 (太字の内側に余計なスペースを入れない)
-const entryJa = `- **[Fix & UX]** ${cleanJa} / ${cleanEn}`;
-const entryEn = `- **[Fix & UX]** ${cleanJa} / ${cleanEn}`; // 同期表記
+const entry = `- **[Fix & UX]** ${cleanEn} / ${cleanJa}`;
 
 const targetFiles = {
   packageJson: path.join(__dirname, '../package.json'),
@@ -149,14 +148,13 @@ try {
     .replace(/v\d+\.\d+\.\d+ FourPanel Releaseアセット/, `v${newVersion} FourPanel Releaseアセット`);
 
   // ChangeLogへのエントリ挿入
-  const changelogHeader = '## 📋 ChangeLog';
-  const changelogInsertPos = readmeContent.indexOf(changelogHeader);
-  if (changelogInsertPos === -1) {
+  const changelogHeading = readmeContent.match(/^## 📋 ChangeLog[^\n]*/m);
+  if (!changelogHeading) {
     throw new Error('Could not find "## 📋 ChangeLog" in README.md');
   }
 
-  const insertIndex = changelogInsertPos + changelogHeader.length;
-  const newChangelogEntry = `\n\n### v${newVersion} (${today})\n${entryJa}`;
+  const insertIndex = changelogHeading.index + changelogHeading[0].length;
+  const newChangelogEntry = `\n\n### v${newVersion} (${today})\n${entry}`;
   
   readmeContent = readmeContent.slice(0, insertIndex) + newChangelogEntry + readmeContent.slice(insertIndex);
   fs.writeFileSync(targetFiles.readmeMd, readmeContent, 'utf8');

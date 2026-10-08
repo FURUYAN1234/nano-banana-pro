@@ -1,5 +1,6 @@
 import { assertPrintableDialogue, readBubbleTextValues } from './bubble-text.js';
 import { COPYRIGHT_MOSAIC_TARGET_SCOPE } from './render-options.js';
+import { assertApiImageInputCount } from './image-input-budget.js';
 
 // キャラは人物の同一性、背景は舞台の参照として区別する。
 export function buildGeminiReferencePlan({characterImages = [], referenceImages = [], backgroundReferences = false} = {}) {
@@ -7,6 +8,7 @@ export function buildGeminiReferencePlan({characterImages = [], referenceImages 
     throw new Error('Gemini参照画像は配列で指定してください。');
   }
   const references = [...characterImages, ...referenceImages];
+  assertApiImageInputCount('gemini', references.length);
   if (references.some(image => typeof image !== 'string' || !image.trim())) {
     throw new Error('Gemini参照画像に空または不正な画像が含まれています。');
   }

@@ -31,9 +31,18 @@ export default function Step1Panel({
   setIsCastListCopied,
   currentStep,
   setShowModal,
+  imageInputBudget,
+  imageInputError,
   styleJson,
   setStyleJson
 }) {
+  const handleFileChange = (event) => {
+    const files = Array.from(event.target.files);
+    // Allow the same files to be selected again after an over-limit rejection.
+    event.target.value = '';
+    if (!apiKey) setShowModal(true);
+    else processFiles(files);
+  };
   return (
     <section
       onDragOver={(e) => {
@@ -59,6 +68,20 @@ export default function Step1Panel({
         {isAnalyzing && <Loader2 size={18} className="animate-spin text-blue-400" />}
         {currentStep > 1 && <CheckCircle2 size={18} className="text-blue-500" />}
       </div>
+
+      <div className="mb-4 text-xs text-slate-300 leading-relaxed" aria-live="polite">
+        <p>キャラシート画像：{imageInputBudget.characterImageCount} / {imageInputBudget.maxCharacterImages}枚（あと{imageInputBudget.remaining}枚・OpenAI／Gemini共通）</p>
+        <p className="mt-1 text-[11px] text-slate-400">
+          {bg360Enabled ? '360°背景ON：背景用に4枚分を確保するため、キャラシートは10枚まで。' : '背景なしは14枚まで。360°背景を使う場合は10枚までです。'}
+          作風JSONは枚数に含めません。上限を超える追加は受け付けず、既存の画像・設定を保持します。
+        </p>
+        <p className="mt-1 text-[11px] text-slate-400">1枚に複数人が載っていても画像は1枚です。人数による固定の拒否上限はありませんが、多人数では識別・描き分け・台詞対応が崩れることがあり、全員の正確な生成を保証するものではありません。</p>
+      </div>
+      {(imageInputError || !imageInputBudget.fits) && (
+        <p role="alert" className="mb-4 rounded-lg border border-amber-500/50 bg-amber-950/30 p-3 text-xs text-amber-200 leading-relaxed">
+          {imageInputError || `現在のキャラシート画像が上限${imageInputBudget.maxCharacterImages}枚を超えています。画像を減らしてください。`}
+        </p>
+      )}
 
       <div className="flex flex-wrap gap-2 mb-6 z-10 p-4 bg-[#0a0c10] rounded-3xl border border-white/10 h-[130px] overflow-y-auto custom-scrollbar content-start">
         {images.map((img, i) => (
@@ -111,15 +134,9 @@ export default function Step1Panel({
             <input
               type="file"
               multiple
-              accept="image/*"
+              accept="image/*,.json"
               className="hidden"
-              onChange={(e) => {
-                if (!apiKey) {
-                  setShowModal(true);
-                } else {
-                  processFiles(e.target.files);
-                }
-              }}
+              onChange={handleFileChange}
               disabled={isAnalyzing}
             />
           </label>
@@ -130,15 +147,9 @@ export default function Step1Panel({
             <input
               type="file"
               multiple
-              accept="image/*"
+              accept="image/*,.json"
               className="hidden"
-              onChange={(e) => {
-                if (!apiKey) {
-                  setShowModal(true);
-                } else {
-                  processFiles(e.target.files);
-                }
-              }}
+              onChange={handleFileChange}
             />
             <span className="primary-step-action primary-step-action-accent-border w-full inline-flex items-center justify-center rounded-lg border px-4 py-2 mb-3 text-xs font-bold shadow-lg active:translate-y-0.5">
               キャラクター設定画像を選択 (STEP 1)
@@ -168,7 +179,7 @@ export default function Step1Panel({
               <span className="relative inline-flex rounded-full h-3 w-3 bg-blue-500"></span>
             </span>
             <div className="text-xs font-mono text-blue-300">
-              Analyzing {images.length} chars... <span className="text-slate-500 ml-2 text-[10px]">(数十秒〜数分待機)</span>
+              Analyzing {images.length} sheets... <span className="text-slate-500 ml-2 text-[10px]">(数十秒〜数分待機)</span>
             </div>
           </div>
         )}

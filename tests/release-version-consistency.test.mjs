@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, resolve, basename, sep } from 'node:path';
 import { spawnSync } from 'node:child_process';
 
 const read = path => readFileSync(new URL(path, import.meta.url), 'utf8');
@@ -30,7 +30,13 @@ test('version updater synchronizes root lock metadata regardless of field order 
     lock.version = '1.0.1';
     lock.packages[''].version = '1.0.1';
     assert.deepEqual(actual, lock);
+    const updatedReadme = readFileSync(join(root, 'README.md'), 'utf8');
+    const heading = '## 📋 ChangeLog / 更新履歴';
+    assert.ok(updatedReadme.includes(heading + '\n\n### v1.0.1'), 'preserve the complete bilingual heading');
+    assert.ok(/- \*\*\[Fix & UX\]\*\* Fix \/ 修正/.test(updatedReadme), 'new history must be English / Japanese');
+    assert.ok(updatedReadme.indexOf('## Terms & Output Rights') < updatedReadme.indexOf(heading));
   } finally {
+    assert.ok(resolve(root).startsWith(resolve(tmpdir()) + sep) && basename(root).startsWith('nano-version-'));
     rmSync(root, { recursive: true, force: true });
   }
 });

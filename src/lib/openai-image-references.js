@@ -1,7 +1,8 @@
 import { OPENAI_IMAGE_PROMPT_MAX_CHARS, assertImagePromptBudget } from './image-prompt-budget.js';
 import { COPYRIGHT_MOSAIC_TARGET_SCOPE } from './render-options.js';
+import { OPENAI_IMAGE_INPUT_LIMIT } from './image-input-budget.js';
 
-export const OPENAI_IMAGE_INPUT_LIMIT = 16;
+export { OPENAI_IMAGE_INPUT_LIMIT };
 export const OPENAI_IMAGE_DATA_URL_MAX_CHARS = 20971520;
 
 export function normalizeOpenAIImageDataUrl(value, label = '参照画像') {
