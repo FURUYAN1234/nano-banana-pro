@@ -1,4 +1,4 @@
-Current candidate: v6.9.4. Live delivery status and evidence are tracked in the root PLAN.md (Public seven-app security remediation, 2026-10-07). CSP/frame protection, dependency updates, current manuals and mandatory per-deployment security checks are prepared. Public delivery is not yet complete; prior v6.9.3 delivery is complete and must not be repeated.
+Current candidate: v6.9.5. The sole live task record is root PLAN.md, Nano STEP1 image-count feedback (2026-10-08); private evidence is output/image-count-20261008/REPORT.md. Normal real OpenAI analysis, STEP2/STEP3 and one image generation completed; image-quality warnings remain recorded. Shared14/10-sheet intake and English/Japanese README/all3 PDFs are prepared. Official release and note/Facebook delivery are pending; X is inline-only and full backup is excluded. Prior v6.9.4 delivery is complete and must not be repeated.
 
 ## Current: 2026-10-07 v6.9.2 公開準備
 
