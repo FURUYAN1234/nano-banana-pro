@@ -1,25 +1,25 @@
 {
-  "pricingSourceSha256": "07fc3760bf6b3eddd49cd5e83eeaef352de104d80633d23af90acf0c1a44a6ee",
-  "manualVersion": "6.9.4",
-  "manualSourceSha256": "7845cd4250ac0b02fd5772684a38cdc0775185f874ae19bd62b2ace44e89742d",
+  "pricingSourceSha256": "61f9332cd9fd136c0823335419d1bfa4e707a82290a4b0ae56d0a061be78360e",
+  "manualVersion": "6.9.5",
+  "manualSourceSha256": "efdae9c1625c472e3b0818b7be6de1bccb2bcf177d14b672c53fef77d1322b52",
   "manualFiles": [
     {
       "name": "gemini-api-beginner-guide-2026-10-01.pdf",
-      "sha256": "b73b613d8cc4e7e051c46e641c67e8b029534b3c0c87963fba1c8deb36881ab4"
+      "sha256": "3e85647b7af7bfb6bb346bd7a94375cf7f9579fdc67b1f4df289871152b8c458"
     },
     {
       "name": "openai-api-beginner-guide-2026-09-30.pdf",
-      "sha256": "b732f0f844983098f1f89ffcc52883c18131b315f47e6092a9b62950971b873e"
+      "sha256": "a4a9cf51e8b63ea682bfb24d6cee757edb691e34501948bf358247a00cd80d92"
     },
     {
       "name": "super-furu-ai-4koma-full-manual-2026-10-01.pdf",
-      "sha256": "fb89637b42f0ae349b44131631b55a9e81a1b980903c65a0764b75b9453ac82a"
+      "sha256": "3e0cfc145fb7bf0d880411078ceba241768e0e34e2c20a4cf3ab62ff018cf8e6"
     }
   ],
-  "readmeSha256": "9495065fc86db90f4dd4126830ac8849224e8eeecfcf6efbb61b69ceffab7f9a",
-  "sourceTree": "d298602a61e806d940366b8a84fa91ab688c3e1e",
-  "publicTree": "d250c83db95066b2c75c735c1399afa400ce1e7c",
-  "packageSha256": "d7fa33a16edf585c6236083e6bce4589a22aa1c3694df6c5641284435475f4a7",
+  "readmeSha256": "6b64454fb631381aa1ab54fbb8c31c82d8ea65362fa19c96bc981b50db31159c",
+  "sourceTree": "ff65704b172781576398a0bc1b8963a987072cdf",
+  "publicTree": "3c04600a85e295dbbc168415690633383c833b33",
+  "packageSha256": "b33226f725e6e375d11325be44681134c1367ef52e4240d82a3a7b6127b695c2",
   "releaseAssetSha256": "9e41886be6afa0ebfad6d244ecf53f37260a92f73b30309319029cc87e1ddb4e",
   "reviewedSections": [
     "Application screen and output / 操作画面と生成例",
@@ -34,19 +34,19 @@
     "Package licenses and privacy / 配布ライセンスと個人情報",
     "Development / 開発",
     "FAQ / よくある質問",
-    "📋 ChangeLog",
-    "License / ライセンス"
+    "Terms & Output Rights / 利用条件・作品の権利",
+    "📋 ChangeLog / 更新履歴"
   ],
-  "findings": "Reviewed every README body section against the v6.9.4 candidate and retained the existing generation, Step4 disclosures/copy spacing, image review placement, privacy, licensing, media and history. Updated current version/release links and documented CSP, frame guard, dependency remediation and every-deploy security/pricing gates. Protection scope and gh-pages temporary pin/deprecation tradeoff are explicit. Current pricing values match official standard tables; no additional paid generation or release completion is claimed. Final source/public tree hashes are bound to the reviewed staged candidate. Public wording now leads with further security strengthening, per user instruction; technical scope and limitations remain explicit.",
-  "manualFindings": "Rebuilt Gemini12 and full32 manuals for v6.9.4 and visually reviewed all44 pages across8 contact sheets plus Gemini10/full17/full27 individually. No clipping, overlap or missing glyphs observed. Added scoped security/key handling notes; retained current Step4 instructions and official prices. A4, text bounds, privacy and link checks passed; reviewed PDFs copied to public/downloads. Unchanged OpenAI20 setup guide retains its prior visual evidence and identical SHA256.",
+  "findings": "Reviewed the complete English/Japanese README body and retained existing media, links, generation guidance and source-available terms above history. v6.9.5 adds shared STEP1 intake14/10, atomic over-limit rejection, duplicate/JSON accounting, and multi-person-sheet guidance without a fixed people rejection or accuracy guarantee. Current UI/source/API reference handling and all three manuals agree. Normal OpenAI analysis, scenario, prompt and one image generation were observed; existing image-QA balloon-order warnings are retained and not claimed fixed. Current release references and current price dates are synchronized; complete bilingual history heading is retained by the tested updater.",
+  "manualFindings": "Gemini13/full33/OpenAI21 pages (67 total) were rendered and visually inspected for the v6.9.5 count/people/retention guidance. Final Gemini2/full5 changes were individually rechecked with65 identical page hashes. The current official price-date renewal changed only full18; that page was inspected again and the other66 hashes remain identical. A4, text bounds, links, current version and privacy checks pass. Reviewed PDF bytes were copied to public/downloads and hashes verified.",
   "pricingReview": {
-    "version": "6.9.4",
-    "checkedAt": "2026-10-07T04:42:16.291Z",
+    "version": "6.9.5",
+    "checkedAt": "2026-10-08T07:13:54.863968+00:00",
     "sources": [
       "https://developers.openai.com/api/docs/pricing",
       "https://ai.google.dev/gemini-api/docs/pricing"
     ],
-    "findings": "Rechecked official standard tables for this deployment. OpenAI page-delivered pricing props explicitly identify Standard versus Batch; all11 scenario options match. Standard Image2/2.5 image input8,cached2,output30 and text input5,cached1.25 USD/M. Google Standard Nano Banana2.1 input1.50,text/thinking7.50,image30 USD/M;1K0.0336,2K0.0504,4K0.113 USD. Gemini3.8 Flash0.75/3.75 USD/M through2026-12-31. Existing displayed values and2026-10-07 dates already match, so no artificial price change was made. Review remains mandatory for every deployment.",
-    "sourceSha256": "07fc3760bf6b3eddd49cd5e83eeaef352de104d80633d23af90acf0c1a44a6ee"
+    "sourceSha256": "61f9332cd9fd136c0823335419d1bfa4e707a82290a4b0ae56d0a061be78360e",
+    "findings": "Rechecked official OpenAI Standard tables against all11 scenario options and all3 image models; values match. Standard image8/cached2/output30 and text5/cached1.25 USD/M are distinct from Batch4/1/15 and2.5/0.625. Google Standard Nano Banana2.1 input1.50/text-thinking7.50/image30 USD/M and1K0.0336/2K0.0504/4K0.113 were directly reviewed; Gemini3.8 Flash0.75/3.75 applies through2026-12-31. App, README and manual snapshot dates were renewed to2026-10-08; no numeric price change."
   }
 }
