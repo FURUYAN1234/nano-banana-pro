@@ -1,4 +1,4 @@
-Current candidate: v6.9.5. The sole live task record is root PLAN.md, Nano STEP1 image-count feedback (2026-10-08); private evidence is output/image-count-20261008/REPORT.md. Normal real OpenAI analysis, STEP2/STEP3 and one image generation completed; image-quality warnings remain recorded. Shared14/10-sheet intake and English/Japanese README/all3 PDFs are prepared. Official release and note/Facebook delivery are pending; X is inline-only and full backup is excluded. Prior v6.9.4 delivery is complete and must not be repeated.
+Current candidate: v6.9.6. The sole live task record is root PLAN.md, Nano mixed-reference automation (2026-10-09); private evidence is output/mixed-reference-20261009. Normal OpenAI material recognition, STEP2/STEP3, mixed-reference images and final image/scenario-model credits were verified; camera/surface/observation warnings remain. Official release, note/Facebook/X delivery and the separately authorized full backup are pending. Prior v6.9.5 release and earlier completed operations must not be repeated. This pointer supersedes the older pending-release snapshots below.
 
 ## Current: 2026-10-07 v6.9.2 公開準備
 
