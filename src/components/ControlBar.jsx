@@ -145,17 +145,13 @@ export default function ControlBar({
               setTimeout(() => setIsPolicyCopied(false), 2000);
             }}
             title="Web版ChatGPT用の1枚絵エモーショナル演出プロンプトをクリップボードにコピーします。指示内容の感情を自動検知し、カメラ・ライティング・表情・VFXを最適化します。"
-            className={`w-full flex flex-wrap items-center justify-center gap-2 sm:gap-4 px-4 py-2.5 sm:py-3 rounded-xl text-sm font-black tracking-widest transition-all duration-100 border-2 border-b-4 select-none active:border-b-2 active:translate-y-0.5 shadow-lg ${
-              isPolicyCopied
-                ? 'bg-white border-green-500 text-green-600'
-                : 'bg-white border-slate-300 hover:bg-slate-50 text-[#2d3a4d]'
-            }`}
+            className="save-guide-secondary w-full flex flex-wrap items-center justify-center gap-2 sm:gap-4 px-4 py-2.5 sm:py-3 rounded-xl text-sm font-black tracking-widest transition-all duration-100 border-2 border-b-4 select-none active:border-b-2 active:translate-y-0.5 shadow-lg"
           >
             <div className="flex items-center gap-1.5 shrink-0">
               {isPolicyCopied ? <Check size={16} /> : <Copy size={16} />}
               <span className="whitespace-nowrap">{isPolicyCopied ? 'コピー完了！' : '🎬 ChatGPT用 1枚絵エモーショナルプロンプトをコピー'}</span>
             </div>
-            <span className="text-[10px] md:text-[11px] font-normal tracking-normal whitespace-normal text-center text-slate-500">
+            <span className="text-[10px] md:text-[11px] font-normal tracking-normal whitespace-normal text-center">
               【1枚絵用】プロンプトをコピーしてChatGPTのチャット欄に貼り付け、元のキャラクター画像と一緒に送信すると、シネマチックで感情豊かなイラストが生成されます。
             </span>
           </button>

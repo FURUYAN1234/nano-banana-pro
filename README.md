@@ -3,14 +3,14 @@
 > **Source code available; free to use.** Ordinary use, free integration and free provision require no application, prior contact or permission from FURU. You may sell and monetize your own works. External API costs and third-party terms are separate. See Terms & Output Rights below. / **ソースコード公開・利用無料。** 通常利用と無料の組み込み・無料提供に、申請・事前連絡・FURUの許可は不要です。自分の作品は販売・収益化できます。外部API料金と第三者の条件は別です。詳しくは「利用条件・作品の権利」をご確認ください。
 
 
-> Current source version: **v6.9.9** / 現在のソース版: **v6.9.9**
+> Current source version: **v7.0.0** / 現在のソース版: **v7.0.0**
 
 
 An experimental web application in which AI handles topic research, story structure, direction, prompt construction, image generation, and quality review for a four-panel manga. / AIが話題調査、構成、演出、プロンプト構築、画像生成、品質確認まで担当する4コマ漫画制作Webアプリです。
 
 [Open the app / アプリを開く](https://furuyan1234.github.io/nano-banana-pro/) · [Full manual / 全機能PDFマニュアル](https://furuyan1234.github.io/nano-banana-pro/downloads/super-furu-ai-4koma-full-manual-2026-10-01.pdf)
 
-The full operation manual and API setup guides cover v6.9.9, including image limits and the distinction between image counts and people. Current application terms are in [LICENSE](LICENSE). / 全機能マニュアルとAPI取得ガイドはv6.9.9対応で、画像枚数の上限と人数との違いも説明しています。現在のアプリ利用条件は [LICENSE](LICENSE) を参照してください。
+The full operation manual and API setup guides cover v7.0.0, including image limits and the distinction between image counts and people. Current application terms are in [LICENSE](LICENSE). / 全機能マニュアルとAPI取得ガイドはv7.0.0対応で、画像枚数の上限と人数との違いも説明しています。現在のアプリ利用条件は [LICENSE](LICENSE) を参照してください。
 
 ## Application screen and output / 操作画面と生成例
 
@@ -30,7 +30,7 @@ Automatic direction retains rectilinear wide angles and excludes fisheye. Choose
 
 Drawing options: STEP2 mosaic masking for existing copyrighted characters and STEP3 watermarking default to ON. The former adds a large-mosaic instruction to scenario and image prompts; disabling the latter removes both footer marks. The settings apply to OpenAI/Gemini API and Web-copy prompts. Rebuild from STEP2 for mosaic changes or STEP3 for watermark changes; toggling alone does not call an API. Settings last until a full reset or reload, do not alter existing images retroactively, and require visual confirmation. / 描画オプション：STEP2の「版権キャラクターにモザイクをかける」と、STEP3の「ウオーターマークを表記する」は初期状態でONです。前者はシナリオ構築と最終画像プロンプトに「版権キャラクターにおおきなモザイクをかける」を追加し、後者をOFFにすると左右のフッターの描画指示を外します。OpenAI／GeminiのAPIとWeb用コピーに共通で反映します。設定変更後はモザイクならSTEP2、ウオーターマークならSTEP3から再作成してください。変更だけでAPIは実行されません。選択は全設定リセットまたは再読込まで保持します。生成済み画像には遡って反映されず、AIの対象判断・描画は実画像で確認してください。
 
-The right footer keeps the scenario-model attribution and shows the current image engine first, for example `ChatGPT Images 2.5 / GPT-6.1 Sol / FURU AI 4-koma v6.9.9`. Changing image quality/model updates the image-engine prefix for API and Web-copy instructions; existing images are retained. / 右フッターはシナリオモデル名を残し、先頭に現在の画像生成エンジン名を記載します。例：`ChatGPT Images 2.5 / GPT-6.1 Sol / FURU AI 4-koma v6.9.9`。画像モデルを変更すると、API・Webコピー用の表記をその選択へ同期します。生成済み画像は保持します。
+The right footer keeps the scenario-model attribution and shows the current image engine first, for example `ChatGPT Images 2.5 / GPT-6.1 Sol / FURU AI 4-koma v7.0.0`. Changing image quality/model updates the image-engine prefix for API and Web-copy instructions; existing images are retained. / 右フッターはシナリオモデル名を残し、先頭に現在の画像生成エンジン名を記載します。例：`ChatGPT Images 2.5 / GPT-6.1 Sol / FURU AI 4-koma v7.0.0`。画像モデルを変更すると、API・Webコピー用の表記をその選択へ同期します。生成済み画像は保持します。
 
 
 Mosaic targets are existing-work characters actually depicted in the scripted Action. Reference sheets, art style, resemblance or a shared name alone do not authorize masking original cast members. An intentional source instruction applies only to its specified person and region. Check both masked and unmasked subjects in the final image. GPT-6.1 Sol is the default scenario model in development and production. / モザイク対象は台本のActionで実際に描く既存作品の人物描写です。参照キャラクターシートの存在、画風、外見の類似、同名だけを根拠にオリジナルの登場人物を隠しません。原文で本人への意図的なモザイクを指定した場合は、その対象・領域だけに適用します。最終画像で対象と非対象の両方を確認してください。OpenAIシナリオモデルの初期選択は開発版・公開版ともGPT-6.1 Solです。
@@ -193,7 +193,9 @@ The latest-ten history keeps final selected images in session memory. After each
 
 1. In Settings → Downloads, turn “Ask where to save each file before downloading” OFF. This affects downloads from other sites too. / 設定 → ダウンロード →「ダウンロード前に各ファイルの保存場所を確認する」をOFFにします。他のサイトにも適用されます。
 2. In Site settings → Additional permissions → Automatic downloads, allow `http://localhost:5173`, `http://127.0.0.1:5173` and `https://furuyan1234.github.io`. / サイトの設定 → その他の権限 → 自動ダウンロードで、上記3つを「許可するサイト」に追加します。
-3. Use “Automatic save settings / free test” at the top of the app. It downloads two small test PNGs six seconds apart without an API call. Verify both files in Chrome's configured download folder. / アプリ上部の「自動保存の設定・無料テスト」から、6秒間隔で小さな確認PNGを2枚保存します。APIは使用しません。Chromeで指定した保存先に2枚ともあることを確認してください。
+3. Use “Automatic save settings / check” at the top of the app. Keep the dialog open for about 12 seconds while it requests two test PNGs, six seconds apart, without an API call. The images display “Super FURU AI 4-koma System”. Verify both files in Chrome's configured download folder. / アプリ上部の「自動保存の設定・動作確認」から、6秒間隔で確認PNGを2枚保存します。合計約12秒、この画面を開いたまま待ってください。画像には「Super FURU AI 4-koma System」と表示します。APIは使用しません。Chromeで指定した保存先に2枚ともあることを確認してください。
+
+The settings/check and single-image prompt buttons share a blue-gray background with white text. Embedded browsers may not save downloads; run the check in the Chrome browser you will actually use. / 設定・動作確認と1枚絵プロンプトのボタンは、青みのあるグレー地・白文字です。アプリ内ブラウザーでは保存できない場合があるため、実際に使うChromeで確認してください。
 
 `127.0.0.1` and `localhost` refer to the current PC on every computer. In the browser address bar, the number after the host's colon is the port (normally 5173). For example, if the app opens at `http://localhost:5174/`, also allow `http://localhost:5174`. / `127.0.0.1` と `localhost` は、どのPCでもそのPC自身を指します。ブラウザーのアドレス欄で、その後の「:」に続く番号がポート番号です（標準は5173）。例えば `http://localhost:5174/` で開いた場合は、`http://localhost:5174` も許可してください。
 
@@ -469,7 +471,7 @@ The copied prompt guides panel order, cast, speaker assignment, acting, camera, 
 The app provides separate download buttons for the workflow JSON and the custom-node ZIP. Both files are needed for this route. / アプリにはワークフローJSONとカスタムノードZIPのダウンロードボタンが別々にあります。この経路では両方のファイルが必要です。
 
 - [Download workflow JSON](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261005233427.json) / [ワークフローJSONをダウンロード](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261005233427.json)
-- [Download custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.9.9/ComfyUI_H3_FourPanel_NonLM_20261005233427_authfix1.zip) / [カスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.9.9/ComfyUI_H3_FourPanel_NonLM_20261005233427_authfix1.zip)
+- [Download custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.0.0/ComfyUI_H3_FourPanel_NonLM_20261005233427_authfix1.zip) / [カスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.0.0/ComfyUI_H3_FourPanel_NonLM_20261005233427_authfix1.zip)
 
 Place the ZIP's `3フォルダ` under `ComfyUI/custom_nodes/` and the workflow JSON under `ComfyUI/user/default/workflows/`. Install the separate dependencies below, then restart ComfyUI. / ZIP内の`3フォルダ`を`ComfyUI/custom_nodes/`へ、ワークフローJSONを`ComfyUI/user/default/workflows/`以下へ配置します。下記の別途必要な依存関係を導入してからComfyUIを再起動します。
 
@@ -521,7 +523,7 @@ Every deployment requires a fresh dependency audit, the shared security checks a
 
 **Why are there two ComfyUI download buttons? / ComfyUIのダウンロードボタンが2つあるのはなぜですか？**  The JSON defines the workflow, while the ZIP supplies three custom-node folders and documentation; three additional runtime dependencies are installed separately. / JSONはワークフロー定義、ZIPはカスタムノード3フォルダーと導入文書です。さらに実行依存3項目を別途導入します。
 
-**Which video package should I install? / 動画化には何を入れますか？** Use the `20261005233427` workflow JSON and matching v6.9.9 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261005233427` のワークフローJSONと対応するv6.9.9 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
+**Which video package should I install? / 動画化には何を入れますか？** Use the `20261005233427` workflow JSON and matching v7.0.0 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261005233427` のワークフローJSONと対応するv7.0.0 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
 
 **Is this the T2V/I2V/Ref2V repository? / T2V・I2V・Ref2Vのリポジトリですか？**  No. Those workflows are maintained separately in [comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows). / いいえ。それらは別の[comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows)で管理します。
 
@@ -596,6 +598,9 @@ The Covered Software is provided as is. To the extent permitted by law, operatio
 These are custom source-available terms. Restrictions on productization mean that they are not an open-source license under the OSI definition. / 本条件はソースコードを公開する独自の利用条件です。商品化等に制限があるため、OSIの定義によるオープンソースライセンスではありません。
 
 ## 📋 ChangeLog / 更新履歴
+
+### v7.0.0 (2026-10-09)
+- **[Fix & UX]** Unified secondary button colors and branded save-check images; verified two automatic downloads in Chrome. / 自動保存確認と1枚絵ボタンの配色を統一し、確認画像を正式アプリ名へ変更。Chromeで2枚の自動保存を確認。
 
 ### v6.9.9 (2026-10-09)
 - **[Fix & UX]** Automatically download final PNGs, choose an extra save location, and test Chrome download settings. Synchronize STEP1 reference numbering and recognition with JSON/PNG production records. / 最終画像の自動PNG保存と保存先選択、Chrome設定案内・無料保存テスト。STEP1の素材番号・認識表示と制作情報JSON/PNGを同期。

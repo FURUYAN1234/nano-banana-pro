@@ -556,5 +556,6 @@ body {
 .auto-save-guide ol { padding-left: 22px; margin: 6px 0; }
 .save-guide-button { display: block; width: 100%; border: 1px solid #aaa; border-radius: 0; padding: 3px 8px; margin: 6px 0; background: #fff; color: #000; font-size: 14px; cursor: pointer; }
 .save-guide-button:disabled { opacity: .6; cursor: wait; }
+.save-guide-secondary { background: #374151; color: #fff; border-color: #64748b; }
 .save-start-dialog { background: #0f1115; color: #fff; border: 1px solid #94a3b8; padding: 18px; width: min(620px, calc(100vw - 32px)); max-height: 85vh; overflow-y: auto; }
 .save-start-dialog::backdrop { background: #000a; }

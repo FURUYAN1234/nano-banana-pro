@@ -1,4 +1,4 @@
-Current candidate: v6.9.9. Root PLAN.md owns the live automatic PNG saving, STEP1/schema4 follow-up, official release, public Chrome verification, note/Facebook and inline-only X. Private evidence: output/step1-followup-api-20261009 (API metadata and auto-save subdirectories). The previous release and full backup are complete; do not repeat them. This task does not include a new backup or an extra paid image generation. See PLAN.md for current verification and delivery status; production callback tests, actual API evidence and ordinary Chrome downloads remain separately identified.
+Current candidate: v7.0.0. Root PLAN.md owns the authorized secondary-button/test-image update, official release, note/Facebook, inline-only X and subsequent full backup. Local Chrome saved both new branded PNGs; ordinary IAB saving did not, and tool-assisted downloads are excluded from that proof. User accepted Chrome verification and approved matching single-image button colors. No paid API generation needed. Evidence: output/save-check-presentation-20261009. The completed v6.9.9 release and backup must not be repeated.
 
 ## Current: 2026-10-07 v6.9.2 公開準備
 

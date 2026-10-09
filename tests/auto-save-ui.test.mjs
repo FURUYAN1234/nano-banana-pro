@@ -4,11 +4,11 @@ import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { createServer } from 'vite';
 
-let server, ControlBar, AutoSaveGuide;
+let server, ControlBar, AutoSaveGuide, AutoSaveSettingsButton;
 before(async () => {
   server = await createServer({ appType: 'custom', logLevel: 'silent', server: { middlewareMode: true, hmr: false } });
   ({ default: ControlBar } = await server.ssrLoadModule('/src/components/ControlBar.jsx'));
-  ({ default: AutoSaveGuide } = await server.ssrLoadModule('/src/components/AutoSaveGuide.jsx'));
+  ({ default: AutoSaveGuide, AutoSaveSettingsButton } = await server.ssrLoadModule('/src/components/AutoSaveGuide.jsx'));
 });
 after(async () => server?.close());
 const descendants = node => !node || typeof node !== 'object' ? [] : [node, ...[node.props?.children].flat(Infinity).flatMap(descendants)];
@@ -41,4 +41,26 @@ test('mode starts require the guide confirmation; cancellation never starts; sto
 test('shared guide includes all three origins, manual settings, free test and truthful download status', () => {
   const html = renderToStaticMarkup(React.createElement(AutoSaveGuide));
   for (const text of ['http://localhost:5173', 'http://127.0.0.1:5173', 'https://furuyan1234.github.io', 'OFF', 'API不使用', '保存先を選んで保存', '保存完了はダウンロード一覧']) assert.ok(html.includes(text), text);
+});
+
+test('save settings and download check use secondary styling with the current settings label', () => {
+  const settings = renderToStaticMarkup(React.createElement(AutoSaveSettingsButton));
+  const guide = renderToStaticMarkup(React.createElement(AutoSaveGuide));
+  assert.match(settings, /class="save-guide-button save-guide-secondary"/);
+  assert.ok(settings.includes('自動保存の設定・動作確認'));
+  assert.ok(!settings.includes('自動保存の設定・無料テスト'));
+  assert.match(guide, /class="save-guide-button save-guide-secondary"/);
+  assert.ok(guide.includes('アプリ内ブラウザーでは保存できない場合があります'));
+});
+
+test('single-image copy retains its action and uses the same secondary color in both states', t => {
+  t.mock.method(React, 'useState', () => [null, () => {}]);
+  for (const isPolicyCopied of [false, true]) {
+    const nodes = descendants(ControlBar({ selectedEngine: 'openai', enableOpenAIApi: true, isPolicyCopied }));
+    const copy = nodes.find(n => n.type === 'button' && n.props.title?.includes('1枚絵'));
+    assert.ok(copy);
+    assert.ok(copy.props.className.split(' ').includes('save-guide-secondary'));
+    assert.equal(typeof copy.props.onClick, 'function');
+    assert.ok(!copy.props.className.includes('bg-white'));
+  }
 });

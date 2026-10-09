@@ -1,25 +1,25 @@
 {
   "pricingSourceSha256": "616e60732cb269e9c8bace8ef1fa4ed40fdd92fcc6dcbc5b919a9a2f7db960cd",
-  "manualVersion": "6.9.9",
-  "manualSourceSha256": "77ace09b89edb40d97977665c5552f519c712bef4d8062cc6d1ee1949ab2bdb6",
+  "manualVersion": "7.0.0",
+  "manualSourceSha256": "e0fb8a010980e9e4eb0e83972005822dae47aa8a902b22e9aca928e1aa5886cc",
   "manualFiles": [
     {
       "name": "gemini-api-beginner-guide-2026-10-01.pdf",
-      "sha256": "6daa4f89cb9e08099c62c1cb18a8a29d9fba85a6ec0d1a102101416cef2bcf2c"
+      "sha256": "1e35326c55d065d8bd17ff21d31d3adab32839f98edb088e822c7b6dc1fc6d8d"
     },
     {
       "name": "openai-api-beginner-guide-2026-09-30.pdf",
-      "sha256": "cb5a1f4fba0a666bcabfa9f3d6f82236182abd5b1482fd35d45ab3c06f8fae45"
+      "sha256": "06e07acd000391c74bba676a7a48fdd3cbba38351c5e53ce90983ac00dcf6531"
     },
     {
       "name": "super-furu-ai-4koma-full-manual-2026-10-01.pdf",
-      "sha256": "2ea7c70b5671eecfe94a6a63ad1d9927047c942d2a3b83154f3ca9cdcaedcb12"
+      "sha256": "be271d90d1318612994cc572410b55e5df7e12b41e35d6f6358bfc50e964c75a"
     }
   ],
-  "readmeSha256": "9597dd98df31981d37d7563a5fb1d72aa8ae50f6252b6f9ee009794f3583da11",
-  "sourceTree": "8e49e8bd67a7db0c7a6f69bc8c219b687b7dac04",
-  "publicTree": "c012504a190c52c16a8d5e2210be0533b73c704c",
-  "packageSha256": "39e17835deac31084524c4170fc1202787081adf6edd98f825080a999f5c514b",
+  "readmeSha256": "60c06b4a957360f8c0a4f77cdaf45e804c551f928966086f867ca1b1c1536e22",
+  "sourceTree": "afbde8af597f523cb188821782e06c07e007dcf6",
+  "publicTree": "f2e0d7e3595267f5810c97435b99fd9e822af57a",
+  "packageSha256": "5df5f5760ebf844b2d3531961e2c70cf9f16ef35ab2954ef0f6295a605df4f15",
   "releaseAssetSha256": "9e41886be6afa0ebfad6d244ecf53f37260a92f73b30309319029cc87e1ddb4e",
   "reviewedSections": [
     "Application screen and output / 操作画面と生成例",
@@ -37,16 +37,16 @@
     "Terms & Output Rights / 利用条件・作品の権利",
     "📋 ChangeLog / 更新履歴"
   ],
-  "findings": "Reviewed all current README sections against preserved generation/model/QA routes, current reference lifecycle and STEP1/STEP4 changes. Synchronized thumbnail hover numbers, one compact recognition/cast scroll area, schema4 reference recognition/manual edits/cast/panorama snapshots, exact Web copy text and immutable API provenance. Updated final-image automatic saving in manual/full-auto/endless modes, extra destination picker, cancellation, unsupported-browser fallback, deduplication, stale/stop boundaries, setup dialog, free two-file test, three origins and address-bar port lookup. Replaced stale current manual/footer versions; historical versions retained. Existing output examples are explicitly older; external Web images remain outside app autosaving. Chrome disk completion is not claimed by application logs. Unchanged prompt/model/ComfyUI/terms descriptions remain consistent with the unchanged implementations and assets. Whole linked note body inspected before release; corresponding body edits and public readback follow deployment.",
-  "manualFindings": "All three v6.9.9 PDFs regenerated: Gemini13, system35 and OpenAI22 pages. All contact sheets visually reviewed; final system pages5 and35 re-rendered and inspected after recognition and port-lookup edits. Removed literal br markup, confirmed no overflow/clipping and readable URL/port example. Metadata snapshot and automatic/manual save descriptions match implementation; old screenshots remain labelled. Copied exact reviewed PDFs to public/downloads and verified byte equality and SHA256.",
+  "findings": "Reviewed current README sections and current public note body against the candidate. Source diff is limited to secondary button colors, test-image branding, save-guide wording and version; generation, reference, provider, metadata, terms and distribution routines retain the previously reviewed behavior. Updated current versions, Release asset links, the settings/check label, official test image name, approximately 12-second wait and embedded-browser limitation. Local ordinary Chrome saved both new PNGs without a download receiver; IAB requests alone did not. Public verification and note body synchronization follow the official release. Historical release records and labelled older examples retained.",
+  "manualFindings": "All three v7.0.0 PDFs regenerated with bundled Python: Gemini13, system35, OpenAI22 pages. All13 contact sheets visually inspected; current version labels, updated system page35 settings/test guidance and OpenAI page17 label are readable with no clipping/overlap. Automated A4/text-bounds/privacy/link checks pass. Exact reviewed PDFs copied to public/downloads.",
   "pricingReview": {
-    "version": "6.9.9",
+    "version": "7.0.0",
     "sourceSha256": "616e60732cb269e9c8bace8ef1fa4ed40fdd92fcc6dcbc5b919a9a2f7db960cd",
-    "checkedAt": "2026-10-09T04:19:51.669Z",
+    "checkedAt": "2026-10-09T11:26:34.372Z",
     "sources": [
       "https://developers.openai.com/api/docs/pricing",
       "https://ai.google.dev/gemini-api/docs/pricing"
     ],
-    "findings": "Both official pricing pages re-read on2026-10-09 for v6.9.9; earlier same-day timestamp retained conservatively. Standard GPT-6.1 Sol2/10, Astra10/50,Luna0.10/0.50 USD/M; Sunburst/Flare image8/cached2/output30,text5/cached1.25. Exact Gemini3.8 Flash heading confirms0.75/3.75 through2026-12-31. Nano Banana2.1 input1.50,text-thinking7.50,image30,1K0.0336/2K0.0504/4K0.113. Batch rates separate. Price source bytes unchanged."
+    "findings": "Both official pages re-read for v7.0.0 on2026-10-09. Standard GPT-6.1 Sol2/10,Astra10/50,Luna0.10/0.50 USD/M; Sunburst/Flare image8/cached2/output30,text5/cached1.25. Gemini3.8 Flash0.75/3.75 through2026-12-31; Nano Banana2.1 input1.50,text-thinking7.50,image30,1K0.0336/2K0.0504/4K0.113. Batch pricing is separate; current price configuration remains unchanged."
   }
 }
