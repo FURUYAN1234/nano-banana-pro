@@ -229,7 +229,7 @@ test('OpenAI generation binds initial references and the actual repair source', 
   assert.match(workflowSource, /backgroundImage:\s*bg360Image/);
   assert.match(workflowSource, /backgroundEnabled:\s*bg360Enabled/);
   assert.match(workflowSource, /originalCandidate:\s*repairSource/);
-  assert.match(workflowSource, /appendOpenAIReferencePrompt\(prompt, referencePlan\)/);
+  assert.match(workflowSource, /appendOpenAIReferencePrompt\(applyOpenAIImageEngineWatermark\(prompt, openAIImageQuality\), referencePlan\)/);
   assert.match(workflowSource, /imageInputs:\s*referencePlan\.imageInputs/);
   assert.match(workflowSource, /sourceCandidate = originalCandidate/);
   assert.match(workflowSource, /repairSource:\s*isOpenAIEngine\s*\?\s*sourceCandidate\s*:\s*null/);

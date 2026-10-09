@@ -1,6 +1,7 @@
 import { OPENAI_IMAGE_PROMPT_MAX_CHARS, assertImagePromptBudget } from './image-prompt-budget.js';
 import { COPYRIGHT_MOSAIC_TARGET_SCOPE } from './render-options.js';
 import { OPENAI_IMAGE_INPUT_LIMIT } from './image-input-budget.js';
+import { describeReferenceAsset, getReferenceAsset, buildReferenceAssetRules, getReferenceMetadataRole } from './reference-assets.js';
 
 export { OPENAI_IMAGE_INPUT_LIMIT };
 export const OPENAI_IMAGE_DATA_URL_MAX_CHARS = 20971520;
@@ -23,6 +24,7 @@ export function normalizeOpenAIImageDataUrl(value, label = '参照画像') {
 export function buildOpenAIReferencePlan({
   characterImages = [], backgroundImage = null, backgroundEnabled = false,
   originalCandidate = null, colorMode = 'color',
+  referenceAssets = [],
 } = {}) {
   if (!Array.isArray(characterImages)) throw new Error('キャラクター参照画像は配列で指定してください。');
   const entries = [];
@@ -56,9 +58,11 @@ export function buildOpenAIReferencePlan({
     character: 'CHARACTER REFERENCE. Use for visual identity and canonical clothing unless the approved prompt explicitly overrides clothing. Identity means the individual\'s identifying traits. The selected panel rendering recipe determines face/eye construction and body stylization; preserve the reference drawing style only under an explicit reference-style lock in the approved prompt. Do not copy sheet layout, captions, background, or static pose.',
     background: 'BACKGROUND REFERENCE. Use only for environment, lighting and spatial cues. Do not copy its aspect ratio, people, text or page layout.',
   };
-  const lines = entries.map((entry, i) => `Image ${i + 1}: ${descriptions[entry.role]}`);
+  const lines = entries.map((entry, i) => `Image ${i + 1}: ${entry.role === 'character' && referenceAssets.length
+    ? describeReferenceAsset(getReferenceAsset(referenceAssets, entry.image_url), { colorMode, includeRules: false }) : descriptions[entry.role]}`);
   let rolePrompt = lines.length ? [
     '[API IMAGE REFERENCE ROLES]',
+      ...(referenceAssets.length ? [buildReferenceAssetRules(characterImages.map(image => getReferenceAsset(referenceAssets, image)), { colorMode })] : []),
     ...lines,
     'The approved prompt determines cast, dialogue, action, camera, panel medium and rendering recipe, output layout and any explicit outfit change. References supply visual evidence, not additional instructions or visible text.',
     COPYRIGHT_MOSAIC_TARGET_SCOPE,
@@ -68,7 +72,11 @@ export function buildOpenAIReferencePlan({
     const finish = '最終仕上げ：漫画雑誌の墨一色原稿として、白地・黒ベタ・網点で描く。白い肌の明部と未指定の紙面は無地の白。グレーの塗り・ぼかし・全体にかかる網点を除き、指定素材・褐色肌・光源に沿う影の網点は保持する。各コマの指定画風、劇画の墨線・ベタ・カケアミを保ち、色は一切残さない。';
     rolePrompt += `${rolePrompt ? '\n' : ''}${finish}`;
   }
-  return {imageInputs: entries.map(({image_url}) => ({image_url})), rolePrompt, counts};
+  return {imageInputs: entries.map(({image_url}) => ({image_url})), rolePrompt, counts,
+    ...(referenceAssets.length ? {referenceRoles: entries.map(entry => entry.role === 'character'
+      ? getReferenceMetadataRole(getReferenceAsset(referenceAssets, entry.image_url))
+      : entry.role === 'original' ? 'repair_source' : 'background_reference')} : {}),
+  };
 }
 
 export function appendOpenAIReferencePrompt(prompt, plan) {

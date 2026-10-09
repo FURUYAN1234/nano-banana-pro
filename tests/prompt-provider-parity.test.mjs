@@ -23,8 +23,8 @@ test('web copy and API generation preserve the same prompt body and OpenAI refer
   );
   assert.match(
     workflowSource,
-    /const apiPrompt = appendOpenAIReferencePrompt\(prompt, referencePlan\);[\s\S]*?generateImageWithOpenAI\(apiPrompt,/,
-    'OpenAI may append reference roles without rewriting the approved body'
+    /const apiPrompt = appendOpenAIReferencePrompt\(applyOpenAIImageEngineWatermark\(prompt, openAIImageQuality\), referencePlan\);[\s\S]*?generateImageWithOpenAI\(apiPrompt,/,
+    'OpenAI may synchronize the selected engine credit and append reference roles; content preservation is covered by watermark behavioral tests'
   );
   assert.match(
     workflowSource,
@@ -74,6 +74,6 @@ test('prompt assembly only branches by Gemini-family vs ChatGPT-family, not Web 
     /\b(?:setWebPrompt|setApiPrompt|setPromptForWeb|setPromptForApi)\b/i,
     'workflow must not introduce separately editable Web/API prompt state'
   );
-  assert.match(workflowSource, /appendOpenAIReferencePrompt\(prompt, referencePlan\)/);
+  assert.match(workflowSource, /appendOpenAIReferencePrompt\(applyOpenAIImageEngineWatermark\(prompt, openAIImageQuality\), referencePlan\)/);
   assert.doesNotMatch(workflowSource, /setFinalPrompt\(\s*apiPrompt\s*\)/);
 });

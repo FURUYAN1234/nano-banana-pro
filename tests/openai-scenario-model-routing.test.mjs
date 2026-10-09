@@ -11,7 +11,7 @@ test('only STEP2 generation and enhancement request the dedicated scenario route
   );
   assert.match(
     source,
-    /callAI\(prompt, \[\], buildScenarioCastContext\(castList\), onProgress, \{[\s\S]*?timeoutMs: STEP2_TEXT_TIMEOUT_MS,[\s\S]*?modelRoute: 'scenario',[\s\S]*?scenarioModelId[\s\S]*?\}\)/
+    /callAI\(prompt, \[\], \[buildScenarioCastContext\(castList\), referenceAssetContext\]\.filter\(Boolean\)\.join\('\\n\\n'\), onProgress, \{[\s\S]*?timeoutMs: STEP2_TEXT_TIMEOUT_MS,[\s\S]*?modelRoute: 'scenario',[\s\S]*?scenarioModelId[\s\S]*?\}\)/
   );
   assert.doesNotMatch(source, /callAI\(cameraWorkPrompt, \[bg360ImageParts\], null, onCameraProgress, \{[^}]*modelRoute: 'scenario'/);
 });

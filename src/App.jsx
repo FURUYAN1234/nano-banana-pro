@@ -79,6 +79,10 @@ function App() {
     hardReset,
     imageResultRef,
     images,
+    referenceAssets,
+    recognitionText,
+    setRecognitionText,
+    referenceEditorError,
     imageInputBudget,
     imageInputError,
     inputMode,
@@ -348,12 +352,14 @@ function App() {
               isAnalyzing={isAnalyzing}
               analysisProgressRef={step1ProgressRef}
               images={images}
+              referenceAssets={referenceAssets}
+              recognitionText={recognitionText}
+              setRecognitionText={setRecognitionText}
+              referenceEditorError={referenceEditorError}
               setImages={setImages}
               bg360Image={bg360Image}
               bg360Enabled={bg360Enabled}
               analyzeThought={analyzeThought}
-              castList={castList}
-              setCastList={setCastList}
               isCastListCopied={isCastListCopied}
               setIsCastListCopied={setIsCastListCopied}
               styleJson={styleJson}

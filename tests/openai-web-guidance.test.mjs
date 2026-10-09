@@ -6,7 +6,7 @@ const readme = readFileSync(new URL('../README.md', import.meta.url), 'utf8');
 
 test('Web guidance explains savings and the separate API bill', () => {
   assert.match(ui, /API画像生成料金を節約したい/);
-  assert.match(ui, /サブスク料金とは別会計/);
+  assert.match(ui, /サブスク料金とは別(?:会計|です)/);
   assert.match(ui, /利用枠・上限/);
   assert.match(ui, /キャラ解析・シナリオ生成などのAPI料金/);
   assert.doesNotMatch(ui, /画像を直接添付できないため/);

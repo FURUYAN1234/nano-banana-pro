@@ -1,3 +1,4 @@
+import { applyOpenAIImageEngineWatermark } from '../src/lib/openai-image-settings.js';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
@@ -7,6 +8,7 @@ import { retryImagePolicyGeneration } from '../src/lib/image-policy-retry.js';
 import { assertRenderOptions, buildRenderOptionsContract } from '../src/lib/render-options.js';
 import { assertPrintableDialogue } from '../src/lib/bubble-text.js';
 import { assertPromptEndingModeConsistency } from '../src/lib/ending-mode-policy.js';
+import { buildReferenceAssetContext } from '../src/lib/reference-assets.js';
 
 const source = await readFile(new URL('../src/hooks/useMangaWorkflow.js', import.meta.url), 'utf8');
 const step2 = await readFile(new URL('../src/components/Step2Panel.jsx', import.meta.url), 'utf8');
@@ -28,6 +30,8 @@ function deferred() {
 
 function harness(overrides = {}) {
   const state = {
+    referenceEditorError: '',
+    buildReferenceAssetContext, referenceAssetsRef: { current: [] }, imagesRef: { current: [] },
     beginApiWork, cancelApiWork, is360Analyzing: false, isAnalyzingRef: { current: false }, analyzeThought: '',
     scenario: 'Original scenario with enough text for enhancement', castList: 'Reference cast with sufficient detail',
     originalScenario: '', scenarioThought: '', enhanceLog: '', genLog: [], finalPrompt: 'Original prompt',
@@ -48,7 +52,7 @@ function harness(overrides = {}) {
     customLocation: '', customOutfit: '', punchlineType: 'Auto',
     bg360Image: null, bg360Analysis: null, bg360Enabled: false, bg360ImageParts: [],
     styleJson: {}, scenarioModelId: 'unchanged', mosaicCopyrightedCharacters: true,
-    isOpenAIEngine: true, selectedEngine: 'chatgpt', policyErrorMsg: 'policy refusal', MAX_POLICY_RETRIES: 5,
+    isOpenAIEngine: true, applyOpenAIImageEngineWatermark, openAIImageQuality: 'sunburst-max', selectedEngine: 'chatgpt', policyErrorMsg: 'policy refusal', MAX_POLICY_RETRIES: 5,
     updateResolvedPunchlineType: () => {}, showStatus: () => {},
     validateMangaScenario: () => ({ ok: true }), formatGeneratedMangaTitle: title => title,
     translateApiError: error => error.message, console: { error: () => {} },

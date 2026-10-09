@@ -4,6 +4,9 @@ import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 import { beginApiWork } from '../src/lib/api-work-cancellation.js';
 import { assertImageInputBudget } from '../src/lib/image-input-budget.js';
+import { buildReferenceAssetContext } from '../src/lib/reference-assets.js';
+import { formatOpenAIImageEngineName } from '../src/lib/openai-image-settings.js';
+import { GEMINI_IMAGE_MODEL } from '../src/lib/gemini-image-settings.js';
 
 const workflow = readFileSync(new URL('../src/hooks/useMangaWorkflow.js', import.meta.url), 'utf8');
 const assembly = workflow.slice(workflow.indexOf('const assemblePrompt ='), workflow.indexOf('// [v3.04]'));
@@ -11,7 +14,7 @@ const assembly = workflow.slice(workflow.indexOf('const assemblePrompt ='), work
 test('STEP3 rejects an over-budget legacy session before starting API work', async () => {
   for (const [count, background] of [[15, false], [11, true]]) {
     let calls = 0; let error = '';
-    const context = { assertImageInputBudget,
+    const context = { assertImageInputBudget, referenceEditorError: '',
       imagesRef:{current:Array.from({length:count}, (_, i) => `sheet-${i}`)}, bg360EnabledRef:{current:background},
       beginApiWork:()=>{calls++;}, setImageInputError:value=>{error=value;}, showStatus:()=>{} };
     vm.createContext(context);
@@ -27,7 +30,10 @@ test('scenario invalidation releases STEP3 and an old review cannot unlock or ov
   let active = false;
   let output = '';
   const context = {
+    referenceEditorError: '',
+    formatOpenAIImageEngineName, GEMINI_IMAGE_MODEL, openAIImageQuality: 'sunburst_max', translateApiError: error => error.message,
     beginApiWork,
+    buildReferenceAssetContext, referenceAssetsRef: { current: [] },
     assertImageInputBudget, imagesRef:{current:[]}, bg360EnabledRef:{current:false}, setImageInputError:()=>{},
     scenarioRunEpochRef:{current:0}, promptAssemblyRunRef:{current:0}, promptAssemblyAbortRef:{current:null},
     scenario:'fixture scenario', castList:'fixture cast', collectCastNameEntries:()=>[], validateMangaScenario:()=>({ok:true}),

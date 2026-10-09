@@ -288,6 +288,7 @@ export const parseScenarioResponse = (result, {
  */
 export async function generateScenario({
   recentScenarios = [],
+  referenceAssetContext = '',
   mosaicCopyrightedCharacters = true,
   castList,
   categories,
@@ -417,7 +418,7 @@ export async function generateScenario({
 
   // 4. シナリオプロンプトの構築とAPI呼び出し
   const seasonContext = getSeasonContext({ targetDate, inputMode });
-  const scenarioCastContext = buildScenarioCastContext(castList);
+  const scenarioCastContext = [buildScenarioCastContext(castList), referenceAssetContext].filter(Boolean).join('\n\n');
   // Generated roles/location cannot serve as evidence for their own wardrobe.
   const wardrobeSourceText = [
     inputMode === 'manual' ? manualTopic : randomCategory,
@@ -693,6 +694,7 @@ ${parsedData.scenario}
  */
 export async function enhanceScenarioText({
   scenario,
+  referenceAssetContext = '',
   selectedCategories,
   punchlineType,
   castList,
@@ -713,7 +715,7 @@ export async function enhanceScenarioText({
         validationIssues
       }),
     requestEnhancement: async (prompt) => {
-      const result = await callAI(prompt, [], buildScenarioCastContext(castList), onProgress, {
+      const result = await callAI(prompt, [], [buildScenarioCastContext(castList), referenceAssetContext].filter(Boolean).join('\n\n'), onProgress, {
         timeoutMs: STEP2_TEXT_TIMEOUT_MS,
         modelRoute: 'scenario',
         scenarioModelId

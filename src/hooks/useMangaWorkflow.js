@@ -12,7 +12,8 @@ import { buildImageEditRequest } from '../lib/image-edit.js';
 import { formatApiErrorGuide } from '../lib/api-errors.js';
 import { generateImageWithOpenAI, setOpenAIApiKey } from '../lib/openai';
 import {buildOpenAIReferencePlan, appendOpenAIReferencePrompt, getOpenAIPromptBodyBudget} from '../lib/openai-image-references.js';
-import {buildGeminiReferencePlan, buildGeminiImageApiPrompt} from '../lib/gemini-image-references.js';
+import {buildGeminiReferencePlan, buildGeminiImageApiPrompt, appendGeminiReferencePrompt} from '../lib/gemini-image-references.js';
+import { buildReferenceAnalysisPrompt, parseReferenceAnalysis, buildReferenceAssetContext, buildWebReferencePlan, buildRecognitionEditorText, parseRecognitionEditorText } from '../lib/reference-assets.js';
 import { getImageInputBudget, assertImageInputBudget, planImageAddition } from '../lib/image-input-budget.js';
 import { callAI, setActiveEngine } from '../lib/ai-provider';
 import { reviewComedyPrompt } from '../lib/comedy-review';
@@ -63,7 +64,7 @@ import {
 } from '../lib/image-quality-qa';
 import { buildImageFailureAnalysisPrompt, formatImageQualityStopReason, GEMINI_IMAGE_REPAIR_PROMPT_MAX_CHARS, inferImageQualityMode, isMaterialImageQualityIssue, runImageQualityFailsafe } from '../lib/image-quality-failsafe';
 import { getEffectiveEngine } from '../lib/engine-state';
-import { DEFAULT_OPENAI_IMAGE_QUALITY, DEFAULT_OPENAI_IMAGE_SIZE, normalizeOpenAIImageSize, normalizeOpenAIImageQuality, resolveOpenAIImageOption, selectInitialOpenAIImageQuality, isOpenAIImageVerificationError, OPENAI_IMAGE_VERIFICATION_MESSAGE } from '../lib/openai-image-settings.js';
+import { DEFAULT_OPENAI_IMAGE_QUALITY, DEFAULT_OPENAI_IMAGE_SIZE, normalizeOpenAIImageSize, normalizeOpenAIImageQuality, resolveOpenAIImageOption, formatOpenAIImageEngineName, applyOpenAIImageEngineWatermark, selectInitialOpenAIImageQuality, isOpenAIImageVerificationError, OPENAI_IMAGE_VERIFICATION_MESSAGE } from '../lib/openai-image-settings.js';
 import { DEFAULT_OPENAI_SCENARIO_MODEL_ID, OPENAI_SCENARIO_MODEL_OPTIONS, OPENAI_SCENARIO_TEXT_MODEL_IDS } from '../lib/openai-model-routes.js';
 
 export default function useMangaWorkflow() {
@@ -172,10 +173,24 @@ export default function useMangaWorkflow() {
   // getModelBadgeInfo → src/lib/constants.js に移動済み
   const [images, setImagesState] = useState([]);
   const imagesRef = useRef([]);
+  const [referenceAssets, setReferenceAssetsState] = useState([]);
+  const referenceAssetsRef = useRef([]);
+  const [recognitionDraft, setRecognitionDraft] = useState(null);
+  const [referenceEditorError, setReferenceEditorError] = useState('');
+  const setReferenceAssets = (assets) => {
+    referenceAssetsRef.current = assets;
+    setReferenceAssetsState(assets);
+  };
   const setImages = (value) => {
     const next = typeof value === 'function' ? value(imagesRef.current) : value;
     imagesRef.current = next;
     setImagesState(next);
+    setRecognitionDraft(null);
+    setReferenceEditorError('');
+    setReferenceAssets(next.map(image => referenceAssetsRef.current.find(asset => asset.image === image)
+      || { image, items: [{ kind: 'unknown', name: '未解析の素材', description: 'AIによる素材認識は未確認。台本に合う視覚情報だけを使用する。' }] }));
+    invalidatePromptAssembly();
+    setFinalPrompt('');
     setImageInputError('');
   };
   const [imageInputError, setImageInputError] = useState('');
@@ -307,7 +322,24 @@ export default function useMangaWorkflow() {
   }, [genLog]);
 
   // Logic centralization for v1.4.9
-  const isAssembleDisabled = isAssembling || !castList || castList.length < 20 || !scenario || scenario.length < 20 || isSearching || isAnalyzing; // [v1.8.83] Relaxed limits from 50 to 20
+  const isAssembleDisabled = isAssembling || !castList || castList.length < 20 || !scenario || scenario.length < 20 || isSearching || isAnalyzing || Boolean(referenceEditorError);
+
+  const recognitionPanorama = bg360Enabled && bg360Analysis ? bg360Analysis : null;
+  const recognitionText = recognitionDraft ?? buildRecognitionEditorText(castList, referenceAssets, images, recognitionPanorama);
+  const setRecognitionText = (text) => {
+    setRecognitionDraft(text);
+    try {
+      const parsed = parseRecognitionEditorText(text, imagesRef.current, recognitionPanorama);
+      setCastList(parsed.castList);
+      setReferenceAssets(parsed.assets);
+      if (parsed.background) setBg360Analysis(parsed.background);
+      setReferenceEditorError('');
+      invalidatePromptAssembly();
+      setFinalPrompt('');
+    } catch (error) {
+      setReferenceEditorError(error.message);
+    }
+  };
 
   // Image Generation
   const [generatedImage, setGeneratedImage] = useState("");
@@ -502,7 +534,7 @@ export default function useMangaWorkflow() {
     const currentCastList = castList;
 
     setIsAnalyzing(true);
-    setAnalyzeThought("キャラクター解析プロトコルを開始しました...\n> ピクセルデータをスキャン中...\n> キャラクター形態を識別中...");
+    setAnalyzeThought('制作素材の認識を開始しました。人物・表情集・三面図・背景・小物をまとめて確認します。');
 
     // [v2.44] フェイクストリーミング＋経過時間表示（フォールバック待ち中にハングアップに見えない対策）
     // モデルフォールバック時もタイマーが継続するように、APIコールバック後も常に経過時間を更新する
@@ -510,16 +542,6 @@ export default function useMangaWorkflow() {
     const thinkTimer = setInterval(() => {
       thinkTickCount++;
       setAnalyzeThought(prev => {
-        // 最初の10回（8秒間）はフェイクメッセージ
-        if (thinkTickCount <= 10) {
-          const messages = [
-            ".", ".", ".",
-            "\n> 顔の特徴点を抽出中...",
-            "\n> 髪型トポロジーを解析中...",
-            "\n> ファッション属性を検出中...",
-          ];
-          return prev + messages[Math.floor(Math.random() * messages.length)];
-        }
         // それ以降は経過時間をカウンター表示（上書き方式で行を増やさない）
         const elapsed = Math.floor(thinkTickCount * 0.8);
         // 既存の経過表示行を更新（なければ追加）
@@ -625,8 +647,8 @@ export default function useMangaWorkflow() {
       // 360度画像のみドロップされた場合はキャラシート解析をスキップ
       clearInterval(thinkTimer);
       setIsAnalyzing(false);
-      setAnalyzeThought(prev => prev + `\n> 🌐 360°背景画像のみが検出されました。キャラクターシートも一緒にドロップしてください。`);
-      showStatus('360°背景画像を検出しました。キャラクターシートを追加してください。');
+      setAnalyzeThought(prev => prev + `\n> 🌐 360°背景の取り込み処理が終了しました。通常素材は保持され、後から追加もできます。`);
+      showStatus('360°背景の取り込み処理が終了しました。通常素材は後から追加できます。');
       return;
     }
     if (imageArray.length === 0) {
@@ -638,10 +660,11 @@ export default function useMangaWorkflow() {
       return;
     }
 
-    showStatus(`思考モード: ${imageArray.length}枚のキャラクター設定画を同時解析中...${detected360File ? '（+ 360°背景1枚検出済み）' : ''}`);
+    const analysisImages = addition.images;
+    showStatus(`制作素材${analysisImages.length}枚をまとめて認識中...${detected360File ? '（+ 360°背景1枚検出済み）' : ''}`);
 
       // Map all images to Gemini API parts
-      const imageParts = imageArray.map(img => {
+      const imageParts = analysisImages.map(img => {
         const base64Data = img.split(',')[1];
         const mimeType = img.split(';')[0].split(':')[1];
         return {
@@ -650,10 +673,7 @@ export default function useMangaWorkflow() {
       });
 
       // キャラクター解析プロンプト（テンプレートは prompts.js に外部化済み）
-      let prompt = getCharacterAnalysisPrompt();
-      if (currentCastList && currentCastList.trim().length > 10) {
-        prompt += `\n\n\n【最重要: 既存キャストリストのマージ指示】\n現在、すでに以下のキャストリストが存在します。\n既存のキャラクターの設定や、ユーザーによる手動修正内容を一切変更・削除することなく維持してください。\n今回新しく提供された画像から解析された新キャラクターの情報を、既存のフォーマットに合わせて重複しないように末尾に追加（マージ）した、最終的なキャストリストを出力してください。\n既存のキャラクターが今回追加された画像と同一であると明確に判断できる場合は、既存の設定に新しい特徴をマージ・追記しても構いませんが、基本的には既存の情報を消さないでください。\n\n【既存のキャストリスト】\n${currentCastList}`;
-      }
+      const prompt = buildReferenceAnalysisPrompt(getCharacterAnalysisPrompt(), analysisImages.length, currentCastList);
 
       const result = await callAI(prompt, imageParts, null, (msg) => {
         if (inputEpoch === scenarioRunEpochRef.current) setAnalyzeThought(prev => prev + `\n> ${msg}`);
@@ -663,7 +683,13 @@ export default function useMangaWorkflow() {
         showStatus('解析中にキャストが編集されたため、解析結果の上書きを中止しました。必要なら画像を再解析してください。');
         return;
       }
-      setCastList(result.text);
+      const analysis = parseReferenceAnalysis(result.text, analysisImages, currentCastList);
+      if (analysisImages.length !== imagesRef.current.length || analysisImages.some((image, index) => image !== imagesRef.current[index])) {
+        showStatus('解析中に素材が変更されたため、結果の上書きを中止しました。必要なら素材を再解析してください。');
+        return;
+      }
+      setReferenceAssets(analysis.assets);
+      setCastList(analysis.castList);
       setUsedModel(result.model); // [v1.7.0] Track Model
       // [v2.42] 蓄積ログを保持し、完了メッセージとThinking Traceを追記（上書きしない）
       setAnalyzeThought(prev => {
@@ -673,7 +699,7 @@ export default function useMangaWorkflow() {
           : "> 通常処理が完了しました（思考トレースは利用不可）。";
         return prev + separator + thoughtTrace;
       });
-      showStatus("全キャラクターの解析が完了しました。");
+      showStatus('素材の認識が完了しました。認識結果をシナリオ・描画指示・Web貼付文へ引き継ぎます。');
 
       // [v2.78] フルオート武装中なら自動的にSTEP2→3→4を開始
       if (isFullAutoModeRef.current) {
@@ -713,6 +739,7 @@ export default function useMangaWorkflow() {
   // --- Step 2.5: Scenario Enhancement (v2.41) ---
   // シナリオ強化機能: 選択されたカテゴリに基づいてシナリオの演出を強化する
   const enhanceScenario = async () => {
+    if (referenceEditorError) return showStatus(referenceEditorError);
     beginApiWork();
     if (!scenario || scenario.length < 20) return showStatus("先にシナリオを生成してください。");
     const anySelected = enhanceExpressions || enhanceBodyLang || enhanceEffects || enhanceBackgrounds || enhanceCameraWork || enhanceDialogue || enhanceGag;
@@ -760,6 +787,7 @@ export default function useMangaWorkflow() {
       setEnhanceLog(prev => prev + `\n> [API] ${isOpenAIEngine ? 'OpenAI' : 'Gemini'} にシナリオ強化をリクエスト中...`);
       const result = await enhanceScenarioText({
         scenario,
+        referenceAssetContext: buildReferenceAssetContext(referenceAssetsRef.current, imagesRef.current, { panorama: bg360Enabled ? bg360Analysis : null }),
         selectedCategories,
         punchlineType: resolvedPunchlineTypeRef.current || punchlineType,
         castList,
@@ -822,6 +850,7 @@ export default function useMangaWorkflow() {
 
   // --- Step 2: Scenario ---
   const generateScenarioFromNews = async (categoriesOverride, inputModeOverride = null) => {
+    if (referenceEditorError) return showStatus(referenceEditorError);
     beginApiWork();
     if (!castList) return showStatus("先にキャラクターを解析してください。");
     if (isSearching) return;
@@ -889,6 +918,7 @@ export default function useMangaWorkflow() {
         mosaicCopyrightedCharacters,
         castList,
         categories: effectiveCategories,
+        referenceAssetContext: buildReferenceAssetContext(referenceAssetsRef.current, imagesRef.current, { panorama: bg360Enabled ? bg360Analysis : null }),
         inputMode: effectiveInputMode,
         manualTopic,
         searchTopic,
@@ -966,7 +996,7 @@ export default function useMangaWorkflow() {
       const punchlineLine = result.punchline ? `\nPunchline: ${result.punchline}` : '';
       const bg360HeaderLine = bg360Image
         ? (bg360Enabled
-          ? `\n🌐 360°背景: ON (${bg360Analysis?.location || '解析済み'} / ${bg360Analysis?.spatialType === 'indoor' ? '室内' : bg360Analysis?.spatialType === 'outdoor' ? '屋外' : '複合'}) — 添付ファイル: キャラシート＋360°画像`
+          ? `\n🌐 360°背景: ON (${bg360Analysis?.location || '解析済み'} / ${bg360Analysis?.spatialType === 'indoor' ? '室内' : bg360Analysis?.spatialType === 'outdoor' ? '屋外' : '複合'}) — 添付ファイル: STEP1の参照素材＋360°背景画像`
           : `\n🌐 360°背景: OFF — 背景はAIが自由選定 / 添付ファイル: キャラシートのみ`)
         : '';
 
@@ -1103,6 +1133,7 @@ export default function useMangaWorkflow() {
   const assemblePrompt = async (skipGuard = false, overrideScenario = null, providerFamilyOverride = null) => {
     try {
       assertImageInputBudget({ characterImages: imagesRef.current, backgroundEnabled: bg360EnabledRef.current });
+      if (referenceEditorError) throw new Error(referenceEditorError);
     } catch (error) {
       setImageInputError(error.message);
       showStatus(error.message);
@@ -1154,6 +1185,7 @@ export default function useMangaWorkflow() {
       const promptMaxChars = effectiveProviderFamily === PROMPT_PROVIDER_FAMILIES.CHATGPT
         ? getOpenAIPromptBodyBudget(buildOpenAIReferencePlan({
           characterImages: images, backgroundImage: bg360Image, backgroundEnabled: bg360Enabled,
+          referenceAssets: referenceAssetsRef.current,
           colorMode,
         }))
         : undefined;
@@ -1165,12 +1197,14 @@ export default function useMangaWorkflow() {
         castList,
         colorMode,
         providerFamily: effectiveProviderFamily,
+        referenceAssetContext: buildReferenceAssetContext(referenceAssetsRef.current, imagesRef.current, { panorama: bg360Enabled ? bg360Analysis : null }),
         bg360Image,
         bg360Analysis,
         bg360Enabled,
         bg360CroppedPanels,
         punchlineType: activePunchlineType,
         systemVersion: SYSTEM_VERSION,
+        imageEngineLabel: effectiveProviderFamily === PROMPT_PROVIDER_FAMILIES.CHATGPT ? formatOpenAIImageEngineName(openAIImageQuality) : GEMINI_IMAGE_MODEL.replace(/^gemini-nano-banana-/, 'Gemini Nano Banana '),
         scenarioModelLabel: OPENAI_SCENARIO_MODEL_OPTIONS.find(({ id }) => id === scenarioUsedModelRef.current)?.label,
         allowScenarioQualityWarning: true,
         promptMaxChars
@@ -1435,13 +1469,17 @@ export default function useMangaWorkflow() {
   // Use the same complete text as the initial API request, including image roles.
   // Validate again at copy time because the user may edit the text or references.
   const prepareWebCopyPrompt = (prompt) => {
+    if (referenceEditorError) throw new Error(referenceEditorError);
     if (inferImageQualityMode(prompt) === 'four-panel') assertRenderOptions(prompt, { mosaicCopyrightedCharacters, showWatermarks, protectedCast: collectCastNameEntries(castList).map(entry => entry.displayName) });
     return ensureWebPromptTrailingNewline(getCurrentPromptProviderFamily() === PROMPT_PROVIDER_FAMILIES.CHATGPT
-      ? appendOpenAIReferencePrompt(prompt, buildOpenAIReferencePlan({
+      ? appendOpenAIReferencePrompt(applyOpenAIImageEngineWatermark(prompt, openAIImageQuality), buildOpenAIReferencePlan({
         characterImages: images, backgroundImage: bg360Image, backgroundEnabled: bg360Enabled,
+        referenceAssets: referenceAssetsRef.current,
         colorMode,
       }))
-      : prompt);
+      : appendGeminiReferencePrompt(prompt, buildWebReferencePlan({
+        images, referenceAssets: referenceAssetsRef.current, backgroundImage: bg360Image, backgroundEnabled: bg360Enabled, colorMode,
+      })));
   };
 
   let webCopyPartLengths = [];
@@ -1638,6 +1676,7 @@ export default function useMangaWorkflow() {
 
   // [v2.79] 戻り値変更: フルオート連鎖用（true=成功, false=失敗）
   const generateImageOnce = async (skipGuard = false, overridePrompt = null, generationOptions = {}) => {
+    if (referenceEditorError) { showStatus(referenceEditorError); return false; }
     if (generationOptions.policyAttempt && (!allowImageQualityRepair || generationOptions.reviewOnly || qualityRetryAbortRef.current)) return false;
     try {
       assertImageInputBudget({ characterImages: imagesRef.current, backgroundEnabled: bg360EnabledRef.current });
@@ -1651,9 +1690,11 @@ export default function useMangaWorkflow() {
     const editablePrompt = overridePrompt || finalPrompt;
     const workflowSource = { promptAssemblyRun: promptAssemblyRunRef.completedRun, finalPrompt: editablePrompt };
     const qualityMode = inferImageQualityMode(editablePrompt);
+    const enginePrompt = isOpenAIEngine && !generationOptions.reviewOnly
+      ? applyOpenAIImageEngineWatermark(editablePrompt, openAIImageQuality) : editablePrompt;
     const currentPrompt = qualityMode === 'four-panel'
-      ? ensureMangaColorModeContract(editablePrompt, colorMode)
-      : editablePrompt;
+      ? ensureMangaColorModeContract(enginePrompt, colorMode)
+      : enginePrompt;
     const metadataSettings = {
       punchline_type: punchlineType,
       color_mode: colorMode,
@@ -1693,7 +1734,8 @@ export default function useMangaWorkflow() {
     const initialLogs = generationOptions.policyAttempt
       ? [`[POLICY AUTO-FIX] 画像再生成 ${generationOptions.policyAttempt}/${MAX_POLICY_RETRIES}`, "[1/5] プロンプトパラメータをロック中...", "[2/5] セーフティフィルターを検証中..."]
       : ["[1/5] プロンプトパラメータをロック中...", "[2/5] セーフティフィルターを検証中..."];
-    if (currentPrompt !== editablePrompt) initialLogs.push('[MODE] 選択中の白黒指定を、編集した描画指示に反映しました。');
+    if (enginePrompt !== editablePrompt) initialLogs.push('[WATERMARK] 表記を現在の画像生成エンジン名へ同期しました。');
+    if (currentPrompt !== enginePrompt) initialLogs.push('[MODE] 選択中の白黒指定を、編集した描画指示に反映しました。');
     if (getCurrentPromptProviderFamily() === PROMPT_PROVIDER_FAMILIES.CHATGPT) {
       initialLogs.push("[2.5/5] ✅ ChatGPT Engine: ChatGPT-family prompt structure locked.");
     } else {
@@ -1752,12 +1794,13 @@ export default function useMangaWorkflow() {
         if (isOpenAIEngine) {
           const referencePlan = buildOpenAIReferencePlan({
             characterImages: images,
+            referenceAssets: referenceAssetsRef.current,
             backgroundImage: bg360Image,
             backgroundEnabled: bg360Enabled,
             originalCandidate: repairSource,
             colorMode,
           });
-          const apiPrompt = appendOpenAIReferencePrompt(prompt, referencePlan);
+          const apiPrompt = appendOpenAIReferencePrompt(applyOpenAIImageEngineWatermark(prompt, openAIImageQuality), referencePlan);
           metadataPrompt = apiPrompt;
           const roles = [
             ...Array(referencePlan.counts.original).fill('repair_source'),
@@ -1765,10 +1808,10 @@ export default function useMangaWorkflow() {
             ...Array(referencePlan.counts.background).fill('background_reference'),
           ];
           metadataInputImages = referencePlan.imageInputs.map((item, index) => ({
-            role: roles[index] || 'reference', dataUrl: item.image_url,
+            role: referencePlan.referenceRoles?.[index] || roles[index] || 'reference', dataUrl: item.image_url,
           }));
           const {character, background, original} = referencePlan.counts;
-          statCallback(`[REF] OpenAI入力: キャラ${character}枚、背景${background}枚、修復元${original}枚`);
+          statCallback(`[REF] OpenAI入力: 参照素材${character}枚、360°背景${background}枚、修復元${original}枚`);
           statCallback(repair
             ? `[QUALITY QA] ${resolveOpenAIImageOption(openAIImageQuality).label} で元画像の限定修正を実行中です...`
             : `[INFO] ${resolveOpenAIImageOption(openAIImageQuality).label} の最終画像を待機します...`);
@@ -1780,17 +1823,19 @@ export default function useMangaWorkflow() {
         } else {
           const referencePlan = buildGeminiReferencePlan({
             characterImages: images,
+            referenceAssets: referenceAssetsRef.current,
+            colorMode,
             referenceImages: geminiReferenceImages,
             backgroundReferences: !Array.isArray(generationOptions.referenceImages),
           });
           const apiPrompt = buildGeminiImageApiPrompt(prompt, referencePlan);
           metadataPrompt = apiPrompt;
           metadataInputImages = referencePlan.referenceImages.map((dataUrl, index) => ({
-            role: index < images.length ? 'character_reference'
-              : Array.isArray(generationOptions.referenceImages) ? 'additional_reference' : 'background_reference',
+            role: referencePlan.referenceRoles?.[index] || (index < images.length ? 'character_reference'
+              : Array.isArray(generationOptions.referenceImages) ? 'additional_reference' : 'background_reference'),
             dataUrl,
           }));
-          statCallback(`[REF] Gemini入力: キャラ${referencePlan.counts.character}枚、背景・追加参照${referencePlan.counts.other}枚`);
+          statCallback(`[REF] Gemini入力: 参照素材${referencePlan.counts.character}枚、背景・追加参照${referencePlan.counts.other}枚`);
           response = await generateImageWithImagen(apiPrompt, statCallback, referencePlan.referenceImages, geminiImageOptions);
         }
         const normalizedImage = String(response.base64Img || '').replace(/\s+/g, '');
@@ -2736,6 +2781,10 @@ export default function useMangaWorkflow() {
   return {
     imageInputBudget,
     imageInputError,
+    referenceAssets,
+    recognitionText,
+    setRecognitionText,
+    referenceEditorError,
     analyzeThought,
     apiKey,
     assemblePrompt,

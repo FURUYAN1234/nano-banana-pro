@@ -39,7 +39,7 @@ test('file input serializes drops and releases analysis state after read failure
   assert.match(input, /const castRevisionAtStart = castRevisionRef\.current/);
   assert.match(input, /isAnalyzingRef\.current = true/);
   assert.match(input, /await readFileAsDataURL\(file\)/);
-  assert.match(input, /if \(inputEpoch !== scenarioRunEpochRef\.current\) return;[\s\S]*setCastList\(result\.text\)/);
-  assert.match(input, /if \(castRevisionAtStart !== castRevisionRef\.current\) \{[\s\S]*return;[\s\S]*\}[\s\S]*setCastList\(result\.text\)/);
+  assert.match(input, /if \(inputEpoch !== scenarioRunEpochRef\.current\) return;[\s\S]*setCastList\(analysis\.castList\)/);
+  assert.match(input, /if \(castRevisionAtStart !== castRevisionRef\.current\) \{[\s\S]*return;[\s\S]*\}[\s\S]*setCastList\(analysis\.castList\)/);
   assert.match(input, /finally \{[\s\S]*clearInterval\(thinkTimer\);[\s\S]*setIsAnalyzing\(false\);[\s\S]*isAnalyzingRef\.current = false/);
 });

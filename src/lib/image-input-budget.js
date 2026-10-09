@@ -6,7 +6,7 @@ export const GEMINI_IMAGE_INPUT_LIMIT = 14;
 export const GEMINI_BACKGROUND_IMAGE_COUNT = 4;
 
 export function getImageInputBudget({ characterImages = [], backgroundEnabled = false } = {}) {
-  if (!Array.isArray(characterImages)) throw new Error('キャラシート画像は配列で指定してください。');
+  if (!Array.isArray(characterImages)) throw new Error('参照素材画像は配列で指定してください。');
   const characterImageCount = new Set(characterImages).size;
   // OpenAI repair adds its source; Gemini re-generates using the same references.
   const openAIReserved = 1 + (backgroundEnabled ? 1 : 0);
@@ -24,7 +24,7 @@ export function getImageInputBudget({ characterImages = [], backgroundEnabled = 
 export function assertImageInputBudget(options) {
   const budget = getImageInputBudget(options);
   if (!budget.fits) {
-    const error = new Error(`キャラシート画像は${budget.maxCharacterImages}枚までです（今回の合計${budget.characterImageCount}枚）。`
+    const error = new Error(`参照素材画像は${budget.maxCharacterImages}枚までです（今回の合計${budget.characterImageCount}枚）。`
       + (budget.backgroundEnabled ? '360°背景用に4枚分を確保しています。' : 'OpenAI・Gemini共通の上限です。')
       + '上限を超える追加・背景ON・生成開始は受け付けません。既存の画像・設定は保持します。不要な画像を減らしてください。');
     error.code = 'IMAGE_INPUT_LIMIT';

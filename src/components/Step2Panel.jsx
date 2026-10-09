@@ -253,6 +253,7 @@ export default function Step2Panel({
             <div className="text-xs font-bold text-purple-300 text-center">
               ▼ 自由入力：描きたいテーマや、ニュースのURLを自由に入力してください (<span className="text-blue-400">URLからの自動読み込みに対応</span>)
             </div>
+            <p className="material-direction-help">素材名や現在の画像番号で、使う・使わない、誰が持つ・何をするかも指定できます。AIが希望をできる範囲で整理し、未指定の部分はおまかせで調整します。</p>
             <textarea
               value={manualTopic}
               onChange={(e) => setManualTopic(e.target.value)}

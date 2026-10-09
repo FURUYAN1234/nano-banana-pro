@@ -1,5 +1,5 @@
 export const GEMINI_IMAGE_MODEL = 'gemini-nano-banana-2.1';
-export const GEMINI_IMAGE_PRICE_SNAPSHOT_DATE = '2026-10-08';
+export const GEMINI_IMAGE_PRICE_SNAPSHOT_DATE = '2026-10-09';
 export const DEFAULT_GEMINI_IMAGE_OPTIONS = Object.freeze({
   aspectRatio: '3:4',
   imageSize: '1K',

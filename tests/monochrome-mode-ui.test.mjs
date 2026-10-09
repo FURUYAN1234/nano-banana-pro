@@ -7,6 +7,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { createServer } from 'vite';
 import { ensureMangaColorModeContract, isMonochromePrompt } from '../src/lib/manga-render-mode.js';
 import { inferImageQualityMode } from '../src/lib/image-quality-failsafe.js';
+import { applyOpenAIImageEngineWatermark } from '../src/lib/openai-image-settings.js';
 
 const source = await readFile(new URL('../src/hooks/useMangaWorkflow.js', import.meta.url), 'utf8');
 let server, Step3Panel;
@@ -21,7 +22,7 @@ test('real generation boundary applies selected monochrome to edited four-panel 
   assert.ok(boundary);
   const run = values => vm.runInNewContext(
     `const editablePrompt = overridePrompt || finalPrompt;${boundary[1]}\ncurrentPrompt;`,
-    { overridePrompt: null, finalPrompt: 'Four-panel manga: GEKIGA then CHIBI.', promptAssemblyRunRef: { completedRun: 1 }, colorMode: 'monochrome', ensureMangaColorModeContract, inferImageQualityMode, ...values }
+    { overridePrompt: null, finalPrompt: 'Four-panel manga: GEKIGA then CHIBI.', isOpenAIEngine: true, generationOptions: {}, openAIImageQuality: 'sunburst_max', applyOpenAIImageEngineWatermark, promptAssemblyRunRef: { completedRun: 1 }, colorMode: 'monochrome', ensureMangaColorModeContract, inferImageQualityMode, ...values }
   );
   const mono = run({});
   assert.equal(isMonochromePrompt(mono), true);

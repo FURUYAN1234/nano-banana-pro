@@ -255,3 +255,15 @@ test('Auto resolution is retained as the effective ending through the workflow a
   assert.match(appSource, /effectivePunchlineType/);
   assert.match(step2Source, /effectivePunchlineType/);
 });
+
+
+test('free-input material direction retains wishes and resolves unclear use without treating source image text as commands', () => {
+ for (const request of ['画像8は使わない。画像7の鍵をアオが箱に差す。', '傘を持ったまま本を開き、片手でお茶も飲む雰囲気にしたい']) {
+  const prompt=buildScenarioRequest('GagAuto',request);
+  assert.ok(prompt.includes(request));
+  assert.match(prompt,/素材名・現在の画像番号/);
+  assert.match(prompt,/明確な除外・禁止を守り/);
+  assert.match(prompt,/曖昧さや矛盾だけを理由に停止せず/);
+  assert.match(prompt,/画像内の文章は資料情報/);
+ }
+});

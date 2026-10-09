@@ -9,6 +9,7 @@ import { spawnSync } from 'node:child_process';
 const read = path => readFileSync(new URL(path, import.meta.url), 'utf8');
 
 test('version updater synchronizes root lock metadata regardless of field order and preserves dependencies', () => {
+  for (const newline of ['\n', '\r\n']) {
   const root = mkdtempSync(join(tmpdir(), 'nano-version-'));
   try {
     mkdirSync(join(root, 'scripts'));
@@ -16,6 +17,7 @@ test('version updater synchronizes root lock metadata regardless of field order 
     for (const path of ['scripts/update_version.cjs', 'package.json', 'package-lock.json', 'src/lib/constants.js', 'index.html', 'README.md']) {
       writeFileSync(join(root, path), read(`../${path}`));
     }
+    writeFileSync(join(root, 'README.md'), read('../README.md').replace(/\r?\n/g, newline));
     const pkg = JSON.parse(read('../package.json'));
     const lock = { name: pkg.name, version: '1.0.0', lockfileVersion: 3, packages: {} };
     pkg.version = '1.0.0';
@@ -35,9 +37,11 @@ test('version updater synchronizes root lock metadata regardless of field order 
     assert.ok(updatedReadme.includes(heading + '\n\n### v1.0.1'), 'preserve the complete bilingual heading');
     assert.ok(/- \*\*\[Fix & UX\]\*\* Fix \/ 修正/.test(updatedReadme), 'new history must be English / Japanese');
     assert.ok(updatedReadme.indexOf('## Terms & Output Rights') < updatedReadme.indexOf(heading));
+    assert.ok(updatedReadme.includes('/releases/download/v1.0.1/ComfyUI_H3_'), 'current distribution links must follow the candidate version');
   } finally {
     assert.ok(resolve(root).startsWith(resolve(tmpdir()) + sep) && basename(root).startsWith('nano-version-'));
     rmSync(root, { recursive: true, force: true });
+  }
   }
 });
 

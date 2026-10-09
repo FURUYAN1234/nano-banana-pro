@@ -2,6 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { planImageAddition, assertImageInputBudget } from '../src/lib/image-input-budget.js';
+import { parse360Analysis } from '../src/lib/panorama360.js';
+import { buildReferenceAnalysisPrompt, parseReferenceAnalysis } from '../src/lib/reference-assets.js';
 
 // Execute the production event handler with state/API boundaries instrumented.
 const source = await readFile(new URL('../src/hooks/useMangaWorkflow.js', import.meta.url), 'utf8');
@@ -11,7 +13,7 @@ const sheets = count => Array.from({ length: count }, (_, i) => `data:image/png;
 const file = (data, panorama = false) => ({ name: 'sheet.png', type: 'image/png', data, panorama });
 const jsonFile = { name: 'style.json', type: 'application/json', text: async () => JSON.stringify({ style_name: 'new style', reproduction_prompt: 'new prompt' }) };
 function setup(existing = [], background = false) {
-  const state = { images: [...existing], style: 'old style', background: 'old background', enabled: background, cast: 'existing named people', apiCalls: 0, error: '', analyzing: false };
+  const state = { images: [...existing], style: 'old style', background: 'old background', enabled: background, cast: 'existing named people', apiCalls: 0, error: '', analyzing: false, messages: [] };
   const imagesRef = { current: state.images };
   const ctx = {
     apiKey: true, isAnalyzingRef: { current: false }, imagesRef,
@@ -20,7 +22,12 @@ function setup(existing = [], background = false) {
     planImageAddition, assertImageInputBudget,
     isEquirectangularFile: async f => f.panorama,
     readFileAsDataURL: async f => f.data,
-    callAI: async () => { state.apiCalls++; return { text: 'new named people', model: 'test' }; },
+    callAI: async (prompt, parts) => { state.apiCalls++; state.sentParts = parts;
+      if (prompt === 'test-360') return {text: JSON.stringify({location:'gallery', lighting:'window daylight', spatialType:'indoor', objects:'bench', mood:'calm'})};
+      return { text: JSON.stringify({ castList: '## 1. New Person\nnew named people', references: parts.map((_, index) => ({ imageIndex: index + 1,
+        items: [{ kind: 'character', name: 'New Person', description: '人物設定資料' }] })) }), model: 'test' }; },
+    buildReferenceAnalysisPrompt, parseReferenceAnalysis,
+    setReferenceAssets: value => { state.assets = value; },
     getCharacterAnalysisPrompt: () => 'analyze all named people',
     setImages: value => { imagesRef.current = value; state.images = value; },
     setStyleJson: value => { state.style = value; },
@@ -29,7 +36,9 @@ function setup(existing = [], background = false) {
     setCastList: value => { state.cast = value; },
     setImageInputError: value => { state.error = value; },
     setIsAnalyzing: value => { state.analyzing = value; },
-    showStatus: () => {}, setShowModal: () => {}, beginApiWork: () => {}, setAnalyzeThought: () => {},
+    get360AnalysisPrompt: () => 'test-360', parse360Analysis, setBg360ImageParts: () => {},
+    setIs360Analyzing: () => {}, setBg360Analysis: value => {state.analysis = value;}, setCustomLocation: value => {state.location = value;},
+    showStatus: value => {state.messages.push(value);}, setShowModal: () => {}, beginApiWork: () => {}, setAnalyzeThought: () => {},
     setUsedModel: () => {}, setShowOpenAIKeyModal: () => {}, translateApiError: e => e.message,
     console: { error: () => {}, warn: () => {} }, setInterval: () => 1, clearInterval: () => {},
   };
@@ -71,7 +80,9 @@ test('ordinary new sheet is retained and follows normal character analysis', asy
   await processFiles([file('data:image/png;base64,bmV3')]);
   assert.equal(state.images.length, 2);
   assert.equal(state.apiCalls, 1);
-  assert.equal(state.cast, 'new named people');
+  assert.equal(state.cast, '## 1. New Person\nnew named people');
+  assert.equal(state.sentParts.length, 2, 'existing and new references are analyzed together to merge identities');
+  assert.equal(state.assets.length, 2);
   assert.equal(state.error, '');
 });
 
@@ -91,7 +102,7 @@ test('background switch rejects 11 sheets but accepts 10 using the actual setter
   }
 });
 
-test('both file selectors retain a file snapshot and allow repeat selection after rejection', async () => {
+test('the persistent file selector retains a file snapshot and allow repeat selection after rejection', async () => {
   const panel = await readFile(new URL('../src/components/Step1Panel.jsx', import.meta.url), 'utf8');
   const code = panel.slice(panel.indexOf('const handleFileChange ='), panel.indexOf('  return ('))
     .replace(/^const handleFileChange = /, '').trim().replace(/;$/, '');
@@ -104,5 +115,19 @@ test('both file selectors retain a file snapshot and allow repeat selection afte
     assert.equal(input.value, '');
   }
   assert.deepEqual(calls, [selected, selected]);
-  assert.equal((panel.match(/onChange=\{handleFileChange\}/g) || []).length, 2);
+  assert.equal((panel.match(/onChange=\{handleFileChange\}/g) || []).length, 1);
+});
+
+
+test('adding only a panorama retains existing materials and does not request another character upload', async () => {
+  const {state, processFiles} = setup(sheets(3));
+  const before = [...state.images];
+  await processFiles([file('data:image/png;base64,cGFub3JhbWE=', true)]);
+  assert.deepEqual(state.images, before);
+  assert.equal(state.cast, 'existing named people');
+  assert.equal(state.enabled, true);
+  assert.equal(state.analysis.location, 'gallery');
+  assert.equal(state.apiCalls, 1);
+  assert.ok(state.messages.every(message => !/キャラクターシート.*追加|キャラクターシート.*一緒/.test(message)));
+  assert.equal(state.analyzing, false);
 });

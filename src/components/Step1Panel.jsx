@@ -1,14 +1,14 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import {
   Camera,
   Loader2,
   CheckCircle2,
   Trash2,
   Globe,
-  Plus,
   Copy
 } from 'lucide-react';
 import ThinkingLog from './ThinkingLog';
+import { REFERENCE_KIND_LABELS } from '../lib/reference-assets.js';
 
 /**
  * STEP 01: キャラクター解析 ＆ 360°背景読み込みパネル
@@ -19,14 +19,16 @@ export default function Step1Panel({
   setIsDragging,
   processFiles,
   images,
+  referenceAssets = [],
+  recognitionText = '',
+  setRecognitionText,
+  referenceEditorError = '',
   setImages,
   bg360Image,
   bg360Enabled,
   isAnalyzing,
   analysisProgressRef,
   analyzeThought,
-  castList,
-  setCastList,
   isCastListCopied,
   setIsCastListCopied,
   currentStep,
@@ -36,6 +38,7 @@ export default function Step1Panel({
   styleJson,
   setStyleJson
 }) {
+  const materialInputRef = useRef(null);
   const handleFileChange = (event) => {
     const files = Array.from(event.target.files);
     // Allow the same files to be selected again after an over-limit rejection.
@@ -63,19 +66,23 @@ export default function Step1Panel({
     >
       <div className="flex items-center justify-between mb-6 z-10">
         <div className={`flex items-center gap-3 text-xs font-black uppercase tracking-widest ${currentStep === 1 ? 'text-blue-400' : 'text-slate-500'} `}>
-          <Camera size={18} /> STEP 01: キャラクター解析（設定の読み込み）
+          <Camera size={18} /> STEP 01: 素材の認識（人物・背景・小物）
         </div>
         {isAnalyzing && <Loader2 size={18} className="animate-spin text-blue-400" />}
         {currentStep > 1 && <CheckCircle2 size={18} className="text-blue-500" />}
       </div>
 
-      <div className="mb-4 text-xs text-slate-300 leading-relaxed" aria-live="polite">
-        <p>キャラシート画像：{imageInputBudget.characterImageCount} / {imageInputBudget.maxCharacterImages}枚（あと{imageInputBudget.remaining}枚・OpenAI／Gemini共通）</p>
+      <div className="reference-intake-guidance" aria-live="polite">
+        <p>素材の追加は、下の「素材画像を選択」ボタンでも、STEP1の枠内全体へのドロップでもできます。後からの追加も同じ操作です。</p>
+        <p className="reference-image-count">参照素材画像：{imageInputBudget.characterImageCount} / {imageInputBudget.maxCharacterImages}枚（あと{imageInputBudget.remaining}枚・OpenAI／Gemini共通）</p>
         <p className="mt-1 text-[11px] text-slate-400">
-          {bg360Enabled ? '360°背景ON：背景用に4枚分を確保するため、キャラシートは10枚まで。' : '背景なしは14枚まで。360°背景を使う場合は10枚までです。'}
+          {bg360Enabled ? '360°背景ON：その他の参照素材は合計10枚まで。API用に4コマ分の背景枠を確保します。Webへは元の360°背景1枚を添付するため、元画像は合計11枚までです。' : '人物・表情集・三面図・通常背景・小物を合わせて14枚まで。360°背景ONでは、その他の参照素材は合計10枚までです。'}
           作風JSONは枚数に含めません。上限を超える追加は受け付けず、既存の画像・設定を保持します。
         </p>
-        <p className="mt-1 text-[11px] text-slate-400">1枚に複数人が載っていても画像は1枚です。人数による固定の拒否上限はありませんが、多人数では識別・描き分け・台詞対応が崩れることがあり、全員の正確な生成を保証するものではありません。</p>
+        <p className="mt-1 text-[11px] text-slate-400">素材をまとめてドロップすると、AIが種類・同じ人物・関係・使いどころを判断し、シナリオとAPI／Webの描画指示へ極力反映します。認識できない場合や取り違える場合、今回のまんがには使用しない場合もあります。素材全点の登場や完全再現を保証するものではありません。</p>
+        <p>2D背景と360°背景が両方ある場合、指定がなければ360°背景を舞台の基準にします。自由入力の素材・コマ別指定を優先し、2D背景も場面に合う範囲で使います。添付順は画像番号との対応づけのためで、背景の使用優先度を決めるものではありません。</p>
+        <p className="mt-1 text-[11px] text-slate-400">1枚に複数の人物・素材が載っていても1枚です。同じ人物の表情集・三面図は一人分の資料として扱います。</p>
+        <p className="mt-1 text-[11px] text-slate-400">ChatGPTやGeminiのWeb版で生成するときは、STEP1で読み込んだ素材画像をもう一度添付してください。添付する順番は、STEP1に現在表示されている「1、2、3…」の番号順です。360°背景は途中で追加しても最後に表示されます。その後に通常素材を追加すると、360°背景は最後へ繰り下がり、番号も更新されます。API画像生成では、アプリが対応づけて送信するため、並べ直しや再添付は不要です。</p>
       </div>
       {(imageInputError || !imageInputBudget.fits) && (
         <p role="alert" className="mb-4 rounded-lg border border-amber-500/50 bg-amber-950/30 p-3 text-xs text-amber-200 leading-relaxed">
@@ -83,12 +90,21 @@ export default function Step1Panel({
         </p>
       )}
 
-      <div className="flex flex-wrap gap-2 mb-6 z-10 p-4 bg-[#0a0c10] rounded-3xl border border-white/10 h-[130px] overflow-y-auto custom-scrollbar content-start">
+      <div className="reference-file-selection">
+        <button type="button" onClick={() => materialInputRef.current?.click()} disabled={isAnalyzing}>
+          素材画像を選択 (STEP 1)
+        </button>
+        <input ref={materialInputRef} type="file" multiple accept="image/*,.json" onChange={handleFileChange} disabled={isAnalyzing} hidden />
+      </div>
+      <div className="reference-drop-area" role="region" aria-label="読み込んだ素材画像">
         {images.map((img, i) => (
-          <div key={i} className="relative w-[56px] min-w-[56px] max-w-[56px] h-14 flex-shrink-0 rounded-lg overflow-hidden border border-white/10 group/img transition-all hover:scale-110 hover:z-50 hover:shadow-xl hover:border-blue-400 cursor-pointer">
-            <img src={img} className="w-full h-full object-cover shadow-sm" alt={`char-${i}`} />
+          <div key={i} className="reference-thumbnail">
+            <img src={img} className="w-full h-full object-cover shadow-sm" alt={`参照素材${i + 1}`} title={`画像${i + 1}\n${referenceAssets.find(asset => asset.image === img)?.items.map(item => `${REFERENCE_KIND_LABELS[item.kind]}: ${item.name} — ${item.description}`).join('\n') || '解析待ち'}`} />
+            <span className="absolute bottom-0 inset-x-0 bg-black/80 text-[8px] text-white text-center truncate">{i + 1}: {referenceAssets.find(asset => asset.image === img)?.items.map(item => REFERENCE_KIND_LABELS[item.kind]).filter((kind, index, kinds) => kinds.indexOf(kind) === index).join('・') || '解析待ち'}</span>
             <button
               onClick={() => setImages(images.filter((_, idx) => idx !== i))}
+              disabled={isAnalyzing}
+              aria-label={`参照素材${i + 1}を削除`}
               className="absolute inset-0 bg-black/60 opacity-0 group-hover/img:opacity-100 flex items-center justify-center text-white transition-all backdrop-blur-[1px]"
             >
               <Trash2 size={16} />
@@ -98,11 +114,11 @@ export default function Step1Panel({
         {bg360Image && (
           <div
             className={`relative w-[112px] min-w-[112px] max-w-[112px] h-14 flex-shrink-0 rounded-lg overflow-hidden border ${bg360Enabled ? 'border-cyan-500/50' : 'border-slate-700'} transition-all`}
-            title="360°パノラマ背景 (下の「場所設定」から詳細確認可能)"
+            title={`画像${images.length + 1}\n360°パノラマ背景 (下の「場所設定」から詳細確認可能)`}
           >
             <img src={bg360Image} className={`w-full h-full object-cover shadow-sm ${bg360Enabled ? 'opacity-100' : 'opacity-40 grayscale'}`} alt="360 bg" />
             <div className="absolute bottom-0 left-0 right-0 bg-black/80 text-[8px] text-cyan-300 text-center font-bold px-1 py-0.5 truncate flex items-center justify-center gap-1">
-              <Globe size={8} /> 360° BACKGROUND
+              <Globe size={8} /> {images.length + 1}: 360°背景
             </div>
           </div>
         )}
@@ -124,38 +140,10 @@ export default function Step1Panel({
             </button>
           </div>
         )}
-        {(images.length > 0 || isAnalyzing) && (
-          <label className="w-14 h-14 flex flex-col items-center justify-center cursor-pointer rounded-lg border border-dashed border-white/10 hover:border-blue-500 hover:bg-blue-500/10 transition-all text-slate-500 hover:text-blue-400 group/add">
-            {isAnalyzing ? (
-              <Loader2 size={16} className="animate-spin" />
-            ) : (
-              <Plus size={16} className="group-hover/add:scale-125 transition-transform" />
-            )}
-            <input
-              type="file"
-              multiple
-              accept="image/*,.json"
-              className="hidden"
-              onChange={handleFileChange}
-              disabled={isAnalyzing}
-            />
-          </label>
-        )}
-
         {images.length === 0 && !isAnalyzing && (
-          <label style={{ minWidth: 0 }} className="flex-1 flex flex-col items-center justify-center text-slate-500 cursor-pointer hover:bg-white/5 rounded-xl transition-colors p-4 border border-transparent hover:border-white/10">
-            <input
-              type="file"
-              multiple
-              accept="image/*,.json"
-              className="hidden"
-              onChange={handleFileChange}
-            />
-            <span className="primary-step-action primary-step-action-accent-border w-full inline-flex items-center justify-center rounded-lg border px-4 py-2 mb-3 text-xs font-bold shadow-lg active:translate-y-0.5">
-              キャラクター設定画像を選択 (STEP 1)
-            </span>
+          <div style={{ minWidth: 0 }} className="flex-1 flex flex-col items-center justify-center text-slate-500">
             <p className="text-xs font-bold text-slate-400">
-              上記STEP1のボタンを押して、キャラクター設定画像（キャラシート）を選択するか、ここにドロップしてください。（複数枚を同時に、または後から追加ドロップすることも可能です。必須ではありませんが、360°背景画像や、作風設定のJSONファイルも一緒に読み込むことが出来ます。）
+              キャラクター設定・表情集・三面図・背景・小物の画像をまとめて選択するか、STEP1の枠内全体にドロップしてください。分類や番号の指定は不要です。後から追加でき、360°背景や作風設定JSONも一緒に読み込めます。
             </p>
             <p className="text-[10px] opacity-60 mt-1">
               ※名前や性格、特徴が書かれた設定シートを推奨。
@@ -169,7 +157,7 @@ export default function Step1Panel({
                 className="h-24 w-auto rounded-lg border border-white/10 opacity-50 group-hover/preview:opacity-100 transition-opacity shadow-2xl skew-x-[-2deg] hover:skew-x-0 duration-500"
               />
             </div>
-          </label>
+          </div>
         )}
 
         {isAnalyzing && (
@@ -185,33 +173,37 @@ export default function Step1Panel({
         )}
       </div>
 
-      <div ref={analysisProgressRef} className="mb-4">
+      <div ref={analysisProgressRef} className="reference-analysis-progress">
         <ThinkingLog thought={analyzeThought} />
       </div>
 
-      <div className="flex flex-col gap-2 w-full">
-        <span className="px-2 bg-[#0f1115] text-xs font-bold text-slate-400 w-fit rounded">
-          ▼ 抽出されたキャラクター設定 (自由に編集・追加できます)
-        </span>
+        <div className="reference-recognition">
+          <div className="reference-recognition-heading">
+            <h3><label htmlFor="reference-recognition-editor">認識結果（人物・背景・小物／編集できます）</label></h3>
+          </div>
+          <p className="reference-recognition-note">解析ログの結果をここに表示し、シナリオ・描画指示へ引き継ぎます。認識できない場合や取り違える場合、今回のまんがには使用しない場合もあります。</p>
         <textarea
-          value={castList}
-          onChange={(e) => setCastList(e.target.value)}
-          style={{ color: '#ffffff', backgroundColor: '#08090b', opacity: 1 }}
-          className="flex-1 w-full min-h-[140px] p-6 rounded-2xl text-sm border border-white/5 focus:border-blue-500/50 outline-none leading-relaxed resize-none font-medium z-10 placeholder-slate-600"
+          id="reference-recognition-editor"
+          value={recognitionText}
+          onChange={(e) => setRecognitionText(e.target.value)}
+          className="reference-recognition-editor"
+          aria-invalid={Boolean(referenceEditorError)}
+          disabled={isAnalyzing}
           placeholder="画像をアップロードして特徴を自動抽出、または直接入力して設定を記述します。"
         />
+        {referenceEditorError && <p role="alert">{referenceEditorError}</p>}
         <div className="mt-2 relative z-50">
           <button
             onClick={() => {
-              navigator.clipboard.writeText(castList);
+              navigator.clipboard.writeText(recognitionText);
               setIsCastListCopied(true);
               setTimeout(() => setIsCastListCopied(false), 2000);
             }}
-            disabled={!castList}
+            disabled={!recognitionText || Boolean(referenceEditorError)}
             className={`w-full ${isCastListCopied ? 'bg-green-600' : 'bg-slate-800 hover:bg-slate-700'} text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all border border-white/10 disabled:opacity-50 disabled:cursor-not-allowed`}
           >
             {isCastListCopied ? <CheckCircle2 size={20} /> : <Copy size={20} />}
-            {isCastListCopied ? "コピー完了" : "📋 キャラクター設定をコピー"}
+            {isCastListCopied ? "コピー完了" : "📋 認識結果をコピー"}
           </button>
         </div>
       </div>

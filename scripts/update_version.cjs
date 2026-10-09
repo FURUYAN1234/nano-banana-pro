@@ -145,10 +145,11 @@ try {
     `> Current source version: **v${newVersion}** / 現在のソース版: **v${newVersion}**`);
   readmeContent = readmeContent
     .replace(/matching v\d+\.\d+\.\d+ FourPanel Release asset/, `matching v${newVersion} FourPanel Release asset`)
-    .replace(/v\d+\.\d+\.\d+ FourPanel Releaseアセット/, `v${newVersion} FourPanel Releaseアセット`);
+    .replace(/v\d+\.\d+\.\d+ FourPanel Releaseアセット/, `v${newVersion} FourPanel Releaseアセット`)
+    .replace(/(\/releases\/download\/)v\d+\.\d+\.\d+(\/ComfyUI_H3_[^\s)]+)/g, `$1v${newVersion}$2`);
 
   // ChangeLogへのエントリ挿入
-  const changelogHeading = readmeContent.match(/^## 📋 ChangeLog[^\n]*/m);
+  const changelogHeading = readmeContent.match(/^## 📋 ChangeLog[^\r\n]*/m);
   if (!changelogHeading) {
     throw new Error('Could not find "## 📋 ChangeLog" in README.md');
   }

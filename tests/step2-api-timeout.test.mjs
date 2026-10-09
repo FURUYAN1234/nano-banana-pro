@@ -12,7 +12,7 @@ test('STEP2 scenario creation and enhancement request a ten-minute text API time
   );
   assert.match(
     source,
-    /callAI\(prompt, \[\], buildScenarioCastContext\(castList\), onProgress, \{[\s\S]*?timeoutMs: STEP2_TEXT_TIMEOUT_MS,[\s\S]*?modelRoute: 'scenario',[\s\S]*?scenarioModelId[\s\S]*?\}\)/
+    /callAI\(prompt, \[\], \[buildScenarioCastContext\(castList\), referenceAssetContext\]\.filter\(Boolean\)\.join\('\\n\\n'\), onProgress, \{[\s\S]*?timeoutMs: STEP2_TEXT_TIMEOUT_MS,[\s\S]*?modelRoute: 'scenario',[\s\S]*?scenarioModelId[\s\S]*?\}\)/
   );
 });
 
