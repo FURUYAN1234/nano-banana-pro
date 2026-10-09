@@ -1,4 +1,4 @@
-Current candidate: v6.9.7. Root PLAN.md owns the live STEP1 processing/overflow bugfix and authorized official release, note/Facebook, inline-only X and full backup. Private UI proof: output/step1-boundary-20261009. Previous v6.9.6 release, announcements and full backup completed; do not repeat them. Display checks use explicitly labelled component state fixtures, not paid API evidence.
+Current candidate: v6.9.8. Root PLAN.md owns the live Nano audit repairs, API verification and authorized official release, note/Facebook, inline-only X and full backup. Private evidence: output/step1-boundary-20261009. Previous v6.9.7 release, announcements and full backup completed; do not repeat them. See the root task record for current verification and delivery status; fixture checks and actual API evidence remain separately identified.
 
 ## Current: 2026-10-07 v6.9.2 公開準備
 
