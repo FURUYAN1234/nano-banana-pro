@@ -1,25 +1,25 @@
 {
   "pricingSourceSha256": "616e60732cb269e9c8bace8ef1fa4ed40fdd92fcc6dcbc5b919a9a2f7db960cd",
-  "manualVersion": "6.9.6",
-  "manualSourceSha256": "df4a03526b96aae67be58744dcbf9391eefdb9e960dc445fe81f95231717cff1",
+  "manualVersion": "6.9.7",
+  "manualSourceSha256": "9aa8e0113326a24c75db4006a4d62579facaa8656a9de5e34eb6c2481cb4a254",
   "manualFiles": [
     {
       "name": "gemini-api-beginner-guide-2026-10-01.pdf",
-      "sha256": "76d334ed444788344a99672b53b48be517a378baf2c5c5d9bccb509a5db24534"
+      "sha256": "aa27cb87b65ade83fe945eb496fda6881f50c32fd11c72cacd015af1f9cf3970"
     },
     {
       "name": "openai-api-beginner-guide-2026-09-30.pdf",
-      "sha256": "96f4cba6a4116506dc7af694a36faf0d684df18e81b6d64fba927fe0f2f2c2a0"
+      "sha256": "eb33a339731c38469033d70abc0416e56f0326487afa45ecd85bbf26036d967b"
     },
     {
       "name": "super-furu-ai-4koma-full-manual-2026-10-01.pdf",
-      "sha256": "306bb98d01f1efe8edebc651fbe44831550cf7f67c1c0815a2ed34423b4c9b08"
+      "sha256": "a162efc6c6921b668c6fcb3afea25dbe9903481ed5b87408741c7653da446078"
     }
   ],
-  "readmeSha256": "e7a344f7f9668b62a346b7b5c1eb4788939ac2fe8356a14025f074dceda343a6",
-  "sourceTree": "21b9b59cb79985bec7113bbe5ed1994599a4f8e3",
-  "publicTree": "b9381e483f1925d97920a951fff1e3878017fc4c",
-  "packageSha256": "fc4a181bdf76dea05969ec1bf6d0476cbcdb7b7a992ce1086530746a00a35052",
+  "readmeSha256": "742c6f642f9296a1647dda5989859942a571bbc59f23afe09cad2436799b5cba",
+  "sourceTree": "7f171f5f64af84c22bbfc0e406dbd90d4df6fd40",
+  "publicTree": "1a1ff1e10bbef126b54dd5ba806ff9586395017c",
+  "packageSha256": "47ba6c20a6b492a5adbf96322b235f91d252dfe374434ea57d4b37a0d50a4c95",
   "releaseAssetSha256": "9e41886be6afa0ebfad6d244ecf53f37260a92f73b30309319029cc87e1ddb4e",
   "reviewedSections": [
     "Application screen and output / 操作画面と生成例",
@@ -37,16 +37,16 @@
     "Terms & Output Rights / 利用条件・作品の権利",
     "📋 ChangeLog / 更新履歴"
   ],
-  "findings": "Compared all current README section headings and the changed body against STEP1/2/3/4, provider/reference plans and the existing verified v6.9.5 body. Updated mixed-material roles, one visible editor, whole-STEP1 drop/file picker, shared14/10 capacity, panorama-last renumbering, same-original current Web order, explicit material/panel priority and optional 2D backgrounds, free-input reconciliation and limits, and image-engine plus scenario-model attribution. Individual material facts and scripted camera/acting remain; measured compression removes repeated type policies. API/Web provenance, pricing, other-app links, H3 current ZIP/JSON, dependencies, custom terms and release-history ordering remain consistent. Current H3 download links follow v6.9.6; recursive distribution tests passed. The whole public note body was read and protected before delivery; its old character-only guidance needs the prepared narrow v6.9.6 update after release. Paid OpenAI image material/footer reflection was observed; retained camera/surface evidence warnings are not reported as universal QA approval.",
-  "manualFindings": "Gemini13, system34 and OpenAI22 pages (69 total) were rendered and reviewed. Final material/control/ordering/priority pages, system TOC/free-input/watermark pages and price date, plus OpenAI19-22 were visually rechecked; unchanged layouts retain prior all-page review. Added a footer page-count gate which rejected the old22/21 PDF and passed regenerated22/22 pages. A4 dimensions, content bounds, links, version6.9.6, privacy and current source gates pass. All three reviewed PDF bytes were copied to public/downloads. Old UI screenshots remain explicitly labeled as previous-version layouts; current instructions describe the updated controls.",
+  "findings": "Compared current README headings and changed body with STEP1 processing/copy readiness, responsive material CSS and downstream App boundaries. Added bilingual processing guidance and v6.9.7 history; reviewed current download/release URLs and version consistency. Unchanged material rules, models, terms, privacy and actual-generation limits retain the same-day verified v6.9.6 body review. No new API/image quality claim.",
+  "manualFindings": "Regenerated all three PDFs as v6.9.7 (13/34/22 pages). Visually checked updated system1-6 and OpenAI19-22 and Gemini1-6 contact sheets. STEP1 processing description fits without overflow; footers and existing version-labelled older screenshots are consistent. Unchanged page layouts retain same-day all-page review; automatic page-count, bounds, link, naming and privacy checks passed.",
   "pricingReview": {
-    "version": "6.9.6",
+    "version": "6.9.7",
     "sourceSha256": "616e60732cb269e9c8bace8ef1fa4ed40fdd92fcc6dcbc5b919a9a2f7db960cd",
-    "checkedAt": "2026-10-09T00:52:35.059Z",
+    "checkedAt": "2026-10-09T04:19:51.669Z",
     "sources": [
       "https://developers.openai.com/api/docs/pricing",
       "https://ai.google.dev/gemini-api/docs/pricing"
     ],
-    "findings": "Reopened both official pricing pages on2026-10-09 and checked Standard versus Batch. GPT-6.1 Sol2/10, Astra10/50, Luna0.10/0.50 USD/M; Sol long context4/15. Sunburst/Flare image8/cached2/output30 and text5/cached1.25 USD/M; Batch is half. Nano Banana2.1 Standard input1.50/text-thinking7.50/image30, 1K0.0336/2K0.0504/4K0.113; Batch half. Gemini3.8 Flash0.75/3.75 through2026-12-31. Remaining unchanged scenario/image options retain the earlier current-session official review. App/README/manual dates renewed to2026-10-09 without changing rates."
+    "findings": "Reopened both official pricing pages on2026-10-09 and checked Standard versus Batch. GPT-6.1 Sol2/10, Astra10/50, Luna0.10/0.50 USD/M; Sol long context4/15. Sunburst/Flare image8/cached2/output30 and text5/cached1.25 USD/M; Batch is half. Nano Banana2.1 Standard input1.50/text-thinking7.50/image30, 1K0.0336/2K0.0504/4K0.113; Batch half. Gemini3.8 Flash0.75/3.75 through2026-12-31. Remaining unchanged scenario/image options retain the earlier current-session official review. App/README/manual dates renewed to2026-10-09 without changing rates. Reopened the same official pricing pages before v6.9.7 publication; Standard/Batch flagship and image rates remain unchanged. Pricing source bytes are unchanged."
   }
 }

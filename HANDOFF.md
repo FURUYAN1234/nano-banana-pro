@@ -1,4 +1,4 @@
-Current candidate: v6.9.6. The sole live task record is root PLAN.md, Nano mixed-reference automation (2026-10-09); private evidence is output/mixed-reference-20261009. Normal OpenAI material recognition, STEP2/STEP3, mixed-reference images and final image/scenario-model credits were verified; camera/surface/observation warnings remain. Official release, note/Facebook/X delivery and the separately authorized full backup are pending. Prior v6.9.5 release and earlier completed operations must not be repeated. This pointer supersedes the older pending-release snapshots below.
+Current candidate: v6.9.7. Root PLAN.md owns the live STEP1 processing/overflow bugfix and authorized official release, note/Facebook, inline-only X and full backup. Private UI proof: output/step1-boundary-20261009. Previous v6.9.6 release, announcements and full backup completed; do not repeat them. Display checks use explicitly labelled component state fixtures, not paid API evidence.
 
 ## Current: 2026-10-07 v6.9.2 公開準備
 
