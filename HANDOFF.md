@@ -1,4 +1,4 @@
-Current candidate: v6.9.8. Root PLAN.md owns the live Nano audit repairs, API verification and authorized official release, note/Facebook, inline-only X and full backup. Private evidence: output/step1-boundary-20261009. Previous v6.9.7 release, announcements and full backup completed; do not repeat them. See the root task record for current verification and delivery status; fixture checks and actual API evidence remain separately identified.
+Current candidate: v6.9.9. Root PLAN.md owns the live automatic PNG saving, STEP1/schema4 follow-up, official release, public Chrome verification, note/Facebook and inline-only X. Private evidence: output/step1-followup-api-20261009 (API metadata and auto-save subdirectories). The previous release and full backup are complete; do not repeat them. This task does not include a new backup or an extra paid image generation. See PLAN.md for current verification and delivery status; production callback tests, actual API evidence and ordinary Chrome downloads remain separately identified.
 
 ## Current: 2026-10-07 v6.9.2 公開準備
 
