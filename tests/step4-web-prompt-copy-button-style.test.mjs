@@ -101,6 +101,6 @@ test('Web copy guidance is consolidated above the chunks, with TXT immediately a
   assert.match(css, /\.web-prompt-copy-heading\s*\{[^}]*font-size: 14px;[^}]*font-weight: 700;/);
   assert.match(source, /全文を一括コピー（\$\{webCopyPartLengths\.reduce\([\s\S]*?toLocaleString\(\)\}文字・Web一括はTXT化に注意）/);
   assert.equal(source.split('ChatGPT / Work用とAPI用は同じ指示文').length - 1, 1);
-  assert.match(source, /制作情報JSONは後で制作条件を確認・引き継ぐための別ファイル/);
+  assert.match(source, /制作情報JSONには、現在の素材番号・認識内容・編集後の人物設定・360°背景設定/);
   assert.match(source, /finalPrompt && !isOpenAIImageMode/);
 });

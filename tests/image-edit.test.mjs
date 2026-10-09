@@ -47,6 +47,7 @@ function setup(overrides = {}) {
   let busy = false;
   const calls = [];
   const normalizations = [];
+  const saves = [];
   const context = {
     beginApiWork,
     generatedImage: source, generationHistory: history, isGeneratingImage: false,
@@ -55,6 +56,7 @@ function setup(overrides = {}) {
     imageEditRunRef: { current: null }, scenarioRunEpochRef: { current: 1 },
     isOpenAIEngine: true, openAIImageQuality: 'high', openAIImageSize: '1024x1536',
     formatPageLayoutStatus,
+    autoSaveFinalImage: async (item, isCurrent) => { if (!isCurrent()) return false; saves.push(item); return true; },
     buildImageEditRequest: (image, instruction) => {
       if (!image || !instruction.trim()) throw new Error('invalid input');
       return { prompt: instruction.trim(), imageInputs: [{ image_url: image }], referenceImages: [image] };
@@ -84,7 +86,7 @@ function setup(overrides = {}) {
   assert.notEqual(start, -1, 'manual edit handler must exist');
   const end = workflow.indexOf('// --- Step 4: Image Generation ---', start);
   vm.runInNewContext(workflow.slice(start, end) + '\nglobalThis.edit = editGeneratedImage;', context);
-  return { context, calls, normalizations, state: () => ({ displayed, history, busy }) };
+  return { context, calls, normalizations, saves, state: () => ({ displayed, history, busy }) };
 }
 
 test('manual edit sends the displayed image once and retains its history', async () => {
@@ -103,6 +105,8 @@ test('manual edit sends the displayed image once and retains its history', async
   assert.equal(h.state().history[0].originalImage, 'data:image/png;base64,ZWRpdA==');
   assert.equal(h.state().history[0].pageLayout.applied, true);
   assert.equal(h.state().history[0].qualityPass, false);
+  assert.equal(h.saves.length, 1);
+  assert.equal(h.saves[0], h.state().history[0]);
   assert.equal(h.state().busy, false);
 });
 
@@ -114,6 +118,7 @@ test('Gemini receives the same source image and failure keeps the image and hist
   assert.equal(await pending, false);
   assert.equal(h.state().displayed, source);
   assert.equal(h.state().history.length, 1);
+  assert.equal(h.saves.length, 0);
   assert.equal(h.state().busy, false);
 });
 

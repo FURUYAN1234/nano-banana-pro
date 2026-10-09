@@ -110,7 +110,8 @@ test('background switch rejects 11 sheets but accepts 10 using the actual setter
 
 test('the persistent file selector retains a file snapshot and allow repeat selection after rejection', async () => {
   const panel = await readFile(new URL('../src/components/Step1Panel.jsx', import.meta.url), 'utf8');
-  const code = panel.slice(panel.indexOf('const handleFileChange ='), panel.indexOf('  return ('))
+  const start = panel.indexOf('const handleFileChange =');
+  const code = panel.slice(start, panel.indexOf('  return (', start))
     .replace(/^const handleFileChange = /, '').trim().replace(/;$/, '');
   const calls = [];
   const handle = new Function('apiKey', 'setShowModal', 'processFiles', `return (${code});`)(true, () => {}, files => calls.push(files));

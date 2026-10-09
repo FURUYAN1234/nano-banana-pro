@@ -50,3 +50,28 @@ test('recognition copy reports success only after clipboard completion and repor
     assert.equal(copied,!reject); if(reject)assert.match(message,/コピーできません/);
   }
 });
+
+test('thumbnail hover and compact recognition follow current images, not recognition arrival order', async () => {
+  const server = await createServer({ appType: 'custom', logLevel: 'silent', server: { middlewareMode: true } });
+  try {
+    const { default: Step1 } = await server.ssrLoadModule('/src/components/Step1Panel.jsx');
+    const html = renderToStaticMarkup(React.createElement(Step1, {
+      images: ['prop', 'sheet'], currentStep: 1, castList: '## A\nProfile',
+      referenceAssets: [
+        {image:'deleted', items:[{kind:'background',name:'Removed',description:'Old'}]},
+        {image:'sheet', items:[{kind:'character',name:'A',description:'Red coat'}, {kind:'character',name:'B',description:'Blue coat'}]},
+        {image:'prop', items:[{kind:'prop',name:'Key',description:'Round handle'}]},
+      ],
+      imageInputBudget: {characterImageCount:2,maxCharacterImages:14,remaining:12,fits:true},
+    }));
+    assert.match(html, /<div[^>]*class="reference-thumbnail"[^>]*title="画像1\n小物: Key/);
+    assert.doesNotMatch(html, /Removed|画像3の素材/);
+    assert.match(html, /aria-label="画像1の素材1の名前"[^>]*value="Key"/);
+    assert.match(html, /aria-label="画像2の素材2の名前"[^>]*value="B"/);
+    const scroll = html.indexOf('class="reference-recognition-scroll"');
+    assert.ok(scroll > 0 && scroll < html.indexOf('class="reference-recognition-item"'));
+    assert.ok(html.indexOf('id="reference-recognition-editor"') > scroll);
+    assert.match(html, /class="reference-recognition-row"/);
+    assert.doesNotMatch(html, /rows="2"/);
+  } finally { await server.close(); }
+});

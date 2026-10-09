@@ -2,6 +2,7 @@ import React from 'react';
 import { Check, ArrowRight, RefreshCw, Zap, Square, Loader2, Copy } from 'lucide-react';
 import { buildSingleImageEmotionalPrompt } from '../lib/single-image-prompt';
 import { getEffectiveEngine } from '../lib/engine-state';
+import { AutoSaveStartDialog } from './AutoSaveGuide';
 
 export default function ControlBar({
   controlBarRef,
@@ -21,6 +22,11 @@ export default function ControlBar({
   setIsPolicyCopied
 }) {
   const isOpenAIEngine = getEffectiveEngine(selectedEngine, enableOpenAIApi) === 'openai';
+  const [pendingMode, setPendingMode] = React.useState(null);
+  const setEndless = next => {
+    setIsEndlessMode(next);
+    if (isEndlessModeRef) isEndlessModeRef.current = next;
+  };
 
   return (
     <div ref={controlBarRef} className="fixed top-0 left-0 right-0 z-[100] bg-[#0f1115] border-b border-white/10 px-2 md:px-8 py-2 md:py-3 shadow-xl w-full flex flex-col gap-2 md:gap-3 overflow-x-hidden">
@@ -76,11 +82,8 @@ export default function ControlBar({
           <button
             disabled={!apiKey || isAborting}
             onClick={() => {
-              const nextState = !isEndlessMode;
-              setIsEndlessMode(nextState);
-              if (isEndlessModeRef) {
-                isEndlessModeRef.current = nextState;
-              }
+              if (isEndlessMode) setEndless(false);
+              else setPendingMode('endless');
             }}
             title="ONにすると、フルオート完了時に同じキャラクターで永遠にシナリオ生成と画像生成を繰り返します。完全停止するにはフルオート中断を押してください。"
             style={{ color: isEndlessMode ? '#dc2626' : '#ffffff' }}
@@ -97,7 +100,7 @@ export default function ControlBar({
           {/* フルオートボタン */}
           <button
             disabled={!apiKey || isAborting}
-            onClick={handleFullAutoToggle}
+            onClick={() => isFullAutoMode ? handleFullAutoToggle() : setPendingMode('fullAuto')}
             title="画像をドロップするだけで4コマを全自動生成。完了後は自動OFF。生成中に押すと即中断。"
             style={{ color: isFullAutoMode ? (isAborting ? '#ffffff' : '#dc2626') : '#ffffff' }}
             className={`min-w-[160px] flex items-center justify-center gap-1.5 px-4 py-3 rounded-xl text-sm font-black tracking-widest transition-all duration-100 border-2 border-b-4 select-none shrink-0 active:border-b-2 active:translate-y-0.5 ${
@@ -159,6 +162,13 @@ export default function ControlBar({
         </div>
       )}
 
+      {pendingMode && <AutoSaveStartDialog mode={pendingMode} onCancel={() => setPendingMode(null)} onConfirm={() => {
+        const mode = pendingMode;
+        setPendingMode(null);
+        if (!apiKey || isAborting) return;
+        if (mode === 'endless') setEndless(true);
+        else if (!isFullAutoMode) handleFullAutoToggle();
+      }} />}
       {/* Progress Line */}
       <div className="absolute bottom-0 left-0 h-[2px] bg-white/10 w-full">
         <div className={`h-full transition-all duration-700 ease-out

@@ -17,7 +17,7 @@ test('ChatGPT Web disclosure starts closed and contains every manual action, lea
       const disclosure = html.match(/<details class="web-prompt-disclosure">([\s\S]*?)<\/details>/)?.[1];
       assert.ok(disclosure, 'native details has no open attribute, so it starts closed');
       assert.match(disclosure, /<summary[^>]*>ChatGPTのWebでプロンプトを貼り付け（API節約可能）／4コマ漫画を動画化<\/summary>/);
-      for (const text of ['ChatGPT Webへの貼り付け手順', '全文プロンプトを.txtで保存する', 'Web版生成用 制作情報JSONを保存', '制作情報JSONは後で制作条件を確認', '画像比率修正・アップスケール（web貼り付け時）', '安全基準（ポリシー）に引っかかって画像が出ない場合（web貼り付け時）']) {
+      for (const text of ['ChatGPT Webへの貼り付け手順', '全文プロンプトを.txtで保存する', 'Web版生成用 制作情報JSONを保存', '制作情報JSONには、現在の素材番号・認識内容', '画像比率修正・アップスケール（web貼り付け時）', '安全基準（ポリシー）に引っかかって画像が出ない場合（web貼り付け時）']) {
         assert.ok(disclosure.includes(text), text);
       }
       assert.doesNotMatch(disclosure, /APIで新しい画像を生成する/);

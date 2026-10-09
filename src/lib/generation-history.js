@@ -69,10 +69,21 @@ export const buildGeneratedImageFilename = ({ apiName, title, extension, now = n
 };
 
 export const downloadImageDataUrl = (imageDataUrl, filename, documentObject = document) => {
+  const match = /^data:(image\/[a-z0-9.+-]+);base64,([\s\S]+)$/i.exec(imageDataUrl || '');
+  if (!match) throw new Error('保存する画像データが不正です。');
+  const bytes = Uint8Array.from(atob(match[2]), character => character.charCodeAt(0));
+  // Large data URLs are silently rejected by some browser download surfaces.
+  // Keep the original encoded bytes, including embedded production metadata.
+  const url = URL.createObjectURL(new Blob([bytes], { type: match[1] }));
   const anchor = documentObject.createElement('a');
-  anchor.href = imageDataUrl;
+  anchor.href = url;
   anchor.download = filename;
-  documentObject.body.appendChild(anchor);
-  anchor.click();
-  documentObject.body.removeChild(anchor);
+  try {
+    documentObject.body.appendChild(anchor);
+    anchor.click();
+  } finally {
+    if (anchor.parentNode) anchor.parentNode.removeChild(anchor);
+    // Allow the browser to consume the download before releasing its URL.
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
+  }
 };

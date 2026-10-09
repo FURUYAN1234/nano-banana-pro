@@ -11,7 +11,7 @@ test('generated image actions expose only the PNG download label and no debug co
   // QA and downloads must receive the actual generated artwork, including its
   // variable panel heights and designed title. Never split/rasterize it first.
   assert.doesNotMatch(workflow, /typesetFourPanelCandidate|four-panel-typesetter/);
-  const downloadIndex = imageArea.indexOf('PNGをダウンロード（制作情報入り）');
+  const downloadIndex = imageArea.indexOf('保存先を選んで保存（制作情報入りPNG）');
   const backIndex = imageArea.indexOf('最初（STEP 1）に戻る');
 
   assert.ok(downloadIndex >= 0);

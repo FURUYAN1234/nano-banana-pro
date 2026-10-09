@@ -1,15 +1,12 @@
+import { getReferenceAsset, getReferenceMetadataRole } from './reference-assets.js';
+
 export const GENERATED_IMAGE_METADATA_KEYWORD = 'furu.nano_banana_pro';
 
-const SCHEMA_VERSION = 3;
+const SCHEMA_VERSION = 4;
 const REPOSITORY_URL = 'https://github.com/FURUYAN1234/nano-banana-pro';
 const DIGITAL_SOURCE_TYPE = 'http://cv.iptc.org/newscodes/digitalsourcetype/trainedAlgorithmicMedia';
 const OMITTED_FIELDS = Object.freeze([
-  'character_analysis',
-  'background_analysis.location',
-  'background_analysis.spatial_type',
-  'background_analysis.lighting',
-  'background_analysis.objects',
-  'background_analysis.mood',
+  'api_keys', 'raw_reference_images', 'analysis_logs',
 ]);
 const PNG_SIGNATURE = Uint8Array.from([137, 80, 78, 71, 13, 10, 26, 10]);
 const JPEG_METADATA_MAGIC = new TextEncoder().encode('FURU_AI_JSON\0');
@@ -66,6 +63,53 @@ const sha256Hex = async (bytes) => {
 
 export const getImageContentHash = async dataUrl => sha256Hex(parseImageDataUrl(dataUrl).bytes);
 
+const sanitizeRecognitionItems = items => (items || []).map(item => ({
+  kind: sanitizeText(item.kind), name: sanitizeText(item.name),
+  description: sanitizeText(item.description), user_edited: Boolean(item.user_edited ?? item.userEdited),
+}));
+const sanitizeBackgroundAnalysis = analysis => analysis ? Object.fromEntries(
+  ['location', 'spatialType', 'lighting', 'objects', 'mood'].map(field => [field, sanitizeText(analysis[field])]),
+) : null;
+
+// Whitelist the export shape: never serialize caller objects, raw images or credentials.
+const sanitizeReferenceContext = context => {
+  if (!context) return null; // Older history must not be filled with today's settings.
+  const materials = context.materials.map((material, index) => {
+    if (material.image_number !== index + 1 || !/^[a-f0-9]{64}$/.test(material.sha256)) {
+      throw new Error('制作情報の素材番号または画像識別情報が不正です。');
+    }
+    return { image_number: index + 1, sha256: material.sha256, role: sanitizeText(material.role),
+      analysis_completed: Boolean(material.analysis_completed), items: sanitizeRecognitionItems(material.items) };
+  });
+  const background = context.background;
+  if (background.enabled && (background.image_number !== materials.length || materials.at(-1)?.role !== 'panorama_reference')) {
+    throw new Error('制作情報の360°背景と素材番号が一致しません。');
+  }
+  return { numbering: 'step1_display_order', character_settings: sanitizeText(context.character_settings), materials,
+    background: { enabled: Boolean(background.enabled), image_number: background.enabled ? background.image_number : null,
+      analysis: background.enabled ? sanitizeBackgroundAnalysis(background.analysis) : null } };
+};
+
+export const buildReferenceRecognitionMetadata = async ({ images = [], referenceAssets = [], castList = '',
+  backgroundImage, backgroundEnabled = false, backgroundAnalysis = null } = {}) => {
+  // Capture all editable values before hashing yields to later user edits.
+  const sources = images.map((dataUrl, index) => {
+    const asset = getReferenceAsset(referenceAssets, dataUrl);
+    return { dataUrl, image_number: index + 1, role: getReferenceMetadataRole(asset),
+      analysis_completed: asset.analysisCompleted === true, items: sanitizeRecognitionItems(asset.items) };
+  });
+  const enabled = Boolean(backgroundEnabled && backgroundImage);
+  const background = { enabled, image_number: enabled ? sources.length + 1 : null,
+    analysis: enabled ? sanitizeBackgroundAnalysis(backgroundAnalysis) : null };
+  if (enabled) sources.push({dataUrl: backgroundImage, image_number: sources.length + 1,
+    role: 'panorama_reference', analysis_completed: Boolean(backgroundAnalysis), items: []});
+  const characterSettings = sanitizeText(castList);
+  const materials = await Promise.all(sources.map(async ({ dataUrl, ...material }) => ({
+    ...material, sha256: await getImageContentHash(dataUrl),
+  })));
+  return sanitizeReferenceContext({character_settings: characterSettings, materials, background});
+};
+
 const providerName = (provider) => {
   if (String(provider).toLowerCase() === 'openai') return 'OpenAI';
   if (String(provider).toLowerCase() === 'gemini') return 'Google';
@@ -105,17 +149,22 @@ export const buildWebGenerationMetadata = async (options = {}) => {
     finalPrompt,
     inputImages = [],
     settings = {},
+    referenceContext = null,
   } = options;
   const safeProvider = sanitizeText(provider);
   const safeScenario = sanitizeText(scenario);
   const safePrompt = sanitizeText(finalPrompt);
   const safePreparedAt = sanitizeText(preparedAt);
+  const safeReferenceContext = sanitizeReferenceContext(referenceContext);
+  const safeSettings = sanitizeValue(settings);
+  const inputs = await buildInputImageRecords(inputImages);
   const recordHash = await sha256Hex(new TextEncoder().encode(JSON.stringify({
     app_version: sanitizeText(appVersion),
     prepared_at: safePreparedAt,
     provider: safeProvider,
     scenario: safeScenario,
     final_prompt: safePrompt,
+    reference_context: safeReferenceContext, inputs, settings: safeSettings,
   })));
 
   return {
@@ -144,8 +193,9 @@ export const buildWebGenerationMetadata = async (options = {}) => {
       scenario: safeScenario,
       final_sent_prompt: safePrompt,
     },
-    settings: sanitizeValue(settings),
-    inputs: await buildInputImageRecords(inputImages),
+    settings: safeSettings,
+    inputs,
+    reference_context: safeReferenceContext,
     standards: {
       iptc: {
         digital_source_type: DIGITAL_SOURCE_TYPE,
@@ -186,7 +236,9 @@ export const buildGeneratedImageMetadata = async ({
   inputImages = [],
   outputImage,
   settings = {},
+  referenceContext = null,
 }) => {
+  const safeReferenceContext = sanitizeReferenceContext(referenceContext);
   const parsedOutput = parseImageDataUrl(outputImage);
   const outputHash = await sha256Hex(parsedOutput.bytes);
   const safeModelId = sanitizeText(modelId || 'unknown');
@@ -221,6 +273,7 @@ export const buildGeneratedImageMetadata = async ({
     },
     settings: sanitizeValue(settings),
     inputs,
+    reference_context: safeReferenceContext,
     output: {
       mime_type: parsedOutput.mimeType,
       byte_length: parsedOutput.bytes.byteLength,

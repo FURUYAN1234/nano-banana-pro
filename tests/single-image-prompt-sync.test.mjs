@@ -1,3 +1,4 @@
+import React from 'react';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
@@ -105,6 +106,7 @@ test('compact append prompt preserves content priority, rendering and geometry s
 });
 
 test('the actual single-image button handler copies the complete accepted text', async (t) => {
+  t.mock.method(React, 'useState', initial => [initial, () => {}]);
   const originalNavigator = Object.getOwnPropertyDescriptor(globalThis, 'navigator');
   const copied = [];
   const states = [];

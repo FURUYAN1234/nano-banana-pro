@@ -47,6 +47,7 @@ function App() {
     setColorMode,
     isColorModeLocked,
     copyPrompt,
+    prepareWebCopyPrompt,
     webCopyPartLengths,
     copiedPartIndex,
     isTextSaved,
@@ -341,6 +342,7 @@ function App() {
 
 
 
+        <AutoSaveSettingsButton />
         <main className="space-y-8" style={{ filter: isMainLocked ? 'blur(10px)' : 'none', pointerEvents: isMainLocked ? 'none' : 'auto', transition: 'filter 0.5s ease' }}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
 
@@ -494,6 +496,7 @@ function App() {
               finalPrompt={finalPrompt}
               setFinalPrompt={setFinalPrompt}
               copyPrompt={copyPrompt}
+              prepareWebCopyPrompt={prepareWebCopyPrompt}
               webCopyPartLengths={webCopyPartLengths}
               copiedPartIndex={copiedPartIndex}
               isTextSaved={isTextSaved}
@@ -614,3 +617,4 @@ export default function AppWrapper() {
     </ErrorBoundary>
   );
 }
+import { AutoSaveSettingsButton } from './components/AutoSaveGuide';

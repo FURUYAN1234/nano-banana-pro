@@ -7,12 +7,15 @@
 .reference-recognition h3 { margin: 0; font-size: 12px; line-height: 1.5; color: #93c5fd; }
 .reference-recognition p { margin: 0; font-size: 11px; line-height: 1.5; }
 .reference-recognition .reference-recognition-note { margin: 0 0 6px; color: #94a3b8; }
-.reference-recognition-editor { box-sizing: border-box; display: block; width: 100%; height: 240px; padding: 8px; margin: 0; border: 1px solid #334155; border-radius: 4px; background: #08090b; color: #fff; font-size: 11px; line-height: 1.45; resize: vertical; }
+.reference-recognition-scroll { max-height: 320px; overflow-y: auto; overflow-x: hidden; min-width: 0; scrollbar-gutter: stable; }
+.reference-recognition-scroll textarea { overflow: hidden; resize: none; }
+.reference-recognition-editor { box-sizing: border-box; display: block; width: 100%; padding: 4px; margin: 0; border: 1px solid #334155; border-radius: 4px; background: #08090b; color: #fff; font-size: 11px; line-height: 1.45; }
 .reference-recognition-editor:focus-visible { outline: 2px solid #93c5fd; outline-offset: 2px; }
-.reference-recognition-item { margin: 4px 0; min-width: 0; }
-.reference-recognition-item label { display: flex; align-items: baseline; gap: 4px; }
+.reference-recognition-item { margin: 2px 0; min-width: 0; }
+.reference-recognition-row { display: grid; grid-template-columns: 4em minmax(8em, 20%) minmax(0, 1fr); align-items: start; gap: 4px; }
+.reference-recognition-item label { display: flex; align-items: baseline; gap: 4px; min-width: 0; white-space: nowrap; }
 .reference-recognition-item input, .reference-recognition-item textarea { box-sizing: border-box; min-width: 0; width: 100%; border: 1px solid #334155; padding: 2px 4px; background: #08090b; color: #fff; font: inherit; }
-.reference-recognition-item textarea { display: block; resize: vertical; }
+.reference-recognition-item textarea { display: block; }
 .reference-intake-guidance { margin: 6px 0 8px; color: #94a3b8; font-size: 11px; line-height: 1.45; }
 .reference-intake-guidance p { margin: 2px 0; font-size: 11px; line-height: 1.45; }
 .reference-intake-guidance p:first-child { margin-bottom: 4px; color: #cbd5e1; font-size: 12px; }
@@ -547,3 +550,11 @@ body {
 .material-direction-help { margin: 4px 0; color: #94a3b8; font-size: 11px; line-height: 1.45; }
 
 .panorama-reference-guidance { margin: 4px 0; font-size: 11px; line-height: 1.45; color: #94a3b8; }
+/* Shared PNG save help and mode-start dialog. */
+.auto-save-guide { font-size: 12px; line-height: 1.5; text-align: left; overflow-wrap: anywhere; color: #cbd5e1; }
+.auto-save-guide p { margin: 6px 0; }
+.auto-save-guide ol { padding-left: 22px; margin: 6px 0; }
+.save-guide-button { display: block; width: 100%; border: 1px solid #aaa; border-radius: 0; padding: 3px 8px; margin: 6px 0; background: #fff; color: #000; font-size: 14px; cursor: pointer; }
+.save-guide-button:disabled { opacity: .6; cursor: wait; }
+.save-start-dialog { background: #0f1115; color: #fff; border: 1px solid #94a3b8; padding: 18px; width: min(620px, calc(100vw - 32px)); max-height: 85vh; overflow-y: auto; }
+.save-start-dialog::backdrop { background: #000a; }

@@ -64,16 +64,30 @@ test('manual save keeps the existing API-title-date-time filename convention', (
   assert.equal(filename, 'AI_4koma_comic_ChatGPT_タイトル___使用禁止_文字_20260916070509.png');
 });
 
-test('download helper saves the selected data URL through the browser download surface', () => {
+test('download helper preserves large encoded images through a Blob download', async (t) => {
   const clicked = [];
-  const parent = { appendChild: node => clicked.push(['append', node]), removeChild: node => clicked.push(['remove', node]) };
+  const parent = { appendChild: node => {node.parentNode = parent; clicked.push(['append', node]);}, removeChild: node => clicked.push(['remove', node]) };
   const documentObject = { body: parent, createElement: () => ({ click() { clicked.push(['click', this]); } }) };
-
-  downloadImageDataUrl('data:image/png;base64,saved-image', 'AI_4koma_comic_ChatGPT_title_20260916070509.png', documentObject);
+  const timers = [];
+  t.mock.method(globalThis, 'setTimeout', (callback, delay) => timers.push({callback, delay}));
+  const bytes = new Uint8Array(9_000_000).fill(173);
+  downloadImageDataUrl(`data:image/png;base64,${Buffer.from(bytes).toString('base64')}`, 'AI_4koma_comic_ChatGPT_title_20260916070509.png', documentObject);
 
   assert.equal(clicked[0][0], 'append');
   assert.equal(clicked[1][0], 'click');
   assert.equal(clicked[2][0], 'remove');
-  assert.equal(clicked[0][1].href, 'data:image/png;base64,saved-image');
+  assert.match(clicked[0][1].href, /^blob:/);
   assert.equal(clicked[0][1].download, 'AI_4koma_comic_ChatGPT_title_20260916070509.png');
+  const response = await fetch(clicked[0][1].href);
+  assert.equal(response.headers.get('content-type'), 'image/png');
+  assert.deepEqual(new Uint8Array(await response.arrayBuffer()), bytes);
+  assert.equal(timers[0].delay, 60_000);
+  timers[0].callback();
+  await assert.rejects(fetch(clicked[0][1].href));
+});
+
+test('download helper rejects invalid data before creating a download', () => {
+  const documentObject = { createElement() { throw new Error('must not reach download'); } };
+  assert.throws(() => downloadImageDataUrl('https://example.com/image.png', 'x.png', documentObject), /画像データが不正/);
+  assert.throws(() => downloadImageDataUrl('data:image/png;base64,!!!!', 'x.png', documentObject));
 });

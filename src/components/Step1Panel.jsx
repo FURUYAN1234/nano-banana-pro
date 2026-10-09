@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useLayoutEffect, useRef } from 'react';
 import {
   Camera,
   Loader2,
@@ -44,6 +44,31 @@ export default function Step1Panel({
   setStyleJson
 }) {
   const materialInputRef = useRef(null);
+  const recognitionScrollRef = useRef(null);
+  // One scroll surface: grow each text field to its content, including after
+  // image mutations and width changes, instead of nesting textarea scrollbars.
+  useLayoutEffect(() => {
+    const container = recognitionScrollRef.current;
+    if (!container) return;
+    const fit = () => {
+      const scrollTop = container.scrollTop;
+      container.querySelectorAll('textarea').forEach(field => {
+        field.style.height = '0px';
+        field.style.height = `${field.scrollHeight + 2}px`;
+      });
+      container.scrollTop = scrollTop;
+    };
+    fit();
+    let width = container.clientWidth;
+    const observer = new ResizeObserver(() => {
+      if (container.clientWidth !== width) {
+        width = container.clientWidth;
+        fit();
+      }
+    });
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, [images, referenceAssets, castList, bg360Analysis, bg360Enabled, isAnalyzing]);
   const canCopyRecognition = !isAnalyzing && Boolean(recognitionText.trim()) && !referenceEditorError
     && images.every(image => referenceAssets.some(asset => asset.image === image
       && asset.items?.length > 0 && (asset.analysisCompleted === true || asset.items.every(item => item.kind !== 'unknown'))));
@@ -107,11 +132,11 @@ export default function Step1Panel({
       </div>
       <div className="reference-drop-area" role="region" aria-label="読み込んだ素材画像">
         {images.map((img, i) => (
-          <div key={i} className="reference-thumbnail">
-            <img src={img} className="w-full h-full object-cover shadow-sm" alt={`参照素材${i + 1}`} title={`画像${i + 1}\n${referenceAssets.find(asset => asset.image === img)?.items.map(item => `${REFERENCE_KIND_LABELS[item.kind]}: ${item.name} — ${item.description}`).join('\n') || '解析待ち'}`} />
+          <div key={img} className="reference-thumbnail" title={`画像${i + 1}\n${referenceAssets.find(asset => asset.image === img)?.items.map(item => `${REFERENCE_KIND_LABELS[item.kind]}: ${item.name} — ${item.description}`).join('\n') || '解析待ち'}`}>
+            <img src={img} className="w-full h-full object-cover shadow-sm" alt={`参照素材${i + 1}`} />
             <span className="absolute bottom-0 inset-x-0 bg-black/80 text-[8px] text-white text-center truncate">{i + 1}: {referenceAssets.find(asset => asset.image === img)?.items.map(item => REFERENCE_KIND_LABELS[item.kind]).filter((kind, index, kinds) => kinds.indexOf(kind) === index).join('・') || '解析待ち'}</span>
             <button
-              onClick={() => setImages(images.filter((_, idx) => idx !== i))}
+              onClick={() => setImages(current => current.filter(image => image !== img))}
               disabled={isAnalyzing}
               aria-label={`参照素材${i + 1}を削除`}
               className="absolute inset-0 bg-black/60 opacity-0 group-hover/img:opacity-100 flex items-center justify-center text-white transition-all backdrop-blur-[1px]"
@@ -191,15 +216,19 @@ export default function Step1Panel({
             <h3><label htmlFor="reference-recognition-editor">認識結果（人物・背景・小物／編集できます）</label></h3>
           </div>
           <p className="reference-recognition-note">解析ログの結果をここに表示し、シナリオ・描画指示へ引き継ぎます。認識できない場合や取り違える場合、今回のまんがには使用しない場合もあります。</p>
-        {referenceAssets.map((asset, imageIndex) => <div key={asset.image} className="reference-recognition-item">
-          <strong>画像{imageIndex + 1}</strong>
-          {asset.items.map((item, itemIndex) => <div key={itemIndex}>
-            <label>{REFERENCE_KIND_LABELS[item.kind]}：<input aria-label={`画像${imageIndex + 1}の素材${itemIndex + 1}の名前`}
-              value={item.name} onChange={event => editReferenceItem(asset.image, itemIndex, 'name', event.target.value)} /></label>
-            <textarea aria-label={`画像${imageIndex + 1}の素材${itemIndex + 1}の認識内容`} rows={2}
-              value={item.description} onChange={event => editReferenceItem(asset.image, itemIndex, 'description', event.target.value)} />
-          </div>)}
-        </div>)}
+        <div ref={recognitionScrollRef} className="reference-recognition-scroll" role="region" aria-label="認識結果と人物設定" tabIndex={0}>
+        {images.map((image, imageIndex) => {
+          const asset = referenceAssets.find(entry => entry.image === image);
+          return <div key={image} className="reference-recognition-item">
+            {asset?.items?.length ? asset.items.map((item, itemIndex) => <div key={itemIndex} className="reference-recognition-row">
+              <span>{itemIndex === 0 ? `画像${imageIndex + 1}` : ''}</span>
+              <label>{REFERENCE_KIND_LABELS[item.kind]}：<input aria-label={`画像${imageIndex + 1}の素材${itemIndex + 1}の名前`}
+                value={item.name} onChange={event => editReferenceItem(image, itemIndex, 'name', event.target.value)} /></label>
+              <textarea aria-label={`画像${imageIndex + 1}の素材${itemIndex + 1}の認識内容`} rows={1}
+                value={item.description} onChange={event => editReferenceItem(image, itemIndex, 'description', event.target.value)} />
+            </div>) : <span>画像{imageIndex + 1}：解析待ち</span>}
+          </div>;
+        })}
         {bg360Enabled && bg360Analysis && <div className="reference-recognition-item">
           <strong>画像{images.length + 1}：360°背景</strong>
           {Object.entries({location:'場所', lighting:'光', objects:'小物・設備', mood:'雰囲気'}).map(([field, label]) =>
@@ -208,6 +237,7 @@ export default function Step1Panel({
         <label htmlFor="reference-recognition-editor">人物設定</label>
         <textarea
           id="reference-recognition-editor"
+          rows={1}
           value={castList}
           onChange={(e) => editCastList(e.target.value)}
           className="reference-recognition-editor"
@@ -215,6 +245,7 @@ export default function Step1Panel({
           disabled={isAnalyzing}
           placeholder="画像をアップロードして特徴を自動抽出、または直接入力して設定を記述します。"
         />
+        </div>
         {referenceEditorError && <p role="alert">{referenceEditorError}</p>}
         <div className="mt-2 relative z-50">
           <button

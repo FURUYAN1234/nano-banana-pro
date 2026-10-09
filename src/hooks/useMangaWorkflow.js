@@ -1,4 +1,4 @@
-import { getImageContentHash } from '../lib/generated-image-metadata.js';
+import { getImageContentHash, buildReferenceRecognitionMetadata } from '../lib/generated-image-metadata.js';
 import { beginApiWork, cancelApiWork } from '../lib/api-work-cancellation.js';
 import { useState, useRef, useEffect } from 'react';
 
@@ -35,6 +35,7 @@ import {
   normalizePromptProviderFamily
 } from '../lib/prompt-assembler';
 import { addGenerationHistoryItem, collectRecentScenarioOutcomes, getWorkflowStep } from '../lib/generation-history';
+import { createFinalImageSaver } from '../lib/generated-image-save.js';
 import { inspectImageDimensions, inspectNativeMonochromeChroma, extractMangaPanelCrops, normalizePageCandidate, formatPageLayoutStatus } from '../lib/manga-page-layout.js';
 import { generateScenario, enhanceScenarioText } from '../lib/scenario-provider';
 import { fixPolicyViolation } from '../lib/policy-fixer';
@@ -362,6 +363,24 @@ export default function useMangaWorkflow() {
   const setImageEditDraft = (image, text) => setImageEditDrafts(previous => ({ ...previous, [image]: text }));
   const imageEditRunRef = useRef(null);
   const [generationHistory, setGenerationHistory] = useState([]); // [v2.86] Generated Image History
+  const finalImageSaverRef = useRef(null);
+  const autoSaveFinalImage = async (item, isCurrent) => {
+    finalImageSaverRef.current ||= createFinalImageSaver();
+    try {
+      const result = await finalImageSaverRef.current(item, SYSTEM_VERSION, isCurrent);
+      if (result === 'stale') return false;
+      if (result === 'requested') setGenLog(lines => [...lines,
+        '[自動保存] 制作情報入りPNGのダウンロードを開始しました。ブラウザーのダウンロード一覧で完了を確認してください。']);
+      return true;
+    } catch (error) {
+      if (!isCurrent()) return false;
+      fullAutoAbortRef.current = true;
+      setIsGenerationError(true);
+      setGenLog(lines => [...lines, `[保存エラー] ${error.message} 生成画像は保持しています。「保存先を選んで保存」から保存してください。`]);
+      showStatus('自動保存の準備に失敗したため、自動進行を停止しました。生成画像は保持しています。');
+      return false;
+    }
+  };
 
   const invalidatePromptAssembly = () => {
     promptAssemblyRunRef.current += 1;
@@ -1734,10 +1753,7 @@ export default function useMangaWorkflow() {
       const mimeType = candidate.mimeType || rawMimeType;
       const img = `data:${mimeType};base64,${candidate.base64Img}`;
       const timestamp = Date.now();
-      setGenerationHistory(items => {
-        const retained = items.some(item => item.img === sourceImage) ? items
-          : addGenerationHistoryItem(items, { ...sourceHistory, id: timestamp - 1, img: sourceImage });
-        return addGenerationHistoryItem(retained, {
+      const editedHistoryItem = {
           id: timestamp, img, mimeType, modelId: response.usedModel,
           originalImage: candidate.originalImage,
           pageLayout: candidate.pageLayout,
@@ -1749,12 +1765,17 @@ export default function useMangaWorkflow() {
             inputImages: [{ role: 'edit_source', dataUrl: sourceImage }],
             settings: { manual_image_edit: true, quality_review: 'not_run' },
           },
-        });
+      };
+      setGenerationHistory(items => {
+        const retained = items.some(item => item.img === sourceImage) ? items
+          : addGenerationHistoryItem(items, { ...sourceHistory, id: timestamp - 1, img: sourceImage });
+        return addGenerationHistoryItem(retained, editedHistoryItem);
       });
       setGeneratedImage(img);
       setIsFallbackUsed(false);
       setImageQualityNeedsRepair(false);
       log(formatPageLayoutStatus(candidate.pageLayout));
+      if (!await autoSaveFinalImage(editedHistoryItem, isCurrent)) return false;
       log('[画像修正] 完了。修正前の画像は履歴から選べます。自動品質検査は未実行です。');
       showStatus('修正版を表示しました。変更箇所を確認してください。元画像は履歴に残っています。');
       return true;
@@ -1872,6 +1893,11 @@ export default function useMangaWorkflow() {
 
     try {
       if (qualityRunEpoch !== scenarioRunEpochRef.current) return false;
+      const referenceContext = await buildReferenceRecognitionMetadata({
+        images, referenceAssets: referenceAssetsRef.current, castList,
+        backgroundImage: bg360Image, backgroundEnabled: bg360Enabled, backgroundAnalysis: bg360Analysis,
+      });
+      if (qualityRunEpoch !== scenarioRunEpochRef.current) return false;
       setOpenAIImageVerificationWarning('');
       showStatus(isOpenAIEngine ? `${resolveOpenAIImageOption(openAIImageQuality).label} に送信中...` : "Google AI (Gemini/Imagen) に送信中...");
       setGenLog(prev => [...prev, "[3/5] クラウドAPIへ接続中...", "[3/5] プロンプトデータをアップロード中..."]);
@@ -1950,7 +1976,7 @@ export default function useMangaWorkflow() {
           workflowSource,
           metadataContext: {
             provider: isOpenAIEngine ? 'openai' : 'gemini', scenario,
-            finalPrompt: metadataPrompt, inputImages: metadataInputImages, settings: metadataSettings,
+            finalPrompt: metadataPrompt, inputImages: metadataInputImages, settings: metadataSettings, referenceContext,
           },
         };
         if (qualityMode !== 'four-panel') return candidate;
@@ -2252,26 +2278,25 @@ export default function useMangaWorkflow() {
       }
       const acceptedImageStr = `data:${generatedMimeType};base64,${qualityOutcome.candidate.base64Img}`;
       setGeneratedImage(acceptedImageStr);
+      const timestamp = Date.now();
+      const acceptedHistoryItem = {
+        id: timestamp, img: acceptedImageStr,
+        modelId: qualityOutcome.candidate.modelId,
+        mimeType: qualityOutcome.candidate.mimeType || 'image/png',
+        generatedAt: new Date(timestamp).toISOString(),
+        originalImage: qualityOutcome.candidate.originalImage,
+        pageLayout: qualityOutcome.candidate.pageLayout,
+        metadataContext: qualityOutcome.candidate.metadataContext,
+        workflowSource: qualityOutcome.candidate.workflowSource,
+        fallbackOccurred: Boolean(qualityOutcome.candidate.modelId
+          && qualityOutcome.candidate.modelId !== GEMINI_IMAGE_MODEL
+          && !qualityOutcome.candidate.modelId.startsWith('gpt-')),
+        qualityPass: qualityResult?.pass === true, selected: true,
+      };
       setGenerationHistory(prev => {
-        const timestamp = Date.now();
         const candidateImages = new Set(qualityOutcome.candidates.map(entry =>
           `data:${entry.candidate.mimeType || 'image/png'};base64,${entry.candidate.base64Img}`));
-        return addGenerationHistoryItem(prev, {
-          id: timestamp,
-          img: acceptedImageStr,
-          modelId: qualityOutcome.candidate.modelId,
-          mimeType: qualityOutcome.candidate.mimeType || 'image/png',
-          generatedAt: new Date(timestamp).toISOString(),
-          originalImage: qualityOutcome.candidate.originalImage,
-          pageLayout: qualityOutcome.candidate.pageLayout,
-          metadataContext: qualityOutcome.candidate.metadataContext,
-          workflowSource: qualityOutcome.candidate.workflowSource,
-          fallbackOccurred: Boolean(qualityOutcome.candidate.modelId
-            && qualityOutcome.candidate.modelId !== GEMINI_IMAGE_MODEL
-            && !qualityOutcome.candidate.modelId.startsWith('gpt-')),
-          qualityPass: qualityResult?.pass === true,
-          selected: true,
-        }, { removeImages: candidateImages });
+        return addGenerationHistoryItem(prev, acceptedHistoryItem, { removeImages: candidateImages });
       });
 
       if (!qualityOutcome.canContinue) {
@@ -2279,6 +2304,12 @@ export default function useMangaWorkflow() {
         fullAutoAbortRef.current = true;
         showStatus('修正リトライを停止しました。生成済み画像は履歴に保持しています。');
         return false;
+      }
+      // Reinspection without a changed image must not create another download.
+      if (!(generationOptions.reviewExisting && acceptedImageStr === generatedImage)) {
+        const saved = await autoSaveFinalImage(acceptedHistoryItem, () => qualityRunEpoch === scenarioRunEpochRef.current
+          && !qualityRetryAbortRef.current && (!isFullAutoMode || !fullAutoAbortRef.current));
+        if (!saved) return false;
       }
       setIsGenerationError(false);
       if (qualityOutcome.validationWarning) {
@@ -2914,6 +2945,7 @@ export default function useMangaWorkflow() {
     setColorMode,
     isColorModeLocked,
     copyPrompt,
+    prepareWebCopyPrompt,
     webCopyPartLengths,
     copiedPartIndex,
     isTextSaved,

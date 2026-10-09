@@ -18,6 +18,8 @@ import {
 } from 'lucide-react';
 import Panorama360Viewer from './Panorama360Viewer';
 import ImageEditForm from './ImageEditForm';
+import AutoSaveGuide from './AutoSaveGuide';
+import { prepareGeneratedImageSave, saveImageToChosenLocation } from '../lib/generated-image-save.js';
 import { getReferenceAsset, getReferenceMetadataRole } from '../lib/reference-assets.js';
 import { GEMINI_A4_RELAYOUT_PROMPT, GEMINI_2K_REFINEMENT_PROMPT } from '../lib/gemini-image-edit';
 import { getEffectiveEngine } from '../lib/engine-state';
@@ -26,11 +28,10 @@ import { SYSTEM_VERSION } from '../lib/constants';
 import { applyOpenAIImageEngineWatermark, formatOpenAIImageEngineName } from '../lib/openai-image-settings.js';
 import { getEndingModePolicy } from '../lib/ending-mode-policy';
 import { inferImageQualityMode } from '../lib/image-quality-failsafe';
-import { buildGeneratedImageFilename, downloadImageDataUrl, selectGenerationMetadataContext } from '../lib/generation-history';
+import { buildGeneratedImageFilename } from '../lib/generation-history';
 import {
-  buildGeneratedImageMetadata,
   buildWebGenerationMetadata,
-  embedGeneratedImageMetadata,
+  buildReferenceRecognitionMetadata,
   serializeGeneratedImageMetadata,
 } from '../lib/generated-image-metadata';
 import {
@@ -40,7 +41,6 @@ import {
   MANGA_MANUSCRIPT_STANDARD,
 } from '../lib/manga-manuscript-format';
 import {
-  GEMINI_IMAGE_MODEL,
   GEMINI_IMAGE_PRICE_SNAPSHOT_DATE,
   formatGeminiImagePricingSummary,
   formatGeminiImageSettingsSummary,
@@ -102,23 +102,6 @@ const copyTextToClipboard = async (text) => {
   throw new Error('Clipboard copy failed');
 };
 
-const convertImageDataUrlToPng = (dataUrl) => {
-  if (/^data:image\/png;base64,/i.test(dataUrl || '')) return Promise.resolve(dataUrl);
-  return new Promise((resolve, reject) => {
-    const image = new Image();
-    image.onload = () => {
-      const canvas = document.createElement('canvas');
-      canvas.width = image.naturalWidth;
-      canvas.height = image.naturalHeight;
-      const context = canvas.getContext('2d');
-      if (!context) return reject(new Error('PNG保存用の画像処理を開始できませんでした。'));
-      context.drawImage(image, 0, 0);
-      resolve(canvas.toDataURL('image/png'));
-    };
-    image.onerror = () => reject(new Error('PNG保存用の画像を読み取れませんでした。'));
-    image.src = dataUrl;
-  });
-};
 
 const CHATGPT_2X_UPSCALE_PROMPT = `SELF-TRAINED 2X IMAGE UPSCALE TASK
 
@@ -317,6 +300,7 @@ export default function Step4Panel({
   finalPrompt,
   setFinalPrompt,
   copyPrompt,
+  prepareWebCopyPrompt,
   webCopyPartLengths,
   copiedPartIndex,
   isTextSaved,
@@ -425,7 +409,6 @@ export default function Step4Panel({
   const [webMetadataError, setWebMetadataError] = React.useState('');
   const [imageMetadataError, setImageMetadataError] = React.useState('');
   const [displayedImageSize, setDisplayedImageSize] = React.useState(null);
-  const generatedAtByImageRef = React.useRef(new Map());
 
   const getCurrentMetadataInputImages = () => {
     const inputImages = images.map(dataUrl => ({ role: getReferenceMetadataRole(getReferenceAsset(referenceAssets, dataUrl)), dataUrl }));
@@ -450,41 +433,19 @@ export default function Step4Panel({
     background_reference_used: Boolean(bg360Enabled && bg360Image),
   });
 
-  const buildCurrentWebGenerationMetadata = (preparedAt) => buildWebGenerationMetadata({
+  const buildCurrentWebGenerationMetadata = async (preparedAt) => buildWebGenerationMetadata({
     appVersion: SYSTEM_VERSION,
     preparedAt,
     provider: (isOpenAIImageMode || enableChatGPTMode) ? 'openai' : 'gemini',
     scenario,
-    finalPrompt,
+    finalPrompt: prepareWebCopyPrompt(finalPrompt),
     inputImages: getCurrentMetadataInputImages(),
     settings: getCurrentMetadataSettings(),
+    referenceContext: await buildReferenceRecognitionMetadata({ images, referenceAssets, castList,
+      backgroundImage: bg360Image, backgroundEnabled: bg360Enabled, backgroundAnalysis: bg360Analysis }),
   });
 
-  const buildCurrentGeneratedImageMetadata = async (outputImage) => {
-    if (!generatedImage) throw new Error('画像生成後に制作情報を保存できます。');
-    const generationContext = selectGenerationMetadataContext(displayedHistory);
-    if (!generatedAtByImageRef.current.has(generatedImage)) {
-      const historyTime = displayedHistory?.generatedAt
-        || (Number.isFinite(displayedHistory?.id) ? new Date(displayedHistory.id).toISOString() : new Date().toISOString());
-      generatedAtByImageRef.current.set(generatedImage, historyTime);
-    }
-    const modelId = displayedHistory?.modelId
-      || (isOpenAIImageMode ? resolveOpenAIImageOption(openAIImageQuality).model : GEMINI_IMAGE_MODEL);
-    return buildGeneratedImageMetadata({
-      appVersion: SYSTEM_VERSION,
-      generatedAt: generatedAtByImageRef.current.get(generatedImage),
-      provider: generationContext.provider,
-      modelId,
-      workflowMode: 'api_image_generation',
-      humanOversightLevel: 'prompt_guided',
-      scenario: generationContext.scenario,
-      finalPrompt: generationContext.finalPrompt,
-      fallbackOccurred: displayedHistory?.fallbackOccurred === true,
-      inputImages: generationContext.inputImages,
-      outputImage,
-      settings: generationContext.settings,
-    });
-  };
+  const prepareCurrentImageSave = () => prepareGeneratedImageSave({ ...displayedHistory, img: generatedImage }, SYSTEM_VERSION);
 
   const existingImageReviewControl = generatedImage && (
                 <button
@@ -1180,7 +1141,7 @@ No explanations. No partial results.`;
                 {isMetaSaved ? '保存完了！' : '📂 Web版生成用 制作情報JSONを保存'}
               </button>
               <p className="text-[11px] text-slate-400 leading-relaxed">
-                制作情報JSONは後で制作条件を確認・引き継ぐための別ファイルです。画像生成の指示文ではないため、{isChatGPTWebGuide ? 'ChatGPT' : 'Gemini'}へ貼り付ける必要はありません。
+                制作情報JSONには、現在の素材番号・認識内容・編集後の人物設定・360°背景設定と、コピーする指示文を保存します。元画像やAPIキーは含みません。{isChatGPTWebGuide ? 'ChatGPT' : 'Gemini'}へ貼り付ける必要はありません。
               </p>
               {webMetadataError && <p className="mt-1 text-[10px] text-red-400">{webMetadataError}</p>}
               {webSupportControls}
@@ -1321,7 +1282,7 @@ No explanations. No partial results.`;
               </button>
               {isChatGPTWebGuide && existingImageReviewControl}
               <p className="mt-1.5 mb-3 px-1 text-[10px] leading-snug text-slate-400">
-                生成画像には、安全化した制作情報を保存します。APIキー、参照画像本体、人物・場所の解析全文は保存しません。
+                生成画像には、安全化した制作情報を保存します。生成時点の素材番号・認識内容・人物設定・360°背景設定を記録し、後からの素材変更で書き換えません。APIキー・参照画像本体・解析ログは保存しません。
               </p>
 
               {/* [v4.2.0] コンテンツポリシー選択メッセージボックス（パネルとは独立） */}
@@ -1478,19 +1439,18 @@ No explanations. No partial results.`;
                   onClick={async () => {
                     try {
                       setImageMetadataError('');
-                      const pngImage = await convertImageDataUrlToPng(generatedImage);
-                      const metadata = await buildCurrentGeneratedImageMetadata(pngImage);
-                      const imageWithMetadata = embedGeneratedImageMetadata(pngImage, metadata);
-                      downloadImageDataUrl(imageWithMetadata, getGeneratedImageFilename());
+                      const result = await saveImageToChosenLocation({ prepare: prepareCurrentImageSave, filename: getGeneratedImageFilename() });
+                      if (result === 'requested') setImageMetadataError('このブラウザーでは保存先選択に対応していないため、通常のダウンロードを開始しました。');
                     } catch (error) {
                       setImageMetadataError(error instanceof Error ? error.message : '制作情報を画像へ保存できませんでした。');
                     }
                   }}
                   className="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg border border-white/20 active:scale-95"
                 >
-                  <Download size={20} /> PNGをダウンロード（制作情報入り）
+                  <Download size={20} /> 保存先を選んで保存（制作情報入りPNG）
                 </button>
-                {imageMetadataError && <p className="mt-1 text-[10px] text-red-400">{imageMetadataError}</p>}
+                {imageMetadataError && <p role="status" className="mt-1 text-[10px] text-red-400">{imageMetadataError}</p>}
+                <AutoSaveGuide />
 
                 {isFourPanelPage && !hasFixedPageLayout && normalizeDisplayedPage && <button type="button" disabled={isGeneratingImage} className="w-full mt-2 text-slate-300 underline disabled:opacity-50" onClick={normalizeDisplayedPage}>ページ比率を揃える（追加課金なし）</button>}
 

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {reconcileReferenceCast, remapReferenceNumbers} from '../src/lib/reference-assets.js';
+import {reconcileReferenceCast, remapReferenceNumbers, mergeReferenceAnalysis, buildRecognitionEditorText, buildWebReferencePlan} from '../src/lib/reference-assets.js';
 
 const source = readFileSync(new URL('../src/hooks/useMangaWorkflow.js',import.meta.url),'utf8');
 // Execute the actual event/transition functions with observable state setters.
@@ -27,7 +27,7 @@ function workflow() {
     assert.ok(definition,name);
     return new Function(...Object.keys(ctx),`return ${definition[1]} => {${definition[2]}}`)(...Object.values(ctx))(...args);
   };
-  for (const name of ['invalidateScenarioRun','invalidateReferenceOutputs','setImages','setCastList','setReferenceAssets','setBg360Image','setBg360Enabled','partialReset','step1Reset','hardReset']) ctx[name]=bind(name);
+  for (const name of ['invalidateScenarioRun','invalidateReferenceOutputs','setImages','setCastList','setReferenceAssets','setBg360Image','setBg360Enabled','partialReset','step1Reset','hardReset','editReferenceItem']) ctx[name]=bind(name);
   return {state,ctx,a,b};
 }
 
@@ -56,4 +56,40 @@ test('panorama OFF invalidates outputs and cannot redirect its number to a survi
   assert.equal(state.finalPrompt,''); assert.equal(state.scenario,'');
   assert.match(state.manualTopic,/削除済み素材（旧画像3）/);
   assert.equal(state.bg360Image,'panorama');
+});
+
+test('successive add, reorder, middle/front deletion and re-add keep recognition, edits, cast and Web numbers attached to images',()=>{
+  const {state,ctx,a}=workflow();
+  const verify = expected => {
+    assert.deepEqual(ctx.imagesRef.current,expected);
+    assert.deepEqual(ctx.referenceAssetsRef.current.map(asset=>asset.image),expected);
+    const web=buildWebReferencePlan({images:expected,referenceAssets:ctx.referenceAssetsRef.current,backgroundImage:'panorama',backgroundEnabled:true});
+    assert.deepEqual(web.referenceImages,[...expected,'panorama']);
+    assert.match(web.rolePrompt,new RegExp(`Image ${expected.length+1}: BACKGROUND REFERENCE`));
+    const copy=buildRecognitionEditorText(ctx.castListRef.current,ctx.referenceAssetsRef.current,expected);
+    expected.forEach((image,index)=>{
+      const asset=ctx.referenceAssetsRef.current.find(item=>item.image===image);
+      for(const item of asset.items)assert.ok(copy.includes(`画像${index+1}｜`) && copy.includes(JSON.stringify(item.name)));
+      assert.ok(web.rolePrompt.split('\n').find(line=>line.startsWith(`Image ${index+1}:`)).includes(asset.items[0].name));
+    });
+  };
+  ctx.setImages(current=>[...current,'c']);
+  const incoming={castList:'',assets:[{image:'c',items:[{kind:'background',name:'Garden',description:'Trees'}]}]};
+  ctx.setReferenceAssets(mergeReferenceAnalysis(ctx.referenceAssetsRef.current,incoming,ctx.imagesRef.current));
+  verify(['a','b','c']); assert.match(state.manualTopic,/画像4を舞台/);
+  ctx.setImages(['c','a','b']); verify(['c','a','b']);
+  ctx.editReferenceItem('b',0,'description','Edited handle');
+  assert.equal(ctx.referenceAssetsRef.current[2].items[0].description,'Edited handle');
+  ctx.setImages(current=>current.filter(image=>image!=='a')); verify(['c','b']);
+  assert.equal(ctx.castListRef.current,'');
+  assert.equal(ctx.referenceAssetsRef.current[1].items[0].description,'Edited handle');
+  ctx.setImages(current=>current.filter(image=>image!=='c')); verify(['b']);
+  assert.match(state.manualTopic,/画像1を使う。画像2を舞台/);
+  ctx.setImages(current=>[...current,'a']);
+  const before=ctx.referenceAssetsRef.current;
+  const after=mergeReferenceAnalysis(before,{castList:a.castProfiles.A,assets:[a]},ctx.imagesRef.current);
+  ctx.setCastList(reconcileReferenceCast(ctx.castListRef.current,before,after)); ctx.setReferenceAssets(after);
+  verify(['b','a']); assert.equal(ctx.castListRef.current,a.castProfiles.A);
+  ctx.setImages([]); verify([]); assert.equal(ctx.castListRef.current,'');
+  assert.match(state.manualTopic,/削除済み素材/);
 });
