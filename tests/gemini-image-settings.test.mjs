@@ -30,7 +30,7 @@ test('Gemini STEP4 summary states model, request size, and normalized A4 size', 
 });
 
 test('Gemini image price snapshot exposes per-image and retry costs', () => {
-  assert.equal(GEMINI_IMAGE_PRICE_SNAPSHOT_DATE, '2026-10-08');
+  assert.equal(GEMINI_IMAGE_PRICE_SNAPSHOT_DATE, '2026-10-09');
   assert.equal(
     formatGeminiImagePricingSummary(),
     'Nano Banana 2.1｜画像出力 1K $0.0336/枚（最大4枚 $0.1344）＋入力 $1.50・テキスト/思考出力 $7.50 / 100万トークン',
