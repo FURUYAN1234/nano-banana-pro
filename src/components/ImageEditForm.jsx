@@ -1,8 +1,10 @@
 import React, { useRef, useState } from 'react';
 import { IMAGE_EDIT_INSTRUCTION_MAX_CHARS } from '../lib/image-edit.js';
 
-export default function ImageEditForm({ image, busy = false, providerLabel, onSubmit }) {
-  const [instruction, setInstruction] = useState('');
+export default function ImageEditForm({ image, busy = false, providerLabel, onSubmit, draft, onDraftChange }) {
+  const [localInstruction, setLocalInstruction] = useState('');
+  const instruction = draft ?? localInstruction;
+  const setInstruction = onDraftChange ?? setLocalInstruction;
   const sending = useRef(false);
   if (!image) return null;
   return (

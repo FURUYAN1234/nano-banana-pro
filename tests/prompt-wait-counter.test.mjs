@@ -47,7 +47,7 @@ test('scenario invalidation releases STEP3 and an old review cannot unlock or ov
     reviewComedyPrompt:input=>new Promise(resolve=>reviews.push({resolve,signal:input.signal})),callAI:()=>{},isDocumentaryEnding:()=>false,
     assertPromptEndingModeConsistency:()=>{},assertPrintableDialogue:()=>{},showStatus:()=>{},console,
     qualityRetryAbortRef:{current:false},setGeneratedImage:()=>{},setIsGeneratingImage:()=>{},setIsFixingPolicy:()=>{},setPolicyAutoRetrying:()=>{},
-    setIsSearching:()=>{},setIsEnhancing:()=>{},setIs360CameraWorking:()=>{}
+    setIsSearching:()=>{},setIsEnhancing:()=>{},setIs360CameraWorking:()=>{},setIsAnalyzing:()=>{},isAnalyzingRef:{current:false},setIs360Analyzing:()=>{}
   };
   const resetStart = workflow.includes('const invalidatePromptAssembly =') ? 'const invalidatePromptAssembly =' : 'const invalidateScenarioOutput =';
   const invalidation = workflow.slice(workflow.indexOf(resetStart), workflow.indexOf('const setScenarioFromUser ='));

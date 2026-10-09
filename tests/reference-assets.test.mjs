@@ -75,6 +75,30 @@ test('additional materials cannot overwrite existing user-authored character set
   assert.match(result.castList, /ベニ/);
 });
 
+test('incremental recognition accepts only supplied profiles and preserves unrelated existing cast', () => {
+  const original = 'STYLE_TAG: COLOR\n\n## 1. アオ\n既存の人物設定';
+  const initial = lib.parseReferenceAnalysis(JSON.stringify({ castList: original,
+    references: [entry(1, 'character', 'アオ', '正面資料')] }), [images[0]]);
+  const previous = lib.mergeReferenceAnalysis([], initial, [images[0]]);
+  const added = '## 2. ベニ\n新しく追加した人物設定';
+  const result = lib.parseReferenceAnalysis(JSON.stringify({ castList: added,
+    references: [entry(1, 'character', 'ベニ', '表情集')] }), [images[3]], original);
+  assert.equal(result.castList, `${original}\n\n${added}`);
+  const next = lib.mergeReferenceAnalysis(previous, result, [images[0], images[3]]);
+  assert.equal(lib.reconcileReferenceCast(original, previous, next), `${original}\n\n${added}`);
+  assert.equal(lib.reconcileReferenceCast(`${original}\n\n${added}`, next, previous), original);
+  assert.throws(() => lib.parseReferenceAnalysis(JSON.stringify({ castList: '',
+    references: [entry(1, 'character', 'ベニ', '表情集')] }), [images[3]], original), /人物参照/);
+});
+
+test('incremental non-character recognition does not require regenerated cast profiles', () => {
+  const original = '## 1. アオ\n手動設定';
+  const result = lib.parseReferenceAnalysis(JSON.stringify({ castList: '',
+    references: [entry(1, 'prop', '鍵', '丸い持ち手')] }), [images[5]], original);
+  assert.equal(result.castList, original);
+  assert.equal(result.recognizedCastList, '');
+});
+
 test('one editor and clipboard text contain character profiles plus background and prop recognition', () => {
   const { assets } = parse(payload());
   const text = lib.buildRecognitionEditorText(castList, assets, images);

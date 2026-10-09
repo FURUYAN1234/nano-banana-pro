@@ -80,6 +80,11 @@ function App() {
     imageResultRef,
     images,
     referenceAssets,
+    editReferenceItem,
+    editCastList,
+    editBackground,
+    imageEditDrafts,
+    setImageEditDraft,
     recognitionText,
     setRecognitionText,
     referenceEditorError,
@@ -353,6 +358,12 @@ function App() {
               analysisProgressRef={step1ProgressRef}
               images={images}
               referenceAssets={referenceAssets}
+              editReferenceItem={editReferenceItem}
+              castList={castList}
+              editCastList={editCastList}
+              bg360Analysis={bg360Analysis}
+              editBackground={editBackground}
+              showStatus={showStatus}
               recognitionText={recognitionText}
               setRecognitionText={setRecognitionText}
               referenceEditorError={referenceEditorError}
@@ -367,7 +378,7 @@ function App() {
             />
 
             {/* 02: シナリオ設定 (Static Layout) */}
-            {!isAnalyzing && <Step2Panel
+            <div hidden={isAnalyzing}><Step2Panel
               mosaicCopyrightedCharacters={mosaicCopyrightedCharacters}
               setMosaicCopyrightedCharacters={setMosaicCopyrightedCharacters}
               isRenderOptionsLocked={isColorModeLocked}
@@ -430,7 +441,7 @@ function App() {
               enhanceLog={enhanceLog}
               showStatus={showStatus}
               styleJson={styleJson}
-            />}
+            /></div>
           </div>
 
           {!isAnalyzing && !isSearching && currentStep >= 3 && (
@@ -472,6 +483,9 @@ function App() {
 
           {/* 出力結果 */}
           {!isAnalyzing && !isSearching && !isAssembling && Boolean(finalPrompt?.trim()) && (<Step4Panel
+              referenceAssets={referenceAssets}
+              imageEditDrafts={imageEditDrafts}
+              setImageEditDraft={setImageEditDraft}
               outputRef={outputRef}
               currentStep={currentStep}
               isSearching={isSearching}

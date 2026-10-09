@@ -36,10 +36,10 @@ test('image generation discards stale API and QA results after reset', () => {
 test('file input serializes drops and releases analysis state after read failures', () => {
   const input = workflow.slice(workflow.indexOf('const processFiles ='), workflow.indexOf('const enhanceScenario ='));
   assert.match(input, /if \(isAnalyzingRef\.current\) \{/);
-  assert.match(input, /const castRevisionAtStart = castRevisionRef\.current/);
+  assert.match(input, /let castRevisionAtStart = castRevisionRef\.current/);
   assert.match(input, /isAnalyzingRef\.current = true/);
   assert.match(input, /await readFileAsDataURL\(file\)/);
-  assert.match(input, /if \(inputEpoch !== scenarioRunEpochRef\.current\) return;[\s\S]*setCastList\(analysis\.castList\)/);
-  assert.match(input, /if \(castRevisionAtStart !== castRevisionRef\.current\) \{[\s\S]*return;[\s\S]*\}[\s\S]*setCastList\(analysis\.castList\)/);
+  assert.match(input, /if \(inputEpoch !== scenarioRunEpochRef\.current\) return;[\s\S]*setCastList\(reconcileReferenceCast/);
+  assert.match(input, /if \(castRevisionAtStart !== castRevisionRef\.current\) \{[\s\S]*return;[\s\S]*\}[\s\S]*setCastList\(reconcileReferenceCast/);
   assert.match(input, /finally \{[\s\S]*clearInterval\(thinkTimer\);[\s\S]*setIsAnalyzing\(false\);[\s\S]*isAnalyzingRef\.current = false/);
 });

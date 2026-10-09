@@ -100,7 +100,7 @@ test('fixed control bar always shows a pale-orange/red stop button, enabled only
     const { default: ControlBar } = await server.ssrLoadModule('/src/components/ControlBar.jsx');
     for (const busy of [false, true]) {
       const html = renderToStaticMarkup(React.createElement(ControlBar, { isApiProcessing: busy }));
-      const button = html.match(/<button([^>]*)class="api-force-stop"([^>]*)>全行程強制ストップ<\/button>/);
+      const button = html.match(/<button([^>]*)class="api-force-stop"([^>]*)>解析・生成強制ストップ<\/button>/);
       assert.ok(button);
       assert.equal((button[1] + button[2]).includes('disabled'), !busy);
       assert.match(html, /fixed top-0/);

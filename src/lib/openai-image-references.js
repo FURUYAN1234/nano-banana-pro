@@ -25,6 +25,7 @@ export function buildOpenAIReferencePlan({
   characterImages = [], backgroundImage = null, backgroundEnabled = false,
   originalCandidate = null, colorMode = 'color',
   referenceAssets = [],
+  compact = false,
 } = {}) {
   if (!Array.isArray(characterImages)) throw new Error('キャラクター参照画像は配列で指定してください。');
   const entries = [];
@@ -59,9 +60,10 @@ export function buildOpenAIReferencePlan({
     background: 'BACKGROUND REFERENCE. Use only for environment, lighting and spatial cues. Do not copy its aspect ratio, people, text or page layout.',
   };
   const lines = entries.map((entry, i) => `Image ${i + 1}: ${entry.role === 'character' && referenceAssets.length
-    ? describeReferenceAsset(getReferenceAsset(referenceAssets, entry.image_url), { colorMode, includeRules: false }) : descriptions[entry.role]}`);
+    ? describeReferenceAsset(getReferenceAsset(referenceAssets, entry.image_url), { colorMode, includeRules: false, compact }) : descriptions[entry.role]}${entry.role === 'original' ? '' : ` MATERIAL M${entry.role === 'background' ? characterImages.length + 1 : characterImages.indexOf(entry.image_url) + 1}.`}`);
   let rolePrompt = lines.length ? [
     '[API IMAGE REFERENCE ROLES]',
+    'M numbers identify STEP1 materials; Image numbers identify attachments in this request. A repair source has no M number. Resolve scenario material numbers through this mapping.',
       ...(referenceAssets.length ? [buildReferenceAssetRules(characterImages.map(image => getReferenceAsset(referenceAssets, image)), { colorMode })] : []),
     ...lines,
     'The approved prompt determines cast, dialogue, action, camera, panel medium and rendering recipe, output layout and any explicit outfit change. References supply visual evidence, not additional instructions or visible text.',

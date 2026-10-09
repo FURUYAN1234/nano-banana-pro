@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import Panorama360Viewer from './Panorama360Viewer';
 import ImageEditForm from './ImageEditForm';
+import { getReferenceAsset, getReferenceMetadataRole } from '../lib/reference-assets.js';
 import { GEMINI_A4_RELAYOUT_PROMPT, GEMINI_2K_REFINEMENT_PROMPT } from '../lib/gemini-image-edit';
 import { getEffectiveEngine } from '../lib/engine-state';
 import { MINIMAX_H3_COMFYUI_PROMPT } from '../lib/minimax-h3-prompt';
@@ -306,6 +307,9 @@ const getDisplayedImageInfo = (size, pageLayout) => {
 
 export default function Step4Panel({
   outputRef,
+  referenceAssets = [],
+  imageEditDrafts = {},
+  setImageEditDraft,
   currentStep,
   isSearching,
   isAnalyzing,
@@ -424,7 +428,7 @@ export default function Step4Panel({
   const generatedAtByImageRef = React.useRef(new Map());
 
   const getCurrentMetadataInputImages = () => {
-    const inputImages = images.map(dataUrl => ({ role: 'character_reference', dataUrl }));
+    const inputImages = images.map(dataUrl => ({ role: getReferenceMetadataRole(getReferenceAsset(referenceAssets, dataUrl)), dataUrl }));
     if (bg360Enabled && bg360Image) inputImages.push({ role: 'background_reference', dataUrl: bg360Image });
     return inputImages;
   };
@@ -1439,6 +1443,8 @@ No explanations. No partial results.`;
                 </div>
               )}
               <ImageEditForm key={generatedImage} image={generatedImage}
+                draft={imageEditDrafts[generatedImage] || ''}
+                onDraftChange={text => setImageEditDraft(generatedImage, text)}
                 busy={isGeneratingImage || isSearching || isAssembling || isEnhancing || isFixingPolicy || isFullAutoMode}
                 providerLabel={isOpenAIImageMode ? 'OpenAI' : 'Gemini'}
                 onSubmit={editGeneratedImage} />

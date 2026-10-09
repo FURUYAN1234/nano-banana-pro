@@ -7,7 +7,7 @@ import { readFile } from 'node:fs/promises';
 
 test('downstream steps and footer cannot extend the page past the active recognition progress', async () => {
   const app = await readFile(new URL('../src/App.jsx', import.meta.url), 'utf8');
-  assert.match(app, /\{!isAnalyzing && <Step2Panel/);
+  assert.match(app, /<div hidden=\{isAnalyzing\}><Step2Panel/);
   assert.match(app, /\{!isAnalyzing && !isSearching && currentStep >= 3/);
   assert.match(app, /\{!isAnalyzing && !isSearching && !isAssembling && Boolean\(finalPrompt/);
   assert.match(app, /\{!isAnalyzing && !isSearching && !isAssembling && <footer/);
@@ -37,4 +37,16 @@ test('STEP1 exposes editing and copying only after recognition, preserving manua
     assert.doesNotMatch(copy(render({ recognitionText: '手入力の人物設定' }))[1], /\sdisabled=""/);
     assert.match(copy(render({ recognitionText: '設定', referenceEditorError: 'invalid' }))[1], /\sdisabled=""/);
   } finally { await server.close(); }
+});
+
+test('recognition copy reports success only after clipboard completion and reports rejection',async()=>{
+  const panel=await readFile(new URL('../src/components/Step1Panel.jsx',import.meta.url),'utf8');
+  const callback=panel.match(/onClick=\{async \(\) => \{([\s\S]*?)\n            \}\}/)[1];
+  for(const reject of [false,true]) {
+    let copied=false, message='',finish;
+    const clipboard={writeText:()=>new Promise((resolve,fail)=>{finish=()=>reject?fail(new Error('denied')):resolve();})};
+    const handler=new Function('navigator','recognitionText','setIsCastListCopied','setTimeout','showStatus',`return async()=>{${callback}}`)({clipboard},'content',v=>{copied=v;},()=>{},m=>{message=m;});
+    const run=handler(); assert.equal(copied,false); finish(); await run;
+    assert.equal(copied,!reject); if(reject)assert.match(message,/コピーできません/);
+  }
 });

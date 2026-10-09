@@ -117,7 +117,7 @@ export default function ControlBar({
             title="進行中のAPI通信と自動進行を中断し、取得済みの台本・画像を保持します。送信済み処理の課金は取り消せません。"
             className="api-force-stop"
           >
-            全行程強制ストップ
+            解析・生成強制ストップ
           </button>
           <div className="hidden sm:block w-6 shrink-0"></div>
 

@@ -13,7 +13,7 @@ import { formatApiErrorGuide } from '../lib/api-errors.js';
 import { generateImageWithOpenAI, setOpenAIApiKey } from '../lib/openai';
 import {buildOpenAIReferencePlan, appendOpenAIReferencePrompt, getOpenAIPromptBodyBudget} from '../lib/openai-image-references.js';
 import {buildGeminiReferencePlan, buildGeminiImageApiPrompt, appendGeminiReferencePrompt} from '../lib/gemini-image-references.js';
-import { buildReferenceAnalysisPrompt, parseReferenceAnalysis, buildReferenceAssetContext, buildWebReferencePlan, buildRecognitionEditorText, parseRecognitionEditorText } from '../lib/reference-assets.js';
+import { buildReferenceAnalysisPrompt, parseReferenceAnalysis, buildReferenceAssetContext, buildWebReferencePlan, buildRecognitionEditorText, parseRecognitionEditorText, reconcileReferenceCast, mergeReferenceAnalysis, getReferenceImagesToAnalyze, remapReferenceNumbers } from '../lib/reference-assets.js';
 import { getImageInputBudget, assertImageInputBudget, planImageAddition } from '../lib/image-input-budget.js';
 import { callAI, setActiveEngine } from '../lib/ai-provider';
 import { reviewComedyPrompt } from '../lib/comedy-review';
@@ -128,9 +128,11 @@ export default function useMangaWorkflow() {
   const [targetDate, setTargetDate] = useState(getJSTDate());
   const [castList, setCastListState] = useState("");
   const castRevisionRef = useRef(0);
+  const castListRef = useRef('');
   const setCastList = (value) => {
     castRevisionRef.current += 1;
-    setCastListState(value);
+    castListRef.current = typeof value === 'function' ? value(castListRef.current) : value;
+    setCastListState(castListRef.current);
   };
   const [scenario, setScenario] = useState("");
   const [explanation, setExplanation] = useState("");
@@ -183,14 +185,16 @@ export default function useMangaWorkflow() {
   };
   const setImages = (value) => {
     const next = typeof value === 'function' ? value(imagesRef.current) : value;
+    if (next.length === imagesRef.current.length && next.every((image, index) => image === imagesRef.current[index])) return;
+    const previousAssets = referenceAssetsRef.current;
+    const nextAssets = next.map(image => previousAssets.find(asset => asset.image === image)
+      || { image, items: [{ kind: 'unknown', name: '未解析の素材', description: 'AIによる素材認識は未確認。台本に合う視覚情報だけを使用する。' }] });
+    const panorama = bg360EnabledRef.current && bg360ImageRef.current ? [bg360ImageRef.current] : [];
+    invalidateReferenceOutputs([...imagesRef.current, ...panorama], [...next, ...panorama]);
     imagesRef.current = next;
     setImagesState(next);
-    setRecognitionDraft(null);
-    setReferenceEditorError('');
-    setReferenceAssets(next.map(image => referenceAssetsRef.current.find(asset => asset.image === image)
-      || { image, items: [{ kind: 'unknown', name: '未解析の素材', description: 'AIによる素材認識は未確認。台本に合う視覚情報だけを使用する。' }] }));
-    invalidatePromptAssembly();
-    setFinalPrompt('');
+    setCastList(reconcileReferenceCast(castListRef.current, previousAssets, nextAssets));
+    setReferenceAssets(nextAssets);
     setImageInputError('');
   };
   const [imageInputError, setImageInputError] = useState('');
@@ -266,7 +270,15 @@ export default function useMangaWorkflow() {
   }, [enableChatGPTMode, enableOpenAIApi, isOpenAIEngine, selectedEngine]);
 
   // [v3.48] 360度背景画像読み込み (Studio Shooting Protocol)
-  const [bg360Image, setBg360Image] = useState(null);                 // Base64プレビュー用
+  const [bg360Image, setBg360ImageState] = useState(null);
+  const bg360ImageRef = useRef(null);
+  const setBg360Image = (image) => {
+    if (image === bg360ImageRef.current) return;
+    const previous = [...imagesRef.current, ...(bg360EnabledRef.current && bg360ImageRef.current ? [bg360ImageRef.current] : [])];
+    bg360ImageRef.current = image;
+    setBg360ImageState(image);
+    invalidateReferenceOutputs(previous, [...imagesRef.current, ...(bg360EnabledRef.current && image ? [image] : [])]);
+  };
   const [bg360ImageParts, setBg360ImageParts] = useState(null);       // Gemini API送信用パーツ
   const [bg360Analysis, setBg360Analysis] = useState(null);           // AI解析結果 {location, lighting, spatialType}
   const [is360Analyzing, setIs360Analyzing] = useState(false);        // 解析中フラグ
@@ -280,8 +292,11 @@ export default function useMangaWorkflow() {
       setImageInputError(error.message);
       return false;
     }
+    if (next === bg360EnabledRef.current) return true;
+    const previous = [...imagesRef.current, ...(bg360EnabledRef.current && bg360ImageRef.current ? [bg360ImageRef.current] : [])];
     bg360EnabledRef.current = next;
     setBg360EnabledState(next);
+    invalidateReferenceOutputs(previous, [...imagesRef.current, ...(next && bg360ImageRef.current ? [bg360ImageRef.current] : [])]);
     setImageInputError('');
     return true;
   };
@@ -329,7 +344,7 @@ export default function useMangaWorkflow() {
   const setRecognitionText = (text) => {
     setRecognitionDraft(text);
     try {
-      const parsed = parseRecognitionEditorText(text, imagesRef.current, recognitionPanorama);
+      const parsed = parseRecognitionEditorText(text, imagesRef.current, recognitionPanorama, referenceAssetsRef.current);
       setCastList(parsed.castList);
       setReferenceAssets(parsed.assets);
       if (parsed.background) setBg360Analysis(parsed.background);
@@ -343,6 +358,8 @@ export default function useMangaWorkflow() {
 
   // Image Generation
   const [generatedImage, setGeneratedImage] = useState("");
+  const [imageEditDrafts, setImageEditDrafts] = useState({});
+  const setImageEditDraft = (image, text) => setImageEditDrafts(previous => ({ ...previous, [image]: text }));
   const imageEditRunRef = useRef(null);
   const [generationHistory, setGenerationHistory] = useState([]); // [v2.86] Generated Image History
 
@@ -369,12 +386,61 @@ export default function useMangaWorkflow() {
     // The invalidating action owns cleanup. Obsolete finally blocks must not
     // clear a successor's busy state when their requests eventually settle.
     setIsSearching(false);
+    setIsAnalyzing(false);
+    isAnalyzingRef.current = false;
+    setIs360Analyzing(false);
     setIsEnhancing(false);
     setIs360CameraWorking(false);
     setIsGeneratingImage(false);
     setIsFixingPolicy(false);
     setPolicyAutoRetrying(false);
     return scenarioRunEpochRef.current;
+  };
+
+  // Material identity is the boundary for every dependent run, including Web
+  // attachment instructions. History remains intact; old active output cannot
+  // silently become a result for a different set of references.
+  const invalidateReferenceOutputs = (previousImages, nextImages) => {
+    cancelApiWork();
+    invalidateScenarioRun('素材変更');
+    fullAutoAbortRef.current = true;
+    isFullAutoModeRef.current = false;
+    isEndlessModeRef.current = false;
+    scenarioRunEpochRef.fullAutoRun = (scenarioRunEpochRef.fullAutoRun || 0) + 1;
+    setIsFullAutoMode(false);
+    setIsEndlessMode(false);
+    setFullAutoStep(0);
+    setIsAborting(false);
+    if (previousImages && nextImages) setManualTopic(text => remapReferenceNumbers(text, previousImages, nextImages));
+    setScenario('');
+    setOriginalScenario('');
+    setExplanation('');
+    setExplanationNotice('');
+    setMangaTitle('');
+    setFinalPrompt('');
+    setGeneratedImage(null);
+    setBg360CameraWork(null);
+    setBg360CroppedPanels(null);
+    setIsCastListCopied(false);
+    setIsScenarioCopied(false);
+    setIsMetaSaved(false);
+  };
+
+  const editReferenceItem = (image, itemIndex, field, value) => {
+    if (!['name', 'description'].includes(field)) return;
+    invalidateReferenceOutputs();
+    setReferenceAssets(referenceAssetsRef.current.map(asset => asset.image !== image ? asset : {
+      ...asset, items: asset.items.map((item, index) => index !== itemIndex ? item : { ...item, [field]: value, userEdited: true }),
+    }));
+  };
+  const editCastList = (text) => {
+    invalidateReferenceOutputs();
+    setCastList(text);
+  };
+  const editBackground = (field, value) => {
+    if (!['location', 'lighting', 'spatialType', 'objects', 'mood'].includes(field)) return;
+    invalidateReferenceOutputs();
+    setBg360Analysis(previous => ({ ...previous, [field]: value }));
   };
 
   const invalidateScenarioOutput = () => {
@@ -526,12 +592,13 @@ export default function useMangaWorkflow() {
     }
     setImageInputError('');
     isAnalyzingRef.current = true;
-    beginApiWork();
-    const inputEpoch = scenarioRunEpochRef.current;
-    const castRevisionAtStart = castRevisionRef.current;
+    let inputEpoch = scenarioRunEpochRef.current;
+    let castRevisionAtStart = castRevisionRef.current;
 
     // 非同期処理に入る前に、現在のキャストリストの値を保持しておく（累積・マージ用）
-    const currentCastList = castList;
+    let currentCastList = castListRef.current;
+    const armedFullAuto = isFullAutoModeRef.current && !scenario && !finalPrompt && !isSearching && !isGeneratingImage;
+    const armedEndless = armedFullAuto && isEndlessModeRef.current;
 
     setIsAnalyzing(true);
     setAnalyzeThought('制作素材の認識を開始しました。人物・表情集・三面図・背景・小物をまとめて確認します。');
@@ -540,6 +607,7 @@ export default function useMangaWorkflow() {
     // モデルフォールバック時もタイマーが継続するように、APIコールバック後も常に経過時間を更新する
     let thinkTickCount = 0;
     const thinkTimer = setInterval(() => {
+      if (inputEpoch !== scenarioRunEpochRef.current) return;
       thinkTickCount++;
       setAnalyzeThought(prev => {
         // それ以降は経過時間をカウンター表示（上書き方式で行を増やさない）
@@ -609,13 +677,32 @@ export default function useMangaWorkflow() {
       showStatus(`作風を適用: ${detectedStyleJson.style_name}`);
     }
 
+    if (detected360File) {
+      setBg360Image(detected360File.base64);
+      setBg360Enabled(true);
+      setBg360Analysis(null);
+    }
+    const analysisImages = getReferenceImagesToAnalyze(addition.images, referenceAssetsRef.current);
+    if (analysisImages.length || detected360File || detectedStyleJson) invalidateReferenceOutputs();
+    inputEpoch = scenarioRunEpochRef.current;
+    castRevisionAtStart = castRevisionRef.current;
+    currentCastList = castListRef.current;
+    isAnalyzingRef.current = true;
+    setIsAnalyzing(true);
+    if (armedFullAuto) {
+      fullAutoAbortRef.current = false;
+      isFullAutoModeRef.current = true;
+      setIsFullAutoMode(true);
+      isEndlessModeRef.current = armedEndless;
+      setIsEndlessMode(armedEndless);
+    }
+    beginApiWork();
+
     // [v3.50] 360度画像が検出された場合、バックグラウンドで空間解析を実行
     // ※ v3.48時点ではこのブロックがtry-catchの外にあり、さらに bg360Enabled state が未定義だったため
     //    ReferenceErrorで processFiles 全体が即死し、isAnalyzingもthinkTimerもクリーンアップされなかった。
     if (detected360File) {
       try {
-        setBg360Enabled(true);
-        setBg360Image(detected360File.base64);
         const base64Data = detected360File.base64.split(',')[1];
         const imagePart = {
           inlineData: { mimeType: detected360File.mimeType, data: base64Data }
@@ -636,6 +723,10 @@ export default function useMangaWorkflow() {
         console.warn('[360° BG] Analysis failed:', err);
         setBg360Analysis(null);
         setBg360Enabled(false);
+        inputEpoch = scenarioRunEpochRef.current;
+        isAnalyzingRef.current = true;
+        setIsAnalyzing(true);
+        beginApiWork();
         setCustomLocation('');
         showStatus('360°背景の空間解析に失敗しました。画像を確認して再試行してください。');
       } finally {
@@ -643,7 +734,7 @@ export default function useMangaWorkflow() {
       }
     }
 
-    if (imageArray.length === 0 && detected360File) {
+    if (analysisImages.length === 0 && detected360File) {
       // 360度画像のみドロップされた場合はキャラシート解析をスキップ
       clearInterval(thinkTimer);
       setIsAnalyzing(false);
@@ -651,7 +742,7 @@ export default function useMangaWorkflow() {
       showStatus('360°背景の取り込み処理が終了しました。通常素材は後から追加できます。');
       return;
     }
-    if (imageArray.length === 0) {
+    if (analysisImages.length === 0) {
       clearInterval(thinkTimer);
       setIsAnalyzing(false);
       if (detectedStyleJson) {
@@ -660,7 +751,6 @@ export default function useMangaWorkflow() {
       return;
     }
 
-    const analysisImages = addition.images;
     showStatus(`制作素材${analysisImages.length}枚をまとめて認識中...${detected360File ? '（+ 360°背景1枚検出済み）' : ''}`);
 
       // Map all images to Gemini API parts
@@ -684,12 +774,14 @@ export default function useMangaWorkflow() {
         return;
       }
       const analysis = parseReferenceAnalysis(result.text, analysisImages, currentCastList);
-      if (analysisImages.length !== imagesRef.current.length || analysisImages.some((image, index) => image !== imagesRef.current[index])) {
+      if (addition.images.length !== imagesRef.current.length || addition.images.some((image, index) => image !== imagesRef.current[index])) {
         showStatus('解析中に素材が変更されたため、結果の上書きを中止しました。必要なら素材を再解析してください。');
         return;
       }
-      setReferenceAssets(analysis.assets.map(asset => ({ ...asset, analysisCompleted: true })));
-      setCastList(analysis.castList);
+      const previousAssets = referenceAssetsRef.current;
+      const mergedAssets = mergeReferenceAnalysis(previousAssets, analysis, addition.images);
+      setCastList(reconcileReferenceCast(castListRef.current, previousAssets, mergedAssets));
+      setReferenceAssets(mergedAssets);
       setUsedModel(result.model); // [v1.7.0] Track Model
       // [v2.42] 蓄積ログを保持し、完了メッセージとThinking Traceを追記（上書きしない）
       setAnalyzeThought(prev => {
@@ -1183,7 +1275,7 @@ export default function useMangaWorkflow() {
       const activePunchlineType = resolvedPunchlineTypeRef.current || resolveScenarioEndingType(currentScenario, punchlineType);
       updateResolvedPunchlineType(activePunchlineType);
       const promptMaxChars = effectiveProviderFamily === PROMPT_PROVIDER_FAMILIES.CHATGPT
-        ? getOpenAIPromptBodyBudget(buildOpenAIReferencePlan({
+        ? getOpenAIPromptBodyBudget(buildOpenAIReferencePlan({ compact: true,
           characterImages: images, backgroundImage: bg360Image, backgroundEnabled: bg360Enabled,
           referenceAssets: referenceAssetsRef.current,
           colorMode,
@@ -1197,7 +1289,7 @@ export default function useMangaWorkflow() {
         castList,
         colorMode,
         providerFamily: effectiveProviderFamily,
-        referenceAssetContext: buildReferenceAssetContext(referenceAssetsRef.current, imagesRef.current, { panorama: bg360Enabled ? bg360Analysis : null }),
+        referenceAssetContext: buildReferenceAssetContext(referenceAssetsRef.current, imagesRef.current, { purpose: 'image', panorama: bg360Enabled ? bg360Analysis : null }),
         bg360Image,
         bg360Analysis,
         bg360Enabled,
@@ -1288,7 +1380,11 @@ export default function useMangaWorkflow() {
 
   // [v3.59] ソフトリセット: キャラクター解析(STEP1)を保持し、STEP2以降をリセット
   const partialReset = () => {
+    cancelApiWork();
     invalidateScenarioRun();
+    isFullAutoModeRef.current = false;
+    isEndlessModeRef.current = false;
+    setIsEndlessMode(false);
     qualityRetryAbortRef.current = true;
     fullAutoAbortRef.current = true;
     invalidatePromptAssembly();
@@ -1310,12 +1406,9 @@ export default function useMangaWorkflow() {
     setGenLog([]);
     setIsFullAutoMode(false);
     setFullAutoStep(0);
-    // [v3.48-alpha2] Clear manual inputs and 360 background on reset
+    // STEP1 material and its recognition survive a STEP2 reset.
     setCustomLocation("");
     setCustomOutfit("");
-    setBg360Image(null);
-    setBg360ImageParts(null);
-    setBg360Analysis(null);
     setBg360CameraWork(null); // [v3.53] カメラワーク設計結果もリセット
     setBg360CroppedPanels(null); // [v3.53 Phase2] クロップ画像もリセット
     setIs360CameraWorking(false); // [v3.53] カメラワーク処理フラグリセット
@@ -1326,7 +1419,6 @@ export default function useMangaWorkflow() {
     setSearchTopic("");
     setLockedLocation("");
     setLockedOutfit("");
-    setBg360Enabled(false);
     setPunchlineType("Auto");
     setInputMode("news");
     setOriginalScenario("");
@@ -1363,6 +1455,12 @@ export default function useMangaWorkflow() {
     partialReset();
     setCastList("");
     setImages([]);
+    setBg360Image(null);
+    setBg360ImageParts(null);
+    setBg360Analysis(null);
+    setBg360Enabled(false);
+    setRecognitionDraft(null);
+    setReferenceEditorError('');
     setAnalyzeThought("");
     setStyleJson(null);
     setIsCastListCopied(false);
@@ -1372,7 +1470,14 @@ export default function useMangaWorkflow() {
 
   // [v3.59] ハードリセット: 全データ消去 + APIキー再入力モーダルを表示
   const hardReset = () => {
+    cancelApiWork();
     invalidateScenarioRun();
+    isFullAutoModeRef.current = false;
+    isEndlessModeRef.current = false;
+    setIsEndlessMode(false);
+    setImageEditDrafts({});
+    setRecognitionDraft(null);
+    setReferenceEditorError('');
     qualityRetryAbortRef.current = true;
     fullAutoAbortRef.current = true;
     invalidatePromptAssembly();
@@ -1472,12 +1577,12 @@ export default function useMangaWorkflow() {
     if (referenceEditorError) throw new Error(referenceEditorError);
     if (inferImageQualityMode(prompt) === 'four-panel') assertRenderOptions(prompt, { mosaicCopyrightedCharacters, showWatermarks, protectedCast: collectCastNameEntries(castList).map(entry => entry.displayName) });
     return ensureWebPromptTrailingNewline(getCurrentPromptProviderFamily() === PROMPT_PROVIDER_FAMILIES.CHATGPT
-      ? appendOpenAIReferencePrompt(applyOpenAIImageEngineWatermark(prompt, openAIImageQuality), buildOpenAIReferencePlan({
+      ? appendOpenAIReferencePrompt(applyOpenAIImageEngineWatermark(prompt, openAIImageQuality), buildOpenAIReferencePlan({ compact: true,
         characterImages: images, backgroundImage: bg360Image, backgroundEnabled: bg360Enabled,
         referenceAssets: referenceAssetsRef.current,
         colorMode,
       }))
-      : appendGeminiReferencePrompt(prompt, buildWebReferencePlan({
+      : appendGeminiReferencePrompt(prompt, buildWebReferencePlan({ compact: true,
         images, referenceAssets: referenceAssetsRef.current, backgroundImage: bg360Image, backgroundEnabled: bg360Enabled, colorMode,
       })));
   };
@@ -1792,7 +1897,7 @@ export default function useMangaWorkflow() {
         let metadataPrompt;
         let metadataInputImages;
         if (isOpenAIEngine) {
-          const referencePlan = buildOpenAIReferencePlan({
+          const referencePlan = buildOpenAIReferencePlan({ compact: true,
             characterImages: images,
             referenceAssets: referenceAssetsRef.current,
             backgroundImage: bg360Image,
@@ -1821,7 +1926,7 @@ export default function useMangaWorkflow() {
             imageInputs: referencePlan.imageInputs,
           });
         } else {
-          const referencePlan = buildGeminiReferencePlan({
+          const referencePlan = buildGeminiReferencePlan({ compact: true,
             characterImages: images,
             referenceAssets: referenceAssetsRef.current,
             colorMode,
@@ -2782,6 +2887,11 @@ export default function useMangaWorkflow() {
     imageInputBudget,
     imageInputError,
     referenceAssets,
+    editReferenceItem,
+    editCastList,
+    editBackground,
+    imageEditDrafts,
+    setImageEditDraft,
     recognitionText,
     setRecognitionText,
     referenceEditorError,

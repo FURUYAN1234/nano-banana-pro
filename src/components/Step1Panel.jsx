@@ -21,7 +21,12 @@ export default function Step1Panel({
   images,
   referenceAssets = [],
   recognitionText = '',
-  setRecognitionText,
+  castList = '',
+  editCastList,
+  editReferenceItem,
+  bg360Analysis,
+  editBackground,
+  showStatus,
   referenceEditorError = '',
   setImages,
   bg360Image,
@@ -77,6 +82,7 @@ export default function Step1Panel({
 
       <div className="reference-intake-guidance" aria-live="polite">
         <p>素材の追加は、下の「素材画像を選択」ボタンでも、STEP1の枠内全体へのドロップでもできます。後からの追加も同じ操作です。</p>
+        <p>追加・削除・背景ON/OFF後は認識結果と人物設定を更新し、シナリオ以降を作り直します。手編集は保持します。Webへ貼付済みの指示文・添付画像は、新しい内容と現在の番号順に差し替えてください。</p>
         <p className="reference-image-count">参照素材画像：{imageInputBudget.characterImageCount} / {imageInputBudget.maxCharacterImages}枚（あと{imageInputBudget.remaining}枚・OpenAI／Gemini共通）</p>
         <p className="mt-1 text-[11px] text-slate-400">
           {bg360Enabled ? '360°背景ON：その他の参照素材は合計10枚まで。API用に4コマ分の背景枠を確保します。Webへは元の360°背景1枚を添付するため、元画像は合計11枚までです。' : '人物・表情集・三面図・通常背景・小物を合わせて14枚まで。360°背景ONでは、その他の参照素材は合計10枚までです。'}
@@ -117,11 +123,11 @@ export default function Step1Panel({
         {bg360Image && (
           <div
             className={`relative w-[112px] min-w-[112px] max-w-[112px] h-14 flex-shrink-0 rounded-lg overflow-hidden border ${bg360Enabled ? 'border-cyan-500/50' : 'border-slate-700'} transition-all`}
-            title={`画像${images.length + 1}\n360°パノラマ背景 (下の「場所設定」から詳細確認可能)`}
+            title={`${bg360Enabled ? `画像${images.length + 1}` : '番号なし・参照OFF'}\n360°パノラマ背景 (下の「場所設定」から詳細確認可能)`}
           >
             <img src={bg360Image} className={`w-full h-full object-cover shadow-sm ${bg360Enabled ? 'opacity-100' : 'opacity-40 grayscale'}`} alt="360 bg" />
             <div className="absolute bottom-0 left-0 right-0 bg-black/80 text-[8px] text-cyan-300 text-center font-bold px-1 py-0.5 truncate flex items-center justify-center gap-1">
-              <Globe size={8} /> {images.length + 1}: 360°背景
+              <Globe size={8} /> {bg360Enabled ? `${images.length + 1}: 360°背景` : '360°背景・参照OFF'}
             </div>
           </div>
         )}
@@ -185,10 +191,25 @@ export default function Step1Panel({
             <h3><label htmlFor="reference-recognition-editor">認識結果（人物・背景・小物／編集できます）</label></h3>
           </div>
           <p className="reference-recognition-note">解析ログの結果をここに表示し、シナリオ・描画指示へ引き継ぎます。認識できない場合や取り違える場合、今回のまんがには使用しない場合もあります。</p>
+        {referenceAssets.map((asset, imageIndex) => <div key={asset.image} className="reference-recognition-item">
+          <strong>画像{imageIndex + 1}</strong>
+          {asset.items.map((item, itemIndex) => <div key={itemIndex}>
+            <label>{REFERENCE_KIND_LABELS[item.kind]}：<input aria-label={`画像${imageIndex + 1}の素材${itemIndex + 1}の名前`}
+              value={item.name} onChange={event => editReferenceItem(asset.image, itemIndex, 'name', event.target.value)} /></label>
+            <textarea aria-label={`画像${imageIndex + 1}の素材${itemIndex + 1}の認識内容`} rows={2}
+              value={item.description} onChange={event => editReferenceItem(asset.image, itemIndex, 'description', event.target.value)} />
+          </div>)}
+        </div>)}
+        {bg360Enabled && bg360Analysis && <div className="reference-recognition-item">
+          <strong>画像{images.length + 1}：360°背景</strong>
+          {Object.entries({location:'場所', lighting:'光', objects:'小物・設備', mood:'雰囲気'}).map(([field, label]) =>
+            <label key={field}>{label}<input value={bg360Analysis[field] || ''} onChange={event => editBackground(field, event.target.value)} /></label>)}
+        </div>}
+        <label htmlFor="reference-recognition-editor">人物設定</label>
         <textarea
           id="reference-recognition-editor"
-          value={recognitionText}
-          onChange={(e) => setRecognitionText(e.target.value)}
+          value={castList}
+          onChange={(e) => editCastList(e.target.value)}
           className="reference-recognition-editor"
           aria-invalid={Boolean(referenceEditorError)}
           disabled={isAnalyzing}
@@ -197,10 +218,15 @@ export default function Step1Panel({
         {referenceEditorError && <p role="alert">{referenceEditorError}</p>}
         <div className="mt-2 relative z-50">
           <button
-            onClick={() => {
-              navigator.clipboard.writeText(recognitionText);
-              setIsCastListCopied(true);
-              setTimeout(() => setIsCastListCopied(false), 2000);
+            onClick={async () => {
+              setIsCastListCopied(false);
+              try {
+                await navigator.clipboard.writeText(recognitionText);
+                setIsCastListCopied(true);
+                setTimeout(() => setIsCastListCopied(false), 2000);
+              } catch {
+                showStatus('コピーできませんでした。ブラウザーのクリップボード権限を確認してください。');
+              }
             }}
             disabled={!canCopyRecognition}
             className={`w-full ${isCastListCopied ? 'bg-green-600' : 'bg-slate-800 hover:bg-slate-700'} text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all border border-white/10 disabled:opacity-50 disabled:cursor-not-allowed`}

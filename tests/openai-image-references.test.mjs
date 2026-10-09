@@ -16,6 +16,8 @@ const image = text => `data:image/png;base64,${Buffer.from(text).toString('base6
 
 // Preserve the previous manifest snapshots except for the two declared additions.
 const withoutPanelRenderingPriority = text => text
+  .replace('M numbers identify STEP1 materials; Image numbers identify attachments in this request. A repair source has no M number. Resolve scenario material numbers through this mapping.\n', '')
+  .replace(/ MATERIAL M\d+\./g, '')
   .replaceAll(" Identity means the individual's identifying traits. The selected panel rendering recipe determines face/eye construction and body stylization; preserve the reference drawing style only under an explicit reference-style lock in the approved prompt.", '')
   .replace('camera, panel medium and rendering recipe, output layout', 'camera, output layout');
 
