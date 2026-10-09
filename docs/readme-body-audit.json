@@ -1,25 +1,25 @@
 {
-  "pricingSourceSha256": "61f9332cd9fd136c0823335419d1bfa4e707a82290a4b0ae56d0a061be78360e",
-  "manualVersion": "6.9.5",
-  "manualSourceSha256": "efdae9c1625c472e3b0818b7be6de1bccb2bcf177d14b672c53fef77d1322b52",
+  "pricingSourceSha256": "616e60732cb269e9c8bace8ef1fa4ed40fdd92fcc6dcbc5b919a9a2f7db960cd",
+  "manualVersion": "6.9.6",
+  "manualSourceSha256": "df4a03526b96aae67be58744dcbf9391eefdb9e960dc445fe81f95231717cff1",
   "manualFiles": [
     {
       "name": "gemini-api-beginner-guide-2026-10-01.pdf",
-      "sha256": "3e85647b7af7bfb6bb346bd7a94375cf7f9579fdc67b1f4df289871152b8c458"
+      "sha256": "76d334ed444788344a99672b53b48be517a378baf2c5c5d9bccb509a5db24534"
     },
     {
       "name": "openai-api-beginner-guide-2026-09-30.pdf",
-      "sha256": "a4a9cf51e8b63ea682bfb24d6cee757edb691e34501948bf358247a00cd80d92"
+      "sha256": "96f4cba6a4116506dc7af694a36faf0d684df18e81b6d64fba927fe0f2f2c2a0"
     },
     {
       "name": "super-furu-ai-4koma-full-manual-2026-10-01.pdf",
-      "sha256": "3e0cfc145fb7bf0d880411078ceba241768e0e34e2c20a4cf3ab62ff018cf8e6"
+      "sha256": "306bb98d01f1efe8edebc651fbe44831550cf7f67c1c0815a2ed34423b4c9b08"
     }
   ],
-  "readmeSha256": "6b64454fb631381aa1ab54fbb8c31c82d8ea65362fa19c96bc981b50db31159c",
-  "sourceTree": "ff65704b172781576398a0bc1b8963a987072cdf",
-  "publicTree": "3c04600a85e295dbbc168415690633383c833b33",
-  "packageSha256": "b33226f725e6e375d11325be44681134c1367ef52e4240d82a3a7b6127b695c2",
+  "readmeSha256": "e7a344f7f9668b62a346b7b5c1eb4788939ac2fe8356a14025f074dceda343a6",
+  "sourceTree": "21b9b59cb79985bec7113bbe5ed1994599a4f8e3",
+  "publicTree": "b9381e483f1925d97920a951fff1e3878017fc4c",
+  "packageSha256": "fc4a181bdf76dea05969ec1bf6d0476cbcdb7b7a992ce1086530746a00a35052",
   "releaseAssetSha256": "9e41886be6afa0ebfad6d244ecf53f37260a92f73b30309319029cc87e1ddb4e",
   "reviewedSections": [
     "Application screen and output / 操作画面と生成例",
@@ -37,16 +37,16 @@
     "Terms & Output Rights / 利用条件・作品の権利",
     "📋 ChangeLog / 更新履歴"
   ],
-  "findings": "Reviewed the complete English/Japanese README body and retained existing media, links, generation guidance and source-available terms above history. v6.9.5 adds shared STEP1 intake14/10, atomic over-limit rejection, duplicate/JSON accounting, and multi-person-sheet guidance without a fixed people rejection or accuracy guarantee. Current UI/source/API reference handling and all three manuals agree. Normal OpenAI analysis, scenario, prompt and one image generation were observed; existing image-QA balloon-order warnings are retained and not claimed fixed. Current release references and current price dates are synchronized; complete bilingual history heading is retained by the tested updater.",
-  "manualFindings": "Gemini13/full33/OpenAI21 pages (67 total) were rendered and visually inspected for the v6.9.5 count/people/retention guidance. Final Gemini2/full5 changes were individually rechecked with65 identical page hashes. The current official price-date renewal changed only full18; that page was inspected again and the other66 hashes remain identical. A4, text bounds, links, current version and privacy checks pass. Reviewed PDF bytes were copied to public/downloads and hashes verified.",
+  "findings": "Compared all current README section headings and the changed body against STEP1/2/3/4, provider/reference plans and the existing verified v6.9.5 body. Updated mixed-material roles, one visible editor, whole-STEP1 drop/file picker, shared14/10 capacity, panorama-last renumbering, same-original current Web order, explicit material/panel priority and optional 2D backgrounds, free-input reconciliation and limits, and image-engine plus scenario-model attribution. Individual material facts and scripted camera/acting remain; measured compression removes repeated type policies. API/Web provenance, pricing, other-app links, H3 current ZIP/JSON, dependencies, custom terms and release-history ordering remain consistent. Current H3 download links follow v6.9.6; recursive distribution tests passed. The whole public note body was read and protected before delivery; its old character-only guidance needs the prepared narrow v6.9.6 update after release. Paid OpenAI image material/footer reflection was observed; retained camera/surface evidence warnings are not reported as universal QA approval.",
+  "manualFindings": "Gemini13, system34 and OpenAI22 pages (69 total) were rendered and reviewed. Final material/control/ordering/priority pages, system TOC/free-input/watermark pages and price date, plus OpenAI19-22 were visually rechecked; unchanged layouts retain prior all-page review. Added a footer page-count gate which rejected the old22/21 PDF and passed regenerated22/22 pages. A4 dimensions, content bounds, links, version6.9.6, privacy and current source gates pass. All three reviewed PDF bytes were copied to public/downloads. Old UI screenshots remain explicitly labeled as previous-version layouts; current instructions describe the updated controls.",
   "pricingReview": {
-    "version": "6.9.5",
-    "checkedAt": "2026-10-08T07:13:54.863968+00:00",
+    "version": "6.9.6",
+    "sourceSha256": "616e60732cb269e9c8bace8ef1fa4ed40fdd92fcc6dcbc5b919a9a2f7db960cd",
+    "checkedAt": "2026-10-09T00:52:35.059Z",
     "sources": [
       "https://developers.openai.com/api/docs/pricing",
       "https://ai.google.dev/gemini-api/docs/pricing"
     ],
-    "sourceSha256": "61f9332cd9fd136c0823335419d1bfa4e707a82290a4b0ae56d0a061be78360e",
-    "findings": "Rechecked official OpenAI Standard tables against all11 scenario options and all3 image models; values match. Standard image8/cached2/output30 and text5/cached1.25 USD/M are distinct from Batch4/1/15 and2.5/0.625. Google Standard Nano Banana2.1 input1.50/text-thinking7.50/image30 USD/M and1K0.0336/2K0.0504/4K0.113 were directly reviewed; Gemini3.8 Flash0.75/3.75 applies through2026-12-31. App, README and manual snapshot dates were renewed to2026-10-08; no numeric price change."
+    "findings": "Reopened both official pricing pages on2026-10-09 and checked Standard versus Batch. GPT-6.1 Sol2/10, Astra10/50, Luna0.10/0.50 USD/M; Sol long context4/15. Sunburst/Flare image8/cached2/output30 and text5/cached1.25 USD/M; Batch is half. Nano Banana2.1 Standard input1.50/text-thinking7.50/image30, 1K0.0336/2K0.0504/4K0.113; Batch half. Gemini3.8 Flash0.75/3.75 through2026-12-31. Remaining unchanged scenario/image options retain the earlier current-session official review. App/README/manual dates renewed to2026-10-09 without changing rates."
   }
 }
