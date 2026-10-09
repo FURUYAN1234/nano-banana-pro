@@ -367,7 +367,7 @@ function App() {
             />
 
             {/* 02: シナリオ設定 (Static Layout) */}
-            <Step2Panel
+            {!isAnalyzing && <Step2Panel
               mosaicCopyrightedCharacters={mosaicCopyrightedCharacters}
               setMosaicCopyrightedCharacters={setMosaicCopyrightedCharacters}
               isRenderOptionsLocked={isColorModeLocked}
@@ -430,10 +430,10 @@ function App() {
               enhanceLog={enhanceLog}
               showStatus={showStatus}
               styleJson={styleJson}
-            />
+            />}
           </div>
 
-          {currentStep >= 3 && (
+          {!isAnalyzing && !isSearching && currentStep >= 3 && (
             <>
               <GenerationPreview
                 scenario={scenario}
@@ -471,7 +471,7 @@ function App() {
           )}
 
           {/* 出力結果 */}
-          {Boolean(finalPrompt?.trim()) && (<Step4Panel
+          {!isAnalyzing && !isSearching && !isAssembling && Boolean(finalPrompt?.trim()) && (<Step4Panel
               outputRef={outputRef}
               currentStep={currentStep}
               isSearching={isSearching}
@@ -566,9 +566,9 @@ function App() {
           
           </main >
 
-        <footer className="text-center text-slate-500 text-[9px] font-bold tracking-[0.3em] uppercase py-10 px-4">
+        {!isAnalyzing && !isSearching && !isAssembling && <footer className="text-center text-slate-500 text-[9px] font-bold tracking-[0.3em] uppercase py-10 px-4">
           &copy; 2026 FURU <span className="mx-2 sm:mx-4">|</span> SUPER FURU AI 4-KOMA SYSTEM
-        </footer>
+        </footer>}
       </div >
 
       {/* 通知 (日本語) */}

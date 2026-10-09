@@ -55,7 +55,7 @@ page('Gemini API 取得マニュアル',
  ('h2','はじめての取得・接続・費用確認'),
  ('body','Super FURU AI 4-koma Systemで使うGemini APIキーを取得するための、日本語操作ガイドです。Googleアカウントでのログインから、プロジェクト選択、キー発行、アプリへの接続まで順番に説明します。'),
  ('box','この冊子の対象','パソコンのブラウザで作業する初心者向けです。APIとは、アプリからAIへ処理を依頼する仕組みです。プログラムを書く必要はありません。'),
- ('body','v6.9.6対応。Google AI StudioでAPIキーを用意し、本アプリへ接続する手順を説明します。画面写真は操作に必要な部分のみを掲載しています。画面の表記や利用条件はアカウントによって異なる場合があります。'),
+ ('body','v6.9.7対応。Google AI StudioでAPIキーを用意し、本アプリへ接続する手順を説明します。画面写真は操作に必要な部分のみを掲載しています。画面の表記や利用条件はアカウントによって異なる場合があります。'),
  ('body','キーを取得するだけで、すべてのモデルを無料で利用できるわけではありません。画像生成や検索、解析、修正にも費用が発生する場合があります。'),refs=('studio','app')),
 page('目次と最短の作業順',
  ('rows',[['ページ','内容'],['3','GoogleアカウントとAI Studio'],['4','APIキー画面を開く'],['5','プロジェクトを選ぶ'],['6','キーを作成・コピーする'],['7','アプリへ接続する'],['8','無料枠と有料枠の違い'],['9','有料枠の設定と費用確認'],['10','キーの安全な管理'],['11','接続できないとき'],['12','公式リンクと完了チェック'],['13','画像枚数と人数の違い']]),
@@ -115,13 +115,13 @@ GEMINI.append(page('画像枚数と登場人物の人数',
  ('body','2D背景と360°背景を一緒に読み込むと、未指定の舞台は360°背景を基準にします。自由入力の素材・コマ別指定を優先し、2D背景も場面に合う範囲で使います。添付順は画像番号との対応づけのためで、背景の使用優先度を決めるものではありません。'),
  ('body','STEP2の自由入力では、素材名や現在の画像番号で採用・除外、持ち主、動作・状態を指定できます。AIが希望をできる範囲で整理し、曖昧・矛盾する要望を成立する場面へ調整します。未指定部分はおまかせです。全要望の実現は保証しません。'),
  ('body','WebにはSTEP1の現在の表示番号順で同じ元画像を添付します。360°背景は途中で追加しても最後に表示され、通常素材の後追加で最後の番号へ繰り下がります。APIでは自動で対応づけるため再添付・並べ直しは不要です。'),
- ('body','右フッターは画像生成エンジン名とシナリオモデル名を併記します。例えばOpenAIではChatGPT Images 2.5 / GPT-6.1 Sol / FURU AI 4-koma v6.9.6。Geminiでは選択中のGemini画像エンジン名を使います。生成済み画像は書き換えません。'),
+ ('body','右フッターは画像生成エンジン名とシナリオモデル名を併記します。例えばOpenAIではChatGPT Images 2.5 / GPT-6.1 Sol / FURU AI 4-koma v6.9.7。Geminiでは選択中のGemini画像エンジン名を使います。生成済み画像は書き換えません。'),
  ('small','公式仕様（2026-10-09確認）：OpenAI画像編集は合計16枚、gemini-nano-banana-2.1は参照画像14枚。アプリの共通読み込み上限とは区別してください。'),refs=('imageopenai','imagegemini')))
 
 SYSTEM=[
 page('全機能マニュアル',('h2','Super FURU AI 4-koma System'),
  ('body','キャラクター資料と題材から、4コマの構成、画像用の指示文、生成画像、保存まで進める日本語操作ガイドです。各機能の目的、操作順、変更が反映される工程、費用と保存の注意を説明します。'),
- ('box','このマニュアルの使い方','v6.9.6の全機能を、準備から保存まで操作順に説明します。OpenAIシナリオの初期選択はGPT-6.1 Solです。STEP2は題材に沿った具体的な結末を優先し、STEP3は合唱台詞と人数、コマ別の画風・カメラ指定を保ちます。タイトル左の「使い方マニュアル」と接続欄のAPIマニュアルから、必要な説明を開けます。'),
+ ('box','このマニュアルの使い方','v6.9.7の全機能を、準備から保存まで操作順に説明します。OpenAIシナリオの初期選択はGPT-6.1 Solです。STEP2は題材に沿った具体的な結末を優先し、STEP3は合唱台詞と人数、コマ別の画風・カメラ指定を保ちます。タイトル左の「使い方マニュアル」と接続欄のAPIマニュアルから、必要な説明を開けます。'),
  ('body','画面写真はCodex内蔵ブラウザで取得しています。実行を伴う画面が撮影できない機能は、現行の画面部品と処理コードを照合して説明し、生成済みの画面を作り物で代用しません。'),refs=('app',)),
 page('目次・機能の見つけ方',
  ('rows',[['ページ','機能'],['3-4','4ステップの流れ・API接続'],['5-8','人物・背景・小物、素材枚数、作風JSON・360°背景'],['9-11','ニュース、自由入力、舞台・衣装・結末'],['12-13','シナリオ編集、SNS説明、演出強化'],['14-16','カラー／白黒、モザイク、ウオーターマーク、プロンプト構築・編集'],['17-20','Webコピー、Web修正・高解像度、API生成、検査・自動修正'],['21-23','追加修正、画像履歴・保存、制作情報'],['24-25','全自動・連続ループ、やり直しとモデル確認'],['26-27','1枚絵、動画化・関連アプリ'],['28-29','トラブル対処、完成前チェック・参照情報'],['30-32','白黒の描画指定・生成例・部分修正'],['33-34','Windowsでのローカル起動・STEP4の待機と検査']]),
@@ -135,6 +135,7 @@ page('API接続と処理先の選択',
  ('body','Gemini APIの取得リンクの右側に「Gemini APIマニュアル」、OpenAIのリンクの隣に「OpenAI APIマニュアル」があります。未接続でも取得手順を確認できます。キーはブラウザ内メモリで保持し、再読み込み後は再入力が必要です。Web版の契約とAPI料金は別です。'),
  ('box','何が送信されるか','実行時には、必要なキャラクター資料、題材、台本、プロンプト、画像が選択したプロバイダーへ送られます。キーも認証・実行のために送信されます。キーをファイルへ貼り付けたり、公開したりしないでください。'),shot='app-connected-header.jpg',caption='実画面：接続後ヘッダー。接続先は表示で確認します',refs=('app',)),
 page('STEP1  素材を読み込む',
+ ('body','解析中は進捗窓までを表示し、認識結果とコピーボタンは完了後に表示します。未解析の素材はコピーできません。狭い画面でも見本画像は素材欄の幅に収まります。STEP2・STEP3も処理中は進捗を末尾に表示し、後続の出力は処理終了後に表示します。STEP4で取得済みの画像は、検査中も保持します。'),
  ('body','「素材画像を選択 (STEP 1)」で画像を選ぶか、STEP1の枠内全体へドロップします。複数枚を一度に読み込み、後から追加することもできます。不要なシートは個別に取り除きます。'),
  ('body','名前、性格、外見の特徴が書かれた設定シートを推奨します。「認識結果」欄で人物・背景・小物をまとめて確認・編集・コピーできます。名前や関係性の誤読を、シナリオを作る前に直してください。'),
  ('body','参照シートの紙面配置・説明ラベル・立ち姿を、そのまま漫画へ写すための機能ではありません。人物の識別情報を取り出して、台本の動作へ使います。台本に必要な店員・受付係などは、参照画像がなくても設計されます。'),
@@ -191,7 +192,7 @@ page('STEP3  カラー／白黒の選択',
  ('box','白黒は印刷の適合保証ではありません','仕上げ画像を読み込んでピクセル変換する機能ではありません。厳密な二値、解像度、出版社の入稿規定は、保存した実画像で別途確認してください。'),
  ('body','人物の特徴、演技、カメラ、背景の遠近感、台詞は白黒でも維持する方針ですが、画像AIがすべて正確に描けるとは限りません。')),
 page('モザイクとウオーターマーク',
- ('body','右フッターの先頭は現在の画像生成エンジン名です。シナリオモデル名は残します。例：ChatGPT Images 2.5 / GPT-6.1 Sol / FURU AI 4-koma v6.9.6。API・Webコピー用の指示へ同期し、生成済み画像は書き換えません。'),
+ ('body','右フッターの先頭は現在の画像生成エンジン名です。シナリオモデル名は残します。例：ChatGPT Images 2.5 / GPT-6.1 Sol / FURU AI 4-koma v6.9.7。API・Webコピー用の指示へ同期し、生成済み画像は書き換えません。'),
  ('rows',[['設定','反映する工程'],['版権キャラクターにモザイクをかける','STEP2から作り直して反映。初期状態ON'],['ウオーターマークを表記する','STEP3から作り直して反映。初期状態ON']]),
  ('body','モザイクは台本の動作で描く既存作品の人物への描画指示です。登録したシート人物は自動モザイクから除外し、生成・品質検査へ同じ除外リストを渡します。原文で本人への遮蔽を明示した場合は、その対象・領域だけ例外です。除外リストが現在のキャストと合わない場合は、STEP3から再構築してください。'),
  ('body','ウオーターマークをOFFにすると、左右フッターのクレジット描画指示を外します。ONでは、外側フッターへ1回ずつ配置するよう指示します。'),
@@ -317,7 +318,7 @@ for p in SYSTEM:
  if p['title']=='API接続と処理先の選択':
   p.update(shot='app-connected-header.jpg',caption='前版の実画面（操作配置は共通）：接続後ヘッダーと設定クリア（OpenAI接続例）')
  elif p['title']=='STEP1  素材を読み込む':
-  p.update(shot='app-step1-safe.jpg',caption='前版の実画面：2枚の資料。v6.9.6では、この上に枚数と残り枠を表示します')
+  p.update(shot='app-step1-safe.jpg',caption='前版の実画面：2枚の資料。v6.9.7では、この上に枚数と残り枠を表示します')
  elif p['title']=='全自動モードと連続ループ':
   p.update(shot='app-auto-controls.jpg',caption='実画面：フルオート・連続ループ操作ボタン（実行前）')
 
@@ -325,7 +326,7 @@ for p in SYSTEM:
 class Book:
  def __init__(self,path,title,pages):
   self.path=path; self.pages=pages; self.c=canvas.Canvas(str(path),pagesize=A4,pageCompression=1)
-  self.c.setTitle(title);self.c.setAuthor('Super FURU AI 4-koma System');self.c.setSubject('日本語操作マニュアル / v6.9.6 / 2026-10-09')
+  self.c.setTitle(title);self.c.setAuthor('Super FURU AI 4-koma System');self.c.setSubject('日本語操作マニュアル / v6.9.7 / 2026-10-09')
   self.y=0;self.number=0;self.layout=[]
  def para(self,text,style='body',gap=10):
   p=Paragraph(text,STYLES[style]);_,h=p.wrap(CW,1000)
@@ -367,7 +368,7 @@ class Book:
    if page['shot']:self.shot(page['shot'],page['caption'])
    if page['refs']:
     self.para('参照：'+' / '.join(f'<link href="{escape(SOURCES[k][1])}" color="#087c86">{escape(SOURCES[k][0])}</link>' for k in page['refs']),'small',0)
-   c.setFillColor(GRAY);c.setFont('JP',8);c.drawString(M,33,'v6.9.6対応 | 2026年10月9日更新 | A4 日本語版');c.drawRightString(W-M,33,f'{i:02d} / {len(self.pages):02d}')
+   c.setFillColor(GRAY);c.setFont('JP',8);c.drawString(M,33,'v6.9.7対応 | 2026年10月9日更新 | A4 日本語版');c.drawRightString(W-M,33,f'{i:02d} / {len(self.pages):02d}')
    self.layout.append(dict(page=i,bottom_y=round(self.y,2)));c.showPage()
   c.save();return self.layout
 
@@ -393,13 +394,13 @@ def verify_and_render(path,layout,pages):
  assert len(r.pages)==len(pages)
  for page_index,pdf_page in enumerate(r.pages,1):
   assert f'{page_index:02d}/{len(r.pages)}' in re.sub(r'\s+','',pdf_page.extract_text()), 'Incorrect footer page count'
- assert all('v6.9.6対応' in p.extract_text() and '2026年10月9日更新' in p.extract_text() for p in r.pages)
+ assert all('v6.9.7対応' in p.extract_text() and '2026年10月9日更新' in p.extract_text() for p in r.pages)
  for required in ['14枚','10枚','1枚に複数人','人数による固定上限','保証','保持','認識できない','小物']:
   assert re.sub(r'\s+','',required) in re.sub(r'\s+','',text),required
  if 'full-manual' in path.name:
   for required in ['Download ZIP','Node.js','start_app.bat','npm install','node_modules','ウィンドウ','画像表示予定枠の中央','累積時間だけでは打ち切りません','原寸RGB','褐色肌','カケアミ']:
    assert re.sub(r'\s+','',required) in re.sub(r'\s+','',text),required
- assert set(re.findall(r'v[0-9]+\.[0-9]+\.[0-9]+',text)) <= {'v6.9.6'}, 'Historical version in current manual'
+ assert set(re.findall(r'v[0-9]+\.[0-9]+\.[0-9]+',text)) <= {'v6.9.7'}, 'Historical version in current manual'
  assert not re.search(r'nano\s*banana|ナノ[・\s]*バナナ',text,re.I)
  assert not re.search(r'AIza[A-Za-z0-9_-]{20,}|sk-(?:proj-)?[A-Za-z0-9_-]{20,}|gen-lang-client-\d+|sx717|@[A-Za-z0-9.-]+\.[A-Za-z]{2,}',text)
  assert all(p['bottom_y']>=64 for p in layout)

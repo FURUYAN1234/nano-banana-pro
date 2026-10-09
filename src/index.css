@@ -16,6 +16,12 @@
 .reference-analysis-progress > div { box-sizing: border-box; max-height: 180px; padding: 10px; overflow: hidden; font-size: 11px; }
 .reference-analysis-progress > div > div:last-child { height: 120px; overflow-y: auto; white-space: pre-wrap; }
 .reference-drop-area { display: flex; flex-wrap: wrap; align-content: flex-start; align-items: center; gap: 8px; margin: 8px 0; padding: 10px; min-height: 78px; max-height: 190px; overflow-y: auto; border: 1px solid #475569; border-radius: 8px; background: #0a0c10; }
+.reference-step-panel { min-width: 0; }
+.reference-drop-area { box-sizing: border-box; min-width: 0; max-width: 100%; overflow-x: hidden; overflow-wrap: anywhere; }
+.reference-drop-area > div { min-width: 0; max-width: 100%; }
+.reference-drop-area > div > p { box-sizing: border-box; min-width: 0; width: 100%; max-width: 100%; overflow-wrap: anywhere; }
+.reference-drop-area img[alt="Example"] { display: block; width: auto; height: auto; max-width: 100%; max-height: 96px; }
+.reference-analysis-progress > div > div:last-child { overflow-wrap: anywhere; }
 .reference-thumbnail { position: relative; flex: 0 0 64px; width: 64px; height: 64px; overflow: hidden; border: 1px solid #475569; border-radius: 5px; }
 .reference-thumbnail img { width: 100%; height: 100%; object-fit: cover; }
 .reference-thumbnail > span { position: absolute; inset: auto 0 0; padding: 1px; background: #000c; color: #fff; font-size: 9px; text-align: center; white-space: nowrap; overflow: hidden; }

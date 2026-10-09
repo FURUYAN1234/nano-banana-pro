@@ -39,6 +39,9 @@ export default function Step1Panel({
   setStyleJson
 }) {
   const materialInputRef = useRef(null);
+  const canCopyRecognition = !isAnalyzing && Boolean(recognitionText.trim()) && !referenceEditorError
+    && images.every(image => referenceAssets.some(asset => asset.image === image
+      && asset.items?.length > 0 && (asset.analysisCompleted === true || asset.items.every(item => item.kind !== 'unknown'))));
   const handleFileChange = (event) => {
     const files = Array.from(event.target.files);
     // Allow the same files to be selected again after an over-limit rejection.
@@ -58,7 +61,7 @@ export default function Step1Panel({
         setIsDragging(false);
         if (apiKey) processFiles(e.dataTransfer.files);
       }}
-      className={`group p-8 rounded-xl border-2 transition-all flex flex-col relative overflow-hidden duration-500 min-h-[300px] justify-center
+      className={`reference-step-panel group p-8 rounded-xl border-2 transition-all flex flex-col relative overflow-hidden duration-500 min-h-[300px] justify-center
         ${isDragging ? 'border-blue-500 bg-blue-500/20 border-solid scale-105 shadow-2xl z-20' : 'border-dashed border-slate-700 bg-[#0f1115] hover:border-slate-500 hover:bg-[#161b22]'}
         ${currentStep === 1 && !isDragging ? 'border-blue-500/50 shadow-[0_0_30px_rgba(59,130,246,0.1)]' : ''}
         ${currentStep > 1 ? 'border-blue-500/30 bg-blue-900/5' : ''}
@@ -177,7 +180,7 @@ export default function Step1Panel({
         <ThinkingLog thought={analyzeThought} />
       </div>
 
-        <div className="reference-recognition">
+      {!isAnalyzing && <div className="reference-recognition">
           <div className="reference-recognition-heading">
             <h3><label htmlFor="reference-recognition-editor">認識結果（人物・背景・小物／編集できます）</label></h3>
           </div>
@@ -199,14 +202,14 @@ export default function Step1Panel({
               setIsCastListCopied(true);
               setTimeout(() => setIsCastListCopied(false), 2000);
             }}
-            disabled={!recognitionText || Boolean(referenceEditorError)}
+            disabled={!canCopyRecognition}
             className={`w-full ${isCastListCopied ? 'bg-green-600' : 'bg-slate-800 hover:bg-slate-700'} text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all border border-white/10 disabled:opacity-50 disabled:cursor-not-allowed`}
           >
             {isCastListCopied ? <CheckCircle2 size={20} /> : <Copy size={20} />}
             {isCastListCopied ? "コピー完了" : "📋 認識結果をコピー"}
           </button>
         </div>
-      </div>
+      </div>}
     </section>
   );
 }

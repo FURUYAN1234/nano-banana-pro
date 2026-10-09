@@ -3,7 +3,7 @@
 > **Source code available; free to use.** Ordinary use, free integration and free provision require no application, prior contact or permission from FURU. You may sell and monetize your own works. External API costs and third-party terms are separate. See Terms & Output Rights below. / **ソースコード公開・利用無料。** 通常利用と無料の組み込み・無料提供に、申請・事前連絡・FURUの許可は不要です。自分の作品は販売・収益化できます。外部API料金と第三者の条件は別です。詳しくは「利用条件・作品の権利」をご確認ください。
 
 
-> Current source version: **v6.9.6** / 現在のソース版: **v6.9.6**
+> Current source version: **v6.9.7** / 現在のソース版: **v6.9.7**
 
 
 An experimental web application in which AI handles topic research, story structure, direction, prompt construction, image generation, and quality review for a four-panel manga. / AIが話題調査、構成、演出、プロンプト構築、画像生成、品質確認まで担当する4コマ漫画制作Webアプリです。
@@ -176,6 +176,8 @@ OpenAI reasoning models reserve up to 32,768 tokens for reasoning plus text; leg
 STEP3 shows `⏳ AI応答を待機中... (○秒経過)` directly below its build button while the connected text API reviews the prompt, then stops the counter when processing ends. / STEP3は接続中の文章APIがプロンプトを精査している間、構築ボタン直下に`⏳ AI応答を待機中... (○秒経過)`を表示し、処理完了時にカウントを停止します。
 
 STEP2–STEP4 retain the final total elapsed time on the last line inside each progress window, including failed runs. STEP4 includes image generation and checks; these totals are not individual API response times. The STEP2 progress frame also stays visible when a pasted scenario has no execution log; it does not invent a completion. Starting a new run or resetting replaces the corresponding log. / STEP2〜STEP4は処理終了後も、それぞれの進捗窓内の最終行に合計所要時間を残します。エラーで終了した場合も記録します。STEP4は画像生成と検査を含む時間で、各API単体の応答時間とは区別します。手入力したシナリオで実行ログがない場合もSTEP2の進捗枠を残し、未実行を完了として表示しません。次の実行開始やリセット時には対応するログを置き換えます。
+
+While STEP1 recognises materials, the page ends at its progress log; results and copying return when processing ends. Pending references cannot enable copying. STEP2/STEP3 also keep downstream output hidden during processing. Example images fit narrow material panels. Whole-STEP1 drop, file selection, manual editing and retained images remain supported. / STEP1の素材解析中は進捗窓までを表示し、認識結果・編集・コピーは処理終了後に表示します。未解析の素材はコピーできません。STEP2・STEP3も処理中は後続の出力を隠し、進捗を末尾に表示します。見本画像は狭い素材欄の幅に収まります。STEP1全体へのドロップ、ファイル選択、手入力、取得済み画像の保持は維持します。
 
 ### Image history and downloads / 生成履歴と保存
 
@@ -447,7 +449,7 @@ The copied prompt guides panel order, cast, speaker assignment, acting, camera, 
 The app provides separate download buttons for the workflow JSON and the custom-node ZIP. Both files are needed for this route. / アプリにはワークフローJSONとカスタムノードZIPのダウンロードボタンが別々にあります。この経路では両方のファイルが必要です。
 
 - [Download workflow JSON](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261005233427.json) / [ワークフローJSONをダウンロード](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261005233427.json)
-- [Download custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.9.6/ComfyUI_H3_FourPanel_NonLM_20261005233427_authfix1.zip) / [カスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.9.6/ComfyUI_H3_FourPanel_NonLM_20261005233427_authfix1.zip)
+- [Download custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.9.7/ComfyUI_H3_FourPanel_NonLM_20261005233427_authfix1.zip) / [カスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v6.9.7/ComfyUI_H3_FourPanel_NonLM_20261005233427_authfix1.zip)
 
 Place the ZIP's `3フォルダ` under `ComfyUI/custom_nodes/` and the workflow JSON under `ComfyUI/user/default/workflows/`. Install the separate dependencies below, then restart ComfyUI. / ZIP内の`3フォルダ`を`ComfyUI/custom_nodes/`へ、ワークフローJSONを`ComfyUI/user/default/workflows/`以下へ配置します。下記の別途必要な依存関係を導入してからComfyUIを再起動します。
 
@@ -499,7 +501,7 @@ Every deployment requires a fresh dependency audit, the shared security checks a
 
 **Why are there two ComfyUI download buttons? / ComfyUIのダウンロードボタンが2つあるのはなぜですか？**  The JSON defines the workflow, while the ZIP supplies three custom-node folders and documentation; three additional runtime dependencies are installed separately. / JSONはワークフロー定義、ZIPはカスタムノード3フォルダーと導入文書です。さらに実行依存3項目を別途導入します。
 
-**Which video package should I install? / 動画化には何を入れますか？** Use the `20261005233427` workflow JSON and matching v6.9.6 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261005233427` のワークフローJSONと対応するv6.9.6 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
+**Which video package should I install? / 動画化には何を入れますか？** Use the `20261005233427` workflow JSON and matching v6.9.7 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261005233427` のワークフローJSONと対応するv6.9.7 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
 
 **Is this the T2V/I2V/Ref2V repository? / T2V・I2V・Ref2Vのリポジトリですか？**  No. Those workflows are maintained separately in [comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows). / いいえ。それらは別の[comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows)で管理します。
 
@@ -574,6 +576,9 @@ The Covered Software is provided as is. To the extent permitted by law, operatio
 These are custom source-available terms. Restrictions on productization mean that they are not an open-source license under the OSI definition. / 本条件はソースコードを公開する独自の利用条件です。商品化等に制限があるため、OSIの定義によるオープンソースライセンスではありません。
 
 ## 📋 ChangeLog / 更新履歴
+
+### v6.9.7 (2026-10-09)
+- **[Fix & UX]** Fix narrow STEP1 overflow and premature recognition copying; keep progress last while processing. / STEP1の狭い幅での横はみ出しと解析途中のコピーを修正。各STEPの処理中は進捗を末尾に表示。
 
 ### v6.9.6 (2026-10-09)
 - **[Fix & UX]** Recognize mixed character, background and prop references in STEP1, unify editable results, retain panorama numbering and Web attachment order, support free-input material directions, and name both image and scenario models in the footer. / STEP1で人物・背景・小物をまとめてAI認識し、一つの編集・コピー欄へ統合。360°背景の番号とWeb添付順、自由入力の素材指定を整理し、画像エンジン名とシナリオモデル名をフッターへ反映。

@@ -688,7 +688,7 @@ export default function useMangaWorkflow() {
         showStatus('解析中に素材が変更されたため、結果の上書きを中止しました。必要なら素材を再解析してください。');
         return;
       }
-      setReferenceAssets(analysis.assets);
+      setReferenceAssets(analysis.assets.map(asset => ({ ...asset, analysisCompleted: true })));
       setCastList(analysis.castList);
       setUsedModel(result.model); // [v1.7.0] Track Model
       // [v2.42] 蓄積ログを保持し、完了メッセージとThinking Traceを追記（上書きしない）

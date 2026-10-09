@@ -113,6 +113,6 @@ test('preview and STEP3 are disclosed only after a scenario exists', async () =>
 
   assert.match(
     app,
-    /\{currentStep >= 3 && \(\s*<>[\s\S]*?<GenerationPreview[\s\S]*?<Step3Panel[\s\S]*?<\/?>\s*\)\}/,
+    /\{!isAnalyzing && !isSearching && currentStep >= 3 && \(\s*<>[\s\S]*?<GenerationPreview[\s\S]*?<Step3Panel[\s\S]*?<\/?>\s*\)\}/,
   );
 });
