@@ -1,5 +1,5 @@
 {
-  "priceSnapshotDate": "2026-10-09",
+  "priceSnapshotDate": "2026-10-10",
   "priceSnapshotSource": "OpenAI official model pricing",
   "models": [
     {
@@ -15,7 +15,7 @@
       "id": "gpt-6.1-sol",
       "label": "GPT-6.1 Sol",
       "group": "GPT-6.1",
-      "priceSnapshotDate": "2026-10-09",
+      "priceSnapshotDate": "2026-10-10",
       "description": "新しいSol・構成品質と料金のバランス",
       "inputPriceUsdPerM": 2,
       "outputPriceUsdPerM": 10,

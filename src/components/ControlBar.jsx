@@ -1,7 +1,5 @@
 import React from 'react';
-import { Check, ArrowRight, RefreshCw, Zap, Square, Loader2, Copy } from 'lucide-react';
-import { buildSingleImageEmotionalPrompt } from '../lib/single-image-prompt';
-import { getEffectiveEngine } from '../lib/engine-state';
+import { Check, ArrowRight, RefreshCw, Zap, Square, Loader2 } from 'lucide-react';
 import { AutoSaveStartDialog } from './AutoSaveGuide';
 
 export default function ControlBar({
@@ -16,16 +14,19 @@ export default function ControlBar({
   onStopApiProcessing,
   handleFullAutoToggle,
   isFullAutoMode,
-  selectedEngine,
-  enableOpenAIApi,
-  isPolicyCopied,
-  setIsPolicyCopied
+  autoSaveVerified = false,
+  onAutoSaveVerified,
 }) {
-  const isOpenAIEngine = getEffectiveEngine(selectedEngine, enableOpenAIApi) === 'openai';
   const [pendingMode, setPendingMode] = React.useState(null);
   const setEndless = next => {
     setIsEndlessMode(next);
     if (isEndlessModeRef) isEndlessModeRef.current = next;
+  };
+  const requestMode = mode => {
+    if (!apiKey || isAborting) return;
+    if (!autoSaveVerified) setPendingMode(mode);
+    else if (mode === 'endless') setEndless(true);
+    else handleFullAutoToggle();
   };
 
   return (
@@ -83,7 +84,7 @@ export default function ControlBar({
             disabled={!apiKey || isAborting}
             onClick={() => {
               if (isEndlessMode) setEndless(false);
-              else setPendingMode('endless');
+              else requestMode('endless');
             }}
             title="ONにすると、フルオート完了時に同じキャラクターで永遠にシナリオ生成と画像生成を繰り返します。完全停止するにはフルオート中断を押してください。"
             style={{ color: isEndlessMode ? '#dc2626' : '#ffffff' }}
@@ -100,7 +101,7 @@ export default function ControlBar({
           {/* フルオートボタン */}
           <button
             disabled={!apiKey || isAborting}
-            onClick={() => isFullAutoMode ? handleFullAutoToggle() : setPendingMode('fullAuto')}
+            onClick={() => isFullAutoMode ? handleFullAutoToggle() : requestMode('fullAuto')}
             title="画像をドロップするだけで4コマを全自動生成。完了後は自動OFF。生成中に押すと即中断。"
             style={{ color: isFullAutoMode ? (isAborting ? '#ffffff' : '#dc2626') : '#ffffff' }}
             className={`min-w-[160px] flex items-center justify-center gap-1.5 px-4 py-3 rounded-xl text-sm font-black tracking-widest transition-all duration-100 border-2 border-b-4 select-none shrink-0 active:border-b-2 active:translate-y-0.5 ${
@@ -134,34 +135,11 @@ export default function ControlBar({
         </div>
       </div>
       
-      {/* Web版ChatGPT用 コピーボタン (β) */}
-      {isOpenAIEngine && (
-        <div className="flex justify-center w-full max-w-7xl mx-auto px-2 pb-1">
-          <button
-            onClick={() => {
-              const protocol = buildSingleImageEmotionalPrompt();
-              navigator.clipboard.writeText(protocol);
-              setIsPolicyCopied(true);
-              setTimeout(() => setIsPolicyCopied(false), 2000);
-            }}
-            title="Web版ChatGPT用の1枚絵エモーショナル演出プロンプトをクリップボードにコピーします。指示内容の感情を自動検知し、カメラ・ライティング・表情・VFXを最適化します。"
-            className="save-guide-secondary w-full flex flex-wrap items-center justify-center gap-2 sm:gap-4 px-4 py-2.5 sm:py-3 rounded-xl text-sm font-black tracking-widest transition-all duration-100 border-2 border-b-4 select-none active:border-b-2 active:translate-y-0.5 shadow-lg"
-          >
-            <div className="flex items-center gap-1.5 shrink-0">
-              {isPolicyCopied ? <Check size={16} /> : <Copy size={16} />}
-              <span className="whitespace-nowrap">{isPolicyCopied ? 'コピー完了！' : '🎬 ChatGPT用 1枚絵エモーショナルプロンプトをコピー'}</span>
-            </div>
-            <span className="text-[10px] md:text-[11px] font-normal tracking-normal whitespace-normal text-center">
-              【1枚絵用】プロンプトをコピーしてChatGPTのチャット欄に貼り付け、元のキャラクター画像と一緒に送信すると、シネマチックで感情豊かなイラストが生成されます。
-            </span>
-          </button>
-        </div>
-      )}
-
       {pendingMode && <AutoSaveStartDialog mode={pendingMode} onCancel={() => setPendingMode(null)} onConfirm={() => {
         const mode = pendingMode;
         setPendingMode(null);
         if (!apiKey || isAborting) return;
+        onAutoSaveVerified?.();
         if (mode === 'endless') setEndless(true);
         else if (!isFullAutoMode) handleFullAutoToggle();
       }} />}

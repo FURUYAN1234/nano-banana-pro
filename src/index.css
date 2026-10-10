@@ -554,8 +554,20 @@ body {
 .auto-save-guide { font-size: 12px; line-height: 1.5; text-align: left; overflow-wrap: anywhere; color: #cbd5e1; }
 .auto-save-guide p { margin: 6px 0; }
 .auto-save-guide ol { padding-left: 22px; margin: 6px 0; }
+.auto-save-guide .save-setup-steps { color: #fca5a5; }
+.auto-save-guide .save-setup-steps code { color: inherit; }
 .save-guide-button { display: block; width: 100%; border: 1px solid #aaa; border-radius: 0; padding: 3px 8px; margin: 6px 0; background: #fff; color: #000; font-size: 14px; cursor: pointer; }
 .save-guide-button:disabled { opacity: .6; cursor: wait; }
 .save-guide-secondary { background: #374151; color: #fff; border-color: #64748b; }
+.save-guide-required { background: #fbbf24; color: #111827; border: 2px solid #f59e0b; border-radius: 8px; padding: 12px 16px; font-weight: 800; animation: save-confirm-pulse 2.4s ease-in-out infinite; }
+.save-guide-required:hover { background: #fcd34d; }
+.save-guide-required:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+@keyframes save-confirm-pulse {
+  0%, 100% { background-color: #fbbf24; border-color: #f59e0b; box-shadow: 0 0 0 0 #fbbf2466; }
+  50% { background-color: #fb923c; border-color: #ea580c; box-shadow: 0 0 12px 3px #fb923c80; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .save-guide-required { animation: none; }
+}
 .save-start-dialog { background: #0f1115; color: #fff; border: 1px solid #94a3b8; padding: 18px; width: min(620px, calc(100vw - 32px)); max-height: 85vh; overflow-y: auto; }
 .save-start-dialog::backdrop { background: #000a; }

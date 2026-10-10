@@ -198,6 +198,8 @@ function App() {
   } = useMangaWorkflow();
 
   const [controlBarHeight, setControlBarHeight] = useState(70);
+  const [autoSaveCheckStatus, setAutoSaveCheckStatus] = useState('pending');
+  const autoSaveVerified = autoSaveCheckStatus === 'passed';
   const controlBarRef = useRef(null);
   const wasAssemblingRef = useRef(false);
   const step2ActionRef = useRef(null);
@@ -308,10 +310,8 @@ function App() {
         onStopApiProcessing={stopApiProcessing}
         handleFullAutoToggle={handleFullAutoToggle}
         isFullAutoMode={isFullAutoMode}
-        selectedEngine={selectedEngine}
-        enableOpenAIApi={enableOpenAIApi}
-        isPolicyCopied={isPolicyCopied}
-        setIsPolicyCopied={setIsPolicyCopied}
+        autoSaveVerified={autoSaveVerified}
+        onAutoSaveVerified={() => setAutoSaveCheckStatus('passed')}
         showStatus={showStatus}
       />
       
@@ -342,7 +342,7 @@ function App() {
 
 
 
-        <AutoSaveSettingsButton />
+        <AutoSaveSettingsButton autoSaveVerified={autoSaveVerified} onVerified={() => setAutoSaveCheckStatus('passed')} />
         <main className="space-y-8" style={{ filter: isMainLocked ? 'blur(10px)' : 'none', pointerEvents: isMainLocked ? 'none' : 'auto', transition: 'filter 0.5s ease' }}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
 

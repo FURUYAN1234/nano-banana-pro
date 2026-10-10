@@ -16,7 +16,7 @@ test('ChatGPT Web disclosure starts closed and contains every manual action, lea
       const html = renderToStaticMarkup(React.createElement(Step4Panel, { ...props, ...mode }));
       const disclosure = html.match(/<details class="web-prompt-disclosure">([\s\S]*?)<\/details>/)?.[1];
       assert.ok(disclosure, 'native details has no open attribute, so it starts closed');
-      assert.match(disclosure, /<summary[^>]*>ChatGPTのWebでプロンプトを貼り付け（API節約可能）／4コマ漫画を動画化<\/summary>/);
+      assert.match(disclosure, /<summary[^>]*>ChatGPTのWebでプロンプトを貼り付け（API節約可能）／4コマ漫画を動画化(?:\/1枚絵エモーショナルプロンプト)?<\/summary>/);
       for (const text of ['ChatGPT Webへの貼り付け手順', '全文プロンプトを.txtで保存する', 'Web版生成用 制作情報JSONを保存', '制作情報JSONには、現在の素材番号・認識内容', '画像比率修正・アップスケール（web貼り付け時）', '安全基準（ポリシー）に引っかかって画像が出ない場合（web貼り付け時）']) {
         assert.ok(disclosure.includes(text), text);
       }

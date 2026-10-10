@@ -6,6 +6,7 @@ import { getEffectiveEngine } from '../src/lib/engine-state.js';
 
 const systemHeaderSource = await readFile(new URL('../src/components/SystemHeader.jsx', import.meta.url), 'utf8');
 const controlBarSource = await readFile(new URL('../src/components/ControlBar.jsx', import.meta.url), 'utf8');
+const step4PanelSource = await readFile(new URL('../src/components/Step4Panel.jsx', import.meta.url), 'utf8');
 const step2PanelSource = await readFile(new URL('../src/components/Step2Panel.jsx', import.meta.url), 'utf8');
 const appSource = await readFile(new URL('../src/App.jsx', import.meta.url), 'utf8');
 
@@ -21,12 +22,14 @@ test('Gemini is selected only when neither legacy state requests OpenAI', () => 
   assert.equal(getEffectiveEngine('', false), 'gemini');
 });
 
-test('all provider-sensitive header controls use the same effective engine resolver', () => {
-  for (const source of [systemHeaderSource, controlBarSource]) {
+test('provider-sensitive header and STEP4 Web controls share the effective engine resolver', () => {
+  for (const [source, variable] of [[systemHeaderSource, 'isOpenAIEngine'], [step4PanelSource, 'isOpenAIImageMode']]) {
     assert.match(source, /import \{ getEffectiveEngine \} from ['"]\.\.\/lib\/engine-state['"];/);
-    assert.match(source, /const isOpenAIEngine = getEffectiveEngine\(selectedEngine, enableOpenAIApi\) === 'openai';/);
+    assert.ok(source.includes(`const ${variable} = getEffectiveEngine(selectedEngine, enableOpenAIApi) === 'openai';`));
     assert.doesNotMatch(source, /selectedEngine === 'openai'/);
   }
+  assert.doesNotMatch(controlBarSource, /selectedEngine|enableOpenAIApi|buildSingleImageEmotionalPrompt/);
+  assert.match(step4PanelSource, /\{isOpenAIImageMode && \([\s\S]*?copyTextToClipboard\(buildSingleImageEmotionalPrompt\(\)\)/);
 });
 
 test('Gemini UI hides the OpenAI-only scenario-model selector', () => {

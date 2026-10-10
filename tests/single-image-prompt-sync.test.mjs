@@ -8,7 +8,7 @@ import { createServer } from 'vite';
 let server;
 let buildSingleImageEmotionalPrompt;
 let buildMangaPrompt;
-let ControlBar;
+let Step4Panel;
 let buildImageQualityQaPrompt;
 let buildImageQualityRepairPrompt;
 
@@ -19,7 +19,7 @@ before(async () => {
     server: { middlewareMode: true }
   });
   ({ buildSingleImageEmotionalPrompt } = await server.ssrLoadModule('/src/lib/single-image-prompt.js'));
-  ({ default: ControlBar } = await server.ssrLoadModule('/src/components/ControlBar.jsx'));
+  ({ default: Step4Panel } = await server.ssrLoadModule('/src/components/Step4Panel.jsx'));
   ({ buildMangaPrompt } = await server.ssrLoadModule('/src/lib/prompt-assembler.js'));
   ({ buildImageQualityQaPrompt } = await server.ssrLoadModule('/src/lib/image-quality-qa.js'));
   ({ buildImageQualityRepairPrompt } = await server.ssrLoadModule('/src/lib/image-quality-failsafe.js'));
@@ -117,8 +117,8 @@ test('the actual single-image button handler copies the complete accepted text',
     if (originalNavigator) Object.defineProperty(globalThis, 'navigator', originalNavigator);
     else delete globalThis.navigator;
   });
-  const tree = ControlBar({ selectedEngine: 'openai', enableOpenAIApi: true,
-    currentStep: 1, setIsPolicyCopied: value => states.push(value) });
+  const tree = Step4Panel({ selectedEngine: 'openai', enableOpenAIApi: true,
+    currentStep: 4, finalPrompt: 'UI fixture', genLog: [], webCopyPartLengths: [], setIsPolicyCopied: value => states.push(value) });
   function findCopyButton(node) {
     if (!node || typeof node !== 'object') return undefined;
     if (node.type === 'button' && node.props.title?.includes('1枚絵')) return node;
@@ -132,7 +132,7 @@ test('the actual single-image button handler copies the complete accepted text',
   assert.deepEqual(states, [true]);
   t.mock.timers.tick(2000);
   assert.deepEqual(states, [true, false]);
-  const geminiTree = ControlBar({ selectedEngine: 'gemini', enableOpenAIApi: false, currentStep: 1 });
+  const geminiTree = Step4Panel({ selectedEngine: 'gemini', enableOpenAIApi: false, currentStep: 4, finalPrompt: 'UI fixture', genLog: [], webCopyPartLengths: [] });
   assert.equal(findCopyButton(geminiTree), undefined, 'single-image ChatGPT action stays scoped to OpenAI');
 });
 
@@ -190,7 +190,7 @@ Hero「行こう。」`;
     assert.match(prompt, /back of the head.*do not invent eyes, nose, or mouth|rear head.*no invented face/i);
   }
 
-  const controlBar = readFileSync(new URL('../src/components/ControlBar.jsx', import.meta.url), 'utf8');
-  assert.match(controlBar, /import \{ buildSingleImageEmotionalPrompt \}/);
-  assert.match(controlBar, /const protocol = buildSingleImageEmotionalPrompt\(\)/);
+  const step4Panel = readFileSync(new URL('../src/components/Step4Panel.jsx', import.meta.url), 'utf8');
+  assert.match(step4Panel, /import \{ buildSingleImageEmotionalPrompt \}/);
+  assert.match(step4Panel, /copyTextToClipboard\(buildSingleImageEmotionalPrompt\(\)\)/);
 });

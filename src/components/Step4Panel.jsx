@@ -23,6 +23,7 @@ import { prepareGeneratedImageSave, saveImageToChosenLocation } from '../lib/gen
 import { getReferenceAsset, getReferenceMetadataRole } from '../lib/reference-assets.js';
 import { GEMINI_A4_RELAYOUT_PROMPT, GEMINI_2K_REFINEMENT_PROMPT } from '../lib/gemini-image-edit';
 import { getEffectiveEngine } from '../lib/engine-state';
+import { buildSingleImageEmotionalPrompt } from '../lib/single-image-prompt';
 import { MINIMAX_H3_COMFYUI_PROMPT } from '../lib/minimax-h3-prompt';
 import { SYSTEM_VERSION } from '../lib/constants';
 import { applyOpenAIImageEngineWatermark, formatOpenAIImageEngineName } from '../lib/openai-image-settings.js';
@@ -1045,7 +1046,7 @@ No explanations. No partial results.`;
               )}
               <details className="web-prompt-disclosure">
                   <summary className="web-prompt-disclosure-toggle">
-                    {isChatGPTWebGuide ? 'ChatGPTのWebでプロンプトを貼り付け（API節約可能）／4コマ漫画を動画化' : 'Gemini Webで手動生成／4コマ漫画を動画化'}
+                    {isChatGPTWebGuide ? `ChatGPTのWebでプロンプトを貼り付け（API節約可能）／4コマ漫画を動画化${isOpenAIImageMode ? '/1枚絵エモーショナルプロンプト' : ''}` : 'Gemini Webで手動生成／4コマ漫画を動画化'}
                   </summary>
                 <div className="space-y-3">
               {isChatGPTWebGuide && finalPrompt && (
@@ -1146,6 +1147,33 @@ No explanations. No partial results.`;
               {webMetadataError && <p className="mt-1 text-[10px] text-red-400">{webMetadataError}</p>}
               {webSupportControls}
               {videoGuideControl}
+              {isOpenAIImageMode && (
+                <div style={{ paddingTop: '8px' }}>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        await copyTextToClipboard(buildSingleImageEmotionalPrompt());
+                        setIsPolicyCopied(true);
+                        setTimeout(() => setIsPolicyCopied(false), 2000);
+                      } catch {
+                        setWebMetadataError('1枚絵プロンプトをコピーできませんでした。ブラウザーのクリップボード設定を確認してください。');
+                      }
+                    }}
+                    title="Web版ChatGPT用の1枚絵エモーショナル演出プロンプトをクリップボードにコピーします。指示内容の感情を自動検知し、カメラ・ライティング・表情・VFXを最適化します。"
+                    className="save-guide-secondary w-full flex flex-wrap items-center justify-center gap-2 sm:gap-4 px-4 py-2.5 sm:py-3 rounded-xl text-sm font-black tracking-widest transition-all duration-100 border-2 border-b-4 select-none active:border-b-2 active:translate-y-0.5 shadow-lg"
+                    aria-live="polite"
+                  >
+                    <span className="flex items-center gap-1.5 shrink-0">
+                      {isPolicyCopied ? <Check size={16} /> : <Copy size={16} />}
+                      <span>{isPolicyCopied ? 'コピー完了！' : '🎬 ChatGPT用 1枚絵エモーショナルプロンプトをコピー'}</span>
+                    </span>
+                    <span className="text-[10px] md:text-[11px] font-normal tracking-normal whitespace-normal text-center">
+                      【1枚絵用】描きたい内容の後ろに追加し、必要な参照画像と一緒にChatGPTへ一度だけ送信してください。
+                    </span>
+                  </button>
+                </div>
+              )}
 
               {/* コピーボタン下の親切な補足ガイド */}
               {finalPrompt && !isOpenAIImageMode && (

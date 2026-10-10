@@ -1,4 +1,4 @@
-Current candidate: v7.0.0. Root PLAN.md owns the authorized secondary-button/test-image update, official release, note/Facebook, inline-only X and subsequent full backup. Local Chrome saved both new branded PNGs; ordinary IAB saving did not, and tool-assisted downloads are excluded from that proof. User accepted Chrome verification and approved matching single-image button colors. No paid API generation needed. Evidence: output/save-check-presentation-20261009. The completed v6.9.9 release and backup must not be repeated.
+Current candidate: v7.0.1. Root PLAN.md "Nano Web補助ボタン/保存確認（2026-10-10）" owns the current authorized deploy, README/PDF update and note/Facebook/X publication. Local UI and actual API evidence are retained under output/web-buttons-20261010; three manuals have been regenerated and visually reviewed. No full backup is requested. Previous releases/backups are complete and must not be repeated.
 
 ## Current: 2026-10-07 v6.9.2 公開準備
 
