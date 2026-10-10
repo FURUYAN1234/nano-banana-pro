@@ -18,7 +18,7 @@
   ],
   "readmeSha256": "d8faf75ef7bf2583077ea9c386244a17d07c3afe22a22102b0012715ff3cd5e9",
   "sourceTree": "b7d297ed944ef2eea03a27a895826b05bf0c7181",
-  "publicTree": "e4aebe917ace7652ddcefba6506e828344ee62c2",
+  "publicTree": "634cf813dfbb044d4869235be30eff19a8d07121",
   "packageSha256": "098b3fe3a08ae291eb72075beb426fc714123e3d6d6d14a8a0e08a818d44eca0",
   "releaseAssetSha256": "9e41886be6afa0ebfad6d244ecf53f37260a92f73b30309319029cc87e1ddb4e",
   "reviewedSections": [
@@ -37,7 +37,7 @@
     "AI Manga Creative Suite / AIまんが制作エコシステム",
     "📋 ChangeLog / 更新履歴"
   ],
-  "findings": "Reviewed all 14 README sections, the current article body and the candidate diff against existing source/provider/parser/save contracts and unchanged workflow ZIP. Updated current version, release asset links, the noninteractive bold blinking reminder above the white free test, manuals and standard price dates. Generation, key memory, cancellation, licenses and ComfyUI routes retain the prior reviewed implementation. The old Stop report remains unreproduced and is not described as fixed. Article introduction/footer/reminder require synchronization; public readback remains pending browser authorization.",
+  "findings": "Reviewed all 14 README sections, the current article body and the candidate diff against existing source/provider/parser/save contracts and unchanged workflow ZIP. Updated current version, release asset links, the noninteractive bold blinking reminder above the white free test, manuals and standard price dates. Generation, key memory, cancellation, licenses and ComfyUI routes retain the prior reviewed implementation. The old Stop report remains unreproduced and is not described as fixed. Article introduction/footer/reminder require synchronization; public readback remains pending browser authorization. Generated SVG diagrams differ only in the version label v7.0.2. Native ESM replaces unnecessary Vite setup for the pure-JS Gemini contract test; all three assertions and runtime API source are retained.",
   "manualFindings": "Gemini13, system36 and OpenAI22 pages regenerated for v7.0.2/2026-10-11. Reviewed all71 pages in13 contact sheets, with full-resolution system36 reminder and system19 refreshed standard-price text. No clipping or overlap observed. Automated A4, text-bound, footer, link and privacy scans passed. Exact PDFs copied to public/downloads and SHA256 parity checked. Historical screenshots remain labeled examples.",
   "pricingReview": {
     "version": "7.0.2",
