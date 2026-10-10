@@ -69,25 +69,6 @@ Wardrobe continuity: Clothing and attachments are specified once per character a
 
 Panel media and projection / コマ別の画材と投影: Watercolor applies transparent pale washes to figures, clothes, props and backgrounds. Normal, gekiga and chibi use their own opaque color treatment; explicit pale palettes still take priority. Subsequent panels reset inherited chibi anatomy. High/low camera review needs localized evidence on actors, not scenery alone. Explicitly offscreen continuity actors are excluded from physical on-screen counts. / 水彩は人物・服・小道具・背景まで淡い透明な薄塗りを指定します。通常・劇画・ちびキャラは各画風の不透明な塗りを使い、明示した淡色指定は保持します。ちび化の次のコマは頭身を戻します。俯瞰・アオリの検査は背景だけでなく人物の具体的な投影根拠を必要とし、画面外で位置を保持する人物は画面内人数へ数えません。既存の台本はSTEP3から再構築してください。
 
-## AI Manga Creative Suite / AIまんが制作エコシステム
-
-[![AI Manga Creative Suite introduction video](https://github.com/user-attachments/assets/d850ac7f-aa1c-40cc-a378-b8c6673c726c)](https://youtu.be/pqYVxUUg0Cs?si=27g1I3tO2EuZkOuxJ)
-
-This application is the four-panel manga production system in AI Manga Creative Suite. It turns character references and a topic into a reviewed four-panel manga, then keeps the completed image available for the suite's video, translation, background, story, and character-design workflows. / 本アプリはAI Manga Creative Suiteの4コマ漫画制作システムです。キャラクター資料と題材から、検査済みの4コマ漫画を作成し、完成画像を動画化、翻訳、背景、物語、キャラクター設計の各ワークフローへ渡せます。
-
-### AI Voice Comic Maker integration / AI Voice Comic Makerとの連携
-
-Load a completed four-panel manga into [AI Voice Comic Maker](https://github.com/FURUYAN1234/ai-voice-comic-maker) to analyze the page and render a vertical short video with camera movement, BGM, and a selected local voice engine. This makes the completed manga usable as a TikTok or YouTube Shorts video source. / 完成した4コマ漫画を[AI Voice Comic Maker](https://github.com/FURUYAN1234/ai-voice-comic-maker)へ読み込むと、ページを解析し、カメラワーク、BGM、選択したローカル音声エンジンを使った縦型ショート動画をレンダリングできます。完成漫画をTikTokやYouTube Shorts向け動画の素材として使えます。
-
-### Related systems / 関連システム
-
-- [Monogatari Buzz Maker / 物語バズメーカー](https://github.com/FURUYAN1234/viral-radar): Turn evidence-backed Web/RSS trends into planning material for manga, short videos, explainer videos, and novels. / 公開Web・RSSから取得した根拠付きトレンドを、漫画・ショート動画・解説動画・小説の制作案へ整理します。
-- [Story Maker](https://github.com/FURUYAN1234/story-maker): Create stories and plots for a manga topic. / 漫画の題材になる物語やプロットを作成します。
-- [AI Character Sheet Maker](https://github.com/FURUYAN1234/character-sheet-maker): Create structured character reference sheets for this workflow. / このワークフローに渡す構造化キャラクターシートを作成します。
-- [AI Comic Translation Tool](https://github.com/FURUYAN1234/comic-translation): Translate completed manga pages. / 完成した漫画ページを翻訳します。
-- [360° AI Panorama Generator](https://github.com/FURUYAN1234/panoforge): Create spatial background material for manga and video. / 漫画と動画向けの空間背景素材を作成します。
-- [AI Voice Comic Maker](https://github.com/FURUYAN1234/ai-voice-comic-maker): Convert a completed manga page into a voiced vertical video. / 完成した漫画ページを音声付き縦型動画に変換します。
-
 ## A4 workflow map / A4縦フローチャート
 
 ![Full workflow flowchart covering API connection, STEP1–STEP4, image generation, QA, policy repair, history, and saving.](public/diagrams/nano-banana-pro-workflow-a4.png)
@@ -597,6 +578,38 @@ See [previous notices and applicable scope](docs/licenses/previous-notices.md). 
 The Covered Software is provided as is. To the extent permitted by law, operation, fitness for a particular purpose, originality of outputs and non-infringement are not guaranteed. FURU is not liable for damage arising from use except where liability cannot be excluded by law. / 対象ソフトウェアは現状のまま提供します。法令で認められる範囲で、動作、特定目的への適合性、成果物の独自性や第三者権利の非侵害を保証しません。法令上免除できない責任を除き、FURUは利用に起因する損害について責任を負いません。
 
 These are custom source-available terms. Restrictions on productization mean that they are not an open-source license under the OSI definition. / 本条件はソースコードを公開する独自の利用条件です。商品化等に制限があるため、OSIの定義によるオープンソースライセンスではありません。
+
+## AI Manga Creative Suite / AIまんが制作エコシステム
+
+This app is one component in a broader AI-assisted manga and story production workflow. / このアプリは、AIを活用した漫画・物語制作ワークフローの一部です。
+
+[![AI Manga Creative Suite introduction video](https://github.com/user-attachments/assets/d850ac7f-aa1c-40cc-a378-b8c6673c726c)](https://youtu.be/pqYVxUUg0Cs?si=27g1I3tO2EuZkOuxJ)
+
+This application is the four-panel manga production system in AI Manga Creative Suite. It turns character references and a topic into a reviewed four-panel manga, then keeps the completed image available for the suite's video, translation, background, story, and character-design workflows. / 本アプリはAI Manga Creative Suiteの4コマ漫画制作システムです。キャラクター資料と題材から、検査済みの4コマ漫画を作成し、完成画像を動画化、翻訳、背景、物語、キャラクター設計の各ワークフローへ渡せます。
+
+### AI Voice Comic Maker integration / AI Voice Comic Makerとの連携
+
+Load a completed four-panel manga into [AI Voice Comic Maker](https://github.com/FURUYAN1234/ai-voice-comic-maker) to analyze the page and render a vertical short video with camera movement, BGM, and a selected local voice engine. This makes the completed manga usable as a TikTok or YouTube Shorts video source. / 完成した4コマ漫画を[AI Voice Comic Maker](https://github.com/FURUYAN1234/ai-voice-comic-maker)へ読み込むと、ページを解析し、カメラワーク、BGM、選択したローカル音声エンジンを使った縦型ショート動画をレンダリングできます。完成漫画をTikTokやYouTube Shorts向け動画の素材として使えます。
+
+### Related systems / 関連システム
+
+- [Monogatari Buzz Maker / 物語バズメーカー](https://github.com/FURUYAN1234/viral-radar): Turn evidence-backed Web/RSS trends into planning material for manga, short videos, explainer videos, and novels. / 公開Web・RSSから取得した根拠付きトレンドを、漫画・ショート動画・解説動画・小説の制作案へ整理します。
+- [Story Maker](https://github.com/FURUYAN1234/story-maker): Create stories and plots for a manga topic. / 漫画の題材になる物語やプロットを作成します。
+- [AI Character Sheet Maker](https://github.com/FURUYAN1234/character-sheet-maker): Create structured character reference sheets for this workflow. / このワークフローに渡す構造化キャラクターシートを作成します。
+- [AI Comic Translation Tool](https://github.com/FURUYAN1234/comic-translation): Translate completed manga pages. / 完成した漫画ページを翻訳します。
+- [360° AI Panorama Generator](https://github.com/FURUYAN1234/panoforge): Create spatial background material for manga and video. / 漫画と動画向けの空間背景素材を作成します。
+- [AI Voice Comic Maker](https://github.com/FURUYAN1234/ai-voice-comic-maker): Convert a completed manga page into a voiced vertical video. / 完成した漫画ページを音声付き縦型動画に変換します。
+
+| **Tool / ツール** | **Role / 役割** | **Repository / リポジトリ** |
+| --- | --- | --- |
+| Super FURU AI 4-koma System / Super FURU AI 4コマシステム | AI 4-panel manga generation / AI 4コマ漫画生成 | [nano-banana-pro](https://github.com/FURUYAN1234/nano-banana-pro) |
+| Story Maker | Story and plot generation / 物語・プロット生成 | [story-maker](https://github.com/FURUYAN1234/story-maker) |
+| AI Character Sheet Maker / AIキャラクターシートメーカー | Character reference generation / キャラクター資料生成 | [character-sheet-maker](https://github.com/FURUYAN1234/character-sheet-maker) |
+| AI Comic Translation Tool / AI漫画翻訳ツール | Manga translation and regeneration / 漫画翻訳・再生成 | [comic-translation](https://github.com/FURUYAN1234/comic-translation) |
+| 360° AI Panorama Generator / 360度AIパノラマ生成ツール | 360-degree background generation / 360度背景生成 | [panoforge](https://github.com/FURUYAN1234/panoforge) |
+| AI Voice Comic Maker / AI音声コミックメーカー | Voice comic video generation / フルボイス動画化 | [ai-voice-comic-maker](https://github.com/FURUYAN1234/ai-voice-comic-maker) |
+| Monogatari Buzz Maker / 物語バズメーカー | Trend research and creative planning / トレンド調査・創作企画 | [viral-radar](https://github.com/FURUYAN1234/viral-radar) |
+| Narration Video Maker / ナレーション動画メーカー | Video generation with narration, subtitles, and BGM / ナレーション・字幕・BGM付き動画生成 | [gemini-narration-studio](https://github.com/FURUYAN1234/gemini-narration-studio) |
 
 ## 📋 ChangeLog / 更新履歴
 
