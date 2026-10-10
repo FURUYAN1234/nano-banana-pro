@@ -556,6 +556,11 @@ body {
 .auto-save-guide ol { padding-left: 22px; margin: 6px 0; }
 .auto-save-guide .save-setup-steps { color: #fca5a5; }
 .auto-save-guide .save-setup-steps code { color: inherit; }
+.auto-save-guide .save-setup-reminder { margin: 12px 0 8px; color: #fbbf24; font-size: 18px; line-height: 1.6; font-weight: 800; animation: save-reminder-pulse 1.6s ease-in-out infinite; }
+@keyframes save-reminder-pulse {
+  0%, 100% { color: #fbbf24; opacity: 1; }
+  50% { color: #fb923c; opacity: 0.08; }
+}
 .save-guide-button { display: block; width: 100%; border: 1px solid #aaa; border-radius: 0; padding: 3px 8px; margin: 6px 0; background: #fff; color: #000; font-size: 14px; cursor: pointer; }
 .save-guide-button:disabled { opacity: .6; cursor: wait; }
 .save-guide-secondary { background: #374151; color: #fff; border-color: #64748b; }
@@ -568,6 +573,7 @@ body {
 }
 @media (prefers-reduced-motion: reduce) {
   .save-guide-required { animation: none; }
+  .auto-save-guide .save-setup-reminder { animation: none; }
 }
 .save-start-dialog { background: #0f1115; color: #fff; border: 1px solid #94a3b8; padding: 18px; width: min(620px, calc(100vw - 32px)); max-height: 85vh; overflow-y: auto; }
 .save-start-dialog::backdrop { background: #000a; }

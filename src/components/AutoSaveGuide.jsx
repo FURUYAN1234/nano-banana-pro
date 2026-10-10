@@ -46,7 +46,8 @@ export default function AutoSaveGuide({ onTestComplete } = {}) {
     <p>127.0.0.1とlocalhostは、どのPCでもそのPC自身を指します。ブラウザーのアドレス欄で、その後の「:」に続く番号がポート番号です。標準は5173ですが、例えば「http://localhost:5174/」なら「http://localhost:5174」も許可してください。</p>
     <p>自動保存先はChromeの「設定 → ダウンロード」で指定したフォルダです。設定は使用するブラウザー・プロファイルごとに必要です。Web版ChatGPT／Geminiで生成した画像の保存は各サービス側で行います。</p>
     <p>アプリ内ブラウザーでは保存できない場合があります。実際に使用するChromeでこのページを開いて確認してください。</p>
-    <button type="button" className="save-guide-button save-guide-secondary" disabled={testing} onClick={testDownloads}>{testing ? '保存テスト中…' : '2枚の自動保存をテスト（無料・API不使用）'}</button>
+    <p className="save-setup-reminder">Chromeの自動保存設定を完了したら、下記テストボタンをクリックしてください。</p>
+    <button type="button" className="save-guide-button" disabled={testing} onClick={testDownloads}>{testing ? '保存テスト中…' : '2枚の自動保存をテスト（無料・API不使用）'}</button>
     {message && <p role="status">{message}</p>}
     <p>アプリはブラウザーへのダウンロード要求まで行います。実際の保存完了はダウンロード一覧・保存先で確認してください。</p>
   </div>;

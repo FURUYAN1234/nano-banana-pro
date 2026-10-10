@@ -51,14 +51,28 @@ test('shared guide includes all three origins, manual settings, free test and tr
   assert.ok(!html.includes('その他のコンテンツの設定'));
 });
 
-test('required save settings stand out while the free test retains secondary styling', () => {
+test('required save settings stand out while the free test is white', () => {
   const settings = renderToStaticMarkup(React.createElement(AutoSaveSettingsButton));
   const guide = renderToStaticMarkup(React.createElement(AutoSaveGuide));
   assert.match(settings, /class="save-guide-button save-guide-required"/);
   assert.ok(settings.includes('自動保存の設定・動作確認'));
   assert.ok(!settings.includes('自動保存の設定・無料テスト'));
-  assert.match(guide, /class="save-guide-button save-guide-secondary"/);
+  assert.match(guide, /class="save-guide-button"[^>]*>2枚の自動保存をテスト/);
   assert.ok(guide.includes('アプリ内ブラウザーでは保存できない場合があります'));
+});
+
+test('save setup reminder is noninteractive text above the free test with spacing and reduced motion', () => {
+  const html = renderToStaticMarkup(React.createElement(AutoSaveGuide));
+  const reminder = html.match(/<p class="save-setup-reminder">([^<]+)<\/p>/);
+  assert.equal(reminder?.[1], 'Chromeの自動保存設定を完了したら、下記テストボタンをクリックしてください。');
+  assert.ok(html.indexOf(reminder[0]) < html.indexOf('>2枚の自動保存をテスト'));
+  assert.doesNotMatch(reminder[0], /button|tabindex|onclick|role=/i);
+  const css = readFileSync(new URL('../src/index.css', import.meta.url), 'utf8');
+  assert.match(css, /\.auto-save-guide \.save-setup-reminder\s*\{[^}]*margin:\s*12px 0 8px;[^}]*color:\s*#fbbf24;[^}]*animation:\s*save-reminder-pulse 1\.6s/);
+  assert.match(css, /@keyframes save-reminder-pulse/);
+  assert.match(css, /@keyframes save-reminder-pulse\s*\{\s*0%, 100%\s*\{[^}]*opacity:\s*1;[^}]*\}\s*50%\s*\{[^}]*opacity:\s*0\.08;/);
+  assert.match(css, /\.auto-save-guide \.save-setup-reminder\s*\{[^}]*font-size:\s*18px;[^}]*line-height:\s*1\.6;[^}]*font-weight:\s*800;/);
+  assert.match(css, /@media \(prefers-reduced-motion: reduce\)\s*\{[^}]*\}[^}]*\.auto-save-guide \.save-setup-reminder\s*\{\s*animation: none;/);
 });
 
 test('single-image copy is inside the Web disclosure after video guidance with spacing', t => {
