@@ -1,15 +1,8 @@
-import test, {before, after} from 'node:test';
+import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createServer} from 'vite';
-
-let server;
-let callThinkingGemini;
-let setApiKey;
-before(async () => {
-  server = await createServer({appType:'custom',logLevel:'silent',server:{middlewareMode:true}});
-  ({callThinkingGemini, setApiKey} = await server.ssrLoadModule('/src/lib/gemini.js'));
-});
-after(async () => {setApiKey(''); await server?.close();});
+// This client and its dependencies are plain ESM. A development server adds
+// an asynchronous SSR loading boundary without contributing to this contract.
+import {callThinkingGemini, setApiKey} from '../src/lib/gemini.js';
 
 test('ordinary text requests do not consume Google Search grounding', async () => {
   const originalFetch = globalThis.fetch;
