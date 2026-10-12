@@ -1,25 +1,25 @@
 {
-  "pricingSourceSha256": "decb854a8d8fcc35e12c83052220874177235f4a6f3e0f772f0f8ea503001843",
-  "manualVersion": "7.0.2",
-  "manualSourceSha256": "0a54e1bf80dc754d8d6c88cbf343fc1ecb6842e38bf4f02d25e4ef497d4e437f",
+  "pricingSourceSha256": "0c77fc0964d99204da376217db2b9754b0ab620dce3d5efd65d8efee0a8ca295",
+  "manualVersion": "7.0.3",
+  "manualSourceSha256": "a1f7fe76530c3074a665d6faf51cb2f80c00b863b0f3ca4eb11d3258b4556a60",
   "manualFiles": [
     {
       "name": "gemini-api-beginner-guide-2026-10-01.pdf",
-      "sha256": "cadc7aa4c704da1cfe07ce8dba6fa4383b8beb3a6b95fe8f1dc34a979301ce3b"
+      "sha256": "5cf554a18fdc016272a0b48b546723b64e17ad38f5def2a858ef229b8b1fb3ea"
     },
     {
       "name": "openai-api-beginner-guide-2026-09-30.pdf",
-      "sha256": "5ff7545363513608ae1c695e47749fefdb47d92472162da0d2fc48c70a451408"
+      "sha256": "4910136718166c2a140b4f5e96c32db66c0689821be8b4ce6e100d8d8bcffb82"
     },
     {
       "name": "super-furu-ai-4koma-full-manual-2026-10-01.pdf",
-      "sha256": "2605132ccfa99d4dcc9c7b695a25aada34c176be1a0853708740dfe44aaa047c"
+      "sha256": "43c10ade25ce41be6ad2f5e7ff032b1696a8ff65ce4b299962a387a37a82e186"
     }
   ],
-  "readmeSha256": "44913469b825c3f3bdedd69fe9420b42fb5e90b1004f03d04ea864dd09281d37",
-  "sourceTree": "b7d297ed944ef2eea03a27a895826b05bf0c7181",
-  "publicTree": "634cf813dfbb044d4869235be30eff19a8d07121",
-  "packageSha256": "098b3fe3a08ae291eb72075beb426fc714123e3d6d6d14a8a0e08a818d44eca0",
+  "readmeSha256": "7c9742f80c0880eda27414e823d87ca947eecbd51ca55b973f94b9aaa2e36f28",
+  "sourceTree": "02941d0bcdddd4830cd07642c9f10f11923809be",
+  "publicTree": "8be2145155b585ad33b5040194671f23ad30b6b1",
+  "packageSha256": "532ba203a708a3f01075e1ceec1a5674c6297029eb29c5ce521deb00905d1986",
   "releaseAssetSha256": "9e41886be6afa0ebfad6d244ecf53f37260a92f73b30309319029cc87e1ddb4e",
   "reviewedSections": [
     "Application screen and output / 操作画面と生成例",
@@ -40,13 +40,13 @@
   "findings": "Whole-body review covers all 14 README sections for v7.0.3, with focused follow-up against current STEP3/STEP4, reference, review, selection and save contracts. The README documents initial experimental OFF, separate 5-8-panel preparation from the four-panel script, conditional restoration of the normal prompt, shared STEP4 and saving, separate ten-entry session histories, retained unselected experimental candidates, and no automatic experimental image repair. Uncertainty and harmless variation are not described as a pass or a reason for another image generation; supported material defects are not erased by unrelated uncertainty. Gemini reinspection is available below the displayed image in normal and experimental modes; its analysis charges remain explicit. Existing license and ComfyUI distribution terms are retained. Real-API generation and candidate-comparison evidence are recorded separately. This documentation review is not release approval, public readback or a guarantee of image quality.",
   "manualFindings": "Reviewed v7.0.3/2026-10-12 Gemini 13, OpenAI 22 and system 37 pages: all 72 pages visually covered by 14 contact sheets and enlarged changed-page checks. A4 size, text bounds, version/date/page footers and HTTPS link annotations passed; link destination reachability was not tested. The final source correction on system page21 describes Gemini reinspection in both normal and experimental modes, with no automatic experimental image repair. Gemini13 and system37 were regenerated; only system21 and its contact sheet changed, while the other49 page renders matched prior visual evidence. System21 was visually rechecked at120dpi together with contact sheet4 pages19-24; no clipping, overlap or missing Japanese glyphs observed. OpenAI22 PDF bytes were retained unchanged. Current copies in public/downloads match all three reviewed PDF SHA256 hashes. Historical screenshots remain labeled examples. This is document/content verification, not a universal image-quality claim.",
   "pricingReview": {
-    "version": "7.0.2",
-    "sourceSha256": "decb854a8d8fcc35e12c83052220874177235f4a6f3e0f772f0f8ea503001843",
-    "checkedAt": "2026-10-10T21:56:17.451Z",
+    "version": "7.0.3",
+    "sourceSha256": "0c77fc0964d99204da376217db2b9754b0ab620dce3d5efd65d8efee0a8ca295",
+    "checkedAt": "2026-10-12T07:25:51Z",
     "sources": [
       "https://developers.openai.com/api/docs/pricing",
       "https://ai.google.dev/gemini-api/docs/pricing"
     ],
-    "findings": "Official standard prices were checked on 2026-10-12, with no amount changes. Standard short-context GPT-6.1 Sol input/output 2/10, Astra 10/50 and Luna 0.10/0.50 USD per million tokens. GPT Image 2.5 Sunburst/Flare and GPT Image 2 use image input 8, cached input 2 and output 30; text input 5 and cached input 1.25. Gemini 3.8 Flash input/output 0.75/3.75 applies through 2026-12-31. Nano Banana 2.1 input 1.50, text/thinking output 7.50 and image output 30; image estimates are 1K 0.0336, 2K 0.0504 and 4K 0.113 USD. Batch discounts are separate. The documentation price snapshot is 2026-10-12. The precise current official-read timestamp and final version/source binding still require synchronization; the existing checkedAt value is not presented as current deployment evidence."
+    "findings": "Official standard prices were checked on 2026-10-12, with no amount changes. Standard short-context GPT-6.1 Sol input/output 2/10, Astra 10/50 and Luna 0.10/0.50 USD per million tokens. GPT Image 2.5 Sunburst/Flare and GPT Image 2 use image input 8, cached input 2 and output 30; text input 5 and cached input 1.25. Gemini 3.8 Flash input/output 0.75/3.75 applies through 2026-12-31. Nano Banana 2.1 input 1.50, text/thinking output 7.50 and image output 30; image estimates are 1K 0.0336, 2K 0.0504 and 4K 0.113 USD. Batch discounts are separate. The documentation price snapshot is 2026-10-12. This review is bound to the current candidate version and source hashes; checkedAt records the actual fresh reading of both official pricing pages."
   }
 }
