@@ -121,7 +121,7 @@ test('monochrome reference headroom is reserved identically for Web copy and API
 test('workflow reserves, copies and sends the same selected reference medium', () => {
   const source = readFileSync(new URL('../src/hooks/useMangaWorkflow.js', import.meta.url), 'utf8');
   const plans = [...source.matchAll(/buildOpenAIReferencePlan\(\{([\s\S]*?)\}\)/g)];
-  assert.equal(plans.length, 3);
+  assert.equal(plans.length, 4); // normal/experimental preparation, Web copy, API send
   for (const [, options] of plans) assert.match(options, /\bcolorMode\b/);
 });
 

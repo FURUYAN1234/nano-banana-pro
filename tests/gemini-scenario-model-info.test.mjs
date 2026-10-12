@@ -14,11 +14,7 @@ const geminiClientSource = readFileSync(new URL('../src/lib/gemini.js', import.m
 test('Gemini scenario price card describes the real primary route', () => {
   assert.equal(GEMINI_SCENARIO_MODEL_INFO.id, GEMINI_TEXT_MODEL_IDS[0]);
   assert.deepEqual(GEMINI_TEXT_MODEL_IDS, [
-    'gemini-3.8-flash',
-    'gemini-3.7-flash',
-    'gemini-3.6-flash',
-    'gemini-3.5-flash',
-    'gemini-3.5-flash-lite',
+    'gemini-3.8-flash',    'gemini-3.6-flash',    'gemini-3.5-flash-lite',
     'gemini-3.1-flash-lite',
   ]);
   assert.deepEqual(GEMINI_SCENARIO_MODEL_INFO, {

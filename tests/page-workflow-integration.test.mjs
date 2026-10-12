@@ -94,7 +94,7 @@ test('experimental preparation takes current cast and actual scenario model from
     formatOpenAIImageEngineName:()=> 'image model',openAIImageQuality:'max',scenarioModelId:'selected',
     scenarioUsedModelRef:{current:'actual'},OPENAI_SCENARIO_MODEL_OPTIONS:[{id:'selected',label:'selected model'},{id:'actual',label:'actual model'}],
     referenceAssetsRef:{current:[]},imagesRef:{current:[]},bg360Enabled:false,bg360Analysis:null,bg360Image:null,
-    buildReferenceAssetContext:()=>'',buildWebReferencePlan:()=>({rolePrompt:''}),
+    buildReferenceAssetContext:()=>'',buildOpenAIReferencePlan:()=>({rolePrompt:''}),getOpenAIPromptBodyBudget:()=>32000,
     summarizeExperimentalLayouts:x=>x,generationHistory:[]};
   const input=new Function(...Object.keys(scope),`return (${body})`)(...Object.values(scope))('new scenario');
   assert.equal(input.scenario,'new scenario');
@@ -104,4 +104,34 @@ test('experimental preparation takes current cast and actual scenario model from
   scope.inputMode='news';
   const newsInput=new Function(...Object.keys(scope),`return (${body})`)(...Object.values(scope))('new scenario');
   assert.equal(newsInput.userDirection,'','news mode must not reuse an old manual request');
+});
+
+for (const colorMode of ['color','monochrome']) {
+  test('experimental STEP3 reserves transport references once: '+colorMode,async()=>{
+    const {buildOpenAIReferencePlan,getOpenAIPromptBodyBudget,appendOpenAIReferencePrompt}=await import('../src/lib/openai-image-references.js');
+    const {buildReferenceAssetContext,buildWebReferencePlan}=await import('../src/lib/reference-assets.js');
+    const source=await readFile(new URL('../src/hooks/useMangaWorkflow.js',import.meta.url),'utf8');
+    const body=source.match(/const experimentalInput = ([\s\S]+?);\r?\n  const changePageMode/)[1];
+    const images=['data:image/png;base64,YQ==','data:image/png;base64,Yg=='];
+    const scope={scenario:'source',castListRef:{current:'cast'},colorMode,mosaicCopyrightedCharacters:false,showWatermarks:true,
+      inputMode:'manual',manualTopic:'retain detailed source',isOpenAIEngine:true,formatOpenAIImageEngineName:()=> 'ChatGPT Images 2.5',openAIImageQuality:'high',
+      GEMINI_IMAGE_MODEL:'gemini',OPENAI_SCENARIO_MODEL_OPTIONS:[],scenarioUsedModelRef:{current:'gpt-6-luna'},
+      buildReferenceAssetContext,buildWebReferencePlan,buildOpenAIReferencePlan,getOpenAIPromptBodyBudget,
+      referenceAssetsRef:{current:[]},imagesRef:{current:images},bg360Enabled:false,bg360Analysis:null,bg360Image:null,
+      summarizeExperimentalLayouts:()=>[],generationHistory:[]};
+    const input=new Function(...Object.keys(scope),'return ('+body+')();')(...Object.values(scope));
+    const refs=buildOpenAIReferencePlan({compact:true,characterImages:images,colorMode});
+    assert.equal(input.promptMaxChars,getOpenAIPromptBodyBudget(refs));
+    assert.equal(input.referenceContext,buildReferenceAssetContext([],images,{purpose:'image',panorama:null}));
+    assert.ok(!input.referenceContext.includes('[IMAGE REFERENCE ROLES]'),'transport appends the authoritative role map for both API and Web');
+    const bodyPrompt='あ'.repeat(input.promptMaxChars);
+    assert.equal(appendOpenAIReferencePrompt(bodyPrompt,refs).length,32000);
+    assert.throws(()=>appendOpenAIReferencePrompt(bodyPrompt+'い',refs),/上限/);
+  });
+}
+
+test('only experimental candidate comparison receives the expanded-page contract',()=>{
+ assert.equal((source.match(/approvedExperimentalPage:buildExperimentalPageContract/g)||[]).length,1);
+ assert.match(source,/if\(experimentalPrepared\)[\s\S]*selectExperimentalCandidate[\s\S]*approvedExperimentalPage:buildExperimentalPageContract\(experimentalPrepared.plan,experimentalPrepared.source\)/);
+ assert.match(source,/buildImageQualityComparisonPrompt\(\{ scenario:generationScenario, castList, finalPrompt: originalPrompt, \.\.\.comparisonOptions \}\)/);
 });

@@ -3,7 +3,7 @@ import { getEndingModePolicy } from './ending-mode-policy.js';
 // --- 定数・タグ定義 (constants.js) ---
 // App.jsx から抽出された共有定数
 
-export const SYSTEM_VERSION = "v7.0.3";
+export const SYSTEM_VERSION = "v7.0.4";
 
 // --- Punchline ラベル変換関数 ---
 export const getPunchlineLabel = (type) => {
@@ -40,6 +40,11 @@ export const DEFAULT_CATEGORIES = [
 // AIモデルIDからバッジ表示用の情報を返す純粋関数
 export const getModelBadgeInfo = (modelId) => {
   if (!modelId) return null;
+  const flashVersion = /^gemini-(3\.[678])-flash$/.exec(modelId)?.[1];
+  if (flashVersion) return {
+    label: "Gemini Flash", tier: "Active", color: "bg-blue-600 text-white",
+    desc: `Gemini ${flashVersion} Flash: テキスト・画像解析`
+  };
 
   // Gemini 3.5 / 3.1系 = 最高品質 (Next-Gen)
   if (modelId.includes("3.5") || modelId.includes("3.1")) {

@@ -11,7 +11,7 @@ import { collectCastNameEntries } from '../lib/panel-utils.js';
 import { buildImageEditRequest } from '../lib/image-edit.js';
 import { formatApiErrorGuide } from '../lib/api-errors.js';
 import { generateImageWithOpenAI, setOpenAIApiKey } from '../lib/openai';
-import {buildOpenAIReferencePlan, appendOpenAIReferencePrompt, getOpenAIPromptBodyBudget} from '../lib/openai-image-references.js';
+import {buildOpenAIReferencePlan, appendOpenAIReferencePrompt, appendOpenAIWebReferencePrompt, getOpenAIPromptBodyBudget} from '../lib/openai-image-references.js';
 import {buildGeminiReferencePlan, buildGeminiImageApiPrompt, appendGeminiReferencePrompt} from '../lib/gemini-image-references.js';
 import { buildReferenceAnalysisPrompt, parseReferenceAnalysis, buildReferenceAssetContext, buildWebReferencePlan, buildRecognitionEditorText, parseRecognitionEditorText, reconcileReferenceCast, mergeReferenceAnalysis, getReferenceImagesToAnalyze, remapReferenceNumbers } from '../lib/reference-assets.js';
 import { getImageInputBudget, assertImageInputBudget, planImageAddition } from '../lib/image-input-budget.js';
@@ -67,7 +67,7 @@ import { getEffectiveEngine } from '../lib/engine-state';
 import { DEFAULT_OPENAI_IMAGE_QUALITY, DEFAULT_OPENAI_IMAGE_SIZE, normalizeOpenAIImageSize, normalizeOpenAIImageQuality, resolveOpenAIImageOption, formatOpenAIImageEngineName, applyOpenAIImageEngineWatermark, selectInitialOpenAIImageQuality, isOpenAIImageVerificationError, OPENAI_IMAGE_VERIFICATION_MESSAGE } from '../lib/openai-image-settings.js';
 import { DEFAULT_OPENAI_SCENARIO_MODEL_ID, OPENAI_SCENARIO_MODEL_OPTIONS, OPENAI_SCENARIO_TEXT_MODEL_IDS } from '../lib/openai-model-routes.js';
 
-import { prepareExperimentalManga, buildExperimentalReviewPrompt, reviewExperimentalImage, validateExperimentalReview, reviewExperimentalCandidatePair, selectExperimentalCandidate, summarizeExperimentalLayouts } from '../lib/experimental-manga.js';
+import { prepareExperimentalManga, buildExperimentalPageContract, buildExperimentalReviewPrompt, reviewExperimentalImage, validateExperimentalReview, reviewExperimentalCandidatePair, selectExperimentalCandidate, summarizeExperimentalLayouts } from '../lib/experimental-manga.js';
 import { resolvePageWorkflow, applyPageCandidateSelection } from '../lib/page-workflow.js';
 
 export default function useMangaWorkflow({ experimentalEnabled = false } = {}) {
@@ -1246,8 +1246,11 @@ export default function useMangaWorkflow({ experimentalEnabled = false } = {}) {
     userDirection:inputMode==='manual'?manualTopic:'',
     imageEngineLabel:isOpenAIEngine?formatOpenAIImageEngineName(openAIImageQuality):GEMINI_IMAGE_MODEL.replace(/^gemini-nano-banana-/, 'Gemini Nano Banana '),
     scenarioModelLabel:OPENAI_SCENARIO_MODEL_OPTIONS.find(({id})=>id===scenarioUsedModelRef.current)?.label,
-    referenceContext:[buildReferenceAssetContext(referenceAssetsRef.current,imagesRef.current,{purpose:'image',panorama:bg360Enabled?bg360Analysis:null}),
-      buildWebReferencePlan({images:imagesRef.current,referenceAssets:referenceAssetsRef.current,backgroundImage:bg360Image,backgroundEnabled:bg360Enabled,colorMode}).rolePrompt].filter(Boolean).join('\n'),
+    // The API and Web copy paths append their own attachment-role manifest once.
+    referenceContext:buildReferenceAssetContext(referenceAssetsRef.current,imagesRef.current,{purpose:'image',panorama:bg360Enabled?bg360Analysis:null}),
+    promptMaxChars:isOpenAIEngine?getOpenAIPromptBodyBudget(buildOpenAIReferencePlan({compact:true,
+      characterImages:imagesRef.current,referenceAssets:referenceAssetsRef.current,
+      backgroundImage:bg360Image,backgroundEnabled:bg360Enabled,colorMode})):undefined,
     recentLayouts:summarizeExperimentalLayouts(generationHistory.filter(item=>item.experimentalPlan).map(item=>({plan:item.experimentalPlan})).reverse()),
   });
   const changePageMode = (enabled) => {
@@ -1633,14 +1636,14 @@ export default function useMangaWorkflow({ experimentalEnabled = false } = {}) {
   const [isFixPromptCopied, setIsFixPromptCopied] = useState(false);
   const [isPolicyCopied, setIsPolicyCopied] = useState(false);
 
-  // Use the same complete text as the initial API request, including image roles.
+  // Export the complete API-equivalent text without applying the API send limit.
   // Validate again at copy time because the user may edit the text or references.
   const prepareWebCopyPrompt = (prompt) => {
     if (referenceEditorError) throw new Error(referenceEditorError);
     if (experimentalEnabled) resolvePageWorkflow({experimentalEnabled,prepared:promptAssemblyRunRef.experimentalPrepared,prompt,input:experimentalInput()});
     if (!experimentalEnabled && inferImageQualityMode(prompt) === 'four-panel') assertRenderOptions(prompt, { mosaicCopyrightedCharacters, showWatermarks, protectedCast: collectCastNameEntries(castList).map(entry => entry.displayName) });
     return ensureWebPromptTrailingNewline(getCurrentPromptProviderFamily() === PROMPT_PROVIDER_FAMILIES.CHATGPT
-      ? appendOpenAIReferencePrompt(applyOpenAIImageEngineWatermark(prompt, openAIImageQuality), buildOpenAIReferencePlan({ compact: true,
+      ? appendOpenAIWebReferencePrompt(applyOpenAIImageEngineWatermark(prompt, openAIImageQuality), buildOpenAIReferencePlan({ compact: true,
         characterImages: images, backgroundImage: bg360Image, backgroundEnabled: bg360Enabled,
         referenceAssets: referenceAssetsRef.current,
         colorMode,
@@ -2323,7 +2326,7 @@ export default function useMangaWorkflow({ experimentalEnabled = false } = {}) {
           const original=originalExperimental;
           const retainedReview={pass:previousExperimental.qualityPass,issues:previousExperimental.qualityIssues||[]};
           const selection=await selectExperimentalCandidate(original,next,(a,b,prompt,options)=>withImageReviewDeadline(async signal=>{
-            const response=await callAI(buildImageQualityComparisonPrompt({scenario:generationScenario,castList,finalPrompt:prompt,...options}),
+            const response=await callAI(buildImageQualityComparisonPrompt({scenario:generationScenario,castList,finalPrompt:prompt,...options,approvedExperimentalPage:buildExperimentalPageContract(experimentalPrepared.plan,experimentalPrepared.source)}),
               [a,b].map(image=>`data:${image.mimeType};base64,${image.base64Img}`),null,msg=>statCallback(`[候補比較] ${msg}`),{signal,outputProfile:'image-quality-review'});
             const compared=parseImageQualityComparison(response.text);
             statCallback(`[候補比較の判定] ${JSON.stringify(compared)}`);

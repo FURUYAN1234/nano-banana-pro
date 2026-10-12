@@ -81,9 +81,15 @@ export function buildOpenAIReferencePlan({
   };
 }
 
-export function appendOpenAIReferencePrompt(prompt, plan) {
+// Export must preserve recoverable text even when it is too long to send to the API.
+// API callers retain the strict budget check in appendOpenAIReferencePrompt.
+export function appendOpenAIWebReferencePrompt(prompt, plan) {
   if (typeof prompt !== 'string') throw new Error('画像生成プロンプトは文字列で指定してください。');
-  return assertImagePromptBudget(plan.rolePrompt ? `${prompt}\n\n${plan.rolePrompt}` : prompt);
+  return plan.rolePrompt ? `${prompt}\n\n${plan.rolePrompt}` : prompt;
+}
+
+export function appendOpenAIReferencePrompt(prompt, plan) {
+  return assertImagePromptBudget(appendOpenAIWebReferencePrompt(prompt, plan));
 }
 
 export function getOpenAIPromptBodyBudget(plan) {

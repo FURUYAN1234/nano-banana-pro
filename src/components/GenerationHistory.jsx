@@ -16,6 +16,9 @@ export default function GenerationHistory({
   if (generationHistory.length === 0) return null;
 
   const isGenerating = isSearching || isAssembling || isGeneratingImage || isEnhancing || (isFullAutoMode && fullAutoStep > 0 && fullAutoStep < 4);
+  const preparationLabel = isAssembling ? 'プロンプト作成中…'
+    : isSearching ? 'シナリオ作成中…'
+      : isEnhancing ? 'シナリオ強化中…' : '自動処理中…';
 
   return (
     <section className="relative bg-[#0a0c10] border border-white/10 rounded-2xl p-4 shadow-xl mt-6 mx-2 lg:mx-0">
@@ -23,7 +26,7 @@ export default function GenerationHistory({
       {isGenerating && (
         <div style={{ position: 'absolute', inset: 0, zIndex: 10, backgroundColor: 'rgba(10,12,16,0.6)', backdropFilter: 'blur(2px)', pointerEvents: 'auto', borderRadius: '1rem' }} className="flex items-center justify-center">
           {!isGeneratingImage && <span className="text-xs font-bold text-slate-400 bg-black/80 px-3 py-1 rounded-full border border-white/10 shadow-lg flex items-center gap-2">
-            <Loader2 size={12} className="animate-spin" /> 生成中...
+            <Loader2 size={12} className="animate-spin" /> {preparationLabel}
           </span>}
         </div>
       )}

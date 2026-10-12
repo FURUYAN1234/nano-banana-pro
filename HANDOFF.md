@@ -1,3 +1,12 @@
+## Current: 2026-10-12 v7.0.4 release and full backup
+
+- User authorizes the complete release, note article update, Facebook announcement, X inline code block only, then official full backup. Model-switch pause has been lifted. Do not publish X or rerun the completed v7.0.3 transaction.
+- Experimental compiler revision15 preserves original dialogue/camera/style, reserves attachment headroom and binds scenes to physical frames. Web exports remain available above the API limit, while API submission still rejects overflow. Gemini badges/routes and STEP3 history status are corrected. Normal4 uses its existing route and experimental mode starts OFF.
+- Prior actual Luna STEP3/STEP4 finished:6panels,24758body/26007Web characters,205seconds. Reading/camera/style/story/pageText passed; anatomy remains uncertain and pointing-hand ownership is ambiguous. No clear material duplicate observed and no further paid generation planned. Full1556/1556 and built security passed before version/doc preparation. Evidence: output/prompt-compression-20261012/spatial-final-verification.json and spatial-bugfix-evidence.json.
+- Manuals are regenerated as v7.0.4: Gemini13/OpenAI22/system37 pages, all72 visually reviewed. Current PDFs copied to public/downloads with exact hashes. Release preparation remains in root PLAN.md; formal transaction/public note+Facebook readbacks and final full-backup verification still pending.
+
+## Previous snapshot
+
 ## Current: 2026-10-12 v7.0.3公開準備
 
 - 最新承認の追加最大2枚は2/2実行済み。通常STEP3は5コマを70.078秒で作成、STEP4は215秒と221秒で生成・検査・比較まで終了。初回6項目pass、2回目anatomy/pageText uncertainだが比較完了（15.626秒）で初回を選択。両画像を履歴保持し、選択画像の完全一致とerror0、ボタン再有効を確認。追加課金なし。

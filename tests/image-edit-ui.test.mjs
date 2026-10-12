@@ -132,13 +132,40 @@ test('both generation and QA show one compact spinning status with their elapsed
   assert.match(statusStyle, /pointer-events:\s*none;/);
 });
 
-test('history keeps its lock but suppresses the redundant badge only during STEP4', () => {
+test('history names the active preparation stage while preserving the existing lock', () => {
   const props = { generationHistory: [{ id: 1, img: 'data:image/png;base64,YQ==' }] };
-  const step4 = renderToStaticMarkup(React.createElement(GenerationHistory, { ...props, isGeneratingImage: true }));
-  assert.match(step4, /backdrop-filter:blur\(2px\)/);
-  assert.doesNotMatch(step4, /生成中\.\.\./);
-  const step2 = renderToStaticMarkup(React.createElement(GenerationHistory, { ...props, isSearching: true }));
-  assert.match(step2, /生成中\.\.\./);
+  for (const [state, label] of [
+    [{ isAssembling: true }, 'プロンプト作成中…'],
+    [{ isSearching: true }, 'シナリオ作成中…'],
+    [{ isEnhancing: true }, 'シナリオ強化中…'],
+    [{ isFullAutoMode: true, fullAutoStep: 1 }, '自動処理中…'],
+    [{ isFullAutoMode: true, fullAutoStep: 3 }, '自動処理中…'],
+  ]) {
+    const html = renderToStaticMarkup(React.createElement(GenerationHistory, { ...props, ...state }));
+    assert.ok(html.includes(label), `history must describe ${label}`);
+    assert.match(html, /backdrop-filter:blur\(2px\)/);
+    assert.match(html, /pointer-events:auto/);
+    assert.match(html, /animate-spin/);
+    assert.doesNotMatch(html, /生成中\.\.\./, 'preparation must not imply image generation');
+  }
+});
+
+test('history suppresses the redundant badge during STEP4 even if preparation flags overlap', () => {
+  const props = { generationHistory: [{ id: 1, img: 'data:image/png;base64,YQ==' }], isGeneratingImage: true };
+  for (const state of [{}, { isAssembling: true, isSearching: true, isEnhancing: true, isFullAutoMode: true, fullAutoStep: 3 }]) {
+    const html = renderToStaticMarkup(React.createElement(GenerationHistory, { ...props, ...state }));
+    assert.match(html, /backdrop-filter:blur\(2px\)/);
+    assert.doesNotMatch(html, /animate-spin|作成中|強化中|自動処理中|生成中/);
+  }
+});
+
+test('idle or empty history has no preparation badge or lock', () => {
+  const props = { generationHistory: [{ id: 1, img: 'data:image/png;base64,YQ==' }] };
+  for (const state of [{}, { isFullAutoMode: false, fullAutoStep: 2 }, { isFullAutoMode: true, fullAutoStep: 0 }, { isFullAutoMode: true, fullAutoStep: 4 }]) {
+    const html = renderToStaticMarkup(React.createElement(GenerationHistory, { ...props, ...state }));
+    assert.doesNotMatch(html, /backdrop-filter|animate-spin|作成中|強化中|自動処理中|生成中/);
+  }
+  assert.equal(renderToStaticMarkup(React.createElement(GenerationHistory, { generationHistory: [], isAssembling: true })), '');
 });
 
 test('completed images have no processing mask or status and allow editing again', () => {

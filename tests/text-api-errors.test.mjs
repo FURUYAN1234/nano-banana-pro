@@ -2,6 +2,8 @@ import assert from 'node:assert/strict';
 import {after, before, test} from 'node:test';
 import {createServer} from 'vite';
 import {translateApiError} from '../src/lib/safety-filters.js';
+import {OPENAI_TEXT_MODEL_IDS} from '../src/lib/openai-model-routes.js';
+import {GEMINI_TEXT_MODEL_IDS} from '../src/lib/gemini-model-routes.js';
 
 let server, openai, gemini, session;
 const originalFetch = globalThis.fetch;
@@ -36,19 +38,20 @@ for (const provider of ['openai', 'gemini']) {
 
   test(`${provider}: exhausted model failures retain actual evidence; a new run recovers without reload`, async () => {
     session.setApiSession(provider, 'test-only-credential');
+    const expectedModels = provider === 'openai' ? OPENAI_TEXT_MODEL_IDS : GEMINI_TEXT_MODEL_IDS;
     let calls = 0;
     globalThis.fetch = async () => {
       calls++;
       return Response.json({error:{code:'server_error', message:'fixture service unavailable'}}, {status:503});
     };
     await assert.rejects(run(), error => {
-      assert.equal(error.failures.length, provider === 'openai' ? 4 : 6);
+      assert.deepEqual(error.failures.map(failure => failure.model), expectedModels);
       assert.ok(error.failures.every(failure => failure.status === 503 && failure.model));
       assert.match(translateApiError(error), /503/);
       assert.match(translateApiError(error), /APIサーバー/);
       return true;
     });
-    assert.equal(calls, provider === 'openai' ? 4 : 6, 'no unrelated model-list diagnosis');
+    assert.equal(calls, expectedModels.length, 'each configured fallback is tried once without unrelated model-list diagnosis');
     globalThis.fetch = async () => Response.json(provider === 'openai'
       ? {choices:[{message:{content:'recovered'}, finish_reason:'stop'}]}
       : {candidates:[{content:{parts:[{text:'recovered'}]}}]});

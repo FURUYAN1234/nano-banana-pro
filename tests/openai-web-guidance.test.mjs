@@ -15,11 +15,15 @@ test('Web guidance explains savings and the separate API bill', () => {
   assert.match(readme, /a ChatGPT subscription does not include OpenAI API usage/);
 });
 
-test('long prompt guidance separates the shared API ceiling from Web input and supports TXT attachments', () => {
-  assert.match(ui, /共通上限32,000文字/);
+test('long prompt guidance keeps the API ceiling while allowing lossless over-limit Web exports', () => {
+  assert.match(ui, /API生成の上限は、参照画像の説明を含め32,000文字/);
+  assert.match(ui, /上限を超えても、分割コピー・全文保存で内容を取り出せます/);
+  assert.doesNotMatch(ui, /共通上限32,000文字/);
   assert.match(ui, /プロンプトが添付ファイルになった場合でも、環境によりテキストフィールドへ戻せる場合は全文貼付が可能です。/);
   assert.match(ui, /onClick=\{\(\) => copyPrompt\(true\)\}/);
-  assert.match(readme, /Web入力欄や添付ファイルの絶対上限ではありません/);
+  assert.match(readme, /編集などで上限を超えても、総文字数・分割／全文コピー・保存は利用でき、全文を切り捨てず取り出せます/);
+  assert.match(readme, /API送信は上限超過を拒否します/);
+  assert.match(readme, /Web側の入力・添付制限は利用環境によって異なります/);
   assert.doesNotMatch(readme, /uses an empirical 10,000-character soft budget/);
   assert.match(ui, /webCopyPartLengths\.map/);
   assert.match(ui, /copyPrompt\(false, index\)/);

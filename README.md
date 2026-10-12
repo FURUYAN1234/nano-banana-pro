@@ -3,14 +3,14 @@
 > **Source code available; free to use.** Ordinary use, free integration and free provision require no application, prior contact or permission from FURU. You may sell and monetize your own works. External API costs and third-party terms are separate. See Terms & Output Rights below. / **ソースコード公開・利用無料。** 通常利用と無料の組み込み・無料提供に、申請・事前連絡・FURUの許可は不要です。自分の作品は販売・収益化できます。外部API料金と第三者の条件は別です。詳しくは「利用条件・作品の権利」をご確認ください。
 
 
-> Current source version: **v7.0.3** / 現在のソース版: **v7.0.3**
+> Current source version: **v7.0.4** / 現在のソース版: **v7.0.4**
 
 
 An experimental web application in which AI handles topic research, story structure, direction, prompt construction, image generation, and quality review for a four-panel manga. An optional mode adapts the same script into a page with 5–8 panels. / AIが話題調査、構成、演出、プロンプト構築、画像生成、品質確認まで担当する4コマ漫画制作Webアプリです。実験的コマ割りをONにすると、同じ台本から5〜8コマのページも作れます。
 
 [Open the app / アプリを開く](https://furuyan1234.github.io/nano-banana-pro/) · [Full manual / 全機能PDFマニュアル](https://furuyan1234.github.io/nano-banana-pro/downloads/super-furu-ai-4koma-full-manual-2026-10-01.pdf)
 
-The full operation manual and API setup guides cover v7.0.3, including standard four-panel operation, the optional 5–8-panel mode, image limits and the distinction between image counts and people. Current application terms are in [LICENSE](LICENSE). / 全機能マニュアルとAPI取得ガイドはv7.0.3対応です。標準の4コマと実験的な5〜8コマの操作、画像枚数の上限と人数との違いを説明しています。現在のアプリ利用条件は [LICENSE](LICENSE) を参照してください。
+The full operation manual and API setup guides cover v7.0.4, including standard four-panel operation, the optional 5–8-panel mode, image limits and the distinction between image counts and people. Current application terms are in [LICENSE](LICENSE). / 全機能マニュアルとAPI取得ガイドはv7.0.4対応です。標準の4コマと実験的な5〜8コマの操作、画像枚数の上限と人数との違いを説明しています。現在のアプリ利用条件は [LICENSE](LICENSE) を参照してください。
 
 ## Application screen and output / 操作画面と生成例
 
@@ -28,11 +28,15 @@ https://github.com/user-attachments/assets/15608ccc-8d86-4b78-9ff3-785201b42629
 
 Experimental mode uses the usual STEP4, save controls, history, automatic workflow and Web-copy controls. Switching the mode alone does not call an API. It starts OFF after reload; switching back restores the saved four-panel prompt when the script and settings still match. / 実験モードも通常と同じSTEP4・保存・履歴・全自動・Webコピーを使います。スイッチだけではAPIを呼びません。実験のカメラは俯瞰・アオリとし、カメラ目線を使わない指示です。表現や台詞・読む順番が意図どおりかは実画像で確認してください。
 
+Experimental mode may enrich dialogue, connected actions and reactions while preserving the original plot progression and ending. Original lines remain verbatim and in order; added lines have explicit speakers and are included in image review and candidate comparison. Use the extra panels for purposeful activity or a meaningful silent pause, without weakening camera, acting, expression or medium. / 実験モードでは、元の展開と結末を保ち、台詞・動作の連続・掛け合い・リアクションを膨らませます。元の台詞と順番は保持し、追加台詞も話者を定めて画像検査・候補比較の対象にします。増えたコマを活発な演技や意味のある無言の間に使い、カメラ・表情・画風の強さを保つ構成を指示します。無言コマを必須にはせず、コマ数だけを増やすための繰り返しも避けます。
+
 コマ数と配置を一緒に検討し、カメラの画角、台詞を置く広さ、見せ場と間に合う構成を選びます。直近と同じ配置でも物語に適すれば使い、違いを作るためにカメラや内容を変えません。大きな見せ場、手前と奥の対比、斜めのコマ枠、同じ形をつなぐ動作、動きの軌跡、輪郭の光も場面に応じて選びます。無言の挿入コマでは、間・シルエット・余白を使えます。演出は元のカメラ・画風・台詞より優先せず、毎回すべてを使うものではありません。枠越えなどの任意演出が出なかったことだけで再生成はしません。水彩などの画風は人物にも適用する指示にし、全コマ共通の太い墨線やセル影を重ねません。実際の出方は生成画像で確認してください。タイトルと左右の透かしは既存設定に従い、Web貼付にも同じ指示を含めます。
 
 実験STEP3の再実行に失敗しても、前の準備案と取得済み画像を保持します。元台本や設定が変わった場合は古い案で生成せず、作り直します。品質検査では原画像全体・各コマ・左右の透かしの切り出しを使い、台本を渡さない文字転記と、台本との品質照合を2回の検査APIで行います。台詞は右→左の実位置で照合し、タイトルと透かしも指定文と照合します。句読点や空白だけの差は許容します。元画像は変更しません。検査が失敗したり2回合計で120秒を超えたりした場合は、画像を残して未確認と表示します。未確認や作品が成立する軽微な違いだけでは、自動で画像を再生成しません。人物を同定できない場合は未確認のまま保持し、それだけで同一人物の重複とは断定しません。明確な欠陥がある項目は、別項目の未確認で取り消しません。
 
 同じ準備案でSTEP4を再実行した場合は、従来の選択候補と新しい画像を比較し、改善を確認できた場合だけ選択を更新します。従来候補の検査方式が古いか、検査結果の形式が不完全な場合は、新画像と並行してその画像を一度再検査します。両方の検査を同時に開始するため、旧画像の検査が新画像の残り時間だけに制限されることはありません。各画像の検査は最大120秒、有効な旧検査は再利用します。比較は最大60秒で、失敗・同等・劣化・改善不明の場合は従来候補を保持します。未比較で保持した候補を「比較で選んだ最良候補」とは表示しません。取得した画像は実験側の履歴に直近10件まで残り、手動で選び直せます。必要な画像は履歴から外れる前に保存してください。検査不足の項目と実画像の観察内容は生成ログに残ります。候補比較にもAPI料金がかかります。
+
+Experimental prompts consolidate repeated style recipes and generated cast/effect rules with explicit panel scope. Script text, dialogue, camera directions and required quality instructions remain intact. STEP3 reserves space for OpenAI attachment instructions, which are appended once for Web copy or API submission; text that exceeds the limit is rejected without truncation. / 実験用プロンプトでは、重複する画風レシピ・人物ルール・演出指示を、適用するコマを明示してまとめます。台本・台詞・カメラ指定・必要な品質指示は保持します。STEP3でOpenAIの参照画像説明分を先に確保し、WebコピーやAPI送信時に一度だけ加えます。上限を超えた文章は切り捨てず、構築を中断して既存の結果を保持します。各コマのページ上の位置と、そのコマに描く場面・台詞を同じブロックにまとめ、場面内の左右とページ上の左右を区別して指示します。
 
 画像の保持・候補選択は通常生成と共通の処理を使います。品質検査の入口では「通常4コマ」「1枚絵」「実験5〜8コマ」を明示し、種別とコマ数が一致しない要求を拒否します。通常4コマの描画指示・検査項目・修正基準は維持し、実験用の可変コマ検査を通常4コマへ適用しません。通常側にも検査待ちの上限を設け、時間切れは未確認として画像を保持します。実験画像を4コマ用の自動修正へ送ることも禁止しています。
 
@@ -44,7 +48,7 @@ Automatic direction retains rectilinear wide angles and excludes fisheye. Choose
 
 Drawing options: STEP2 mosaic masking for existing copyrighted characters and STEP3 watermarking default to ON. The former adds a large-mosaic instruction to scenario and image prompts; disabling the latter removes both footer marks. The settings apply to OpenAI/Gemini API and Web-copy prompts. Rebuild from STEP2 for mosaic changes or STEP3 for watermark changes; toggling alone does not call an API. Settings last until a full reset or reload, do not alter existing images retroactively, and require visual confirmation. / 描画オプション：STEP2の「版権キャラクターにモザイクをかける」と、STEP3の「ウオーターマークを表記する」は初期状態でONです。前者はシナリオ構築と最終画像プロンプトに「版権キャラクターにおおきなモザイクをかける」を追加し、後者をOFFにすると左右のフッターの描画指示を外します。OpenAI／GeminiのAPIとWeb用コピーに共通で反映します。設定変更後はモザイクならSTEP2、ウオーターマークならSTEP3から再作成してください。変更だけでAPIは実行されません。選択は全設定リセットまたは再読込まで保持します。生成済み画像には遡って反映されず、AIの対象判断・描画は実画像で確認してください。
 
-The right footer keeps the scenario-model attribution and shows the current image engine first, for example `ChatGPT Images 2.5 / GPT-6.1 Sol / FURU AI 4-koma v7.0.3`. Changing image quality/model updates the image-engine prefix for API and Web-copy instructions; existing images are retained. / 右フッターはシナリオモデル名を残し、先頭に現在の画像生成エンジン名を記載します。例：`ChatGPT Images 2.5 / GPT-6.1 Sol / FURU AI 4-koma v7.0.3`。画像モデルを変更すると、API・Webコピー用の表記をその選択へ同期します。生成済み画像は保持します。
+The right footer keeps the scenario-model attribution and shows the current image engine first, for example `ChatGPT Images 2.5 / GPT-6.1 Sol / FURU AI 4-koma v7.0.4`. Changing image quality/model updates the image-engine prefix for API and Web-copy instructions; existing images are retained. / 右フッターはシナリオモデル名を残し、先頭に現在の画像生成エンジン名を記載します。例：`ChatGPT Images 2.5 / GPT-6.1 Sol / FURU AI 4-koma v7.0.4`。画像モデルを変更すると、API・Webコピー用の表記をその選択へ同期します。生成済み画像は保持します。
 
 
 Mosaic targets are existing-work characters actually depicted in the scripted Action. Reference sheets, art style, resemblance or a shared name alone do not authorize masking original cast members. An intentional source instruction applies only to its specified person and region. Check both masked and unmasked subjects in the final image. GPT-6.1 Sol is the default scenario model in development and production. / モザイク対象は台本のActionで実際に描く既存作品の人物描写です。参照キャラクターシートの存在、画風、外見の類似、同名だけを根拠にオリジナルの登場人物を隠しません。原文で本人への意図的なモザイクを指定した場合は、その対象・領域だけに適用します。最終画像で対象と非対象の両方を確認してください。OpenAIシナリオモデルの初期選択は開発版・公開版ともGPT-6.1 Solです。
@@ -164,7 +168,7 @@ OpenAI reasoning models reserve up to 32,768 tokens for reasoning plus text; leg
 | Selected provider / 選択API | STEP2 scenario and enhancement route / STEP2のシナリオ・強化経路 |
 |---|---|
 | OpenAI | `gpt-6-astra` → `gpt-6.1-sol` → `gpt-6-sol` → `gpt-5.6-sol` → `gpt-5.6-terra` → `gpt-6-luna` → `gpt-5.6-luna` → `gpt-4.1` → `gpt-4.1-mini` → `gpt-4.1-nano` → `gpt-4o` |
-| Google Gemini | `gemini-3.8-flash` → `gemini-3.7-flash` → `gemini-3.6-flash` → `gemini-3.5-flash` → `gemini-3.5-flash-lite` → `gemini-3.1-flash-lite` |
+| Google Gemini | `gemini-3.8-flash` → `gemini-3.6-flash` → `gemini-3.5-flash-lite` → `gemini-3.1-flash-lite` |
 
 `gpt-6.1-sol` is the public default for OpenAI scenario work, and local development uses the same default. The dropdown can explicitly start from any listed GPT-6.1, GPT-6, GPT-5.6, GPT-4.1, or GPT-4o option; on failure, the app tries only the models below that selection in the displayed order. `gpt-6-astra` is unrelated to Google's Project Astra product name. The app sends the scenario prompt through its provider route and does not inherit the Codex desktop task's High or Extra High reasoning setting. Model presence in a list is not proof of image quality; the rendered manga still requires visual review. / OpenAIのシナリオ作成では、公開版・ローカル開発版とも`gpt-6.1-sol`から開始します。プルダウンでは一覧にあるGPT-6.1、GPT-6、GPT-5.6、GPT-4.1、GPT-4oの各モデルを開始位置として明示選択でき、失敗時は選択位置より下のモデルだけを表示順に試します。`gpt-6-astra`はGoogleのProject Astraという製品名とは別物です。アプリは選択プロバイダーの経路へシナリオ指示を送信し、Codexデスクトップ作業の「高い」「極高」推論設定を引き継ぎません。モデル一覧への表示は画像品質の証明ではなく、生成画像の目視確認が必要です。
 
@@ -310,7 +314,7 @@ When an automatic check or retry runs, the relevant STEP progress log reports th
 
 STEP3 now names why a proposed edit was rejected and states clearly when none was applied. STEP4 lists concrete repair reasons before uncertain observations. A timed-out repair with no returned image is reported as retaining the original, without claiming a comparison. Repair prompts keep the approved script and each correction strategy/check, while omitting repeated diagnostic prose from the outset; oversized repair instructions retain the original image. A QA response cut off by its output limit remains unverified and cannot authorize image regeneration. / STEP3は精査案を見送った理由を示し、適用0件も明示します。STEP4は未確認事項より先に具体的な修正理由を表示します。修正画像のAPIがタイムアウトして画像を受信していない場合は、比較済みとせず元画像の保持を表示します。修正指示は台本と修正方法・確認方法を残し、診断文の重複を最初から省き、修正指示が長すぎる場合は元画像を保持します。検査応答が出力上限で途切れた場合は未確認とし、その応答から画像を再生成しません。
 
-Both providers inspect newly generated API images automatically. In normal four-panel mode, Gemini also has an “AI image reinspection” control below the image. Experimental mode uses its own inspection after generation and disables automatic image repair. With automatic repair OFF, this control only analyzes the image; with repair ON, confirmed material defects may receive paid corrections. Uncertain observations alone do not trigger image regeneration. / 両プロバイダーとも、APIで新しく生成した画像を自動検査します。通常4コマのGeminiでは画像下の「AIで画像を再検査」でも検査できます。実験モードでは生成後の専用検査を使い、画像の自動修正は行いません。自動修正OFF時は解析だけ、ON時は確認できた重大な欠陥に追加料金のかかる修正を行う場合があります。未確認の指摘だけでは画像を再生成しません。
+Both providers inspect newly generated API images automatically. Gemini also has an “AI image reinspection” control below the image in normal and experimental modes. Experimental mode uses its own inspection after generation and disables automatic image repair. With automatic repair OFF, this control only analyzes the image; with repair ON, confirmed material defects may receive paid corrections. Uncertain observations alone do not trigger image regeneration. / 両プロバイダーとも、APIで新しく生成した画像を自動検査します。Geminiでは通常・実験とも画像下の「AIで画像を再検査」でも検査できます。実験モードでは生成後の専用検査を使い、画像の自動修正は行いません。自動修正OFF時は解析だけ、ON時は確認できた重大な欠陥に追加料金のかかる修正を行う場合があります。未確認の指摘だけでは画像を再生成しません。
 
 In normal four-panel mode, the same OFF setting also stops automatic prompt repair and image retries after a provider policy rejection, preserving the original prompt. When ON, policy repair considers up to five revisions, separately from the three quality-repair attempts. Unchanged prompts (including whitespace-only changes), previously rejected prompts, and repairs that violate required settings are not sent to the image API or adopted in the editor: their failure reasons and short change history inform the next revision. Valid changes continue to image generation. Each revision uses one analysis request and may use one fallback analysis; image requests are counted separately. At the limit, obtained images and valid prompts remain available, with the unresolved reason shown. A changed prompt does not guarantee provider acceptance. / 通常4コマでは、OFF設定はAPIの安全判定後の自動プロンプト修正・画像再試行にも適用し、元の指示文を保持します。ON時は最大5回の修正検討を行い、品質修正の最大3回とは別枠です。無変更（空白だけを含む）・拒否済み文への逆戻り・必須設定違反の案は、画像APIへの再送と編集欄への採用を見送り、不採用理由と短い変更履歴を次の検討へ渡して作り直します。変更と必須条件の検査を通った案で画像生成を続けます。各検討は解析API1回と必要時の予備解析1回を使い、画像再生成回数とは分けて表示します。解析・生成にはそれぞれ料金が発生します。上限時も取得済み画像と有効な指示文を残し、未解決の理由を表示します。文が変わっただけでAPIの受理が保証されるわけではありません。
 
@@ -426,7 +430,7 @@ OpenAI monochrome references supply identity, clothing and structure; their colo
 
 **Single-image append prompt / 1枚絵の追加プロンプト**: The ChatGPT single-image copy button is inside the STEP4 Web disclosure, just below four-panel video guidance with extra spacing, and copies the accepted compact 8,911-character prompt. Write your image request first, append this text in the same unsent composer, attach any references, then send once. Explicit user content, style and camera choices take priority; quality directions supplement unspecified details. / 「ChatGPT用 1枚絵エモーショナルプロンプトをコピー」は、STEP4のWeb用折り畳み内で、4コマ動画化の下に少し間隔を空けて配置しています。折り畳み名の末尾は「/1枚絵エモーショナルプロンプト」です。採用済みの圧縮版8,911文字をコピーします。ChatGPTの入力欄に描きたい内容を書き、改行してその後ろへ追加文を貼り、必要な参照画像も添えて最後に一度だけ送信してください。ユーザーの内容・画風・カメラ指定を優先し、未指定部分を品質指示で補います。追加文は1回の貼り付け目安9,500文字以内で管理します。ユーザー文と追加文を外部で結合して一括貼付する場合、その合計がこの目安を超えることがあるため、別々に貼ってください。
 
-**ChatGPT / Work long prompts**: The shared four-panel ceiling follows the GPT Image API: 32,000 characters including reference instructions. A soft target of about 15,000 characters first compacts safe repetition, but necessary script and visual instructions may exceed it. Web copy, TXT export and the initial API request use the same complete text. Reference instructions reserve their actual length; overflow is rejected rather than silently truncated. / **長文プロンプト**: ChatGPT向け4コマプロンプトの共通上限は、参照画像の説明を含めて **32,000文字** です。約15,000文字をソフト目安として、安全に削れる重複を先に圧縮します。必要な台詞・構図・人物・画風の指定が残る場合は目安を超えても保持し、Webコピー・.txt保存・初回API送信は同じ指示文と参照説明を使います。構築時は参照説明の分を実測して確保し、編集後のコピー／保存／API送信でも上限を再検査します。収まらない台詞や指示を黙って切り捨てません。これは [GPT Image APIの上限](https://developers.openai.com/api/reference/cli/resources/images/methods/generate) に合わせたアプリ側の共通上限であり、Web入力欄や添付ファイルの絶対上限ではありません。
+**ChatGPT / Work long prompts**: Prompt construction reserves reference instructions within the 32,000-character API budget. A soft target of about 15,000 characters first compacts safe repetition while preserving necessary script and visual instructions. Web copy, TXT/production-JSON export and the initial API request use the same complete instructions. If later edits exceed the API budget, the character count, split/full copy and exports remain available without truncation; API sending still rejects overflow. / **長文プロンプト**: 構築時は参照画像の説明を含めて **32,000文字** のAPI送信枠に収めます。約15,000文字をソフト目安として重複を圧縮し、必要な台詞・構図・人物・画風の指定は保持します。Webコピー・TXT／制作情報JSON保存・初回API送信は同じ指示文と参照説明を使います。編集などで上限を超えても、総文字数・分割／全文コピー・保存は利用でき、全文を切り捨てず取り出せます。API送信は上限超過を拒否します。Web側の入力・添付制限は利用環境によって異なります。
 
 The design target is image quality, not prompt length. Prefer concise effective instructions and use extra length only to preserve necessary visual and story constraints; the 32,000-character ceiling is not a target. / プロンプトの設計目標は文字数ではなく完成画像の品質です。短くても効く指示を優先し、台詞・構図・人物識別・画風などの必要な条件を守るためにだけ長くします。32,000文字は使い切る目標ではなく上限であり、長文化による画質向上は保証されません。
 
@@ -469,7 +473,7 @@ The copied prompt guides panel order, cast, speaker assignment, acting, camera, 
 The app provides separate download buttons for the workflow JSON and the custom-node ZIP. Both files are needed for this route. / アプリにはワークフローJSONとカスタムノードZIPのダウンロードボタンが別々にあります。この経路では両方のファイルが必要です。
 
 - [Download workflow JSON](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261005233427.json) / [ワークフローJSONをダウンロード](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261005233427.json)
-- [Download custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.0.3/ComfyUI_H3_FourPanel_NonLM_20261005233427_authfix1.zip) / [カスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.0.3/ComfyUI_H3_FourPanel_NonLM_20261005233427_authfix1.zip)
+- [Download custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.0.4/ComfyUI_H3_FourPanel_NonLM_20261005233427_authfix1.zip) / [カスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.0.4/ComfyUI_H3_FourPanel_NonLM_20261005233427_authfix1.zip)
 
 Place the ZIP's `3フォルダ` under `ComfyUI/custom_nodes/` and the workflow JSON under `ComfyUI/user/default/workflows/`. Install the separate dependencies below, then restart ComfyUI. / ZIP内の`3フォルダ`を`ComfyUI/custom_nodes/`へ、ワークフローJSONを`ComfyUI/user/default/workflows/`以下へ配置します。下記の別途必要な依存関係を導入してからComfyUIを再起動します。
 
@@ -521,7 +525,7 @@ Every deployment requires a fresh dependency audit, the shared security checks a
 
 **Why are there two ComfyUI download buttons? / ComfyUIのダウンロードボタンが2つあるのはなぜですか？**  The JSON defines the workflow, while the ZIP supplies three custom-node folders and documentation; three additional runtime dependencies are installed separately. / JSONはワークフロー定義、ZIPはカスタムノード3フォルダーと導入文書です。さらに実行依存3項目を別途導入します。
 
-**Which video package should I install? / 動画化には何を入れますか？** Use the `20261005233427` workflow JSON and matching v7.0.3 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261005233427` のワークフローJSONと対応するv7.0.3 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
+**Which video package should I install? / 動画化には何を入れますか？** Use the `20261005233427` workflow JSON and matching v7.0.4 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261005233427` のワークフローJSONと対応するv7.0.4 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
 
 **Is this the T2V/I2V/Ref2V repository? / T2V・I2V・Ref2Vのリポジトリですか？**  No. Those workflows are maintained separately in [comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows). / いいえ。それらは別の[comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows)で管理します。
 
@@ -628,6 +632,9 @@ Load a completed four-panel manga into [AI Voice Comic Maker](https://github.com
 | Narration Video Maker / ナレーション動画メーカー | Video generation with narration, subtitles, and BGM / ナレーション・字幕・BGM付き動画生成 | [gemini-narration-studio](https://github.com/FURUYAN1234/gemini-narration-studio) |
 
 ## 📋 ChangeLog / 更新履歴
+
+### v7.0.4 (2026-10-12)
+- **[Fix & UX]** Compacted repeated experimental prompt rules and bound scenes to physical panel positions. Supported source-grounded dialogue and acting, restored over-limit Web exports, and corrected Gemini model badges. / 実験用プロンプトの重複を圧縮し、コマ位置と場面を結び付けました。元の展開を保つ追加台詞・演技に対応し、長文のWebコピー・分割・TXT・JSON保存とGeminiモデル表示を修正しました。
 
 ### v7.0.3 (2026-10-12)
 

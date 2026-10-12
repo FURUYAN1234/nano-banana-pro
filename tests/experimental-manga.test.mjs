@@ -72,7 +72,7 @@ try {
       const prompt=m.buildExperimentalImagePrompt(plan,src,{colorMode:'color'});
       assert.match(prompt,/CAST COUNT:.*\[ユウ\].*\[ナギ\].*EXACTLY ONCE/);
       assert.match(prompt,/OTS CAST INSTANCE LOCK:.*\[ユウ\]/);
-      const insert=prompt.split('P2 rect=')[1].split('P3 rect=')[0];
+      const insert=prompt.split('[PAGE FRAME P2 |')[1].split('[END PAGE FRAME P2]')[0];
       assert.match(insert,/ABSENT: do NOT draw \[ナギ\]/);
       assert.match(insert,/手元の接写/);
       const cast=prompt.split('CAST: ')[1].split('SOURCE FACTS')[0];
@@ -88,7 +88,7 @@ try {
     const plan=structuredClone(six);
     plan.panels.forEach(p=>{p.camera=src.panels[p.sourcePanel-1].camera;p.action='ユウとナギが再生画面を見る。再生画面には三人全員の写真が見える。ソラの顔が笑っている。';});
     const prompt=m.buildExperimentalImagePrompt(plan,src,{});
-    const insert=prompt.split('P2 rect=')[1].split('P3 rect=')[0];
+    const insert=prompt.split('[PAGE FRAME P2 |')[1].split('[END PAGE FRAME P2]')[0];
     assert.match(insert,/CAST COUNT: \[ユウ\], \[ナギ\] each EXACTLY ONCE/);
     assert.match(insert,/PHYSICALLY ABSENT: \[ソラ\]/);
     assert.match(insert,/DIEGETIC REPLICA LAYER:.*\[ソラ\]/);
