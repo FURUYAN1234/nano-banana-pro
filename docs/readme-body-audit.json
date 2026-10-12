@@ -1,25 +1,25 @@
 {
-  "pricingSourceSha256": "0c77fc0964d99204da376217db2b9754b0ab620dce3d5efd65d8efee0a8ca295",
-  "manualVersion": "7.0.3",
-  "manualSourceSha256": "a1f7fe76530c3074a665d6faf51cb2f80c00b863b0f3ca4eb11d3258b4556a60",
+  "pricingSourceSha256": "6e7e2c0583cee26efea356c7f971afe095f60bfb2f0f030776513b738eb6cd3b",
+  "manualVersion": "7.0.4",
+  "manualSourceSha256": "e4f0fdbbe3854bfd207c1ba9a1d0dc869e528e29d93aebd7a8387256e6ec432e",
   "manualFiles": [
     {
       "name": "gemini-api-beginner-guide-2026-10-01.pdf",
-      "sha256": "5cf554a18fdc016272a0b48b546723b64e17ad38f5def2a858ef229b8b1fb3ea"
+      "sha256": "5275486f6588c848354ebfdfc1fbc57dfe259f5ac28a1e1e1b7358d19de59dd1"
     },
     {
       "name": "openai-api-beginner-guide-2026-09-30.pdf",
-      "sha256": "4910136718166c2a140b4f5e96c32db66c0689821be8b4ce6e100d8d8bcffb82"
+      "sha256": "4a510b2416f70934ac82e6e5cf352e2b755601b14aa805e218781614299853c9"
     },
     {
       "name": "super-furu-ai-4koma-full-manual-2026-10-01.pdf",
-      "sha256": "43c10ade25ce41be6ad2f5e7ff032b1696a8ff65ce4b299962a387a37a82e186"
+      "sha256": "171adce46ad09b43377fe8e1808bad221443dabc509793b6ef2dc4a188d6fe56"
     }
   ],
-  "readmeSha256": "8e88982f123b28a34caaa3ce044334d09c60819cf03cc8ac2daaf7ebeb7124b4",
-  "sourceTree": "02941d0bcdddd4830cd07642c9f10f11923809be",
-  "publicTree": "8be2145155b585ad33b5040194671f23ad30b6b1",
-  "packageSha256": "532ba203a708a3f01075e1ceec1a5674c6297029eb29c5ce521deb00905d1986",
+  "readmeSha256": "78353e7899de79c7eb288a6e79da24953496515be119ca6d9390f808641975bf",
+  "sourceTree": "a6ae7ed8c213bd6b0e5a744956cfd916ea86135f",
+  "publicTree": "bf8f51ae9e7cd77766e9e2c59d1f2188401343c4",
+  "packageSha256": "b90d5c2b4032b6330bdf841e39899463d6a08afaedc36cf5082bee08e2f5dad4",
   "releaseAssetSha256": "9e41886be6afa0ebfad6d244ecf53f37260a92f73b30309319029cc87e1ddb4e",
   "reviewedSections": [
     "Application screen and output / 操作画面と生成例",
@@ -37,16 +37,16 @@
     "AI Manga Creative Suite / AIまんが制作エコシステム",
     "📋 ChangeLog / 更新履歴"
   ],
-  "findings": "Whole-body review covers all 14 README sections for v7.0.3, with focused follow-up against current STEP3/STEP4, reference, review, selection and save contracts. The README documents initial experimental OFF, separate 5-8-panel preparation from the four-panel script, conditional restoration of the normal prompt, shared STEP4 and saving, separate ten-entry session histories, retained unselected experimental candidates, and no automatic experimental image repair. Uncertainty and harmless variation are not described as a pass or a reason for another image generation; supported material defects are not erased by unrelated uncertainty. Gemini reinspection is available below the displayed image in normal and experimental modes; its analysis charges remain explicit. Existing license and ComfyUI distribution terms are retained. Real-API generation and candidate-comparison evidence are recorded separately. This documentation review is not release approval, public readback or a guarantee of image quality. Local follow-up for the prompt-compression candidate reviewed the changed README paragraphs against the current experimental dialogue/acting contract, shared style recipes and reference headroom, configured Gemini text fallback order, and lossless over-limit Web/TXT/JSON export with strict API rejection. Original lines and ending remain protected while approved additions are reviewed. The review preserves the original PDF, pricing and release-input records; it does not renew their evidence or claim live image quality, deployment approval or public readback.",
-  "manualFindings": "Reviewed v7.0.3/2026-10-12 Gemini 13, OpenAI 22 and system 37 pages: all 72 pages visually covered by 14 contact sheets and enlarged changed-page checks. A4 size, text bounds, version/date/page footers and HTTPS link annotations passed; link destination reachability was not tested. The final source correction on system page21 describes Gemini reinspection in both normal and experimental modes, with no automatic experimental image repair. Gemini13 and system37 were regenerated; only system21 and its contact sheet changed, while the other49 page renders matched prior visual evidence. System21 was visually rechecked at120dpi together with contact sheet4 pages19-24; no clipping, overlap or missing Japanese glyphs observed. OpenAI22 PDF bytes were retained unchanged. Current copies in public/downloads match all three reviewed PDF SHA256 hashes. Historical screenshots remain labeled examples. This is document/content verification, not a universal image-quality claim.",
+  "findings": "Reviewed the existing whole-body README audit and all14 current sections against the unchanged routes plus the current source/PDF/distribution diff for v7.0.4. Updated current-version labels and Release links; compression retains source lines/cameras/styles and scopes content to physical frames. Expanded acting and dialogue stay source-grounded, silent panels are optional, Web count/full/split/TXT/JSON exports survive over-limit input while API overflow is rejected. Normal4 remains isolated and experimental starts OFF. Gemini3.8/3.7/3.6 badge classifications and configured3.8->3.6->3.5Lite->3.1Lite routes are documented without changing the image model/Lite. Reinspection wording is corrected for both modes. Existing privacy/license/ComfyUI and other operation descriptions are retained; the unchanged packaged ZIP remains credential-audited by preflight. Real API reading-order evidence is recorded separately and anatomy uncertainty is not described as a pass.",
+  "manualFindings": "v7.0.4 Gemini13/OpenAI22/system37 pages regenerated and reviewed: all72 pages inspected on14 contact sheets, with enlarged system page18. Updated version footers, experimental dialogue/acting guidance, compact physical-frame assembly and STEP3 status, Web count/split/TXT/JSON overflow guidance. Japanese text and footer labels are readable and inside A4 bounds; no overlap, clipping or missing glyphs observed. Historical UI captures remain labeled examples. All three reviewed PDFs are copied to public/downloads with exact SHA256 parity. Source renderer checks A4/footer/text bounds/privacy and HTTPS link annotations. Link reachability is verified separately after publication.",
   "pricingReview": {
-    "version": "7.0.3",
-    "sourceSha256": "0c77fc0964d99204da376217db2b9754b0ab620dce3d5efd65d8efee0a8ca295",
-    "checkedAt": "2026-10-12T07:25:51Z",
+    "version": "7.0.4",
+    "sourceSha256": "6e7e2c0583cee26efea356c7f971afe095f60bfb2f0f030776513b738eb6cd3b",
+    "checkedAt": "2026-10-12T12:15:37Z",
     "sources": [
       "https://developers.openai.com/api/docs/pricing",
       "https://ai.google.dev/gemini-api/docs/pricing"
     ],
-    "findings": "Official standard prices were checked on 2026-10-12, with no amount changes. Standard short-context GPT-6.1 Sol input/output 2/10, Astra 10/50 and Luna 0.10/0.50 USD per million tokens. GPT Image 2.5 Sunburst/Flare and GPT Image 2 use image input 8, cached input 2 and output 30; text input 5 and cached input 1.25. Gemini 3.8 Flash input/output 0.75/3.75 applies through 2026-12-31. Nano Banana 2.1 input 1.50, text/thinking output 7.50 and image output 30; image estimates are 1K 0.0336, 2K 0.0504 and 4K 0.113 USD. Batch discounts are separate. The documentation price snapshot is 2026-10-12. This review is bound to the current candidate version and source hashes; checkedAt records the actual fresh reading of both official pricing pages."
+    "findings": "Freshly read official standard and batch tables on2026-10-12. Standard short-context GPT6.1Sol2/10, Astra10/50, Luna0.10/0.50 USD per million tokens; Sunburst/Flare image8/30 (cached2), text5(cached1.25). GPTImage2 is present in the batch table4/15 and text2.50; the retained standard snapshot8/30 and5 is consistent with the stated half-price batch relation. Gemini3.8Flash standard0.75/3.75 through2026-12-31; NanoBanana2.1 input1.50, text/thinking7.50, image30 and1K0.0336,2K0.0504,4K0.113. Display/README/manual snapshots remain2026-10-12, standard rates distinguished from batch discounts; no new price amounts introduced."
   }
 }
