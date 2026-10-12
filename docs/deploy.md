@@ -15,7 +15,7 @@
 - 毎回、READMEのChangeLogだけでなく本文の全見出しを現行UI・ソース・配布JSON/ZIP・リンクと照合し、過剰な説明、欠落、誤記を直す。結果を `docs/readme-body-audit.json` の `findings` と `reviewedSections` に記録する。`pre_deploy_check.js` はREADME、`src`、`public`、版情報、配布ZIPとの一致を毎回検証し、古い監査記録では停止する。`findings` は自動生成せず、実際の本文確認の結果を書く。
 - Git tagまたはGitHub Releaseの同一versionが既に別candidateを指す場合は、tag強制更新や過去Release改変を行わない。パッチversionを上げた新しいcandidateでfail forwardし、新しいレシートを開始する。
 - API key、token、認証情報をGitHub Pages、GitHub Release、レシート、ログへ含めない。
-- GitHub source ZIPを検証して `C:\nano-banana-pro-main` へ配置し、既存コピーは削除せず時刻付きで退避する。
+- GitHub source ZIPを検証して固定の `C:\nano-banana-pro-main` へ配置する。共通手順が既存コピーを固定の `.rollback` へ一時退避し、完全tree照合に成功したら退避を削除する。置換に失敗した場合は復元する。版番号・日時別の配布フォルダは作らない。
 - フルバックアップは別の明示操作であり、`-RunFullBackup` なしに開始しない。
 
 ## Commands

@@ -48,7 +48,7 @@ function setup(overrides = {}) {
   const calls = [];
   const normalizations = [];
   const saves = [];
-  const context = {
+  const context = { experimentalEnabled:false,
     beginApiWork,
     generatedImage: source, generationHistory: history, isGeneratingImage: false,
     isSearching: false, isAssembling: false, isEnhancing: false, isFullAutoMode: false,

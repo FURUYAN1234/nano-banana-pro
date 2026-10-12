@@ -16,7 +16,7 @@
       "sha256": "2605132ccfa99d4dcc9c7b695a25aada34c176be1a0853708740dfe44aaa047c"
     }
   ],
-  "readmeSha256": "d8faf75ef7bf2583077ea9c386244a17d07c3afe22a22102b0012715ff3cd5e9",
+  "readmeSha256": "44913469b825c3f3bdedd69fe9420b42fb5e90b1004f03d04ea864dd09281d37",
   "sourceTree": "b7d297ed944ef2eea03a27a895826b05bf0c7181",
   "publicTree": "634cf813dfbb044d4869235be30eff19a8d07121",
   "packageSha256": "098b3fe3a08ae291eb72075beb426fc714123e3d6d6d14a8a0e08a818d44eca0",
@@ -37,8 +37,8 @@
     "AI Manga Creative Suite / AIまんが制作エコシステム",
     "📋 ChangeLog / 更新履歴"
   ],
-  "findings": "Reviewed all 14 README sections, the current article body and the candidate diff against existing source/provider/parser/save contracts and unchanged workflow ZIP. Updated current version, release asset links, the noninteractive bold blinking reminder above the white free test, manuals and standard price dates. Generation, key memory, cancellation, licenses and ComfyUI routes retain the prior reviewed implementation. The old Stop report remains unreproduced and is not described as fixed. Article introduction/footer/reminder require synchronization; public readback remains pending browser authorization. Generated SVG diagrams differ only in the version label v7.0.2. Native ESM replaces unnecessary Vite setup for the pure-JS Gemini contract test; all three assertions and runtime API source are retained.",
-  "manualFindings": "Gemini13, system36 and OpenAI22 pages regenerated for v7.0.2/2026-10-11. Reviewed all71 pages in13 contact sheets, with full-resolution system36 reminder and system19 refreshed standard-price text. No clipping or overlap observed. Automated A4, text-bound, footer, link and privacy scans passed. Exact PDFs copied to public/downloads and SHA256 parity checked. Historical screenshots remain labeled examples.",
+  "findings": "Whole-body review covers all 14 README sections for v7.0.3, with focused follow-up against current STEP3/STEP4, reference, review, selection and save contracts. The README documents initial experimental OFF, separate 5-8-panel preparation from the four-panel script, conditional restoration of the normal prompt, shared STEP4 and saving, separate ten-entry session histories, retained unselected experimental candidates, and no automatic experimental image repair. Uncertainty and harmless variation are not described as a pass or a reason for another image generation; supported material defects are not erased by unrelated uncertainty. Gemini reinspection is available below the displayed image in normal and experimental modes; its analysis charges remain explicit. Existing license and ComfyUI distribution terms are retained. Real-API generation and candidate-comparison evidence are recorded separately. This documentation review is not release approval, public readback or a guarantee of image quality.",
+  "manualFindings": "Reviewed v7.0.3/2026-10-12 Gemini 13, OpenAI 22 and system 37 pages: all 72 pages visually covered by 14 contact sheets and enlarged changed-page checks. A4 size, text bounds, version/date/page footers and HTTPS link annotations passed; link destination reachability was not tested. The final source correction on system page21 describes Gemini reinspection in both normal and experimental modes, with no automatic experimental image repair. Gemini13 and system37 were regenerated; only system21 and its contact sheet changed, while the other49 page renders matched prior visual evidence. System21 was visually rechecked at120dpi together with contact sheet4 pages19-24; no clipping, overlap or missing Japanese glyphs observed. OpenAI22 PDF bytes were retained unchanged. Current copies in public/downloads match all three reviewed PDF SHA256 hashes. Historical screenshots remain labeled examples. This is document/content verification, not a universal image-quality claim.",
   "pricingReview": {
     "version": "7.0.2",
     "sourceSha256": "decb854a8d8fcc35e12c83052220874177235f4a6f3e0f772f0f8ea503001843",
@@ -47,6 +47,6 @@
       "https://developers.openai.com/api/docs/pricing",
       "https://ai.google.dev/gemini-api/docs/pricing"
     ],
-    "findings": "Official pages re-read on2026-10-11. Standard short-context GPT-6.1 Sol2/10,Astra10/50,Luna0.10/0.50 USD/M. GPT Image2.5 Sunburst/Flare image8/cached2/output30,text5/cached1.25. Gemini3.8 Flash0.75/3.75 until2026-12-31; Nano Banana2.1 input1.50,text-thinking7.50,image30,1K0.0336/2K0.0504/4K0.113. Batch discounts are separate. Amounts unchanged, snapshot dates refreshed; previously verified 16/14 image limits are unchanged in this release."
+    "findings": "Official standard prices were checked on 2026-10-12, with no amount changes. Standard short-context GPT-6.1 Sol input/output 2/10, Astra 10/50 and Luna 0.10/0.50 USD per million tokens. GPT Image 2.5 Sunburst/Flare and GPT Image 2 use image input 8, cached input 2 and output 30; text input 5 and cached input 1.25. Gemini 3.8 Flash input/output 0.75/3.75 applies through 2026-12-31. Nano Banana 2.1 input 1.50, text/thinking output 7.50 and image output 30; image estimates are 1K 0.0336, 2K 0.0504 and 4K 0.113 USD. Batch discounts are separate. The documentation price snapshot is 2026-10-12. The precise current official-read timestamp and final version/source binding still require synchronization; the existing checkedAt value is not presented as current deployment evidence."
   }
 }

@@ -1,0 +1,944 @@
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import { createHash } from 'node:crypto';
+import { prepareGeneratedImageSave } from '../src/lib/generated-image-save.js';
+import { extractGeneratedImageMetadata } from '../src/lib/generated-image-metadata.js';
+import { createServer } from 'vite';
+import React from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+
+const server = await createServer({ appType: 'custom', logLevel: 'silent', server: { middlewareMode: true } });
+try {
+  const m = await server.ssrLoadModule('/src/lib/experimental-manga.js');
+  const {resolvePageWorkflow,applyPageCandidateSelection}=await server.ssrLoadModule('/src/lib/page-workflow.js');
+  const {withImageReviewDeadline,beginApiWork,cancelApiWork}=await server.ssrLoadModule('/src/lib/api-work-cancellation.js');
+  const shared = await server.ssrLoadModule('/src/lib/shared-image-quality.js');
+  const {runPageImageQuality}=await server.ssrLoadModule('/src/lib/image-quality-failsafe.js');
+  const {default:Step3}=await server.ssrLoadModule('/src/components/Step3Panel.jsx');
+  const {default:Panel}=await server.ssrLoadModule('/src/components/ExperimentalMangaPanel.jsx');
+  test('experimental image uses the normal metadata PNG saver with its generation-time snapshot', async()=>{
+    const png='iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Wl6tZkAAAAASUVORK5CYII=';
+    const item={id:123,image:{base64Img:png,mimeType:'image/png',usedModel:'gpt-test'},
+      metadataContext:{provider:'openai',scenario:'元の台本',finalPrompt:'approved six panels',inputImages:[],settings:{pageKind:'experimental-manga',panelCount:6}}};
+    const saved=await prepareGeneratedImageSave(m.experimentalImageSaveItem(item),'test');
+    const metadata=await extractGeneratedImageMetadata(saved.dataUrl);
+    assert.ok(JSON.stringify(metadata).includes('approved six panels'));
+    assert.ok(JSON.stringify(metadata).includes('元の台本'));
+    assert.equal(metadata.settings.panelCount,6);
+    assert.throws(()=>m.experimentalImageSaveItem({}),/画像/);
+    const legacy=m.experimentalImageSaveItem({id:124,image:item.image});
+    assert.equal(legacy.metadataContext,undefined,'old results must not borrow current inputs');
+  });
+  const scenario = [1, 2, 3, 4].map(n => `[${n}コマ目]\n[Camera: ${n % 2 ? '強い俯瞰、広角' : '低い位置からアオリ、全身'}]\n[EMOTION: NORMAL]\n状況: 行動${n}\nセリフなし`).join('\n');
+  const input = { enabled: true, scenario, castList: '人物A', colorMode: 'monochrome', images: [] };
+  const source = m.readExperimentalSource(input);
+  test('experimental reading flow preserves acting and forbids eye-level or viewer eye contact',()=>{
+    for(const prompt of [m.buildExperimentalPlanPrompt(source),m.buildExperimentalImagePrompt(six,source,input),m.buildExperimentalReviewPrompt(six,source,input)]) {
+      assert.match(prompt,/READING FLOW WITH ACTING/);
+      assert.match(prompt,/No eye-level shots/);
+      assert.match(prompt,/never look at the viewer or camera lens/);
+      assert.match(prompt,/preserve camera strength, drawing quality, style, expression and dramatic energy/);
+    }
+    const bad=structuredClone(six);bad.panels.find(p=>p.kind==='insert').camera='アイレベルの接写';
+    assert.throws(()=>m.validateExperimentalPlan(bad,source),/アイレベル/);
+    bad.panels.find(p=>p.kind==='insert').camera='アイレベルではなく、手元を高所から俯瞰';
+    assert.equal(m.validateExperimentalPlan(bad,source).count,6);
+  });
+  test('page direction survives source parsing and a changed request invalidates the prepared page',async()=>{
+    const userDirection='台本は4コマ形式、完成ページは5〜8コマへ展開。無言の間を残す。';
+    const src=m.readExperimentalSource({...input,userDirection});
+    assert.equal(src.userDirection,userDirection);
+    assert.ok(m.buildExperimentalPlanPrompt(src).includes(userDirection));
+    assert.match(m.buildExperimentalPlanPrompt(src),/SOURCE SCRIPT format request describes the input beats/);
+    const prepared=await m.prepareExperimentalManga({...input,userDirection},async()=>JSON.stringify(six));
+    assert.throws(()=>resolvePageWorkflow({experimentalEnabled:true,prepared,prompt:prepared.prompt,input:{...input,userDirection:'別の演出'}}),/変更/);
+    assert.equal(resolvePageWorkflow({experimentalEnabled:true,prepared,prompt:prepared.prompt,input:{...input,userDirection}}).count,6);
+  });
+  const planFor = count => ({ count, layout:count===4?'strips':'tall_right_middle', reason: '動作と反応に間を置く', panels: Array.from({length:count}, (_,i) => {
+    const sourcePanel = Math.min(i + 1, 4);
+    return { sourcePanel, kind:i < 4 ? 'anchor' : 'insert', camera:source.panels[sourcePanel-1].camera, action:'元の出来事の反応', dialogueIds:[], breakout:null };
+  }) });
+  // Inserts must be adjacent to their own source beat, never after the ending.
+  const six = planFor(6);
+  six.panels = [six.panels[0], {...six.panels[4],sourcePanel:1, camera:source.panels[0].camera}, six.panels[1],six.panels[2], {...six.panels[5],sourcePanel:3,camera:source.panels[2].camera},six.panels[3]];
+  test('experimental rendering reuses normal cast-instance and wardrobe contracts without filling silent close-ups with the whole cast',()=>{
+    const castList='## ユウ\n### 髪\n[WEIGHTS]: (black hair:1.4)\n### 服装\n[WEIGHTS]: (school uniform:1.3)\n## ナギ\n[WEIGHTS]: (blond hair:1.4)';
+    for(const outfit of ['', 'Outfit: ユウは赤いコート、ナギは青い作業着。\n']) {
+      const scenario=outfit+[1,2,3,4].map(n=>`[${n}コマ目]\n[Camera: ユウの肩越し、後方からナギを見下ろす]\n[EMOTION: NORMAL]\n状況: 手前のユウの後頭部と肩。奥のナギが本を開く。\nセリフなし`).join('\n');
+      const src=m.readExperimentalSource({scenario,castList,colorMode:'color'});
+      const plan=structuredClone(six);
+      plan.panels.forEach(p=>{p.camera=src.panels[p.sourcePanel-1].camera;p.action='ユウの肩越しにナギが本を開く。';});
+      plan.panels[1].camera='手元の接写';plan.panels[1].action='ユウの手と本だけが見える。';
+      const prompt=m.buildExperimentalImagePrompt(plan,src,{colorMode:'color'});
+      assert.match(prompt,/CAST COUNT:.*\[ユウ\].*\[ナギ\].*EXACTLY ONCE/);
+      assert.match(prompt,/OTS CAST INSTANCE LOCK:.*\[ユウ\]/);
+      const insert=prompt.split('P2 rect=')[1].split('P3 rect=')[0];
+      assert.match(insert,/ABSENT: do NOT draw \[ナギ\]/);
+      assert.match(insert,/手元の接写/);
+      const cast=prompt.split('CAST: ')[1].split('SOURCE FACTS')[0];
+      assert.match(cast,/black hair/);
+      if(outfit)assert.doesNotMatch(cast,/school uniform/);
+      else assert.match(cast,/school uniform/);
+    }
+  });
+  test('silent inserts inherit the source physical roster while preserving people depicted in a photo',()=>{
+    const castList='## ユウ\n## ナギ\n## ソラ';
+    const scenario=[1,2,3,4].map(n=>`[${n}コマ目]\n[Camera: ユウの肩越し]\n[EMOTION: NORMAL]\n状況: ユウとナギが再生画面を見る。再生画面には三人全員の写真が見える。ソラは画角外にいる。\nセリフなし`).join('\n');
+    const src=m.readExperimentalSource({scenario,castList});
+    const plan=structuredClone(six);
+    plan.panels.forEach(p=>{p.camera=src.panels[p.sourcePanel-1].camera;p.action='ユウとナギが再生画面を見る。再生画面には三人全員の写真が見える。ソラの顔が笑っている。';});
+    const prompt=m.buildExperimentalImagePrompt(plan,src,{});
+    const insert=prompt.split('P2 rect=')[1].split('P3 rect=')[0];
+    assert.match(insert,/CAST COUNT: \[ユウ\], \[ナギ\] each EXACTLY ONCE/);
+    assert.match(insert,/PHYSICALLY ABSENT: \[ソラ\]/);
+    assert.match(insert,/DIEGETIC REPLICA LAYER:.*\[ソラ\]/);
+  });
+  test('layout history retains recurring structures across intervening four-panel checks',()=>{
+    const records=[5,6,6,4,4].map(count=>({plan:planFor(count)}));
+    const history=m.summarizeExperimentalLayouts(records);
+    assert.equal(history.length,3);
+    assert.equal(history.filter(p=>p.layout==='tall_right_middle').length,3);
+    assert.equal(history[0].geometry,m.experimentalLayoutFingerprint(records[0].plan));
+    assert.equal(m.summarizeExperimentalLayouts([...records,...records]).length,6);
+    const prompt=m.buildExperimentalPlanPrompt(source,{recentLayouts:history});
+    assert.match(prompt,/different layout IDs/);
+    assert.match(prompt,/Full-body does not require a tall spanning panel/);
+    assert.match(prompt,/preserve a story-justified repeated layout/);
+    assert.match(m.EXPERIMENTAL_LAYOUTS.mixed_rows.description,/6=\[\[2,0\.20\],\[1,0\.30\],\[2,0\.23\],\[1,0\.27\]\]/);
+    assert.match(m.EXPERIMENTAL_LAYOUTS.tall_right_middle.description,/count5=0\.77/);
+  });
+  test('named cast cannot invent or reuse bodies absent from blind physical inventory',()=>{
+    const report={inspectionVersion:3,status:'pass',observedCount:6,readingOrder:'pass',camera:'pass',style:'pass',story:'pass',anatomy:'pass',pageText:'pass',breakout:'not_requested',issues:[],pageEvidence:'原画のタイトルと左右のクレジット',evidence:six.panels.map((_,i)=>({panel:i+1,camera:'頭頂と肩の上面が見える',style:'顔の輪郭と陰影が明瞭',story:'人物の動作と道具が整合',anatomy:'両手と肩の接続が連続',physical_bodies:[{id:'body1',bounds:[0.1,0.1,0.5,0.8],features:['黒い短髪','赤いコート']}],cast_instances:[{name:'甲',observed_count:1,status:'ok',instances:[{body_id:'body1',location:'中央',matched_features:['黒い短髪','赤いコート']}]}]}))};
+    const plan={...six,expectedCast:six.panels.map((_,i)=>({panel:i+1,names:['甲']}))};
+    assert.equal(m.validateExperimentalReview(report,plan).status,'pass');
+    const compound=structuredClone(report);compound.evidence[0].physical_bodies[0].features=['黒い短髪、赤いコート'];
+    assert.equal(m.validateExperimentalReview(compound,plan).status,'pass','comma-delimited observed cues do not lose their independent meaning');
+    compound.evidence[0].physical_bodies[0].features=['人物'];
+    assert.equal(m.validateExperimentalReview(compound,plan).status,'unverified','a single vague cue remains insufficient');
+    const staged=structuredClone(report);staged.inspectionVersion=4;
+    for(const panel of staged.evidence) panel.view={elevation:'high',gaze:'in_scene',evidence:'頭頂と机の上面が見え、顔は向かいの相手に向く'};
+    assert.equal(m.validateExperimentalReview(staged,plan).status,'pass');
+    for(const view of [{elevation:'eye_level',gaze:'in_scene'},{elevation:'high',gaze:'at_viewer'}]) {
+      const forbidden=structuredClone(staged);Object.assign(forbidden.evidence[0].view,view);
+      assert.equal(m.validateExperimentalReview(forbidden,plan).camera,'fail');
+    }
+    const uncertain=structuredClone(staged);delete uncertain.evidence[0].view;
+    assert.equal(m.validateExperimentalReview(uncertain,plan).status,'unverified');
+    const hiddenEyes=structuredClone(staged);hiddenEyes.evidence[0].view.gaze='no_visible_eyes';
+    assert.equal(m.validateExperimentalReview(hiddenEyes,plan).status,'pass','hands-only or rear-view shots need no forced visible eyes');
+    const invented=structuredClone(report);invented.evidence[0].cast_instances[0].instances[0].body_id='unseen';
+    const rejected=m.validateExperimentalReview(invented,plan);
+    assert.equal(rejected.status,'unverified');
+    assert.equal(rejected.inspectionVersion,3);
+    const rechecked=m.validateExperimentalReview(rejected,plan);
+    assert.deepEqual(rechecked.validationErrors,rejected.validationErrors,'retaining diagnostics must not manufacture new validation failures');
+    assert.deepEqual(rechecked.issues,rejected.issues,'rechecking must not turn structured cast evidence into missing evidence');
+    assert.deepEqual(rejected.evidence[0].physical_bodies,report.evidence[0].physical_bodies);
+    const detailed=structuredClone(invented);
+    detailed.evidence[0].physical_bodies=Array.from({length:8},(_,i)=>({...report.evidence[0].physical_bodies[0],id:`b${i}`}));
+    const retained=m.validateExperimentalReview(detailed,plan);
+    assert.deepEqual(retained.evidence[0].physical_bodies,detailed.evidence[0].physical_bodies);
+    const reused=structuredClone(report);reused.evidence[0].cast_instances.push({name:'乙',observed_count:1,status:'ok',instances:[{body_id:'body1',location:'中央',matched_features:['黒い短髪','赤いコート']}]});
+    assert.equal(m.validateExperimentalReview(reused,plan).status,'unverified');
+    const missing=structuredClone(report);delete missing.evidence[0].physical_bodies;
+    assert.equal(m.validateExperimentalReview(missing,plan).status,'unverified');
+  });
+  const currentPairReview=()=>({inspectionVersion:4,status:'pass',observedCount:6,readingOrder:'pass',camera:'pass',style:'pass',story:'pass',anatomy:'pass',pageText:'pass',breakout:'not_requested',issues:[],pageEvidence:'原画のタイトルと左右のクレジット',evidence:six.panels.map((_,i)=>({panel:i+1,camera:'頭頂と肩の上面が見える',style:'顔の輪郭と陰影が明瞭',story:'人物の動作と道具が整合',anatomy:'両手と肩の接続が連続',view:{elevation:'high',gaze:'in_scene',evidence:'人物は机を見下ろし頭頂と肩上面が見える'},physical_bodies:[],cast_instances:[]}))});
+  test('partial body observations remain uncertain but comparable; confirmed regressions remain blocked',async()=>{
+    const original={plan:six,review:currentPairReview(),image:{base64Img:'old'},prompt:'same',groupId:'same'};
+    const partial=currentPairReview();
+    partial.evidence[0].physical_bodies=[{id:'partly-hidden',bounds:[.2,.3,.1,.1],features:['短い赤髪']}];
+    const reviewed=m.validateExperimentalReview(partial,six);
+    assert.equal(reviewed.status,'unverified');
+    assert.equal(reviewed.anatomy,'uncertain');
+    assert.equal(reviewed.validationErrors?.length||0,0,'one visible cue is incomplete identification, not broken data');
+    let options;
+    const next={...original,review:reviewed,image:{base64Img:'new'}};
+    const selected=await m.selectExperimentalCandidate(original,next,async(a,b,p,o)=>{options=o;return {preferred:'repair',reason:'奥の人物同定は未確認だが、前景の演技と構図が改善。'};});
+    assert.equal(selected.candidate,next.image);
+    assert.equal(selected.selectedReview.pass,false,'comparison must not promote uncertainty to a full pass');
+    assert.ok(selected.selectedReview.issues.some(i=>i.type==='unverified'));
+    assert.equal(options.allowIncomplete,true);
+    assert.ok(options.candidateUncertainties.repair.includes('anatomy'));
+    for(const bad of [
+      {...reviewed,anatomy:'fail',status:'warning',issues:['肩から腕が三本に分岐している。']},
+    ]) {
+      const kept=await m.selectExperimentalCandidate(original,{...next,review:bad},()=>{throw Error('must not compare known regression');});
+      assert.equal(kept.candidate,original.image);assert.equal(kept.comparison.status,'not_compared');
+    }
+  });
+  const censusComparisonCase=()=>{
+    const plan={...six,layout:'two_columns',expectedDialogue:[{id:0,text:'右の言葉'},{id:1,text:'左の返事'}],
+      expectedCast:[{panel:1,names:['甲']}],panels:six.panels.map((p,i)=>({...p,dialogueIds:i===0?[0,1]:[]}))};
+    const review=currentPairReview();
+    review.observedFrames=m.experimentalLayout(plan.count,plan.layout).map(r=>({bounds:[.01+r.x*.98,.02+r.y*.96,r.w*.96,r.h*.94]}));
+    review.evidence.forEach((e,i)=>{
+      e.bounds=review.observedFrames[i].bounds;
+      e.center=[e.bounds[0]+e.bounds[2]/2,e.bounds[1]+e.bounds[3]/2];
+      e.dialogue=i===0?['右の言葉','左の返事']:[];
+      e.text_regions=i===0?[{region_kind:'speech_balloon',text:'右の言葉',center_x:.8},{region_kind:'speech_balloon',text:'左の返事',center_x:.2}]:[];
+    });
+    review.evidence[0].physical_bodies=[{id:'body1',bounds:[.1,.1,.2,.6],features:['黒い短髪','赤いコート']}];
+    review.evidence[0].cast_instances=[{name:'甲',observed_count:1,status:'ok',instances:[{body_id:'body1',location:'右側の身体',matched_features:['黒い短髪','赤いコート']}]}];
+    const checks={original:plan.panels.map((_,i)=>({panel:i+1,status:'pass'})),repair:plan.panels.map((_,i)=>({panel:i+1,status:'pass'}))};
+    return {plan,review,checks,original:{plan,review,image:{base64Img:'old'},prompt:'same',groupId:'same'}};
+  };
+  test('census quarantine permits comparison with intact independent reading without certifying anatomy',async()=>{
+    for(const damage of [
+      e=>e.physical_bodies.push({id:'outside',bounds:[.2,.55,.4,.72],features:['短い髪','青い服']}),
+      e=>e.physical_bodies.push({id:'broken',bounds:[.1,.2],features:['短い髪']}),
+      e=>e.physical_bodies.push({...e.physical_bodies[0]}),
+      e=>e.cast_instances[0].instances[0].body_id='unsupported',
+      e=>e.cast_instances.push({...structuredClone(e.cast_instances[0]),name:'乙'}),
+      e=>{e.physical_bodies=null;e.cast_instances={};},
+    ]) {
+      const {plan,review,checks,original}=censusComparisonCase();
+      assert.equal(m.validateExperimentalReview(review,plan).status,'pass');
+      const broken=structuredClone(review);damage(broken.evidence[0]);
+      const untouched=structuredClone(broken);
+      const checked=m.validateExperimentalReview(broken,plan);
+      assert.equal(checked.status,'unverified');assert.equal(checked.anatomy,'uncertain');
+      assert.deepEqual(checked.validationErrors||[],[],'census uncertainty must not disable independent image comparison');
+      assert.deepEqual(checked.observedFrames,review.observedFrames);
+      for(const key of ['bounds','text_regions','dialogue']) assert.deepEqual(checked.evidence[0][key],review.evidence[0][key]);
+      assert.deepEqual(broken,untouched,'validation must not mutate the stored raw observation');
+      assert.deepEqual(m.validateExperimentalReview(checked,plan),checked,'quarantine must survive repeated validation');
+      assert.ok(!checked.evidence[0].physical_bodies?.some(body=>['outside','broken'].includes(body.id)));
+      let comparisons=0;
+      const next={...original,image:{base64Img:'new'},review:checked};
+      const selected=await m.selectExperimentalCandidate(original,next,async(a,b,p,options)=>{
+        comparisons++;
+        assert.deepEqual(options.readingEvidence.repair[0].dialogue,review.evidence[0].dialogue);
+        assert.deepEqual(options.readingEvidence.repair[0].balloons,review.evidence[0].text_regions.map(({text,center_x})=>({text,center_x})));
+        assert.ok(options.candidateUncertainties.repair.includes('anatomy'));
+        assert.doesNotMatch(JSON.stringify(options),/physical_bodies|cast_instances|unsupported|"outside"|"broken"/);
+        return {preferred:'repair',reason:'台詞を保ち、演技が明瞭。',readingOrderChecks:checks};
+      });
+      assert.equal(comparisons,1);assert.equal(selected.candidate,next.image);
+      assert.equal(selected.comparison.status,'completed');assert.equal(selected.selectedReview.pass,false);
+    }
+  });
+  test('census quarantine preserves grounded duplicates and independent anatomy failures',async()=>{
+    for(const duplicate of [true,false]) {
+      const {plan,review,original}=censusComparisonCase();
+      const broken=structuredClone(review),e=broken.evidence[0];
+      e.physical_bodies.push({id:'outside',bounds:[.9,.9,.8,.8],features:['短い髪','青い服']});
+      e.cast_instances.push({name:'乙',observed_count:1,status:'ok',instances:[{body_id:'outside',location:'画像外と申告された身体',matched_features:['短い髪','青い服']}]});
+      if(duplicate) {
+        e.physical_bodies.push({...structuredClone(e.physical_bodies[0]),id:'body2',bounds:[.5,.1,.2,.6]});
+        e.cast_instances[0].observed_count=2;
+        e.cast_instances[0].instances.push({...structuredClone(e.cast_instances[0].instances[0]),body_id:'body2',location:'左側の別の身体'});
+      } else {broken.anatomy='fail';broken.issues=['肩から腕が三本に分岐している。'];}
+      const checked=m.validateExperimentalReview(broken,plan);
+      assert.equal(checked.anatomy,'fail');assert.equal(checked.status,'warning');
+      assert.deepEqual(checked.validationErrors||[],[]);
+      assert.deepEqual(m.validateExperimentalReview(checked,plan),checked);
+      if(duplicate) assert.ok(checked.issues.some(issue=>issue.includes('observed 2')));
+      const selected=await m.selectExperimentalCandidate(original,{...original,image:{base64Img:'bad'},review:checked},()=>{throw Error('known failure must not be compared away');});
+      assert.equal(selected.candidate,original.image);assert.equal(selected.comparison.status,'not_compared');
+    }
+  });
+  test('census quarantine preserves grounded duplicates within a partially invalid actor record',async()=>{
+    for(const validCount of [2,1]) {
+      const {plan,review,checks,original}=censusComparisonCase();
+      const broken=structuredClone(review),e=broken.evidence[0],actor=e.cast_instances[0];
+      if(validCount===2) {
+        e.physical_bodies.push({...structuredClone(e.physical_bodies[0]),id:'body2',bounds:[.5,.1,.2,.6]});
+        actor.instances.push({...structuredClone(actor.instances[0]),body_id:'body2',location:'左側の別の身体'});
+      }
+      actor.instances.push({...structuredClone(actor.instances[0]),body_id:'not-observed',location:'対応未確認の身体'});
+      actor.observed_count=actor.instances.length;
+      const checked=m.validateExperimentalReview(broken,plan);
+      assert.equal(checked.anatomy,validCount===2?'fail':'uncertain');
+      assert.equal(checked.status,validCount===2?'warning':'unverified');
+      assert.equal(checked.evidence[0].cast_instances,null,'an incomplete actor inventory must not become a certified exact count');
+      assert.deepEqual(checked.validationErrors||[],[]);
+      assert.deepEqual(m.validateExperimentalReview(checked,plan),checked,'partial census handling must remain stable');
+      assert.deepEqual(checked.evidence[0].dialogue,review.evidence[0].dialogue);
+      if(validCount===2) {
+        assert.ok(checked.issues.some(issue=>issue.includes('少なくとも2体')));
+        const retained=await m.selectExperimentalCandidate(original,{...original,image:{base64Img:'bad'},review:checked},()=>{throw Error('a supported duplicate must not be compared away');});
+        assert.equal(retained.candidate,original.image);assert.equal(retained.comparison.status,'not_compared');
+        const selected=await m.selectExperimentalCandidate({...original,review:checked},{...original,groupId:'different'},()=>{throw Error('different groups must not be compared');});
+        assert.equal(selected.selectedReview.pass,false);
+        assert.ok(selected.selectedReview.issues.some(issue=>issue.type==='experimental_quality'&&issue.reason.includes('少なくとも2体')));
+      } else {
+        assert.ok(!checked.issues.some(issue=>issue.includes('少なくとも')));
+        const next={...original,image:{base64Img:'new'},review:checked};
+        const selected=await m.selectExperimentalCandidate(original,next,async()=>({preferred:'repair',reason:'台詞を保ち、演技が明瞭。',readingOrderChecks:checks}));
+        assert.equal(selected.candidate,next.image);assert.equal(selected.comparison.status,'completed');
+        assert.equal(selected.selectedReview.pass,false);
+        assert.ok(selected.selectedReview.issues.every(issue=>issue.type==='unverified'));
+      }
+    }
+  });
+  test('census quarantine never bypasses missing reading, invalid frames, or a confirmed reading regression',async()=>{
+    for(const damage of [e=>{e.dialogue=null;},e=>{e.dialogue.reverse();},e=>{e.bounds=[.9,.9,.8,.8];}]) {
+      const {plan,review,original}=censusComparisonCase();
+      const broken=structuredClone(review);
+      broken.evidence[0].physical_bodies=null;damage(broken.evidence[0]);
+      const checked=m.validateExperimentalReview(broken,plan);
+      const selected=await m.selectExperimentalCandidate(original,{...original,image:{base64Img:'bad'},review:checked},()=>{throw Error('independent reading gate must remain closed');});
+      assert.equal(selected.candidate,original.image);assert.equal(selected.comparison.status,'not_compared');
+    }
+  });
+  test('census quarantine revalidates only exact legacy errors with preserved physical reading evidence',async()=>{
+    const {plan,review,checks,original}=censusComparisonCase();
+    const legacy=structuredClone(review);
+    legacy.status='unverified';legacy.evidence[0].physical_bodies[0].bounds=[.2,.55,.4,.72];
+    legacy.validationErrors=['evidence[1].physical_bodies: missing or invalid independent census','evidence[1].cast_instances: unsupported or reused body_id'];
+    const checked=m.validateExperimentalReview(legacy,plan);
+    assert.deepEqual(checked.validationErrors||[],[]);
+    assert.deepEqual(m.validateExperimentalReview(checked,plan),checked);
+    const old={...original,review:legacy};let inspections=0;
+    await m.reviewExperimentalCandidatePair({base64Img:'fresh'},old,async()=>{inspections++;return {};});
+    assert.equal(inspections,1,'a quarantined census must not start another inspection of the old image');
+    const next={...original,image:{base64Img:'fresh'}};
+    const selected=await m.selectExperimentalCandidate(old,next,async()=>({preferred:'repair',reason:'台詞を保ち、演技が明瞭。',readingOrderChecks:checks}));
+    assert.equal(selected.candidate,next.image);assert.equal(selected.comparison.status,'completed');
+    for(const damage of [
+      value=>value.validationErrors.push('evidence[1].view: missing or invalid projection/gaze evidence'),
+      value=>value.validationErrors.push('evidence[1].physical_bodies: different unknown validation error'),
+      value=>{delete value.observedFrames;for(const e of value.evidence){delete e.bounds;delete e.text_regions;}},
+    ]) {
+      const incomplete=structuredClone(legacy);damage(incomplete);
+      const retained=await m.selectExperimentalCandidate(original,{...next,review:incomplete},()=>{throw Error('other errors and lost physical reading must remain blocked');});
+      assert.equal(retained.candidate,original.image);assert.equal(retained.comparison.status,'not_compared');
+    }
+  });
+  test('comparison retains physical reading evidence and rejects a contradictory or missing order judgment',async()=>{
+    const plan={...six,expectedDialogue:[{id:0,text:'右の言葉'},{id:1,text:'左の返事'}],
+      panels:six.panels.map((p,i)=>({...p,dialogueIds:i===0?[0,1]:[]}))};
+    const review=currentPairReview();
+    const rects=m.experimentalLayout(plan.count,plan.layout);
+    review.evidence.forEach((e,i)=>{e.dialogue=i===0?['右の言葉','左の返事']:[];
+      e.center=[rects[i].x+rects[i].w/2,rects[i].y+rects[i].h/2];
+      e.text_regions=i===0?[{region_kind:'speech_balloon',text:'右の言葉',center_x:.8},{region_kind:'speech_balloon',text:'左の返事',center_x:.2}]:[];});
+    assert.deepEqual(m.validateExperimentalReview(review,plan).validationErrors||[],[]);
+    const original={plan,review,image:{base64Img:'old'},prompt:'approved',groupId:'same'};
+    const next={...original,image:{base64Img:'new'}};
+    const checks={original:plan.panels.map((_,i)=>({panel:i+1,status:'pass'})),repair:plan.panels.map((_,i)=>({panel:i+1,status:'pass'}))};
+    let received;
+    const valid=await m.selectExperimentalCandidate(original,next,async(a,b,p,options)=>{
+      received=options.readingEvidence;
+      return {preferred:'repair',reason:'台詞順を保ち、表情と描線が明瞭。',readingOrderChecks:checks};
+    });
+    assert.deepEqual(received?.repair[0].dialogue,['右の言葉','左の返事']);
+    assert.deepEqual(received?.repair[0].balloons.map(b=>b.center_x),[.8,.2]);
+    assert.equal(valid.candidate,next.image);assert.equal(valid.comparison.status,'completed');
+    const kept=await m.selectExperimentalCandidate(original,next,async()=>({preferred:'original',reason:'両画像の台詞順は正しく、以前の絵の表情が明瞭。',readingOrderChecks:checks}));
+    assert.equal(kept.candidate,original.image);assert.equal(kept.comparison.status,'completed');
+    for(const wrong of [undefined,{...checks,repair:checks.repair.map((c,i)=>({...c,status:i===0?'fail':'pass'}))},
+      {...checks,repair:checks.repair.map((c,i)=>i===1?checks.repair[0]:c)}]) {
+      const result=await m.selectExperimentalCandidate(original,next,async()=>({preferred:'original',reason:'新画像の左右が逆',readingOrderChecks:wrong}));
+      assert.equal(result.candidate,original.image);
+      assert.equal(result.comparison.status,'not_compared','unsupported hard-condition claims are not a verified best-candidate comparison');
+      assert.match(result.comparison.reason,/読順|根拠/);
+    }
+  });
+  test('candidate selection retains confirmed warnings and shared STEP4 does not mislabel them as uncertainty',async()=>{
+    for(const defect of [true,false]) {
+      const review={...currentPairReview(),status:'unverified',observedCount:null,anatomy:defect?'fail':'uncertain',issues:[defect?'腕が肩から分岐して三本ある。':'人物の身体が隠れて確認できません。']};
+      const original={image:{base64Img:'old'},plan:six,review,prompt:'same',groupId:'same'};
+      const selection=await m.selectExperimentalCandidate(original,{...original,groupId:'other'},()=>{throw Error('unrelated candidates must not be compared');});
+      assert.equal(selection.selectedReview.issues[0].type,defect?'experimental_quality':'unverified');
+      const log=[];
+      const outcome=await runPageImageQuality({kind:'experimental-manga',count:6},{mode:'experimental-manga',allowRepair:false,
+        originalCandidate:original.image,originalPrompt:'same',reviewCandidate:async()=>selection.selectedReview,
+        onProgress:line=>log.push(line),generateCandidate:()=>{throw Error('automatic regeneration is disabled');}});
+      assert.equal(outcome.candidate,original.image);
+      if(defect) {assert.match(log.join('\n'),/自動修正OFF/);assert.doesNotMatch(log.join('\n'),/未確認のみで明確な欠陥がない/);}
+      else assert.match(log.join('\n'),/未確認のみ/);
+    }
+  });
+  test('candidate review pair starts necessary old and new inspections together before either completes',async()=>{
+    const old={base64Img:'old'},fresh={base64Img:'new'};
+    const original={image:old,plan:six,review:{...currentPairReview(),evidence:[]},prompt:'same',groupId:'same'};
+    const started=[],finish=[];
+    const pending=m.reviewExperimentalCandidatePair(fresh,original,async(image,signal)=>{
+      started.push(image); await new Promise(resolve=>finish.push(resolve)); signal.throwIfAborted();
+      image.experimentalReview=currentPairReview(); return {pass:true,issues:[]};
+    });
+    await new Promise(resolve=>setImmediate(resolve));
+    assert.deepEqual(started,[fresh,old],'old inspection must not receive only the time left after the new inspection');
+    finish.forEach(resolve=>resolve());
+    assert.equal((await pending).pass,true);
+    let compared=0;
+    const selected=await m.selectExperimentalCandidate(original,{...original,image:fresh,review:fresh.experimentalReview},async()=>{compared++;return {preferred:'repair',reason:'演技と構図が改善し、台詞と人物を維持している。'};});
+    assert.equal(compared,1);assert.equal(selected.candidate,fresh);assert.equal(selected.comparison.status,'completed');
+  });
+  test('candidate review pair reuses valid current evidence and never inspects another prepared group',async()=>{
+    const original={image:{base64Img:'old'},plan:six,review:currentPairReview()};
+    let requests=0;
+    for(const previous of [original,null]) {
+      await m.reviewExperimentalCandidatePair({},previous,async()=>{requests++;return {pass:true,issues:[]};});
+    }
+    assert.equal(requests,2,'only each new image requires a review');
+  });
+  test('candidate review pair bounds both inspections and does not claim a comparison on timeout',async()=>{
+    const signals=[];
+    const original={image:{},plan:six,review:{...currentPairReview(),evidence:[]},groupId:'same',prompt:'same'};
+    await assert.rejects(m.reviewExperimentalCandidatePair({},original,async(_image,signal)=>{
+      signals.push(signal);return new Promise(()=>{});
+    },undefined,{budgetMs:15}),error=>error.code==='REVIEW_TIMEOUT');
+    assert.equal(signals.length,2);assert.ok(signals.every(signal=>signal.aborted));
+    const selection=await m.selectExperimentalCandidate(original,{...original,image:{},review:currentPairReview()},async()=>{throw new Error('must not compare incomplete evidence');});
+    assert.equal(selection.comparison.status,'not_compared');
+  });
+  test('candidate review pair propagates cancellation and preserves a completed new review when old review fails',async()=>{
+    const original={image:{base64Img:'old'},plan:six,review:{...currentPairReview(),evidence:[]}};
+    const logs=[];
+    const result=await m.reviewExperimentalCandidatePair({},original,async image=>{
+      if(image===original.image)throw new Error('old review unavailable');return {pass:true,issues:[]};
+    },undefined,{onProgress:message=>logs.push(message)});
+    assert.equal(result.pass,true);assert.ok(logs.some(message=>message.includes('未完了')));
+    const controller=new AbortController(),signals=[];
+    const pending=m.reviewExperimentalCandidatePair({},original,async(_image,signal)=>{signals.push(signal);return new Promise(()=>{});},controller.signal);
+    await new Promise(resolve=>setImmediate(resolve));controller.abort();
+    await assert.rejects(pending,error=>error.name==='AbortError');
+    assert.ok(signals.every(signal=>signal.aborted));
+  });
+  test('candidate comparison refreshes an older inspection contract before comparing verdicts',async()=>{
+    const image={base64Img:'old'},nextImage={base64Img:'new'};
+    const base={status:'pass',observedCount:6,readingOrder:'pass',camera:'pass',style:'pass',story:'pass',anatomy:'pass',pageText:'pass',breakout:'not_requested',issues:[],pageEvidence:'原画のタイトルと左右のクレジット',evidence:six.panels.map((_,i)=>({panel:i+1,camera:'頭頂と肩の上面が見える',style:'顔の輪郭と陰影が明瞭',story:'人物の動作と道具が整合',anatomy:'両手と肩の接続が連続'}))};
+    const original={image,plan:six,review:base,prompt:'same',groupId:'same'};
+    const next={...original,image:nextImage,review:{...base,inspectionVersion:1,readingOrder:'fail',status:'warning',issues:['順序違反']}};
+    let refreshes=0,comparisons=0;
+    const result=await m.selectExperimentalCandidate(original,next,async()=>{comparisons++;return {preferred:'repair'};},undefined,async actual=>{assert.equal(actual,image);refreshes++;return {...base,inspectionVersion:1};});
+    assert.equal(refreshes,1);assert.equal(comparisons,0);assert.equal(result.candidate,image);
+    await m.selectExperimentalCandidate(original,next,async()=>{comparisons++;},undefined,async()=>{refreshes++;});
+    assert.equal(refreshes,1,'current inspection must not be repeated');
+    for(const refresh of [async()=>{throw new Error('offline');},async()=>null]) {
+      const rejected=await m.selectExperimentalCandidate(original,{...next,review:{...next.review,inspectionVersion:2}},async()=>{comparisons++;return {preferred:'repair'};},undefined,refresh);
+      assert.equal(rejected.candidate,image,'failed or incomplete refresh preserves the known image');
+    }
+    assert.equal(comparisons,0);
+  });
+  test('same-version malformed prior evidence is refreshed once before candidate comparison',async()=>{
+    const base={inspectionVersion:1,status:'pass',observedCount:6,readingOrder:'pass',camera:'pass',style:'pass',story:'pass',anatomy:'pass',pageText:'pass',breakout:'not_requested',issues:[],pageEvidence:'原画のタイトルと左右のクレジット',evidence:six.panels.map((_,i)=>({panel:i+1,camera:'頭頂と肩の上面が見える',style:'顔の輪郭と陰影が明瞭',story:'人物の動作と道具が整合',anatomy:'両手と肩の接続が連続'}))};
+    let refreshes=0,comparisons=0;
+    const old={base64Img:'old'},fresh={base64Img:'new'};
+    const original={image:old,plan:six,review:{...base,evidence:[]},prompt:'same',groupId:'same'};
+    const next={...original,image:fresh,review:base};
+    const selected=await m.selectExperimentalCandidate(original,next,async()=>{comparisons++;return {preferred:'repair',reason:'New candidate retains the verified conditions and improves acting.'};},undefined,async()=>{refreshes++;return base;});
+    assert.equal(refreshes,1);assert.equal(comparisons,1);assert.equal(selected.candidate,fresh);
+    const broken={...original,review:{...base,evidence:[]}};
+    const retained=await m.selectExperimentalCandidate(broken,next,async()=>{throw new Error('must not compare unknown evidence');},undefined,async()=>{refreshes++;return null;});
+    assert.equal(retained.candidate,old);assert.equal(retained.selectedReview.pass,false);
+  });
+  test('retaining an image never resurrects a stale pass when the new review is incomplete',async()=>{
+    const base={inspectionVersion:2,status:'pass',observedCount:6,readingOrder:'pass',camera:'pass',style:'pass',story:'pass',anatomy:'pass',pageText:'pass',breakout:'not_requested',issues:[],pageEvidence:'原画のタイトルと左右のクレジット',evidence:six.panels.map((_,i)=>({panel:i+1,camera:'頭頂と肩の上面が見える',style:'顔の輪郭と陰影が明瞭',story:'人物の動作と道具が整合',anatomy:'両手と肩の接続が連続'}))};
+    const old={base64Img:'old',experimentalReview:base},fresh={base64Img:'new'};
+    const original={image:old,plan:six,review:base,prompt:'same',groupId:'same'};
+    let calls=0;
+    const selection=await m.selectExperimentalCandidate(original,{...original,image:fresh,review:{...base,inspectionVersion:3,evidence:[]}},async()=>{calls++;},undefined,async()=>{calls++;});
+    const applied=applyPageCandidateSelection({candidate:fresh,finalReview:{pass:false,issues:[]},history:[],canContinue:true},selection,{pass:true,issues:[]});
+    assert.equal(applied.candidate,old);
+    assert.equal(applied.finalReview.pass,false,'old pass is invalid after its inspection contract changes');
+    assert.equal(old.experimentalReview.status,'unverified','history must retain the invalidated verdict with the image');
+    assert.ok(applied.finalReview.issues.some(issue=>issue.type==='unverified'));
+    assert.equal(calls,0,'an unusable new candidate needs neither comparison nor another paid review');
+    const same={...original,review:base,image:{base64Img:'same',experimentalReview:base}};
+    const retained=await m.selectExperimentalCandidate(same,{...same,image:fresh,review:{...base,evidence:[]}},async()=>{calls++;});
+    assert.equal(applyPageCandidateSelection({candidate:fresh,finalReview:{pass:false},history:[],canContinue:true},retained,{pass:true,issues:[]}).finalReview.pass,true,'an unchanged valid inspection remains usable');
+  });
+  test('experimental QA checks physical cast instances with the shared evidence criteria',()=>{
+    const plan={...six,expectedCast:[{panel:1,names:['ユウ'],replicaNames:[]}]};
+    const report={status:'pass',observedCount:6,readingOrder:'pass',camera:'pass',style:'pass',story:'pass',anatomy:'pass',pageText:'pass',breakout:'not_requested',issues:[],pageEvidence:'原画像にある題字と左右の文字',
+      evidence:six.panels.map((p,i)=>({panel:i+1,camera:'頭の上面と机の天板が見える',style:'人物に細い斜線の影が見える',story:'人物の手が小道具に触れている',anatomy:'腕が肩から手まで連続している'}))};
+    report.evidence[0].cast_instances=[{name:'ユウ',observed_count:1,status:'ok',instances:[{location:'右前景の後頭部と肩',matched_features:['黒い短髪','赤いコート']}]}];
+    assert.equal(m.validateExperimentalReview(report,plan).status,'pass');
+    const duplicate=structuredClone(report);
+    duplicate.evidence[0].cast_instances[0].observed_count=2;
+    duplicate.evidence[0].cast_instances[0].instances.push({location:'左奥にもう一人',matched_features:['同じ黒い短髪','同じ赤いコート']});
+    const rejected=m.validateExperimentalReview(duplicate,plan);
+    assert.equal(rejected.status,'warning');assert.equal(rejected.anatomy,'fail');
+    assert.match(rejected.issues.join(' '),/ユウ|two|2/);
+    for(const uncertain of [{observedCount:null},{status:'unverified'},{observedCount:null,status:'unverified'}]) {
+      const mixed=m.validateExperimentalReview({...structuredClone(duplicate),...uncertain},plan);
+      assert.equal(mixed.status,'warning','a supported duplicate remains a defect even when another check is unverified');
+      assert.equal(mixed.anatomy,'fail');
+    }
+    const invalid=structuredClone(duplicate);invalid.evidence[0].camera='';
+    assert.equal(m.validateExperimentalReview(invalid,plan).status,'unverified','invalid evidence must not authorize repair');
+    assert.equal(m.validateExperimentalReview({...structuredClone(report),observedCount:null},plan).status,'unverified','unknown count alone is not a defect');
+    const unknown=structuredClone(report);delete unknown.evidence[0].cast_instances;
+    assert.equal(m.validateExperimentalReview(unknown,plan).status,'unverified');
+    const brokenAnatomy=m.validateExperimentalReview({...structuredClone(unknown),anatomy:'fail',issues:['手首から先に別の腕が分岐している。']},plan);
+    assert.equal(brokenAnatomy.anatomy,'fail','unknown cast identity cannot erase a separate anatomy defect');
+    assert.equal(brokenAnatomy.status,'warning');
+    const cropped=structuredClone(report);
+    cropped.evidence[0].cast_instances[0].instances[0].location='画面端に後頭部と肩だけ見える';
+    assert.equal(m.validateExperimentalReview(cropped,plan).status,'pass','an intentional crop is still one grounded physical instance');
+  });
+  test('render prompt contains only the chosen geometry and preserves source content without old panel instructions', () => {
+    const text='Location: 工房の長い机\n'+scenario.replace('状況: 行動1','状況: 行動1\n左の棚には触れない（原作の細部）').replace('セリフなし','人物A：「順番を守ろう」');
+    const src=m.readExperimentalSource({...input,scenario:text});
+    const p=structuredClone(six);p.layout='hero_top';p.panels[0].dialogueIds=[0];
+    const prompt=m.buildExperimentalImagePrompt(p,src,input);
+    assert.doesNotMatch(prompt,/\[\dコマ目\]|tall right panel precedes|usual middle tall-right/);
+    assert.ok(prompt.includes('左の棚には触れない（原作の細部）'));
+    assert.ok(prompt.includes('Location: 工房の長い机'));
+    assert.equal(prompt.split('順番を守ろう').length-1,1);
+    assert.ok(prompt.includes(source.panels[0].camera));
+    assert.equal(m.buildExperimentalWebCopy(prompt).join(''),prompt+'\n');
+  });
+  test('layout history describes geometry, and directing compares camera fit without forcing a variety quota', () => {
+    const a=m.experimentalLayoutFingerprint({...six,layout:'hero_top'});
+    assert.equal(a,m.experimentalLayoutFingerprint({...six,layout:'hero_top',reason:'別名の説明'}));
+    assert.notEqual(a,m.experimentalLayoutFingerprint({...six,layout:'two_columns'}));
+    const prompt=m.buildExperimentalPlanPrompt(source,{recentLayouts:[{count:6,layout:'hero_top',geometry:a}]});
+    assert.match(prompt,/alternatives/);assert.match(prompt,/pageIntent/);
+    assert.match(prompt,/dialogue space/);assert.match(prompt,/equally/);
+    assert.match(prompt,/remove an optional insert/);
+  });
+  test('panel media override generic ink and cel shading without weakening anatomy or the normal shared contract', () => {
+    assert.equal(shared.buildImageQualityContract(),shared.SHARED_IMAGE_QUALITY_CONTRACT);
+    assert.equal(createHash('sha256').update(shared.SHARED_IMAGE_QUALITY_CONTRACT).digest('hex'),'a898f9df6b1f6718c90bab8928ca71bd81ce1d7bdcb34040217461f6f9307804');
+    const src=m.readExperimentalSource({...input,colorMode:'color',scenario:scenario.replaceAll('NORMAL','WATERCOLOR')});
+    const prompt=m.buildExperimentalImagePrompt(six,src,{...input,colorMode:'color'});
+    assert.doesNotMatch(prompt,/strongest G-pen|Focal G-pen|use clean, localized cel-shaded shadow planes/);
+    assert.match(prompt,/assigned medium|panel medium/);assert.match(prompt,/LIMB OWNERSHIP/);
+    assert.match(prompt,/no heavy black contours or opaque base/);
+    const mixed=m.readExperimentalSource({...input,colorMode:'color',scenario:scenario.replace('[EMOTION: NORMAL]','[EMOTION: GEKIGA]')});
+    const mixedPrompt=m.buildExperimentalImagePrompt(six,mixed,{...input,colorMode:'color'});
+    assert.match(mixedPrompt,/Realistic gekiga/);assert.match(mixedPrompt,/Brush ink\/facial hatching/);
+  });
+  test('review failures retain the delivered image without issuing another image request', async () => {
+    for (const response of [null,()=>{throw Object.assign(new Error('timeout'),{code:'REVIEW_TIMEOUT'});}]) {
+      let images=0,adopted=0;
+      const result=await m.runExperimentalManga(input,{plan:async()=>JSON.stringify(six),image:async()=>{images++;return {base64Img:'test-only',mimeType:'image/png'};},onImage:()=>adopted++,review:async()=>typeof response==='function'?response():response});
+      assert.equal(images,1);assert.equal(adopted,1);assert.equal(result.image.base64Img,'test-only');assert.equal(result.review.status,'unverified');
+    }
+  });
+  test('experimental candidates use shared best selection and never compare different prepared contracts', async () => {
+    const report={status:'pass',observedCount:6,readingOrder:'pass',camera:'pass',style:'pass',story:'pass',anatomy:'pass',pageText:'pass',pageEvidence:'上の題字と左右のクレジットが全文読める',breakout:'not_requested',issues:[],evidence:six.panels.map((p,i)=>({panel:i+1,camera:'人物の頭頂と肩の上面が見えている',style:'顔の輪郭と頬の墨の陰影が見える',story:'手と小道具の接点から動作が読める',anatomy:'両腕と体の接続が連続している'}))};
+    const first={id:1,groupId:'a',prompt:'approved',plan:six,review:report,image:{base64Img:'one'}};
+    const second={...first,id:2,image:{base64Img:'two'}};
+    let calls=0;
+    const compare=async()=>{calls++;return {preferred:'repair',reason:'The same hands and text remain; specified actor medium improves.'};};
+    assert.equal((await m.selectExperimentalCandidate(first,second,compare)).candidate,second.image);
+    const observedIssue='3コマ目の吹き出し左右順が台本と逆転しています';
+    const warned={...first,review:{...report,status:'warning',readingOrder:'fail',issues:[observedIssue]}};
+    let comparisonEvidence;
+    await m.selectExperimentalCandidate(warned,second,async(a,b,p,options)=>{comparisonEvidence=options.originalIssues;return {preferred:'original',reason:'同等'};});
+    assert.ok(comparisonEvidence.some(issue=>issue.reason===observedIssue),'comparison must receive prior observed defects');
+    const cameraRegression={...second,review:{...report,camera:'fail',status:'warning',issues:['頭頂だけの俯瞰が正面顔に変わっている']}};
+    assert.equal((await m.selectExperimentalCandidate(first,cameraRegression,compare)).candidate,first.image);
+    const invalid={...second,review:{status:'unverified',issues:['検査が届かない']}};
+    assert.equal((await m.selectExperimentalCandidate(first,invalid,compare)).candidate,first.image);
+    calls=0;
+    assert.equal((await m.selectExperimentalCandidate(first,{...second,groupId:'b'},compare)).candidate,first.image);
+    assert.equal((await m.selectExperimentalCandidate(first,{...second,prompt:'changed'},compare)).candidate,first.image);
+    assert.equal(calls,0);
+  });
+  test('review decoding and transport failures retain safe, distinct diagnostics without a paid repair', async () => {
+    for(const mode of ['unknown','transport','decode','evidence']) {
+      let images=0;
+      const result=await m.runExperimentalManga(input,{
+        plan:async()=>JSON.stringify(six),
+        image:async()=>{images++;return {base64Img:'test-only',mimeType:'image/png'};},
+        review:async()=>{
+          if(mode==='decode') return m.parseExperimentalReview('invalid JSON');
+          if(mode==='transport') throw Object.assign(new Error('HTTP 503'),{status:503,code:'HTTP_ERROR'});
+          if(mode==='unknown') throw new Error('unexpected failure Authorization: Bearer sk-test-secret-value');
+          return null;
+        }
+      });
+      assert.equal(images,1);assert.equal(result.image.base64Img,'test-only');
+      assert.equal(result.review.status,'unverified');
+      assert.equal(result.review.diagnostics.stage,mode==='decode'?'decode':mode==='evidence'?'validation':'request');
+      assert.ok(result.review.diagnostics.imageMs>=0);assert.ok(result.review.diagnostics.reviewMs>=0);
+      assert.doesNotMatch(JSON.stringify(result.review),/sk-test-secret-value/);
+      if(mode==='decode') assert.match(result.review.issues.join(' '),/REVIEW_INVALID_JSON/);
+      if(mode==='transport') assert.equal(result.review.diagnostics.kind,'server');
+    }
+    assert.deepEqual(m.parseExperimentalReview('```json\n{"status":"unverified"}\n```'),{status:'unverified'});
+    assert.throws(()=>m.parseExperimentalReview('not json'),error=>error.code==='REVIEW_INVALID_JSON');
+  });
+  test('experimental pages require five to eight panels at planning and rendering boundaries', async () => {
+    const four=planFor(4);
+    assert.throws(()=>m.validateExperimentalPlan(four,source),/コマ数/);
+    assert.throws(()=>m.experimentalLayoutOptions(4),/コマ数/);
+    assert.throws(()=>m.buildExperimentalImagePrompt(four,source,input),/コマ数/);
+    await assert.rejects(m.prepareExperimentalManga(input,async()=>JSON.stringify(four)),/コマ数/);
+    for(let count=5;count<=8;count++) {
+      const panels=structuredClone(six.panels);
+      if(count===5) panels.splice(4,1);
+      while(panels.length<count) panels.splice(panels.length-1,0,{...panels[4]});
+      assert.equal(m.validateExperimentalPlan({...six,count,layout:'mixed_rows',panels},source).count,count);
+    }
+    assert.match(m.buildExperimentalPlanPrompt(source),/count=5\.\.8/);
+    assert.doesNotMatch(m.buildExperimentalPlanPrompt(source),/4\.\.8|count4=/);
+    const oldHistory=[{plan:four},{plan:six}];
+    assert.deepEqual(m.summarizeExperimentalLayouts(oldHistory).map(p=>p.count),[6]);
+    assert.equal(oldHistory.length,2,'legacy images and their records must not be deleted');
+  });
+  test('variable count rejects missing beats and altered anchor cameras', () => {
+    assert.equal(m.validateExperimentalPlan(six,source).count,6);
+    assert.throws(()=>m.validateExperimentalPlan({...six,count:9},source));
+    assert.throws(()=>m.validateExperimentalPlan({...six,panels:six.panels.slice(1)},source));
+    const changed=structuredClone(six); changed.panels[0].camera='正面の顔アップ';
+    assert.throws(()=>m.validateExperimentalPlan(changed,source),/Camera/);
+  });
+  test('dialogue inventory is immutable, silent inserts remain allowed', () => {
+    const spoken=m.readExperimentalSource({...input,scenario:scenario.replace('セリフなし','人物A：「待って」')});
+    const p=structuredClone(six); p.panels[0].dialogueIds=[0];
+    assert.equal(m.validateExperimentalPlan(p,spoken).count,6);
+    assert.throws(()=>m.validateExperimentalPlan(six,spoken),/台詞/);
+    p.panels[1].dialogueIds=[0];
+    assert.throws(()=>m.validateExperimentalPlan(p,spoken),/台詞/);
+  });
+  test('each supported count has unambiguous RTL row order and an optional continuous breakout', () => {
+    for(let count=5;count<=8;count++) {
+      const rects=m.experimentalLayout(count);
+      assert.equal(rects.length,count);
+      assert.ok(rects.every(r=>r.x>=0&&r.y>=0&&r.x+r.w<=1.00001&&r.y+r.h<=1.00001));
+      for(let i=0;i<rects.length;i++) for(let j=i+1;j<rects.length;j++) {
+        const a=rects[i],b=rects[j];
+        assert.ok(a.x+a.w<=b.x+0.00001||b.x+b.w<=a.x+0.00001||a.y+a.h<=b.y+0.00001||b.y+b.h<=a.y+0.00001);
+      }
+    }
+    const p=structuredClone(six); p.panels[2].breakout={part:'手と前腕',into:4};
+    assert.equal(m.validateExperimentalPlan(p,source).count,6);
+    p.panels[2].breakout.into=2;
+    assert.throws(()=>m.validateExperimentalPlan(p,source),/隣接/);
+    const prompt=m.buildExperimentalImagePrompt(six,source,input);
+    assert.match(prompt,/strong|Camera/i);
+    assert.doesNotMatch(prompt,/four horizontal|2×2.*禁止/);
+  });
+  test('OFF sends no API request, ON uses one image and does not mutate inputs or run repairs', async () => {
+    const before=JSON.stringify(input); let calls=0,images=0;
+    const deps={plan:async()=>{calls++;return JSON.stringify(six);},image:async()=>{images++;return {base64Img:'test-only',mimeType:'image/png'};},review:async()=>({status:'unverified',issues:['角度を確認できない']})};
+    await assert.rejects(m.runExperimentalManga({...input,enabled:false},deps));
+    assert.equal(calls,0);
+    const result=await m.runExperimentalManga(input,deps);
+    assert.equal(images,1); assert.equal(result.review.status,'unverified');
+    assert.equal(JSON.stringify(input),before);
+  });
+  test('cancelled plan never starts image; cancelled late image is never adopted',async()=>{
+    for(const stopAt of ['plan','image']) {
+      const controller=new AbortController(); let adopted=0,images=0;
+      const deps={plan:async()=>{if(stopAt==='plan')controller.abort();return JSON.stringify(six);},image:async()=>{images++;controller.abort();return {base64Img:'test-only'};},onImage:()=>adopted++,review:async()=>({status:'pass'})};
+      await assert.rejects(m.runExperimentalManga({...input,signal:controller.signal},deps));
+      assert.equal(images,stopAt==='plan'?0:1);assert.equal(adopted,0);
+    }
+  });
+  test('prepared input rejects a changed story before image generation; web chunks retain the complete variable-panel contract',async()=>{
+    const prepared=await m.prepareExperimentalManga(input,async()=>JSON.stringify(six));let images=0;
+    await assert.rejects(m.runExperimentalManga({...input,scenario:scenario+'\n追加',prepared},{image:async()=>images++}),/変更/);
+    assert.equal(images,0);
+    const chunks=m.buildExperimentalWebCopy(prepared.prompt);
+    assert.equal(chunks.join(''),prepared.prompt+'\n');
+    assert.ok(chunks.every(chunk=>chunk.length<=9500));
+    assert.match(chunks.join(''),/EXACTLY 6 framed panels/);
+    assert.match(chunks.join(''),/GEKIGA|NORMAL/);
+  });
+  test('QA cannot turn uncertainty, a missing required field or wrong panel count into pass',()=>{
+    const review={status:'pass',observedCount:6,readingOrder:'pass',camera:'pass',style:'pass',story:'pass',anatomy:'pass',pageText:'pass',pageEvidence:'上部の題字と下部の左右の透かし全文を読める',breakout:'not_requested',issues:[],evidence:six.panels.map((p,i)=>({panel:i+1,camera:'人物の頭頂と肩の上面が見えている',style:'顔の墨線と陰影の描き分けが見える',story:'手と小道具の接点で行動が読み取れる',anatomy:'手首から腕と肩まで一続きに見える'}))};
+    assert.equal(m.validateExperimentalReview(review,six).status,'pass');
+    assert.equal(m.validateExperimentalReview({...review,camera:'uncertain'},six).status,'unverified');
+    assert.equal(m.validateExperimentalReview({...review,observedCount:4},six).status,'warning');
+    assert.equal(m.validateExperimentalReview({...review,story:undefined},six).status,'unverified');
+    const pageChecked={...review,expectedPageText:['実際の題字','実際のクレジット'],pageEvidence:'実際の題字\n実際のクレジット'};
+    assert.equal(m.validateExperimentalReview(pageChecked,six).status,'pass');
+    const misread=m.validateExperimentalReview({...pageChecked,pageEvidence:'実際の題字\n別の会社のクレジット'},six);
+    assert.equal(misread.status,'unverified');assert.equal(misread.pageText,'uncertain');
+    assert.equal(m.validateExperimentalReview({...review,status:'unverified'},six).status,'unverified');
+    assert.equal(m.validateExperimentalReview({...review,evidence:undefined,issues:['Example finding without an observation']},six).status,'unverified');
+    assert.equal(m.validateExperimentalReview({...review,issues:[{}]},six).status,'unverified');
+    const short=structuredClone(review);short.evidence[2].anatomy='手が不明';
+    const rejected=m.validateExperimentalReview(short,six);
+    assert.equal(rejected.status,'unverified');
+    assert.ok(rejected.validationErrors.includes('evidence[3].anatomy: missing or too short'));
+    assert.equal(rejected.evidence[2].anatomy,'手が不明');
+    assert.equal(rejected.camera,'pass');
+    assert.deepEqual(m.validateExperimentalReview(rejected,six).validationErrors,rejected.validationErrors);
+    const malformed=structuredClone(review);malformed.evidence[0].camera={unexpected:true};
+    assert.equal(m.validateExperimentalReview(malformed,six).status,'unverified');
+    malformed.evidence[0].story='api_key=sk-test-secret-value';
+    assert.doesNotMatch(JSON.stringify(m.validateExperimentalReview(malformed,six)),/sk-test-secret-value/);
+    const echoed=structuredClone(review);echoed.evidence[0].camera=six.panels[0].camera;
+    assert.equal(m.validateExperimentalReview(echoed,six).status,'unverified');
+    const optional=structuredClone(six);optional.panels[2].breakout={part:'手',into:4};
+    const omitted=structuredClone(review);omitted.breakout='not_requested';
+    omitted.evidence[2].breakout='手は枠内につながり、枠外には出ていない';
+    assert.equal(m.validateExperimentalReview(omitted,optional).status,'pass');
+  });
+  test('page envelope explicitly constrains outside margins without removing gutters',()=>{
+    const prompt=m.buildExperimentalImagePrompt(six,source,input);
+    assert.match(prompt,/0\.6%/);assert.match(prompt,/white gutters/);
+  });
+  test('observed dialogue is checked in physical reading slots, not reordered by the story',()=>{
+    const spokenSource=m.readExperimentalSource({...input,scenario:scenario.replace(/セリフなし/g,'人物A：「同じ言葉」')});
+    const spokenPlan=structuredClone(six);
+    for(const p of spokenPlan.panels) p.dialogueIds=p.kind==='anchor'?[p.sourcePanel-1]:[];
+    const contract=m.validateExperimentalPlan(spokenPlan,spokenSource);
+    const rects=m.experimentalLayout(contract.count,contract.layout);
+    const report={status:'pass',observedCount:6,readingOrder:'pass',camera:'pass',style:'pass',story:'pass',anatomy:'pass',pageText:'pass',pageEvidence:'上の題字と下の両クレジットを転記した内容',breakout:'not_requested',issues:[],evidence:contract.panels.map((p,i)=>({panel:i+1,camera:'人物の頭と肩の上面が見えている',style:'人物の顔に細い墨の陰影が見える',story:'手と小道具の接点から動作が読める',anatomy:'両腕と体の接続が連続している',dialogue:p.dialogueIds.length?['同じ 言葉！']:[]}))};
+    report.evidence.forEach((e,i)=>e.center=[rects[i].x+rects[i].w/2,rects[i].y+rects[i].h/2]);
+    report.evidence.forEach(e=>{e.cast_instances=(contract.expectedCast.find(c=>c.panel===e.panel)?.names||[]).map(name=>({name,observed_count:1,status:'ok',instances:[{location:'右前景の一つの身体',matched_features:['黒い短髪','赤い服']}]}));});
+    assert.equal(m.validateExperimentalReview(report,contract).status,'pass');
+    const reversed=structuredClone(report);
+    [reversed.evidence[4].dialogue,reversed.evidence[5].dialogue]=[reversed.evidence[5].dialogue,reversed.evidence[4].dialogue];
+    const result=m.validateExperimentalReview(reversed,contract);
+    assert.equal(result.readingOrder,'fail');assert.equal(result.status,'warning');
+    assert.match(result.issues.join(' '),/5|6/);
+    const missing=structuredClone(report);delete missing.evidence[4].dialogue;
+    assert.equal(m.validateExperimentalReview(missing,contract).status,'unverified');
+    const wrongType={...report,pageEvidence:{title:'実画像の題字'}};
+    const invalid=m.validateExperimentalReview(wrongType,contract);
+    assert.equal(invalid.status,'unverified');assert.match(invalid.pageEvidence,/実画像の題字/);
+    const prompt=m.buildExperimentalImagePrompt(contract,spokenSource,input);
+    assert.match(prompt,/PHYSICAL READING PATH/);assert.match(prompt,/FINAL ENDING/);
+    assert.match(prompt,/PANEL RENDERING MAP/);
+    assert.match(prompt,/Identity is not a frozen drawing style/);
+  });
+  test('QA binds observations by their measured location even if the model numbers left first',()=>{
+    const spokenSource=m.readExperimentalSource({...input,scenario:scenario.replace(/セリフなし/g,'人物A：「同じ言葉」')});
+    const plan=structuredClone(six);plan.layout='two_columns';
+    for(const p of plan.panels) p.dialogueIds=p.kind==='anchor'?[p.sourcePanel-1]:[];
+    const contract=m.validateExperimentalPlan(plan,spokenSource);
+    const rects=m.experimentalLayout(contract.count,contract.layout);
+    const report={status:'pass',observedCount:6,readingOrder:'pass',camera:'pass',style:'pass',story:'pass',anatomy:'pass',pageText:'pass',pageEvidence:'上の題字と下の両クレジットを転記した内容',breakout:'not_requested',issues:[],evidence:contract.panels.map((p,i)=>({panel:i%2===0?i+2:i,center:[rects[i].x+rects[i].w/2,rects[i].y+rects[i].h/2],camera:'人物の頭と肩の上面が見えている',style:'人物の顔に細い墨の陰影が見える',story:'手と小道具の接点から動作が読める',anatomy:'両腕と体の接続が連続している',dialogue:p.dialogueIds.length?['同じ言葉']:[]}))};
+    report.evidence.forEach((e,i)=>{e.cast_instances=(contract.expectedCast.find(c=>c.panel===i+1)?.names||[]).map(name=>({name,observed_count:1,status:'ok',instances:[{location:'右前景の一つの身体',matched_features:['黒い短髪','赤い服']}]}));});
+    assert.equal(m.validateExperimentalReview(report,contract).status,'pass');
+    const duplicate=structuredClone(report);duplicate.evidence[1].center=duplicate.evidence[0].center;
+    assert.equal(m.validateExperimentalReview(duplicate,contract).status,'unverified');
+  });
+  test('review attachments retain the full page and cut its physical slots in reading order',async()=>{
+    const plan={...six,layout:'two_columns'},regions=[];
+    const frames=m.experimentalLayout(6,'two_columns').map(r=>({bounds:[r.x===0?0.01:0.62,0.05+r.y*.90,r.x===0?0.59:0.37,r.h*.87]}));
+    const request=await m.prepareExperimentalReviewImages({mimeType:'image/png',base64Img:'test-only'},plan,undefined,{
+      inspect:async()=>({width:2240,height:3168}),crop:async(url,region)=>{regions.push(region);return {dataUrl:`crop-${regions.length}`};}
+    },frames);
+    assert.equal(request.images.length,9);assert.match(request.images[0],/^data:image\/png/);
+    assert.ok(regions[0].x>regions[1].x);assert.equal(regions[0].y,regions[1].y);
+    assert.ok(regions[4].x>regions[5].x);
+    assert.equal(regions[0].x,Math.round(2240*.62),'crop must follow observed frame, not the planned half-page');
+    assert.equal(regions[1].width,Math.round(2240*.60)-Math.round(2240*.01));
+    assert.match(request.instruction,/Image 7 = physical P6/);
+    assert.equal(regions[6].x,0);assert.equal(regions[7].x,1120);
+    assert.ok(regions[6].y>3000);assert.match(request.instruction,/footer/);
+    const controller=new AbortController();controller.abort();
+    await assert.rejects(m.prepareExperimentalReviewImages({},plan,controller.signal),{name:'AbortError'});
+  });
+  test('blind transcription overrides narrative-biased QA and never receives expected story text',async()=>{
+    const calls=[];
+    const frames=m.experimentalLayout(six.count,six.layout).map((r,i)=>({bounds:[.01+.98*r.x,.05+.90*r.y,.98*r.w,.88*r.h],dialogue:i===4?['実際は先に結末がある']:[]}));
+    const result=await m.reviewExperimentalImage({image:{mimeType:'image/png',base64Img:'test-only'},plan:six,prompt:'PRIVATE_EXPECTED_STORY'},async(prompt,images)=>{
+      calls.push({prompt,count:images.length});
+      return calls.length===1?{text:JSON.stringify({pageEvidence:'実画像の題字とフッターをここに転記',evidence:six.panels.map((p,i)=>({panel:i+1,text_regions:i===4?[
+          {region_kind:'speech_balloon',text:'左の台詞',center_x:.2},
+          {region_kind:'sound_effect',text:'ピッ'},
+          {region_kind:'printed_object',text:'3'},
+          {region_kind:'speech_balloon',text:'右の台詞',center_x:.8}
+        ]:[]}))})}
+        :{text:JSON.stringify({status:'unverified',observedCount:null,camera:'uncertain',evidence:six.panels.map((p,i)=>({panel:i+1,text_regions:[{region_kind:'speech_balloon',text:'採点側の誤った上書き',center_x:.9}],dialogue:['古い誤読'],camera:'観察',style:'観察'}))}),model:'test'};
+    },{detect:async()=>frames,inspect:async()=>({width:2240,height:3168}),crop:async()=>({dataUrl:'test-crop'})});
+    assert.equal(calls.length,2);assert.equal(calls[0].count,9,'blind reading sees all native frames and footer crops without the expected plan');
+    assert.match(calls[1].prompt,/ROOT VERDICTS ONLY/);
+    assert.match(calls[1].prompt,/PANEL OBSERVATIONS ARE PROSE/);
+    assert.doesNotMatch(calls[1].prompt,/"status":"unverified"|"observedCount":null|"readingOrder":"uncertain"/,
+      'the assessment must not supply a filled-in unverified verdict for the model to copy');
+    assert.match(calls[1].prompt,/observedCount: integer counted from the full page/);
+    assert.match(calls[1].prompt,/Assess each required check independently/);
+    assert.equal(result.review.observedCount,null,'an unresolved API count must not be filled from the plan or crops');
+    assert.equal(result.review.camera,'uncertain','unresolved observations must not be converted to pass');
+    assert.doesNotMatch(m.buildExperimentalReviewPrompt(six,source,input),/any uncertain required check means unverified/,
+      'the base prompt must not override confirmed failures with an unrelated uncertainty');
+    assert.match(calls[1].prompt,/do not put pass, fail, high or low into these four observation strings/);
+
+    assert.doesNotMatch(calls[0].prompt,/PRIVATE_EXPECTED_STORY|sourcePanel|dialogueIds/);
+    assert.match(m.buildExperimentalReviewPrompt(six,source,input),/instances:\[\{body_id,/);
+    assert.doesNotMatch(calls[0].prompt,/features:\["visible hair\/face cue"/);
+    assert.deepEqual(result.review.evidence[4].dialogue,['右の台詞','左の台詞'],'only speech balloons sorted by physical x, never sound effects or full-page OCR');
+    assert.deepEqual(result.review.evidence[0].dialogue,[],'a silent panel stays silent');
+    for(const regions of [[{region_kind:'uncertain',text:'不明'}],[{region_kind:'speech_balloon',text:'台詞',center_x:2}]]) {
+      let call=0;
+      const uncertain=await m.reviewExperimentalImage({image:{mimeType:'image/png',base64Img:'test-only'},plan:six,prompt:'story'},async()=>({text:JSON.stringify(++call===1?{evidence:six.panels.map((_,i)=>({panel:i+1,text_regions:regions}))}:{evidence:six.panels.map((_,i)=>({panel:i+1,text_regions:[]}))})}),{detect:async()=>frames,inspect:async()=>({width:2240,height:3168}),crop:async()=>({dataUrl:'test-crop'})});
+      assert.equal(uncertain.review.evidence[0].dialogue,null,'unreadable text or invalid coordinates must stay unverified');
+    }
+    assert.equal(result.attachedImages,9);
+    const controller=new AbortController();let requests=0;
+    await assert.rejects(m.reviewExperimentalImage({image:{mimeType:'image/png',base64Img:'test-only'},plan:six,prompt:'story',signal:controller.signal},async()=>{
+      requests++;controller.abort();return {text:'{}'};
+    },{detect:async()=>frames,inspect:async()=>({width:2240,height:3168}),crop:async()=>({dataUrl:'test-crop'})}),{name:'AbortError'});
+    assert.equal(requests,1);
+    let badRequests=0;
+    await assert.rejects(m.reviewExperimentalImage({image:{mimeType:'image/png',base64Img:'test-only'},plan:six,prompt:'story'},async()=>{
+      badRequests++;return {text:'{}'};
+    },{detect:async()=>frames.map(()=>frames[0]),inspect:async()=>({width:2240,height:3168}),crop:async()=>({dataUrl:'test-crop'})}),/境界|重な/);
+    assert.equal(badRequests,0,'ambiguous pixel geometry must not fabricate cuts or spend an inspection');
+  });
+  test('native crop inspection receives no expected speech even when the plan action repeats it',()=>{
+    const phrase='照合用の台詞、答えを渡さない！';
+    const src=m.readExperimentalSource({...input,scenario:scenario.replace('セリフなし',`人物A「${phrase}」`)});
+    const plan=structuredClone(six);plan.panels[0].dialogueIds=[0];plan.panels[0].action+=phrase;
+    const prompt=m.buildExperimentalReviewPrompt(plan,src);
+    assert.ok(!prompt.includes(phrase));
+    assert.match(prompt,/RIGHTMOST FIRST/);
+    assert.match(prompt,/speech-0-withheld/);
+    assert.equal(src.dialogue[0].text,phrase,'the deterministic expected contract remains intact');
+  });
+  test('experimental API and Web prompts retain source title and both configured footer credits',()=>{
+    const named=m.readExperimentalSource({...input,scenario:'タイトル：枠の外へ！\n'+scenario});
+    const prompt=m.buildExperimentalImagePrompt(six,named,{...input,showWatermarks:true,imageEngineLabel:'ChatGPT Images 2.5'});
+    assert.match(prompt,/Top title EXACTLY "枠の外へ！"/);
+    assert.match(prompt,/https:\/\/note.com\/happy_duck780/);
+    assert.match(prompt,/Generated by ChatGPT Images 2.5 with Super FURU AI 4-koma/);
+    assert.doesNotMatch(prompt,/FURU • EXPERIMENT/);
+    assert.equal(m.buildExperimentalWebCopy(prompt).join(''),prompt+'\n');
+    const off=m.buildExperimentalImagePrompt(six,named,{...input,showWatermarks:false});
+    assert.match(off,/Top title EXACTLY "枠の外へ！"/);
+    assert.doesNotMatch(off,/https:\/\/note.com\/happy_duck780/);
+    const qa=m.buildExperimentalReviewPrompt(six,named,{showWatermarks:true,imageEngineLabel:'ChatGPT Images 2.5'});
+    assert.match(qa,/https:\/\/note.com\/happy_duck780/);
+    assert.match(qa,/Generated by ChatGPT Images 2.5 with Super FURU AI 4-koma/);
+    assert.doesNotMatch(qa,/credit from the drawing prompt/);
+  });
+  test('one overall review deadline aborts the transport, returns control and rejects a late answer',async()=>{
+    let signalAtRequest,requests=0,finish;
+    const started=Date.now();
+    await assert.rejects(m.withExperimentalReviewDeadline(signal=>{
+      signalAtRequest=signal;requests++;return new Promise(resolve=>finish=resolve);
+    },new AbortController().signal,20),error=>error.code==='REVIEW_TIMEOUT');
+    assert.ok(Date.now()-started<500);assert.equal(requests,1);assert.equal(signalAtRequest.aborted,true);
+    finish({status:'pass'});
+  });
+  test('visual effects preserve reading slots and camera, and reject incompatible or unknown effects',()=>{
+    const rich=structuredClone(six);
+    rich.panels[2].visualEffects=['hero_scale','foreground_depth','diagonal_frame'];
+    rich.panels[1].visualEffects=['silhouette','silent_pause'];
+    assert.equal(m.validateExperimentalPlan(rich,source).count,6);
+    const prompt=m.buildExperimentalImagePrompt(rich,source,input);
+    assert.match(prompt,/DIAGONAL FRAME/);assert.match(prompt,/FOREGROUND DEPTH/);assert.match(prompt,/SILENT PAUSE/);
+    assert.match(prompt,/inside its allocated rectangle/);
+    assert.ok(prompt.includes(source.panels[1].camera));
+    const unknown=structuredClone(rich);unknown.panels[2].visualEffects=['made_up'];
+    assert.throws(()=>m.validateExperimentalPlan(unknown,source),/演出/);
+    const duplicate=structuredClone(rich);duplicate.panels[2].visualEffects=['hero_scale','hero_scale'];
+    assert.throws(()=>m.validateExperimentalPlan(duplicate,source),/演出/);
+    const hiddenAnchor=structuredClone(rich);hiddenAnchor.panels[2].visualEffects=['silhouette'];
+    assert.throws(()=>m.validateExperimentalPlan(hiddenAnchor,source),/無言/);
+    const spoken=m.readExperimentalSource({...input,scenario:scenario.replace('セリフなし','人物A：「待って」')});
+    const hiddenSpeech=structuredClone(rich);hiddenSpeech.panels[0].dialogueIds=[];hiddenSpeech.panels[1].dialogueIds=[0];
+    assert.throws(()=>m.validateExperimentalPlan(hiddenSpeech,spoken),/無言/);
+  });
+  test('a changed rendering contract cannot silently generate a different prompt from the prepared Web prompt',async()=>{
+    const prepared=await m.prepareExperimentalManga(input,async()=>JSON.stringify(six));let images=0;
+    await assert.rejects(m.runExperimentalManga({...input,prepared,showWatermarks:true},{image:async()=>images++}),/STEP3/);
+    assert.equal(images,0);
+  });
+  test('the same count offers genuinely different reading-safe layouts, not a fixed tall-right middle',()=>{
+    for(let count=5;count<=8;count++) {
+      const layouts=m.experimentalLayoutOptions(count);
+      assert.ok(layouts.length>=7);
+      const shapes=new Set();
+      for(const {id} of layouts) {
+        const rects=m.experimentalLayout(count,id);
+        assert.equal(rects.length,count);shapes.add(JSON.stringify(rects));
+        assert.ok(Math.abs(rects.reduce((sum,r)=>sum+r.w*r.h,0)-1)<.00001);
+        for(let i=0;i<count;i++) {
+          const a=rects[i];assert.ok(a.x>=0&&a.y>=0&&a.x+a.w<=1.00001&&a.y+a.h<=1.00001);
+          if(i) {const previous=rects[i-1];assert.ok(a.y>previous.y-.00001);if(Math.abs(a.y-previous.y)<.00001)assert.ok(a.x<previous.x);}
+          for(let j=i+1;j<count;j++) {const b=rects[j];assert.ok(a.x+a.w<=b.x+.00001||b.x+b.w<=a.x+.00001||a.y+a.h<=b.y+.00001||b.y+b.h<=a.y+.00001);}
+        }
+      }
+      assert.ok(shapes.size>=6);
+    }
+    const wide={...six,layout:'hero_top'};
+    assert.equal(m.validateExperimentalPlan(wide,source).layout,'hero_top');
+    const prompt=m.buildExperimentalImagePrompt(wide,source,input);
+    assert.match(prompt,/layout=hero_top/);assert.ok(prompt.includes('"x":0,"y":0,"w":1,"h":0.38'));
+    assert.throws(()=>m.validateExperimentalPlan({...six,layout:'unknown'},source),/配置/);
+    assert.throws(()=>m.validateExperimentalPlan({...six,layout:undefined},source),/配置/);
+    const brokenBreakout=structuredClone(six);brokenBreakout.layout='two_columns';brokenBreakout.panels[2].breakout={part:'手',into:6};
+    assert.throws(()=>m.validateExperimentalPlan(brokenBreakout,source),/隣接/);
+  });
+  test('shared STEP3 visibly names the selected route; switch itself exposes no automatic API action',()=>{
+    for(const experimentEnabled of [false,true]) {
+      const html=renderToStaticMarkup(React.createElement(Step3,{currentStep:3,experimentEnabled}));
+      assert.match(html,experimentEnabled?/実験的コマ割りのプロンプトを作成/:/4コマ用の指示文/);
+    }
+    const props={currentStep:3,onModeChange:()=>{}};
+    const html=renderToStaticMarkup(React.createElement(Panel,{...props,enabled:false}));
+    assert.match(html,/role="switch" aria-checked="false"/);
+    assert.match(html,/ONにすると元の4コマ台本/);assert.doesNotMatch(html,/OFFへ戻す|乱れる場合/);
+    assert.doesNotMatch(html,/実験画像を1枚生成/);
+    const active=renderToStaticMarkup(React.createElement(Panel,{...props,enabled:true}));
+    assert.match(active,/OFFへ戻す/);assert.match(active,/乱れる場合/);
+    assert.doesNotMatch(active,/実験画像を1枚生成|実験を停止|Web貼付用プロンプトをコピー|実験プロンプトと画像/);
+    assert.doesNotMatch(active,/通常と同じSTEP4|合計120秒|60秒まで|API 2回/);
+    assert.doesNotMatch(active,/<details|<summary/);
+    assert.match(active,/動きの軌跡/);
+  });
+  test('experimental selector and STEP3 appear together only after the scenario is ready',()=>{
+    for (const currentStep of [1,2,3,4,5]) {
+      for (const enabled of [false,true]) {
+        for (const phase of [{}, {isAnalyzing:true}, {isSearching:true}]) {
+          const html=renderToStaticMarkup(React.createElement(Panel,
+            {currentStep,enabled,...phase,onModeChange:()=>{}},
+            React.createElement('div',{'data-testid':'step3-content'},'STEP3')));
+          const expected=currentStep>=3&&!phase.isAnalyzing&&!phase.isSearching;
+          assert.equal(html.includes('role="switch"'),expected,JSON.stringify({currentStep,enabled,...phase}));
+          assert.equal(html.includes('step3-content'),expected,'selector and action must share visibility');
+          assert.doesNotMatch(html,/position:(?:fixed|sticky)/);
+        }
+      }
+    }
+  });
+  test('experimental footer retains the scenario model attribution',()=>{
+    const options={...input,showWatermarks:true,imageEngineLabel:'ChatGPT Images',scenarioModelLabel:'Scenario model'};
+    assert.match(m.buildExperimentalImagePrompt(six,source,options),/ChatGPT Images \/ Scenario model \/ FURU/);
+    assert.match(m.buildExperimentalReviewPrompt(six,source,options),/ChatGPT Images \/ Scenario model \/ FURU/);
+  });
+  test('page boundary rejects cross-mode prompts and changed input before generation',()=>{
+    const prompt=m.buildExperimentalImagePrompt(six,source,input);
+    const prepared={source,plan:six,prompt};
+    assert.deepEqual(resolvePageWorkflow({experimentalEnabled:false,prompt:'normal four-panel prompt'}),{kind:'four-panel',count:4});
+    assert.deepEqual(resolvePageWorkflow({experimentalEnabled:true,prepared,prompt,input}),{kind:'experimental-manga',count:6});
+    assert.throws(()=>resolvePageWorkflow({experimentalEnabled:false,prompt}),/通常4コマ/);
+    assert.throws(()=>resolvePageWorkflow({experimentalEnabled:true,prepared,prompt:prompt+' changed',input}),/変更/);
+    assert.throws(()=>resolvePageWorkflow({experimentalEnabled:true,prepared,prompt,input:{...input,castList:'別の人'}}),/変更/);
+    assert.throws(()=>resolvePageWorkflow({experimentalEnabled:true,prepared,prompt,input:{...input,showWatermarks:!input.showWatermarks}}),/変更/);
+  });
+  test('the accepted image carries its own verdict after best-candidate selection',()=>{
+    const old={base64Img:'old'},next={base64Img:'new'};
+    for(const oldPass of [false,true]) for(const nextPass of [false,true]) for(const retained of [false,true]) {
+      const outcome={candidate:next,finalReview:{pass:nextPass,issues:[]},history:[],canContinue:true};
+      const result=applyPageCandidateSelection(outcome,{candidate:retained?old:next,comparison:{preferred:retained?'original':'repair'}},{pass:oldPass,issues:[]});
+      assert.equal(result.finalReview.pass,retained?oldPass:nextPass);
+      assert.equal(result.validationWarning,!(retained?oldPass:nextPass));
+      assert.equal(result.candidate,retained?old:next);
+    }
+  });
+  test('experimental explanation follows the existing switch without hiding STEP3',()=>{
+    for(const enabled of [false,true]) {
+      const html=renderToStaticMarkup(React.createElement(Panel,{enabled,currentStep:3,onModeChange:()=>{},normalBusy:false},React.createElement('button',null,'STEP3 sentinel')));
+      assert.match(html,/aria-controls="experimental-manga-description"/);
+      assert.match(html,/<div id="experimental-manga-description" style="color:#cbd5e1;font-size:11.5px">/);
+      const short='ONにすると元の4コマ台本をもとに、AIが内容に合う5〜8コマと配置を選びます。';
+      if(enabled) {
+        assert.ok(!html.includes(short));
+        for(const sentence of ['左右2列、横長と分割の組み合わせ','元のカメラ・画風・台詞を保ち','OFFへ戻す：','保存していた4コマ用プロンプトへ戻ります。','OFFに戻して従来の4コマをご利用ください。']) assert.ok(html.includes(sentence));
+      } else {
+        assert.ok(html.includes(short));
+        assert.ok(!html.includes('左右2列'));
+        assert.ok(!html.includes('OFFへ戻す：'));
+      }
+      assert.match(html,/<\/section><button>STEP3 sentinel<\/button>/);
+      assert.equal((html.match(/<button/g)||[]).length,2,'no separate disclosure button');
+    }
+  });
+  test('whole-review deadline aborts pending work, accepts a normal review and rejects late completion',async()=>{
+    beginApiWork();
+    let received,late;
+    const pending=withImageReviewDeadline(signal=>{received=signal;return new Promise(resolve=>{late=resolve;});},undefined,15);
+    await assert.rejects(pending,/待機上限/);
+    assert.equal(received.aborted,true);late({pass:true});
+    assert.deepEqual(await withImageReviewDeadline(async()=>({pass:true}),undefined,100),{pass:true});
+    const cancelled=withImageReviewDeadline(()=>new Promise(()=>{}),undefined,100);
+    cancelApiWork();await assert.rejects(cancelled,/停止/);beginApiWork();
+  });
+} finally { await server.close(); }

@@ -24,10 +24,13 @@ import ControlBar from './components/ControlBar';
 import SystemHeader from './components/SystemHeader';
 import GenerationPreview from './components/GenerationPreview';
 import GenerationHistory from './components/GenerationHistory';
+import ExperimentalMangaPanel from './components/ExperimentalMangaPanel';
 
 function App() {
+  const [experimentEnabled, setExperimentEnabled] = useState(false);
   // --- All 113 variables from useMangaWorkflow (auto-audited, zero omissions) ---
   const {
+    changePageMode,
     analyzeThought,
     apiKey,
     assemblePrompt,
@@ -195,7 +198,7 @@ function App() {
     targetDate,
     toggleCategory,
     usedModel,
-  } = useMangaWorkflow();
+  } = useMangaWorkflow({experimentalEnabled:experimentEnabled});
 
   const [controlBarHeight, setControlBarHeight] = useState(70);
   const [autoSaveCheckStatus, setAutoSaveCheckStatus] = useState('pending');
@@ -327,7 +330,7 @@ function App() {
         className="relative z-10 max-w-5xl mx-auto px-4 pb-4 space-y-8 md:px-10 md:pb-10"
       >
         {/* === ヘッダー領域 === */}
-        <SystemHeader
+        <div ><SystemHeader
           scenarioModelId={scenarioModelId}
           SYSTEM_VERSION={SYSTEM_VERSION}
           apiKey={apiKeyForUnlockedUi}
@@ -338,13 +341,13 @@ function App() {
           hardReset={hardReset}
           usedModel={usedModel}
           getModelBadgeInfo={getModelBadgeInfo}
-        />
+        /></div>
 
 
 
         <AutoSaveSettingsButton autoSaveVerified={autoSaveVerified} onVerified={() => setAutoSaveCheckStatus('passed')} />
         <main className="space-y-8" style={{ filter: isMainLocked ? 'blur(10px)' : 'none', pointerEvents: isMainLocked ? 'none' : 'auto', transition: 'filter 0.5s ease' }}>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div  className="grid grid-cols-1 md:grid-cols-2 gap-8">
 
             {/* 01: キャラクター入力 (Dynamic Style) */}
             <Step1Panel
@@ -458,9 +461,14 @@ function App() {
                 punchlineType={punchlineType}
                 getPunchlineLabel={getPunchlineLabel}
               />
-
-              <div ref={step3Ref} className="flex flex-col gap-4">
-                <ExplanationPanel value={explanation} onChange={setExplanation} notice={explanationNotice} busy={isSearching} />
+            </>
+          )}
+          {!isAnalyzing && !isSearching && currentStep >= 3 && <ExplanationPanel value={explanation} onChange={setExplanation} notice={explanationNotice} busy={isSearching} />}
+          <ExperimentalMangaPanel enabled={experimentEnabled} onModeChange={enabled=>{if(changePageMode(enabled))setExperimentEnabled(enabled);}}
+            currentStep={currentStep} isAnalyzing={isAnalyzing} isSearching={isSearching}
+            normalBusy={isApiProcessing || isFullAutoMode || isEndlessMode || isEnhancing || is360CameraWorking}
+            >
+              <div  ref={step3Ref} className="flex flex-col gap-4">
 
                 {/* 03: プロンプト生成 - Tailwind p-8等がJITで無視されるためインラインスタイルで適用 */}
                 <Step3Panel
@@ -474,17 +482,19 @@ function App() {
                   isAnalyzing={isAnalyzing}
                   isEnhancing={isEnhancing}
                   is360CameraWorking={is360CameraWorking}
+                  experimentEnabled={experimentEnabled}
                   assemblePrompt={assemblePrompt}
                   assembleThought={assembleThought}
                   isAssembling={isAssembling}
                   promptActionRef={step3ActionRef}
                 />
               </div>
-            </>
-          )}
+          </ExperimentalMangaPanel>
 
           {/* 出力結果 */}
+          <div>
           {!isAnalyzing && !isSearching && !isAssembling && Boolean(finalPrompt?.trim()) && (<Step4Panel
+              experimentalEnabled={experimentEnabled}
               referenceAssets={referenceAssets}
               imageEditDrafts={imageEditDrafts}
               setImageEditDraft={setImageEditDraft}
@@ -581,6 +591,7 @@ function App() {
               fullAutoStep={fullAutoStep}
             />)}
           
+          </div>
           </main >
 
         {!isAnalyzing && !isSearching && !isAssembling && <footer className="text-center text-slate-500 text-[9px] font-bold tracking-[0.3em] uppercase py-10 px-4">

@@ -10,10 +10,27 @@ const item = { id: 10, img: png, generatedAt: '2026-10-09T00:00:00Z', modelId: '
 
 test('prepared PNG retains generation snapshot and unique filename', async () => {
   const saved = await prepareGeneratedImageSave(item, 'test');
-  const metadata = extractGeneratedImageMetadata(saved.dataUrl);
+  const metadata = await extractGeneratedImageMetadata(saved.dataUrl);
   assert.ok(metadata);
   assert.match(saved.filename, /保存の検証/);
   assert.notEqual(saved.filename, (await prepareGeneratedImageSave(item, 'test')).filename);
+});
+
+test('both page modes embed their original prompt and panel count in the saved PNG', async () => {
+  for (const count of [4, 5, 6, 7, 8]) {
+    const pageKind = count === 4 ? 'four-panel' : 'experimental-manga';
+    const snapshot = { ...item, metadataContext: { ...item.metadataContext,
+      finalPrompt: `Generate exactly ${count} panels`, settings: { page_kind: pageKind, panel_count: count } } };
+    const saved = await prepareGeneratedImageSave(snapshot, 'test');
+    const metadata = await extractGeneratedImageMetadata(saved.dataUrl);
+    assert.equal(metadata.settings.page_kind, pageKind);
+    assert.equal(metadata.settings.panel_count, count);
+    assert.equal(metadata.prompt.scenario, snapshot.metadataContext.scenario);
+    assert.equal(metadata.prompt.final_sent_prompt, snapshot.metadataContext.finalPrompt);
+    assert.equal(metadata.ai.model_id, item.modelId);
+    assert.equal(metadata.generated_at, item.generatedAt);
+    assert.equal(metadata.privacy.api_key_included, false);
+  }
 });
 
 test('final save waits for preparation, rejects stale completion and deduplicates concurrent calls', async () => {
@@ -65,7 +82,7 @@ test('production final-selection block saves accepted snapshot before continuing
     const current = { value: true };
     const save = createFinalImageSaver({ prepare: () => new Promise(resolve => { release = resolve; }), download: (...args) => downloaded.push(args) });
     const candidate = { base64Img: png.split(',')[1], mimeType: 'image/png', modelId: 'gpt-test', metadataContext: item.metadataContext };
-    const ctx = {
+    const ctx = { experimentalPrepared:null,
       generatedMimeType: 'image/png', generatedModelId: 'gpt-test',
       qualityOutcome: { candidate, candidates: [{ candidate }], canContinue: mode !== 'stopped', validationWarning: false, attempts: 1 },
       qualityResult: { pass: true }, generationOptions: { reviewExisting: mode === 'review' },

@@ -42,6 +42,20 @@ const tryCompare = async (compare, original, repair, prompt, allowIncomplete = f
   catch { return { preferred: 'original', reason: '画像の比較判定を取得できませんでした。' }; }
 };
 
+// Shared by automatic repairs and explicit candidate retries. Comparing never
+// generates an image; ambiguity, transport failure and late answers retain best.
+export const selectImageQualityCandidate = async ({originalCandidate, repairCandidate, originalReview, repairReview,
+  prompt, compareCandidates, originalIssues = [], shouldStop = () => false}) => {
+  let comparison={preferred:'original',reason:'停止したため、これまでの候補を保持しました。'};
+  if(!shouldStop()) {
+    comparison=enforceCriticalCameraComparison(enforceBubbleComparison(
+      await tryCompare(compareCandidates,originalCandidate,repairCandidate,prompt,!repairReview?.pass,{originalIssues}),originalReview,repairReview),originalReview,repairReview);
+  }
+  const useRepair=!shouldStop()&&comparison?.preferred==='repair'&&typeof comparison.reason==='string'&&!!comparison.reason.trim();
+  return {candidate:useRepair?repairCandidate:originalCandidate,
+    comparison:{...comparison,preferred:useRepair?'repair':'original'}};
+};
+
 const SINGLE_IMAGE_PROMPT_RE = /\[\s*ANTIGRAVITY EMOTIONAL CINEMA ENGINE\b|Create a SINGLE breathtaking illustration/i;
 
 export const inferImageQualityMode = (prompt = '') => (
@@ -114,12 +128,13 @@ const formatReviewProgress = (label, review) => {
     `${issue?.panel ? `${issue.panel}コマ / ` : ''}${issue?.subject ? `${issue.subject} / ` : ''}${issue?.reason || issue?.type || '根拠未取得'}`);
   const remainder = prioritized.length > 5 ? ` / ほか${prioritized.length - 5}件` : '';
   const status = issues.every(issue => issue?.type === 'unverified') ? '未確認'
+    : issues.some(issue => issue?.type === 'experimental_quality') ? '要確認'
     : getRepairableIssues(review).length ? '要修正' : '参考指摘';
   return `${label}: ${status}。${details.join(' / ')}${remainder}`;
 };
 
 export const formatImageQualityStopReason = (reason) => ({
-  unverified: '根拠不足のみ', non_material: '軽微な指摘のみ', repair_disabled: '自動修正OFF',
+  unverified: '根拠不足のみ', non_material: '軽微な指摘のみ', repair_disabled: '自動修正OFF', review_warning: '検査指摘あり',
   analysis_failed: '修正方針を確定できない', prompt_limit: '修正指示の長さ上限',
   generation_failed: '修正版の生成失敗', retry_limit: '修正回数の上限', cancelled: '利用者が停止',
   no_improvement: '修正で改善を確認できない',
@@ -327,6 +342,22 @@ Keep correct acting, expressions, camera dynamism and visual finish; a costume c
 Verify coherent object/body occlusion and text alignment to the actual printed face; preserve source-supported surreal events.`;
 };
 
+// Dispatch by an explicit page contract, never by a mutable UI toggle or prompt inference.
+// Keep legacy four-panel/single-image inspection and repair behavior unchanged.
+export async function runPageImageQuality(contract, options) {
+  const invalid = () => { throw new Error('ページ種別と品質検査の契約が一致しません。'); };
+  if (!contract || Object.keys(contract).some(key => !['kind', 'count'].includes(key))) invalid();
+  const expected = { 'four-panel': 4, 'single-image': 1 }[contract.kind];
+  if (expected) {
+    if (contract.count !== expected || options?.mode !== contract.kind) invalid();
+  } else if (contract.kind === 'experimental-manga') {
+    if (!Number.isInteger(contract.count) || contract.count < 5 || contract.count > 8
+      || options?.mode !== contract.kind || options.allowRepair !== false
+      || options.generateRepairCandidate || options.analyzeFailure || options.reviewCriticalCamera) invalid();
+  } else invalid();
+  return runImageQualityFailsafe(options);
+}
+
 export const runImageQualityFailsafe = async ({
   originalCandidate, originalPrompt, reviewCandidate, reviewCriticalCamera, generateRepairCandidate, analyzeFailure,
   onProgress = () => {}, shouldStop = () => false, mode, allowRepair = true,
@@ -436,6 +467,12 @@ export const runImageQualityFailsafe = async ({
   candidates[0].review = originalReview;
   while (!finalReview.pass && attempts < IMAGE_QUALITY_MAX_ATTEMPTS) {
     if (shouldStop()) { stopReason = 'cancelled'; break; }
+    if (mode === 'experimental-manga' && !allowRepair
+      && finalReview.issues?.some(issue => issue?.type === 'experimental_quality')) {
+      stopReason = 'review_warning';
+      onProgress('検査で指摘された内容と画像を保持します。自動修正OFFのため画像は再生成しません。');
+      break;
+    }
     const repairable = getRepairableIssues(finalReview);
     // 実文字で確認済みの読順違反を先に局所修正し、他の判定で埋もれさせない。
     const confirmedOrder = repairable.filter(issue => issue.type === 'bubble_order'
@@ -503,8 +540,8 @@ export const runImageQualityFailsafe = async ({
     record.review = repairReview;
     entry.outcome = { pass: repairReview.pass, issues: repairReview.issues };
     if (shouldStop()) { stopReason = 'cancelled'; break; }
-    const comparison = enforceCriticalCameraComparison(enforceBubbleComparison(
-      await tryCompare(compareCandidates, candidate, repairCandidate, reviewPrompt, !repairReview.pass, { originalIssues: issues }), finalReview, repairReview), finalReview, repairReview);
+    const {comparison} = await selectImageQualityCandidate({originalCandidate:candidate,repairCandidate,
+      originalReview:finalReview,repairReview,prompt:reviewPrompt,compareCandidates,originalIssues:issues,shouldStop});
     entry.comparison = comparison;
     onProgress(`候補比較: ${comparison?.preferred === 'repair' ? '今回の修正版を保持' : 'これまでの最良候補を保持'}。${comparison?.reason || '比較根拠は未確認です。'}`);
     if (comparison?.preferred === 'repair') {

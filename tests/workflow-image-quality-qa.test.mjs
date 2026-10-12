@@ -33,7 +33,7 @@ test('a malformed primary QA report stops supplementary paid audits and keeps th
   for (const text of ['not JSON', '{"pass":true,"issues":[],"spatial_checks":{"$columns":["panel"],"$rows":[[]]}}']) {
     let requests = 0;
     const requestOptions = [];
-    const context = {
+    const context = { experimentalPrepared:null, generationScenario:"",
       ...imageQualityQa, qualityMode: 'four-panel', scenario: '', castList: '', images: [], isOpenAIEngine: true, colorMode: 'color',
       inspectImageDimensions: async () => ({ width: 100, height: 400 }), getImageContentHash: async () => 'hash',
       extractMangaPanelCrops: async () => ['one', 'two', 'three', 'four'],
@@ -60,7 +60,7 @@ test('a malformed primary QA report stops supplementary paid audits and keeps th
 test('the actual independent camera workflow sends only the contract panel without another generation', async () => {
   const callback = workflowSource.match(/const reviewCriticalCameraCandidate = ([\s\S]+?);\r?\n\r?\n      const retainedImage/)[1];
   const finalPrompt = "## Panel 3\nEXPLICIT REAR CAMERA: camera is physically behind [Observer]'s shoulder; rear head/shoulder foreground.";
-  const context = { ...imageQualityQa, qualityMode: 'four-panel',
+  const context = { experimentalPrepared:null, generationScenario:"", ...imageQualityQa, qualityMode: 'four-panel',
     extractMangaPanelCrops: async () => [1, 2, 3, 4].map(panel => `data:image/png;base64,crop${panel}`),
     callAI: async (prompt, images) => {
       assert.deepEqual(images.map(image => image.inlineData.data), ['crop3']);
@@ -80,7 +80,7 @@ test('the actual workflow retains primary findings when a supplementary hand or 
       { type: 'anatomy', panel: 2, subject: 'actor', reason: 'Three visible hands attached to one actor' },
       ...(missingHand ? [{ type: 'unverified', panel: 2, subject: 'actor', reason: 'Missing or incomplete per-actor visible-hand inventory' }] : []),
     ] };
-    const context = {
+    const context = { experimentalPrepared:null, generationScenario:"",
       qualityMode: 'four-panel', scenario: '', castList: '', images: [], isOpenAIEngine: true, colorMode: 'color',
       inspectImageDimensions: async () => ({ width: 100, height: 400 }), getImageContentHash: async () => 'hash',
       extractMangaPanelCrops: async () => ['one', 'two', 'three', 'four'],
@@ -91,7 +91,7 @@ test('the actual workflow retains primary findings when a supplementary hand or 
       },
       parseImageQualityQaResponse: () => primary, statCallback: () => {},
       extractPanelCastContracts: () => [{ panel: 2, actors: ['actor'] }],
-      buildActorHandAuditPrompt: () => 'hands', parseActorHandAuditResponse: () => [],
+      requestActorHandAudit: async ({ request }) => ({ response: await request('hands', [], null, () => {}), issues: [] }),
       buildBubbleInventoryPrompt: () => 'bubbles', applyBubbleInventory: review => review,
     };
     context.requestImageQualityQa = primaryQaFixture(context.parseImageQualityQaResponse);
@@ -117,7 +117,7 @@ test('native monochrome chroma findings survive every QA outcome without authori
   for (const outcome of ['success', 'primary_failure', 'hand_failure', 'bubble_failure', 'native_failure']) {
     let inspected = 0, requests = 0;
     const progress = [];
-    const context = {
+    const context = { experimentalPrepared:null, generationScenario:"",
       qualityMode: 'four-panel', scenario: '', castList: '', images: [], isOpenAIEngine: true, colorMode: 'monochrome',
       inspectImageDimensions: async () => ({ width: 100, height: 400 }), getImageContentHash: async () => 'native-source-hash',
       inspectNativeMonochromeChroma: async value => {
@@ -136,7 +136,7 @@ test('native monochrome chroma findings survive every QA outcome without authori
       parseImageQualityQaResponse: () => ({ pass: outcome !== 'hand_failure', observations: { hands: 'observed hands' },
         issues: outcome === 'hand_failure' ? [{ type: 'unverified', panel: 2, reason: 'Missing or incomplete per-actor visible-hand inventory' }] : [] }),
       statCallback: () => {}, extractPanelCastContracts: () => [{ panel: 2, actors: ['actor'] }],
-      buildActorHandAuditPrompt: () => 'hands', parseActorHandAuditResponse: () => [],
+      requestActorHandAudit: async ({ request }) => ({ response: await request('hands', [], null, () => {}), issues: [] }),
       buildBubbleInventoryPrompt: () => 'bubbles', applyBubbleInventory: imageQualityQa.applyBubbleInventory,
     };
     context.requestImageQualityQa = primaryQaFixture(context.parseImageQualityQaResponse);
@@ -164,7 +164,7 @@ test('native chroma inspection is never invoked for color, Gemini or single-imag
   const callback = workflowSource.match(/const reviewImageCandidate = ([\s\S]+?);\r?\n\r?\n      const reviewCriticalCameraCandidate/)[1];
   for (const [isOpenAIEngine, colorMode, qualityMode] of [[true, 'color', 'four-panel'], [false, 'monochrome', 'four-panel'],
     [false, 'color', 'four-panel'], [true, 'monochrome', 'single-image']]) {
-    const context = { isOpenAIEngine, colorMode, qualityMode, scenario: '', castList: '', images: [],
+    const context = { experimentalPrepared:null, generationScenario:"", isOpenAIEngine, colorMode, qualityMode, scenario: '', castList: '', images: [],
       inspectNativeMonochromeChroma: () => assert.fail('non-target path must not inspect pixels'),
       inspectImageDimensions: async () => ({ width: 100, height: 400 }), getImageContentHash: async () => 'hash',
       extractMangaPanelCrops: async () => [], buildImageQualityQaImageParts: () => [], buildImageQualityQaPrompt: () => 'primary',
@@ -180,20 +180,21 @@ test('native chroma inspection is never invoked for color, Gemini or single-imag
 
 test('image generation displays the received image before running one visible combined quality gate', () => {
   const renderIndex = workflowSource.indexOf('setGeneratedImage(finalImageStr)');
-  const qaIndex = workflowSource.indexOf('const qualityOutcome = await runImageQualityFailsafe');
+  const qaIndex = workflowSource.indexOf('qualityOutcome = await runPageImageQuality');
+  assert.match(workflowSource, /runPageImageQuality\(pageContract,/);
 
   assert.ok(renderIndex >= 0);
   assert.ok(qaIndex > renderIndex);
   assert.match(workflowSource, /buildImageQualityQaImageParts\(\{[\s\S]*candidate,[\s\S]*panelImages,[\s\S]*referenceImages:\s*images/);
   assert.match(workflowSource, /referenceImageCount:\s*images\.length/);
   assert.match(workflowSource, /panelCropCount:\s*panelImages\.length/);
-  assert.match(workflowSource, /requestImageQualityQa\(\{\s*prompt: qualityPrompt, images: qualityImageParts, request: callAI,/);
+  assert.match(workflowSource, /requestImageQualityQa\(\{\s*prompt: qualityPrompt, images: qualityImageParts, request: reviewRequest,/);
   assert.match(workflowSource, /\[QUALITY QA\].*キャラクターシート・人物・手・小物・吹き出し/);
   assert.match(workflowSource, /formatImageQualityIssue/);
   assert.match(workflowSource, /qualityOutcome\.validationWarning/);
-  assert.match(workflowSource, /const qualityMode = inferImageQualityMode\(editablePrompt\)/);
+  assert.match(workflowSource, /const qualityMode=pageContract.kind/);
   assert.match(workflowSource, /requestImageQualityQa\(\{[\s\S]*options: \{\s*mode: qualityMode, finalPrompt: candidatePrompt, referenceImageCount: images\.length/);
-  assert.match(workflowSource, /buildImageQualityQaPrompt\(\{[\s\S]*scenario,[\s\S]*castList,[\s\S]*finalPrompt:\s*candidatePrompt,[\s\S]*mode:\s*qualityMode/);
+  assert.match(workflowSource, /buildImageQualityQaPrompt\(\{[\s\S]*scenario:generationScenario,[\s\S]*castList,[\s\S]*finalPrompt:\s*candidatePrompt,[\s\S]*mode:\s*qualityMode/);
   assert.match(workflowSource, /referenceImageCount:\s*images\.length,[\s\S]*panelCropCount:\s*panelImages\.length/);
   assert.match(workflowSource, /originalPrompt: currentPrompt,[\s\S]*mode: qualityMode,/);
 });
@@ -203,7 +204,7 @@ test('best available fallback continues with a warning while explicit cancellati
   assert.match(workflowSource, /Best available image selected \(quality warning\)/);
   assert.doesNotMatch(workflowSource, /qualityOutcome.candidates.reduce/);
   assert.match(workflowSource, /addGenerationHistoryItem\(prev,[\s\S]*removeImages:\s*candidateImages/);
-  assert.match(workflowSource, /analyzeFailure: async[\s\S]*buildImageFailureAnalysisPrompt/);
+  assert.match(workflowSource, /analyzeFailure: experimentalPrepared \? undefined : async[\s\S]*buildImageFailureAnalysisPrompt/);
   assert.match(workflowSource, /shouldStop:.*qualityRetryAbortRef.current/);
   assert.match(workflowSource, /qualityOutcome\.history\?\.some\(entry => entry\.comparison\)/);
   assert.doesNotMatch(workflowSource, /qualityOutcome\.attempts > 1 \? '最良候補を採用'/);
@@ -213,14 +214,13 @@ test('retained-image retry is available without generating a fresh original imag
   assert.match(workflowSource, /generationOptions\.reviewExisting[\s\S]*?generatedImage/);
   assert.match(workflowSource, /: await generateImageCandidate\(currentPrompt\)/);
   assert.match(step4Source, /generatedImage\s*&&[\s\S]*?regenerateImage\(false, null, \{ reviewExisting: true, reviewOnly: !allowImageQualityRepair \}\)/);
-  assert.match(workflowSource, /const repairEnabled = allowImageQualityRepair && !generationOptions\.reviewOnly/);
+  assert.match(workflowSource, /const repairEnabled = !experimentalPrepared && allowImageQualityRepair && !generationOptions\.reviewOnly/);
   assert.match(workflowSource, /allowRepair: repairEnabled/);
 });
 
-test('missing per-actor hand evidence triggers per-panel crop-only audits without generating another image', () => {
-  assert.match(workflowSource, /missingHandPanels\.size[\s\S]*?buildActorHandAuditPrompt\(\[contract\]\)[\s\S]*?parseActorHandAuditResponse\(audit\.text, \[contract\]\)/);
-  assert.match(workflowSource, /const cropParts = buildImageQualityQaImageParts\(\{ candidate, panelImages \}\)\.slice\(1\)/);
-  assert.match(workflowSource, /\[cropParts\[contract\.panel - 1\]\]/);
+test('missing actor evidence uses panel crops and identity references without generating another image', () => {
+  assert.match(workflowSource, /missingHandPanels\.size[\s\S]*?requestActorHandAudit\(/);
+  assert.match(workflowSource, /contracts: \[contract\], panelImages, referenceImages: images, castList, request: reviewRequest/);
   assert.match(workflowSource, /\[手の独立監査 \/ \$\{contract\.panel\}コマ\]/);
 });
 

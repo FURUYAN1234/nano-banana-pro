@@ -35,6 +35,16 @@ const tableQaArrays = value => {
     ? Object.fromEntries(Object.entries(value).map(([key, item]) => [key, tableQaArrays(item)])) : value;
 };
 
+test('unreadable comparison responses cannot be reported as a completed selection',()=>{
+  for(const response of ['not JSON','{}',JSON.stringify({preferred:'unknown',reason:'不明'}),JSON.stringify({preferred:'repair',reason:''})]) {
+    const result=parseImageQualityComparison(response);
+    assert.equal(result.unverified,true);
+  }
+  for(const preferred of ['original','repair']) {
+    assert.equal(parseImageQualityComparison(JSON.stringify({preferred,reason:'人物と台詞の配置を比較した。'})).unverified,undefined);
+  }
+});
+
 test('invalid image QA is repaired once by AI with the same images; valid uncertainty does not retry', async () => {
   const good = {text: JSON.stringify({pass:true, observations, spatial_checks:spatialChecks(), issues:[]})};
   const images = [{image_url:'test-image'}];
@@ -296,6 +306,22 @@ test('rear-camera PASS also needs a coherent head and never accepts same-side du
   assert.equal(parse().pass, false);
   assert.equal(parse().issues.some(isMaterialImageQualityIssue), false);
   assert.match(buildCriticalCameraQaPrompt({ finalPrompt: EXPLICIT_REAR_PROMPT }), /headwear.*not anatomical ears/i);
+});
+
+test('experimental comparison carries reading evidence and returns its checks without changing the default prompt', () => {
+  const request=buildImageQualityComparisonPrompt({readingEvidence:{original:[],repair:[]}});
+  const contract=request.split('\n').find(line=>line.startsWith('Return JSON only:'));
+  assert.match(contract,/"readingOrderChecks":\{"original":\[.*"repair":\[/,'all required fields must be inside the single output contract');
+  const options={scenario:'台詞原文',finalPrompt:'approved prompt'};
+  const baseline=buildImageQualityComparisonPrompt(options);
+  assert.equal(buildImageQualityComparisonPrompt({...options,readingEvidence:null}),baseline);
+  assert.doesNotMatch(baseline,/INDEPENDENT PANEL READING EVIDENCE|readingOrderChecks/);
+  const readingEvidence={original:[{panel:1,status:'pass',dialogue:['右','左'],balloons:[{text:'右',center_x:.8}]}],repair:[{panel:1,status:'pass',dialogue:['右','左']}]};
+  assert.ok(buildImageQualityComparisonPrompt({...options,readingEvidence}).includes(JSON.stringify(readingEvidence)));
+  assert.ok(buildImageQualityComparisonPrompt({...options,candidateUncertainties:{original:[],repair:['anatomy']}}).includes('"repair":["anatomy"]'));
+  const checks={original:[{panel:1,status:'pass'}],repair:[{panel:1,status:'pass'}]};
+  assert.deepEqual(parseImageQualityComparison(JSON.stringify({preferred:'repair',reason:'構図を比較した。',readingOrderChecks:checks})).readingOrderChecks,checks);
+  assert.equal(Object.hasOwn(parseImageQualityComparison('{"preferred":"original","reason":"構図を比較した。"}'),'readingOrderChecks'),false);
 });
 
 test('direct comparison fixes image order and defaults uncertain judgments to original', () => {
@@ -742,6 +768,54 @@ test('focused hand audit can turn omitted general-review inventory into a materi
   assert.ok(parseActorHandAuditResponse(response([hand('left', 0.2), { ...hand('uncertain', 0.5), shoulder_connection: 'uncertain' }]), contracts)
     .some(issue => issue.type === 'unverified'));
   assert.ok(parseActorHandAuditResponse('{}', contracts).some(issue => issue.type === 'unverified'));
+});
+
+test('focused cast audit carries identity references and preserves compact duplicate evidence', async () => {
+  const contracts = [{ panel: 4, names: ['A', 'B'] }];
+  const response = { panels: [{ panel: 4, cast_instances: [
+    { name: 'A', observed_count: 2, status: 'defect', instances: [
+      { location: 'far left body', matched_features: ['round glasses', 'short blonde bob'] },
+      { location: 'right body', matched_features: ['round glasses', 'short blonde bob'] },
+    ] },
+    { name: 'B', observed_count: 1, status: 'ok', instances: [
+      { location: 'middle body', matched_features: ['long dark hair', 'blue jacket'] },
+    ] },
+  ], actor_limb_inventory: [] }] };
+  assert.ok(parseActorHandAuditResponse(JSON.stringify(tableQaArrays(response)), contracts)
+    .some(issue => issue.type === 'cast_count' && issue.subject === 'A'));
+  const calls = [];
+  await imageQualityQa.requestActorHandAudit({ contracts, panelImages: ['one', 'two', 'three', 'data:image/png;base64,YQ=='],
+    referenceImages: ['data:image/jpeg;base64,Yg=='], castList: 'A: round glasses and blonde bob',
+    request: async (...args) => { calls.push(args); return { text: JSON.stringify(response) }; },
+  });
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0][1].length, 2);
+  assert.equal(calls[0][1][0].inlineData.data, 'YQ==');
+  assert.equal(calls[0][1][1].inlineData.data, 'Yg==');
+  assert.match(calls[0][0], /A: round glasses and blonde bob/);
+  assert.match(calls[0][0], /reference.*not.*count/i);
+});
+
+test('camera summary cannot turn a harmless crop into paid repair; independent defects still count', () => {
+  const finalPrompt = '## Panel 1\nCamera: full body from above\nSHOT EXECUTION: head-to-feet inside panel;';
+  const checks = spatialChecks();
+  checks[0].camera_geometry = { ...checks[0].camera_geometry, status: 'defect', evidence: 'Feet leave panel edge.' };
+  checks[0].camera_geometry.dimensions.framing = {
+    requested: 'head-to-feet', observed: 'feet below panel edge; action visible',
+    status: 'defect', visible_extent: 'partial_body', material_impact: 'none',
+  };
+  const raw = { pass: false, observations, spatial_checks: checks,
+    issues: [{ type: 'camera_geometry', panel: 1, subject: 'framing', reason: 'Feet cropped.' }] };
+  const read = () => parseImageQualityQaResponse(JSON.stringify(raw), { finalPrompt });
+  assert.equal(read().issues.some(isMaterialImageQualityIssue), false);
+  checks[0].camera_geometry.dimensions.framing.material_impact = 'material';
+  checks[0].camera_geometry.dimensions.framing.loss_type = 'crop_only';
+  assert.equal(read().issues.some(isMaterialImageQualityIssue), false, 'a severity label cannot make feet-only crop chargeable');
+  checks[0].camera_geometry.dimensions.elevation.status = 'defect';
+  assert.equal(read().issues.some(isMaterialImageQualityIssue), true);
+  checks[0].camera_geometry.dimensions.elevation.status = 'ok';
+  raw.issues.push({ type: 'anatomy', panel: 1, subject: 'arm', reason: 'Clearly detached arm.' });
+  assert.equal(read().issues.some(issue => issue.type === 'anatomy' && isMaterialImageQualityIssue(issue)), true);
 });
 
 test('a scripted hand-to-prop action needs actor-specific visual evidence before PASS', () => {

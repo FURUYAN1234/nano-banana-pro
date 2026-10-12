@@ -10,7 +10,7 @@ function workflow() {
   const a = {image:'a',analysisCompleted:true,items:[{kind:'character',name:'A',description:'front'}],castProfiles:{A:'## A\nFront view'}};
   const b = {image:'b',analysisCompleted:true,items:[{kind:'prop',name:'box',description:'User box'}]};
   const state = {castList:'## A\nFront view',images:['a','b'],scenario:'old scenario',finalPrompt:'old prompt',manualTopic:'画像2を使う。画像3を舞台にする。',bg360Image:'panorama',isAnalyzing:true,is360Analyzing:true};
-  const ctx = {
+  const ctx = { promptAssemblyRunRef:{current:0},
     DEFAULT_CATEGORIES:[], reconcileReferenceCast,remapReferenceNumbers,finishScenarioTiming:()=>{},cancelApiWork:()=>{state.cancelled=true;},
     invalidatePromptAssembly:()=>{},showStatus:()=>{},resetScenarioModelId:()=>{},
     scenarioRunEpochRef:{current:5},scenarioUsedModelRef:{current:null},qualityRetryAbortRef:{current:false},fullAutoAbortRef:{current:false},
@@ -27,7 +27,7 @@ function workflow() {
     assert.ok(definition,name);
     return new Function(...Object.keys(ctx),`return ${definition[1]} => {${definition[2]}}`)(...Object.values(ctx))(...args);
   };
-  for (const name of ['invalidateScenarioRun','invalidateReferenceOutputs','setImages','setCastList','setReferenceAssets','setBg360Image','setBg360Enabled','partialReset','step1Reset','hardReset','editReferenceItem']) ctx[name]=bind(name);
+  for (const name of ['invalidateScenarioRun','invalidateReferenceOutputs','setImages','setCastList','setReferenceAssets','setBg360Image','setBg360Enabled','resetPageCaches','partialReset','step1Reset','hardReset','editReferenceItem']) ctx[name]=bind(name);
   return {state,ctx,a,b};
 }
 

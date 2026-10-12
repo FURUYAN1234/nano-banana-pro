@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import * as pageWorkflow from '../src/lib/image-quality-failsafe.js';
 import { parseImageQualityQaResponse } from '../src/lib/image-quality-qa.js';
 
 import {
@@ -14,7 +15,80 @@ import {
   enforceBubbleComparison,
   enforceCriticalCameraComparison,
   isMaterialImageQualityIssue,
+  selectImageQualityCandidate,
 } from '../src/lib/image-quality-failsafe.js';
+
+test('page contract keeps the four-panel gate identical and rejects cross-mode inputs before review', async () => {
+  const image={base64Img:'fixture'};
+  for(const mode of ['four-panel','single-image']) {
+    for(const pass of [true,false]) {
+      const options={mode,originalCandidate:image,originalPrompt:'approved',allowRepair:false,
+        reviewCandidate:async()=>({pass,issues:pass?[]:[{type:'panel_count',panel:null,reason:'wrong count'}]})};
+      assert.deepEqual(await pageWorkflow.runPageImageQuality({kind:mode,count:mode==='four-panel'?4:1},options),await executeQualityGate(options));
+    }
+  }
+  let calls=0;
+  const options={mode:'four-panel',reviewCandidate:async()=>{calls++;}};
+  for(const contract of [{kind:'four-panel',count:6},{kind:'four-panel',count:4,plan:{}},{kind:'unknown',count:4},{kind:'experimental-manga',count:6}]) {
+    await assert.rejects(()=>pageWorkflow.runPageImageQuality(contract,options));
+  }
+  assert.equal(calls,0);
+});
+
+test('experimental quality contract accepts only five to eight without changing normal four panels', async () => {
+  let calls=0;
+  const options={mode:'experimental-manga',allowRepair:false,originalCandidate:{base64Img:'fixture'},originalPrompt:'approved',
+    reviewCandidate:async()=>{calls++;return {pass:true,issues:[]};}};
+  for(const count of [1,4,9,5.5]) await assert.rejects(()=>pageWorkflow.runPageImageQuality({kind:'experimental-manga',count},options));
+  assert.equal(calls,0);
+  for(const count of [5,6,7,8]) await pageWorkflow.runPageImageQuality({kind:'experimental-manga',count},options);
+  assert.equal(calls,4);
+  await pageWorkflow.runPageImageQuality({kind:'four-panel',count:4},{...options,mode:'four-panel'});
+  assert.equal(calls,5);
+});
+
+test('experimental page uses shared retention but cannot enter four-panel repair or camera audit', async () => {
+  const contract={kind:'experimental-manga',count:6};
+  const image={base64Img:'fixture'};
+  const options={mode:'experimental-manga',allowRepair:false,originalCandidate:image,originalPrompt:'six panels',
+    reviewCandidate:async()=>({pass:false,issues:[{type:'unverified',panel:6,reason:'review unavailable'}]})};
+  const result=await pageWorkflow.runPageImageQuality(contract,options);
+  assert.equal(result.candidate,image);assert.equal(result.attempts,1);assert.equal(result.canContinue,true);
+  for(const unsafe of [{allowRepair:true},{mode:'four-panel'},{generateRepairCandidate:()=>{}},{reviewCriticalCamera:()=>{}},{analyzeFailure:()=>{}}]) {
+    await assert.rejects(()=>pageWorkflow.runPageImageQuality(contract,{...options,...unsafe}));
+  }
+});
+
+test('experimental warnings retain their verdict without claiming minor defects or triggering repair', async () => {
+  const image={base64Img:'fixture'};
+  for(const type of ['experimental_quality','unverified']) {
+    const progress=[];
+    const result=await pageWorkflow.runPageImageQuality({kind:'experimental-manga',count:5},{
+      mode:'experimental-manga',allowRepair:false,originalCandidate:image,originalPrompt:'five panels',
+      reviewCandidate:async()=>({pass:false,issues:[{type,reason:'observed mismatch'}]}),onProgress:line=>progress.push(line),
+    });
+    assert.equal(result.candidate,image);
+    assert.equal(result.attempts,1);
+    assert.equal(result.stopReason,type==='experimental_quality'?'review_warning':'unverified');
+    assert.doesNotMatch(progress.join('\n'),/軽微|重大な修正対象がない/);
+  }
+});
+
+test('candidate selection compares the retained best and keeps it on regression, failure or cancellation', async () => {
+  const candidates=[1,2,3].map(id=>({base64Img:`image-${id}`}));
+  const ok={pass:true,issues:[]};
+  let best=candidates[0];
+  for(let i=1;i<3;i++) {
+    const result=await selectImageQualityCandidate({originalCandidate:best,repairCandidate:candidates[i],originalReview:ok,repairReview:ok,prompt:'approved variable page',compareCandidates:async(a,b)=>{assert.equal(a,best);assert.equal(b,candidates[i]);return {preferred:i===1?'repair':'original',reason:'visible comparison'};}});
+    best=result.candidate;
+  }
+  assert.equal(best,candidates[1]);
+  for(const compare of [async()=>{throw Error('offline');},async()=>({preferred:'tie'}),async()=>({preferred:'repair',reason:''})]) {
+    assert.equal((await selectImageQualityCandidate({originalCandidate:best,repairCandidate:candidates[2],originalReview:ok,repairReview:ok,compareCandidates:compare})).candidate,best);
+  }
+  let stopped=false;
+  assert.equal((await selectImageQualityCandidate({originalCandidate:best,repairCandidate:candidates[2],originalReview:ok,repairReview:ok,shouldStop:()=>stopped,compareCandidates:async()=>{stopped=true;return {preferred:'repair',reason:'late result'};}})).candidate,best);
+});
 
 test('a requested drawing-medium failure requires complete visible evidence before paid repair', () => {
   const issue = { type: 'art_style', panel: 3, styleEvidence: {

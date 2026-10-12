@@ -1206,7 +1206,7 @@ const extractExplicitRearSubject = (text, castEntries) => {
       const escapedName = boundedName(name);
       // 衣装・役割の修飾語は許可するが、文の区切りや別人物まで跨いで
       // 肩越しの撮影対象を取り違えない。
-      const japaneseShoulder = new RegExp(`\\[?${escapedName}\\]?(?:の(?:(?!${castNamePattern})[^\\n、，,。.!?！？;；]){0,48}?)?(?:右|左)?(?:肩|ショルダー)(?:越し|ごし)`, 'i');
+      const japaneseShoulder = new RegExp(`\\[?${escapedName}\\]?(?:の(?:(?!${castNamePattern})[^\\n、，,。.!?！？;；はがを]){0,48}?)?(?:右|左)?(?:肩|ショルダー)(?:越し|ごし)`, 'i');
       const englishShoulder = new RegExp(`(?:over|from\\s+behind|behind)\\s+(?:the\\s+)?\\[?${escapedName}\\]?(?:['’]s)?\\s+(?:(?:right|left)\\s+)?shoulder`, 'i');
       return japaneseShoulder.test(source) || englishShoulder.test(source);
     });
@@ -1676,6 +1676,12 @@ const DIEGETIC_REPLICA_NOUN_PATTERN = '(?:ミニチュア|極小(?:の)?(?:人�
 const DIEGETIC_REPLICA_CUE_RE = new RegExp(DIEGETIC_REPLICA_NOUN_PATTERN, 'iu');
 
 const extractDiegeticReplicaNames = (text, allPanelCharacters) => {
+  // A later "画面には...写る" refers to the established device display,
+  // not the manga's whole frame. Keep ordinary "画面内に立つ" physical.
+  if(/再生画面|(?:カメラ|スマホ|端末|モニター)[^。！？\n]{0,20}画面/u.test(text)) {
+    text=text.replace(/画面(?=には[^。！？\n]*(?:写|映|表示))/gu,'画面内');
+  }
+  text=text.replace(/再生画面/gu,'画面内');
   if (!DIEGETIC_REPLICA_CUE_RE.test(text)) return [];
   const contexts = String(text).split(/[。！？\n]/u).filter(part => DIEGETIC_REPLICA_CUE_RE.test(part));
   if (contexts.length === 0) return [];
@@ -1683,7 +1689,7 @@ const extractDiegeticReplicaNames = (text, allPanelCharacters) => {
   const countLabels = [String(count), '一二三四五六七八九十'[count - 1]].filter(Boolean);
   const groupPattern = `(?:全員|一同|みんな|全キャラ|全メンバー|everyone|all characters|${countLabels.map(label => `${label}人`).join('|')})`;
   const wholeCast = contexts.some(part => new RegExp(
-    `(?:${DIEGETIC_REPLICA_NOUN_PATTERN}.{0,18}${groupPattern}|${groupPattern}.{0,18}${DIEGETIC_REPLICA_NOUN_PATTERN})`,
+    `(?:${DIEGETIC_REPLICA_NOUN_PATTERN}[^。！？\\n]*${groupPattern}|${groupPattern}[^。！？\\n]*${DIEGETIC_REPLICA_NOUN_PATTERN})`,
     'iu',
   ).test(part.normalize('NFKC')));
   const explicit = allPanelCharacters.filter(name => {
@@ -1784,7 +1790,7 @@ export const extractCastLimitRule = (fullPanelText, castList, options = {}) => {
   const castNamePattern = validCharacters.map(escapeRegex).sort((a, b) => b.length - a.length).join('|');
   const offscreenCast = new Set();
   if (castNamePattern) {
-    const offscreenLocation = new RegExp(`((?:${castNamePattern})(?:\\s*(?:と|や|、|及び)\\s*(?:${castNamePattern}))*)は\\s*(?:引き続き|そのまま)?(?:画面外|フレーム外)(?:の(?:前コマ|元の)?位置を維持|に(?:いる|居る|残る|留まる)|で待機|[。\\n]|$)`, 'gu');
+    const offscreenLocation = new RegExp(`((?:${castNamePattern})(?:\\s*(?:と|や|、|及び)\\s*(?:${castNamePattern}))*)は\\s*(?:引き続き|そのまま)?(?:画面外|画角外|フレーム外)(?:の(?:前コマ|元の)?位置を維持|(?:の[^。！？\\n]{1,24}?(?:側|場所|位置))?に(?:いる|居る|残(?:る|っている)|留まる)|で待機|[。\\n]|$)`, 'gu');
     for (const match of actionAndMetaText.matchAll(offscreenLocation)) {
       for (const name of match[1].matchAll(new RegExp(castNamePattern, 'gu'))) {
         const canonical = charLookup[name[0]].name;
@@ -1826,6 +1832,20 @@ export const extractCastLimitRule = (fullPanelText, castList, options = {}) => {
       allPanelCharacters.push(canonicalName);
     }
   });
+  // A guest introduced by dialogue remains a person when later acting silently.
+  // Infer a shortened subject only when it identifies one known story guest.
+  const storyGuestsByName = [...new Set(extractDialogueOnly(validCharacters.length ? options.storyText || '' : '', castList, { asEntries: true })
+    .map(entry => entry.speaker).filter(name => name && !findSpeakerCastMatch(name, validCharacters) && !parseCollectiveSpeaker(name, validCharacters)))];
+  const visibleGuestText = actionAndMetaText.replace(/[「『"][^」』"\n]*[」』"]/g, '');
+  const guestSubjects = [...visibleGuestText.matchAll(/(?:^|[。！？\n、:：]|の|と|を|に|へ|で)([\p{Script=Han}\p{Script=Katakana}ー]{2,})(?=は|が)/gu)].map(match => match[1]);
+  for (const subject of guestSubjects) {
+    const candidates = storyGuestsByName.filter(name => name === subject || name.endsWith(subject));
+    if (candidates.length !== 1) continue;
+    const guest = candidates[0];
+    const offscreen = new RegExp(escapeRegex(subject) + '(?:は|が)(?:引き続き)?(?:画面外|画角外|フレーム外)(?:にいる|に居る|に残|で待機|[。\\n])').test(visibleGuestText);
+    if (!offscreen && !allPanelCharacters.includes(guest)) allPanelCharacters.push(guest);
+  }
+
   if (explicitRearSubject && !offscreenCast.has(explicitRearSubject) && !allPanelCharacters.includes(explicitRearSubject)) {
     allPanelCharacters.push(explicitRearSubject);
   }
@@ -1845,7 +1865,7 @@ export const extractCastLimitRule = (fullPanelText, castList, options = {}) => {
   const panelActors = speakers.slice(0, 3).map(s => `[${s}]`);
   const explicitRearActor = explicitRearSubject && !offscreenCast.has(explicitRearSubject) ? `[${explicitRearSubject}]` : '';
   const allCharBrackets = allPanelCharacters.map(c => `[${c}]`);
-  const replicaNames = extractDiegeticReplicaNames(actionAndMetaText, allPanelCharacters);
+  const replicaNames = extractDiegeticReplicaNames(actionAndMetaText, [...new Set([...allPanelCharacters,...canonicalValidCharacters])]);
   const replicaBrackets = replicaNames.map(c => `[${c}]`);
   // 肩越しの手前人物と、奥で注目される話者を混同しない。
   // 無言コマでもActionに明記された登場人物をキャスト制約へ残す。
@@ -1905,10 +1925,13 @@ export const extractCastLimitRule = (fullPanelText, castList, options = {}) => {
     // 登場しないキャラへの強力な除外指示（Negative Constraints）を生成
     let negativeConstraint = "";
     if (noShowCharacters.length > 0) {
-      const noShowNames = noShowCharacters.map(c => `[${c}]`).join(', ');
-      negativeConstraint = compact
+      const absent=noShowCharacters.filter(c=>!replicaNames.includes(c));
+      const noShowNames = absent.map(c => `[${c}]`).join(', ');
+      negativeConstraint = !absent.length?'':compact
         ? `\nABSENT: do NOT draw ${noShowNames}.`
         : `\nDo NOT draw ${noShowNames} in this panel. They are completely absent from this scene.`;
+      const representedOnly=noShowCharacters.filter(c=>replicaNames.includes(c));
+      if(representedOnly.length) negativeConstraint+=`\nPHYSICALLY ABSENT: ${representedOnly.map(c=>`[${c}]`).join(', ')} appear only inside the scripted replica surface/container, never as extra physical people.`;
     }
 
     // [v4.2.1] モブキャラ検出ロジック：本文にモブが含まれる場合はABS制限を緩和する

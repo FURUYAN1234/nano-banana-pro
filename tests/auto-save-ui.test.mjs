@@ -15,6 +15,18 @@ before(async () => {
 after(async () => server?.close());
 const descendants = node => !node || typeof node !== 'object' ? [] : [node, ...[node.props?.children].flat(Infinity).flatMap(descendants)];
 
+test('generated image output never duplicates the top-level save settings guide', t => {
+  t.mock.method(React, 'useState', () => [null, () => {}]);
+  const nodes=descendants(Step4Panel({selectedEngine:'openai',enableOpenAIApi:true,
+    generatedImage:'data:image/png;base64,fixture',finalPrompt:'four-panel fixture',genLog:[],webCopyPartLengths:[],generationHistory:[]}));
+  assert.equal(nodes.filter(n=>n.type===AutoSaveGuide||n.type===AutoSaveSettingsButton).length,0,
+    'The settings guide belongs only to the existing top-level dialog, never below generated images');
+  assert.ok(nodes.some(n=>n.type==='button'&&JSON.stringify(n.props.children).includes('保存先を選んで保存')));
+  const app=readFileSync(new URL('../src/App.jsx',import.meta.url),'utf8');
+  assert.ok(app.indexOf('<AutoSaveSettingsButton ')<app.indexOf('<main '),'settings remain before STEP1');
+  assert.match(app,/<AutoSaveSettingsButton autoSaveVerified=\{autoSaveVerified\}/);
+});
+
 test('mode starts require the guide confirmation; cancellation never starts; stop is immediate', t => {
   let pending = null;
   t.mock.method(React, 'useState', () => [pending, value => { pending = value; }]);
@@ -87,7 +99,7 @@ test('single-image copy is inside the Web disclosure after video guidance with s
   }
   const html = renderToStaticMarkup(React.createElement(Step4Panel, { selectedEngine: 'openai', enableOpenAIApi: true, finalPrompt: 'UI fixture', genLog: [], webCopyPartLengths: [] }));
   const disclosure = html.match(/<details class="web-prompt-disclosure">([\s\S]*?)<\/details>/)?.[1];
-  assert.ok(disclosure.includes('/1枚絵エモーショナルプロンプト'));
+  assert.ok(disclosure.includes('／1枚絵エモーショナルプロンプト'));
   assert.ok(disclosure.indexOf('ChatGPT用 1枚絵') > disclosure.indexOf('aria-controls="video-guide-content"'));
   assert.match(disclosure, /style="padding-top:8px"/);
   assert.doesNotMatch(renderToStaticMarkup(React.createElement(ControlBar)), /ChatGPT用 1枚絵/);

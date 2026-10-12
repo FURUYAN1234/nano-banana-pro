@@ -1,6 +1,31 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { PAGE_LAYOUT, detectPageBands, buildPageDrawPlan, normalizePageCandidate, scalePageLayout } from '../src/lib/manga-page-layout.js';
+import { PAGE_LAYOUT, detectPageBands, detectVariablePanelFrames, buildPageDrawPlan, normalizePageCandidate, scalePageLayout } from '../src/lib/manga-page-layout.js';
+
+test('variable frame sampling follows drawn unequal widths and spanning panels, never equal divisions',()=>{
+  for(const frames of [
+    [[10,30,230,150],[245,30,145,150],[10,185,380,170],[10,360,180,200],[195,360,195,200]],
+    [[10,30,380,140],[10,175,180,385],[195,175,195,180],[195,360,195,200]],
+  ]) {
+    const width=400,height=600,data=new Uint8ClampedArray(width*height*4).fill(255);
+    for(const [x,y,w,h] of frames) for(let dy=0;dy<h;dy++) for(let dx=0;dx<w;dx++) {
+      if(dx>2&&dx<w-3&&dy>2&&dy<h-3) continue;
+      const pos=((y+dy)*width+x+dx)*4;data[pos]=data[pos+1]=data[pos+2]=0;
+    }
+    const detected=detectVariablePanelFrames({data,width,height},frames.length);
+    assert.equal(detected.length,frames.length);
+    for(const [x,y,w,h] of frames) assert.ok(detected.some(r=>Math.abs(r.x-x)<8&&Math.abs(r.y-y)<8&&Math.abs(r.width-w)<12&&Math.abs(r.height-h)<12));
+    assert.deepEqual(detectVariablePanelFrames({data,width,height},frames.length+1),[],'never fabricate a missing frame');
+    // A heavy crossing drawing can connect neighboring frames. Refuse to
+    // invent a boundary through that connected artwork.
+    const joined=data.slice();
+    for(let y=100;y<103;y++) for(let x=180;x<300;x++) {
+      const offset=(y*width+x)*4;joined[offset]=joined[offset+1]=joined[offset+2]=0;
+    }
+    if(frames.length===5)assert.deepEqual(detectVariablePanelFrames({data:joined,width,height},frames.length),[]);
+    assert.deepEqual(detectVariablePanelFrames({data:new Uint8ClampedArray(width*height*4).fill(255),width,height},frames.length),[]);
+  }
+});
 
 const fixture = (rows = [80, 435, 442, 744, 750, 1070, 1078, 1498]) => {
   const width = 128, height = 1536;

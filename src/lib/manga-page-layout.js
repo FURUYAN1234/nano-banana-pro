@@ -185,6 +185,53 @@ export const inspectImageDimensions = async (dataUrl) => {
   return { width: image.naturalWidth, height: image.naturalHeight };
 };
 
+// Inspect the drawn rules; never infer frame geometry from the requested plan.
+// Ambiguous/non-rectangular pages return no crops rather than fabricated bounds.
+export const detectVariablePanelFrames = ({data,width,height},expectedCount) => {
+  if(!width||!height||data?.length!==width*height*4) return [];
+  const size=width*height,seen=new Uint8Array(size),queue=new Uint32Array(size);
+  const paper=i=>{const p=i*4;return data[p+3]<32||Math.min(data[p],data[p+1],data[p+2])>=238;};
+  let head=0,tail=0;
+  const exterior=i=>{if(!seen[i]&&paper(i)){seen[i]=1;queue[tail++]=i;}};
+  for(let x=0;x<width;x++){exterior(x);exterior((height-1)*width+x);}
+  for(let y=0;y<height;y++){exterior(y*width);exterior(y*width+width-1);}
+  while(head<tail){
+    const i=queue[head++],x=i%width;
+    if(x)exterior(i-1);if(x+1<width)exterior(i+1);
+    if(i>=width)exterior(i-width);if(i+width<size)exterior(i+width);
+  }
+  // Paper reachable from page edges includes the gutters. Its complement
+  // contains the complete enclosed panels, including white areas inside them.
+  const frames=[];
+  for(let seed=0;seed<size;seed++){
+    if(seen[seed])continue;
+    head=0;tail=1;queue[0]=seed;seen[seed]=2;
+    let left=width,right=0,top=height,bottom=0;
+    const visit=i=>{if(!seen[i]){seen[i]=2;queue[tail++]=i;}};
+    while(head<tail){
+      const i=queue[head++],x=i%width,y=Math.floor(i/width);
+      left=Math.min(left,x);right=Math.max(right,x);top=Math.min(top,y);bottom=Math.max(bottom,y);
+      if(x)visit(i-1);if(x+1<width)visit(i+1);
+      if(i>=width)visit(i-width);if(i+width<size)visit(i+width);
+    }
+    const w=right-left+1,h=bottom-top+1;
+    if(w>=width*.12&&h>=height*.075&&tail>=size*.012&&tail/(w*h)>=.7)
+      frames.push({x:left,y:top,width:w,height:h});
+  }
+  return frames.length===expectedCount?frames:[];
+};
+
+export const inspectVariablePanelFrames = async(dataUrl,count)=>{
+  const image=new Image();image.src=dataUrl;await image.decode();
+  const canvas=document.createElement('canvas');
+  canvas.width=image.naturalWidth;canvas.height=image.naturalHeight;
+  const context=canvas.getContext('2d',{willReadFrequently:true});
+  if(!context)throw new Error('コマ枠の原寸検査を初期化できません。');
+  context.drawImage(image,0,0);
+  return detectVariablePanelFrames(context.getImageData(0,0,canvas.width,canvas.height),count)
+    .map(r=>({bounds:[r.x/canvas.width,r.y/canvas.height,r.width/canvas.width,r.height/canvas.height]}));
+};
+
 // Read-only chroma evidence, not a grayscale conversion or a manuscript-quality
 // verdict. Neutral antialiasing is allowed; sparse colored dots/lines are not a
 // broad color area. Bounds and samples always refer to the supplied native grid.

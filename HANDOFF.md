@@ -1,3 +1,81 @@
+## Current: 2026-10-12 v7.0.3公開準備
+
+- 最新承認の追加最大2枚は2/2実行済み。通常STEP3は5コマを70.078秒で作成、STEP4は215秒と221秒で生成・検査・比較まで終了。初回6項目pass、2回目anatomy/pageText uncertainだが比較完了（15.626秒）で初回を選択。両画像を履歴保持し、選択画像の完全一致とerror0、ボタン再有効を確認。追加課金なし。
+- React開発計測の画像props複製OOMをDEV限定の診断情報上限で修正。8回帰・10画像履歴×2views/3追加/198更新秒の実ブラウザー負荷確認・実API2回を結合した監査PASS。人物観察の部分不正と読順証拠の分離、比較への根拠引継ぎも232回帰＋実API比較の監査PASS。画像全体の完全性は保証しない。
+- 証拠: output/dual-mode-release-20261012/counter-comparison の recovery-first/second-api.png・*-api-log.txt・*-run.json・*-screen.png、react-performance-bugfix-evidence.json、census-comparison-bugfix-evidence.json。台本/指示文はrelease-page-textareas.jsonに保全、キー値は未取得。
+- 本番は初期実験OFFを本人確定。検証時はON。v7.0.3版更新でローカル画面は通常再読み込み、現在未接続。検証画像と全記録は上記ファイルで保全済み。再生成のためのキー再入力は不要。
+- 公開境界: 正式release/deploy・README/PDF更新・note/Facebook/Xのコードブロック草稿まで本人承認。フルバックアップとSNS実投稿は行わない。版helper実行済み、README重複履歴統合済み。公開PDF3冊72頁の最終修正/確認済み。残り: 図版同期、候補commit、監査hash再採取、最終検査、正式transaction、公開UI/文書readback。
+- OpenAI/Gemini公式標準料金を2026-10-12T07:25:51Zに再確認、金額変更なし。下のPreviousは過去の状態であり現在の権限を上書きしない。
+
+## Previous: 2026-10-12 人物重複検査を修正→通常4コマ→実験5コマ以上の実API検証
+
+- 最新指示: **追加課金せず現状保持**。追加API・生成・デプロイを行わない。最後の承認1枚は192秒で生成・検査終了。今回画像comparison-grounding-api-new.png（dataURL長13557938）は5コマ。P4の一部人物は隠れて同定不足、検査はanatomy uncertain。身体観察に特徴が1個の人物があり、形式不正として比較前に止める原因を確認。目視は一ページとして成立、分身検出ではない。比較APIはこの回は未実行。
+- ローカル修正: 比較へ独立した台詞転記と吹き出し位置を引き継ぎ、対応する比較応答が欠落・矛盾する場合は未比較として保持。通常4コマの既定比較指示は変更しない。特徴が1個の身体観察は人物同定未確認として保持し、形式不正と区別。正しい形式の未確認は比較へ渡すが合格へ昇格しない。番号の再使用・壊れた座標・確認済み条件の明確な劣化は引き続き拒否。通常4コマの描画指示を変更しない。
+- 証拠: counter-comparison/comparison-grounding-red.tapは根拠を渡さない旧動作をVite変換で再現した1件失敗。comparison-grounding-green.tapは214/214。partial-observation-red.tapは修正前の同定不足処理で1件失敗、partial-observation-green.tapは215/215。対象eslint成功、diff check成功。今回の比較用変更は192秒APIでは比較前に止まり未検証、その後の同定不足区別も実API未検証。完了・公開可とはしない。IAB5/tab1、台本・選択画像・履歴を保持、API実行中なし。再開時はこの課金停止指示を優先し、以前の1枚承認を再利用しない。
+
+- 最新実API（追加承認1枚、2026-10-12）: 通常STEP4から生成・独立観察・検査・既存候補との比較まで194秒で完了。新画像verdict-template-api-new.png（dataURL長14213878）は5コマ、検査status/pass・observedCount/5・6項目pass。回答例に引かれ全項目未確認となる症状は今回解消。検査23.019秒＋35.649秒、比較12.714秒。比較は旧画像14375514を保持し、両候補を履歴保存。比較理由が「新画像P1/P2の台詞が左右逆」と述べたが、目視では職員右・ミク左であり一致しない。画像の取り違えはなく、比較呼出は旧→新を送信、画像detail high。比較精度の問題は未解決、比較完了と正しい選択を混同しない。新たなシステム修正はこの実行後なし。証拠verdict-template-api-log.txt / api-run.json / api-result-screen.png。公開なし、追加1枚承認は使用済み、IAB5/tab1と旧選択・全履歴を保持、API実行中なし。
+- 継続診断: 新189秒候補の保存済みreviewを既存履歴クリック時の一時ログから取得（saved-review-diagnostic.json / saved-verdict-summary.json）。observedCount=null、status=unverified、6項目すべてuncertain、issues空、個別5コマ観察あり。検査指示の完成済み初期値JSONと一致。値埋め込み例を型・判定条件に置換、failと未確認の優先順位も指示全体で統一。nullを予定コマ数へ補完せず、合格へ強制変換しない。verdict-template-red 1件失敗→green171/171、eslint成功。一時GenerationHistory診断は撤去済み。その後の追加承認1枚で実APIを実行（上記最新結果）。現在IAB5/tab1、画像と履歴を保持、API実行中なし。公開なし。
+- 継続中（2026-10-12）: 候補比較の待機不具合は、新旧検査を必要時に同時開始（各120秒、正常な旧検査は再利用）へ修正。比較60秒維持、未比較を最良比較済みと表示しない。実APIは通常STEP4から207秒と追加承認1枚199秒で終了。前者は新旧両検査完了後、新候補の身体ID再使用を拒否。後者は旧検査再利用、新候補のコマ数未確認等で旧画像保持。比較API完了は未達。2枚とも保存済み、追加有料生成の承認は消費済み。
+- 追加修正: 有効な観察で人物重複などfailが出ても、別項目や総評の未確認が優先され欠陥まで未確認になる集計不具合を再現。fail優先（形式不正は未確認維持）、人物同定の曖昧さで別の解剖failを消さない、採用結果の警告区分も保持。mixed-verdict-red.tapで失敗→green171/171、対象eslint/diff成功。追加承認1枚を通常STEP4で実行、189秒で生成・検査終了（mixed-verdict-api-log.txt / mixed-verdict-api-new.png）。新候補は目視5コマ・明確な主要人物重複なし、検査issues空・未確認、panelCountの条件で比較前に保持候補を維持。重大failと未確認の混在分岐は今回発生せず、実APIでのその分岐と比較完了は未証明。
+- 画像取り違え訂正: 現在表示は保持候補（data URL長14375514）、追加新候補は14682242。本人の指摘した表示画像を分身とする説明は誤り。表示画像の主要人物は手前1人＋お辞儀4人、検査記録も各1人。追加画像parallel-review-retry-new.pngとは別。髪色だけや隠れた顔だけでは同一人物と断定しない。表示証拠selected-after-retry-screen.png。
+- 証拠: output/dual-mode-release-20261012/counter-comparison/parallel-review-api-log.txt、parallel-review-retry-api-log.txt、parallel-review-retry-new.png、mixed-verdict-red/green.tap。当時ログにはコマ数の生判定値が欠落していた（上記の保存済みreview取得でnullと確定）。推測で値を埋めず、既存ログへstatus/count/各項目の判定を追加。verdict-diagnostics-redで3件失敗→green成功、eslint成功。次はこの値を取得して比較阻害の原因を特定する。新たな画像生成は未承認、現承認1枚は実行済み。現IAB5/tab1、キー未読、実API実行中なし。公開・デフォルト変更・backupなし。
+- 最新UI指定: 実験スイッチOFFは「ONにすると元の4コマ台本をもとに、AIが内容に合う5〜8コマと配置を選びます。」だけ、ONは本人指定の全文（実験結果保持の文は除去済み）を表示。説明11.5px、見出しとSTEP3は維持。対象回帰1/1・対象eslint成功、IAB browser5/tab1でOFF→ONの実操作・全文/計算済みfontSizeを確認。証拠はcounter-comparison/description-display-proof.json、description-short-off.png、description-full-on.png（後二つは全viewportで撮り直し済み）。初期OFFは変更せず、公開・追加APIなし。現在のONと画像/台本を保持。
+- 最新状態: 本人承認の追加1枚は共通STEP4で238秒で終了（structured-evidence-api-preview.png / structured-evidence-api-log.txt / structured-evidence-api-shape.json）。5コマの観察はcast/body配列とviewオブジェクトを保持。新候補は形式エラーなし・QA未確認、同版の不完全な旧検査の再確認に実際に進んだが、残り時間で終わらず旧画像を保持。旧画像の再検査→比較完了は未達。ユーザーは再生成画像を高く評価。目視では5コマの流れ・水彩・低角度と俯瞰が良好、一ページとして成立。履歴から新画像（src長13765714）を選んで表示、画像8枚・台本・キーを保持。実API/検証処理は全て終了、追加生成承認はこの1枚で使用済み。未公開、全体完了とはしない。以下の「進行中」は過去時点。
+- 受入基準の本人確認: 制服や後ろ姿だけで同一職員の分身と断定しない。役所に複数職員がいる自然なモブ描写は許容。一ページとして物語・読順・行動が成立する軽微差は実用上合格と評価できる。明白な同一人物の分身や物語上の破綻は不可。AI未確認と作品不成立を混同せず、未確認だけの自動再生成はしない。179秒の画像P5について以前の「職員重複」断定は撤回、別職員として読める可能性を記録。
+- 診断保存の修正: 失敗診断のcast_instances / physical_bodies / viewをJSON文字列へ変換して再検証時に偽の根拠不足を増やす原因を修正。機密値除去を維持して構造を保つ。structured-evidence-redで再現、green43/43（通常4コマ互換含む）、eslint / diff check成功。179秒の前回画像/logはrefresh-invalid-apiとして保持。今後は新規生成を増やす前に、残り時間を消費する旧検査更新と候補比較の実行設計を調査する。
+- 継続2026-10-12: 実験説明はONで展開/OFFで折り畳み（STEP3は残す）。実画面両状態をdescription-on/off.pngへ保存。視線誘導を演技・構図・画風・勢いを弱めない補助指示として計画/描画/検査に接続。本人指定によりアイレベル/カメラ目線禁止、既存camera分類で明示アイレベル案を拒否し、inspectionVersion4で実画像の高低角/視線観察を検証。通常4コマ出力互換56/56、追加身体特徴の区切り形式回帰を含む61/61成功。reading-flow-red/green.tap、body-cue-red/green.tap。
+- 候補選択の確定不具合: 新候補が未確認だと旧検査版の合格を無検証で復活させていた。selectExperimentalCandidateの入口で旧判定を未確認化し、採用レビューと履歴にも反映。stale-selection-red→green46/46、selection-isolation58/58。実API190秒selection-api-new.png/logでは新候補P5人物不整合が残り、旧画像を保持するが旧合格は復活せず未確認表示。検査側の身体特徴配列1要素に複数特徴が列挙された正常応答を拒否する形式不整合も、明示区切りの計数だけで修正（曖昧な単独特徴は拒否維持）。
+- 継続検証: 実験STEP3が60.883秒で5コマ案を生成（reading-flow-prompt.txt）。reading-flow-apiは194秒で終了し、P5職員の重複とタイトル「ば」の濁点1画欠落を目視。検査が観察文章にpass/highを返す形式不具合を要求schemaで修正し、review-prose-apiも194秒で終了。後者は観察文章が正常、目視では濁点2画・職員重複なし。ただし透かし未確認であり全面合格ではない。以前の同版・形式不完全な検査を再検査せず旧候補に固定する不具合を確認し、既存の再検査条件に追加。refresh-invalid-redで0!==1失敗、修正後通常4コマ互換を含む43/43成功、eslint成功。共通STEP4からこの修正の実API検証を開始し進行中。現IAB5/tab1、キー未読、公開未実行。
+- 表示修正: 「実験結果も保持します。」を説明から削除。STEP4の動画化と1枚絵の間を全角「／」に統一、既存表示テスト4/4成功。description-copy-removed.png / slash-unified.pngで実画面確認。生成中の素材・台本・履歴を保持し、再読み込みしていない。
+
+- 最新承認: バグを順次修正し、通常4コマに問題がなくなったら5コマ以上の実API検証まで続行。足先の見切れ単独は注意にとどめ、再生成させない。同一のアプリ生成台本「丁寧に聞けば早い」で比較。新しいUI操作・ボタンは追加しない。公開は下記条件を満たすまで保留、バックアップなし。制作情報確認のため保存先選択を開いてしまい本人から指摘。以後そのダイアログを使わない。
+- 観測: output/dual-mode-release-20261012/counter-comparison/local-api.pngのP4にヒカリが2人。QAは人物の根拠不足を表示して検出できず。人物補足検査はコマ画像と名前だけで、外見設定・参照資料を渡していなかった。補足parserだけ圧縮表を展開せず、主検査との不整合もあった。過去の補足生応答は未保存のため、その応答形式は断定しない。
+- 修正: 補足検査へ人物設定・参照画像を接続、身体を数えてから名前を同定する明示schema、共通の表展開を使用、既存ログへ観察応答を保持。足先等の無害な見切れを総評が再生成対象へ戻す経路を修正。重大な別のカメラ・解剖不具合は保持。
+- 通常4コマ: 肩越し対象の助詞解析と、無言になった既出ゲストの人数漏れも原因を再現して最小修正。ゲスト推論を登録人物あり・集合話者除外へ制限し、従来の出力互換テストを維持。normal-final-api.png（205秒）は主要人物5人＋職員を重複なく描き、台詞順と肩越しを目視確認。検査は一部未確認であり全項目AI合格とは報告しない。足先見切れは注意のみ。
+- 実験5コマ: experimental-final-api.png（193秒）はP1の見えない2人をQAが存在すると誤判定。独立した身体観察→人物ID照合のinspectionVersion3へ修正。experimental-v3-api.png（210秒）はP5職員重複、ID字段不足等を未確認として検出し旧候補保持。応答schema例にbody_idがない不一致と、観察全体を600文字に切る診断欠損を追加修正。body-schema-red.tap失敗→body-schema-green.tap45/45。再検証205秒終了、experimental-body-schema-api-log.txt。P1でリン/ヒカリ、P3でアカリ/ヒカリに同じ身体IDを割り当てたAPI応答を実際に拒否し未確認、旧候補保持。画像はexperimental-history-1.png（最新）、同0は最初、同2は210秒候補。最新画像P1リン欠落/P3アカリ欠落/P5リン重複が目視で残る。検査の誤合格抑止は実証できたが、実験画像の完成・比較採用経路全体の実API合格は未達。公開しない。全候補はアプリ履歴3枚にも残る。実APIは現在すべて終了。
+- 回帰: qa-fixes-red.tapの2失敗→162/162、isolation-save-green.tap103/103。全1471件中1470成功、残りは未公開README変更の監査記録不一致（公開準備ゲート）。4〜8コマPNGを保存・抽出し台本/実送信prompt/モデル/日時/page_kind/panel_count保持を確認。IABでは保存完了イベントを取得できず、ダウンロード実物検証は未完了。npm run build/BUILT_WEB_SECURITY_VERIFIED成功、eslint成功。現IAB4/tab1、Vite session4485。証拠はoutput/dual-mode-release-20261012/counter-comparison。以下の旧「さらに画像生成を追加しない」は今回承認に更新済み。
+
+## Previous: 2026-10-12 実験5〜8コマ必須・両モード実APIから公開一式（進行中）
+
+- 最新承認: 実験モードだけ5〜8コマ必須。通常4コマの品質を保持。指定Microsoft 365 Copilot/X要約をSTEP2へ入力し、お金・レトロ・都市伝説・風紀・お菓子ネタ厳禁。同じ実STEP2台本から通常4コマと実験5〜8コマを各1枚API画像検証し、問題がなければREADME/PDF修正・正式デプロイ/公開確認・note更新・Facebook投稿・X投稿文コードブロック表示まで。X実投稿とバックアップは除外。公開承認は実画像検証成功が条件。
+- 実装: 実験の計画prompt/validator/layout/catalog/共通QA入口を5..8へ変更、通常four-panelは4のまま。旧4コマ実験履歴は削除せず配置案参照から除外。README/UI同期。回帰117/117成功（focused.tap）。
+- 実API: 指定文→STEP2「スキルの先にある理解」106.696秒→通常STEP3/4（195秒）と実験5コマSTEP3/4（60.379秒/152秒）を各1枚生成。通常は3コマの台詞左右逆転を検出、全身指定も未達。実験は5コマ2/1/2と全身を描いたが、中央コマの台詞左右逆転をQAが誤ってPASS。両モードを公開合格にはしていない。
+- 描画品質: ユーザーが過去11作品を提示。今回の通常画像は質感・光・表情/構図のメリハリで見劣りするとの指摘。過去作はユーザー訂正によりChatGPT Web貼り付け生成と確認（APIとの最初の回答は撤回）。少なくともカフェ画像にはPNG生成条件なし。今回の実台本/人物設定をv7.0.2のsrc/lib/config全体と現在に通すと、実UI指示文23,380文字と両再構築が完全一致（actual-input-release-parity.json）。画像の品質保証や生成側の原因特定とは別。
+- 誤判定の原因修正: 文字列だけ隠して予定吹き出し座標等を渡す採点APIから観察文字/位置を採用していた。1回目を期待台本/配置なしの原寸コマ転記へ変更、2回目の採点で観察を上書きできなくした。inspectionVersion=2。修正前回帰失敗（blind-boundary-red.tap）→実験/通常互換39/39成功（blind-boundary-green.tap）。承認された追加実験1枚が226秒で終了。同一prompt。修正後の独立転記は中央コマのx=.27/.64を読み、3コマ目の読順違反をwarningとして検出。候補比較は旧画像を保持し、警告も保持。比較理由文は旧画像の読順を正しいと誤記しており、比較説明の正確性は未達。新規画像experimental-retry-new.pngと実ログexperimental-retry-log.txtを保持。描画では追加画像の足先が見切れており、全身の達成を保証しない。
+- 公開保留: READMEの存在しないOpenAI再検査ボタン記述を修正、PDF生成ソースへ実験説明を追加したが、版上げ/PDF生成/公開/note/FB/X文は未実施。バックアップ不可。公開条件を未達のまま実行しない。
+- 現在: Vite5173 session4485稼働。IAB browser2/tab1・素材2枚・台本・生成2枚を保持、Chrome3の既存2078499734も保持。キー未読。今回のPNG/台本/指示文/ログ/回帰/公開版比較はoutput/dual-mode-release-20261012。追加1枚の生成・検査は終了。さらに画像生成を追加しない。ユーザーはGit版で自ら生成中。貼付prompt（attachments/f3d75ae3-21f0-49f4-84fa-a30c84613c3e）は別題材「丁寧に聞けば早い」、WATERCOLOR/POP_ART指定あり。今回ローカルは全NORMAL。光/肌/表現/奥行き4共通規則は完全一致。Git prompt内に職員肩越し→ミク肩越しの矛盾と後半職員の人数漏れを確認、現段階で追加修正はしていない。
+
+## Previous: 2026-10-11 共通品質経路へのローカル編入（実API検証済み）
+
+- 範囲: 実験ONを通常STEP4・保存・履歴・全自動へ接続。初期OFF、通常4コマ本文/判定経路を保持。ローカルのみ、commit/push/deploy/release/backupなし。別実験メニュー・追加再検査ボタンは撤去。元IAB browser4/tab1・キー・素材・台本を保持、再読み込みなし。
+- 実API: アプリSTEP2の新規台本「集合写真は共同作業」（163.288秒）→実験STEP3の5コマ（上2/中央横長1/下2）→共通STEP4 GPT Image 2.5 Sunburst/max/2240×3168。最終236秒で新規生成・新旧QA・候補比較が完了、両QA pass、既存候補を採用。新規画像と採用画像を保存し、履歴7を維持。6コマmixed_rowsの別題材は既に実生成済みだが、画質指摘ありの証拠として区別。
+- 原因修正: 計画の均等幅から切ったコマが隣の台詞を混入した。AI座標にも誤差が出たため、閉じた枠を実画素から検出して右→左・上→下へ並べる。枠を確定できない画像を推測で合格にしない。原寸枠ごとの盲検転記で吹き出しと効果音を区別、期待台詞との照合はコードで行う。旧検査版の候補は現行方式で再検査してから比較し、失敗時は旧画像を保持。実APIで下段P4/P5逆転を検出して旧画像を保持できた。
+- 共通人物解析: 画角外・写真/再生画面・長い写真内の人物説明を正負回帰から修正。挿入コマは元場面の明示的な非登場者制約を引き継ぐ。観察・転記・不一致は各候補ごとに既存ログへ保持し、採用候補の切替で消さない。検査未確認だけの自動有料再生成はしない。
+- 確認: 最新影響回帰212/212（通常4コマ互換性含む）、lint/build/postbuild security成功。全体1459/1459は後半QA変更前の結果であり、最新全体実行と混同しない。実Web4分割9498/9352/9372/2533文字は一括30755文字と完全一致、実験5コマpromptを保持。ON→OFF→ONのprompt/画像復帰実操作は mode-restore-proof.json。
+- 証拠: output/page-workflow-integration-20261011/retained-session の new-app-step2-*、final-experimental-prompt.txt、acceptance-api-log.txt、acceptance-new-image.png、final-experimental.png、acceptance-screen.png、pixel-reading-failure-screen.png、pixel-review-comparison-log.txt、web-copy-proof.json。修正前REDと最新212回帰を final-bugfix-evidence.json にハッシュで紐付ける。
+- 境界: AI検査のpassは全描画要件の完全保証ではない。細部の足先見切れ、画風の強さ、比較説明の誤りは残り得る。候補比較の理由文に目視と合わない吹き出し説明もあり、画像保持と説明精度を混同しない。自動保存はIABのダウンロード要求まで確認、実保存完了は未証明（検証PNGは上記ローカルへ別途保存済み）。通常4コマの長時間QAは今回の実験QA修正とは別課題。全自動の接続は回帰検証、最終実APIは手動STEP2→3→4。公開・全配置/全プロバイダー保証はしていない。
+- 現状: API/検証処理は終了、採用画像と履歴7が元タブに残る。追加生成なし。新たな具体的不具合の対応またはユーザーの公開指示が次の作業。以下は過去の記録であり、新規公開・再実行の承認として扱わない。
+
+## 2026-10-11 実験的コマ割り revision8（ローカル実装・実API確認済み）
+
+- 範囲: 実験モードの実用化。初期OFF・リロードまで保持、通常4コマへの復帰・結果保持。公開/commit/push/backupなし。本番共通ルーチンへの合流は別段階。
+- 配置: 直近6件のlayout ID/幾何を参照し、縦結合なしを含む異なる案を比較。mixed_rowsの実高さを明記。全身と縦長結合を同一視しない。話に適した同型の再利用は許容し、数だけ変えて多様性の証拠にしない。
+- 新規実画像: 実験9「葉っぱの貫禄」5コマ2/1/2（中央大コマ、生成130秒、最終QA50秒）と実験10「場所はごちそう」6コマ2/1/2/1（横長動作、生成110秒、QA49秒）。原画像・台本・準備文・目視記録は output/experimental-manga-20261011/practical-*。右側縦結合なし、右→左の台詞/結末、強いアオリ/俯瞰、水彩/ちび、題字/両透かし確認。劇画顔は引き絵で控えめに残る。細部揺れ・任意枠越え・全配置/全プロバイダーの再現保証はしていない。
+- QA原因/修正: 拒否時の項目と根拠を捨てていたので安全に保持。物語を知るAIの読順false-passを実画像で確認し、台本なし独立転記→品質照合の2 APIへ。全ページ/原寸コマ/左右透かしを添付し、実位置の台詞と題字/透かしをコード照合。元画像変更なし、合計120秒上限、未確認で画像保持・操作復帰、自動画像修正OFF。
+- 最良候補: 同じ準備案で実験7→8を実生成、比較13秒で改善なしとされ7を維持、両画像保存。旧候補維持・例外/同点/回帰/停止のローカル回帰あり。QA実通信中停止→画像/検査保持、後続再開、遅延採用なしを実UI確認。
+- 検証: review-fields/physical-reading/page-text/style-partition等RED→GREEN。影響133/133、最新QA86/86、revision8実験25/25。lint成功、build初回EPERMは権限を診断し同一build再実行成功、postbuild security成功。証拠の整合性監査は practical-bugfix-evidence.json（全画像の完全性を保証する監査ではない）。
+- 現在のタブ: IAB browser2/tab1、providerTabId browser-use:1ff41f7e-22b2-4214-9575-cfac569ddaa8、localhost5173。元入力/既存結果を保持し実験10枚、現在実験ON。API接続再利用、キー未読・再読み込みなし。以前のタブ障害は解消済み。
+- 残る別課題: 通常4コマの長時間QAは未修正。実験の画風強度/微細な描写は生成ごとに目視が必要。デフォルトON化や本番統合は未実施。次は利用結果に具体的な重大失敗があればその共通原因を調査し、無条件の追加課金は行わない。
+- 計画: docs/superpowers/plans/2026-10-11-experimental-manga-expression-plan.md。本項を現在状態の正本とし、以前の途中経過は output/experimental-manga-20261011/practical-handoff-prior.txt に保存。以下は過去の履歴。
+
+## 2026-10-11 実験revision 2までの確認記録（未公開）
+
+- 承認: 実装＋実API検証。初期OFFで通常4コマを保持。STEP3前のスイッチ、ONは実験用STEP3→確認→STEP4、OFFで保存済み通常promptへ復帰。元台本/通常履歴と実験結果は別状態。カメラ・画風のトレードオフも判定。公開/commit/push/backup/デフォルト変更なし。
+- 実装: App/ExperimentalMangaPanel/experimental-manga。4〜8コマ、台詞ID・anchorカメラ保持、隣接枠越えは任意、自動修正なし。初期OFF・session保持・STEP3ラベル切替・OFF復帰・Webコピー実確認。タイトル/既存両透かしを共有抽出へ戻し、狭い外側余白を指定。実験QAは総待機120秒・根拠不足unverified、通常4コマQAの600秒待ちは未変更。
+- API: IAB4/tab1 localhost5173のOpenAI接続を保持、キー未読。dev session1834。新規3画像（通常4/実験5/実験6）保存済み。6コマで題字・両透かし・狭くなった余白・画風差を目視確認、枠越えは出ず。全身の足先とQAの偽陽性を目視記録し全面品質PASSにはしない。output/experimental-manga-20261011。focused21/21、lint/build成功。全1413中1412成功、未公開READMEの既存公開用監査がstaleで1失敗（偽更新しない）。
+- revision 2追加済み: 映える演出10候補をAIが必要な場面だけ選ぶ。既存camera/style/台詞/読順を維持、無言専用演出はsilent insertへ限定、未知/重複/不適合を拒否。新prompt契約で古いSTEP3を無効化し、WebとAPI本文の無断変更を拒否。追加RED2件→GREEN23/23、lint/build成功。
+- 追加実API: 新規「最後の一投」で実験STEP3→STEP4を1回（累計4画像＝通常1+実験3）。AIが6コマ・手前奥対比/大きな見せ場/軌跡/輪郭光/無言の間/余白/形の接続を選んだ。実画素で手元アップ・縦長の強いアオリ・紙飛行機の軌跡・夕日・無言反応・タイトル/両透かしを確認。劇画の顔の変化は弱く、全身の足先も完全一致でない。AI検査は根拠不足unverifiedを保持し、任意演出の欠落から再生成しない。出力experiment-3-*、visible IAB4/tab1・接続・全結果保持。初期OFFだが現在の確認タブはON。
+- revision 2時点の確認境界: localのみ。screen gate/題字・両透かし・外側余白のroot-cause bugfix gate成功。新演出の23 focused、全1413中1412成功の広域結果は新演出追加前（shared title/footer変更後）。公開用README監査stale1件は未更新。通常4コマの長いQA待ちは未修正であり、一般的な画質向上や任意演出全部の実描画は保証しない。公開/commit/push/backup/デフォルト変更は行わない。
 Release validation 072511: process exited1 before publication because four price-snapshot tests still expected2026-10-10 after required official review advanced all current snapshots to2026-10-11. Focused28 checks reproduced4 failures; synchronizing only those five date assertions yields28/28 PASS. Prices, privacy and runtime routes unchanged. Previous user authorized stopping/repairing verification and redoing the same v7.0.2 deployment; the operation remains unfinished. Note editorIAB4 has a prepared body update, not published; IAB2 input preserved. Next: commit fixture synchronization, clean preflight and the established formal redeployment.
 
 Release verification follow-up: initial formal session1207 stopped by explicit user approval before push/publication (receipt 065641 retained). Remaining file was gemini-grounding-contract.test.mjs at Vite SSR initialization. Isolated original passed3/3 in15.4s; traced full run spent85s loading then0.3s executing/closing. Internal reason for first15-minute nonreturn remains unknown. Removed unnecessary Vite setup for this plain-ESM API contract, retaining every allowed/rejected assertion and calling the same client through native Node. Focused3/3 now0.48s; diagnostic instrumentation removed. User authorized formal redeployment after diagnosis/change. Next: commit clean candidate and fresh shared transaction; no new paid generation or full backup.

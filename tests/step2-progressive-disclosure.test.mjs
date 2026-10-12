@@ -111,8 +111,6 @@ test('STEP2 completion log and final time remain beside the generated scenario',
 test('preview and STEP3 are disclosed only after a scenario exists', async () => {
   const app = await readFile(new URL('../src/App.jsx', import.meta.url), 'utf8');
 
-  assert.match(
-    app,
-    /\{!isAnalyzing && !isSearching && currentStep >= 3 && \(\s*<>[\s\S]*?<GenerationPreview[\s\S]*?<Step3Panel[\s\S]*?<\/?>\s*\)\}/,
-  );
+  assert.match(app, /\{!isAnalyzing && !isSearching && currentStep >= 3 && \(\s*<>\s*<GenerationPreview[\s\S]*?<\/?>\s*\)\}/);
+  assert.match(app, /<ExperimentalMangaPanel[\s\S]*?currentStep=\{currentStep\} isAnalyzing=\{isAnalyzing\} isSearching=\{isSearching\}[\s\S]*?<Step3Panel[\s\S]*?<\/ExperimentalMangaPanel>/);
 });

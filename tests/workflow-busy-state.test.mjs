@@ -37,7 +37,7 @@ function harness(overrides = {}) {
     originalScenario: '', scenarioThought: '', enhanceLog: '', genLog: [], finalPrompt: 'Original prompt',
     isSearching: false, isEnhancing: false, isGeneratingImage: false, isFixingPolicy: false,
     policyAutoRetrying: false, allowImageQualityRepair: true, is360CameraWorking: false, isFullAutoMode: false, isAborting: false,
-    isAssembling: false, isAnalyzing: false,
+    isAssembling: false, isAnalyzing: false, experimentalEnabled: false,
     scenarioRunEpochRef: { current: 0 }, promptAssemblyRunRef: { current: 0 },
     promptAssemblyAbortRef: { current: null }, fullAutoAbortRef: { current: false },
     isFullAutoModeRef: { current: false }, qualityRetryAbortRef: { current: false },
@@ -77,7 +77,7 @@ function harness(overrides = {}) {
   });
   const bind = name => (state[name] = new Function('scope', `with (scope) { return (${callback(name)}); }`)(scope));
   for (const name of ['finishScenarioTiming', 'invalidateScenarioRun', 'invalidatePromptAssembly',
-    'invalidateScenarioOutput', 'setScenarioFromUser', 'setPunchlineType', 'assertImageGenerationPrompt']) {
+    'invalidateScenarioOutput', 'setScenarioFromUser', 'setPunchlineType', 'assertImageGenerationPrompt', 'resetPageCaches']) {
     if (source.includes(`const ${name} = `)) bind(name);
   }
   return { state, bind };
@@ -294,10 +294,10 @@ test('obsolete image generation cannot initiate a paid policy retry for the new 
   assert.equal(await pending, false);
 });
 
-for (const mode of ['disabled', 'review-only']) {
+for (const mode of ['disabled', 'review-only', 'experimental']) {
   test(`${mode} image generation cannot automatically enter the paid policy repair path`, async () => {
     const { state, bind } = harness({
-      allowImageQualityRepair: mode !== 'disabled',
+      allowImageQualityRepair: mode !== 'disabled', experimentalEnabled: mode === 'experimental',
       generateImageOnce: async (_skip, _prompt, options) => {
         assert.equal(options.suppressPolicyChoice, false);
         state.lastPolicyErrorRef.current = 'Safety refusal';
@@ -312,7 +312,7 @@ for (const mode of ['disabled', 'review-only']) {
   test(`${mode} policy entry rejects direct calls before prompt repair or image generation`, async () => {
     let repairs = 0, generations = 0;
     const { state, bind } = harness({
-      allowImageQualityRepair: mode !== 'disabled',
+      allowImageQualityRepair: mode !== 'disabled', experimentalEnabled: mode === 'experimental',
       retryImagePolicyGeneration,
       fixPolicyViolation: async () => { repairs++; return { success: true, modifiedPrompt: 'Unapproved changed prompt' }; },
       generateImageOnce: async () => { generations++; return true; },
@@ -330,7 +330,7 @@ for (const mode of ['disabled', 'review-only']) {
   });
 
   test(`${mode} policy-attempt image callback cannot bypass the automatic repair guard`, async () => {
-    const { state, bind } = harness({ allowImageQualityRepair: mode !== 'disabled' });
+    const { state, bind } = harness({ allowImageQualityRepair: mode !== 'disabled', experimentalEnabled: mode === 'experimental' });
     assert.equal(await bind('generateImageOnce')(true, 'Unapproved changed prompt', {
       policyAttempt: 1, reviewOnly: mode === 'review-only',
     }), false);

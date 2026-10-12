@@ -24,7 +24,8 @@ export default function Step3Panel({
   promptActionRef,
   colorMode = 'color',
   setColorMode,
-  isColorModeLocked = false
+  isColorModeLocked = false,
+  experimentEnabled = false
 }) {
   const progressLogRef = useRef(null);
   const controlsDisabled = currentStep < 3 || isSearching || isAnalyzing || isEnhancing
@@ -104,7 +105,7 @@ export default function Step3Panel({
         ) : (
           <>
             <Wand2 size={24} className={`text-blue-600 ${currentStep === 3 ? 'animate-bounce' : ''} `} />
-            <span>画像用の指示文（プロンプト）を構築する (STEP 3)</span>
+            <span>{experimentEnabled ? '実験的コマ割りのプロンプトを作成 (STEP 3)' : '4コマ用の指示文（プロンプト）を構築する (STEP 3)'}</span>
             <ArrowRight size={24} className="opacity-60" />
           </>
         )}

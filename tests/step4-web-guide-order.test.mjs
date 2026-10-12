@@ -16,7 +16,7 @@ test('ChatGPT Web disclosure starts closed and contains every manual action, lea
       const html = renderToStaticMarkup(React.createElement(Step4Panel, { ...props, ...mode }));
       const disclosure = html.match(/<details class="web-prompt-disclosure">([\s\S]*?)<\/details>/)?.[1];
       assert.ok(disclosure, 'native details has no open attribute, so it starts closed');
-      assert.match(disclosure, /<summary[^>]*>ChatGPTのWebでプロンプトを貼り付け（API節約可能）／4コマ漫画を動画化(?:\/1枚絵エモーショナルプロンプト)?<\/summary>/);
+      assert.match(disclosure, /<summary[^>]*>ChatGPTのWebでプロンプトを貼り付け（API節約可能）／4コマ漫画を動画化(?:／1枚絵エモーショナルプロンプト)?<\/summary>/);
       for (const text of ['ChatGPT Webへの貼り付け手順', '全文プロンプトを.txtで保存する', 'Web版生成用 制作情報JSONを保存', '制作情報JSONには、現在の素材番号・認識内容', '画像比率修正・アップスケール（web貼り付け時）', '安全基準（ポリシー）に引っかかって画像が出ない場合（web貼り付け時）']) {
         assert.ok(disclosure.includes(text), text);
       }
@@ -65,17 +65,18 @@ test('Gemini review is beside the image and before instructions; video remains r
   try {
     const { default: Step4Panel } = await server.ssrLoadModule('/src/components/Step4Panel.jsx');
     for (const generatedImage of ['', 'data:image/png;base64,YQ==']) {
-      for (const allowImageQualityRepair of [false, true]) {
+      for (const [experimentalEnabled,allowImageQualityRepair] of [[false,false],[false,true],[true,false],[true,true]]) {
         const html = renderToStaticMarkup(React.createElement(Step4Panel, {
           selectedEngine: 'gemini', currentStep: 5, finalPrompt: 'OUTPUT: Single image.',
           genLog: [], policyErrorMsg: '', castList: '', scenario: '', webCopyPartLengths: [],
-          generatedImage, allowImageQualityRepair,
+          generatedImage, allowImageQualityRepair, experimentalEnabled,
         }));
         const review = html.indexOf('AIで画像を再検査');
         if (generatedImage) {
           assert.ok(review > html.indexOf('alt="Generated Result"'));
           assert.ok(review < html.indexOf('この画像への追加指示'));
-          assert.ok(html.includes(allowImageQualityRepair ? '自動修正ON' : '自動修正OFF'));
+          assert.ok(html.includes(!experimentalEnabled && allowImageQualityRepair ? '自動修正ON' : '自動修正OFF'));
+          if(experimentalEnabled)assert.ok(!html.includes('自動修正ON'));
         } else {
           assert.equal(review, -1, 'no review action without an image');
         }

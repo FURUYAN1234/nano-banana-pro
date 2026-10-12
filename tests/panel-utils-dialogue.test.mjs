@@ -77,6 +77,23 @@ test('explicit offscreen continuity does not reinsert named actors into visible 
   }
 });
 
+test('offscreen locations stay out of physical cast while device photos retain their depicted people',()=>{
+  const cast='## 甲\n## 乙\n## 丙\n## 丁';
+  const text='[Camera: 甲の肩越しの俯瞰]\n状況: 甲と乙がカメラの再生画面を見る。画面には四人全員の集合写真が写る。丙、丁は画角外の展示板側に残っている。\n乙「写真を見よう。」';
+  const rule=extractCastLimitRule(text,cast,{compact:true});
+  const count=rule.split('\n').find(line=>line.startsWith('CAST COUNT:'));
+  assert.match(count,/\[甲\]|\[乙\]/);assert.doesNotMatch(count,/\[丙\]|\[丁\]/);
+  assert.match(rule,/DIEGETIC REPLICA LAYER:.*\[丙\].*\[丁\]/);
+  assert.doesNotMatch(rule,/ABSENT: do NOT draw \[丙\], \[丁\]/,'photo representations remain allowed');
+  const playback=extractCastLimitRule('[Camera: 甲の肩越し]\n状況: 甲と乙が写真を見る。再生画面を主な注視対象とし、前コマと同じ四人の支持姿勢を表示する。丙、丁は画角外の展示板側に残っている。',cast,{compact:true});
+  assert.match(playback,/DIEGETIC REPLICA LAYER:.*\[丙\].*\[丁\]/);
+  const detailed=extractCastLimitRule('[Camera: 甲の肩越し]\n状況: 甲と乙がカメラの再生画面を見る。画面には、前コマの位置・衣装・左右の手・踏ん張りをそのまま引き継いだ四人全員が写る。丙、丁は画角外にいる。',cast,{compact:true});
+  assert.match(detailed,/DIEGETIC REPLICA LAYER:.*\[丙\].*\[丁\]/);
+  const ordinary=extractCastLimitRule('状況: 甲は画角外の展示板を見る。乙は画角外に出ない。丙は写真の横に立つ。丁は画面内に立つ。',cast,{compact:true});
+  assert.match(ordinary,/CAST COUNT:.*\[甲\].*\[乙\].*\[丙\].*\[丁\]/);
+  assert.doesNotMatch(ordinary,/DIEGETIC REPLICA LAYER/,'a camera-frame position is not a device-screen replica');
+});
+
 test('an actors shoulder-over gaze does not silently become the cameras shoulder-over view', () => {
   const cast = '## 甲\n## 乙';
   const panel = '[Camera: 左上からの俯瞰]\n状況: 乙は甲の肩越しに用紙を見つめる。甲は机の向こうで説明する。\n甲「ここだよ。」';
@@ -86,6 +103,19 @@ test('an actors shoulder-over gaze does not silently become the cameras shoulder
   assert.match(explicit, /OTS CAST INSTANCE LOCK/);
   const actionShot = extractCastLimitRule('状況: 甲の肩越しから撮影し、乙を捉える。\n乙「ここだよ。」', cast);
   assert.match(actionShot, /OTS CAST INSTANCE LOCK/);
+});
+
+test('a guests shoulder in Camera is not reassigned to the actor whose face is beyond it', () => {
+  const cast = '## 甲\n## 乙';
+  for (const role of ['職員', '案内人', '整備士']) {
+    const panel = `[Camera: ${role}の右肩越しから見下ろす。奥の甲の顔は${role}の肩越しに見せる。]\n状況: ${role}が用紙を示し、甲と乙は説明を聞く。\n${role}「ここです。」\n甲「分かりました。」`;
+    const rule = extractCastLimitRule(panel, cast, { compact: true });
+    assert.doesNotMatch(rule, /FG(?: only)?: \[甲\]|OTS CAST INSTANCE LOCK: \[甲\]/);
+    const dialogue = extractDialogueOnly(panel, cast, { forImagePrompt: true });
+    assert.doesNotMatch(dialogue, /B2=>\[甲\] visible rear-head/);
+  }
+  const actual = extractCastLimitRule('[Camera: 甲の右肩越しから、乙の顔を見せる。]\n状況: 甲と乙が話す。\n乙「はい。」', cast, { compact: true });
+  assert.match(actual, /FG(?: only)?: \[甲\]/);
 });
 
 test('enumerated chorus speakers retain every owner across STEP3 dialogue, action and cast boundaries', () => {
@@ -1295,3 +1325,19 @@ test('invalid BalloonLayout exposes the precise reason without weakening validat
     assert.throws(()=>extractDialogueOnly(`BalloonLayout: ${layout}\n甲「一。」\n乙「二。」`, '## 甲\n## 乙', {forImagePrompt:true}), error=>error.code === 'BALLOON_LAYOUT_INVALID' && error.reason === reason, reason);
   }
 });
+
+ test('story guests remain physical actors after their speaking panel, including unique shortened subjects', () => {
+ const cast='## 甲\n## 乙';
+ for(const [guest,short] of [['受付職員','職員'],['主任研究員','研究員']]) {
+ const storyText=guest+'「確認します。」\n甲「はい。」';
+ for(const subject of [guest,short]) {
+ const rule=extractCastLimitRule('状況: 甲と乙が机の前に立つ。甲の置いた紙を'+subject+'が受け取る。\n甲「ありがとう。」',cast,{compact:true,storyText});
+ assert.match(rule,new RegExp('CAST COUNT:.*\\['+guest+'\\]'));
+ assert.match(rule,/3 people/);
+ }
+ const absent=extractCastLimitRule('状況: 甲と乙が机の前に立つ。'+guest+'は画角外にいる。\n甲「'+guest+'が戻ったら聞こう。」',cast,{compact:true,storyText});
+ assert.doesNotMatch(absent,new RegExp('CAST COUNT:.*\\['+guest+'\\]'));
+ }
+ const ambiguous=extractCastLimitRule('状況: 甲が職員を見る。\n甲「誰だろう。」',cast,{compact:true,storyText:'受付職員「はい。」\n会場職員「こちらです。」'});
+ assert.doesNotMatch(ambiguous,/CAST COUNT:.*\[(?:受付職員|会場職員)\]/);
+ });

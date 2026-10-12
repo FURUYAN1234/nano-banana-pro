@@ -30,7 +30,7 @@ test('hard reset clears session story comparison data before clearing public his
 test('image generation discards stale API and QA results after reset', () => {
   const generation = workflow.slice(workflow.indexOf('const generateImageOnce ='), workflow.indexOf('const runPolicyAutoRetries ='));
   assert.match(generation, /await generateImageCandidate\(currentPrompt\);[\s\S]*if \(qualityRunEpoch !== scenarioRunEpochRef\.current\) return false;[\s\S]*setGeneratedImage\(finalImageStr\)/);
-  assert.match(generation, /await runImageQualityFailsafe\([\s\S]*if \(qualityRunEpoch !== scenarioRunEpochRef\.current\) return false;[\s\S]*setGeneratedImage\(acceptedImageStr\)/);
+  assert.match(generation, /await runPageImageQuality\([\s\S]*if \(qualityRunEpoch !== scenarioRunEpochRef\.current\) return false;[\s\S]*setGeneratedImage\(acceptedImageStr\)/);
 });
 
 test('file input serializes drops and releases analysis state after read failures', () => {

@@ -56,7 +56,7 @@ test('initial and bounded repair compose the same references with the completed 
       reviewCandidate: async candidate => candidate === original
         ? {pass: false, issues: [{type: 'anatomy', reason: 'extra finger'}]} : {pass: true},
       generateRepairCandidate: prompt => generate(prompt, original),
-      compareCandidates: async () => ({preferred: 'repair'}),
+      compareCandidates: async () => ({preferred: 'repair', reason:'The completed repair removes the extra finger and retains the rest.'}),
     });
     assert.equal(calls.length, 2);
     assert.ok(calls.every(call => call.url.endsWith('/images/edits')));

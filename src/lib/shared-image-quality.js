@@ -49,12 +49,15 @@ export const LIMB_OWNERSHIP_CHECK = 'LIMB OWNERSHIP CHECK (internal; never print
 
 export const LIMB_OWNERSHIP_CHECK_COMPACT = 'LIMB OWNERSHIP CHECK: Each person: hands-wrists-elbows-shoulders, feet-ankles-knees-hips connected; L/R limbs visible/occluded/cropped plausibly. No stray/extra/missing/merged/detached/mirrored/malformed limbs, even by furniture. Keep Action/crop/foreshortening; never expose hidden limbs. Never print.';
 
-export const SHARED_IMAGE_QUALITY_CONTRACT = `
+// Existing callers retain the exact legacy contract. Mixed-media pages opt in
+// to medium-neutral rendering; their per-panel recipes supply ink/paint details.
+export function buildImageQualityContract({ panelMedia = false } = {}) {
+  return `
 [ SHARED IMAGE QUALITY CONTRACT — CURRENT NANO BANANA QUALITY BASELINE ]
 - Preserve the user's requested cast, action, setting, and camera. Quality enrichment must support those directions, never replace them.
 - Render a rich physical setting with meaningful environmental anchors and layered foreground, midground, and background; do not default to empty walls, flat gradients, or generic blank rooms unless physical emptiness is explicitly requested.
-- Establish one primary focal subject or action per image/panel and at most one supporting focal cue. Make the primary subject the first read through scale, placement, light and contrast. Give its silhouette, acting face, important hand and story prop the strongest G-pen-like contour: visibly heavier pressure-tapered strokes with the boldest contact/overlap accents on that focal path. Render secondary figures and background detail with a clear step down to lighter, thinner, lower-contrast lines or controlled depth-of-field. Omit nonessential micro-detail instead of making every object equally sharp.
-- ${FOCAL_READABILITY}
+- ${panelMedia ? 'Establish one primary focal subject or action and at most one supporting cue per panel. Use scale, placement, value and medium-appropriate edges to make the acting face, hand and story prop readable. Render actors, faces, clothing, props AND background in that panel\'s assigned medium; do not apply one generic ink or paint treatment across the page. Simplify secondary detail without erasing required setting evidence.' : 'Establish one primary focal subject or action per image/panel and at most one supporting focal cue. Make the primary subject the first read through scale, placement, light and contrast. Give its silhouette, acting face, important hand and story prop the strongest G-pen-like contour: visibly heavier pressure-tapered strokes with the boldest contact/overlap accents on that focal path. Render secondary figures and background detail with a clear step down to lighter, thinner, lower-contrast lines or controlled depth-of-field. Omit nonessential micro-detail instead of making every object equally sharp.'}
+- ${panelMedia ? `FOCAL READABILITY: preserve shot scale, elevation, side, gaze, head turn and required body/prop visibility. Keep reactions, lettering and contact readable using the assigned medium's edges, pigment or ink, not an imposed contour style. Never turn a rear head toward the viewer for clarity. ${FOCAL_DEPTH_HIERARCHY}` : FOCAL_READABILITY}
 - Keep lighting and color coherent between cast and setting: use a motivated key light, fill, and rim or equivalent emotional lighting, with the cast clear against a softer, lower-contrast background.
 - ${SKIN_LIGHTING}
 - Keep coherent anatomy and joint direction at the neck, shoulder, elbow, wrist, hip, knee, and ankle. Use exactly the limbs implied by each visible character; preserve natural prop ownership, grip, contact, support, and left/right orientation.
@@ -64,6 +67,9 @@ export const SHARED_IMAGE_QUALITY_CONTRACT = `
 - ${FUNCTIONAL_SURFACE_ORIENTATION_LOCK}
 - ${FUNCTIONAL_SURFACE_PROJECTION_RULE}
 - ${OBJECT_GEOMETRY_LOCK}
-- Add clothing-fold shadows only where fabric overlaps, pinches, or intersects: use clean, localized cel-shaded shadow planes, never random geometric patterns or texture noise.
+- ${panelMedia ? 'Model clothing folds at real overlaps, pinches and intersections using the assigned medium: transparent pigment for watercolor, ink planes for ink-based recipes. Preserve natural material texture; do not impose opaque cel-fill on transparent painting.' : 'Add clothing-fold shadows only where fabric overlaps, pinches, or intersects: use clean, localized cel-shaded shadow planes, never random geometric patterns or texture noise.'}
 - Do not duplicate, merge, or replace main characters. Allow ordinary background people suited to the setting; no main-cast clones or new dominant characters.
-- Keep surfaces clean: no grain, speckles, dithering, moire, glitter, floating dust, or noisy micro-texture. Do not let decorative VFX replace physical setting or story evidence.`;
+- ${panelMedia ? 'Keep focal surfaces legible; avoid accidental compression noise, moire and decorative particles. Preserve deliberate pigment pooling, paper grain, pencil texture or hatching belonging to the assigned medium. VFX never replace physical setting or story evidence.' : 'Keep surfaces clean: no grain, speckles, dithering, moire, glitter, floating dust, or noisy micro-texture. Do not let decorative VFX replace physical setting or story evidence.'}`;
+}
+
+export const SHARED_IMAGE_QUALITY_CONTRACT = buildImageQualityContract();

@@ -18,7 +18,6 @@ import {
 } from 'lucide-react';
 import Panorama360Viewer from './Panorama360Viewer';
 import ImageEditForm from './ImageEditForm';
-import AutoSaveGuide from './AutoSaveGuide';
 import { prepareGeneratedImageSave, saveImageToChosenLocation } from '../lib/generated-image-save.js';
 import { getReferenceAsset, getReferenceMetadataRole } from '../lib/reference-assets.js';
 import { GEMINI_A4_RELAYOUT_PROMPT, GEMINI_2K_REFINEMENT_PROMPT } from '../lib/gemini-image-edit';
@@ -290,6 +289,7 @@ const getDisplayedImageInfo = (size, pageLayout) => {
 };
 
 export default function Step4Panel({
+  experimentalEnabled = false,
   outputRef,
   referenceAssets = [],
   imageEditDrafts = {},
@@ -377,7 +377,7 @@ export default function Step4Panel({
   const isSeriousEnhancementMode = getEndingModePolicy(punchlineType).endingTone === 'serious';
   const displayedHistory = generationHistory.find(item => item.img === generatedImage);
   const hasFixedPageLayout = displayedHistory?.pageLayout?.applied === true;
-  const isFourPanelPage = inferImageQualityMode(finalPrompt) === 'four-panel';
+  const isFourPanelPage = !experimentalEnabled && inferImageQualityMode(finalPrompt) === 'four-panel';
   const generationWaitLog = genLog.find(log => String(log).startsWith('[WAIT]'));
   const visibleGenLog = genLog.filter(log => !String(log).startsWith('[WAIT]'));
   if (!isGeneratingImage && generationWaitLog) visibleGenLog.push(generationWaitLog);
@@ -455,9 +455,7 @@ export default function Step4Panel({
                   disabled={isGeneratingImage || isFixingPolicy}
                   className={`w-full mt-2 px-4 py-2 rounded-lg border border-blue-400/40 bg-blue-900/20 text-blue-100 text-sm font-bold disabled:opacity-50 disabled:cursor-wait ${currentStep === 5 && !isGeneratingImage && !isFixingPolicy ? 'next-step-gentle-pulse' : ''}`}
                 >
-                  {!isChatGPTWebGuide ? 'AIで画像を再検査' : allowImageQualityRepair
-                    ? '表示中の画像を再検査し、必要な箇所だけ修正する（追加API課金あり）'
-                    : '表示中の画像を品質再検査する（画像再生成なし・解析API課金あり）'}
+                  AIで画像を再検査
                 </button>
   );
 
@@ -1046,7 +1044,7 @@ No explanations. No partial results.`;
               )}
               <details className="web-prompt-disclosure">
                   <summary className="web-prompt-disclosure-toggle">
-                    {isChatGPTWebGuide ? `ChatGPTのWebでプロンプトを貼り付け（API節約可能）／4コマ漫画を動画化${isOpenAIImageMode ? '/1枚絵エモーショナルプロンプト' : ''}` : 'Gemini Webで手動生成／4コマ漫画を動画化'}
+                    {isChatGPTWebGuide ? `ChatGPTのWebでプロンプトを貼り付け（API節約可能）／4コマ漫画を動画化${isOpenAIImageMode ? '／1枚絵エモーショナルプロンプト' : ''}` : 'Gemini Webで手動生成／4コマ漫画を動画化'}
                   </summary>
                 <div className="space-y-3">
               {isChatGPTWebGuide && finalPrompt && (
@@ -1263,10 +1261,10 @@ No explanations. No partial results.`;
                 </div>
               )}
               <label className="step4-help-copy mt-3 flex items-start gap-2 text-slate-300">
-                <input type="checkbox" checked={allowImageQualityRepair} onChange={event => setAllowImageQualityRepair(event.target.checked)} disabled={isGeneratingImage || isFixingPolicy} />
-                API生成の自動修正を許可する（品質の重大欠陥は最大3回、ポリシー拒否は別枠で最大5回。解析・再生成・再検査は追加課金／全候補NGなら最良候補を保持／OFFでは追加の画像生成なし）
+                <input type="checkbox" checked={!experimentalEnabled && allowImageQualityRepair} onChange={event => setAllowImageQualityRepair(event.target.checked)} disabled={experimentalEnabled || isGeneratingImage || isFixingPolicy} />
+                {experimentalEnabled ? '実験的コマ割りでは自動修正OFFです。生成画像と検査結果を保持します。' : 'API生成の自動修正を許可する（品質の重大欠陥は最大3回、ポリシー拒否は別枠で最大5回。解析・再生成・再検査は追加課金／全候補NGなら最良候補を保持／OFFでは追加の画像生成なし）'}
               </label>
-              {(isGeneratingImage || policyAutoRetrying) && allowImageQualityRepair && (
+              {(isGeneratingImage || policyAutoRetrying) && !experimentalEnabled && allowImageQualityRepair && (
                 <button
                   type="button"
                   onClick={stopQualityRetries}
@@ -1308,7 +1306,6 @@ No explanations. No partial results.`;
                   )}
                 </div>
               </button>
-              {isChatGPTWebGuide && existingImageReviewControl}
               <p className="mt-1.5 mb-3 px-1 text-[10px] leading-snug text-slate-400">
                 生成画像には、安全化した制作情報を保存します。生成時点の素材番号・認識内容・人物設定・360°背景設定を記録し、後からの素材変更で書き換えません。APIキー・参照画像本体・解析ログは保存しません。
               </p>
@@ -1322,14 +1319,14 @@ No explanations. No partial results.`;
                   </div>
                   <p className="text-yellow-200/80 leading-relaxed" style={{ fontSize: '12px' }}>
                     AIの安全基準により画像生成が拒否されました。最後に成功した画像と生成履歴は保持しています。修正の実行状況は進捗ログで確認できます。
-                    {!allowImageQualityRepair && ' 自動修正OFFのため、追加の修正解析・画像生成は行いません。'}
+                    {(experimentalEnabled || !allowImageQualityRepair) && ' 自動修正OFFのため、追加の修正解析・画像生成は行いません。'}
                   </p>
                   <div className="flex flex-col sm:flex-row gap-2">
                     <button
                       className="flex-1 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-700 disabled:opacity-50 text-white font-bold py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 transition-all active:scale-95 border border-blue-400/30"
                       style={{ fontSize: '12px' }}
                       onClick={handlePolicyAutoFix}
-                      disabled={!allowImageQualityRepair || policyAutoRetrying || isFixingPolicy || isGeneratingImage}
+                      disabled={experimentalEnabled || !allowImageQualityRepair || policyAutoRetrying || isFixingPolicy || isGeneratingImage}
                     >
                       {policyAutoRetrying ? (
                         <><Loader2 size={16} className="animate-spin" /> 自動修正中...</>
@@ -1425,7 +1422,7 @@ No explanations. No partial results.`;
                 <div className="w-full max-w-2xl">
                   {existingImageReviewControl}
                   <p className="mt-2 text-[11px] text-slate-400 leading-relaxed">
-                    {allowImageQualityRepair
+                    {!experimentalEnabled && allowImageQualityRepair
                       ? '自動修正ON：AIが問題を探し、必要な箇所を修正します（追加API課金あり）。'
                       : '自動修正OFF：検査のみ行います（画像再生成なし・解析API課金あり）。'}
                   </p>
@@ -1478,7 +1475,6 @@ No explanations. No partial results.`;
                   <Download size={20} /> 保存先を選んで保存（制作情報入りPNG）
                 </button>
                 {imageMetadataError && <p role="status" className="mt-1 text-[10px] text-red-400">{imageMetadataError}</p>}
-                <AutoSaveGuide />
 
                 {isFourPanelPage && !hasFixedPageLayout && normalizeDisplayedPage && <button type="button" disabled={isGeneratingImage} className="w-full mt-2 text-slate-300 underline disabled:opacity-50" onClick={normalizeDisplayedPage}>ページ比率を揃える（追加課金なし）</button>}
 

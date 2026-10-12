@@ -19,7 +19,7 @@ test('new STEP2/STEP3 results advance the next action while repairs preserve sou
   assert.equal(getWorkflowStep({ ...ready, scenario: 'regenerated scenario', finalPrompt: '', imageSource }), 3);
 });
 
-test('only the next STEP4 action pulses, and neither action pulses while processing', async () => {
+test('OpenAI STEP4 has no additional review button; only generation pulses when it is next', async () => {
   const server = await createServer({ appType: 'custom', logLevel: 'silent', server: { middlewareMode: true } });
   try {
     const { default: Step4Panel } = await server.ssrLoadModule('/src/components/Step4Panel.jsx');
@@ -31,10 +31,10 @@ test('only the next STEP4 action pulses, and neither action pulses while process
         const buttons = [...html.matchAll(/<button\b([^>]*)>([\s\S]*?)<\/button>/g)];
         const generate = buttons.find(([, , body]) => /APIで新しい画像を生成する|画像を生成中/.test(body));
         const repair = buttons.find(([, , body]) => /表示中の画像を.*再検査/.test(body));
-        assert.ok(generate && repair);
+        assert.ok(generate);
+        assert.equal(repair,undefined,'do not add a second action under STEP4 generation');
         const idle = !busy.isGeneratingImage && !busy.isFixingPolicy;
         assert.equal(generate[1].includes('next-step-gentle-pulse'), idle && currentStep === 4);
-        assert.equal(repair[1].includes('next-step-gentle-pulse'), idle && currentStep === 5);
       }
     }
   } finally {
