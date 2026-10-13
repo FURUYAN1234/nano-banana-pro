@@ -38,6 +38,7 @@ const DEFAULT_OPENAI_SCENARIO_MODEL_LABEL = OPENAI_SCENARIO_MODEL_OPTIONS
  * STEP 02: シナリオ構築設定パネル
  */
 export default function Step2Panel({
+  experimentEnabled = false,
   mosaicCopyrightedCharacters = true,
   setMosaicCopyrightedCharacters,
   isRenderOptionsLocked = false,
@@ -108,7 +109,7 @@ export default function Step2Panel({
     ? (isSeriousEnhancementMode ? 'シリアス・ドキュメンタリー' : 'ギャグ・ドキュメンタリー')
     : (isSeriousEnhancementMode ? 'シリアス演出' : 'ギャグ演出');
   const enhancementDirectionDescription = isDocumentaryEnhancementMode
-    ? (isSeriousEnhancementMode ? '事実保持・深刻な余韻' : '事実保持・4コマ目の反応')
+    ? (isSeriousEnhancementMode ? '事実保持・深刻な余韻' : '事実保持・最終コマの反応')
     : (isSeriousEnhancementMode ? '緊張・間・結末' : '仕込み・増幅・回収');
   const allEnhancementCategoriesSelected = enhanceExpressions &&
     enhanceBodyLang &&
@@ -141,7 +142,7 @@ export default function Step2Panel({
       )}
       <div className="flex items-center justify-between">
         <div className={`flex items-center gap-3 text-xs font-black uppercase tracking-widest ${currentStep === 2 ? 'text-purple-400' : 'text-slate-500'} `}>
-          <FileText size={18} /> STEP 02: シナリオ構築設定（ストーリー設定）
+          <FileText size={18} /> STEP 02: シナリオ構築設定（{experimentEnabled ? '5〜8コマ' : '4コマ'}のストーリー設定）
         </div>
       </div>
 
@@ -253,7 +254,7 @@ export default function Step2Panel({
             <div className="text-xs font-bold text-purple-300 text-center">
               ▼ 自由入力：描きたいテーマや、ニュースのURLを自由に入力してください (<span className="text-blue-400">URLからの自動読み込みに対応</span>)
             </div>
-            <p className="material-direction-help">素材名や現在の画像番号で、使う・使わない、誰が持つ・何をするかも指定できます。AIが希望をできる範囲で整理し、未指定の部分はおまかせで調整します。</p>
+            <p className="material-direction-help">素材名や現在の画像番号で、使う・使わない、誰が持つ・何をするかを指定できます。画風も「通常・POP・水彩・劇画・スケッチ・ちびギャグ」をコマごとに指定できます（例：2コマ目はPOP、4コマ目は劇画）。<br />通常モードは4コマ固定で、入力したコマ数指定は無視します。実験的コマ割りがONの場合は5〜8コマで指定でき、指定がなければ内容に合わせて決めます。<br />AIが希望をできる範囲で反映し、指定のない部分は内容に合わせて調整します。</p>
             <textarea
               value={manualTopic}
               onChange={(e) => setManualTopic(e.target.value)}

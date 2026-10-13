@@ -5,11 +5,12 @@ import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { createServer } from 'vite';
 
-let server, Step2Panel;
+let server, Step2Panel, Step3Panel;
 
 before(async () => {
   server = await createServer({ appType: 'custom', logLevel: 'silent', server: { middlewareMode: true, hmr: false } });
   ({ default: Step2Panel } = await server.ssrLoadModule('/src/components/Step2Panel.jsx'));
+  ({ default: Step3Panel } = await server.ssrLoadModule('/src/components/Step3Panel.jsx'));
 });
 
 after(async () => { await server?.close(); });
@@ -108,9 +109,26 @@ test('STEP2 completion log and final time remain beside the generated scenario',
   assert.doesNotMatch(html, /STEP2を実行すると/);
 });
 
-test('preview and STEP3 are disclosed only after a scenario exists', async () => {
+test('preview waits for a scenario and the page-mode switch precedes STEP2', async () => {
   const app = await readFile(new URL('../src/App.jsx', import.meta.url), 'utf8');
-
   assert.match(app, /\{!isAnalyzing && !isSearching && currentStep >= 3 && \(\s*<>\s*<GenerationPreview[\s\S]*?<\/?>\s*\)\}/);
-  assert.match(app, /<ExperimentalMangaPanel[\s\S]*?currentStep=\{currentStep\} isAnalyzing=\{isAnalyzing\} isSearching=\{isSearching\}[\s\S]*?<Step3Panel[\s\S]*?<\/ExperimentalMangaPanel>/);
+  assert.match(app, /<ExperimentalMangaPanel[\s\S]*?currentStep=\{currentStep\} isAnalyzing=\{isAnalyzing\} isSearching=\{isSearching\}[\s\S]*?\/>[\s\S]*?<Step2Panel/);
+  assert.doesNotMatch(app, /<\/ExperimentalMangaPanel>/);
+});
+
+test('STEP3 stays locked until STEP2 is ready in both page modes', () => {
+  for (const experimentEnabled of [false, true]) {
+    const render = overrides => renderToStaticMarkup(React.createElement(Step3Panel, {
+      currentStep: 3, experimentEnabled, scenarioModeValid: true,
+      setColorMode() {}, setShowWatermarks() {}, assemblePrompt() {}, ...overrides,
+    }));
+    for (const blocked of [{ currentStep: 2 }, { isAnalyzing: true }, { isSearching: true }]) {
+      const html = render(blocked);
+      assert.match(html, /<button[^>]*disabled=""/);
+      assert.match(html, /pointer-events:auto/);
+    }
+    const ready = render({});
+    assert.doesNotMatch(ready, /<button[^>]*disabled=""/);
+    assert.doesNotMatch(ready, /pointer-events:auto/);
+  }
 });

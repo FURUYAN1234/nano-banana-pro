@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import * as scenarioHistory from '../src/lib/generation-history.js';
 
 import {
   addGenerationHistoryItem,
@@ -8,6 +9,49 @@ import {
   downloadImageDataUrl,
   MAX_GENERATION_HISTORY_ITEMS
 } from '../src/lib/generation-history.js';
+
+test('manual source keys identify the same explicit input without retaining its text', async () => {
+  const key = await scenarioHistory.createScenarioSourceKey({ inputMode: 'manual', manualTopic: '風鈴を直す。\n二人で支える。' });
+  assert.match(key, /^manual:sha256:[a-f0-9]{64}$/);
+  assert.equal(await scenarioHistory.createScenarioSourceKey({ inputMode: 'manual', manualTopic: ' 風鈴を直す。\r\n二人で支える。 ' }), key);
+  assert.notEqual(await scenarioHistory.createScenarioSourceKey({ inputMode: 'manual', manualTopic: '風鈴を直す。\n一人で支える。' }), key);
+  assert.equal(await scenarioHistory.createScenarioSourceKey({ inputMode: 'news', manualTopic: '風鈴を直す。\n二人で支える。' }), '');
+  assert.equal(await scenarioHistory.createScenarioSourceKey({ inputMode: 'manual', manualTopic: ' ' }), '');
+});
+
+test('recent outcomes follow the actual final panel for native 5 and 8 panel scenarios', () => {
+  for (const count of [5, 8]) {
+    const source = `Punchline: 決意\nLogline: 札を揃えて案内を通す\n` + Array.from({ length: count }, (_, index) =>
+      `[${index + 1}コマ目: 展開]\n[EMOTION: NORMAL]\n[Camera: 俯瞰]\nBalloonLayout: []\n状況: ${index + 1 === count ? '最後の札が正しい入口を示す。' : `${index + 1}枚目の札を確認する。`}\nセリフなし`).join('\n');
+    const [record] = scenarioHistory.collectRecentScenarioOutcomes([source]);
+    assert.equal(record.ending, '決意');
+    assert.match(record.outcome, /最後の札が正しい入口を示す/);
+    assert.doesNotMatch(record.outcome, /4枚目|Camera|EMOTION|BalloonLayout/);
+  }
+});
+
+test('same-source reruns exclude only proven matching entries while other and unknown stories remain comparable', () => {
+  const sourceKey = `manual:sha256:${'a'.repeat(64)}`;
+  const differentKey = `manual:sha256:${'b'.repeat(64)}`;
+  const story = action => `[4コマ目: 結]\n状況: ${action}`;
+  const sources = [
+    { scenario: story('同じ原案を再現する。'), sourceKey },
+    { scenario: story('別の原案で同じ仕掛けを使う。'), sourceKey: differentKey },
+    story('旧履歴で出所は不明。'),
+    { scenario: story('自由生成で重複した仕掛け。'), sourceKey: '' },
+  ];
+  const filtered = scenarioHistory.collectRecentScenarioOutcomes(sources, { sourceKey, currentScenario: sources[0].scenario, isManualRerun: true });
+  assert.deepEqual(filtered.map(item => item.outcome), ['状況: 別の原案で同じ仕掛けを使う。', '状況: 旧履歴で出所は不明。', '状況: 自由生成で重複した仕掛け。']);
+  assert.equal(scenarioHistory.collectRecentScenarioOutcomes(sources).length, 4, 'free generation still compares every source');
+  assert.equal(scenarioHistory.collectRecentScenarioOutcomes(sources, { sourceKey }).length, 4, 'a fixed topic alone is not an intentional rerun');
+  assert.equal(scenarioHistory.collectRecentScenarioOutcomes(sources, { sourceKey, currentScenario: '', isManualRerun: true }).length, 4, 'a new work without a current scenario retains comparison');
+  assert.equal(scenarioHistory.collectRecentScenarioOutcomes(sources, { sourceKey, currentScenario: sources[0].scenario, isManualRerun: false }).length, 4, 'automatic generation retains comparison');
+  assert.equal(scenarioHistory.collectRecentScenarioOutcomes([{ scenario: sources[0].scenario, sourceKey: 'unknown' }], { sourceKey: 'unknown' }).length, 1);
+  assert.equal(scenarioHistory.findScenarioSourceKey(sources[0].scenario, sources), sourceKey);
+  assert.equal(scenarioHistory.findScenarioSourceKey('edited output', sources), '');
+  assert.equal(scenarioHistory.findScenarioSourceKey(sources[0].scenario, [...sources, { scenario: sources[0].scenario, sourceKey: differentKey }]), '', 'ambiguous origin is unknown');
+  assert.equal(scenarioHistory.findScenarioSourceKey(sources[0].scenario, [...sources, sources[0].scenario]), '', 'a legacy match does not prove origin');
+});
 
 test('generated image history keeps multiple recent API images for selection during a loop', () => {
   const oldHistory = [

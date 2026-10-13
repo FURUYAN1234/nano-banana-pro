@@ -792,8 +792,15 @@ const renderBalloonLayout = (source, entries, rearSubject = '', uncertainRear = 
   }
   if (!plan.length) return '';
   const visibleAnchor = (value, speaker) => speaker !== rearSubject && !uncertainRear ? value : value
-    .replace(/口元|口もと|\bmouth\b/gi, '頭の見える輪郭')
-    .replace(/(^|の|から|\s)口(?=へ|に|の|$)/g, '$1頭の見える輪郭');
+    .replace(/口元|口もと|\bmouth\b|(^|の|から|\s)口(?=へ|に|の|$)/gi, (match, prefix, offset, text) => {
+      // Preserve authored visibility prohibitions; only positive tail endpoints
+      // are redirected. Rewriting a hidden mouth would hide the head contour.
+      const before = text.slice(0, offset).split(/[。;；.!?]/).pop();
+      const after = text.slice(offset + match.length);
+      const hiddenAfter = /^(?:[・やと](?:顔|目|両目))*\s*(?:は|を|が)?\s*(?:見せ(?:ない|ず)|見え(?:ない|ず)|描か(?:ない|ず)|出さ(?:ない|ず)|隠す|隠れ|を隠)|^\s*(?:(?:must|should)\s+)?(?:not|never)\s+(?:be\s+)?(?:shown|visible|drawn)/i.test(after);
+      const hiddenBefore = /(?:do not|don't|never)\s+(?:show|draw|expose)\s+(?:the\s+)?$|(?:hidden|invisible)\s+$/i.test(before);
+      return hiddenAfter || hiddenBefore ? match : (prefix || '') + '頭の見える輪郭';
+    });
   return ` BALLOON LAYOUT (NEVER PRINT; x=0 left/1 right; preserve Camera/Action): ${plan.map((item, i) => {
     const sourceMembers = parseCollectiveSpeaker(item.speaker, validCharacters)?.members || parseCollectiveSpeaker(entries[i].sourceSpeaker, validCharacters)?.members;
     const members = sourceMembers ? (collectiveMemberKeys(sourceMembers, validCharacters, false) || [])
@@ -1095,7 +1102,10 @@ export const extractDialogueOnly = (fullPanelText, castList, options = {}) => {
 
   // [v2.22] 「吹き出し描くな」指示を廃止。セリフが無い場合でも描画を阻害しない
   if (speechBubbleEntries.length === 0) {
-    if (options.forImagePrompt) renderBalloonLayout(layoutSource, []);
+    if (options.forImagePrompt) {
+      const layout = renderBalloonLayout(layoutSource, []);
+      if (options.layoutOnly) return layout;
+    }
     if (options.asEntries) return [];
     return "(Characters interact without dialogue in this panel)";
   }
@@ -1108,6 +1118,7 @@ export const extractDialogueOnly = (fullPanelText, castList, options = {}) => {
     const rear = extractExplicitRearSubject(fullPanelText, collectCastNameEntries(castList));
     const rearSubject = rear.subject;
     const layout = renderBalloonLayout(layoutSource, orderedEntries, rearSubject, ['unresolved', 'ambiguous'].includes(rear.status), validCharacters);
+    if (options.layoutOnly) return layout;
     if (options.asEntries) return orderedEntries.map(entryValue);
     // 上位台本には本文だけを再掲し、話者名は各コマの尻尾メタデータに一元化する。
     if (options.forScriptLock) {
@@ -2029,9 +2040,9 @@ const extractRawEmotionTag = (panelText) => {
 };
 
 // [v2.31] パネルの感情スタイル指示を構築（マルチキャラ対応）
-export const OPENAI_COLOR_GEKIGA_STYLE = `THIS PANEL ONLY: high-intensity GEKIGA faces, not anime faces with gritty backgrounds. ${GEKIGA_FACE_CONSTRUCTION} Put large solid-black shadow planes and dense directional crosshatching ON faces/hands, bold ink beside sharp white cuts. FULL COLOR. ${OPAQUE_COLOR_RENDERING} Keep identity/age and scripted emotion/gaze/pose/Camera; no added anger, age or wrinkles. Same face means same identity, not retained anime proportions.`;
+export const OPENAI_COLOR_GEKIGA_STYLE = `THIS PANEL ONLY: high-intensity GEKIGA faces, not anime faces with gritty backgrounds. ${GEKIGA_FACE_CONSTRUCTION} Fine dense directional crosshatching ON faces/hands is primary; solid black is a local secondary accent, with fine white gaps between strokes. FULL COLOR. ${OPAQUE_COLOR_RENDERING} Keep identity/age and scripted emotion/gaze/pose/Camera; no added anger, age or wrinkles. Same face means same identity, not retained anime proportions.`;
 
-const OPENAI_MONOCHROME_GEKIGA_STYLE = `THIS PANEL ONLY: redraw GEKIGA faces. ${GEKIGA_FACE_CONSTRUCTION} Large solid-black shadow planes and dense directional crosshatching ON faces/hands in shadow, sharp white cuts. Same identity, not anime proportions. Keep identity/age, scripted emotion/gaze/pose/Camera; no added anger, age or wrinkles. 白紙に墨一色。白肌の明部は墨線の間を無地白とし、灰色・網点の下地なし。光源に沿う局所影、褐色肌、衣服のトーンは残す。`;
+const OPENAI_MONOCHROME_GEKIGA_STYLE = `THIS PANEL ONLY: redraw GEKIGA faces. ${GEKIGA_FACE_CONSTRUCTION} Fine dense directional crosshatching ON faces/hands is primary; solid black is a local secondary accent, with fine white gaps between strokes. Same identity, not anime proportions. Keep identity/age, scripted emotion/gaze/pose/Camera; no added anger, age or wrinkles. 白紙に墨一色。白肌の明部は墨線の間を無地白とし、灰色・網点の下地なし。光源に沿う局所影、褐色肌、衣服のトーンは残す。`;
 const NORMAL_COLOR_RENDERING = `\nNORMAL PANEL RENDERING: Chic cinematic full-color TV anime style; polished Japanese animation finish. ${OPAQUE_COLOR_RENDERING}`;
 
 export const buildEmotionBlock = (panelText, colorMode = 'color', { preserveReferenceStyle = false, seriousTone = false, providerFamily = '', resetChibiProportions = false } = {}) => {

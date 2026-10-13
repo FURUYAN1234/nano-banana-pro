@@ -81,3 +81,48 @@ test('concrete cast directions and explicit camera directions remain enforceable
     assert.match(applyManualStagingLocks(SCENARIO, directive), /USER STAGING LOCK/, directive);
   }
 });
+
+const SIX_PANEL_SCENARIO = Array.from({ length: 6 }, (_, index) =>
+  `[${index + 1}コマ目: 場面]\n[Camera: ${index === 3 ? '一人の顔の接写' : index === 5 ? '反対側から見上げる' : '斜め上から見下ろす'}]\n状況: AとBとCが作業する。\n${['A', 'B', 'C'][index % 3]}「確認${index + 1}。」`).join('\n');
+
+test('continuation sentences inherit their panel scope before staging-cue filtering', () => {
+  const scoped = 'Aだけが背面で、奥のBとCは対象への視線に応じた横顔や斜め正面でよい。';
+  const next = 'BはAへ話しかける。';
+  const manual = '4コマ目は一人の接写。5コマ目は鉛筆スケッチの望遠。\n' + scoped
+    + 'カメラを見ない。\n6コマ目は反対側からのアオリ。' + next;
+  const result = applyManualStagingLocks(SIX_PANEL_SCENARIO, manual);
+  const panels = result.split(/(?=\[[1-6]コマ目)/);
+  assert.equal(panels.length, 6);
+  assert.equal((result.match(/USER STAGING LOCK - ABSOLUTE/g) || []).length, 2);
+  for (const [index, panel] of panels.entries()) {
+    assert.equal(panel.includes(scoped), index === 4);
+    assert.equal(panel.includes('カメラを見ない。'), index === 4);
+    assert.equal(panel.includes(next), index === 5);
+  }
+  assert.deepEqual(result.match(/\[Camera:[^\n]+/g), SIX_PANEL_SCENARIO.match(/\[Camera:[^\n]+/g));
+  assert.deepEqual(result.match(/[ABC]「[^」]+」/g), SIX_PANEL_SCENARIO.match(/[ABC]「[^」]+」/g));
+  assert.equal(applyManualStagingLocks(result, manual), result);
+});
+
+test('explicit whole-page scope ends local inheritance while earlier global rules remain global', () => {
+  for (const wholePage of ['全コマ', '全6コマ', '各コマ', 'ページ全体']) {
+    const global = 'AはBへ話しかける。';
+    const local = 'CはAを見つめる。';
+    const later = `${wholePage}で読者に視線を向けない。`;
+    const result = applyManualStagingLocks(SIX_PANEL_SCENARIO, global + '\n5コマ目は手元の接写。' + local + '\n' + later + 'BはAを見る。');
+    const panels = result.split(/(?=\[[1-6]コマ目)/);
+    for (const [index, panel] of panels.entries()) {
+      assert.ok(panel.includes(global), wholePage);
+      assert.equal(panel.includes(local), index === 4, wholePage);
+      assert.ok(panel.includes(later), wholePage);
+      assert.ok(panel.includes('BはAを見る。'), wholePage);
+    }
+  }
+});
+
+test('continuations retain each explicitly named panel without promoting ambiguous new paragraphs', () => {
+  const directive = 'AはBを見つめる。';
+  const result = applyManualStagingLocks(SIX_PANEL_SCENARIO, '２コマ目と五コマ目は水彩。\n\n' + directive);
+  const panels = result.split(/(?=\[[1-6]コマ目)/);
+  panels.forEach((panel, index) => assert.equal(panel.includes(directive), [1, 4].includes(index)));
+});

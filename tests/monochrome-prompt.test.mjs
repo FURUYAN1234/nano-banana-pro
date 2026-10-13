@@ -121,8 +121,8 @@ test('monochrome style changes retain white skin and do not inherit incidental b
     assert.match(prompt, /no default\/peak or copied sheet blush|既定の頬模様・見本の赤面の転写は禁止/);
     assert.match(prompt, /CHIBI_GAG;.*2-3 heads tall.*explicit proportions override.*Enlarge the skull.*compress torso.*Camera\/Action/i);
     assert.match(prompt, providerFamily === 'chatgpt'
-      ? /GEKIGA;.*small realistic eyes\/irises, heavy anatomical eyelids, pronounced nose bridges and carved cheek\/jaw planes.*Same identity, not anime proportions/
-      : /GEKIGA; Fully redraw GEKIGA faces.*small realistic eyes\/irises, heavy anatomical eyelids, pronounced nose bridges and carved cheek\/jaw planes.*Keep identity\/age, scripted gaze, Camera\/Action\/body acting/);
+      ? /GEKIGA;.*narrow eye openings, small irises partly covered by thick anatomical lids; projecting nose bridge, sidewalls and nostril wings; distinct cheekbone and jaw angles.*Same identity, not anime proportions/
+      : /GEKIGA; Fully redraw GEKIGA faces.*narrow eye openings, small irises partly covered by thick anatomical lids; projecting nose bridge, sidewalls and nostril wings; distinct cheekbone and jaw angles.*Keep identity\/age, scripted gaze, Camera\/Action\/body acting/);
     assert.match(prompt, /WATERCOLOR;.*assigned material\/shadow masks.*lit light skin/);
     assert.match(prompt, /panel recipe redraws facial construction/);
     assert.equal((prompt.match(/CHEEKS: none/g) || []).length, 4);
@@ -225,7 +225,7 @@ test('every monochrome emotion uses ink-specific direction, not its color recipe
     const block = buildEmotionBlock(`[EMOTION: ${style}]\n葵「はい。」\n凛「うん。」`, 'monochrome');
     assert.match(block, /MONOCHROME PANEL STYLE LOCK:/, style);
     assert.doesNotMatch(block, /full color|vibrant.*color|color wash|sepia|gaussian blur|golden backlight|neon pink|graphite|ink wash|soft bloom|grayscale panel|palette/i, style);
-    assert.match(block, /black|white|ink|hatch/i, style);
+    assert.match(block, /black|white|ink|hatch|白黒|墨|網点/i, style);
   }
 });
 
@@ -255,7 +255,7 @@ test('ink lighting and physical depth survive long Web compaction without changi
     assert.doesNotMatch(mono, /overrides ALL color\/paint\/lighting/);
     assert.deepEqual(mono.match(/^Camera:.*$/gm), color.match(/^Camera:.*$/gm));
     assert.deepEqual(mono.match(/^Action \(visual only\):.*$/gm), color.match(/^Action \(visual only\):.*$/gm));
-    assert.match(mono, /Redraw visible faces with small realistic eyes\/irises, heavy anatomical eyelids, pronounced nose bridges and carved cheek\/jaw planes/i);
+    assert.match(mono, /Rebuild faces as sculptural GEKIGA: narrow eye openings, small irises partly covered by thick anatomical lids; projecting nose bridge, sidewalls and nostril wings; distinct cheekbone and jaw angles/i);
     assert.doesNotMatch(mono, /PROPORTION OVERRIDE: Use 7-8 head proportions/);
     if (family === 'chatgpt') assert.ok(mono.length <= 32000, `shared Web/API budget: ${mono.length}`);
   }
@@ -390,4 +390,22 @@ test('API image repair preserves the requested ink medium, not erroneous color p
   assert.match(prompt, /preserve.*monochrome medium/i);
   assert.match(prompt, /remove the reported forbidden color or grey/i);
   assert.doesNotMatch(prompt, /typography, colors, or already-correct content/);
+});
+
+// The strict compact tier may remove only an app-owned identical reminder.
+test('strict monochrome compaction retains every drawing recipe and authored Camera/Action/dialogue', () => {
+  const full = build('chatgpt', 'monochrome', { promptMaxChars: 32000 });
+  const compact = build('chatgpt', 'monochrome', { promptMaxChars: 19000 });
+  const commonTail = ' Preserve script/Camera/Action, cast, glasses and wardrobe tone assignments.';
+  const fullRecipes = full.split('\n').filter(line => line.startsWith('MONOCHROME PANEL STYLE LOCK:'));
+  const compactRecipes = compact.split('\n').filter(line => line.startsWith('MONOCHROME PANEL STYLE LOCK:'));
+  assert.equal(fullRecipes.length, 4);
+  assert.deepEqual(compactRecipes, fullRecipes.map(line => line.endsWith(commonTail) ? line.slice(0, -commonTail.length) : line));
+  assert.ok(compact.length <= 19000);
+  for (const block of ['Camera:', 'Action (visual only):', 'Dialogue (verbatim bubbles):']) {
+    assert.deepEqual(compact.split('\n').filter(line => line.startsWith(block)), full.split('\n').filter(line => line.startsWith(block)), block);
+  }
+  assert.match(compact, /PROMPT PRIORITY: cast\/count\/identity\/glasses\/wardrobe, exact script\/Camera\/panel medium\/layout/);
+  assert.match(compact, /CROSS-PANEL WARDROBE TONE LOCK/);
+  assert.match(compact, /IDENTITY MATRIX:/);
 });

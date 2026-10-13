@@ -9,6 +9,7 @@ let parseScenarioResponse;
 let resolveGeneratedEnding;
 let assertNoInputModeLabelLeak;
 let sanitizeInputModeLabelLeak;
+let buildScenarioPanelCountInstruction;
 
 before(async () => {
   server = await createServer({
@@ -23,6 +24,7 @@ before(async () => {
     sanitizeInputModeLabelLeak,
   } = await server.ssrLoadModule('/src/lib/scenario-provider.js'));
   ({ resolveGeneratedEnding } = await server.ssrLoadModule('/src/lib/ending-mode-policy.js'));
+  ({ buildScenarioPanelCountInstruction } = await server.ssrLoadModule('/src/lib/scenario-validation.js'));
 });
 
 after(async () => {
@@ -56,8 +58,13 @@ test('manual topics never receive input-mode labels or news-search directives as
   });
 
   assert.match(prompt, /トピック: 山岳救助隊が新しい交代手順を試す/);
-  assert.doesNotMatch(prompt, /手動入力|手入力|自由入力/);
-  assert.doesNotMatch(promptWithExclusions, /手動入力|手入力|自由入力/);
+  // The mode-owned count policy names free input as instructions, not a topic.
+  // Every other occurrence remains forbidden, including repeated policy text.
+  for (const candidate of [prompt, promptWithExclusions]) {
+    const countPolicy = buildScenarioPanelCountInstruction();
+    assert.ok(candidate.includes(countPolicy));
+    assert.doesNotMatch(candidate.replace(countPolicy, ''), /手動入力|手入力|自由入力/);
+  }
   assert.doesNotMatch(prompt, /Time Machine Lock|Data Freshness Lock|MUST search for news\/events/);
   assert.doesNotMatch(prompt, /IT系ネタは禁止|具体的でマイナーな[^\n]*ニュース|Topic: \[ニュースの見出し/);
   assert.doesNotMatch(prompt, /ニュースのトピック/);

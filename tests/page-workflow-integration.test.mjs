@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import test from 'node:test';
+import { getWorkflowStep } from '../src/lib/generation-history.js';
 
 const source=await readFile(new URL('../src/hooks/useMangaWorkflow.js',import.meta.url),'utf8');
 const AsyncFunction=Object.getPrototypeOf(async function(){}).constructor;
@@ -14,14 +15,16 @@ for (const status of ['pass','warning','unverified']) {
       pageEvidence:'実画像で確認した題字と左右のクレジット',
       evidence:[{panel:1,dialogue:['本当に、ここ？'],camera:'頭頂部と机の天板が見える',
         style:'人物の顔も透明な水彩で描かれている',story:'右側の人物が窓を開いている',anatomy:'人物の腕は両肩から連続している'}]};
-    const candidate={},progress=[],log=[];
+    const candidate={},progress=[],log=[],requests=[];
     const scope={candidate,experimentalPrepared:{plan:{count:6},source:{}},generationScenario:'scenario',
-      experimentalInput:()=>({}),buildExperimentalReviewPrompt:()=>'',reviewExperimentalImage:async()=>({review,requests:2}),
+      experimentalInput:()=>({}),buildExperimentalReviewPrompt:()=>'',reviewExperimentalImage:async(_input,request)=>{await request('JSON',[],undefined,{responseFormat:'json_object'});return {review,requests:2};},
       validateExperimentalReview:x=>x,onReviewProgress:value=>progress.push(value),signal:undefined,
-      reviewRequest:()=>{},statCallback:value=>log.push(value),progressPhase:''};
+      reviewRequest:(...args)=>requests.push(args),statCallback:value=>log.push(value),progressPhase:''};
     const result=await new AsyncFunction(...Object.keys(scope),body)(...Object.values(scope));
     assert.equal(result.pass,status==='pass');
     assert.equal(candidate.experimentalReview,review);
+    assert.equal(requests[0][4].responseFormat,'json_object');
+    assert.equal(requests[0][4].outputProfile,'image-quality-review');
     const observed=Object.values(result.observations).join('\n');
     for(const value of [review.pageEvidence,...Object.values(review.evidence[0]).filter(v=>typeof v==='string'),'本当に、ここ？',...review.validationErrors]) {
       assert.ok(observed.includes(value),`lost observation: ${value}`);
@@ -39,22 +42,29 @@ for (const status of ['pass','warning','unverified']) {
 
 function modeHarness() {
   const body=source.match(/const changePageMode = ([\s\S]+?);\r?\n  \/\/ --- Step 3/)[1];
-  const state={isApiProcessing:false,experimentalEnabled:false,scenario:'original scenario',inputMode:'manual',manualTopic:'original request',
+  const state={isApiProcessing:false,experimentalEnabled:false,scenario:'normal scenario',inputMode:'manual',manualTopic:'original request',
+    originalScenario:'normal original',scenarioThought:'normal thought',explanation:'normal explanation',explanationNotice:'normal notice',mangaTitle:'normal title',
+    enhanceLog:'normal enhancement',lockedLocation:'normal location',lockedOutfit:'normal outfit',bg360CameraWork:{panels:[]},bg360CroppedPanels:['normal crop'],usedModel:'normal model',
+    punchlineType:'Auto',resolvedPunchlineTypeRef:{current:'Surreal'},scenarioRunEpochRef:{current:0},
     castListRef:{current:'original cast'},colorMode:'color',showWatermarks:true,mosaicCopyrightedCharacters:true,
     selectedEngine:'chatgpt',openAIImageQuality:'max',scenarioUsedModelRef:{current:'model'},
     imagesRef:{current:[]},referenceAssetsRef:{current:[]},bg360EnabledRef:{current:false},bg360ImageRef:{current:null},
     bg360Analysis:null,styleJson:{},getCurrentPromptProviderFamily:()=> 'chatgpt',
-    promptAssemblyRunRef:{current:0},finalPrompt:'normal prompt',generatedImage:'normal image',
-    generationHistory:[{image:'normal image'}],genLog:['normal log'],assembleThought:'normal assembly'};
-  for(const prop of ['finalPrompt','generatedImage','generationHistory','genLog','assembleThought']) {
-    state[`set${prop[0].toUpperCase()}${prop.slice(1)}`]=value=>{state[prop]=value;};
-  }
-  const scope=new Proxy(state,{has:()=>true,get:(target,key)=>key===Symbol.unscopables?undefined:key in target?target[key]:globalThis[key]});
+    promptAssemblyRunRef:{current:4,completedRun:4},finalPrompt:'normal prompt',generatedImage:'normal image',
+    generationHistory:[{image:'normal image',workflowSource:{promptAssemblyRun:4,finalPrompt:'normal prompt'}}],genLog:['normal log'],assembleThought:'normal assembly'};
+  state.invalidatePromptAssembly=()=>{state.promptAssemblyRunRef.current++;};
+  state.updateResolvedPunchlineType=value=>{state.resolvedPunchlineTypeRef.current=value;};
+  const scope=new Proxy(state,{has:()=>true,get:(target,key)=>{
+    if(key===Symbol.unscopables)return undefined;
+    if(key in target)return target[key];
+    if(/^set[A-Z]/.test(key))return value=>{const prop=key[3].toLowerCase()+key.slice(4);target[prop]=typeof value==='function'?value(target[prop]):value;};
+    return globalThis[key];
+  }});
   const change=new Function('scope',`with(scope){return (${body});}`)(scope);
   return {state,change};
 }
 
-for(const changed of ['unchanged','scenario','cast','color','watermark','references','provider','direction']) {
+for(const changed of ['unchanged','scenario','cast','color','watermark','references','provider','direction','ending']) {
   test(`mode restore ${changed}: preserve history and restore only matching prompt inputs`,()=>{
     const {state,change}=modeHarness();
     change(true);state.experimentalEnabled=true;
@@ -67,13 +77,56 @@ for(const changed of ['unchanged','scenario','cast','color','watermark','referen
     if(changed==='references')state.imagesRef.current=['new reference'];
     if(changed==='provider')state.selectedEngine='gemini';
     if(changed==='direction')state.manualTopic='new page direction';
+    if(changed==='ending')state.punchlineType='SeriousDocumentary';
     change(false);
-    assert.equal(state.finalPrompt,changed==='unchanged'?'normal prompt':'');
+    assert.equal(state.finalPrompt,['unchanged','scenario'].includes(changed)?'normal prompt':'');
+     assert.equal(state.scenario,'normal scenario','the other mode owns its own scenario');
+     if(changed==='ending')assert.equal(state.resolvedPunchlineTypeRef.current,'','old resolved ending must not override the new selector');
     assert.equal(state.generatedImage,'normal image');
-    assert.deepEqual(state.generationHistory,[{image:'normal image'}]);
+    assert.deepEqual(state.generationHistory,[{image:'normal image',workflowSource:{promptAssemblyRun:4,finalPrompt:'normal prompt'}}]);
     assert.equal(state.promptAssemblyRunRef.pages.experimental.generatedImage,'experimental image');
   });
 }
+
+test('mode round trips restore each scenario, metadata, prepared page and completed image provenance',()=>{
+  const {state,change}=modeHarness();
+  assert.equal(change(true),true);state.experimentalEnabled=true;
+  assert.equal(state.scenario,'');
+  assert.equal(state.finalPrompt,'');
+  assert.equal(state.generatedImage,null);
+  Object.assign(state,{scenario:'native 8 scenario',originalScenario:'native original',scenarioThought:'native thought',explanation:'native explanation',
+    mangaTitle:'native title',lockedLocation:'native location',lockedOutfit:'native outfit',bg360CroppedPanels:['native crop'],
+    finalPrompt:'native prompt',generatedImage:'native image',generationHistory:[{image:'native image',workflowSource:{promptAssemblyRun:6,finalPrompt:'native prompt'}}]});
+  const prepared={plan:{count:8},signature:'native source'};
+  state.promptAssemblyRunRef.current=6;state.promptAssemblyRunRef.completedRun=6;state.promptAssemblyRunRef.experimentalPrepared=prepared;
+  assert.equal(change(false),true);state.experimentalEnabled=false;
+  assert.equal(state.scenario,'normal scenario');
+  assert.equal(state.mangaTitle,'normal title');
+  assert.equal(state.explanation,'normal explanation');
+  assert.deepEqual(state.bg360CroppedPanels,['normal crop']);
+  assert.equal(state.promptAssemblyRunRef.completedRun,4);
+  assert.equal(getWorkflowStep({castList:'cast',scenario:state.scenario,finalPrompt:state.finalPrompt,generatedImage:state.generatedImage,
+    promptAssemblyRun:state.promptAssemblyRunRef.completedRun,imageSource:state.generationHistory[0].workflowSource}),5);
+  assert.equal(change(true),true);state.experimentalEnabled=true;
+  assert.equal(state.scenario,'native 8 scenario');
+  assert.equal(state.mangaTitle,'native title');
+  assert.equal(state.explanation,'native explanation');
+  assert.deepEqual(state.bg360CroppedPanels,['native crop']);
+  assert.equal(state.promptAssemblyRunRef.experimentalPrepared,prepared);
+  assert.equal(state.promptAssemblyRunRef.completedRun,6);
+  assert.equal(getWorkflowStep({castList:'cast',scenario:state.scenario,finalPrompt:state.finalPrompt,generatedImage:state.generatedImage,
+    promptAssemblyRun:state.promptAssemblyRunRef.completedRun,imageSource:state.generationHistory[0].workflowSource}),5);
+});
+
+test('mode cannot change during active API work and leaves current draft and completed image intact',()=>{
+  const {state,change}=modeHarness();
+  state.isApiProcessing=true;
+  assert.equal(change(true),false);
+  assert.equal(state.scenario,'normal scenario');
+  assert.equal(state.generatedImage,'normal image');
+  assert.equal(state.promptAssemblyRunRef.completedRun,4);
+  assert.equal(state.promptAssemblyRunRef.pages,undefined);
+});
 
 test('full-auto passes the newly generated scenario through shared STEP3 and STEP4',async()=>{
   const body=source.match(/const fullAutoProviderFamily = getCurrentPromptProviderFamily\(\);([\s\S]*?const step4ok = await regenerateImage\([^;]+;)/)[0];
@@ -89,7 +142,7 @@ test('full-auto passes the newly generated scenario through shared STEP3 and STE
 
 test('experimental preparation takes current cast and actual scenario model from shared workflow refs',()=>{
   const body=source.match(/const experimentalInput = ([\s\S]+?);\r?\n  const changePageMode/)[1];
-  const scope={scenario:'old scenario',castList:'old cast',castListRef:{current:'current cast'},inputMode:'manual',manualTopic:'完成ページは5〜8コマで、無言の間を残す',
+  const scope={scenarioMode:'experimental-manga',scenario:'old scenario',castList:'old cast',castListRef:{current:'current cast'},inputMode:'manual',manualTopic:'完成ページは5〜8コマで、無言の間を残す',
     colorMode:'color',mosaicCopyrightedCharacters:false,showWatermarks:true,isOpenAIEngine:true,
     formatOpenAIImageEngineName:()=> 'image model',openAIImageQuality:'max',scenarioModelId:'selected',
     scenarioUsedModelRef:{current:'actual'},OPENAI_SCENARIO_MODEL_OPTIONS:[{id:'selected',label:'selected model'},{id:'actual',label:'actual model'}],
@@ -113,7 +166,7 @@ for (const colorMode of ['color','monochrome']) {
     const source=await readFile(new URL('../src/hooks/useMangaWorkflow.js',import.meta.url),'utf8');
     const body=source.match(/const experimentalInput = ([\s\S]+?);\r?\n  const changePageMode/)[1];
     const images=['data:image/png;base64,YQ==','data:image/png;base64,Yg=='];
-    const scope={scenario:'source',castListRef:{current:'cast'},colorMode,mosaicCopyrightedCharacters:false,showWatermarks:true,
+    const scope={scenarioMode:'experimental-manga',scenario:'source',castListRef:{current:'cast'},colorMode,mosaicCopyrightedCharacters:false,showWatermarks:true,
       inputMode:'manual',manualTopic:'retain detailed source',isOpenAIEngine:true,formatOpenAIImageEngineName:()=> 'ChatGPT Images 2.5',openAIImageQuality:'high',
       GEMINI_IMAGE_MODEL:'gemini',OPENAI_SCENARIO_MODEL_OPTIONS:[],scenarioUsedModelRef:{current:'gpt-6-luna'},
       buildReferenceAssetContext,buildWebReferencePlan,buildOpenAIReferencePlan,getOpenAIPromptBodyBudget,

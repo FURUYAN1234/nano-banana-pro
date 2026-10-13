@@ -4,6 +4,7 @@ import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { createServer } from 'vite';
 import { FOCAL_DEPTH_HIERARCHY } from '../src/lib/shared-image-quality.js';
+import { GEKIGA_FACE_CONSTRUCTION } from '../src/lib/constants.js';
 import { withoutMosaicRepair } from './helpers/mosaic-isolation.mjs';
 import { restorePrePolicyContracts, restorePreSelectionContracts } from './helpers/prompt-policy-normalization.mjs';
 
@@ -149,9 +150,10 @@ test('only the OpenAI monochrome GEKIGA panel receives structural ink and facial
         providerFamily: 'chatgpt', colorMode: 'monochrome', promptMaxChars });
       const panels = prompt.split(/^## Panel \d+\s*$/m).slice(1);
       const gekiga = panels[input.emotions.indexOf('GEKIGA')];
-      assert.match(gekiga, /small realistic eyes\/irises/i);
-      assert.match(gekiga, /large solid-black shadow planes/i);
-      assert.match(gekiga, /dense directional crosshatching ON faces\/hands/i);
+      assert.ok(gekiga.includes(GEKIGA_FACE_CONSTRUCTION));
+      assert.doesNotMatch(gekiga, /large solid-black shadow planes/i);
+      assert.match(gekiga, /fine dense directional crosshatching ON faces\/hands.*primary/i);
+      assert.match(gekiga, /solid black.*local.*secondary/i);
       assert.match(gekiga, /same identity/i);
       assert.match(gekiga, /(?:not|do not retain)[^\n.]*anime/i);
       assert.match(gekiga, /scripted emotion\/gaze\/pose\/Camera/i);
@@ -170,7 +172,7 @@ test('OpenAI monochrome GEKIGA reserves lit light skin without stripping necessa
     assert.match(gekiga, /白肌の明部は墨線の間を無地白/);
     assert.match(gekiga, /灰色・網点の下地なし/);
     assert.match(gekiga, /光源に沿う局所影、褐色肌、衣服のトーンは残す/);
-    assert.match(gekiga, /crosshatching ON faces\/hands in shadow/);
+    assert.match(gekiga, /crosshatching ON faces\/hands is primary/);
     assert.doesNotMatch(gekiga, /Keep[^\n]*skin\/material tones/);
   }
 });

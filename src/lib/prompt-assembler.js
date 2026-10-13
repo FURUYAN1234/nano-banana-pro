@@ -197,7 +197,7 @@ const compactBudgetEyeLine = (line) => {
   return `EYE-LINE LOCK: ${participants} mutual gaze; reactors watch speaker; never lens/front. ${primary} 3/4; camera behind ${rear}; ${rear} rear head/shoulder FG, no front-on face. Script camera wins.`;
 };
 
-const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt(prompt), preserveReferenceStyle = false, seriousTone = false, maxChars = OPENAI_IMAGE_PROMPT_MAX_CHARS, preservePanelRecipes = false, sourceBlocks = []) => {
+const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt(prompt), preserveReferenceStyle = false, seriousTone = false, maxChars = OPENAI_IMAGE_PROMPT_MAX_CHARS, preservePanelRecipes = false, sourceBlocks = [], compactStyleReminderAtCap = false) => {
   if (prompt.length <= maxChars) return prompt;
   const panelColorMedia = !monochrome && !preserveReferenceStyle;
   const focalReadability = monochrome ? MONOCHROME_FOCAL_READABILITY : panelColorMedia ? OPENAI_COLOR_FOCAL_READABILITY : FOCAL_READABILITY;
@@ -213,9 +213,16 @@ const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt
     const index = literals.push(value) - 1;
     return `${label}"${tokenPrefix}${index}__"`;
   });
-  const restore = value => value
+  const restore = (value, compactStyleReminder = false) => value
     .replace(new RegExp(`"${tokenPrefix}(\\d+)__"`, 'g'), (_, index) => literals[Number(index)])
-    .replace(new RegExp(`${tokenPrefix}SOURCE_(\\d+)__`, 'g'), (_, index) => sourceLiterals[Number(index)]);
+    .replace(new RegExp(`${tokenPrefix}SOURCE_(\\d+)__`, 'g'), (_, index) => {
+      const sourceText = sourceLiterals[Number(index)];
+      // Only an app-generated style block may drop this shared reminder.
+      // Authored Action, Camera and dialogue blocks remain byte-identical.
+      return compactStyleReminder && /^\s*MONOCHROME PANEL STYLE LOCK:/.test(sourceText)
+        ? sourceText.replace(/^(MONOCHROME PANEL STYLE LOCK:[^\n]*) Preserve script\/Camera\/Action, cast, glasses and wardrobe tone assignments\.$/gm, '$1')
+        : sourceText;
+    });
   const sourceToken = new RegExp(`(${tokenPrefix}SOURCE_\\d+__)`, 'g');
   const mapAuthored = (text, transform) => text.split(sourceToken)
     .map(part => part.startsWith(`${tokenPrefix}SOURCE_`) ? part : transform(part)).join('');
@@ -373,7 +380,7 @@ const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt
   // 全コマ共有の衣装原文は上位に残し、機械注入した同一文だけを各Actionから除く。
   // 台本固有の着脱・状態変化・本文は触らない。各コマで衣装を再設計させない。
   const sharedOutfit = finallyCompacted.match(/^- IGNORE reference clothing\. Follow role-specific outfit assignments: (.*); unscoped categories apply to all\.$/m)?.[1];
-  return restore(mapAuthored(finallyCompacted, part => part
+  const minimumCompacted = mapAuthored(finallyCompacted, part => part
     // Keep medium/cheek intent in the last budget tier without repeating prose.
     .replace(/^SKIN LIGHT:[^\n]*/gm, line => preservePanelRecipes ? line : 'SKIN LIGHT: base hue, small soft highlights; no white face blobs. Key/fill/rim, depth, eye/hair glints; explicit glossy/stylized light or mono wins. CHEEK RENDERING: story/canonical makeup; watercolor skin wash. No default stamps/stripes/copied sheet blush. Preserve expressive blush and ink shadows.')
     .replace(/^BODY VOLUME:[^\n]*/gm, 'BODY VOLUME: body form shadows; hair/jaw/clothing cast shadows. Light direction, no quota. Bounded screen/black; lit=canonical base. FACE INK: eyes/nose/mouth, white gaps; no feature merging or disappearing hairlines.')
@@ -475,7 +482,10 @@ const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt
     .replace(/^PROMPT PRIORITY:[^\n]*/gm, "PROMPT PRIORITY: cast/count/identity/glasses/wardrobe, exact script/Camera/panel medium/layout. 人数のため顔出し/横並び/画風・投影変更不可。 CAMERA FIRST: fixed view; Action contact wins if Camera depth conflicts: move that actor's sole body within reach; never borrow another actor's hand; never relocate for legibility/chibi or mirror screen-left/right. Never derive body positions from dialogue order. Simplify only unspecified background texture and decorative VFX. Never print.")
     .replace(/^[\t ]+|[\t ]+$/gm, '')
     .replace(/[\t ]{2,}/g, ' ')
-    .replace(/\n{2,}/g, '\n')));
+    .replace(/\n{2,}/g, '\n'));
+  const restored = restore(minimumCompacted);
+  // Preserve already-fitting output; deduplicate only at the last hard cap.
+  return !compactStyleReminderAtCap || restored.length <= maxChars ? restored : restore(minimumCompacted, true);
 };
 
 const buildMonochromePanelInkLock = (panelText = '', identityMatrix = '') => {
@@ -898,7 +908,7 @@ ${geminiRearForegroundLock}`;
     ? compactForSoftTarget(clarifiedPrompt)
     : clarifiedPrompt;
   let budgetedPrompt = isChatGPTFamily && baselinePrompt.length > promptMaxChars
-    ? compactChatGPTConversationRules(baselinePrompt, isMonochrome, preserveReferenceStyle, seriousTone, promptMaxChars, false, sourceBlocks)
+    ? compactChatGPTConversationRules(baselinePrompt, isMonochrome, preserveReferenceStyle, seriousTone, promptMaxChars, false, sourceBlocks, true)
     : baselinePrompt;
   if (isChatGPTFamily && budgetedPrompt.length > promptMaxChars) {
     // Share only this repeated generated cue. Never touch Camera/Action or the

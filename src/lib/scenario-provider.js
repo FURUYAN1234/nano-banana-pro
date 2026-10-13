@@ -33,6 +33,8 @@ import {
   SEASONAL_OUTFIT_RETRY_INSTRUCTION
 } from './seasonal-outfit';
 import {
+  assertScenarioPanelStructure,
+  getScenarioPanelBlocks,
   assertGeneratedScenarioCameraContract,
   assertGeneratedScenarioStyleContract,
   formatMangaScenarioValidationIssue,
@@ -51,6 +53,15 @@ import { runScenarioPayoffGate } from './scenario-payoff-quality.js';
 
 const STEP2_TEXT_TIMEOUT_MS = 600_000;
 
+export const assertScenarioCameraWork = (cameraWork, panelCount) => {
+  if (!Array.isArray(cameraWork?.panels) || cameraWork.panels.length !== panelCount
+    || cameraWork.panels.some((panel, index) => panel.panel !== index + 1
+      || !Number.isFinite(panel.yaw) || !Number.isFinite(panel.pitch) || !Number.isFinite(panel.fov))) {
+    throw new Error('360°カメラ設定のコマ数・順番・角度がシナリオと一致しませんでした。');
+  }
+  return true;
+};
+
 const scenarioRetryLabels = {
   SAFE_LOCATION: '安全な舞台設定',
   SCENARIO_CONTENT: 'シナリオ本文の表現衛生',
@@ -60,7 +71,8 @@ const scenarioRetryLabels = {
   DOCUMENTARY_SOURCE_FIDELITY: '原文の数値・時系列',
   DIALOGUE_CONTRACT: '各コマの吹き出しセリフ',
   CAMERA_CONTRACT: '自動構成の非アイレベル・カメラ投影',
-  STYLE_CONTRACT: '自動構成で使用できる画風'
+  STYLE_CONTRACT: '自動構成で使用できる画風',
+  PANEL_STRUCTURE_CONTRACT: '選択モードのコマ数と連番'
 };
 
 const getManualTopicAnchor = (manualTopic = '') => {
@@ -124,10 +136,10 @@ The previous scenario cannot be compiled into speech bubbles. Rewrite the comple
 Each speaking panel must contain at least one standalone dialogue line in exactly this form after its visual situation:
 キャラ名「短いセリフ。」
 Pair every opening and closing dialogue quote. The outer speaker label stays outside the spoken text; do not duplicate it inside the quotation. Preserve legitimate quoted speech within the dialogue.
-Do not embed spoken dialogue inside 状況, Action, 表情, 演出, 背景, or other visual-direction lines. For an intentionally silent beat, write セリフなし on its own line instead. Preserve explicitly requested silence; never invent speech to satisfy validation. Preserve the requested topic, cast, four-panel sequence, and output format.`;
+Do not embed spoken dialogue inside 状況, Action, 表情, 演出, 背景, or other visual-direction lines. For an intentionally silent beat, write セリフなし on its own line instead. Preserve explicitly requested silence; never invent speech to satisfy validation. Preserve the requested topic, cast, selected panel count and sequence, and output format.`;
 
-export const assertMangaScenarioDialogueContract = (scenarioText, castList) => {
-  const validation = validateMangaScenario(scenarioText, castList);
+export const assertMangaScenarioDialogueContract = (scenarioText, castList, options = {}) => {
+  const validation = validateMangaScenario(scenarioText, castList, options);
   if (validation.ok) return true;
 
   const error = new Error(formatMangaScenarioValidationIssue(validation));
@@ -147,6 +159,7 @@ const assertScenarioCheck = (code, check) => {
 
 const validateScenarioForRetry = ({
   scenario,
+  scenarioMode = 'four-panel',
   punchlineType,
   manualTopic,
   seasonContext,
@@ -157,8 +170,9 @@ const validateScenarioForRetry = ({
   castList
 }) => {
   const checks = [
-    ['CAMERA_CONTRACT', () => assertGeneratedScenarioCameraContract(scenario.scenario, manualTopic)],
-    ['STYLE_CONTRACT', () => assertGeneratedScenarioStyleContract(scenario.scenario)],
+    ['PANEL_STRUCTURE_CONTRACT', () => assertScenarioPanelStructure(scenario.scenario, { scenarioMode })],
+    ['CAMERA_CONTRACT', () => assertGeneratedScenarioCameraContract(scenario.scenario, manualTopic, { scenarioMode })],
+    ['STYLE_CONTRACT', () => assertGeneratedScenarioStyleContract(scenario.scenario, { scenarioMode })],
     ['SCENARIO_CONTENT', () => assertSafeScenarioContent(scenario)],
     ...(manualTopic ? [[
       'INPUT_MODE_LABEL_LEAK',
@@ -179,7 +193,7 @@ const validateScenarioForRetry = ({
       customOutfit
     })],
     ['MANUAL_TOPIC_EXCLUSION', () => assertManualTopicExclusions(scenario.scenario, manualTopic)],
-    ['DIALOGUE_CONTRACT', () => assertMangaScenarioDialogueContract(scenario.scenario, castList)]
+    ['DIALOGUE_CONTRACT', () => assertMangaScenarioDialogueContract(scenario.scenario, castList, { scenarioMode })]
   ];
   const failures = [];
   for (const [code, check] of checks) {
@@ -287,6 +301,7 @@ export const parseScenarioResponse = (result, {
  * ニュースカテゴリまたは手動トピックから4コマ漫画のシナリオを生成する
  */
 export async function generateScenario({
+  scenarioMode = 'four-panel',
   recentScenarios = [],
   referenceAssetContext = '',
   mosaicCopyrightedCharacters = true,
@@ -425,6 +440,7 @@ export async function generateScenario({
     extractedArticleText, customLocation, backgroundLocation
   ].filter(Boolean).join('\n');
   const scenarioPrompt = getScenarioPrompt({
+    scenarioMode,
     recentScenarios,
     mosaicCopyrightedCharacters,
     randomCategory,
@@ -476,12 +492,14 @@ export async function generateScenario({
         );
         parsedScenario.scenario = attachDocumentarySourceFacts(
           parsedScenario.scenario,
-          documentarySourceText
+          documentarySourceText,
+          { scenarioMode }
         );
       }
       return parsedScenario;
     },
     validateScenario: (parsedScenario) => validateScenarioForRetry({
+      scenarioMode,
       scenario: parsedScenario,
       punchlineType: activePunchlineType,
       manualTopic: inputMode === 'manual' ? manualTopic : '',
@@ -499,14 +517,14 @@ export async function generateScenario({
       ].filter(Boolean).join('\n')
     }),
     retryInstruction: ({ code, message }) => [
-      scenarioQualityRetryInstructions[code] || '',
+      code === 'PANEL_STRUCTURE_CONTRACT' ? `PANEL STRUCTURE RETRY: Return ${scenarioMode === 'experimental-manga' ? '5–8' : 'exactly 4'} complete panels numbered consecutively from 1. Preserve the topic and every required event. Design meaningful actions and exchanges for every panel; never pad with empty reactions.` : scenarioQualityRetryInstructions[code] || '',
       message ? `FAILED CHECK (correct every listed item): ${String(message).slice(0, 1400)}` : '',
       code === 'DOCUMENTARY_SOURCE_FIDELITY' && documentarySourceText
-        ? `ORIGINAL SOURCE TO PRESERVE:\n${documentarySourceText}\n\nREPAIR METHOD: distribute the original source clauses across the Situation and dialogue lines of panels 1-3. Copy the listed missing factual terms exactly. Do not leave a source cause, action, measure, affected party, or outcome only in Topic, Logline, Location, VisualEvidence, Outfit, Punchline, or thought trace; it must occur inside Scenario.`
+        ? `ORIGINAL SOURCE TO PRESERVE:\n${documentarySourceText}\n\nREPAIR METHOD: distribute the original source clauses across the Situation and dialogue lines of all panels before the final panel. Copy the listed missing factual terms exactly. Do not leave a source cause, action, measure, affected party, or outcome only in Topic, Logline, Location, VisualEvidence, Outfit, Punchline, or thought trace; it must occur inside Scenario.`
         : ''
     ].filter(Boolean).join('\n\n'),
     onRetry: (retry) => onProgress(formatScenarioRetryProgress(retry)),
-    fatalValidationCodes: ['CAMERA_CONTRACT', 'STYLE_CONTRACT', ...(isDocumentaryEnding(activePunchlineType)
+    fatalValidationCodes: ['PANEL_STRUCTURE_CONTRACT', 'CAMERA_CONTRACT', 'STYLE_CONTRACT', ...(isDocumentaryEnding(activePunchlineType)
       ? ['DOCUMENTARY_SOURCE_FIDELITY'] : [])],
     maxAttempts: 3
   });
@@ -536,6 +554,8 @@ export async function generateScenario({
   const resolvedEndingType = generatedEnding.type;
   parsedData = { ...parsedData, punchline: generatedEnding.label };
   const payoffGate = await runScenarioPayoffGate({
+    scenarioMode,
+    castList,
     recentScenarios,
     scenario: parsedData.scenario,
     mosaicCopyrightedCharacters,
@@ -562,10 +582,12 @@ export async function generateScenario({
         );
         normalizedCandidate = attachDocumentarySourceFacts(
           normalizedCandidate,
-          documentarySourceText
+          documentarySourceText,
+          { scenarioMode }
         );
       }
       validateScenarioForRetry({
+        scenarioMode,
         scenario: { ...parsedData, scenario: normalizedCandidate },
         punchlineType: resolvedEndingType,
         manualTopic: inputMode === 'manual' ? manualTopic : '',
@@ -587,8 +609,9 @@ export async function generateScenario({
     onProgress
   });
   parsedData = { ...parsedData, scenario: payoffGate.scenario };
-  assertGeneratedScenarioCameraContract(parsedData.scenario, inputMode === 'manual' ? manualTopic : '');
-  assertGeneratedScenarioStyleContract(parsedData.scenario);
+  assertScenarioPanelStructure(parsedData.scenario, { scenarioMode });
+  assertGeneratedScenarioCameraContract(parsedData.scenario, inputMode === 'manual' ? manualTopic : '', { scenarioMode });
+  assertGeneratedScenarioStyleContract(parsedData.scenario, { scenarioMode });
   const payoffValidationWarning = payoffGate.warning
     ? { code: payoffGate.renderabilityWarning ? 'VISUAL_FEASIBILITY' : 'NARRATIVE_PAYOFF', message: payoffGate.warning }
     : null;
@@ -596,12 +619,13 @@ export async function generateScenario({
   // 6. 360°カメラワーク自律設計
   let cameraWork = null;
   let croppedPanels = null;
+  const panelCount = getScenarioPanelBlocks(parsedData.scenario).length;
 
   if (bg360Image && bg360Analysis && bg360Enabled && bg360ImageParts) {
     try {
       onCameraProgress("🎬 [360° Camera AI] カメラワーク自律設計を開始...");
       const cameraWorkPrompt = `あなたは映画監督兼シネマトグラファーです。
-以下の4コマ漫画シナリオと360度パノラマ背景画像を分析し、各コマに最適なカメラの方角を設計してください。
+以下の${panelCount}コマ漫画シナリオと360度パノラマ背景画像を分析し、各コマに最適なカメラの方角を設計してください。
 
 【シナリオ】
 ${parsedData.scenario}
@@ -619,29 +643,17 @@ ${parsedData.scenario}
 3. pitchは0°=水平、正の値=上向き、負の値=下向き（±30°以内推奨）
 4. FOVはカメラのショットに合わせて調整（60°=望遠、90°=標準、120°=広角）
 5. 光源方向を考慮し、逆光・順光・サイドライトを各コマで使い分けること
-6. 4コマ中少なくとも3コマは異なるyaw方向（差が45°以上）にすること
+6. 全${panelCount}コマ中少なくとも3コマは異なるyaw方向（差が45°以上）にすること
 
 **必ず以下のJSON形式のみで出力してください。それ以外のテキストは一切不要です。**
-{
-  "panels": [
-    {
-      "panel": 1,
-      "camera": "ショットタイプ（例: establishing_shot, close_up, medium_shot, wide_shot）",
-      "yaw": 0,
-      "pitch": 0,
-      "fov": 90,
-      "reasoning": "この方角を選んだ理由（日本語・1文）"
-    },
-    { "panel": 2, "camera": "...", "yaw": 0, "pitch": 0, "fov": 90, "reasoning": "..." },
-    { "panel": 3, "camera": "...", "yaw": 0, "pitch": 0, "fov": 90, "reasoning": "..." },
-    { "panel": 4, "camera": "...", "yaw": 0, "pitch": 0, "fov": 90, "reasoning": "..." }
-  ]
-}`;
+${JSON.stringify({ panels: Array.from({ length: panelCount }, (_, index) => ({ panel: index + 1, camera: 'ショットタイプ', yaw: 0, pitch: 0, fov: 90, reasoning: 'この方角を選んだ理由' })) })}`;
 
       const cameraWorkResult = await callAI(cameraWorkPrompt, [bg360ImageParts], null, onCameraProgress);
       const cwJsonStr = cameraWorkResult.text.match(/\{[\s\S]*\}/)?.[0];
       if (cwJsonStr) {
-        cameraWork = JSON.parse(cwJsonStr);
+        const candidateCameraWork = JSON.parse(cwJsonStr);
+        assertScenarioCameraWork(candidateCameraWork, panelCount);
+        cameraWork = candidateCameraWork;
         onCameraProgress("🔲 [Crop] 360°画像から各コマの方角ビューをクロップ中...");
         
         croppedPanels = [];
@@ -693,6 +705,7 @@ ${parsedData.scenario}
  * シナリオテキストを選択された演出カテゴリで強化する
  */
 export async function enhanceScenarioText({
+  scenarioMode = 'four-panel',
   scenario,
   referenceAssetContext = '',
   selectedCategories,
@@ -703,11 +716,13 @@ export async function enhanceScenarioText({
   onProgress
 }) {
   const result = await runValidatedScenarioEnhancement({
+    scenarioMode,
     originalScenario: scenario,
     selectedCategories,
     punchlineType,
     buildPrompt: ({ validationIssues }) =>
       buildScenarioEnhancementPrompt({
+        scenarioMode,
         scenario,
         selectedCategories,
         punchlineType,

@@ -24,7 +24,14 @@ const SEASONS = Object.freeze({
 const AMBIGUOUS_OUTFIT_RE = /^(?:なし|未指定|デフォルト|キャラシート準拠|おまかせ|none|default)$/i;
 const WARDROBE_LABEL_RE = /^(?:服装|衣装|衣服|outfit|clothing|clothes|wardrobe|costume|attire)(?:\s*[（(][^）)]*[）)])?(?:\s*[:：]|\s*$)/i;
 const SCHOOL_OUTFIT_RE = /学校制服|学生服|学ラン|セーラー服|ブレザー制服|学生ボランティア|通学用|school\s+uniform|sailor\s+uniform/i;
-const SCHOOL_SOURCE_RE = /学校|学園|高校|中学|小学校|放課後|通学|登校|下校|文化祭|学園祭|卒業式|入学式|学生服|学校制服|セーラー服|school|campus/i;
+// Ignore only a direct garment exclusion, never its whole clause or actor.
+// A partial exclusion (e.g. its jacket) or double negative remains detectable.
+const NEGATED_SCHOOL_OUTFIT_RE = new RegExp(
+  `(?:${SCHOOL_OUTFIT_RE.source})` + String.raw`\s*(?:(?:ではない|でない|じゃない|ではありません|(?:は|を)(?:着ない|着ません|着用しない|着用しません))(?=$|[\s。、，,.!?！？;；]|が|ので)|(?:ではなく|でなく|じゃなく)(?!ない|もない))`
+  + String.raw`|\b(?:no|without)\s+(?:a\s+)?(?:` + SCHOOL_OUTFIT_RE.source + String.raw`)(?=$|[。、，,.!?！？;；]|\s*$)`,
+  'gi'
+);
+const SCHOOL_SOURCE_RE = /学校|学園|高校|中学|小学校|校舎|校庭|校門|放課後|通学|登校|下校|文化祭|学園祭|卒業式|入学式|学生服|学校制服|セーラー服|school|campus/i;
 
 // Project the structured analysis; never mutate the saved character sheet or
 // discard personality/relationships by reducing the scenario cast to image tags.
@@ -140,7 +147,7 @@ export const assertSeasonalOutfit = ({
   if (AMBIGUOUS_OUTFIT_RE.test(normalizedOutfit)) {
     throw new Error('Outfitに具体的な衣装カテゴリーがありません。');
   }
-  if (SCHOOL_OUTFIT_RE.test(normalizedOutfit)
+  if (SCHOOL_OUTFIT_RE.test(normalizedOutfit.replace(NEGATED_SCHOOL_OUTFIT_RE, ''))
     && !SCHOOL_SOURCE_RE.test(String(wardrobeSourceText))) {
     throw new Error('学校制服の根拠が元の題材・原文・ユーザー指定にありません。生成した学校行事や学生の役割を口実にせず、今回の行為に合う衣装を選び直してください。');
   }

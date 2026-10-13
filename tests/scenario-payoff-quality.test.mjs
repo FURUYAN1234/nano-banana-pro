@@ -18,6 +18,11 @@ const CAMERA_RHYTHM = {
   evidence: 'Each shot changes the visible projection and serves its story beat.', correction: '',
 };
 
+const identityFor = count => Array.from({ length: count }, (_, i) => ({
+  panel: i + 1, status: 'consistent', reference_evidence: 'Aは黒い短髪で眼鏡なし。Bは長髪で眼鏡あり。',
+  scenario_evidence: 'Aの動作と台詞の名前は一致し、Bの特徴をAへ付けていない。', change_basis: '', correction: '',
+}));
+
 const STRONG_GAG_REVIEW = {
   pass: true,
   payoff_clarity: { material_failure: false, evidence: '入口の札と同じ扉が、近道で出発点へ戻る結果を示す。', correction: '' },
@@ -29,6 +34,7 @@ const STRONG_GAG_REVIEW = {
   slogan_only: false,
   unseeded_fact: false,
   camera_rhythm: CAMERA_RHYTHM,
+  cast_identity: identityFor(4),
   visual_feasibility: [1, 2, 3, 4].map(panel => ({ panel, feasible: true, evidence: `Panel ${panel} stages its focal action at readable scale.`, correction: '' })),
   ensemble_continuity: [1, 2, 3, 4].map(panel => ({ panel, material_break: false, evidence: `Panel ${panel} continues its actors and reactions.`, correction: '' })),
   reason_codes: [],
@@ -45,10 +51,82 @@ const WEAK_SLOGAN_REVIEW = {
   slogan_only: true,
   unseeded_fact: false,
   camera_rhythm: CAMERA_RHYTHM,
+  cast_identity: identityFor(4),
   visual_feasibility: [1, 2, 3, 4].map(panel => ({ panel, feasible: true, evidence: `Panel ${panel} stages its focal action at readable scale.`, correction: '' })),
   ensemble_continuity: [1, 2, 3, 4].map(panel => ({ panel, material_break: false, evidence: `Panel ${panel} continues its actors and reactions.`, correction: '' })),
   reason_codes: [],
 };
+
+const nativeScenario = count => '## タイトル: 支え合う仕事\n' + Array.from({ length: count }, (_, i) =>
+  `[${i + 1}コマ目: ${i === count - 1 ? '結' : '展開'}]\n[Camera: 高い位置から強い俯瞰]\n[EMOTION: NORMAL]\nBalloonLayout: [{"speaker":"A","x":0.7,"anchor":"画面右のAの口元","route":"右上の余白からAへ"}]\n状況: Aが作業の段階${i + 1}を進める。\nA「段階${i + 1}だよ。」`).join('\n');
+const nativeReview = count => ({ ...structuredClone(STRONG_GAG_REVIEW),
+   cast_identity: identityFor(count),
+  visual_feasibility: Array.from({ length: count }, (_, i) => ({ ...STRONG_GAG_REVIEW.visual_feasibility[0], panel: i + 1 })),
+  ensemble_continuity: Array.from({ length: count }, (_, i) => ({ ...STRONG_GAG_REVIEW.ensemble_continuity[0], panel: i + 1 })),
+  camera_rhythm: { ...CAMERA_RHYTHM, shots: Array.from({ length: count }, (_, i) => ({ panel: i + 1, signature: `high / action ${i + 1}`, purpose: '直前の作業を進める' })) },
+  panel_development: Array.from({ length: count }, (_, i) => ({ panel: i + 1, material_padding: false, evidence: '作業の変化または反応までの必要な間を示している。', correction: '' })),
+});
+
+for (const count of [5, 8]) {
+  test(`native ${count}-panel payoff checks the actual ending and every camera while retaining purposeful silence`, async () => {
+    const scenario = nativeScenario(count), review = nativeReview(count);
+    const options = { scenarioMode: 'experimental-manga', panelCount: count };
+    assert.deepEqual(parseScenarioPayoffReview(JSON.stringify(review), options), review);
+    const prompt = buildScenarioPayoffReviewPrompt({ scenario, ...options });
+    assert.match(prompt, new RegExp(`FINAL PANEL: ${count}`));
+    assert.doesNotMatch(prompt, /全幅1列|上から4コマ配置|横長4コマ/);
+    assert.match(prompt, /panel_development/);
+    assert.match(prompt, /意味のある沈黙/);
+    const repair = buildScenarioPayoffRepairPrompt({ scenario, review, ...options });
+    assert.match(repair, new RegExp(`\\[${count}コマ目: 結\\]`));
+    let requests = 0;
+    const result = await runScenarioPayoffGate({ scenario, ...options,
+      requestReview: async () => { requests++; return JSON.stringify(review); },
+      requestRepair: async () => assert.fail('a purposeful beat must not be repaired'),
+    });
+    assert.equal(result.status, 'passed');assert.equal(requests, 1);
+    const patched = applyScenarioStagingPatch(scenario, JSON.stringify([{ panel: count, field: 'Camera', value: '床近くから強いアオリ' }]), 'A', options);
+    assert.match(patched, /床近くから強いアオリ/);
+    assert.throws(() => applyScenarioStagingPatch(scenario, JSON.stringify([{ panel: count + 1, field: 'Camera', value: '俯瞰' }]), 'A', options), /invalid_staging_patch/);
+    const missing = structuredClone(review);missing.camera_rhythm.shots.pop();
+    assert.throws(() => parseScenarioPayoffReview(JSON.stringify(missing), options), /incomplete_payoff_review/);
+    assert.throws(() => parseScenarioPayoffReview(JSON.stringify(review)), /incomplete_payoff_review/);
+  });
+}
+
+test('native wrong counts and missing scenario cameras are retained as invalid before any audit request', async () => {
+  for (const scenario of [nativeScenario(4), nativeScenario(9), nativeScenario(5).replace('[Camera: 高い位置から強い俯瞰]', '')]) {
+    let calls = 0;
+    const result = await runScenarioPayoffGate({ scenario, scenarioMode: 'experimental-manga',
+      requestReview: async () => { calls++; return JSON.stringify(nativeReview(5)); },
+    });
+    assert.equal(calls, 0);assert.equal(result.status, 'retained');
+  }
+});
+
+test('native redundancy audit distinguishes material padding from a meaningful silent pause', () => {
+  const review = nativeReview(5), options = { scenarioMode: 'experimental-manga', panelCount: 5 };
+  assert.equal(evaluateScenarioPayoffReview(review, options).ok, true);
+  review.panel_development[1] = { panel: 2, material_padding: true, evidence: '直前と同じ静止画で情報も反応の間も変化せず、削除しても意味が変わらない。', correction: '同じ作業で次の手順が分かる動作へ整理する。' };
+  assert.ok(evaluateScenarioPayoffReview(review, options).reasonCodes.includes('redundant_panel_2'));
+});
+
+test('native final-panel staging repair keeps all panels and forwards the scenario mode to validation', async () => {
+  const scenario = nativeScenario(8), review = nativeReview(8);
+  review.pass = false;review.reason_codes = ['BALLOON_LAYOUT_X_ANCHOR_CONTRADICTION'];
+  Object.assign(review.visual_feasibility[7], { feasible: false, material_loss: true, correction: '最後の話者の余白に吹き出しを移す。' });
+  let requests = 0, validations = 0;
+  const result = await runScenarioPayoffGate({ scenario, scenarioMode: 'experimental-manga',
+    requestReview: async () => JSON.stringify(requests++ ? nativeReview(8) : review),
+    requestRepair: async prompt => {
+      assert.match(prompt, /panelは1〜8/);
+      return JSON.stringify([{ panel: 8, field: 'BalloonLayout', value: [{ speaker: 'A', x: 0.75, anchor: '画面右のAの口元', route: '右上の余白からAへ' }] }]);
+    },
+    validateRepair: (candidate, options) => { validations++;assert.equal(options.scenarioMode, 'experimental-manga');return candidate; },
+  });
+  assert.equal(result.status, 'repaired', result.warning);assert.equal(requests, 2);assert.equal(validations, 1);
+  assert.match(result.scenario, /\[8コマ目: 結\]/);
+});
 
 test('recent mechanism audit distinguishes repetition from an intentional or merely same-label ending', async () => {
   const recentScenarios = [{ ending: '天丼', setup: '箱を開ける', outcome: '同じ箱がまた出る' }];
@@ -318,10 +396,11 @@ test('STEP2 review treats a material same-depth lineup with copied reactions as 
 
   const progress = [];
   const reviews = [flat, STRONG_GAG_REVIEW];
+  const staged = nativeScenario(4).replace('Aが作業の段階2を進める。', 'Aが手前の札を奥の仲間へ向ける。');
   const result = await runScenarioPayoffGate({
-    scenario: '元の4コマ', punchlineType: 'GagAuto',
+    scenario: nativeScenario(4), punchlineType: 'GagAuto',
     requestReview: async () => ({ text: JSON.stringify(reviews.shift()) }),
-    requestRepair: async () => ({ text: '立体的な人物演技を持つ4コマ' }),
+    requestRepair: async () => ({ text: staged }),
     onProgress: message => progress.push(message),
   });
   assert.equal(result.status, 'repaired');
@@ -344,11 +423,106 @@ test('STEP2 accepts intentional shared gaze or stillness without forcing differe
   assert.equal(result.status, 'passed');
 });
 
+test('native ensemble audit targets unexplained relational swaps but accepts projection changes and motivated movement', async () => {
+  const options = { scenarioMode: 'experimental-manga', panelCount: 6 };
+  const rearSituation = '窓側からA・B・Cの席順は変わらず、背面からは画面左にC、中央にB、右にAが見える。Aが作業の段階2を進める。';
+  const scenario = nativeScenario(6)
+    .replace('[1コマ目: 展開]\n[Camera: 高い位置から強い俯瞰]', '[1コマ目: 展開]\n[Camera: ベンチの正面の高い位置から強い俯瞰]')
+    .replace('[2コマ目: 展開]\n[Camera: 高い位置から強い俯瞰]', '[2コマ目: 展開]\n[Camera: ベンチの背面の高い位置から強い俯瞰、望遠で奥行きを圧縮]')
+    .replace('"x":0.7,"anchor":"画面右のAの口元","route":"右上の余白からAへ"', '"x":0.3,"anchor":"画面左のAの口元","route":"左上の余白からAへ"')
+    .replace('Aが作業の段階1を進める。', 'ベンチの窓側からA・B・Cが座る。正面からは画面左にA、中央にB、右にC。Aが作業の段階1を進める。')
+    .replace('Aが作業の段階2を進める。', rearSituation);
+  const prompt = buildScenarioPayoffReviewPrompt({ scenario, ...options });
+  assert.match(prompt, /隣接.*前後.*向かい.*席位置/u);
+  assert.match(prompt, /移動.*転換.*根拠.*重大.*material_break=true/u);
+  assert.match(prompt, /切り返し.*望遠.*左右.*重なり.*変化だけ.*false/u);
+  const projectionEvidence = '正面では左A・中央B・右C、背面では左C・中央B・右A。窓側からA・B・Cの同じ席順で、望遠の圧縮も隣接関係を変えない。';
+  for (const [candidate, evidence] of [[scenario, projectionEvidence],
+    [scenario.replace(rearSituation, 'Aが窓側の席を立ってBの後ろへ一歩回る。BとCは元の席に座ったまま。'), 'Aが席を立ってBの後ろへ回る動作が明記され、BとCの席は不変。']]) {
+    const allowed = nativeReview(6);
+    allowed.ensemble_continuity[1] = { panel: 2, material_break: false, evidence, correction: '' };
+    const result = await runScenarioPayoffGate({ scenario: candidate, ...options,
+      requestReview: async () => JSON.stringify(allowed),
+      requestRepair: async () => assert.fail('coherent viewpoint changes and scripted movement must not require repair'),
+    });
+    assert.equal(result.status, 'passed'); assert.equal(result.scenario, candidate);
+  }
+  const brokenScenario = scenario.replace(rearSituation, '移動や席替えはしていないのに窓側からA・C・Bが座り、背面では画面左にB、中央にC、右にAが見える。Aが作業の段階2を進める。');
+  const broken = nativeReview(6);
+  broken.ensemble_continuity[1] = { panel: 2, material_break: true,
+    evidence: '席替えなしで窓側からA・B・CがA・C・Bへ変わり、Aの隣がBからCへ変わる。背面の投影だけでは説明できない。',
+    correction: '背面のCameraは維持して窓側からA・B・Cへ戻し、画面左C・中央B・右Aとして投影する。' };
+  assert.ok(evaluateScenarioPayoffReview(broken, options).reasonCodes.includes('flat_ensemble_panel_2'));
+  const repairPrompt = buildScenarioPayoffRepairPrompt({ scenario: brokenScenario, review: broken, ...options });
+  assert.match(repairPrompt, /場面内.*隣接.*向かい/u);
+  assert.match(repairPrompt, /正面から背面.*画面左右.*反転.*移動.*入れ替え.*扱わない/u);
+  let reviews = 0, repairs = 0;
+  const result = await runScenarioPayoffGate({ scenario: brokenScenario, ...options,
+    requestReview: async () => { reviews++; return JSON.stringify(reviews === 1 ? broken : nativeReview(6)); },
+    requestRepair: async () => { repairs++; return scenario; },
+  });
+  assert.equal(result.status, 'repaired'); assert.equal(result.scenario, scenario);
+  assert.equal(reviews, 2); assert.equal(repairs, 1);
+  assert.deepEqual(result.scenario.match(/\[Camera:[^\n]+/g), brokenScenario.match(/\[Camera:[^\n]+/g), 'repair must retain the rear camera');
+  assert.deepEqual(result.scenario.match(/A「[^」]+」/g), brokenScenario.match(/A「[^」]+」/g), 'repair must retain speakers and dialogue');
+});
+
 test('ensemble review checks copied acting even after positions are varied, without imposing mouth quotas', () => {
   const prompt = buildScenarioPayoffReviewPrompt({ scenario: 'SCENARIO' });
   assert.match(prompt, /配置が分散していても/);
   assert.match(prompt, /口の開閉だけ|開口人数/);
   assert.match(prompt, /軽微|好み/);
+});
+
+for (const count of [4, 6, 8]) test(`${count}-panel relation continuity crosses a cropped panel without locking projection or motivated movement`, async () => {
+  const options = { scenarioMode: count === 4 ? 'four-panel' : 'experimental-manga', panelCount: count };
+  const initial = 'Aは台の赤い印の端、Bは反対の青い印の端に立ち、台を動かさず二人で作業する。';
+  const retainedRelation = '台と人物は移動せず、Aは赤い印の端、Bは青い印の端にいる。背面からの投影で画面左右だけが反転する。';
+  const scenario = nativeScenario(count)
+    .replace('[2コマ目: 展開]\n[Camera: 高い位置から強い俯瞰]', '[2コマ目: 展開]\n[Camera: 高所からAの手元だけの接写、台の両端は画角外]')
+    .replace('[3コマ目: 展開]\n[Camera: 高い位置から強い俯瞰]', '[3コマ目: 展開]\n[Camera: 台の背面側の高所から強い俯瞰、望遠で奥行きを圧縮]')
+    .replace('Aが作業の段階1を進める。', initial)
+    .replace('Aが作業の段階2を進める。', 'Aの手元の作業だけが見え、二人と台の端の関係は画角外。位置変更は描かれない。')
+    .replace('Aが作業の段階3を進める。', retainedRelation);
+  const reviewPrompt = buildScenarioPayoffReviewPrompt({ scenario, ...options });
+  assert.match(reviewPrompt, /最後に明示された.*人物・物.*関係.*接写.*遮蔽.*画面外/u);
+  assert.match(reviewPrompt, /物の側・端.*画面左右.*区別/u);
+  assert.match(reviewPrompt, /未指定・曖昧.*material_break=false.*根拠不足/u);
+  const positiveCases = [
+    [scenario, 'P1のAは赤い印の端、Bは青い印の端という関係が、P2の接写を挟んだP3も同じ。背面投影の左右反転だけ。', false],
+    [scenario.replace(retainedRelation, 'AとBが台の周りを歩いて互いの端へ移る。台は回さず、Aは青い印、Bは赤い印の端へ到着する。'), 'P1からP3の間に二人が歩いて入れ替わる動作が明示され、物語に沿った移動。', false],
+    [scenario.replace(retainedRelation, 'AとBは床上の位置を保ち、台を二人で半回転させる。赤い印の端がBへ、青い印の端がAへ来る。'), 'P3の台の半回転で人物に近い端が変わる。人物移動も関係崩壊も捏造しない。', false],
+    [scenario.replace(initial, '二人が台の近くで作業し、どの端にいるかは未指定。').replace(retainedRelation, 'AとBが作業するが、台の印は遮蔽されて見えない。'), 'P1の端の関係は未指定、P2は接写、P3は印が遮蔽されており比較根拠が不足。入れ替えは断定できない。', true],
+  ];
+  for (const [candidate, evidence, uncertain] of positiveCases) {
+    const review = nativeReview(count);
+    review.pass = !uncertain;
+    review.ensemble_continuity[2] = { panel: 3, material_break: false, evidence, correction: '' };
+    const result = await runScenarioPayoffGate({ scenario: candidate, ...options,
+      requestReview: async () => JSON.stringify(review),
+      requestRepair: async () => assert.fail('projection, explicit movement, prop rotation or insufficient evidence must not cause paid repair'),
+    });
+    assert.equal(result.status, uncertain ? 'retained' : 'passed');
+    assert.equal(result.scenario, candidate);
+    if (uncertain) assert.ok(result.warning);
+  }
+  const brokenScenario = scenario.replace(retainedRelation, '台も人物も移動・回転していないのに、Aが青い印の端、Bが赤い印の端にいる。');
+  const broken = nativeReview(count);
+  broken.ensemble_continuity[2] = { panel: 3, material_break: true,
+    evidence: 'P1のA=赤い印の端、B=青い印の端が、接写だけのP2を挟みP3で逆転する。移動も台の回転もなく、画面投影では物の印と人物の対応を逆転できない。',
+    correction: 'P3の背面Cameraを維持し、Aは赤い印、Bは青い印の端という最後に明示された関係を投影する。' };
+  const repairPrompt = buildScenarioPayoffRepairPrompt({ scenario: brokenScenario, review: broken, ...options });
+  assert.match(repairPrompt, /最後に明示された.*人物・物.*関係.*接写.*遮蔽.*画面外/u);
+  assert.match(repairPrompt, /人物の移動・物の回転・場面転換.*更新/u);
+  let reviews = 0, repairs = 0;
+  const result = await runScenarioPayoffGate({ scenario: brokenScenario, ...options,
+    requestReview: async () => JSON.stringify(++reviews === 1 ? broken : nativeReview(count)),
+    requestRepair: async () => { repairs++; return scenario; },
+  });
+  assert.equal(result.status, 'repaired'); assert.equal(repairs, 1); assert.equal(reviews, 2);
+  assert.equal(result.scenario, scenario);
+  assert.deepEqual(result.scenario.match(/\[Camera:[^\n]+/g), brokenScenario.match(/\[Camera:[^\n]+/g));
+  assert.deepEqual(result.scenario.match(/A「[^」]+」/g), brokenScenario.match(/A「[^」]+」/g));
 });
 
 test('unsupported ensemble reason codes cannot trigger a paid repair', async () => {
@@ -481,6 +655,7 @@ test('scenario review rejects a visually overloaded panel even when the ending i
 test('surreal gag accepts visible absurdity without forcing causal setup or a rational explanation', () => {
   const review = {
     pass: false,
+    cast_identity: identityFor(4),
     setup_seed: '',
     panel3_prediction: '',
     panel4_outcome: '作業台が突然折り紙の海になり、全員が真顔で泳ぎ始める。',
@@ -607,6 +782,7 @@ test('gate performs one full repair and adopts it only after a passing second re
 });
 
 test('gate repairs a spatially unreadable panel even when payoff passes', async () => {
+  const repaired = nativeScenario(4).replace('Aが作業の段階4を進める。', 'Aが一枚の札を両手で支える。');
   const overloaded = {
     ...STRONG_GAG_REVIEW,
     visual_feasibility: STRONG_GAG_REVIEW.visual_feasibility.map(item => item.panel === 4
@@ -615,18 +791,19 @@ test('gate repairs a spatially unreadable panel even when payoff passes', async 
   };
   let reviews = 0;
   const result = await runScenarioPayoffGate({
-    scenario: 'ORIGINAL',
+    scenario: nativeScenario(4),
     punchlineType: 'GagAuto',
     requestReview: async () => JSON.stringify(++reviews === 1 ? overloaded : STRONG_GAG_REVIEW),
-    requestRepair: async () => 'REPAIRED',
+    requestRepair: async () => repaired,
     validateRepair: () => true,
   });
   assert.equal(result.status, 'repaired');
-  assert.equal(result.scenario, 'REPAIRED');
+  assert.equal(result.scenario, repaired);
   assert.equal(reviews, 2);
 });
 
 test('gate gives subjective spatial staging one repair and keeps the best candidate for image generation', async () => {
+  const repaired = nativeScenario(4).replace('Aが作業の段階3を進める。', 'Aが札を手前の余白に置く。');
   const overloaded = {
     ...STRONG_GAG_REVIEW,
     visual_feasibility: STRONG_GAG_REVIEW.visual_feasibility.map(item => item.panel >= 3
@@ -636,7 +813,7 @@ test('gate gives subjective spatial staging one repair and keeps the best candid
   let reviews = 0;
   let repairs = 0;
   const result = await runScenarioPayoffGate({
-    scenario: 'ORIGINAL',
+    scenario: nativeScenario(4),
     punchlineType: 'GagAuto',
     requestReview: async () => JSON.stringify(++reviews === 1 ? overloaded : {
       ...overloaded,
@@ -644,11 +821,11 @@ test('gate gives subjective spatial staging one repair and keeps the best candid
         ? { ...item, feasible: true, evidence: 'The board contact is now legible.', correction: '' }
         : item),
     }),
-    requestRepair: async () => `REPAIR ${++repairs}`,
+    requestRepair: async () => { repairs++;return repaired; },
     validateRepair: () => true,
   });
   assert.equal(result.status, 'best_effort');
-  assert.equal(result.scenario, 'REPAIR 1');
+  assert.equal(result.scenario, repaired);
   assert.equal(result.renderabilityWarning, true);
   assert.equal(repairs, 1);
   assert.equal(reviews, 2);
@@ -715,4 +892,122 @@ test('an unrepaired visual feasibility warning preserves full-auto image repair'
   assert.doesNotMatch(workflow, /visualFeasibilityBlocked\s*\?\s*null\s*:\s*finalScenarioText/);
   assert.match(workflow, /return finalScenarioText;/);
   assert.match(workflow, /const step4ok = await regenerateImage\(true, generatedPrompt, \{sourceScenario:generatedScenario\}\)/);
+});
+
+
+test('cast identity proof is required for every panel and incomplete proof is never a successful audit', async () => {
+  const mutations = [r => { delete r.cast_identity; }, r => r.cast_identity.pop(),
+    r => { r.cast_identity[1].panel = 1; }, r => { r.cast_identity[0].reference_evidence = ''; },
+    r => { r.cast_identity[0].scenario_evidence = ' '; }, r => { r.cast_identity[0].status = 'invented'; },
+    r => { r.cast_identity[0].status = 'mismatch'; },
+    r => { r.cast_identity[0].status = 'intentional_change'; },
+  ];
+  for (const count of [4, 5, 6, 7, 8]) for (const mutate of mutations) {
+    const review = nativeReview(count); mutate(review);
+    const options = { scenarioMode: count === 4 ? 'four-panel' : 'experimental-manga', panelCount: count };
+    assert.throws(() => parseScenarioPayoffReview(JSON.stringify(review), options), /incomplete_payoff_review/);
+    assert.equal(evaluateScenarioPayoffReview(review, options).ok, false);
+    let calls = 0;
+    const result = await runScenarioPayoffGate({ scenario: nativeScenario(count), ...options,
+      requestReview: async () => { calls++; return JSON.stringify(review); },
+      requestRepair: async () => assert.fail('incomplete evidence must not cause a paid repair'),
+    });
+    assert.equal(result.status, 'retained'); assert.ok(result.warning); assert.equal(calls, 1);
+  }
+});
+
+test('grounded identity swaps enter the existing bounded staging repair and receive the same final audit', async () => {
+  for (const count of [4, 5, 6, 7, 8]) {
+    const options = { scenarioMode: count === 4 ? 'four-panel' : 'experimental-manga', panelCount: count };
+    const original = nativeScenario(count).replace('Aが作業の段階2を進める。', '眼鏡姿のAが作業の段階2を進める。');
+    const repaired = original.replace('眼鏡姿のA', '眼鏡のないA');
+    const review = nativeReview(count);
+    review.cast_identity[1] = { ...review.cast_identity[1], status: 'mismatch',
+      reference_evidence: 'Aは眼鏡なし、Bが眼鏡あり。', scenario_evidence: '2コマ目は眼鏡姿のAとし、台詞と尾もAへ指定している。',
+      correction: 'Aの外見記述を眼鏡なしへ戻し、Aの台詞と尾を保持する。' };
+    const evaluation = evaluateScenarioPayoffReview(review, { ...options, punchlineType: 'Surreal' });
+    assert.ok(evaluation.reasonCodes.includes('cast_identity_panel_2'));
+    assert.equal(evaluation.ok, false, 'a top-level pass cannot hide supported contradictory identity evidence');
+    let reviews = 0, repairs = 0;
+    const result = await runScenarioPayoffGate({ scenario: original, castList: 'A\nB', ...options, punchlineType: 'Surreal',
+      requestReview: async prompt => {
+        reviews++; assert.match(prompt, /cast_identity/); assert.match(prompt, /認識.*人物設定|人物設定.*認識/);
+        if (reviews === 2) assert.ok(prompt.includes(repaired));
+        return JSON.stringify(reviews === 1 ? review : nativeReview(count));
+      },
+      requestRepair: async prompt => {
+        repairs++; assert.match(prompt, /外見/); assert.match(prompt, /話者・文言・順序/);
+        assert.doesNotMatch(prompt, /全体を書き直/); return repaired;
+      },
+    });
+    assert.equal(result.status, 'repaired'); assert.equal(result.scenario, repaired);
+    assert.equal(reviews, 2); assert.equal(repairs, 1);
+    assert.deepEqual([...result.scenario.matchAll(/A「[^」]+」/g)].map(m => m[0]), [...original.matchAll(/A「[^」]+」/g)].map(m => m[0]));
+  }
+});
+
+test('identity repairs cannot change names or dialogue and are bounded when the mismatch remains', async () => {
+  const original = nativeScenario(6), review = nativeReview(6);
+  review.cast_identity[1] = { ...review.cast_identity[1], status: 'mismatch',
+    scenario_evidence: 'Aの状況説明と尾にBの特徴が付いている。', correction: '状況説明と尾をAの設定へ合わせる。' };
+  for (const candidate of [original.replace('A「段階2だよ。」', 'B「段階2だよ。」'),
+    original.replace('A「段階2だよ。」', 'A「別の話だよ。」')]) {
+    let reviews = 0, repairs = 0;
+    const result = await runScenarioPayoffGate({ scenario: original, scenarioMode: 'experimental-manga',
+      requestReview: async () => { reviews++; return JSON.stringify(review); },
+      requestRepair: async () => { repairs++; return candidate; },
+    });
+    assert.equal(result.scenario, original); assert.match(result.warning, /staging_only_scope_violation/);
+    assert.equal(reviews, 1); assert.equal(repairs, 1);
+  }
+  let reviews = 0, repairs = 0;
+  const result = await runScenarioPayoffGate({ scenario: original, scenarioMode: 'experimental-manga',
+    requestReview: async () => { reviews++; return JSON.stringify(review); },
+    requestRepair: async () => { repairs++; return original.replace('作業の段階2', '作業の第二段階'); },
+  });
+  assert.notEqual(result.status, 'passed'); assert.notEqual(result.status, 'repaired'); assert.ok(result.warning);
+  assert.equal(reviews, 2); assert.equal(repairs, 1, 'use the existing one-repair staging budget');
+});
+
+test('correct identities and grounded intentional changes remain allowed without repair', async () => {
+  const cases = [
+    { status: 'consistent', reference_evidence: 'Cは赤い短髪、Dは白い長髪。', scenario_evidence: 'CとDの外見・話者・尾は各自の設定と一致する。', change_basis: '' },
+    { status: 'consistent', scenario_evidence: 'Aは劇画で眼窩と鼻の陰影が変わるが、本人の髪と眼鏡なしは保持する。', change_basis: '' },
+    { status: 'intentional_change', scenario_evidence: 'Aが変装用の眼鏡とカツラを付けている。', change_basis: 'ユーザーがAの変装を明示している。' },
+    { status: 'intentional_change', scenario_evidence: 'Bが自分の長髪を一つに結び直している。', change_basis: '直前の状況にBが作業のため髪を結ぶ動作がある。' },
+    { status: 'intentional_change', scenario_evidence: 'Bは濡れた眼鏡を外して拭いている。', change_basis: 'このコマの出来事として本人が眼鏡を外す動作が指定されている。' },
+  ];
+  for (const item of cases) {
+    const review = nativeReview(6); review.cast_identity[1] = { ...review.cast_identity[1], ...item };
+    const result = await runScenarioPayoffGate({ scenario: nativeScenario(6), scenarioMode: 'experimental-manga',
+      requestReview: async () => JSON.stringify(review),
+      requestRepair: async () => assert.fail('explicit changes or drawing style are not identity defects'),
+    });
+    assert.equal(result.status, 'passed');
+  }
+  const prompt = buildScenarioPayoffReviewPrompt({ scenario: nativeScenario(6), scenarioMode: 'experimental-manga' });
+  assert.match(prompt, /変装/); assert.match(prompt, /髪型/); assert.match(prompt, /着脱/); assert.match(prompt, /画風/);
+});
+
+test('uncertain identity and unsupported model codes cannot trigger a paid identity repair', async () => {
+  const review = nativeReview(6); review.cast_identity[1].status = 'uncertain';
+  review.cast_identity[1].scenario_evidence = '顔が画面外という指定で外見の対応を確定できない。';
+  assert.equal(evaluateScenarioPayoffReview(review, { scenarioMode: 'experimental-manga', panelCount: 6 }).ok, false);
+  const result = await runScenarioPayoffGate({ scenario: nativeScenario(6), scenarioMode: 'experimental-manga',
+    requestReview: async () => JSON.stringify(review), requestRepair: async () => assert.fail('uncertain is not material'),
+  });
+  assert.equal(result.status, 'retained'); assert.ok(result.warning);
+  const supported = nativeReview(6); supported.reason_codes = ['cast_identity_panel_2', 'cast_identity_unverified'];
+  assert.equal(evaluateScenarioPayoffReview(supported, { scenarioMode: 'experimental-manga', panelCount: 6 }).ok, true,
+    'structured evidence is authoritative over invented model reason codes');
+});
+
+
+test('cast identity prompt example cannot be accepted as completed observation evidence', () => {
+  const prompt = buildScenarioPayoffReviewPrompt({ scenario: nativeScenario(6), scenarioMode: 'experimental-manga' });
+  const start = prompt.indexOf('{\n  "pass":');
+  const example = JSON.parse(prompt.slice(start, prompt.indexOf('\n\nSCENARIO:', start)).trim());
+  assert.throws(() => parseScenarioPayoffReview(JSON.stringify(example), { scenarioMode: 'experimental-manga', panelCount: 6 }), /incomplete_payoff_review/);
+  assert.ok(evaluateScenarioPayoffReview(example, { scenarioMode: 'experimental-manga', panelCount: 6 }).reasonCodes.includes('cast_identity_unverified'));
+  assert.match(prompt, /実際の認識設定と台本から/);
 });

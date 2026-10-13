@@ -193,8 +193,10 @@ export function getReferenceMetadataRole(asset) {
   return kinds.length > 1 ? 'mixed_reference' : `${kinds[0] === 'unknown' ? 'unclassified' : kinds[0]}_reference`;
 }
 
+export const CHARACTER_REFERENCE_IDENTITY_RULE = "Use for visual identity and canonical clothing unless the approved prompt explicitly overrides clothing. Identity means the individual's identifying traits and age. The selected panel rendering recipe determines face/eye construction and body stylization; preserve the reference drawing style only under an explicit reference-style lock in the approved prompt.";
+
 const REFERENCE_RULES = {
-      character: 'CHARACTER REFERENCE. Preserve this individual’s identity; expression sheets and turnaround views show the same person, not extra cast. Follow scripted acting, panel style and explicit outfit changes. Do not copy sheet layout, captions or static poses.',
+      character: `CHARACTER REFERENCE. ${CHARACTER_REFERENCE_IDENTITY_RULE} Repeated expression sheets and turnaround views show the same person, not extra cast. Follow scripted acting. Do not copy sheet layout, captions or static poses.`,
       background: 'BACKGROUND REFERENCE. Use environment geometry, lighting and spatial cues where the scenario uses this location. Do not add its incidental people, text or page layout.',
       prop: 'PROP REFERENCE. Preserve object design. Its holder, location and state follow the approved scenario; do not invent ownership or force it into every panel.',
       unknown: 'UNCLASSIFIED REFERENCE. Use only coherent visible details supported by the approved scenario; do not invent a character or relationship from uncertain material.',

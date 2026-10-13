@@ -290,7 +290,7 @@ const buildFinalPrompt = (providerFamily) => buildMangaPrompt({
   systemVersion: 'v5.2.7-test'
 });
 
-const buildNormalScenarioPrompt = () => getScenarioPrompt({
+const buildNormalScenarioPrompt = (options = {}) => getScenarioPrompt({
   randomCategory: 'workplace',
   targetDate: '2026-08-10',
   inputMode: 'manual',
@@ -305,7 +305,8 @@ const buildNormalScenarioPrompt = () => getScenarioPrompt({
   ragReactions: '',
   punchlineType: 'Auto',
   comedyTone: 'standard',
-  styleJson: null
+  styleJson: null,
+  ...options
 });
 
 test('STEP2 plans a page of motivated contrasting shots across independent camera axes', () => {
@@ -440,6 +441,23 @@ test('STEP2 designs continuous relational staging instead of directing every lis
   assert.match(prompt, /働きかけ.*受け手.*反応|相手の行動.*次の動作/u);
   assert.match(prompt, /異なる.*視線.*反応|視線.*演技.*描き分け/u);
   assert.doesNotMatch(prompt, /無言のリアクション役も現在の話者を見る/u);
+});
+
+test('STEP2 preserves scene relationships without freezing camera, movement or the visible cast', () => {
+  for (const scenarioMode of ['four-panel', 'experimental-manga']) {
+    const prompt = buildNormalScenarioPrompt({ scenarioMode });
+    assert.match(prompt, /隣接.*前後.*向かい.*席位置/u);
+    assert.match(prompt, /移動.*転換.*根拠なく.*入れ替え/u);
+    assert.match(prompt, /画面上の左右.*固定しない/u);
+    assert.match(prompt, /状況: \(場面内の人物・物の相対関係と変化、そのCamera投影/u);
+    assert.match(prompt, /最後に明示された.*人物・物.*関係.*接写.*遮蔽.*画面外/u);
+    assert.match(prompt, /物の側・端.*画面左右.*区別/u);
+    assert.match(prompt, /人物の移動・物の回転・場面転換.*更新/u);
+    assert.match(prompt, /未指定・曖昧.*創作.*固定しない/u);
+    for (const camera of ['俯瞰', 'アオリ', '切り返し', 'アップ', '望遠', '奥行圧縮', '寄り引き', '遮蔽']) assert.ok(prompt.includes(camera), camera);
+    assert.match(prompt, /自然な移動.*許容/u);
+    assert.match(prompt, /必要な人物.*選び.*全員.*横一列.*しない/u);
+  }
 });
 
 test('panel composition helper preserves explicit azimuth and derives missing side from the scene', () => {

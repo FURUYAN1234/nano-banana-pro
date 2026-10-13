@@ -34,7 +34,7 @@ import {
   PROMPT_PROVIDER_FAMILIES,
   normalizePromptProviderFamily
 } from '../lib/prompt-assembler';
-import { addGenerationHistoryItem, collectRecentScenarioOutcomes, getWorkflowStep } from '../lib/generation-history';
+import { addGenerationHistoryItem, collectRecentScenarioOutcomes, createScenarioSourceKey, findScenarioSourceKey, getWorkflowStep } from '../lib/generation-history';
 import { createFinalImageSaver } from '../lib/generated-image-save.js';
 import { inspectImageDimensions, inspectNativeMonochromeChroma, extractMangaPanelCrops, normalizePageCandidate, formatPageLayoutStatus } from '../lib/manga-page-layout.js';
 import { generateScenario, enhanceScenarioText } from '../lib/scenario-provider';
@@ -71,6 +71,7 @@ import { prepareExperimentalManga, buildExperimentalPageContract, buildExperimen
 import { resolvePageWorkflow, applyPageCandidateSelection } from '../lib/page-workflow.js';
 
 export default function useMangaWorkflow({ experimentalEnabled = false } = {}) {
+  const scenarioMode = experimentalEnabled ? 'experimental-manga' : 'four-panel';
   const [scenarioModelId, setScenarioModelIdState] = useState(DEFAULT_OPENAI_SCENARIO_MODEL_ID);
   const setScenarioModelId = (modelId) => {
     const nextModelId = OPENAI_SCENARIO_TEXT_MODEL_IDS.includes(modelId)
@@ -899,6 +900,7 @@ export default function useMangaWorkflow({ experimentalEnabled = false } = {}) {
     try {
       setEnhanceLog(prev => prev + `\n> [API] ${isOpenAIEngine ? 'OpenAI' : 'Gemini'} にシナリオ強化をリクエスト中...`);
       const result = await enhanceScenarioText({
+        scenarioMode,
         scenario,
         referenceAssetContext: buildReferenceAssetContext(referenceAssetsRef.current, imagesRef.current, { panorama: bg360Enabled ? bg360Analysis : null }),
         selectedCategories,
@@ -970,6 +972,7 @@ export default function useMangaWorkflow({ experimentalEnabled = false } = {}) {
 
     const effectiveCategories = Array.isArray(categoriesOverride) ? categoriesOverride : categories;
     const effectiveInputMode = inputModeOverride || inputMode;
+    const previousScenario = scenario;
 
     if (effectiveInputMode === 'manual' && !manualTopic.trim()) {
       alert("自由入力トピックを入力してください。");
@@ -1025,9 +1028,17 @@ export default function useMangaWorkflow({ experimentalEnabled = false } = {}) {
     }, 800);
 
     try {
+      const sourceKey = await createScenarioSourceKey({ inputMode: effectiveInputMode, manualTopic });
+      if (scenarioRunEpoch !== scenarioRunEpochRef.current) return null;
+      const recentSources = [...recentScenarioTextsRef.current, ...generationHistory.map(item => ({
+        scenario: item.metadataContext?.scenario, sourceKey: item.metadataContext?.settings?.scenario_source_key,
+      }))];
       const result = await generateScenario({
-        recentScenarios: collectRecentScenarioOutcomes([scenario, ...recentScenarioTextsRef.current,
-          ...generationHistory.map(item => item.metadataContext?.scenario)]),
+        scenarioMode,
+        recentScenarios: collectRecentScenarioOutcomes([
+          { scenario: previousScenario, sourceKey: findScenarioSourceKey(previousScenario, recentSources) }, ...recentSources,
+        ], { sourceKey, currentScenario: previousScenario,
+          isManualRerun: effectiveInputMode === 'manual' && !isFullAutoModeRef.current && !isEndlessModeRef.current }),
         mosaicCopyrightedCharacters,
         castList,
         categories: effectiveCategories,
@@ -1133,16 +1144,17 @@ export default function useMangaWorkflow({ experimentalEnabled = false } = {}) {
       const locationLine = resolvedLocation ? `\nLocation: ${resolvedLocation}` : '';
       const finalScenarioText = `## タイトル: ${generatedTitle}${loglineLine}${locationLine}${visualEvidenceLine}${outfitLine}${punchlineLine}${bg360HeaderLine}${cameraWorkHeaderLine}\n\n${result.scenario} `;
       setScenario(finalScenarioText);
-      recentScenarioTextsRef.current = [finalScenarioText, ...recentScenarioTextsRef.current.filter(text => text !== finalScenarioText)].slice(0, 6);
+      recentScenarioTextsRef.current = [{ scenario: finalScenarioText, sourceKey }, ...recentScenarioTextsRef.current
+        .filter(item => item?.scenario !== finalScenarioText || item?.sourceKey !== sourceKey)].slice(0, 6);
       setMangaTitle(generatedTitle); // タイトルをstateに保存（画像ダウンロード時のファイル名に使用）
-      const scenarioValidation = validateMangaScenario(finalScenarioText, castList);
+      const scenarioValidation = validateMangaScenario(finalScenarioText, castList, {scenarioMode});
       const qualityWarnings = [];
       if (result.validationWarning) {
         qualityWarnings.push(`STEP2検証: ${result.validationWarning.code}: ${result.validationWarning.message}`);
       }
       if (!scenarioValidation.ok) {
         const validationIssue = formatMangaScenarioValidationIssue(scenarioValidation);
-        qualityWarnings.push(`4コマ検証: ${validationIssue}`);
+        qualityWarnings.push(`シナリオ検証: ${validationIssue}`);
       }
       if (qualityWarnings.length > 0) {
         const warningMessage = `シナリオ品質警告: ${qualityWarnings.join(' / ')}`;
@@ -1221,10 +1233,13 @@ export default function useMangaWorkflow({ experimentalEnabled = false } = {}) {
     if (isColorModeLocked) return;
     const nextMode = normalizeMangaColorMode(value);
     if (nextMode === colorMode) return;
+    promptAssemblyRunRef.colorLayoutPrepared = experimentalEnabled
+      ? promptAssemblyRunRef.colorLayoutPrepared || promptAssemblyRunRef.experimentalPrepared
+      : undefined;
     setColorModeState(nextMode);
     invalidatePromptAssembly();
     setFinalPrompt("");
-    setGeneratedImage(null);
+    if (!experimentalEnabled) setGeneratedImage(null);
     setAssembleThought("");
     setIsCopied(false);
     setCopiedPartIndex(null);
@@ -1242,12 +1257,13 @@ export default function useMangaWorkflow({ experimentalEnabled = false } = {}) {
   };
 
   const experimentalInput = (sourceScenario = scenario) => ({
-    enabled:true,scenario:sourceScenario,castList:castListRef.current,colorMode,mosaicCopyrightedCharacters,showWatermarks,
+    enabled:true,scenarioMode,scenario:sourceScenario,castList:castListRef.current,colorMode,mosaicCopyrightedCharacters,showWatermarks,
     userDirection:inputMode==='manual'?manualTopic:'',
     imageEngineLabel:isOpenAIEngine?formatOpenAIImageEngineName(openAIImageQuality):GEMINI_IMAGE_MODEL.replace(/^gemini-nano-banana-/, 'Gemini Nano Banana '),
     scenarioModelLabel:OPENAI_SCENARIO_MODEL_OPTIONS.find(({id})=>id===scenarioUsedModelRef.current)?.label,
     // The API and Web copy paths append their own attachment-role manifest once.
     referenceContext:buildReferenceAssetContext(referenceAssetsRef.current,imagesRef.current,{purpose:'image',panorama:bg360Enabled?bg360Analysis:null}),
+    referenceImages:imagesRef.current,backgroundImage:bg360Image,backgroundEnabled:bg360Enabled,
     promptMaxChars:isOpenAIEngine?getOpenAIPromptBodyBudget(buildOpenAIReferencePlan({compact:true,
       characterImages:imagesRef.current,referenceAssets:referenceAssetsRef.current,
       backgroundImage:bg360Image,backgroundEnabled:bg360Enabled,colorMode})):undefined,
@@ -1255,16 +1271,31 @@ export default function useMangaWorkflow({ experimentalEnabled = false } = {}) {
   });
   const changePageMode = (enabled) => {
     if (isApiProcessing) return false;
-    const context=[scenario,castListRef.current,colorMode,showWatermarks,mosaicCopyrightedCharacters,
-      selectedEngine,openAIImageQuality,scenarioUsedModelRef.current,imagesRef.current,referenceAssetsRef.current,
+    if (enabled === experimentalEnabled) return true;
+    promptAssemblyRunRef.colorLayoutPrepared=undefined;
+    const context=[castListRef.current,colorMode,showWatermarks,mosaicCopyrightedCharacters,punchlineType,
+      selectedEngine,openAIImageQuality,imagesRef.current,referenceAssetsRef.current,
       bg360EnabledRef.current,bg360ImageRef.current,bg360Analysis,styleJson,getCurrentPromptProviderFamily(),inputMode,manualTopic];
     const pages=promptAssemblyRunRef.pages ||= {};
-    pages[experimentalEnabled?'experimental':'normal']={context,finalPrompt,generatedImage,generationHistory,genLog,assembleThought,completedRun:promptAssemblyRunRef.completedRun};
+    pages[experimentalEnabled?'experimental':'normal']={context,scenario,originalScenario,scenarioThought,explanation,explanationNotice,mangaTitle,
+      enhanceLog,lockedLocation,lockedOutfit,bg360CameraWork,bg360CroppedPanels,usedModel,scenarioUsedModel:scenarioUsedModelRef.current,
+      resolvedPunchlineType:resolvedPunchlineTypeRef.current,finalPrompt,generatedImage,generationHistory,genLog,assembleThought,
+      completedRun:promptAssemblyRunRef.completedRun,experimentalPrepared:promptAssemblyRunRef.experimentalPrepared};
     const next=pages[enabled?'experimental':'normal'] || {};
     const matches=next.context?.length===context.length && next.context.every((value,index)=>Object.is(value,context[index]));
+    invalidatePromptAssembly();
+    scenarioRunEpochRef.current+=1;
+    setScenario(next.scenario||'');setOriginalScenario(next.originalScenario||'');setScenarioThought(next.scenarioThought||'');
+    setExplanation(next.explanation||'');setExplanationNotice(next.explanationNotice||'');setMangaTitle(next.mangaTitle||'');
+    setEnhanceLog(next.enhanceLog||'');setLockedLocation(next.lockedLocation||'');setLockedOutfit(next.lockedOutfit||'');
+    setBg360CameraWork(next.bg360CameraWork||null);setBg360CroppedPanels(next.bg360CroppedPanels||[]);
+    scenarioUsedModelRef.current=next.scenarioUsedModel||null;setUsedModel(next.usedModel||null);
+    updateResolvedPunchlineType(matches?next.resolvedPunchlineType||'':'');
     setFinalPrompt(matches?next.finalPrompt||'':'');setGeneratedImage(next.generatedImage||null);
     setGenerationHistory(next.generationHistory||[]);setGenLog(next.genLog||[]);setAssembleThought(matches?next.assembleThought||'':'');
     promptAssemblyRunRef.completedRun=matches?next.completedRun:undefined;
+    promptAssemblyRunRef.experimentalPrepared=matches?next.experimentalPrepared:undefined;
+    setIsScenarioCopied(false);setIsCopied(false);setIsTextSaved(false);setIsMetaSaved(false);
     return true;
   };
   // --- Step 3: Prompt Assembly (Super FURU v121.3) ---
@@ -1286,7 +1317,11 @@ export default function useMangaWorkflow({ experimentalEnabled = false } = {}) {
     const assemblyRun = promptAssemblyRunRef.current;
     const controller = new AbortController();
     promptAssemblyAbortRef.current = controller;
-    const scenarioValidation = validateMangaScenario(currentScenario, castList);
+    const scenarioValidation = validateMangaScenario(currentScenario, castList, {scenarioMode});
+    if (scenarioValidation.structuralValid === false) {
+      showStatus(experimentalEnabled ? '実験モードには5〜8コマのシナリオが必要です。STEP2で作成してください。' : '通常モードには4コマのシナリオが必要です。STEP2で作成してください。');
+      return null;
+    }
     const assemblyQualityWarning = !scenarioValidation.ok
       ? `シナリオ品質警告: ${formatMangaScenarioValidationIssue(scenarioValidation)}。取得済みの内容を保持し、品質警告のままSTEP4へ進めます。`
       : '';
@@ -1321,13 +1356,15 @@ export default function useMangaWorkflow({ experimentalEnabled = false } = {}) {
     try {
       if (experimentalEnabled) {
         const input=experimentalInput(currentScenario);
-        const prepared=await prepareExperimentalManga({...input,signal:controller.signal},async(prompt,signal)=>
-          (await callAI(prompt,[],null,message=>setAssembleThought(prev=>prev+'\n'+message),{signal,modelRoute:'scenario',scenarioModelId})).text);
+        const prepared=await prepareExperimentalManga({...input,signal:controller.signal,onProgress:message=>setAssembleThought(prev=>prev+'\n'+message)},async(prompt,signal)=>
+          (await callAI(prompt,[],null,message=>setAssembleThought(prev=>prev+'\n'+message),{signal,modelRoute:'scenario',scenarioModelId})).text,
+          {colorOnlyPrepared:promptAssemblyRunRef.colorLayoutPrepared});
         if(promptScenarioEpoch!==scenarioRunEpochRef.current||assemblyRun!==promptAssemblyRunRef.current) return null;
+        promptAssemblyRunRef.colorLayoutPrepared=undefined;
         promptAssemblyRunRef.experimentalPrepared={...prepared,images:imagesRef.current,bg360Image,groupId:crypto.randomUUID()};
         promptAssemblyRunRef.completedRun=assemblyRun;
         setFinalPrompt(prepared.prompt);
-        setAssembleThought(`実験STEP3完了：${prepared.plan.count}コマ。${prepared.plan.reason}`);
+        setAssembleThought(`実験STEP3完了：${prepared.plan.count}コマ。${prepared.plan.reason}\nSTEP2のコマ数・順序・台詞を保持しました。`);
         return prepared.prompt;
       }
       const activePunchlineType = resolvedPunchlineTypeRef.current || resolveScenarioEndingType(currentScenario, punchlineType);
@@ -1441,6 +1478,7 @@ export default function useMangaWorkflow({ experimentalEnabled = false } = {}) {
     promptAssemblyRunRef.pages = Object.fromEntries(Object.entries(promptAssemblyRunRef.pages || {})
       .map(([mode, page]) => [mode, {generationHistory:page.generationHistory}]));
     promptAssemblyRunRef.experimentalPrepared = null;
+    promptAssemblyRunRef.colorLayoutPrepared = undefined;
   };
   const partialReset = () => {
     resetPageCaches();
@@ -1884,6 +1922,7 @@ export default function useMangaWorkflow({ experimentalEnabled = false } = {}) {
       ? ensureMangaColorModeContract(enginePrompt, colorMode)
       : enginePrompt;
     const metadataSettings = {
+      scenario_source_key: findScenarioSourceKey(generationScenario, recentScenarioTextsRef.current),
       page_kind:qualityMode,panel_count:pageContract.count,
       punchline_type: punchlineType,
       color_mode: colorMode,
@@ -2054,7 +2093,7 @@ export default function useMangaWorkflow({ experimentalEnabled = false } = {}) {
           progressPhase='品質検査';
           const response=await reviewExperimentalImage({image:candidate,plan:experimentalPrepared.plan,
             prompt:buildExperimentalReviewPrompt(experimentalPrepared.plan,experimentalPrepared.source,experimentalInput(generationScenario)),signal},
-            (prompt,attachments,signal)=>reviewRequest(prompt,attachments,null,msg=>statCallback(`[QUALITY QA] ${msg}`),{signal,outputProfile:'image-quality-review'}));
+            (prompt,attachments,signal,options)=>reviewRequest(prompt,attachments,null,msg=>statCallback(`[QUALITY QA] ${msg}`),{...options,signal,outputProfile:'image-quality-review'}));
           signal?.throwIfAborted();
           const review=validateExperimentalReview(response.review,experimentalPrepared.plan);
           candidate.experimentalReview=review;
@@ -2966,7 +3005,7 @@ export default function useMangaWorkflow({ experimentalEnabled = false } = {}) {
       setFullAutoStep(0);
       setIsAborting(false);
       if (step4ok) {
-        showStatus("🎉 フルオート生成完了！4コマ漫画が生成されました！");
+        showStatus("🎉 フルオート生成完了！漫画が生成されました！");
       }
     }
     } catch (error) {
@@ -3046,6 +3085,7 @@ export default function useMangaWorkflow({ experimentalEnabled = false } = {}) {
   // --- Return all 113 variables needed by JSX ---
   return {
     changePageMode,
+    scenarioModeValid: !scenario || validateMangaScenario(scenario, castList, {scenarioMode}).structuralValid !== false,
     imageInputBudget,
     imageInputError,
     referenceAssets,

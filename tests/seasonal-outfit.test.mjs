@@ -78,6 +78,45 @@ test('an unqualified uniform is not automatically classified as school attire', 
   assert.throws(() => assertSeasonalOutfit({ outfit: '学校制服', wardrobeSourceText: '警察官が交番で勤務する' }), /学校制服/);
 });
 
+test('explicitly negated school garments do not turn casual outfits into school assignments', () => {
+  for (const outfit of [
+    'Aは薄手パーカーと長ズボン。Bは軽い撥水ジャケットとパンツ。Cは薄手レインジャケットと長ズボン。三人とも学校制服ではない。',
+    '全員、学校制服ではなく場面に合う私服。',
+    'Aは私服で、セーラー服は着ない。',
+    'Aは私服。学生服を着用しない。',
+    'Casual jackets and trousers. No school uniform.',
+  ]) assert.equal(assertSeasonalOutfit({ outfit, wardrobeSourceText: '雨上がりに荷物を運ぶ' }), true, outfit);
+});
+
+test('negating one garment or one actor never exempts a positive school outfit elsewhere', () => {
+  for (const outfit of [
+    '全員が学校制服を着る。',
+    'Aは学校制服ではない。Bは学校制服を着る。',
+    'Aは学校制服ではなく、Bが学校制服。',
+    'Aは学校制服の上着を着ないが、学校制服のスカートを着る。',
+    'Aは学校制服（リボンなし）。',
+    '学校制服ではないとは言えない服装。',
+    'A wears no school uniform. B wears school uniform.',
+  ]) assert.throws(() => assertSeasonalOutfit({ outfit, wardrobeSourceText: '地域の催し' }), /学校制服の根拠/, outfit);
+});
+
+test('ordinary school-location words ground school attire without requiring a particular school label', () => {
+  const brief = '制服・髪・眼鏡・年齢は素材準拠。雨上がりの校舎の軒下、横から差す午後の光。';
+  assert.equal(assertSeasonalOutfit({ outfit: '学校制服', wardrobeSourceText: brief }), true);
+  for (const location of ['校庭', '校門']) {
+    assert.equal(assertSeasonalOutfit({ outfit: '学校制服', wardrobeSourceText: `${location}で二人が待ち合わせる` }), true);
+  }
+});
+
+test('a workplace uniform request or generated school location cannot ground school attire', () => {
+  for (const source of ['制服は素材準拠。店の入口で開店準備をする。', '職場の制服で荷物を受け取る。']) {
+    assert.throws(() => assertSeasonalOutfit({
+      outfit: '学校制服', wardrobeSourceText: source,
+      contextText: '校舎の軒下で学生ボランティアが待つ。校庭と校門が見える。'
+    }), /学校制服の根拠/);
+  }
+});
+
 test('returns no date season for invalid dates or manual mode', () => {
   assert.equal(getSeasonContext({ targetDate: '', inputMode: 'news' }), null);
   assert.equal(getSeasonContext({ targetDate: '2026-02-30', inputMode: 'news' }), null);
@@ -194,6 +233,7 @@ test('automatic scenario generation fails closed and preserves a camera-invalid 
 });
 
 const payoffReviewResponse = JSON.stringify({
+  cast_identity: [1, 2, 3, 4].map(panel => ({ panel, status: 'consistent', reference_evidence: '設定された人物の髪と眼鏡の有無を維持する。', scenario_evidence: '同じ人物が案内板を運び、台詞の話者も対応する。', change_basis: '', correction: '' })),
   pass: true,
   payoff_clarity: { material_failure: false, evidence: '案内板の向きと入口の対応が回転によって変わる。', correction: '' },
   setup_seed: '受付机に案内板を置く。',
@@ -207,6 +247,25 @@ const payoffReviewResponse = JSON.stringify({
   ensemble_continuity: [1, 2, 3, 4].map(panel => ({ panel, material_break: false, evidence: `Panel ${panel}: the single actor carries the prop action forward.`, correction: '' })),
   camera_rhythm: { shots: [1, 2, 3, 4].map(panel => ({ panel, signature: `Panel ${panel}: distinct scripted projection.`, purpose: 'Follow the seasonal prop action.' })), repeated_panels: [], material_repeat: false, intentional_repeat: false, evidence: 'Different views keep each beat readable.', correction: '' },
   reason_codes: [],
+});
+
+test('normal generation keeps a negated-uniform outfit unchanged without wasting scenario retries', async () => {
+  const outfit = 'テスト人物は動きやすい薄手の上着と長ズボン。学校制服ではない。';
+  let generations = 0, reviews = 0;
+  setFixtureResponse(async prompt => {
+    if (prompt.includes('panel3_prediction') && prompt.includes('構成監査')) {
+      reviews++;
+      return { text: payoffReviewResponse, model: 'test-fixture' };
+    }
+    generations++;
+    return { text: `Topic: 会館の受付\nLocation: 地域会館\nVisualEvidence: 受付机、案内板、筆記具\nOutfit: ${outfit}\nScenario:\n${fixtureBody}`, model: 'test-fixture' };
+  });
+  const result = await generateScenario({
+    castList: referenceCast, categories: [], inputMode: 'manual', manualTopic: '地域会館の受付',
+    targetDate: '2026-09-15', customLocation: '', customOutfit: '', punchlineType: 'Surreal', onProgress: () => {},
+  });
+  assert.equal(generations, 1); assert.equal(reviews, 1);
+  assert.equal(result.outfit, outfit); assert.equal(result.validationWarning, null);
 });
 
 test('actual scenario and enhancement call paths exclude sheet wardrobe and retry ungrounded uniforms', async () => {

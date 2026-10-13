@@ -2,6 +2,100 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { PAGE_LAYOUT, detectPageBands, detectVariablePanelFrames, buildPageDrawPlan, normalizePageCandidate, scalePageLayout } from '../src/lib/manga-page-layout.js';
 
+test('slightly sloped borders and rounded corners retain real frames without accepting a deep notch',()=>{
+  const width=1000,height=1400;
+  const make=(notch=false,tilt=8)=>{
+    const data=new Uint8ClampedArray(width*height*4).fill(255);
+    for(const [left,top] of [[20,40],[510,40],[20,460],[510,460],[20,880],[510,880]]) {
+      const w=470,h=380,radius=9;
+      const inside=(x,y)=>{
+        if(x<0||x>=w||y<0||y>=h-Math.floor(x/w*tilt))return false;
+        if(notch&&left===20&&top===460&&x>180&&x<280&&y<32)return false;
+        const cx=Math.max(radius,Math.min(w-1-radius,x));
+        const cy=Math.max(radius,Math.min(h-1-radius,y));
+        return (x-cx)**2+(y-cy)**2<=radius**2;
+      };
+      for(let y=0;y<h;y++)for(let x=0;x<w;x++) {
+        if(!inside(x,y)||inside(x-3,y)&&inside(x+3,y)&&inside(x,y-3)&&inside(x,y+3))continue;
+        const p=((top+y)*width+left+x)*4;data[p]=data[p+1]=data[p+2]=0;
+      }
+    }
+    return {data,width,height};
+  };
+  const diagnostics=[];
+  const frames=detectVariablePanelFrames(make(),undefined,d=>diagnostics.push(d));
+  assert.equal(frames.length,6,'drawn border variation is not a missing panel');
+  assert.deepEqual(frames,detectVariablePanelFrames(make()));
+  assert.ok(diagnostics[0].components.some(c=>c.shapeFallbackAccepted));
+  assert.equal(detectVariablePanelFrames(make(false,13)).length,6,'fractional pixel envelope rounds outward');
+  assert.deepEqual(detectVariablePanelFrames(make(true)),[],'a material inward notch stays ambiguous');
+});
+
+test('optional frame diagnostics explain rejection without changing detection or exposing pixels',()=>{
+  const width=200,height=240,data=new Uint8ClampedArray(width*height*4).fill(255);
+  const ink=(x,y)=>{const p=(y*width+x)*4;data[p]=data[p+1]=data[p+2]=0;};
+  for(const [left,top] of [[10,20],[110,20],[10,130],[110,130]]) {
+    for(let y=top;y<top+90;y++)for(let x=left;x<left+80;x++) {
+      if(x<left+2||x>=left+78||y<top+2||y>=top+88)ink(x,y);
+    }
+  }
+  const inspect=(pixels,expectedCount)=>{
+    const reports=[];
+    const actual=detectVariablePanelFrames(pixels,expectedCount,report=>reports.push(report));
+    assert.deepEqual(actual,detectVariablePanelFrames(pixels,expectedCount));
+    assert.equal(reports.length,1);
+    assert.equal(Object.hasOwn(reports[0],'data'),false);
+    assert.equal(reports[0].resultCount,actual.length);
+    return reports[0];
+  };
+  const valid=inspect({data,width,height});
+  assert.equal(valid.reason,'ok');assert.equal(valid.frameCount,4);assert.equal(valid.ambiguous,false);
+  assert.equal(valid.componentCount,4);assert.equal(valid.paperThreshold,238);
+  assert.deepEqual(valid.components[0].bbox,[10,20,80,90]);
+  assert.equal(valid.components[0].area,7200);assert.equal(valid.components[0].fill,1);
+  assert.ok(Object.values(valid.components[0].edgeCoverage).every(edge=>edge.coverage===1&&edge.missing===0));
+  const mismatch=inspect({data,width,height},5);
+  assert.equal(mismatch.reason,'expected_count_mismatch');assert.equal(mismatch.frameCount,4);
+  for(let y=60;y<62;y++)for(let x=88;x<112;x++)ink(x,y);
+  const joined=inspect({data,width,height});
+  assert.equal(joined.reason,'ambiguous');assert.equal(joined.ambiguous,true);assert.equal(joined.frameCount,2);
+  assert.ok(joined.components.some(component=>component.accepted===false&&Object.values(component.edgeCoverage).some(edge=>edge.missing>edge.allowedMissing)));
+  const blank=inspect({data:new Uint8ClampedArray(data.length).fill(255),width,height});
+  assert.equal(blank.reason,'no_frames');assert.equal(blank.componentCount,0);
+  assert.equal(inspect({data,width:0,height}).reason,'invalid_input');
+  assert.doesNotThrow(()=>detectVariablePanelFrames({data,width,height},undefined,()=>{throw new Error('diagnostic sink unavailable');}));
+});
+
+test('independent frame observation retains clear count mismatches but rejects connected or incomplete candidates',()=>{
+  const width=400,height=600;
+  const frames=[[10,30,180,120],[210,30,180,120],[10,165,180,120],[210,165,180,120],[10,300,180,120],[210,300,180,120],[10,435,380,130]];
+  const fixture=count=>{
+    const data=new Uint8ClampedArray(width*height*4).fill(255);
+    for(const [x,y,w,h] of frames.slice(0,count)) for(let dy=0;dy<h;dy++) for(let dx=0;dx<w;dx++) {
+      if(dx>2&&dx<w-3&&dy>2&&dy<h-3)continue;
+      const pos=((y+dy)*width+x+dx)*4;data[pos]=data[pos+1]=data[pos+2]=0;
+    }
+    return data;
+  };
+  for(const count of [6,7]) assert.equal(detectVariablePanelFrames({data:fixture(count),width,height}).length,count,'observed geometry must not depend on requested count');
+  const withSmallMark=fixture(6);
+  for(let y=7;y<11;y++)for(let x=15;x<25;x++){const p=(y*width+x)*4;withSmallMark[p]=withSmallMark[p+1]=withSmallMark[p+2]=0;}
+  assert.equal(detectVariablePanelFrames({data:withSmallMark,width,height}).length,6,'small title/footer marks are not extra panels');
+  const connected=fixture(7);
+  for(let y=75;y<78;y++)for(let x=180;x<225;x++){const p=(y*width+x)*4;connected[p]=connected[p+1]=connected[p+2]=0;}
+  assert.deepEqual(detectVariablePanelFrames({data:connected,width,height}),[],'connected neighboring panels do not certify a lower count');
+  const rectangularJoin=fixture(6);
+  for(const top of [30,147])for(let y=top;y<top+3;y++)for(let x=180;x<225;x++) {
+    const p=(y*width+x)*4;rectangularJoin[p]=rectangularJoin[p+1]=rectangularJoin[p+2]=0;
+  }
+  assert.equal(detectVariablePanelFrames({data:rectangularJoin,width,height}).length,5,'closed merged components can undercount real panels; collection is not proof of total count');
+  assert.deepEqual(detectVariablePanelFrames({data:rectangularJoin,width,height},6),[],'the legacy exact-count sampler stays fail-closed');
+  const incomplete=fixture(7);
+  for(let y=435;y<438;y++)for(let x=80;x<130;x++){const p=(y*width+x)*4;incomplete[p]=incomplete[p+1]=incomplete[p+2]=255;}
+  assert.deepEqual(detectVariablePanelFrames({data:incomplete,width,height}),[],'an open missing boundary must not certify the remaining six panels');
+  assert.deepEqual(detectVariablePanelFrames({data:new Uint8ClampedArray(width*height*4).fill(255),width,height}),[]);
+});
+
 test('variable frame sampling follows drawn unequal widths and spanning panels, never equal divisions',()=>{
   for(const frames of [
     [[10,30,230,150],[245,30,145,150],[10,185,380,170],[10,360,180,200],[195,360,195,200]],

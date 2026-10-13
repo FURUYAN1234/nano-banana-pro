@@ -1341,3 +1341,44 @@ test('invalid BalloonLayout exposes the precise reason without weakening validat
  const ambiguous=extractCastLimitRule('状況: 甲が職員を見る。\n甲「誰だろう。」',cast,{compact:true,storyText:'受付職員「はい。」\n会場職員「こちらです。」'});
  assert.doesNotMatch(ambiguous,/CAST COUNT:.*\[(?:受付職員|会場職員)\]/);
  });
+
+
+test('layout-only extraction reuses canonical speakers and rear contours without returning printed speech', () => {
+  const cast = '## 甲（案内役）\n## 乙';
+  const layout = [{ speaker: '甲（案内役）', x: 0.8, anchor: '右手前の甲の口元', route: '右上から甲の口へ' },
+    { speaker: '乙', x: 0.2, anchor: '左奥の乙の口元', route: '左上から乙の口元へ' }];
+  const panel = '[Camera: 甲の肩越し、後頭部を手前に置く]\nBalloonLayout: ' + JSON.stringify(layout) + '\n状況: 甲と乙が向かい合う。\n甲「見つけた。」\n乙「続けよう。」';
+  const usual = extractDialogueOnly(panel, cast, { forImagePrompt: true });
+  const only = extractDialogueOnly(panel, cast, { forImagePrompt: true, layoutOnly: true });
+  assert.equal(only, usual.slice(usual.indexOf(' BALLOON LAYOUT')));
+  assert.match(only, /B1 x=0\.8, \[甲\].*頭の見える輪郭/);
+  assert.match(only, /B2 x=0\.2, \[乙\].*口元/);
+  assert.doesNotMatch(only, /見つけた|続けよう|TEXT \(PRINT|甲の口/);
+  assert.deepEqual(extractDialogueOnly(panel, cast, { forImagePrompt: true, asEntries: true }), [
+    { speaker: '甲', text: '見つけた。' }, { speaker: '乙', text: '続けよう。' },
+  ]);
+  assert.equal(extractDialogueOnly(panel, cast, { forImagePrompt: true, forScriptLock: true }), 'TEXT (PRINT VALUES ONLY): B1="見つけた。"; B2="続けよう。".');
+  assert.equal(extractDialogueOnly('BalloonLayout: []\nセリフなし', cast, { forImagePrompt: true, layoutOnly: true }), '');
+  assert.equal(extractDialogueOnly('甲「配置なし。」', cast, { forImagePrompt: true, layoutOnly: true }), '');
+  assert.equal(extractDialogueOnly('セリフなし', cast, { forImagePrompt: true, layoutOnly: true }), '');
+  for (const mutate of [items => { items[0].speaker = '乙'; }, items => { items[0].x = 0.1; }, items => { items[1].route = ''; }]) {
+    const invalid = structuredClone(layout); mutate(invalid);
+    assert.throws(() => extractDialogueOnly(panel.replace(JSON.stringify(layout), JSON.stringify(invalid)), cast, { forImagePrompt: true, layoutOnly: true }), { code: 'BALLOON_LAYOUT_INVALID' });
+  }
+  assert.throws(() => extractDialogueOnly('BalloonLayout: ' + JSON.stringify(layout) + '\nセリフなし', cast, { forImagePrompt: true, layoutOnly: true }), { code: 'BALLOON_LAYOUT_INVALID' });
+});
+
+test('rear balloon routing preserves explicit hidden-mouth clauses while redirecting positive endpoints', () => {
+  const cast='## 甲\n## 乙';
+  const render=(route)=>extractDialogueOnly(`[Camera: 甲の肩越し、背後上方から俯瞰、後頭部と背中だけ]
+BalloonLayout: ${JSON.stringify([{speaker:'甲',x:0.7,anchor:'手前の甲の口元',route}])}
+状況: 甲は奥の乙へ話す。
+甲「準備できた。」`,cast,{forImagePrompt:true,layoutOnly:true});
+  const jp=render('左上から甲の口元へ。背面の口元は見せない');
+  assert.match(jp,/tail=左上から甲の頭の見える輪郭へ。背面の口元は見せない/);
+  assert.doesNotMatch(jp,/輪郭は見せない/);
+  const hidden=render('後頭部へ。口元と両目は描かない');
+  assert.match(hidden,/口元と両目は描かない/);
+  const en=render('from top to mouth; do not show the mouth');
+  assert.match(en,/from top to 頭の見える輪郭; do not show the mouth/);
+});

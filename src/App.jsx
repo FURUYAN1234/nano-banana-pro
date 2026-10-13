@@ -31,6 +31,7 @@ function App() {
   // --- All 113 variables from useMangaWorkflow (auto-audited, zero omissions) ---
   const {
     changePageMode,
+    scenarioModeValid,
     analyzeThought,
     apiKey,
     assemblePrompt,
@@ -382,8 +383,14 @@ function App() {
               setStyleJson={setStyleJson}
             />
 
+          <ExperimentalMangaPanel enabled={experimentEnabled} onModeChange={enabled=>{if(changePageMode(enabled))setExperimentEnabled(enabled);}}
+            currentStep={currentStep} isAnalyzing={isAnalyzing} isSearching={isSearching}
+            normalBusy={isApiProcessing || isFullAutoMode || isEndlessMode || isEnhancing || is360CameraWorking}
+            />
+
             {/* 02: シナリオ設定 (Static Layout) */}
             <div hidden={isAnalyzing}><Step2Panel
+              experimentEnabled={experimentEnabled}
               mosaicCopyrightedCharacters={mosaicCopyrightedCharacters}
               setMosaicCopyrightedCharacters={setMosaicCopyrightedCharacters}
               isRenderOptionsLocked={isColorModeLocked}
@@ -464,10 +471,6 @@ function App() {
             </>
           )}
           {!isAnalyzing && !isSearching && currentStep >= 3 && <ExplanationPanel value={explanation} onChange={setExplanation} notice={explanationNotice} busy={isSearching} />}
-          <ExperimentalMangaPanel enabled={experimentEnabled} onModeChange={enabled=>{if(changePageMode(enabled))setExperimentEnabled(enabled);}}
-            currentStep={currentStep} isAnalyzing={isAnalyzing} isSearching={isSearching}
-            normalBusy={isApiProcessing || isFullAutoMode || isEndlessMode || isEnhancing || is360CameraWorking}
-            >
               <div  ref={step3Ref} className="flex flex-col gap-4">
 
                 {/* 03: プロンプト生成 - Tailwind p-8等がJITで無視されるためインラインスタイルで適用 */}
@@ -483,13 +486,14 @@ function App() {
                   isEnhancing={isEnhancing}
                   is360CameraWorking={is360CameraWorking}
                   experimentEnabled={experimentEnabled}
+                  scenarioModeValid={scenarioModeValid}
                   assemblePrompt={assemblePrompt}
                   assembleThought={assembleThought}
                   isAssembling={isAssembling}
                   promptActionRef={step3ActionRef}
                 />
               </div>
-          </ExperimentalMangaPanel>
+
 
           {/* 出力結果 */}
           <div>

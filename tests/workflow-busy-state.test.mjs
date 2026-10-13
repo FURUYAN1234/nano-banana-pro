@@ -4,6 +4,7 @@ import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 import { beginApiWork, cancelApiWork } from '../src/lib/api-work-cancellation.js';
 import { collectRecentScenarioOutcomes } from '../src/lib/generation-history.js';
+import * as scenarioHistory from '../src/lib/generation-history.js';
 import { retryImagePolicyGeneration } from '../src/lib/image-policy-retry.js';
 import { assertRenderOptions, buildRenderOptionsContract } from '../src/lib/render-options.js';
 import { assertPrintableDialogue } from '../src/lib/bubble-text.js';
@@ -38,11 +39,13 @@ function harness(overrides = {}) {
     isSearching: false, isEnhancing: false, isGeneratingImage: false, isFixingPolicy: false,
     policyAutoRetrying: false, allowImageQualityRepair: true, is360CameraWorking: false, isFullAutoMode: false, isAborting: false,
     isAssembling: false, isAnalyzing: false, experimentalEnabled: false,
+    get scenarioMode() { return this.experimentalEnabled ? 'experimental-manga' : 'four-panel'; },
     scenarioRunEpochRef: { current: 0 }, promptAssemblyRunRef: { current: 0 },
     promptAssemblyAbortRef: { current: null }, fullAutoAbortRef: { current: false },
     isFullAutoModeRef: { current: false }, qualityRetryAbortRef: { current: false },
     resolvedPunchlineTypeRef: { current: '' }, scenarioUsedModelRef: { current: null },
     recentScenarioTextsRef: { current: [] }, generationHistory: [], collectRecentScenarioOutcomes,
+    createScenarioSourceKey: async () => '', findScenarioSourceKey: (...args) => scenarioHistory.findScenarioSourceKey(...args),
     lastPolicyErrorRef: { current: '' }, isEndlessModeRef: { current: false },
     step2Ref: { current: null }, step3Ref: { current: null }, imageResultRef: { current: null },
     enhanceExpressions: true, enhanceBodyLang: false, enhanceEffects: false,
@@ -85,6 +88,26 @@ function harness(overrides = {}) {
 
 const result = { topic: 'Generic title', scenario: 'A complete generated scenario', usedModel: 'unchanged' };
 const flush = async () => { for (let i = 0; i < 12; i++) await Promise.resolve(); };
+
+for (const experimentalEnabled of [false, true]) {
+  test(`full-auto keeps ${experimentalEnabled ? 'native 5–8' : 'four-panel'} mode across normal STEP2, STEP3 and STEP4`, async () => {
+    const calls=[];
+    const generatedScenario=Array.from({length:experimentalEnabled?8:4},(_,i)=>`[${i+1}コマ目]\n状況: 次の札を動かす。\nA「次です。」`).join('\n');
+    const {state,bind}=harness({experimentalEnabled,
+      generateScenario:async input=>{calls.push(['provider',input.scenarioMode,input.inputMode]);return {...result,scenario:generatedScenario};},
+      validateMangaScenario:(_scenario,_cast,options)=>{calls.push(['validate',options.scenarioMode]);return {ok:true,structuralValid:true};},
+      assemblePrompt:async(_skip,scenario)=>{calls.push(['step3',scenario]);return 'assembled current prompt';},
+      regenerateImage:async(_skip,prompt,options)=>{calls.push(['step4',prompt,options.sourceScenario]);return true;},
+    });
+    bind('generateScenarioFromNews');
+    await bind('runFullAuto')();
+    const mode=experimentalEnabled?'experimental-manga':'four-panel';
+    assert.deepEqual(calls,[['provider',mode,'news'],['validate',mode],['step3',state.scenario],['step4','assembled current prompt',state.scenario]]);
+    assert.ok(state.scenario.includes(generatedScenario));
+    assert.equal(state.isFullAutoMode,false);
+    assert.equal(state.isSearching,false);
+  });
+}
 
 for (const outcome of ['success', 'failure']) {
   test(`editing the scenario releases enhancement; stale ${outcome} cannot relock or overwrite it`, async () => {
@@ -154,6 +177,7 @@ for (const outcome of ['complete', 'failed', 'cancelled']) {
     let now = 1000;
     const { state, bind } = harness({ Date: { now: () => now }, generateScenario: () => request.promise });
     const pending = bind('generateScenarioFromNews')();
+    await flush();
     state.scenarioThought += '\n> ⏳ AI応答を待機中... (120秒経過)';
     now = 126432;
     if (outcome === 'cancelled') state.setScenarioFromUser('replacement');
@@ -176,9 +200,11 @@ test('stale STEP2 success/failure cannot replace newer timing or release newer l
     const { state, bind } = harness({ Date: { now: () => now }, generateScenario: () => ++calls === 1 ? first.promise : second.promise });
     const generate = bind('generateScenarioFromNews');
     const old = generate();
+    await flush();
     now = 1000;
     state.setScenarioFromUser('replacement');
     const latest = generate();
+    await flush();
     now = 3000;
     if (failed) first.reject(new Error('obsolete failure')); else first.resolve(result);
     await old;
@@ -202,6 +228,7 @@ test('hard reset clears both story-history sources and stale STEP2 cannot restor
     generateScenario: input => { providerInput = input; return request.promise; },
   });
   const pending = bind('generateScenarioFromNews')();
+  await flush();
   assert.equal(providerInput.recentScenarios.length, 2, 'both existing history sources reach STEP2');
 
   bind('hardReset')();
@@ -214,6 +241,61 @@ test('hard reset clears both story-history sources and stale STEP2 cannot restor
   assert.deepEqual(state.recentScenarioTextsRef.current, []);
   assert.deepEqual(state.generationHistory, []);
 });
+
+test('STEP2 retains source provenance and excludes a same-input rerun from current, session and image history', async () => {
+  const sourceKey = `manual:sha256:${'a'.repeat(64)}`;
+  const differentKey = `manual:sha256:${'b'.repeat(64)}`;
+  const same = '[4コマ目: 結]\n状況: 二人で支えて風鈴を直す。';
+  const other = '[4コマ目: 結]\n状況: 別の原案で二人が風鈴を直す。';
+  const unknown = '[4コマ目: 結]\n状況: 古い原案で二人が風鈴を直す。';
+  const inputs = [];
+  const { state, bind } = harness({
+    scenario: same, createScenarioSourceKey: async () => sourceKey,
+    recentScenarioTextsRef: { current: [{ scenario: same, sourceKey }, { scenario: other, sourceKey: differentKey }, unknown] },
+    generationHistory: [{ metadataContext: { scenario: same, settings: { scenario_source_key: sourceKey } } }],
+    generateScenario: async input => { inputs.push(input); return { ...result, scenario: same }; },
+  });
+  const generate = bind('generateScenarioFromNews');
+  await generate();
+  assert.deepEqual(inputs[0].recentScenarios.map(item => item.outcome), ['状況: 別の原案で二人が風鈴を直す。', '状況: 古い原案で二人が風鈴を直す。']);
+  assert.deepEqual(state.recentScenarioTextsRef.current[0], { scenario: state.scenario, sourceKey });
+  await generate();
+  assert.deepEqual(inputs[1].recentScenarios, inputs[0].recentScenarios, 'the newly current scenario does not bypass provenance filtering');
+  state.createScenarioSourceKey = async () => differentKey;
+  await generate();
+  assert.ok(inputs[2].recentScenarios.some(item => item.outcome === '状況: 二人で支えて風鈴を直す。'), 'a different input still compares the previous plot');
+});
+
+test('STEP2 cannot start a provider after source hashing is invalidated by a user edit', async () => {
+  const key = deferred();
+  let calls = 0;
+  const { state, bind } = harness({
+    createScenarioSourceKey: () => key.promise,
+    generateScenario: async () => { calls++; return result; },
+  });
+  const pending = bind('generateScenarioFromNews')();
+  state.setScenarioFromUser('User replacement');
+  key.resolve(`manual:sha256:${'a'.repeat(64)}`);
+  assert.equal(await pending, null);
+  assert.equal(calls, 0, 'invalidated preflight must not start a provider');
+  assert.equal(state.scenario, 'User replacement');
+});
+
+for (const mode of ['new-work', 'full-auto', 'endless']) {
+  test(`STEP2 ${mode} keeps history comparison even when the manual topic matches`, async () => {
+    const sourceKey = `manual:sha256:${'a'.repeat(64)}`;
+    const same = '[4コマ目: 結]\n状況: 二人で支えて風鈴を直す。';
+    let input;
+    const { bind } = harness({
+      scenario: mode === 'new-work' ? '' : same, createScenarioSourceKey: async () => sourceKey,
+      isFullAutoModeRef: { current: mode === 'full-auto' }, isEndlessModeRef: { current: mode === 'endless' },
+      recentScenarioTextsRef: { current: [{ scenario: same, sourceKey }] },
+      generateScenario: async value => { input = value; return result; },
+    });
+    await bind('generateScenarioFromNews')();
+    assert.deepEqual(input.recentScenarios.map(item => item.outcome), ['状況: 二人で支えて風鈴を直す。']);
+  });
+}
 
 test('full-auto releases its own mode when an unexpected downstream error escapes', async () => {
   const { state, bind } = harness({

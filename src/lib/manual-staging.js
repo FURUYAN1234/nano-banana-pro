@@ -1,7 +1,7 @@
 const STAGING_CUE_RE = /(?:話しかけ|語りかけ|呼びかけ|問いかけ|会話相手|聞き手|見つめ|視線|目線|向かい合|向き合|振り向|(?:を|へ|に)向(?:く|かう|ける|いて)|(?:読者|観客|視聴者|カメラ|画面)(?:正面)?(?:を|へ|に)?(?:見ない|向(?:く|かう|ける|いて))|(?:カメラ|画面)?正面.{0,8}(?:禁止|避け|向かない)|face(?:s|d|ing)?|look(?:s|ed|ing)?|gaze|eye[-\s]?line|address(?:es|ed|ing)?)/i;
 const INTERPERSONAL_VIEW_CUE_RE = /(?:^|[。！？!?]\s*)[^\s、。！？!?]{1,24}(?:は|が)[^\s、。！？!?]{1,24}(?:を|へ|に)見(?:る|ない)(?:[、。！？!?]|$)/u;
-const PANEL_REF_RE = /([1-4一二三四])\s*コマ目/gu;
-const PANEL_NUMBER = { '1': 1, '2': 2, '3': 3, '4': 4, 一: 1, 二: 2, 三: 3, 四: 4 };
+const PANEL_REF_RE = /([1-8１-８一二三四五六七八])\s*コマ目/gu;
+const PANEL_NUMBER = { '1': 1, '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, 一: 1, 二: 2, 三: 3, 四: 4, 五: 5, 六: 6, 七: 7, 八: 8 };
 const LOCK_MARKER = '[USER STAGING LOCK - ABSOLUTE]';
 const ONE_SHOT_BEAT_RE = /(?:上映(?:前|中|後)|その後|直後|最後(?:に|の)|やがて|翌日|初めて|瞬間|とき|時点)/u;
 
@@ -11,7 +11,7 @@ const splitDirectiveSentences = (manualTopic) => String(manualTopic || '')
   .filter(Boolean);
 
 const CAMERA_DIRECTIVE_RE = /(?:カメラ|画面|読者|観客)(?:正面|目線)?(?:を|へ|に|は)?(?:見ない|見るな|向かない|向く|向ける|禁止)|(?:カメラ|画面)正面.{0,8}(?:禁止|避け)|\b(?:look|face|gaze)\b.{0,20}\b(?:camera|viewer|audience)\b/i;
-const PAGE_SCOPE_RE = /全コマ|各コマ|ページ全体|全編|\b(?:every|all) panels?\b|throughout the page/i;
+const PAGE_SCOPE_RE = /全(?:[1-8１-８一二三四五六七八])?コマ|各コマ|ページ全体|全編|\b(?:every|all) panels?\b|throughout the page/i;
 
 const collectManualStagingDirectives = (manualTopic, scenario) => {
   const global = [];
@@ -20,11 +20,17 @@ const collectManualStagingDirectives = (manualTopic, scenario) => {
   const names = speakers.map(name => name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
   const castMention = names.length ? new RegExp(`(?<![A-Za-z0-9_])(?:${names.join('|')})(?![A-Za-z0-9_])`, 'u') : null;
 
+  let activePanels = [];
   splitDirectiveSentences(manualTopic).forEach((sentence) => {
-    if (!STAGING_CUE_RE.test(sentence) && !INTERPERSONAL_VIEW_CUE_RE.test(sentence)) return;
-    const panelNumbers = [...sentence.matchAll(PANEL_REF_RE)]
-      .map((match) => PANEL_NUMBER[match[1]])
+    const referencedPanels = [...sentence.matchAll(PANEL_REF_RE)]
+      .map((match) => PANEL_NUMBER[match[1].normalize('NFKC')])
       .filter(Boolean);
+    // A panel heading scopes its following sentences even if the heading has
+    // no staging cue. A paragraph break alone never promotes a local rule.
+    if (referencedPanels.length) activePanels = [...new Set(referencedPanels)];
+    else if (PAGE_SCOPE_RE.test(sentence)) activePanels = [];
+    if (!STAGING_CUE_RE.test(sentence) && !INTERPERSONAL_VIEW_CUE_RE.test(sentence)) return;
+    const panelNumbers = activePanels;
 
     if (panelNumbers.length === 0) {
       // Topic prose is still passed to the scenario model as content. Only
@@ -58,8 +64,8 @@ export const applyManualStagingLocks = (scenario, manualTopic) => {
 
   let currentPanel = null;
   return text.split('\n').flatMap((line) => {
-    const panelMatch = line.match(/^\[([1-4一二三四])\s*コマ目/u);
-    if (panelMatch) currentPanel = PANEL_NUMBER[panelMatch[1]];
+    const panelMatch = line.match(/^\[([1-8１-８一二三四五六七八])\s*コマ目/u);
+    if (panelMatch) currentPanel = PANEL_NUMBER[panelMatch[1].normalize('NFKC')];
     if (!currentPanel || !/^\s*状況\s*[:：]/u.test(line)) return [line];
 
     const panelDirectives = [

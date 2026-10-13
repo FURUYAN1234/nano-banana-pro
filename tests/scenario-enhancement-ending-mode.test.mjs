@@ -115,8 +115,23 @@ test('STEP2 and STEP4 label the same enhancement category from the selected endi
   assert.match(step2, /const isDocumentaryEnhancementMode = enhancementEndingPolicy\.documentary;/);
   assert.match(step2, /ギャグ・ドキュメンタリー/);
   assert.match(step2, /シリアス・ドキュメンタリー/);
-  assert.match(step2, /事実保持・4コマ目の反応/);
+  assert.match(step2, /事実保持・最終コマの反応/);
   assert.match(step4, /isSeriousEnhancementMode \? "シリアス演出強化" : "ギャグ演出強化"/);
   assert.match(hook, /enhanceScenarioText\(\{[\s\S]*?punchlineType: resolvedPunchlineTypeRef\.current \|\| punchlineType,[\s\S]*?\}\)/);
   assert.match(provider, /buildScenarioEnhancementPrompt\(\{[\s\S]*?punchlineType,[\s\S]*?\}\)/);
 });
+
+ test('native enhancement categories use actual panel count for every ending tone', () => {
+ for (const count of [5, 8]) {
+ const source = Array.from({length:count},(_,i)=>'['+(i+1)+'コマ目: 展開]\n[EMOTION: NORMAL]\n[Camera: 上から俯瞰]\n状況: Aが資料を調べる。\nA「確認します」').join('\n');
+ for (const punchlineType of ['GagAuto','SeriousAuto','Documentary','SeriousDocumentary']) {
+ for (const category of ['expressions','body','effects','background','camera','dialogue','gag']) {
+ const prompt=buildScenarioEnhancementPrompt({scenario:source,scenarioMode:'experimental-manga',selectedCategories:[category],punchlineType});
+ const instructions=prompt.split('【元のシナリオ】')[0];
+ assert.match(instructions,new RegExp(count+'コマ構造をそのまま保つ'));
+ assert.doesNotMatch(instructions,/4コマ目|全4コマ|4コマ構造|1〜3コマ目|2〜3コマ目/);
+ assert.ok(prompt.endsWith(source),'source content is not rewritten');
+ }
+ }
+ }
+ });

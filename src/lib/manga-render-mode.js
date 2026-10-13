@@ -174,7 +174,7 @@ export const MONOCHROME_IMAGE_QUALITY_CONTRACT = SHARED_IMAGE_QUALITY_CONTRACT
 // colored recipes are not included and then contradicted by a later warning.
 export const MONOCHROME_EMOTION_STYLES = Object.freeze({
   CHIBI_GAG: 'Super-deformed chibi anatomy: normally 2-3 heads tall, unless explicit proportions override. Enlarge the skull; compress torso and jointed limbs, not merely eyes. Preserve Camera/Action, body acting, individual gaze/reactions, hair/glasses. Project this redesigned body into the same shot, not a zoom or lineup. Black accents on white.',
-  GEKIGA: `Fully redraw GEKIGA faces with carved facial planes. ${GEKIGA_FACE_CONSTRUCTION} Brush contours, solid ink shadows and directional crosshatching model turning planes. Keep identity/age, scripted gaze, Camera/Action/body acting and skin bases.`,
+  GEKIGA: `Fully redraw GEKIGA faces with carved facial planes. ${GEKIGA_FACE_CONSTRUCTION} Brush contours; fine directional hatching is primary, small solid-black accents secondary. Keep identity/age, scripted gaze, Camera/Action/body acting and skin bases.`,
   SHOUJO: 'Romantic delicate black penwork, outlined flowers and airy white highlights; sparse regular screen dots behind the cast and star-shaped eye highlights. Keep faces, glasses and dialogue readable.',
   HORROR: 'Tense horror-manga penwork, jagged contours and strong black shadow masses with sparse hatching; preserve the existing cast, readable faces and scripted comedic exaggeration.',
   BLANK: 'Frozen deadpan expression, blank white eyes and stiff posture; clean sparse ink contours and canonical facial bases. Preserve glasses around the blank eyes.',
@@ -186,7 +186,7 @@ export const MONOCHROME_EMOTION_STYLES = Object.freeze({
   SPEED: 'Extreme speed through directional black strokes and panning-like hatching; sharp focal faces/eyes, clear moving limbs and wind-blown clothing. Background defocus follows depth; no duplicate people.',
   FLASHBACK: 'Memory scene with delicate ink lines, wavy but separate panel boundaries and sparse regular black dots toward the edges; airy white centers, crisp marks and canonical lit facial bases.',
   UKIYOE: 'Woodblock-like bold black carved contours, flat black and white shapes, elegant elongated figures and patterned hatching integrated with the existing physical setting.',
-  POP_ART: 'Punchy graphic composition, thick black outlines, strong black/white shapes and regular Ben-Day dots. Preserve Japanese bubble typography and the declared scene.',
+  POP_ART: '顔/髪/服/小物/背景を極太の黒い輪郭、大胆な白黒のflat面、大粒で明瞭な規則的Ben-Day網点で印刷絵へ再構築。白肌明部は白、網点は許可された影/素材面のみ。Camera/Action・演技/表情・同一性/既定トーン・台詞/吹出配置を保持。',
   SKETCH: 'Loose energetic pen sketch with crisp black strokes and deliberate crosshatching separated by white gaps; retain recognizable faces, clear acting and clean lit skin.',
   NEON: 'Electric night atmosphere via white cutout light strips and crisp white rim highlights against controlled black masses and regular screen dots; wet reflections as hard ink/white shapes.',
   THICK_PAINT: 'Weighty sculptural brush-ink rendering: broad solid black brush shapes, decisive white highlights and dense controlled hatching in shadows. Keep light-skin lit planes unprinted.',

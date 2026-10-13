@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
+import { runInNewContext } from 'node:vm';
 
 import { requestSafeScenario } from '../src/lib/location-policy.js';
 
@@ -225,7 +226,24 @@ test('quality-gate warnings do not block STEP3 or STEP4', async () => {
 test('STEP3 quality warnings never return early or disappear during prompt assembly', async () => {
   const source = await readFile(new URL('../src/hooks/useMangaWorkflow.js', import.meta.url), 'utf8');
   const check = source.slice(source.indexOf('const scenarioValidation = validateMangaScenario(currentScenario'), source.indexOf('setIsAssembling(true)', source.indexOf('const assemblePrompt')));
-  assert.doesNotMatch(check, /return null/);
+  for (const scenarioMode of ['four-panel', 'experimental-manga']) {
+    const statuses = [];
+    const context = {
+      currentScenario: 'current scenario', castList: 'current cast', scenarioMode,
+      experimentalEnabled: scenarioMode === 'experimental-manga',
+      validateMangaScenario: () => ({ ok: false, structuralValid: true }),
+      formatMangaScenarioValidationIssue: () => 'dialogue warning',
+      showStatus: message => statuses.push(message),
+    };
+    const run = () => runInNewContext('(function () {' + check + '; return { continued: true, assemblyQualityWarning }; })()', context);
+    const warning = run();
+    assert.equal(warning.continued, true, 'ordinary quality warnings must continue');
+    assert.match(warning.assemblyQualityWarning, /dialogue warning/);
+    assert.match(statuses.pop(), /品質警告のままSTEP4へ/);
+    context.validateMangaScenario = () => ({ ok: false, structuralValid: false });
+    assert.equal(run(), null, 'wrong mode counts must stop before API work');
+    assert.match(statuses.pop(), scenarioMode === 'four-panel' ? /4コマ/ : /5〜8コマ/);
+  }
   assert.match(source, /allowScenarioQualityWarning: true/);
   assert.doesNotMatch(source, /error\?\.code === 'DIALOGUE_CONTRACT'/);
   assert.match(source, /assemblyQualityWarning/);

@@ -2,10 +2,11 @@ import assert from 'node:assert/strict';
 import test, { after, before } from 'node:test';
 import { createServer } from 'vite';
 import { readFileSync } from 'node:fs';
-import { EMOTION_STYLES, COMPACT_EMOTION_STYLES } from '../src/lib/constants.js';
+import { EMOTION_STYLES, COMPACT_EMOTION_STYLES, GEKIGA_FACE_CONSTRUCTION } from '../src/lib/constants.js';
 
 let server;
 let buildMangaPrompt;
+let buildEmotionBlock, MONOCHROME_EMOTION_STYLES;
 let buildMangaPromptArtifact, validateMangaPromptArtifact;
 
 test('opaque color styles retain solid color coverage beside watercolor, with explicit pale colors allowed', () => {
@@ -56,6 +57,8 @@ before(async () => {
     server: { middlewareMode: true }
   });
   ({ buildMangaPrompt, buildMangaPromptArtifact, validateMangaPromptArtifact } = await server.ssrLoadModule('/src/lib/prompt-assembler.js'));
+  ({ buildEmotionBlock } = await server.ssrLoadModule('/src/lib/panel-utils.js'));
+  ({ MONOCHROME_EMOTION_STYLES } = await server.ssrLoadModule('/src/lib/manga-render-mode.js'));
 });
 
 test('long reference-locked monochrome keeps camera projection and source within the existing budget', () => {
@@ -180,13 +183,13 @@ test('panel recipes can redraw reference facial rendering without changing ident
       assert.match(prompt, /Keep identity\/age and scripted emotion\/gaze\/pose\/Camera/);
     } else {
       assert.match(prompt, /Identity from refs; facial construction\/ink\/shading from panel recipe/);
-      assert.match(prompt, /Redraw visible faces with small realistic eyes/);
+      assert.ok(prompt.includes(GEKIGA_FACE_CONSTRUCTION));
     }
     assert.match(prompt, /Keep Camera\/Action\/identity\/age\/wardrobe/);
   }
 });
 
-test('the visually verified gekiga facial anatomy survives providers, media and prompt budgets', () => {
+test('the prescribed gekiga facial anatomy survives providers, media and prompt budgets', () => {
   for (const providerFamily of ['chatgpt', 'gemini']) {
     for (const colorMode of ['color', 'monochrome']) {
       for (const promptMaxChars of [24000, 32000]) {
@@ -194,23 +197,28 @@ test('the visually verified gekiga facial anatomy survives providers, media and 
           castList: CAST_LIST, colorMode, providerFamily, promptMaxChars, punchlineType: 'Auto', systemVersion: 'test' };
         const prompt = buildMangaPrompt(options);
         const faceRecipe = prompt.split('## Panel 2')[1].split('## Panel 3')[0];
-        assert.match(faceRecipe, /Redraw visible faces with small realistic eyes\/irises/i);
-        assert.match(faceRecipe, /heavy anatomical eyelids/i);
-        assert.match(faceRecipe, /pronounced nose bridges/i);
-        assert.match(faceRecipe, /carved cheek\/jaw planes/i);
+        assert.ok(faceRecipe.includes(GEKIGA_FACE_CONSTRUCTION));
+        assert.match(faceRecipe, /narrow eye openings, small irises partly covered by thick anatomical lids/i);
+        assert.match(faceRecipe, /projecting nose bridge, sidewalls and nostril wings/i);
+        assert.match(faceRecipe, /distinct cheekbone and jaw angles/i);
         assert.match(faceRecipe, /identity\/age/i);
         assert.match(faceRecipe, /ink|crosshatching/i);
         assert.match(faceRecipe, /Camera|camera/);
+        if (providerFamily === 'chatgpt') {
+          assert.match(faceRecipe, /fine dense directional crosshatching ON faces\/hands.*primary/i);
+          assert.match(faceRecipe, /solid black.*local.*secondary/i);
+          assert.doesNotMatch(faceRecipe, /large solid-black shadow planes/i);
+        }
         const locked = buildMangaPrompt({ ...options, punchlineType: 'SeriousDocumentary' });
-        assert.doesNotMatch(locked, /Redraw visible faces with small realistic eyes/i);
+        assert.ok(!locked.includes(GEKIGA_FACE_CONSTRUCTION));
       }
     }
   }
-  assert.match(COMPACT_EMOTION_STYLES.GEKIGA, /Redraw visible faces with small realistic eyes/i);
+  assert.ok(COMPACT_EMOTION_STYLES.GEKIGA.includes(GEKIGA_FACE_CONSTRUCTION));
   const fullPage = buildMangaPrompt({ scenario: buildScenarioWithEmotions(Array(4).fill('GEKIGA')),
     castList: CAST_LIST, colorMode: 'color', providerFamily: 'chatgpt', promptMaxChars: 24000,
     punchlineType: 'Auto', systemVersion: 'test' });
-  assert.equal((fullPage.match(/Redraw visible faces with small realistic eyes/g) || []).length, 4);
+  assert.equal(fullPage.split(GEKIGA_FACE_CONSTRUCTION).length - 1, 4);
   assert.equal((fullPage.match(/not anime faces with gritty backgrounds/g) || []).length, 4);
   assert.ok(fullPage.length <= 24000);
 });
@@ -288,9 +296,12 @@ test('budget compression preserves executable style recipes, not just style name
       castList: CAST_LIST + ' stable identity detail'.repeat(400),
       colorMode: 'color', providerFamily, punchlineType: 'Auto', systemVersion: 'test'
     });
-    assert.match(prompt, providerFamily === 'chatgpt'
-      ? /Style:.*Redraw visible faces.*small realistic eyes\/irises.*nose bridges.*cheek\/jaw.*solid-black shadow planes.*crosshatching ON faces\/hands/i
-      : /Style:.*Redraw visible faces.*heavy anatomical eyelids.*cheek\/jaw/i);
+    assert.ok(prompt.includes(GEKIGA_FACE_CONSTRUCTION));
+    assert.match(prompt, /Style:.*narrow eye openings.*thick anatomical lids.*projecting nose bridge.*cheekbone and jaw angles/i);
+    if (providerFamily === 'chatgpt') {
+      assert.match(prompt, /Style:.*fine dense directional crosshatching ON faces\/hands.*primary/i);
+      assert.doesNotMatch(prompt, /large solid-black shadow planes/i);
+    }
     assert.match(prompt, /Style:.*delicate thin linework/i);
     assert.match(prompt, /Style:.*transparent color washes/i);
     assert.match(prompt, /Style:.*chibi.*Camera\/Action.*gaze/i);
@@ -337,7 +348,7 @@ test('monochrome preserves strong facial drawing and camera-first chibi interpre
     scenario: buildScenarioWithEmotions(['GEKIGA', 'SHOUJO', 'WATERCOLOR', 'CHIBI_GAG']),
     castList: CAST_LIST, colorMode: 'monochrome', providerFamily: 'chatgpt', punchlineType: 'Auto'
   });
-  assert.match(prompt, /GEKIGA;.*small realistic eyes\/irises.*heavy anatomical eyelids.*pronounced nose bridges.*carved cheek\/jaw/i);
+  assert.match(prompt, /GEKIGA;.*narrow eye openings.*thick anatomical lids.*projecting nose bridge.*cheekbone and jaw angles/i);
   assert.match(prompt, /CHIBI_GAG;.*Camera\/Action.*gaze/i);
   assert.match(prompt, /Explicit user proportions win/i);
   assert.match(prompt, /CHIBI: Explicit user proportions win; otherwise retain shortened body and enlarged head within the requested Camera\/Action/);
@@ -376,6 +387,49 @@ Action: 店内の壁面と商品箱が大きく映る。
 繝溘け「効いてる。」
 Action: 背景の看板と空気感が最後の確認対象になる。
 `;
+
+
+test('POP print recipe stays conspicuous on actors and setting in full, compact and monochrome routes', () => {
+  for (const [route, recipe] of [
+    ['full', buildEmotionBlock('[EMOTION: POP_ART]', 'color')],
+    ['compact', COMPACT_EMOTION_STYLES.POP_ART],
+    ['monochrome', buildEmotionBlock('[EMOTION: POP_ART]', 'monochrome')],
+  ]) {
+    for (const instruction of ['顔/髪/服/小物/背景', '極太の黒い輪郭', '大粒で明瞭な規則的Ben-Day網点',
+      'Camera/Action', '演技/表情', '同一性', '台詞/吹出配置']) assert.ok(recipe.includes(instruction), route + ': ' + instruction);
+    assert.doesNotMatch(recipe, /zoom|close-up|enlarge faces|顔を拡大/i);
+    if (route === 'monochrome') {
+      assert.match(recipe, /白黒のflat面/);
+      assert.match(recipe, /白肌明部は白、網点は許可された影\/素材面のみ/);
+      assert.match(recipe, /既定トーン/);
+      assert.doesNotMatch(recipe, /vivid|primary color|鮮烈|FULL COLOR/i);
+    } else {
+      assert.match(recipe, /鮮烈で不透明なflat色面/);
+      assert.match(recipe, /網点は顔の陰影にも/);
+      assert.match(recipe, /グラデやアニメ塗り＋速度線だけは不可/);
+      assert.match(recipe, /固有色/);
+    }
+  }
+  assert.ok(EMOTION_STYLES.POP_ART.style.length + EMOTION_STYLES.POP_ART.vfx.length <= 483, 'full recipe stays within prior size');
+  assert.ok(COMPACT_EMOTION_STYLES.POP_ART.length <= 149, 'compact recipe does not consume more budget');
+  assert.ok(MONOCHROME_EMOTION_STYLES.POP_ART.length <= 161, 'monochrome recipe does not consume more budget');
+});
+
+test('POP print reaches ordinary provider output while preserving camera, acting, speech and neighboring media', () => {
+  const camera = '背面側の低い位置から見上げる望遠。手前の後頭部と奥の横顔を収める。';
+  const scenario = buildScenarioWithEmotions(['NORMAL', 'POP_ART', 'WATERCOLOR', 'GEKIGA'])
+    .replace('[EMOTION: POP_ART]', '[EMOTION: POP_ART]\n[Camera: ' + camera + ']');
+  for (const providerFamily of ['chatgpt', 'gemini']) for (const colorMode of ['color', 'monochrome']) {
+    const prompt = buildMangaPrompt({ scenario, castList: CAST_LIST, providerFamily, colorMode, promptMaxChars: 32000 });
+    const panels = prompt.split(/^## Panel \d+\s*$/m).slice(1);
+    assert.match(panels[1], /極太の黒い輪郭/);
+    assert.match(panels[1], /大粒で明瞭な規則的Ben-Day網点/);
+    assert.ok(panels[1].includes(camera));
+    assert.ok(panels[1].includes('質感を見たいね。'));
+    assert.ok(panels[1].includes('背景に照明と奥行きがある。'));
+    for (const panel of [panels[0], panels[2], panels[3]]) assert.doesNotMatch(panel, /極太の黒い輪郭|大粒で明瞭な規則的Ben-Day網点/);
+  }
+});
 
 test('selected texture-driven styles add compact panel exceptions to the final ChatGPT prompt', () => {
   const prompt = buildMangaPrompt({

@@ -31,6 +31,11 @@ const getTextOutputTokenLimit = (modelId, outputProfile) => {
     return outputProfile === 'image-quality-review' ? IMAGE_QA_OUTPUT_LIMITS[modelId] ?? 8192 : 8192;
 };
 
+const getChatResponseFormat = responseFormat => {
+    if (responseFormat !== undefined && responseFormat !== 'json_object') throw new TypeError('Unsupported response format');
+    return responseFormat === 'json_object' ? { type: 'json_object' } : undefined;
+};
+
 const extractResponsesOutputText = (response) => (
     (response.output || [])
         .filter((item) => item.type === 'message')
@@ -130,7 +135,8 @@ const requestOpenAIWebSearch = async ({ modelId, prompt, systemInstruction, time
     }
 };
 
-export const requestOpenAIChatCompletion = async ({modelId, messages, apiKey, timeoutMs, signal, onThinkingUpdate, outputTokenLimit = getTextOutputTokenLimit(modelId)}) => {
+export const requestOpenAIChatCompletion = async ({modelId, messages, apiKey, timeoutMs, signal, onThinkingUpdate, outputTokenLimit = getTextOutputTokenLimit(modelId), responseFormat}) => {
+    const responseFormatConfig = getChatResponseFormat(responseFormat);
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
     const reportTiming = createRequestTiming(modelId, onThinkingUpdate);
@@ -143,6 +149,7 @@ export const requestOpenAIChatCompletion = async ({modelId, messages, apiKey, ti
             body: JSON.stringify({
                 model: modelId,
                 messages,
+                ...(responseFormatConfig ? { response_format: responseFormatConfig } : {}),
                 ...(usesModernChatParameters
                     ? {max_completion_tokens: outputTokenLimit}
                     : {temperature: 0.7, max_tokens: outputTokenLimit}),
@@ -172,6 +179,10 @@ export const requestOpenAIChatCompletion = async ({modelId, messages, apiKey, ti
  */
 export const callOpenAIText = async (prompt, images = null, systemInstruction = null, onThinkingUpdate, options = {}) => {
     options = { ...options, signal: getApiWorkSignal(options.signal) };
+    getChatResponseFormat(options.responseFormat);
+    if (options.responseFormat === 'json_object' && options.useWebSearch === true && !images?.length) {
+        throw new TypeError('JSON response format is not supported by the Web Search route');
+    }
     const apiKey = getOpenAIApiKey();
     if (!apiKey) throw createApiError("OpenAI APIキーが設定されていません。", {provider:'openai', code:'KEY_NOT_CONFIGURED'});
     const timeoutMs = options.timeoutMs ?? OPENAI_TEXT_TIMEOUT_MS;
@@ -294,7 +305,7 @@ export const callOpenAIText = async (prompt, images = null, systemInstruction = 
                 content: userContent.length === 1 ? prompt : userContent
             });
 
-            const {data} = await requestOpenAIChatCompletion({modelId, messages, apiKey, timeoutMs, signal:options.signal, onThinkingUpdate, outputTokenLimit});
+            const {data} = await requestOpenAIChatCompletion({modelId, messages, apiKey, timeoutMs, signal:options.signal, onThinkingUpdate, outputTokenLimit, responseFormat:options.responseFormat});
 
             const choice = data.choices?.[0];
 

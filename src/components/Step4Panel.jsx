@@ -974,7 +974,6 @@ No explanations. No partial results.`;
                   <Copy size={14} />
                 </button>
               )}
-              <span className="text-[9px] font-mono text-slate-600">DYNAMIC ENGINE V1.2.3</span>
             </div>
           </div>
 

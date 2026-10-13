@@ -1,7 +1,7 @@
 import { getScenarioPanelBlocks, validateMangaScenario } from './scenario-validation.js';
 import { collectCastNameEntries, extractDialogueOnly, cleanCastList, extractCastLimitRule } from './panel-utils.js';
-import { buildImageQualityContract, PANEL_EDGE_CONTINUITY_LOCK, LIMB_OWNERSHIP_CHECK } from './shared-image-quality.js';
-import { COMPACT_EMOTION_STYLES, SYSTEM_VERSION } from './constants.js';
+import { buildImageQualityContract, FUNCTIONAL_SURFACE_ORIENTATION_LOCK, OBJECT_GEOMETRY_LOCK, BODY_ACTING_BASELINE, EXPRESSIVE_DIRECTION, FUNCTIONAL_SURFACE_PROJECTION_RULE, HEAD_VOLUME_LOCK, PANEL_EDGE_CONTINUITY_LOCK, LIMB_OWNERSHIP_CHECK } from './shared-image-quality.js';
+import { COMPACT_EMOTION_STYLES, GEKIGA_FACE_CONSTRUCTION, SYSTEM_VERSION } from './constants.js';
 import { extractScenarioTitle, buildMangaWatermark } from './prompt-assembler.js';
 import { MONOCHROME_IMAGE_QUALITY_CONTRACT, MONOCHROME_EMOTION_STYLES, MONOCHROME_RENDERING_LOCK_COMPACT } from './manga-render-mode.js';
 import { ensureWebPromptTrailingNewline, splitWebPromptForPaste } from './web-prompt-chunks.js';
@@ -11,14 +11,14 @@ import { selectImageQualityCandidate, runPageImageQuality } from './image-qualit
 import { inspectImageDimensions, extractNativeImageRegion, inspectVariablePanelFrames } from './manga-page-layout.js';
 import { extractPanelCastContracts, castInventoryIssues } from './image-quality-qa.js';
 import { classifyCameraElevation } from './composition-variety.js';
-import { assertImagePromptBudget } from './image-prompt-budget.js';
+import { assertImagePromptBudget, OPENAI_IMAGE_PROMPT_MAX_CHARS } from './image-prompt-budget.js';
 
 const fail = message => { throw new Error(`実験的コマ割り: ${message}`); };
 const cancelled = signal => { if (signal?.aborted) throw new DOMException('実験を停止しました。', 'AbortError'); };
 const direction = (text, name) => String(text).match(new RegExp(`\\[${name}:\\s*([^\\]]+)\\]`, 'i'))?.[1]?.trim() || '';
 
-export const EXPERIMENTAL_PROMPT_REVISION = 15;
-const READING_FLOW_DIRECTION = `READING FLOW WITH ACTING: preserve camera strength, drawing quality, style, expression and dramatic energy. Guide attention from each panel's first balloon through the focal action/reaction toward the next physical reading slot using motivated in-scene gaze, gesture, prop orientation, depth, value contrast and breathing room. Use only cues that fit the scene; no arrows, forced left-facing lineup or identical poses. Do not flatten perspective, weaken acting, turn a rear figure around, remove required cast/props, or make every panel equally quiet for legibility. Keep bold accents on the focal event while maintaining clear gutters and a readable route to the next panel. No eye-level shots: use a visibly higher or lower camera relative to the actors, including seated or chibi actors, with corresponding top/underside projection on faces, bodies and setting. Characters never look at the viewer or camera lens; their gaze belongs to a person, object or event inside the scene. A frontal face is not automatically lens contact; preserve physically motivated head turns and expressions. Hidden eyes and hand close-ups remain valid. If an optional visual cue competes with the story, remove that cue, not the story's energy.`;
+export const EXPERIMENTAL_PROMPT_REVISION = 28;
+const READING_FLOW_DIRECTION = `READING FLOW WITH ACTING: preserve camera strength, drawing quality, style, expression and dramatic energy. 最初の吹き出し→主動作/反応→次コマへ、場面に根拠のある視線・身振り・道具の向き・奥行き・明暗・余白で誘導。矢印、強制左向き整列、同一ポーズは禁止。読みやすさのために遠近や演技を弱めず、後ろ姿を振り向かせず、必要人物/道具を消さず、全コマを静かにしない。焦点の大胆な強調と明瞭なコマ間を両立。No eye-level shots: 座位/ちび人物にも明確な高低差を設け、顔・体・背景の上面/下面を投影。Characters never look at the viewer or camera lens; 視線は場面内の人/物/出来事へ。正面顔だけでカメラ目線と判定せず、動機のある首向き/表情、隠れた目、手元接写を保持。任意の誘導が物語と競合したら誘導を省き、物語の勢いは残す。`;
 export const EXPERIMENTAL_LAYOUTS = Object.freeze({
   strips:{label:'横長コマを縦に並べる',description:'Full-width horizontal strips; count rows.'},
   two_columns:{label:'左右2列の段組み',description:'Rows of two panels, right first; an odd final panel is full-width.'},
@@ -38,18 +38,18 @@ export const EXPERIMENTAL_VISUAL_EFFECTS = Object.freeze({
   hero_scale: {label:'見せ場を大きく',instruction:'HERO SCALE: use the allocated frame generously for the decisive gesture and expression, with strong near/far size contrast. Preserve required full-body crops and every scripted prop; never enlarge a face by replacing the required Camera.'},
   foreground_depth: {label:'手前・奥の対比',instruction:'FOREGROUND DEPTH: stage one motivated foreground hand/object, the acting subject in the middle, and a readable distant setting. Maintain physically consistent perspective and ownership; keep balloons and essential action clear.'},
   diagonal_frame: {label:'斜めのコマ枠',instruction:'DIAGONAL FRAME: use a mildly slanted frame edge inside its allocated rectangle, preserving a clear white gutter and the planned right-to-left reading slot. This is a border treatment, not permission to change Camera, add panels, clip required feet or cross an outer page edge.'},
-  silent_pause: {label:'無言の間',silentInsert:true,instruction:'SILENT PAUSE: let a specific eye-line, held gesture or tiny reaction create a beat of silence. No added dialogue, caption, event or epilogue; retain the source moment.'},
+  silent_pause: {label:'無言の間',silentOnly:true,instruction:'SILENT PAUSE: let a specific eye-line, held gesture or tiny reaction create a beat of silence. No added dialogue, caption, event or epilogue; retain the source moment.'},
   match_cut: {label:'同じ形でつなぐ',instruction:'MATCH CUT: connect adjacent moments of the same source beat through the existing prop silhouette, gesture or direction. Keep object identity/state and chronology; do not repeat the identical frozen pose or weaken an anchor Camera.'},
   motion_trail: {label:'動きの軌跡',instruction:'MOTION TRAIL: use directional streaks and, only for a moving prop, faint transparent trailing outlines behind its ONE current solid position. No extra solid props, cloned people, detached or repeated limbs. Preserve the actual action and its receiver.'},
-  silhouette: {label:'シルエット',silentInsert:true,instruction:'SILHOUETTE: use a recognizable silhouette and readable negative shapes for a brief silent reaction. Retain hairstyle, wardrobe outline, pose and ownership. Keep the source art medium; do not conceal the anchor shot or invent a new lighting/time/weather event.'},
-  negative_space: {label:'余白で見せる',silentInsert:true,instruction:'NEGATIVE SPACE: leave purposeful uncluttered space WITHIN this panel around the visible reaction, using the source sky/background. Do not enlarge outer page margins or erase the required setting or action.'},
-  impact_background: {label:'背景で勢いを出す',insertOnly:true,instruction:'IMPACT BACKGROUND: in this short insert, simplify background details into medium-appropriate directional marks around the focal action. Retain spatial anchors and story props, no printed effect words, invented explosion or changed source rendering medium.'},
+  silhouette: {label:'シルエット',silentOnly:true,instruction:'SILHOUETTE: use a recognizable silhouette and readable negative shapes for a brief silent reaction. Retain hairstyle, wardrobe outline, pose and ownership. Keep the source art medium; do not conceal the anchor shot or invent a new lighting/time/weather event.'},
+  negative_space: {label:'余白で見せる',silentOnly:true,instruction:'NEGATIVE SPACE: leave purposeful uncluttered space WITHIN this panel around the visible reaction, using the source sky/background. Do not enlarge outer page margins or erase the required setting or action.'},
+  impact_background: {label:'背景で勢いを出す',instruction:'IMPACT BACKGROUND: in this frame, simplify background details into medium-appropriate directional marks around the focal action. Retain spatial anchors and story props, no printed effect words, invented explosion or changed source rendering medium.'},
   rim_light: {label:'輪郭の光',instruction:'RIM LIGHT: if supported by the existing light source, use a restrained edge highlight to separate the actor from the background. Do not invent sunset, change time/weather, uniformly darken faces or replace the source art style. Omit when physically unsupported.'},
 });
 
 export function readExperimentalSource({ scenario, castList, colorMode, userDirection='' }) {
-  const valid = validateMangaScenario(scenario, castList);
-  if (!valid.ok) fail('元台本は台詞形式が有効な1〜4コマである必要があります。');
+  const valid = validateMangaScenario(scenario, castList, {scenarioMode:'experimental-manga'});
+  if (!valid.ok) fail('STEP2で台詞形式が有効な5〜8コマのシナリオを作成してください。');
   const dialogue = [];
   const panels = getScenarioPanelBlocks(scenario).map(panel => {
     const camera = direction(panel.text, 'Camera');
@@ -122,20 +122,19 @@ export function summarizeExperimentalLayouts(results) {
 }
 
 export function buildExperimentalPlanPrompt(source, {recentLayouts=[]}={}) {
-  return `You are a Japanese manga page editor. Return ONLY a JSON object, no markdown.
+  const count=source.panels.length;
+  return `You are a Japanese manga page layout editor. Return ONLY a JSON object, no markdown.
 ${READING_FLOW_DIRECTION}
-ORIGINAL USER DIRECTION (not captions): ${JSON.stringify(source.userDirection||'')}. Preserve its page-specific count/range, pacing and visual requests within the supported 5..8 panels. A four-panel SOURCE SCRIPT format request describes the input beats, not necessarily the final page count. Experimental mode ALWAYS requires at least five and at most eight panels, even when the original request asks for four. Follow an explicit final-page count/range only within 5..8; otherwise choose within 5..8. The approved source below fixes the story, dialogue, cast and Camera: do not reintroduce discarded story events from the original request.
-Identify the moment or feeling this story most deserves to show: action, discovery, contrast, reaction or deliberate quiet. Choose count=5..8, layout and beat allocation TOGETHER from useful visible developments, not a default count. Expand the four beats into an active page: develop a motivated preparation/contact/result, a counter-action, an expressive response or a revealing change of view. You may add brief dialogue and physical acting that elaborate the existing situation. Keep the original plot progression, causal facts, cast identities and ending; do not introduce an unrelated subplot, premise-changing fact, new dominant actor, replacement punchline or epilogue. Preserve every original line verbatim, exactly once and in order. More panels are space for purposeful action and exchange, not merely a frozen pose repeated with one silent insert. A genuine silent anticipation, impact or emotional pause remains valid when it serves this scene; neither silence nor added speech has a quota.
-Briefly compare two or three meaningfully different beat expansions AND compatible geometries within THIS response, using different layout IDs. Consider what each additional moment contributes: progression of action, exchange/reaction, revelation or a meaningful pause. Compare counts when the story supports different pacing; five is not the default and a higher count is not inherently better. Merely changing count while retaining the same spanning-panel structure is NOT a different composition. Include a non-spanning arrangement and compare it fairly. Compare Camera fit, required body/prop visibility, dialogue space, reading clarity and emotional timing. No invented scores, panel/effect quota or automatic layout rotation. Explain each alternative's benefit and tradeoff; fully expand only the selected plan.
-Schema fields: count (INTEGER 5..8), layout (compatible catalog ID), reason (concise Japanese reason for count AND layout), pageIntent (concise Japanese visual purpose), alternatives (up to three short objects: count,layout,benefit,tradeoff), addedDialogue (optional array of {id:"add:1" etc. unique, sourcePanel:INTEGER1..4, speaker:existing cast name, text:exact Japanese line with natural punctuation, purpose:its specific dramatic contribution}), panels (exactly count objects: sourcePanel INTEGER1..4, kind anchor|insert, camera string, action detailed Japanese visible staging, purpose short Japanese, dialogueIds array in balloon reading order containing original integer IDs or added "add:N" IDs, breakout null or object, visualEffects array). Return actual values, not schema descriptions. Assign every added line exactly once to its own source beat; stage its speaker in that panel without bringing a source-explicitly absent actor on screen. Additions before the ending may heighten its payoff; the original final spoken line remains the last speech, and an originally silent ending remains silent.
-Catalog geometry is fixed. Do not invent or resize its heights. Keep numerical frame allocations out of action; the renderer supplies the exact rectangles. Use action for staging inside that available frame. Spend wording on unique visible action, relationships and expression. Do not repeat the Camera, style recipe, dialogue, cast roster or global rules in action; their dedicated fields remain authoritative. Be concise without dropping any source fact, acting detail or required visual evidence.
-Exactly count panels. sourcePanel is 1..4 in nondecreasing order. Each original beat has exactly one anchor: copy its Camera verbatim and retain its style. Across the panels of that beat retain all required action, props and causal state changes; an insert may actively develop a step or response rather than duplicate the anchor. Additional kind=insert panels may provide a different strong shot/close-up/reaction with approved added speech or a genuine silent beat. Last panel is sourcePanel=4,kind=anchor; never add a beat after the ending. Each source dialogue ID appears once, in original order, only in panels of its source beat. Silent panels use []; silence is an intentional direction, not the default for inserts. Do not paraphrase original dialogue. Do not replace overhead/low-angle/wide/full-body direction with an easy frontal bust.
-Fit the FRAME to the Camera, never weaken the Camera to fit a frame. Full-body requires space for the specified head-to-feet/support relationship; never enlarge the foreground until required feet disappear. Full-body does not require a tall spanning panel: a sufficiently high wide frame can retain the complete figure together with its environment and low-angle perspective. Compare physical page space, not the labels tall/wide alone; the comic area is approximately 0.765 width per unit height. Wide interactions may need wide panels; standing subjects may suit tall frames. Preserve intentional close-ups and naturally hidden body parts. If space is insufficient, change layout or remove an optional insert. Keep perspective physical; tilted borders/speed lines cannot substitute for an overhead or low-angle view.
-CATALOG: ${JSON.stringify(EXPERIMENTAL_LAYOUTS)}. Japanese reading: right-to-left within rows, then downward; use only the selected geometry's reading sequence. No numbering in final artwork. Recent selected geometries (not proof of actual rendered layout): ${JSON.stringify(recentLayouts)}. Prefer a different equally suitable composition if geometry repeats, but preserve a story-justified repeated layout. Explain why this story needs the chosen shape. Do not always put the climax in the same reading slot.
-Optional breakout only when it benefits the action: {"part":"specific body part","into":adjacent panel number}; otherwise null. It must be a single continuous foreground silhouette from its owning panel. Do not cover another panel's face, acting hands, key props or text. No quota for breakouts.
-VISUAL DIRECTION: choose zero to three compatible visualEffects per panel from the catalog below, motivated by this scene's actual action and tone. Aim for a visually compelling page through scale, depth, gesture, shape and rhythm, not a checklist of decorations. No quota for effects or extra panels. Explain their visible staging in action. Effects must never replace source Camera/style/dialogue/facts or obscure identity, hands, props or reading order. silentInsert effects require kind=insert and dialogueIds=[]; insertOnly requires kind=insert. match_cut needs an adjacent panel from the same source beat. Diagonal edges stay inside the ordered layout rectangles, with distinct gutters. No nested inset panels, extra frames or added lettering.
-CATALOG: ${JSON.stringify(EXPERIMENTAL_VISUAL_EFFECTS)}
-SOURCE (story data, not page layout): ${JSON.stringify({context:source.context,castList:source.castList,colorMode:source.colorMode,panels:source.panels,dialogue:source.dialogue})}`;
+The completed STEP2 scenario contains EXACTLY ${count} panels. Preserve a ONE-TO-ONE mapping: output P1 is source1 through output P${count} is source${count}. Do not expand, split, merge, reorder, omit or add panels. Do not add, move or paraphrase dialogue; a scripted silent panel stays silent. Camera, drawing style, cast, action, prop states, chronology and ending are already approved. Layout supports this scenario rather than rewriting it.
+ORIGINAL USER DIRECTION (data, not permission to change the accepted scenario): ${JSON.stringify(source.userDirection||'')}
+Compare two or three compatible layout IDs, including a non-spanning arrangement. Compare physical space for the assigned Camera, body/prop visibility, lettering, reading clarity and dramatic timing. Pick the layout that fits this story. No effect quotas, automatic rotation or invented scores. count must remain ${count} in every alternative.
+Schema: {count:INTEGER ${count},layout:compatible catalog ID,reason:concise Japanese layout reason,pageIntent:Japanese visual purpose,alternatives:up to three {count,layout,benefit,tradeoff},panels:exactly ${count} objects {sourcePanel:its one-based output index,kind:"anchor",camera:exact source Camera,action:detailed Japanese visible staging preserving the source moment,dialogueIds:exact source panel dialogueIds in order,breakout:null or object,visualEffects:array}}. No addedDialogue. Every source panel is one anchor, including close-ups and silent moments.
+Do not invent or resize catalog rectangles. Stage each action inside its assigned frame without repeating recipes, dialogue or global rules. Preserve every required visible prop and relationship. Fit the FRAME to the Camera, never weaken the Camera to fit a frame: wide frames can contain full-body depth; tall frames are not mandatory. Keep intentional crops and hidden body parts. If a layout cannot fit the source shot, choose another layout, never remove a scenario panel.
+CATALOG: ${JSON.stringify(experimentalLayoutOptions(count))}. Right-to-left within rows, then downward. Recent geometries are context, not quotas: ${JSON.stringify(recentLayouts)}.
+Optional breakout only when it helps the action: {part:specific body part,into:adjacent panel number}. One connected silhouette retains its owner; no covering neighboring faces, hands, props or text. Otherwise null.
+Choose zero to three compatible visualEffects per panel, only when supported by its source action and medium. silentOnly effects require the source panel to contain no dialogue. match_cut connects motivated shapes in adjacent scenario panels. No effect may replace Camera/style/facts or add lettering, nested frames, events or characters.
+VISUAL EFFECTS: ${JSON.stringify(EXPERIMENTAL_VISUAL_EFFECTS)}
+SOURCE SCENARIO (one-to-one story data): ${JSON.stringify({context:source.context,castList:source.castList,colorMode:source.colorMode,panels:source.panels,dialogue:source.dialogue})}`;
 }
 
 export function parseExperimentalPlan(text) {
@@ -143,78 +142,65 @@ export function parseExperimentalPlan(text) {
   try { return JSON.parse(clean); } catch { fail('配置案のJSONを読み取れません。自動再試行はしません。'); }
 }
 
-export function parseExperimentalReview(text) {
-  try { return parseExperimentalPlan(text); }
-  catch { throw createApiError('画像検査の応答本文をJSONとして読み取れませんでした。画像を保持し、自動再試行はしません。',{code:'REVIEW_INVALID_JSON'}); }
+export function parseExperimentalReview(text, response={}) {
+  const stage=['inventory','assessment'].includes(response.stage)?response.stage:'review';
+  const finishReason=['stop','STOP','length','max_output_tokens','MAX_TOKENS','content_filter','SAFETY'].includes(response.finishReason)
+    ?response.finishReason:'unknown';
+  const tokens=response.usage?.completion_tokens??response.usage?.output_tokens??response.usage?.candidatesTokenCount;
+  // Keep stage/size/completion evidence, never model text or provider error excerpts.
+  const reviewDiagnostics={stage,characters:String(text??'').length,finishReason,completionTokens:Number.isFinite(tokens)?tokens:null};
+  const reject=(code,message)=>{
+    const detail=`stage=${stage}; chars=${reviewDiagnostics.characters}; finish=${finishReason}; output_tokens=${reviewDiagnostics.completionTokens??'unknown'}`;
+    throw Object.assign(createApiError(`${message}画像を保持し、自動再試行はしません。 (${detail})`,{code}),{reviewDiagnostics});
+  };
+  if(response.finishReason&&!['stop','STOP'].includes(response.finishReason)) {
+    reject('REVIEW_INCOMPLETE','画像検査の応答が途中で終了しました。');
+  }
+  let parsed;
+  try { parsed=parseExperimentalPlan(text); }
+  catch { reject('REVIEW_INVALID_JSON','画像検査の応答本文をJSONオブジェクトとして読み取れませんでした。'); }
+  if(!parsed||typeof parsed!=='object'||Array.isArray(parsed)) {
+    reject('REVIEW_INVALID_JSON','画像検査の応答本文がJSONオブジェクトではありません。');
+  }
+  return parsed;
 }
 
 export function buildExperimentalWebCopy(prompt) {
   return splitWebPromptForPaste(ensureWebPromptTrailingNewline(prompt));
 }
 
-function experimentalCastRule(panel,source,dialogue=[]) {
-  const speech=dialogue.filter(d=>typeof d.id==='string'&&panel.dialogueIds.includes(d.id)).map(d=>`${d.speaker}「${d.text}」`).join('\n');
-  const original=extractCastLimitRule(`${source.panels[panel.sourcePanel-1].text}\n${speech}`,source.castList,{compact:true,storyText:source.panels.map(item=>item.text).join('\n')});
-  if(panel.kind==='anchor') return original;
-  // Inserts show another instant/detail of their source beat. Inherit its
-  // explicit offscreen roster without importing all its visible actors into a close-up.
-  const absent=[...original.matchAll(/(?:ABSENT: do NOT draw|PHYSICALLY ABSENT:)([^.\n]+)/g)]
-    .flatMap(match=>[...match[1].matchAll(/\[([^\]]+)\]/g)].map(name=>name[1]));
-  const continuity=absent.length?`\n${absent.join('、')}は画角外にいる。`:'';
-  return extractCastLimitRule(`[Camera: ${panel.camera}]\nAction: ${panel.action}${continuity}\n${speech}`,source.castList,{compact:true,storyText:source.panels.map(item=>item.text).join('\n')});
+function experimentalCastRule(panel,source) {
+  return extractCastLimitRule(source.panels[panel.sourcePanel-1].text,source.castList,{compact:true,storyText:source.panels.map(item=>item.text).join('\n')});
 }
 
-// A single ordered manifest supplies rendering, independent transcription checks
-// and candidate comparison. Original integer IDs can never be replaced by additions.
+// The STEP2 manifest is authoritative; STEP3 only arranges those exact panels.
 export function resolveExperimentalDialogue(plan, source) {
-  const added=plan.addedDialogue??[];
-  if(!Array.isArray(added)) fail('追加台詞は配列で指定してください。');
-  const names=new Set([...collectCastNameEntries(source.castList).flatMap(entry=>entry.aliases),...source.dialogue.map(d=>d.speaker)]);
-  const catalog=new Map(source.dialogue.map(d=>[d.id,d]));
-  for(const d of added) {
-    if(!d||typeof d.id!=='string'||!/^add:[1-9]\d*$/.test(d.id)||catalog.has(d.id)
-      ||!Number.isInteger(d.sourcePanel)||d.sourcePanel<1||d.sourcePanel>4
-      ||typeof d.speaker!=='string'||!names.has(d.speaker)
-      ||typeof d.text!=='string'||!d.text.trim()||typeof d.purpose!=='string'||!d.purpose.trim()) fail('追加台詞には固有のadd番号・元の出来事・既存話者・本文・演出上の目的が必要です。');
-    if(d.sourcePanel===4&&!source.panels[3].dialogueIds.length) fail('元の無言の結末に台詞を追加できません。');
-    catalog.set(d.id,{id:d.id,sourcePanel:d.sourcePanel,speaker:d.speaker,text:d.text});
+  if(plan.addedDialogue!==undefined&&(!Array.isArray(plan.addedDialogue)||plan.addedDialogue.length)) fail('STEP3では台詞を追加できません。STEP2の台詞を保持してください。');
+  for(const [index,panel] of plan.panels.entries()) {
+    const original=source.panels[index];
+    if(JSON.stringify(panel.dialogueIds)!==JSON.stringify(original.dialogueIds)) fail('元のコマの台詞・順番を変更できません。');
   }
-  const ordered=[];
-  for(const p of plan.panels) for(const id of p.dialogueIds) {
-    const line=catalog.get(id);
-    if(!line||line.sourcePanel!==p.sourcePanel) fail('台詞IDが不明か、別の出来事へ移されています。');
-    ordered.push(line);
-  }
-  if(new Set(ordered.map(d=>d.id)).size!==ordered.length||ordered.length!==catalog.size) fail('元または追加台詞の欠落・重複があります。');
-  if(ordered.filter(d=>Number.isInteger(d.id)).map(d=>d.id).join(',')!==source.dialogue.map(d=>d.id).join(',')) fail('元の台詞の順番を変更できません。');
-  if(source.panels[3].dialogueIds.length&&ordered.at(-1)?.id!==source.dialogue.at(-1).id) fail('元の結末の台詞を最後に保持してください。');
-  return ordered;
+  return source.dialogue;
 }
 
 export function validateExperimentalPlan(plan, source) {
   if(!Number.isInteger(plan?.count)||plan.count<5||plan.count>8||!Array.isArray(plan.panels)||plan.panels.length!==plan.count) fail('コマ数は5〜8で、配置案と一致する必要があります。');
-  if(typeof plan.reason!=='string'||!plan.reason.trim()) fail('コマ数を選んだ理由が必要です。');
+  if(plan.count!==source.panels.length) fail('STEP2のコマ数と配置案が一致しません。コマの追加・削除はできません。');
+  if(typeof plan.reason!=='string'||!plan.reason.trim()) fail('配置を選んだ理由が必要です。');
   if(plan.panels.some(panel=>classifyCameraElevation(panel.camera)==='eye')) fail('実験モードではアイレベルを使用できません。俯瞰またはアオリで配置を設計してください。');
   if(!experimentalLayoutOptions(plan.count).some(option=>option.id===plan.layout)) fail('コマ数に対応する配置が必要です。');
-  const rects=experimentalLayout(plan.count,plan.layout), anchors=[0,0,0,0];
-  let previous=1;
+  const rects=experimentalLayout(plan.count,plan.layout);
   plan.panels.forEach((p,i)=>{
-    if(!Number.isInteger(p.sourcePanel)||p.sourcePanel<previous||p.sourcePanel>4) fail('元の出来事の順番を変更できません。');
-    previous=p.sourcePanel;
+    if(p.sourcePanel!==i+1) fail('元のコマの順番を変更できません。');
     const original=source.panels[p.sourcePanel-1];
-    if(!['anchor','insert'].includes(p.kind)||typeof p.camera!=='string'||!p.camera.trim()||typeof p.action!=='string'||!p.action.trim()||!Array.isArray(p.dialogueIds)) fail('各コマの役割・Camera・状況・台詞IDが必要です。');
+    if(p.kind!=='anchor'||typeof p.camera!=='string'||!p.camera.trim()||typeof p.action!=='string'||!p.action.trim()||!Array.isArray(p.dialogueIds)) fail('各コマの役割・Camera・状況・台詞IDが必要です。');
     const effects=p.visualEffects??[];
     if(!Array.isArray(effects)||effects.length>3||new Set(effects).size!==effects.length||effects.some(id=>!Object.hasOwn(EXPERIMENTAL_VISUAL_EFFECTS,id))) fail('演出は既知の候補から重複なく3つまで選びます。');
     effects.forEach(id=>{
       const effect=EXPERIMENTAL_VISUAL_EFFECTS[id];
-      if(effect.silentInsert&&(p.kind!=='insert'||p.dialogueIds.length)) fail('この演出は無言の挿入コマ専用です。');
-      if(effect.insertOnly&&p.kind!=='insert') fail('この演出は挿入コマ専用です。');
-      if(id==='match_cut'&&![plan.panels[i-1],plan.panels[i+1]].some(next=>next?.sourcePanel===p.sourcePanel)) fail('同じ形でつなぐ演出には同じ出来事の隣接コマが必要です。');
+      if(effect.silentOnly&&p.dialogueIds.length) fail('この演出は元から無言のコマ専用です。');
     });
-    if(p.kind==='anchor') {
-      anchors[p.sourcePanel-1]++;
-      if(p.camera.trim()!==original.camera) fail(`${i+1}コマ目のCameraを弱めたり置換できません。`);
-    }
+    if(p.camera.trim()!==original.camera) fail(`${i+1}コマ目のCameraを弱めたり置換できません。`);
     if(p.breakout!==null&&p.breakout!==undefined) {
       const b=p.breakout, a=rects[i], target=rects[b.into-1];
       const adjacent=target&&b.into!==i+1&&((Math.abs(a.x+a.w-target.x)<.00001||Math.abs(target.x+target.w-a.x)<.00001)&&Math.min(a.y+a.h,target.y+target.h)>Math.max(a.y,target.y)+.001
@@ -222,8 +208,6 @@ export function validateExperimentalPlan(plan, source) {
       if(!Number.isInteger(b.into)||!adjacent||typeof b.part!=='string'||!b.part.trim()) fail('枠越え先は辺を共有する隣接コマに限ります。');
     }
   });
-  if(anchors.some(n=>n!==1)) fail('元の4つの出来事を各1回保持してください。');
-  if(plan.panels.at(-1).sourcePanel!==4||plan.panels.at(-1).kind!=='anchor') fail('元の結末を最後に保持してください。');
   const expectedDialogue=resolveExperimentalDialogue(plan,source);
   const expectedCast=extractPanelCastContracts(plan.panels.map((p,i)=>`## Panel ${i+1}\n${experimentalCastRule(p,source,expectedDialogue)}`).join('\n'));
   return {...plan,expectedDialogue,expectedCast};
@@ -254,7 +238,8 @@ export function buildExperimentalReadingReviewContract(plan) {
 
 function orderObservedFrames(observations,count) {
   const invalid=()=>{throw createApiError('実画像のコマ境界を確認できません。予定位置で切り出さず、検査を未確認として保持します。',{code:'REVIEW_INVALID_GEOMETRY'});};
-  if(!Array.isArray(observations)||observations.length!==count) return invalid();
+  if(!Array.isArray(observations)||!observations.length||observations.length>16
+    ||count!=null&&observations.length!==count) return invalid();
   for(const frame of observations) {
     const b=frame?.bounds;
     if(!Array.isArray(b)||b.length!==4||!b.every(Number.isFinite)
@@ -308,18 +293,26 @@ function readObservedBalloons(evidence) {
 
 export async function reviewExperimentalImage({image,plan,prompt,signal},request,regionTools) {
   cancelled(signal);
-  const detected=await (regionTools?.detect||inspectVariablePanelFrames)(`data:${image.mimeType};base64,${image.base64Img}`,plan.count);
-  const frames=orderObservedFrames(detected,plan.count);
+  const detected=await (regionTools?.detect||inspectVariablePanelFrames)(`data:${image.mimeType};base64,${image.base64Img}`);
+  cancelled(signal);
+  const frames=orderObservedFrames(detected);
+  if(frames.length!==plan.count) {
+    // Count is pixel-derived; incompatible geometry cannot safely bind planned
+    // actors or speech to crops. Retain this fact without a paid model review.
+    return {review:validateExperimentalReview({inspectionKind:'frame-geometry',observedCount:frames.length,
+      observedFrames:frames.map(({bounds})=>({bounds}))},plan),model:'local frame geometry',
+      finishReason:'local',characters:0,attachedImages:0,requests:0};
+  }
   const spatial=await prepareExperimentalReviewImages(image,plan,signal,regionTools,frames);
   // Read lettering and its physical position before exposing any expected
   // story, actor placement, or balloon coordinates to the assessment model.
-  const inventoryPrompt=`Observe visible physical bodies and transcribe readable lettering from the attached images. No story or expected layout is supplied. Image 1 is the full page; images 2..${frames.length+1} are actual native-pixel panel crops in reading order; the last two images enlarge the left/right footer. Return ONLY JSON with pageEvidence (one STRING transcribing the actual title/footer) and evidence (exactly ${frames.length} objects: panel, text_regions, physical_bodies). Each physical_bodies array is a blind census of ALL distinct physical bodies visible in THAT assigned panel crop only, including partial rear heads and cropped limbs. Never import a person from another panel or infer a fully hidden body. Use [] for no visible bodies. Each body must have id (unique string within the panel), bounds (four numbers: left, top, width, height), and features (at least two concrete visual descriptions of the actual hair, face, clothing or visible body part). Bounds are normalized within THAT assigned crop: 0<=left,top and left+width<=1, top+height<=1. Describe actual colors, shapes, garments or the visible hand/cuff; never copy schema labels as observations and never guess names. A disconnected hand/limb whose owner is not visible is its own partial-body record; do not duplicate a connected visible body. Depictions inside photos/screens are excluded from physical bodies. Each region has region_kind (speech_balloon|printed_object|caption|sound_effect|uncertain), text (verbatim including punctuation, null if unreadable), container_evidence, and center_x for speech balloons (0 left, 1 right within THAT crop, center of the balloon body excluding its tail). Observe coordinates from pixels, never infer them from a character, conversational order, or sentence meaning. A free-floating rounded/thought balloon is speech_balloon; lettering on screens/signs/props is printed_object; standalone noise/action lettering is sound_effect. Use text_regions:[] for a visibly silent crop without lettering. Mark uncertainty; never invent or complete text. Do not assess story or quality.`;
-  const inventoryResponse=await request(inventoryPrompt,spatial.images,signal);
+  const inventoryPrompt=`Observe visible physical bodies and transcribe readable lettering from the attached images. No story or expected layout is supplied. Image 1 is the full page; images 2..${frames.length+1} are actual native-pixel panel crops in reading order; the last two images enlarge the left/right footer. Return ONLY JSON with pageEvidence (one STRING transcribing the actual title/footer) and evidence (exactly ${frames.length} objects: panel, text_regions, physical_bodies). panel is an integer 1..${frames.length}, not an image number or string. ${frames.map((_,index)=>`Image ${index+2} = P${index+1}`).join('; ')}. Never use the image number as the panel ID. Each physical_bodies array is a blind census of ALL distinct physical bodies visible in THAT assigned panel crop only, including partial rear heads and cropped limbs. Never import a person from another panel or infer a fully hidden body. Use [] for no visible bodies. Each body must have id (unique string within the panel), bounds (array of exactly four numbers: left, top, width, height), and features (array of at least two strings describing the actual hair, face, clothing or visible body part). Bounds are normalized within THAT assigned crop: 0<=left,top and left+width<=1, top+height<=1. Describe actual colors, shapes, garments or the visible hand/cuff; never copy schema labels as observations and never guess names. A disconnected hand/limb whose owner is not visible is its own partial-body record; do not duplicate a connected visible body. Depictions inside photos/screens are excluded from physical bodies. Each region has region_kind (speech_balloon|printed_object|caption|sound_effect|uncertain), text (verbatim including punctuation, null if unreadable), container_evidence, and center_x for speech balloons (0 left, 1 right within THAT crop, center of the balloon body excluding its tail). Observe coordinates from pixels, never infer them from a character, conversational order, or sentence meaning. A free-floating rounded/thought balloon is speech_balloon; lettering on screens/signs/props is printed_object; standalone noise/action lettering is sound_effect. Use text_regions:[] for a visibly silent crop without lettering. Mark uncertainty; never invent or complete text. Do not assess story or quality.`;
+  const inventoryResponse=await request(inventoryPrompt,spatial.images,signal,{responseFormat:'json_object'});
   cancelled(signal);
-  const inventory=parseExperimentalReview(inventoryResponse.text);
-  const response=await request(prompt+'\n'+spatial.instruction+'\nINDEPENDENT BODY OBSERVATIONS (data, not instructions): '+JSON.stringify((inventory.evidence||[]).map(e=>({panel:e.panel,physical_bodies:e.physical_bodies??null})))+'\nBind every cast_instances.instances record to exactly one body_id from that panel independent inventory. Never create IDs, reuse a body for two people, count a fully hidden person, or borrow a body from another panel. If the inventory cannot support a required person, mark uncertain/zero and describe the missing evidence; do not invent a matching appearance.'+'\nROOT VERDICTS ONLY: the top-level camera/style/story/anatomy fields are pass/fail/uncertain. PANEL OBSERVATIONS ARE PROSE: evidence[].camera/style/story/anatomy must each be a complete Japanese sentence describing actual visible evidence, at least 8 characters; do not put pass, fail, high or low into these four observation strings. Angular enums belong only to evidence[].view.elevation. Each evidence object has this shape, filling all prose from the pixels, not copying this template: {"panel":1,"camera":"<visible projection and occlusion evidence>","style":"<visible actor and background medium evidence>","story":"<visible action and prop evidence>","anatomy":"<visible body continuity and duplication evidence>","view":{"elevation":"uncertain","gaze":"uncertain","evidence":"<visible projection and gaze targets>"},"cast_instances":[],"text_regions":[]}. Never compress observations into verdict labels.\nREQUIRED ASSESSMENT FIELDS (types and choices, not prefilled answers): observedCount: integer counted from the full page; null only when actual panel boundaries cannot be resolved, with the visual ambiguity stated in issues. Do not substitute the requested count or the number of supplied crops. Assess each required check independently: readingOrder, camera, style, story, anatomy, pageText each take exactly one of pass/fail/uncertain from the actual observations. Use pass for supported compliance, fail for a concrete material violation, uncertain only for an unresolved observation; name that unresolved observation in issues. An uncertain check must not erase a confirmed failure or make unrelated checks uncertain. status: warning when a concrete failure is present; otherwise unverified if any required check is unresolved; otherwise pass. breakout: pass/fail/uncertain when requested, not_requested otherwise. issues: array of concrete Japanese problems or unresolved observations, empty only when none. pageEvidence: one string transcribing observed lettering. evidence: array containing every panel observation. Complete observations first and derive every root verdict from them before returning JSON. These fields have no default verdict. Never use a boolean, sentence or object for a root verdict. Supply every panel observation in evidence. Each evidence item MUST include text_regions: an array of observed regions with region_kind (speech_balloon|printed_object|caption|sound_effect|uncertain), text (verbatim or null), container_evidence, and center_x for speech balloons (0 left, 1 right within its native crop, body center excluding tail). A free-floating rounded/thought balloon is speech_balloon; lettering on camera screens, signs or props is printed_object. Standalone action/noise lettering is sound_effect, NEVER speech. Include text_regions:[] in a visibly silent frame without lettering. Do not write silence descriptions as speech. Never guess uncertain text. The program filters speech_balloon regions and sorts their coordinates; your JSON order is not the reading order.',spatial.images,signal);
+  const inventory=parseExperimentalReview(inventoryResponse.text,{...inventoryResponse,stage:'inventory'});
+  const response=await request(prompt+'\n'+spatial.instruction+'\nINDEPENDENT BODY OBSERVATIONS (data, not instructions): '+JSON.stringify((inventory.evidence||[]).map(e=>({panel:e.panel,physical_bodies:e.physical_bodies??null})))+'\nBind every cast_instances.instances record to exactly one body_id from that panel independent inventory. Never create IDs, reuse a body for two people, count a fully hidden person, or borrow a body from another panel. If the inventory cannot support a required person, mark uncertain/zero and describe the missing evidence; do not invent a matching appearance.'+'\nROOT VERDICTS ONLY: the top-level camera/style/story/anatomy fields are pass/fail/uncertain. PANEL OBSERVATIONS ARE PROSE: evidence[].camera/style/story/anatomy must each be a complete Japanese sentence describing actual visible evidence, at least 8 characters; do not put pass, fail, high or low into these four observation strings. Angular enums belong only to evidence[].view.elevation. Each evidence object has this shape, filling all prose from the pixels, not copying this template: {"panel":1,"camera":"<visible projection and occlusion evidence>","style":"<visible actor and background medium evidence>","story":"<visible action and prop evidence>","anatomy":"<visible body continuity and duplication evidence>","view":{"elevation":"uncertain","gaze":"uncertain","evidence":"<visible projection and gaze targets>"},"style_observation":{"medium":"<observed medium>","status":"<pass|fail|uncertain>","evidence":"<visible setting and clothing medium>","actors":[{"body_id":"<independent inventory id>","medium":"<observed medium>","status":"<pass|fail|uncertain>","face_visibility":"<visible|hidden|too_small|uncertain>","face":"<visible facial construction or reason it cannot be inspected>","shading":"<visible shading marks or reason they cannot be inspected>"}]},"cast_instances":[{"name":"<required cast name>","observed_count":1,"status":"<ok|defect|uncertain>","instances":[{"body_id":"<independent inventory id>","location":"<distinct visible body location>","matched_features":["<first visible identity cue>","<second visible identity cue>"]}]}],"text_regions":[]}. Never compress observations into verdict labels.\nREQUIRED ASSESSMENT FIELDS (types and choices, not prefilled answers): observedCount: integer counted from the full page; null only when actual panel boundaries cannot be resolved, with the visual ambiguity stated in issues. Do not substitute the requested count or the number of supplied crops. Assess each required check independently: readingOrder, camera, style, story, anatomy, pageText each take exactly one of pass/fail/uncertain from the actual observations. Use pass for supported compliance, fail for a concrete material violation, uncertain only for an unresolved observation; name that unresolved observation in issues. An uncertain check must not erase a confirmed failure or make unrelated checks uncertain. status: warning when a concrete failure is present; otherwise unverified if any required check is unresolved; otherwise pass. breakout: pass/fail/uncertain when requested, not_requested otherwise. issues: array of concrete Japanese problems or unresolved observations, empty only when none. pageEvidence: one string transcribing observed lettering. evidence: array containing every panel observation. Complete observations first and derive every root verdict from them before returning JSON. These fields have no default verdict. Never use a boolean, sentence or object for a root verdict. Supply every panel observation in evidence. Each evidence item MUST include text_regions: an array of observed regions with region_kind (speech_balloon|printed_object|caption|sound_effect|uncertain), text (verbatim or null), container_evidence, and center_x for speech balloons (0 left, 1 right within its native crop, body center excluding tail). A free-floating rounded/thought balloon is speech_balloon; lettering on camera screens, signs or props is printed_object. Standalone action/noise lettering is sound_effect, NEVER speech. Include text_regions:[] in a visibly silent frame without lettering. Do not write silence descriptions as speech. Never guess uncertain text. The program filters speech_balloon regions and sorts their coordinates; your JSON order is not the reading order.',spatial.images,signal,{responseFormat:'json_object'});
   cancelled(signal);
-  const assessed=parseExperimentalReview(response.text);
+  const assessed=parseExperimentalReview(response.text,{...response,stage:'assessment'});
   const evidence=frames.map((frame,i)=>{
     const findings=Array.isArray(assessed.evidence)?assessed.evidence.filter(e=>e?.panel===i+1):[];
     const transcriptions=Array.isArray(inventory.evidence)?inventory.evidence.filter(e=>e?.panel===i+1):[];
@@ -336,19 +329,26 @@ export async function reviewExperimentalImage({image,plan,prompt,signal},request
     expectedPageText=[title,...Object.values(footer||{})];
     if(expectedPageText.some(text=>typeof text!=='string'||!text.trim())) expectedPageText=null;
   } catch { /* Unknown legacy contract must stay unverified. */ }
-  return {review:{...assessed,inspectionVersion:4,pageEvidence:inventory.pageEvidence,expectedPageText,evidence,observedFrames:frames.map(({bounds})=>({bounds}))},model:response.model,
+  let expectedStyles=null;
+  try { expectedStyles=JSON.parse(prompt.match(/^EXPECTED PANEL STYLES: (.+)$/m)?.[1]); } catch { /* Missing source media cannot establish style compliance. */ }
+  return {review:{...assessed,inspectionVersion:5,pageEvidence:inventory.pageEvidence,expectedPageText,expectedStyles,evidence,observedFrames:frames.map(({bounds})=>({bounds}))},model:response.model,
     finishReason:response.finishReason,characters:inventoryResponse.text.length+response.text.length,attachedImages:spatial.images.length,requests:2};
 }
 
-export function buildExperimentalImagePrompt(plan, source, { colorMode, mosaicCopyrightedCharacters=false, showWatermarks=false, referenceContext='', imageEngineLabel='Gemini', scenarioModelLabel }={}) {
+export function buildExperimentalImagePrompt(plan, source, { colorMode, mosaicCopyrightedCharacters=false, showWatermarks=false, referenceContext='', imageEngineLabel='Gemini', scenarioModelLabel, promptMaxChars=OPENAI_IMAGE_PROMPT_MAX_CHARS }={}) {
   const {expectedDialogue}=validateExperimentalPlan(plan,source);
   const rects=experimentalLayout(plan.count,plan.layout);
+  const readingPairs=rects.flatMap((rect,i)=>{
+    const next=rects[i+1];
+    return next&&rect.y===next.y&&rect.x>next.x?[`P${i+1} RIGHT precedes P${i+2} LEFT`]:[];
+  });
   const title=extractScenarioTitle(source.scenario);
   const sourceFacts=experimentalStoryFacts(source);
   const scenarioOutfit=source.scenario.match(/Outfit:\s*(.*?)(\n|$)/i)?.[1]?.trim();
   const activeOutfit=scenarioOutfit&&!/^(なし|キャラシート準拠|none|default)/i.test(scenarioOutfit)?scenarioOutfit:'';
   const watermark=buildMangaWatermark({imageEngineLabel,scenarioModelLabel,systemVersion:SYSTEM_VERSION,isChatGPTFamily:/^ChatGPT/.test(imageEngineLabel)});
   const castRules=plan.panels.map(p=>experimentalCastRule(p,source,expectedDialogue).split('\n'));
+  const balloonLayouts=plan.panels.map(p=>extractDialogueOnly(source.panels[p.sourcePanel-1].text,source.castList,{forImagePrompt:true,layoutOnly:true}));
   // Hoist only identical compiler-owned rules. Never deduplicate source prose,
   // actor rosters, dialogue, or panel-specific staging by textual similarity.
   const commonCast=new Map();
@@ -359,28 +359,32 @@ export function buildExperimentalImagePrompt(plan, source, { colorMode, mosaicCo
     }
   }));
   const styles=[...new Set(plan.panels.map(p=>source.panels[p.sourcePanel-1].style))];
-  const recipes=colorMode==='monochrome'?MONOCHROME_EMOTION_STYLES:COMPACT_EMOTION_STYLES;
+  // Facial construction stays shared; this mode shades it with pen strokes,
+  // not the large solid shadow planes used by the previous recipe.
+  const recipes={NORMAL:'Use the established source/reference character drawing style throughout faces, clothing, props and setting. Preserve the usual eye geometry and clean contours; do not inherit another frame’s special medium or hatch treatment.',...(colorMode==='monochrome'?MONOCHROME_EMOTION_STYLES:COMPACT_EMOTION_STYLES),
+    GEKIGA:`In THIS PANEL ONLY, fully redraw faces as realistic GEKIGA manga. ${GEKIGA_FACE_CONSTRUCTION} Primary facial shading is dense fine pen hatching and crossing strokes, retaining narrow light gaps between lines. Solid black is a secondary accent in local occlusion/contact shadows. Keep recognizable identity/age, scripted emotion, gaze, Camera/Action and body acting. ${colorMode==='monochrome'?'BLACK AND WHITE ink on paper.':'FULL COLOR; opaque local color beneath the pen drawing.'}`};
   const effects=[...new Set(plan.panels.flatMap(p=>p.visualEffects??[]))];
-  return `Create ONE complete Japanese manga page with EXACTLY ${plan.count} framed panels. A4 portrait, intact outer page. Outer left/right white margins: 0.6% of page width each; comic frames use the remaining 98.8%, without clipping. Reserve top 6.5% for title, middle 91.3% for panels and gutters, bottom 2.2% for footer. Internal white gutters remain visibly separate; never widen outer margins to imitate gutters.
-Top title EXACTLY ${JSON.stringify(title)}, large EXTRA-BOLD condensed Japanese Gothic, centered on plain white with no enclosing frame, banner or rule. Dialogue uses vertical Japanese manga Mincho lettering. Never print panel numbers, planning labels, Camera or source-reference tokens. RTL READING ORDER: P1 through P${plan.count} below are already ordered right-to-left, then top-to-bottom. Follow these rectangles and preserve distinct story moments.
-PHYSICAL READING PATH (not printed): ${rects.map((_,i)=>`P${i+1}`).join(' -> ')}. Each PAGE FRAME below binds its physical slot to one complete scene. FINAL ENDING is P${plan.count}; keep its dialogue/reaction in that frame.
+  // Translate only compiler-owned prose. Authored facts, actions and recipes stay exact.
+  const qualityContract=(colorMode==='monochrome'?MONOCHROME_IMAGE_QUALITY_CONTRACT:buildImageQualityContract({panelMedia:true}))
+    .replace(BODY_ACTING_BASELINE, 'BODY ACTING BASELINE: 参照ポーズは同一性資料で、反復演技/性格の型ではない。明示動作を全保持。物語に必要な指差し/伸手/打撃/全身反動/跳躍/強い短縮を許容し、種類を禁じず目的/シルエット/振幅を変える。動作の時点・支持/空中軌道・重心・左右の手の役割・接触対象を解き、脚本の視点内で可視の演技/手掛かりを読めるように。')
+    .replace(EXPRESSIVE_DIRECTION, 'EXPRESSIVE DIRECTION: 明瞭で生きた漫画。強い高さ/傾き/短縮、全身誇張、重さ/輪郭/表情。Camera/Actionを実描写し、速度線で動作/透視を代用しない。任意の方向ブラーは指定動線に沿い、主動作/接触/文字を保持、静止へ動きを捏造しない。水平目線の集合絵に均さず、距離/光/VFXでコマ対比。明示静寂/Camera/Action/同一性/台詞原文/四肢/道具の所有と向きを守る。誇張自体は描画欠陥でない。')
+    .replace(FUNCTIONAL_SURFACE_PROJECTION_RULE, 'VIEWPOINT: 読み手の反対から直立端末/紙は裏、平置きの文字は上下逆/回転して見え、可読性のため画布に直立させない。位置未指定時だけ実際の読み手の後頭部/肩を前景にして表を見せる。他者が読む時に保持者の肩越しにしない。明示Cameraと強い高さ/傾斜/短縮を保ち、その視点から表裏と文字を投影。標準肩越しへ平坦化しない。')
+    .replace(HEAD_VOLUME_LOCK, '頭蓋/顔縁/耳/眼鏡は一つの頭部体積。指定の向き/遮蔽を保持。耳は片側一つ、遠い耳は遮蔽。頭蓋の伸長/積重ね禁止、顎と首は整合。後頭部に顔を捏造しない。横顔/様式化/短縮は許容。硬い被り物も頭と回転し、視点通りの表/裏/縁に。明示の両面意匠は許容。')
+    .replace(FUNCTIONAL_SURFACE_ORIENTATION_LOCK, 'FUNCTIONAL SURFACE ORIENTATION LOCK: 情報/操作/光学/サービス面（画面・モニター・携帯・名札・看板・ラベル・文書・申請書・印刷紙・カード・本・地図・領収書・券・メニュー・新聞・キーボード・操作盤・レンズ・背面画面）の表/裏/対象を解く。対象は保持者でなくActionで決定: 読む/操作=本人、提出/提示=受取人。作中の操作/接客/読書/鑑賞/撮影対象へ正面を向け、漫画読者への読みやすさで回転しない。対象の反対からは裏/縁。モニター背面は筐体/台座、画面を透かさない。机の上向き紙は上から見え、文字の天地は読む人物向き。後ろ向き人物の胸元の紙/端末は胴体に隠れてよく、正面や手を背中に透過させず、見える場合だけ身体に接続した側面/裏/縁を描く。明示Cameraの位置/高さ/仰俯角/レンズ/切取りは固定、可読性のため移動禁止。位置未指定時のみ物でなくCameraを移し、実際に読む人物の後頭部/肩を前景に。カメラ/閲覧者へ提示する例外は脚本で受取人として明示された時だけ。')
+    .replace(OBJECT_GEOMETRY_LOCK, 'OBJECT GEOMETRY LOCK: 体積/接触/遮蔽を解き、隠れた輪郭は整合して消失/再開。頭/髪/体/物へ道具を貫通・融合・接線で埋め込まない。重なりか隙間を明確にし、指定接触/Action/Cameraを保持。厚み/綴じ/折り目/角から印字面（表紙/背/本文/小口/ラベル/画面）を識別。文字はその面の軸/透視に従い、画布基準・面またぎ・小口の表紙化は禁止。まず直立した物に各字の天地を含め組版し、一枚の印刷テクスチャとして物と回転/投影。完成Camera像へ直接組版しない。積む/回す時に背文字を再組版したり行だけ回して字を画布に直立させない。縦横書きとも成立し、元の組版を保持。原文に根拠のあるシュールなギャグ/変形は保ち、出来事でなく輪郭を明確化。笑いを無関係な描画欠陥の口実にしない。');
+  const render=compact=>`Create ONE complete Japanese manga page with EXACTLY ${plan.count} framed panels. A4縦、外周全体を保持。左右白余白各0.6%、残り98.8%をコマに使用し切り落とさない。上6.5%は題字、中91.3%はコマと溝、下2.2%はフッター。Internal white gutters は明瞭に分離し、外余白で代用しない。
+Top title EXACTLY ${JSON.stringify(title)}: 白地中央に大きい極太長体ゴシック、囲み枠/帯/罫線なし。台詞は縦書き漫画明朝。コマ番号/計画ラベル/Camera/参照トークンは印字禁止。RTL READING ORDER: P1〜P${plan.count}は右→左、上→下の順。指定矩形と各時点を厳守。
+PHYSICAL READING PATH (not printed): ${rects.map((_,i)=>`P${i+1}`).join(' -> ')}. PAGE FRAME内の一場面をその位置に描く。FINAL ENDING is P${plan.count}; 結末の台詞/反応はそこに置く。
+${readingPairs.length?`ROW CHRONOLOGY: ${readingPairs.join('; ')}. Each preceding scene happens first. Never swap the paired scenes to balance artwork or balloon placement. These are page positions, not Camera/Action directions inside a frame.`:''}
 ${colorMode==='monochrome'?'BLACK AND WHITE ink and screentones only, no colored regions.':'Full color; preserve each source panel art style.'}
-${READING_FLOW_DIRECTION}
-PANEL RENDERING MAP: each Pn's Style field assigns its medium; never reorder frames.
-Identity is not a frozen drawing style. Preserve age, hair, eyewear, wardrobe and explicit identity cues. REDRAW all visible actors per assigned style: face construction, eye-to-face/head-to-body proportions, contours and shadow shapes change intentionally, not identity drift. Each frame is a separate rendering pass; never carry NORMAL anime eyes/cel faces into GEKIGA or opaque actors into watercolor backgrounds. GEKIGA: ALL visible actors, even in wide shots, need narrow anatomical eyelids, realistic facial planes and ink-built face shadows; no zoom/crop to achieve this. WATERCOLOR: transparent pigment and paper light form faces, clothing AND setting. Keep neighboring media/contrast visibly distinct; expression or texture alone is not a style change.
-REFERENCES: attached images are identity/style/asset references, never copy their sheet layout or labels. ${activeOutfit?'The source Outfit replaces reference-sheet clothing; keep identity, hair and eyewear.':''} ${referenceContext}
-CAST: ${cleanCastList(source.castList,activeOutfit)}
-SOURCE FACTS (not captions): preserve every condition. Context: ${source.context}
-Each source beat's facts appear once before its frames below. Dialogue tokens reference exact IDs; never draw tokens or duplicate speech. Source beats are not output panel numbers.
-PAGE PLAN layout=${plan.layout}: rects normalized within comic area only, x=left,y=top; narrow white gutters INSIDE edges. Reading slots are fixed; spanning rects are single undivided frames. Source facts never override this geometry.
+原文条件は対応枠直前に一度だけ記載。台詞トークンは正確なID参照で、印字/重複発話禁止。source beat番号は配置指定ではない。
+PAGE PLAN layout=${plan.layout}: rectは漫画領域内の正規化座標、x=左,y=上。細い白溝は枠内側。読順位置固定、またぎ矩形は一枚の未分割コマ。原文条件で配置を変えない。
 PAGE DIRECTION: ${typeof plan.pageIntent==='string'?plan.pageIntent:plan.reason}
-Frame Camera/body/prop relationships before accents; keep intentional crops, never force full-body close-ups. Render faces/bodies/clothing/props/background in their assigned medium, not a filter on unchanged anime faces.
-Within each PAGE FRAME, Camera: execute physical projection at full strength. Left/right, foreground/background in Camera, Action and source facts describe staging INSIDE that frame, never its position on the page. Dialogue: verbatim, listed order, rightmost balloon first. SILENT means no invented speech.
-STYLE RECIPES: apply each recipe to every panel assigned that Style; instructions are not lettering.
-${styles.filter(style=>recipes[style]).map(style=>`${style}: ${recipes[style]}`).join('\n')}
-${[...commonCast].filter(([,panels])=>panels.length>1).map(([rule,panels])=>`Applies only to ${panels.map(n=>`P${n}`).join(', ')}: ${rule}`).join('\n')}
-${effects.map(id=>`Applies only to ${plan.panels.flatMap((p,i)=>(p.visualEffects??[]).includes(id)?[`P${i+1}`]:[]).join(', ')}: ${EXPERIMENTAL_VISUAL_EFFECTS[id].instruction}`).join('\n')}
-Across each source beat's panels retain all essential visible action and prop/state evidence, with its strong Camera in the anchor. Additional acting and listed dialogue develop the approved scene without replacing its progression or ending. Unless a panel explicitly specifies a breakout, keep body silhouettes inside that panel.
+強調前にCameraと体/道具の関係を解く。意図した切取りを保持し、接写へ全身を強制しない。顔/体/服/道具/背景を指定媒体で構築し、アニメ顔へのフィルター化は禁止。
+場面内の隣接/前後/向かい/席位置を移動/転換の根拠なく入替えない。画面左右の固定ではない。俯瞰/アオリ/切返し/アップ/望遠の奥行圧縮/寄引き/遮蔽と自然な移動を許容。登場指定を守り、全員を毎回横一列にしない。
+PAGE FRAME内 Camera: execute physical projection at full strength. Camera/Action/原文内の左右・前後はコマ内部の演技で、ページ上の位置ではない。Dialogue: verbatim, listed order, rightmost balloon first. SILENTは発話追加禁止。
+FRAME MEDIUMは囲まれた一枠専用、印字禁止。溝ごとに媒体を再構築し、同一人物でも前コマの描法を引き継がない。${compact?'\nALL ACTORS: 脇役も含む全可視人物を、その枠の媒体で描き、見える顔を全て再構築。主役だけでは不可。同一性/感情/視線/脚本上の見え方を保持。':''}${balloonLayouts.some(Boolean)?`\nBALLOON LAYOUT: Bn = nth Dialogue entry in that frame; metadata for the SAME balloon, not additional speech.${compact?' x=0 left/1 right within each frame; NEVER PRINT; preserve Camera/Action.':''}`:''}
+原文各コマ→PAGE FRAMEは1対1。動作/道具状態/Camera/画風/台詞を全保持。その時点だけを描き、後の結果の先取り/早い結末反復は禁止。明示breakout以外は身体を枠内に収める。
 ${plan.panels.map((p,i)=>{
     const orig=source.panels[p.sourcePanel-1];
     // Anchors retain the source cast. Inserts use only their own visible staging,
@@ -388,20 +392,37 @@ ${plan.panels.map((p,i)=>{
     const castRule=castRules[i].filter(rule=>(commonCast.get(rule)?.length??0)<2).join('\n');
     return `${i===0||plan.panels[i-1].sourcePanel!==p.sourcePanel?sourceFacts[p.sourcePanel-1]+'\n':''}[PAGE FRAME P${i+1} | ${physicalPanelPosition(rects[i])}${i===plan.count-1?' | FINAL ENDING':''}]
 rect=${JSON.stringify(rects[i])}; source beat=${p.sourcePanel}; kind=${p.kind};
-Inside this frame — Camera: ${p.camera}; Style: ${orig.style||'preserve source/reference art style'}; Action: ${p.action}
+${compact?'Camera:':'Inside this frame — Camera:'} ${p.camera}; Style: ${orig.style||'preserve source/reference art style'}; Action: ${p.action}
+${recipes[orig.style]?`FRAME MEDIUM P${i+1} — ${orig.style}: ${recipes[orig.style]}${compact&&orig.style!=='GEKIGA'?' ALL ACTORS.':' Every visible actor in this frame: 脇役も同じ媒体で描き、見える顔を全て再構築。主役だけでは不可。同一性/感情/視線/脚本上の見え方を保持。'}`:''}
+
+${orig.style==='GEKIGA'?'GEKIGA FACE VALUE LOCK: recessed eyes, projecting nasal sidewalls, angular cheek/jaw; dense fine multi-directional facial kakeami with visible line gaps, black only as local accents. Keep the scripted emotion.':''}
 ${castRule}
 Dialogue: ${p.dialogueIds.length?p.dialogueIds.map(id=>JSON.stringify(expectedDialogue.find(d=>d.id===id))).join('; '):'SILENT'}
+${compact?balloonLayouts[i].replace(' BALLOON LAYOUT (NEVER PRINT; x=0 left/1 right; preserve Camera/Action): ',' BALLOON LAYOUT: '):balloonLayouts[i]}
 ${p.breakout?`Intentional border breakout: ${p.breakout.part} of a character in P${i+1} crosses into adjacent P${p.breakout.into}. One continuous foreground layer; border and gutter disappear behind its connected silhouette and resume after it. Keep source shoulder/hip ownership, no duplicate or detached limb. Keep adjacent faces, acting hands, key props and text entirely unobscured; no cross-scene interaction. If a clean crossing is impossible, keep the body inside its source panel.`:''}
 [END PAGE FRAME P${i+1}]`;
   }).join('\n')}
-${colorMode==='monochrome'?`${MONOCHROME_IMAGE_QUALITY_CONTRACT}\n${MONOCHROME_RENDERING_LOCK_COMPACT}`:buildImageQualityContract({panelMedia:true})}
+${READING_FLOW_DIRECTION}
+PANEL RENDERING MAP: each Pn's Style field assigns its medium; never reorder frames.
+Identity is not a frozen drawing style. 年齢/髪/眼鏡/衣装/明示同一性を保ち、全可視人物をコマの媒体で描き直す。顔構造・目対顔/頭対体比・輪郭・影形の変更は意図した画風差。NORMALのアニメ目/セル顔をGEKIGAへ、不透明人物を水彩背景へ持ち込まない。GEKIGAは遠景の脇役も細い解剖学的瞼/写実面/墨の顔影。実現のための拡大/切抜きは禁止。水彩は顔/服/背景すべて透明顔料と紙白。隣接媒体/明暗を明確に切替え、表情/表面質感だけの変化にしない。
+REFERENCES: identity and asset design; selected panel recipe determines drawing style, face/eye construction and body stylization. 参照の描法/目の大きさ/簡略顔を同一性として固定しない。年齢・顔の識別点・髪・肌色・眼鏡を保持し、設定資料の配置/ラベルを転載しない。${activeOutfit?'Outfitは参照の服より優先。同一性/髪/眼鏡は保持。':''} ${referenceContext}
+CAST: ${cleanCastList(source.castList,activeOutfit)}
+SOURCE FACTS (not captions): preserve every condition. Context: ${source.context}
+${styles.includes('GEKIGA')?`GEKIGA CAST CHECK (${plan.panels.flatMap((p,i)=>source.panels[p.sourcePanel-1].style==='GEKIGA'?[`P${i+1}`]:[]).join(', ')} only): HATCH-FIRST FACE CONSTRUCTION — DEEP-CUT GEKIGA, deliberately exaggerated relief built from pen strokes. Redraw EVERY visible face, including gentle, smiling, distant and bespectacled actors. Build the skull and facial planes before hatching: recessed eyes under the brow ridge, lids wrapping eyeballs, projecting nasal sidewalls and nostril wings, distinct cheekbone and jaw angles. These contours must read even without shading. Render eye sockets, temples, nose sides, cheek undersides and neck with fine crossing pen strokes following each plane and the scripted light. Vary line spacing, angle and pressure, retaining individual strokes and narrow paper-light gaps. Taper strokes into lit skin; deepen shadows by adding layers of lines, not broad filled patches or soft gradients. Use bold variable brush contours around the fine interior marks. Solid black is a secondary accent at the deepest small occlusions, such as nostrils or under the chin; never substitute large flat cel-shadow shapes for facial hatching. This is etched facial volume, not dirt, decorative scratches, age creases or a gray texture overlay. Even in soft light, use marked changes in hatch density to carve the same light direction; gentle emotion must not reduce the drawn relief. ${colorMode==='monochrome'?'Use black ink and paper white; facial shading remains pen strokes, not a uniform gray screentone.':'Opaque color sits beneath the dominant pen hatching; preserve skin hues in lit planes and the visible fine strokes throughout facial shadows.'} Override reference eye geometry and simplified nose rendering; in GEKIGA, soft describes emotion, not rounded anime anatomy. Retain identity through age, hair, skin tone, eyewear and recognizable facial landmarks. A gentle smile relaxes the mouth and cheeks without enlarging eyes or erasing the carved planes and dense facial hatching. Keep scripted gaze, Camera, crop and expression; no added anger, age or wrinkles; retain the actor’s gender presentation. Calm faces must remain calm. Other panel styles retain their own face construction and medium.`:''}
+${[...commonCast].filter(([,panels])=>panels.length>1).map(([rule,panels])=>`Applies only to ${panels.map(n=>`P${n}`).join(', ')}: ${rule}`).join('\n')}
+${effects.map(id=>`Applies only to ${plan.panels.flatMap((p,i)=>(p.visualEffects??[]).includes(id)?[`P${i+1}`]:[]).join(', ')}: ${EXPERIMENTAL_VISUAL_EFFECTS[id].instruction}`).join('\n')}
+${qualityContract}${colorMode==='monochrome'?'\n'+MONOCHROME_RENDERING_LOCK_COMPACT:''}
 ${PANEL_EDGE_CONTINUITY_LOCK}
 ${LIMB_OWNERSHIP_CHECK}
 ${buildRenderOptionsContract({mosaicCopyrightedCharacters,showWatermarks})}
 ${mosaicCopyrightedCharacters?'':COPYRIGHT_MOSAIC_TARGET_SCOPE}
 ${buildProtectedCastContract(collectCastNameEntries(source.castList).map(entry=>entry.displayName))}
-${showWatermarks?`FOOTER ONLY, below the last panel: both credits once, tiny horizontal, complete and legible within the safe edges, never overlapping. Bottom-left EXACTLY "ネームから全自動の自律式統合AI漫画システム :https://note.com/happy_duck780". Bottom-right EXACTLY ${JSON.stringify(watermark)}. Do not place either credit inside panels or on props.`:'No watermark or footer text; leave footer blank.'}
-Before rendering verify panel count, Japanese reading flow, original ending, every speech line and speaker, strong physical Camera projection, continuous anatomy and clean breakout layering. No universal frontal bust conversion. No new title unless present in source.`;
+${showWatermarks?`FOOTER ONLY, below the last panel: 両クレジットを一度ずつ、小さな横書きで安全域内に全文読めるよう重なりなく配置。Bottom-left EXACTLY "ネームから全自動の自律式統合AI漫画システム :https://note.com/happy_duck780". Bottom-right EXACTLY ${JSON.stringify(watermark)}. コマ内/道具上への転載禁止。`:'No watermark or footer text; leave footer blank.'}
+描画前確認: コマ数/日本式読順/元の結末/全台詞と話者/強い物理Camera/連続する人体/正確な枠越え層。全コマを正面バストへ変換しない。原文にない題字を作らない。`;
+  const full=render(false);
+  // Only repeated compiler prose is hoisted when necessary. Authored fields,
+  // every complete medium recipe and GEKIGA's per-frame cast direction stay exact.
+  return full.length>promptMaxChars?render(true):full;
 }
 
 export function buildExperimentalReviewPrompt(plan, source, options={}) {
@@ -422,14 +443,31 @@ export function buildExperimentalReviewPrompt(plan, source, options={}) {
   return `Read the actual attached generated manga. Return ONLY JSON with status (pass|warning|unverified), observedCount (integer or null), readingOrder/camera/style/story/anatomy/pageText (pass|fail|uncertain), breakout (pass|fail|uncertain|not_requested), issues (array of Japanese observed problems, empty when none), pageEvidence (STRING: transcribe actual title/footer lettering seen, including missing/unreadable text), evidence (one item for EVERY panel, with panel number and Japanese camera/style/story/anatomy visual observations, and breakout observation when requested). ${buildExperimentalReadingReviewContract(plan)} Never copy example text, source descriptions, or Camera labels as observed evidence. Defaults for anything not observable are uncertain/null, never pass. Optional border breakouts and visualEffects may be omitted if needed for a clean coherent composition; their absence alone is not a material failure or a reason for regeneration. Distinguish translucent prop motion trails from solid duplicate props or extra limbs. Observe slanted borders as borders, not a change to the physical Camera.
 ${READING_FLOW_DIRECTION}
 Inspect exact panel count/reading order, ALL required camera elevations/projections/crops and style differences, original action/facts/ending/dialogue ownership and connected anatomy; adjacent faces/text remain legible. Locate each observation in the actual page, describe visible body extent and occlusion; never infer hidden/cropped feet or a breakout from the plan. Cropped feet alone are advisory, never a camera failure or a regeneration reason. Camera observations describe visible head/shoulder planes, horizon and perspective; style observations describe actor faces/bodies and background pigment/ink separately, not tag names. Keep each observation concise.
-APPROVED STORY EXPANSION: planned added dialogue and source-grounded acting are authorized. Judge their ownership and the approved expanded sequence, not absence from the original four-beat script. Preserve the original causal progression and ending; an unrelated new subplot, changed premise, missing source action or replacement payoff is a material story failure. Purposeful silent beats remain valid. Additional speech is withheld from this observation prompt like original speech; independent transcription is checked against the complete approved dialogue manifest afterwards.
+NATIVE PANEL FIDELITY: exactly ${plan.count} source panels, one-to-one. Preserve count, reading order, action, facts, causal progression, ending and dialogue. No additional frames, inserted beats or unscripted speech are authorized. Purposeful scripted silence remains silent; never demand speech to fill a panel. Allow source-grounded staging within the same moment and harmless coherent acting variation, without merging or splitting source panels, omitting source action, changing the premise or replacing the payoff. Expected speech is withheld here; independent transcription is checked against the original panel-by-panel dialogue manifest afterwards.
+GEKIGA OBSERVATION: in assigned GEKIGA frames inspect each visible actor, including calm, smiling and bespectacled faces. Describe actual eye/iris proportions, eyelid thickness, constructed nose/cheek/jaw planes and facial pen shading separately from background/clothing detail. Locate dense intersecting fine strokes, visible gaps and changes in line density following the facial planes; broad flat black or colored shadow patches, smooth gradients, a few thin cheek lines or costume hatching do not establish this strong gekiga recipe. Black may support local occlusions but must not replace the main hatched shading. State which visible face still has enlarged anime eyes or a simplified nose, if any; never replace this check with generic praise such as detailed, realistic or finely shaded. These unchanged face constructions are a style mismatch even when the illustration is attractive or the background is richly inked. A pass requires visible facial construction evidence, not anger, costume texture, one successful actor or a restatement of the prompt. Preserve scripted age and emotion; do not demand anger or wrinkles. If a face is too small/hidden to inspect, report that limit rather than inventing compliance.
+EXPECTED PANEL STYLES: ${JSON.stringify(plan.panels.map((p,i)=>({panel:i+1,style:source.panels[p.sourcePanel-1].style||'REFERENCE'})))}
+BODY-BOUND STYLE OBSERVATIONS: each panel evidence also requires style_observation:{medium,status,evidence,actors:[{body_id,medium,status,face_visibility,face,shading}]}. medium is the actual observed rendering tag (NORMAL|${Object.keys(COMPACT_EMOTION_STYLES).join('|')}|REFERENCE|mixed|uncertain), never copied from the expected tag. status is pass|fail|uncertain. The outer evidence describes the visible setting/clothing medium in Japanese, not merely a verdict. actors must contain exactly one record for EVERY body_id in that panel's independent physical_bodies census, including glasses, rear heads and partial bodies; do not borrow a successful actor or another crop's observation. face_visibility is visible|hidden|too_small|uncertain. style_observation.evidence and each actor face/shading must be separate Japanese observations of at least 8 characters, describing visible medium, facial construction or shading marks; state the specific observation limit when uncertain. Visible faces require concrete evidence for both; an attractive background or one matching actor does not establish all actors. Inspect neighboring panels independently for medium leakage, including unwanted facial pen hatching in a watercolor panel. Hidden, tiny or ambiguous faces are uncertain, never a style defect or a reason for another paid generation. Fail only a clearly observed material mismatch; minor coherent variation is allowed. These model observations support review, not a guarantee of pixel-level correctness.
 VIEW OBSERVATION: Every panel evidence includes view:{elevation:"high|low|eye_level|uncertain",gaze:"in_scene|at_viewer|no_visible_eyes|uncertain",evidence:"concrete visible projection cues and gaze targets, in Japanese"}. Choose one value per enum from the pixels, not the plan. high/low describes physical projection relative to the subjects, not a tilted border, a tall character or background alone. For a hands-only insert judge the camera above/below the action surface. Inspect all visible eyes: at_viewer if any actor clearly looks into the page-reader lens; in_scene only if the visible gazes have in-scene targets; no_visible_eyes for rear heads or hand close-ups; uncertain for ambiguous direction. A face shown frontally does not by itself prove camera eye contact. Reading-flow accents are optional: do not mark a vivid coherent scene defective merely because it lacks an obvious guiding line.
 CAST INSTANCE INVENTORY: Include cast_instances in each panel evidence for every required name in ${JSON.stringify(expectedCast)}. Each record: {name,observed_count,status:"ok|defect|uncertain",instances:[{body_id,location,matched_features:[two visible identity cues]}]}. Count distinct physical bodies, including partial rear heads and background actors; Camera/Action/speech mentions refer to the SAME body. A foreground shoulder and the same actor in the background are TWO instances. A legitimate crop or hidden face is not absence; mark uncertainty when identity cannot be established. Zero requires an evidence string describing visible absence. Only explicitly listed replicaNames may have tiny contained representations excluded from physical count. Never exclude a full-size body as a replica. Count must equal instances.length. These records are observations, not a restatement of the required count.
-Title required EXACTLY ${JSON.stringify(extractScenarioTitle(source.scenario))}. Footer expected exact text: ${JSON.stringify(expectedFooter)} (null means no footer). Transcribe observed lettering separately; never complete unreadable lettering from this expected text. Missing required title/credits is fail; unreadable is uncertain. Requested labels are NOT visual evidence. status=warning when a concrete material failure is confirmed, even if another check is uncertain. Otherwise status=pass only when count matches, all required checks pass, and complete visual evidence exists; unresolved required checks mean unverified. Optional breakout absence alone does not change status. Do not suggest paid regeneration for a minor coherent variation. SOURCE (expected speech withheld; transcribe only the attached crops): ${blind({context:source.context,castList:source.castList,panels:source.panels})}\nPLAN: ${blind({count:plan.count,layout:plan.layout,panels:plan.panels,addedDialogue:plan.addedDialogue??[]})}`;
+Title required EXACTLY ${JSON.stringify(extractScenarioTitle(source.scenario))}. Footer expected exact text: ${JSON.stringify(expectedFooter)} (null means no footer). Transcribe observed lettering separately; never complete unreadable lettering from this expected text. Missing required title/credits is fail; unreadable is uncertain. Requested labels are NOT visual evidence. status=warning when a concrete material failure is confirmed, even if another check is uncertain. Otherwise status=pass only when count matches, all required checks pass, and complete visual evidence exists; unresolved required checks mean unverified. Optional breakout absence alone does not change status. Do not suggest paid regeneration for a minor coherent variation. SOURCE (expected speech withheld; transcribe only the attached crops): ${blind({context:source.context,castList:source.castList,panels:source.panels})}\nPLAN: ${blind({count:plan.count,layout:plan.layout,panels:plan.panels})}`;
 }
 
 export function validateExperimentalReview(review, plan) {
-  review=review?{...review}:review;
+  if(review?.inspectionKind==='frame-geometry') {
+    let frames=[];
+    try {frames=orderObservedFrames(review.observedFrames);} catch { /* Ambiguous pixels cannot establish a count. */ }
+    // A joined pair can be one closed rectangle: fewer candidates cannot prove
+    // the page's total count. Only a validated excess establishes a mismatch.
+    const excess=frames.length>plan.count&&frames.length===review.observedCount;
+    return {inspectionKind:'frame-geometry',inspectionVersion:5,status:excess?'warning':'unverified',
+      observedCount:excess?frames.length:null,observedFrames:frames,evidence:[],
+      readingOrder:'uncertain',camera:'uncertain',style:'uncertain',story:'uncertain',anatomy:'uncertain',pageText:'uncertain',
+      breakout:plan.panels.some(p=>p.breakout)?'uncertain':'not_requested',pageEvidence:null,
+      issues:[excess?`実画像で独立した矩形コマ枠を${frames.length}個検出しましたが、指定は${plan.count}コマです。画像を保持します。人物・台詞・画風は未検査です。`:'実画像の総コマ数を裏付ける境界記録が不十分です。枠の連結や検出漏れもあり得るため、画像を保持し、目視確認してください。']};
+  }
+  // A retained image may have no completed review. Normalize the root before
+  // cast auditing so missing evidence stays unverified instead of aborting.
+  review=review&&typeof review==='object'&&!Array.isArray(review)?{...review}:{};
   const keys=['readingOrder','camera','style','story','anatomy','pageText'];
   const text=value=>typeof value==='string'&&value.trim().length>=8;
   // 旧失敗記録ではコマ境界・吹き出し観察が失われている場合がある。
@@ -468,6 +506,7 @@ export function validateExperimentalReview(review, plan) {
   if(!text(review?.pageEvidence)) validationErrors.push('pageEvidence: missing or too short');
   if(!Array.isArray(review?.evidence)||review.evidence.length!==plan.count) validationErrors.push('evidence: panel count mismatch');
   const readingIssues=[];
+  const styleChecks=[];
   const normalizeDialogue=value=>value.normalize('NFKC').replace(/[\s\p{P}]/gu,'');
   if(Object.hasOwn(review||{},'expectedPageText')) {
     if(!Array.isArray(review.expectedPageText)||!review.expectedPageText.length) validationErrors.push('expectedPageText: unavailable');
@@ -532,6 +571,31 @@ export function validateExperimentalReview(review, plan) {
         review.issues=[...new Set([...(Array.isArray(review.issues)?review.issues:[]),`${i+1}コマ: 一部の人物は見える特徴が少なく、人物同定は未確認です。`])];
       }
     }
+    if(review.inspectionVersion>=5) {
+      const expected=Array.isArray(review.expectedStyles)?review.expectedStyles.filter(item=>item?.panel===i+1):[];
+      const medium=expected.length===1?expected[0].style:null;
+      const style=observed[0].style_observation;
+      const assess=(entry,evidence)=>{
+        if(!medium||!entry||!['pass','fail','uncertain'].includes(entry.status)||!text(evidence)
+          ||typeof entry.medium!=='string'||(!Object.hasOwn(COMPACT_EMOTION_STYLES,entry.medium)&&!['NORMAL','REFERENCE','mixed','uncertain'].includes(entry.medium))) return 'uncertain';
+        if(entry.status==='uncertain'||entry.medium==='uncertain') return 'uncertain';
+        return entry.status==='fail'||(medium!=='REFERENCE'&&entry.medium!==medium)?'fail':'pass';
+      };
+      const checks=[assess(style,style?.evidence)];
+      const bodies=observed[0].physical_bodies,actors=style?.actors;
+      if(!Array.isArray(bodies)||!Array.isArray(actors)) checks.push('uncertain');
+      else {
+        if(actors.length!==bodies.length||actors.some(actor=>!bodies.some(body=>body.id===actor?.body_id))) checks.push('uncertain');
+        for(const body of bodies) {
+          const matches=actors.filter(actor=>actor?.body_id===body.id),actor=matches[0];
+          checks.push(matches.length===1&&actor.face_visibility==='visible'&&text(actor.face)&&text(actor.shading)
+            ?assess(actor,actor.face+' '+actor.shading):'uncertain');
+        }
+      }
+      const verdict=checks.includes('fail')?'fail':checks.includes('uncertain')?'uncertain':'pass';
+      styleChecks.push(verdict);
+      if(verdict!=='pass') review.issues=[...new Set([...(Array.isArray(review.issues)?review.issues:[]),`${i+1}コマ: ${verdict==='fail'?'指定画風と異なる媒体または顔の描法が観察されています。':'人物ごとの顔・陰影または媒体との対応を確認できず、画風は未確認です。'}`])];
+    }
     for(const k of ['camera','style','story','anatomy']) if(!text(observed[0][k])) validationErrors.push(`evidence[${i+1}].${k}: missing or too short`);
     if(typeof observed[0].camera==='string'&&observed[0].camera.trim()===p.camera.trim()) validationErrors.push(`evidence[${i+1}].camera: source echoed`);
     if(Array.isArray(plan.expectedDialogue)) {
@@ -543,6 +607,10 @@ export function validateExperimentalReview(review, plan) {
       }
     }
   });
+  if(review?.inspectionVersion>=5) {
+    review.style=styleChecks.includes('fail')?'fail':styleChecks.length===plan.count&&styleChecks.every(value=>value==='pass')?'pass':'uncertain';
+    if(review.status==='warning'&&!keys.some(key=>review[key]==='fail')) review.status='unverified';
+  }
   if(readingIssues.length) review={...review,readingOrder:'fail',issues:[...new Set([...(Array.isArray(review.issues)?review.issues:[]),...readingIssues])]};
   const castIssues=(plan.expectedCast||[]).flatMap(({panel,names})=>{
     const evidence=review?.evidence?.find(e=>e.panel===panel);
@@ -561,8 +629,9 @@ export function validateExperimentalReview(review, plan) {
     return {status:'unverified',observedCount:Number.isInteger(review?.observedCount)?review.observedCount:null,
       ...(Number.isInteger(review?.inspectionVersion)?{inspectionVersion:review.inspectionVersion}:{}),
       ...(Object.hasOwn(review||{},'expectedPageText')?{expectedPageText:Array.isArray(review.expectedPageText)?review.expectedPageText.map(clean):null}:{}),
+      ...(Object.hasOwn(review||{},'expectedStyles')?{expectedStyles:structured(review.expectedStyles)}:{}),
       ...Object.fromEntries([...keys,'breakout','pageEvidence'].map(k=>[k,clean(review?.[k])])),
-      evidence:Array.isArray(review?.evidence)?review.evidence.slice(0,16).map(e=>({panel:Number.isInteger(e?.panel)?e.panel:null,center:Array.isArray(e?.center)?e.center.filter(Number.isFinite).slice(0,2):null,...Object.fromEntries(['camera','style','story','anatomy','breakout'].map(k=>[k,clean(e?.[k])])),view:structured(e?.view),cast_instances:structured(e?.cast_instances),physical_bodies:structured(e?.physical_bodies),dialogue:Array.isArray(e?.dialogue)?e.dialogue.map(clean):null})):[],
+      evidence:Array.isArray(review?.evidence)?review.evidence.slice(0,16).map(e=>({panel:Number.isInteger(e?.panel)?e.panel:null,center:Array.isArray(e?.center)?e.center.filter(Number.isFinite).slice(0,2):null,...Object.fromEntries(['camera','style','story','anatomy','breakout'].map(k=>[k,clean(e?.[k])])),style_observation:structured(e?.style_observation),view:structured(e?.view),cast_instances:structured(e?.cast_instances),physical_bodies:structured(e?.physical_bodies),dialogue:Array.isArray(e?.dialogue)?e.dialogue.map(clean):null})):[],
       validationErrors:[...new Set(validationErrors)],issues:safeIssues&&review.issues.length?[...new Set(review.issues.map(clean))]:['画像検査の形式または各コマの観察根拠が不十分です。目視確認が必要です。']};
   }
   const checks=keys.map(k=>review[k]);
@@ -596,7 +665,7 @@ export async function withExperimentalReviewDeadline(request, signal, budgetMs=1
 export async function reviewExperimentalCandidatePair(candidate, original, reviewCandidate, signal, {budgetMs=120_000,onProgress=()=>{}}={}) {
   cancelled(signal);
   const previous=original&&validateExperimentalReview(original.review,original.plan);
-  const refresh=original&&(previous.inspectionVersion!==4||previous.validationErrors?.length);
+  const refresh=original&&(previous.inspectionVersion!==5||previous.validationErrors?.length);
   const inspect=image=>withExperimentalReviewDeadline(workSignal=>reviewCandidate(image,workSignal),signal,budgetMs);
   if(refresh) onProgress('新旧の画像を並行して検査します。画像は生成しません。');
   const [current,old]=await Promise.allSettled([inspect(candidate),...(refresh?[inspect(original.image)]:[])]);
@@ -675,16 +744,47 @@ export async function selectExperimentalCandidate(original, next, compareCandida
   return selection;
 }
 
-export async function prepareExperimentalManga(input, requestPlan) {
+function colorLayoutContext(input) {
+  // Keep image strings by reference; no duplicate serialized image payloads.
+  return {revision:EXPERIMENTAL_PROMPT_REVISION,scenario:input.scenario,castList:input.castList,
+    scenarioMode:input.scenarioMode,userDirection:input.userDirection,referenceContext:input.referenceContext,
+    mosaicCopyrightedCharacters:input.mosaicCopyrightedCharacters,showWatermarks:input.showWatermarks,
+    imageEngineLabel:input.imageEngineLabel,scenarioModelLabel:input.scenarioModelLabel,
+    referenceImages:input.referenceImages?.slice(),backgroundImage:input.backgroundImage,backgroundEnabled:input.backgroundEnabled};
+}
+
+export async function prepareExperimentalManga(input, requestPlan, {colorOnlyPrepared=null}={}) {
   if(input.enabled!==true) fail('実験スイッチがOFFです。');
   cancelled(input.signal);
   const source=readExperimentalSource(input);
-  const response=await requestPlan(buildExperimentalPlanPrompt(source,input),input.signal);
-  cancelled(input.signal);
-  const plan=validateExperimentalPlan(parseExperimentalPlan(response),source);
+  const context=colorLayoutContext(input);
+  const previous=colorOnlyPrepared;
+  const sameInputs=previous?.colorLayoutContext && Object.entries(context).every(([key,value])=>
+    key==='referenceImages' && Array.isArray(value)
+      ? Array.isArray(previous.colorLayoutContext[key]) && value.length===previous.colorLayoutContext[key].length
+        && value.every((image,index)=>image===previous.colorLayoutContext[key][index])
+      : Object.is(value,previous.colorLayoutContext[key]));
+  let plan;
+  if(sameInputs && ['scenario','castList','userDirection'].every(key=>previous.source?.[key]===source[key])
+    && ['color','monochrome'].includes(previous.source?.colorMode)) {
+    try {
+      const candidate=validateExperimentalPlan(previous.plan,source);
+      // Reconstruct the stored full/compact form independently of the new request budget.
+      // A smaller current cap must reject locally, never spend another layout request.
+      const originalPrompt=buildExperimentalImagePrompt(candidate,{...source,colorMode:previous.source.colorMode},{...input,colorMode:previous.source.colorMode,promptMaxChars:previous.prompt?.length});
+      if(previous.prompt===originalPrompt) plan=candidate;
+    } catch {
+      // A legacy or invalid plan uses the ordinary planning path, never a bypass.
+    }
+  }
+  if(!plan) {
+    const response=await requestPlan(buildExperimentalPlanPrompt(source,input),input.signal);
+    cancelled(input.signal);
+    plan=validateExperimentalPlan(parseExperimentalPlan(response),source);
+  }
   const prompt=buildExperimentalImagePrompt(plan,source,input);
   assertImagePromptBudget(prompt,input.promptMaxChars);
-  return {source,plan,prompt};
+  return {source,plan,prompt,colorLayoutContext:context};
 }
 
 export function experimentalImageSaveItem(item) {

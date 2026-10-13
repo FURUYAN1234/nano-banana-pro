@@ -8,7 +8,7 @@ import {
 import { SCENARIO_FACIAL_ACTING_CONTRACT } from './facial-acting.js';
 import { getEndingModePolicy } from './ending-mode-policy.js';
 import { extractDialogueOnly, extractEmotionStyle, getScriptedCamera } from './panel-utils.js';
-import { getScenarioPanelBlocks } from './scenario-validation.js';
+import { getScenarioPanelBlocks, validateMangaScenario, assertScenarioPanelStructure } from './scenario-validation.js';
 import { STYLE_DRAWING_CONTRACTS } from './constants.js';
 
 const CATEGORY_DEFINITIONS = Object.freeze({
@@ -144,8 +144,7 @@ const extractMetadata = (scenario) => {
   );
 };
 
-const extractPanelHeaders = (scenario) =>
-  extractMatches(scenario, /^\s*\[[1-4１-４一二三四]コマ目[^\]]*\]\s*$/gmu);
+const extractPanelHeaders = (scenario) => getScenarioPanelBlocks(scenario).map(panel => panel.header);
 
 const extractTagValues = (scenario, tag) =>
   extractMatches(scenario, new RegExp(`^\\s*\\[${tag}:\\s*[^\\]]*\\]\\s*$`, 'gmi'));
@@ -248,12 +247,17 @@ export const normalizeEnhancementCategories = (selectedCategories = []) =>
   unique(selectedCategories.filter((category) => CATEGORY_DEFINITIONS[category]));
 
 export const buildScenarioEnhancementPrompt = ({
+  scenarioMode = 'four-panel',
   scenario,
   selectedCategories = [],
   styleJson = null,
   validationIssues = [],
   punchlineType = null
 }) => {
+  const panelCount = getScenarioPanelBlocks(scenario).length;
+  const panelRule = (rule) => scenarioMode === 'experimental-manga' ? String(rule)
+    .replaceAll('1〜3コマ目', '最終コマより前の各コマ').replaceAll('2〜3コマ目', '中盤の各コマ')
+    .replaceAll('4コマ目', '最終コマ').replaceAll('4コマ', panelCount + 'コマ') : rule;
   const selected = normalizeEnhancementCategories(selectedCategories);
   const categoryDefinitions = getCategoryDefinitions(punchlineType);
   const serious = getEndingModePolicy(punchlineType).endingTone === 'serious';
@@ -261,14 +265,14 @@ export const buildScenarioEnhancementPrompt = ({
   const selectedInstructions = selected
     .map(
       (category) =>
-        `- ${categoryDefinitions[category].label}: ${categoryDefinitions[category].instruction}`
+        `- ${categoryDefinitions[category].label}: ${panelRule(categoryDefinitions[category].instruction)}`
     )
     .join('\n');
   const lockedLabels = locked.map((category) => categoryDefinitions[category].label).join('、');
   const dialogueRule = selected.includes('dialogue')
     ? `- セリフ強化を選択したため、「」内のセリフを最低1つは必ず変更する。話者の順序と人数は変えない
 - 変更が不要なセリフまで一律に言い換えない。短く口語的に保ち、セリフ全体を元の約1.5倍以内に収める
-- 4コマ目のオチは元より冗長にせず、「もしかしたら」「かもしれない」「気がする」など弱い婉曲表現を新たに足さない`
+- 最終コマのオチは元より冗長にせず、「もしかしたら」「かもしれない」「気がする」など弱い婉曲表現を新たに足さない`
     : '- セリフは未選択なので、明示された発話・音読の本文と話者を一字一句変更しない。ト書き内の引用や比喩は発話として数えない';
   const backgroundRule = selected.includes('background')
     ? '- 背景は選択済み。Locationを変えず、背景情報だけを具体化する'
@@ -291,10 +295,10 @@ export const buildScenarioEnhancementPrompt = ({
     : '- 元シナリオのギャグの種類と強さを保ち、別の笑いや事件へ置き換えない';
   const gestureVarietyRules = serious ? SERIOUS_GESTURE_VARIETY_RULES : SCENARIO_GESTURE_VARIETY_RULES;
 
-  return `あなたは4コマ漫画の編集者です。元シナリオを、選択されたカテゴリだけ部分編集してください。
+  return `あなたは${panelCount}コマ漫画の編集者です。元シナリオを、選択されたカテゴリだけ部分編集してください。
 
 【最優先の編集契約】
-- タイトル、Logline、Location、Outfit、Punchline、登場人物、話者順、4コマ構造をそのまま保つ
+- タイトル、Logline、Location、Outfit、Punchline、登場人物、話者順、${panelCount}コマ構造をそのまま保つ
 - ト書きの服装も確定済みOutfitに合わせ、キャラシートの参考衣装を復活させない。参考衣装に合わせるために舞台や役割を変更しない
 - LoglineとPunchlineが示す物語の温度、静けさ、テンポを最優先し、派手さを目的に反転させない
 ${narrativeModeRule}
@@ -308,10 +312,10 @@ ${backgroundRule}
 ${SCENARIO_PROP_CAUSALITY_RULES}
 ${facialActingRule}
 ${SCENARIO_EXPRESSIVE_STAGING_CONTRACT}
-${FINAL_PANEL_ACTIVE_STAGING_SCENARIO_CONTRACT}
-${gestureVarietyRules}
-${selected.includes('camera') ? SCENARIO_CAMERA_SEQUENCE_RULES : ''}
-${selected.includes('camera') && selected.includes('body') ? SCENARIO_SHOT_DESIGN_RULES : ''}
+${panelRule(FINAL_PANEL_ACTIVE_STAGING_SCENARIO_CONTRACT)}
+${panelRule(gestureVarietyRules)}
+${selected.includes('camera') ? panelRule(SCENARIO_CAMERA_SEQUENCE_RULES) : ''}
+${selected.includes('camera') && selected.includes('body') ? panelRule(SCENARIO_SHOT_DESIGN_RULES) : ''}
 
 【選択されたカテゴリ — 変更必須】
 ${selectedInstructions || '- なし'}
@@ -325,6 +329,7 @@ ${scenario}`;
 };
 
 export const validateScenarioEnhancement = ({
+  scenarioMode = 'four-panel',
   originalScenario,
   candidateScenario,
   selectedCategories = [],
@@ -356,8 +361,10 @@ export const validateScenarioEnhancement = ({
     }
   }
 
-  if (!arraysEqual(original.panelHeaders, candidate.panelHeaders)) {
-    addIssue(issues, issueCodes, 'panel_structure_changed', '4コマの見出し構造が変わっています');
+  if (!arraysEqual(original.panelHeaders, candidate.panelHeaders)
+    || !validateMangaScenario(originalScenario, '', { scenarioMode }).structuralValid
+    || !validateMangaScenario(candidateScenario, '', { scenarioMode }).structuralValid) {
+    addIssue(issues, issueCodes, 'panel_structure_changed', '選択モードのコマ数または見出し構造が変わっています');
   }
 
   const originalSpeakers = original.dialogue.map((entry) => `${entry.panel}:${entry.speaker}`);
@@ -408,7 +415,7 @@ export const validateScenarioEnhancement = ({
         issues,
         issueCodes,
         'punchline_overexpanded',
-        '4コマ目のオチのセリフが冗長になっています'
+        '最終コマのオチのセリフが冗長になっています'
       );
     }
 
@@ -421,7 +428,7 @@ export const validateScenarioEnhancement = ({
         issues,
         issueCodes,
         'punchline_softened',
-        '4コマ目のオチに弱い婉曲表現が追加されています'
+        '最終コマのオチに弱い婉曲表現が追加されています'
       );
     }
   } else if (!arraysEqual(
@@ -543,6 +550,7 @@ export const validateScenarioEnhancement = ({
 };
 
 export const runValidatedScenarioEnhancement = async ({
+  scenarioMode = 'four-panel',
   originalScenario,
   selectedCategories = [],
   punchlineType = null,
@@ -552,6 +560,7 @@ export const runValidatedScenarioEnhancement = async ({
   onRetry,
   onWarning
 }) => {
+  assertScenarioPanelStructure(originalScenario, { scenarioMode });
   let validationIssues = [];
   let lastResult = null;
   let bestSafeCandidate = null;
@@ -569,6 +578,7 @@ export const runValidatedScenarioEnhancement = async ({
     }
     const text = normalizeText(result?.text);
     const validation = validateScenarioEnhancement({
+      scenarioMode,
       originalScenario,
       candidateScenario: text,
       selectedCategories,
@@ -616,6 +626,7 @@ export const runValidatedScenarioEnhancement = async ({
   // known-safe original so the user can continue to STEP3/STEP4 rather than lose work.
   const originalText = normalizeText(originalScenario);
   const originalValidation = validateScenarioEnhancement({
+    scenarioMode,
     originalScenario,
     candidateScenario: originalText,
     selectedCategories,

@@ -13,13 +13,37 @@ export const getWorkflowStep = ({ castList, scenario, finalPrompt, generatedImag
   return generatedImage && completed ? 5 : 4;
 };
 
+const isManualSourceKey = key => typeof key === 'string' && /^manual:sha256:[a-f0-9]{64}$/.test(key);
+
+// Store only provenance, not another persisted copy of the user's original text.
+export const createScenarioSourceKey = async ({ inputMode, manualTopic } = {}) => {
+  const text = typeof manualTopic === 'string' ? manualTopic.replace(/\r\n?/g, '\n').trim() : '';
+  if (inputMode !== 'manual' || !text || !globalThis.crypto?.subtle) return '';
+  const digest = await globalThis.crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return `manual:sha256:${Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, '0')).join('')}`;
+};
+
+export const findScenarioSourceKey = (scenario, sources = []) => {
+  if (!scenario) return '';
+  const matches = sources.filter(item => (typeof item === 'string' ? item : item?.scenario) === scenario);
+  const keys = new Set(matches.map(item => item?.sourceKey));
+  const key = matches[0]?.sourceKey;
+  return keys.size === 1 && isManualSourceKey(key) ? key : '';
+};
+
 // Session-only story examples, not instructions or a quota for ending labels.
-export const collectRecentScenarioOutcomes = (sources = []) => {
+export const collectRecentScenarioOutcomes = (sources = [], { sourceKey = '', currentScenario = '', isManualRerun = false } = {}) => {
+  const records = Array.isArray(sources) ? sources : [];
+  // A fixed topic can produce many different works. Only an identified current
+  // work being rerun manually is exempt from comparison with its own source.
+  const repeatCurrentSource = isManualRerun && isManualSourceKey(sourceKey)
+    && findScenarioSourceKey(currentScenario, records) === sourceKey;
   const seen = new Set();
   const outcomes = [];
-  for (const source of Array.isArray(sources) ? sources : []) {
-    const text = typeof source === 'string' ? source : '';
-    const panel = getScenarioPanelBlocks(text).find(item => item.num === 4 && item.found);
+  for (const source of records) {
+    if (repeatCurrentSource && source?.sourceKey === sourceKey) continue;
+    const text = typeof source === 'string' ? source : typeof source?.scenario === 'string' ? source.scenario : '';
+    const panel = getScenarioPanelBlocks(text).filter(item => item.found).at(-1);
     const lastPanel = panel?.text.slice(panel.header.length);
     if (!lastPanel) continue;
     const outcome = lastPanel.split('\n').filter(line => !/^\s*(?:\[(?:Camera|EMOTION):|BalloonLayout\s*[:：])/i.test(line))

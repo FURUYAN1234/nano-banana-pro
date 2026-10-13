@@ -54,5 +54,5 @@ test('editable-prompt guidance leads into the prompt editor after STEP3 owns the
 test('final prompt heading keeps edit guidance out of the title', () => {
   assert.match(step4PanelSource, />\s*最終プロンプト\s*<\/label>/);
   assert.doesNotMatch(step4PanelSource, /最終プロンプト（直接編集できます）/);
-  assert.match(step4PanelSource, />DYNAMIC ENGINE V1\.2\.3<\/span>/);
+  assert.doesNotMatch(step4PanelSource, /DYNAMIC ENGINE/i);
 });

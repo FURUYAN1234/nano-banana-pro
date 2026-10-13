@@ -19,6 +19,58 @@ test('ordinary text requests do not consume Google Search grounding', async () =
   } finally {globalThis.fetch = originalFetch; setApiKey('');}
 });
 
+test('explicit JSON output reaches Gemini and exposes completion metadata without changing ordinary text', async () => {
+  const originalFetch = globalThis.fetch;
+  const bodies = [];
+  setApiKey('test-only-key');
+  globalThis.fetch = async (_url, options) => {
+    bodies.push(JSON.parse(options.body));
+    return Response.json({ candidates: [{ finishReason: 'STOP', content: { parts: [{ text: '{"status":"unverified"}' }] } }],
+      usageMetadata: { promptTokenCount: 200, candidatesTokenCount: 100, totalTokenCount: 300 } });
+  };
+  try {
+    const ordinary = await callThinkingGemini('Return JSON.', null, null, null);
+    const json = await callThinkingGemini('Return JSON.', null, null, null, { responseFormat: 'json_object' });
+    assert.equal(bodies.length, 2);
+    assert.deepEqual(bodies[0].generationConfig, { maxOutputTokens: 8192 });
+    assert.deepEqual(bodies[1], { ...bodies[0], generationConfig: { maxOutputTokens: 8192, responseMimeType: 'application/json' } });
+    assert.equal(ordinary.finishReason, undefined);
+    assert.equal(ordinary.usage, undefined);
+    assert.equal(json.finishReason, 'STOP');
+    assert.deepEqual(json.usage, { prompt_tokens: 200, completion_tokens: 100, total_tokens: 300 });
+    assert.equal(json.text, ordinary.text);
+  } finally { globalThis.fetch = originalFetch; setApiKey(''); }
+});
+
+test('JSON output returns a nonempty truncated Gemini response and its finish reason without another request', async () => {
+  const originalFetch = globalThis.fetch;
+  let calls = 0;
+  setApiKey('test-only-key');
+  globalThis.fetch = async () => {
+    calls++;
+    return Response.json({ candidates: [{ finishReason: 'MAX_TOKENS', content: { parts: [{ text: '{"partial":true}' }] } }] });
+  };
+  try {
+    const result = await callThinkingGemini('Return JSON.', null, null, null, { responseFormat: 'json_object' });
+    assert.equal(result.finishReason, 'MAX_TOKENS', 'the review boundary must be able to reject incomplete output');
+    assert.equal(result.text, '{"partial":true}');
+    assert.equal(calls, 1);
+  } finally { globalThis.fetch = originalFetch; setApiKey(''); }
+});
+
+test('unsupported Gemini JSON formats fail before any request or fallback', async () => {
+  const originalFetch = globalThis.fetch;
+  let calls = 0;
+  setApiKey('test-only-key');
+  globalThis.fetch = async () => { calls++; return Response.json({ candidates: [{ content: { parts: [{ text: 'fixture' }] } }] }); };
+  try {
+    for (const responseFormat of [null, 'json', { type: 'json_object' }]) {
+      await assert.rejects(callThinkingGemini('fixture', null, null, null, { responseFormat }), /Unsupported response format/);
+    }
+    assert.equal(calls, 0);
+  } finally { globalThis.fetch = originalFetch; setApiKey(''); }
+});
+
 test('required news search never succeeds through an ungrounded retry', async () => {
   const originalFetch = globalThis.fetch;
   const bodies = [];

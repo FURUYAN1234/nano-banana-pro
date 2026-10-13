@@ -18,7 +18,7 @@ const image = text => `data:image/png;base64,${Buffer.from(text).toString('base6
 const withoutPanelRenderingPriority = text => text
   .replace('M numbers identify STEP1 materials; Image numbers identify attachments in this request. A repair source has no M number. Resolve scenario material numbers through this mapping.\n', '')
   .replace(/ MATERIAL M\d+\./g, '')
-  .replaceAll(" Identity means the individual's identifying traits. The selected panel rendering recipe determines face/eye construction and body stylization; preserve the reference drawing style only under an explicit reference-style lock in the approved prompt.", '')
+  .replaceAll(" Identity means the individual's identifying traits and age. The selected panel rendering recipe determines face/eye construction and body stylization; preserve the reference drawing style only under an explicit reference-style lock in the approved prompt.", '')
   .replace('camera, panel medium and rendering recipe, output layout', 'camera, output layout');
 
 test('character reference identity defers construction to the selected panel recipe unless reference style is explicitly locked', () => {
@@ -30,6 +30,7 @@ test('character reference identity defers construction to the selected panel rec
       const character = plan.rolePrompt.split('\n').find(line => line.includes('CHARACTER REFERENCE'));
       assert.match(character, /identity and canonical clothing unless the approved prompt explicitly overrides clothing/);
       assert.match(character, /Identity means the individual's identifying traits/);
+      assert.match(character, /identifying traits and age/);
       assert.match(character, /selected panel rendering recipe determines face\/eye construction and body stylization/);
       assert.match(character, /preserve the reference drawing style only under an explicit reference-style lock in the approved prompt/);
       assert.match(plan.rolePrompt, /approved prompt determines.*panel medium and rendering recipe/);
@@ -41,6 +42,50 @@ test('character reference identity defers construction to the selected panel rec
         assert.doesNotMatch(original, /face\/eye|body stylization|reference-style lock/);
       }
     }
+  }
+});
+
+test('recognized character materials retain rendering priority through color, monochrome, compact and repair manifests', () => {
+  const sheet = image('recognized sheet');
+  const background = image('recognized room');
+  const prop = image('recognized object');
+  const referenceAssets = [
+    { image: sheet, items: [{ kind: 'character', name: '人物A', description: '眼鏡と短い髪' }] },
+    { image: background, items: [{ kind: 'background', name: '室内', description: '窓のある部屋' }] },
+    { image: prop, items: [{ kind: 'prop', name: '箱', description: '四角い箱' }] },
+  ];
+  for (const colorMode of ['color', 'monochrome']) for (const compact of [false, true]) for (const repair of [false, true]) {
+    const plan = buildOpenAIReferencePlan({ colorMode, compact, referenceAssets,
+      characterImages: [sheet, background, prop],
+      ...(repair ? { originalCandidate: { base64Img: 'Yw==', mimeType: 'image/png' } } : {}) });
+    const rules = plan.rolePrompt.split('\n').find(line => line.startsWith('CHARACTER REFERENCE.'));
+    assert.match(rules, /identity and canonical clothing unless the approved prompt explicitly overrides clothing/);
+    assert.match(rules, /identifying traits and age/);
+    assert.match(rules, /selected panel rendering recipe determines face\/eye construction and body stylization/);
+    assert.match(rules, /preserve the reference drawing style only under an explicit reference-style lock in the approved prompt/);
+    for (const role of ['BACKGROUND REFERENCE.', 'PROP REFERENCE.']) {
+      for (const line of plan.rolePrompt.split('\n').filter(line => line.includes(role))) {
+        assert.doesNotMatch(line, /face\/eye|body stylization|reference-style lock|canonical clothing/);
+      }
+    }
+    assert.deepEqual(plan.imageInputs.slice(repair ? 1 : 0).map(item => item.image_url), [sheet, background, prop]);
+    if (colorMode === 'monochrome') assert.match(rules, /native black ink, white paper and assigned screens; ignore source hues/);
+  }
+});
+
+test('recognized background and prop batches do not acquire character rendering rules', () => {
+  const background = image('background-only');
+  const prop = image('prop-only');
+  const referenceAssets = [
+    { image: background, items: [{ kind: 'background', name: '廊下', description: '長い廊下' }] },
+    { image: prop, items: [{ kind: 'prop', name: '椅子', description: '木の椅子' }] },
+  ];
+  for (const colorMode of ['color', 'monochrome']) for (const compact of [false, true]) {
+    const plan = buildOpenAIReferencePlan({ colorMode, compact, characterImages: [background, prop], referenceAssets });
+    assert.doesNotMatch(plan.rolePrompt, /CHARACTER REFERENCE|face\/eye|body stylization|reference-style lock|canonical clothing/);
+    assert.deepEqual(plan.referenceRoles, ['background_reference', 'prop_reference']);
+    assert.match(plan.rolePrompt, /BACKGROUND REFERENCE.*environment geometry/);
+    assert.match(plan.rolePrompt, /PROP REFERENCE.*object design/);
   }
 });
 

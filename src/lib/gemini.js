@@ -105,6 +105,7 @@ export const diagnoseConnection = async () => {
  */
 export const callThinkingGemini = async (prompt, images = null, systemInstruction = null, onThinkingUpdate, options = {}) => {
     options = { ...options, signal: getApiWorkSignal(options.signal) };
+    if (options.responseFormat !== undefined && options.responseFormat !== 'json_object') throw new TypeError('Unsupported response format');
     if (!getApiKey()) throw createApiError("API Key is not set.", {provider:'gemini', code:'KEY_NOT_CONFIGURED'});
     const timeoutMs = options.timeoutMs ?? GEMINI_TEXT_TIMEOUT_MS;
     const searchRequired = options.useWebSearch === true;
@@ -152,7 +153,8 @@ export const callThinkingGemini = async (prompt, images = null, systemInstructio
             const result = await postGeminiGenerateContent(modelId, {
                 contents: [{ role: "user", parts: finalPromptParts }],
                 ...(searchRequired ? { tools: [{ googleSearch: {} }] } : {}),
-                generationConfig: { maxOutputTokens: 8192 }
+                generationConfig: { maxOutputTokens: 8192,
+                    ...(options.responseFormat === 'json_object' ? { responseMimeType: 'application/json' } : {}) }
             }, timeoutMs, options.signal);
 
             const response = result;
@@ -188,7 +190,15 @@ export const callThinkingGemini = async (prompt, images = null, systemInstructio
                 text: finalOutput,
                 sources,
                 thought: thought || "通常処理が完了しました。",
-                model: modelId // [v1.7.0] Return the successful model ID for UI display
+                model: modelId, // [v1.7.0] Return the successful model ID for UI display
+                ...(options.responseFormat === 'json_object' ? {
+                    finishReason: candidate.finishReason,
+                    usage: {
+                        prompt_tokens: response.usageMetadata?.promptTokenCount,
+                        completion_tokens: response.usageMetadata?.candidatesTokenCount,
+                        total_tokens: response.usageMetadata?.totalTokenCount,
+                    },
+                } : {}),
             };
 
         } catch (err) {

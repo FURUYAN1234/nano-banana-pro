@@ -187,8 +187,15 @@ export const inspectImageDimensions = async (dataUrl) => {
 
 // Inspect the drawn rules; never infer frame geometry from the requested plan.
 // Ambiguous/non-rectangular pages return no crops rather than fabricated bounds.
-export const detectVariablePanelFrames = ({data,width,height},expectedCount) => {
-  if(!width||!height||data?.length!==width*height*4) return [];
+export const detectVariablePanelFrames = ({data,width,height},expectedCount,onDiagnostic) => {
+  const diagnostic=typeof onDiagnostic==='function'?{width,height,paperThreshold:238,
+    expectedCount:expectedCount??null,componentCount:0,components:[]}:null;
+  const report=(reason,ambiguous=false,frameCount=0,resultCount=0)=>{
+    if(!diagnostic)return;
+    try {onDiagnostic({...diagnostic,omittedComponents:diagnostic.componentCount-diagnostic.components.length,
+      ambiguous,frameCount,resultCount,reason});} catch { /* Diagnostics cannot interrupt image inspection. */ }
+  };
+  if(!width||!height||data?.length!==width*height*4){report('invalid_input');return [];}
   const size=width*height,seen=new Uint8Array(size),queue=new Uint32Array(size);
   const paper=i=>{const p=i*4;return data[p+3]<32||Math.min(data[p],data[p+1],data[p+2])>=238;};
   let head=0,tail=0;
@@ -203,6 +210,7 @@ export const detectVariablePanelFrames = ({data,width,height},expectedCount) => 
   // Paper reachable from page edges includes the gutters. Its complement
   // contains the complete enclosed panels, including white areas inside them.
   const frames=[];
+  let ambiguous=false;
   for(let seed=0;seed<size;seed++){
     if(seen[seed])continue;
     head=0;tail=1;queue[0]=seed;seen[seed]=2;
@@ -215,20 +223,100 @@ export const detectVariablePanelFrames = ({data,width,height},expectedCount) => 
       if(i>=width)visit(i-width);if(i+width<size)visit(i+width);
     }
     const w=right-left+1,h=bottom-top+1;
-    if(w>=width*.12&&h>=height*.075&&tail>=size*.012&&tail/(w*h)>=.7)
-      frames.push({x:left,y:top,width:w,height:h});
+    const edgeCoverage=diagnostic?{}:null;
+    const shapeEdgeCoverage=diagnostic?{}:null;
+    let rectangular=false,strictAccepted=false,shapeFallbackAccepted=false;
+    if(w>=width*.12&&h>=height*.075) {
+      // A bridge between neighboring frames can have a rectangular bounding
+      // box too. Require four continuous outer edges of THIS component before
+      // treating its rectangle (or the remaining rectangles) as count evidence.
+      const band=Math.max(1,Math.floor(Math.min(w,h)*.015));
+      const covered=(length,pixel,edge)=>{
+        let missing=0;
+        const allowedMissing=Math.max(1,Math.floor(length*.002));
+        for(let offset=0;offset<length;offset++) {
+          let found=false;
+          for(let depth=0;depth<=band;depth++) if(seen[pixel(offset,depth)]===2){found=true;break;}
+          if(!found&&++missing>allowedMissing&&!diagnostic)return false;
+        }
+        if(diagnostic)edgeCoverage[edge]={missing,total:length,allowedMissing,coverage:Number((1-missing/length).toFixed(4))};
+        return missing<=allowedMissing;
+      };
+      // Diagnostic mode measures all four edges, including those after the
+      // first rejected edge. The acceptance thresholds remain identical.
+      const edges=()=>[
+        covered(w,(x,d)=>(top+d)*width+left+x,'top'),
+        covered(w,(x,d)=>(bottom-d)*width+left+x,'bottom'),
+        covered(h,(y,d)=>(top+y)*width+left+d,'left'),
+        covered(h,(y,d)=>(top+y)*width+right-d,'right'),
+      ].every(Boolean);
+      const continuous=diagnostic?edges():null;
+      strictAccepted=tail>=size*.012&&tail/(w*h)>=.7&&(diagnostic?continuous:edges());
+      // Hand-drawn rules may slope slightly or round their corners. Require a
+      // nearly full component and uninterrupted edges inside a bounded inset;
+      // this tolerates drawing variation without bridging gaps or inventing crops.
+      if(!strictAccepted&&tail>=size*.012&&tail/(w*h)>=.95) {
+        const depthLimit=Math.max(1,Math.ceil(Math.min(w,h)*.03));
+        const followsEdge=(length,pixel,edge)=>{
+          // A sloped adjacent edge can end inside this corner square too.
+          // Use the same bounded inset in both axes, never skip mid-edge gaps.
+          const trim=depthLimit;
+          let missing=0,maxDepth=0,maxRejectedDepth=0;
+          for(let offset=trim;offset<length-trim;offset++) {
+            let depth=0;
+            while(depth<=depthLimit&&seen[pixel(offset,depth)]!==2)depth++;
+            if(depth>depthLimit) {
+              missing++;
+              if(diagnostic) {
+                const searchLimit=Math.floor(Math.min(w,h)*.1);
+                while(depth<=searchLimit&&seen[pixel(offset,depth)]!==2)depth++;
+                maxRejectedDepth=Math.max(maxRejectedDepth,depth);
+              }
+            }
+            else maxDepth=Math.max(maxDepth,depth);
+          }
+          if(diagnostic)shapeEdgeCoverage[edge]={missing,total:length-2*trim,trim,depthLimit,maxDepth,maxRejectedDepth};
+          return missing===0;
+        };
+        shapeFallbackAccepted=[
+          followsEdge(w,(x,d)=>(top+d)*width+left+x,'top'),
+          followsEdge(w,(x,d)=>(bottom-d)*width+left+x,'bottom'),
+          followsEdge(h,(y,d)=>(top+y)*width+left+d,'left'),
+          followsEdge(h,(y,d)=>(top+y)*width+right-d,'right'),
+        ].every(Boolean);
+      }
+      rectangular=strictAccepted||shapeFallbackAccepted;
+      if(rectangular)frames.push({x:left,y:top,width:w,height:h});
+      else ambiguous=true;
+    }
+    if(diagnostic) {
+      diagnostic.componentCount++;
+      // Keep the largest 32 components: enough to expose merged frames while
+      // bounding logs from title glyphs and leaked drawing fragments.
+      if(diagnostic.components.length<32||tail>diagnostic.components.at(-1).area) {
+        diagnostic.components.push({bbox:[left,top,w,h],area:tail,fill:Number((tail/(w*h)).toFixed(4)),
+          edgeCoverage,shapeEdgeCoverage,strictAccepted,shapeFallbackAccepted,accepted:rectangular});
+        diagnostic.components.sort((a,b)=>b.area-a.area);
+        if(diagnostic.components.length>32)diagnostic.components.pop();
+      }
+    }
+    // Distinguish previously visited ink from this component's edge evidence.
+    for(let i=0;i<tail;i++)seen[queue[i]]=3;
   }
-  return frames.length===expectedCount?frames:[];
+  const result=!ambiguous&&(expectedCount==null||frames.length===expectedCount)?frames:[];
+  report(ambiguous?'ambiguous':expectedCount!=null&&frames.length!==expectedCount?'expected_count_mismatch':frames.length?'ok':'no_frames',ambiguous,frames.length,result.length);
+  return result;
 };
 
-export const inspectVariablePanelFrames = async(dataUrl,count)=>{
+export const inspectVariablePanelFrames = async(dataUrl)=>{
   const image=new Image();image.src=dataUrl;await image.decode();
   const canvas=document.createElement('canvas');
   canvas.width=image.naturalWidth;canvas.height=image.naturalHeight;
   const context=canvas.getContext('2d',{willReadFrequently:true});
   if(!context)throw new Error('コマ枠の原寸検査を初期化できません。');
   context.drawImage(image,0,0);
-  return detectVariablePanelFrames(context.getImageData(0,0,canvas.width,canvas.height),count)
+  const onDiagnostic=import.meta.env?.DEV?report=>console.info('[PANEL FRAME DIAGNOSTIC]',JSON.stringify({...report,sourceLength:dataUrl.length})):undefined;
+  return detectVariablePanelFrames(context.getImageData(0,0,canvas.width,canvas.height),undefined,onDiagnostic)
     .map(r=>({bounds:[r.x/canvas.width,r.y/canvas.height,r.width/canvas.width,r.height/canvas.height]}));
 };
 

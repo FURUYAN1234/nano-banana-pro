@@ -3,14 +3,14 @@
 > **Source code available; free to use.** Ordinary use, free integration and free provision require no application, prior contact or permission from FURU. You may sell and monetize your own works. External API costs and third-party terms are separate. See Terms & Output Rights below. / **ソースコード公開・利用無料。** 通常利用と無料の組み込み・無料提供に、申請・事前連絡・FURUの許可は不要です。自分の作品は販売・収益化できます。外部API料金と第三者の条件は別です。詳しくは「利用条件・作品の権利」をご確認ください。
 
 
-> Current source version: **v7.0.4** / 現在のソース版: **v7.0.4**
+> Current source version: **v7.0.5** / 現在のソース版: **v7.0.5**
 
 
-An experimental web application in which AI handles topic research, story structure, direction, prompt construction, image generation, and quality review for a four-panel manga. An optional mode adapts the same script into a page with 5–8 panels. / AIが話題調査、構成、演出、プロンプト構築、画像生成、品質確認まで担当する4コマ漫画制作Webアプリです。実験的コマ割りをONにすると、同じ台本から5〜8コマのページも作れます。
+An experimental web application in which AI handles topic research, story structure, direction, prompt construction, image generation, and quality review for a four-panel manga. An optional mode writes a 5–8-panel scenario from the start and converts it into a manga page. / AIが話題調査、構成、演出、プロンプト構築、画像生成、品質確認まで担当する4コマ漫画制作Webアプリです。実験的コマ割りをONにすると、最初から5〜8コマのシナリオを作り、漫画にします。
 
 [Open the app / アプリを開く](https://furuyan1234.github.io/nano-banana-pro/) · [Full manual / 全機能PDFマニュアル](https://furuyan1234.github.io/nano-banana-pro/downloads/super-furu-ai-4koma-full-manual-2026-10-01.pdf)
 
-The full operation manual and API setup guides cover v7.0.4, including standard four-panel operation, the optional 5–8-panel mode, image limits and the distinction between image counts and people. Current application terms are in [LICENSE](LICENSE). / 全機能マニュアルとAPI取得ガイドはv7.0.4対応です。標準の4コマと実験的な5〜8コマの操作、画像枚数の上限と人数との違いを説明しています。現在のアプリ利用条件は [LICENSE](LICENSE) を参照してください。
+The manuals describe the current release from setup through saving. Application terms are in [LICENSE](LICENSE). / マニュアルは最新版を初めて使う方に向けて、準備から保存までの現行手順を説明します。利用条件は [LICENSE](LICENSE) をご確認ください。
 
 ## Application screen and output / 操作画面と生成例
 
@@ -22,25 +22,74 @@ The previous-release controls and an inspected API-generated example are shown h
 
 https://github.com/user-attachments/assets/15608ccc-8d86-4b78-9ff3-785201b42629
 
+## Panel modes / 4コマと5〜8コマの選び方
+
+STEP2の上にある「実験的コマ割り」で、台本を作り始める前に選びます。初期状態はOFFです。短い出来事を起承転結でまとめたいときはOFF、途中の動作や反応、見せ場を一つずつ描きたいときはONを選びます。どちらも、題材入力→STEP2で台本作成→STEP3で画像指示文→STEP4で画像生成、という順番です。
+
+| 項目 | OFF：4コマモード | ON：5〜8コマモード |
+|---|---|---|
+| 台本 | 起・承・転・結の4コマ固定 | 最初から5〜8コマの1ページを構成 |
+| コマ数指定 | 自由入力に総コマ数を書いても無視 | 5〜8の範囲で指定でき、未指定なら内容に合わせてAIが選択 |
+| 配置 | 縦1列の4コマ | 台本に合う大小・横長・縦長などの配置を選択 |
+| コマ別の画風・演出 | 1〜4コマに指定可能 | 作成する各コマに指定可能 |
+| 生成後 | 自動検査。設定に応じて重大な不具合を自動修正 | 専用の自動検査。画像の自動修正は行わず、必要なら追加指示で修正 |
+
+### モードを分けている理由
+
+4コマは、短い準備と展開から最後の反転や余韻へつなぐ、限られた四つの場面の構成です。5〜8コマは、途中の動作、相手の反応、場面の転換、必要な間まで含めて、一ページの流れを考えます。描く場面の数と、一場面に割ける広さが違うため、台本を作る段階から二つの方式を分けています。
+
+ONではSTEP2から必要な5〜8コマを作ります。コマ数を満たすだけの無言コマを加える方針は取りません。動作や気持ちを見せるための無言コマは使えます。STEP3では、できた台本のコマ数・順番・台詞・画風・カメラを保って配置を作り、4コマを5〜8コマへ引き延ばしません。小さいコマが増えると一場面の絵や文字が小さくなるので、人物や台詞が多い話は、コマ数だけを増やさず内容を整理してください。
+
+### 入力例と切り替え
+
+OFFでは「2コマ目はPOP、4コマ目は劇画」のように指定できます。「全6コマで」と併記しても4コマ固定を優先します。台詞中の「この漫画は5コマだった」や、小物の「8枚」といった物語の数値は、そのまま扱います。ONなら「全6コマ。2コマ目は水彩、5コマ目は劇画」のように書けます。コマ数を書かず題材だけ入力しても5〜8コマの範囲で構成します。
+
+シナリオ強化は両方のモードに対応し、元台本のコマ数を保ちます。強化・手編集の後はSTEP3を作り直します。カラー／白黒だけを変更した実験モードのSTEP3では、決定済みのコマ割りを保って色と画材の指示を更新します。スイッチの操作だけではAPIを呼びません。選択は再読み込みまで保持し、再読み込み後はOFFです。台本・履歴は画面を開いている間だけ保持します。題材や素材などの共通条件を変更した場合は、古い条件の指示文を使わず再構築します。必要な画像と制作情報は再読み込み前に保存してください。
+
+The modes are separated because a four-beat strip and a 5–8-panel page require different story pacing from STEP2. OFF fixes four panels and ignores conflicting total-count requests while keeping valid panel directions. ON authors the complete 5–8-panel story first; STEP3 preserves that story and plans its page layout. Enhancement retains the source count, and color-only experimental rebuilds reuse the approved layout. Choose before STEP2; reload resets the switch to OFF.
+
+## Art styles / コマごとの絵柄
+
+自由入力に「1コマ目は通常、2コマ目はPOP、3コマ目は水彩、4コマ目は劇画」のように書けます。5〜8コマモードでも、作成するコマに合わせて同じ書き方を使います。数字は選択肢の番号ではなく、物語のコマ番号です。英語名でも指定できます。台本では各コマの `[EMOTION: ...]` に画風が記載されるので、STEP3へ進む前に確認・編集できます。
+
+| 画風 | 英語名 | 見た目の特徴 |
+|---|---|---|
+| 通常 | NORMAL | 登録した人物資料の絵柄を基準にした、普段の漫画表現 |
+| POP | POP_ART | 太い黒い輪郭、鮮やかで不透明な平面色、大粒の網点を使う印刷ポスターのような表現 |
+| 水彩 | WATERCOLOR | 淡い透明色、にじみ、色溜まり、紙の白を生かした柔らかな描写 |
+| 劇画 | GEKIGA | 目のくぼみ、鼻梁、頬骨、顎の立体を、細い斜線を重ねるカケアミと強弱のある描線で描く表現 |
+| スケッチ | SKETCH | 鉛筆の線やハッチング、紙の質感を見せる素描のような表現 |
+| ちびギャグ | CHIBI_GAG | 頭を大きく、胴や手足を短く描き、動作や反応を誇張するコミカルな表現 |
+
+画風は顔・髪・服・小物・背景へ適用する指示です。人物の同一性や衣装、台詞、場面のカメラと演技は保ちます。劇画だから険しい表情にする、といった変更は求めません。白黒では色の特徴を墨線、白黒の面や網点へ置き換えます。指定しないコマは題材と演出に合わせてAIが選びます。生成にはばらつきがあり、小さなコマや遠い顔では描き分けが弱くなることもあるため、最終画像を見て必要な修正を指定してください。
+
+Per-panel choices are NORMAL, POP_ART, WATERCOLOR, GEKIGA, SKETCH and CHIBI_GAG. Write the desired style beside a story-panel number in free input; both modes support this. The recipe applies to actors and setting while preserving identity, acting and camera directions. Unspecified panels are chosen automatically; actual rendering can vary.
+
 ## Visual direction and reading / 演出と読みやすさ
 
-**Experimental panel layout / 実験的コマ割り（5〜8コマ）**：STEP3直前のスイッチは初期OFFで、選択はリロードまで保持します。OFFでは短い案内、ONでは演出と操作の詳しい説明を表示します。OFFは従来の4コマ用、ONは次のSTEP3で元の4コマ台本から5〜8コマ用の指示を別に作ります。AIが内容に合うコマ数を選び、大小のコマ、縦のぶち抜き、隣のコマへの身体の枠越えを必要に応じて試します。直近6枚の配置を比較資料にし、コマ数だけを変えた同型案ではなく、結合コマを使わない構成も比較するよう指示します。物語上必要な反復は許容し、配置の重複だけで有料再生成はしません。配置は読む順番が明確な候補から選び、自由な配置全般を保証する機能ではありません。
+GEKIGA panels request exaggerated facial relief through dense multidirectional fine pen hatching: deep eye sockets, a projecting nose and carved cheek/jaw planes, including calm or smiling faces. Line density builds the shadows; solid black supports only local occlusions. Color sits under the pen drawing; monochrome remains black and white. Other panel styles retain their own rendering. This is a drawing instruction, not a guarantee; inspect the generated faces. / 劇画コマでは、目のくぼみ・鼻梁・頬骨・顎の彫りを強め、顔や首に細い斜線を何方向にも重ねる濃いカケアミを指定します。影は線の密度で作り、黒ベタは局所を締める補助に留めます。穏やかな顔や笑顔も描き込みを弱めず、年齢や表情は保ちます。カラーはペンの描線の下に着色し、白黒は無彩色を保ちます。他の画風には適用しません。指示どおりになる保証ではなく、生成後の顔を確認してください。
 
-Experimental mode uses the usual STEP4, save controls, history, automatic workflow and Web-copy controls. Switching the mode alone does not call an API. It starts OFF after reload; switching back restores the saved four-panel prompt when the script and settings still match. / 実験モードも通常と同じSTEP4・保存・履歴・全自動・Webコピーを使います。スイッチだけではAPIを呼びません。実験のカメラは俯瞰・アオリとし、カメラ目線を使わない指示です。表現や台詞・読む順番が意図どおりかは実画像で確認してください。
+POP panels redraw faces, hair, clothes, props and backgrounds with extra-bold black contours, vivid opaque flat colors and clearly separated large Ben-Day dots. Monochrome uses bold black/white shapes and dots only in permitted shadow/material regions. Camera, acting, identity and dialogue stay intact; inspect the actual output. / POPでは顔・髪・服・小物・背景に極太の黒い輪郭、鮮烈で不透明な平面色、大粒で明瞭な網点を指定します。白黒では大胆な白黒面と、許可された影・素材面の網点へ置き換えます。カメラ・演技・同一性・台詞を保つ指示ですが、実際の出方は生成画像で確認してください。
 
-Experimental mode may enrich dialogue, connected actions and reactions while preserving the original plot progression and ending. Original lines remain verbatim and in order; added lines have explicit speakers and are included in image review and candidate comparison. Use the extra panels for purposeful activity or a meaningful silent pause, without weakening camera, acting, expression or medium. / 実験モードでは、元の展開と結末を保ち、台詞・動作の連続・掛け合い・リアクションを膨らませます。元の台詞と順番は保持し、追加台詞も話者を定めて画像検査・候補比較の対象にします。増えたコマを活発な演技や意味のある無言の間に使い、カメラ・表情・画風の強さを保つ構成を指示します。無言コマを必須にはせず、コマ数だけを増やすための繰り返しも避けます。
+**Experimental panel layout / 実験的コマ割り（5〜8コマ）**：STEP2の上にあるスイッチは初期OFFで、選択はリロードまで保持します。OFFでは短い案内、ONでは演出と操作の詳しい説明を表示します。OFFはSTEP2で通常の4コマを作り、自由入力の「6コマ」などの総コマ数指定は採用しません。1〜4コマへの有効な画風・演出指定は保持します。ONは最初から5〜8コマのシナリオを作ります。STEP3では台本と同じコマ数・順番を保って配置と描画指示を作ります。大小のコマ、縦のぶち抜き、隣のコマへの身体の枠越えを必要に応じて試します。直近6枚の配置を比較資料にし、結合コマを使わない構成も比較します。物語上必要な反復は許容し、配置の重複だけで有料再生成はしません。配置は読む順番が明確な候補から選び、自由な配置全般を保証する機能ではありません。
 
-コマ数と配置を一緒に検討し、カメラの画角、台詞を置く広さ、見せ場と間に合う構成を選びます。直近と同じ配置でも物語に適すれば使い、違いを作るためにカメラや内容を変えません。大きな見せ場、手前と奥の対比、斜めのコマ枠、同じ形をつなぐ動作、動きの軌跡、輪郭の光も場面に応じて選びます。無言の挿入コマでは、間・シルエット・余白を使えます。演出は元のカメラ・画風・台詞より優先せず、毎回すべてを使うものではありません。枠越えなどの任意演出が出なかったことだけで再生成はしません。水彩などの画風は人物にも適用する指示にし、全コマ共通の太い墨線やセル影を重ねません。実際の出方は生成画像で確認してください。タイトルと左右の透かしは既存設定に従い、Web貼付にも同じ指示を含めます。
+Experimental mode uses the usual STEP4, save controls, history, automatic workflow and Web-copy controls. Switching the mode alone does not call an API; each mode retains its own scenario and results. Rebuilding STEP3 after changing only color/monochrome reuses the approved experimental layout without another layout request. / 実験モードも通常と同じSTEP4・保存・履歴・全自動・Webコピーを使います。スイッチだけではAPIを呼びません。4コマと5〜8コマそれぞれの台本・生成結果を保持します。実験モードでは、カラー／白黒だけを変更した後のSTEP3は決定済みのコマ割りを保ち、色と画材の指示だけを更新します。この更新では配置を決めるAPIを再実行しません。台本や参照資料なども変わった場合は再構築します。実験のカメラは俯瞰・アオリとし、カメラ目線を使わない指示です。表現や台詞・読む順番が意図どおりかは実画像で確認してください。
+
+Experimental STEP2 writes and reviews a complete 5–8-panel scenario. Each panel needs a distinct story contribution or necessary timing; genuine silent beats remain allowed without a silence quota. STEP3 makes one text-model layout request and retains the exact panel count, order, dialogue, styles and camera directions. It rejects additions, omissions or reordered panels before image generation. / 実験モードはSTEP2で5〜8コマの台本を作り、各コマの展開や必要な間を点検します。必要な無言コマは許容し、無言・台詞の数にノルマを設けません。STEP3では文章AIを1回呼び、台本のコマ数・順番・台詞・画風・カメラを保った配置と描画指示に変換します。4コマからの引き延ばしや台詞追加は行わず、コマの増減・入れ替えを画像生成前に拒否します。文章APIの利用料金がかかり、演出の良し悪しを完全に保証する検査ではありません。
+
+STEP2で決まったコマ数を保ち、STEP3でカメラの画角、台詞を置く広さ、見せ場と間に合う構成を選びます。直近と同じ配置でも物語に適すれば使い、違いを作るためにカメラや内容を変えません。大きな見せ場、手前と奥の対比、斜めのコマ枠、同じ形をつなぐ動作、動きの軌跡、輪郭の光も場面に応じて選びます。台本にある無言コマでは、間・シルエット・余白を使えます。演出は元のカメラ・画風・台詞より優先せず、毎回すべてを使うものではありません。枠越えなどの任意演出が出なかったことだけで再生成はしません。水彩などの画風は人物にも適用する指示にし、全コマ共通の太い墨線やセル影を重ねません。実際の出方は生成画像で確認してください。タイトルと左右の透かしは既存設定に従い、Web貼付にも同じ指示を含めます。
 
 実験STEP3の再実行に失敗しても、前の準備案と取得済み画像を保持します。元台本や設定が変わった場合は古い案で生成せず、作り直します。品質検査では原画像全体・各コマ・左右の透かしの切り出しを使い、台本を渡さない文字転記と、台本との品質照合を2回の検査APIで行います。台詞は右→左の実位置で照合し、タイトルと透かしも指定文と照合します。句読点や空白だけの差は許容します。元画像は変更しません。検査が失敗したり2回合計で120秒を超えたりした場合は、画像を残して未確認と表示します。未確認や作品が成立する軽微な違いだけでは、自動で画像を再生成しません。人物を同定できない場合は未確認のまま保持し、それだけで同一人物の重複とは断定しません。明確な欠陥がある項目は、別項目の未確認で取り消しません。
 
-同じ準備案でSTEP4を再実行した場合は、従来の選択候補と新しい画像を比較し、改善を確認できた場合だけ選択を更新します。従来候補の検査方式が古いか、検査結果の形式が不完全な場合は、新画像と並行してその画像を一度再検査します。両方の検査を同時に開始するため、旧画像の検査が新画像の残り時間だけに制限されることはありません。各画像の検査は最大120秒、有効な旧検査は再利用します。比較は最大60秒で、失敗・同等・劣化・改善不明の場合は従来候補を保持します。未比較で保持した候補を「比較で選んだ最良候補」とは表示しません。取得した画像は実験側の履歴に直近10件まで残り、手動で選び直せます。必要な画像は履歴から外れる前に保存してください。検査不足の項目と実画像の観察内容は生成ログに残ります。候補比較にもAPI料金がかかります。
+同じ準備案でSTEP4を再実行した場合は、前の選択候補と新しい画像を比較し、改善を確認できた場合だけ選択を更新します。前の候補の検査方式が古いか、検査結果の形式が不完全な場合は、新画像と並行してその画像を一度再検査します。両方の検査を同時に開始するため、旧画像の検査が新画像の残り時間だけに制限されることはありません。各画像の検査は最大120秒、有効な旧検査は再利用します。比較は最大60秒で、失敗・同等・劣化・改善不明の場合は前の候補を保持します。未比較で保持した候補を「比較で選んだ最良候補」とは表示しません。取得した画像は実験側の履歴に直近10件まで残り、手動で選び直せます。必要な画像は履歴から外れる前に保存してください。検査不足の項目と実画像の観察内容は生成ログに残ります。候補比較にもAPI料金がかかります。
 
-Experimental prompts consolidate repeated style recipes and generated cast/effect rules with explicit panel scope. Script text, dialogue, camera directions and required quality instructions remain intact. STEP3 reserves space for OpenAI attachment instructions, which are appended once for Web copy or API submission; text that exceeds the limit is rejected without truncation. / 実験用プロンプトでは、重複する画風レシピ・人物ルール・演出指示を、適用するコマを明示してまとめます。台本・台詞・カメラ指定・必要な品質指示は保持します。STEP3でOpenAIの参照画像説明分を先に確保し、WebコピーやAPI送信時に一度だけ加えます。上限を超えた文章は切り捨てず、構築を中断して既存の結果を保持します。各コマのページ上の位置と、そのコマに描く場面・台詞を同じブロックにまとめ、場面内の左右とページ上の左右を区別して指示します。
+Experimental prompts place the full drawing recipe beside each panel to separate visual styles. Repeated cast/effect rules use explicit panel scope. Script text, dialogue, camera directions and required quality instructions remain intact. STEP3 reserves space for OpenAI attachment instructions, appended once for Web copy or API submission; oversized text is rejected without truncation. / 実験用プロンプトでは各コマに画風の描画指示を置き、隣のコマへ画風が混ざらないよう指定します。人物・演出の共通指示は適用コマを明示してまとめ、台本・台詞・カメラ指定・必要な品質指示を保持します。STEP3でOpenAIの参照画像説明分を先に確保し、WebコピーやAPI送信時に一度だけ加えます。上限を超えた文章は切り捨てず、構築を中断して既存の結果を保持します。各コマのページ上の位置と、そのコマに描く場面・台詞を同じブロックにまとめ、場面内の左右とページ上の左右を区別して指示します。
+
+Character staging carries explicitly established scene relationships across crops or occlusion, while allowing camera changes, motivated movement and prop rotation. Unclear relationships alone do not trigger a paid repair. / 人物配置は、明示された人物や物の相対関係を、接写や遮蔽を挟んでも参照します。画面の左右は固定せず、俯瞰・アオリ・背面への切り返し・アップ・望遠・寄り引きを使えます。台本に沿う人物の移動や物の回転、場面転換では関係を更新し、曖昧な位置関係だけでは有料修正しません。画質・カメラ・演技を優先し、全員を横一列に固定しません。実画像での位置維持を保証するものではありません。
 
 画像の保持・候補選択は通常生成と共通の処理を使います。品質検査の入口では「通常4コマ」「1枚絵」「実験5〜8コマ」を明示し、種別とコマ数が一致しない要求を拒否します。通常4コマの描画指示・検査項目・修正基準は維持し、実験用の可変コマ検査を通常4コマへ適用しません。通常側にも検査待ちの上限を設け、時間切れは未確認として画像を保持します。実験画像を4コマ用の自動修正へ送ることも禁止しています。
 
-OFFへ戻すと、元台本・設定が同じ場合は保存済みの4コマ用指示へ戻ります。元台本・通常履歴・実験結果は保持し、入力が変わっていればSTEP3を作り直します。スイッチだけではAPIを呼びません。自由入力にある完成ページのコマ数・演出の希望も実験STEP3へ渡します。実験用STEP3の後にコマ割り・描画指示を確認し、STEP4で1枚生成するかWeb貼付用プロンプトをコピーします。WebではSTEP1の元画像を表示順に添付し、分割指示を番号順に貼り付けます。APIの生成・検査には料金がかかり、自動の修正再生成はありません。コマ割り・読む順番・カメラや画風などの結果が乱れる場合はOFFに戻して従来の4コマをご利用ください。コマ数の成立とカメラ・画風の品質は別に評価します。
+OFFへ戻すと作成済みの4コマ台本・生成結果へ戻り、ONにすると5〜8コマ側へ戻ります。共通設定が変わっていればSTEP3を作り直します。スイッチだけではAPIを呼びません。自由入力にあるコマ数・演出の希望はSTEP2でシナリオ作成に反映し、STEP3では完成した台本を保ちます。実験用STEP3の後にコマ割り・描画指示を確認し、STEP4で1枚生成するかWeb貼付用プロンプトをコピーします。WebではSTEP1の元画像を表示順に添付し、分割指示を番号順に貼り付けます。APIの生成・検査には料金がかかり、自動の修正再生成はありません。コマ割り・読む順番・カメラや画風などの結果が乱れる場合はOFFに戻して通常の4コマをご利用ください。コマ数の成立とカメラ・画風の品質は別に評価します。
 
 Automatic camera design / 自動カメラ設計: STEP2 requires a high or low viewpoint for every automatically designed panel; only an explicit user request can permit eye level. Missing elevation is rejected after bounded retries, with the unaccepted candidate retained in the progress log. Japanese camera-height phrases and positive pitch angles share the same projection parser used by assembly and QA. / STEP2の自動構成は全コマで俯瞰またはアオリを指定し、アイレベルはユーザーの明示指定があるコマだけに限定します。高さ未指定の候補は規定回数の検査後も未達なら次工程へ送らず、進捗欄へ保持します。「高めに撮る」「低めから」などの表現と正の仰俯角を共通判定し、画像QAでは指定文の丸写しを観察証拠にしません。高低の投影証拠が不足する画像は未確認として保持します。画像の出来を保証するものではなく、Webで別途生成した画像はアプリの自動QA対象にはなりません。
 
@@ -48,7 +97,7 @@ Automatic direction retains rectilinear wide angles and excludes fisheye. Choose
 
 Drawing options: STEP2 mosaic masking for existing copyrighted characters and STEP3 watermarking default to ON. The former adds a large-mosaic instruction to scenario and image prompts; disabling the latter removes both footer marks. The settings apply to OpenAI/Gemini API and Web-copy prompts. Rebuild from STEP2 for mosaic changes or STEP3 for watermark changes; toggling alone does not call an API. Settings last until a full reset or reload, do not alter existing images retroactively, and require visual confirmation. / 描画オプション：STEP2の「版権キャラクターにモザイクをかける」と、STEP3の「ウオーターマークを表記する」は初期状態でONです。前者はシナリオ構築と最終画像プロンプトに「版権キャラクターにおおきなモザイクをかける」を追加し、後者をOFFにすると左右のフッターの描画指示を外します。OpenAI／GeminiのAPIとWeb用コピーに共通で反映します。設定変更後はモザイクならSTEP2、ウオーターマークならSTEP3から再作成してください。変更だけでAPIは実行されません。選択は全設定リセットまたは再読込まで保持します。生成済み画像には遡って反映されず、AIの対象判断・描画は実画像で確認してください。
 
-The right footer keeps the scenario-model attribution and shows the current image engine first, for example `ChatGPT Images 2.5 / GPT-6.1 Sol / FURU AI 4-koma v7.0.4`. Changing image quality/model updates the image-engine prefix for API and Web-copy instructions; existing images are retained. / 右フッターはシナリオモデル名を残し、先頭に現在の画像生成エンジン名を記載します。例：`ChatGPT Images 2.5 / GPT-6.1 Sol / FURU AI 4-koma v7.0.4`。画像モデルを変更すると、API・Webコピー用の表記をその選択へ同期します。生成済み画像は保持します。
+The right footer keeps the scenario-model attribution and shows the current image engine first, for example `ChatGPT Images 2.5 / GPT-6.1 Sol / FURU AI 4-koma v7.0.5`. Changing image quality/model updates the image-engine prefix for API and Web-copy instructions; existing images are retained. / 右フッターはシナリオモデル名を残し、先頭に現在の画像生成エンジン名を記載します。例：`ChatGPT Images 2.5 / GPT-6.1 Sol / FURU AI 4-koma v7.0.5`。画像モデルを変更すると、API・Webコピー用の表記をその選択へ同期します。生成済み画像は保持します。
 
 
 Mosaic targets are existing-work characters actually depicted in the scripted Action. Reference sheets, art style, resemblance or a shared name alone do not authorize masking original cast members. An intentional source instruction applies only to its specified person and region. Check both masked and unmasked subjects in the final image. GPT-6.1 Sol is the default scenario model in development and production. / モザイク対象は台本のActionで実際に描く既存作品の人物描写です。参照キャラクターシートの存在、画風、外見の類似、同名だけを根拠にオリジナルの登場人物を隠しません。原文で本人への意図的なモザイクを指定した場合は、その対象・領域だけに適用します。最終画像で対象と非対象の両方を確認してください。OpenAIシナリオモデルの初期選択は開発版・公開版ともGPT-6.1 Solです。
@@ -77,7 +126,7 @@ Shoulder-view identity / 肩越しの人物: Registered aliases resolve to one p
 
 Panel art styles / コマごとの画風: Compact prompts retain concrete linework, facial shading and material directions. Automatic chibi deformation yields to camera, acting and expressions; explicit user style and proportion requests remain. Rebuild STEP3 for existing scenarios and inspect the rendered result. / 短縮後も描線・顔の陰影・質感の指示を保持します。自動のちび化よりカメラ・演技・表情を優先し、明示された画風・頭身指定は守ります。既存シナリオはSTEP3から再構築し、実画像で効果を確認してください。
 
-Camera and visual direction / カメラと画作り: Scenarios carry positions, actions and prop states between panels and stage how one character affects another. STEP2 compares the four views and their story roles; material, unintended repetition can receive one direction repair, while meaningful repeats and minor differences are retained. Camera position, elevation, framing, lens perspective and Dutch tilt are designed separately. A contextual pullback normally reveals body action, space and actor distances; large foreground figures, natural crops and intentional close-only pages remain valid. Initial Web/API prompts preserve that framing, use contour and contrast for readability, and allow taller panels for body action. Repeated decorative detail or already-read text alone does not justify zooming in during scenario review; explicitly required text remains protected. Rebuild from STEP2 to change an existing camera plan. Shoulder views retain scripted gaze, and balloon order does not assign horizontal actor slots. Low shots preserve the requested height and project faces, bodies and setting from the same viewpoint. QA requires localized underside evidence for an upward-shot pass; uncertainty alone does not trigger regeneration. Compression preserves expressive acting and layered lighting, with local value, color and contour contrast separating faces and hands from busy settings. Verify the result in the rendered image. / シナリオ段階から位置・動作・小道具をコマ間で引き継ぎ、働きかけと相手の反応を設計します。STEP2で4コマの視点と役割を比較し、意図しない反復が見せ場の差を失わせる場合は演出を1回修正します。意味のある反復や軽微な差は保持します。撮影位置・仰俯角・寄り引き・レンズ遠近・ダッチの傾きは分けて設計します。原則一コマは身体演技・空間・人物間の距離が伝わる引きを設けますが、手前の人物を大きく描ける構図や自然な見切れ、意図した寄りだけのページも保持します。全員の足先や一律の縮小は強制しません。Web/API共通の初回指示で画角を保ち、輪郭と明暗で読みやすくし、身体演技には十分なコマ高を配分します。既出の文字や補助細部を再び大きく読ませるためだけに、シナリオ監査で寄りへ変更しません。ユーザーが明示した可読文字は保持します。既存のカメラ設計を変える場合はSTEP2から作り直してください。肩越しでも台本の視線を保ち、台詞順から人物の左右位置を固定しません。アオリは指定された撮影高さを保ち、顔・身体・背景へ同じ見上げの投影を指定します。検査で下面の具体的な位置を確認できない場合は未確認とし、それだけでは再生成しません。圧縮後も演技と光を残し、局所的な明暗・色・輪郭の差で顔や手を背景から見分けやすくします。効果は実画像で確認してください。
+Camera and visual direction / カメラと画作り: Scenarios carry positions, actions and prop states between panels and stage how one character affects another. STEP2 compares the selected mode’s panel views and their story roles; material, unintended repetition can receive one direction repair, while meaningful repeats and minor differences are retained. Camera position, elevation, framing, lens perspective and Dutch tilt are designed separately. A contextual pullback normally reveals body action, space and actor distances; large foreground figures, natural crops and intentional close-only pages remain valid. Initial Web/API prompts preserve that framing, use contour and contrast for readability, and allow taller panels for body action. Repeated decorative detail or already-read text alone does not justify zooming in during scenario review; explicitly required text remains protected. Rebuild from STEP2 to change an existing camera plan. Shoulder views retain scripted gaze, and balloon order does not assign horizontal actor slots. Low shots preserve the requested height and project faces, bodies and setting from the same viewpoint. QA requires localized underside evidence for an upward-shot pass; uncertainty alone does not trigger regeneration. Compression preserves expressive acting and layered lighting, with local value, color and contour contrast separating faces and hands from busy settings. Verify the result in the rendered image. / シナリオ段階から位置・動作・小道具をコマ間で引き継ぎ、働きかけと相手の反応を設計します。STEP2で選択モードの全コマの視点と役割を比較し、意図しない反復が見せ場の差を失わせる場合は演出を1回修正します。意味のある反復や軽微な差は保持します。撮影位置・仰俯角・寄り引き・レンズ遠近・ダッチの傾きは分けて設計します。原則一コマは身体演技・空間・人物間の距離が伝わる引きを設けますが、手前の人物を大きく描ける構図や自然な見切れ、意図した寄りだけのページも保持します。全員の足先や一律の縮小は強制しません。Web/API共通の初回指示で画角を保ち、輪郭と明暗で読みやすくし、身体演技には十分なコマ高を配分します。既出の文字や補助細部を再び大きく読ませるためだけに、シナリオ監査で寄りへ変更しません。ユーザーが明示した可読文字は保持します。既存のカメラ設計を変える場合はSTEP2から作り直してください。肩越しでも台本の視線を保ち、台詞順から人物の左右位置を固定しません。アオリは指定された撮影高さを保ち、顔・身体・背景へ同じ見上げの投影を指定します。検査で下面の具体的な位置を確認できない場合は未確認とし、それだけでは再生成しません。圧縮後も演技と光を残し、局所的な明暗・色・輪郭の差で顔や手を背景から見分けやすくします。効果は実画像で確認してください。
 
 Wardrobe continuity: Clothing and attachments are specified once per character and shared between panels. Scripted dressing or removal remains valid; occlusion and offscreen placement are not missing items. API QA requests repair only with clear evidence of the same person and body region in two panels. Complete visual consistency is not guaranteed. / 衣装の連続性: 4コマでは人物ごとに服と付属品の有無・数・形・取り付け位置を一度決め、コマ間で共有します。台本にある着脱等は保持し、遮蔽や画面外を欠落とは扱いません。API検査は、同じ人物・部位が明瞭に見える2コマの根拠がある場合だけ衣装変化を修正対象にします。生成結果の完全一致を保証する機能ではありません。
 
@@ -106,7 +155,7 @@ When a workflow or reasoning rule changes materially, run `npm run docs:workflow
 The application provides one continuous four-step workflow. / アプリは次の4ステップを一続きで実行します。
 
 1. **Material recognition / 素材の認識:** Read character sheets, backgrounds and props, and extract their roles and traits. / 人物・背景・小物の参照画像から種類と特徴を抽出します。
-2. **Scenario / シナリオ:** Generate a four-panel story and optionally strengthen its direction. / 4コマのシナリオを生成し、必要に応じて演出を強化します。
+2. **Scenario / シナリオ:** Choose four panels or the experimental 5–8-panel mode before STEP2, then generate the scenario and optionally strengthen its direction. / STEP2の前に通常4コマか実験5〜8コマを選び、シナリオを生成します。必要に応じて演出を強化できます。
 3. **Prompt / プロンプト:** Build an image prompt and review it before generation. Normal four-panel prompts can be edited directly; in experimental mode, change the source script or settings and rebuild STEP3. / 画像プロンプトを構築し、生成前に内容を確認します。通常4コマの指示文は直接編集でき、実験モードでは元台本や設定を直してSTEP3を再実行します。
 4. **Image / 画像:** Generate through Google Gemini or OpenAI, inspect the result, and offer bounded repair when enabled. / Google GeminiまたはOpenAIで画像を生成し、結果を検査し、設定時は回数を制限した修正候補を作ります。
 
@@ -136,7 +185,7 @@ The story routine is a constrained editor rather than a single request to “mak
 1. **Normalize input facts / 入力事実の正規化:** Separate source/reference metadata, URLs, article titles, interface labels, input-mode names and internal placeholders from drawable events and real character dialogue. News-only category/date/freshness instructions never enter free-input prompts. Compound headings such as `出典・参考:` and their bullet lists remain posting metadata and never become a speaker, balloon or visible label. Explicit quotations spoken by a character and explicitly required prop lettering remain in the script. / 出典・参考メタデータ、URL、記事名、UIラベル、入力モード名、内部プレースホルダーを、描画する出来事と実際の人物台詞から分離します。ニュース専用のカテゴリ・日付・鮮度指示は自由入力プロンプトへ入れません。`出典・参考:`のような複合見出しと箇条書きは投稿用情報として扱い、話者・吹き出し・画面文字へ変換しません。人物が実際に話す引用と明示された小道具文字は保持します。
 2. **Resolve tone once / 調子の確定:** Resolve automatic selection into one gag or serious ending policy. Serious topics protect consequence and restraint; documentary modes additionally lock facts, numbers, chronology and causality. / 自動選択をギャグまたはシリアスの結末方針へ一度だけ確定します。シリアス題材は結果と抑制を守り、ドキュメンタリーでは事実・数値・時系列・因果も固定します。
 3. **Build a four-beat comic or dramatic spine / 4段階のギャグ・ドラマ設計:** Ordinary gag construction uses a character desire or contradiction, setup, readable escalation, then a visual reversal or payoff. A Surreal ending is deliberately different: it may use destruction, causal leaps, incoherence and absurd visual change without retroactive explanation, provided the absurd event is visible and the ending is not merely a slogan. Serious construction uses concrete loss, cost, choice, action and aftermath; it avoids manufacturing emotion with a lecture or abstract feeling words alone. / 通常ギャグは人物の欲望または矛盾、仕込み、読める増幅、視覚的な反転または回収で組みます。静寂型（シュール）は別契約で、物・設備・舞台の破壊、因果の飛躍、支離滅裂、不条理な画面変化を、後付け説明で合理化せず許可します。目で分かる出来事があり、標語だけの結末でなければ、論理的な伏線や回収を要求しません。シリアスは具体的な損失、代償、選択、行動、余韻で組み、説教や抽象感情語だけで深刻さを作りません。
-4. **Apply documentary variants / ドキュメンタリー分岐:** Gag Documentary accumulates verified facts in panels 1–3 and uses a character reaction or fact-derived payoff in panel 4 without inventing an incident, statement, prize or failure. Serious Documentary strengthens the human consequence and aftermath while preserving the reference style and ordinary proportions. / ギャグ・ドキュメンタリーは1～3コマで確認済み事実を積み、4コマ目を人物の反応または事実由来の回収にし、事件・発言・受賞・失敗を捏造しません。シリアス・ドキュメンタリーは参照絵柄と通常頭身を守り、人への影響と余韻を強めます。
+4. **Apply documentary variants / ドキュメンタリー分岐:** Gag Documentary accumulates verified facts before the final panel and ends with a character reaction or fact-derived payoff without inventing an incident, statement, prize or failure. Serious Documentary strengthens the human consequence and aftermath while preserving the reference style and ordinary proportions. / ギャグ・ドキュメンタリーは最終コマまでに確認済み事実を積み、最終コマを人物の反応または事実由来の回収にし、事件・発言・受賞・失敗を捏造しません。シリアス・ドキュメンタリーは参照絵柄と通常頭身を守り、人への影響と余韻を強めます。
 5. **Assign visual evidence, guests and props / 視覚証拠・新キャラ・小道具:** Select concrete objects, equipment and actions that prove this topic. Add a role character only when the story needs that person, count the guest in every applicable panel, and preserve identity and spatial continuity when recurring. Preserve each prop's owner, function, material, facing, contact and transfer. Do not mechanically turn every increase or shortage into longer paper, a scroll or an accordion object. / 題材を絵で証明する物、設備、行動を選びます。物語上必要な場合だけ役職人物を加え、該当コマの人数に含め、再登場時は同一人物と位置関係を維持します。小道具の持ち主、用途、材質、向き、接触、受け渡しを保持し、増減や不足を毎回長い紙・巻物・蛇腹へ機械変換しません。
 6. **Design acting identity and contrast / 演技個性と緩急:** If a cast profile explicitly describes acting habits, the Acting Identity Lock keeps character-specific tendencies in lean, posture, gesture amplitude or frequency, gaze and object-check behavior. It expresses the tendency through different story actions instead of repeating one pose, and never infers personality from a reference-sheet pose alone. / キャラクター情報に演技癖が明記されている場合、Acting Identity Lockが前傾、姿勢、身振りの振幅・頻度、視線、物の確認動作を人物固有の傾向として保持します。同じポーズを反復せず、物語ごとの別動作で表し、参照画像のポーズだけから性格を推測しません。
 7. **Pair camera and action / カメラと動作:** Write each `Camera` and action as one physical shot. Specify position, height, azimuth, crop, lens effect, visible surfaces, action phase, support leg or seat, center of gravity, left/right hand roles and contact target. Explicit camera and action always win. / 各`Camera`と動作を一つの物理ショットとして設計します。撮影位置、高さ、左右方向、範囲、レンズ効果、見える面、動作段階、支持脚・座面、重心、左右の手、接触先を具体化し、明示CameraとActionを最優先します。
@@ -264,7 +313,7 @@ STEP2 now requests a short topic explanation alongside the scenario for both cat
 
 ### STEP3 output mode / STEP3の出力モード
 
-Choose **Color** (default) or **Monochrome**, then press STEP3 to rebuild the same scenario. Changing the selection clears the previous prompt and current image preview without starting generation; generation history stays available. The selection survives STEP1/STEP2 resets in the current session; the full settings reset returns it to Color. / 初期値は **カラー** です。**白黒** に切り替えてSTEP3を押すと、同じシナリオから指示文を再構築します。選択変更時は古い指示文と現在の画像プレビューをクリアしますが、自動生成はせず、画像生成履歴も残します。起動中はSTEP1・STEP2からのやり直しでも選択を保持し、全設定リセットでカラーに戻ります。
+Choose **Color** (default) or **Monochrome**, then press STEP3 to rebuild the same scenario. Changing the selection clears the previous prompt without starting generation. Normal mode also clears the current image preview; experimental mode retains acquired images and reuses the layout when only color changes. Generation history stays available. The selection survives STEP1/STEP2 resets in the current session; the full settings reset returns it to Color. / 初期値は **カラー** です。**白黒** に切り替えてSTEP3を押すと、同じシナリオから指示文を再構築します。選択変更時は古い指示文をクリアしますが、自動生成はしません。通常モードは現在の画像表示もクリアし、実験モードは取得済み画像を保持します。色だけの変更ならSTEP3で配置を再利用し、両モードとも画像履歴は残します。起動中はSTEP1・STEP2からのやり直しでも選択を保持し、全設定リセットでカラーに戻ります。
 
 API generation and Web copy share a native manga contract: pen strokes, bounded black shapes and screentones assigned to material, canonical dark skin or motivated shadows. Unassigned lit planes stay white. Tone coverage alone is not a defect, and natural ink-edge antialiasing is retained. Each panel keeps its selected ink style, camera, acting and verbatim lettering through compaction and AI review. / API生成とWeb貼付は、墨線・形のある黒ベタ・肌の地色や素材と影に割り当てたトーンを共通の指示にします。割当のない明部は白地に残します。トーンの面積だけで不合格にせず、自然な線の縁も保持します。短縮やAI精査でコマごとの絵柄・カメラ・演技・台詞と印字を消さないよう検査します。
 
@@ -280,7 +329,7 @@ The four primary actions for STEP1 through STEP4 use the same full-width light-b
 2. Choose Gemini API or OpenAI API and enter that provider's API key in the application. / Gemini APIまたはOpenAI APIを選び、対応するAPIキーをアプリへ入力します。
    The connection dialog includes Gemini and OpenAI API manual PDFs beside their key acquisition links. The header's user manual opens the full application guide. All PDFs open in a separate tab. / 接続画面のGemini・OpenAIキー取得リンクの右側から、それぞれのAPIマニュアルを開けます。タイトル左側の「使い方マニュアル」はアプリ全体の操作ガイドです。同梱PDFは別タブで開き、表示方法はブラウザーの設定に依存します。
 3. Select character-sheet images with the STEP1 button or drop them into its drop zone; multiple images can be added together or later, within the limits below. Optional 360-degree background images and style-setting JSON files can be loaded there too. / STEP1ボタンでキャラクター設定画像（キャラシート）を選ぶか、ドロップ領域へ読み込みます。以下の上限内で複数枚を同時または後から追加でき、任意で360°背景画像や作風設定JSONも読み込めます。
-4. Run STEP2. While the scenario request is active, the app keeps its real progress or error log directly below the STEP2 button and hides the stale result, preview and STEP3. A completed scenario reveals those controls and highlights STEP3. / STEP2を実行します。シナリオ処理中はSTEP2ボタン直下の実際の進捗・エラーログだけを表示し、古い結果・プレビュー・STEP3を隠します。シナリオ完成後に各欄を表示し、次のSTEP3を案内します。
+4. Before STEP2, choose standard four-panel mode (switch OFF) or experimental 5–8-panel mode (ON), then run STEP2. OFF ignores a free-input total such as six panels while retaining valid style/staging directions for panels 1–4. With ON and no requested count, the AI chooses 5–8 panels to suit the story. While the scenario request is active, the app keeps its real progress or error log directly below the STEP2 button and hides the stale result, preview and STEP3. A completed scenario reveals those controls and highlights STEP3. / STEP2の上のスイッチで通常4コマ（OFF）か実験5〜8コマ（ON）を選んでから実行します。OFFは自由入力の総コマ数指定を採用せず4コマを保ち、1〜4コマへの有効な画風・演出指定を残します。ONでコマ数を指定しない場合は、AIが話に合う5〜8コマを選びます。シナリオ処理中はSTEP2ボタン直下の実際の進捗・エラーログだけを表示し、古い結果・プレビュー・STEP3を隠します。シナリオ完成後に各欄を表示し、次のSTEP3を案内します。
 
 #### Drop materials together / 素材をまとめて投入する
 
@@ -473,7 +522,7 @@ The copied prompt guides panel order, cast, speaker assignment, acting, camera, 
 The app provides separate download buttons for the workflow JSON and the custom-node ZIP. Both files are needed for this route. / アプリにはワークフローJSONとカスタムノードZIPのダウンロードボタンが別々にあります。この経路では両方のファイルが必要です。
 
 - [Download workflow JSON](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261005233427.json) / [ワークフローJSONをダウンロード](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261005233427.json)
-- [Download custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.0.4/ComfyUI_H3_FourPanel_NonLM_20261005233427_authfix1.zip) / [カスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.0.4/ComfyUI_H3_FourPanel_NonLM_20261005233427_authfix1.zip)
+- [Download custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.0.5/ComfyUI_H3_FourPanel_NonLM_20261005233427_authfix1.zip) / [カスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.0.5/ComfyUI_H3_FourPanel_NonLM_20261005233427_authfix1.zip)
 
 Place the ZIP's `3フォルダ` under `ComfyUI/custom_nodes/` and the workflow JSON under `ComfyUI/user/default/workflows/`. Install the separate dependencies below, then restart ComfyUI. / ZIP内の`3フォルダ`を`ComfyUI/custom_nodes/`へ、ワークフローJSONを`ComfyUI/user/default/workflows/`以下へ配置します。下記の別途必要な依存関係を導入してからComfyUIを再起動します。
 
@@ -525,7 +574,7 @@ Every deployment requires a fresh dependency audit, the shared security checks a
 
 **Why are there two ComfyUI download buttons? / ComfyUIのダウンロードボタンが2つあるのはなぜですか？**  The JSON defines the workflow, while the ZIP supplies three custom-node folders and documentation; three additional runtime dependencies are installed separately. / JSONはワークフロー定義、ZIPはカスタムノード3フォルダーと導入文書です。さらに実行依存3項目を別途導入します。
 
-**Which video package should I install? / 動画化には何を入れますか？** Use the `20261005233427` workflow JSON and matching v7.0.4 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261005233427` のワークフローJSONと対応するv7.0.4 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
+**Which video package should I install? / 動画化には何を入れますか？** Use the `20261005233427` workflow JSON and matching v7.0.5 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261005233427` のワークフローJSONと対応するv7.0.5 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
 
 **Is this the T2V/I2V/Ref2V repository? / T2V・I2V・Ref2Vのリポジトリですか？**  No. Those workflows are maintained separately in [comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows). / いいえ。それらは別の[comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows)で管理します。
 
@@ -632,6 +681,9 @@ Load a completed four-panel manga into [AI Voice Comic Maker](https://github.com
 | Narration Video Maker / ナレーション動画メーカー | Video generation with narration, subtitles, and BGM / ナレーション・字幕・BGM付き動画生成 | [gemini-narration-studio](https://github.com/FURUYAN1234/gemini-narration-studio) |
 
 ## 📋 ChangeLog / 更新履歴
+
+### v7.0.5 (2026-10-13)
+- **[Fix & UX]** "Choose / "STEP2で4コマと5〜8コマを選択。画風とカメラを保つ変換、色切替時の配置保持、コマ数指定の安全機能を整備。"
 
 ### v7.0.4 (2026-10-12)
 - **[Fix & UX]** Compacted repeated experimental prompt rules and bound scenes to physical panel positions. Supported source-grounded dialogue and acting, restored over-limit Web exports, and corrected Gemini model badges. / 実験用プロンプトの重複を圧縮し、コマ位置と場面を結び付けました。元の展開を保つ追加台詞・演技に対応し、長文のWebコピー・分割・TXT・JSON保存とGeminiモデル表示を修正しました。

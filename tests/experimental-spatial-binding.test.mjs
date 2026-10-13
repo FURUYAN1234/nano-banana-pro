@@ -7,26 +7,23 @@ try {
   const m = await server.ssrLoadModule('/src/lib/experimental-manga.js');
   const styles = ['NORMAL', 'WATERCOLOR', 'POP_ART', 'GEKIGA'];
   const castList = '## ユウ\n[WEIGHTS]: (black hair:1.4)\n## ナギ\n[WEIGHTS]: (blonde hair:1.4)';
-  const makeInput = side => ({
+  const makeInput = (side, count = 7) => ({
     enabled: true, castList, colorMode: 'color',
-    scenario: '## タイトル: 手をつなぐ順番\nLocation: 明るい作業室\n' + styles.map((style, i) =>
+    scenario: '## タイトル: 手をつなぐ順番\nLocation: 明るい作業室\n' + Array.from({length:count}, (_, i) => {
+      const style=styles[i%styles.length];
+      return (
       `[${i + 1}コマ目]\n[Camera: ${i % 2 ? '床から強く見上げる広角' : '頭上から強く見下ろす俯瞰'}]\n[EMOTION: ${style}]\n`
       + `状況: ユウとナギが箱を運ぶ。事実${i + 1}: ユウは${side}側の取っ手を持ち、ナギは反対側で支える。\n`
-      + `ユウ「${i + 1}番目は、こちらから！」\nナギ「はい、動作${i + 1}を続けます。」`).join('\n'),
+      + `ユウ「${i + 1}番目は、こちらから！」\nナギ「はい、動作${i + 1}を続けます。」`);
+    }).join('\n'),
   });
   const input = makeInput('右');
   const source = m.readExperimentalSource(input);
   const makePlan = (count, layout, src = source) => ({
     count, layout, reason: '箱の受け渡しに必要な動作と反応を展開する', pageIntent: '両者の力の連携を見せる',
-    panels: src.panels.flatMap((p, index) => {
-      const anchor = { sourcePanel: index + 1, kind: 'anchor', camera: p.camera,
+    panels: src.panels.map((p, index) => ({ sourcePanel: index + 1, kind: 'anchor', camera: p.camera,
         action: `ユウとナギが箱を運ぶ。実動作${index + 1}: 右手で取っ手を引き、左手で底を支える。`,
-        dialogueIds: [...p.dialogueIds], visualEffects: [], breakout: null };
-      const insert = { ...anchor, kind: 'insert', camera: '手元を床側から強く見上げる接写',
-        action: `連携${index + 1}: ユウとナギの手が箱の傾きに合わせて動く。`, dialogueIds: [] };
-      if (index >= count - 4) return [anchor];
-      return index === 3 ? [insert, anchor] : [anchor, insert];
-    }),
+        dialogueIds: [...p.dialogueIds], visualEffects: [], breakout: null })),
   });
   const occurrences = (text, fragment) => text.split(fragment).length - 1;
   const frames = prompt => [...prompt.matchAll(/\[PAGE FRAME P(\d+) \| ([^\]\n]+)\]\n([\s\S]*?)\n\[END PAGE FRAME P\1\]/g)]
@@ -35,7 +32,8 @@ try {
 
   for (const count of [5, 6, 7, 8]) for (const { id: layout } of m.experimentalLayoutOptions(count)) {
     test(`experimental ${count}/${layout} binds each physical frame to its exact camera, style, action and ordered speech`, () => {
-      const plan = makePlan(count, layout);
+      const input=makeInput('右',count),source=m.readExperimentalSource(input);
+      const plan = makePlan(count, layout, source);
       const validated = m.validateExperimentalPlan(plan, source);
       const prompt = m.buildExperimentalImagePrompt(plan, source, input);
       const blocks = frames(prompt);
@@ -62,7 +60,7 @@ try {
         const factPosition = prompt.indexOf(marker);
         assert.equal(occurrences(prompt, marker), 1, 'each source beat is preserved once');
         assert.ok(factPosition >= precedingEnd && factPosition < blocks[firstIndex].start,
-          'source facts must immediately precede their first physical frame, including an insert before the ending anchor');
+          'source facts must immediately precede their one corresponding physical frame');
         const preceding = prompt.slice(precedingEnd, blocks[firstIndex].start);
         assert.ok(preceding.includes(`事実${beat.id}: ユウは右側の取っ手を持ち、ナギは反対側で支える。`));
         assert.equal(occurrences(preceding, 'Source beat '), 1, 'unrelated source beats cannot collect before this frame');
@@ -85,26 +83,28 @@ try {
     assert.ok(rightPrompt.includes('ユウは右側の取っ手を持ち'));
   });
 
-  test('approved added speech and purposeful silence remain valid inside spanning layouts', () => {
-    const plan = makePlan(6, 'tall_right_top');
-    plan.addedDialogue = [{ id: 'add:1', sourcePanel: 1, speaker: 'ナギ', text: 'この傾きなら、支えられる！', purpose: '受け渡しに応じる演技を具体化する' }];
-    plan.panels[1].dialogueIds = ['add:1'];
+  test('original speech and purposeful silence remain valid inside spanning layouts', () => {
+    const input=makeInput('右',6);
+    input.scenario=input.scenario.replace('ユウ「4番目は、こちらから！」\nナギ「はい、動作4を続けます。」','セリフなし');
+    const source=m.readExperimentalSource(input);
+    const plan = makePlan(6, 'tall_right_top',source);
     const validated = m.validateExperimentalPlan(plan, source);
     assert.equal(validated.count, 6);
     const blocks = frames(m.buildExperimentalImagePrompt(plan, source, input));
     assert.equal(blocks.length, 6);
     assert.equal(blocks[0].position, 'RIGHT, top=0%, bottom=52% of comic area');
-    assert.ok(blocks[1].body.includes(JSON.stringify(validated.expectedDialogue.find(line => line.id === 'add:1'))));
+    assert.ok(blocks[1].body.includes(JSON.stringify(validated.expectedDialogue.find(line => line.id === source.panels[1].dialogueIds[0]))));
     assert.ok(blocks[3].body.includes('Dialogue: SILENT'));
     assert.ok(blocks.at(-1).position.endsWith(' | FINAL ENDING'));
   });
 
   test('spatial compilation still rejects original dialogue reversal before emitting a prompt', () => {
-    const plan = makePlan(5, 'hero_bottom');
+    const input=makeInput('右',5),source=m.readExperimentalSource(input);
+    const plan = makePlan(5, 'hero_bottom',source);
     assert.doesNotThrow(() => m.validateExperimentalPlan(plan, source));
     plan.panels[0].dialogueIds.reverse();
-    assert.throws(() => m.validateExperimentalPlan(plan, source), /元の台詞の順番/);
-    assert.throws(() => m.buildExperimentalImagePrompt(plan, source, input), /元の台詞の順番/);
+    assert.throws(() => m.validateExperimentalPlan(plan, source), /元のコマの台詞・順番/);
+    assert.throws(() => m.buildExperimentalImagePrompt(plan, source, input), /元のコマの台詞・順番/);
   });
 } finally {
   await server.close();

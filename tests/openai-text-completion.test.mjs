@@ -57,6 +57,42 @@ test('invalid output purpose fails before a provider request', async () => {
   await assert.rejects(client.callOpenAIText('review', null, null, null, { outputProfile: 'unbounded' }), /Unsupported output profile/);
 });
 
+test('explicit JSON output reaches the Chat request without changing ordinary text requests', async () => {
+  const bodies = [];
+  globalThis.fetch = async (_url, init) => {
+    bodies.push(JSON.parse(init.body));
+    return Response.json(payload(false, { text: '{"status":"unverified"}' }));
+  };
+  for (const responseFormat of [undefined, 'json_object']) {
+    const result = await client.callOpenAIText('Return JSON.', ['data:image/png;base64,fixture'], null, null,
+      { outputProfile: 'image-quality-review', responseFormat });
+    assert.equal(result.finishReason, 'stop');
+    assert.equal(result.usage.completion_tokens, 32768);
+  }
+  assert.equal(bodies.length, 2);
+  assert.equal(bodies[0].response_format, undefined);
+  assert.deepEqual(bodies[1], { ...bodies[0], response_format: { type: 'json_object' } });
+});
+
+test('unsupported JSON formats fail before any Chat request or fallback', async () => {
+  let calls = 0;
+  globalThis.fetch = async () => { calls++; return Response.json(payload(false, { text: 'fixture' })); };
+  for (const responseFormat of [null, 'json', { type: 'json_object' }]) {
+    await assert.rejects(client.callOpenAIText('fixture', null, null, null, { responseFormat }), /Unsupported response format/);
+    await assert.rejects(client.requestOpenAIChatCompletion({ modelId: 'gpt-4.1', messages: [],
+      apiKey: 'test-only-credential', timeoutMs: 1000, responseFormat }), /Unsupported response format/);
+  }
+  assert.equal(calls, 0);
+});
+
+test('JSON output cannot be silently ignored by the separate Web Search route', async () => {
+  let calls = 0;
+  globalThis.fetch = async () => { calls++; return Response.json(payload(true, { text: 'fixture' })); };
+  await assert.rejects(client.callOpenAIText('Return JSON.', null, null, null,
+    { responseFormat: 'json_object', useWebSearch: true }), /JSON response format.*Web Search/);
+  assert.equal(calls, 0);
+});
+
 for (const web of [false, true]) {
   const route = web ? 'Responses search' : 'Chat';
   test(`${route}: reasoning receives headroom without lowering effort or changing the selected model`, async () => {

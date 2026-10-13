@@ -75,7 +75,7 @@ test('actual selection handler clears stale output without assembly, preserving 
   assert.ok(invalidator);
   const calls = [];
   const context = {
-    isColorModeLocked: false, colorMode: 'color',
+    isColorModeLocked: false, colorMode: 'color', experimentalEnabled: false,
     normalizeMangaColorMode: v => v === 'monochrome' ? v : 'color',
     promptAssemblyRunRef: { current: 1 }, lastPolicyErrorRef: { current: 'previous error' },
     promptAssemblyAbortRef: { current: null },

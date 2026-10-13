@@ -23,6 +23,10 @@ const withoutFocusRepair = value => withoutScaleRepair(value).replaceAll(` ${FOC
   .replaceAll('crisp story focus; soften nonessential near/far planes in the panel medium; preserve required text and lighting.',
     'crisp foreground, softer background, lighting.');
 
+// Invert only the explicitly authorized revision 25 GEKIGA recipe changes.
+// Unknown drawing changes still fail the original immutable hashes.
+const withoutGekigaRevision25 = value => value.replaceAll("Rebuild faces as sculptural GEKIGA: narrow eye openings, small irises partly covered by thick anatomical lids; projecting nose bridge, sidewalls and nostril wings; distinct cheekbone and jaw angles. 全人物を劇画化。顔にも写実的な陰影と斜線。背景・服だけ劇画にしない。",'Redraw visible faces with small realistic eyes/irises, heavy anatomical eyelids, pronounced nose bridges and carved cheek/jaw planes. 全人物を劇画化。顔にも写実的な陰影と斜線。背景・服だけ劇画にしない。').replaceAll('Variable brush contours; fine directional hatching is primary, small solid-black accents secondary.','Thick variable brush contours, solid ink shadow planes and directional facial crosshatching model this anatomy.').replaceAll('Brush ink; fine hatching is primary, solid black secondary. Keep','Brush ink/facial hatching; keep').replaceAll('Brush contours; fine directional hatching is primary, small solid-black accents secondary.', 'Brush contours, solid ink shadows and directional crosshatching model turning planes.');
+
 const scenario = readFileSync(new URL('./fixtures/ai-illustration-balloon-layout.txt', import.meta.url), 'utf8');
 const options = { scenario, castList: 'ミク、リン、サエコ、アカリ、ヒカリ', systemVersion: 'test', punchlineType: 'Auto', cinematicTechniques: false };
 let server, buildMangaPrompt;
@@ -49,7 +53,7 @@ test('OpenAI color repair preserves byte-identical output in other provider/medi
     // mono-style-isolation.test.mjs against the accepted post-color-fix state.
     if (baseline.options.providerFamily === 'chatgpt' && baseline.options.colorMode === 'monochrome') continue;
     const prompt = buildMangaPrompt({ ...options, ...baseline.options });
-    assert.equal(createHash('sha256').update(withoutFocusRepair(prompt)).digest('hex'), baseline.sha256, JSON.stringify(baseline.options));
+    assert.equal(createHash('sha256').update(withoutFocusRepair(withoutGekigaRevision25(prompt))).digest('hex'), baseline.sha256, JSON.stringify(baseline.options));
   }
 });
 
@@ -79,9 +83,10 @@ test('OpenAI color GEKIGA intensifies facial drawing without changing acting or 
     const prompt = buildMangaPrompt({ ...options, providerFamily: 'chatgpt', colorMode: 'color', promptMaxChars });
     const panels = prompt.split(/^## Panel \d+\s*$/m).slice(1);
     assert.match(panels[0], /high-intensity GEKIGA/);
-    assert.match(panels[0], /large solid-black shadow planes/i);
+    assert.match(panels[0], /crosshatching ON faces\/hands is primary; solid black is a local secondary accent/i);
+    assert.doesNotMatch(panels[0], /large solid-black shadow planes/i);
     assert.match(panels[0], /dense directional crosshatching/);
-    assert.match(panels[0], /small realistic eyes\/irises/);
+    assert.match(panels[0], /narrow eye openings, small irises partly covered by thick anatomical lids/);
     assert.match(panels[0], /crosshatching ON faces\/hands/);
     assert.match(panels[0], /scripted emotion\/gaze\/pose\/Camera/);
     assert.match(panels[0], /no added anger, age or wrinkles/);

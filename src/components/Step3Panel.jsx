@@ -25,10 +25,11 @@ export default function Step3Panel({
   colorMode = 'color',
   setColorMode,
   isColorModeLocked = false,
+  scenarioModeValid = true,
   experimentEnabled = false
 }) {
   const progressLogRef = useRef(null);
-  const controlsDisabled = currentStep < 3 || isSearching || isAnalyzing || isEnhancing
+  const controlsDisabled = !scenarioModeValid || currentStep < 3 || isSearching || isAnalyzing || isEnhancing
     || is360CameraWorking || isAssembling || isColorModeLocked;
 
   useEffect(() => {
@@ -77,6 +78,7 @@ export default function Step3Panel({
         <p id="manga-color-mode-help">
           {colorMode === 'monochrome' ? '白地と墨線を基本に、肌の地色・素材・影へ必要なトーンを配置します。コマごとの絵柄とカメラ・演技を保ちます。' : '色彩とライティングを活かしたカラー漫画。'}
           <br />選択後にSTEP3を押して反映します。全設定リセットまで選択を保持します。
+          {experimentEnabled && <><br />色だけを切り替える場合は、決定済みのコマ割りを保ちます。</>}
         </p>
       </fieldset>
 
@@ -87,6 +89,7 @@ export default function Step3Panel({
         <span>ウオーターマークを表記する</span>
       </label>
 
+      {!scenarioModeValid && <p role="status" style={{color:'#fde68a'}}>このモードには{experimentEnabled ? '5〜8コマ' : '4コマ'}のシナリオが必要です。STEP2で作成してください。作成済みの画像は保持しています。</p>}
       <button
         ref={promptActionRef}
         onClick={() => assemblePrompt()}

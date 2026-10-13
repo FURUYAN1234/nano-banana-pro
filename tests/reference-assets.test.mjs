@@ -210,6 +210,24 @@ test('mixed-reference manifests share policy once and retain every per-image vis
   }
 });
 
+test('shared recognized character rules preserve identity but defer drawing geometry to the panel medium in API and Web output', () => {
+  const { assets } = parse(payload());
+  for (const colorMode of ['color', 'monochrome']) for (const compact of [false, true]) {
+    const plans = [
+      buildOpenAIReferencePlan({ characterImages: images, referenceAssets: assets, colorMode, compact }),
+      buildGeminiReferencePlan({ characterImages: images, referenceAssets: assets, colorMode, compact }),
+      lib.buildWebReferencePlan({ images, referenceAssets: assets, colorMode, compact }),
+    ];
+    for (const { rolePrompt } of plans) {
+      assert.equal((rolePrompt.match(/selected panel rendering recipe determines face\/eye construction and body stylization/g) || []).length, 1);
+      assert.match(rolePrompt, /identifying traits and age/);
+      assert.match(rolePrompt, /canonical clothing unless the approved prompt explicitly overrides clothing/);
+      assert.match(rolePrompt, /preserve the reference drawing style only under an explicit reference-style lock/);
+      assert.match(rolePrompt, /expression sheets and turnaround views show the same person/);
+    }
+  }
+});
+
 
 test('panorama remains the last original and receives the new last number after ordinary additions', () => {
   const { assets } = parse(payload()); const panorama = image('panorama-middle-drop');

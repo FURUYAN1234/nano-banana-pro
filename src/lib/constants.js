@@ -3,7 +3,7 @@ import { getEndingModePolicy } from './ending-mode-policy.js';
 // --- 定数・タグ定義 (constants.js) ---
 // App.jsx から抽出された共有定数
 
-export const SYSTEM_VERSION = "v7.0.4";
+export const SYSTEM_VERSION = "v7.0.5";
 
 // --- Punchline ラベル変換関数 ---
 export const getPunchlineLabel = (type) => {
@@ -118,9 +118,9 @@ export const getModelBadgeInfo = (modelId) => {
   };
 };
 
-// Retain the facial anatomy recipe verified in the saved API output.
+// Shared facial construction: style changes geometry as well as ink treatment.
 // Share it across providers and compression tiers instead of paraphrasing it.
-export const GEKIGA_FACE_CONSTRUCTION = 'Redraw visible faces with small realistic eyes/irises, heavy anatomical eyelids, pronounced nose bridges and carved cheek/jaw planes. 全人物を劇画化。顔にも写実的な陰影と斜線。背景・服だけ劇画にしない。';
+export const GEKIGA_FACE_CONSTRUCTION = 'Rebuild faces as sculptural GEKIGA: narrow eye openings, small irises partly covered by thick anatomical lids; projecting nose bridge, sidewalls and nostril wings; distinct cheekbone and jaw angles. 全人物を劇画化。顔にも写実的な陰影と斜線。背景・服だけ劇画にしない。';
 export const OPAQUE_COLOR_RENDERING = '色は不透明な塗りで鮮明に置き、淡い水彩下地を継承しない。明示された淡色指定は優先。';
 
 // [v2.25] 感情連動スタイル定義 - 固有名詞ゼロ (Trademark Sanitization準拠)
@@ -136,7 +136,7 @@ export const EMOTION_STYLES = {
     vfx: '(Exaggerated sweat drops:1.3), (popping veins:1.2), (comedic steam from head), (glasses preserved on chibi face if character wears them:1.5)',
   },
   GEKIGA: {
-    style: `In THIS PANEL ONLY, fully redraw faces as realistic GEKIGA manga. ${GEKIGA_FACE_CONSTRUCTION} Thick variable brush contours, solid ink shadow planes and directional facial crosshatching model this anatomy. Keep recognizable identity/age, scripted gaze, Camera/Action and body acting; no added anger, age or wrinkles. FULL COLOR. ${OPAQUE_COLOR_RENDERING}`,
+    style: `In THIS PANEL ONLY, fully redraw faces as realistic GEKIGA manga. ${GEKIGA_FACE_CONSTRUCTION} Variable brush contours; fine directional hatching is primary, small solid-black accents secondary. Keep recognizable identity/age, scripted gaze, Camera/Action and body acting; no added anger, age or wrinkles. FULL COLOR. ${OPAQUE_COLOR_RENDERING}`,
     proportions: '',
     vfx: '(Heavy crosshatching shadows:1.4), (dramatic rim lighting:1.5), (high contrast deep shadows with stark chiaroscuro lighting), (intense speed lines in background)',
     surfaceException: 'intentional crosshatching and deep ink shadows only',
@@ -212,9 +212,9 @@ EMOTION_STYLES.UKIYOE = {
   vfx: '(Flat bold color areas with no gradients:1.4), (thick black woodblock-style outlines:1.5), (stylized wave or cloud patterns in background:1.3), (traditional Japanese color palette - indigo vermillion ochre:1.3)',
 };
 EMOTION_STYLES.POP_ART = {
-  style: 'In THIS PANEL ONLY, redraw actors as pop-art print: thick graphic contours, flat vivid pigment planes and controlled Ben-Day dots modeling faces and clothing. Keep Camera/Action, identity, dialogue and bubble layout. Colorful dots only behind unchanged anime actors are insufficient.',
+  style: 'In THIS PANEL ONLY, 顔/髪/服/小物/背景を極太の黒い輪郭、鮮烈で不透明なflat色面、大粒で明瞭な規則的Ben-Day網点で印刷絵へ再構築。網点は顔の陰影にも。グラデやアニメ塗り＋速度線だけは不可。Camera/Action・演技/表情・同一性/固有色・台詞/吹出配置を保持。',
   proportions: '',
-  vfx: '(Bold Ben-Day halftone dot shading:1.5), (primary color palette - red blue yellow:1.4), (thick bold pop art outlines:1.4), (high contrast flat color fills:1.3), (retro comic book printing texture:1.2)',
+  vfx: '(extra-bold graphic contours on actors and setting:1.5), (flat vivid opaque color planes:1.5), (large clearly separated regular Ben-Day dots on facial shadows and clothing:1.5), (no smooth anime gradients:1.4)',
   surfaceException: 'intentional Ben-Day dots and retro print texture only',
 };
 EMOTION_STYLES.SKETCH = {
@@ -285,7 +285,7 @@ EMOTION_STYLES.GOLDEN_HOUR = {
 // Budget-safe drawing recipes. Keep the visual operation, not a bare style name.
 export const COMPACT_EMOTION_STYLES = Object.freeze({
   CHIBI_GAG: `Redraw enlarged heads, shortened torsos and jointed limbs as expressive chibi, not unchanged anime. Keep Camera/Action, acting/gaze/hair/glasses; readable perspective, no zoom for cuteness. ${OPAQUE_COLOR_RENDERING}`,
-  GEKIGA: `Realistic gekiga: ${GEKIGA_FACE_CONSTRUCTION} Brush ink/facial hatching; keep identity/age/color, gaze and Camera/Action. ${OPAQUE_COLOR_RENDERING}`,
+  GEKIGA: `Realistic gekiga: ${GEKIGA_FACE_CONSTRUCTION} Brush ink; fine hatching is primary, solid black secondary. Keep identity/age/color, gaze and Camera/Action. ${OPAQUE_COLOR_RENDERING}`,
   SHOUJO: 'Delicate thin linework, fine eyelashes, luminous layered irises, airy soft shading, petals and bokeh behind clear acting faces.',
   HORROR: 'Deep ink masses, sharp lit facial planes and eerie rim/underlighting; keep scripted framing and cast.',
   BLANK: 'Affected face: blank pupil-less eyes behind retained glasses, pale face, rigid acting and dark emotional aura.',
@@ -297,7 +297,7 @@ export const COMPACT_EMOTION_STYLES = Object.freeze({
   SPEED: 'Directional strokes and panning streaks following actual movement; sharp focal face and limbs.',
   FLASHBACK: 'Delicate faded-memory rendering, soft vignette and subdued environmental palette; identity and costume remain.',
   UKIYOE: 'Carved woodblock actor contours, flat pigment planes and rhythmic printed shapes on faces/clothing; existing scene, Camera/Action/identity fixed.',
-  POP_ART: 'Bold graphic actor contours, flat vivid pigment and Ben-Day dots on faces/clothing; Camera/Action/identity/lettering fixed, not background-only dots.',
+  POP_ART: '顔/髪/服/小物/背景を極太の黒い輪郭、鮮烈で不透明なflat色面、大粒で明瞭な規則的Ben-Day網点で印刷絵へ再構築。網点は顔の陰影にも。グラデやアニメ塗り＋速度線だけは不可。Camera/Action・演技/表情・同一性/固有色・台詞/吹出配置を保持。',
   SKETCH: 'Visible pencil strokes and deliberate hatching construct actor faces/hair/clothing; paper grain, readable features, Camera/Action/identity fixed.',
   NEON: 'Colored neon rims and sharp reflected light on dark surfaces, controlled glow behind crisp faces.',
   THICK_PAINT: 'Opaque brush masses and layered strokes model actor faces/hair/clothing, with impasto-like edges; Camera/Action/identity/age fixed, not background texture alone.',

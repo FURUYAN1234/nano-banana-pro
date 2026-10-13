@@ -42,6 +42,26 @@ const renderStep4 = props => renderToStaticMarkup(React.createElement(Step4Panel
   isGeneratingImage: true, ...props,
 }));
 
+test('original provider visibility keeps the verification-only review button off OpenAI and Web', () => {
+  const generatedImage = 'data:image/png;base64,YQ==';
+  {
+    const html = renderStep4({ selectedEngine: 'gemini', generatedImage, isGeneratingImage: false,
+      allowImageQualityRepair: false });
+    assert.match(html, /AIで画像を再検査/);
+    assert.match(html, /画像再生成なし・解析API課金あり/);
+    const reviewButton = html.match(/<button\b[^>]*>\s*AIで画像を再検査\s*<\/button>/)?.[0];
+    assert.ok(reviewButton);
+    assert.doesNotMatch(reviewButton, /disabled=""/);
+  }
+  assert.doesNotMatch(renderStep4({ generatedImage, selectedEngine: 'openai',
+    isGeneratingImage: false }), /AIで画像を再検査/);
+  assert.doesNotMatch(renderStep4({ generatedImage: '', isGeneratingImage: false }), /AIで画像を再検査/);
+  assert.doesNotMatch(renderStep4({ generatedImage, selectedEngine: 'gemini',
+    enableChatGPTMode: true, isGeneratingImage: false }), /AIで画像を再検査/);
+  const busy = renderStep4({ generatedImage, selectedEngine: 'gemini', isGeneratingImage: true });
+  assert.match(busy, /<button\b[^>]*disabled=""[^>]*>\s*AIで画像を再検査\s*<\/button>/);
+});
+
 test('completed STEP4 keeps its elapsed time last even after a post-generation status message', () => {
   const html = renderStep4({ isGeneratingImage: false,
     genLog: ['[WAIT] STEP4終了（合計133秒）', '[POLICY AUTO-FIX] 処理結果'],

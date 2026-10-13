@@ -30,27 +30,27 @@ const splitDocumentarySourceFacts = (sourceText) => {
     .filter(Boolean);
 };
 
-export const attachDocumentarySourceFacts = (scenarioText = '', sourceText = '') => {
+export const attachDocumentarySourceFacts = (scenarioText = '', sourceText = '', { scenarioMode = 'four-panel' } = {}) => {
   const scenario = String(scenarioText || '').trim();
   if (!scenario || scenario.includes(SOURCE_FACT_PREFIX)) return scenario;
 
   const facts = splitDocumentarySourceFacts(sourceText);
   if (facts.length === 0) return scenario;
 
-  const factsByPanel = [[], [], []];
+  const panelHeaders = scenario.match(/\[\s*[0-9０-９一二三四五六七八九十]+\s*コマ目[^\]]*\]/gu) || [];
+  const panelCount = panelHeaders.length;
+  const factPanelCount = scenarioMode === 'experimental-manga' ? Math.max(1, panelCount - 1) : 3;
+  const factsByPanel = Array.from({ length: factPanelCount }, () => []);
   facts.forEach((fact, index) => {
-    const panelIndex = Math.min(2, Math.floor(index * 3 / facts.length));
+    const panelIndex = Math.min(factPanelCount - 1, Math.floor(index * factPanelCount / facts.length));
     factsByPanel[panelIndex].push(fact);
   });
 
   return factsByPanel.reduce((result, panelFacts, index) => {
     if (panelFacts.length === 0) return result;
-    const panelHeader = new RegExp(`(\\[${index + 1}コマ目[^\\]]*\\]\\s*)`, 'i');
-    if (!panelHeader.test(result)) return result;
-    return result.replace(
-      panelHeader,
-      `$1\n${SOURCE_FACT_PREFIX} ${panelFacts.join(' ') }\n`
-    );
+    const panelHeader = panelHeaders[index];
+    if (!panelHeader) return result;
+    return result.replace(panelHeader, () => `${panelHeader}\n${SOURCE_FACT_PREFIX} ${panelFacts.join(' ')}\n`);
   }, scenario);
 };
 
@@ -192,4 +192,4 @@ export const assertDocumentarySourceFidelity = (input) => {
 };
 
 export const DOCUMENTARY_SOURCE_FIDELITY_RETRY_INSTRUCTION = `DOCUMENTARY SOURCE FIDELITY RETRY:
-Rewrite the complete four-panel scenario from the original source. Preserve every source date, effective date, clock time, duration, quantity, percentage, price, count, and before/after value. Preserve the source's key factual nouns, causes, actions, announced measures, and outcomes verbatim whenever possible instead of replacing them with broader synonyms. Equivalent clock notation is allowed (for example, 午後8時 and 20時), but omission, substitution, vague wording such as 今日から, and changed chronology are forbidden. Do not add an unsupported date, number, event, cause, participant, or outcome. The fourth panel may change only the characters' serious or gag reaction required by the selected documentary mode; it must not change source facts.`;
+Rewrite the complete scenario with the selected panel count from the original source. Preserve every source date, effective date, clock time, duration, quantity, percentage, price, count, and before/after value. Preserve the source's key factual nouns, causes, actions, announced measures, and outcomes verbatim whenever possible instead of replacing them with broader synonyms. Equivalent clock notation is allowed (for example, 午後8時 and 20時), but omission, substitution, vague wording such as 今日から, and changed chronology are forbidden. Do not add an unsupported date, number, event, cause, participant, or outcome. The final panel may change only the characters' serious or gag reaction required by the selected documentary mode; it must not change source facts.`;
