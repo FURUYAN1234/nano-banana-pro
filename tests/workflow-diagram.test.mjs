@@ -52,7 +52,7 @@ test('generates an A4 portrait bilingual reasoning routine from the workflow sou
     '最大3回',
     'API Policy Error',
     '最大5回',
-    '成功画像は保持',
+    '既存の成功画像や履歴を消さない',
     'Review, Compare, Keep',
   ]) {
     assert.match(svg, new RegExp(label));
@@ -69,7 +69,7 @@ test('README embeds the generated diagram instead of a copied diagram', () => {
 test('diagrams describe current dialogue, wardrobe and warning-retention contracts', () => {
   const workflow = readFileSync(diagramPath, 'utf8');
   const reasoning = readFileSync(reasoningDiagramPath, 'utf8');
-  for (const text of ['横長4コマ縦1列', '台詞本文', '衣装', '最大3回', '警告付き']) {
+  for (const text of ['OFFは4コマ・ONは5〜8コマ', '通常は縦4コマ、実験は台本に合う配置', '台詞・話者・衣装を保持', '通常4コマのみ、修正最大3回', '警告付き', '通常の採用画像・実験の候補を各最大10件保持']) {
     assert.ok((workflow + reasoning).includes(text), `Missing current contract: ${text}`);
   }
   assert.doesNotMatch(workflow, /QA-passed images|QA通過画像/);

@@ -1,6 +1,6 @@
 # Nano Banana Pro handoff
 
-## Current: native STEP2, six media and four-panel count safety (2026-10-13)
+## Current: v7.0.5 official release and backup (2026-10-13)
 
 - Delivery boundary NOW AUTHORIZED (2026-10-13): complete ordinary Nano release/deploy, current newcomer-facing README/PDF/note with detailed OFF4 / ON5–8 and rationale, usual announcements, then full backup and independent verification. Prepare v7.0.5. Preserve earlier visual acceptance; no new paid images required. Target Nano only; backup established all8-app environment.
 - User accepted current image14 GEKIGA anime-like shading and asked to close the POP/style iterations. Do not restart paid style experiments. STEP2 verification model remains gpt-6-luna. Drawing quality, camera, acting and distinct media outrank rigid screen-position management.
@@ -11,6 +11,7 @@
 - Final build/lint and built security PASS; current shared security audit0 PASS. README/scenario spec updated. SYSTEM manual37 pages visually reviewed and copied locally to public/downloads with hash parity; other2 guides unchanged. Local README/PDF audit refreshed without claiming fresh pricing review.
 - Final whole-suite completed:1681 tests,1680pass/1fail. Sole failure was an old input-label assertion treating the newly added mode-control instruction as story content. Test-only scope correction followed by21/21 relevant tests passed; runtime unchanged, no redundant full rerun. Earlier Japanese POP vocabulary and README hash failures resolved. No outstanding local regression failure. Both scoped bugfix evidence audits PASS.
 - IAB tab6 localhost5173 retains reference sheets, API readiness and experimental scenario13accepted; experiment ON, Luna. Four-panel text test scenario is cached under OFF. Shared brief restored. The new STEP2 run cleared the prior generated-image display; image14 data remains in CUA result14DataUrl and prior conversation, not proven saved as PNG. Preserve tab3 ChatGPT comparison too.
+- Official first release stopped at validation before external stages; receipt nano-banana-pro-v7.0.5-2026-10-13_225906.json retained. Diagnostic whole suite1681:1675pass/6fail, all old price-date or diagram-copy assertions. Expected dates/current diagram contracts corrected; targeted32/32 PASS, runtime unchanged. User explicitly authorized official retry. PDFs SYSTEM39/Gemini13/OpenAI22 reviewed; note draft prepared, not published yet.
 - Current release actions: version/candidate preparation, fresh official price review, formal clean-tree release preflight and established publish transaction. Historical one-off unspecified STEP3 mismatch could not be reproduced; do not invent its exact cause. Current confirmed fixes have separate observed evidence.
 
 ## Previous: 2026-10-12 v7.0.4 release and full backup
