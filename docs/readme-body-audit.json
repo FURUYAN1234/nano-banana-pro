@@ -1,28 +1,30 @@
 {
-  "pricingSourceSha256": "6e7e2c0583cee26efea356c7f971afe095f60bfb2f0f030776513b738eb6cd3b",
-  "manualVersion": "7.0.4",
-  "manualSourceSha256": "e4f0fdbbe3854bfd207c1ba9a1d0dc869e528e29d93aebd7a8387256e6ec432e",
+  "pricingSourceSha256": "bbbcaa8d942d81fa879e93cc26ca272ec3fefc9e161741e3acbdebc312b51b05",
+  "manualVersion": "7.0.5",
+  "manualSourceSha256": "9a7d8eced07c28e3201076d69640b4b5c8a3ef4a28afae82d684510f7677527f",
   "manualFiles": [
     {
       "name": "gemini-api-beginner-guide-2026-10-01.pdf",
-      "sha256": "5275486f6588c848354ebfdfc1fbc57dfe259f5ac28a1e1e1b7358d19de59dd1"
+      "sha256": "71efcb38479c0b485fbbf3aae22c699ebc00bc9bf012268a69981d0fe37f48f9"
     },
     {
       "name": "openai-api-beginner-guide-2026-09-30.pdf",
-      "sha256": "4a510b2416f70934ac82e6e5cf352e2b755601b14aa805e218781614299853c9"
+      "sha256": "d7a38d1cec47cfff082f978ea06ab51761fa1c14cbecc0814b190824a735dfc9"
     },
     {
       "name": "super-furu-ai-4koma-full-manual-2026-10-01.pdf",
-      "sha256": "171adce46ad09b43377fe8e1808bad221443dabc509793b6ef2dc4a188d6fe56"
+      "sha256": "72a72c01b26d3a5620520f4a529907492fc556f3c4bb0cb1d7e408969e27ee4a"
     }
   ],
-  "readmeSha256": "78353e7899de79c7eb288a6e79da24953496515be119ca6d9390f808641975bf",
-  "sourceTree": "a6ae7ed8c213bd6b0e5a744956cfd916ea86135f",
-  "publicTree": "f022e4ea12a313d39f8c3ac32f6f77fbb3ad5961",
-  "packageSha256": "b90d5c2b4032b6330bdf841e39899463d6a08afaedc36cf5082bee08e2f5dad4",
+  "readmeSha256": "77186b0cf80ef2deb1b085d8e913ea7c97a02e34ce8842de61549d54832bc8d3",
+  "sourceTree": "4f31e7987a7f512c5214c530c22363dc92cee48b",
+  "publicTree": "ee60d8dd3746d40e6547e9e1ccd51eca7fe11a26",
+  "packageSha256": "1ed516e2c28a51490e2a7be1f281e00f978facc9c4398715173a600c4b893a69",
   "releaseAssetSha256": "9e41886be6afa0ebfad6d244ecf53f37260a92f73b30309319029cc87e1ddb4e",
   "reviewedSections": [
     "Application screen and output / 操作画面と生成例",
+    "Panel modes / 4コマと5〜8コマの選び方",
+    "Art styles / コマごとの絵柄",
     "Visual direction and reading / 演出と読みやすさ",
     "A4 workflow map / A4縦フローチャート",
     "What this project does / このプロジェクトでできること",
@@ -37,16 +39,16 @@
     "AI Manga Creative Suite / AIまんが制作エコシステム",
     "📋 ChangeLog / 更新履歴"
   ],
-  "findings": "Reviewed the existing whole-body README audit and all14 current sections against the unchanged routes plus the current source/PDF/distribution diff for v7.0.4. Updated current-version labels and Release links; compression retains source lines/cameras/styles and scopes content to physical frames. Expanded acting and dialogue stay source-grounded, silent panels are optional, Web count/full/split/TXT/JSON exports survive over-limit input while API overflow is rejected. Normal4 remains isolated and experimental starts OFF. Gemini3.8/3.7/3.6 badge classifications and configured3.8->3.6->3.5Lite->3.1Lite routes are documented without changing the image model/Lite. Reinspection wording is corrected for both modes. Existing privacy/license/ComfyUI and other operation descriptions are retained; the unchanged packaged ZIP remains credential-audited by preflight. Real API reading-order evidence is recorded separately and anatomy uncertainty is not described as a pass.",
-  "manualFindings": "v7.0.4 Gemini13/OpenAI22/system37 pages regenerated and reviewed: all72 pages inspected on14 contact sheets, with enlarged system page18. Updated version footers, experimental dialogue/acting guidance, compact physical-frame assembly and STEP3 status, Web count/split/TXT/JSON overflow guidance. Japanese text and footer labels are readable and inside A4 bounds; no overlap, clipping or missing glyphs observed. Historical UI captures remain labeled examples. All three reviewed PDFs are copied to public/downloads with exact SHA256 parity. Source renderer checks A4/footer/text bounds/privacy and HTTPS link annotations. Link reachability is verified separately after publication.",
+  "findings": "Reviewed all16 README sections against current source/UI and distributions. Expanded OFF4/ON5–8 explanation, separate-story rationale, examples, count safety, enhancement, color layout reuse,6 art styles and limits. Current version links/footer and full feature map reviewed. Removed unreleased and outdated current instructions; history retained. Public note whole body inspected and a block-preserving revision prepared for publication after app readback.",
+  "manualFindings": "Three current v7.0.5 PDFs rebuilt: OpenAI22, Gemini13, SYSTEM39 pages. All pages rendered and visually reviewed; expanded mode/style pages and revised first-run steps enlarged. No clipping, overlap, missing glyphs; obsolete app screenshots removed. Inputs, links, limits, model/pricing and saving guide reviewed against current implementation.",
   "pricingReview": {
-    "version": "7.0.4",
-    "sourceSha256": "6e7e2c0583cee26efea356c7f971afe095f60bfb2f0f030776513b738eb6cd3b",
-    "checkedAt": "2026-10-12T12:15:37Z",
+    "version": "7.0.5",
+    "sourceSha256": "bbbcaa8d942d81fa879e93cc26ca272ec3fefc9e161741e3acbdebc312b51b05",
+    "checkedAt": "2026-10-13T13:51:50.747Z",
     "sources": [
       "https://developers.openai.com/api/docs/pricing",
       "https://ai.google.dev/gemini-api/docs/pricing"
     ],
-    "findings": "Freshly read official standard and batch tables on2026-10-12. Standard short-context GPT6.1Sol2/10, Astra10/50, Luna0.10/0.50 USD per million tokens; Sunburst/Flare image8/30 (cached2), text5(cached1.25). GPTImage2 is present in the batch table4/15 and text2.50; the retained standard snapshot8/30 and5 is consistent with the stated half-price batch relation. Gemini3.8Flash standard0.75/3.75 through2026-12-31; NanoBanana2.1 input1.50, text/thinking7.50, image30 and1K0.0336,2K0.0504,4K0.113. Display/README/manual snapshots remain2026-10-12, standard rates distinguished from batch discounts; no new price amounts introduced."
+    "findings": "Standard short-context text and image prices matched current config: Astra10/50, Sol6.1 and6 2/10, Luna6 0.1/0.5, Sol5.6 4/20, Terra2/12,Luna5.6 0.2/1.2; GPT4.1/mini/nano/4o unchanged. Image2/2.5 image8/30 text5 with caches2/1.25. Gemini3.8 Flash0.75/3.75 through2026-12-31; image1K0.0336 plusinput1.50 andtext7.50. Standard, not Batch. Fast/long context/tool/tax charges excluded. Official tables saved in private output."
   }
 }
