@@ -22,6 +22,75 @@ const SEASONS = Object.freeze({
 });
 
 const AMBIGUOUS_OUTFIT_RE = /^(?:なし|未指定|デフォルト|キャラシート準拠|おまかせ|none|default)$/i;
+// Call with one scope only: the scenario preamble or one panel, never both.
+export const readExplicitOutfit = (scopeText = '') => {
+  const match=String(scopeText).replace(/<thought>[\s\S]*?<\/thought>/gi,'')
+    .match(/(?:^|\n)[ \t]*(\[)?[ \t]*Outfit[ \t]*[:：][ \t]*([^\r\n]*)/i);
+  const value=(match?.[1]?match[2].replace(/\][ \t]*$/,''):match?.[2]||'').trim();
+  return AMBIGUOUS_OUTFIT_RE.test(value)?'':value;
+};
+
+// A named/role-scoped assignment needs the other actors' reference defaults.
+// This is conservative scope detection, not an attempt to parse clothing prose.
+export const hasScopedOutfitAssignment = (outfit = '', castEntries = [], plainRoster = '') => {
+  // Older inputs may contain only comma-separated names. Accept that whole
+  // format here; descriptive/structured text must keep conservative defaults.
+  const roster=String(plainRoster).trim();
+  const names=!castEntries.length&&/^[\p{L}\p{M}\p{N}][\p{L}\p{M}\p{N} '’\-]*(?:[、,，][ \t]*[\p{L}\p{M}\p{N}][\p{L}\p{M}\p{N} '’\-]*)+$/u.test(roster)
+    ? roster.split(/[、,，]/).map(name=>name.trim()) : [];
+  const aliases=(castEntries.length?castEntries:names).map(entry=>typeof entry==='string'?[entry]:entry.aliases||[]);
+  const namePattern=name=> {
+    const escaped=String(name).replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+    return /^[\w -]+$/.test(name)
+      ? `(?<![\\w])${escaped}(?![\\w])` : escaped;
+  };
+  // Only a direct assignment for every known actor can discard all defaults.
+  // Merely mentioning an actor or saying "everyone" must not assign their clothes.
+  const preservesDefaults=/参照|キャラシート|デフォルト|未指定|以外|除外|除く|ではな|じゃな|着ない|着用しない|\b(?:only|reference|default|except|not|without|keep)\b/i.test(outfit);
+  if(aliases.length&&!preservesDefaults&&aliases.every(names=>names.some(name=>
+    new RegExp(`${namePattern(name)}\\s*(?:は|[:：]|wears?\\b)`,'i').test(outfit)
+  ))) return false;
+  return /は|のみ|だけ|参照|キャラシート|\b(?:only|for|wears?|assigned|reference|default)\b/i.test(outfit)
+    || aliases.some(names=>names.some(name=>new RegExp(namePattern(name),'i').test(outfit)));
+};
+
+// Evidence gating only: resolve direct, known-name assignments conservatively.
+// Unknown roles, exclusions and compound prose are not permission to repair.
+export const resolveOutfitForSubject = (authority, panel, subject) => {
+  const names=Array.isArray(authority?.castNames)?authority.castNames.filter(name=>typeof name==='string'&&name.trim()):[];
+  if(!names.includes(subject)) return null;
+  const escaped=names.sort((a,b)=>b.length-a.length).map(name=>name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|');
+  const group=new RegExp(`^(?:${escaped})(?:\\s*(?:と|、|,|，|&|and)\\s*(?:${escaped}))*$`,'i');
+  const assignment=outfit=>{
+    if(!outfit) return {applies:false,instruction:''};
+    const clauses=String(outfit).split(/[。;；\n]+|[、,，](?=[^。、,，;；\n]+(?:は|[:：]|\s+wears?\b))/u).map(value=>value.trim()).filter(Boolean);
+    const assigned=[];let named=false,bare=false;
+    for(const clause of clauses) {
+      if(/参照|キャラシート|デフォルト|未指定|以外|除外|除く|ではな|じゃな|着ない|着用しない|\b(?:only|reference|default|except|not|without|keep)\b/i.test(clause)) return null;
+      const match=clause.match(/^(.+?)(?:は|[:：]|\s+wears?\s+)(.+)$/i);
+      if(match) {
+        const target=match[1].trim();
+        if(!group.test(target)) return null;
+        named=true;
+        if(target.match(new RegExp(escaped,'g'))?.includes(subject)) assigned.push(clause);
+      } else {
+        if(hasScopedOutfitAssignment(clause,names)||/のみ|だけ|用の|向け|\b(?:for|assigned|whose|who)\b/i.test(clause)) return null;
+        bare=true;assigned.push(clause);
+      }
+    }
+    if(named&&bare) return null;
+    return {applies:assigned.length>0,instruction:assigned.join('。')};
+  };
+  const local=Array.isArray(authority?.panels)?authority.panels.find(entry=>entry.panel===panel)?.outfit:'';
+  for(const [scope,quote] of [['panel',local],['global',authority?.global]]) {
+    const resolved=assignment(quote);
+    if(!resolved) return null;
+    if(resolved.applies) return {scope,quote,instruction:resolved.instruction};
+  }
+  return {scope:'reference',quote:'',instruction:''};
+};
+
+export const OUTFIT_SCOPE_CONTRACT = 'OUTFIT SCOPE: 全体Outfitは既定。FRAME OUTFITはそのコマの指定人物/役割だけ上書き。人物未指定のカテゴリは当該コマの可視人物全員。未指定人物/コマは全体指定→参照衣装の順。別コマへ展開せず、同一性/髪/眼鏡を保持。この範囲を服装固定の一般指示より優先。';
 const WARDROBE_LABEL_RE = /^(?:服装|衣装|衣服|outfit|clothing|clothes|wardrobe|costume|attire)(?:\s*[（(][^）)]*[）)])?(?:\s*[:：]|\s*$)/i;
 const SCHOOL_OUTFIT_RE = /学校制服|学生服|学ラン|セーラー服|ブレザー制服|学生ボランティア|通学用|school\s+uniform|sailor\s+uniform/i;
 // Ignore only a direct garment exclusion, never its whole clause or actor.

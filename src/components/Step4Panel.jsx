@@ -1261,7 +1261,7 @@ No explanations. No partial results.`;
               )}
               <label className="step4-help-copy mt-3 flex items-start gap-2 text-slate-300">
                 <input type="checkbox" checked={!experimentalEnabled && allowImageQualityRepair} onChange={event => setAllowImageQualityRepair(event.target.checked)} disabled={experimentalEnabled || isGeneratingImage || isFixingPolicy} />
-                {experimentalEnabled ? '実験的コマ割りでは自動修正OFFです。生成画像と検査結果を保持します。' : 'API生成の自動修正を許可する（品質の重大欠陥は最大3回、ポリシー拒否は別枠で最大5回。解析・再生成・再検査は追加課金／全候補NGなら最良候補を保持／OFFでは追加の画像生成なし）'}
+                {experimentalEnabled ? '5～8コマ生成では自動修正を行いません。生成画像と検査結果を保持します。' : 'API生成の自動修正を許可する（品質の重大欠陥は最大3回、ポリシー拒否は別枠で最大5回。解析・再生成・再検査は追加課金／全候補NGなら最良候補を保持／OFFでは追加の画像生成なし）'}
               </label>
               {(isGeneratingImage || policyAutoRetrying) && !experimentalEnabled && allowImageQualityRepair && (
                 <button
@@ -1494,7 +1494,7 @@ No explanations. No partial results.`;
                 <BrainCircuit size={80} className="mx-auto" />
                 <div className="space-y-2 text-center">
                   <p className="text-sm font-black uppercase tracking-[0.5em] text-slate-500">Ready to Start</p>
-                  <p className="text-[10px] font-bold text-slate-600">ここに生成された4コマ漫画が表示されます</p>
+                  <p className="text-[10px] font-bold text-slate-600">{experimentalEnabled ? 'ここに生成された5～8コマ漫画が表示されます' : 'ここに生成された4コマ漫画が表示されます'}</p>
                 </div>
               </div>
             </div>

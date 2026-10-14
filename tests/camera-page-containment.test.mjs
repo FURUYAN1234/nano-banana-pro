@@ -29,7 +29,7 @@ test('physical Japanese camera positions produce matching elevation and body-pla
   assert.match(low, /side view.*near\/far/);
   assert.doesNotMatch(low, /head-to-feet/);
   assert.match(getPanelShotExecution('展示台の左前方、膝の高さから緩く見上げる引き'), /oblique view/);
-  assert.match(getPanelShotExecution('卓の高さから左後方へ引いた望遠の全身ショット'), /back planes.*scripted subject/);
+  assert.match(getPanelShotExecution('卓の高さから左後方へ引いた望遠の全身ショット'), /rear view:.*人物の指定向きを保持.*背面/);
   assert.doesNotMatch(getPanelShotExecution('正面アイレベル、奥に低い机、左上に照明'), /look up|look down|side view/);
 });
 

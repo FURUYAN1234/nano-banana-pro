@@ -79,7 +79,11 @@ test('a foreground prop contact takes precedence over a conflicting background a
     assert.match(prompt, /move that actor's sole body within reach/i);
     assert.match(prompt, /never borrow another actor's hand/i);
     assert.match(prompt, /CAMERA FIRST:[^\n]*Action contact[^\n]*within reach/i);
-    assert.match(prompt.match(/## Panel 2[\s\S]*?(?=## Panel 3)/)?.[0] || '', /SHOT EXECUTION:.*look down.*upper prop faces/i);
+    const localShot = (prompt.match(/## Panel 2[\s\S]*?(?=## Panel 3)/)?.[0] || '').match(/^SHOT EXECUTION:.*$/m)?.[0] || '';
+    const shared = [...prompt.matchAll(/^SHOT (P\d+(?:\/P\d+)*) ONLY: (.+)$/gm)]
+      .filter(([, panels]) => panels.split('/').includes('P2')).map(([, , cue]) => cue);
+    assert.match([...shared, localShot].join('\n'), /look down.*upper prop faces/i);
+    assert.match(localShot, /actors and setting share downward projection/i);
   }
 });
 

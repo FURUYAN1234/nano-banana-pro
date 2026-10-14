@@ -32,8 +32,46 @@ const getTextOutputTokenLimit = (modelId, outputProfile) => {
 };
 
 const getChatResponseFormat = responseFormat => {
-    if (responseFormat !== undefined && responseFormat !== 'json_object') throw new TypeError('Unsupported response format');
-    return responseFormat === 'json_object' ? { type: 'json_object' } : undefined;
+    if (responseFormat === undefined) return undefined;
+    if (responseFormat === 'json_object') return { type: 'json_object' };
+    const reject = () => { throw new TypeError('Unsupported response format'); };
+    const object = value => value !== null && typeof value === 'object' && !Array.isArray(value);
+    const only = (value, keys) => Object.keys(value).every(key => keys.includes(key));
+    const definition = responseFormat?.json_schema;
+    if (!object(responseFormat) || responseFormat.type !== 'json_schema' || !only(responseFormat, ['type','json_schema'])
+        || !object(definition) || !only(definition, ['name','schema','strict','description']) || definition.strict !== true
+        || typeof definition.name !== 'string' || !/^[A-Za-z0-9_-]{1,64}$/.test(definition.name)
+        || (definition.description !== undefined && typeof definition.description !== 'string')
+        || definition.schema?.type !== 'object') reject();
+    // A deliberately small strict-schema subset. Fail before transport rather
+    // than silently loosening a closed object or accepting unknown keywords.
+    const ancestors = new Set();
+    const inspect = schema => {
+        if (!object(schema) || ancestors.has(schema) || !only(schema, ['type','properties','required','additionalProperties','items','enum','description','minimum','maximum','minItems','maxItems'])) reject();
+        ancestors.add(schema);
+        const types = Array.isArray(schema.type) ? schema.type : [schema.type];
+        if (!types.length || new Set(types).size !== types.length || types.some(type => !['object','array','string','number','integer','boolean','null'].includes(type))
+            || types.filter(type => type !== 'null').length !== 1
+            || (schema.description !== undefined && typeof schema.description !== 'string')) reject();
+        if (types.includes('object')) {
+            if (!object(schema.properties) || schema.additionalProperties !== false || !Array.isArray(schema.required)
+                || schema.required.length !== Object.keys(schema.properties).length || new Set(schema.required).size !== schema.required.length
+                || schema.required.some(key => typeof key !== 'string' || !Object.hasOwn(schema.properties,key))) reject();
+            Object.values(schema.properties).forEach(inspect);
+        } else if (['properties','required','additionalProperties'].some(key => Object.hasOwn(schema,key))) reject();
+        if (types.includes('array')) inspect(schema.items);
+        else if (['items','minItems','maxItems'].some(key => Object.hasOwn(schema,key))) reject();
+        if (schema.enum !== undefined && (!Array.isArray(schema.enum) || !schema.enum.length || schema.enum.some(value =>
+            !types.some(type => type === 'null' ? value === null : type === 'integer' ? Number.isInteger(value) : typeof value === type)))) reject();
+        for (const key of ['minimum','maximum','minItems','maxItems']) {
+            if (schema[key] !== undefined && (!Number.isFinite(schema[key])
+                || (key.endsWith('Items') ? !Number.isInteger(schema[key]) || schema[key] < 0 : !types.some(type => ['number','integer'].includes(type))))) reject();
+        }
+        if (schema.minimum > schema.maximum || schema.minItems > schema.maxItems) reject();
+        ancestors.delete(schema);
+    };
+    inspect(definition.schema);
+    return responseFormat;
 };
 
 const extractResponsesOutputText = (response) => (
@@ -46,7 +84,7 @@ const extractResponsesOutputText = (response) => (
         .trim()
 );
 
-const readCompleteOpenAIText = (data, modelId, webSearch, onThinkingUpdate, outputTokenLimit) => {
+const readCompleteOpenAIText = (data, modelId, webSearch, onThinkingUpdate, outputTokenLimit, requireExplicitStop = false) => {
     const choice = data.choices?.[0];
     const finish = webSearch ? data.status : choice?.finish_reason;
     const reason = webSearch ? data.incomplete_details?.reason : null;
@@ -67,7 +105,7 @@ const readCompleteOpenAIText = (data, modelId, webSearch, onThinkingUpdate, outp
     if (finish === 'length' || reason === 'max_output_tokens') {
         fail('OUTPUT_TOKEN_LIMIT', '推論・本文の生成が出力トークン上限で途中終了しました。未完成の本文は採用しません。');
     }
-    if (webSearch && finish && finish !== 'completed') {
+    if ((webSearch && finish && finish !== 'completed') || (requireExplicitStop && finish !== 'stop')) {
         fail('INCOMPLETE_RESPONSE', 'OpenAIの応答が完了していません。');
     }
     const content = webSearch ? data.output_text || extractResponsesOutputText(data) : choice?.message?.content;
@@ -180,7 +218,7 @@ export const requestOpenAIChatCompletion = async ({modelId, messages, apiKey, ti
 export const callOpenAIText = async (prompt, images = null, systemInstruction = null, onThinkingUpdate, options = {}) => {
     options = { ...options, signal: getApiWorkSignal(options.signal) };
     getChatResponseFormat(options.responseFormat);
-    if (options.responseFormat === 'json_object' && options.useWebSearch === true && !images?.length) {
+    if (options.responseFormat !== undefined && options.useWebSearch === true && !images?.length) {
         throw new TypeError('JSON response format is not supported by the Web Search route');
     }
     const apiKey = getOpenAIApiKey();
@@ -206,7 +244,7 @@ export const callOpenAIText = async (prompt, images = null, systemInstruction = 
     };
 
     if (isFixedScenarioRoute && onThinkingUpdate) {
-        onThinkingUpdate(`> [MODEL] 固定開始モデル: ${MODEL_IDS[0]}（失敗時は下位モデルへフォールバック）`);
+        onThinkingUpdate(`> [MODEL] 固定開始モデル: ${MODEL_IDS[0]}（${MODEL_IDS.length > 1 ? '失敗時は下位モデルへフォールバック' : '失敗時は別モデルへ自動切替せず停止'}）`);
     }
 
     const failures = [];
@@ -309,7 +347,8 @@ export const callOpenAIText = async (prompt, images = null, systemInstruction = 
 
             const choice = data.choices?.[0];
 
-            const finalOutput = readCompleteOpenAIText(data, modelId, false, onThinkingUpdate, outputTokenLimit);
+            const finalOutput = readCompleteOpenAIText(data, modelId, false, onThinkingUpdate, outputTokenLimit,
+                options.responseFormat?.type === 'json_schema');
 
             if (onThinkingUpdate) onThinkingUpdate(`> [API] 応答の受信が完了しました。`);
             if (onThinkingUpdate) onThinkingUpdate(`> [MODEL] 最終採用モデル: ${modelId}`);
@@ -329,7 +368,8 @@ export const callOpenAIText = async (prompt, images = null, systemInstruction = 
             failures.push(failure);
             console.warn(formatApiErrorDetails(failure));
             if (onThinkingUpdate) onThinkingUpdate(`> [API] 試行失敗: ${formatApiErrorDetails(failure)}`);
-            if (shouldStopApiFallback(failure)) throw failure;
+            if (shouldStopApiFallback(failure)
+                || (options.responseFormat?.type === 'json_schema' && failure.code === 'INCOMPLETE_RESPONSE')) throw failure;
         }
     }
 

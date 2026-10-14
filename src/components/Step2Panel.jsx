@@ -142,7 +142,7 @@ export default function Step2Panel({
       )}
       <div className="flex items-center justify-between">
         <div className={`flex items-center gap-3 text-xs font-black uppercase tracking-widest ${currentStep === 2 ? 'text-purple-400' : 'text-slate-500'} `}>
-          <FileText size={18} /> STEP 02: シナリオ構築設定（{experimentEnabled ? '5〜8コマ' : '4コマ'}のストーリー設定）
+          <FileText size={18} /> STEP 02: シナリオ構築設定（{experimentEnabled ? '5～8コマ' : '4コマ'}のストーリー設定）
         </div>
       </div>
 
@@ -254,7 +254,7 @@ export default function Step2Panel({
             <div className="text-xs font-bold text-purple-300 text-center">
               ▼ 自由入力：描きたいテーマや、ニュースのURLを自由に入力してください (<span className="text-blue-400">URLからの自動読み込みに対応</span>)
             </div>
-            <p className="material-direction-help">素材名や現在の画像番号で、使う・使わない、誰が持つ・何をするかを指定できます。画風も「通常・POP・水彩・劇画・スケッチ・ちびギャグ」をコマごとに指定できます（例：2コマ目はPOP、4コマ目は劇画）。<br />通常モードは4コマ固定で、入力したコマ数指定は無視します。実験的コマ割りがONの場合は5〜8コマで指定でき、指定がなければ内容に合わせて決めます。<br />AIが希望をできる範囲で反映し、指定のない部分は内容に合わせて調整します。</p>
+            <p className="material-direction-help">素材名や現在の画像番号で、使う・使わない、誰が持つ・何をするかを指定できます。画風も「通常・POP・水彩・劇画・スケッチ・ちびギャグ」をコマごとに指定できます（例：2コマ目はPOP、4コマ目は劇画）。<br />「4コマ生成」は4コマ固定で、入力したコマ数指定は無視します。「5～8コマ生成」では5～8コマで指定でき、指定がなければ内容に合わせて決めます。<br />AIが希望をできる範囲で反映し、指定のない部分は内容に合わせて調整します。</p>
             <textarea
               value={manualTopic}
               onChange={(e) => setManualTopic(e.target.value)}
@@ -391,7 +391,7 @@ export default function Step2Panel({
           <div className="scenario-model-select-card flex-1 bg-[#050505] p-3 rounded-xl border border-cyan-500/20">
             <label className="text-xs font-bold text-cyan-300 mb-1 block flex items-center gap-1" htmlFor="scenario-model-select">
               <span>🧠</span> OpenAIシナリオモデル
-              <span className="text-[10px] text-gray-500 font-normal ml-auto">固定・失敗時のみ下位へ</span>
+              <span className="text-[10px] text-gray-500 font-normal ml-auto">{import.meta.env?.DEV && scenarioModelId === 'gpt-6-luna' ? '検証用・他モデルへ切替なし' : '固定・失敗時のみ下位へ'}</span>
             </label>
             <select
               id="scenario-model-select"

@@ -20,6 +20,16 @@ import {
   applyBubbleInventory,
 } from '../src/lib/image-quality-qa.js';
 
+test('rear-camera QA distinguishes a named room or prop anchor from an actor back-view contract', () => {
+  for (const camera of ['共同作業室の後方から俯瞰', '人物の後方から背面を描く']) {
+    const prompt = buildImageQualityQaPrompt({ finalPrompt: `## Panel 1\nCamera: ${camera}` });
+    assert.match(prompt, /rear camera.*named reference object or place/i);
+    assert.match(prompt, /Require torso back planes.*only.*explicitly.*actor.*back/i);
+    assert.doesNotMatch(prompt, /for a rear camera inspect the subject torso back planes/i);
+    assert.ok(prompt.includes(camera));
+  }
+});
+
 const tableQaArrays = value => {
   if (Array.isArray(value)) {
     const rows = value.map(tableQaArrays);

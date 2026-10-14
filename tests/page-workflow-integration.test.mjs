@@ -6,30 +6,45 @@ import { getWorkflowStep } from '../src/lib/generation-history.js';
 const source=await readFile(new URL('../src/hooks/useMangaWorkflow.js',import.meta.url),'utf8');
 const AsyncFunction=Object.getPrototypeOf(async function(){}).constructor;
 
-for (const status of ['pass','warning','unverified']) {
-  test(`shared experimental QA retains observations and validation diagnostics: ${status}`,async()=>{
+for (const isOpenAIEngine of [false,true]) for (const status of ['pass','warning','unverified']) {
+  test(`shared experimental QA retains observations and validation diagnostics: ${isOpenAIEngine?'OpenAI':'Gemini'} ${status}`,async()=>{
     const body=source.slice(source.indexOf('const reviewImageCandidate = async'))
       .match(/if\(experimentalPrepared\) \{([\s\S]*?)\r?\n        \}\r?\n        progressPhase/)[1];
     const review={status,observedCount:status==='unverified'?null:6,readingOrder:'pass',camera:'pass',style:'pass',story:'pass',anatomy:status==='warning'?'fail':'pass',pageText:'pass',issues:status==='pass'?[]:['人物の重複を検出'],
       validationErrors:status==='unverified'?['evidence[2].camera: missing or too short']:[],
       pageEvidence:'実画像で確認した題字と左右のクレジット',
+      ...(status==='unverified'?{}:{wardrobe_observation:{status:status==='warning'?'fail':'pass',evidence:'同じ人物の見える服の形と色を確認した。',issues:[]}}),
       evidence:[{panel:1,dialogue:['本当に、ここ？'],camera:'頭頂部と机の天板が見える',
         style:'人物の顔も透明な水彩で描かれている',story:'右側の人物が窓を開いている',anatomy:'人物の腕は両肩から連続している'}]};
     const candidate={},progress=[],log=[],requests=[];
+    const reviewContext=status==='pass'?undefined:{candidateLabel:status==='warning'?'以前の画像':'今回の画像'};
     const scope={candidate,experimentalPrepared:{plan:{count:6},source:{}},generationScenario:'scenario',
-      experimentalInput:()=>({}),buildExperimentalReviewPrompt:()=>'',reviewExperimentalImage:async(_input,request)=>{await request('JSON',[],undefined,{responseFormat:'json_object'});return {review,requests:2};},
-      validateExperimentalReview:x=>x,onReviewProgress:value=>progress.push(value),signal:undefined,
+      experimentalInput:()=>({}),buildExperimentalReviewPrompt:()=>'',reviewExperimentalImage:async(input,request)=>{
+        assert.equal(input.reviewContext,reviewContext,'the caller forwards optional candidate context without inventing a review deadline');
+        assert.equal(input.useStructuredOutput,isOpenAIEngine,'only the OpenAI route receives strict structured-output options');
+        input.onPhaseProgress('inventory: 応答待ち');
+        await request('JSON',[],undefined,{responseFormat:'json_object'});return {review,requests:2};},
+      validateExperimentalReview:x=>x,onReviewProgress:value=>progress.push(value),signal:undefined,reviewContext,isOpenAIEngine,
       reviewRequest:(...args)=>requests.push(args),statCallback:value=>log.push(value),progressPhase:''};
     const result=await new AsyncFunction(...Object.keys(scope),body)(...Object.values(scope));
     assert.equal(result.pass,status==='pass');
     assert.equal(candidate.experimentalReview,review);
     assert.equal(requests[0][4].responseFormat,'json_object');
     assert.equal(requests[0][4].outputProfile,'image-quality-review');
+    assert.equal(requests[0][4].timeoutMs,undefined,'provider response limits are not replaced by a cumulative QA timeout');
+    assert.ok(log.includes('[QUALITY QA] inventory: 応答待ち'));
+    const expectedLabel=reviewContext?.candidateLabel?`${reviewContext.candidateLabel}の検査`:'今回の候補の検査';
+    assert.ok(log.some(line=>line.startsWith(`[${expectedLabel} / 1コマの観察]`)), 'new and previous observations must identify their own image');
+    if(reviewContext)assert.equal(log.some(line=>line.startsWith('[今回の候補の検査 /')),false);
     const observed=Object.values(result.observations).join('\n');
     for(const value of [review.pageEvidence,...Object.values(review.evidence[0]).filter(v=>typeof v==='string'),'本当に、ここ？',...review.validationErrors]) {
       assert.ok(observed.includes(value),`lost observation: ${value}`);
     }
     assert.deepEqual(progress.at(-1),result);
+    if(review.wardrobe_observation) {
+      assert.deepEqual(JSON.parse(result.observations['衣装の観察']),review.wardrobe_observation);
+      assert.ok(log.includes(`[${expectedLabel} / 衣装の観察] ${JSON.stringify(review.wardrobe_observation)}`), 'wardrobe evidence must stay attached to its own candidate before selection');
+    } else assert.equal(Object.hasOwn(result.observations,'衣装の観察'),false,'missing wardrobe evidence must not be invented');
     const verdict=JSON.parse(result.observations['検査の項目別判定']);
     assert.equal(verdict.observedCount,review.observedCount);
     assert.equal(verdict.status,status);
@@ -132,12 +147,21 @@ test('full-auto passes the newly generated scenario through shared STEP3 and STE
   const body=source.match(/const fullAutoProviderFamily = getCurrentPromptProviderFamily\(\);([\s\S]*?const step4ok = await regenerateImage\([^;]+;)/)[0];
   const calls=[];
   const scope={generatedScenario:'new scenario',getCurrentPromptProviderFamily:()=> 'chatgpt',
+    promptAssemblyRunRef:{current:1},
     assemblePrompt:async(...args)=>{calls.push(['step3',...args]);return 'new prompt';},
     regenerateImage:async(...args)=>{calls.push(['step4',...args]);return true;},
     isCurrent:()=>true,fullAutoAbortRef:{current:false},setFullAutoStep:()=>{},
     window:{scrollTo:()=>{}},document:{body:{scrollHeight:100}},setTimeout:fn=>fn()};
   await new AsyncFunction(...Object.keys(scope),body)(...Object.values(scope));
   assert.deepEqual(calls,[['step3',true,'new scenario','chatgpt'],['step4',true,'new prompt',{sourceScenario:'new scenario'}]]);
+  calls.length=0;
+  scope.assemblePrompt=async(...args)=>{
+    calls.push(['step3',...args]);
+    Object.assign(scope.promptAssemblyRunRef,{completedRun:1,completedScenario:'layout-only repaired scenario'});
+    return 'new prompt';
+  };
+  await new AsyncFunction(...Object.keys(scope),body)(...Object.values(scope));
+  assert.equal(calls.at(-1)[3].sourceScenario,'layout-only repaired scenario');
 });
 
 test('experimental preparation takes current cast and actual scenario model from shared workflow refs',()=>{

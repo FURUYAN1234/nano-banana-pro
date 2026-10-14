@@ -1,12 +1,51 @@
 import assert from 'node:assert/strict';
 import test, { after, before } from 'node:test';
 import { createServer } from 'vite';
+import { restoreReviewedShotExecution } from './helpers/prompt-policy-normalization.mjs';
 
 let server;
 let buildMangaPrompt;
 let getScenarioPrompt;
 let getPanelCompositionAssist;
 let getPanelShotExecution;
+let sharePanelShotExecution;
+const applicableShotClauses = (prompt, panelNumber) => {
+  const shared = [...prompt.matchAll(/^SHOT (P\d+(?:\/P\d+)*) ONLY: (.+)$/gm)]
+    .filter(([, panels]) => panels.split('/').includes(`P${panelNumber}`)).map(([, , cue]) => cue);
+  const panel = prompt.split(new RegExp(`^## Panel ${panelNumber}\\s*$`, 'm'))[1]?.split(/^## Panel \d+\s*$/m)[0] || '';
+  return [...shared, panel.match(/^SHOT EXECUTION:.*$/m)?.[0] || ''].join('\n');
+};
+
+test('rear camera projection permits natural back planes without an explicit back-view instruction', () => {
+  for (const compact of [false, true]) {
+    for (const camera of ['作業室の左後方から俯瞰する引き', '装置の右後ろから見上げる中景', 'from the rear of the hall, high-angle']) {
+      const cue = getPanelShotExecution(camera, { compact });
+      assert.doesNotMatch(cue, /背面指定の人物だけ|only.*explicit.*back/i);
+      assert.match(cue, /人物の指定向きを保持.*正面\/側面\/背面.*Camera\/Actionの位置関係/);
+      assert.match(cue, /場所\/道具の向きで全員を回さない/);
+      assert.match(cue, /距離\/切取り保持、肩越し接写を強制しない/);
+    }
+  }
+});
+
+test('rear camera anchors do not force every actor to turn away from scripted gaze', () => {
+  for (const camera of [
+    '展示室の左後方から俯瞰。人物は中央の展示品を囲んで見る。',
+    '装置の右後ろから見上げる。作業者は装置に向く。',
+    'from the rear of the hall, high-angle; actors face the central object',
+  ]) {
+    assert.match(getPanelShotExecution(camera), /後方.*基準対象/);
+    assert.match(getPanelShotExecution(camera), /人物の指定向きを保持/);
+    assert.match(getPanelShotExecution(camera), /場所\/道具.*全員を回さない/);
+    assert.match(getPanelShotExecution(camera, { compact: true }), /後方.*基準対象.*Camera\/Actionの位置関係から投影/);
+  }
+  for (const camera of ['人物の左後方、後頭部と背中を見せる広角の引き', 'rear-view close-up of the actor']) {
+    const cue = getPanelShotExecution(camera);
+    assert.match(cue, /人物の指定向きを保持.*背面/);
+    assert.match(cue, /距離\/切取り保持/);
+    assert.match(cue, /肩越し接写を強制しない/);
+  }
+});
 let classifyCameraElevation;
 let isFisheyeCamera;
 let isPullbackShot;
@@ -14,14 +53,23 @@ let MANGA_COMPOSITION_VARIETY_LOCK;
 let MANGA_COMPOSITION_VARIETY_LOCK_COMPACT;
 let MANGA_GESTURE_VARIETY_LOCK;
 let cinematicCompositionMap;
-test('high and low shots construct actor projection before medium-specific marks', () => {
-  for (const camera of ['俯瞰・広角', 'アオリ・望遠']) {
-    const execution = getPanelShotExecution(camera);
-    assert.match(execution, /ACTOR PROJECTION FIRST/);
-    assert.match(execution, /before style\/texture/);
-    assert.match(execution, /preserve gaze\/head pose/);
+test('scene-target face alignment is conditional on unspecified face direction and never overrides authored acting',()=>{
+  for(const compact of [false,true]) for(const camera of ['俯瞰・広角','アオリ・望遠']) {
+    const shot=getPanelShotExecution(camera,{compact});
+    assert.match(shot,/注視先明示かつ顔向き未指定/);
+    assert.match(shot,/対象に応じた自然な頭向きを補う/);
+    assert.match(shot,/明示の横目\/目だけの移動\/顔上げ\/背面を優先、顔\/対象の遮蔽保持/);
+    assert.match(shot,/首傾げ・表情保持/);
+    assert.doesNotMatch(shot,/全員.*下向|必ず下向|水平器|気泡/);
   }
-  assert.doesNotMatch(getPanelShotExecution('eye-level horizontal'), /ACTOR PROJECTION FIRST/);
+});
+test('high and low shots establish scene gaze before independent camera projection and medium', () => {
+  for (const compact of [false, true]) for (const camera of ['俯瞰・広角', 'アオリ・望遠']) {
+    const execution = getPanelShotExecution(camera, { compact });
+    assert.match(execution, /^SHOT EXECUTION: 人物\/注視先を配置→指定の体\/首\/顔向き・首傾げ・表情保持、注視先明示かつ顔向き未指定なら対象に応じた自然な頭向きを補う（明示の横目\/目だけの移動\/顔上げ\/背面を優先、顔\/対象の遮蔽保持）、可視瞳を指定先へ（対象未指定\/閉眼\/明示の読者目線保持）→独立Cameraで立体投影→画風; /);
+    assert.doesNotMatch(execution, /ACTOR PROJECTION FIRST|描法\/質感前に立体投影/);
+  }
+  assert.equal(getPanelShotExecution('eye-level horizontal'), '');
 });
 let cameraAngles;
 let openAIColorGekigaStyle;
@@ -53,8 +101,8 @@ test('repeated prompt compaction preserves each low shot projection and quiet sc
       assert.ok(panel.match(/^Action \(visual only\):(.+)$/m)?.[1].endsWith(actions[index]));
       assert.equal(panel.match(/^Style: (.+)$/m)?.[1], openAIColorGekigaStyle);
       const shot = panel.match(/^SHOT EXECUTION:.*$/m)?.[0] || '';
-      assert.match(shot, /ACTOR PROJECTION FIRST:.*before style\/texture/,
-        'repeated compaction must retain actor construction before rendering style');
+      assert.match(applicableShotClauses(prompt, index + 1), /人物\/注視先を配置→.*首傾げ・表情保持.*可視瞳を指定先へ.*独立Cameraで立体投影→画風/,
+        'repeated compaction must retain scene gaze before independent projection and style');
       assert.match(shot, /(?:Face\/body\/setting|facial planes, body and setting) share projection/i,
         `panel ${index + 1}, ${promptMaxChars}: preserve local face/body/setting projection`);
       assert.match(shot, /(?:no|not) frontal faces? on (?:a )?tilted (?:BG|background)/i);
@@ -62,6 +110,104 @@ test('repeated prompt compaction preserves each low shot projection and quiet sc
       assert.doesNotMatch(shot, /floor-level|extreme|steep|\d+\s*(?:degrees|°)/i);
     }
   }
+});
+
+test('scene-first shot cues preserve authored side glances, raised targets, head tilt and invisible eyes', () => {
+  const cameras = ['左前の高い位置から見下ろす中景', '右前の低所から見上げる広角', '背中側の高所から俯瞰する引き', '左上から手元だけを見下ろす接写'];
+  const actions = [
+    'SpeakerA keeps the torso forward, neck and face tilted left, smiling softly while only the eyes glance right toward SpeakerB.',
+    'SpeakerB leans backward and looks up at the hanging lamp, with raised eyebrows and an open mouth.',
+    'SpeakerA is seen only from behind: the rear head and relaxed shoulders remain visible, while the face and eyes stay hidden.',
+    'Only SpeakerB\'s hands holding the cup appear in this crop; the head and eyes remain outside the frame.',
+  ];
+  let c=0,a=0;
+  const scenario=FOUR_PANEL_SCENARIO.replace(/\[Camera: [^\]]+\]/g,()=>`[Camera: ${cameras[c++]}]`)
+    .replace(/^Action: .+$/gm,()=>`Action: ${actions[a++]}`);
+  for (const providerFamily of ['chatgpt','gemini']) {
+    const prompt=buildMangaPrompt({scenario,castList:CAST_LIST,providerFamily,colorMode:'color',promptMaxChars:32000});
+    const panels=prompt.split(/^## Panel \d+\s*$/m).slice(1);
+    for (const [i,panel] of panels.entries()) {
+      const actualCamera=panel.match(/^Camera: (.+)$/m)?.[1];
+      assert.ok([cameras[i],`${cameras[i]}; (NEVER draw text of camera names:3.0).`].includes(actualCamera));
+      assert.ok(panel.includes(actions[i]));
+      const shot=applicableShotClauses(prompt,i+1);
+      assert.match(shot,/指定の体\/首\/顔向き・首傾げ・表情保持、注視先明示かつ顔向き未指定.*可視瞳を指定先へ/);
+      assert.doesNotMatch(shot,/全員.*正対|必ず下向|顔を対象へ回す/);
+    }
+  }
+  for (const action of ['SpeakerA closes both eyes and smiles quietly.', 'SpeakerA rests without a stated gaze target.', 'SpeakerA explicitly looks at the reader and addresses the camera.',
+    'SpeakerA looks at the instrument on the desk without a stated face direction.',
+    'SpeakerA keeps the face raised while only the eyes look down toward the instrument.']) {
+    const variant=scenario.replace(actions[0],action);
+    const prompt=buildMangaPrompt({scenario:variant,castList:CAST_LIST,providerFamily:'chatgpt',colorMode:'color',promptMaxChars:32000});
+    assert.ok(prompt.includes(action));
+    assert.match(prompt,/対象未指定\/閉眼\/明示の読者目線保持/);
+    assert.match(prompt,/注視先明示かつ顔向き未指定/);
+    assert.match(prompt,/目だけの移動\/顔上げ/);
+  }
+});
+
+test('sharing preserves complete multiline page contracts before the first generated panel', () => {
+  const header = 'MOSAIC PROTECTED CAST: ["Actor A"]\nNever automatically mosaic registered cast.\n\nNormal four-panel page contract.\nKeep all dialogue and boundaries.\n';
+  const panels = [1, 2].map(number => `## Panel ${number}\nCamera: 俯瞰\n${getPanelShotExecution('俯瞰')}\nAction: 台詞も対象も保持。`).join('\n');
+  const shared = sharePanelShotExecution(header + panels);
+  assert.ok(shared.startsWith(header), 'shared clauses must not split a preceding multi-line contract');
+  assert.match(shared.slice(header.length), /^SHOT P1\/P2 ONLY:/);
+  assert.equal(sharePanelShotExecution(shared), shared);
+});
+
+test('shared shot clauses apply only to their original panels and never rewrite authored content',()=>{
+  const cameras=['俯瞰・広角','低い位置から水平に撮る中景','アオリ・望遠','中景、目線指定なし'];
+  const header='Normal four-panel page header.';
+  const prompt=header+'\n'+cameras.map((camera,i)=>`## Panel ${i+1}\nCamera: ${camera}\n${getPanelShotExecution(camera)}\nAction: 原文の首傾げ/表情は保持する。`).join('\n');
+  const shared=sharePanelShotExecution(prompt);
+  assert.equal(shared.split('\n')[0],header,'sharing must preserve the page header as the first line');
+  assert.match(shared,/^SHOT P1\/P3 ONLY: 人物\/注視先を配置→/m);
+  assert.doesNotMatch(shared,/^SHOT P[^\n]*(?:P2|P4)[^\n]*ONLY:/m);
+  for(const [i,camera] of cameras.entries()) {
+    assert.ok(shared.includes(`## Panel ${i+1}\nCamera: ${camera}\n`));
+    const panel=shared.split(`## Panel ${i+1}\n`)[1].split('## Panel ')[0];
+    assert.ok(panel.includes('Action: 原文の首傾げ/表情は保持する。'));
+    if(i===1||i===3) assert.doesNotMatch(panel,/人物\/注視先を配置/);
+  }
+  const prose='Action: SHOT EXECUTION: user-authored clause; preserve it.\nSHOT EXECUTION: user-authored standalone line.';
+  assert.equal(sharePanelShotExecution(prose),prose);
+  assert.equal(sharePanelShotExecution(shared),shared,'sharing is idempotent');
+});
+
+test('soft-target sharing retains exact shot scope below the API ceiling', () => {
+  const cameras = ['左前の高所から見下ろす広角', '低い位置から水平に撮る中景', '右前の低所から見上げる望遠', '中景、目線指定なし'];
+  let index = 0;
+  const scenario = FOUR_PANEL_SCENARIO.replace(/\[Camera: [^\]]+\]/g, () => `[Camera: ${cameras[index++]}]`);
+  const prompt = buildMangaPrompt({ scenario, castList: CAST_LIST, providerFamily: 'chatgpt',
+    colorMode: 'color', cinematicTechniques: false, promptMaxChars: 32000 });
+  assert.ok(prompt.length > 15000 && prompt.length < 32000, 'exercise soft sharing without a hard-cap failure');
+  assert.match(prompt, /^SHOT P1\/P3 ONLY: 人物\/注視先を配置→/m);
+  for (const n of [1, 3]) assert.match(applicableShotClauses(prompt, n), /注視先明示かつ顔向き未指定/);
+  for (const n of [2, 4]) assert.doesNotMatch(applicableShotClauses(prompt, n), /注視先明示かつ顔向き未指定/);
+  for (const camera of cameras) assert.ok(prompt.includes(`Camera: ${camera}`));
+  for (const [, action] of scenario.matchAll(/^Action: (.+)$/gm)) assert.ok(prompt.includes(action));
+  assert.equal((prompt.match(/人物\/注視先を配置→/g) || []).length, 1);
+});
+
+test('style normalization inverts only exact generated head cues and preserves changed or authored clauses', () => {
+  const shot = getPanelShotExecution('俯瞰');
+  const authored = shot.split('; ')[0];
+  const original = `Normal header.\n## Panel 1\nCamera: 俯瞰\n${shot}\nAction: ${authored}`;
+  const normalized = restoreReviewedShotExecution(original);
+  assert.match(normalized, /SHOT EXECUTION: 人物\/注視先を配置→指定の体\/首\/顔向き・首傾げ・表情保持、可視の瞳/);
+  assert.ok(normalized.includes(`Action: ${authored}`), 'authored matching prose cannot be normalized away');
+  const changed = original.replace('顔/対象の遮蔽保持', '顔/対象の遮蔽を無視');
+  assert.match(restoreReviewedShotExecution(changed), /顔\/対象の遮蔽を無視/);
+  const unknown = `SHOT P1/P3 ONLY: unrelated new rule.\n${original}`;
+  assert.ok(restoreReviewedShotExecution(unknown).startsWith('SHOT P1/P3 ONLY: unrelated new rule.\n'));
+  const rearShot = getPanelShotExecution('部屋の左後方から俯瞰');
+  const rear = `## Panel 1\nCamera: 部屋の左後方から俯瞰\n${rearShot}\nAction: ${rearShot}`;
+  const normalizedRear = restoreReviewedShotExecution(rear);
+  assert.match(normalizedRear,/SHOT EXECUTION:.*背面指定の人物だけ背面/);
+  assert.ok(normalizedRear.includes(`Action: ${rearShot}`));
+  const changedRear = rear.replace('人物の指定向きを保持し', '人物の指定向きを破棄し');
+  assert.match(restoreReviewedShotExecution(changedRear),/SHOT EXECUTION:.*人物の指定向きを破棄し/);
 });
 
 test('supporting actors retain physical scale and depth in both provider budgets', () => {
@@ -229,6 +375,7 @@ before(async () => {
   ({
     getPanelCompositionAssist,
     getPanelShotExecution,
+    sharePanelShotExecution,
     classifyCameraElevation,
     isFisheyeCamera,
     isPullbackShot,
@@ -421,6 +568,104 @@ test('single camera prohibitions leave later affirmative elevation lens and fram
   assert.doesNotMatch(getPanelShotExecution('ダッチ禁止。顔のアップ。'), /tilt scene axes/);
   assert.match(getPanelShotExecution('全身禁止。顔のアップ。'), /tight crop/);
   assert.doesNotMatch(getPanelShotExecution('全身禁止。顔のアップ。'), /head-to-feet/);
+});
+
+test('prohibited full-body additions cannot override a close crop, while affirmative full-body subjects remain', () => {
+  const cameras = [
+    '台の右上方から15度見下ろす接写。直前の中景からズームインし、ヒカリの目元、自然につながる右手、水平器の中央を同じ近景に収める。画角外の全身を追加しない。',
+    '俯瞰の接写。全身を描かない。',
+    '手元のアップ。全身は描写しない。',
+    '望遠の接写。全身や全景を追加しない。',
+  ];
+  for (const compact of [false, true]) {
+    for (const camera of cameras) {
+      const execution = getPanelShotExecution(camera, { compact });
+      assert.match(execution, /tight crop|主対象を寄りで切取/, camera);
+      assert.doesNotMatch(execution, /head-to-feet|BOTH shoes|両靴|wide framing|引き:/, camera);
+    }
+    for (const camera of ['全身の引き。背景人物を追加しない。', '手前の全身を追加しない。奥の人物の全身を描く。', '接写を描かない。人物の全身を収める。']) {
+      assert.match(getPanelShotExecution(camera, { compact }), /head-to-feet|両靴/, camera);
+    }
+  }
+});
+
+test('English camera prohibitions are bounded to named terms and preserve later affirmative clauses', () => {
+  const cases = [
+    ['high-angle, no Dutch tilt', 'high', /tilt scene axes/],
+    ['no high-angle or Dutch tilt; low-angle telephoto', 'low', /look down|tilt scene axes/],
+    ['without fisheye, eye-level or Dutch tilt, high-angle telephoto', 'high', /fisheye:|tilt scene axes/],
+    ['avoid low-angle and wide-angle; high-angle close-up', 'high', /look up|near\/far scale contrast/],
+    ['no telephoto; low-angle wide-angle', 'low', /compressed depth/],
+    ['non-eye-level, high-angle; non-Dutch tilt', 'high', /tilt scene axes/],
+    ['ダッチアングルなし。俯瞰・望遠', 'high', /tilt scene axes/],
+  ];
+  for (const [camera, elevation, absent] of cases) {
+    assert.equal(classifyCameraElevation(camera), elevation, camera);
+    assert.doesNotMatch(getPanelShotExecution(camera), absent, camera);
+  }
+  assert.match(getPanelShotExecution(cases[2][0]), /look down.*compressed depth/);
+  assert.match(getPanelShotExecution('no fisheye or eye-level, Dutch angle, low-angle'), /look up.*tilt scene axes/);
+  assert.match(getPanelShotExecution('俯瞰禁止。アオリ、ダッチアングル。'), /look up.*tilt scene axes/);
+});
+
+test('actor head tilt is not a camera roll while explicit scene tilt remains effective', () => {
+  for (const camera of ['medium shot; her head tilts to the left', 'close-up, head tilt', '高所からの中景。人物の顔の傾きを見せる', '中景、首の傾き']) {
+    assert.doesNotMatch(getPanelShotExecution(camera), /tilt scene axes/, camera);
+  }
+  for (const camera of ['medium shot, camera tilt', 'tilted scene axes', 'Dutch tilt; her head tilts to the left', 'ダッチアングル、人物の顔の傾きを保つ']) {
+    assert.match(getPanelShotExecution(camera), /tilt scene axes/, camera);
+  }
+});
+
+test('horizontal frame or prop edges do not change the pitch of a low camera', () => {
+  for (const camera of ['低い位置から20度見上げる。水平のコマ枠は保つ', 'low-angle; horizontal panel borders', 'low-angle, horizontal table edges', '床近くから見上げる。紙を水平に保つ']) {
+    assert.match(getPanelShotExecution(camera), /look up.*facial planes/, camera);
+    assert.doesNotMatch(getPanelShotExecution(camera), /keep horizontal aim/, camera);
+  }
+  for (const camera of ['低い位置から水平に撮る', 'low-angle camera, horizontal aim', '低い位置でカメラは水平を保つ']) {
+    assert.match(getPanelShotExecution(camera), /keep horizontal aim/, camera);
+    assert.doesNotMatch(getPanelShotExecution(camera), /look up/, camera);
+  }
+});
+
+test('locative camera height accepts camera placement but not actors or objects placed high or low', () => {
+  for (const camera of ['低い位置で水平に撮る', '低めの位置で、カメラを構える', '低い撮影位置で撮影']) {
+    assert.equal(classifyCameraElevation(camera), 'low', camera);
+  }
+  for (const camera of ['高い位置で撮る', '高めの位置でカメラを構える', '高い撮影位置で捉える']) {
+    assert.equal(classifyCameraElevation(camera), 'high', camera);
+  }
+  for (const camera of ['中景。人物が低い位置で箱を持つ', '中景。高い位置で手を振る人物', '低い位置の棚の上で箱が水平', '高い位置で看板を固定する']) {
+    assert.equal(classifyCameraElevation(camera), 'unspecified', camera);
+  }
+  assert.equal(classifyCameraElevation('低い位置でカメラを構え、座った人のアイレベル'), 'eye');
+});
+
+test('near-profile orientation does not turn a medium shot into a close crop', () => {
+  for (const camera of ['望遠で圧縮した中景。二人とも横顔寄り。', '望遠の中景。二人とも横顔寄りに配置する', '中景、人物は後ろ姿寄り', '右側面寄りからの中景']) {
+    assert.doesNotMatch(getPanelShotExecution(camera), /tight crop/, camera);
+    assert.doesNotMatch(getPanelShotExecution(camera, { compact: true }), /寄りで切取/, camera);
+  }
+  for (const camera of ['横顔に寄る接写', '横顔寄りに配置し、目元をズームイン', '人物への寄りのショット']) {
+    assert.match(getPanelShotExecution(camera), /tight crop/, camera);
+  }
+});
+
+test('compact shot execution retains observable geometry without inventing a stronger shot', () => {
+  const shot = camera => getPanelShotExecution(camera, { compact: true });
+  assert.equal(shot('中景。人物が相手を見下ろす'), '');
+  assert.match(shot('やや高めから撮る中景'), /頭\/肩の上面.*胴の短縮/);
+  assert.match(shot('やや高めから撮る中景'), /指定角度.*急俯瞰.*禁止/);
+  assert.match(shot('低い位置から水平に撮る中景'), /水平.*低い地平線/);
+  assert.doesNotMatch(shot('低い位置から水平に撮る中景'), /見上げ|顎.*下面/);
+  assert.match(shot('右後方からの広角接写'), /主対象を寄りで切取.*背面.*距離\/切取り保持/);
+  assert.doesNotMatch(shot('右後方からの広角接写'), /全身|両靴|俯瞰:|アオリ:/);
+  assert.match(shot('俯瞰、望遠、ダッチアングル'), /遠い撮影位置.*長焦点.*奥行圧縮/);
+  assert.match(shot('俯瞰、望遠、ダッチアングル'), /顔だけでなく.*場面軸/);
+  assert.doesNotMatch(shot('俯瞰、望遠、ダッチアングルなし'), /場面軸/);
+  for (const camera of ['俯瞰、望遠、ダッチアングル', '床近くから水平に撮る', '右後方の全身引き']) {
+    assert.equal(getPanelShotExecution(camera), getPanelShotExecution(camera, { compact: false }));
+  }
 });
 
 test('affirmative fisheye and eye-level directives retain their existing interpretation', () => {

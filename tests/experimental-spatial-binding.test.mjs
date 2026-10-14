@@ -5,6 +5,7 @@ import { createServer } from 'vite';
 const server = await createServer({ appType: 'custom', logLevel: 'silent', server: { middlewareMode: true } });
 try {
   const m = await server.ssrLoadModule('/src/lib/experimental-manga.js');
+  const {resolvePageWorkflow} = await server.ssrLoadModule('/src/lib/page-workflow.js');
   const styles = ['NORMAL', 'WATERCOLOR', 'POP_ART', 'GEKIGA'];
   const castList = '## ユウ\n[WEIGHTS]: (black hair:1.4)\n## ナギ\n[WEIGHTS]: (blonde hair:1.4)';
   const makeInput = (side, count = 7) => ({
@@ -30,6 +31,38 @@ try {
     .map(match => ({ number: Number(match[1]), position: match[2], body: match[3], start: match.index, end: match.index + match[0].length }));
   const position = rect => `${rect.w === 1 ? 'FULL WIDTH' : rect.x === 0 ? 'LEFT' : 'RIGHT'}, top=${Math.round(rect.y * 100)}%, bottom=${Math.round((rect.y + rect.h) * 100)}% of comic area`;
 
+  test('native full and compact prompts preserve each scripted head direction without requiring explicit back-view permission', () => {
+    const actions = [
+      'ユウは手前、ナギは奥に立ち、二人とも中央の模型を見る。',
+      'ユウは顔と胸を前に向けたまま、目だけで横のナギを見る。',
+      'ナギの後頭部と肩だけが見え、顔と目は隠れる。',
+      'ユウは顔を上げて吊り下げた時計を見つめ、首を少し傾ける。',
+      'ナギは目を閉じ、笑顔で休む。注視先は指定しない。',
+    ];
+    const cameras = actions.map(() => '作業室の左後方、高い位置から俯瞰する広角の中景');
+    const input = {enabled:true,castList,colorMode:'color',scenario:actions.map((action,i)=>
+      `[${i+1}コマ目]\n[Camera: ${cameras[i]}]\n[EMOTION: NORMAL]\n状況: ${action}\nセリフなし`).join('\n')};
+    const source = m.readExperimentalSource(input);
+    const plan = makePlan(5,'hero_top',source);
+    plan.panels.forEach((panel,i)=>{panel.action=actions[i];});
+    const full = m.buildExperimentalImagePrompt(plan,source,input);
+    const compactInput = {...input,promptMaxChars:full.length-1};
+    const compact = m.buildExperimentalImagePrompt(plan,source,compactInput);
+    assert.ok(compact.length < full.length);
+    for (const prompt of [full,compact]) {
+      assert.doesNotMatch(prompt,/背面指定の人物だけ/);
+      assert.match(prompt,/人物の指定向きを保持.*正面\/側面\/背面.*Camera\/Actionの位置関係/);
+      for (const [index,frame] of frames(prompt).entries()) {
+        assert.ok(frame.body.includes(`Camera: ${cameras[index]}`));
+        assert.ok(frame.body.includes(`Action: ${actions[index]}`));
+      }
+    }
+    const old = compact.replaceAll('人物の指定向きを保持し、見える正面/側面/背面はCamera/Actionの位置関係から投影', '背面指定の人物だけ背面を描く');
+    const prepared = {source,plan,prompt:compact};
+    assert.equal(resolvePageWorkflow({experimentalEnabled:true,prepared,prompt:compact,input:compactInput}).count,5);
+    assert.throws(()=>resolvePageWorkflow({experimentalEnabled:true,prepared:{...prepared,prompt:old},prompt:old,input:compactInput}),/STEP3/);
+  });
+
   for (const count of [5, 6, 7, 8]) for (const { id: layout } of m.experimentalLayoutOptions(count)) {
     test(`experimental ${count}/${layout} binds each physical frame to its exact camera, style, action and ordered speech`, () => {
       const input=makeInput('右',count),source=m.readExperimentalSource(input);
@@ -45,7 +78,7 @@ try {
         assert.equal(block.position, position(rects[index]) + (index === count - 1 ? ' | FINAL ENDING' : ''));
         assert.equal(occurrences(prompt, `[PAGE FRAME P${index + 1} | `), 1);
         assert.equal(occurrences(prompt, `[END PAGE FRAME P${index + 1}]`), 1);
-        assert.ok(block.body.includes(`Inside this frame — Camera: ${panel.camera}; Style: ${source.panels[panel.sourcePanel - 1].style}; Action: ${panel.action}`));
+        assert.ok(block.body.includes(`Camera: ${panel.camera}; Style: ${source.panels[panel.sourcePanel - 1].style}; Action: ${panel.action}`));
         const expected = panel.dialogueIds.length ? panel.dialogueIds.map(id =>
           JSON.stringify(validated.expectedDialogue.find(line => line.id === id))).join('; ') : 'SILENT';
         assert.ok(block.body.includes(`Dialogue: ${expected}`), 'approved speech belongs inside its own physical frame');

@@ -891,7 +891,7 @@ test('an unrepaired visual feasibility warning preserves full-auto image repair'
   assert.match(provider, /payoffGate\.renderabilityWarning\s*\?\s*'VISUAL_FEASIBILITY'/);
   assert.doesNotMatch(workflow, /visualFeasibilityBlocked\s*\?\s*null\s*:\s*finalScenarioText/);
   assert.match(workflow, /return finalScenarioText;/);
-  assert.match(workflow, /const step4ok = await regenerateImage\(true, generatedPrompt, \{sourceScenario:generatedScenario\}\)/);
+  assert.match(workflow, /const step4ok = await regenerateImage\(true, generatedPrompt, \{sourceScenario:assembledScenario\}\)/);
 });
 
 

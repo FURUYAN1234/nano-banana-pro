@@ -1,4 +1,5 @@
 import { buildRenderOptionsContract, buildProtectedCastContract } from './render-options.js';
+import { readExplicitOutfit, hasScopedOutfitAssignment, OUTFIT_SCOPE_CONTRACT } from './seasonal-outfit.js';
 import { stripSourceMetadata } from './sns-explanation.js';
 import { MANGA_FACIAL_ACTING_LOCK_COMPACT } from './facial-acting.js';
 import { formatGeneratedMangaTitle } from './manga-title.js';
@@ -57,6 +58,7 @@ import { FINAL_PANEL_ACTIVE_STAGING_IMAGE_LOCK } from './final-panel-staging';
 import {
   getPanelCompositionAssist,
   getPanelShotExecution,
+  sharePanelShotExecution,
   MANGA_COMPOSITION_VARIETY_LOCK,
   MANGA_COMPOSITION_VARIETY_LOCK_COMPACT,
   MANGA_GESTURE_VARIETY_LOCK,
@@ -379,7 +381,7 @@ const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt
 
   // 全コマ共有の衣装原文は上位に残し、機械注入した同一文だけを各Actionから除く。
   // 台本固有の着脱・状態変化・本文は触らない。各コマで衣装を再設計させない。
-  const sharedOutfit = finallyCompacted.match(/^- IGNORE reference clothing\. Follow role-specific outfit assignments: (.*); unscoped categories apply to all\.$/m)?.[1];
+  const sharedOutfit = finallyCompacted.match(/^- (?:IGNORE reference clothing|Override reference clothing only for assigned characters\/roles)\. Follow role-specific outfit assignments: (.*); unscoped categories apply to all\.$/m)?.[1];
   const minimumCompacted = mapAuthored(finallyCompacted, part => part
     // Keep medium/cheek intent in the last budget tier without repeating prose.
     .replace(/^SKIN LIGHT:[^\n]*/gm, line => preservePanelRecipes ? line : 'SKIN LIGHT: base hue, small soft highlights; no white face blobs. Key/fill/rim, depth, eye/hair glints; explicit glossy/stylized light or mono wins. CHEEK RENDERING: story/canonical makeup; watercolor skin wash. No default stamps/stripes/copied sheet blush. Preserve expressive blush and ink shadows.')
@@ -536,7 +538,7 @@ const buildVisualStoryEvidenceLock = (scenario) => {
 
 const buildPanelActionText = (panelText, castList, activeOutfit, colorMode = 'color') => {
   const placementRule = extractPlacementRule(panelText, castList, { colorMode });
-  const action = injectOutfitReminder(extractActionOnly(panelText, castList, placementRule), activeOutfit);
+  const action = injectOutfitReminder(extractActionOnly(panelText, castList, placementRule), readExplicitOutfit(panelText)?'':activeOutfit);
   if (colorMode !== 'monochrome') return action;
   return action
     .replace(/全編(?:フル)?カラー/gu, '全編白黒（純白・純黒・網点）')
@@ -728,9 +730,11 @@ export const buildMangaPromptArtifact = ({
 
   // シナリオテキストから場所・服装設定の読み取り
   const scenarioLocationMatch = scenario.match(/Location:\s*(.*?)(\n|$)/i)?.[1]?.trim();
-  const scenarioOutfitMatch = scenario.match(/Outfit:\s*(.*?)(\n|$)/i)?.[1]?.trim();
   const cleanLocation = scenarioLocationMatch || "Generic Detailed Background";
-  const activeOutfit = (scenarioOutfitMatch && !/^(なし|キャラシート準拠|none|default)/i.test(scenarioOutfitMatch)) ? scenarioOutfitMatch : "";
+  const withoutThought=String(scenario).replace(/<thought>[\s\S]*?<\/thought>/gi,'');
+  const firstPanelHeader=getScenarioPanelBlocks(withoutThought)[0]?.header;
+  const activeOutfit=readExplicitOutfit(firstPanelHeader?withoutThought.slice(0,withoutThought.indexOf(firstPanelHeader)):withoutThought);
+  const scopedOutfit=hasScopedOutfitAssignment(activeOutfit,collectCastNameEntries(castList),castList);
   const promptActiveOutfit = isMonochrome
     ? sanitizeMonochromeSourceDescription(activeOutfit)
     : activeOutfit;
@@ -747,6 +751,10 @@ export const buildMangaPromptArtifact = ({
     ? buildDocumentarySourceFactLock(rawPanels)
     : '';
   const panels = rawPanels.map(stripDocumentarySourceFacts);
+  const panelOutfits=panels.map(panel=>{
+    const outfit=readExplicitOutfit(panel);
+    return isMonochrome?sanitizeMonochromeSourceDescription(outfit):outfit;
+  });
   const cinematicAssignments = cinematicTechniques
     ? selectPageCinematicTechniques(panels, { location: cleanLocation })
     : [];
@@ -756,7 +764,7 @@ export const buildMangaPromptArtifact = ({
   const cameraState = { index: 0 };
 
   // キャストリストの最適化とクリーンアップ
-  const VAR_CAST_LIST = [cleanCastList(castList, activeOutfit), referenceAssetContext].filter(Boolean).join('\n\n');
+  const VAR_CAST_LIST = [cleanCastList(castList, scopedOutfit?'':activeOutfit), referenceAssetContext].filter(Boolean).join('\n\n');
   const promptCastList = isMonochrome
     ? sanitizeMonochromeSourceDescription(VAR_CAST_LIST)
     : VAR_CAST_LIST;
@@ -787,7 +795,7 @@ export const buildMangaPromptArtifact = ({
   const mediumIsolationLock = mixedColorMedia
     ? 'PANEL MEDIA: IDENTITY CONTINUITY: 髪・眼鏡・服・人物・固有色・照明方向を保持。表情は場面、彩度・明度・黒量・輪郭・紙白・にじみは各コマ画材に従う。他コマ色調継承・均色化禁止。明示共通色調優先。'
     : '';
-  const sceneLocks = [scriptLock, mediumIsolationLock || identityContinuityLock, documentarySourceFactLock, compositionVarietyLock, gestureVarietyLock, actingIdentityNotes, `${HAND_PROP_KINEMATICS_LOCK}\n${LIMB_OWNERSHIP_CHECK}`, visualStoryEvidenceLock, settingContinuityLock, finalPanelStagingLock, MANGA_READING_RHYTHM_LOCK]
+  const sceneLocks = [scriptLock, scopedOutfit||panelOutfits.some(Boolean)?OUTFIT_SCOPE_CONTRACT:'', mediumIsolationLock || identityContinuityLock, documentarySourceFactLock, compositionVarietyLock, gestureVarietyLock, actingIdentityNotes, `${HAND_PROP_KINEMATICS_LOCK}\n${LIMB_OWNERSHIP_CHECK}`, visualStoryEvidenceLock, settingContinuityLock, finalPanelStagingLock, MANGA_READING_RHYTHM_LOCK]
     .filter(Boolean)
     .join('\n');
   const panelEyeLineRules = panels.map((panel) => buildPanelEyeLineRule(panel, castList));
@@ -815,7 +823,7 @@ COMPOSITION STAGING: ${getPanelCompositionAssist(pt, num, { compact: true })}
 ${FUNCTIONAL_SURFACE_PANEL_CHECK}
 ${eyeLineRule}
 
-${source(`Action (visual only): ${buildPanelActionText(pt, castList, promptActiveOutfit, colorMode)}`)}
+${panelOutfits[i]?source(`FRAME OUTFIT: ${panelOutfits[i]}`)+'\n':''}${source(`Action (visual only): ${buildPanelActionText(pt, castList, promptActiveOutfit, colorMode)}`)}
 Dialogue (verbatim bubbles): ${extractDialogueOnly(pt, castList, { forImagePrompt: true })}`;
     }).join('\n\n');
     panelSections = eyeLineBase ? `${eyeLineBase}\n\n${panelSections}` : panelSections;
@@ -824,7 +832,7 @@ Dialogue (verbatim bubbles): ${extractDialogueOnly(pt, castList, { forImagePromp
       showWatermarks,
       safeTopic, watermarkEng, styleCore, safeLocation, isMonochrome,
       bg360Image, bg360Analysis, bg360Enabled, bg360CroppedPanels,
-      VAR_CAST_LIST_CHATGPT, identityMatrix, activeOutfit: promptActiveOutfit,
+      VAR_CAST_LIST_CHATGPT, identityMatrix, activeOutfit: promptActiveOutfit, scopedOutfit,
       scriptLock: sceneLocks, panelSections, preserveReferenceStyle, seriousTone
     });
     rawPrompt = compactForSoftTarget(rawPrompt);
@@ -859,7 +867,7 @@ ${FUNCTIONAL_SURFACE_PANEL_CHECK}
 ${lensRule}
 ${eyeLineRule}
 
-${source(`Action (Visual ONLY, non-dialogue; do NOT render quoted words as visible text unless this action explicitly says handwriting, signage, board text, label text, or screen text): ${buildPanelActionText(pt, castList, promptActiveOutfit, colorMode)}.`)}
+${panelOutfits[i]?source(`FRAME OUTFIT: ${panelOutfits[i]}`)+'\n':''}${source(`Action (Visual ONLY, non-dialogue; do NOT render quoted words as visible text unless this action explicitly says handwriting, signage, board text, label text, or screen text): ${buildPanelActionText(pt, castList, promptActiveOutfit, colorMode)}.`)}
 Dialogue (ONLY inside bubbles): ${extractDialogueOnly(pt, castList, { forImagePrompt: true })}.
 ${geminiRearForegroundLock}`;
     }).join('\n\n');
@@ -870,7 +878,7 @@ ${geminiRearForegroundLock}`;
       showWatermarks,
       safeTopic, watermarkEng, styleCore, safeLocation, isMonochrome,
       bg360Image, bg360Analysis, bg360Enabled, bg360CroppedPanels,
-      VAR_CAST_LIST: promptCastList, identityMatrix, activeOutfit: promptActiveOutfit,
+      VAR_CAST_LIST: promptCastList, identityMatrix, activeOutfit: promptActiveOutfit, scopedOutfit,
       dynamicCamera, scriptLock: sceneLocks, panelSections, preserveReferenceStyle, seriousTone
     });
   }
@@ -910,11 +918,10 @@ ${geminiRearForegroundLock}`;
   let budgetedPrompt = isChatGPTFamily && baselinePrompt.length > promptMaxChars
     ? compactChatGPTConversationRules(baselinePrompt, isMonochrome, preserveReferenceStyle, seriousTone, promptMaxChars, false, sourceBlocks, true)
     : baselinePrompt;
-  if (isChatGPTFamily && budgetedPrompt.length > promptMaxChars) {
+  if (isChatGPTFamily && budgetedPrompt.length > promptTargetChars) {
     // Share only this repeated generated cue. Never touch Camera/Action or the
     // per-panel projection details, and still fail closed if the budget cannot fit.
-    const sharedProjection = budgetedPrompt.replace(/^SHOT EXECUTION: ACTOR PROJECTION FIRST: volumes before style\/texture; preserve gaze\/head pose; /gm, 'SHOT EXECUTION: ');
-    if (sharedProjection !== budgetedPrompt) budgetedPrompt = `人物の投影→画風の順で描画。\n${sharedProjection}`;
+    budgetedPrompt = sharePanelShotExecution(budgetedPrompt);
   }
   if (isChatGPTFamily) assertImagePromptBudget(budgetedPrompt, promptMaxChars);
   if (cinematicAssignments.length === 0) return captureMangaPromptArtifact(assertPrintableDialogue(budgetedPrompt), colorMode);

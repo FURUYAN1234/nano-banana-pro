@@ -17,6 +17,137 @@ try {
   const planResponse=(_prompt,plan)=>JSON.stringify(plan);
   const plan={count:8,layout:'two_columns',reason:'手順と反応の対比',pageIntent:'手の連携を見せる',panels:source.panels.map((p,i)=>({sourcePanel:i+1,kind:'anchor',camera:p.camera,action:`ユウとナギだけが木の箱を持つ。左手と右手は別人の手。行動${i+1}。`,dialogueIds:p.dialogueIds,visualEffects:['foreground_depth'],breakout:null}))};
   const occurrences=(text,fragment)=>text.split(fragment).length-1;
+  test('native plain-name rosters do not add partial outfit defaults to complete assignments',()=>{
+    for(const roster of ['ユウ、ナギ','ユウ, ナギ']) for(const colorMode of ['color','monochrome']) {
+      const options={...input,castList:roster,colorMode};
+      const complete=m.buildExperimentalImagePrompt(plan,m.readExperimentalSource(options),options);
+      assert.doesNotMatch(complete,/OUTFIT SCOPE:/);
+      assert.ok(complete.includes('ユウは赤い上着、ナギは青い服。'));
+      for(const panel of plan.panels) { assert.ok(complete.includes(panel.camera)); assert.ok(complete.includes(panel.action)); }
+      const partial={...options,scenario:scenario.replace(/^Outfit:.*$/m,'Outfit: ユウは赤い上着。')};
+      assert.match(m.buildExperimentalImagePrompt(plan,m.readExperimentalSource(partial),partial),/OUTFIT SCOPE:/);
+      const local={...options,scenario:scenario.replace('[3コマ目]','[3コマ目]\n[Outfit: ナギは雨具]')};
+      const withLocal=m.buildExperimentalImagePrompt(plan,m.readExperimentalSource(local),local);
+      assert.match(withLocal,/OUTFIT SCOPE:/);
+      assert.equal(occurrences(withLocal,'FRAME OUTFIT: ナギは雨具'),1);
+    }
+  });
+  test('native global and panel outfits remain separate and unassigned actors retain reference wardrobes',()=>{
+    const local='ユウは作業用コート';
+    const reference='## ユウ\n髪: black hair\n衣装: school uniform\n## ナギ\n髪: long hair\n衣装: sailor uniform';
+    for(const header of ['Outfit: default','Outfit: none','','Outfit: ユウは雨具']) for(const colorMode of ['color','monochrome']) {
+      const variant=scenario.replace(/^Outfit:.*$/m,header).replace('[3コマ目]',`[3コマ目]\n[Outfit: ${local}]`);
+      const options={...input,scenario:variant,castList:reference,colorMode};
+      const src=m.readExperimentalSource(options);
+      const prompt=m.buildExperimentalImagePrompt(plan,src,options);
+      assert.match(prompt,/sailor uniform/);
+      if(!header.includes('雨具')) assert.match(prompt,/school uniform/);
+      assert.match(prompt,/OUTFIT SCOPE:.*指定人物\/役割だけ.*未指定人物\/コマ.*参照/);
+      const frames=prompt.split('[PAGE FRAME ').slice(1).map(frame=>frame.split('[END PAGE FRAME')[0]);
+      for(const [i,frame] of frames.entries()) {
+        if(i===2) assert.ok(frame.includes(`FRAME OUTFIT: ${local}`));
+        else assert.ok(!frame.includes(`FRAME OUTFIT: ${local}`));
+        assert.ok(frame.includes(plan.panels[i].camera));assert.ok(frame.includes(plan.panels[i].action));
+      }
+    }
+    const all={...input,castList:reference,scenario:scenario.replace(/^Outfit:.*$/m,'Outfit: 作業着')};
+    const prompt=m.buildExperimentalImagePrompt(plan,m.readExperimentalSource(all),all);
+    assert.doesNotMatch(prompt,/school uniform|sailor uniform/,'unscoped global clothing still replaces all reference outfits');
+    for(const outfit of ['ユウはコート、ナギは作業着。全員、指定の普段着。','ユウはコート、ナギは作業着。']) {
+      const options={...all,scenario:scenario.replace(/^Outfit:.*$/m,`Outfit: ${outfit}`).replace('[3コマ目]',`[3コマ目]\n[Outfit: ${local}]`)};
+      const complete=m.buildExperimentalImagePrompt(plan,m.readExperimentalSource(options),options);
+      assert.doesNotMatch(complete,/school uniform|sailor uniform/,'complete named global assignments replace contradictory reference garments');
+      assert.match(complete,/OUTFIT SCOPE:/,'the local exception still has explicit panel priority');
+      assert.equal(occurrences(complete,`FRAME OUTFIT: ${local}`),1);
+    }
+  });
+  test('native close-up keeps a no-full-body-addition camera verbatim without adding a conflicting full-body cue',()=>{
+    const camera='台の右上方から15度見下ろす接写。直前の中景からズームインし、ユウの目元、自然につながる右手、水平器の中央を同じ近景に収める。画角外の全身を追加しない。';
+    let index=0;
+    const options={...input,scenario:scenario.replace(/\[Camera: [^\]]+\]/g,original=>index++===3?`[Camera: ${camera}]`:original)};
+    const src=m.readExperimentalSource(options);
+    const native={...plan,panels:plan.panels.map((p,i)=>({...p,camera:src.panels[i].camera}))};
+    for(const colorMode of ['color','monochrome']) {
+      const prompt=m.buildExperimentalImagePrompt(native,src,{...options,colorMode});
+      const frame=prompt.split('[PAGE FRAME P4 |')[1].split('[END PAGE FRAME')[0];
+      assert.ok(frame.includes(camera));
+      const execution=frame.match(/^SHOT EXECUTION:.*$/m)?.[0]||'';
+      assert.match(execution,/主対象を寄りで切取/);
+      assert.doesNotMatch(execution,/両靴|全身|引き:/);
+      assert.ok(frame.includes(native.panels[3].action));
+      for(const id of native.panels[3].dialogueIds) assert.ok(frame.includes(JSON.stringify(src.dialogue[id])));
+    }
+  });
+  test('native frames carry their own compact physical camera cues before the medium without changing source fields',()=>{
+    const cameras=[
+      '左前の高所から40度俯瞰する広角中景。',
+      '右前の低い位置から20度アオリ、時計回り12度のダッチアングル。',
+      '少し上から25度見下ろす望遠中景。',
+      '右後方からの手元の接写。',
+      '低い位置から水平に撮る中景。',
+      '中景。人物が相手を見下ろし、首を傾ける。',
+      '左側面から少し上で見下ろす顔のアップ。',
+      '高所から60度俯瞰する広角の全身引き。',
+    ];
+    for(const count of [5,6,7,8]) for(const colorMode of ['color','monochrome']) {
+      const variantScenario='## タイトル: カメラ検証\nLocation: 共同作業室\n'+cameras.slice(0,count).map((camera,i)=>`[${i+1}コマ目]\n[Camera: ${camera}]\n[EMOTION: ${styles[i]}]\n状況: ユウとナギが箱を確認する。ユウは首を傾け、眉を少し下げて微笑む。\nユウ「ここは${i+1}番目。」`).join('\n');
+      const options={...input,scenario:variantScenario,colorMode};
+      const src=m.readExperimentalSource(options);
+      const native={...plan,count,panels:src.panels.map((p,i)=>({...plan.panels[i],camera:p.camera,action:'ユウとナギが箱を確認する。ユウは首を傾け、眉を少し下げて微笑む。',dialogueIds:p.dialogueIds}))};
+      const prompt=m.buildExperimentalImagePrompt(native,src,options);
+      const frames=prompt.split('[PAGE FRAME ').slice(1).map(frame=>frame.split('[END PAGE FRAME')[0]);
+      for(const [i,frame] of frames.entries()) {
+        assert.ok(frame.includes(`Camera: ${cameras[i]}; Style: ${styles[i]}; Action: ${native.panels[i].action}`));
+        for(const id of native.panels[i].dialogueIds) assert.ok(frame.includes(JSON.stringify(src.dialogue[id])));
+        const recipe=colorMode==='monochrome'?mono.MONOCHROME_EMOTION_STYLES[styles[i]]:COMPACT_EMOTION_STYLES[styles[i]];
+        if(styles[i]!=='GEKIGA') assert.ok(frame.includes(recipe));
+        else assert.ok(frame.includes(GEKIGA_FACE_CONSTRUCTION));
+        if(i!==5) assert.match(frame,/Action: [^\n]+\nSHOT EXECUTION: [^\n]+\nFRAME MEDIUM/);
+      }
+      const cues=frames.map((frame,i)=>[frame.match(/^SHOT EXECUTION:.*$/m)?.[0]||'',
+        ...[...prompt.matchAll(/^SHOT (P\d+(?:\/P\d+)*) ONLY: (.+)$/gm)].filter(match=>match[1].split('/').includes(`P${i+1}`)).map(match=>match[2])].filter(Boolean).join('; '));
+      for(const i of [0,1,2,6,7].filter(i=>i<count)) assert.match(cues[i],/人物\/注視先を配置→.*首傾げ・表情保持.*可視瞳を指定先へ.*独立Cameraで立体投影→画風/);
+      for(const i of [3,4,5].filter(i=>i<count)) assert.doesNotMatch(cues[i],/人物\/注視先を配置/,'shared cue must not reach horizontal, rear-only or unspecified views');
+      assert.match(cues[0],/頭\/肩の上面.*胴の短縮/);
+      assert.match(cues[1],/顎\/道具下面.*顔\/体\/場.*背景だけ.*傾けない.*顔だけでなく.*場面軸/);
+      assert.match(cues[2],/遠い撮影位置.*長焦点.*奥行圧縮.*収束.*ぼかしだけ.*不可/);
+      assert.match(cues[3],/寄りで切取.*背面.*距離\/切取り保持/);
+      assert.match(cues[4],/水平.*低い地平線/);
+      for(const i of [0,2,3,4,5,6,7].filter(i=>i<count)) assert.doesNotMatch(cues[i],/場面軸/);
+      assert.doesNotMatch(cues[3],/頭\/肩の上面|顎\/道具下面|全身/);
+      assert.doesNotMatch(cues[4],/顎\/道具下面|見上げ/);
+      if(count>=6) assert.equal(cues[5],'','unspecified camera must not inherit camera instructions from another frame or actor action');
+      assert.ok(prompt.length<32000);
+    }
+    assert.equal(m.EXPERIMENTAL_PROMPT_REVISION,33);
+  });
+  test('native prompts compact before the hard ceiling while preserving every camera, acting and medium',()=>{
+    const cameras=[
+      '左前・頭上2mから45度俯瞰、広角の全身引き。',
+      '右後ろ・床上15cmから30度アオリ、強い遠近の中景。',
+      '真上から90度見下ろす俯瞰、机全体を含む引き。',
+      '左後方の肩越しから手元へズーム、指定の接写。',
+      '右前の高所から20度見下ろす望遠、奥行きを圧縮。',
+      '右側面の低所から25度見上げ、時計回り18度のダッチアングル。',
+      '正面の高所から35度見下ろす中景。意図した同じ構図を保持。',
+      '正面の高所から35度見下ろす中景。意図した同じ構図を保持。',
+    ];
+    const detailedScenario=scenario.replace(/\[Camera: [^\]]+\]/g,()=>`[Camera: ${cameras.shift()}]`);
+    const detailedSource=m.readExperimentalSource({...input,scenario:detailedScenario});
+    const detailedPlan={...plan,panels:plan.panels.map((p,i)=>({...p,camera:detailedSource.panels[i].camera,
+      action:p.action+'眉を八の字に下げ、口元は微笑む。左足に重心を乗せ、右腕を相手へ伸ばす。'}))};
+    const options={...input,scenario:detailedScenario};
+    const prompt=m.buildExperimentalImagePrompt(detailedPlan,detailedSource,options);
+    assert.ok(prompt.length>15000&&prompt.length<32000,'exercise the soft-target interval');
+    assert.equal(prompt,m.buildExperimentalImagePrompt(detailedPlan,detailedSource,{...options,promptMaxChars:1}),
+      'safe compaction must not wait for a hard-budget overflow');
+    for(const [i,p] of detailedPlan.panels.entries()) {
+      const frame=prompt.split(`[PAGE FRAME P${i+1} |`)[1].split('[END PAGE FRAME')[0];
+      assert.ok(frame.includes(p.camera));assert.ok(frame.includes(p.action));
+      assert.ok(frame.includes(`Style: ${detailedSource.panels[i].style}`));
+      for(const id of p.dialogueIds) assert.ok(frame.includes(JSON.stringify(detailedSource.dialogue[id])));
+    }
+  });
   // Portable regression fixture: five adult cast sheets and a body-staged six-panel script.
   // Names are changed; source length/media/identity and action detail match the observed load.
   const budgetScenario="## タイトル: 葉脈をつなぐ一色\nLogline: お世話になった人へ贈るカードを刷るナオ、ユキ、カナタ、コハル、マコト。欠けた葉脈を前に手順を整え直し、五人の仕事が重なった一枚を完成させる。\nLocation: 夕方の共同アトリエにある大きな版画作業台\nVisualEvidence: 葉模様の小さな木版、葉脈の欠けた試し刷り、インクローラー、ばれん、位置を合わせたカード用紙、つながった葉の刷り上がり\nOutfit: ナオは明るい長袖トップスと作業エプロン、ユキは柔らかなカーディガンと作業エプロン、カナタは落ち着いた色の長袖シャツと厚手の作業エプロン、コハルは朱色系のブラウスと短めの作業エプロン、マコトは淡色ブラウスとキャンバス地の作業エプロン。全員、作業しやすい普段着で袖口を整える。\nPunchline: 静寂型 (シュール)\n\n[1コマ目: 導入]\n[EMOTION: NORMAL]\n[Camera: 作業台の左後方、頭上約2メートルから35度見下ろす広角の引き。机の天面と五人の頭頂、夕方の窓光が伸ばす長い影を一緒に捉え、台の木目が葉の版へ視線を導く。]\nBalloonLayout: [{\"speaker\":\"マコト\",\"x\":0.76,\"anchor\":\"画面奥中央、前髪と眼鏡の輪郭\",\"route\":\"画面上部の右余白から奥中央へ短く下ろす\"}]\n状況: 夕方の共同アトリエ。大きな作業台の奥中央で、淡色ブラウスにキャンバス地のエプロンを着たマコトが、両足を台の下で安定させ、腰をわずかに前へ寄せて、自分の葉模様の小さな木版を両手で作業面へ静かに置く。左隣のカナタは落ち着いた色のシャツと厚手のエプロン姿で、片手を台に添え、もう片方の腕を体側に保って版へ身を傾ける。右側のナオは明るいトップスとエプロン姿で、自分のインクローラーを手元に置き、片足を半歩引いて作業台へ向く。手前左のユキはカーディガンとエプロンで自分のばれんを手元に寄せ、肩をすぼめて確認する。手前右のコハルは朱色系ブラウスと短いエプロンで、両手を使って自分のカード用紙の端をそろえ、重心を前へ移す。窓からの橙色の光が紙の端を照らし、五人の長い影が台に伸びる。その影の細い部分だけ、五人の姿勢にも道具の形にも合わない葉脈のような線が、かすかに交差している。\nマコト「この葉を、お世話になった人へ贈ろう。」\n\n[2コマ目: 欠けの発見]\n[EMOTION: GEKIGA]\n[Camera: 作業台の右前方、座った人物の胸より低い位置から15度見上げる中寄り。マコトとカナタの顔を大きく、机上の版と試し刷りを手前に置く。奥の三人も同じ劇画の描法で控えめに入れる。]\nBalloonLayout: [{\"speaker\":\"マコト\",\"x\":0.78,\"anchor\":\"右前景、眼鏡と頬の輪郭\",\"route\":\"右上の余白からマコトの見える口元へ\"},{\"speaker\":\"カナタ\",\"x\":0.39,\"anchor\":\"左中景、前髪と頬の輪郭\",\"route\":\"左上の余白からカナタの見える口元へ\"}]\n状況: 試し刷りの紙をマコトが右手で持ち、左手の木版と見比べる。紙には葉脈の一部が白く途切れている。マコトは眼鏡越しに欠けた線を追い、片方の眉をわずかに上げ、首と肩を紙へ傾ける。左手は木版を揺らさないように支え、右肘を体に寄せて紙を目の高さへ保つ。カナタは隣で左手をマコトの手首の下へ添え、右手で版の端を支える。台に近い足へ重心を置き、二人の手元をのぞき込む。二人の顔には写実的な面取り、明瞭な鼻梁と顎、細密なカケアミを施す。特にマコトの眼鏡越しの目元にも彫りとカケアミをはっきり描く。怒りや威嚇ではなく、集中した穏やかな表情。黒ベタ主体にしない。ナオは自分のローラーを台に置き、肩を前へ寄せて欠けを見つめる。ユキは自分のばれんを手前に置いたまま、腰を少し落として版の外縁を確かめる。コハルは揃えた紙束を胸の前で両腕に抱え直し、紙を崩さないよう肘を締める。三人も同じ劇画調。\nマコト「葉脈のここだけ、紙に出てない。」\nカナタ「端の押さえ方を見直しましょう。」\n\n[3コマ目: 手元の協力]\n[EMOTION: GEKIGA]\n[Camera: 作業台の左側、立った人物の肩より高い位置から30度見下ろす斜め中景。左手前のナオのローラーから、中央のマコトとカナタの支える手、右奥で待つユキとコハルへ視線が流れる。顔は中寄りの大きさで、全員を劇画の顔・線・陰影で描く。]\nBalloonLayout: [{\"speaker\":\"マコト\",\"x\":0.75,\"anchor\":\"中央右、眼鏡と前髪の輪郭\",\"route\":\"右上の余白からマコトの見える口元へ\"},{\"speaker\":\"カナタ\",\"x\":0.39,\"anchor\":\"中央左、黒髪と頬の輪郭\",\"route\":\"左上の余白からカナタの見える口元へ\"}]\n状況: 欠けた試し刷りは台に残る。マコトは左手で紙を押さえ、右手の指先で木版の端を示す。体は版へまっすぐ向け、右肘を浮かせて指先だけを慎重に伸ばす。カナタはマコトの右手首を左手で静かに支え、右手で木版の外縁を固定する。両足を台に向けて踏ん張り、手元がずれないよう上体を安定させる。二人の顔には明瞭な彫りと細密なカケアミを描き、マコトの眼鏡越しの顔も十分に見せる。二人とも集中した穏やかな表情。ナオは自分のローラーを両手で扱い、片足を台へ寄せて木版にインクを均一にのせる。ユキは自分のばれんを右手に持ち、肘を曲げて次の工程に備える。コハルは自分のカード用紙を両手でまっすぐ揃え、紙束を胸元近くで安定させて待つ。五人の袖口は台に触れない位置にある。\nマコト「この端まで、ちゃんと押さえたい。」\nカナタ「手首は支えるわ。力をまっすぐ伝えて。」\n\n[4コマ目: 押さえる]\n[EMOTION: NORMAL]\n[Camera: 作業台の手前右から、台面より少し高い位置で25度見下ろす広角中景。画面右のコハルの揃えた紙端から、中央の版とユキのばれんへ斜めに読む。腰から上の身体の傾きと、前後に分かれた手元を見せる。]\nBalloonLayout: [{\"speaker\":\"コハル\",\"x\":0.77,\"anchor\":\"右手前、ボブの輪郭\",\"route\":\"右上の余白からコハルの見える口元へ\"},{\"speaker\":\"ユキ\",\"x\":0.39,\"anchor\":\"左中景、ツインテールと丸眼鏡の輪郭\",\"route\":\"左上の余白からユキの見える口元へ\"}]\n状況: インクをのせ終えたマコトの木版に、マコトがカード用紙をそっと重ねる。腰を台へ寄せ、両手で用紙の端を保つ。カナタは両足を安定させて前へ体を傾け、版の外縁を押さえ続ける。コハルは右手で紙の角を合わせ、左手で反対側の端を軽く保持し、前足へ体重を移して角を見つめる。ユキは左側から右手で自分のばれんを紙の上へ置き、左手で紙の端を支えながら、膝を少し緩めてゆっくり一定に押さえ始める。ナオは自分のローラーを台の端に置き、体を引いて両手を空け、紙の位置を見守る。\nコハル「角、ぴたりと合ったよ！」\nユキ「ゆっくり、均等に押さえるね。」\n\n[5コマ目: めくる瞬間]\n[EMOTION: NORMAL]\n[Camera: マコトの左肩越しに、作業台の右上から55度見下ろす寄り。めくれ始めた紙と、下から現れる新しい葉の刷り上がりを同じ画面に収め、手元以外の背景は台の木目だけに整理する。]\nBalloonLayout: []\n状況: ばれんで紙全体を押さえ終えた後。マコトは片足を台へ寄せ、両手でカード用紙の手前角をつまみ、手首を返しながらゆっくり持ち上げる。めくれた紙の下から、葉の輪郭と、試し刷りで欠けていた葉脈が一本につながった刷り上がりが現れる。新しい刷り上がりが初めて見える瞬間。カナタは両足を崩さず版の外縁を押さえた手を保ち、首を静かに紙へ傾ける。ユキは自分のばれんを台へ置いた直後、手を離して上体を止め、視線を現れた線へ向ける。ナオは自分のローラーのそばで肩を固め、両手を台の縁近くにとどめる。コハルは紙束を胸元に抱えたまま、身を少し乗り出して見つめる。全員の顔と視線は紙へ向き、誰もカメラを見ない。セリフも擬音も置かず、めくる手とつながった葉の形だけで伝える。\nセリフなし\n\n[6コマ目: 五人の一色]\n[EMOTION: WATERCOLOR]\n[Camera: 作業台の左前方、座った人物の腰より低い位置から25度見下ろす中広景。手前の完成カードを少し大きく、五人の上半身と顔を周囲に奥行き差をつけて配置する。夕方の窓光と作業台の木目も含め、人物・衣服・紙・背景すべてを淡い透明水彩で描く。]\nBalloonLayout: []\n状況: つながった葉の完成カードが作業台中央に置かれ、試し刷りはその脇に残る。人物にも劇画のカケアミや太い黒輪郭を持ち込まず、水彩の淡い色溜まりと紙白で描く。マコトは両足を台の下にそろえ、眼鏡越しに葉を見つめ、肩の力を抜いた小さな笑顔。カナタは版を支えた手を台に下ろし、手首の力をほどいて目を細め、口元をやわらげる。ナオはローラーを置いた手を腰へ戻し、片方の肩を緩めて頬を上げる。ユキはばれんをカードの横に置き、上体を少し引いて満足そうに目を細める。コハルは揃えた紙束を台へ置き、片手を紙束のそばに残したままカードへ身を乗り出して笑う。五人はそれぞれの仕事が重なった一枚を囲み、声を出すより先に顔をほころばせる。そのとき、窓光の向きとは逆へ、完成カードの葉だけの影が机いっぱいに広がる。五人の手、ローラー、ばれん、木版を避けるように枝分かれしながら、実物よりはるかに大きな葉の形を描いている。五人は説明も驚きの身振りもなく、カードとその奇妙な影を静かに見つめる。\nセリフなし";
@@ -54,7 +185,8 @@ try {
       for(const rect of m.experimentalLayout(6,'two_columns')) assert.ok(prompt.includes('rect='+JSON.stringify(rect)));
       assert.ok(prompt.includes(GEKIGA_FACE_CONSTRUCTION));
       assert.ok(prompt.includes('dense fine multi-directional facial kakeami with visible line gaps'));
-      assert.ok(prompt.length<=29000,`regression ${colorMode} prompt ${prompt.length} leaves too little reserved-budget headroom`);
+      // Keep the observed source budget while allowing its new local physical cues.
+      assert.ok(prompt.length<=(colorMode==='color'?24100:27100),`regression ${colorMode} prompt ${prompt.length} leaves too little reserved-budget headroom`);
       assert.equal((await m.prepareExperimentalManga(options,async()=>JSON.stringify(diagnosticPlan))).prompt,prompt);
     }
   });
@@ -122,11 +254,12 @@ try {
       for(const p of source.panels) {assert.ok(prompt.includes('これは行動'+p.id+'。'));assert.ok(prompt.includes(p.camera));}
       for(const d of source.dialogue) assert.ok(prompt.includes(JSON.stringify(d)),d.text);
       assert.ok(prompt.includes(options.referenceContext));
-      assert.ok(prompt.includes(shared.PANEL_EDGE_CONTINUITY_LOCK));
-      assert.ok(prompt.includes(shared.LIMB_OWNERSHIP_CHECK));
+      for(const condition of ['外枠の四辺/四隅を余白付きで画布内','明示の枠なし/裁切り指定は優先','内部の枠越えは外周裁切りの許可ではない','隣場面への流出は明示時のみ','枠線は頭/髪の全輪郭の後ろで止まり','外側断片の複製','枠内外の位置ずれは禁止','全輪郭を枠内に保持','可視・自然な遮蔽・画面外に分類','本人の肩','本人の腰','隠れた部分も自然につなぐ','理由のない欠落','家具や他人の体から出る手足は禁止','隠れた四肢の露出や全身画角を強制しない','動作や構図を変えない']) assert.ok(prompt.includes(condition),condition);
       const quality=colorMode==='monochrome'?mono.MONOCHROME_IMAGE_QUALITY_CONTRACT:shared.buildImageQualityContract({panelMedia:true});
       const translated=[shared.FUNCTIONAL_SURFACE_ORIENTATION_LOCK,shared.OBJECT_GEOMETRY_LOCK,shared.BODY_ACTING_BASELINE,shared.EXPRESSIVE_DIRECTION,shared.FUNCTIONAL_SURFACE_PROJECTION_RULE,shared.HEAD_VOLUME_LOCK];
-      for(const unchanged of translated.reduce((parts,rule)=>parts.flatMap(part=>part.split(rule)),[quality])) assert.ok(prompt.includes(unchanged));
+      const translatedPrefixes=/^- (?:Preserve the user's|Render a rich physical|Establish one primary focal subject or action and|FOCAL READABILITY: preserve|Keep lighting and color|SKIN LIGHT: colored|Keep coherent anatomy|Model clothing folds|Do not duplicate, merge|Keep focal surfaces)/;
+      for(const unchanged of translated.reduce((parts,rule)=>parts.flatMap(part=>part.split(rule)),[quality]).flatMap(part=>part.split('\n')).map(part=>part.trim()).filter(part=>part&&part!=='-'&&!translatedPrefixes.test(part))) assert.ok(prompt.includes(unchanged),unchanged);
+      if(colorMode==='color') for(const condition of ['前景・中景・背景の層','空の壁・平坦なグラデーション・無個性な空室へ簡略化しない','補助焦点は最大一つ','全ページを同じ墨/塗りへ均さない','必要な場所の証拠は消さない','寄引き/仰俯角/撮影側/視線/頭の向き','後頭部を読者へ振り向かせない','主光・補助光・輪郭光','影の深さ・目/髪の輝き','感情による赤面/化粧/墨と影の面は保持','透明画へ不透明なセル塗りを強制しない','意図した色溜まり/紙目/鉛筆の質感/カケアミは保持']) assert.ok(prompt.includes(condition),condition);
       for(const condition of ['対象は保持者でなくActionで決定','筐体/台座','文字の天地は読む人物向き','後ろ向き人物の胸元','明示Cameraの位置/高さ/仰俯角/レンズ/切取りは固定','位置未指定時のみ物でなくCamera','受取人として明示された時だけ','隠れた輪郭は整合して消失/再開','小口の表紙化は禁止','各字の天地を含め組版','行だけ回して字を画布に直立させない','元の組版を保持','出来事でなく輪郭を明確化']) assert.ok(prompt.includes(condition),condition);
       for(const condition of ['明示動作を全保持','指差し/伸手/打撃/全身反動/跳躍/強い短縮','支持/空中軌道・重心・左右の手の役割・接触対象','速度線で動作/透視を代用しない','静止へ動きを捏造しない','誇張自体は描画欠陥でない','他者が読む時に保持者の肩越しにしない','標準肩越しへ平坦化しない','耳は片側一つ','後頭部に顔を捏造しない','明示の両面意匠は許容']) assert.ok(prompt.includes(condition),condition);
       assert.equal(assertRenderOptions(prompt,options),prompt);
@@ -149,7 +282,7 @@ try {
     const previous={prompt:'previous approved prompt'};
     let selected=previous;
     const compact=m.buildExperimentalImagePrompt(prepared.plan,source,{...input,promptMaxChars:1});
-    assert.ok(compact.length<prompt.length);
+    assert.equal(compact,prompt,'safe compaction already happened at the soft target');
     assert.ok(compact.includes(long.panels[0].action));
     await assert.rejects(async()=>{selected=await m.prepareExperimentalManga({...input,promptMaxChars:compact.length-1},async request=>planResponse(request,long));},/上限を超え/);
     assert.equal(selected,previous);
@@ -174,7 +307,7 @@ try {
     }
   });
   test('compiler prose translation never rewrites matching authored source or action text',()=>{
-    const authored=shared.FUNCTIONAL_SURFACE_ORIENTATION_LOCK+' '+shared.OBJECT_GEOMETRY_LOCK;
+    const authored=shared.FUNCTIONAL_SURFACE_ORIENTATION_LOCK+' '+shared.OBJECT_GEOMETRY_LOCK+' '+shared.PANEL_EDGE_CONTINUITY_LOCK+' '+shared.LIMB_OWNERSHIP_CHECK+' '+shared.SKIN_LIGHTING;
     const authoredScenario=scenario.replace('これは行動1。','これは行動1。'+authored);
     const authoredSource=m.readExperimentalSource({...input,scenario:authoredScenario});
     const authoredPlan=structuredClone(plan);authoredPlan.panels[0].action+=' '+authored;

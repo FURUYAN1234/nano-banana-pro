@@ -864,6 +864,10 @@ const REFERENCE_SHEET_OUTFIT_RENDERING_LOCK = `REFERENCE-SHEET OUTFIT RENDERING 
 - Apply the character sheet's linework, fold-line treatment, shading method, coloring or monochrome tone method, and degree of stylization to those overridden garments in all four panels. In monochrome, the white-paper/ink/tone contract takes priority over reference fills and shading methods.
 - Lighting may change highlight and shadow strength, but never change the selected garment items or the reference sheet's rendering method.`;
 
+const referenceOutfitRenderingLock = (scopedOutfit) => scopedOutfit
+  ? REFERENCE_SHEET_OUTFIT_RENDERING_LOCK.replace('Garment items come from the active outfit override, not from the character sheet.', 'Garment items come from the active outfit override only for assigned characters/roles; unassigned actors retain character-sheet garments.')
+  : REFERENCE_SHEET_OUTFIT_RENDERING_LOCK;
+
 // Present the drawing task before generic finishing/inspection prose. Retain
 // the complete storyboard and every supporting contract exactly once.
 const prioritizePanelArtDirection = (prompt, panelSections, preserveReferenceStyle, scriptLock, storyboardFirst) => {
@@ -880,7 +884,7 @@ export const buildChatGPTMangaPrompt = (p) => {
     showWatermarks = true,
     safeTopic, watermarkEng, styleCore, safeLocation, isMonochrome = false,
     bg360Image, bg360Analysis, bg360Enabled,
-    VAR_CAST_LIST_CHATGPT, identityMatrix, activeOutfit,
+    VAR_CAST_LIST_CHATGPT, identityMatrix, activeOutfit, scopedOutfit = false,
     scriptLock, panelSections, preserveReferenceStyle = false // 事前にビルドされた4パネル分のセクション文字列
   } = p;
 
@@ -895,7 +899,7 @@ Use the 360° background image's lighting direction (${bg360Analysis.lighting}),
   ) : '';
 
   const outfitRule = activeOutfit
-    ? `- IGNORE reference clothing. Follow role-specific outfit assignments: ${activeOutfit}; unscoped categories apply to all.`
+    ? `- ${scopedOutfit?'Override reference clothing only for assigned characters/roles':'IGNORE reference clothing'}. Follow role-specific outfit assignments: ${activeOutfit}; unscoped categories apply to all.`
     : '- OUTFIT CONSISTENCY: Each character keeps their own outfit across ALL 4 panels.';
   const compactCastDetails = compactChatGPTCastDetails(VAR_CAST_LIST_CHATGPT);
   const clothingFoldRule = preserveReferenceStyle
@@ -939,7 +943,7 @@ CHARACTER IDENTITY:
 - ${isMonochrome ? preserveReferenceStyle ? 'Reproduce reference geometry and design using black ink/white paper: face/eye shape, hairstyle, glasses and accessory shapes. No source hue or skin base tone.' : 'Keep reference identity/ink assignments; panel recipe redraws facial construction. No source hue.' : preserveReferenceStyle ? 'Reproduce reference face, hair, eyes, skin, accessories.' : 'Keep reference identity/colors; panel recipe redraws facial construction.'} No feature swapping.
 ${outfitRule}
 ${preserveReferenceStyle
-  ? (activeOutfit ? REFERENCE_SHEET_OUTFIT_RENDERING_LOCK : REFERENCE_SHEET_WARDROBE_STYLE_LOCK)
+  ? (activeOutfit ? referenceOutfitRenderingLock(scopedOutfit) : REFERENCE_SHEET_WARDROBE_STYLE_LOCK)
   : isMonochrome ? MONOCHROME_WARDROBE_LOCK : CROSS_PANEL_WARDROBE_COLOR_LOCK}
 ${WARDROBE_ENVIRONMENT_CONTRAST_LOCK}
 - Adults 20+. Keep each character recognizable through hairstyle, wardrobe, glasses, and other identity anchors across panels; facial expression and drawing style may vary with the scene. ${isMonochrome ? 'Keep skin bases in light: light=paper, dark/tanned=screen.' : 'Keep canonical skin and outfit colors under changing light.'}
@@ -991,7 +995,7 @@ export const buildGeminiMangaPrompt = (p) => {
     showWatermarks = true,
     safeTopic, watermarkEng, styleCore, safeLocation, isMonochrome = false,
     bg360Image, bg360Analysis, bg360Enabled, bg360CroppedPanels,
-    VAR_CAST_LIST, identityMatrix, activeOutfit,
+    VAR_CAST_LIST, identityMatrix, activeOutfit, scopedOutfit = false,
     dynamicCamera, scriptLock, panelSections, preserveReferenceStyle = false, seriousTone = false // 事前にビルドされた4パネル分のセクション文字列
   } = p;
 
@@ -1021,7 +1025,7 @@ Use this environment only in panels whose approved Action calls for it; explicit
 `
   ) : '';
 
-  const outfitSection = activeOutfit ? `
+  const outfitSection = activeOutfit ? scopedOutfit ? '\nCLOTHING:\n- Override reference clothing only for assigned characters/roles. Keep reference wardrobe for unassigned actors.' : `
 CLOTHING:
 - Reference image ONLY for face, hair, skin, accessories.
 - IGNORE reference clothing. Use ONLY the OUTFIT OVERRIDE below.` : '';
@@ -1065,7 +1069,7 @@ ${VAR_CAST_LIST}
 ${outfitOverride}
 【Identity Anchor】: Cross-panel consistency is MANDATORY. Redraw if hair/eyes/glasses/outfit mismatch.
 ${identityMatrix}
-${preserveReferenceStyle ? (activeOutfit ? REFERENCE_SHEET_OUTFIT_RENDERING_LOCK : REFERENCE_SHEET_WARDROBE_STYLE_LOCK) : isMonochrome ? MONOCHROME_WARDROBE_LOCK : CROSS_PANEL_WARDROBE_COLOR_LOCK}
+${preserveReferenceStyle ? (activeOutfit ? referenceOutfitRenderingLock(scopedOutfit) : REFERENCE_SHEET_WARDROBE_STYLE_LOCK) : isMonochrome ? MONOCHROME_WARDROBE_LOCK : CROSS_PANEL_WARDROBE_COLOR_LOCK}
 ${WARDROBE_ENVIRONMENT_CONTRAST_LOCK}
 OUTFIT CONSISTENCY: Each character keeps their own assigned outfit across ALL 4 panels unless the script explicitly changes its state.
 ${WARDROBE_COMPONENT_LOCK}

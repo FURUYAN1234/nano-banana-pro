@@ -36,12 +36,12 @@
     },
     {
       "name": "MEDIA_689_projection-shared",
-      "current": "人物の投影→画風の順で描画。\n",
+      "current": "SHOT P1/P2/P3/P4 ONLY: 人物/注視先を配置→指定の体/首/顔向き・首傾げ・表情保持、可視の瞳を指定先へ（対象未指定/閉眼/明示の読者目線は保持）→独立Cameraで立体投影→画風.\n",
       "previous": ""
     },
     {
       "name": "MEDIA_689_projection-panel",
-      "current": "ACTOR PROJECTION FIRST: volumes before style/texture; preserve gaze/head pose; ",
+      "current": "人物/注視先を配置→指定の体/首/顔向き・首傾げ・表情保持、可視の瞳を指定先へ（対象未指定/閉眼/明示の読者目線は保持）→独立Cameraで立体投影→画風; ",
       "previous": ""
     },
     {

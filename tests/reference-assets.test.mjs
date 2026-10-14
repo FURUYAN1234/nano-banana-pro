@@ -140,6 +140,43 @@ test('scenario context keeps appearance, spatial cues and uncertain ownership as
   assert.doesNotMatch(context, /data:image|base64/);
 });
 
+test('image material context limits character-reference authority instead of locking all appearance', () => {
+  const {assets}=parse(payload());
+  const context=lib.buildReferenceAssetContext(assets,images,{purpose:'image'});
+  assert.doesNotMatch(context,/外見は参照画像/,'unqualified appearance authority competes with explicit wardrobe and panel media');
+  assert.match(context,/人物参照は.*識別特徴の資料/);
+  assert.match(context,/衣装・画風\/顔構造・演技\/表情・Cameraは承認済み台本と該当コマ指定を優先/);
+  assert.match(context,/衣装が未指定または資料準拠を明示した範囲は参照衣装を使う/);
+  assert.match(context,/背景\/小物の形状は参照を保ち/);
+});
+
+test('assembled reference prompts keep explicit wardrobe media and acting while retaining reference defaults and asset designs', () => {
+  const {assets}=parse(payload());
+  const snapshot=structuredClone(assets);
+  const context=lib.buildReferenceAssetContext(assets,images,{purpose:'image'});
+  for(const source of [
+    'Outfit: アオは赤い作業着。\nCamera: 右後方の低い位置からアオリ。\nStyle: WATERCOLOR。顔も透明水彩。\nAction: 左手で鍵を支え、困り笑いを保つ。',
+    'Outfit: キャラシート準拠。\nCamera: 左上から俯瞰。\nStyle: NORMAL。\nAction: 鍵は机に置いたまま。',
+    'Camera: 左上から俯瞰。\nAction: 作業室でアオとベニが鍵を見る。',
+  ]) {
+    const body=source+'\n'+context;
+    const openAI=buildOpenAIReferencePlan({characterImages:images,referenceAssets:assets,compact:false});
+    const gemini=buildGeminiReferencePlan({characterImages:images,referenceAssets:assets,compact:false});
+    const web=lib.buildWebReferencePlan({images,referenceAssets:assets,compact:false});
+    for(const prompt of [appendOpenAIReferencePrompt(body,openAI),appendGeminiReferencePrompt(body,gemini),body+'\n'+web.rolePrompt]) {
+      assert.ok(prompt.startsWith(source),'authored wardrobe/camera/media/acting cannot be rewritten');
+      assert.doesNotMatch(prompt,/外見は参照画像/);
+      assert.match(prompt,/canonical clothing unless the approved prompt explicitly overrides clothing/);
+      assert.match(prompt,/selected panel rendering recipe determines face\/eye construction and body stylization/);
+      assert.match(prompt,/丸い持ち手。持ち主は不明/);
+      assert.match(prompt,/奥に扉、左に窓/);
+    }
+    assert.deepEqual(openAI.imageInputs.map(item=>item.image_url),images);
+    assert.deepEqual(web.referenceImages,images);
+  }
+  assert.deepEqual(assets,snapshot,'reference records must not be rewritten to fit a scenario');
+});
+
 test('both providers use every original in the same order, with actual character/background/prop roles', () => {
   const { assets } = parse(payload());
   const openai = buildOpenAIReferencePlan({ characterImages: images, referenceAssets: assets });

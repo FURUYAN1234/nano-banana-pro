@@ -10,8 +10,8 @@ import {
   getOpenAIScenarioModelRoute,
 } from '../src/lib/openai-model-routes.js';
 
-test('development and production both start on Sol 6.1', () => {
-  assert.equal(resolveDefaultOpenAIScenarioModelId(true), 'gpt-6.1-sol');
+test('development validation starts on Luna 6 while production keeps Sol 6.1', () => {
+  assert.equal(resolveDefaultOpenAIScenarioModelId(true), 'gpt-6-luna');
   assert.equal(resolveDefaultOpenAIScenarioModelId(false), 'gpt-6.1-sol');
 });
 
@@ -21,6 +21,30 @@ const workflowSource = await import('node:fs/promises')
   .then(({ readFile }) => readFile(new URL('../src/hooks/useMangaWorkflow.js', import.meta.url), 'utf8'));
 const cssSource = await import('node:fs/promises')
   .then(({ readFile }) => readFile(new URL('../src/index.css', import.meta.url), 'utf8'));
+
+test('initial selection, invalid selection and full reset share the environment default without overwriting an explicit model', () => {
+  const selectionBlock = workflowSource.slice(
+    workflowSource.indexOf('const [scenarioModelId, setScenarioModelIdState]'),
+    workflowSource.indexOf('const [openAIImageQuality, setOpenAIImageQualityState]'),
+  );
+  const initializeSelection = new Function('useState', 'DEFAULT_OPENAI_SCENARIO_MODEL_ID', 'OPENAI_SCENARIO_TEXT_MODEL_IDS',
+    `${selectionBlock}; return {scenarioModelId, setScenarioModelId, resetScenarioModelId};`);
+  for (const [development, expected] of [[true, 'gpt-6-luna'], [false, 'gpt-6.1-sol']]) {
+    let selected;
+    const selection = initializeSelection(initial => {
+      selected = initial;
+      return [initial, value => { selected = value; }];
+    }, resolveDefaultOpenAIScenarioModelId(development), OPENAI_SCENARIO_TEXT_MODEL_IDS);
+    assert.equal(selection.scenarioModelId, expected);
+    selection.setScenarioModelId('gpt-6-sol');
+    assert.equal(selected, 'gpt-6-sol', 'an intentional supported choice remains allowed');
+    selection.setScenarioModelId('not-a-model');
+    assert.equal(selected, expected);
+    selection.setScenarioModelId('gpt-6-astra');
+    selection.resetScenarioModelId();
+    assert.equal(selected, expected);
+  }
+});
 
 test('the STEP2 selectable route includes every supported scenario fallback model', () => {
   assert.deepEqual(OPENAI_SCENARIO_TEXT_MODEL_IDS, [
@@ -41,8 +65,8 @@ test('the STEP2 selectable route includes every supported scenario fallback mode
     OPENAI_SCENARIO_TEXT_MODEL_IDS,
   );
   assert.ok(OPENAI_SCENARIO_MODEL_OPTIONS.every(({ label, description }) => label && description));
-  assert.equal(OPENAI_SCENARIO_PRICE_SNAPSHOT_DATE, '2026-10-13');
-  assert.equal(OPENAI_SCENARIO_MODEL_OPTIONS.find(({ id }) => id === 'gpt-6.1-sol').priceSnapshotDate, '2026-10-13');
+  assert.equal(OPENAI_SCENARIO_PRICE_SNAPSHOT_DATE, '2026-10-14');
+  assert.equal(OPENAI_SCENARIO_MODEL_OPTIONS.find(({ id }) => id === 'gpt-6.1-sol').priceSnapshotDate, '2026-10-14');
   assert.ok(OPENAI_SCENARIO_MODEL_OPTIONS.every(({ inputPriceUsdPerM, outputPriceUsdPerM }) => (
     Number.isFinite(inputPriceUsdPerM) && Number.isFinite(outputPriceUsdPerM)
   )));
@@ -80,6 +104,57 @@ test('a fixed scenario model falls back only to later models', () => {
     'gpt-4.1-nano',
     'gpt-4o',
   ]);
+});
+
+test('local Luna validation cannot silently fall back while production and other selected models keep their routes', () => {
+  assert.deepEqual(getOpenAIScenarioModelRoute('gpt-6-luna', true), ['gpt-6-luna']);
+  assert.deepEqual(getOpenAIScenarioModelRoute('gpt-6-luna', false), [
+    'gpt-6-luna', 'gpt-5.6-luna', 'gpt-4.1', 'gpt-4.1-mini', 'gpt-4.1-nano', 'gpt-4o',
+  ]);
+  for (const id of OPENAI_SCENARIO_TEXT_MODEL_IDS.filter(id => id !== 'gpt-6-luna')) {
+    assert.deepEqual(getOpenAIScenarioModelRoute(id, true), getOpenAIScenarioModelRoute(id, false));
+  }
+});
+
+test('Vite development and production apply their own initial model, route and reload explanation', async () => {
+  const [{ createServer }, { default: React }, { renderToStaticMarkup }] = await Promise.all([
+    import('vite'), import('react'), import('react-dom/server'),
+  ]);
+  const originalNodeEnv = process.env.NODE_ENV;
+  try {
+    for (const [environment, expectedId, expectedLabel] of [
+      ['development', 'gpt-6-luna', 'GPT-6 Luna'],
+      ['production', 'gpt-6.1-sol', 'GPT-6.1 Sol'],
+    ]) {
+      process.env.NODE_ENV = environment;
+      const server = await createServer({
+        appType: 'custom', logLevel: 'silent', mode: environment,
+        server: { middlewareMode: true, hmr: false },
+      });
+      try {
+        assert.equal(server.config.isProduction, environment === 'production');
+        const routes = await server.ssrLoadModule('/src/lib/openai-model-routes.js');
+        const { default: Step2Panel } = await server.ssrLoadModule('/src/components/Step2Panel.jsx');
+        assert.equal(routes.DEFAULT_OPENAI_SCENARIO_MODEL_ID, expectedId);
+        assert.equal(routes.getOpenAIScenarioModelRoute('gpt-6-luna').length, environment === 'development' ? 1 : 6);
+        const renderPanel = scenarioModelId => renderToStaticMarkup(React.createElement(Step2Panel, {
+          currentStep: 2, inputMode: 'manual', targetDate: '2026-10-14', categories: [],
+          manualTopic: '', scenario: '', originalScenario: '', scenarioThought: '',
+          selectedEngine: 'openai', enableOpenAIApi: true, scenarioModelId, punchlineType: 'Auto',
+        }));
+        const html = renderPanel(expectedId);
+        assert.ok(html.includes(`再読込時は${expectedLabel}から開始します。`));
+        assert.ok(html.includes(`value="${expectedId}" selected=""`));
+        assert.ok(html.includes(environment === 'development' ? '検証用・他モデルへ切替なし' : '固定・失敗時のみ下位へ'));
+        assert.ok(renderPanel('gpt-6-sol').includes('固定・失敗時のみ下位へ'));
+      } finally {
+        await server.close();
+      }
+    }
+  } finally {
+    if (originalNodeEnv === undefined) delete process.env.NODE_ENV;
+    else process.env.NODE_ENV = originalNodeEnv;
+  }
 });
 
 test('automatic or invalid selection keeps the complete default route', () => {

@@ -14,7 +14,9 @@ const step2PanelSource = readFileSync(new URL('../src/components/Step2Panel.jsx'
 test('Gemini scenario price card describes the real primary route', () => {
   assert.equal(GEMINI_SCENARIO_MODEL_INFO.id, GEMINI_TEXT_MODEL_IDS[0]);
   assert.deepEqual(GEMINI_TEXT_MODEL_IDS, [
-    'gemini-3.8-flash',    'gemini-3.6-flash',    'gemini-3.5-flash-lite',
+    'gemini-3.8-flash',
+    'gemini-3.6-flash',
+    'gemini-3.5-flash-lite',
     'gemini-3.1-flash-lite',
   ]);
   assert.deepEqual(GEMINI_SCENARIO_MODEL_INFO, {
@@ -24,7 +26,7 @@ test('Gemini scenario price card describes the real primary route', () => {
     inputPriceUsdPerM: 0.75,
     outputPriceUsdPerM: 3.75,
   });
-  assert.equal(GEMINI_SCENARIO_PRICE_SNAPSHOT_DATE, '2026-10-13');
+  assert.equal(GEMINI_SCENARIO_PRICE_SNAPSHOT_DATE, '2026-10-14');
 });
 
 test('Gemini 3 text requests omit deprecated sampling parameters in ordinary and JSON modes', async () => {

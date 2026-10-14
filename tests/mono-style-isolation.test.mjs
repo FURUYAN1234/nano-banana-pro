@@ -6,7 +6,7 @@ import { createServer } from 'vite';
 import { FOCAL_DEPTH_HIERARCHY } from '../src/lib/shared-image-quality.js';
 import { GEKIGA_FACE_CONSTRUCTION } from '../src/lib/constants.js';
 import { withoutMosaicRepair } from './helpers/mosaic-isolation.mjs';
-import { restorePrePolicyContracts, restorePreSelectionContracts } from './helpers/prompt-policy-normalization.mjs';
+import { restorePrePolicyContracts, restorePreSelectionContracts, restoreReviewedShotExecution } from './helpers/prompt-policy-normalization.mjs';
 
 // Retain the original isolation baseline; normalize only the authorized shared
 // focus contract, independently covered by expressive-direction.test.mjs.
@@ -134,7 +134,9 @@ test('OpenAI monochrome keeps every neighboring NORMAL, WATERCOLOR and CHIBI pan
     const input = baseline.cases.find(value => value.name === record.case);
     const prompt = buildMangaPrompt({ ...baseline.options, scenario: scenarioFor(input),
       providerFamily: 'chatgpt', colorMode: 'monochrome', promptMaxChars: record.promptMaxChars });
-    const panels = prompt.split(/^## Panel \d+\s*$/m).slice(1);
+    // Restore only reviewed shot sharing before separating panels, so the
+    // exact per-panel style hash retains each shared clause's original scope.
+    const panels = restoreReviewedShotExecution(prompt).split(/^## Panel \d+\s*$/m).slice(1);
     assert.equal(panels.length, 4);
     assert.equal(record.panels.length, 3);
     for (const panel of record.panels) {

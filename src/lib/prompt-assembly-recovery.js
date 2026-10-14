@@ -7,9 +7,14 @@ import { formatApiErrorDetails } from './api-errors.js';
 // 通常の構築を優先し、配置データの不整合だけを既存の文章APIで修復する。
 // 台詞・状況・CameraをAIの返答で上書きする経路は持たない。
 export async function assembleMangaPromptWithRecovery(options, request, onProgress = () => {}, signal) {
+  const { value: artifact, scenario, repaired } = await withScenarioBalloonLayoutRecovery(options, buildMangaPromptArtifact, request, onProgress, signal);
+  return { artifact, scenario, repaired };
+}
+
+export async function withScenarioBalloonLayoutRecovery(options, build, request, onProgress = () => {}, signal) {
   signal?.throwIfAborted();
   try {
-    return { artifact: buildMangaPromptArtifact(options), scenario: options.scenario, repaired: false };
+    return { value: build(options), scenario: options.scenario, repaired: false };
   } catch (error) {
     if (error?.code !== 'BALLOON_LAYOUT_INVALID') throw error;
   }
@@ -43,11 +48,11 @@ ${options.scenario}`, null, null, onProgress, { signal });
     if (!Array.isArray(edits) || !edits.length || edits.some(edit => edit?.field !== 'BalloonLayout' || !affected.has(edit.panel))) {
       throw new Error('配置以外、または正常なコマを変更する修復案のため、元の台本を保持しました。');
     }
-    const scenario = applyScenarioStagingPatch(options.scenario, JSON.stringify(edits), options.castList);
-    const artifact = buildMangaPromptArtifact({ ...options, scenario });
+    const scenario = applyScenarioStagingPatch(options.scenario, JSON.stringify(edits), options.castList, { scenarioMode: options.scenarioMode });
+    const value = build({ ...options, scenario });
     signal?.throwIfAborted();
-    onProgress('吹き出し配置の自動修復が完了しました。台詞を保持した指示文を構築し、AI精査へ進みます。');
-    return { artifact, scenario, repaired: true };
+    onProgress('吹き出し配置の自動修復が完了しました。台詞・状況・カメラを保持して処理を続けます。');
+    return { value, scenario, repaired: true };
   } catch (cause) {
     if (signal?.aborted || cause?.name === 'AbortError' || cause?.code === 'CANCELLED') throw cause;
     const detail = issues.map(issue => `${issue.panel}コマ目: ${issue.reason}\n正本台詞: ${issue.dialogue.map((entry, index) => `${index + 1}. ${entry.speaker}「${entry.text}」`).join(' / ')}`).join('\n');

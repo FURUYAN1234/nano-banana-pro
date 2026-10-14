@@ -83,7 +83,7 @@ try {
   test('side-by-side frames receive explicit chronological pairs while strips receive none',()=>{
     const prompt=m.buildExperimentalImagePrompt(plan,source,input);
     assert.match(prompt,/ROW CHRONOLOGY: P1 RIGHT precedes P2 LEFT; P3 RIGHT precedes P4 LEFT/);
-    assert.match(prompt,/Never swap the paired scenes to balance artwork or balloon placement/);
+    assert.match(prompt,/各組の先行場面が先。絵\/吹き出しの均衡のために入替えない。ページ位置であり、コマ内Camera\/Actionの方向ではない。/);
     const strips=m.buildExperimentalImagePrompt({...plan,layout:'strips'},source,input);
     assert.doesNotMatch(strips,/ROW CHRONOLOGY:/);
     assert.match(strips,/P1 -> P2 -> P3 -> P4 -> P5/);
@@ -105,7 +105,8 @@ try {
       for(const [i,frame] of frames.entries()) {
         const style=mixed.panels[mediaPlan.panels[i].sourcePanel-1].style;
         assert.match(frame,new RegExp(`FRAME MEDIUM P${i+1} — ${style}:`));
-        assert.match(frame,/Every visible actor in this frame/);
+        assert.match(frame,/Every visible actor in this frame|ALL ACTORS\./);
+        if(frame.includes('ALL ACTORS.')) assert.match(prompt,/ALL ACTORS: 脇役も含む全可視人物を、その枠の媒体で描き、見える顔を全て再構築。主役だけでは不可。同一性\/感情\/視線\/脚本上の見え方を保持。/);
         if(style==='WATERCOLOR') {
           assert.match(frame,/水彩|wash|pigment/i);
           assert.doesNotMatch(frame,/GEKIGA FACE VALUE LOCK|fully redraw faces as realistic GEKIGA/);

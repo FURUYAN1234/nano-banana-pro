@@ -1,25 +1,25 @@
 {
-  "pricingSourceSha256": "bbbcaa8d942d81fa879e93cc26ca272ec3fefc9e161741e3acbdebc312b51b05",
-  "manualVersion": "7.0.5",
-  "manualSourceSha256": "9a7d8eced07c28e3201076d69640b4b5c8a3ef4a28afae82d684510f7677527f",
+  "pricingSourceSha256": "074b1193e0c8ccb8570faa586fed2fe5c5a3ffff337e1107dffc4fdf17045d68",
+  "manualVersion": "7.0.6",
+  "manualSourceSha256": "a77ddf02c0e0ca0b4d75fb9a9a988a699df1ebdaf6bfc7a328a5fe4e14201789",
   "manualFiles": [
     {
       "name": "gemini-api-beginner-guide-2026-10-01.pdf",
-      "sha256": "71efcb38479c0b485fbbf3aae22c699ebc00bc9bf012268a69981d0fe37f48f9"
+      "sha256": "e358d17879f53d4c178c7300c6df3ad756428eef012f281ebd2bb6f127e3c0a4"
     },
     {
       "name": "openai-api-beginner-guide-2026-09-30.pdf",
-      "sha256": "d7a38d1cec47cfff082f978ea06ab51761fa1c14cbecc0814b190824a735dfc9"
+      "sha256": "d6c50673fe9f55f579cf6ae8e6c7a797d7e25c8ea0d92814e338b362b2f039f6"
     },
     {
       "name": "super-furu-ai-4koma-full-manual-2026-10-01.pdf",
-      "sha256": "72a72c01b26d3a5620520f4a529907492fc556f3c4bb0cb1d7e408969e27ee4a"
+      "sha256": "16c3c4097a05ecb2bbea7d17d02d239f64f0e4aa275ad71a1f5594c99ed57ffd"
     }
   ],
-  "readmeSha256": "77186b0cf80ef2deb1b085d8e913ea7c97a02e34ce8842de61549d54832bc8d3",
-  "sourceTree": "4f31e7987a7f512c5214c530c22363dc92cee48b",
-  "publicTree": "ee60d8dd3746d40e6547e9e1ccd51eca7fe11a26",
-  "packageSha256": "1ed516e2c28a51490e2a7be1f281e00f978facc9c4398715173a600c4b893a69",
+  "readmeSha256": "9d3b428de8792f98ef6cef8c19ae128dd63727d617354a307852ebe4606d5ed3",
+  "sourceTree": "fdd6756d617e1daa40668f03df34317a287c7a35",
+  "publicTree": "d4a17edcabf206eaa6b38d157f959cf80eef2bf4",
+  "packageSha256": "c0f2107e19b63e704bf31e2ebc5041aa14a7bd2f7f855b6acd58f1f0c7d932b8",
   "releaseAssetSha256": "9e41886be6afa0ebfad6d244ecf53f37260a92f73b30309319029cc87e1ddb4e",
   "reviewedSections": [
     "Application screen and output / 操作画面と生成例",
@@ -39,16 +39,16 @@
     "AI Manga Creative Suite / AIまんが制作エコシステム",
     "📋 ChangeLog / 更新履歴"
   ],
-  "findings": "Reviewed all16 README sections against current source/UI and distributions. Expanded OFF4/ON5–8 explanation, separate-story rationale, examples, count safety, enhancement, color layout reuse,6 art styles and limits. Current version links/footer and full feature map reviewed. Removed unreleased and outdated current instructions; history retained. Public note whole body inspected and a block-preserving revision prepared for publication after app readback.",
-  "manualFindings": "Three current v7.0.5 PDFs rebuilt: OpenAI22, Gemini13, SYSTEM39 pages. All pages rendered and visually reviewed; expanded mode/style pages and revised first-run steps enlarged. No clipping, overlap, missing glyphs; obsolete app screenshots removed. Inputs, links, limits, model/pricing and saving guide reviewed against current implementation.",
+  "findings": "The prior 2026-10-13 review covered all16 README sections against source/UI and distributions. The saved 2026-10-14 delta review covered the introduction, mode comparison, direction, feature map, quick start, API settings and shared balloon-only repair: left/gray 4コマ生成, right/green 5～8コマ生成, white sliding thumb, separate cached scenarios/results, no API call on switching, reload-to-four, color-only layout reuse, count constraints and source/failure retention. Current compression delta review re-read the long-prompt paragraph with adjacent quality and API-budget limitations, plus the pending v7.0.6 changelog. 5-8-panel compaction starts above the15,000-character soft target while preserving source camera, acting, expressions, dialogue and complete local style instructions; this is not a truncation limit. Troubleshooting separates same-input local reconstruction measurements from live image evidence. Current README/package/manual metadata was collected from files; sourceTree/publicTree are the existing collector's HEAD identifiers. The saved v7.0.6 manual review was reused after exact PDF hash checks, with no new PDF render. Older pricingReview remains unchanged and must be renewed before any later authorized deployment. This record does not claim new official-price checks, API-image success, public-note readback or deployment. The 2026-10-14 verification-model delta re-read the three README default/routing descriptions against openai-model-routes.js and Step2Panel: public default remains GPT-6.1 Sol, local DEV default/reset is GPT-6 Luna, and a DEV Luna scenario route has no alternate-model fallback. Existing public-use manuals remain applicable to production; no new PDF review, pricing check or API run is claimed. The later 2026-10-14 delta rechecked the changed mode introduction/comparison/quick-start wording against the saved cyan switch UI proof and unchanged manuals: four-panel left is light blue. Native QA paragraphs now match removal of cumulative 120-second and 60-second cutoffs; provider request limits and cancellation remain. Ordinary STEP3 replanning remains intentional and was explicitly reaffirmed by the user. The wardrobe paragraph describes the new local version7 evidence boundary, including explicit scoped outfits, visible-region uncertainty and no guarantee of model accuracy. The real revision33 image failed visual acceptance; its completion is not proof of generation improvement or of the later wardrobe change. No new price, PDF, public readback or deployment claim is made. Current delta: reviewed the added bilingual head-direction paragraph against composition-variety.js: only an explicit target with unspecified face orientation gets natural-head completion; authored glances, raised/rear heads, expression and occlusion take priority. The paragraph explicitly requires pixel verification and makes no efficacy or release claim. Earlier section, PDF and pricing findings are unchanged. Current narrow delta: the bilingual rear-camera paragraph now permits naturally projected front/side/back planes while retaining actor direction and the room/prop/actor camera anchor. Checked against the one-line composition-variety.js correction; it explicitly states first-generation gaze efficacy remains API-unverified. Prior PDF, pricing and publication evidence is unchanged. Current authorized v7.0.6 release review compared the16 README sections with the documented baseline and all changed source/UI contracts. Current-version names and asset links, four/light-blue vs native/green switch, preserved mode caches, unchanged public Sol6.1 vs DEV Luna defaults, source-retaining prompt compaction, independent camera/head projection, blind review/wardrobe scope and per-request timeout limitations match the candidate. Unchanged licenses, package/privacy, Web exports, history/downloads, video workflow and related-app sections retain their verified behavior; no universal rendering or QA accuracy claim is added. Release notes now include all delivered changes. The malformed historical v7.0.5 English summary was corrected without changing its meaning. Manual delta and current official-price sources are retained privately.",
+  "manualFindings": "Current v7.0.6 manual review: SYSTEM39 regenerated for the long-prompt explanation and independent review limits. Pages20/37 inspected directly: legible Japanese, intact headers/footers, no clipping/overlap. Other37 SYSTEM pages are pixel-exact to the already reviewed v7.0.6 baseline. All13 Gemini pages are pixel-exact; its published bytes remain unchanged. OpenAI22 remains byte-identical to its previously reviewed v7.0.6 guide. Current source text/privacy/version/A4/link/bounds checks pass; private manual-delta.json links the prior complete review and changed-page evidence. Public SYSTEM PDF hash matches reviewed output.",
   "pricingReview": {
-    "version": "7.0.5",
-    "sourceSha256": "bbbcaa8d942d81fa879e93cc26ca272ec3fefc9e161741e3acbdebc312b51b05",
-    "checkedAt": "2026-10-13T13:51:50.747Z",
+    "version": "7.0.6",
+    "sourceSha256": "074b1193e0c8ccb8570faa586fed2fe5c5a3ffff337e1107dffc4fdf17045d68",
+    "checkedAt": "2026-10-14T10:25:49.107Z",
     "sources": [
       "https://developers.openai.com/api/docs/pricing",
       "https://ai.google.dev/gemini-api/docs/pricing"
     ],
-    "findings": "Standard short-context text and image prices matched current config: Astra10/50, Sol6.1 and6 2/10, Luna6 0.1/0.5, Sol5.6 4/20, Terra2/12,Luna5.6 0.2/1.2; GPT4.1/mini/nano/4o unchanged. Image2/2.5 image8/30 text5 with caches2/1.25. Gemini3.8 Flash0.75/3.75 through2026-12-31; image1K0.0336 plusinput1.50 andtext7.50. Standard, not Batch. Fast/long context/tool/tax charges excluded. Official tables saved in private output."
+    "findings": "Fresh official tables read2026-10-14: Standard short-context Astra10/50; Sol6.1 and6 2/10; Luna6 0.1/0.5; Sol5.6 4/20; Terra2/12; Luna5.6 0.2/1.2; GPT4.1 2/8,mini0.4/1.6,nano0.1/0.4,4o2.5/10. Image2/2.5 image8/30 with cached2, text5 with cached1.25. Gemini3.8 Flash0.75/3.75 through2026-12-31; NanoBanana2.1 input1.50,text/thinking7.50,image30/tokenM or0.0336/1K. Standard is distinguished from half-price Batch. Long-context/Fast/tool/tax charges excluded; promotion end dates remain documented. Current config, UI summaries and manual price descriptions match."
   }
 }

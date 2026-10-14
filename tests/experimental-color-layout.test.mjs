@@ -59,7 +59,7 @@ try {
   });
 
   test('color-only reuse accepts a stored compact prompt when the new budget changes',async()=>{
-    const input=fixture(8),full=await prepare(input);
+    const input=fixture(5),full=await prepare(input);
     const previous=await prepare({...input,promptMaxChars:full.prompt.length-1});
     assert.ok(previous.prompt.length<full.prompt.length,'fixture exercises the compact form');
     let requests=0;
@@ -137,6 +137,22 @@ try {
     setColor('monochrome');setColor('color');
     assert.ok(await assemble(),state.status);assert.equal(state.requests,1);assert.equal(state.finalPrompt,original);
     state.experimentalEnabled=false;setColor('monochrome');assert.equal(state.generatedImage,null);
+  });
+
+  test('real STEP3 callback publishes the repaired scenario with the same completed preparation',async()=>{
+    const {state,assemble}=workflowState();
+    const original=state.scenario;
+    state.scenario=original.replace('状況:','BalloonLayout: []\n状況:');
+    const placement=[{speaker:'ユウ',x:0.7,anchor:'右の頭の輪郭',route:'上の余白から頭へ'}];
+    const fixed=state.scenario.replace('BalloonLayout: []','BalloonLayout: '+JSON.stringify(placement));
+    state.callAI=async()=>({text:++state.requests===1?JSON.stringify([{panel:1,field:'BalloonLayout',value:placement}]):JSON.stringify(planFor({...state,scenario:fixed}))});
+    assert.ok(await assemble(),state.lastError);
+    assert.equal(state.requests,2);assert.equal(state.scenario,fixed);
+    assert.equal(state.promptAssemblyRunRef.completedScenario,fixed);
+    assert.equal(state.promptAssemblyRunRef.experimentalPrepared.source.scenario,fixed);
+    assert.equal(state.promptAssemblyRunRef.completedRun,state.promptAssemblyRunRef.current);
+    assert.equal(state.generatedImage,'visible-image');
+    assert.deepEqual(state.generationHistory,[{img:'saved-image'}]);
   });
 
   test('mode round trips and every reset clear pending color reuse without erasing saved history',async()=>{

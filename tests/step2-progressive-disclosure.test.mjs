@@ -71,6 +71,16 @@ const renderStep2 = (overrides = {}) => renderToStaticMarkup(React.createElement
   ...overrides,
 }));
 
+test('STEP2 help uses the selected panel-count names without old experimental ON/OFF labels', () => {
+  for (const experimentEnabled of [false, true]) {
+    const html = renderStep2({ experimentEnabled });
+    assert.match(html, experimentEnabled ? /5～8コマ<!-- -->のストーリー設定|5～8コマのストーリー設定/ : /4コマ<!-- -->のストーリー設定|4コマのストーリー設定/);
+    assert.match(html, /「4コマ生成」は4コマ固定/);
+    assert.match(html, /「5～8コマ生成」では5～8コマで指定でき/);
+    assert.doesNotMatch(html, /実験的コマ割り|通常モードは4コマ固定/);
+  }
+});
+
 test('STEP2 generation keeps the real progress log visible while hiding stale result controls', () => {
   const html = renderStep2({
     isSearching: true,

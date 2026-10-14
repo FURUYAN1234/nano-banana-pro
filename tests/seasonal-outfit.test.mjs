@@ -10,8 +10,73 @@ import {
   getJapaneseWeekdayLabel,
   getSeasonContext,
   stripReferenceWardrobe,
-  buildScenarioCastContext
+  buildScenarioCastContext,
+  readExplicitOutfit,
+  hasScopedOutfitAssignment,
+  resolveOutfitForSubject
 } from '../src/lib/seasonal-outfit.js';
+
+test('wardrobe authority resolves each actor before applying a panel override',()=>{
+  const authority={castNames:['ユウ','ナギ'],global:'ユウは灰色の上着。ナギは黒い作業着。',panels:[{panel:3,outfit:'ナギは青い雨具。'}]};
+  const original=structuredClone(authority);
+  assert.deepEqual(resolveOutfitForSubject(authority,3,'ユウ'),{scope:'global',quote:authority.global,instruction:'ユウは灰色の上着'});
+  assert.deepEqual(resolveOutfitForSubject(authority,3,'ナギ'),{scope:'panel',quote:authority.panels[0].outfit,instruction:'ナギは青い雨具'});
+  assert.equal(resolveOutfitForSubject(authority,1,'ナギ').instruction,'ナギは黒い作業着');
+  assert.deepEqual(authority,original,'resolving an actor cannot mutate the source contract');
+});
+
+test('wardrobe authority preserves shared categories, direct groups and reference fallback',()=>{
+  const authority={castNames:['Yuu','Nagi'],global:'casual clothes',panels:[{panel:2,outfit:'Yuu and Nagi wear coats'}]};
+  assert.equal(resolveOutfitForSubject(authority,1,'Yuu').instruction,'casual clothes');
+  for(const actor of authority.castNames) assert.equal(resolveOutfitForSubject(authority,2,actor).scope,'panel');
+  assert.deepEqual(resolveOutfitForSubject({...authority,global:'',panels:[]},1,'Yuu'),{scope:'reference',quote:'',instruction:''});
+  assert.equal(resolveOutfitForSubject(authority,2,'unknown'),null);
+});
+
+test('wardrobe authority leaves roles, exclusions and mixed prose unresolved',()=>{
+  const authority={castNames:['ユウ','ナギ'],global:'ユウは上着。ナギは作業着。'};
+  for(const outfit of ['受付係は制服。','ユウ以外は雨具。','ユウは参照衣装。','ユウは上着。全員で作業する。','ユウ用の衣装']) {
+    assert.equal(resolveOutfitForSubject({...authority,panels:[{panel:2,outfit}]},2,'ユウ'),null,outfit);
+  }
+});
+
+test('explicit outfit reader keeps its supplied scope and treats defaults as fallback',()=>{
+  for(const value of ['default','none','なし','キャラシート準拠','デフォルト','未指定']) {
+    assert.equal(readExplicitOutfit(`Outfit: ${value}\nLocation: 部屋`),'');
+    assert.equal(readExplicitOutfit(`[Outfit: ${value}]`),'');
+  }
+  assert.equal(readExplicitOutfit('[Outfit: Aはコート]\r\n状況: 確認する'),'Aはコート');
+  assert.equal(readExplicitOutfit('Outfit:\nLocation: 部屋'),'');
+  assert.equal(readExplicitOutfit('Outfit: default-inspired jacket'),'default-inspired jacket');
+  assert.equal(readExplicitOutfit('<thought>Outfit: 古い服</thought>\nOutfit: 作業着'),'作業着');
+  assert.equal(hasScopedOutfitAssignment('A: work coat',['A','B']),true);
+  assert.equal(hasScopedOutfitAssignment('casual clothes',['A','B']),false,'short aliases do not match inside garment words');
+  assert.equal(hasScopedOutfitAssignment('受付係のみ制服',['A','B']),true);
+});
+
+test('complete cast outfit assignments replace wardrobe defaults but partial or excluded actors retain them',()=>{
+  const cast=[{aliases:['ユウ','Yuu']},{aliases:['ナギ','Nagi']}];
+  for(const outfit of ['ユウはコート、ナギは作業着。全員、指定の普段着。','ユウはコート、ナギは作業着。','Yuu: coat; Nagi wears overalls.']) {
+    assert.equal(hasScopedOutfitAssignment(outfit,cast),false,outfit);
+  }
+  for(const outfit of ['ユウはコート。全員で作業する。','ユウはコート。ナギと作業する。','ユウはコート、ナギは参照衣装。全員、指定どおり。','ユウはコート、ナギは作業着ではない。','ユウはコート、ナギ以外は作業着。','Yuu: coat; Nagi: default.']) {
+    assert.equal(hasScopedOutfitAssignment(outfit,cast),true,outfit);
+  }
+});
+
+test('plain-name rosters retain complete outfit coverage without treating prose as a roster',()=>{
+  for(const roster of ['ユウ、ナギ','ユウ, ナギ','ユウ，ナギ']) {
+    assert.equal(hasScopedOutfitAssignment('ユウはコート、ナギは作業着。',[],roster),false,roster);
+    for(const outfit of ['ユウはコート。','ユウはコート、ナギは参照衣装。','ユウはコート、ナギ以外は作業着。']) {
+      assert.equal(hasScopedOutfitAssignment(outfit,[],roster),true,outfit);
+    }
+  }
+  assert.equal(hasScopedOutfitAssignment('Yuu wears a coat; Nagi: overalls.',[],'Yuu, Nagi'),false);
+  for(const text of ['ユウ、ナギ\n性格: 友人思い','ユウ、ナギ（眼鏡）','ユウ、ナギと作業する。','ユウ、ナギ、']) {
+    assert.equal(hasScopedOutfitAssignment('ユウはコート、ナギは作業着。',[],text),true,text);
+  }
+  assert.equal(hasScopedOutfitAssignment('ユウはコート、ナギは作業着。',[{aliases:['ユウ']},{aliases:['ナギ']},{aliases:['ソラ']}],'ユウ、ナギ'),true,'structured cast remains authoritative');
+});
 
 const referenceCast = `## 1. テスト人物
 | **髪(Hair)** | 黒髪 | [WEIGHTS]: (black hair:1.4) |

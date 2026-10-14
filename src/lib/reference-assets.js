@@ -225,7 +225,7 @@ export function buildReferenceAssetContext(assets = [], images = [], { panorama 
   if (!assets.length && !panorama) return '';
   const references = images.map((image, index) => ({ imageIndex: index + 1, items: getReferenceAsset(assets, image).items }));
   if (panorama) references.push({ imageIndex: images.length + 1, items: [{ kind: 'background', name: '360°背景', description: JSON.stringify(panorama) }] });
-  if (purpose === 'image') return `[REFERENCE MATERIAL DATA]\n${JSON.stringify(references.map(reference => ({materialId: `M${reference.imageIndex}`, items: reference.items.map(({kind,name}) => ({kind,name}))})))}\nM番号はSTEP1の素材番号。API添付のImage番号との対応は末尾の参照一覧を使う。外見は参照画像、用途・動作は承認済み台本に従う。素材番号を絵に印字しない。`;
+  if (purpose === 'image') return `[REFERENCE MATERIAL DATA]\n${JSON.stringify(references.map(reference => ({materialId: `M${reference.imageIndex}`, items: reference.items.map(({kind,name}) => ({kind,name}))})))}\nM番号はSTEP1の素材番号。API添付のImage番号との対応は末尾の参照一覧を使う。人物参照は年齢・髪・肌色・眼鏡等の識別特徴の資料。衣装・画風/顔構造・演技/表情・Cameraは承認済み台本と該当コマ指定を優先。衣装が未指定または資料準拠を明示した範囲は参照衣装を使う。背景/小物の形状は参照を保ち、用途・動作・配置・所有・状態は台本に従う。素材番号を絵に印字しない。`;
   return `[REFERENCE MATERIAL DATA]\n${JSON.stringify(references)}
 素材の種類・人物の同一性・視覚的特徴を極力反映する。同じ人物の表情集・三面図は別人に数えない。
 AIで認識できない場合もある。unknownや未確定の関係を事実として断定しない。ユーザーに分類を要求せず、台本に合う範囲で扱う。

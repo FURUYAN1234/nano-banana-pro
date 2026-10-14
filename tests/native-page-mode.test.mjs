@@ -32,9 +32,39 @@ try {
   test('mode switch is available before STEP2 and explains native scenario creation in both states',()=>{
     for(const enabled of [false,true]) {
       const html=renderToStaticMarkup(React.createElement(Panel,{enabled,currentStep:2,onModeChange:()=>{}}));
-      assert.match(html,/role="switch"/);assert.match(html,/最初から5〜8コマ/);assert.doesNotMatch(html,/元の4コマ台本|保存していた4コマ用プロンプトへ戻り/);
+      assert.match(html,/role="switch"/);assert.match(html,/最初から5～8コマ/);assert.doesNotMatch(html,/元の4コマ台本|保存していた4コマ用プロンプトへ戻り/);
     }
     assert.equal(renderToStaticMarkup(React.createElement(Panel,{currentStep:1})), '');
+  });
+  test('mode switch labels the selected panel count and moves a fixed white thumb across a changing track',()=>{
+    const modes=[];
+    for(const enabled of [false,true]) {
+      const changes=[];
+      const element=Panel({enabled,currentStep:2,onModeChange:value=>changes.push(value)});
+      const button=React.Children.toArray(element.props.children).find(child=>child.type==='button');
+      const track=React.Children.toArray(button.props.children).find(child=>child.props?.['aria-hidden']==='true');
+      const thumb=track.props.children;
+      const html=renderToStaticMarkup(element);
+      assert.match(html,enabled?/<strong>5～8コマ生成<\/strong>/:/<strong>4コマ生成<\/strong>/);
+      assert.doesNotMatch(html,/ON|OFF|実験的コマ割り/);
+      assert.equal(button.props['aria-label'],'コマ数切り替え');
+      assert.equal(button.props['aria-checked'],enabled);
+      assert.equal(button.props['aria-describedby'],'experimental-manga-description');
+      assert.ok(button.props.style.minHeight>=44,'the switch keeps a usable click target');
+      assert.equal(track.props.style.flexShrink,0,'the track cannot collapse beside its label');
+      assert.equal(thumb.props.style.width,thumb.props.style.height,'the thumb remains circular');
+      assert.equal(thumb.props.style.background,'#fff','only the track changes color');
+      button.props.onClick();
+      assert.deepEqual(changes,[!enabled]);
+      modes.push({track:track.props.style,thumb:thumb.props.style});
+    }
+    assert.equal(modes[0].track.background,'#38bdf8','four-panel mode uses a light-blue track');
+    assert.equal(modes[1].track.background,'#059669','five-to-eight panels retain the green track');
+    assert.notEqual(modes[0].thumb.transform,modes[1].thumb.transform);
+    for(const enabled of [false,true]) {
+      const html=renderToStaticMarkup(React.createElement(Panel,{enabled,currentStep:2,normalBusy:true}));
+      assert.match(html,/<button[^>]*disabled=""/,'busy generation must still disable the switch');
+    }
   });
   test('App places the switch before STEP2 rather than wrapping STEP3',async()=>{
     const app=await readFile(new URL('../src/App.jsx',import.meta.url),'utf8');

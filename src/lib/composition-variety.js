@@ -97,15 +97,15 @@ export const SCENARIO_SHOT_DESIGN_RULES = `【画角と身体動作の一体設�
 - Cameraには撮影位置と画面に見える証拠を書く。俯瞰なら頭頂・机天面、床からの煽りなら大きな前景と上へ伸びる身体、傾きなら斜めの環境線、全身なら頭から足先と明記する。`;
 
 const FULL_BODY_SHOT_RE = /full[ -]body|graceful full shot|head.to.(?:toe|feet)|全身|頭から(?:両)?(?:足先|つま先|靴)|足元から上半身/i;
-const CLOSE_SHOT_RE = /close[ -]?up|deep emotion close|zoom[ -]?in|ズームイン|アップ|(?<!側面|正面|背面|方|側|左|右|前|後|上|下|奥|横)寄り(?:の|(?=[。．.!！?？、,;；\s]|$))|寄る|接写/i;
+const CLOSE_SHOT_RE = /close[ -]?up|deep emotion close|zoom[ -]?in|ズームイン|アップ|(?<!側面|正面|背面|横顔|後ろ姿|方|側|左|右|前|後|上|下|奥|横)寄り(?:の|(?=[。．.!！?？、,;；\s]|$))|寄る|接写/i;
 const FLOOR_CAMERA_RE = /(?:floor|ground)[ -]level|(?:床|地面)(?:すれすれ|近く|付近|から(?!\s*[\d０-９一二三四五六七八九十百]))/i;
-const HIGH_CAMERA_RE = /overhead|high[ -]angle|innocent high|bird['’]?s?[ -]eye|top[ -]down|俯瞰|真上|斜め上(?:から|より|の(?:視点|位置|カメラ))|上から|高(?:い|めの?)(?:撮影)?位置(?:から|より)|高め(?:から|より|に(?:撮|捉え))|高く(?:撮|捉え|構え)|(?:カメラ|撮影位置|視点)[はをが:：\s]*(?:やや|少し)?高(?:い|め|く)|高所から|上方から|見下ろ[すし]/i;
-const LOW_CAMERA_RE = /low[ -]angle|dominant low|worm['’]?s?[ -]eye|ローアングル|ワームズアイ|アオリ|煽[りる]|下から|見上げ|低(?:い|めの?)(?:撮影)?位置(?:から|より|[、。]|$)|低(?:い|めの?)斜め|低め(?:から|より|に(?:撮|捉え))|低く(?:撮|捉え|構え)|(?:カメラ|撮影位置|視点)[はをが:：\s]*(?:やや|少し)?低(?:い|め|く)|低所(?:から|の|に|より)?|(?:[^\s、。]+上|[^\s、。]+面)すれすれ(?:から|より|[、。]|$)/i;
+const HIGH_CAMERA_RE = /overhead|high[ -]angle|innocent high|bird['’]?s?[ -]eye|top[ -]down|俯瞰|真上|斜め上(?:から|より|の(?:視点|位置|カメラ))|上から|高(?:い|めの?)(?:撮影)?位置(?:から|より|で(?=[、,]?\s*(?:カメラ|撮|捉|構え|水平)))|高め(?:から|より|に(?:撮|捉え))|高く(?:撮|捉え|構え)|(?:カメラ|撮影位置|視点)[はをが:：\s]*(?:やや|少し)?高(?:い|め|く)|高所から|上方から|見下ろ[すし]/i;
+const LOW_CAMERA_RE = /low[ -]angle|dominant low|worm['’]?s?[ -]eye|ローアングル|ワームズアイ|アオリ|煽[りる]|下から|見上げ|低(?:い|めの?)(?:撮影)?位置(?:から|より|で(?=[、,]?\s*(?:カメラ|撮|捉|構え|水平))|[、。]|$)|低(?:い|めの?)斜め|低め(?:から|より|に(?:撮|捉え))|低く(?:撮|捉え|構え)|(?:カメラ|撮影位置|視点)[はをが:：\s]*(?:やや|少し)?低(?:い|め|く)|低所(?:から|の|に|より)?|(?:[^\s、。]+上|[^\s、。]+面)すれすれ(?:から|より|[、。]|$)/i;
 
 // Strip only named camera terms under a prohibition, including Japanese lists;
 // keep affirmative directions in the same sentence for every camera consumer.
 const CAMERA_TERM = '(?:魚眼|フィッシュアイ|超広角|広角|望遠|長焦点|長い焦点距離|アイレベル|目線の高さ|目の高さ|俯瞰|アオリ|煽り|ローアングル|ハイアングル|ダッチ(?:アングル)?|ズームイン|ズームアウト|アップ|接写|全身|全景|遠景|ワイドショット)(?:レンズ)?(?:の歪み)?';
-const CAMERA_PROHIBITION = '(?:なし|無し|使わない|使わず|使用しない|使用せず|用いない|用いず|禁止|避ける|避け|不可)';
+const CAMERA_PROHIBITION = '(?:なし|無し|使わない|使わず|使用しない|使用せず|用いない|用いず|追加しない|追加せず|描かない|描かず|描写しない|描写せず|禁止|避ける|避け|不可)';
 const CAMERA_NEGATION = `(?:(?:は|を|も)?${CAMERA_PROHIBITION}|にしない|ではなく|ではない|でなく|でない)`;
 const NEGATED_CAMERA_TERMS_RE = new RegExp([
   `非${CAMERA_TERM}`,
@@ -115,9 +115,15 @@ const NEGATED_CAMERA_TERMS_RE = new RegExp([
   `(?<![\\p{L}\\p{N}])${CAMERA_TERM}(?:\\s*(?:[・、,／/]|と|や|および|及び)\\s*${CAMERA_TERM})+\\s*(?:は|を|も)${CAMERA_PROHIBITION}`,
   `${CAMERA_TERM}\\s*${CAMERA_NEGATION}`,
 ].join('|'), 'gu');
+const ENGLISH_CAMERA_TERM = '(?:fish[ -]?eye|eye[ -]?level|high[ -]angle|low[ -]angle|overhead|top[ -]down|bird[\'’]?s?[ -]eye|worm[\'’]?s?[ -]eye|telephoto|long[ -](?:lens|focal length)|wide[ -]angle|dutch(?:[ -](?:angle|tilt))?|camera[ -]tilt|tilt|cinematic slant|zoom[ -]in|zoom[ -]out|close[ -]?up|full[ -]body|wide[ -]shot|long[ -]shot)(?: lens)?';
+const NEGATED_ENGLISH_CAMERA_TERMS_RE = new RegExp([
+  `\\b(?:no|not|without|avoid)\\s+(?:(?:using|use|any|a|an)\\s+)*${ENGLISH_CAMERA_TERM}(?:\\s*,\\s*${ENGLISH_CAMERA_TERM})*\\s*,?\\s+(?:or|and)\\s+${ENGLISH_CAMERA_TERM}`,
+  `\\b(?:no|not|without|avoid)\\s+(?:(?:using|use|any|a|an)\\s+)*${ENGLISH_CAMERA_TERM}(?:\\s*(?:/|\\bor\\b|\\band\\b)\\s*${ENGLISH_CAMERA_TERM})*`,
+  `\\bnon[ -]?${ENGLISH_CAMERA_TERM}`,
+].join('|'), 'gi');
 const affirmativeCameraText = (camera) => String(camera)
-  .replace(/\b(?:no|not|without|avoid)\s+(?:(?:using|use|any|a)\s+)*(?:fish[ -]?eye|eye[ -]?level)(?:\s*(?:,|\/|\bor\b|\band\b)\s*(?:fish[ -]?eye|eye[ -]?level))*/gi, '')
-  .replace(/non[ -]?(?:fish[ -]?eye|eye[ -]?level)/gi, '')
+  // A comma alone starts a new direction; a comma list needs a final and/or.
+  .replace(NEGATED_ENGLISH_CAMERA_TERMS_RE, '')
   .replace(NEGATED_CAMERA_TERMS_RE, '');
 
 export const isFisheyeCamera = (camera = '') => /fish[ -]?eye|魚眼|フィッシュアイ/i.test(affirmativeCameraText(camera));
@@ -145,8 +151,31 @@ export const isPullbackShot = (camera = '') => {
     && (FULL_BODY_SHOT_RE.test(text) || !CLOSE_SHOT_RE.test(text));
 };
 
+export const PANEL_SHOT_EXECUTION_ORDER = '人物/注視先を配置→指定の体/首/顔向き・首傾げ・表情保持、注視先明示かつ顔向き未指定なら対象に応じた自然な頭向きを補う（明示の横目/目だけの移動/顔上げ/背面を優先、顔/対象の遮蔽保持）、可視瞳を指定先へ（対象未指定/閉眼/明示の読者目線保持）→独立Cameraで立体投影→画風';
+const HIGH_SHOT_PROJECTION = 'look down from the scripted higher viewpoint, not eye-level: head/shoulder tops, shortened torsos, upper prop faces, floor/table planes as visible';
+
+// Share only these exact compiler-owned clauses at generated shot boundaries.
+// Scope every shared clause to the panels it came from; authored fields stay put.
+export const sharePanelShotExecution = (prompt) => {
+  const shotBoundary = /^((?:## Panel (\d+)\nCamera:[^\n]*|\[PAGE FRAME P(\d+) [^\n]*\nrect=[^\n]*\n(?:Inside this frame — )?Camera:[^\n]*)\n)(SHOT EXECUTION: [^\n]*)$/gm;
+  const shots = [...prompt.matchAll(shotBoundary)];
+  const shared = [PANEL_SHOT_EXECUTION_ORDER, HIGH_SHOT_PROJECTION].flatMap(cue => {
+    const panels = shots.filter(match => match[4].includes(`${cue}; `)).map(match => Number(match[2] || match[3]));
+    const line = `SHOT P${panels.join('/P')} ONLY: ${cue}.\n`;
+    return panels.length > 1 && line.length < (cue.length + 2) * panels.length ? [{ cue, panels, line }] : [];
+  });
+  if (!shared.length) return prompt;
+  const compacted = prompt.replace(shotBoundary, (_match, prefix, normal, native, shot) =>
+    prefix + shared.filter(rule => rule.panels.includes(Number(normal || native)))
+      .reduce((value, rule) => value.replace(`${rule.cue}; `, ''), shot));
+  // Preserve whole leading contracts, including multi-line cast/page headers.
+  // Replacements start inside this first panel, so its original index is stable.
+  const firstPanel = shots[0].index;
+  return compacted.slice(0, firstPanel) + shared.map(rule => rule.line).join('') + compacted.slice(firstPanel);
+};
+
 // Turn a shot label into observable framing cues; never replace explicit crop/angle.
-export const getPanelShotExecution = (camera = '') => {
+export const getPanelShotExecution = (camera = '', { compact = false } = {}) => {
   const text = affirmativeCameraText(camera);
   const cues = [];
   const full = FULL_BODY_SHOT_RE.test(text);
@@ -155,24 +184,39 @@ export const getPanelShotExecution = (camera = '') => {
   const floor = FLOOR_CAMERA_RE.test(text);
   const elevation = classifyCameraElevation(text);
   const fisheye = isFisheyeCamera(text);
-  const horizontal = /水平(?:に|の|を保)|horizontal|level aim/i.test(text);
-  if (elevation === 'high' || (elevation === 'low' && !horizontal)) cues.push('ACTOR PROJECTION FIRST: volumes before style/texture; preserve gaze/head pose');
-  if (close) cues.push('tight crop on focal subject');
+  // Camera aim is distinct from a level panel border, table edge or held prop.
+  const horizontal = /水平に(?:撮|構え|向け|捉え)|水平(?:の|な)?(?:視点|カメラ|撮影|視線)|(?:カメラ|視点|撮影方向|光軸)(?:は|を|が)?水平|(?:^|[、。;；\s])水平(?=[、。;；]|$)|\bhorizontal(?:ly)?(?:\s+(?:aim|camera|view|shot|looking|pointing|filming)|(?=\s*[,;.]|$))|level aim/i.test(text);
+  if (elevation === 'high' || (elevation === 'low' && !horizontal)) cues.push(PANEL_SHOT_EXECUTION_ORDER);
+  if (close) cues.push(compact ? '主対象を寄りで切取' : 'tight crop on focal subject');
   else if (full) {
     const mixedCrop = /(?:腰|胸|膝|ひざ|肩)(?:から上|まで)|(?:waist|chest|knee)[ -]up|close[ -]up|bust|portrait|アップ|接写/i.test(text);
-    cues.push(`${mixedCrop ? '全身指定の被写体のみ: ' : ''}head-to-feet inside panel with headroom and floor beyond BOTH shoes; ${mixedCrop ? '他の指定クロップは保持; ' : ''}natural occlusion allowed; keep Camera/cast, never expose hidden limbs`);
+    cues.push(compact
+      ? `${mixedCrop ? '全身指定の被写体のみ: ' : ''}頭から両靴とその先の床/頭上余白を枠内に。${mixedCrop ? '他の切取り保持。' : ''}自然な遮蔽/Camera/人物を保持、隠れた四肢は露出しない`
+      : `${mixedCrop ? '全身指定の被写体のみ: ' : ''}head-to-feet inside panel with headroom and floor beyond BOTH shoes; ${mixedCrop ? '他の指定クロップは保持; ' : ''}natural occlusion allowed; keep Camera/cast, never expose hidden limbs`);
   }
-  if (isPullbackShot(text)) cues.push('wide framing: body extent and continuous setting reveal actor distances; foreground may stay large, receding actors smaller; not a bust portrait. Explicit scale/crop wins; no uniform shrinking to a fixed ratio');
-  if (elevation === 'high') cues.push(`look down from the scripted higher viewpoint, not eye-level: head/shoulder tops, shortened torsos, upper prop faces, floor/table planes as visible; actors and setting share downward projection; ${close ? '' : 'headroom/breakout; border behind hair; intact; '}keep projection even with omitted BG; pitch strength follows script, never force steep overhead`);
-  else if (elevation === 'low') cues.push(`${floor ? 'floor-level' : 'low'} camera below faces including crouched/chibi; ${horizontal ? 'keep horizontal aim and a low horizon' : 'look up: chin/jaw undersides, prop undersides from below; forehead recedes, horizon below faces, upward convergence; facial planes, body and setting share projection, not frontal faces on a tilted background'}; preserve scripted height/pitch/proportions`);
-  if (/(?:膝|腰|胸|肩|[^\s、。]+台|机|卓)(?:の高さ|高)から/i.test(text)) cues.push('keep scripted height landmark; pitch strength follows script; faces/text never lift camera');
-  if (/(?:斜め(?:に(?:見上げ|見下ろ)|から|上|下|前|後ろ)|(?:左|右)(?:(?:前|後)?斜め|(?:前|後)方)|diagonal (?:view|camera)|oblique|three-quarter|3\/4)/i.test(text) && !/(?:正面|真正面|front[ -]on|frontal)/i.test(text)) cues.push('oblique view: near/far body planes, receding setting edges/floor planes; staggered depth, not a flat frontal lineup; keep named camera side');
-  if (/(?:左|右)?側面から|side[ -]view|profile (?:view|shot)/i.test(text)) cues.push('side view: near/far body planes/limb overlap follow named side; no forced front-facing cast');
-  if (/の(?:左|右)?(?:後方|後ろ|背中側)|(?:左|右)(?:後方|後ろ)(?:から|より|へ)|rear[ -]view|from (?:the )?(?:(?:left|right)[ -])?rear/i.test(text)) cues.push('show back planes of the scripted subject; preserve crop/distance, no forced close OTS');
-  if (/telephoto|long[ -]lens|望遠|長焦点|長い焦点距離/i.test(text)) cues.push('distant camera + long focal length: compressed depth, background relatively larger/closer; overlapping depth planes at similar scale, weak convergence of receding edges; not blur alone');
-  else if (fisheye || /wide[ -]angle|広角|hyper perspective/i.test(text)) cues.push('near/far scale contrast; keep focal subject');
-  if (fisheye) cues.push('fisheye: curved outer edges, radial warp');
-  if (/dutch|tilt|cinematic slant|ダッチ|傾き|傾斜/i.test(text)) cues.push('tilt scene axes, not only faces');
+  if (isPullbackShot(text)) cues.push(compact ? '引き: 身体範囲/場の連続で距離を示す。前景大/遠景小は可。バスト化/一律縮小禁止、指定尺度/切取り優先' : 'wide framing: body extent and continuous setting reveal actor distances; foreground may stay large, receding actors smaller; not a bust portrait. Explicit scale/crop wins; no uniform shrinking to a fixed ratio');
+  if (elevation === 'high') cues.push(compact
+    ? `俯瞰: 指定高から頭/肩の上面・胴の短縮・道具上面/床/卓面を可視範囲で投影。人物/場は同じ俯角、背景省略時も維持。${close ? '' : '頭上余白、枠は髪の後ろ、頭の切断禁止。'}指定角度厳守、急俯瞰の強制禁止`
+    : `${HIGH_SHOT_PROJECTION}; actors and setting share downward projection; ${close ? '' : 'headroom/breakout; border behind hair; intact; '}keep projection even with omitted BG; pitch strength follows script, never force steep overhead`);
+  else if (elevation === 'low') cues.push(compact
+    ? `${floor ? '床付近' : '低所'}: 座位/ちびの顔より下。${horizontal ? '水平を保ち低い地平線' : '見上げて顎/道具下面、後退する額、顔より低い地平線と上方収束。顔/体/場を同じ仰角にし、背景だけ傾けない'}。指定高/角度/体格を保持`
+    : `${floor ? 'floor-level' : 'low'} camera below faces including crouched/chibi; ${horizontal ? 'keep horizontal aim and a low horizon' : 'look up: chin/jaw undersides, prop undersides from below; forehead recedes, horizon below faces, upward convergence; facial planes, body and setting share projection, not frontal faces on a tilted background'}; preserve scripted height/pitch/proportions`);
+  if (/(?:膝|腰|胸|肩|[^\s、。]+台|机|卓)(?:の高さ|高)から/i.test(text)) cues.push(compact ? '指定高の基準/角度保持。顔/文字のためにカメラを上げない' : 'keep scripted height landmark; pitch strength follows script; faces/text never lift camera');
+  if (/(?:斜め(?:に(?:見上げ|見下ろ)|から|上|下|前|後ろ)|(?:左|右)(?:(?:前|後)?斜め|(?:前|後)方)|diagonal (?:view|camera)|oblique|three-quarter|3\/4)/i.test(text) && !/(?:正面|真正面|front[ -]on|frontal)/i.test(text)) cues.push(compact ? '斜め: 指定側、体の近遠面/場の縁/床の奥行を保持。平坦な正面整列は禁止' : 'oblique view: near/far body planes, receding setting edges/floor planes; staggered depth, not a flat frontal lineup; keep named camera side');
+  if (/(?:左|右)?側面から|side[ -]view|profile (?:view|shot)/i.test(text)) cues.push(compact ? '側面: 指定側に沿う体の近遠面/四肢の重なり。正面化禁止' : 'side view: near/far body planes/limb overlap follow named side; no forced front-facing cast');
+  // A rear camera position can be anchored to a room or prop, not the actors.
+  // Preserve that relationship without assigning a new body turn or gaze.
+  if (/の(?:左|右)?(?:後方|後ろ|背中側)|(?:左|右)(?:後方|後ろ)(?:から|より|へ)|rear[ -]view|from (?:the )?(?:(?:left|right)[ -])?rear/i.test(text)) {
+    const rearCue = '後方は基準対象に対して保持。人物の指定向きを保持し、見える正面/側面/背面はCamera/Actionの位置関係から投影。場所/道具の向きで全員を回さない。距離/切取り保持、肩越し接写を強制しない';
+    cues.push(compact ? rearCue : `rear view: ${rearCue}`);
+  }
+  if (/telephoto|long[ -]lens|望遠|長焦点|長い焦点距離/i.test(text)) cues.push(compact ? '望遠: 遠い撮影位置+長焦点で奥行圧縮。背景は相対的に大きく近く、近遠面は似た尺度で重なり、奥行線の収束は弱い。ぼかしだけは不可' : 'distant camera + long focal length: compressed depth, background relatively larger/closer; overlapping depth planes at similar scale, weak convergence of receding edges; not blur alone');
+  else if (fisheye || /wide[ -]angle|広角|hyper perspective/i.test(text)) cues.push(compact ? '近遠の尺度差、主対象保持' : 'near/far scale contrast; keep focal subject');
+  if (fisheye) cues.push(compact ? '魚眼: 外縁湾曲/放射状歪み' : 'fisheye: curved outer edges, radial warp');
+  const rollText = text
+    .replace(/\b(?:head|face|chin|neck|body|shoulder)s?(?:\s+(?:is|are|slightly|gently|slowly))*[ -]+tilt(?:s|ed|ing)?\b|\btilt(?:s|ed|ing)?\s+(?:(?:the|her|his|their|a|an)\s+)?(?:head|face|chin|neck|body|shoulder)s?\b/gi, '')
+    .replace(/(?:頭|顔|首|体|身体|肩)(?:の|が|は|を)(?:(?:少し|わずかに|軽く|大きく))*傾(?:き|斜|け|げ|く|い)/g, '');
+  if (/dutch|\btilt(?:ed|ing)?\b|cinematic slant|ダッチ|傾き|傾斜/i.test(rollText)) cues.push(compact ? '顔だけでなく環境を含む場面軸を傾ける' : 'tilt scene axes, not only faces');
   return cues.length ? `SHOT EXECUTION: ${cues.join('; ')}.` : '';
 };
 

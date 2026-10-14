@@ -89,7 +89,7 @@ export default function Step3Panel({
         <span>ウオーターマークを表記する</span>
       </label>
 
-      {!scenarioModeValid && <p role="status" style={{color:'#fde68a'}}>このモードには{experimentEnabled ? '5〜8コマ' : '4コマ'}のシナリオが必要です。STEP2で作成してください。作成済みの画像は保持しています。</p>}
+      {!scenarioModeValid && <p role="status" style={{color:'#fde68a'}}>このモードには{experimentEnabled ? '5～8コマ' : '4コマ'}のシナリオが必要です。STEP2で作成してください。作成済みの画像は保持しています。</p>}
       <button
         ref={promptActionRef}
         onClick={() => assemblePrompt()}
@@ -108,7 +108,7 @@ export default function Step3Panel({
         ) : (
           <>
             <Wand2 size={24} className={`text-blue-600 ${currentStep === 3 ? 'animate-bounce' : ''} `} />
-            <span>{experimentEnabled ? '実験的コマ割りのプロンプトを作成 (STEP 3)' : '4コマ用の指示文（プロンプト）を構築する (STEP 3)'}</span>
+            <span>{experimentEnabled ? '5～8コマ用の指示文（プロンプト）を構築する (STEP 3)' : '4コマ用の指示文（プロンプト）を構築する (STEP 3)'}</span>
             <ArrowRight size={24} className="opacity-60" />
           </>
         )}

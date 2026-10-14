@@ -66,6 +66,36 @@ test('outfit overrides exclude reference clothing even in the unweighted cast fa
   }
 });
 
+test('panel-local outfits override only that panel and preserve unspecified reference wardrobes', () => {
+  const local='Aは作業用コート';
+  const reference='Character [A]: short dark hair\n服装: hooded jacket\nCharacter [B]: long hair, glasses\n衣装: striped shirt';
+  for(const header of ['Outfit: default','Outfit: none','']) for(const providerFamily of ['chatgpt','gemini']) for(const colorMode of ['color','monochrome']) {
+    const directed=scenario.replace('Outfit: default',header).replace('[3コマ目: 転]',`[3コマ目: 転]\n[Outfit: ${local}]`);
+    const prompt=buildMangaPrompt({scenario:directed,castList:reference,providerFamily,colorMode,systemVersion:'test',cinematicTechniques:false});
+    assert.match(prompt,/hooded jacket/);assert.match(prompt,/striped shirt/);
+    assert.match(prompt,/OUTFIT SCOPE:.*指定人物\/役割だけ.*未指定人物\/コマ.*参照/);
+    const frames=prompt.split(/## Panel \d+\s*\n/).slice(1);
+    assert.equal(frames.length,4);
+    for(const [i,frame] of frames.entries()) {
+      if(i===2) assert.ok(frame.includes(`FRAME OUTFIT: ${local}`));
+      else assert.ok(!frame.includes(`FRAME OUTFIT: ${local}`));
+    }
+    assert.doesNotMatch(prompt,/IGNORE reference clothing/);
+  }
+});
+
+test('a named global outfit preserves unassigned reference clothing and local exceptions',()=>{
+  const reference='Character [A]: short dark hair\n服装: hooded jacket\nCharacter [B]: long hair, glasses\n衣装: striped shirt';
+  const directed=scenario.replace('Outfit: default','Outfit: Aは作業用コート').replace('[3コマ目: 転]','[3コマ目: 転]\n[Outfit: Aは雨具]');
+  for(const providerFamily of ['chatgpt','gemini']) for(const colorMode of ['color','monochrome']) {
+    const prompt=buildMangaPrompt({scenario:directed,castList:reference,providerFamily,colorMode,systemVersion:'test',cinematicTechniques:false});
+    assert.match(prompt,/striped shirt/);
+    assert.match(prompt,/Aは作業用コート/);assert.match(prompt,/FRAME OUTFIT: Aは雨具/);
+    assert.match(prompt,/Override reference clothing only for assigned characters\/roles/);
+    assert.doesNotMatch(prompt,/IGNORE reference clothing/);
+  }
+});
+
 test('explicit outfit overrides stay intentionally separate from the setting era', () => {
   const explicitOutfit = 'AとBは精密な異世界騎士装束';
   const source = scenario

@@ -72,7 +72,7 @@ test('long reference-locked monochrome keeps camera projection and source within
     punchlineType: 'SeriousDocumentary', promptMaxChars: 24000 });
   assert.ok(prompt.length <= 24000);
   assert.match(prompt, /REFERENCE-SHEET/);
-  assert.match(prompt, /(?:before style\/texture|人物の投影→画風の順で描画)/);
+  assert.match(prompt, /^SHOT P1\/P2\/P3\/P4 ONLY: 人物\/注視先を配置→.*首傾げ・表情保持.*可視瞳を指定先へ.*独立Cameraで立体投影→画風/m);
   for (const camera of scenario.matchAll(/\[Camera: ([^\]]+)\]/g)) assert.ok(prompt.includes(camera[1]));
 });
 

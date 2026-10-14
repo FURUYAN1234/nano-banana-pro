@@ -1,5 +1,5 @@
 import { getImageContentHash, buildReferenceRecognitionMetadata } from '../lib/generated-image-metadata.js';
-import { beginApiWork, cancelApiWork, getApiWorkSignal, withImageReviewDeadline } from '../lib/api-work-cancellation.js';
+import { beginApiWork, cancelApiWork, getApiWorkSignal, withImageReviewCancellation } from '../lib/api-work-cancellation.js';
 import { useState, useRef, useEffect } from 'react';
 
 // --- Imports (paths adjusted from ./lib/ to ../lib/) ---
@@ -1360,9 +1360,11 @@ export default function useMangaWorkflow({ experimentalEnabled = false } = {}) {
           (await callAI(prompt,[],null,message=>setAssembleThought(prev=>prev+'\n'+message),{signal,modelRoute:'scenario',scenarioModelId})).text,
           {colorOnlyPrepared:promptAssemblyRunRef.colorLayoutPrepared});
         if(promptScenarioEpoch!==scenarioRunEpochRef.current||assemblyRun!==promptAssemblyRunRef.current) return null;
+        if(prepared.source.scenario!==currentScenario) setScenario(prepared.source.scenario);
         promptAssemblyRunRef.colorLayoutPrepared=undefined;
         promptAssemblyRunRef.experimentalPrepared={...prepared,images:imagesRef.current,bg360Image,groupId:crypto.randomUUID()};
         promptAssemblyRunRef.completedRun=assemblyRun;
+        promptAssemblyRunRef.completedScenario=prepared.source.scenario;
         setFinalPrompt(prepared.prompt);
         setAssembleThought(`実験STEP3完了：${prepared.plan.count}コマ。${prepared.plan.reason}\nSTEP2のコマ数・順序・台詞を保持しました。`);
         return prepared.prompt;
@@ -1437,6 +1439,7 @@ export default function useMangaWorkflow({ experimentalEnabled = false } = {}) {
       assertPrintableDialogue(reviewed.prompt);
       assertRenderOptions(reviewed.prompt, { mosaicCopyrightedCharacters, showWatermarks, protectedCast: collectCastNameEntries(castList).map(entry => entry.displayName) });
       promptAssemblyRunRef.completedRun = assemblyRun;
+      promptAssemblyRunRef.completedScenario = assembled.scenario;
       if (assembled.repaired) setScenario(assembled.scenario);
       setFinalPrompt(reviewed.prompt);
       setAssembleThought(prev => prev + `\n> 出力モード: ${colorMode === 'monochrome' ? '白黒漫画原稿（墨線・白地・肌や素材と影に応じたトーン）' : 'カラー'}`);
@@ -2087,12 +2090,13 @@ export default function useMangaWorkflow({ experimentalEnabled = false } = {}) {
         return normalized;
       };
 
-      const reviewImageCandidate = async (candidate, candidatePrompt, { onReviewProgress, signal } = {}) => {
+      const reviewImageCandidate = async (candidate, candidatePrompt, { onReviewProgress, signal, reviewContext } = {}) => {
         const reviewRequest=(prompt,attachments,system,progress,options={})=>callAI(prompt,attachments,system,progress,{...options,signal});
         if(experimentalPrepared) {
           progressPhase='品質検査';
           const response=await reviewExperimentalImage({image:candidate,plan:experimentalPrepared.plan,
-            prompt:buildExperimentalReviewPrompt(experimentalPrepared.plan,experimentalPrepared.source,experimentalInput(generationScenario)),signal},
+            prompt:buildExperimentalReviewPrompt(experimentalPrepared.plan,experimentalPrepared.source,experimentalInput(generationScenario)),signal,reviewContext,useStructuredOutput:isOpenAIEngine,
+            onPhaseProgress:message=>statCallback(`[QUALITY QA] ${message}`)},
             (prompt,attachments,signal,options)=>reviewRequest(prompt,attachments,null,msg=>statCallback(`[QUALITY QA] ${msg}`),{...options,signal,outputProfile:'image-quality-review'}));
           signal?.throwIfAborted();
           const review=validateExperimentalReview(response.review,experimentalPrepared.plan);
@@ -2100,12 +2104,14 @@ export default function useMangaWorkflow({ experimentalEnabled = false } = {}) {
           const observations={experimental:`${experimentalPrepared.plan.count}コマ。検査API ${response.requests}回。${review.status}`,
             '検査の項目別判定':JSON.stringify(Object.fromEntries(['status','observedCount','readingOrder','camera','style','story','anatomy','pageText'].map(key=>[key,review[key]??null]))),
             '題字・クレジットの転記':review.pageEvidence};
+          if(Object.hasOwn(review,'wardrobe_observation')) observations['衣装の観察']=JSON.stringify(review.wardrobe_observation);
           for(const evidence of review.evidence || []) {
             observations[`${evidence.panel ?? '?'}コマの観察`]=JSON.stringify(evidence);
           }
           if(review.validationErrors?.length) observations['検査で確認できなかった項目']=review.validationErrors.join(' / ');
+          const observationLabel=reviewContext?.candidateLabel?`${reviewContext.candidateLabel}の検査`:'今回の候補の検査';
           for(const [key,value] of Object.entries(observations)) {
-            if(value) statCallback(`[今回の候補の検査 / ${key}] ${value}`);
+            if(value) statCallback(`[${observationLabel} / ${key}] ${value}`);
           }
           const result={pass:review.status==='pass',
             issues:review.issues.map(reason=>({type:review.status==='warning'?'experimental_quality':'unverified',panel:null,reason})),
@@ -2333,9 +2339,9 @@ export default function useMangaWorkflow({ experimentalEnabled = false } = {}) {
         originalPrompt: currentPrompt,
         mode: qualityMode,
         reviewCandidate: (candidate,prompt,options)=>experimentalPrepared
-          ? reviewExperimentalCandidatePair(candidate,originalExperimental,(image,signal)=>reviewImageCandidate(image,prompt,{...(image===candidate?options:{}),signal}),getApiWorkSignal(),{onProgress:msg=>statCallback(`[候補比較] ${msg}`)})
-          : withImageReviewDeadline(signal=>reviewImageCandidate(candidate,prompt,{...options,signal}),getApiWorkSignal()),
-        reviewCriticalCamera: experimentalPrepared ? undefined : (candidate,prompt)=>withImageReviewDeadline(signal=>reviewCriticalCameraCandidate(candidate,prompt,signal),getApiWorkSignal(),60_000),
+          ? reviewExperimentalCandidatePair(candidate,originalExperimental,(image,signal,reviewContext)=>reviewImageCandidate(image,prompt,{...(image===candidate?options:{}),signal,reviewContext}),getApiWorkSignal(),{onProgress:msg=>statCallback(`[候補比較] ${msg}`)})
+          : withImageReviewCancellation(signal=>reviewImageCandidate(candidate,prompt,{...options,signal}),getApiWorkSignal()),
+        reviewCriticalCamera: experimentalPrepared ? undefined : (candidate,prompt)=>withImageReviewCancellation(signal=>reviewCriticalCameraCandidate(candidate,prompt,signal),getApiWorkSignal()),
         generateRepairCandidate: experimentalPrepared ? undefined : (repairPrompt, sourceCandidate = originalCandidate) => generateImageCandidate(repairPrompt, {
           repair: true,
           repairSource: isOpenAIEngine ? sourceCandidate : null,
@@ -2364,13 +2370,13 @@ export default function useMangaWorkflow({ experimentalEnabled = false } = {}) {
         if(originalExperimental) {
           const original=originalExperimental;
           const retainedReview={pass:previousExperimental.qualityPass,issues:previousExperimental.qualityIssues||[]};
-          const selection=await selectExperimentalCandidate(original,next,(a,b,prompt,options)=>withImageReviewDeadline(async signal=>{
+          const selection=await selectExperimentalCandidate(original,next,(a,b,prompt,options)=>withImageReviewCancellation(async signal=>{
             const response=await callAI(buildImageQualityComparisonPrompt({scenario:generationScenario,castList,finalPrompt:prompt,...options,approvedExperimentalPage:buildExperimentalPageContract(experimentalPrepared.plan,experimentalPrepared.source)}),
               [a,b].map(image=>`data:${image.mimeType};base64,${image.base64Img}`),null,msg=>statCallback(`[候補比較] ${msg}`),{signal,outputProfile:'image-quality-review'});
             const compared=parseImageQualityComparison(response.text);
             statCallback(`[候補比較の判定] ${JSON.stringify(compared)}`);
             return compared;
-          },getApiWorkSignal(),60_000),getApiWorkSignal());
+          },getApiWorkSignal()),getApiWorkSignal());
           if(qualityRunEpoch!==scenarioRunEpochRef.current) return false;
           statCallback(`[候補比較] ${selection.comparison.reason}`);
           qualityOutcome=applyPageCandidateSelection(qualityOutcome,selection,retainedReview);
@@ -2944,7 +2950,9 @@ export default function useMangaWorkflow({ experimentalEnabled = false } = {}) {
 
     if (!isCurrent()) return;
     // 手動生成と同じ共通ループで、自動修正設定を守る。
-    const step4ok = await regenerateImage(true, generatedPrompt, {sourceScenario:generatedScenario});
+    const assembledScenario = promptAssemblyRunRef.completedRun === promptAssemblyRunRef.current
+      ? promptAssemblyRunRef.completedScenario ?? generatedScenario : generatedScenario;
+    const step4ok = await regenerateImage(true, generatedPrompt, {sourceScenario:assembledScenario});
     if (!isCurrent()) return;
 
     // ポリシー関連のステートをクリーンアップ

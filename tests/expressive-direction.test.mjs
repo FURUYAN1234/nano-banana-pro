@@ -239,10 +239,10 @@ test('camera is a protected projection, not movable for face or screen legibilit
 test('a distant rear camera preserves back planes without turning the wide shot into OTS', () => {
   for (const camera of ['Observerの左後方から広角の全身ショット', 'wide rear view']) {
     const cue = getPanelShotExecution(camera);
-    assert.match(cue, /back planes.*scripted subject/);
+    assert.match(cue, /rear view:.*人物の指定向きを保持.*背面/);
     assert.doesNotMatch(cue, /shoulder foreground|tight crop/);
   }
-  assert.doesNotMatch(getPanelShotExecution('ローアングル、背後に稲妻エフェクト'), /back planes/);
+  assert.doesNotMatch(getPanelShotExecution('ローアングル、背後に稲妻エフェクト'), /rear view:/);
 });
 
 test('natural Japanese camera height produces projection cues, not just enlarged foreground', () => {

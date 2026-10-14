@@ -13,8 +13,8 @@ before(async () => {
 });
 after(async () => { globalThis.fetch = originalFetch; session?.clearApiSession(); await server?.close(); });
 
-const run = (web, logs = []) => client.callOpenAIText('fixture', null, 'fixture instructions', message => logs.push(message), {
-  modelRoute: 'scenario', scenarioModelId: 'gpt-6-luna', useWebSearch: web,
+const run = (web, logs = [], scenarioModelId = 'gpt-6-luna') => client.callOpenAIText('fixture', null, 'fixture instructions', message => logs.push(message), {
+  modelRoute: 'scenario', scenarioModelId, useWebSearch: web,
 });
 const payload = (web, { text = '', limited = false, refusal = false } = {}) => web ? {
   status: limited || refusal ? 'incomplete' : 'completed',
@@ -85,6 +85,75 @@ test('unsupported JSON formats fail before any Chat request or fallback', async 
   assert.equal(calls, 0);
 });
 
+const strictReviewFormat = () => ({type:'json_schema',json_schema:{name:'review_test',strict:true,schema:{
+  type:'object',properties:{status:{type:'string',enum:['pass','uncertain']},evidence:{type:['string','null']}},
+  required:['status','evidence'],additionalProperties:false,
+}}});
+
+test('strict structured QA reaches Chat unchanged and retains its output and response limits',async()=>{
+  const format=strictReviewFormat(),bodies=[],logs=[];
+  globalThis.fetch=async(_url,init)=>{bodies.push(JSON.parse(init.body));return Response.json(payload(false,{text:'{"status":"uncertain","evidence":null}'}));};
+  const result=await client.callOpenAIText('Return JSON.',['data:image/png;base64,fixture'],null,line=>logs.push(line),
+    {outputProfile:'image-quality-review',responseFormat:format});
+  assert.deepEqual(bodies[0].response_format,format);
+  assert.equal(bodies[0].max_tokens,32768);
+  assert.equal(bodies[0].model,'gpt-4.1');assert.equal(result.finishReason,'stop');
+  assert.ok(logs.some(line=>line.includes('600秒')));assert.equal(bodies.length,1);
+});
+
+test('invalid strict schemas fail before transport and cannot be mixed with Web Search',async()=>{
+  let calls=0;globalThis.fetch=async()=>{calls++;return Response.json(payload(false,{text:'{}'}));};
+  for(const alter of [
+    f=>{f.json_schema.strict=false;},f=>{f.json_schema.name='invalid name';},
+    f=>{f.json_schema.schema.additionalProperties=true;},f=>{f.json_schema.schema.required=['status'];},
+    f=>{f.json_schema.schema.properties.child={type:'object',properties:{},required:[]};f.json_schema.schema.required.push('child');},
+    f=>{f.json_schema.schema.properties.items={type:'array'};f.json_schema.schema.required.push('items');},
+  ]) {
+    const format=strictReviewFormat();alter(format);
+    await assert.rejects(client.callOpenAIText('JSON',null,null,null,{responseFormat:format}),/Unsupported response format/);
+    await assert.rejects(client.requestOpenAIChatCompletion({modelId:'gpt-4.1',messages:[],apiKey:'test-only-credential',timeoutMs:1000,responseFormat:format}),/Unsupported response format/);
+  }
+  await assert.rejects(client.callOpenAIText('JSON',null,null,null,{responseFormat:strictReviewFormat(),useWebSearch:true}),/JSON response format.*Web Search/);
+  assert.equal(calls,0);
+});
+
+test('strict QA refusal and truncation remain terminal without format fallback or retry',async()=>{
+  for(const issue of [{limited:true},{refusal:true}]) {
+    let calls=0;globalThis.fetch=async()=>{calls++;return Response.json(payload(false,{text:'{"status":"pass","evidence":null}',...issue}));};
+    await assert.rejects(client.callOpenAIText('JSON',['data:image/png;base64,fixture'],null,null,
+      {responseFormat:strictReviewFormat(),outputProfile:'image-quality-review'}),error=>error.code===(issue.limited?'OUTPUT_TOKEN_LIMIT':'content_policy_violation'));
+    assert.equal(calls,1);
+  }
+});
+
+test('strict structured QA accepts only explicit stop even when other finishes contain valid JSON',async()=>{
+  for(const finishReason of [undefined,null,'unknown','tool_calls','function_call']) {
+    let calls=0;
+    globalThis.fetch=async()=>{
+      calls++;const result=payload(false,{text:'{"status":"pass","evidence":null}'});
+      if(finishReason===undefined)delete result.choices[0].finish_reason;
+      else result.choices[0].finish_reason=finishReason;
+      return Response.json(result);
+    };
+    await assert.rejects(client.callOpenAIText('JSON',['data:image/png;base64,fixture'],null,null,
+      {responseFormat:strictReviewFormat(),outputProfile:'image-quality-review'}),error=>error.code==='INCOMPLETE_RESPONSE');
+    assert.equal(calls,1,'an unknown completion cannot trigger a paid format/model retry');
+  }
+});
+
+test('strict structured QA propagates user stop during transport without a retry',async()=>{
+  const controller=new AbortController();let sent,calls=0;
+  const ready=new Promise(resolve=>{sent=resolve;});
+  globalThis.fetch=async(_url,init)=>{
+    calls++;assert.deepEqual(JSON.parse(init.body).response_format,strictReviewFormat());sent();
+    return new Promise((_,reject)=>init.signal.addEventListener('abort',()=>reject(new DOMException('stopped','AbortError')),{once:true}));
+  };
+  const pending=client.callOpenAIText('JSON',['data:image/png;base64,fixture'],null,null,
+    {responseFormat:strictReviewFormat(),outputProfile:'image-quality-review',signal:controller.signal});
+  await ready;controller.abort();
+  await assert.rejects(pending,error=>error.code==='CANCELLED');assert.equal(calls,1);
+});
+
 test('JSON output cannot be silently ignored by the separate Web Search route', async () => {
   let calls = 0;
   globalThis.fetch = async () => { calls++; return Response.json(payload(true, { text: 'fixture' })); };
@@ -123,16 +192,44 @@ for (const web of [false, true]) {
     });
   }
 
-  test(`${route}: provider-completed whitespace is truly empty and retains the normal fallback route`, async () => {
-    let calls = 0;
+  test(`${route}: provider-completed whitespace is truly empty and retains the normal fallback route for other selections`, async () => {
+    const models = [];
     const logs = [];
-    globalThis.fetch = async () => Response.json(payload(web, { text: ++calls === 1 ? '  \n ' : 'complete fixture' }));
-    const result = await run(web, logs);
-    assert.equal(calls, 2);
-    assert.equal(result.model, 'gpt-5.6-luna');
+    globalThis.fetch = async (_url, init) => {
+      models.push(JSON.parse(init.body).model);
+      return Response.json(payload(web, { text: models.length === 1 ? '  \n ' : 'complete fixture' }));
+    };
+    const result = await run(web, logs, 'gpt-5.6-luna');
+    assert.deepEqual(models, ['gpt-5.6-luna', 'gpt-4.1']);
+    assert.equal(result.model, 'gpt-4.1');
     assert.ok(logs.some(line => line.includes('EMPTY_RESPONSE')));
     assert.ok(logs.some(line => line.includes('[RESPONSE]')));
+    assert.ok(logs.some(line => line.includes('失敗時は下位モデルへフォールバック')));
   });
+
+  for (const failure of ['EMPTY_RESPONSE', 'model_not_found']) {
+    test(`${route}: DEV Luna ${failure} fails without requesting a replacement model`, async () => {
+      assert.equal(server.config.isProduction, false, 'this guard is specific to the local development build');
+      const models = [], logs = [];
+      globalThis.fetch = async (_url, init) => {
+        models.push(JSON.parse(init.body).model);
+        if (models.length > 1) return Response.json(payload(web, { text: 'replacement must not be accepted' }));
+        return failure === 'EMPTY_RESPONSE'
+          ? Response.json(payload(web, { text: '  \n ' }))
+          : Response.json({ error: { message: 'model unavailable', code: failure } }, { status: 404 });
+      };
+      await assert.rejects(run(web, logs), error => {
+        assert.equal(error.failures.length, 1);
+        assert.equal(error.failures[0].code, failure);
+        assert.equal(error.failures[0].model, 'gpt-6-luna');
+        return true;
+      });
+      assert.deepEqual(models, ['gpt-6-luna']);
+      assert.ok(!logs.some(line => line.includes('最終採用モデル:')));
+      assert.ok(logs.some(line => line.includes('失敗時は別モデルへ自動切替せず停止')));
+      assert.ok(!logs.some(line => line.includes('下位モデルへフォールバック')));
+    });
+  }
 
   test(`${route}: structured refusal remains terminal`, async () => {
     let calls = 0;

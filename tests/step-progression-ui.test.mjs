@@ -48,6 +48,26 @@ test('STEP4 output stays hidden until a final prompt exists', async () => {
   assert.match(app, /Boolean\(finalPrompt\?\.trim\(\)\)\s*&&\s*\(\s*<Step4Panel/);
 });
 
+test('STEP4 empty image area describes the selected four-panel or five-to-eight-panel mode', async () => {
+  const server = await createServer({ appType: 'custom', logLevel: 'silent', server: { middlewareMode: true } });
+  try {
+    const { default: Step4Panel } = await server.ssrLoadModule('/src/components/Step4Panel.jsx');
+    for (const experimentalEnabled of [false, true]) {
+      const html = renderToStaticMarkup(React.createElement(Step4Panel, {
+        currentStep: 4, finalPrompt: 'OUTPUT: Single image.', generatedImage: null,
+        genLog: [], policyErrorMsg: '', castList: '', scenario: '', webCopyPartLengths: [],
+        selectedEngine: 'openai', experimentalEnabled,
+      }));
+      const message = html.match(/<p[^>]*>(ここに生成された[\s\S]*?漫画が表示されます)<\/p>/)?.[1];
+      assert.equal(message, experimentalEnabled
+        ? 'ここに生成された5～8コマ漫画が表示されます'
+        : 'ここに生成された4コマ漫画が表示されます');
+    }
+  } finally {
+    await server.close();
+  }
+});
+
 test('STEP3 exposes its live progress and advances to STEP4 only after the prompt is ready', async () => {
   const [app, step3] = await Promise.all([
     readFile(new URL('../src/App.jsx', import.meta.url), 'utf8'),
