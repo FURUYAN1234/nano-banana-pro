@@ -180,7 +180,9 @@ A「またどうぞ」`;
 test('Web prompts retain limb ownership and occlusion checks under every compaction budget', () => {
   for (const providerFamily of ['chatgpt', 'gemini']) {
     for (const colorMode of ['color', 'monochrome']) {
-      for (const size of [0, 6000, 16000]) {
+      // Leave space for the current, protected camera contract at the hard cap.
+      // Oversized source is exercised separately as a rejection, never truncated.
+      for (const size of [0, 6000, 15000]) {
         const input = scenario.replace('AがBに本を差し出す。', `AがBに本を差し出す。${'静かな室内。'.repeat(Math.max(0, size - buildRenderOptionsContract().length) / 6)}`);
         const prompt = buildMangaPrompt({ scenario: input, castList, providerFamily, colorMode, systemVersion: 'test' });
         const minimal = prompt.includes('connect each L/R hand-arm-shoulder');
@@ -205,7 +207,7 @@ test('Web prompts retain limb ownership and occlusion checks under every compact
         }
         assert.equal((prompt.match(/## Panel \d/g) || []).length, 4);
         for (const line of ['こちらです', 'ありがとう', '少し待って', 'これだった！', 'またどうぞ']) assert.ok(prompt.includes(line));
-        if (size === 18000 && providerFamily === 'chatgpt') assert.ok(compact || minimal);
+        if (size === 15000 && providerFamily === 'chatgpt') assert.ok(compact || minimal);
       }
     }
   }
@@ -266,7 +268,7 @@ test('bubbles can use nearby negative space without centering every balloon on a
 test('balloon ownership survives every provider, medium and compaction without frozen body slots', () => {
   for (const providerFamily of ['chatgpt', 'gemini']) {
     for (const colorMode of ['color', 'monochrome']) {
-      for (const size of [0, 6000, 16000]) {
+      for (const size of [0, 6000, 15000]) {
         const input = scenario.replace('AがBに本を差し出す。', `Aは左、Bは右。画面内の無言の人物を見る。${'静かな室内。'.repeat(Math.max(0, size - buildRenderOptionsContract().length) / 6)}`);
         const prompt = buildMangaPrompt({ scenario: input, castList, providerFamily, colorMode, systemVersion: 'test' });
         assert.doesNotMatch(prompt, /freeze (?:balloon )?bodies|freeze numeric slots|never move a body toward its speaker|BUBBLE SLOTS:/i);
@@ -279,6 +281,12 @@ test('balloon ownership survives every provider, medium and compaction without f
       }
     }
   }
+});
+
+test('source that cannot fit retains the API rejection instead of losing camera or action', () => {
+  const input = scenario.replace('AがBに本を差し出す。', `AがBに本を差し出す。${'静かな室内。'.repeat(Math.max(0, 17000 - buildRenderOptionsContract().length) / 6)}`);
+  assert.throws(() => buildMangaPrompt({ scenario: input, castList, providerFamily: 'chatgpt', colorMode: 'monochrome', systemVersion: 'test' }), /32,000文字.*台詞や指示は自動で切り捨てません/);
+  assert.ok(input.includes('[Camera: 超ローアングル、強い短縮遠近法、全身]'));
 });
 
 test('both final prompts carry reading rhythm through color, monochrome and serious modes', () => {
