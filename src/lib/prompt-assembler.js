@@ -1,5 +1,5 @@
 import { buildRenderOptionsContract, buildProtectedCastContract } from './render-options.js';
-import { readExplicitOutfit, hasScopedOutfitAssignment, OUTFIT_SCOPE_CONTRACT } from './seasonal-outfit.js';
+import { readExplicitOutfit, hasScopedOutfitAssignment, OUTFIT_SCOPE_CONTRACT, OUTFIT_SCOPE_CONTRACT_COMPACT } from './seasonal-outfit.js';
 import { stripSourceMetadata } from './sns-explanation.js';
 import { MANGA_FACIAL_ACTING_LOCK_COMPACT } from './facial-acting.js';
 import { formatGeneratedMangaTitle } from './manga-title.js';
@@ -73,6 +73,8 @@ import {
 } from './hand-prop-kinematics';
 import {
   BODY_ACTING_BASELINE_COMPACT,
+  WARDROBE_COMPONENT_LOCK,
+  WARDROBE_COMPONENT_LOCK_COMPACT,
   LIMB_OWNERSHIP_CHECK,
   LIMB_OWNERSHIP_CHECK_COMPACT,
   EXPRESSIVE_DIRECTION,
@@ -230,7 +232,7 @@ const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt
     .map(part => part.startsWith(`${tokenPrefix}SOURCE_`) ? part : transform(part)).join('');
   const compactWardrobeLock = preserveReferenceStyle
     ? "REFERENCE-SHEET WARDROBE AND RENDERING LOCK: explicit outfit overrides setting era/culture; preserve mismatch. Keep garment items and rendering method across panels."
-      : 'CROSS-PANEL WARDROBE COLOR LOCK: fix garment items/colors once; reuse in all panels; style and lighting never change canonical wardrobe. Explicit outfit overrides setting era/culture; no period substitution. No outfit: infer from setting.';
+      : 'CROSS-PANEL WARDROBE COLOR LOCK: same items/colors across style/light. Explicit outfit overrides setting era/culture; preserve mismatch; never period-substitute. Default: infer setting.';
   // This body-placement rule is identical for every panel. Keep one global
   // copy instead of spending the source/recipe budget repeating it four times.
   const compacted = 'PLACEMENT (all panels): Keep Camera/Action bodies/depth/contacts; never derive body positions from dialogue order.\n' + mapAuthored(protectedPrompt, part => part
@@ -238,6 +240,8 @@ const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt
     // and reading order. Keep only the distinct body-staging constraint here.
     .replace(/^(?:PLACEMENT\/IDENTITY|PLACEMENT \(all panels\)):[^\n]*\n?/gm, '')
     .replace(/LIMB OWNERSHIP CHECK[^\n]*/g, LIMB_OWNERSHIP_CHECK_COMPACT)
+    .replaceAll(WARDROBE_COMPONENT_LOCK, WARDROBE_COMPONENT_LOCK_COMPACT)
+    .replaceAll(OUTFIT_SCOPE_CONTRACT, OUTFIT_SCOPE_CONTRACT_COMPACT)
     .replace(MANGA_READING_RHYTHM_LOCK, MANGA_READING_RHYTHM_LOCK_COMPACT)
     .replace(/CONVERSATIONAL DEPTH BASE:[^\n]*/g, 'CONVERSATIONAL DEPTH BASE: Action gaze first; varied depth.')
     .replace(/EYE-LINE LOCK:[^\n]*/g, compactConversationEyeLine)

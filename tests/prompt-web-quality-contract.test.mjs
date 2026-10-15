@@ -118,13 +118,13 @@ test('generic wardrobe component continuity survives both providers, media, styl
       const scenario = SCENARIO.replace(/(\[EMOTION:[^\]]+\])/g, '$1\n[Camera: eye-level medium shot]');
       const prompt = buildMangaPrompt({ scenario, castList: CAST_LIST + extra, colorMode, providerFamily, punchlineType, systemVersion: 'test' });
       assert.match(prompt, /WARDROBE COMPONENT LOCK:/);
-      assert.match(prompt, /有無\/数\/形\/取付位置/);
-      assert.match(prompt, /内側の服/);
-      assert.match(prompt, /身体基準の左右/);
-      assert.match(prompt, /カメラ\/ポーズ/);
-      assert.match(prompt, /変更は台本の着脱等のみ/);
+      assert.match(prompt, /有無\/数\/形\/(?:色\/)?取付(?:位置)?/);
+      assert.match(prompt, /内側の服|重ね着/);
+      assert.match(prompt, /身体基準の左右|身体左右/);
+      assert.match(prompt, /カメラ\/ポーズ|Camera\/演技/);
+      assert.match(prompt, /変更は台本の着脱等のみ|コマ限定\/着脱\/転換\/受渡し優先/);
       assert.doesNotMatch(prompt, /OUTFIT CONSISTENCY:[^\n]*NO changes\./);
-      assert.match(prompt, /遮蔽\/画面外\/短縮/);
+      assert.match(prompt, /遮蔽\/画面外\/短縮|遮蔽再露出/);
       assert.doesNotMatch(prompt, /サスペンダー|suspenders|アカリ/);
     }
   }
@@ -182,7 +182,10 @@ test('both provider prompts preserve artwork and freely allow natural incidental
 test('both provider prompts lock each named character wardrobe colors across panel styles', () => {
   for (const prompt of [buildChatGptPrompt(), buildGeminiPrompt()]) {
     assert.match(prompt, /CROSS-PANEL WARDROBE COLOR LOCK/);
-    if (prompt.includes('CROSS-PANEL WARDROBE COLOR LOCK: fix garment items/colors once;')) {
+    if (prompt.includes('CROSS-PANEL WARDROBE COLOR LOCK: same items/colors')) {
+      assert.match(prompt,/same items\/colors across style\/light/);
+      assert.match(prompt,/WARDROBE COMPONENT LOCK:.*服\/付属品.*同場面.*省略.*継続/);
+    } else if (prompt.includes('CROSS-PANEL WARDROBE COLOR LOCK: fix garment items/colors once;')) {
       assert.match(prompt, /fix garment items\/colors once; reuse in all panels; style and lighting never change canonical wardrobe/);
     } else {
       assert.match(prompt, /choose each named character's (?:concrete )?garment items, base colors, accent colors, material, and pattern once/i);

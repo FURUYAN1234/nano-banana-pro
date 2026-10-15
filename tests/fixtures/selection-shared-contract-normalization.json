@@ -3,6 +3,36 @@
   "sourceCommit": "1da0524dceb0c3d4532bc8c552b1ce2e1ab387f6",
   "entries": [
     {
+      "name": "WARDROBE_708_wardrobe-continuity-full",
+      "current": "WARDROBE COMPONENT LOCK: 全体Outfitと状況/Actionの衣装を人物別に合わせ、未指定の服・付属品の構成/色も初登場時に一度決める。同じ連続場面の後続コマで衣装の記述が省略されても未指定扱いに戻さず、その人物の衣装を引き継ぐ。台本にない参照衣装の混入や他人への衣装移動をしない。明示された参照服との重ね着や衣装の受け渡しは保持。服・付属品の有無/数/形/取付位置、上着と内側の服、肩掛けの身体基準の左右を人物別に固定。未指定も同じ。カメラ/ポーズ・画風/光で身体側や服を変えない。変更は台本の着脱等のみ。明示のコマ限定Outfitはその範囲だけ、着替え/場面転換による衣装変更は台本に従う。遮蔽/画面外/短縮後の再露出も同じ構成。しわ・なびき・短縮・隠れ方は動作と視点に合わせる。衣装を見せるために振り向かせたり全身へ引いたりしない。演技・動き・表情・構図とコマ指定の画風/線/塗り/描き込みを保つ。上下左右前後・望遠/広角・ダッチアングルのCameraを変えない。演技・表情・構図は自由。",
+      "previous": "WARDROBE COMPONENT LOCK: 服・付属品の有無/数/形/取付位置、上着と内側の服、肩掛けの身体基準の左右を人物別に固定。未指定も同じ。カメラ/ポーズ・画風/光で身体側や服を変えない。変更は台本の着脱等のみ。遮蔽/画面外/短縮後の再露出も同じ構成。他人に移さない。演技・表情・構図は自由。"
+    },
+    {
+      "name": "WARDROBE_708_wardrobe-continuity-compact",
+      "current": "WARDROBE COMPONENT LOCK: 人物別Outfit/状況/Actionの初回服/付属品を同場面は省略後も継続。参照服へ戻さず移さない。有無/数/形/色/取付/重ね着/身体左右/遮蔽再露出固定。コマ限定/着脱/転換/受渡し優先。しわ等は動作/視点へ。服のため振向き/全身化せず、Camera/演技/表情/構図/各コマの画風/線/塗り/描込保持。",
+      "previous": "WARDROBE COMPONENT LOCK: 服・付属品の有無/数/形/取付位置、上着と内側の服、肩掛けの身体基準の左右を人物別に固定。未指定も同じ。カメラ/ポーズ・画風/光で身体側や服を変えない。変更は台本の着脱等のみ。遮蔽/画面外/短縮後の再露出も同じ構成。他人に移さない。演技・表情・構図は自由。"
+    },
+    {
+      "name": "WARDROBE_708_wardrobe-scope-full",
+      "current": "OUTFIT SCOPE: 全体Outfitは既定。FRAME OUTFITはそのコマの指定人物/役割だけ上書き。人物未指定のカテゴリは当該コマの可視人物全員。未指定人物/コマは全体指定と同じ連続場面の台本衣装→参照衣装の順。コマ限定指定を別コマへ展開せず、同一性/髪/眼鏡を保持。状況/Actionで成立した継続衣装は後続コマで省略されても維持。この範囲を服装固定の一般指示より優先。",
+      "previous": "OUTFIT SCOPE: 全体Outfitは既定。FRAME OUTFITはそのコマの指定人物/役割だけ上書き。人物未指定のカテゴリは当該コマの可視人物全員。未指定人物/コマは全体指定→参照衣装の順。別コマへ展開せず、同一性/髪/眼鏡を保持。この範囲を服装固定の一般指示より優先。"
+    },
+    {
+      "name": "WARDROBE_708_wardrobe-scope-compact",
+      "current": "OUTFIT SCOPE: 全体Outfitは既定、FRAME OUTFITは指定コマの人物/役割だけ上書き、人物未指定カテゴリは可視人物全員。未指定は同じ場面の全体/状況/Action衣装→参照服。省略で戻さず、コマ限定を他コマへ展開しない。同一性/髪/眼鏡保持。この範囲が一般固定指示に優先。",
+      "previous": "OUTFIT SCOPE: 全体Outfitは既定。FRAME OUTFITはそのコマの指定人物/役割だけ上書き。人物未指定のカテゴリは当該コマの可視人物全員。未指定人物/コマは全体指定→参照衣装の順。別コマへ展開せず、同一性/髪/眼鏡を保持。この範囲を服装固定の一般指示より優先。"
+    },
+    {
+      "name": "WARDROBE_708_narrative-reference-priority",
+      "current": "Use for visual identity and canonical clothing unless the approved prompt explicitly overrides clothing. Outfit or narrative clothing established for an actor in the same continuous scene overrides reference clothing, including when later panels omit it; omission is not a reset to reference clothing. Preserve explicit frame-only scope and scripted clothing changes. Identity means the individual's identifying traits and age. The selected panel rendering recipe determines face/eye construction and body stylization; preserve the reference drawing style only under an explicit reference-style lock in the approved prompt.",
+      "previous": "Use for visual identity and canonical clothing unless the approved prompt explicitly overrides clothing. Identity means the individual's identifying traits and age. The selected panel rendering recipe determines face/eye construction and body stylization; preserve the reference drawing style only under an explicit reference-style lock in the approved prompt."
+    },
+    {
+      "name": "WARDROBE_708_compact-color-summary",
+      "current": "CROSS-PANEL WARDROBE COLOR LOCK: same items/colors across style/light. Explicit outfit overrides setting era/culture; preserve mismatch; never period-substitute. Default: infer setting.",
+      "previous": "CROSS-PANEL WARDROBE COLOR LOCK: fix garment items/colors once; reuse in all panels; style and lighting never change canonical wardrobe. Explicit outfit overrides setting era/culture; no period substitution. No outfit: infer from setting."
+    },
+    {
       "name": "MEDIA_689_chibi-reset-mono-spacing",
       "current": "PANEL INK:white/black;no veil. CHEEKS: none.\n\nPANEL ANATOMY RESET: ordinary body/head ratio, no inherited chibi; facial anatomy follows THIS medium. Explicit scripted proportions win.",
       "previous": "PANEL INK:white/black;no veil. CHEEKS: none.",

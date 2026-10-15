@@ -27,7 +27,7 @@ const payload = (web, { text = '', limited = false, refusal = false } = {}) => w
 };
 
 test('primary image QA uses model-specific headroom and reports the actual request limit', async () => {
-  for (const target of ['gpt-4.1', 'gpt-4o', 'gpt-4.1-mini']) {
+  for (const target of ['gpt-6.1-sol', 'gpt-6-sol', 'gpt-5.6-luna']) {
     const bodies = [], logs = [];
     globalThis.fetch = async (_url, init) => {
       const body = JSON.parse(init.body); bodies.push(body);
@@ -36,9 +36,9 @@ test('primary image QA uses model-specific headroom and reports the actual reque
     };
     const result = await client.callOpenAIText('review', ['data:image/png;base64,fixture'], null,
       line => logs.push(line), { outputProfile: 'image-quality-review' });
-    const limit = target === 'gpt-4o' ? 16384 : 32768;
+    const limit = 32768;
     assert.equal(result.model, target);
-    assert.equal(bodies.at(-1).max_tokens, limit);
+    assert.equal(bodies.at(-1).max_completion_tokens, limit);
     assert.ok(logs.some(line => line.includes('[RESPONSE]') && line.includes(`limit=${limit}`)));
     assert.ok(logs.some(line => line.includes(`${limit.toLocaleString()} tokens`)));
   }
@@ -96,8 +96,9 @@ test('strict structured QA reaches Chat unchanged and retains its output and res
   const result=await client.callOpenAIText('Return JSON.',['data:image/png;base64,fixture'],null,line=>logs.push(line),
     {outputProfile:'image-quality-review',responseFormat:format});
   assert.deepEqual(bodies[0].response_format,format);
-  assert.equal(bodies[0].max_tokens,32768);
-  assert.equal(bodies[0].model,'gpt-4.1');assert.equal(result.finishReason,'stop');
+  assert.equal(bodies[0].max_completion_tokens,32768);
+  assert.equal(bodies[0].max_tokens,undefined);
+  assert.equal(bodies[0].model,'gpt-6.1-sol');assert.equal(result.finishReason,'stop');
   assert.ok(logs.some(line=>line.includes('600秒')));assert.equal(bodies.length,1);
 });
 
@@ -199,9 +200,9 @@ for (const web of [false, true]) {
       models.push(JSON.parse(init.body).model);
       return Response.json(payload(web, { text: models.length === 1 ? '  \n ' : 'complete fixture' }));
     };
-    const result = await run(web, logs, 'gpt-5.6-luna');
-    assert.deepEqual(models, ['gpt-5.6-luna', 'gpt-4.1']);
-    assert.equal(result.model, 'gpt-4.1');
+    const result = await run(web, logs, 'gpt-6-sol');
+    assert.deepEqual(models, ['gpt-6-sol', 'gpt-5.6-sol']);
+    assert.equal(result.model, 'gpt-5.6-sol');
     assert.ok(logs.some(line => line.includes('EMPTY_RESPONSE')));
     assert.ok(logs.some(line => line.includes('[RESPONSE]')));
     assert.ok(logs.some(line => line.includes('失敗時は下位モデルへフォールバック')));

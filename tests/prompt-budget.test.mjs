@@ -141,6 +141,16 @@ test('ChatGPT default removes repeated instructions without treating the Web pas
   assert.match(prompt, /monochrome keeps white-paper rules/);
 });
 
+test('wardrobe compaction keeps narrative continuity, scoped changes and camera/medium freedom', () => {
+  const prompt = buildMangaPrompt({ scenario: LONG_FOUR_KOMA_SCENARIO.replace('Location:', 'Outfit: ミクは作業着、他は参照服。\nLocation:'), castList: FULL_CAST_LIST,
+    colorMode: 'color', providerFamily: 'chatgpt', punchlineType: 'Documentary', systemVersion: 'test' });
+  assert.match(prompt, /WARDROBE COMPONENT LOCK:.*同場面.*省略.*参照服へ戻さず/);
+  assert.match(prompt, /コマ限定\/着脱\/転換\/受渡し優先/);
+  assert.match(prompt, /振向き\/全身化せず、Camera\/演技\/表情\/構図/);
+  assert.match(prompt, /各コマの画風\/線\/塗り\/描込保持/);
+  assert.match(prompt, /FRAME OUTFIT.*指定コマ.*人物\/役割だけ上書き/);
+});
+
 test('irreducible oversized ChatGPT input fails before returning a truncated prompt', () => {
   assert.throws(() => buildMangaPrompt({
     scenario: LONG_FOUR_KOMA_SCENARIO, castList: FULL_CAST_LIST + ' identity detail'.repeat(3000),

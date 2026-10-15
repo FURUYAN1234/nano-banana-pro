@@ -91,6 +91,7 @@ export const resolveOutfitForSubject = (authority, panel, subject) => {
 };
 
 export const OUTFIT_SCOPE_CONTRACT = 'OUTFIT SCOPE: 全体Outfitは既定。FRAME OUTFITはそのコマの指定人物/役割だけ上書き。人物未指定のカテゴリは当該コマの可視人物全員。未指定人物/コマは全体指定と同じ連続場面の台本衣装→参照衣装の順。コマ限定指定を別コマへ展開せず、同一性/髪/眼鏡を保持。状況/Actionで成立した継続衣装は後続コマで省略されても維持。この範囲を服装固定の一般指示より優先。';
+export const OUTFIT_SCOPE_CONTRACT_COMPACT = 'OUTFIT SCOPE: 全体Outfitは既定、FRAME OUTFITは指定コマの人物/役割だけ上書き、人物未指定カテゴリは可視人物全員。未指定は同じ場面の全体/状況/Action衣装→参照服。省略で戻さず、コマ限定を他コマへ展開しない。同一性/髪/眼鏡保持。この範囲が一般固定指示に優先。';
 const WARDROBE_LABEL_RE = /^(?:服装|衣装|衣服|outfit|clothing|clothes|wardrobe|costume|attire)(?:\s*[（(][^）)]*[）)])?(?:\s*[:：]|\s*$)/i;
 const SCHOOL_OUTFIT_RE = /学校制服|学生服|学ラン|セーラー服|ブレザー制服|学生ボランティア|通学用|school\s+uniform|sailor\s+uniform/i;
 // Ignore only a direct garment exclusion, never its whole clause or actor.

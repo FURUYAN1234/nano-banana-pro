@@ -55,10 +55,6 @@ test('the STEP2 selectable route includes every supported scenario fallback mode
     'gpt-5.6-terra',
     'gpt-6-luna',
     'gpt-5.6-luna',
-    'gpt-4.1',
-    'gpt-4.1-mini',
-    'gpt-4.1-nano',
-    'gpt-4o',
   ]);
   assert.deepEqual(
     OPENAI_SCENARIO_MODEL_OPTIONS.map(({ id }) => id),
@@ -94,22 +90,14 @@ test('a fixed scenario model falls back only to later models', () => {
   ]);
   assert.deepEqual(getOpenAIScenarioModelRoute('gpt-5.6-luna'), [
     'gpt-5.6-luna',
-    'gpt-4.1',
-    'gpt-4.1-mini',
-    'gpt-4.1-nano',
-    'gpt-4o',
   ]);
-  assert.deepEqual(getOpenAIScenarioModelRoute('gpt-4.1-mini'), [
-    'gpt-4.1-mini',
-    'gpt-4.1-nano',
-    'gpt-4o',
-  ]);
+  assert.ok(OPENAI_SCENARIO_TEXT_MODEL_IDS.every(id=>!/^gpt-4/.test(id)));
 });
 
 test('local Luna validation cannot silently fall back while production and other selected models keep their routes', () => {
   assert.deepEqual(getOpenAIScenarioModelRoute('gpt-6-luna', true), ['gpt-6-luna']);
   assert.deepEqual(getOpenAIScenarioModelRoute('gpt-6-luna', false), [
-    'gpt-6-luna', 'gpt-5.6-luna', 'gpt-4.1', 'gpt-4.1-mini', 'gpt-4.1-nano', 'gpt-4o',
+    'gpt-6-luna', 'gpt-5.6-luna',
   ]);
   for (const id of OPENAI_SCENARIO_TEXT_MODEL_IDS.filter(id => id !== 'gpt-6-luna')) {
     assert.deepEqual(getOpenAIScenarioModelRoute(id, true), getOpenAIScenarioModelRoute(id, false));
@@ -136,7 +124,7 @@ test('Vite development and production apply their own initial model, route and r
         const routes = await server.ssrLoadModule('/src/lib/openai-model-routes.js');
         const { default: Step2Panel } = await server.ssrLoadModule('/src/components/Step2Panel.jsx');
         assert.equal(routes.DEFAULT_OPENAI_SCENARIO_MODEL_ID, expectedId);
-        assert.equal(routes.getOpenAIScenarioModelRoute('gpt-6-luna').length, environment === 'development' ? 1 : 6);
+        assert.equal(routes.getOpenAIScenarioModelRoute('gpt-6-luna').length, environment === 'development' ? 1 : 2);
         const renderPanel = scenarioModelId => renderToStaticMarkup(React.createElement(Step2Panel, {
           currentStep: 2, inputMode: 'manual', targetDate: '2026-10-14', categories: [],
           manualTopic: '', scenario: '', originalScenario: '', scenarioThought: '',

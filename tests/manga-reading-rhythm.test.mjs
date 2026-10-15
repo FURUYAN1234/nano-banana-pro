@@ -73,7 +73,7 @@ test('panel-local outfits override only that panel and preserve unspecified refe
     const directed=scenario.replace('Outfit: default',header).replace('[3コマ目: 転]',`[3コマ目: 転]\n[Outfit: ${local}]`);
     const prompt=buildMangaPrompt({scenario:directed,castList:reference,providerFamily,colorMode,systemVersion:'test',cinematicTechniques:false});
     assert.match(prompt,/hooded jacket/);assert.match(prompt,/striped shirt/);
-    assert.match(prompt,/OUTFIT SCOPE:.*指定人物\/役割だけ.*未指定人物\/コマ.*参照/);
+    assert.match(prompt,/OUTFIT SCOPE:.*(?:指定人物\/役割だけ.*未指定人物\/コマ|指定コマの人物\/役割だけ上書き.*未指定).*参照/);
     const frames=prompt.split(/## Panel \d+\s*\n/).slice(1);
     assert.equal(frames.length,4);
     for(const [i,frame] of frames.entries()) {
@@ -111,7 +111,7 @@ test('explicit outfit overrides stay intentionally separate from the setting era
   }
 
   const inferred = buildMangaPrompt({ scenario, castList, providerFamily: 'chatgpt', colorMode: 'color', systemVersion: 'test' });
-  assert.match(inferred, /when no outfit is specified.*infer.*setting|no outfit: infer from setting/i);
+  assert.match(inferred, /when no outfit is specified.*infer.*setting|no outfit: infer from setting|Default: infer setting/i);
 });
 
 test('occupational uniforms and visitor clothes survive final assembly in both media and ending modes', () => {

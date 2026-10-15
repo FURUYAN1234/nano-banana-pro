@@ -3,6 +3,9 @@ import {execFileSync} from 'node:child_process';
 import test from 'node:test';
 import {createServer} from 'vite';
 import {restoreReviewedShotExecution} from './helpers/prompt-policy-normalization.mjs';
+import {readFileSync} from 'node:fs';
+const wardrobeChanges=JSON.parse(readFileSync(new URL('./fixtures/selection-shared-contract-normalization.json',import.meta.url))).entries.filter(({name})=>name.startsWith('WARDROBE_708_'));
+const beforeWardrobeChange=value=>wardrobeChanges.reduce((text,change)=>text.replaceAll(change.current,change.previous),restoreReviewedShotExecution(value));
 
 test('normal four-panel prompts and shared quality text match released v7.0.2',async()=>{
   const released=new Map(['prompt-assembler','shared-image-quality'].map(name=>[name,
@@ -26,8 +29,8 @@ test('normal four-panel prompts and shared quality text match released v7.0.2',a
           scenario:'Topic: 工作\n'+[1,2,3,4].map(n=>`[${n}コマ目]\n[Camera: ${n%2?'俯瞰':'アオリ'}]\n[EMOTION: NORMAL]\n状況: 人物Aが道具を順番に置く\nA「${n}番目」`).join('\n')};
         // Only the reviewed exact camera clauses may move into scoped sharing.
         // Restore them on both sides; every other released prompt byte stays exact.
-        assert.equal(restoreReviewedShotExecution(current.buildMangaPrompt(input)),
-          restoreReviewedShotExecution(old.buildMangaPrompt(input)),JSON.stringify({providerFamily,colorMode,showWatermarks,scenarioModelLabel}));
+        assert.equal(beforeWardrobeChange(current.buildMangaPrompt(input)),
+          beforeWardrobeChange(old.buildMangaPrompt(input)),JSON.stringify({providerFamily,colorMode,showWatermarks,scenarioModelLabel}));
       }
   } finally {await server.close();}
 });

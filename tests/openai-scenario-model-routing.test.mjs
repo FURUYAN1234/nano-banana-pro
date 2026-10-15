@@ -1,6 +1,15 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
+import {OPENAI_TEXT_MODEL_IDS, OPENAI_VISION_MODEL_IDS} from '../src/lib/openai-model-routes.js';
+
+test('fixed helper and vision routes use maintained models without retired GPT-4 fallbacks', () => {
+  for (const route of [OPENAI_TEXT_MODEL_IDS, OPENAI_VISION_MODEL_IDS]) {
+    assert.equal(route[0], 'gpt-6.1-sol');
+    assert.ok(route.includes('gpt-6-luna'));
+    assert.ok(route.every(id => !/^gpt-4/.test(id)));
+  }
+});
 
 test('only STEP2 generation and enhancement request the dedicated scenario route', async () => {
   const source = await readFile(new URL('../src/lib/scenario-provider.js', import.meta.url), 'utf8');

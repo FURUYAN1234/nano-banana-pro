@@ -26,13 +26,13 @@ import {
 } from './openai-image-settings.js';
 
 const OPENAI_MODEL_NOTES = {
-  'gpt-6.1-sol': 'STEP2専用・公開版の初期モデル・入力$2/出力$10 USD/MTok',
+  'gpt-6.1-sol': '画像解析・文章処理のPrimary・STEP2公開版の初期モデル・入力$2/出力$10 USD/MTok',
   'gpt-6-astra': 'STEP2専用・物語構成と演出推論',
-  'gpt-6-sol': 'STEP2専用・複雑な構成と料金のバランス',
-  'gpt-5.6-sol': 'STEP2専用・高い構成力を保ちつつ節約',
-  'gpt-5.6-terra': 'STEP2専用・品質と料金のバランス',
-  'gpt-6-luna': 'STEP2専用・低コストのシナリオ構成',
-  'gpt-5.6-luna': 'STEP2専用・簡潔な題材を低コストで構成',
+  'gpt-6-sol': '画像解析・文章処理・複雑な構成と料金のバランス',
+  'gpt-5.6-sol': '画像解析・文章処理・高い構成力を重視',
+  'gpt-5.6-terra': '画像解析・文章処理・品質と料金のバランス',
+  'gpt-6-luna': '画像解析・文章処理・低コストの軽量モデル',
+  'gpt-5.6-luna': '画像解析・文章処理・軽量フォールバック',
   'gpt-4.1': '高品質・1Mコンテキスト',
   'gpt-4.1-mini': 'コスト効率・高速',
   'gpt-4.1-nano': '最軽量・最速',
@@ -175,6 +175,13 @@ export const getFallbackChains = (scenarioModelId = DEFAULT_OPENAI_SCENARIO_MODE
 };
 
 export const FALLBACK_CHAIN_HISTORY = [
+  {
+    version: 'v7.0.8', date: '2026-10-15',
+    note: 'OpenAIの終了予定モデルを現行ルートから除外。画像解析・STEP3・STEP2の表示と実行定義を同期。',
+    changes: [
+      { step: 'STEP 1 / STEP 3 (OpenAI)', action: '移行', detail: 'GPT-6.1 Solから現行のSol/Terra/Lunaへ。STEP2の選択モデルは独立して維持。' },
+    ],
+  },
   {
     version: 'v6.9.2', date: '2026-10-07',
     note: 'Gemini画像生成をNano Banana 2.1へ更新。Model Chain・保存画像のモデル情報・参考料金を同期。',

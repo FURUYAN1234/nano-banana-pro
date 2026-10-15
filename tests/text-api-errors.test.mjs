@@ -92,25 +92,19 @@ test('OpenAI: ordinary quoted refusal wording is usable; only a structured refus
   await assert.rejects(openai.callOpenAIText('fixture'), error => error.code === 'content_policy_violation');
 });
 
-test('GPT-6 and GPT-5.6 requests retain modern chat parameters; legacy STEP3 requests retain their parameters', async () => {
+test('scenario and migrated STEP3 routes use modern chat parameters', async () => {
   session.setApiSession('openai', 'test-only-credential');
-  for (const model of ['gpt-6-astra', 'gpt-5.6-sol', 'gpt-4.1']) {
+  for (const model of ['gpt-6-astra', 'gpt-5.6-sol', 'gpt-6.1-sol']) {
     let body;
     globalThis.fetch = async (_url, init) => {
       body = JSON.parse(init.body);
       return Response.json({choices:[{message:{content:'fixture reply'}}]});
     };
-    await openai.callOpenAIText('fixture', null, 'instruction', () => {}, model === 'gpt-4.1' ? {} : {modelRoute:'scenario',scenarioModelId:model});
+    await openai.callOpenAIText('fixture', null, 'instruction', () => {}, model === 'gpt-6.1-sol' ? {} : {modelRoute:'scenario',scenarioModelId:model});
     assert.equal(body.model, model);
-    assert.equal(body.messages[0].role, model === 'gpt-4.1' ? 'system' : 'developer');
-    if (model === 'gpt-4.1') {
-      assert.equal(body.max_tokens, 8192);
-      assert.equal(body.temperature, 0.7);
-      assert.equal(body.max_completion_tokens, undefined);
-    } else {
+    assert.equal(body.messages[0].role, 'developer');
       assert.equal(body.max_completion_tokens, 32768);
       assert.equal(body.max_tokens, undefined);
       assert.equal(body.temperature, undefined);
-    }
   }
 });
