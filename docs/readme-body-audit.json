@@ -1,7 +1,7 @@
 {
   "pricingSourceSha256": "19fd4c1a8add6f294cf28ec2a516ff1d913054e17e0ee1a77dbc65e3130df996",
   "manualVersion": "7.0.8",
-  "manualSourceSha256": "a2072fe370cbb406850f2097ce3172a3d810eb3173e9278dd04c9cdc9ab19ed3",
+  "manualSourceSha256": "0c231d4c85df9e0c8c759657f5de4e156931c792c7815dd3b6bc1e4097a0fc41",
   "manualFiles": [
     {
       "name": "gemini-api-beginner-guide-2026-10-01.pdf",
@@ -13,12 +13,12 @@
     },
     {
       "name": "super-furu-ai-4koma-full-manual-2026-10-01.pdf",
-      "sha256": "9b6d33ee9a27a10fef1cca78b8c46f7112ff537eb5e56606f877655791426ed9"
+      "sha256": "3cc37ab857f49d738865c9039f318979595a37a620eea235304aea79279b2039"
     }
   ],
-  "readmeSha256": "ad5086561d6a5c1007986ef63eb04a20e24e8b9ee3a143b6e1c667982cd7e073",
-  "sourceTree": "3aabd2e544787fef85cb4901b79865c8d45715ca",
-  "publicTree": "9c2efba8757d84d55f00b21ec671105e69e5532d",
+  "readmeSha256": "041ffdba56bad621107b77809b564a27423e828ece490a5d17e8f1c657ba8ab7",
+  "sourceTree": "aa5313a9a5adcf7ced82f6815e992c9e2b20fe45",
+  "publicTree": "067d826d53402034c7bfaad26e1e1a0debc5b70d",
   "packageSha256": "48b684f7d85cdd3d34b519e64311470d15c647e45696c1117b2dd64370ab3d09",
   "releaseAssetSha256": "9e41886be6afa0ebfad6d244ecf53f37260a92f73b30309319029cc87e1ddb4e",
   "reviewedSections": [
@@ -39,12 +39,12 @@
     "AI Manga Creative Suite / AIまんが制作エコシステム",
     "📋 ChangeLog / 更新履歴"
   ],
-  "findings": "Candidate v7.0.8 compared all 16 README sections with the verified v7.0.7 body and the complete candidate diff. Updated narrative outfit precedence/continuity, native observed-body coverage, OpenAI native existing-image inspection and the explicit limit that the vision census can miss people. Corrected the previous unconditional duplicate-reporting claim. Normal four-panel behavior, five-to-eight count/layout choices, authored camera/acting/media, reference roles, pricing/config, downloads, privacy, terms, video assets, related apps and historical descriptions were compared against their unchanged current paths. No claim of flawless costumes, reliable duplicate detection or improved drawing quality. Current public note full body has been read before publication; its targeted update and readback remain delivery stages. Final migration review: current options are7; fixed analysis/text routes use6.1Sol downward and STEP2 keeps its own selection. Ordinary-four-panel compaction preserves wardrobe/camera/style requirements within the unchanged budgets; immutable older baselines are normalized only for explicitly reviewed contract changes. The new normal UI STEP1 real API finished on6.1Sol with finish=stop and adopted five characters from two sheets. The Model Chain screen readback matches current routes; no new image generation or duplicate-detection guarantee is claimed.",
-  "manualFindings": "v7.0.8: regenerated SYSTEM39, Gemini13 and OpenAI22 pages. Prior rendered review covered all74 pages and SYSTEM23 at full resolution. The final migration rebuild changed only SYSTEM28 and OpenAI12 image hashes; reviewed both full-size pages, with the other72 page-image hashes unchanged. SYSTEM28 now lists7 model choices; OpenAI12 names6.1Sol and maintained analysis fallbacks. SYSTEM11 preserves explicit wardrobe changes, camera and acting; SYSTEM23 describes review-only inspection and missed-body limits. No clipped or overlapping text was observed. Version/date/links, A4 text bounds, source/privacy scans and page numbers passed the builders. This document audit does not certify generated imagery.",
+  "findings": "Candidate v7.0.8 compared all 16 README sections with the verified v7.0.7 body and the complete candidate diff. Updated narrative outfit precedence/continuity, native observed-body coverage, OpenAI native existing-image inspection and the explicit limit that the vision census can miss people. Corrected the previous unconditional duplicate-reporting claim. Normal four-panel behavior, five-to-eight count/layout choices, authored camera/acting/media, reference roles, pricing/config, downloads, privacy, terms, video assets, related apps and historical descriptions were compared against their unchanged current paths. No claim of flawless costumes, reliable duplicate detection or improved drawing quality. Current public note full body has been read before publication; its targeted update and readback remain delivery stages. Final layout review: full-width strip plans are excluded for every native count5/6/7/8 at the shared option/plan boundary; observed strip stacks warn and preserve the image, mixed arrangements remain accepted. Camera/acting/style and ordinary-four paths are unchanged by this extension. Red-before2/2 and green focused112/112; no new5/7 image generation is claimed. Final migration review: current options are7; fixed analysis/text routes use6.1Sol downward and STEP2 keeps its own selection. Ordinary-four-panel compaction preserves wardrobe/camera/style requirements within the unchanged budgets; immutable older baselines are normalized only for explicitly reviewed contract changes. The new normal UI STEP1 real API finished on6.1Sol with finish=stop and adopted five characters from two sheets. The Model Chain screen readback matches current routes; no new image generation or duplicate-detection guarantee is claimed.",
+  "manualFindings": "v7.0.8: regenerated SYSTEM39, Gemini13 and OpenAI22 pages. Prior rendered review covered all74 pages and SYSTEM23 at full resolution. The final migration and layout rebuild changed SYSTEM14, SYSTEM28 and OpenAI12 image hashes; reviewed all three full-size pages, with the other71 page-image hashes unchanged. SYSTEM14 now covers all5/6/7/8 full-width strip exclusions while retaining mixed and individual wide panels. SYSTEM28 now lists7 model choices; OpenAI12 names6.1Sol and maintained analysis fallbacks. SYSTEM11 preserves explicit wardrobe changes, camera and acting; SYSTEM23 describes review-only inspection and missed-body limits. No clipped or overlapping text was observed. Version/date/links, A4 text bounds, source/privacy scans and page numbers passed the builders. This document audit does not certify generated imagery.",
   "pricingReview": {
     "version": "7.0.8",
     "sourceSha256": "19fd4c1a8add6f294cf28ec2a516ff1d913054e17e0ee1a77dbc65e3130df996",
-    "checkedAt": "2026-10-15T09:35:52.659Z",
+    "checkedAt": "2026-10-15T10:22:20.846Z",
     "sources": [
       "https://developers.openai.com/api/docs/pricing",
       "https://ai.google.dev/gemini-api/docs/pricing"
