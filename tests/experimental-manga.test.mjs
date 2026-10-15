@@ -65,6 +65,21 @@ try {
     return { sourcePanel, kind:'anchor', camera:source.panels[i%source.panels.length].camera, action:'元の出来事の反応', dialogueIds:[], breakout:null };
   }) });
   const six = planFor(6);
+  test('dense all-horizontal six and eight panel layouts are excluded while other counts and mixed layouts remain',()=>{
+    for(const count of [5,7]) assert.ok(m.experimentalLayoutOptions(count).some(option=>option.id==='strips'));
+    for(const count of [6,8]) {
+      const nativeSource=m.readExperimentalSource({...input,scenario:scenarioFor(count)});
+      const plan={...planFor(count),layout:'strips'};
+      assert.ok(!m.experimentalLayoutOptions(count).some(option=>option.id==='strips'));
+      assert.doesNotMatch(m.buildExperimentalPlanPrompt(nativeSource),/"id":"strips"/);
+      assert.throws(()=>m.experimentalLayout(count,'strips'),/配置/);
+      assert.throws(()=>m.validateExperimentalPlan(plan,nativeSource),/配置/);
+      assert.equal(m.validateExperimentalPlan({...plan,layout:'mixed_rows'},nativeSource).count,count);
+    }
+    const oldHistory=[{plan:{count:6,layout:'strips'}},{plan:{count:8,layout:'strips'}},{plan:{count:6,layout:'mixed_rows'}}];
+    assert.deepEqual(m.summarizeExperimentalLayouts(oldHistory).map(entry=>entry.layout),['mixed_rows']);
+    assert.equal(oldHistory.length,3,'saved images and history remain intact');
+  });
   test('experimental rendering reuses normal cast-instance and wardrobe contracts without filling silent close-ups with the whole cast',()=>{
     const castList='## ユウ\n### 髪\n[WEIGHTS]: (black hair:1.4)\n### 服装\n[WEIGHTS]: (school uniform:1.3)\n## ナギ\n[WEIGHTS]: (blond hair:1.4)';
     for(const outfit of ['', 'Outfit: ユウは赤いコート、ナギは青い作業着。\n']) {
@@ -115,6 +130,19 @@ try {
     const report={inspectionVersion:3,status:'pass',observedCount:6,readingOrder:'pass',camera:'pass',style:'pass',story:'pass',anatomy:'pass',pageText:'pass',breakout:'not_requested',issues:[],pageEvidence:'原画のタイトルと左右のクレジット',evidence:six.panels.map((_,i)=>({panel:i+1,camera:'頭頂と肩の上面が見える',style:'顔の輪郭と陰影が明瞭',story:'人物の動作と道具が整合',anatomy:'両手と肩の接続が連続',physical_bodies:[{id:'body1',bounds:[0.1,0.1,0.5,0.8],features:['黒い短髪','赤いコート']}],cast_instances:[{name:'甲',observed_count:1,status:'ok',instances:[{body_id:'body1',location:'中央',matched_features:['黒い短髪','赤いコート']}]}]}))};
     const plan={...six,expectedCast:six.panels.map((_,i)=>({panel:i+1,names:['甲']}))};
     assert.equal(m.validateExperimentalReview(report,plan).status,'pass');
+    for(const count of [6,8]) {
+      const candidatePlan=count===6?plan:{...planFor(8),layout:'two_columns'};
+      const candidate={...report,observedCount:count,evidence:Array.from({length:count},(_,index)=>({...structuredClone(report.evidence[0]),panel:index+1}))};
+      const strips=Array.from({length:count},(_,index)=>({bounds:[.03,.06+index*.84/count,.94,.8/count]}));
+      candidate.observedFrames=strips;
+      candidate.evidence.forEach((entry,index)=>{entry.bounds=strips[index].bounds;});
+      assert.equal(m.validateExperimentalReview(candidate,candidatePlan).status,'warning');
+      const mixed=structuredClone(candidate);
+      const rects=m.experimentalLayout(count,'mixed_rows');
+      mixed.observedFrames=rects.map(rect=>({bounds:[.02+.96*rect.x,.05+.9*rect.y,.96*rect.w,.88*rect.h]}));
+      mixed.evidence.forEach((entry,index)=>{entry.bounds=mixed.observedFrames[index].bounds;});
+      assert.equal(m.validateExperimentalReview(mixed,candidatePlan).status,'pass');
+    }
     const compound=structuredClone(report);compound.evidence[0].physical_bodies[0].features=['黒い短髪、赤いコート'];
     assert.equal(m.validateExperimentalReview(compound,plan).status,'pass','comma-delimited observed cues do not lose their independent meaning');
     compound.evidence[0].physical_bodies[0].features=['人物'];
@@ -1330,7 +1358,7 @@ try {
   test('the same count offers genuinely different reading-safe layouts, not a fixed tall-right middle',()=>{
     for(let count=5;count<=8;count++) {
       const layouts=m.experimentalLayoutOptions(count);
-      assert.ok(layouts.length>=7);
+      assert.ok(layouts.length>=(count===8?6:7));
       const shapes=new Set();
       for(const {id} of layouts) {
         const rects=m.experimentalLayout(count,id);

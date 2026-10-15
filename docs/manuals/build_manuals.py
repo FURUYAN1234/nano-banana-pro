@@ -55,7 +55,7 @@ page('Gemini API 取得マニュアル',
  ('h2','はじめての取得・接続・費用確認'),
  ('body','Super FURU AI 4-koma Systemで使うGemini APIキーを取得するための、日本語操作ガイドです。Googleアカウントでのログインから、プロジェクト選択、キー発行、アプリへの接続まで順番に説明します。'),
  ('box','この冊子の対象','パソコンのブラウザで作業する初心者向けです。APIとは、アプリからAIへ処理を依頼する仕組みです。プログラムを書く必要はありません。'),
- ('body','v7.0.6対応。Google AI StudioでAPIキーを用意し、本アプリへ接続する手順を説明します。画面写真は操作に必要な部分のみを掲載しています。画面の表記や利用条件はアカウントによって異なる場合があります。'),
+ ('body','v7.0.7対応。Google AI StudioでAPIキーを用意し、本アプリへ接続する手順を説明します。画面写真は操作に必要な部分のみを掲載しています。画面の表記や利用条件はアカウントによって異なる場合があります。'),
  ('body','キーを取得するだけで、すべてのモデルを無料で利用できるわけではありません。画像生成や検索、解析、修正にも費用が発生する場合があります。'),refs=('studio','app')),
 page('目次と最短の作業順',
  ('rows',[['ページ','内容'],['3','GoogleアカウントとAI Studio'],['4','APIキー画面を開く'],['5','プロジェクトを選ぶ'],['6','キーを作成・コピーする'],['7','アプリへ接続する'],['8','無料枠と有料枠の違い'],['9','有料枠の設定と費用確認'],['10','キーの安全な管理'],['11','接続できないとき'],['12','公式リンクと完了チェック'],['13','画像枚数と人数の違い']]),
@@ -115,7 +115,7 @@ GEMINI.append(page('画像枚数と登場人物の人数',
  ('body','2D背景と360°背景を一緒に読み込むと、未指定の舞台は360°背景を基準にします。自由入力の素材・コマ別指定を優先し、2D背景も場面に合う範囲で使います。添付順は画像番号との対応づけのためで、背景の使用優先度を決めるものではありません。'),
  ('body','STEP2の自由入力では、素材名や現在の画像番号で採用・除外、持ち主、動作・状態を指定できます。AIが希望をできる範囲で整理し、曖昧・矛盾する要望を成立する場面へ調整します。未指定部分はおまかせです。全要望の実現は保証しません。'),
  ('body','WebにはSTEP1の現在の表示番号順で同じ元画像を添付します。360°背景は途中で追加しても最後に表示され、通常素材の後追加で最後の番号へ繰り下がります。APIでは自動で対応づけるため再添付・並べ直しは不要です。'),
- ('body','右フッターは画像生成エンジン名とシナリオモデル名を併記します。例えばOpenAIではChatGPT Images 2.5 / GPT-6.1 Sol / FURU AI 4-koma v7.0.6。Geminiでは選択中のGemini画像エンジン名を使います。生成済み画像は書き換えません。'),
+ ('body','右フッターは画像生成エンジン名とシナリオモデル名を併記します。例えばOpenAIではChatGPT Images 2.5 / GPT-6.1 Sol / FURU AI 4-koma v7.0.7。Geminiでは選択中のGemini画像エンジン名を使います。生成済み画像は書き換えません。'),
  ('small','公式仕様（2026-10-10確認）：OpenAI画像編集は合計16枚、gemini-nano-banana-2.1は参照画像14枚。アプリの共通読み込み上限とは区別してください。'),refs=('imageopenai','imagegemini')))
 
 SYSTEM=[
@@ -189,7 +189,7 @@ page('シナリオ強化と元に戻す操作',
  ('box','カメラの強弱を見る','全コマが同じ距離・同じ目線になっていないか確認します。意味のある反復や、明示した正面・肩越し等の構図は残し、身体の動きと反応が読めることを重視します。')),
 page('STEP2の前に選ぶ  コマ数選択',
  ('body','白い丸が左右に動き、背景色が左では水色、右では緑色に切り替わります。STEP2の上のスイッチは初期状態は左の「4コマ生成」です。4コマ生成は4コマ固定で、自由入力の「6コマ」などの総コマ数指定を採用しません。1〜4コマへの有効な画風・演出指定は保持します。5～8コマ生成は最初から5〜8コマの台本をSTEP2で作ります。数を指定しなくても、話に合う5〜8コマをAIが選びます。スイッチだけではAPIを呼びません。'),
- ('body','STEP2で各コマの展開と必要な間を作り、意味のある無言コマも使えます。STEP3は台本と同じコマ数・順番・台詞・画風・カメラを保ち、右から左・上から下の配置を作ります。4コマを引き延ばしたり、台詞を追加したりしません。横長や縦長の見せ場を使えますが、任意の演出が出ないことだけでは再生成しません。'),
+ ('body','STEP2で各コマの展開と必要な間を作り、意味のある無言コマも使えます。STEP3は台本と同じコマ数・順番・台詞・画風・カメラを保ち、右から左・上から下の配置を作ります。4コマを引き延ばしたり、台詞を追加したりしません。6・8コマの全横長縦積みは読みづらいため配置候補から除外し、実画像で確認した場合も警告します。横長や縦長の見せ場を使えますが、任意の演出が出ないことだけでは再生成しません。'),
  ('body','通常と同じSTEP4を使い、保存・履歴・全自動・Web貼り付け用コピーも共通です。実験モードでは画像の自動修正は無効です。同じ準備案で作り直した場合は候補を比較します。比較できない場合や改善が確認できない場合は前の選択画像を保持し、取得した画像は履歴に残します。比較にもAPI料金がかかります。'),
  ('body','4コマ生成へ戻すと作成済みの4コマ台本・結果へ、5～8コマ生成にすると5〜8コマ側へ戻ります。台本や共通設定を変更した場合はSTEP3を作り直します。選択は再読み込みまで維持し、再読み込み後は4コマ生成です。'),
  ('box','出力の確認','未確認や軽微な違いだけでは画像を再生成しません。台詞・読む順番・人物・カメラや画風は実画像で確認してください。結果が乱れる場合は、4コマ生成に戻して通常の4コマをご利用ください。')),
@@ -212,7 +212,7 @@ page('STEP3  カラー／白黒の選択',
  ('box','白黒は印刷の適合保証ではありません','仕上げ画像を読み込んでピクセル変換する機能ではありません。厳密な二値、解像度、出版社の入稿規定は、保存した実画像で別途確認してください。'),
  ('body','人物の特徴、演技、カメラ、背景の遠近感、台詞は白黒でも維持する方針ですが、画像AIがすべて正確に描けるとは限りません。')),
 page('モザイクとウオーターマーク',
- ('body','右フッターの先頭は現在の画像生成エンジン名です。シナリオモデル名は残します。例：ChatGPT Images 2.5 / GPT-6.1 Sol / FURU AI 4-koma v7.0.6。API・Webコピー用の指示へ同期し、生成済み画像は書き換えません。'),
+ ('body','右フッターの先頭は現在の画像生成エンジン名です。シナリオモデル名は残します。例：ChatGPT Images 2.5 / GPT-6.1 Sol / FURU AI 4-koma v7.0.7。API・Webコピー用の指示へ同期し、生成済み画像は書き換えません。'),
  ('rows',[['設定','反映する工程'],['版権キャラクターにモザイクをかける','STEP2から作り直して反映。初期状態ON'],['ウオーターマークを表記する','STEP3から作り直して反映。初期状態ON']]),
  ('body','モザイクは台本の動作で描く既存作品の人物への描画指示です。登録したシート人物は自動モザイクから除外し、生成・品質検査へ同じ除外リストを渡します。原文で本人への遮蔽を明示した場合は、その対象・領域だけ例外です。除外リストが現在のキャストと合わない場合は、STEP3から再構築してください。'),
  ('body','ウオーターマークをOFFにすると、左右フッターのクレジット描画指示を外します。ONでは、外側フッターへ1回ずつ配置するよう指示します。'),
@@ -355,7 +355,7 @@ SYSTEM.append(page('自動保存の初回動作確認',
 class Book:
  def __init__(self,path,title,pages):
   self.path=path; self.pages=pages; self.c=canvas.Canvas(str(path),pagesize=A4,pageCompression=1)
-  self.c.setTitle(title);self.c.setAuthor('Super FURU AI 4-koma System');self.c.setSubject('日本語操作マニュアル / v7.0.6 / 2026-10-14')
+  self.c.setTitle(title);self.c.setAuthor('Super FURU AI 4-koma System');self.c.setSubject('日本語操作マニュアル / v7.0.7 / 2026-10-15')
   self.y=0;self.number=0;self.layout=[]
  def para(self,text,style='body',gap=10):
   p=Paragraph(text,STYLES[style]);_,h=p.wrap(CW,1000)
@@ -397,7 +397,7 @@ class Book:
    if page['shot']:self.shot(page['shot'],page['caption'])
    if page['refs']:
     self.para('参照：'+' / '.join(f'<link href="{escape(SOURCES[k][1])}" color="#087c86">{escape(SOURCES[k][0])}</link>' for k in page['refs']),'small',0)
-   c.setFillColor(GRAY);c.setFont('JP',8);c.drawString(M,33,'v7.0.6対応 | 2026年10月14日更新 | A4 日本語版');c.drawRightString(W-M,33,f'{i:02d} / {len(self.pages):02d}')
+   c.setFillColor(GRAY);c.setFont('JP',8);c.drawString(M,33,'v7.0.7対応 | 2026年10月15日更新 | A4 日本語版');c.drawRightString(W-M,33,f'{i:02d} / {len(self.pages):02d}')
    self.layout.append(dict(page=i,bottom_y=round(self.y,2)));c.showPage()
   c.save();return self.layout
 
@@ -423,13 +423,13 @@ def verify_and_render(path,layout,pages):
  assert len(r.pages)==len(pages)
  for page_index,pdf_page in enumerate(r.pages,1):
   assert f'{page_index:02d}/{len(r.pages)}' in re.sub(r'\s+','',pdf_page.extract_text()), 'Incorrect footer page count'
- assert all('v7.0.6対応' in p.extract_text() and '2026年10月14日更新' in p.extract_text() for p in r.pages)
+ assert all('v7.0.7対応' in p.extract_text() and '2026年10月15日更新' in p.extract_text() for p in r.pages)
  for required in ['14枚','10枚','1枚に複数人','人数による固定上限','保証','保持','認識できない','小物']:
   assert re.sub(r'\s+','',required) in re.sub(r'\s+','',text),required
  if 'full-manual' in path.name:
   for required in ['Download ZIP','Node.js','start_app.bat','npm install','node_modules','ウィンドウ','画像表示予定枠の中央','累積時間だけでは打ち切りません','原寸RGB','褐色肌','カケアミ']:
    assert re.sub(r'\s+','',required) in re.sub(r'\s+','',text),required
- assert set(re.findall(r'v[0-9]+\.[0-9]+\.[0-9]+',text)) <= {'v7.0.6'}, 'Historical version in current manual'
+ assert set(re.findall(r'v[0-9]+\.[0-9]+\.[0-9]+',text)) <= {'v7.0.7'}, 'Historical version in current manual'
  assert not re.search(r'nano\s*banana|ナノ[・\s]*バナナ',text,re.I)
  assert not re.search(r'AIza[A-Za-z0-9_-]{20,}|sk-(?:proj-)?[A-Za-z0-9_-]{20,}|gen-lang-client-\d+|sx717|@[A-Za-z0-9.-]+\.[A-Za-z]{2,}',text)
  assert all(p['bottom_y']>=64 for p in layout)
