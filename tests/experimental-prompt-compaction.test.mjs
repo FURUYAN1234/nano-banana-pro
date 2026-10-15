@@ -119,7 +119,7 @@ try {
       if(count>=6) assert.equal(cues[5],'','unspecified camera must not inherit camera instructions from another frame or actor action');
       assert.ok(prompt.length<32000);
     }
-    assert.equal(m.EXPERIMENTAL_PROMPT_REVISION,34);
+    assert.equal(m.EXPERIMENTAL_PROMPT_REVISION,35);
   });
   test('native prompts compact before the hard ceiling while preserving every camera, acting and medium',()=>{
     const cameras=[
@@ -185,8 +185,10 @@ try {
       for(const rect of m.experimentalLayout(6,'two_columns')) assert.ok(prompt.includes('rect='+JSON.stringify(rect)));
       assert.ok(prompt.includes(GEKIGA_FACE_CONSTRUCTION));
       assert.ok(prompt.includes('dense fine multi-directional facial kakeami with visible line gaps'));
-      // Keep the observed source budget while allowing its new local physical cues.
-      assert.ok(prompt.length<=(colorMode==='color'?24100:27100),`regression ${colorMode} prompt ${prompt.length} leaves too little reserved-budget headroom`);
+      // Add only the newly shared wardrobe contract to the prior regression budget.
+      // Keep the real reserved API ceiling unchanged and all authored content intact.
+      assert.ok(prompt.length<=30460);
+      assert.ok(prompt.length-shared.WARDROBE_COMPONENT_LOCK.length<=(colorMode==='color'?24100:27100),`regression ${colorMode} prompt ${prompt.length} leaves too little reserved-budget headroom`);
       assert.equal((await m.prepareExperimentalManga(options,async()=>JSON.stringify(diagnosticPlan))).prompt,prompt);
     }
   });

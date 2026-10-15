@@ -451,7 +451,7 @@ export default function Step4Panel({
   const existingImageReviewControl = generatedImage && (
                 <button
                   type="button"
-                  onClick={() => regenerateImage(false, null, { reviewExisting: true, reviewOnly: !allowImageQualityRepair })}
+                  onClick={() => regenerateImage(false, null, { reviewExisting: true, reviewOnly: experimentalEnabled || !allowImageQualityRepair })}
                   disabled={isGeneratingImage || isFixingPolicy}
                   className={`w-full mt-2 px-4 py-2 rounded-lg border border-blue-400/40 bg-blue-900/20 text-blue-100 text-sm font-bold disabled:opacity-50 disabled:cursor-wait ${currentStep === 5 && !isGeneratingImage && !isFixingPolicy ? 'next-step-gentle-pulse' : ''}`}
                 >
@@ -1417,7 +1417,7 @@ No explanations. No partial results.`;
                 {isGeneratingImage && processingStatus}
               </div>
               <p style={{ fontSize: '11px', lineHeight: 1.6 }} className="text-slate-400">{getDisplayedImageInfo(displayedImageSize?.image === generatedImage ? displayedImageSize : null, displayedHistory?.pageLayout)}</p>
-              {!isChatGPTWebGuide && (
+              {(!isChatGPTWebGuide || experimentalEnabled) && (
                 <div className="w-full max-w-2xl">
                   {existingImageReviewControl}
                   <p className="mt-2 text-[11px] text-slate-400 leading-relaxed">

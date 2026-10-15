@@ -362,6 +362,10 @@ test('actual scenario and enhancement call paths exclude sheet wardrobe and retr
     assert.doesNotMatch(call.system, /school uniform|ブレザー制服/);
     assert.match(call.system, /冷静。幼馴染を気遣う。/);
     assert.match(call.system, /CHARACTER IDENTITY, NOT STORY SETTING/);
+    assert.match(call.system, /人物別の具体的な衣装・主な構成・色をOutfit/);
+    assert.match(call.system, /状況\/Actionの衣装と一致/);
+    assert.match(call.system, /明示の着替えやコマ限定指定はその範囲を保つ/);
+    assert.match(call.system, /Camera・演技・動き・表情・コマ指定の画風を固定\/簡略化しない/);
     assert.equal(call.options.modelRoute, 'scenario');
   }
 });

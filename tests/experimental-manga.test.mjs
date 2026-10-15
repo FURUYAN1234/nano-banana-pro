@@ -181,7 +181,7 @@ try {
     face_direction:i?'首を自然に傾けて顔の左側を台へ向ける。':'横向きの顔を右下の台へ向けている。',
     target:{description:'二人の間にある赤い計測器の表示面。',position:[.5,.65]}});
   const styledReview=()=>{
-    const report=currentPairReview();report.inspectionVersion=7;
+    const report=currentPairReview();report.inspectionVersion=8;
     report.expectedOutfits={global:'',panels:six.panels.map((_,i)=>({panel:i+1,outfit:''}))};
     report.wardrobe_observation={status:'pass',evidence:'各人物の見える上着を参照と照合し、コマ間でも同じ形を保っている。',issues:[]};
     report.expectedStyles=six.panels.map((_,i)=>({panel:i+1,style:i===2?'WATERCOLOR':'GEKIGA'}));
@@ -191,12 +191,78 @@ try {
     return report;
   };
   const wardrobeReview=()=>{
-    const report=styledReview();report.inspectionVersion=7;
+    const report=styledReview();report.inspectionVersion=8;
     report.expectedOutfits={global:'人物Aは灰色のジャケットと黒いパンツ。',castNames:['人物A','人物B'],panels:six.panels.map((_,i)=>({panel:i+1,outfit:''}))};
     report.evidence[0].cast_instances=[{name:'人物A',observed_count:1,status:'ok',instances:[{body_id:'left',location:'左側',matched_features:['短い黒髪','丸い眼鏡']}]}];
     report.wardrobe_observation={status:'pass',evidence:'見える上着と脚の服を指定と照合し、他の人物は参照衣装を保つ。',issues:[]};
     return report;
   };
+  const castCoverageReview=()=>{
+    const report=styledReview();
+    report.evidence.forEach(e=>{e.physical_bodies=[];e.cast_instances=[];e.style_observation.actors=[];});
+    const panel=report.evidence[3];
+    panel.physical_bodies=['near','far'].map((id,i)=>({id,bounds:[.1+i*.4,.1,.3,.8],features:['黒い長髪','紫のローブ'],gaze:blindGaze(i)}));
+    panel.cast_instances=[{name:'人物A',observed_count:1,status:'ok',instances:[{body_id:'near',location:'左前景の独立した身体',matched_features:['黒い長髪','紫のローブ']}]}];
+    panel.style_observation.actors=['near','far'].map(body_id=>({body_id,medium:'GEKIGA',status:'pass',face_visibility:'visible',face:'小さい虹彩と厚い瞼、鼻梁と頬骨の立体が見える。',shading:'鼻側面と頬に細い斜線が交差し紙の隙間が残る。'}));
+    return report;
+  };
+  const castCoveragePlan={...six,expectedCast:six.panels.map((_,i)=>({panel:i+1,names:i===3?['人物A']:[]}))};
+  const backgroundDisposition=()=>({body_id:'far',kind:'non_cast',observed_features:['短い白髪','緑の作業着'],evidence:'背景の人物は短い白髪と緑の作業着で、人物Aの黒い長髪と紫のローブとは異なる。'});
+  test('native cast coverage cannot pass an unmapped body from the independent census',()=>{
+    const report=castCoverageReview(),original=structuredClone(report);
+    const checked=m.validateExperimentalReview(report,castCoveragePlan);
+    assert.equal(checked.anatomy,'uncertain');assert.equal(checked.status,'unverified');
+    assert.match(checked.issues.join('\n'),/far.*人物対応/);
+    assert.deepEqual(report,original,'coverage verification preserves the original observations');
+    assert.ok(!checked.issues.some(issue=>/Expected exactly one|2体/.test(issue)),'unmapped does not prove duplication');
+    const legacy={...report,inspectionVersion:7};
+    assert.equal(m.validateExperimentalReview(legacy,castCoveragePlan).anatomy,'uncertain','old evidence cannot hide an unbound observed body');
+  });
+  test('native cast coverage allows grounded background bodies and preserves cropped identity uncertainty',()=>{
+    const report=castCoverageReview(),panel=report.evidence[3];
+    panel.physical_bodies[1].features=['短い白髪','緑の作業着'];
+    panel.body_dispositions=[backgroundDisposition()];
+    assert.equal(m.validateExperimentalReview(report,castCoveragePlan).status,'pass');
+    for(const damage of [
+      e=>{e.body_dispositions=[];},
+      e=>{e.body_dispositions[0].kind='uncertain';},
+      e=>{e.body_dispositions[0].evidence='背景';},
+      e=>{e.body_dispositions[0].observed_features=['奥にいる'];},
+      e=>{e.body_dispositions[0].observed_features=['別の髪型','別の服'];},
+      e=>{e.body_dispositions[0].observed_features=['短い白髪','短い白髪'];},
+      e=>{e.body_dispositions[0].body_id='missing';},
+      e=>{e.body_dispositions.push({...e.body_dispositions[0]});},
+      e=>{e.body_dispositions.push({...e.body_dispositions[0],body_id:'near'});},
+      e=>{e.body_dispositions=[];e.cast_instances.push({name:'勝手に追加した人物名',observed_count:1,status:'ok',instances:[{body_id:'far',location:'右後列の身体',matched_features:['短い白髪','緑の作業着']}]});},
+    ]) {
+      const copy=structuredClone(report);damage(copy.evidence[3]);
+      assert.equal(m.validateExperimentalReview(copy,castCoveragePlan).anatomy,'uncertain');
+    }
+    const cropped=structuredClone(report);cropped.evidence[3].physical_bodies[1].features=['袖だけが見える'];
+    cropped.evidence[3].body_dispositions=[{body_id:'far',kind:'uncertain',observed_features:['袖だけが見える'],evidence:'顔と胴体は画角外で袖のみ見え、人物Aか背景人物かは同定できない。'}];
+    const checked=m.validateExperimentalReview(cropped,castCoveragePlan);
+    assert.equal(checked.anatomy,'uncertain');assert.notEqual(checked.status,'warning');
+    const malformed=structuredClone(report);malformed.evidence[3].camera='pass';
+    assert.deepEqual(m.validateExperimentalReview(malformed,castCoveragePlan).evidence[3].body_dispositions,panel.body_dispositions,
+      'other malformed observations cannot discard the actual identity dispositions');
+  });
+  test('native cast coverage preserves a grounded duplicate alongside an unresolved body',()=>{
+    const report=castCoverageReview(),panel=report.evidence[3];
+    panel.cast_instances[0].observed_count=2;panel.cast_instances[0].status='defect';
+    panel.cast_instances[0].instances.push({body_id:'far',location:'右後列の独立した身体',matched_features:['黒い長髪','紫のローブ']});
+    panel.physical_bodies.push({id:'partial',bounds:[.8,.8,.1,.1],features:['白い袖だけが見える']});
+    panel.body_dispositions=[{body_id:'partial',kind:'uncertain',observed_features:['白い袖だけが見える'],evidence:'腕だけが画角内に見え、どの人物につながるかは不明。'}];
+    const checked=m.validateExperimentalReview(report,castCoveragePlan);
+    assert.equal(checked.anatomy,'fail');assert.equal(checked.status,'warning');
+    assert.match(checked.issues.join('\n'),/observed 2/);
+  });
+  test('native cast coverage prompt assesses every census body without forcing background people into the cast',()=>{
+    const prompt=m.buildExperimentalReviewPrompt(six,source,input);
+    assert.match(prompt,/body_dispositions/);
+    assert.match(prompt,/Never stop after the first identity match/);
+    assert.match(prompt,/ordinary background people/);
+    assert.match(prompt,/uncertain.*not.*duplicate/i);
+  });
   const explicitWardrobeIssue=()=>({panel:1,subject:'人物A',reason:'指定パンツが見えるスカートに置き換わった。',material_impact:'material',impact_reason:'指定された衣装の種類と脚部の構成が変わっている。',
     wardrobe_evidence:{basis:'approved_outfit',component:'脚部の衣服',difference_kind:'component_state',expected_scope:'global',expected_quote:'人物Aは灰色のジャケットと黒いパンツ。',later_body_id:'left',
       later_location:'人物Aの露出している腰から膝',later_state:'青いプリーツスカートと露出した脚',later_visibility:'clear',matched_features:['短い黒髪','丸い眼鏡'],scripted_change:'none'}});
@@ -510,7 +576,7 @@ try {
     assert.deepEqual(checked.validationErrors||[],[]);
     assert.deepEqual(m.validateExperimentalReview(checked,plan),checked);
     const old={...original,review:legacy};let inspections=0;
-    await m.reviewExperimentalCandidatePair({base64Img:'fresh'},{...old,review:{...legacy,inspectionVersion:7}},async()=>{inspections++;return {};});
+    await m.reviewExperimentalCandidatePair({base64Img:'fresh'},{...old,review:{...legacy,inspectionVersion:8}},async()=>{inspections++;return {};});
     assert.equal(inspections,1,'a quarantined census must not start another inspection of the old image');
     const next={...original,image:{base64Img:'fresh'}};
     const selected=await m.selectExperimentalCandidate(old,next,async()=>({preferred:'repair',reason:'台詞を保ち、演技が明瞭。',readingOrderChecks:checks}));
@@ -693,12 +759,18 @@ try {
       view:{elevation:'high',gaze:'in_scene',evidence:'人物は台の水平器へ視線を向ける。'},
       style_observation:{medium:'WATERCOLOR',status:'pass',evidence:'顔と衣服に淡彩と紙の白が見える。',actors:[{
         body_id:'p3b1',medium:'WATERCOLOR',status:'pass',face_visibility:'visible',face:'細い目と真っすぐな口の輪郭が見える。',shading:'頬に薄い水彩の重なりが見える。'}]},
-      cast_instances:[{name:'人物甲',observed_count:1,status:'ok',evidence:null,
+      body_dispositions:[],cast_instances:[{name:'人物甲',observed_count:1,status:'ok',evidence:null,
         instances:[{body_id:'p3b1',location:'左奥に立つ人物',matched_features:['黒い長髪','灰色の上着']}]}],text_regions:[],dialogue:null};
     const report={status:'unverified',observedCount:null,readingOrder:'uncertain',camera:'uncertain',style:'uncertain',story:'uncertain',anatomy:'uncertain',pageText:'uncertain',breakout:'not_requested',issues:['細部を確認できない。'],pageEvidence:null,evidence:[panel],wardrobe_observation:null};
     assert.equal(assessment(report),true,JSON.stringify(assessment.errors));
     const missingWardrobe=structuredClone(report);delete missingWardrobe.wardrobe_observation;
     assert.equal(assessment(missingWardrobe),false,'clothing observation cannot silently disappear from the native review schema');
+    const missingCoverage=structuredClone(report);delete missingCoverage.evidence[0].body_dispositions;
+    assert.equal(assessment(missingCoverage),false,'unbound body dispositions must be requested in every assessment');
+    const background=structuredClone(report);background.evidence[0].body_dispositions=[backgroundDisposition()];
+    assert.equal(assessment(background),true,JSON.stringify(assessment.errors));
+    background.evidence[0].body_dispositions[0].kind='ignore';
+    assert.equal(assessment(background),false,'unexamined census bodies cannot be dismissed with an arbitrary label');
     const garment=structuredClone(report);garment.wardrobe_observation={status:'uncertain',evidence:'脚部の衣服が台の後ろへ隠れて確認できない。',issues:[]};
     assert.equal(assessment(garment),true,JSON.stringify(assessment.errors));
     const original=structuredClone(report);
@@ -739,14 +811,14 @@ try {
     }
     assert.equal(requests,2,'only each new image requires a review');
   });
-  test('candidate review pair refreshes the previous version instead of reusing its incomplete gaze contract',async()=>{
-    const original={image:{base64Img:'old'},plan:six,review:{...styledReview(),inspectionVersion:6}};
+  test('candidate review pair refreshes the previous version instead of reusing its incomplete body coverage contract',async()=>{
+    const original={image:{base64Img:'old'},plan:six,review:{...styledReview(),inspectionVersion:7}};
     const fresh={base64Img:'new'},started=[];
     await m.reviewExperimentalCandidatePair(fresh,original,async image=>{
       started.push(image);image.experimentalReview=styledReview();return {pass:true,issues:[]};
     });
     assert.deepEqual(started,[fresh,original.image]);
-    assert.equal(original.review.inspectionVersion,7);
+    assert.equal(original.review.inspectionVersion,8);
   });
   test('candidate review pair preserves provider timeout failures and does not claim a comparison',async()=>{
     const signals=[];
@@ -1219,7 +1291,7 @@ try {
         :{text:JSON.stringify({status:'unverified',observedCount:null,camera:'uncertain',expectedStyles:[{panel:1,style:'NORMAL'}],expectedOutfits:{global:'採点側が捏造した衣装指定',panels:[]},evidence:six.panels.map((p,i)=>({panel:i+1,physical_bodies:[{...independentBody,gaze:null}],text_regions:[{region_kind:'speech_balloon',text:'採点側の誤った上書き',center_x:.9}],dialogue:['古い誤読'],camera:'観察',style:'観察'}))}),model:'test'};
     },{detect:async()=>frames,inspect:async()=>({width:2240,height:3168}),crop:async()=>({dataUrl:'test-crop'})});
     assert.equal(calls.length,2);assert.equal(calls[0].count,9,'blind reading sees all native frames and footer crops without the expected plan');
-    assert.equal(result.review.inspectionVersion,7);
+    assert.equal(result.review.inspectionVersion,8);
     assert.deepEqual(result.review.evidence[0].physical_bodies,[independentBody],'assessment cannot replace independent gaze, body identity or geometry');
     assert.deepEqual(result.review.expectedStyles,expectedStyles,'expected media come from the source contract, not the assessment model');
     assert.deepEqual(result.review.expectedOutfits,expectedOutfits,'outfit authority comes from the compiler, never the assessment response');
@@ -1263,7 +1335,7 @@ try {
     const result=await m.reviewExperimentalImage({image:{mimeType:'image/png',base64Img:'test-only'},plan:six,prompt:'story'},async()=>{requests++;throw new Error('no paid review for count mismatch');},{detect:async()=>frames,inspect:async()=>({width:400,height:600}),crop:async()=>{crops++;throw new Error('no crop based on incompatible plan');}});
     assert.equal(requests,0);assert.equal(crops,0);assert.equal(result.requests,0);
     assert.equal(result.review.observedCount,7);assert.deepEqual(result.review.observedFrames,frames);
-    assert.equal(result.review.inspectionVersion,7,'local count evidence belongs to the current inspection format');
+    assert.equal(result.review.inspectionVersion,8,'local count evidence belongs to the current inspection format');
     const review=m.validateExperimentalReview(result.review,six);
     assert.equal(review.status,'warning');assert.equal(review.observedCount,7);
     assert.equal(m.validateExperimentalReview(JSON.parse(JSON.stringify(review)),six).status,'warning','saved local geometry retains its supported count warning');

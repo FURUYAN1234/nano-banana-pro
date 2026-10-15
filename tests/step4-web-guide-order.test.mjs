@@ -110,6 +110,29 @@ test('API settings stay outside Web help and immediately precede STEP4 with a sm
   }
 });
 
+test('native panels expose existing-image inspection for OpenAI without changing ordinary Web-guide controls', async () => {
+  const server = await createServer({ appType: 'custom', logLevel: 'silent', server: { middlewareMode: true, hmr: false } });
+  try {
+    const { default: Step4Panel } = await server.ssrLoadModule('/src/components/Step4Panel.jsx');
+    for (const generatedImage of ['', 'data:image/png;base64,YQ==']) {
+      for (const experimentalEnabled of [false, true]) {
+        const html = renderToStaticMarkup(React.createElement(Step4Panel, {
+          selectedEngine: 'openai', currentStep: 5, finalPrompt: 'OUTPUT: Single image.',
+          genLog: [], policyErrorMsg: '', castList: '', scenario: '', webCopyPartLengths: [],
+          generatedImage, experimentalEnabled, allowImageQualityRepair: true,
+        }));
+        const review = html.indexOf('AIで画像を再検査');
+        if (generatedImage && experimentalEnabled) {
+          assert.ok(review > html.indexOf('alt="Generated Result"'));
+          assert.ok(review < html.indexOf('この画像への追加指示'));
+          assert.ok(html.includes('検査のみ行います（画像再生成なし・解析API課金あり）'));
+          assert.doesNotMatch(html, /自動修正ON/);
+        } else assert.equal(review, -1);
+      }
+    }
+  } finally { await server.close(); }
+});
+
 test('STEP4 places Web safety help between upscale and video guides with scoped labels', async () => {
   const server = await createServer({ appType: 'custom', logLevel: 'silent', server: { middlewareMode: true } });
   try {

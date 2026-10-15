@@ -213,7 +213,7 @@ test('best available fallback continues with a warning while explicit cancellati
 test('retained-image retry is available without generating a fresh original image', () => {
   assert.match(workflowSource, /generationOptions\.reviewExisting[\s\S]*?generatedImage/);
   assert.match(workflowSource, /: await generateImageCandidate\(currentPrompt\)/);
-  assert.match(step4Source, /generatedImage\s*&&[\s\S]*?regenerateImage\(false, null, \{ reviewExisting: true, reviewOnly: !allowImageQualityRepair \}\)/);
+  assert.match(step4Source, /generatedImage\s*&&[\s\S]*?regenerateImage\(false, null, \{ reviewExisting: true, reviewOnly: experimentalEnabled \|\| !allowImageQualityRepair \}\)/);
   assert.match(workflowSource, /const repairEnabled = !experimentalPrepared && allowImageQualityRepair && !generationOptions\.reviewOnly/);
   assert.match(workflowSource, /allowRepair: repairEnabled/);
 });

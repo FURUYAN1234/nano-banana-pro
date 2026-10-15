@@ -6,6 +6,7 @@ const server = await createServer({ appType: 'custom', logLevel: 'silent', serve
 try {
   const m = await server.ssrLoadModule('/src/lib/experimental-manga.js');
   const {resolvePageWorkflow} = await server.ssrLoadModule('/src/lib/page-workflow.js');
+  const {appendOpenAIWebReferencePrompt,appendOpenAIReferencePrompt,buildOpenAIReferencePlan}=await server.ssrLoadModule('/src/lib/openai-image-references.js');
   const styles = ['NORMAL', 'WATERCOLOR', 'POP_ART', 'GEKIGA'];
   const castList = '## ユウ\n[WEIGHTS]: (black hair:1.4)\n## ナギ\n[WEIGHTS]: (blonde hair:1.4)';
   const makeInput = (side, count = 7) => ({
@@ -27,6 +28,32 @@ try {
         dialogueIds: [...p.dialogueIds], visualEffects: [], breakout: null })),
   });
   const occurrences = (text, fragment) => text.split(fragment).length - 1;
+  test('narrative wardrobe survives native full/compact Web and API exports without flattening camera acting or media', () => {
+    const cameras=['右後方の高所から俯瞰する広角','左側の床近くから強く見上げる広角','真上から手元を見下ろす接写','右前方の高所から望遠で奥行きを圧縮','左後方の低い位置から25度のダッチアングル','右上空から遠く見下ろす超広角'];
+    const actions=['ユウは青い整備士の衣装で腕を伸ばし、歯を食いしばってレバーを引く。ナギは赤い飛行士の衣装で身を乗り出す。','ユウは片足で踏ん張り、ナギは勢いよく跳び上がって笑う。','ユウの袖と手だけが見え、つまんだ留め具を外す。','ナギは眉を寄せ、口を半開きにして振り返る。','ユウは驚いて体を反らし、ナギは片手を伸ばして支える。','二人は肩を震わせて笑う。'];
+    const input={enabled:true,castList,colorMode:'color',scenario:'Outfit: 全員別々のコスプレ\nLocation: 空中の整備場\n'+actions.map((action,i)=>`[${i+1}コマ目]\n[Camera: ${cameras[i]}]\n[EMOTION: ${styles[i%styles.length]}]\n状況: ${action}\nセリフなし`).join('\n')};
+    const src=m.readExperimentalSource(input),before=structuredClone(src),plan=makePlan(6,'hero_bottom',src);
+    plan.panels.forEach((panel,i)=>{panel.action=actions[i];});
+    const full=m.buildExperimentalImagePrompt(plan,src,input);
+    const compact=m.buildExperimentalImagePrompt(plan,src,{...input,promptMaxChars:full.length-1});
+    const refs=buildOpenAIReferencePlan({characterImages:['data:image/png;base64,dGVzdA==']});
+    for(const body of [full,compact]) for(const prompt of [appendOpenAIWebReferencePrompt(body,refs),appendOpenAIReferencePrompt(body,refs)]) {
+      assert.equal(occurrences(prompt,'WARDROBE COMPONENT LOCK:'),1,'native pages need the shared continuity contract');
+      assert.match(prompt,/状況\/Action.*衣装/);
+      assert.match(prompt,/後続コマ.*省略.*未指定/);
+      assert.match(prompt,/コマ限定.*着替え/);
+      assert.match(prompt,/演技・動き・表情.*画風/);
+      assert.match(prompt,/明示された参照服との重ね着や衣装の受け渡しは保持/);
+      for(const [i,frame] of frames(prompt).entries()) {
+        assert.ok(frame.body.includes(`Camera: ${cameras[i]}`));
+        assert.ok(frame.body.includes(`Action: ${actions[i]}`));
+        assert.ok(frame.body.includes(`Style: ${styles[i%styles.length]}`));
+      }
+      assert.match(prompt,/FRAME MEDIUM P2 — WATERCOLOR/);
+      assert.match(prompt,/FRAME MEDIUM P4 — GEKIGA/);
+    }
+    assert.deepEqual(src,before,'continuity cannot rewrite the accepted scenario');
+  });
   const frames = prompt => [...prompt.matchAll(/\[PAGE FRAME P(\d+) \| ([^\]\n]+)\]\n([\s\S]*?)\n\[END PAGE FRAME P\1\]/g)]
     .map(match => ({ number: Number(match[1]), position: match[2], body: match[3], start: match.index, end: match.index + match[0].length }));
   const position = rect => `${rect.w === 1 ? 'FULL WIDTH' : rect.x === 0 ? 'LEFT' : 'RIGHT'}, top=${Math.round(rect.y * 100)}%, bottom=${Math.round((rect.y + rect.h) * 100)}% of comic area`;

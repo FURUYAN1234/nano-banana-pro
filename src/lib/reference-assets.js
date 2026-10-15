@@ -193,7 +193,7 @@ export function getReferenceMetadataRole(asset) {
   return kinds.length > 1 ? 'mixed_reference' : `${kinds[0] === 'unknown' ? 'unclassified' : kinds[0]}_reference`;
 }
 
-export const CHARACTER_REFERENCE_IDENTITY_RULE = "Use for visual identity and canonical clothing unless the approved prompt explicitly overrides clothing. Identity means the individual's identifying traits and age. The selected panel rendering recipe determines face/eye construction and body stylization; preserve the reference drawing style only under an explicit reference-style lock in the approved prompt.";
+export const CHARACTER_REFERENCE_IDENTITY_RULE = "Use for visual identity and canonical clothing unless the approved prompt explicitly overrides clothing. Outfit or narrative clothing established for an actor in the same continuous scene overrides reference clothing, including when later panels omit it; omission is not a reset to reference clothing. Preserve explicit frame-only scope and scripted clothing changes. Identity means the individual's identifying traits and age. The selected panel rendering recipe determines face/eye construction and body stylization; preserve the reference drawing style only under an explicit reference-style lock in the approved prompt.";
 
 const REFERENCE_RULES = {
       character: `CHARACTER REFERENCE. ${CHARACTER_REFERENCE_IDENTITY_RULE} Repeated expression sheets and turnaround views show the same person, not extra cast. Follow scripted acting. Do not copy sheet layout, captions or static poses.`,
@@ -225,7 +225,7 @@ export function buildReferenceAssetContext(assets = [], images = [], { panorama 
   if (!assets.length && !panorama) return '';
   const references = images.map((image, index) => ({ imageIndex: index + 1, items: getReferenceAsset(assets, image).items }));
   if (panorama) references.push({ imageIndex: images.length + 1, items: [{ kind: 'background', name: '360°背景', description: JSON.stringify(panorama) }] });
-  if (purpose === 'image') return `[REFERENCE MATERIAL DATA]\n${JSON.stringify(references.map(reference => ({materialId: `M${reference.imageIndex}`, items: reference.items.map(({kind,name}) => ({kind,name}))})))}\nM番号はSTEP1の素材番号。API添付のImage番号との対応は末尾の参照一覧を使う。人物参照は年齢・髪・肌色・眼鏡等の識別特徴の資料。衣装・画風/顔構造・演技/表情・Cameraは承認済み台本と該当コマ指定を優先。衣装が未指定または資料準拠を明示した範囲は参照衣装を使う。背景/小物の形状は参照を保ち、用途・動作・配置・所有・状態は台本に従う。素材番号を絵に印字しない。`;
+  if (purpose === 'image') return `[REFERENCE MATERIAL DATA]\n${JSON.stringify(references.map(reference => ({materialId: `M${reference.imageIndex}`, items: reference.items.map(({kind,name}) => ({kind,name}))})))}\nM番号はSTEP1の素材番号。API添付のImage番号との対応は末尾の参照一覧を使う。人物参照は年齢・髪・肌色・眼鏡等の識別特徴の資料。衣装・画風/顔構造・演技/表情・Cameraは承認済み台本と該当コマ指定を優先。同じ連続場面の台本にも衣装指定がない人物、または資料準拠を明示した範囲は参照衣装を使う。後続コマで衣装の記述が省略されても参照衣装へ戻さない。コマ限定指定と明示の着替えはその範囲を保つ。背景/小物の形状は参照を保ち、用途・動作・配置・所有・状態は台本に従う。素材番号を絵に印字しない。`;
   return `[REFERENCE MATERIAL DATA]\n${JSON.stringify(references)}
 素材の種類・人物の同一性・視覚的特徴を極力反映する。同じ人物の表情集・三面図は別人に数えない。
 AIで認識できない場合もある。unknownや未確定の関係を事実として断定しない。ユーザーに分類を要求せず、台本に合う範囲で扱う。

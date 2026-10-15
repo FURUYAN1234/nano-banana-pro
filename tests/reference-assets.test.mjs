@@ -146,7 +146,8 @@ test('image material context limits character-reference authority instead of loc
   assert.doesNotMatch(context,/外見は参照画像/,'unqualified appearance authority competes with explicit wardrobe and panel media');
   assert.match(context,/人物参照は.*識別特徴の資料/);
   assert.match(context,/衣装・画風\/顔構造・演技\/表情・Cameraは承認済み台本と該当コマ指定を優先/);
-  assert.match(context,/衣装が未指定または資料準拠を明示した範囲は参照衣装を使う/);
+  assert.match(context,/同じ連続場面の台本にも衣装指定がない.*参照衣装/);
+  assert.match(context,/後続コマ.*省略.*参照衣装へ戻さない/);
   assert.match(context,/背景\/小物の形状は参照を保ち/);
 });
 
@@ -167,6 +168,8 @@ test('assembled reference prompts keep explicit wardrobe media and acting while 
       assert.ok(prompt.startsWith(source),'authored wardrobe/camera/media/acting cannot be rewritten');
       assert.doesNotMatch(prompt,/外見は参照画像/);
       assert.match(prompt,/canonical clothing unless the approved prompt explicitly overrides clothing/);
+      assert.match(prompt,/Outfit or narrative clothing.*same continuous scene/);
+      assert.match(prompt,/omission.*not.*reset.*reference clothing/);
       assert.match(prompt,/selected panel rendering recipe determines face\/eye construction and body stylization/);
       assert.match(prompt,/丸い持ち手。持ち主は不明/);
       assert.match(prompt,/奥に扉、左に窓/);

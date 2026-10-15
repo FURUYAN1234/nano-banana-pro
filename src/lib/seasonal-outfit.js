@@ -90,7 +90,7 @@ export const resolveOutfitForSubject = (authority, panel, subject) => {
   return {scope:'reference',quote:'',instruction:''};
 };
 
-export const OUTFIT_SCOPE_CONTRACT = 'OUTFIT SCOPE: 全体Outfitは既定。FRAME OUTFITはそのコマの指定人物/役割だけ上書き。人物未指定のカテゴリは当該コマの可視人物全員。未指定人物/コマは全体指定→参照衣装の順。別コマへ展開せず、同一性/髪/眼鏡を保持。この範囲を服装固定の一般指示より優先。';
+export const OUTFIT_SCOPE_CONTRACT = 'OUTFIT SCOPE: 全体Outfitは既定。FRAME OUTFITはそのコマの指定人物/役割だけ上書き。人物未指定のカテゴリは当該コマの可視人物全員。未指定人物/コマは全体指定と同じ連続場面の台本衣装→参照衣装の順。コマ限定指定を別コマへ展開せず、同一性/髪/眼鏡を保持。状況/Actionで成立した継続衣装は後続コマで省略されても維持。この範囲を服装固定の一般指示より優先。';
 const WARDROBE_LABEL_RE = /^(?:服装|衣装|衣服|outfit|clothing|clothes|wardrobe|costume|attire)(?:\s*[（(][^）)]*[）)])?(?:\s*[:：]|\s*$)/i;
 const SCHOOL_OUTFIT_RE = /学校制服|学生服|学ラン|セーラー服|ブレザー制服|学生ボランティア|通学用|school\s+uniform|sailor\s+uniform/i;
 // Ignore only a direct garment exclusion, never its whole clause or actor.
@@ -127,7 +127,8 @@ export const SCENARIO_WARDROBE_CONTRACT = `CHARACTER IDENTITY, NOT STORY SETTING
 キャラ情報から名前・顔・髪・体格・性格・口調・人物間の関係性を保つ。参考衣装は今回の衣装・舞台・職業・出来事を決める根拠にしない。性格欄の学校・職業上の役割も、今回の場面をその活動へ変える理由にしない。
 今回の題材・原文・ユーザー指定から出来事と役割を先に決め、その行為、場所、季節に合う衣装を選ぶ。衣装を使う口実として学校行事や学生ボランティア等を後付けしない。明示衣装指定を最優先し、学校制服は題材・原文・ユーザー指定に学校活動または制服指定の根拠がある場合だけ選ぶ。
 勤務中で職務上の服装が必要な人物には、職業制服・作業服・安全装備を必須とし、私服や一般的なフォーマル服へ一律に置き換えない。来訪者・客・通行人と勤務者を区別し、場所だけを理由に全員を同じ職業服にしない。役割が異なる場合は人物名または役割ごとに衣装をOutfitへ記載する。職務・行事上の指定がない場合は場面に合う私服等を選ぶ。
-演出強化では確定済みOutfitを維持し、ト書きの衣装もそれに合わせる。参考衣装へ戻さない。この内部ルールは漫画のセリフや画面文字にしない。`;
+「全員コスプレ」等の広い衣装指定は、人物別の具体的な衣装・主な構成・色をOutfitに記載し、状況/Actionの衣装と一致させる。同じ連続場面では再登場時も維持し、衣装の省略を着替えと解釈しない。明示の着替えやコマ限定指定はその範囲を保つ。
+演出強化では確定済みOutfitを維持し、ト書きの衣装もそれに合わせる。参考衣装へ戻さない。衣装の継続のためにCamera・演技・動き・表情・コマ指定の画風を固定/簡略化しない。この内部ルールは漫画のセリフや画面文字にしない。`;
 
 export const buildScenarioCastContext = (castList = '') =>
   `${SCENARIO_WARDROBE_CONTRACT}\n\n${stripReferenceWardrobe(castList)}`;
