@@ -1,25 +1,25 @@
 {
   "pricingSourceSha256": "d368aaae89642014be9386bb9a11d923e451c33efea1c2134a114e46ea0af96c",
-  "manualVersion": "7.0.7",
-  "manualSourceSha256": "27bd20837c3daa565768b273834c725a1f6f464933452e95792768db1e62caef",
+  "manualVersion": "7.0.8",
+  "manualSourceSha256": "7f13c61e724a6a780a86bd0f858924e4be03aed531a33ad3abeb7058188fb3b0",
   "manualFiles": [
     {
       "name": "gemini-api-beginner-guide-2026-10-01.pdf",
-      "sha256": "3c1c9742790dd362d1603c7f1dd1b7d402a5462c80ab46d4b16132247855a142"
+      "sha256": "353794a0727da2f59522cf2e7a65876ff252ea7fc701fa837c46c4f401482fd2"
     },
     {
       "name": "openai-api-beginner-guide-2026-09-30.pdf",
-      "sha256": "12158733bf065ce9bf88e1c7f23e12b631919769d99a21904e7d39093bc5d977"
+      "sha256": "5e19f5342f26bba66b7051a45b545297c8dd18767e6ac811e45d55a66cbd7439"
     },
     {
       "name": "super-furu-ai-4koma-full-manual-2026-10-01.pdf",
-      "sha256": "1d744619d4c4e34c8694b30ab5ea4dd09121a0a706812f39f76d4ea761b20953"
+      "sha256": "8398291061273cab9333536c3fa4ca16b7f0a2c052990b4836850e06575c9694"
     }
   ],
-  "readmeSha256": "a0315fc5db92cdf0e3703aa4ef8055ed2a1a8a69cd4894bcbc4025195877222c",
-  "sourceTree": "25de63386ccd2d0dd63511200c759ba58e2932f3",
-  "publicTree": "c36fd1696e9e3dee4e711d238efcd7398ac6ffbb",
-  "packageSha256": "32f8c3f55aecd95d806061f8fc9dcfc16f824a81aca0465cce301762295ff360",
+  "readmeSha256": "d18468b7978c84bd7f44797494c9cc2c82c3d6c6426866ed9d58bbc4297de7dc",
+  "sourceTree": "779e3a4db16a1c6f8e1fab9dbe37b56707d0d179",
+  "publicTree": "8d5da84ced2647bf5d0cb777a1358b561706afc0",
+  "packageSha256": "48b684f7d85cdd3d34b519e64311470d15c647e45696c1117b2dd64370ab3d09",
   "releaseAssetSha256": "9e41886be6afa0ebfad6d244ecf53f37260a92f73b30309319029cc87e1ddb4e",
   "reviewedSections": [
     "Application screen and output / 操作画面と生成例",
@@ -39,16 +39,16 @@
     "AI Manga Creative Suite / AIまんが制作エコシステム",
     "📋 ChangeLog / 更新履歴"
   ],
-  "findings": "Candidate v7.0.7 review of all 16 README sections against the v7.0.6 verified baseline and current source/UI, release asset, pricing snapshot and PDFs. Changed mode comparison, reading direction, quick-start and changelog now distinguish 5-8 panel counts from forbidden all-wide 6/8 strip layouts; normal four panels, 5/7 strips, mixed 6/8 layouts, source dialogue/camera/style preservation and color-only behavior remain. Image QA warns on observed forbidden strips and retains the paid image. Current prices, footer/version, downloads and bilingual notes match the candidate. Unchanged licensing, privacy, routes, history, video and related-app sections were checked for stale version/contract claims. This audit is source/PDF evidence; real API image, public note readback and deployment are separate pending gates.",
-  "manualFindings": "v7.0.7: regenerated SYSTEM 39 pages, Gemini 13 pages and OpenAI 22 pages from current dated sources. Builder checks passed for page counts, source text, privacy, A4 bounds and links. Inspected all 39 SYSTEM pages in rendered contact sheets and page 14 at full resolution: new 6/8 layout wording is legible, with no apparent clipping or overlap. Gemini and OpenAI guide text/version/date and published PDF byte hashes match their generated outputs; previous complete visual baseline remains applicable to otherwise unchanged pages. Real API output is a separate pending gate.",
+  "findings": "Candidate v7.0.8 compared all 16 README sections with the verified v7.0.7 body and the complete candidate diff. Updated narrative outfit precedence/continuity, native observed-body coverage, OpenAI native existing-image inspection and the explicit limit that the vision census can miss people. Corrected the previous unconditional duplicate-reporting claim. Normal four-panel behavior, five-to-eight count/layout choices, authored camera/acting/media, reference roles, pricing/config, downloads, privacy, terms, video assets, related apps and historical descriptions were compared against their unchanged current paths. No claim of flawless costumes, reliable duplicate detection or improved drawing quality. Current public note full body has been read before publication; its targeted update and readback remain delivery stages.",
+  "manualFindings": "v7.0.8: regenerated SYSTEM39, Gemini13 and OpenAI22 pages. Reviewed all74 pages in rendered contact sheets and changed SYSTEM page23 at full resolution. SYSTEM11 explains narrative wardrobe continuation while preserving explicit changes/camera/acting; SYSTEM23 explains both-provider native review without image regeneration and the limits of observed-body identity checks. Text is legible without clipping or overlap. Version/date/links, A4 text bounds, source/privacy scans and page numbers passed the builders. API guide bodies retain their setup scope and current pricing; this document audit does not certify generated imagery.",
   "pricingReview": {
-    "version": "7.0.7",
+    "version": "7.0.8",
     "sourceSha256": "d368aaae89642014be9386bb9a11d923e451c33efea1c2134a114e46ea0af96c",
-    "checkedAt": "2026-10-15T03:44:27.254Z",
+    "checkedAt": "2026-10-15T06:56:59.567Z",
     "sources": [
       "https://developers.openai.com/api/docs/pricing",
       "https://ai.google.dev/gemini-api/docs/pricing"
     ],
-    "findings": "Official standard tables read 2026-10-15, distinguished from half-price Batch: GPT-6.1 Sol $2/$10, GPT-6 Luna $0.10/$0.50 per million input/output; GPT Image 2.5 Sunburst/Flare image input $8 cached $2 output $30, text input $5 cached $1.25. Official image guide confirms GPT Image 2 shares the $30 image output token rate and earlier-model pricing examples; current app uses the documented $8/$30 standard snapshot. Gemini 3.8 Flash $0.75/$3.75 through 2026-12-31; Nano Banana 2.1 input $1.50, text/thinking $7.50, image $30 per million or $0.0336 per 1K image. Current config and README/manual price text match; long-context, tools, tax and billing variation are outside the reference display."
+    "findings": "Read both official pricing pages on 2026-10-15 immediately before preparing this release; Standard distinguished from half-price Batch/Flex. GPT-6.1 Sol short-context input/output $2/$10 and GPT-6 Luna $0.10/$0.50 per million tokens; Sunburst/Flare image input $8 cached $2 output $30, text input $5 cached $1.25. Gemini3.8 Flash Standard $0.75/$3.75 through2026-12-31; Nano Banana2.1 input$1.50, text/thinking$7.50, images$30 per million and1K$0.0336,2K$0.0504,4K$0.113. These standard rates match current configuration/README/manuals; no price change. Long-context, tools, tax and account-specific billing remain separate."
   }
 }
