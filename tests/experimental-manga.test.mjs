@@ -65,9 +65,8 @@ try {
     return { sourcePanel, kind:'anchor', camera:source.panels[i%source.panels.length].camera, action:'元の出来事の反応', dialogueIds:[], breakout:null };
   }) });
   const six = planFor(6);
-  test('dense all-horizontal six and eight panel layouts are excluded while other counts and mixed layouts remain',()=>{
-    for(const count of [5,7]) assert.ok(m.experimentalLayoutOptions(count).some(option=>option.id==='strips'));
-    for(const count of [6,8]) {
+  test('all-horizontal strip layouts are excluded for every native count while mixed layouts remain',()=>{
+    for(const count of [5,6,7,8]) {
       const nativeSource=m.readExperimentalSource({...input,scenario:scenarioFor(count)});
       const plan={...planFor(count),layout:'strips'};
       assert.ok(!m.experimentalLayoutOptions(count).some(option=>option.id==='strips'));
@@ -76,9 +75,9 @@ try {
       assert.throws(()=>m.validateExperimentalPlan(plan,nativeSource),/配置/);
       assert.equal(m.validateExperimentalPlan({...plan,layout:'mixed_rows'},nativeSource).count,count);
     }
-    const oldHistory=[{plan:{count:6,layout:'strips'}},{plan:{count:8,layout:'strips'}},{plan:{count:6,layout:'mixed_rows'}}];
+    const oldHistory=[...[5,6,7,8].map(count=>({plan:{count,layout:'strips'}})),{plan:{count:6,layout:'mixed_rows'}}];
     assert.deepEqual(m.summarizeExperimentalLayouts(oldHistory).map(entry=>entry.layout),['mixed_rows']);
-    assert.equal(oldHistory.length,3,'saved images and history remain intact');
+    assert.equal(oldHistory.length,5,'saved images and history remain intact');
   });
   test('experimental rendering reuses normal cast-instance and wardrobe contracts without filling silent close-ups with the whole cast',()=>{
     const castList='## ユウ\n### 髪\n[WEIGHTS]: (black hair:1.4)\n### 服装\n[WEIGHTS]: (school uniform:1.3)\n## ナギ\n[WEIGHTS]: (blond hair:1.4)';
@@ -130,8 +129,8 @@ try {
     const report={inspectionVersion:3,status:'pass',observedCount:6,readingOrder:'pass',camera:'pass',style:'pass',story:'pass',anatomy:'pass',pageText:'pass',breakout:'not_requested',issues:[],pageEvidence:'原画のタイトルと左右のクレジット',evidence:six.panels.map((_,i)=>({panel:i+1,camera:'頭頂と肩の上面が見える',style:'顔の輪郭と陰影が明瞭',story:'人物の動作と道具が整合',anatomy:'両手と肩の接続が連続',physical_bodies:[{id:'body1',bounds:[0.1,0.1,0.5,0.8],features:['黒い短髪','赤いコート']}],cast_instances:[{name:'甲',observed_count:1,status:'ok',instances:[{body_id:'body1',location:'中央',matched_features:['黒い短髪','赤いコート']}]}]}))};
     const plan={...six,expectedCast:six.panels.map((_,i)=>({panel:i+1,names:['甲']}))};
     assert.equal(m.validateExperimentalReview(report,plan).status,'pass');
-    for(const count of [6,8]) {
-      const candidatePlan=count===6?plan:{...planFor(8),layout:'two_columns'};
+    for(const count of [5,6,7,8]) {
+      const candidatePlan=count===6?plan:{...planFor(count),layout:'two_columns'};
       const candidate={...report,observedCount:count,evidence:Array.from({length:count},(_,index)=>({...structuredClone(report.evidence[0]),panel:index+1}))};
       const strips=Array.from({length:count},(_,index)=>({bounds:[.03,.06+index*.84/count,.94,.8/count]}));
       candidate.observedFrames=strips;
@@ -181,7 +180,7 @@ try {
     face_direction:i?'首を自然に傾けて顔の左側を台へ向ける。':'横向きの顔を右下の台へ向けている。',
     target:{description:'二人の間にある赤い計測器の表示面。',position:[.5,.65]}});
   const styledReview=()=>{
-    const report=currentPairReview();report.inspectionVersion=8;
+    const report=currentPairReview();report.inspectionVersion=9;
     report.expectedOutfits={global:'',panels:six.panels.map((_,i)=>({panel:i+1,outfit:''}))};
     report.wardrobe_observation={status:'pass',evidence:'各人物の見える上着を参照と照合し、コマ間でも同じ形を保っている。',issues:[]};
     report.expectedStyles=six.panels.map((_,i)=>({panel:i+1,style:i===2?'WATERCOLOR':'GEKIGA'}));
@@ -191,7 +190,7 @@ try {
     return report;
   };
   const wardrobeReview=()=>{
-    const report=styledReview();report.inspectionVersion=8;
+    const report=styledReview();report.inspectionVersion=9;
     report.expectedOutfits={global:'人物Aは灰色のジャケットと黒いパンツ。',castNames:['人物A','人物B'],panels:six.panels.map((_,i)=>({panel:i+1,outfit:''}))};
     report.evidence[0].cast_instances=[{name:'人物A',observed_count:1,status:'ok',instances:[{body_id:'left',location:'左側',matched_features:['短い黒髪','丸い眼鏡']}]}];
     report.wardrobe_observation={status:'pass',evidence:'見える上着と脚の服を指定と照合し、他の人物は参照衣装を保つ。',issues:[]};
@@ -576,7 +575,7 @@ try {
     assert.deepEqual(checked.validationErrors||[],[]);
     assert.deepEqual(m.validateExperimentalReview(checked,plan),checked);
     const old={...original,review:legacy};let inspections=0;
-    await m.reviewExperimentalCandidatePair({base64Img:'fresh'},{...old,review:{...legacy,inspectionVersion:8}},async()=>{inspections++;return {};});
+    await m.reviewExperimentalCandidatePair({base64Img:'fresh'},{...old,review:{...legacy,inspectionVersion:9}},async()=>{inspections++;return {};});
     assert.equal(inspections,1,'a quarantined census must not start another inspection of the old image');
     const next={...original,image:{base64Img:'fresh'}};
     const selected=await m.selectExperimentalCandidate(old,next,async()=>({preferred:'repair',reason:'台詞を保ち、演技が明瞭。',readingOrderChecks:checks}));
@@ -811,14 +810,16 @@ try {
     }
     assert.equal(requests,2,'only each new image requires a review');
   });
-  test('candidate review pair refreshes the previous version instead of reusing its incomplete body coverage contract',async()=>{
-    const original={image:{base64Img:'old'},plan:six,review:{...styledReview(),inspectionVersion:7}};
-    const fresh={base64Img:'new'},started=[];
-    await m.reviewExperimentalCandidatePair(fresh,original,async image=>{
-      started.push(image);image.experimentalReview=styledReview();return {pass:true,issues:[]};
-    });
-    assert.deepEqual(started,[fresh,original.image]);
-    assert.equal(original.review.inspectionVersion,8);
+  test('candidate review pair refreshes prior body-coverage and layout inspection versions',async()=>{
+    for(const inspectionVersion of [7,8]) {
+      const original={image:{base64Img:'old'},plan:six,review:{...styledReview(),inspectionVersion}};
+      const fresh={base64Img:'new'},started=[];
+      await m.reviewExperimentalCandidatePair(fresh,original,async image=>{
+        started.push(image);image.experimentalReview=styledReview();return {pass:true,issues:[]};
+      });
+      assert.deepEqual(started,[fresh,original.image]);
+      assert.equal(original.review.inspectionVersion,9);
+    }
   });
   test('candidate review pair preserves provider timeout failures and does not claim a comparison',async()=>{
     const signals=[];
@@ -1291,7 +1292,7 @@ try {
         :{text:JSON.stringify({status:'unverified',observedCount:null,camera:'uncertain',expectedStyles:[{panel:1,style:'NORMAL'}],expectedOutfits:{global:'採点側が捏造した衣装指定',panels:[]},evidence:six.panels.map((p,i)=>({panel:i+1,physical_bodies:[{...independentBody,gaze:null}],text_regions:[{region_kind:'speech_balloon',text:'採点側の誤った上書き',center_x:.9}],dialogue:['古い誤読'],camera:'観察',style:'観察'}))}),model:'test'};
     },{detect:async()=>frames,inspect:async()=>({width:2240,height:3168}),crop:async()=>({dataUrl:'test-crop'})});
     assert.equal(calls.length,2);assert.equal(calls[0].count,9,'blind reading sees all native frames and footer crops without the expected plan');
-    assert.equal(result.review.inspectionVersion,8);
+    assert.equal(result.review.inspectionVersion,9);
     assert.deepEqual(result.review.evidence[0].physical_bodies,[independentBody],'assessment cannot replace independent gaze, body identity or geometry');
     assert.deepEqual(result.review.expectedStyles,expectedStyles,'expected media come from the source contract, not the assessment model');
     assert.deepEqual(result.review.expectedOutfits,expectedOutfits,'outfit authority comes from the compiler, never the assessment response');
@@ -1335,7 +1336,7 @@ try {
     const result=await m.reviewExperimentalImage({image:{mimeType:'image/png',base64Img:'test-only'},plan:six,prompt:'story'},async()=>{requests++;throw new Error('no paid review for count mismatch');},{detect:async()=>frames,inspect:async()=>({width:400,height:600}),crop:async()=>{crops++;throw new Error('no crop based on incompatible plan');}});
     assert.equal(requests,0);assert.equal(crops,0);assert.equal(result.requests,0);
     assert.equal(result.review.observedCount,7);assert.deepEqual(result.review.observedFrames,frames);
-    assert.equal(result.review.inspectionVersion,8,'local count evidence belongs to the current inspection format');
+    assert.equal(result.review.inspectionVersion,9,'local count evidence belongs to the current inspection format');
     const review=m.validateExperimentalReview(result.review,six);
     assert.equal(review.status,'warning');assert.equal(review.observedCount,7);
     assert.equal(m.validateExperimentalReview(JSON.parse(JSON.stringify(review)),six).status,'warning','saved local geometry retains its supported count warning');

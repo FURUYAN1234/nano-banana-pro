@@ -20,8 +20,8 @@ const fail = message => { throw new Error(`実験的コマ割り: ${message}`); 
 const cancelled = signal => { if (signal?.aborted) throw new DOMException('実験を停止しました。', 'AbortError'); };
 const direction = (text, name) => String(text).match(new RegExp(`\\[${name}:\\s*([^\\]]+)\\]`, 'i'))?.[1]?.trim() || '';
 
-export const EXPERIMENTAL_PROMPT_REVISION = 35;
-const EXPERIMENTAL_INSPECTION_VERSION = 8;
+export const EXPERIMENTAL_PROMPT_REVISION = 36;
+const EXPERIMENTAL_INSPECTION_VERSION = 9;
 const EXPERIMENTAL_PROMPT_SOFT_TARGET_CHARS = 15000;
 const READING_FLOW_DIRECTION = `READING FLOW WITH ACTING: preserve camera strength, drawing quality, style, expression and dramatic energy. 最初の吹き出し→主動作/反応→次コマへ、場面に根拠のある視線・身振り・道具の向き・奥行き・明暗・余白で誘導。矢印、強制左向き整列、同一ポーズは禁止。読みやすさのために遠近や演技を弱めず、後ろ姿を振り向かせず、必要人物/道具を消さず、全コマを静かにしない。焦点の大胆な強調と明瞭なコマ間を両立。No eye-level shots: 座位/ちび人物にも明確な高低差を設け、顔・体・背景の上面/下面を投影。Characters never look at the viewer or camera lens; 視線は場面内の人/物/出来事へ。正面顔だけでカメラ目線と判定せず、動機のある首向き/表情、隠れた目、手元接写を保持。任意の誘導が物語と競合したら誘導を省き、物語の勢いは残す。`;
 export const EXPERIMENTAL_LAYOUTS = Object.freeze({
@@ -38,7 +38,7 @@ export const EXPERIMENTAL_LAYOUTS = Object.freeze({
 export function experimentalLayoutOptions(count) {
   if(!Number.isInteger(count)||count<5||count>8) fail('実験モードのコマ数は5〜8です。');
   return Object.entries(EXPERIMENTAL_LAYOUTS).filter(([id])=>
-    !(id==='strips'&&[6,8].includes(count))
+    id!=='strips'
     &&(id!=='tall_right_middle'||[5,6,7].includes(count))).map(([id,option])=>({id,...option}));
 }
 export const EXPERIMENTAL_VISUAL_EFFECTS = Object.freeze({
@@ -853,7 +853,7 @@ export function validateExperimentalReview(review, plan) {
       validationErrors:[...new Set(validationErrors)],issues:safeIssues&&review.issues.length?[...new Set(review.issues.map(clean))]:['画像検査の形式または各コマの観察根拠が不十分です。目視確認が必要です。']};
   }
   const checks=keys.map(k=>review[k]);
-  const denseStrips=[6,8].includes(plan.count)&&Array.isArray(review.observedFrames)
+  const denseStrips=[5,6,7,8].includes(plan.count)&&Array.isArray(review.observedFrames)
     &&review.observedFrames.length===plan.count
     &&review.observedFrames.every(frame=>frame.bounds[2]>=.75&&frame.bounds[2]>frame.bounds[3]*1.42);
   if(denseStrips) review.issues=[...new Set([...review.issues,`${plan.count}コマがすべて横長の全幅帯として描かれ、各コマの文字と演技を読む高さが不足しています。画像を保持し、配置を目視確認してください。`])];

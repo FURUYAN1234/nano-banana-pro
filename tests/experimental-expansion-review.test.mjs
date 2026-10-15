@@ -84,9 +84,7 @@ try {
     const prompt=m.buildExperimentalImagePrompt(plan,source,input);
     assert.match(prompt,/ROW CHRONOLOGY: P1 RIGHT precedes P2 LEFT; P3 RIGHT precedes P4 LEFT/);
     assert.match(prompt,/各組の先行場面が先。絵\/吹き出しの均衡のために入替えない。ページ位置であり、コマ内Camera\/Actionの方向ではない。/);
-    const strips=m.buildExperimentalImagePrompt({...plan,layout:'strips'},source,input);
-    assert.doesNotMatch(strips,/ROW CHRONOLOGY:/);
-    assert.match(strips,/P1 -> P2 -> P3 -> P4 -> P5/);
+    assert.throws(()=>m.buildExperimentalImagePrompt({...plan,layout:'strips'},source,input),/配置/);
   });
   test('character references never become an implicit drawing-style lock in the experimental prompt',()=>{
     for(const colorMode of ['color','monochrome']) {

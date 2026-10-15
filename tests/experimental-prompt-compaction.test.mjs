@@ -119,7 +119,7 @@ try {
       if(count>=6) assert.equal(cues[5],'','unspecified camera must not inherit camera instructions from another frame or actor action');
       assert.ok(prompt.length<32000);
     }
-    assert.equal(m.EXPERIMENTAL_PROMPT_REVISION,35);
+    assert.equal(m.EXPERIMENTAL_PROMPT_REVISION,36);
   });
   test('native prompts compact before the hard ceiling while preserving every camera, acting and medium',()=>{
     const cameras=[
