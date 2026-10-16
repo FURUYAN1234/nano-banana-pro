@@ -101,12 +101,18 @@ try {
     }
   });
 
-  test('monochrome, reference-fixed and other styles retain their exact previous output', () => {
+  test('reference-fixed color stays byte-identical; revised monochrome preserves script and excludes color bindings', () => {
     for (const providerFamily of ['chatgpt', 'gemini']) for (const colorMode of ['color', 'monochrome']) for (const punchlineType of ['Auto', 'SeriousDocumentary']) {
       if (colorMode === 'color' && punchlineType === 'Auto') continue;
       const fixture = bindingFixture(2, false, colorMode);
       const prompt = buildMangaPrompt({ ...fixture, providerFamily, promptMaxChars: 32000, punchlineType, cinematicTechniques: false });
-      assert.equal(hash(prompt), baseline[`excluded/${providerFamily}/${colorMode}/${punchlineType}`].sha256);
+      if (colorMode === 'color') assert.equal(hash(prompt), baseline[`excluded/${providerFamily}/${colorMode}/${punchlineType}`].sha256);
+      else {
+        assert.match(prompt, /TONE PLACEMENT:.*lit light skin.*paper white/);
+        assert.ok(prompt.includes(fixture.camera));
+        assert.ok(prompt.includes(fixture.action));
+        assert.ok(prompt.includes('このまま運ぼう。'));
+      }
       assert.doesNotMatch(prompt, /\]=(?:POP_ART|WATERCOLOR|GEKIGA)/);
     }
     for (const style of ['NORMAL', 'SKETCH', 'CHIBI_GAG']) {

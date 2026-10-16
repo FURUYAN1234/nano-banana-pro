@@ -93,9 +93,9 @@ test('focal ink, sharp story cues and actual exaggerated acting survive every ou
     assert.match(prompt, /FOCAL READABILITY:/);
     if (colorMode === 'monochrome') {
       assert.match(prompt, /Focal ink follows the panel recipe; NORMAL=pressure-taper/);
-      assert.match(prompt, /Bold focal silhouettes\/contacts, fine separate face\/hand lines/);
-      assert.match(prompt, /no uniform thickening\/clogging/);
-      assert.match(prompt, /Sharp story reactions\/props\/text/);
+      assert.match(prompt, /輪郭\/接触を強く、顔\/手の細線を分離/);
+      assert.match(prompt, /一律太線\/潰れ禁止/);
+      assert.match(prompt, /反応\/道具\/文字を鮮明に/);
     } else if (panelColorMedia) {
       assert.match(prompt, /NORMAL\/unmarked[^\n]*pressure[^\n]*thick-to-hairline[^\n]*(?:contour|silhouette|outline|accents)/i);
       assert.match(prompt, /Focal strokes follow panel medium/);
@@ -110,14 +110,14 @@ test('focal ink, sharp story cues and actual exaggerated acting survive every ou
       assert.match(prompt, /story-critical reactions.*(?:sharp|crisp)/i);
     }
     if (colorMode === 'monochrome') {
-      assert.match(prompt, /white\/black planes/);
-      assert.match(prompt, /If merged: fewer BG lines or bounded black behind light forms/);
+      assert.match(prompt, /白黒面・輪郭光・線間の白/);
+      assert.match(prompt, /融合時は背景線を減らす\/明るい形の背後に局所黒/);
       assert.doesNotMatch(prompt, /lighten\/desaturate BG|warm\/cool (?:color )?planes/);
     } else {
       assert.match(prompt, /(?:pale|lighten).*desaturat/i);
       assert.match(prompt, panelColorMedia ? /light\/dark and warm\/cool planes/ : /local light\/dark value and warm\/cool color planes/);
     }
-    assert.match(prompt, /clear gaps at faces\/hands|face\/hand gaps/);
+    assert.match(prompt, /clear gaps at faces\/hands|face\/hand gaps|顔\/手の細線を分離/);
     assert.match(prompt, /speed lines.*(?:substitute|replace)|(?:substitute|replace).*speed lines/i);
     assert.match(prompt, /actual.*(?:projection|pose)|(?:projection|pose).*actual/i);
     assert.match(prompt, /explicit quiet/);

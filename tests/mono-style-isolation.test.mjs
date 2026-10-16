@@ -7,7 +7,7 @@ import { FOCAL_DEPTH_HIERARCHY } from '../src/lib/shared-image-quality.js';
 import { GEKIGA_FACE_CONSTRUCTION } from '../src/lib/constants.js';
 import { buildActorMediumInstruction } from '../src/lib/panel-utils.js';
 import { withoutMosaicRepair } from './helpers/mosaic-isolation.mjs';
-import { restorePrePolicyContracts, restorePreSelectionContracts, restoreReviewedShotExecution, restoreReviewedActorMedium, restoreReviewedMonoStyleReminder } from './helpers/prompt-policy-normalization.mjs';
+import { restorePrePolicyContracts, restorePreSelectionContracts, restoreReviewedShotExecution, restoreReviewedActorMedium } from './helpers/prompt-policy-normalization.mjs';
 
 // Retain the original isolation baseline; normalize only the authorized shared
 // focus contract, independently covered by expressive-direction.test.mjs.
@@ -136,18 +136,29 @@ test('new actor construction normalization recognizes only reviewed complete lin
 });
 
 for (const record of baseline.records) {
-  test(`mono-only repair preserves exact ${record.providerFamily}/${record.colorMode}/${record.case}/${record.promptMaxChars} output`, () => {
+  test(`color isolation and revised mono contract: ${record.providerFamily}/${record.colorMode}/${record.case}/${record.promptMaxChars}`, () => {
     const input = baseline.cases.find(value => value.name === record.case);
     const prompt = buildMangaPrompt({ ...baseline.options, scenario: scenarioFor(input),
       providerFamily: record.providerFamily, colorMode: record.colorMode, promptMaxChars: record.promptMaxChars });
-    assert.equal(sha256(prompt), record.sha256, 'a non-target prompt byte changed');
-    assert.equal(Buffer.byteLength(withoutFocusRepair(prompt)), record.utf8Bytes);
-    assert.equal(withoutFocusRepair(prompt).length, record.characters);
+    if (record.colorMode === 'color') {
+      assert.equal(sha256(prompt), record.sha256, 'a non-target color prompt byte changed');
+      assert.equal(Buffer.byteLength(withoutFocusRepair(prompt)), record.utf8Bytes);
+      assert.equal(withoutFocusRepair(prompt).length, record.characters);
+    } else {
+      assert.match(prompt, /TONE PLACEMENT:.*lit light skin.*paper white/);
+      assert.match(prompt, /middle shadows=screentone; deepest shadows=solid black/);
+      assert.match(prompt, /SCREENED SKIN BASE:/);
+      assert.match(prompt, /NEUTRAL INK: R=G=B/);
+      for (const [,camera] of scenarioFor(input).matchAll(/\[Camera: ([^\]]+)\]/g)) assert.ok(prompt.includes(camera), camera);
+      for (const [,dialogue] of scenarioFor(input).matchAll(/「([^」]+)」/g)) assert.ok(prompt.includes(dialogue), dialogue);
+      assert.equal((prompt.match(/^## Panel \d+/gm) || []).length, 4);
+      if (record.providerFamily === 'chatgpt') assert.ok(prompt.length <= record.promptMaxChars);
+    }
     if (input.ending) assert.match(prompt, /REFERENCE-SHEET/);
   });
 }
 
-test('OpenAI monochrome keeps every neighboring NORMAL, WATERCOLOR and CHIBI panel byte-identical', () => {
+test('OpenAI monochrome keeps neighboring NORMAL, WATERCOLOR and CHIBI media separate after the shared ink revision', () => {
   assert.equal(baseline.nonTargetPanels.length, 8);
   for (const record of baseline.nonTargetPanels) {
     const input = baseline.cases.find(value => value.name === record.case);
@@ -160,21 +171,17 @@ test('OpenAI monochrome keeps every neighboring NORMAL, WATERCOLOR and CHIBI pan
     assert.equal(record.panels.length, 3);
     for (const panel of record.panels) {
       const normalized = withoutFocusRepair(panels[panel.panel - 1], { providerFamily: 'chatgpt', colorMode: 'monochrome' });
-      const restored = restoreReviewedMonoStyleReminder(normalized);
-      const hash = text => createHash('sha256').update(text).digest('hex');
-      if (hash(normalized) !== panel.sha256) {
-        // Only the duplicate local reminder may be compacted. Its global
-        // requirements must still reach the generated prompt.
-        assert.match(prompt, /PROMPT PRIORITY:.*Camera/);
-        assert.match(prompt, /CROSS-PANEL WARDROBE TONE LOCK:/);
-        assert.match(prompt, /glasses/);
-        assert.equal(hash(restored), panel.sha256, `${record.case} panel ${panel.panel}/${record.promptMaxChars}`);
-        const compactLine = normalized.split('\n').find(line => restoreReviewedMonoStyleReminder(line) !== line);
-        assert.ok(compactLine);
-        for (const unknown of [compactLine + ' UNAUTHORIZED', compactLine.replace('STYLE LOCK', 'CHANGED LOCK'), `Action (visual only): ${compactLine}`, `Camera: ${compactLine}`]) {
-          assert.equal(restoreReviewedMonoStyleReminder(unknown), unknown);
-        }
-      }
+      const style = input.emotions[panel.panel - 1];
+      const medium = { WATERCOLOR: /watercolor|水彩|ink wash/i, CHIBI_GAG: /chibi|deformed|ちび|頭身/i }[style];
+      if (style === 'NORMAL') assert.match(prompt, /G-PEN INK DIRECTION: NORMAL default/);
+      else { assert.ok(medium); assert.match(normalized, medium); }
+      const localPanel = normalized.split('\nSTRICT SCRIPT LOCK:')[0];
+      assert.ok(!localPanel.includes(GEKIGA_FACE_CONSTRUCTION), 'GEKIGA anatomy must not leak into another panel');
+      assert.match(normalized, /Action \(visual only\):/);
+      assert.match(normalized, /Camera:/);
+      assert.match(prompt, /PROMPT PRIORITY:.*Camera/);
+      assert.match(prompt, /CROSS-PANEL WARDROBE TONE LOCK:/);
+      assert.match(prompt, /glasses/);
     }
   }
 });

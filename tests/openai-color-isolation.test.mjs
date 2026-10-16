@@ -51,7 +51,10 @@ test('OpenAI color repair preserves byte-identical output in other provider/medi
     // The user subsequently authorized OpenAI-only mono GEKIGA strengthening.
     // Its unchanged neighboring panels and all other routes are now frozen by
     // mono-style-isolation.test.mjs against the accepted post-color-fix state.
-    if (baseline.options.providerFamily === 'chatgpt' && baseline.options.colorMode === 'monochrome') continue;
+    // v7.1.0 deliberately revises BOTH monochrome providers. Their new ink,
+    // script and per-panel isolation contract is checked in mono-style-isolation.
+    // Keep every color snapshot unchanged.
+    if (baseline.options.colorMode === 'monochrome') continue;
     const prompt = buildMangaPrompt({ ...options, ...baseline.options });
     assert.equal(createHash('sha256').update(withoutFocusRepair(withoutGekigaRevision25(prompt))).digest('hex'), baseline.sha256, JSON.stringify(baseline.options));
   }
