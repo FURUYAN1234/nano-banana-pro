@@ -1,25 +1,25 @@
 {
   "pricingSourceSha256": "917b02dac5c0eb8367f94d6ee0411242b25487a6bb0b9cdc74aa6cb12c874e88",
-  "manualVersion": "7.0.9",
-  "manualSourceSha256": "26f562b8cc1adfb7642b33bff2f47715a5e20e7e763a274dd7f96fdbf1eecbbc",
+  "manualVersion": "7.1.0",
+  "manualSourceSha256": "74c947a49b1c406cd64ebad52139c41657f169160e87630c56af9c7ac40f5e11",
   "manualFiles": [
     {
       "name": "gemini-api-beginner-guide-2026-10-01.pdf",
-      "sha256": "6d489bb040928731eb89691a6097e144641da83e0abab67a6f86f70fcd46672c"
+      "sha256": "fd88658a12debe8b2acf18b57e55e432a61780b00716e46cc4ef8bd5a2ae1bcd"
     },
     {
       "name": "openai-api-beginner-guide-2026-09-30.pdf",
-      "sha256": "601a46cb7126757a142b83947c413abe259787eeee2fe648ab6c26e2325adcb1"
+      "sha256": "c8625ab4e2f6643c875b7fcd6e0ae17216e8e6448996ada1e4d19508d57fa341"
     },
     {
       "name": "super-furu-ai-4koma-full-manual-2026-10-01.pdf",
-      "sha256": "e8ec7c800011055b204f437950455e01e2cd1dc0061989e2f00639b9cb7fb01d"
+      "sha256": "cac3cff459cc57f97b704cfa098397623461cee3fa4cddff1f77681e48206d53"
     }
   ],
-  "readmeSha256": "87b2204d51967b84f961610aa24ac2774f3733fb1cd1f6c7a733bffd39afe8dc",
-  "sourceTree": "f5a9988f7554fb28afdd6112a56cb614754be5aa",
-  "publicTree": "482993567dc85b98541cd68a1123316ca19e8438",
-  "packageSha256": "fd12f0552307b54f3cda8e542319645545fd7561c85f389700f24dd2bd4afb94",
+  "readmeSha256": "c138333780a445d00b14166acb9d24866f4117771baad7f730d41661c217d842",
+  "sourceTree": "bd5317e8f2e5e5e6b6f6e30fd3d7fe8efc99c135",
+  "publicTree": "7700e0c04a627db2ba2b11305643153192577e6a",
+  "packageSha256": "ca08f2edf376d6482f76560b8c823b379241ec3da4c933b4746e6632e538e01d",
   "releaseAssetSha256": "9e41886be6afa0ebfad6d244ecf53f37260a92f73b30309319029cc87e1ddb4e",
   "reviewedSections": [
     "Application screen and output / 操作画面と生成例",
@@ -39,16 +39,16 @@
     "AI Manga Creative Suite / AIまんが制作エコシステム",
     "📋 ChangeLog / 更新履歴"
   ],
-  "findings": "v7.0.9: compared every README body section with the verified v7.0.8 body and the complete candidate documentation/source diff. Updated current version/download assets, initial/reload 5–8 mode, printable dialogue versus speaker metadata, actor media and anonymous style-reference conditions, camera preservation, unified page/panel editing (OpenAI panels only), reading order, candidate adoption/history/pixel guarantees and limits, external import, white square editable fields and STEP navigation. Removed obsolete user manual AI-reinspection UI claims. Existing ordinary-four/monochrome/Gemini generation, references, provider routes, 28px/26px selector geometry, privacy, licensing, ComfyUI packages and unrelated tools remain matched to current code. API request limits are distinct from local output decoding. Retained image quality improvement is user-approved with disclosed warnings, not a universal compliance claim. Whole note body and existing media read before publishing; stale initial-four and reinspection descriptions identified for paragraph-scoped update and later live readback. Post-deployment four/mono/Gemini editing proof remains a separate accepted delivery stage. Manuals were rebuilt and visually reviewed across all75 pages; see manualFindings and private manual-review.json.",
-  "manualFindings": "v7.0.9: regenerated SYSTEM39, Gemini13 and OpenAI23 pages (75 total). Visually reviewed all 75 pages in the current rendered contact sheets, plus SYSTEM3/14/15/16/19/20/22/23/24/26/28/35 and OpenAI17/22/23 individually at full render size. Updated the default/reload mode to5-8; the unified whole-page/selected-panel editor, OpenAI-only panel mode, automatic local frame discovery, reading-order uncertainty, preview/review/adopt/discard, saved-image import and STEP navigation; removed the obsolete manual AI-reinspection control. Documented scoped color POP/WATER/GEKIGA technique guides and Web attach-last handling, preservation of identity/camera/acting, dialogue ownership separation and model-setting provenance limits. Official pricing review date is2026-10-16 per the release owner; rates are unchanged. OpenAI17 exceeded the64pt content-bottom guard during preparation, so its existing explanatory prose was shortened without reducing the guard; the final build passes. No clipped/overlapping text or missing glyphs observed. All builders passed A4, footer/version/date, text bounds, privacy/naming and link checks. Output/public PDF hashes match. Existing historical screenshot/spec observation dates remain unchanged. Evidence: output/release-v709-20261016/manual-review.json. This document review does not certify generated-image quality, provider behavior or release completion.",
+  "findings": "v7.1.0: reviewed all16 README body sections against the previously reviewed7.0.9 and the full current source/document diff. Current descriptions cover OpenAI4-8 versus Gemini4 only, connected-provider page/panel edits, native Gemini square input, original history, fresh whole-page geometry, verified adopted-panel lineage, exact outside pixels, and candidate review/adopt/discard. Removed standalone saved-manga import and giant inline portrait preview without removing color API guide references. Updated white/black copy button, generation/inspection busy lock, four-stage progress and elapsed panel time. Monochrome instructions preserve white lit skin, assigned dark-skin bases, bounded screentones and black shadows; API-only neutral hue finishing bypasses color and Web copy and does not resize/quantize/dot-remove. Skin parsing is field-scoped; edits preserve source hair/skin/clothing base tones. Native monochrome baseline accepted by user, not universal style/camera compliance. Ordinary-four, provider settings, privacy, licensing, price distinctions, ComfyUI and unrelated sections retained and reviewed. Actual requested API mode matrix completed; final release/social/backup separate.",
+  "manualFindings": "v7.1.0: SYSTEM39, Gemini13, OpenAI23 pages,75 total. Prior full75-page visual review reused only for73 pages independently pixel-identical to the current PDFs. Visually reviewed changed SYSTEM33 and OpenAI23 at full size: monochrome API hue finish, white/black/screentone placement, connected-provider editing and Gemini4-only constraints. No overflow or clipping observed; builders passed A4/version/footer/bounds/privacy/link guards. Output/public PDF SHA256 parity verified. Evidence: private manual-review-v710-final.json and manual-page-diff-v710.json. This records document review, not generated-image quality or release completion.",
   "pricingReview": {
-    "version": "7.0.9",
+    "version": "7.1.0",
     "sourceSha256": "917b02dac5c0eb8367f94d6ee0411242b25487a6bb0b9cdc74aa6cb12c874e88",
-    "checkedAt": "2026-10-16T05:36:17.179Z",
+    "checkedAt": "2026-10-16T11:24:30.776Z",
     "sources": [
       "https://developers.openai.com/api/docs/pricing",
       "https://ai.google.dev/gemini-api/docs/pricing"
     ],
-    "findings": "Read official OpenAI and Google pricing pages on 2026-10-16. Standard pricing distinguished from Batch/Flex: GPT6.1Sol2/10, Luna0.10/0.50, Astra10/50 per million short-context text tokens; Sunburst/Flare image8 cached2 output30, text5 cached1.25. Gemini3.8Flash0.75/3.75 through2026-12-31, NanoBanana2.1 input1.50 text/thinking7.50 image30 and1K0.0336/2K0.0504/4K0.113. Existing numerical reference rates retained; UI/README/manual snapshot dates renewed. Long context, tools, taxes, discounts and account-specific billing separate."
+    "findings": "Re-read both official pricing pages on2026-10-16 before this release: standard short-context GPT6.1Sol2/10,Luna0.10/0.50,Astra10/50 per million tokens. Sunburst/Flare image8 cached2 output30,text5 cached1.25. Gemini3.8Flash0.75/3.75 through2026-12-31,NanoBanana2.1 input1.50,text/thinking7.50,image30,1K0.0336/2K0.0504/4K0.113. Batch/Flex discounted rates distinguished, no numeric price change. Long-context,tools,taxes and account billing separate."
   }
 }
