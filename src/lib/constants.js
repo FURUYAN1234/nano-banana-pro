@@ -3,7 +3,7 @@ import { getEndingModePolicy } from './ending-mode-policy.js';
 // --- 定数・タグ定義 (constants.js) ---
 // App.jsx から抽出された共有定数
 
-export const SYSTEM_VERSION = "v7.0.8";
+export const SYSTEM_VERSION = "v7.0.9";
 
 // --- Punchline ラベル変換関数 ---
 export const getPunchlineLabel = (type) => {
@@ -131,7 +131,7 @@ export const EMOTION_STYLES = {
     vfx: '',
   },
   CHIBI_GAG: {
-    style: `In THIS PANEL ONLY, redraw the actors as expressive chibi: enlarged heads above shortened torsos and jointed limbs, not just bigger eyes on normal bodies. Preserve Camera/Action, body acting, gaze, facial reactions, hair and glasses. Adapt deformation to keep acting and perspective readable; never replace chibi with unchanged anime or zoom for cuteness. ${OPAQUE_COLOR_RENDERING}`,
+    style: `THIS PANEL ONLY: 大きな頭・短い胴・関節ある手足へ再構成した表情豊かなちび。通常体の目だけを拡大しない。Camera/Action・身体演技・視線・表情・髪/眼鏡を保ち、誇張と透視を両立。通常頭身への戻しや可愛さ目的のズーム禁止。適用Outfit優先、未指定は継続/参照服。服種/色/重ね着はちび化で変えず、明示の着替えは反映。服の描法・しわは画風と動作に従う。 ${OPAQUE_COLOR_RENDERING}`,
     proportions: 'Explicit user proportions win. Otherwise choose the degree of chibi deformation around camera, body acting and expression; no compulsory all-cast head ratio.',
     vfx: '(Exaggerated sweat drops:1.3), (popping veins:1.2), (comedic steam from head), (glasses preserved on chibi face if character wears them:1.5)',
   },
@@ -284,7 +284,7 @@ EMOTION_STYLES.GOLDEN_HOUR = {
 
 // Budget-safe drawing recipes. Keep the visual operation, not a bare style name.
 export const COMPACT_EMOTION_STYLES = Object.freeze({
-  CHIBI_GAG: `Redraw enlarged heads, shortened torsos and jointed limbs as expressive chibi, not unchanged anime. Keep Camera/Action, acting/gaze/hair/glasses; readable perspective, no zoom for cuteness. ${OPAQUE_COLOR_RENDERING}`,
+  CHIBI_GAG: `大頭・短い胴・関節ある手足の表情豊かなちびへ再構成。通常アニメのまま不可。Camera/Action・演技/視線/髪/眼鏡と透視を保持、可愛さ目的のズーム禁止。適用Outfit優先、未指定は継続/参照服。服種/色/重ね着をちび化で変えず明示着替えは反映。服の描法/しわは画風/動作に従う。 ${OPAQUE_COLOR_RENDERING}`,
   GEKIGA: `Realistic gekiga: ${GEKIGA_FACE_CONSTRUCTION} Brush ink; fine hatching is primary, solid black secondary. Keep identity/age/color, gaze and Camera/Action. ${OPAQUE_COLOR_RENDERING}`,
   SHOUJO: 'Delicate thin linework, fine eyelashes, luminous layered irises, airy soft shading, petals and bokeh behind clear acting faces.',
   HORROR: 'Deep ink masses, sharp lit facial planes and eerie rim/underlighting; keep scripted framing and cast.',
@@ -315,11 +315,11 @@ export const COMPACT_EMOTION_STYLES = Object.freeze({
 // Automatic selection uses the six visually reviewed media. Other recipes
 // remain readable for explicitly imported/manual scenarios.
 const actorDrawingStyles = {
-  GEKIGA: { family: 'gekiga' },
+  GEKIGA: { family: 'gekiga', actorRendering: '顔は眉骨/眼窩→張り出す鼻→頬骨/顎の面から構築。個人の識別点を保ち、参照の目の大きさをこの骨格へ翻訳。dense fine multi-directional facial kakeami with visible line gaps が各面に沿う。穏やかな笑顔も同じ立体描法。加齢/怒りを足さない。', actorRenderingMonochrome: '全人物の顔を劇画骨格で描く。' },
   CHIBI_GAG: { family: 'chibi', actorCue: 'shortened_body', evidence: 'enlarged head plus shortened torso and jointed limbs, projected through the fixed Camera' },
-  WATERCOLOR: { family: 'watercolor', actorCue: 'transparent_washes', evidence: 'transparent pigment layers and broken pooling edges on the actor, not just paper or background' },
+  WATERCOLOR: { family: 'watercolor', actorCue: 'transparent_washes', evidence: 'transparent pigment layers and broken pooling edges on the actor, not just paper or background', actorRendering: '顔の頬/鼻・髪の束・服の量感を透明顔料の重なりで構築。肌と髪にも紙白、途切れた縁の色溜まり、目/口は少数の色線。セル塗り顔への質感上乗せにしない。', actorRenderingMonochrome: '顔の頬/鼻・髪の束・服を疎な途切れ墨線と限定した網点の形で構築。白紙・指定肌ベース・判読できる目口を保持。灰色の紙下地や一様なセル顔を継承しない。' },
   UKIYOE: { family: 'woodblock', actorCue: 'woodblock_planes', evidence: 'carved actor contours and flat pigment planes' },
-  POP_ART: { family: 'pop_print', actorCue: 'ben_day_print', evidence: 'bold actor contours, flat color and Ben-Day print marks on actor planes' },
+  POP_ART: { family: 'pop_print', actorCue: 'ben_day_print', evidence: 'bold actor contours, flat color and Ben-Day print marks on actor planes', actorRendering: '顔の頬/鼻・髪・服を太い墨輪郭と不透明な印刷色面で構築。顔の影も間隔の明瞭なBen-Day網点で造形。目口の判読を保ち、人物の滑らかなセル陰影を印刷面へ置換。背景だけの網点では不可。', actorRenderingMonochrome: '顔の頬/鼻・髪・服を太い墨輪郭と白黒の印刷面で構築。指定肌ベースを守り、顔の影も間隔の明瞭なBen-Day網点。目口を明瞭に保ち、背景だけの網点では不可。' },
   SKETCH: { family: 'pencil', actorCue: 'pencil_strokes', evidence: 'visible pencil strokes and hatching constructing the actor' },
   THICK_PAINT: { family: 'opaque_paint', actorCue: 'opaque_brush_masses', evidence: 'overlapping opaque brush masses modeling the actor' },
 };

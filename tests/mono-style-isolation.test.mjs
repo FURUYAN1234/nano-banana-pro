@@ -5,8 +5,9 @@ import { readFileSync } from 'node:fs';
 import { createServer } from 'vite';
 import { FOCAL_DEPTH_HIERARCHY } from '../src/lib/shared-image-quality.js';
 import { GEKIGA_FACE_CONSTRUCTION } from '../src/lib/constants.js';
+import { buildActorMediumInstruction } from '../src/lib/panel-utils.js';
 import { withoutMosaicRepair } from './helpers/mosaic-isolation.mjs';
-import { restorePrePolicyContracts, restorePreSelectionContracts, restoreReviewedShotExecution } from './helpers/prompt-policy-normalization.mjs';
+import { restorePrePolicyContracts, restorePreSelectionContracts, restoreReviewedShotExecution, restoreReviewedActorMedium, restoreReviewedMonoStyleReminder } from './helpers/prompt-policy-normalization.mjs';
 
 // Retain the original isolation baseline; normalize only the authorized shared
 // focus contract, independently covered by expressive-direction.test.mjs.
@@ -116,6 +117,24 @@ test('actor-medium normalization is exact and preserves unknown recipe changes a
   }
 });
 
+test('new actor construction normalization recognizes only reviewed complete lines', () => {
+  for (const mode of ['color', 'monochrome']) for (const style of ['POP_ART', 'WATERCOLOR', 'GEKIGA']) {
+    const line = buildActorMediumInstruction(style, mode);
+    assert.ok(line);
+    const scope = mode === 'color' ? `PANEL STYLE LOCK: ${style};\n` : '';
+    assert.equal(restoreReviewedActorMedium(line), mode === 'color' ? line : '');
+    const wrapped = `${scope}Action (visual only): USER ACTION\n${line}\nCamera: USER CAMERA`;
+    assert.equal(restoreReviewedActorMedium(wrapped), `${scope}Action (visual only): USER ACTION\nCamera: USER CAMERA`);
+    for (const unknown of [line + ' UNAUTHORIZED', line.replace('ACTOR MEDIUM', 'UNKNOWN MEDIUM'),
+      `Action (visual only): ${line}`, `Camera: ${line}`, `Dialogue: "${line}"`]) {
+      assert.equal(restoreReviewedActorMedium(unknown), unknown);
+      assert.equal(restoreReviewedActorMedium(scope + unknown), scope + unknown);
+    }
+    assert.notEqual(sha256(wrapped.replace('USER ACTION', 'CHANGED ACTION')), sha256(wrapped));
+    assert.notEqual(sha256(wrapped.replace('USER CAMERA', 'CHANGED CAMERA')), sha256(wrapped));
+  }
+});
+
 for (const record of baseline.records) {
   test(`mono-only repair preserves exact ${record.providerFamily}/${record.colorMode}/${record.case}/${record.promptMaxChars} output`, () => {
     const input = baseline.cases.find(value => value.name === record.case);
@@ -140,7 +159,22 @@ test('OpenAI monochrome keeps every neighboring NORMAL, WATERCOLOR and CHIBI pan
     assert.equal(panels.length, 4);
     assert.equal(record.panels.length, 3);
     for (const panel of record.panels) {
-      assert.equal(sha256(panels[panel.panel - 1], { providerFamily: 'chatgpt', colorMode: 'monochrome' }), panel.sha256, `${record.case} panel ${panel.panel}/${record.promptMaxChars}`);
+      const normalized = withoutFocusRepair(panels[panel.panel - 1], { providerFamily: 'chatgpt', colorMode: 'monochrome' });
+      const restored = restoreReviewedMonoStyleReminder(normalized);
+      const hash = text => createHash('sha256').update(text).digest('hex');
+      if (hash(normalized) !== panel.sha256) {
+        // Only the duplicate local reminder may be compacted. Its global
+        // requirements must still reach the generated prompt.
+        assert.match(prompt, /PROMPT PRIORITY:.*Camera/);
+        assert.match(prompt, /CROSS-PANEL WARDROBE TONE LOCK:/);
+        assert.match(prompt, /glasses/);
+        assert.equal(hash(restored), panel.sha256, `${record.case} panel ${panel.panel}/${record.promptMaxChars}`);
+        const compactLine = normalized.split('\n').find(line => restoreReviewedMonoStyleReminder(line) !== line);
+        assert.ok(compactLine);
+        for (const unknown of [compactLine + ' UNAUTHORIZED', compactLine.replace('STYLE LOCK', 'CHANGED LOCK'), `Action (visual only): ${compactLine}`, `Camera: ${compactLine}`]) {
+          assert.equal(restoreReviewedMonoStyleReminder(unknown), unknown);
+        }
+      }
     }
   }
 });

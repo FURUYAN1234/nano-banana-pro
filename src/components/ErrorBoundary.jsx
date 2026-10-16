@@ -1,5 +1,7 @@
 import React from 'react';
-import { SYSTEM_VERSION } from '../lib/constants';
+import { version } from '../../package.json';
+
+const SYSTEM_VERSION = `v${version}`;
 
 // --- Error Boundary ---
 class ErrorBoundary extends React.Component {

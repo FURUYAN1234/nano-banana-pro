@@ -46,7 +46,7 @@ try {
       {scenario:input.scenario.replace('道具1','道具を確認してから部品1')}, {castList:input.castList+'\n髪: 黒'},
       {userDirection:'手順と動作を変える'}, {referenceContext:'別の素材指定'}, {referenceImages:['image-b']},
       {backgroundImage:'background-b'}, {backgroundEnabled:true}, {showWatermarks:true},
-      {mosaicCopyrightedCharacters:true}, {imageEngineLabel:'別の画像エンジン'}, {scenarioModelLabel:'別の台本モデル'},
+      {mosaicCopyrightedCharacters:true}, {imageEngineLabel:'別の画像エンジン'}, {scenarioModelLabel:'別の台本モデル'}, {providerFamily:'chatgpt'},
     ];
     for(const change of changes) {
       let requests=0;const next={...input,colorMode:'monochrome',...change};

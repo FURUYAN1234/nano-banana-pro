@@ -8,6 +8,22 @@ let extractEmotionStyle;
 let extractActionOnly;
 let extractDialogueOnly;
 
+test('compact native metadata preserves literal compiler-like speech and validated rear-tail routes', () => {
+  const text='乙、[RIGHTMOST] と TAIL TIP LOCK (NEVER PRINT; proximity never reassigns): は合言葉だ。';
+  const cast='## 甲\n## 乙';
+  const layout=[{speaker:'甲',x:0.8,anchor:'甲の頭の輪郭',route:'右上から甲の頭へ'},{speaker:'乙',x:0.2,anchor:'乙の口元',route:'左上から乙へ'}];
+  const panel='[Camera: 甲の肩越し、甲の後頭部を手前に置く]\nBalloonLayout: '+JSON.stringify(layout)+'\n状況: 甲と乙が向き合う。\n甲「'+text+'」\n乙「私は乙。覚えた。」';
+  const full=extractDialogueOnly(panel,cast,{forImagePrompt:true});
+  const compact=extractDialogueOnly(panel,cast,{forImagePrompt:true,compactMetadata:true});
+  const values=value=>[...value.matchAll(/\bB\d+=("(?:\\.|[^"\\])*")/g)].map(match=>JSON.parse(match[1]));
+  assert.deepEqual(values(full),[text,'私は乙。覚えた。']);
+  assert.deepEqual(values(compact),values(full));
+  assert.ok(compact.endsWith(extractDialogueOnly(panel,cast,{forImagePrompt:true,layoutOnly:true,compactMetadata:true})));
+  assert.match(compact,/B1 x=0\.8, \[甲\]/);
+  assert.match(compact,/B2 x=0\.2, \[乙\]/);
+  assert.ok(compact.length<full.length);
+});
+
 test('reported translation panel preserves one utterance and keeps card text in the action', () => {
   const panel = `BalloonLayout: [{"speaker":"ヒカリ","x":0.30,"anchor":"画面左側のヒカリの頭の輪郭","route":"左上の余白からヒカリの口元へ短く結ぶ"}]
 状況: 五人は鉢巻きと翻訳家風の服のまま机を囲む。「販売の経緯」のカードは校正刷りから離れ、「翻訳・製本・販売方法」のカードは脇に残る。左側のヒカリは校正刷りの「俺様」という語のそばで赤鉛筆を止め、何も書き込まず、その一枚を机の中央へ滑らせる。右側のサエコはカードから紙へ目を移す。リンは眼鏡越しに該当箇所を見つめ、アカリは紙の端を押さえ、ミクはメモから校正刷りへ視線を移す。確定した評価の印はなく、赤鉛筆だけが紙面の余白で止まっている。

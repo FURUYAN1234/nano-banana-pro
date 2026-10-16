@@ -42,10 +42,18 @@ test('OpenAI STEP4 has no additional review button; only generation pulses when 
   }
 });
 
-test('STEP4 output stays hidden until a final prompt exists', async () => {
+test('STEP4 opens for a prepared prompt or saved image and stays hidden during prerequisite work', async () => {
   const app = await readFile(new URL('../src/App.jsx', import.meta.url), 'utf8');
-
-  assert.match(app, /Boolean\(finalPrompt\?\.trim\(\)\)\s*&&\s*\(\s*<Step4Panel/);
+  const gate = app.match(/\{([^\r\n{}]+?)\s*&&\s*\(<Step4Panel/)?.[1];
+  assert.ok(gate, 'test the actual App condition that renders STEP4');
+  const visible = new Function('finalPrompt','generatedImage','isAnalyzing','isSearching','isAssembling',`return Boolean(${gate});`);
+  assert.equal(visible('',null,false,false,false),false);
+  assert.equal(visible('   ',null,false,false,false),false);
+  assert.equal(visible('prepared prompt',null,false,false,false),true);
+  assert.equal(visible('', 'saved-image',false,false,false),true);
+  for(const busy of [[true,false,false],[false,true,false],[false,false,true]]) {
+    assert.equal(visible('prepared prompt','saved-image',...busy),false);
+  }
 });
 
 test('STEP4 empty image area describes the selected four-panel or five-to-eight-panel mode', async () => {

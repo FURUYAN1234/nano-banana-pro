@@ -1,3 +1,4 @@
+import { getBuiltinPanelMediumReference } from '../lib/builtin-panel-medium-reference.js';
 import { getImageContentHash, buildReferenceRecognitionMetadata } from '../lib/generated-image-metadata.js';
 import { beginApiWork, cancelApiWork, getApiWorkSignal, withImageReviewCancellation } from '../lib/api-work-cancellation.js';
 import { useState, useRef, useEffect } from 'react';
@@ -9,6 +10,7 @@ import { generateImageWithImagen } from '../lib/imagen';
 import { assertRenderOptions, readRenderOptions } from '../lib/render-options.js';
 import { collectCastNameEntries } from '../lib/panel-utils.js';
 import { buildImageEditRequest } from '../lib/image-edit.js';
+import { readPanelStyleEditFrames, preparePanelStyleEdit, composePanelStyleEdit } from '../lib/panel-style-edit.js';
 import { formatApiErrorGuide } from '../lib/api-errors.js';
 import { generateImageWithOpenAI, setOpenAIApiKey } from '../lib/openai';
 import {buildOpenAIReferencePlan, appendOpenAIReferencePrompt, appendOpenAIWebReferencePrompt, getOpenAIPromptBodyBudget} from '../lib/openai-image-references.js';
@@ -70,7 +72,7 @@ import { DEFAULT_OPENAI_SCENARIO_MODEL_ID, OPENAI_SCENARIO_MODEL_OPTIONS, OPENAI
 import { prepareExperimentalManga, buildExperimentalPageContract, buildExperimentalReviewPrompt, reviewExperimentalImage, validateExperimentalReview, reviewExperimentalCandidatePair, selectExperimentalCandidate, summarizeExperimentalLayouts } from '../lib/experimental-manga.js';
 import { resolvePageWorkflow, applyPageCandidateSelection } from '../lib/page-workflow.js';
 
-export default function useMangaWorkflow({ experimentalEnabled = false } = {}) {
+export default function useMangaWorkflow({ experimentalEnabled = true } = {}) {
   const scenarioMode = experimentalEnabled ? 'experimental-manga' : 'four-panel';
   const [scenarioModelId, setScenarioModelIdState] = useState(DEFAULT_OPENAI_SCENARIO_MODEL_ID);
   const setScenarioModelId = (modelId) => {
@@ -365,6 +367,7 @@ export default function useMangaWorkflow({ experimentalEnabled = false } = {}) {
   const [imageEditDrafts, setImageEditDrafts] = useState({});
   const setImageEditDraft = (image, text) => setImageEditDrafts(previous => ({ ...previous, [image]: text }));
   const imageEditRunRef = useRef(null);
+  imageEditRunRef.displayedImage = generatedImage;
   const [generationHistory, setGenerationHistory] = useState([]); // [v2.86] Generated Image History
   const finalImageSaverRef = useRef(null);
   const autoSaveFinalImage = async (item, isCurrent) => {
@@ -1258,6 +1261,7 @@ export default function useMangaWorkflow({ experimentalEnabled = false } = {}) {
 
   const experimentalInput = (sourceScenario = scenario) => ({
     enabled:true,scenarioMode,scenario:sourceScenario,castList:castListRef.current,colorMode,mosaicCopyrightedCharacters,showWatermarks,
+    providerFamily:getCurrentPromptProviderFamily(),
     userDirection:inputMode==='manual'?manualTopic:'',
     imageEngineLabel:isOpenAIEngine?formatOpenAIImageEngineName(openAIImageQuality):GEMINI_IMAGE_MODEL.replace(/^gemini-nano-banana-/, 'Gemini Nano Banana '),
     scenarioModelLabel:OPENAI_SCENARIO_MODEL_OPTIONS.find(({id})=>id===scenarioUsedModelRef.current)?.label,
@@ -1266,7 +1270,8 @@ export default function useMangaWorkflow({ experimentalEnabled = false } = {}) {
     referenceImages:imagesRef.current,backgroundImage:bg360Image,backgroundEnabled:bg360Enabled,
     promptMaxChars:isOpenAIEngine?getOpenAIPromptBodyBudget(buildOpenAIReferencePlan({compact:true,
       characterImages:imagesRef.current,referenceAssets:referenceAssetsRef.current,
-      backgroundImage:bg360Image,backgroundEnabled:bg360Enabled,colorMode})):undefined,
+      backgroundImage:bg360Image,backgroundEnabled:bg360Enabled,colorMode,
+      mediumReference:getBuiltinPanelMediumReference({scenario:sourceScenario,colorMode,styleJson,punchlineType})})):undefined,
     recentLayouts:summarizeExperimentalLayouts(generationHistory.filter(item=>item.experimentalPlan).map(item=>({plan:item.experimentalPlan})).reverse()),
   });
   const changePageMode = (enabled) => {
@@ -1376,6 +1381,7 @@ export default function useMangaWorkflow({ experimentalEnabled = false } = {}) {
           characterImages: images, backgroundImage: bg360Image, backgroundEnabled: bg360Enabled,
           referenceAssets: referenceAssetsRef.current,
           colorMode,
+          mediumReference: getBuiltinPanelMediumReference({scenario:currentScenario,colorMode,styleJson,punchlineType:activePunchlineType}),
         }))
         : undefined;
       // [v3.82-alpha] リファクタリング: 外部モジュールでプロンプトを構築
@@ -1688,6 +1694,7 @@ export default function useMangaWorkflow({ experimentalEnabled = false } = {}) {
         characterImages: images, backgroundImage: bg360Image, backgroundEnabled: bg360Enabled,
         referenceAssets: referenceAssetsRef.current,
         colorMode,
+        mediumReference: getBuiltinPanelMediumReference({scenario,colorMode,styleJson,punchlineType}),
       }))
       : appendGeminiReferencePrompt(prompt, buildWebReferencePlan({ compact: true,
         images, referenceAssets: referenceAssetsRef.current, backgroundImage: bg360Image, backgroundEnabled: bg360Enabled, colorMode,
@@ -1797,6 +1804,156 @@ export default function useMangaWorkflow({ experimentalEnabled = false } = {}) {
       qualityPass: false, selected: true,
     }));
     showStatus('ページ比率を揃えました。元画像も保持しています。追加API課金なし／配置後の画像QAは未実行です。');
+  };
+
+  const panelStyleEditBusy = () => isGeneratingImage || isSearching || isAssembling || isEnhancing
+    || isAnalyzing || is360CameraWorking || isFixingPolicy || isFullAutoMode;
+  const loadSavedMangaImage = async (file) => {
+    if (!isOpenAIEngine || panelStyleEditBusy() || imageEditRunRef.current?.epoch === scenarioRunEpochRef.current) {
+      throw new Error('処理の完了後、OpenAIモードで保存画像を読み込んでください。');
+    }
+    if (!file || !['image/png', 'image/jpeg', 'image/webp'].includes(file.type) || !(file.size > 0)) {
+      throw new Error('PNG・JPEG・WebPの画像ファイルを選んでください。');
+    }
+    const epoch = scenarioRunEpochRef.current;
+    const sourceImage = generatedImage;
+    const img = await readFileAsDataURL(file);
+    const dimensions = await inspectImageDimensions(img);
+    if (!(dimensions.width > 0 && dimensions.height > 0)) throw new Error('画像の寸法を読み取れませんでした。');
+    if (scenarioRunEpochRef.current !== epoch || imageEditRunRef.displayedImage !== sourceImage
+      || imageEditRunRef.current?.epoch === epoch) throw new Error('処理状態が変更されました。読み込み直してください。');
+    const item = {
+      id: Date.now(), img, mimeType: file.type, imported: true, selected: true, qualityPass: false,
+      metadataContext: { settings: { imported_manga: true, quality_review: 'not_run' } },
+    };
+    setGenerationHistory(items => addGenerationHistoryItem(items, item));
+    imageEditRunRef.prepared = null;
+    imageEditRunRef.candidate = null;
+    setGeneratedImage(img);
+    setImageQualityNeedsRepair(false);
+    setIsGenerationError(false);
+    setGenLog(['[保存画像] 読み込みました。API生成・品質検査は実行していません。']);
+    showStatus('保存画像を読み込みました。追加API課金なし。');
+    return true;
+  };
+  const preparePanelStyleEditor = async ({ sourceImage, panelCount }) => {
+    if (!isOpenAIEngine || !sourceImage || sourceImage !== generatedImage || panelStyleEditBusy()
+      || imageEditRunRef.current?.epoch === scenarioRunEpochRef.current) {
+      throw new Error('表示中の画像を選び、処理の完了後にコマを確認してください。');
+    }
+    const epoch = scenarioRunEpochRef.current;
+    const sourceHistory = generationHistory.find(item => item.img === sourceImage);
+    const prepared = await readPanelStyleEditFrames(sourceImage, panelCount, { plan: sourceHistory?.experimentalPlan });
+    if (imageEditRunRef.displayedImage !== sourceImage || scenarioRunEpochRef.current !== epoch) {
+      throw new Error('修正元が変わりました。対象コマを確認し直してください。');
+    }
+    imageEditRunRef.prepared = { ...prepared, panelCount };
+    return prepared;
+  };
+  const discardPanelStyleEdit = () => {
+    imageEditRunRef.candidate = null;
+  };
+  const generatePanelStyleEdit = async ({ sourceImage, panelIndex, region, mode = 'style', style, instruction }) => {
+    const epoch = scenarioRunEpochRef.current;
+    const prepared = imageEditRunRef.prepared;
+    const frame = prepared?.frames.find(item => item.index === panelIndex);
+    if (!isOpenAIEngine || !sourceImage || sourceImage !== generatedImage || prepared?.sourceImage !== sourceImage
+      || !frame || ['x', 'y', 'width', 'height'].some(key => frame.region[key] !== region?.[key])
+      || panelStyleEditBusy() || imageEditRunRef.current?.epoch === epoch
+      || imageEditRunRef.candidate?.epoch === epoch) {
+      showStatus('修正元と対象コマを確認し直してください。');
+      return null;
+    }
+    const run = { epoch, phase: 'panel-style-running' };
+    imageEditRunRef.current = run;
+    const isCurrent = () => scenarioRunEpochRef.current === epoch && imageEditRunRef.current === run
+      && imageEditRunRef.displayedImage === sourceImage;
+    const sourceHistory = generationHistory.find(item => item.img === sourceImage);
+    const log = message => { if (isCurrent()) setGenLog(items => [...items, message]); };
+    setIsGeneratingImage(true);
+    setIsGenerationError(false);
+    setGenLog(['[コマ修正] 対象の1コマを修正します。元画像は採用まで保持します。']);
+    try {
+      const editInstruction = typeof instruction === 'string' ? instruction.trim() : instruction;
+      const edit = await preparePanelStyleEdit(sourceImage, region, {
+        requestedSize: openAIImageSize, mode, style, instruction: editInstruction,
+        colorMode: sourceHistory?.metadataContext?.settings?.color_mode || colorMode,
+      });
+      if (!isCurrent()) return null;
+      beginApiWork();
+      const response = await generateImageWithOpenAI(edit.request.prompt, log, {
+        quality: openAIImageQuality, size: edit.plan.size, imageInputs: edit.request.imageInputs,
+      });
+      if (!isCurrent()) return null;
+      const base64 = String(response.base64Img || '').replace(/\s+/g, '');
+      if (!base64) throw new Error('修正画像を受信できませんでした。');
+      const result = await composePanelStyleEdit(sourceImage, `data:${response.mimeType || 'image/png'};base64,${base64}`, edit.plan);
+      if (!isCurrent()) return null;
+      if (result.outsidePixelsUnchanged !== true) throw new Error('対象コマ以外の画素を保持できませんでした。');
+      const candidate = {
+        sourceImage, sourceHistory, panelIndex, panelNumber: frame.panelNumber, panelCount: prepared.panelCount,
+        region: { ...region }, mode, style, instruction: editInstruction,
+        before: edit.before, after: result.after, image: result.dataUrl,
+        modelId: response.usedModel, prompt: edit.request.prompt,
+        inputImages: edit.request.imageInputs.map(item => ({ role: 'edit_source', dataUrl: item.image_url })),
+        outsidePixelsUnchanged: true,
+      };
+      imageEditRunRef.candidate = { epoch, value: candidate };
+      log('[コマ修正] 候補を作成しました。対象外の画素一致を確認済み。修正内容と台詞・演技は比較してから採用してください。自動品質検査は未実行です。');
+      showStatus('修正前と候補を比較してください。現在の完成画像は変更していません。');
+      return candidate;
+    } catch (error) {
+      if (isCurrent()) {
+        const message = translateApiError(error);
+        log(`[コマ修正エラー] ${message}`);
+        showStatus(`元画像を保持しました。${message}`);
+        setIsGenerationError(true);
+      }
+      return null;
+    } finally {
+      if (imageEditRunRef.current === run && scenarioRunEpochRef.current === epoch) setIsGeneratingImage(false);
+      if (imageEditRunRef.current === run) imageEditRunRef.current = null;
+    }
+  };
+  const adoptPanelStyleEdit = async ({ candidate, reviewConfirmed }) => {
+    const run = imageEditRunRef.candidate;
+    if (reviewConfirmed !== true || !candidate
+      || run?.value !== candidate || run.epoch !== scenarioRunEpochRef.current
+      || candidate.sourceImage !== generatedImage || panelStyleEditBusy()
+      || candidate.outsidePixelsUnchanged !== true) {
+      showStatus('現在の修正候補と確認項目を確認してから採用してください。');
+      return false;
+    }
+    const timestamp = Date.now();
+    const { sourceHistory, sourceImage } = candidate;
+    const item = {
+      id: timestamp, img: candidate.image, sourceImage, workflowSource: sourceHistory?.workflowSource,
+      experimentalPlan: sourceHistory?.experimentalPlan,
+      originalImage: sourceImage, mimeType: 'image/png', modelId: candidate.modelId,
+      generatedAt: new Date(timestamp).toISOString(), selected: true, qualityPass: false,
+      editInstruction: `${candidate.panelNumber ? `${candidate.panelNumber}コマ目` : `選択範囲${candidate.panelIndex + 1}`}: ${candidate.mode === 'free' ? candidate.instruction : `画風 ${candidate.style}`}`,
+      metadataContext: {
+        ...sourceHistory?.metadataContext, provider: 'openai', finalPrompt: candidate.prompt,
+        inputImages: candidate.inputImages,
+        settings: { ...sourceHistory?.metadataContext?.settings,
+          panel_count: candidate.panelCount,
+          panel_edit: { panel_index: candidate.panelIndex, panel_number: candidate.panelNumber ?? null, region: candidate.region,
+            mode: candidate.mode, ...(candidate.mode === 'free' ? { instruction: candidate.instruction } : { style: candidate.style }) },
+          panel_style_edit: candidate.mode === 'style'
+            ? { panel_index: candidate.panelIndex, region: candidate.region, style: candidate.style } : undefined,
+          outside_panel_pixels_unchanged: true, visual_review_confirmed: true, quality_review: 'not_run',
+        },
+      },
+    };
+    setGenerationHistory(items => addGenerationHistoryItem(addGenerationHistoryItem(
+      items.filter(entry => entry.img !== sourceImage),
+      sourceHistory || { id: timestamp - 1, img: sourceImage }), item));
+    setGeneratedImage(candidate.image);
+    setImageQualityNeedsRepair(false);
+    imageEditRunRef.candidate = null;
+    if (!await autoSaveFinalImage(item, () => scenarioRunEpochRef.current === run.epoch)) return false;
+    showStatus('確認したコマの修正を採用しました。元画像は履歴に保持しています。');
+    return true;
   };
 
   const editGeneratedImage = async (instruction) => {
@@ -2035,6 +2192,7 @@ export default function useMangaWorkflow({ experimentalEnabled = false } = {}) {
             backgroundEnabled: bg360Enabled,
             originalCandidate: repairSource,
             colorMode,
+            mediumReference: getBuiltinPanelMediumReference({scenario:generationScenario,colorMode,styleJson,punchlineType}),
           });
           const apiPrompt = appendOpenAIReferencePrompt(applyOpenAIImageEngineWatermark(prompt, openAIImageQuality), referencePlan);
           metadataPrompt = apiPrompt;
@@ -2046,8 +2204,8 @@ export default function useMangaWorkflow({ experimentalEnabled = false } = {}) {
           metadataInputImages = referencePlan.imageInputs.map((item, index) => ({
             role: referencePlan.referenceRoles?.[index] || roles[index] || 'reference', dataUrl: item.image_url,
           }));
-          const {character, background, original} = referencePlan.counts;
-          statCallback(`[REF] OpenAI入力: 参照素材${character}枚、360°背景${background}枚、修復元${original}枚`);
+          const {character, background, original, styleReference = 0} = referencePlan.counts;
+          statCallback(`[REF] OpenAI入力: 参照素材${character}枚、360°背景${background}枚、修復元${original}枚、描法見本${styleReference}枚`);
           statCallback(repair
             ? `[QUALITY QA] ${resolveOpenAIImageOption(openAIImageQuality).label} で元画像の限定修正を実行中です...`
             : `[INFO] ${resolveOpenAIImageOption(openAIImageQuality).label} の最終画像を待機します...`);
@@ -3230,6 +3388,11 @@ export default function useMangaWorkflow({ experimentalEnabled = false } = {}) {
     setGeneratedImage,
     normalizeDisplayedPage,
     editGeneratedImage,
+    loadSavedMangaImage,
+    preparePanelStyleEditor,
+    generatePanelStyleEdit,
+    adoptPanelStyleEdit,
+    discardPanelStyleEdit,
     setGenerationHistory,
     setImages,
     setInputMode,

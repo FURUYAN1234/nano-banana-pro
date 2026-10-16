@@ -1,4 +1,4 @@
-import { EMOTION_STYLES, GEKIGA_FACE_CONSTRUCTION, OPAQUE_COLOR_RENDERING } from './constants.js';
+import { EMOTION_STYLES, GEKIGA_FACE_CONSTRUCTION, OPAQUE_COLOR_RENDERING, STYLE_DRAWING_CONTRACTS } from './constants.js';
 import { resolveMonochromeRenderIntent } from './manga-render-mode.js';
 import { stripReferenceWardrobe } from './seasonal-outfit.js';
 import { stripSourceMetadata } from './sns-explanation.js';
@@ -772,7 +772,38 @@ export const getCameraForChatGPT = (panelText, cameraState) => {
 
 const BALLOON_LAYOUT_LINE_RE = /^\s*BalloonLayout\s*[:：]\s*(.*)$/gim;
 
-const renderBalloonLayout = (source, entries, rearSubject = '', uncertainRear = false, validCharacters = []) => {
+// Explicit whole-person absence is different from a hidden face, a rear view,
+// or a distant visible body. Share this decision between cast and speech tails.
+export const readOffscreenCast = (source, castList, extraNames = []) => {
+  const lookup = { ...buildCastLookup(castList) };
+  extraNames.filter(Boolean).forEach(name => { if (!lookup[name]) lookup[name] = name; });
+  const pattern = Object.keys(lookup).map(escapeRegex).sort((a,b) => b.length-a.length).join('|');
+  if (!pattern) return new Set();
+  const text = String(source).replace(BALLOON_LAYOUT_LINE_RE, '')
+    .replace(/「[^」]*」|『[^』]*』|"[^"\n]*"|“[^”]*”/gu, '');
+  const group = `((?:${pattern})(?:\\s*(?:と|や|、|及び)\\s*(?:${pattern}))*)`;
+  const outside = '(?:画面外|画角外|フレーム外)';
+  const absent = new Set();
+  const rules = [
+    new RegExp(`${group}(?:は|が)\\s*(?:引き続き|そのまま)?${outside}(?:の(?:前コマ|元の)?位置を維持|(?:の[^。！？\\n]{1,24}?(?:側|場所|位置))?に(?:いる|居る|残(?:る|っている)|留まる)|で待機|[。\\n]|$)`, 'gu'),
+    new RegExp(`${outside}の${group}(?=へ|に|を|は|が|[、。！？\\n])`, 'gu'),
+  ];
+  for (const rule of rules) for (const match of text.matchAll(rule)) {
+    for (const name of match[1].matchAll(new RegExp(pattern, 'gu'))) absent.add(lookup[name[0]]);
+  }
+  for (const [alias, canonical] of Object.entries(lookup)) {
+    if (!absent.has(canonical)) continue;
+    const name = escapeRegex(alias);
+    const body = '(?:顔|頭|後頭部|肩|手|腕|指|足|脚|背中|体|身体|姿|後ろ姿)';
+    // Positive evidence of any visible part wins. Do not treat 見えない as 見える.
+    const visiblePart = new RegExp(`${name}(?:の(?:[左右両片]?(?:${body}))(?:と${body})*)?(?:だけ|のみ)?(?:は|が|を)?[^。！？\\n]{0,12}(?:(?:画面内|画角内|フレーム内)(?:に|で|へ)|(?:見える|映る|写る|見せる))`, 'u');
+    const visibleBody = new RegExp(`${name}(?:は|が|を)(?:画面内|画角内|フレーム内|遠景|手前|奥|後ろ姿)[^。！？\\n]{0,20}(?:見える|映る|写る|置く|立つ|並べ)`, 'u');
+    if (visiblePart.test(text) || visibleBody.test(text)) absent.delete(canonical);
+  }
+  return absent;
+};
+
+const renderBalloonLayout = (source, entries, rearSubject = '', uncertainRear = false, validCharacters = [], offscreen = new Set()) => {
   const lines = [...String(source).matchAll(BALLOON_LAYOUT_LINE_RE)];
   if (!lines.length) return ''; // Existing/manual scenarios keep their supported format.
   const fail = (reason, detail) => { throw Object.assign(new Error(`BalloonLayout: ${detail}`), {code: 'BALLOON_LAYOUT_INVALID', reason}); };
@@ -791,7 +822,9 @@ const renderBalloonLayout = (source, entries, rearSubject = '', uncertainRear = 
     }
   }
   if (!plan.length) return '';
-  const visibleAnchor = (value, speaker) => speaker !== rearSubject && !uncertainRear ? value : value
+  const visibleAnchor = (value, speaker) => offscreen.has(speaker)
+    ? value.replace(/口元|口もと|頭の(?:見える)?輪郭|頭部|\b(?:mouth|head)(?:\s+silhouette)?\b/gi, '話者方向の画面縁')
+    : speaker !== rearSubject && !uncertainRear ? value : value
     .replace(/口元|口もと|\bmouth\b|(^|の|から|\s)口(?=へ|に|の|$)/gi, (match, prefix, offset, text) => {
       // Preserve authored visibility prohibitions; only positive tail endpoints
       // are redirected. Rewriting a hidden mouth would hide the head contour.
@@ -809,7 +842,20 @@ const renderBalloonLayout = (source, entries, rearSubject = '', uncertainRear = 
   }).join('; ')}.`;
 };
 
+// Canonicalize only standalone metadata. A quoted style label remains speech.
+// Keep the authored scenario unchanged; all readers share this derived form.
+export const normalizePanelStyleTags = (text) => {
+  const source = String(text || '');
+  const quotes = collectDialogueQuotes(source.replace(/『/g, '「').replace(/』/g, '」'));
+  return source.replace(
+    /^[\t ]*\[[\t ]*画風[\t ]*[:：][\t ]*([^\]\r\n]+)\][\t ]*(?=\r?$)/gm,
+    (line, style, offset) => quotes.some(quote => offset >= quote.start && offset < quote.end)
+      ? line : `[EMOTION: ${style.trim()}]`
+  );
+};
+
 export const extractDialogueOnly = (fullPanelText, castList, options = {}) => {
+  fullPanelText = normalizePanelStyleTags(fullPanelText);
   const layoutSource = fullPanelText;
   fullPanelText = String(fullPanelText).replace(BALLOON_LAYOUT_LINE_RE, '');
   fullPanelText = stripSourceMetadata(fullPanelText);
@@ -1117,8 +1163,14 @@ export const extractDialogueOnly = (fullPanelText, castList, options = {}) => {
   if (options.forImagePrompt) {
     const rear = extractExplicitRearSubject(fullPanelText, collectCastNameEntries(castList));
     const rearSubject = rear.subject;
-    const layout = renderBalloonLayout(layoutSource, orderedEntries, rearSubject, ['unresolved', 'ambiguous'].includes(rear.status), validCharacters);
-    if (options.layoutOnly) return layout;
+    const offscreen = readOffscreenCast(fullPanelText, castList, orderedEntries.map(entry => entry.speaker));
+    const fullLayout = renderBalloonLayout(layoutSource, orderedEntries, rearSubject, ['unresolved', 'ambiguous'].includes(rear.status), validCharacters, offscreen);
+    const layout = options.compactMetadata
+      ? fullLayout.replace(/^ BALLOON LAYOUT \(NEVER PRINT; x=0 left\/1 right; preserve Camera\/Action\): /, ' BALLOON LAYOUT: ')
+      : fullLayout;
+    const offscreenTargets = orderedEntries.flatMap((entry,index) => offscreen.has(entry.speaker) ? [`B${index+1}=>[${entry.speaker}] frame_edge`] : []);
+    const offscreenContract = offscreenTargets.length ? `\nOFFSCREEN VOICE: ${offscreenTargets.join('; ')}. This panel overrides global visible mouth/head tail rules: point the tail toward the scripted frame edge/direction; retain speech ownership, never expose the offscreen body or face.` : '';
+    if (options.layoutOnly) return layout + offscreenContract;
     if (options.asEntries) return orderedEntries.map(entryValue);
     // 上位台本には本文だけを再掲し、話者名は各コマの尻尾メタデータに一元化する。
     if (options.forScriptLock) {
@@ -1127,22 +1179,28 @@ export const extractDialogueOnly = (fullPanelText, castList, options = {}) => {
     }
     // Order and ownership share entries; body coordinates remain composition-dependent.
     const visibleText = orderedEntries
-      .map((entry, index) => `B${index + 1}=${JSON.stringify(entry.text)}${orderedEntries.length > 1 ? ` [${index === 0 ? 'RIGHTMOST' : index === orderedEntries.length - 1 ? 'LEFTMOST' : `LEFT OF B${index}`}]` : ''}`)
+      .map((entry, index) => `B${index + 1}=${JSON.stringify(entry.text)}${!options.compactMetadata && orderedEntries.length > 1 ? ` [${index === 0 ? 'RIGHTMOST' : index === orderedEntries.length - 1 ? 'LEFTMOST' : `LEFT OF B${index}`}]` : ''}`)
       .join('; ');
     const tailTargets = orderedEntries
       .map((entry, index) => entry.speaker ? `B${index + 1}->[${entry.speaker}]` : '')
       .filter(Boolean)
       .join('; ');
     const mappedSpeakers = orderedEntries.filter((entry) => entry.speaker);
+    // A validated layout already carries every speaker, endpoint and route.
+    // Native compact pages hoist its nonprinting/order rules, not authored data.
+    const metadataSeparator = options.separateMetadata ? '\n' : ' ';
+    if (options.compactMetadata && layout) return `TEXT (PRINT VALUES ONLY): ${visibleText}.${metadataSeparator}${layout.trimStart()}${offscreenContract}`;
     if (mappedSpeakers.length >= 1) {
       const endpointTargets = orderedEntries
         .map((entry, index) => entry.speaker
-          ? `B${index + 1}=>[${entry.speaker}] ${entry.speaker === rearSubject ? 'visible rear-head contour (never expose mouth)' : ['unresolved', 'ambiguous'].includes(rear.status) ? 'visible contour from scripted Camera (never expose a hidden mouth)' : 'mouth/head'}`
+          ? `B${index + 1}=>[${entry.speaker}] ${offscreen.has(entry.speaker) ? 'frame_edge (offscreen voice; never reveal body/face)' : entry.speaker === rearSubject ? 'visible rear-head contour (never expose mouth)' : ['unresolved', 'ambiguous'].includes(rear.status) ? 'visible contour from scripted Camera (never expose a hidden mouth)' : 'mouth/head'}`
           : `B${index + 1}=>match the visually speaking character`)
         .join('; ');
-      return `TEXT (PRINT VALUES ONLY): ${visibleText}. TAIL TIP LOCK (NEVER PRINT; proximity never reassigns): ${endpointTargets}.${layout}`;
+      // Compact native pages declare order and proximity once at page level.
+      // Compact compiler metadata here, never by replacing authored text.
+      return `TEXT (PRINT VALUES ONLY): ${visibleText}.${metadataSeparator}TAIL TIP LOCK (NEVER PRINT${options.compactMetadata ? '' : '; proximity never reassigns'}): ${endpointTargets}.${layout}${offscreenContract}`;
     }
-    return `TEXT (PRINT VALUES ONLY): ${visibleText}. TAILS (METADATA; NEVER PRINT NAMES): ${tailTargets || 'match the visually speaking character'}.`;
+    return `TEXT (PRINT VALUES ONLY): ${visibleText}.${metadataSeparator}TAILS (METADATA; NEVER PRINT NAMES): ${tailTargets || 'match the visually speaking character'}.`;
   }
 
   return orderedEntries
@@ -1287,17 +1345,51 @@ const buildRequiredDepthAssignment = (speakers, listeners, requireVisibleRear = 
   return `DEPTH ASSIGNMENT (REQUIRED): ${primaryLabel} PRIMARY THREE-QUARTER toward ${partnerLabel}; ${partnerLabel} BACK-THREE-QUARTER OR OVER-THE-SHOULDER PARTNER toward ${primaryLabel}. Do not render this exchange as two reader-facing frontal poses.${visibleRearCheck}`;
 };
 
+// A completed action can identify an object without putting its former actor
+// in this shot. Apply this only when both the explicit headcount and Camera
+// independently identify the current cast. Keep ambiguous continuing actions.
+const currentCastMentionText = (source, castList) => {
+  const text = String(source || '');
+  const evidence = text.replace(BALLOON_LAYOUT_LINE_RE, match => ' '.repeat(match.length))
+    .replace(/「[^」]*」|『[^』]*』|"[^"\n]*"|“[^”]*”/gu, match => ' '.repeat(match.length));
+  const counts = [...evidence.matchAll(/(?:画面|画角|フレーム)内(?:は|には)[^。！？\n]*?([0-9０-９一二三四五六七八九十]+)人(?:だけ|のみ)?(?=[。！？\n]|$)/gu)]
+    .map(match => {
+      const value = match[1].normalize('NFKC');
+      return /^\d+$/.test(value) ? Number(value) : '一二三四五六七八九十'.indexOf(value) + 1;
+    });
+  if (!counts.length || counts[0] < 1 || new Set(counts).size !== 1) return text;
+  const lookup = buildCastLookup(castList);
+  const aliases = Object.keys(lookup).sort((a, b) => b.length - a.length);
+  if (!aliases.length) return text;
+  const camera = (evidence.match(CAMERA_INSTRUCTION_LINE_RE) || []).join(' ');
+  const offscreen = readOffscreenCast(evidence, castList);
+  const cameraCast = new Set(aliases.filter(name => camera.includes(name) && !offscreen.has(lookup[name])).map(name => lookup[name]));
+  if (cameraCast.size !== counts[0]) return text;
+  const clause = new RegExp(`(^|[。！？!?、,；;\\n:：]\\s*)(${aliases.map(escapeRegex).join('|')})(?:が|の)([^。！？!?、,；;\\n]{1,60}?[ただ])([\\p{Script=Han}\\p{Script=Katakana}A-Za-z0-9０-９ー]{1,30})(?:は|が)([^。！？!?、,；;\\n]{1,80})(?=[。！？!?、,；;\\n]|$)`, 'gmu');
+  return text.replace(clause, (match, prefix, name, pastAction, object, state, offset) => {
+    if (cameraCast.has(lookup[name]) || evidence.slice(offset, offset + match.length) !== match
+      || aliases.some(alias => object.includes(alias)) || /(?:て|で)(?:い|おっ)た$/u.test(pastAction)) return match;
+    // Object location or a completed/passive object state is evidence of the
+    // object, not of the earlier actor. An active main verb (e.g. creaking),
+    // nominalized event, or accusative object with an implicit actor is not.
+    const objectState = /に(?:は)?(?:ある|在る)(?:$|[。\s])|(?:れ|られ)(?:て(?:いる|ある)|た)?$/u.test(state);
+    if (!objectState) return match;
+    return prefix + match.slice(prefix.length + name.length);
+  });
+};
+
 export const buildPanelEyeLineRule = (panelText, castList) => {
   const text = String(panelText || '');
+  const offscreen = readOffscreenCast(text, castList);
   const dialogue = extractDialogueOnly(text, castList);
   const speakers = [...dialogue.matchAll(/Speech Bubble \d+ \[([^\]]+)\]/g)]
     .map((match) => match[1].trim())
-    .filter((name, index, names) => name && names.indexOf(name) === index);
-  const actionAndDialogueText = text.replace(CAMERA_INSTRUCTION_LINE_RE, '');
+    .filter((name, index, names) => name && names.indexOf(name) === index && !offscreen.has(name));
+  const actionAndDialogueText = currentCastMentionText(text, castList).replace(CAMERA_INSTRUCTION_LINE_RE, '');
   const castEntries = collectCastNameEntries(castList);
   const canonicalCastNames = [...new Set(castEntries.map(entry => entry.nameOnly))];
   const mentionedCastNames = canonicalCastNames
-    .filter((name) => actionAndDialogueText.includes(name));
+    .filter((name) => actionAndDialogueText.includes(name) && !offscreen.has(name));
   const rear = extractExplicitRearSubject(text, castEntries);
   const explicitRearSubject = rear.subject;
   const cameraText = (text.match(CAMERA_INSTRUCTION_LINE_RE) || []).join(' ');
@@ -1469,6 +1561,7 @@ const protectNonDialogueTextHints = (actionText) => {
 };
 
 export const extractActionOnly = (fullPanelText, castList, placementRule = "") => {
+  fullPanelText = normalizePanelStyleTags(fullPanelText);
   fullPanelText = String(fullPanelText).replace(BALLOON_LAYOUT_LINE_RE, '');
   fullPanelText = stripSourceMetadata(fullPanelText);
   const lines = fullPanelText.split('\n');
@@ -1612,6 +1705,7 @@ export const injectOutfitReminder = (actionText, activeOutfit) => {
 };
 
 export const extractPlacementRule = (fullPanelText, castList, options = {}) => {
+  fullPanelText = normalizePanelStyleTags(fullPanelText);
   fullPanelText = stripSourceMetadata(fullPanelText);
   const compact = Boolean(options.compact);
   const monochrome = options.colorMode === 'monochrome';
@@ -1631,7 +1725,7 @@ export const extractPlacementRule = (fullPanelText, castList, options = {}) => {
   const validCharsForPlacement = collectCastNames(castList);
   const charLookup = buildCastLookup(castList);
 
-  const speakers = [];
+  let speakers = [];
   dialogLines.forEach(line => {
     const match = line.match(/^(.*?)(?:[:：]|「)/);
     if (match && match[1].trim()) {
@@ -1670,6 +1764,8 @@ export const extractPlacementRule = (fullPanelText, castList, options = {}) => {
     }
   });
 
+  const offscreen = readOffscreenCast(fullPanelText, castList, speakers);
+  speakers = speakers.filter(speaker => !offscreen.has(speaker));
   const hasMultipleBubbles = /\bB2=/.test(extractDialogueOnly(fullPanelText, castList, { forImagePrompt: true }));
   if (speakers.length >= 2) {
     const identities = speakers.map(name => `[${name}] (${compactIdentityTraits(getCharTraitsFromMatrix(name, castList, { monochrome }))})`).join('; ');
@@ -1795,26 +1891,12 @@ export const extractCastLimitRule = (fullPanelText, castList, options = {}) => {
       actionAndMetaLines.push(line);
     }
   });
-  const actionAndMetaText = actionAndMetaLines.join('\n');
-  // A named continuity note is not a request to render that actor. Only match
-  // explicit offscreen location predicates, never a gaze target or negation.
-  const castNamePattern = validCharacters.map(escapeRegex).sort((a, b) => b.length - a.length).join('|');
-  const offscreenCast = new Set();
-  if (castNamePattern) {
-    const offscreenLocation = new RegExp(`((?:${castNamePattern})(?:\\s*(?:と|や|、|及び)\\s*(?:${castNamePattern}))*)は\\s*(?:引き続き|そのまま)?(?:画面外|画角外|フレーム外)(?:の(?:前コマ|元の)?位置を維持|(?:の[^。！？\\n]{1,24}?(?:側|場所|位置))?に(?:いる|居る|残(?:る|っている)|留まる)|で待機|[。\\n]|$)`, 'gu');
-    for (const match of actionAndMetaText.matchAll(offscreenLocation)) {
-      for (const name of match[1].matchAll(new RegExp(castNamePattern, 'gu'))) {
-        const canonical = charLookup[name[0]].name;
-        // Dialogue owners retain the existing voice/tail contract; this rule
-        // removes non-speaking continuity mentions from the physical roster.
-        if (!speakers.includes(canonical)) offscreenCast.add(canonical);
-      }
-    }
-  }
+  const actionAndMetaText = currentCastMentionText(actionAndMetaLines.join('\n'), castList);
+  const offscreenCast = readOffscreenCast(actionAndMetaText, castList, speakers);
   const hasBroadGroupCue = /(?:全員|みんな|一同|全キャラ|全メンバー|主要人物全員|メンバー全員|全員集合|everyone|all characters|the whole group)/i.test(actionAndMetaText);
 
   // Visual Action テキストからも登場キャラ名を検出
-  const allPanelCharacters = [...speakers];
+  const allPanelCharacters = speakers.filter(speaker => !offscreenCast.has(speaker));
   const canonicalValidCharacters = [...new Set(Object.values(charLookup).map(obj => obj.name))];
   const explicitRearSubject = extractExplicitRearSubject(fullPanelText, collectCastNameEntries(castList)).subject;
   // An unqualified group subject refers to the registered cast, not unnamed mobs.
@@ -1873,7 +1955,7 @@ export const extractCastLimitRule = (fullPanelText, castList, options = {}) => {
   });
 
   // スピーカー最大3名をメインアクターとして登録
-  const panelActors = speakers.slice(0, 3).map(s => `[${s}]`);
+  const panelActors = speakers.filter(speaker => !offscreenCast.has(speaker)).slice(0, 3).map(s => `[${s}]`);
   const explicitRearActor = explicitRearSubject && !offscreenCast.has(explicitRearSubject) ? `[${explicitRearSubject}]` : '';
   const allCharBrackets = allPanelCharacters.map(c => `[${c}]`);
   const replicaNames = extractDiegeticReplicaNames(actionAndMetaText, [...new Set([...allPanelCharacters,...canonicalValidCharacters])]);
@@ -1899,9 +1981,13 @@ export const extractCastLimitRule = (fullPanelText, castList, options = {}) => {
 
   if (foregroundActors.length > 0) {
     const mainFocus = panelActors.length > 0 ? panelActors.join(' and ') : foregroundActors.join(' and ');
+    const medium = options.colorMode === 'color' && !options.preserveReferenceStyle
+      ? options.effectiveStyle ?? extractEmotionStyle(fullPanelText) : '';
+    const mediumCast = ['POP_ART', 'WATERCOLOR', 'GEKIGA'].includes(medium)
+      ? allCharBrackets.map(name => `${name}=${medium}`) : allCharBrackets;
     let cloneWarning = compact
-      ? `CAST COUNT: ${allCharBrackets.join(', ')} each EXACTLY ONCE; no named-character duplicates.`
-      : `ANTI-CLONE REMINDER: ${allCharBrackets.join(', ')} — each appears EXACTLY ONCE. If a character is mentioned in both the placement rule AND the visual action, they are the SAME person — do NOT draw a second copy.`;
+      ? `CAST COUNT: ${mediumCast.join(', ')} each EXACTLY ONCE; no named-character duplicates.`
+      : `ANTI-CLONE REMINDER: ${mediumCast.join(', ')} — each appears EXACTLY ONCE. If a character is mentioned in both the placement rule AND the visual action, they are the SAME person — do NOT draw a second copy.`;
     cloneWarning += '\nCAST INSTANCE LOCK: allocate each named actor one physical body silhouette at scripted depth, including background actors. Every Camera/Action/dialogue/reaction mention updates that same physical body; never clone, omit a required actor, or substitute a depicted replica. Preserve scripted crops, hidden faces and expressive depth.';
     if (replicaBrackets.length > 0) {
       cloneWarning += `\nDIEGETIC REPLICA LAYER: ${replicaBrackets.join(', ')} may appear as one tiny replica each, fully inside the explicitly scripted container/surface. Replicas are representations, not additional physical actors; never render them full-size or outside that container/surface.`;
@@ -2013,7 +2099,7 @@ const normalizeEmotionTagToKnownStyle = (rawTag = '') => {
 // [v2.25] パネルテキストからEMOTIONタグを抽出
 // [v4.8.3] 自由記述風タグも既存の強い画風タグへ正規化する
 export const extractEmotionStyle = (panelText) => {
-  const match = panelText.match(/\[EMOTION:\s*([^\]]+)\]/i);
+  const match = normalizePanelStyleTags(panelText).match(/\[EMOTION:\s*([^\]]+)\]/i);
   return match ? normalizeEmotionTagToKnownStyle(match[1]) : 'NORMAL';
 };
 
@@ -2035,7 +2121,7 @@ const SERIOUS_STYLES_FOR_GAG_OVERLAY = new Set(['HORROR', 'GEKIGA', 'SHADOW', 'D
 const GAG_INTENT_OVERLAY = `\nGAG INTENT OVERLAY: the source emotion is comedic at its core (a gag), so KEEP this panel's dark/dramatic rendering exactly as specified — lighting, heavy shadows, palette, and composition stay — but let the humor read THROUGH it. Allow exaggerated cartoon reactions, over-the-top expressions, and comedic timing inside this serious art style (horror-comedy / dramatic-comedy). Do NOT play it straight-serious, and do NOT flatten the dramatic styling into a plain chibi gag.`;
 
 const extractRawEmotionTag = (panelText) => {
-  const match = String(panelText || '').match(/\[EMOTION:\s*([^\]]+)\]/i);
+  const match = normalizePanelStyleTags(panelText).match(/\[EMOTION:\s*([^\]]+)\]/i);
   return match ? match[1].trim() : '';
 };
 
@@ -2044,6 +2130,18 @@ export const OPENAI_COLOR_GEKIGA_STYLE = `THIS PANEL ONLY: high-intensity GEKIGA
 
 const OPENAI_MONOCHROME_GEKIGA_STYLE = `THIS PANEL ONLY: redraw GEKIGA faces. ${GEKIGA_FACE_CONSTRUCTION} Fine dense directional crosshatching ON faces/hands is primary; solid black is a local secondary accent, with fine white gaps between strokes. Same identity, not anime proportions. Keep identity/age, scripted emotion/gaze/pose/Camera; no added anger, age or wrinkles. 白紙に墨一色。白肌の明部は墨線の間を無地白とし、灰色・網点の下地なし。光源に沿う局所影、褐色肌、衣服のトーンは残す。`;
 const NORMAL_COLOR_RENDERING = `\nNORMAL PANEL RENDERING: Chic cinematic full-color TV anime style; polished Japanese animation finish. ${OPAQUE_COLOR_RENDERING}`;
+
+// The same actor construction travels through ordinary/native and API/Web
+// paths. It changes the drawing medium, never the camera or visible cast.
+export const buildActorMediumInstruction = (style, colorMode = 'color') => {
+  const contract = STYLE_DRAWING_CONTRACTS[style];
+  const construction = colorMode === 'monochrome'
+    ? contract?.actorRenderingMonochrome || contract?.actorRendering
+    : contract?.actorRendering;
+  // Color cast rosters bind each visible name to the local medium. The shared
+  // media/camera/acting contracts retain all-actor, crop and hidden-face scope.
+  return construction ? `ACTOR MEDIUM${colorMode === 'monochrome' ? ` ${style}` : ''}: ${construction}` : '';
+};
 
 export const buildEmotionBlock = (panelText, colorMode = 'color', { preserveReferenceStyle = false, seriousTone = false, providerFamily = '', resetChibiProportions = false } = {}) => {
   const emo = extractEmotionStyle(panelText);
@@ -2057,6 +2155,8 @@ export const buildEmotionBlock = (panelText, colorMode = 'color', { preserveRefe
   const anatomyReset = resetChibiProportions && ['NORMAL', 'GEKIGA', 'WATERCOLOR', 'POP_ART', 'SKETCH'].includes(emo)
     ? '\nPANEL ANATOMY RESET: ordinary body/head ratio, no inherited chibi; facial anatomy follows THIS medium. Explicit scripted proportions win.' : '';
   if (emo === 'NORMAL') return (colorMode === 'monochrome' ? '' : NORMAL_COLOR_RENDERING) + anatomyReset;
+  const actorInstruction = buildActorMediumInstruction(emo, colorMode);
+  const actorBlock = actorInstruction ? '\n' + actorInstruction : '';
   if (colorMode === 'monochrome') {
     const gag = !seriousTone && SERIOUS_STYLES_FOR_GAG_OVERLAY.has(emo) && rawTagHasComedyIntent(rawEmotionTag)
       ? '\nGAG INTENT OVERLAY: retain dramatic ink/shadows while allowing exaggerated cartoon reactions and comedic timing; do not play the gag straight-serious.' : '';
@@ -2068,7 +2168,7 @@ export const buildEmotionBlock = (panelText, colorMode = 'color', { preserveRefe
     const lineRule = providerFamily === 'chatgpt' && emo === 'GEKIGA'
       ? OPENAI_MONOCHROME_GEKIGA_STYLE
       : resolveMonochromeRenderIntent({ style: emo, preserveReferenceStyle, seriousTone }).lineRule;
-    return `\nMONOCHROME PANEL STYLE LOCK: ${emo}; ${lineRule} Preserve script/Camera/Action, cast, glasses and wardrobe tone assignments.${proportionLock}${gag}${anatomyReset}`;
+    return `\nMONOCHROME PANEL STYLE LOCK: ${emo}; ${lineRule} Preserve script/Camera/Action, cast, glasses and wardrobe tone assignments.${proportionLock}${gag}${anatomyReset}${actorBlock}`;
   }
   const s = EMOTION_STYLES[emo];
   const styleLock = `PANEL STYLE LOCK: ${emo}; use the selected style recipe below; preserve identity and canonical wardrobe.`;
@@ -2102,7 +2202,7 @@ export const buildEmotionBlock = (panelText, colorMode = 'color', { preserveRefe
     if (s.proportionsMulti) block += `\nPROPORTION OVERRIDE: ${s.proportionsMulti}`;
     if (s.vfxMulti) block += `\nVFX: ${s.vfxMulti}`;
     if (s.surfaceException) block += `\nSTYLE EXCEPTION: ${s.surfaceException}. Intentional style marks may model faces and skin; no unrelated noise.`;
-    return block + gagOverlay + anatomyReset;
+    return block + actorBlock + gagOverlay + anatomyReset;
   }
 
   const style = providerFamily === 'chatgpt' && emo === 'GEKIGA' ? OPENAI_COLOR_GEKIGA_STYLE : s.style;
@@ -2110,7 +2210,7 @@ export const buildEmotionBlock = (panelText, colorMode = 'color', { preserveRefe
   if (s.proportions) block += `\nPROPORTION OVERRIDE: ${s.proportions}`;
   if (s.vfx) block += `\nVFX: ${s.vfx}`;
   if (s.surfaceException) block += `\nSTYLE EXCEPTION: ${s.surfaceException}. Intentional style marks may model faces and skin; no unrelated noise.`;
-  return block + gagOverlay + anatomyReset;
+  return block + actorBlock + gagOverlay + anatomyReset;
 };
 
 // --- Clean Cast List (Phase 3-C: castList parsing -> externalized) ---

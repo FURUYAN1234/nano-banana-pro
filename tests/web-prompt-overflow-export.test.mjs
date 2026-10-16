@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
+import { createServer } from 'vite';
 import * as references from '../src/lib/openai-image-references.js';
 import { buildOpenAIImageRequest } from '../src/lib/openai.js';
 import { ensureWebPromptTrailingNewline, splitWebPromptForPaste } from '../src/lib/web-prompt-chunks.js';
@@ -12,6 +13,13 @@ const longPrompt = `Create ONE complete Japanese manga page with EXACTLY 7 frame
 const plan = references.buildOpenAIReferencePlan({ characterImages: ['data:image/png;base64,YQ=='] });
 const workflow = readFileSync(new URL('../src/hooks/useMangaWorkflow.js', import.meta.url), 'utf8');
 const appendForWeb = references.appendOpenAIWebReferencePrompt ?? references.appendOpenAIReferencePrompt;
+const server = await createServer({ appType: 'custom', logLevel: 'silent', server: { middlewareMode: true } });
+let getBuiltinPanelMediumReference;
+try {
+  ({ getBuiltinPanelMediumReference } = await server.ssrLoadModule('/src/lib/builtin-panel-medium-reference.js'));
+} finally {
+  await server.close();
+}
 
 function webPreparation(overrides = {}) {
   const expression = workflow.split('const prepareWebCopyPrompt = ')[1].split('let webCopyPartLengths')[0].trim().replace(/;$/, '');
@@ -24,7 +32,8 @@ function webPreparation(overrides = {}) {
     mosaicCopyrightedCharacters: true, showWatermarks: true, castList: '', collectCastNameEntries: () => [],
     getCurrentPromptProviderFamily: () => 'chatgpt', PROMPT_PROVIDER_FAMILIES: { CHATGPT: 'chatgpt' },
     openAIImageQuality: 'max', images: ['data:image/png;base64,YQ=='], referenceAssetsRef: { current: [] },
-    bg360Image: null, bg360Enabled: false, colorMode: 'color', ...overrides,
+    bg360Image: null, bg360Enabled: false, colorMode: 'color', scenario: '', styleJson: null, punchlineType: 'Auto',
+    getBuiltinPanelMediumReference, ...overrides,
   };
   return new Function(...Object.keys(scope), `return (${expression});`)(...Object.values(scope));
 }
@@ -42,6 +51,17 @@ test('over-limit seven-panel Web prompt retains the exact text and count for spl
   assert.equal(await new Blob([text], { type: 'text/plain;charset=utf-8' }).text(), text);
   assert.throws(() => references.appendOpenAIReferencePrompt(longPrompt, plan), /32,000/);
   assert.throws(() => buildOpenAIImageRequest(text), /32,000/);
+});
+
+test('over-limit Web export retains the active medium reference and every authored byte', () => {
+  const scenario = '[1コマ目]\n[EMOTION: POP_ART]\n[Camera: 上から]\n状況: 箱を持つ。\nセリフなし';
+  const mediumReference = getBuiltinPanelMediumReference({ scenario, colorMode: 'color', styleJson: null, punchlineType: 'Auto' });
+  assert.ok(mediumReference);
+  const guidePlan = references.buildOpenAIReferencePlan({ compact: true, characterImages: ['data:image/png;base64,YQ=='], mediumReference });
+  const text = webPreparation({ scenario })(longPrompt);
+  assert.equal(text, ensureWebPromptTrailingNewline(`${longPrompt}\n\n${guidePlan.rolePrompt}`));
+  assert.equal(splitWebPromptForPaste(text).join(''), text);
+  assert.throws(() => references.appendOpenAIReferencePrompt(longPrompt, guidePlan), /32,000/);
 });
 
 test('ordinary four-panel export preserves the former API preparation bytes for both media', () => {

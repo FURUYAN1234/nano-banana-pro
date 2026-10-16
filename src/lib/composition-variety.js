@@ -196,8 +196,8 @@ export const getPanelShotExecution = (camera = '', { compact = false } = {}) => 
   }
   if (isPullbackShot(text)) cues.push(compact ? '引き: 身体範囲/場の連続で距離を示す。前景大/遠景小は可。バスト化/一律縮小禁止、指定尺度/切取り優先' : 'wide framing: body extent and continuous setting reveal actor distances; foreground may stay large, receding actors smaller; not a bust portrait. Explicit scale/crop wins; no uniform shrinking to a fixed ratio');
   if (elevation === 'high') cues.push(compact
-    ? `俯瞰: 指定高から頭/肩の上面・胴の短縮・道具上面/床/卓面を可視範囲で投影。人物/場は同じ俯角、背景省略時も維持。${close ? '' : '頭上余白、枠は髪の後ろ、頭の切断禁止。'}指定角度厳守、急俯瞰の強制禁止`
-    : `${HIGH_SHOT_PROJECTION}; actors and setting share downward projection; ${close ? '' : 'headroom/breakout; border behind hair; intact; '}keep projection even with omitted BG; pitch strength follows script, never force steep overhead`);
+    ? `俯瞰: 指定高から頭/肩の上面・胴の短縮・道具上面/床/卓面を可視範囲で投影。人物/場は同じ俯角、背景省略時も維持。${close ? '' : '頭上余白、枠は髪の後ろ、頭の切断禁止。'}指定角を弱めず強めない`
+    : `${HIGH_SHOT_PROJECTION}; actors and setting share downward projection; ${close ? '' : 'headroom/breakout; border behind hair; intact; '}keep projection even with omitted BG; 指定角を弱めず強めない`);
   else if (elevation === 'low') cues.push(compact
     ? `${floor ? '床付近' : '低所'}: 座位/ちびの顔より下。${horizontal ? '水平を保ち低い地平線' : '見上げて顎/道具下面、後退する額、顔より低い地平線と上方収束。顔/体/場を同じ仰角にし、背景だけ傾けない'}。指定高/角度/体格を保持`
     : `${floor ? 'floor-level' : 'low'} camera below faces including crouched/chibi; ${horizontal ? 'keep horizontal aim and a low horizon' : 'look up: chin/jaw undersides, prop undersides from below; forehead recedes, horizon below faces, upward convergence; facial planes, body and setting share projection, not frontal faces on a tilted background'}; preserve scripted height/pitch/proportions`);
@@ -216,7 +216,7 @@ export const getPanelShotExecution = (camera = '', { compact = false } = {}) => 
   const rollText = text
     .replace(/\b(?:head|face|chin|neck|body|shoulder)s?(?:\s+(?:is|are|slightly|gently|slowly))*[ -]+tilt(?:s|ed|ing)?\b|\btilt(?:s|ed|ing)?\s+(?:(?:the|her|his|their|a|an)\s+)?(?:head|face|chin|neck|body|shoulder)s?\b/gi, '')
     .replace(/(?:頭|顔|首|体|身体|肩)(?:の|が|は|を)(?:(?:少し|わずかに|軽く|大きく))*傾(?:き|斜|け|げ|く|い)/g, '');
-  if (/dutch|\btilt(?:ed|ing)?\b|cinematic slant|ダッチ|傾き|傾斜/i.test(rollText)) cues.push(compact ? '顔だけでなく環境を含む場面軸を傾ける' : 'tilt scene axes, not only faces');
+  if (/dutch|\btilt(?:ed|ing)?\b|cinematic slant|ダッチ|傾き|傾斜/i.test(rollText)) cues.push('ロール: 場面の鉛直/水平を光軸回りに投影。机の遠近線だけで代用せず透視収束保持。指定角を弱めず強めない');
   return cues.length ? `SHOT EXECUTION: ${cues.join('; ')}.` : '';
 };
 

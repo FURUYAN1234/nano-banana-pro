@@ -1,6 +1,10 @@
 # Nano Banana Pro handoff
 
-## Current delivery: v7.0.8 (2026-10-15)
+## Current delivery: v7.0.9 (2026-10-16)
+
+Root PLAN owns the live release/coverage/backup checklist. User authorized the current source improvements and 8px scenario-copy/enhancement gap, official release, then real page/panel editing verification for four-panel/monochrome/Gemini. Any discovered bug is to be repaired, verified and redeployed. Full backup only after all work; X is inline text only. Prior initial and editor API proof is retained under output/speaker-label-20261015, current delivery evidence under output/release-v709-20261016. Preserve the approved fa3d0470…03d45 image as quality floor. Manual and pricing snapshots updated to7.0.9/2026-10-16. No claim of universal visual compliance or Gemini selected-panel support (current selected-panel editing is OpenAI only).
+
+## Previous delivery: v7.0.8 (2026-10-15)
 
 - User explicitly requested the usual deploy and full backup after accepting the minimum wardrobe/inspection improvement and its limits. Root PLAN owns delivery state. Prepare v7.0.8 using the official publish transaction, note/Facebook with X inline only, then the established full backup and independent verifier. No new image generation. Current image/history stay in IAB tab1; idle dev server5173 stopped before version edits to avoid hot reload. Current APIs were already verified for the unchanged behavior; do not label residual generated duplication or vision misses resolved. Version/manual/README/release notes and current pricing/security gates are being prepared; publication has not started.
 

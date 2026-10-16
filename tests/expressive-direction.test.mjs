@@ -260,7 +260,7 @@ test('natural Japanese camera height produces projection cues, not just enlarged
   const highPosition = getPanelShotExecution('高い位置から会議室右奥へ引いたワイドショット');
   assert.match(highPosition, /look down.*head\/shoulder tops/);
   assert.match(highPosition, /scripted higher viewpoint.*not eye-level/i);
-  assert.match(highPosition, /pitch strength follows script/);
+  assert.match(highPosition, /指定角を弱めず強めない/);
   assert.match(getPanelShotExecution('床から低い斜めの引き。頭から両足先まで入れる'), /head-to-feet/);
   assert.doesNotMatch(getPanelShotExecution('アイレベルの肩越し、背景ボケ'), /look up|look down/);
   assert.doesNotMatch(getPanelShotExecution('Bokeh Depth'), /look up|look down|eye.level/);

@@ -304,7 +304,7 @@ test('budget compression preserves executable style recipes, not just style name
     }
     assert.match(prompt, /Style:.*delicate thin linework/i);
     assert.match(prompt, /Style:.*transparent color washes/i);
-    assert.match(prompt, /Style:.*chibi.*Camera\/Action.*gaze/i);
+    assert.match(prompt, /Style:.*大(?:きな)?頭.*短い胴.*関節ある手足.*ちび.*Camera\/Action.*視線/);
     if (providerFamily === 'chatgpt') {
       assert.match(prompt, /Preserve gaze and emotional intent, not reference facial geometry/);
       assert.match(prompt, /Redraw eyes, nose, mouth and jaw in each panel's medium/);

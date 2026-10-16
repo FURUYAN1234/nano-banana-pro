@@ -17,7 +17,8 @@ import {
   ExternalLink
 } from 'lucide-react';
 import Panorama360Viewer from './Panorama360Viewer';
-import ImageEditForm from './ImageEditForm';
+import ImageEditForm, { ImageEditSection } from './ImageEditForm';
+import PanelStyleEditForm from './PanelStyleEditForm';
 import { prepareGeneratedImageSave, saveImageToChosenLocation } from '../lib/generated-image-save.js';
 import { getReferenceAsset, getReferenceMetadataRole } from '../lib/reference-assets.js';
 import { GEMINI_A4_RELAYOUT_PROMPT, GEMINI_2K_REFINEMENT_PROMPT } from '../lib/gemini-image-edit';
@@ -291,6 +292,8 @@ const getDisplayedImageInfo = (size, pageLayout) => {
 export default function Step4Panel({
   experimentalEnabled = false,
   outputRef,
+  step2Ref,
+  step3Ref,
   referenceAssets = [],
   imageEditDrafts = {},
   setImageEditDraft,
@@ -302,6 +305,7 @@ export default function Step4Panel({
   setFinalPrompt,
   copyPrompt,
   prepareWebCopyPrompt,
+  mediumReference = null,
   webCopyPartLengths,
   copiedPartIndex,
   isTextSaved,
@@ -359,6 +363,10 @@ export default function Step4Panel({
   generationHistory = [],
   normalizeDisplayedPage,
   editGeneratedImage,
+  preparePanelStyleEditor,
+  generatePanelStyleEdit,
+  adoptPanelStyleEdit,
+  discardPanelStyleEdit,
   isFullAutoMode,
   fullAutoStep,
   mangaTitle,
@@ -376,8 +384,9 @@ export default function Step4Panel({
   const isChatGPTWebGuide = isOpenAIImageMode || enableChatGPTMode;
   const isSeriousEnhancementMode = getEndingModePolicy(punchlineType).endingTone === 'serious';
   const displayedHistory = generationHistory.find(item => item.img === generatedImage);
+  const isImportedManga = displayedHistory?.metadataContext?.settings?.imported_manga === true;
   const hasFixedPageLayout = displayedHistory?.pageLayout?.applied === true;
-  const isFourPanelPage = !experimentalEnabled && inferImageQualityMode(finalPrompt) === 'four-panel';
+  const isFourPanelPage = !isImportedManga && !experimentalEnabled && inferImageQualityMode(finalPrompt) === 'four-panel';
   const generationWaitLog = genLog.find(log => String(log).startsWith('[WAIT]'));
   const visibleGenLog = genLog.filter(log => !String(log).startsWith('[WAIT]'));
   if (!isGeneratingImage && generationWaitLog) visibleGenLog.push(generationWaitLog);
@@ -447,17 +456,6 @@ export default function Step4Panel({
   });
 
   const prepareCurrentImageSave = () => prepareGeneratedImageSave({ ...displayedHistory, img: generatedImage }, SYSTEM_VERSION);
-
-  const existingImageReviewControl = generatedImage && (
-                <button
-                  type="button"
-                  onClick={() => regenerateImage(false, null, { reviewExisting: true, reviewOnly: experimentalEnabled || !allowImageQualityRepair })}
-                  disabled={isGeneratingImage || isFixingPolicy}
-                  className={`w-full mt-2 px-4 py-2 rounded-lg border border-blue-400/40 bg-blue-900/20 text-blue-100 text-sm font-bold disabled:opacity-50 disabled:cursor-wait ${currentStep === 5 && !isGeneratingImage && !isFixingPolicy ? 'next-step-gentle-pulse' : ''}`}
-                >
-                  AIで画像を再検査
-                </button>
-  );
 
   const webSupportControls = (
     <>
@@ -951,7 +949,7 @@ No explanations. No partial results.`;
       className="relative flex flex-col gap-12 mt-12 border-t border-white/5 pt-12 transition-all duration-500"
     >
       {/* 出力結果ロックオーバーレイ */}
-      {(currentStep < 3 || isSearching || isAnalyzing || isEnhancing) && (
+      {((currentStep < 3 && !generatedImage) || isSearching || isAnalyzing || isEnhancing) && (
         <div style={{ position: 'absolute', inset: -2, zIndex: 200, backgroundColor: 'rgba(10,12,16,0.92)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', pointerEvents: 'auto', borderRadius: '0.625rem' }} />
       )}
 
@@ -1049,6 +1047,15 @@ No explanations. No partial results.`;
               {isChatGPTWebGuide && finalPrompt && (
                 <div>
                   <h3 className="web-prompt-copy-heading">ChatGPT Webへの貼り付け手順</h3>
+                  {mediumReference && (
+                    <div className="my-3 rounded-lg border border-cyan-400/30 p-3">
+                      <p className="text-sm text-cyan-100">この台本には描法見本を使用します。ChatGPTの画像APIでは自動添付されます。Webでは下の見本を保存し、STEP1の元画像をすべて添付した後、最後に追加してください。</p>
+                      <a href={mediumReference.imageUrl} download="nano-panel-media.png" className="inline-flex items-center gap-3 mt-2 text-cyan-200 underline">
+                        <img src={mediumReference.imageUrl} alt="コマの描法見本" className="h-28 w-auto rounded" />
+                        描法見本を保存
+                      </a>
+                    </div>
+                  )}
                   <p className="text-[11px] text-cyan-200 leading-relaxed">
                   ChatGPT / Work用とAPI用は同じ指示文です。API生成の上限は、参照画像の説明を含め32,000文字です。上限を超えても、分割コピー・全文保存で内容を取り出せます。
                   {webCopyPartLengths.length > 1 && ' ChatGPT Webでは下の分割ボタンを1から順に使い、同じ入力欄へすべて貼り付けてください。'}
@@ -1286,7 +1293,7 @@ No explanations. No partial results.`;
                 ref={imageActionRef}
                 style={{ display: 'flex', width: '100%', boxSizing: 'border-box', marginBottom: 0 }}
                 onClick={() => regenerateImage()}
-                disabled={!finalPrompt || isGeneratingImage || isFixingPolicy}
+                disabled={currentStep < 3 || !finalPrompt || isGeneratingImage || isFixingPolicy}
                 aria-current={currentStep === 4 ? 'step' : undefined}
                 className={`primary-step-action primary-step-action-accent-border w-full font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg border active:scale-95 disabled:opacity-50 disabled:cursor-wait ${currentStep === 4 && !isGeneratingImage && !isFixingPolicy ? 'next-step-gentle-pulse' : ''}`}
               >
@@ -1417,22 +1424,24 @@ No explanations. No partial results.`;
                 {isGeneratingImage && processingStatus}
               </div>
               <p style={{ fontSize: '11px', lineHeight: 1.6 }} className="text-slate-400">{getDisplayedImageInfo(displayedImageSize?.image === generatedImage ? displayedImageSize : null, displayedHistory?.pageLayout)}</p>
-              {(!isChatGPTWebGuide || experimentalEnabled) && (
-                <div className="w-full max-w-2xl">
-                  {existingImageReviewControl}
-                  <p className="mt-2 text-[11px] text-slate-400 leading-relaxed">
-                    {!experimentalEnabled && allowImageQualityRepair
-                      ? '自動修正ON：AIが問題を探し、必要な箇所を修正します（追加API課金あり）。'
-                      : '自動修正OFF：検査のみ行います（画像再生成なし・解析API課金あり）。'}
-                  </p>
-                </div>
-              )}
-              <ImageEditForm key={generatedImage} image={generatedImage}
-                draft={imageEditDrafts[generatedImage] || ''}
-                onDraftChange={text => setImageEditDraft(generatedImage, text)}
+              <ImageEditSection key={generatedImage} image={generatedImage}
                 busy={isGeneratingImage || isSearching || isAssembling || isEnhancing || isFixingPolicy || isFullAutoMode}
-                providerLabel={isOpenAIImageMode ? 'OpenAI' : 'Gemini'}
-                onSubmit={editGeneratedImage} />
+                panelEditor={isOpenAIImageMode && preparePanelStyleEditor && generatePanelStyleEdit && adoptPanelStyleEdit && discardPanelStyleEdit && (
+                  <PanelStyleEditForm image={generatedImage}
+                    panelCount={displayedHistory?.metadataContext?.settings?.panel_count}
+                    busy={isGeneratingImage || isSearching || isAssembling || isEnhancing || isFixingPolicy || isFullAutoMode}
+                    onPrepare={preparePanelStyleEditor}
+                    onGenerate={generatePanelStyleEdit}
+                    onAdopt={adoptPanelStyleEdit}
+                    onDiscard={discardPanelStyleEdit} />
+                )}>
+                <ImageEditForm image={generatedImage}
+                  draft={imageEditDrafts[generatedImage] || ''}
+                  onDraftChange={text => setImageEditDraft(generatedImage, text)}
+                  busy={isGeneratingImage || isSearching || isAssembling || isEnhancing || isFixingPolicy || isFullAutoMode}
+                  providerLabel={isOpenAIImageMode ? 'OpenAI' : 'Gemini'}
+                  onSubmit={editGeneratedImage} />
+              </ImageEditSection>
               
               {/* 妥協版警告の復活 */}
               {isFallbackUsed && (
@@ -1477,13 +1486,22 @@ No explanations. No partial results.`;
 
                 {isFourPanelPage && !hasFixedPageLayout && normalizeDisplayedPage && <button type="button" disabled={isGeneratingImage} className="w-full mt-2 text-slate-300 underline disabled:opacity-50" onClick={normalizeDisplayedPage}>ページ比率を揃える（追加課金なし）</button>}
 
-                <button
-                  onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-                  style={{ marginTop: '24px' }}
-                  className="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg border border-slate-600/50 active:scale-95"
-                >
-                  最初（STEP 1）に戻る
-                </button>
+                <div style={{ display: 'flex', marginTop: '16px' }}>
+                  <select aria-label="STEPへ移動" defaultValue=""
+                    style={{ flex: 1, minWidth: 0, padding: '8px 10px', borderRadius: '8px', fontSize: '13px', background: '#ffffff', color: '#111111', border: '1px solid #94a3b8', colorScheme: 'light' }}
+                    onChange={(event) => {
+                      const step = event.currentTarget.value;
+                      if (step === '1') window.scrollTo({ top: 0, behavior: 'smooth' });
+                      else ({ '2': step2Ref, '3': step3Ref, '4': outputRef })[step]?.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                      event.currentTarget.value = '';
+                    }}>
+                    <option value="">移動先を選択</option>
+                    <option value="1">STEP1：素材の認識（人物・背景・小物）に移動</option>
+                    <option value="2">STEP2：シナリオ構築設定に移動</option>
+                    <option value="3">STEP3：プロンプト生成（画像指示文の構築）に移動</option>
+                    <option value="4">STEP4：画像生成・修正に移動</option>
+                  </select>
+                </div>
               </div>
 
             </div>

@@ -1,4 +1,4 @@
-import { extractDialogueOnly, extractEmotionStyle } from './panel-utils.js';
+import { extractDialogueOnly, extractEmotionStyle, normalizePanelStyleTags } from './panel-utils.js';
 import { classifyCameraElevation, isFisheyeCamera } from './composition-variety.js';
 import { STYLE_DRAWING_CONTRACTS } from './constants.js';
 
@@ -50,7 +50,7 @@ export const getScenarioPanelBlocks = (scenarioText) => {
     num: match.num,
     found: true,
     header: match.header,
-    text: text.slice(match.index, matches[index + 1]?.index ?? text.length).trim()
+    text: normalizePanelStyleTags(text.slice(match.index, matches[index + 1]?.index ?? text.length).trim())
   }));
 };
 

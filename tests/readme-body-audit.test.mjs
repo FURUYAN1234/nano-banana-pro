@@ -8,6 +8,19 @@ const appRoot = fileURLToPath(new URL('..', import.meta.url));
 const audit = JSON.parse(readFileSync(new URL('../docs/readme-body-audit.json', import.meta.url), 'utf8'));
 const evidence = collectReadmeBodyEvidence(appRoot);
 
+test('current README explains the default page mode and scoped technique guide', () => {
+  const current = readFileSync(new URL('../README.md', import.meta.url), 'utf8').split(/^## .*ChangeLog/m)[0];
+  for (const expected of [
+    /初期状態は右の「5～8コマ生成」です/,
+    /再読み込み後は右の「5～8コマ生成」です/,
+    /reload resets the switch to the right, 5–8-panel position/,
+    /カラーのPOP・水彩・劇画/,
+    /白黒、カスタム画風.*SeriousDocumentary.*添付しません/,
+    /nano-panel-media\.png.*最後に添付/,
+  ]) assert.ok(expected.test(current), `Missing current documentation: ${expected}`);
+  assert.ok(!/初期状態(?:は|が)左の「4コマ生成」|Six- and eight-panel pages exclude/.test(current));
+});
+
 test('deployment pricing gate accepts current official review and rejects stale, missing or changed evidence', () => {
   const now = Date.parse('2026-10-07T05:00:00Z');
   const review = { version: evidence.manualVersion, sourceSha256: evidence.pricingSourceSha256, checkedAt: '2026-10-07T04:00:00Z', sources: ['https://developers.openai.com/api/docs/pricing', 'https://ai.google.dev/gemini-api/docs/pricing'], findings: 'Reviewed standard image and scenario rates, excluding Batch discounts.' };

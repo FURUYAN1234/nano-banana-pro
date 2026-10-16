@@ -5,7 +5,10 @@ import {createServer} from 'vite';
 const server=await createServer({appType:'custom',logLevel:'silent',server:{middlewareMode:true}});
 try {
   const m=await server.ssrLoadModule('/src/lib/experimental-manga.js');
-  const { extractDialogueOnly } = await server.ssrLoadModule('/src/lib/panel-utils.js');
+  const { extractDialogueOnly, buildActorMediumInstruction } = await server.ssrLoadModule('/src/lib/panel-utils.js');
+  const { buildGeminiImageApiPrompt } = await server.ssrLoadModule('/src/lib/gemini-image-references.js');
+  const { COMPACT_EMOTION_STYLES, GEKIGA_FACE_CONSTRUCTION } = await server.ssrLoadModule('/src/lib/constants.js');
+  const { MONOCHROME_EMOTION_STYLES } = await server.ssrLoadModule('/src/lib/manga-render-mode.js');
   const {resolvePageWorkflow}=await server.ssrLoadModule('/src/lib/page-workflow.js');
   const inputFor=count=>({enabled:true,scenarioMode:'experimental-manga',castList:'## ユウ',colorMode:'color',scenario:Array.from({length:count},(_,i)=>`[${i+1}コマ目]\n[Camera: 高い位置から俯瞰]\n[EMOTION: NORMAL]\n状況: ユウが道具を順に確かめる。\n${i===2?'セリフなし':`ユウ「確認${i+1}」`}`).join('\n')});
   const planFor=source=>({count:source.panels.length,layout:'two_columns',reason:'動作順を保ち、隣り合う場面を対比する',panels:source.panels.map(p=>({sourcePanel:p.id,kind:'anchor',camera:p.camera,action:'ユウが指定の道具を確かめる。',dialogueIds:p.dialogueIds,breakout:null}))});
@@ -154,11 +157,112 @@ try {
       else {
         assert.equal((frame.match(/B1 x=0\.7/g) || []).length, 1);
         const entry = source.dialogue[source.panels[index].dialogueIds[0]];
-        assert.ok(frame.includes(JSON.stringify(entry)));
+        assert.ok(frame.includes(`B1=${JSON.stringify(entry.text)}`));
         assert.equal(prompt.split(JSON.stringify(entry.text)).length - 1, 1);
       }
     }
     assert.equal(prompt.includes(' ALL ACTORS.'), compact, 'both renderer branches are exercised');
+  });
+
+  for (const compact of [false, true]) test(`${compact ? 'compact' : 'ordinary'} native Gemini transport preserves speaker, rear and collective routing separately from printed speech`, () => {
+    const castList='## ユウ（案内役）\n## ナギ';
+    const panels=[
+      {layout:[{speaker:'ユウ（案内役）',x:0.76,anchor:'右側のユウの口元',route:'右上の余白からユウへ'},
+        {speaker:'ナギ',x:0.28,anchor:'左側のナギの頭',route:'左上の余白からナギへ'}],speech:'ユウ「ナギ、右を支えて。」\nナギ「私はナギ、任せて。」'},
+      {camera:'ユウの肩越し、後頭部を手前に置く高所からの俯瞰',
+        layout:[{speaker:'ユウ',x:0.63,anchor:'ユウの口元',route:'上の余白からユウの口へ'}],speech:'ユウ「後ろから支える。」'},
+      {layout:[{speaker:'全員（ユウ・ナギ）',x:0.61,anchor:'二人の頭の輪郭',route:'上の余白から二人へ枝分かれする'}],speech:'全員（ユウ・ナギ）「一緒に運ぼう。」'},
+      {speech:'ナギ「ここで止めよう。」'},
+      {layout:[],speech:'セリフなし'},
+    ];
+    const scenario=panels.map((p,i)=>`[${i+1}コマ目]\n[Camera: ${p.camera||'高い位置から強い俯瞰'}]\n[EMOTION: NORMAL]\n${p.layout?'BalloonLayout: '+JSON.stringify(p.layout)+'\n':''}状況: ユウとナギが木の箱を支える。\n${p.speech}`).join('\n');
+    const input={enabled:true,scenarioMode:'experimental-manga',scenario,castList,colorMode:'color'};
+    const source=m.readExperimentalSource(input),plan=planFor(source);
+    const prompt=m.buildExperimentalImagePrompt(plan,source,{...input,...(compact?{promptMaxChars:1}:{})});
+    const sent=buildGeminiImageApiPrompt(prompt,{rolePrompt:''});
+    const frames=value=>value.split('[PAGE FRAME ').slice(1).map(frame=>frame.split('[END PAGE FRAME')[0]);
+    const before=frames(prompt),after=frames(sent);
+    assert.equal(before.length,5);assert.equal(after.length,5);
+    assert.equal(prompt.includes(' ALL ACTORS.'),compact,'exercise both native renderer branches');
+    for(const [i,frame] of after.entries()) {
+      assert.ok(frame.includes(source.panels[i].camera));
+      if(i===4) {
+        assert.equal(frame,before[i],'transport must leave the silent frame unchanged');
+        assert.match(frame,/Dialogue: SILENT/);
+        assert.doesNotMatch(frame,/speech balloon|TAIL TIP LOCK|BALLOON LAYOUT/);
+        continue;
+      }
+      const originalMetadata=before[i].split('\n').filter(line=>/^(?:TAIL TIP LOCK|TAILS|BALLOON LAYOUT)/.test(line));
+      assert.ok(originalMetadata.length>0);
+      assert.deepEqual(frame.split('\n').filter(line=>/^(?:TAIL TIP LOCK|TAILS|BALLOON LAYOUT)/.test(line)),originalMetadata,
+        'Gemini transport must retain exact nonprinting ownership, endpoints and authored placement');
+      if(panels[i].layout) {
+        const canonical=extractDialogueOnly(source.panels[i].text,castList,{forImagePrompt:true,layoutOnly:true})
+          .replace(/^ BALLOON LAYOUT \(NEVER PRINT; x=0 left\/1 right; preserve Camera\/Action\): /,'');
+        assert.ok(frame.includes(canonical),'canonical speaker, x, anchor, route and collective members remain exact');
+      }
+      const expected=source.panels[i].dialogueIds.map(id=>source.dialogue[id].text);
+      const actual=[...frame.matchAll(/Inside it, print exactly ("(?:\\.|[^"\\])*") vertically in Japanese\./g)].map(match=>JSON.parse(match[1]));
+      assert.deepEqual(actual,expected,'render only each verbatim utterance in its own frame');
+      for(const text of expected) assert.equal(sent.split(JSON.stringify(text)).length-1,1,'speech occurs once across the complete transport prompt');
+      assert.doesNotMatch(frame,/^Dialogue: TEXT/m,'prove the actual transport rewrite ran');
+    }
+    assert.match(after[0],/B1 x=0\.76, \[ユウ\]/);assert.match(after[0],/B2 x=0\.28, \[ナギ\]/);
+    assert.match(after[1],/B1 x=0\.63, \[ユウ\] ユウの頭の見える輪郭, tail=上の余白からユウの頭の見える輪郭へ/);
+    assert.doesNotMatch(after[1],/ユウの口元|ユウの口へ/);
+    assert.match(after[2],/members=ユウ・ナギ 二人の頭の輪郭, tail=上の余白から二人へ枝分かれする/);
+    assert.match(after[3],/TAIL TIP LOCK \(NEVER PRINT[^)]*\): B1=>\[ナギ\] mouth\/head\./);
+    assert.doesNotMatch(after[3],/BALLOON LAYOUT/);
+  });
+
+  const primaryStyles=['NORMAL','POP_ART','WATERCOLOR','GEKIGA','SKETCH','CHIBI_GAG'];
+  const styleCases=['color','monochrome'].flatMap(colorMode=>[false,true].map(forceCompact=>({
+    name:`${colorMode} ${forceCompact?'forced-compact':'default-budget'} six-style`,colorMode,forceCompact,compact:true,styles:primaryStyles,
+  })));
+  // Six mixed media exceed the existing soft budget. Exercise reachable full
+  // rendering separately; NORMAL already has full transport coverage above.
+  for(const style of ['POP_ART','WATERCOLOR','SKETCH','CHIBI_GAG']) styleCases.push({
+    name:`color full ${style}`,colorMode:'color',forceCompact:false,compact:false,styles:[style,'NORMAL','NORMAL','NORMAL','NORMAL'],
+  });
+  for (const {name,colorMode,forceCompact,compact,styles} of styleCases) test(`${name} native API, Web and Gemini prompts retain each medium, camera, action and speaker`, () => {
+    const input={...inputFor(styles.length),colorMode};let panel=0;
+    input.scenario=input.scenario.replace(/\[EMOTION: NORMAL\]/g,()=>`[EMOTION: ${styles[panel++]}]`).replace('セリフなし','ユウ「確認3」');
+    const source=m.readExperimentalSource(input),plan=planFor(source);
+    plan.panels.forEach((p,i)=>{p.action=`ユウが道具${i+1}を左手で支える。`;});
+    const api=m.buildExperimentalImagePrompt(plan,source,{...input,...(forceCompact?{promptMaxChars:1}:{})});
+    const web=m.buildExperimentalWebCopy(api).join('');
+    const gemini=buildGeminiImageApiPrompt(web,{rolePrompt:''});
+    const frames=value=>value.split('[PAGE FRAME ').slice(1).map(frame=>frame.split('[END PAGE FRAME')[0]);
+    const original=frames(api),recipes=colorMode==='monochrome'?MONOCHROME_EMOTION_STYLES:COMPACT_EMOTION_STYLES;
+    assert.equal(api.includes(' ALL ACTORS.'),compact,'exercise the requested full or compact renderer');
+    assert.equal(web,api+'\n','Web paste retains the entire API prompt');
+    for(const [transport,prompt] of [['API',api],['Web',web],['Gemini',gemini]]) {
+      const rendered=frames(prompt);assert.equal(rendered.length,styles.length);
+      for(const [i,frame] of rendered.entries()) {
+        const style=styles[i],prefix=`FRAME MEDIUM P${i+1} — ${style}: `;
+        const medium=frame.split('\n').filter(line=>line.startsWith('FRAME MEDIUM '));
+        assert.equal(medium.length,1,`${transport} P${i+1} has one local medium`);
+        assert.ok(medium[0].startsWith(prefix));
+        assert.equal(medium[0],original[i].split('\n').find(line=>line.startsWith(prefix)),`${transport} retains the exact medium recipe`);
+        if(style==='NORMAL') assert.match(medium[0],/established source\/reference character drawing style/);
+        else if(style==='GEKIGA') {
+          assert.ok(medium[0].includes(GEKIGA_FACE_CONSTRUCTION));
+          assert.match(medium[0],/Primary facial shading is dense fine pen hatching and crossing strokes/);
+          assert.ok(medium[0].includes(colorMode==='monochrome'?'BLACK AND WHITE ink on paper.':'FULL COLOR; opaque local color beneath the pen drawing.'));
+          assert.ok(frame.includes(buildActorMediumInstruction('GEKIGA',colorMode)));
+          if(colorMode==='color') assert.match(frame,/CAST COUNT: \[ユウ\]=GEKIGA each EXACTLY ONCE/);
+          else assert.doesNotMatch(frame,/\]=GEKIGA/);
+        } else assert.ok(medium[0].includes(recipes[style]),`${transport} retains the ${colorMode} ${style} recipe`);
+        assert.ok(frame.includes(`Camera: ${plan.panels[i].camera}; Style: ${style}; Action: ${plan.panels[i].action}`));
+        const metadata=value=>value.split('\n').filter(line=>line.startsWith('TAIL TIP LOCK (NEVER PRINT'));
+        assert.deepEqual(metadata(frame),metadata(original[i]),`${transport} retains separate nonprinting ownership`);
+        assert.match(frame,/TAIL TIP LOCK \(NEVER PRINT[^)]*\): B1=>\[ユウ\] mouth\/head\./);
+        const expected=source.panels[i].dialogueIds.map(id=>source.dialogue[id].text);
+        const pattern=transport==='Gemini'?/Inside it, print exactly ("(?:\\.|[^"\\])*") vertically in Japanese\./g:/\bB\d+=("(?:\\.|[^"\\])*")/g;
+        assert.deepEqual([...frame.matchAll(pattern)].map(match=>JSON.parse(match[1])),expected,`${transport} prints only the exact dialogue in its own frame`);
+        for(const text of expected) assert.equal(prompt.split(JSON.stringify(text)).length-1,1,`${transport} prints each utterance once`);
+      }
+    }
   });
 
   test('native frames retain each approved balloon placement exactly once without duplicating speech', async () => {
@@ -177,7 +281,7 @@ try {
       const prepared = await m.prepareExperimentalManga(input, async () => JSON.stringify(plan));
       const frames = prepared.prompt.split('[PAGE FRAME ').slice(1).map(frame => frame.split('[END PAGE FRAME')[0]);
       assert.equal(frames.length, count);
-      assert.equal((prepared.prompt.match(/ BALLOON LAYOUT(?: \(NEVER PRINT; x=0 left\/1 right; preserve Camera\/Action\))?: B1 /g)||[]).length, count - 1);
+      assert.equal((prepared.prompt.match(/(?:^|\s)BALLOON LAYOUT(?: \(NEVER PRINT; x=0 left\/1 right; preserve Camera\/Action\))?: B1 /g)||[]).length, count - 1);
       assert.doesNotMatch(prepared.prompt, /BalloonLayout:/, 'raw source JSON must not be printed a second time');
       for (const [i, frame] of frames.entries()) {
         const expected = extractDialogueOnly(source.panels[i].text, castList, { forImagePrompt: true, layoutOnly: true });

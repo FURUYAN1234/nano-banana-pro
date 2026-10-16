@@ -60,7 +60,7 @@ test('ChatGPT Web disclosure starts closed and contains every manual action, lea
   }
 });
 
-test('Gemini review is beside the image and before instructions; video remains reachable without an API image', async () => {
+test('Gemini manual AI recheck stays absent; video remains reachable without an API image', async () => {
   const server = await createServer({ appType: 'custom', logLevel: 'silent', server: { middlewareMode: true, hmr: false } });
   try {
     const { default: Step4Panel } = await server.ssrLoadModule('/src/components/Step4Panel.jsx');
@@ -72,14 +72,8 @@ test('Gemini review is beside the image and before instructions; video remains r
           generatedImage, allowImageQualityRepair, experimentalEnabled,
         }));
         const review = html.indexOf('AIで画像を再検査');
-        if (generatedImage) {
-          assert.ok(review > html.indexOf('alt="Generated Result"'));
-          assert.ok(review < html.indexOf('この画像への追加指示'));
-          assert.ok(html.includes(!experimentalEnabled && allowImageQualityRepair ? '自動修正ON' : '自動修正OFF'));
-          if(experimentalEnabled)assert.ok(!html.includes('自動修正ON'));
-        } else {
-          assert.equal(review, -1, 'no review action without an image');
-        }
+        assert.equal(review, -1, 'manual AI review is not a user image action');
+        assert.doesNotMatch(html, /検査のみ行います（画像再生成なし・解析API課金あり）/);
         const video = html.indexOf('aria-controls="video-guide-content"');
         assert.ok(video > html.indexOf('<details class="web-prompt-disclosure">') && video < html.indexOf('</details>'),
           'video is inside Web disclosure, accessible without an API image');
@@ -110,7 +104,7 @@ test('API settings stay outside Web help and immediately precede STEP4 with a sm
   }
 });
 
-test('native panels expose existing-image inspection for OpenAI without changing ordinary Web-guide controls', async () => {
+test('native and ordinary OpenAI pages keep manual AI inspection out of user controls', async () => {
   const server = await createServer({ appType: 'custom', logLevel: 'silent', server: { middlewareMode: true, hmr: false } });
   try {
     const { default: Step4Panel } = await server.ssrLoadModule('/src/components/Step4Panel.jsx');
@@ -122,12 +116,8 @@ test('native panels expose existing-image inspection for OpenAI without changing
           generatedImage, experimentalEnabled, allowImageQualityRepair: true,
         }));
         const review = html.indexOf('AIで画像を再検査');
-        if (generatedImage && experimentalEnabled) {
-          assert.ok(review > html.indexOf('alt="Generated Result"'));
-          assert.ok(review < html.indexOf('この画像への追加指示'));
-          assert.ok(html.includes('検査のみ行います（画像再生成なし・解析API課金あり）'));
-          assert.doesNotMatch(html, /自動修正ON/);
-        } else assert.equal(review, -1);
+        assert.equal(review, -1);
+        assert.doesNotMatch(html, /検査のみ行います（画像再生成なし・解析API課金あり）/);
       }
     }
   } finally { await server.close(); }

@@ -1,8 +1,8 @@
 import { getScenarioPanelBlocks, validateMangaScenario } from './scenario-validation.js';
-import { collectCastNameEntries, extractDialogueOnly, cleanCastList, extractCastLimitRule } from './panel-utils.js';
+import { collectCastNameEntries, extractDialogueOnly, cleanCastList, stripWeightTags, extractCastLimitRule, buildActorMediumInstruction } from './panel-utils.js';
 import { buildImageQualityContract, FUNCTIONAL_SURFACE_ORIENTATION_LOCK, OBJECT_GEOMETRY_LOCK, BODY_ACTING_BASELINE, EXPRESSIVE_DIRECTION, FUNCTIONAL_SURFACE_PROJECTION_RULE, HEAD_VOLUME_LOCK, SKIN_LIGHTING, WARDROBE_COMPONENT_LOCK } from './shared-image-quality.js';
 import { COMPACT_EMOTION_STYLES, GEKIGA_FACE_CONSTRUCTION, SYSTEM_VERSION } from './constants.js';
-import { extractScenarioTitle, buildMangaWatermark } from './prompt-assembler.js';
+import { extractScenarioTitle, buildMangaWatermark, PROMPT_PROVIDER_FAMILIES, normalizePromptProviderFamily } from './prompt-assembler.js';
 import { MONOCHROME_IMAGE_QUALITY_CONTRACT, MONOCHROME_EMOTION_STYLES, MONOCHROME_RENDERING_LOCK_COMPACT } from './manga-render-mode.js';
 import { ensureWebPromptTrailingNewline, splitWebPromptForPaste } from './web-prompt-chunks.js';
 import { buildRenderOptionsContract, buildProtectedCastContract, COPYRIGHT_MOSAIC_TARGET_SCOPE } from './render-options.js';
@@ -20,7 +20,7 @@ const fail = message => { throw new Error(`実験的コマ割り: ${message}`); 
 const cancelled = signal => { if (signal?.aborted) throw new DOMException('実験を停止しました。', 'AbortError'); };
 const direction = (text, name) => String(text).match(new RegExp(`\\[${name}:\\s*([^\\]]+)\\]`, 'i'))?.[1]?.trim() || '';
 
-export const EXPERIMENTAL_PROMPT_REVISION = 36;
+export const EXPERIMENTAL_PROMPT_REVISION = 46;
 const EXPERIMENTAL_INSPECTION_VERSION = 9;
 const EXPERIMENTAL_PROMPT_SOFT_TARGET_CHARS = 15000;
 const READING_FLOW_DIRECTION = `READING FLOW WITH ACTING: preserve camera strength, drawing quality, style, expression and dramatic energy. 最初の吹き出し→主動作/反応→次コマへ、場面に根拠のある視線・身振り・道具の向き・奥行き・明暗・余白で誘導。矢印、強制左向き整列、同一ポーズは禁止。読みやすさのために遠近や演技を弱めず、後ろ姿を振り向かせず、必要人物/道具を消さず、全コマを静かにしない。焦点の大胆な強調と明瞭なコマ間を両立。No eye-level shots: 座位/ちび人物にも明確な高低差を設け、顔・体・背景の上面/下面を投影。Characters never look at the viewer or camera lens; 視線は場面内の人/物/出来事へ。正面顔だけでカメラ目線と判定せず、動機のある首向き/表情、隠れた目、手元接写を保持。任意の誘導が物語と競合したら誘導を省き、物語の勢いは残す。`;
@@ -184,8 +184,9 @@ export function buildExperimentalWebCopy(prompt) {
   return splitWebPromptForPaste(ensureWebPromptTrailingNewline(prompt));
 }
 
-function experimentalCastRule(panel,source) {
-  return extractCastLimitRule(source.panels[panel.sourcePanel-1].text,source.castList,{compact:true,storyText:source.panels.map(item=>item.text).join('\n')});
+function experimentalCastRule(panel,source,colorMode=source.colorMode) {
+  const sourcePanel=source.panels[panel.sourcePanel-1];
+  return extractCastLimitRule(sourcePanel.text,source.castList,{compact:true,colorMode,effectiveStyle:sourcePanel.style,storyText:source.panels.map(item=>item.text).join('\n')});
 }
 
 // The STEP2 manifest is authoritative; STEP3 only arranges those exact panels.
@@ -224,7 +225,7 @@ export function validateExperimentalPlan(plan, source) {
     }
   });
   const expectedDialogue=resolveExperimentalDialogue(plan,source);
-  const expectedCast=extractPanelCastContracts(plan.panels.map((p,i)=>`## Panel ${i+1}\n${experimentalCastRule(p,source,expectedDialogue)}`).join('\n'));
+  const expectedCast=extractPanelCastContracts(plan.panels.map((p,i)=>`## Panel ${i+1}\n${experimentalCastRule(p,source)}`).join('\n'));
   return {...plan,expectedDialogue,expectedCast};
 }
 
@@ -251,7 +252,7 @@ export function buildExperimentalReadingReviewContract(plan) {
   return `PHYSICAL INVENTORY: Observe the actual drawn frames. The supplied native crops use independently observed frame bounds and physical reading order, not planned proportions. Number actual panels RIGHT before LEFT within each row, then downward. A spanning right panel is read before the stacked left panels. NEVER move observations to match expected story events. Each evidence item includes dialogue: complete balloon STRINGS ordered by balloon position RIGHTMOST FIRST, then downward; read vertical columns right-to-left within each balloon. Preserve punctuation and heart symbols exactly; never paraphrase. Use the native frame crop, [] for silence, null if unreadable. Never copy expected text as observations. pageEvidence must be one STRING transcribing observed title/footer, marking missing/unreadable text. Planned slots are comparison targets only, NEVER observed geometry: ${JSON.stringify(rects.map((rect,i)=>({panel:i+1,position:physicalPanelPosition(rect)})))}.`;
 }
 
-function orderObservedFrames(observations,count) {
+export function orderObservedFrames(observations,count) {
   const invalid=()=>{throw createApiError('実画像のコマ境界を確認できません。予定位置で切り出さず、検査を未確認として保持します。',{code:'REVIEW_INVALID_GEOMETRY'});};
   if(!Array.isArray(observations)||!observations.length||observations.length>16
     ||count!=null&&observations.length!==count) return invalid();
@@ -432,8 +433,9 @@ export async function reviewExperimentalImage({image,plan,prompt,signal,reviewCo
     finishReason:response.finishReason,characters:inventoryResponse.text.length+response.text.length,attachedImages:spatial.images.length,requests:2};
 }
 
-export function buildExperimentalImagePrompt(plan, source, { colorMode, mosaicCopyrightedCharacters=false, showWatermarks=false, referenceContext='', imageEngineLabel='Gemini', scenarioModelLabel, promptMaxChars=OPENAI_IMAGE_PROMPT_MAX_CHARS }={}) {
-  const {expectedDialogue}=validateExperimentalPlan(plan,source);
+export function buildExperimentalImagePrompt(plan, source, { colorMode, providerFamily=PROMPT_PROVIDER_FAMILIES.GEMINI, mosaicCopyrightedCharacters=false, showWatermarks=false, referenceContext='', imageEngineLabel='Gemini', scenarioModelLabel, promptMaxChars=OPENAI_IMAGE_PROMPT_MAX_CHARS }={}) {
+  const effectiveProviderFamily=normalizePromptProviderFamily(providerFamily);
+  validateExperimentalPlan(plan,source);
   const rects=experimentalLayout(plan.count,plan.layout);
   const readingPairs=rects.flatMap((rect,i)=>{
     const next=rects[i+1];
@@ -442,11 +444,27 @@ export function buildExperimentalImagePrompt(plan, source, { colorMode, mosaicCo
   const title=extractScenarioTitle(source.scenario);
   const sourceFacts=experimentalStoryFacts(source);
   const activeOutfit=readExplicitOutfit(source.context);
+  // Move only the authored global line, outside reference observations. Keep the
+  // source intact for panel scopes/QA and preserve every other context byte.
+  let renderedContext=source.context, sceneOutfit='';
+  if(activeOutfit){
+    const line=[...source.context.matchAll(/[^\r\n]+/g)].find(match=>readExplicitOutfit(match[0])===activeOutfit);
+    if(line){
+      const start=line.index,end=start+line[0].length;
+      const after=source.context.slice(end).match(/^\r?\n/)?.[0]||'';
+      const before=source.context.slice(0,start).match(/\r?\n$/)?.[0]||'';
+      sceneOutfit=line[0]+(after||before||'\n');
+      renderedContext=source.context.slice(0,start-(after?0:before.length))+source.context.slice(end+after.length);
+    }
+  }
   const scopedOutfit=hasScopedOutfitAssignment(activeOutfit,collectCastNameEntries(source.castList),source.castList);
   const panelOutfits=source.panels.map(panel=>readExplicitOutfit(panel.text));
   const watermark=buildMangaWatermark({imageEngineLabel,scenarioModelLabel,systemVersion:SYSTEM_VERSION,isChatGPTFamily:/^ChatGPT/.test(imageEngineLabel)});
-  const castRules=plan.panels.map(p=>experimentalCastRule(p,source,expectedDialogue).split('\n'));
-  const balloonLayouts=plan.panels.map(p=>extractDialogueOnly(source.panels[p.sourcePanel-1].text,source.castList,{forImagePrompt:true,layoutOnly:true}));
+  const castRules=plan.panels.map(p=>experimentalCastRule(p,source,colorMode).split('\n'));
+  // Share the four-panel lettering boundary: Bn values are printable, while
+  // speaker ownership and balloon geometry remain nonprinting metadata.
+  const dialogueBlocks=compact=>plan.panels.map(p=>extractDialogueOnly(source.panels[p.sourcePanel-1].text,source.castList,{forImagePrompt:true,compactMetadata:compact,separateMetadata:true}));
+  const fullDialogue=dialogueBlocks(false),compactDialogue=dialogueBlocks(true);
   // Hoist only identical compiler-owned rules. Never deduplicate source prose,
   // actor rosters, dialogue, or panel-specific staging by textual similarity.
   const commonCast=new Map();
@@ -490,10 +508,14 @@ PAGE PLAN layout=${plan.layout}: rectは漫画領域内の正規化座標、x=�
 PAGE DIRECTION: ${typeof plan.pageIntent==='string'?plan.pageIntent:plan.reason}
 強調前にCameraと体/道具の関係を解く。意図した切取りを保持し、接写へ全身を強制しない。顔/体/服/道具/背景を指定媒体で構築し、アニメ顔へのフィルター化は禁止。
 場面内の隣接/前後/向かい/席位置を移動/転換の根拠なく入替えない。画面左右の固定ではない。俯瞰/アオリ/切返し/アップ/望遠の奥行圧縮/寄引き/遮蔽と自然な移動を許容。登場指定を守り、全員を毎回横一列にしない。
-PAGE FRAME内 Camera: execute physical projection at full strength. Camera/Action/原文内の左右・前後はコマ内部の演技で、ページ上の位置ではない。Dialogue: verbatim, listed order, rightmost balloon first. SILENTは発話追加禁止。
-FRAME MEDIUMは囲まれた一枠専用、印字禁止。溝ごとに媒体を再構築し、同一人物でも前コマの描法を引き継がない。${compact?'\nALL ACTORS: 脇役も含む全可視人物を、その枠の媒体で描き、見える顔を全て再構築。主役だけでは不可。同一性/感情/視線/脚本上の見え方を保持。':''}${balloonLayouts.some(Boolean)?`\nBALLOON LAYOUT: Bn = nth Dialogue entry in that frame; metadata for the SAME balloon, not additional speech.${compact?' x=0 left/1 right within each frame; NEVER PRINT; preserve Camera/Action.':''}`:''}
+PAGE FRAME内 Camera: execute physical projection at full strength. Camera/Action/原文内の左右・前後はコマ内部の演技で、ページ上の位置ではない。Dialogue: Bnの引用符内の本文だけを原文通り印字。B1から右→左 (rightmost balloon first)。話者名/番号/TAIL TIP LOCK/BALLOON LAYOUTは印字禁止。本文内の呼びかけ/名乗りは保持。TAIL TIP LOCK: proximity never reassigns ownership. SILENTは発話追加禁止。
+FRAME MEDIUMは囲まれた一枠専用、印字禁止。溝ごとに媒体を再構築し、同一人物でも前コマの描法を引き継がない。${compact?'\nALL ACTORS: 脇役も含む全可視人物を、その枠の媒体で描き、見える顔を全て再構築。主役だけでは不可。同一性/感情/視線/脚本上の見え方を保持。':''}${fullDialogue.some(block=>block.includes(' BALLOON LAYOUT'))?`\nBALLOON LAYOUT: Bn = nth Dialogue entry in that frame; metadata for the SAME balloon, not additional speech.${compact?' x=0 left/1 right within each frame; NEVER PRINT; preserve Camera/Action.':''}`:''}
 原文各コマ→PAGE FRAMEは1対1。動作/道具状態/Camera/画風/台詞を全保持。その時点だけを描き、後の結果の先取り/早い結末反復は禁止。明示breakout以外は身体を枠内に収める。
-${plan.panels.map((p,i)=>{
+[REFERENCE CAST DATA]
+以下は参照人物の観察データ。重み付き語も全コマ共通の描画命令ではない。年齢・肌・髪・眼鏡・顔の識別点・左右差を保持。資料の描法と様式的な目対顔/頭対体比はNORMALで採用し、特殊媒体では各FRAME MEDIUMとACTOR MEDIUMで描き直す。脚本で明示された身体特徴と表情は保持。
+CAST: ${effectiveProviderFamily===PROMPT_PROVIDER_FAMILIES.CHATGPT ? stripWeightTags(cleanCastList(source.castList,scopedOutfit?'':activeOutfit)) : cleanCastList(source.castList,scopedOutfit?'':activeOutfit)}
+[END REFERENCE CAST DATA]
+${sceneOutfit}${plan.panels.map((p,i)=>{
     const orig=source.panels[p.sourcePanel-1];
     // Anchors retain the source cast. Inserts use only their own visible staging,
     // so a hand close-up does not acquire every actor from the source beat.
@@ -504,10 +526,9 @@ ${compact?'Camera:':'Inside this frame — Camera:'} ${p.camera}; Style: ${orig.
 ${getPanelShotExecution(p.camera,{compact:true})}${panelOutfits[p.sourcePanel-1]?`\nFRAME OUTFIT: ${panelOutfits[p.sourcePanel-1]}`:''}
 ${recipes[orig.style]?`FRAME MEDIUM P${i+1} — ${orig.style}: ${recipes[orig.style]}${compact&&orig.style!=='GEKIGA'?' ALL ACTORS.':' Every visible actor in this frame: 脇役も同じ媒体で描き、見える顔を全て再構築。主役だけでは不可。同一性/感情/視線/脚本上の見え方を保持。'}`:''}
 
-${orig.style==='GEKIGA'?'GEKIGA FACE VALUE LOCK: recessed eyes, projecting nasal sidewalls, angular cheek/jaw; dense fine multi-directional facial kakeami with visible line gaps, black only as local accents. Keep the scripted emotion.':''}
+${buildActorMediumInstruction(orig.style,colorMode)}
 ${castRule}
-Dialogue: ${p.dialogueIds.length?p.dialogueIds.map(id=>JSON.stringify(expectedDialogue.find(d=>d.id===id))).join('; '):'SILENT'}
-${compact?balloonLayouts[i].replace(' BALLOON LAYOUT (NEVER PRINT; x=0 left/1 right; preserve Camera/Action): ',' BALLOON LAYOUT: '):balloonLayouts[i]}
+Dialogue: ${p.dialogueIds.length?(compact?compactDialogue[i]:fullDialogue[i]):'SILENT'}
 ${p.breakout?`Intentional border breakout: ${p.breakout.part} of a character in P${i+1} crosses into adjacent P${p.breakout.into}. One continuous foreground layer; border and gutter disappear behind its connected silhouette and resume after it. Keep source shoulder/hip ownership, no duplicate or detached limb. Keep adjacent faces, acting hands, key props and text entirely unobscured; no cross-scene interaction. If a clean crossing is impossible, keep the body inside its source panel.`:''}
 [END PAGE FRAME P${i+1}]`;
   }).join('\n')}
@@ -517,9 +538,8 @@ Identity is not a frozen drawing style. 年齢/髪/眼鏡/衣装/明示同一性
 REFERENCES: identity and asset design; selected panel recipe determines drawing style, face/eye construction and body stylization. 参照の描法/目の大きさ/簡略顔を同一性として固定しない。年齢・顔の識別点・髪・肌色・眼鏡を保持し、設定資料の配置/ラベルを転載しない。${activeOutfit?'Outfitは参照の服より優先。同一性/髪/眼鏡は保持。':''} ${referenceContext}
 ${WARDROBE_COMPONENT_LOCK}
 ${scopedOutfit||panelOutfits.some(Boolean)?OUTFIT_SCOPE_CONTRACT:''}
-CAST: ${cleanCastList(source.castList,scopedOutfit?'':activeOutfit)}
-SOURCE FACTS (not captions): preserve every condition. Context: ${source.context}
-${styles.includes('GEKIGA')?`GEKIGA CAST CHECK (${plan.panels.flatMap((p,i)=>source.panels[p.sourcePanel-1].style==='GEKIGA'?[`P${i+1}`]:[]).join(', ')} only): HATCH-FIRST FACE CONSTRUCTION — DEEP-CUT GEKIGA, deliberately exaggerated relief built from pen strokes. Redraw EVERY visible face, including gentle, smiling, distant and bespectacled actors. Build the skull and facial planes before hatching: recessed eyes under the brow ridge, lids wrapping eyeballs, projecting nasal sidewalls and nostril wings, distinct cheekbone and jaw angles. These contours must read even without shading. Render eye sockets, temples, nose sides, cheek undersides and neck with fine crossing pen strokes following each plane and the scripted light. Vary line spacing, angle and pressure, retaining individual strokes and narrow paper-light gaps. Taper strokes into lit skin; deepen shadows by adding layers of lines, not broad filled patches or soft gradients. Use bold variable brush contours around the fine interior marks. Solid black is a secondary accent at the deepest small occlusions, such as nostrils or under the chin; never substitute large flat cel-shadow shapes for facial hatching. This is etched facial volume, not dirt, decorative scratches, age creases or a gray texture overlay. Even in soft light, use marked changes in hatch density to carve the same light direction; gentle emotion must not reduce the drawn relief. ${colorMode==='monochrome'?'Use black ink and paper white; facial shading remains pen strokes, not a uniform gray screentone.':'Opaque color sits beneath the dominant pen hatching; preserve skin hues in lit planes and the visible fine strokes throughout facial shadows.'} Override reference eye geometry and simplified nose rendering; in GEKIGA, soft describes emotion, not rounded anime anatomy. Retain identity through age, hair, skin tone, eyewear and recognizable facial landmarks. A gentle smile relaxes the mouth and cheeks without enlarging eyes or erasing the carved planes and dense facial hatching. Keep scripted gaze, Camera, crop and expression; no added anger, age or wrinkles; retain the actor’s gender presentation. Calm faces must remain calm. Other panel styles retain their own face construction and medium.`:''}
+${sceneOutfit&&!renderedContext?'':`SOURCE FACTS (not captions): preserve every condition. Context: ${renderedContext}`}
+${styles.includes('GEKIGA')?`GEKIGA CAST CHECK (${plan.panels.flatMap((p,i)=>source.panels[p.sourcePanel-1].style==='GEKIGA'?[`P${i+1}`]:[]).join(', ')} only): HATCH-FIRST FACE CONSTRUCTION — DEEP-CUT GEKIGA。ペン線で意図的に深い彫りを作る。穏やか・微笑・遠景・眼鏡を含む全可視顔を再構築。ハッチ前に頭蓋と顔面を組立て、眉骨下へくぼむ眼、眼球を包む厚い瞼と狭い開口・小さい虹彩、突出する鼻梁/鼻側面/小鼻、明瞭な頬骨/顎角を陰影なしでも読める輪郭にする。眼窩/こめかみ/鼻側面/頬下面/首へ、各面と脚本の光に沿う細い交差ペン線。線間隔/角度/筆圧を変え、個々の線と狭い紙白の隙間を残す。明部へ線を先細りさせ、影は広い塗潰しや柔らかなグラデでなく線の層で深める。内部は細線、外輪郭は強弱ある太い筆線。黒ベタは鼻孔/顎下など最深部の小さな遮蔽の補助だけ。顔のハッチを大きな平坦セル影で代替しない。彫った顔の量感であり、汚れ/装飾傷/加齢皺/灰色テクスチャ被せではない。柔光でも同じ光向きでハッチ密度差を明瞭にし、穏やかな感情で彫りを弱めない。${colorMode==='monochrome'?'墨と紙白。顔の陰影はペン線で、均一な灰色網点にしない。':'主となるハッチの下に不透明色。明部の肌色と顔の影全体の細線を保持。'}参照の眼形状/簡略鼻を上書き。劇画の柔らかさは感情で、丸いアニメ顔ではない。年齢/髪/肌色/眼鏡/顔の識別点で同一性を保つ。微笑は口と頬を緩め、目を拡大せず、彫った面/密な顔ハッチを消さない。脚本の視線/Camera/切取り/表情と性別表現を保持し、怒り/加齢/皺を追加しない。冷静な顔は冷静に。他コマは各自の顔構造/媒体を保持。`:''}
 ${[...commonCast].filter(([,panels])=>panels.length>1).map(([rule,panels])=>`Applies only to ${panels.map(n=>`P${n}`).join(', ')}: ${rule}`).join('\n')}
 ${effects.map(id=>`Applies only to ${plan.panels.flatMap((p,i)=>(p.visualEffects??[]).includes(id)?[`P${i+1}`]:[]).join(', ')}: ${EXPERIMENTAL_VISUAL_EFFECTS[id].instruction}`).join('\n')}
 ${qualityContract}${colorMode==='monochrome'?'\n'+MONOCHROME_RENDERING_LOCK_COMPACT:''}
@@ -953,7 +973,7 @@ export async function selectExperimentalCandidate(original, next, compareCandida
 
 function colorLayoutContext(input) {
   // Keep image strings by reference; no duplicate serialized image payloads.
-  return {revision:EXPERIMENTAL_PROMPT_REVISION,scenario:input.scenario,castList:input.castList,
+  return {revision:EXPERIMENTAL_PROMPT_REVISION,providerFamily:input.providerFamily??PROMPT_PROVIDER_FAMILIES.GEMINI,scenario:input.scenario,castList:input.castList,
     scenarioMode:input.scenarioMode,userDirection:input.userDirection,referenceContext:input.referenceContext,
     mosaicCopyrightedCharacters:input.mosaicCopyrightedCharacters,showWatermarks:input.showWatermarks,
     imageEngineLabel:input.imageEngineLabel,scenarioModelLabel:input.scenarioModelLabel,
@@ -963,6 +983,7 @@ function colorLayoutContext(input) {
 export async function prepareExperimentalManga(input, requestPlan, {colorOnlyPrepared=null}={}) {
   if(input.enabled!==true) fail('実験スイッチがOFFです。');
   cancelled(input.signal);
+  normalizePromptProviderFamily(input.providerFamily??PROMPT_PROVIDER_FAMILIES.GEMINI);
   const recovered=await withScenarioBalloonLayoutRecovery({...input,scenarioMode:'experimental-manga'},readExperimentalSource,
     (prompt,_images,_system,onProgress,{signal})=>requestPlan(prompt,signal),input.onProgress,input.signal);
   input={...input,scenario:recovered.scenario};

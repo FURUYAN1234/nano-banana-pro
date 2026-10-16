@@ -7,7 +7,7 @@
 .reference-recognition h3 { margin: 0; font-size: 12px; line-height: 1.5; color: #93c5fd; }
 .reference-recognition p { margin: 0; font-size: 11px; line-height: 1.5; }
 .reference-recognition .reference-recognition-note { margin: 0 0 6px; color: #94a3b8; }
-.reference-recognition-scroll { max-height: 320px; overflow-y: auto; overflow-x: hidden; min-width: 0; scrollbar-gutter: stable; }
+.reference-recognition-scroll { margin-bottom: 8px; max-height: 320px; overflow-y: auto; overflow-x: hidden; min-width: 0; scrollbar-gutter: stable; }
 .reference-recognition-scroll textarea { overflow: hidden; resize: none; }
 .reference-recognition-editor { box-sizing: border-box; display: block; width: 100%; padding: 4px; margin: 0; border: 1px solid #334155; border-radius: 4px; background: #08090b; color: #fff; font-size: 11px; line-height: 1.45; }
 .reference-recognition-editor:focus-visible { outline: 2px solid #93c5fd; outline-offset: 2px; }
@@ -76,9 +76,36 @@
 .api-key-link:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
 .api-key-manual-link { margin-left: 10px; }
 
-.image-edit-submit { background-color: #ddd6fe; color: #4c1d95; }
-.image-edit-submit:hover:not(:disabled) { background-color: #c4b5fd; }
-.image-edit-submit:focus-visible { outline: 2px solid #c4b5fd; outline-offset: 3px; }
+/* Editable fields share one palette, including legacy inline STEP2 colors. */
+textarea:not([readonly]),
+input:not([readonly]):is(:not([type]), [type="text"], [type="password"], [type="search"], [type="url"], [type="email"], [type="tel"], [type="number"]),
+.image-edit-section select {
+  background: #fff !important;
+  color: #111 !important;
+  caret-color: #111 !important;
+  border: 1px solid #94a3b8 !important;
+  color-scheme: light;
+}
+textarea:not([readonly])::placeholder,
+input:not([readonly]):is(:not([type]), [type="text"], [type="password"], [type="search"], [type="url"], [type="email"], [type="tel"], [type="number"])::placeholder { color: #64748b !important; opacity: 1; }
+textarea:not([readonly]):disabled,
+input:not([readonly]):is(:not([type]), [type="text"], [type="password"], [type="search"], [type="url"], [type="email"], [type="tel"], [type="number"]):disabled,
+.image-edit-section select:disabled { opacity: 1 !important; cursor: not-allowed; }
+/* Text fields use square edges; actions and dropdowns use the same moderate corners. */
+textarea,
+input:is(:not([type]), [type="text"], [type="password"], [type="search"], [type="url"], [type="email"], [type="tel"], [type="number"]) { border-radius: 0 !important; }
+select,
+button { border-radius: 8px !important; }
+.image-edit-section .image-edit-action {
+  background: #ddd6fe;
+  color: #4c1d95;
+  border: 1px solid #a78bfa;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.image-edit-section .image-edit-action:hover:not(:disabled) { background: #c4b5fd; }
+.image-edit-section .image-edit-action:disabled { background: #e2e8f0; color: #475569; border-color: #94a3b8; opacity: 1; cursor: not-allowed; }
+.image-edit-section .image-edit-action:focus-visible { outline: 2px solid #c4b5fd; outline-offset: 3px; }
 
 .sns-explanation { border: 1px solid #334155; background: #0f1115; }
 .sns-explanation h2 { font-size: 18px; }

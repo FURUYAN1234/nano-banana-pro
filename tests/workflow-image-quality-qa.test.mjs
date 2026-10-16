@@ -210,10 +210,10 @@ test('best available fallback continues with a warning while explicit cancellati
   assert.doesNotMatch(workflowSource, /qualityOutcome\.attempts > 1 \? '最良候補を採用'/);
 });
 
-test('retained-image retry is available without generating a fresh original image', () => {
+test('internal retained-image review remains available without a user-facing recheck action', () => {
   assert.match(workflowSource, /generationOptions\.reviewExisting[\s\S]*?generatedImage/);
   assert.match(workflowSource, /: await generateImageCandidate\(currentPrompt\)/);
-  assert.match(step4Source, /generatedImage\s*&&[\s\S]*?regenerateImage\(false, null, \{ reviewExisting: true, reviewOnly: experimentalEnabled \|\| !allowImageQualityRepair \}\)/);
+  assert.doesNotMatch(step4Source, /reviewExisting:\s*true|AIで画像を再検査/);
   assert.match(workflowSource, /const repairEnabled = !experimentalPrepared && allowImageQualityRepair && !generationOptions\.reviewOnly/);
   assert.match(workflowSource, /allowRepair: repairEnabled/);
 });

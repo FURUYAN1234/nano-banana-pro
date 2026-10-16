@@ -4,12 +4,14 @@ import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { createServer } from 'vite';
 import { readFileSync } from 'node:fs';
+import { transformSync } from 'esbuild';
 import vm from 'node:vm';
+import { parse as parseCss } from 'postcss';
 
-let server, ImageEditForm, Step4Panel, GenerationHistory;
+let server, ImageEditForm, ImageEditSection, Step4Panel, GenerationHistory;
 before(async () => {
   server = await createServer({ appType: 'custom', logLevel: 'silent', server: { middlewareMode: true, hmr: false } });
-  ({ default: ImageEditForm } = await server.ssrLoadModule('/src/components/ImageEditForm.jsx'));
+  ({ default: ImageEditForm, ImageEditSection } = await server.ssrLoadModule('/src/components/ImageEditForm.jsx'));
   ({ default: Step4Panel } = await server.ssrLoadModule('/src/components/Step4Panel.jsx'));
   ({ default: GenerationHistory } = await server.ssrLoadModule('/src/components/GenerationHistory.jsx'));
 });
@@ -22,7 +24,8 @@ test('correction form is absent until an image exists', () => {
 });
 test('after generation the input is available, with empty submissions disabled', () => {
   const html = render({ image: 'data:image/png;base64,YQ==' });
-  assert.match(html, /この画像への追加指示/);
+  assert.match(html, /ページ全体への指示/);
+  assert.match(html, /他のコマも変わる場合があります/);
   assert.doesNotMatch(html.match(/<textarea[^>]*>/)[0], / disabled=""/);
   assert.match(html.match(/<textarea[^>]*>/)[0], /maxLength="\d+"/i);
   assert.match(html.match(/<textarea[^>]*>/)[0], /rows="6"/);
@@ -35,6 +38,153 @@ test('during processing both the input and send button are disabled', () => {
   assert.match(html.match(/<button[^>]*>/)[0], / disabled=""/);
 });
 
+test('editable fields share a readable white palette while readonly output is excluded', () => {
+  const css = parseCss(readFileSync(new URL('../src/index.css', import.meta.url), 'utf8'));
+  const ruleFor = selector => {
+    const matches = [];
+    css.walkRules(rule => { if (rule.selectors.includes(selector)) matches.push(rule); });
+    assert.ok(matches.length, `missing shared rule: ${selector}`);
+    return matches;
+  };
+  const palette = ruleFor('textarea:not([readonly])')[0];
+  assert.ok(palette.selectors.includes('textarea:not([readonly])'));
+  assert.ok(palette.selectors.includes('.image-edit-section select'));
+  for (const [property, value] of Object.entries({ background: '#fff', color: '#111', 'caret-color': '#111', border: '1px solid #94a3b8' })) {
+    const declaration = palette.nodes.find(node => node.prop === property);
+    assert.equal(declaration?.value, value);
+    assert.equal(declaration.important, true, `${property} must override existing STEP2 inline colors`);
+  }
+  assert.equal(ruleFor('textarea:not([readonly])::placeholder')[0].nodes.find(node => node.prop === 'color').value, '#64748b');
+  const disabledField = ruleFor('textarea:not([readonly]):disabled')[0];
+  assert.ok(disabledField.selectors.includes('.image-edit-section select:disabled'));
+  assert.equal(disabledField.nodes.find(node => node.prop === 'opacity').value, '1');
+  for (const selector of ['.image-edit-section .image-edit-action', '.image-edit-section .image-edit-action:disabled']) {
+    const declarations = Object.fromEntries(ruleFor(selector)[0].nodes.map(node => [node.prop, node.value]));
+    assert.ok(declarations.background && declarations.color && (declarations.border || declarations['border-color']));
+  }
+});
+
+test('text fields have square edges while buttons and selects use moderate corners without reducing label space', () => {
+  const css = parseCss(readFileSync(new URL('../src/index.css', import.meta.url), 'utf8'));
+  const palette = css.nodes.find(node => node.type === 'rule' && node.selectors.includes('textarea:not([readonly])'));
+  const inputs = palette.selectors.find(selector => selector.startsWith('input'));
+  assert.ok(inputs, 'single-line free inputs must use the same palette as textarea');
+  assert.match(inputs, /:not\(\[readonly\]\)/);
+  assert.match(inputs, /:not\(\[type\]\)/, 'default text inputs include STEP1 material names and background attributes');
+  for (const type of ['text', 'password', 'search', 'url', 'email', 'tel', 'number']) assert.ok(inputs.includes(`[type="${type}"]`), type);
+  for (const type of ['checkbox', 'radio', 'file', 'range', 'date', 'hidden']) assert.equal(inputs.includes(`[type="${type}"]`), false, type);
+  const actionRule = css.nodes.find(node => node.type === 'rule' && node.selectors.includes('select'));
+  assert.ok(actionRule);
+  assert.deepEqual(actionRule.selectors, ['select', 'button']);
+  assert.equal(actionRule.nodes.find(node => node.prop === 'border-radius')?.value, '8px');
+  assert.equal(actionRule.nodes.find(node => node.prop === 'border-radius')?.important, true, 'overrides inconsistent old inline radii');
+  assert.deepEqual(actionRule.nodes.map(node => node.prop), ['border-radius'], 'shape rule must not shrink padding, line-height or label space');
+  const textRule = css.nodes.find(node => node.type === 'rule' && node.selectors.includes('textarea'));
+  assert.equal(textRule.nodes.find(node => node.prop === 'border-radius')?.value, '0');
+  assert.equal(textRule.nodes.find(node => node.prop === 'border-radius')?.important, true);
+  const textInputs = textRule.selectors.find(selector => selector.startsWith('input'));
+  assert.equal(textInputs.includes('[readonly]'), false, 'readonly text fields also use square edges');
+  for (const type of ['checkbox', 'radio', 'file', 'range', 'date', 'hidden']) assert.equal(textInputs.includes(`[type="${type}"]`), false, type);
+  assert.deepEqual(textRule.nodes.map(node => node.prop), ['border-radius']);
+});
+
+function mountEditComponent(name, props) {
+  const slots = [];
+  let cursor = 0, tree;
+  const react = {
+    createElement(type, attrs, ...children) { return { type, props: { ...attrs, children } }; },
+    cloneElement(element, attrs) { return { ...element, props: { ...element.props, ...attrs } }; },
+    useState(initial) { const i = cursor++; if (!(i in slots)) slots[i] = initial; return [slots[i], value => { slots[i] = value; }]; },
+    useRef(initial) { const i = cursor++; return slots[i] ??= { current: initial }; },
+  };
+  const source = readFileSync(new URL('../src/components/ImageEditForm.jsx', import.meta.url), 'utf8');
+  const context = { module: { exports: {} }, require: path => {
+    if (path === 'react') return react;
+    if (path === 'lucide-react') return { ChevronDown() {} };
+    assert.equal(path, '../lib/image-edit.js');
+    return { IMAGE_EDIT_INSTRUCTION_MAX_CHARS: 30000 };
+  } };
+  vm.runInNewContext(transformSync(source, { loader: 'jsx', format: 'cjs', jsx: 'transform' }).code, context);
+  const walk = node => !node || typeof node !== 'object' ? [] : Array.isArray(node) ? node.flatMap(walk) : [node, ...walk(node.props?.children)];
+  const render = updates => { props = { ...props, ...updates }; cursor = 0; tree = context.module.exports[name](props); return tree; };
+  render();
+  return { render, nodes: () => walk(tree), find: type => walk(tree).find(node => node.type === type) };
+}
+
+test('one styled folded edit section selects panel or whole image and keeps the whole-image draft mounted', () => {
+  const panel = React.createElement('div', { id: 'panel-fixture' });
+  const whole = React.createElement(ImageEditForm, { image: 'image', draft: '保全する指示', providerLabel: 'OpenAI', onSubmit() {} });
+  const h = mountEditComponent('ImageEditSection', { image: 'image', panelEditor: panel, children: whole });
+  const panelNode = () => h.nodes().find(node => node.props?.id === 'panel-fixture');
+  const sectionContent = () => h.nodes().find(node => node.props?.id === 'image-edit-section-content');
+  assert.equal(h.find('button').props['aria-expanded'], false);
+  assert.equal(sectionContent().props.hidden, true);
+  assert.equal(panelNode().props.enabled, false, 'closed initial section must not prepare panels');
+  h.find('button').props.onClick(); h.render();
+  assert.equal(h.find('button').props['aria-expanded'], true);
+  assert.equal(sectionContent().props.hidden, false);
+  assert.equal(panelNode().props.enabled, true);
+  h.find('button').props.onClick(); h.render();
+  assert.equal(sectionContent().props.hidden, true);
+  assert.equal(h.find('select').props['aria-label'], '修正対象');
+  assert.equal(h.find('select').props.value, 'panel');
+  assert.ok(panelNode());
+  const wholeContainer = () => h.nodes().find(node => node.props?.['data-edit-target'] === 'whole');
+  assert.equal(wholeContainer().props.hidden, true);
+  assert.ok(h.nodes().includes(whole), 'the whole form stays mounted to preserve its local or controlled draft');
+  h.find('select').props.onChange({ target: { value: 'whole' } }); h.render();
+  assert.equal(panelNode(), undefined, 'panel controls unmount so their candidate cleanup runs');
+  assert.equal(wholeContainer().props.hidden, false);
+  assert.ok(h.nodes().includes(whole));
+  h.render({ busy: true });
+  assert.equal(h.find('select').props.disabled, true);
+  h.find('select').props.onChange({ target: { value: 'panel' } }); h.render();
+  assert.equal(h.find('select').props.value, 'whole');
+  h.render({ busy: false });
+  h.find('select').props.onChange({ target: { value: 'panel' } }); h.render();
+  assert.ok(panelNode());
+  const html = renderToStaticMarkup(React.createElement(ImageEditSection, { image: 'image', panelEditor: panel }, whole));
+  assert.match(html, /ページ全体／コマを選んで修正/);
+  assert.equal((html.match(/aria-controls="image-edit-section-content"/g) || []).length, 1);
+  assert.match(html, /aria-expanded="false"/);
+  assert.match(html, /class="web-prompt-disclosure-toggle"/);
+  assert.equal(h.find('button').props.style.padding, '12px');
+  assert.equal(h.find('button').props.style.borderRadius, '12px');
+  assert.equal(h.find('button').props.style.fontSize, '13px');
+  assert.equal(h.find('select').props.style.fontSize, '13px');
+  assert.match(html, /class="web-prompt-disclosure image-edit-section"/);
+  for (const property of ['background', 'backgroundColor', 'color', 'border']) assert.equal(h.find('select').props.style[property], undefined);
+  assert.match(html, /クリックで開く/);
+  assert.doesNotMatch(html, /<details\b/);
+});
+
+test('whole image is available without panel editing and keeps the existing single-flight submit behavior', async () => {
+  const wholeOnly = mountEditComponent('ImageEditSection', { image: 'image', children: React.createElement('form') });
+  assert.equal(wholeOnly.find('select').props.value, 'whole');
+  assert.equal(wholeOnly.nodes().some(node => node.type === 'option' && node.props.value === 'panel'), false);
+  let calls = 0, finish, submitted, changed;
+  const h = mountEditComponent('default', { image: 'image', draft: 'ページ全体を修正する指示', onDraftChange: value => { changed = value; },
+    onSubmit: value => { submitted = value; calls++; return new Promise(resolve => { finish = resolve; }); } });
+  assert.match(h.find('button').props.className, /\bimage-edit-action\b/);
+  for (const node of [h.find('textarea'), h.find('button')]) {
+    for (const property of ['background', 'backgroundColor', 'color', 'border', 'opacity']) assert.equal(node.props.style[property], undefined);
+  }
+  h.find('textarea').props.onChange({ target: { value: '編集した指示' } });
+  assert.equal(changed, '編集した指示');
+  h.render({ draft: changed });
+  assert.equal(h.find('textarea').props.value, changed);
+  const submit = h.find('form').props.onSubmit;
+  const event = { preventDefault() {} };
+  const pending = submit(event); await submit(event);
+  assert.equal(calls, 1);
+  assert.equal(submitted, changed);
+  finish(); await pending;
+  h.render({ busy: true }); await h.find('form').props.onSubmit(event);
+  assert.equal(calls, 1);
+  h.render({ busy: false, draft: '  ' }); await h.find('form').props.onSubmit(event);
+  assert.equal(calls, 1);
+});
+
 const renderStep4 = props => renderToStaticMarkup(React.createElement(Step4Panel, {
   currentStep: 4, selectedEngine: 'openai', finalPrompt: 'Four-panel comic',
   webCopyPartLengths: [], policyPromptHistory: [], policyErrorMsg: '',
@@ -42,24 +192,12 @@ const renderStep4 = props => renderToStaticMarkup(React.createElement(Step4Panel
   isGeneratingImage: true, ...props,
 }));
 
-test('original provider visibility keeps the verification-only review button off OpenAI and Web', () => {
-  const generatedImage = 'data:image/png;base64,YQ==';
-  {
-    const html = renderStep4({ selectedEngine: 'gemini', generatedImage, isGeneratingImage: false,
-      allowImageQualityRepair: false });
-    assert.match(html, /AIで画像を再検査/);
-    assert.match(html, /画像再生成なし・解析API課金あり/);
-    const reviewButton = html.match(/<button\b[^>]*>\s*AIで画像を再検査\s*<\/button>/)?.[0];
-    assert.ok(reviewButton);
-    assert.doesNotMatch(reviewButton, /disabled=""/);
-  }
-  assert.doesNotMatch(renderStep4({ generatedImage, selectedEngine: 'openai',
-    isGeneratingImage: false }), /AIで画像を再検査/);
-  assert.doesNotMatch(renderStep4({ generatedImage: '', isGeneratingImage: false }), /AIで画像を再検査/);
-  assert.doesNotMatch(renderStep4({ generatedImage, selectedEngine: 'gemini',
-    enableChatGPTMode: true, isGeneratingImage: false }), /AIで画像を再検査/);
-  const busy = renderStep4({ generatedImage, selectedEngine: 'gemini', isGeneratingImage: true });
-  assert.match(busy, /<button\b[^>]*disabled=""[^>]*>\s*AIで画像を再検査\s*<\/button>/);
+test('user image-edit surfaces never expose the verification-only AI recheck action', () => {
+  for (const selectedEngine of ['gemini', 'openai']) for (const experimentalEnabled of [false, true])
+    for (const isGeneratingImage of [false, true]) for (const generatedImage of ['', 'data:image/png;base64,YQ==']) {
+      const html = renderStep4({ selectedEngine, experimentalEnabled, isGeneratingImage, generatedImage });
+      assert.doesNotMatch(html, /AIで画像を再検査|画像再生成なし・解析API課金あり/);
+    }
 });
 
 test('completed STEP4 keeps its elapsed time last even after a post-generation status message', () => {

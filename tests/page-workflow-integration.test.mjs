@@ -2,9 +2,15 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import test from 'node:test';
 import { getWorkflowStep } from '../src/lib/generation-history.js';
+import { selectPanelMediumStyles } from '../src/lib/panel-medium-reference.js';
 
 const source=await readFile(new URL('../src/hooks/useMangaWorkflow.js',import.meta.url),'utf8');
 const AsyncFunction=Object.getPrototypeOf(async function(){}).constructor;
+const providerResolver=source.match(/const getCurrentPromptProviderFamily = [\s\S]+?;\r?\n/)[0];
+const noGuideForScenario=options=>{
+  assert.deepEqual(selectPanelMediumStyles(options),[],'these fixtures must not reserve a technique guide');
+  return null;
+};
 
 for (const isOpenAIEngine of [false,true]) for (const status of ['pass','warning','unverified']) {
   test(`shared experimental QA retains observations and validation diagnostics: ${isOpenAIEngine?'OpenAI':'Gemini'} ${status}`,async()=>{
@@ -168,19 +174,27 @@ test('experimental preparation takes current cast and actual scenario model from
   const body=source.match(/const experimentalInput = ([\s\S]+?);\r?\n  const changePageMode/)[1];
   const scope={scenarioMode:'experimental-manga',scenario:'old scenario',castList:'old cast',castListRef:{current:'current cast'},inputMode:'manual',manualTopic:'完成ページは5〜8コマで、無言の間を残す',
     colorMode:'color',mosaicCopyrightedCharacters:false,showWatermarks:true,isOpenAIEngine:true,
+    PROMPT_PROVIDER_FAMILIES:{CHATGPT:'chatgpt',GEMINI:'gemini'},GEMINI_IMAGE_MODEL:'gemini-nano-banana-pro',
+    getBuiltinPanelMediumReference:noGuideForScenario,styleJson:null,punchlineType:'Auto',
     formatOpenAIImageEngineName:()=> 'image model',openAIImageQuality:'max',scenarioModelId:'selected',
     scenarioUsedModelRef:{current:'actual'},OPENAI_SCENARIO_MODEL_OPTIONS:[{id:'selected',label:'selected model'},{id:'actual',label:'actual model'}],
     referenceAssetsRef:{current:[]},imagesRef:{current:[]},bg360Enabled:false,bg360Analysis:null,bg360Image:null,
     buildReferenceAssetContext:()=>'',buildOpenAIReferencePlan:()=>({rolePrompt:''}),getOpenAIPromptBodyBudget:()=>32000,
     summarizeExperimentalLayouts:x=>x,generationHistory:[]};
-  const input=new Function(...Object.keys(scope),`return (${body})`)(...Object.values(scope))('new scenario');
+  const input=new Function(...Object.keys(scope),`${providerResolver} return (${body})`)(...Object.values(scope))('new scenario');
   assert.equal(input.scenario,'new scenario');
+  assert.equal(input.providerFamily,'chatgpt','the real resolver passes the selected OpenAI family to native preparation');
   assert.equal(input.castList,'current cast');
   assert.equal(input.scenarioModelLabel,'actual model');
   assert.equal(input.userDirection,scope.manualTopic);
   scope.inputMode='news';
-  const newsInput=new Function(...Object.keys(scope),`return (${body})`)(...Object.values(scope))('new scenario');
+  const newsInput=new Function(...Object.keys(scope),`${providerResolver} return (${body})`)(...Object.values(scope))('new scenario');
   assert.equal(newsInput.userDirection,'','news mode must not reuse an old manual request');
+  scope.isOpenAIEngine=false;
+  const geminiInput=new Function(...Object.keys(scope),`${providerResolver} return (${body})`)(...Object.values(scope))('gemini scenario');
+  assert.equal(geminiInput.providerFamily,'gemini','Gemini must not inherit OpenAI-only native prompt normalization');
+  assert.equal(geminiInput.scenario,'gemini scenario');
+  assert.equal(geminiInput.promptMaxChars,undefined,'Gemini does not reserve OpenAI transport overhead');
 });
 
 for (const colorMode of ['color','monochrome']) {
@@ -192,11 +206,14 @@ for (const colorMode of ['color','monochrome']) {
     const images=['data:image/png;base64,YQ==','data:image/png;base64,Yg=='];
     const scope={scenarioMode:'experimental-manga',scenario:'source',castListRef:{current:'cast'},colorMode,mosaicCopyrightedCharacters:false,showWatermarks:true,
       inputMode:'manual',manualTopic:'retain detailed source',isOpenAIEngine:true,formatOpenAIImageEngineName:()=> 'ChatGPT Images 2.5',openAIImageQuality:'high',
+      PROMPT_PROVIDER_FAMILIES:{CHATGPT:'chatgpt',GEMINI:'gemini'},
+      getBuiltinPanelMediumReference:noGuideForScenario,styleJson:null,punchlineType:'Auto',
       GEMINI_IMAGE_MODEL:'gemini',OPENAI_SCENARIO_MODEL_OPTIONS:[],scenarioUsedModelRef:{current:'gpt-6-luna'},
       buildReferenceAssetContext,buildWebReferencePlan,buildOpenAIReferencePlan,getOpenAIPromptBodyBudget,
       referenceAssetsRef:{current:[]},imagesRef:{current:images},bg360Enabled:false,bg360Analysis:null,bg360Image:null,
       summarizeExperimentalLayouts:()=>[],generationHistory:[]};
-    const input=new Function(...Object.keys(scope),'return ('+body+')();')(...Object.values(scope));
+    const input=new Function(...Object.keys(scope),providerResolver+'return ('+body+')();')(...Object.values(scope));
+    assert.equal(input.providerFamily,'chatgpt');
     const refs=buildOpenAIReferencePlan({compact:true,characterImages:images,colorMode});
     assert.equal(input.promptMaxChars,getOpenAIPromptBodyBudget(refs));
     assert.equal(input.referenceContext,buildReferenceAssetContext([],images,{purpose:'image',panorama:null}));

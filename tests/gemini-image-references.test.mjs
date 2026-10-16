@@ -5,6 +5,7 @@ import {buildGeminiReferencePlan, buildGeminiImageApiPrompt} from '../src/lib/ge
 import {generateImageWithImagen} from '../src/lib/imagen.js';
 import {setApiKey} from '../src/lib/gemini.js';
 import {getApiErrorInfo} from '../src/lib/api-errors.js';
+import {extractDialogueOnly} from '../src/lib/panel-utils.js';
 
 const workflow = readFileSync(new URL('../src/hooks/useMangaWorkflow.js', import.meta.url), 'utf8');
 
@@ -120,5 +121,43 @@ test('real Gemini request builder sends character and background bytes in manife
   } finally {
     globalThis.fetch = savedFetch;
     setApiKey('');
+  }
+});
+
+test('Gemini transport preserves source-authorized offscreen voice without introducing a visible mouth', () => {
+  const cast = '## 甲\n## 乙';
+  const source = '[Camera: 乙の後ろ姿を広角で捉える]\n状況: 乙が窓際に立つ。甲は画面外にいる。\n甲「こちらだよ。」\n乙「今行く。」';
+  const camera = 'Camera: 乙の後ろ姿を広角で捉える';
+  const action = 'Action: 乙が窓際に立つ。甲は画面外にいる。';
+  const plan = buildGeminiReferencePlan({characterImages: [image('offscreen-sheet')]});
+  for (const compactMetadata of [false, true]) {
+    const dialogue = extractDialogueOnly(source, cast, {forImagePrompt: true, compactMetadata});
+    const marker = dialogue.split('\n').find(line => line.startsWith('OFFSCREEN VOICE:'));
+    assert.ok(marker, 'the source compiler explicitly authorizes the edge endpoint');
+    const result = buildGeminiImageApiPrompt(`## Panel 1\n${camera}\n${action}\nDialogue: ${dialogue}`, plan);
+    assert.ok(result.includes(marker), 'transport preserves the exact source-authorized exception');
+    assert.ok(result.includes(camera));
+    assert.ok(result.includes(action));
+    assert.match(result, /print exactly "こちらだよ。"/);
+    assert.match(result, /print exactly "今行く。"/);
+    assert.match(result, /Its tail tip touches 乙's mouth or head silhouette\./);
+    assert.doesNotMatch(result, /Its tail tip touches 甲's mouth or head silhouette\./);
+    assert.ok(result.endsWith(plan.rolePrompt));
+  }
+});
+
+test('Gemini transport keeps ordinary and partial visible speakers on their physical tail endpoints', () => {
+  const cast = '## 甲\n## 乙';
+  for (const visibility of [
+    '甲は画面内にいる。',
+    '甲の顔は画面外だが手は画面内に見える。',
+  ]) {
+    const source = `状況: 乙が窓際に立つ。${visibility}\n甲「画面外という言葉だよ。」\n乙「今行く。」`;
+    const dialogue = extractDialogueOnly(source, cast, {forImagePrompt: true});
+    const result = buildGeminiImageApiPrompt(`## Panel 1\nDialogue: ${dialogue}`, buildGeminiReferencePlan());
+    assert.doesNotMatch(result, /^OFFSCREEN VOICE:/m);
+    assert.match(result, /Its tail tip touches 甲's mouth or head silhouette\./);
+    assert.match(result, /Its tail tip touches 乙's mouth or head silhouette\./);
+    assert.match(result, /print exactly "画面外という言葉だよ。"/);
   }
 });

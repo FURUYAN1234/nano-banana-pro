@@ -12,13 +12,15 @@ test('generated image actions expose only the PNG download label and no debug co
   // variable panel heights and designed title. Never split/rasterize it first.
   assert.doesNotMatch(workflow, /typesetFourPanelCandidate|four-panel-typesetter/);
   const downloadIndex = imageArea.indexOf('保存先を選んで保存（制作情報入りPNG）');
-  const backIndex = imageArea.indexOf('最初（STEP 1）に戻る');
+  const backIndex = imageArea.indexOf('aria-label="STEPへ移動"');
 
   assert.ok(downloadIndex >= 0);
   assert.ok(backIndex > downloadIndex);
   assert.doesNotMatch(imageArea, /固定比率画像をダウンロード/);
   assert.doesNotMatch(imageArea, /加工前の元画像をダウンロード/);
   assert.doesNotMatch(imageArea, /表示中の画像をQA再検査/);
+  assert.doesNotMatch(source, /AIで画像を再検査|existingImageReviewControl|reviewExisting:\s*true/);
+  assert.doesNotMatch(imageArea, /検査のみ行います（画像再生成なし・解析API課金あり）/);
   assert.match(imageArea.slice(downloadIndex, backIndex), /isFourPanelPage && !hasFixedPageLayout && normalizeDisplayedPage/);
   assert.match(source, /inferImageQualityMode\(finalPrompt\) === 'four-panel'/);
   assert.match(source, /APIで新しい画像を生成する（STEP4）/);

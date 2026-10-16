@@ -6,6 +6,33 @@ import React from 'react';
 import {renderToStaticMarkup} from 'react-dom/server';
 
 const hook=await readFile(new URL('../src/hooks/useMangaWorkflow.js',import.meta.url),'utf8');
+const app=await readFile(new URL('../src/App.jsx',import.meta.url),'utf8');
+
+test('new sessions start in native five-to-eight-panel mode and preserve an explicit four-panel choice',()=>{
+  const selection=app.match(/const \[experimentEnabled, setExperimentEnabled\] = useState\([^;]+;/)?.[0];
+  assert.ok(selection);
+  const initialize=new Function('useState',`${selection} return {enabled:experimentEnabled,setEnabled:setExperimentEnabled};`);
+  let stored;
+  const useState=initial=>{
+    if(stored===undefined)stored=initial;
+    return [stored,value=>{stored=value;}];
+  };
+  const initial=initialize(useState);
+  assert.equal(initial.enabled,true);
+  initial.setEnabled(false);
+  assert.equal(initialize(useState).enabled,false,'ordinary rerenders retain a manual four-panel selection');
+  assert.match(app,/<ExperimentalMangaPanel enabled=\{experimentEnabled\}/);
+  assert.match(app,/useMangaWorkflow\(\{experimentalEnabled:experimentEnabled\}\)/);
+
+  const prelude=hook.match(/export default function useMangaWorkflow\([^\n]+\) \{[\r\n]+  const scenarioMode = [^\r\n]+;/)?.[0];
+  assert.ok(prelude);
+  const mode=new Function(`${prelude.replace('export default ','')} return scenarioMode; } return useMangaWorkflow;`)();
+  assert.equal(mode(),'experimental-manga');
+  assert.equal(mode({}),'experimental-manga');
+  assert.equal(mode({experimentalEnabled:true}),'experimental-manga');
+  assert.equal(mode({experimentalEnabled:false}),'four-panel');
+});
+
 const start=hook.indexOf('const changePageMode = ');
 const callback=hook.slice(start+'const changePageMode = '.length,hook.indexOf('\n  };',start)+4);
 function modeState() {
@@ -29,6 +56,10 @@ test('busy mode cannot switch or discard work',()=>{const {state,change}=modeSta
 const server=await createServer({appType:'custom',logLevel:'silent',server:{middlewareMode:true}});
 try {
   const {default:Panel}=await server.ssrLoadModule('/src/components/ExperimentalMangaPanel.jsx');
+  test('native mode description covers the horizontal-strip exclusion for every supported count',()=>{
+    const html=renderToStaticMarkup(React.createElement(Panel,{enabled:true,currentStep:2,onModeChange:()=>{}}));
+    assert.match(html,/5・6・7・8コマでは全コマ横長の縦積みを選びません/);
+  });
   test('mode switch is available before STEP2 and explains native scenario creation in both states',()=>{
     for(const enabled of [false,true]) {
       const html=renderToStaticMarkup(React.createElement(Panel,{enabled,currentStep:2,onModeChange:()=>{}}));

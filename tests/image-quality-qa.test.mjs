@@ -1437,10 +1437,101 @@ test('panel-border head clipping cannot hide behind an overall camera PASS', () 
     requested: 'clean containment or a deliberate continuous breakout',
     observed: 'the top panel rule slices through the hair and the outer segment is horizontally offset',
     status: 'defect',
+    loss_type: 'broken_contour',
   };
   const review = parseImageQualityQaResponse(JSON.stringify({ pass: true, issues: [], observations, spatial_checks: checks }));
   assert.equal(review.pass, false);
   assert.ok(review.issues.some(issue => issue.type === 'panel_layout' && issue.panel === 1 && issue.reason.includes('boundary')));
+});
+
+const boundaryCropReport = (boundary = {}) => {
+  const checks = spatialChecks();
+  checks[0].camera_geometry.status = 'defect';
+  checks[0].camera_geometry.evidence = 'Both crowns terminate at the upper frame.';
+  checks[0].camera_geometry.dimensions.boundary = {
+    requested: 'complete silhouette and clear headroom',
+    observed: 'At the upper inner panel edge, both crowns continue beyond the crop; the visible contours align, with no outside fragment or broken connection.',
+    status: 'defect', loss_type: 'crop_only', ...boundary,
+  };
+  return { pass: false, observations, spatial_checks: checks, issues: [
+    { type: 'camera_geometry', panel: 1, subject: 'Both upper head boundaries', reason: 'Both crowns terminate at the upper frame.' },
+  ] };
+};
+
+test('authored close and chest shots allow coherent panel-edge crops without paid repair', () => {
+  for (const camera of ['close-up of the two faces', '二人の胸上を捉える']) {
+    const report = boundaryCropReport();
+    report.issues.push({ type: 'panel_layout', panel: 1, subject: 'camera_geometry.boundary', reason: 'The crowns end at the upper inner frame.' });
+    const review = parseImageQualityQaResponse(JSON.stringify(report), { finalPrompt: `## Panel 1\nCamera: ${camera}` });
+    assert.equal(review.issues.some(isMaterialImageQualityIssue), false);
+    assert.ok(review.issues.some(issue => issue.subject === 'camera_geometry' && /coherent panel-edge crop/i.test(issue.reason)));
+
+    report.spatial_checks[0].camera_geometry.dimensions.azimuth.status = 'defect';
+    const independent = parseImageQualityQaResponse(JSON.stringify(report), { finalPrompt: `## Panel 1\nCamera: ${camera}` });
+    assert.ok(independent.issues.some(issue => issue.type === 'camera_geometry' && isMaterialImageQualityIssue(issue)));
+  }
+});
+
+test('boundary crop cannot override a source-quoted full head or body requirement', () => {
+  for (const camera of ['close-up; keep the complete head inside the panel', '全身を頭頂から足先まで入れる']) {
+    const report = boundaryCropReport({ requirement_quote: camera });
+    const review = parseImageQualityQaResponse(JSON.stringify(report), { finalPrompt: `## Panel 1\nCamera: ${camera}` });
+    assert.ok(review.issues.some(issue => issue.type === 'panel_layout' && isMaterialImageQualityIssue(issue)));
+  }
+  for (const action of ['Action', 'Action (visual only)']) {
+    const requirement_quote = '頭部全体を枠内に入れる';
+    const review = parseImageQualityQaResponse(JSON.stringify(boundaryCropReport({ loss_type: 'required_extent_hidden', requirement_quote })), {
+      finalPrompt: `## Panel 1\nCamera: chest-up\n${action}: ${requirement_quote}`,
+    });
+    assert.ok(review.issues.some(issue => issue.type === 'panel_layout' && isMaterialImageQualityIssue(issue)));
+  }
+});
+
+test('negative extent instructions and partial quotes never become required full framing', () => {
+  for (const [source, requirement_quote] of [
+    ['全身を入れない', '全身を入れない'],
+    ['全身を入れない', '全身'],
+    ['no full-body framing', 'no full-body framing'],
+    ['no full-body framing', 'full-body'],
+  ]) {
+    const report = boundaryCropReport({ loss_type: 'required_extent_hidden', requirement_quote });
+    const review = parseImageQualityQaResponse(JSON.stringify(report), { finalPrompt: `## Panel 1\nCamera: close-up; ${source}` });
+    assert.equal(review.pass, false);
+    assert.equal(review.issues.some(isMaterialImageQualityIssue), false);
+  }
+});
+
+test('actual boundary breaks and exterior page clipping remain material in close shots', () => {
+  for (const [loss_type, observed] of [
+    ['broken_contour', 'At the upper panel border, the outside hair fragment is shifted right from the inside contour.'],
+    ['broken_contour', 'The forehead is severed across the upper border, with an isolated duplicate above it.'],
+    ['page_clip', 'At the canvas top-right, the outer page frame and its corner run beyond the image edge.'],
+  ]) {
+    const report = boundaryCropReport({ loss_type, observed });
+    const review = parseImageQualityQaResponse(JSON.stringify(report), { finalPrompt: '## Panel 1\nCamera: close-up' });
+    assert.ok(review.issues.some(issue => issue.type === 'panel_layout' && isMaterialImageQualityIssue(issue)));
+  }
+  const report = boundaryCropReport();
+  report.issues.push({ type: 'anatomy', panel: 1, subject: 'arm', reason: 'The visible forearm is detached from the upper arm.' });
+  report.issues.push({ type: 'panel_layout', panel: 1, subject: 'page count', reason: 'An extra panel duplicates the scene.' });
+  const review = parseImageQualityQaResponse(JSON.stringify(report), { finalPrompt: '## Panel 1\nCamera: close-up' });
+  assert.ok(review.issues.some(issue => issue.type === 'anatomy' && isMaterialImageQualityIssue(issue)));
+  assert.ok(review.issues.some(issue => issue.type === 'panel_layout' && issue.subject === 'page count' && isMaterialImageQualityIssue(issue)));
+});
+
+test('untyped or ungrounded boundary accusations stay unverified rather than forcing repair', () => {
+  for (const [boundary, finalPrompt] of [
+    [{ loss_type: undefined }, '## Panel 1\nCamera: close-up'],
+    [{ observed: '' }, '## Panel 1\nCamera: close-up'],
+    [{}, ''],
+    [{ loss_type: 'required_extent_hidden', requirement_quote: 'keep the complete head inside the panel' }, '## Panel 1\nCamera: chest-up'],
+    [{ loss_type: 'required_extent_hidden', requirement_quote: 'keep the complete head inside the panel' }, 'DEFAULT: keep the complete head inside the panel\n## Panel 1\nCamera: chest-up'],
+  ]) {
+    const review = parseImageQualityQaResponse(JSON.stringify(boundaryCropReport(boundary)), { finalPrompt });
+    assert.equal(review.pass, false);
+    assert.equal(review.issues.some(isMaterialImageQualityIssue), false);
+    assert.ok(review.issues.some(issue => issue.type === 'unverified' && issue.subject === 'camera_geometry'));
+  }
 });
 
 test('visual QA explicitly audits clean panel-border breakthroughs', () => {
@@ -1449,6 +1540,10 @@ test('visual QA explicitly audits clean panel-border breakthroughs', () => {
   assert.match(prompt, /continuous head\/hair silhouette/i);
   assert.match(prompt, /border line.*stops behind/i);
   assert.match(prompt, /slicing through face\/hair.*panel_layout defect/i);
+  assert.match(prompt, /Default headroom is not an absolute full-head requirement/);
+  assert.match(prompt, /loss_type=crop_only\|broken_contour\|page_clip\|required_extent_hidden\|uncertain/);
+  assert.match(prompt, /requirement_quote copied exactly from that panel Camera\/Action/);
+  assert.doesNotMatch(prompt, /Ordinary containment requires the complete silhouette/);
   assert.match(prompt, /"boundary"/);
 });
 

@@ -490,7 +490,7 @@ export default function Step2Panel({
         </div>
 
         {/* シナリオ強化パネル */}
-        <div className={`mt-2 border rounded-lg overflow-hidden transition-all duration-300 ${
+        <div style={{ marginTop: '8px' }} className={`mt-2 border rounded-lg overflow-hidden transition-all duration-300 ${
           scenario && scenario.length > 20 
             ? 'border-orange-500/30' 
             : 'border-slate-700/30 blur-[2px] opacity-40 grayscale pointer-events-none'

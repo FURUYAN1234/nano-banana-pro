@@ -839,6 +839,7 @@ export const OPENAI_COLOR_FOCAL_READABILITY = FOCAL_READABILITY
   .replace('Support/BG thinner, lower contrast; local light/dark value and warm/cool color planes, motivated edge light and clear gaps at faces/hands.', 'Support/BG: thinner, lower contrast; light/dark and warm/cool planes, motivated edge light, clear face/hand gaps.')
   .replace('strengthen focal G-pen.', 'strengthen focal separation in the panel medium.');
 export const OPENAI_COLOR_FOLD_PRIORITY = 'FOLD PRIORITY: 2-4 triangular overlap/pinch shadows in panel medium; hard cel edges NORMAL/unmarked only; no geometric patterns.';
+export const REFERENCE_FOLD_RENDERING = 'Keep reference fold/shadow treatment; no new method.';
 
 export const SCENE_LETTERING_LOCK = 'SCENE LETTERING: scripted object text exact/readable; repeat only if scripted. Otherwise keep natural artwork/icons/colors/borders/material/layout and any context-appropriate lettering, length/density/readability. No censoring/blanking/simplifying just for unscripted text; depth blur/thin/pale allowed, required text readable.';
 
@@ -848,7 +849,11 @@ const MANGA_IMAGE_QUALITY_CONTRACT = SHARED_IMAGE_QUALITY_CONTRACT.replace(
   '- Physical-setting shots preserve recognizable shapes and spatial depth; explicitly scripted abstract beats may omit scenery while preserving story evidence. Quiet beats lower nonessential detail; keep focal action and necessary reactions crisp.'
 );
 
-const mangaImageQualityContract = (isMonochrome) => `${isMonochrome ? MONOCHROME_IMAGE_QUALITY_CONTRACT : MANGA_IMAGE_QUALITY_CONTRACT}\n- ${PANEL_EDGE_CONTINUITY_LOCK}`;
+const mangaImageQualityContract = (isMonochrome, preserveReferenceStyle = false) => {
+  const contract = isMonochrome ? MONOCHROME_IMAGE_QUALITY_CONTRACT : MANGA_IMAGE_QUALITY_CONTRACT;
+  const foldRule = preserveReferenceStyle ? REFERENCE_FOLD_RENDERING : isMonochrome ? '' : OPENAI_COLOR_FOLD_PRIORITY;
+  return `${foldRule ? contract.replace(/^- Add clothing-fold shadows[^\n]*/m, `- ${foldRule}`) : contract}\n- ${PANEL_EDGE_CONTINUITY_LOCK}`;
+};
 
 const CROSS_PANEL_WARDROBE_COLOR_LOCK = `CROSS-PANEL WARDROBE COLOR LOCK:
 - Before drawing, choose each named character's concrete garment items, base colors, accent colors, material, and pattern once; reuse that exact wardrobe assignment in every later panel. If only a broad category is given, individualize without cloning.
@@ -903,7 +908,7 @@ Use the 360° background image's lighting direction (${bg360Analysis.lighting}),
     : '- OUTFIT CONSISTENCY: Each character keeps their own outfit across ALL 4 panels.';
   const compactCastDetails = compactChatGPTCastDetails(VAR_CAST_LIST_CHATGPT);
   const clothingFoldRule = preserveReferenceStyle
-    ? 'Preserve the character-sheet treatment of fabric folds and shadows; do not impose a different cel-shading or painting method.'
+    ? REFERENCE_FOLD_RENDERING
     : `${isMonochrome ? 'use a few localized solid-black or hatched wedge shadows where fabric overlaps; preserve white lit fabric and garment tone assignments. Do not scatter geometric patterns.' : 'for full-color clothing only, render overlapping, pinched, and intersecting fabric folds with a few crisp wedge-shaped triangular cel-shaded shadow planes. Make a distinct small dark triangular fill at each selected crease junction, not merely a soft fold gradient. Use them as form shadows, not printed patterns or random geometric marks; preserve the outfit, material, and scene lighting.'}`;
   const panelColorMedia = !isMonochrome && !preserveReferenceStyle;
   const artStyleQa = preserveReferenceStyle
@@ -925,7 +930,7 @@ ${MANGA_FOOTER_EXCLUSIVITY}` : ''}
 ${scriptLock}
 
 ART / RENDERING QUALITY:
-${panelColorMedia ? mangaImageQualityContract(false).replace(FOCAL_READABILITY, OPENAI_COLOR_FOCAL_READABILITY) : mangaImageQualityContract(isMonochrome)}
+${panelColorMedia ? mangaImageQualityContract(false).replace(FOCAL_READABILITY, OPENAI_COLOR_FOCAL_READABILITY) : mangaImageQualityContract(isMonochrome, preserveReferenceStyle)}
 - Clean finish: ${isMonochrome ? 'crisp focal ink; simplify distant lines while keeping setting shapes and white light planes.' : 'crisp story focus; soften nonessential near/far planes in the panel medium; preserve required text and lighting.'}
 ${MANGA_FACIAL_ACTING_LOCK}
 - CLEAN SURFACE PROTOCOL: ${isMonochrome ? 'regular black-on-white dots and intentional hatching allowed; no random noise, moire or marks on lit skin.' : 'no grain/speckles/dithering/rough texture/pores/moire/dust/particles/sparkle unless a panel style exception allows it.'}
@@ -974,7 +979,7 @@ THINGS TO AVOID:
 - No plastic skin, extra credits/watermarks, floating/ghost eyes/faces or duplicate humans.
 - No sparkle/glow dust unless scripted. HAND ANATOMY: correct hands; five digits (one thumb + four fingers); every foreground hand/foreshortened hand; no four-digit/mirrored/extra/backward hands.
 
-PANEL-BY-PANEL CLOTHING FOLD PRIORITY: ${panelColorMedia ? OPENAI_COLOR_FOLD_PRIORITY : preserveReferenceStyle ? 'Follow the character sheet\'s existing fold-line and shadow treatment in every panel; do not introduce a new rendering method.' : 'When a panel shows folded clothing, render 2-4 distinct small dark triangular shadow fills at visible crease junctions. Use hard cel-shaded edges, especially on light shirts, blouses, jackets, and sleeves. These are localized form shadows only: never scatter triangles across smooth fabric or turn them into a print/pattern.'}
+PANEL-BY-PANEL CLOTHING FOLD PRIORITY: ${panelColorMedia ? OPENAI_COLOR_FOLD_PRIORITY : preserveReferenceStyle ? REFERENCE_FOLD_RENDERING : 'When a panel shows folded clothing, render 2-4 distinct small dark triangular shadow fills at visible crease junctions. Use hard cel-shaded edges, especially on light shirts, blouses, jackets, and sleeves. These are localized form shadows only: never scatter triangles across smooth fabric or turn them into a print/pattern.'}
 
 PANEL DESCRIPTIONS:
 
@@ -998,6 +1003,7 @@ export const buildGeminiMangaPrompt = (p) => {
     VAR_CAST_LIST, identityMatrix, activeOutfit, scopedOutfit = false,
     dynamicCamera, scriptLock, panelSections, preserveReferenceStyle = false, seriousTone = false // 事前にビルドされた4パネル分のセクション文字列
   } = p;
+  const panelColorMedia = !isMonochrome && !preserveReferenceStyle;
 
   const bg360Block = (bg360Image && bg360Analysis && bg360Enabled) ? (
     (bg360CroppedPanels && bg360CroppedPanels.length === 4)
@@ -1102,12 +1108,12 @@ ${SCENE_LETTERING_LOCK}
 (NO unrelated ENGLISH TEXT. NO 'G-pen'/'HA': 3.0)
 
 GEMINI STABILITY / QUALITY LOCK:
-${mangaImageQualityContract(isMonochrome)}
+${mangaImageQualityContract(isMonochrome, preserveReferenceStyle)}
 - Physical-setting shots keep spatial depth and recognizable setting props; explicitly scripted abstract beats may omit scenery. Quiet beats reduce detail/contrast; depth-of-field may soften distant backgrounds while focal actions and required reactions stay readable.
 ${MANGA_FACIAL_ACTING_LOCK}
 ${isMonochrome ? MONOCHROME_BACKGROUND_LOCK : RICH_PANEL_COMPOSITION_LOCK}
 - MANGA FINISH ASSIST: preserve script/cast/camera/layout; keep bubble space, ${isMonochrome ? 'readable ink shapes and screen density' : 'cast/background light and color'}, coherent anatomy, and setting depth.
-- CLOTHING FOLD SHADOW ASSIST: ${preserveReferenceStyle ? 'follow the character sheet\'s existing fold-line and shadow treatment; do not impose a different cel-shading, ink or painting method.' : isMonochrome ? 'localized solid-black/hatched wedge shadows only where fabric overlaps; preserve white lit fabric and stable wardrobe tones, never random geometric patterns.' : 'for full-color clothing only, render overlapping, pinched, and intersecting fabric folds with a few crisp wedge-shaped triangular cel-shaded shadow planes. Make a distinct small dark triangular fill at each selected crease junction, not merely a soft fold gradient. Use them as form shadows, not printed patterns or random geometric marks; preserve the outfit, material, and scene lighting.'}
+- CLOTHING FOLD SHADOW ASSIST: ${preserveReferenceStyle ? REFERENCE_FOLD_RENDERING : panelColorMedia ? 'Follow panel medium and FOLD PRIORITY below.' : 'localized solid-black/hatched wedge shadows only where fabric overlaps; preserve white lit fabric and stable wardrobe tones, never random geometric patterns.'}
 ${SAFE_VISUAL_CONTENT_LOCK}
 - Existing named cast only. Do NOT invent a new dominant person, black silhouette, monster, ghost, mascot, presenter, antagonist, or narrator figure. Background extras may appear only as small non-speaking atmosphere when the setting naturally needs a crowd; they must never become central, shadowed, named, or connected to a speech bubble.
 - If a panel says a shadow falls on a character, draw lighting/shadow ON that existing named character. Do NOT interpret "shadow" or a dark style tag as permission to create a separate black silhouette person.
@@ -1117,7 +1123,7 @@ ${SAFE_VISUAL_CONTENT_LOCK}
 - Dialogue punctuation is part of the script lock. Copy the dialogue exactly as written; do NOT add periods, commas, ellipses, exclamation marks, emphasis marks, or spacing unless they already exist in the Dialogue line.
 - ${preserveReferenceStyle ? 'Panel mood may become more serious through expression, acting, camera, composition and lighting, but the character-sheet art style must remain identical in all four panels.' : seriousTone ? 'Panel style may be dramatic or restrained and may vary with the selected serious emotion cues, but must never become comedic, chibi, or a gag release. Keep the story consequences, cast, key prop and bold camera readable.' : 'Panel style may be dramatic, dark, or comedic, but style must never change the story, add cast members, replace the key prop, or make the page look like a clean generic anime template.'}
 
-PANEL-BY-PANEL CLOTHING FOLD PRIORITY: ${preserveReferenceStyle ? 'Follow the character sheet\'s existing fold-line and shadow treatment in every panel; do not introduce a new rendering method.' : 'When a panel shows folded clothing, render 2-4 distinct small dark triangular shadow fills at visible crease junctions. Use hard cel-shaded edges, especially on light shirts, blouses, jackets, and sleeves. These are localized form shadows only: never scatter triangles across smooth fabric or turn them into a print/pattern.'}
+PANEL-BY-PANEL CLOTHING FOLD PRIORITY: ${preserveReferenceStyle ? REFERENCE_FOLD_RENDERING : panelColorMedia ? OPENAI_COLOR_FOLD_PRIORITY : 'When a panel shows folded clothing, render 2-4 distinct small dark triangular shadow fills at visible crease junctions. Use hard cel-shaded edges, especially on light shirts, blouses, jackets, and sleeves. These are localized form shadows only: never scatter triangles across smooth fabric or turn them into a print/pattern.'}
 
 PANEL DESCRIPTIONS:
 

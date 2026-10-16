@@ -1222,7 +1222,7 @@ try {
     assert.match(prompt,/0\.6%/);assert.match(prompt,/white gutters/);
   });
   test('observed dialogue is checked in physical reading slots, not reordered by the story',()=>{
-    const spokenSource=m.readExperimentalSource({...input,scenario:scenario.replace(/セリフなし/g,'人物A：「同じ言葉」').replace(/同じ言葉」$/,'結末の言葉」')});
+    const spokenSource=m.readExperimentalSource({...input,scenario:scenario.replace(/セリフなし/g,'人物A：「同じ言葉、私は人物A。」').replace(/同じ言葉、私は人物A。」$/,'結末の言葉」')});
     const spokenPlan=structuredClone(six);
     for(const p of spokenPlan.panels) p.dialogueIds=p.kind==='anchor'?[p.sourcePanel-1]:[];
     const contract=m.validateExperimentalPlan(spokenPlan,spokenSource);
@@ -1231,6 +1231,13 @@ try {
     report.evidence.forEach((e,i)=>e.center=[rects[i].x+rects[i].w/2,rects[i].y+rects[i].h/2]);
     report.evidence.forEach(e=>{e.cast_instances=(contract.expectedCast.find(c=>c.panel===e.panel)?.names||[]).map(name=>({name,observed_count:1,status:'ok',instances:[{location:'右前景の一つの身体',matched_features:['黒い短髪','赤い服']}]}));});
     assert.equal(m.validateExperimentalReview(report,contract).status,'pass');
+    // A genuine name inside dialogue and harmless spacing/punctuation pass;
+    // an extra speaker heading printed in every balloon must remain a defect.
+    const labeled=structuredClone(report);
+    labeled.evidence.forEach(e=>{e.dialogue=e.dialogue.map(text=>'人物A\n'+text);});
+    const labelFailure=m.validateExperimentalReview(labeled,contract);
+    assert.equal(labelFailure.readingOrder,'fail');
+    assert.equal(labelFailure.status,'warning');
     const reversed=structuredClone(report);
     [reversed.evidence[4].dialogue,reversed.evidence[5].dialogue]=[reversed.evidence[5].dialogue,reversed.evidence[4].dialogue];
     const result=m.validateExperimentalReview(reversed,contract);

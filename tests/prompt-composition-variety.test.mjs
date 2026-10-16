@@ -480,7 +480,7 @@ test('a pullback reveals setting and distances without imposing feet or confusin
 });
 
 test('Japanese Dutch and fisheye specify observable separate projection cues', () => {
-  assert.match(getPanelShotExecution('目の高さで右側面、望遠、ダッチアングル'), /tilt scene axes/);
+  assert.match(getPanelShotExecution('目の高さで右側面、望遠、ダッチアングル'), /ロール:/);
   assert.match(getPanelShotExecution('目の高さで右側面、望遠、ダッチアングル'), /compressed depth/);
   assert.doesNotMatch(getPanelShotExecution('目の高さで右側面、望遠、ダッチアングル'), /look up|look down/);
   assert.match(getPanelShotExecution('真上から魚眼レンズで見下ろす全景'), /curved.*edges/);
@@ -565,7 +565,7 @@ test('single camera prohibitions leave later affirmative elevation lens and fram
   assert.equal(classifyCameraElevation('アオリ禁止。俯瞰。'), 'high');
   assert.doesNotMatch(getPanelShotExecution('望遠禁止。広角。'), /compressed depth/);
   assert.match(getPanelShotExecution('望遠禁止。広角。'), /near\/far scale contrast/);
-  assert.doesNotMatch(getPanelShotExecution('ダッチ禁止。顔のアップ。'), /tilt scene axes/);
+  assert.doesNotMatch(getPanelShotExecution('ダッチ禁止。顔のアップ。'), /ロール:/);
   assert.match(getPanelShotExecution('全身禁止。顔のアップ。'), /tight crop/);
   assert.doesNotMatch(getPanelShotExecution('全身禁止。顔のアップ。'), /head-to-feet/);
 });
@@ -591,29 +591,29 @@ test('prohibited full-body additions cannot override a close crop, while affirma
 
 test('English camera prohibitions are bounded to named terms and preserve later affirmative clauses', () => {
   const cases = [
-    ['high-angle, no Dutch tilt', 'high', /tilt scene axes/],
-    ['no high-angle or Dutch tilt; low-angle telephoto', 'low', /look down|tilt scene axes/],
-    ['without fisheye, eye-level or Dutch tilt, high-angle telephoto', 'high', /fisheye:|tilt scene axes/],
+    ['high-angle, no Dutch tilt', 'high', /ロール:/],
+    ['no high-angle or Dutch tilt; low-angle telephoto', 'low', /look down|ロール:/],
+    ['without fisheye, eye-level or Dutch tilt, high-angle telephoto', 'high', /fisheye:|ロール:/],
     ['avoid low-angle and wide-angle; high-angle close-up', 'high', /look up|near\/far scale contrast/],
     ['no telephoto; low-angle wide-angle', 'low', /compressed depth/],
-    ['non-eye-level, high-angle; non-Dutch tilt', 'high', /tilt scene axes/],
-    ['ダッチアングルなし。俯瞰・望遠', 'high', /tilt scene axes/],
+    ['non-eye-level, high-angle; non-Dutch tilt', 'high', /ロール:/],
+    ['ダッチアングルなし。俯瞰・望遠', 'high', /ロール:/],
   ];
   for (const [camera, elevation, absent] of cases) {
     assert.equal(classifyCameraElevation(camera), elevation, camera);
     assert.doesNotMatch(getPanelShotExecution(camera), absent, camera);
   }
   assert.match(getPanelShotExecution(cases[2][0]), /look down.*compressed depth/);
-  assert.match(getPanelShotExecution('no fisheye or eye-level, Dutch angle, low-angle'), /look up.*tilt scene axes/);
-  assert.match(getPanelShotExecution('俯瞰禁止。アオリ、ダッチアングル。'), /look up.*tilt scene axes/);
+  assert.match(getPanelShotExecution('no fisheye or eye-level, Dutch angle, low-angle'), /look up.*ロール:/);
+  assert.match(getPanelShotExecution('俯瞰禁止。アオリ、ダッチアングル。'), /look up.*ロール:/);
 });
 
 test('actor head tilt is not a camera roll while explicit scene tilt remains effective', () => {
   for (const camera of ['medium shot; her head tilts to the left', 'close-up, head tilt', '高所からの中景。人物の顔の傾きを見せる', '中景、首の傾き']) {
-    assert.doesNotMatch(getPanelShotExecution(camera), /tilt scene axes/, camera);
+    assert.doesNotMatch(getPanelShotExecution(camera), /ロール:/, camera);
   }
   for (const camera of ['medium shot, camera tilt', 'tilted scene axes', 'Dutch tilt; her head tilts to the left', 'ダッチアングル、人物の顔の傾きを保つ']) {
-    assert.match(getPanelShotExecution(camera), /tilt scene axes/, camera);
+    assert.match(getPanelShotExecution(camera), /ロール:/, camera);
   }
 });
 
@@ -655,14 +655,14 @@ test('compact shot execution retains observable geometry without inventing a str
   const shot = camera => getPanelShotExecution(camera, { compact: true });
   assert.equal(shot('中景。人物が相手を見下ろす'), '');
   assert.match(shot('やや高めから撮る中景'), /頭\/肩の上面.*胴の短縮/);
-  assert.match(shot('やや高めから撮る中景'), /指定角度.*急俯瞰.*禁止/);
+  assert.match(shot('やや高めから撮る中景'), /指定角を弱めず強めない/);
   assert.match(shot('低い位置から水平に撮る中景'), /水平.*低い地平線/);
   assert.doesNotMatch(shot('低い位置から水平に撮る中景'), /見上げ|顎.*下面/);
   assert.match(shot('右後方からの広角接写'), /主対象を寄りで切取.*背面.*距離\/切取り保持/);
   assert.doesNotMatch(shot('右後方からの広角接写'), /全身|両靴|俯瞰:|アオリ:/);
   assert.match(shot('俯瞰、望遠、ダッチアングル'), /遠い撮影位置.*長焦点.*奥行圧縮/);
-  assert.match(shot('俯瞰、望遠、ダッチアングル'), /顔だけでなく.*場面軸/);
-  assert.doesNotMatch(shot('俯瞰、望遠、ダッチアングルなし'), /場面軸/);
+  assert.match(shot('俯瞰、望遠、ダッチアングル'), /場面の鉛直\/水平.*光軸回り/);
+  assert.doesNotMatch(shot('俯瞰、望遠、ダッチアングルなし'), /ロール:|光軸回り/);
   for (const camera of ['俯瞰、望遠、ダッチアングル', '床近くから水平に撮る', '右後方の全身引き']) {
     assert.equal(getPanelShotExecution(camera), getPanelShotExecution(camera, { compact: false }));
   }

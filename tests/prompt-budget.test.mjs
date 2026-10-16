@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { buildRenderOptionsContract, buildProtectedCastContract, readProtectedCast } from '../src/lib/render-options.js';
 import test, { after, before } from 'node:test';
 import { createServer } from 'vite';
+import { buildActorMediumInstruction } from '../src/lib/panel-utils.js';
 
 let server;
 let buildMangaPrompt;
@@ -125,10 +126,13 @@ test('ChatGPT default removes repeated instructions without treating the Web pas
   // Keep the same overhead cap and the actual API ceiling while retaining them.
   const recipeChars = [...prompt.matchAll(/^Style: (.+)$/gm)].reduce((sum, match) => sum + match[0].length, 0);
   assert.ok(recipeChars > 0, 'explicit panel rendering recipes must survive soft compaction');
+  const actorRecipes = new Set(['POP_ART', 'WATERCOLOR', 'GEKIGA'].map(style => buildActorMediumInstruction(style, 'color')));
+  const actorRecipeChars = prompt.split('\n').filter(line => actorRecipes.has(line)).reduce((sum, line) => sum + line.length, 0);
+  assert.ok(actorRecipeChars > 0, 'actor construction is rendering content, not repeated infrastructure');
   const projectionChars = [...prompt.matchAll(/Face\/body\/setting share projection, no frontal face on tilted BG; keep scripted height\/pitch\/proportions/g)]
     .reduce((sum, match) => sum + match[0].length, 0);
   assert.ok(projectionChars > 0, 'local face/body projection must survive soft compaction');
-  const overhead = prompt.length - buildRenderOptionsContract().length - buildProtectedCastContract(readProtectedCast(prompt)).length - recipeChars - projectionChars;
+  const overhead = prompt.length - buildRenderOptionsContract().length - buildProtectedCastContract(readProtectedCast(prompt)).length - recipeChars - actorRecipeChars - projectionChars;
   assert.ok(overhead < 18000, `unexpected non-rendering overhead: ${overhead}; total=${prompt.length}`);
   assert.equal((prompt.match(/FOCAL READABILITY:/g) || []).length, 1);
   assert.ok(prompt.length <= 32000);

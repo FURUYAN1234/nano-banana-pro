@@ -1,3 +1,4 @@
+import { getBuiltinPanelMediumReference } from './lib/builtin-panel-medium-reference.js';
 import React, { useState, useEffect, useRef } from 'react';
 
 import {
@@ -20,6 +21,8 @@ import Step2Panel from './components/Step2Panel';
 import Step3Panel from './components/Step3Panel';
 import ExplanationPanel from './components/ExplanationPanel';
 import Step4Panel from './components/Step4Panel';
+import { SavedMangaImageInput } from './components/PanelStyleEditForm';
+import { getEffectiveEngine } from './lib/engine-state';
 import ControlBar from './components/ControlBar';
 import SystemHeader from './components/SystemHeader';
 import GenerationPreview from './components/GenerationPreview';
@@ -27,7 +30,7 @@ import GenerationHistory from './components/GenerationHistory';
 import ExperimentalMangaPanel from './components/ExperimentalMangaPanel';
 
 function App() {
-  const [experimentEnabled, setExperimentEnabled] = useState(false);
+  const [experimentEnabled, setExperimentEnabled] = useState(true);
   // --- All 113 variables from useMangaWorkflow (auto-audited, zero omissions) ---
   const {
     changePageMode,
@@ -78,6 +81,11 @@ function App() {
     generatedImage,
     normalizeDisplayedPage,
     editGeneratedImage,
+    preparePanelStyleEditor,
+    loadSavedMangaImage,
+    generatePanelStyleEdit,
+    adoptPanelStyleEdit,
+    discardPanelStyleEdit,
     generationHistory,
     handleFullAutoToggle,
     handleSetKey,
@@ -497,7 +505,13 @@ function App() {
 
           {/* 出力結果 */}
           <div>
-          {!isAnalyzing && !isSearching && !isAssembling && Boolean(finalPrompt?.trim()) && (<Step4Panel
+          {getEffectiveEngine(selectedEngine, enableOpenAIApi) === 'openai' && <SavedMangaImageInput
+            busy={isApiProcessing || isFullAutoMode || isEndlessMode || isEnhancing || is360CameraWorking}
+            onLoad={loadSavedMangaImage}
+          />}
+          {!isAnalyzing && !isSearching && !isAssembling && Boolean(finalPrompt?.trim() || generatedImage) && (<Step4Panel
+              step2Ref={step2Ref}
+              step3Ref={step3Ref}
               experimentalEnabled={experimentEnabled}
               referenceAssets={referenceAssets}
               imageEditDrafts={imageEditDrafts}
@@ -511,6 +525,7 @@ function App() {
               setFinalPrompt={setFinalPrompt}
               copyPrompt={copyPrompt}
               prepareWebCopyPrompt={prepareWebCopyPrompt}
+              mediumReference={getBuiltinPanelMediumReference({scenario,colorMode,styleJson,punchlineType})}
               webCopyPartLengths={webCopyPartLengths}
               copiedPartIndex={copiedPartIndex}
               isTextSaved={isTextSaved}
@@ -567,6 +582,10 @@ function App() {
               images={images}
               normalizeDisplayedPage={normalizeDisplayedPage}
               editGeneratedImage={editGeneratedImage}
+              preparePanelStyleEditor={preparePanelStyleEditor}
+              generatePanelStyleEdit={generatePanelStyleEdit}
+              adoptPanelStyleEdit={adoptPanelStyleEdit}
+              discardPanelStyleEdit={discardPanelStyleEdit}
               isFullAutoMode={isFullAutoMode}
               fullAutoStep={fullAutoStep}
               mangaTitle={mangaTitle}
@@ -582,7 +601,7 @@ function App() {
               MAX_POLICY_RETRIES={MAX_POLICY_RETRIES}
             />)}
 
-            {Boolean(finalPrompt?.trim()) && (<GenerationHistory
+            {Boolean(finalPrompt?.trim() || generatedImage) && (<GenerationHistory
               generationHistory={generationHistory}
               setGenerationHistory={setGenerationHistory}
               generatedImage={generatedImage}

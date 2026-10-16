@@ -277,12 +277,11 @@ test('Gemini prompt has stability locks for dialogue duplication, invented cast,
   assert.match(prompt, /coherent anatomy/i);
   assert.match(prompt, /setting depth/i);
   assert.match(prompt, /CLOTHING FOLD SHADOW ASSIST/);
-  assert.match(prompt, /overlapping, pinched, and intersecting fabric folds/i);
-  assert.match(prompt, /wedge-shaped triangular cel-shaded shadow planes/i);
-  assert.match(prompt, /distinct small dark triangular fill at each selected crease junction/i);
-  assert.match(prompt, /not printed patterns or random geometric marks/i);
+  assert.match(prompt, /CLOTHING FOLD SHADOW ASSIST: Follow panel medium and FOLD PRIORITY below\./);
   assert.match(prompt, /PANEL-BY-PANEL CLOTHING FOLD PRIORITY/);
-  assert.match(prompt, /2-4 distinct small dark triangular shadow fills/i);
+  assert.match(prompt, /FOLD PRIORITY: 2-4 triangular overlap\/pinch shadows in panel medium; hard cel edges NORMAL\/unmarked only; no geometric patterns\./);
+  assert.match(prompt, /No cel-fill or watercolor filter over anime; pigment shapes build faces and folds/);
+  assert.doesNotMatch(prompt, /wedge-shaped triangular cel-shaded shadow planes|distinct small dark triangular fill at each selected crease junction|Use hard cel-shaded edges, especially on light shirts/i);
   assert.doesNotMatch(prompt, /Japanese dialogue MUST end with a period/i);
   assert.doesNotMatch(prompt, /accurately reflect classic anime styles/i);
   assert.doesNotMatch(prompt, /デザイン募集|著作権|クッキー|現金/);

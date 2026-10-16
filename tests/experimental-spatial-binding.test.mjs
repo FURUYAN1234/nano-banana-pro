@@ -106,11 +106,12 @@ try {
         assert.equal(occurrences(prompt, `[PAGE FRAME P${index + 1} | `), 1);
         assert.equal(occurrences(prompt, `[END PAGE FRAME P${index + 1}]`), 1);
         assert.ok(block.body.includes(`Camera: ${panel.camera}; Style: ${source.panels[panel.sourcePanel - 1].style}; Action: ${panel.action}`));
-        const expected = panel.dialogueIds.length ? panel.dialogueIds.map(id =>
-          JSON.stringify(validated.expectedDialogue.find(line => line.id === id))).join('; ') : 'SILENT';
-        assert.ok(block.body.includes(`Dialogue: ${expected}`), 'approved speech belongs inside its own physical frame');
+        const expected = panel.dialogueIds.map(id => validated.expectedDialogue.find(line => line.id === id).text);
+        const printed = [...block.body.matchAll(/\bB\d+=("(?:\\.|[^"\\])*")/g)].map(match => JSON.parse(match[1]));
+        assert.deepEqual(printed, expected, 'approved speech belongs inside its own physical frame');
+        if (!expected.length) assert.ok(block.body.includes('Dialogue: SILENT'));
         for (const line of validated.expectedDialogue) {
-          assert.equal(block.body.includes(JSON.stringify(line)), panel.dialogueIds.includes(line.id), 'speech must not leak into another frame');
+          assert.equal(printed.includes(line.text), panel.dialogueIds.includes(line.id), 'speech must not leak into another frame');
         }
       });
       for (const beat of source.panels) {
@@ -153,7 +154,7 @@ try {
     const blocks = frames(m.buildExperimentalImagePrompt(plan, source, input));
     assert.equal(blocks.length, 6);
     assert.equal(blocks[0].position, 'RIGHT, top=0%, bottom=52% of comic area');
-    assert.ok(blocks[1].body.includes(JSON.stringify(validated.expectedDialogue.find(line => line.id === source.panels[1].dialogueIds[0]))));
+    assert.ok(blocks[1].body.includes(JSON.stringify(validated.expectedDialogue.find(line => line.id === source.panels[1].dialogueIds[0]).text)));
     assert.ok(blocks[3].body.includes('Dialogue: SILENT'));
     assert.ok(blocks.at(-1).position.endsWith(' | FINAL ENDING'));
   });
