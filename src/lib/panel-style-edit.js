@@ -29,14 +29,20 @@ function validateRegion(page, region) {
 
 // The existing provider accepts these manuscript canvases only. Padding keeps
 // the selected panel at native resolution; no invented API size or resampling.
-export function createPanelStyleEditPlan(page, region, requestedSize = DEFAULT_OPENAI_IMAGE_SIZE) {
+export function createPanelStyleEditPlan(page, region, requestedSize = DEFAULT_OPENAI_IMAGE_SIZE, provider = 'openai') {
   validateRegion(page, region);
-  const size = OPENAI_IMAGE_SIZE_OPTIONS.find(option => option.value === requestedSize);
+  if (!['openai', 'gemini'].includes(provider)) throw new RangeError('対応していないプロバイダーです。');
+  const edge = provider === 'gemini' ? [1024, 2048, 4096].find(n => n >= Math.max(region.width, region.height)) : undefined;
+  const size = provider === 'gemini'
+    ? edge && { value: `${edge}x${edge}`, width: edge, height: edge }
+    : OPENAI_IMAGE_SIZE_OPTIONS.find(option => option.value === requestedSize);
   if (!size) throw new RangeError('対応していない画像サイズです。');
   if (region.width > size.width || region.height > size.height) {
     throw new RangeError('原寸のコマが収まりません。大きい画像サイズを選択してください。');
   }
   return Object.freeze({
+    provider,
+    ...(provider === 'gemini' ? { imageOptions: Object.freeze({ aspectRatio: '1:1', imageSize: `${edge / 1024}K` }) } : {}),
     page: Object.freeze({ width: page.width, height: page.height }),
     region: Object.freeze({ x: region.x, y: region.y, width: region.width, height: region.height }),
     size: size.value,
@@ -46,7 +52,8 @@ export function createPanelStyleEditPlan(page, region, requestedSize = DEFAULT_O
 }
 
 function validatePlan(plan) {
-  const expected = createPanelStyleEditPlan(plan?.page, plan?.region, plan?.size);
+  const expected = createPanelStyleEditPlan(plan?.page, plan?.region, plan?.size, plan?.provider);
+  if (JSON.stringify(plan.imageOptions) !== JSON.stringify(expected.imageOptions)) throw new RangeError('画像モデルのサイズ指定が一致しません。');
   for (const key of ['canvas', 'editRegion']) {
     if (!plan[key] || Object.keys(expected[key]).some(field => plan[key][field] !== expected[key][field])) {
       throw new RangeError('画風修正の領域計画が一致しません。');
@@ -68,11 +75,11 @@ export function buildPanelStyleEditRequest(paddedSource, plan, { mode = 'style',
       'The surrounding white padding is not part of the scene. Keep the panel rectangle fixed; requested scene and camera changes occur inside it.',
       'USER PANEL INSTRUCTION:', instruction.trim(),
       `Return exactly one ${plan.canvas.width} x ${plan.canvas.height} image with the edited panel in its original pixel rectangle and white padding outside.`,
-    ].join('\n'));
+    ].join('\n'), {colorMode});
   }
   if (instruction !== undefined) throw new RangeError('画風指定と自由入力は併用できません。');
   if (!EDIT_STYLES.has(style)) throw new RangeError('対応していない画風です。');
-  const recipe = buildEmotionBlock(`[EMOTION: ${style}]`, colorMode, { providerFamily: 'chatgpt' }).trim()
+  const recipe = buildEmotionBlock(`[EMOTION: ${style}]`, colorMode, { providerFamily: plan.provider === 'gemini' ? 'gemini' : 'chatgpt' }).trim()
     || 'NORMAL: standard Japanese manga ink drawing. Keep identifying facial features and all acting.';
   return buildImageEditRequest(paddedSource, [
     `SELECTED PANEL STYLE EDIT: ${style}. Change only the drawing medium of the single existing panel.`,
@@ -85,7 +92,7 @@ export function buildPanelStyleEditRequest(paddedSource, plan, { mode = 'style',
     'Apply the selected medium to every visible actor, face, hair, garment, prop and background within this panel, without changing the acting or scene.',
     recipe,
     `Return exactly one ${plan.canvas.width} x ${plan.canvas.height} image with the edited panel in its original pixel rectangle and white padding outside.`,
-  ].join('\n'));
+  ].join('\n'), {colorMode});
 }
 
 // Copy-on-write RGBA composition. The provider's surrounding canvas is never
@@ -165,9 +172,32 @@ export function orderPanelStyleEditFrames(regions, page, { plan } = {}) {
 export async function readPanelStyleEditFrames(sourceDataUrl, count, options = {}) {
   if (!Number.isInteger(count) || count < 4 || count > 8) throw new RangeError('コマ数は4〜8で指定してください。');
   const { pixels } = await readPixels(sourceDataUrl);
-  const regions = detectVariablePanelFrames(pixels, count);
-  if (regions.length !== count) throw new Error('コマ枠を確定できません。元画像は変更していません。');
-  const ordered = orderPanelStyleEditFrames(regions, pixels, options);
+  let ordered;
+  const lineage = options.editLineage;
+  if (Array.isArray(lineage) && lineage.length) {
+    if (lineage.length > 10) throw new Error('コマ修正の履歴が不正です。');
+    const { sourceImage, region } = lineage[0];
+    validateRegion(pixels, region);
+    const previous = await readPanelStyleEditFrames(sourceImage, count, { ...options, editLineage: lineage.slice(1) });
+    if (previous.width !== pixels.width || previous.height !== pixels.height
+      || !previous.frames.some(frame => ['x','y','width','height'].every(key => frame.region[key] === region[key]))) {
+      throw new Error('元画像のコマ領域と修正領域が一致しません。');
+    }
+    const { pixels: original } = await readPixels(sourceImage);
+    for (let y = 0; y < pixels.height; y++) for (let x = 0; x < pixels.width; x++) {
+      if (x >= region.x && x < region.x + region.width && y >= region.y && y < region.y + region.height) continue;
+      const offset = (y * pixels.width + x) * 4;
+      for (let c = 0; c < 4; c++) if (pixels.data[offset+c] !== original.data[offset+c]) {
+        throw new Error('修正対象外の画素が変わっています。コマ領域を引き継げません。');
+      }
+    }
+    ordered = { readingOrderConfirmed: previous.readingOrderConfirmed, readingOrderNote: previous.readingOrderNote,
+      frames: previous.frames.map(frame => ({ index: frame.index, panelNumber: frame.panelNumber, region: { ...frame.region } })) };
+  } else {
+    const regions = detectVariablePanelFrames(pixels, count);
+    if (regions.length !== count) throw new Error('コマ枠を確定できません。元画像は変更していません。');
+    ordered = orderPanelStyleEditFrames(regions, pixels, options);
+  }
   const frames = [];
   for (const frame of ordered.frames) {
     frames.push({ ...frame, thumbnail: (await extractNativeImageRegion(sourceDataUrl, frame.region)).dataUrl });
@@ -177,7 +207,7 @@ export async function readPanelStyleEditFrames(sourceDataUrl, count, options = {
 
 export async function preparePanelStyleEdit(sourceDataUrl, region, options = {}) {
   const { pixels } = await readPixels(sourceDataUrl);
-  const plan = createPanelStyleEditPlan(pixels, region, options.requestedSize);
+  const plan = createPanelStyleEditPlan(pixels, region, options.requestedSize, options.provider);
   const before = (await extractNativeImageRegion(sourceDataUrl, region)).dataUrl;
   const { image } = await readPixels(before);
   const { canvas, context } = canvasFor(plan.canvas.width, plan.canvas.height);

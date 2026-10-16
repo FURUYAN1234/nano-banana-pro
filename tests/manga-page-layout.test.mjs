@@ -1,6 +1,26 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { PAGE_LAYOUT, detectPageBands, detectVariablePanelFrames, buildPageDrawPlan, normalizePageCandidate, scalePageLayout } from '../src/lib/manga-page-layout.js';
+import * as pagePixels from '../src/lib/manga-page-layout.js';
+
+test('monochrome finishing removes only chroma, retains geometry/alpha/neutral tones, and never processes color candidates', async () => {
+  const data = new Uint8ClampedArray([255,255,255,255, 0,0,0,255, 127,127,127,255, 180,160,170,200]);
+  const original = data.slice();
+  const result = pagePixels.neutralizeMonochromePixels({width:2,height:2,data});
+  assert.deepEqual(data,original);
+  assert.deepEqual([result.width,result.height,result.changedPixels],[2,2,1]);
+  assert.deepEqual([...result.data.slice(0,12)],[...data.slice(0,12)]);
+  assert.deepEqual([...result.data.slice(12)],[165,165,165,200]);
+  for(let i=0;i<result.data.length;i+=4) assert.equal(result.data[i],result.data[i+2]);
+  const source={base64Img:'YWJj',mimeType:'image/png',modelId:'image-model'};
+  let calls=0;
+  const normalize=async()=>{calls++;return {dataUrl:'data:image/png;base64,ZGVm',changedPixels:1,width:2,height:2};};
+  assert.equal(await pagePixels.finalizeMonochromeCandidate(source,'color',normalize),source);
+  assert.equal(calls,0,'color must bypass even decoding');
+  const mono=await pagePixels.finalizeMonochromeCandidate(source,'monochrome',normalize);
+  assert.equal(calls,1); assert.equal(mono.base64Img,'ZGVm'); assert.equal(mono.modelId,'image-model');
+  assert.equal(mono.originalImage,'data:image/png;base64,YWJj');
+});
 
 test('slightly sloped borders and rounded corners retain real frames without accepting a deep notch',()=>{
   const width=1000,height=1400;

@@ -382,6 +382,7 @@ export default function Step4Panel({
   // raw flag directly.
   const isOpenAIImageMode = getEffectiveEngine(selectedEngine, enableOpenAIApi) === 'openai';
   const isChatGPTWebGuide = isOpenAIImageMode || enableChatGPTMode;
+  const imageEditorBusy = isGeneratingImage || isSearching || isAssembling || isEnhancing || isAnalyzing || isFixingPolicy || isFullAutoMode;
   const isSeriousEnhancementMode = getEndingModePolicy(punchlineType).endingTone === 'serious';
   const displayedHistory = generationHistory.find(item => item.img === generatedImage);
   const isImportedManga = displayedHistory?.metadataContext?.settings?.imported_manga === true;
@@ -1049,9 +1050,8 @@ No explanations. No partial results.`;
                   <h3 className="web-prompt-copy-heading">ChatGPT Webへの貼り付け手順</h3>
                   {mediumReference && (
                     <div className="my-3 rounded-lg border border-cyan-400/30 p-3">
-                      <p className="text-sm text-cyan-100">この台本には描法見本を使用します。ChatGPTの画像APIでは自動添付されます。Webでは下の見本を保存し、STEP1の元画像をすべて添付した後、最後に追加してください。</p>
+                      <p className="text-sm text-cyan-100">この台本には描法見本を使用します。ChatGPTの画像APIでは自動添付されます。Webでは描法見本を保存し、STEP1の元画像をすべて添付した後、最後に追加してください。</p>
                       <a href={mediumReference.imageUrl} download="nano-panel-media.png" className="inline-flex items-center gap-3 mt-2 text-cyan-200 underline">
-                        <img src={mediumReference.imageUrl} alt="コマの描法見本" className="h-28 w-auto rounded" />
                         描法見本を保存
                       </a>
                     </div>
@@ -1165,7 +1165,8 @@ No explanations. No partial results.`;
                       }
                     }}
                     title="Web版ChatGPT用の1枚絵エモーショナル演出プロンプトをクリップボードにコピーします。指示内容の感情を自動検知し、カメラ・ライティング・表情・VFXを最適化します。"
-                    className="save-guide-secondary w-full flex flex-wrap items-center justify-center gap-2 sm:gap-4 px-4 py-2.5 sm:py-3 rounded-xl text-sm font-black tracking-widest transition-all duration-100 border-2 border-b-4 select-none active:border-b-2 active:translate-y-0.5 shadow-lg"
+                    style={{ backgroundColor: '#fff', color: '#000', borderColor: '#aaa' }}
+                    className="w-full flex flex-wrap items-center justify-center gap-2 sm:gap-4 px-4 py-2.5 sm:py-3 rounded-xl text-sm font-black tracking-widest transition-all duration-100 border-2 border-b-4 select-none active:border-b-2 active:translate-y-0.5 shadow-lg"
                     aria-live="polite"
                   >
                     <span className="flex items-center gap-1.5 shrink-0">
@@ -1425,20 +1426,22 @@ No explanations. No partial results.`;
               </div>
               <p style={{ fontSize: '11px', lineHeight: 1.6 }} className="text-slate-400">{getDisplayedImageInfo(displayedImageSize?.image === generatedImage ? displayedImageSize : null, displayedHistory?.pageLayout)}</p>
               <ImageEditSection key={generatedImage} image={generatedImage}
-                busy={isGeneratingImage || isSearching || isAssembling || isEnhancing || isFixingPolicy || isFullAutoMode}
-                panelEditor={isOpenAIImageMode && preparePanelStyleEditor && generatePanelStyleEdit && adoptPanelStyleEdit && discardPanelStyleEdit && (
+                busy={imageEditorBusy}
+                panelEditor={preparePanelStyleEditor && generatePanelStyleEdit && adoptPanelStyleEdit && discardPanelStyleEdit && (
                   <PanelStyleEditForm image={generatedImage}
                     panelCount={displayedHistory?.metadataContext?.settings?.panel_count}
-                    busy={isGeneratingImage || isSearching || isAssembling || isEnhancing || isFixingPolicy || isFullAutoMode}
+                    maxPanelCount={isOpenAIImageMode ? 8 : 4}
+                    busy={imageEditorBusy}
                     onPrepare={preparePanelStyleEditor}
                     onGenerate={generatePanelStyleEdit}
                     onAdopt={adoptPanelStyleEdit}
                     onDiscard={discardPanelStyleEdit} />
                 )}>
                 <ImageEditForm image={generatedImage}
+                  colorMode={displayedHistory?.metadataContext?.settings?.color_mode || colorMode}
                   draft={imageEditDrafts[generatedImage] || ''}
                   onDraftChange={text => setImageEditDraft(generatedImage, text)}
-                  busy={isGeneratingImage || isSearching || isAssembling || isEnhancing || isFixingPolicy || isFullAutoMode}
+                  busy={imageEditorBusy}
                   providerLabel={isOpenAIImageMode ? 'OpenAI' : 'Gemini'}
                   onSubmit={editGeneratedImage} />
               </ImageEditSection>

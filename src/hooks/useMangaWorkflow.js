@@ -38,7 +38,7 @@ import {
 } from '../lib/prompt-assembler';
 import { addGenerationHistoryItem, collectRecentScenarioOutcomes, createScenarioSourceKey, findScenarioSourceKey, getWorkflowStep } from '../lib/generation-history';
 import { createFinalImageSaver } from '../lib/generated-image-save.js';
-import { inspectImageDimensions, inspectNativeMonochromeChroma, extractMangaPanelCrops, normalizePageCandidate, formatPageLayoutStatus } from '../lib/manga-page-layout.js';
+import { inspectImageDimensions, inspectNativeMonochromeChroma, extractMangaPanelCrops, normalizePageCandidate, formatPageLayoutStatus, finalizeMonochromeCandidate } from '../lib/manga-page-layout.js';
 import { generateScenario, enhanceScenarioText } from '../lib/scenario-provider';
 import { fixPolicyViolation } from '../lib/policy-fixer';
 import { verifyApiKeyConnection } from '../lib/api-key-preflight';
@@ -72,8 +72,7 @@ import { DEFAULT_OPENAI_SCENARIO_MODEL_ID, OPENAI_SCENARIO_MODEL_OPTIONS, OPENAI
 import { prepareExperimentalManga, buildExperimentalPageContract, buildExperimentalReviewPrompt, reviewExperimentalImage, validateExperimentalReview, reviewExperimentalCandidatePair, selectExperimentalCandidate, summarizeExperimentalLayouts } from '../lib/experimental-manga.js';
 import { resolvePageWorkflow, applyPageCandidateSelection } from '../lib/page-workflow.js';
 
-export default function useMangaWorkflow({ experimentalEnabled = true } = {}) {
-  const scenarioMode = experimentalEnabled ? 'experimental-manga' : 'four-panel';
+export default function useMangaWorkflow({ experimentalEnabled: requestedExperimentalEnabled = true } = {}) {
   const [scenarioModelId, setScenarioModelIdState] = useState(DEFAULT_OPENAI_SCENARIO_MODEL_ID);
   const setScenarioModelId = (modelId) => {
     const nextModelId = OPENAI_SCENARIO_TEXT_MODEL_IDS.includes(modelId)
@@ -261,6 +260,8 @@ export default function useMangaWorkflow({ experimentalEnabled = true } = {}) {
   // Legacy sessions can preserve one old flag across a hot update. Treat either
   // OpenAI signal as authoritative and immediately restore one coherent engine.
   const effectiveEngine = getEffectiveEngine(selectedEngine, enableOpenAIApi);
+  const experimentalEnabled = Boolean(requestedExperimentalEnabled && effectiveEngine === 'openai');
+  const scenarioMode = experimentalEnabled ? 'experimental-manga' : 'four-panel';
   const isOpenAIEngine = effectiveEngine === 'openai';
   useEffect(() => {
     if (isOpenAIEngine && selectedEngine !== 'openai') {
@@ -1275,6 +1276,7 @@ export default function useMangaWorkflow({ experimentalEnabled = true } = {}) {
     recentLayouts:summarizeExperimentalLayouts(generationHistory.filter(item=>item.experimentalPlan).map(item=>({plan:item.experimentalPlan})).reverse()),
   });
   const changePageMode = (enabled) => {
+    if (enabled && getCurrentPromptProviderFamily() === 'gemini') return false;
     if (isApiProcessing) return false;
     if (enabled === experimentalEnabled) return true;
     promptAssemblyRunRef.colorLayoutPrepared=undefined;
@@ -1808,42 +1810,28 @@ export default function useMangaWorkflow({ experimentalEnabled = true } = {}) {
 
   const panelStyleEditBusy = () => isGeneratingImage || isSearching || isAssembling || isEnhancing
     || isAnalyzing || is360CameraWorking || isFixingPolicy || isFullAutoMode;
-  const loadSavedMangaImage = async (file) => {
-    if (!isOpenAIEngine || panelStyleEditBusy() || imageEditRunRef.current?.epoch === scenarioRunEpochRef.current) {
-      throw new Error('処理の完了後、OpenAIモードで保存画像を読み込んでください。');
-    }
-    if (!file || !['image/png', 'image/jpeg', 'image/webp'].includes(file.type) || !(file.size > 0)) {
-      throw new Error('PNG・JPEG・WebPの画像ファイルを選んでください。');
-    }
-    const epoch = scenarioRunEpochRef.current;
-    const sourceImage = generatedImage;
-    const img = await readFileAsDataURL(file);
-    const dimensions = await inspectImageDimensions(img);
-    if (!(dimensions.width > 0 && dimensions.height > 0)) throw new Error('画像の寸法を読み取れませんでした。');
-    if (scenarioRunEpochRef.current !== epoch || imageEditRunRef.displayedImage !== sourceImage
-      || imageEditRunRef.current?.epoch === epoch) throw new Error('処理状態が変更されました。読み込み直してください。');
-    const item = {
-      id: Date.now(), img, mimeType: file.type, imported: true, selected: true, qualityPass: false,
-      metadataContext: { settings: { imported_manga: true, quality_review: 'not_run' } },
-    };
-    setGenerationHistory(items => addGenerationHistoryItem(items, item));
-    imageEditRunRef.prepared = null;
-    imageEditRunRef.candidate = null;
-    setGeneratedImage(img);
-    setImageQualityNeedsRepair(false);
-    setIsGenerationError(false);
-    setGenLog(['[保存画像] 読み込みました。API生成・品質検査は実行していません。']);
-    showStatus('保存画像を読み込みました。追加API課金なし。');
-    return true;
-  };
   const preparePanelStyleEditor = async ({ sourceImage, panelCount }) => {
-    if (!isOpenAIEngine || !sourceImage || sourceImage !== generatedImage || panelStyleEditBusy()
+    const sourceCount = generationHistory.find(item => item.img === sourceImage)?.metadataContext?.settings?.panel_count;
+    if (!isOpenAIEngine && (panelCount !== 4 || (Number.isInteger(sourceCount) && sourceCount !== 4))) {
+      throw new Error('Geminiは4コマのみ対応しています。');
+    }
+    if (!sourceImage || sourceImage !== generatedImage || panelStyleEditBusy()
       || imageEditRunRef.current?.epoch === scenarioRunEpochRef.current) {
       throw new Error('表示中の画像を選び、処理の完了後にコマを確認してください。');
     }
     const epoch = scenarioRunEpochRef.current;
     const sourceHistory = generationHistory.find(item => item.img === sourceImage);
-    const prepared = await readPanelStyleEditFrames(sourceImage, panelCount, { plan: sourceHistory?.experimentalPlan });
+    const editLineage = [];
+    const visited = new Set();
+    let ancestor = sourceHistory;
+    while (ancestor?.metadataContext?.settings?.outside_panel_pixels_unchanged === true
+      && ancestor.metadataContext.settings.panel_edit?.region && ancestor.sourceImage) {
+      if (visited.has(ancestor.img) || editLineage.length >= 10) throw new Error('コマ修正の履歴が不正です。');
+      visited.add(ancestor.img);
+      editLineage.push({ sourceImage: ancestor.sourceImage, region: ancestor.metadataContext.settings.panel_edit.region });
+      ancestor = generationHistory.find(item => item.img === ancestor.sourceImage);
+    }
+    const prepared = await readPanelStyleEditFrames(sourceImage, panelCount, { plan: sourceHistory?.experimentalPlan, editLineage });
     if (imageEditRunRef.displayedImage !== sourceImage || scenarioRunEpochRef.current !== epoch) {
       throw new Error('修正元が変わりました。対象コマを確認し直してください。');
     }
@@ -1857,7 +1845,11 @@ export default function useMangaWorkflow({ experimentalEnabled = true } = {}) {
     const epoch = scenarioRunEpochRef.current;
     const prepared = imageEditRunRef.prepared;
     const frame = prepared?.frames.find(item => item.index === panelIndex);
-    if (!isOpenAIEngine || !sourceImage || sourceImage !== generatedImage || prepared?.sourceImage !== sourceImage
+    if (!isOpenAIEngine && prepared?.panelCount !== 4) {
+      showStatus('Geminiは4コマのみ対応しています。');
+      return null;
+    }
+    if (!sourceImage || sourceImage !== generatedImage || prepared?.sourceImage !== sourceImage
       || !frame || ['x', 'y', 'width', 'height'].some(key => frame.region[key] !== region?.[key])
       || panelStyleEditBusy() || imageEditRunRef.current?.epoch === epoch
       || imageEditRunRef.candidate?.epoch === epoch) {
@@ -1873,28 +1865,39 @@ export default function useMangaWorkflow({ experimentalEnabled = true } = {}) {
     setIsGeneratingImage(true);
     setIsGenerationError(false);
     setGenLog(['[コマ修正] 対象の1コマを修正します。元画像は採用まで保持します。']);
+    const startedAt = Date.now();
+    const timer = setInterval(() => {
+      if (isCurrent()) setGenLog(items => [...items.filter(item => !item.startsWith('[WAIT]')),
+        `[WAIT] コマ修正中… ${Math.floor((Date.now() - startedAt) / 1000)}秒経過`]);
+    }, 1000);
     try {
       const editInstruction = typeof instruction === 'string' ? instruction.trim() : instruction;
       const edit = await preparePanelStyleEdit(sourceImage, region, {
-        requestedSize: openAIImageSize, mode, style, instruction: editInstruction,
+        requestedSize: openAIImageSize, provider: isOpenAIEngine ? 'openai' : 'gemini', mode, style, instruction: editInstruction,
         colorMode: sourceHistory?.metadataContext?.settings?.color_mode || colorMode,
       });
       if (!isCurrent()) return null;
       beginApiWork();
-      const response = await generateImageWithOpenAI(edit.request.prompt, log, {
-        quality: openAIImageQuality, size: edit.plan.size, imageInputs: edit.request.imageInputs,
-      });
+      const response = isOpenAIEngine
+        ? await generateImageWithOpenAI(edit.request.prompt, log, {
+          quality: openAIImageQuality, size: edit.plan.size, imageInputs: edit.request.imageInputs,
+        })
+        : await generateImageWithImagen(edit.request.prompt, log, edit.request.referenceImages, edit.plan.imageOptions);
       if (!isCurrent()) return null;
       const base64 = String(response.base64Img || '').replace(/\s+/g, '');
       if (!base64) throw new Error('修正画像を受信できませんでした。');
-      const result = await composePanelStyleEdit(sourceImage, `data:${response.mimeType || 'image/png'};base64,${base64}`, edit.plan);
+      const outputMode = sourceHistory?.metadataContext?.settings?.color_mode || colorMode;
+      const finished = outputMode === 'monochrome'
+        ? await finalizeMonochromeCandidate({ base64Img: base64, mimeType: response.mimeType || 'image/png' }, outputMode)
+        : { base64Img: base64, mimeType: response.mimeType || 'image/png' };
+      const result = await composePanelStyleEdit(sourceImage, `data:${finished.mimeType};base64,${finished.base64Img}`, edit.plan);
       if (!isCurrent()) return null;
       if (result.outsidePixelsUnchanged !== true) throw new Error('対象コマ以外の画素を保持できませんでした。');
       const candidate = {
         sourceImage, sourceHistory, panelIndex, panelNumber: frame.panelNumber, panelCount: prepared.panelCount,
         region: { ...region }, mode, style, instruction: editInstruction,
         before: edit.before, after: result.after, image: result.dataUrl,
-        modelId: response.usedModel, prompt: edit.request.prompt,
+        modelId: response.usedModel, provider: isOpenAIEngine ? 'openai' : 'gemini', prompt: edit.request.prompt,
         inputImages: edit.request.imageInputs.map(item => ({ role: 'edit_source', dataUrl: item.image_url })),
         outsidePixelsUnchanged: true,
       };
@@ -1911,6 +1914,7 @@ export default function useMangaWorkflow({ experimentalEnabled = true } = {}) {
       }
       return null;
     } finally {
+      clearInterval(timer);
       if (imageEditRunRef.current === run && scenarioRunEpochRef.current === epoch) setIsGeneratingImage(false);
       if (imageEditRunRef.current === run) imageEditRunRef.current = null;
     }
@@ -1933,7 +1937,7 @@ export default function useMangaWorkflow({ experimentalEnabled = true } = {}) {
       generatedAt: new Date(timestamp).toISOString(), selected: true, qualityPass: false,
       editInstruction: `${candidate.panelNumber ? `${candidate.panelNumber}コマ目` : `選択範囲${candidate.panelIndex + 1}`}: ${candidate.mode === 'free' ? candidate.instruction : `画風 ${candidate.style}`}`,
       metadataContext: {
-        ...sourceHistory?.metadataContext, provider: 'openai', finalPrompt: candidate.prompt,
+        ...sourceHistory?.metadataContext, provider: candidate.provider, finalPrompt: candidate.prompt,
         inputImages: candidate.inputImages,
         settings: { ...sourceHistory?.metadataContext?.settings,
           panel_count: candidate.panelCount,
@@ -1962,13 +1966,21 @@ export default function useMangaWorkflow({ experimentalEnabled = true } = {}) {
     if (!generatedImage || isGeneratingImage || isSearching || isAssembling || isEnhancing
       || isAnalyzing || is360CameraWorking || isFixingPolicy || isFullAutoMode
       || imageEditRunRef.current?.epoch === epoch) return false;
-    let request;
-    try { request = buildImageEditRequest(generatedImage, instruction); }
-    catch (error) { showStatus(translateApiError(error)); return false; }
-    const run = { epoch };
-    imageEditRunRef.current = run;
     const sourceImage = generatedImage;
     const sourceHistory = generationHistory.find(item => item.img === sourceImage);
+    const sourceSettings = sourceHistory?.metadataContext?.settings;
+    let request;
+    try { request = buildImageEditRequest(sourceImage, instruction, {colorMode:sourceSettings?.color_mode || colorMode}); }
+    catch (error) { showStatus(translateApiError(error)); return false; }
+    const sourceCount = Number.isInteger(sourceSettings?.panel_count) && sourceSettings.panel_count >= 4 && sourceSettings.panel_count <= 8
+      ? sourceSettings.panel_count : undefined;
+    if (!isOpenAIEngine && sourceCount && sourceCount !== 4) {
+      showStatus('Geminiは4コマのみ対応しています。');
+      return false;
+    }
+    const run = { epoch };
+    imageEditRunRef.current = run;
+    const preserveNativePage = sourceCount ? sourceCount > 4 : experimentalEnabled;
     const isCurrent = () => scenarioRunEpochRef.current === epoch && imageEditRunRef.current === run;
     const log = message => { if (isCurrent()) setGenLog(items => [...items, message]); };
     setIsGeneratingImage(true);
@@ -1990,12 +2002,14 @@ export default function useMangaWorkflow({ experimentalEnabled = true } = {}) {
       const base64 = String(response.base64Img || '').replace(/\s+/g, '');
       if (!base64) throw new Error('Image response did not include usable image data.');
       const rawMimeType = response.mimeType || 'image/png';
-      const rawCandidate = {
+      let rawCandidate = {
         base64Img: base64, mimeType: rawMimeType, modelId: response.usedModel,
       };
-      const candidate = experimentalEnabled ? rawCandidate : await normalizePageCandidate(rawCandidate);
+      const outputMode = sourceSettings?.color_mode || colorMode;
+      if (outputMode === 'monochrome') rawCandidate = await finalizeMonochromeCandidate(rawCandidate, outputMode);
+      const candidate = preserveNativePage ? rawCandidate : await normalizePageCandidate(rawCandidate);
       if (!isCurrent()) return false;
-      if (!experimentalEnabled && !candidate.pageLayout?.applied) {
+      if (!preserveNativePage && !candidate.pageLayout?.applied) {
         throw new Error(`修正画像のページ比率を自動補正できませんでした。${candidate.pageLayout?.reason || ''}`.trim());
       }
       const mimeType = candidate.mimeType || rawMimeType;
@@ -2012,7 +2026,9 @@ export default function useMangaWorkflow({ experimentalEnabled = true } = {}) {
             provider: isOpenAIEngine ? 'openai' : 'gemini', scenario: '', finalPrompt: request.prompt,
             inputImages: [{ role: 'edit_source', dataUrl: sourceImage }],
             settings: { manual_image_edit: true, quality_review: 'not_run',
-              page_kind:experimentalEnabled?'experimental-manga':'four-panel' },
+              ...(sourceCount ? { panel_count: sourceCount } : {}),
+              color_mode: ['color','monochrome'].includes(sourceSettings?.color_mode) ? sourceSettings.color_mode : colorMode,
+              page_kind:preserveNativePage?'experimental-manga':'four-panel' },
           },
       };
       setGenerationHistory(items => {
@@ -2234,7 +2250,7 @@ export default function useMangaWorkflow({ experimentalEnabled = true } = {}) {
         }
         const normalizedImage = String(response.base64Img || '').replace(/\s+/g, '');
         if (!normalizedImage) throw new Error('Image response did not include usable image data.');
-        const candidate = {
+        let candidate = {
           base64Img: normalizedImage, mimeType: response.mimeType || 'image/png', modelId: response.usedModel,
           workflowSource,
           metadataContext: {
@@ -2242,6 +2258,10 @@ export default function useMangaWorkflow({ experimentalEnabled = true } = {}) {
             finalPrompt: metadataPrompt, inputImages: metadataInputImages, settings: metadataSettings, referenceContext,
           },
         };
+        if (colorMode === 'monochrome' && qualityMode !== 'single-image') {
+          candidate = await finalizeMonochromeCandidate(candidate, colorMode);
+          if (candidate.monochromeNormalization) statCallback(`[白黒仕上げ] 色成分を除去しました。原寸・線・濃淡を保持（${candidate.monochromeNormalization.changedPixels}画素）。`);
+        }
         if (qualityMode !== 'four-panel') return candidate;
         const normalized = await normalizePageCandidate(candidate);
         statCallback(formatPageLayoutStatus(normalized.pageLayout));
@@ -3388,7 +3408,6 @@ export default function useMangaWorkflow({ experimentalEnabled = true } = {}) {
     setGeneratedImage,
     normalizeDisplayedPage,
     editGeneratedImage,
-    loadSavedMangaImage,
     preparePanelStyleEditor,
     generatePanelStyleEdit,
     adoptPanelStyleEdit,

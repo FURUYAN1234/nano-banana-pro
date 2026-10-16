@@ -65,6 +65,61 @@ try {
     return { sourcePanel, kind:'anchor', camera:source.panels[i%source.panels.length].camera, action:'元の出来事の反応', dialogueIds:[], breakout:null };
   }) });
   const six = planFor(6);
+  test('native monochrome frames retain character skin bases without changing color output', () => {
+    const castList = '## 葵\n肌: 小麦色\n[WEIGHTS]: (tanned skin:1.2)\n## 凛\n肌: 明るい肌色\n[WEIGHTS]: (fair skin:1.2)';
+    const scenario = scenarioFor(6).replaceAll(/行動\d+/g, '葵と凛が木箱を運ぶ。');
+    const plan = structuredClone(six);
+    plan.panels.forEach(p => { p.action = '葵と凛が木箱を運ぶ。'; });
+    const colorSource = m.readExperimentalSource({scenario, castList, colorMode:'color'});
+    const color = m.buildExperimentalImagePrompt(plan, colorSource, {colorMode:'color'});
+    // Captured before the monochrome-only fix; version text is intentionally normalized.
+    assert.equal(createHash('sha256').update(color.replace(/v\d+\.\d+\.\d+/g,'v<VERSION>')).digest('hex'),
+      '5951da401a8db0995f364a3e4b3753238f54532d014a327b308308c48813f20f');
+    for (const count of [5,6,7,8]) {
+      const scenario = scenarioFor(count).replaceAll(/行動\d+/g, '葵と凛が木箱を運ぶ。');
+      const source = m.readExperimentalSource({scenario, castList, colorMode:'monochrome'});
+      const plan = {...planFor(count), layout:'mixed_rows'};
+      plan.panels.forEach(p => { p.action = '葵と凛が木箱を運ぶ。'; });
+      const prompt = m.buildExperimentalImagePrompt(plan, source, {colorMode:'monochrome'});
+      assert.equal((prompt.match(/WHITE-SKIN\[凛\]:lit=unprinted; shade=screen\/black/g)||[]).length, count);
+      assert.equal((prompt.match(/SCREEN-SKIN\[葵\]:base stays in light; no broad patches/g)||[]).length, count);
+      assert.doesNotMatch(prompt, /WHITE-SKIN\[葵\]/);
+    }
+    assert.doesNotMatch(color, /PANEL INK:|WHITE-SKIN\[|SCREEN-SKIN\[/);
+  });
+  test('native monochrome rendering and review interpret source paint as ink without changing source cameras',()=>{
+    const scenario=scenarioFor(6).replaceAll('行動','赤い札を掲げる行動');
+    const src=m.readExperimentalSource({...input,scenario});
+    const prompt=m.buildExperimentalImagePrompt(six,src,input);
+    assert.match(prompt,/SCENE COLOR PRIORITY: keep story and verbatim text; source hues yield to assigned ink\/skin bases/);
+    const review=m.buildExperimentalReviewPrompt(six,src,input);
+    assert.match(review,/MONOCHROME REVIEW:/);
+    assert.match(review,/MONOCHROME THREE-TONE MANUSCRIPT LOCK/);
+    const color=m.buildExperimentalReviewPrompt(six,{...src,colorMode:'color'},{...input,colorMode:'color'});
+    assert.doesNotMatch(color,/MONOCHROME REVIEW:|MONOCHROME THREE-TONE MANUSCRIPT LOCK/);
+    for(const p of six.panels) assert.ok(prompt.includes(p.camera));
+    assert.ok(prompt.includes('赤い札を掲げる行動'),'story evidence must not be removed to remove paint directives');
+  });
+  test('native monochrome cast descriptors strip source chroma and retain the final ink audit',()=>{
+    const castList='## 葵\n[WEIGHTS]: (blonde hair:1.2), (pink-tipped hair:1.3), (loose wavy hair:1.2), (tanned skin:1.2)\n## 凛\n[WEIGHTS]: (black hair:1.2), (fair skin:1.2)';
+    const src=m.readExperimentalSource({...input,castList});
+    const prompt=m.buildExperimentalImagePrompt(six,src,{colorMode:'monochrome'});
+    const cast=prompt.split('CAST: ')[1].split('[END REFERENCE CAST DATA]')[0];
+    assert.doesNotMatch(cast,/\b(?:pink|blonde|black)\b/i);
+    assert.match(cast,/loose wavy hair/);
+    assert.match(prompt,/MONOCHROME FINAL CHROMA AUDIT/);
+    const color=m.buildExperimentalImagePrompt(six,{...src,colorMode:'color'},{colorMode:'color'});
+    assert.match(color,/pink-tipped hair/);
+  });
+  test('native monochrome shared medium direction cannot reintroduce colored watercolor after ink recipes',()=>{
+    const prompt=m.buildExperimentalImagePrompt(six,source,input);
+    const direction=prompt.split('Identity is not a frozen drawing style.')[1].split('\nREFERENCES:')[0];
+    assert.doesNotMatch(direction,/透明顔料|不透明人物|水彩背景/);
+    assert.match(direction,/墨|紙白/);
+    for (const panel of six.panels) assert.ok(prompt.includes(panel.camera));
+    const color=m.buildExperimentalImagePrompt(six,{...source,colorMode:'color'},{...input,colorMode:'color'});
+    assert.match(color,/水彩は顔\/服\/背景すべて透明顔料と紙白/);
+  });
   test('all-horizontal strip layouts are excluded for every native count while mixed layouts remain',()=>{
     for(const count of [5,6,7,8]) {
       const nativeSource=m.readExperimentalSource({...input,scenario:scenarioFor(count)});

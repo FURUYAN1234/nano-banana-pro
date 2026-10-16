@@ -3,6 +3,7 @@ import { buildExperimentalImagePrompt, readExperimentalSource } from './experime
 
 // The page contract travels with the prepared prompt, never inferred from panel count.
 export function resolvePageWorkflow({ experimentalEnabled, prepared, prompt, input }) {
+  if (experimentalEnabled && input?.providerFamily === 'gemini') throw new Error('Geminiは4コマのみ対応しています。');
   if (!experimentalEnabled) {
     if (/^Create ONE complete Japanese manga page with EXACTLY \d+ framed panels\./.test(prompt)) {
       throw new Error('実験用の指示文を通常4コマの処理には送れません。STEP3を作り直してください。');

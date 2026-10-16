@@ -303,7 +303,9 @@ try {
       for(const condition of ['明示動作を全保持','指差し/伸手/打撃/全身反動/跳躍/強い短縮','支持/空中軌道・重心・左右の手の役割・接触対象','速度線で動作/透視を代用しない','静止へ動きを捏造しない','誇張自体は描画欠陥でない','他者が読む時に保持者の肩越しにしない','標準肩越しへ平坦化しない','耳は片側一つ','後頭部に顔を捏造しない','明示の両面意匠は許容']) assert.ok(prompt.includes(condition),condition);
       assert.equal(assertRenderOptions(prompt,options),prompt);
       assert.match(prompt,/ABSENT|NO OTHER HUMANS/);
-      assert.match(prompt,/black hair/);assert.match(prompt,/ユウは赤い上着/);
+      if(colorMode==='color') assert.match(prompt,/black hair/);
+      else {const cast=prompt.split('CAST: ')[1].split('[END REFERENCE CAST DATA]')[0];assert.match(cast,/hair/);assert.doesNotMatch(cast,/black hair/);}
+      assert.match(prompt,/ユウは赤い上着/);
       assert.match(prompt,/No eye-level shots/);assert.match(prompt,/never look at the viewer or camera lens/);
       assert.match(prompt,/PHYSICAL READING PATH/);assert.match(prompt,/FINAL ENDING is P8/);
       const chunks=m.buildExperimentalWebCopy(prompt);

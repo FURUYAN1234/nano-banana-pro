@@ -88,15 +88,15 @@ try {
   const inputCallback=hook.slice(inputStart+'const experimentalInput = '.length,hook.indexOf('\n  const changePageMode',inputStart)).trim().replace(/;$/,'');
   function workflowState() {
     const input=fixture();
-    const state={...input,isColorModeLocked:false,isOpenAIEngine:false,experimentalEnabled:true,scenarioModelId:'test-model',
+    const state={...input,isColorModeLocked:false,isOpenAIEngine:true,experimentalEnabled:true,scenarioModelId:'test-model',
       castListRef:{current:input.castList},imagesRef:{current:input.referenceImages},referenceAssetsRef:{current:[]},bg360Image:null,bg360Enabled:false,bg360Analysis:null,bg360EnabledRef:{current:false},
-      scenarioUsedModelRef:{current:null},OPENAI_SCENARIO_MODEL_OPTIONS:[],GEMINI_IMAGE_MODEL:'gemini-nano-banana-test',inputMode:'manual',manualTopic:input.userDirection,
+      scenarioUsedModelRef:{current:null},OPENAI_SCENARIO_MODEL_OPTIONS:[],getBuiltinPanelMediumReference:()=>null,formatOpenAIImageEngineName:()=> 'ChatGPT Images 2.5',getOpenAIPromptBodyBudget:()=>32000,buildOpenAIReferencePlan:()=>({}),GEMINI_IMAGE_MODEL:'gemini-nano-banana-test',inputMode:'manual',manualTopic:input.userDirection,
       generationHistory:[{img:'saved-image'}],generatedImage:'visible-image',finalPrompt:'',isAssembling:false,referenceEditorError:'',
-      isApiProcessing:false,punchlineType:'Auto',selectedEngine:'gemini',openAIImageQuality:'max',styleJson:null,bg360ImageRef:{current:null},
+      isApiProcessing:false,punchlineType:'Auto',selectedEngine:'openai',openAIImageQuality:'max',styleJson:null,bg360ImageRef:{current:null},
       originalScenario:'',scenarioThought:'',explanation:'',explanationNotice:'',mangaTitle:'',enhanceLog:'',lockedLocation:'',lockedOutfit:'',bg360CameraWork:null,bg360CroppedPanels:[],usedModel:null,genLog:[],assembleThought:'',resolvedPunchlineTypeRef:{current:''},
       promptAssemblyRunRef:{current:0},promptAssemblyAbortRef:{current:null},scenarioRunEpochRef:{current:0},copyFeedbackTimerRef:{current:null},lastPolicyErrorRef:{current:''},
       normalizeMangaColorMode:v=>v==='monochrome'?v:'color',assertImageInputBudget:()=>{},beginApiWork:()=>{},normalizePromptProviderFamily:v=>v,
-      getCurrentPromptProviderFamily:()=> 'gemini',buildReferenceAssetContext:()=>input.referenceContext,summarizeExperimentalLayouts:m.summarizeExperimentalLayouts,
+      getCurrentPromptProviderFamily:()=> 'chatgpt',buildReferenceAssetContext:()=>input.referenceContext,summarizeExperimentalLayouts:m.summarizeExperimentalLayouts,
       validateMangaScenario,formatMangaScenarioValidationIssue:()=> 'invalid',prepareExperimentalManga:m.prepareExperimentalManga,
       showStatus:message=>{state.status=message;},translateApiError:error=>{state.lastError=error.message;return error.message;},requests:0,
       updateResolvedPunchlineType:value=>{state.resolvedPunchlineTypeRef.current=value;},

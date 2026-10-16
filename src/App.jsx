@@ -21,7 +21,6 @@ import Step2Panel from './components/Step2Panel';
 import Step3Panel from './components/Step3Panel';
 import ExplanationPanel from './components/ExplanationPanel';
 import Step4Panel from './components/Step4Panel';
-import { SavedMangaImageInput } from './components/PanelStyleEditForm';
 import { getEffectiveEngine } from './lib/engine-state';
 import ControlBar from './components/ControlBar';
 import SystemHeader from './components/SystemHeader';
@@ -82,7 +81,6 @@ function App() {
     normalizeDisplayedPage,
     editGeneratedImage,
     preparePanelStyleEditor,
-    loadSavedMangaImage,
     generatePanelStyleEdit,
     adoptPanelStyleEdit,
     discardPanelStyleEdit,
@@ -208,6 +206,7 @@ function App() {
     toggleCategory,
     usedModel,
   } = useMangaWorkflow({experimentalEnabled:experimentEnabled});
+  const nativePageModeEnabled = experimentEnabled && getEffectiveEngine(selectedEngine, enableOpenAIApi) === 'openai';
 
   const [controlBarHeight, setControlBarHeight] = useState(70);
   const [autoSaveCheckStatus, setAutoSaveCheckStatus] = useState('pending');
@@ -313,6 +312,9 @@ function App() {
       <ControlBar
         controlBarRef={controlBarRef}
         currentStep={currentStep}
+        activeStep={isAnalyzing || is360Analyzing ? 1 : isSearching || isEnhancing ? 2
+          : isAssembling || is360CameraWorking || isFixingPolicy ? 3 : isGeneratingImage ? 4 : 0}
+        imagePhase={genLog.some(log => /\[QUALITY QA\]|\[候補比較\]/.test(String(log))) ? '検査中' : '生成中'}
         apiKey={apiKeyForUnlockedUi}
         isEndlessMode={isEndlessMode}
         setIsEndlessMode={setIsEndlessMode}
@@ -391,14 +393,14 @@ function App() {
               setStyleJson={setStyleJson}
             />
 
-          <ExperimentalMangaPanel enabled={experimentEnabled} onModeChange={enabled=>{if(changePageMode(enabled))setExperimentEnabled(enabled);}}
+          {getEffectiveEngine(selectedEngine, enableOpenAIApi) === 'openai' && <ExperimentalMangaPanel enabled={experimentEnabled} onModeChange={enabled=>{if(changePageMode(enabled))setExperimentEnabled(enabled);}}
             currentStep={currentStep} isAnalyzing={isAnalyzing} isSearching={isSearching}
             normalBusy={isApiProcessing || isFullAutoMode || isEndlessMode || isEnhancing || is360CameraWorking}
-            />
+            />}
 
             {/* 02: シナリオ設定 (Static Layout) */}
             <div hidden={isAnalyzing}><Step2Panel
-              experimentEnabled={experimentEnabled}
+              experimentEnabled={nativePageModeEnabled}
               mosaicCopyrightedCharacters={mosaicCopyrightedCharacters}
               setMosaicCopyrightedCharacters={setMosaicCopyrightedCharacters}
               isRenderOptionsLocked={isColorModeLocked}
@@ -493,7 +495,7 @@ function App() {
                   isAnalyzing={isAnalyzing}
                   isEnhancing={isEnhancing}
                   is360CameraWorking={is360CameraWorking}
-                  experimentEnabled={experimentEnabled}
+                  experimentEnabled={nativePageModeEnabled}
                   scenarioModeValid={scenarioModeValid}
                   assemblePrompt={assemblePrompt}
                   assembleThought={assembleThought}
@@ -505,14 +507,10 @@ function App() {
 
           {/* 出力結果 */}
           <div>
-          {getEffectiveEngine(selectedEngine, enableOpenAIApi) === 'openai' && <SavedMangaImageInput
-            busy={isApiProcessing || isFullAutoMode || isEndlessMode || isEnhancing || is360CameraWorking}
-            onLoad={loadSavedMangaImage}
-          />}
           {!isAnalyzing && !isSearching && !isAssembling && Boolean(finalPrompt?.trim() || generatedImage) && (<Step4Panel
               step2Ref={step2Ref}
               step3Ref={step3Ref}
-              experimentalEnabled={experimentEnabled}
+              experimentalEnabled={nativePageModeEnabled}
               referenceAssets={referenceAssets}
               imageEditDrafts={imageEditDrafts}
               setImageEditDraft={setImageEditDraft}

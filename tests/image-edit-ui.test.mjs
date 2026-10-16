@@ -7,6 +7,8 @@ import { readFileSync } from 'node:fs';
 import { transformSync } from 'esbuild';
 import vm from 'node:vm';
 import { parse as parseCss } from 'postcss';
+import { buildImageEditRequest, getImageEditInstructionMaxChars } from '../src/lib/image-edit.js';
+import { OPENAI_IMAGE_PROMPT_MAX_CHARS } from '../src/lib/image-prompt-budget.js';
 
 let server, ImageEditForm, ImageEditSection, Step4Panel, GenerationHistory;
 before(async () => {
@@ -36,6 +38,16 @@ test('during processing both the input and send button are disabled', () => {
   const html = render({ image: 'data:image/png;base64,YQ==', busy: true });
   assert.match(html.match(/<textarea[^>]*>/)[0], / disabled=""/);
   assert.match(html.match(/<button[^>]*>/)[0], / disabled=""/);
+});
+test('whole-page input reserves the actual monochrome instruction size before enabling submission', () => {
+  const source='data:image/png;base64,YQ==';
+  const limit=mode=>Number(render({image:source,colorMode:mode}).match(/maxlength="(\d+)"/i)[1]);
+  const color=limit('color'),mono=limit('monochrome');
+  assert.ok(mono<color);
+  for(const [colorMode,max] of [['color',color],['monochrome',mono]]) {
+    assert.equal(buildImageEditRequest(source,'あ'.repeat(max),{colorMode}).prompt.length,OPENAI_IMAGE_PROMPT_MAX_CHARS);
+    assert.throws(()=>buildImageEditRequest(source,'あ'.repeat(max+1),{colorMode}),/上限|長|文字/);
+  }
 });
 
 test('editable fields share a readable white palette while readonly output is excluded', () => {
@@ -102,7 +114,7 @@ function mountEditComponent(name, props) {
     if (path === 'react') return react;
     if (path === 'lucide-react') return { ChevronDown() {} };
     assert.equal(path, '../lib/image-edit.js');
-    return { IMAGE_EDIT_INSTRUCTION_MAX_CHARS: 30000 };
+    return { getImageEditInstructionMaxChars };
   } };
   vm.runInNewContext(transformSync(source, { loader: 'jsx', format: 'cjs', jsx: 'transform' }).code, context);
   const walk = node => !node || typeof node !== 'object' ? [] : Array.isArray(node) ? node.flatMap(walk) : [node, ...walk(node.props?.children)];
@@ -156,6 +168,20 @@ test('one styled folded edit section selects panel or whole image and keeps the 
   for (const property of ['background', 'backgroundColor', 'color', 'border']) assert.equal(h.find('select').props.style[property], undefined);
   assert.match(html, /クリックで開く/);
   assert.doesNotMatch(html, /<details\b/);
+});
+
+test('busy generation or review prevents opening or closing the editor and restores it afterward', () => {
+  const h = mountEditComponent('ImageEditSection', { image:'image', busy:true, panelEditor:React.createElement('div') });
+  assert.equal(h.find('button').props.disabled, true);
+  h.find('button').props.onClick(); h.render();
+  assert.equal(h.find('button').props['aria-expanded'], false);
+  h.render({busy:false});
+  assert.equal(h.find('button').props.disabled, false);
+  h.find('button').props.onClick(); h.render();
+  assert.equal(h.find('button').props['aria-expanded'], true);
+  h.render({busy:true});
+  h.find('button').props.onClick(); h.render();
+  assert.equal(h.find('button').props['aria-expanded'], true, 'busy state retains the open form and its draft');
 });
 
 test('whole image is available without panel editing and keeps the existing single-flight submit behavior', async () => {

@@ -1,4 +1,12 @@
 import assert from 'node:assert/strict';
+test('Gemini cannot enter the native five-to-eight panel generation boundary', async () => {
+  const {createServer}=await import('vite');
+  const server=await createServer({appType:'custom',logLevel:'silent',server:{middlewareMode:true,hmr:false}});
+  try {
+    const {resolvePageWorkflow}=await server.ssrLoadModule('/src/lib/page-workflow.js');
+    assert.throws(() => resolvePageWorkflow({experimentalEnabled:true,input:{providerFamily:'gemini'},prompt:''}), /Gemini.*4コマ/);
+  } finally {await server.close();}
+});
 import {readFile} from 'node:fs/promises';
 import test from 'node:test';
 import { getWorkflowStep } from '../src/lib/generation-history.js';

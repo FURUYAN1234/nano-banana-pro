@@ -28,6 +28,21 @@ const build = (providerFamily, colorMode, overrides = {}) => buildMangaPrompt({
   scenario: scenario(), castList, colorMode, providerFamily, systemVersion: 'test', punchlineType: 'Auto', ...overrides,
 });
 
+test('three-tone shading reserves lit light skin and uses screentone for middle shadows, never flat-gray paint', () => {
+  for (const family of ['chatgpt', 'gemini']) for (const promptMaxChars of [32000, 19000]) {
+    const prompt = build(family, 'monochrome', {promptMaxChars});
+    assert.match(prompt, /TONE PLACEMENT: lit light skin\/light materials=paper white; middle shadows=screentone; deepest shadows=solid black/);
+    assert.match(prompt, /Never substitute flat-gray paint for screentone/);
+    assert.match(prompt, /SCREENED-SKIN \[葵\]:.*keep base in light/);
+    assert.match(prompt, /WHITE-SKIN\[凛\]:lit=unprinted/);
+    assert.match(prompt, /hatching|交差/);
+    assert.ok(prompt.includes('ローアングル') || prompt.includes('LOW ANGLE'));
+    assert.ok(prompt.includes('赤と青はそのまま書いてね。'));
+    const color = build(family, 'color', {promptMaxChars});
+    assert.doesNotMatch(color, /TONE PLACEMENT:|Never substitute flat-gray paint/);
+  }
+});
+
 test('white light planes and restricted tone regions survive provider, style and Web compaction paths', () => {
   for (const providerFamily of ['chatgpt', 'gemini']) {
     for (const punchlineType of ['Auto', 'SeriousDocumentary']) {
@@ -217,6 +232,18 @@ test('qualified light-skin fields keep white reserves without borrowing adjacent
     assert.match(prompt, /WHITE-SKIN\[凛\]:lit=unprinted; shade=screen\/black/);
     assert.match(prompt, /SCREENED-SKIN \[葵\]:.*uniform screen/);
     assert.doesNotMatch(prompt, /LIGHT-SKIN \[[^\]]*(?:葵|澪)/);
+  }
+});
+
+test('skin tone reads its own field rather than brown glasses or other adjacent features', () => {
+  const cast='## 葵\n| 顔 | 肌: 明るい肌色。眼鏡: 細い灰褐色系のフルリム。 | light skin, round glasses |\n## 凛\n| 顔 | 肌: 日焼けした褐色。眼鏡: なし。 | tanned skin, no glasses |\n## 澪\n| 顔 | 肌: 未指定。目: 明るい茶色。眼鏡: 灰褐色。 | round glasses |';
+  for(const family of ['chatgpt','gemini']) for(const input of [cast,cast.replaceAll('。眼鏡:', '、眼鏡:')]) {
+    const prompt=build(family,'monochrome',{castList:input});
+    assert.match(prompt,/LIGHT-SKIN \[葵\]:/);
+    assert.match(prompt,/SCREENED-SKIN \[凛\]:/);
+    assert.doesNotMatch(prompt,/SCREENED-SKIN \[[^\]]*葵|LIGHT-SKIN \[[^\]]*(?:凛|澪)|SCREENED-SKIN \[[^\]]*澪/);
+    assert.equal((prompt.match(/WHITE-SKIN\[葵\]/g)||[]).length,4);
+    assert.equal((prompt.match(/SCREEN-SKIN\[凛\]/g)||[]).length,4);
   }
 });
 

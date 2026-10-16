@@ -93,7 +93,9 @@ test('single-image copy is inside the Web disclosure after video guidance with s
     const nodes = descendants(Step4Panel({ selectedEngine: 'openai', enableOpenAIApi: true, isPolicyCopied, finalPrompt: 'UI fixture', genLog: [], webCopyPartLengths: [] }));
     const copy = nodes.find(n => n.type === 'button' && n.props.title?.includes('1枚絵'));
     assert.ok(copy);
-    assert.ok(copy.props.className.split(' ').includes('save-guide-secondary'));
+    assert.equal(copy.props.style.backgroundColor, '#fff');
+    assert.equal(copy.props.style.color, '#000');
+    assert.equal(copy.props.style.borderColor, '#aaa');
     assert.equal(typeof copy.props.onClick, 'function');
     assert.ok(!copy.props.className.includes('bg-white'));
   }

@@ -1,10 +1,12 @@
 import React from 'react';
-import { Check, ArrowRight, RefreshCw, Zap, Square, Loader2 } from 'lucide-react';
+import { Check, RefreshCw, Zap, Square, Loader2 } from 'lucide-react';
 import { AutoSaveStartDialog } from './AutoSaveGuide';
 
 export default function ControlBar({
   controlBarRef,
-  currentStep,
+  currentStep = 1,
+  activeStep = 0,
+  imagePhase = '生成中',
   apiKey,
   isEndlessMode,
   setIsEndlessMode,
@@ -33,52 +35,29 @@ export default function ControlBar({
     <div ref={controlBarRef} className="fixed top-0 left-0 right-0 z-[100] bg-[#0f1115] border-b border-white/10 px-2 md:px-8 py-2 md:py-3 shadow-xl w-full flex flex-col gap-2 md:gap-3 overflow-x-hidden">
       <div className="flex flex-wrap xl:flex-nowrap items-center justify-center max-w-7xl mx-auto w-full gap-y-3">
         
-        {/* Progress Steps (Center Left) */}
-        <div className={`flex flex-wrap items-center justify-center gap-2 md:gap-4 shrink-0 transition-opacity duration-300 ${!apiKey ? 'opacity-30' : 'opacity-100'}`}>
-          {/* Step 1: 解析 */}
-          <div className={`flex items-center gap-1.5 ${currentStep >= 1 ? 'opacity-100' : 'opacity-40'}`}>
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${currentStep === 1 ? 'bg-blue-500 text-white shadow-[0_0_10px_rgba(59,130,246,0.6)]' : currentStep > 1 ? 'bg-blue-600/50 text-blue-200' : 'bg-white/10 text-white/50'}`}>
-              {currentStep > 1 ? <Check size={16} /> : '1'}
-            </div>
-            <span className="text-sm font-bold text-white tracking-wider">解析</span>
-          </div>
-          
-          <ArrowRight size={14} className="text-white/30 shrink-0 mx-0.5 sm:mx-1" />
-          
-          {/* Step 2: シナリオ */}
-          <div className={`flex items-center gap-1.5 ${currentStep >= 2 ? 'opacity-100' : 'opacity-40'}`}>
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${currentStep === 2 ? 'bg-purple-500 text-white shadow-[0_0_10px_rgba(168,85,247,0.6)]' : currentStep > 2 ? 'bg-purple-600/50 text-purple-200' : 'bg-white/10 text-white/50'}`}>
-              {currentStep > 2 ? <Check size={16} /> : '2'}
-            </div>
-            <span className="text-sm font-bold text-white tracking-wider">シナリオ</span>
-          </div>
-          
-          <ArrowRight size={14} className="text-white/30 shrink-0 mx-0.5 sm:mx-1" />
-          
-          {/* Step 3: プロンプト */}
-          <div className={`flex items-center gap-1.5 ${currentStep >= 3 ? 'opacity-100' : 'opacity-40'}`}>
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${currentStep === 3 ? 'bg-orange-500 text-white shadow-[0_0_10px_rgba(249,115,22,0.6)]' : currentStep > 3 ? 'bg-orange-600/50 text-orange-200' : 'bg-white/10 text-white/50'}`}>
-              {currentStep > 3 ? <Check size={16} /> : '3'}
-            </div>
-            <span className="text-sm font-bold text-white tracking-wider">プロンプト</span>
-          </div>
-          
-          <ArrowRight size={14} className="text-white/30 shrink-0 mx-0.5 sm:mx-1" />
-          
-          {/* Step 4: 画像生成 */}
-          <div className={`flex items-center gap-1.5 ${currentStep >= 4 ? 'opacity-100' : 'opacity-40'}`}>
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${currentStep === 4 ? 'bg-green-500 text-white shadow-[0_0_10px_rgba(34,197,94,0.6)]' : currentStep > 4 ? 'bg-green-600/50 text-green-200 shadow-[0_0_10px_rgba(34,197,94,0.3)]' : 'bg-white/10 text-white/50'}`}>
-              {currentStep > 4 ? <Check size={16} /> : '4'}
-            </div>
-            <span className="text-sm font-bold text-white tracking-wider">画像生成　</span>
-          </div>
-        </div>
+        <ol aria-label="制作の進捗" aria-live="polite" className="workflow-progress">
+          {['解析', 'シナリオ', 'プロンプト', '画像生成'].map((label, index) => {
+            const step = index + 1;
+            const state = activeStep > 0
+              ? step < activeStep ? 'complete' : step === activeStep ? 'active' : 'waiting'
+              : step < currentStep ? 'complete' : step === currentStep ? 'ready' : 'waiting';
+            const status = state === 'active' ? step === 4 ? imagePhase : '実行中'
+              : state === 'complete' ? step === 4 ? '生成済み' : '完了'
+                : state === 'ready' ? '次の操作' : '待機';
+            return <li key={step} className="workflow-progress-step" data-state={state}
+              aria-current={state === 'active' ? 'step' : undefined}>
+              <span className="workflow-progress-mark" aria-hidden="true">{state === 'complete' ? <Check size={14} /> : step}</span>
+              <span className="workflow-progress-label">{label}</span>
+              <span className="workflow-progress-status">{status}</span>
+            </li>;
+          })}
+        </ol>
 
         {/* 物理スペーサー */}
         <div className="hidden xl:block w-12 lg:w-16 shrink-0"></div>
 
         {/* Controls - フルオートボタン＋説明文 */}
-        <div className="flex flex-wrap sm:flex-nowrap items-center justify-center gap-4 lg:gap-6 shrink-0 max-w-full">
+        <div className="workflow-mode-controls flex flex-wrap sm:flex-nowrap items-center justify-center gap-4 lg:gap-6 shrink-0 max-w-full">
           {/* 連続生成(ループ)トグル */}
           <button
             disabled={!apiKey || isAborting}
@@ -126,7 +105,7 @@ export default function ControlBar({
           <div className="hidden sm:block w-6 shrink-0"></div>
 
           {/* 説明文 */}
-          <div className={`flex flex-col justify-center text-[10px] leading-relaxed max-w-[650px] text-center sm:text-left transition-opacity duration-300 ${!apiKey ? 'text-slate-600 opacity-40' : 'text-slate-400'}`}>
+          <div className={`workflow-mode-help flex flex-col justify-center text-[10px] leading-relaxed max-w-[650px] text-center sm:text-left transition-opacity duration-300 ${!apiKey ? 'text-slate-600 opacity-40' : 'text-slate-400'}`}>
             <span className="whitespace-normal text-slate-300 font-bold">💡 全自動モード（フルオート）の使い方：</span>
             <span className="whitespace-normal">・「⚡ 全自動モード ON」にして画像をドロップ（またはドロップ後にON）すると、4コマ漫画を全自動で最後まで生成します。</span>
             <span className="whitespace-normal">・途中で中断したい場合は同じボタンで停止できます。以降は手動（各STEPボタン）で進行可能です。</span>
@@ -143,15 +122,7 @@ export default function ControlBar({
         if (mode === 'endless') setEndless(true);
         else if (!isFullAutoMode) handleFullAutoToggle();
       }} />}
-      {/* Progress Line */}
-      <div className="absolute bottom-0 left-0 h-[2px] bg-white/10 w-full">
-        <div className={`h-full transition-all duration-700 ease-out
-          ${currentStep === 1 ? 'w-1/4 bg-blue-500' :
-            currentStep === 2 ? 'w-2/4 bg-purple-500 shadow-[0_0_10px_rgba(168,85,247,0.5)]' :
-            currentStep === 3 ? 'w-3/4 bg-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.5)]' :
-            currentStep >= 4 ? 'w-full bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)]' : 'w-0'}
-        `} />
-      </div>
+
     </div>
   );
 }

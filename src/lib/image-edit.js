@@ -1,6 +1,7 @@
 import { normalizeOpenAIImageDataUrl } from './openai-image-references.js';
 import { assertImagePromptBudget, OPENAI_IMAGE_PROMPT_MAX_CHARS } from './image-prompt-budget.js';
 import { LOCAL_ANATOMY_REPAIR } from './shared-image-quality.js';
+import { MONOCHROME_EDIT_MEDIUM } from './manga-render-mode.js';
 
 const EDIT_PROMPT_PREFIX = [
   'Edit the supplied image (Image 1) according to the user instruction below.',
@@ -13,12 +14,18 @@ const EDIT_PROMPT_PREFIX = [
   '', 'USER EDIT INSTRUCTION:', '',
 ].join('\n');
 export const IMAGE_EDIT_INSTRUCTION_MAX_CHARS = OPENAI_IMAGE_PROMPT_MAX_CHARS - EDIT_PROMPT_PREFIX.length;
+export function getImageEditInstructionMaxChars(colorMode = 'color') {
+  if (!['color', 'monochrome'].includes(colorMode)) throw new RangeError('カラーまたは白黒を指定してください。');
+  return IMAGE_EDIT_INSTRUCTION_MAX_CHARS - (colorMode === 'monochrome' ? MONOCHROME_EDIT_MEDIUM.length + 2 : 0);
+}
 
 // 元の長い生成指示を再投入せず、表示中の画像と今回の変更を正本にする。
-export function buildImageEditRequest(sourceImage, instruction) {
+export function buildImageEditRequest(sourceImage, instruction, { colorMode = 'color' } = {}) {
+  getImageEditInstructionMaxChars(colorMode);
   const source = normalizeOpenAIImageDataUrl(sourceImage, '修正元画像');
   const change = String(instruction || '').trim();
   if (!change) throw new Error('修正したい内容を入力してください。');
-  const prompt = assertImagePromptBudget(EDIT_PROMPT_PREFIX + change);
+  const prompt = assertImagePromptBudget(EDIT_PROMPT_PREFIX + change
+    + (colorMode === 'monochrome' ? '\n\n' + MONOCHROME_EDIT_MEDIUM : ''));
   return { prompt, imageInputs: [{ image_url: source }], referenceImages: [source] };
 }

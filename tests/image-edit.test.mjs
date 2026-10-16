@@ -9,6 +9,17 @@ import { beginApiWork } from '../src/lib/api-work-cancellation.js';
 
 const workflow = readFileSync(new URL('../src/hooks/useMangaWorkflow.js', import.meta.url), 'utf8');
 const source = 'data:image/png;base64,c291cmNl';
+test('monochrome whole-page edits retain the source drawing medium and enforce the real prompt budget', () => {
+  const instruction='看板の文字だけ確認中に直す。';
+  const mono=buildImageEditRequest(source,instruction,{colorMode:'monochrome'});
+  assert.match(mono.prompt,/middle shadows=screentone; deepest shadows=solid black/);
+  assert.match(mono.prompt,/Never substitute flat-gray paint/);
+  assert.match(mono.prompt,/SCREENED SKIN BASE:.*(?:keep base in light|light keeps base)/);
+  assert.ok(mono.prompt.includes(instruction));
+  assert.equal(buildImageEditRequest(source,instruction,{colorMode:'color'}).prompt,buildImageEditRequest(source,instruction).prompt);
+  assert.throws(()=>buildImageEditRequest(source,'あ'.repeat(IMAGE_EDIT_INSTRUCTION_MAX_CHARS),{colorMode:'monochrome'}),/上限|長|文字/);
+  assert.throws(()=>buildImageEditRequest(source,instruction,{colorMode:'unknown'}),/カラー|白黒/);
+});
 
 test('edit budget reserves the fixed instructions and rejects one character over the API limit', () => {
   const instruction = 'あ'.repeat(IMAGE_EDIT_INSTRUCTION_MAX_CHARS);
@@ -47,6 +58,7 @@ function setup(overrides = {}) {
   let busy = false;
   const calls = [];
   const normalizations = [];
+  const monoFinishes = [];
   const saves = [];
   const context = { experimentalEnabled:false,
     beginApiWork,
@@ -54,7 +66,7 @@ function setup(overrides = {}) {
     isSearching: false, isAssembling: false, isEnhancing: false, isFullAutoMode: false,
     isFixingPolicy: false, isAnalyzing: false, is360CameraWorking: false,
     imageEditRunRef: { current: null }, scenarioRunEpochRef: { current: 1 },
-    isOpenAIEngine: true, openAIImageQuality: 'high', openAIImageSize: '1024x1536',
+    isOpenAIEngine: true, colorMode: 'color', openAIImageQuality: 'high', openAIImageSize: '1024x1536',
     formatPageLayoutStatus,
     autoSaveFinalImage: async (item, isCurrent) => { if (!isCurrent()) return false; saves.push(item); return true; },
     buildImageEditRequest: (image, instruction) => {
@@ -63,6 +75,7 @@ function setup(overrides = {}) {
     },
     generateImageWithOpenAI: (...args) => new Promise((resolve, reject) => calls.push({ args, resolve, reject })),
     generateImageWithImagen: (...args) => new Promise((resolve, reject) => calls.push({ args, resolve, reject })),
+    finalizeMonochromeCandidate: async (candidate, mode) => { monoFinishes.push(mode); return candidate; },
     normalizePageCandidate: async candidate => {
       normalizations.push(candidate);
       return {
@@ -86,8 +99,31 @@ function setup(overrides = {}) {
   assert.notEqual(start, -1, 'manual edit handler must exist');
   const end = workflow.indexOf('// --- Step 4: Image Generation ---', start);
   vm.runInNewContext(workflow.slice(start, end) + '\nglobalThis.edit = editGeneratedImage;', context);
-  return { context, calls, normalizations, saves, state: () => ({ displayed, history, busy }) };
+  return { context, calls, normalizations, monoFinishes, saves, state: () => ({ displayed, history, busy }) };
 }
+
+test('whole edit preserves the displayed page count and monochrome mode across a different current mode', async () => {
+  const h=setup();
+  h.state().history[0].metadataContext={settings:{panel_count:6,color_mode:'monochrome',outside_panel_pixels_unchanged:true}};
+  const pending=h.context.edit('文字だけ変更');
+  h.calls[0].resolve({base64Img:'ZWRpdA==',mimeType:'image/png',usedModel:'gpt-test'});
+  assert.equal(await pending,true);
+  assert.equal(h.normalizations.length,0,'a six-panel source must not enter four-panel normalization');
+  assert.deepEqual(h.monoFinishes,['monochrome'],'finish follows the source image mode, not the current selector');
+  const settings=h.state().history[0].metadataContext.settings;
+  assert.equal(settings.panel_count,6);
+  assert.equal(settings.color_mode,'monochrome');
+  assert.equal(settings.outside_panel_pixels_unchanged,undefined,'whole edits must not inherit a panel-only pixel guarantee');
+});
+
+test('Gemini rejects a known native page before whole-edit API dispatch', async () => {
+  const h = setup({ isOpenAIEngine: false });
+  h.state().history[0].metadataContext = { settings: { panel_count: 6 } };
+  const pending = h.context.edit('文字だけ変更');
+  assert.equal(h.calls.length, 0);
+  assert.equal(await pending, false);
+  assert.equal(h.state().displayed, source);
+});
 
 test('manual edit sends the displayed image once and retains its history', async () => {
   const h = setup();
@@ -108,6 +144,7 @@ test('manual edit sends the displayed image once and retains its history', async
   assert.equal(h.saves.length, 1);
   assert.equal(h.saves[0], h.state().history[0]);
   assert.equal(h.state().busy, false);
+  assert.deepEqual(h.monoFinishes,[],'color must bypass monochrome pixel processing');
 });
 
 test('Gemini receives the same source image and failure keeps the image and history', async () => {

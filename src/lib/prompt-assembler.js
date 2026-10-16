@@ -495,7 +495,7 @@ const compactChatGPTConversationRules = (prompt, monochrome = isMonochromePrompt
   return !compactStyleReminderAtCap || restored.length <= maxChars ? restored : restore(minimumCompacted, true);
 };
 
-const buildMonochromePanelInkLock = (panelText = '', identityMatrix = '') => {
+export const buildMonochromePanelInkLock = (panelText = '', identityMatrix = '') => {
   const text = String(panelText);
   const subjects = [...text.matchAll(/([^\s、。；「」:：()]+?)(?:は|が)/gu)]
     .map(match => ({ name: match[1], index: match.index ?? 0 }));

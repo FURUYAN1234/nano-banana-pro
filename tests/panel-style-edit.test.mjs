@@ -24,6 +24,33 @@ const image = (width, height, paint = (x, y) => [x % 256, y % 256, (x + y) % 256
 };
 const sourceUrl = 'data:image/png;base64,c291cmNl';
 const region = { x: 20, y: 25, width: 80, height: 60 };
+test('both panel edit methods carry the source monochrome medium without changing color requests', () => {
+  for (const provider of ['openai','gemini']) for (const mode of ['style','free']) {
+    const plan=createPanelStyleEditPlan({width:200,height:240},region,undefined,provider);
+    const options=mode==='style'?{mode,style:'POP_ART'}:{mode,instruction:'手に持つ本へ星印を一つ追加。'};
+    const mono=buildPanelStyleEditRequest(sourceUrl,plan,{...options,colorMode:'monochrome'});
+    assert.match(mono.prompt,/TONE PLACEMENT: lit light skin\/light materials=paper white; middle shadows=screentone; deepest shadows=solid black/);
+    assert.match(mono.prompt,/SCREENED SKIN BASE:.*(?:keep base in light|light keeps base)/);
+    assert.match(mono.prompt,/Never substitute flat-gray paint for screentone/);
+    assert.match(mono.prompt,/EDIT TONE LOCK: source hair\/skin\/garment base assignments stay fixed/);
+    assert.doesNotMatch(mono.prompt,/darkest[^\n]*solid black/);
+    const color=buildPanelStyleEditRequest(sourceUrl,plan,{...options,colorMode:'color'});
+    assert.doesNotMatch(color.prompt,/MONOCHROME THREE-TONE MANUSCRIPT LOCK|TONE PLACEMENT:/);
+    if(mode==='free') assert.ok(mono.prompt.includes(options.instruction));
+  }
+});
+test('Gemini uses supported square canvases without shrinking native panels', () => {
+  for (const [width, edge, imageSize] of [[800, 1024, '1K'], [1500, 2048, '2K'], [2200, 4096, '4K']]) {
+    const plan = createPanelStyleEditPlan({width:3000,height:4000}, {x:0,y:0,width,height:300}, undefined, 'gemini');
+    assert.deepEqual(plan.canvas,{width:edge,height:edge});
+    assert.equal(plan.editRegion.width,width);
+    assert.deepEqual(plan.imageOptions,{aspectRatio:'1:1',imageSize});
+    const request = buildPanelStyleEditRequest(sourceUrl,plan,{style:'SKETCH',colorMode:'monochrome'});
+    assert.match(request.prompt,/monochrome/i);
+  }
+  assert.throws(()=>createPanelStyleEditPlan({width:5000,height:5000},{x:0,y:0,width:4500,height:100},undefined,'gemini'),/サイズ|原寸/);
+  assert.throws(()=>createPanelStyleEditPlan({width:200,height:240},region,undefined,'unknown'),/provider|プロバイダー/i);
+});
 
 test('editor orders observed regions in Japanese reading order and retains actual pixel bounds', () => {
   const regions = [
@@ -289,6 +316,33 @@ test('detected thumbnail regions require the observed count and cannot fabricate
   await assert.rejects(readPanelStyleEditFrames(source, 5), /コマ|領域/);
   await assert.rejects(readPanelStyleEditFrames(source, 3), /コマ/);
   await assert.rejects(readPanelStyleEditFrames(env.add(image(200, 240, () => [255, 255, 255, 255])), 4), /コマ|領域/);
+}));
+
+test('reopening an adopted panel edit retains verified frames and refreshes thumbnails even if its drawn rule changes', async () => withCanvas(async env => {
+  const rectangles = [{ x: 10, y: 20, width: 80, height: 90 }, { x: 110, y: 20, width: 80, height: 90 },
+    { x: 10, y: 130, width: 80, height: 90 }, { x: 110, y: 130, width: 80, height: 90 }];
+  const pixels = image(200, 240, (x, y) => rectangles.some(r => x >= r.x && x < r.x + r.width && y >= r.y && y < r.y + r.height) ? [80, 60, 50, 255] : [255, 255, 255, 255]);
+  const sourceImage = env.add(pixels);
+  const original = await readPanelStyleEditFrames(sourceImage, 4);
+  const region = original.frames[0].region;
+  const edited = composePanelPixels(pixels, image(region.width, region.height, () => [255, 255, 255, 255]), region);
+  const adopted = env.add(edited);
+  await assert.rejects(readPanelStyleEditFrames(adopted, 4), /コマ枠/);
+  const editLineage = [{ sourceImage, region }];
+  const reopened = await readPanelStyleEditFrames(adopted, 4, { editLineage });
+  assert.deepEqual(reopened.frames.map(f => f.region), original.frames.map(f => f.region));
+  assert.deepEqual(reopened.frames.map(f => f.panelNumber), [1, 2, 3, 4]);
+  assert.ok(env.registry.get(reopened.frames[0].thumbnail).data.every(v => v === 255), 'thumbnail comes from current adopted pixels');
+  const secondRegion = original.frames[1].region;
+  const twice = env.add(composePanelPixels(edited, image(secondRegion.width, secondRegion.height, () => [0,0,0,255]), secondRegion));
+  const reopenedTwice = await readPanelStyleEditFrames(twice, 4, {
+    editLineage: [{ sourceImage: adopted, region: secondRegion }, ...editLineage],
+  });
+  assert.deepEqual(reopenedTwice.frames.map(f => f.region), original.frames.map(f => f.region));
+  assert.deepEqual([...env.registry.get(reopenedTwice.frames[1].thumbnail).data.slice(0,4)], [0,0,0,255]);
+  const invalid = { ...edited, data: edited.data.slice() }; invalid.data[0] = 0;
+  await assert.rejects(readPanelStyleEditFrames(env.add(invalid), 4, { editLineage }), /対象外|画素/);
+  await assert.rejects(readPanelStyleEditFrames(adopted, 4, { editLineage: [{ sourceImage, region: { ...region, width: region.width + 1 } }] }), /領域|コマ/);
 }));
 
 test('browser adapter pads only one native crop, rejects bad output dimensions, and proves outside PNG pixels', async () => withCanvas(async env => {

@@ -56,7 +56,8 @@ SOURCE COLOR BOUNDARIES: fix regions/accents/gradients/tips/streaks as black/whi
 SCENE COLOR PRIORITY: keep story and verbatim text; source hues yield to assigned ink/skin bases.`;
 
 // 全体・Web短縮の両方で、白地と網点を置ける領域を同じ条件で固定する。
-const MONOCHROME_SCREEN_MASK = 'SCREEN MASK: screen=assigned material/dark-skin bases or bounded form/cast shadows; unassigned=white; no dots/grain. Never convert whole-image brightness to dots. Shadow boundaries follow light and form; screen area alone is not a defect.';
+const MONOCHROME_SCREEN_MASK = `SCREEN MASK: bounded; unassigned=white; no dots/grain. Never convert brightness to dots; area alone is not a defect.
+TONE PLACEMENT: lit light skin/light materials=paper white; middle shadows=screentone; deepest shadows=solid black. Never substitute flat-gray paint for screentone.`;
 const MONOCHROME_PAPER = 'PAPER: unassigned areas match balloon white; no scan haze/fibers. Change style with ink construction, never a page-wide texture layer.';
 const MONOCHROME_INK_LIGHT_SOURCE = 'INK LIGHT SOURCE: glow/transparency/fog=white cutouts+black contours; no glow/screen veil. Preserve light direction/perspective/drama.';
 const MONOCHROME_NEUTRAL_INK = 'NEUTRAL INK: R=G=B everywhere; no tint, including fine lines/screens/reflections/highlights.';
@@ -102,21 +103,31 @@ Keep exact dialogue/title/required lettering, script events, cast, camera, poses
 export const MONOCHROME_RENDERING_LOCK_COMPACT = `[ MONOCHROME THREE-TONE MANUSCRIPT LOCK ]
 ${MONOCHROME_NATIVE_INKING_COMPACT}
 縦長フキダシ。空間より縦書き優先。
-MONOCHROME THREE-TONE MANUSCRIPT: #000000/#FFFFFF + assigned screens; drawing materials, not a pixel limit; no grayscale/whole-page halftone/color.
+MONOCHROME THREE-TONE MANUSCRIPT: #000000/#FFFFFF + screentone; drawing materials, not a pixel limit; no grayscale/color.
 BLACK INK PLATE: redraw; refs=identity, not palette.
 WHITE PAPER RESERVE: unassigned lit planes=white; no face/panel/BG veil. Assigned bases and motivated shadows may be broad.
 ${MONOCHROME_SKIN_PAPER_BASE}
 SCREENED SKIN BASE: dark/tanned=screen; keep base in light; shade=black/hatching. 小さい光点は可。広い白抜き・ベース漂流は禁止。画風の光効果より肌割当を優先。
 CHEEK SCREEN: 明示された赤面・化粧だけ小さく表す。既定の頬模様・見本の赤面の転写は禁止。
-SCREENTONE: consistent assigned bases and bounded shadows; no grey wash/gradient/tint/moire; 面積割当なし、全体膜禁止。
-SCREEN MASK: assigned material/dark-skin bases or bounded shadows; unassigned=white; no dots/grain. Never convert brightness to dots. 陰影の境界は光源と立体に従う。面積だけで欠陥としない。
-PAPER: unassigned areas match balloon white; no scan haze/fibers. 画風差は墨の構築で描く。紙全体の質感レイヤーは禁止。
+SCREENTONE: consistent bases; bounded shadows; no grey wash/gradient/tint/moire; 全体膜禁止。
+${MONOCHROME_SCREEN_MASK}
+PAPER: unassigned areas match balloon white; no scan haze/fibers. 画風=墨の構築、全体質感膜禁止。
 INK LIGHT SOURCE: white cutouts+black contours; no glow/screen veil. 光源・遠近・演出保持。
 NEUTRAL INK: R=G=B; no tint in ink/screen/light/reflections.
 DEPTH-OF-FIELD DEFOCUS: fewer far lines/wider white gaps; 遠近・ぼけで網点を足さない。
 G-PEN INK DIRECTION: NORMAL default; panel recipe wins. BLACK-HAIR INK LOCK: darkest hair=solid black; white shine, no screen.
 INK LIGHT / ACTING: full-body action amplitude; directional solid-black cast shadows, white rim cutouts; keep depth/beats.
 台本・Camera・Action・台詞は保持。原色は再現せず、文字中の色名は原文保持。指示非印字。`;
+
+// Editing starts from assigned image tones. Initial-generation reference ranking
+// must not reclassify medium-tone hair as black when a crop excludes darker hair.
+export const MONOCHROME_EDIT_MEDIUM = `[ MONOCHROME THREE-TONE MANUSCRIPT LOCK ]
+${MONOCHROME_NATIVE_INKING_COMPACT}
+${MONOCHROME_SCREEN_MASK}
+${MONOCHROME_SKIN_PAPER_BASE}
+${MONOCHROME_SCREENED_SKIN_BASE}
+${MONOCHROME_NEUTRAL_INK}
+EDIT TONE LOCK: source hair/skin/garment base assignments stay fixed. Keep their base-tone family and relative darkness; selected style may change strokes and screen geometry, not recolor regions. Screened hair must not become an all-black fill; black hair must not become white or a lighter screen. Do not rerank visible hair by darkness. Preserve small highlights and light-driven shadows. No gray wash/gradient/veil. Camera/Action/acting/text stay exact; never print these rules.`;
 
 export const MONOCHROME_FINAL_CHROMA_AUDIT = 'MONOCHROME FINAL CHROMA AUDIT (MANDATORY): source colors are identity metadata, never output color. Inspect every panel, including hair roots/ends/highlights, irises, lips, cheeks, skin shadows, clothing, props, reflections, VFX, backgrounds, antialiased edges and tiny details. Visible hue, tint, sepia or broad grey base wash outside assigned masks is a defect; natural neutral ink-edge antialiasing is allowed: redraw with pure black, pure white and regular black-on-white dots/hatching. Leave lit light skin unprinted; keep screens inside assigned masks. Do not deliver until it passes.';
 export const MONOCHROME_FINAL_CHROMA_AUDIT_COMPACT = 'MONOCHROME FINAL CHROMA AUDIT: no tint/grey/veil; lit light skin=unprinted; screen only inside assigned masks.';
@@ -159,8 +170,8 @@ export const MONOCHROME_BACKGROUND_LOCK_COMPACT = 'MONOCHROME BACKGROUND CLARITY
 
 // Adapt only our authored quality text, never replace words in user dialogue,
 // Actions, cast descriptions or other source data.
-export const MONOCHROME_FOCAL_READABILITY = `FOCAL READABILITY: Focal ink follows the panel recipe; NORMAL=pressure-taper. Camera scale/height/side/head turn fixed; visible features only. Rear=head/shoulders/weight; scripted profiles win. Bold focal silhouettes/contacts, fine separate face/hand lines; no uniform thickening/clogging. Sharp story reactions/props/text. white/black planes, motivated edge light, face/hand gaps. If merged: fewer BG lines or bounded black behind light forms; stronger style ink. Keep setting/depth/light/identity/tones/gaze/diagonal/negative-space; no glow. ${FOCAL_DEPTH_HIERARCHY}`;
-export const MONOCHROME_SKIN_LIGHTING = 'BODY VOLUME: wrap connected form shadows around turning limbs/torso; retain hair/jaw/clothing cast shadows. Follow light direction; no fixed shadow quota. Shade=bounded screen/black, lit=canonical base; no wash. FACE INK: tapered eyes/nose/mouth, distinct white gaps; no feature merging or disappearing hairlines. Bold silhouettes, fine facial lines; shadows preserve expression.';
+export const MONOCHROME_FOCAL_READABILITY = `FOCAL READABILITY: Focal ink follows the panel recipe; NORMAL=pressure-taper. Camera scale/height/side/head turn fixed; visible features only. 後姿=後頭/肩/重心、指定横顔優先。輪郭/接触を強く、顔/手の細線を分離し一律太線/潰れ禁止。反応/道具/文字を鮮明に。白黒面・輪郭光・線間の白。融合時は背景線を減らす/明るい形の背後に局所黒/媒体の墨を強める。場所/奥行/光/同一性/トーン/視線/斜線構図/余白を保持、発光禁止。 ${FOCAL_DEPTH_HIERARCHY}`;
+export const MONOCHROME_SKIN_LIGHTING = 'BODY VOLUME: connected form shadows turn with limbs/torso; hair/jaw/clothing cast shadows. Follow light direction; no fixed shadow quota. Shade=bounded screen/black; lit=canonical base, no wash. FACE INK: tapered eyes/nose/mouth; white gaps, no feature merging or disappearing hairlines. Bold silhouettes/fine face lines; keep expression.';
 export const MONOCHROME_IMAGE_QUALITY_CONTRACT = SHARED_IMAGE_QUALITY_CONTRACT
   .replace(FOCAL_READABILITY, MONOCHROME_FOCAL_READABILITY)
   .replace('the strongest G-pen-like contour: visibly heavier pressure-tapered strokes', 'the strongest contour within its panel recipe: clear style-specific strokes')

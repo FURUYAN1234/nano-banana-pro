@@ -11,37 +11,7 @@ const selectStyle = { width: 'auto', maxWidth: '100%', margin: 0, padding: '5px 
 const actionStyle = { margin: 0, padding: '7px 12px', fontSize: '13px', lineHeight: 1.5 };
 const validCount = value => Number.isInteger(value) && value >= 4 && value <= 8;
 
-export function SavedMangaImageInput({ busy = false, onLoad }) {
-  const [pending, setPending] = useState(false);
-  const [error, setError] = useState('');
-  const loading = useRef(false);
-  return (
-    <details className="w-full max-w-2xl rounded-xl border border-white/15 p-4 text-left">
-      <summary className="cursor-pointer text-sm text-slate-300">保存した漫画を読み込む（追加課金なし）</summary>
-      <label className="mt-3 block text-sm text-slate-300">
-        漫画画像
-        <input type="file" accept="image/png,image/jpeg,image/webp" disabled={busy || pending || !onLoad}
-          className="mt-2 block w-full text-xs text-slate-300 disabled:opacity-40"
-          onChange={async event => {
-            const input = event.currentTarget;
-            const file = input.files?.[0];
-            if (busy || loading.current || !file || !onLoad) return;
-            loading.current = true;
-            setPending(true);
-            setError('');
-            try { await onLoad(file); }
-            catch (failure) { setError(failure?.message || '画像を読み込めませんでした。'); }
-            finally { loading.current = false; setPending(false); input.value = ''; }
-          }} />
-      </label>
-      <p className="mt-2 text-xs text-slate-400">外部に保存したPNG・JPEG・WebPの漫画画像を読み込めます。読み込み後に、修正するコマを選べます。</p>
-      {pending && <p className="mt-2 text-xs text-blue-200" aria-live="polite">画像を読み込み中…</p>}
-      {error && <p role="alert" className="mt-2 text-xs text-red-300">{error}</p>}
-    </details>
-  );
-}
-
-function PanelStyleEditControls({ image, panelCount, enabled = true, busy = false, onPrepare, onGenerate, onAdopt, onDiscard }) {
+function PanelStyleEditControls({ image, panelCount, maxPanelCount = 8, enabled = true, busy = false, onPrepare, onGenerate, onAdopt, onDiscard }) {
   const [countChoice, setCountChoice] = useState('');
   const [prepared, setPrepared] = useState(null);
   const [selectedIndex, setSelectedIndex] = useState(null);
@@ -62,9 +32,10 @@ function PanelStyleEditControls({ image, panelCount, enabled = true, busy = fals
     return () => { active.current = false; discard(); };
   }, []);
 
-  const count = validCount(panelCount) ? panelCount : Number(countChoice);
+  const knownCount = validCount(panelCount) && panelCount <= maxPanelCount;
+  const count = knownCount ? panelCount : Number(countChoice);
   useEffect(() => {
-    if (!enabled || busy || !validCount(count)) return;
+    if (!enabled || busy || !validCount(count) || count > maxPanelCount) return;
     if (preparedSource.current?.image === image && preparedSource.current.count === count) return;
     let cancelled = false;
     preparedSource.current = null;
@@ -88,7 +59,7 @@ function PanelStyleEditControls({ image, panelCount, enabled = true, busy = fals
       }
     })();
     return () => { cancelled = true; };
-  }, [count, enabled, image, busy]);
+  }, [count, maxPanelCount, enabled, image, busy]);
   const frame = prepared?.frames.find(item => item.index === selectedIndex);
   const frameLabel = (item, position) => prepared?.readingOrderConfirmed && Number.isInteger(item.panelNumber)
     ? `${item.panelNumber}コマ目` : `範囲${position + 1}（順番未確認）`;
@@ -118,12 +89,12 @@ function PanelStyleEditControls({ image, panelCount, enabled = true, busy = fals
     <div className="w-full text-left" style={{ width: '100%', fontSize: '13px', lineHeight: 1.5 }}>
       <div>
         {!prepared && <>
-          {validCount(panelCount) ? <p style={copyStyle} className="text-xs text-slate-400">この画像：{panelCount}コマ</p> : (
+          {knownCount ? <p style={copyStyle} className="text-xs text-slate-400">この画像：{panelCount}コマ</p> : (
             <label style={labelStyle} className="block text-sm">この画像のコマ数
               <select aria-label="この画像のコマ数" value={countChoice} disabled={locked}
                 onChange={event => setCountChoice(event.target.value)} style={selectStyle} className="ml-2 rounded border border-white/20 bg-slate-900 p-2">
                 <option value="">選択してください</option>
-                {[4, 5, 6, 7, 8].map(value => <option key={value} value={value}>{value}コマ</option>)}
+                {[4, 5, 6, 7, 8].filter(value => value <= maxPanelCount).map(value => <option key={value} value={value}>{value}コマ</option>)}
               </select>
             </label>
           )}

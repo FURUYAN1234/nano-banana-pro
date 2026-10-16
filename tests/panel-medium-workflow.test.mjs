@@ -145,7 +145,21 @@ test('actual API callback rejects capacity overflow before transport and retains
   }
 });
 
-test('App passes the selected guide to the existing Step4 export; download and preview use that same image', () => {
+test('actual initial-image callback finishes monochrome manga before layout while color and single-image outputs bypass it', async () => {
+  for (const [colorMode,qualityMode,expected] of [['color','four-panel',0],['monochrome','four-panel',1],['monochrome','experimental-manga',1],['monochrome','single-image',0]]) {
+    let finishes=0;
+    const h=setup({colorMode,qualityMode,workflowSource:{},metadataSettings:{},referenceContext:{},
+      generateImageWithOpenAI:async()=>({base64Img:'YWJj',mimeType:'image/png'}),
+      finalizeMonochromeCandidate:async(candidate,mode)=>{assert.equal(mode,'monochrome');finishes++;return {...candidate,base64Img:'ZGVm'};},
+      normalizePageCandidate:async candidate=>candidate,formatPageLayoutStatus:()=>'',
+    });
+    const candidate=await callback('generateImageCandidate',h.context)('image prompt');
+    assert.equal(finishes,expected,JSON.stringify({colorMode,qualityMode}));
+    assert.equal(candidate.base64Img,expected?'ZGVm':'YWJj');
+  }
+});
+
+test('App passes the selected guide to Web export without displaying an unsolicited portrait preview', () => {
   const appNodes = nodes(app);
   const panel = appNodes.find(node => node.type === 'JSXOpeningElement' && node.name.name === 'Step4Panel');
   const prop = panel.attributes.find(node => node.name?.name === 'mediumReference');
@@ -157,8 +171,8 @@ test('App passes the selected guide to the existing Step4 export; download and p
   const anchor = elements.find(node => node.name.name === 'a' && node.attributes.some(attr => attr.name?.name === 'download' && attr.value?.value === 'nano-panel-media.png'));
   const preview = elements.find(node => node.name.name === 'img' && node.attributes.some(attr => attr.name?.name === 'alt' && attr.value?.value === 'コマの描法見本'));
   assert.ok(anchor, 'existing export area provides the exact guide file');
-  assert.ok(preview, 'the guide has a visible purpose preview');
-  for (const [element, attribute] of [[anchor, 'href'], [preview, 'src']]) {
+  assert.equal(preview, undefined, 'Web instructions must not insert the bundled portrait image into STEP4');
+  for (const [element, attribute] of [[anchor, 'href']]) {
     const expression = element.attributes.find(attr => attr.name?.name === attribute)?.value?.expression;
     assert.ok(expression);
     assert.equal(evaluate(step4, expression, { mediumReference: selected }), selected.imageUrl);

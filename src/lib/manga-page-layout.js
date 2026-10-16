@@ -364,6 +364,51 @@ export const analyzeNativeMonochromeChroma = ({ data, width, height } = {}) => {
     coloredFraction: coloredPixels / count, maxChannelDifference, region };
 };
 
+// Preserve native pixel positions, alpha and every neutral ink/paper value.
+// This removes residual hue only; it does not threshold or retone the drawing.
+export const neutralizeMonochromePixels = ({ data, width, height } = {}) => {
+  if (!Number.isSafeInteger(width) || !Number.isSafeInteger(height) || width < 1 || height < 1
+    || data?.length !== width * height * 4) throw new RangeError('原寸RGBA画素と画像寸法が一致しません。');
+  const output = new Uint8ClampedArray(data);
+  let changedPixels = 0;
+  for (let i = 0; i < output.length; i += 4) {
+    const r = output[i], g = output[i+1], b = output[i+2];
+    if (r === g && g === b) continue;
+    const neutral = Math.round(r * .2126 + g * .7152 + b * .0722);
+    output[i] = output[i+1] = output[i+2] = neutral;
+    changedPixels++;
+  }
+  return { width, height, data: output, changedPixels };
+};
+
+export const neutralizeNativeMonochromeImage = async dataUrl => {
+  const image = new Image(); image.src = dataUrl; await image.decode();
+  const canvas = document.createElement('canvas');
+  canvas.width = image.naturalWidth; canvas.height = image.naturalHeight;
+  const context = canvas.getContext('2d', { willReadFrequently: true });
+  if (!context) throw new Error('白黒画像の色成分を処理できません。');
+  context.imageSmoothingEnabled = false; context.drawImage(image, 0, 0);
+  const pixels = context.getImageData(0, 0, canvas.width, canvas.height);
+  const result = neutralizeMonochromePixels(pixels);
+  if (result.changedPixels) { pixels.data.set(result.data); context.putImageData(pixels, 0, 0); }
+  return { dataUrl: result.changedPixels ? canvas.toDataURL('image/png') : dataUrl,
+    width: result.width, height: result.height, changedPixels: result.changedPixels };
+};
+
+export const finalizeMonochromeCandidate = async (candidate, colorMode, normalize = neutralizeNativeMonochromeImage) => {
+  if (colorMode !== 'monochrome') return candidate;
+  const source = `data:${candidate.mimeType || 'image/png'};base64,${candidate.base64Img}`;
+  const result = await normalize(source);
+  if (!result.changedPixels) return candidate;
+  const match = result.dataUrl.match(/^data:image\/png;base64,(.+)$/s);
+  if (!match) throw new Error('白黒仕上げ画像の形式が不正です。');
+  const receipt = { changedPixels: result.changedPixels, width: result.width, height: result.height };
+  return { ...candidate, base64Img: match[1], mimeType: 'image/png', originalImage: candidate.originalImage || source,
+    monochromeNormalization: receipt,
+    ...(candidate.metadataContext ? { metadataContext: { ...candidate.metadataContext,
+      settings: { ...candidate.metadataContext.settings, monochrome_finish: receipt } } } : {}) };
+};
+
 export const inspectNativeMonochromeChroma = async (dataUrl) => {
   const image = new Image();
   image.src = dataUrl;

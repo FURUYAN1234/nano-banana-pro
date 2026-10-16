@@ -19,6 +19,25 @@ test('new STEP2/STEP3 results advance the next action while repairs preserve sou
   assert.equal(getWorkflowStep({ ...ready, scenario: 'regenerated scenario', finalPrompt: '', imageSource }), 3);
 });
 
+test('the progress header follows rerun activity before retained completed output and distinguishes image review', async () => {
+  const server = await createServer({appType:'custom',logLevel:'silent',server:{middlewareMode:true,hmr:false}});
+  try {
+    const {default:ControlBar}=await server.ssrLoadModule('/src/components/ControlBar.jsx');
+    const render=props=>renderToStaticMarkup(React.createElement(ControlBar,{currentStep:5,...props}));
+    for (const activeStep of [1,2,3,4]) {
+      const html=render({activeStep,imagePhase:'検査中'});
+      const steps=[...html.matchAll(/<li\b([^>]*)>([\s\S]*?)<\/li>/g)];
+      assert.equal(steps.length,4);
+      assert.match(steps[activeStep-1][1],/aria-current="step"/);
+      assert.match(steps[activeStep-1][2],activeStep===4?/検査中/:/実行中/);
+      for(let i=activeStep;i<4;i++) assert.match(steps[i][2],/待機/);
+    }
+    assert.doesNotMatch(render({activeStep:0}),/aria-current="step"/);
+    assert.match(render({activeStep:0}),/生成済み/);
+    assert.match(render({activeStep:4,imagePhase:'生成中'}),/生成中/);
+  } finally {await server.close();}
+});
+
 test('OpenAI STEP4 has no additional review button; only generation pulses when it is next', async () => {
   const server = await createServer({ appType: 'custom', logLevel: 'silent', server: { middlewareMode: true } });
   try {

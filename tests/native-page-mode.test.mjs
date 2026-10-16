@@ -24,13 +24,16 @@ test('new sessions start in native five-to-eight-panel mode and preserve an expl
   assert.match(app,/<ExperimentalMangaPanel enabled=\{experimentEnabled\}/);
   assert.match(app,/useMangaWorkflow\(\{experimentalEnabled:experimentEnabled\}\)/);
 
-  const prelude=hook.match(/export default function useMangaWorkflow\([^\n]+\) \{[\r\n]+  const scenarioMode = [^\r\n]+;/)?.[0];
-  assert.ok(prelude);
-  const mode=new Function(`${prelude.replace('export default ','')} return scenarioMode; } return useMangaWorkflow;`)();
-  assert.equal(mode(),'experimental-manga');
-  assert.equal(mode({}),'experimental-manga');
-  assert.equal(mode({experimentalEnabled:true}),'experimental-manga');
-  assert.equal(mode({experimentalEnabled:false}),'four-panel');
+  const gate=hook.match(/const experimentalEnabled = [^\r\n]+;/)?.[0];
+  assert.ok(gate);
+  const mode=new Function('requestedExperimentalEnabled','effectiveEngine',`${gate} return experimentalEnabled;`);
+  assert.equal(mode(true,'openai'),true);
+  assert.equal(mode(false,'openai'),false);
+  assert.equal(mode(true,'gemini'),false);
+  assert.equal(mode(false,'gemini'),false);
+  assert.match(app,/getEffectiveEngine\(selectedEngine, enableOpenAIApi\) === 'openai' && <ExperimentalMangaPanel/);
+  assert.match(app,/experimentEnabled=\{nativePageModeEnabled\}/);
+
 });
 
 const start=hook.indexOf('const changePageMode = ');

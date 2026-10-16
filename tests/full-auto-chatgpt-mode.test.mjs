@@ -30,7 +30,7 @@ test('full-auto image generation assembles a ChatGPT prompt when the active API 
 test('a stale legacy provider flag self-heals to one OpenAI engine state before any workflow action', () => {
   assert.match(
     source,
-    /const effectiveEngine = getEffectiveEngine\(selectedEngine, enableOpenAIApi\);\s*const isOpenAIEngine = effectiveEngine === 'openai';/,
+    /const effectiveEngine = getEffectiveEngine\(selectedEngine, enableOpenAIApi\);[\s\S]*?const isOpenAIEngine = effectiveEngine === 'openai';/,
     'the workflow needs one effective provider predicate'
   );
   assert.match(

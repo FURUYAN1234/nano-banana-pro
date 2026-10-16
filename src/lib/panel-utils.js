@@ -145,8 +145,12 @@ export const buildIdentityMatrix = (castListText, options = {}) => {
 
     // Parse only the skin field: qualifiers such as 普通～やや明るい are
     // valid, but an adjacent 明るい eye/hair field must not classify skin.
-    const skinDescription = cleanLine.match(/肌\s*[:：]\s*([^|<\n]+)/)?.[1] || '';
-    if (/\b(?:tanned|dark)[\s_-]*skin\b/i.test(cleanLine) || /肌[^|\n]*(?:小麦色|褐色|日焼け)/.test(cleanLine)) {
+    const skinDescription = (cleanLine.match(/肌\s*[:：]\s*([^|<\n]+)/)?.[1] || '')
+      .split(/[。；;]|(?:[、,，]|\s+)[^、,，:：\s]+[:：]/u)[0];
+    const darkSkinPhrase = /(?:小麦色|褐色|日焼けした)(?:の)?肌|肌(?:は|が)(?:小麦色|褐色|日焼け)/.test(cleanLine);
+    const hasDarkSkin = skinDescription ? /小麦色|褐色|日焼け/.test(skinDescription)
+      : /\b(?:tanned|dark)[\s_-]*skin\b/i.test(cleanLine) || darkSkinPhrase;
+    if (hasDarkSkin) {
       currentChar.skinTone = 'screened';
     } else if (!currentChar.skinTone && (/\b(?:pale|light|fair)[\s_-]*skin\b/i.test(cleanLine) || /明るい|色白|白い/.test(skinDescription))) {
       currentChar.skinTone = 'light';

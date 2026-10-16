@@ -8,7 +8,8 @@ const workflow = readFileSync(new URL('../src/hooks/useMangaWorkflow.js', import
 const region = { x: 5, y: 8, width: 20, height: 10 };
 const source = 'data:image/png;base64,c291cmNl';
 function setup(overrides = {}) {
-  const calls = [], saves = [];
+  const calls = [], saves = [], timers = new Map();
+  let logs = [], now = 1000, timerId = 0;
   let displayed = source, history = [{ id: 1, img: source, metadataContext: { settings: { panel_count: 6 } } }], busy = false;
   const context = {
     isOpenAIEngine: true, generatedImage: source, generationHistory: history, colorMode: 'color',
@@ -18,25 +19,27 @@ function setup(overrides = {}) {
     openAIImageSize: '2240x3168', openAIImageQuality: 'sunburst-max',
     readPanelStyleEditFrames: async image => ({ sourceImage: image, width: 40, height: 60,
       frames: [{ index: 0, region, thumbnail: 'before' }] }),
-    readFileAsDataURL: async () => 'data:image/png;base64,aW1wb3J0',
-    inspectImageDimensions: async () => ({ width: 2240, height: 3168 }),
     preparePanelStyleEdit: async () => ({ before: 'before', plan: { size: '2240x3168' },
       request: { prompt: 'single medium', imageInputs: [{ image_url: 'padded-panel' }] } }),
     composePanelStyleEdit: async () => ({ dataUrl: 'composite', after: 'after', outsidePixelsUnchanged: true }),
     generateImageWithOpenAI: (...args) => new Promise((resolve, reject) => calls.push({ args, resolve, reject })),
-    beginApiWork: () => {}, setGenLog: () => {}, showStatus: () => {}, translateApiError: e => e.message,
+    beginApiWork: () => {}, setGenLog: value => { logs = typeof value === 'function' ? value(logs) : value; }, showStatus: () => {}, translateApiError: e => e.message,
     setIsGeneratingImage: value => { busy = value; }, setIsGenerationError: () => {},
     setGeneratedImage: value => { displayed = value; }, setImageQualityNeedsRepair: () => {},
     setGenerationHistory: update => { history = update(history); },
     addGenerationHistoryItem,
     autoSaveFinalImage: async item => { saves.push(item); return true; }, Date,
+    setInterval: callback => { const id = ++timerId; timers.set(id, callback); return id; },
+    clearInterval: id => timers.delete(id),
     ...overrides,
   };
   const start = workflow.indexOf('const panelStyleEditBusy =');
   const end = workflow.indexOf('const editGeneratedImage =', start);
   assert.ok(start >= 0 && end > start);
-  vm.runInNewContext(workflow.slice(start, end) + '\nObject.assign(globalThis,{loadSavedMangaImage,preparePanelStyleEditor,generatePanelStyleEdit,adoptPanelStyleEdit,discardPanelStyleEdit});', context);
-  return { context, calls, saves, state: () => ({ displayed, history, busy }) };
+  vm.runInNewContext(workflow.slice(start, end) + '\nObject.assign(globalThis,{preparePanelStyleEditor,generatePanelStyleEdit,adoptPanelStyleEdit,discardPanelStyleEdit});', context);
+  return { context, calls, saves, timers, logs: () => logs,
+    tick: milliseconds => { now += milliseconds; for (const callback of timers.values()) callback(); },
+    clock: { now: () => now }, state: () => ({ displayed, history, busy }) };
 }
 const args = { sourceImage: source, panelIndex: 0, region, style: 'GEKIGA' };
 async function start(h) {
@@ -46,6 +49,54 @@ async function start(h) {
   return { pending };
 }
 const response = { base64Img: 'Y2FuZGlkYXRl', mimeType: 'image/png', usedModel: 'test-image-model' };
+
+test('panel editing reports elapsed time for both providers and cleans up success, failure and stale runs', async () => {
+  for (const isOpenAIEngine of [true, false]) for (const outcome of ['success', 'failure', 'stale']) {
+    const h = setup({ isOpenAIEngine });
+    h.context.Date = h.clock;
+    h.state().history[0].metadataContext.settings.panel_count = 4;
+    h.context.generateImageWithImagen = (...args) => new Promise((resolve, reject) => h.calls.push({ args, resolve, reject }));
+    await h.context.preparePanelStyleEditor({ sourceImage: source, panelCount: 4 });
+    const pending = h.context.generatePanelStyleEdit(args);
+    await new Promise(setImmediate);
+    assert.equal(h.calls.length, 1);
+    h.tick(3000);
+    assert.match(h.logs().find(item => item.startsWith('[WAIT]')) || '', /3秒経過/);
+    assert.equal(h.logs().filter(item => item.startsWith('[WAIT]')).length, 1);
+    if (outcome === 'stale') h.context.scenarioRunEpochRef.current++;
+    const before = [...h.logs()];
+    h.tick(2000);
+    if (outcome === 'stale') assert.deepEqual(Array.from(h.logs()), before);
+    else assert.match(h.logs().find(item => item.startsWith('[WAIT]')), /5秒経過/);
+    if (outcome === 'failure') h.calls[0].reject(new Error('HTTP 429'));
+    else h.calls[0].resolve(response);
+    await pending;
+    assert.equal(h.timers.size, 0);
+    const completed = [...h.logs()]; h.tick(4000); assert.deepEqual(Array.from(h.logs()), completed);
+  }
+});
+test('Gemini panel edits dispatch only to Gemini and retain provider on reviewed adoption', async () => {
+  let options;
+  const h = setup({isOpenAIEngine:false,
+    preparePanelStyleEdit:async (_image,_region,input) => { options=input; return {before:'before',plan:{imageOptions:{aspectRatio:'1:1',imageSize:'1K'}},request:{prompt:'one panel',referenceImages:['padded-panel'],imageInputs:[{image_url:'padded-panel'}]}}; },
+  });
+  h.context.generateImageWithImagen = (...args)=>new Promise(resolve=>h.calls.push({args,resolve}));
+  await assert.rejects(h.context.preparePanelStyleEditor({sourceImage:source,panelCount:6}),/Gemini.*4コマ/);
+  assert.equal(h.calls.length,0);
+  await assert.rejects(h.context.preparePanelStyleEditor({sourceImage:source,panelCount:4}),/Gemini.*4コマ/);
+  h.state().history[0].metadataContext.settings.panel_count = 4;
+  await h.context.preparePanelStyleEditor({sourceImage:source,panelCount:4});
+  const pending=h.context.generatePanelStyleEdit(args);
+  await new Promise(setImmediate);
+  assert.equal(options.provider,'gemini');
+  assert.deepEqual(Array.from(h.calls[0].args[2]),['padded-panel']);
+  assert.equal(h.calls[0].args[3].imageSize,'1K');
+  h.calls[0].resolve(response);
+  const candidate=await pending;
+  assert.equal(candidate.provider,'gemini');
+  assert.equal(await h.context.adoptPanelStyleEdit({candidate,reviewConfirmed:true}),true);
+  assert.equal(h.state().history[0].metadataContext.provider,'gemini');
+});
 
 test('panel preparation uses the selected image plan and preserves its verified panel number on adoption', async () => {
   let received;
@@ -69,39 +120,37 @@ test('panel preparation uses the selected image plan and preserves its verified 
   assert.match(h.state().history[0].editInstruction, /^1コマ目:/);
 });
 
-test('saved manga loads locally without generated provenance, API, autosave or losing original history', async () => {
-  const h = setup();
-  await h.context.loadSavedMangaImage({ type: 'image/png', size: 10 });
-  assert.equal(h.state().displayed, 'data:image/png;base64,aW1wb3J0');
-  assert.equal(h.state().history[1].img, source);
-  assert.equal(h.state().history[0].metadataContext.settings.imported_manga, true);
-  assert.equal(h.state().history[0].qualityPass, false);
-  assert.equal(h.state().history[0].modelId, undefined);
-  assert.equal(h.state().history[0].metadataContext.scenario, undefined);
-  assert.equal(h.state().history[0].metadataContext.settings.panel_count, undefined);
-  assert.equal(h.calls.length, 0); assert.equal(h.saves.length, 0);
+test('both panel providers finish the returned monochrome crop before composition using the source mode', async () => {
+  for (const isOpenAIEngine of [true,false]) {
+    let finishes=0;
+    const h=setup({isOpenAIEngine,colorMode:'color',
+      finalizeMonochromeCandidate:async(candidate,mode)=>{assert.equal(mode,'monochrome');finishes++;return {...candidate,base64Img:'bW9ubw=='};},
+      composePanelStyleEdit:async(_source,edited)=>{assert.match(edited,/bW9ubw==$/);return {dataUrl:'composite',after:'after',outsidePixelsUnchanged:true};},
+    });
+    h.state().history[0].metadataContext.settings={panel_count:4,color_mode:'monochrome'};
+    h.context.generateImageWithImagen=(...args)=>new Promise(resolve=>h.calls.push({args,resolve}));
+    await h.context.preparePanelStyleEditor({sourceImage:source,panelCount:4});
+    const pending=h.context.generatePanelStyleEdit(args);
+    await new Promise(setImmediate); h.calls[0].resolve(response);
+    assert.ok(await pending); assert.equal(finishes,1);
+  }
 });
 
-test('saved manga rejects invalid, corrupt, busy or stale loads without changing original', async () => {
-  for (const file of [null, { type: 'image/svg+xml', size: 20 }, { type: 'image/png', size: 0 }]) {
-    const h = setup(); await assert.rejects(h.context.loadSavedMangaImage(file));
-    assert.equal(h.state().displayed, source);
-  }
-  for (const overrides of [
-    { isGeneratingImage: true },
-    { inspectImageDimensions: async () => { throw new Error('decode failed'); } },
-    { inspectImageDimensions: async () => ({ width: 0, height: 20 }) },
-  ]) {
-    const h = setup(overrides);
-    await assert.rejects(h.context.loadSavedMangaImage({ type: 'image/png', size: 20 }));
-    assert.equal(h.state().displayed, source); assert.equal(h.state().history.length, 1);
-    assert.equal(h.calls.length, 0);
-  }
-  const h = setup({ readFileAsDataURL: async () => {
-    h.context.imageEditRunRef.displayedImage = 'other'; return source;
+test('reopening a panel-only adoption passes its source lineage; whole-page changes do not reuse old frames', async () => {
+  let options;
+  const h = setup({ readPanelStyleEditFrames: async (image, count, input) => {
+    options = input; return {sourceImage:image, frames: [{index:0, region}]};
   } });
-  await assert.rejects(h.context.loadSavedMangaImage({ type: 'image/png', size: 20 }), /変更/);
-  assert.equal(h.state().displayed, source);
+  h.state().history[0].sourceImage = 'original-page';
+  h.state().history[0].metadataContext.settings.panel_edit = {region};
+  h.state().history[0].metadataContext.settings.outside_panel_pixels_unchanged = true;
+  await h.context.preparePanelStyleEditor({sourceImage:source, panelCount:6});
+  assert.equal(options.editLineage?.length, 1);
+  assert.equal(options.editLineage[0].sourceImage, 'original-page');
+  assert.deepEqual({...options.editLineage[0].region}, region);
+  delete h.state().history[0].metadataContext.settings.outside_panel_pixels_unchanged;
+  await h.context.preparePanelStyleEditor({sourceImage:source, panelCount:6});
+  assert.equal(options.editLineage.length, 0);
 });
 
 test('single paid call prepares candidate without replacing or saving original; reviewed adoption retains it', async () => {
@@ -168,14 +217,13 @@ test('adopting from the oldest history keeps original selectable and clears obso
   assert.equal(h.state().history[0].experimentalGroupId, undefined);
 });
 
-test('unprepared, different image, altered region, unsupported engine and busy state do not call API', async () => {
+test('unprepared, different image, altered region and busy state do not call API', async () => {
   const h = setup(); assert.equal(await h.context.generatePanelStyleEdit(args), null);
   await h.context.preparePanelStyleEditor({ sourceImage: source, panelCount: 6 });
   for (const change of [{ sourceImage: 'different' }, { region: { ...region, x: 6 } }, { panelIndex: 4 }]) {
     assert.equal(await h.context.generatePanelStyleEdit({ ...args, ...change }), null);
   }
-  h.context.isOpenAIEngine = false; assert.equal(await h.context.generatePanelStyleEdit(args), null);
-  h.context.isOpenAIEngine = true; h.context.isGeneratingImage = true;
+  h.context.isGeneratingImage = true;
   assert.equal(await h.context.generatePanelStyleEdit(args), null); assert.equal(h.calls.length, 0);
 });
 

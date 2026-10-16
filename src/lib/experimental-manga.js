@@ -1,9 +1,9 @@
 import { getScenarioPanelBlocks, validateMangaScenario } from './scenario-validation.js';
-import { collectCastNameEntries, extractDialogueOnly, cleanCastList, stripWeightTags, extractCastLimitRule, buildActorMediumInstruction } from './panel-utils.js';
+import { collectCastNameEntries, extractDialogueOnly, cleanCastList, stripWeightTags, extractCastLimitRule, buildActorMediumInstruction, buildIdentityMatrix } from './panel-utils.js';
 import { buildImageQualityContract, FUNCTIONAL_SURFACE_ORIENTATION_LOCK, OBJECT_GEOMETRY_LOCK, BODY_ACTING_BASELINE, EXPRESSIVE_DIRECTION, FUNCTIONAL_SURFACE_PROJECTION_RULE, HEAD_VOLUME_LOCK, SKIN_LIGHTING, WARDROBE_COMPONENT_LOCK } from './shared-image-quality.js';
 import { COMPACT_EMOTION_STYLES, GEKIGA_FACE_CONSTRUCTION, SYSTEM_VERSION } from './constants.js';
-import { extractScenarioTitle, buildMangaWatermark, PROMPT_PROVIDER_FAMILIES, normalizePromptProviderFamily } from './prompt-assembler.js';
-import { MONOCHROME_IMAGE_QUALITY_CONTRACT, MONOCHROME_EMOTION_STYLES, MONOCHROME_RENDERING_LOCK_COMPACT } from './manga-render-mode.js';
+import { extractScenarioTitle, buildMangaWatermark, PROMPT_PROVIDER_FAMILIES, normalizePromptProviderFamily, buildMonochromePanelInkLock } from './prompt-assembler.js';
+import { MONOCHROME_IMAGE_QUALITY_CONTRACT, MONOCHROME_EMOTION_STYLES, MONOCHROME_RENDERING_LOCK_COMPACT, sanitizeMonochromeSourceDescription, MONOCHROME_FINAL_CHROMA_AUDIT_COMPACT, MONOCHROME_REFERENCE_SEPARATION, MONOCHROME_QA_RULE } from './manga-render-mode.js';
 import { ensureWebPromptTrailingNewline, splitWebPromptForPaste } from './web-prompt-chunks.js';
 import { buildRenderOptionsContract, buildProtectedCastContract, COPYRIGHT_MOSAIC_TARGET_SCOPE } from './render-options.js';
 import { createApiError, formatApiErrorDetails, getApiErrorInfo, sanitizeErrorMessage } from './api-errors.js';
@@ -461,6 +461,8 @@ export function buildExperimentalImagePrompt(plan, source, { colorMode, provider
   const panelOutfits=source.panels.map(panel=>readExplicitOutfit(panel.text));
   const watermark=buildMangaWatermark({imageEngineLabel,scenarioModelLabel,systemVersion:SYSTEM_VERSION,isChatGPTFamily:/^ChatGPT/.test(imageEngineLabel)});
   const castRules=plan.panels.map(p=>experimentalCastRule(p,source,colorMode).split('\n'));
+  const monochromeIdentity = colorMode === 'monochrome' ? buildIdentityMatrix(source.castList, {monochrome:true}) : '';
+  const referenceCast = effectiveProviderFamily===PROMPT_PROVIDER_FAMILIES.CHATGPT ? stripWeightTags(cleanCastList(source.castList,scopedOutfit?'':activeOutfit)) : cleanCastList(source.castList,scopedOutfit?'':activeOutfit);
   // Share the four-panel lettering boundary: Bn values are printable, while
   // speaker ownership and balloon geometry remain nonprinting metadata.
   const dialogueBlocks=compact=>plan.panels.map(p=>extractDialogueOnly(source.panels[p.sourcePanel-1].text,source.castList,{forImagePrompt:true,compactMetadata:compact,separateMetadata:true}));
@@ -502,7 +504,7 @@ export function buildExperimentalImagePrompt(plan, source, { colorMode, provider
 Top title EXACTLY ${JSON.stringify(title)}: 白地中央に大きい極太長体ゴシック、囲み枠/帯/罫線なし。台詞は縦書き漫画明朝。コマ番号/計画ラベル/Camera/参照トークンは印字禁止。RTL READING ORDER: P1〜P${plan.count}は右→左、上→下の順。指定矩形と各時点を厳守。
 PHYSICAL READING PATH (not printed): ${rects.map((_,i)=>`P${i+1}`).join(' -> ')}. PAGE FRAME内の一場面をその位置に描く。FINAL ENDING is P${plan.count}; 結末の台詞/反応はそこに置く。
 ${readingPairs.length?`ROW CHRONOLOGY: ${readingPairs.join('; ')}. 各組の先行場面が先。絵/吹き出しの均衡のために入替えない。ページ位置であり、コマ内Camera/Actionの方向ではない。`:''}
-${colorMode==='monochrome'?'BLACK AND WHITE ink and screentones only, no colored regions.':'Full color; preserve each source panel art style.'}
+${colorMode==='monochrome'?'BLACK AND WHITE ink and screentones only, no colored regions.\n'+MONOCHROME_REFERENCE_SEPARATION:'Full color; preserve each source panel art style.'}
 原文条件は対応枠直前に一度だけ記載。台詞トークンは正確なID参照で、印字/重複発話禁止。source beat番号は配置指定ではない。
 PAGE PLAN layout=${plan.layout}: rectは漫画領域内の正規化座標、x=左,y=上。細い白溝は枠内側。読順位置固定、またぎ矩形は一枚の未分割コマ。原文条件で配置を変えない。
 PAGE DIRECTION: ${typeof plan.pageIntent==='string'?plan.pageIntent:plan.reason}
@@ -513,7 +515,7 @@ FRAME MEDIUMは囲まれた一枠専用、印字禁止。溝ごとに媒体を�
 原文各コマ→PAGE FRAMEは1対1。動作/道具状態/Camera/画風/台詞を全保持。その時点だけを描き、後の結果の先取り/早い結末反復は禁止。明示breakout以外は身体を枠内に収める。
 [REFERENCE CAST DATA]
 以下は参照人物の観察データ。重み付き語も全コマ共通の描画命令ではない。年齢・肌・髪・眼鏡・顔の識別点・左右差を保持。資料の描法と様式的な目対顔/頭対体比はNORMALで採用し、特殊媒体では各FRAME MEDIUMとACTOR MEDIUMで描き直す。脚本で明示された身体特徴と表情は保持。
-CAST: ${effectiveProviderFamily===PROMPT_PROVIDER_FAMILIES.CHATGPT ? stripWeightTags(cleanCastList(source.castList,scopedOutfit?'':activeOutfit)) : cleanCastList(source.castList,scopedOutfit?'':activeOutfit)}
+CAST: ${colorMode==='monochrome'?sanitizeMonochromeSourceDescription(referenceCast):referenceCast}
 [END REFERENCE CAST DATA]
 ${sceneOutfit}${plan.panels.map((p,i)=>{
     const orig=source.panels[p.sourcePanel-1];
@@ -526,7 +528,7 @@ ${compact?'Camera:':'Inside this frame — Camera:'} ${p.camera}; Style: ${orig.
 ${getPanelShotExecution(p.camera,{compact:true})}${panelOutfits[p.sourcePanel-1]?`\nFRAME OUTFIT: ${panelOutfits[p.sourcePanel-1]}`:''}
 ${recipes[orig.style]?`FRAME MEDIUM P${i+1} — ${orig.style}: ${recipes[orig.style]}${compact&&orig.style!=='GEKIGA'?' ALL ACTORS.':' Every visible actor in this frame: 脇役も同じ媒体で描き、見える顔を全て再構築。主役だけでは不可。同一性/感情/視線/脚本上の見え方を保持。'}`:''}
 
-${buildActorMediumInstruction(orig.style,colorMode)}
+${colorMode==='monochrome'?buildMonochromePanelInkLock(orig.text+'\n'+p.action,monochromeIdentity)+'\n':''}${buildActorMediumInstruction(orig.style,colorMode)}
 ${castRule}
 Dialogue: ${p.dialogueIds.length?(compact?compactDialogue[i]:fullDialogue[i]):'SILENT'}
 ${p.breakout?`Intentional border breakout: ${p.breakout.part} of a character in P${i+1} crosses into adjacent P${p.breakout.into}. One continuous foreground layer; border and gutter disappear behind its connected silhouette and resume after it. Keep source shoulder/hip ownership, no duplicate or detached limb. Keep adjacent faces, acting hands, key props and text entirely unobscured; no cross-scene interaction. If a clean crossing is impossible, keep the body inside its source panel.`:''}
@@ -534,7 +536,7 @@ ${p.breakout?`Intentional border breakout: ${p.breakout.part} of a character in 
   }).join('\n')}
 ${READING_FLOW_DIRECTION}
 PANEL RENDERING MAP: each Pn's Style field assigns its medium; never reorder frames.
-Identity is not a frozen drawing style. 年齢/髪/眼鏡/衣装/明示同一性を保ち、全可視人物をコマの媒体で描き直す。顔構造・目対顔/頭対体比・輪郭・影形の変更は意図した画風差。NORMALのアニメ目/セル顔をGEKIGAへ、不透明人物を水彩背景へ持ち込まない。GEKIGAは遠景の脇役も細い解剖学的瞼/写実面/墨の顔影。実現のための拡大/切抜きは禁止。水彩は顔/服/背景すべて透明顔料と紙白。隣接媒体/明暗を明確に切替え、表情/表面質感だけの変化にしない。
+Identity is not a frozen drawing style. 年齢/髪/眼鏡/衣装/明示同一性を保ち、全可視人物をコマの媒体で描き直す。顔構造・目対顔/頭対体比・輪郭・影形の変更は意図した画風差。${colorMode==='monochrome'?'白黒の各FRAME MEDIUMを顔/髪/服/背景へ適用。NORMALのアニメ目/セル顔をGEKIGAへ持ち込まない。GEKIGAは遠景の脇役も細い解剖学的瞼/写実面/墨の顔影。水彩枠も墨線/紙白による白黒用の描法で、人物だけ別媒体にしない。実現のための拡大/切抜きは禁止。':'NORMALのアニメ目/セル顔をGEKIGAへ、不透明人物を水彩背景へ持ち込まない。GEKIGAは遠景の脇役も細い解剖学的瞼/写実面/墨の顔影。実現のための拡大/切抜きは禁止。水彩は顔/服/背景すべて透明顔料と紙白。'}隣接媒体/明暗を明確に切替え、表情/表面質感だけの変化にしない。
 REFERENCES: identity and asset design; selected panel recipe determines drawing style, face/eye construction and body stylization. 参照の描法/目の大きさ/簡略顔を同一性として固定しない。年齢・顔の識別点・髪・肌色・眼鏡を保持し、設定資料の配置/ラベルを転載しない。${activeOutfit?'Outfitは参照の服より優先。同一性/髪/眼鏡は保持。':''} ${referenceContext}
 ${WARDROBE_COMPONENT_LOCK}
 ${scopedOutfit||panelOutfits.some(Boolean)?OUTFIT_SCOPE_CONTRACT:''}
@@ -542,7 +544,7 @@ ${sceneOutfit&&!renderedContext?'':`SOURCE FACTS (not captions): preserve every 
 ${styles.includes('GEKIGA')?`GEKIGA CAST CHECK (${plan.panels.flatMap((p,i)=>source.panels[p.sourcePanel-1].style==='GEKIGA'?[`P${i+1}`]:[]).join(', ')} only): HATCH-FIRST FACE CONSTRUCTION — DEEP-CUT GEKIGA。ペン線で意図的に深い彫りを作る。穏やか・微笑・遠景・眼鏡を含む全可視顔を再構築。ハッチ前に頭蓋と顔面を組立て、眉骨下へくぼむ眼、眼球を包む厚い瞼と狭い開口・小さい虹彩、突出する鼻梁/鼻側面/小鼻、明瞭な頬骨/顎角を陰影なしでも読める輪郭にする。眼窩/こめかみ/鼻側面/頬下面/首へ、各面と脚本の光に沿う細い交差ペン線。線間隔/角度/筆圧を変え、個々の線と狭い紙白の隙間を残す。明部へ線を先細りさせ、影は広い塗潰しや柔らかなグラデでなく線の層で深める。内部は細線、外輪郭は強弱ある太い筆線。黒ベタは鼻孔/顎下など最深部の小さな遮蔽の補助だけ。顔のハッチを大きな平坦セル影で代替しない。彫った顔の量感であり、汚れ/装飾傷/加齢皺/灰色テクスチャ被せではない。柔光でも同じ光向きでハッチ密度差を明瞭にし、穏やかな感情で彫りを弱めない。${colorMode==='monochrome'?'墨と紙白。顔の陰影はペン線で、均一な灰色網点にしない。':'主となるハッチの下に不透明色。明部の肌色と顔の影全体の細線を保持。'}参照の眼形状/簡略鼻を上書き。劇画の柔らかさは感情で、丸いアニメ顔ではない。年齢/髪/肌色/眼鏡/顔の識別点で同一性を保つ。微笑は口と頬を緩め、目を拡大せず、彫った面/密な顔ハッチを消さない。脚本の視線/Camera/切取り/表情と性別表現を保持し、怒り/加齢/皺を追加しない。冷静な顔は冷静に。他コマは各自の顔構造/媒体を保持。`:''}
 ${[...commonCast].filter(([,panels])=>panels.length>1).map(([rule,panels])=>`Applies only to ${panels.map(n=>`P${n}`).join(', ')}: ${rule}`).join('\n')}
 ${effects.map(id=>`Applies only to ${plan.panels.flatMap((p,i)=>(p.visualEffects??[]).includes(id)?[`P${i+1}`]:[]).join(', ')}: ${EXPERIMENTAL_VISUAL_EFFECTS[id].instruction}`).join('\n')}
-${qualityContract}${colorMode==='monochrome'?'\n'+MONOCHROME_RENDERING_LOCK_COMPACT:''}
+${qualityContract}${colorMode==='monochrome'?'\n'+MONOCHROME_RENDERING_LOCK_COMPACT+'\n'+MONOCHROME_FINAL_CHROMA_AUDIT_COMPACT:''}
 PANEL EDGE CONTINUITY LOCK: PAGE CONTAINMENT: 外枠の四辺/四隅を余白付きで画布内へ収め、切落とし/画外拡張は禁止。明示の枠なし/裁切り指定は優先。内部の枠越えは外周裁切りの許可ではない。道具/画面/文字は自枠内、隣場面への流出は明示時のみ。原則、見える頭と髪の全輪郭を余裕付きで枠内に。演出上の枠越えは一つの連続した前景層とし、枠線は頭/髪の全輪郭の後ろで止まり、その後に再開。顔/髪を枠線で貫く・輪郭の切断・外側断片の複製・枠内外の位置ずれは禁止。綺麗に越えられなければ全輪郭を枠内に保持。
 LIMB OWNERSHIP CHECK (internal; never print): 全コマの各人物の左右の腕/手/脚/足を可視・自然な遮蔽・画面外に分類。見える手→手首→肘→本人の肩、足→足首→膝→本人の腰を辿り、隠れた部分も自然につなぐ。所有者不明/余分/融合/分離/理由のない欠落、家具や他人の体から出る手足は禁止。指定の解剖/ポーズ/接触/Camera/切取り/短縮を保持し、隠れた四肢の露出や全身画角を強制しない。仕上げ前に所有/接続の曖昧さだけを直し、動作や構図を変えない。
 ${buildRenderOptionsContract({mosaicCopyrightedCharacters,showWatermarks})}
@@ -576,7 +578,7 @@ ${READING_FLOW_DIRECTION}
 Inspect exact panel count/reading order, ALL required camera elevations/projections/crops and style differences, original action/facts/ending/dialogue ownership and connected anatomy; adjacent faces/text remain legible. Locate each observation in the actual page, describe visible body extent and occlusion; never infer hidden/cropped feet or a breakout from the plan. Cropped feet alone are advisory, never a camera failure or a regeneration reason. Camera observations describe visible head/shoulder planes, horizon and perspective; style observations describe actor faces/bodies and background pigment/ink separately, not tag names. Keep each observation concise.
 NATIVE PANEL FIDELITY: exactly ${plan.count} source panels, one-to-one. Preserve count, reading order, action, facts, causal progression, ending and dialogue. No additional frames, inserted beats or unscripted speech are authorized. Purposeful scripted silence remains silent; never demand speech to fill a panel. Allow source-grounded staging within the same moment and harmless coherent acting variation, without merging or splitting source panels, omitting source action, changing the premise or replacing the payoff. Expected speech is withheld here; independent transcription is checked against the original panel-by-panel dialogue manifest afterwards.
 GEKIGA OBSERVATION: in assigned GEKIGA frames inspect each visible actor, including calm, smiling and bespectacled faces. Describe actual eye/iris proportions, eyelid thickness, constructed nose/cheek/jaw planes and facial pen shading separately from background/clothing detail. Locate dense intersecting fine strokes, visible gaps and changes in line density following the facial planes; broad flat black or colored shadow patches, smooth gradients, a few thin cheek lines or costume hatching do not establish this strong gekiga recipe. Black may support local occlusions but must not replace the main hatched shading. State which visible face still has enlarged anime eyes or a simplified nose, if any; never replace this check with generic praise such as detailed, realistic or finely shaded. These unchanged face constructions are a style mismatch even when the illustration is attractive or the background is richly inked. A pass requires visible facial construction evidence, not anger, costume texture, one successful actor or a restatement of the prompt. Preserve scripted age and emotion; do not demand anger or wrinkles. If a face is too small/hidden to inspect, report that limit rather than inventing compliance.
-EXPECTED PANEL STYLES: ${JSON.stringify(plan.panels.map((p,i)=>({panel:i+1,style:source.panels[p.sourcePanel-1].style||'REFERENCE'})))}
+${source.colorMode==='monochrome'?MONOCHROME_RENDERING_LOCK_COMPACT+'\n'+MONOCHROME_REFERENCE_SEPARATION+'\n'+MONOCHROME_QA_RULE+'\n':''}EXPECTED PANEL STYLES: ${JSON.stringify(plan.panels.map((p,i)=>({panel:i+1,style:source.panels[p.sourcePanel-1].style||'REFERENCE'})))}
 ${WARDROBE_CONTINUITY_QA_CONTRACT}
 ${OUTFIT_SCOPE_CONTRACT}
 EXPECTED OUTFIT SCOPES: ${JSON.stringify({global:readExplicitOutfit(source.context),castNames:[...new Set(expectedCast.flatMap(entry=>entry.names))],panels:plan.panels.map((p,i)=>({panel:i+1,outfit:readExplicitOutfit(source.panels[p.sourcePanel-1].text)}))})}

@@ -7,15 +7,20 @@ import { transformSync } from 'esbuild';
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 
-let server, PanelStyleEditForm, SavedMangaImageInput, Step4Panel;
+let server, PanelStyleEditForm, Step4Panel;
 before(async () => {
   server = await createServer({ appType: 'custom', logLevel: 'silent', server: { middlewareMode: true, hmr: false } });
-  ({ default: PanelStyleEditForm, SavedMangaImageInput } = await server.ssrLoadModule('/src/components/PanelStyleEditForm.jsx'));
+  ({ default: PanelStyleEditForm } = await server.ssrLoadModule('/src/components/PanelStyleEditForm.jsx'));
   ({ default: Step4Panel } = await server.ssrLoadModule('/src/components/Step4Panel.jsx'));
 });
 after(async () => { await server?.close(); });
 
 const sourceImage = 'data:image/png;base64,b3JpZ2luYWw=';
+test('the app exposes no standalone saved-image upload before API output', () => {
+  const app = readFileSync(new URL('../src/App.jsx', import.meta.url), 'utf8');
+  assert.equal(/SavedMangaImageInput|loadSavedMangaImage/.test(app), false);
+  assert.match(app, /Boolean\(finalPrompt\?\.trim\(\) \|\| generatedImage\)/);
+});
 const frames = Array.from({ length: 6 }, (_, index) => ({
   index, panelNumber: index + 1, region: { x: 10, y: 20 + index * 100, width: 200, height: 90 },
   thumbnail: `data:image/png;base64,cGFuZWw${index}`,
@@ -88,6 +93,18 @@ function mount(props = {}, componentName = 'default') {
     change: (label, value) => { const node = nodes().find(item => item.props?.['aria-label'] === label); assert.ok(node, label); node.props.onChange({ target: { value, checked: value } }); render(); },
   };
 }
+
+test('Gemini count choices admit only four while OpenAI retains four through eight', async () => {
+  const calls = [];
+  const h = mount({ panelCount: undefined, maxPanelCount: 4, onPrepare: async args => { calls.push(args); return { ...prepared, frames: frames.slice(0, 4) }; } });
+  assert.deepEqual(h.nodes().filter(node => node.type === 'option' && node.props.value).map(node => node.props.value), [4]);
+  h.change('この画像のコマ数', '6');
+  await h.settle();
+  assert.equal(calls.length, 0);
+  h.change('この画像のコマ数', '4');
+  await h.settle();
+  assert.equal(calls[0].panelCount, 4);
+});
 
 async function select(harness) {
   await harness.settle();
@@ -343,6 +360,17 @@ test('opening panel editing while busy waits and prepares once when processing e
   assert.equal(calls, 1, 'ordinary renders must not repeat preparation');
 });
 
+test('STEP4 locks the shared editor for both providers and both color modes during generation and review', () => {
+  const toggle = html => html.match(/<button\b[^>]*aria-controls="image-edit-section-content"[^>]*>/)?.[0];
+  for (const selectedEngine of ['openai','gemini']) for (const colorMode of ['color','monochrome']) {
+    const props = {selectedEngine,colorMode};
+    assert.doesNotMatch(toggle(renderStep4(props)), /disabled=""/);
+    for (const work of [{isGeneratingImage:true}, {isGeneratingImage:true,genLog:['[QUALITY QA] 検査中']}, {isAnalyzing:true}, {isFixingPolicy:true}]) {
+      assert.match(toggle(renderStep4({...props,...work})), /disabled=""/, JSON.stringify({selectedEngine,colorMode,work}));
+    }
+  }
+});
+
 test('busy transitions after preparation preserve the selected edit and unadopted candidate', async () => {
   let calls = 0;
   const h = mount({ onPrepare: async () => { calls++; return prepared; } });
@@ -369,7 +397,7 @@ test('STEP4 offers editing for the displayed OpenAI image independently of curre
   assert.match(html, /この画像：6コマ/);
   assert.doesNotMatch(html, /aria-label="この画像のコマ数"/);
   assert.match(renderStep4({ experimentalEnabled: true, experimentalPanelCount: 8 }), /aria-label="この画像のコマ数"/);
-  assert.doesNotMatch(renderStep4({ selectedEngine: 'gemini' }), /<option value="panel"/);
+  assert.match(renderStep4({ selectedEngine: 'gemini' }), /<option value="panel"/);
   assert.match(renderStep4({ selectedEngine: 'gemini' }), /ページ全体への指示/);
   for (const finalPrompt of ['', '[ANTIGRAVITY EMOTIONAL CINEMA ENGINE]']) {
     for (const experimentalEnabled of [false, true]) {
@@ -415,34 +443,4 @@ test('saved-image editing is not covered by the step prerequisite overlay, while
   }
   assert.match(generationButton(renderStep4({ ...props, finalPrompt: 'Four-panel comic' })), /^<button\b[^>]*disabled=""/, 'an old prompt must not unlock a new generation before STEP3');
   assert.doesNotMatch(generationButton(renderStep4({ currentStep: 3 })), /^<button\b[^>]*disabled=""/);
-});
-
-test('saved manga input awaits one explicit local file load, disables busy changes and reports errors', async () => {
-  let calls = 0, finish;
-  const file = { name: 'saved-page.png', type: 'image/png' };
-  const h = mount({ onLoad: value => { assert.equal(value, file); calls++; return new Promise(resolve => { finish = resolve; }); } }, 'SavedMangaImageInput');
-  const input = () => h.nodes().find(node => node.type === 'input');
-  assert.match(h.text(), /保存した漫画を読み込む（追加課金なし）/);
-  assert.equal(h.find('details', '保存した漫画を読み込む').props.open, undefined, 'external import starts collapsed');
-  assert.equal(input().props.type, 'file');
-  assert.equal(input().props.accept, 'image/png,image/jpeg,image/webp');
-  assert.equal(calls, 0);
-  const element = { files: [file], value: 'saved-page.png' };
-  const event = { currentTarget: element };
-  const pending = input().props.onChange(event);
-  await input().props.onChange(event); h.render();
-  assert.equal(calls, 1);
-  assert.equal(input().props.disabled, true);
-  finish(); await pending; h.render();
-  assert.equal(input().props.disabled, false);
-  assert.equal(element.value, '', 'the same file may be selected again explicitly');
-  h.render({ busy: true });
-  await input().props.onChange(event);
-  assert.equal(calls, 1);
-  h.render({ busy: false, onLoad: async () => { throw new Error('not a readable image'); } });
-  await input().props.onChange(event); h.render();
-  assert.match(h.text(), /not a readable image/);
-  assert.ok(h.nodes().some(node => node.props.role === 'alert'));
-  const html = renderToStaticMarkup(React.createElement(SavedMangaImageInput, { busy: true, onLoad() {} }));
-  assert.match(html, /<input[^>]*disabled=""/);
 });
