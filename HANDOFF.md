@@ -1,6 +1,14 @@
 # Nano Banana Pro handoff
 
-## Current delivery: v7.0.9 (2026-10-16)
+## Current delivery: v7.1.0 (2026-10-16)
+
+Root PLAN owns the live release/social/final-backup status. v7.0.9 is already published; do not repeat it. The authorized follow-up fixes connected-provider page/panel editing: OpenAI4-8 and Gemini FOUR ONLY, color and monochrome. Preserve API/history images; standalone external-manga import and manual reinspection controls are absent. Original image/history retention, exact outside-panel pixels and adopted-image frame reopening have real API evidence under output/release-v709-20261016.
+
+The monochrome pipeline retains white lit skin, canonical dark-skin bases, bounded screentone and black shadows. Skin classification reads its own appearance field. Edits retain original hair/skin/clothing base-tone assignments. API-only neutral color finishing preserves dimensions and bypasses color; camera/style/acting fidelity remains generative and variable. The user accepted the current native5-8 monochrome drawing baseline; do not start speculative improvement rerolls. The latest accepted source/adopted images and all earlier candidates remain in private evidence and browser history.
+
+Editor busy locks apply during generation/inspection, STEP progress reflects reruns, and panel editing updates elapsed seconds. Focused timer13 and revised-contract88 checks passed; full preceding1951 run passed1935 with16 obsolete monochrome expectation failures covered by those88 revised checks. Build/lint/built CSP passed. The first v7.1.0 official transaction stopped in validation because this handoff still named7.0.9; nothing was published by that transaction. Follow the existing receipt and required retry authorization. Publish only after the official current full/security gates pass. Complete scoped note/Facebook, provide X as an inline code block ONLY, then the established full backup plus independent verifier. Preserve the five user-owned IAB tabs and keys entered in the app; never inspect credentials.
+
+## Previous delivery: v7.0.9 (2026-10-16)
 
 Root PLAN owns the live release/coverage/backup checklist. User authorized the current source improvements and 8px scenario-copy/enhancement gap, official release, then real page/panel editing verification for four-panel/monochrome/Gemini. Any discovered bug is to be repaired, verified and redeployed. Full backup only after all work; X is inline text only. Prior initial and editor API proof is retained under output/speaker-label-20261015, current delivery evidence under output/release-v709-20261016. Preserve the approved fa3d0470…03d45 image as quality floor. Manual and pricing snapshots updated to7.0.9/2026-10-16. No claim of universal visual compliance or Gemini selected-panel support (current selected-panel editing is OpenAI only).
 
