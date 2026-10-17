@@ -59,13 +59,14 @@ export function verifyBuiltSecurity(html) {
   return true;
 }
 
-export function webSecurity(options = {}) {
+export function webSecurity({ allowMicrophone = false, ...options } = {}) {
+  if (typeof allowMicrophone !== 'boolean') throw new TypeError('allowMicrophone must be a boolean');
   let development = false;
   const headers = (server) => { server.middlewares.use((_req, res, next) => {
     res.setHeader('X-Frame-Options', 'DENY');
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('Referrer-Policy', 'no-referrer');
-    res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+    res.setHeader('Permissions-Policy', `camera=(), microphone=${allowMicrophone ? '(self)' : '()'}, geolocation=()`);
     next();
   }); };
   return {

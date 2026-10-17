@@ -7,9 +7,11 @@
  */
 
 import {
+  DEFAULT_OPENAI_STEP1_MODEL_ID,
   DEFAULT_OPENAI_SCENARIO_MODEL_ID,
+  DEFAULT_OPENAI_STEP3_MODEL_ID,
   getOpenAIScenarioModelRoute,
-  OPENAI_TEXT_MODEL_IDS,
+  getOpenAIVisionModelRoute,
   OPENAI_SCENARIO_TEXT_MODEL_IDS,
   OPENAI_VISION_MODEL_IDS,
 } from './openai-model-routes.js';
@@ -26,8 +28,8 @@ import {
 } from './openai-image-settings.js';
 
 const OPENAI_MODEL_NOTES = {
-  'gpt-6.1-sol': '画像解析・文章処理のPrimary・STEP2公開版の初期モデル・入力$2/出力$10 USD/MTok',
-  'gpt-6-astra': 'STEP2専用・物語構成と演出推論',
+  'gpt-6.1-sol': '画像解析・文章処理の選択肢・入力$2/出力$10 USD/MTok',
+  'gpt-6-astra': 'STEP2・STEP3で選択可能・物語構成と演出推論',
   'gpt-6-sol': '画像解析・文章処理・複雑な構成と料金のバランス',
   'gpt-5.6-sol': '画像解析・文章処理・高い構成力を重視',
   'gpt-5.6-terra': '画像解析・文章処理・品質と料金のバランス',
@@ -76,7 +78,7 @@ export const FALLBACK_CHAIN_SOURCE_IDS = {
   'step2-gemini': GEMINI_TEXT_MODEL_IDS,
   'step2-openai': OPENAI_SCENARIO_TEXT_MODEL_IDS,
   'step3-gemini': GEMINI_TEXT_MODEL_IDS,
-  'step3-openai': OPENAI_TEXT_MODEL_IDS,
+  'step3-openai': OPENAI_SCENARIO_TEXT_MODEL_IDS,
   'step4-gemini': GEMINI_IMAGE_MODEL_IDS,
   'step4-openai': describeOpenAIImageRoute().map(({ id }) => id),
 };
@@ -99,7 +101,7 @@ export const FALLBACK_CHAINS = [
     description: 'キャラクターシート画像をAIが読み取り、髪色・髪型・メガネの有無・性格などをテキストデータとして抽出する。※注記: 現在のアプリのAPIは、最新APIの対応状況や安定稼働を考慮し、あえて古い世代のモデルをPrimaryに設定している場合があります。',
     provider: 'OpenAI',
     sourceFile: 'src/lib/openai-text.js',
-    models: describeOpenAITextRoute(FALLBACK_CHAIN_SOURCE_IDS['step1-openai'])
+    models: describeOpenAITextRoute(getOpenAIVisionModelRoute(DEFAULT_OPENAI_STEP1_MODEL_ID))
   },
   {
     id: 'step2-gemini',
@@ -135,7 +137,7 @@ export const FALLBACK_CHAINS = [
     description: 'シナリオのセリフ・感情・カメラアングルを解析し、画像生成AIに渡す超詳細なプロンプト（英語の指示文）を自動構築する。キャラクターの配置ルールやクローン防止ロジックもここで適用。※注記: 現在のアプリのAPIは、最新APIの対応状況や安定稼働を考慮し、あえて古い世代のモデルをPrimaryに設定している場合があります。',
     provider: 'OpenAI',
     sourceFile: 'src/lib/openai-text.js',
-    models: describeOpenAITextRoute(FALLBACK_CHAIN_SOURCE_IDS['step3-openai'])
+    models: describeOpenAITextRoute(getOpenAIScenarioModelRoute(DEFAULT_OPENAI_STEP3_MODEL_ID))
   },
   {
     id: 'step4-gemini',
@@ -161,17 +163,30 @@ export const FALLBACK_CHAINS = [
 // ※ ユーザーの明示的な指示があった場合のみ、ここにエントリを追加する。
 //   通常のバグフィックスでは追加しない。
 //   date は必ず 'YYYY-MM-DD HH:MM JST' 形式で日時を記録すること。
-export const getFallbackChains = (scenarioModelId = DEFAULT_OPENAI_SCENARIO_MODEL_ID) => {
-  const route = getOpenAIScenarioModelRoute(scenarioModelId);
-  const alternatives = OPENAI_SCENARIO_TEXT_MODEL_IDS.filter(id => !route.includes(id));
-  return FALLBACK_CHAINS.map(chain => chain.id === 'step2-openai' ? {
-    ...chain,
-    description: 'STEP2とシナリオ強化はPrimaryから表示順に自動切替。Selectableは自動切替の対象外で、STEP2で手動選択できます。公開版の初期モデルはGPT-6.1 Sol。',
-    models: [
-      ...describeOpenAITextRoute(route),
-      ...alternatives.map(id => ({ id, role: 'Selectable', note: `${OPENAI_MODEL_NOTES[id]}・STEP2で手動選択可能（自動切替対象外）` })),
-    ],
-  } : chain);
+export const getFallbackChains = (selection = {}) => {
+  const {
+    analysisModelId = DEFAULT_OPENAI_STEP1_MODEL_ID,
+    scenarioModelId = DEFAULT_OPENAI_SCENARIO_MODEL_ID,
+    promptModelId = DEFAULT_OPENAI_STEP3_MODEL_ID,
+  } = typeof selection === 'string' ? { scenarioModelId: selection } : selection;
+  const routes = {
+    'step1-openai': getOpenAIVisionModelRoute(analysisModelId),
+    'step2-openai': getOpenAIScenarioModelRoute(scenarioModelId),
+    'step3-openai': getOpenAIScenarioModelRoute(promptModelId),
+  };
+  return FALLBACK_CHAINS.map(chain => {
+    const route = routes[chain.id];
+    if (!route) return chain;
+    const alternatives = FALLBACK_CHAIN_SOURCE_IDS[chain.id].filter(id => !route.includes(id));
+    return {
+      ...chain,
+      description: `${chain.step}の選択モデルから表示順に実行。Selectableは自動切替の対象外で、制作前に手動選択できます。`,
+      models: [
+        ...describeOpenAITextRoute(route),
+        ...alternatives.map(id => ({ id, role: 'Selectable', note: `${OPENAI_MODEL_NOTES[id]}・手動選択可能（自動切替対象外）` })),
+      ],
+    };
+  });
 };
 
 export const FALLBACK_CHAIN_HISTORY = [

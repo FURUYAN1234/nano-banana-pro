@@ -38,6 +38,20 @@ test('the progress header follows rerun activity before retained completed outpu
   } finally {await server.close();}
 });
 
+test('the progress header stacks progress, controls and help at every width', async () => {
+  const server = await createServer({appType:'custom',logLevel:'silent',server:{middlewareMode:true,hmr:false}});
+  try {
+    const {default:ControlBar}=await server.ssrLoadModule('/src/components/ControlBar.jsx');
+    const html=renderToStaticMarkup(React.createElement(ControlBar));
+    assert.match(html, /class="workflow-header-row flex flex-col [^"]*"[^>]*>\s*<ol aria-label="制作の進捗"/);
+    assert.match(html, /<\/ol>\s*<div class="workflow-mode-controls/);
+    assert.match(html, /<\/div>\s*<div class="workflow-mode-help/);
+    assert.doesNotMatch(html, /hidden xl:block w-12/, 'the gap must not rely on an extra-large-only spacer');
+    const css=await readFile(new URL('../src/index.css', import.meta.url), 'utf8');
+    assert.match(css, /\.workflow-header-row\s*\{\s*row-gap:\s*8px;/);
+  } finally {await server.close();}
+});
+
 test('OpenAI STEP4 has no additional review button; only generation pulses when it is next', async () => {
   const server = await createServer({ appType: 'custom', logLevel: 'silent', server: { middlewareMode: true } });
   try {

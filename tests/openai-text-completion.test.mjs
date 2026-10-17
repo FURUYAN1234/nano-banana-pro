@@ -26,6 +26,21 @@ const payload = (web, { text = '', limited = false, refusal = false } = {}) => w
   usage: { prompt_tokens: 20000, completion_tokens: 32768, completion_tokens_details: { reasoning_tokens: 32000 } },
 };
 
+test('independent STEP1 and STEP3 selections reach the matching OpenAI requests', async () => {
+  const bodies = [];
+  globalThis.fetch = async (_url, init) => {
+    bodies.push(JSON.parse(init.body));
+    return Response.json(payload(false, { text: 'complete fixture' }));
+  };
+  await client.callOpenAIText('analyze', ['data:image/png;base64,fixture'], null, null,
+    { visionModelId: 'gpt-6-luna' });
+  await client.callOpenAIText('assemble', null, null, null,
+    { modelRoute: 'scenario', scenarioModelId: 'gpt-6-sol' });
+  assert.deepEqual(bodies.map(body => body.model), ['gpt-6-luna', 'gpt-6-sol']);
+  assert.match(JSON.stringify(bodies[0].messages), /image_url/);
+  assert.doesNotMatch(JSON.stringify(bodies[1].messages), /image_url/);
+});
+
 test('primary image QA uses model-specific headroom and reports the actual request limit', async () => {
   for (const target of ['gpt-6.1-sol', 'gpt-6-sol', 'gpt-5.6-luna']) {
     const bodies = [], logs = [];

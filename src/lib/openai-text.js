@@ -15,7 +15,7 @@ import { openAISources } from './sns-explanation.js';
 import {createApiError, readApiJson, aggregateApiErrors, formatApiErrorDetails, shouldStopApiFallback, sanitizeErrorMessage} from './api-errors.js';
 import {
     OPENAI_TEXT_MODEL_IDS,
-    OPENAI_VISION_MODEL_IDS,
+    getOpenAIVisionModelRoute,
     getOpenAIScenarioCostEstimate,
     getOpenAIScenarioModelRoute,
 } from './openai-model-routes.js';
@@ -227,7 +227,7 @@ export const callOpenAIText = async (prompt, images = null, systemInstruction = 
 
     // Vision、STEP2専用のシナリオ、その他テキストを明確に分離する。
     const MODEL_IDS = (images && images.length > 0)
-        ? OPENAI_VISION_MODEL_IDS
+        ? getOpenAIVisionModelRoute(options.visionModelId)
         : options.modelRoute === 'scenario'
             ? getOpenAIScenarioModelRoute(options.scenarioModelId)
             : OPENAI_TEXT_MODEL_IDS;

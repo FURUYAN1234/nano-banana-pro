@@ -3,7 +3,6 @@ import assert from 'node:assert/strict';
 
 import { getFallbackChains, FALLBACK_CHAINS, FALLBACK_CHAIN_SOURCE_IDS } from '../src/lib/fallback-chain-history.js';
 import {
-  OPENAI_TEXT_MODEL_IDS,
   OPENAI_SCENARIO_TEXT_MODEL_IDS,
   OPENAI_VISION_MODEL_IDS,
 } from '../src/lib/openai-model-routes.js';
@@ -40,9 +39,9 @@ test('the STEP2 OpenAI snapshot starts with the active scenario route', () => {
 
 test('the STEP1 and STEP3 OpenAI chains use their active routes', () => {
   assert.strictEqual(FALLBACK_CHAIN_SOURCE_IDS['step1-openai'], OPENAI_VISION_MODEL_IDS);
-  assert.strictEqual(FALLBACK_CHAIN_SOURCE_IDS['step3-openai'], OPENAI_TEXT_MODEL_IDS);
-  assert.deepEqual(chainModels('step1-openai'), OPENAI_VISION_MODEL_IDS);
-  assert.deepEqual(chainModels('step3-openai'), OPENAI_TEXT_MODEL_IDS);
+  assert.strictEqual(FALLBACK_CHAIN_SOURCE_IDS['step3-openai'], OPENAI_SCENARIO_TEXT_MODEL_IDS);
+  assert.deepEqual(chainModels('step1-openai'), ['gpt-6-luna', 'gpt-5.6-luna']);
+  assert.deepEqual(chainModels('step3-openai'), ['gpt-6-luna', 'gpt-5.6-luna']);
 });
 
 test('the Gemini Model Chain entries use their active routes', () => {
@@ -75,7 +74,8 @@ for (const selected of ['gpt-6.1-sol', 'gpt-6-astra', 'gpt-6-luna']) {
     const chains=getFallbackChains(selected);
     assert.deepEqual(chains.find(c=>c.id==='step2-openai').models.filter(m=>m.role!=='Selectable').map(m=>m.id),getOpenAIScenarioModelRoute(selected));
     assert.equal(chains.find(c=>c.id==='step2-openai').models[0].role,'Primary');
-    assert.deepEqual(chains.filter(c=>c.id!=='step2-openai'),FALLBACK_CHAINS.filter(c=>c.id!=='step2-openai'));
+    assert.equal(chains.find(c=>c.id==='step1-openai').models[0].id,'gpt-6-luna');
+    assert.equal(chains.find(c=>c.id==='step3-openai').models[0].id,'gpt-6-luna');
   });
 }
 

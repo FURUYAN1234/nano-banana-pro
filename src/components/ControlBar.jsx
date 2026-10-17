@@ -33,7 +33,7 @@ export default function ControlBar({
 
   return (
     <div ref={controlBarRef} className="fixed top-0 left-0 right-0 z-[100] bg-[#0f1115] border-b border-white/10 px-2 md:px-8 py-2 md:py-3 shadow-xl w-full flex flex-col gap-2 md:gap-3 overflow-x-hidden">
-      <div className="flex flex-wrap xl:flex-nowrap items-center justify-center max-w-7xl mx-auto w-full gap-y-3">
+      <div className="workflow-header-row flex flex-col items-center justify-center max-w-7xl mx-auto w-full">
         
         <ol aria-label="制作の進捗" aria-live="polite" className="workflow-progress">
           {['解析', 'シナリオ', 'プロンプト', '画像生成'].map((label, index) => {
@@ -53,14 +53,12 @@ export default function ControlBar({
           })}
         </ol>
 
-        {/* 物理スペーサー */}
-        <div className="hidden xl:block w-12 lg:w-16 shrink-0"></div>
-
-        {/* Controls - フルオートボタン＋説明文 */}
-        <div className="workflow-mode-controls flex flex-wrap sm:flex-nowrap items-center justify-center gap-4 lg:gap-6 shrink-0 max-w-full">
+        {/* Controls - フルオートボタン */}
+        <div className="workflow-mode-controls flex flex-wrap items-center justify-center gap-4 shrink-0 max-w-full">
           {/* 連続生成(ループ)トグル */}
           <button
             disabled={!apiKey || isAborting}
+            aria-pressed={Boolean(isEndlessMode)}
             onClick={() => {
               if (isEndlessMode) setEndless(false);
               else requestMode('endless');
@@ -74,12 +72,13 @@ export default function ControlBar({
             } disabled:opacity-50 disabled:cursor-not-allowed`}
           >
             <RefreshCw size={14} className={isEndlessMode ? 'animate-spin' : ''} style={{ animationDuration: '3s' }} />
-            <span className="whitespace-nowrap">{isEndlessMode ? '🔁 連続ループ生成を解除' : '🔁 連続ループ生成 ON'}</span>
+            <span className="whitespace-nowrap">{isEndlessMode ? '🔁 連続ループ生成 ON' : '🔁 連続ループ生成 OFF'}</span>
           </button>
 
           {/* フルオートボタン */}
           <button
             disabled={!apiKey || isAborting}
+            aria-pressed={Boolean(isFullAutoMode)}
             onClick={() => isFullAutoMode ? handleFullAutoToggle() : requestMode('fullAuto')}
             title="画像をドロップするだけで4コマを全自動生成。完了後は自動OFF。生成中に押すと即中断。"
             style={{ color: isFullAutoMode ? (isAborting ? '#ffffff' : '#dc2626') : '#ffffff' }}
@@ -90,7 +89,7 @@ export default function ControlBar({
             } ${!apiKey && !isAborting ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             {isFullAutoMode ? (isAborting ? <Loader2 size={14} className="animate-spin" /> : <Square size={14} fill="currentColor" />) : <Zap size={14} />}
-            {isFullAutoMode ? (isAborting ? '停止処理中...' : '全自動モード 中断') : '⚡ 全自動モード（フルオート） ON'}
+            {isFullAutoMode ? (isAborting ? '停止処理中...' : '⚡ 全自動モード（フルオート） ON') : '⚡ 全自動モード（フルオート） OFF'}
           </button>
           
           <button
@@ -102,15 +101,14 @@ export default function ControlBar({
           >
             解析・生成強制ストップ
           </button>
-          <div className="hidden sm:block w-6 shrink-0"></div>
+        </div>
 
-          {/* 説明文 */}
-          <div className={`workflow-mode-help flex flex-col justify-center text-[10px] leading-relaxed max-w-[650px] text-center sm:text-left transition-opacity duration-300 ${!apiKey ? 'text-slate-600 opacity-40' : 'text-slate-400'}`}>
+        {/* 説明文 */}
+        <div className={`workflow-mode-help flex flex-col justify-center text-[10px] leading-relaxed text-center transition-opacity duration-300 ${!apiKey ? 'text-slate-600 opacity-40' : 'text-slate-400'}`}>
             <span className="whitespace-normal text-slate-300 font-bold">💡 全自動モード（フルオート）の使い方：</span>
             <span className="whitespace-normal">・「⚡ 全自動モード ON」にして画像をドロップ（またはドロップ後にON）すると、4コマ漫画を全自動で最後まで生成します。</span>
             <span className="whitespace-normal">・途中で中断したい場合は同じボタンで停止できます。以降は手動（各STEPボタン）で進行可能です。</span>
             <span className="whitespace-normal">・「連続ループ生成」をONにすると、自動生成完了後に自動で次の作品（別のシナリオ）を永遠に作り続けます。</span>
-          </div>
         </div>
       </div>
       

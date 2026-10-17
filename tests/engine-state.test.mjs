@@ -32,9 +32,10 @@ test('provider-sensitive header and STEP4 Web controls share the effective engin
   assert.match(step4PanelSource, /\{isOpenAIImageMode && \([\s\S]*?copyTextToClipboard\(buildSingleImageEmotionalPrompt\(\)\)/);
 });
 
-test('Gemini UI hides the OpenAI-only scenario-model selector', () => {
+test('Gemini UI hides the OpenAI-only step model selectors', () => {
   assert.match(step2PanelSource, /import \{ getEffectiveEngine \} from ['"]\.\.\/lib\/engine-state['"];/);
   assert.match(step2PanelSource, /const isOpenAIEngine = getEffectiveEngine\(selectedEngine, enableOpenAIApi\) === 'openai';/);
-  assert.match(step2PanelSource, /\{isOpenAIEngine && \(\s*<div className="scenario-model-select-card/);
+  assert.match(appSource, /getEffectiveEngine\(selectedEngine, enableOpenAIApi\) === 'openai' && \(\s*<ModelSelectionPanel/);
+  assert.doesNotMatch(step2PanelSource, /scenario-model-select-card/);
   assert.match(appSource, /<Step2Panel[\s\S]*?selectedEngine=\{selectedEngine\}[\s\S]*?enableOpenAIApi=\{enableOpenAIApi\}/);
 });

@@ -10,13 +10,15 @@ import {
   getOpenAIScenarioModelRoute,
 } from '../src/lib/openai-model-routes.js';
 
-test('development validation starts on Luna 6 while production keeps Sol 6.1', () => {
+test('STEP2 starts on Luna 6 in both environments', () => {
   assert.equal(resolveDefaultOpenAIScenarioModelId(true), 'gpt-6-luna');
-  assert.equal(resolveDefaultOpenAIScenarioModelId(false), 'gpt-6.1-sol');
+  assert.equal(resolveDefaultOpenAIScenarioModelId(false), 'gpt-6-luna');
 });
 
 const step2PanelSource = await import('node:fs/promises')
   .then(({ readFile }) => readFile(new URL('../src/components/Step2Panel.jsx', import.meta.url), 'utf8'));
+const modelPanelSource = await import('node:fs/promises')
+  .then(({ readFile }) => readFile(new URL('../src/components/ModelSelectionPanel.jsx', import.meta.url), 'utf8'));
 const workflowSource = await import('node:fs/promises')
   .then(({ readFile }) => readFile(new URL('../src/hooks/useMangaWorkflow.js', import.meta.url), 'utf8'));
 const cssSource = await import('node:fs/promises')
@@ -25,11 +27,11 @@ const cssSource = await import('node:fs/promises')
 test('initial selection, invalid selection and full reset share the environment default without overwriting an explicit model', () => {
   const selectionBlock = workflowSource.slice(
     workflowSource.indexOf('const [scenarioModelId, setScenarioModelIdState]'),
-    workflowSource.indexOf('const [openAIImageQuality, setOpenAIImageQualityState]'),
+    workflowSource.indexOf('const [promptModelId, setPromptModelIdState]'),
   );
   const initializeSelection = new Function('useState', 'DEFAULT_OPENAI_SCENARIO_MODEL_ID', 'OPENAI_SCENARIO_TEXT_MODEL_IDS',
     `${selectionBlock}; return {scenarioModelId, setScenarioModelId, resetScenarioModelId};`);
-  for (const [development, expected] of [[true, 'gpt-6-luna'], [false, 'gpt-6.1-sol']]) {
+  for (const [development, expected] of [[true, 'gpt-6-luna'], [false, 'gpt-6-luna']]) {
     let selected;
     const selection = initializeSelection(initial => {
       selected = initial;
@@ -104,16 +106,13 @@ test('local Luna validation cannot silently fall back while production and other
   }
 });
 
-test('Vite development and production apply their own initial model, route and reload explanation', async () => {
+test('Vite development and production render the three independent initial models', async () => {
   const [{ createServer }, { default: React }, { renderToStaticMarkup }] = await Promise.all([
     import('vite'), import('react'), import('react-dom/server'),
   ]);
   const originalNodeEnv = process.env.NODE_ENV;
   try {
-    for (const [environment, expectedId, expectedLabel] of [
-      ['development', 'gpt-6-luna', 'GPT-6 Luna'],
-      ['production', 'gpt-6.1-sol', 'GPT-6.1 Sol'],
-    ]) {
+    for (const environment of ['development', 'production']) {
       process.env.NODE_ENV = environment;
       const server = await createServer({
         appType: 'custom', logLevel: 'silent', mode: environment,
@@ -122,19 +121,16 @@ test('Vite development and production apply their own initial model, route and r
       try {
         assert.equal(server.config.isProduction, environment === 'production');
         const routes = await server.ssrLoadModule('/src/lib/openai-model-routes.js');
-        const { default: Step2Panel } = await server.ssrLoadModule('/src/components/Step2Panel.jsx');
-        assert.equal(routes.DEFAULT_OPENAI_SCENARIO_MODEL_ID, expectedId);
+        const { default: ModelSelectionPanel } = await server.ssrLoadModule('/src/components/ModelSelectionPanel.jsx');
+        assert.equal(routes.DEFAULT_OPENAI_SCENARIO_MODEL_ID, 'gpt-6-luna');
         assert.equal(routes.getOpenAIScenarioModelRoute('gpt-6-luna').length, environment === 'development' ? 1 : 2);
-        const renderPanel = scenarioModelId => renderToStaticMarkup(React.createElement(Step2Panel, {
-          currentStep: 2, inputMode: 'manual', targetDate: '2026-10-14', categories: [],
-          manualTopic: '', scenario: '', originalScenario: '', scenarioThought: '',
-          selectedEngine: 'openai', enableOpenAIApi: true, scenarioModelId, punchlineType: 'Auto',
+        const html = renderToStaticMarkup(React.createElement(ModelSelectionPanel, {
+          analysisModelId: routes.DEFAULT_OPENAI_STEP1_MODEL_ID,
+          scenarioModelId: routes.DEFAULT_OPENAI_SCENARIO_MODEL_ID,
+          promptModelId: routes.DEFAULT_OPENAI_STEP3_MODEL_ID,
         }));
-        const html = renderPanel(expectedId);
-        assert.ok(html.includes(`再読込時は${expectedLabel}から開始します。`));
-        assert.ok(html.includes(`value="${expectedId}" selected=""`));
-        assert.ok(html.includes(environment === 'development' ? '検証用・他モデルへ切替なし' : '固定・失敗時のみ下位へ'));
-        assert.ok(renderPanel('gpt-6-sol').includes('固定・失敗時のみ下位へ'));
+        assert.match(html, /STEP1 · 素材の画像解析[\s\S]*?STEP2 · シナリオ生成・強化[\s\S]*?STEP3 · 描画指示の構築・確認/);
+        assert.equal((html.match(/value="gpt-6-luna" selected=""/g) || []).length, 3);
       } finally {
         await server.close();
       }
@@ -170,18 +166,13 @@ test('missing or invalid usage never becomes a zero-cost actual result', () => {
     { inputTokens: 1000, outputTokens: 2000, estimatedUsd: 0.026 });
 });
 
-test('STEP2 exposes descriptive model choices before OpenAI is connected', () => {
-  assert.match(step2PanelSource, /OpenAIシナリオモデル/);
-  assert.match(step2PanelSource, /OPENAI_SCENARIO_MODEL_OPTIONS\.map/);
-  assert.match(step2PanelSource, /\{label\}（\{description\}｜入力 \$\{inputPriceUsdPerM\}/);
-  assert.doesNotMatch(step2PanelSource, /Astraへ戻す/);
-  assert.doesNotMatch(step2PanelSource, /disabled=\{!enableOpenAIApi\}/);
-  assert.match(step2PanelSource, /scenario-model-select-input/);
-  assert.match(step2PanelSource, /参考単価/);
-  assert.match(step2PanelSource, /inputPriceUsdPerM/);
-  assert.match(step2PanelSource, /comparisonNote/);
-  assert.match(step2PanelSource, /\{label\}（\{description\}｜入力 \$\{inputPriceUsdPerM\} \/ 出力 \$\{outputPriceUsdPerM\} USD\/MTok）/);
-  assert.match(step2PanelSource, /長文コンテキスト加算/);
+test('all three model choices appear before STEP1 with a clear price unit', () => {
+  assert.match(modelPanelSource, /STEP1[\s\S]*STEP2[\s\S]*STEP3/);
+  assert.match(modelPanelSource, /OPENAI_SCENARIO_MODEL_OPTIONS\.filter/);
+  assert.match(modelPanelSource, /OPENAI_VISION_MODEL_IDS\.includes/);
+  assert.match(modelPanelSource, /inputPriceUsdPerM, outputPriceUsdPerM/);
+  assert.match(modelPanelSource, /USD\/100万トークン/);
+  assert.doesNotMatch(step2PanelSource, /scenario-model-select-card/);
 });
 
 test('the scenario model dropdown has explicit readable closed and option colors', () => {
@@ -189,24 +180,21 @@ test('the scenario model dropdown has explicit readable closed and option colors
   assert.match(cssSource, /\.scenario-model-select-input option\s*\{[\s\S]*background-color:\s*#0f172a;[\s\S]*color:\s*#f8fafc;/);
 });
 
-test('the three scenario-model help lines are compact without blank paragraph gaps', () => {
-  assert.match(step2PanelSource, /scenario-model-copy mt-1 flex flex-col gap-0 text-\[10px\] leading-tight/);
-  assert.match(cssSource, /\.scenario-model-copy p\s*\{[\s\S]*margin:\s*0;[\s\S]*line-height:\s*1\.2;/);
-  const helpBlock = step2PanelSource.slice(
-    step2PanelSource.indexOf('scenario-model-copy'),
-    step2PanelSource.indexOf('</div>', step2PanelSource.indexOf('scenario-model-copy')),
-  );
-  assert.doesNotMatch(helpBlock, /<p className="mt-/);
-  assert.equal((helpBlock.match(/<p className="m-0 /g) || []).length, 3);
+test('the three model controls fit one row or stack at narrow widths', () => {
+  assert.match(cssSource, /\.model-selection-grid\s*\{[^}]*grid-template-columns:\s*repeat\(3,minmax\(0,1fr\)\)/);
+  assert.match(cssSource, /@media \(max-width:700px\)\s*\{\s*\.model-selection-grid\s*\{\s*grid-template-columns:1fr;/);
 });
 
-test('STEP2 uses the environment default and keeps validation choices in memory only', () => {
+test('all step models reset to Luna and keep choices in memory only', () => {
+  assert.match(workflowSource, /useState\(DEFAULT_OPENAI_STEP1_MODEL_ID\)/);
   assert.match(workflowSource, /useState\(DEFAULT_OPENAI_SCENARIO_MODEL_ID\)/);
+  assert.match(workflowSource, /useState\(DEFAULT_OPENAI_STEP3_MODEL_ID\)/);
   assert.doesNotMatch(workflowSource, /nano-banana-pro:scenario-model-id/);
   assert.doesNotMatch(workflowSource, /localStorage\.(?:getItem|setItem)/);
   assert.match(workflowSource, /scenarioModelId/);
   assert.match(workflowSource, /const hardReset = \(\) => \{[\s\S]*?resetScenarioModelId\(\);/);
-  assert.match(step2PanelSource, /再読込時は\{DEFAULT_OPENAI_SCENARIO_MODEL_LABEL\}から開始します/);
+  assert.match(workflowSource, /setAnalysisModelId\(DEFAULT_OPENAI_STEP1_MODEL_ID\)/);
+  assert.match(workflowSource, /setPromptModelId\(DEFAULT_OPENAI_STEP3_MODEL_ID\)/);
 });
 
 test('Sol 6.1 uses its listed price and never escalates fallback to Astra', () => {

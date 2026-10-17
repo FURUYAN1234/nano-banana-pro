@@ -5,7 +5,9 @@ import { getEffectiveEngine } from '../lib/engine-state';
 
 export default function SystemHeader({
   SYSTEM_VERSION,
+  analysisModelId,
   scenarioModelId,
+  promptModelId,
   apiKey,
   selectedEngine,
   enableOpenAIApi,
@@ -59,7 +61,7 @@ export default function SystemHeader({
               </div>
               
               {apiKey && (
-                <div className="flex flex-wrap items-center justify-center gap-2">
+                <div className="system-reset-controls flex flex-wrap items-center justify-center gap-2">
                   <button
                     onClick={partialReset}
                     className="flex items-center gap-1.5 bg-white/5 hover:bg-white/10 text-slate-300 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors border border-white/10"
@@ -112,7 +114,9 @@ export default function SystemHeader({
         </div>
       </div>
       <FallbackChainViewer
+        analysisModelId={analysisModelId}
         scenarioModelId={scenarioModelId}
+        promptModelId={promptModelId}
         isOpen={showFallbackChain}
         onClose={() => setShowFallbackChain(false)}
       />

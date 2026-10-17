@@ -12,6 +12,8 @@ import {
   CalendarDays
 } from 'lucide-react';
 import ThinkingLog from './ThinkingLog';
+import SpeechDictationButton from './SpeechDictationButton';
+import { appendDictatedText } from '../lib/audio-transcription';
 import Panorama360Viewer from './Panorama360Viewer';
 import { getJapaneseWeekdayLabel, getSeasonContext } from '../lib/seasonal-outfit';
 import { getEffectiveEngine } from '../lib/engine-state';
@@ -22,17 +24,9 @@ import {
   getEndingModePolicy
 } from '../lib/ending-mode-policy';
 import {
-  DEFAULT_OPENAI_SCENARIO_MODEL_ID,
-  OPENAI_SCENARIO_MODEL_OPTIONS,
-  OPENAI_SCENARIO_PRICE_SNAPSHOT_DATE,
-} from '../lib/openai-model-routes';
-import {
   GEMINI_SCENARIO_MODEL_INFO,
   GEMINI_SCENARIO_PRICE_SNAPSHOT_DATE,
 } from '../lib/gemini-model-routes';
-
-const DEFAULT_OPENAI_SCENARIO_MODEL_LABEL = OPENAI_SCENARIO_MODEL_OPTIONS
-  .find(({ id }) => id === DEFAULT_OPENAI_SCENARIO_MODEL_ID)?.label || 'GPT-6 Astra';
 
 /**
  * STEP 02: シナリオ構築設定パネル
@@ -67,8 +61,6 @@ export default function Step2Panel({
   punchlineType,
   effectivePunchlineType = punchlineType,
   setPunchlineType,
-  scenarioModelId,
-  setScenarioModelId,
   isSearching,
   scenarioActionRef,
   scenarioProgressRef,
@@ -125,8 +117,6 @@ export default function Step2Panel({
     ? `${targetDate.replaceAll('-', '/')}（${targetWeekdayLabel.slice(0, 1)}）`
     : '日付を選択';
   const isOpenAIEngine = getEffectiveEngine(selectedEngine, enableOpenAIApi) === 'openai';
-  const selectedScenarioModel = OPENAI_SCENARIO_MODEL_OPTIONS.find(({ id }) => id === scenarioModelId)
-    || OPENAI_SCENARIO_MODEL_OPTIONS[0];
 
   return (
     <section
@@ -167,7 +157,7 @@ export default function Step2Panel({
                 : 'bg-[#1e293b] text-slate-500 border-b-[4px] border-[#0f172a] hover:bg-[#334155] hover:text-slate-300'
               } `}
           >
-            <span className="mr-2">✏️</span> 自由入力
+            <span className="mr-2" aria-hidden="true">✏️ 🎙️</span> 自由入力　文章／音声
           </button>
         </div>
 
@@ -255,14 +245,22 @@ export default function Step2Panel({
               ▼ 自由入力：描きたいテーマや、ニュースのURLを自由に入力してください (<span className="text-blue-400">URLからの自動読み込みに対応</span>)
             </div>
             <p className="material-direction-help">素材名や現在の画像番号で、使う・使わない、誰が持つ・何をするかを指定できます。画風も「通常・POP・水彩・劇画・スケッチ・ちびギャグ」をコマごとに指定できます（例：2コマ目はPOP、4コマ目は劇画）。<br />「4コマ生成」は4コマ固定で、入力したコマ数指定は無視します。「5～8コマ生成」では5～8コマで指定でき、指定がなければ内容に合わせて決めます。<br />AIが希望をできる範囲で反映し、指定のない部分は内容に合わせて調整します。</p>
-            <textarea
-              value={manualTopic}
-              onChange={(e) => setManualTopic(e.target.value)}
-              placeholder="例：&#13;&#10;・最近のAI技術の進化について&#13;&#10;・近所の猫が可愛かった話&#13;&#10;・https://example.com/news/12345&#13;&#10;&#13;&#10;※WebサイトのURLを入力すると、AIがそのページの内容を読み込んで漫画化します。&#13;&#10;ニュース記事を直接コピー＆ペーストするか、作りたいお話のイメージを文章で入力してください。"
-              style={{ color: '#ffffff', backgroundColor: '#0f1115' }}
-              rows={10}
-              className="w-full bg-[#0f1115] border-2 border-purple-900/50 rounded-xl p-6 text-base text-white focus:border-purple-500 focus:shadow-md outline-none placeholder-slate-500 font-medium leading-relaxed resize-none"
-            />
+            <div className="speech-dictation-field">
+              <textarea
+                value={manualTopic}
+                onChange={(e) => setManualTopic(e.target.value)}
+                placeholder="例：&#13;&#10;・最近のAI技術の進化について&#13;&#10;・近所の猫が可愛かった話&#13;&#10;・https://example.com/news/12345&#13;&#10;&#13;&#10;※WebサイトのURLを入力すると、AIがそのページの内容を読み込んで漫画化します。&#13;&#10;ニュース記事を直接コピー＆ペーストするか、作りたいお話のイメージを文章で入力してください。"
+                style={{ color: '#ffffff', backgroundColor: '#0f1115' }}
+                rows={10}
+                className="w-full bg-[#0f1115] border-2 border-purple-900/50 rounded-xl p-6 pb-16 text-base text-white focus:border-purple-500 focus:shadow-md outline-none placeholder-slate-500 font-medium leading-relaxed resize-none"
+              />
+              <SpeechDictationButton
+                provider={isOpenAIEngine ? 'openai' : 'gemini'}
+                disabled={isSearching || isAnalyzing}
+                onText={text => setManualTopic(current => appendDictatedText(current, text))}
+              />
+            </div>
+            <p className="text-xs text-slate-400 text-right">音声入力ボタンを押すと録音を開始し、止めると{isOpenAIEngine ? 'OpenAI' : 'Gemini'} APIで文字起こしします（有料）。結果は上の欄で編集できます。</p>
           </div>
         )}
 
@@ -387,32 +385,6 @@ export default function Step2Panel({
               <span>版権キャラクターにモザイクをかける</span>
             </label>
           </div>
-          {isOpenAIEngine && (
-          <div className="scenario-model-select-card flex-1 bg-[#050505] p-3 rounded-xl border border-cyan-500/20">
-            <label className="text-xs font-bold text-cyan-300 mb-1 block flex items-center gap-1" htmlFor="scenario-model-select">
-              <span>🧠</span> OpenAIシナリオモデル
-              <span className="text-[10px] text-gray-500 font-normal ml-auto">{import.meta.env?.DEV && scenarioModelId === 'gpt-6-luna' ? '検証用・他モデルへ切替なし' : '固定・失敗時のみ下位へ'}</span>
-            </label>
-            <select
-              id="scenario-model-select"
-              value={scenarioModelId}
-              onChange={(e) => setScenarioModelId(e.target.value)}
-              aria-label="OpenAIシナリオモデルを選択"
-              className="scenario-model-select-input w-full appearance-none font-mono"
-            >
-              {OPENAI_SCENARIO_MODEL_OPTIONS.map(({ id, label, description, inputPriceUsdPerM, outputPriceUsdPerM }) => (
-                <option key={id} value={id}>{label}（{description}｜入力 ${inputPriceUsdPerM} / 出力 ${outputPriceUsdPerM} USD/MTok）</option>
-              ))}
-            </select>
-            <div className="scenario-model-copy mt-1 flex flex-col gap-0 text-[10px] leading-tight">
-              <p className="m-0 text-cyan-100">参考単価（{selectedScenarioModel.priceSnapshotDate || OPENAI_SCENARIO_PRICE_SNAPSHOT_DATE}時点）: 入力 ${selectedScenarioModel.inputPriceUsdPerM} / 出力 ${selectedScenarioModel.outputPriceUsdPerM} USD / 100万トークン</p>
-              {selectedScenarioModel.comparisonNote && (
-                <p className="m-0 text-slate-300">選び方: {selectedScenarioModel.comparisonNote}</p>
-              )}
-              <p className="m-0 text-slate-400">選択はこの画面を開いている間だけ有効です。再読込時は{DEFAULT_OPENAI_SCENARIO_MODEL_LABEL}から開始します。ツール料金・キャッシュ割引・税・長文コンテキスト加算・処理モード差額は含まない参考値です。</p>
-            </div>
-          </div>
-          )}
         </div>
 
         {!isOpenAIEngine && (

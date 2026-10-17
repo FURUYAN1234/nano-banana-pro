@@ -8,9 +8,9 @@ export const OPENAI_SCENARIO_MODEL_OPTIONS = scenarioModelConfig.models;
 export const OPENAI_SCENARIO_TEXT_MODEL_IDS = OPENAI_SCENARIO_MODEL_OPTIONS.map(({ id }) => id);
 export const OPENAI_SCENARIO_PRICE_SNAPSHOT_DATE = scenarioModelConfig.priceSnapshotDate;
 
-export const resolveDefaultOpenAIScenarioModelId = (isDevelopment = import.meta.env?.DEV === true) => (
-  isDevelopment ? 'gpt-6-luna' : 'gpt-6.1-sol'
-);
+export const DEFAULT_OPENAI_STEP1_MODEL_ID = 'gpt-6-luna';
+export const DEFAULT_OPENAI_STEP3_MODEL_ID = 'gpt-6-luna';
+export const resolveDefaultOpenAIScenarioModelId = () => 'gpt-6-luna';
 
 export const DEFAULT_OPENAI_SCENARIO_MODEL_ID = resolveDefaultOpenAIScenarioModelId();
 
@@ -38,3 +38,7 @@ export const getOpenAIScenarioModelRoute = (selectedModelId = 'auto', isDevelopm
 };
 
 export const OPENAI_VISION_MODEL_IDS = [...OPENAI_TEXT_MODEL_IDS];
+export const getOpenAIVisionModelRoute = (selectedModelId = 'auto') => {
+  const selectedIndex = OPENAI_VISION_MODEL_IDS.indexOf(selectedModelId);
+  return selectedIndex >= 0 ? OPENAI_VISION_MODEL_IDS.slice(selectedIndex) : OPENAI_VISION_MODEL_IDS;
+};

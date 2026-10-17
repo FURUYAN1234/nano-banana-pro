@@ -35,7 +35,7 @@ const GEMINI_SAFETY_SETTINGS = [
     { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" },
 ];
 
-const postGeminiGenerateContent = async (modelId, requestBody, timeoutMs = GEMINI_TEXT_TIMEOUT_MS, signal) => {
+export const postGeminiGenerateContent = async (modelId, requestBody, timeoutMs = GEMINI_TEXT_TIMEOUT_MS, signal) => {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
     try {

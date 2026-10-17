@@ -67,12 +67,16 @@ import {
 import { buildImageFailureAnalysisPrompt, formatImageQualityStopReason, GEMINI_IMAGE_REPAIR_PROMPT_MAX_CHARS, inferImageQualityMode, isMaterialImageQualityIssue, runPageImageQuality } from '../lib/image-quality-failsafe';
 import { getEffectiveEngine } from '../lib/engine-state';
 import { DEFAULT_OPENAI_IMAGE_QUALITY, DEFAULT_OPENAI_IMAGE_SIZE, normalizeOpenAIImageSize, normalizeOpenAIImageQuality, resolveOpenAIImageOption, formatOpenAIImageEngineName, applyOpenAIImageEngineWatermark, selectInitialOpenAIImageQuality, isOpenAIImageVerificationError, OPENAI_IMAGE_VERIFICATION_MESSAGE } from '../lib/openai-image-settings.js';
-import { DEFAULT_OPENAI_SCENARIO_MODEL_ID, OPENAI_SCENARIO_MODEL_OPTIONS, OPENAI_SCENARIO_TEXT_MODEL_IDS } from '../lib/openai-model-routes.js';
+import { DEFAULT_OPENAI_STEP1_MODEL_ID, DEFAULT_OPENAI_SCENARIO_MODEL_ID, DEFAULT_OPENAI_STEP3_MODEL_ID, OPENAI_SCENARIO_MODEL_OPTIONS, OPENAI_SCENARIO_TEXT_MODEL_IDS, OPENAI_VISION_MODEL_IDS } from '../lib/openai-model-routes.js';
 
 import { prepareExperimentalManga, buildExperimentalPageContract, buildExperimentalReviewPrompt, reviewExperimentalImage, validateExperimentalReview, reviewExperimentalCandidatePair, selectExperimentalCandidate, summarizeExperimentalLayouts } from '../lib/experimental-manga.js';
 import { resolvePageWorkflow, applyPageCandidateSelection } from '../lib/page-workflow.js';
 
 export default function useMangaWorkflow({ experimentalEnabled: requestedExperimentalEnabled = true } = {}) {
+  const [analysisModelId, setAnalysisModelIdState] = useState(DEFAULT_OPENAI_STEP1_MODEL_ID);
+  const setAnalysisModelId = modelId => setAnalysisModelIdState(
+    OPENAI_VISION_MODEL_IDS.includes(modelId) ? modelId : DEFAULT_OPENAI_STEP1_MODEL_ID
+  );
   const [scenarioModelId, setScenarioModelIdState] = useState(DEFAULT_OPENAI_SCENARIO_MODEL_ID);
   const setScenarioModelId = (modelId) => {
     const nextModelId = OPENAI_SCENARIO_TEXT_MODEL_IDS.includes(modelId)
@@ -81,6 +85,10 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
     setScenarioModelIdState(nextModelId);
   };
   const resetScenarioModelId = () => setScenarioModelId(DEFAULT_OPENAI_SCENARIO_MODEL_ID);
+  const [promptModelId, setPromptModelIdState] = useState(DEFAULT_OPENAI_STEP3_MODEL_ID);
+  const setPromptModelId = modelId => setPromptModelIdState(
+    OPENAI_SCENARIO_TEXT_MODEL_IDS.includes(modelId) ? modelId : DEFAULT_OPENAI_STEP3_MODEL_ID
+  );
   const [openAIImageQuality, setOpenAIImageQualityState] = useState(DEFAULT_OPENAI_IMAGE_QUALITY);
   const [openAIImageSize, setOpenAIImageSizeState] = useState(DEFAULT_OPENAI_IMAGE_SIZE);
   const openAIImageQualityChosen = useRef(false);
@@ -737,7 +745,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
 
         setIs360Analyzing(true);
         setAnalyzeThought(prev => prev + `\n> 🌐 360°空間解析を実行中... (API通信保護のため順次処理)`);
-        const analysisResult = await callAI(get360AnalysisPrompt(), [imagePart], null, () => {});
+        const analysisResult = await callAI(get360AnalysisPrompt(), [imagePart], null, () => {}, { visionModelId: analysisModelId });
         if (inputEpoch !== scenarioRunEpochRef.current) return;
         const analysis = parse360Analysis(analysisResult.text);
         setBg360Analysis(analysis);
@@ -793,7 +801,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
 
       const result = await callAI(prompt, imageParts, null, (msg) => {
         if (inputEpoch === scenarioRunEpochRef.current) setAnalyzeThought(prev => prev + `\n> ${msg}`);
-      });
+      }, { visionModelId: analysisModelId });
       if (inputEpoch !== scenarioRunEpochRef.current) return;
       if (castRevisionAtStart !== castRevisionRef.current) {
         showStatus('解析中にキャストが編集されたため、解析結果の上書きを中止しました。必要なら画像を再解析してください。');
@@ -1360,11 +1368,15 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
       });
     }, 1000);
 
+    const callStep3AI = (prompt, images, systemInstruction, onProgress, options = {}) => callAI(
+      prompt, images, systemInstruction, onProgress,
+      { ...options, modelRoute: 'scenario', scenarioModelId: promptModelId }
+    );
     try {
       if (experimentalEnabled) {
         const input=experimentalInput(currentScenario);
         const prepared=await prepareExperimentalManga({...input,signal:controller.signal,onProgress:message=>setAssembleThought(prev=>prev+'\n'+message)},async(prompt,signal)=>
-          (await callAI(prompt,[],null,message=>setAssembleThought(prev=>prev+'\n'+message),{signal,modelRoute:'scenario',scenarioModelId})).text,
+          (await callStep3AI(prompt,[],null,message=>setAssembleThought(prev=>prev+'\n'+message),{signal})).text,
           {colorOnlyPrepared:promptAssemblyRunRef.colorLayoutPrepared});
         if(promptScenarioEpoch!==scenarioRunEpochRef.current||assemblyRun!==promptAssemblyRunRef.current) return null;
         if(prepared.source.scenario!==currentScenario) setScenario(prepared.source.scenario);
@@ -1405,7 +1417,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
         scenarioModelLabel: OPENAI_SCENARIO_MODEL_OPTIONS.find(({ id }) => id === scenarioUsedModelRef.current)?.label,
         allowScenarioQualityWarning: true,
         promptMaxChars
-      }, callAI, message => {
+      }, callStep3AI, message => {
         if (promptScenarioEpoch === scenarioRunEpochRef.current && assemblyRun === promptAssemblyRunRef.current) {
           setAssembleThought(prev => prev + `\n> ${message}`);
         }
@@ -1429,7 +1441,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
         reviewTone: endingPolicy.endingTone,
         preserveReferenceStyle: endingPolicy.preserveReferenceStyle,
         signal: controller.signal
-      }, callAI, message => {
+      }, callStep3AI, message => {
         if (promptScenarioEpoch === scenarioRunEpochRef.current && assemblyRun === promptAssemblyRunRef.current) {
           setAssembleThought(prev => prev + `\n> ${message}`);
         }
@@ -1605,6 +1617,8 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
     setMosaicCopyrightedCharactersState(true);
     setShowWatermarksState(true);
     resetScenarioModelId();
+    setAnalysisModelId(DEFAULT_OPENAI_STEP1_MODEL_ID);
+    setPromptModelId(DEFAULT_OPENAI_STEP3_MODEL_ID);
     setCastList("");
     setScenario("");
     setExplanation("");
@@ -3391,7 +3405,9 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
     setExplanation,
     explanationNotice,
     scenarioThought,
+    analysisModelId,
     scenarioModelId,
+    promptModelId,
     selectedEngine,
     setBg360Enabled,
     setCastList,
@@ -3428,7 +3444,9 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
     setPolicyErrorMsg,
     setPunchlineType,
     setScenario: setScenarioFromUser,
+    setAnalysisModelId,
     setScenarioModelId,
+    setPromptModelId,
     setShowModal,
     setShowOpenAIKeyModal,
     setStyleJson,

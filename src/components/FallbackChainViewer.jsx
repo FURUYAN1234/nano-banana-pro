@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { getFallbackChains, FALLBACK_CHAIN_HISTORY } from '../lib/fallback-chain-history';
 
-export default function FallbackChainViewer({ isOpen, onClose, scenarioModelId }) {
+export default function FallbackChainViewer({ isOpen, onClose, analysisModelId, scenarioModelId, promptModelId }) {
   const [copied, setCopied] = useState(false);
   const contentRef = useRef(null);
 
@@ -24,7 +24,7 @@ export default function FallbackChainViewer({ isOpen, onClose, scenarioModelId }
   const steps = ['STEP 1', 'STEP 2', 'STEP 3', 'STEP 4'];
   const groupedByStep = {};
   for (const step of steps) {
-    groupedByStep[step] = getFallbackChains(scenarioModelId).filter(c => c.step === step);
+    groupedByStep[step] = getFallbackChains({ analysisModelId, scenarioModelId, promptModelId }).filter(c => c.step === step);
   }
 
   // 全内容を1つのテキストにまとめる（現在の構成 + 更新履歴）

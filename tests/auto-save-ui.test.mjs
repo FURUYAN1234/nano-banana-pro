@@ -34,7 +34,7 @@ test('mode starts require the guide confirmation; cancellation never starts; sto
   const props = { apiKey: 'fixture-not-a-key', isEndlessModeRef: { current: false }, setIsEndlessMode: value => calls.push(['endless', value]), handleFullAutoToggle: () => calls.push(['auto']), onStopApiProcessing: () => calls.push(['stop']), isApiProcessing: true };
   const tree = overrides => ControlBar({ ...props, ...overrides });
   const button = (nodes, needle) => descendants(nodes).find(n => n.type === 'button' && JSON.stringify(n.props.children).includes(needle));
-  for (const [needle, mode] of [['全自動モード（フルオート） ON', 'fullAuto'], ['連続ループ生成 ON', 'endless']]) {
+  for (const [needle, mode] of [['全自動モード（フルオート） OFF', 'fullAuto'], ['連続ループ生成 OFF', 'endless']]) {
     calls.length = 0; pending = null;
     button(tree(), needle).props.onClick();
     assert.equal(pending, mode); assert.equal(calls.length, 0);
@@ -45,11 +45,26 @@ test('mode starts require the guide confirmation; cancellation never starts; sto
     assert.deepEqual(calls, mode === 'fullAuto' ? [['auto']] : [['endless', true]]);
   }
   calls.length = 0; pending = null;
-  button(tree({ isFullAutoMode: true }), '全自動モード 中断').props.onClick();
-  button(tree({ isEndlessMode: true }), '連続ループ生成を解除').props.onClick();
+  button(tree({ isFullAutoMode: true }), '全自動モード（フルオート） ON').props.onClick();
+  button(tree({ isEndlessMode: true }), '連続ループ生成 ON').props.onClick();
   button(tree(), '解析・生成強制ストップ').props.onClick();
   assert.equal(pending, null);
   assert.deepEqual(calls, [['auto'], ['endless', false], ['stop']]);
+});
+
+test('mode buttons display their current state rather than the action they would perform', t => {
+  t.mock.method(React, 'useState', () => [null, () => {}]);
+  const props = { apiKey: 'fixture-not-a-key', isEndlessModeRef: { current: false } };
+  const buttons = overrides => descendants(ControlBar({ ...props, ...overrides })).filter(n => n.type === 'button');
+  const text = node => JSON.stringify(node.props.children);
+  for (const [overrides, expected, pressed] of [
+    [{}, ['連続ループ生成 OFF', '全自動モード（フルオート） OFF'], false],
+    [{ isEndlessMode: true, isFullAutoMode: true }, ['連続ループ生成 ON', '全自動モード（フルオート） ON'], true],
+  ]) {
+    const matches = buttons(overrides).filter(node => expected.some(label => text(node).includes(label)));
+    assert.equal(matches.length, 2);
+    for (const node of matches) assert.equal(node.props['aria-pressed'], pressed);
+  }
 });
 
 test('shared guide includes all three origins, manual settings, free test and truthful download status', () => {
@@ -113,13 +128,13 @@ test('verified save state bypasses both startup dialogs while retaining stop and
   const calls = [];
   const props = { apiKey: 'fixture-not-a-key', autoSaveVerified: true, setIsEndlessMode: value => calls.push(['endless', value]), handleFullAutoToggle: () => calls.push(['auto']) };
   const button = (tree, needle) => descendants(tree).find(n => n.type === 'button' && JSON.stringify(n.props.children).includes(needle));
-  button(ControlBar(props), '全自動モード（フルオート） ON').props.onClick();
-  button(ControlBar(props), '連続ループ生成 ON').props.onClick();
+  button(ControlBar(props), '全自動モード（フルオート） OFF').props.onClick();
+  button(ControlBar(props), '連続ループ生成 OFF').props.onClick();
   assert.equal(pending, null);
   assert.deepEqual(calls, [['auto'], ['endless', true]]);
   calls.length = 0;
-  button(ControlBar({ ...props, apiKey: '' }), '全自動モード（フルオート） ON').props.onClick();
-  button(ControlBar({ ...props, isAborting: true }), '連続ループ生成 ON').props.onClick();
+  button(ControlBar({ ...props, apiKey: '' }), '全自動モード（フルオート） OFF').props.onClick();
+  button(ControlBar({ ...props, isAborting: true }), '連続ループ生成 OFF').props.onClick();
   assert.deepEqual(calls, []);
 });
 

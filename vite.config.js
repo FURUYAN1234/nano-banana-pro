@@ -4,7 +4,7 @@ import react from '@vitejs/plugin-react'
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [webSecurity({ connectSources: ["https://api.openai.com","https://generativelanguage.googleapis.com","https://api.codetabs.com","https://*.blob.core.windows.net"] }), react()],
+  plugins: [webSecurity({ allowMicrophone: true, connectSources: ["https://api.openai.com","https://generativelanguage.googleapis.com","https://api.codetabs.com","https://*.blob.core.windows.net"] }), react()],
   base: './',
   server: {
     port: 5173,

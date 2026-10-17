@@ -606,9 +606,30 @@ body {
 .save-start-dialog::backdrop { background: #000a; }
 
 /* Actual workflow stages; no elapsed-time percentage. */
+.workflow-header-row { row-gap:8px; }
+.model-selection-panel { padding:16px; border:1px solid #334155; border-radius:12px; background:#0f1115; }
+.model-selection-panel h2 { margin:0 0 12px; color:#e0f2fe; font-size:14px; font-weight:700; }
+.model-selection-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
+.model-selection-card { min-width:0; }
+.model-selection-card label { display:block; margin-bottom:6px; color:#bae6fd; font-size:12px; font-weight:700; }
+.model-selection-card select { width:100%; }
+.model-selection-note { margin:10px 0 0; color:#cbd5e1; font-size:11px; line-height:1.5; }
+@media (max-width:700px) { .model-selection-grid { grid-template-columns:1fr; } }
+.speech-dictation-field { position:relative; }
+.speech-dictation-control { position:absolute; right:12px; bottom:12px; display:flex; flex-wrap:wrap; justify-content:flex-end; align-items:center; gap:8px; max-width:calc(100% - 24px); }
+.speech-dictation-button { display:inline-flex; align-items:center; gap:6px; padding:7px 12px; border:1px solid #a855f7; border-radius:8px; background:#312044; color:#f5d0fe; font-size:12px; font-weight:700; cursor:pointer; }
+.speech-dictation-button[aria-pressed="true"] { border-color:#fb7185; background:#4c1829; color:#ffe4e6; }
+.speech-dictation-button:disabled { opacity:.5; cursor:not-allowed; }
+.speech-dictation-button:focus-visible { outline:2px solid #e9d5ff; outline-offset:2px; }
+.speech-dictation-status { color:#f1f5f9; background:#1e293b; border-radius:6px; padding:4px 6px; font-size:11px; line-height:1.4; }
 .workflow-progress { display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:6px; margin:4px 0 10px; padding:0; list-style:none; }
-.workflow-mode-controls { row-gap:8px; }
-.workflow-mode-help { margin:6px 0 2px; }
+.workflow-mode-controls { column-gap:10px; row-gap:8px; }
+.system-reset-controls { column-gap:8px; row-gap:8px; }
+.sample-character-sheets-button { padding:5px 14px; border:1px solid #f59e0b; border-radius:8px; background:#a16207; color:#fff7ed; font-size:13px; line-height:1.2; font-weight:700; cursor:pointer; }
+.sample-character-sheets-button:hover:not(:disabled) { background:#b45309; }
+.sample-character-sheets-button:disabled { opacity:.5; cursor:not-allowed; }
+.sample-character-sheets-note { margin:3px 0 0; color:#94a3b8; font-size:11px; line-height:1.3; }
+.workflow-mode-help { margin:6px 0 2px; max-width:100%; text-align:center; }
 .workflow-progress-step { display:grid; grid-template-columns:20px auto; column-gap:6px; align-items:center; min-width:78px; padding:5px 8px; border:1px solid #475569; border-radius:8px; background:#17202d; color:#94a3b8; font-family:inherit; line-height:1.3; }
 .workflow-progress-mark { grid-row:1 / 3; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; }
 .workflow-progress-label { font-size:12px; font-weight:700; white-space:nowrap; }

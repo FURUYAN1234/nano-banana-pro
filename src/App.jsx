@@ -17,7 +17,9 @@ import useMangaWorkflow from './hooks/useMangaWorkflow';
 import ApiKeyModal from './components/ApiKeyModal';
 import ErrorBoundary from './components/ErrorBoundary';
 import Step1Panel from './components/Step1Panel';
+import SampleCharacterSheetsButton from './components/SampleCharacterSheetsButton';
 import Step2Panel from './components/Step2Panel';
+import ModelSelectionPanel from './components/ModelSelectionPanel';
 import Step3Panel from './components/Step3Panel';
 import ExplanationPanel from './components/ExplanationPanel';
 import Step4Panel from './components/Step4Panel';
@@ -158,7 +160,9 @@ function App() {
     setExplanation,
     explanationNotice,
     scenarioThought,
+    analysisModelId,
     scenarioModelId,
+    promptModelId,
     selectedEngine,
     setBg360Enabled,
     setCastList,
@@ -189,7 +193,9 @@ function App() {
     setPolicyErrorMsg,
     setPunchlineType,
     setScenario,
+    setAnalysisModelId,
     setScenarioModelId,
+    setPromptModelId,
     setShowModal,
     setShowOpenAIKeyModal,
     setTargetDate,
@@ -342,7 +348,9 @@ function App() {
       >
         {/* === ヘッダー領域 === */}
         <div ><SystemHeader
+          analysisModelId={analysisModelId}
           scenarioModelId={scenarioModelId}
+          promptModelId={promptModelId}
           SYSTEM_VERSION={SYSTEM_VERSION}
           apiKey={apiKeyForUnlockedUi}
           selectedEngine={selectedEngine}
@@ -358,7 +366,17 @@ function App() {
 
         <AutoSaveSettingsButton autoSaveVerified={autoSaveVerified} onVerified={() => setAutoSaveCheckStatus('passed')} />
         <main className="space-y-8" style={{ filter: isMainLocked ? 'blur(10px)' : 'none', pointerEvents: isMainLocked ? 'none' : 'auto', transition: 'filter 0.5s ease' }}>
+          {getEffectiveEngine(selectedEngine, enableOpenAIApi) === 'openai' && (
+            <ModelSelectionPanel
+              analysisModelId={analysisModelId} setAnalysisModelId={setAnalysisModelId}
+              scenarioModelId={scenarioModelId} setScenarioModelId={setScenarioModelId}
+              promptModelId={promptModelId} setPromptModelId={setPromptModelId}
+              disabled={isApiProcessing}
+            />
+          )}
           <div  className="grid grid-cols-1 md:grid-cols-2 gap-8">
+
+            <SampleCharacterSheetsButton processFiles={processFiles} disabled={isAnalyzing || isApiProcessing} />
 
             {/* 01: キャラクター入力 (Dynamic Style) */}
             <Step1Panel
@@ -429,8 +447,6 @@ function App() {
               punchlineType={punchlineType}
               effectivePunchlineType={effectivePunchlineType}
               setPunchlineType={setPunchlineType}
-              scenarioModelId={scenarioModelId}
-              setScenarioModelId={setScenarioModelId}
               isSearching={isSearching}
               scenarioActionRef={step2ActionRef}
               scenarioProgressRef={step2ProgressRef}
