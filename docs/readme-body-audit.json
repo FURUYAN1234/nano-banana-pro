@@ -1,25 +1,25 @@
 {
-  "pricingSourceSha256": "917b02dac5c0eb8367f94d6ee0411242b25487a6bb0b9cdc74aa6cb12c874e88",
-  "manualVersion": "7.1.0",
-  "manualSourceSha256": "74c947a49b1c406cd64ebad52139c41657f169160e87630c56af9c7ac40f5e11",
+  "pricingSourceSha256": "7b490e8916f8cb39b3e783b49714d285ed856fae6c0be3a3a96defc79a9f9cfa",
+  "manualVersion": "7.1.1",
+  "manualSourceSha256": "9dbd23f59af5f8a1ba4ac2b9b18af0dfaf2bdfe12fb1063cbd517f8cfc912474",
   "manualFiles": [
     {
       "name": "gemini-api-beginner-guide-2026-10-01.pdf",
-      "sha256": "fd88658a12debe8b2acf18b57e55e432a61780b00716e46cc4ef8bd5a2ae1bcd"
+      "sha256": "f280afcc1c6946b6cd1c9304048902ad77fec39b6dea02712b92f7849fdeb11a"
     },
     {
       "name": "openai-api-beginner-guide-2026-09-30.pdf",
-      "sha256": "c8625ab4e2f6643c875b7fcd6e0ae17216e8e6448996ada1e4d19508d57fa341"
+      "sha256": "f5b58aba13e466058b0a8f59037ce4104577f8ac739e8155bba8279eefab4b5c"
     },
     {
       "name": "super-furu-ai-4koma-full-manual-2026-10-01.pdf",
-      "sha256": "cac3cff459cc57f97b704cfa098397623461cee3fa4cddff1f77681e48206d53"
+      "sha256": "1644778a9fac66cd17784c8720457e2b9aabde9bf6c09f5d47e47a5f1ec3339a"
     }
   ],
-  "readmeSha256": "c138333780a445d00b14166acb9d24866f4117771baad7f730d41661c217d842",
-  "sourceTree": "bd5317e8f2e5e5e6b6f6e30fd3d7fe8efc99c135",
-  "publicTree": "7700e0c04a627db2ba2b11305643153192577e6a",
-  "packageSha256": "ca08f2edf376d6482f76560b8c823b379241ec3da4c933b4746e6632e538e01d",
+  "readmeSha256": "8e278284a28b775caad76a1f165fce8f73f056bdf1dee5a555642e60e2c9c3cb",
+  "sourceTree": "4cbc15c980fa6740526edb8988dabaf268787d3e",
+  "publicTree": "fb9559af7356f148672f4c13c49a4e3ceb8baf49",
+  "packageSha256": "168947ddf224c53a1e6b91645fc1969b3985bf73a7ce8785f588fa4add9a32ac",
   "releaseAssetSha256": "9e41886be6afa0ebfad6d244ecf53f37260a92f73b30309319029cc87e1ddb4e",
   "reviewedSections": [
     "Application screen and output / 操作画面と生成例",
@@ -39,16 +39,16 @@
     "AI Manga Creative Suite / AIまんが制作エコシステム",
     "📋 ChangeLog / 更新履歴"
   ],
-  "findings": "v7.1.0: reviewed all16 README body sections against the previously reviewed7.0.9 and the full current source/document diff. Current descriptions cover OpenAI4-8 versus Gemini4 only, connected-provider page/panel edits, native Gemini square input, original history, fresh whole-page geometry, verified adopted-panel lineage, exact outside pixels, and candidate review/adopt/discard. Removed standalone saved-manga import and giant inline portrait preview without removing color API guide references. Updated white/black copy button, generation/inspection busy lock, four-stage progress and elapsed panel time. Monochrome instructions preserve white lit skin, assigned dark-skin bases, bounded screentones and black shadows; API-only neutral hue finishing bypasses color and Web copy and does not resize/quantize/dot-remove. Skin parsing is field-scoped; edits preserve source hair/skin/clothing base tones. Native monochrome baseline accepted by user, not universal style/camera compliance. Ordinary-four, provider settings, privacy, licensing, price distinctions, ComfyUI and unrelated sections retained and reviewed. Actual requested API mode matrix completed; final release/social/backup separate.",
-  "manualFindings": "v7.1.0: SYSTEM39, Gemini13, OpenAI23 pages,75 total. Prior full75-page visual review reused only for73 pages independently pixel-identical to the current PDFs. Visually reviewed changed SYSTEM33 and OpenAI23 at full size: monochrome API hue finish, white/black/screentone placement, connected-provider editing and Gemini4-only constraints. No overflow or clipping observed; builders passed A4/version/footer/bounds/privacy/link guards. Output/public PDF SHA256 parity verified. Evidence: private manual-review-v710-final.json and manual-page-diff-v710.json. This records document review, not generated-image quality or release completion.",
+  "findings": "v7.1.1: reviewed every README section against the current model routing, STEP2 dictation, sample JPEG loading, header controls, provider and image paths, licensing, privacy, price displays, downloads and release assets. Corrected the stale fixed STEP1 model statement, added the sample path, confirmed demo link and current-version copy. Existing v7.1.0 image editing limits and history remain stated. SNS and note publication are outside this request.",
+  "manualFindings": "v7.1.1: regenerated all three manuals (39, 23 and 13 pages), checked generated text, A4 geometry, link targets, privacy scan and minimum layout bounds; visually inspected all pages in contact sheets and changed STEP1, STEP2, model-selection and OpenAI workflow pages at readable size. Replaced unsupported emoji in PDF prose. Output and public PDF SHA-256 match.",
   "pricingReview": {
-    "version": "7.1.0",
-    "sourceSha256": "917b02dac5c0eb8367f94d6ee0411242b25487a6bb0b9cdc74aa6cb12c874e88",
-    "checkedAt": "2026-10-16T11:24:30.776Z",
+    "version": "7.1.1",
+    "sourceSha256": "7b490e8916f8cb39b3e783b49714d285ed856fae6c0be3a3a96defc79a9f9cfa",
+    "checkedAt": "2026-10-17T08:30:53.828Z",
     "sources": [
       "https://developers.openai.com/api/docs/pricing",
       "https://ai.google.dev/gemini-api/docs/pricing"
     ],
-    "findings": "Re-read both official pricing pages on2026-10-16 before this release: standard short-context GPT6.1Sol2/10,Luna0.10/0.50,Astra10/50 per million tokens. Sunburst/Flare image8 cached2 output30,text5 cached1.25. Gemini3.8Flash0.75/3.75 through2026-12-31,NanoBanana2.1 input1.50,text/thinking7.50,image30,1K0.0336/2K0.0504/4K0.113. Batch/Flex discounted rates distinguished, no numeric price change. Long-context,tools,taxes and account billing separate."
+    "findings": "2026-10-17 official Standard rates checked separately from discounted Batch: OpenAI gpt-6-luna 0.10/0.50 and gpt-6.1-sol 2/10 per million input/output tokens; GPT Image 2.5 and 2 Standard image input 8, image output 30, text input 5; transcription gpt-4o-mini-transcribe estimated 0.003 per minute. Gemini 3.8 Flash Standard 0.75/3.75, Nano Banana 2.1 Standard 1K output 0.0336 per image plus 1.50 input and 7.50 text output per million. App configuration and README display match; Batch discounts were not used as normal rates."
   }
 }
