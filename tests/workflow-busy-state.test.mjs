@@ -10,6 +10,7 @@ import { assertRenderOptions, buildRenderOptionsContract } from '../src/lib/rend
 import { assertPrintableDialogue } from '../src/lib/bubble-text.js';
 import { assertPromptEndingModeConsistency } from '../src/lib/ending-mode-policy.js';
 import { buildReferenceAssetContext } from '../src/lib/reference-assets.js';
+import { DEFAULT_OPENAI_STEP1_MODEL_ID, DEFAULT_OPENAI_STEP3_MODEL_ID } from '../src/lib/openai-model-routes.js';
 
 const source = await readFile(new URL('../src/hooks/useMangaWorkflow.js', import.meta.url), 'utf8');
 const step2 = await readFile(new URL('../src/components/Step2Panel.jsx', import.meta.url), 'utf8');
@@ -31,7 +32,7 @@ function deferred() {
 
 function harness(overrides = {}) {
   const state = {
-    referenceEditorError: '',
+    referenceEditorError: '', DEFAULT_OPENAI_STEP1_MODEL_ID, DEFAULT_OPENAI_STEP3_MODEL_ID,
     buildReferenceAssetContext, referenceAssetsRef: { current: [] }, imagesRef: { current: [] },
     beginApiWork, cancelApiWork, is360Analyzing: false, isAnalyzingRef: { current: false }, analyzeThought: '',
     scenario: 'Original scenario with enough text for enhancement', castList: 'Reference cast with sufficient detail',

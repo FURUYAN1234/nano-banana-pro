@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {reconcileReferenceCast, remapReferenceNumbers, mergeReferenceAnalysis, buildRecognitionEditorText, buildWebReferencePlan} from '../src/lib/reference-assets.js';
+import {DEFAULT_OPENAI_STEP1_MODEL_ID, DEFAULT_OPENAI_STEP3_MODEL_ID} from '../src/lib/openai-model-routes.js';
 
 const source = readFileSync(new URL('../src/hooks/useMangaWorkflow.js',import.meta.url),'utf8');
 // Execute the actual event/transition functions with observable state setters.
@@ -10,7 +11,7 @@ function workflow() {
   const a = {image:'a',analysisCompleted:true,items:[{kind:'character',name:'A',description:'front'}],castProfiles:{A:'## A\nFront view'}};
   const b = {image:'b',analysisCompleted:true,items:[{kind:'prop',name:'box',description:'User box'}]};
   const state = {castList:'## A\nFront view',images:['a','b'],scenario:'old scenario',finalPrompt:'old prompt',manualTopic:'画像2を使う。画像3を舞台にする。',bg360Image:'panorama',isAnalyzing:true,is360Analyzing:true};
-  const ctx = { promptAssemblyRunRef:{current:0},
+  const ctx = { promptAssemblyRunRef:{current:0}, DEFAULT_OPENAI_STEP1_MODEL_ID, DEFAULT_OPENAI_STEP3_MODEL_ID,
     DEFAULT_CATEGORIES:[], reconcileReferenceCast,remapReferenceNumbers,finishScenarioTiming:()=>{},cancelApiWork:()=>{state.cancelled=true;},
     invalidatePromptAssembly:()=>{},showStatus:()=>{},resetScenarioModelId:()=>{},
     scenarioRunEpochRef:{current:5},scenarioUsedModelRef:{current:null},qualityRetryAbortRef:{current:false},fullAutoAbortRef:{current:false},

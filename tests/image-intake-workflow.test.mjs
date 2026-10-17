@@ -4,6 +4,7 @@ import { readFile } from 'node:fs/promises';
 import { planImageAddition, assertImageInputBudget } from '../src/lib/image-input-budget.js';
 import { parse360Analysis } from '../src/lib/panorama360.js';
 import { buildReferenceAnalysisPrompt, parseReferenceAnalysis, getReferenceImagesToAnalyze, mergeReferenceAnalysis, reconcileReferenceCast } from '../src/lib/reference-assets.js';
+import { DEFAULT_OPENAI_STEP1_MODEL_ID } from '../src/lib/openai-model-routes.js';
 
 // Execute the production event handler with state/API boundaries instrumented.
 const source = await readFile(new URL('../src/hooks/useMangaWorkflow.js', import.meta.url), 'utf8');
@@ -17,12 +18,13 @@ function setup(existing = [], background = false) {
   const imagesRef = { current: state.images };
   const referenceAssetsRef = { current: existing.map(image => ({image,analysisCompleted:true,items:[{kind:'character',name:'Existing',description:'user retained'}]})) };
   const ctx = {
-    apiKey: true, isAnalyzingRef: { current: false }, imagesRef,
+    apiKey: true, analysisModelId: DEFAULT_OPENAI_STEP1_MODEL_ID, isAnalyzingRef: { current: false }, imagesRef,
     bg360EnabledRef: { current: background }, scenarioRunEpochRef: { current: 1 }, castRevisionRef: { current: 1 },
     castListRef: {current:state.cast}, referenceAssetsRef, scenario:'', finalPrompt:'', isSearching:false, isGeneratingImage:false,
     isFullAutoModeRef: { current: false }, fullAutoAbortRef: { current: false },
     isEndlessModeRef: {current:false}, setIsEndlessMode:value=>{state.endless=value;}, setIsFullAutoMode:value=>{state.fullAuto=value;},
     setTriggerFullAuto:value=>{state.trigger=typeof value==='function'?value(state.trigger||0):value;},
+    setFullAutoStep:value=>{state.fullAutoStep=value;},
     invalidateReferenceOutputs:()=>{ctx.scenarioRunEpochRef.current++;},
     getReferenceImagesToAnalyze, mergeReferenceAnalysis, reconcileReferenceCast,
     planImageAddition, assertImageInputBudget,
