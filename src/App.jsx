@@ -24,6 +24,7 @@ import Step3Panel from './components/Step3Panel';
 import ExplanationPanel from './components/ExplanationPanel';
 import Step4Panel from './components/Step4Panel';
 import { getEffectiveEngine } from './lib/engine-state';
+import { scrollToWorkflowStep } from './lib/step-navigation.js';
 import ControlBar from './components/ControlBar';
 import SystemHeader from './components/SystemHeader';
 import GenerationPreview from './components/GenerationPreview';
@@ -300,6 +301,11 @@ function App() {
   const isApiModalOpen = showModal || showOpenAIKeyModal;
   const isMainLocked = !apiKey || isApiModalOpen;
   const apiKeyForUnlockedUi = isMainLocked ? "" : apiKey;
+  const isStepNavigationDisabled = isMainLocked || isApiProcessing || isAborting || isFullAutoMode;
+  const handleNavigateToStep = step => scrollToWorkflowStep(step, {
+    currentStep, disabled: isStepNavigationDisabled, browserWindow: window, headerOffset: controlBarHeight,
+    targets: { 2: step2Ref.current, 3: step3Ref.current, 4: outputRef.current },
+  });
 
   return (
     <div className="min-h-screen bg-[#0a0c10] text-slate-100 font-sans selection:bg-blue-500/30 overflow-x-hidden">
@@ -317,6 +323,7 @@ function App() {
       />
       <ControlBar
         controlBarRef={controlBarRef}
+        onNavigateToStep={handleNavigateToStep}
         currentStep={currentStep}
         activeStep={isAnalyzing || is360Analyzing ? 1 : isSearching || isEnhancing ? 2
           : isAssembling || is360CameraWorking || isFixingPolicy ? 3 : isGeneratingImage ? 4 : 0}
@@ -524,8 +531,8 @@ function App() {
           {/* 出力結果 */}
           <div>
           {!isAnalyzing && !isSearching && !isAssembling && Boolean(finalPrompt?.trim() || generatedImage) && (<Step4Panel
-              step2Ref={step2Ref}
-              step3Ref={step3Ref}
+              onNavigateToStep={handleNavigateToStep}
+              isStepNavigationDisabled={isStepNavigationDisabled}
               experimentalEnabled={nativePageModeEnabled}
               referenceAssets={referenceAssets}
               imageEditDrafts={imageEditDrafts}

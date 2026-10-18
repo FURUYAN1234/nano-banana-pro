@@ -3,7 +3,7 @@
 > **Source code available; free to use.** Ordinary use, free integration and free provision require no application, prior contact or permission from FURU. You may sell and monetize your own works. External API costs and third-party terms are separate. See Terms & Output Rights below. / **ソースコード公開・利用無料。** 通常利用と無料の組み込み・無料提供に、申請・事前連絡・FURUの許可は不要です。自分の作品は販売・収益化できます。外部API料金と第三者の条件は別です。詳しくは「利用条件・作品の権利」をご確認ください。
 
 
-> Current source version: **v7.1.2** / 現在のソース版: **v7.1.2**
+> Current source version: **v7.1.3** / 現在のソース版: **v7.1.3**
 
 
 An experimental web application in which AI handles topic research, story structure, direction, prompt construction, image generation, and quality review for manga. OpenAI starts in 5–8-panel mode and also supports four panels. Gemini supports four-panel color and monochrome pages only. / AIが話題調査、構成、演出、プロンプト構築、画像生成、品質確認まで担当する漫画制作Webアプリです。OpenAIの初期選択「5～8コマ生成」では、最初から5～8コマのシナリオを作り、漫画にします。「4コマ生成」にも切り替えられます。Geminiはカラー・白黒とも4コマ固定です。
@@ -115,7 +115,7 @@ Automatic direction retains rectilinear wide angles and excludes fisheye. Choose
 
 Drawing options: STEP2 mosaic masking for existing copyrighted characters and STEP3 watermarking default to ON. The former adds a large-mosaic instruction to scenario and image prompts; disabling the latter removes both footer marks. The settings apply to OpenAI/Gemini API and Web-copy prompts. Rebuild from STEP2 for mosaic changes or STEP3 for watermark changes; toggling alone does not call an API. Settings last until a full reset or reload, do not alter existing images retroactively, and require visual confirmation. / 描画オプション：STEP2の「版権キャラクターにモザイクをかける」と、STEP3の「ウオーターマークを表記する」は初期状態でONです。前者はシナリオ構築と最終画像プロンプトに「版権キャラクターにおおきなモザイクをかける」を追加し、後者をOFFにすると左右のフッターの描画指示を外します。OpenAI／GeminiのAPIとWeb用コピーに共通で反映します。設定変更後はモザイクならSTEP2、ウオーターマークならSTEP3から再作成してください。変更だけでAPIは実行されません。選択は全設定リセットまたは再読込まで保持します。生成済み画像には遡って反映されず、AIの対象判断・描画は実画像で確認してください。
 
-The right footer keeps the scenario-model attribution and shows the current image engine first, for example `ChatGPT Images 2.5 / GPT-6.1 Sol / FURU AI 4-koma v7.1.2`. Changing image quality/model updates the image-engine prefix for API and Web-copy instructions; existing images are retained. / 右フッターはシナリオモデル名を残し、先頭に現在の画像生成エンジン名を記載します。例：`ChatGPT Images 2.5 / GPT-6.1 Sol / FURU AI 4-koma v7.1.2`。画像モデルを変更すると、API・Webコピー用の表記をその選択へ同期します。生成済み画像は保持します。
+The right footer keeps the scenario-model attribution and shows the current image engine first, for example `ChatGPT Images 2.5 / GPT-6.1 Sol / FURU AI 4-koma v7.1.3`. Changing image quality/model updates the image-engine prefix for API and Web-copy instructions; existing images are retained. / 右フッターはシナリオモデル名を残し、先頭に現在の画像生成エンジン名を記載します。例：`ChatGPT Images 2.5 / GPT-6.1 Sol / FURU AI 4-koma v7.1.3`。画像モデルを変更すると、API・Webコピー用の表記をその選択へ同期します。生成済み画像は保持します。
 
 
 Mosaic targets are existing-work characters actually depicted in the scripted Action. Reference sheets, art style, resemblance or a shared name alone do not authorize masking original cast members. An intentional source instruction applies only to its specified person and region. Check both masked and unmasked subjects in the final image. The independent OpenAI model selectors before STEP1 start STEP1, STEP2 and STEP3 at GPT-6 Luna. Local Luna validation stops on failure without automatic model substitution for STEP2 and STEP3. / モザイク対象は台本のActionで実際に描く既存作品の人物描写です。参照キャラクターシートの存在、画風、外見の類似、同名だけを根拠にオリジナルの登場人物を隠しません。原文で本人への意図的なモザイクを指定した場合は、その対象・領域だけに適用します。最終画像で対象と非対象の両方を確認してください。STEP1の前にある独立したOpenAIモデル選択はSTEP1・STEP2・STEP3ともGPT-6 Lunaが初期値です。ローカル検証版でSTEP2・STEP3にLunaを選んだ場合、失敗しても別モデルへ自動切替しません。
@@ -364,6 +364,8 @@ The four primary actions for STEP1 through STEP4 use the same full-width light-b
 
 ## Quick start / すぐに使う
 
+**Return to a completed STEP / 完了したSTEPへ戻る:** Click a completed tile in the top progress bar, or focus it with Tab and press Enter. Your inputs and generated work stay in place. Current and unfinished steps are informational; navigation is disabled during processing, stopping, full-auto mode or disconnection. To regenerate after editing, use the destination STEP's execution button. The lower STEP4 return menu uses the same navigation. / 上部の進行表示で、完了したSTEPをクリックすると、その工程へ戻れます。Tabキーで選んでEnterキーを押す操作にも対応します。入力・台本・生成物は保持されます。現在の工程と未完了の工程は表示のみで、処理中・停止処理中・全自動ON・未接続時は移動できません。編集を反映するには、移動先の実行ボタンで再生成してください。STEP4下部の移動メニューも同じ動作です。
+
 1. Open the [published application](https://furuyan1234.github.io/nano-banana-pro/). / [公開アプリ](https://furuyan1234.github.io/nano-banana-pro/)を開きます。
 2. Choose Gemini API or OpenAI API and enter that provider's API key in the application. / Gemini APIまたはOpenAI APIを選び、対応するAPIキーをアプリへ入力します。
    The connection dialog includes Gemini and OpenAI API manual PDFs beside their key acquisition links. The header's user manual opens the full application guide. All PDFs open in a separate tab. / 接続画面のGemini・OpenAIキー取得リンクの右側から、それぞれのAPIマニュアルを開けます。タイトル左側の「使い方マニュアル」はアプリ全体の操作ガイドです。同梱PDFは別タブで開き、表示方法はブラウザーの設定に依存します。
@@ -443,9 +445,9 @@ To update, save needed images and text, stop the old launcher, extract a fresh s
 
 Generation prompts retain a per-person limb ownership check even after Web-copy compaction: trace hands to shoulders and feet to hips, distinguish natural occlusion or cropping from missing limbs, and reject ownerless limbs near furniture or other bodies while preserving the scripted pose and camera. This is a drawing instruction, not an independent inspection of the finished Web image. / 生成指示には、Web貼り付け用の短縮後も人物ごとの手足確認を残します。手から肩、足から骨盤への接続を確認し、自然な遮蔽・画角外と欠損を区別し、指定した演技・構図を保ちながら家具や他人の身体の付近に出る所属不明の手足を防ぐよう指示します。これは作画指示であり、Web完成画像を独立して検査する機能ではありません。
 
-The default OpenAI image setting is Sunburst / max at the large exact A4 manuscript tier, 2240×3168; the standard tier remains available at 1120×1584 with the same 210:297 ratio. API output is normalized to the selected exact canvas. The Web-copy prompt states both exact tiers, but ChatGPT Web can still return a near-A4 canvas because it does not run the app's normalizer; a small Web-only ratio variance is accepted. Current GPT Image 2.5/2 APIs accept these custom dimensions because both edges are multiples of 16 and remain within the documented size limits. The STEP4 generation button shows the selected model's official list-price snapshot: GPT Image 2.5 Sunburst/Flare use image input $8 (cached $2), image output $30, text input $5 (cached $1.25); GPT Image 2 uses the same standard rates: image input $8 (cached $2), image output $30, text input $5 (cached $1.25), all in USD per million tokens as of 2026-10-17. Larger sizes and higher quality increase cost and latency and do not guarantee correct dialogue, hands, or composition. / OpenAI画像の既定値は、利用可能な場合Sunburst / max・A4漫画原稿比率の大サイズ2240×3168です。標準サイズ1120×1584も同じ210:297比率で選択できます。API出力は選択した正確なキャンバスへ正規化します。Web貼付用プロンプトにも両方の正確な寸法を記載しますが、ChatGPT Webではアプリ側の正規化を通らないためA4近似になる場合があり、Web版だけは小さな比率誤差を許容します。現行GPT Image 2.5／2 APIは、両辺が16の倍数で仕様上限内のため、このカスタム寸法を直接受け付けます。STEP4生成ボタン内には選択中モデルの公式参考単価を表示し、2026-10-17時点でGPT Image 2.5 Sunburst/Flareは画像入力$8（キャッシュ$2）・画像出力$30・テキスト入力$5（キャッシュ$1.25）、GPT Image 2も通常料金は画像入力$8（キャッシュ$2）・画像出力$30・テキスト入力$5（キャッシュ$1.25）です（いずれもUSD／100万トークン）。大きなサイズや高品質設定は料金と待ち時間が増え、台詞・手・構図の正確さを保証しません。
+The default OpenAI image setting is Sunburst / max at the large exact A4 manuscript tier, 2240×3168; the standard tier remains available at 1120×1584 with the same 210:297 ratio. API output is normalized to the selected exact canvas. The Web-copy prompt states both exact tiers, but ChatGPT Web can still return a near-A4 canvas because it does not run the app's normalizer; a small Web-only ratio variance is accepted. Current GPT Image 2.5/2 APIs accept these custom dimensions because both edges are multiples of 16 and remain within the documented size limits. The STEP4 generation button shows the selected model's official list-price snapshot: GPT Image 2.5 Sunburst/Flare use image input $8 (cached $2), image output $30, text input $5 (cached $1.25); GPT Image 2 uses the same standard rates: image input $8 (cached $2), image output $30, text input $5 (cached $1.25), all in USD per million tokens as of 2026-10-18. Larger sizes and higher quality increase cost and latency and do not guarantee correct dialogue, hands, or composition. / OpenAI画像の既定値は、利用可能な場合Sunburst / max・A4漫画原稿比率の大サイズ2240×3168です。標準サイズ1120×1584も同じ210:297比率で選択できます。API出力は選択した正確なキャンバスへ正規化します。Web貼付用プロンプトにも両方の正確な寸法を記載しますが、ChatGPT Webではアプリ側の正規化を通らないためA4近似になる場合があり、Web版だけは小さな比率誤差を許容します。現行GPT Image 2.5／2 APIは、両辺が16の倍数で仕様上限内のため、このカスタム寸法を直接受け付けます。STEP4生成ボタン内には選択中モデルの公式参考単価を表示し、2026-10-18時点でGPT Image 2.5 Sunburst/Flareは画像入力$8（キャッシュ$2）・画像出力$30・テキスト入力$5（キャッシュ$1.25）、GPT Image 2も通常料金は画像入力$8（キャッシュ$2）・画像出力$30・テキスト入力$5（キャッシュ$1.25）です（いずれもUSD／100万トークン）。大きなサイズや高品質設定は料金と待ち時間が増え、台詞・手・構図の正確さを保証しません。
 
-On the Gemini route, STEP2 starts with Gemini 3.8 Flash; failure-only fallback proceeds through the models shown in Model Chain. STEP4 uses Nano Banana 2.1 (`gemini-nano-banana-2.1`) through the Interactions API with `1K / 3:4`, then normalizes the full page to A4. There is no separate Gemini quality selector. As of 2026-10-17, the official reference prices are $0.0336 per 1K image (up to $0.1344 for four candidates), $1.50 input and $7.50 text/thinking output per million tokens. QA and repair requests can add charges; these are reference prices, not live billing. / GeminiのSTEP2はGemini 3.8 Flashから開始し、失敗時だけModel Chainの候補へ切り替えます。STEP4はNano Banana 2.1 (`gemini-nano-banana-2.1`) のInteractions APIへ`1K / 3:4`で送信し、ページ全体をA4へ正規化します。Geminiに独立した品質選択はありません。2026-10-17時点の公式参考価格は1K画像$0.0336／枚（4候補なら最大$0.1344）、入力$1.50、テキスト・思考出力$7.50／100万トークンです。精査と修正にも料金がかかり、表示は実際の請求額ではありません。
+On the Gemini route, STEP2 starts with Gemini 3.8 Flash; failure-only fallback proceeds through the models shown in Model Chain. STEP4 uses Nano Banana 2.1 (`gemini-nano-banana-2.1`) through the Interactions API with `1K / 3:4`, then normalizes the full page to A4. There is no separate Gemini quality selector. As of 2026-10-18, the official reference prices are $0.0336 per 1K image (up to $0.1344 for four candidates), $1.50 input and $7.50 text/thinking output per million tokens. QA and repair requests can add charges; these are reference prices, not live billing. / GeminiのSTEP2はGemini 3.8 Flashから開始し、失敗時だけModel Chainの候補へ切り替えます。STEP4はNano Banana 2.1 (`gemini-nano-banana-2.1`) のInteractions APIへ`1K / 3:4`で送信し、ページ全体をA4へ正規化します。Geminiに独立した品質選択はありません。2026-10-18時点の公式参考価格は1K画像$0.0336／枚（4候補なら最大$0.1344）、入力$1.50、テキスト・思考出力$7.50／100万トークンです。精査と修正にも料金がかかり、表示は実際の請求額ではありません。
 
 The three OpenAI text model selectors appear before STEP1. STEP1 uses its image-analysis selection, STEP2 and enhancement use the scenario selection, and STEP3 uses its prompt selection. All three start at GPT-6 Luna after reload or full reset. Local Luna validation stops on failure without automatic substitution for STEP2 and STEP3; other selections retain their failure-only fallback order. Model Chain displays all three active routes and lists upper choices such as Astra as Selectable (manual selection only). The progress log records selected and adopted models. STEP4 image generation retains its separate image-model selector. / OpenAIの文章モデル選択はSTEP1の前に3つあります。STEP1は画像解析の選択、STEP2と任意の強化はシナリオの選択、STEP3は描画指示の選択を使います。再読み込みと全リセット後は3つともGPT-6 Lunaから始まります。ローカルのSTEP2・STEP3でLunaを選んだ場合は失敗時も別モデルへ自動切替せず、他の選択には失敗時だけのフォールバック順を適用します。Model Chainは3つの有効経路を表示し、Astra等の上位候補もSelectable（手動選択のみ）として残します。進捗ログは選択・採用モデルを記録します。STEP4画像生成には別の画像モデル選択があります。
 
@@ -564,7 +566,7 @@ The copied prompt guides panel order, cast, speaker assignment, acting, camera, 
 The app provides separate download buttons for the workflow JSON and the custom-node ZIP. Both files are needed for this route. / アプリにはワークフローJSONとカスタムノードZIPのダウンロードボタンが別々にあります。この経路では両方のファイルが必要です。
 
 - [Download workflow JSON](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261005233427.json) / [ワークフローJSONをダウンロード](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261005233427.json)
-- [Download custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.1.2/ComfyUI_H3_FourPanel_NonLM_20261005233427_authfix1.zip) / [カスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.1.2/ComfyUI_H3_FourPanel_NonLM_20261005233427_authfix1.zip)
+- [Download custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.1.3/ComfyUI_H3_FourPanel_NonLM_20261005233427_authfix1.zip) / [カスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.1.3/ComfyUI_H3_FourPanel_NonLM_20261005233427_authfix1.zip)
 
 Place the ZIP's `3フォルダ` under `ComfyUI/custom_nodes/` and the workflow JSON under `ComfyUI/user/default/workflows/`. Install the separate dependencies below, then restart ComfyUI. / ZIP内の`3フォルダ`を`ComfyUI/custom_nodes/`へ、ワークフローJSONを`ComfyUI/user/default/workflows/`以下へ配置します。下記の別途必要な依存関係を導入してからComfyUIを再起動します。
 
@@ -616,7 +618,7 @@ Every deployment requires a fresh dependency audit, the shared security checks a
 
 **Why are there two ComfyUI download buttons? / ComfyUIのダウンロードボタンが2つあるのはなぜですか？**  The JSON defines the workflow, while the ZIP supplies three custom-node folders and documentation; three additional runtime dependencies are installed separately. / JSONはワークフロー定義、ZIPはカスタムノード3フォルダーと導入文書です。さらに実行依存3項目を別途導入します。
 
-**Which video package should I install? / 動画化には何を入れますか？** Use the `20261005233427` workflow JSON and matching v7.1.2 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261005233427` のワークフローJSONと対応するv7.1.2 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
+**Which video package should I install? / 動画化には何を入れますか？** Use the `20261005233427` workflow JSON and matching v7.1.3 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261005233427` のワークフローJSONと対応するv7.1.3 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
 
 **Is this the T2V/I2V/Ref2V repository? / T2V・I2V・Ref2Vのリポジトリですか？**  No. Those workflows are maintained separately in [comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows). / いいえ。それらは別の[comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows)で管理します。
 
@@ -724,6 +726,9 @@ Load a completed four-panel manga into [AI Voice Comic Maker](https://github.com
 
 ## 📋 ChangeLog / 更新履歴
 
+### v7.1.3 (2026-10-18)
+- **[Fix & UX]** Make completed header steps clickable while preserving work; block navigation during processing, account for the fixed header, and support narrow screens and keyboard use. / 上部の完了済みSTEPをクリックして内容を保持したまま戻る操作を追加。処理中の移動防止、固定ヘッダー下への位置調整、狭い画面とキーボード操作に対応。
+
 ### v7.1.2 (2026-10-18)
 
 - Added five endings shared by OpenAI and Gemini: serious anger/protest and earned reversal; gag comic rage, self-inflicted consequences and role reversal. / OpenAI・Gemini共通の結末に、シリアスの「怒り・抗議」「逆転・反撃」、ギャグの「激怒・逆ギレ」「自業自得・ブーメラン」「立場逆転」を追加しました。
@@ -781,77 +786,4 @@ Load a completed four-panel manga into [AI Voice Comic Maker](https://github.com
 ### v6.9.9 (2026-10-09)
 - **[Fix & UX]** Automatically download final PNGs, choose an extra save location, and test Chrome download settings. Synchronize STEP1 reference numbering and recognition with JSON/PNG production records. / 最終画像の自動PNG保存と保存先選択、Chrome設定案内・無料保存テスト。STEP1の素材番号・認識表示と制作情報JSON/PNGを同期。
 
-### v6.9.8 (2026-10-09)
-- **[Fix & UX]** Reconcile material recognition, cast and reference numbers after changes; fix reset cleanup, edit retention and repeated image-reference text. Rename the stop control. / 素材変更後の認識・人物設定・参照番号を整合し、解析中のリセット、編集保持と画像生成の参照情報量を修正。停止ボタンを「解析・生成強制ストップ」へ変更。
-
-### v6.9.7 (2026-10-09)
-- **[Fix & UX]** Fix narrow STEP1 overflow and premature recognition copying; keep progress last while processing. / STEP1の狭い幅での横はみ出しと解析途中のコピーを修正。各STEPの処理中は進捗を末尾に表示。
-
-### v6.9.6 (2026-10-09)
-- **[Fix & UX]** Recognize mixed character, background and prop references in STEP1, unify editable results, retain panorama numbering and Web attachment order, support free-input material directions, and name both image and scenario models in the footer. / STEP1で人物・背景・小物をまとめてAI認識し、一つの編集・コピー欄へ統合。360°背景の番号とWeb添付順、自由入力の素材指定を整理し、画像エンジン名とシナリオモデル名をフッターへ反映。
-
-### v6.9.5 (2026-10-08)
-- Limit STEP1 character-sheet images to 14 without panorama or 10 with it; reject excess additions before analysis and explain image counts versus people. / **[Fix & UX]** STEP1のキャラシート枚数を背景なし14枚・360°背景ONで10枚に統一し、超過追加を解析前に拒否。画像枚数と人数の違いを説明。
-
-### v6.9.4 (2026-10-07)
-- Added browser script and connection restrictions, updated dependencies, and required security checks on every deployment. / **[Fix & UX]** ブラウザーのスクリプト実行・通信先を制限するCSPを追加し、依存ライブラリを更新。毎回のデプロイでセキュリティ検査を必須化。
-
-### v6.9.3 (2026-10-07)
-- Grouped Gemini Web help and video tools, spaced the copy button, and moved AI review beside the displayed image. / **[Fix & UX]** GeminiのWeb補助と動画化を折り畳みに整理。コピーの上下に余白を追加し、AI再検査を画像下の追加指示欄の前へ移動。
-
-### v6.9.2 (2026-10-06)
-- Fixed STEP3 quote parsing, automatic AI repair and image request cancellation; migrated Gemini images to Nano Banana 2.1. / **[Fix & UX]** STEP3の引用判定とAI自動修復、画像通信の強制停止を修正。Gemini画像をNano Banana 2.1へ更新。
-
-### v6.9.1 (2026-10-06)
-- Preserved split/full copy and TXT/JSON saving; nested image help and video conversion in Web guidance, placed API settings above STEP4 with a 6px gap, and clarified full pasting from attachments. / **[Fix & UX]** Web貼り付けの三分割・一括コピー・TXT/JSON保存を保持し、画像補助・動画化を折り畳み内に整理。API品質・サイズをSTEP4直前へ移動し、6pxの隙間と添付ファイルからの全文貼付案内を追加。
-
-### v6.9.0 (2026-10-06)
-- Add shared Force Stop and next-action pulses, collapse the ChatGPT Web paste guide, and keep VisualEvidence sign text out of STEP3 dialogue. / **[Fix & UX]** 全行程強制ストップと次STEP・修正ボタンの点滅案内を追加。ChatGPT Web貼付ガイドを折り畳み、VisualEvidenceの看板文字が台詞へ混入するSTEP3不具合を修正。
-
-### v6.8.9 (2026-10-06)
-- Separate panel media from actor projection, strengthen gekiga faces and pale watercolor, and exclude explicitly offscreen continuity actors from physical cast counts. / **[Fix & UX]** コマごとの画材と人物の投影を分けて指定し、劇画の顔・淡い水彩・通常色の描き分けを改善。画面外の人物を重複計上しないよう修正。
-
-### v6.8.8 (2026-10-06)
-- Fix camera negation, close-up and telephoto parsing and preserve projection instructions during compaction. Refine six automatic styles, gekiga face instructions and unverified findings; update the H3 package. / **[Fix & UX]** カメラの禁止指定・寄り・長焦点の判定と圧縮時の投影指示を修正。6画風の自動選択、劇画の顔指定と未確認表示を整理し、最新H3配布物へ更新。
-
-### v6.8.7 (2026-10-05)
-- Revised page containment, speaker focus and scene-led style/ending selection; invalid repair proposals are replanned with failure feedback. / **[Fix & UX]** 外枠・話者の焦点・シーンに応じた絵柄と結末の選択を見直し、無効な修正案は理由を引き継いで再検討。
-
-### v6.8.6 (2026-10-05)
-- Improved topic-specific clear endings in STEP2 and preserved group dialogue, cast counts, per-panel art styles and camera direction in STEP3. / **[Fix & UX]** STEP2が題材に沿った明確な結末を選び、STEP3は合唱・人数・コマ別の画風とカメラ指定を保つよう改善。
-
-### v6.8.5 (2026-10-05)
-- Fixed collective-speaker STEP3 mismatches and extra cast counts. Image QA checks member tail evidence and no longer triggers repair from a group wording difference. / **[Fix & UX]** 集合話者の表記差によるSTEP3誤停止と人数の過剰計上を修正。画像検査は構成員の接続証拠を照合し、表記差だけで追加生成しません。
-
-### v6.8.4 (2026-10-04)
-- Fixed dialogue loss for bracketed speaker names and unintended mosaic on registered cast; shortened the single-image add-on prompt. / **[Fix & UX]** 括弧付き話者名の台詞欠落と登録キャストへのモザイク誤適用を修正。1枚絵の追加指示を圧縮。
-
-### v6.8.3 (2026-10-04)
-- Unified application terms and excluded a third-party PDF skill from public distribution while preserving valid prior grants and generation behavior. / **[Fix & UX]** アプリ利用条件を統一し、再配布許諾未確認の第三者PDF skillを公開配布対象から除外。既存の有効な許諾とアプリの生成機能は保持。
-
-### v6.8.2 (2026-10-03)
-- Fix STEP3 document quotations and shoulder-view identity resolution; preserve composition and acting during local anatomy edits. / **[Fix & UX]** 資料引用を台詞と誤認するSTEP3停止と肩越し人物の誤割当を修正。顔などの局所修正で構図・演技を維持する指示を強化。
-
-### v6.8.1 (2026-10-03)
-- Fix incomplete quality reports and unnecessary re-audits; retain harmless differences as warnings while preserving material anatomy checks, per-character style evidence and depth-consistent scale. / **[Fix & UX]** 品質検査の出力不足と無駄な再監査を修正。軽微な差異は注意事項として保持し、重大な人体破綻は修正対象を維持。劇画の人物別確認と遠近に沿う縮尺を改善。
-
-### v6.8.0 (2026-10-03)
-- Default image generation to Sunburst/max, retain the STEP2 progress frame and STEP2–4 completion times, and refine conditional focal depth while preserving camera and panel media. / **[Fix & UX]** 画像生成をSunburst/max既定に変更。STEP2の進捗枠とSTEP2〜4の終了時間を保持し、カメラ・画風を保つ条件付き焦点表現を調整。
-
-### v6.7.9 (2026-10-02)
-- Restored panel styles and monochrome finishing, corrected progress and API inspection, updated H3 downloads and manuals, and documented local ZIP startup. / **[Fix & UX]** コマ別画風と白黒仕上げ、処理中表示とAPI検査を修正。H3配布とPDFを更新し、ZIPからのローカル起動手順を追加。
-
-### v6.7.8 (2026-10-01)
-- Improve monochrome rendering instructions, panel style direction, source preservation and quality checks; update Web helper controls and the user manual. / **[Fix & UX]** 白黒漫画の描画指示とコマ別の絵柄指定、台本保持、品質確認を改善。Web用補助ボタンの順序と使い方マニュアルを更新。
-
-### v6.7.7 (2026-10-01)
-- Match the Gemini API manual button to the existing API buttons while preserving spacing. / **[Fix & UX]** Gemini APIマニュアルボタンを既存のAPIボタンと同じデザインへ統一。ボタン間隔を維持。
-
-### v6.7.6 (2026-10-01)
-- **[Docs]** Update the full manual to v6.7.6, including current model selection, API button names, Gemini dimensions and observed mosaic limits; require manuals/README body review for each deployment and whole-note-body readback after publication. / 全機能マニュアルをv6.7.6のモデル選択・APIボタン名・Gemini寸法・モザイクの確認済み制限へ更新。デプロイごとのマニュアル／README本文確認と、公開後のnote全文読み戻しを必須化。
-- Bundle Gemini API and full application PDF manuals with buttons in the connection panel and beside the title. / **[Fix & UX]** Gemini APIとアプリ全体のPDFマニュアルを同梱し、接続画面とタイトル左側に閲覧ボタンを追加。
-
-### v6.7.5 (2026-10-01)
-- Separate character references from authorized mosaic targets, preserve intentional masks, and default development to GPT-6.1 Sol. / **[Fix & UX]** 参照シートとモザイク対象を区別し、意図的な対象指定を保持。開発版もGPT-6.1 Solを初期選択に統一。
-
-Older release history is available in [GitHub Releases](https://github.com/FURUYAN1234/nano-banana-pro/releases). / 以前の更新履歴は [GitHub Releases](https://github.com/FURUYAN1234/nano-banana-pro/releases) で確認できます。
+Earlier versions / 過去の版: [GitHub Releases](https://github.com/FURUYAN1234/nano-banana-pro/releases)

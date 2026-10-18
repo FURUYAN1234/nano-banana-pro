@@ -1,5 +1,9 @@
 # Nano Banana Pro handoff
 
+## v7.1.3 completed STEP navigation (2026-10-18)
+
+The root `PLAN.md` owns this authorized implementation/API verification/deploy/full-backup task. Local and both-provider real STEP3/navigation acceptance passed; evidence is `output/step-navigation-v713-20261018/api-acceptance.json`. README/manual/note synchronization and the formal v7.1.3 delivery remain pending. Preserve the existing note and two API tabs; navigation itself never calls an API or resets production data. No SNS.
+
 ## v7.1.2 ending choices and documentation update (2026-10-18)
 
 The user authorized adding five endings, verifying each once through OpenAI and Gemini (ten paid scenario runs), and proceeding to deployment and full backup if verification succeeds. Keep the existing selector and generation routes. Scope includes serious anger/protest and earned reversal; gag comic rage, self-inflicted consequences and role reversal; the outdated manual/default-model/ON-OFF and README inspection/provider explanations. The root `PLAN.md` owns the live implementation, verification and delivery status. Do not infer API success or release completion from this preparation note.

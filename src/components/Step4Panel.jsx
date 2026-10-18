@@ -292,8 +292,8 @@ const getDisplayedImageInfo = (size, pageLayout) => {
 export default function Step4Panel({
   experimentalEnabled = false,
   outputRef,
-  step2Ref,
-  step3Ref,
+  onNavigateToStep,
+  isStepNavigationDisabled = false,
   referenceAssets = [],
   imageEditDrafts = {},
   setImageEditDraft,
@@ -1491,11 +1491,11 @@ No explanations. No partial results.`;
 
                 <div style={{ display: 'flex', marginTop: '16px' }}>
                   <select aria-label="STEPへ移動" defaultValue=""
+                    disabled={isStepNavigationDisabled || typeof onNavigateToStep !== 'function'}
                     style={{ flex: 1, minWidth: 0, padding: '8px 10px', borderRadius: '8px', fontSize: '13px', background: '#ffffff', color: '#111111', border: '1px solid #94a3b8', colorScheme: 'light' }}
                     onChange={(event) => {
                       const step = event.currentTarget.value;
-                      if (step === '1') window.scrollTo({ top: 0, behavior: 'smooth' });
-                      else ({ '2': step2Ref, '3': step3Ref, '4': outputRef })[step]?.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                      if (step) onNavigateToStep?.(Number(step));
                       event.currentTarget.value = '';
                     }}>
                     <option value="">移動先を選択</option>

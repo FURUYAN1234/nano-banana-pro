@@ -6,6 +6,7 @@ export default function ControlBar({
   controlBarRef,
   currentStep = 1,
   activeStep = 0,
+  onNavigateToStep,
   imagePhase = '生成中',
   apiKey,
   isEndlessMode,
@@ -20,6 +21,8 @@ export default function ControlBar({
   onAutoSaveVerified,
 }) {
   const [pendingMode, setPendingMode] = React.useState(null);
+  const navigationDisabled = !apiKey || activeStep > 0 || isApiProcessing || isAborting
+    || isFullAutoMode || typeof onNavigateToStep !== 'function';
   const setEndless = next => {
     setIsEndlessMode(next);
     if (isEndlessModeRef) isEndlessModeRef.current = next;
@@ -44,11 +47,21 @@ export default function ControlBar({
             const status = state === 'active' ? step === 4 ? imagePhase : '実行中'
               : state === 'complete' ? step === 4 ? '生成済み' : '完了'
                 : state === 'ready' ? '次の操作' : '待機';
-            return <li key={step} className="workflow-progress-step" data-state={state}
-              aria-current={state === 'active' ? 'step' : undefined}>
+            const content = <>
               <span className="workflow-progress-mark" aria-hidden="true">{state === 'complete' ? <Check size={14} /> : step}</span>
               <span className="workflow-progress-label">{label}</span>
               <span className="workflow-progress-status">{status}</span>
+            </>;
+            return <li key={step} className="workflow-progress-item" data-state={state}
+              aria-current={state === 'active' ? 'step' : undefined}>
+              {state === 'complete' ? <button type="button"
+                className="workflow-progress-step workflow-progress-return" data-state={state}
+                disabled={navigationDisabled}
+                aria-label={`STEP${step} ${label}に戻る`}
+                title={navigationDisabled ? '処理中や未接続時は移動できません' : `クリックしてSTEP${step} ${label}に戻る（内容は保持されます）`}
+                onClick={() => { if (!navigationDisabled) onNavigateToStep(step); }}>
+                {content}
+              </button> : <span className="workflow-progress-step" data-state={state}>{content}</span>}
             </li>;
           })}
         </ol>

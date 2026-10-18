@@ -8,7 +8,7 @@ export const GEMINI_TEXT_MODEL_IDS = [
   'gemini-3.1-flash-lite',
 ];
 
-export const GEMINI_SCENARIO_PRICE_SNAPSHOT_DATE = '2026-10-17';
+export const GEMINI_SCENARIO_PRICE_SNAPSHOT_DATE = '2026-10-18';
 export const GEMINI_SCENARIO_MODEL_INFO = Object.freeze({
   id: GEMINI_TEXT_MODEL_IDS[0],
   label: 'Gemini 3.8 Flash',
