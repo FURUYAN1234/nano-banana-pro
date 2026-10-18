@@ -3,7 +3,7 @@
 > **Source code available; free to use.** Ordinary use, free integration and free provision require no application, prior contact or permission from FURU. You may sell and monetize your own works. External API costs and third-party terms are separate. See Terms & Output Rights below. / **ソースコード公開・利用無料。** 通常利用と無料の組み込み・無料提供に、申請・事前連絡・FURUの許可は不要です。自分の作品は販売・収益化できます。外部API料金と第三者の条件は別です。詳しくは「利用条件・作品の権利」をご確認ください。
 
 
-> Current source version: **v7.1.1** / 現在のソース版: **v7.1.1**
+> Current source version: **v7.1.2** / 現在のソース版: **v7.1.2**
 
 
 An experimental web application in which AI handles topic research, story structure, direction, prompt construction, image generation, and quality review for manga. OpenAI starts in 5–8-panel mode and also supports four panels. Gemini supports four-panel color and monochrome pages only. / AIが話題調査、構成、演出、プロンプト構築、画像生成、品質確認まで担当する漫画制作Webアプリです。OpenAIの初期選択「5～8コマ生成」では、最初から5～8コマのシナリオを作り、漫画にします。「4コマ生成」にも切り替えられます。Geminiはカラー・白黒とも4コマ固定です。
@@ -95,7 +95,7 @@ STEP2で決まったコマ数を保ち、STEP3でカメラの画角、台詞を�
 
 5～8コマ生成のSTEP3を押し直すと、同じ台本でもコマ割りを再計画します。再実行に失敗した場合は前の準備案と取得済み画像を保持します。元台本や設定が変わった場合は古い案で生成せず、作り直します。品質検査では原画像全体・各コマ・左右の透かしの切り出しを使い、台本を渡さない文字転記と、台本との品質照合を2回の検査APIで行います。台詞は右→左の実位置で照合し、タイトルと透かしも指定文と照合します。句読点や空白だけの差は許容します。元画像は変更しません。各検査は利用するAPI固有の応答待ち上限を使い、2回の合計時間では打ち切りません。検査の失敗や時間切れでは、画像を残して未確認と表示します。未確認や作品が成立する軽微な違いだけでは、自動で画像を再生成しません。人物を同定できない場合は未確認のまま保持し、それだけで同一人物の重複とは断定しません。明確な欠陥がある項目は、別項目の未確認で取り消しません。
 
-5～8コマでは、OpenAI・Geminiとも画像の下の「AIで画像を再検査」で既存画像を検査できます。解析API料金はかかりますが、画像は再生成しません。人物検査では、観測した身体をすべて登場人物・根拠のある背景人物・未確認のいずれかとして照合し、対応漏れを合格にしません。ただし、検査AIが身体そのものを見落とす場合があるため、人物重複の完全検出は保証しません。完成画像も目視で確認してください。
+5～8コマ生成はOpenAIのみで、Geminiはカラー・白黒とも4コマです。APIで新しく生成した画像は自動検査されます。手動の「AIで画像を再検査」ボタンはありません。人物検査では、観測した身体をすべて登場人物・根拠のある背景人物・未確認のいずれかとして照合し、対応漏れを合格にしません。ただし、検査AIが身体そのものを見落とす場合があるため、人物重複の完全検出は保証しません。完成画像も目視で確認してください。
 
 同じ準備案でSTEP4を再実行した場合は、前の選択候補と新しい画像を比較し、改善を確認できた場合だけ選択を更新します。前の候補の検査方式が古いか、検査結果の形式が不完全な場合は、新画像と並行してその画像を一度再検査します。両方の検査を同時に開始するため、旧画像の検査が新画像の残り時間だけに制限されることはありません。有効な旧検査は再利用します。候補比較も利用するAPI固有の応答待ち上限を使い、失敗・同等・劣化・改善不明の場合は前の候補を保持します。検査・比較の途中でも強制ストップを受け付けます。未比較で保持した候補を「比較で選んだ最良候補」とは表示しません。取得した画像は実験側の履歴に直近10件まで残り、手動で選び直せます。必要な画像は履歴から外れる前に保存してください。検査不足の項目と実画像の観察内容は生成ログに残ります。候補比較にもAPI料金がかかります。
 
@@ -115,7 +115,7 @@ Automatic direction retains rectilinear wide angles and excludes fisheye. Choose
 
 Drawing options: STEP2 mosaic masking for existing copyrighted characters and STEP3 watermarking default to ON. The former adds a large-mosaic instruction to scenario and image prompts; disabling the latter removes both footer marks. The settings apply to OpenAI/Gemini API and Web-copy prompts. Rebuild from STEP2 for mosaic changes or STEP3 for watermark changes; toggling alone does not call an API. Settings last until a full reset or reload, do not alter existing images retroactively, and require visual confirmation. / 描画オプション：STEP2の「版権キャラクターにモザイクをかける」と、STEP3の「ウオーターマークを表記する」は初期状態でONです。前者はシナリオ構築と最終画像プロンプトに「版権キャラクターにおおきなモザイクをかける」を追加し、後者をOFFにすると左右のフッターの描画指示を外します。OpenAI／GeminiのAPIとWeb用コピーに共通で反映します。設定変更後はモザイクならSTEP2、ウオーターマークならSTEP3から再作成してください。変更だけでAPIは実行されません。選択は全設定リセットまたは再読込まで保持します。生成済み画像には遡って反映されず、AIの対象判断・描画は実画像で確認してください。
 
-The right footer keeps the scenario-model attribution and shows the current image engine first, for example `ChatGPT Images 2.5 / GPT-6.1 Sol / FURU AI 4-koma v7.0.7`. Changing image quality/model updates the image-engine prefix for API and Web-copy instructions; existing images are retained. / 右フッターはシナリオモデル名を残し、先頭に現在の画像生成エンジン名を記載します。例：`ChatGPT Images 2.5 / GPT-6.1 Sol / FURU AI 4-koma v7.0.7`。画像モデルを変更すると、API・Webコピー用の表記をその選択へ同期します。生成済み画像は保持します。
+The right footer keeps the scenario-model attribution and shows the current image engine first, for example `ChatGPT Images 2.5 / GPT-6.1 Sol / FURU AI 4-koma v7.1.2`. Changing image quality/model updates the image-engine prefix for API and Web-copy instructions; existing images are retained. / 右フッターはシナリオモデル名を残し、先頭に現在の画像生成エンジン名を記載します。例：`ChatGPT Images 2.5 / GPT-6.1 Sol / FURU AI 4-koma v7.1.2`。画像モデルを変更すると、API・Webコピー用の表記をその選択へ同期します。生成済み画像は保持します。
 
 
 Mosaic targets are existing-work characters actually depicted in the scripted Action. Reference sheets, art style, resemblance or a shared name alone do not authorize masking original cast members. An intentional source instruction applies only to its specified person and region. Check both masked and unmasked subjects in the final image. The independent OpenAI model selectors before STEP1 start STEP1, STEP2 and STEP3 at GPT-6 Luna. Local Luna validation stops on failure without automatic model substitution for STEP2 and STEP3. / モザイク対象は台本のActionで実際に描く既存作品の人物描写です。参照キャラクターシートの存在、画風、外見の類似、同名だけを根拠にオリジナルの登場人物を隠しません。原文で本人への意図的なモザイクを指定した場合は、その対象・領域だけに適用します。最終画像で対象と非対象の両方を確認してください。STEP1の前にある独立したOpenAIモデル選択はSTEP1・STEP2・STEP3ともGPT-6 Lunaが初期値です。ローカル検証版でSTEP2・STEP3にLunaを選んだ場合、失敗しても別モデルへ自動切替しません。
@@ -143,6 +143,16 @@ Explicit camera fields / 明示カメラ指定: Both `[Camera: ...]` tags and st
 Rear camera geometry / 後方カメラの見え方: Preserve the stated room, prop or actor as the camera-position reference. Each actor keeps the scripted orientation; front, side and back planes follow the Camera/Action geometry without requiring an explicit back-view label. This instruction correction has not yet demonstrated improved first-generation gaze in the real API. / 後方の基準が部屋・道具・人物のどれかを保ち、人物の指定向きと撮影位置から正面・側面・背面を描き分けます。「後ろ姿」の明記がないことを理由に、自然に見える背中を禁止しません。この指示修正による一発生成の視線改善は、実APIでは未確認です。
 
 Scene-led selection / 場面に応じた選択: STEP2 chooses art styles and endings from the story, without fixed tag quotas or character rotations. A coherent, motivated payoff takes priority over novelty. Up to six recent accepted endings from the current screen session are sent as comparison data during scenario generation and review; they are cleared by the full settings reset or reload. The same ending type, intentional repetition or an uncertain comparison alone does not trigger repair. / 絵柄・決め役・オチの型を固定配分せず、伏線と人物の動機・行動から成立する結末を優先します。同じ画面セッションの直近採用作から最大6件の結末要約を、生成・監査時に接続先AIへ比較資料として送ります。全設定リセットまたは再読込で消去されます。同じ型、意図した反復、不確かな比較だけでは修正しません。画風固定など選択モードの条件は保持します。
+
+STEP2 offers **8 serious endings and 12 gag endings**, plus automatic and documentary choices, with either OpenAI or Gemini. The five additions in v7.1.2 are below. / STEP2の結末は、個別の **シリアス8種類・ギャグ12種類** に加え、おまかせとドキュメンタリーから選べます。OpenAI・Gemini共通で、v7.1.2では次の5種類を追加しました。
+
+| Mode / 分類 | Ending / 結末 | Direction / 描く変化 |
+|---|---|---|
+| Serious / シリアス | Anger / protest / 怒り・抗議 | A concrete objection to unfair treatment. / 不当な扱いに対して異議を示す。 |
+| Serious / シリアス | Earned reversal / 逆転・反撃 | Earlier choices and actions turn the situation around. / 積み上げた選択や行動で局面を変える。 |
+| Gag / ギャグ | Comic rage / 激怒・逆ギレ | Anger or blame shifting creates a comic contrast. / 怒りや責任転嫁の落差で笑いを作る。 |
+| Gag / ギャグ | Self-inflicted consequences / 自業自得・ブーメラン | A character's own action comes back to them. / 自分の行動が自分へ返ってくる。 |
+| Gag / ギャグ | Role reversal / 立場逆転 | Roles or the balance of power switch at the payoff. / 役割や力関係の反転をオチにする。 |
 
 Page and focus / 外枠とピント: Keep the four outer frame sides and corners inside the canvas with a visible margin unless full bleed is explicitly requested. Focus follows the scripted speaker, reaction or main action; nonessential foreground and background may soften or use thinner, paler detail. Required text, contacts and reactions remain readable, and explicit deep focus wins. Directional motion blur is optional for scripted movement. / 明示した断ち切りを除き、外枠の四辺・四隅と余白を残します。人数確認は全員を同じ鮮明さにする指定ではありません。話者・反応・主動作に合わせ、非重要な前後景はボケや薄描きを使えます。必要な文字・接触・反応の判読と明示した深いピントは守ります。動きがある場面では方向に沿ったモーションブラーを使えます。実画像で描画を確認してください。
 
@@ -318,7 +328,7 @@ Normal-style focal figures use varied G-pen line weight; watercolor and other st
 
 ### Story endings / ストーリーの結末
 
-STEP2 groups endings into Automatic, Serious and Gag. Automatic chooses the tone from the topic; clear loss, disaster and victim-related topics use serious endings. Each tone also has its own automatic choice. Serious offers quiet aftermath, resolve, warning, open question, emotional closure and tragic closure, with short explanations beside each choice. / STEP2の結末は「おまかせ」「シリアス」「ギャグ」に分類しています。全体のおまかせは題材に応じて調子を選び、明白な喪失・災害・被害などはシリアスへ振り分けます。両カテゴリ内にも専用のおまかせがあります。シリアスでは静かな余韻、決意・再出発、警告、問題提起、感動・救い、悲劇・喪失を、括弧の説明を見ながら選べます。
+STEP2 groups endings into Automatic, Serious and Gag. Automatic chooses the tone from the topic; clear loss, disaster and victim-related topics use serious endings. Each tone also has its own automatic choice. Serious offers quiet aftermath, resolve, warning, open question, emotional closure, tragic closure, anger/protest and earned reversal, with short explanations beside each choice. / STEP2の結末は「おまかせ」「シリアス」「ギャグ」に分類しています。全体のおまかせは題材に応じて調子を選び、明白な喪失・災害・被害などはシリアスへ振り分けます。両カテゴリ内にも専用のおまかせがあります。シリアスでは静かな余韻、決意・再出発、警告、問題提起、感動・救い、悲劇・喪失、怒り・抗議、逆転・反撃を、括弧の説明を見ながら選べます。
 
 General serious endings use serious story construction, enhancement and image direction without forcing a gag or chibi transformation. They retain the selected art style; the all-panel reference-style lock remains specific to Serious Documentary. The resolved automatic ending is retained through STEP3 and STEP4. / 一般シリアスでは物語設計・シナリオ強化・画像演出をシリアス用に切り替え、ギャグやちび化を強制しません。選んだ画風を使い、全コマの参照絵柄固定はシリアス・ドキュメンタリー専用です。自動選択で決まった結末はSTEP3・STEP4へ引き継ぎます。
 
@@ -476,7 +486,7 @@ OpenAI image analysis, scenario writing and prompt construction each use the mod
 
 Visual QA requests ordinary JSON objects and arrays, retaining actors, hands, text, coordinates and checks instead of imposing a second positional table format. Compatible older table responses are still validated and expanded; malformed reports and output-limit termination remain unverified and cannot authorize image repair. Required evidence takes priority over a fixed brevity target. QA reads cast contracts from both compact and full provider prompts. This does not guarantee that every API review fits its output limit. / 画像QAは通常のJSON形式で回答を求め、人物・手・文字・座標・検査項目を保持します。位置依存の表形式への変換を追加要求しません。以前の表形式の回答も検証・展開できますが、不正な回答や出力上限での終了は未確認として扱い、画像修正の根拠にはしません。固定の短文化目標より必須の根拠を優先し、短縮版・通常版のプロンプト双方から人物一覧を読み取ります。すべてのAPI検査が上限内に収まる保証ではありません。
 
-Primary OpenAI image QA has its own output allowance (GPT-4.1/mini: 32,768 tokens; GPT-4o: 16,384); ordinary text and STEP2 limits are unchanged. Truncated or malformed primary reports stop supplementary paid audits and keep the image. Color panel-style QA checks every named, readable face, rather than certifying a group from one successful face; located hidden/rear/tiny faces do not force a new pose or a paid repair. Hand instructions retain each actor's scripted actions and the shared two-hand constraint without inferring that different actors' gestures belong to one person. / OpenAIの主画像QAには専用の回答枠を設けます（GPT-4.1/mini:32,768トークン、GPT-4o:16,384）。通常テキストとSTEP2の上限は変えません。主検査の切断・不正な回答時は補助の有料検査を止め、元画像を保持します。カラーのコマ別画風検査は代表１人だけでなく、判読できる各人物の顔を確認します。根拠のある後ろ姿・遮蔽・小さすぎる顔のために、ポーズ変更や有料修正を要求しません。手の指示は各人物の動作と共通の２本制約を保持し、別人物の動作を一人のものと誤認して削除しません。
+Primary OpenAI image QA uses the current reasoning models with a combined reasoning-and-response limit of 32,768 tokens. This is a ceiling, not the amount used on every request. Truncated or malformed primary reports stop supplementary paid audits and keep the image. Color panel-style QA checks every named, readable face, rather than certifying a group from one successful face; located hidden/rear/tiny faces do not force a new pose or a paid repair. Hand instructions retain each actor's scripted actions and the shared two-hand constraint without inferring that different actors' gestures belong to one person. / OpenAIの主画像QAは現行の推論モデルを使い、推論と回答本文の合計上限を32,768トークンとします。毎回その量を使う設定ではありません。主検査の切断・不正な回答時は補助の有料検査を止め、元画像を保持します。カラーのコマ別画風検査は代表１人だけでなく、判読できる各人物の顔を確認します。根拠のある後ろ姿・遮蔽・小さすぎる顔のために、ポーズ変更や有料修正を要求しません。手の指示は各人物の動作と共通の２本制約を保持し、別人物の動作を一人のものと誤認して削除しません。
 
 The prompt preserves explicit cast, dialogue, props, action, camera direction, and quiet beats while allowing variation in camera height, tilt, depth, and body acting. / 明示した登場人物、台詞、小物、動作、カメラ方向、静かな間を保持しながら、カメラの高低・傾き・奥行き・身体演技に変化を付けます。
 
@@ -554,7 +564,7 @@ The copied prompt guides panel order, cast, speaker assignment, acting, camera, 
 The app provides separate download buttons for the workflow JSON and the custom-node ZIP. Both files are needed for this route. / アプリにはワークフローJSONとカスタムノードZIPのダウンロードボタンが別々にあります。この経路では両方のファイルが必要です。
 
 - [Download workflow JSON](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261005233427.json) / [ワークフローJSONをダウンロード](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261005233427.json)
-- [Download custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.1.1/ComfyUI_H3_FourPanel_NonLM_20261005233427_authfix1.zip) / [カスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.1.1/ComfyUI_H3_FourPanel_NonLM_20261005233427_authfix1.zip)
+- [Download custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.1.2/ComfyUI_H3_FourPanel_NonLM_20261005233427_authfix1.zip) / [カスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.1.2/ComfyUI_H3_FourPanel_NonLM_20261005233427_authfix1.zip)
 
 Place the ZIP's `3フォルダ` under `ComfyUI/custom_nodes/` and the workflow JSON under `ComfyUI/user/default/workflows/`. Install the separate dependencies below, then restart ComfyUI. / ZIP内の`3フォルダ`を`ComfyUI/custom_nodes/`へ、ワークフローJSONを`ComfyUI/user/default/workflows/`以下へ配置します。下記の別途必要な依存関係を導入してからComfyUIを再起動します。
 
@@ -606,7 +616,7 @@ Every deployment requires a fresh dependency audit, the shared security checks a
 
 **Why are there two ComfyUI download buttons? / ComfyUIのダウンロードボタンが2つあるのはなぜですか？**  The JSON defines the workflow, while the ZIP supplies three custom-node folders and documentation; three additional runtime dependencies are installed separately. / JSONはワークフロー定義、ZIPはカスタムノード3フォルダーと導入文書です。さらに実行依存3項目を別途導入します。
 
-**Which video package should I install? / 動画化には何を入れますか？** Use the `20261005233427` workflow JSON and matching v7.1.1 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261005233427` のワークフローJSONと対応するv7.1.1 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
+**Which video package should I install? / 動画化には何を入れますか？** Use the `20261005233427` workflow JSON and matching v7.1.2 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261005233427` のワークフローJSONと対応するv7.1.2 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
 
 **Is this the T2V/I2V/Ref2V repository? / T2V・I2V・Ref2Vのリポジトリですか？**  No. Those workflows are maintained separately in [comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows). / いいえ。それらは別の[comfyui-h3-workflows](https://github.com/FURUYAN1234/comfyui-h3-workflows)で管理します。
 
@@ -713,6 +723,11 @@ Load a completed four-panel manga into [AI Voice Comic Maker](https://github.com
 | Narration Video Maker / ナレーション動画メーカー | Video generation with narration, subtitles, and BGM / ナレーション・字幕・BGM付き動画生成 | [gemini-narration-studio](https://github.com/FURUYAN1234/gemini-narration-studio) |
 
 ## 📋 ChangeLog / 更新履歴
+
+### v7.1.2 (2026-10-18)
+
+- Added five endings shared by OpenAI and Gemini: serious anger/protest and earned reversal; gag comic rage, self-inflicted consequences and role reversal. / OpenAI・Gemini共通の結末に、シリアスの「怒り・抗議」「逆転・反撃」、ギャグの「激怒・逆ギレ」「自業自得・ブーメラン」「立場逆転」を追加しました。
+- Updated the manuals and README to explain the independent Luna defaults for STEP1–3, current OFF/ON state, automatic image inspection and Gemini's four-panel support. / マニュアルとREADMEの旧説明を修正し、STEP1〜3の個別選択とLuna初期値、現在のOFF／ON状態、画像の自動検査、Geminiの4コマ対応を明記しました。
 
 ### v7.1.1 (2026-10-17)
 - **[Fix & UX]** Added independent step model selection, dictation, sample character sheets, and workflow controls / STEP別モデル選択、音声入力、サンプルキャラシートと操作画面を追加・改善

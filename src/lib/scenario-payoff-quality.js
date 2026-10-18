@@ -165,6 +165,7 @@ FINAL PANEL: ${panelCount}
 ${buildScenarioPanelCountInstruction(scenarioMode)}
 ${experimental ? '互換JSON名 panel3_prediction は最終直前までの予測、panel4_outcome は実際の最終コマの帰結を意味する。番号3・4へ固定しない。panel_development は全コマを確認し、新しい動作・応答・発見・意味のある沈黙や間の必要性を evidence に記す。同じ出来事・情報の再掲やカメラだけの変更で、削除しても時機・感情・理解を何も失わない明確な水増しだけ material_padding=true とし、同じ題材・結末を保つ correction を添える。無言という理由だけで失格にせず、台詞や沈黙の数のノルマを設けない。' : ''}
 ${toneRule}
+${policy.guidance ? `選択した結末の判定基準: ${policy.guidance}` : ''}
 ${factRule}
 ${buildRecentStoryContext(recentScenarios)}
 ${recentScenarios.length ? '追加JSONフィールド recent_repetition: {"status":"distinct|same_mechanism|intentional_repeat|uncertain","matched_index":null,"evidence":"過去と今回の具体的な種・行為・帰結の比較","correction":""}。matched_indexはRECENT配列の0始まり。型・題材・絵柄が同じだけならdistinct。名詞だけ変えた同じ仕掛けと帰結の再利用が明確で、新作の展開を失わせる場合だけsame_mechanismとして該当indexと指定結末を保つcorrectionを記す。明示された再現・続編・意図した反復はintentional_repeat。推測はuncertain。' : ''}
@@ -387,6 +388,7 @@ ${String(scenario || '').trim()}`;
 ENDING MODE: ${punchlineType || 'Auto'}
 ${buildScenarioPanelCountInstruction(scenarioMode)}
 監査結果: ${JSON.stringify(repairReview, null, 2)}
+${getEndingModePolicy(punchlineType).guidance ? `選択した結末の意味を保つ: ${getEndingModePolicy(punchlineType).guidance}` : ''}
 ${buildRecentStoryContext(recentScenarios)}
 ${mosaicReviewRule(mosaicCopyrightedCharacters)}
 

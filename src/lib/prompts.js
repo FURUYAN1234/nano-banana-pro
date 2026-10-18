@@ -19,7 +19,7 @@ import {
   SCENARIO_PROP_CAUSALITY_RULES,
   SCENARIO_READING_RHYTHM_RULES
 } from './composition-variety';
-import { getEndingModePolicy } from './ending-mode-policy.js';
+import { getEndingModePolicy, SERIOUS_ENDING_OPTIONS, GAG_ENDING_OPTIONS } from './ending-mode-policy.js';
 import {
   MANGA_MANUSCRIPT_ASPECT_LABEL,
   MANGA_MANUSCRIPT_LARGE,
@@ -56,6 +56,14 @@ const SERIOUS_ENDING_INSTRUCTIONS = Object.freeze({
   TragicClosure: '4コマ目を「悲劇・喪失」で締める。被害や喪失を笑いにせず、残された人物、空いた場所、戻らない物など題材に即した結果を静かに示す。'
 });
 
+const seriousEndingLabels = SERIOUS_ENDING_OPTIONS
+  .filter(({ value }) => value !== 'SeriousAuto').map(({ value }) => getPunchlineLabel(value)).join('、');
+const gagEndingLabels = GAG_ENDING_OPTIONS.map(({ value }) => getPunchlineLabel(value)).join('、');
+const buildAddedEndingGuidance = (options) => options
+  .map(({ value }) => getEndingModePolicy(value))
+  .filter(({ guidance }) => guidance)
+  .map(({ label, guidance }) => `                * **${label}**: ${guidance}`).join('\n');
+
 const buildGeneralSeriousEndingContract = (punchlineType) => {
   const common = `3. **【シリアス結末設計】**:
              - 1コマ目で人物の通常状態と望み、2コマ目で変化または問題、3コマ目で選択または決定的な事実、4コマ目で結果と余韻を描く。
@@ -63,9 +71,10 @@ const buildGeneralSeriousEndingContract = (punchlineType) => {
              - 人物の身体演技、カメラの高低・向き・距離、前景・中景・後景、照明を4コマで変化させ、静かな話を単調なアイレベル会話にしない。`;
   if (punchlineType === 'SeriousAuto') {
     return `${common}
-             - **【シリアス内でおまかせ】**: 題材の感情と因果に最も合うものを、静かな余韻、決意・再出発、警告、問題提起、感動・救い、悲劇・喪失から1つだけ選ぶ。選んだ方向性をPunchline行に記す。`;
+             - **【シリアス内でおまかせ】**: 題材の感情と因果に最も合うものを、${seriousEndingLabels}から1つだけ選ぶ。選んだ方向性をPunchline行に記す。
+${buildAddedEndingGuidance(SERIOUS_ENDING_OPTIONS)}`;
   }
-  const instruction = SERIOUS_ENDING_INSTRUCTIONS[punchlineType] || SERIOUS_ENDING_INSTRUCTIONS.QuietAftermath;
+  const instruction = getEndingModePolicy(punchlineType).guidance || SERIOUS_ENDING_INSTRUCTIONS[punchlineType] || SERIOUS_ENDING_INSTRUCTIONS.QuietAftermath;
   return `${common}
              - **【強制シリアス結末: ${getPunchlineLabel(punchlineType)}】**: ${instruction}`;
 };
@@ -539,7 +548,7 @@ ${styleJson.anti_patterns ? `            - 絶対禁止事項:\n${styleJson.anti
                 * **置換を使った場合**: → 元の文脈と置換先のビジュアル差を最大化。「国際会議の荘厳なテーブルに幼稚園児の工作道具が並んでいる」等、視覚的ミスマッチを明記
                 * **常識に戻るを使った場合**: → 行動と受け止め方の温度差を表情・姿勢・描画方式で表現する。人物の役割から絵柄を固定しない
              - **【結末の判読性】**: 誰に何が起き、何が変わったのかを、前の手掛かりと最後の行動・受け手の反応で見せる。最後の台詞で新設定を説明するだけにせず、読者が絵と短い台詞から落差を読み取れるようにする。指定したオチや意図的な沈黙・不条理は保つ。
-             - ${['Auto', 'GagAuto'].includes(punchlineType) ? `**【オチの多様化 (Punchline Variety Enforcement)】**: 題材の欲求・障害・人物の行動から、異なる結末の可能性を短く比較し、前のコマの種を最も明瞭に回収するものを選ぶ。型の抽選や固定順では決めない。${lastPanel}だけで眠る・目覚める・夢だった・ループ・メタ終了などへ逃げ、積み上げた出来事を帳消しにしない。これらも題材に必要な種と見て分かる落差・帰結があるなら使用可能。特定の型や眠る動作そのものは禁止しない。以下の9系統からネタに最適なものを選択せよ。
+             - ${['Auto', 'GagAuto'].includes(punchlineType) ? `**【オチの多様化 (Punchline Variety Enforcement)】**: 題材の欲求・障害・人物の行動から、異なる結末の可能性を短く比較し、前のコマの種を最も明瞭に回収するものを選ぶ。型の抽選や固定順では決めない。${lastPanel}だけで眠る・目覚める・夢だった・ループ・メタ終了などへ逃げ、積み上げた出来事を帳消しにしない。これらも題材に必要な種と見て分かる落差・帰結があるなら使用可能。特定の型や眠る動作そのものは禁止しない。以下の${GAG_ENDING_OPTIONS.length}系統からネタに最適なものを選択せよ。
                 * **爆発型**: 全員が限界突破。叫び・暴走・カオスで画面爆発
                 * **静寂型（シュール）**: 全員が無言で固まる。沈黙と虚無が最大の笑い
                 * **感動詐欺**: 狂った状況のまま感動的なイイハナシダナーで終わる理不尽な美しさ
@@ -548,7 +557,9 @@ ${styleJson.anti_patterns ? `            - 絶対禁止事項:\n${styleJson.anti
                 * **天丼爆発型**: 繰り返したボケの意味や受け手を最後に反転し、強烈に回収する。物のサイズ増加だけで締めない
                 * **夢オチ型**: 壮大な展開が全て夢だったと判明し、現実との落差で笑わせる
                 * **盛大な勘違い型**: 全ての行動が根本的な勘違いの上に成り立っていたと判明し全てが台無しに
-                * **打ち切りエンド型**: 話が盛り上がりきった直後「俺たちの戦いはこれからだ！」で強制終了` :
+                * **打ち切りエンド型**: 話が盛り上がりきった直後「俺たちの戦いはこれからだ！」で強制終了
+${buildAddedEndingGuidance(GAG_ENDING_OPTIONS)}` :
+                getEndingModePolicy(punchlineType).guidance ? `**【強制オチ指定: ${getPunchlineLabel(punchlineType)}】**: ${lastPanel}は指定した結末にする。${getEndingModePolicy(punchlineType).guidance}` :
                 punchlineType === 'Surreal' ? `**【強制オチ指定: 静寂型（シュール）】**: ${lastPanel}のオチは必ず「静寂型（シュール）」にすること。全員が無言で固まる、沈黙と虚無による笑いを生み出せ。` :
                 punchlineType === 'Explosion' ? `**【強制オチ指定: 爆発型】**: ${lastPanel}のオチは必ず「爆発型」にすること。全員が限界突破し、叫び・暴走・カオスで画面を爆発させろ。` :
                 punchlineType === 'FakeEmotion' ? `**【強制オチ指定: 感動詐欺】**: ${lastPanel}のオチは必ず「感動詐欺（いい話風の狂気）」にすること。狂った状況のまま、なぜか感動的なBGMが流れているような理不尽なイイハナシダナーで終わらせろ。` :
@@ -679,7 +690,7 @@ ${styleJson.anti_patterns ? `            - 絶対禁止事項:\n${styleJson.anti
           Location: [${adaptiveLocationMode ? `題材本文・出来事・${panelTotal}コマの行動に最も適した、安全で具体的な非生体ロケーションを1つ記入せよ` : `必ず『${effectiveLocationPlan.anchorName}』にせよ`}]
           VisualEvidence: [元トピックや出来事を絵で伝える具体的な手掛かりを「、」区切りで記入せよ。数合わせはしない]
           Outfit: [${customOutfit.trim() ? "必ず『" + customOutfit.trim() + "』にせよ" : "今回の題材に基づくイベント、職業、安全、場所、天候、屋内環境、季節に適した具体的な服装カテゴリーを記入せよ。※「キャラシート準拠」「デフォルト」および原文・指定に根拠のない学校制服は禁止"}]
-          Punchline: [${punchlineType === 'SeriousAuto' ? '選択したシリアス結末の方向性を、静かな余韻、決意・再出発、警告、問題提起、感動・救い、悲劇・喪失のいずれかで記載せよ' : !['Auto', 'GagAuto'].includes(punchlineType) ? "必ず『" + getPunchlineLabel(punchlineType) + "』と記載せよ" : "選択した具体的な結末名を、静寂型 (シュール)、爆発型 (カオス)、感動詐欺、メタフィクション、理不尽な制裁、天丼、夢オチ (ループ)、盛大な勘違い (すれ違い)、打ち切りエンドのいずれかで記載せよ"}]
+          Punchline: [${punchlineType === 'SeriousAuto' ? `選択したシリアス結末の方向性を、${seriousEndingLabels}のいずれかで記載せよ` : !['Auto', 'GagAuto'].includes(punchlineType) ? "必ず『" + getPunchlineLabel(punchlineType) + "』と記載せよ" : `選択した具体的な結末名を、${gagEndingLabels}のいずれかで記載せよ`}]
           Scenario:
           ${panelFormat}
 

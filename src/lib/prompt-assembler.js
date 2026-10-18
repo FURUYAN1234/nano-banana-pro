@@ -585,7 +585,7 @@ ${MANGA_PROMPT_PRIORITY}
 ${preserveReferenceStyle
   ? '- SERIOUS DOCUMENTARY INTENT: Preserve source facts, chronology and the serious final reaction. Do not convert any panel into a gag or invent an event for dramatic effect.'
   : seriousTone
-    ? '- SERIOUS INTENT: Preserve the scripted emotional causality, restraint, consequences and selected serious ending. Build intensity through camera, composition, lighting, gaze and body acting. Do not add a gag, chibi transformation, absurd event, punchline reversal or comic release.'
+    ? '- SERIOUS INTENT: Preserve the scripted emotional causality, restraint, consequences and selected serious ending. Build intensity through camera, composition, lighting, gaze and body acting. Do not add a gag, chibi transformation, absurd event, unrequested comic reversal or comic release.'
   : '- COMEDY INTENT: Preserve scripted surreal events, impossible changes, emotional mismatch and absent reactions. Do not normalize them, explain them or add a tsukkomi. Ambiguous intent stays unchanged; continuity rules must not erase a scripted gag.'}
 - SINGLE INSTANT: Draw one script-consistent instant per panel. For sequential actions, select the moment that supports that panel's dialogue or silent beat; never combine before/after poses or duplicate a character to show motion.
 - REVEAL ORDER: Show only information available in that panel's Action. Later outcomes and punchline states must not appear early, including background props or reaction faces. VisualEvidence is an inventory, not an instruction to show every state together.

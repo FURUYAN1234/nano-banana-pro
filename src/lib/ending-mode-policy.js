@@ -55,6 +55,20 @@ const ENDING_MODE_POLICIES = Object.freeze({
     preserveReferenceStyle: false,
     label: '悲劇・喪失'
   }),
+  AngerProtest: Object.freeze({
+    documentary: false,
+    endingTone: 'serious',
+    preserveReferenceStyle: false,
+    label: '怒り・抗議',
+    guidance: '不当な扱いや踏みにじられた価値に対し、人物が怒りを持って抗議する結末にする。何に怒り、何を守ろうとするかを先の出来事と結び、抗議・拒絶・境界を示す行動で締める。静かな抗議や毅然とした拒否も認め、叫びや暴力を必須にしない。単なる困惑や再出発に置き換えない。'
+  }),
+  EarnedReversal: Object.freeze({
+    documentary: false,
+    endingTone: 'serious',
+    preserveReferenceStyle: false,
+    label: '逆転・反撃',
+    guidance: '不利な状況にいた人物が、先に示した行動・準備・証拠を使って局面を逆転させ、反撃または主導権の回復を具体的に示す。勝利の宣言だけにせず、何がどう変わったかを見せる。突然の能力や偶然だけで解決しない。反撃に暴力を必須にしない。'
+  }),
   Surreal: Object.freeze({ documentary: false, endingTone: 'gag', preserveReferenceStyle: false, label: '静寂型 (シュール)' }),
   Explosion: Object.freeze({ documentary: false, endingTone: 'gag', preserveReferenceStyle: false, label: '爆発型 (カオス)' }),
   FakeEmotion: Object.freeze({ documentary: false, endingTone: 'gag', preserveReferenceStyle: false, label: '感動詐欺' }),
@@ -64,6 +78,27 @@ const ENDING_MODE_POLICIES = Object.freeze({
   Dream: Object.freeze({ documentary: false, endingTone: 'gag', preserveReferenceStyle: false, label: '夢オチ (ループ)' }),
   Misunderstanding: Object.freeze({ documentary: false, endingTone: 'gag', preserveReferenceStyle: false, label: '盛大な勘違い (すれ違い)' }),
   CanceledEnding: Object.freeze({ documentary: false, endingTone: 'gag', preserveReferenceStyle: false, label: '打ち切りエンド (俺たちの戦いはこれからだ)' }),
+  ComicRage: Object.freeze({
+    documentary: false,
+    endingTone: 'gag',
+    preserveReferenceStyle: false,
+    label: '激怒・逆ギレ',
+    guidance: '先のコマで怒りの原因と期待・思い込みや責任の所在を示し、最後の過剰な激怒または筋違いな逆ギレとの落差で笑わせる。逆ギレなら自分の責任を他人へ転嫁する筋違いを読者に分かるようにする。受け手の反応も見せ、無関係な相手への突然の暴力に置き換えない。'
+  }),
+  SelfInflicted: Object.freeze({
+    documentary: false,
+    endingTone: 'gag',
+    preserveReferenceStyle: false,
+    label: '自業自得・ブーメラン',
+    guidance: '本人の発言・行動が原因となり、その結果が本人へ返る様子を先のコマからつなぐ。自分で作った仕掛けや主張が自分に効くと読者に見える帰結で笑わせる。理不尽な制裁とは区別し、無関係な罰を突然与える結末にしない。'
+  }),
+  RoleReversal: Object.freeze({
+    documentary: false,
+    endingTone: 'gag',
+    preserveReferenceStyle: false,
+    label: '立場逆転',
+    guidance: '先に示した力関係や役割が、仕込んだ行動・弱点・条件によって最後にひっくり返る結末にする。入れ替わった人物双方の振る舞いと反応で落差を見せる。勝敗だけでなく役割の逆転で笑わせ、最後に新設定を足して逆転を説明しない。'
+  }),
   SeriousDocumentary: Object.freeze({
     documentary: true,
     endingTone: 'serious',
@@ -85,7 +120,9 @@ export const SERIOUS_ENDING_OPTIONS = Object.freeze([
   Object.freeze({ value: 'Warning', icon: '⚠️', menuLabel: '警告（危機や代償を示す）' }),
   Object.freeze({ value: 'OpenQuestion', icon: '❓', menuLabel: '問題提起（答えを急がず、問いを残す）' }),
   Object.freeze({ value: 'EmotionalClosure', icon: '🕯️', menuLabel: '感動・救い（理解や支えで心を結ぶ）' }),
-  Object.freeze({ value: 'TragicClosure', icon: '🌧️', menuLabel: '悲劇・喪失（取り戻せないものと向き合う）' })
+  Object.freeze({ value: 'TragicClosure', icon: '🌧️', menuLabel: '悲劇・喪失（取り戻せないものと向き合う）' }),
+  Object.freeze({ value: 'AngerProtest', icon: '✊', menuLabel: '怒り・抗議（不当な扱いに異議を示す）' }),
+  Object.freeze({ value: 'EarnedReversal', icon: '↗️', menuLabel: '逆転・反撃（積み上げた行動で局面を変える）' })
 ]);
 
 export const GAG_ENDING_OPTIONS = Object.freeze([
@@ -97,7 +134,10 @@ export const GAG_ENDING_OPTIONS = Object.freeze([
   Object.freeze({ value: 'RunningGag', icon: '🔁', menuLabel: '天丼 (同じボケの最終形態)' }),
   Object.freeze({ value: 'Dream', icon: '🛏️', menuLabel: '夢オチ (ループの恐怖)' }),
   Object.freeze({ value: 'Misunderstanding', icon: '🤷', menuLabel: '盛大な勘違い (すれ違いの頂点)' }),
-  Object.freeze({ value: 'CanceledEnding', icon: '🏃', menuLabel: '打ち切りエンド (俺たちの戦いはこれからだ)' })
+  Object.freeze({ value: 'CanceledEnding', icon: '🏃', menuLabel: '打ち切りエンド (俺たちの戦いはこれからだ)' }),
+  Object.freeze({ value: 'ComicRage', icon: '😡', menuLabel: '激怒・逆ギレ（怒りと責任転嫁の落差で笑う）' }),
+  Object.freeze({ value: 'SelfInflicted', icon: '🪃', menuLabel: '自業自得・ブーメラン（自分の行動が自分へ返る）' }),
+  Object.freeze({ value: 'RoleReversal', icon: '🔄', menuLabel: '立場逆転（役割や力関係がひっくり返る）' })
 ]);
 
 export const DOCUMENTARY_ENDING_OPTIONS = Object.freeze([

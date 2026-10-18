@@ -55,7 +55,7 @@ page('Gemini API 取得マニュアル',
  ('h2','はじめての取得・接続・費用確認'),
  ('body','Super FURU AI 4-koma Systemで使うGemini APIキーを取得するための、日本語操作ガイドです。Googleアカウントでのログインから、プロジェクト選択、キー発行、アプリへの接続まで順番に説明します。'),
  ('box','この冊子の対象','パソコンのブラウザで作業する初心者向けです。APIとは、アプリからAIへ処理を依頼する仕組みです。プログラムを書く必要はありません。'),
- ('body','v7.1.1対応。Google AI StudioでAPIキーを用意し、本アプリへ接続する手順を説明します。画面写真は操作に必要な部分のみを掲載しています。画面の表記や利用条件はアカウントによって異なる場合があります。'),
+ ('body','v7.1.2対応。Google AI StudioでAPIキーを用意し、本アプリへ接続する手順を説明します。画面写真は操作に必要な部分のみを掲載しています。画面の表記や利用条件はアカウントによって異なる場合があります。'),
  ('body','キーを取得するだけで、すべてのモデルを無料で利用できるわけではありません。画像生成や検索、解析、修正にも費用が発生する場合があります。'),refs=('studio','app')),
 page('目次と最短の作業順',
  ('rows',[['ページ','内容'],['3','GoogleアカウントとAI Studio'],['4','APIキー画面を開く'],['5','プロジェクトを選ぶ'],['6','キーを作成・コピーする'],['7','アプリへ接続する'],['8','無料枠と有料枠の違い'],['9','有料枠の設定と費用確認'],['10','キーの安全な管理'],['11','接続できないとき'],['12','公式リンクと完了チェック'],['13','画像枚数と人数の違い']]),
@@ -115,7 +115,7 @@ GEMINI.append(page('画像枚数と登場人物の人数',
  ('body','2D背景と360°背景を一緒に読み込むと、未指定の舞台は360°背景を基準にします。自由入力の素材・コマ別指定を優先し、2D背景も場面に合う範囲で使います。添付順は画像番号との対応づけのためで、背景の使用優先度を決めるものではありません。'),
  ('body','STEP2の自由入力では、素材名や現在の画像番号で採用・除外、持ち主、動作・状態を指定できます。AIが希望をできる範囲で整理し、曖昧・矛盾する要望を成立する場面へ調整します。未指定部分はおまかせです。全要望の実現は保証しません。'),
  ('body','WebにはSTEP1の現在の表示番号順で同じ元画像を添付します。360°背景は途中で追加しても最後に表示され、通常素材の後追加で最後の番号へ繰り下がります。APIでは自動で対応づけるため再添付・並べ直しは不要です。'),
- ('body','右フッターは画像生成エンジン名とシナリオモデル名を併記します。例えばOpenAIではChatGPT Images 2.5 / GPT-6 Luna / FURU AI 4-koma v7.1.1。Geminiでは選択中のGemini画像エンジン名を使います。生成済み画像は書き換えません。'),
+ ('body','右フッターは画像生成エンジン名とシナリオモデル名を併記します。例えばOpenAIではChatGPT Images 2.5 / GPT-6 Luna / FURU AI 4-koma v7.1.2。Geminiでは選択中のGemini画像エンジン名を使います。生成済み画像は書き換えません。'),
  ('small','公式仕様（2026-10-10確認）：OpenAI画像編集は合計16枚、gemini-nano-banana-2.1は参照画像14枚。アプリの共通読み込み上限とは区別してください。'),refs=('imageopenai','imagegemini')))
 
 SYSTEM=[
@@ -171,7 +171,8 @@ page('STEP2  自由入力・URL・持ち込み台本',
  ('box','入力例の扱い','自由入力の例文や記入形式は操作説明です。入力しただけでニュース検索や画像生成が完了したことにはなりません。')),
 page('舞台・衣装・結末を指定する',
  ('body','「指定場所」は、駅前広場、会場、店内などの舞台指定です。「指定服装」は、キャラシート通り、制服などの衣装指定です。空欄ならAIが題材から設計します。明示した指定を優先します。同じ場面では台本の衣装を後続コマへ引き継ぎ、記述省略だけで参照シートの制服へ戻さないよう指示します。明示した着替えは保持し、カメラや演技を衣装確認のために固定しません。'),
- ('rows',[['結末の種類','選べる方向性'],['全体おまかせ','題材に応じてギャグ／シリアスを選ぶ'],['シリアス','静かな余韻、決意・再出発、警告、問題提起、感動・救い、悲劇・喪失'],['ギャグ','静寂型、爆発型、感動詐欺、メタフィクション、理不尽な制裁、天丼、夢オチ、盛大な勘違い、打ち切りエンド'],['種類内おまかせ','ギャグまたはシリアスの範囲でAIが選ぶ'],['ドキュメンタリー','原文の事実を保ち、最後の着地をギャグまたはシリアスとして漫画化']]),
+ ('rows',[['結末の種類','選べる方向性'],['全体おまかせ','題材に応じてギャグ／シリアスを選ぶ'],['シリアス：8種類','静かな余韻、決意・再出発、警告、問題提起、感動・救い、悲劇・喪失、怒り・抗議、逆転・反撃'],['ギャグ：12種類','静寂型、爆発型、感動詐欺、メタフィクション、理不尽な制裁、天丼、夢オチ、盛大な勘違い、打ち切りエンド、激怒・逆ギレ、自業自得・ブーメラン、立場逆転'],['種類内おまかせ','ギャグまたはシリアスの範囲でAIが選ぶ'],['ドキュメンタリー','原文の事実を保ち、最後の着地をギャグまたはシリアスとして漫画化']]),
+ ('body','怒り・抗議は不当な扱いへの異議、逆転・反撃は積み上げた行動による局面の変化を描きます。ギャグの激怒・逆ギレは怒りや責任転嫁の落差、自業自得・ブーメランは自分の行動が返ってくる結果、立場逆転は役割や力関係の反転をオチにします。OpenAI・Geminiの両方で選べます。'),
  ('body','自動の絵柄と結末は場面と因果から選び、均等ノルマや固定巡回にしません。直近の完成作品も参考にしますが、オチとしての必然性を優先します。自動で選ばれた結末は後続STEPへ引き継ぎます。シリアス・ドキュメンタリーでは、参照の絵柄や頭身を保つ方針です。事実保持の結果は原文と照合してください。')),
 page('シナリオを読む・編集する',
  ('body','STEP2の出力には、タイトル、題材、場所、衣装、結末、各コマの人物・動作・カメラ・台詞が含まれます。自由に編集し、「シナリオをコピー」で保存用のテキストを取り出せます。'),
@@ -213,7 +214,7 @@ page('STEP3  カラー／白黒の選択',
  ('box','白黒は印刷の適合保証ではありません','仕上げ画像を読み込んでピクセル変換する機能ではありません。厳密な二値、解像度、出版社の入稿規定は、保存した実画像で別途確認してください。'),
  ('body','人物の特徴、演技、カメラ、背景の遠近感、台詞は白黒でも維持する方針ですが、画像AIがすべて正確に描けるとは限りません。')),
 page('モザイクとウオーターマーク',
- ('body','右フッターの先頭は現在の画像生成エンジン名です。シナリオモデル名は残します。例：ChatGPT Images 2.5 / GPT-6 Luna / FURU AI 4-koma v7.1.1。API・Webコピー用の指示へ同期し、生成済み画像は書き換えません。'),
+ ('body','右フッターの先頭は現在の画像生成エンジン名です。シナリオモデル名は残します。例：ChatGPT Images 2.5 / GPT-6 Luna / FURU AI 4-koma v7.1.2。API・Webコピー用の指示へ同期し、生成済み画像は書き換えません。'),
  ('rows',[['設定','反映する工程'],['版権キャラクターにモザイクをかける','STEP2から作り直して反映。初期状態ON'],['ウオーターマークを表記する','STEP3から作り直して反映。初期状態ON']]),
  ('body','モザイクは台本の動作で描く既存作品の人物への描画指示です。登録したシート人物は自動モザイクから除外し、生成・品質検査へ同じ除外リストを渡します。原文で本人への遮蔽を明示した場合は、その対象・領域だけ例外です。除外リストが現在のキャストと合わない場合は、STEP3から再構築してください。'),
  ('body','ウオーターマークをOFFにすると、左右フッターのクレジット描画指示を外します。ONでは、外側フッターへ1回ずつ配置するよう指示します。'),
@@ -359,7 +360,7 @@ SYSTEM.append(page('自動保存の初回動作確認',
 class Book:
  def __init__(self,path,title,pages):
   self.path=path; self.pages=pages; self.c=canvas.Canvas(str(path),pagesize=A4,pageCompression=1)
-  self.c.setTitle(title);self.c.setAuthor('Super FURU AI 4-koma System');self.c.setSubject('日本語操作マニュアル / v7.1.1 / 2026-10-17')
+  self.c.setTitle(title);self.c.setAuthor('Super FURU AI 4-koma System');self.c.setSubject('日本語操作マニュアル / v7.1.2 / 2026-10-18')
   self.y=0;self.number=0;self.layout=[]
  def para(self,text,style='body',gap=10):
   p=Paragraph(text,STYLES[style]);_,h=p.wrap(CW,1000)
@@ -401,7 +402,7 @@ class Book:
    if page['shot']:self.shot(page['shot'],page['caption'])
    if page['refs']:
     self.para('参照：'+' / '.join(f'<link href="{escape(SOURCES[k][1])}" color="#087c86">{escape(SOURCES[k][0])}</link>' for k in page['refs']),'small',0)
-   c.setFillColor(GRAY);c.setFont('JP',8);c.drawString(M,33,'v7.1.1対応 | 2026年10月17日更新 | A4 日本語版');c.drawRightString(W-M,33,f'{i:02d} / {len(self.pages):02d}')
+   c.setFillColor(GRAY);c.setFont('JP',8);c.drawString(M,33,'v7.1.2対応 | 2026年10月18日更新 | A4 日本語版');c.drawRightString(W-M,33,f'{i:02d} / {len(self.pages):02d}')
    self.layout.append(dict(page=i,bottom_y=round(self.y,2)));c.showPage()
   c.save();return self.layout
 
@@ -427,7 +428,7 @@ def verify_and_render(path,layout,pages):
  assert len(r.pages)==len(pages)
  for page_index,pdf_page in enumerate(r.pages,1):
   assert f'{page_index:02d}/{len(r.pages)}' in re.sub(r'\s+','',pdf_page.extract_text()), 'Incorrect footer page count'
- assert all('v7.1.1対応' in p.extract_text() and '2026年10月17日更新' in p.extract_text() for p in r.pages)
+ assert all('v7.1.2対応' in p.extract_text() and '2026年10月18日更新' in p.extract_text() for p in r.pages)
  for required in ['14枚','10枚','1枚に複数人','人数による固定上限','保証','保持','認識できない','小物']:
   assert re.sub(r'\s+','',required) in re.sub(r'\s+','',text),required
  if 'full-manual' in path.name:
@@ -435,7 +436,14 @@ def verify_and_render(path,layout,pages):
    assert re.sub(r'\s+','',required) in re.sub(r'\s+','',text),required
   for obsolete in ['初期状態は左の「4コマ生成」','再読み込み後は4コマ生成','この画像への追加指示','「AIで画像を再検査」が','保存した漫画を読み込む（追加課金なし）']:
    assert obsolete not in text,obsolete
- assert set(re.findall(r'v[0-9]+\.[0-9]+\.[0-9]+',text)) <= {'v7.1.1'}, 'Historical version in current manual'
+  for required in ['シリアス：8種類','ギャグ：12種類','怒り・抗議','逆転・反撃','激怒・逆ギレ','自業自得・ブーメラン','立場逆転']:
+   assert re.sub(r'\s+','',required) in re.sub(r'\s+','',text),required
+ if 'openai-api-beginner-guide' in path.name:
+  for required in ['gpt-6-lunaが初期値','各工程のモデルを個別に選べます','OFF／ONは現在の状態']:
+   assert required in re.sub(r'\s+','',text),required
+  for obsolete in ['シナリオの初期選択','「ON」が有効化する操作名']:
+   assert obsolete not in text,obsolete
+ assert set(re.findall(r'v[0-9]+\.[0-9]+\.[0-9]+',text)) <= {'v7.1.2'}, 'Historical version in current manual'
  assert not re.search(r'nano\s*banana|ナノ[・\s]*バナナ',text,re.I)
  assert not re.search(r'AIza[A-Za-z0-9_-]{20,}|sk-(?:proj-)?[A-Za-z0-9_-]{20,}|gen-lang-client-\d+|sx717|@[A-Za-z0-9.-]+\.[A-Za-z]{2,}',text)
  assert all(p['bottom_y']>=64 for p in layout)

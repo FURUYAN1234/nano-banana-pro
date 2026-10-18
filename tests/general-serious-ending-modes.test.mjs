@@ -14,6 +14,9 @@ let classifyTopicTreatment;
 let resolveAutoEndingType;
 let buildMangaPrompt;
 let buildComedyReviewRequest;
+let buildScenarioEnhancementPrompt;
+let buildScenarioPayoffReviewPrompt;
+let buildScenarioPayoffRepairPrompt;
 
 const step2Url = new URL('../src/components/Step2Panel.jsx', import.meta.url);
 const appUrl = new URL('../src/App.jsx', import.meta.url);
@@ -35,6 +38,8 @@ before(async () => {
   ({ getScenarioPrompt } = await server.ssrLoadModule('/src/lib/prompts.js'));
   ({ buildMangaPrompt } = await server.ssrLoadModule('/src/lib/prompt-assembler.js'));
   ({ buildComedyReviewRequest } = await server.ssrLoadModule('/src/lib/comedy-review.js'));
+  ({ buildScenarioEnhancementPrompt } = await server.ssrLoadModule('/src/lib/scenario-enhancement.js'));
+  ({ buildScenarioPayoffReviewPrompt, buildScenarioPayoffRepairPrompt } = await server.ssrLoadModule('/src/lib/scenario-payoff-quality.js'));
   ({
     classifyTopicTreatment,
     resolveAutoEndingType
@@ -85,7 +90,8 @@ test('edited scenario ending overrides stale gag metadata in both copy providers
   }
 });
 
-const buildScenarioRequest = (punchlineType, manualTopic = '友人たちが新しい喫茶店のメニューを相談する') => getScenarioPrompt({
+const buildScenarioRequest = (punchlineType, manualTopic = '友人たちが新しい喫茶店のメニューを相談する', scenarioMode = 'four-panel') => getScenarioPrompt({
+  scenarioMode,
   randomCategory: '手動入力',
   targetDate: '2026-09-17',
   inputMode: 'manual',
@@ -127,7 +133,9 @@ test('registers general serious endings independently from documentary fidelity'
     'Warning',
     'OpenQuestion',
     'EmotionalClosure',
-    'TragicClosure'
+    'TragicClosure',
+    'AngerProtest',
+    'EarnedReversal'
   ]);
   assert.deepEqual(GAG_ENDING_OPTIONS.map(({ value }) => value), [
     'Surreal',
@@ -138,7 +146,10 @@ test('registers general serious endings independently from documentary fidelity'
     'RunningGag',
     'Dream',
     'Misunderstanding',
-    'CanceledEnding'
+    'CanceledEnding',
+    'ComicRage',
+    'SelfInflicted',
+    'RoleReversal'
   ]);
   assert.equal(getPunchlineLabel('SeriousAuto'), 'シリアス内でおまかせ');
   assert.equal(getPunchlineLabel('QuietAftermath'), '静かな余韻');
@@ -161,6 +172,64 @@ test('groups automatic, serious, gag, and documentary endings in the existing se
   assert.match(source, /SERIOUS_ENDING_OPTIONS\.map/);
   assert.match(source, /GAG_ENDING_OPTIONS\.map/);
   assert.match(source, /DOCUMENTARY_ENDING_OPTIONS\.filter/);
+});
+
+const ADDED_ENDINGS = [
+  { type: 'AngerProtest', label: '怒り・抗議', tone: 'serious', meaning: /静かな抗議/, boundary: /叫びや暴力を必須にしない/ },
+  { type: 'EarnedReversal', label: '逆転・反撃', tone: 'serious', meaning: /先に示した行動・準備・証拠/, boundary: /突然の能力や偶然だけで解決しない/ },
+  { type: 'ComicRage', label: '激怒・逆ギレ', tone: 'gag', meaning: /怒りの原因/, boundary: /無関係な相手への突然の暴力に置き換えない/ },
+  { type: 'SelfInflicted', label: '自業自得・ブーメラン', tone: 'gag', meaning: /本人の発言・行動/, boundary: /無関係な罰を突然与える結末にしない/ },
+  { type: 'RoleReversal', label: '立場逆転', tone: 'gag', meaning: /先に示した力関係や役割/, boundary: /最後に新設定を足して逆転を説明しない/ }
+];
+
+test('new explicit endings and automatic lists carry distinct causes rather than a generic anger tag', () => {
+  for (const { type, label, tone, meaning, boundary } of ADDED_ENDINGS) {
+    const prompt = buildScenarioRequest(type);
+    assert.ok(prompt.includes(`必ず『${label}』`));
+    assert.match(prompt, meaning);
+    assert.match(prompt, boundary);
+    if (tone === 'serious') assert.doesNotMatch(prompt, /笑いの構造設計|CHIBI_GAG/);
+    const auto = buildScenarioRequest(tone === 'serious' ? 'SeriousAuto' : 'GagAuto');
+    assert.ok(auto.includes(label));
+    assert.match(auto, meaning);
+    assert.match(auto, boundary);
+    const native = buildScenarioRequest(type, undefined, 'experimental-manga');
+    assert.match(native, meaning);
+    assert.match(native, boundary);
+    assert.doesNotMatch(native, /4コマ目/);
+  }
+});
+
+test('enhancement and payoff checks preserve each new ending meaning and reject replacement endings', () => {
+  for (const { type, label, meaning, boundary } of ADDED_ENDINGS) {
+    const scenario = SERIOUS_SCENARIO.replace('Punchline: 静かな余韻', `Punchline: ${label}`);
+    const prompts = [
+      buildScenarioEnhancementPrompt({ scenario, punchlineType: type, selectedCategories: ['gag'] }),
+      buildScenarioPayoffReviewPrompt({ scenario, punchlineType: type }),
+      buildScenarioPayoffRepairPrompt({ scenario, punchlineType: type, review: { issues: [] } })
+    ];
+    for (const prompt of prompts) {
+      assert.match(prompt, meaning);
+      assert.match(prompt, boundary);
+    }
+  }
+});
+
+test('new serious labels override stale gag metadata in STEP3 without banning the selected reversal', () => {
+  for (const { type, label, tone } of ADDED_ENDINGS) {
+    for (const providerFamily of ['chatgpt', 'gemini']) {
+      const scenario = SERIOUS_SCENARIO.replace('Punchline: 静かな余韻', `Punchline: ${label}`);
+      const prompt = buildMangaPrompt({ scenario, castList: CAST_LIST, colorMode: 'color', providerFamily,
+        punchlineType: tone === 'serious' ? 'Explosion' : type, systemVersion: 'test' });
+      if (tone === 'serious') {
+        assert.match(prompt, /SERIOUS INTENT/);
+        assert.doesNotMatch(prompt, /COMEDY INTENT|GAG INTENT OVERLAY|CHIBI_GAG|absurd event, punchline reversal/);
+      } else {
+        assert.match(prompt, /COMEDY INTENT/);
+        assert.doesNotMatch(prompt, /SERIOUS INTENT/);
+      }
+    }
+  }
 });
 
 test('Auto routes clearly tragic or inappropriate-to-joke topics into serious mode before prompt assembly', () => {

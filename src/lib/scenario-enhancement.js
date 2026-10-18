@@ -302,6 +302,7 @@ export const buildScenarioEnhancementPrompt = ({
 - ト書きの服装も確定済みOutfitに合わせ、キャラシートの参考衣装を復活させない。参考衣装に合わせるために舞台や役割を変更しない
 - LoglineとPunchlineが示す物語の温度、静けさ、テンポを最優先し、派手さを目的に反転させない
 ${narrativeModeRule}
+${getEndingModePolicy(punchlineType).guidance ? `- 選択した結末の意味を保つ: ${getEndingModePolicy(punchlineType).guidance}` : ''}
 ${styleSelectionRule}
 - 選択されていないカテゴリは変更しない。未選択: ${lockedLabels || 'なし'}
 - 全身の誇張や強い遠近法は許可する。手足の接続・本数と小道具の所有・向きを保ち、部位の増殖、身体崩壊、ボディホラーを新たに加えない
