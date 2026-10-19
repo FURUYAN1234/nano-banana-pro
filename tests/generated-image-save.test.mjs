@@ -76,13 +76,15 @@ test('production final-selection block saves accepted snapshot before continuing
   const end = source.indexOf('    } catch (error)', start);
   assert.ok(start > 0 && end > start);
   const block = source.slice(start, end);
-  for (const mode of ['manual', 'full-auto', 'endless', 'stopped', 'review', 'stale', 'save-failed']) {
+  for (const mode of ['manual', 'full-auto', 'endless', 'stopped', 'review', 'stale', 'save-failed', 'review-timeout']) {
     const downloaded = [], history = [];
     let release;
     const current = { value: true };
     const save = createFinalImageSaver({ prepare: () => new Promise(resolve => { release = resolve; }), download: (...args) => downloaded.push(args) });
     const candidate = { base64Img: png.split(',')[1], mimeType: 'image/png', modelId: 'gpt-test', metadataContext: item.metadataContext };
-    const ctx = { experimentalPrepared:null,
+    let autoMode = true, endlessMode = true;
+    const ctx = { experimentalPrepared:null, qualityBudget:{exhausted:mode === 'review-timeout'},
+      setIsFullAutoMode: value => {autoMode=value;}, setIsEndlessMode: value => {endlessMode=value;},
       generatedMimeType: 'image/png', generatedModelId: 'gpt-test',
       qualityOutcome: { candidate, candidates: [{ candidate }], canContinue: mode !== 'stopped', validationWarning: false, attempts: 1 },
       qualityResult: { pass: true }, generationOptions: { reviewExisting: mode === 'review' },
@@ -106,8 +108,12 @@ test('production final-selection block saves accepted snapshot before continuing
       release({ dataUrl: png, filename: 'test.png' });
     }
     const result = await pending;
-    assert.equal(downloaded.length, ['manual', 'full-auto', 'endless'].includes(mode) ? 1 : 0, mode);
-    assert.equal(result, !['stopped', 'stale', 'save-failed'].includes(mode), mode);
+    assert.equal(downloaded.length, ['manual', 'full-auto', 'endless', 'review-timeout'].includes(mode) ? 1 : 0, mode);
+    assert.equal(result, !['stopped', 'stale', 'save-failed', 'review-timeout'].includes(mode), mode);
     assert.equal(history[0].metadataContext, item.metadataContext);
+    if(mode === 'review-timeout') {
+      assert.equal(ctx.fullAutoAbortRef.current,true);
+      assert.equal(autoMode,false); assert.equal(endlessMode,false);
+    }
   }
 });
