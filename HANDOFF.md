@@ -1,5 +1,9 @@
 # Nano Banana Pro handoff
 
+## v7.1.5 authorized deployment and full backup (2026-10-19)
+
+Latest user explicitly requested deploy and full backup. Run the unchanged root publish_app_release.ps1 with RunFullBackup, then independently verify the new manifest for7.1.5. Existing completed local implementation/API/manual evidence remains valid. Bilingual notes and immediate official-price recheck are complete. No additional paid generation or SNS post. Earlier STOP BEFORE DEPLOY entries below are historical and superseded only for this authorized transaction. Root PLAN owns active status and exact receipt/session.
+
 ## v7.1.5 local candidate, STOP BEFORE DEPLOY (2026-10-19)
 
 Completed interrupted implementation and documentation preparation. Latest delivery boundary includes local candidate commit and strict pre-deploy validation, but excludes push, deployment, release, note/SNS and backup. No additional paid generation. Evidence owner: output/panel-edit-scale-20261019/resume-validation.json and resume-completion.json.

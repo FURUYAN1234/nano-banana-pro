@@ -39,17 +39,17 @@
     "AI Manga Creative Suite / AIまんが制作エコシステム",
     "📋 ChangeLog / 更新履歴"
   ],
-  "findings": "v7.1.5: compared the changed README sections and the complete existing feature map against current workflow, one-pass QA, history and panel editing source. Preserved unchanged sections and their previously reviewed rights, provider, metadata and distribution contracts. Corrected remaining unconditional QA, independent camera review, best-candidate comparison and original-image-history descriptions. OFF zero QA; ON one comprehensive review and at most one material correction; source image and warnings retained. No complete quality or latency improvement claim. Public note remains unchanged under explicit STOP BEFORE DEPLOY scope.",
+  "findings": "v7.1.5: compared the changed README sections and the complete existing feature map against current workflow, one-pass QA, history and panel editing source. Preserved unchanged sections and their previously reviewed rights, provider, metadata and distribution contracts. Corrected remaining unconditional QA, independent camera review, best-candidate comparison and original-image-history descriptions. OFF zero QA; ON one comprehensive review and at most one material correction; source image and warnings retained. No complete quality or latency improvement claim. Public note publication was excluded from local preparation and is not part of the requested deployment/full-backup transaction.",
   "manualFindings": "v7.1.5: rebuilt and reviewed all75pages (13Gemini,39full,23OpenAI) in14contact sheets, plus full-manual23/37 and OpenAI23 at readable size. Corrected one-pass OFF/ON, absent independent reinspection, direct adopt/discard without checkbox, retained originals and automatic PNG save. Existing A4, footer/version, text bounds, links and privacy checks passed. No clipping or overlap observed. Copied reviewed exact PDF bytes to public/downloads.",
   "pricingReview": {
     "version": "7.1.5",
     "sourceSha256": "0c3a27e0071c5dca3c0e374ac7a5dd2b78a1474ca7143e77c5d81a438e197319",
-    "checkedAt": "2026-10-19T13:13:56.328Z",
+    "checkedAt": "2026-10-19T13:47:22.830Z",
     "sources": [
       "https://developers.openai.com/api/docs/pricing",
       "https://developers.openai.com/api/docs/pricing?multimodal-image-pricing=standard",
       "https://ai.google.dev/gemini-api/docs/pricing"
     ],
-    "findings": "2026-10-19: reread official OpenAI pricing HTML and full markdown plus Gemini Standard and Batch sections. Confirmed Standard text input/output USD per1M: Astra10/50,6.1Sol2/10,6Sol2/10,5.6Sol4/20,5.6Terra2/12,6Luna0.10/0.50,5.6Luna0.20/1.20. Image2/2.5 Standard image input8 cached2 output30 and text input5 cached1.25; mini transcription0.003/min. Gemini3.8Flash0.75/3.75 through2026-12-31; NanoBanana2.1 input1.50,text7.50,image30 and1K0.0336. Batch half rates are separate. Existing app prices unchanged."
+    "findings": "2026-10-19: reread official OpenAI pricing HTML and full markdown plus Gemini Standard and Batch sections. Confirmed Standard text input/output USD per1M: Astra10/50,6.1Sol2/10,6Sol2/10,5.6Sol4/20,5.6Terra2/12,6Luna0.10/0.50,5.6Luna0.20/1.20. Image2/2.5 Standard image input8 cached2 output30 and text input5 cached1.25; mini transcription0.003/min. Gemini3.8Flash0.75/3.75 through2026-12-31; NanoBanana2.1 input1.50,text7.50,image30 and1K0.0336. Batch half rates are separate. Existing app prices unchanged. Reopened both official pricing pages immediately before this deployment; Standard Gemini Nano Banana2.1 and OpenAI flagship/image2.5 values remain unchanged; Batch is separate."
   }
 }
