@@ -15,7 +15,7 @@ try {
   // Explicit test-only layout response. STEP3 does not add or rewrite beats.
   const planResponse=(_prompt,plan)=>JSON.stringify(plan);
   const {resolvePageWorkflow,applyPageCandidateSelection}=await server.ssrLoadModule('/src/lib/page-workflow.js');
-  const {withImageReviewCancellation,beginApiWork,cancelApiWork}=await server.ssrLoadModule('/src/lib/api-work-cancellation.js');
+  const {withImageReviewCancellation,createImageReviewBudget,beginApiWork,cancelApiWork}=await server.ssrLoadModule('/src/lib/api-work-cancellation.js');
   const shared = await server.ssrLoadModule('/src/lib/shared-image-quality.js');
   const {runPageImageQuality}=await server.ssrLoadModule('/src/lib/image-quality-failsafe.js');
   const {default:Step3}=await server.ssrLoadModule('/src/components/Step3Panel.jsx');
@@ -706,72 +706,72 @@ try {
     const selected=await m.selectExperimentalCandidate(original,{...original,image:fresh,review:fresh.experimentalReview},async()=>{compared++;return {preferred:'repair',reason:'演技と構図が改善し、台詞と人物を維持している。'};});
     assert.equal(compared,1);assert.equal(selected.candidate,fresh);assert.equal(selected.comparison.status,'completed');
   });
-  test('parallel candidate reviews give each sequential request its own provider limit without a cumulative cutoff',async t=>{
+  test('parallel candidate reviews share one QA budget while normal two-stage inspections succeed',async t=>{
     t.mock.timers.enable({apis:['setTimeout','Date'],now:0});
     const frames=m.experimentalLayout(six.count,six.layout).map(r=>({bounds:[.01+.98*r.x,.05+.90*r.y,.98*r.w,.88*r.h]}));
     const regionTools={detect:async()=>frames,inspect:async()=>({width:2240,height:3168}),crop:async()=>({dataUrl:'test-crop'})};
     const fresh={mimeType:'image/png',base64Img:'new'},old={mimeType:'image/png',base64Img:'old'};
     const original={image:old,plan:six,review:{...currentPairReview(),evidence:[]}};
-    const calls=[],progress=[];
-    const result=m.reviewExperimentalCandidatePair(fresh,original,async(image,signal,reviewContext)=>{
+    const calls=[],progress=[],budget=createImageReviewBudget();
+    const result=budget.run(signal=>m.reviewExperimentalCandidatePair(fresh,original,async(image,signal,reviewContext)=>{
       const response=await m.reviewExperimentalImage({image,plan:six,prompt:'Review test-only pixels',signal,reviewContext,
         onPhaseProgress:message=>progress.push(message)},async(_prompt,_images,requestSignal,options)=>{
           calls.push({candidate:image.base64Img,options,started:Date.now(),signal:requestSignal});
           await new Promise((resolve,reject)=>{
-            const timer=setTimeout(resolve,450_000);
+            const timer=setTimeout(resolve,45_000);
             requestSignal.addEventListener('abort',()=>{clearTimeout(timer);reject(new DOMException('stop','AbortError'));},{once:true});
           });
           return {text:JSON.stringify({...styledReview(),evidence:styledReview().evidence.map(e=>({...e,text_regions:[]}))}),finishReason:'stop'};
         },regionTools);
       return response;
-    }).then(value=>({value}),error=>({error}));
+    },signal)).then(value=>({value}),error=>({error}));
     await new Promise(resolve=>setImmediate(resolve));
     assert.equal(calls.length,2,'both independent inventories start together');
-    t.mock.timers.tick(450_000);
+    t.mock.timers.tick(45_000);
     await new Promise(resolve=>setImmediate(resolve));
     assert.equal(calls.length,4,'each assessment starts once after its own inventory');
-    t.mock.timers.tick(450_000);
+    t.mock.timers.tick(45_000);
     const completed=await result;
-    assert.equal(completed.error,undefined,'two requests within the provider 600-second limit must not inherit a whole-review cutoff');
+    assert.equal(completed.error,undefined,'two parallel inspections finish within the shared 600-second budget');
     assert.equal(completed.value.requests,2);
     assert.ok(calls.every(call=>call.options.timeoutMs===undefined),'provider limits are not overridden by a review timer');
     assert.ok(calls.every(call=>call.options.responseFormat==='json_object'));
     assert.ok(calls.every(call=>!call.signal.aborted));
-    assert.ok(progress.some(message=>/inventory/.test(message)&&/応答待ち/.test(message)));
-    assert.ok(progress.some(message=>/assessment/.test(message)&&/応答待ち/.test(message)));
-    assert.ok(progress.every(message=>!/全体の残り/.test(message)));
+    assert.ok(progress.some(message=>/inventory/.test(message)&&/共有する残り時間/.test(message)));
+    assert.ok(progress.some(message=>/assessment/.test(message)&&/共有する残り時間/.test(message)));
+    assert.equal(budget.elapsedMs,90_000,'parallel candidates consume wall time only once');
   });
-  test('assessment inherits no elapsed-time budget and user stop rejects its late response',async t=>{
+  test('assessment shares the remaining QA budget and rejects its late response after expiry',async t=>{
     t.mock.timers.enable({apis:['setTimeout','Date'],now:0});
     const frames=m.experimentalLayout(six.count,six.layout).map(r=>({bounds:[.01+.98*r.x,.05+.90*r.y,.98*r.w,.88*r.h]}));
     const regionTools={detect:async()=>frames,inspect:async()=>({width:2240,height:3168}),crop:async()=>({dataUrl:'test-crop'})};
-    const calls=[],progress=[],controller=new AbortController();let lateResolve;
-    const pending=m.reviewExperimentalCandidatePair({mimeType:'image/png',base64Img:'kept'},null,(_image,signal,reviewContext)=>
+    const calls=[],progress=[],budget=createImageReviewBudget();let lateResolve;
+    const pending=budget.run(workSignal=>m.reviewExperimentalCandidatePair({mimeType:'image/png',base64Img:'kept'},null,(_image,signal,reviewContext)=>
       m.reviewExperimentalImage({image:_image,plan:six,prompt:'Test-only review',signal,reviewContext,onPhaseProgress:message=>progress.push(message)},
         async(_prompt,_images,requestSignal,options)=>{
           calls.push({signal:requestSignal,options});
           if(calls.length===1) {
-            await new Promise(resolve=>setTimeout(resolve,590_000));
+            await new Promise(resolve=>setTimeout(resolve,90_000));
             return {text:'{"pageEvidence":"observed lettering","evidence":[]}',finishReason:'stop'};
           }
           return await new Promise(resolve=>{lateResolve=resolve;});
-        },regionTools),controller.signal).then(value=>({value}),error=>({error}));
+        },regionTools),workSignal)).then(value=>({value}),error=>({error}));
     await new Promise(resolve=>setImmediate(resolve));
-    t.mock.timers.tick(590_000);
+    t.mock.timers.tick(90_000);
     await new Promise(resolve=>setImmediate(resolve));
     assert.equal(calls.length,2);
-    assert.equal(calls[1].options.timeoutMs,undefined,'a slow census cannot shorten the assessment request timeout');
-    assert.ok(progress.some(message=>/assessment/.test(message)&&/応答待ち/.test(message)));
-    t.mock.timers.tick(300_000);
-    assert.ok(calls.every(call=>!call.signal.aborted),'only provider timeout or user stop may abort');
-    controller.abort();
+    assert.equal(calls[1].options.timeoutMs,undefined,'the shared signal bounds the phase without resetting a new provider timer');
+    assert.ok(progress.some(message=>/assessment/.test(message)&&/共有する残り時間/.test(message)));
+    t.mock.timers.tick(509_999);
+    assert.ok(calls.every(call=>!call.signal.aborted),'assessment may use the remaining budget');
+    t.mock.timers.tick(1);
     const result=await pending;
-    assert.equal(result.error?.name,'AbortError');
+    assert.equal(result.error?.code,'IMAGE_REVIEW_TIMEOUT');
     assert.ok(calls.every(call=>call.signal.aborted));
     lateResolve({text:'{"status":"pass"}',finishReason:'stop'});
     await new Promise(resolve=>setImmediate(resolve));
-    assert.equal(result.value,undefined,'late results never replace cancellation');
-    assert.equal(calls.length,2,'stop does not add retries');
+    assert.equal(result.value,undefined,'late results never replace the deadline outcome');
+    assert.equal(calls.length,2,'expiry does not add retries');
   });
   test('strict review schemas preserve honest unknowns and reject the observed nested panel hierarchy',async()=>{
     const frames=m.experimentalLayout(six.count,six.layout).map(r=>({bounds:[.01+.98*r.x,.05+.90*r.y,.98*r.w,.88*r.h]}));

@@ -61,3 +61,38 @@ test('stale finalizers cannot append time to the newer run', () => {
   assert.equal(step4.genLog.at(-1), '処理結果');
   assert.equal(step4.isGeneratingImage, true);
 });
+
+test('STEP4 waiting text distinguishes cumulative inspection time from generation-inclusive total', () => {
+  const start = source.indexOf('const generationStartedAt = Date.now();');
+  const block = source.slice(start, source.indexOf('// Artificial delay',start));
+  let now = 0, callback, logs = [];
+  const budget = {elapsedMs:0};
+  const scope = {Date:{now:()=>now}, createImageReviewBudget:()=>budget, IMAGE_REVIEW_BUDGET_MS:600_000,
+    generationOptions:{}, qualityRunEpoch:1, scenarioRunEpochRef:{current:1},
+    setInterval:fn=>{callback=fn;}, setGenLog:update=>{logs=update(logs);}};
+  new Function(...Object.keys(scope),block)(...Object.values(scope));
+  now = 140_000; callback();
+  assert.match(logs[0],/画像生成中.*STEP4合計140秒/);
+  assert.doesNotMatch(logs[0],/検査累計/);
+  now = 170_000; budget.elapsedMs=30_000; callback();
+  assert.match(logs[0],/検査累計30秒／上限600秒・STEP4合計170秒/);
+});
+
+test('inspection deadline returns control, stops full-auto and retains concrete findings without a success message', () => {
+  const start = source.indexOf('if(qualityBudget.exhausted) {\n        fullAutoAbortRef.current');
+  assert.ok(start >= 0);
+  const block = source.slice(start,source.indexOf('\n      if (qualityOutcome.validationWarning)',start));
+  let fullAuto = true, endless = true, logs = [], status;
+  const scope = {qualityBudget:{exhausted:true}, fullAutoAbortRef:{current:false},
+    setIsFullAutoMode:value=>{fullAuto=value;}, setIsEndlessMode:value=>{endless=value;},
+    setGenLog:update=>{logs=update(logs);}, showStatus:value=>{status=value;},
+    qualityResult:{issues:[{reason:'Three attached arms'}]}, formatImageQualityIssue:issue=>issue.reason};
+  const result = new Function(...Object.keys(scope),block)(...Object.values(scope));
+  assert.equal(result,false);
+  assert.equal(fullAuto,false); assert.equal(endless,false);
+  assert.equal(scope.fullAutoAbortRef.current,true);
+  assert.match(status,/検査未完了/);
+  assert.ok(logs.some(line=>line.includes('Three attached arms')));
+  assert.ok(logs.every(line=>!line.includes('PASS')));
+  assert.equal(finish('generateImageOnce').isGeneratingImage,false);
+});

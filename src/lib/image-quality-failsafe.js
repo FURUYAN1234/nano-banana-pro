@@ -137,7 +137,7 @@ export const formatImageQualityStopReason = (reason) => ({
   unverified: '根拠不足のみ', non_material: '軽微な指摘のみ', repair_disabled: '自動修正OFF', review_warning: '検査指摘あり',
   analysis_failed: '修正方針を確定できない', prompt_limit: '修正指示の長さ上限',
   generation_failed: '修正版の生成失敗', retry_limit: '修正回数の上限', cancelled: '利用者が停止',
-  no_improvement: '修正で改善を確認できない',
+  no_improvement: '修正で改善を確認できない', review_timeout: '品質検査の時間上限・検査未完了',
 })[reason] || '検査未完了';
 
 const compactRepairData = (value, maxChars = 9000) => {
@@ -361,6 +361,7 @@ export async function runPageImageQuality(contract, options) {
 export const runImageQualityFailsafe = async ({
   originalCandidate, originalPrompt, reviewCandidate, reviewCriticalCamera, generateRepairCandidate, analyzeFailure,
   onProgress = () => {}, shouldStop = () => false, mode, allowRepair = true,
+  isReviewBudgetExhausted = () => false,
   repairSourceMode = 'regenerate',
   repairPromptMaxChars = IMAGE_REPAIR_PROMPT_MAX_CHARS,
   compareCandidates = async () => ({ preferred: 'original', reason: 'Direct comparison unavailable.' }),
@@ -429,7 +430,7 @@ export const runImageQualityFailsafe = async ({
     let result = await review(image, prompt);
     const identityIssues = (Array.isArray(result?.issues) ? result.issues : [])
       .filter(issue => issue?.type === 'character_reference');
-    if (identityIssues.length && !result?.requestFailed && !shouldStop()) {
+    if (identityIssues.length && !result?.requestFailed && !shouldStop() && !isReviewBudgetExhausted()) {
       onProgress('人物差分の独立再検査を行います。髪型・色味など単発の判定だけでは画像を再生成しません。');
       const confirmation = await review(image, prompt);
       const confirmed = Array.isArray(confirmation?.issues) ? confirmation.issues : [];
@@ -449,7 +450,7 @@ export const runImageQualityFailsafe = async ({
         onProgress('人物差分の再検査結果: 同じ人物・コマの欠陥を再確認しました。');
       }
     }
-    if (reviewCriticalCamera && hasCriticalRearCameraContract(prompt) && !result?.requestFailed) {
+    if (reviewCriticalCamera && hasCriticalRearCameraContract(prompt) && !result?.requestFailed && !isReviewBudgetExhausted()) {
       onProgress('明示された肩越し構図を、吹き出し判定と独立して再検査します。画像は再生成しません。');
       try {
         const audit = shouldStop() ? null : await reviewCriticalCamera(image, prompt);
@@ -467,6 +468,7 @@ export const runImageQualityFailsafe = async ({
   candidates[0].review = originalReview;
   while (!finalReview.pass && attempts < IMAGE_QUALITY_MAX_ATTEMPTS) {
     if (shouldStop()) { stopReason = 'cancelled'; break; }
+    if (isReviewBudgetExhausted()) { stopReason = 'review_timeout'; break; }
     if (mode === 'experimental-manga' && !allowRepair
       && finalReview.issues?.some(issue => issue?.type === 'experimental_quality')) {
       stopReason = 'review_warning';
@@ -497,7 +499,7 @@ export const runImageQualityFailsafe = async ({
     }
     let analysis;
     let feedback = '';
-    for (let analysisAttempt = 0; analysisAttempt < 2 && !analysis && !shouldStop(); analysisAttempt++) {
+    for (let analysisAttempt = 0; analysisAttempt < 2 && !analysis && !shouldStop() && !isReviewBudgetExhausted(); analysisAttempt++) {
       try {
         if (!analyzeFailure) throw new Error('不合格解析が接続されていません。');
         onProgress(`修正${attempts}/3の前に、AIが不合格原因と過去の失敗を解析します。`);
@@ -509,6 +511,7 @@ export const runImageQualityFailsafe = async ({
       }
     }
     if (shouldStop()) { stopReason = 'cancelled'; break; }
+    if (isReviewBudgetExhausted()) { stopReason = 'review_timeout'; break; }
     if (!analysis) { stopReason = 'analysis_failed'; break; }
     repairError = null;
     const recurringPrint = incidentalPrintIssues(finalReview).filter(issue => history.some(entry =>
@@ -559,6 +562,12 @@ export const runImageQualityFailsafe = async ({
     }
     if (finalReview.pass) break;
     onProgress('未合格です。今回の結果と比較結果を失敗履歴へ追加し、次の方針を見直します。');
+  }
+  if (isReviewBudgetExhausted()) {
+    stopReason = 'review_timeout';
+    finalReview = { ...finalReview, pass: false, requestFailed: true,
+      issues: [...(finalReview.issues || []), {type:'unverified', panel:null, subject:'quality review',
+        reason:'品質検査の合計待ち時間が上限に達しました。取得済みの画像と検査結果を保持しています。'}] };
   }
   if (shouldStop()) stopReason = 'cancelled';
   if (!finalReview.pass && !stopReason) stopReason = 'retry_limit';

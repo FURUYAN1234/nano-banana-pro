@@ -373,7 +373,7 @@ export async function reviewExperimentalImage({image,plan,prompt,signal,reviewCo
     cancelled(phaseSignal);
     const label=reviewContext?.candidateLabel||'今回の画像';
     const started=Date.now();
-    onPhaseProgress(`${label} / ${stage}: 各API固有の応答待ち上限を使用します。`);
+    onPhaseProgress(`${label} / ${stage}: 検査全体で共有する残り時間内で応答を待ちます。`);
     try {
       const response=await request(phasePrompt,attachments,phaseSignal,{...options,
         ...(useStructuredOutput?{responseFormat:{type:'json_schema',json_schema:{
@@ -888,7 +888,7 @@ export function validateExperimentalReview(review, plan) {
   return {...review,status};
 }
 
-// Independent inspections start together and retain their own per-request limits.
+// Independent inspections start together under the caller's shared QA budget.
 export async function reviewExperimentalCandidatePair(candidate, original, reviewCandidate, signal, {onProgress=()=>{}}={}) {
   cancelled(signal);
   const previous=original&&validateExperimentalReview(original.review,original.plan);

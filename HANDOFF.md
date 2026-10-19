@@ -1,5 +1,10 @@
 # Nano Banana Pro handoff
 
+## v7.1.4 quality inspection deadline (2026-10-19)
+
+User authorized formal deploy and full backup. Root PLAN owns the live transaction. Shared cumulative QA600seconds, generation time excluded; timeout retains images/findings and stops automatic continuation. Local regression127 checks, lint, build and actual OpenAI UI verification passed before release metadata changes (QA233.455s, STEP4345s, quality warnings retained). Evidence: output/quality-review-budget-20261019. Release candidate preparation synchronizes README, three PDF guides and official pricing review dates. No additional paid generation is required for these documentation/version-only changes.
+
+
 ## v7.1.3 completed STEP navigation (2026-10-18)
 
 The root `PLAN.md` owns this authorized implementation/API verification/deploy/full-backup task. Local and both-provider real STEP3/navigation acceptance passed; evidence is `output/step-navigation-v713-20261018/api-acceptance.json`. README/manual/note synchronization and the formal v7.1.3 delivery remain pending. Preserve the existing note and two API tabs; navigation itself never calls an API or resets production data. No SNS.

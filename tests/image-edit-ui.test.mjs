@@ -287,7 +287,7 @@ test('a previous image is preserved under the mask while the next image is still
 test('both generation and QA show one compact spinning status with their elapsed time', () => {
   for (const received of [false, true]) {
     const logs = received ? ['[4/5] データストリーム受信完了 (Model: fixture)'] : [];
-    logs.push(`[WAIT] ⏳ ${received ? '品質検査' : '画像生成'}中… 合計14秒経過`);
+    logs.push(`[WAIT] ⏳ ${received ? '品質検査（文字・人物の観察）中… 検査累計4秒／上限600秒・STEP4' : '画像生成中… '}合計14秒経過`);
     const result = renderStep4({ generatedImage: 'data:image/png;base64,YQ==', genLog: logs }).split('<section').at(-1);
     const status = result.match(/<p[^>]*role="status"[^>]*>[\s\S]*?<\/p>/)?.[0];
     assert.ok(status);
@@ -303,7 +303,7 @@ test('both generation and QA show one compact spinning status with their elapsed
     assert.doesNotMatch(imageZone, /<textarea|PNGをダウンロード/);
   }
   const css = readFileSync(new URL('../src/index.css', import.meta.url), 'utf8');
-  assert.match(css, /\.step4-processing-status\s*\{[^}]*font-size:\s*16px;[^}]*line-height:\s*24px;[^}]*white-space:\s*nowrap;/);
+  assert.match(css, /\.step4-processing-status\s*\{[^}]*font-size:\s*16px;[^}]*line-height:\s*24px;[^}]*white-space:\s*normal;[^}]*overflow-wrap:\s*anywhere;/);
   assert.match(css, /\.step4-processing-spinner\s*\{[^}]*animation:\s*step4-processing-spin\s+[\d.]+s\s+linear\s+infinite;/);
   assert.match(css, /@keyframes step4-processing-spin\s*\{[\s\S]*?rotate\(360deg\)/);
   const statusStyle = css.match(/\.step4-processing-status\s*\{([^}]+)\}/)?.[1];
