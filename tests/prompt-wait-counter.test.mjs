@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
-import { beginApiWork } from '../src/lib/api-work-cancellation.js';
+import { beginApiWork, createImageReviewBudget, IMAGE_REVIEW_BUDGET_MS } from '../src/lib/api-work-cancellation.js';
 import { assertImageInputBudget } from '../src/lib/image-input-budget.js';
 import { buildReferenceAssetContext } from '../src/lib/reference-assets.js';
 import { formatOpenAIImageEngineName } from '../src/lib/openai-image-settings.js';
@@ -116,7 +116,7 @@ test('obsolete STEP4 timer and API callbacks leave the current generation log in
   const updates = [];
   const epoch = { current: 1 };
   const context = { experimentalEnabled:false, scenarioMode:'four-panel',
-    beginApiWork,
+    beginApiWork, createImageReviewBudget, IMAGE_REVIEW_BUDGET_MS,
     Date: { now: () => now }, generationOptions: {}, qualityRunEpoch: 1, scenarioRunEpochRef: epoch,
     setInterval: fn => { tick = fn; return 1; },
     setGenLog: update => { if (deferred) updates.push(update); else log = update(log); },
@@ -126,7 +126,7 @@ test('obsolete STEP4 timer and API callbacks leave the current generation log in
   now = 3000;
   tick();
   context.progress('active API progress');
-  assert.equal(log[1], '[WAIT] ⏳ 画像生成中… 合計2秒経過');
+  assert.equal(log[1], '[WAIT] ⏳ 画像生成中… STEP4合計2秒経過');
   assert.equal(log[2], 'active API progress');
 
   // React may apply a functional update after the scenario is superseded.
