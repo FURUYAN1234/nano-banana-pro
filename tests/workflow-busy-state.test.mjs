@@ -423,28 +423,23 @@ for (const mode of ['disabled', 'review-only', 'experimental']) {
   });
 }
 
-test('enabled automatic policy repair retains its one successful repair and generation flow', async () => {
-  let generations = 0, repairs = 0;
-  const { state, bind } = harness({
-    retryImagePolicyGeneration,
-    fixPolicyViolation: async () => { repairs++; return { success: true, modifiedPrompt: 'Compliant revised prompt' }; },
-    generateImageOnce: async (_skip, prompt, options) => {
+test('enabled QA never starts paid policy repair automatically after refusal', async () => {
+  let generations = 0;
+  const {state,bind}=harness({
+    fixPolicyViolation:()=>assert.fail('automatic policy repair is prohibited'),
+    runPolicyAutoRetries:()=>assert.fail('explicit policy action required'),
+    generateImageOnce:async(_skip,_prompt,options)=>{
       generations++;
-      assert.equal(options.suppressPolicyChoice, true);
-      if (generations === 1) { state.lastPolicyErrorRef.current = 'Safety refusal'; return false; }
-      assert.equal(prompt, 'Compliant revised prompt');
-      assert.equal(options.policyAttempt, 1);
-      state.lastPolicyErrorRef.current = '';
-      return true;
+      assert.equal(options.suppressPolicyChoice,false);
+      state.lastPolicyErrorRef.current='Safety refusal';
+      return false;
     },
   });
-  bind('runPolicyAutoRetries');
-  assert.equal(await bind('regenerateImage')(), true);
-  assert.equal(generations, 2);
-  assert.equal(repairs, 1);
-  assert.equal(state.finalPrompt, 'Compliant revised prompt');
-  assert.equal(state.policyAutoRetrying, false);
-  assert.equal(state.isFixingPolicy, false);
+  assert.equal(await bind('regenerateImage')(),false);
+  assert.equal(generations,1);
+  assert.equal(state.finalPrompt,'Original prompt');
+  assert.equal(state.policyAutoRetrying,false);
+  assert.equal(state.isFixingPolicy,false);
 });
 
 for (const valid of [false, true]) {
@@ -490,29 +485,19 @@ for (const violation of [
   });
 }
 
-test('an invalid policy proposal is replanned with feedback until a valid image can be generated', async () => {
-  const original = `${buildRenderOptionsContract()}\nApproved scene`;
-  const revised = `${buildRenderOptionsContract()}\nValid revised scene`;
-  let repairs = 0, generations = 0;
-  const { state, bind } = harness({
-    finalPrompt: original, assertRenderOptions, retryImagePolicyGeneration,
-    fixPolicyViolation: async ({ repairFeedback, shouldStop }) => {
-      repairs++;
-      assert.equal(shouldStop(), false);
-      if (repairs === 1) return { success: true, modifiedPrompt: `${buildRenderOptionsContract({ mosaicCopyrightedCharacters: false })}\nInvalid scene` };
-      assert.match(repairFeedback, /モザイク／ウオーターマークの設定/);
-      assert.equal(state.finalPrompt, original);
-      return { success: true, modifiedPrompt: revised };
-    },
-    generateImageOnce: async () => { generations++; return true; },
+test('explicit policy repair rejects an invalid proposal without another paid attempt', async () => {
+  const original=buildRenderOptionsContract()+'\nApproved scene';
+  let repairs=0,generations=0;
+  const {state,bind}=harness({finalPrompt:original,assertRenderOptions,retryImagePolicyGeneration,
+    fixPolicyViolation:async()=>{repairs++;return {success:true,modifiedPrompt:buildRenderOptionsContract({mosaicCopyrightedCharacters:false})+'\nInvalid scene'};},
+    generateImageOnce:async()=>{generations++;return true;},
   });
-  assert.equal(await bind('runPolicyAutoRetries')({ initialPrompt: original, initialPolicyError: 'Safety refusal' }), true);
-  assert.equal(repairs, 2);
-  assert.equal(generations, 1);
-  assert.equal(state.finalPrompt, revised);
-  assert.deepEqual(state.policyPromptHistory, [original, revised]);
-  assert.match(state.genLog.join('\n'), /次の修正検討へ引き継ぎます/);
-  assert.match(state.genLog.join('\n'), /修正検討2回・画像再生成1回で成功/);
+  assert.equal(await bind('runPolicyAutoRetries')({initialPrompt:original,initialPolicyError:'Safety refusal'}),false);
+  assert.equal(repairs,1);
+  assert.equal(generations,0);
+  assert.equal(state.finalPrompt,original);
+  assert.deepEqual(state.policyPromptHistory,[original]);
+  assert.match(state.genLog.join('\n'),/モザイク／ウオーターマークの設定/);
 });
 
 for (const cancellation of ['obsolete', 'stop']) {

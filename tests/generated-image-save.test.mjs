@@ -76,19 +76,23 @@ test('production final-selection block saves accepted snapshot before continuing
   const end = source.indexOf('    } catch (error)', start);
   assert.ok(start > 0 && end > start);
   const block = source.slice(start, end);
-  for (const mode of ['manual', 'full-auto', 'endless', 'stopped', 'review', 'stale', 'save-failed', 'review-timeout']) {
+  for (const mode of ['manual', 'full-auto', 'endless', 'stopped', 'review', 'stale', 'save-failed', 'review-timeout', 'repaired', 'experimental-repaired']) {
     const downloaded = [], history = [];
     let release;
     const current = { value: true };
     const save = createFinalImageSaver({ prepare: () => new Promise(resolve => { release = resolve; }), download: (...args) => downloaded.push(args) });
     const candidate = { base64Img: png.split(',')[1], mimeType: 'image/png', modelId: 'gpt-test', metadataContext: item.metadataContext };
+    const repaired = mode.endsWith('repaired');
+    const originalCandidate = repaired ? { ...candidate, base64Img: 'b3JpZ2luYWw=', modelId: 'gpt-original' } : candidate;
+    const finalImageStr = `data:image/png;base64,${originalCandidate.base64Img}`;
     let autoMode = true, endlessMode = true;
-    const ctx = { experimentalPrepared:null, qualityBudget:{exhausted:mode === 'review-timeout'},
+    const ctx = { originalCandidate, finalImageStr, previousExperimental: null, originalExperimental: { review: null },
+      experimentalPrepared: mode === 'experimental-repaired' ? { plan: { panelCount: 6 }, groupId: 'test-group' } : null, qualityBudget:{exhausted:mode === 'review-timeout'},
       setIsFullAutoMode: value => {autoMode=value;}, setIsEndlessMode: value => {endlessMode=value;},
       generatedMimeType: 'image/png', generatedModelId: 'gpt-test',
-      qualityOutcome: { candidate, candidates: [{ candidate }], canContinue: mode !== 'stopped', validationWarning: false, attempts: 1 },
-      qualityResult: { pass: true }, generationOptions: { reviewExisting: mode === 'review' },
-      generatedImage: png, GEMINI_IMAGE_MODEL: 'gemini-test',
+      qualityOutcome: { candidate, originalReview: { pass: false }, candidates: [{ candidate }], canContinue: mode !== 'stopped', validationWarning: false, attempts: 1 },
+      qualityResult: { pass: true, issues: [] }, generationOptions: { reviewExisting: mode === 'review' },
+      generatedImage: repaired ? finalImageStr : png, GEMINI_IMAGE_MODEL: 'gemini-test',
       addGenerationHistoryItem, setGenerationHistory: fn => history.push(...fn([])),
       setGeneratedImage() {}, setIsGenerationError() {}, setIsFallbackUsed() {}, setGenLog() {}, showStatus() {}, statCallback() {},
       scenarioRunEpochRef: { current: 1 }, qualityRunEpoch: 1, qualityRetryAbortRef: { current: false },
@@ -108,9 +112,18 @@ test('production final-selection block saves accepted snapshot before continuing
       release({ dataUrl: png, filename: 'test.png' });
     }
     const result = await pending;
-    assert.equal(downloaded.length, ['manual', 'full-auto', 'endless', 'review-timeout'].includes(mode) ? 1 : 0, mode);
+    assert.equal(downloaded.length, ['manual', 'full-auto', 'endless', 'review-timeout', 'repaired', 'experimental-repaired'].includes(mode) ? 1 : 0, mode);
     assert.equal(result, !['stopped', 'stale', 'save-failed', 'review-timeout'].includes(mode), mode);
     assert.equal(history[0].metadataContext, item.metadataContext);
+    assert.equal(history.length, repaired ? 2 : 1, mode);
+    if (repaired) {
+      const retained = history.find(entry => entry.img === finalImageStr);
+      assert.ok(retained, mode);
+      assert.equal(retained.modelId, 'gpt-original');
+      assert.equal(retained.selected, false);
+      assert.equal(retained.qualityPass, false);
+      assert.equal(history.find(entry => entry.img === png)?.selected, true);
+    }
     if(mode === 'review-timeout') {
       assert.equal(ctx.fullAutoAbortRef.current,true);
       assert.equal(autoMode,false); assert.equal(endlessMode,false);

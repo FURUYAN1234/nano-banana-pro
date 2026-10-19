@@ -1,25 +1,25 @@
 {
   "pricingSourceSha256": "0c3a27e0071c5dca3c0e374ac7a5dd2b78a1474ca7143e77c5d81a438e197319",
-  "manualVersion": "7.1.4",
-  "manualSourceSha256": "7aba830a0643543d4c9d98fd0d824f4c8e6ae40b453bce58596fa36f215f5de2",
+  "manualVersion": "7.1.5",
+  "manualSourceSha256": "be6f7be7f45cafa3ddfe72c4daa5a57bf5b27bea32520ca740c137401e1466cb",
   "manualFiles": [
     {
       "name": "gemini-api-beginner-guide-2026-10-01.pdf",
-      "sha256": "93d9ce18d266880d0eaca97a81d2c4581874c10cd76dd86048e01dbe94645f04"
+      "sha256": "1f53c414b424548e06fe25e6aa86be1e84a19b0efa807a47dfb9b5bad1a81ad8"
     },
     {
       "name": "openai-api-beginner-guide-2026-09-30.pdf",
-      "sha256": "c569144e56be9c6931965670b9fc451671b38d0c26f5fc1c19f65e8170534cdf"
+      "sha256": "610cc4d3ede642a3078688396d93d66567f12f67efcff3ffaca9c0203e77188c"
     },
     {
       "name": "super-furu-ai-4koma-full-manual-2026-10-01.pdf",
-      "sha256": "e67b4fb0bf1153d3b50a8b75875dcb92df5edfbb5c668f55072bb761dc32af5b"
+      "sha256": "53c33dd56f4d22b92ab9e8d53f8e175aa237ed4ddb051a9c0406133825b6de68"
     }
   ],
-  "readmeSha256": "355c169210f306149d4c359a7e59b844619693103e4c0a42f9692a775a4c652c",
-  "sourceTree": "59ca886c75aab01ba6fe1f6d815e05ef0937c122",
-  "publicTree": "58c1e2160899812e81408c0918e391667e19e1e1",
-  "packageSha256": "becd3307fec9e06694dcb2da02b5aae53a0dcfacdc42a1ac15935a54c4629461",
+  "readmeSha256": "9d5633a5f141da7ae44cc8fe900413775e6d1c4e8b20d9a8f6aebfaf60ffe652",
+  "sourceTree": "e82dffbbbb37758c5610b7f4ffe69586500e2abc",
+  "publicTree": "40a6b87b3308da2aff929d210e952e0666378a33",
+  "packageSha256": "1e0c54394ccfafc0ee45414bf59f19ec68993b912755b790906dc9030b5d4241",
   "releaseAssetSha256": "9e41886be6afa0ebfad6d244ecf53f37260a92f73b30309319029cc87e1ddb4e",
   "reviewedSections": [
     "Application screen and output / 操作画面と生成例",
@@ -39,17 +39,17 @@
     "AI Manga Creative Suite / AIまんが制作エコシステム",
     "📋 ChangeLog / 更新履歴"
   ],
-  "findings": "v7.1.4: compared all16 README sections with the previously reviewed v7.1.3 body and current source. Unchanged sections preserve their reviewed feature, rights, privacy and distribution contracts. Read the changed QA paragraph, footer examples, API/pricing explanations, download/FAQ links and release history against the shared cancellation budget and workflow. Updated cumulative600second QA deadline, independent elapsed displays, fail-closed incomplete result, retained image/findings and halted automatic continuation. Pricing values remain unchanged; date and current release references synchronized. No generation-quality guarantee added.",
-  "manualFindings": "v7.1.4: reviewed all75pages (13Gemini,39full,23OpenAI) via14contact sheets and full-manual37 at readable size. Updated current version/date, standard pricing date and shared10minute QA/independent STEP4-time explanation, including wrapped progress display. Existing text-bound, A4, footer, naming/privacy/link audits passed; no clipping or overlap observed. Reviewed output PDF bytes copied to public/downloads.",
+  "findings": "v7.1.5: compared the changed README sections and the complete existing feature map against current workflow, one-pass QA, history and panel editing source. Preserved unchanged sections and their previously reviewed rights, provider, metadata and distribution contracts. Corrected remaining unconditional QA, independent camera review, best-candidate comparison and original-image-history descriptions. OFF zero QA; ON one comprehensive review and at most one material correction; source image and warnings retained. No complete quality or latency improvement claim. Public note remains unchanged under explicit STOP BEFORE DEPLOY scope.",
+  "manualFindings": "v7.1.5: rebuilt and reviewed all75pages (13Gemini,39full,23OpenAI) in14contact sheets, plus full-manual23/37 and OpenAI23 at readable size. Corrected one-pass OFF/ON, absent independent reinspection, direct adopt/discard without checkbox, retained originals and automatic PNG save. Existing A4, footer/version, text bounds, links and privacy checks passed. No clipping or overlap observed. Copied reviewed exact PDF bytes to public/downloads.",
   "pricingReview": {
-    "version": "7.1.4",
+    "version": "7.1.5",
     "sourceSha256": "0c3a27e0071c5dca3c0e374ac7a5dd2b78a1474ca7143e77c5d81a438e197319",
-    "checkedAt": "2026-10-19T02:38:05.652Z",
+    "checkedAt": "2026-10-19T13:13:56.328Z",
     "sources": [
       "https://developers.openai.com/api/docs/pricing",
       "https://developers.openai.com/api/docs/pricing?multimodal-image-pricing=standard",
       "https://ai.google.dev/gemini-api/docs/pricing"
     ],
-    "findings": "2026-10-19: read both official Standard pricing pages and expanded OpenAI All models in the IAB. Text input/output per1M: Astra10/50,6.1Sol and6Sol2/10,5.6Sol4/20,Terra2/12,6Luna0.10/0.50,5.6Luna0.20/1.20. Image2.5Sunburst/Flare and Image2 Standard image input8,cached2,output30; text input5,cached1.25. Mini transcription0.003/min. Gemini3.8Flash Standard0.75/3.75 through2026-12-31; NanoBanana2.1 input1.50,text/thinking7.50,image output30 and1K0.0336/image. Batch discounts checked separately and not used. Existing configuration matches; refreshed date only."
+    "findings": "2026-10-19: reread official OpenAI pricing HTML and full markdown plus Gemini Standard and Batch sections. Confirmed Standard text input/output USD per1M: Astra10/50,6.1Sol2/10,6Sol2/10,5.6Sol4/20,5.6Terra2/12,6Luna0.10/0.50,5.6Luna0.20/1.20. Image2/2.5 Standard image input8 cached2 output30 and text input5 cached1.25; mini transcription0.003/min. Gemini3.8Flash0.75/3.75 through2026-12-31; NanoBanana2.1 input1.50,text7.50,image30 and1K0.0336. Batch half rates are separate. Existing app prices unchanged."
   }
 }

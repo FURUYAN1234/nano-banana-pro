@@ -93,7 +93,7 @@ export const isMaterialImageQualityIssue = (issue, evidenceContext) => {
     return evidence?.status === 'defect' && evidence.materialImpact === 'requested_medium_missing'
       && ['face', 'linework', 'coloring'].includes(evidence.visibleRegion)
       && ['expectedStyle', 'observedStyle', 'subject', 'location', 'observed'].every(key => typeof evidence[key] === 'string' && evidence[key].trim())
-      && Number.isInteger(issue.panel) && issue.panel >= 1 && issue.panel <= 4;
+      && Number.isInteger(issue.panel) && issue.panel >= 1 && issue.panel <= (evidenceContext?.panelCount || 4);
   }
   if (issue?.type === 'monochrome_rendering') return assessMonochromeEvidence(issue, evidenceContext).repairable;
   if (issue?.type === 'character_reference') {
@@ -116,7 +116,7 @@ const getRepairableIssues = (review) => (Array.isArray(review?.issues) ? review.
   ) === index);
 
 const formatRepairIssue = (issue = {}) => (
-  `- panel ${issue.panel ?? 'unknown'} / ${issue.type || 'unverified'} / ${issue.subject || 'unspecified'}: ${issue.reason || 'visible issue'}`
+  `- panel ${issue.panel ?? 'unknown'} / ${issue.type || 'unverified'} / ${issue.subject || 'unspecified'}: ${issue.reason || 'visible issue'}${typeof issue.correction==='string'&&issue.correction.trim()?` Correction: ${issue.correction}`:''}`
 );
 
 const formatReviewProgress = (label, review) => {
@@ -278,11 +278,10 @@ export const parseImageFailureAnalysis = (text, { issues, history = [], original
   });
 };
 
-export const buildImageQualityRepairPrompt = ({ originalPrompt = '', issues = [], mode, sourceMode = 'regenerate', attempt = 2 } = {}) => {
+export const buildImageQualityRepairPrompt = ({ originalPrompt = '', issues = [], mode, panelCount = 4, sourceMode = 'regenerate', attempt = 2, maxAttempts = IMAGE_QUALITY_MAX_ATTEMPTS } = {}) => {
   const anatomyRepair = issues.some(issue => issue?.type === 'anatomy') ? LOCAL_ANATOMY_REPAIR : '';
   const concreteIssues = issues
     .filter((issue) => issue?.type !== 'unverified')
-    .slice(0, 8)
     .map(formatRepairIssue)
     .join('\n');
   const bubbleOrderRepair = issues.some(issue => issue?.type === 'bubble_order')
@@ -296,10 +295,10 @@ export const buildImageQualityRepairPrompt = ({ originalPrompt = '', issues = []
   if (sourceMode === 'source-image') {
     const sourceLayout = effectiveMode === 'single-image'
       ? 'Edit the same single illustration. Do not introduce panels, a comic page, a collage, additional scenes, new characters, or a new setting.'
-      : 'Edit the same four-panel manga page. Preserve exactly four separate visible panels and the original page geometry. Do not merge, omit, duplicate, or reorder panels.';
+      : `Edit the same manga page. Preserve exactly ${panelCount} separate visible panels and the original page geometry. Do not merge, omit, duplicate, or reorder panels.`;
     return `${String(originalPrompt)}
 
-  IMAGE QUALITY CORRECTION ATTEMPT (bounded candidate ${attempt}/${IMAGE_QUALITY_MAX_ATTEMPTS}):
+  IMAGE QUALITY CORRECTION ATTEMPT (bounded candidate ${attempt}/${maxAttempts}):
   SOURCE IMAGE TO EDIT: the first attached image is the current retained candidate, not a character sheet.
   ${sourceLayout}
   CHANGE:
@@ -323,13 +322,13 @@ export const buildImageQualityRepairPrompt = ({ originalPrompt = '', issues = []
     ? `Create a corrected replacement for the same single illustration.
 Do not introduce panels, panel borders, a comic page, a collage, additional scenes, new characters, or a new setting.
 Do not change the approved subject count, action, setting, camera, crop, or story beat.`
-    : `Create a corrected replacement for the same four-panel manga page.
-Preserve exactly four separate visible panels and the original page geometry.
+    : `Create a corrected replacement for the same manga page.
+Preserve exactly ${panelCount} separate visible panels and the original page geometry.
 Do not merge, omit, duplicate, or reorder panels. Do not change the approved dialogue, cast, panel order, or story action.`;
 
   return `${String(originalPrompt).trim()}
 
-IMAGE QUALITY CORRECTION ATTEMPT (bounded candidate ${attempt}/${IMAGE_QUALITY_MAX_ATTEMPTS}):
+IMAGE QUALITY CORRECTION ATTEMPT (bounded candidate ${attempt}/${maxAttempts}):
 ${preservationLock}
 Correct only these concrete visible issues:
 ${concreteIssues || '- No concrete issue was supplied; preserve the approved page without adding content.'}
@@ -343,7 +342,8 @@ Verify coherent object/body occlusion and text alignment to the actual printed f
 };
 
 // Dispatch by an explicit page contract, never by a mutable UI toggle or prompt inference.
-// Keep legacy four-panel/single-image inspection and repair behavior unchanged.
+// OFF spends no review request. ON reviews once and performs at most one edit.
+// No analysis, comparison or reinspection callback is reachable from this path.
 export async function runPageImageQuality(contract, options) {
   const invalid = () => { throw new Error('ページ種別と品質検査の契約が一致しません。'); };
   if (!contract || Object.keys(contract).some(key => !['kind', 'count'].includes(key))) invalid();
@@ -352,10 +352,49 @@ export async function runPageImageQuality(contract, options) {
     if (contract.count !== expected || options?.mode !== contract.kind) invalid();
   } else if (contract.kind === 'experimental-manga') {
     if (!Number.isInteger(contract.count) || contract.count < 5 || contract.count > 8
-      || options?.mode !== contract.kind || options.allowRepair !== false
-      || options.generateRepairCandidate || options.analyzeFailure || options.reviewCriticalCamera) invalid();
+      || options?.mode !== contract.kind) invalid();
   } else invalid();
-  return runImageQualityFailsafe(options);
+  const {originalCandidate,originalPrompt,reviewCandidate,generateRepairCandidate,
+    allowRepair=false,reviewOnly=false,shouldStop=()=>false,isReviewBudgetExhausted=()=>false,
+    onProgress=()=>{},repairSourceMode='source-image',repairPromptMaxChars=IMAGE_REPAIR_PROMPT_MAX_CHARS}=options;
+  let candidate=originalCandidate,originalReview={pass:false,skipped:true,issues:[]},finalReview=originalReview;
+  let attempts=1,stopReason='',repairError=null;
+  const candidates=[{candidate:originalCandidate,attempt:1}],history=[];
+  const outcome=()=>({candidate,originalReview,finalReview,repairReview:null,attempts,
+    validationWarning:!finalReview.skipped&&!finalReview.notRechecked&&!finalReview.pass,
+    fallbackToOriginal:candidate===originalCandidate,repairError,history,candidates,
+    canContinue:stopReason!=='cancelled'&&Boolean(candidate?.base64Img),stopReason});
+  if(shouldStop()) {stopReason='cancelled';return outcome();}
+  if(!allowRepair&&!reviewOnly) {
+    onProgress('自動修正OFF：品質検査を行わず、生成画像をそのまま表示・保存します。');
+    return outcome();
+  }
+  try {originalReview=await reviewCandidate(originalCandidate,originalPrompt);}
+  catch(error) {originalReview=createUnverifiedReview(error);}
+  originalReview=originalReview||createUnverifiedReview('Empty quality response');
+  finalReview=originalReview;candidates[0].review=originalReview;
+  onProgress(formatReviewProgress('総合検査結果',originalReview));
+  if(shouldStop()) {stopReason='cancelled';return outcome();}
+  if(isReviewBudgetExhausted()) {stopReason='review_timeout';return outcome();}
+  if(originalReview.requestFailed||originalReview.pass||!allowRepair||reviewOnly)return outcome();
+  const issues=getRepairableIssues(originalReview);
+  if(!issues.length) {stopReason=originalReview.issues?.some(issue=>issue.type==='unverified')?'unverified':'non_material';return outcome();}
+  try {
+    const repairPrompt=buildImageQualityRepairPrompt({originalPrompt,issues,mode:contract.kind,
+      panelCount:contract.count,sourceMode:repairSourceMode,maxAttempts:2});
+    if(repairPrompt.length>repairPromptMaxChars)throw Error('修正指示が画像APIの上限を超えます。指摘を切り捨てず元画像を保持します。');
+    onProgress('総合検査の指摘をまとめて1回修正します。修正後の再検査・自動再修正は行いません。');
+    const repaired=await generateRepairCandidate(repairPrompt,originalCandidate);
+    if(!repaired?.base64Img)throw Error('修正画像を取得できませんでした。元画像を保持します。');
+    candidates.push({candidate:repaired,attempt:2});attempts=2;
+    if(shouldStop()) {stopReason='cancelled';return outcome();}
+    candidate=repaired;
+    // Completion of an edit is not evidence that the edited pixels passed QA.
+    finalReview={pass:false,notRechecked:true,issues:[]};
+    history.push({attempt:2,issues,outcome:{status:'edit_completed',rechecked:false}});
+    stopReason='single_repair_completed';
+  } catch(error) {repairError=error;stopReason='repair_failed';}
+  return outcome();
 }
 
 export const runImageQualityFailsafe = async ({

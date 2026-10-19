@@ -1,4 +1,4 @@
-export const MAX_IMAGE_POLICY_RETRIES = 5;
+export const MAX_IMAGE_POLICY_RETRIES = 1;
 
 function summarizeChange(before, after) {
   let start = 0;

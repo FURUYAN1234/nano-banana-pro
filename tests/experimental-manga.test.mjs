@@ -230,7 +230,7 @@ try {
     assert.equal(m.validateExperimentalReview(missing,plan).status,'unverified');
   });
   const currentPairReview=()=>({inspectionVersion:4,status:'pass',observedCount:6,readingOrder:'pass',camera:'pass',style:'pass',story:'pass',anatomy:'pass',pageText:'pass',breakout:'not_requested',issues:[],pageEvidence:'原画のタイトルと左右のクレジット',evidence:six.panels.map((_,i)=>({panel:i+1,camera:'頭頂と肩の上面が見える',style:'顔の輪郭と陰影が明瞭',story:'人物の動作と道具が整合',anatomy:'両手と肩の接続が連続',view:{elevation:'high',gaze:'in_scene',evidence:'人物は机を見下ろし頭頂と肩上面が見える'},physical_bodies:[],cast_instances:[]}))});
-  const blindGaze=(i=0)=>({eye_visibility:'visible',direction:'in_scene',eye_position:[.25+i*.4,.25],
+  const blindGaze=(i=0)=>({visibility_basis:'visible_eyes',pupil_placement:i?'The pupils lie at the left edge of the eye openings.':'The pupils lie at the right edge of the eye openings.',eye_visibility:'visible',direction:'in_scene',eye_position:[.25+i*.4,.25],
     eye_evidence:i?'虹彩は瞼の左下へ寄り、右側の白目が広く見える。':'黒目が瞼の右下へ寄り、左側の白目が広く見える。',
     face_direction:i?'首を自然に傾けて顔の左側を台へ向ける。':'横向きの顔を右下の台へ向けている。',
     target:{description:'二人の間にある赤い計測器の表示面。',position:[.5,.65]}});
@@ -251,6 +251,24 @@ try {
     report.wardrobe_observation={status:'pass',evidence:'見える上着と脚の服を指定と照合し、他の人物は参照衣装を保つ。',issues:[]};
     return report;
   };
+  test('structured gaze accepts anatomical paraphrases and closed eyes without keyword guessing',()=>{
+    const report=styledReview();report.inspectionVersion=10;
+    for(const [i,body] of report.evidence[0].physical_bodies.entries()) {
+      body.gaze.visibility_basis='visible_eyes';
+      body.gaze.pupil_placement=i?'The colored centers sit toward the lower left of both eye openings.':'The colored centers sit toward the lower right of both eye openings.';
+      body.gaze.eye_evidence=body.gaze.pupil_placement;
+    }
+    assert.equal(m.validateExperimentalReview(report,six).camera,'pass');
+    const closed=structuredClone(report),eye=closed.evidence[0].physical_bodies[0].gaze;
+    Object.assign(eye,{eye_visibility:'not_visible',visibility_basis:'closed_eyes',direction:'no_visible_eyes',
+      eye_position:null,pupil_placement:null,eye_evidence:'Both eyes are closed into curved lines; the pupils are not exposed.',target:null});
+    assert.equal(m.validateExperimentalReview(closed,six).camera,'pass');
+    const unsupported=structuredClone(report);delete unsupported.evidence[0].physical_bodies[0].gaze.pupil_placement;
+    assert.equal(m.validateExperimentalReview(unsupported,six).camera,'uncertain');
+    const violation=structuredClone(report);Object.assign(violation.evidence[0].physical_bodies[0].gaze,
+      {direction:'at_viewer',target:null,pupil_placement:'Both colored centers align with the eye openings toward the reader.'});
+    assert.equal(m.validateExperimentalReview(violation,six).camera,'fail');
+  });
   const castCoverageReview=()=>{
     const report=styledReview();
     report.evidence.forEach(e=>{e.physical_bodies=[];e.cast_instances=[];e.style_observation.actors=[];});
@@ -630,7 +648,7 @@ try {
     assert.deepEqual(checked.validationErrors||[],[]);
     assert.deepEqual(m.validateExperimentalReview(checked,plan),checked);
     const old={...original,review:legacy};let inspections=0;
-    await m.reviewExperimentalCandidatePair({base64Img:'fresh'},{...old,review:{...legacy,inspectionVersion:9}},async()=>{inspections++;return {};});
+    await m.reviewExperimentalCandidatePair({base64Img:'fresh'},{...old,review:{...legacy,inspectionVersion:10}},async()=>{inspections++;return {};});
     assert.equal(inspections,1,'a quarantined census must not start another inspection of the old image');
     const next={...original,image:{base64Img:'fresh'}};
     const selected=await m.selectExperimentalCandidate(old,next,async()=>({preferred:'repair',reason:'台詞を保ち、演技が明瞭。',readingOrderChecks:checks}));
@@ -687,7 +705,8 @@ try {
         onProgress:line=>log.push(line),generateCandidate:()=>{throw Error('automatic regeneration is disabled');}});
       assert.equal(outcome.candidate,original.image);
       if(defect) {assert.match(log.join('\n'),/自動修正OFF/);assert.doesNotMatch(log.join('\n'),/未確認のみで明確な欠陥がない/);}
-      else assert.match(log.join('\n'),/未確認のみ/);
+      else assert.match(log.join('\n'),/自動修正OFF/);
+      assert.equal(outcome.originalReview.skipped,true);
     }
   });
   test('candidate review pair starts necessary old and new inspections together before either completes',async()=>{
@@ -706,7 +725,7 @@ try {
     const selected=await m.selectExperimentalCandidate(original,{...original,image:fresh,review:fresh.experimentalReview},async()=>{compared++;return {preferred:'repair',reason:'演技と構図が改善し、台詞と人物を維持している。'};});
     assert.equal(compared,1);assert.equal(selected.candidate,fresh);assert.equal(selected.comparison.status,'completed');
   });
-  test('parallel candidate reviews share one QA budget while normal two-stage inspections succeed',async t=>{
+  test('explicit candidate comparisons share one QA budget with one inspection per candidate',async t=>{
     t.mock.timers.enable({apis:['setTimeout','Date'],now:0});
     const frames=m.experimentalLayout(six.count,six.layout).map(r=>({bounds:[.01+.98*r.x,.05+.90*r.y,.98*r.w,.88*r.h]}));
     const regionTools={detect:async()=>frames,inspect:async()=>({width:2240,height:3168}),crop:async()=>({dataUrl:'test-crop'})};
@@ -729,17 +748,16 @@ try {
     assert.equal(calls.length,2,'both independent inventories start together');
     t.mock.timers.tick(45_000);
     await new Promise(resolve=>setImmediate(resolve));
-    assert.equal(calls.length,4,'each assessment starts once after its own inventory');
-    t.mock.timers.tick(45_000);
+    assert.equal(calls.length,2,'each candidate has one combined inspection');
     const completed=await result;
     assert.equal(completed.error,undefined,'two parallel inspections finish within the shared 600-second budget');
-    assert.equal(completed.value.requests,2);
+    assert.equal(completed.value.requests,1);
     assert.ok(calls.every(call=>call.options.timeoutMs===undefined),'provider limits are not overridden by a review timer');
     assert.ok(calls.every(call=>call.options.responseFormat==='json_object'));
     assert.ok(calls.every(call=>!call.signal.aborted));
-    assert.ok(progress.some(message=>/inventory/.test(message)&&/共有する残り時間/.test(message)));
+    assert.ok(progress.every(message=>!/inventory/.test(message)));
     assert.ok(progress.some(message=>/assessment/.test(message)&&/共有する残り時間/.test(message)));
-    assert.equal(budget.elapsedMs,90_000,'parallel candidates consume wall time only once');
+    assert.equal(budget.elapsedMs,45_000,'parallel candidates consume wall time only once');
   });
   test('assessment shares the remaining QA budget and rejects its late response after expiry',async t=>{
     t.mock.timers.enable({apis:['setTimeout','Date'],now:0});
@@ -750,17 +768,13 @@ try {
       m.reviewExperimentalImage({image:_image,plan:six,prompt:'Test-only review',signal,reviewContext,onPhaseProgress:message=>progress.push(message)},
         async(_prompt,_images,requestSignal,options)=>{
           calls.push({signal:requestSignal,options});
-          if(calls.length===1) {
-            await new Promise(resolve=>setTimeout(resolve,90_000));
-            return {text:'{"pageEvidence":"observed lettering","evidence":[]}',finishReason:'stop'};
-          }
           return await new Promise(resolve=>{lateResolve=resolve;});
         },regionTools),workSignal)).then(value=>({value}),error=>({error}));
     await new Promise(resolve=>setImmediate(resolve));
     t.mock.timers.tick(90_000);
     await new Promise(resolve=>setImmediate(resolve));
-    assert.equal(calls.length,2);
-    assert.equal(calls[1].options.timeoutMs,undefined,'the shared signal bounds the phase without resetting a new provider timer');
+    assert.equal(calls.length,1);
+    assert.equal(calls[0].options.timeoutMs,undefined,'the shared signal bounds the phase without resetting a new provider timer');
     assert.ok(progress.some(message=>/assessment/.test(message)&&/共有する残り時間/.test(message)));
     t.mock.timers.tick(509_999);
     assert.ok(calls.every(call=>!call.signal.aborted),'assessment may use the remaining budget');
@@ -771,7 +785,7 @@ try {
     lateResolve({text:'{"status":"pass"}',finishReason:'stop'});
     await new Promise(resolve=>setImmediate(resolve));
     assert.equal(result.value,undefined,'late results never replace the deadline outcome');
-    assert.equal(calls.length,2,'expiry does not add retries');
+    assert.equal(calls.length,1,'expiry does not add retries');
   });
   test('strict review schemas preserve honest unknowns and reject the observed nested panel hierarchy',async()=>{
     const frames=m.experimentalLayout(six.count,six.layout).map(r=>({bounds:[.01+.98*r.x,.05+.90*r.y,.98*r.w,.88*r.h]}));
@@ -779,7 +793,7 @@ try {
     const formats=[];
     await m.reviewExperimentalImage({image:{mimeType:'image/png',base64Img:'test-only'},plan:six,prompt:'Test-only review',useStructuredOutput:true},
       async(_prompt,_images,_signal,options)=>{formats.push(options.responseFormat);return {text:'{"pageEvidence":null,"evidence":[]}',finishReason:'stop'};},tools);
-    assert.deepEqual(formats.map(format=>format?.type),['json_schema','json_schema']);
+    assert.deepEqual(formats.map(format=>format?.type),['json_schema']);
     const originalFetch=globalThis.fetch,bodies=[];
     try {
       globalThis.fetch=async(_url,init)=>{bodies.push(JSON.parse(init.body));return Response.json({choices:[{finish_reason:'stop',message:{content:'{}'}}]});};
@@ -787,7 +801,7 @@ try {
       assert.deepEqual(bodies.map(body=>body.response_format),formats,'both real phase schemas survive the provider boundary unchanged');
     } finally {globalThis.fetch=originalFetch;}
     const ajv=new Ajv({allErrors:true});
-    const [inventory,assessment]=formats.map(format=>{
+    const [assessment]=formats.map(format=>{
       assert.equal(format.json_schema.strict,true);
       const check=schema=>{
         const types=[].concat(schema.type||[]);
@@ -800,28 +814,27 @@ try {
       };
       check(format.json_schema.schema);return ajv.compile(format.json_schema.schema);
     });
-    const census={pageEvidence:null,evidence:[{panel:3,physical_bodies:null,text_regions:null}]};
-    assert.equal(inventory(census),true,JSON.stringify(inventory.errors));
-    const body={id:'p3b1',bounds:[.1,.1,.4,.7],features:['黒い長髪','灰色の上着'],gaze:null};
-    census.evidence[0].physical_bodies=[body];census.evidence[0].text_regions=[];
-    assert.equal(inventory(census),true,JSON.stringify(inventory.errors));
-    body.gaze=blindGaze();assert.equal(inventory(census),true,JSON.stringify(inventory.errors));
-    const nestedEyes=structuredClone(census);nestedEyes.evidence[0].gaze=nestedEyes.evidence[0].physical_bodies[0].gaze;
-    delete nestedEyes.evidence[0].physical_bodies[0].gaze;
-    assert.equal(inventory(nestedEyes),false,'independent eye evidence belongs only to its existing physical body');
+    const body={id:'p3b1',bounds:[.1,.1,.4,.7],features:['黒い長髪','灰色の上着'],gaze:blindGaze()};
     const panel={panel:3,camera:'やや高い位置から台の上面が見える。',style:'淡い水彩の筆触が顔と衣服にも見える。',story:null,anatomy:null,breakout:null,
       view:{elevation:'high',gaze:'in_scene',evidence:'人物は台の水平器へ視線を向ける。'},
       style_observation:{medium:'WATERCOLOR',status:'pass',evidence:'顔と衣服に淡彩と紙の白が見える。',actors:[{
         body_id:'p3b1',medium:'WATERCOLOR',status:'pass',face_visibility:'visible',face:'細い目と真っすぐな口の輪郭が見える。',shading:'頬に薄い水彩の重なりが見える。'}]},
       body_dispositions:[],cast_instances:[{name:'人物甲',observed_count:1,status:'ok',evidence:null,
-        instances:[{body_id:'p3b1',location:'左奥に立つ人物',matched_features:['黒い長髪','灰色の上着']}]}],text_regions:[],dialogue:null};
-    const report={status:'unverified',observedCount:null,readingOrder:'uncertain',camera:'uncertain',style:'uncertain',story:'uncertain',anatomy:'uncertain',pageText:'uncertain',breakout:'not_requested',issues:['細部を確認できない。'],pageEvidence:null,evidence:[panel],wardrobe_observation:null};
+        instances:[{body_id:'p3b1',location:'左奥に立つ人物',matched_features:['黒い長髪','灰色の上着']}]}],text_regions:[],physical_bodies:[body]};
+    // The wire response references shared observations; the reader expands them locally.
+    delete body.gaze.pupil_placement;
+    delete panel.camera;delete panel.style;delete panel.cast_instances[0].observed_count;
+    delete panel.cast_instances[0].instances[0].matched_features;
+    panel.cast_instances[0].instances[0].feature_indices=[0,1];
+    const report={corrections:[],status:'unverified',observedCount:null,readingOrder:'uncertain',camera:'uncertain',style:'uncertain',story:'uncertain',anatomy:'uncertain',pageText:'uncertain',breakout:'not_requested',issues:['細部を確認できない。'],pageEvidence:null,evidence:[panel],wardrobe_observation:null};
     assert.equal(assessment(report),true,JSON.stringify(assessment.errors));
     const missingWardrobe=structuredClone(report);delete missingWardrobe.wardrobe_observation;
     assert.equal(assessment(missingWardrobe),false,'clothing observation cannot silently disappear from the native review schema');
     const missingCoverage=structuredClone(report);delete missingCoverage.evidence[0].body_dispositions;
     assert.equal(assessment(missingCoverage),false,'unbound body dispositions must be requested in every assessment');
     const background=structuredClone(report);background.evidence[0].body_dispositions=[backgroundDisposition()];
+    delete background.evidence[0].body_dispositions[0].observed_features;
+    background.evidence[0].body_dispositions[0].feature_indices=[0,1];
     assert.equal(assessment(background),true,JSON.stringify(assessment.errors));
     background.evidence[0].body_dispositions[0].kind='ignore';
     assert.equal(assessment(background),false,'unexamined census bodies cannot be dismissed with an arbitrary label');
@@ -833,13 +846,13 @@ try {
     for(const key of ['style_observation','cast_instances']) {nested.evidence[0].view[key]=nested.evidence[0][key];delete nested.evidence[0][key];}
     assert.equal(assessment(nested),false,'the actual P3 view nesting violates the transmitted schema');
     assert.ok(assessment.errors.some(error=>error.keyword==='additionalProperties'));
-    const unknown=structuredClone(report);Object.assign(unknown.evidence[0],{view:null,style_observation:null,cast_instances:null,camera:null,style:null});
+    const unknown=structuredClone(report);Object.assign(unknown.evidence[0],{view:null,style_observation:null,cast_instances:null});
     assert.equal(assessment(unknown),true,JSON.stringify(assessment.errors));
     const invalid=structuredClone(report);invalid.style={status:'pass'};
     assert.equal(assessment(invalid),false,'a root verdict cannot become an object');
     invalid.style='pass';invalid.evidence[0].panel='3';assert.equal(assessment(invalid),false,'panel IDs cannot silently change type');
   });
-  test('five and eight panel reviews keep exactly two JSON requests with provider limits and stop prevents the next phase',async()=>{
+  test('five and eight panel reviews keep exactly one JSON request with provider limits and reject cancellation',async()=>{
     for(const useStructuredOutput of [false,true]) for(const count of [5,8]) {
       const plan={...six,count,layout:'mixed_rows'};
       const frames=m.experimentalLayout(count,plan.layout).map(r=>({bounds:[.01+.98*r.x,.05+.90*r.y,.98*r.w,.88*r.h]}));
@@ -848,7 +861,7 @@ try {
       await m.reviewExperimentalImage({image,plan,prompt:'Test-only review',useStructuredOutput},async(_prompt,_images,_signal,options)=>{
         calls.push(options);return {text:'{"pageEvidence":"observed lettering","evidence":[]}',finishReason:'stop'};
       },regionTools);
-      assert.equal(calls.length,2);
+      assert.equal(calls.length,1);
       assert.ok(calls.every(options=>(useStructuredOutput?options.responseFormat?.type==='json_schema':options.responseFormat==='json_object')&&options.timeoutMs===undefined));
       const controller=new AbortController();let stoppedCalls=0;
       await assert.rejects(m.reviewExperimentalImage({image,plan,prompt:'Test-only review',signal:controller.signal,useStructuredOutput},async()=>{
@@ -858,7 +871,7 @@ try {
     }
   });
   test('candidate review pair reuses valid current evidence and never inspects another prepared group',async()=>{
-    const original={image:{base64Img:'old'},plan:six,review:styledReview()};
+    const original={image:{base64Img:'old'},plan:six,review:{...styledReview(),inspectionVersion:10}};
     let requests=0;
     for(const previous of [original,null]) {
       await m.reviewExperimentalCandidatePair({},previous,async()=>{requests++;return {pass:true,issues:[]};});
@@ -870,10 +883,10 @@ try {
       const original={image:{base64Img:'old'},plan:six,review:{...styledReview(),inspectionVersion}};
       const fresh={base64Img:'new'},started=[];
       await m.reviewExperimentalCandidatePair(fresh,original,async image=>{
-        started.push(image);image.experimentalReview=styledReview();return {pass:true,issues:[]};
+        started.push(image);image.experimentalReview={...styledReview(),inspectionVersion:10};return {pass:true,issues:[]};
       });
       assert.deepEqual(started,[fresh,original.image]);
-      assert.equal(original.review.inspectionVersion,9);
+      assert.equal(original.review.inspectionVersion,10);
     }
   });
   test('candidate review pair preserves provider timeout failures and does not claim a comparison',async()=>{
@@ -1010,7 +1023,7 @@ try {
   test('review failures retain the delivered image without issuing another image request', async () => {
     for (const response of [null,()=>{throw Object.assign(new Error('timeout'),{code:'REVIEW_TIMEOUT'});}]) {
       let images=0,adopted=0;
-      const result=await m.runExperimentalManga(input,{plan:async prompt=>planResponse(prompt,six),image:async()=>{images++;return {base64Img:'test-only',mimeType:'image/png'};},onImage:()=>adopted++,review:async()=>typeof response==='function'?response():response});
+      const result=await m.runExperimentalManga({...input,reviewOnly:true},{plan:async prompt=>planResponse(prompt,six),image:async()=>{images++;return {base64Img:'test-only',mimeType:'image/png'};},onImage:()=>adopted++,review:async()=>typeof response==='function'?response():response});
       assert.equal(images,1);assert.equal(adopted,1);assert.equal(result.image.base64Img,'test-only');assert.equal(result.review.status,'unverified');
     }
   });
@@ -1038,7 +1051,7 @@ try {
   test('review decoding and transport failures retain safe, distinct diagnostics without a paid repair', async () => {
     for(const mode of ['unknown','transport','decode','evidence']) {
       let images=0;
-      const result=await m.runExperimentalManga(input,{
+      const result=await m.runExperimentalManga({...input,reviewOnly:true},{
         plan:async prompt=>planResponse(prompt,six),
         image:async()=>{images++;return {base64Img:'test-only',mimeType:'image/png'};},
         review:async()=>{
@@ -1094,10 +1107,10 @@ try {
       assert.deepEqual(m.parseExperimentalReview('```json\n{"status":"unverified"}\n```',{finishReason}),{status:'unverified'});
     }
   });
-  test('both experimental inspections request JSON and stop at the failed stage without paid retries',async()=>{
+  test('combined experimental inspection requests JSON and stops on invalid output without paid retries',async()=>{
     const frames=m.experimentalLayout(six.count,six.layout).map(r=>({bounds:[.01+.98*r.x,.05+.90*r.y,.98*r.w,.88*r.h]}));
     const regionTools={detect:async()=>frames,inspect:async()=>({width:2240,height:3168}),crop:async()=>({dataUrl:'test-crop'})};
-    for(const failedStage of [1,2]) {
+    for(const failedStage of [1]) {
       let calls=0;
       await assert.rejects(m.reviewExperimentalImage({image:{mimeType:'image/png',base64Img:'kept-image'},plan:six,prompt:'Return JSON'},
         async(_prompt,_images,_signal,options)=>{
@@ -1107,7 +1120,7 @@ try {
           return {text:calls===failedStage?'broken JSON':'{"evidence":[]}',finishReason:'stop',usage:{completion_tokens:7}};
         },regionTools),error=>{
           assert.equal(error.code,'REVIEW_INVALID_JSON');
-          assert.equal(error.reviewDiagnostics.stage,failedStage===1?'inventory':'assessment');
+          assert.equal(error.reviewDiagnostics.stage,'assessment');
           return true;
         });
       assert.equal(calls,failedStage,'never request the next stage or a repair after invalid JSON');
@@ -1122,7 +1135,7 @@ try {
       prompts.push(prompt);
       return {text:'{"evidence":[]}',finishReason:'stop'};
     },regionTools);
-    assert.equal(prompts.length,2,'schema instructions must not add another request');
+    assert.equal(prompts.length,1,'schema instructions must not add another request');
     await t.test('inventory maps one-based numeric panel IDs to native crop image IDs',()=>{
       assert.match(prompts[0],/panel.*integer.*1\.\.6/i);
       assert.match(prompts[0],/Image 2\s*=\s*(?:physical )?P(?:anel )?1/i);
@@ -1134,7 +1147,7 @@ try {
       assert.match(prompts[0],/features \(array of at least two[^)]*strings/i);
     });
     await t.test('assessment example retains every required style actor and cast body link',()=>{
-      const example=prompts[1].match(/Each evidence object has this shape[^:]*:\s*(\{[^\n]+\})\. Never compress/);
+      const example=prompts[0].match(/Each evidence object has this shape[^:]*:\s*(\{[^\n]+\})\. Never compress/);
       assert.ok(example,'the model-visible complete evidence shape must remain inspectable');
       const shape=JSON.parse(example[1]);
       assert.ok(shape.style_observation&&typeof shape.style_observation==='object','complete example must include the required style observation');
@@ -1145,7 +1158,7 @@ try {
       const cast=shape.cast_instances?.[0];
       assert.ok(cast,'complete example must describe the cast-instance shape');
       assert.equal(cast.instances?.[0]?.body_id,actor.body_id,'both observations refer to the same independently observed body ID');
-      assert.match(prompts[1],/style_observation.*(?:face|shading).*at least 8 characters/i);
+      assert.match(prompts[0],/style_observation.*(?:face|shading).*at least 8 characters/i);
     });
   });
   test('variable count rejects missing beats and altered anchor cameras', () => {
@@ -1190,7 +1203,7 @@ try {
     const deps={plan:async prompt=>{calls++;return planResponse(prompt,six);},image:async()=>{images++;return {base64Img:'test-only',mimeType:'image/png'};},review:async()=>({status:'unverified',issues:['角度を確認できない']})};
     await assert.rejects(m.runExperimentalManga({...input,enabled:false},deps));
     assert.equal(calls,0);
-    const result=await m.runExperimentalManga(input,deps);
+    const result=await m.runExperimentalManga({...input,reviewOnly:true},deps);
     assert.equal(images,1); assert.equal(result.review.status,'unverified');
     assert.equal(JSON.stringify(input),before);
   });
@@ -1337,7 +1350,7 @@ try {
     const controller=new AbortController();controller.abort();
     await assert.rejects(m.prepareExperimentalReviewImages({},plan,controller.signal),{name:'AbortError'});
   });
-  test('blind transcription overrides narrative-biased QA and never receives expected story text',async()=>{
+  test('single-response transcription is ordered locally and source expectations cannot be overwritten',async()=>{
     const calls=[];
     const independentBody={id:'body1',bounds:[.1,.1,.3,.8],features:['短い黒髪','白い作業服'],gaze:blindGaze()};
     const expectedStyles=six.panels.map((_,i)=>({panel:i+1,style:i===2?'WATERCOLOR':'GEKIGA'}));
@@ -1345,32 +1358,31 @@ try {
     const frames=m.experimentalLayout(six.count,six.layout).map((r,i)=>({bounds:[.01+.98*r.x,.05+.90*r.y,.98*r.w,.88*r.h],dialogue:i===4?['実際は先に結末がある']:[]}));
     const result=await m.reviewExperimentalImage({image:{mimeType:'image/png',base64Img:'test-only'},plan:six,prompt:'PRIVATE_EXPECTED_STORY\nEXPECTED PANEL STYLES: '+JSON.stringify(expectedStyles)+'\nEXPECTED OUTFIT SCOPES: '+JSON.stringify(expectedOutfits)},async(prompt,images)=>{
       calls.push({prompt,count:images.length});
-      return calls.length===1?{text:JSON.stringify({pageEvidence:'実画像の題字とフッターをここに転記',evidence:six.panels.map((p,i)=>({panel:i+1,physical_bodies:i===0?[independentBody]:[],text_regions:i===4?[
-          {region_kind:'speech_balloon',text:'左の台詞',center_x:.2},
-          {region_kind:'sound_effect',text:'ピッ'},
-          {region_kind:'printed_object',text:'3'},
-          {region_kind:'speech_balloon',text:'右の台詞',center_x:.8}
-        ]:[]}))})}
-        :{text:JSON.stringify({status:'unverified',observedCount:null,camera:'uncertain',expectedStyles:[{panel:1,style:'NORMAL'}],expectedOutfits:{global:'採点側が捏造した衣装指定',panels:[]},evidence:six.panels.map((p,i)=>({panel:i+1,physical_bodies:[{...independentBody,gaze:null}],text_regions:[{region_kind:'speech_balloon',text:'採点側の誤った上書き',center_x:.9}],dialogue:['古い誤読'],camera:'観察',style:'観察'}))}),model:'test'};
+      return {text:JSON.stringify({status:'unverified',observedCount:null,camera:'uncertain',
+        expectedStyles:[{panel:1,style:'NORMAL'}],expectedOutfits:{global:'invented outfit',panels:[]},
+        pageEvidence:'実画像の題字とフッターをここに転記',evidence:six.panels.map((p,i)=>({panel:i+1,
+          physical_bodies:i===0?[independentBody]:[],dialogue:['model invented order'],text_regions:i===4?[
+            {region_kind:'speech_balloon',text:'左の台詞',center_x:.2},{region_kind:'sound_effect',text:'ピッ'},
+            {region_kind:'printed_object',text:'3'},{region_kind:'speech_balloon',text:'右の台詞',center_x:.8}]:[]}))})};
     },{detect:async()=>frames,inspect:async()=>({width:2240,height:3168}),crop:async()=>({dataUrl:'test-crop'})});
-    assert.equal(calls.length,2);assert.equal(calls[0].count,9,'blind reading sees all native frames and footer crops without the expected plan');
-    assert.equal(result.review.inspectionVersion,9);
-    assert.deepEqual(result.review.evidence[0].physical_bodies,[independentBody],'assessment cannot replace independent gaze, body identity or geometry');
+    assert.equal(calls.length,1);assert.equal(calls[0].count,9,'combined review sees all native frames and footer crops');
+    assert.equal(result.review.inspectionVersion,10);
+    assert.deepEqual(result.review.evidence[0].physical_bodies,[independentBody],'observed gaze, body identity and geometry remain bound to the panel');
     assert.deepEqual(result.review.expectedStyles,expectedStyles,'expected media come from the source contract, not the assessment model');
     assert.deepEqual(result.review.expectedOutfits,expectedOutfits,'outfit authority comes from the compiler, never the assessment response');
-    assert.match(calls[1].prompt,/ROOT VERDICTS ONLY/);
-    assert.match(calls[1].prompt,/PANEL OBSERVATIONS ARE PROSE/);
-    assert.doesNotMatch(calls[1].prompt,/"status":"unverified"|"observedCount":null|"readingOrder":"uncertain"/,
+    assert.match(calls[0].prompt,/ROOT VERDICTS ONLY/);
+    assert.match(calls[0].prompt,/PANEL OBSERVATIONS ARE PROSE/);
+    assert.doesNotMatch(calls[0].prompt,/"status":"unverified"|"observedCount":null|"readingOrder":"uncertain"/,
       'the assessment must not supply a filled-in unverified verdict for the model to copy');
-    assert.match(calls[1].prompt,/observedCount: integer counted from the full page/);
-    assert.match(calls[1].prompt,/Assess each required check independently/);
+    assert.match(calls[0].prompt,/observedCount: integer counted from the full page/);
+    assert.match(calls[0].prompt,/Assess each required check independently/);
     assert.equal(result.review.observedCount,null,'an unresolved API count must not be filled from the plan or crops');
     assert.equal(result.review.camera,'uncertain','unresolved observations must not be converted to pass');
     assert.doesNotMatch(m.buildExperimentalReviewPrompt(six,source,input),/any uncertain required check means unverified/,
       'the base prompt must not override confirmed failures with an unrelated uncertainty');
-    assert.match(calls[1].prompt,/do not put pass, fail, high or low into these four observation strings/);
+    assert.match(calls[0].prompt,/view\.evidence, style_observation\.evidence, story and anatomy describe actual visible evidence/);
 
-    assert.doesNotMatch(calls[0].prompt,/PRIVATE_EXPECTED_STORY|sourcePanel|dialogueIds/);
+    assert.match(calls[0].prompt,/PRIVATE_EXPECTED_STORY/,'one combined inspection receives the source for comparison');
     assert.match(m.buildExperimentalReviewPrompt(six,source,input),/instances:\[\{body_id,/);
     assert.doesNotMatch(calls[0].prompt,/features:\["visible hair\/face cue"/);
     assert.deepEqual(result.review.evidence[4].dialogue,['右の台詞','左の台詞'],'only speech balloons sorted by physical x, never sound effects or full-page OCR');
@@ -1398,7 +1410,7 @@ try {
     const result=await m.reviewExperimentalImage({image:{mimeType:'image/png',base64Img:'test-only'},plan:six,prompt:'story'},async()=>{requests++;throw new Error('no paid review for count mismatch');},{detect:async()=>frames,inspect:async()=>({width:400,height:600}),crop:async()=>{crops++;throw new Error('no crop based on incompatible plan');}});
     assert.equal(requests,0);assert.equal(crops,0);assert.equal(result.requests,0);
     assert.equal(result.review.observedCount,7);assert.deepEqual(result.review.observedFrames,frames);
-    assert.equal(result.review.inspectionVersion,9,'local count evidence belongs to the current inspection format');
+    assert.equal(result.review.inspectionVersion,10,'local count evidence belongs to the current inspection format');
     const review=m.validateExperimentalReview(result.review,six);
     assert.equal(review.status,'warning');assert.equal(review.observedCount,7);
     assert.equal(m.validateExperimentalReview(JSON.parse(JSON.stringify(review)),six).status,'warning','saved local geometry retains its supported count warning');
@@ -1453,15 +1465,15 @@ try {
   test('review phase reports the actual failed request and never retries it',async()=>{
     const frames=m.experimentalLayout(six.count,six.layout).map(r=>({bounds:[.01+.98*r.x,.05+.90*r.y,.98*r.w,.88*r.h]}));
     const regionTools={detect:async()=>frames,inspect:async()=>({width:2240,height:3168}),crop:async()=>({dataUrl:'test-crop'})};
-    for(const failedStage of ['inventory','assessment']) {
+    for(const failedStage of ['assessment']) {
       const progress=[];let requests=0;
       await assert.rejects(m.reviewExperimentalImage({image:{mimeType:'image/png',base64Img:'test-only'},plan:six,prompt:'Test-only review',
         onPhaseProgress:message=>progress.push(message)},async()=>{
         requests++;
-        if(failedStage==='inventory'||requests===2)throw Object.assign(new Error('provider timeout'),{code:'TIMEOUT'});
+        if(requests===1)throw Object.assign(new Error('provider timeout'),{code:'TIMEOUT'});
         return {text:'{"pageEvidence":"observed lettering","evidence":[]}',finishReason:'stop'};
       },regionTools),error=>error.code==='TIMEOUT');
-      assert.equal(requests,failedStage==='inventory'?1:2);
+      assert.equal(requests,1);
       assert.ok(progress.some(message=>message.includes(`${failedStage}: APIの応答待ち上限到達`)));
       assert.ok(progress.every(message=>!/全体期限|全体の残り/.test(message)));
     }

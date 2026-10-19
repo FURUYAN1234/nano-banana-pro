@@ -226,3 +226,12 @@ test('edit deadline remains armed while the response body is incomplete', async 
     setOpenAIApiKey('');
   }
 });
+
+test('panel edit preserves the cropped reference aspect through auto size without relaxing manuscript generation',()=>{
+  const request=buildOpenAIImageRequest('edit entire selected panel',{imageInputs:[ref],panelEdit:true});
+  assert.equal(request.body.size,'auto');
+  assert.equal(request.isEdit,true);
+  assert.throws(()=>buildOpenAIImageRequest('not a panel',{panelEdit:true}),/コマ|panel|画像/i);
+  assert.throws(()=>buildOpenAIImageRequest('not one panel',{imageInputs:[ref,ref],panelEdit:true}),/コマ|panel|画像/i);
+  assert.equal(buildOpenAIImageRequest('normal manga',{size:'auto',imageInputs:[ref]}).body.size,'2240x3168');
+});

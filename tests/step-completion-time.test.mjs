@@ -81,7 +81,7 @@ test('STEP4 waiting text distinguishes cumulative inspection time from generatio
 test('inspection deadline returns control, stops full-auto and retains concrete findings without a success message', () => {
   const start = source.indexOf('if(qualityBudget.exhausted) {\n        fullAutoAbortRef.current');
   assert.ok(start >= 0);
-  const block = source.slice(start,source.indexOf('\n      if (qualityOutcome.validationWarning)',start));
+  const block = source.slice(start,source.indexOf('\n      if(qualityResult.skipped)',start));
   let fullAuto = true, endless = true, logs = [], status;
   const scope = {qualityBudget:{exhausted:true}, fullAutoAbortRef:{current:false},
     setIsFullAutoMode:value=>{fullAuto=value;}, setIsEndlessMode:value=>{endless=value;},

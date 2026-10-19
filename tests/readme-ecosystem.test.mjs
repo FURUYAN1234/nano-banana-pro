@@ -9,7 +9,10 @@ test('current README documents all five added endings and the actual provider an
   }
   assert.match(current, /5[～〜]8コマ生成はOpenAIのみ/);
   assert.match(current, /Geminiはカラー・白黒とも4コマ/);
-  assert.match(current, /APIで新しく生成した画像は自動検査されます/);
+  assert.match(current, /APIで新しく生成した画像は、自動修正ONの場合だけ総合検査されます/);
+  assert.match(current, /自動修正OFFは画像検査なし/);
+  assert.match(current, /重大な破綻だけ最大1回修正/);
+  assert.doesNotMatch(current, /APIで新しく生成した画像は自動検査されます/);
   assert.match(current, /手動の「AIで画像を再検査」ボタンはありません/);
 });
 

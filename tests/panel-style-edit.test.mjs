@@ -39,12 +39,12 @@ test('both panel edit methods carry the source monochrome medium without changin
     if(mode==='free') assert.ok(mono.prompt.includes(options.instruction));
   }
 });
-test('Gemini uses supported square canvases without shrinking native panels', () => {
-  for (const [width, edge, imageSize] of [[800, 1024, '1K'], [1500, 2048, '2K'], [2200, 4096, '4K']]) {
+test('Gemini uses the nearest supported aspect ratio while retaining the native input panel', () => {
+  for (const [width, imageSize] of [[800, '1K'], [1500, '2K'], [2200, '4K']]) {
     const plan = createPanelStyleEditPlan({width:3000,height:4000}, {x:0,y:0,width,height:300}, undefined, 'gemini');
-    assert.deepEqual(plan.canvas,{width:edge,height:edge});
+    assert.deepEqual(plan.canvas,{width,height:300});
     assert.equal(plan.editRegion.width,width);
-    assert.deepEqual(plan.imageOptions,{aspectRatio:'1:1',imageSize});
+    assert.deepEqual(plan.imageOptions,{aspectRatio:'21:9',imageSize});
     const request = buildPanelStyleEditRequest(sourceUrl,plan,{style:'SKETCH',colorMode:'monochrome'});
     assert.match(request.prompt,/monochrome/i);
   }
@@ -119,20 +119,20 @@ test('ambiguous crossing columns and mismatched plans remain editable without cl
   assert.throws(() => panelEditor.orderPanelStyleEditFrames([ordinary[0], { ...ordinary[0], x: 20 }], page), /重な|重複|領域/);
 });
 
-test('panel plan uses an existing API size, centers without scaling, and validates geometry before payment', () => {
-  for (const [size, width, height] of [['1120x1584', 1120, 1584], ['2240x3168', 2240, 3168]]) {
+test('panel plan retains the native selected rectangle and separates output resolution from manuscript size', () => {
+  for (const size of ['1120x1584', '2240x3168']) {
     const plan = createPanelStyleEditPlan({ width: 2000, height: 2800 }, region, size);
-    assert.equal(plan.size, size);
-    assert.deepEqual(plan.canvas, { width, height });
+    assert.equal(plan.size, 'auto');
+    assert.deepEqual(plan.canvas, { width: 80, height: 60 });
     assert.deepEqual(plan.region, region);
-    assert.deepEqual(plan.editRegion, { x: Math.floor((width - 80) / 2), y: Math.floor((height - 60) / 2), width: 80, height: 60 });
+    assert.deepEqual(plan.editRegion, { x: 0, y: 0, width: 80, height: 60 });
     assert.deepEqual(plan.page, { width: 2000, height: 2800 });
   }
   for (const invalid of [null, { ...region, x: -1 }, { ...region, y: 0.5 }, { ...region, width: 0 }, { ...region, x: 180 }]) {
     assert.throws(() => createPanelStyleEditPlan({ width: 200, height: 240 }, invalid, '1120x1584'), /領域|整数|画像/);
   }
   assert.throws(() => createPanelStyleEditPlan({ width: 200, height: 240 }, region, '80x60'), /対応|サイズ/);
-  assert.throws(() => createPanelStyleEditPlan({ width: 2240, height: 3168 }, { x: 0, y: 0, width: 2000, height: 500 }, '1120x1584'), /大きい.*サイズ/);
+  assert.doesNotThrow(() => createPanelStyleEditPlan({ width: 2240, height: 3168 }, { x: 0, y: 0, width: 2000, height: 500 }, '1120x1584'));
   assert.doesNotThrow(() => createPanelStyleEditPlan({ width: 2240, height: 3168 }, { x: 0, y: 0, width: 2000, height: 500 }, '2240x3168'));
 });
 
@@ -147,14 +147,14 @@ test('all six explicit styles reuse the common recipes while preserving the sour
     assert.match(request.prompt, /Camera\/Action/);
     assert.match(request.prompt, /dialogue.*exactly/i);
     assert.match(request.prompt, /expressions.*gaze.*poses/i);
-    assert.match(request.prompt, /padding.*not.*scene/i);
-    assert.match(request.prompt, /1120.*1584/);
-    assert.ok(request.prompt.includes(JSON.stringify(plan.editRegion)));
+    assert.match(request.prompt, /Do not add page padding/i);
+    assert.match(request.prompt, /80.*60/);
+    assert.match(request.prompt, /complete.*panel|complete.*composition/i);
     assert.match(request.prompt, /Do not add.*speaker names/i);
   }
   assert.throws(() => buildPanelStyleEditRequest(sourceUrl, plan, { style: 'UNKNOWN' }), /画風/);
   assert.throws(() => buildPanelStyleEditRequest(sourceUrl, plan, { style: 'POP_ART', colorMode: 'sepia' }), /カラー|色/);
-  assert.throws(() => buildPanelStyleEditRequest(sourceUrl, { ...plan, editRegion: { ...plan.editRegion, x: 0 } }, { style: 'POP_ART' }), /領域|計画/);
+  assert.throws(() => buildPanelStyleEditRequest(sourceUrl, { ...plan, editRegion: { ...plan.editRegion, x: 1 } }, { style: 'POP_ART' }), /領域|計画/);
 });
 
 test('composition changes only the selected exact pixels and preserves both inputs including alpha', () => {
@@ -188,8 +188,8 @@ test('free panel edits retain literal requested changes without style-mode locks
     assert.ok(request.prompt.includes(instruction), 'the complete user request stays literal');
     assert.match(request.prompt, /except where the user explicitly requests a change and its necessary local consequences/);
     assert.match(request.prompt, /user instruction takes priority/i);
-    assert.ok(request.prompt.includes(JSON.stringify(plan.editRegion)));
-    assert.match(request.prompt, /1120 x 1584/);
+    assert.match(request.prompt, /complete.*panel|complete.*composition/i);
+    assert.match(request.prompt, /80 x 60/);
     assert.match(request.prompt, /padding/i);
     assert.doesNotMatch(request.prompt, /SELECTED PANEL STYLE EDIT|Keep all dialogue text exactly|Keep the existing Camera\/Action|Maintain full color|Maintain monochrome|Change only the drawing medium|Do not add labels, speaker names/);
     assert.doesNotMatch(request.prompt, /ACTOR MEDIUM|PANEL STYLE LOCK|Every visible actor in this frame/);
@@ -261,15 +261,14 @@ async function withCanvas(run) {
       },
       drawImage(input, ...args) {
         const inputPixels = input.pixels;
-        let sx = 0, sy = 0, sw = inputPixels.width, sh = inputPixels.height, dx, dy;
+        let sx = 0, sy = 0, sw = inputPixels.width, sh = inputPixels.height, dx, dy, dw = sw, dh = sh;
         if (args.length === 2) [dx, dy] = args;
         else {
-          let dw, dh; [sx, sy, sw, sh, dx, dy, dw, dh] = args;
-          assert.equal(sw, dw, 'no panel rescale'); assert.equal(sh, dh, 'no panel rescale');
+          [sx, sy, sw, sh, dx, dy, dw, dh] = args;
         }
         const target = current();
-        for (let y = 0; y < sh; y++) for (let x = 0; x < sw; x++) {
-          const start = ((sy + y) * inputPixels.width + sx + x) * 4;
+        for (let y = 0; y < dh; y++) for (let x = 0; x < dw; x++) {
+          const start = ((sy + Math.floor(y * sh / dh)) * inputPixels.width + sx + Math.floor(x * sw / dw)) * 4;
           target.data.set(inputPixels.data.subarray(start, start + 4), ((dy + y) * target.width + dx + x) * 4);
         }
       },
@@ -351,12 +350,10 @@ test('browser adapter pads only one native crop, rejects bad output dimensions, 
   const prepared = await preparePanelStyleEdit(source, region, { requestedSize: '1120x1584', style: 'POP_ART', colorMode: 'color' });
   assert.equal(prepared.sourceImage, source);
   assert.deepEqual([env.registry.get(prepared.before).width, env.registry.get(prepared.before).height], [80, 60]);
-  const padded = env.registry.get(prepared.request.imageInputs[0].image_url);
-  const target = prepared.plan.editRegion;
-  assert.deepEqual([...padded.data.slice(0, 4)], [255, 255, 255, 255]);
-  assert.deepEqual([...padded.data.slice((target.y * padded.width + target.x) * 4, (target.y * padded.width + target.x) * 4 + 4)], [20, 25, 45, 255]);
-  // Changed padding is discarded, not a false reason for paid regeneration.
-  const returned = image(padded.width, padded.height, () => [9, 8, 7, 255]);
+  const sent = env.registry.get(prepared.request.imageInputs[0].image_url);
+  assert.deepEqual([sent.width,sent.height],[region.width,region.height]);
+  assert.deepEqual([...sent.data.slice(0,4)],[20,25,45,255]);
+  const returned = image(region.width,region.height, () => [9,8,7,255]);
   const composed = await composePanelStyleEdit(source, env.add(returned), prepared.plan);
   assert.equal(composed.outsidePixelsUnchanged, true);
   assert.deepEqual([composed.width, composed.height], [200, 240]);
@@ -364,8 +361,6 @@ test('browser adapter pads only one native crop, rejects bad output dimensions, 
   assert.deepEqual(result, composePanelPixels(pixels, image(80, 60, () => [9, 8, 7, 255]), region));
   assert.deepEqual(env.registry.get(source), pixels);
   assert.deepEqual([env.registry.get(composed.after).width, env.registry.get(composed.after).height], [80, 60]);
-  await assert.rejects(composePanelStyleEdit(source, env.add(image(560, 792)), prepared.plan), /寸法|サイズ/);
-  await assert.rejects(composePanelStyleEdit(source, env.add(image(1584, 1120)), prepared.plan), /寸法|サイズ/);
   await assert.rejects(composePanelStyleEdit(env.add(image(199, 240)), env.add(returned), prepared.plan), /元画像|寸法/);
   env.onEncode = output => { if (output.width === 200 && output.height === 240) output.data[0] ^= 255; };
   await assert.rejects(composePanelStyleEdit(source, env.add(returned), prepared.plan), /範囲外|コマ外/);
@@ -385,7 +380,6 @@ test('free edit preparation and composition use the same crop boundary and retai
   assert.equal(composed.outsidePixelsUnchanged, true);
   assert.deepEqual(env.registry.get(composed.dataUrl), composePanelPixels(pixels, patch, region));
   assert.deepEqual(env.registry.get(source), pixels);
-  await assert.rejects(composePanelStyleEdit(source, env.add(image(560, 792)), prepared.plan), /寸法|サイズ/);
 }));
 
 test('local source, returned PNG and PNG round-trip may exceed upload size while API inputs still reject it', async () => withCanvas(async env => {
@@ -412,7 +406,7 @@ test('local source, returned PNG and PNG round-trip may exceed upload size while
   const result = await composePanelStyleEdit(largeUrl, largeUrl, plan);
   assert.equal(result.outsidePixelsUnchanged, true);
   assert.equal(result.dataUrl, largeUrl, 'the oversized local PNG round-trip is retained');
-  assert.deepEqual(env.registry.get(largeUrl).data, pixels.data);
+  assert.equal(env.registry.get(result.after).data.length, region.width * region.height * 4);
   assert.throws(() => normalizeOpenAIImageDataUrl(largeUrl), /API.*上限/);
   assert.throws(() => buildPanelStyleEditRequest(largeUrl, plan, { mode: 'free', instruction: '小物だけ修正する。' }), /API.*上限/);
 }));
@@ -427,4 +421,37 @@ test('local decoding still rejects unsafe MIME, malformed base64, failed decode 
   }
   await assert.rejects(composePanelStyleEdit(source, env.add(image(0, 100)), plan), /寸法|画像/);
   assert.deepEqual(env.registry.get(source), pixels);
+}));
+
+// A provider returns an entire edited panel, not a small rectangle at a fixed
+// offset in an A4 page. Every edge must survive preview and page composition.
+test('panel-only input and complete same-size API output retain all four corners without central cropping', async () => withCanvas(async env => {
+  const pixels=image(200,240);
+  const source=env.add(pixels);
+  for (const provider of ['openai','gemini']) {
+    const prepared=await preparePanelStyleEdit(source,region,{provider,style:'POP_ART'});
+    const sent=env.registry.get(prepared.request.imageInputs[0].image_url);
+    assert.deepEqual([sent.width,sent.height],[region.width,region.height],'send the panel, without page padding');
+    const returned=image(region.width,region.height,(x,y)=>[x,y,190,255]);
+    const result=await composePanelStyleEdit(source,env.add(returned),prepared.plan);
+    assert.deepEqual(env.registry.get(result.after),returned,'preview preserves every returned pixel');
+    assert.deepEqual(env.registry.get(result.dataUrl),composePanelPixels(pixels,returned,region));
+    assert.equal(result.outsidePixelsUnchanged,true);
+  }
+}));
+
+test('different-resolution and different-aspect returns keep every corner in the same fixed replacement box', async () => withCanvas(async env => {
+  const pixels=image(200,240), source=env.add(pixels);
+  const plan=createPanelStyleEditPlan(pixels,region);
+  const colors=[[230,20,20,255],[20,230,20,255],[20,20,230,255],[30,30,30,255]];
+  for(const [width,height] of [[160,120],[120,160]]) {
+    const returned=image(width,height,(x,y)=>colors[(y>=height/2?2:0)+(x>=width/2?1:0)]);
+    const result=await composePanelStyleEdit(source,env.add(returned),plan);
+    const patch=env.registry.get(result.after);
+    assert.deepEqual([patch.width,patch.height],[region.width,region.height]);
+    for(const color of colors) assert.ok(Array.from({length:patch.width*patch.height},(_,i)=>i*4)
+      .some(i=>color.every((channel,c)=>patch.data[i+c]===channel)),'A complete corner region must survive fitting');
+    assert.deepEqual(env.registry.get(result.dataUrl),composePanelPixels(pixels,patch,region));
+    assert.deepEqual(env.registry.get(source),pixels);
+  }
 }));

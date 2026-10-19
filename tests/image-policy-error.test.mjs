@@ -18,7 +18,7 @@ test('does not misclassify a timeout as a policy error', () => {
   assert.equal(isImagePolicyError('Request timed out after 120 seconds.'), false);
 });
 
-test('automatically repairs and retries policy-blocked image generation up to five times', async () => {
+test('limits an explicitly requested policy repair to one proposal and one generation by default', async () => {
   const repairAttempts = [];
   const generationAttempts = [];
 
@@ -35,13 +35,13 @@ test('automatically repairs and retries policy-blocked image generation up to fi
     },
   });
 
-  assert.equal(MAX_IMAGE_POLICY_RETRIES, 5);
+  assert.equal(MAX_IMAGE_POLICY_RETRIES, 1);
   assert.equal(result.success, false);
   assert.equal(result.reason, 'policy_retry_exhausted');
-  assert.equal(result.attempts, 5);
-  assert.equal(repairAttempts.length, 5);
-  assert.equal(generationAttempts.length, 5);
-  assert.equal(result.promptHistory.length, 6);
+  assert.equal(result.attempts, 1);
+  assert.equal(repairAttempts.length, 1);
+  assert.equal(generationAttempts.length, 1);
+  assert.equal(result.promptHistory.length, 2);
   assert.equal(result.promptHistory[0], 'original prompt');
 });
 
@@ -49,6 +49,8 @@ test('stops policy retries as soon as a repaired image succeeds', async () => {
   const generatedPrompts = [];
 
   const result = await retryImagePolicyGeneration({
+    maxRetries: 3, // Explicit bound tests the reusable guard; the UI default remains one.
+
     initialPrompt: 'original prompt',
     initialPolicyError: 'content policy rejection',
     repairPrompt: async ({ prompt, attempt }) => ({
@@ -99,7 +101,7 @@ for (const modifiedPrompt of ['original prompt', '  original\n\t prompt  ']) {
     assert.equal(result.reason, 'policy_retry_exhausted');
     assert.equal(result.lastRepairReason, 'no_prompt_change');
     assert.equal(result.attempts, 0);
-    assert.equal(repairs, 5);
+    assert.equal(repairs, 1);
     assert.equal(result.prompt, 'original prompt');
     assert.deepEqual(result.promptHistory, ['original prompt']);
   });
@@ -108,6 +110,8 @@ for (const modifiedPrompt of ['original prompt', '  original\n\t prompt  ']) {
 test('stops a cycle before resending any previously rejected prompt', async () => {
   const generated = [];
   const result = await retryImagePolicyGeneration({
+    maxRetries: 3, // Explicit bound tests the reusable guard; the UI default remains one.
+
     initialPrompt: 'original', initialPolicyError: 'generic refusal',
     repairPrompt: async ({ attempt }) => ({ success: true, modifiedPrompt: attempt === 1 ? 'revised' : ' original\n' }),
     generateImage: async ({ prompt }) => { generated.push(prompt); return { success: false, policyError: 'generic refusal' }; },
@@ -138,6 +142,8 @@ test('rejects a broken repair contract before adopting the prompt or requesting 
 test('a generic repeated refusal does not prevent genuinely changed valid attempts', async () => {
   const checked = [], generated = [];
   const result = await retryImagePolicyGeneration({
+    maxRetries: 3, // Explicit bound tests the reusable guard; the UI default remains one.
+
     initialPrompt: 'original', initialPolicyError: 'generic refusal',
     repairPrompt: async ({ attempt }) => ({ success: true, modifiedPrompt: `revision ${attempt}` }),
     validatePrompt: prompt => checked.push(prompt),
@@ -153,6 +159,8 @@ for (const defect of ['unchanged', 'invalid', 'no_safe_revision']) {
   test(`replans a ${defect} proposal with feedback and generates the next valid proposal`, async () => {
     const generated = [], events = [];
     const result = await retryImagePolicyGeneration({
+      maxRetries: 2, // Explicit library bound for rejection-feedback regression.
+
       initialPrompt: 'original', initialPolicyError: 'generic refusal',
       repairPrompt: async ({ attempt, repairFeedback }) => {
         if (attempt === 1) return defect === 'no_safe_revision'
@@ -177,6 +185,8 @@ for (const defect of ['unchanged', 'invalid', 'no_safe_revision']) {
 test('a rejected cycle becomes feedback for a different plan instead of ending the workflow', async () => {
   const generated = [];
   const result = await retryImagePolicyGeneration({
+    maxRetries: 3, // Explicit bound tests the reusable guard; the UI default remains one.
+
     initialPrompt: 'original', initialPolicyError: 'generic refusal',
     repairPrompt: async ({ attempt, repairFeedback }) => {
       if (attempt === 3) {
@@ -193,7 +203,7 @@ test('a rejected cycle becomes feedback for a different plan instead of ending t
   assert.deepEqual(generated, ['first revision', 'new solution']);
 });
 
-test('STEP4 policy recovery keeps the last successful image and exposes the five-attempt limit', () => {
+test('STEP4 policy recovery keeps the last successful image and exposes the explicit one-attempt action', () => {
   const workflowSource = readFileSync(new URL('../src/hooks/useMangaWorkflow.js', import.meta.url), 'utf8');
   const step4Source = readFileSync(new URL('../src/components/Step4Panel.jsx', import.meta.url), 'utf8');
   const singleGenerationSource = workflowSource
@@ -202,6 +212,6 @@ test('STEP4 policy recovery keeps the last successful image and exposes the five
 
   assert.match(workflowSource, /retryImagePolicyGeneration/);
   assert.doesNotMatch(singleGenerationSource, /setGeneratedImage\((?:null|"")\)/);
-  assert.match(step4Source, /最大5回の修正検討/);
-  assert.match(step4Source, /その理由を次の検討に渡して作り直し/);
+  assert.match(step4Source, /表現修正を検討して再生成する（1回）/);
+  assert.match(step4Source, /上の表現修正ボタンを押した場合だけ、1回の修正検討/);
 });

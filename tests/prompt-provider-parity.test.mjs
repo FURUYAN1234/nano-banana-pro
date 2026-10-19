@@ -13,13 +13,13 @@ test('web copy and API generation preserve the same prompt body and OpenAI refer
   );
   assert.match(
     workflowSource,
-    /const\s+currentPrompt\s*=\s*overridePrompt\s*\|\|\s*finalPrompt\s*;/,
+    /const\s+editablePrompt\s*=\s*overridePrompt\s*\|\|\s*finalPrompt\s*;/,
     'API generation must start from finalPrompt unless a policy retry supplies an explicit replacement'
   );
   assert.match(
     workflowSource,
     /generateImageCandidate\(\s*currentPrompt\s*\)/,
-    'initial API generation must send the same currentPrompt used by the Web-copy flow'
+    'initial API generation must send the approved prompt after engine-credit and color-contract preparation'
   );
   assert.match(
     workflowSource,

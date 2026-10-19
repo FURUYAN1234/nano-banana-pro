@@ -237,11 +237,11 @@ test('completed STEP4 keeps its elapsed time last even after a post-generation s
 test('policy recovery UI follows the automatic-repair setting without claiming unperformed retries', () => {
   for (const allowImageQualityRepair of [false, true]) {
     const html = renderStep4({ isGeneratingImage: false, showPolicyChoice: true, allowImageQualityRepair });
-    const retry = html.match(/<button\b[^>]*>[^]*?もう一度自動修正して再生成する<\/button>/)?.[0];
+    const retry = html.match(/<button\b[^>]*>[^]*?表現修正を検討して再生成する（1回）<\/button>/)?.[0];
     assert.ok(retry);
     const retryTag = retry.slice(retry.lastIndexOf('<button'), retry.indexOf('>', retry.lastIndexOf('<button')) + 1);
     assert.equal(/disabled=""/.test(retryTag), !allowImageQualityRepair);
-    assert.equal(html.includes('自動修正OFFのため、追加の修正解析・画像生成は行いません。'), !allowImageQualityRepair);
+    assert.ok(html.includes('追加の解析・画像再送は自動では行いません。'));
     assert.doesNotMatch(html, /内部で最大5回まで[^<]*試しました/);
   }
 });
@@ -287,7 +287,7 @@ test('a previous image is preserved under the mask while the next image is still
 test('both generation and QA show one compact spinning status with their elapsed time', () => {
   for (const received of [false, true]) {
     const logs = received ? ['[4/5] データストリーム受信完了 (Model: fixture)'] : [];
-    logs.push(`[WAIT] ⏳ ${received ? '品質検査（文字・人物の観察）中… 検査累計4秒／上限600秒・STEP4' : '画像生成中… '}合計14秒経過`);
+    logs.push(`[WAIT] ⏳ ${received ? '品質検査中（文字・人物の観察）… 検査累計4秒／上限600秒・STEP4' : '画像生成中… '}合計14秒経過`);
     const result = renderStep4({ generatedImage: 'data:image/png;base64,YQ==', genLog: logs }).split('<section').at(-1);
     const status = result.match(/<p[^>]*role="status"[^>]*>[\s\S]*?<\/p>/)?.[0];
     assert.ok(status);

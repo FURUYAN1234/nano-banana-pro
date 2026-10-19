@@ -1,5 +1,28 @@
 # Nano Banana Pro handoff
 
+## v7.1.5 local candidate, STOP BEFORE DEPLOY (2026-10-19)
+
+Completed interrupted implementation and documentation preparation. Latest delivery boundary includes local candidate commit and strict pre-deploy validation, but excludes push, deployment, release, note/SNS and backup. No additional paid generation. Evidence owner: output/panel-edit-scale-20261019/resume-validation.json and resume-completion.json.
+
+Full suite2009:1994passed and15obsolete-fixture failures; all affected files rerun with94/94passing. Final lint/build/built-security and shared security audit passed (zero vulnerabilities). README, release notes, version7.1.5, two diagrams and three PDFs synchronized; all75PDF pages visually reviewed. Saved live IAB output and compact-schema sources match historical SHA256; unchanged panel core modules match their API-verified sources. Earlier whole-hook hash predates the one-pass changes; do not present that older record as exact current whole-hook proof.
+
+Remaining quality limits: latest inspection262.659s, STEP4 total506s; no measured latency improvement, no second paid review of the repair and no universal artistic-compliance claim. These are disclosed limits, not permission for further paid retries. The canceled v7.1.4 backup remains canceled and preserved. Older sections below are historical and superseded by this entry.
+
+## Active one-pass verification and Chrome recovery (2026-10-19)
+
+Current accepted flow and live status are in ../PLAN.md first ACTIVE section and output/panel-edit-scale-20261019/completion.json. OFF zero QA / ON one comprehensive QA and at most one material correction implemented. Focused408/409 initially passed; obsolete text assertion fixed and22 affected UI tests passed; lint/build/security and5 diagram tests passed. Normal Chrome free panel edit and actual autosave verified with zero outside-region pixel changes. Automatic ON final outcome and chosen-location manual save remain unverified due recurrent controller detachment. Do not interpret the earlier panel-only completion below as completion of the expanded task. No deployment or backup.
+
+
+## Local panel edit repair and save verification (2026-10-19)
+
+User boundary: repair and real API verification, STOP BEFORE DEPLOY. No commit, push, deploy or backup. The previously running v7.1.4 full backup was explicitly canceled; do not resume it.
+
+Panel enlargement came from page-sized padded input followed by a fixed central crop of the returned image. Native full-panel input and whole-output contain fitting now preserve the original replacement coordinates and dimensions. Direct adopt/discard removes the redundant checkbox; stale, busy, abort and outside-pixel guards remain. Status wording is now `品質検査中（詳細）`. README and troubleshooting describe the change.
+
+Evidence: `output/panel-edit-scale-20261019/`. Focused69 tests passed; after the final wording change, relevant46 tests, lint, build and built security passed. New OpenAI normal UI source generation used Luna for STEP1/2/3 and Sunburst max for the image. POP style1 and free instruction3 each used one image edit; both were adopted directly. Independent PNG audits: page2240x3168; style rectangle1128,171,1076,890; free rectangle1128,1076,1076,844; outside changed pixels0; previews exactly match adopted regions. Free instruction made the microphone handle red and retained its dark head, composition and text. Source manga QA retained warnings; this does not claim full manga quality PASS or Gemini live verification.
+
+Chrome production-saver integration with the actual two API PNGs created both files; pixels match and metadata exists. Fixture metadata is explicitly verification-only. In IAB, automatic save requests without a download receiver produced no file; documented download-event waiting saved both small probes and actual edited PNGs. Subsequent host-source diagnosis identified the intentional agent-control download gate: absent a receiver grant, active automation downloads are cancelled without a prompt. The installed handler passes6 isolated allow/deny checks. Correct documented reception saved both original API PNGs after10-second asynchronous delays with exact pixels and metadata. This corrects the verification procedure, not the app saver or host safety policy. Idle-user IAB behavior was not live-tested; do not claim the safety gate was removed. See host-download-policy-evidence.json and iab-delayed-save-audit.json. Latest raw adopted PNG was separately rescued to `C:/Users/sx717/Downloads/NanoBanana_自由入力修正後_保全_20261019.png`; that copy is not automatic-save evidence. Temporary public/diagnostic IAB tabs and isolated Chrome session closed; original IAB tab1 and Vite5173 retained. A later fresh DOM showed only STEP1 results, not the earlier generated history; the cause was not established. All source, adopted PNGs and API logs remain in the output folder. Do not regenerate paid images to recreate this state.
+
 ## v7.1.4 quality inspection deadline (2026-10-19)
 
 User authorized formal deploy and full backup. Root PLAN owns the live transaction. Shared cumulative QA600seconds, generation time excluded; timeout retains images/findings and stops automatic continuation. Local regression127 checks, lint, build and actual OpenAI UI verification passed before release metadata changes (QA233.455s, STEP4345s, quality warnings retained). Evidence: output/quality-review-budget-20261019. Release candidate preparation synchronizes README, three PDF guides and official pricing review dates. No additional paid generation is required for these documentation/version-only changes.

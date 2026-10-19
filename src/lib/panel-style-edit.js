@@ -27,27 +27,28 @@ function validateRegion(page, region) {
   }
 }
 
-// The existing provider accepts these manuscript canvases only. Padding keeps
-// the selected panel at native resolution; no invented API size or resampling.
+// The input is the complete native panel, never a tiny inset in a page canvas.
+// Provider output resolution is separate from the fixed page replacement box.
 export function createPanelStyleEditPlan(page, region, requestedSize = DEFAULT_OPENAI_IMAGE_SIZE, provider = 'openai') {
   validateRegion(page, region);
   if (!['openai', 'gemini'].includes(provider)) throw new RangeError('対応していないプロバイダーです。');
   const edge = provider === 'gemini' ? [1024, 2048, 4096].find(n => n >= Math.max(region.width, region.height)) : undefined;
-  const size = provider === 'gemini'
-    ? edge && { value: `${edge}x${edge}`, width: edge, height: edge }
-    : OPENAI_IMAGE_SIZE_OPTIONS.find(option => option.value === requestedSize);
-  if (!size) throw new RangeError('対応していない画像サイズです。');
-  if (region.width > size.width || region.height > size.height) {
-    throw new RangeError('原寸のコマが収まりません。大きい画像サイズを選択してください。');
-  }
+  if (provider === 'gemini' ? !edge : requestedSize !== 'auto'
+    && !OPENAI_IMAGE_SIZE_OPTIONS.some(option => option.value === requestedSize)) throw new RangeError('対応していない画像サイズです。');
+  const ratio = region.width / region.height;
+  const aspectRatio = ['1:1', '2:3', '3:2', '3:4', '4:3', '4:5', '5:4', '9:16', '16:9', '21:9']
+    .reduce((best, candidate) => {
+      const distance = value => { const [w, h] = value.split(':').map(Number); return Math.abs(Math.log(ratio / (w / h))); };
+      return distance(candidate) < distance(best) ? candidate : best;
+    });
   return Object.freeze({
     provider,
-    ...(provider === 'gemini' ? { imageOptions: Object.freeze({ aspectRatio: '1:1', imageSize: `${edge / 1024}K` }) } : {}),
+    ...(provider === 'gemini' ? { imageOptions: Object.freeze({ aspectRatio, imageSize: `${edge / 1024}K` }) } : {}),
     page: Object.freeze({ width: page.width, height: page.height }),
     region: Object.freeze({ x: region.x, y: region.y, width: region.width, height: region.height }),
-    size: size.value,
-    canvas: Object.freeze({ width: size.width, height: size.height }),
-    editRegion: Object.freeze({ x: Math.floor((size.width - region.width) / 2), y: Math.floor((size.height - region.height) / 2), width: region.width, height: region.height }),
+    size: 'auto',
+    canvas: Object.freeze({ width: region.width, height: region.height }),
+    editRegion: Object.freeze({ x: 0, y: 0, width: region.width, height: region.height }),
   });
 }
 
@@ -70,11 +71,11 @@ export function buildPanelStyleEditRequest(paddedSource, plan, { mode = 'style',
     if (style !== undefined) throw new RangeError('自由入力と画風の指定は併用できません。');
     if (typeof instruction !== 'string' || !instruction.trim()) throw new Error('修正したい内容を入力してください。');
     return buildImageEditRequest(paddedSource, [
-      'SELECTED PANEL EDIT: apply the user instruction only inside the existing panel rectangle.',
-      `The source is a ${plan.canvas.width} x ${plan.canvas.height} canvas. The panel rectangle in pixels is ${JSON.stringify(plan.editRegion)}.`,
-      'The surrounding white padding is not part of the scene. Keep the panel rectangle fixed; requested scene and camera changes occur inside it.',
+      'SELECTED PANEL EDIT: the supplied image is the complete selected panel, edge to edge.',
+      `Its source dimensions are ${plan.canvas.width} x ${plan.canvas.height}. Preserve this aspect ratio and the complete panel bounds.`,
+      'Apply requested scene and camera changes inside this panel. Do not add page padding or crop its edges.',
       'USER PANEL INSTRUCTION:', instruction.trim(),
-      `Return exactly one ${plan.canvas.width} x ${plan.canvas.height} image with the edited panel in its original pixel rectangle and white padding outside.`,
+      'Return exactly one complete edited panel filling the image. The app fits the whole returned image into the original panel rectangle.',
     ].join('\n'), {colorMode});
   }
   if (instruction !== undefined) throw new RangeError('画風指定と自由入力は併用できません。');
@@ -83,15 +84,15 @@ export function buildPanelStyleEditRequest(paddedSource, plan, { mode = 'style',
     || 'NORMAL: standard Japanese manga ink drawing. Keep identifying facial features and all acting.';
   return buildImageEditRequest(paddedSource, [
     `SELECTED PANEL STYLE EDIT: ${style}. Change only the drawing medium of the single existing panel.`,
-    `The source is a ${plan.canvas.width} x ${plan.canvas.height} canvas. The panel rectangle in pixels is ${JSON.stringify(plan.editRegion)}.`,
-    'The surrounding white padding is not part of the scene. Keep the panel at exactly this rectangle, dimensions and crop; do not expand, move, rotate or resize it.',
+    `The supplied image is the complete ${plan.canvas.width} x ${plan.canvas.height} selected panel, edge to edge. Preserve its aspect ratio and complete composition.`,
+    'Do not add page padding, expand the scene, move or crop the panel boundaries.',
     'Preserve every character identity, age, defining features, hair, skin, costume, character count, object, and spatial relationship. Translate the drawing construction into the selected medium.',
     'Keep the existing Camera/Action, lens, perspective, foreshortening, expressions, gaze and poses. Do not expose hidden faces, straighten a Dutch angle or zoom in.',
     'Keep all dialogue text exactly, including punctuation, balloon count, locations, tails and speaker assignments. Preserve silent panels as silent. Do not add labels, speaker names, titles or editing instructions.',
     colorMode === 'monochrome' ? 'Maintain monochrome ink/paper and the existing skin base distinctions.' : 'Maintain full color and the characters’ identifying colors.',
     'Apply the selected medium to every visible actor, face, hair, garment, prop and background within this panel, without changing the acting or scene.',
     recipe,
-    `Return exactly one ${plan.canvas.width} x ${plan.canvas.height} image with the edited panel in its original pixel rectangle and white padding outside.`,
+    'Return exactly one complete edited panel filling the image. The app fits the whole returned image into the original panel rectangle.',
   ].join('\n'), {colorMode});
 }
 
@@ -209,23 +210,28 @@ export async function preparePanelStyleEdit(sourceDataUrl, region, options = {})
   const { pixels } = await readPixels(sourceDataUrl);
   const plan = createPanelStyleEditPlan(pixels, region, options.requestedSize, options.provider);
   const before = (await extractNativeImageRegion(sourceDataUrl, region)).dataUrl;
-  const { image } = await readPixels(before);
-  const { canvas, context } = canvasFor(plan.canvas.width, plan.canvas.height);
-  context.fillStyle = '#ffffff'; context.fillRect(0, 0, canvas.width, canvas.height);
-  context.drawImage(image, plan.editRegion.x, plan.editRegion.y);
   return { sourceImage: sourceDataUrl, plan, before,
-    request: buildPanelStyleEditRequest(canvas.toDataURL('image/png'), plan, options) };
+    request: buildPanelStyleEditRequest(before, plan, options) };
 }
 
 export async function composePanelStyleEdit(sourceDataUrl, returnedDataUrl, plan) {
   validatePlan(plan);
   const { pixels: original } = await readPixels(sourceDataUrl);
   if (original.width !== plan.page.width || original.height !== plan.page.height) throw new RangeError('元画像の寸法が修正開始時と一致しません。');
-  const { pixels: returned } = await readPixels(returnedDataUrl);
-  if (returned.width !== plan.canvas.width || returned.height !== plan.canvas.height) {
-    throw new RangeError('返却画像の寸法が要求サイズと一致しません。元画像は変更していません。');
+  const { image: returnedImage, pixels: returned } = await readPixels(returnedDataUrl);
+  const { canvas: patchCanvas, context: patchContext } = canvasFor(plan.region.width, plan.region.height);
+  const scale = Math.min(plan.region.width / returned.width, plan.region.height / returned.height);
+  const fittedWidth = Math.max(1, Math.min(plan.region.width, Math.round(returned.width * scale)));
+  const fittedHeight = Math.max(1, Math.min(plan.region.height, Math.round(returned.height * scale)));
+  const left = Math.floor((plan.region.width - fittedWidth) / 2);
+  const top = Math.floor((plan.region.height - fittedHeight) / 2);
+  if (fittedWidth !== plan.region.width || fittedHeight !== plan.region.height) {
+    patchContext.fillStyle = '#ffffff'; patchContext.fillRect(0, 0, patchCanvas.width, patchCanvas.height);
   }
-  const after = (await extractNativeImageRegion(returnedDataUrl, plan.editRegion)).dataUrl;
+  patchContext.imageSmoothingEnabled = true;
+  patchContext.imageSmoothingQuality = 'high';
+  patchContext.drawImage(returnedImage, 0, 0, returned.width, returned.height, left, top, fittedWidth, fittedHeight);
+  const after = patchCanvas.toDataURL('image/png');
   const { pixels: patch } = await readPixels(after);
   const result = composePanelPixels(original, patch, plan.region);
   const { canvas, context } = canvasFor(result.width, result.height);

@@ -8,6 +8,24 @@ import { buildReferenceAssetContext } from '../src/lib/reference-assets.js';
 import { formatOpenAIImageEngineName } from '../src/lib/openai-image-settings.js';
 import { GEMINI_IMAGE_MODEL } from '../src/lib/gemini-image-settings.js';
 
+test('quality inspection status puts the detail after the in-progress word', () => {
+  const generation = workflow.slice(workflow.indexOf('const generateImageOnce ='), workflow.indexOf('const runPolicyAutoRetries ='));
+  const timer = generation.slice(generation.indexOf('const generationStartedAt'), generation.indexOf('// Artificial delay'));
+  let tick, log = [];
+  const context = { createImageReviewBudget, IMAGE_REVIEW_BUDGET_MS, generationOptions: {},
+    qualityRunEpoch: 1, scenarioRunEpochRef: { current: 1 }, Date: { now: () => 1000 },
+    setInterval: fn => { tick = fn; return 1; }, setGenLog: update => { log = update(log); } };
+  vm.createContext(context);
+  vm.runInContext(timer + ';globalThis.phase = value => { progressPhase = value; };', context);
+  for (const detail of ['文字・人物の観察', '台本との照合']) {
+    context.phase(`品質検査（${detail}）`); tick();
+    assert.ok(log[0].includes(`品質検査中（${detail}）`));
+  }
+  context.phase('画像生成'); tick();
+  assert.ok(log[0].includes('画像生成中…'));
+  assert.equal(log.length, 1);
+});
+
 const workflow = readFileSync(new URL('../src/hooks/useMangaWorkflow.js', import.meta.url), 'utf8');
 const assembly = workflow.slice(workflow.indexOf('const assemblePrompt ='), workflow.indexOf('// [v3.04]'));
 

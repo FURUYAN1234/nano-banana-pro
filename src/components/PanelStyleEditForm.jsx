@@ -17,7 +17,6 @@ function PanelStyleEditControls({ image, panelCount, maxPanelCount = 8, enabled 
   const [selectedIndex, setSelectedIndex] = useState(null);
   const [edit, setEdit] = useState({ mode: 'style', style: '', instruction: '' });
   const [candidate, setCandidate] = useState(null);
-  const [reviewed, setReviewed] = useState(false);
   const [pending, setPending] = useState('');
   const [error, setError] = useState('');
   const sending = useRef(false);
@@ -42,7 +41,6 @@ function PanelStyleEditControls({ image, panelCount, maxPanelCount = 8, enabled 
     setPrepared(null);
     setSelectedIndex(null);
     setCandidate(null);
-    setReviewed(false);
     setError('');
     setPending('prepare');
     void (async () => {
@@ -156,7 +154,6 @@ function PanelStyleEditControls({ image, panelCount, maxPanelCount = 8, enabled 
                 throw new Error('現在の選択と修正候補が一致しません。元画像はそのままです。');
               }
               setCandidate(result);
-              setReviewed(false);
             });
           }}>{targetLabel}を修正（追加課金あり）</button>
           </>}
@@ -167,30 +164,24 @@ function PanelStyleEditControls({ image, panelCount, maxPanelCount = 8, enabled 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '12px' }}>
             {[[candidate.before, '元のコマ'], [candidate.after, '修正候補']].map(([src, label]) => <figure key={label} style={{ margin: 0 }}>
               <figcaption style={{ ...copyStyle, textAlign: 'center' }} className="mb-2 text-center text-sm">{label}</figcaption>
-              <img src={src} alt={label} style={{ width: '100%', height: 'auto' }} />
+              <img src={src} alt={label} style={{ width: '100%', height: 'auto', maxHeight: '420px', objectFit: 'contain' }} />
             </figure>)}
           </div>
-          <label style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', margin: '8px 0', fontSize: '13px', lineHeight: 1.5 }} className="flex items-start gap-2 text-sm">
-            <input type="checkbox" aria-label="修正候補の目視確認" checked={reviewed} disabled={locked}
-              onChange={event => setReviewed(event.target.checked)} className="mt-1" />
-            <span>指定した修正、顔・髪・服の絵柄、人物の同一性・台詞・カメラ・演技、周囲とのつながりを目視で確認しました。</span>
-          </label>
+          <p style={copyStyle}>修正内容と台詞・人物・構図を比較し、採用するか元画像を保つか選んでください。</p>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }} className="flex flex-wrap gap-2">
-            <button type="button" style={actionStyle} className={buttonClass} disabled={locked || !reviewed} onClick={() => {
-              if (!reviewed || candidate.sourceImage !== image) return;
+            <button type="button" style={actionStyle} className={buttonClass} disabled={locked} onClick={() => {
+              if (candidate.sourceImage !== image) return;
               return run('adopt', async () => {
-                const adopted = await onAdopt({ candidate, reviewConfirmed: true });
+                const adopted = await onAdopt({ candidate });
                 if (!active.current) return;
                 if (!adopted) throw new Error('候補を採用できませんでした。元画像と処理状況を確認してください。');
                 setCandidate(null);
-                setReviewed(false);
               });
             }}>この候補を採用</button>
             <button type="button" style={actionStyle} className={buttonClass} disabled={locked} onClick={() => run('discard', async () => {
               await onDiscard();
               if (!active.current) return;
               setCandidate(null);
-              setReviewed(false);
             })}>候補を破棄して元画像を保つ</button>
           </div>
         </>}

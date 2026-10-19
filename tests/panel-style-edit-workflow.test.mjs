@@ -153,7 +153,7 @@ test('reopening a panel-only adoption passes its source lineage; whole-page chan
   assert.equal(options.editLineage.length, 0);
 });
 
-test('single paid call prepares candidate without replacing or saving original; reviewed adoption retains it', async () => {
+test('single paid call prepares candidate; direct explicit adoption retains the original without asserting visual review', async () => {
   const h = setup(); const { pending } = await start(h);
   assert.equal(h.calls.length, 1);
   assert.equal(h.calls[0].args[2].imageInputs[0].image_url, 'padded-panel');
@@ -161,9 +161,9 @@ test('single paid call prepares candidate without replacing or saving original; 
   h.calls[0].resolve(response); const candidate = await pending;
   assert.equal(h.state().displayed, source); assert.equal(h.state().history.length, 1);
   assert.equal(h.saves.length, 0); assert.equal(h.state().busy, false);
-  assert.equal(await h.context.adoptPanelStyleEdit({ candidate, reviewConfirmed: false }), false);
   assert.equal(await h.context.adoptPanelStyleEdit({ candidate: { ...candidate }, reviewConfirmed: true }), false);
-  assert.equal(await h.context.adoptPanelStyleEdit({ candidate, reviewConfirmed: true }), true);
+  assert.equal(await h.context.adoptPanelStyleEdit({ candidate }), true);
+  assert.equal(h.state().history[0].metadataContext.settings.visual_review_confirmed, undefined);
   assert.equal(h.state().displayed, 'composite'); assert.equal(h.state().history[1].img, source);
   assert.equal(h.state().history[0].qualityPass, false);
   assert.equal(h.state().history[0].metadataContext.settings.panel_count, 6);

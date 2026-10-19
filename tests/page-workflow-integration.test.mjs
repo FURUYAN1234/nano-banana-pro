@@ -9,6 +9,11 @@ test('Gemini cannot enter the native five-to-eight panel generation boundary', a
 });
 import {readFile} from 'node:fs/promises';
 import test from 'node:test';
+import {createServer} from 'vite';
+const reviewServer=await createServer({appType:'custom',logLevel:'silent',server:{middlewareMode:true,hmr:false}});
+let experimentalRepairIssues;
+try { ({experimentalRepairIssues}=await reviewServer.ssrLoadModule('/src/lib/experimental-manga.js')); }
+finally { await reviewServer.close(); }
 import { getWorkflowStep } from '../src/lib/generation-history.js';
 import { selectPanelMediumStyles } from '../src/lib/panel-medium-reference.js';
 
@@ -25,6 +30,7 @@ for (const isOpenAIEngine of [false,true]) for (const status of ['pass','warning
     const body=source.slice(source.indexOf('const reviewImageCandidate = async'))
       .match(/if\(experimentalPrepared\) \{([\s\S]*?)\r?\n        \}\r?\n        progressPhase/)[1];
     const review={status,observedCount:status==='unverified'?null:6,readingOrder:'pass',camera:'pass',style:'pass',story:'pass',anatomy:status==='warning'?'fail':'pass',pageText:'pass',issues:status==='pass'?[]:['人物の重複を検出'],
+      corrections:status==='warning'?[{type:'anatomy',panel:1,subject:'人物',observed:'腕が三本見える',expected:'両肩から二本の腕',correction:'余分な腕を除去する',materialImpact:'material',impactReason:'人物の動作が成立しない'}]:[],
       validationErrors:status==='unverified'?['evidence[2].camera: missing or too short']:[],
       pageEvidence:'実画像で確認した題字と左右のクレジット',
       ...(status==='unverified'?{}:{wardrobe_observation:{status:status==='warning'?'fail':'pass',evidence:'同じ人物の見える服の形と色を確認した。',issues:[]}}),
@@ -32,17 +38,18 @@ for (const isOpenAIEngine of [false,true]) for (const status of ['pass','warning
         style:'人物の顔も透明な水彩で描かれている',story:'右側の人物が窓を開いている',anatomy:'人物の腕は両肩から連続している'}]};
     const candidate={},progress=[],log=[],requests=[];
     const reviewContext=status==='pass'?undefined:{candidateLabel:status==='warning'?'以前の画像':'今回の画像'};
-    const scope={candidate,experimentalPrepared:{plan:{count:6},source:{}},generationScenario:'scenario',
+    const scope={candidate,experimentalRepairIssues,experimentalPrepared:{plan:{count:6},source:{}},generationScenario:'scenario',
       experimentalInput:()=>({}),buildExperimentalReviewPrompt:()=>'',reviewExperimentalImage:async(input,request)=>{
         assert.equal(input.reviewContext,reviewContext,'the caller forwards optional candidate context without inventing a review deadline');
         assert.equal(input.useStructuredOutput,isOpenAIEngine,'only the OpenAI route receives strict structured-output options');
         input.onPhaseProgress('inventory: 応答待ち');
-        await request('JSON',[],undefined,{responseFormat:'json_object'});return {review,requests:2};},
+        await request('JSON',[],undefined,{responseFormat:'json_object'});return {review,requests:1};},
       validateExperimentalReview:x=>x,onReviewProgress:value=>progress.push(value),signal:undefined,reviewContext,isOpenAIEngine,
       reviewRequest:(...args)=>requests.push(args),statCallback:value=>log.push(value),progressPhase:''};
     const result=await new AsyncFunction(...Object.keys(scope),body)(...Object.values(scope));
     assert.equal(result.pass,status==='pass');
     assert.equal(candidate.experimentalReview,review);
+    assert.equal(requests.length,1);
     assert.equal(requests[0][4].responseFormat,'json_object');
     assert.equal(requests[0][4].outputProfile,'image-quality-review');
     assert.equal(requests[0][4].timeoutMs,undefined,'provider response limits are not replaced by a cumulative QA timeout');
@@ -232,8 +239,10 @@ for (const colorMode of ['color','monochrome']) {
   });
 }
 
-test('only experimental candidate comparison receives the expanded-page contract',()=>{
- assert.equal((source.match(/approvedExperimentalPage:buildExperimentalPageContract/g)||[]).length,1);
- assert.match(source,/if\(experimentalPrepared\)[\s\S]*selectExperimentalCandidate[\s\S]*approvedExperimentalPage:buildExperimentalPageContract\(experimentalPrepared.plan,experimentalPrepared.source\)/);
- assert.match(source,/buildImageQualityComparisonPrompt\(\{ scenario:generationScenario, castList, finalPrompt: originalPrompt, \.\.\.comparisonOptions \}\)/);
+test('workflow configuration does not install a second review or candidate comparison callback',()=>{
+ assert.match(source,/await runPageImageQuality\(/);
+ for(const callback of ['compareCandidates','reviewCriticalCamera','analyzeFailure']) {
+   assert.doesNotMatch(source,new RegExp('\\b'+callback+'\\s*:'));
+ }
+ assert.doesNotMatch(source,/selectExperimentalCandidate\(/);
 });

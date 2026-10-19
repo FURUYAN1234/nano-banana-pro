@@ -18,13 +18,14 @@ import {
   selectImageQualityCandidate,
 } from '../src/lib/image-quality-failsafe.js';
 
-test('page contract keeps the four-panel gate identical and rejects cross-mode inputs before review', async () => {
+test('page contract skips review when OFF and rejects cross-mode inputs before review', async () => {
   const image={base64Img:'fixture'};
   for(const mode of ['four-panel','single-image']) {
     for(const pass of [true,false]) {
       const options={mode,originalCandidate:image,originalPrompt:'approved',allowRepair:false,
         reviewCandidate:async()=>({pass,issues:pass?[]:[{type:'panel_count',panel:null,reason:'wrong count'}]})};
-      assert.deepEqual(await pageWorkflow.runPageImageQuality({kind:mode,count:mode==='four-panel'?4:1},options),await executeQualityGate(options));
+      const result=await pageWorkflow.runPageImageQuality({kind:mode,count:mode==='four-panel'?4:1},{...options,reviewCandidate:()=>assert.fail('OFF cannot inspect')});
+      assert.equal(result.candidate,image);assert.equal(result.originalReview.skipped,true);
     }
   }
   let calls=0;
@@ -37,7 +38,7 @@ test('page contract keeps the four-panel gate identical and rejects cross-mode i
 
 test('experimental quality contract accepts only five to eight without changing normal four panels', async () => {
   let calls=0;
-  const options={mode:'experimental-manga',allowRepair:false,originalCandidate:{base64Img:'fixture'},originalPrompt:'approved',
+  const options={mode:'experimental-manga',allowRepair:true,originalCandidate:{base64Img:'fixture'},originalPrompt:'approved',
     reviewCandidate:async()=>{calls++;return {pass:true,issues:[]};}};
   for(const count of [1,4,9,5.5]) await assert.rejects(()=>pageWorkflow.runPageImageQuality({kind:'experimental-manga',count},options));
   assert.equal(calls,0);
@@ -47,16 +48,15 @@ test('experimental quality contract accepts only five to eight without changing 
   assert.equal(calls,5);
 });
 
-test('experimental page uses shared retention but cannot enter four-panel repair or camera audit', async () => {
-  const contract={kind:'experimental-manga',count:6};
-  const image={base64Img:'fixture'};
-  const options={mode:'experimental-manga',allowRepair:false,originalCandidate:image,originalPrompt:'six panels',
-    reviewCandidate:async()=>({pass:false,issues:[{type:'unverified',panel:6,reason:'review unavailable'}]})};
+test('experimental page uses its own count and cannot invoke separate camera or analysis audits', async () => {
+  const contract={kind:'experimental-manga',count:6}, image={base64Img:'fixture'};
+  const options={mode:'experimental-manga',allowRepair:true,originalCandidate:image,originalPrompt:'six panels',
+    reviewCandidate:async()=>({pass:false,issues:[{type:'unverified',panel:6,reason:'review unavailable'}]}),
+    generateRepairCandidate:()=>assert.fail('uncertainty cannot repair'),
+    reviewCriticalCamera:()=>assert.fail('extra audit prohibited'),analyzeFailure:()=>assert.fail('extra analysis prohibited')};
   const result=await pageWorkflow.runPageImageQuality(contract,options);
   assert.equal(result.candidate,image);assert.equal(result.attempts,1);assert.equal(result.canContinue,true);
-  for(const unsafe of [{allowRepair:true},{mode:'four-panel'},{generateRepairCandidate:()=>{}},{reviewCriticalCamera:()=>{}},{analyzeFailure:()=>{}}]) {
-    await assert.rejects(()=>pageWorkflow.runPageImageQuality(contract,{...options,...unsafe}));
-  }
+  await assert.rejects(()=>pageWorkflow.runPageImageQuality(contract,{...options,mode:'four-panel'}));
 });
 
 test('experimental warnings retain their verdict without claiming minor defects or triggering repair', async () => {
@@ -64,12 +64,12 @@ test('experimental warnings retain their verdict without claiming minor defects 
   for(const type of ['experimental_quality','unverified']) {
     const progress=[];
     const result=await pageWorkflow.runPageImageQuality({kind:'experimental-manga',count:5},{
-      mode:'experimental-manga',allowRepair:false,originalCandidate:image,originalPrompt:'five panels',
+      mode:'experimental-manga',allowRepair:false,reviewOnly:true,originalCandidate:image,originalPrompt:'five panels',
       reviewCandidate:async()=>({pass:false,issues:[{type,reason:'observed mismatch'}]}),onProgress:line=>progress.push(line),
     });
     assert.equal(result.candidate,image);
     assert.equal(result.attempts,1);
-    assert.equal(result.stopReason,type==='experimental_quality'?'review_warning':'unverified');
+    assert.equal(result.finalReview.issues[0].type,type);assert.equal(result.validationWarning,true);
     assert.doesNotMatch(progress.join('\n'),/軽微|重大な修正対象がない/);
   }
 });
@@ -913,7 +913,7 @@ test('repair prompt preserves the approved prompt and limits edits to concrete v
   assert.match(prompt, /^APPROVED SCRIPT AND LAYOUT/);
   assert.match(prompt, /prop_ownership/);
   assert.match(prompt, /Do not change the approved dialogue, cast, panel order, or story action/);
-  assert.match(prompt, /exactly four separate visible panels/i);
+  assert.match(prompt, /exactly 4 separate visible panels/i);
   assert.match(prompt, /original page geometry/i);
 });
 
@@ -1041,7 +1041,7 @@ test('source-image repair states change preserve and verify without changing the
   assert.ok(prompt.startsWith('APPROVED SCRIPT'));
   for (const label of ['SOURCE IMAGE TO EDIT', 'CHANGE:', 'PRESERVE:', 'VERIFY:']) assert.ok(prompt.includes(label));
   assert.match(prompt, /prop_ownership/);
-  assert.match(prompt, /exactly four separate visible panels/i);
+  assert.match(prompt, /exactly 4 separate visible panels/i);
   assert.match(prompt, /necessary local contact and shadow changes/i);
 });
 
@@ -1052,7 +1052,7 @@ test('source-image single illustration repair does not invent a comic layout', (
     issues: [{type: 'anatomy', panel: null, subject: 'hand', reason: 'extra finger'}],
   });
   assert.match(prompt, /same single illustration/i);
-  assert.doesNotMatch(prompt, /exactly four separate visible panels/i);
+  assert.doesNotMatch(prompt, /exactly 4 separate visible panels/i);
 });
 
 test('missing geometric evidence retains the completed image without image regeneration and remains unverified', async () => {

@@ -32,5 +32,6 @@ test('generated image actions expose only the PNG download label and no debug co
   assert.match(workflow, /originalImage: retainedHistory\?\.originalImage/);
   assert.match(workflow, /pageLayout: retainedHistory\?\.pageLayout/);
   assert.match(workflow, /if \(originalCandidate\.pageLayout \|\| experimentalPrepared\)[\s\S]*setGenerationHistory/);
-  assert.match(workflow, /candidateImages = new Set[\s\S]*removeImages:\s*candidateImages/);
+  assert.doesNotMatch(workflow, /removeImages:\s*candidateImages/);
+  assert.match(workflow, /return addGenerationHistoryItem\(retained, acceptedHistoryItem, \{ removeImages: new Set\(\[acceptedImageStr\]\)/);
 });

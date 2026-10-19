@@ -55,17 +55,17 @@ test('unreadable comparison responses cannot be reported as a completed selectio
   }
 });
 
-test('invalid image QA is repaired once by AI with the same images; valid uncertainty does not retry', async () => {
+test('invalid image QA remains unverified without retry; valid uncertainty does not retry', async () => {
   const good = {text: JSON.stringify({pass:true, observations, spatial_checks:spatialChecks(), issues:[]})};
   const images = [{image_url:'test-image'}];
   const calls = [];
   const result = await imageQualityQa.requestImageQualityQa({prompt:'Inspect unchanged image',images,request:async (...args) => {
     calls.push(args); return calls.length === 1 ? {text:'{invalid'} : good;
   }});
-  assert.equal(calls.length,2);
-  assert.strictEqual(calls[1][1],images);
-  assert.match(calls[1][0],/Inspect unchanged image/);
-  assert.equal(result.review.pass,true);
+  assert.equal(calls.length,1);
+  assert.strictEqual(calls[0][1],images);
+  assert.equal(result.review.pass,false);
+  assert.equal(result.review.requestFailed,true);
   let count=0;
   await imageQualityQa.requestImageQualityQa({prompt:'Inspect',images,request:async () => {
     count++; return {text:'{"pass":false,"issues":[{"type":"unverified","reason":"occluded"}]}'};
@@ -73,10 +73,10 @@ test('invalid image QA is repaired once by AI with the same images; valid uncert
   assert.equal(count,1);
 });
 
-test('QA format recovery never invents PASS after another malformed response or cancellation', async () => {
+test('QA never invents PASS or retries a malformed response or cancellation', async () => {
   let count=0;
   const result = await imageQualityQa.requestImageQualityQa({prompt:'Inspect',request:async () => {count++;return {text:'invalid'};}});
-  assert.equal(count,2);
+  assert.equal(count,1);
   assert.equal(result.review.pass,false);
   assert.equal(result.review.requestFailed,true);
   const controller=new AbortController();

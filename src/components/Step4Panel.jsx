@@ -1268,10 +1268,10 @@ No explanations. No partial results.`;
                 </div>
               )}
               <label className="step4-help-copy mt-3 flex items-start gap-2 text-slate-300">
-                <input type="checkbox" checked={!experimentalEnabled && allowImageQualityRepair} onChange={event => setAllowImageQualityRepair(event.target.checked)} disabled={experimentalEnabled || isGeneratingImage || isFixingPolicy} />
-                {experimentalEnabled ? '5～8コマ生成では自動修正を行いません。生成画像と検査結果を保持します。' : 'API生成の自動修正を許可する（品質の重大欠陥は最大3回、ポリシー拒否は別枠で最大5回。解析・再生成・再検査は追加課金／全候補NGなら最良候補を保持／OFFでは追加の画像生成なし）'}
+                <input type="checkbox" checked={allowImageQualityRepair} onChange={event => setAllowImageQualityRepair(event.target.checked)} disabled={isGeneratingImage || isFixingPolicy} />
+                自動修正（OFF：検査せず生成画像を保存。ON：総合検査1回で問題を確認し、必要な修正をまとめて最大1回反映。追加のAPI料金が発生します。残る修正は自由入力・コマ修正で行えます）
               </label>
-              {(isGeneratingImage || policyAutoRetrying) && !experimentalEnabled && allowImageQualityRepair && (
+              {(isGeneratingImage || policyAutoRetrying) && allowImageQualityRepair && (
                 <button
                   type="button"
                   onClick={stopQualityRetries}
@@ -1326,7 +1326,7 @@ No explanations. No partial results.`;
                   </div>
                   <p className="text-yellow-200/80 leading-relaxed" style={{ fontSize: '12px' }}>
                     AIの安全基準により画像生成が拒否されました。最後に成功した画像と生成履歴は保持しています。修正の実行状況は進捗ログで確認できます。
-                    {(experimentalEnabled || !allowImageQualityRepair) && ' 自動修正OFFのため、追加の修正解析・画像生成は行いません。'}
+                    {' 追加の解析・画像再送は自動では行いません。'}
                   </p>
                   <div className="flex flex-col sm:flex-row gap-2">
                     <button
@@ -1338,7 +1338,7 @@ No explanations. No partial results.`;
                       {policyAutoRetrying ? (
                         <><Loader2 size={16} className="animate-spin" /> 自動修正中...</>
                       ) : (
-                        <><RefreshCw size={16} /> もう一度自動修正して再生成する</>
+                        <><RefreshCw size={16} /> 表現修正を検討して再生成する（1回）</>
                       )}
                     </button>
                     <button
@@ -1351,7 +1351,7 @@ No explanations. No partial results.`;
                     </button>
                   </div>
                   <p className="text-slate-400" style={{ fontSize: '10px' }}>
-                    💡 自動修正をONにして再実行すると、最大5回の修正検討を行います。無変更・拒否済みの文への逆戻り・必須設定に違反する案は、その理由を次の検討に渡して作り直します。画像APIは変更と必須条件の検査を通った案だけで再利用します。修正解析にもAPI料金が発生します。取得済みの画像と有効な指示文を保持します。
+                    上の表現修正ボタンを押した場合だけ、1回の修正検討を行います。無変更・拒否済みの文への逆戻り・必須設定に違反する案は送信しません。画像APIは変更と必須条件の検査を通った案だけで再利用します。修正解析にもAPI料金が発生します。取得済みの画像と有効な指示文を保持します。
                     {policyPromptHistory?.length > 0 && ` 現在のプロンプト履歴: ${policyPromptHistory.length}件。`}
                   </p>
                 </div>

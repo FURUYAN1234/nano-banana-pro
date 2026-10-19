@@ -55,22 +55,17 @@ import {
   buildBubbleInventoryPrompt,
   applyBubbleInventory,
   buildImageQualityQaPrompt,
-  requestActorHandAudit,
-  extractPanelCastContracts,
-  buildCriticalCameraQaRequest,
-  parseCriticalCameraQaResponse,
-  buildImageQualityComparisonPrompt,
-  parseImageQualityComparison,
+  extractBubbleContracts,
   formatImageQualityIssue,
   requestImageQualityQa
 } from '../lib/image-quality-qa';
-import { buildImageFailureAnalysisPrompt, formatImageQualityStopReason, GEMINI_IMAGE_REPAIR_PROMPT_MAX_CHARS, inferImageQualityMode, isMaterialImageQualityIssue, runPageImageQuality } from '../lib/image-quality-failsafe';
+import { formatImageQualityStopReason, GEMINI_IMAGE_REPAIR_PROMPT_MAX_CHARS, inferImageQualityMode, isMaterialImageQualityIssue, runPageImageQuality } from '../lib/image-quality-failsafe';
 import { getEffectiveEngine } from '../lib/engine-state';
 import { DEFAULT_OPENAI_IMAGE_QUALITY, DEFAULT_OPENAI_IMAGE_SIZE, normalizeOpenAIImageSize, normalizeOpenAIImageQuality, resolveOpenAIImageOption, formatOpenAIImageEngineName, applyOpenAIImageEngineWatermark, selectInitialOpenAIImageQuality, isOpenAIImageVerificationError, OPENAI_IMAGE_VERIFICATION_MESSAGE } from '../lib/openai-image-settings.js';
 import { DEFAULT_OPENAI_STEP1_MODEL_ID, DEFAULT_OPENAI_SCENARIO_MODEL_ID, DEFAULT_OPENAI_STEP3_MODEL_ID, OPENAI_SCENARIO_MODEL_OPTIONS, OPENAI_SCENARIO_TEXT_MODEL_IDS, OPENAI_VISION_MODEL_IDS } from '../lib/openai-model-routes.js';
 
-import { prepareExperimentalManga, buildExperimentalPageContract, buildExperimentalReviewPrompt, reviewExperimentalImage, validateExperimentalReview, reviewExperimentalCandidatePair, selectExperimentalCandidate, summarizeExperimentalLayouts } from '../lib/experimental-manga.js';
-import { resolvePageWorkflow, applyPageCandidateSelection } from '../lib/page-workflow.js';
+import { prepareExperimentalManga, buildExperimentalReviewPrompt, reviewExperimentalImage, validateExperimentalReview, experimentalRepairIssues, summarizeExperimentalLayouts } from '../lib/experimental-manga.js';
+import { resolvePageWorkflow } from '../lib/page-workflow.js';
 
 export default function useMangaWorkflow({ experimentalEnabled: requestedExperimentalEnabled = true } = {}) {
   const [analysisModelId, setAnalysisModelIdState] = useState(DEFAULT_OPENAI_STEP1_MODEL_ID);
@@ -1894,7 +1889,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
       beginApiWork();
       const response = isOpenAIEngine
         ? await generateImageWithOpenAI(edit.request.prompt, log, {
-          quality: openAIImageQuality, size: edit.plan.size, imageInputs: edit.request.imageInputs,
+          quality: openAIImageQuality, size: edit.plan.size, imageInputs: edit.request.imageInputs, panelEdit: true,
         })
         : await generateImageWithImagen(edit.request.prompt, log, edit.request.referenceImages, edit.plan.imageOptions);
       if (!isCurrent()) return null;
@@ -1933,13 +1928,13 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
       if (imageEditRunRef.current === run) imageEditRunRef.current = null;
     }
   };
-  const adoptPanelStyleEdit = async ({ candidate, reviewConfirmed }) => {
+  const adoptPanelStyleEdit = async ({ candidate }) => {
     const run = imageEditRunRef.candidate;
-    if (reviewConfirmed !== true || !candidate
+    if (!candidate
       || run?.value !== candidate || run.epoch !== scenarioRunEpochRef.current
       || candidate.sourceImage !== generatedImage || panelStyleEditBusy()
       || candidate.outsidePixelsUnchanged !== true) {
-      showStatus('現在の修正候補と確認項目を確認してから採用してください。');
+      showStatus('現在の画像に対応する修正候補を選んでください。');
       return false;
     }
     const timestamp = Date.now();
@@ -1959,10 +1954,11 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
             mode: candidate.mode, ...(candidate.mode === 'free' ? { instruction: candidate.instruction } : { style: candidate.style }) },
           panel_style_edit: candidate.mode === 'style'
             ? { panel_index: candidate.panelIndex, region: candidate.region, style: candidate.style } : undefined,
-          outside_panel_pixels_unchanged: true, visual_review_confirmed: true, quality_review: 'not_run',
+          outside_panel_pixels_unchanged: true, quality_review: 'not_run',
         },
       },
     };
+    delete item.metadataContext.settings.visual_review_confirmed;
     setGenerationHistory(items => addGenerationHistoryItem(addGenerationHistoryItem(
       items.filter(entry => entry.img !== sourceImage),
       sourceHistory || { id: timestamp - 1, img: sourceImage }), item));
@@ -2170,7 +2166,10 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
       const elapsed = Math.floor((Date.now() - generationStartedAt) / 1000);
       const reviewTime = qualityBudget.elapsedMs > 0
         ? `検査累計${Math.floor(qualityBudget.elapsedMs / 1000)}秒／上限${IMAGE_REVIEW_BUDGET_MS / 1000}秒・` : '';
-      const waitLine = `[WAIT] ⏳ ${progressPhase}中… ${reviewTime}STEP4合計${elapsed}秒経過`;
+      const detailStart = progressPhase.indexOf('（');
+      const phaseStatus = detailStart < 0 ? `${progressPhase}中`
+        : `${progressPhase.slice(0, detailStart)}中${progressPhase.slice(detailStart)}`;
+      const waitLine = `[WAIT] ⏳ ${phaseStatus}… ${reviewTime}STEP4合計${elapsed}秒経過`;
       setGenLog(prev => {
         if (qualityRunEpoch !== scenarioRunEpochRef.current) return prev;
         const waitIndex = prev.findIndex(entry => entry.startsWith("[WAIT]"));
@@ -2286,7 +2285,9 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
       };
 
       const reviewImageCandidate = async (candidate, candidatePrompt, { onReviewProgress, signal, reviewContext } = {}) => {
+        let reviewRequests=0;
         const reviewRequest=async(prompt,attachments,system,progress,options={})=>{
+          if(reviewRequests++!==0) throw new Error('総合検査は1回までです。追加検査は実行しません。');
           signal?.throwIfAborted();
           const response=await callAI(prompt,attachments,system,message=>{
             if(!signal?.aborted) progress?.(message);
@@ -2300,7 +2301,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
             prompt:buildExperimentalReviewPrompt(experimentalPrepared.plan,experimentalPrepared.source,experimentalInput(generationScenario)),signal,reviewContext,useStructuredOutput:isOpenAIEngine,
             onPhaseProgress:message=>{
               if(signal?.aborted) return;
-              progressPhase=message.includes('inventory:')?'品質検査（文字・人物の観察）':'品質検査（台本との照合）';
+              progressPhase='総合検査（画像・台本・人物・文字・構図）';
               statCallback(`[QUALITY QA] ${message}`);
             }},
             (prompt,attachments,signal,options)=>reviewRequest(prompt,attachments,null,msg=>statCallback(`[QUALITY QA] ${msg}`),{...options,signal,outputProfile:'image-quality-review'}));
@@ -2320,7 +2321,9 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
             if(value) statCallback(`[${observationLabel} / ${key}] ${value}`);
           }
           const result={pass:review.status==='pass',
-            issues:review.issues.map(reason=>({type:review.status==='warning'?'experimental_quality':'unverified',panel:null,reason})),
+            issues:[...experimentalRepairIssues(review,experimentalPrepared.plan),
+              ...review.issues.map(reason=>({type:'unverified',panel:null,reason}))],
+            evidenceContext:{panelCount:experimentalPrepared.plan.count},
             observations};
           onReviewProgress?.(result);
           return result;
@@ -2362,7 +2365,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
             panelImages,
             referenceImages: images,
           });
-          const qualityPrompt = buildImageQualityQaPrompt({
+          let qualityPrompt = buildImageQualityQaPrompt({
             scenario:generationScenario,
             castList,
             finalPrompt: candidatePrompt,
@@ -2372,6 +2375,15 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
             evidenceContext,
             requirePanelStyleEvidence: isOpenAIEngine && colorMode === 'color',
           });
+          if (qualityMode === 'four-panel') {
+            const inventoryInstructions=buildBubbleInventoryPrompt({panelCropCount:panelImages.length})
+              .replace('No script or reference sheet is supplied.','Read the image pixels; expected speech is withheld.')
+              .replace('Return JSON only:', 'Add this panels array to the SAME quality-review JSON object:');
+            qualityPrompt+='\n'+inventoryInstructions;
+            for(const {texts} of extractBubbleContracts(candidatePrompt)) for(const text of texts) {
+              if(text) qualityPrompt=qualityPrompt.replaceAll(text,'<expected speech withheld>');
+            }
+          }
           const nativeReview = review;
           const { response: qualityResponse, review: parsedReview } = await requestImageQualityQa({
             prompt: qualityPrompt, images: qualityImageParts, request: reviewRequest,
@@ -2392,63 +2404,13 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
           const reviewTokens = qualityResponse.usage?.completion_tokens ?? qualityResponse.usage?.output_tokens;
           statCallback(`[QUALITY QA] 応答サイズ: ${String(qualityResponse.text ?? '').length.toLocaleString()}文字${Number.isFinite(reviewTokens) ? `・出力 ${reviewTokens.toLocaleString()} tokens` : ''}。`);
           if (review.requestFailed) return review;
-          const missingCastEvidence = issue => issue.type === 'unverified' && (issue.subject === 'cast_count'
-            || issue.reason?.startsWith('Named-cast count lacks distinct body locations'));
-          const missingHandPanels = new Set(review.issues
-            .filter(issue => issue.type === 'unverified' && issue.reason?.startsWith('Missing or incomplete per-actor visible-hand inventory')
-              || missingCastEvidence(issue))
-            .map(issue => issue.panel));
-          if (qualityMode === 'four-panel' && panelImages.length === 4 && missingHandPanels.size) {
-            const contracts = extractPanelCastContracts(candidatePrompt).filter(({ panel }) => missingHandPanels.has(panel));
-            if (contracts.length) {
-              statCallback(`[QUALITY QA] 人物・手の記録が欠けた${contracts.map(({ panel }) => `${panel}コマ`).join('・')}を各コマの拡大画像で補足検査します。画像は再生成しません。`);
-              await Promise.all(contracts.map(async contract => {
-                try {
-                  const { response: audit, issues: auditIssues } = await requestActorHandAudit({
-                    contracts: [contract], panelImages, referenceImages: images, castList, request: reviewRequest,
-                    onProgress: msg => statCallback(`[手の独立監査 / ${contract.panel}コマ] ${msg}`),
-                  });
-                  statCallback(`[人物・手の観察 / ${contract.panel}コマ] ${audit.text}`);
-                  const stillMissing = new Set(auditIssues
-                    .filter(issue => issue.reason?.startsWith('Missing or incomplete per-actor visible-hand inventory'))
-                    .map(issue => `${issue.panel}:${issue.subject}`));
-                  review.issues = review.issues.filter(issue => !(
-                    issue.panel === contract.panel && issue.reason?.startsWith('Missing or incomplete per-actor visible-hand inventory')
-                    && !stillMissing.has(`${issue.panel}:${issue.subject}`)
-                  ) && !(
-                    issue.panel === contract.panel && missingCastEvidence(issue)
-                    && !auditIssues.some(item => missingCastEvidence(item)
-                      && (issue.subject === 'cast_count' || item.subject === issue.subject))
-                  ));
-                  review.issues.push(...auditIssues.filter(issue => !issue.reason?.startsWith('Missing or incomplete per-actor visible-hand inventory')));
-                  review.pass = review.issues.length === 0;
-                  onReviewProgress?.(review);
-                  const material = auditIssues.filter(issue => issue.type === 'anatomy' || issue.type === 'cast_count');
-                  statCallback(`[手の独立監査 / ${contract.panel}コマ] ${material.length ? `手・人数の明確な不一致 ${material.map(issue => issue.subject).join('・')}` : auditIssues.length ? '判定に未確認あり' : '人物・可視の手の数に異常なし'}。`);
-                } catch (error) {
-                  statCallback(`[手の独立監査 / ${contract.panel}コマ] 未確認: ${error.message}`);
-                }
-              }));
-              review.pass = review.issues.length === 0;
-            }
-          }
           if (candidate.pageLayout?.applied === false) {
             review.pass = false;
             review.issues.push({ type: 'unverified', panel: null, subject: 'page_layout', reason: candidate.pageLayout.reason });
           }
           onReviewProgress?.(review);
           if (qualityMode === 'single-image') return review;
-          // 正解は渡さず候補ページと同一ページの拡大コマから文字・実字の位置を読む。
-          let inventoryText = '';
-          try {
-            const inventory = await reviewRequest(buildBubbleInventoryPrompt({ panelCropCount: panelImages.length }),
-              buildImageQualityQaImageParts({ candidate, panelImages }), null,
-              msg => statCallback(`[読順転記] ${msg}`));
-            inventoryText = inventory.text;
-          } catch (error) {
-            statCallback(`[読順転記] 未確認: ${error.message}`);
-          }
-          return applyBubbleInventory(review, inventoryText, candidatePrompt);
+          return applyBubbleInventory(review, qualityResponse.text, candidatePrompt);
         } catch (qualityError) {
           return {
             ...review,
@@ -2462,24 +2424,6 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
             }]
           };
         }
-      };
-
-      const reviewCriticalCameraCandidate = async (candidate, candidatePrompt, signal) => {
-        progressPhase = 'カメラ検査';
-        const panelImages = qualityMode === 'four-panel'
-          ? await extractMangaPanelCrops(`data:${candidate.mimeType || 'image/png'};base64,${candidate.base64Img}`)
-          : [];
-        const cameraRequest = buildCriticalCameraQaRequest({ candidate, panelImages, finalPrompt: candidatePrompt });
-        signal?.throwIfAborted();
-        if (!cameraRequest.prompt) return { pass: true, issues: [] };
-        const response = await callAI(
-          cameraRequest.prompt,
-          cameraRequest.images,
-          null,
-          msg => { if(!signal?.aborted) statCallback(`[カメラ独立監査] ${msg}`); }, {signal},
-        );
-        signal?.throwIfAborted();
-        return parseCriticalCameraQaResponse(response.text, { finalPrompt: candidatePrompt });
       };
 
       const retainedImage = generationOptions.reviewExisting
@@ -2519,10 +2463,10 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
           qualityPass: false, selected: !experimentalPrepared,
         }));
       }
-      const repairEnabled = !experimentalPrepared && allowImageQualityRepair && !generationOptions.reviewOnly;
+      const repairEnabled = allowImageQualityRepair && !generationOptions.reviewOnly;
       statCallback(repairEnabled
-        ? '[QUALITY QA] キャラクターシート・人物・手・小物・吹き出しを検査中です。明確な重大欠陥だけ最大3回修正します。未確認だけなら最良画像を保持します。'
-        : '[QUALITY QA] 自動修正OFF：元画像を表示して品質検査します。追加の画像生成は行いません。');
+        ? '[QUALITY QA] 総合検査1回で問題を確認し、必要な修正をまとめて1回だけ反映します。'
+        : '[QUALITY QA] 自動修正OFF：品質検査を行わず、生成画像を表示・保存します。');
 
       const previousExperimental=experimentalPrepared&&generationHistory.find(item=>item.experimentalGroupId===experimentalPrepared.groupId&&item.selected);
       const previousMatch=previousExperimental?.img.match(/^data:([^;]+);base64,([\s\S]+)$/);
@@ -2535,63 +2479,20 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
         isReviewBudgetExhausted: () => qualityBudget.exhausted,
         shouldStop: () => qualityRetryAbortRef.current || scenarioRunEpochRef.current !== qualityRunEpoch
           || (isFullAutoMode && fullAutoAbortRef.current),
-        analyzeFailure: experimentalPrepared ? undefined : async ({ candidate, originalPrompt, issues, history, feedback }) => {
-          progressPhase = '修正方針の解析';
-          const response = await qualityBudget.run(signal => callAI(
-            buildImageFailureAnalysisPrompt({ originalPrompt, issues, history, feedback }),
-            buildImageQualityQaImageParts({ candidate, referenceImages: images }),
-            null, msg => { if(!signal.aborted) statCallback(`[修正解析] ${msg}`); }, {signal}
-          ), getApiWorkSignal());
-          return response.text;
-        },
         originalCandidate,
         originalPrompt: currentPrompt,
         mode: qualityMode,
-        reviewCandidate: (candidate,prompt,options)=>qualityBudget.run(signal=>experimentalPrepared
-          ? reviewExperimentalCandidatePair(candidate,originalExperimental,(image,workSignal,reviewContext)=>reviewImageCandidate(image,prompt,{...(image===candidate?options:{}),signal:workSignal,reviewContext}),signal,{onProgress:msg=>{if(!signal.aborted) statCallback(`[候補比較] ${msg}`);}})
-          : reviewImageCandidate(candidate,prompt,{...options,signal}),getApiWorkSignal()),
-        reviewCriticalCamera: experimentalPrepared ? undefined : (candidate,prompt)=>qualityBudget.run(signal=>reviewCriticalCameraCandidate(candidate,prompt,signal),getApiWorkSignal()),
-        generateRepairCandidate: experimentalPrepared ? undefined : (repairPrompt, sourceCandidate = originalCandidate) => generateImageCandidate(repairPrompt, {
-          repair: true,
-          repairSource: isOpenAIEngine ? sourceCandidate : null,
+        reviewOnly:Boolean(generationOptions.reviewOnly),
+        reviewCandidate: (candidate,prompt,options)=>qualityBudget.run(signal=>
+          reviewImageCandidate(candidate,prompt,{...options,signal}),getApiWorkSignal()),
+        generateRepairCandidate: (repairPrompt, sourceCandidate = originalCandidate) => generateImageCandidate(repairPrompt, {
+          repair:true,repairSource:isOpenAIEngine?sourceCandidate:null,
         }),
         repairSourceMode: isOpenAIEngine ? 'source-image' : 'regenerate',
         repairPromptMaxChars: isOpenAIEngine ? undefined : GEMINI_IMAGE_REPAIR_PROMPT_MAX_CHARS,
-        compareCandidates: async (original, repair, originalPrompt, comparisonOptions = {}) => {
-          progressPhase = '画像候補の比較';
-          statCallback('[QUALITY QA] 元画像と修正版を直接比較し、台詞・人物・動作を優先して自動選択します。');
-          const comparisonParts = [
-            ...buildImageQualityQaImageParts({ candidate: original }),
-            ...buildImageQualityQaImageParts({ candidate: repair, referenceImages: images }),
-          ];
-          const comparison = await qualityBudget.run(signal=>callAI(
-            buildImageQualityComparisonPrompt({ scenario:generationScenario, castList, finalPrompt: originalPrompt, ...comparisonOptions }),
-            comparisonParts, null, msg => { if(!signal.aborted) statCallback(`[QUALITY QA] ${msg}`); }, {signal}
-          ),getApiWorkSignal());
-          return parseImageQualityComparison(comparison.text);
-        },
         onProgress: (msg) => statCallback(`[QUALITY QA] ${msg}`),
       });
       if (qualityRunEpoch !== scenarioRunEpochRef.current) return false;
-      if(experimentalPrepared) {
-        const next={image:qualityOutcome.candidate,plan:experimentalPrepared.plan,review:qualityOutcome.candidate.experimentalReview,
-          prompt:currentPrompt,groupId:experimentalPrepared.groupId};
-        if(originalExperimental) {
-          const original=originalExperimental;
-          const retainedReview={pass:previousExperimental.qualityPass,issues:previousExperimental.qualityIssues||[]};
-          const selection=await selectExperimentalCandidate(original,next,(a,b,prompt,options)=>qualityBudget.run(async signal=>{
-            const response=await callAI(buildImageQualityComparisonPrompt({scenario:generationScenario,castList,finalPrompt:prompt,...options,approvedExperimentalPage:buildExperimentalPageContract(experimentalPrepared.plan,experimentalPrepared.source)}),
-              [a,b].map(image=>`data:${image.mimeType};base64,${image.base64Img}`),null,msg=>{if(!signal.aborted) statCallback(`[候補比較] ${msg}`);},{signal,outputProfile:'image-quality-review'});
-            signal.throwIfAborted();
-            const compared=parseImageQualityComparison(response.text);
-            statCallback(`[候補比較の判定] ${JSON.stringify(compared)}`);
-            return compared;
-          },getApiWorkSignal()),getApiWorkSignal());
-          if(qualityRunEpoch!==scenarioRunEpochRef.current) return false;
-          statCallback(`[候補比較] ${selection.comparison.reason}`);
-          qualityOutcome=applyPageCandidateSelection(qualityOutcome,selection,retainedReview);
-        }
-      }
       if(qualityBudget.exhausted) {
         qualityOutcome = {...qualityOutcome, validationWarning:true, stopReason:'review_timeout',
           finalReview:{...qualityOutcome.finalReview, pass:false, issues:[...(qualityOutcome.finalReview.issues||[]),
@@ -2630,7 +2531,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
           '[QUALITY QA] ℹ️ 画像品質レビューは未完了です。検査証拠が不足または矛盾しているため、合格を確認できません。',
           ...qualityOutcome.originalReview.issues.map((issue) => `[QUALITY QA] ${formatImageQualityIssue(issue)}`)
         ]);
-      } else if (!qualityOutcome.originalReview.pass) {
+      } else if (!qualityOutcome.originalReview.pass && !qualityOutcome.originalReview.skipped) {
         setGenLog(prev => [
           ...prev,
           '[QUALITY QA] ⚠️ 元画像の品質検査で問題を検出しました。',
@@ -2673,8 +2574,6 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
         qualityPass: qualityResult?.pass === true, selected: true,
       };
       setGenerationHistory(prev => {
-        const candidateImages = new Set(qualityOutcome.candidates.map(entry =>
-          `data:${entry.candidate.mimeType || 'image/png'};base64,${entry.candidate.base64Img}`));
         if(experimentalPrepared) {
           let retained=prev.filter(item=>item.img!==finalImageStr).map(item=>item.experimentalGroupId===experimentalPrepared.groupId?{...item,selected:false,
             ...(item.img===previousExperimental?.img?{experimentalReview:originalExperimental.review,qualityPass:originalExperimental.review?.status==='pass'}:{})}:item);
@@ -2683,7 +2582,15 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
             experimentalReview:originalCandidate.experimentalReview,qualityPass:qualityOutcome.originalReview.pass,selected:false});
           return addGenerationHistoryItem(retained,acceptedHistoryItem,{removeImages:new Set([acceptedImageStr])});
         }
-        return addGenerationHistoryItem(prev, acceptedHistoryItem, { removeImages: candidateImages });
+        const retained = qualityOutcome.candidate === originalCandidate ? prev
+          : addGenerationHistoryItem(prev, {
+            ...acceptedHistoryItem, id: timestamp - 1, img: finalImageStr,
+            modelId: originalCandidate.modelId, mimeType: originalCandidate.mimeType,
+            originalImage: originalCandidate.originalImage, pageLayout: originalCandidate.pageLayout,
+            metadataContext: originalCandidate.metadataContext, workflowSource: originalCandidate.workflowSource,
+            qualityPass: qualityOutcome.originalReview.pass === true, selected: false,
+          }, { removeImages: new Set([finalImageStr]) });
+        return addGenerationHistoryItem(retained, acceptedHistoryItem, { removeImages: new Set([acceptedImageStr]) });
       });
 
       if (!qualityOutcome.canContinue) {
@@ -2708,7 +2615,11 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
         showStatus('検査未完了（時間上限）。画像を保持しました。');
         return false;
       }
-      if (qualityOutcome.validationWarning) {
+      if(qualityResult.skipped) {
+        statCallback('[QUALITY QA] 自動修正OFFのため検査なしで出力しました。');
+      } else if(qualityResult.notRechecked) {
+        statCallback('[QUALITY QA] 指摘を反映した修正出力が完了しました。追加の検査・修正は行いません。');
+      } else if (qualityOutcome.validationWarning) {
         const comparedCandidate = qualityOutcome.history?.some(entry => entry.comparison && (!experimentalPrepared || entry.comparison.status==='completed'));
         setGenLog(prev => [...prev,
           `[QUALITY QA] ${comparedCandidate ? '比較で保持した最良候補を採用' : '元画像を保持'}・警告あり（${formatImageQualityStopReason(qualityOutcome.stopReason)}）。後続作業を続行します。`,
@@ -2781,9 +2692,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
         setShowPolicyChoice(!policyRepairEnabled || !generationOptions.suppressPolicyChoice);
         guideLines = [
           "[ERROR GUIDE] 🚨 表現の一部がAIの安全基準（ポリシー）に触れたため、生成がスキップされました。",
-          policyRepairEnabled
-            ? `[ERROR GUIDE] 【自動修正】安全な表現への修正と画像再生成を最大${MAX_POLICY_RETRIES}回まで内部で試します。`
-            : "[ERROR GUIDE] 自動修正は無効です。この実行では追加の修正解析・画像生成を行いません。",
+          "[ERROR GUIDE] この実行は停止しました。指示文と生成済み画像を保持し、追加の解析・画像再送は自動では行いません。",
           "[ERROR GUIDE] 【対処法】拒否内容を確認し、許可された表現に修正してください。"
         ];
       } else if (errMsg.includes("not found") || errMsg.includes("not supported") || errMsg.includes("404") || errMsg.includes("403") || errMsg.includes("401")) {
@@ -2942,22 +2851,10 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
   };
 
   const regenerateImage = async (skipGuard = false, overridePrompt = null, generationOptions = {}) => {
-    const generationEpoch = scenarioRunEpochRef.current;
-    const currentPrompt = overridePrompt || finalPrompt;
-    const policyRepairEnabled = !experimentalEnabled && allowImageQualityRepair && !generationOptions.reviewOnly;
     setPolicyPromptHistory([]);
-    const success = await generateImageOnce(skipGuard, overridePrompt, {
+    return generateImageOnce(skipGuard, overridePrompt, {
       ...generationOptions,
-      suppressPolicyChoice: policyRepairEnabled,
-    });
-    if (generationEpoch !== scenarioRunEpochRef.current) return false;
-    if (success || !lastPolicyErrorRef.current) return success;
-    if (!policyRepairEnabled || qualityRetryAbortRef.current) return false;
-
-    return runPolicyAutoRetries({
-      initialPrompt: currentPrompt,
-      initialPolicyError: lastPolicyErrorRef.current,
-      generationOptions,
+      suppressPolicyChoice: false,
     });
   };
 

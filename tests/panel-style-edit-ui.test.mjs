@@ -144,7 +144,7 @@ test('preparation is automatic and local after a valid count; paid controls requ
   assert.doesNotMatch(h.text(), /OpenAI画像APIを1回/);
 });
 
-test('candidate generation is single-flight and adoption requires checked visual review', async () => {
+test('candidate generation is single-flight and adopt/discard need no confirmation checkbox', async () => {
   let finish, calls = 0, adoption;
   const h = mount({ onGenerate: args => { calls++; assert.equal(args.panelIndex, 1); assert.equal(args.region, frames[1].region); assert.equal(args.mode, 'style'); assert.equal(args.style, 'POP_ART'); assert.equal('instruction' in args, false); return new Promise(resolve => { finish = resolve; }); },
     onAdopt: async args => { adoption = args; return true; } });
@@ -158,13 +158,12 @@ test('candidate generation is single-flight and adoption requires checked visual
   assert.ok(h.nodes().some(node => node.type === 'img' && node.props.src === candidate.before));
   assert.ok(h.nodes().some(node => node.type === 'img' && node.props.src === candidate.after));
   assert.equal(h.find('button', '修正（追加課金あり）'), undefined);
-  assert.equal(h.button('この候補を採用').props.disabled, true);
-  await h.button('この候補を採用').props.onClick();
-  assert.equal(adoption, undefined);
-  h.change('修正候補の目視確認', true);
+  assert.equal(h.nodes().some(node => node.type === 'input' && node.props.type === 'checkbox'), false);
+  assert.equal(h.button('この候補を採用').props.disabled, false);
+  assert.equal(h.button('候補を破棄').props.disabled, false);
   await h.button('この候補を採用').props.onClick();
   assert.equal(adoption.candidate, candidate);
-  assert.equal(adoption.reviewConfirmed, true);
+  assert.equal(adoption.reviewConfirmed, undefined);
 });
 
 test('discard preserves the source and generation failures never retry automatically', async () => {
@@ -197,7 +196,7 @@ test('failed or mismatched results cannot become adoptable candidates', async ()
   }
 });
 
-test('free input shows only its instruction field and sends one explicit nonblank request before reviewed adoption', async () => {
+test('free input shows only its instruction field and sends one explicit nonblank request before direct adoption', async () => {
   let request, adoption, calls = 0;
   const instruction = '右手に持ったブロックを自然な形に修正する。';
   const freeCandidate = { ...candidate, mode: 'free', instruction };
@@ -229,8 +228,7 @@ test('free input shows only its instruction field and sends one explicit nonblan
   assert.equal(request.sourceImage, sourceImage);
   assert.equal(request.panelIndex, 1);
   assert.equal(request.region, frames[1].region);
-  assert.equal(h.button('この候補を採用').props.disabled, true);
-  h.change('修正候補の目視確認', true);
+  assert.equal(h.button('この候補を採用').props.disabled, false);
   await h.button('この候補を採用').props.onClick();
   assert.equal(adoption.candidate, freeCandidate);
 });
@@ -332,7 +330,6 @@ test('leaving panel editing discards an unadopted candidate and invalidates its 
   const h = mount({ onDiscard() { discarded++; }, onAdopt() { adopted++; return true; } });
   await select(h);
   await h.button('修正（追加課金あり）').props.onClick(); h.render();
-  h.change('修正候補の目視確認', true);
   const adopt = h.button('この候補を採用').props.onClick;
   h.unmount(); await adopt();
   assert.equal(discarded, 1);
@@ -380,7 +377,6 @@ test('busy transitions after preparation preserve the selected edit and unadopte
   assert.equal(calls, 1);
   assert.equal(h.button('2コマ目を修正（追加課金あり）').props.disabled, false);
   await h.button('2コマ目を修正（追加課金あり）').props.onClick(); h.render();
-  h.change('修正候補の目視確認', true);
   h.render({ busy: true }); await h.settle();
   h.render({ busy: false }); await h.settle();
   assert.equal(calls, 1);

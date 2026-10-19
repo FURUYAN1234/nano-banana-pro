@@ -27,7 +27,7 @@ test('generates an A4 portrait workflow diagram covering the full manga pipeline
     'STEP4',
     '画像QA',
     'コンテンツポリシー',
-    '最大5回',
+    '手動で1回',
     '生成履歴',
     '保存',
     'Save &amp; Export',
@@ -51,9 +51,9 @@ test('generates an A4 portrait bilingual reasoning routine from the workflow sou
     'Scenario Contract Pass',
     '最大3回',
     'API Policy Error',
-    '最大5回',
+    '手動で1回',
     '既存の成功画像や履歴を消さない',
-    'Review, Compare, Keep',
+    'Review Once, Keep',
   ]) {
     assert.match(svg, new RegExp(label));
   }
@@ -61,7 +61,7 @@ test('generates an A4 portrait bilingual reasoning routine from the workflow sou
 
 test('README embeds the generated diagram instead of a copied diagram', () => {
   const readme = readFileSync(new URL('../README.md', import.meta.url), 'utf8');
-  assert.match(readme, /nano-banana-pro-workflow-a4\.png/);
+  assert.match(readme, /nano-banana-pro-workflow-a4\.svg/);
   assert.match(readme, /nano-banana-pro-reasoning-a4\.svg/);
   assert.match(readme, /ワークフローまたは思考ルールを大きく変更した際/);
 });
@@ -69,8 +69,16 @@ test('README embeds the generated diagram instead of a copied diagram', () => {
 test('diagrams describe current dialogue, wardrobe and warning-retention contracts', () => {
   const workflow = readFileSync(diagramPath, 'utf8');
   const reasoning = readFileSync(reasoningDiagramPath, 'utf8');
-  for (const text of ['OFFは4コマ・ONは5〜8コマ', '通常は縦4コマ、実験は台本に合う配置', '台詞・話者・衣装を保持', '通常4コマのみ、修正最大3回', '警告付き', '通常の採用画像・実験の候補を各最大10件保持']) {
+  for (const text of ['OFFは4コマ・ONは5〜8コマ', '通常は縦4コマ、実験は台本に合う配置', '台詞・話者・衣装を保持', '全モード共通、修正は最大1回', '警告付き', '元画像・修正画像を各モード最大10件保持']) {
     assert.ok((workflow + reasoning).includes(text), `Missing current contract: ${text}`);
   }
   assert.doesNotMatch(workflow, /QA-passed images|QA通過画像/);
+});
+
+test('workflow image correction has no reinspection loop and policy errors branch from generation', () => {
+  const svg = readFileSync(diagramPath, 'utf8');
+  assert.match(svg, /OFF: skip; ON: inspect once/);
+  assert.doesNotMatch(svg, /M 70 854 H 45 V 742 H 67|M 724 854 H 749 V 641 H 727|修正最大3回|最大5回/);
+  assert.match(svg, /M 724 658 H 749 V 854 H 727/);
+  assert.match(svg, /M 230 909 V 929/);
 });

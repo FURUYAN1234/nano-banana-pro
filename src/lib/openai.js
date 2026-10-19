@@ -20,7 +20,7 @@ export const buildOpenAIImageRequestBody = (prompt, { stream = true, quality, si
   ...(stream ? { stream: true, partial_images: 1 } : {}),
 });
 
-export function buildOpenAIImageRequest(prompt, {quality, size, stream = true, imageInputs = []} = {}) {
+export function buildOpenAIImageRequest(prompt, {quality, size, stream = true, imageInputs = [], panelEdit = false} = {}) {
   if (typeof prompt !== 'string' || !prompt.trim()) throw new Error('画像生成プロンプトが空です。');
   if (prompt.length > OPENAI_IMAGE_PROMPT_MAX_CHARS) throw new Error('参照説明を含む画像生成プロンプトが32,000文字を超えています。本文を確認してください。');
   if (!Array.isArray(imageInputs)) throw new Error('OpenAI参照画像は配列で指定してください。');
@@ -29,9 +29,13 @@ export function buildOpenAIImageRequest(prompt, {quality, size, stream = true, i
     image_url: normalizeOpenAIImageDataUrl(item?.image_url, `送信画像${i + 1}`),
   }));
   const isEdit = images.length > 0;
+  if (typeof panelEdit !== 'boolean' || (panelEdit && images.length !== 1)) {
+    throw new Error('コマ修正は対象コマの画像1枚だけを指定してください。');
+  }
   return {
     url: `https://api.openai.com/v1/images/${isEdit ? 'edits' : 'generations'}`,
-    body: {...buildOpenAIImageRequestBody(prompt, {quality, size, stream}), ...(isEdit ? {images} : {})},
+    body: {...buildOpenAIImageRequestBody(prompt, {quality, size, stream}),
+      ...(panelEdit ? {size: 'auto'} : {}), ...(isEdit ? {images} : {})},
     isEdit,
   };
 }
@@ -186,6 +190,7 @@ export const generateImageWithOpenAI = async (prompt, statCallback, options = {}
   const request = buildOpenAIImageRequest(prompt, {
     quality,
     size: options.size,
+    panelEdit: options.panelEdit,
     imageInputs: options.imageInputs ?? [],
   });
   if (request.isEdit) {
