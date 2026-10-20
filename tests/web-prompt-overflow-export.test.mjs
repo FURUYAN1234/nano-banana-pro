@@ -35,6 +35,7 @@ function webPreparation(overrides = {}) {
     bg360Image: null, bg360Enabled: false, colorMode: 'color', scenario: '', styleJson: null, punchlineType: 'Auto',
     getBuiltinPanelMediumReference, ...overrides,
   };
+  scope.isExperimentalPage=()=>scope.experimentalEnabled;
   return new Function(...Object.keys(scope), `return (${expression});`)(...Object.values(scope));
 }
 

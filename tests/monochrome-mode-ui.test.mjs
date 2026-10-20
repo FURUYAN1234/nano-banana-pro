@@ -23,7 +23,7 @@ test('real generation boundary applies selected monochrome to edited four-panel 
   assert.ok(boundary);
   const run = values => vm.runInNewContext(
     `(()=>{const editablePrompt = overridePrompt || finalPrompt;${boundary[1]}\nreturn currentPrompt;})()`,
-    { scenario:'', experimentalEnabled:false, resolvePageWorkflow, showStatus:message=>{throw new Error(message);}, overridePrompt: null, finalPrompt: 'Four-panel manga: GEKIGA then CHIBI.', isOpenAIEngine: true, generationOptions: {}, openAIImageQuality: 'sunburst_max', applyOpenAIImageEngineWatermark, promptAssemblyRunRef: { completedRun: 1 }, colorMode: 'monochrome', ensureMangaColorModeContract, inferImageQualityMode, ...values }
+    { scenario:'', experimentalEnabled:false, isExperimentalPage:()=>false, resolvePageWorkflow, showStatus:message=>{throw new Error(message);}, overridePrompt: null, finalPrompt: 'Four-panel manga: GEKIGA then CHIBI.', isOpenAIEngine: true, generationOptions: {}, openAIImageQuality: 'sunburst_max', applyOpenAIImageEngineWatermark, promptAssemblyRunRef: { completedRun: 1 }, colorMode: 'monochrome', ensureMangaColorModeContract, inferImageQualityMode, ...values }
   );
   const mono = run({});
   assert.equal(isMonochromePrompt(mono), true);
@@ -75,7 +75,7 @@ test('actual selection handler clears stale output without assembly, preserving 
   assert.ok(invalidator);
   const calls = [];
   const context = {
-    isColorModeLocked: false, colorMode: 'color', experimentalEnabled: false,
+    isColorModeLocked: false, colorMode: 'color', experimentalEnabled: false, isExperimentalPage:()=>false,
     normalizeMangaColorMode: v => v === 'monochrome' ? v : 'color',
     promptAssemblyRunRef: { current: 1 }, lastPolicyErrorRef: { current: 'previous error' },
     promptAssemblyAbortRef: { current: null },

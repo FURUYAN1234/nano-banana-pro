@@ -109,6 +109,11 @@ try {
       throw Error('Missing dependency '+String(k));
     }});
     const bind=text=>new Function('scope',`with(scope){return (${text});}`)(scope);
+    state.pageModeRef={get current(){return state.experimentalEnabled;},set current(value){state.experimentalEnabled=value;}};
+    state.isExperimentalPage=()=>state.pageModeRef.current;
+    state.getScenarioMode=()=>state.isExperimentalPage()?'experimental-manga':'four-panel';
+    state.generationHistoryRef={get current(){return state.generationHistory;}};
+    state.cacheCurrentPage=bind(callback('cacheCurrentPage'));
     state.invalidatePromptAssembly=bind(callback('invalidatePromptAssembly'));
     state.experimentalInput=bind(inputCallback);
     return {state,setColor:bind(callback('setColorMode')),assemble:bind(callback('assemblePrompt')),changePage:bind(callback('changePageMode')),resetPages:bind(callback('resetPageCaches'))};
