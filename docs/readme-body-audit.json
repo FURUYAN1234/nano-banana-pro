@@ -1,25 +1,25 @@
 {
-  "pricingSourceSha256": "0c3a27e0071c5dca3c0e374ac7a5dd2b78a1474ca7143e77c5d81a438e197319",
-  "manualVersion": "7.1.5",
-  "manualSourceSha256": "be6f7be7f45cafa3ddfe72c4daa5a57bf5b27bea32520ca740c137401e1466cb",
+  "pricingSourceSha256": "7fc60176eebca2dd749467bf692ec24050cc9213e9a69a788aaa179393246a09",
+  "manualVersion": "7.1.6",
+  "manualSourceSha256": "796a4e4f0d667bcf149f19344db2fbe4258f312defcd9c634bbef46981877290",
   "manualFiles": [
     {
       "name": "gemini-api-beginner-guide-2026-10-01.pdf",
-      "sha256": "1f53c414b424548e06fe25e6aa86be1e84a19b0efa807a47dfb9b5bad1a81ad8"
+      "sha256": "b1008fd59633e01555149678cda6328f7922619ed65ddea386cb1448e135b611"
     },
     {
       "name": "openai-api-beginner-guide-2026-09-30.pdf",
-      "sha256": "610cc4d3ede642a3078688396d93d66567f12f67efcff3ffaca9c0203e77188c"
+      "sha256": "40aef0d86659a8f8ca33f7e12a678e2c3af9a33baab685aae402449951c16cc5"
     },
     {
       "name": "super-furu-ai-4koma-full-manual-2026-10-01.pdf",
-      "sha256": "53c33dd56f4d22b92ab9e8d53f8e175aa237ed4ddb051a9c0406133825b6de68"
+      "sha256": "e54e9d734305f4db6a3e0cf903c092009175b16ac66bbc336acd96fa3282361f"
     }
   ],
-  "readmeSha256": "9d5633a5f141da7ae44cc8fe900413775e6d1c4e8b20d9a8f6aebfaf60ffe652",
-  "sourceTree": "e82dffbbbb37758c5610b7f4ffe69586500e2abc",
-  "publicTree": "40a6b87b3308da2aff929d210e952e0666378a33",
-  "packageSha256": "1e0c54394ccfafc0ee45414bf59f19ec68993b912755b790906dc9030b5d4241",
+  "readmeSha256": "789172754a94f857f3b543047263c4dc49f79a49bc417d010eb0d979c4e90330",
+  "sourceTree": "c127a2b67e36f1f10724c69400ef4635f4df7b6b",
+  "publicTree": "1774deb48ef71d55782272fc130906c97ffdd9e0",
+  "packageSha256": "79f519f9a0b5bf26fbdb165697328c6e9788e58b202a441f8df4f8c12baec19d",
   "releaseAssetSha256": "9e41886be6afa0ebfad6d244ecf53f37260a92f73b30309319029cc87e1ddb4e",
   "reviewedSections": [
     "Application screen and output / 操作画面と生成例",
@@ -39,17 +39,16 @@
     "AI Manga Creative Suite / AIまんが制作エコシステム",
     "📋 ChangeLog / 更新履歴"
   ],
-  "findings": "v7.1.5: compared the changed README sections and the complete existing feature map against current workflow, one-pass QA, history and panel editing source. Preserved unchanged sections and their previously reviewed rights, provider, metadata and distribution contracts. Corrected remaining unconditional QA, independent camera review, best-candidate comparison and original-image-history descriptions. OFF zero QA; ON one comprehensive review and at most one material correction; source image and warnings retained. No complete quality or latency improvement claim. Public note publication was excluded from local preparation and is not part of the requested deployment/full-backup transaction.",
-  "manualFindings": "v7.1.5: rebuilt and reviewed all75pages (13Gemini,39full,23OpenAI) in14contact sheets, plus full-manual23/37 and OpenAI23 at readable size. Corrected one-pass OFF/ON, absent independent reinspection, direct adopt/discard without checkbox, retained originals and automatic PNG save. Existing A4, footer/version, text bounds, links and privacy checks passed. No clipping or overlap observed. Copied reviewed exact PDF bytes to public/downloads.",
+  "findings": "v7.1.6: reviewed the complete existing section map and affected Japanese/English descriptions against STEP2 selection, validated concrete mode, UI callback, separate page caches and current-layout history refs. Full-auto selects four or necessary five to eight from content in the existing request; OFF manual and Gemini four-only remain. Invalid count/reason and stale-run guards stop propagation. Existing one-pass QA limits and warning retention are explicit; no claim of warning-free image or successful live five-to-eight selection. Unchanged licensing and packaged workflows retain prior contracts. Deployment/SNS/backup remain deferred by user.",
+  "manualFindings": "v7.1.6: rebuilt all75pages (13Gemini,39full,23OpenAI), inspected all14contact sheets and changed pages at readable size. Updated full-auto/manual/Gemini distinctions, current version and pricing dates. Corrected OpenAI page17 text overflow, rerendered and visually checked. A4/text bounds/footer/version checks passed. Reviewed both updated A4 workflow diagrams; no clipping or overlap observed. Public PDF bytes match reviewed output.",
   "pricingReview": {
-    "version": "7.1.5",
-    "sourceSha256": "0c3a27e0071c5dca3c0e374ac7a5dd2b78a1474ca7143e77c5d81a438e197319",
-    "checkedAt": "2026-10-19T13:47:22.830Z",
+    "version": "7.1.6",
+    "sourceSha256": "7fc60176eebca2dd749467bf692ec24050cc9213e9a69a788aaa179393246a09",
+    "checkedAt": "2026-10-20T22:46:18.491Z",
     "sources": [
       "https://developers.openai.com/api/docs/pricing",
-      "https://developers.openai.com/api/docs/pricing?multimodal-image-pricing=standard",
       "https://ai.google.dev/gemini-api/docs/pricing"
     ],
-    "findings": "2026-10-19: reread official OpenAI pricing HTML and full markdown plus Gemini Standard and Batch sections. Confirmed Standard text input/output USD per1M: Astra10/50,6.1Sol2/10,6Sol2/10,5.6Sol4/20,5.6Terra2/12,6Luna0.10/0.50,5.6Luna0.20/1.20. Image2/2.5 Standard image input8 cached2 output30 and text input5 cached1.25; mini transcription0.003/min. Gemini3.8Flash0.75/3.75 through2026-12-31; NanoBanana2.1 input1.50,text7.50,image30 and1K0.0336. Batch half rates are separate. Existing app prices unchanged. Reopened both official pricing pages immediately before this deployment; Standard Gemini Nano Banana2.1 and OpenAI flagship/image2.5 values remain unchanged; Batch is separate."
+    "findings": "2026-10-21 JST: read official OpenAI pricing and model pages, Gemini Standard/Batch tables, and the expanded OpenAI standard image table in the in-app browser. Existing text/image/transcription prices remain unchanged; Gemini3.8Flash promotional end date remains2026-12-31. Standard rates are used in the UI; Batch half rates are separate. Review expires24hours after checkedAt and must be renewed if deployment is later."
   }
 }

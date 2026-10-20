@@ -230,6 +230,7 @@ test('STEP3 quality warnings never return early or disappear during prompt assem
     const statuses = [];
     const context = {
       currentScenario: 'current scenario', castList: 'current cast', scenarioMode,
+      getScenarioMode: () => scenarioMode, isExperimentalPage: () => scenarioMode === 'experimental-manga',
       experimentalEnabled: scenarioMode === 'experimental-manga',
       validateMangaScenario: () => ({ ok: false, structuralValid: true }),
       formatMangaScenarioValidationIssue: () => 'dialogue warning',

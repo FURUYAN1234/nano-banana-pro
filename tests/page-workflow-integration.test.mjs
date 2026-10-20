@@ -88,6 +88,8 @@ function modeHarness() {
     bg360Analysis:null,styleJson:{},getCurrentPromptProviderFamily:()=> 'chatgpt',
     promptAssemblyRunRef:{current:4,completedRun:4},finalPrompt:'normal prompt',generatedImage:'normal image',
     generationHistory:[{image:'normal image',workflowSource:{promptAssemblyRun:4,finalPrompt:'normal prompt'}}],genLog:['normal log'],assembleThought:'normal assembly'};
+  state.pageModeRef={current:false};
+  state.isExperimentalPage=()=>state.pageModeRef.current;
   state.invalidatePromptAssembly=()=>{state.promptAssemblyRunRef.current++;};
   state.updateResolvedPunchlineType=value=>{state.resolvedPunchlineTypeRef.current=value;};
   const scope=new Proxy(state,{has:()=>true,get:(target,key)=>{
@@ -96,6 +98,8 @@ function modeHarness() {
     if(/^set[A-Z]/.test(key))return value=>{const prop=key[3].toLowerCase()+key.slice(4);target[prop]=typeof value==='function'?value(target[prop]):value;};
     return globalThis[key];
   }});
+  const cache=source.match(/const cacheCurrentPage = ([\s\S]+?\r?\n  });/)[1];
+  state.cacheCurrentPage=new Function('scope',`with(scope){return (${cache});}`)(scope);
   const change=new Function('scope',`with(scope){return (${body});}`)(scope);
   return {state,change};
 }
@@ -187,7 +191,7 @@ test('full-auto passes the newly generated scenario through shared STEP3 and STE
 
 test('experimental preparation takes current cast and actual scenario model from shared workflow refs',()=>{
   const body=source.match(/const experimentalInput = ([\s\S]+?);\r?\n  const changePageMode/)[1];
-  const scope={scenarioMode:'experimental-manga',scenario:'old scenario',castList:'old cast',castListRef:{current:'current cast'},inputMode:'manual',manualTopic:'完成ページは5〜8コマで、無言の間を残す',
+  const scope={getScenarioMode:()=> 'experimental-manga',scenario:'old scenario',castList:'old cast',castListRef:{current:'current cast'},inputMode:'manual',manualTopic:'完成ページは5〜8コマで、無言の間を残す',
     colorMode:'color',mosaicCopyrightedCharacters:false,showWatermarks:true,isOpenAIEngine:true,
     PROMPT_PROVIDER_FAMILIES:{CHATGPT:'chatgpt',GEMINI:'gemini'},GEMINI_IMAGE_MODEL:'gemini-nano-banana-pro',
     getBuiltinPanelMediumReference:noGuideForScenario,styleJson:null,punchlineType:'Auto',
@@ -195,8 +199,9 @@ test('experimental preparation takes current cast and actual scenario model from
     scenarioUsedModelRef:{current:'actual'},OPENAI_SCENARIO_MODEL_OPTIONS:[{id:'selected',label:'selected model'},{id:'actual',label:'actual model'}],
     referenceAssetsRef:{current:[]},imagesRef:{current:[]},bg360Enabled:false,bg360Analysis:null,bg360Image:null,
     buildReferenceAssetContext:()=>'',buildOpenAIReferencePlan:()=>({rolePrompt:''}),getOpenAIPromptBodyBudget:()=>32000,
-    summarizeExperimentalLayouts:x=>x,generationHistory:[]};
+    summarizeExperimentalLayouts:x=>x,generationHistory:[{experimentalPlan:{id:"stale"}}],generationHistoryRef:{current:[{experimentalPlan:{id:"current"}}]}};
   const input=new Function(...Object.keys(scope),`${providerResolver} return (${body})`)(...Object.values(scope))('new scenario');
+  assert.deepEqual(input.recentLayouts,[{plan:{id:'current'}}], 'same-run STEP3 reads the selected mode history, not its stale render closure');
   assert.equal(input.scenario,'new scenario');
   assert.equal(input.providerFamily,'chatgpt','the real resolver passes the selected OpenAI family to native preparation');
   assert.equal(input.castList,'current cast');
@@ -219,14 +224,14 @@ for (const colorMode of ['color','monochrome']) {
     const source=await readFile(new URL('../src/hooks/useMangaWorkflow.js',import.meta.url),'utf8');
     const body=source.match(/const experimentalInput = ([\s\S]+?);\r?\n  const changePageMode/)[1];
     const images=['data:image/png;base64,YQ==','data:image/png;base64,Yg=='];
-    const scope={scenarioMode:'experimental-manga',scenario:'source',castListRef:{current:'cast'},colorMode,mosaicCopyrightedCharacters:false,showWatermarks:true,
+    const scope={getScenarioMode:()=> 'experimental-manga',scenario:'source',castListRef:{current:'cast'},colorMode,mosaicCopyrightedCharacters:false,showWatermarks:true,
       inputMode:'manual',manualTopic:'retain detailed source',isOpenAIEngine:true,formatOpenAIImageEngineName:()=> 'ChatGPT Images 2.5',openAIImageQuality:'high',
       PROMPT_PROVIDER_FAMILIES:{CHATGPT:'chatgpt',GEMINI:'gemini'},
       getBuiltinPanelMediumReference:noGuideForScenario,styleJson:null,punchlineType:'Auto',
       GEMINI_IMAGE_MODEL:'gemini',OPENAI_SCENARIO_MODEL_OPTIONS:[],scenarioUsedModelRef:{current:'gpt-6-luna'},
       buildReferenceAssetContext,buildWebReferencePlan,buildOpenAIReferencePlan,getOpenAIPromptBodyBudget,
       referenceAssetsRef:{current:[]},imagesRef:{current:images},bg360Enabled:false,bg360Analysis:null,bg360Image:null,
-      summarizeExperimentalLayouts:()=>[],generationHistory:[]};
+      summarizeExperimentalLayouts:()=>[],generationHistory:[],generationHistoryRef:{current:[]}};
     const input=new Function(...Object.keys(scope),providerResolver+'return ('+body+')();')(...Object.values(scope));
     assert.equal(input.providerFamily,'chatgpt');
     const refs=buildOpenAIReferencePlan({compact:true,characterImages:images,colorMode});

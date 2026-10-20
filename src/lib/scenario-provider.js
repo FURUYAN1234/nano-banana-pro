@@ -34,6 +34,7 @@ import {
 } from './seasonal-outfit';
 import {
   assertScenarioPanelStructure,
+  resolveAutoScenarioMode,
   getScenarioPanelBlocks,
   assertGeneratedScenarioCameraContract,
   assertGeneratedScenarioStyleContract,
@@ -72,6 +73,7 @@ const scenarioRetryLabels = {
   DIALOGUE_CONTRACT: '各コマの吹き出しセリフ',
   CAMERA_CONTRACT: '自動構成の非アイレベル・カメラ投影',
   STYLE_CONTRACT: '自動構成で使用できる画風',
+  AUTO_PANEL_CHOICE: '内容に基づくコマ数の選択理由',
   PANEL_STRUCTURE_CONTRACT: '選択モードのコマ数と連番'
 };
 
@@ -263,6 +265,7 @@ export const parseScenarioResponse = (result, {
       parsedData.visualEvidence = visualEvidenceMatch ? visualEvidenceMatch[1].trim() : '';
       parsedData.outfit = outfitMatch ? outfitMatch[1].trim() : '';
       parsedData.punchline = punchlineMatch ? punchlineMatch[1].trim() : '';
+      parsedData.panelCountReason = result.text.match(/^[ \t]*PanelCountReason:[ \t]*([^\r\n]*)/im)?.[1]?.trim() || '';
       parsedData.scenario = scenarioMatch[1].trim();
     } else {
       const jsonMatch = result.text.match(/\{[\s\S]*\}/);
@@ -274,6 +277,7 @@ export const parseScenarioResponse = (result, {
         parsedData.outfit = json.outfit || '';
         parsedData.logline = json.logline || '';
         parsedData.punchline = json.punchline || '';
+        parsedData.panelCountReason = json.panelCountReason || '';
         parsedData.scenario = json.scenario || result.text;
       } else {
         if (result.text.length < 20) throw new Error('AI returned empty or invalid response.');
@@ -302,6 +306,7 @@ export const parseScenarioResponse = (result, {
  */
 export async function generateScenario({
   scenarioMode = 'four-panel',
+  autoSelectPanelCount = false,
   recentScenarios = [],
   referenceAssetContext = '',
   mosaicCopyrightedCharacters = true,
@@ -441,6 +446,7 @@ export async function generateScenario({
   ].filter(Boolean).join('\n');
   const scenarioPrompt = getScenarioPrompt({
     scenarioMode,
+    autoSelectPanelCount,
     recentScenarios,
     mosaicCopyrightedCharacters,
     randomCategory,
@@ -485,6 +491,10 @@ export async function generateScenario({
         manualTopic,
         searchTopic
       });
+      if (autoSelectPanelCount) {
+        parsedScenario.panelCountDecision = resolveAutoScenarioMode(parsedScenario);
+      }
+      const candidateMode = parsedScenario.panelCountDecision?.scenarioMode || scenarioMode;
       if (isDocumentaryEnding(activePunchlineType)) {
         parsedScenario.scenario = normalizeDocumentaryScenarioTimeline(
           parsedScenario.scenario,
@@ -493,13 +503,13 @@ export async function generateScenario({
         parsedScenario.scenario = attachDocumentarySourceFacts(
           parsedScenario.scenario,
           documentarySourceText,
-          { scenarioMode }
+          { scenarioMode: candidateMode }
         );
       }
       return parsedScenario;
     },
     validateScenario: (parsedScenario) => validateScenarioForRetry({
-      scenarioMode,
+      scenarioMode: parsedScenario.panelCountDecision?.scenarioMode || scenarioMode,
       scenario: parsedScenario,
       punchlineType: activePunchlineType,
       manualTopic: inputMode === 'manual' ? manualTopic : '',
@@ -517,14 +527,14 @@ export async function generateScenario({
       ].filter(Boolean).join('\n')
     }),
     retryInstruction: ({ code, message }) => [
-      code === 'PANEL_STRUCTURE_CONTRACT' ? `PANEL STRUCTURE RETRY: Return ${scenarioMode === 'experimental-manga' ? '5–8' : 'exactly 4'} complete panels numbered consecutively from 1. Preserve the topic and every required event. Design meaningful actions and exchanges for every panel; never pad with empty reactions.` : scenarioQualityRetryInstructions[code] || '',
+      code === 'AUTO_PANEL_CHOICE' ? 'Return PanelCountReason before Scenario, explaining why this specific story requires its chosen 4–8 panels. Preserve the topic.' : code === 'PANEL_STRUCTURE_CONTRACT' ? `PANEL STRUCTURE RETRY: Return ${autoSelectPanelCount ? '4–8 selected from story content' : scenarioMode === 'experimental-manga' ? '5–8' : 'exactly 4'} complete panels numbered consecutively from 1. Preserve the topic and every required event. Design meaningful actions and exchanges for every panel; never pad with empty reactions.` : scenarioQualityRetryInstructions[code] || '',
       message ? `FAILED CHECK (correct every listed item): ${String(message).slice(0, 1400)}` : '',
       code === 'DOCUMENTARY_SOURCE_FIDELITY' && documentarySourceText
         ? `ORIGINAL SOURCE TO PRESERVE:\n${documentarySourceText}\n\nREPAIR METHOD: distribute the original source clauses across the Situation and dialogue lines of all panels before the final panel. Copy the listed missing factual terms exactly. Do not leave a source cause, action, measure, affected party, or outcome only in Topic, Logline, Location, VisualEvidence, Outfit, Punchline, or thought trace; it must occur inside Scenario.`
         : ''
     ].filter(Boolean).join('\n\n'),
     onRetry: (retry) => onProgress(formatScenarioRetryProgress(retry)),
-    fatalValidationCodes: ['PANEL_STRUCTURE_CONTRACT', 'CAMERA_CONTRACT', 'STYLE_CONTRACT', ...(isDocumentaryEnding(activePunchlineType)
+    fatalValidationCodes: ['AUTO_PANEL_CHOICE', 'PANEL_STRUCTURE_CONTRACT', 'CAMERA_CONTRACT', 'STYLE_CONTRACT', ...(isDocumentaryEnding(activePunchlineType)
       ? ['DOCUMENTARY_SOURCE_FIDELITY'] : [])],
     maxAttempts: 3
   });
@@ -533,6 +543,11 @@ export async function generateScenario({
     : `シナリオ検査結果: ${safeScenarioResult.attempts}回目の候補が品質条件を通過しました${safeScenarioResult.attempts > 1 ? '。再生成で指摘が解消しました。' : '。再生成は不要です。'}`);
   let result = safeScenarioResult.response;
   let parsedData = safeScenarioResult.parsed;
+  const panelCountDecision = autoSelectPanelCount ? resolveAutoScenarioMode(parsedData) : null;
+  if (panelCountDecision) {
+    scenarioMode = panelCountDecision.scenarioMode;
+    onProgress(`コマ数自動選択: ${panelCountDecision.panelCount}コマ — ${panelCountDecision.reason}`);
+  }
   let repairedInputModeLabelLeak = false;
   if (inputMode === 'manual') {
     try {
@@ -610,6 +625,9 @@ export async function generateScenario({
   });
   parsedData = { ...parsedData, scenario: payoffGate.scenario };
   assertScenarioPanelStructure(parsedData.scenario, { scenarioMode });
+  if (panelCountDecision && getScenarioPanelBlocks(parsedData.scenario).length !== panelCountDecision.panelCount) {
+    throw new Error('シナリオ検査で決定済みのコマ数が変わりました。');
+  }
   assertGeneratedScenarioCameraContract(parsedData.scenario, inputMode === 'manual' ? manualTopic : '', { scenarioMode });
   assertGeneratedScenarioStyleContract(parsedData.scenario, { scenarioMode });
   const payoffValidationWarning = payoffGate.warning
@@ -681,6 +699,7 @@ ${JSON.stringify({ panels: Array.from({ length: panelCount }, (_, index) => ({ p
     outfit: parsedData.outfit,
     punchline: parsedData.punchline,
     resolvedEndingType,
+    panelCountDecision,
     scenario: parsedData.scenario,
     cameraWork,
     croppedPanels,

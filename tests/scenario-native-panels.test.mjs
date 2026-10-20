@@ -227,3 +227,53 @@ test('normal provider supplies the same recognized identity context to generatio
  assert.match(calls[1].prompt, /cast_identity/); assert.match(calls[3].prompt, /cast_identity/);
  assert.ok(calls[3].prompt.includes(corrected));
 });
+
+test('auto prompt uses story content without changing the manual prompt contract',()=>{
+ const auto=prompts.getScenarioPrompt({...args,...mode,autoSelectPanelCount:true});
+ assert.match(auto,/内容に基づくコマ数の自動選択/);
+ assert.match(auto,/4コマで因果と結末/);
+ assert.match(auto,/文字数・カテゴリ名・偶然・交互選択で決めない/);
+ assert.match(auto,/PanelCountReason:/);
+ assert.doesNotMatch(auto,/実験的コマ割りは5〜8コマ|四コマモードは常に全4コマ|N（5〜8）/);
+ const manual=prompts.getScenarioPrompt({...args,...mode});
+ assert.doesNotMatch(manual,/PanelCountReason:/);
+ assert.match(manual,/実験的コマ割りは5〜8コマ/);
+});
+test('provider selects either mode within the existing generation and review calls',async()=>{
+ for (const count of [4,5,6,7,8]) {
+  const calls=[], reason='必要な行動と判断がこの順序で過不足なく伝わる';
+  setFixtureResponse(async(prompt,_images,_system,_progress,options)=>{
+   calls.push({prompt,options});
+   return {text:prompt.includes('構成監査')?JSON.stringify(reviewFor(count)):
+    'Topic: 札\nLocation: 会館\nOutfit: 私服\nPanelCountReason: '+reason+'\nScenario:\n'+panels(count),model:'fixture'};
+  });
+  const result=await provider.generateScenario({...args,...mode,autoSelectPanelCount:true,scenarioModelId:'gpt-6-luna'});
+  assert.deepEqual(result.panelCountDecision,{scenarioMode:count===4?'four-panel':'experimental-manga',panelCount:count,reason});
+  assert.equal(validation.getScenarioPanelBlocks(result.scenario).length,count);
+  assert.equal(calls.length,2,'no additional classifier API');
+  assert.equal(calls[0].options.scenarioModelId,'gpt-6-luna');
+  assert.match(calls[1].prompt,count===4?/四コマモードは常に全4コマ/:/実験的コマ割りは5〜8コマ/);
+ }
+});
+test('parser keeps selection rationale separate from manga dialogue for both response formats',()=>{
+ for (const text of ['Topic: 札\nPanelCountReason: 一つの行動と結果\nScenario:\n'+panels(4),
+ JSON.stringify({topic:'札',panelCountReason:'一つの行動と結果',scenario:panels(4)})]) {
+  const parsed=provider.parseScenarioResponse({text},args);
+  assert.equal(parsed.panelCountReason,'一つの行動と結果');
+  assert.equal(parsed.scenario,panels(4));
+ }
+});
+test('auto response without a content reason is rejected before downstream review',async()=>{
+ let calls=0;
+ setFixtureResponse(async()=>{calls++;return {text:'Topic: 札\nLocation: 会館\nOutfit: 私服\nScenario:\n'+panels(4),model:'fixture'};});
+ await assert.rejects(()=>provider.generateScenario({...args,autoSelectPanelCount:true}),{code:'AUTO_PANEL_CHOICE'});
+ assert.ok(calls<=3);
+});
+
+test('blank selection reason cannot consume the following Scenario field',()=>{
+ for(const blank of ['', '   ', '\t']) {
+  const parsed=provider.parseScenarioResponse({text:'Topic: 札\nPanelCountReason:'+blank+'\nScenario:\n'+panels(4)},args);
+  assert.equal(parsed.panelCountReason,'');
+  assert.throws(()=>validation.resolveAutoScenarioMode(parsed),{code:'AUTO_PANEL_CHOICE'});
+ }
+});

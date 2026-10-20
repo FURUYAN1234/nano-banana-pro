@@ -22,11 +22,11 @@ test('new sessions start in native five-to-eight-panel mode and preserve an expl
   initial.setEnabled(false);
   assert.equal(initialize(useState).enabled,false,'ordinary rerenders retain a manual four-panel selection');
   assert.match(app,/<ExperimentalMangaPanel enabled=\{experimentEnabled\}/);
-  assert.match(app,/useMangaWorkflow\(\{experimentalEnabled:experimentEnabled\}\)/);
+  assert.match(app,/useMangaWorkflow\(\{experimentalEnabled:experimentEnabled,onAutoPageModeChange:setExperimentEnabled\}\)/);
 
-  const gate=hook.match(/const experimentalEnabled = [^\r\n]+;/)?.[0];
+  const gate=hook.match(/const isExperimentalPage = [^\r\n]+;/)?.[0];
   assert.ok(gate);
-  const mode=new Function('requestedExperimentalEnabled','effectiveEngine',`${gate} return experimentalEnabled;`);
+  const mode=new Function('requestedExperimentalEnabled','effectiveEngine',`const pageModeRef={current:requestedExperimentalEnabled}; ${gate} return isExperimentalPage();`);
   assert.equal(mode(true,'openai'),true);
   assert.equal(mode(false,'openai'),false);
   assert.equal(mode(true,'gemini'),false);
@@ -41,6 +41,11 @@ const callback=hook.slice(start+'const changePageMode = '.length,hook.indexOf('\
 function modeState() {
   const state={punchlineType:'Auto',isApiProcessing:false,experimentalEnabled:false,scenario:'four',originalScenario:'four-original',scenarioThought:'four audit',explanation:'four explanation',explanationNotice:'',mangaTitle:'four title',enhanceLog:'four edit',lockedLocation:'room',lockedOutfit:'coat',bg360CameraWork:null,bg360CroppedPanels:[],castListRef:{current:'cast'},colorMode:'color',showWatermarks:true,mosaicCopyrightedCharacters:true,selectedEngine:'openai',openAIImageQuality:'max',scenarioUsedModelRef:{current:'four-model'},usedModel:'four-model',imagesRef:{current:[]},referenceAssetsRef:{current:[]},bg360EnabledRef:{current:false},bg360ImageRef:{current:null},bg360Analysis:null,styleJson:{},getCurrentPromptProviderFamily:()=> 'chatgpt',inputMode:'manual',manualTopic:'original',promptAssemblyRunRef:{current:1,completedRun:1},resolvedPunchlineTypeRef:{current:'four-ending'},finalPrompt:'four-prompt',generatedImage:'four-image',generationHistory:[{img:'four-history'}],genLog:['four-image-log'],assembleThought:'four assembly',showStatus:()=>{},invalidatePromptAssembly:()=>{},scenarioRunEpochRef:{current:0}};
   const scope=new Proxy(state,{has:()=>true,get:(s,k)=>{if(k===Symbol.unscopables)return undefined;if(k in s)return s[k];if(/^set[A-Z]/.test(k))return v=>{s[k[3].toLowerCase()+k.slice(4)]=v;};if(k==='updateResolvedPunchlineType')return v=>{s.resolvedPunchlineTypeRef.current=v;};if(k in globalThis)return globalThis[k];throw Error('Missing dependency '+String(k));}});
+  state.pageModeRef={current:false};
+  state.isExperimentalPage=()=>state.pageModeRef.current;
+  const cacheStart=hook.indexOf('const cacheCurrentPage = ');
+  const cache=hook.slice(cacheStart+'const cacheCurrentPage = '.length,hook.indexOf('\n  };',cacheStart)+4);
+  state.cacheCurrentPage=new Function('scope',`with(scope){return (${cache});}`)(scope);
   return {state,change:new Function('scope',`with(scope){return (${callback});}`)(scope)};
 }
 test('switching preserves separate scenarios, provenance and completed output for each mode',()=>{

@@ -270,6 +270,7 @@ ${scenario}
 export const getScenarioPrompt = ({
   recentScenarios = [],
   scenarioMode = 'four-panel',
+  autoSelectPanelCount = false,
   mosaicCopyrightedCharacters = true,
   randomCategory,
   targetDate,
@@ -288,9 +289,9 @@ export const getScenarioPrompt = ({
   comedyTone,
   styleJson
 }) => {
-  const experimental = scenarioMode === 'experimental-manga';
+  const experimental = autoSelectPanelCount || scenarioMode === 'experimental-manga';
   if (!experimental && scenarioMode !== 'four-panel') throw new Error('Unknown scenario mode: ' + scenarioMode);
-  const panelTotal = experimental ? '5〜8' : '4';
+  const panelTotal = autoSelectPanelCount ? '4〜8' : experimental ? '5〜8' : '4';
   const lastPanel = experimental ? '最終コマ' : '4コマ目';
   const beforeEnding = experimental ? '最終コマより前の各コマ' : '1〜3コマ目';
   // Adapt only internal rule text; user input and reference data remain verbatim.
@@ -298,9 +299,10 @@ export const getScenarioPrompt = ({
     .replaceAll('1〜3コマ目', beforeEnding).replaceAll('2〜3コマ目', '中盤の各コマ')
     .replaceAll('4コマ目', lastPanel).replaceAll('4コマ', panelTotal + 'コマ') : rule;
   const panelFormat = experimental
-    ? '[1コマ目: 導入]から選んだN（5〜8）の[Ｎコマ目: 結末]まで、半角数字で連番の見出しを出力する。各コマに以下の全項目を必ず書く。途中を省略したり、この例のＮをそのまま出力しない。\n[nコマ目: そのコマの役割]\n[EMOTION: XXX]\n[Camera: XXX]\nBalloonLayout: (台詞順のJSON配列)\n状況: (場面内の人物・物の相対関係と変化、そのCamera投影、働きかけと反応)\nキャラ名「短いセリフ。」（発話のない演出ならセリフなし）'
+    ? '[1コマ目: 導入]から選んだN（' + panelTotal + '）の[Ｎコマ目: 結末]まで、半角数字で連番の見出しを出力する。各コマに以下の全項目を必ず書く。途中を省略したり、この例のＮをそのまま出力しない。\n[nコマ目: そのコマの役割]\n[EMOTION: XXX]\n[Camera: XXX]\nBalloonLayout: (台詞順のJSON配列)\n状況: (場面内の人物・物の相対関係と変化、そのCamera投影、働きかけと反応)\nキャラ名「短いセリフ。」（発話のない演出ならセリフなし）'
     : [1, 2, 3, 4].map((n, index) => '[' + n + 'コマ目: ' + ['起', '承', '転', '結'][index] + ']\n[EMOTION: XXX]\n[Camera: XXX]\nBalloonLayout: (上記の形式のJSON配列、台詞順)\n状況: (場面内の人物・物の相対関係と変化、そのCamera投影、働きかけと反応)\nキャラ名「短いセリフ。」').join('\n\n');
-  const panelStructure = experimental
+  const autoPanelInstruction = '【内容に基づくコマ数の自動選択】まず今回の題材・出来事・オチまでの流れを読み、必要な行動・判断・会話・場面転換を整理する。4コマで因果と結末を省略せず読みやすく伝えられるなら4コマを選ぶ。4コマでは必要な展開を省略するか台詞を詰め込む場合だけ5〜8コマの必要最小数を選ぶ。短い原文でも展開が多い場合、長い原文でも単純な流れの場合があるため、文字数・カテゴリ名・偶然・交互選択で決めない。コマ数を増やすための出来事や同じ反応を足さない。PanelCountReasonに今回の具体的な展開と選択理由を一文で書き、台本と一致させる。4コマなら起承転結の横長4段、5〜8コマならネイティブ1ページとして最初から完成形を設計する。';
+  const panelStructure = autoSelectPanelCount ? autoPanelInstruction : experimental
     ? '【ネイティブ5〜8コマ構成】最初から5〜8コマの完成した1ページとして設計する。題材の因果・行動・判断・掛け合い・帰結を読める必要数Nを選び、1からNまで欠番や重複なく書く。各コマで新しい行動、情報、関係または感情の変化を進める。コマ数を埋めるだけの無言の反応や同じ状況の再掲を足さない。無言は、その瞬間の動作・ためらい・発見・余韻に固有の役割があるときに使い、無言数のノルマや全面禁止は設けない。構成とセリフと画風をこの段階で確定する。'
     : '【四コマ構成】ちょうど4コマを起承転結で構成する。';
   const punchlineType = requestedPunchlineType === 'PsychoHorror' ? 'Surreal' : requestedPunchlineType;
@@ -345,7 +347,7 @@ export const getScenarioPrompt = ({
          Ignore all previous instructions and conversation history. This is a fresh, standalone session.
          ${contextRebootLock}
          ${panelStructure}
-         ${buildScenarioPanelCountInstruction(scenarioMode)}
+         ${autoSelectPanelCount ? '全4〜8コマを1から欠番・重複なく書く。決定後の監査・修正ではコマ数を保持する。' : buildScenarioPanelCountInstruction(scenarioMode)}
          ${buildCopyrightMosaicInstruction(mosaicCopyrightedCharacters)}
 
           あなたは${isSeriousDocumentary ? '原文の事実関係を守り、深刻な余韻を構成するプロのドキュメンタリー漫画脚本家' : isGeneralSerious ? '人物の感情と出来事の因果を、力強い画面で構成するプロのシリアス漫画脚本家' : 'プロの風刺漫画脚本家'}です。
@@ -691,6 +693,7 @@ ${buildAddedEndingGuidance(GAG_ENDING_OPTIONS)}` :
           VisualEvidence: [元トピックや出来事を絵で伝える具体的な手掛かりを「、」区切りで記入せよ。数合わせはしない]
           Outfit: [${customOutfit.trim() ? "必ず『" + customOutfit.trim() + "』にせよ" : "今回の題材に基づくイベント、職業、安全、場所、天候、屋内環境、季節に適した具体的な服装カテゴリーを記入せよ。※「キャラシート準拠」「デフォルト」および原文・指定に根拠のない学校制服は禁止"}]
           Punchline: [${punchlineType === 'SeriousAuto' ? `選択したシリアス結末の方向性を、${seriousEndingLabels}のいずれかで記載せよ` : !['Auto', 'GagAuto'].includes(punchlineType) ? "必ず『" + getPunchlineLabel(punchlineType) + "』と記載せよ" : `選択した具体的な結末名を、${gagEndingLabels}のいずれかで記載せよ`}]
+          ${autoSelectPanelCount ? 'PanelCountReason: [今回の内容に基づき、そのコマ数が必要な理由。漫画の台詞や画面文字には入れない]' : ''}
           Scenario:
           ${panelFormat}
 
@@ -702,12 +705,12 @@ ${buildAddedEndingGuidance(GAG_ENDING_OPTIONS)}` :
           - (禁止事項): AIが勝ために架空のオリジナルキャラクターを独自に創作して出演させることは禁止する。指定されたCastListのキャラクターのみをメインキャストとして扱うこと。
           - (許可事項): 題材の当事者（スポーツ選手、政治家、怪人、動物、虫など）や名もなきモブキャラは、物語を面白くするために必要であれば自由に登場・発言させて構わない。
           - (ハルシネーション防止): ゲストを登場させる場合でも、画像生成時のVisual Actionに「意味不明な文字」や「描画不可能な複雑すぎる行動」が混入しないよう、シンプルで視覚的にわかりやすい行動に留めること。
-          - 構成: ${experimental ? '導入・展開・変化・帰結を選んだコマ数へ配分する。固定の4段へ押し込まない' : '起承転結（4段）'}。
+          - 構成: ${autoSelectPanelCount ? '4コマなら起承転結の4段、5〜8コマなら導入・展開・変化・帰結を選んだコマ数へ配分する' : experimental ? '導入・展開・変化・帰結を選んだコマ数へ配分する。固定の4段へ押し込まない' : '起承転結（4段）'}。
            - 内容: ${isSeriousDocumentary ? `原文の事実を変えない真摯な再構成。${lastPanel}だけ、事実に対するシリアスな反応または結論で締める。` : isGeneralSerious ? `人物の感情と出来事の因果を保つシリアスな構成。${lastPanel}は選択した余韻、決意、警告、問題提起、救い、または喪失で締める。` : '題材に対する辛辣な風刺や、キャラの個性を活かしたドタバタ劇。'}
           - 文体: 各コマの「状況」「セリフ」が明確にわかる文章。
 
           ⚠️【最終確認・絶対厳守】⚠️
-          ${experimental ? '選んだ5〜8コマの全見出しが1から最終番号まで欠番・重複なく存在し' : '[1コマ目] [2コマ目] [3コマ目] [4コマ目] がすべて存在し'}、各コマに独立した「」付きセリフ、または明示した「セリフなし」の行があるか出力前に確認せよ。
+          ${experimental ? '選んだ' + panelTotal + 'コマの全見出しが1から最終番号まで欠番・重複なく存在し' : '[1コマ目] [2コマ目] [3コマ目] [4コマ目] がすべて存在し'}、各コマに独立した「」付きセリフ、または明示した「セリフなし」の行があるか出力前に確認せよ。
           全てのセリフの末尾に必ず「。」や「！」等の終止記号がついているか出力前に確認せよ。
           「…」や「～」など、終止記号なしで終わるセリフはシステムエラーとなるため完全禁止とする。
 

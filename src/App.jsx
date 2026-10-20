@@ -212,7 +212,7 @@ function App() {
     targetDate,
     toggleCategory,
     usedModel,
-  } = useMangaWorkflow({experimentalEnabled:experimentEnabled});
+  } = useMangaWorkflow({experimentalEnabled:experimentEnabled,onAutoPageModeChange:setExperimentEnabled});
   const nativePageModeEnabled = experimentEnabled && getEffectiveEngine(selectedEngine, enableOpenAIApi) === 'openai';
 
   const [controlBarHeight, setControlBarHeight] = useState(70);

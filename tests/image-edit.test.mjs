@@ -95,6 +95,7 @@ function setup(overrides = {}) {
     Date, setInterval: () => 1, clearInterval: () => {},
     ...overrides,
   };
+  context.isExperimentalPage = () => context.experimentalEnabled;
   const start = workflow.indexOf('const editGeneratedImage =');
   assert.notEqual(start, -1, 'manual edit handler must exist');
   const end = workflow.indexOf('// --- Step 4: Image Generation ---', start);

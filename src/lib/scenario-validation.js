@@ -80,6 +80,20 @@ export const assertScenarioPanelStructure = (scenarioText, { scenarioMode = 'fou
   throw error;
 };
 
+// 自動選択の根拠と実際の台本を同じ境界で検証する。推測や既定値で補完しない。
+export const resolveAutoScenarioMode = ({ scenario, panelCountReason } = {}) => {
+  const reason = typeof panelCountReason === 'string' ? panelCountReason.trim() : '';
+  if (!reason) {
+    const error = new Error('内容に基づくコマ数の選択理由がありません。');
+    error.code = 'AUTO_PANEL_CHOICE';
+    throw error;
+  }
+  const panelCount = getScenarioPanelBlocks(scenario).length;
+  const scenarioMode = panelCount === 4 ? 'four-panel' : 'experimental-manga';
+  assertScenarioPanelStructure(scenario, { scenarioMode });
+  return { scenarioMode, panelCount, reason };
+};
+
 const userRequestsEyeLevel = (userTopic, panelNumber) => {
   const source = String(userTopic || '').normalize('NFKC');
   const negated = /禁止|しない|使わない|用いない|避け|不可|ではなく|でなく|以外|\b(?:not|never|no|avoid)\b/i;

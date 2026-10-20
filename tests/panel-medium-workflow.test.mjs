@@ -72,6 +72,7 @@ function setup(overrides = {}) {
     getCurrentPromptProviderFamily: () => 'chatgpt', PROMPT_PROVIDER_FAMILIES: { CHATGPT: 'chatgpt' },
     progressPhase: '', statCallback: () => {}, ...overrides,
   };
+  context.isExperimentalPage = () => context.experimentalEnabled;
   return { context, plans };
 }
 const guideInputs = plan => plan.imageInputs.filter((_, i) => plan.referenceRoles?.[i] === 'style_reference');

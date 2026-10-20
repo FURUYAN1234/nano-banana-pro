@@ -93,7 +93,7 @@ export default function ControlBar({
             disabled={!apiKey || isAborting}
             aria-pressed={Boolean(isFullAutoMode)}
             onClick={() => isFullAutoMode ? handleFullAutoToggle() : requestMode('fullAuto')}
-            title="画像をドロップするだけで4コマを全自動生成。完了後は自動OFF。生成中に押すと即中断。"
+            title="画像をドロップするだけで漫画を全自動生成。OpenAIは内容に応じて4コマ／5〜8コマを選択。完了後は自動OFF。生成中に押すと即中断。"
             style={{ color: isFullAutoMode ? (isAborting ? '#ffffff' : '#dc2626') : '#ffffff' }}
             className={`min-w-[160px] flex items-center justify-center gap-1.5 px-4 py-3 rounded-xl text-sm font-black tracking-widest transition-all duration-100 border-2 border-b-4 select-none shrink-0 active:border-b-2 active:translate-y-0.5 ${
               isFullAutoMode
@@ -119,7 +119,8 @@ export default function ControlBar({
         {/* 説明文 */}
         <div className={`workflow-mode-help flex flex-col justify-center text-[10px] leading-relaxed text-center transition-opacity duration-300 ${!apiKey ? 'text-slate-600 opacity-40' : 'text-slate-400'}`}>
             <span className="whitespace-normal text-slate-300 font-bold">💡 全自動モード（フルオート）の使い方：</span>
-            <span className="whitespace-normal">・「⚡ 全自動モード ON」にして画像をドロップ（またはドロップ後にON）すると、4コマ漫画を全自動で最後まで生成します。</span>
+            <span className="whitespace-normal">・「⚡ 全自動モード ON」にして画像をドロップ（またはドロップ後にON）すると、漫画を全自動で最後まで生成します。</span>
+            <span className="whitespace-normal">・OpenAIではネタの内容から4コマ／5〜8コマを自動選択します。Geminiは4コマ。フルオートOFFでは手動のモード選択を使います。</span>
             <span className="whitespace-normal">・途中で中断したい場合は同じボタンで停止できます。以降は手動（各STEPボタン）で進行可能です。</span>
             <span className="whitespace-normal">・「連続ループ生成」をONにすると、自動生成完了後に自動で次の作品（別のシナリオ）を永遠に作り続けます。</span>
         </div>

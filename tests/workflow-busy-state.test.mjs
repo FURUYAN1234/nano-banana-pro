@@ -1,3 +1,4 @@
+import { resolveAutoScenarioMode } from '../src/lib/scenario-validation.js';
 import { applyOpenAIImageEngineWatermark } from '../src/lib/openai-image-settings.js';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
@@ -32,7 +33,7 @@ function deferred() {
 
 function harness(overrides = {}) {
   const state = {
-    referenceEditorError: '', DEFAULT_OPENAI_STEP1_MODEL_ID, DEFAULT_OPENAI_STEP3_MODEL_ID,
+    referenceEditorError: '', isApiProcessing:false, colorMode:'color', castListRef:{current:'cast'}, bg360EnabledRef:{current:false}, bg360ImageRef:{current:null}, bg360CameraWork:null, bg360CroppedPanels:[], usedModel:null, explanation:'', explanationNotice:'', mangaTitle:'', lockedLocation:'', lockedOutfit:'', generatedImage:null, assembleThought:'', resolveAutoScenarioMode, onAutoPageModeChange: enabled => { state.experimentalEnabled = enabled; }, pageModeRef: {current: false}, DEFAULT_OPENAI_STEP1_MODEL_ID, DEFAULT_OPENAI_STEP3_MODEL_ID,
     buildReferenceAssetContext, referenceAssetsRef: { current: [] }, imagesRef: { current: [] },
     beginApiWork, cancelApiWork, is360Analyzing: false, isAnalyzingRef: { current: false }, analyzeThought: '',
     scenario: 'Original scenario with enough text for enhancement', castList: 'Reference cast with sufficient detail',
@@ -66,6 +67,10 @@ function harness(overrides = {}) {
     window: { scrollTo: () => {} }, document: { body: { scrollHeight: 1 } },
     getCurrentPromptProviderFamily: () => 'chatgpt', ...overrides,
   };
+  state.generationHistoryRef = {current: state.generationHistory};
+  state.pageModeRef.current = state.experimentalEnabled;
+  state.isExperimentalPage = () => state.pageModeRef.current && state.isOpenAIEngine;
+  state.getScenarioMode = () => state.isExperimentalPage() ? 'experimental-manga' : 'four-panel';
   const scope = new Proxy(state, {
     has: () => true,
     get: (target, key) => {
@@ -80,7 +85,7 @@ function harness(overrides = {}) {
     },
   });
   const bind = name => (state[name] = new Function('scope', `with (scope) { return (${callback(name)}); }`)(scope));
-  for (const name of ['finishScenarioTiming', 'invalidateScenarioRun', 'invalidatePromptAssembly',
+  for (const name of ['cacheCurrentPage', 'finishScenarioTiming', 'invalidateScenarioRun', 'invalidatePromptAssembly',
     'invalidateScenarioOutput', 'setScenarioFromUser', 'setPunchlineType', 'assertImageGenerationPrompt', 'resetPageCaches']) {
     if (source.includes(`const ${name} = `)) bind(name);
   }
@@ -95,7 +100,7 @@ for (const experimentalEnabled of [false, true]) {
     const calls=[];
     const generatedScenario=Array.from({length:experimentalEnabled?8:4},(_,i)=>`[${i+1}コマ目]\n状況: 次の札を動かす。\nA「次です。」`).join('\n');
     const {state,bind}=harness({experimentalEnabled,
-      generateScenario:async input=>{calls.push(['provider',input.scenarioMode,input.inputMode]);return {...result,scenario:generatedScenario};},
+      generateScenario:async input=>{calls.push(['provider',input.scenarioMode,input.inputMode]);return {...result,scenario:generatedScenario,panelCountDecision:{reason:'導入から結果まで必要な展開を過不足なく伝える'}};},
       validateMangaScenario:(_scenario,_cast,options)=>{calls.push(['validate',options.scenarioMode]);return {ok:true,structuralValid:true};},
       assemblePrompt:async(_skip,scenario)=>{calls.push(['step3',scenario]);return 'assembled current prompt';},
       regenerateImage:async(_skip,prompt,options)=>{calls.push(['step4',prompt,options.sourceScenario]);return true;},
@@ -526,3 +531,72 @@ test('invalid STEP2 input leaves the existing generation and run ownership intac
   assert.equal(state.isGeneratingImage, true);
   assert.equal(state.finalPrompt, 'Original prompt');
 });
+
+for (const selectedNative of [false,true]) {
+ test('full-auto adopts content-selected mode before STEP3/4, initial native='+selectedNative, async () => {
+  const count=selectedNative?4:6, calls=[];
+  const generated=Array.from({length:count},(_,i)=>'['+(i+1)+'コマ目]\n状況: 札を動かす。\nA「次です。」').join('\n');
+  const {state,bind}=harness({experimentalEnabled:selectedNative,
+   generateScenario:async input=>{assert.equal(input.autoSelectPanelCount,true);return {...result,scenario:generated,panelCountDecision:{reason:'必要な行動と判断を順に伝える'}};},
+   assemblePrompt:async()=>{calls.push(state.getScenarioMode());return 'new prompt';},
+   regenerateImage:async()=>{calls.push(state.getScenarioMode());return true;},
+  });
+  bind('generateScenarioFromNews');await bind('runFullAuto')();
+  const expected=count===4?'four-panel':'experimental-manga';
+  assert.deepEqual(calls,[expected,expected]);
+  assert.equal(state.experimentalEnabled,!selectedNative);
+  assert.equal(state.pageModeRef.current,!selectedNative);
+ });
+}
+for (const fullAuto of [false,true]) {
+ test('manual STEP2 cannot opt into content selection, auto flag='+fullAuto,async()=>{
+  let input;const {state,bind}=harness({experimentalEnabled:true,
+   generateScenario:async value=>{input=value;return result;},
+  });
+  await bind('generateScenarioFromNews')(undefined,undefined,{autoSelectPanelCount:fullAuto});
+  assert.equal(input.autoSelectPanelCount,false);
+  assert.equal(state.experimentalEnabled,true);
+ });
+}
+test('Gemini full-auto retains four-panel provider boundary',async()=>{
+ let input;const {state,bind}=harness({isOpenAIEngine:false,experimentalEnabled:false,
+  generateScenario:async value=>{input=value;return result;},
+  assemblePrompt:async()=> 'prompt',regenerateImage:async()=>true,
+ });
+ bind('generateScenarioFromNews');await bind('runFullAuto')();
+ assert.equal(input.autoSelectPanelCount,false);assert.equal(input.scenarioMode,'four-panel');
+ assert.equal(state.experimentalEnabled,false);
+});
+test('late auto selection cannot replace mode after stop',async()=>{
+ const pending=deferred();const {state,bind}=harness({experimentalEnabled:false,
+  generateScenario:()=>pending.promise,assemblePrompt:async()=>assert.fail('stale assembly'),
+ });
+ bind('generateScenarioFromNews');const work=bind('runFullAuto')();await flush();
+ bind('stopApiProcessing')();
+ pending.resolve({...result,scenario:'obsolete',panelCountDecision:{reason:'obsolete'}});
+ await work;assert.equal(state.experimentalEnabled,false);assert.equal(state.pageModeRef.current,false);
+});
+
+for (const initialMode of [false,true]) {
+  test('automatic mode choice preserves separate histories: '+initialMode, async()=>{
+    const nextMode=!initialMode;
+    const outgoing=[{img:'previous outgoing image'}];
+    const incoming=[{img:'previous incoming image'}];
+    const chosenScenario=Array.from({length:nextMode?6:4},(_,i)=>`[${i+1}コマ目]
+状況: 必要な出来事を順に描く。
+A「次へ。」`).join('\n');
+    const {state,bind}=harness({experimentalEnabled:initialMode,generationHistory:outgoing,
+      promptAssemblyRunRef:{current:0,pages:{[nextMode?'experimental':'normal']:{generationHistory:incoming}}},
+      generateScenario:async()=>({...result,scenario:chosenScenario,panelCountDecision:{reason:'内容を省略せず最小のコマ数で描く'}}),
+      assemblePrompt:async()=> 'new prompt',
+      regenerateImage:async()=>{assert.deepEqual(state.generationHistory,incoming);assert.deepEqual(state.generationHistoryRef.current,incoming);state.generationHistory=[...state.generationHistory,{img:'new image'}];return true;},
+    });
+    bind('generateScenarioFromNews');
+    await bind('runFullAuto')();
+    assert.deepEqual(state.promptAssemblyRunRef.pages[initialMode?'experimental':'normal'].generationHistory,outgoing);
+    assert.equal(state.promptAssemblyRunRef.pages[initialMode?'experimental':'normal'].scenario,'Original scenario with enough text for enhancement');
+    assert.deepEqual(state.generationHistory,[...incoming,{img:'new image'}]);
+    bind('changePageMode')(initialMode);
+    assert.deepEqual(state.generationHistory,outgoing);
+  });
+}

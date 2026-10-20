@@ -32,7 +32,7 @@ const assembly = workflow.slice(workflow.indexOf('const assemblePrompt ='), work
 test('STEP3 rejects an over-budget legacy session before starting API work', async () => {
   for (const [count, background] of [[15, false], [11, true]]) {
     let calls = 0; let error = '';
-    const context = { experimentalEnabled:false, scenarioMode:'four-panel', assertImageInputBudget, referenceEditorError: '',
+    const context = { experimentalEnabled:false, scenarioMode:'four-panel', isExperimentalPage:()=>false, getScenarioMode:()=> 'four-panel', assertImageInputBudget, referenceEditorError: '',
       imagesRef:{current:Array.from({length:count}, (_, i) => `sheet-${i}`)}, bg360EnabledRef:{current:background},
       beginApiWork:()=>{calls++;}, setImageInputError:value=>{error=value;}, showStatus:()=>{} };
     vm.createContext(context);
@@ -47,7 +47,7 @@ test('scenario invalidation releases STEP3 and an old review cannot unlock or ov
   const reviews = [];
   let active = false;
   let output = '';
-  const context = { experimentalEnabled:false, scenarioMode:'four-panel',
+  const context = { experimentalEnabled:false, scenarioMode:'four-panel', isExperimentalPage:()=>false, getScenarioMode:()=> 'four-panel',
     referenceEditorError: '',
     formatOpenAIImageEngineName, GEMINI_IMAGE_MODEL, openAIImageQuality: 'sunburst_max', translateApiError: error => error.message,
     beginApiWork,
@@ -133,7 +133,7 @@ test('obsolete STEP4 timer and API callbacks leave the current generation log in
   let deferred = false;
   const updates = [];
   const epoch = { current: 1 };
-  const context = { experimentalEnabled:false, scenarioMode:'four-panel',
+  const context = { experimentalEnabled:false, scenarioMode:'four-panel', isExperimentalPage:()=>false, getScenarioMode:()=> 'four-panel',
     beginApiWork, createImageReviewBudget, IMAGE_REVIEW_BUDGET_MS,
     Date: { now: () => now }, generationOptions: {}, qualityRunEpoch: 1, scenarioRunEpochRef: epoch,
     setInterval: fn => { tick = fn; return 1; },

@@ -1,3 +1,4 @@
+import { resolveAutoScenarioMode } from '../lib/scenario-validation.js';
 import { getBuiltinPanelMediumReference } from '../lib/builtin-panel-medium-reference.js';
 import { getImageContentHash, buildReferenceRecognitionMetadata } from '../lib/generated-image-metadata.js';
 import { beginApiWork, cancelApiWork, getApiWorkSignal, createImageReviewBudget, IMAGE_REVIEW_BUDGET_MS } from '../lib/api-work-cancellation.js';
@@ -67,7 +68,7 @@ import { DEFAULT_OPENAI_STEP1_MODEL_ID, DEFAULT_OPENAI_SCENARIO_MODEL_ID, DEFAUL
 import { prepareExperimentalManga, buildExperimentalReviewPrompt, reviewExperimentalImage, validateExperimentalReview, experimentalRepairIssues, summarizeExperimentalLayouts } from '../lib/experimental-manga.js';
 import { resolvePageWorkflow } from '../lib/page-workflow.js';
 
-export default function useMangaWorkflow({ experimentalEnabled: requestedExperimentalEnabled = true } = {}) {
+export default function useMangaWorkflow({ experimentalEnabled: requestedExperimentalEnabled = true, onAutoPageModeChange } = {}) {
   const [analysisModelId, setAnalysisModelIdState] = useState(DEFAULT_OPENAI_STEP1_MODEL_ID);
   const setAnalysisModelId = modelId => setAnalysisModelIdState(
     OPENAI_VISION_MODEL_IDS.includes(modelId) ? modelId : DEFAULT_OPENAI_STEP1_MODEL_ID
@@ -263,8 +264,11 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
   // Legacy sessions can preserve one old flag across a hot update. Treat either
   // OpenAI signal as authoritative and immediately restore one coherent engine.
   const effectiveEngine = getEffectiveEngine(selectedEngine, enableOpenAIApi);
-  const experimentalEnabled = Boolean(requestedExperimentalEnabled && effectiveEngine === 'openai');
-  const scenarioMode = experimentalEnabled ? 'experimental-manga' : 'four-panel';
+  const pageModeRef = useRef(requestedExperimentalEnabled);
+  useEffect(() => { pageModeRef.current = requestedExperimentalEnabled; }, [requestedExperimentalEnabled]);
+  // 同じフルオート呼出しの途中で選択が変わっても、後続STEPは最新の確定モードを読む。
+  const isExperimentalPage = () => Boolean(pageModeRef.current && effectiveEngine === 'openai');
+  const getScenarioMode = () => isExperimentalPage() ? 'experimental-manga' : 'four-panel';
   const isOpenAIEngine = effectiveEngine === 'openai';
   useEffect(() => {
     if (isOpenAIEngine && selectedEngine !== 'openai') {
@@ -373,6 +377,8 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
   const imageEditRunRef = useRef(null);
   imageEditRunRef.displayedImage = generatedImage;
   const [generationHistory, setGenerationHistory] = useState([]); // [v2.86] Generated Image History
+  const generationHistoryRef = useRef(generationHistory);
+  generationHistoryRef.current = generationHistory;
   const finalImageSaverRef = useRef(null);
   const autoSaveFinalImage = async (item, isCurrent) => {
     finalImageSaverRef.current ||= createFinalImageSaver();
@@ -907,7 +913,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
     try {
       setEnhanceLog(prev => prev + `\n> [API] ${isOpenAIEngine ? 'OpenAI' : 'Gemini'} にシナリオ強化をリクエスト中...`);
       const result = await enhanceScenarioText({
-        scenarioMode,
+        scenarioMode:getScenarioMode(),
         scenario,
         referenceAssetContext: buildReferenceAssetContext(referenceAssetsRef.current, imagesRef.current, { panorama: bg360Enabled ? bg360Analysis : null }),
         selectedCategories,
@@ -971,7 +977,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
   };
 
   // --- Step 2: Scenario ---
-  const generateScenarioFromNews = async (categoriesOverride, inputModeOverride = null) => {
+  const generateScenarioFromNews = async (categoriesOverride, inputModeOverride = null, options = {}) => {
     if (referenceEditorError) return showStatus(referenceEditorError);
     beginApiWork();
     if (!castList) return showStatus("先にキャラクターを解析してください。");
@@ -980,6 +986,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
     const effectiveCategories = Array.isArray(categoriesOverride) ? categoriesOverride : categories;
     const effectiveInputMode = inputModeOverride || inputMode;
     const previousScenario = scenario;
+    const autoSelectPanelCount = options.autoSelectPanelCount === true && isFullAutoModeRef.current && isOpenAIEngine;
 
     if (effectiveInputMode === 'manual' && !manualTopic.trim()) {
       alert("自由入力トピックを入力してください。");
@@ -1041,7 +1048,8 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
         scenario: item.metadataContext?.scenario, sourceKey: item.metadataContext?.settings?.scenario_source_key,
       }))];
       const result = await generateScenario({
-        scenarioMode,
+        scenarioMode:getScenarioMode(),
+        autoSelectPanelCount,
         recentScenarios: collectRecentScenarioOutcomes([
           { scenario: previousScenario, sourceKey: findScenarioSourceKey(previousScenario, recentSources) }, ...recentSources,
         ], { sourceKey, currentScenario: previousScenario,
@@ -1086,6 +1094,17 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
         return null;
       }
 
+      if (autoSelectPanelCount) {
+        const decision = resolveAutoScenarioMode({scenario:result.scenario,panelCountReason:result.panelCountDecision?.reason});
+        const nextExperimental = decision.scenarioMode === 'experimental-manga';
+        if (nextExperimental !== isExperimentalPage()) {
+          const nextPage = promptAssemblyRunRef.pages?.[nextExperimental ? 'experimental' : 'normal'];
+          generationHistoryRef.current = nextPage?.generationHistory || [];
+          setGenerationHistory(generationHistoryRef.current);
+        }
+        pageModeRef.current = nextExperimental;
+        onAutoPageModeChange?.(pageModeRef.current);
+      }
       updateResolvedPunchlineType(result.resolvedEndingType || punchlineType);
       setExplanation(result.explanation?.text || "");
       setExplanationNotice(result.explanation?.notice || "解説を取得できませんでした。手入力できます。");
@@ -1154,7 +1173,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
       recentScenarioTextsRef.current = [{ scenario: finalScenarioText, sourceKey }, ...recentScenarioTextsRef.current
         .filter(item => item?.scenario !== finalScenarioText || item?.sourceKey !== sourceKey)].slice(0, 6);
       setMangaTitle(generatedTitle); // タイトルをstateに保存（画像ダウンロード時のファイル名に使用）
-      const scenarioValidation = validateMangaScenario(finalScenarioText, castList, {scenarioMode});
+      const scenarioValidation = validateMangaScenario(finalScenarioText, castList, {scenarioMode:getScenarioMode()});
       const qualityWarnings = [];
       if (result.validationWarning) {
         qualityWarnings.push(`STEP2検証: ${result.validationWarning.code}: ${result.validationWarning.message}`);
@@ -1240,13 +1259,13 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
     if (isColorModeLocked) return;
     const nextMode = normalizeMangaColorMode(value);
     if (nextMode === colorMode) return;
-    promptAssemblyRunRef.colorLayoutPrepared = experimentalEnabled
+    promptAssemblyRunRef.colorLayoutPrepared = isExperimentalPage()
       ? promptAssemblyRunRef.colorLayoutPrepared || promptAssemblyRunRef.experimentalPrepared
       : undefined;
     setColorModeState(nextMode);
     invalidatePromptAssembly();
     setFinalPrompt("");
-    if (!experimentalEnabled) setGeneratedImage(null);
+    if (!isExperimentalPage()) setGeneratedImage(null);
     setAssembleThought("");
     setIsCopied(false);
     setCopiedPartIndex(null);
@@ -1263,8 +1282,20 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
     showStatus(`${nextMode === 'monochrome' ? '白黒' : 'カラー'}を選択しました。STEP3で指示文を再構築してください。`);
   };
 
+  const cacheCurrentPage = () => {
+    const context=[castListRef.current,colorMode,showWatermarks,mosaicCopyrightedCharacters,punchlineType,
+      selectedEngine,openAIImageQuality,imagesRef.current,referenceAssetsRef.current,
+      bg360EnabledRef.current,bg360ImageRef.current,bg360Analysis,styleJson,getCurrentPromptProviderFamily(),inputMode,manualTopic];
+    const pages=promptAssemblyRunRef.pages ||= {};
+    pages[isExperimentalPage()?'experimental':'normal']={context,scenario,originalScenario,scenarioThought,explanation,explanationNotice,mangaTitle,
+      enhanceLog,lockedLocation,lockedOutfit,bg360CameraWork,bg360CroppedPanels,usedModel,scenarioUsedModel:scenarioUsedModelRef.current,
+      resolvedPunchlineType:resolvedPunchlineTypeRef.current,finalPrompt,generatedImage,generationHistory,genLog,assembleThought,
+      completedRun:promptAssemblyRunRef.completedRun,experimentalPrepared:promptAssemblyRunRef.experimentalPrepared};
+    return context;
+  };
+
   const experimentalInput = (sourceScenario = scenario) => ({
-    enabled:true,scenarioMode,scenario:sourceScenario,castList:castListRef.current,colorMode,mosaicCopyrightedCharacters,showWatermarks,
+    enabled:true,scenarioMode:getScenarioMode(),scenario:sourceScenario,castList:castListRef.current,colorMode,mosaicCopyrightedCharacters,showWatermarks,
     providerFamily:getCurrentPromptProviderFamily(),
     userDirection:inputMode==='manual'?manualTopic:'',
     imageEngineLabel:isOpenAIEngine?formatOpenAIImageEngineName(openAIImageQuality):GEMINI_IMAGE_MODEL.replace(/^gemini-nano-banana-/, 'Gemini Nano Banana '),
@@ -1276,21 +1307,15 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
       characterImages:imagesRef.current,referenceAssets:referenceAssetsRef.current,
       backgroundImage:bg360Image,backgroundEnabled:bg360Enabled,colorMode,
       mediumReference:getBuiltinPanelMediumReference({scenario:sourceScenario,colorMode,styleJson,punchlineType})})):undefined,
-    recentLayouts:summarizeExperimentalLayouts(generationHistory.filter(item=>item.experimentalPlan).map(item=>({plan:item.experimentalPlan})).reverse()),
+    recentLayouts:summarizeExperimentalLayouts(generationHistoryRef.current.filter(item=>item.experimentalPlan).map(item=>({plan:item.experimentalPlan})).reverse()),
   });
   const changePageMode = (enabled) => {
     if (enabled && getCurrentPromptProviderFamily() === 'gemini') return false;
     if (isApiProcessing) return false;
-    if (enabled === experimentalEnabled) return true;
+    if (enabled === isExperimentalPage()) return true;
     promptAssemblyRunRef.colorLayoutPrepared=undefined;
-    const context=[castListRef.current,colorMode,showWatermarks,mosaicCopyrightedCharacters,punchlineType,
-      selectedEngine,openAIImageQuality,imagesRef.current,referenceAssetsRef.current,
-      bg360EnabledRef.current,bg360ImageRef.current,bg360Analysis,styleJson,getCurrentPromptProviderFamily(),inputMode,manualTopic];
-    const pages=promptAssemblyRunRef.pages ||= {};
-    pages[experimentalEnabled?'experimental':'normal']={context,scenario,originalScenario,scenarioThought,explanation,explanationNotice,mangaTitle,
-      enhanceLog,lockedLocation,lockedOutfit,bg360CameraWork,bg360CroppedPanels,usedModel,scenarioUsedModel:scenarioUsedModelRef.current,
-      resolvedPunchlineType:resolvedPunchlineTypeRef.current,finalPrompt,generatedImage,generationHistory,genLog,assembleThought,
-      completedRun:promptAssemblyRunRef.completedRun,experimentalPrepared:promptAssemblyRunRef.experimentalPrepared};
+    const context=cacheCurrentPage();
+    const pages=promptAssemblyRunRef.pages;
     const next=pages[enabled?'experimental':'normal'] || {};
     const matches=next.context?.length===context.length && next.context.every((value,index)=>Object.is(value,context[index]));
     invalidatePromptAssembly();
@@ -1306,6 +1331,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
     promptAssemblyRunRef.completedRun=matches?next.completedRun:undefined;
     promptAssemblyRunRef.experimentalPrepared=matches?next.experimentalPrepared:undefined;
     setIsScenarioCopied(false);setIsCopied(false);setIsTextSaved(false);setIsMetaSaved(false);
+    pageModeRef.current = enabled;
     return true;
   };
   // --- Step 3: Prompt Assembly (Super FURU v121.3) ---
@@ -1327,9 +1353,9 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
     const assemblyRun = promptAssemblyRunRef.current;
     const controller = new AbortController();
     promptAssemblyAbortRef.current = controller;
-    const scenarioValidation = validateMangaScenario(currentScenario, castList, {scenarioMode});
+    const scenarioValidation = validateMangaScenario(currentScenario, castList, {scenarioMode:getScenarioMode()});
     if (scenarioValidation.structuralValid === false) {
-      showStatus(experimentalEnabled ? '実験モードには5〜8コマのシナリオが必要です。STEP2で作成してください。' : '通常モードには4コマのシナリオが必要です。STEP2で作成してください。');
+      showStatus(isExperimentalPage() ? '実験モードには5〜8コマのシナリオが必要です。STEP2で作成してください。' : '通常モードには4コマのシナリオが必要です。STEP2で作成してください。');
       return null;
     }
     const assemblyQualityWarning = !scenarioValidation.ok
@@ -1337,7 +1363,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
       : '';
     if (assemblyQualityWarning) showStatus(assemblyQualityWarning);
     setIsAssembling(true);
-    if (!experimentalEnabled) setFinalPrompt(""); // Experimental rebuild failures retain the previous prepared prompt.
+    if (!isExperimentalPage()) setFinalPrompt(""); // Experimental rebuild failures retain the previous prepared prompt.
     setGenLog([]); // [v3.01] Clear previous image generation logs
     // [v2.35] 救済パネルリセット
     setPolicyErrorMsg("");
@@ -1368,7 +1394,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
       { ...options, modelRoute: 'scenario', scenarioModelId: promptModelId }
     );
     try {
-      if (experimentalEnabled) {
+      if (isExperimentalPage()) {
         const input=experimentalInput(currentScenario);
         const prepared=await prepareExperimentalManga({...input,signal:controller.signal,onProgress:message=>setAssembleThought(prev=>prev+'\n'+message)},async(prompt,signal)=>
           (await callStep3AI(prompt,[],null,message=>setAssembleThought(prev=>prev+'\n'+message),{signal})).text,
@@ -1698,8 +1724,8 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
   // Validate again at copy time because the user may edit the text or references.
   const prepareWebCopyPrompt = (prompt) => {
     if (referenceEditorError) throw new Error(referenceEditorError);
-    if (experimentalEnabled) resolvePageWorkflow({experimentalEnabled,prepared:promptAssemblyRunRef.experimentalPrepared,prompt,input:experimentalInput()});
-    if (!experimentalEnabled && inferImageQualityMode(prompt) === 'four-panel') assertRenderOptions(prompt, { mosaicCopyrightedCharacters, showWatermarks, protectedCast: collectCastNameEntries(castList).map(entry => entry.displayName) });
+    if (isExperimentalPage()) resolvePageWorkflow({experimentalEnabled:isExperimentalPage(),prepared:promptAssemblyRunRef.experimentalPrepared,prompt,input:experimentalInput()});
+    if (!isExperimentalPage() && inferImageQualityMode(prompt) === 'four-panel') assertRenderOptions(prompt, { mosaicCopyrightedCharacters, showWatermarks, protectedCast: collectCastNameEntries(castList).map(entry => entry.displayName) });
     return ensureWebPromptTrailingNewline(getCurrentPromptProviderFamily() === PROMPT_PROVIDER_FAMILIES.CHATGPT
       ? appendOpenAIWebReferencePrompt(applyOpenAIImageEngineWatermark(prompt, openAIImageQuality), buildOpenAIReferencePlan({ compact: true,
         characterImages: images, backgroundImage: bg360Image, backgroundEnabled: bg360Enabled,
@@ -1725,7 +1751,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
     if (!finalPrompt) return;
     let copiedPrompt;
     try {
-      if (!experimentalEnabled) {
+      if (!isExperimentalPage()) {
         assertPromptEndingModeConsistency({ prompt: finalPrompt, punchlineType: resolvedPunchlineTypeRef.current || punchlineType });
         assertPrintableDialogue(finalPrompt);
       }
@@ -1794,7 +1820,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
   // Local-only placement also makes existing successful API images reviewable
   // without paying for another generation. Always retain the original pixels.
   const normalizeDisplayedPage = async () => {
-    if (experimentalEnabled || !generatedImage || isGeneratingImage || inferImageQualityMode(finalPrompt) !== 'four-panel') return;
+    if (isExperimentalPage() || !generatedImage || isGeneratingImage || inferImageQualityMode(finalPrompt) !== 'four-panel') return;
     const previous = generationHistory.find(item => item.img === generatedImage);
     const sourceImage = previous?.originalImage || generatedImage;
     const match = sourceImage.match(/^data:(image\/[^;]+);base64,([\s\S]+)$/);
@@ -1990,7 +2016,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
     }
     const run = { epoch };
     imageEditRunRef.current = run;
-    const preserveNativePage = sourceCount ? sourceCount > 4 : experimentalEnabled;
+    const preserveNativePage = sourceCount ? sourceCount > 4 : isExperimentalPage();
     const isCurrent = () => scenarioRunEpochRef.current === epoch && imageEditRunRef.current === run;
     const log = message => { if (isCurrent()) setGenLog(items => [...items, message]); };
     setIsGeneratingImage(true);
@@ -2070,9 +2096,9 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
 
   // --- Step 4: Image Generation ---
   const assertImageGenerationPrompt = (prompt, sourceScenario = scenario) => {
-    if(experimentalEnabled) {
+    if(isExperimentalPage()) {
       const prepared=promptAssemblyRunRef.experimentalPrepared;
-      resolvePageWorkflow({experimentalEnabled,prepared,prompt,input:experimentalInput(sourceScenario)});
+      resolvePageWorkflow({experimentalEnabled:isExperimentalPage(),prepared,prompt,input:experimentalInput(sourceScenario)});
       if(prepared.images!==imagesRef.current||prepared.bg360Image!==bg360Image) throw new Error('参照素材が変わりました。STEP3を作り直してください。');
       return;
     }
@@ -2084,7 +2110,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
   // [v2.79] 戻り値変更: フルオート連鎖用（true=成功, false=失敗）
   const generateImageOnce = async (skipGuard = false, overridePrompt = null, generationOptions = {}) => {
     if (referenceEditorError) { showStatus(referenceEditorError); return false; }
-    if (generationOptions.policyAttempt && (experimentalEnabled || !allowImageQualityRepair || generationOptions.reviewOnly || qualityRetryAbortRef.current)) return false;
+    if (generationOptions.policyAttempt && (isExperimentalPage() || !allowImageQualityRepair || generationOptions.reviewOnly || qualityRetryAbortRef.current)) return false;
     try {
       assertImageInputBudget({ characterImages: imagesRef.current, backgroundEnabled: bg360EnabledRef.current });
     } catch (error) {
@@ -2098,7 +2124,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
     const generationScenario = generationOptions.sourceScenario ?? scenario;
     const workflowSource = { promptAssemblyRun: promptAssemblyRunRef.completedRun, finalPrompt: editablePrompt };
     let pageContract;
-    try { pageContract=resolvePageWorkflow({experimentalEnabled,prepared:promptAssemblyRunRef.experimentalPrepared,prompt:editablePrompt,input:experimentalEnabled?experimentalInput(generationScenario):undefined}); }
+    try { pageContract=resolvePageWorkflow({experimentalEnabled:isExperimentalPage(),prepared:promptAssemblyRunRef.experimentalPrepared,prompt:editablePrompt,input:isExperimentalPage()?experimentalInput(generationScenario):undefined}); }
     catch(error){showStatus(error.message);return false;}
     const qualityMode=pageContract.kind;
     const experimentalPrepared=qualityMode==='experimental-manga'?promptAssemblyRunRef.experimentalPrepared:null;
@@ -2686,7 +2712,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
           "[ERROR GUIDE] 【対処法】アプリ側の送信形式を修正する必要があります。通信障害として再試行しても解決しません。"
         ];
       } else if (isImagePolicyError(errMsg)) {
-        const policyRepairEnabled = !experimentalEnabled && allowImageQualityRepair && !generationOptions.reviewOnly && !qualityRetryAbortRef.current;
+        const policyRepairEnabled = !isExperimentalPage() && allowImageQualityRepair && !generationOptions.reviewOnly && !qualityRetryAbortRef.current;
         setPolicyErrorMsg(errMsg);
         lastPolicyErrorRef.current = errMsg; // ref経由で即時参照可能にする
         setShowPolicyChoice(!policyRepairEnabled || !generationOptions.suppressPolicyChoice);
@@ -2734,13 +2760,13 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
 
   const runPolicyAutoRetries = async ({ initialPrompt, initialPolicyError, generationOptions = {} }) => {
     if (!initialPrompt || !initialPolicyError) return false;
-    if (experimentalEnabled || !allowImageQualityRepair || generationOptions.reviewOnly || qualityRetryAbortRef.current) {
+    if (isExperimentalPage() || !allowImageQualityRepair || generationOptions.reviewOnly || qualityRetryAbortRef.current) {
       setShowPolicyChoice(true);
       setGenLog(prev => [...prev, '[POLICY AUTO-FIX] 自動修正OFF・検査専用・停止指定のため、追加の修正解析・画像生成を行いません。']);
       return false;
     }
     const policyEpoch = scenarioRunEpochRef.current;
-    const shouldStop = () => experimentalEnabled || !allowImageQualityRepair || generationOptions.reviewOnly || qualityRetryAbortRef.current
+    const shouldStop = () => isExperimentalPage() || !allowImageQualityRepair || generationOptions.reviewOnly || qualityRetryAbortRef.current
       || policyEpoch !== scenarioRunEpochRef.current || (isFullAutoMode && fullAutoAbortRef.current);
 
     setShowPolicyChoice(false);
@@ -2917,7 +2943,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
 
   // 上限到達後に利用者がもう一度試す場合も、同じ最大5回の内部ループを使う。
   const handlePolicyAutoFix = async () => {
-    if (experimentalEnabled) return false;
+    if (isExperimentalPage()) return false;
     beginApiWork();
     const errorMsg = lastPolicyErrorRef.current || policyErrorMsg;
     if (!finalPrompt || !errorMsg.trim()) return;
@@ -2943,7 +2969,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
     if (finalPrompt) {
       let copiedPrompt;
       try {
-        if (!experimentalEnabled) {
+        if (!isExperimentalPage()) {
           assertPromptEndingModeConsistency({ prompt: finalPrompt, punchlineType: resolvedPunchlineTypeRef.current || punchlineType });
           assertPrintableDialogue(finalPrompt);
         }
@@ -2987,6 +3013,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
     // フルオート開始
     const fullAutoRun = (scenarioRunEpochRef.fullAutoRun || 0) + 1;
     scenarioRunEpochRef.fullAutoRun = fullAutoRun;
+    if (isOpenAIEngine) cacheCurrentPage();
     let fullAutoEpoch = invalidateScenarioRun();
     let nextRoundQueued = false;
     const ownsRun = () => scenarioRunEpochRef.fullAutoRun === fullAutoRun;
@@ -2994,6 +3021,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
     qualityRetryAbortRef.current = true;
     setPolicyAutoRetrying(false);
     fullAutoAbortRef.current = false;
+    isFullAutoModeRef.current = true;
     setIsFullAutoMode(true);
     setEnableChatGPTMode(isOpenAIEngine);
 
@@ -3034,7 +3062,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
     await new Promise(r => setTimeout(r, 600)); // スクロール完了をしっかり待つ
 
     if (!isCurrent()) return;
-    const scenarioRequest = generateScenarioFromNews(overrideCategories, "news");
+    const scenarioRequest = generateScenarioFromNews(overrideCategories, "news", {autoSelectPanelCount:true});
     fullAutoEpoch = scenarioRunEpochRef.current;
     const generatedScenario = await scenarioRequest;
     if (!isCurrent()) return;
@@ -3214,7 +3242,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
   // --- Return all 113 variables needed by JSX ---
   return {
     changePageMode,
-    scenarioModeValid: !scenario || validateMangaScenario(scenario, castList, {scenarioMode}).structuralValid !== false,
+    scenarioModeValid: !scenario || validateMangaScenario(scenario, castList, {scenarioMode:getScenarioMode()}).structuralValid !== false,
     imageInputBudget,
     imageInputError,
     referenceAssets,
