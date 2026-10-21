@@ -69,7 +69,7 @@ test('README embeds the generated diagram instead of a copied diagram', () => {
 test('diagrams describe current dialogue, wardrobe and warning-retention contracts', () => {
   const workflow = readFileSync(diagramPath, 'utf8');
   const reasoning = readFileSync(reasoningDiagramPath, 'utf8');
-  for (const text of ['OFFは4コマ・ONは5〜8コマ', '通常は縦4コマ、実験は台本に合う配置', '台詞・話者・衣装を保持', '全モード共通、修正は最大1回', '警告付き', '元画像・修正画像を各モード最大10件保持']) {
+  for (const text of ['全自動は内容から4〜8コマ、手動は指定モード', 'Geminiは4コマ固定', '必要最小4〜8コマ', '通常は縦4コマ、実験は台本に合う配置', '台詞・話者・衣装を保持', '全モード共通、修正は最大1回', '警告付き', '元画像・修正画像を各モード最大10件保持']) {
     assert.ok((workflow + reasoning).includes(text), `Missing current contract: ${text}`);
   }
   assert.doesNotMatch(workflow, /QA-passed images|QA通過画像/);
