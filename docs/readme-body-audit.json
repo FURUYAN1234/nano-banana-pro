@@ -39,16 +39,16 @@
     "AI Manga Creative Suite / AIまんが制作エコシステム",
     "📋 ChangeLog / 更新履歴"
   ],
-  "findings": "v7.1.6: reviewed the complete existing section map and affected Japanese/English descriptions against STEP2 selection, validated concrete mode, UI callback, separate page caches and current-layout history refs. Full-auto selects four or necessary five to eight from content in the existing request; OFF manual and Gemini four-only remain. Invalid count/reason and stale-run guards stop propagation. Existing one-pass QA limits and warning retention are explicit; no claim of warning-free image or successful live five-to-eight selection. Unchanged licensing and packaged workflows retain prior contracts. Deployment/SNS/backup remain deferred by user.",
+  "findings": "v7.1.6: reviewed the complete existing section map and affected Japanese/English descriptions against STEP2 selection, validated concrete mode, UI callback, separate page caches and current-layout history refs. Full-auto selects four or necessary five to eight from content in the existing request; OFF manual and Gemini four-only remain. Invalid count/reason and stale-run guards stop propagation. Existing one-pass QA limits and warning retention are explicit; no claim of warning-free image or successful live five-to-eight selection. Unchanged licensing and packaged workflows retain prior contracts. The user has now authorized deployment, note/Facebook and full backup; X posting is explicitly excluded, with copy text to be delivered separately.",
   "manualFindings": "v7.1.6: rebuilt all75pages (13Gemini,39full,23OpenAI), inspected all14contact sheets and changed pages at readable size. Updated full-auto/manual/Gemini distinctions, current version and pricing dates. Corrected OpenAI page17 text overflow, rerendered and visually checked. A4/text bounds/footer/version checks passed. Reviewed both updated A4 workflow diagrams; no clipping or overlap observed. Public PDF bytes match reviewed output.",
   "pricingReview": {
     "version": "7.1.6",
     "sourceSha256": "7fc60176eebca2dd749467bf692ec24050cc9213e9a69a788aaa179393246a09",
-    "checkedAt": "2026-10-20T22:46:18.491Z",
+    "checkedAt": "2026-10-21T01:05:36.302Z",
     "sources": [
       "https://developers.openai.com/api/docs/pricing",
       "https://ai.google.dev/gemini-api/docs/pricing"
     ],
-    "findings": "2026-10-21 JST: read official OpenAI pricing and model pages, Gemini Standard/Batch tables, and the expanded OpenAI standard image table in the in-app browser. Existing text/image/transcription prices remain unchanged; Gemini3.8Flash promotional end date remains2026-12-31. Standard rates are used in the UI; Batch half rates are separate. Review expires24hours after checkedAt and must be renewed if deployment is later."
+    "findings": "2026-10-21 JST immediate pre-release recheck: opened both official pricing pages in the in-app browser. Expanded all OpenAI standard text/image tables and matched every selectable model to current settings. Gemini3.8Flash standard remains0.75/3.75 through2026-12-31; Nano Banana2.1 input1.50, text/thought output7.50 and image output30 USD per million (1K0.0336/image). OpenAI Sunburst/Flare/image2 standard image8/30 and text input5 remain. Batch pricing is separate. No price changes; date snapshots already2026-10-21."
   }
 }

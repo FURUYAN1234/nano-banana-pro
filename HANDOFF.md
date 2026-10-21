@@ -1,12 +1,12 @@
-# CURRENT — v7.1.6 candidate, STOP BEFORE DEPLOY (2026-10-21)
+# CURRENT — v7.1.6 authorized publication and full backup (2026-10-21)
 
-Latest user boundary: finish local implementation and API/release-readiness checks, then stop before deployment. Do not push, create a release, deploy, post note/Facebook, or run full backup without a later user instruction. Root PLAN is the single live coordination record.
+Latest user explicitly resumed deployment, note/Facebook publication and full backup. X posting is excluded; provide its text in a code block. Use the unchanged official transaction with RunFullBackup, independently verify the new backup and read back note/Facebook. Root PLAN owns live status.
 
 Content selection is inside STEP2, with a required reason and validated sequential4–8 panels. OFF manual and Gemini4-only behavior remain. Separate histories, synchronous mode and recent-layout refs, and cancellation guards are covered by focused checks.
 
 Real in-app full-auto selected4 from a5–8 initial switch, used GPT-6 Luna in STEP1–3 and generated2240x3168 with GPT Image2.5 Sunburst/max. One existing comprehensive QA found warnings; its attempted correction produced no adopted replacement before the run finished after1146s. Original retained and automatically saved. This proves the selected4 pipeline, not a warning-free image or live5–8 selection. Do not rerun paid generation merely to clear uncertainty. Further local readiness results are recorded in root PLAN and output/full-auto-panels-20261021.
 
-Browser tab2 holds the user's API session, reference inputs, scenario and generated original. Local Vite stopped via the dedicated helper before hook/version edits to prevent hot reload from losing that work. Do not reload that tab. No deployment or backup has occurred for this candidate.
+Browser tab2 holds the user's API session, reference inputs, scenario and generated original. Local Vite stopped via the dedicated helper before hook/version edits to prevent hot reload from losing that work. Do not reload that tab. At the local-readiness checkpoint no deployment or backup had occurred. Current authorized delivery status is in root PLAN.
 
 # Nano Banana Pro handoff
 
