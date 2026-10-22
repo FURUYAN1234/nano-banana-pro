@@ -24,6 +24,17 @@ The previous-release controls and an inspected API-generated example are shown h
 
 https://github.com/user-attachments/assets/15608ccc-8d86-4b78-9ff3-785201b42629
 
+## Single-page design approach / 1ページ制作の設計方針
+
+The app uses one manga page as its unit of story planning, direction and image generation. When automatic image repair is ON, quality review also runs per page. The aim is to concentrate these steps on a coherent story and readable visual detail within that page. / 本アプリでは、物語の構成、演出、画像生成を1ページ単位で組み立てます。画像自動修正がONの場合は品質確認もページ単位で行い、各工程をその1ページの物語のまとまりと、読み取れる絵の密度に集中させる方針です。
+
+- **Story density / 物語の密度:** Give page space to events, choices and reactions that advance the story. Monologues, action scenes and quiet beats serve the story's pacing; adding pages or repeating similar beats is not a quality target. Panel-count and layout rules are described in [Panel modes](#panel-modes--4コマと58コマの選び方). / 出来事、人物の判断、相手の反応に必要な紙面を配分します。モノローグ、バトルシーン、静かな間も物語上の役割に応じて扱い、ページ数や類似場面の反復そのものを品質の指標にしません。コマ数と配置の具体的なルールは、[4コマと5〜8コマの選び方](#panel-modes--4コマと58コマの選び方)で説明します。
+- **An interacting cast / 複数人物の相互作用:** Use registered appearance, personality and relationships to guide the topic's scenario and each character's acting. When several people share a panel, plan whose action prompts whose response in the same scene. Cast size follows the story and available space. See [Story construction algorithm](#story-construction-algorithm--物語アルゴリズム) and [Visual direction and reading](#visual-direction-and-reading--演出と読みやすさ) for the acting and continuity rules. / 登録した外見、性格、人物間の関係を、題材のシナリオと各人物の演技へ反映するよう指示します。複数人が同じコマに登場する場合は、同じ場面で誰の働きかけが誰の反応につながるかを設計します。人数は物語と使える紙面に応じて扱います。演技と連続性の詳細は、[物語アルゴリズム](#story-construction-algorithm--物語アルゴリズム)と[演出と読みやすさ](#visual-direction-and-reading--演出と読みやすさ)を参照してください。
+- **Page boundaries / ページの外枠:** Plan on an A4 portrait page and instruct the model to keep all four outer frame sides and corners inside the canvas with visible margins, unless full bleed is explicitly requested. Intentional panel-breaking effects remain available. Exact API canvas sizes and Web-copy differences are described in [API routes and settings](#api-routes-and-settings--api経路と設定). / A4縦の紙面を基準とし、明示した断ち切りを除き、外枠の四辺・四隅と余白を画像内に残すよう指示します。意図した人物の枠越え演出は利用できます。API出力の正確な画像サイズとWeb貼り付け時の違いは、[API経路と設定](#api-routes-and-settings--api経路と設定)で説明します。
+- **Automatically constructed instructions / 指示文の自動構築:** AI builds the scenario and image instructions from character references and a topic. The normal workflow does not require hand-written YAML or other structured data; review and optional editing remain available in the [four-step workflow](#what-this-project-does--このプロジェクトでできること). / キャラクター資料と題材から、AIが台本と画像生成用の指示文を組み立てます。通常の制作手順でYAMLなどの構造化データを手書きする必要はなく、[4ステップの制作工程](#what-this-project-does--このプロジェクトでできること)で内容を確認し、必要に応じて編集できます。
+
+The achievable cast size and detail depend on panel space, dialogue volume and the image model. These are design goals; inspect the generated image for the actual framing, character depiction and readability. / 実現できる人数と描写の細かさは、コマの広さ、台詞量、画像モデルの能力に依存します。これらは設計上の目標であり、実際の枠の収まり、人物描写、読みやすさは生成画像で確認してください。
+
 ## Panel modes / 4コマと5〜8コマの選び方
 
 OpenAIでは両モードを使えます。Geminiはカラー・白黒とも4コマ固定で、5～8コマへの切り替えはありません。以下のスイッチはOpenAI接続時だけ表示します。 / Both modes are available with OpenAI. Gemini is fixed to four panels in color and monochrome; the switch below appears only for OpenAI.
@@ -160,7 +171,7 @@ STEP2 offers **8 serious endings and 12 gag endings**, plus automatic and docume
 | Gag / ギャグ | Self-inflicted consequences / 自業自得・ブーメラン | A character's own action comes back to them. / 自分の行動が自分へ返ってくる。 |
 | Gag / ギャグ | Role reversal / 立場逆転 | Roles or the balance of power switch at the payoff. / 役割や力関係の反転をオチにする。 |
 
-Page and focus / 外枠とピント: Keep the four outer frame sides and corners inside the canvas with a visible margin unless full bleed is explicitly requested. Focus follows the scripted speaker, reaction or main action; nonessential foreground and background may soften or use thinner, paler detail. Required text, contacts and reactions remain readable, and explicit deep focus wins. Directional motion blur is optional for scripted movement. / 明示した断ち切りを除き、外枠の四辺・四隅と余白を残します。人数確認は全員を同じ鮮明さにする指定ではありません。話者・反応・主動作に合わせ、非重要な前後景はボケや薄描きを使えます。必要な文字・接触・反応の判読と明示した深いピントは守ります。動きがある場面では方向に沿ったモーションブラーを使えます。実画像で描画を確認してください。
+Focus / ピント: Focus follows the scripted speaker, reaction or main action; a cast-count check does not require equal sharpness for every person. Nonessential foreground and background may soften or use thinner, paler detail. Required text, contacts and reactions remain readable, and explicit deep focus wins. Directional motion blur is optional for scripted movement. / 人数確認は全員を同じ鮮明さにする指定ではありません。話者・反応・主動作に合わせ、非重要な前後景はボケや薄描きを使えます。必要な文字・接触・反応の判読と明示した深いピントは守ります。動きがある場面では方向に沿ったモーションブラーを使えます。実画像で描画を確認してください。
 
 Shoulder-view identity / 肩越しの人物: Registered aliases resolve to one person across camera, balloon tails and cast count. Unresolved or ambiguous names are not replaced by a speaker chosen from dialogue order. Camera-side position alone does not assign the operator of a prop. Keep each actor's scripted gaze and connect tails to contours visible from the specified view. / 登録された別名は、カメラ・吹き出しの尾・人物数で同じ人物として扱います。名前を解決できない場合や別名が重複する場合、台詞順から別人へ置き換えません。カメラに近い人物を小道具の操作者と決めつけず、各人物の指定された視線と、その画角で見える輪郭への尾の接続を保ちます。
 
