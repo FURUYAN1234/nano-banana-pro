@@ -1,4 +1,5 @@
 import { MANGA_MANUSCRIPT_STANDARD } from './manga-manuscript-format.js';
+import { readRenderOptions } from './render-options.js';
 
 // Normalize three page regions. The four-panel artwork is ONE region: never
 // infer equal-height panels, redraw lettering, or discard the source image.
@@ -9,11 +10,17 @@ export const PAGE_LAYOUT = Object.freeze({
   footerHeight: 35, inset: 7, titleInkHeight: 87,
 });
 
-export const scalePageLayout = (sourceHeight = PAGE_LAYOUT.height) => {
+export const scalePageLayout = (sourceHeight = PAGE_LAYOUT.height, { showTitle = true } = {}) => {
   const scale = sourceHeight / PAGE_LAYOUT.height;
   if (!Number.isFinite(scale) || scale <= 0) return null;
-  return Object.freeze(Object.fromEntries(Object.entries(PAGE_LAYOUT)
-    .map(([key, value]) => [key, Math.round(value * scale)])));
+  const layout = Object.fromEntries(Object.entries(PAGE_LAYOUT)
+    .map(([key, value]) => [key, Math.round(value * scale)]));
+  if (!showTitle) {
+    layout.titleHeight = layout.inset;
+    layout.titleInkHeight = 0;
+    layout.panelHeight = layout.height - layout.footerHeight - layout.titleHeight;
+  }
+  return Object.freeze(layout);
 };
 
 const isInk = (data, offset, threshold) => data[offset + 3] >= 200
@@ -29,7 +36,7 @@ const contentBounds = ({ data, width }, top, bottom, scanLeft = 0, scanRight = w
   return right < left ? null : { x: left, y: first, width: right - left + 1, height: last - first + 1 };
 };
 
-export const detectPageBands = (pixels) => {
+export const detectPageBands = (pixels, { showTitle = true, showWatermarks = true } = {}) => {
   const { data, width, height } = pixels;
   if (!width || !height || data.length !== width * height * 4) return null;
   const groups = [];
@@ -97,14 +104,14 @@ export const detectPageBands = (pixels) => {
       Math.min(width, Math.min(titleFrame.upper.right, titleFrame.lower.right) + 1 - fringe))
     : contentBounds(pixels, 0, top);
   const footer = contentBounds(pixels, bottom, height);
-  if (!title || !footer) return null;
+  if ((showTitle && !title) || (showWatermarks && !footer)) return null;
   return { canvas: { width, height }, title,
     panels: { x: panelLeft, y: top, width: panelRight - panelLeft, height: bottom - top }, panelFrames, footer };
 };
 
-export const buildPageDrawPlan = (bands) => {
+export const buildPageDrawPlan = (bands, options = {}) => {
   if (!bands) return null;
-  const layout = scalePageLayout(bands.canvas?.height ?? PAGE_LAYOUT.height);
+  const layout = scalePageLayout(bands.canvas?.height ?? PAGE_LAYOUT.height, options);
   if (!layout) return null;
   const { width, titleHeight, panelHeight, footerHeight, inset, titleInkHeight } = layout;
   const safeWidth = width - 2 * inset;
@@ -137,15 +144,15 @@ export const buildPageDrawPlan = (bands) => {
     });
   }
   const plan = [
-    contain(bands.title, 0, titleHeight, titleInkHeight, width * 0.9),
+    ...(options.showTitle === false ? [] : [contain(bands.title, 0, titleHeight, titleInkHeight, width * 0.9)]),
     ...panelPlans,
-    contain(bands.footer, titleHeight + panelHeight, footerHeight),
+    ...(bands.footer ? [contain(bands.footer, titleHeight + panelHeight, footerHeight)] : []),
   ];
   plan.layout = layout;
   return plan;
 };
 
-export const normalizeMangaPage = async (dataUrl) => {
+export const normalizeMangaPage = async (dataUrl, options = {}) => {
   const image = new Image();
   image.src = dataUrl;
   await image.decode();
@@ -154,9 +161,9 @@ export const normalizeMangaPage = async (dataUrl) => {
   const sourceContext = source.getContext('2d', { willReadFrequently: true });
   if (!sourceContext) throw new Error('ページ配置用Canvasを初期化できません。');
   sourceContext.drawImage(image, 0, 0);
-  const bands = detectPageBands(sourceContext.getImageData(0, 0, source.width, source.height));
-  const plan = buildPageDrawPlan(bands);
-  const layout = plan?.layout || scalePageLayout(source.height);
+  const bands = detectPageBands(sourceContext.getImageData(0, 0, source.width, source.height), options);
+  const plan = buildPageDrawPlan(bands, options);
+  const layout = plan?.layout || scalePageLayout(source.height, options);
   const canvas = document.createElement('canvas');
   canvas.width = layout.width; canvas.height = layout.height;
   const context = canvas.getContext('2d');
@@ -456,7 +463,7 @@ export const extractMangaPanelCrops = async (dataUrl) => {
   const context = source.getContext('2d', { willReadFrequently: true });
   if (!context) return [];
   context.drawImage(image, 0, 0);
-  const bands = detectPageBands(context.getImageData(0, 0, source.width, source.height));
+  const bands = detectPageBands(context.getImageData(0, 0, source.width, source.height), { showTitle: false, showWatermarks: false });
   if (!bands?.panelFrames?.length) return [];
   return bands.panelFrames.map(frame => {
     const scale = Math.min(2, 1536 / frame.width);
@@ -481,7 +488,7 @@ export const formatPageLayoutStatus = (pageLayout) => {
   }
   const layout = pageLayout.layout;
   if (!layout) return '[ページ配置] 配置の詳細は未確認です。画像は保持します。';
-  return `[ページ配置] ${layout.width}×${layout.height}へ自動補正してから表示します。タイトル${layout.titleHeight}px・コマ全体${layout.panelHeight}px・フッター${layout.footerHeight}px。元のAPI画像も保持しました。`;
+  return `[ページ配置] ${layout.width}×${layout.height}へ自動補正してから表示します。${layout.titleInkHeight === 0 ? '上余白' : 'タイトル'}${layout.titleHeight}px・コマ全体${layout.panelHeight}px・フッター${layout.footerHeight}px。元のAPI画像も保持しました。`;
 };
 
 export const normalizePageCandidate = async (
@@ -502,7 +509,7 @@ export const normalizePageCandidate = async (
     // The normalizer below owns the actionable decode error and reason.
   }
   try {
-    const result = await normalize(originalImage);
+    const result = await normalize(originalImage, candidate.renderOptions || readRenderOptions(candidate.metadataContext?.finalPrompt));
     if (!result.applied) return { ...candidate, pageLayout: result };
     const match = result.dataUrl?.match(/^data:image\/png;base64,([\s\S]+)$/);
     if (!match) throw new Error('ページ配置後のPNGを読み取れません。');

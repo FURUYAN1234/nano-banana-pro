@@ -136,7 +136,7 @@ test('option contract survives long-prompt compaction and cannot be silently rem
     assert.equal(assertRenderOptions(prompt, options), prompt);
     assert.throws(() => assertRenderOptions(prompt, { ...options, showWatermarks: true }), /STEP3/);
     assert.throws(() => assertRenderOptions(prompt.replace(buildRenderOptionsContract(options), ''), options), /STEP3/);
-    assert.deepEqual(readRenderOptions(prompt), options);
+    assert.deepEqual(readRenderOptions(prompt), { ...options, showTitle: true });
   }
 });
 

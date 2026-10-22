@@ -53,6 +53,8 @@ function App() {
     setMosaicCopyrightedCharacters,
     showWatermarks,
     setShowWatermarks,
+    showTitle,
+    setShowTitle,
     setColorMode,
     isColorModeLocked,
     copyPrompt,
@@ -508,6 +510,8 @@ function App() {
 
                 {/* 03: プロンプト生成 - Tailwind p-8等がJITで無視されるためインラインスタイルで適用 */}
                 <Step3Panel
+                  showTitle={showTitle}
+                  setShowTitle={setShowTitle}
                   showWatermarks={showWatermarks}
                   setShowWatermarks={setShowWatermarks}
                   colorMode={colorMode}

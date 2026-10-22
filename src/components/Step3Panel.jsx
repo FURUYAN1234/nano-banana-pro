@@ -11,6 +11,8 @@ import ThinkingLog from './ThinkingLog';
  */
 export default function Step3Panel({
   showWatermarks = true,
+  showTitle = true,
+  setShowTitle,
   setShowWatermarks,
   step3Ref,
   currentStep,
@@ -82,12 +84,27 @@ export default function Step3Panel({
         </p>
       </fieldset>
 
-      <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer"
-        style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-        <input type="checkbox" checked={showWatermarks} disabled={controlsDisabled}
-          onChange={(event) => setShowWatermarks(event.target.checked)} />
-        <span>ウオーターマークを表記する</span>
-      </label>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+          <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer"
+            style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <input type="checkbox" aria-label="タイトルを表示" aria-describedby="manga-title-help"
+              checked={showTitle} disabled={controlsDisabled}
+              onChange={(event) => setShowTitle(event.target.checked)} />
+            <span>タイトルを表示</span>
+          </label>
+          <p id="manga-title-help" style={{ margin: '0 0 0 19px', padding: 0, fontSize: '11px', lineHeight: 1.4, color: '#94a3b8' }}>OFFで題字の領域をコマに使います。外枠と余白は残します。</p>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+          <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer"
+            style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <input type="checkbox" aria-describedby="manga-watermarks-help" checked={showWatermarks} disabled={controlsDisabled}
+              onChange={(event) => setShowWatermarks(event.target.checked)} />
+            <span>ウオーターマークを表記する</span>
+          </label>
+          <p id="manga-watermarks-help" style={{ margin: '0 0 0 19px', padding: 0, fontSize: '11px', lineHeight: 1.4, color: '#94a3b8' }}>画像下部に生成情報とクレジットを表記します。</p>
+        </div>
+      </div>
 
       {!scenarioModeValid && <p role="status" style={{color:'#fde68a'}}>このモードには{experimentEnabled ? '5～8コマ' : '4コマ'}のシナリオが必要です。STEP2で作成してください。作成済みの画像は保持しています。</p>}
       <button

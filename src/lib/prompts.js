@@ -1,4 +1,4 @@
-import { buildCopyrightMosaicInstruction } from './render-options.js';
+import { buildCopyrightMosaicInstruction, NO_PAGE_TITLE } from './render-options.js';
 import { buildScenarioPanelCountInstruction } from './scenario-validation.js';
 import { getPunchlineLabel, COMPACT_EMOTION_STYLES, STYLE_DRAWING_CONTRACTS } from './constants';
 import { buildRecentStoryContext } from './generation-history.js';
@@ -97,6 +97,13 @@ const MANGA_PAGE_TYPOGRAPHY_LOCK_COMPACT = `TYPE: title EXTRA-BOLD condensed Jap
 const MANGA_PAGE_ENVELOPE = `PAGE:A4 ${MANGA_MANUSCRIPT_RATIO_LABEL} (${MANGA_MANUSCRIPT_ASPECT_LABEL}); canvas ${MANGA_MANUSCRIPT_STANDARD.value} or ${MANGA_MANUSCRIPT_LARGE.value}; title6.5%/font5.5%; panels+gutters91.3%, variable heights; footer2.2%, inset0.6%, no clipping.
 PANELS: 4 full-width horizontal strips stacked vertically in ONE column; no 2x2/side-by-side. Give body action/perspective enough panel height; never zoom to portraits to fit equal bands.`;
 const MANGA_FOOTER_EXCLUSIVITY = 'FOOTER ONLY: both exact watermarks once outside panels; no watermark/credit inside panels or on in-scene paper.';
+
+const pageEnvelope = showTitle => showTitle ? MANGA_PAGE_ENVELOPE
+  : MANGA_PAGE_ENVELOPE.replace('title6.5%/font5.5%; panels+gutters91.3%', 'no title/header band; panels+gutters97.8% minus the small outer top safety inset');
+const pageTypography = (showTitle, compact = false) => showTitle
+  ? (compact ? MANGA_PAGE_TYPOGRAPHY_LOCK_COMPACT : MANGA_PAGE_TYPOGRAPHY_LOCK)
+  : compact ? `BUBBLES:${MANGA_PAGE_TYPOGRAPHY_LOCK_COMPACT.split(' BUBBLES:')[1]}`
+    : MANGA_PAGE_TYPOGRAPHY_LOCK.slice(MANGA_PAGE_TYPOGRAPHY_LOCK.indexOf('SPEECH BUBBLE TYPE LOCK:'));
 
 // --- プロンプトテンプレート (prompts.js) ---
 // App.jsx から抽出された大規模プロンプト文字列テンプレート群
@@ -900,6 +907,7 @@ ${prompt.replace(storyboard, '').replace(scriptLock, '')}`;
 
 export const buildChatGPTMangaPrompt = (p) => {
   const {
+    showTitle = true,
     showWatermarks = true,
     safeTopic, watermarkEng, styleCore, safeLocation, isMonochrome = false,
     bg360Image, bg360Analysis, bg360Enabled,
@@ -934,9 +942,9 @@ Use the 360° background image's lighting direction (${bg360Analysis.lighting}),
 ABSOLUTE TASK: new 4-panel manga, not a reference sheet. Use character refs for ${preserveReferenceStyle ? 'identity and the same art style across all four panels' : isMonochrome ? 'identity, hair, glasses and design; panel recipes redraw faces within the black ink plate' : 'identity, hair, eye/skin colors and glasses; panel recipes determine facial construction and body stylization'}.
 
 FORMAT:
-${MANGA_PAGE_ENVELOPE}
-- Top title EXACTLY "${safeTopic}", large black, centered.
-${MANGA_PAGE_TYPOGRAPHY_LOCK_COMPACT}
+${pageEnvelope(showTitle)}
+${showTitle ? `- Top title EXACTLY "${safeTopic}", large black, centered.` : NO_PAGE_TITLE}
+${pageTypography(showTitle, true)}
 ${showWatermarks ? `- Bottom-right 4th-panel watermark EXACTLY "${watermarkEng}", tiny horizontal.
 - Bottom-left 4th-panel watermark EXACTLY "ネームから全自動の自律式統合AI漫画システム :https://note.com/happy_duck780", tiny horizontal. Copy "自律式" exactly.
 ${MANGA_FOOTER_EXCLUSIVITY}` : ''}
@@ -1011,6 +1019,7 @@ ${isMonochrome ? `\n${MONOCHROME_FINAL_CHROMA_AUDIT}` : ''}
  */
 export const buildGeminiMangaPrompt = (p) => {
   const {
+    showTitle = true,
     showWatermarks = true,
     safeTopic, watermarkEng, styleCore, safeLocation, isMonochrome = false,
     bg360Image, bg360Analysis, bg360Enabled, bg360CroppedPanels,
@@ -1060,10 +1069,10 @@ MUST have the exact A4 portrait aspect ratio ${MANGA_MANUSCRIPT_RATIO_LABEL} (wi
 
 LAYOUT:
 Canvas completely filled by panels (95% width). NO large white margins.
-${MANGA_PAGE_ENVELOPE}
-Top page: draw large black Japanese text title: "${safeTopic}"
-Do NOT add quote marks around the title or invent extra punctuation. Preserve the exact punctuation already present in the specified title.
-${MANGA_PAGE_TYPOGRAPHY_LOCK}
+${pageEnvelope(showTitle)}
+${showTitle ? `Top page: draw large black Japanese text title: "${safeTopic}"
+Do NOT add quote marks around the title or invent extra punctuation. Preserve the exact punctuation already present in the specified title.` : NO_PAGE_TITLE}
+${pageTypography(showTitle)}
 ${showWatermarks ? `Draw tiny English watermark in the footer below panel 4, on the right: "${watermarkEng}" (clean sans-serif). VERBATIM COPY — do NOT paraphrase or alter any word.
 Draw tiny Japanese watermark in the footer below panel 4, on the left: "ネームから全自動の自律式統合AI漫画システム :https://note.com/happy_duck780" (in an extremely small font size to prevent overlapping with the right watermark). ⚠️ CRITICAL: The word "自律式" must appear EXACTLY as written. Do NOT replace it with topic-related words. Copy character-by-character.
 Watermarks standard horizontal, fully inside the footer with visible safe margins. Keep left/right text separate; never touch, overlap or clip against the image edges.

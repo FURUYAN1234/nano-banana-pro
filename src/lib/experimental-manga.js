@@ -5,7 +5,7 @@ import { COMPACT_EMOTION_STYLES, GEKIGA_FACE_CONSTRUCTION, SYSTEM_VERSION } from
 import { extractScenarioTitle, buildMangaWatermark, PROMPT_PROVIDER_FAMILIES, normalizePromptProviderFamily, buildMonochromePanelInkLock } from './prompt-assembler.js';
 import { MONOCHROME_IMAGE_QUALITY_CONTRACT, MONOCHROME_EMOTION_STYLES, MONOCHROME_RENDERING_LOCK_COMPACT, sanitizeMonochromeSourceDescription, MONOCHROME_FINAL_CHROMA_AUDIT_COMPACT, MONOCHROME_REFERENCE_SEPARATION, MONOCHROME_QA_RULE } from './manga-render-mode.js';
 import { ensureWebPromptTrailingNewline, splitWebPromptForPaste } from './web-prompt-chunks.js';
-import { buildRenderOptionsContract, buildProtectedCastContract, COPYRIGHT_MOSAIC_TARGET_SCOPE } from './render-options.js';
+import { buildRenderOptionsContract, buildRenderOptionsQa, buildProtectedCastContract, COPYRIGHT_MOSAIC_TARGET_SCOPE, NO_PAGE_TITLE } from './render-options.js';
 import { createApiError, formatApiErrorDetails, getApiErrorInfo, sanitizeErrorMessage } from './api-errors.js';
 import { selectImageQualityCandidate, runPageImageQuality, isMaterialImageQualityIssue } from './image-quality-failsafe.js';
 import { inspectImageDimensions, extractNativeImageRegion, inspectVariablePanelFrames } from './manga-page-layout.js';
@@ -20,7 +20,7 @@ const fail = message => { throw new Error(`実験的コマ割り: ${message}`); 
 const cancelled = signal => { if (signal?.aborted) throw new DOMException('実験を停止しました。', 'AbortError'); };
 const direction = (text, name) => String(text).match(new RegExp(`\\[${name}:\\s*([^\\]]+)\\]`, 'i'))?.[1]?.trim() || '';
 
-export const EXPERIMENTAL_PROMPT_REVISION = 46;
+export const EXPERIMENTAL_PROMPT_REVISION = 47;
 const EXPERIMENTAL_INSPECTION_VERSION = 10;
 const EXPERIMENTAL_PROMPT_SOFT_TARGET_CHARS = 15000;
 const READING_FLOW_DIRECTION = `READING FLOW WITH ACTING: preserve camera strength, drawing quality, style, expression and dramatic energy. 最初の吹き出し→主動作/反応→次コマへ、場面に根拠のある視線・身振り・道具の向き・奥行き・明暗・余白で誘導。矢印、強制左向き整列、同一ポーズは禁止。読みやすさのために遠近や演技を弱めず、後ろ姿を振り向かせず、必要人物/道具を消さず、全コマを静かにしない。焦点の大胆な強調と明瞭なコマ間を両立。No eye-level shots: 座位/ちび人物にも明確な高低差を設け、顔・体・背景の上面/下面を投影。Characters never look at the viewer or camera lens; 視線は場面内の人/物/出来事へ。正面顔だけでカメラ目線と判定せず、動機のある首向き/表情、隠れた目、手元接写を保持。任意の誘導が物語と競合したら誘導を省き、物語の勢いは残す。`;
@@ -464,20 +464,20 @@ export async function reviewExperimentalImage({image,plan,prompt,signal,reviewCo
   // Read only the compiler's explicit page-text contract, never model-supplied expectations.
   let expectedPageText=null;
   try {
-    const title=JSON.parse(prompt.match(/Title required EXACTLY ("(?:\\.|[^"\\])*")\. Footer expected exact text:/)?.[1]);
+    const title=JSON.parse(prompt.match(/Title required EXACTLY (null|"(?:\\.|[^"\\])*")\. Footer expected exact text:/)?.[1]);
     const footer=JSON.parse(prompt.match(/Footer expected exact text: (null|\{[^\n]*?\}) \(null means no footer\)/)?.[1]);
-    expectedPageText=[title,...Object.values(footer||{})];
+    expectedPageText=[...(title===null?[]:[title]),...Object.values(footer||{})];
     if(expectedPageText.some(text=>typeof text!=='string'||!text.trim())) expectedPageText=null;
   } catch { /* Unknown legacy contract must stay unverified. */ }
   let expectedStyles=null;
   try { expectedStyles=JSON.parse(prompt.match(/^EXPECTED PANEL STYLES: (.+)$/m)?.[1]); } catch { /* Missing source media cannot establish style compliance. */ }
   let expectedOutfits=null;
   try { expectedOutfits=JSON.parse(prompt.match(/^EXPECTED OUTFIT SCOPES: (.+)$/m)?.[1]); } catch { /* Missing authority is never supplied by the reviewer. */ }
-  return {review:{...assessed,inspectionVersion:EXPERIMENTAL_INSPECTION_VERSION,pageEvidence:inventory.pageEvidence,expectedPageText,expectedStyles,expectedOutfits,evidence,observedFrames:frames.map(({bounds})=>({bounds}))},model:response.model,
+  return {review:{...assessed,inspectionVersion:EXPERIMENTAL_INSPECTION_VERSION,pageEvidence:inventory.pageEvidence,expectedPageText,pageTextOptional:prompt.includes("Title required EXACTLY null. Footer expected exact text: null "),expectedStyles,expectedOutfits,evidence,observedFrames:frames.map(({bounds})=>({bounds}))},model:response.model,
     finishReason:response.finishReason,characters:response.text.length,attachedImages:spatial.images.length,requests:1};
 }
 
-export function buildExperimentalImagePrompt(plan, source, { colorMode, providerFamily=PROMPT_PROVIDER_FAMILIES.GEMINI, mosaicCopyrightedCharacters=false, showWatermarks=false, referenceContext='', imageEngineLabel='Gemini', scenarioModelLabel, promptMaxChars=OPENAI_IMAGE_PROMPT_MAX_CHARS }={}) {
+export function buildExperimentalImagePrompt(plan, source, { colorMode, providerFamily=PROMPT_PROVIDER_FAMILIES.GEMINI, mosaicCopyrightedCharacters=false, showWatermarks=false, showTitle=true, referenceContext='', imageEngineLabel='Gemini', scenarioModelLabel, promptMaxChars=OPENAI_IMAGE_PROMPT_MAX_CHARS }={}) {
   const effectiveProviderFamily=normalizePromptProviderFamily(providerFamily);
   validateExperimentalPlan(plan,source);
   const rects=experimentalLayout(plan.count,plan.layout);
@@ -544,8 +544,8 @@ export function buildExperimentalImagePrompt(plan, source, { colorMode, provider
     .replace(HEAD_VOLUME_LOCK, '頭蓋/顔縁/耳/眼鏡は一つの頭部体積。指定の向き/遮蔽を保持。耳は片側一つ、遠い耳は遮蔽。頭蓋の伸長/積重ね禁止、顎と首は整合。後頭部に顔を捏造しない。横顔/様式化/短縮は許容。硬い被り物も頭と回転し、視点通りの表/裏/縁に。明示の両面意匠は許容。')
     .replace(FUNCTIONAL_SURFACE_ORIENTATION_LOCK, 'FUNCTIONAL SURFACE ORIENTATION LOCK: 情報/操作/光学/サービス面（画面・モニター・携帯・名札・看板・ラベル・文書・申請書・印刷紙・カード・本・地図・領収書・券・メニュー・新聞・キーボード・操作盤・レンズ・背面画面）の表/裏/対象を解く。対象は保持者でなくActionで決定: 読む/操作=本人、提出/提示=受取人。作中の操作/接客/読書/鑑賞/撮影対象へ正面を向け、漫画読者への読みやすさで回転しない。対象の反対からは裏/縁。モニター背面は筐体/台座、画面を透かさない。机の上向き紙は上から見え、文字の天地は読む人物向き。後ろ向き人物の胸元の紙/端末は胴体に隠れてよく、正面や手を背中に透過させず、見える場合だけ身体に接続した側面/裏/縁を描く。明示Cameraの位置/高さ/仰俯角/レンズ/切取りは固定、可読性のため移動禁止。位置未指定時のみ物でなくCameraを移し、実際に読む人物の後頭部/肩を前景に。カメラ/閲覧者へ提示する例外は脚本で受取人として明示された時だけ。')
     .replace(OBJECT_GEOMETRY_LOCK, 'OBJECT GEOMETRY LOCK: 体積/接触/遮蔽を解き、隠れた輪郭は整合して消失/再開。頭/髪/体/物へ道具を貫通・融合・接線で埋め込まない。重なりか隙間を明確にし、指定接触/Action/Cameraを保持。厚み/綴じ/折り目/角から印字面（表紙/背/本文/小口/ラベル/画面）を識別。文字はその面の軸/透視に従い、画布基準・面またぎ・小口の表紙化は禁止。まず直立した物に各字の天地を含め組版し、一枚の印刷テクスチャとして物と回転/投影。完成Camera像へ直接組版しない。積む/回す時に背文字を再組版したり行だけ回して字を画布に直立させない。縦横書きとも成立し、元の組版を保持。原文に根拠のあるシュールなギャグ/変形は保ち、出来事でなく輪郭を明確化。笑いを無関係な描画欠陥の口実にしない。');
-  const render=compact=>`Create ONE complete Japanese manga page with EXACTLY ${plan.count} framed panels. A4縦、外周全体を保持。左右白余白各0.6%、残り98.8%をコマに使用し切り落とさない。上6.5%は題字、中91.3%はコマと溝、下2.2%はフッター。Internal white gutters は明瞭に分離し、外余白で代用しない。
-Top title EXACTLY ${JSON.stringify(title)}: 白地中央に大きい極太長体ゴシック、囲み枠/帯/罫線なし。台詞は縦書き漫画明朝。コマ番号/計画ラベル/Camera/参照トークンは印字禁止。RTL READING ORDER: P1〜P${plan.count}は右→左、上→下の順。指定矩形と各時点を厳守。
+  const render=compact=>`Create ONE complete Japanese manga page with EXACTLY ${plan.count} framed panels. A4縦、外周全体を保持。左右白余白各0.6%、残り98.8%をコマに使用し切り落とさない。${showTitle?'上6.5%は題字、中91.3%はコマと溝、下2.2%はフッター。':'題字と題字用の空白帯は不要。小さな上端安全余白から下2.2%のフッターまで、旧題字領域も含めコマと溝へ配分。'}Internal white gutters は明瞭に分離し、外余白で代用しない。
+${showTitle?`Top title EXACTLY ${JSON.stringify(title)}: 白地中央に大きい極太長体ゴシック、囲み枠/帯/罫線なし。`:NO_PAGE_TITLE}台詞は縦書き漫画明朝。コマ番号/計画ラベル/Camera/参照トークンは印字禁止。RTL READING ORDER: P1〜P${plan.count}は右→左、上→下の順。指定矩形と各時点を厳守。
 PHYSICAL READING PATH (not printed): ${rects.map((_,i)=>`P${i+1}`).join(' -> ')}. PAGE FRAME内の一場面をその位置に描く。FINAL ENDING is P${plan.count}; 結末の台詞/反応はそこに置く。
 ${readingPairs.length?`ROW CHRONOLOGY: ${readingPairs.join('; ')}. 各組の先行場面が先。絵/吹き出しの均衡のために入替えない。ページ位置であり、コマ内Camera/Actionの方向ではない。`:''}
 ${colorMode==='monochrome'?'BLACK AND WHITE ink and screentones only, no colored regions.\n'+MONOCHROME_REFERENCE_SEPARATION:'Full color; preserve each source panel art style.'}
@@ -591,7 +591,7 @@ ${effects.map(id=>`Applies only to ${plan.panels.flatMap((p,i)=>(p.visualEffects
 ${qualityContract}${colorMode==='monochrome'?'\n'+MONOCHROME_RENDERING_LOCK_COMPACT+'\n'+MONOCHROME_FINAL_CHROMA_AUDIT_COMPACT:''}
 PANEL EDGE CONTINUITY LOCK: PAGE CONTAINMENT: 外枠の四辺/四隅を余白付きで画布内へ収め、切落とし/画外拡張は禁止。明示の枠なし/裁切り指定は優先。内部の枠越えは外周裁切りの許可ではない。道具/画面/文字は自枠内、隣場面への流出は明示時のみ。原則、見える頭と髪の全輪郭を余裕付きで枠内に。演出上の枠越えは一つの連続した前景層とし、枠線は頭/髪の全輪郭の後ろで止まり、その後に再開。顔/髪を枠線で貫く・輪郭の切断・外側断片の複製・枠内外の位置ずれは禁止。綺麗に越えられなければ全輪郭を枠内に保持。
 LIMB OWNERSHIP CHECK (internal; never print): 全コマの各人物の左右の腕/手/脚/足を可視・自然な遮蔽・画面外に分類。見える手→手首→肘→本人の肩、足→足首→膝→本人の腰を辿り、隠れた部分も自然につなぐ。所有者不明/余分/融合/分離/理由のない欠落、家具や他人の体から出る手足は禁止。指定の解剖/ポーズ/接触/Camera/切取り/短縮を保持し、隠れた四肢の露出や全身画角を強制しない。仕上げ前に所有/接続の曖昧さだけを直し、動作や構図を変えない。
-${buildRenderOptionsContract({mosaicCopyrightedCharacters,showWatermarks})}
+${buildRenderOptionsContract({mosaicCopyrightedCharacters,showWatermarks,showTitle})}
 ${mosaicCopyrightedCharacters?'':COPYRIGHT_MOSAIC_TARGET_SCOPE}
 ${buildProtectedCastContract(collectCastNameEntries(source.castList).map(entry=>entry.displayName))}
 ${showWatermarks?`FOOTER ONLY, below the last panel: 両クレジットを一度ずつ、小さな横書きで安全域内に全文読めるよう重なりなく配置。Bottom-left EXACTLY "ネームから全自動の自律式統合AI漫画システム :https://note.com/happy_duck780". Bottom-right EXACTLY ${JSON.stringify(watermark)}. コマ内/道具上への転載禁止。`:'No watermark or footer text; leave footer blank.'}
@@ -632,7 +632,7 @@ BODY-BOUND STYLE OBSERVATIONS: each panel evidence also requires style_observati
 VIEW OBSERVATION: Every panel evidence includes view:{elevation:"high|low|eye_level|uncertain",gaze:"in_scene|at_viewer|no_visible_eyes|uncertain",evidence:"concrete visible projection cues and gaze targets, in Japanese"}. Choose one value per enum from the pixels, not the plan. high/low describes physical projection relative to the subjects, not a tilted border, a tall character or background alone. For a hands-only insert judge the camera above/below the action surface. Inspect all visible eyes: at_viewer if any actor clearly looks into the page-reader lens; in_scene only if the visible gazes have in-scene targets; no_visible_eyes for rear heads or hand close-ups; uncertain for ambiguous direction. A face shown frontally does not by itself prove camera eye contact. Reading-flow accents are optional: do not mark a vivid coherent scene defective merely because it lacks an obvious guiding line.
 CAST INSTANCE INVENTORY: Include cast_instances in each panel evidence for every required name in ${JSON.stringify(expectedCast)}. Each record: {name,status:"ok|defect|uncertain",evidence,instances:[{body_id,location,feature_indices:[two or more distinct zero-based indices of visible identity cues in that same body's features]}]}. Count distinct physical bodies, including partial rear heads and background actors; Camera/Action/speech mentions refer to the SAME body. A foreground shoulder and the same actor in the background are TWO instances. A legitimate crop or hidden face is not absence; mark uncertainty when identity cannot be established. Zero requires an evidence string describing visible absence. Only explicitly listed replicaNames may have tiny contained representations excluded from physical count. Never exclude a full-size body as a replica. Count is computed locally from instances.length; do not return observed_count. These records are observations, not a restatement of the required count.
 BODY IDENTITY COVERAGE: Assess EVERY independent physical_bodies ID, including after all required cast names have a match. Never stop after the first identity match: another separate matching body belongs in that actor's instances. For each body not assigned to cast_instances, return exactly one body_dispositions entry: {body_id,kind:"non_cast|uncertain",feature_indices:[two or more distinct zero-based indices into that same census body's features],evidence:"visible reason for the identity disposition"}. Use non_cast only for grounded ordinary background people with at least two observed distinguishing features and explain why they are not a required actor; background position, small size, clothing alone or already having found the named actor is not sufficient. Possible named-cast identity, rear views, crops and occlusion without enough cues remain uncertain, not a confirmed duplicate. Do not force ordinary background people into the named cast or invent hidden bodies. Never list a body in both cast_instances and body_dispositions, and do not invent IDs. Use [] only when every census body is already assigned. Unresolved or unexamined bodies make anatomy uncertain; preserve any independently confirmed duplicate or anatomy failure.
-Title required EXACTLY ${JSON.stringify(extractScenarioTitle(source.scenario))}. Footer expected exact text: ${JSON.stringify(expectedFooter)} (null means no footer). Transcribe observed lettering separately; never complete unreadable lettering from this expected text. Missing required title/credits is fail; unreadable is uncertain. Requested labels are NOT visual evidence. status=warning when a concrete material failure is confirmed, even if another check is uncertain. Otherwise status=pass only when count matches, all required checks pass, and complete visual evidence exists; unresolved required checks mean unverified. Optional breakout absence alone does not change status. Do not suggest paid regeneration for a minor coherent variation. SOURCE (expected speech withheld; transcribe only the attached crops): ${blind({context:source.context,castList:source.castList,panels:source.panels})}\nPLAN: ${blind({count:plan.count,layout:plan.layout,panels:plan.panels})}`;
+Title required EXACTLY ${JSON.stringify(options.showTitle===false?null:extractScenarioTitle(source.scenario))}. Footer expected exact text: ${JSON.stringify(expectedFooter)} (null means no footer). ${buildRenderOptionsQa(buildRenderOptionsContract({ ...options, mosaicCopyrightedCharacters: options.mosaicCopyrightedCharacters ?? false, showWatermarks: options.showWatermarks ?? false }))} Transcribe observed lettering separately; never complete unreadable lettering from this expected text. Missing required title/credits is fail; unreadable is uncertain. Requested labels are NOT visual evidence. status=warning when a concrete material failure is confirmed, even if another check is uncertain. Otherwise status=pass only when count matches, all required checks pass, and complete visual evidence exists; unresolved required checks mean unverified. Optional breakout absence alone does not change status. Do not suggest paid regeneration for a minor coherent variation. SOURCE (expected speech withheld; transcribe only the attached crops): ${blind({context:source.context,castList:source.castList,panels:source.panels})}\nPLAN: ${blind({count:plan.count,layout:plan.layout,panels:plan.panels})}`;
 }
 
 // Turn only a grounded failing check into an edit. Missing observations,
@@ -751,7 +751,7 @@ export function validateExperimentalReview(review, plan) {
   const styleChecks=[];
   const normalizeDialogue=value=>value.normalize('NFKC').replace(/[\s\p{P}]/gu,'');
   if(Object.hasOwn(review||{},'expectedPageText')) {
-    if(!Array.isArray(review.expectedPageText)||!review.expectedPageText.length) validationErrors.push('expectedPageText: unavailable');
+    if(!Array.isArray(review.expectedPageText)||(!review.expectedPageText.length&&review.pageTextOptional!==true)) validationErrors.push('expectedPageText: unavailable');
     else if(typeof review.pageEvidence==='string'&&review.expectedPageText.some(value=>typeof value!=='string'||!normalizeDialogue(review.pageEvidence).includes(normalizeDialogue(value)))) {
       review.pageText='uncertain';
       review.issues=[...new Set([...(Array.isArray(review.issues)?review.issues:[]),'題字・クレジットの独立転記が指定と一致しないため未確認です。誤読もあり得るので目視で確認してください。'])];
@@ -938,6 +938,7 @@ export function validateExperimentalReview(review, plan) {
     return {status:'unverified',observedCount:Number.isInteger(review?.observedCount)?review.observedCount:null,
       ...(Number.isInteger(review?.inspectionVersion)?{inspectionVersion:review.inspectionVersion}:{}),
       ...(Object.hasOwn(review||{},'expectedPageText')?{expectedPageText:Array.isArray(review.expectedPageText)?review.expectedPageText.map(clean):null}:{}),
+      ...(review?.pageTextOptional===true?{pageTextOptional:true}:{}),
       ...(Object.hasOwn(review||{},'expectedStyles')?{expectedStyles:structured(review.expectedStyles)}:{}),
       ...(Object.hasOwn(review||{},'expectedOutfits')?{expectedOutfits:structured(review.expectedOutfits)}:{}),
       ...(Object.hasOwn(review||{},'wardrobe_observation')?{wardrobe_observation:structured(review.wardrobe_observation)}:{}),
@@ -1048,7 +1049,7 @@ function colorLayoutContext(input) {
   // Keep image strings by reference; no duplicate serialized image payloads.
   return {revision:EXPERIMENTAL_PROMPT_REVISION,providerFamily:input.providerFamily??PROMPT_PROVIDER_FAMILIES.GEMINI,scenario:input.scenario,castList:input.castList,
     scenarioMode:input.scenarioMode,userDirection:input.userDirection,referenceContext:input.referenceContext,
-    mosaicCopyrightedCharacters:input.mosaicCopyrightedCharacters,showWatermarks:input.showWatermarks,
+    mosaicCopyrightedCharacters:input.mosaicCopyrightedCharacters,showWatermarks:input.showWatermarks,showTitle:input.showTitle!==false,
     imageEngineLabel:input.imageEngineLabel,scenarioModelLabel:input.scenarioModelLabel,
     referenceImages:input.referenceImages?.slice(),backgroundImage:input.backgroundImage,backgroundEnabled:input.backgroundEnabled};
 }

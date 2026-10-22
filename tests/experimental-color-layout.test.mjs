@@ -7,7 +7,7 @@ const server=await createServer({appType:'custom',logLevel:'silent',server:{midd
 try {
   const m=await server.ssrLoadModule('/src/lib/experimental-manga.js');
   const {validateMangaScenario}=await server.ssrLoadModule('/src/lib/scenario-validation.js');
-  const fixture=(count=5)=>({enabled:true,scenarioMode:'experimental-manga',colorMode:'color',castList:'## ユウ',showWatermarks:false,mosaicCopyrightedCharacters:false,
+  const fixture=(count=5)=>({enabled:true,scenarioMode:'experimental-manga',colorMode:'color',castList:'## ユウ',showTitle:true,showWatermarks:false,mosaicCopyrightedCharacters:false,
     scenario:Array.from({length:count},(_,i)=>`[${i+1}コマ目]\n[Camera: ${i%2?'床から強く見上げる':'机の上から強く俯瞰'}]\n[EMOTION: NORMAL]\n状況: ユウが道具${i+1}を手に取る。\nユウ「手順${i+1}」`).join('\n'),
     userDirection:'作業の順序を保つ',referenceContext:'人物参照',referenceImages:['image-a'],backgroundImage:null,backgroundEnabled:false});
   const planFor=input=>({count:m.readExperimentalSource(input).panels.length,layout:'two_columns',reason:'手順を読みやすく並べる',panels:m.readExperimentalSource(input).panels.map(p=>({sourcePanel:p.id,kind:'anchor',camera:p.camera,action:`ユウが道具${p.id}を手に取る。`,dialogueIds:p.dialogueIds,breakout:null}))});

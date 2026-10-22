@@ -1,3 +1,9 @@
+# CURRENT — v7.1.7 title option release (2026-10-22)
+
+User authorized deployment, note and Facebook publication, X draft only, then full backup. Official release without RunFullBackup comes first; standalone official full backup runs after social readback. Root PLAN owns operation status.
+
+Default-ON STEP3 title checkbox is implemented across prompt, review, repair, normalization and history contexts. OFF reclaims the title band while retaining A4 frames and margins; title metadata and dialogue stay intact. Compact11px help and watermark explanation were visually verified.14focused and516related tests, lint/build/security passed. One OpenAI normal UI run used GPT-6 Luna and Sunburst/max, saved2240×3168 title-free five-panel PNG; output/title-option-20261022 contains actual image/hash/UI/API evidence. Automatic repair was OFF. No further paid generation or Gemini live result claimed. The live tab is preserved, Vite5173 stopped before version edits to prevent reload.
+
 # CURRENT — v7.1.6 authorized publication and full backup (2026-10-21)
 
 Latest user explicitly resumed deployment, note/Facebook publication and full backup. X posting is excluded; provide its text in a code block. Use the unchanged official transaction with RunFullBackup, independently verify the new backup and read back note/Facebook. Root PLAN owns live status.

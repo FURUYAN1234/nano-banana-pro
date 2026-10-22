@@ -556,7 +556,7 @@ const compactScriptLockOrReference = (text, maxLength, referenceText) => {
   return compact.length <= maxLength ? compact : referenceText;
 };
 
-const buildStrictScriptLock = ({ safeTopic, panels, castList, activeOutfit, isMonochrome = false, preserveReferenceStyle = false, seriousTone = false }) => {
+const buildStrictScriptLock = ({ showTitle = true, safeTopic, panels, castList, activeOutfit, isMonochrome = false, preserveReferenceStyle = false, seriousTone = false }) => {
   const panelLocks = panels.map((panelText, index) => {
     const panelNumber = index + 1;
     try {
@@ -576,7 +576,7 @@ const buildStrictScriptLock = ({ safeTopic, panels, castList, activeOutfit, isMo
   }).join('\n');
 
   return `STRICT SCRIPT LOCK:
-- Title: ${safeTopic}
+- ${showTitle ? 'Title' : 'Title metadata (not printed)'}: ${safeTopic}
 - Scenario is source truth. A different story is a failed output.${isMonochrome ? ' This locks story and verbatim text, not source colors: render all source color/paint descriptions using the MONOCHROME THREE-TONE MANUSCRIPT LOCK.' : ''}
 - Do not replace conflict, setting, sequence, ending, or punchline.
 - Do not replace, rewrite, paraphrase, omit, or add dialogue.
@@ -665,6 +665,7 @@ export const buildMangaPrompt = options => buildMangaPromptArtifact(options).pro
 export const buildMangaPromptArtifact = ({
   mosaicCopyrightedCharacters = true,
   showWatermarks = true,
+  showTitle = true,
   scenario,
   castList,
   colorMode,
@@ -792,7 +793,7 @@ export const buildMangaPromptArtifact = ({
 
   let rawPrompt = "";
   const identityMatrix = buildIdentityMatrix(castList, { monochrome: isMonochrome });
-  const scriptLock = buildStrictScriptLock({ safeTopic, panels, castList, activeOutfit: promptActiveOutfit, providerFamily, isMonochrome, preserveReferenceStyle, seriousTone });
+  const scriptLock = buildStrictScriptLock({ showTitle, safeTopic, panels, castList, activeOutfit: promptActiveOutfit, providerFamily, isMonochrome, preserveReferenceStyle, seriousTone });
   const finalPanelStagingLock = punchlineType === 'Surreal' ? '' : FINAL_PANEL_ACTIVE_STAGING_IMAGE_LOCK;
   const identityContinuityLock = 'IDENTITY CONTINUITY: keep each character recognizable through hairstyle, wardrobe, glasses and other identity anchors; facial expression and drawing style may vary with the scene without creating a new person.';
   const mixedColorMedia = !isMonochrome && !preserveReferenceStyle
@@ -835,6 +836,7 @@ Dialogue (verbatim bubbles): ${extractDialogueOnly(pt, castList, { forImagePromp
 
     rawPrompt = buildChatGPTMangaPrompt({
       showWatermarks,
+      showTitle,
       safeTopic, watermarkEng, styleCore, safeLocation, isMonochrome,
       bg360Image, bg360Analysis, bg360Enabled, bg360CroppedPanels,
       VAR_CAST_LIST_CHATGPT, identityMatrix, activeOutfit: promptActiveOutfit, scopedOutfit,
@@ -881,6 +883,7 @@ ${geminiRearForegroundLock}`;
     const antiCharSheetPrefix = ANTI_CHARSHEET_PREFIX;
     rawPrompt = antiCharSheetPrefix + buildGeminiMangaPrompt({
       showWatermarks,
+      showTitle,
       safeTopic, watermarkEng, styleCore, safeLocation, isMonochrome,
       bg360Image, bg360Analysis, bg360Enabled, bg360CroppedPanels,
       VAR_CAST_LIST: promptCastList, identityMatrix, activeOutfit: promptActiveOutfit, scopedOutfit,
@@ -900,7 +903,7 @@ ${geminiRearForegroundLock}`;
   if (isMonochrome) {
     safePrompt = `${MONOCHROME_RENDERING_LOCK}\n\n${safePrompt}`;
   }
-  safePrompt = `${buildRenderOptionsContract({ mosaicCopyrightedCharacters, showWatermarks })}\n\n${safePrompt}`;
+  safePrompt = `${buildRenderOptionsContract({ mosaicCopyrightedCharacters, showWatermarks, showTitle })}\n\n${safePrompt}`;
   if (mosaicCopyrightedCharacters) {
     const protectedCast = buildProtectedCastContract(collectCastNameEntries(castList).map(entry => entry.displayName));
     if (protectedCast) safePrompt = `${protectedCast}\n${safePrompt}`;

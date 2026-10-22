@@ -1,5 +1,5 @@
 import React from 'react';
-import { buildRenderOptionsContract, readRenderOptions } from '../lib/render-options.js';
+import { buildRenderOptionsContract, readRenderOptions, NO_PAGE_TITLE } from '../lib/render-options.js';
 import {
   Copy,
   Globe,
@@ -286,7 +286,7 @@ const getDisplayedImageInfo = (size, pageLayout) => {
   const dimensions = `${size.width}×${size.height}`;
   const layout = pageLayout?.layout;
   if (!pageLayout?.applied || layout?.width !== size.width || layout?.height !== size.height) return dimensions;
-  return `${dimensions}｜タイトル${layout.titleHeight}px・4コマ全体${layout.panelHeight}px・フッター${layout.footerHeight}px。各コマの高さ配分と書体を保持。`;
+  return `${dimensions}｜${layout.titleInkHeight === 0 ? '上余白' : 'タイトル'}${layout.titleHeight}px・4コマ全体${layout.panelHeight}px・フッター${layout.footerHeight}px。各コマの高さ配分と書体を保持。`;
 };
 
 export default function Step4Panel({
@@ -562,7 +562,7 @@ export default function Step4Panel({
                               finalPrompt?.match(/Top page:\s*draw large bold Japanese text title:\s*"([^"]+)"/i)?.[1] ||
                               scenario?.match(/タイトル[:：]\s*([^\n]+)/)?.[1]?.trim().replace(/\s+([!！?？]+)$/u, '$1') ||
                               "";
-                            const titleReapplyBlock = titleFromPrompt ? `
+                            const titleReapplyBlock = readRenderOptions(finalPrompt).showTitle && titleFromPrompt ? `
 ━━━━━━━━━━━━━━━━━━
 ■ TITLE RE-APPLICATION (CRITICAL)
 ━━━━━━━━━━━━━━━━━━
@@ -571,7 +571,7 @@ export default function Step4Panel({
 - The title is NOT optional. Do NOT omit it while fixing A4 size.
 - Reserve enough top title area inside the A4 canvas so the title is fully visible and not cropped.
 - Do NOT move the title into a speech bubble, caption box, panel background, watermark, or dialogue.
-` : "";
+` : readRenderOptions(finalPrompt).showTitle ? "" : NO_PAGE_TITLE;
                             const fixPrompt = `[ABSOLUTE OVERRIDE — FORCE FULL REBUILD]
 
 You MUST discard the previously generated image completely.
