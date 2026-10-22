@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="240" viewBox="0 0 1200 240" role="img" aria-labelledby="title desc">
-  <title id="title">Nano Banana Pro デモサイトを開く</title>
-  <desc id="desc">https://furuyan1234.github.io/nano-banana-pro/</desc>
+  <title id="title">Open the Super FURU AI 4-koma System demo / デモサイトを開く</title>
+  <desc id="desc">Open the application / アプリを開く: https://furuyan1234.github.io/nano-banana-pro/</desc>
   <defs>
     <linearGradient id="panel" x2="1" y2="1">
       <stop stop-color="#142740"/>
@@ -17,7 +17,7 @@
   <circle cx="73" cy="73" r="16" fill="#f59e0b"/>
   <path d="M157 68h26m-13-13v26M55 170q22-38 43 0M143 160q24-29 44 0" fill="none" stroke="#0f766e" stroke-width="9" stroke-linecap="round"/>
   <text x="244" y="58" fill="#67e8f9" font-family="Segoe UI, Yu Gothic, Meiryo, sans-serif" font-size="23" font-weight="700" letter-spacing="3">LIVE DEMO · アプリを開く</text>
-  <text x="244" y="123" fill="#ffffff" font-family="Segoe UI, Yu Gothic, Meiryo, sans-serif" font-size="43" font-weight="800">Nano Banana Pro デモサイトを開く</text>
+  <text x="244" y="123" fill="#ffffff" font-family="Segoe UI, Yu Gothic, Meiryo, sans-serif" font-size="40" font-weight="800">Super FURU AI 4-koma System</text>
   <rect x="244" y="145" width="786" height="52" rx="10" fill="#172e48" stroke="#3b82a0" stroke-width="2"/>
   <text x="260" y="179" fill="#c7f9f1" font-family="Segoe UI, Arial, sans-serif" font-size="24">https://furuyan1234.github.io/nano-banana-pro/</text>
   <circle cx="1092" cy="120" r="53" fill="url(#accent)"/>

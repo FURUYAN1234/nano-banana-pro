@@ -13,4 +13,6 @@ test('README demo image and copyable URL both target the published app', () => {
   assert.equal(png.subarray(0, 8).toString('hex'), '89504e470d0a1a0a');
   const svg = readFileSync(new URL('../docs/assets/demo-site-button.svg', import.meta.url), 'utf8');
   assert.ok(svg.includes(target));
+  assert.ok(svg.includes('Super FURU AI 4-koma System'));
+  assert.doesNotMatch(svg, /Nano Banana Pro/);
 });

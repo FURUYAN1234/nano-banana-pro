@@ -1,4 +1,16 @@
-# CURRENT — v7.1.7 title option release (2026-10-22)
+# CURRENT — authorized v7.1.8 documentation publication (2026-10-22)
+
+User explicitly authorized GitHub, served PDFs and note publication. Use the existing official release transaction without RunFullBackup. Facebook, X and full backup are excluded. New patch7.1.8 preserves the existing7.1.7 release. Publish reviewed bilingual README with three PDF image buttons, role-separated API guides and full manual; then apply the prepared12operation note corrections and read back the complete body/media. Recheck official pricing, exact staged PDFs, all Node tests, lint/security/build and public URLs. Keep IAB2 tab1 API/work state intact; no paid generation. Root PLAN owns current status.
+
+# CURRENT — local documentation corrections, not published (2026-10-22)
+
+README: English/Japanese prose, table, heading, caption and history gaps repaired, including semantic omissions. Exactly three image buttons open full-manual/OpenAI-API/Gemini-API PDF URLs near the demo; real URLs return application/pdf. Formal app name corrected in demo SVG/PNG. New coverage/button regressions and updated existing route test pass20focused checks; both manual builder hashes bind the renewed docs/readme-body-audit.json.
+
+PDFs: API guides now contain account/billing/verification/key/connection preparation only. App operations remain in the full manual. Locally generated and public/downloads-staged PDFs are Gemini12/OpenAI19/full39pages, all70rendered pages inspected; role, version, footer, name/privacy, links, A4/text-bounds and byte parity checked. Evidence: output/title-option-20261022/manual-role-visual-review.json. Both API PDFs failed the original role regression and revised PDFs pass.
+
+Note: public full body and media reviewed. Prepared output/title-option-20261022/note-correction-proposal.json plus note-correction-proposed-body.txt: manual roles, title explanation placement/persistence, formal naming, suite4–8description and history grouping corrected. Includes explicit replacement of the old management-name demo image. Other media, links, embeds and headings must remain. No note edit/publish was performed in this local review; updated PDF delivery is a prerequisite to claiming revised public contents. No new commit, push, release, deploy or backup begun; those completed operations below are historical. Preserve IAB2 tabs1/2/3/5, especially tab1 with entered key/work. Do not reload or restart its Vite server.
+
+# PRIOR COMPLETE — v7.1.7 title option release (2026-10-22)
 
 User authorized deployment, note and Facebook publication, X draft only, then full backup. Official release without RunFullBackup comes first; standalone official full backup runs after social readback. Root PLAN owns operation status.
 

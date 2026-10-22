@@ -35,5 +35,5 @@ test('README keeps the OpenAI scenario route synchronized with the selectable mo
   const config = JSON.parse(await readFile(new URL('../src/config/openai-scenario-models.json', import.meta.url), 'utf8'));
   const documentedRoute = config.models.map(({ id }) => `\`${id}\``).join(' → ');
 
-  assert.match(readme, new RegExp(`\\| OpenAI \\| ${documentedRoute.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&')} \\|`));
+  assert.ok(readme.includes(`| OpenAI route / OpenAI経路 | ${documentedRoute} |`), 'The bilingual OpenAI route row must match the selectable catalog in order.');
 });
