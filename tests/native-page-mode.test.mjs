@@ -39,7 +39,7 @@ test('new sessions start in native five-to-eight-panel mode and preserve an expl
 const start=hook.indexOf('const changePageMode = ');
 const callback=hook.slice(start+'const changePageMode = '.length,hook.indexOf('\n  };',start)+4);
 function modeState() {
-  const state={punchlineType:'Auto',isApiProcessing:false,experimentalEnabled:false,scenario:'four',originalScenario:'four-original',scenarioThought:'four audit',explanation:'four explanation',explanationNotice:'',mangaTitle:'four title',enhanceLog:'four edit',lockedLocation:'room',lockedOutfit:'coat',bg360CameraWork:null,bg360CroppedPanels:[],castListRef:{current:'cast'},colorMode:'color',showWatermarks:true,mosaicCopyrightedCharacters:true,selectedEngine:'openai',openAIImageQuality:'max',scenarioUsedModelRef:{current:'four-model'},usedModel:'four-model',imagesRef:{current:[]},referenceAssetsRef:{current:[]},bg360EnabledRef:{current:false},bg360ImageRef:{current:null},bg360Analysis:null,styleJson:{},getCurrentPromptProviderFamily:()=> 'chatgpt',inputMode:'manual',manualTopic:'original',promptAssemblyRunRef:{current:1,completedRun:1},resolvedPunchlineTypeRef:{current:'four-ending'},finalPrompt:'four-prompt',generatedImage:'four-image',generationHistory:[{img:'four-history'}],genLog:['four-image-log'],assembleThought:'four assembly',showStatus:()=>{},invalidatePromptAssembly:()=>{},scenarioRunEpochRef:{current:0}};
+  const state={punchlineType:'Auto',isApiProcessing:false,experimentalEnabled:false,scenario:'four',originalScenario:'four-original',scenarioThought:'four audit',explanation:'four explanation',explanationNotice:'',mangaTitle:'four title',enhanceLog:'four edit',lockedLocation:'room',lockedOutfit:'coat',bg360CameraWork:null,bg360CroppedPanels:[],castListRef:{current:'cast'},colorMode:'color',showTitle:true,showWatermarks:true,mosaicCopyrightedCharacters:true,selectedEngine:'openai',openAIImageQuality:'max',scenarioUsedModelRef:{current:'four-model'},usedModel:'four-model',imagesRef:{current:[]},referenceAssetsRef:{current:[]},bg360EnabledRef:{current:false},bg360ImageRef:{current:null},bg360Analysis:null,styleJson:{},getCurrentPromptProviderFamily:()=> 'chatgpt',inputMode:'manual',manualTopic:'original',promptAssemblyRunRef:{current:1,completedRun:1},resolvedPunchlineTypeRef:{current:'four-ending'},finalPrompt:'four-prompt',generatedImage:'four-image',generationHistory:[{img:'four-history'}],genLog:['four-image-log'],assembleThought:'four assembly',showStatus:()=>{},invalidatePromptAssembly:()=>{},scenarioRunEpochRef:{current:0}};
   const scope=new Proxy(state,{has:()=>true,get:(s,k)=>{if(k===Symbol.unscopables)return undefined;if(k in s)return s[k];if(/^set[A-Z]/.test(k))return v=>{s[k[3].toLowerCase()+k.slice(4)]=v;};if(k==='updateResolvedPunchlineType')return v=>{s.resolvedPunchlineTypeRef.current=v;};if(k in globalThis)return globalThis[k];throw Error('Missing dependency '+String(k));}});
   state.pageModeRef={current:false};
   state.isExperimentalPage=()=>state.pageModeRef.current;
@@ -61,6 +61,13 @@ test('shared settings invalidate an old prompt without discarding either mode sc
   assert.equal(state.scenario,'four');assert.equal(state.finalPrompt,'');assert.equal(state.generatedImage,'four-image');
 });
 test('busy mode cannot switch or discard work',()=>{const {state,change}=modeState();state.isApiProcessing=true;assert.equal(change(true),false);assert.equal(state.scenario,'four');});
+test('title changes invalidate cached prompts while retaining each mode image and scenario',()=>{
+  const {state,change}=modeState();change(true);state.experimentalEnabled=true;
+  state.scenario='six';state.generatedImage='six-image';state.showTitle=false;
+  change(false);state.experimentalEnabled=false;
+  assert.equal(state.scenario,'four');assert.equal(state.finalPrompt,'');assert.equal(state.generatedImage,'four-image');
+  change(true);assert.equal(state.scenario,'six');assert.equal(state.generatedImage,'six-image');
+});
 const server=await createServer({appType:'custom',logLevel:'silent',server:{middlewareMode:true}});
 try {
   const {default:Panel}=await server.ssrLoadModule('/src/components/ExperimentalMangaPanel.jsx');
