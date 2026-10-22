@@ -6,6 +6,7 @@ import { buildImageEditRequest, IMAGE_EDIT_INSTRUCTION_MAX_CHARS } from '../src/
 import { OPENAI_IMAGE_PROMPT_MAX_CHARS } from '../src/lib/image-prompt-budget.js';
 import { formatPageLayoutStatus } from '../src/lib/manga-page-layout.js';
 import { beginApiWork } from '../src/lib/api-work-cancellation.js';
+import { readRenderOptions, buildRenderOptionsContract } from '../src/lib/render-options.js';
 
 const workflow = readFileSync(new URL('../src/hooks/useMangaWorkflow.js', import.meta.url), 'utf8');
 const source = 'data:image/png;base64,c291cmNl';
@@ -62,6 +63,7 @@ function setup(overrides = {}) {
   const saves = [];
   const context = { experimentalEnabled:false,
     beginApiWork,
+    readRenderOptions, finalPrompt: '',
     generatedImage: source, generationHistory: history, isGeneratingImage: false,
     isSearching: false, isAssembling: false, isEnhancing: false, isFullAutoMode: false,
     isFixingPolicy: false, isAnalyzing: false, is360CameraWorking: false,
@@ -146,6 +148,15 @@ test('manual edit sends the displayed image once and retains its history', async
   assert.equal(h.saves[0], h.state().history[0]);
   assert.equal(h.state().busy, false);
   assert.deepEqual(h.monoFinishes,[],'color must bypass monochrome pixel processing');
+});
+
+test('whole edit normalization follows the source title option rather than the current prompt', async () => {
+  const h = setup({ finalPrompt: buildRenderOptionsContract({ showTitle: true }) });
+  h.state().history[0].metadataContext = { finalPrompt: buildRenderOptionsContract({ showTitle: false }) };
+  const pending = h.context.edit('小物だけ修正');
+  h.calls[0].resolve({ base64Img: 'ZWRpdA==', mimeType: 'image/png', usedModel: 'gpt-test' });
+  assert.equal(await pending, true);
+  assert.equal(h.normalizations[0].renderOptions.showTitle, false);
 });
 
 test('Gemini receives the same source image and failure keeps the image and history', async () => {
