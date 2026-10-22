@@ -29,7 +29,7 @@ function webPreparation(overrides = {}) {
     resolvePageWorkflow: () => ({ kind: 'experimental-manga', count: 7 }),
     promptAssemblyRunRef: { experimentalPrepared: {} }, experimentalInput: () => ({}),
     inferImageQualityMode: () => 'four-panel', assertRenderOptions: () => {},
-    mosaicCopyrightedCharacters: true, showWatermarks: true, castList: '', collectCastNameEntries: () => [],
+    mosaicCopyrightedCharacters: true, showTitle: true, showWatermarks: true, castList: '', collectCastNameEntries: () => [],
     getCurrentPromptProviderFamily: () => 'chatgpt', PROMPT_PROVIDER_FAMILIES: { CHATGPT: 'chatgpt' },
     openAIImageQuality: 'max', images: ['data:image/png;base64,YQ=='], referenceAssetsRef: { current: [] },
     bg360Image: null, bg360Enabled: false, colorMode: 'color', scenario: '', styleJson: null, punchlineType: 'Auto',
