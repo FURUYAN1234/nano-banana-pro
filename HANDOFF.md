@@ -1,4 +1,8 @@
-# CURRENT — authorized v7.1.8 documentation publication (2026-10-22)
+# CURRENT — authorized H3 v7.1.9 distribution, deploy and full backup (2026-10-23)
+
+Root ../PLAN.md owns current delivery state. User supplied20261023195344ZIP and explicitly approved the authentication-corrected20261023195344_authfix1distribution after original failure/corrected4checks were shown.31-node/42-link workflow and upstream generation records preserved. Current19distribution/UI checks and114-file offline package verification pass; corrected live authentication/GPU generation not performed. No note/SNS publication or cancelled USB work authorized. Follow existing official transaction with RunFullBackup and independent verification; root PLAN retains exact sessions/receipts.
+
+# PRIOR — authorized v7.1.8 documentation publication (2026-10-22)
 
 User explicitly authorized GitHub, served PDFs and note publication. Use the existing official release transaction without RunFullBackup. Facebook, X and full backup are excluded. New patch7.1.8 preserves the existing7.1.7 release. Publish reviewed bilingual README with three PDF image buttons, role-separated API guides and full manual; then apply the prepared12operation note corrections and read back the complete body/media. Recheck official pricing, exact staged PDFs, all Node tests, lint/security/build and public URLs. Keep IAB2 tab1 API/work state intact; no paid generation. Root PLAN owns current status.
 
