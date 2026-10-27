@@ -8,6 +8,7 @@ import {
   resolveDefaultOpenAIScenarioModelId,
   getOpenAIScenarioCostEstimate,
   getOpenAIScenarioModelRoute,
+  getOpenAIVisionModelRoute,
 } from '../src/lib/openai-model-routes.js';
 
 test('STEP2 starts on Luna 6 in both environments', () => {
@@ -52,6 +53,7 @@ test('the STEP2 selectable route includes every supported scenario fallback mode
   assert.deepEqual(OPENAI_SCENARIO_TEXT_MODEL_IDS, [
     'gpt-6-astra',
     'gpt-6.1-sol',
+    'gpt-6.1-terra',
     'gpt-6-sol',
     'gpt-5.6-sol',
     'gpt-5.6-terra',
@@ -63,7 +65,7 @@ test('the STEP2 selectable route includes every supported scenario fallback mode
     OPENAI_SCENARIO_TEXT_MODEL_IDS,
   );
   assert.ok(OPENAI_SCENARIO_MODEL_OPTIONS.every(({ label, description }) => label && description));
-  assert.equal(OPENAI_SCENARIO_PRICE_SNAPSHOT_DATE, '2026-10-23');
+  assert.equal(OPENAI_SCENARIO_PRICE_SNAPSHOT_DATE, '2026-10-27');
   assert.equal(OPENAI_SCENARIO_MODEL_OPTIONS.find(({ id }) => id === 'gpt-6.1-sol').priceSnapshotDate, '2026-10-23');
   assert.ok(OPENAI_SCENARIO_MODEL_OPTIONS.every(({ inputPriceUsdPerM, outputPriceUsdPerM }) => (
     Number.isFinite(inputPriceUsdPerM) && Number.isFinite(outputPriceUsdPerM)
@@ -198,8 +200,19 @@ test('all step models reset to Luna and keep choices in memory only', () => {
 });
 
 test('Sol 6.1 uses its listed price and never escalates fallback to Astra', () => {
-  assert.deepEqual(getOpenAIScenarioModelRoute('gpt-6.1-sol').slice(0, 3), ['gpt-6.1-sol', 'gpt-6-sol', 'gpt-5.6-sol']);
+  assert.deepEqual(getOpenAIScenarioModelRoute('gpt-6.1-sol').slice(0, 3), ['gpt-6.1-sol', 'gpt-6.1-terra', 'gpt-6-sol']);
   assert.ok(!getOpenAIScenarioModelRoute('gpt-6.1-sol').includes('gpt-6-astra'));
   assert.equal(getOpenAIScenarioCostEstimate('gpt-6.1-sol', { input_tokens: 1000, output_tokens: 2000 }).estimatedUsd, 0.022);
+});
+
+test('Terra 6.1 is selectable for scenario and image analysis with its official standard price', () => {
+  const terra = OPENAI_SCENARIO_MODEL_OPTIONS.find(({ id }) => id === 'gpt-6.1-terra');
+  assert.equal(terra.inputPriceUsdPerM, 1);
+  assert.equal(terra.outputPriceUsdPerM, 5);
+  assert.deepEqual(getOpenAIScenarioModelRoute(terra.id).slice(0, 2), [terra.id, 'gpt-6-sol']);
+  assert.ok(!getOpenAIScenarioModelRoute(terra.id).includes('gpt-6.1-sol'));
+  assert.equal(getOpenAIVisionModelRoute(terra.id)[0], terra.id);
+  assert.ok(!getOpenAIVisionModelRoute(terra.id).includes('gpt-6.1-sol'));
+  assert.equal(getOpenAIScenarioCostEstimate(terra.id, { input_tokens: 1000, output_tokens: 2000 }).estimatedUsd, 0.011);
 });
 

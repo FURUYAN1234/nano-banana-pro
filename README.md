@@ -3,7 +3,7 @@
 > **Source code available; free to use.** Ordinary use, free integration and free provision require no application, prior contact or permission from FURU. You may sell and monetize your own works. External API costs and third-party terms are separate. See Terms & Output Rights below. / **ソースコード公開・利用無料。** 通常利用と無料の組み込み・無料提供に、申請・事前連絡・FURUの許可は不要です。自分の作品は販売・収益化できます。外部API料金と第三者の条件は別です。詳しくは「利用条件・作品の権利」をご確認ください。
 
 
-> Current source version: **v7.1.9** / 現在のソース版: **v7.1.9**
+> Current source version: **v7.2.0** / 現在のソース版: **v7.2.0**
 
 
 An experimental web application in which AI handles topic research, story structure, direction, prompt construction, image generation, and quality review for manga. OpenAI starts in 5–8-panel mode and also supports four panels. Gemini supports four-panel color and monochrome pages only. / AIが話題調査、構成、演出、プロンプト構築、画像生成、品質確認まで担当する漫画制作Webアプリです。OpenAIの初期選択「5～8コマ生成」では、最初から5～8コマのシナリオを作り、漫画にします。「4コマ生成」にも切り替えられます。Geminiはカラー・白黒とも4コマ固定です。
@@ -279,10 +279,12 @@ OpenAI reasoning models reserve up to 32,768 tokens for reasoning plus text; leg
 
 | Selected provider / 選択API | STEP2 scenario and enhancement route / STEP2のシナリオ・強化経路 |
 |---|---|
-| OpenAI route / OpenAI経路 | `gpt-6-astra` → `gpt-6.1-sol` → `gpt-6-sol` → `gpt-5.6-sol` → `gpt-5.6-terra` → `gpt-6-luna` → `gpt-5.6-luna` |
+| OpenAI route / OpenAI経路 | `gpt-6-astra` → `gpt-6.1-sol` → `gpt-6.1-terra` → `gpt-6-sol` → `gpt-5.6-sol` → `gpt-5.6-terra` → `gpt-6-luna` → `gpt-5.6-luna` |
 | Google Gemini route / Google Gemini経路 | `gemini-3.8-flash` → `gemini-3.6-flash` → `gemini-3.5-flash-lite` → `gemini-3.1-flash-lite` |
 
 OpenAI STEP1, STEP2 and STEP3 each start at `gpt-6-luna` and can be selected independently before STEP1. STEP1 lists image-capable text models; STEP2 and STEP3 list the scenario and prompt models. The chosen model starts the corresponding route, and Model Chain shows each active route. Local Luna validation stops on failure without substituting another model for STEP2 and STEP3; other choices try only the models below that selection in the displayed order. `gpt-6-astra` is unrelated to Google's Project Astra product name. The app does not inherit the Codex desktop task's High or Extra High reasoning setting. Model presence in a list is not proof of image quality; the rendered manga still requires visual review. / OpenAIのSTEP1・STEP2・STEP3はそれぞれ`gpt-6-luna`が初期値で、STEP1の前に個別に選択できます。STEP1には画像入力対応の文章モデル、STEP2・STEP3にはシナリオ・描画指示用モデルを表示します。選択モデルから各工程の経路を開始し、Model Chainにも各経路を表示します。ローカルのSTEP2・STEP3でLunaを選んだ場合は失敗時も別モデルへ切り替えず、その他の選択では選択位置より下のモデルだけを表示順に試します。`gpt-6-astra`はGoogleのProject Astraという製品名とは別物です。アプリはCodexデスクトップ作業の「高い」「極高」推論設定を引き継ぎません。モデル一覧への表示は画像品質の証明ではなく、生成画像の目視確認が必要です。
+
+GPT-6.1 Terra is available in all three OpenAI text and image-analysis selections. Its 2026-10-27 Standard short-context price is USD 1 input and USD 5 output per million tokens; cached input is USD 0.05 per million, while the app's simple estimate uses uncached input and output totals. Image generation is billed separately. / GPT-6.1 TerraはOpenAIの3工程の文章・画像解析モデルとして選択できます。2026-10-27時点のStandard短文料金は100万トークン当たり入力1米ドル、出力5米ドル、キャッシュ入力0.05米ドルです。アプリの簡易見積もりはキャッシュなしの入力・出力合計を使います。画像生成の料金は別です。
 
 STEP3 shows `⏳ AI応答を待機中... (○秒経過)` directly below its build button while the connected text API reviews the prompt, then stops the counter when processing ends. / STEP3は接続中の文章APIがプロンプトを精査している間、構築ボタン直下に`⏳ AI応答を待機中... (○秒経過)`を表示し、処理完了時にカウントを停止します。
 
@@ -593,7 +595,7 @@ The copied prompt guides panel order, cast, speaker assignment, acting, camera, 
 The app provides separate download buttons for the workflow JSON and the custom-node ZIP. Both files are needed for this route. / アプリにはワークフローJSONとカスタムノードZIPのダウンロードボタンが別々にあります。この経路では両方のファイルが必要です。
 
 - [Download workflow JSON](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261023195344.json) / [ワークフローJSONをダウンロード](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261023195344.json)
-- [Download custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.1.9/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip) / [カスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.1.9/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip)
+- [Download custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.2.0/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip) / [カスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.2.0/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip)
 
 Place the three folders included in the ZIP under `ComfyUI/custom_nodes/` and the workflow JSON under `ComfyUI/user/default/workflows/`. Install the separate dependencies below, then restart ComfyUI. / ZIP内の`3フォルダ`を`ComfyUI/custom_nodes/`へ、ワークフローJSONを`ComfyUI/user/default/workflows/`以下へ配置します。下記の別途必要な依存関係を導入してからComfyUIを再起動します。
 
@@ -645,7 +647,7 @@ Every deployment requires a fresh dependency audit, the shared security checks a
 
 **Why are there two ComfyUI download buttons? / ComfyUIのダウンロードボタンが2つあるのはなぜですか？**  The JSON defines the workflow, while the ZIP supplies three custom-node folders and documentation; three additional runtime dependencies are installed separately. / JSONはワークフロー定義、ZIPはカスタムノード3フォルダーと導入文書です。さらに実行依存3項目を別途導入します。
 
-**Which video package should I install? / 動画化には何を入れますか？** Use the `20261023195344` workflow JSON and matching v7.1.9 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261023195344` のワークフローJSONと対応するv7.1.9 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
+**Which video package should I install? / 動画化には何を入れますか？** Use the `20261023195344` workflow JSON and matching v7.2.0 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261023195344` のワークフローJSONと対応するv7.2.0 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
 
 **Is this the T2V/I2V/Ref2V repository? / T2V・I2V・Ref2Vのリポジトリですか？**  No. Those workflows are maintained separately in [`comfyui-h3-workflows`](https://github.com/FURUYAN1234/comfyui-h3-workflows). / いいえ。それらは別の[`comfyui-h3-workflows`](https://github.com/FURUYAN1234/comfyui-h3-workflows)で管理します。
 
@@ -752,6 +754,9 @@ Load a completed four-panel manga into [AI Voice Comic Maker](https://github.com
 | Narration Video Maker / ナレーション動画メーカー | Video generation with narration, subtitles, and BGM / ナレーション・字幕・BGM付き動画生成 | [`gemini-narration-studio`](https://github.com/FURUYAN1234/gemini-narration-studio) |
 
 ## 📋 ChangeLog / 更新履歴
+
+### v7.2.0 (2026-10-27)
+- **[Models & pricing]** Added GPT-6.1 Terra to STEP1 image analysis and STEP2/STEP3 text selection and Model Chain. The STEP defaults remain GPT-6 Luna. Standard short-context Terra rates are USD 1 input, USD 0.05 cached input and USD 5 output per million tokens. / GPT-6.1 TerraをSTEP1画像解析、STEP2・STEP3文章選択とModel Chainへ追加しました。各STEPの既定はGPT-6 Lunaのままです。Standard短文料金は100万トークン当たり入力1米ドル、キャッシュ入力0.05米ドル、出力5米ドルです。
 
 ### v7.1.9 (2026-10-23)
 - **[Fix & UX]** Updated the H3 distribution to 20261023195344 and retained the authentication-model validation fix. / H3配布物を20261023195344版へ更新し、既存の認証モデル検証修正を適用。

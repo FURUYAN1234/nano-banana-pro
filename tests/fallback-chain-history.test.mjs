@@ -68,7 +68,7 @@ test('the STEP4 OpenAI snapshot distinguishes its default model from selectable 
   assert.deepEqual(FALLBACK_CHAIN_SOURCE_IDS['step4-openai'], chain.models.map(({ id }) => id));
 });
 
-for (const selected of ['gpt-6.1-sol', 'gpt-6-astra', 'gpt-6-luna']) {
+for (const selected of ['gpt-6.1-sol', 'gpt-6.1-terra', 'gpt-6-astra', 'gpt-6-luna']) {
   test(`Model Chain reflects selection ${selected} without changing other routes`, async () => {
     const {getOpenAIScenarioModelRoute}=await import('../src/lib/openai-model-routes.js');
     const chains=getFallbackChains(selected);
@@ -83,4 +83,14 @@ test('Astra stays visible as selectable when Sol 6.1 is primary', () => {
   const models=getFallbackChains('gpt-6.1-sol').find(c=>c.id==='step2-openai').models;
   assert.equal(models.find(m=>m.id==='gpt-6-astra').role,'Selectable');
   assert.equal(models[0].id,'gpt-6.1-sol');
+});
+
+test('Terra 6.1 is selectable in every OpenAI step but never escalates to Sol', () => {
+  const chains=getFallbackChains({analysisModelId:'gpt-6.1-terra',scenarioModelId:'gpt-6.1-terra',promptModelId:'gpt-6.1-terra'});
+  for (const id of ['step1-openai','step2-openai','step3-openai']) {
+    const models=chains.find(c=>c.id===id).models;
+    assert.equal(models[0].id,'gpt-6.1-terra');
+    assert.ok(models.find(m=>m.id==='gpt-6.1-sol'&&m.role==='Selectable'));
+    assert.ok(!models.some(m=>m.id==='gpt-6.1-sol'&&m.role!=='Selectable'));
+  }
 });

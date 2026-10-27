@@ -1,5 +1,5 @@
 {
-  "priceSnapshotDate": "2026-10-23",
+  "priceSnapshotDate": "2026-10-27",
   "priceSnapshotSource": "OpenAI official model pricing",
   "models": [
     {
@@ -20,6 +20,16 @@
       "inputPriceUsdPerM": 2,
       "outputPriceUsdPerM": 10,
       "comparisonNote": "手動選択できる高性能モデル。通常の入力・出力単価はAstraの5分の1。題材ごとの生成結果を確認してください。"
+    },
+    {
+      "id": "gpt-6.1-terra",
+      "label": "GPT-6.1 Terra",
+      "group": "GPT-6.1",
+      "priceSnapshotDate": "2026-10-27",
+      "description": "画像理解と自然な文章を低コストで両立",
+      "inputPriceUsdPerM": 1,
+      "outputPriceUsdPerM": 5,
+      "comparisonNote": "標準・短文コンテキストでSol 6.1の半額。画像入力にも対応します。題材ごとの生成結果を確認してください。"
     },
     {
       "id": "gpt-6-sol",

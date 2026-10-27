@@ -29,6 +29,7 @@ import {
 
 const OPENAI_MODEL_NOTES = {
   'gpt-6.1-sol': '画像解析・文章処理の選択肢・入力$2/出力$10 USD/MTok',
+  'gpt-6.1-terra': '画像解析・文章処理の選択肢・入力$1/出力$5 USD/MTok',
   'gpt-6-astra': 'STEP2・STEP3で選択可能・物語構成と演出推論',
   'gpt-6-sol': '画像解析・文章処理・複雑な構成と料金のバランス',
   'gpt-5.6-sol': '画像解析・文章処理・高い構成力を重視',
