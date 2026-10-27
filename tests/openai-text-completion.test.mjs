@@ -286,14 +286,19 @@ for (const web of [false, true]) {
   });
 }
 
-test('Sol 6.1 unavailability falls back to Sol and reports the adopted model', async () => {
-  const models=[], logs=[];
-  globalThis.fetch=async (_url,init)=> {
-    models.push(JSON.parse(init.body).model);
-    return models.length===1 ? Response.json({error:{message:'model unavailable',code:'model_not_found'}},{status:404}) : Response.json(payload(false,{text:'complete fixture'}));
-  };
-  const result=await client.callOpenAIText('fixture',null,null,line=>logs.push(line),{modelRoute:'scenario',scenarioModelId:'gpt-6.1-sol'});
-  assert.deepEqual(models,['gpt-6.1-sol','gpt-6-sol']);
-  assert.equal(result.model,'gpt-6-sol');
-  assert.ok(logs.some(line=>line.includes('最終採用モデル: gpt-6-sol')));
-});
+for (const { unavailable, expectedModels, adoptedModel } of [
+  { unavailable: 1, expectedModels: ['gpt-6.1-sol', 'gpt-6.1-terra'], adoptedModel: 'gpt-6.1-terra' },
+  { unavailable: 2, expectedModels: ['gpt-6.1-sol', 'gpt-6.1-terra', 'gpt-6-sol'], adoptedModel: 'gpt-6-sol' },
+]) {
+  test(`Sol 6.1 falls through ${unavailable} unavailable model(s) and reports ${adoptedModel}`, async () => {
+    const models=[], logs=[];
+    globalThis.fetch=async (_url,init)=> {
+      models.push(JSON.parse(init.body).model);
+      return models.length<=unavailable ? Response.json({error:{message:'model unavailable',code:'model_not_found'}},{status:404}) : Response.json(payload(false,{text:'complete fixture'}));
+    };
+    const result=await client.callOpenAIText('fixture',null,null,line=>logs.push(line),{modelRoute:'scenario',scenarioModelId:'gpt-6.1-sol'});
+    assert.deepEqual(models,expectedModels);
+    assert.equal(result.model,adoptedModel);
+    assert.ok(logs.some(line=>line.includes(`最終採用モデル: ${adoptedModel}`)));
+  });
+}
