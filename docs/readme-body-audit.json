@@ -1,26 +1,26 @@
 {
-  "pricingSourceSha256": "f606d3f11a71aa20bdf644aec08e4cbc64f1bede0cb8a31729bc9781ecd80ce6",
-  "manualVersion": "7.1.9",
-  "manualSourceSha256": "3fbf5f5fb8ba6576eec3f285a8dbbe8127a5d2b91b044762ab14908408616513",
+  "pricingSourceSha256": "12a2f5f73742c09dcc787ae7ae1559e427826055140b59568e7f404042c9dc55",
+  "manualVersion": "7.2.0",
+  "manualSourceSha256": "49ee824375ed4fbe5ebb690956102a95baccf7f336bd1829578687ed0e724c97",
   "manualFiles": [
     {
       "name": "gemini-api-beginner-guide-2026-10-01.pdf",
-      "sha256": "5b8d20315a36fd99fce9da724aa22ca3f8756281851cb0253fae3751af2463d2"
+      "sha256": "3b7577b88be04d85e5e022997a1a7ea532426033ac999298bdcc7ef2d9d17758"
     },
     {
       "name": "openai-api-beginner-guide-2026-09-30.pdf",
-      "sha256": "4de6360b89ba92c2b4e6a47dcde8c9d9b7842744607898aa0f198f6f47457b11"
+      "sha256": "bb347ed88b129d95a7f8a0ca8bad92095a099801d2fb9e57165e3f0e7af17b1c"
     },
     {
       "name": "super-furu-ai-4koma-full-manual-2026-10-01.pdf",
-      "sha256": "f7b81431b18ec26d2025f066f2200aa3d0c8f34a56ef3b8bc077821f07f0351d"
+      "sha256": "94e18f4969cb9f93142baa51e0c1c4b15acd1fc2108c6a5e12a910b02399ee1f"
     }
   ],
-  "readmeSha256": "039bb19d7399a41802b3363f76059b751b3ea08047be494e872ba0110db72a1b",
+  "readmeSha256": "a7027add365bed8b9df4cc6e066fa60801dc0cee12331e02e6336747edee1f8b",
   "readmeLanguageGaps": [],
-  "sourceTree": "8bd473fab193da0e3bd75af46b0831b2021fa331",
-  "publicTree": "6a4cca77c8fc2a3304073deaf8c748dcd88c7878",
-  "packageSha256": "5980f9fa5cf80b80189e1202eed5f735e3f6fe9578b337120ca5f23c6a9ac1fe",
+  "sourceTree": "9648b2f1e7a450e5086fe9c64e9f93871085d1c3",
+  "publicTree": "f119290e71e6b805a8f5858e9feca30e34612c58",
+  "packageSha256": "11405b012770b6a433f0938a130bccb33580643cb0a1a004772a893bc521b5fc",
   "releaseAssetSha256": "c2c6e430de40f14279cd7a97624164f9cb7e46105eadb0763c01ed9fb1a3f96e",
   "reviewedSections": [
     "Application screen and output / 操作画面と生成例",
@@ -41,17 +41,17 @@
     "AI Manga Creative Suite / AIまんが制作エコシステム",
     "📋 ChangeLog / 更新履歴"
   ],
-  "checkedAt": "2026-10-23T14:09:12.815Z",
-  "findings": "Compared the entire current README against the previous reviewed release and current implementation. Untouched sections retain the previously reviewed content; checked all changed H3 links, graph/settings, setup dependencies, licensing/privacy and validation limits against the supplied archive actual bytes. Updated the current pricing confirmation dates against both official pages. Both languages retain the original-versus-authfix evidence distinction. All17section headings, PDF roles, existing links/media and unrelated application behavior are preserved. No note or SNS publication is authorized; the read public note remains a separate historical surface.",
-  "manualFindings": "Reviewed the current Japanese manual sources and all70rendered pages: Gemini12, OpenAI19, full39, in13contact sheets. Version7.1.9/date/page counts, A4, text bounds, safe images, links and role/privacy/name checks pass. Updated H3 filenames,31-node/42-link graph, Comfy Kitchen dependency and upstream-versus-corrected validation limits on full-manual page30; inspected its rendered page. The later date-only full-manual rebuild was reviewed again on affected page22. Generated PDFs match staged public bytes; no new GPU execution is claimed.",
+  "checkedAt": "2026-10-27T02:32:57.959Z",
+  "findings": "Reviewed all current README sections against v7.2.0 source and the maintained STEP1-3 model routing. The OpenAI route includes Terra after Sol 6.1, STEP defaults remain Luna, the public application name and dated H3 release asset links match this candidate, and both language blocks describe the same price and fallback limits. Verified unchanged sections against the prior reviewed release; no note or SNS edit is included in this candidate.",
+  "manualFindings": "Regenerated Gemini 12-page, OpenAI 19-page and full 39-page Japanese PDFs from the v7.2.0 sources. Builder checks passed for A4, safe naming, privacy, links and text bounds. Visually inspected all 70 pages in 13 current contact sheets and OpenAI model-permission page 12 at full size after adding Terra; no clipping or overlap observed. All three staged public PDF bytes equal the reviewed outputs. The OpenAI guide covers setup, permissions and connection; application operation remains in the full manual.",
   "pricingReview": {
-    "version": "7.1.9",
-    "sourceSha256": "f606d3f11a71aa20bdf644aec08e4cbc64f1bede0cb8a31729bc9781ecd80ce6",
-    "checkedAt": "2026-10-23T14:09:12.815Z",
+    "version": "7.2.0",
+    "sourceSha256": "12a2f5f73742c09dcc787ae7ae1559e427826055140b59568e7f404042c9dc55",
+    "checkedAt": "2026-10-27T02:32:57.959Z",
     "sources": [
       "https://developers.openai.com/api/docs/pricing",
       "https://ai.google.dev/gemini-api/docs/pricing"
     ],
-    "findings": "Read both official pricing pages for7.1.9on2026-10-23. Standard rates remain unchanged, distinguished from Batch/Flex discounts: Astra10/50, Sol6.1 2/10, Luna6 0.10/0.50 USD per million input/output; Sunburst/Flare image8/30, text5, cached image2/text1.25. Gemini3.8Flash0.75/3.75 through2026-12-31; NanoBanana2.1 input1.50,text/thinking7.50,images30, equivalent1K0.0336/2K0.0504/4K0.113. Updated confirmation dates without changing model routing or rates."
+    "findings": "Read both official pricing pages on 2026-10-27. Standard short-context rates per million input/output tokens: GPT-6.1 Terra $1/$5 with cached input $0.05; Sol 6.1 $2/$10, Astra $10/$50, Luna 6 $0.10/$0.50. GPT Image 2.5 Sunburst/Flare Standard image input/output $8/$30, cached image input $2; text input $5, cached text input $1.25. Gemini 3.8 Flash Standard input/output $0.75/$3.75 through 2026-12-31. Nano Banana 2.1 Standard input $1.50, text/thinking output $7.50 and image output $30, equivalent 1K $0.0336. Batch/Flex discounts are separate and are not used for the app display."
   }
 }
