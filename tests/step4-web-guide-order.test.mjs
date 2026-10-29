@@ -75,7 +75,8 @@ test('Gemini manual AI recheck stays absent; video remains reachable without an 
         assert.equal(review, -1, 'manual AI review is not a user image action');
         assert.doesNotMatch(html, /検査のみ行います（画像再生成なし・解析API課金あり）/);
         const video = html.indexOf('aria-controls="video-guide-content"');
-        assert.ok(video > html.indexOf('<details class="web-prompt-disclosure">') && video < html.indexOf('</details>'),
+        const webStart = html.indexOf('<details class="web-prompt-disclosure">');
+        assert.ok(video > webStart && video < html.indexOf('</details>', webStart),
           'video is inside Web disclosure, accessible without an API image');
         assert.equal((html.match(/aria-controls="video-guide-content"/g) || []).length, 1);
       }

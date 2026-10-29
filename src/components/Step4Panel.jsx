@@ -421,6 +421,18 @@ export default function Step4Panel({
   const [imageMetadataError, setImageMetadataError] = React.useState('');
   const [displayedImageSize, setDisplayedImageSize] = React.useState(null);
 
+  // Export text is derived, never written back into the editable prompt body.
+  // Otherwise the automatic reference supplement would be appended again.
+  let completePrompt = '';
+  let completePromptError = '';
+  if (finalPrompt) {
+    try {
+      completePrompt = prepareWebCopyPrompt(finalPrompt);
+    } catch (error) {
+      completePromptError = error.message || '最終プロンプトを準備できませんでした。';
+    }
+  }
+
   const getCurrentMetadataInputImages = () => {
     const inputImages = images.map(dataUrl => ({ role: getReferenceMetadataRole(getReferenceAsset(referenceAssets, dataUrl)), dataUrl }));
     if (bg360Enabled && bg360Image) inputImages.push({ role: 'background_reference', dataUrl: bg360Image });
@@ -976,22 +988,43 @@ No explanations. No partial results.`;
             </div>
           </div>
 
-          <div className="mt-2 text-[11px] text-slate-500 text-center font-mono">
-            この欄で直接編集できます。編集した内容が、プロンプトのコピーと画像生成の両方に使われます。
+          <div id="final-prompt-help" className="mt-2 text-[11px] text-slate-400 text-center font-mono">
+            コピー・TXT保存と同じ全文です。参照画像の指示も含みます。変更する場合は「本文を編集」を開いてください。
           </div>
 
           <div className="flex flex-col h-full mt-4 gap-4">
             <div className="relative flex-1">
               <textarea
                 id="final-prompt-editor"
-                value={finalPrompt}
-                onChange={(e) => setFinalPrompt(e.target.value)}
+                value={completePrompt}
+                readOnly
+                aria-describedby="final-prompt-help"
+                aria-invalid={Boolean(completePromptError)}
                 spellCheck={false}
                 style={{ color: '#ffffff', backgroundColor: '#000000', opacity: 1 }}
                 className="w-full h-full min-h-[300px] text-xs font-mono border border-white/10 resize-y focus:outline-none focus:border-orange-500/70 focus:ring-2 focus:ring-orange-500/20 leading-relaxed overflow-y-auto custom-scrollbar rounded-xl p-4 placeholder-slate-500 transition-colors"
                 placeholder="◀ 上の「画像用の指示文（プロンプト）を構築する」ボタンを押すと、ここに生成された指示文（プロンプト）が表示されます。"
               />
+              {completePromptError && (
+                <p role="alert" className="mt-2 text-sm text-red-300">全文を表示できません：{completePromptError}</p>
+              )}
             </div>
+
+            <details className="border border-white/10 rounded-lg p-3">
+              <summary className="cursor-pointer text-sm text-orange-300">本文を編集</summary>
+              <p id="prompt-body-help" className="my-2 text-xs text-slate-400">
+                編集内容は上の全文表示・コピー・画像生成に反映されます。参照画像の指示は現在の設定から自動で付加されます。
+              </p>
+              <label htmlFor="prompt-body-editor" className="text-xs text-slate-300">プロンプト本文</label>
+              <textarea
+                id="prompt-body-editor"
+                value={finalPrompt}
+                onChange={(e) => setFinalPrompt(e.target.value)}
+                aria-describedby="prompt-body-help"
+                spellCheck={false}
+                className="w-full min-h-[300px] mt-2 text-xs font-mono border border-white/10 resize-y focus:outline-none focus:border-orange-500/70 focus:ring-2 focus:ring-orange-500/20 leading-relaxed p-4"
+              />
+            </details>
 
             {/* Buttons Row */}
             <div className="flex flex-col gap-4 mt-2 relative z-50">

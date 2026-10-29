@@ -49,7 +49,7 @@ def new(title,kicker='操作ガイド',sources=''):
  c.setFont('JPB',21); c.setFillColor(INK); c.drawString(M,H-73,title)
  c.setStrokeColor(HexColor('#cfdddf')); c.line(M,H-89,W-M,H-89)
  c.bookmarkPage(f'p{page}'); c.addOutlineEntry(title,f'p{page}',0,False)
- c.setFont('JP',8); c.setFillColor(GRAY); c.drawString(M,31,'v7.2.0対応 | 2026年10月27日更新 | A4 日本語版')
+ c.setFont('JP',8); c.setFillColor(GRAY); c.drawString(M,31,'v7.2.1対応 | 2026年10月29日更新 | A4 日本語版')
  c.drawRightString(W-M,31,f'{page:02d} / 19')
  if sources: c.setFont('JP',7.5); c.drawString(M,45,'根拠: '+sources+'（出典一覧は19ページ）')
  transcript.append('\n\n'+str(page)+'. '+title)
@@ -279,7 +279,7 @@ for label,url in sources:
 p('入力例のmanga-app／Personal manga、初回5～10米ドル、30日のキー期限は本資料の説明例・提案です。OpenAIの必須条件とは区別しています。','small')
 end();c.save()
 (BASE/'source'/'guide-text.txt').write_text('\n'.join(transcript),encoding='utf-8')
-(BASE/'source'/'layout-check.json').write_text(json.dumps({'pages':page,'layout':checks,'date':'2026-10-27'},ensure_ascii=False,indent=2),encoding='utf-8')
+(BASE/'source'/'layout-check.json').write_text(json.dumps({'pages':page,'layout':checks,'date':'2026-10-29'},ensure_ascii=False,indent=2),encoding='utf-8')
 print(f'CREATED {OUT} pages={page}')
 
 # Reuse the shared manual gate: render every page and reject stale versions,

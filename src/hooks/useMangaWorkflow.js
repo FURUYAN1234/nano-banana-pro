@@ -2204,7 +2204,9 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
       if (qualityRunEpoch !== scenarioRunEpochRef.current) return;
       const elapsed = Math.floor((Date.now() - generationStartedAt) / 1000);
       const reviewTime = qualityBudget.elapsedMs > 0
-        ? `検査累計${Math.floor(qualityBudget.elapsedMs / 1000)}秒／上限${IMAGE_REVIEW_BUDGET_MS / 1000}秒・` : '';
+        ? (progressPhase === '修正画像生成'
+          ? `検査終了（${Math.floor(qualityBudget.elapsedMs / 1000)}秒）・`
+          : `検査累計${Math.floor(qualityBudget.elapsedMs / 1000)}秒／上限${IMAGE_REVIEW_BUDGET_MS / 1000}秒・`) : '';
       const detailStart = progressPhase.indexOf('（');
       const phaseStatus = detailStart < 0 ? `${progressPhase}中`
         : `${progressPhase.slice(0, detailStart)}中${progressPhase.slice(detailStart)}`;

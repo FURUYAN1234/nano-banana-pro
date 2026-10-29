@@ -42,8 +42,8 @@ test('STEP4 omits the API-only reference supplement implementation note', () => 
   );
 });
 
-test('editable-prompt guidance leads into the prompt editor after STEP3 owns the thinking log', () => {
-  const guidanceIndex = step4PanelSource.indexOf('この欄で直接編集できます。編集した内容が、プロンプトのコピーと画像生成の両方に使われます。');
+test('complete-prompt guidance leads into the preview after STEP3 owns the thinking log', () => {
+  const guidanceIndex = step4PanelSource.indexOf('コピー・TXT保存と同じ全文です。');
   const promptEditorIndex = step4PanelSource.search(/<textarea\r?\n\s+id="final-prompt-editor"/);
 
   assert.doesNotMatch(step4PanelSource, /<ThinkingLog thought=\{assembleThought\}/);

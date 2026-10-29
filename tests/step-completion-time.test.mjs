@@ -78,6 +78,25 @@ test('STEP4 waiting text distinguishes cumulative inspection time from generatio
   assert.match(logs[0],/検査累計30秒／上限600秒・STEP4合計170秒/);
 });
 
+test('repair waiting labels the frozen inspection duration as finished while total keeps advancing', () => {
+  const start = source.indexOf('const generationStartedAt = Date.now();');
+  const block = source.slice(start, source.indexOf('// Artificial delay', start));
+  let now = 0, callback, logs = [];
+  const budget = { elapsedMs: 211000 };
+  const scope = { Date: { now: () => now }, createImageReviewBudget: () => budget, IMAGE_REVIEW_BUDGET_MS: 600000,
+    generationOptions: {}, qualityRunEpoch: 1, scenarioRunEpochRef: { current: 1 },
+    setInterval: fn => { callback = fn; }, setGenLog: update => { logs = update(logs); } };
+  const setPhase = new Function(...Object.keys(scope), block + '\nreturn phase => { progressPhase = phase; };')(...Object.values(scope));
+  setPhase('品質検査'); now = 333000; callback();
+  assert.match(logs[0], /検査累計211秒／上限600秒/);
+  setPhase('修正画像生成'); now = 420000; callback();
+  assert.match(logs[0], /修正画像生成中.*検査終了（211秒）.*STEP4合計420秒/);
+  assert.doesNotMatch(logs[0], /検査累計|上限600秒/);
+  now = 444000; callback();
+  assert.match(logs[0], /検査終了（211秒）.*STEP4合計444秒/);
+  assert.equal(budget.elapsedMs, 211000);
+});
+
 test('inspection deadline returns control, stops full-auto and retains concrete findings without a success message', () => {
   const start = source.indexOf('if(qualityBudget.exhausted) {\n        fullAutoAbortRef.current');
   assert.ok(start >= 0);

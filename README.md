@@ -3,7 +3,7 @@
 > **Source code available; free to use.** Ordinary use, free integration and free provision require no application, prior contact or permission from FURU. You may sell and monetize your own works. External API costs and third-party terms are separate. See Terms & Output Rights below. / **ソースコード公開・利用無料。** 通常利用と無料の組み込み・無料提供に、申請・事前連絡・FURUの許可は不要です。自分の作品は販売・収益化できます。外部API料金と第三者の条件は別です。詳しくは「利用条件・作品の権利」をご確認ください。
 
 
-> Current source version: **v7.2.0** / 現在のソース版: **v7.2.0**
+> Current source version: **v7.2.1** / 現在のソース版: **v7.2.1**
 
 
 An experimental web application in which AI handles topic research, story structure, direction, prompt construction, image generation, and quality review for manga. OpenAI starts in 5–8-panel mode and also supports four panels. Gemini supports four-panel color and monochrome pages only. / AIが話題調査、構成、演出、プロンプト構築、画像生成、品質確認まで担当する漫画制作Webアプリです。OpenAIの初期選択「5～8コマ生成」では、最初から5～8コマのシナリオを作り、漫画にします。「4コマ生成」にも切り替えられます。Geminiはカラー・白黒とも4コマ固定です。
@@ -30,7 +30,7 @@ Application terms are in [LICENSE](LICENSE). / 利用条件は [LICENSE](LICENSE
 |---|---|
 | <img src="docs/manuals/assets/app-current.png" width="460" alt="API connection, reference analysis and scenario controls / API接続状態、キャラクター解析、シナリオ設定の操作例"> | <img src="docs/manuals/assets/current-color-example.jpg" width="460" alt="Inspected API-generated manga showing per-panel direction, gekiga and cast depth / APIで生成し目視確認した4コマ漫画。コマごとの演出、劇画表現と人物の遠近の例"> |
 
-The left image shows previous-release connection and reference controls; current recognition fields are described below. The right image is an inspected example generated with the OpenAI API (GPT Image 2.5 Sunburst / max). Inspect styles, character scale and dialogue in the actual image. Unconfirmed automated findings and minor crops remain caveats; equal quality on every generation is not guaranteed. / max）で生成して確認した作例です。画風・人物の縮尺・台詞は画像を見て確認し、自動検査の未確認項目や軽微な見切れは注意事項として扱います。生成ごとに同じ品質を保証するものではありません。
+The left image shows previous-release connection and reference controls; current recognition fields are described below. The right image is an inspected example generated with the OpenAI API (GPT Image 2.5 Sunburst / max). Inspect styles, character scale and dialogue in the actual image. Unconfirmed automated findings and minor crops remain caveats; equal quality on every generation is not guaranteed. / 左は以前の版の接続・素材操作画面で、現在の認識欄は後述します。右はOpenAI API（GPT Image 2.5 Sunburst / max）で生成して目視確認した作例です。画風・人物の縮尺・台詞は画像を見て確認し、自動検査の未確認項目や軽微な見切れは注意事項として扱います。生成ごとに同じ品質を保証するものではありません。
 
 https://github.com/user-attachments/assets/15608ccc-8d86-4b78-9ff3-785201b42629
 
@@ -219,8 +219,10 @@ The application provides one continuous four-step workflow. / アプリは次の
 
 1. **Material recognition / 素材の認識:** Read character sheets, backgrounds and props, and extract their roles and traits. / 人物・背景・小物の参照画像から種類と特徴を抽出します。
 2. **Scenario / シナリオ:** With full-auto OFF, choose four panels or the experimental 5–8-panel mode before STEP2, then generate the scenario and optionally strengthen its direction. / フルオートOFFではSTEP2の前に「4コマ生成」か「5～8コマ生成」を選び、シナリオを生成します。必要に応じて演出を強化できます。
-3. **Prompt / プロンプト:** Build an image prompt and review it before generation. Normal four-panel prompts can be edited directly; in experimental mode, change the source script or settings and rebuild STEP3. / 画像プロンプトを構築し、生成前に内容を確認します。通常4コマの指示文は直接編集でき、5～8コマ生成では元台本や設定を直してSTEP3を再実行します。
+3. **Prompt / プロンプト:** Build an image prompt and review the complete export text before generation. For normal four-panel edits, open 「本文を編集」; in experimental mode, change the source script or settings and rebuild STEP3. / 画像プロンプトを構築し、生成前にコピー対象の全文を確認します。通常4コマでは「本文を編集」を開いて変更でき、5～8コマ生成では元台本や設定を直してSTEP3を再実行します。
 4. **Image / 画像:** Generate through Google Gemini or OpenAI; automatic image repair ON adds one review and at most one material correction. / Google GeminiまたはOpenAIで画像を生成します。画像自動修正ONの場合は総合検査1回と重大な破綻の修正を最大1回行います。
+
+The read-only 「最終プロンプト」 field shows exactly the full-copy/TXT text, including reference-image instructions and the OpenAI monochrome finishing instruction when applicable. Selecting the displayed text or joining numbered copy parts preserves that same content. 「本文を編集」 retains the editable body separately; its changes update the full preview without duplicating automatic supplements. Invalid preparation shows an error rather than an incomplete final text. API length checks and provider-specific conversion or image-repair instructions remain unchanged. / 「最終プロンプト」は全文コピー・TXT保存と同じ文章を表示する閲覧欄です。参照画像の指示と、該当時のOpenAI白黒仕上げ指示も含み、表示全文の選択コピーと番号順の分割コピーで同じ内容を取り出せます。「本文を編集」の変更は全文表示へ反映され、自動付加部分は二重になりません。準備できない場合は不完全な全文を表示せず、エラーを示します。APIの文字数検査、プロバイダー別の変換、画像修正時の追加指示は従来どおりです。
 
 ### Complete current feature map / 現行機能の全体像
 
@@ -574,6 +576,8 @@ Functional surfaces such as phones, documents, books, and monitors are oriented 
 
 Image QA checks panel structure, character identity, body and hand integrity, prop ownership, dialogue-only bubbles, text leakage, and observable surface orientation. Each panel carries an exact-once physical-cast contract: every on-screen named actor gets one physical body silhouette in one depth position, and every Camera, Action, dialogue, or reaction mention must reuse that body. Explicitly scripted miniatures, reflections, photos, or screen images are inventoried separately as contained diegetic replicas; they never authorize another full-size actor. QA compares both inventories to look for repeated faces or bodies across foreground/background and panel-edge occlusion. The vision inventory can itself miss a person, so this is not a guarantee of complete duplicate detection. For every large, foreground, foreshortened, open, or action-critical hand, QA inventories visible and naturally occluded digits and requires their total to be five. A four-digit hand is an anatomy defect; uncertain or missing evidence remains unverified. One comprehensive review retains missing hand evidence as unverified; that alone cannot trigger image regeneration. / 画像QAはコマ構造、人物同一性、身体・手、小物の持ち主、吹き出しが台詞だけか、余分な文字、確認可能な面の向きを検査します。各コマは画面内の登場人物ごとに実体シルエット1体・奥行き位置1か所というexact-once契約を持ち、Camera、Action、台詞、リアクションに同じ人物が繰り返し現れても同じ身体を再利用します。台本に明示されたミニチュア、鏡像、写真、画面内人物は、容器や面の中に限る劇中複製として実体とは別に棚卸しし、等身大の追加人物を許可しません。QAは両方の内訳を突合し、前景／背景やコマ端の見切れをまたぐ顔・身体の重複を調べます。検査AIが人物自体を見落とす場合があるため、重複の完全検出を保証するものではありません。大きい手、前景の手、短縮遠近の手、開いた手、動作上重要な手ごとに、見える指と自然に隠れた指を数え、合計5本であることを必須にします。4本指は人体不具合とし、判別不能・根拠不足は未確認に残します。総合検査は1回とし、手の根拠不足は未確認のまま保持します。それだけを理由に画像を再生成しません。
 
+Inspection time excludes image generation. During a correction the display labels the finished inspection duration as 「検査終了」 while STEP4 total time continues. Repair instructions apply cast-count and camera corrections to the reported panels, preserving other content; successful correction is not guaranteed. / 検査時間に画像生成時間は含みません。修正画像生成中は確定した検査時間を「検査終了」と表示し、STEP4全体の時間は進みます。人物数・カメラの修正指示は指摘されたコマに限定し、他の内容を保持します。修正の成功を保証するものではありません。
+
 ## MiniMax H3 and ComfyUI / MiniMax H3・ComfyUI動画化
 
 <img width="1055" height="1491" alt="Four-panel manga used as the video source / 動画化の元になる4コマ漫画" src="https://github.com/user-attachments/assets/2b7a7cd2-54d0-4ac2-9bf6-a99092a912e8" />
@@ -595,7 +599,7 @@ The copied prompt guides panel order, cast, speaker assignment, acting, camera, 
 The app provides separate download buttons for the workflow JSON and the custom-node ZIP. Both files are needed for this route. / アプリにはワークフローJSONとカスタムノードZIPのダウンロードボタンが別々にあります。この経路では両方のファイルが必要です。
 
 - [Download workflow JSON](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261023195344.json) / [ワークフローJSONをダウンロード](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261023195344.json)
-- [Download custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.2.0/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip) / [カスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.2.0/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip)
+- [Download custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.2.1/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip) / [カスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.2.1/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip)
 
 Place the three folders included in the ZIP under `ComfyUI/custom_nodes/` and the workflow JSON under `ComfyUI/user/default/workflows/`. Install the separate dependencies below, then restart ComfyUI. / ZIP内の`3フォルダ`を`ComfyUI/custom_nodes/`へ、ワークフローJSONを`ComfyUI/user/default/workflows/`以下へ配置します。下記の別途必要な依存関係を導入してからComfyUIを再起動します。
 
@@ -647,7 +651,7 @@ Every deployment requires a fresh dependency audit, the shared security checks a
 
 **Why are there two ComfyUI download buttons? / ComfyUIのダウンロードボタンが2つあるのはなぜですか？**  The JSON defines the workflow, while the ZIP supplies three custom-node folders and documentation; three additional runtime dependencies are installed separately. / JSONはワークフロー定義、ZIPはカスタムノード3フォルダーと導入文書です。さらに実行依存3項目を別途導入します。
 
-**Which video package should I install? / 動画化には何を入れますか？** Use the `20261023195344` workflow JSON and matching v7.2.0 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261023195344` のワークフローJSONと対応するv7.2.0 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
+**Which video package should I install? / 動画化には何を入れますか？** Use the `20261023195344` workflow JSON and matching v7.2.1 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261023195344` のワークフローJSONと対応するv7.2.1 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
 
 **Is this the T2V/I2V/Ref2V repository? / T2V・I2V・Ref2Vのリポジトリですか？**  No. Those workflows are maintained separately in [`comfyui-h3-workflows`](https://github.com/FURUYAN1234/comfyui-h3-workflows). / いいえ。それらは別の[`comfyui-h3-workflows`](https://github.com/FURUYAN1234/comfyui-h3-workflows)で管理します。
 
@@ -754,6 +758,9 @@ Load a completed four-panel manga into [AI Voice Comic Maker](https://github.com
 | Narration Video Maker / ナレーション動画メーカー | Video generation with narration, subtitles, and BGM / ナレーション・字幕・BGM付き動画生成 | [`gemini-narration-studio`](https://github.com/FURUYAN1234/gemini-narration-studio) |
 
 ## 📋 ChangeLog / 更新履歴
+
+### v7.2.1 (2026-10-29)
+- **[Fix & UX]** Align final prompt display with full copy and TXT export while retaining a separate body editor / 最終プロンプトの表示を全文コピー・TXT保存と一致させ、本文編集を別欄に保持
 
 ### v7.2.0 (2026-10-27)
 - **[Models & pricing]** Added GPT-6.1 Terra to STEP1 image analysis and STEP2/STEP3 text selection and Model Chain. The STEP defaults remain GPT-6 Luna. Standard short-context Terra rates are USD 1 input, USD 0.05 cached input and USD 5 output per million tokens. / GPT-6.1 TerraをSTEP1画像解析、STEP2・STEP3文章選択とModel Chainへ追加しました。各STEPの既定はGPT-6 Lunaのままです。Standard短文料金は100万トークン当たり入力1米ドル、キャッシュ入力0.05米ドル、出力5米ドルです。

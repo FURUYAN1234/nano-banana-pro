@@ -293,6 +293,12 @@ export const buildImageQualityRepairPrompt = ({ originalPrompt = '', issues = []
 
   const effectiveMode = mode || inferImageQualityMode(originalPrompt);
   if (sourceMode === 'source-image') {
+    const structuralOverrides = issues.filter(issue => Number.isInteger(issue.panel)
+      && issue.panel >= 1 && issue.panel <= panelCount).flatMap(issue => {
+      if (issue.type === 'cast_count') return [`Panel ${issue.panel} CAST COUNT OVERRIDE: match the approved cast identities and counts. For an observed duplicate, retain the one body consistent with the scripted action/depth and remove only the observed extra body, restoring the exposed background. For an observed missing actor, restore that actor once. Do not change other actors or create a replacement clone.`];
+      if (issue.type === 'camera_geometry') return [`Panel ${issue.panel} CAMERA OVERRIDE: rebuild only this panel's reported incorrect projection to the approved Camera, including actors, props and setting in one coherent viewpoint. Preserve scripted action, identity, dialogue and framing; do not preserve the source's defective angle.`];
+      return [];
+    }).join('\n');
     const sourceLayout = effectiveMode === 'single-image'
       ? 'Edit the same single illustration. Do not introduce panels, a comic page, a collage, additional scenes, new characters, or a new setting.'
       : `Edit the same manga page. Preserve exactly ${panelCount} separate visible panels and the original page geometry. Do not merge, omit, duplicate, or reorder panels.`;
@@ -304,11 +310,13 @@ export const buildImageQualityRepairPrompt = ({ originalPrompt = '', issues = []
   CHANGE:
   Correct only the concrete visible defects listed below, using the smallest coherent edit:
   ${concreteIssues || '- No concrete issue was supplied; do not introduce any change.'}
+  ${structuralOverrides}
   ${anatomyRepair}
   ${bubbleOrderRepair}
   ${bubbleMoves}
   PRESERVE:
-  Do not change the approved dialogue, cast, story action, identities, canonical clothing, reading order, camera, crop, typography, ${isMonochromePrompt(originalPrompt) ? 'or already-correct ink/tone assignments. Preserve the monochrome medium; remove the reported forbidden color or grey wherever visible, including page-wide tint if reported, without altering correct shapes, text or acting' : 'colors, or already-correct content outside the defects'}.
+  Preserve the approved dialogue, cast identities and counts, story action, canonical clothing, reading order, camera, crop, typography, ${isMonochromePrompt(originalPrompt) ? 'and already-correct ink/tone assignments. Preserve the monochrome medium; remove the reported forbidden color or grey wherever visible, including page-wide tint if reported, without altering correct shapes, text or acting' : 'colors, and already-correct content outside the defects'}.
+  Approved requirements take priority over incorrect source pixels: preservation never locks the reported defect. The listed corrections override source preservation only for their identified targets; everything else remains protected.
   Keep the original as the visual baseline. Never redraw the page from scratch or copy the reference-sheet layout.
   Keep correct acting, expressions, camera dynamism and visual finish; a costume correction must not flatten poses or staging.
   Allow only necessary local contact and shadow changes caused by fixing the listed defect; do not freeze the defective geometry itself.

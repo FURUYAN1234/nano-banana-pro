@@ -1045,6 +1045,22 @@ test('source-image repair states change preserve and verify without changing the
   assert.match(prompt, /necessary local contact and shadow changes/i);
 });
 
+test('source-image structural defects explicitly override source preservation only in valid affected panels', () => {
+  const prompt = buildImageQualityRepairPrompt({originalPrompt:'APPROVED',sourceMode:'source-image',panelCount:6,
+    issues:[{type:'cast_count',panel:6,reason:'An actor has two separate bodies'},
+      {type:'camera_geometry',panel:2,reason:'Low-angle projection is missing'}]});
+  assert.match(prompt, /Panel 6 CAST COUNT OVERRIDE/);
+  assert.match(prompt, /remove only the observed extra body/);
+  assert.match(prompt, /Panel 2 CAMERA OVERRIDE/);
+  assert.match(prompt, /preservation never locks the reported defect/);
+  assert.match(prompt, /approved cast identities and counts/);
+  const harmless = buildImageQualityRepairPrompt({originalPrompt:'APPROVED',sourceMode:'source-image',panelCount:6,
+    issues:[{type:'unverified',panel:6,reason:'Identity uncertain'},
+      {type:'cast_count',panel:7,reason:'outside the page'},
+      {type:'camera_geometry',panel:null,reason:'no observed panel'}]});
+  assert.doesNotMatch(harmless, /CAST COUNT OVERRIDE|CAMERA OVERRIDE/);
+});
+
 test('source-image single illustration repair does not invent a comic layout', () => {
   const prompt = buildImageQualityRepairPrompt({
     originalPrompt: SINGLE_IMAGE_PROMPT,
