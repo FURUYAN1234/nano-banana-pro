@@ -1054,6 +1054,9 @@ test('source-image structural defects explicitly override source preservation on
   assert.match(prompt, /Panel 2 CAMERA OVERRIDE/);
   assert.match(prompt, /preservation never locks the reported defect/);
   assert.match(prompt, /approved cast identities and counts/);
+  assert.match(prompt, /Do not invent unrequested characters/);
+  assert.match(prompt, /a listed missing approved actor may be restored/);
+  assert.doesNotMatch(prompt, /extra text or new characters/);
   const harmless = buildImageQualityRepairPrompt({originalPrompt:'APPROVED',sourceMode:'source-image',panelCount:6,
     issues:[{type:'unverified',panel:6,reason:'Identity uncertain'},
       {type:'cast_count',panel:7,reason:'outside the page'},

@@ -300,7 +300,7 @@ export const buildImageQualityRepairPrompt = ({ originalPrompt = '', issues = []
       return [];
     }).join('\n');
     const sourceLayout = effectiveMode === 'single-image'
-      ? 'Edit the same single illustration. Do not introduce panels, a comic page, a collage, additional scenes, new characters, or a new setting.'
+      ? 'Edit the same single illustration. Do not introduce panels, a comic page, a collage, additional scenes, unrequested characters, or a new setting.'
       : `Edit the same manga page. Preserve exactly ${panelCount} separate visible panels and the original page geometry. Do not merge, omit, duplicate, or reorder panels.`;
     return `${String(originalPrompt)}
 
@@ -323,7 +323,7 @@ export const buildImageQualityRepairPrompt = ({ originalPrompt = '', issues = []
   VERIFY:
   Check the corrected defect against the approved prompt and reference sheets. Check every dialogue line, its speaker, cast identity, hand and prop ownership, camera and unchanged regions for regressions.
   Trace repaired object/body occlusion boundaries and text alignment to the actual printed face. Keep source-supported surreal events; do not straighten text to the canvas or alter correct neighboring surfaces.
-  Do not add speaker names, metadata, translations, annotations, extra text or new characters.`;
+  Do not add speaker names, metadata, translations, annotations or extra text. Do not invent unrequested characters; only a listed missing approved actor may be restored, once in its reported panel.`;
   }
 
   const preservationLock = effectiveMode === 'single-image'
