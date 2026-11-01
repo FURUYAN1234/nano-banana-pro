@@ -111,3 +111,42 @@ test('a guarded earlier action cannot lend its run ID to a different STEP1 intak
   assert.equal(getDiagnosticContext().runId, observed.runId);
   endDiagnosticRun(observed, 'settled');
 });
+
+test('only new failures notify the viewer, with persisted sanitized data and isolated subscribers', async () => {
+  const d = await import('../src/lib/diagnostics.js');
+  assert.equal(typeof d.subscribeDiagnosticErrors, 'function');
+  const received = [];
+  const broken = d.subscribeDiagnosticErrors(() => { throw new Error('viewer failed'); });
+  const unsubscribe = d.subscribeDiagnosticErrors(row => received.push(row));
+  await d.recordDiagnostic('api.response', {ok:true, status:200});
+  await d.recordDiagnostic('workflow.cancel', {outcome:'requested'});
+  await d.recordDiagnostic('api.error', {errorName:'AbortError'});
+  await d.recordDiagnostic('workflow.error', {errorCode:'CANCELLED'});
+  await d.recordDiagnostic('workflow.error', summarizeDiagnosticError('処理を中断しました。必要なら現在の入力で再実行してください。'));
+  assert.equal(received.length, 0, 'normal results and cancellation must not open the panel');
+  await d.recordDiagnostic('api.error', {errorName:'TypeError', errorKind:'network', message:'private story sk-secret'});
+  await d.recordDiagnostic('api.response', {ok:false, status:500});
+  await d.recordDiagnostic('workflow.error', {errorName:'Error'});
+  assert.equal(received.length, 3);
+  assert.doesNotMatch(JSON.stringify(received), /private story|sk-secret/);
+  const report = await d.readDiagnostics();
+  assert(report.events.some(e => e.id === received[0].id), 'the notified error must already be readable');
+  unsubscribe(); broken();
+  await d.recordDiagnostic('runtime.error', {errorName:'Error'});
+  assert.equal(received.length, 3, 'unmounted viewers must not receive events');
+});
+
+test('every complete export includes a generic app contract, investigation guide and readable event context', async () => {
+  const d = await import('../src/lib/diagnostics.js');
+  const event = d.makeDiagnosticEvent('api.error', {operation:'step3', errorKind:'network'}, {now:1000});
+  assert.equal(event.timeISO, '1970-01-01T00:00:01.000Z');
+  assert.match(event.operationLabel, /描画指示/);
+  const report = await d.readDiagnostics();
+  assert.equal(report.schemaVersion, 2);
+  assert.equal(report.applicationSpec.stages.length, 4);
+  assert(report.investigationGuide.steps.length >= 5);
+  assert.match(JSON.stringify(report.investigationGuide), /確認済み|推測|未確認/);
+  assert.match(JSON.stringify(report.applicationSpec), /参照|台本|描画指示|画像生成/);
+  assert.doesNotMatch(JSON.stringify([report.applicationSpec, report.investigationGuide]), /Super FURU|OpenAI|Gemini|sk-/);
+  assert(report.events.every(e => typeof e.timeISO === 'string' && typeof e.operationLabel === 'string'));
+});

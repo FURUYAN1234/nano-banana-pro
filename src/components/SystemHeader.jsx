@@ -1,100 +1,40 @@
-import React, { useState } from 'react';
-import { BrainCircuit, RefreshCw, LogOut } from 'lucide-react';
-import FallbackChainViewer from './FallbackChainViewer';
+import React from 'react';
+import { RefreshCw, LogOut } from 'lucide-react';
 import { getEffectiveEngine } from '../lib/engine-state';
 
-export default function SystemHeader({
-  SYSTEM_VERSION,
-  analysisModelId,
-  scenarioModelId,
-  promptModelId,
-  apiKey,
-  selectedEngine,
-  enableOpenAIApi,
-  partialReset,
-  step1Reset,
-  hardReset
-}) {
-  const [showFallbackChain, setShowFallbackChain] = useState(false);
+export default function SystemHeader({SYSTEM_VERSION, apiKey, selectedEngine, enableOpenAIApi, partialReset, step1Reset, hardReset}) {
   const isOpenAIEngine = getEffectiveEngine(selectedEngine, enableOpenAIApi) === 'openai';
-
-  return (
-    <header className="flex flex-col items-center justify-center gap-6 bg-[#0f1115] px-6 pb-6 pt-4 md:px-8 md:pb-8 md:pt-5 rounded-xl border border-white/5 shadow-2xl relative overflow-hidden group">
-      <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/5 blur-[80px] rounded-full pointer-events-none" />
-
-      <div className="flex flex-col items-center text-center z-10 w-full">
-        <div className="flex flex-col items-center justify-center gap-2 mb-2 w-full max-w-full overflow-hidden">
-          <div className="flex flex-col items-center text-center max-w-full">
-            <div className="flex flex-row flex-wrap items-center justify-center gap-x-7 gap-y-4 text-center">
-              <a
-                href={`${import.meta.env.BASE_URL}downloads/super-furu-ai-4koma-full-manual-2026-10-01.pdf`}
-                target="_blank"
-                rel="noreferrer"
-                className="manual-link-button header-manual-button shrink-0"
-              >
-                使い方マニュアル
-              </a>
-              <div className="p-2 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl shadow-lg shadow-blue-500/20 shrink-0">
-                <BrainCircuit size={28} className="text-white" />
-              </div>
-              <h1 className="text-xl md:text-4xl font-black tracking-tighter text-blue-400 drop-shadow-[0_0_10px_rgba(59,130,246,0.8)] whitespace-nowrap">
-                Super FURU AI <span className="text-white text-lg md:text-3xl ml-1 tracking-widest">4-koma System</span> <span className="text-lg md:text-3xl text-yellow-500 font-mono ml-2">{SYSTEM_VERSION}</span>
-              </h1>
-            </div>
-            <div className="flex flex-col md:flex-row items-center justify-center gap-3 mt-2">
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.4em]">
-                Social Satire Engine [ 演出強化版 ]
-              </p>
-              <button
-                onClick={() => setShowFallbackChain(true)}
-                className="text-[10px] text-slate-500 hover:text-blue-400 transition-colors cursor-pointer"
-                title="AIモデルフォールバックチェーンの構成を確認"
-              >
-                ⚙ Model Chain
-              </button>
-              
-              <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[10px] font-black tracking-wider ${apiKey ? (isOpenAIEngine ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-400' : 'bg-green-500/15 border-green-500/40 text-green-400') : 'bg-red-500/15 border-red-500/40 text-red-400 animate-pulse'}`}>
-                <span className={`w-1.5 h-1.5 rounded-full ${apiKey ? (isOpenAIEngine ? 'bg-emerald-400 shadow-[0_0_6px_rgba(16,185,129,0.8)]' : 'bg-green-400 shadow-[0_0_6px_rgba(74,222,128,0.8)]') : 'bg-red-400'}`} />
-                {apiKey ? (isOpenAIEngine ? '✅ ChatGPT Engine' : '✅ Gemini Engine') : '⚠ 未接続'}
-              </div>
-              
-              {apiKey && (
-                <div className="system-reset-controls flex flex-wrap items-center justify-center gap-2">
-                  <button
-                    onClick={partialReset}
-                    className="flex items-center gap-1.5 bg-white/5 hover:bg-white/10 text-slate-300 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors border border-white/10"
-                    title="キャラクター設定は残したまま、シナリオ・指示文・画像をリセットして新しく作り直します"
-                  >
-                    <RefreshCw size={12} /> シナリオ（STEP2）からやり直す
-                  </button>
-                  <button
-                    onClick={step1Reset}
-                    className="flex items-center gap-1.5 bg-blue-950/40 hover:bg-blue-900/50 text-blue-200 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors border border-blue-500/20"
-                    title="API接続は残したまま、キャラクターシート・抽出設定・解析ログと、それ以降の作業をリセットします"
-                  >
-                    <RefreshCw size={12} /> キャラクター解析（STEP1）からやり直す
-                  </button>
-                  <button
-                    onClick={hardReset}
-                    className="flex items-center gap-1.5 bg-red-950/50 hover:bg-red-900/60 text-red-300 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors border border-red-500/20"
-                    title="すべてのデータを削除し、最初のAPIキー入力画面に戻ります（AIエンジンの切り替えもここで行えます）"
-                  >
-                    <LogOut size={12} /> 最初からやり直す（設定クリア）
-                  </button>
-                </div>
-              )}
-            </div>
-            
-          </div>
-        </div>
+  return <header className="system-header">
+    <h1 className="font-black tracking-tighter text-blue-400 drop-shadow-[0_0_10px_rgba(59,130,246,0.8)]">
+      Super FURU AI <span className="text-white">4-koma System</span> <span className="text-yellow-500 font-mono">{SYSTEM_VERSION}</span>
+    </h1>
+    <div className="system-engine-label" style={{color:apiKey ? '#6ee7b7' : '#fca5a5'}}>
+      {apiKey ? (isOpenAIEngine ? '✅ ChatGPT Engine' : '✅ Gemini Engine') : '⚠ 未接続'}
+    </div>
+    {apiKey && (
+      <div className="system-reset-controls flex flex-wrap items-center justify-center gap-2">
+        <button
+          onClick={partialReset}
+          className="flex items-center gap-1.5 bg-white/5 hover:bg-white/10 text-slate-300 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors border border-white/10"
+          title="キャラクター設定は残したまま、シナリオ・指示文・画像をリセットして新しく作り直します"
+        >
+          <RefreshCw size={12} /> シナリオ（STEP2）からやり直す
+        </button>
+        <button
+          onClick={step1Reset}
+          className="flex items-center gap-1.5 bg-blue-950/40 hover:bg-blue-900/50 text-blue-200 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors border border-blue-500/20"
+          title="API接続は残したまま、キャラクターシート・抽出設定・解析ログと、それ以降の作業をリセットします"
+        >
+          <RefreshCw size={12} /> キャラクター解析（STEP1）からやり直す
+        </button>
+        <button
+          onClick={hardReset}
+          className="flex items-center gap-1.5 bg-red-950/50 hover:bg-red-900/60 text-red-300 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors border border-red-500/20"
+          title="すべてのデータを削除し、最初のAPIキー入力画面に戻ります（AIエンジンの切り替えもここで行えます）"
+        >
+          <LogOut size={12} /> 最初からやり直す（設定クリア）
+        </button>
       </div>
-      <FallbackChainViewer
-        analysisModelId={analysisModelId}
-        scenarioModelId={scenarioModelId}
-        promptModelId={promptModelId}
-        isOpen={showFallbackChain}
-        onClose={() => setShowFallbackChain(false)}
-      />
-    </header>
-  );
+    )}
+  </header>;
 }

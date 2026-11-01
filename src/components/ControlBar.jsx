@@ -1,8 +1,15 @@
 import React from 'react';
 import { Check, RefreshCw, Zap, Square, Loader2 } from 'lucide-react';
 import { AutoSaveStartDialog } from './AutoSaveGuide';
+import DiagnosticLogPanel from './DiagnosticLogPanel';
+import FallbackChainViewer from './FallbackChainViewer';
 
 export default function ControlBar({
+  embedded = false,
+  diagnosticHost,
+  analysisModelId,
+  scenarioModelId,
+  promptModelId,
   controlBarRef,
   currentStep = 1,
   activeStep = 0,
@@ -21,6 +28,7 @@ export default function ControlBar({
   onAutoSaveVerified,
 }) {
   const [pendingMode, setPendingMode] = React.useState(null);
+  const [showFallbackChain, setShowFallbackChain] = React.useState(false);
   const navigationDisabled = !apiKey || activeStep > 0 || isApiProcessing || isAborting
     || isFullAutoMode || typeof onNavigateToStep !== 'function';
   const setEndless = next => {
@@ -35,9 +43,12 @@ export default function ControlBar({
   };
 
   return (
-    <div ref={controlBarRef} className="fixed top-0 left-0 right-0 z-[100] bg-[#0f1115] border-b border-white/10 px-2 md:px-8 py-2 md:py-3 shadow-xl w-full flex flex-col gap-2 md:gap-3 overflow-x-hidden">
+    <div ref={controlBarRef} className={`${embedded ? 'workflow-controls-embedded' : 'fixed top-0 left-0 right-0 z-[100]'} bg-[#0f1115] border-b border-white/10 px-2 md:px-8 py-2 md:py-3 shadow-xl w-full flex flex-col gap-2 md:gap-3 overflow-x-hidden`}>
       <div className="workflow-header-row flex flex-col items-center justify-center max-w-7xl mx-auto w-full">
         
+        <div className="workflow-progress-tools">
+        <a href={`${import.meta.env.BASE_URL}downloads/super-furu-ai-4koma-full-manual-2026-10-01.pdf`}
+          target="_blank" rel="noreferrer" className="manual-link-button workflow-manual-link">使い方マニュアル</a>
         <ol aria-label="制作の進捗" aria-live="polite" className="workflow-progress">
           {['解析', 'シナリオ', 'プロンプト', '画像生成'].map((label, index) => {
             const step = index + 1;
@@ -65,6 +76,12 @@ export default function ControlBar({
             </li>;
           })}
         </ol>
+        <div className="workflow-utility-tools">
+        <DiagnosticLogPanel panelHost={diagnosticHost} />
+        <button type="button" className="diagnostic-button workflow-model-chain" onClick={() => setShowFallbackChain(true)}
+          title="AIモデルフォールバックチェーンの構成を確認">⚙ Model Chain</button>
+        </div>
+        </div>
 
         {/* Controls - フルオートボタン */}
         <div className="workflow-mode-controls flex flex-wrap items-center justify-center gap-4 shrink-0 max-w-full">
@@ -125,7 +142,10 @@ export default function ControlBar({
             <span className="whitespace-normal">・「連続ループ生成」をONにすると、自動生成完了後に自動で次の作品（別のシナリオ）を永遠に作り続けます。</span>
         </div>
       </div>
+
       
+      <FallbackChainViewer analysisModelId={analysisModelId} scenarioModelId={scenarioModelId} promptModelId={promptModelId}
+        isOpen={showFallbackChain} onClose={() => setShowFallbackChain(false)} />
       {pendingMode && <AutoSaveStartDialog mode={pendingMode} onCancel={() => setPendingMode(null)} onConfirm={() => {
         const mode = pendingMode;
         setPendingMode(null);

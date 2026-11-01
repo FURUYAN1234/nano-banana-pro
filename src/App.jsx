@@ -1,5 +1,5 @@
 import { getBuiltinPanelMediumReference } from './lib/builtin-panel-medium-reference.js';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 
 import {
   CheckCircle2
@@ -12,7 +12,6 @@ import { SYSTEM_VERSION, getPunchlineLabel } from './lib/constants';
 
 // --- Custom Hook (all business logic) ---
 import useMangaWorkflow from './hooks/useMangaWorkflow';
-import DiagnosticLogPanel from './components/DiagnosticLogPanel';
 
 // --- UI Components ---
 import ApiKeyModal from './components/ApiKeyModal';
@@ -217,10 +216,14 @@ function App() {
   } = useMangaWorkflow({experimentalEnabled:experimentEnabled,onAutoPageModeChange:setExperimentEnabled});
   const nativePageModeEnabled = experimentEnabled && getEffectiveEngine(selectedEngine, enableOpenAIApi) === 'openai';
 
-  const [controlBarHeight, setControlBarHeight] = useState(70);
+  const [fixedHeaderHeight, setFixedHeaderHeight] = useState(70);
   const [autoSaveCheckStatus, setAutoSaveCheckStatus] = useState('pending');
   const autoSaveVerified = autoSaveCheckStatus === 'passed';
-  const controlBarRef = useRef(null);
+  const [fixedHeaderElement, setFixedHeaderElement] = useState(null);
+  const captureFixedHeader = useCallback(element => {
+    setFixedHeaderElement(element);
+  }, []);
+  const [diagnosticHost, setDiagnosticHost] = useState(null);
   const wasAssemblingRef = useRef(false);
   const step2ActionRef = useRef(null);
   const step3ActionRef = useRef(null);
@@ -229,23 +232,21 @@ function App() {
   const step2ProgressRef = useRef(null);
 
   useEffect(() => {
-    if (!controlBarRef.current) return;
-
-    const resizeObserver = new ResizeObserver((entries) => {
-      for (let entry of entries) {
-        const height = entry.borderBoxSize
-          ? (entry.borderBoxSize[0] ? entry.borderBoxSize[0].blockSize : entry.target.getBoundingClientRect().height)
-          : entry.target.getBoundingClientRect().height;
-        // Add 12px margin beneath control bar for optimal breathing room
-        setControlBarHeight(height + 12);
-      }
-    });
-
-    resizeObserver.observe(controlBarRef.current);
+    if (!fixedHeaderElement) return;
+    const measure = () => {
+      // HMR can replace the element without changing the workflow state.
+      // Ignore a detached old bar's zero-height notification and bind the new node.
+      if (!fixedHeaderElement.isConnected) return;
+      const height = fixedHeaderElement.getBoundingClientRect().height;
+      if (Number.isFinite(height) && height > 0) setFixedHeaderHeight(Math.ceil(height));
+    };
+    measure();
+    const resizeObserver = new ResizeObserver(measure);
+    resizeObserver.observe(fixedHeaderElement);
     return () => {
       resizeObserver.disconnect();
     };
-  }, [apiKey, selectedEngine, enableOpenAIApi, currentStep]);
+  }, [fixedHeaderElement]);
 
   useEffect(() => {
     if (isAssembling) {
@@ -305,12 +306,13 @@ function App() {
   const apiKeyForUnlockedUi = isMainLocked ? "" : apiKey;
   const isStepNavigationDisabled = isMainLocked || isApiProcessing || isAborting || isFullAutoMode;
   const handleNavigateToStep = step => scrollToWorkflowStep(step, {
-    currentStep, disabled: isStepNavigationDisabled, browserWindow: window, headerOffset: controlBarHeight,
+    currentStep, disabled: isStepNavigationDisabled, browserWindow: window,
+    headerOffset: fixedHeaderHeight,
     targets: { 2: step2Ref.current, 3: step3Ref.current, 4: outputRef.current },
   });
 
   return (
-    <div className="min-h-screen bg-[#0a0c10] text-slate-100 font-sans selection:bg-blue-500/30 overflow-x-hidden">
+    <div className="app-shell min-h-screen bg-[#0a0c10] text-slate-100 font-sans selection:bg-blue-500/30">
       <ApiKeyModal isOpen={showModal} onSave={handleSetKey} provider="google" />
       <ApiKeyModal 
         isOpen={showOpenAIKeyModal} 
@@ -323,8 +325,13 @@ function App() {
         }} 
         provider="openai" 
       />
+      <div ref={captureFixedHeader} className="app-fixed-header">
       <ControlBar
-        controlBarRef={controlBarRef}
+        embedded
+        diagnosticHost={diagnosticHost}
+        analysisModelId={analysisModelId}
+        scenarioModelId={scenarioModelId}
+        promptModelId={promptModelId}
         onNavigateToStep={handleNavigateToStep}
         currentStep={currentStep}
         activeStep={isAnalyzing || is360Analyzing ? 1 : isSearching || isEnhancing ? 2
@@ -343,6 +350,18 @@ function App() {
         onAutoSaveVerified={() => setAutoSaveCheckStatus('passed')}
         showStatus={showStatus}
       />
+        <div className="system-header-with-diagnostics"><SystemHeader
+          SYSTEM_VERSION={SYSTEM_VERSION}
+          apiKey={apiKeyForUnlockedUi}
+          selectedEngine={selectedEngine}
+          enableOpenAIApi={enableOpenAIApi}
+          partialReset={partialReset}
+          step1Reset={step1Reset}
+          hardReset={hardReset}
+        />
+        <div ref={setDiagnosticHost} className="diagnostic-slot" />
+        </div>
+      </div>
       
         
          {/* 背景装飾 */}
@@ -352,26 +371,9 @@ function App() {
       </div>
 
       <div 
-        style={{ paddingTop: `${controlBarHeight}px` }}
+        style={{ paddingTop: `${fixedHeaderHeight}px` }}
         className="relative z-10 max-w-5xl mx-auto px-4 pb-4 space-y-8 md:px-10 md:pb-10"
       >
-        {/* === ヘッダー領域 === */}
-        <div ><SystemHeader
-          analysisModelId={analysisModelId}
-          scenarioModelId={scenarioModelId}
-          promptModelId={promptModelId}
-          SYSTEM_VERSION={SYSTEM_VERSION}
-          apiKey={apiKeyForUnlockedUi}
-          selectedEngine={selectedEngine}
-          enableOpenAIApi={enableOpenAIApi}
-          partialReset={partialReset}
-          step1Reset={step1Reset}
-          hardReset={hardReset}
-        /></div>
-
-
-
-        <DiagnosticLogPanel />
         <AutoSaveSettingsButton autoSaveVerified={autoSaveVerified} onVerified={() => setAutoSaveCheckStatus('passed')} />
         <main className="space-y-8" style={{ filter: isMainLocked ? 'blur(10px)' : 'none', pointerEvents: isMainLocked ? 'none' : 'auto', transition: 'filter 0.5s ease' }}>
           {getEffectiveEngine(selectedEngine, enableOpenAIApi) === 'openai' && (

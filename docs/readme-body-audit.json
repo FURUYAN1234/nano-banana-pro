@@ -1,7 +1,7 @@
 {
   "pricingSourceSha256": "293573da772b498b7d393da778fd230a23384f7e73262974a57a0a764a26f460",
   "manualVersion": "7.2.4",
-  "manualSourceSha256": "6db78fddd659cdaf1bcd6cdbc9e92dec838d4dd598ba8b8ce16eead99fce5339",
+  "manualSourceSha256": "72705685eac476bd0265e28d4c678de61088ae1a45f2ecde13bf2c1ecbfa5bb7",
   "manualFiles": [
     {
       "name": "gemini-api-beginner-guide-2026-10-01.pdf",
@@ -13,13 +13,13 @@
     },
     {
       "name": "super-furu-ai-4koma-full-manual-2026-10-01.pdf",
-      "sha256": "34b8ed769dd05afeba5cccabb51eaffc3bae356b3f5467b7877d6279c63050d4"
+      "sha256": "aa2d339974f91456e9558937e456d5f17ee783b65eb2407e001f7df246936022"
     }
   ],
-  "readmeSha256": "89cc03f7eddbff55dc215cac74171fbae951a2ce7b6422c15e1fa992f2b22595",
+  "readmeSha256": "f6cb2094867ca07ed62ab6232a237ecb6369b6367a2472b80da01b3b60f1626f",
   "readmeLanguageGaps": [],
-  "sourceTree": "898474634a52e40bd696592940f84a5d44d46e25",
-  "publicTree": "4fc01797f949e1fd76b25b6750c3344f792195d9",
+  "sourceTree": "461230fd16886c42533b556b5f0f6eb2a596ce60",
+  "publicTree": "8e0a154f32222f89d55c05e842bc6efe3bf29c89",
   "packageSha256": "deb81bdc96668341d0714df07872d5567282733ab3c893d3c84cfc52aea658c9",
   "releaseAssetSha256": "c2c6e430de40f14279cd7a97624164f9cb7e46105eadb0763c01ed9fb1a3f96e",
   "reviewedSections": [
@@ -41,9 +41,9 @@
     "AI Manga Creative Suite / AIまんが制作エコシステム",
     "📋 ChangeLog / 更新履歴"
   ],
-  "checkedAt": "2026-11-01T11:25:12.604Z",
-  "findings": "Reused the unchanged same-day whole-body v7.2.3 review and compared the complete bounded v7.2.4 source/document diff across all 17 README sections. Current-source and download references, bilingual changelog, FAQ retention/privacy/storage warnings and AI investigation instructions match the implemented UI and native IndexedDB behavior. Model selection and workflow behavior remain available after removing the header badge. Normal STEP1 through STEP4 real API runs completed: observed GPT-6 Luna for text/vision without fallback; requested Sunburst/max image generated and manually reviewed. Logging correlation was checked against the actual request/payload/end events. HTTP success is explicitly distinct from quality acceptance. OS clipboard byte readback and metadata-bearing browser image-save completion are not claimed. Existing release asset, licensing, routes and unchanged legacy instructions reuse the same-day baseline review. This audit binds the staged source/public tree that will become the candidate commit; nothing has been pushed or deployed.",
-  "manualFindings": "Rebuilt v7.2.4 Gemini12, OpenAI19 and full40-page PDFs in WSL. Visually inspected all71 pages in13 contact sheets, then the updated full-manual TOC and new diagnostic-log page32 individually. Checked A4 text bounds, current version/footer, page numbering, privacy/naming and links. Retention, origin separation, excluded payloads, storage-failure warning and handing JSON to an AI match source and real browser observations. Public PDFs exactly match the reviewed files; SHA256 values are recorded here.",
+  "checkedAt": "2026-11-01T12:25:15.662Z",
+  "findings": "Reused the unchanged same-day whole-body v7.2.3 review and compared the complete bounded v7.2.4 source/document diff across all 17 README sections. Current-source and download references, bilingual changelog, FAQ retention/privacy/storage warnings and AI investigation instructions match the implemented UI and native IndexedDB behavior. Model selection and workflow behavior remain available after removing the header badge. Normal STEP1 through STEP4 real API runs completed: observed GPT-6 Luna for text/vision without fallback; requested Sunburst/max image generated and manually reviewed. Logging correlation was checked against the actual request/payload/end events. HTTP success is explicitly distinct from quality acceptance. OS clipboard byte readback and metadata-bearing browser image-save completion are not claimed. Existing release asset, licensing, routes and unchanged legacy instructions reuse the same-day baseline review. This audit binds the staged source/public tree that will become the candidate commit; nothing has been pushed or deployed. Final user-directed UI review: a single fixed header contains progress controls, compact title/engine/reset frame and the optional log; real whole-page scrolling shows zero title drift and zero control/title gap in both states. Manual/progress/log/Model Chain order and final28px/12px spacing, original white JSON, smaller explanations, cancellation exclusion and automatic failure/crash display were checked. The API dialog is centered and the user accepted that layout. Every schema2 export includes UTC times, operation labels, generic application specification and investigation steps without personal/material proper names. Native browser export and existing-event enrichment were observed; normal/cancellation events remain closed. No transport or paid generation behavior was changed by the UI/export additions.",
+  "manualFindings": "Rebuilt v7.2.4 Gemini12, OpenAI19 and full40-page PDFs in WSL. Visually inspected all71 pages in13 contact sheets, then the updated full-manual TOC and new diagnostic-log page32 individually. Checked A4 text bounds, current version/footer, page numbering, privacy/naming and links. Retention, origin separation, excluded payloads, storage-failure warning and handing JSON to an AI match source and real browser observations. Public PDFs exactly match the reviewed files; SHA256 values are recorded here. Final follow-up updated full-manual pages1 and32 for the manual button location, fixed range and portable guide. Both pages were inspected individually; the other38 full-manual pages are pixel-identical to the previously reviewed candidate. The other two PDFs are unchanged from the71-page review.",
   "pricingReview": {
     "version": "7.2.4",
     "sourceSha256": "293573da772b498b7d393da778fd230a23384f7e73262974a57a0a764a26f460",

@@ -1,15 +1,55 @@
-import React, { useState } from 'react';
-import { readDiagnostics, clearDiagnostics } from '../lib/diagnostics.js';
+import React, { useCallback, useEffect, useId, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { readDiagnostics, clearDiagnostics, subscribeDiagnosticErrors } from '../lib/diagnostics.js';
 
-export default function DiagnosticLogPanel() {
+export default function DiagnosticLogPanel({defaultOpen = false, panelHost}) {
   const [report, setReport] = useState(null);
+  const [open, setOpen] = useState(defaultOpen);
+  const [fromError, setFromError] = useState(defaultOpen);
   const [notice, setNotice] = useState('');
-  const [busy, setBusy] = useState(false);
-  const refresh = async () => {
+  const [busy, setBusy] = useState(defaultOpen);
+  const dialogRef = useRef(null);
+  const closeRef = useRef(null);
+  const titleId = useId();
+  const refresh = useCallback(async () => {
     setBusy(true);
     try { setReport(await readDiagnostics()); setNotice(''); }
     finally { setBusy(false); }
-  };
+  }, []);
+  const show = useCallback((error = false) => {
+    setFromError(error);
+    setOpen(true);
+    void refresh();
+  }, [refresh]);
+  useEffect(() => subscribeDiagnosticErrors(() => show(true)), [show]);
+  useEffect(() => {
+    if (!defaultOpen) return;
+    let active = true;
+    void readDiagnostics().then(next => {
+      if (active) { setReport(next); setBusy(false); }
+    });
+    return () => { active = false; };
+  }, [defaultOpen]);
+  useEffect(() => {
+    if (!open) return;
+    const previousFocus = document.activeElement;
+    closeRef.current?.focus({preventScroll:true});
+    const fit = () => {
+      const top = dialogRef.current.getBoundingClientRect().top;
+      dialogRef.current.style.setProperty('--diagnostic-available-height', `${Math.max(100, window.innerHeight - top - 28)}px`);
+    };
+    fit();
+    window.addEventListener('resize', fit);
+    const onKey = event => {
+      if (event.key === 'Escape') { event.preventDefault(); setOpen(false); }
+    };
+    document.addEventListener('keydown', onKey);
+    return () => {
+      window.removeEventListener('resize', fit);
+      document.removeEventListener('keydown', onKey);
+      if (previousFocus?.isConnected) previousFocus.focus({preventScroll:true});
+    };
+  }, [open]);
   const save = () => {
     const url = URL.createObjectURL(new Blob([JSON.stringify(report, null, 2)], {type:'application/json'}));
     const anchor = document.createElement('a');
@@ -18,34 +58,36 @@ export default function DiagnosticLogPanel() {
     anchor.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
-  const button = 'rounded border border-slate-600 px-3 py-1 text-xs text-slate-200 disabled:opacity-50';
-  return (
-    <div className="text-left text-slate-300">
-      {!report ? <button type="button" onClick={refresh} disabled={busy} className={button}>
-        {busy ? 'ログを読み込み中…' : '不具合調査ログ'}
-      </button> : <section aria-label="不具合調査ログ" className="rounded-xl border border-slate-600 bg-slate-950 p-4 space-y-3">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="font-bold">不具合調査ログ</h2>
-          <button type="button" onClick={() => setReport(null)} className={button}>閉じる</button>
-        </div>
-        <p className="text-sm">不具合が起きた時刻と操作を添えて、このログを修正担当のAIへ渡してください。実行IDで操作・通信・エラーを辿れます。</p>
-        <p className="text-xs">このブラウザーの同じURL内に直近7日分を保存します。記録データは最大2MiB・2,000件で、古い方から削除します。APIキー、入力本文、画像本体は記録しません。</p>
-        <p className="text-xs">保存先：{globalThis.location?.origin} ／ {report.events.length}件 ／ {report.storageState === 'persistent' ? 'ブラウザーに保存済み' : '一時記録のみ（再読み込みで失われます）'}</p>
-        {report.storageState !== 'persistent' && <p role="alert" className="text-amber-300">ログを永続保存できません。この画面からJSONを保存してください。アプリの処理は継続できます。</p>}
-        <div className="flex flex-wrap gap-2">
-          <button type="button" onClick={refresh} disabled={busy} className={button}>最新に更新</button>
-          <button type="button" onClick={save} className={button}>JSONを保存</button>
-          <button type="button" className={button} onClick={async () => {
-            try { await navigator.clipboard.writeText(JSON.stringify(report, null, 2)); setNotice('ログをコピーしました。'); }
-            catch { setNotice('コピーできませんでした。JSONを保存するか、下の欄から選択してください。'); }
-          }}>ログをコピー</button>
-          <button type="button" className={button} disabled={busy} onClick={async () => { await clearDiagnostics(); await refresh(); }}>記録を削除</button>
-        </div>
-        <p role="status" className="text-xs">{notice}</p>
-        <textarea aria-label="AIへ渡す調査ログJSON" readOnly value={JSON.stringify(report, null, 2)}
-          style={{width:'100%', height:'18rem', display:'block', boxSizing:'border-box', fontFamily:'monospace', fontSize:12}}
-          className="bg-black text-slate-200 p-3 rounded border border-slate-700" />
-      </section>}
-    </div>
-  );
+  const panel = open && <section role="region" id={`${titleId}-panel`} aria-labelledby={titleId} className="diagnostic-panel" ref={dialogRef} tabIndex={0}>
+          <div className="diagnostic-header">
+            <h2 id={titleId}>不具合調査ログ</h2>
+            <button type="button" ref={closeRef} onClick={() => setOpen(false)} className="diagnostic-button">閉じる</button>
+          </div>
+          <div className="diagnostic-content">
+            {fromError && <p role="status" className="diagnostic-error-notice">エラーを検出したため開きました。調査記録をJSONで保存できます。</p>}
+            <p>発生時刻・操作・アプリの仕様・調査手順はログに含まれます。JSONを丸ごと調査担当のAIへ渡し、簡単な症状をひと言添えてください。</p>
+            <p>同じブラウザー・同じURL内に直近7日分を保存します。記録データは最大2MiB・2,000件で、古い方から削除します。APIキー、入力本文、画像本体は記録しません。</p>
+            {report ? <>
+              <p>保存先：{globalThis.location?.origin} ／ {report.events.length}件 ／ {report.storageState === 'persistent' ? 'ブラウザーに保存済み' : '一時記録のみ（再読み込みで失われます）'}</p>
+              {report.storageState !== 'persistent' && <p role="alert" className="diagnostic-error-notice">ログを永続保存できません。JSONを保存してください。アプリの処理は継続できます。</p>}
+            </> : <p role="status">ログを読み込み中…</p>}
+            <div className="diagnostic-actions">
+              <button type="button" onClick={refresh} disabled={busy} className="diagnostic-button">最新に更新</button>
+              <button type="button" onClick={save} disabled={!report || busy} className="diagnostic-button">JSONを保存</button>
+              <button type="button" disabled={!report || busy} className="diagnostic-button" onClick={async () => {
+                try { await navigator.clipboard.writeText(JSON.stringify(report, null, 2)); setNotice('ログをコピーしました。'); }
+                catch { setNotice('コピーできませんでした。JSONを保存するか、下の記録を選択してください。'); }
+              }}>ログをコピー</button>
+              <button type="button" className="diagnostic-button" disabled={!report || busy} onClick={async () => { await clearDiagnostics(); await refresh(); }}>記録を削除</button>
+            </div>
+            {notice && <p role="status">{notice}</p>}
+            {report && <pre aria-label="AIへ渡す調査ログJSON" className="diagnostic-json">{JSON.stringify(report, null, 2)}</pre>}
+            <div className="diagnostic-footer"><button type="button" onClick={() => setOpen(false)} className="diagnostic-button">ログを閉じる</button></div>
+          </div>
+        </section>;
+  return <>
+    <button type="button" onClick={() => open ? setOpen(false) : show()} aria-expanded={open} aria-controls={`${titleId}-panel`}
+      className="diagnostic-button diagnostic-trigger">不具合調査ログ</button>
+    {panelHost ? createPortal(panel, panelHost) : panel}
+  </>;
 }

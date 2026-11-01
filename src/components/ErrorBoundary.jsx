@@ -26,7 +26,7 @@ class ErrorBoundary extends React.Component {
             <br />
             {this.state.errorInfo?.componentStack}
           </pre>
-          <DiagnosticLogPanel />
+          <DiagnosticLogPanel defaultOpen />
           <button onClick={() => window.location.reload()} style={{ padding: 10, marginTop: 20 }}>RETRY</button>
         </div>
       );

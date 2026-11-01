@@ -78,9 +78,9 @@ const ApiKeyModal = ({ isOpen, onSave, onClose, provider = "google" }) => {
   const focusShadowClass = activeColor === 'emerald' ? "focus:shadow-[0_0_12px_rgba(16,185,129,0.2)]" : "focus:shadow-[0_0_12px_rgba(59,130,246,0.2)]";
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-[99999] animate-in slide-in-from-top duration-300">
-      <div className="max-w-5xl mx-auto px-4 md:px-10 pt-4 relative">
-        <div className={`bg-[#0f1115]/95 backdrop-blur-2xl border ${borderClass} rounded-xl shadow-2xl ${shadowClass} p-4 flex flex-col gap-4 relative pr-10 transition-all duration-300`}>
+    <div className="api-key-overlay" role="dialog" aria-modal="true" aria-label={title}>
+      <div className="api-key-modal-positioner">
+        <div className={`api-key-modal bg-[#0f1115]/95 backdrop-blur-2xl border ${borderClass} rounded-xl shadow-2xl ${shadowClass} p-4 flex flex-col gap-4 relative pr-10 transition-all duration-300`}>
           {onClose && (
             <button 
               onClick={onClose}
@@ -92,9 +92,9 @@ const ApiKeyModal = ({ isOpen, onSave, onClose, provider = "google" }) => {
           )}
 
           {/* 上段: アイコン + ラベル + 入力 */}
-          <div className="flex flex-col md:flex-row items-center gap-4">
+          <div className="api-key-entry flex flex-col md:flex-row items-center gap-4">
             {/* 左: アイコンとラベル */}
-            <div className="flex items-center gap-3 shrink-0">
+            <div className="api-key-heading flex items-center gap-3 shrink-0">
               <div className={`p-2 ${iconBgClass} rounded-lg animate-pulse transition-colors duration-300`}>
                 <Zap size={18} className="text-white" />
               </div>
@@ -110,6 +110,7 @@ const ApiKeyModal = ({ isOpen, onSave, onClose, provider = "google" }) => {
                 <form onSubmit={(e) => { e.preventDefault(); handleSave(); }} className="flex gap-2 flex-1" autoComplete="off">
                 <input
                   id="dual-engine-api-key-input"
+                  aria-label="APIキー"
                   name={isOpenAIKey ? "openai-api-key" : "gemini-api-key"}
                   autoComplete="off"
                   data-lpignore="true"
