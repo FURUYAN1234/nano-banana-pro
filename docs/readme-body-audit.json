@@ -19,7 +19,7 @@
   "readmeSha256": "89cc03f7eddbff55dc215cac74171fbae951a2ce7b6422c15e1fa992f2b22595",
   "readmeLanguageGaps": [],
   "sourceTree": "898474634a52e40bd696592940f84a5d44d46e25",
-  "publicTree": "2eeb5ac536679a78277704736990d9223dcc416c",
+  "publicTree": "4fc01797f949e1fd76b25b6750c3344f792195d9",
   "packageSha256": "deb81bdc96668341d0714df07872d5567282733ab3c893d3c84cfc52aea658c9",
   "releaseAssetSha256": "c2c6e430de40f14279cd7a97624164f9cb7e46105eadb0763c01ed9fb1a3f96e",
   "reviewedSections": [
@@ -41,13 +41,13 @@
     "AI Manga Creative Suite / AIまんが制作エコシステム",
     "📋 ChangeLog / 更新履歴"
   ],
-  "checkedAt": "2026-11-01T11:22:35.648Z",
+  "checkedAt": "2026-11-01T11:25:12.604Z",
   "findings": "Reused the unchanged same-day whole-body v7.2.3 review and compared the complete bounded v7.2.4 source/document diff across all 17 README sections. Current-source and download references, bilingual changelog, FAQ retention/privacy/storage warnings and AI investigation instructions match the implemented UI and native IndexedDB behavior. Model selection and workflow behavior remain available after removing the header badge. Normal STEP1 through STEP4 real API runs completed: observed GPT-6 Luna for text/vision without fallback; requested Sunburst/max image generated and manually reviewed. Logging correlation was checked against the actual request/payload/end events. HTTP success is explicitly distinct from quality acceptance. OS clipboard byte readback and metadata-bearing browser image-save completion are not claimed. Existing release asset, licensing, routes and unchanged legacy instructions reuse the same-day baseline review. This audit binds the staged source/public tree that will become the candidate commit; nothing has been pushed or deployed.",
   "manualFindings": "Rebuilt v7.2.4 Gemini12, OpenAI19 and full40-page PDFs in WSL. Visually inspected all71 pages in13 contact sheets, then the updated full-manual TOC and new diagnostic-log page32 individually. Checked A4 text bounds, current version/footer, page numbering, privacy/naming and links. Retention, origin separation, excluded payloads, storage-failure warning and handing JSON to an AI match source and real browser observations. Public PDFs exactly match the reviewed files; SHA256 values are recorded here.",
   "pricingReview": {
     "version": "7.2.4",
     "sourceSha256": "293573da772b498b7d393da778fd230a23384f7e73262974a57a0a764a26f460",
-    "checkedAt": "2026-11-01T11:22:35.648Z",
+    "checkedAt": "2026-11-01T11:25:12.604Z",
     "sources": [
       "https://developers.openai.com/api/docs/pricing",
       "https://ai.google.dev/gemini-api/docs/pricing",
