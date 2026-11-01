@@ -43,8 +43,10 @@ test('the progress header stacks progress, controls and help at every width', as
   try {
     const {default:ControlBar}=await server.ssrLoadModule('/src/components/ControlBar.jsx');
     const html=renderToStaticMarkup(React.createElement(ControlBar));
-    assert.match(html, /class="workflow-header-row flex flex-col [^"]*"[^>]*>\s*<ol aria-label="制作の進捗"/);
-    assert.match(html, /<\/ol>\s*<div class="workflow-mode-controls/);
+    assert.match(html, /class="workflow-header-row flex flex-col [^"]*"[^>]*>\s*<div class="workflow-progress-tools">[\s\S]*?<ol aria-label="制作の進捗"/);
+    assert.match(html, /<\/ol>\s*<div class="workflow-utility-tools">[\s\S]*?<\/div>\s*<\/div>\s*<div class="workflow-mode-controls/);
+    assert.ok(html.indexOf('使い方マニュアル') < html.indexOf('aria-label="制作の進捗"'), 'manual remains left of the progress steps');
+    assert.ok(html.indexOf('</ol>') < html.indexOf('不具合調査ログ') && html.indexOf('不具合調査ログ') < html.indexOf('⚙ Model Chain'), 'log and model-chain controls follow the progress steps');
     assert.match(html, /<\/div>\s*<div class="workflow-mode-help/);
     assert.doesNotMatch(html, /hidden xl:block w-12/, 'the gap must not rely on an extra-large-only spacer');
     const css=await readFile(new URL('../src/index.css', import.meta.url), 'utf8');
