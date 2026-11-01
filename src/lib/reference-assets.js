@@ -75,11 +75,17 @@ const derivedCast = assets => {
   return { profiles, preamble };
 };
 
-// Rebuild generated profiles from surviving sources. A user-edited or manually
-// added profile is an explicit override and must not be discarded with an image.
+// 人物設定の寿命は元画像に結び付ける。手編集は参照が残る人物と、
+// 画像に由来しない手入力人物だけ保持し、削除済みの人物を復活させない。
+const sourceCastNames = assets => new Set(assets.flatMap(asset => [
+  ...Object.keys(asset.castProfiles || {}),
+  ...asset.items.filter(item => item.kind === 'character').map(item => item.name),
+]));
 export function reconcileReferenceCast(currentCast, previousAssets = [], nextAssets = []) {
   const current = castSections(currentCast), previous = derivedCast(previousAssets), next = derivedCast(nextAssets);
+  const previousNames = sourceCastNames(previousAssets), nextNames = sourceCastNames(nextAssets);
   for (const [name, profile] of current.profiles) {
+    if (previousNames.has(name) && !nextNames.has(name)) continue;
     if (profile !== previous.profiles.get(name)) next.profiles.set(name, profile);
   }
   const preamble = current.preamble !== previous.preamble ? current.preamble : next.preamble;

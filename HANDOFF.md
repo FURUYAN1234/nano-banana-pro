@@ -1,3 +1,21 @@
+## CURRENT — v7.2.2 candidate, character-sheet real API acceptance passed (2026-11-01)
+
+- 旧PCの2026-10-31差し替え修正をそのまま移設し、このPCの通常STEP1操作で実API検証を完了。選択・採用モデルはGPT-6 Luna。シート2枚の読込、人物編集、1枚削除、別画像追加、削除人物と同名を含むシート再追加を確認。
+- 最後の参照を外した人物の古い編集は除去され、同名の新規解析に復活しなかった。参照が残る人物と手入力のみの人物の編集は保持。画像生成品質の追加改修は今回の対象外。
+- 原因、修正前RED、回帰、実APIの実ツール出力・画面は移設作業領域に保存し、共通の原因修正・実API検証器を通過。キー値は読み出し・記録していない。
+- 候補版7.2.2へ更新。READMEのSTEP1本文、release notes、PDF3冊を更新。公式料金を2026-11-01に照合しStandardとBatchを区別。デプロイ、note/Facebook更新、環境統合後のフルバックアップとFミラー登録は許可済みで、まだ完了していない。
+- 現在のPC固有のCodexモデル・MCP・ComfyUI環境を保持して旧PC環境を統合中。以降の過去HANDOFFは当時の記録であり、現在の未承認条件へ戻さない。
+
+## CURRENT — キャラクターシート差し替え修正、実API未検証 (2026-10-31)
+
+- 依頼: 一部のシート削除→別画像追加時に、人物設定が単なる追記にならず新しい解析結果へ差し替わること。ローカル修正範囲。公開・commit・push・backupは未実施。
+- 原因: `reconcileReferenceCast` が前回生成文と異なる人物設定を、元画像が全削除された後も手編集として残していた。同名の差し替え画像の解析結果も古い設定が優先された。
+- 変更: 元画像由来の名前で設定の寿命を制御。最後の元画像を外した人物は編集済みでも削除。残る人物と画像に由来しない手入力人物の編集を保持。既存の通常STEP1経路で新規画像を解析し反映。UI説明とREADMEを同期。
+- 証拠: `output/reference-cast-replacement-20261031/`。修正前に3件失敗、修正後は関連54テスト成功。変更ソースのeslint警告0、Vite build成功（生成先は同output下）。API応答の模擬は回帰テスト専用。
+- 未了: 内蔵ブラウザでの操作確認と実API。API呼出0回。資格情報の値は取得しておらず、準備状態も未確認。完了監査はこれらの未検証を正しく拒否。
+- ブロッカー: iab browser 2 / tab 2 は `http://127.0.0.1:5173/` へ到達したが白い画面。Emulation.setFocusEmulationEnabled / Runtime.evaluateのCDP timeoutが繰り返す。接続再取得・新規tab1枚・同tab再読み込みを試行。その後サーバーのHTTP取得も10秒でtimeoutしたため、既定の限定停止ヘルパーでVite PID23672だけを停止し、exec session52840でnpm run devを再起動。Vite readyとmain.jsxのHTTP200（2.204秒）を確認した。しかしcua_replは明示的なjs_reset後もtransport closed before responseとなり、表示・操作確認は未了。既存ユーザーtab 1は触らず保持。新規tabのhandoffマークは呼出前の画面取得が失敗し未確認。Codex本体を強制終了したり別ブラウザへ切り替えたりしていない。
+- 再開: 稼働中のdevサーバー(HTTP 200確認)を保持し、同じtab 2を再取得。画面と安全なAPI準備状態を確認→通常STEP1でシートを解析→一部を削除→別画像を追加して新旧人物・残した手編集を確認。OpenAIの場合STEP1 Luna選択を確認。追加の有料再試行は既存の回数境界に従う。実証拠を追加し `verify_bugfix_evidence.mjs` と `--completion` を通すまで完了にしない。
+
 # CURRENT — final prompt display parity repair (2026-10-29)
 
 2026-10-30 image acceptance: round3 normal STEP4 and its single bounded correction completed. Final manually inspected2240x3168 image api-image-round3-corrected-20261030.png retains6panels, RTL narrative order, all5cast without observed duplicates/omissions, readable scripted dialogue/title/ending, and improved P2 tag-tying action. Style/camera fidelity still varies; no repeatability or automatic QA-pass claim. Whole UI evidence api-round3-completed-20261030.txt. Earlier round1/2 failures preserved. The remaining final blanket new-character prohibition was replaced by unrequested-character prohibition with explicit restoration of a listed missing approved actor; source-image single illustration wording aligned. Its new regression failed before correction and74related checks passed after. Actual round3 API exercised the updated common one-inspection/one-repair path; timer-repair-live-20261030.png records real repair-stage 検査終了 with advancing STEP4 total. Local source commits abd9251,760e35b; audit commits8eb7af1,35401d2. User's conditional deployment criterion is accepted for this observed output, with remaining generative fidelity limits disclosed. Proceed with official publish_app_release.ps1 for7.2.1, then note/Facebook, X code block only, then official backup_full.ps1 -NoGui and independent verifier. No extra paid generation is needed for release preparation. Earlier ACTIVE generation notes are superseded by this completed round3 evidence. Preserve all IAB work: tab1 app, tab2 unchanged note editor, tab3 authenticated Facebook personal profile. No external publication/backup has started yet.

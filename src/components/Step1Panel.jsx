@@ -107,7 +107,7 @@ export default function Step1Panel({
 
       <div className="reference-intake-guidance" aria-live="polite">
         <p>素材の追加は、下の「素材画像を選択」ボタンでも、STEP1の枠内全体へのドロップでもできます。後からの追加も同じ操作です。</p>
-        <p>追加・削除・背景ON/OFF後は認識結果と人物設定を更新し、シナリオ以降を作り直します。手編集は保持します。Webへ貼付済みの指示文・添付画像は、新しい内容と現在の番号順に差し替えてください。</p>
+        <p>追加・削除・背景ON/OFF後は認識結果と人物設定を更新し、シナリオ以降を作り直します。画像をすべて外した人物は設定も削除し、差し替え画像は新たに解析します。残る人物と手入力人物の編集は保持します。Webへ貼付済みの指示文・添付画像は、新しい内容と現在の番号順に差し替えてください。</p>
         <p className="reference-image-count">参照素材画像：{imageInputBudget.characterImageCount} / {imageInputBudget.maxCharacterImages}枚（あと{imageInputBudget.remaining}枚・OpenAI／Gemini共通）</p>
         <p className="mt-1 text-[11px] text-slate-400">
           {bg360Enabled ? '360°背景ON：その他の参照素材は合計10枚まで。API用に4コマ分の背景枠を確保します。Webへは元の360°背景1枚を添付するため、元画像は合計11枚までです。' : '人物・表情集・三面図・通常背景・小物を合わせて14枚まで。360°背景ONでは、その他の参照素材は合計10枚までです。'}

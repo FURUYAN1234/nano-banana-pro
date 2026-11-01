@@ -19,12 +19,36 @@ test('removal rebuilds AI-derived cast while another sheet of the same person ke
   assert.equal(refs.reconcileReferenceCast(original, [first, second], []), '');
 });
 
-test('user-edited and manually added character settings survive material changes', () => {
-  const edited = '## A\nUser-written personality\n\n## B\nOther appearance\n\n## C\nManual character';
+test('removing a sheet removes its edited profile but preserves surviving edits and manual characters', () => {
+  const edited = '## A\nRemoved user-written personality\n\n## B\nRetained user-written personality\n\n## C\nManual character';
   const next = refs.reconcileReferenceCast(edited, [first, second], [second]);
-  assert.match(next, /User-written personality/);
-  assert.match(next, /Manual character/);
-  assert.doesNotMatch(next, /Original appearance/);
+  assert.doesNotMatch(next, /## A|Removed user-written personality|Original appearance/);
+  assert.match(next, /## B\nRetained user-written personality/);
+  assert.match(next, /## C\nManual character/);
+});
+
+test('another surviving sheet of the same person retains that person and manual edits', () => {
+  const turn = analyzed('turn', 'A', '## A\nSide view');
+  const edited = '## A\nUser-written personality\n\n## B\nOther appearance';
+  assert.match(refs.reconcileReferenceCast(edited, [first, turn, second], [turn, second]), /User-written personality/);
+});
+
+test('removal uses source identity even when the editable material name was changed', () => {
+  const renamed = {...first, items: [{...first.items[0], name: 'Edited material label'}]};
+  const next = refs.reconcileReferenceCast('## A\nUser-written personality', [renamed], []);
+  assert.equal(next, '');
+});
+
+test('replacing a sheet with a newly analyzed version cannot resurrect the removed edited profile', () => {
+  const edited = '## A\nOld edited clothing\n\n## B\nOther appearance';
+  const retained = refs.reconcileReferenceCast(edited, [first, second], [second]);
+  const fresh = refs.parseReferenceAnalysis(JSON.stringify({castList: '## A\nNew clothing from replacement image',
+    references: [{imageIndex: 1, items: [{kind: 'character', name: 'A', description: 'New clothing'}]}]}), ['replacement'], retained);
+  const assets = refs.mergeReferenceAnalysis([second], fresh, ['b', 'replacement']);
+  const next = refs.reconcileReferenceCast(retained, [second], assets);
+  assert.match(next, /New clothing from replacement image/);
+  assert.doesNotMatch(next, /Old edited clothing/);
+  assert.match(next, /## B\nOther appearance/);
 });
 
 test('incremental analysis selects new and failed references but skips completed unknown references', () => {

@@ -19,7 +19,7 @@ function setup(existing = [], background = false) {
   const referenceAssetsRef = { current: existing.map(image => ({image,analysisCompleted:true,items:[{kind:'character',name:'Existing',description:'user retained'}]})) };
   const ctx = {
     apiKey: true, analysisModelId: DEFAULT_OPENAI_STEP1_MODEL_ID, isAnalyzingRef: { current: false }, imagesRef,
-    bg360EnabledRef: { current: background }, scenarioRunEpochRef: { current: 1 }, castRevisionRef: { current: 1 },
+    bg360EnabledRef: { current: background }, bg360ImageRef: {current: null}, scenarioRunEpochRef: { current: 1 }, castRevisionRef: { current: 1 },
     castListRef: {current:state.cast}, referenceAssetsRef, scenario:'', finalPrompt:'', isSearching:false, isGeneratingImage:false,
     isFullAutoModeRef: { current: false }, fullAutoAbortRef: { current: false },
     isEndlessModeRef: {current:false}, setIsEndlessMode:value=>{state.endless=value;}, setIsFullAutoMode:value=>{state.fullAuto=value;},
@@ -37,11 +37,11 @@ function setup(existing = [], background = false) {
     buildReferenceAnalysisPrompt, parseReferenceAnalysis,
     setReferenceAssets: value => { state.assets = value; referenceAssetsRef.current=value; },
     getCharacterAnalysisPrompt: () => 'analyze all named people',
-    setImages: value => { imagesRef.current = value; state.images = value; },
+    setImagesState: value => { state.images = value; },
     setStyleJson: value => { state.style = value; },
     setBg360Image: value => { state.background = value; },
     setBg360Enabled: value => { state.enabled = value; },
-    setCastList: value => { state.cast = value; },
+    setCastList: value => { state.cast = value; ctx.castListRef.current = value; ctx.castRevisionRef.current++; },
     setImageInputError: value => { state.error = value; },
     setIsAnalyzing: value => { state.analyzing = value; },
     get360AnalysisPrompt: () => 'test-360', parse360Analysis, setBg360ImageParts: () => {},
@@ -50,6 +50,10 @@ function setup(existing = [], background = false) {
     setUsedModel: () => {}, setShowOpenAIKeyModal: () => {}, translateApiError: e => e.message,
     console: { error: () => {}, warn: () => {} }, setInterval: () => 1, clearInterval: () => {},
   };
+  const start = source.indexOf('const setImages = (value) =>');
+  const setter = source.slice(start, source.indexOf('  const [imageInputError', start))
+    .replace(/^const setImages = /, '').trim().replace(/;$/, '');
+  ctx.setImages = new Function(...Object.keys(ctx), 'return ('+setter+');')(...Object.values(ctx));
   return { state, ctx, processFiles: new Function(...Object.keys(ctx), `return (${handler});`)(...Object.values(ctx)) };
 }
 
@@ -156,4 +160,36 @@ test('initial full-auto and endless arming survive its own material intake',asyn
   await processFiles([file(sheets(1)[0])]);
   assert.equal(state.fullAuto,true); assert.equal(state.endless,true);
   assert.ok(state.trigger); assert.equal(state.error,'');
+});
+
+for (const replacementName of ['New Person', 'Old Person']) test('delete then analyze replacement: '+replacementName, async () => {
+  const {state,ctx,processFiles} = setup(sheets(2));
+  const original = state.images[0];
+  const retained = state.images[1];
+  ctx.setReferenceAssets([
+    {image:original,analysisCompleted:true,items:[{kind:'character',name:'Old Person',description:'Old sheet'}],castProfiles:{'Old Person':'## Old Person\nOld appearance'}},
+    {image:retained,analysisCompleted:true,items:[{kind:'character',name:'Retained Person',description:'Retained sheet'}],castProfiles:{'Retained Person':'## Retained Person\nRetained appearance'}},
+  ]);
+  ctx.setCastList('## Old Person\nOld edited appearance\n\n## Retained Person\nRetained edited appearance');
+  ctx.setImages(images=>images.filter(image=>image!==original));
+  assert.doesNotMatch(state.cast,/Old Person|Old edited appearance/);
+  const ordinaryCall = ctx.callAI;
+  ctx.callAI = async (prompt,parts,...rest) => {
+    assert.doesNotMatch(prompt,/Old edited appearance/);
+    assert.match(prompt,/Retained edited appearance/);
+    const response=await ordinaryCall(prompt,parts,...rest);
+    return {...response,text:response.text.replaceAll('New Person',replacementName)};
+  };
+  const processReplacement = new Function(...Object.keys(ctx), 'return ('+handler+');')(...Object.values(ctx));
+  const replacement = file('data:image/png;base64,cmVwbGFjZW1lbnQ=');
+  await processReplacement([replacement]);
+  assert.equal(state.apiCalls,1);
+  assert.equal(state.sentParts.length,1);
+  assert.deepEqual(state.images,[retained,replacement.data]);
+  assert.match(state.cast,/new named people/);
+  assert.match(state.cast,/Retained edited appearance/);
+  assert.doesNotMatch(state.cast,/Old edited appearance/);
+  assert.equal(state.assets[1].analysisCompleted,true);
+  await processFiles([replacement]);
+  assert.equal(state.apiCalls,1,'unchanged completed image does not trigger another paid call');
 });
