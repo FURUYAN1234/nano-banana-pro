@@ -1,26 +1,26 @@
 {
-  "pricingSourceSha256": "12a2f5f73742c09dcc787ae7ae1559e427826055140b59568e7f404042c9dc55",
-  "manualVersion": "7.2.1",
-  "manualSourceSha256": "97733d3b53565d33532b327e434c9e76c7450491d8909cf508232ee4c45bac20",
+  "pricingSourceSha256": "293573da772b498b7d393da778fd230a23384f7e73262974a57a0a764a26f460",
+  "manualVersion": "7.2.2",
+  "manualSourceSha256": "d71b9f773dd61e307b982182979675847a81d7e9f8bb64b1e339ac972dabe4fb",
   "manualFiles": [
     {
       "name": "gemini-api-beginner-guide-2026-10-01.pdf",
-      "sha256": "b6c63a37d696b3d680e6a39b133149b83267d61c85f9c15665be9ef93c51a7eb"
+      "sha256": "fed142731555c1715dc83d6f5e664d85f0f7be742ae7c347f9ba4d0386bf1bf9"
     },
     {
       "name": "openai-api-beginner-guide-2026-09-30.pdf",
-      "sha256": "40955ce6d52d52ee3bc192c6d2577c54544f03dd926857ec26d416250ce0456f"
+      "sha256": "104a0742d4e7626d2a9671859a61384a6710719d3aca125ee64e2d3869a68b5c"
     },
     {
       "name": "super-furu-ai-4koma-full-manual-2026-10-01.pdf",
-      "sha256": "e99eafdccdedb46add2cb2a616aa07a99739f77a516bbc6bcf7e5a0f96d9c8dc"
+      "sha256": "2000f23ffa6297e3061744182b82d6951c149298e6b53dbeb51b6deffe1814fb"
     }
   ],
-  "readmeSha256": "11e65aac94f7e9c23e0dfa6a1bc9f6ee4c20bdb892b4eb4d0d4bb82b4e417fba",
+  "readmeSha256": "e391455b6e93c66a1fdd9a0e46a2b08882224766a4dc02933f8845ed93105b2c",
   "readmeLanguageGaps": [],
-  "sourceTree": "acefa42fcd0c2e8ff474376e1b50c9f8309df3de",
-  "publicTree": "98252ab92d84a22f8625bf365cf7ea8af8edf0bd",
-  "packageSha256": "395b77e4366ae9e18fe2710cbc8e0e8b9bc03ad2068eb78edf02ab4169da4222",
+  "sourceTree": "4c8502ff07be6a868b0e88103a9bb1b95306b668",
+  "publicTree": "9fefd76dddd9512a6328e925049d592e319ab570",
+  "packageSha256": "739e07129969d3ae0509d70f20b48bc45186acb489c4ca7c1099f10220d27e89",
   "releaseAssetSha256": "c2c6e430de40f14279cd7a97624164f9cb7e46105eadb0763c01ed9fb1a3f96e",
   "reviewedSections": [
     "Application screen and output / 操作画面と生成例",
@@ -41,17 +41,20 @@
     "AI Manga Creative Suite / AIまんが制作エコシステム",
     "📋 ChangeLog / 更新履歴"
   ],
-  "checkedAt": "2026-10-29T22:41:17.164Z",
-  "findings": "Reviewed v7.2.1 README changes against final-prompt preview/export source, native prompt-integrity errors, scoped source-image repair and STEP4 time display. All 17 section headings are retained; unchanged sections reuse the v7.2.0 body review. Fixed a broken Japanese example caption; public naming, current release links and bilingual text remain aligned. Real OpenAI color/monochrome export parity is recorded privately. Image quality acceptance and note publication are tracked separately.",
-  "manualFindings": "Retained the earlier visual review of all 70 pages in 13 contact sheets and the updated full-manual page19. Regenerated Gemini12/full39 PDFs after adding the completed-inspection timer explanation and visually inspected changed full-manual page14, with no overflow observed. OpenAI19-page guide source is unchanged from its v7.2.1 review. Builders passed A4/privacy/link/text-bound checks; staged public PDFs match these reviewed outputs.",
+  "checkedAt": "2026-11-01T01:14:01.039Z",
+  "findings": "Compared all 17 current README sections with the source changes, normal STEP1 browser behavior, provider/model settings, distributed workflow/asset contract, manual links, local startup, privacy/licensing and related-app links. Existing full review applies to unchanged behavior; the current body now explicitly removes edits for a person whose last reference was removed, preserves surviving/manual-only edits, and refreshes replacement recognition. Version, bilingual changelog and download tag match v7.2.2. The patched minimatch and publishing dependencies are documented; production dependency versions are unchanged. Actual publication of the candidate URLs is verified by the release transaction separately.",
+  "manualFindings": "Regenerated all three v7.2.2 PDFs (Gemini12, OpenAI19, full39 pages). Visually inspected every page in 13 contact sheets, plus full-manual STEP1 page5 and updated official-pricing page22 at individual-page size. No clipping, overlapping text or unreadable glyphs observed. Builders passed A4, footer/page-count, scope, privacy, clickable-link and text-bound checks. Source-bound deletion/replacement and surviving/manual-only edit retention match the accepted real API workflow. Public PDFs were copied byte-for-byte from the reviewed outputs; existing screenshots remain clearly identified as illustrative earlier UI.",
   "pricingReview": {
-    "version": "7.2.1",
-    "sourceSha256": "12a2f5f73742c09dcc787ae7ae1559e427826055140b59568e7f404042c9dc55",
-    "checkedAt": "2026-10-29T22:41:17.169Z",
+    "version": "7.2.2",
+    "sourceSha256": "293573da772b498b7d393da778fd230a23384f7e73262974a57a0a764a26f460",
+    "checkedAt": "2026-11-01T01:14:01.041Z",
     "sources": [
       "https://developers.openai.com/api/docs/pricing",
-      "https://ai.google.dev/gemini-api/docs/pricing"
+      "https://ai.google.dev/gemini-api/docs/pricing",
+      "https://developers.openai.com/api/docs/models/gpt-6-sol",
+      "https://developers.openai.com/api/docs/models/gpt-5.6-terra",
+      "https://developers.openai.com/api/docs/models/gpt-5.6-luna"
     ],
-    "findings": "Read official OpenAI and Gemini pricing pages on 2026-10-30. Current Standard short-context rates per million tokens match the app: Terra6.1 input1/output5/cached0.05 USD; Sol6.1 input2/output10; Astra input10/output50; Luna6 input0.10/output0.50. Sunburst/Flare image input8/output30/cached2 and text input5/cached1.25. Gemini3.8 Flash input0.75/output3.75 through2026-12-31; Nano Banana2.1 input1.50, text/thinking output7.50, image output30 and1K image0.0336. Batch/Flex discounted prices are separate."
+    "findings": "Read current official Standard short-context rates on2026-11-01: Astra10/50, Sol6.1 and Sol6 2/10, Terra6.1 1/5, Sol5.6 4/20, Terra5.6 2/12, Luna6 .10/.50 and Luna5.6 .20/1.20 USD per1M input/output tokens. Image2.5/2 image input8/output30/cached2 and text input5/cached1.25 match. Gemini3.8 Flash .75/3.75 through2026-12-31 and Nano Banana2.1 input1.50/text-thinking7.50/image30 with1K .0336 match the app. Batch/Flex discounts are separate; prices and UI dates are not generation-cost guarantees."
   }
 }
