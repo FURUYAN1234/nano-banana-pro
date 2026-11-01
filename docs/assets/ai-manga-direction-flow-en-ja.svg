@@ -1,0 +1,55 @@
+<svg viewBox="0 0 1600 1580" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="direction-title direction-desc">
+<title id="direction-title">AI-assisted manga direction / AIが担う漫画の演出設計</title><desc id="direction-desc">Current four-stage workflow, with optional bounded image review. Generation quality still requires inspection. / 現行の4段階工程と任意の回数制限付き画像検査。実画像の品質は確認が必要です。</desc>
+<style>text {font-family:'BIZ UDGothic','Yu Gothic',Meiryo,sans-serif;}</style>
+<defs><marker id="direction-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#52667b"/></marker></defs>
+<rect width="1600" height="1580" fill="#f5f7fa"/><text x="60" y="79" font-size="44" font-weight="700" fill="#2475b9">AI-assisted manga direction</text>
+<text x="60" y="133" font-size="44" font-weight="700" fill="#2475b9">/ AIが担う漫画の演出設計</text>
+<text x="60" y="181" font-size="26" font-weight="400" fill="#52667b">Current workflow overview / 現行ワークフローの概要</text>
+<rect x="60" y="215" width="1480" height="100" rx="18" fill="#e9f0f7" stroke="#cbd5e1" stroke-width="2"/>
+<text x="88" y="258" font-size="28" font-weight="400" fill="#172d43">You: provide references, a topic and optional directions</text>
+<text x="88" y="296" font-size="28" font-weight="400" fill="#172d43">/ 作者：資料・題材・必要な指示を用意</text>
+<polyline points="760,500 840,500" fill="none" stroke="#52667b" stroke-width="5" data-from="A" data-to="B" marker-end="url(#direction-arrow)"/>
+<polyline points="1190,650 1190,714 410,714 410,780" fill="none" stroke="#52667b" stroke-width="5" data-from="B" data-to="C" marker-end="url(#direction-arrow)"/>
+<polyline points="760,930 840,930" fill="none" stroke="#52667b" stroke-width="5" data-from="C" data-to="D" marker-end="url(#direction-arrow)"/>
+<g data-node="A">
+<rect x="60" y="350" width="700" height="300" rx="18" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+<text x="88" y="392" font-size="26" font-weight="700" fill="#2475b9">STEP 1</text>
+<text x="88" y="446" font-size="34" font-weight="700" fill="#172d43">Read references</text>
+<text x="88" y="490" font-size="34" font-weight="700" fill="#172d43">/ 素材を読む</text>
+<text x="88" y="553" font-size="26" font-weight="400" fill="#52667b">Appearance, traits and relationships</text>
+<text x="88" y="589" font-size="26" font-weight="400" fill="#52667b">/ 外見・性格・人物関係</text>
+</g>
+<g data-node="B">
+<rect x="840" y="350" width="700" height="300" rx="18" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+<text x="868" y="392" font-size="26" font-weight="700" fill="#2475b9">STEP 2</text>
+<text x="868" y="446" font-size="34" font-weight="700" fill="#172d43">Plan story and acting</text>
+<text x="868" y="490" font-size="34" font-weight="700" fill="#172d43">/ 台本と演技を組む</text>
+<text x="868" y="553" font-size="26" font-weight="400" fill="#52667b">Facts, sequence, actions and reactions</text>
+<text x="868" y="589" font-size="26" font-weight="400" fill="#52667b">/ 事実・順序・働きかけと反応</text>
+</g>
+<g data-node="C">
+<rect x="60" y="780" width="700" height="300" rx="18" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+<text x="88" y="822" font-size="26" font-weight="700" fill="#2475b9">STEP 3</text>
+<text x="88" y="876" font-size="34" font-weight="700" fill="#172d43">Build page direction</text>
+<text x="88" y="920" font-size="34" font-weight="700" fill="#172d43">/ 描画指示をまとめる</text>
+<text x="88" y="983" font-size="26" font-weight="400" fill="#52667b">Cast, dialogue, wide shots and depth</text>
+<text x="88" y="1019" font-size="26" font-weight="400" fill="#52667b">/ 人物・台詞・ヒキ・奥行き</text>
+</g>
+<g data-node="D">
+<rect x="840" y="780" width="700" height="300" rx="18" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+<text x="868" y="822" font-size="26" font-weight="700" fill="#2475b9">STEP 4</text>
+<text x="868" y="876" font-size="34" font-weight="700" fill="#172d43">Generate; optional review</text>
+<text x="868" y="920" font-size="34" font-weight="700" fill="#172d43">/ 生成し、必要なら検査</text>
+<text x="868" y="972" font-size="22" font-weight="400" fill="#52667b">QA OFF: no inspection</text>
+<text x="868" y="1004" font-size="22" font-weight="400" fill="#52667b">/ 自動修正OFF：画像検査なし</text>
+<text x="868" y="1040" font-size="22" font-weight="400" fill="#52667b">QA ON: one inspection</text>
+<text x="868" y="1072" font-size="22" font-weight="400" fill="#52667b">/ 自動修正ON：総合検査1回</text>
+</g>
+<rect x="60" y="1130" width="1480" height="260" rx="18" fill="#e9f0f7" stroke="#cbd5e1" stroke-width="2"/>
+<text x="88" y="1180" font-size="30" font-weight="700" fill="#2475b9">Automatic repair ON / 自動修正ONの場合</text>
+<text x="88" y="1236" font-size="26" font-weight="400" fill="#172d43">Material defects: at most one repair / 重大な破綻だけ、修正は最大1回</text>
+<text x="88" y="1296" font-size="26" font-weight="400" fill="#172d43">Unverified or timed out: no added generation / 未確認・時間切れだけで追加生成しない</text>
+<text x="88" y="1356" font-size="26" font-weight="400" fill="#172d43">Keep original; no recheck after repair / 元画像も保持・修正後の再検査なし</text>
+<rect x="60" y="1430" width="1480" height="110" rx="18" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+<text x="88" y="1478" font-size="28" font-weight="700" fill="#172d43">You review the story and the actual output / 作者が台本と実画像を確認</text>
+<text x="88" y="1522" font-size="26" font-weight="400" fill="#52667b">Choose modes, add direction, revise / モードを選び、指示を足し、直す</text></svg>

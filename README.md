@@ -6,7 +6,9 @@
 > Current source version: **v7.2.4** / 現在のソース版: **v7.2.4**
 
 
-An experimental web application in which AI handles topic research, story structure, direction, prompt construction, image generation, and quality review for manga. OpenAI starts in 5–8-panel mode and also supports four panels. Gemini supports four-panel color and monochrome pages only. / AIが話題調査、構成、演出、プロンプト構築、画像生成、品質確認まで担当する漫画制作Webアプリです。OpenAIの初期選択「5～8コマ生成」では、最初から5～8コマのシナリオを作り、漫画にします。「4コマ生成」にも切り替えられます。Geminiはカラー・白黒とも4コマ固定です。
+An AI-assisted manga production and direction system that turns character references and a topic into a scenario, acting, camera directions and image instructions. Its focus is an interacting cast: consistent identities, actions and reactions grounded in the story, and wide shots with readable spatial depth. AI plans part of the direction between the author’s input and the final image; the author can review and edit each stage. / キャラクター資料と題材から、台本・演技・カメラ・画像用の指示を組み立てるAI漫画制作・演出支援システムです。多人数の人物整合性、物語を踏まえた働きかけと反応、ヒキを含む奥行きのある構図を重視します。作者の入力から画像化までの間にある演出判断の一部をAIが担い、作者は各工程を確認・編集できます。
+
+OpenAI starts in five- to eight-panel mode and also supports four panels; Gemini supports four panels in color or monochrome. Full-auto can continue through the stages, while post-generation quality review runs only when automatic image repair is ON. / OpenAIの初期選択は「5～8コマ生成」で、「4コマ生成」にも対応します。Geminiはカラー・白黒とも4コマ固定です。全自動で各工程を続ける使い方も選べ、生成後の品質検査は画像自動修正がONの場合だけ行います。
 
 [![Open the Super FURU AI 4-koma System demo / デモサイトを開く。リンク先: https://furuyan1234.github.io/nano-banana-pro/](docs/assets/demo-site-button.png)](https://furuyan1234.github.io/nano-banana-pro/)
 
@@ -35,6 +37,24 @@ The left image shows previous-release connection and reference controls; current
 https://github.com/user-attachments/assets/15608ccc-8d86-4b78-9ff3-785201b42629
 
 ## Single-page design approach / 1ページ制作の設計方針
+
+### AI handles intermediate direction decisions / 演出の中間工程をAIが担う
+
+The author supplies references, a topic and any explicit directions. The workflow connects three kinds of decisions rather than requiring every panel to be specified separately. / 作者は資料、題材、必要な明示指定を渡します。次の三つの判断を制作工程でつなぎ、コマごとの細部を毎回すべて指定する負担を減らす設計です。
+
+| Direction decision / 演出判断 | How the workflow handles it / 制作工程での扱い |
+|---|---|
+| A consistent multi-person cast / 多人数の描き分け | Carry appearance, clothes and identity from references into the scenario and drawing instructions; optional image QA checks material cast defects. / 資料の外見・衣装・人物対応を台本と描画指示へ引き継ぎ、任意の画像QAで重大な人物不具合を検査します。 |
+| Acting through sequence and relationships / 出来事の順序と関係性を踏まえた演技 | Plan whose action prompts whose response, including gaze, posture and action phase. Documentary fact/timeline checks preserve source events, dates and causality. / 誰の働きかけが誰の反応につながるかを、視線・姿勢・動作段階とともに計画します。ドキュメンタリーでは資料の出来事・日時・因果も照合します。 |
+| Wide shots and spatial direction / ヒキと空間演出 | Combine camera position, height, framing and lens cues with character action; organize foreground, middle ground, background and the focal subject. / 撮影位置・高さ・寄り引き・レンズ感を人物の動作と組み合わせ、前景・中景・背景と注視点を整理します。 |
+
+![Author input, four AI stages and optional bounded review / 作者の入力、AIの4工程と任意の回数制限付き品質検査](docs/assets/ai-manga-direction-flow-en-ja.png)
+
+The figure summarizes the normal page workflow. The detailed [story algorithm](#story-construction-algorithm--物語アルゴリズム) and [visual direction rules](#visual-direction-and-reading--演出と読みやすさ) explain its constraints. The author retains control of intent, explicit instructions and output selection. Automatic repair OFF skips image QA; ON permits one review and at most one material repair, without post-repair reinspection. / 図は通常のページ制作工程の概要です。制約の詳細は[物語アルゴリズム](#story-construction-algorithm--物語アルゴリズム)と[演出と読みやすさ](#visual-direction-and-reading--演出と読みやすさ)で説明します。意図・明示指定・出力の採用は作者が決めます。画像自動修正OFFでは画像QAを行わず、ONでは検査1回と重大修正最大1回で、修正後の再検査は行いません。
+
+These are implemented instructions and checks, not a guarantee that the model understands every relationship or renders it consistently. Timeline fidelity is distinct from natural acting, and the app does not provide persistent emotional or relationship state across an entire long-form series. Other manga tools also offer character references, story generation and automation; no exclusive-feature or comparative-quality claim is made here. / ここで説明するのは実装した指示と検査であり、モデルがすべての人間関係を理解し、一貫して描けるという保証ではありません。時系列の保持と自然な演技は別で、長編全体の感情・関係性を永続的に追跡する機能も提供していません。他の漫画ツールにも人物参照・ストーリー生成・自動化があり、機能の独占性や比較品質を主張するものではありません。
+
+### One page as the production unit / 1ページを制作の単位にする
 
 The app uses one manga page as its unit of story planning, direction and image generation. When automatic image repair is ON, quality review also runs per page. The aim is to concentrate these steps on a coherent story and readable visual detail within that page. / 本アプリでは、物語の構成、演出、画像生成を1ページ単位で組み立てます。画像自動修正がONの場合は品質確認もページ単位で行い、各工程をその1ページの物語のまとまりと、読み取れる絵の密度に集中させる方針です。
 
