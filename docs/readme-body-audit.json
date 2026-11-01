@@ -1,26 +1,26 @@
 {
   "pricingSourceSha256": "293573da772b498b7d393da778fd230a23384f7e73262974a57a0a764a26f460",
-  "manualVersion": "7.2.2",
-  "manualSourceSha256": "d71b9f773dd61e307b982182979675847a81d7e9f8bb64b1e339ac972dabe4fb",
+  "manualVersion": "7.2.3",
+  "manualSourceSha256": "3582b1dcc197f18689fb16523411cf0490321dbe4dddc10ebd1e0f57b2233de0",
   "manualFiles": [
     {
       "name": "gemini-api-beginner-guide-2026-10-01.pdf",
-      "sha256": "fed142731555c1715dc83d6f5e664d85f0f7be742ae7c347f9ba4d0386bf1bf9"
+      "sha256": "d17081f94f5dbc4048ade4c71b16db838f16d68776aba90fc880aa82b538c7f1"
     },
     {
       "name": "openai-api-beginner-guide-2026-09-30.pdf",
-      "sha256": "104a0742d4e7626d2a9671859a61384a6710719d3aca125ee64e2d3869a68b5c"
+      "sha256": "c5ab245c87238e27c80f79887bee64f0a288957d40d760daec179dc549e9558d"
     },
     {
       "name": "super-furu-ai-4koma-full-manual-2026-10-01.pdf",
-      "sha256": "2000f23ffa6297e3061744182b82d6951c149298e6b53dbeb51b6deffe1814fb"
+      "sha256": "dd4e53d0bafc2e2626c15baef9cbfe0407f9b17acfd840153456a0871baed431"
     }
   ],
-  "readmeSha256": "e391455b6e93c66a1fdd9a0e46a2b08882224766a4dc02933f8845ed93105b2c",
+  "readmeSha256": "4fbd9c1b11d40e7fe1df747ccdefa43710e355a61bdf6783e24769f1e7f9e1f0",
   "readmeLanguageGaps": [],
-  "sourceTree": "4c8502ff07be6a868b0e88103a9bb1b95306b668",
-  "publicTree": "65ed61107b7a6246ba1b24625e02ccba9d4d2ece",
-  "packageSha256": "739e07129969d3ae0509d70f20b48bc45186acb489c4ca7c1099f10220d27e89",
+  "sourceTree": "ee21463c5d60e36df306785b73b86788dc7152d4",
+  "publicTree": "332f4def6eb55c7f9dea2cc82de0e6fc9fd37feb",
+  "packageSha256": "a234d52b06e5623cf27196d03269a6af1abc6d330ecf35c4daf1c2d6eab5ce35",
   "releaseAssetSha256": "c2c6e430de40f14279cd7a97624164f9cb7e46105eadb0763c01ed9fb1a3f96e",
   "reviewedSections": [
     "Application screen and output / 操作画面と生成例",
@@ -41,13 +41,13 @@
     "AI Manga Creative Suite / AIまんが制作エコシステム",
     "📋 ChangeLog / 更新履歴"
   ],
-  "checkedAt": "2026-11-01T01:20:34.636Z",
-  "findings": "Compared all 17 current README sections with the source changes, normal STEP1 browser behavior, provider/model settings, distributed workflow/asset contract, manual links, local startup, privacy/licensing and related-app links. Existing full review applies to unchanged behavior; the current body now explicitly removes edits for a person whose last reference was removed, preserves surviving/manual-only edits, and refreshes replacement recognition. Version, bilingual changelog and download tag match v7.2.2. The patched minimatch and publishing dependencies are documented; production dependency versions are unchanged. Actual publication of the candidate URLs is verified by the release transaction separately.",
-  "manualFindings": "Regenerated all three v7.2.2 PDFs (Gemini12, OpenAI19, full39 pages). Visually inspected every page in 13 contact sheets, plus full-manual STEP1 page5 and updated official-pricing page22 at individual-page size. No clipping, overlapping text or unreadable glyphs observed. Builders passed A4, footer/page-count, scope, privacy, clickable-link and text-bound checks. Source-bound deletion/replacement and surviving/manual-only edit retention match the accepted real API workflow. Public PDFs were copied byte-for-byte from the reviewed outputs; existing screenshots remain clearly identified as illustrative earlier UI.",
+  "checkedAt": "2026-11-01T09:10:07.326Z",
+  "findings": "Reused the same-day whole-README review of v7.2.2 for unchanged behavior and compared every current section against this bounded source diff. Checked the updated STEP1 names/profiles, source-bound deletion, duplicate and empty drafts, copy invalidation, local-only Luna vision route, current source/download version, bilingual release entry, 17-section coverage, unchanged public API modes/privacy/licensing and release asset. Actual normal STEP1 with selected/actual GPT-6 Luna completed and both name-edit directions passed. No STEP2/3/4 generation or OS clipboard byte readback is claimed.",
+  "manualFindings": "Rebuilt v7.2.3 Gemini12, OpenAI19 and full39-page PDFs in the WSL task workspace. Reviewed all70 pages in13 contact sheets and inspected full-manual STEP1 page5 individually. After local-Luna wording changed, rebuilt and inspected affected page28 individually; unchanged layouts reused the just-completed review. A4, footer/version, page count, naming/privacy, text-bounds and link checks passed. Published download files exactly match reviewed PDF bytes.",
   "pricingReview": {
-    "version": "7.2.2",
+    "version": "7.2.3",
     "sourceSha256": "293573da772b498b7d393da778fd230a23384f7e73262974a57a0a764a26f460",
-    "checkedAt": "2026-11-01T01:20:34.638Z",
+    "checkedAt": "2026-11-01T09:10:07.329Z",
     "sources": [
       "https://developers.openai.com/api/docs/pricing",
       "https://ai.google.dev/gemini-api/docs/pricing",
@@ -55,6 +55,6 @@
       "https://developers.openai.com/api/docs/models/gpt-5.6-terra",
       "https://developers.openai.com/api/docs/models/gpt-5.6-luna"
     ],
-    "findings": "Read current official Standard short-context rates on2026-11-01: Astra10/50, Sol6.1 and Sol6 2/10, Terra6.1 1/5, Sol5.6 4/20, Terra5.6 2/12, Luna6 .10/.50 and Luna5.6 .20/1.20 USD per1M input/output tokens. Image2.5/2 image input8/output30/cached2 and text input5/cached1.25 match. Gemini3.8 Flash .75/3.75 through2026-12-31 and Nano Banana2.1 input1.50/text-thinking7.50/image30 with1K .0336 match the app. Batch/Flex discounts are separate; prices and UI dates are not generation-cost guarantees."
+    "findings": "Opened both official pricing pages on2026-11-01 before publication. Standard short-context GPT-6 Astra10/50, Sol6.1 2/10, Terra6.1 1/5 and Luna6 .10/.50 USD per1M input/output match the app; GPT Image2.5 input8/output30 and text input5 match. Gemini3.8 Flash .75/3.75 through2026-12-31 and Nano Banana2.1 input1.50/text-thinking7.50/image30 with1K .0336 match. Batch/Flex discounts are separate. Same-day prior official review covers unchanged legacy rows; pricing source hash is unchanged."
   }
 }
