@@ -19,7 +19,7 @@
   "readmeSha256": "e391455b6e93c66a1fdd9a0e46a2b08882224766a4dc02933f8845ed93105b2c",
   "readmeLanguageGaps": [],
   "sourceTree": "4c8502ff07be6a868b0e88103a9bb1b95306b668",
-  "publicTree": "9fefd76dddd9512a6328e925049d592e319ab570",
+  "publicTree": "65ed61107b7a6246ba1b24625e02ccba9d4d2ece",
   "packageSha256": "739e07129969d3ae0509d70f20b48bc45186acb489c4ca7c1099f10220d27e89",
   "releaseAssetSha256": "c2c6e430de40f14279cd7a97624164f9cb7e46105eadb0763c01ed9fb1a3f96e",
   "reviewedSections": [
@@ -41,13 +41,13 @@
     "AI Manga Creative Suite / AIまんが制作エコシステム",
     "📋 ChangeLog / 更新履歴"
   ],
-  "checkedAt": "2026-11-01T01:14:01.039Z",
+  "checkedAt": "2026-11-01T01:20:34.636Z",
   "findings": "Compared all 17 current README sections with the source changes, normal STEP1 browser behavior, provider/model settings, distributed workflow/asset contract, manual links, local startup, privacy/licensing and related-app links. Existing full review applies to unchanged behavior; the current body now explicitly removes edits for a person whose last reference was removed, preserves surviving/manual-only edits, and refreshes replacement recognition. Version, bilingual changelog and download tag match v7.2.2. The patched minimatch and publishing dependencies are documented; production dependency versions are unchanged. Actual publication of the candidate URLs is verified by the release transaction separately.",
   "manualFindings": "Regenerated all three v7.2.2 PDFs (Gemini12, OpenAI19, full39 pages). Visually inspected every page in 13 contact sheets, plus full-manual STEP1 page5 and updated official-pricing page22 at individual-page size. No clipping, overlapping text or unreadable glyphs observed. Builders passed A4, footer/page-count, scope, privacy, clickable-link and text-bound checks. Source-bound deletion/replacement and surviving/manual-only edit retention match the accepted real API workflow. Public PDFs were copied byte-for-byte from the reviewed outputs; existing screenshots remain clearly identified as illustrative earlier UI.",
   "pricingReview": {
     "version": "7.2.2",
     "sourceSha256": "293573da772b498b7d393da778fd230a23384f7e73262974a57a0a764a26f460",
-    "checkedAt": "2026-11-01T01:14:01.041Z",
+    "checkedAt": "2026-11-01T01:20:34.638Z",
     "sources": [
       "https://developers.openai.com/api/docs/pricing",
       "https://ai.google.dev/gemini-api/docs/pricing",
