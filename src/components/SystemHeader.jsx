@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BrainCircuit, RefreshCw, LogOut, AlertTriangle } from 'lucide-react';
+import { BrainCircuit, RefreshCw, LogOut } from 'lucide-react';
 import FallbackChainViewer from './FallbackChainViewer';
 import { getEffectiveEngine } from '../lib/engine-state';
 
@@ -13,9 +13,7 @@ export default function SystemHeader({
   enableOpenAIApi,
   partialReset,
   step1Reset,
-  hardReset,
-  usedModel,
-  getModelBadgeInfo
+  hardReset
 }) {
   const [showFallbackChain, setShowFallbackChain] = useState(false);
   const isOpenAIEngine = getEffectiveEngine(selectedEngine, enableOpenAIApi) === 'openai';
@@ -87,29 +85,6 @@ export default function SystemHeader({
               )}
             </div>
             
-            {usedModel && (() => {
-              const info = getModelBadgeInfo(usedModel);
-              if (!info) return null;
-              return (
-                <div className={`mt-3 inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-white/10 ${info.color} shadow-lg animate-in fade-in slide-in-from-top-2 cursor-help group/badge relative`}>
-                  <span className="text-[10px] font-black uppercase tracking-widest">{info.label}</span>
-                  <span className="w-[1px] h-3 bg-white/40" />
-                  <span className="text-[10px] font-bold truncate max-w-[150px] md:max-w-none">{info.desc}</span>
-
-                  <div className="absolute left-0 top-full mt-2 w-64 p-3 bg-[#0f1115] border border-white/20 rounded-xl text-[10px] text-slate-300 z-50 invisible group-hover/badge:visible shadow-2xl backdrop-blur-xl">
-                    <p className="font-bold text-white mb-1 border-b border-white/10 pb-1">AIモデル品質情報</p>
-                    <p>現在 <span className="font-mono text-blue-300">{usedModel}</span> を使用中。</p>
-                    {info.tier === "Lite" && (
-                      <div className="mt-2 text-yellow-500 bg-yellow-500/10 p-2 rounded relative">
-                        <AlertTriangle size={10} className="absolute top-2 right-2" />
-                        <span className="font-bold block mb-1">⚠️ 一時的な接続制限モード</span>
-                        APIアクセス制限を回避するため、自動的に軽量モデル（低消費）に切り替えています。画像やシナリオの品質が一時的に低下する場合がありますが、しばらくお待ちいただくと自動的に元の最高品質に戻ります。
-                      </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })()}
           </div>
         </div>
       </div>

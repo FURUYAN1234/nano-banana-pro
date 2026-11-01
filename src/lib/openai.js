@@ -1,3 +1,4 @@
+import { diagnosticFetch as fetch } from './diagnostics.js';
 import { getApiWorkSignal, throwIfApiWorkCancelled } from './api-work-cancellation.js';
 // ※ OpenAIの画像生成はフォールバック配列を持たず、最高品質の単一モデルを直接指定します。
 import { clearApiSession, getApiCredential, setApiSession } from './api-session.js';

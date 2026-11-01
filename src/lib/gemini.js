@@ -1,3 +1,4 @@
+import { diagnosticFetch as fetch } from './diagnostics.js';
 import { getApiWorkSignal } from './api-work-cancellation.js';
 import { clearApiSession, getApiCredential, setApiSession } from './api-session.js';
 import { geminiSources } from './sns-explanation.js';

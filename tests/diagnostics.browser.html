@@ -1,0 +1,65 @@
+<!doctype html><html lang="ja"><head><meta charset="utf-8"><title>Diagnostics native browser tests (isolated database)</title></head>
+<body><h1>調査ログ：実ブラウザー保存検証（テスト専用DB）</h1>
+<button id="run">保存・期限・容量・障害分離を検証</button>
+<button id="append">別タブから記録</button><button id="read">再読み込み後の記録を確認</button>
+<button id="runtime">テスト用例外を発生</button><pre id="results">未実行</pre>
+<script type="module">
+// This fixture never writes the normal application's database or calls a paid API.
+const nativeIDB = globalThis.indexedDB;
+const isolatedIDB = {open:(_name,version)=>nativeIDB.open('super-furu-diagnostics-browser-test',version)};
+Object.defineProperty(globalThis,'indexedDB',{configurable:true,value:isolatedIDB});
+const d = await import('/src/lib/diagnostics.js');
+const results = document.querySelector('#results');
+const assert = (condition, message) => { if (!condition) throw new Error(message); };
+d.installDiagnostics({version:'browser-test'});
+document.querySelector('#append').onclick = async () => {
+  await d.recordDiagnostic('ui.action',{operation:'other_tab'});
+  results.textContent = JSON.stringify(await d.readDiagnostics(),null,2);
+};
+document.querySelector('#read').onclick = async () => { results.textContent=JSON.stringify(await d.readDiagnostics(),null,2); };
+document.querySelector('#runtime').onclick = () => { setTimeout(()=>{throw new TypeError('synthetic-test-only sk-not-a-real-key');},0); };
+document.querySelector('#run').onclick = async () => {
+  try {
+    await d.clearDiagnostics();
+    await Promise.all(Array.from({length:50},(_,i)=>d.recordDiagnostic('ui.action',{operation:`burst_${i}`})));
+    let report=await d.readDiagnostics();
+    assert(report.storageState==='persistent' && report.events.length===50,'native persistent burst lost events');
+    const db=await new Promise((resolve,reject)=>{const r=isolatedIDB.open('',1);r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});
+    await new Promise((resolve,reject)=>{
+      const tx=db.transaction('logs','readwrite');
+      const now=Date.now();
+      const rows=Array.from({length:2010},(_,i)=>d.makeDiagnosticEvent('ui.action',{operation:`retention_${i}`},{now:now-2010+i}));
+      rows.unshift(d.makeDiagnosticEvent('ui.action',{operation:'expired'},{now:now-8*86400000}));
+      tx.objectStore('logs').put(rows,'events');tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);
+    });
+    report=await d.readDiagnostics();
+    assert(report.events.length===2000 && report.events[0].operation==='retention_10','count/expiry pruning failed');
+    assert(!report.events.some(row=>row.operation==='expired'),'expired record survived');
+    await new Promise((resolve,reject)=>{
+      const tx=db.transaction('logs','readwrite');
+      const rows=Array.from({length:2000},(_,i)=>({...d.makeDiagnosticEvent('ui.action',{operation:`bytes_${i}`}),stack:'x.js:123:45\n'.repeat(150)}));
+      tx.objectStore('logs').put(rows,'events');tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);
+    });
+    report=await d.readDiagnostics();
+    assert(new TextEncoder().encode(JSON.stringify(report.events)).length<=d.DIAGNOSTIC_LIMITS.maxBytes,'UTF8 byte budget exceeded');
+    assert(report.events.length<2000,'byte eviction was not exercised');
+    db.close();
+    Object.defineProperty(globalThis,'indexedDB',{configurable:true,value:undefined});
+    await d.recordDiagnostic('ui.action',{operation:'offline_storage',prompt:'PRIVATE_INPUT',apiKey:'sk-not-a-real-key'});
+    report=await d.readDiagnostics();
+    assert(report.storageState==='memory_only','storage failure not visible');
+    assert(report.events.some(row=>row.operation==='offline_storage'),'memory fallback lost record');
+    Object.defineProperty(globalThis,'indexedDB',{configurable:true,value:isolatedIDB});
+    report=await d.readDiagnostics();
+    assert(report.storageState==='persistent'&&report.events.some(row=>row.operation==='offline_storage'),'recovery lost memory record');
+    assert(!JSON.stringify(report).includes('PRIVATE_INPUT')&&!JSON.stringify(report).includes('sk-not-a-real-key'),'secret persisted');
+    await d.clearDiagnostics();
+    const run=d.beginDiagnosticRun('step2',{step:2,requestedModel:'gpt-6-luna'});
+    await d.recordDiagnostic('api.error',{errorName:'TypeError',errorCode:'NETWORK_ERROR'});
+    d.endDiagnosticRun(run,'settled');
+    report=await d.readDiagnostics();
+    assert(report.events.length===3&&new Set(report.events.map(row=>row.runId)).size===1,'run correlation failed');
+    results.textContent='PASS: native IndexedDB burst50, expiry, count2000, UTF8 2MiB, storage denial+recovery, secret exclusion, run correlation.\n'+JSON.stringify(report,null,2);
+  } catch(error) { results.textContent='FAIL: '+error.stack; }
+};
+</script></body></html>

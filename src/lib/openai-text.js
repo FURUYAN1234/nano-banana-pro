@@ -1,3 +1,4 @@
+import { diagnosticFetch as fetch } from './diagnostics.js';
 import { getApiWorkSignal } from './api-work-cancellation.js';
 /**
  * OpenAI Chat Completions API Client for Nano Banana Pro

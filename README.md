@@ -3,7 +3,7 @@
 > **Source code available; free to use.** Ordinary use, free integration and free provision require no application, prior contact or permission from FURU. You may sell and monetize your own works. External API costs and third-party terms are separate. See Terms & Output Rights below. / **ソースコード公開・利用無料。** 通常利用と無料の組み込み・無料提供に、申請・事前連絡・FURUの許可は不要です。自分の作品は販売・収益化できます。外部API料金と第三者の条件は別です。詳しくは「利用条件・作品の権利」をご確認ください。
 
 
-> Current source version: **v7.2.3** / 現在のソース版: **v7.2.3**
+> Current source version: **v7.2.4** / 現在のソース版: **v7.2.4**
 
 
 An experimental web application in which AI handles topic research, story structure, direction, prompt construction, image generation, and quality review for manga. OpenAI starts in 5–8-panel mode and also supports four panels. Gemini supports four-panel color and monochrome pages only. / AIが話題調査、構成、演出、プロンプト構築、画像生成、品質確認まで担当する漫画制作Webアプリです。OpenAIの初期選択「5～8コマ生成」では、最初から5～8コマのシナリオを作り、漫画にします。「4コマ生成」にも切り替えられます。Geminiはカラー・白黒とも4コマ固定です。
@@ -599,7 +599,7 @@ The copied prompt guides panel order, cast, speaker assignment, acting, camera, 
 The app provides separate download buttons for the workflow JSON and the custom-node ZIP. Both files are needed for this route. / アプリにはワークフローJSONとカスタムノードZIPのダウンロードボタンが別々にあります。この経路では両方のファイルが必要です。
 
 - [Download workflow JSON](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261023195344.json) / [ワークフローJSONをダウンロード](https://furuyan1234.github.io/nano-banana-pro/workflows/FourPanel_NonLM_4step_20261023195344.json)
-- [Download custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.2.3/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip) / [カスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.2.3/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip)
+- [Download custom-node ZIP](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.2.4/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip) / [カスタムノードZIPをダウンロード](https://github.com/FURUYAN1234/nano-banana-pro/releases/download/v7.2.4/ComfyUI_H3_FourPanel_NonLM_20261023195344_authfix1.zip)
 
 Place the three folders included in the ZIP under `ComfyUI/custom_nodes/` and the workflow JSON under `ComfyUI/user/default/workflows/`. Install the separate dependencies below, then restart ComfyUI. / ZIP内の`3フォルダ`を`ComfyUI/custom_nodes/`へ、ワークフローJSONを`ComfyUI/user/default/workflows/`以下へ配置します。下記の別途必要な依存関係を導入してからComfyUIを再起動します。
 
@@ -647,11 +647,15 @@ Every deployment requires a fresh dependency audit, the shared security checks a
 
 ## FAQ / よくある質問
 
+**How can I report a bug? / 不具合の調査ログは？** Open “不具合調査ログ” below the header and refresh it after the failure. Give the investigating AI the JSON with the time and operation that failed. The same browser/origin retains the most recent seven days, with oldest-first eviction at 2 MiB of event data or 2,000 events; database overhead is additional. Pruning runs on startup, writes, reads and hourly while open. Public and localhost logs are separate. If browser storage fails, the viewer warns that only temporary memory recording is available. / ヘッダー下の「不具合調査ログ」を開き、不具合後に「最新に更新」してください。発生時刻・操作と一緒にJSONを調査担当のAIへ渡せます。同じブラウザー・同じURLの保存領域に直近7日分を残し、記録データ2MiBまたは2,000件を超えると古い方から削除します（DBの管理容量は別）。起動・記録・閲覧時と、画面を開いている間は1時間ごとに削除を確認します。公開版とlocalhostは別記録です。保存できない場合は一時記録のみであることを表示します。
+
+The log records settings, execution/request IDs, HTTP results, observed response model IDs, error codes and reduced source locations. It omits API keys, headers, text/image bodies and full exception messages. A received HTTP response or an ended busy state is not a quality verdict. Logs do not transmit themselves to an AI; an AI operating the browser can read the viewer, or the user can provide its JSON. / 設定、実行・通信ID、HTTP結果、応答から取得できたモデルID、エラーコードと発生元のファイル名・行番号を記録します。APIキー、ヘッダー、台本・プロンプト・画像本体、例外メッセージ全文は保存しません。HTTP応答や処理終了だけで内容・品質が合格したとは扱いません。ログが自動的にAIへ送信される機能ではなく、ブラウザーを操作するAIが表示を読むか、JSONを渡して調査します。
+
 **Does this guarantee perfect Japanese text? / 日本語を完全に正しく描けますか？**  No. The prompt and QA reduce known failure modes, but generated glyphs remain model output and require visual confirmation. / いいえ。プロンプトとQAで既知の失敗を減らしますが、生成文字はモデル出力のため目視確認が必要です。
 
 **Why are there two ComfyUI download buttons? / ComfyUIのダウンロードボタンが2つあるのはなぜですか？**  The JSON defines the workflow, while the ZIP supplies three custom-node folders and documentation; three additional runtime dependencies are installed separately. / JSONはワークフロー定義、ZIPはカスタムノード3フォルダーと導入文書です。さらに実行依存3項目を別途導入します。
 
-**Which video package should I install? / 動画化には何を入れますか？** Use the `20261023195344` workflow JSON and matching v7.2.3 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261023195344` のワークフローJSONと対応するv7.2.3 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
+**Which video package should I install? / 動画化には何を入れますか？** Use the `20261023195344` workflow JSON and matching v7.2.4 FourPanel Release asset. Follow the bundled environment and validation instructions. / `20261023195344` のワークフローJSONと対応するv7.2.4 FourPanel Releaseアセットを使い、同梱の環境要件と確認手順に従ってください。
 
 **Is this the T2V/I2V/Ref2V repository? / T2V・I2V・Ref2Vのリポジトリですか？**  No. Those workflows are maintained separately in [`comfyui-h3-workflows`](https://github.com/FURUYAN1234/comfyui-h3-workflows). / いいえ。それらは別の[`comfyui-h3-workflows`](https://github.com/FURUYAN1234/comfyui-h3-workflows)で管理します。
 
@@ -758,6 +762,9 @@ Load a completed four-panel manga into [AI Voice Comic Maker](https://github.com
 | Narration Video Maker / ナレーション動画メーカー | Video generation with narration, subtitles, and BGM / ナレーション・字幕・BGM付き動画生成 | [`gemini-narration-studio`](https://github.com/FURUYAN1234/gemini-narration-studio) |
 
 ## 📋 ChangeLog / 更新履歴
+
+### v7.2.4 (2026-11-01)
+- **[Fix & UX]** Remove the redundant header model badge and add bounded diagnostic logs with JSON export for AI-assisted bug investigation. / 不要なヘッダーモデル表示を削除。AIの不具合調査用に期限・容量制限付きの動作ログとJSON保存を追加。
 
 ### v7.2.3 (2026-11-01)
 - **[Fix & UX]** Synchronize STEP1 character name fields and profile headings in both directions, retain cross-sheet and copy/deletion links, and detect empty or conflicting names. Local STEP1 Luna verification now stops without fallback. / STEP1の人物名欄と人物設定の名前見出しを双方向に同期。同じ人物の別シート・コピー・削除時の対応を保ち、空欄と別人との同名を検出。ローカルSTEP1のLuna検証はフォールバックせず停止。

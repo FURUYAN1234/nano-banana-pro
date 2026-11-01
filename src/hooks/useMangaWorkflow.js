@@ -1,3 +1,5 @@
+import { useWorkflowDiagnostics } from './useWorkflowDiagnostics.js';
+import { diagnosticConsole as console } from '../lib/diagnostics.js';
 import { resolveAutoScenarioMode } from '../lib/scenario-validation.js';
 import { getBuiltinPanelMediumReference } from '../lib/builtin-panel-medium-reference.js';
 import { getImageContentHash, buildReferenceRecognitionMetadata } from '../lib/generated-image-metadata.js';
@@ -345,6 +347,16 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
   const outputRef = useRef(null);
   const imageResultRef = useRef(null);
   const genLogRef = useRef(null); // [v2.88] Auto-scroll for Image Gen Log
+
+  useWorkflowDiagnostics({
+    isAnalyzing, isSearching, isAssembling, isGeneratingImage, isEnhancing, isFixingPolicy,
+    provider: isOpenAIEngine ? 'openai' : 'gemini',
+    analysisModel: isOpenAIEngine ? analysisModelId : undefined,
+    scenarioModel: isOpenAIEngine ? scenarioModelId : undefined,
+    promptModel: isOpenAIEngine ? promptModelId : undefined,
+    inputMode, colorMode, fullAuto: isFullAutoMode, experimental: isExperimentalPage(),
+    imageCount: images.length, scenarioLength: scenario.length, promptLength: finalPrompt.length,
+  });
 
   // [v2.88] Auto-scroll genLog terminal
   useEffect(() => {
@@ -741,7 +753,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
       isEndlessModeRef.current = armedEndless;
       setIsEndlessMode(armedEndless);
     }
-    beginApiWork();
+    beginApiWork('step1', {imageCount: analysisImages.length});
 
     // [v3.50] 360度画像が検出された場合、バックグラウンドで空間解析を実行
     // ※ v3.48時点ではこのブロックがtry-catchの外にあり、さらに bg360Enabled state が未定義だったため
@@ -771,7 +783,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
         inputEpoch = scenarioRunEpochRef.current;
         isAnalyzingRef.current = true;
         setIsAnalyzing(true);
-        beginApiWork();
+        beginApiWork('step1');
         setCustomLocation('');
         showStatus('360°背景の空間解析に失敗しました。画像を確認して再試行してください。');
       } finally {
@@ -877,7 +889,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
   // シナリオ強化機能: 選択されたカテゴリに基づいてシナリオの演出を強化する
   const enhanceScenario = async () => {
     if (referenceEditorError) return showStatus(referenceEditorError);
-    beginApiWork();
+    beginApiWork('enhance');
     if (!scenario || scenario.length < 20) return showStatus("先にシナリオを生成してください。");
     const anySelected = enhanceExpressions || enhanceBodyLang || enhanceEffects || enhanceBackgrounds || enhanceCameraWork || enhanceDialogue || enhanceGag;
     if (!anySelected) return showStatus("少なくとも1つの強化カテゴリをONにしてください。");
@@ -989,7 +1001,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
   // --- Step 2: Scenario ---
   const generateScenarioFromNews = async (categoriesOverride, inputModeOverride = null, options = {}) => {
     if (referenceEditorError) return showStatus(referenceEditorError);
-    beginApiWork();
+    beginApiWork('step2');
     if (!castList) return showStatus("先にキャラクターを解析してください。");
     if (isSearching) return;
 
@@ -1364,7 +1376,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
       showStatus(error.message);
       return null;
     }
-    beginApiWork();
+    beginApiWork('step3');
     const promptScenarioEpoch = scenarioRunEpochRef.current;
     const currentScenario = overrideScenario || scenario;
     if (!skipGuard && (!castList || !currentScenario)) return showStatus("キャストとシナリオが必要です。");
@@ -1933,7 +1945,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
         colorMode: sourceHistory?.metadataContext?.settings?.color_mode || colorMode,
       });
       if (!isCurrent()) return null;
-      beginApiWork();
+      beginApiWork('panel_edit');
       const response = isOpenAIEngine
         ? await generateImageWithOpenAI(edit.request.prompt, log, {
           quality: openAIImageQuality, size: edit.plan.size, imageInputs: edit.request.imageInputs, panelEdit: true,
@@ -2018,7 +2030,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
   };
 
   const editGeneratedImage = async (instruction) => {
-    beginApiWork();
+    beginApiWork('image_edit');
     const epoch = scenarioRunEpochRef.current;
     if (!generatedImage || isGeneratingImage || isSearching || isAssembling || isEnhancing
       || isAnalyzing || is360CameraWorking || isFixingPolicy || isFullAutoMode
@@ -2140,7 +2152,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
       showStatus(error.message);
       return false;
     }
-    beginApiWork();
+    beginApiWork('step4');
     setImageQualityNeedsRepair(false);
     const editablePrompt = overridePrompt || finalPrompt;
     const generationScenario = generationOptions.sourceScenario ?? scenario;
@@ -2912,7 +2924,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
   // Phase 1: AIが「問題箇所 → 安全な置換」のJSONテーブルを出力
   // Phase 2: そのテーブルを機械的に元プロンプトに適用（全文再出力不要）
   const regenerateSafePrompt = async () => {
-    beginApiWork();
+    beginApiWork('safe_prompt');
     if (!finalPrompt || !policyErrorMsg.trim()) return;
     const policyEpoch = scenarioRunEpochRef.current;
     setIsFixingPolicy(true);

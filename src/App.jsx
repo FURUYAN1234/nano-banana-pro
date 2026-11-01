@@ -8,10 +8,11 @@ import {
 import { getOpenAIApiKey } from './lib/openai';
 
 // --- Refactored Imports (Phase 1-2) ---
-import { SYSTEM_VERSION, getPunchlineLabel, getModelBadgeInfo } from './lib/constants';
+import { SYSTEM_VERSION, getPunchlineLabel } from './lib/constants';
 
 // --- Custom Hook (all business logic) ---
 import useMangaWorkflow from './hooks/useMangaWorkflow';
+import DiagnosticLogPanel from './components/DiagnosticLogPanel';
 
 // --- UI Components ---
 import ApiKeyModal from './components/ApiKeyModal';
@@ -213,7 +214,6 @@ function App() {
     setStyleJson,
     targetDate,
     toggleCategory,
-    usedModel,
   } = useMangaWorkflow({experimentalEnabled:experimentEnabled,onAutoPageModeChange:setExperimentEnabled});
   const nativePageModeEnabled = experimentEnabled && getEffectiveEngine(selectedEngine, enableOpenAIApi) === 'openai';
 
@@ -367,12 +367,11 @@ function App() {
           partialReset={partialReset}
           step1Reset={step1Reset}
           hardReset={hardReset}
-          usedModel={usedModel}
-          getModelBadgeInfo={getModelBadgeInfo}
         /></div>
 
 
 
+        <DiagnosticLogPanel />
         <AutoSaveSettingsButton autoSaveVerified={autoSaveVerified} onVerified={() => setAutoSaveCheckStatus('passed')} />
         <main className="space-y-8" style={{ filter: isMainLocked ? 'blur(10px)' : 'none', pointerEvents: isMainLocked ? 'none' : 'auto', transition: 'filter 0.5s ease' }}>
           {getEffectiveEngine(selectedEngine, enableOpenAIApi) === 'openai' && (

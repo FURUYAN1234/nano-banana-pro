@@ -1,14 +1,19 @@
 import { createApiError } from './api-errors.js';
+import { recordDiagnostic, beginDiagnosticAction } from './diagnostics.js';
 
 // One in-memory signal spans text, image streams, QA and provider fallbacks.
 // Old requests keep their aborted signal when a new user action starts.
 let workController = new AbortController();
 
-export const beginApiWork = () => {
+export const beginApiWork = (operation = 'api_work', metadata = {}) => {
+  beginDiagnosticAction(operation, metadata);
   if (workController.signal.aborted) workController = new AbortController();
 };
 
-export const cancelApiWork = () => workController.abort();
+export const cancelApiWork = () => {
+  void recordDiagnostic('workflow.cancel', {outcome:'requested'});
+  workController.abort();
+};
 
 export const getApiWorkSignal = (signal) => signal
   ? AbortSignal.any([workController.signal, signal]) : workController.signal;

@@ -1,3 +1,5 @@
+import { recordDiagnostic, getDiagnosticRequest } from './diagnostics.js';
+
 // Keep provider evidence separate from the user-facing diagnosis. Never infer
 // congestion from an unknown exception, and never expose credentials in logs.
 export const sanitizeErrorMessage = value => String(value ?? '')
@@ -22,6 +24,12 @@ export const readApiJson = async (response, details) => {
       ...details, status:response.status, code:response.ok ? 'INVALID_RESPONSE' : 'HTTP_ERROR'
     });
   }
+  void recordDiagnostic('api.payload', {...getDiagnosticRequest(response), provider: details?.provider,
+    requestedModel: details?.model, responseModel: data?.model || data?.modelVersion,
+    status: response.status, ok: response.ok && !data?.error,
+    errorCode: data?.error?.code || data?.error?.status,
+    inputTokens: data?.usage?.input_tokens ?? data?.usage?.prompt_tokens ?? data?.usageMetadata?.promptTokenCount,
+    outputTokens: data?.usage?.output_tokens ?? data?.usage?.completion_tokens ?? data?.usageMetadata?.candidatesTokenCount});
   if (!response.ok || data?.error) {
     throw createApiError(data?.error?.message || response.statusText || `HTTP ${response.status}`, {
       ...details, status:response.status, code:data?.error?.status || data?.error?.code || 'HTTP_ERROR'

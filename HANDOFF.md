@@ -1,3 +1,23 @@
+## CURRENT — v7.2.4 実API検証済み・デプロイ直前の許可待ちへ準備中（2026-11-01）
+
+本人の訂正「API検証までしてデプロイ手前で許可を貰う」を現行境界とする。下のLOCAL FOLLOW-UPのローカル終了判断は撤回済み。v7.2.3のPages/Release/C配布コピー、note/Facebookと正式フルバックアップは完了済みで、下の同版の未実施記述は当時の履歴である。今回のpush・公開・デプロイ・追加バックアップはまだ行わない。
+
+- 変更：不要なヘッダーモデルバッジを削除し、ブラウザー内の期限・容量制限付き調査ログと表示/JSON保存を追加。7日・記録データ2MiB・2,000件、古い順に削除。秘密情報・本文・画像本体は除外。保存失敗時は一時記録と明示する。AIは不具合調査時に該当originのログを先に読み、実行/通信IDとソースを照合する。自動送信はない。
+- 実API：通常画面v7.2.4でSTEP1〜4完了。STEP1の実通信で見つかった準備/通信間の実行ID分断と古い画像枚数を修正し、本人が許可した1回の再解析で同一ID・送信2枚を確認。STEP1/2/3は選択・応答ともGPT-6 Lunaでフォールバックなし。STEP2は通常4コマの内部監査を含む2通信、STEP3は1通信。実解析結果で名前の双方向同期も確認。
+- STEP4：通常4コマ、カラー、A4大2240×3168、GPT Image 2.5 Sunburst/maxを要求し、画像を1回生成。追加の自動検査・修正はOFF。HTTP200と通常UIの完了を確認し、表示PNG全バイトを回収してCRC/デコード/SHA256を検証。人物2人・4コマ・台詞と話者・髪/眼鏡/衣装を目視確認。画像応答のモデルIDは得られていないため採用モデルの断定はしない。ブラウザーのOS保存完了と制作情報入りPNG保存は未確認（画像生成自体と区別）。追加の有料生成はしない。
+- 検証記録：/home/furu/Codex/work/workflow-diagnostics-20261101/ の step1-retry-result.json、step2-result.json、step3-result.json、step4-result.json、api-complete-report.json、api-image-integrity.json。表示原本 api-generated-result.png のSHA256は8e0ad8387b1b9b131735f8dfb5bd39b5ccaa408027b75a599b2d2605e58a6a9f。最新の別操作ID混入回帰は修正前1失敗→修正後8件成功。正常な実API経路と共通通信は変更せず、別操作の古いIDを隔離した。
+- 文書：README全17節の差分照合、v7.2.4日英説明、PDF3冊（12/19/40ページ）の全71ページを確認。調査ログの新設ページ32・目次を単独確認し、公開PDFは確認済みのバイト列と一致。公式料金は当日のOpenAI/Gemini表と照合済み。最終のソース対応監査・全テスト・lint・build・公開前preflightを揃える。
+- ブラウザー：同作業の旧版・完了済みタブは閉じ、内蔵ブラウザーの現行アプリ http://127.0.0.1:5173/ だけを残した。キーはメモリー内のみ。追加入力を頼む前は対象版・右側の表示幅・入力欄・実タブ一覧を確認し、接続済みなら再入力を求めない。現在は有料処理なし。接続やタブIDは継続時に現物を再確認する。
+- 次：公開前検査を完了後、v7.2.4のGitHub Pages/Release/C配布コピーを正式 publish_app_release.ps1 で更新する直前に本人の許可を求める。許可前にpushや正式公開トランザクションを開始しない。
+
+## HISTORICAL LOCAL FOLLOW-UP — header badge removal and bounded diagnostic logs (2026-11-01)
+
+User asked to remove the header model badge and retain logs that this AI can inspect before bugfixes. Local implementation only; the earlier v7.2.3 delivery/backup finished and this follow-up does not authorize a new deploy/publication/backup/API generation. Working evidence: /home/furu/Codex/work/workflow-diagnostics-20261101/.
+
+Removed badge UI/props while retaining model selection and process logs. Native IndexedDB stores seven days with oldest-first 2MiB event-data/2000-event caps, pruning on open/read/write/hourly. Viewer/export is available below the header and on React crash. Persistence failure falls back to bounded memory with an explicit warning. Structured settings, action/run/request IDs, HTTP/payload metadata, reduced error locations and observed workflow lifecycle omit keys, bodies and full exception text. App AGENTS requires reading the affected origin's log before reset/reload during bug investigation. HTTP success and settled workflow state do not establish generated-content quality.
+
+Verification: native IndexedDB expiry/count/UTF8 bytes/burst/storage-denial-recovery/secret exclusion/run IDs passed. Exception capture, reload and second-tab retention observed; normal UI JSON export saved and parsed (20events). Header SSR with a nonempty usedModel confirms badge absence and existing controls. Full suite2058/2059 passed; its sole stale-README-hash issue was corrected and all12 diagnostics+README checks passed, followed by31 focused checks after final setting/version adjustments. Full lint warning0 and final production build/web-security passed (existing bundle/import warnings retained). Screenshot diagnostics-local.png is in the chat outputs folder. No paid API call was added and no new deploy/backup ran. PDF/manual/publication review remains for a future authorized release.
+
 ## CURRENT — v7.2.3 character-name synchronization, release authorized (2026-11-01)
 
 - User requested live synchronization from STEP1 name fields to profile headings and the reverse, then real API verification, deployment, existing note/Facebook updates, X text only, and a final official full backup with independent verification. No subagents.

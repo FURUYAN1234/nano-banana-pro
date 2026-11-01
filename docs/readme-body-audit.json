@@ -1,26 +1,26 @@
 {
   "pricingSourceSha256": "293573da772b498b7d393da778fd230a23384f7e73262974a57a0a764a26f460",
-  "manualVersion": "7.2.3",
-  "manualSourceSha256": "3582b1dcc197f18689fb16523411cf0490321dbe4dddc10ebd1e0f57b2233de0",
+  "manualVersion": "7.2.4",
+  "manualSourceSha256": "6db78fddd659cdaf1bcd6cdbc9e92dec838d4dd598ba8b8ce16eead99fce5339",
   "manualFiles": [
     {
       "name": "gemini-api-beginner-guide-2026-10-01.pdf",
-      "sha256": "d17081f94f5dbc4048ade4c71b16db838f16d68776aba90fc880aa82b538c7f1"
+      "sha256": "53764e98f37288b9073c75d7ebd632d3e35088e3706cc873315288272a8cbc34"
     },
     {
       "name": "openai-api-beginner-guide-2026-09-30.pdf",
-      "sha256": "c5ab245c87238e27c80f79887bee64f0a288957d40d760daec179dc549e9558d"
+      "sha256": "992a4f7b59d53110bf4db8494a33f322fa398f659d31b0c2b7f3a763b444249d"
     },
     {
       "name": "super-furu-ai-4koma-full-manual-2026-10-01.pdf",
-      "sha256": "dd4e53d0bafc2e2626c15baef9cbfe0407f9b17acfd840153456a0871baed431"
+      "sha256": "34b8ed769dd05afeba5cccabb51eaffc3bae356b3f5467b7877d6279c63050d4"
     }
   ],
-  "readmeSha256": "4fbd9c1b11d40e7fe1df747ccdefa43710e355a61bdf6783e24769f1e7f9e1f0",
+  "readmeSha256": "89cc03f7eddbff55dc215cac74171fbae951a2ce7b6422c15e1fa992f2b22595",
   "readmeLanguageGaps": [],
-  "sourceTree": "ee21463c5d60e36df306785b73b86788dc7152d4",
-  "publicTree": "332f4def6eb55c7f9dea2cc82de0e6fc9fd37feb",
-  "packageSha256": "a234d52b06e5623cf27196d03269a6af1abc6d330ecf35c4daf1c2d6eab5ce35",
+  "sourceTree": "898474634a52e40bd696592940f84a5d44d46e25",
+  "publicTree": "2eeb5ac536679a78277704736990d9223dcc416c",
+  "packageSha256": "deb81bdc96668341d0714df07872d5567282733ab3c893d3c84cfc52aea658c9",
   "releaseAssetSha256": "c2c6e430de40f14279cd7a97624164f9cb7e46105eadb0763c01ed9fb1a3f96e",
   "reviewedSections": [
     "Application screen and output / 操作画面と生成例",
@@ -41,13 +41,13 @@
     "AI Manga Creative Suite / AIまんが制作エコシステム",
     "📋 ChangeLog / 更新履歴"
   ],
-  "checkedAt": "2026-11-01T09:10:07.326Z",
-  "findings": "Reused the same-day whole-README review of v7.2.2 for unchanged behavior and compared every current section against this bounded source diff. Checked the updated STEP1 names/profiles, source-bound deletion, duplicate and empty drafts, copy invalidation, local-only Luna vision route, current source/download version, bilingual release entry, 17-section coverage, unchanged public API modes/privacy/licensing and release asset. Actual normal STEP1 with selected/actual GPT-6 Luna completed and both name-edit directions passed. No STEP2/3/4 generation or OS clipboard byte readback is claimed.",
-  "manualFindings": "Rebuilt v7.2.3 Gemini12, OpenAI19 and full39-page PDFs in the WSL task workspace. Reviewed all70 pages in13 contact sheets and inspected full-manual STEP1 page5 individually. After local-Luna wording changed, rebuilt and inspected affected page28 individually; unchanged layouts reused the just-completed review. A4, footer/version, page count, naming/privacy, text-bounds and link checks passed. Published download files exactly match reviewed PDF bytes.",
+  "checkedAt": "2026-11-01T11:22:35.648Z",
+  "findings": "Reused the unchanged same-day whole-body v7.2.3 review and compared the complete bounded v7.2.4 source/document diff across all 17 README sections. Current-source and download references, bilingual changelog, FAQ retention/privacy/storage warnings and AI investigation instructions match the implemented UI and native IndexedDB behavior. Model selection and workflow behavior remain available after removing the header badge. Normal STEP1 through STEP4 real API runs completed: observed GPT-6 Luna for text/vision without fallback; requested Sunburst/max image generated and manually reviewed. Logging correlation was checked against the actual request/payload/end events. HTTP success is explicitly distinct from quality acceptance. OS clipboard byte readback and metadata-bearing browser image-save completion are not claimed. Existing release asset, licensing, routes and unchanged legacy instructions reuse the same-day baseline review. This audit binds the staged source/public tree that will become the candidate commit; nothing has been pushed or deployed.",
+  "manualFindings": "Rebuilt v7.2.4 Gemini12, OpenAI19 and full40-page PDFs in WSL. Visually inspected all71 pages in13 contact sheets, then the updated full-manual TOC and new diagnostic-log page32 individually. Checked A4 text bounds, current version/footer, page numbering, privacy/naming and links. Retention, origin separation, excluded payloads, storage-failure warning and handing JSON to an AI match source and real browser observations. Public PDFs exactly match the reviewed files; SHA256 values are recorded here.",
   "pricingReview": {
-    "version": "7.2.3",
+    "version": "7.2.4",
     "sourceSha256": "293573da772b498b7d393da778fd230a23384f7e73262974a57a0a764a26f460",
-    "checkedAt": "2026-11-01T09:10:07.329Z",
+    "checkedAt": "2026-11-01T11:22:35.648Z",
     "sources": [
       "https://developers.openai.com/api/docs/pricing",
       "https://ai.google.dev/gemini-api/docs/pricing",
@@ -55,6 +55,6 @@
       "https://developers.openai.com/api/docs/models/gpt-5.6-terra",
       "https://developers.openai.com/api/docs/models/gpt-5.6-luna"
     ],
-    "findings": "Opened both official pricing pages on2026-11-01 before publication. Standard short-context GPT-6 Astra10/50, Sol6.1 2/10, Terra6.1 1/5 and Luna6 .10/.50 USD per1M input/output match the app; GPT Image2.5 input8/output30 and text input5 match. Gemini3.8 Flash .75/3.75 through2026-12-31 and Nano Banana2.1 input1.50/text-thinking7.50/image30 with1K .0336 match. Batch/Flex discounts are separate. Same-day prior official review covers unchanged legacy rows; pricing source hash is unchanged."
+    "findings": "Reopened both official pricing pages on2026-11-01 for this candidate. Standard short-context GPT-6 Astra10/50, Sol6.1 2/10, Terra6.1 1/5 and GPT-6 Luna .10/.50 USD per1M input/output match the app. Image2.5 image input8/output30, text input5 and cached image2/text1.25 match. Gemini3.8 Flash .75/3.75 through2026-12-31 and Nano Banana2.1 input1.50/text-thinking7.50/image30 with1K .0336 match. Batch/Flex50% discounts remain separate. Same-day earlier official review covers unchanged legacy rows. The pricing source hash is unchanged."
   }
 }

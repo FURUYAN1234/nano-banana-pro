@@ -1,5 +1,7 @@
 import React from 'react';
 import { version } from '../../package.json';
+import { recordDiagnostic, summarizeDiagnosticError } from '../lib/diagnostics.js';
+import DiagnosticLogPanel from './DiagnosticLogPanel.jsx';
 
 const SYSTEM_VERSION = `v${version}`;
 
@@ -10,7 +12,10 @@ class ErrorBoundary extends React.Component {
     this.state = { hasError: false, error: null, errorInfo: null };
   }
   static getDerivedStateFromError(error) { return { hasError: true, error }; }
-  componentDidCatch(error, errorInfo) { this.setState({ errorInfo }); console.error("CRITICAL ERROR:", error, errorInfo); }
+  componentDidCatch(error, errorInfo) {
+    void recordDiagnostic('react.error', summarizeDiagnosticError(error));
+    this.setState({ errorInfo }); console.error("CRITICAL ERROR:", error, errorInfo);
+  }
   render() {
     if (this.state.hasError) {
       return (
@@ -21,6 +26,7 @@ class ErrorBoundary extends React.Component {
             <br />
             {this.state.errorInfo?.componentStack}
           </pre>
+          <DiagnosticLogPanel />
           <button onClick={() => window.location.reload()} style={{ padding: 10, marginTop: 20 }}>RETRY</button>
         </div>
       );

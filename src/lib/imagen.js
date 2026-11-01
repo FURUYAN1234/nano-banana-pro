@@ -1,3 +1,4 @@
+import { diagnosticFetch as fetch } from './diagnostics.js';
 import { getApiWorkSignal, throwIfApiWorkCancelled } from './api-work-cancellation.js';
 import { getApiKey } from "./gemini.js";
 import { createApiError } from "./api-errors.js";
