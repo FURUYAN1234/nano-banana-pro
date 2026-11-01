@@ -38,7 +38,8 @@ export const getOpenAIScenarioModelRoute = (selectedModelId = 'auto', isDevelopm
 };
 
 export const OPENAI_VISION_MODEL_IDS = [...OPENAI_TEXT_MODEL_IDS];
-export const getOpenAIVisionModelRoute = (selectedModelId = 'auto') => {
+export const getOpenAIVisionModelRoute = (selectedModelId = 'auto', isDevelopment = import.meta.env?.DEV === true) => {
+  if (isDevelopment && selectedModelId === 'gpt-6-luna') return ['gpt-6-luna'];
   const selectedIndex = OPENAI_VISION_MODEL_IDS.indexOf(selectedModelId);
   return selectedIndex >= 0 ? OPENAI_VISION_MODEL_IDS.slice(selectedIndex) : OPENAI_VISION_MODEL_IDS;
 };

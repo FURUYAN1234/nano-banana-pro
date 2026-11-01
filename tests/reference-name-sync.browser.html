@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8"><title>STEP1 人物名同期のローカル回帰確認</title></head><body>
+<div id="root"></div>
+<script type="module">
+import React from 'react';
+import {createRoot} from 'react-dom/client';
+import useMangaWorkflow from '/src/hooks/useMangaWorkflow.js';
+import Step1Panel from '/src/components/Step1Panel.jsx';
+import {buildRecognitionEditorText} from '/src/lib/reference-assets.js';
+import '/src/index.css';
+import '/src/App.css';
+
+// The actual hook and STEP1 UI, seeded with local regression data. No API calls.
+function Fixture() {
+  const flow = useMangaWorkflow();
+  const load = () => {
+    const image = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="90" height="90"><rect width="90" height="90" fill="gray"/></svg>');
+    const images = [image];
+    const castList = 'STYLE_TAG: COLOR\n\n## 1. 仮名\n眼鏡をかけた人物。\n\n## 2. 仮名太郎\n別の人物。';
+    flow.setImages(images);
+    flow.setRecognitionText(buildRecognitionEditorText(castList,[{image,items:[
+      {kind:'character',name:'仮名',description:'「仮名」の資料'},
+      {kind:'character',name:'仮名太郎',description:'別の人物の資料'},
+    ]}],images));
+  };
+  return React.createElement(React.Fragment,null,
+    React.createElement('p',null,'ローカル回帰用データです。実API解析の証拠ではありません。'),
+    React.createElement('button',{onClick:load},'検証データ読込'),
+    React.createElement(Step1Panel,{...flow,showStatus:()=>{},setShowModal:()=>{}}),
+    React.createElement('pre',{'aria-label':'同期後のコピー内容'},flow.recognitionText));
+}
+createRoot(document.getElementById('root')).render(React.createElement(Fixture));
+</script></body></html>

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {reconcileReferenceCast, remapReferenceNumbers, mergeReferenceAnalysis, buildRecognitionEditorText, buildWebReferencePlan} from '../src/lib/reference-assets.js';
+import {reconcileReferenceCast, remapReferenceNumbers, mergeReferenceAnalysis, buildRecognitionEditorText, buildWebReferencePlan, editReferenceAsset, editReferenceCast} from '../src/lib/reference-assets.js';
 import {DEFAULT_OPENAI_STEP1_MODEL_ID, DEFAULT_OPENAI_STEP3_MODEL_ID} from '../src/lib/openai-model-routes.js';
 
 const source = readFileSync(new URL('../src/hooks/useMangaWorkflow.js',import.meta.url),'utf8');
@@ -12,7 +12,7 @@ function workflow() {
   const b = {image:'b',analysisCompleted:true,items:[{kind:'prop',name:'box',description:'User box'}]};
   const state = {castList:'## A\nFront view',images:['a','b'],scenario:'old scenario',finalPrompt:'old prompt',manualTopic:'画像2を使う。画像3を舞台にする。',bg360Image:'panorama',isAnalyzing:true,is360Analyzing:true};
   const ctx = { promptAssemblyRunRef:{current:0}, DEFAULT_OPENAI_STEP1_MODEL_ID, DEFAULT_OPENAI_STEP3_MODEL_ID,
-    DEFAULT_CATEGORIES:[], reconcileReferenceCast,remapReferenceNumbers,finishScenarioTiming:()=>{},cancelApiWork:()=>{state.cancelled=true;},
+    DEFAULT_CATEGORIES:[], reconcileReferenceCast,remapReferenceNumbers,editReferenceAsset,editReferenceCast,castNameBaselineRef:{current:state.castList},finishScenarioTiming:()=>{},cancelApiWork:()=>{state.cancelled=true;},
     invalidatePromptAssembly:()=>{},showStatus:()=>{},resetScenarioModelId:()=>{},
     scenarioRunEpochRef:{current:5},scenarioUsedModelRef:{current:null},qualityRetryAbortRef:{current:false},fullAutoAbortRef:{current:false},
     isFullAutoModeRef:{current:true},isEndlessModeRef:{current:true},isAnalyzingRef:{current:true},
@@ -28,9 +28,24 @@ function workflow() {
     assert.ok(definition,name);
     return new Function(...Object.keys(ctx),`return ${definition[1]} => {${definition[2]}}`)(...Object.values(ctx))(...args);
   };
-  for (const name of ['invalidateScenarioRun','invalidateReferenceOutputs','setImages','setCastList','setReferenceAssets','setBg360Image','setBg360Enabled','resetPageCaches','partialReset','step1Reset','hardReset','editReferenceItem']) ctx[name]=bind(name);
+  for (const name of ['invalidateScenarioRun','invalidateReferenceOutputs','setImages','setCastList','setReferenceAssets','setBg360Image','setBg360Enabled','resetPageCaches','partialReset','step1Reset','hardReset','editReferenceItem','editCastList']) ctx[name]=bind(name);
   return {state,ctx,a,b};
 }
+
+test('actual STEP1 handlers synchronize in both directions, including clear-then-type and subsequent deletion',()=>{
+  const {state,ctx}=workflow();
+  state.recognitionDraft='old serialized recognition';
+  ctx.editReferenceItem('a',0,'name','Named');
+  assert.match(ctx.castListRef.current,/## Named/);
+  assert.equal(state.recognitionDraft,null);
+  assert.equal(state.scenario,''); assert.equal(state.finalPrompt,'');
+  ctx.editCastList(ctx.castListRef.current.replace('## Named','## '));
+  ctx.editCastList(ctx.castListRef.current.replace('## ','## Final'));
+  assert.equal(ctx.referenceAssetsRef.current[0].items[0].name,'Final');
+  assert.equal(ctx.referenceAssetsRef.current[0].castProfiles.Final,'## Final\nFront view');
+  ctx.setImages(['b']);
+  assert.equal(ctx.castListRef.current,'');
+});
 
 for(const action of ['partialReset','step1Reset','hardReset']) test(`${action} releases recognition state and synchronous guard, rejecting obsolete completion`,()=>{
   const {state,ctx}=workflow(); const oldEpoch=ctx.scenarioRunEpochRef.current;

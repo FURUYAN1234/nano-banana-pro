@@ -64,6 +64,96 @@ const castSections = text => {
   return { profiles, preamble };
 };
 
+// 名前だけを変更しても、元画像と人物設定の対応・削除時の寿命を維持する。
+const linkedCastName = item => item.castName ?? item.name;
+const nameSyncError = (castList, assets) => {
+  const names = collectCastNameEntries(castList).map(entry => entry.displayName);
+  if (new Set(names).size !== names.length) return '別の人物と同じ名前の見出しがあります。別名を入力してください。';
+  if (assets.some(asset => asset.items.some(item => item.kind === 'character'
+    && (!item.name.trim() || (item.castName !== undefined && item.name.trim() !== item.castName))))) {
+    return '人物名の編集を完了してください。空欄や別の人物と同じ名前は使用できません。';
+  }
+  return '';
+};
+const renameCharacters = (castList, assets, renames, knownCast = castList) => {
+  const names = [...new Set([
+    ...collectCastNameEntries(knownCast).map(entry => entry.displayName),
+    ...assets.flatMap(asset => asset.items.filter(item => item.kind === 'character').map(linkedCastName)),
+    ...renames.keys(),
+    ...renames.values(),
+  ])].filter(Boolean);
+  const escaped = names.sort((a, b) => b.length - a.length).map(name => name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+  const pattern = new RegExp(escaped.join('|'), 'g');
+  const replace = text => String(text || '').replace(pattern, (name, offset, input) => {
+    // A must not match Appearance/Alice; longer known Japanese names win first.
+    if (/^[\w]/.test(name) && /[\w]/.test(input[offset - 1] || '')) return name;
+    if (/[\w]$/.test(name) && /[\w]/.test(input[offset + name.length] || '')) return name;
+    return renames.get(name) ?? name;
+  });
+  const result = {
+    castList: replace(castList), error: '',
+    assets: assets.map(asset => ({ ...asset,
+      items: asset.items.map(item => item.kind !== 'character' ? item : {
+        ...item, name: renames.get(linkedCastName(item)) ?? item.name,
+        castName: renames.get(linkedCastName(item)) ?? linkedCastName(item),
+        description: replace(item.description),
+        userEdited: item.userEdited || renames.has(linkedCastName(item)),
+      }),
+      ...(asset.castProfiles ? {castProfiles: Object.fromEntries(Object.entries(asset.castProfiles)
+        .map(([name, profile]) => [renames.get(name) ?? name, replace(profile)]))} : {}),
+      ...(asset.castPreamble ? {castPreamble: replace(asset.castPreamble)} : {}),
+    })),
+  };
+  result.error = nameSyncError(result.castList, result.assets);
+  return result;
+};
+
+export function editReferenceAsset(castList, assets, image, itemIndex, field, value) {
+  const asset = assets.find(entry => entry.image === image);
+  const item = asset?.items[itemIndex];
+  if (!item || !['name', 'description'].includes(field)) return {castList, assets, error: ''};
+  let oldName = linkedCastName(item);
+  const profiles = castSections(castList).profiles;
+  // 旧版で素材名だけ手編集した資料も、元画像の対応が一意なら復元する。
+  if (!profiles.has(oldName) && asset.items.filter(entry => entry.kind === 'character').length === 1) {
+    const sourceNames = Object.keys(asset.castProfiles || {}).filter(name => profiles.has(name));
+    if (sourceNames.length === 1) oldName = sourceNames[0];
+  }
+  const edited = assets.map(entry => entry !== asset ? entry : {...entry,
+    items: entry.items.map((entryItem, index) => index !== itemIndex ? entryItem : {...entryItem,
+      [field]: value, userEdited: true,
+      ...(item.kind === 'character' && field === 'name' ? {castName: oldName} : {}),
+    }),
+  });
+  if (field !== 'name' || item.kind !== 'character') return {castList, assets: edited, error: nameSyncError(castList, edited)};
+  const name = value.trim();
+  if (!name) return {castList, assets: edited, error: '人物名を入力してください。設定の対応は保持しています。'};
+  if (name !== oldName && (profiles.has(name) || assets.some(entry => entry.items.some(candidate =>
+    candidate.kind === 'character' && linkedCastName(candidate) === name)))) {
+    return {castList, assets: edited, error: '別の人物と同じ名前です。別名を入力してください。'};
+  }
+  return renameCharacters(castList, edited, new Map([[oldName, name]]));
+}
+
+export function editReferenceCast(previousCast, text, assets) {
+  const before = collectCastNameEntries(previousCast).map(entry => entry.displayName);
+  const after = collectCastNameEntries(text).map(entry => entry.displayName);
+  const unchanged = {castList: text, assets, error: nameSyncError(text, assets), deferBaseline: after.length < before.length};
+  if (new Set(after).size !== after.length) return {...unchanged, deferBaseline: true, error: '別の人物と同じ名前の見出しがあります。別名を入力してください。'};
+  if (before.length !== after.length) return unchanged;
+  const previousProfiles = castSections(previousCast).profiles, nextProfiles = castSections(text).profiles;
+  const body = profile => profile?.replace(/^[^\n]*(?:\n|$)/, '').trim();
+  const renames = new Map();
+  before.forEach((name, index) => {
+    const nextName = after[index];
+    if (name !== nextName && !after.includes(name) && !before.includes(nextName)
+      && body(previousProfiles.get(name)) === body(nextProfiles.get(nextName))) renames.set(name, nextName);
+  });
+  if (!renames.size) return unchanged;
+  // The heading has already been edited. Only old occurrences and linked data change.
+  return renameCharacters(text, assets, renames, previousCast);
+}
+
 const derivedCast = assets => {
   const profiles = new Map();
   let preamble = '';

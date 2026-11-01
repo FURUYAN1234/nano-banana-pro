@@ -215,7 +215,7 @@ export default function Step1Panel({
           <div className="reference-recognition-heading">
             <h3><label htmlFor="reference-recognition-editor">認識結果（人物・背景・小物／編集できます）</label></h3>
           </div>
-          <p className="reference-recognition-note">解析ログの結果をここに表示し、シナリオ・描画指示へ引き継ぎます。認識できない場合や取り違える場合、今回のまんがには使用しない場合もあります。</p>
+          <p className="reference-recognition-note">解析ログの結果をここに表示し、シナリオ・描画指示へ引き継ぎます。人物名欄と人物設定の名前見出しは、どちらを編集しても連動します。同じ人物の別シートにも反映します。認識できない場合や取り違える場合、今回のまんがには使用しない場合もあります。</p>
         <div ref={recognitionScrollRef} className="reference-recognition-scroll" role="region" aria-label="認識結果と人物設定" tabIndex={0}>
         {images.map((image, imageIndex) => {
           const asset = referenceAssets.find(entry => entry.image === image);

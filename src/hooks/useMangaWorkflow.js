@@ -16,7 +16,7 @@ import { formatApiErrorGuide } from '../lib/api-errors.js';
 import { generateImageWithOpenAI, setOpenAIApiKey } from '../lib/openai';
 import {buildOpenAIReferencePlan, appendOpenAIReferencePrompt, appendOpenAIWebReferencePrompt, getOpenAIPromptBodyBudget} from '../lib/openai-image-references.js';
 import {buildGeminiReferencePlan, buildGeminiImageApiPrompt, appendGeminiReferencePrompt} from '../lib/gemini-image-references.js';
-import { buildReferenceAnalysisPrompt, parseReferenceAnalysis, buildReferenceAssetContext, buildWebReferencePlan, buildRecognitionEditorText, parseRecognitionEditorText, reconcileReferenceCast, mergeReferenceAnalysis, getReferenceImagesToAnalyze, remapReferenceNumbers } from '../lib/reference-assets.js';
+import { buildReferenceAnalysisPrompt, parseReferenceAnalysis, buildReferenceAssetContext, buildWebReferencePlan, buildRecognitionEditorText, parseRecognitionEditorText, reconcileReferenceCast, mergeReferenceAnalysis, getReferenceImagesToAnalyze, remapReferenceNumbers, editReferenceAsset, editReferenceCast } from '../lib/reference-assets.js';
 import { getImageInputBudget, assertImageInputBudget, planImageAddition } from '../lib/image-input-budget.js';
 import { callAI, setActiveEngine } from '../lib/ai-provider';
 import { reviewComedyPrompt } from '../lib/comedy-review';
@@ -138,9 +138,11 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
   const [castList, setCastListState] = useState("");
   const castRevisionRef = useRef(0);
   const castListRef = useRef('');
+  const castNameBaselineRef = useRef('');
   const setCastList = (value) => {
     castRevisionRef.current += 1;
     castListRef.current = typeof value === 'function' ? value(castListRef.current) : value;
+    castNameBaselineRef.current = castListRef.current;
     setCastListState(castListRef.current);
   };
   const [scenario, setScenario] = useState("");
@@ -437,6 +439,7 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
   // attachment instructions. History remains intact; old active output cannot
   // silently become a result for a different set of references.
   const invalidateReferenceOutputs = (previousImages, nextImages) => {
+    setRecognitionDraft(null);
     cancelApiWork();
     invalidateScenarioRun('素材変更');
     fullAutoAbortRef.current = true;
@@ -465,13 +468,19 @@ export default function useMangaWorkflow({ experimentalEnabled: requestedExperim
   const editReferenceItem = (image, itemIndex, field, value) => {
     if (!['name', 'description'].includes(field)) return;
     invalidateReferenceOutputs();
-    setReferenceAssets(referenceAssetsRef.current.map(asset => asset.image !== image ? asset : {
-      ...asset, items: asset.items.map((item, index) => index !== itemIndex ? item : { ...item, [field]: value, userEdited: true }),
-    }));
+    const result = editReferenceAsset(castListRef.current, referenceAssetsRef.current, image, itemIndex, field, value);
+    setCastList(result.castList);
+    setReferenceAssets(result.assets);
+    setReferenceEditorError(result.error);
   };
   const editCastList = (text) => {
     invalidateReferenceOutputs();
-    setCastList(text);
+    const baseline = castNameBaselineRef.current;
+    const result = editReferenceCast(baseline, text, referenceAssetsRef.current);
+    setCastList(result.castList);
+    if (result.deferBaseline) castNameBaselineRef.current = baseline;
+    setReferenceAssets(result.assets);
+    setReferenceEditorError(result.error);
   };
   const editBackground = (field, value) => {
     if (!['location', 'lighting', 'spatialType', 'objects', 'mood'].includes(field)) return;

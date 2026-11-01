@@ -10,6 +10,12 @@ import {
 } from '../src/lib/openai-model-routes.js';
 import { getFallbackChains } from '../src/lib/fallback-chain-history.js';
 
+test('local STEP1 Luna verification stops on failure while production keeps its declared route', () => {
+  assert.deepEqual(getOpenAIVisionModelRoute('gpt-6-luna', true), ['gpt-6-luna']);
+  assert.deepEqual(getOpenAIVisionModelRoute('gpt-6-luna', false), ['gpt-6-luna', 'gpt-5.6-luna']);
+  assert.equal(getOpenAIVisionModelRoute('gpt-6.1-sol', true)[0], 'gpt-6.1-sol');
+});
+
 test('the three OpenAI steps start on their separate defaults and keep valid selections independent', () => {
   assert.equal(DEFAULT_OPENAI_STEP1_MODEL_ID, 'gpt-6-luna');
   assert.equal(DEFAULT_OPENAI_SCENARIO_MODEL_ID, 'gpt-6-luna');
