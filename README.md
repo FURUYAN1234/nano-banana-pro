@@ -14,6 +14,8 @@ OpenAI starts in five- to eight-panel mode and also supports four panels; Gemini
 
 Demo URL / デモサイト: [https://furuyan1234.github.io/nano-banana-pro/](https://furuyan1234.github.io/nano-banana-pro/)
 
+[![Read the note article: features, examples and getting started / note記事で特徴・作例・始め方を読む](docs/assets/note-article-button.png)](https://note.com/happy_duck780/n/ndf063558c1f5)
+
 ### PDF manuals / PDFマニュアル
 
 Click an image button to open its PDF. The full manual covers application features and the workflow through saving; the two API guides cover account preparation, billing, API keys and connection checks. / 画像ボタンをクリックすると各PDFが開きます。全機能マニュアルはアプリの機能と保存までの操作手順を、API取得マニュアル2冊はアカウントの準備・課金・APIキーの取得・接続確認を説明します。
